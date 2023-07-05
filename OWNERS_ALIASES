@@ -6,29 +6,30 @@
 
 aliases:
   documentation-reviewers:
-    - klaudiagrz
-    - mmitoraj
-    - majakurcius
-    - NHingerl
+    - IwonaLanger
     - grego952
+    - NHingerl
+    - mmitoraj
+    - nataliasitko
   documentation-approvers:
-    - klaudiagrz
-    - mmitoraj
-    - majakurcius
-    - NHingerl
+    - IwonaLanger
     - grego952
-  technical-writers:
-    - klaudiagrz
-    - mmitoraj
-    - majakurcius
     - NHingerl
-    - grego952
-  ci-reviewers:
-    - Ressetkk
-    - Halamix2
-    - dekiel
-    - kasiakepka
-  ci-approvers:
-    - Ressetkk
-    - Halamix2
-    - dekiel
+    - mmitoraj
+    - nataliasitko
+  code-reviewers:
+    - PK85
+    - jaroslaw-pieszka
+    - piotrmiskiewicz
+    - ralikio
+    - szwedm
+    - ukff
+    - MarekMichali
+  code-approvers:
+    - PK85
+    - jaroslaw-pieszka
+    - piotrmiskiewicz
+    - ralikio
+    - szwedm
+    - ukff
+    - MarekMichali
