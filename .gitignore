@@ -1,1 +1,4 @@
 .DS_Store
+
+# Dependency directories
+testing/fast-integration/node_modules/
