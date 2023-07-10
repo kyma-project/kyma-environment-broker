@@ -22,7 +22,8 @@
   },
   "dependencies": {
     "@kubernetes/client-node": "0.15.1",
-    "axios": "^0.21.0"
+    "axios": "^0.21.0",
+    "mocha-junit-reporter": "^2.0.0"
   },
   "engines": {
     "node": ">=12"
