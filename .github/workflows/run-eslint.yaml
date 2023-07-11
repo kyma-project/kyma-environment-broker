@@ -1,0 +1,18 @@
+name: Run eslint
+
+on:
+  pull_request:
+    branches: [ main ]
+    paths:
+    - 'testing/fast-integration/**/*.js'
+
+jobs:
+  run-eslint:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v3
+
+    - name: Run eslint
+      run: make lint -C testing/fast-integration
