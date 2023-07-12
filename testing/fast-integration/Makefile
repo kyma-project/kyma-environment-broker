@@ -12,3 +12,9 @@ lint-fix:
 keb-endpoints:
 	npm install
 	npm run keb-endpoints-test
+
+.PHONY: skr
+skr:
+	npm install
+	npm run skr-test
+	
