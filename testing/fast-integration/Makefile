@@ -8,7 +8,7 @@ lint-fix:
 	npm install
 	npm run lint-fix
 
-.PHONY: ci-keb-endpoints
-ci-keb-endpoints:
+.PHONY: keb-endpoints
+keb-endpoints:
 	npm install
-	npm run test-keb-endpoints
+	npm run keb-endpoints-test
