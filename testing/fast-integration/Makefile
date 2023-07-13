@@ -17,4 +17,8 @@ keb-endpoints:
 skr:
 	npm install
 	npm run skr-test
-	
+
+.PHONY: skr-aws-upgrade-integration
+skr-aws-upgrade-integration:
+	npm install
+	npm run skr-aws-upgrade-integration-test
