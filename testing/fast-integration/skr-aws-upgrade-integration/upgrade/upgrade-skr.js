@@ -14,8 +14,6 @@ async function upgradeSKRInstance(options, kymaUpgradeVersion, timeout) {
   }
 }
 
-
 module.exports = {
   upgradeSKRInstance,
 };
-
