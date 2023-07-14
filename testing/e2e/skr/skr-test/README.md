@@ -75,15 +75,15 @@ export $(xargs < .env)
    - To run the test **with** provisioning, call the following target:
 
     ```bash
-    npm run test-skr
+    npm run skr-test
     #or
-    make test-skr
+    make skr
     ```
     - To run the SKR test **without** provisioning, use the following command:
 
     ```bash
-    make test-skr SKIP_PROVISIONING=true
+    make skr SKIP_PROVISIONING=true
     #or
-    npm run test-skr # when all env vars are exported
+    npm run skr-test # when all env vars are exported
     ```
 
