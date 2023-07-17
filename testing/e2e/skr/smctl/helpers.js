@@ -146,7 +146,7 @@ async function cleanupInstanceBinding(creds, svcatPlatform, btpOperatorInstance,
   }
 
   try {
-    // hint: probably should fail cause that instance created other instannces (after the migration is done)
+    // hint: probably should fail cause that instance created other instances (after the migration is done)
     args = ['deprovision', btpOperatorInstance, '-f', '--mode=sync'];
     const {stdout} = await execa('smctl', args);
     if (stdout !== 'Service Instance successfully deleted.') {
