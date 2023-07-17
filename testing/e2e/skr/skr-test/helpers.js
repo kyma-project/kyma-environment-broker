@@ -61,7 +61,7 @@ function gatherOptions(...opts) {
     instanceID: uuid.v4(),
     testNS: testNS,
     // These options are not meant to be rewritten apart from env variable for KEB_USER_ID
-    // If that's needed please add separate function that overrides this field.
+    // If that's needed, add a separate function that overrides this field.
     oidc0: {
       clientID: '9bd05ed7-a930-44e6-8c79-e6defeb7dec9',
       groupsClaim: 'groups',
