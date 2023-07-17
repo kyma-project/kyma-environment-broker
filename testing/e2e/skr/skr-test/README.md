@@ -3,8 +3,8 @@
 This test covers SKR (SAP Kyma Runtime).
 
 ## File structure
-- **provision** folder contains the scripts for provisioning and de-provisioning the SKR cluster using KEB client
-- **oidc** folder contains the OIDC-related tests
+- `provision` folder contains the scripts for provisioning and de-provisioning the SKR cluster using KEB client
+- `oidc` folder contains the OIDC-related tests
 
 ## Usage modes
 
