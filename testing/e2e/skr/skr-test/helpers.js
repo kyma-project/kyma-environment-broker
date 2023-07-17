@@ -56,7 +56,7 @@ function withCustomParams(customParams) {
 }
 
 function gatherOptions(...opts) {
-  // If no opts provided the options object will be set to these default values.
+  // If no opts provided, the options object will be set to these default values.
   const options = {
     instanceID: uuid.v4(),
     testNS: testNS,
