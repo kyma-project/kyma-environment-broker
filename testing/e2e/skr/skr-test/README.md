@@ -24,9 +24,9 @@ In this mode the test additionally needs the following environment variables:
 - **INSTANCE_ID** the UUID of the provisioned SKR instance
 
 In this mode, the test executes the following steps:
-1. Ensure the SKR exists.
-2. Run the OIDC test.
-3. Clean up the resources.
+1. Ensures the SKR exists.
+2. Runs the OIDC test.
+3. Cleans up the resources.
  
 >**NOTE:** The SKR test additionally contains a stand-alone script that you can use to register the resources.
 
