@@ -17,7 +17,7 @@ In this mode, the test executes the following steps:
 2. Run the OIDC test.
 3. Deprovision the SKR instance and clean up the resources.
 
-### Without Provisioning.
+### Without provisioning
 
 In this mode the test additionally needs the following environment variables:
 - `SKIP_PROVISIONING`, set to `true`
