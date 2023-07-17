@@ -79,7 +79,7 @@ export $(xargs < .env)
     #or
     make skr
     ```
-    - To run the SKR test **without** provisioning, use the following command:
+    - To run the SKR test without provisioning, use the following command:
 
     ```bash
     make skr SKIP_PROVISIONING=true
