@@ -13,7 +13,6 @@ You can use the SKR test in two modes - with and without provisioning.
 ### With provisioning
 
 In this mode, the test executes the following steps:
-
 1. Provision an SKR cluster.
 2. Run the OIDC test.
 3. Deprovision the SKR instance and clean up the resources.
