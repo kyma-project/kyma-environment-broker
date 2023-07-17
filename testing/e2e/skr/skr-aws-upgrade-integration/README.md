@@ -1,6 +1,6 @@
 # SKR test
 
-This test covers SKR (SAP Kyma Runtime).
+This test covers SAP BTP, Kyma runtime (SKR).
 
 ## Usage
 
