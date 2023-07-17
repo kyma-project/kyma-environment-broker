@@ -71,7 +71,7 @@ export $(xargs < .env)
 ```
 
 3. Choose whether you want to run the test with or without provisioning.
-   - To run the test **with** provisioning, call the following target:
+   - To run the test with provisioning, call the following target:
 
     ```bash
     npm run skr-test
