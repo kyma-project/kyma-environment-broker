@@ -32,7 +32,7 @@ In this mode, the test executes the following steps:
 
 ## Test execution
 
-1. Before you run the test, prepare the `.env` file based on the following `.env.template`:
+1. Before you run the test, prepare the `.env` file based on the following [.env.template](.env.template):
 ```
 INSTANCE_ID
 SKIP_PROVISIONING
