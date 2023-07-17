@@ -103,7 +103,7 @@ async function getSKRRuntimeStatus(instanceID) {
   return JSON.parse(runtimeStatus);
 }
 
-// gets the skr config by its instance id
+// gets the SKR config by its instance id
 async function getSKRConfig(instanceID) {
   const runtimeStatus = await kcp.getRuntimeStatusOperations(instanceID);
   const objRuntimeStatus = JSON.parse(runtimeStatus);
