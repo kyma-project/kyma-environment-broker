@@ -36,7 +36,7 @@ class OAuthCredentials {
  * the OAuth2 token.
  *
  * This is very naive implementation just for the
- * internal fast-integration tests usage.
+ * internal e2e SKR tests usage.
  */
 class OAuthToken {
   constructor(url, credentials) {
