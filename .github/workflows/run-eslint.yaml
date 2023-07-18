@@ -4,7 +4,7 @@ on:
   pull_request:
     branches: [ main ]
     paths:
-    - 'testing/fast-integration/**/*.js'
+    - 'testing/e2e/skr/**/*.js'
 
 jobs:
   run-eslint:
@@ -15,4 +15,4 @@ jobs:
       uses: actions/checkout@v3
 
     - name: Run eslint
-      run: make lint -C testing/fast-integration
+      run: make lint -C testing/e2e/skr
