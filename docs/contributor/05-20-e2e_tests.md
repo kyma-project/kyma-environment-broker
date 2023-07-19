@@ -28,7 +28,7 @@ In this mode, the test executes the following steps:
 
 In this mode the test additionally needs the following environment variables:
 - **SKIP_PROVISIONING** set to `true`
-- **INSTANCE_ID** the UUID of the provisioned SKR instance
+- **INSTANCE_ID** - the UUID of the provisioned SKR instance
 
 In this mode, the test executes the following steps:
 1. Ensures the SKR exists.
