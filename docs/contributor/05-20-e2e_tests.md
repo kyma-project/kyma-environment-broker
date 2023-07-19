@@ -112,7 +112,7 @@ The test executes the following steps:
 
 ### Test execution 
 
-1. Before you run the test, prepare the `.env` file based on the following [.env.template](/testing/e2e/skr/keb-endpoints-test/.env.template):
+1. Before you run the test, prepare the `.env` file based on the following [`.env.template`](/testing/e2e/skr/keb-endpoints-test/.env.template):
 2. To set up the environment variables in your system, run:
 
 ```bash
