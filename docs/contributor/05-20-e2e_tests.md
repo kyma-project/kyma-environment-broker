@@ -21,7 +21,7 @@ In this mode, the test executes the following steps:
 1. Provisions an SKR cluster.
 2. Runs the BTP Manager secret reconciliation test.
 3. Runs OIDC test.
-4. Runs machine type update test.
+4. Runs the machine type update test.
 5. Deprovisions the SKR instance and clean up the resources.
 
 #### Without provisioning
