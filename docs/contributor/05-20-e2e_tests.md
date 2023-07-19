@@ -20,8 +20,8 @@ You can use the SKR test in two modes - with and without provisioning.
 In this mode, the test executes the following steps:
 1. Provisions an SKR cluster.
 2. Runs BTP Manager secret reconcilation test.
-3. Runs the OIDC test.
-4. Runs updating machine type test.
+3. Runs OIDC test.
+4. Runs machine type update test.
 5. Deprovisions the SKR instance and clean up the resources.
 
 #### Without provisioning
@@ -32,7 +32,7 @@ In this mode the test additionally needs the following environment variables:
 
 In this mode, the test executes the following steps:
 1. Ensures the SKR exists.
-2. Runs the OIDC test.
+2. Runs OIDC test.
 3. Cleans up the resources.
  
 ### Test execution
@@ -56,7 +56,7 @@ export $(xargs < .env)
     make skr SKIP_PROVISIONING=true
     ```
 
-## E2E SKR own cluster
+## E2E SKR own cluster test
 
 ### Usage
 
@@ -107,8 +107,8 @@ make skr-aws-upgrade-integration
 ### Usage
 
 The test executes the following steps:
-1. Calls KEB endpoints without authorization token.
-2. Checks if the call was rejected.
+1. Calls KEB endpoints without an authorization token.
+2. Checks whether the call was rejected.
 
 ### Test execution 
 
@@ -133,6 +133,6 @@ The tests are run once per day at 01:05 by the given prowjobs:
 - `skr-preview-dev` - SKR test
 - `skr-free-aws-integration-dev` - SKR test
 - `skr-aws-integration-dev` - SKR test
-- `skr-aws-own-cluster-dev` - SKR test
+- `skr-aws-own-cluster-dev` - SKR own cluster test
 - `skr-aws-upgrade-integration-dev` - SKR AWS upgrade integration test
 - `keb-endpoints-test` - KEB endpoints test
