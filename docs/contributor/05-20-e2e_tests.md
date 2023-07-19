@@ -7,7 +7,7 @@ There are four tests:
 - `skr-tests` for checking on different cloud service providers Kyma provisioning, BTP Manager secret reconcilation, updating OIDC, updating machine type and Kyma deprovisioning
 - `skr-tests-own-cluster` for checking experimental Kyma provisioning and Kyma deprovisioning where the user provides the kubeconfig
 - `skr-aws-upgrade-integration` for checking Kyma provisioning, Kyma upgrading, and Kyma deprovisioning
-- `keb-endpoints-test` for checking kyma-environment-broker endpoints if they require authorization
+- `keb-endpoints-test` for checking if kyma-environment-broker endpoints require authorization
 
 ## E2E SKR tests
 
