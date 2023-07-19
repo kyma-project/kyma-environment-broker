@@ -32,7 +32,7 @@ In this mode the test additionally needs the following environment variables:
 
 In this mode, the test executes the following steps:
 1. Ensures the SKR exists.
-2. Runs OIDC test.
+2. Runs the OIDC test.
 3. Cleans up the resources.
  
 ### Test execution
