@@ -61,9 +61,9 @@ export $(xargs < .env)
 ### Usage
 
 The test executes the following steps:
-1. Provisions SKR on a cluster given by the customer
-2. Checks if sap-btp-manager secret exist.
-3. Deprovisions SKR on a cluster given by the customer
+1. Provisions SKR on a cluster given by the customer.
+2. Checks if sap-btp-manager secret exists.
+3. Deprovisions SKR on a cluster given by the customer.
 
 ### Test execution 
 
