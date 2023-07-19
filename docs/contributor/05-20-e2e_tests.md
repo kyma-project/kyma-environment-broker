@@ -126,7 +126,7 @@ make keb-endpoints
 
 ### CI pipelines
 
-The tests are run once per day at 01:05 by the given prowjobs:
+The tests are run once per day at 01:05 by the given Prow jobs:
 - `skr-azure-integration-dev` - SKR test
 - `skr-azure-lite-integration-dev` - SKR test
 - `skr-trial-integration-dev` - SKR test
