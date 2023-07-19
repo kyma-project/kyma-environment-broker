@@ -86,7 +86,7 @@ make skr-own-cluster
 The test executes the following steps:
 1. Provisions an SKR cluster.
 2. Runs Kyma upgrade.
-3. Deprovisions the SKR instance and clean up the resources.
+3. Deprovisions the SKR instance and cleans up the resources.
 
 ### Test execution 
 
