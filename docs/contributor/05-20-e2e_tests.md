@@ -2,7 +2,7 @@
 
 ## Overview
 
-The end-to-end (E2E) tests covers kyma-environment-broker (KEB) and SAP BTP, Kyma runtime (SKR).
+The end-to-end (E2E) tests cover Kyma Environment Broker (KEB) and SAP BTP, Kyma runtime (SKR).
 There are four tests:
 - `skr-tests` for checking on different cloud service providers Kyma provisioning, BTP Manager secret reconcilation, updating OIDC, updating machine type and Kyma deprovisioning
 - `skr-tests-own-cluster` for checking experimental Kyma provisioning and Kyma deprovisioning where user provides the kubeconfig
