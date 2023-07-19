@@ -1,4 +1,4 @@
-# GitHub Action workflows
+# GitHub Actions workflows
 
 ## ESLint workflow
 
