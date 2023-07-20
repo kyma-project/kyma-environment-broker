@@ -3,9 +3,8 @@
 ## Overview
 
 The end-to-end (E2E) tests cover Kyma Environment Broker (KEB) and SAP BTP, Kyma runtime (SKR).
-There are four tests:
+There are three tests:
 - `skr-tests` for testing the following operations on different cloud service providers: Kyma provisioning, BTP Manager secret reconciliation, updating OIDC, updating machine type, and Kyma deprovisioning
-- `skr-tests-own-cluster` for checking experimental Kyma provisioning and Kyma deprovisioning where the user provides the kubeconfig
 - `skr-aws-upgrade-integration` for checking Kyma provisioning, Kyma upgrading, and Kyma deprovisioning
 - `keb-endpoints-test` for checking if kyma-environment-broker endpoints require authorization
 
@@ -55,29 +54,6 @@ export $(xargs < .env)
     ```bash
     make skr SKIP_PROVISIONING=true
     ```
-
-## E2E SKR own cluster test
-
-### Usage
-
-The test executes the following steps:
-1. Provisions SKR on a cluster given by the customer.
-2. Checks if sap-btp-manager secret exists.
-3. Deprovisions SKR on a cluster given by the customer.
-
-### Test execution 
-
-1. Before you run the test, prepare the `.env` file based on the following [`.env.template`](/testing/e2e/skr/skr-test/.env.template):
-2. To set up the environment variables in your system, run:
-
-```bash
-export $(xargs < .env)
-```
-
-3. Run the test scenario:
-```bash
-make skr-own-cluster
-```
 
 ## E2E SKR AWS upgrade integration test
 
@@ -133,6 +109,5 @@ The tests are run once per day at 01:05 by the given Prow jobs:
 - `skr-preview-dev` - SKR test
 - `skr-free-aws-integration-dev` - SKR test
 - `skr-aws-integration-dev` - SKR test
-- `skr-aws-own-cluster-dev` - SKR own cluster test
 - `skr-aws-upgrade-integration-dev` - SKR AWS upgrade integration test
 - `keb-endpoints-test` - KEB endpoints test
