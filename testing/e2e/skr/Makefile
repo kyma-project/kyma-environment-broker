@@ -22,8 +22,3 @@ skr:
 skr-aws-upgrade-integration:
 	npm install
 	npm run skr-aws-upgrade-integration-test
-
-.PHONY: skr-own-cluster
-skr-own-cluster:
-	npm install
-	npm run skr-own-cluster-test
