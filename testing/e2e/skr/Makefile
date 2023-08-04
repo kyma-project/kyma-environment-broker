@@ -15,6 +15,8 @@ keb-endpoints:
 
 .PHONY: skr
 skr:
+	curl -fLSs -o /usr/local/bin/kcp https://storage.googleapis.com/kyma-development-artifacts/kcp/master/kcp-linux
+    chmod +x /usr/local/bin/kcp
 	npm install
 	npm run skr-test
 
