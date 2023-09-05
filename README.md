@@ -1,3 +1,5 @@
+This change is a workaround for pjtester requirement for the latests commit being a merge commit.
+
 [![REUSE status](https://api.reuse.software/badge/github.com/kyma-project/kyma-environment-broker)](https://api.reuse.software/info/github.com/kyma-project/kyma-environment-broker)
 # Kyma Environment Broker
 
