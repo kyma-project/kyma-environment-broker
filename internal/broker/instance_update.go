@@ -9,7 +9,7 @@ import (
 	"time"
 
 	"github.com/kyma-incubator/compass/components/director/pkg/jsonschema"
-	"github.com/kyma-project/control-plane/components/kyma-environment-broker/internal/euaccess"
+	"github.com/kyma-project/kyma-environment-broker/internal/euaccess"
 
 	"github.com/google/uuid"
 	"github.com/pivotal-cf/brokerapi/v8/domain"
@@ -17,11 +17,11 @@ import (
 	"github.com/sirupsen/logrus"
 	"k8s.io/apimachinery/pkg/util/wait"
 
-	"github.com/kyma-project/control-plane/components/kyma-environment-broker/internal"
-	"github.com/kyma-project/control-plane/components/kyma-environment-broker/internal/dashboard"
-	"github.com/kyma-project/control-plane/components/kyma-environment-broker/internal/ptr"
-	"github.com/kyma-project/control-plane/components/kyma-environment-broker/internal/storage"
-	"github.com/kyma-project/control-plane/components/kyma-environment-broker/internal/storage/dberr"
+	"github.com/kyma-project/kyma-environment-broker/internal"
+	"github.com/kyma-project/kyma-environment-broker/internal/dashboard"
+	"github.com/kyma-project/kyma-environment-broker/internal/ptr"
+	"github.com/kyma-project/kyma-environment-broker/internal/storage"
+	"github.com/kyma-project/kyma-environment-broker/internal/storage/dberr"
 )
 
 type ContextUpdateHandler interface {

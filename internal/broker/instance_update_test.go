@@ -8,17 +8,17 @@ import (
 	"testing"
 	"time"
 
-	"github.com/kyma-project/control-plane/components/kyma-environment-broker/internal"
-	"github.com/kyma-project/control-plane/components/kyma-environment-broker/internal/broker/automock"
+	"github.com/kyma-project/kyma-environment-broker/internal"
+	"github.com/kyma-project/kyma-environment-broker/internal/broker/automock"
 
 	"github.com/stretchr/testify/mock"
 
-	"github.com/kyma-project/control-plane/components/kyma-environment-broker/internal/dashboard"
+	"github.com/kyma-project/kyma-environment-broker/internal/dashboard"
 	"github.com/kyma-project/control-plane/components/provisioner/pkg/gqlschema"
 
-	"github.com/kyma-project/control-plane/components/kyma-environment-broker/internal/fixture"
-	"github.com/kyma-project/control-plane/components/kyma-environment-broker/internal/ptr"
-	"github.com/kyma-project/control-plane/components/kyma-environment-broker/internal/storage"
+	"github.com/kyma-project/kyma-environment-broker/internal/fixture"
+	"github.com/kyma-project/kyma-environment-broker/internal/ptr"
+	"github.com/kyma-project/kyma-environment-broker/internal/storage"
 	"github.com/pivotal-cf/brokerapi/v8/domain"
 	"github.com/pivotal-cf/brokerapi/v8/domain/apiresponses"
 	"github.com/sirupsen/logrus"

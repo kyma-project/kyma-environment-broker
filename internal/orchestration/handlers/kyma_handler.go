@@ -9,16 +9,16 @@ import (
 	"strings"
 	"time"
 
-	"github.com/kyma-project/control-plane/components/kyma-environment-broker/internal"
+	"github.com/kyma-project/kyma-environment-broker/internal"
 	"github.com/pkg/errors"
 	"golang.org/x/mod/semver"
 
 	"github.com/google/uuid"
 	"github.com/gorilla/mux"
-	"github.com/kyma-project/control-plane/components/kyma-environment-broker/common/orchestration"
-	"github.com/kyma-project/control-plane/components/kyma-environment-broker/internal/httputil"
-	"github.com/kyma-project/control-plane/components/kyma-environment-broker/internal/process"
-	"github.com/kyma-project/control-plane/components/kyma-environment-broker/internal/storage"
+	"github.com/kyma-project/kyma-environment-broker/common/orchestration"
+	"github.com/kyma-project/kyma-environment-broker/internal/httputil"
+	"github.com/kyma-project/kyma-environment-broker/internal/process"
+	"github.com/kyma-project/kyma-environment-broker/internal/storage"
 	"github.com/sirupsen/logrus"
 
 	"github.com/google/go-github/github"

@@ -4,9 +4,9 @@ import (
 	"sort"
 	"sync"
 
-	"github.com/kyma-project/control-plane/components/kyma-environment-broker/internal/storage/dberr"
+	"github.com/kyma-project/kyma-environment-broker/internal/storage/dberr"
 
-	"github.com/kyma-project/control-plane/components/kyma-environment-broker/internal"
+	"github.com/kyma-project/kyma-environment-broker/internal"
 )
 
 type runtimeState struct {

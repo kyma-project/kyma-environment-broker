@@ -6,18 +6,18 @@ import (
 
 	apiErrors "k8s.io/apimachinery/pkg/api/errors"
 
-	"github.com/kyma-project/control-plane/components/kyma-environment-broker/common/pagination"
+	"github.com/kyma-project/kyma-environment-broker/common/pagination"
 
-	"github.com/kyma-project/control-plane/components/kyma-environment-broker/internal/httputil"
-	"github.com/kyma-project/control-plane/components/kyma-environment-broker/internal/process"
+	"github.com/kyma-project/kyma-environment-broker/internal/httputil"
+	"github.com/kyma-project/kyma-environment-broker/internal/process"
 
-	internalError "github.com/kyma-project/control-plane/components/kyma-environment-broker/internal/error"
-	"github.com/kyma-project/control-plane/components/kyma-environment-broker/internal/storage"
-	"github.com/kyma-project/control-plane/components/kyma-environment-broker/internal/storage/dberr"
-	"github.com/kyma-project/control-plane/components/kyma-environment-broker/internal/storage/dbmodel"
+	internalError "github.com/kyma-project/kyma-environment-broker/internal/error"
+	"github.com/kyma-project/kyma-environment-broker/internal/storage"
+	"github.com/kyma-project/kyma-environment-broker/internal/storage/dberr"
+	"github.com/kyma-project/kyma-environment-broker/internal/storage/dbmodel"
 
 	"github.com/gorilla/mux"
-	commonOrchestration "github.com/kyma-project/control-plane/components/kyma-environment-broker/common/orchestration"
+	commonOrchestration "github.com/kyma-project/kyma-environment-broker/common/orchestration"
 
 	"github.com/sirupsen/logrus"
 )

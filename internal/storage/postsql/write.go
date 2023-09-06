@@ -4,11 +4,11 @@ import (
 	"time"
 
 	"github.com/google/uuid"
-	"github.com/kyma-project/control-plane/components/kyma-environment-broker/common/events"
-	"github.com/kyma-project/control-plane/components/kyma-environment-broker/internal/storage/dbmodel"
+	"github.com/kyma-project/kyma-environment-broker/common/events"
+	"github.com/kyma-project/kyma-environment-broker/internal/storage/dbmodel"
 
 	"github.com/gocraft/dbr"
-	"github.com/kyma-project/control-plane/components/kyma-environment-broker/internal/storage/dberr"
+	"github.com/kyma-project/kyma-environment-broker/internal/storage/dberr"
 	"github.com/lib/pq"
 )
 

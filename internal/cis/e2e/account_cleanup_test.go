@@ -7,10 +7,10 @@ import (
 	"context"
 	"testing"
 
-	"github.com/kyma-project/control-plane/components/kyma-environment-broker/internal/cis"
-	"github.com/kyma-project/control-plane/components/kyma-environment-broker/internal/logger"
-	"github.com/kyma-project/control-plane/components/kyma-environment-broker/internal/storage"
-	"github.com/kyma-project/control-plane/components/kyma-environment-broker/internal/storage/driver/postsql/events"
+	"github.com/kyma-project/kyma-environment-broker/internal/cis"
+	"github.com/kyma-project/kyma-environment-broker/internal/logger"
+	"github.com/kyma-project/kyma-environment-broker/internal/storage"
+	"github.com/kyma-project/kyma-environment-broker/internal/storage/driver/postsql/events"
 
 	"github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/require"

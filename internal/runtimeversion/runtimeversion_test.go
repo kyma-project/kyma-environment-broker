@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/kyma-project/control-plane/components/kyma-environment-broker/internal"
+	"github.com/kyma-project/kyma-environment-broker/internal"
 	"github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/require"
 	coreV1 "k8s.io/api/core/v1"

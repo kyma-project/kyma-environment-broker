@@ -6,7 +6,7 @@ import (
 	"time"
 
 	"github.com/kyma-incubator/compass/components/director/pkg/graphql"
-	kebError "github.com/kyma-project/control-plane/components/kyma-environment-broker/internal/error"
+	kebError "github.com/kyma-project/kyma-environment-broker/internal/error"
 	machineGraph "github.com/machinebox/graphql"
 	"github.com/sirupsen/logrus"
 	"golang.org/x/oauth2/clientcredentials"

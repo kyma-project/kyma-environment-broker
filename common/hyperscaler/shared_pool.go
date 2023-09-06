@@ -4,7 +4,7 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/kyma-project/control-plane/components/kyma-environment-broker/common/gardener"
+	"github.com/kyma-project/kyma-environment-broker/common/gardener"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/client-go/dynamic"

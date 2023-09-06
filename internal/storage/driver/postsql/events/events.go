@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"time"
 
-	eventsapi "github.com/kyma-project/control-plane/components/kyma-environment-broker/common/events"
-	"github.com/kyma-project/control-plane/components/kyma-environment-broker/internal/storage/postsql"
+	eventsapi "github.com/kyma-project/kyma-environment-broker/common/events"
+	"github.com/kyma-project/kyma-environment-broker/internal/storage/postsql"
 	"github.com/sirupsen/logrus"
 )
 

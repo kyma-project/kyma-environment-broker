@@ -9,7 +9,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/kyma-incubator/reconciler/pkg/keb"
 	reconcilerApi "github.com/kyma-incubator/reconciler/pkg/keb"
-	"github.com/kyma-project/control-plane/components/kyma-environment-broker/internal/ptr"
+	"github.com/kyma-project/kyma-environment-broker/internal/ptr"
 	"github.com/kyma-project/control-plane/components/provisioner/pkg/gqlschema"
 
 	v1 "k8s.io/api/core/v1"

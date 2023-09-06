@@ -7,9 +7,9 @@ import (
 	"strings"
 	"sync"
 
-	"github.com/kyma-project/control-plane/components/kyma-environment-broker/internal"
-	kebError "github.com/kyma-project/control-plane/components/kyma-environment-broker/internal/error"
-	"github.com/kyma-project/control-plane/components/kyma-environment-broker/internal/iosafety"
+	"github.com/kyma-project/kyma-environment-broker/internal"
+	kebError "github.com/kyma-project/kyma-environment-broker/internal/error"
+	"github.com/kyma-project/kyma-environment-broker/internal/iosafety"
 	"gopkg.in/yaml.v2"
 )
 

@@ -7,12 +7,12 @@ import (
 	"github.com/gocraft/dbr"
 	"github.com/sirupsen/logrus"
 
-	eventsapi "github.com/kyma-project/control-plane/components/kyma-environment-broker/common/events"
-	"github.com/kyma-project/control-plane/components/kyma-environment-broker/internal/events"
-	"github.com/kyma-project/control-plane/components/kyma-environment-broker/internal/storage/driver/memory"
-	postgres "github.com/kyma-project/control-plane/components/kyma-environment-broker/internal/storage/driver/postsql"
-	eventstorage "github.com/kyma-project/control-plane/components/kyma-environment-broker/internal/storage/driver/postsql/events"
-	"github.com/kyma-project/control-plane/components/kyma-environment-broker/internal/storage/postsql"
+	eventsapi "github.com/kyma-project/kyma-environment-broker/common/events"
+	"github.com/kyma-project/kyma-environment-broker/internal/events"
+	"github.com/kyma-project/kyma-environment-broker/internal/storage/driver/memory"
+	postgres "github.com/kyma-project/kyma-environment-broker/internal/storage/driver/postsql"
+	eventstorage "github.com/kyma-project/kyma-environment-broker/internal/storage/driver/postsql/events"
+	"github.com/kyma-project/kyma-environment-broker/internal/storage/postsql"
 )
 
 type BrokerStorage interface {

@@ -5,7 +5,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/kyma-project/control-plane/components/kyma-environment-broker/common/events"
+	"github.com/kyma-project/kyma-environment-broker/common/events"
 )
 
 type Config struct {

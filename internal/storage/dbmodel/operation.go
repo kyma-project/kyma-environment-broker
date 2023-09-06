@@ -4,7 +4,7 @@ import (
 	"database/sql"
 	"time"
 
-	"github.com/kyma-project/control-plane/components/kyma-environment-broker/internal"
+	"github.com/kyma-project/kyma-environment-broker/internal"
 )
 
 // OperationFilter holds the filters when listing multiple operations

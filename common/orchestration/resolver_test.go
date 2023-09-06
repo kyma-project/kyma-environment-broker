@@ -17,8 +17,8 @@ import (
 	dynamicfake "k8s.io/client-go/dynamic/fake"
 	k8stesting "k8s.io/client-go/testing"
 
-	"github.com/kyma-project/control-plane/components/kyma-environment-broker/common/gardener"
-	"github.com/kyma-project/control-plane/components/kyma-environment-broker/common/runtime"
+	"github.com/kyma-project/kyma-environment-broker/common/gardener"
+	"github.com/kyma-project/kyma-environment-broker/common/runtime"
 )
 
 const (

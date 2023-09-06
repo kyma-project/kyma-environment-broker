@@ -7,17 +7,17 @@ import (
 	"strings"
 	"time"
 
-	"github.com/kyma-project/control-plane/components/kyma-environment-broker/internal/euaccess"
+	"github.com/kyma-project/kyma-environment-broker/internal/euaccess"
 
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	"github.com/google/uuid"
 	reconcilerApi "github.com/kyma-incubator/reconciler/pkg/keb"
-	"github.com/kyma-project/control-plane/components/kyma-environment-broker/common/gardener"
-	"github.com/kyma-project/control-plane/components/kyma-environment-broker/common/orchestration"
-	kebError "github.com/kyma-project/control-plane/components/kyma-environment-broker/internal/error"
-	"github.com/kyma-project/control-plane/components/kyma-environment-broker/internal/events"
-	"github.com/kyma-project/control-plane/components/kyma-environment-broker/internal/ptr"
+	"github.com/kyma-project/kyma-environment-broker/common/gardener"
+	"github.com/kyma-project/kyma-environment-broker/common/orchestration"
+	kebError "github.com/kyma-project/kyma-environment-broker/internal/error"
+	"github.com/kyma-project/kyma-environment-broker/internal/events"
+	"github.com/kyma-project/kyma-environment-broker/internal/ptr"
 	"github.com/kyma-project/control-plane/components/provisioner/pkg/gqlschema"
 	"github.com/pivotal-cf/brokerapi/v8/domain"
 	log "github.com/sirupsen/logrus"

@@ -20,7 +20,7 @@ import (
 	"github.com/docker/docker/client"
 	"github.com/docker/go-connections/nat"
 	"github.com/gocraft/dbr"
-	"github.com/kyma-project/control-plane/components/kyma-environment-broker/internal/storage/postsql"
+	"github.com/kyma-project/kyma-environment-broker/internal/storage/postsql"
 	v1 "github.com/opencontainers/image-spec/specs-go/v1"
 	"github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/assert"

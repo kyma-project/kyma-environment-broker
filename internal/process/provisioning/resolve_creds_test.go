@@ -5,22 +5,22 @@ import (
 	"testing"
 	"time"
 
-	"github.com/kyma-project/control-plane/components/kyma-environment-broker/common/gardener"
-	"github.com/kyma-project/control-plane/components/kyma-environment-broker/internal/fixture"
+	"github.com/kyma-project/kyma-environment-broker/common/gardener"
+	"github.com/kyma-project/kyma-environment-broker/internal/fixture"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 
 	"github.com/pivotal-cf/brokerapi/v8/domain"
 
-	"github.com/kyma-project/control-plane/components/kyma-environment-broker/internal"
+	"github.com/kyma-project/kyma-environment-broker/internal"
 
-	"github.com/kyma-project/control-plane/components/kyma-environment-broker/internal/broker"
+	"github.com/kyma-project/kyma-environment-broker/internal/broker"
 
 	"github.com/stretchr/testify/require"
 
-	"github.com/kyma-project/control-plane/components/kyma-environment-broker/common/hyperscaler"
-	hyperscalerMocks "github.com/kyma-project/control-plane/components/kyma-environment-broker/common/hyperscaler/automock"
-	"github.com/kyma-project/control-plane/components/kyma-environment-broker/internal/storage"
+	"github.com/kyma-project/kyma-environment-broker/common/hyperscaler"
+	hyperscalerMocks "github.com/kyma-project/kyma-environment-broker/common/hyperscaler/automock"
+	"github.com/kyma-project/kyma-environment-broker/internal/storage"
 	"github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/assert"
 )

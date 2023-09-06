@@ -3,14 +3,14 @@ package provisioning
 import (
 	"time"
 
-	"github.com/kyma-project/control-plane/components/kyma-environment-broker/common/orchestration"
-	"github.com/kyma-project/control-plane/components/kyma-environment-broker/internal/process"
-	"github.com/kyma-project/control-plane/components/kyma-environment-broker/internal/storage"
-	"github.com/kyma-project/control-plane/components/kyma-environment-broker/internal/storage/dberr"
+	"github.com/kyma-project/kyma-environment-broker/common/orchestration"
+	"github.com/kyma-project/kyma-environment-broker/internal/process"
+	"github.com/kyma-project/kyma-environment-broker/internal/storage"
+	"github.com/kyma-project/kyma-environment-broker/internal/storage/dberr"
 	"github.com/pivotal-cf/brokerapi/v8/domain"
 	"github.com/sirupsen/logrus"
 
-	"github.com/kyma-project/control-plane/components/kyma-environment-broker/internal"
+	"github.com/kyma-project/kyma-environment-broker/internal"
 )
 
 // StartStep changes the state from pending to in progress if necessary

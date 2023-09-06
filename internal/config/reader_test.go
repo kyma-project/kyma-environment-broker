@@ -7,8 +7,8 @@ import (
 	"path"
 	"testing"
 
-	"github.com/kyma-project/control-plane/components/kyma-environment-broker/internal/broker"
-	"github.com/kyma-project/control-plane/components/kyma-environment-broker/internal/config"
+	"github.com/kyma-project/kyma-environment-broker/internal/broker"
+	"github.com/kyma-project/kyma-environment-broker/internal/config"
 	"github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"

@@ -3,7 +3,7 @@
 package automock
 
 import (
-	internal "github.com/kyma-project/control-plane/components/kyma-environment-broker/internal"
+	internal "github.com/kyma-project/kyma-environment-broker/internal"
 	mock "github.com/stretchr/testify/mock"
 
 	v1alpha1 "github.com/kyma-project/kyma/components/kyma-operator/pkg/apis/installer/v1alpha1"

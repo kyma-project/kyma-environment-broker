@@ -8,14 +8,14 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"github.com/kyma-project/control-plane/components/kyma-environment-broker/internal/broker"
+	"github.com/kyma-project/kyma-environment-broker/internal/broker"
 	"github.com/stretchr/testify/assert"
 
-	"github.com/kyma-project/control-plane/components/kyma-environment-broker/common/orchestration"
-	"github.com/kyma-project/control-plane/components/kyma-environment-broker/internal"
-	"github.com/kyma-project/control-plane/components/kyma-environment-broker/internal/kubeconfig/automock"
-	"github.com/kyma-project/control-plane/components/kyma-environment-broker/internal/logger"
-	"github.com/kyma-project/control-plane/components/kyma-environment-broker/internal/storage"
+	"github.com/kyma-project/kyma-environment-broker/common/orchestration"
+	"github.com/kyma-project/kyma-environment-broker/internal"
+	"github.com/kyma-project/kyma-environment-broker/internal/kubeconfig/automock"
+	"github.com/kyma-project/kyma-environment-broker/internal/logger"
+	"github.com/kyma-project/kyma-environment-broker/internal/storage"
 
 	"github.com/gorilla/mux"
 	"github.com/pivotal-cf/brokerapi/v8/domain"

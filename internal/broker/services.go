@@ -3,11 +3,11 @@ package broker
 import (
 	"context"
 
-	"github.com/kyma-project/control-plane/components/kyma-environment-broker/internal/euaccess"
+	"github.com/kyma-project/kyma-environment-broker/internal/euaccess"
 
 	"fmt"
 
-	"github.com/kyma-project/control-plane/components/kyma-environment-broker/internal/middleware"
+	"github.com/kyma-project/kyma-environment-broker/internal/middleware"
 
 	"github.com/pivotal-cf/brokerapi/v8/domain"
 	"github.com/sirupsen/logrus"

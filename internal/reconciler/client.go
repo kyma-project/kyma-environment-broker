@@ -10,7 +10,7 @@ import (
 	"time"
 
 	reconcilerApi "github.com/kyma-incubator/reconciler/pkg/keb"
-	kebError "github.com/kyma-project/control-plane/components/kyma-environment-broker/internal/error"
+	kebError "github.com/kyma-project/kyma-environment-broker/internal/error"
 	"github.com/sirupsen/logrus"
 )
 

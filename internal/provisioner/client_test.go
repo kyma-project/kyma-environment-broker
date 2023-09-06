@@ -9,8 +9,8 @@ import (
 
 	"github.com/99designs/gqlgen/handler"
 	"github.com/gorilla/mux"
-	kebError "github.com/kyma-project/control-plane/components/kyma-environment-broker/internal/error"
-	"github.com/kyma-project/control-plane/components/kyma-environment-broker/internal/ptr"
+	kebError "github.com/kyma-project/kyma-environment-broker/internal/error"
+	"github.com/kyma-project/kyma-environment-broker/internal/ptr"
 	schema "github.com/kyma-project/control-plane/components/provisioner/pkg/gqlschema"
 	"github.com/stretchr/testify/assert"
 )

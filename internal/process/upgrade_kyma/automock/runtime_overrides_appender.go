@@ -3,7 +3,7 @@
 package automock
 
 import (
-	runtimeoverrides "github.com/kyma-project/control-plane/components/kyma-environment-broker/internal/runtimeoverrides"
+	runtimeoverrides "github.com/kyma-project/kyma-environment-broker/internal/runtimeoverrides"
 	mock "github.com/stretchr/testify/mock"
 )
 
