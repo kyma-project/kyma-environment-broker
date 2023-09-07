@@ -10,23 +10,23 @@ import (
 	"net/netip"
 	"strings"
 
-	"github.com/kyma-project/control-plane/components/kyma-environment-broker/internal/networking"
+	"github.com/kyma-project/kyma-environment-broker/internal/networking"
 
 	"github.com/hashicorp/go-multierror"
 
-	"github.com/kyma-project/control-plane/components/kyma-environment-broker/internal/euaccess"
+	"github.com/kyma-project/kyma-environment-broker/internal/euaccess"
 
 	"k8s.io/client-go/tools/clientcmd"
 
 	"github.com/google/uuid"
 	"github.com/kyma-incubator/compass/components/director/pkg/jsonschema"
-	"github.com/kyma-project/control-plane/components/kyma-environment-broker/common/gardener"
-	"github.com/kyma-project/control-plane/components/kyma-environment-broker/internal"
-	"github.com/kyma-project/control-plane/components/kyma-environment-broker/internal/dashboard"
-	"github.com/kyma-project/control-plane/components/kyma-environment-broker/internal/middleware"
-	"github.com/kyma-project/control-plane/components/kyma-environment-broker/internal/ptr"
-	"github.com/kyma-project/control-plane/components/kyma-environment-broker/internal/storage"
-	"github.com/kyma-project/control-plane/components/kyma-environment-broker/internal/storage/dberr"
+	"github.com/kyma-project/kyma-environment-broker/common/gardener"
+	"github.com/kyma-project/kyma-environment-broker/internal"
+	"github.com/kyma-project/kyma-environment-broker/internal/dashboard"
+	"github.com/kyma-project/kyma-environment-broker/internal/middleware"
+	"github.com/kyma-project/kyma-environment-broker/internal/ptr"
+	"github.com/kyma-project/kyma-environment-broker/internal/storage"
+	"github.com/kyma-project/kyma-environment-broker/internal/storage/dberr"
 	"github.com/pivotal-cf/brokerapi/v8/domain"
 	"github.com/pivotal-cf/brokerapi/v8/domain/apiresponses"
 	"github.com/sirupsen/logrus"

@@ -4,7 +4,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/kyma-project/control-plane/components/kyma-environment-broker/common/orchestration"
+	"github.com/kyma-project/kyma-environment-broker/common/orchestration"
 )
 
 func TestKymaUpgrade_OneRuntimeHappyPath(t *testing.T) {

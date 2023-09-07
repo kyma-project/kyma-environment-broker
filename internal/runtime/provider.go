@@ -9,9 +9,9 @@ import (
 	"sync"
 
 	"github.com/hashicorp/go-multierror"
-	"github.com/kyma-project/control-plane/components/kyma-environment-broker/internal"
-	kebError "github.com/kyma-project/control-plane/components/kyma-environment-broker/internal/error"
-	"github.com/kyma-project/control-plane/components/kyma-environment-broker/internal/iosafety"
+	"github.com/kyma-project/kyma-environment-broker/internal"
+	kebError "github.com/kyma-project/kyma-environment-broker/internal/error"
+	"github.com/kyma-project/kyma-environment-broker/internal/iosafety"
 	"github.com/kyma-project/kyma/components/kyma-operator/pkg/apis/installer/v1alpha1"
 	"gopkg.in/yaml.v2"
 )

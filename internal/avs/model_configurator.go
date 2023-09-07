@@ -1,6 +1,6 @@
 package avs
 
-import "github.com/kyma-project/control-plane/components/kyma-environment-broker/internal"
+import "github.com/kyma-project/kyma-environment-broker/internal"
 
 type ModelConfigurator interface {
 	ProvideSuffix() string

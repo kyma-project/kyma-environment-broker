@@ -14,7 +14,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/kyma-project/control-plane/components/kyma-environment-broker/common/pagination"
+	"github.com/kyma-project/kyma-environment-broker/common/pagination"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"golang.org/x/exp/slices"

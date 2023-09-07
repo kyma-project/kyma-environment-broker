@@ -1,6 +1,6 @@
 package runtime
 
-import "github.com/kyma-project/control-plane/components/kyma-environment-broker/internal"
+import "github.com/kyma-project/kyma-environment-broker/internal"
 
 // GenericComponentDisabler provides functionality for removing configured component from given list
 type GenericComponentDisabler struct {

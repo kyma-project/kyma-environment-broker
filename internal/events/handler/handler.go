@@ -5,9 +5,9 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/kyma-project/control-plane/components/kyma-environment-broker/common/events"
-	"github.com/kyma-project/control-plane/components/kyma-environment-broker/internal/storage"
-	"github.com/kyma-project/control-plane/components/kyma-environment-broker/internal/storage/dbmodel"
+	"github.com/kyma-project/kyma-environment-broker/common/events"
+	"github.com/kyma-project/kyma-environment-broker/internal/storage"
+	"github.com/kyma-project/kyma-environment-broker/internal/storage/dbmodel"
 )
 
 type Handler struct {

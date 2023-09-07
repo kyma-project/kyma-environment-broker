@@ -3,8 +3,8 @@
 package mocks
 
 import (
-	internal "github.com/kyma-project/control-plane/components/kyma-environment-broker/internal"
-	dbmodel "github.com/kyma-project/control-plane/components/kyma-environment-broker/internal/storage/dbmodel"
+	internal "github.com/kyma-project/kyma-environment-broker/internal"
+	dbmodel "github.com/kyma-project/kyma-environment-broker/internal/storage/dbmodel"
 
 	mock "github.com/stretchr/testify/mock"
 

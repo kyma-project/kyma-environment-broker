@@ -9,7 +9,7 @@ import (
 	"net/url"
 	"strconv"
 
-	"github.com/kyma-project/control-plane/components/kyma-environment-broker/common/pagination"
+	"github.com/kyma-project/kyma-environment-broker/common/pagination"
 )
 
 const defaultPageSize = 100

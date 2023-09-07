@@ -3,11 +3,11 @@ package orchestration
 import (
 	"fmt"
 
-	"github.com/kyma-project/control-plane/components/kyma-environment-broker/common/runtime"
-	runtimeInt "github.com/kyma-project/control-plane/components/kyma-environment-broker/internal/runtime"
-	"github.com/kyma-project/control-plane/components/kyma-environment-broker/internal/storage"
-	"github.com/kyma-project/control-plane/components/kyma-environment-broker/internal/storage/dberr"
-	"github.com/kyma-project/control-plane/components/kyma-environment-broker/internal/storage/dbmodel"
+	"github.com/kyma-project/kyma-environment-broker/common/runtime"
+	runtimeInt "github.com/kyma-project/kyma-environment-broker/internal/runtime"
+	"github.com/kyma-project/kyma-environment-broker/internal/storage"
+	"github.com/kyma-project/kyma-environment-broker/internal/storage/dberr"
+	"github.com/kyma-project/kyma-environment-broker/internal/storage/dbmodel"
 	"github.com/sirupsen/logrus"
 )
 

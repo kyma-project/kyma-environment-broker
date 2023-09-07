@@ -5,8 +5,8 @@ import (
 	"testing"
 
 	"github.com/kyma-incubator/compass/components/director/pkg/graphql"
-	mocks "github.com/kyma-project/control-plane/components/kyma-environment-broker/common/director/automock"
-	"github.com/kyma-project/control-plane/components/kyma-environment-broker/internal/logger"
+	mocks "github.com/kyma-project/kyma-environment-broker/common/director/automock"
+	"github.com/kyma-project/kyma-environment-broker/internal/logger"
 	machineGraphql "github.com/machinebox/graphql"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"

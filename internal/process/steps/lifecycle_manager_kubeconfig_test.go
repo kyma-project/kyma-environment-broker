@@ -4,9 +4,9 @@ import (
 	"context"
 	"testing"
 
-	"github.com/kyma-project/control-plane/components/kyma-environment-broker/internal/fixture"
-	"github.com/kyma-project/control-plane/components/kyma-environment-broker/internal/logger"
-	"github.com/kyma-project/control-plane/components/kyma-environment-broker/internal/storage"
+	"github.com/kyma-project/kyma-environment-broker/internal/fixture"
+	"github.com/kyma-project/kyma-environment-broker/internal/logger"
+	"github.com/kyma-project/kyma-environment-broker/internal/storage"
 	"github.com/stretchr/testify/assert"
 	v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"

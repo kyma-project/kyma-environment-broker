@@ -3,7 +3,7 @@
 package automock
 
 import (
-	edp "github.com/kyma-project/control-plane/components/kyma-environment-broker/internal/edp"
+	edp "github.com/kyma-project/kyma-environment-broker/internal/edp"
 	mock "github.com/stretchr/testify/mock"
 )
 

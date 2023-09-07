@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"time"
 
-	orchestrationExt "github.com/kyma-project/control-plane/components/kyma-environment-broker/common/orchestration"
-	"github.com/kyma-project/control-plane/components/kyma-environment-broker/internal/storage"
+	orchestrationExt "github.com/kyma-project/kyma-environment-broker/common/orchestration"
+	"github.com/kyma-project/kyma-environment-broker/internal/storage"
 	"github.com/sirupsen/logrus"
 )
 

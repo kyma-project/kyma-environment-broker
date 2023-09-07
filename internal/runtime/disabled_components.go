@@ -3,8 +3,8 @@ package runtime
 import (
 	"fmt"
 
-	"github.com/kyma-project/control-plane/components/kyma-environment-broker/internal/broker"
-	"github.com/kyma-project/control-plane/components/kyma-environment-broker/internal/runtime/components"
+	"github.com/kyma-project/kyma-environment-broker/internal/broker"
+	"github.com/kyma-project/kyma-environment-broker/internal/runtime/components"
 )
 
 //

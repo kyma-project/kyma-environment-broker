@@ -3,7 +3,7 @@ package hyperscaler
 import (
 	"fmt"
 
-	"github.com/kyma-project/control-plane/components/kyma-environment-broker/internal"
+	"github.com/kyma-project/kyma-environment-broker/internal"
 )
 
 //go:generate mockery --name=AccountProvider --output=automock --outpkg=automock --case=underscore

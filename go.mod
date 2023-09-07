@@ -1,4 +1,4 @@
-module github.com/kyma-project/control-plane/components/kyma-environment-broker
+module github.com/kyma-project/kyma-environment-broker
 
 go 1.20
 

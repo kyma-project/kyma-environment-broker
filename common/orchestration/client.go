@@ -13,7 +13,7 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/kyma-project/control-plane/components/kyma-environment-broker/common/pagination"
+	"github.com/kyma-project/kyma-environment-broker/common/pagination"
 	"golang.org/x/oauth2"
 )
 

@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/kyma-project/control-plane/components/kyma-environment-broker/common/gardener"
+	"github.com/kyma-project/kyma-environment-broker/common/gardener"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	machineryv1 "k8s.io/apimachinery/pkg/apis/meta/v1"

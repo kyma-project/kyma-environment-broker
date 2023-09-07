@@ -3,7 +3,7 @@ package avs_test
 import (
 	"testing"
 
-	"github.com/kyma-project/control-plane/components/kyma-environment-broker/internal/avs"
+	"github.com/kyma-project/kyma-environment-broker/internal/avs"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )

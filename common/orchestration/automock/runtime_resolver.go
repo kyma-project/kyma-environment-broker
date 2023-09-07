@@ -3,7 +3,7 @@
 package automock
 
 import (
-	orchestration "github.com/kyma-project/control-plane/components/kyma-environment-broker/common/orchestration"
+	orchestration "github.com/kyma-project/kyma-environment-broker/common/orchestration"
 	mock "github.com/stretchr/testify/mock"
 )
 

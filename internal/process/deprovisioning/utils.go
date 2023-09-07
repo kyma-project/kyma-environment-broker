@@ -3,8 +3,8 @@ package deprovisioning
 import (
 	"time"
 
-	"github.com/kyma-project/control-plane/components/kyma-environment-broker/internal"
-	kebError "github.com/kyma-project/control-plane/components/kyma-environment-broker/internal/error"
+	"github.com/kyma-project/kyma-environment-broker/internal"
+	kebError "github.com/kyma-project/kyma-environment-broker/internal/error"
 	"github.com/sirupsen/logrus"
 )
 

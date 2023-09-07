@@ -5,21 +5,21 @@ import (
 	"testing"
 	"time"
 
-	"github.com/kyma-project/control-plane/components/kyma-environment-broker/internal/notification"
-	internalOrchestration "github.com/kyma-project/control-plane/components/kyma-environment-broker/internal/orchestration"
-	"github.com/kyma-project/control-plane/components/kyma-environment-broker/internal/storage/dbmodel"
+	"github.com/kyma-project/kyma-environment-broker/internal/notification"
+	internalOrchestration "github.com/kyma-project/kyma-environment-broker/internal/orchestration"
+	"github.com/kyma-project/kyma-environment-broker/internal/storage/dbmodel"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 
 	"sigs.k8s.io/controller-runtime/pkg/client/fake"
 
-	"github.com/kyma-project/control-plane/components/kyma-environment-broker/common/orchestration"
-	"github.com/kyma-project/control-plane/components/kyma-environment-broker/common/orchestration/automock"
-	"github.com/kyma-project/control-plane/components/kyma-environment-broker/internal"
-	notificationAutomock "github.com/kyma-project/control-plane/components/kyma-environment-broker/internal/notification/mocks"
-	"github.com/kyma-project/control-plane/components/kyma-environment-broker/internal/orchestration/manager"
-	"github.com/kyma-project/control-plane/components/kyma-environment-broker/internal/storage"
+	"github.com/kyma-project/kyma-environment-broker/common/orchestration"
+	"github.com/kyma-project/kyma-environment-broker/common/orchestration/automock"
+	"github.com/kyma-project/kyma-environment-broker/internal"
+	notificationAutomock "github.com/kyma-project/kyma-environment-broker/internal/notification/mocks"
+	"github.com/kyma-project/kyma-environment-broker/internal/orchestration/manager"
+	"github.com/kyma-project/kyma-environment-broker/internal/storage"
 
 	"github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/require"

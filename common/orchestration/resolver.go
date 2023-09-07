@@ -7,8 +7,8 @@ import (
 	"sync"
 	"time"
 
-	"github.com/kyma-project/control-plane/components/kyma-environment-broker/common/gardener"
-	"github.com/kyma-project/control-plane/components/kyma-environment-broker/common/runtime"
+	"github.com/kyma-project/kyma-environment-broker/common/gardener"
+	"github.com/kyma-project/kyma-environment-broker/common/runtime"
 	"github.com/sirupsen/logrus"
 
 	brokerapi "github.com/pivotal-cf/brokerapi/v8/domain"
