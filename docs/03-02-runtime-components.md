@@ -1,5 +1,7 @@
 # Runtime components
 
+> **NOTE:** Once all Kyma components become independent modules, KEB will no longer be required to send components to Reconciler and this document will be deprecated as irrelevant.
+
 Kyma Environment Broker (KEB) serves the functionality of composing the list of components that are installed in a Runtime. The diagram and steps describe the KEB workflow in terms of calculating and processing Runtime components:
 
 ![runtime-components-architecture](./assets/runtime-components.svg)

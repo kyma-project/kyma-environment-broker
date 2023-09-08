@@ -1,5 +1,7 @@
 # Set overrides for Kyma Runtime
 
+> **NOTE:** Once all Kyma components become independent modules, KEB will no longer be required to send overrides to Reconciler and this document will be deprecated as irrelevant.
+
 You can set overrides to customize your Kyma Runtime. To provision a cluster with custom overrides, add a Secret or a ConfigMap with a specific label. Kyma Environment Broker uses this Secret and/or ConfigMap to prepare a request to the Runtime Provisioner.
 
 > **NOTE:** Create all overrides in the `kcp-system` Namespace.

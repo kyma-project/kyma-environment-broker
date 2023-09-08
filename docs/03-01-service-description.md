@@ -1,6 +1,6 @@
 # Service description
 
-Kyma Environment Broker (KEB) is compatible with the [Open Service Broker API](https://www.openservicebrokerapi.org/) (OSBA) specification. It provides a ServiceClass that provisions Kyma Runtime on a cluster.
+Kyma Environment Broker (KEB) is compatible with the [Open Service Broker API](https://www.openservicebrokerapi.org/) (OSBA) specification. It provides a ServiceClass that provisions SAP BTP, Kyma runtime (SKR) on a cluster.
 
 ## Service plans
 
@@ -8,15 +8,15 @@ The supported plans are as follows:
 
 | Plan name | Plan ID | Description |
 |-----------|---------|-------------|
-| `azure` | `4deee563-e5ec-4731-b9b1-53b42d855f0c` |Installs Kyma Runtime on the Azure cluster. |
-| `azure_lite` | `8cb22518-aa26-44c5-91a0-e669ec9bf443` | Installs Kyma Lite on the Azure cluster. |
-| `aws` | `361c511f-f939-4621-b228-d0fb79a1fe15` | Installs Kyma Runtime on the AWS cluster. |
-| `openstack` | `03b812ac-c991-4528-b5bd-08b303523a63` | Installs Kyma Runtime on the Openstack cluster. |
-| `gcp` | `ca6e5357-707f-4565-bbbd-b3ab732597c6` | Installs Kyma Runtime on the GCP cluster. |
-| `trial` | `7d55d31d-35ae-4438-bf13-6ffdfa107d9f` | Installs Kyma trial plan on Azure, AWS or GCP. |
-| `free` | `b1a5764e-2ea1-4f95-94c0-2b4538b37b55` | Installs Kyma free plan on Azure or AWS. |
-| `own_cluster` | `b1a5764e-2ea1-4f95-94c0-2b4538b37b55` | Installs Kyma on custom K8S cluster. |
-| `preview` | `5cb3d976-b85c-42ea-a636-79cadda109a9` | Installs Kyma on AWS using Lifecycle Manager. |
+| `azure` | `4deee563-e5ec-4731-b9b1-53b42d855f0c` |Installs SKR on the Azure cluster. |
+| `azure_lite` | `8cb22518-aa26-44c5-91a0-e669ec9bf443` | Installs SKR on the Azure Lite cluster. |
+| `aws` | `361c511f-f939-4621-b228-d0fb79a1fe15` | Installs SKR on the AWS cluster. |
+| `openstack` | `03b812ac-c991-4528-b5bd-08b303523a63` | Installs SKR on the OpenStack cluster. |
+| `gcp` | `ca6e5357-707f-4565-bbbd-b3ab732597c6` | Installs SKR on the GCP cluster. |
+| `trial` | `7d55d31d-35ae-4438-bf13-6ffdfa107d9f` | Installs SKR trial plan on Azure, AWS or GCP. |
+| `free` | `b1a5764e-2ea1-4f95-94c0-2b4538b37b55` | Installs SKR free plan on Azure or AWS. |
+| `own_cluster` | `b1a5764e-2ea1-4f95-94c0-2b4538b37b55` | Installs SKR on a custom Kubernetes cluster. |
+| `preview` | `5cb3d976-b85c-42ea-a636-79cadda109a9` | Installs SKR on AWS using Lifecycle Manager. |
 
 ## Provisioning parameters
 
@@ -39,8 +39,8 @@ These are the provisioning parameters that you can configure:
 | **context.tenant_id** | string | Provides a tenant ID for an SKR. | No | None |
 | **context.subaccount_id** | string | Provides a subaccount ID for an SKR. | No | None |
 | **context.globalaccount_id** | string | Provides a global account ID for an SKR. | No | None |
-| **context.sm_platform_credentials.credentials.basic.username** | string | Provides the Service Manager username for an SKR. | No | None |
-| **context.sm_platform_credentials.credentials.basic.password** | string | Provides the Service Manager password for an SKR. | No | None |
+| **context.sm_platform_credentials.&#x200b;credentials.basic.username** | string | Provides the Service Manager username for an SKR. | No | None |
+| **context.sm_platform_credentials.&#x200b;credentials.basic.password** | string | Provides the Service Manager password for an SKR. | No | None |
 | **context.sm_platform_credentials.url** | string | Provides the Service Manager URL for an SKR. | No | None |
 | **context.user_id** | string | Provides a user ID for an SKR. | No | None |
 | **oidc.clientID** | string | Provides an OIDC client ID for an SKR. | No | None |
@@ -49,7 +49,6 @@ These are the provisioning parameters that you can configure:
 | **oidc.signingAlgs** | string | Provides the OIDC signing algorithms for an SKR. | No | `RS256` |
 | **oidc.usernameClaim** | string | Provides an OIDC username claim for an SKR. | No | `email` |
 | **oidc.usernamePrefix** | string | Provides an OIDC username prefix for an SKR. | No | None |
-| **networking.nodes** | string | The Node network's CIDR. | No | `10.250.0.0/22` |
 
 ### Provider-specific parameters
 
@@ -241,3 +240,4 @@ These are the provisioning parameters for the `preview` plan that you configure:
 </details>
 </div>
 
+<a name="update"><sup>1</sup> This parameter is available for `PATCH` as well, and can be updated with the same constraints as during provisioning.</a>

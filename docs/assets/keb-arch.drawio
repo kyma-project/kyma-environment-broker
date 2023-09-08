@@ -1,6 +1,6 @@
-<mxfile host="Electron" modified="2023-08-31T13:49:21.902Z" agent="Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) draw.io/21.6.8 Chrome/114.0.5735.289 Electron/25.5.0 Safari/537.36" etag="BE3lJ6pVzs6dTEkFsSf7" version="21.6.8" type="device">
+<mxfile host="Electron" modified="2023-09-08T10:35:34.555Z" agent="Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) draw.io/21.6.8 Chrome/114.0.5735.289 Electron/25.5.0 Safari/537.36" etag="KyR_oxiyW_sp8cHKOqL7" version="21.6.8" type="device">
   <diagram id="ZGsqVFqlMtBjAnkGU3Om" name="Page-1">
-    <mxGraphModel dx="1890" dy="806" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="827" pageHeight="1169" math="0" shadow="0">
+    <mxGraphModel dx="1890" dy="802" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="827" pageHeight="1169" math="0" shadow="0">
       <root>
         <mxCell id="0" />
         <mxCell id="1" parent="0" />
@@ -84,7 +84,7 @@
         <mxCell id="-fF3yJ7clYEyhTMX5PpK-7" value="" style="shape=actor;whiteSpace=wrap;html=1;fillColor=#0a6ec7;strokeColor=#0a6ec7;" parent="1" vertex="1">
           <mxGeometry x="-140" y="290" width="40" height="60" as="geometry" />
         </mxCell>
-        <mxCell id="-fF3yJ7clYEyhTMX5PpK-8" value="Kyma runtime" style="rounded=1;whiteSpace=wrap;html=1;fontSize=13;" parent="1" vertex="1">
+        <mxCell id="-fF3yJ7clYEyhTMX5PpK-8" value="SAP BTP, &lt;br&gt;Kyma runtime" style="rounded=1;whiteSpace=wrap;html=1;fontSize=13;" parent="1" vertex="1">
           <mxGeometry x="690" y="290" width="120" height="60" as="geometry" />
         </mxCell>
         <mxCell id="-fF3yJ7clYEyhTMX5PpK-9" value="&lt;font color=&quot;#ffffff&quot; size=&quot;1&quot;&gt;&lt;b style=&quot;font-size: 14px;&quot;&gt;1&lt;/b&gt;&lt;/font&gt;" style="ellipse;whiteSpace=wrap;html=1;fontSize=12;fillColor=#0a6ec7;strokeColor=#0a6ec7;" parent="1" vertex="1">

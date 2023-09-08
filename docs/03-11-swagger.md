@@ -6,17 +6,7 @@ The Swagger UI static files are copied from the [official source](https://github
 
 KEB uses a Swagger schema file that is mounted as a volume to the Pod. You can find that schema [here](https://github.com/kyma-project/control-plane/blob/main/resources/kcp/charts/kyma-environment-broker/files/swagger.yaml). You can use templates in the Swagger schema file to configure it.
 
-You can either use Virtual Service or port-forward the Pod to expose and use the Swagger UI.
-
-## Use Virtual Service
-
-Open the KEB APIs in the desired environment:
-- [DEV environment](https://kyma-env-broker.cp.dev.kyma.cloud.sap/) 
-- [STAGE environment](https://kyma-env-broker.cp.stage.kyma.cloud.sap/)
-
- 
-
-To use the `Try it out` feature on Virtual Service, you need this [Chrome browser extension](https://chrome.google.com/webstore/detail/allow-cors-access-control/lhobafahddgcelffkeicbaginigeejlf).
+You can port-forward the Pod to expose and use the Swagger UI.
 
 ## Port-forward the Pod
 

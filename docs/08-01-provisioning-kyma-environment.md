@@ -94,10 +94,10 @@ If you need a BTP Operator component installed, obtain [BTP Operator access cred
 
 ```json
 "sm_operator_credentials": {
-    "clientid": "testClientID",
-						  "clientsecret": "testClientSecret",
-						  "sm_url": "https://service-manager.kyma.com",
-						  "url": "https://test.auth.com",
-						  "xsappname": "testXsappname"
-						},
+  "clientid": "testClientID",
+  "clientsecret": "testClientSecret",
+  "sm_url": "https://service-manager.kyma.com",
+  "url": "https://test.auth.com",
+  "xsappname": "testXsappname"
+}
 ``` 
