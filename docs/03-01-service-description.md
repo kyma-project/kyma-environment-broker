@@ -29,9 +29,9 @@ These are the provisioning parameters that you can configure:
 | Parameter name | Type | Description | Required | Default value |
 |----------------|-------|-------------|:----------:|---------------|
 | **name** | string | Specifies the name of the cluster. | Yes | None |
-| **components** | array | Defines optional components that are installed in a Kyma Runtime. The possible values are `kiali` and `tracing`. | No | [] |
-| **kymaVersion** | string | Provides a Kyma version on demand. | No | None |
-| **overridesVersion** | string | Provides an overrides version for a specific Kyma version. | No | None |
+| **components** | array | Defines optional components that are installed in an SKR. The possible values are `kiali` and `tracing`. | No | [] |
+| **kymaVersion[<sup>2</sup>](#version)** | string | Provides a Kyma version on demand. | No | None |
+| **overridesVersion[<sup>2</sup>](#version)** | string | Provides an overrides version for a specific Kyma version. | No | None |
 | **purpose** | string | Provides a purpose for an SKR. | No | None |
 | **targetSecret** | string | Provides the name of the Secret that contains hyperscaler's credentials for an SKR. | No | None |
 | **platform_region** | string | Defines the platform region that is sent in the request path. | No | None |
@@ -134,12 +134,12 @@ These are the provisioning parameters for GCP that you can configure:
  </details>
  </div>
 
-These are the provisioning parameters for Openstack that you can configure:
+These are the provisioning parameters for OpenStack that you can configure:
 
 <div tabs name="openstack-plans" group="openstack-plans">
   <details>
   <summary label="openstack-plan">
-  Openstack
+  OpenStack
   </summary>
 
 | Parameter name | Type | Description | Required | Default value |
@@ -159,11 +159,11 @@ These are the provisioning parameters for Openstack that you can configure:
 
 ## Trial plan
 
-Trial plan allows you to install Kyma on Azure, AWS, or GCP. The trial plan assumptions are as follows:
-- Kyma is uninstalled after 14 days and the Kyma cluster is deprovisioned after this time.
-- It's possible to provision only one Kyma Runtime per global account.
+The trial plan allows you to install an SKR on Azure, AWS, or GCP. The plan assumptions are as follows:
+- the SKR is uninstalled after 14 days and the Kyma cluster is deprovisioned after this time.
+- It's possible to provision only one SKR per global account.
 
-To reduce the costs, the Trial plan skips one of the [provisioning steps](./03-03-runtime-operations.md#provisioning).
+To reduce the costs, the trial plan skips one of the [provisioning steps](./03-03-runtime-operations.md#provisioning).
 
 - `AVS External Evaluation` 
 
@@ -179,7 +179,7 @@ These are the provisioning parameters for the Trial plan that you can configure:
 
 | Parameter name | Type | Description | Required | Possible values| Default value |
 | ---------------|-------|-------------|----------|---------------|---------------|
-| **name** | string | Specifies the name of the Kyma Runtime. | Yes | Any string| None |
+| **name** | string | Specifies the name of the SKR. | Yes | Any string| None |
 | **region** | string | Defines the cluster region. | No | `europe`,`us`, `asia` | Calculated from the platform region |
 | **provider** | string | Specifies the cloud provider used during provisioning. | No | `Azure`, `AWS`, `GCP` | `Azure` |
 | **context.active** | string | Specifies if the SKR should be suspended or unsuspended. | `true`, `false` | None |
@@ -205,9 +205,9 @@ These are the provisioning parameters for the `own_cluster` plan that you config
 
 | Parameter name | Type | Description | Required | Default value |
 | ---------------|-------|-------------|----------|---------------|
-| **kubeconfig** | string | Kubeconfig that points to the cluster where you install Kyma. | Yes | None |
-| **shootDomain** | string | Domain of the shoot where you install Kyma. | Yes | None |
-| **shootName** | string | Name of the shoot where you install Kyma. | Yes | None |
+| **kubeconfig** | string | Kubeconfig that points to the cluster where you install SKR. | Yes | None |
+| **shootDomain** | string | Domain of the shoot where you install SKR. | Yes | None |
+| **shootName** | string | Name of the shoot where you install SKR. | Yes | None |
 
 </details>
 </div>
@@ -240,4 +240,5 @@ These are the provisioning parameters for the `preview` plan that you configure:
 </details>
 </div>
 
-<a name="update"><sup>1</sup> This parameter is available for `PATCH` as well, and can be updated with the same constraints as during provisioning.</a>
+<a name="update"><sup>1</sup> This parameter is available for `PATCH` as well, and can be updated with the same constraints as during provisioning.</a> <br>
+<a name="version"><sup>2</sup> This parameter will not be available after all Kyma components become independent modules.</a> 
