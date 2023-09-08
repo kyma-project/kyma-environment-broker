@@ -40,6 +40,21 @@ spec:
   scope: Namespaced
 `)
 
+var sbCRD = []byte(`
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  name: servicebindings.services.cloud.sap.com
+spec:
+  group: services.cloud.sap.com
+  names:
+    kind: ServiceBinding
+    listKind: ServiceBindingList
+    plural: servicebindings
+    singular: servicebinding
+  scope: Namespaced
+`)
+
 func TestProvisionerDoesNotProvideKubeconfig(t *testing.T) {
 	// given
 	log := logrus.New()
@@ -210,6 +225,116 @@ func TestRemoveServiceInstanceStep(t *testing.T) {
 	})
 }
 
+func TestBTPOperatorCleanupStep_SoftDelete(t *testing.T) {
+	t.Run("should skip resources deletion when CRDs are missing", func(t *testing.T) {
+		// given
+		log := logrus.New()
+		ms := storage.NewMemoryStorage()
+		ns := &corev1.Namespace{ObjectMeta: metav1.ObjectMeta{Name: "kyma-system"}}
+
+		scheme := internal.NewSchemeForTests()
+		err := apiextensionsv1.AddToScheme(scheme)
+
+		k8sCli := &fakeK8sClientWrapper{fake: fake.NewClientBuilder().WithScheme(scheme).WithRuntimeObjects(ns).Build()}
+		require.NoError(t, err)
+
+		op := fixture.FixDeprovisioningOperation(fixOperationID, fixInstanceID)
+		op.UserAgent = broker.AccountCleanupJob
+		op.State = "in progress"
+		fakeProvisionerClient := fakeProvisionerClient{}
+		step := NewBTPOperatorCleanupStep(ms.Operations(), fakeProvisionerClient, func(k string) (client.Client, error) { return k8sCli, nil })
+
+		// when
+		entry := log.WithFields(logrus.Fields{"step": "TEST"})
+		_, _, err = step.Run(op.Operation, entry)
+
+		// then
+		assert.NoError(t, err)
+		assert.False(t, k8sCli.cleanupInstances)
+		assert.False(t, k8sCli.cleanupBindings)
+	})
+
+	t.Run("should delete SI and skip SB deletion ", func(t *testing.T) {
+		log := logrus.New()
+		ms := storage.NewMemoryStorage()
+		si := &unstructured.Unstructured{Object: map[string]interface{}{
+			"apiVersion": "apiextensions.k8s.io/v1",
+			"kind":       "ServiceInstance",
+			"metadata": map[string]interface{}{
+				"name":      "test-instance",
+				"namespace": "kyma-system",
+			},
+		}}
+		ns := &corev1.Namespace{ObjectMeta: metav1.ObjectMeta{Name: "kyma-system"}}
+
+		scheme := internal.NewSchemeForTests()
+		err := apiextensionsv1.AddToScheme(scheme)
+		decoder := serializer.NewCodecFactory(scheme).UniversalDeserializer()
+		obj, gvk, err := decoder.Decode(siCRD, nil, nil)
+		fmt.Println(gvk)
+		require.NoError(t, err)
+
+		k8sCli := &fakeK8sClientWrapper{fake: fake.NewClientBuilder().WithScheme(scheme).WithRuntimeObjects(obj, ns).Build()}
+		err = k8sCli.Create(context.TODO(), si)
+		require.NoError(t, err)
+
+		op := fixture.FixDeprovisioningOperation(fixOperationID, fixInstanceID)
+		op.UserAgent = broker.AccountCleanupJob
+		op.State = "in progress"
+		fakeProvisionerClient := fakeProvisionerClient{}
+		step := NewBTPOperatorCleanupStep(ms.Operations(), fakeProvisionerClient, func(k string) (client.Client, error) { return k8sCli, nil })
+
+		// when
+		entry := log.WithFields(logrus.Fields{"step": "TEST"})
+		_, _, err = step.Run(op.Operation, entry)
+
+		// then
+		assert.NoError(t, err)
+		assert.True(t, k8sCli.cleanupInstances)
+		assert.False(t, k8sCli.cleanupBindings)
+	})
+
+	t.Run("should delete SB and skip SI deletion ", func(t *testing.T) {
+		log := logrus.New()
+		ms := storage.NewMemoryStorage()
+		sb := &unstructured.Unstructured{Object: map[string]interface{}{
+			"apiVersion": "apiextensions.k8s.io/v1",
+			"kind":       "ServiceBinding",
+			"metadata": map[string]interface{}{
+				"name":      "test-binding",
+				"namespace": "kyma-system",
+			},
+		}}
+		ns := &corev1.Namespace{ObjectMeta: metav1.ObjectMeta{Name: "kyma-system"}}
+
+		scheme := internal.NewSchemeForTests()
+		err := apiextensionsv1.AddToScheme(scheme)
+		decoder := serializer.NewCodecFactory(scheme).UniversalDeserializer()
+		obj, gvk, err := decoder.Decode(sbCRD, nil, nil)
+		fmt.Println(gvk)
+		require.NoError(t, err)
+
+		k8sCli := &fakeK8sClientWrapper{fake: fake.NewClientBuilder().WithScheme(scheme).WithRuntimeObjects(obj, ns).Build()}
+		err = k8sCli.Create(context.TODO(), sb)
+		require.NoError(t, err)
+
+		op := fixture.FixDeprovisioningOperation(fixOperationID, fixInstanceID)
+		op.UserAgent = broker.AccountCleanupJob
+		op.State = "in progress"
+		fakeProvisionerClient := fakeProvisionerClient{}
+		step := NewBTPOperatorCleanupStep(ms.Operations(), fakeProvisionerClient, func(k string) (client.Client, error) { return k8sCli, nil })
+
+		// when
+		entry := log.WithFields(logrus.Fields{"step": "TEST"})
+		_, _, err = step.Run(op.Operation, entry)
+
+		// then
+		assert.NoError(t, err)
+		assert.False(t, k8sCli.cleanupInstances)
+		assert.True(t, k8sCli.cleanupBindings)
+	})
+}
+
 type fakeK8sClientWrapper struct {
 	fake             client.Client
 	cleanupInstances bool
@@ -249,6 +374,14 @@ func (f *fakeK8sClientWrapper) Patch(ctx context.Context, obj client.Object, pat
 }
 
 func (f *fakeK8sClientWrapper) DeleteAllOf(ctx context.Context, obj client.Object, opts ...client.DeleteAllOfOption) error {
+	if u, ok := obj.(*unstructured.Unstructured); ok {
+		switch u.Object["kind"] {
+		case "ServiceBinding":
+			f.cleanupBindings = true
+		case "ServiceInstance":
+			f.cleanupInstances = true
+		}
+	}
 	return f.fake.DeleteAllOf(ctx, obj, opts...)
 }
 
