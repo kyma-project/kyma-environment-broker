@@ -219,20 +219,15 @@ func OwnClusterSchema(update bool) *map[string]interface{} {
 	}
 
 	if update {
-		return createSchemaForOwnCluster(properties.UpdateProperties, update)
+		return createSchemaWith(properties.UpdateProperties, update, []string{"name", "kubeconfig", "shootName", "shootDomain"})
 	} else {
-		return createSchemaForOwnCluster(properties, update)
+		return createSchemaWith(properties, update, []string{"name", "kubeconfig", "shootName", "shootDomain"})
 	}
 }
 
 func empty() *map[string]interface{} {
 	empty := make(map[string]interface{}, 0)
 	return &empty
-}
-
-func createSchema(machineTypesDisplay map[string]string, machineTypes, regions []string, additionalParams, update bool, required []string) *map[string]interface{} {
-	properties := NewProvisioningProperties(machineTypesDisplay, machineTypes, regions, update)
-	return createSchemaWithProperties(properties, additionalParams, update, required)
 }
 
 func createSchemaWithProperties(properties ProvisioningProperties, additionalParams, update bool, requiered []string) *map[string]interface{} {
@@ -247,32 +242,8 @@ func createSchemaWithProperties(properties ProvisioningProperties, additionalPar
 	}
 }
 
-func createTrialSchemaWithProperties(properties ProvisioningProperties, additionalParams, update bool) *map[string]interface{} {
-	if additionalParams {
-		properties.IncludeAdditional()
-	}
-
-	if update {
-		return createTrialSchemaWith(properties.UpdateProperties, update)
-	} else {
-		return createTrialSchemaWith(properties, update)
-	}
-}
-
 func createSchemaWith(properties interface{}, update bool, required []string) *map[string]interface{} {
 	schema := NewSchema(properties, update, required)
-
-	return unmarshalSchema(schema)
-}
-
-func createTrialSchemaWith(properties interface{}, update bool) *map[string]interface{} {
-	schema := NewSchemaWithOnlyNameAndRegionRequired(properties, update)
-
-	return unmarshalSchema(schema)
-}
-
-func createSchemaForOwnCluster(properties interface{}, update bool) *map[string]interface{} {
-	schema := NewSchemaForOwnCluster(properties, update, []string{"name", "kubeconfig", "shootName", "shootDomain"})
 
 	return unmarshalSchema(schema)
 }
