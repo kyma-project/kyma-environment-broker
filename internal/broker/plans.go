@@ -116,6 +116,7 @@ func OpenStackRegions() []string {
 func OpenStackSchema(machineTypesDisplay map[string]string, machineTypes []string, additionalParams, update bool) *map[string]interface{} {
 	properties := NewProvisioningProperties(machineTypesDisplay, machineTypes, OpenStackRegions(), update)
 	properties.AutoScalerMax.Maximum = 40
+	properties.Region.Default = OpenStackRegions()[0]
 	if !update {
 		properties.AutoScalerMax.Default = 8
 	}
@@ -128,6 +129,7 @@ func PreviewSchema(machineTypesDisplay map[string]string, machineTypes []string,
 	properties.AutoScalerMax.Minimum = 3
 	properties.AutoScalerMin.Minimum = 3
 	properties.Networking = NewNetworkingSchema()
+	properties.Region.Default = AWSRegions(euAccessRestricted)[0]
 	return createSchemaWithProperties(properties, additionalParams, update)
 }
 
@@ -135,6 +137,7 @@ func GCPSchema(machineTypesDisplay map[string]string, machineTypes []string, add
 	properties := NewProvisioningProperties(machineTypesDisplay, machineTypes, GCPRegions(), update)
 	properties.AutoScalerMax.Minimum = 3
 	properties.AutoScalerMin.Minimum = 3
+	properties.Region.Default = GCPRegions()[0]
 	return createSchemaWithProperties(properties, additionalParams, update)
 }
 
@@ -142,6 +145,7 @@ func AWSSchema(machineTypesDisplay map[string]string, machineTypes []string, add
 	properties := NewProvisioningProperties(machineTypesDisplay, machineTypes, AWSRegions(euAccessRestricted), update)
 	properties.AutoScalerMax.Minimum = 3
 	properties.AutoScalerMin.Minimum = 3
+	properties.Region.Default = AWSRegions(euAccessRestricted)[0]
 	return createSchemaWithProperties(properties, additionalParams, update)
 }
 
@@ -149,12 +153,14 @@ func AzureSchema(machineTypesDisplay map[string]string, machineTypes []string, a
 	properties := NewProvisioningProperties(machineTypesDisplay, machineTypes, AzureRegions(euAccessRestricted), update)
 	properties.AutoScalerMax.Minimum = 3
 	properties.AutoScalerMin.Minimum = 3
+	properties.Region.Default = AzureRegions(euAccessRestricted)[0]
 	return createSchemaWithProperties(properties, additionalParams, update)
 }
 
 func AzureLiteSchema(machineTypesDisplay map[string]string, machineTypes []string, additionalParams, update bool, euAccessRestricted bool) *map[string]interface{} {
 	properties := NewProvisioningProperties(machineTypesDisplay, machineTypes, AzureRegions(euAccessRestricted), update)
 	properties.AutoScalerMax.Maximum = 40
+	properties.Region.Default = AzureRegions(euAccessRestricted)[0]
 
 	if !update {
 		properties.AutoScalerMax.Default = 10
@@ -185,9 +191,7 @@ func FreemiumSchema(provider internal.CloudProvider, additionalParams, update bo
 			Enum: ToInterfaceSlice(regions),
 		},
 	}
-	if !update {
-		properties.Networking = NewNetworkingSchema()
-	}
+	properties.Region.Default = regions[0]
 
 	return createSchemaWithProperties(properties, additionalParams, update)
 }

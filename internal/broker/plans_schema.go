@@ -28,6 +28,7 @@ type ProvisioningProperties struct {
 	ShootDomain *Type           `json:"shootDomain,omitempty"`
 	Region      *Type           `json:"region,omitempty"`
 	Networking  *NetworkingType `json:"networking,omitempty"`
+	Required    []string        `json:"required"`
 }
 
 type UpdateProperties struct {
@@ -171,6 +172,7 @@ func NewProvisioningProperties(machineTypesDisplay map[string]string, machineTyp
 			Enum: ToInterfaceSlice(regions),
 		},
 		Networking: NewNetworkingSchema(),
+		Required:   []string{"region"},
 	}
 
 	if update {
