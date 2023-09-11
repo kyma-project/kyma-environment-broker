@@ -121,7 +121,7 @@ func OpenStackSchema(machineTypesDisplay map[string]string, machineTypes []strin
 		properties.AutoScalerMax.Default = 8
 	}
 
-	return createSchemaWithProperties(properties, additionalParams, update)
+	return createSchemaWithProperties(properties, additionalParams, update, []string{"name, region"})
 }
 
 func PreviewSchema(machineTypesDisplay map[string]string, machineTypes []string, additionalParams, update bool, euAccessRestricted bool) *map[string]interface{} {
@@ -130,7 +130,7 @@ func PreviewSchema(machineTypesDisplay map[string]string, machineTypes []string,
 	properties.AutoScalerMin.Minimum = 3
 	properties.Networking = NewNetworkingSchema()
 	properties.Region.Default = AWSRegions(euAccessRestricted)[0]
-	return createSchemaWithProperties(properties, additionalParams, update)
+	return createSchemaWithProperties(properties, additionalParams, update, []string{"name, region"})
 }
 
 func GCPSchema(machineTypesDisplay map[string]string, machineTypes []string, additionalParams, update bool) *map[string]interface{} {
@@ -138,7 +138,7 @@ func GCPSchema(machineTypesDisplay map[string]string, machineTypes []string, add
 	properties.AutoScalerMax.Minimum = 3
 	properties.AutoScalerMin.Minimum = 3
 	properties.Region.Default = GCPRegions()[0]
-	return createSchemaWithProperties(properties, additionalParams, update)
+	return createSchemaWithProperties(properties, additionalParams, update, []string{"name, region"})
 }
 
 func AWSSchema(machineTypesDisplay map[string]string, machineTypes []string, additionalParams, update bool, euAccessRestricted bool) *map[string]interface{} {
@@ -146,7 +146,7 @@ func AWSSchema(machineTypesDisplay map[string]string, machineTypes []string, add
 	properties.AutoScalerMax.Minimum = 3
 	properties.AutoScalerMin.Minimum = 3
 	properties.Region.Default = AWSRegions(euAccessRestricted)[0]
-	return createSchemaWithProperties(properties, additionalParams, update)
+	return createSchemaWithProperties(properties, additionalParams, update, []string{"name, region"})
 }
 
 func AzureSchema(machineTypesDisplay map[string]string, machineTypes []string, additionalParams, update bool, euAccessRestricted bool) *map[string]interface{} {
@@ -154,7 +154,7 @@ func AzureSchema(machineTypesDisplay map[string]string, machineTypes []string, a
 	properties.AutoScalerMax.Minimum = 3
 	properties.AutoScalerMin.Minimum = 3
 	properties.Region.Default = AzureRegions(euAccessRestricted)[0]
-	return createSchemaWithProperties(properties, additionalParams, update)
+	return createSchemaWithProperties(properties, additionalParams, update, []string{"name, region"})
 }
 
 func AzureLiteSchema(machineTypesDisplay map[string]string, machineTypes []string, additionalParams, update bool, euAccessRestricted bool) *map[string]interface{} {
@@ -167,7 +167,7 @@ func AzureLiteSchema(machineTypesDisplay map[string]string, machineTypes []strin
 		properties.AutoScalerMin.Default = 2
 	}
 
-	return createSchemaWithProperties(properties, additionalParams, update)
+	return createSchemaWithProperties(properties, additionalParams, update, []string{"name, region"})
 }
 
 func FreemiumSchema(provider internal.CloudProvider, additionalParams, update bool, euAccessRestricted bool) *map[string]interface{} {
@@ -193,7 +193,7 @@ func FreemiumSchema(provider internal.CloudProvider, additionalParams, update bo
 	}
 	properties.Region.Default = regions[0]
 
-	return createSchemaWithProperties(properties, additionalParams, update)
+	return createSchemaWithProperties(properties, additionalParams, update, []string{"name, region"})
 }
 
 func TrialSchema(additionalParams, update bool) *map[string]interface{} {
@@ -205,7 +205,7 @@ func TrialSchema(additionalParams, update bool) *map[string]interface{} {
 		return empty()
 	}
 
-	return createSchemaWithProperties(properties, additionalParams, update)
+	return createSchemaWithProperties(properties, additionalParams, update, []string{"name"})
 }
 
 func OwnClusterSchema(update bool) *map[string]interface{} {
@@ -230,25 +230,43 @@ func empty() *map[string]interface{} {
 	return &empty
 }
 
-func createSchema(machineTypesDisplay map[string]string, machineTypes, regions []string, additionalParams, update bool) *map[string]interface{} {
+func createSchema(machineTypesDisplay map[string]string, machineTypes, regions []string, additionalParams, update bool, required []string) *map[string]interface{} {
 	properties := NewProvisioningProperties(machineTypesDisplay, machineTypes, regions, update)
-	return createSchemaWithProperties(properties, additionalParams, update)
+	return createSchemaWithProperties(properties, additionalParams, update, required)
 }
 
-func createSchemaWithProperties(properties ProvisioningProperties, additionalParams, update bool) *map[string]interface{} {
+func createSchemaWithProperties(properties ProvisioningProperties, additionalParams, update bool, requiered []string) *map[string]interface{} {
 	if additionalParams {
 		properties.IncludeAdditional()
 	}
 
 	if update {
-		return createSchemaWith(properties.UpdateProperties, update)
+		return createSchemaWith(properties.UpdateProperties, update, requiered)
 	} else {
-		return createSchemaWith(properties, update)
+		return createSchemaWith(properties, update, requiered)
 	}
 }
 
-func createSchemaWith(properties interface{}, update bool) *map[string]interface{} {
-	schema := NewSchemaWithOnlyNameRequired(properties, update)
+func createTrialSchemaWithProperties(properties ProvisioningProperties, additionalParams, update bool) *map[string]interface{} {
+	if additionalParams {
+		properties.IncludeAdditional()
+	}
+
+	if update {
+		return createTrialSchemaWith(properties.UpdateProperties, update)
+	} else {
+		return createTrialSchemaWith(properties, update)
+	}
+}
+
+func createSchemaWith(properties interface{}, update bool, required []string) *map[string]interface{} {
+	schema := NewSchema(properties, update, required)
+
+	return unmarshalSchema(schema)
+}
+
+func createTrialSchemaWith(properties interface{}, update bool) *map[string]interface{} {
+	schema := NewSchemaWithOnlyNameAndRegionRequired(properties, update)
 
 	return unmarshalSchema(schema)
 }

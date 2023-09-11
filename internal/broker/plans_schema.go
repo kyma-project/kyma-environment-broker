@@ -28,7 +28,6 @@ type ProvisioningProperties struct {
 	ShootDomain *Type           `json:"shootDomain,omitempty"`
 	Region      *Type           `json:"region,omitempty"`
 	Networking  *NetworkingType `json:"networking,omitempty"`
-	Required    []string        `json:"required"`
 }
 
 type UpdateProperties struct {
@@ -172,7 +171,6 @@ func NewProvisioningProperties(machineTypesDisplay map[string]string, machineTyp
 			Enum: ToInterfaceSlice(regions),
 		},
 		Networking: NewNetworkingSchema(),
-		Required:   []string{"region"},
 	}
 
 	if update {
@@ -216,8 +214,16 @@ func NewOIDCSchema() *OIDCType {
 	}
 }
 
+func NewSchema(properties interface{}, update bool, requiered []string) *RootSchema {
+	return NewSchemaForOwnCluster(properties, update, requiered)
+}
+
 func NewSchemaWithOnlyNameRequired(properties interface{}, update bool) *RootSchema {
 	return NewSchemaForOwnCluster(properties, update, []string{"name"})
+}
+
+func NewSchemaWithOnlyNameAndRegionRequired(properties interface{}, update bool) *RootSchema {
+	return NewSchemaForOwnCluster(properties, update, []string{"name, region"})
 }
 
 func NewSchemaForOwnCluster(properties interface{}, update bool, required []string) *RootSchema {
