@@ -1,6 +1,6 @@
-# Trial Cleanup Job
+# Trial Cleanup CronJob
 
-Trial Cleanup Job is a Job that makes the SKR instances with the `trial` plan expire 14 days after their creation.
+Trial Cleanup CronJob is a Job that makes the SKR instances with the `trial` plan expire 14 days after their creation.
 Expiration means that the SKR instance is suspended and the `expired` flag is set.
 
 ## Details
@@ -11,7 +11,7 @@ If the instance is already in the `suspended` state, this instance is just marke
 ### Dry-run mode
 
 If you need to test the Job, you can run it in the `dry-run` mode.
-In that mode, the Job only logs the information about the candidate instances (i.e. instances meeting the configured criteria). The instances are not affected.
+In that mode, the Job only logs the information about the candidate instances (that is, instances meeting the configured criteria). The instances are not affected.
 
 ## Prerequisites
 

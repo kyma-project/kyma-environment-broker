@@ -6,8 +6,8 @@ Environments Cleanup is an application that cleans up environments that do not m
 
 Environments Cleanup requires access to:
 - Gardener project of choice to filter Shoots without a proper label
-- Database to get an Instance ID for each Runtime marked for deletion
-- Kyma Environment Broker to trigger Runtime deprovisioning
+- Database to get an Instance ID for each SAP BTP, Kyma runtime (SKR) marked for deletion
+- Kyma Environment Broker to trigger SKR deprovisioning
 
 ## Configuration
 

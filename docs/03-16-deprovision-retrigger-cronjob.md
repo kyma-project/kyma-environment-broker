@@ -1,11 +1,11 @@
-# Deprovision Retrigger Job
+# Deprovision Retrigger CronJob
 
-Deprovision Retrigger Job is a Job that attempts to deprovision an instance once again.
+Deprovision Retrigger CronJob is a Job that attempts to deprovision an instance once again.
 
 ## Overview
 
 During regular deprovisioning, you can omit some steps due to the occurrence of some errors. These errors do not cause the deprovisioning process to fail.
-You can ignore some not-severe, temporary errors, proceed with deprovisioning and declare the process successful.  The not-completed steps
+You can ignore some not-severe, temporary errors, proceed with deprovisioning and declare the process successful. The not-completed steps
 can be retried later. Store the list of not-completed steps, and mark the deprovisioning operation by setting `deletedAt` to the current timestamp.
 The Job iterates over the instances, and for each one with `deletedAt` appropriately set, sends a DELETE to Kyma Environment Broker (KEB).  
 
@@ -24,8 +24,8 @@ kyma-environment-broker.trialCleanup.schedule: "0 3 * * *"
 ```
 
 > **NOTE**
-> If you need to test the Job, you can run it in the dry-run mode.
-> In this mode, the Job only logs the information about the candidate instances (i.e. instances meeting the configured criteria). The instances are not affected.
+> If you need to test the Job, you can run it in the `dry-run` mode.
+> In this mode, the Job only logs the information about the candidate instances (that is, instances meeting the configured criteria). The instances are not affected.
 
 
 Use the following environment variables to configure the Job:

@@ -1,6 +1,6 @@
-# Provision Kyma Runtime using KEB
+# Provision SAP BTP, Kyma runtime using KEB
 
-This tutorial shows how to provision Kyma Runtime on Azure using Kyma Environment Broker.
+This tutorial shows how to provision SAP BTP, Kyma runtime (SKR) on Azure using Kyma Environment Broker.
 
 ## Prerequisites
 
@@ -34,7 +34,7 @@ This tutorial shows how to provision Kyma Runtime on Azure using Kyma Environmen
      kubectl port-forward -n kcp-system deployments/kcp-kyma-environment-broker 8080
    ```
 
-1. Make a call to the Kyma Environment Broker to create a Runtime on Azure. Find the list of possible request parameters [here](03-01-service-description.md).
+1. Make a call to the Kyma Environment Broker to create an SKR on Azure. Find the list of possible request parameters [here](03-01-service-description.md).
 
    ```bash
    curl --request PUT "https://$BROKER_URL/oauth/v2/service_instances/$INSTANCE_ID?accepts_incomplete=true" \

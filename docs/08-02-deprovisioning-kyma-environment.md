@@ -1,6 +1,6 @@
-# Deprovision Kyma Runtime using KEB
+# Deprovision SAP BTP, Kyma runtime using KEB
 
-This tutorial shows how to deprovision Kyma Runtime on Azure using Kyma Environment Broker.
+This tutorial shows how to deprovision SAP BTP, Kyma runtime (SKR) on Azure using Kyma Environment Broker.
 
 ## Steps
 
@@ -17,7 +17,7 @@ This tutorial shows how to deprovision Kyma Runtime on Azure using Kyma Environm
    export AUTHORIZATION_HEADER="Authorization: Bearer $ACCESS_TOKEN"
    ```
 
-3. Make a call to the Kyma Environment Broker to delete a Runtime on Azure.
+3. Make a call to the Kyma Environment Broker to delete an SKR on Azure.
 
    ```bash
    curl  --request DELETE "https://$BROKER_URL/oauth/v2/service_instances/$INSTANCE_ID?accepts_incomplete=true&service_id=47c9dcbf-ff30-448e-ab36-d3bad66ba281&plan_id=4deee563-e5ec-4731-b9b1-53b42d855f0c" \
@@ -45,4 +45,3 @@ There is one exception, and that is the `subaccount-cleanup` job. [KEB parses th
 `DELETE` call on `/service_instances/${instance_id}` endpoint and forwards it through the operation to the processing step `btp_operator_cleanup` handling
 soft delete for existing BTP Operator resources. Because the `subaccount-cleanup` job is triggered automatically and deletes only SKRs where the whole subaccount is 
 intended for deletion, it is necessary to execute the BTP Operator cleanup procedure as well.
-

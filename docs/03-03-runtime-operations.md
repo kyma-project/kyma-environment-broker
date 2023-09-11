@@ -1,6 +1,6 @@
-# Runtime operations
+# SAP BTP, Kyma runtime operations
 
-Kyma Environment Broker allows you to configure operations that you can run on a Runtime. Each operation consists of several steps and each step is represented by a separate file. As every step can be re-launched multiple times, for each step, you should determine a behavior in case of a processing failure. It can either:
+Kyma Environment Broker (KEB) allows you to configure operations that you can run on a SAP BTP, Kyma runtime (SKR). Each operation consists of several steps and each step is represented by a separate file. As every step can be re-launched multiple times, for each step, you should determine a behavior in case of a processing failure. It can either:
 
 - return an error, which interrupts the entire process, or
 - repeat the entire operation after the specified period.
@@ -9,7 +9,7 @@ Kyma Environment Broker allows you to configure operations that you can run on a
 
 ## Provisioning
 
-Each provisioning step is responsible for a separate part of preparing Runtime parameters. For example, in a step you can provide tokens, credentials, or URLs to integrate Kyma Runtime with external systems. All data collected in provisioning steps are used in the step called [`create_cluster_configuration`](https://github.com/kyma-project/control-plane/blob/main/components/kyma-environment-broker/internal/process/provisioning/create_cluster_configuration.go) which transforms the data into a request input. The request is sent to the Runtime Provisioner component which provisions a Runtime.
+Each provisioning step is responsible for a separate part of preparing SKR parameters. For example, in a step you can provide tokens, credentials, or URLs to integrate SAP BTP, Kyma runtime with external systems. All data collected in provisioning steps are used in the step called [`create_cluster_configuration`](https://github.com/kyma-project/control-plane/blob/main/components/kyma-environment-broker/internal/process/provisioning/create_cluster_configuration.go) which transforms the data into a request input. The request is sent to the Runtime Provisioner component which provisions an SKR.
 The provisioning process contains the following steps:
 
 | Stage          | Step                               | Domain                   | Description                                                                                                                                 | Owner           |
@@ -17,7 +17,7 @@ The provisioning process contains the following steps:
 | start          | Starting                           | Provisioning             | Changes the state from `pending` to `in progress` if there is no other operation in progress.                                               | Team Gopher     |
 | create_runtime | Provision_Initialization           | Provisioning             | Starts the provisioning process.                                                                                                            | Team Gopher     |
 | create_runtime | Resolve_Target_Secret              | Hyperscaler Account Pool | Provides the name of the Gardener Secret that contains the Hypescaler account credentials used during cluster provisioning.                 | Team Framefrog  |
-| create_runtime | AVS_Create_Internal_Eval_Step      | AvS                      | Sets up internal monitoring of Kyma Runtime.                                                                                                | Team Gopher     |
+| create_runtime | AVS_Create_Internal_Eval_Step      | AvS                      | Sets up internal monitoring of an SKR.                                                                                                | Team Gopher     |
 | create_runtime | EDP_Registration                   | Event Data Platform      | Registers an SKR on the Event Data Platform with the necessary parameters. **Note that this step is not mandatory and you can disable it.** | Team Gopher     |
 | create_runtime | Overrides_From_Secrets_And_Config_Step | Kyma overrides           | Configures default overrides for Kyma.                                                                                                      | Team Gopher     |
 | create_runtime | BTPOperatorOverrides               | BTP                      | Configures the required credentials for BTP.                                                                                                | Team Gopher     |
@@ -36,10 +36,10 @@ The timeout for processing the whole provisioning operation is set to `24h`. In 
 
 ## Deprovisioning
 
-Each deprovisioning step is responsible for a separate part of cleaning Runtime dependencies. To properly deprovision all Runtime dependencies, you need the data used during the Runtime provisioning. The first step finds the previous operation and copies the data.
+Each deprovisioning step is responsible for a separate part of cleaning SKR dependencies. To properly deprovision all the dependencies, you need the data used during the SKR provisioning. The first step finds the previous operation and copies the data.
 
 None of the deprovisioning steps should block the entire deprovisioning operation. Use the `RetryOperationWithoutFail` function from the `DeprovisionOperationManager` struct to skip a step in case of a retry timeout. Set a 5-minute, at the most, timeout for retries in a step.
-Once the step is successfully executed, it isn't retried. If a step has been skipped due to a retry timeout or error, a [Cron Job](03-16-deprovision-retrigger-cronjob.md) tries to deprovision all remaining Runtime dependencies again at a scheduled time.
+Once the step is successfully executed, it isn't retried. If a step has been skipped due to a retry timeout or error, a [Cron Job](03-16-deprovision-retrigger-cronjob.md) tries to deprovision all remaining SKR dependencies again at a scheduled time.
 The deprovisioning process contains the following steps:
 
 | Step                         | Domain                          | Description                                                                                                                                                  |
@@ -59,7 +59,7 @@ The deprovisioning process contains the following steps:
 
 ## Upgrade Kyma
 
-Each upgrade step is responsible for a separate part of upgrading Runtime dependencies. To properly upgrade the Runtime, you need the data used during the Runtime provisioning. You can fetch this data from the **ProvisioningOperation** struct in the [initialization](https://github.com/kyma-project/control-plane/blob/main/components/kyma-environment-broker/internal/process/upgrade_kyma/initialisation.go) step.
+Each upgrade step is responsible for a separate part of upgrading SKR dependencies. To properly upgrade SAP BTP, Kyma runtime, you need the data used during the provisioning. You can fetch this data from the **ProvisioningOperation** struct in the [initialization](https://github.com/kyma-project/control-plane/blob/main/components/kyma-environment-broker/internal/process/upgrade_kyma/initialisation.go) step.
 
 The upgrade process contains the following steps:
 
@@ -98,7 +98,7 @@ The upgrade process contains the following steps:
 
 ## Provide additional steps
 
-You can configure Runtime operations by providing additional steps. To add a new step, follow these tutorials:
+You can configure SAP BTP, Kyma runtime operations by providing additional steps. To add a new step, follow these tutorials:
 
 <div tabs name="runtime-provisioning-deprovisioning" group="runtime-provisioning-deprovisioning">
   <details>
