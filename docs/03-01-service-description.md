@@ -15,7 +15,7 @@ The supported plans are as follows:
 | `gcp` | `ca6e5357-707f-4565-bbbd-b3ab732597c6` | Installs Kyma Runtime on the GCP cluster. |
 | `trial` | `7d55d31d-35ae-4438-bf13-6ffdfa107d9f` | Installs Kyma trial plan on Azure, AWS or GCP. |
 | `free` | `b1a5764e-2ea1-4f95-94c0-2b4538b37b55` | Installs Kyma free plan on Azure or AWS. |
-| `own_cluster` | `b1a5764e-2ea1-4f95-94c0-2b4538b37b55` | Installs Kyma on custom K8S cluster. |
+| `own_cluster` | `03e3cb66-a4c6-4c6a-b4b0-5d42224debea` | Installs Kyma on custom K8S cluster. |
 | `preview` | `5cb3d976-b85c-42ea-a636-79cadda109a9` | Installs Kyma on AWS using Lifecycle Manager. |
 
 ## Provisioning parameters
