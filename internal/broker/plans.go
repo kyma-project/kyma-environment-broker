@@ -215,6 +215,10 @@ func FreemiumSchema(provider internal.CloudProvider, additionalParams, update bo
 			Enum: ToInterfaceSlice(regions),
 		},
 	}
+	if !update {
+		properties.Networking = NewNetworkingSchema()
+	}
+
 	properties.Region.Default = defaultRegion
 
 	return createSchemaWithProperties(properties, additionalParams, update, requiredSchemaProperties())
