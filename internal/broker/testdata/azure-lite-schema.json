@@ -59,6 +59,7 @@
       "type": "object"
     },
     "region": {
+      "default": "eastus",
       "enum": [
         "eastus",
         "centralus",
@@ -73,7 +74,7 @@
     }
   },
   "required": [
-    "name"
+    "name, region"
   ],
   "type": "object"
 }

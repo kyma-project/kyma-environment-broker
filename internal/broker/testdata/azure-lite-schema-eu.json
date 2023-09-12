@@ -59,6 +59,7 @@
       "type": "object"
     },
     "region": {
+      "default": "switzerlandnorth",
       "enum": [
         "switzerlandnorth"
       ],
@@ -66,7 +67,7 @@
     }
   },
   "required": [
-    "name"
+    "name, region"
   ],
   "type": "object"
 }
