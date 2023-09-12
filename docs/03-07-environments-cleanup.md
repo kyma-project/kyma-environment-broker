@@ -1,6 +1,8 @@
 # Environments Cleanup CronJob
 
-Environments Cleanup is an application that cleans up environments that do not meet requirements in a given Gardener project.
+>**CAUTION:** The CronJob must run only in the development environment. You must be connected to the development Kubernetes cluster before applying the CronJob.
+
+Environments Cleanup CronJob removes Kyma Environments which are older than 24h. The CronJob is scheduled to run daily at midnight local time defined in the system.
 
 ## Prerequisites
 

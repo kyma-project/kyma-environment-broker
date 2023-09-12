@@ -2,7 +2,7 @@
 
 Deprovision Retrigger CronJob is a Job that attempts to deprovision an instance once again.
 
-## Overview
+## Details
 
 During regular deprovisioning, you can omit some steps due to the occurrence of some errors. These errors do not cause the deprovisioning process to fail.
 You can ignore some not-severe, temporary errors, proceed with deprovisioning and declare the process successful. The not-completed steps
@@ -12,8 +12,8 @@ The Job iterates over the instances, and for each one with `deletedAt` appropria
 ## Prerequisites
 
 Deprovision Retrigger Job requires access to:
-- KEB database, to get the IDs of the instances with not completed steps.
-- KEB, to request SKR deprovisioning.
+- the KEB database to get the IDs of the instances with not completed steps
+- KEB to request SKR deprovisioning
 
 ## Configuration
 
