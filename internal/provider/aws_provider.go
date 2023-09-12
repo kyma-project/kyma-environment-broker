@@ -17,9 +17,9 @@ import (
 )
 
 const (
-	DefaultAWSRegion         = "eu-central-1"
-	DefaultAWSTrialRegion    = "eu-west-1"
-	DefaultEuAccessAWSRegion = "eu-central-1"
+	DefaultAWSRegion         = broker.DefaultAWSRegion
+	DefaultAWSTrialRegion    = broker.DefaultAWSTrialRegion
+	DefaultEuAccessAWSRegion = broker.DefaultEuAccessAWSRegion
 	DefaultAWSMultiZoneCount = 3
 )
 

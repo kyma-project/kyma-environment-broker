@@ -31,6 +31,14 @@ const (
 	OwnClusterPlanName = "own_cluster"
 	PreviewPlanID      = "5cb3d976-b85c-42ea-a636-79cadda109a9"
 	PreviewPlanName    = "preview"
+
+	DefaultAWSRegion           = "eu-central-1"
+	DefaultAWSTrialRegion      = "eu-west-1"
+	DefaultEuAccessAWSRegion   = "eu-central-1"
+	DefaultAzureRegion         = "eastus"
+	DefaultEuAccessAzureRegion = "switzerlandnorth"
+	DefaultGCPRegion           = "europe-west3"
+	DefaultOpenStackRegion     = "eu-de-2"
 )
 
 var PlanNamesMapping = map[string]string{
@@ -141,7 +149,7 @@ func PreviewSchema(machineTypesDisplay map[string]string, machineTypes []string,
 	properties.AutoScalerMax.Minimum = 3
 	properties.AutoScalerMin.Minimum = 3
 	properties.Networking = NewNetworkingSchema()
-	properties.Region.Default = AWSRegions(euAccessRestricted)[0]
+	properties.Region.Default = getDefaultAWSRegion(euAccessRestricted)
 	return createSchemaWithProperties(properties, additionalParams, update, requiredSchemaProperties())
 }
 
@@ -149,7 +157,7 @@ func GCPSchema(machineTypesDisplay map[string]string, machineTypes []string, add
 	properties := NewProvisioningProperties(machineTypesDisplay, machineTypes, GCPRegions(), update)
 	properties.AutoScalerMax.Minimum = 3
 	properties.AutoScalerMin.Minimum = 3
-	properties.Region.Default = GCPRegions()[0]
+	properties.Region.Default = getDefaultGCPRegion()
 	return createSchemaWithProperties(properties, additionalParams, update, requiredSchemaProperties())
 }
 
@@ -157,7 +165,7 @@ func AWSSchema(machineTypesDisplay map[string]string, machineTypes []string, add
 	properties := NewProvisioningProperties(machineTypesDisplay, machineTypes, AWSRegions(euAccessRestricted), update)
 	properties.AutoScalerMax.Minimum = 3
 	properties.AutoScalerMin.Minimum = 3
-	properties.Region.Default = AWSRegions(euAccessRestricted)[0]
+	properties.Region.Default = getDefaultAWSRegion(euAccessRestricted)
 	return createSchemaWithProperties(properties, additionalParams, update, requiredSchemaProperties())
 }
 
@@ -165,14 +173,14 @@ func AzureSchema(machineTypesDisplay map[string]string, machineTypes []string, a
 	properties := NewProvisioningProperties(machineTypesDisplay, machineTypes, AzureRegions(euAccessRestricted), update)
 	properties.AutoScalerMax.Minimum = 3
 	properties.AutoScalerMin.Minimum = 3
-	properties.Region.Default = AzureRegions(euAccessRestricted)[0]
+	properties.Region.Default = getDefaultAzureRegion(euAccessRestricted)
 	return createSchemaWithProperties(properties, additionalParams, update, requiredSchemaProperties())
 }
 
 func AzureLiteSchema(machineTypesDisplay map[string]string, machineTypes []string, additionalParams, update bool, euAccessRestricted bool) *map[string]interface{} {
 	properties := NewProvisioningProperties(machineTypesDisplay, machineTypes, AzureRegions(euAccessRestricted), update)
 	properties.AutoScalerMax.Maximum = 40
-	properties.Region.Default = AzureRegions(euAccessRestricted)[0]
+	properties.Region.Default = getDefaultAzureRegion(euAccessRestricted)
 
 	if !update {
 		properties.AutoScalerMax.Default = 10
@@ -188,13 +196,17 @@ func FreemiumSchema(provider internal.CloudProvider, additionalParams, update bo
 	}
 
 	var regions []string
+	var defaultRegion string
 	switch provider {
 	case internal.AWS:
 		regions = AWSRegions(euAccessRestricted)
+		defaultRegion = getDefaultAWSRegion(euAccessRestricted)
 	case internal.Azure:
 		regions = AzureRegions(euAccessRestricted)
+		defaultRegion = getDefaultAzureRegion(euAccessRestricted)
 	default:
 		regions = AWSRegions(euAccessRestricted)
+		defaultRegion = getDefaultAWSRegion(euAccessRestricted)
 	}
 	properties := ProvisioningProperties{
 		Name: NameProperty(),
@@ -203,7 +215,7 @@ func FreemiumSchema(provider internal.CloudProvider, additionalParams, update bo
 			Enum: ToInterfaceSlice(regions),
 		},
 	}
-	properties.Region.Default = regions[0]
+	properties.Region.Default = defaultRegion
 
 	return createSchemaWithProperties(properties, additionalParams, update, requiredSchemaProperties())
 }
@@ -455,4 +467,26 @@ func filter(items *[]interface{}, included map[string]interface{}) interface{} {
 	}
 
 	return output
+}
+
+func getDefaultOpenStackRegion() string {
+	return DefaultOpenStackRegion
+}
+
+func getDefaultAWSRegion(euAccessRestricted bool) string {
+	if euAccessRestricted {
+		return DefaultEuAccessAWSRegion
+	}
+	return DefaultAWSRegion
+}
+
+func getDefaultGCPRegion() string {
+	return DefaultGCPRegion
+}
+
+func getDefaultAzureRegion(euAccessRestricted bool) string {
+	if euAccessRestricted {
+		return DefaultEuAccessAzureRegion
+	}
+	return DefaultAzureRegion
 }
