@@ -66,4 +66,4 @@ optionalComponentsDisablers := runtime.ComponentsDisablers{
 
 ### Remove an optional component from the disabled components list
 
-If you want to remove the option to disable components and make them required during SAP BTP,Kyma runtime installation, remove a given entry from the **optionalComponentsDisablers** list in the [`cmd/broker/main.go`](https://github.com/kyma-project/control-plane/blob/main/components/kyma-environment-broker/cmd/broker/main.go) file.
+If you want to remove the option to disable components and make them required during SAP BTP, Kyma runtime installation, remove a given entry from the **optionalComponentsDisablers** list in the [`cmd/broker/main.go`](https://github.com/kyma-project/control-plane/blob/main/components/kyma-environment-broker/cmd/broker/main.go) file.

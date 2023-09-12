@@ -163,7 +163,7 @@ The trial plan allows you to install an SKR on Azure, AWS, or GCP. The plan assu
 - the SKR is uninstalled after 14 days and the Kyma cluster is deprovisioned after this time.
 - It's possible to provision only one SKR per global account.
 
-To reduce the costs, the trial plan skips one of the [provisioning steps](./03-03-runtime-operations.md#provisioning).
+To reduce the costs, the trial plan skips one of the [provisioning steps](./03-03-runtime-operations.md#provisioning):
 
 - `AVS External Evaluation` 
 
