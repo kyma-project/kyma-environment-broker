@@ -1,1 +1,0 @@
-ALTER TABLE gardener_config DROP CONSTRAINT gardener_config_name_key;
