@@ -122,7 +122,7 @@ func OpenStackRegions() []string {
 }
 
 func requiredSchemaProperties() []string {
-	return []string{"name, region"}
+	return []string{"name", "region"}
 }
 
 func requiredTrialSchemaProperties() []string {
@@ -136,7 +136,7 @@ func requiredOwnClusterSchemaProperties() []string {
 func OpenStackSchema(machineTypesDisplay map[string]string, machineTypes []string, additionalParams, update bool) *map[string]interface{} {
 	properties := NewProvisioningProperties(machineTypesDisplay, machineTypes, OpenStackRegions(), update)
 	properties.AutoScalerMax.Maximum = 40
-	properties.Region.Default = OpenStackRegions()[0]
+	properties.Region.Default = getDefaultOpenStackRegion()
 	if !update {
 		properties.AutoScalerMax.Default = 8
 	}
