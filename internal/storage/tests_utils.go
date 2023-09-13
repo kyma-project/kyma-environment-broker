@@ -117,7 +117,7 @@ func InitTestDBTables(t *testing.T, connectionURL string) (func(), error) {
 		return cleanupFunc, nil
 	}
 
-	dirPath := "./migrations/"
+	dirPath := "./../../migrations"
 	files, err := ioutil.ReadDir(dirPath)
 	if err != nil {
 		log.Printf("Cannot read files from directory %s", dirPath)
