@@ -186,7 +186,7 @@ These are the provisioning parameters for the Trial plan that you can configure:
 | **name** | string | Specifies the name of the Kyma Runtime. | Yes | Any string| None |
 | **region** | string | Defines the cluster region. | No | `europe`,`us`, `asia` | Calculated from the platform region |
 | **provider** | string | Specifies the cloud provider used during provisioning. | No | `Azure`, `AWS`, `GCP` | `Azure` |
-| **context.active** | string | Specifies if the SKR should be suspended or unsuspended. | `true`, `false` | None |
+| **context.active** | string | Specifies if the SKR should be suspended or unsuspended. | No | `true`, `false` | None |
 
 The **region** parameter is optional. If not specified, the region is calculated from platform region specified in this path:
 ```shell
