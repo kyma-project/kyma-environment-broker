@@ -1,6 +1,6 @@
 # Service description
 
-Kyma Environment Broker (KEB) is compatible with the [Open Service Broker API](https://www.openservicebrokerapi.org/) (OSBA) specification. It provides a ServiceClass that provisions Kyma Runtime on a cluster.
+Kyma Environment Broker (KEB) is compatible with the [Open Service Broker API](https://www.openservicebrokerapi.org/) (OSBAPI) specification. It provides a ServiceClass that provisions Kyma Runtime on a cluster.
 
 ## Service plans
 
@@ -39,9 +39,11 @@ These are the provisioning parameters that you can configure:
 | **context.tenant_id** | string | Provides a tenant ID for an SKR. | No | None |
 | **context.subaccount_id** | string | Provides a subaccount ID for an SKR. | No | None |
 | **context.globalaccount_id** | string | Provides a global account ID for an SKR. | No | None |
-| **context.sm_platform_credentials.credentials.basic.username** | string | Provides the Service Manager username for an SKR. | No | None |
-| **context.sm_platform_credentials.credentials.basic.password** | string | Provides the Service Manager password for an SKR. | No | None |
-| **context.sm_platform_credentials.url** | string | Provides the Service Manager URL for an SKR. | No | None |
+| **context.sm_operator_credentials.clientid** | string | Provides a client ID for SAP BTP Service Operator. | No | None |
+| **context.sm_operator_credentials.clientsecret** | string | Provides a client secret for SAP BTP Service Operator. | No | None |
+| **context.sm_operator_credentials.sm_url** | string | Provides a SAP Service Manager URL for SAP BTP Service Operator. | No | None |
+| **context.sm_operator_credentials.url** | string | Provides an authentication URL for SAP BTP Service Operator. | No | None |
+| **context.sm_operator_credentials.xsappname** | string | Provides a XSApp name for SAP BTP Service Operator. | No | None |
 | **context.user_id** | string | Provides a user ID for an SKR. | No | None |
 | **oidc.clientID** | string | Provides an OIDC client ID for an SKR. | No | None |
 | **oidc.groupsClaim** | string | Provides an OIDC groups claim for an SKR. | No | `groups` |
@@ -49,6 +51,7 @@ These are the provisioning parameters that you can configure:
 | **oidc.signingAlgs** | string | Provides the OIDC signing algorithms for an SKR. | No | `RS256` |
 | **oidc.usernameClaim** | string | Provides an OIDC username claim for an SKR. | No | `email` |
 | **oidc.usernamePrefix** | string | Provides an OIDC username prefix for an SKR. | No | None |
+| **administrators** | string | Provides administrators for an SKR. | No | None |
 | **networking.nodes** | string | The Node network's CIDR. | No | `10.250.0.0/22` |
 
 ### Provider-specific parameters
