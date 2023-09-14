@@ -58,6 +58,7 @@
     },
     "region": {
       "enum": [
+        "eu-de-2",
         "eu-de-1",
         "ap-sa-1"
       ],
