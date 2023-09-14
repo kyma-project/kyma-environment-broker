@@ -120,7 +120,8 @@
     }
   },
   "required": [
-    "name, region"
+    "name",
+    "region"
   ],
   "type": "object"
 }
