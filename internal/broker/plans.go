@@ -39,6 +39,8 @@ const (
 	DefaultEuAccessAzureRegion = "switzerlandnorth"
 	DefaultGCPRegion           = "europe-west3"
 	DefaultOpenStackRegion     = "eu-de-2"
+
+	RequiredPropertyForCallFromUI = "region"
 )
 
 var PlanNamesMapping = map[string]string{
@@ -292,7 +294,7 @@ func unmarshalSchema(schema *RootSchema) *map[string]interface{} {
 
 // Plans is designed to hold plan defaulting logic
 // keep internal/hyperscaler/azure/config.go in sync with any changes to available zones
-func Plans(plans PlansConfig, provider internal.CloudProvider, includeAdditionalParamsInSchema bool, euAccessRestricted bool) map[string]domain.ServicePlan {
+func Plans(plans PlansConfig, provider internal.CloudProvider, includeAdditionalParamsInSchema bool, euAccessRestricted bool, callFromUI bool) map[string]domain.ServicePlan {
 	awsMachines := []string{"m5.xlarge", "m5.2xlarge", "m5.4xlarge", "m5.8xlarge", "m5.12xlarge", "m6i.xlarge", "m6i.2xlarge", "m6i.4xlarge", "m6i.8xlarge", "m6i.12xlarge"}
 	awsMachinesDisplay := map[string]string{
 		// source: https://aws.amazon.com/ec2/instance-types/m5/
@@ -374,6 +376,19 @@ func Plans(plans PlansConfig, provider internal.CloudProvider, includeAdditional
 		OwnClusterPlanID: defaultServicePlan(OwnClusterPlanID, OwnClusterPlanName, plans, ownClusterSchema, OwnClusterSchema(true)),
 		PreviewPlanID: defaultServicePlan(PreviewPlanID, PreviewPlanName, plans, PreviewSchema(awsMachinesDisplay, awsMachines, includeAdditionalParamsInSchema, false, euAccessRestricted),
 			AWSSchema(awsMachinesDisplay, awsMachines, includeAdditionalParamsInSchema, true, euAccessRestricted)),
+	}
+
+	if !callFromUI {
+		for _, plan := range outputPlans {
+			requiredProperties := plan.Schemas.Instance.Create.Parameters["required"].([]interface{})
+			for i, property := range requiredProperties {
+				if property == RequiredPropertyForCallFromUI {
+					requiredProperties = append(requiredProperties[:i], requiredProperties[i+1:]...)
+					plan.Schemas.Instance.Create.Parameters["required"] = requiredProperties
+					break
+				}
+			}
+		}
 	}
 
 	return outputPlans
