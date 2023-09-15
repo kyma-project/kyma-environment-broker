@@ -7,6 +7,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/kyma-project/control-plane/components/provisioner/pkg/gqlschema"
 	"github.com/kyma-project/kyma-environment-broker/internal"
 	"github.com/kyma-project/kyma-environment-broker/internal/provisioner"
 	"github.com/kyma-project/kyma-environment-broker/internal/storage"
@@ -220,7 +221,9 @@ func (s *Manager) getSkrK8sClient(instance *internal.Instance) (client.Client, e
 	var kubeConfig []byte
 	if errors.IsNotFound(err) {
 		s.logger.Infof("not found secret for %s, now it will be executed try to get kubeConfig from provisioner.", instance.InstanceID)
-		status, err := s.provisioner.RuntimeStatus(instance.Parameters.ErsContext.GlobalAccountID, instance.RuntimeID)
+		status, err := CallWithRetry(func() (gqlschema.RuntimeStatus, error) {
+			return s.provisioner.RuntimeStatus(instance.Parameters.ErsContext.GlobalAccountID, instance.RuntimeID)
+		}, 5, time.Second*5)
 		if err != nil {
 			return nil, fmt.Errorf("while getting runtime status from provisioner for %s : %s", instance.InstanceID, err)
 		}
@@ -246,14 +249,23 @@ func (s *Manager) getSkrK8sClient(instance *internal.Instance) (client.Client, e
 	if kubeConfig == nil || len(kubeConfig) == 0 {
 		return nil, fmt.Errorf("not found kubeConfig as secret nor in provisioner or is empty for %s", instance.InstanceID)
 	}
-	restCfg, err := clientcmd.RESTConfigFromKubeConfig(kubeConfig)
-	if err != nil {
-		return nil, fmt.Errorf("while making REST cfg from kube config string for %s : %s", instance.InstanceID, err)
-	}
-	k8sClient, err := client.New(restCfg, client.Options{})
+
+	k8sClient, err := CallWithRetry(func() (client.Client, error) {
+		restCfg, err := clientcmd.RESTConfigFromKubeConfig(kubeConfig)
+		if err != nil {
+			return nil, fmt.Errorf("while making REST cfg from kube config string for %s : %s", instance.InstanceID, err)
+		}
+		k8sClient, err := client.New(restCfg, client.Options{})
+		if err != nil {
+			return nil, fmt.Errorf("while creating k8sClient from REST config for %s : %s", instance.InstanceID, err)
+		}
+		return k8sClient, nil
+	}, 5, time.Second*5)
+
 	if err != nil {
 		return nil, fmt.Errorf("while creating k8sClient from REST config for %s : %s", instance.InstanceID, err)
 	}
+
 	return k8sClient, nil
 }
 
