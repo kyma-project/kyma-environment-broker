@@ -428,7 +428,7 @@ func (b *ProvisionEndpoint) determineLicenceType(planId string) *string {
 
 func (b *ProvisionEndpoint) validator(details *domain.ProvisionDetails, provider internal.CloudProvider, ctx context.Context) (JSONSchemaValidator, error) {
 	platformRegion, _ := middleware.RegionFromContext(ctx)
-	plans := Plans(b.plansConfig, provider, b.config.IncludeAdditionalParamsInSchema, euaccess.IsEURestrictedAccess(platformRegion))
+	plans := Plans(b.plansConfig, provider, b.config.IncludeAdditionalParamsInSchema, euaccess.IsEURestrictedAccess(platformRegion), !CallFromUI)
 	plan := plans[details.PlanID]
 	schema := string(Marshal(plan.Schemas.Instance.Create.Parameters))
 
@@ -515,10 +515,10 @@ func (b *ProvisionEndpoint) validateNetworking(parameters internal.ProvisioningP
 	}
 
 	if e := validateOverlapping(*nodes, *pods); e != nil {
-		err = multierror.Append(err, fmt.Errorf("nodes CIDR must not overlap pods CIDR"))
+		err = multierror.Append(err, fmt.Errorf("nodes CIDR must not overlap %s", pods.String()))
 	}
 	if e := validateOverlapping(*nodes, *services); e != nil {
-		err = multierror.Append(err, fmt.Errorf("nodes CIDR must not overlap services CIDR"))
+		err = multierror.Append(err, fmt.Errorf("nodes CIDR must not overlap %s", services.String()))
 	}
 	if e := validateOverlapping(*services, *pods); e != nil {
 		err = multierror.Append(err, fmt.Errorf("services CIDR must not overlap pods CIDR"))

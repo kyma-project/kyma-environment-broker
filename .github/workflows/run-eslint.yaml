@@ -3,8 +3,6 @@ name: Run eslint
 on:
   pull_request:
     branches: [ main ]
-    paths:
-    - 'testing/e2e/skr/**/*.js'
 
 jobs:
   run-eslint:

@@ -8,8 +8,8 @@ import (
 	kebError "github.com/kyma-project/kyma-environment-broker/internal/error"
 	"github.com/kyma-project/kyma-environment-broker/internal/httputil"
 
-	gcli "github.com/kyma-project/kyma-environment-broker/internal/third_party/machinebox/graphql"
 	schema "github.com/kyma-project/control-plane/components/provisioner/pkg/gqlschema"
+	gcli "github.com/kyma-project/kyma-environment-broker/internal/third_party/machinebox/graphql"
 )
 
 // accountIDKey is a header key name for request send by graphQL client

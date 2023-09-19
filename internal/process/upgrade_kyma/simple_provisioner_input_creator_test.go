@@ -4,9 +4,9 @@ import (
 	"testing"
 
 	reconcilerApi "github.com/kyma-incubator/reconciler/pkg/keb"
+	"github.com/kyma-project/control-plane/components/provisioner/pkg/gqlschema"
 	"github.com/kyma-project/kyma-environment-broker/common/gardener"
 	internal "github.com/kyma-project/kyma-environment-broker/internal"
-	"github.com/kyma-project/control-plane/components/provisioner/pkg/gqlschema"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )

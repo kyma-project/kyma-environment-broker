@@ -13,8 +13,8 @@ import (
 
 	"github.com/stretchr/testify/mock"
 
-	"github.com/kyma-project/kyma-environment-broker/internal/dashboard"
 	"github.com/kyma-project/control-plane/components/provisioner/pkg/gqlschema"
+	"github.com/kyma-project/kyma-environment-broker/internal/dashboard"
 
 	"github.com/kyma-project/kyma-environment-broker/internal/fixture"
 	"github.com/kyma-project/kyma-environment-broker/internal/ptr"

@@ -6,11 +6,11 @@ import (
 
 	"github.com/sirupsen/logrus"
 
+	"github.com/kyma-project/control-plane/components/provisioner/pkg/gqlschema"
 	"github.com/kyma-project/kyma-environment-broker/internal"
 	"github.com/kyma-project/kyma-environment-broker/internal/process"
 	"github.com/kyma-project/kyma-environment-broker/internal/provisioner"
 	"github.com/kyma-project/kyma-environment-broker/internal/storage"
-	"github.com/kyma-project/control-plane/components/provisioner/pkg/gqlschema"
 )
 
 // CheckStep checks if the SKR is updated

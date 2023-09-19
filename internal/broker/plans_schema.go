@@ -186,7 +186,7 @@ func NewNetworkingSchema() *NetworkingType {
 	return &NetworkingType{
 		Type: Type{Type: "object", Description: "Networking configuration. These values are immutable and cannot be updated later."},
 		Properties: NetworkingProperties{
-			Nodes: Type{Type: "string", Title: "Node network's CIDR", Description: fmt.Sprintf("Node network's CIDR, must not overlap with the following CIDRs: %s, %s, %s", networking.DefaultPodsCIDR, networking.DefaultServicesCIDR, seedCIDRs),
+			Nodes: Type{Type: "string", Title: "CIDR range for nodes", Description: fmt.Sprintf("CIDR range for nodes, must not overlap with the following CIDRs: %s, %s, %s", networking.DefaultPodsCIDR, networking.DefaultServicesCIDR, seedCIDRs),
 				Default: networking.DefaultNodesCIDR},
 		},
 		Required: []string{"nodes"},
@@ -214,11 +214,7 @@ func NewOIDCSchema() *OIDCType {
 	}
 }
 
-func NewSchemaWithOnlyNameRequired(properties interface{}, update bool) *RootSchema {
-	return NewSchemaForOwnCluster(properties, update, []string{"name"})
-}
-
-func NewSchemaForOwnCluster(properties interface{}, update bool, required []string) *RootSchema {
+func NewSchema(properties interface{}, update bool, required []string) *RootSchema {
 	schema := &RootSchema{
 		Schema: "http://json-schema.org/draft-04/schema#",
 		Type: Type{
@@ -248,7 +244,7 @@ func unmarshalOrPanic(from, to interface{}) interface{} {
 }
 
 func DefaultControlsOrder() []string {
-	return []string{"name", "kubeconfig", "shootName", "shootDomain", "region", "machineType", "autoScalerMin", "autoScalerMax", "zonesCount", "oidc", "administrators", "networking"}
+	return []string{"name", "kubeconfig", "shootName", "shootDomain", "region", "machineType", "autoScalerMin", "autoScalerMax", "zonesCount", "networking", "oidc", "administrators"}
 }
 
 func ToInterfaceSlice(input []string) []interface{} {

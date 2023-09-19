@@ -1,6 +1,6 @@
 # Service description
 
-Kyma Environment Broker (KEB) is compatible with the [Open Service Broker API](https://www.openservicebrokerapi.org/) (OSBA) specification. It provides a ServiceClass that provisions SAP BTP, Kyma runtime on a cluster.
+Kyma Environment Broker (KEB) is compatible with the [Open Service Broker API](https://www.openservicebrokerapi.org/) (OSBAPI) specification. It provides a ServiceClass that provisions SAP BTP, Kyma runtime on a cluster.
 
 ## Service plans
 
@@ -9,13 +9,13 @@ The supported plans are as follows:
 | Plan name | Plan ID | Description |
 |-----------|---------|-------------|
 | `azure` | `4deee563-e5ec-4731-b9b1-53b42d855f0c` |Installs Kyma runtime on the Azure cluster. |
-| `azure_lite` | `8cb22518-aa26-44c5-91a0-e669ec9bf443` | Installs Kyma runtime on the Azure Lite cluster. |
+| `azure_lite` | `8cb22518-aa26-44c5-91a0-e669ec9bf443` | Installs Kyma Lite on the Azure cluster. |
 | `aws` | `361c511f-f939-4621-b228-d0fb79a1fe15` | Installs Kyma runtime on the AWS cluster. |
 | `openstack` | `03b812ac-c991-4528-b5bd-08b303523a63` | Installs Kyma runtime on the OpenStack cluster. |
 | `gcp` | `ca6e5357-707f-4565-bbbd-b3ab732597c6` | Installs Kyma runtime on the GCP cluster. |
-| `trial` | `7d55d31d-35ae-4438-bf13-6ffdfa107d9f` | Installs Kyma runtime trial plan on Azure, AWS or GCP. |
-| `free` | `b1a5764e-2ea1-4f95-94c0-2b4538b37b55` | Installs Kyma runtime free plan on Azure or AWS. |
-| `own_cluster` | `b1a5764e-2ea1-4f95-94c0-2b4538b37b55` | Installs Kyma runtime on a custom Kubernetes cluster. |
+| `trial` | `7d55d31d-35ae-4438-bf13-6ffdfa107d9f` | Installs Kyma trial plan on Azure, AWS or GCP. |
+| `free` | `b1a5764e-2ea1-4f95-94c0-2b4538b37b55` | Installs Kyma free plan on Azure or AWS. |
+| `own_cluster` | `03e3cb66-a4c6-4c6a-b4b0-5d42224debea` | Installs Kyma runtime on a custom Kubernetes cluster. |
 | `preview` | `5cb3d976-b85c-42ea-a636-79cadda109a9` | Installs Kyma runtime on AWS using Lifecycle Manager. |
 
 ## Provisioning parameters
@@ -29,26 +29,30 @@ These are the provisioning parameters that you can configure:
 | Parameter name | Type | Description | Required | Default value |
 |----------------|-------|-------------|:----------:|---------------|
 | **name** | string | Specifies the name of the cluster. | Yes | None |
-| **components** | array | Defines optional components that are installed in Kyma runtime. The possible values are `kiali` and `tracing`. | No | [] |
-| **kymaVersion[<sup>2</sup>](#version)** | string | Provides a Kyma version on demand. | No | None |
-| **overridesVersion[<sup>2</sup>](#version)** | string | Provides an overrides version for a specific Kyma version. | No | None |
-| **purpose** | string | Provides a purpose for Kyma runtime. | No | None |
-| **targetSecret** | string | Provides the name of the Secret that contains hyperscaler's credentials for Kyma runtime. | No | None |
+| **components** | array | Defines optional components that are installed in a Kyma runtime. The possible values are `kiali` and `tracing`. | No | [] |
+| **kymaVersion** | string | Provides a Kyma version on demand. | No | None |
+| **overridesVersion** | string | Provides an overrides version for a specific Kyma version. | No | None |
+| **purpose** | string | Provides a purpose for a Kyma runtime. | No | None |
+| **targetSecret** | string | Provides the name of the Secret that contains hyperscaler's credentials for a Kyma runtime. | No | None |
 | **platform_region** | string | Defines the platform region that is sent in the request path. | No | None |
-| **platform_provider** | string | Defines the platform provider for Kyma runtime. | No | None |
-| **context.tenant_id** | string | Provides a tenant ID for Kyma runtime. | No | None |
-| **context.subaccount_id** | string | Provides a subaccount ID for Kyma runtime. | No | None |
-| **context.globalaccount_id** | string | Provides a global account ID for Kyma runtime. | No | None |
-| **context.sm_platform_credentials.&#x200b;credentials.basic.username** | string | Provides the Service Manager username for Kyma runtime. | No | None |
-| **context.sm_platform_credentials.&#x200b;credentials.basic.password** | string | Provides the Service Manager password for Kyma runtime. | No | None |
-| **context.sm_platform_credentials.url** | string | Provides the Service Manager URL for Kyma runtime. | No | None |
-| **context.user_id** | string | Provides a user ID for Kyma runtime. | No | None |
-| **oidc.clientID** | string | Provides an OIDC client ID for Kyma runtime. | No | None |
-| **oidc.groupsClaim** | string | Provides an OIDC groups claim for Kyma runtime. | No | `groups` |
-| **oidc.issuerURL** | string | Provides an OIDC issuer URL for Kyma runtime. | No | None |
-| **oidc.signingAlgs** | string | Provides the OIDC signing algorithms for Kyma runtime. | No | `RS256` |
-| **oidc.usernameClaim** | string | Provides an OIDC username claim for Kyma runtime. | No | `email` |
-| **oidc.usernamePrefix** | string | Provides an OIDC username prefix for Kyma runtime. | No | None |
+| **platform_provider** | string | Defines the platform provider for a Kyma runtime. | No | None |
+| **context.tenant_id** | string | Provides a tenant ID for a Kyma runtime. | No | None |
+| **context.subaccount_id** | string | Provides a subaccount ID for a Kyma runtime. | No | None |
+| **context.globalaccount_id** | string | Provides a global account ID for a Kyma runtime. | No | None |
+| **context.sm_operator_credentials.clientid** | string | Provides a client ID for SAP BTP Service Operator. | No | None |
+| **context.sm_operator_credentials.clientsecret** | string | Provides a client secret for SAP BTP Service Operator. | No | None |
+| **context.sm_operator_credentials.sm_url** | string | Provides a SAP Service Manager URL for SAP BTP Service Operator. | No | None |
+| **context.sm_operator_credentials.url** | string | Provides an authentication URL for SAP BTP Service Operator. | No | None |
+| **context.sm_operator_credentials.xsappname** | string | Provides an XSApp name for SAP BTP Service Operator. | No | None |
+| **context.user_id** | string | Provides a user ID for a Kyma runtime. | No | None |
+| **oidc.clientID** | string | Provides an OIDC client ID for a Kyma runtime. | No | None |
+| **oidc.groupsClaim** | string | Provides an OIDC groups claim for a Kyma runtime. | No | `groups` |
+| **oidc.issuerURL** | string | Provides an OIDC issuer URL for a Kyma runtime. | No | None |
+| **oidc.signingAlgs** | string | Provides the OIDC signing algorithms for a Kyma runtime. | No | `RS256` |
+| **oidc.usernameClaim** | string | Provides an OIDC username claim for a Kyma runtime. | No | `email` |
+| **oidc.usernamePrefix** | string | Provides an OIDC username prefix for a Kyma runtime. | No | None |
+| **administrators** | string | Provides administrators for a Kyma runtime. | No | None |
+| **networking.nodes** | string | The Node network's CIDR. | No | `10.250.0.0/22` |
 
 ### Provider-specific parameters
 
@@ -163,9 +167,7 @@ The trial plan allows you to install Kyma runtime on Azure, AWS, or GCP. The pla
 - Kyma runtime is uninstalled after 14 days and the Kyma cluster is deprovisioned after this time.
 - It's possible to provision only one Kyma runtime per global account.
 
-To reduce the costs, the trial plan skips one of the [provisioning steps](./03-03-runtime-operations.md#provisioning):
-
-- `AVS External Evaluation` 
+To reduce the costs, the trial plan skips one of the [provisioning steps](./03-03-runtime-operations.md#provisioning), that is, `AVS External Evaluation`.
 
 ### Provisioning parameters
 
@@ -182,7 +184,7 @@ These are the provisioning parameters for the Trial plan that you can configure:
 | **name** | string | Specifies the name of the Kyma runtime. | Yes | Any string| None |
 | **region** | string | Defines the cluster region. | No | `europe`,`us`, `asia` | Calculated from the platform region |
 | **provider** | string | Specifies the cloud provider used during provisioning. | No | `Azure`, `AWS`, `GCP` | `Azure` |
-| **context.active** | string | Specifies if the Kyma runtime should be suspended or unsuspended. | `true`, `false` | None |
+| **context.active** | string | Specifies if the Kyma runtime should be suspended or unsuspended. | No | `true`, `false` | None |
 
 The **region** parameter is optional. If not specified, the region is calculated from platform region specified in this path:
 ```shell

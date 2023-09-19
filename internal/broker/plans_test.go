@@ -14,7 +14,6 @@ import (
 )
 
 func TestSchemaGenerator(t *testing.T) {
-	t.Skip()
 	tests := []struct {
 		name                string
 		generator           func(map[string]string, []string, bool, bool) *map[string]interface{}

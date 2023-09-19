@@ -13,6 +13,8 @@ import (
 	"github.com/kyma-project/kyma-environment-broker/internal/provisioner"
 	"github.com/kyma-project/kyma-environment-broker/internal/storage"
 	"github.com/sirupsen/logrus"
+	apiextensionsv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
+	k8serrors "k8s.io/apimachinery/pkg/api/errors"
 	k8serrors2 "k8s.io/apimachinery/pkg/api/meta"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -55,29 +57,24 @@ func (s *BTPOperatorCleanupStep) softDelete(operation internal.Operation, log lo
 	if err := k8sClient.List(context.Background(), &namespaces); err != nil {
 		return s.retryOnError(operation, err, log, "failed to list namespaces")
 	}
-	gvk := schema.GroupVersionKind{Group: btpOperatorGroup, Version: btpOperatorApiVer, Kind: btpOperatorBinding}
+
 	var errors []string
-	for _, ns := range namespaces.Items {
-		obj := &unstructured.Unstructured{}
-		obj.SetGroupVersionKind(gvk)
-		if err := k8sClient.DeleteAllOf(context.Background(), obj, client.InNamespace(ns.Name)); err != nil {
-			errors = append(errors, err.Error())
-		}
+	gvk := schema.GroupVersionKind{Group: btpOperatorGroup, Version: btpOperatorApiVer, Kind: btpOperatorBinding}
+	SBCrdExists, err := s.checkCRDExistence(k8sClient, gvk)
+	if err != nil {
+		return operation, 0, err
 	}
-	if err := s.removeFinalizers(k8sClient, namespaces, gvk); err != nil {
-		errors = append(errors, err.Error())
+	if SBCrdExists {
+		s.removeResources(k8sClient, gvk, namespaces, errors)
 	}
 
 	gvk.Kind = btpOperatorServiceInstance
-	for _, ns := range namespaces.Items {
-		obj := &unstructured.Unstructured{}
-		obj.SetGroupVersionKind(gvk)
-		if err := k8sClient.DeleteAllOf(context.Background(), obj, client.InNamespace(ns.Name)); err != nil {
-			errors = append(errors, err.Error())
-		}
+	SICrdExists, err := s.checkCRDExistence(k8sClient, gvk)
+	if err != nil {
+		return operation, 0, err
 	}
-	if err := s.removeFinalizers(k8sClient, namespaces, gvk); err != nil {
-		errors = append(errors, err.Error())
+	if SICrdExists {
+		s.removeResources(k8sClient, gvk, namespaces, errors)
 	}
 
 	if len(errors) != 0 {
@@ -251,4 +248,31 @@ func (s *BTPOperatorCleanupStep) getKubeClient(operation internal.Operation, log
 		return nil, kebError.AsTemporaryError(err, "failed to create k8s client from the kubeconfig")
 	}
 	return cli, nil
+}
+
+func (s *BTPOperatorCleanupStep) checkCRDExistence(k8sClient client.Client, gvk schema.GroupVersionKind) (bool, error) {
+	crdName := fmt.Sprintf("%ss.%s", strings.ToLower(gvk.Kind), gvk.Group)
+	crd := &apiextensionsv1.CustomResourceDefinition{}
+
+	if err := k8sClient.Get(context.Background(), client.ObjectKey{Name: crdName}, crd); err != nil {
+		if k8serrors.IsNotFound(err) || k8serrors2.IsNoMatchError(err) {
+			return false, nil
+		} else {
+			return false, err
+		}
+	}
+	return true, nil
+}
+
+func (s *BTPOperatorCleanupStep) removeResources(k8sClient client.Client, gvk schema.GroupVersionKind, namespaces corev1.NamespaceList, errors []string) {
+	for _, ns := range namespaces.Items {
+		obj := &unstructured.Unstructured{}
+		obj.SetGroupVersionKind(gvk)
+		if err := k8sClient.DeleteAllOf(context.Background(), obj, client.InNamespace(ns.Name)); err != nil {
+			errors = append(errors, err.Error())
+		}
+	}
+	if err := s.removeFinalizers(k8sClient, namespaces, gvk); err != nil {
+		errors = append(errors, err.Error())
+	}
 }

@@ -6,6 +6,7 @@
     "machineType",
     "autoScalerMin",
     "autoScalerMax",
+    "networking",
     "oidc",
     "administrators"
   ],
@@ -54,6 +55,21 @@
       "title": "Cluster Name",
       "type": "string"
     },
+    "networking": {
+      "description": "Networking configuration. These values are immutable and cannot be updated later.",
+      "properties": {
+        "nodes": {
+          "default": "10.250.0.0/22",
+          "description": "CIDR range for nodes, must not overlap with the following CIDRs: 10.96.0.0/13, 10.104.0.0/13, 10.243.128.0/17, 10.242.0.0/16, 10.243.0.0/17, 10.64.0.0/11, 10.254.0.0/16, 10.243.0.0/16",
+          "title": "CIDR range for nodes",
+          "type": "string"
+        }
+      },
+      "required": [
+        "nodes"
+      ],
+      "type": "object"
+    },
     "oidc": {
       "description": "OIDC configuration",
       "properties": {
@@ -92,6 +108,7 @@
       "type": "object"
     },
     "region": {
+      "default": "eastus",
       "enum": [
         "eastus",
         "centralus",
@@ -106,7 +123,8 @@
     }
   },
   "required": [
-    "name"
+    "name",
+    "region"
   ],
   "type": "object"
 }

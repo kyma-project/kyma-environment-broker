@@ -3,10 +3,10 @@ package handlers
 import (
 	"fmt"
 
+	"github.com/kyma-project/control-plane/components/provisioner/pkg/gqlschema"
 	"github.com/kyma-project/kyma-environment-broker/common/orchestration"
 	"github.com/kyma-project/kyma-environment-broker/internal"
 	"github.com/kyma-project/kyma-environment-broker/internal/broker"
-	"github.com/kyma-project/control-plane/components/provisioner/pkg/gqlschema"
 )
 
 type Converter struct{}
