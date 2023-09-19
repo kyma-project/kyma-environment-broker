@@ -1,7 +1,7 @@
 # Trial Cleanup CronJob
 
-Trial Cleanup CronJob is a Job that makes the SKR instances with the `trial` plan expire 14 days after their creation.
-Expiration means that the SKR instance is suspended and the `expired` flag is set.
+Trial Cleanup CronJob is a Job that makes the SAP BTP, Kyma runtime instances with the `trial` plan expire 14 days after their creation.
+Expiration means that the Kyma runtime instance is suspended and the `expired` flag is set.
 
 ## Details
 
@@ -17,7 +17,7 @@ In that mode, the Job only logs the information about the candidate instances (t
 
 The Trial Cleanup Job requires access to:
 - the KEB database to get the IDs of the instances with the `trial` plan which are not expired yet
-- KEB to initiate the SKR instance suspension
+- KEB to initiate the Kyma runtime instance suspension
 
 ## Configuration
 

@@ -2,7 +2,7 @@
 
 > **NOTE:** Once all Kyma components become modules, they will be upgraded independently of one another and of Kyma Environment Broker (KEB). This document will be deprecated as irrelevant.
 
-Orchestration is a mechanism that allows you to upgrade SAP BTP, Kyma runtimes (SKRs). To create an orchestration, [follow this tutorial](08-05-orchestrate-kyma-upgrade.md). After sending the request, the orchestration is processed by `KymaUpgradeManager`. It lists Shoots (SKRs) in the Gardener cluster and narrows them to the IDs that you have specified in the request body. Then, `KymaUpgradeManager` performs the [upgrade steps](03-03-runtime-operations.md#upgrade) logic on the selected SKRs.
+Orchestration is a mechanism that allows you to upgrade SAP BTP, Kyma runtimes. To create an orchestration, [follow this tutorial](08-05-orchestrate-kyma-upgrade.md). After sending the request, the orchestration is processed by `KymaUpgradeManager`. It lists Shoots (Kyma runtimes) in the Gardener cluster and narrows them to the IDs that you have specified in the request body. Then, `KymaUpgradeManager` performs the [upgrade steps](03-03-runtime-operations.md#upgrade) logic on the selected Kyma runtimes.
 
 If Kyma Environment Broker is restarted, it reprocesses the orchestrations that are in the `CANCELING`, `IN PROGRESS`, and `PENDING` state.
 
@@ -25,7 +25,7 @@ To change the behavior of the orchestration, you can specify a **strategy** in t
 For now, there is only one **parallel** strategy with two types of schedule:
 
 - Immediate - schedules the upgrade operations instantly.
-- MaintenanceWindow - schedules the upgrade operations with the maintenance time windows specified for a given SKR.
+- MaintenanceWindow - schedules the upgrade operations with the maintenance time windows specified for a given Kyma runtime.
 
 You can also configure how many upgrade operations can be executed in parallel to accelerate the process. Specify the **parallel** object in the request body with **workers** field set to the number of concurrent executions for the upgrade operations.
 

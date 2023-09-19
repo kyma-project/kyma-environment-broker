@@ -1,6 +1,6 @@
 # Orchestrate Kyma upgrade
 
-This tutorial shows how to upgrade SAP BTP, Kyma runtime (SKR) using Kyma Environment Broker.
+This tutorial shows how to upgrade SAP BTP, Kyma runtime using Kyma Environment Broker.
 
 ## Prerequisites
 
@@ -16,14 +16,14 @@ This tutorial shows how to upgrade SAP BTP, Kyma runtime (SKR) using Kyma Enviro
    export AUTHORIZATION_HEADER="Authorization: Bearer $ID_TOKEN"
    ```
 
-2. Make a call to the Kyma Environment Broker to orchestrate the upgrade. You can select specific SKRs to upgrade using the following selectors:
+2. Make a call to the Kyma Environment Broker to orchestrate the upgrade. You can select specific Kyma runtimes to upgrade using the following selectors:
 
-- `target` - use the `target: "all"` selector to select all SKRs
-- `globalAccount` - use it to select SKRs with the specified global account ID
-- `subAccount` - use it to select SKRs with the specified subaccount ID
-- `runtimeID` - use it to select SKRs with the specified Runtime ID
-- `planName` - use it to select SKRs with the specified plan name
-- `region` - use it to select SKRs located in the specified region
+- `target` - use the `target: "all"` selector to select all Kyma runtimes
+- `globalAccount` - use it to select Kyma runtimes with the specified global account ID
+- `subAccount` - use it to select Kyma runtimes with the specified subaccount ID
+- `runtimeID` - use it to select Kyma runtimes with the specified Runtime ID
+- `planName` - use it to select Kyma runtimes with the specified plan name
+- `region` - use it to select Kyma runtimes located in the specified region
 
    ```bash
    curl --request POST "https://$BROKER_URL/upgrade/kyma" \

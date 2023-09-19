@@ -2,16 +2,16 @@
 
 > **NOTE:** Once all Kyma components become independent modules, KEB will no longer be required to send components to Reconciler and this document will be deprecated as irrelevant.
 
-Kyma Environment Broker (KEB) serves the functionality of composing the list of components that are installed in a SAP BTP, Kyma runtime (SKR). The diagram and steps describe the KEB workflow in terms of calculating and processing SKR components:
+Kyma Environment Broker (KEB) serves the functionality of composing the list of components that are installed in a SAP BTP, Kyma runtime. The diagram and steps describe the KEB workflow in terms of calculating and processing Kyma runtime components:
 
 ![runtime-components-architecture](./assets/runtime-components.svg)
 
-1. During KEB initialization, the broker reads two files that contain lists of components to be installed in an SKR     :  
+1. During KEB initialization, the broker reads two files that contain lists of components to be installed in a Kyma runtime:  
 
    * `kyma-installer-cluster.yaml` file with the given Kyma version
    * `managed-offering-components.yaml` file with additional managed components that are added at the end of the base components list
 
-2. The user provisions an SKR and selects optional components that they want to install.
+2. The user provisions a Kyma runtime and selects optional components that they want to install.
 
 3. KEB composes the final list of components by removing components that were not selected by the user. It also adds the proper global and components overrides and sends the whole provisioning information to the Runtime Provisioner.
 

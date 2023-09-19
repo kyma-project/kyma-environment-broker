@@ -1,6 +1,6 @@
 # Deprovision Retrigger CronJob
 
-Deprovision Retrigger CronJob is a Job that attempts to deprovision an instance once again.
+Deprovision Retrigger CronJob is a Job that attempts to deprovision a SAP BTP, Kyma runtime instance once again.
 
 ## Details
 
@@ -13,7 +13,7 @@ The Job iterates over the instances, and for each one with `deletedAt` appropria
 
 Deprovision Retrigger Job requires access to:
 - the KEB database to get the IDs of the instances with not completed steps
-- KEB to request SKR deprovisioning
+- KEB to request Kyma runtime deprovisioning
 
 ## Configuration
 

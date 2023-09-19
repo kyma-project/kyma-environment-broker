@@ -1,8 +1,8 @@
 # Subaccount Cleanup CronJob
 
-Each SKR instance in Kyma Environment Broker (KEB) database belongs to a global account and to a subaccount.
+Each SAP BTP, Kyma runtime instance in Kyma Environment Broker (KEB) database belongs to a global account and to a subaccount.
 Subaccount Cleanup is an application that periodically calls the CIS service and notifies about `SUBACCOUNT_DELETE` events.
-Based on these events, Subaccount Cleanup triggers the deprovisioning action on the SKR instance to which a given subaccount belongs.
+Based on these events, Subaccount Cleanup triggers the deprovisioning action on the Kyma runtime instance to which a given subaccount belongs.
 
 ## Details
 
@@ -34,7 +34,7 @@ The Subaccount Cleanup workflow is divided into several steps:
 Subaccount Cleanup requires access to:
 - CIS service to receive all `SUBACCOUNT_DELETE` events
 - Database to get the instance ID for each subaccount ID from the `SUBACCOUNT_DELETE` event
-- Kyma Environment Broker to trigger SKR instance deprovisioning
+- Kyma Environment Broker to trigger Kyma runtime instance deprovisioning
 
 ## Configuration
 
