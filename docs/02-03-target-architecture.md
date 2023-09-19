@@ -17,6 +17,3 @@
 > - [Set overrides for Kyma Runtime](03-06-runtime-overrides.md)
 > - [Configure Kyma version](03-08-kyma-versions.md)
 > - [Orchestration](03-10-orchestration.md)
-
-
-[def]: ./assets/target-keb-arch.svg
