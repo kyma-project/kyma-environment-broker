@@ -2,7 +2,7 @@
 
 > **NOTE:** After Runtime Provisioner and Reconciler are deprecated, Kyma Environment Broker (KEB) will integrate with Infrastructure Manager. The diagram and description in this doc present the KEB target architecture. To read about the current KEB workflow, go to [Kyma Environment Broker architecture](02-01-architecture.md).
 
-![KEB target architecture](assets/target-keb-arch.svg)
+![KEB target architecture](./assets/target-keb-arch.svg)
 
 1. The user sends a request to create a new cluster with SAP BTP, Kyma runtime.
 2. Kyma Environment Broker creates a GardenerCluster resource.
@@ -17,3 +17,6 @@
 > - [Set overrides for Kyma Runtime](03-06-runtime-overrides.md)
 > - [Configure Kyma version](03-08-kyma-versions.md)
 > - [Orchestration](03-10-orchestration.md)
+
+
+[def]: ./assets/target-keb-arch.svg
