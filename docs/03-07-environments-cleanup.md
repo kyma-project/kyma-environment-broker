@@ -8,8 +8,8 @@ Environments Cleanup CronJob removes Kyma Environments which are older than 24h.
 
 Environments Cleanup requires access to:
 - Gardener project of choice to filter Shoots without a proper label
-- Database to get an Instance ID for each SAP BTP, Kyma runtime marked for deletion
-- Kyma Environment Broker to trigger Kyma runtime deprovisioning
+- the KEB database to get an Instance ID for each SAP BTP, Kyma runtime marked for deletion
+- Kyma Environment Broker (KEB) to trigger Kyma runtime deprovisioning
 
 ## Configuration
 
@@ -28,8 +28,8 @@ The Environments Cleanup binary allows you to override some configuration parame
 | **APP_DATABASE_NAME** | Specifies the name of the database. | `provisioner` |
 | **APP_DATABASE_SSLMODE** | Activates the SSL mode for PostgrSQL. See [all the possible values](https://www.postgresql.org/docs/9.1/libpq-ssl.html).  | `disable`|
 | **APP_DATABASE_SSLROOTCERT** | Specifies the location of CA cert of PostgreSQL. (Optional)  | None |
-| **APP_BROKER_URL**  | Specifies the Kyma Environment Broker URL. | `https://kyma-env-broker.kyma.local` |
-| **APP_BROKER_TOKEN_URL**  | Specifies the Kyma Environment Broker OAuth token endpoint. | `https://oauth.2kyma.local/oauth2/token` |
+| **APP_BROKER_URL**  | Specifies the KEB URL. | `https://kyma-env-broker.kyma.local` |
+| **APP_BROKER_TOKEN_URL**  | Specifies the KEB OAuth token endpoint. | `https://oauth.2kyma.local/oauth2/token` |
 | **APP_BROKER_CLIENT_ID** | Specifies the username for the OAuth2 authentication in KEB. | None |
 | **APP_BROKER_CLIENT_SECRET** | Specifies the password for the OAuth2 authentication in KEB. | None |
 | **APP_BROKER_SCOPE** | Specifies the scope for the OAuth2 authentication in KEB. | None |
