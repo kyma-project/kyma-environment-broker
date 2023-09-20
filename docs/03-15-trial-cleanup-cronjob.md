@@ -11,7 +11,7 @@ If the instance is already in the `suspended` state, this instance is just marke
 ### Dry-run mode
 
 If you need to test the Job, you can run it in the `dry-run` mode.
-In that mode, the Job only logs the information about the candidate instances (that is, instances meeting the configured criteria). The instances are not affected.
+In that mode, the Job only logs the information about the candidate instances, that is, instances meeting the configured criteria. The instances are not affected.
 
 ## Prerequisites
 

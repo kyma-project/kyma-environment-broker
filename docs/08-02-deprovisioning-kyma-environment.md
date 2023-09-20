@@ -1,6 +1,6 @@
-# Deprovision SAP BTP, Kyma runtime using KEB
+# Deprovision SAP BTP, Kyma runtime using Kyma Environment Broker
 
-This tutorial shows how to deprovision SAP BTP, Kyma runtime on Azure using Kyma Environment Broker.
+This tutorial shows how to deprovision SAP BTP, Kyma runtime on Azure using Kyma Environment Broker (KEB).
 
 ## Steps
 
@@ -17,7 +17,7 @@ This tutorial shows how to deprovision SAP BTP, Kyma runtime on Azure using Kyma
    export AUTHORIZATION_HEADER="Authorization: Bearer $ACCESS_TOKEN"
    ```
 
-3. Make a call to the Kyma Environment Broker to delete a Kyma runtime on Azure.
+3. Make a call to KEB to delete a Kyma runtime on Azure.
 
    ```bash
    curl  --request DELETE "https://$BROKER_URL/oauth/v2/service_instances/$INSTANCE_ID?accepts_incomplete=true&service_id=47c9dcbf-ff30-448e-ab36-d3bad66ba281&plan_id=4deee563-e5ec-4731-b9b1-53b42d855f0c" \

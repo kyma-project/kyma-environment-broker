@@ -9,7 +9,7 @@ Kyma Environment Broker (KEB) allows you to configure operations that you can ru
 
 ## Provisioning
 
-Each provisioning step is responsible for a separate part of preparing Kyma runtime parameters. For example, in a step you can provide tokens, credentials, or URLs to integrate SAP BTP, Kyma runtime with external systems. All data collected in provisioning steps are used in the step called [`create_cluster_configuration`](https://github.com/kyma-project/control-plane/blob/main/components/kyma-environment-broker/internal/process/provisioning/create_cluster_configuration.go) which transforms the data into a request input. The request is sent to the Runtime Provisioner component which provisions a Kyma runtime.
+Each provisioning step is responsible for a separate part of preparing Kyma runtime parameters. For example, in a step you can provide tokens, credentials, or URLs to integrate SAP BTP, Kyma runtime with external systems. All data collected in provisioning steps are used in the step called [`create_cluster_configuration`](https://github.com/kyma-project/kyma-environment-broker/blob/main/internal/process/provisioning/create_cluster_configuration.go) which transforms the data into a request input. The request is sent to the Runtime Provisioner component which provisions a Kyma runtime.
 The provisioning process contains the following steps:
 
 | Stage          | Step                               | Domain                   | Description                                                                                                                                 | Owner           |
@@ -25,7 +25,7 @@ The provisioning process contains the following steps:
 | create_runtime | Create_Runtime_Without_Kyma        | Provisioning             | Triggers provisioning of a Runtime in Runtime Provisioner.                                                                              | Team Gopher     |
 | check_runtime  | Check_Runtime                      | Provisioning             | Checks the status of the Provisioner process and asks the Director for the Dashboard URL if the provisioning is completed in Gardener.      | Team Gopher     |
 | create_runtime | Get_Kubeconfig                     | Provisioning             | Gets the kubeconfig.                                                                                                                        | Team Gopher     |
-| create_runtime | Inject_BTP_Operator_Credentials    | Provisioning             | Creates a secret in the Kyma runtime with credentials for BTP.                                                                                         | Team Gopher     |
+| create_runtime | Inject_BTP_Operator_Credentials    | Provisioning             | Creates a Secret in the Kyma runtime with credentials for BTP.                                                                                         | Team Gopher     |
 | create_runtime | Create_Cluster_Configuration       | Reconciler               | Applies the cluster configuration.                                                                                                          | Team Gopher     |
 | check_kyma     | Check_Cluster_Configuration        | Reconciler               | Checks if the cluster configuration is applied .                                                                                            | Team Gopher     |
 | create_kyma_resource | Apply_Kyma                         | Lifecycle Manager | Creates Kyma resource.                                                                                                                      | Team Gopher     |
@@ -59,7 +59,7 @@ The deprovisioning process contains the following steps:
 
 ## Upgrade Kyma
 
-Each upgrade step is responsible for a separate part of upgrading Kyma runtime dependencies. To properly upgrade SAP BTP, Kyma runtime, you need the data used during the provisioning. You can fetch this data from the **ProvisioningOperation** struct in the [initialization](https://github.com/kyma-project/control-plane/blob/main/components/kyma-environment-broker/internal/process/upgrade_kyma/initialisation.go) step.
+Each upgrade step is responsible for a separate part of upgrading Kyma runtime dependencies. To properly upgrade SAP BTP, Kyma runtime, you need the data used during the provisioning. You can fetch this data from the **ProvisioningOperation** struct in the [initialization](https://github.com/kyma-project/kyma-environment-broker/blob/main/internal/process/upgrade_kyma/initialisation.go) step.
 
 The upgrade process contains the following steps:
 

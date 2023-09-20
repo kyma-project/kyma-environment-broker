@@ -24,7 +24,7 @@ kyma-environment-broker.trialCleanup.schedule: "0 3 * * *"
 ```
 
 > **NOTE:** If you need to test the Job, you can run it in the `dry-run` mode.
-> In this mode, the Job only logs the information about the candidate instances (that is, instances meeting the configured criteria). The instances are not affected.
+> In this mode, the Job only logs the information about the candidate instances, that is, instances meeting the configured criteria. The instances are not affected.
 
 
 Use the following environment variables to configure the Job:

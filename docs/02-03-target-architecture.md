@@ -5,7 +5,7 @@
 ![KEB target architecture](./assets/target-keb-arch.svg)
 
 1. The user sends a request to create a new cluster with SAP BTP, Kyma runtime.
-2. Kyma Environment Broker creates a GardenerCluster resource.
+2. KEB creates a GardenerCluster resource.
 3. Infrastructure Manager provisions a new Kubernetes cluster.
 4. Infrastructure Manager creates and maintains a Secret containing a kubeconfig.
 5. KEB creates a Kyma resource.

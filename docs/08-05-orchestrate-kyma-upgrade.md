@@ -1,12 +1,12 @@
 # Orchestrate Kyma upgrade
 
-This tutorial shows how to upgrade SAP BTP, Kyma runtime using Kyma Environment Broker.
+This tutorial shows how to upgrade SAP BTP, Kyma runtime using Kyma Environment Broker (KEB).
 
 ## Prerequisites
 
 - Compass with:
-  * Runtime Provisioner [configured](../provisioner/08-02-provisioning-gardener.md) for Azure
-  * Kyma Environment Broker configured and chosen [overrides](https://kyma-project.io/docs/kyma/latest/04-operation-guides/operations/03-change-kyma-config-values/) set up
+  * Runtime Provisioner [configured](https://github.com/kyma-project/control-plane/blob/main/docs/provisioner/08-02-provisioning-gardener.md) for Azure
+  * KEB configured and chosen [overrides](https://kyma-project.io/#/04-operation-guides/operations/03-change-kyma-config-values) set up
 
 ## Steps
 
@@ -16,7 +16,7 @@ This tutorial shows how to upgrade SAP BTP, Kyma runtime using Kyma Environment 
    export AUTHORIZATION_HEADER="Authorization: Bearer $ID_TOKEN"
    ```
 
-2. Make a call to the Kyma Environment Broker to orchestrate the upgrade. You can select specific Kyma runtimes to upgrade using the following selectors:
+2. Make a call to KEB to orchestrate the upgrade. You can select specific Kyma runtimes to upgrade using the following selectors:
 
 - `target` - use the `target: "all"` selector to select all Kyma runtimes
 - `globalAccount` - use it to select Kyma runtimes with the specified global account ID
