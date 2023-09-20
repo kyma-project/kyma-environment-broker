@@ -160,7 +160,6 @@ These are the provisioning parameters for OpenStack that you can configure:
  </details>
  </div>
 
-
 ## Trial plan
 
 The trial plan allows you to install Kyma runtime on Azure, AWS, or GCP. The plan assumptions are as follows:
