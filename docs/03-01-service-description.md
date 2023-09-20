@@ -242,5 +242,5 @@ These are the provisioning parameters for the `preview` plan that you configure:
 </details>
 </div>
 
-<a name="version"><sup>1</sup> This parameter will not be available after all Kyma components become independent modules.</a> 
-<a name="update"><sup>2</sup> This parameter is available for `PATCH` as well, and can be updated with the same constraints as during provisioning.</a> <br>
+<a name="version"><sup>1</sup> This parameter will not be available after all Kyma components become independent modules.</a> <br>
+<a name="update"><sup>2</sup> This parameter is available for `PATCH` as well, and can be updated with the same constraints as during provisioning.</a> 
