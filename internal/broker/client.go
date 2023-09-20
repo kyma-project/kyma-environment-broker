@@ -222,7 +222,7 @@ func preparePatchRequest(instance internal.Instance, brokerConfigURL string) (*h
 		return nil, fmt.Errorf("while marshaling payload for instanceID: %s: %w", instance.InstanceID, err)
 	}
 
-	log.Infof("Requesting expiration of the environment with instance id: %q", instance.InstanceID)
+	log.Infof("Requesting expiration of the environment with instanceID: %q", instance.InstanceID)
 
 	request, err := http.NewRequest(http.MethodPatch, updateInstanceUrl, bytes.NewBuffer(jsonPayload))
 	if err != nil {

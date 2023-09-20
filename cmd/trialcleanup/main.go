@@ -165,10 +165,10 @@ func (s *TrialCleanupService) logInstances(instances []internal.Instance) {
 }
 
 func (s *TrialCleanupService) expireInstance(instance internal.Instance) (processed bool, err error) {
-	log.Infof("About to make instance suspended for instanceId: %+v", instance.InstanceID)
+	log.Infof("About to make instance expired for instanceID: %+v", instance.InstanceID)
 	suspensionUnderWay, err := s.brokerClient.SendExpirationRequest(instance)
 	if err != nil {
-		log.Error(fmt.Sprintf("while sending expiration request for instance ID %q: %s", instance.InstanceID, err))
+		log.Error(fmt.Sprintf("while sending expiration request for instanceID %q: %s", instance.InstanceID, err))
 		return suspensionUnderWay, err
 	}
 	return suspensionUnderWay, nil
