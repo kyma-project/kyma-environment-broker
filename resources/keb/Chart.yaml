@@ -1,0 +1,6 @@
+apiVersion: v2
+name: keb
+description:
+description: Kyma Environment Broker Helm chart for Kubernetes
+version: 0.1.0
+type: application
