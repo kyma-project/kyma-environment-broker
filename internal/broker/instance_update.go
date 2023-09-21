@@ -123,7 +123,7 @@ func (b *UpdateEndpoint) Update(_ context.Context, instanceID string, details do
 		logger.Errorf("cannot fetch provisioning lastProvisioningOperation for instance with ID: %s : %s", instance.InstanceID, err.Error())
 		return domain.UpdateServiceSpec{}, fmt.Errorf("unable to process the update")
 	}
-	if lastProvisioningOperation.State == domain.Failed {
+	if lastProvisioningOperation.State == domain.Failed && !instance.IsExpired() {
 		return domain.UpdateServiceSpec{}, apiresponses.NewFailureResponse(fmt.Errorf("Unable to process an update of a failed instance"), http.StatusUnprocessableEntity, "")
 	}
 
@@ -133,7 +133,7 @@ func (b *UpdateEndpoint) Update(_ context.Context, instanceID string, details do
 		return domain.UpdateServiceSpec{}, fmt.Errorf("unable to process the update")
 	}
 	if err == nil {
-		if !lastDeprovisioningOperation.Temporary {
+		if !lastDeprovisioningOperation.Temporary && !instance.IsExpired() {
 			// it is not a suspension, but real deprovisioning
 			logger.Warnf("Cannot process update, the instance has started deprovisioning process (operationID=%s)", lastDeprovisioningOperation.Operation.ID)
 			return domain.UpdateServiceSpec{}, apiresponses.NewFailureResponse(fmt.Errorf("Unable to process an update of a deprovisioned instance"), http.StatusUnprocessableEntity, "")
