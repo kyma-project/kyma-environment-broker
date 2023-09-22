@@ -100,6 +100,9 @@ func TestUpdateEndpoint_UpdateSuspension(t *testing.T) {
 	require.NotNil(t, handler.Instance.Parameters.ErsContext.Active)
 	assert.True(t, *handler.Instance.Parameters.ErsContext.Active)
 	assert.Len(t, response.Metadata.Labels, 1)
+
+	inst, err := st.Instances().GetByID(instanceID)
+	assert.False(t, *inst.Parameters.ErsContext.Active)
 }
 
 func TestUpdateEndpoint_UpdateExpirationOfTrial(t *testing.T) {
@@ -153,6 +156,7 @@ func TestUpdateEndpoint_UpdateExpirationOfTrial(t *testing.T) {
 	inst, err := st.Instances().GetByID(instanceID)
 	require.NoError(t, err)
 	assert.True(t, inst.IsExpired())
+	assert.False(t, *inst.Parameters.ErsContext.Active)
 }
 
 func TestUpdateEndpoint_UpdateExpirationOfExpiredTrial(t *testing.T) {
@@ -688,4 +692,304 @@ func TestUpdateEndpoint_UpdateWithEnabledDashboard(t *testing.T) {
 	assert.Regexp(t, `^https:\/\/dashboard\.example\.com\/\?kubeconfigID=`, inst.DashboardURL)
 	// check if the API response is correct
 	assert.Regexp(t, `^https:\/\/dashboard\.example\.com\/\?kubeconfigID=`, response.DashboardURL)
+}
+
+func TestUpdateEndpoint_UpdateExpirationOfNonTrial(t *testing.T) {
+	// given
+	instance := internal.Instance{
+		InstanceID:    instanceID,
+		ServicePlanID: AWSPlanID,
+		Parameters: internal.ProvisioningParameters{
+			PlanID: AWSPlanID,
+			ErsContext: internal.ERSContext{
+				TenantID:        "",
+				SubAccountID:    "",
+				GlobalAccountID: "",
+				Active:          nil,
+			},
+		},
+	}
+
+	st := storage.NewMemoryStorage()
+	err := st.Instances().Insert(instance)
+	require.NoError(t, err)
+
+	provisioningOp := fixProvisioningOperation("provisioning-aws-01")
+	err = st.Operations().InsertProvisioningOperation(provisioningOp)
+	require.NoError(t, err)
+
+	handler := &handler{}
+	q := &automock.Queue{}
+	q.On("Add", mock.AnythingOfType("string"))
+	planDefaults := func(planID string, platformProvider internal.CloudProvider, provider *internal.CloudProvider) (*gqlschema.ClusterConfigInput, error) {
+		return &gqlschema.ClusterConfigInput{}, nil
+	}
+	svc := NewUpdate(Config{}, st.Instances(), st.RuntimeStates(), st.Operations(), handler, true, false, q, PlansConfig{},
+		planDefaults, logrus.New(), dashboardConfig)
+
+	// when
+	_, err = svc.Update(context.Background(), instanceID, domain.UpdateDetails{
+		ServiceID:       "",
+		PlanID:          AWSPlanID,
+		RawParameters:   json.RawMessage(`{"expired": true}`),
+		PreviousValues:  domain.PreviousValues{},
+		RawContext:      json.RawMessage(`{"active":false}`),
+		MaintenanceInfo: nil,
+	}, true)
+	require.Error(t, err)
+
+	// then
+	assert.IsType(t, err, &apiresponses.FailureResponse{}, "Updating returned error of unexpected type")
+	apierr := err.(*apiresponses.FailureResponse)
+	assert.Equal(t, apierr.ValidatedStatusCode(nil), http.StatusBadRequest, "Updating status code not matching")
+
+	require.Nil(t, handler.ersContext.Active)
+	require.Nil(t, handler.Instance.Parameters.ErsContext.Active)
+	inst, err := st.Instances().GetByID(instanceID)
+	require.NoError(t, err)
+	assert.False(t, inst.IsExpired())
+}
+
+func TestUpdateEndpoint_ExpiryOnFailedOperations(t *testing.T) {
+	t.Run("should expire trial on a failed provisioning operation", func(t *testing.T) {
+		// given
+		instance := internal.Instance{
+			InstanceID:    instanceID,
+			ServicePlanID: TrialPlanID,
+			Parameters: internal.ProvisioningParameters{
+				PlanID: TrialPlanID,
+				ErsContext: internal.ERSContext{
+					TenantID:        "",
+					SubAccountID:    "",
+					GlobalAccountID: "",
+					Active:          nil,
+				},
+			},
+		}
+
+		st := storage.NewMemoryStorage()
+		err := st.Instances().Insert(instance)
+		require.NoError(t, err)
+
+		failedProvisioningOp := fixProvisioningOperation("failed-provisioning-trial-01")
+		failedProvisioningOp.State = domain.Failed
+		err = st.Operations().InsertProvisioningOperation(failedProvisioningOp)
+		require.NoError(t, err)
+
+		handler := &handler{}
+		q := &automock.Queue{}
+		q.On("Add", mock.AnythingOfType("string"))
+		planDefaults := func(planID string, platformProvider internal.CloudProvider, provider *internal.CloudProvider) (*gqlschema.ClusterConfigInput, error) {
+			return &gqlschema.ClusterConfigInput{}, nil
+		}
+		svc := NewUpdate(Config{}, st.Instances(), st.RuntimeStates(), st.Operations(), handler, true, false, q, PlansConfig{},
+			planDefaults, logrus.New(), dashboardConfig)
+
+		// when
+		response, err := svc.Update(context.Background(), instanceID, domain.UpdateDetails{
+			ServiceID:       "",
+			PlanID:          TrialPlanID,
+			RawParameters:   json.RawMessage(`{"expired": true}`),
+			PreviousValues:  domain.PreviousValues{},
+			RawContext:      json.RawMessage(`{"active":false}`),
+			MaintenanceInfo: nil,
+		}, true)
+		require.NoError(t, err)
+
+		// then
+		assert.Equal(t, internal.ERSContext{
+			Active: ptr.Bool(false),
+		}, handler.ersContext)
+
+		require.NotNil(t, handler.Instance.Parameters.ErsContext.Active)
+		assert.True(t, *handler.Instance.Parameters.ErsContext.Active)
+		assert.Len(t, response.Metadata.Labels, 1)
+		inst, err := st.Instances().GetByID(instanceID)
+		require.NoError(t, err)
+		assert.True(t, inst.IsExpired())
+		assert.False(t, *inst.Parameters.ErsContext.Active)
+	})
+
+	t.Run("should return a failure response on a failed provisioning operation when the plan is not trial", func(t *testing.T) {
+		// given
+		instance := internal.Instance{
+			InstanceID:    instanceID,
+			ServicePlanID: AWSPlanID,
+			Parameters: internal.ProvisioningParameters{
+				PlanID: AWSPlanID,
+				ErsContext: internal.ERSContext{
+					TenantID:        "",
+					SubAccountID:    "",
+					GlobalAccountID: "",
+					Active:          nil,
+				},
+			},
+		}
+
+		st := storage.NewMemoryStorage()
+		err := st.Instances().Insert(instance)
+		require.NoError(t, err)
+
+		failedProvisioningOp := fixProvisioningOperation("failed-provisioning-aws-01")
+		failedProvisioningOp.State = domain.Failed
+		err = st.Operations().InsertProvisioningOperation(failedProvisioningOp)
+		require.NoError(t, err)
+
+		handler := &handler{}
+		q := &automock.Queue{}
+		q.On("Add", mock.AnythingOfType("string"))
+		planDefaults := func(planID string, platformProvider internal.CloudProvider, provider *internal.CloudProvider) (*gqlschema.ClusterConfigInput, error) {
+			return &gqlschema.ClusterConfigInput{}, nil
+		}
+		svc := NewUpdate(Config{}, st.Instances(), st.RuntimeStates(), st.Operations(), handler, true, false, q, PlansConfig{},
+			planDefaults, logrus.New(), dashboardConfig)
+
+		// when
+		_, err = svc.Update(context.Background(), instanceID, domain.UpdateDetails{
+			ServiceID:       "",
+			PlanID:          AWSPlanID,
+			RawParameters:   json.RawMessage(``),
+			PreviousValues:  domain.PreviousValues{},
+			RawContext:      json.RawMessage(`{"globalaccount_id": "GAID-01"}`),
+			MaintenanceInfo: nil,
+		}, true)
+		require.Error(t, err)
+
+		// then
+		assert.IsType(t, err, &apiresponses.FailureResponse{}, "Updating returned error of unexpected type")
+		apierr := err.(*apiresponses.FailureResponse)
+		assert.Equal(t, apierr.ValidatedStatusCode(nil), http.StatusUnprocessableEntity, "Updating status code not matching")
+
+		require.Nil(t, handler.ersContext.Active)
+		require.Nil(t, handler.Instance.Parameters.ErsContext.Active)
+		inst, err := st.Instances().GetByID(instanceID)
+		require.NoError(t, err)
+		assert.False(t, inst.IsExpired())
+	})
+
+	t.Run("should expire trial on a failed deprovisioning operation", func(t *testing.T) {
+		// given
+		instance := internal.Instance{
+			InstanceID:    instanceID,
+			ServicePlanID: TrialPlanID,
+			Parameters: internal.ProvisioningParameters{
+				PlanID: TrialPlanID,
+				ErsContext: internal.ERSContext{
+					TenantID:        "",
+					SubAccountID:    "",
+					GlobalAccountID: "",
+					Active:          nil,
+				},
+			},
+		}
+
+		st := storage.NewMemoryStorage()
+		err := st.Instances().Insert(instance)
+		require.NoError(t, err)
+
+		provisioningOp := fixProvisioningOperation("provisioning-trial-01")
+		err = st.Operations().InsertProvisioningOperation(provisioningOp)
+		require.NoError(t, err)
+
+		failedDeprovisioningOp := fixture.FixDeprovisioningOperation("failed-deprovisioning-trial-01", instanceID)
+		failedDeprovisioningOp.CreatedAt = time.Now().Add(5 * time.Minute)
+		failedDeprovisioningOp.State = domain.Failed
+		err = st.Operations().InsertDeprovisioningOperation(failedDeprovisioningOp)
+		require.NoError(t, err)
+
+		handler := &handler{}
+		q := &automock.Queue{}
+		q.On("Add", mock.AnythingOfType("string"))
+		planDefaults := func(planID string, platformProvider internal.CloudProvider, provider *internal.CloudProvider) (*gqlschema.ClusterConfigInput, error) {
+			return &gqlschema.ClusterConfigInput{}, nil
+		}
+		svc := NewUpdate(Config{}, st.Instances(), st.RuntimeStates(), st.Operations(), handler, true, false, q, PlansConfig{},
+			planDefaults, logrus.New(), dashboardConfig)
+
+		// when
+		response, err := svc.Update(context.Background(), instanceID, domain.UpdateDetails{
+			ServiceID:       "",
+			PlanID:          TrialPlanID,
+			RawParameters:   json.RawMessage(`{"expired": true}`),
+			PreviousValues:  domain.PreviousValues{},
+			RawContext:      json.RawMessage(`{"active": false}`),
+			MaintenanceInfo: nil,
+		}, true)
+		require.NoError(t, err)
+
+		// then
+		assert.Equal(t, internal.ERSContext{
+			Active: ptr.Bool(false),
+		}, handler.ersContext)
+
+		require.NotNil(t, handler.Instance.Parameters.ErsContext.Active)
+		assert.False(t, *handler.Instance.Parameters.ErsContext.Active)
+		assert.Len(t, response.Metadata.Labels, 1)
+		inst, err := st.Instances().GetByID(instanceID)
+		require.NoError(t, err)
+		assert.True(t, inst.IsExpired())
+		assert.False(t, *inst.Parameters.ErsContext.Active)
+	})
+
+	t.Run("should return a failure response on a failed deprovisioning operation when the plan is not trial", func(t *testing.T) {
+		// given
+		instance := internal.Instance{
+			InstanceID:    instanceID,
+			ServicePlanID: AWSPlanID,
+			Parameters: internal.ProvisioningParameters{
+				PlanID: AWSPlanID,
+				ErsContext: internal.ERSContext{
+					TenantID:        "",
+					SubAccountID:    "",
+					GlobalAccountID: "",
+					Active:          nil,
+				},
+			},
+		}
+
+		st := storage.NewMemoryStorage()
+		err := st.Instances().Insert(instance)
+		require.NoError(t, err)
+
+		provisioningOp := fixProvisioningOperation("provisioning-aws-01")
+		err = st.Operations().InsertProvisioningOperation(provisioningOp)
+		require.NoError(t, err)
+
+		failedDeprovisioningOp := fixture.FixDeprovisioningOperation("failed-deprovisioning-aws-01", instanceID)
+		failedDeprovisioningOp.CreatedAt = time.Now().Add(5 * time.Minute)
+		failedDeprovisioningOp.State = domain.Failed
+		err = st.Operations().InsertDeprovisioningOperation(failedDeprovisioningOp)
+		require.NoError(t, err)
+
+		handler := &handler{}
+		q := &automock.Queue{}
+		q.On("Add", mock.AnythingOfType("string"))
+		planDefaults := func(planID string, platformProvider internal.CloudProvider, provider *internal.CloudProvider) (*gqlschema.ClusterConfigInput, error) {
+			return &gqlschema.ClusterConfigInput{}, nil
+		}
+		svc := NewUpdate(Config{}, st.Instances(), st.RuntimeStates(), st.Operations(), handler, true, false, q, PlansConfig{},
+			planDefaults, logrus.New(), dashboardConfig)
+
+		// when
+		_, err = svc.Update(context.Background(), instanceID, domain.UpdateDetails{
+			ServiceID:       "",
+			PlanID:          AWSPlanID,
+			RawParameters:   json.RawMessage(``),
+			PreviousValues:  domain.PreviousValues{},
+			RawContext:      json.RawMessage(`{"globalaccount_id": "GAID-01"}`),
+			MaintenanceInfo: nil,
+		}, true)
+		require.Error(t, err)
+
+		// then
+		assert.IsType(t, err, &apiresponses.FailureResponse{}, "Updating returned error of unexpected type")
+		apierr := err.(*apiresponses.FailureResponse)
+		assert.Equal(t, apierr.ValidatedStatusCode(nil), http.StatusUnprocessableEntity, "Updating status code not matching")
+
+		require.Nil(t, handler.ersContext.Active)
+		require.Nil(t, handler.Instance.Parameters.ErsContext.Active)
+		inst, err := st.Instances().GetByID(instanceID)
+		require.NoError(t, err)
+		assert.False(t, inst.IsExpired())
+	})
 }
