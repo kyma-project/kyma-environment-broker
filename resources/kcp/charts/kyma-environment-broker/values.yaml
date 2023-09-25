@@ -195,12 +195,14 @@ avs:
   #   - content: tag-B
   #     tag_id: 2
   #     tag_name: value-B
-  internalTesterTags: ""
-  externalTesterTags: ""
-  additionalTagsEnabled: "false"
-  gardenerSeedNameTagClassId: "0"
+  instanceIdTagClassId: "320334701"
+  globalAccountIdTagClassId: "320339941"
+  subAccountIdTagClassId: "320336838"
+  landscapeTagClassId: "0"
+  providerTagClassId: "320340965"
+  regionTagClassId: "320340750"
+  shootNameTagClassId: "314006844"
   gardenerShootNameTagClassId: "0"
-  regionTagClassId: "0"
   trialApiKey: ""
   trialInternalTesterAccessId: "0"
   trialGroupId: "0"

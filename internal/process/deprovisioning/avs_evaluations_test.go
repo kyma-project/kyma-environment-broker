@@ -241,17 +241,9 @@ func avsConfig(mockOauthServer *httptest.Server, mockAvsServer *httptest.Server)
 		DefinitionType:         avs.DefinitionType,
 		InternalTesterAccessId: 1234,
 		InternalTesterService:  "",
-		InternalTesterTags:     []*avs.Tag{},
 		ExternalTesterAccessId: 5678,
 		ExternalTesterService:  "dummy",
-		ExternalTesterTags: []*avs.Tag{
-			{
-				Content:      "dummy",
-				TagClassId:   123,
-				TagClassName: "dummy",
-			},
-		},
-		GroupId:  5555,
-		ParentId: parentEvalId,
+		GroupId:                5555,
+		ParentId:               parentEvalId,
 	}
 }

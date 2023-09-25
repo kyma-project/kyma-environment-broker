@@ -323,7 +323,6 @@ func main() {
 	externalEvalAssistant := avs.NewExternalEvalAssistant(cfg.Avs)
 	internalEvalAssistant := avs.NewInternalEvalAssistant(cfg.Avs)
 	externalEvalCreator := provisioning.NewExternalEvalCreator(avsDel, cfg.Avs.Disabled, externalEvalAssistant)
-	internalEvalUpdater := provisioning.NewInternalEvalUpdater(avsDel, internalEvalAssistant, cfg.Avs)
 	upgradeEvalManager := avs.NewEvaluationManager(avsDel, cfg.Avs)
 
 	// IAS
@@ -479,20 +478,20 @@ func createAPI(router *mux.Router, servicesConfig broker.ServicesConfig, planVal
 
 	// create KymaEnvironmentBroker endpoints
 	kymaEnvBroker := &broker.KymaEnvironmentBroker{
-		broker.NewServices(cfg.Broker, servicesConfig, logs),
-		broker.NewProvision(cfg.Broker, cfg.Gardener, db.Operations(), db.Instances(),
+		ServicesEndpoint: broker.NewServices(cfg.Broker, servicesConfig, logs),
+		ProvisionEndpoint: broker.NewProvision(cfg.Broker, cfg.Gardener, db.Operations(), db.Instances(),
 			provisionQueue, planValidator, defaultPlansConfig, cfg.EnableOnDemandVersion,
 			planDefaults, whitelistedGlobalAccountIds, cfg.EuAccessRejectionMessage, logs, cfg.KymaDashboardConfig),
-		broker.NewDeprovision(db.Instances(), db.Operations(), deprovisionQueue, logs),
-		broker.NewUpdate(cfg.Broker, db.Instances(), db.RuntimeStates(), db.Operations(),
+		DeprovisionEndpoint: broker.NewDeprovision(db.Instances(), db.Operations(), deprovisionQueue, logs),
+		UpdateEndpoint: broker.NewUpdate(cfg.Broker, db.Instances(), db.RuntimeStates(), db.Operations(),
 			suspensionCtxHandler, cfg.UpdateProcessingEnabled, cfg.UpdateSubAccountMovementEnabled, updateQueue, defaultPlansConfig,
 			planDefaults, logs, cfg.KymaDashboardConfig),
-		broker.NewGetInstance(cfg.Broker, db.Instances(), db.Operations(), logs),
-		broker.NewLastOperation(db.Operations(), logs),
-		broker.NewBind(logs),
-		broker.NewUnbind(logs),
-		broker.NewGetBinding(logs),
-		broker.NewLastBindingOperation(logs),
+		GetInstanceEndpoint:          broker.NewGetInstance(cfg.Broker, db.Instances(), db.Operations(), logs),
+		LastOperationEndpoint:        broker.NewLastOperation(db.Operations(), logs),
+		BindEndpoint:                 broker.NewBind(logs),
+		UnbindEndpoint:               broker.NewUnbind(logs),
+		GetBindingEndpoint:           broker.NewGetBinding(logs),
+		LastBindingOperationEndpoint: broker.NewLastBindingOperation(logs),
 	}
 
 	router.Use(middleware.AddRegionToContext(cfg.DefaultRequestRegion))
@@ -632,7 +631,7 @@ func panicOnError(err error) {
 func NewProvisioningProcessingQueue(ctx context.Context, provisionManager *process.StagedManager, workersAmount int, cfg *Config,
 	db storage.BrokerStorage, provisionerClient provisioner.Client, inputFactory input.CreatorForPlan, avsDel *avs.Delegator,
 	internalEvalAssistant *avs.InternalEvalAssistant, externalEvalCreator *provisioning.ExternalEvalCreator,
-	internalEvalUpdater *provisioning.InternalEvalUpdater, runtimeVerConfigurator *runtimeversion.RuntimeVersionConfigurator,
+	runtimeVerConfigurator *runtimeversion.RuntimeVersionConfigurator,
 	runtimeOverrides provisioning.RuntimeOverridesAppender, edpClient provisioning.EDPClient, accountProvider hyperscaler.AccountProvider,
 	reconcilerClient reconciler.Client, k8sClientProvider func(kcfg string) (client.Client, error), cli client.Client, logs logrus.FieldLogger) *process.Queue {
 
@@ -746,11 +745,6 @@ func NewProvisioningProcessingQueue(ctx context.Context, provisionManager *proce
 		{
 			stage: postActionsStageName,
 			step:  provisioning.NewExternalEvalStep(externalEvalCreator),
-		},
-		{
-			stage:     postActionsStageName,
-			step:      provisioning.NewRuntimeTagsStep(internalEvalUpdater, provisionerClient),
-			condition: provisioning.SkipForOwnClusterPlan,
 		},
 	}
 	for _, step := range provisioningSteps {

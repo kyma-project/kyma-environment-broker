@@ -191,7 +191,7 @@ func NewBrokerSuiteTest(t *testing.T, version ...string) *BrokerSuiteTest {
 	runtimeVerConfigurator := runtimeversion.NewRuntimeVersionConfigurator(cfg.KymaVersion, accountVersionMapping, nil)
 
 	directorClient := director.NewFakeClient()
-	avsDel, externalEvalCreator, internalEvalUpdater, internalEvalAssistant, externalEvalAssistant := createFakeAvsDelegator(t, db, cfg)
+	avsDel, externalEvalCreator, internalEvalAssistant, externalEvalAssistant := createFakeAvsDelegator(t, db, cfg)
 
 	iasFakeClient := ias.NewFakeClient()
 	reconcilerClient := reconciler.NewFakeClient()
@@ -203,7 +203,7 @@ func NewBrokerSuiteTest(t *testing.T, version ...string) *BrokerSuiteTest {
 	fakeK8sSKRClient := fake.NewClientBuilder().WithScheme(sch).Build()
 	provisionManager := process.NewStagedManager(db.Operations(), eventBroker, cfg.OperationTimeout, cfg.Provisioning, logs.WithField("provisioning", "manager"))
 	provisioningQueue := NewProvisioningProcessingQueue(context.Background(), provisionManager, workersAmount, cfg, db, provisionerClient, inputFactory,
-		avsDel, internalEvalAssistant, externalEvalCreator, internalEvalUpdater, runtimeVerConfigurator, runtimeOverrides,
+		avsDel, internalEvalAssistant, externalEvalCreator, runtimeVerConfigurator, runtimeOverrides,
 		edpClient, accountProvider, reconcilerClient, fakeK8sClientProvider(fakeK8sSKRClient), cli, logs)
 
 	provisioningQueue.SpeedUp(10000)
@@ -237,7 +237,7 @@ func NewBrokerSuiteTest(t *testing.T, version ...string) *BrokerSuiteTest {
 		componentProvider:   decoratedComponentListProvider,
 		k8sKcp:              cli,
 		k8sSKR:              fakeK8sSKRClient,
-		poller:              &broker.DefaultPoller{3 * time.Millisecond, 2 * time.Second},
+		poller:              &broker.DefaultPoller{PollInterval: 3 * time.Millisecond, PollTimeout: 2 * time.Second},
 	}
 
 	ts.CreateAPI(inputFactory, cfg, db, provisioningQueue, deprovisioningQueue, updateQueue, logs)
@@ -341,7 +341,7 @@ func (s *BrokerSuiteTest) CreateAPI(inputFactory broker.PlanValidator, cfg *Conf
 	s.httpServer = httptest.NewServer(s.router)
 }
 
-func createFakeAvsDelegator(t *testing.T, db storage.BrokerStorage, cfg *Config) (*avs.Delegator, *provisioning.ExternalEvalCreator, *provisioning.InternalEvalUpdater, *avs.InternalEvalAssistant, *avs.ExternalEvalAssistant) {
+func createFakeAvsDelegator(t *testing.T, db storage.BrokerStorage, cfg *Config) (*avs.Delegator, *provisioning.ExternalEvalCreator, *avs.InternalEvalAssistant, *avs.ExternalEvalAssistant) {
 	server := avs.NewMockAvsServer(t)
 	mockServer := avs.FixMockAvsServer(server)
 	avsConfig := avs.Config{
@@ -354,9 +354,8 @@ func createFakeAvsDelegator(t *testing.T, db storage.BrokerStorage, cfg *Config)
 	externalEvalAssistant := avs.NewExternalEvalAssistant(cfg.Avs)
 	internalEvalAssistant := avs.NewInternalEvalAssistant(cfg.Avs)
 	externalEvalCreator := provisioning.NewExternalEvalCreator(avsDel, cfg.Avs.Disabled, externalEvalAssistant)
-	internalEvalUpdater := provisioning.NewInternalEvalUpdater(avsDel, internalEvalAssistant, cfg.Avs)
 
-	return avsDel, externalEvalCreator, internalEvalUpdater, internalEvalAssistant, externalEvalAssistant
+	return avsDel, externalEvalCreator, internalEvalAssistant, externalEvalAssistant
 }
 
 func (s *BrokerSuiteTest) CreateProvisionedRuntime(options RuntimeOptions) string {
