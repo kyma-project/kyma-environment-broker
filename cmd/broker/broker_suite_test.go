@@ -495,7 +495,29 @@ func (s *BrokerSuiteTest) FinishUpdatingOperationByProvisioner(operationID strin
 		return true, nil
 	})
 	assert.NoError(s.t, err, "timeout waiting for the operation with runtimeID. The existing operation %+v", op)
-	s.finishOperatioByOpIDnByProvisioner(gqlschema.OperationTypeUpgradeShoot, gqlschema.OperationStateSucceeded, op.ID)
+	s.finishOperationByOpIDByProvisioner(gqlschema.OperationTypeUpgradeShoot, gqlschema.OperationStateSucceeded, op.ID)
+}
+
+func (s *BrokerSuiteTest) FinishDeprovisioningOperationByProvisionerForGivenOpId(operationID string) {
+	var op *internal.DeprovisioningOperation
+	err := s.poller.Invoke(func() (done bool, err error) {
+		op, err = s.db.Operations().GetDeprovisioningOperationByID(operationID)
+		if err != nil {
+			return false, nil
+		}
+		if op.RuntimeID != "" && op.ProvisionerOperationID != "" {
+			return true, nil
+		}
+		return false, nil
+	})
+	assert.NoError(s.t, err, "timeout waiting for the operation with runtimeID. The existing operation %+v", op)
+
+	err = s.gardenerClient.Resource(gardener.ShootResource).
+		Namespace(fixedGardenerNamespace).
+		Delete(context.Background(), op.ShootName, v1.DeleteOptions{})
+	require.NoError(s.t, err)
+
+	s.finishOperationByOpIDByProvisioner(gqlschema.OperationTypeDeprovision, gqlschema.OperationStateSucceeded, op.ID)
 }
 
 func (s *BrokerSuiteTest) finishOperationByProvisioner(operationType gqlschema.OperationType, state gqlschema.OperationState, runtimeID string) {
@@ -510,7 +532,7 @@ func (s *BrokerSuiteTest) finishOperationByProvisioner(operationType gqlschema.O
 	assert.NoError(s.t, err, "timeout waiting for provisioner operation to exist")
 }
 
-func (s *BrokerSuiteTest) finishOperatioByOpIDnByProvisioner(operationType gqlschema.OperationType, state gqlschema.OperationState, operationID string) {
+func (s *BrokerSuiteTest) finishOperationByOpIDByProvisioner(operationType gqlschema.OperationType, state gqlschema.OperationState, operationID string) {
 	err := s.poller.Invoke(func() (bool, error) {
 		op, err := s.db.Operations().GetOperationByID(operationID)
 		if err != nil {
@@ -520,6 +542,10 @@ func (s *BrokerSuiteTest) finishOperatioByOpIDnByProvisioner(operationType gqlsc
 		status, err := s.provisionerClient.RuntimeOperationStatus("", op.ProvisionerOperationID)
 		if err != nil {
 			s.Log(fmt.Sprintf("failed to get RuntimeOperationStatus: %v", err))
+			return false, nil
+		}
+		if status.Operation != operationType {
+			s.Log(fmt.Sprintf("operation types don't match, expected: %s, actual: %s", operationType.String(), status.Operation.String()))
 			return false, nil
 		}
 		if status.ID != nil {
@@ -565,6 +591,37 @@ func (s *BrokerSuiteTest) FinishProvisioningOperationByReconciler(operationID st
 		}
 		if state.Cluster != "" {
 			s.reconcilerClient.ChangeClusterState(provisioningOp.RuntimeID, provisioningOp.ClusterConfigurationVersion, reconcilerApi.StatusReady)
+			return true, nil
+		}
+		return false, nil
+	})
+	assert.NoError(s.t, err)
+}
+
+func (s *BrokerSuiteTest) FailProvisioningOperationByReconciler(operationID string) {
+	// wait until ProvisioningOperation reaches CreateRuntime step
+	var provisioningOp *internal.ProvisioningOperation
+	err := s.poller.Invoke(func() (bool, error) {
+		op, err := s.db.Operations().GetProvisioningOperationByID(operationID)
+		if err != nil {
+			return false, nil
+		}
+		if op.ProvisionerOperationID != "" || broker.IsOwnClusterPlan(op.ProvisioningParameters.PlanID) {
+			provisioningOp = op
+			return true, nil
+		}
+		return false, nil
+	})
+	assert.NoError(s.t, err)
+
+	var state *reconcilerApi.HTTPClusterResponse
+	err = s.poller.Invoke(func() (bool, error) {
+		state, err = s.reconcilerClient.GetCluster(provisioningOp.RuntimeID, provisioningOp.ClusterConfigurationVersion)
+		if err != nil {
+			return false, err
+		}
+		if state.Cluster != "" {
+			s.reconcilerClient.ChangeClusterState(provisioningOp.RuntimeID, provisioningOp.ClusterConfigurationVersion, reconcilerApi.StatusError)
 			return true, nil
 		}
 		return false, nil
@@ -714,7 +771,7 @@ func (s *BrokerSuiteTest) FinishUpgradeClusterOperationByProvisioner(operationID
 	})
 	assert.NoError(s.t, err)
 
-	s.finishOperatioByOpIDnByProvisioner(gqlschema.OperationTypeUpgradeShoot, gqlschema.OperationStateSucceeded, upgradeOp.Operation.ID)
+	s.finishOperationByOpIDByProvisioner(gqlschema.OperationTypeUpgradeShoot, gqlschema.OperationStateSucceeded, upgradeOp.Operation.ID)
 }
 
 func (s *BrokerSuiteTest) AssertReconcilerStartedReconcilingWhenProvisioning(provisioningOpID string) {
@@ -1168,6 +1225,24 @@ func (s *BrokerSuiteTest) processReconcilingByOperationID(opID string) {
 	s.FinishProvisioningOperationByReconciler(opID)
 
 	s.WaitForOperationState(opID, domain.Succeeded)
+}
+
+func (s *BrokerSuiteTest) processProvisioningAndFailReconcilingByOperationID(opID string) {
+	// Provisioner part
+	s.WaitForProvisioningState(opID, domain.InProgress)
+	s.AssertProvisionerStartedProvisioning(opID)
+	s.FinishProvisioningOperationByProvisioner(opID, gqlschema.OperationStateSucceeded)
+	_, err := s.gardenerClient.Resource(gardener.ShootResource).Namespace(fixedGardenerNamespace).Create(context.Background(), s.fixGardenerShootForOperationID(opID), v1.CreateOptions{})
+	require.NoError(s.t, err)
+
+	// Reconciler part
+	s.failReconcilingByOperationID(opID)
+}
+
+func (s *BrokerSuiteTest) failReconcilingByOperationID(opID string) {
+	s.AssertReconcilerStartedReconcilingWhenProvisioning(opID)
+	s.FailProvisioningOperationByReconciler(opID)
+	s.WaitForOperationState(opID, domain.Failed)
 }
 
 func (s *BrokerSuiteTest) processProvisioningByInstanceID(iid string) {
