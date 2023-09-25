@@ -49,42 +49,42 @@ func (eea *ExternalEvalAssistant) ProvideParentId(_ internal.ProvisioningParamet
 }
 
 // func (iec *InternalEvalAssistant) ProvideTags(pp internal.ProvisioningParameters, rt runtime.RuntimeDTO) []*Tag {
-func (eea *ExternalEvalAssistant) ProvideTags(pp internal.ProvisioningParameters) []*Tag {
+func (eea *ExternalEvalAssistant) ProvideTags(operation internal.Operation) []*Tag {
 	var Tags []*Tag
 	Tags = append(Tags, &Tag{
-		Content:    "rt.InstanceID",
+		Content:    operation.InstanceID,
 		TagClassId: eea.avsConfig.InstanceIdTagClassId,
 	})
 
 	Tags = append(Tags, &Tag{
-		Content:    pp.ErsContext.GlobalAccountID,
+		Content:    operation.ProvisioningParameters.ErsContext.GlobalAccountID,
 		TagClassId: eea.avsConfig.GlobalAccountIdTagClassId,
 	})
 
 	Tags = append(Tags, &Tag{
-		Content:    pp.ErsContext.SubAccountID,
+		Content:    operation.ProvisioningParameters.ErsContext.SubAccountID,
 		TagClassId: eea.avsConfig.SubAccountIdTagClassId,
 	})
 
-	Tags = append(Tags, &Tag{
-		Content:    "rt.SubAccountRegion",
-		TagClassId: eea.avsConfig.LandscapeTagClassId,
-	})
+	if operation.ProvisioningParameters.ErsContext.Region != nil {
+		Tags = append(Tags, &Tag{
+			Content:    *operation.ProvisioningParameters.ErsContext.Region,
+			TagClassId: eea.avsConfig.LandscapeTagClassId,
+		})
+	}
 
 	Tags = append(Tags, &Tag{
-		// this returns with panic: panic: runtime error: invalid memory address or nil pointer dereference [recovered]
-		// am I referencing it wrong?
-		Content:    "string(*pp.Parameters.Provider)",
+		Content:    string(operation.ProvisioningParameters.PlatformProvider),
 		TagClassId: eea.avsConfig.ProviderTagClassId,
 	})
 
 	Tags = append(Tags, &Tag{
-		Content:    pp.PlatformRegion,
+		Content:    operation.LastRuntimeState.ClusterConfig.Region,
 		TagClassId: eea.avsConfig.RegionTagClassId,
 	})
 
 	Tags = append(Tags, &Tag{
-		Content:    pp.Parameters.ShootName,
+		Content:    operation.ProvisioningParameters.Parameters.ShootName,
 		TagClassId: eea.avsConfig.ShootNameTagClassId,
 	})
 

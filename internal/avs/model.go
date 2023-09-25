@@ -104,7 +104,7 @@ func newBasicEvaluationCreateRequest(operation internal.Operation, evalTypeSpeci
 		CheckType:        evalTypeSpecificConfig.ProvideCheckType(),
 		Interval:         interval,
 		TesterAccessId:   evalTypeSpecificConfig.ProvideTesterAccessId(operation.ProvisioningParameters),
-		Tags:             evalTypeSpecificConfig.ProvideTags(operation.ProvisioningParameters),
+		Tags:             evalTypeSpecificConfig.ProvideTags(operation),
 		Timeout:          timeout,
 		ReadOnly:         false,
 		ContentCheck:     contentCheck,

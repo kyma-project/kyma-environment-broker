@@ -61,47 +61,46 @@ func (iec *InternalEvalAssistant) ProvideCheckType() string {
 }
 
 // func (iec *InternalEvalAssistant) ProvideTags(pp internal.ProvisioningParameters, rt runtime.RuntimeDTO) []*Tag {
-func (iec *InternalEvalAssistant) ProvideTags(pp internal.ProvisioningParameters) []*Tag {
+func (iec *InternalEvalAssistant) ProvideTags(operation internal.Operation) []*Tag {
 
 	var Tags []*Tag
 
 	Tags = append(Tags, &Tag{
-		Content:    "rt.InstanceID",
+		Content:    operation.InstanceID,
 		TagClassId: iec.avsConfig.InstanceIdTagClassId,
 	})
 
 	Tags = append(Tags, &Tag{
-		Content:    pp.ErsContext.GlobalAccountID,
+		Content:    operation.ProvisioningParameters.ErsContext.GlobalAccountID,
 		TagClassId: iec.avsConfig.GlobalAccountIdTagClassId,
 	})
 
 	Tags = append(Tags, &Tag{
-		Content:    pp.ErsContext.SubAccountID,
+		Content:    operation.ProvisioningParameters.ErsContext.SubAccountID,
 		TagClassId: iec.avsConfig.SubAccountIdTagClassId,
 	})
 
-	Tags = append(Tags, &Tag{
-		Content:    "rt.SubAccountRegion",
-		TagClassId: iec.avsConfig.LandscapeTagClassId,
-	})
+	if operation.ProvisioningParameters.ErsContext.Region != nil {
+		Tags = append(Tags, &Tag{
+			Content:    *operation.ProvisioningParameters.ErsContext.Region,
+			TagClassId: iec.avsConfig.LandscapeTagClassId,
+		})
+	}
 
 	Tags = append(Tags, &Tag{
-		// this returns with panic: panic: runtime error: invalid memory address or nil pointer dereference [recovered]
-		// am I referencing it wrong?
-		Content:    "string(*pp.Parameters.Provider)",
+		Content:    string(operation.ProvisioningParameters.PlatformProvider),
 		TagClassId: iec.avsConfig.ProviderTagClassId,
 	})
 
 	Tags = append(Tags, &Tag{
-		Content:    pp.PlatformRegion,
+		Content:    operation.LastRuntimeState.ClusterConfig.Region,
 		TagClassId: iec.avsConfig.RegionTagClassId,
 	})
 
 	Tags = append(Tags, &Tag{
-		Content:    pp.Parameters.ShootName,
+		Content:    operation.ProvisioningParameters.Parameters.ShootName,
 		TagClassId: iec.avsConfig.ShootNameTagClassId,
 	})
-
 	return Tags
 
 }

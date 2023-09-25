@@ -674,11 +674,6 @@ func NewProvisioningProcessingQueue(ctx context.Context, provisionManager *proce
 			condition: provisioning.SkipForOwnClusterPlan,
 		},
 		{
-			stage:    createRuntimeStageName,
-			step:     provisioning.NewInternalEvaluationStep(avsDel, internalEvalAssistant),
-			disabled: cfg.Avs.Disabled,
-		},
-		{
 			stage:     createRuntimeStageName,
 			step:      provisioning.NewEDPRegistrationStep(db.Operations(), edpClient, cfg.EDP),
 			disabled:  cfg.EDP.Disabled,
@@ -699,6 +694,11 @@ func NewProvisioningProcessingQueue(ctx context.Context, provisionManager *proce
 			condition: provisioning.SkipForOwnClusterPlan,
 			stage:     createRuntimeStageName,
 			step:      provisioning.NewCreateRuntimeWithoutKymaStep(db.Operations(), db.RuntimeStates(), db.Instances(), provisionerClient),
+		},
+		{
+			stage:    createRuntimeStageName,
+			step:     provisioning.NewInternalEvaluationStep(avsDel, internalEvalAssistant),
+			disabled: cfg.Avs.Disabled,
 		},
 		{
 			condition: provisioning.DoForOwnClusterPlanOnly,
