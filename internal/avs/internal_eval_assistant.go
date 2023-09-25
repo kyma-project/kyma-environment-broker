@@ -60,8 +60,50 @@ func (iec *InternalEvalAssistant) ProvideCheckType() string {
 	return ""
 }
 
-func (iec *InternalEvalAssistant) ProvideTags() []*Tag {
-	return iec.avsConfig.InternalTesterTags
+// func (iec *InternalEvalAssistant) ProvideTags(pp internal.ProvisioningParameters, rt runtime.RuntimeDTO) []*Tag {
+func (iec *InternalEvalAssistant) ProvideTags(pp internal.ProvisioningParameters) []*Tag {
+
+	var Tags []*Tag
+
+	Tags = append(Tags, &Tag{
+		Content:    "rt.InstanceID",
+		TagClassId: iec.avsConfig.InstanceIdTagClassId,
+	})
+
+	Tags = append(Tags, &Tag{
+		Content:    pp.ErsContext.GlobalAccountID,
+		TagClassId: iec.avsConfig.GlobalAccountIdTagClassId,
+	})
+
+	Tags = append(Tags, &Tag{
+		Content:    pp.ErsContext.SubAccountID,
+		TagClassId: iec.avsConfig.SubAccountIdTagClassId,
+	})
+
+	Tags = append(Tags, &Tag{
+		Content:    "rt.SubAccountRegion",
+		TagClassId: iec.avsConfig.LandscapeTagClassId,
+	})
+
+	Tags = append(Tags, &Tag{
+		// this returns with panic: panic: runtime error: invalid memory address or nil pointer dereference [recovered]
+		// am I referencing it wrong?
+		Content:    "string(*pp.Parameters.Provider)",
+		TagClassId: iec.avsConfig.ProviderTagClassId,
+	})
+
+	Tags = append(Tags, &Tag{
+		Content:    pp.PlatformRegion,
+		TagClassId: iec.avsConfig.RegionTagClassId,
+	})
+
+	Tags = append(Tags, &Tag{
+		Content:    pp.Parameters.ShootName,
+		TagClassId: iec.avsConfig.ShootNameTagClassId,
+	})
+
+	return Tags
+
 }
 
 func (iec *InternalEvalAssistant) ProvideNewOrDefaultServiceName(defaultServiceName string) string {

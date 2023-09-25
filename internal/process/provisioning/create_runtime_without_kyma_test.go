@@ -157,7 +157,7 @@ func fixProvisionerInput(disabled bool, euAccess bool) gqlschema.ProvisionRuntim
 				DNSConfig: &gqlschema.DNSConfigInput{
 					Domain: "kyma.org",
 					Providers: []*gqlschema.DNSProviderInput{
-						&gqlschema.DNSProviderInput{
+						{
 							DomainsInclude: []string{"devtest.kyma.ondemand.com"},
 							Primary:        true,
 							SecretName:     "aws_dns_domain_secrets_test_intest",
