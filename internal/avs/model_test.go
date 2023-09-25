@@ -47,23 +47,12 @@ func TestAvsEvaluationConfigs(t *testing.T) {
 	assert.Equal("dummy", internalEvalAssistant.ProvideNewOrDefaultServiceName("dummy"))
 	assert.Equal("external-dummy", externalEvalAssistant.ProvideNewOrDefaultServiceName("dummy"))
 
-	params := internal.ProvisioningParameters{
-		PlanID:     "my_test_planID",
-		ServiceID:  "my_test_serviceID",
-		ErsContext: internal.ERSContext{
-			// Initialize ERSContext fields here
-		},
-		Parameters: internal.ProvisioningParametersDTO{
-			// Initialize ProvisioningParametersDTO fields here
-		},
-		PlatformRegion:   "your_test_platform_region",
-		PlatformProvider: "AWS",
-	}
-	assert.Equal(7, len(internalEvalAssistant.ProvideTags(internal.ProvisioningParameters{})))
+	params := internal.Operation{}
+	assert.Equal(6, len(internalEvalAssistant.ProvideTags(internal.Operation{})))
 
 	// verify confg as json
 	tags, testTag := externalEvalAssistant.ProvideTags(params), Tag{}
-	json.Unmarshal([]byte(`{"content":"rt.InstanceID","tag_class_id":0,"tag_class_name":""}`), &testTag)
+	json.Unmarshal([]byte(`{"content":"","tag_class_id":0,"tag_class_name":""}`), &testTag)
 	assert.Equal(testTag, *tags[0])
 
 }

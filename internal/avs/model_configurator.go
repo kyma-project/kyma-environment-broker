@@ -7,7 +7,7 @@ type ModelConfigurator interface {
 	ProvideTesterAccessId(pp internal.ProvisioningParameters) int64
 	ProvideGroupId(pp internal.ProvisioningParameters) int64
 	ProvideParentId(pp internal.ProvisioningParameters) int64
-	ProvideTags(pp internal.ProvisioningParameters) []*Tag
+	ProvideTags(pp internal.Operation) []*Tag
 	ProvideNewOrDefaultServiceName(defaultServiceName string) string
 	ProvideCheckType() string
 }
