@@ -37,6 +37,9 @@ func ApplyLabelsAndAnnotationsForLM(object client.Object, operation internal.Ope
 		a = make(map[string]string)
 	}
 	a["skr-domain"] = operation.ShootDomain
+	// This allows to migrate Compass integration functionality from Provisioner to the Compass Manager
+	a["compass-runtime-id-for-migration"] = operation.RuntimeID
+
 	object.SetAnnotations(a)
 }
 
