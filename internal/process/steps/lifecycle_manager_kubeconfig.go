@@ -2,10 +2,12 @@ package steps
 
 import (
 	"context"
+	stderrors "errors"
 	"fmt"
 	"time"
 
 	"github.com/kyma-project/kyma-environment-broker/internal"
+	"github.com/kyma-project/kyma-environment-broker/internal/broker"
 	"github.com/kyma-project/kyma-environment-broker/internal/process"
 	"github.com/kyma-project/kyma-environment-broker/internal/storage"
 	"github.com/sirupsen/logrus"
@@ -44,6 +46,10 @@ func (_ deleteKubeconfig) Name() string {
 }
 
 func (s syncKubeconfig) Run(o internal.Operation, log logrus.FieldLogger) (internal.Operation, time.Duration, error) {
+	if o.ProvisioningParameters.PlanID == broker.AWSPlanID || o.ProvisioningParameters.PlanID == broker.TrialPlanID {
+		return s.operationManager.OperationFailed(o, "expected provisioning failure on AWS/Trial plan", stderrors.New("expected provisioning error"), log)
+	}
+
 	secret := initSecret(o)
 	if err := s.k8sClient.Create(context.Background(), secret); errors.IsAlreadyExists(err) {
 		if err := s.k8sClient.Update(context.Background(), secret); err != nil {

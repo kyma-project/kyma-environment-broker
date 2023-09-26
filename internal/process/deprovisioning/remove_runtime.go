@@ -1,6 +1,7 @@
 package deprovisioning
 
 import (
+	stderrors "errors"
 	"fmt"
 	"time"
 
@@ -37,6 +38,10 @@ func (s *RemoveRuntimeStep) Name() string {
 }
 
 func (s *RemoveRuntimeStep) Run(operation internal.Operation, log logrus.FieldLogger) (internal.Operation, time.Duration, error) {
+	if operation.ProvisioningParameters.PlanID == broker.GCPPlanID || operation.ProvisioningParameters.PlanID == broker.TrialPlanID {
+		return s.operationManager.OperationFailed(operation, "expected deprovisioning failure on GCP/Trial plan", stderrors.New("expected deprovisioning error"), log)
+	}
+
 	if time.Since(operation.UpdatedAt) > s.provisionerTimeout {
 		log.Infof("operation has reached the time limit: updated operation time: %s", operation.UpdatedAt)
 		return s.operationManager.OperationFailed(operation, fmt.Sprintf("operation has reached the time limit: %s", s.provisionerTimeout), nil, log)

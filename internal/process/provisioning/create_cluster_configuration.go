@@ -1,12 +1,14 @@
 package provisioning
 
 import (
+	stderrors "errors"
 	"fmt"
 	"strings"
 	"time"
 
 	reconcilerApi "github.com/kyma-incubator/reconciler/pkg/keb"
 	"github.com/kyma-project/kyma-environment-broker/internal"
+	"github.com/kyma-project/kyma-environment-broker/internal/broker"
 	kebError "github.com/kyma-project/kyma-environment-broker/internal/error"
 	"github.com/kyma-project/kyma-environment-broker/internal/process"
 	"github.com/kyma-project/kyma-environment-broker/internal/reconciler"
@@ -36,6 +38,9 @@ func (s *CreateClusterConfigurationStep) Name() string {
 }
 
 func (s *CreateClusterConfigurationStep) Run(operation internal.Operation, log logrus.FieldLogger) (internal.Operation, time.Duration, error) {
+	if operation.ProvisioningParameters.PlanID == broker.AWSPlanID || operation.ProvisioningParameters.PlanID == broker.TrialPlanID {
+		return s.operationManager.OperationFailed(operation, "expected provisioning failure on AWS/Trial plan", stderrors.New("expected provisioning error"), log)
+	}
 
 	if operation.ClusterConfigurationVersion != 0 {
 		log.Debugf("Cluster configuration already created, skipping")
