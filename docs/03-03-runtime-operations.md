@@ -376,7 +376,7 @@ You can configure SAP BTP, Kyma runtime operations by providing additional steps
     }
     ```
 
-3. Add the step to the [`/cmd/broker/main.go`](https://github.com/kyma-project/control-plane/blob/main/components/kyma-environment-broker/cmd/broker/main.go) file:
+3. Add the step to the [`/cmd/broker/main.go`](../cmd/broker/main.go) file:
 
     ```go
     upgradeSteps := []struct {
