@@ -1,10 +1,10 @@
-# E2E tests of Kyma Environment Broker
+# End-to-end tests of Kyma Environment Broker
 
 ## Overview
 
 The end-to-end (E2E) tests cover Kyma Environment Broker (KEB) and SAP BTP, Kyma runtime.
 There are three tests:
-- `skr-tests` for testing the following operations on different cloud service providers: Kyma provisioning, BTP Manager secret reconciliation, updating OIDC, updating machine type, and Kyma runtime deprovisioning
+- `skr-tests` for testing the following operations on different cloud service providers: Kyma provisioning, BTP Manager Secret reconciliation, updating OIDC, updating machine type, and Kyma runtime deprovisioning
 - `skr-aws-upgrade-integration` for checking Kyma runtime provisioning, upgrading, and deprovisioning
 - `keb-endpoints-test` for checking if `kyma-environment-broker` endpoints require authorization
 
@@ -61,7 +61,7 @@ In this mode, the test executes the following steps:
 
 The test executes the following steps:
 1. Provisions a Kyma runtime cluster.
-2. Runs Kyma runtime upgrade.
+2. Runs a Kyma runtime upgrade.
 3. Deprovisions the Kyma runtime instance and cleans up the resources.
 
 ### Test execution 
@@ -89,7 +89,7 @@ The test executes the following steps:
 
 ### Test execution 
 
-1. Before you run the test, prepare the `.env` file based on the following [`.env.template`](/testing/e2e/skr/keb-endpoints-test/.env.template).
+1. Before you run the test, prepare the `.env` file based on this [`.env.template`](/testing/e2e/skr/keb-endpoints-test/.env.template).
 2. To set up the environment variables in your system, run:
 
     ```bash
