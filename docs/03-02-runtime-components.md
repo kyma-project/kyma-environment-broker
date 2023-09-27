@@ -51,7 +51,7 @@ type OptionalComponentDisabler interface {
 
 In each method, the framework injects the  **components** parameter which is a list of components that are sent to the Runtime Provisioner. The implemented method is responsible for disabling a component and, as a result, returns a modified list.
 
-This interface allows you to easily register the disabler in the [`cmd/broker/main.go`](https://github.com/kyma-project/control-plane/blob/main/components/kyma-environment-broker/cmd/broker/main.go) file by adding a new entry in the **optionalComponentsDisablers** list:
+This interface allows you to easily register the disabler in the [`cmd/broker/main.go`](../cmd/broker/main.go) file by adding a new entry in the **optionalComponentsDisablers** list:
 
 ```go
 // Register disabler. Convention:

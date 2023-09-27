@@ -32,7 +32,7 @@ The provisioning process contains the following steps:
 | post_actions   | AVS_Create_External_Eval_Step      | AvS                      | Sets up external monitoring of Kyma Runtime.                                                                                                | Team Gopher     |
 | post_actions   | AVS_Tags                           | AvS                      | Sets up proper tags in the internal monitoring system.                                                                                      | Team Gopher     |
 
-The timeout for processing the whole provisioning operation is set to `24h`. In Kyma 2.0 provisioning steps delegate resource creation to Reconciler. Since Reconciler does not constrain a number of retries in case of a failed reconciliation, KEB sets [provisioning timeout for Reconciler](../../resources/kcp/charts/kyma-environment-broker/values.yaml#L49) to `2h`.
+The timeout for processing the whole provisioning operation is set to `24h`. In Kyma 2.0 provisioning steps delegate resource creation to Reconciler. Since Reconciler does not constrain a number of retries in case of a failed reconciliation, KEB sets [provisioning timeout for Reconciler](../resources/kcp/charts/kyma-environment-broker/values.yaml) to `2h`.
 
 ## Deprovisioning
 
@@ -106,7 +106,7 @@ You can configure SAP BTP, Kyma runtime operations by providing additional steps
   Provisioning
   </summary>
 
-1. Create a new file in [this directory](https://github.com/kyma-project/control-plane/blob/main/components/kyma-environment-broker/internal/process/provisioning).
+1. Create a new file in [this directory](../internal/process/provisioning).
 
 2. Implement the following interface in your provisioning or deprovisioning step:
 
@@ -238,7 +238,7 @@ You can configure SAP BTP, Kyma runtime operations by providing additional steps
     }
     ```
 
-3. Add the step to the [`/cmd/broker/main.go`](https://github.com/kyma-project/control-plane/blob/main/components/kyma-environment-broker/cmd/broker/main.go) file:
+3. Add the step to the [`/cmd/broker/main.go`](../cmd/broker/main.go) file:
 
     ```go
     provisioningSteps := []struct {
@@ -261,7 +261,7 @@ You can configure SAP BTP, Kyma runtime operations by providing additional steps
   Upgrade
   </summary>
 
-1. Create a new file in [this directory](https://github.com/kyma-project/control-plane/blob/main/components/kyma-environment-broker/internal/process/kyma_upgrade).
+1. Create a new file in [this directory](../internal/process/upgrade_kyma).
 
 2. Implement the following interface in your upgrade step:
 
