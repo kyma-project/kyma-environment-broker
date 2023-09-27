@@ -2,81 +2,82 @@
 
 ## Overview
 
-The end-to-end (E2E) tests cover Kyma Environment Broker (KEB) and SAP BTP, Kyma runtime (SKR).
+The end-to-end (E2E) tests cover Kyma Environment Broker (KEB) and SAP BTP, Kyma runtime.
 There are three tests:
-- `skr-tests` for testing the following operations on different cloud service providers: Kyma provisioning, BTP Manager secret reconciliation, updating OIDC, updating machine type, and Kyma deprovisioning
-- `skr-aws-upgrade-integration` for checking Kyma provisioning, Kyma upgrading, and Kyma deprovisioning
-- `keb-endpoints-test` for checking if kyma-environment-broker endpoints require authorization
+- `skr-tests` for testing the following operations on different cloud service providers: Kyma provisioning, BTP Manager secret reconciliation, updating OIDC, updating machine type, and Kyma runtime deprovisioning
+- `skr-aws-upgrade-integration` for checking Kyma runtime provisioning, upgrading, and deprovisioning
+- `keb-endpoints-test` for checking if `kyma-environment-broker` endpoints require authorization
 
 ## E2E SKR tests
 
 ### Usage
 
-You can use the SKR test in two modes - with and without provisioning.
+You can use the SKR test in two modes - with or without provisioning.
 
 #### With provisioning
 
 In this mode, the test executes the following steps:
-1. Provisions an SKR cluster.
-2. Runs the BTP Manager secret reconciliation test.
+1. Provisions a Kyma runtime cluster.
+2. Runs the BTP Manager Secret reconciliation test.
 3. Runs the OIDC test.
 4. Runs the machine type update test.
-5. Deprovisions the SKR instance and cleans up the resources.
+5. Deprovisions the Kyma runtime instance and cleans up the resources.
 
 #### Without provisioning
 
 In this mode the test additionally needs the following environment variables:
 - **SKIP_PROVISIONING** set to `true`
-- **INSTANCE_ID** - the UUID of the provisioned SKR instance
+- **INSTANCE_ID** - the UUID of the provisioned Kyma runtime instance
 
 In this mode, the test executes the following steps:
-1. Ensures the SKR exists.
+1. Ensures the Kyma runtime exists.
 2. Runs the OIDC test.
 3. Cleans up the resources.
  
 ### Test execution
 
-1. Before you run the test, prepare the `.env` file based on the following [`.env.template`](/testing/e2e/skr/skr-test/.env.template):
+1. Before you run the test, prepare the `.env` file based on this [`.env.template`](/testing/e2e/skr/skr-test/.env.template).
 2. To set up the environment variables in your system, run:
 
-```bash
-export $(xargs < .env)
-```
+    ```bash
+    export $(xargs < .env)
+    ```
 
 3. Choose whether you want to run the test with or without provisioning.
     - To run the test with provisioning, call the following target:
 
-    ```bash
-    make skr
-    ```
+        ```bash
+        make skr
+        ```
     - To run the SKR test without provisioning, use the following command:
 
-    ```bash
-    make skr SKIP_PROVISIONING=true
-    ```
+        ```bash
+        make skr SKIP_PROVISIONING=true
+        ```
 
 ## E2E SKR AWS upgrade integration test
 
 ### Usage
 
 The test executes the following steps:
-1. Provisions an SKR cluster.
-2. Runs Kyma upgrade.
-3. Deprovisions the SKR instance and cleans up the resources.
+1. Provisions a Kyma runtime cluster.
+2. Runs Kyma runtime upgrade.
+3. Deprovisions the Kyma runtime instance and cleans up the resources.
 
 ### Test execution 
 
-1. Before you run the test, prepare the `.env` file based on the following [`.env.template`](/testing/e2e/skr/skr-aws-upgrade-integration/.env.template):
+1. Before you run the test, prepare the `.env` file based on this [`.env.template`](/testing/e2e/skr/skr-aws-upgrade-integration/.env.template).
 2. To set up the environment variables in your system, run:
 
-```bash
-export $(xargs < .env)
-```
+    ```bash
+    export $(xargs < .env)
+    ```
 
 3. Run the test scenario:
-```bash
-make skr-aws-upgrade-integration
-```
+   
+    ```bash
+    make skr-aws-upgrade-integration
+    ```
 
 ## KEB endpoints test
 
@@ -88,17 +89,18 @@ The test executes the following steps:
 
 ### Test execution 
 
-1. Before you run the test, prepare the `.env` file based on the following [`.env.template`](/testing/e2e/skr/keb-endpoints-test/.env.template):
+1. Before you run the test, prepare the `.env` file based on the following [`.env.template`](/testing/e2e/skr/keb-endpoints-test/.env.template).
 2. To set up the environment variables in your system, run:
 
-```bash
-export $(xargs < .env)
-```
+    ```bash
+    export $(xargs < .env)
+    ```
 
 3. Run the test scenario.
-```bash
-make keb-endpoints
-```
+   
+    ```bash
+    make keb-endpoints
+    ```
 
 ### CI pipelines
 

@@ -1,8 +1,8 @@
-# Kyma Environment Broker (KEB) configuration for a given Kyma version and plan
+# Kyma Environment Broker configuration for a given Kyma version and plan
 
 > **NOTE:** Once all Kyma components become independent modules, Kyma version configuration will not be possible.
 
-Some processes in KEB can be configured to deliver different results. KEB needs a ConfigMap with a configuration for the given Kyma version and plan to process the requests. 
+Some processes in Kyma Environment Broker (KEB) can be configured to deliver different results. KEB needs a ConfigMap with a configuration for the given Kyma version and plan to process the requests. 
 A default configuration must be defined for the chosen Kyma version. This configuration must be recognized by KEB as applicable for all the supported plans. You can also set a separate configuration for each plan.
   
 While processing requests, KEB reads a configuration from a ConfigMap which holds data about processable Kyma versions and configurable units for a given plan. Only one ConfigMap can exist for a given Kyma version, but it also can be set for multiple Kyma versions if the configuration is the same for every targeted version.
