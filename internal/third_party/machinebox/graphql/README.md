@@ -60,7 +60,7 @@ use multipart form data instead using the `UseMultipartForm` option when you cre
 client := graphql.NewClient("https://machinebox.io/graphql", graphql.UseMultipartForm())
 ```
 
-For more information, [read the godoc package documentation](http://godoc.org/github.com/machinebox/graphql).
+For more information, read the [godoc package documentation](http://godoc.org/github.com/machinebox/graphql).
 
 ## Thanks
 
