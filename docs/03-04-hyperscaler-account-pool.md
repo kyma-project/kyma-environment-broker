@@ -30,7 +30,7 @@ metadata:
 
 ## Shared credentials
 
-For a certain type of Runtimes, KEB can use the same credentials for multiple tenants.
+For a certain type of SAP BTP, Kyma runtimes, KEB can use the same credentials for multiple tenants.
 In such a case, the Secret with credentials must be labeled differently by adding the **shared** label set to `true`. Shared credentials will not be assigned to any tenant.
 
 This is an example of a Kubernetes Secret that stores shared credentials:

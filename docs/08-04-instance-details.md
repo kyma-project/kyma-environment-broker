@@ -1,6 +1,6 @@
-# Check SKR instance details
+# Check SAP BTP, Kyma runtime instance details
 
-This tutorial shows how to get the SKR instance details.
+This tutorial shows how to get the SAP BTP, Kyma runtime instance details.
 
 ## Steps
 
@@ -43,4 +43,4 @@ A successful call returns the instance details:
    }
    ```
 
-   > **NOTE:** The **dashboard_url** field is available only if the Runtime was provisioned successfully and the Runtime Agent registered the Runtime in the Director. Fields under the **parameters** field can differ depending on the provisioning input.
+   > **NOTE:** The **dashboard_url** field is available only if the Kyma runtime was provisioned successfully and the Runtime Agent registered the Kyma runtime in the Director. Fields under the **parameters** field can differ depending on the provisioning input.

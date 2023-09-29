@@ -1,13 +1,15 @@
-# Environments cleanup
+# Environments Cleanup CronJob
 
-Environments Cleanup is an application that cleans up environments that do not meet requirements in a given Gardener project.
+>**CAUTION:** The CronJob must run only in the development environment. You must be connected to the development Kubernetes cluster before applying the CronJob.
+
+Environments Cleanup CronJob removes Kyma Environments which are older than 24h. The CronJob is scheduled to run daily at midnight local time defined in the system.
 
 ## Prerequisites
 
 Environments Cleanup requires access to:
 - Gardener project of choice to filter Shoots without a proper label
-- Database to get an Instance ID for each Runtime marked for deletion
-- Kyma Environment Broker to trigger Runtime deprovisioning
+- the Kyma Environment Broker (KEB) database to get an Instance ID for each SAP BTP, Kyma runtime marked for deletion
+- KEB to trigger Kyma runtime deprovisioning
 
 ## Configuration
 
@@ -26,8 +28,8 @@ The Environments Cleanup binary allows you to override some configuration parame
 | **APP_DATABASE_NAME** | Specifies the name of the database. | `provisioner` |
 | **APP_DATABASE_SSLMODE** | Activates the SSL mode for PostgrSQL. See [all the possible values](https://www.postgresql.org/docs/9.1/libpq-ssl.html).  | `disable`|
 | **APP_DATABASE_SSLROOTCERT** | Specifies the location of CA cert of PostgreSQL. (Optional)  | None |
-| **APP_BROKER_URL**  | Specifies the Kyma Environment Broker URL. | `https://kyma-env-broker.kyma.local` |
-| **APP_BROKER_TOKEN_URL**  | Specifies the Kyma Environment Broker OAuth token endpoint. | `https://oauth.2kyma.local/oauth2/token` |
+| **APP_BROKER_URL**  | Specifies the KEB URL. | `https://kyma-env-broker.kyma.local` |
+| **APP_BROKER_TOKEN_URL**  | Specifies the KEB OAuth token endpoint. | `https://oauth.2kyma.local/oauth2/token` |
 | **APP_BROKER_CLIENT_ID** | Specifies the username for the OAuth2 authentication in KEB. | None |
 | **APP_BROKER_CLIENT_SECRET** | Specifies the password for the OAuth2 authentication in KEB. | None |
 | **APP_BROKER_SCOPE** | Specifies the scope for the OAuth2 authentication in KEB. | None |

@@ -1,12 +1,12 @@
-# Provision Kyma Runtime using KEB
+# Provision SAP BTP, Kyma runtime using Kyma Environment Broker
 
-This tutorial shows how to provision Kyma Runtime on Azure using Kyma Environment Broker.
+This tutorial shows how to provision SAP BTP, Kyma runtime on Azure using Kyma Environment Broker (KEB).
 
 ## Prerequisites
 
 - Compass with:
-  * Runtime Provisioner [configured](../provisioner/08-02-provisioning-gardener.md) for Azure provider
-  * Kyma Environment Broker configured and chosen [overrides](https://kyma-project.io/docs/kyma/latest/04-operation-guides/operations/03-change-kyma-config-values/) set up
+  * Runtime Provisioner [configured](https://github.com/kyma-project/control-plane/blob/main/docs/provisioner/08-02-provisioning-gardener.md) for Azure provider
+  * KEB configured and chosen [overrides](https://kyma-project.io/#/04-operation-guides/operations/03-change-kyma-config-values) set up
 
 ## Steps
 
@@ -34,7 +34,7 @@ This tutorial shows how to provision Kyma Runtime on Azure using Kyma Environmen
      kubectl port-forward -n kcp-system deployments/kcp-kyma-environment-broker 8080
    ```
 
-1. Make a call to the Kyma Environment Broker to create a Runtime on Azure. Find the list of possible request parameters [here](03-01-service-description.md).
+2. Make a call to KEB to create a Kyma runtime on Azure. Find the list of possible request parameters [here](03-01-service-description.md).
 
    ```bash
    curl --request PUT "https://$BROKER_URL/oauth/v2/service_instances/$INSTANCE_ID?accepts_incomplete=true" \
@@ -62,7 +62,7 @@ This tutorial shows how to provision Kyma Runtime on Azure using Kyma Environmen
    }
    ```  
 
-1. Check the operation status as described [here](08-03-operation-status.md).
+3. Check the operation status as described [here](08-03-operation-status.md).
 
 ## BTP Operator
 
@@ -94,10 +94,10 @@ If you need a BTP Operator component installed, obtain [BTP Operator access cred
 
 ```json
 "sm_operator_credentials": {
-    "clientid": "testClientID",
-						  "clientsecret": "testClientSecret",
-						  "sm_url": "https://service-manager.kyma.com",
-						  "url": "https://test.auth.com",
-						  "xsappname": "testXsappname"
-						},
+  "clientid": "testClientID",
+  "clientsecret": "testClientSecret",
+  "sm_url": "https://service-manager.kyma.com",
+  "url": "https://test.auth.com",
+  "xsappname": "testXsappname"
+}
 ``` 

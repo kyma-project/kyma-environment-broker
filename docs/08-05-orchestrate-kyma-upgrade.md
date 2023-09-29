@@ -1,12 +1,12 @@
 # Orchestrate Kyma upgrade
 
-This tutorial shows how to upgrade Kyma Runtime using Kyma Environment Broker.
+This tutorial shows how to upgrade SAP BTP, Kyma runtime using Kyma Environment Broker (KEB).
 
 ## Prerequisites
 
 - Compass with:
-  * Runtime Provisioner [configured](../provisioner/08-02-provisioning-gardener.md) for Azure
-  * Kyma Environment Broker configured and chosen [overrides](https://kyma-project.io/docs/kyma/latest/04-operation-guides/operations/03-change-kyma-config-values/) set up
+  * Runtime Provisioner [configured](https://github.com/kyma-project/control-plane/blob/main/docs/provisioner/08-02-provisioning-gardener.md) for Azure
+  * KEB configured and chosen [overrides](https://kyma-project.io/#/04-operation-guides/operations/03-change-kyma-config-values) set up
 
 ## Steps
 
@@ -16,14 +16,14 @@ This tutorial shows how to upgrade Kyma Runtime using Kyma Environment Broker.
    export AUTHORIZATION_HEADER="Authorization: Bearer $ID_TOKEN"
    ```
 
-2. Make a call to the Kyma Environment Broker to orchestrate the upgrade. You can select specific Runtimes to upgrade using the following selectors:
+2. Make a call to KEB to orchestrate the upgrade. You can select specific Kyma runtimes to upgrade using the following selectors:
 
-- `target` - use the `target: "all"` selector to select all Runtimes
-- `globalAccount` - use it to select Runtimes with the specified global account ID
-- `subAccount` - use it to select Runtimes with the specified subaccount ID
-- `runtimeID` - use it to select Runtimes with the specified Runtime ID
-- `planName` - use it to select Runtimes with the specified plan name
-- `region` - use it to select Runtimes located in the specified region
+- `target` - use the `target: "all"` selector to select all Kyma runtimes
+- `globalAccount` - use it to select Kyma runtimes with the specified global account ID
+- `subAccount` - use it to select Kyma runtimes with the specified subaccount ID
+- `runtimeID` - use it to select Kyma runtimes with the specified Runtime ID
+- `planName` - use it to select Kyma runtimes with the specified plan name
+- `region` - use it to select Kyma runtimes located in the specified region
 
    ```bash
    curl --request POST "https://$BROKER_URL/upgrade/kyma" \

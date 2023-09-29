@@ -91,27 +91,27 @@ func newTrialCleanupService(cfg Config, brokerClient BrokerClient, instances sto
 
 func (s *TrialCleanupService) PerformCleanup() error {
 
-	nonExpiredTrialInstancesFilter := dbmodel.InstanceFilter{PlanIDs: []string{trialPlanID}, Expired: &[]bool{false}[0]}
-	nonExpiredTrialInstances, nonExpiredTrialInstancesCount, err := s.getInstances(nonExpiredTrialInstancesFilter)
+	trialInstancesFilter := dbmodel.InstanceFilter{PlanIDs: []string{trialPlanID}}
+	trialInstances, trialInstancesCount, err := s.getInstances(trialInstancesFilter)
 
 	if err != nil {
-		log.Error(fmt.Sprintf("while getting non-expired trial instances: %s", err))
+		log.Error(fmt.Sprintf("while getting trial instances: %s", err))
 		return err
 	}
 
 	instancesToExpire, instancesToExpireCount := s.filterInstances(
-		nonExpiredTrialInstances,
+		trialInstances,
 		func(instance internal.Instance) bool { return time.Since(instance.CreatedAt) >= s.cfg.ExpirationPeriod },
 	)
 
-	instancesToBeLeftCount := nonExpiredTrialInstancesCount - instancesToExpireCount
+	instancesToBeLeftCount := trialInstancesCount - instancesToExpireCount
 
 	if s.cfg.DryRun {
 		s.logInstances(instancesToExpire)
-		log.Infof("Trials non-expired: %+v, to expire now: %+v, to be left non-expired: %+v", nonExpiredTrialInstancesCount, instancesToExpireCount, instancesToBeLeftCount)
+		log.Infof("Trials: %+v, to expire now: %+v, to be left non-expired: %+v", trialInstancesCount, instancesToExpireCount, instancesToBeLeftCount)
 	} else {
 		suspensionsAcceptedCount, onlyMarkedAsExpiredCount, failuresCount := s.cleanupInstances(instancesToExpire)
-		log.Infof("Trials non-expired: %+v, to expire: %+v, left non-expired: %+v, suspension under way: %+v just marked expired: %+v, failures: %+v", nonExpiredTrialInstancesCount, instancesToExpireCount, instancesToBeLeftCount, suspensionsAcceptedCount, onlyMarkedAsExpiredCount, failuresCount)
+		log.Infof("Trials: %+v, to expire: %+v, left non-expired: %+v, suspension under way: %+v just marked expired: %+v, failures: %+v", trialInstancesCount, instancesToExpireCount, instancesToBeLeftCount, suspensionsAcceptedCount, onlyMarkedAsExpiredCount, failuresCount)
 	}
 	return nil
 }
@@ -165,10 +165,10 @@ func (s *TrialCleanupService) logInstances(instances []internal.Instance) {
 }
 
 func (s *TrialCleanupService) expireInstance(instance internal.Instance) (processed bool, err error) {
-	log.Infof("About to make instance suspended for instanceId: %+v", instance.InstanceID)
+	log.Infof("About to make instance expired for instanceID: %+v", instance.InstanceID)
 	suspensionUnderWay, err := s.brokerClient.SendExpirationRequest(instance)
 	if err != nil {
-		log.Error(fmt.Sprintf("while sending expiration request for instance ID %q: %s", instance.InstanceID, err))
+		log.Error(fmt.Sprintf("while sending expiration request for instanceID %q: %s", instance.InstanceID, err))
 		return suspensionUnderWay, err
 	}
 	return suspensionUnderWay, nil

@@ -12,7 +12,7 @@ import (
 )
 
 type Delegator struct {
-	provisionManager  *process.OperationManager
+	operationManager  *process.OperationManager
 	avsConfig         Config
 	client            *Client
 	operationsStorage storage.Operations
@@ -26,7 +26,7 @@ type avsApiErrorResp struct {
 
 func NewDelegator(client *Client, avsConfig Config, os storage.Operations) *Delegator {
 	return &Delegator{
-		provisionManager:  process.NewOperationManager(os),
+		operationManager:  process.NewOperationManager(os),
 		avsConfig:         avsConfig,
 		client:            client,
 		operationsStorage: os,
@@ -57,13 +57,13 @@ func (del *Delegator) CreateEvaluation(log logrus.FieldLogger, operation interna
 			errMsg := "cannot create AVS evaluation (temporary)"
 			log.Errorf("%s: %s", errMsg, err)
 			retryConfig := evalAssistant.provideRetryConfig()
-			return del.provisionManager.RetryOperation(operation, errMsg, err, retryConfig.retryInterval, retryConfig.maxTime, log)
+			return del.operationManager.RetryOperation(operation, errMsg, err, retryConfig.retryInterval, retryConfig.maxTime, log)
 		default:
 			errMsg := "cannot create AVS evaluation"
 			log.Errorf("%s: %s", errMsg, err)
-			return del.provisionManager.OperationFailed(operation, errMsg, err, log)
+			return del.operationManager.OperationFailed(operation, errMsg, err, log)
 		}
-		updatedOperation, d, _ = del.provisionManager.UpdateOperation(operation, func(operation *internal.Operation) {
+		updatedOperation, d, _ = del.operationManager.UpdateOperation(operation, func(operation *internal.Operation) {
 			evalAssistant.SetEvalId(&operation.Avs, evalResp.Id)
 			evalAssistant.SetDeleted(&operation.Avs, false)
 		}, log)
@@ -88,12 +88,12 @@ func (del *Delegator) AddTags(log logrus.FieldLogger, operation internal.Operati
 			errMsg := "cannot add tags to AVS evaluation (temporary)"
 			log.Errorf("%s: %s", errMsg, err)
 			retryConfig := evalAssistant.provideRetryConfig()
-			op, duration, err := del.provisionManager.RetryOperation(operation, errMsg, err, retryConfig.retryInterval, retryConfig.maxTime, log)
+			op, duration, err := del.operationManager.RetryOperation(operation, errMsg, err, retryConfig.retryInterval, retryConfig.maxTime, log)
 			return op, duration, err
 		default:
 			errMsg := "cannot add tags to AVS evaluation"
 			log.Errorf("%s: %s", errMsg, err)
-			op, duration, err := del.provisionManager.OperationFailed(operation, errMsg, err, log)
+			op, duration, err := del.operationManager.OperationFailed(operation, errMsg, err, log)
 			return op, duration, err
 		}
 	}
@@ -186,13 +186,13 @@ func (del *Delegator) DeleteAvsEvaluation(deProvisioningOperation internal.Opera
 		return deProvisioningOperation, err
 	}
 
-	assistant.SetDeleted(&deProvisioningOperation.Avs, true)
-
-	updatedDeProvisioningOp, err := del.operationsStorage.UpdateOperation(deProvisioningOperation)
+	updatedDeProvisioningOp, _, err := del.operationManager.UpdateOperation(deProvisioningOperation, func(op *internal.Operation) {
+		assistant.SetDeleted(&op.Avs, true)
+	}, logger)
 	if err != nil {
 		return deProvisioningOperation, err
 	}
-	return *updatedDeProvisioningOp, nil
+	return updatedDeProvisioningOp, nil
 }
 
 func (del *Delegator) tryDeleting(assistant EvalAssistant, deProvisioningOperation internal.Operation, logger logrus.FieldLogger) error {

@@ -1,12 +1,18 @@
 # Runtime Reconciler
 
-Runtime Reconciler is an application that performs reconciliation tasks on SAP BTP, Kyma runtimes (SKRs).
+Runtime Reconciler is an application that performs reconciliation tasks on SAP BTP, Kyma runtime.
 
-## Overview
+## Details
 
-Currently, there is one task for Runtime Reconciler. It reconciles BTP Manager Secrets on Kyma Runtimes. It can do it in two ways: 
-- by implementation with the usage of Runtime Watcher, which sends events about changes of the Secret from Kyma Runtime to KEB in real time. 
-- with a job, which periodically loops over all instances from the KEB database; each instance has an existing assigned Runtime ID; the job checks if the Secret on the Kyma Runtime matches the credentials from the KEB database.
+Currently, there is one task for Runtime Reconciler. It reconciles BTP Manager Secrets on Kyma runtimes. It can do it in two ways: 
+- by implementation with the usage of Runtime Watcher, which sends events about changes of the Secret from a Kyma runtime to Kyma Environment Broker (KEB) in real time. 
+- with a job, which periodically loops over all instances from the KEB database; each instance has an existing assigned Runtime ID; the job checks if the Secret on the Kyma runtime matches the credentials from the KEB database.
+
+## Prerequisites
+
+- the KEB Go packages so that Runtime Reconciler can reuse them
+- the KEB database for storing the Kubernetes Secrets that match the Secrets on Kyma runtimes
+- Provisioner API for fetching kubeconfigs
 
 ## Configuration
 

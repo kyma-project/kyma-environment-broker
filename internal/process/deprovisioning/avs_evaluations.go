@@ -15,7 +15,6 @@ import (
 
 type AvsEvaluationRemovalStep struct {
 	delegator             *avs.Delegator
-	operationsStorage     storage.Operations
 	externalEvalAssistant avs.EvalAssistant
 	internalEvalAssistant avs.EvalAssistant
 	deProvisioningManager *process.OperationManager
@@ -24,7 +23,6 @@ type AvsEvaluationRemovalStep struct {
 func NewAvsEvaluationsRemovalStep(delegator *avs.Delegator, operationsStorage storage.Operations, externalEvalAssistant, internalEvalAssistant avs.EvalAssistant) *AvsEvaluationRemovalStep {
 	return &AvsEvaluationRemovalStep{
 		delegator:             delegator,
-		operationsStorage:     operationsStorage,
 		externalEvalAssistant: externalEvalAssistant,
 		internalEvalAssistant: internalEvalAssistant,
 		deProvisioningManager: process.NewOperationManager(operationsStorage),
@@ -37,6 +35,8 @@ func (ars *AvsEvaluationRemovalStep) Name() string {
 
 func (ars *AvsEvaluationRemovalStep) Run(operation internal.Operation, logger logrus.FieldLogger) (internal.Operation, time.Duration, error) {
 	logger.Infof("Avs lifecycle %+v", operation.Avs)
+
+	// the delegator saves the operation (update in the storage) - it is executed inside the DeleteAvsEvaluation
 
 	operation, err := ars.delegator.DeleteAvsEvaluation(operation, logger, ars.internalEvalAssistant)
 	if err != nil {
@@ -54,11 +54,6 @@ func (ars *AvsEvaluationRemovalStep) Run(operation internal.Operation, logger lo
 		return ars.deProvisioningManager.RetryOperationWithoutFail(operation, ars.Name(), "error while deleting avs external evaluation", 10*time.Second, 1*time.Minute, logger)
 	}
 
-	newOperation, err := ars.operationsStorage.UpdateOperation(operation)
-	if err != nil {
-		logger.Errorf("Unable to update an operation")
-		return operation, 5 * time.Second, nil
-	}
-	return *newOperation, 0, nil
+	return operation, 0, nil
 
 }

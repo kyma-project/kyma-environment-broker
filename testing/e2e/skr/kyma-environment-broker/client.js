@@ -136,7 +136,7 @@ class KEBClient {
     }
   }
 
-  async provisionSKR(name, instanceID, platformCreds, btpOperatorCreds, customParams) {
+  buildPayload(name, instanceID, platformCreds, btpOperatorCreds, customParams) {
     const payload = {
       service_id: KYMA_SERVICE_ID,
       plan_id: this.planID,
@@ -169,6 +169,11 @@ class KEBClient {
         url: btpOperatorCreds.url,
       };
     }
+    return payload;
+  }
+
+  async provisionSKR(name, instanceID, platformCreds, btpOperatorCreds, customParams) {
+    const payload = this.buildPayload(name, instanceID, platformCreds, btpOperatorCreds, customParams);
 
     const endpoint = `service_instances/${instanceID}`;
     try {

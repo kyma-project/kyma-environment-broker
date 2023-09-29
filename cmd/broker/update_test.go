@@ -269,6 +269,210 @@ func TestExpirationOfNonTrial(t *testing.T) {
 	assert.False(suite.t, instance.IsExpired())
 }
 
+func TestTrialExpirationOnFailedOperations(t *testing.T) {
+	t.Run("should expire the trial instance on a failed provisioning operation", func(t *testing.T) {
+		// given
+		suite := NewBrokerSuiteTest(t)
+		defer suite.TearDown()
+		iid := uuid.New().String()
+
+		resp := suite.CallAPI("PUT", fmt.Sprintf("oauth/cf-eu10/v2/service_instances/%s", iid),
+			`{
+  "service_id": "47c9dcbf-ff30-448e-ab36-d3bad66ba281",
+  "plan_id": "7d55d31d-35ae-4438-bf13-6ffdfa107d9f",
+  "context": {
+    "globalaccount_id": "globalaccount-id",
+    "subaccount_id": "subaccount-id",
+    "user_id": "john.smith@email.com"
+  },
+  "parameters": {
+    "name": "trial-failed-provisioning"
+  }
+}`)
+		opID := suite.DecodeOperationID(resp)
+		suite.processProvisioningAndFailReconcilingByOperationID(opID)
+		suite.WaitForOperationState(opID, domain.Failed)
+
+		// when
+		// expiry request
+		resp = suite.CallAPI("PATCH", fmt.Sprintf("oauth/cf-eu10/v2/service_instances/%s?accepts_incomplete=true", iid),
+			`{
+  "service_id": "47c9dcbf-ff30-448e-ab36-d3bad66ba281",
+  "plan_id": "7d55d31d-35ae-4438-bf13-6ffdfa107d9f",
+  "context": {
+    "globalaccount_id": "globalaccount-id",
+    "subaccount_id": "subaccount-id",
+    "active": false
+  },
+  "parameters": {
+    "expired": true
+  }
+}`)
+		// then
+		assert.Equal(t, http.StatusOK, resp.StatusCode)
+		suspensionOpID := suite.WaitForLastOperation(iid, domain.InProgress)
+		suite.FinishDeprovisioningOperationByProvisioner(suspensionOpID)
+		suite.WaitForOperationState(suspensionOpID, domain.Succeeded)
+		instance := suite.GetInstance(iid)
+		assert.True(t, instance.IsExpired())
+		assert.False(t, *instance.Parameters.ErsContext.Active)
+	})
+
+	t.Run("should expire the trial instance on a failed deprovisioning operation", func(t *testing.T) {
+		// given
+		suite := NewBrokerSuiteTest(t)
+		defer suite.TearDown()
+		iid := uuid.New().String()
+
+		resp := suite.CallAPI("PUT", fmt.Sprintf("oauth/cf-eu10/v2/service_instances/%s", iid),
+			`{
+  "service_id": "47c9dcbf-ff30-448e-ab36-d3bad66ba281",
+  "plan_id": "7d55d31d-35ae-4438-bf13-6ffdfa107d9f",
+  "context": {
+    "globalaccount_id": "globalaccount-id",
+    "subaccount_id": "subaccount-id",
+    "user_id": "john.smith@email.com"
+  },
+  "parameters": {
+    "name": "trial-failed-deprovisioning"
+  }
+}`)
+		opID := suite.DecodeOperationID(resp)
+		suite.processProvisioningAndReconcilingByOperationID(opID)
+		suite.WaitForOperationState(opID, domain.Succeeded)
+
+		// when
+		// deprovisioning request
+		resp = suite.CallAPI("DELETE", fmt.Sprintf("oauth/cf-eu10/v2/service_instances/%s?accepts_incomplete=true&plan_id=7d55d31d-35ae-4438-bf13-6ffdfa107d9f&service_id=47c9dcbf-ff30-448e-ab36-d3bad66ba281", iid),
+			`{
+  "service_id": "47c9dcbf-ff30-448e-ab36-d3bad66ba281",
+  "plan_id": "7d55d31d-35ae-4438-bf13-6ffdfa107d9f"
+}`)
+		// then
+		assert.Equal(t, http.StatusAccepted, resp.StatusCode)
+		deprovisioningOpID := suite.WaitForLastOperation(iid, domain.InProgress)
+		suite.FailDeprovisioningByReconciler(deprovisioningOpID)
+		suite.FailDeprovisioningOperationByProvisioner(deprovisioningOpID)
+		suite.WaitForOperationState(deprovisioningOpID, domain.Failed)
+
+		// when
+		// expiry request
+		resp = suite.CallAPI("PATCH", fmt.Sprintf("oauth/cf-eu10/v2/service_instances/%s?accepts_incomplete=true", iid),
+			`{
+  "service_id": "47c9dcbf-ff30-448e-ab36-d3bad66ba281",
+  "plan_id": "7d55d31d-35ae-4438-bf13-6ffdfa107d9f",
+  "context": {
+    "globalaccount_id": "globalaccount-id",
+    "subaccount_id": "subaccount-id",
+    "active": false
+  },
+  "parameters": {
+    "expired": true
+  }
+}`)
+		// then
+		assert.Equal(t, http.StatusOK, resp.StatusCode)
+		suspensionOpID := suite.WaitForLastOperation(iid, domain.InProgress)
+		suite.FinishDeprovisioningOperationByProvisionerForGivenOpId(suspensionOpID)
+		suite.WaitForOperationState(suspensionOpID, domain.Succeeded)
+		instance := suite.GetInstance(iid)
+		assert.True(t, instance.IsExpired())
+		assert.False(t, *instance.Parameters.ErsContext.Active)
+	})
+
+	t.Run("should reject the update request on a non-trial instance with a failed provisioning operation", func(t *testing.T) {
+		// given
+		suite := NewBrokerSuiteTest(t)
+		defer suite.TearDown()
+		iid := uuid.New().String()
+
+		resp := suite.CallAPI("PUT", fmt.Sprintf("oauth/cf-eu10/v2/service_instances/%s", iid),
+			`{
+  "service_id": "47c9dcbf-ff30-448e-ab36-d3bad66ba281",
+  "plan_id": "361c511f-f939-4621-b228-d0fb79a1fe15",
+  "context": {
+    "globalaccount_id": "globalaccount-id",
+    "subaccount_id": "subaccount-id",
+    "user_id": "john.smith@email.com"
+  },
+  "parameters": {
+    "name": "aws-failed-provisioning"
+  }
+}`)
+		opID := suite.DecodeOperationID(resp)
+		suite.processProvisioningAndFailReconcilingByOperationID(opID)
+		suite.WaitForOperationState(opID, domain.Failed)
+
+		// when
+		resp = suite.CallAPI("PATCH", fmt.Sprintf("oauth/cf-eu10/v2/service_instances/%s?accepts_incomplete=true", iid),
+			`{
+  "service_id": "47c9dcbf-ff30-448e-ab36-d3bad66ba281",
+  "plan_id": "361c511f-f939-4621-b228-d0fb79a1fe15",
+  "context": {
+    "globalaccount_id": "globalaccount-id",
+    "subaccount_id": "subaccount-id"
+  }
+}`)
+		// then
+		assert.Equal(t, http.StatusUnprocessableEntity, resp.StatusCode)
+		instance := suite.GetInstance(iid)
+		assert.False(suite.t, instance.IsExpired())
+	})
+
+	t.Run("should reject the update request on a non-trial instance with a failed deprovisioning operation", func(t *testing.T) {
+		// given
+		suite := NewBrokerSuiteTest(t)
+		defer suite.TearDown()
+		iid := uuid.New().String()
+
+		resp := suite.CallAPI("PUT", fmt.Sprintf("oauth/cf-eu10/v2/service_instances/%s", iid),
+			`{
+  "service_id": "47c9dcbf-ff30-448e-ab36-d3bad66ba281",
+  "plan_id": "361c511f-f939-4621-b228-d0fb79a1fe15",
+  "context": {
+    "globalaccount_id": "globalaccount-id",
+    "subaccount_id": "subaccount-id",
+    "user_id": "john.smith@email.com"
+  },
+  "parameters": {
+    "name": "aws-failed-deprovisioning"
+  }
+}`)
+		opID := suite.DecodeOperationID(resp)
+		suite.processProvisioningAndReconcilingByOperationID(opID)
+		suite.WaitForOperationState(opID, domain.Succeeded)
+
+		// when
+		// deprovisioning request
+		resp = suite.CallAPI("DELETE", fmt.Sprintf("oauth/cf-eu10/v2/service_instances/%s?accepts_incomplete=true&plan_id=7d55d31d-35ae-4438-bf13-6ffdfa107d9f&service_id=47c9dcbf-ff30-448e-ab36-d3bad66ba281", iid),
+			`{
+  "service_id": "47c9dcbf-ff30-448e-ab36-d3bad66ba281",
+  "plan_id": "361c511f-f939-4621-b228-d0fb79a1fe15"
+}`)
+		// then
+		assert.Equal(t, http.StatusAccepted, resp.StatusCode)
+		deprovisioningOpID := suite.WaitForLastOperation(iid, domain.InProgress)
+		suite.FailDeprovisioningByReconciler(deprovisioningOpID)
+		suite.FailDeprovisioningOperationByProvisioner(deprovisioningOpID)
+		suite.WaitForOperationState(deprovisioningOpID, domain.Failed)
+
+		// when
+		resp = suite.CallAPI("PATCH", fmt.Sprintf("oauth/cf-eu10/v2/service_instances/%s?accepts_incomplete=true", iid),
+			`{
+  "service_id": "47c9dcbf-ff30-448e-ab36-d3bad66ba281",
+  "plan_id": "361c511f-f939-4621-b228-d0fb79a1fe15",
+  "context": {
+    "globalaccount_id": "globalaccount-id",
+    "subaccount_id": "subaccount-id"
+  }
+}`)
+		// then
+		assert.Equal(t, http.StatusUnprocessableEntity, resp.StatusCode)
+		instance := suite.GetInstance(iid)
+		assert.False(suite.t, instance.IsExpired())
+	})
+}
+
 func TestUpdateDeprovisioningInstance(t *testing.T) {
 	// given
 	suite := NewBrokerSuiteTest(t)

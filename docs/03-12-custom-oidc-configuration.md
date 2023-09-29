@@ -1,6 +1,6 @@
 # Custom OIDC configuration
 
-To create an SKR with a custom OIDC (Open ID Connect) configuration, specify the additional `oidc` provisioning parameters. See the example:
+To create an SAP BTP, Kyma runtime with a custom OIDC (Open ID Connect) configuration, specify the additional `oidc` provisioning parameters. See the example:
 
 ```bash
    export VERSION=1.15.0

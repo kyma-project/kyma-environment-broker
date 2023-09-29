@@ -355,7 +355,6 @@ class KCPWrapper {
       ];
       // debug([`>  kcp`, defaultArgs.concat(args).join(" ")].join(" "))
       const subprocess = execa('kcp', defaultArgs.concat(args), {stdio: 'pipe'});
-
       if ( pipeStdout ) {
         subprocess.stdout.pipe(process.stdout);
       }
@@ -373,7 +372,7 @@ class KCPWrapper {
       if (err.stderr === undefined) {
         throw new Error(`failed to process kcp binary output: ${err.toString()}`);
       }
-      throw new Error(`kcp command failed: ${err.stderr.toString()}`);
+      throw new Error(`kcp command failed: ${err.toString()}`);
     }
   }
 }

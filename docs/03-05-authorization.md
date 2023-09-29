@@ -1,9 +1,9 @@
 # Authorization
 
-Kyma Environment Broker provides OAuth2 authorization. For this purpose, Kyma Environment Broker uses the [ApiRule](https://kyma-project.io/docs/kyma/latest/05-technical-reference/00-custom-resources/apix-01-apirule/) custom resource which generates a [VirtualService](https://istio.io/docs/reference/config/networking/virtual-service/) and uses  [Oathkeeper Access Rules](https://www.ory.sh/docs/oathkeeper/api-access-rules) to allow or deny access.
-To authorize with the Kyma Environment Broker, use an OAuth2 client registered through the [Hydra Maester controller](https://github.com/ory/k8s/blob/master/docs/helm/hydra-maester.md).
+Kyma Environment Broker (KEB) provides OAuth2 authorization. For this purpose, KEB uses the [ApiRule](https://kyma-project.io/#/05-technical-reference/00-custom-resources/apix-01-apirule) custom resource which generates a [VirtualService](https://istio.io/docs/reference/config/networking/virtual-service/) and uses  [Oathkeeper Access Rules](https://www.ory.sh/docs/oathkeeper/api-access-rules) to allow or deny access.
+To authorize with KEB, use an OAuth2 client registered through the [Hydra Maester controller](https://github.com/ory/k8s/blob/master/docs/helm/hydra-maester.md).
 
-To access the Kyma Environment Broker endpoints, use the `/oauth` prefix before OSB API paths. For example:
+To access the KEB endpoints, use the `/oauth` prefix before OSB API paths. For example:
 
 ```shell
 /oauth/{region}/v2/catalog

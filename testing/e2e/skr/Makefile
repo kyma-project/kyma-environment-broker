@@ -26,3 +26,10 @@ skr-aws-upgrade-integration:
 	chmod +x /usr/local/bin/kcp
 	npm install
 	npm run skr-aws-upgrade-integration-test
+
+.PHONY: skr-networking
+skr-networking:
+	curl -fLSs -o /usr/local/bin/kcp https://storage.googleapis.com/kyma-development-artifacts/kcp/master/kcp-linux
+	chmod +x /usr/local/bin/kcp
+	npm install
+	npm run skr-networking-test

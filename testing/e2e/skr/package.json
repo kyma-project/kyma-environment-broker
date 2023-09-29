@@ -12,7 +12,8 @@
     "lint-fix": "./node_modules/.bin/eslint . --fix",
     "keb-endpoints-test": "DEBUG=false mocha --timeout 15000 --inline-diffs --check-leaks --reporter mocha-multi-reporters --reporter-options configFile=mocha-reporter-config.json ./keb-endpoints-test/index.js",
     "skr-test": "DEBUG=true mocha --timeout 15000 --inline-diffs --check-leaks --reporter mocha-multi-reporters --reporter-options configFile=mocha-reporter-config.json ./skr-test/test.js",
-    "skr-aws-upgrade-integration-test": "mocha --inline-diffs --check-leaks --reporter mocha-multi-reporters --reporter-options configFile=mocha-reporter-config.json ./skr-aws-upgrade-integration/index.js"
+    "skr-aws-upgrade-integration-test": "mocha --inline-diffs --check-leaks --reporter mocha-multi-reporters --reporter-options configFile=mocha-reporter-config.json ./skr-aws-upgrade-integration/index.js",
+    "skr-networking-test": "mocha --inline-difs --check-leaks --reporter mocha-multi-reporters --reporter-options configFile=mocha-reporter-config.json ./skr-networking-test/index.js"
   },
   "license": "Apache-2.0",
   "devDependencies": {

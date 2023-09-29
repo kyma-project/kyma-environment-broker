@@ -5,10 +5,10 @@
 EU Access requires, among others, that Data Residency is in the European Economic Area or Switzerland. 
 For more information, see [EU Access Overview](https://wiki.one.int.sap/wiki/display/IntBusComp/EU+Access+Overview). 
 
-SAP BTP, Kyma runtime (SKR) supports the BTP `cf-eu11` AWS and BTP `cf-ch20` Azure subaccount regions which are
+SAP BTP, Kyma runtime supports the BTP `cf-eu11` AWS and BTP `cf-ch20` Azure subaccount regions which are
 called EU Access BTP subaccount regions. 
-Kyma Control Plane manages `cf-eu11` SKRs in a separate AWS hyperscaler account pool and 
-`cf-ch20` SKRs in a separate Azure hyperscaler account pool.
+Kyma Control Plane manages `cf-eu11` Kyma runtimes in a separate AWS hyperscaler account pool and 
+`cf-ch20` Kyma runtimes in a separate Azure hyperscaler account pool.
 
 When the PlatformRegion is an EU access BTP subaccount region:
 - Kyma Environment Broker (KEB) provides the `euAccess` parameter to Provisioner

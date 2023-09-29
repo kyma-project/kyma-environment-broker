@@ -1,6 +1,8 @@
 # Configure Kyma version
 
-Kyma Environment Broker is configured with a default Kyma version specified in the **APP_KYMA_VERSION** environment variable. This means that each Kyma Runtime provisioned by Kyma Environment Broker in a given global account is installed in the default Kyma version.
+> **NOTE:** Once all Kyma components become independent modules, Kyma Environment Broker will no longer be required to send components to Reconciler and this document will be deprecated as irrelevant.
+
+Kyma Environment Broker (KEB) is configured with a default Kyma version specified in the **APP_KYMA_VERSION** environment variable. This means that each SAP BTP, Kyma runtime provisioned by KEB in a given global account is installed in the default Kyma version.
 You can also specify a different Kyma version for a global account or subaccount using a ConfigMap. To specify a version for a given account, use the following prefixes in ConfigMap keys:
 - `GA_` for a global account
 - `SA_` for a subaccount

@@ -1,6 +1,6 @@
-# Deprovision Kyma Runtime using KEB
+# Deprovision SAP BTP, Kyma runtime using Kyma Environment Broker
 
-This tutorial shows how to deprovision Kyma Runtime on Azure using Kyma Environment Broker.
+This tutorial shows how to deprovision SAP BTP, Kyma runtime on Azure using Kyma Environment Broker (KEB).
 
 ## Steps
 
@@ -17,7 +17,7 @@ This tutorial shows how to deprovision Kyma Runtime on Azure using Kyma Environm
    export AUTHORIZATION_HEADER="Authorization: Bearer $ACCESS_TOKEN"
    ```
 
-3. Make a call to the Kyma Environment Broker to delete a Runtime on Azure.
+3. Make a call to KEB to delete a Kyma runtime on Azure.
 
    ```bash
    curl  --request DELETE "https://$BROKER_URL/oauth/v2/service_instances/$INSTANCE_ID?accepts_incomplete=true&service_id=47c9dcbf-ff30-448e-ab36-d3bad66ba281&plan_id=4deee563-e5ec-4731-b9b1-53b42d855f0c" \
@@ -37,12 +37,11 @@ A successful call returns the operation ID:
 
 ## Subaccount Cleanup Job
 
-The standard workflow for [BTP Operator](https://github.com/SAP/sap-btp-service-operator) resources is to keep them untouched by KEB because users may intend to
-keep the external services provisioned through the BTP Operator still operational. In this case, when calling deprovisioning in the BTP Cockpit, users are informed
-there are still instances provisioned by BTP Operator, and the user is expected to handle the cleanup.
+The standard workflow for [SAP BTP Service Operator](https://github.com/SAP/sap-btp-service-operator) resources is to keep them untouched by KEB because users may intend to
+keep the external services provisioned through the SAP BTP Service Operator still operational. In this case, when calling deprovisioning in the BTP Cockpit, users are informed
+there are still instances provisioned by SAP BTP Service Operator, and the user is expected to handle the cleanup.
 
-There is one exception, and that is the `subaccount-cleanup` job. [KEB parses the `User-Agent` HTTP header](https://github.com/kyma-project/control-plane/pull/2520) for
+There is one exception, and that is the `subaccount-cleanup` job. [KEB parses the `User-Agent` HTTP header](https://github.com/kyma-project/kyma-environment-broker/blob/c3579f71078208917abfa8c57d9c7b4ba7f4bb5f/internal/process/deprovisioning/btp_operator_cleanup.go#L87) for
 `DELETE` call on `/service_instances/${instance_id}` endpoint and forwards it through the operation to the processing step `btp_operator_cleanup` handling
-soft delete for existing BTP Operator resources. Because the `subaccount-cleanup` job is triggered automatically and deletes only SKRs where the whole subaccount is 
-intended for deletion, it is necessary to execute the BTP Operator cleanup procedure as well.
-
+soft delete for existing SAP BTP Service Operator resources. Because the `subaccount-cleanup` job is triggered automatically and deletes only Kyma runtimes where the whole subaccount is 
+intended for deletion, it is necessary to execute the SAP BTP Service Operator cleanup procedure as well.
