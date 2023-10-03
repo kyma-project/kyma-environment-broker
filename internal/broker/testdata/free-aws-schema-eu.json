@@ -34,7 +34,6 @@
       "type": "object"
     },
     "region": {
-      "default": "eu-central-1",
       "enum": [
         "eu-central-1"
       ],
@@ -42,8 +41,7 @@
     }
   },
   "required": [
-    "name",
-    "region"
+    "name"
   ],
   "type": "object"
 }

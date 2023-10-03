@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"math/rand"
 
-	"github.com/kyma-project/kyma-environment-broker/internal/broker"
 	"github.com/kyma-project/kyma-environment-broker/internal/networking"
 
 	"github.com/kyma-project/kyma-environment-broker/internal/ptr"
@@ -14,7 +13,7 @@ import (
 )
 
 const (
-	DefaultOpenStackRegion = broker.DefaultOpenStackRegion
+	DefaultOpenStackRegion = "eu-de-2"
 	DefaultExposureClass   = "converged-cloud-internet"
 )
 

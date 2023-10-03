@@ -60,7 +60,6 @@
       "type": "object"
     },
     "region": {
-      "default": "europe-west3",
       "enum": [
         "europe-west3",
         "asia-south1",
@@ -70,8 +69,7 @@
     }
   },
   "required": [
-    "name",
-    "region"
+    "name"
   ],
   "type": "object"
 }

@@ -214,7 +214,11 @@ func NewOIDCSchema() *OIDCType {
 	}
 }
 
-func NewSchema(properties interface{}, update bool, required []string) *RootSchema {
+func NewSchemaWithOnlyNameRequired(properties interface{}, update bool) *RootSchema {
+	return NewSchemaForOwnCluster(properties, update, []string{"name"})
+}
+
+func NewSchemaForOwnCluster(properties interface{}, update bool, required []string) *RootSchema {
 	schema := &RootSchema{
 		Schema: "http://json-schema.org/draft-04/schema#",
 		Type: Type{

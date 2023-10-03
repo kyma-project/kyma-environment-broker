@@ -15,7 +15,7 @@ import (
 )
 
 const (
-	DefaultGCPRegion         = broker.DefaultGCPRegion
+	DefaultGCPRegion         = "europe-west3"
 	DefaultGCPMachineType    = "n2-standard-4"
 	DefaultGCPMultiZoneCount = 3
 )

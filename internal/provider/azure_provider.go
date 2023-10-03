@@ -15,8 +15,8 @@ import (
 )
 
 const (
-	DefaultAzureRegion         = broker.DefaultAzureRegion
-	DefaultEuAccessAzureRegion = broker.DefaultEuAccessAzureRegion
+	DefaultAzureRegion         = "eastus"
+	DefaultEuAccessAzureRegion = "switzerlandnorth"
 	DefaultAzureMultiZoneCount = 3
 )
 

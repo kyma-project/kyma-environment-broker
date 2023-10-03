@@ -57,9 +57,7 @@
       "type": "object"
     },
     "region": {
-      "default": "eu-de-2",
       "enum": [
-        "eu-de-2",
         "eu-de-1",
         "ap-sa-1"
       ],
@@ -67,8 +65,7 @@
     }
   },
   "required": [
-    "name",
-    "region"
+    "name"
   ],
   "type": "object"
 }
