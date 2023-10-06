@@ -238,7 +238,6 @@ func (h *Handler) setRuntimeAllOperations(instance internal.Instance, dto *pkg.R
 		lastProvOp := provOprs[0]
 		// Set AVS evaluation ID based on the data in the last provisioning operation
 		dto.AVSInternalEvaluationID = lastProvOp.InstanceDetails.Avs.AvsEvaluationInternalId
-		dto.AVSExternalEvaluationID = lastProvOp.InstanceDetails.Avs.AVSEvaluationExternalId
 		h.converter.ApplyProvisioningOperation(dto, firstProvOp)
 		if len(provOprs) > 1 {
 			h.converter.ApplyUnsuspensionOperations(dto, provOprs[:len(provOprs)-1])
@@ -297,7 +296,6 @@ func (h *Handler) setRuntimeLastOperation(instance internal.Instance, dto *pkg.R
 
 	// Set AVS evaluation ID based on the data in the last operation
 	dto.AVSInternalEvaluationID = lastOp.InstanceDetails.Avs.AvsEvaluationInternalId
-	dto.AVSExternalEvaluationID = lastOp.InstanceDetails.Avs.AVSEvaluationExternalId
 
 	switch lastOp.Type {
 	case internal.OperationTypeProvision:
