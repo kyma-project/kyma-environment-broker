@@ -693,11 +693,6 @@ func NewProvisioningProcessingQueue(ctx context.Context, provisionManager *proce
 			step:      provisioning.NewCreateRuntimeWithoutKymaStep(db.Operations(), db.RuntimeStates(), db.Instances(), provisionerClient),
 		},
 		{
-			stage:    createRuntimeStageName,
-			step:     provisioning.NewInternalEvaluationStep(avsDel, internalEvalAssistant),
-			disabled: cfg.Avs.Disabled,
-		},
-		{
 			condition: provisioning.DoForOwnClusterPlanOnly,
 			stage:     createRuntimeStageName,
 			step:      provisioning.NewCreateRuntimeForOwnClusterStep(db.Operations(), db.Instances()),
@@ -742,6 +737,11 @@ func NewProvisioningProcessingQueue(ctx context.Context, provisionManager *proce
 		{
 			stage: postActionsStageName,
 			step:  provisioning.NewExternalEvalStep(externalEvalCreator),
+		},
+		{
+			stage:    createRuntimeStageName,
+			step:     provisioning.NewInternalEvaluationStep(avsDel, internalEvalAssistant),
+			disabled: cfg.Avs.Disabled,
 		},
 	}
 	for _, step := range provisioningSteps {
