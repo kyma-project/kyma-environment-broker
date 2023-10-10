@@ -80,12 +80,10 @@ func (iec *InternalEvalAssistant) ProvideTags(operation internal.Operation) []*T
 		TagClassId: iec.avsConfig.SubAccountIdTagClassId,
 	})
 
-	if operation.ProvisioningParameters.ErsContext.Region != nil {
-		Tags = append(Tags, &Tag{
-			Content:    *operation.ProvisioningParameters.ErsContext.Region,
-			TagClassId: iec.avsConfig.LandscapeTagClassId,
-		})
-	}
+	Tags = append(Tags, &Tag{
+		Content:    operation.ProvisioningParameters.PlatformRegion,
+		TagClassId: iec.avsConfig.LandscapeTagClassId,
+	})
 
 	Tags = append(Tags, &Tag{
 		Content:    string(operation.ProvisioningParameters.PlatformProvider),
@@ -93,7 +91,7 @@ func (iec *InternalEvalAssistant) ProvideTags(operation internal.Operation) []*T
 	})
 
 	Tags = append(Tags, &Tag{
-		Content:    operation.ProvisioningParameters.PlatformRegion,
+		Content:    operation.LastRuntimeState.ClusterSetup.Metadata.Region,
 		TagClassId: iec.avsConfig.RegionTagClassId,
 	})
 
