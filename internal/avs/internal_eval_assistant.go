@@ -93,8 +93,7 @@ func (iec *InternalEvalAssistant) ProvideTags(operation internal.Operation) []*T
 	})
 
 	Tags = append(Tags, &Tag{
-		//Content:    operation.LastRuntimeState.ClusterConfig.Region,
-		Content:    operation.Region,
+		Content:    operation.ProvisioningParameters.PlatformRegion,
 		TagClassId: iec.avsConfig.RegionTagClassId,
 	})
 
