@@ -66,12 +66,10 @@ func (eea *ExternalEvalAssistant) ProvideTags(operation internal.Operation) []*T
 		TagClassId: eea.avsConfig.SubAccountIdTagClassId,
 	})
 
-	if operation.ProvisioningParameters.ErsContext.Region != nil {
-		Tags = append(Tags, &Tag{
-			Content:    *operation.ProvisioningParameters.ErsContext.Region,
-			TagClassId: eea.avsConfig.LandscapeTagClassId,
-		})
-	}
+	Tags = append(Tags, &Tag{
+		Content:    operation.ProvisioningParameters.PlatformRegion,
+		TagClassId: eea.avsConfig.LandscapeTagClassId,
+	})
 
 	Tags = append(Tags, &Tag{
 		Content:    string(operation.ProvisioningParameters.PlatformProvider),
@@ -79,7 +77,7 @@ func (eea *ExternalEvalAssistant) ProvideTags(operation internal.Operation) []*T
 	})
 
 	Tags = append(Tags, &Tag{
-		Content:    operation.ProvisioningParameters.PlatformRegion,
+		Content:    operation.LastRuntimeState.ClusterSetup.Metadata.Region,
 		TagClassId: eea.avsConfig.RegionTagClassId,
 	})
 
