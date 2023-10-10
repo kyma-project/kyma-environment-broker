@@ -90,11 +90,23 @@ func (iec *InternalEvalAssistant) ProvideTags(operation internal.Operation) []*T
 		TagClassId: iec.avsConfig.ProviderTagClassId,
 	})
 
+	r := ""
+	if operation.ProvisioningParameters.ErsContext.Region != nil {
+		r = *operation.ProvisioningParameters.ErsContext.Region
+	} else if operation.ProvisioningParameters.Parameters.Region != nil {
+		r = *operation.ProvisioningParameters.Parameters.Region
+	} else if operation.LastRuntimeState.ClusterSetup != nil {
+		r = operation.LastRuntimeState.ClusterSetup.Metadata.Region
+	} else if operation.LastRuntimeState.ClusterConfig.Region != "" {
+		r = operation.LastRuntimeState.ClusterConfig.Region
+	} else if operation.Region != "" {
+		r = operation.Region
+	}
+
 	Tags = append(Tags, &Tag{
-		Content:    operation.LastRuntimeState.ClusterSetup.Metadata.Region,
+		Content:    r,
 		TagClassId: iec.avsConfig.RegionTagClassId,
 	})
-
 	Tags = append(Tags, &Tag{
 		Content:    operation.ShootName,
 		TagClassId: iec.avsConfig.ShootNameTagClassId,
