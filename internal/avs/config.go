@@ -28,7 +28,6 @@ type Config struct {
 	RegionTagClassId                                int
 	GlobalAccountIdTagClassId                       int
 	SubAccountIdTagClassId                          int
-	ShootNameTagClassId                             int
 	LandscapeTagClassId                             int
 	ProviderTagClassId                              int
 	TrialInternalTesterAccessId                     int64    `envconfig:"optional"`

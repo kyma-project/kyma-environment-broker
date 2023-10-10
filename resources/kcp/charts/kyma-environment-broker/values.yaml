@@ -201,7 +201,6 @@ avs:
   landscapeTagClassId: "0"
   providerTagClassId: "0"
   regionTagClassId: "0"
-  shootNameTagClassId: "0"
   gardenerShootNameTagClassId: "0"
   trialApiKey: ""
   trialInternalTesterAccessId: "0"

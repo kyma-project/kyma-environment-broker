@@ -98,8 +98,8 @@ func (iec *InternalEvalAssistant) ProvideTags(operation internal.Operation) []*T
 	})
 
 	Tags = append(Tags, &Tag{
-		Content:    operation.ProvisioningParameters.Parameters.ShootName,
-		TagClassId: iec.avsConfig.ShootNameTagClassId,
+		Content:    operation.ShootName,
+		TagClassId: iec.avsConfig.GardenerShootNameTagClassId,
 	})
 	return Tags
 
