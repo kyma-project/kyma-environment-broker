@@ -298,6 +298,8 @@ spec:
               value: "{{ .Values.avs.regionTagClassId }}"
             - name: APP_AVS_PROVIDER_TAG_CLASS_ID
               value: "{{ .Values.avs.providerTagClassId }}”
+            - name: APP_AVS_SHOOT_NAME_TAG_CLASS_ID
+              value: "{{ .Values.avs.shootNameTagClassId }}"
             - name: APP_AVS_GARDENER_SHOOT_NAME_TAG_CLASS_ID
               value: "{{ .Values.avs.gardenerShootNameTagClassId }}"
             - name: APP_AVS_MAINTENANCE_MODE_DURING_UPGRADE_DISABLED

@@ -79,8 +79,13 @@ func (eea *ExternalEvalAssistant) ProvideTags(operation internal.Operation) []*T
 	})
 
 	Tags = append(Tags, &Tag{
-		Content:    operation.LastRuntimeState.ClusterConfig.Region,
+		Content:    operation.Region,
 		TagClassId: eea.avsConfig.RegionTagClassId,
+	})
+
+	Tags = append(Tags, &Tag{
+		Content:    operation.ShootName,
+		TagClassId: eea.avsConfig.ShootNameTagClassId,
 	})
 
 	Tags = append(Tags, &Tag{
