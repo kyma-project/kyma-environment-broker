@@ -24,6 +24,7 @@ type Config struct {
 	ExternalTesterDisabled                          bool   `envconfig:"default=false"`
 	ParentId                                        int64
 	InstanceIdTagClassId                            int
+	ShootNameTagClassId                             int
 	GardenerShootNameTagClassId                     int
 	RegionTagClassId                                int
 	GlobalAccountIdTagClassId                       int
