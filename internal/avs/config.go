@@ -21,7 +21,6 @@ type Config struct {
 	GroupId                                         int64
 	ExternalTesterAccessId                          int64
 	ExternalTesterService                           string `envconfig:"optional"`
-	ExternalTesterDisabled                          bool   `envconfig:"default=false"`
 	ParentId                                        int64
 	InstanceIdTagClassId                            int
 	ShootNameTagClassId                             int

@@ -187,7 +187,6 @@ func avsConfig(mockOauthServer *httptest.Server, mockAvsServer *httptest.Server)
 		DefinitionType:         avs.DefinitionType,
 		InternalTesterAccessId: 1234,
 		InternalTesterService:  "",
-		ExternalTesterDisabled: false,
 		ExternalTesterAccessId: 5678,
 		ExternalTesterService:  dummyStrAvsTest,
 

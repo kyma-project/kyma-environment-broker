@@ -739,7 +739,7 @@ func NewProvisioningProcessingQueue(ctx context.Context, provisionManager *proce
 			step:  provisioning.NewExternalEvalStep(externalEvalCreator),
 		},
 		{
-			stage:    createRuntimeStageName,
+			stage:    postActionsStageName,
 			step:     provisioning.NewInternalEvaluationStep(avsDel, internalEvalAssistant),
 			disabled: cfg.Avs.Disabled,
 		},
