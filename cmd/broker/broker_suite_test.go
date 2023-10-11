@@ -201,7 +201,7 @@ func NewBrokerSuiteTest(t *testing.T, version ...string) *BrokerSuiteTest {
 	require.NoError(t, err)
 
 	fakeK8sSKRClient := fake.NewClientBuilder().WithScheme(sch).Build()
-	provisionManager := process.NewStagedManager(db.Operations(), eventBroker, cfg.OperationTimeout, logs.WithField("provisioning", "manager"))
+	provisionManager := process.NewStagedManager(db.Operations(), eventBroker, cfg.OperationTimeout, cfg.Provisioning, logs.WithField("provisioning", "manager"))
 	provisioningQueue := NewProvisioningProcessingQueue(context.Background(), provisionManager, workersAmount, cfg, db, provisionerClient, inputFactory,
 		avsDel, internalEvalAssistant, externalEvalCreator, runtimeVerConfigurator, runtimeOverrides,
 		edpClient, accountProvider, reconcilerClient, fakeK8sClientProvider(fakeK8sSKRClient), cli, logs)
@@ -209,14 +209,14 @@ func NewBrokerSuiteTest(t *testing.T, version ...string) *BrokerSuiteTest {
 	provisioningQueue.SpeedUp(10000)
 	provisionManager.SpeedUp(10000)
 
-	updateManager := process.NewStagedManager(db.Operations(), eventBroker, time.Hour, logs)
+	updateManager := process.NewStagedManager(db.Operations(), eventBroker, time.Hour, cfg.Update, logs)
 	rvc := runtimeversion.NewRuntimeVersionConfigurator(cfg.KymaVersion, nil, db.RuntimeStates())
 	updateQueue := NewUpdateProcessingQueue(context.Background(), updateManager, 1, db, inputFactory, provisionerClient,
 		eventBroker, rvc, db.RuntimeStates(), decoratedComponentListProvider, reconcilerClient, *cfg, fakeK8sClientProvider(fakeK8sSKRClient), cli, logs)
 	updateQueue.SpeedUp(10000)
 	updateManager.SpeedUp(10000)
 
-	deprovisionManager := process.NewStagedManager(db.Operations(), eventBroker, time.Hour, logs.WithField("deprovisioning", "manager"))
+	deprovisionManager := process.NewStagedManager(db.Operations(), eventBroker, time.Hour, cfg.Deprovisioning, logs.WithField("deprovisioning", "manager"))
 	deprovisioningQueue := NewDeprovisioningProcessingQueue(ctx, workersAmount, deprovisionManager, cfg, db, eventBroker,
 		provisionerClient, avsDel, internalEvalAssistant, externalEvalAssistant,
 		bundleBuilder, edpClient, accountProvider, reconcilerClient, fakeK8sClientProvider(fakeK8sSKRClient), fakeK8sSKRClient, configProvider, logs,

@@ -29,6 +29,13 @@ type StagedManager struct {
 	mu sync.RWMutex
 
 	speedFactor int64
+	cfg         StagedManagerConfiguration
+}
+
+type StagedManagerConfiguration struct {
+	// Max time of processing step by a worker without returning to the queue
+	MaxStepProcessingTime time.Duration `envconfig:"default=2m"`
+	WorkersAmount         int           `envconfig:"default=20"`
 }
 
 type Step interface {
@@ -55,13 +62,14 @@ func (s *stage) AddStep(step Step, cnd StepCondition) {
 	})
 }
 
-func NewStagedManager(storage storage.Operations, pub event.Publisher, operationTimeout time.Duration, logger logrus.FieldLogger) *StagedManager {
+func NewStagedManager(storage storage.Operations, pub event.Publisher, operationTimeout time.Duration, cfg StagedManagerConfiguration, logger logrus.FieldLogger) *StagedManager {
 	return &StagedManager{
 		log:              logger,
 		operationStorage: storage,
 		publisher:        pub,
 		operationTimeout: operationTimeout,
 		speedFactor:      1,
+		cfg:              cfg,
 	}
 }
 
@@ -237,7 +245,7 @@ func (m *StagedManager) runStep(step Step, operation internal.Operation, logger 
 		// - the step does not need a retry
 		// - step returns an error
 		// - the loop takes too much time (to not block the worker too long)
-		if backoff == 0 || err != nil || time.Since(begin) > 10*time.Minute {
+		if backoff == 0 || err != nil || time.Since(begin) > m.cfg.MaxStepProcessingTime {
 			return processedOperation, backoff, err
 		}
 		operation.EventInfof("step %v sleeping for %v", step.Name(), backoff)

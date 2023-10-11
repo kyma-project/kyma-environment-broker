@@ -85,7 +85,7 @@ func NewDeprovisioningSuite(t *testing.T) *DeprovisioningSuite {
 
 	accountProvider := fixAccountProvider()
 
-	deprovisionManager := process.NewStagedManager(db.Operations(), eventBroker, time.Minute, logs.WithField("deprovisioning", "manager"))
+	deprovisionManager := process.NewStagedManager(db.Operations(), eventBroker, time.Minute, cfg.Deprovisioning, logs.WithField("deprovisioning", "manager"))
 	deprovisionManager.SpeedUp(1000)
 	scheme := runtime.NewScheme()
 	apiextensionsv1.AddToScheme(scheme)

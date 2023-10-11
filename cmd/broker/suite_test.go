@@ -636,7 +636,7 @@ func NewProvisioningSuite(t *testing.T, multiZoneCluster bool, controlPlaneFailu
 
 	eventBroker := event.NewPubSub(logs)
 
-	provisionManager := process.NewStagedManager(db.Operations(), eventBroker, cfg.OperationTimeout, logs.WithField("provisioning", "manager"))
+	provisionManager := process.NewStagedManager(db.Operations(), eventBroker, cfg.OperationTimeout, cfg.Provisioning, logs.WithField("provisioning", "manager"))
 	provisioningQueue := NewProvisioningProcessingQueue(ctx, provisionManager, workersAmount, cfg, db, provisionerClient, inputFactory, avsDel,
 		internalEvalAssistant, externalEvalCreator, runtimeVerConfigurator, runtimeOverrides, edpClient, accountProvider,
 		reconcilerClient, fakeK8sClientProvider(cli), cli, logs)
@@ -1016,6 +1016,10 @@ func fixConfig() *Config {
 		FreemiumProviders:                         []string{"aws", "azure"},
 		EuAccessWhitelistedGlobalAccountsFilePath: "testdata/eu_access_whitelist.yaml",
 		EuAccessRejectionMessage:                  "EU Access Rejection Message - see: http://google.pl",
+
+		Provisioning:   process.StagedManagerConfiguration{MaxStepProcessingTime: time.Minute},
+		Deprovisioning: process.StagedManagerConfiguration{MaxStepProcessingTime: time.Minute},
+		Update:         process.StagedManagerConfiguration{MaxStepProcessingTime: time.Minute},
 	}
 }
 

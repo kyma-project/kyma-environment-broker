@@ -145,7 +145,7 @@ func SetupStagedManager(op internal.Operation) (*process.StagedManager, storage.
 	eventCollector := &CollectingEventHandler{}
 	l := logrus.New()
 	l.SetLevel(logrus.DebugLevel)
-	mgr := process.NewStagedManager(memoryStorage.Operations(), eventCollector, 3*time.Second, l)
+	mgr := process.NewStagedManager(memoryStorage.Operations(), eventCollector, 3*time.Second, process.StagedManagerConfiguration{MaxStepProcessingTime: time.Second}, l)
 	mgr.SpeedUp(100000)
 	mgr.DefineStages([]string{"stage-1", "stage-2"})
 
@@ -316,7 +316,7 @@ func SetupStagedManager2(op internal.Operation) (*process.StagedManager, storage
 	l := logrus.New()
 	l.SetLevel(logrus.DebugLevel)
 	pubSub := event.NewPubSub(nil)
-	mgr := process.NewStagedManager(memoryStorage.Operations(), pubSub, 3*time.Second, l)
+	mgr := process.NewStagedManager(memoryStorage.Operations(), pubSub, 3*time.Second, process.StagedManagerConfiguration{MaxStepProcessingTime: time.Second}, l)
 	mgr.SpeedUp(100000)
 	mgr.DefineStages([]string{"stage-1", "stage-2"})
 
