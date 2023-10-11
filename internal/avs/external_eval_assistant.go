@@ -77,9 +77,8 @@ func (eea *ExternalEvalAssistant) ProvideTags(operation internal.Operation) []*T
 	})
 
 	r := ""
-	if operation.ProvisioningParameters.ErsContext.Region != nil {
-		r = *operation.ProvisioningParameters.ErsContext.Region
-	} else if operation.ProvisioningParameters.Parameters.Region != nil {
+
+	if operation.ProvisioningParameters.Parameters.Region != nil {
 		r = *operation.ProvisioningParameters.Parameters.Region
 	} else if operation.LastRuntimeState.ClusterSetup != nil {
 		r = operation.LastRuntimeState.ClusterSetup.Metadata.Region
