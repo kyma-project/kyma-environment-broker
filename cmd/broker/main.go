@@ -353,7 +353,7 @@ func main() {
 	// run queues
 	provisionManager := process.NewStagedManager(db.Operations(), eventBroker, cfg.OperationTimeout, cfg.Provisioning, logs.WithField("provisioning", "manager"))
 	provisionQueue := NewProvisioningProcessingQueue(ctx, provisionManager, cfg.Provisioning.WorkersAmount, &cfg, db, provisionerClient, inputFactory,
-		avsDel, internalEvalAssistant, externalEvalCreator, internalEvalUpdater, runtimeVerConfigurator,
+		avsDel, internalEvalAssistant, externalEvalCreator, runtimeVerConfigurator,
 		runtimeOverrides, edpClient, accountProvider, reconcilerClient, k8sClientProvider, cli, logs)
 
 	deprovisionManager := process.NewStagedManager(db.Operations(), eventBroker, cfg.OperationTimeout, cfg.Deprovisioning, logs.WithField("deprovisioning", "manager"))
