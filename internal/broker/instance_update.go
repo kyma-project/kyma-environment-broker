@@ -414,7 +414,7 @@ func (b *UpdateEndpoint) processExpirationParam(instance *internal.Instance, det
 }
 
 func (b *UpdateEndpoint) getJsonSchemaValidator(provider internal.CloudProvider, planID string, platformRegion string) (JSONSchemaValidator, error) {
-	plans := Plans(b.plansConfig, provider, b.config.IncludeAdditionalParamsInSchema, euaccess.IsEURestrictedAccess(platformRegion))
+	plans := Plans(b.plansConfig, provider, b.config.IncludeAdditionalParamsInSchema, euaccess.IsEURestrictedAccess(platformRegion), b.config.RegionParameterIsRequired)
 	plan := plans[planID]
 	schema := string(Marshal(plan.Schemas.Instance.Update.Parameters))
 

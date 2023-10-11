@@ -43,6 +43,7 @@ type Config struct {
 	TrialDocsURL                            string `envconfig:"default="`
 
 	AllowNetworkingParameters bool `envconfig:"default=false"`
+	RegionParameterIsRequired bool `envconfig:"default=false"`
 }
 
 type ServicesConfig map[string]Service
