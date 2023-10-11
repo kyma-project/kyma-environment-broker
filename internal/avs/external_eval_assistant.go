@@ -51,7 +51,7 @@ func (eea *ExternalEvalAssistant) ProvideParentId(_ internal.ProvisioningParamet
 // func (iec *InternalEvalAssistant) ProvideTags(pp internal.ProvisioningParameters, rt runtime.RuntimeDTO) []*Tag {
 func (eea *ExternalEvalAssistant) ProvideTags(operation internal.Operation) []*Tag {
 
-	Tags := []*Tag{
+	tags := []*Tag{
 		{
 			Content:    operation.InstanceID,
 			TagClassId: eea.avsConfig.InstanceIdTagClassId,
@@ -93,12 +93,12 @@ func (eea *ExternalEvalAssistant) ProvideTags(operation internal.Operation) []*T
 		region = operation.Region
 	}
 
-	Tags = append(Tags, &Tag{
+	tags = append(tags, &Tag{
 		Content:    region,
 		TagClassId: eea.avsConfig.RegionTagClassId,
 	})
 
-	return Tags
+	return tags
 }
 
 func (eea *ExternalEvalAssistant) ProvideNewOrDefaultServiceName(defaultServiceName string) string {

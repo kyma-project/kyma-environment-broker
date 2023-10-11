@@ -63,7 +63,7 @@ func (iec *InternalEvalAssistant) ProvideCheckType() string {
 // func (iec *InternalEvalAssistant) ProvideTags(pp internal.ProvisioningParameters, rt runtime.RuntimeDTO) []*Tag {
 func (iec *InternalEvalAssistant) ProvideTags(operation internal.Operation) []*Tag {
 
-	Tags := []*Tag{
+	tags := []*Tag{
 		{
 			Content:    operation.InstanceID,
 			TagClassId: iec.avsConfig.InstanceIdTagClassId,
@@ -105,12 +105,12 @@ func (iec *InternalEvalAssistant) ProvideTags(operation internal.Operation) []*T
 		region = operation.Region
 	}
 
-	Tags = append(Tags, &Tag{
+	tags = append(tags, &Tag{
 		Content:    region,
 		TagClassId: iec.avsConfig.RegionTagClassId,
 	})
 
-	return Tags
+	return tags
 
 }
 
