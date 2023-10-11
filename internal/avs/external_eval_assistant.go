@@ -50,57 +50,52 @@ func (eea *ExternalEvalAssistant) ProvideParentId(_ internal.ProvisioningParamet
 
 // func (iec *InternalEvalAssistant) ProvideTags(pp internal.ProvisioningParameters, rt runtime.RuntimeDTO) []*Tag {
 func (eea *ExternalEvalAssistant) ProvideTags(operation internal.Operation) []*Tag {
-	var Tags []*Tag
-	Tags = append(Tags, &Tag{
-		Content:    operation.InstanceID,
-		TagClassId: eea.avsConfig.InstanceIdTagClassId,
-	})
 
-	Tags = append(Tags, &Tag{
-		Content:    operation.ProvisioningParameters.ErsContext.GlobalAccountID,
-		TagClassId: eea.avsConfig.GlobalAccountIdTagClassId,
-	})
+	Tags := []*Tag{
+		{
+			Content:    operation.InstanceID,
+			TagClassId: eea.avsConfig.InstanceIdTagClassId,
+		},
+		{
+			Content:    operation.ProvisioningParameters.ErsContext.GlobalAccountID,
+			TagClassId: eea.avsConfig.GlobalAccountIdTagClassId,
+		},
+		{
+			Content:    operation.ProvisioningParameters.ErsContext.SubAccountID,
+			TagClassId: eea.avsConfig.SubAccountIdTagClassId,
+		},
+		{
+			Content:    operation.ProvisioningParameters.PlatformRegion,
+			TagClassId: eea.avsConfig.LandscapeTagClassId,
+		},
+		{
+			Content:    string(operation.ProvisioningParameters.PlatformProvider),
+			TagClassId: eea.avsConfig.ProviderTagClassId,
+		},
+		{
+			Content:    operation.ShootName,
+			TagClassId: eea.avsConfig.ShootNameTagClassId,
+		},
+		{
+			Content:    operation.ShootName,
+			TagClassId: eea.avsConfig.GardenerShootNameTagClassId,
+		},
+	}
 
-	Tags = append(Tags, &Tag{
-		Content:    operation.ProvisioningParameters.ErsContext.SubAccountID,
-		TagClassId: eea.avsConfig.SubAccountIdTagClassId,
-	})
-
-	Tags = append(Tags, &Tag{
-		Content:    operation.ProvisioningParameters.PlatformRegion,
-		TagClassId: eea.avsConfig.LandscapeTagClassId,
-	})
-
-	Tags = append(Tags, &Tag{
-		Content:    string(operation.ProvisioningParameters.PlatformProvider),
-		TagClassId: eea.avsConfig.ProviderTagClassId,
-	})
-
-	r := ""
-
+	region := ""
 	if operation.ProvisioningParameters.Parameters.Region != nil {
-		r = *operation.ProvisioningParameters.Parameters.Region
+		region = *operation.ProvisioningParameters.Parameters.Region
 	} else if operation.LastRuntimeState.ClusterSetup != nil {
-		r = operation.LastRuntimeState.ClusterSetup.Metadata.Region
+		region = operation.LastRuntimeState.ClusterSetup.Metadata.Region
 	} else if operation.LastRuntimeState.ClusterConfig.Region != "" {
-		r = operation.LastRuntimeState.ClusterConfig.Region
+		region = operation.LastRuntimeState.ClusterConfig.Region
 	} else if operation.Region != "" {
-		r = operation.Region
+		region = operation.Region
 	}
 
 	Tags = append(Tags, &Tag{
-		Content:    r,
+		Content:    region,
 		TagClassId: eea.avsConfig.RegionTagClassId,
-	})
-
-	Tags = append(Tags, &Tag{
-		Content:    operation.ShootName,
-		TagClassId: eea.avsConfig.ShootNameTagClassId,
-	})
-
-	Tags = append(Tags, &Tag{
-		Content:    operation.ShootName,
-		TagClassId: eea.avsConfig.GardenerShootNameTagClassId,
 	})
 
 	return Tags

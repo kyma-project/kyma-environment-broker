@@ -63,57 +63,53 @@ func (iec *InternalEvalAssistant) ProvideCheckType() string {
 // func (iec *InternalEvalAssistant) ProvideTags(pp internal.ProvisioningParameters, rt runtime.RuntimeDTO) []*Tag {
 func (iec *InternalEvalAssistant) ProvideTags(operation internal.Operation) []*Tag {
 
-	var Tags []*Tag
+	Tags := []*Tag{
+		{
+			Content:    operation.InstanceID,
+			TagClassId: iec.avsConfig.InstanceIdTagClassId,
+		},
+		{
+			Content:    operation.ProvisioningParameters.ErsContext.GlobalAccountID,
+			TagClassId: iec.avsConfig.GlobalAccountIdTagClassId,
+		},
+		{
+			Content:    operation.ProvisioningParameters.ErsContext.SubAccountID,
+			TagClassId: iec.avsConfig.SubAccountIdTagClassId,
+		},
+		{
+			Content:    operation.ProvisioningParameters.PlatformRegion,
+			TagClassId: iec.avsConfig.LandscapeTagClassId,
+		},
+		{
+			Content:    string(operation.ProvisioningParameters.PlatformProvider),
+			TagClassId: iec.avsConfig.ProviderTagClassId,
+		},
+		{
+			Content:    operation.ShootName,
+			TagClassId: iec.avsConfig.ShootNameTagClassId,
+		},
+		{
+			Content:    operation.ShootName,
+			TagClassId: iec.avsConfig.GardenerShootNameTagClassId,
+		},
+	}
 
-	Tags = append(Tags, &Tag{
-		Content:    operation.InstanceID,
-		TagClassId: iec.avsConfig.InstanceIdTagClassId,
-	})
-
-	Tags = append(Tags, &Tag{
-		Content:    operation.ProvisioningParameters.ErsContext.GlobalAccountID,
-		TagClassId: iec.avsConfig.GlobalAccountIdTagClassId,
-	})
-
-	Tags = append(Tags, &Tag{
-		Content:    operation.ProvisioningParameters.ErsContext.SubAccountID,
-		TagClassId: iec.avsConfig.SubAccountIdTagClassId,
-	})
-
-	Tags = append(Tags, &Tag{
-		Content:    operation.ProvisioningParameters.PlatformRegion,
-		TagClassId: iec.avsConfig.LandscapeTagClassId,
-	})
-
-	Tags = append(Tags, &Tag{
-		Content:    string(operation.ProvisioningParameters.PlatformProvider),
-		TagClassId: iec.avsConfig.ProviderTagClassId,
-	})
-
-	r := ""
+	region := ""
 	if operation.ProvisioningParameters.Parameters.Region != nil {
-		r = *operation.ProvisioningParameters.Parameters.Region
+		region = *operation.ProvisioningParameters.Parameters.Region
 	} else if operation.LastRuntimeState.ClusterSetup != nil {
-		r = operation.LastRuntimeState.ClusterSetup.Metadata.Region
+		region = operation.LastRuntimeState.ClusterSetup.Metadata.Region
 	} else if operation.LastRuntimeState.ClusterConfig.Region != "" {
-		r = operation.LastRuntimeState.ClusterConfig.Region
+		region = operation.LastRuntimeState.ClusterConfig.Region
 	} else if operation.Region != "" {
-		r = operation.Region
+		region = operation.Region
 	}
 
 	Tags = append(Tags, &Tag{
-		Content:    r,
+		Content:    region,
 		TagClassId: iec.avsConfig.RegionTagClassId,
 	})
-	Tags = append(Tags, &Tag{
-		Content:    operation.ShootName,
-		TagClassId: iec.avsConfig.ShootNameTagClassId,
-	})
 
-	Tags = append(Tags, &Tag{
-		Content:    operation.ShootName,
-		TagClassId: iec.avsConfig.GardenerShootNameTagClassId,
-	})
 	return Tags
 
 }
