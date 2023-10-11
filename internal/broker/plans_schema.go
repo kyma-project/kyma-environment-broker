@@ -167,9 +167,8 @@ func NewProvisioningProperties(machineTypesDisplay map[string]string, machineTyp
 		},
 		Name: NameProperty(),
 		Region: &Type{
-			Type:      "string",
-			Enum:      ToInterfaceSlice(regions),
-			MinLength: 1,
+			Type: "string",
+			Enum: ToInterfaceSlice(regions),
 		},
 		Networking: NewNetworkingSchema(),
 	}
