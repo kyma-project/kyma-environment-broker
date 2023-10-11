@@ -214,9 +214,8 @@ func FreemiumSchema(provider internal.CloudProvider, additionalParams, update bo
 	properties := ProvisioningProperties{
 		Name: NameProperty(),
 		Region: &Type{
-			Type:      "string",
-			Enum:      ToInterfaceSlice(regions),
-			MinLength: 1,
+			Type: "string",
+			Enum: ToInterfaceSlice(regions),
 		},
 	}
 	if !update {
