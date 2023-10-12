@@ -35,7 +35,8 @@ func TestClusterUpgrade_UpgradeAfterUpdateWithNetworkPolicy(t *testing.T) {
 		"user_id": "john.smith@email.com"
 	},
 	"parameters": {
-		"name": "testing-cluster"
+		"name": "testing-cluster",
+		"region": "eastus"
 	}
 }`)
 	opID := suite.DecodeOperationID(resp)
