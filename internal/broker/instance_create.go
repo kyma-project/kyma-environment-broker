@@ -539,7 +539,7 @@ func validateOverlapping(n1 net.IPNet, n2 net.IPNet) error {
 }
 
 func (b *ProvisionEndpoint) validateModules(parameters internal.ProvisioningParametersDTO) error {
-	if parameters.Modules == nil {
+	/*if parameters.Modules == nil {
 		return fmt.Errorf("section with modules not set")
 	}
 	modules := parameters.Modules
@@ -559,6 +559,6 @@ func (b *ProvisionEndpoint) validateModules(parameters internal.ProvisioningPara
 	}
 	//reject scenarios
 
-	//we return and install what is in Modules.
+	//we return and install what is in Modules.*/
 	return nil
 }

@@ -105,6 +105,9 @@ func appendModules(out *unstructured.Unstructured, m *internal.ModulesDTO) error
 	modulesSection = toInsert
 	spec["modules"] = modulesSection
 	out.Object["spec"] = specSection
+
+	unstructured.SetNestedField(out.Object, toInsert, "spec", "modules")
+
 	return nil
 }
 
