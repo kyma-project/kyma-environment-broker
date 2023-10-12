@@ -36,6 +36,17 @@ func TestSchemaGenerator(t *testing.T) {
 			updateFileOIDC: "update-aws-schema-additional-params.json",
 		},
 		{
+			name: "AWS schema with region required is correct",
+			generator: func(machinesDisplay map[string]string, machines []string, additionalParams, update bool) *map[string]interface{} {
+				return AWSSchema(machinesDisplay, machines, additionalParams, update, false, true)
+			},
+			machineTypes:   []string{"m5.xlarge", "m5.2xlarge", "m5.4xlarge", "m5.8xlarge", "m5.12xlarge", "m6i.xlarge", "m6i.2xlarge", "m6i.4xlarge", "m6i.8xlarge", "m6i.12xlarge"},
+			file:           "aws-schema-region-required.json",
+			updateFile:     "update-aws-schema.json",
+			fileOIDC:       "aws-schema-additional-params-region-required.json",
+			updateFileOIDC: "update-aws-schema-additional-params.json",
+		},
+		{
 			name: "AWS schema with EU access restriction is correct",
 			generator: func(machinesDisplay map[string]string, machines []string, additionalParams, update bool) *map[string]interface{} {
 				return AWSSchema(machinesDisplay, machines, additionalParams, update, true, false)
@@ -44,6 +55,17 @@ func TestSchemaGenerator(t *testing.T) {
 			file:           "aws-schema-eu.json",
 			updateFile:     "update-aws-schema.json",
 			fileOIDC:       "aws-schema-additional-params-eu.json",
+			updateFileOIDC: "update-aws-schema-additional-params.json",
+		},
+		{
+			name: "AWS schema with region required and EU access restriction is correct",
+			generator: func(machinesDisplay map[string]string, machines []string, additionalParams, update bool) *map[string]interface{} {
+				return AWSSchema(machinesDisplay, machines, additionalParams, update, true, true)
+			},
+			machineTypes:   []string{"m5.xlarge", "m5.2xlarge", "m5.4xlarge", "m5.8xlarge", "m5.12xlarge", "m6i.xlarge", "m6i.2xlarge", "m6i.4xlarge", "m6i.8xlarge", "m6i.12xlarge"},
+			file:           "aws-schema-eu-region-required.json",
+			updateFile:     "update-aws-schema.json",
+			fileOIDC:       "aws-schema-additional-params-eu-region-required.json",
 			updateFileOIDC: "update-aws-schema-additional-params.json",
 		},
 		{
@@ -58,6 +80,17 @@ func TestSchemaGenerator(t *testing.T) {
 			updateFileOIDC: "update-azure-schema-additional-params.json",
 		},
 		{
+			name: "Azure schema with region required is correct",
+			generator: func(machinesDisplay map[string]string, machines []string, additionalParams, update bool) *map[string]interface{} {
+				return AzureSchema(machinesDisplay, machines, additionalParams, update, false, true)
+			},
+			machineTypes:   []string{"Standard_D4_v3", "Standard_D8_v3", "Standard_D16_v3", "Standard_D32_v3", "Standard_D48_v3", "Standard_D64_v3"},
+			file:           "azure-schema-region-required.json",
+			updateFile:     "update-azure-schema.json",
+			fileOIDC:       "azure-schema-additional-params-region-required.json",
+			updateFileOIDC: "update-azure-schema-additional-params.json",
+		},
+		{
 			name: "Azure schema with EU access restriction is correct",
 			generator: func(machinesDisplay map[string]string, machines []string, additionalParams, update bool) *map[string]interface{} {
 				return AzureSchema(machinesDisplay, machines, additionalParams, update, true, false)
@@ -66,6 +99,17 @@ func TestSchemaGenerator(t *testing.T) {
 			file:           "azure-schema-eu.json",
 			updateFile:     "update-azure-schema.json",
 			fileOIDC:       "azure-schema-additional-params-eu.json",
+			updateFileOIDC: "update-azure-schema-additional-params.json",
+		},
+		{
+			name: "Azure schema with region required and EU access restriction is correct",
+			generator: func(machinesDisplay map[string]string, machines []string, additionalParams, update bool) *map[string]interface{} {
+				return AzureSchema(machinesDisplay, machines, additionalParams, update, true, true)
+			},
+			machineTypes:   []string{"Standard_D4_v3", "Standard_D8_v3", "Standard_D16_v3", "Standard_D32_v3", "Standard_D48_v3", "Standard_D64_v3"},
+			file:           "azure-schema-eu-region-required.json",
+			updateFile:     "update-azure-schema.json",
+			fileOIDC:       "azure-schema-additional-params-eu-region-required.json",
 			updateFileOIDC: "update-azure-schema-additional-params.json",
 		},
 		{
@@ -81,6 +125,18 @@ func TestSchemaGenerator(t *testing.T) {
 			updateFileOIDC:      "update-azure-lite-schema-additional-params.json",
 		},
 		{
+			name: "AzureLite schema with region required is correct",
+			generator: func(machinesDisplay map[string]string, machines []string, additionalParams, update bool) *map[string]interface{} {
+				return AzureLiteSchema(machinesDisplay, machines, additionalParams, update, false, true)
+			},
+			machineTypes:        []string{"Standard_D4_v3"},
+			machineTypesDisplay: map[string]string{"Standard_D4_v3": "Standard_D4_v3 (4vCPU, 16GB RAM)"},
+			file:                "azure-lite-schema-region-required.json",
+			updateFile:          "update-azure-lite-schema.json",
+			fileOIDC:            "azure-lite-schema-additional-params-region-required.json",
+			updateFileOIDC:      "update-azure-lite-schema-additional-params.json",
+		},
+		{
 			name: "AzureLite schema with EU access restriction is correct",
 			generator: func(machinesDisplay map[string]string, machines []string, additionalParams, update bool) *map[string]interface{} {
 				return AzureLiteSchema(machinesDisplay, machines, additionalParams, update, true, false)
@@ -90,6 +146,18 @@ func TestSchemaGenerator(t *testing.T) {
 			file:                "azure-lite-schema-eu.json",
 			updateFile:          "update-azure-lite-schema.json",
 			fileOIDC:            "azure-lite-schema-additional-params-eu.json",
+			updateFileOIDC:      "update-azure-lite-schema-additional-params.json",
+		},
+		{
+			name: "AzureLite schema with region required and EU access restriction is correct",
+			generator: func(machinesDisplay map[string]string, machines []string, additionalParams, update bool) *map[string]interface{} {
+				return AzureLiteSchema(machinesDisplay, machines, additionalParams, update, true, true)
+			},
+			machineTypes:        []string{"Standard_D4_v3"},
+			machineTypesDisplay: map[string]string{"Standard_D4_v3": "Standard_D4_v3 (4vCPU, 16GB RAM)"},
+			file:                "azure-lite-schema-eu-region-required.json",
+			updateFile:          "update-azure-lite-schema.json",
+			fileOIDC:            "azure-lite-schema-additional-params-eu-region-required.json",
 			updateFileOIDC:      "update-azure-lite-schema-additional-params.json",
 		},
 		{
@@ -104,6 +172,17 @@ func TestSchemaGenerator(t *testing.T) {
 			updateFileOIDC: "update-free-azure-schema-additional-params.json",
 		},
 		{
+			name: "Freemium schema with region required is correct",
+			generator: func(machinesDisplay map[string]string, machines []string, additionalParams, update bool) *map[string]interface{} {
+				return FreemiumSchema(internal.Azure, additionalParams, update, false, true)
+			},
+			machineTypes:   []string{},
+			file:           "free-azure-schema-region-required.json",
+			updateFile:     "update-free-azure-schema.json",
+			fileOIDC:       "free-azure-schema-additional-params-region-required.json",
+			updateFileOIDC: "update-free-azure-schema-additional-params.json",
+		},
+		{
 			name: " Freemium schema is correct",
 			generator: func(machinesDisplay map[string]string, machines []string, additionalParams, update bool) *map[string]interface{} {
 				return FreemiumSchema(internal.AWS, additionalParams, update, false, false)
@@ -112,6 +191,17 @@ func TestSchemaGenerator(t *testing.T) {
 			file:           "free-aws-schema.json",
 			updateFile:     "update-free-aws-schema.json",
 			fileOIDC:       "free-aws-schema-additional-params.json",
+			updateFileOIDC: "update-free-aws-schema-additional-params.json",
+		},
+		{
+			name: " Freemium schema with region required is correct",
+			generator: func(machinesDisplay map[string]string, machines []string, additionalParams, update bool) *map[string]interface{} {
+				return FreemiumSchema(internal.AWS, additionalParams, update, false, true)
+			},
+			machineTypes:   []string{},
+			file:           "free-aws-schema-region-required.json",
+			updateFile:     "update-free-aws-schema.json",
+			fileOIDC:       "free-aws-schema-additional-params-region-required.json",
 			updateFileOIDC: "update-free-aws-schema-additional-params.json",
 		},
 		{
@@ -126,6 +216,17 @@ func TestSchemaGenerator(t *testing.T) {
 			updateFileOIDC: "update-free-azure-schema-additional-params.json",
 		},
 		{
+			name: "Freemium schema with region required and EU access restriction is correct",
+			generator: func(machinesDisplay map[string]string, machines []string, additionalParams, update bool) *map[string]interface{} {
+				return FreemiumSchema(internal.Azure, additionalParams, update, true, true)
+			},
+			machineTypes:   []string{},
+			file:           "free-azure-schema-eu-region-required.json",
+			updateFile:     "update-free-azure-schema.json",
+			fileOIDC:       "free-azure-schema-additional-params-eu-region-required.json",
+			updateFileOIDC: "update-free-azure-schema-additional-params.json",
+		},
+		{
 			name: " Freemium schema with EU access restriction is correct",
 			generator: func(machinesDisplay map[string]string, machines []string, additionalParams, update bool) *map[string]interface{} {
 				return FreemiumSchema(internal.AWS, additionalParams, update, true, false)
@@ -134,6 +235,17 @@ func TestSchemaGenerator(t *testing.T) {
 			file:           "free-aws-schema-eu.json",
 			updateFile:     "update-free-aws-schema.json",
 			fileOIDC:       "free-aws-schema-additional-params-eu.json",
+			updateFileOIDC: "update-free-aws-schema-additional-params.json",
+		},
+		{
+			name: " Freemium schema with region required and EU access restriction is correct",
+			generator: func(machinesDisplay map[string]string, machines []string, additionalParams, update bool) *map[string]interface{} {
+				return FreemiumSchema(internal.AWS, additionalParams, update, true, true)
+			},
+			machineTypes:   []string{},
+			file:           "free-aws-schema-eu-region-required.json",
+			updateFile:     "update-free-aws-schema.json",
+			fileOIDC:       "free-aws-schema-additional-params-eu-region-required.json",
 			updateFileOIDC: "update-free-aws-schema-additional-params.json",
 		},
 		{
@@ -148,6 +260,17 @@ func TestSchemaGenerator(t *testing.T) {
 			updateFileOIDC: "update-gcp-schema-additional-params.json",
 		},
 		{
+			name: "GCP schema with region required is correct",
+			generator: func(machinesDisplay map[string]string, machines []string, additionalParams, update bool) *map[string]interface{} {
+				return GCPSchema(machinesDisplay, machines, additionalParams, update, true)
+			},
+			machineTypes:   []string{"n2-standard-4", "n2-standard-8", "n2-standard-16", "n2-standard-32", "n2-standard-48"},
+			file:           "gcp-schema-region-required.json",
+			updateFile:     "update-gcp-schema.json",
+			fileOIDC:       "gcp-schema-additional-params-region-required.json",
+			updateFileOIDC: "update-gcp-schema-additional-params.json",
+		},
+		{
 			name: "OpenStack schema is correct",
 			generator: func(machinesDisplay map[string]string, machines []string, additionalParams, update bool) *map[string]interface{} {
 				return OpenStackSchema(machinesDisplay, machines, additionalParams, update, false)
@@ -156,6 +279,17 @@ func TestSchemaGenerator(t *testing.T) {
 			file:           "openstack-schema.json",
 			updateFile:     "update-openstack-schema.json",
 			fileOIDC:       "openstack-schema-additional-params.json",
+			updateFileOIDC: "update-openstack-schema-additional-params.json",
+		},
+		{
+			name: "OpenStack schema with region required is correct",
+			generator: func(machinesDisplay map[string]string, machines []string, additionalParams, update bool) *map[string]interface{} {
+				return OpenStackSchema(machinesDisplay, machines, additionalParams, update, true)
+			},
+			machineTypes:   []string{"g_c4_m16", "g_c8_m32"},
+			file:           "openstack-schema-region-required.json",
+			updateFile:     "update-openstack-schema.json",
+			fileOIDC:       "openstack-schema-additional-params-region-required.json",
 			updateFileOIDC: "update-openstack-schema-additional-params.json",
 		},
 		{
