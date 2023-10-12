@@ -254,7 +254,8 @@ func TestExpirationOfNonTrial(t *testing.T) {
 					   "user_id": "john.smith@email.com"
 				   },
 					"parameters": {
-						"name": "testing-cluster"
+						"name": "testing-cluster",
+						"region": "eu-central-1"
 			}
    }`)
 	opID := suite.DecodeOperationID(resp)
@@ -413,7 +414,8 @@ func TestTrialExpirationOnFailedOperations(t *testing.T) {
     "user_id": "john.smith@email.com"
   },
   "parameters": {
-    "name": "aws-failed-provisioning"
+    "name": "aws-failed-provisioning",
+	"region": "eu-central-1"
   }
 }`)
 		opID := suite.DecodeOperationID(resp)
@@ -452,7 +454,8 @@ func TestTrialExpirationOnFailedOperations(t *testing.T) {
     "user_id": "john.smith@email.com"
   },
   "parameters": {
-    "name": "aws-failed-deprovisioning"
+    "name": "aws-failed-deprovisioning",
+	"region": "eu-central-1"
   }
 }`)
 		opID := suite.DecodeOperationID(resp)
@@ -1098,7 +1101,8 @@ func TestUpdateOidcForPreview(t *testing.T) {
 					"clientID": "id-ooo",
 					"signingAlgs": ["RS256"],
 					"issuerURL": "https://issuer.url.com"
-				}
+				},
+				"region": "eu-central-1"
 			}
 		}`)
 	opID := suite.DecodeOperationID(resp)
