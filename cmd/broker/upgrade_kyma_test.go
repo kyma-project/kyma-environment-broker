@@ -38,7 +38,8 @@ func TestClusterUpgradeUsesUpdatedAutoscalerParams(t *testing.T) {
 					},
 					"parameters": {
 						"name": "testing-cluster",
-						"kymaVersion": "2.0"
+						"kymaVersion": "2.0",
+						"region": "eastus"
 					}
 		}`)
 	opID := suite.DecodeOperationID(resp)
@@ -147,7 +148,8 @@ func TestKymaUpgradeScheduledToFutureMaintenanceWindow(t *testing.T) {
 					},
 					"parameters": {
 						"name": "testing-cluster",
-						"kymaVersion": "2.0"
+						"kymaVersion": "2.0",
+						"region": "eastus"
 					}
 		}`)
 	opID := suite.DecodeOperationID(resp)
