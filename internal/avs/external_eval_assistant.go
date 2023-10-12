@@ -48,7 +48,6 @@ func (eea *ExternalEvalAssistant) ProvideParentId(_ internal.ProvisioningParamet
 	return eea.avsConfig.ParentId
 }
 
-// func (iec *InternalEvalAssistant) ProvideTags(pp internal.ProvisioningParameters, rt runtime.RuntimeDTO) []*Tag {
 func (eea *ExternalEvalAssistant) ProvideTags(operation internal.Operation) []*Tag {
 
 	tags := []*Tag{

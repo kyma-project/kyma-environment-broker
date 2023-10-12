@@ -60,7 +60,6 @@ func (iec *InternalEvalAssistant) ProvideCheckType() string {
 	return ""
 }
 
-// func (iec *InternalEvalAssistant) ProvideTags(pp internal.ProvisioningParameters, rt runtime.RuntimeDTO) []*Tag {
 func (iec *InternalEvalAssistant) ProvideTags(operation internal.Operation) []*Tag {
 
 	tags := []*Tag{
