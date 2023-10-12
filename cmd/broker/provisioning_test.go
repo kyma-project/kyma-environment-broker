@@ -117,7 +117,7 @@ func TestProvisioning_Preview(t *testing.T) {
 
 func TestCatalog(t *testing.T) {
 	// this test is used for human-testing the catalog response
-	//t.Skip()
+	t.Skip()
 	// given
 	suite := NewBrokerSuiteTest(t)
 	defer suite.TearDown()
@@ -1190,6 +1190,7 @@ func TestProvisioning_WithNetworkFilter(t *testing.T) {
 	instance := suite.GetInstance(iid)
 
 	// then
+
 	disabled := true
 	suite.AssertDisabledNetworkFilterForProvisioning(&disabled)
 	assert.Equal(suite.t, "CUSTOMER", *instance.Parameters.ErsContext.LicenseType)
