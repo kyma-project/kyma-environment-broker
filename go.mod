@@ -11,7 +11,7 @@ require (
 	github.com/Masterminds/semver v1.5.0
 	github.com/Masterminds/sprig v2.22.0+incompatible
 	github.com/aws/aws-sdk-go-v2/credentials v1.13.43
-	github.com/aws/aws-sdk-go-v2/service/ec2 v1.117.0
+	github.com/aws/aws-sdk-go-v2/service/ec2 v1.125.0
 	github.com/dlmiddlecote/sqlstats v1.0.2
 	github.com/docker/docker v24.0.6+incompatible
 	github.com/docker/go-connections v0.4.0
