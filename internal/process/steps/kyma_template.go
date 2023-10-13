@@ -3,7 +3,7 @@ package steps
 import (
 	"bytes"
 	"fmt"
-	cyaml2 "gopkg.in/yaml.v2"
+	yamlv2 "gopkg.in/yaml.v2"
 	"time"
 
 	"github.com/kyma-project/kyma-environment-broker/internal"
@@ -109,7 +109,7 @@ func appendModules(out *unstructured.Unstructured, m *internal.ModulesDTO) error
 }
 
 func encodeKymaTemplate(tmpl *unstructured.Unstructured) (string, error) {
-	result, err := cyaml2.Marshal(tmpl.Object)
+	result, err := yamlv2.Marshal(tmpl.Object)
 	if err != nil {
 		return "", fmt.Errorf("while marshal unstructured to yaml: %v", err)
 	}
