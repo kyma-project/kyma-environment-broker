@@ -239,7 +239,7 @@ func (b *ProvisionEndpoint) validateAndExtract(details domain.ProvisionDetails, 
 		return ersContext, parameters, fmt.Errorf("plan ID %q is not recognized", details.PlanID)
 	}
 
-	if !b.config.AllowModularizationParameters {
+	if !b.config.AllowModulesParameters {
 		parameters.Modules = nil
 	}
 
