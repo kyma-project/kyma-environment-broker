@@ -357,8 +357,8 @@ const (
 )
 
 type ModulesDTO struct {
-	UseDefault bool         `json:"default"`
-	List       []*ModuleDTO `json:"list"`
+	Default bool         `json:"default"`
+	List    []*ModuleDTO `json:"list"`
 }
 
 type ModuleDTO struct {
