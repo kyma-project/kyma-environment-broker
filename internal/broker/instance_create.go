@@ -538,28 +538,3 @@ func validateOverlapping(n1 net.IPNet, n2 net.IPNet) error {
 
 	return nil
 }
-
-func (b *ProvisionEndpoint) validateModules(parameters internal.ProvisioningParametersDTO) error {
-	/*if parameters.Modules == nil {
-		return fmt.Errorf("section with modules not set")
-	}
-	modules := parameters.Modules
-
-	//reject scenarios
-	if modules.List != nil || len(modules.List) > 0 && modules.UseDefault != nil {
-		return fmt.Errorf("it is not possible to set custom")
-	}
-	//
-	if (modules.UseDefault == nil || *modules.UseDefault) && (modules.List != nil || len(modules.List) > 0) {
-
-	}
-
-	//We differ nil from len(0) -> nil means that user not set explicity that modules should be empty, if it is supposed to be empty it must be not nil with len(0)
-	if !*modules.UseDefault && modules.List == nil {
-		//Set specify List to empty array
-	}
-	//reject scenarios
-
-	//we return and install what is in Modules.*/
-	return nil
-}
