@@ -53,7 +53,7 @@ async function provisionSKRInstance(options, timeout) {
     console.log(`\nInstanceID ${options.instanceID}`,
         `Runtime ${options.runtimeName}`, `Application ${options.appName}`, `Suffix ${options.suffix}`);
     debug('keb region', keb.region);
-    return
+    return;
     const skr = await provisionSKR(keb,
         kcp, gardener,
         options.instanceID,
