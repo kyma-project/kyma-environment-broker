@@ -189,7 +189,7 @@ type ProvisioningParametersDTO struct {
 
 	OIDC       *OIDCConfigDTO `json:"oidc,omitempty"`
 	Networking *NetworkingDTO `json:"networking,omitempty""`
-	Modules    *ModulesDTO    `json:"networking,omitempty"`
+	Modules    *ModulesDTO    `json:"modules,omitempty"`
 }
 
 type UpdatingParametersDTO struct {
@@ -358,11 +358,11 @@ const (
 
 type ModulesDTO struct {
 	UseDefault bool         `json:"default"`
-	List       []*ModuleDTO `json:"modules"`
+	List       []*ModuleDTO `json:"list"`
 }
 
 type ModuleDTO struct {
 	Name                 string               `json:"name"`
 	Channel              Channel              `json:"channel"`
-	CustomResourcePolicy CustomResourcePolicy `json:"CustomResourcePolicy"`
+	CustomResourcePolicy CustomResourcePolicy `json:"customResourcePolicy"`
 }

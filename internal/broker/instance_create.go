@@ -239,9 +239,10 @@ func (b *ProvisionEndpoint) validateAndExtract(details domain.ProvisionDetails, 
 		return ersContext, parameters, fmt.Errorf("plan ID %q is not recognized", details.PlanID)
 	}
 
-	if err := b.validateModules(parameters); err != nil {
-		return ersContext, parameters, err
+	if !b.config.AllowModularizationParameters {
+		parameters.Modules = nil
 	}
+
 	ersContext, err := b.extractERSContext(details)
 	logger := l.WithField("globalAccountID", ersContext.GlobalAccountID)
 	if err != nil {

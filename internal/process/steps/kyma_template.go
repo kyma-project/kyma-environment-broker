@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"fmt"
 	cyaml2 "gopkg.in/yaml.v2"
-	"log"
 	"time"
 
 	"github.com/kyma-project/kyma-environment-broker/internal"
@@ -41,17 +40,17 @@ func (s *InitKymaTemplate) Run(operation internal.Operation, logger logrus.Field
 	logger.Infof("Decoded kyma template: %v", obj)
 
 	modules := operation.ProvisioningParameters.Parameters.Modules
-	if err := appendModules(obj, modules); err != nil {
-		logger.Errorf("Unable to append modules to kyma template: %s", err.Error())
-		return s.operationManager.OperationFailed(operation, "Unable to append modules to kyma template:", err, logger)
+	if modules != nil && !modules.UseDefault {
+		if err := appendModules(obj, modules); err != nil {
+			logger.Errorf("Unable to append modules to kyma template: %s", err.Error())
+			return s.operationManager.OperationFailed(operation, "Unable to append modules to kyma template:", err, logger)
+		}
+		tmpl, err = encodeKymaTemplate(obj)
+		if err != nil {
+			logger.Errorf("Unable to create yaml kyma template : %s", err.Error())
+			return s.operationManager.OperationFailed(operation, "unable to create a kyma template", err, logger)
+		}
 	}
-	tmpl, err = encodeKymaTemplate(obj)
-	if err != nil {
-		logger.Errorf("Unable to create yaml kyma template : %s", err.Error())
-		return s.operationManager.OperationFailed(operation, "unable to create a kyma template", err, logger)
-	}
-	fmt.Println("Yaml will be")
-	fmt.Println(tmpl)
 	return s.operationManager.UpdateOperation(operation, func(op *internal.Operation) {
 		op.KymaResourceNamespace = obj.GetNamespace()
 		op.KymaTemplate = tmpl
@@ -106,16 +105,13 @@ func appendModules(out *unstructured.Unstructured, m *internal.ModulesDTO) error
 	spec["modules"] = modulesSection
 	out.Object["spec"] = specSection
 
-	unstructured.SetNestedField(out.Object, toInsert, "spec", "modules")
-
 	return nil
 }
 
 func encodeKymaTemplate(tmpl *unstructured.Unstructured) (string, error) {
-	out, err := cyaml2.Marshal(tmpl.Object)
+	result, err := cyaml2.Marshal(tmpl.Object)
 	if err != nil {
-		log.Fatal(err)
+		return "", fmt.Errorf("while marshal unstructured to yaml: %v", err)
 	}
-	//mt.Printf("output:\n%s\n", out)
-	return string(out), nil
+	return string(result), nil
 }
