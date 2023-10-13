@@ -15,7 +15,7 @@ class KEBConfig {
         getEnvOrThrow('KEB_SUBACCOUNT_ID'),
         getEnvOrThrow('KEB_USER_ID'),
         getEnvOrThrow('KEB_PLAN_ID'),
-        process.env.KEB_REGION,
+        getEnvOrThrow('KEB_REGION'),
         process.env.KEB_TOKEN_URL,
     );
   }
@@ -172,7 +172,7 @@ class KEBClient {
     return payload;
   }
 
-  async provisionSKR(name, instanceID, platformCreds, btpOperatorCreds, customParams) {
+  async  (name, instanceID, platformCreds, btpOperatorCreds, customParams) {
     const payload = this.buildPayload(name, instanceID, platformCreds, btpOperatorCreds, customParams);
 
     const endpoint = `service_instances/${instanceID}`;
