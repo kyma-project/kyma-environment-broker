@@ -58,6 +58,7 @@ func (s *InitialisationStep) Run(operation internal.Operation, log logrus.FieldL
 	// create Provisioner InputCreator
 	log.Infof("create provisioner input creator for %q plan ID", operation.ProvisioningParameters.PlanID)
 	creator, err := s.inputBuilder.CreateProvisionInput(operation.ProvisioningParameters, operation.RuntimeVersion)
+
 	switch {
 	case err == nil:
 		operation.InputCreator = creator
