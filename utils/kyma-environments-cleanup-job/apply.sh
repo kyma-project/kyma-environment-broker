@@ -12,12 +12,9 @@ kebContainerName=kyma-environment-broker
 cloudsqlProxyContainerName=cloudsql-proxy
 host=kyma-env-broker
 
-SCRIPT_DOMAIN=${SCRIPT_BROKER_URL#"$host."}
-
 SCRIPT_CLOUDSQL_PROXY_COMMAND=$(kubectl get deployment $deploymentName -n $namespace -o jsonpath=\
 "{.spec.template.spec.containers[?(@.name==\"$cloudsqlProxyContainerName\")].command}")
 
-export SCRIPT_DOMAIN
 export SCRIPT_CLOUDSQL_PROXY_COMMAND
 
 envsubst < kyma-environments-cleanup-job.yaml | kubectl apply -f -
