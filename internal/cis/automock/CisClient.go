@@ -10,7 +10,7 @@ type CisClient struct {
 }
 
 // FetchSubAccountsToDelete provides a mock function with given fields:
-func (_m *CisClient) FetchSubAccountsToDelete() ([]string, error) {
+func (_m *CisClient) FetchSubaccountsToDelete() ([]string, error) {
 	ret := _m.Called()
 
 	var r0 []string

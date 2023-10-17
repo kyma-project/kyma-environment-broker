@@ -31,7 +31,7 @@ func TestSubAccountCleanupService_Run(t *testing.T) {
 	t.Run("all instances should be deprovisioned", func(t *testing.T) {
 		// Given
 		cisClient := &mocks.CisClient{}
-		cisClient.On("FetchSubAccountsToDelete").Return(fixSubAccountIDs(), nil)
+		cisClient.On("FetchSubaccountsToDelete").Return(fixSubAccountIDs(), nil)
 		defer cisClient.AssertExpectations(t)
 
 		brokerClient := &mocks.BrokerClient{}
@@ -62,7 +62,7 @@ func TestSubAccountCleanupService_Run(t *testing.T) {
 		brokenInstanceIDTwo := "ad6af000-e647-44ea-a3bb-db8672d5bc7e"
 
 		cisClient := &mocks.CisClient{}
-		cisClient.On("FetchSubAccountsToDelete").Return(fixSubAccountIDs(), nil)
+		cisClient.On("FetchSubaccountsToDelete").Return(fixSubAccountIDs(), nil)
 		defer cisClient.AssertExpectations(t)
 
 		brokerClient := &mocks.BrokerClient{}
@@ -97,7 +97,7 @@ func TestSubAccountCleanupService_Run(t *testing.T) {
 	t.Run("process should return with error", func(t *testing.T) {
 		// Given
 		cisClient := &mocks.CisClient{}
-		cisClient.On("FetchSubAccountsToDelete").Return([]string{}, fmt.Errorf("cannot fetch subaccounts"))
+		cisClient.On("FetchSubaccountsToDelete").Return([]string{}, fmt.Errorf("cannot fetch subaccounts"))
 		defer cisClient.AssertExpectations(t)
 
 		brokerClient := &mocks.BrokerClient{}

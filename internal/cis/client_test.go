@@ -19,7 +19,7 @@ const (
 	subAccountTest3 = "47af15c8-adfe-4404-8675-525a878c4601"
 )
 
-func TestClient_FetchSubAccountsToDelete(t *testing.T) {
+func TestClient_FetchSubaccountsToDelete(t *testing.T) {
 	t.Run("client fetched all subaccount IDs to delete", func(t *testing.T) {
 		// Given
 		testServer := fixHTTPServer(newServer(t))
@@ -32,7 +32,7 @@ func TestClient_FetchSubAccountsToDelete(t *testing.T) {
 		client.SetHttpClient(testServer.Client())
 
 		// When
-		saList, err := client.FetchSubAccountsToDelete()
+		saList, err := client.FetchSubaccountsToDelete()
 
 		// Then
 		require.NoError(t, err)
@@ -54,7 +54,7 @@ func TestClient_FetchSubAccountsToDelete(t *testing.T) {
 		client.SetHttpClient(testServer.Client())
 
 		// When
-		saList, err := client.FetchSubAccountsToDelete()
+		saList, err := client.FetchSubaccountsToDelete()
 
 		// Then
 		require.Error(t, err)

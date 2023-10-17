@@ -48,15 +48,15 @@ func (c *ClientVer1) SetHttpClient(httpClient *http.Client) {
 	c.httpClient = httpClient
 }
 
-type subAccountsVer1 struct {
+type subaccountsVer1 struct {
 	total int
 	ids   []string
 }
 
-func (c *ClientVer1) FetchSubAccountsToDelete() ([]string, error) {
-	subaccounts := subAccountsVer1{}
+func (c *ClientVer1) FetchSubaccountsToDelete() ([]string, error) {
+	subaccounts := subaccountsVer1{}
 
-	err := c.fetchSubAccountsFromDeleteEvents(&subaccounts, 1)
+	err := c.fetchSubaccountsFromDeleteEvents(&subaccounts, 1)
 	if err != nil {
 		return []string{}, fmt.Errorf("while fetching subaccounts from delete events: %w", err)
 	}
@@ -68,7 +68,7 @@ func (c *ClientVer1) FetchSubAccountsToDelete() ([]string, error) {
 	return subaccounts.ids, nil
 }
 
-func (c *ClientVer1) fetchSubAccountsFromDeleteEvents(collection *subAccountsVer1, page int) error {
+func (c *ClientVer1) fetchSubaccountsFromDeleteEvents(collection *subaccountsVer1, page int) error {
 	request, err := c.buildRequest(page)
 	if err != nil {
 		return fmt.Errorf("while building request for event service: %w", err)
@@ -100,7 +100,7 @@ func (c *ClientVer1) fetchSubAccountsFromDeleteEvents(collection *subAccountsVer
 
 	page++
 	if page <= cisResponse.TotalPages {
-		return c.fetchSubAccountsFromDeleteEvents(collection, page)
+		return c.fetchSubaccountsFromDeleteEvents(collection, page)
 	}
 
 	return nil

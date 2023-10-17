@@ -11,7 +11,7 @@ import (
 
 //go:generate mockery --name=CisClient --output=automock
 type CisClient interface {
-	FetchSubAccountsToDelete() ([]string, error)
+	FetchSubaccountsToDelete() ([]string, error)
 }
 
 //go:generate mockery --name=BrokerClient --output=automock
@@ -38,7 +38,7 @@ func NewSubAccountCleanupService(client CisClient, brokerClient BrokerClient, st
 }
 
 func (ac *SubAccountCleanupService) Run() error {
-	subaccounts, err := ac.client.FetchSubAccountsToDelete()
+	subaccounts, err := ac.client.FetchSubaccountsToDelete()
 	if err != nil {
 		return fmt.Errorf("while fetching subaccounts by client: %w", err)
 	}
