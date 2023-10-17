@@ -4,7 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"strconv"
 	"time"
@@ -67,7 +67,7 @@ type subaccounts struct {
 func (c *Client) FetchSubaccountsToDelete() ([]string, error) {
 	subaccounts := subaccounts{}
 
-	err := c.fetchSubaccountsFromDeleteEvents(&subaccounts, 0)
+	err := c.fetchSubaccountsFromDeleteEvents(&subaccounts)
 	if err != nil {
 		return []string{}, fmt.Errorf("while fetching subaccounts from delete events: %w", err)
 	}
@@ -82,48 +82,53 @@ func (c *Client) FetchSubaccountsToDelete() ([]string, error) {
 	return subaccounts.ids, nil
 }
 
-func (c *Client) fetchSubaccountsFromDeleteEvents(collection *subaccounts, page int) error {
+func (c *Client) fetchSubaccountsFromDeleteEvents(subaccs *subaccounts) error {
+	var currentPage, totalPages int
+	firstCisResponse, err := c.fetchSubaccountDeleteEventsForGivenPageNum(currentPage)
+	if err != nil {
+		return err
+	}
+
+	totalPages = firstCisResponse.TotalPages
+	subaccs.total = firstCisResponse.Total
+
+	c.appendSubaccountsFromDeleteEvents(&firstCisResponse, subaccs)
+
+	currentPage++
+	for ; currentPage <= totalPages; currentPage++ {
+		nextCisResponse, err := c.fetchSubaccountDeleteEventsForGivenPageNum(currentPage)
+		if err != nil {
+			return err
+		}
+		c.appendSubaccountsFromDeleteEvents(&nextCisResponse, subaccs)
+	}
+
+	return nil
+}
+
+func (c *Client) fetchSubaccountDeleteEventsForGivenPageNum(page int) (CisResponse, error) {
 	request, err := c.buildRequest(page)
 	if err != nil {
-		return fmt.Errorf("while building request for event service: %w", err)
+		return CisResponse{}, fmt.Errorf("while building request for event service: %w", err)
 	}
 
 	response, err := c.httpClient.Do(request)
 	if err != nil {
-		return fmt.Errorf("while executing request to event service: %w", err)
+		return CisResponse{}, fmt.Errorf("while executing request to event service: %w", err)
 	}
+	defer response.Body.Close()
 
 	if response.StatusCode != http.StatusOK {
-		return fmt.Errorf("while processing response: %s", c.handleWrongStatusCode(response))
+		return CisResponse{}, fmt.Errorf("while processing response: %s", c.handleWrongStatusCode(response))
 	}
 
 	var cisResponse CisResponse
 	err = json.NewDecoder(response.Body).Decode(&cisResponse)
 	if err != nil {
-		return fmt.Errorf("while decoding CIS response: %w", err)
+		return CisResponse{}, fmt.Errorf("while decoding CIS response: %w", err)
 	}
 
-	collection.total = cisResponse.Total
-	for _, event := range cisResponse.Events {
-		if event.Type != eventType {
-			c.log.Warnf("event type %s is not equal to %s, skip event", event.Type, eventType)
-			continue
-		}
-		collection.ids = append(collection.ids, event.SubAccount)
-
-		if collection.from.IsZero() {
-			collection.from = time.Unix(0, event.CreationTime*int64(1000000))
-		}
-		if collection.total == len(collection.ids) {
-			collection.to = time.Unix(0, event.CreationTime*int64(1000000))
-		}
-	}
-
-	page++
-	if page <= cisResponse.TotalPages {
-		return c.fetchSubaccountsFromDeleteEvents(collection, page)
-	}
-	return nil
+	return cisResponse, nil
 }
 
 func (c *Client) buildRequest(page int) (*http.Request, error) {
@@ -145,10 +150,27 @@ func (c *Client) buildRequest(page int) (*http.Request, error) {
 }
 
 func (c *Client) handleWrongStatusCode(response *http.Response) string {
-	body, err := ioutil.ReadAll(response.Body)
+	body, err := io.ReadAll(response.Body)
 	if err != nil {
 		return fmt.Sprintf("server returned %d status code, response body is unreadable", response.StatusCode)
 	}
 
 	return fmt.Sprintf("server returned %d status code, body: %s", response.StatusCode, string(body))
+}
+
+func (c *Client) appendSubaccountsFromDeleteEvents(cisResp *CisResponse, subaccs *subaccounts) {
+	for _, event := range cisResp.Events {
+		if event.Type != eventType {
+			c.log.Warnf("event type %s is not equal to %s, skip event", event.Type, eventType)
+			continue
+		}
+		subaccs.ids = append(subaccs.ids, event.SubAccount)
+
+		if subaccs.from.IsZero() {
+			subaccs.from = time.Unix(0, event.CreationTime*int64(1000000))
+		}
+		if subaccs.total == len(subaccs.ids) {
+			subaccs.to = time.Unix(0, event.CreationTime*int64(1000000))
+		}
+	}
 }
