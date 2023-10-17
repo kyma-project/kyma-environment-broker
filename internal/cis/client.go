@@ -86,7 +86,7 @@ func (c *Client) fetchSubaccountsFromDeleteEvents(subaccs *subaccounts) error {
 	var currentPage, totalPages int
 	firstCisResponse, err := c.fetchSubaccountDeleteEventsForGivenPageNum(currentPage)
 	if err != nil {
-		return err
+		return fmt.Errorf("while fetching subaccount delete events for %d page: %w", currentPage, err)
 	}
 
 	totalPages = firstCisResponse.TotalPages
@@ -98,7 +98,7 @@ func (c *Client) fetchSubaccountsFromDeleteEvents(subaccs *subaccounts) error {
 	for ; currentPage <= totalPages; currentPage++ {
 		nextCisResponse, err := c.fetchSubaccountDeleteEventsForGivenPageNum(currentPage)
 		if err != nil {
-			return err
+			return fmt.Errorf("while fetching subaccount delete events for %d page: %w", currentPage, err)
 		}
 		c.appendSubaccountsFromDeleteEvents(&nextCisResponse, subaccs)
 	}
