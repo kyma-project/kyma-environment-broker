@@ -26,8 +26,8 @@ type Config struct {
 	AuthURL              string
 	EventServiceURL      string
 	PageSize             string        `envconfig:"optional"`
-	RateLimitingInterval time.Duration `envconfig:"default=2s"`
-	MaxRequestRetries    int           `envconfig:"default=3"`
+	RateLimitingInterval time.Duration `envconfig:"default=2s,optional"`
+	MaxRequestRetries    int           `envconfig:"default=3,optional"`
 }
 
 type Client struct {

@@ -60,11 +60,61 @@ func TestClient_FetchSubaccountsToDelete(t *testing.T) {
 		require.Error(t, err)
 		require.Len(t, saList, 0)
 	})
+
+	t.Run("should fetch subaccounts ids after request retries", func(t *testing.T) {
+		// Given
+		srv := newServer(t)
+		srv.rateLimiting = true
+		srv.requiredRequestRetries = 1
+		testServer := fixHTTPServer(srv)
+		defer testServer.Close()
+
+		client := NewClient(context.TODO(), Config{
+			EventServiceURL:   testServer.URL,
+			PageSize:          "3",
+			MaxRequestRetries: 3,
+		}, logger.NewLogDummy())
+		client.SetHttpClient(testServer.Client())
+
+		// When
+		saList, err := client.FetchSubaccountsToDelete()
+
+		// Then
+		require.NoError(t, err)
+		require.Len(t, saList, 3)
+		require.ElementsMatch(t, saList, []string{subAccountTest1, subAccountTest2, subAccountTest3})
+	})
+
+	t.Run("should return rate limiting error", func(t *testing.T) {
+		// Given
+		srv := newServer(t)
+		srv.rateLimiting = true
+		srv.requiredRequestRetries = 5
+		testServer := fixHTTPServer(srv)
+		defer testServer.Close()
+
+		client := NewClient(context.TODO(), Config{
+			EventServiceURL:   testServer.URL,
+			PageSize:          "3",
+			MaxRequestRetries: 3,
+		}, logger.NewLogDummy())
+		client.SetHttpClient(testServer.Client())
+
+		// When
+		saList, err := client.FetchSubaccountsToDelete()
+
+		// Then
+		require.Error(t, err)
+		require.Len(t, saList, 0)
+	})
 }
 
 type server struct {
-	serverErr bool
-	t         *testing.T
+	t                      *testing.T
+	serverErr              bool
+	rateLimiting           bool
+	requestRetriesCount    int
+	requiredRequestRetries int
 }
 
 func newServer(t *testing.T) *server {
@@ -91,6 +141,14 @@ func (s *server) returnCISEvents(w http.ResponseWriter, r *http.Request) {
 	if s.serverErr {
 		s.writeResponse(w, []byte(`{bad}`))
 		return
+	}
+
+	if s.rateLimiting {
+		if s.requestRetriesCount < s.requiredRequestRetries {
+			s.writeRateLimitingResponse(w)
+			s.requestRetriesCount++
+			return
+		}
 	}
 
 	pageNum := r.URL.Query().Get("pageNum")
@@ -174,6 +232,7 @@ func (s *server) returnCISEvents(w http.ResponseWriter, r *http.Request) {
 	}
 
 	s.writeResponse(w, []byte(response))
+	s.requestRetriesCount = 0
 }
 
 func (s *server) writeResponse(w http.ResponseWriter, response []byte) {
@@ -184,4 +243,19 @@ func (s *server) writeResponse(w http.ResponseWriter, response []byte) {
 		return
 	}
 	w.WriteHeader(http.StatusOK)
+}
+
+func (s *server) writeRateLimitingResponse(w http.ResponseWriter) {
+	response := fmt.Sprint(`{
+		"error": {
+			"message": "Request rate limit exceeded"
+		}
+	}`)
+	w.WriteHeader(http.StatusTooManyRequests)
+	_, err := w.Write([]byte(response))
+	if err != nil {
+		s.t.Errorf("fakeCisServer cannot write response: %s", err)
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
 }
