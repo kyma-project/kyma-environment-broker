@@ -9,28 +9,33 @@ import (
 	"strconv"
 	"time"
 
+	kebError "github.com/kyma-project/kyma-environment-broker/internal/error"
 	"github.com/sirupsen/logrus"
 	"golang.org/x/oauth2/clientcredentials"
 )
 
 const (
-	eventServicePath = "%s/events/v1/events/central"
-	eventType        = "Subaccount_Deletion"
-	defaultPageSize  = "150"
+	eventServicePath            = "%s/events/v1/events/central"
+	eventType                   = "Subaccount_Deletion"
+	defaultPageSize             = "150"
+	defaultRateLimitingInterval = time.Second * 2
+	maxRequestRetries           = 3
 )
 
 type Config struct {
-	ClientID        string
-	ClientSecret    string
-	AuthURL         string
-	EventServiceURL string
-	PageSize        string `envconfig:"optional"`
+	ClientID             string
+	ClientSecret         string
+	AuthURL              string
+	EventServiceURL      string
+	PageSize             string `envconfig:"optional"`
+	RateLimitingInterval string `envconfig:"default=2s"`
 }
 
 type Client struct {
-	httpClient *http.Client
-	config     Config
-	log        logrus.FieldLogger
+	httpClient           *http.Client
+	config               Config
+	log                  logrus.FieldLogger
+	rateLimitingInterval time.Duration
 }
 
 func NewClient(ctx context.Context, config Config, log logrus.FieldLogger) *Client {
@@ -45,10 +50,16 @@ func NewClient(ctx context.Context, config Config, log logrus.FieldLogger) *Clie
 		config.PageSize = defaultPageSize
 	}
 
+	rateLimitingInterval, err := time.ParseDuration(config.RateLimitingInterval)
+	if err != nil {
+		rateLimitingInterval = defaultRateLimitingInterval
+	}
+
 	return &Client{
-		httpClient: httpClientOAuth,
-		config:     config,
-		log:        log.WithField("client", "CIS-2.0"),
+		httpClient:           httpClientOAuth,
+		config:               config,
+		log:                  log.WithField("client", "CIS-2.0"),
+		rateLimitingInterval: rateLimitingInterval,
 	}
 }
 
@@ -83,24 +94,26 @@ func (c *Client) FetchSubaccountsToDelete() ([]string, error) {
 }
 
 func (c *Client) fetchSubaccountsFromDeleteEvents(subaccs *subaccounts) error {
-	var currentPage, totalPages int
-	firstCisResponse, err := c.fetchSubaccountDeleteEventsForGivenPageNum(currentPage)
-	if err != nil {
-		return fmt.Errorf("while fetching subaccount delete events for %d page: %w", currentPage, err)
-	}
-
-	totalPages = firstCisResponse.TotalPages
-	subaccs.total = firstCisResponse.Total
-
-	c.appendSubaccountsFromDeleteEvents(&firstCisResponse, subaccs)
-
-	currentPage++
-	for ; currentPage <= totalPages; currentPage++ {
-		nextCisResponse, err := c.fetchSubaccountDeleteEventsForGivenPageNum(currentPage)
+	var currentPage, totalPages, retries int
+	for currentPage <= totalPages {
+		cisResponse, err := c.fetchSubaccountDeleteEventsForGivenPageNum(currentPage)
 		if err != nil {
+			if kebError.IsTemporaryError(err) && retries < maxRequestRetries {
+				time.Sleep(c.rateLimitingInterval)
+				retries++
+				continue
+			}
 			return fmt.Errorf("while fetching subaccount delete events for %d page: %w", currentPage, err)
 		}
-		c.appendSubaccountsFromDeleteEvents(&nextCisResponse, subaccs)
+		if totalPages != cisResponse.TotalPages {
+			totalPages = cisResponse.TotalPages
+		}
+		if subaccs.total != cisResponse.Total {
+			subaccs.total = cisResponse.Total
+		}
+		c.appendSubaccountsFromDeleteEvents(&cisResponse, subaccs)
+		retries = 0
+		currentPage++
 	}
 
 	return nil
@@ -118,7 +131,10 @@ func (c *Client) fetchSubaccountDeleteEventsForGivenPageNum(page int) (CisRespon
 	}
 	defer response.Body.Close()
 
-	if response.StatusCode != http.StatusOK {
+	switch {
+	case response.StatusCode == http.StatusTooManyRequests:
+		return CisResponse{}, kebError.NewTemporaryError("rate limiting: %s", c.handleWrongStatusCode(response))
+	case response.StatusCode != http.StatusOK:
 		return CisResponse{}, fmt.Errorf("while processing response: %s", c.handleWrongStatusCode(response))
 	}
 
