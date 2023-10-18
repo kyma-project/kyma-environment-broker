@@ -147,7 +147,8 @@ class KEBClient {
       },
       parameters: {
         name: name,
-        region: this.region,
+        // Trial plan doesn't require region
+        ...(this.planID === "7d55d31d-35ae-4438-bf13-6ffdfa107d9f" ? {} : { region: this.region }),
         ...customParams,
       },
     };
