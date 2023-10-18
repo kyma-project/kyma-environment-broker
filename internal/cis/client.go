@@ -15,11 +15,9 @@ import (
 )
 
 const (
-	eventServicePath            = "%s/events/v1/events/central"
-	eventType                   = "Subaccount_Deletion"
-	defaultPageSize             = "150"
-	defaultRateLimitingInterval = time.Second * 2
-	maxRequestRetries           = 3
+	eventServicePath = "%s/events/v1/events/central"
+	eventType        = "Subaccount_Deletion"
+	defaultPageSize  = "150"
 )
 
 type Config struct {
@@ -27,15 +25,15 @@ type Config struct {
 	ClientSecret         string
 	AuthURL              string
 	EventServiceURL      string
-	PageSize             string `envconfig:"optional"`
-	RateLimitingInterval string `envconfig:"default=2s"`
+	PageSize             string        `envconfig:"optional"`
+	RateLimitingInterval time.Duration `envconfig:"default=2s"`
+	MaxRequestRetries    int           `envconfig:"default=3"`
 }
 
 type Client struct {
-	httpClient           *http.Client
-	config               Config
-	log                  logrus.FieldLogger
-	rateLimitingInterval time.Duration
+	httpClient *http.Client
+	config     Config
+	log        logrus.FieldLogger
 }
 
 func NewClient(ctx context.Context, config Config, log logrus.FieldLogger) *Client {
@@ -50,16 +48,10 @@ func NewClient(ctx context.Context, config Config, log logrus.FieldLogger) *Clie
 		config.PageSize = defaultPageSize
 	}
 
-	rateLimitingInterval, err := time.ParseDuration(config.RateLimitingInterval)
-	if err != nil {
-		rateLimitingInterval = defaultRateLimitingInterval
-	}
-
 	return &Client{
-		httpClient:           httpClientOAuth,
-		config:               config,
-		log:                  log.WithField("client", "CIS-2.0"),
-		rateLimitingInterval: rateLimitingInterval,
+		httpClient: httpClientOAuth,
+		config:     config,
+		log:        log.WithField("client", "CIS-2.0"),
 	}
 }
 
@@ -98,8 +90,8 @@ func (c *Client) fetchSubaccountsFromDeleteEvents(subaccs *subaccounts) error {
 	for currentPage <= totalPages {
 		cisResponse, err := c.fetchSubaccountDeleteEventsForGivenPageNum(currentPage)
 		if err != nil {
-			if kebError.IsTemporaryError(err) && retries < maxRequestRetries {
-				time.Sleep(c.rateLimitingInterval)
+			if kebError.IsTemporaryError(err) && retries < c.config.MaxRequestRetries {
+				time.Sleep(c.config.RateLimitingInterval)
 				retries++
 				continue
 			}
