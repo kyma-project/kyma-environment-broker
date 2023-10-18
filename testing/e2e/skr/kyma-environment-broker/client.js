@@ -147,6 +147,7 @@ class KEBClient {
       },
       parameters: {
         name: name,
+        region: this.region,
         ...customParams,
       },
     };
