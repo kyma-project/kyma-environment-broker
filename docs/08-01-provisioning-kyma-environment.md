@@ -18,6 +18,7 @@ This tutorial shows how to provision SAP BTP, Kyma runtime on Azure using Kyma E
    export GLOBAL_ACCOUNT_ID={GLOBAL_ACCOUNT_ID}
    export NAME={RUNTIME_NAME}
    export USER_ID={USER_ID}
+   export REGION={CLUSTER_REGION}
    ```
 
    > **NOTE:** INSTANCE_ID and NAME must be unique. It is recommended to use UUID as an INSTANCE_ID.
@@ -49,7 +50,8 @@ This tutorial shows how to provision SAP BTP, Kyma runtime on Azure using Kyma E
            \"user_id\": \"$USER_ID\"
        },
        \"parameters\": {
-           \"name\": \"$NAME\"
+           \"name\": \"$NAME\",
+           \"region\": \"$REGION\"
        }
    }"
    ```
@@ -87,7 +89,8 @@ If you need a BTP Operator component installed, obtain [BTP Operator access cred
 		   },
        },
        \"parameters\": {
-           \"name\": \"$NAME\"
+           \"name\": \"$NAME\",
+           \"region\": \"$REGION\"
        }
    }"
    ```

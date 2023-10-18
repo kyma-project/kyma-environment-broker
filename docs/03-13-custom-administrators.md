@@ -23,6 +23,7 @@ See the example:
        },
        \"parameters\": {
            \"name\": \"$NAME\",
+           \"region\": \"$REGION\",
            \"administrators\":[\"admin1@test.com\",\"admin2@test.com\"]
        }
    }"

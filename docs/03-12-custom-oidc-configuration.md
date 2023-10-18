@@ -17,6 +17,7 @@ To create an SAP BTP, Kyma runtime with a custom OIDC (Open ID Connect) configur
        },
        \"parameters\": {
            \"name\": \"$NAME\",
+           \"region\": \"$REGION\",
            \"oidc\": {
               \"clientID\": \"9bd05ed7-a930-44e6-8c79-e6defeb7dec5\",
               \"issuerURL\": \"https://kymatest.accounts400.ondemand.com\",

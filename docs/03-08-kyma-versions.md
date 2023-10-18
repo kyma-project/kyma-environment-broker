@@ -44,6 +44,7 @@ You can also specify a Kyma version using the **kymaVersion** provisioning param
        },
        \"parameters\": {
            \"name\": \"$NAME\",
+           \"region\": \"$REGION\",
            \"kymaVersion\": \"$VERSION"
        }
    }"
