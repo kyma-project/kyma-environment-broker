@@ -173,7 +173,7 @@ class KEBClient {
     return payload;
   }
 
-  async  provisionSKR(name, instanceID, platformCreds, btpOperatorCreds, customParams) {
+  async provisionSKR(name, instanceID, platformCreds, btpOperatorCreds, customParams) {
     const payload = this.buildPayload(name, instanceID, platformCreds, btpOperatorCreds, customParams);
 
     const endpoint = `service_instances/${instanceID}`;
