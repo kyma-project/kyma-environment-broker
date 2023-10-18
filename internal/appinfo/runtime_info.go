@@ -30,22 +30,20 @@ type (
 )
 
 type RuntimeInfoHandler struct {
-	instanceFinder            InstanceFinder
-	lastOperationFinder       LastOperationFinder
-	respWriter                ResponseWriter
-	plansConfig               broker.PlansConfig
-	defaultSubaccountRegion   string
-	regionParameterIsRequired bool
+	instanceFinder          InstanceFinder
+	lastOperationFinder     LastOperationFinder
+	respWriter              ResponseWriter
+	plansConfig             broker.PlansConfig
+	defaultSubaccountRegion string
 }
 
 func NewRuntimeInfoHandler(instanceFinder InstanceFinder, lastOpFinder LastOperationFinder, plansConfig broker.PlansConfig, region string, respWriter ResponseWriter, regionParameterIsRequired bool) *RuntimeInfoHandler {
 	return &RuntimeInfoHandler{
-		instanceFinder:            instanceFinder,
-		lastOperationFinder:       lastOpFinder,
-		respWriter:                respWriter,
-		plansConfig:               plansConfig,
-		defaultSubaccountRegion:   region,
-		regionParameterIsRequired: regionParameterIsRequired,
+		instanceFinder:          instanceFinder,
+		lastOperationFinder:     lastOpFinder,
+		respWriter:              respWriter,
+		plansConfig:             plansConfig,
+		defaultSubaccountRegion: region,
 	}
 }
 
@@ -159,7 +157,7 @@ func (h *RuntimeInfoHandler) planNameOrDefault(inst internal.InstanceWithOperati
 	if inst.ServicePlanName != "" {
 		return inst.ServicePlanName
 	}
-	return broker.Plans(h.plansConfig, "", false, false, h.regionParameterIsRequired)[inst.ServicePlanID].Name //tu
+	return broker.Plans(h.plansConfig, "", false, false, true)[inst.ServicePlanID].Name
 }
 
 func getIfNotZero(in time.Time) *time.Time {
