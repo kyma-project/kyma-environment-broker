@@ -97,12 +97,8 @@ func (c *Client) fetchSubaccountsFromDeleteEvents(subaccs *subaccounts) error {
 			}
 			return fmt.Errorf("while fetching subaccount delete events for %d page: %w", currentPage, err)
 		}
-		if totalPages != cisResponse.TotalPages {
-			totalPages = cisResponse.TotalPages
-		}
-		if subaccs.total != cisResponse.Total {
-			subaccs.total = cisResponse.Total
-		}
+		totalPages = cisResponse.TotalPages
+		subaccs.total = cisResponse.Total
 		c.appendSubaccountsFromDeleteEvents(&cisResponse, subaccs)
 		retries = 0
 		currentPage++
