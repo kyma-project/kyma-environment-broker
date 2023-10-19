@@ -87,10 +87,6 @@ func (iec *InternalEvalAssistant) ProvideTags(operation internal.Operation) []*T
 			Content:    operation.ShootName,
 			TagClassId: iec.avsConfig.ShootNameTagClassId,
 		},
-		{
-			Content:    operation.ShootName,
-			TagClassId: iec.avsConfig.GardenerShootNameTagClassId,
-		},
 	}
 
 	region := ""

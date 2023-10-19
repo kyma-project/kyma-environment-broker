@@ -48,7 +48,7 @@ func TestAvsEvaluationConfigs(t *testing.T) {
 	assert.Equal("external-dummy", externalEvalAssistant.ProvideNewOrDefaultServiceName("dummy"))
 
 	params := internal.Operation{}
-	assert.Equal(8, len(internalEvalAssistant.ProvideTags(internal.Operation{})))
+	assert.Equal(7, len(internalEvalAssistant.ProvideTags(internal.Operation{})))
 
 	// verify confg as json
 	tags, testTag := externalEvalAssistant.ProvideTags(params), Tag{}

@@ -190,10 +190,9 @@ func avsConfig(mockOauthServer *httptest.Server, mockAvsServer *httptest.Server)
 		ExternalTesterAccessId: 5678,
 		ExternalTesterService:  dummyStrAvsTest,
 
-		GroupId:                     5555,
-		ParentId:                    9101112,
-		GardenerShootNameTagClassId: 111112,
-		RegionTagClassId:            111113,
+		GroupId:          5555,
+		ParentId:         9101112,
+		RegionTagClassId: 111113,
 	}
 }
 

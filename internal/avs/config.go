@@ -24,7 +24,6 @@ type Config struct {
 	ParentId                                        int64
 	InstanceIdTagClassId                            int
 	ShootNameTagClassId                             int
-	GardenerShootNameTagClassId                     int
 	RegionTagClassId                                int
 	GlobalAccountIdTagClassId                       int
 	SubAccountIdTagClassId                          int

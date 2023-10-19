@@ -75,10 +75,6 @@ func (eea *ExternalEvalAssistant) ProvideTags(operation internal.Operation) []*T
 			Content:    operation.ShootName,
 			TagClassId: eea.avsConfig.ShootNameTagClassId,
 		},
-		{
-			Content:    operation.ShootName,
-			TagClassId: eea.avsConfig.GardenerShootNameTagClassId,
-		},
 	}
 
 	region := ""
