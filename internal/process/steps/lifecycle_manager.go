@@ -23,7 +23,7 @@ func ApplyLabelsAndAnnotationsForLM(object client.Object, operation internal.Ope
 	l["kyma-project.io/global-account-id"] = operation.GlobalAccountID
 	l["kyma-project.io/subaccount-id"] = operation.SubAccountID
 	l["kyma-project.io/shoot-name"] = operation.ShootName
-	l["kyma-project.io/region"] = operation.Region
+	l["kyma-project.io/region"] = *operation.ProvisioningParameters.Parameters.Region
 	l["operator.kyma-project.io/kyma-name"] = KymaName(operation)
 	l["operator.kyma-project.io/managed-by"] = "lifecycle-manager"
 	if isKymaResourceInternal(operation) {
