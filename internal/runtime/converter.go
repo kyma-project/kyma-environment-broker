@@ -198,7 +198,11 @@ func (c *converter) adjustRuntimeState(dto *pkg.RuntimeDTO) {
 		case pkg.Suspension:
 			dto.Status.State = pkg.StateSuspended
 		case pkg.Deprovision:
-			dto.Status.State = pkg.StateDeprovisioning
+			if len(lastOp.ExcutedButNotCompleted) == 0 {
+				dto.Status.State = pkg.StateDeprovisioned
+			} else {
+				dto.Status.State = pkg.StateDeprovisionIncomplete
+			}
 		}
 	case string(domain.Failed):
 		dto.Status.State = pkg.StateFailed
