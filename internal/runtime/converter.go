@@ -198,7 +198,7 @@ func (c *converter) adjustRuntimeState(dto *pkg.RuntimeDTO) {
 		case pkg.Suspension:
 			dto.Status.State = pkg.StateSuspended
 		case pkg.Deprovision:
-			if len(lastOp.ExcutedButNotCompleted) == 0 {
+			if len(lastOp.ExecutedButNotCompletedSteps) == 0 {
 				dto.Status.State = pkg.StateDeprovisioned
 			} else {
 				dto.Status.State = pkg.StateDeprovisionIncomplete
