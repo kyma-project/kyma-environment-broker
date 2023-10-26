@@ -5,6 +5,7 @@ const {OAuthCredentials, OAuthToken} = require('../lib/oauth');
 
 const SCOPES = ['broker:write'];
 const KYMA_SERVICE_ID = '47c9dcbf-ff30-448e-ab36-d3bad66ba281';
+const trialPlanID = '7d55d31d-35ae-4438-bf13-6ffdfa107d9f';
 
 class KEBConfig {
   static fromEnv() {
@@ -148,7 +149,7 @@ class KEBClient {
       parameters: {
         name: name,
         // Trial plan doesn't require region
-        ...(this.planID === '7d55d31d-35ae-4438-bf13-6ffdfa107d9f' ? {} : {region: this.region}),
+        ...(this.planID === trialPlanID ? {} : {region: this.region}),
         ...customParams,
       },
     };
