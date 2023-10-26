@@ -16,12 +16,13 @@ class KEBConfig {
         getEnvOrThrow('KEB_SUBACCOUNT_ID'),
         getEnvOrThrow('KEB_USER_ID'),
         getEnvOrThrow('KEB_PLAN_ID'),
-        process.env.KEB_REGION,
+        getEnvOrThrow('KEB_REGION'),
+        process.env.KEB_PLATFORM_REGION,
         process.env.KEB_TOKEN_URL,
     );
   }
 
-  constructor(host, credentials, globalAccountID, subaccountID, userID, planID, region, tokenUrl) {
+  constructor(host, credentials, globalAccountID, subaccountID, userID, planID, region, platformRegion, tokenUrl) {
     this.host = host;
     this.credentials = credentials;
     this.globalAccountID = globalAccountID;
@@ -29,6 +30,7 @@ class KEBConfig {
     this.userID = userID;
     this.planID = planID;
     this.region = region;
+    this.platformRegion = platformRegion;
     this.tokenUrl = tokenUrl;
   }
 }
@@ -50,7 +52,8 @@ class KEBClient {
 
   async buildRequest(payload, endpoint, verb) {
     const token = await this.token.getToken(SCOPES);
-    const url = `https://kyma-env-broker.${this.host}/oauth/v2/${endpoint}`;
+    const platformRegion = this.getPlatformRegion();
+    const url = `https://kyma-env-broker.${this.host}/oauth/${platformRegion}v2/${endpoint}`;
     const headers = {
       'X-Broker-API-Version': 2.14,
       'Authorization': `Bearer ${token}`,
@@ -268,9 +271,9 @@ class KEBClient {
     });
   }
 
-  getRegion() {
-    if (this.region && this.region != '') {
-      return `${this.region}/`;
+  getPlatformRegion() {
+    if (this.platformRegion && this.platformRegion != '') {
+      return `${this.platformRegion}/`;
     }
     return '';
   }

@@ -14,12 +14,13 @@ async function testEndpointWithoutToken(requestBody, endpoint, method) {
 
 describe('KEB endpoints test', function() {
   const instanceID = 'keb-endpoints-test';
+  const platformRegion = keb.getPlatformRegion();
   const testData = [
     {payload: {}, endpoint: `oauth/v2/service_instances/${instanceID}`, method: 'get'},
     {payload: {}, endpoint: `runtimes`, method: 'get'},
     {payload: {}, endpoint: `info/runtimes`, method: 'get'},
     {payload: {}, endpoint: `orchestrations`, method: 'get'},
-    {payload: {}, endpoint: `oauth/v2/service_instances/${instanceID}`, method: 'put'},
+    {payload: {}, endpoint: `oauth/${platformRegion}v2/service_instances/${instanceID}`, method: 'put'},
     {payload: {}, endpoint: `upgrade/cluster`, method: 'post'},
     {payload: {}, endpoint: `upgrade/kyma`, method: 'post'},
     {payload: {}, endpoint: `oauth/v2/service_instances/${instanceID}`, method: 'patch'},
