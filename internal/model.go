@@ -527,7 +527,7 @@ func NewDeprovisioningOperationWithID(operationID string, instance *Instance) (D
 	return DeprovisioningOperation{
 		Operation: Operation{
 			RuntimeOperation: orchestration.RuntimeOperation{
-				Runtime: orchestration.Runtime{GlobalAccountID: instance.GlobalAccountID, RuntimeID: instance.RuntimeID},
+				Runtime: orchestration.Runtime{GlobalAccountID: instance.GlobalAccountID, RuntimeID: instance.RuntimeID, Region: instance.ProviderRegion},
 			},
 			ID:                     operationID,
 			Version:                0,
@@ -559,8 +559,11 @@ func NewUpdateOperation(operationID string, instance *Instance, updatingParams U
 		FinishedStages:         make([]string, 0),
 		ProvisioningParameters: instance.Parameters,
 		UpdatingParameters:     updatingParams,
+		RuntimeOperation: orchestration.RuntimeOperation{
+			Runtime: orchestration.Runtime{
+				Region: instance.ProviderRegion},
+		},
 	}
-
 	if updatingParams.OIDC != nil {
 		op.ProvisioningParameters.Parameters.OIDC = updatingParams.OIDC
 	}
@@ -593,6 +596,10 @@ func NewSuspensionOperationWithID(operationID string, instance *Instance) Deprov
 			ProvisioningParameters: instance.Parameters,
 			FinishedStages:         make([]string, 0),
 			Temporary:              true,
+			RuntimeOperation: orchestration.RuntimeOperation{
+				Runtime: orchestration.Runtime{
+					Region: instance.ProviderRegion},
+			},
 		},
 	}
 }

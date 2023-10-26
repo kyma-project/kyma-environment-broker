@@ -50,6 +50,7 @@ func NewUpgradeClusterManager(orchestrationStorage storage.Orchestrations, opera
 
 func (u *upgradeClusterFactory) NewOperation(o internal.Orchestration, r orchestration.Runtime, i internal.Instance, state domain.LastOperationState) (orchestration.RuntimeOperation, error) {
 	id := uuid.New().String()
+	r.Region = i.ProviderRegion
 	op := internal.UpgradeClusterOperation{
 		Operation: internal.Operation{
 			ID:                     id,

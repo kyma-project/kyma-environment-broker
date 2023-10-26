@@ -83,10 +83,11 @@ func (s *CreateRuntimeWithoutKymaStep) Run(operation internal.Operation, log log
 		operation.ProvisionerOperationID = *provisionerResponse.ID
 		if provisionerResponse.RuntimeID != nil {
 			operation.RuntimeID = *provisionerResponse.RuntimeID
+			operation.Region = requestInput.ClusterConfig.GardenerConfig.Region
 		}
 	}, log)
 	if repeat != 0 {
-		log.Errorf("cannot save operation ID from provisioner")
+		log.Errorf("cannot save neither runtime ID nor region from provisioner")
 		return operation, 5 * time.Second, nil
 	}
 

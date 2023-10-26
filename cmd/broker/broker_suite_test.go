@@ -1465,6 +1465,23 @@ func (s *BrokerSuiteTest) AssertKymaAnnotationExists(opId, annotationName string
 	assert.Contains(s.t, obj.GetAnnotations(), annotationName)
 }
 
+func (s *BrokerSuiteTest) AssertKymaLabelsExist(opId string, expectedLabels map[string]string) {
+	operation, err := s.db.Operations().GetOperationByID(opId)
+	assert.NoError(s.t, err)
+	obj := &unstructured.Unstructured{}
+	obj.SetName(operation.RuntimeID)
+	obj.SetNamespace("kyma-system")
+	obj.SetGroupVersionKind(schema.GroupVersionKind{
+		Group:   "operator.kyma-project.io",
+		Version: "v1beta2",
+		Kind:    "Kyma",
+	})
+
+	err = s.k8sKcp.Get(context.Background(), client.ObjectKeyFromObject(obj), obj)
+
+	assert.Subset(s.t, obj.GetLabels(), expectedLabels)
+}
+
 func (s *BrokerSuiteTest) AssertSecretWithKubeconfigExists(opId string) {
 	operation, err := s.db.Operations().GetOperationByID(opId)
 	assert.NoError(s.t, err)

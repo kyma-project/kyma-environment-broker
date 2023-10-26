@@ -56,6 +56,7 @@ func (u *upgradeKymaFactory) NewOperation(o internal.Orchestration, r orchestrat
 	if err != nil {
 		return orchestration.RuntimeOperation{}, err
 	}
+	r.Region = i.ProviderRegion
 	op := internal.UpgradeKymaOperation{
 		Operation: internal.Operation{
 			ID:                     id,
