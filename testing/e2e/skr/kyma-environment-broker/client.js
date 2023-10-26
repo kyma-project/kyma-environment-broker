@@ -54,7 +54,7 @@ class KEBClient {
     const token = await this.token.getToken(SCOPES);
     const platformRegion = this.getPlatformRegion();
     const url = `https://kyma-env-broker.${this.host}/oauth/${platformRegion}v2/${endpoint}`;
-    debug(`Call url: ${downloadUrl}`);
+    debug(`Call url: ${url}`);
     const headers = {
       'X-Broker-API-Version': 2.14,
       'Authorization': `Bearer ${token}`,
