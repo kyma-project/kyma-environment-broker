@@ -50,8 +50,7 @@ class KEBClient {
 
   async buildRequest(payload, endpoint, verb) {
     const token = await this.token.getToken(SCOPES);
-    const region = this.getRegion();
-    const url = `https://kyma-env-broker.${this.host}/oauth/${region}v2/${endpoint}`;
+    const url = `https://kyma-env-broker.${this.host}/oauth/v2/${endpoint}`;
     const headers = {
       'X-Broker-API-Version': 2.14,
       'Authorization': `Bearer ${token}`,
