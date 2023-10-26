@@ -5,7 +5,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"net/http/httptest"
 	"path"
@@ -827,7 +827,7 @@ func (s *BrokerSuiteTest) AssertReconcilerStartedReconcilingWhenUpgrading(opID s
 }
 
 func (s *BrokerSuiteTest) DecodeErrorResponse(resp *http.Response) apiresponses.ErrorResponse {
-	m, err := ioutil.ReadAll(resp.Body)
+	m, err := io.ReadAll(resp.Body)
 	defer resp.Body.Close()
 	require.NoError(s.t, err)
 
@@ -839,7 +839,7 @@ func (s *BrokerSuiteTest) DecodeErrorResponse(resp *http.Response) apiresponses.
 }
 
 func (s *BrokerSuiteTest) DecodeOperationID(resp *http.Response) string {
-	m, err := ioutil.ReadAll(resp.Body)
+	m, err := io.ReadAll(resp.Body)
 	s.Log(string(m))
 	require.NoError(s.t, err)
 	var provisioningResp struct {
@@ -852,7 +852,7 @@ func (s *BrokerSuiteTest) DecodeOperationID(resp *http.Response) string {
 }
 
 func (s *BrokerSuiteTest) DecodeOrchestrationID(resp *http.Response) string {
-	m, err := ioutil.ReadAll(resp.Body)
+	m, err := io.ReadAll(resp.Body)
 	s.Log(string(m))
 	require.NoError(s.t, err)
 	var upgradeResponse orchestration.UpgradeResponse
@@ -863,7 +863,7 @@ func (s *BrokerSuiteTest) DecodeOrchestrationID(resp *http.Response) string {
 }
 
 func (s *BrokerSuiteTest) DecodeLastUpgradeKymaOperationFromOrchestration(resp *http.Response) (*orchestration.OperationResponse, error) {
-	m, err := ioutil.ReadAll(resp.Body)
+	m, err := io.ReadAll(resp.Body)
 	s.Log(string(m))
 	require.NoError(s.t, err)
 	var operationsList orchestration.OperationResponseList
@@ -890,7 +890,7 @@ func (s *BrokerSuiteTest) DecodeLastUpgradeClusterOperationIDFromOrchestration(o
 	var operationsList orchestration.OperationResponseList
 	err := s.poller.Invoke(func() (bool, error) {
 		resp := s.CallAPI("GET", fmt.Sprintf("orchestrations/%s/operations", orchestrationID), "")
-		m, err := ioutil.ReadAll(resp.Body)
+		m, err := io.ReadAll(resp.Body)
 		s.Log(string(m))
 		if err != nil {
 			return false, fmt.Errorf("failed to read response body: %v", err)
@@ -1480,6 +1480,23 @@ func (s *BrokerSuiteTest) AssertKymaLabelsExist(opId string, expectedLabels map[
 	err = s.k8sKcp.Get(context.Background(), client.ObjectKeyFromObject(obj), obj)
 
 	assert.Subset(s.t, obj.GetLabels(), expectedLabels)
+}
+
+func (s *BrokerSuiteTest) AssertKymaLabelNotExists(opId string, notExpectedLabel string) {
+	operation, err := s.db.Operations().GetOperationByID(opId)
+	assert.NoError(s.t, err)
+	obj := &unstructured.Unstructured{}
+	obj.SetName(operation.RuntimeID)
+	obj.SetNamespace("kyma-system")
+	obj.SetGroupVersionKind(schema.GroupVersionKind{
+		Group:   "operator.kyma-project.io",
+		Version: "v1beta2",
+		Kind:    "Kyma",
+	})
+
+	err = s.k8sKcp.Get(context.Background(), client.ObjectKeyFromObject(obj), obj)
+
+	assert.NotContains(s.t, obj.GetLabels(), notExpectedLabel)
 }
 
 func (s *BrokerSuiteTest) AssertSecretWithKubeconfigExists(opId string) {

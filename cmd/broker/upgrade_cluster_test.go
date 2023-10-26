@@ -148,4 +148,9 @@ func TestClusterUpgrade_UpgradeAfterUpdateWithNetworkPolicy(t *testing.T) {
 	upgradeOperationID = suite.DecodeOperationID(resp)
 	suite.FinishUpdatingOperationByProvisioner(upgradeOperationID)
 
+	suite.AssertKymaResourceExists(upgradeOperationID)
+	suite.AssertKymaLabelsExist(upgradeOperationID, map[string]string{
+		"kyma-project.io/region":          "eastus",
+		"kyma-project.io/platform-region": "cf-eu10",
+	})
 }

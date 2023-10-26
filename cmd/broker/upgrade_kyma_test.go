@@ -117,6 +117,11 @@ func TestClusterUpgradeUsesUpdatedAutoscalerParams(t *testing.T) {
 		Administrators: []string{"john.smith@email.com"},
 	})
 
+	suite.AssertKymaResourceExists(upgradeOperationID)
+	suite.AssertKymaLabelsExist(upgradeOperationID, map[string]string{
+		"kyma-project.io/region":          "eastus",
+		"kyma-project.io/platform-region": "cf-eu10",
+	})
 }
 
 func TestKymaUpgradeScheduledToFutureMaintenanceWindow(t *testing.T) {

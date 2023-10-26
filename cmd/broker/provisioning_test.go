@@ -4,7 +4,6 @@ package main
 import (
 	"fmt"
 	"io"
-	"io/ioutil"
 	"net/http"
 	"testing"
 
@@ -75,9 +74,8 @@ func TestProvisioning_HappyPathAWS(t *testing.T) {
 
 	suite.AssertKymaResourceExists(opID)
 	suite.AssertKymaAnnotationExists(opID, "compass-runtime-id-for-migration")
-	suite.AssertKymaLabelsExist(opID, map[string]string{
-		"kyma-project.io/region": "eu-central-1",
-	})
+	suite.AssertKymaLabelsExist(opID, map[string]string{"kyma-project.io/region": "eu-central-1"})
+	suite.AssertKymaLabelNotExists(opID, "kyma-project.io/platform-region")
 	suite.AssertSecretWithKubeconfigExists(opID)
 }
 
@@ -111,6 +109,7 @@ func TestProvisioning_Preview(t *testing.T) {
 	suite.AssertKymaLabelsExist(opID, map[string]string{
 		"kyma-project.io/region": "eu-central-1",
 	})
+	suite.AssertKymaLabelNotExists(opID, "kyma-project.io/platform-region")
 	suite.AssertSecretWithKubeconfigExists(opID)
 }
 
@@ -393,6 +392,7 @@ func TestProvisioning_TrialWithEmptyRegion(t *testing.T) {
 	suite.AssertAWSRegionAndZone("eu-west-1")
 	suite.AssertKymaLabelsExist(opID, map[string]string{
 		"kyma-project.io/region": "eu-west-1"})
+	suite.AssertKymaLabelNotExists(opID, "kyma-project.io/platform-region")
 
 }
 
@@ -545,8 +545,10 @@ func TestProvisioning_TrialAtEU(t *testing.T) {
 	// then
 	suite.AssertAWSRegionAndZone("eu-central-1")
 	suite.AssertKymaLabelsExist(opID, map[string]string{
-		"kyma-project.io/region": "eu-central-1",
+		"kyma-project.io/region":          "eu-central-1",
+		"kyma-project.io/platform-region": "cf-eu11",
 	})
+
 }
 
 func TestProvisioning_HandleExistingOperation(t *testing.T) {
@@ -592,8 +594,8 @@ func TestProvisioning_HandleExistingOperation(t *testing.T) {
 					}
 		}`)
 
-	firstBodyBytes, _ := ioutil.ReadAll(firstResp.Body)
-	secondBodyBytes, _ := ioutil.ReadAll(secondResp.Body)
+	firstBodyBytes, _ := io.ReadAll(firstResp.Body)
+	secondBodyBytes, _ := io.ReadAll(secondResp.Body)
 
 	// then
 	assert.Equal(t, string(firstBodyBytes), string(secondBodyBytes))
