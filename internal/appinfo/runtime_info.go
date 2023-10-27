@@ -37,7 +37,7 @@ type RuntimeInfoHandler struct {
 	defaultSubaccountRegion string
 }
 
-func NewRuntimeInfoHandler(instanceFinder InstanceFinder, lastOpFinder LastOperationFinder, plansConfig broker.PlansConfig, region string, respWriter ResponseWriter, regionParameterIsRequired bool) *RuntimeInfoHandler {
+func NewRuntimeInfoHandler(instanceFinder InstanceFinder, lastOpFinder LastOperationFinder, plansConfig broker.PlansConfig, region string, respWriter ResponseWriter) *RuntimeInfoHandler {
 	return &RuntimeInfoHandler{
 		instanceFinder:          instanceFinder,
 		lastOperationFinder:     lastOpFinder,

@@ -498,7 +498,7 @@ func createAPI(router *mux.Router, servicesConfig broker.ServicesConfig, planVal
 	}
 
 	respWriter := httputil.NewResponseWriter(logs, cfg.DevelopmentMode)
-	runtimesInfoHandler := appinfo.NewRuntimeInfoHandler(db.Instances(), db.Operations(), defaultPlansConfig, cfg.DefaultRequestRegion, respWriter, cfg.Broker.RegionParameterIsRequired)
+	runtimesInfoHandler := appinfo.NewRuntimeInfoHandler(db.Instances(), db.Operations(), defaultPlansConfig, cfg.DefaultRequestRegion, respWriter)
 	router.Handle("/info/runtimes", runtimesInfoHandler)
 	router.Handle("/events", eventshandler.NewHandler(db.Events(), db.Instances()))
 }
