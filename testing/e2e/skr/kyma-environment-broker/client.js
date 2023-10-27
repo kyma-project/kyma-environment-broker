@@ -48,6 +48,7 @@ class KEBClient {
     this.userID = config.userID;
     this.planID = config.planID;
     this.region = config.region;
+    this.platformRegion = platformRegion;
   }
 
   async buildRequest(payload, endpoint, verb) {
