@@ -115,6 +115,46 @@ func TestServices_Services(t *testing.T) {
 		assertPlansContainPropertyInSchemas(t, services[0], "oidc")
 		assertPlansContainPropertyInSchemas(t, services[0], "administrators")
 	})
+
+	t.Run("should containt property required with values name and region", func(t *testing.T) {
+		// given
+		var (
+			name       = "testServiceName"
+			supportURL = "example.com/support"
+		)
+
+		cfg := broker.Config{
+			EnablePlans:                     []string{"gcp", "azure", "openstack", "aws", "free"},
+			IncludeAdditionalParamsInSchema: true,
+			RegionParameterIsRequired:       false,
+			ExposeSchemaWithRegionRequired:  true,
+		}
+		servicesConfig := map[string]broker.Service{
+			broker.KymaServiceName: {
+				Metadata: broker.ServiceMetadata{
+					DisplayName: name,
+					SupportUrl:  supportURL,
+				},
+			},
+		}
+		servicesEndpoint := broker.NewServices(cfg, servicesConfig, logrus.StandardLogger())
+
+		// when
+		services, err := servicesEndpoint.Services(context.TODO())
+
+		// then
+		require.NoError(t, err)
+		assert.Len(t, services, 1)
+		assert.Len(t, services[0].Plans, 5)
+
+		assert.Equal(t, name, services[0].Metadata.DisplayName)
+		assert.Equal(t, supportURL, services[0].Metadata.SupportUrl)
+
+		for _, plan := range services[0].Plans {
+			assertPlanContainsPropertyValuesInCreateSchema(t, plan, "required", []string{"name", "region"})
+		}
+
+	})
 }
 
 func assertPlansContainPropertyInSchemas(t *testing.T, service domain.Service, property string) {
@@ -137,5 +177,23 @@ func assertPlanContainsPropertyInUpdateSchema(t *testing.T, plan domain.ServiceP
 	propertiesMap := properties.(map[string]interface{})
 	if _, exists := propertiesMap[property]; !exists {
 		t.Errorf("plan %s does not contain %s property in Update schema", plan.Name, property)
+	}
+}
+
+func assertPlanContainsPropertyValuesInCreateSchema(t *testing.T, plan domain.ServicePlan, property string, wantedPropertyValues []string) {
+	planPropertyValues := plan.Schemas.Instance.Create.Parameters[property]
+	var wantedPropVal string
+
+	for _, wantedPropVal = range wantedPropertyValues {
+		found := false
+		for _, planPropVal := range planPropertyValues.([]interface{}) {
+			if wantedPropVal == planPropVal {
+				found = true
+				break
+			}
+		}
+		if !found {
+			t.Errorf("plan %s does not contain '%s: %s' property value in Create schema", plan.Name, property, wantedPropVal)
+		}
 	}
 }
