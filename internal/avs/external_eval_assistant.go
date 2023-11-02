@@ -68,7 +68,7 @@ func (eea *ExternalEvalAssistant) ProvideTags(operation internal.Operation) []*T
 			TagClassId: eea.avsConfig.LandscapeTagClassId,
 		},
 		{
-			Content:    string(operation.ProvisioningParameters.PlatformProvider),
+			Content:    providerCodeByPlan(operation.ProvisioningParameters.PlanID),
 			TagClassId: eea.avsConfig.ProviderTagClassId,
 		},
 		{
