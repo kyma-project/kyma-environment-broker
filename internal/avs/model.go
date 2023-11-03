@@ -122,14 +122,14 @@ func generateNameAndDescription(operation internal.Operation, beType string) (st
 	instanceID := operation.InstanceID
 	name := operation.ProvisioningParameters.Parameters.Name
 	shootName := operation.InstanceDetails.ShootName
-	beName := fmt.Sprintf("K8S-%s-Kyma-%s-%s-%s", providerCodeByPlan(operation.ProvisioningParameters.PlanID), beType, instanceID, name)
+	beName := fmt.Sprintf("K8S-%s-Kyma-%s-%s-%s", providerCodeByPlan(operation.ProvisioningParameters.PlanID, false), beType, instanceID, name)
 	beDescription := fmt.Sprintf("{\"instanceName\": \"%s\", \"globalAccountID\": \"%s\", \"subAccountID\": \"%s\", \"instanceID\": \"%s\", \"shootName\": \"%s\"}",
 		name, globalAccountID, subAccountID, instanceID, shootName)
 
 	return truncateString(beName, 80), truncateString(beDescription, 255)
 }
 
-func providerCodeByPlan(planID string) string {
+func providerCodeByPlan(planID string, meaningfulName bool) string {
 	switch planID {
 	case broker.AWSPlanID:
 		return "AWS"
@@ -138,6 +138,9 @@ func providerCodeByPlan(planID string) string {
 	case broker.AzurePlanID, broker.AzureLitePlanID:
 		return "AZR"
 	case broker.TrialPlanID, broker.FreemiumPlanID:
+		if meaningfulName {
+			return "Azure"
+		}
 		return "AZR"
 	case broker.OpenStackPlanID:
 		return "CC"
