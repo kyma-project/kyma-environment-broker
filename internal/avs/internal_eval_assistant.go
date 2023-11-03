@@ -80,7 +80,7 @@ func (iec *InternalEvalAssistant) ProvideTags(operation internal.Operation) []*T
 			TagClassId: iec.avsConfig.LandscapeTagClassId,
 		},
 		{
-			Content:    providerCodeByPlan(operation.ProvisioningParameters.PlanID, true),
+			Content:    convertAZR(providerCodeByPlan(operation.ProvisioningParameters.PlanID)),
 			TagClassId: iec.avsConfig.ProviderTagClassId,
 		},
 		{

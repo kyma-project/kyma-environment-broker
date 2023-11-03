@@ -122,35 +122,35 @@ func generateNameAndDescription(operation internal.Operation, beType string) (st
 	instanceID := operation.InstanceID
 	name := operation.ProvisioningParameters.Parameters.Name
 	shootName := operation.InstanceDetails.ShootName
-	beName := fmt.Sprintf("K8S-%s-Kyma-%s-%s-%s", providerCodeByPlan(operation.ProvisioningParameters.PlanID, false), beType, instanceID, name)
+	beName := fmt.Sprintf("K8S-%s-Kyma-%s-%s-%s", providerCodeByPlan(operation.ProvisioningParameters.PlanID), beType, instanceID, name)
 	beDescription := fmt.Sprintf("{\"instanceName\": \"%s\", \"globalAccountID\": \"%s\", \"subAccountID\": \"%s\", \"instanceID\": \"%s\", \"shootName\": \"%s\"}",
 		name, globalAccountID, subAccountID, instanceID, shootName)
 
 	return truncateString(beName, 80), truncateString(beDescription, 255)
 }
 
-func providerCodeByPlan(planID string, meaningfulName bool) string {
+func providerCodeByPlan(planID string) string {
 	switch planID {
 	case broker.AWSPlanID:
 		return "AWS"
 	case broker.GCPPlanID:
 		return "GCP"
 	case broker.AzurePlanID, broker.AzureLitePlanID:
-		return convertAZR(meaningfulName)
+		return "AZR"
 	case broker.TrialPlanID, broker.FreemiumPlanID:
-		return convertAZR(meaningfulName)
+		return "AZR"
 	case broker.OpenStackPlanID:
 		return "CC"
 	default:
-		return convertAZR(meaningfulName)
+		return "AZR"
 	}
 }
 
-func convertAZR(meaningfulName bool) string {
-	if meaningfulName {
+func convertAZR(code string) string {
+	if code == "AZR" {
 		return "Azure"
 	}
-	return "AZR"
+	return code
 }
 
 func truncateString(input string, num int) string {
