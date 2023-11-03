@@ -136,17 +136,21 @@ func providerCodeByPlan(planID string, meaningfulName bool) string {
 	case broker.GCPPlanID:
 		return "GCP"
 	case broker.AzurePlanID, broker.AzureLitePlanID:
-		return "AZR"
+		return convertAZR(meaningfulName)
 	case broker.TrialPlanID, broker.FreemiumPlanID:
-		if meaningfulName {
-			return "Azure"
-		}
-		return "AZR"
+		return convertAZR(meaningfulName)
 	case broker.OpenStackPlanID:
 		return "CC"
 	default:
-		return "AZR"
+		return convertAZR(meaningfulName)
 	}
+}
+
+func convertAZR(meaningfulName bool) string {
+	if meaningfulName {
+		return "Azure"
+	}
+	return "AZR"
 }
 
 func truncateString(input string, num int) string {
