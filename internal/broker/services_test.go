@@ -309,15 +309,6 @@ func assertPlanContainsPropertyValuesInCreateSchema(t *testing.T, plan domain.Se
 	}
 
 	for _, wantedPropVal = range wantedPropertyValues {
-		found := false
-		for _, planPropVal := range planPropertyValues.([]interface{}) {
-			if wantedPropVal == planPropVal {
-				found = true
-				break
-			}
-		}
-		if !found {
-			t.Errorf("plan %s does not contain the value '%s' for the property '%s' in Create schema", plan.Name, wantedPropVal, property)
-		}
+		assert.Contains(t, planPropertyValues, wantedPropVal)
 	}
 }
