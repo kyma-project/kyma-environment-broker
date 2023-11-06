@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"testing"
+	"time"
 
 	"github.com/gorilla/mux"
 	"github.com/kyma-project/kyma-environment-broker/internal/broker"
@@ -96,5 +97,38 @@ func TestExpiration(t *testing.T) {
 		// then
 		assert.False(t, *actualInstance.Parameters.ErsContext.Active)
 		assert.NotNil(t, actualInstance.ExpiredAt)
+	})
+
+	t.Run("should repeat suspension on previously expired instance", func(t *testing.T) {
+		// given
+		instanceID := "inst-trial-02"
+		trialInstance := fixture.FixInstance(instanceID)
+		trialInstance.ServicePlanID = broker.TrialPlanID
+		trialInstance.ServicePlanName = broker.TrialPlanName
+		expectedExpirationTime := time.Now()
+		trialInstance.ExpiredAt = &expectedExpirationTime
+		expectedActiveValue := false
+		trialInstance.Parameters.ErsContext.Active = &expectedActiveValue
+		err := storage.Instances().Insert(trialInstance)
+		require.NoError(t, err)
+
+		reqPath := fmt.Sprintf(requestPathFormat, instanceID)
+		req := httptest.NewRequest("PUT", reqPath, nil)
+		w := httptest.NewRecorder()
+
+		// when
+		router.ServeHTTP(w, req)
+		resp := w.Result()
+
+		// then
+		assert.Equal(t, http.StatusAccepted, resp.StatusCode)
+
+		// when
+		actualInstance, err := storage.Instances().GetByID(instanceID)
+		require.NoError(t, err)
+
+		// then
+		assert.False(t, *actualInstance.Parameters.ErsContext.Active)
+		assert.Equal(t, expectedExpirationTime, *actualInstance.ExpiredAt)
 	})
 }
