@@ -47,7 +47,7 @@ func (h *handler) AttachRoutes(router *mux.Router) {
 func (h *handler) expireInstance(w http.ResponseWriter, req *http.Request) {
 	instanceID := mux.Vars(req)["instance_id"]
 
-	h.log.Info("Expiration triggered for instanceID: %s", instanceID)
+	h.log.Info("Expiration triggered for instanceID: ", instanceID)
 	logger := h.log.WithField("instanceID", instanceID)
 
 	instance, err := h.instances.GetByID(instanceID)
@@ -120,13 +120,13 @@ func (h *handler) suspendInstance(instance *internal.Instance, log *logrus.Entry
 		}
 		switch lastDeprovisioningOp.State {
 		case orchestration.Pending:
-			log.Info("%s pending", opType)
+			log.Infof("%s pending", opType)
 			return instance, nil
 		case domain.InProgress:
-			log.Info("%s in progress", opType)
+			log.Infof("%s in progress", opType)
 			return instance, nil
 		case domain.Failed:
-			log.Info("repeating suspension after previous failed %s", opType)
+			log.Infof("repeating suspension after previous failed %s", opType)
 		}
 	}
 
