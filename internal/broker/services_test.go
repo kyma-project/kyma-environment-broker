@@ -236,7 +236,7 @@ func TestServices_Services(t *testing.T) {
 
 	})
 
-	t.Run("should containt the property 'required' with values [name] when ExposeSchemaWithRegionRequired is false and RegionParameterIsRequired is false", func(t *testing.T) {
+	t.Run("should contain the property 'required' with values [name] when ExposeSchemaWithRegionRequired is false and RegionParameterIsRequired is false", func(t *testing.T) {
 		// given
 		var (
 			name       = "testServiceName"
