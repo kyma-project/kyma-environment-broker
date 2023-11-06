@@ -116,7 +116,7 @@ func TestServices_Services(t *testing.T) {
 		assertPlansContainPropertyInSchemas(t, services[0], "administrators")
 	})
 
-	t.Run("should containt the property 'required' with values [name region] when ExposeSchemaWithRegionRequired is true and RegionParameterIsRequired is false", func(t *testing.T) {
+	t.Run("should contain the property 'required' with values [name region] when ExposeSchemaWithRegionRequired is true and RegionParameterIsRequired is false", func(t *testing.T) {
 		// given
 		var (
 			name       = "testServiceName"
