@@ -5,14 +5,18 @@ import (
 	"fmt"
 	"net/http"
 	"time"
-	
+
+	"github.com/google/uuid"
 	"github.com/gorilla/mux"
+	"github.com/kyma-project/kyma-environment-broker/common/orchestration"
 	"github.com/kyma-project/kyma-environment-broker/internal"
 	"github.com/kyma-project/kyma-environment-broker/internal/broker"
 	"github.com/kyma-project/kyma-environment-broker/internal/httputil"
 	"github.com/kyma-project/kyma-environment-broker/internal/ptr"
 	"github.com/kyma-project/kyma-environment-broker/internal/storage"
 	"github.com/kyma-project/kyma-environment-broker/internal/storage/dberr"
+	"github.com/kyma-project/kyma-environment-broker/internal/suspension"
+	"github.com/pivotal-cf/brokerapi/v8/domain"
 	"github.com/sirupsen/logrus"
 )
 
@@ -21,16 +25,18 @@ type Handler interface {
 }
 
 type handler struct {
-	instances  storage.Instances
-	operations storage.Operations
-	log        logrus.FieldLogger
+	instances           storage.Instances
+	operations          storage.Operations
+	deprovisioningQueue suspension.Adder
+	log                 logrus.FieldLogger
 }
 
-func NewHandler(instancesStorage storage.Instances, operationsStorage storage.Operations, log logrus.FieldLogger) Handler {
+func NewHandler(instancesStorage storage.Instances, operationsStorage storage.Operations, deprovisioningQueue suspension.Adder, log logrus.FieldLogger) Handler {
 	return &handler{
-		instances:  instancesStorage,
-		operations: operationsStorage,
-		log:        log.WithField("service", "ExpirationEndpoint"),
+		instances:           instancesStorage,
+		operations:          operationsStorage,
+		deprovisioningQueue: deprovisioningQueue,
+		log:                 log.WithField("service", "ExpirationEndpoint"),
 	}
 }
 
@@ -40,10 +46,10 @@ func (h *handler) AttachRoutes(router *mux.Router) {
 
 func (h *handler) expireInstance(w http.ResponseWriter, req *http.Request) {
 	instanceID := mux.Vars(req)["instance_id"]
-	
+
 	h.log.Info("Expiration triggered for instanceID: %s", instanceID)
 	logger := h.log.WithField("instanceID", instanceID)
-	
+
 	instance, err := h.instances.GetByID(instanceID)
 	if err != nil {
 		logger.Errorf("unable to get instance: %s", err.Error())
@@ -55,21 +61,28 @@ func (h *handler) expireInstance(w http.ResponseWriter, req *http.Request) {
 		}
 		return
 	}
-	
+
 	if instance.ServicePlanID != broker.TrialPlanID {
 		msg := fmt.Sprintf("unsupported plan: %s", broker.PlanNamesMapping[instance.ServicePlanID])
 		logger.Warn(msg)
 		httputil.WriteErrorResponse(w, http.StatusBadRequest, errors.New(msg))
 		return
 	}
-	
+
 	instance, err = h.setInstanceExpirationTime(instance, logger)
 	if err != nil {
 		logger.Errorf("unable to update the instance in the database after setting expiration time: %s", err.Error())
 		httputil.WriteErrorResponse(w, http.StatusInternalServerError, err)
 		return
 	}
-	
+
+	instance, err = h.suspendInstance(instance, logger)
+	if err != nil {
+		logger.Errorf("unable to create suspension operation: %s", err.Error())
+		httputil.WriteErrorResponse(w, http.StatusInternalServerError, err)
+		return
+	}
+
 	instance, err = h.deactivateInstance(instance, logger)
 	if err != nil {
 		logger.Errorf("unable to update the instance in the database after deactivating: %s", err.Error())
@@ -87,6 +100,38 @@ func (h *handler) setInstanceExpirationTime(instance *internal.Instance, log log
 	instance.ExpiredAt = ptr.Time(time.Now())
 	instance, err := h.instances.Update(*instance)
 	return instance, err
+}
+
+func (h *handler) suspendInstance(instance *internal.Instance, log *logrus.Entry) (*internal.Instance, error) {
+	lastDeprovisioningOp, err := h.operations.GetDeprovisioningOperationByInstanceID(instance.InstanceID)
+	if err != nil && !dberr.IsNotFound(err) {
+		return instance, err
+	}
+
+	if lastDeprovisioningOp != nil {
+		opType := "deprovisioning"
+		if lastDeprovisioningOp.Temporary {
+			opType = "suspension"
+		}
+		switch lastDeprovisioningOp.State {
+		case orchestration.Pending:
+			log.Info("%s pending", opType)
+			return instance, nil
+		case domain.InProgress:
+			log.Info("%s in progress", opType)
+			return instance, nil
+		case domain.Failed:
+			log.Info("repeating suspension after previous failed %s", opType)
+		}
+	}
+
+	id := uuid.New().String()
+	suspensionOp := internal.NewSuspensionOperationWithID(id, instance)
+	if err := h.operations.InsertDeprovisioningOperation(suspensionOp); err != nil {
+		return instance, err
+	}
+	h.deprovisioningQueue.Add(suspensionOp.ID)
+	return instance, nil
 }
 
 func (h *handler) deactivateInstance(instance *internal.Instance, log logrus.FieldLogger) (*internal.Instance, error) {
