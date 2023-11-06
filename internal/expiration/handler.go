@@ -89,6 +89,11 @@ func (h *handler) expireInstance(w http.ResponseWriter, req *http.Request) {
 		httputil.WriteErrorResponse(w, http.StatusInternalServerError, err)
 		return
 	}
+
+	logger.Infof("the instance has been expired and awaits suspension")
+	w.WriteHeader(http.StatusAccepted)
+
+	return
 }
 
 func (h *handler) setInstanceExpirationTime(instance *internal.Instance, log logrus.FieldLogger) (*internal.Instance, error) {
@@ -131,6 +136,8 @@ func (h *handler) suspendInstance(instance *internal.Instance, log *logrus.Entry
 		return instance, err
 	}
 	h.deprovisioningQueue.Add(suspensionOp.ID)
+	log.Infof("suspension operation %s added to queue", suspensionOp.ID)
+
 	return instance, nil
 }
 
