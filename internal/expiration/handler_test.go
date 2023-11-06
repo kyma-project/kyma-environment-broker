@@ -13,6 +13,7 @@ import (
 	"github.com/kyma-project/kyma-environment-broker/internal/fixture"
 	"github.com/kyma-project/kyma-environment-broker/internal/process"
 	"github.com/kyma-project/kyma-environment-broker/internal/storage"
+	"github.com/pivotal-cf/brokerapi/v8/domain"
 	"github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -130,5 +131,40 @@ func TestExpiration(t *testing.T) {
 		// then
 		assert.False(t, *actualInstance.Parameters.ErsContext.Active)
 		assert.Equal(t, expectedExpirationTime, *actualInstance.ExpiredAt)
+	})
+
+	t.Run("should expire and suspend the instance on previously failed deprovisioning", func(t *testing.T) {
+		// given
+		instanceID := "inst-trial-03"
+		trialInstance := fixture.FixInstance(instanceID)
+		trialInstance.ServicePlanID = broker.TrialPlanID
+		trialInstance.ServicePlanName = broker.TrialPlanName
+		err := storage.Instances().Insert(trialInstance)
+		require.NoError(t, err)
+
+		deprovisioningOpID := "inst-trial-03-failed-deprovisioning"
+		deprovisioningOp := fixture.FixDeprovisioningOperation(deprovisioningOpID, instanceID)
+		deprovisioningOp.State = domain.Failed
+		err = storage.Operations().InsertDeprovisioningOperation(deprovisioningOp)
+		require.NoError(t, err)
+
+		reqPath := fmt.Sprintf(requestPathFormat, instanceID)
+		req := httptest.NewRequest("PUT", reqPath, nil)
+		w := httptest.NewRecorder()
+
+		// when
+		router.ServeHTTP(w, req)
+		resp := w.Result()
+
+		// then
+		assert.Equal(t, http.StatusAccepted, resp.StatusCode)
+
+		// when
+		actualInstance, err := storage.Instances().GetByID(instanceID)
+		require.NoError(t, err)
+
+		// then
+		assert.False(t, *actualInstance.Parameters.ErsContext.Active)
+		assert.NotNil(t, actualInstance.ExpiredAt)
 	})
 }

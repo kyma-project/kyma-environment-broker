@@ -126,7 +126,7 @@ func (h *handler) suspendInstance(instance *internal.Instance, log *logrus.Entry
 			log.Infof("%s in progress", opType)
 			return instance, nil
 		case domain.Failed:
-			log.Infof("repeating suspension after previous failed %s", opType)
+			log.Infof("triggering suspension after previous failed %s", opType)
 		}
 	}
 
