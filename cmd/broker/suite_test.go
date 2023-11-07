@@ -1004,6 +1004,7 @@ func fixConfig() *Config {
 			EnablePlans:               []string{"azure", "trial", "aws", "own_cluster", "preview"},
 			AllowNetworkingParameters: true,
 			RegionParameterIsRequired: true,
+			AllowModulesParameters:    true,
 		},
 		Avs: avs.Config{},
 		IAS: ias.Config{
