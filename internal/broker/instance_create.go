@@ -20,6 +20,10 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/kyma-incubator/compass/components/director/pkg/jsonschema"
+	"github.com/pivotal-cf/brokerapi/v8/domain"
+	"github.com/pivotal-cf/brokerapi/v8/domain/apiresponses"
+	"github.com/sirupsen/logrus"
+
 	"github.com/kyma-project/kyma-environment-broker/common/gardener"
 	"github.com/kyma-project/kyma-environment-broker/internal"
 	"github.com/kyma-project/kyma-environment-broker/internal/dashboard"
@@ -27,9 +31,6 @@ import (
 	"github.com/kyma-project/kyma-environment-broker/internal/ptr"
 	"github.com/kyma-project/kyma-environment-broker/internal/storage"
 	"github.com/kyma-project/kyma-environment-broker/internal/storage/dberr"
-	"github.com/pivotal-cf/brokerapi/v8/domain"
-	"github.com/pivotal-cf/brokerapi/v8/domain/apiresponses"
-	"github.com/sirupsen/logrus"
 )
 
 //go:generate mockery --name=Queue --output=automock --outpkg=automock --case=underscore
@@ -260,6 +261,11 @@ func (b *ProvisionEndpoint) validateAndExtract(details domain.ProvisionDetails, 
 	}
 	if err := b.validateNetworking(parameters); err != nil {
 		return ersContext, parameters, err
+	}
+
+	if !b.config.AllowModulesParameters {
+		b.log.Infof("modules section passed to API, but AllowModulesParameters is set to false. Parameters will be reset to nil")
+		parameters.Modules = nil
 	}
 
 	var autoscalerMin, autoscalerMax int

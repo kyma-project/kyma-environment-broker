@@ -28,6 +28,7 @@ type ProvisioningProperties struct {
 	ShootDomain *Type           `json:"shootDomain,omitempty"`
 	Region      *Type           `json:"region,omitempty"`
 	Networking  *NetworkingType `json:"networking,omitempty"`
+	Modules     *Modules        `json:"modules,omitempty"`
 }
 
 type UpdateProperties struct {
@@ -80,14 +81,16 @@ type Type struct {
 
 	// Regex pattern to match against string type of fields.
 	// If not specified for strings user can pass empty string with whitespaces only.
-	Pattern         string            `json:"pattern,omitempty"`
-	Default         interface{}       `json:"default,omitempty"`
-	Example         interface{}       `json:"example,omitempty"`
-	Enum            []interface{}     `json:"enum,omitempty"`
-	EnumDisplayName map[string]string `json:"_enumDisplayName,omitempty"`
-	Items           *Type             `json:"items,omitempty"`
-	AdditionalItems *bool             `json:"additionalItems,omitempty"`
-	UniqueItems     *bool             `json:"uniqueItems,omitempty"`
+	Pattern              string            `json:"pattern,omitempty"`
+	Default              interface{}       `json:"default,omitempty"`
+	Example              interface{}       `json:"example,omitempty"`
+	Enum                 []interface{}     `json:"enum,omitempty"`
+	EnumDisplayName      map[string]string `json:"_enumDisplayName,omitempty"`
+	Items                *Type             `json:"items,omitempty"`
+	AdditionalItems      interface{}       `json:"additionalItems,omitempty"`
+	UniqueItems          interface{}       `json:"uniqueItems,omitempty"`
+	ReadOnly             interface{}       `json:"readOnly,omitempty"`
+	AdditionalProperties interface{}       `json:"additionalProperties,omitempty"`
 }
 
 type NameType struct {
@@ -98,6 +101,125 @@ type NameType struct {
 type BTPdefaultTemplate struct {
 	Elements  []string `json:"elements,omitempty"`
 	Separator string   `json:"separator,omitempty"`
+}
+
+type Modules struct {
+	Type
+	ControlsOrder []string      `json:"_controlsOrder,omitempty"`
+	OneOf         []interface{} `json:"oneOf,omitempty"`
+}
+
+type ModulesDefault struct {
+	Type
+	Properties ModulesDefaultProperties `json:"properties,omitempty"`
+}
+
+type ModulesDefaultProperties struct {
+	Default Type `json:"default,omitempty"`
+}
+
+type ModulesCustom struct {
+	Type
+	Properties ModulesCustomProperties `json:"properties,omitempty"`
+}
+
+type ModulesCustomProperties struct {
+	List ModulesCustomList `json:"list,omitempty"`
+}
+
+type ModulesCustomList struct {
+	Type
+	Items ModulesCustomListItems `json:"items,omitempty"`
+}
+
+type ModulesCustomListItems struct {
+	Type
+	ControlsOrder []string                         `json:"_controlsOrder,omitempty"`
+	Properties    ModulesCustomListItemsProperties `json:"properties,omitempty"`
+}
+
+type ModulesCustomListItemsProperties struct {
+	Name                 Type `json:"name,omitempty"`
+	Channel              Type `json:"channel,omitempty"`
+	CustomResourcePolicy Type `json:"customResourcePolicy,omitempty"`
+}
+
+func NewModulesSchema() *Modules {
+	return &Modules{
+		Type: Type{
+			Type:        "object",
+			Description: "Use default modules or provide your custom list of modules.",
+		},
+		ControlsOrder: []string{"default", "list"},
+		OneOf: []any{
+			ModulesDefault{
+				Type: Type{
+					Type:                 "object",
+					Title:                "Default",
+					Description:          "Default modules",
+					AdditionalProperties: false,
+				},
+				Properties: ModulesDefaultProperties{
+					Type{
+						Type:        "boolean",
+						Title:       "Use Default",
+						Description: "Check the default modules at: https://help.sap.com/docs/btp/sap-business-technology-platform/kyma-modules?version=Cloud.",
+						Default:     true,
+						ReadOnly:    true,
+					},
+				},
+			},
+			ModulesCustom{
+				Type: Type{
+					Type:                 "object",
+					Title:                "Custom",
+					Description:          "Define custom module list",
+					AdditionalProperties: false,
+				},
+				Properties: ModulesCustomProperties{
+					ModulesCustomList{
+						Type: Type{
+							Type:        "array",
+							UniqueItems: true,
+							Description: "Select a module technical name from the list available at: https://help.sap.com/docs/btp/sap-business-technology-platform/kyma-modules?version=Cloud. You can only use a module technical name once.",
+						},
+						Items: ModulesCustomListItems{
+							ControlsOrder: []string{"name", "channel", "customResourcePolicy"},
+							Type: Type{
+								Type: "object",
+							},
+							Properties: ModulesCustomListItemsProperties{
+								Name: Type{
+									Type:        "string",
+									Title:       "Name",
+									MinLength:   1,
+									Description: "Select a module technical name from the list available at: https://help.sap.com/docs/btp/sap-business-technology-platform/kyma-modules?version=Cloud. You can only use a module technical name once.",
+								},
+								Channel: Type{
+									Type:        "string",
+									Default:     "regular",
+									Description: "Select your preferred release channel.",
+									Enum:        ToInterfaceSlice([]string{"regular", "fast"}),
+									EnumDisplayName: map[string]string{
+										"regular": "Regular - default version",
+										"fast":    "Fast - latest version",
+									},
+								},
+								CustomResourcePolicy: Type{
+									Type:        "string",
+									Description: "Select your preferred CustomResourcePolicy setting.",
+									Default:     "CreateAndDelete",
+									Enum:        ToInterfaceSlice([]string{"CreateAndDelete", "Ignore"}),
+									EnumDisplayName: map[string]string{
+										"CreateAndDelete": "CreateAndDelete - default module resource is created or deleted.",
+										"Ignore":          "Ignore - module resource is not created.",
+									},
+								},
+							},
+						},
+					}},
+			}},
+	}
 }
 
 func NameProperty() NameType {
@@ -171,6 +293,7 @@ func NewProvisioningProperties(machineTypesDisplay map[string]string, machineTyp
 			Enum: ToInterfaceSlice(regions),
 		},
 		Networking: NewNetworkingSchema(),
+		Modules:    NewModulesSchema(),
 	}
 
 	if update {
@@ -244,7 +367,7 @@ func unmarshalOrPanic(from, to interface{}) interface{} {
 }
 
 func DefaultControlsOrder() []string {
-	return []string{"name", "kubeconfig", "shootName", "shootDomain", "region", "machineType", "autoScalerMin", "autoScalerMax", "zonesCount", "networking", "oidc", "administrators"}
+	return []string{"name", "kubeconfig", "shootName", "shootDomain", "region", "machineType", "autoScalerMin", "autoScalerMax", "zonesCount", "modules", "networking", "oidc", "administrators"}
 }
 
 func ToInterfaceSlice(input []string) []interface{} {

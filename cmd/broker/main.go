@@ -320,7 +320,7 @@ func main() {
 	avsDel := avs.NewDelegator(avsClient, cfg.Avs, db.Operations())
 	externalEvalAssistant := avs.NewExternalEvalAssistant(cfg.Avs)
 	internalEvalAssistant := avs.NewInternalEvalAssistant(cfg.Avs)
-	externalEvalCreator := provisioning.NewExternalEvalCreator(avsDel, cfg.Avs.Disabled, externalEvalAssistant)
+	externalEvalCreator := provisioning.NewExternalEvalCreator(avsDel, cfg.Avs.ExternalTesterDisabled, externalEvalAssistant)
 	upgradeEvalManager := avs.NewEvaluationManager(avsDel, cfg.Avs)
 
 	// IAS

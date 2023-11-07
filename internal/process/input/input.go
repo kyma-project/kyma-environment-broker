@@ -72,6 +72,7 @@ type RuntimeInput struct {
 	shootDomain       string
 	shootDnsProviders gardener.DNSProvidersData
 	clusterName       string
+	modules           internal.ModulesDTO
 }
 
 func (r *RuntimeInput) Configuration() *internal.ConfigForPlan {
@@ -255,6 +256,10 @@ func (r *RuntimeInput) CreateProvisionRuntimeInput() (gqlschema.ProvisionRuntime
 		{
 			name:    "configure networking",
 			execute: r.configureNetworking,
+		},
+		{
+			name:    "configure modules",
+			execute: r.configureModules,
 		},
 	} {
 		if err := step.execute(); err != nil {
@@ -637,7 +642,7 @@ func (r *RuntimeInput) adjustRuntimeName() error {
 func (r *RuntimeInput) configureDNS() error {
 	dnsParamsToSet := gqlschema.DNSConfigInput{}
 
-	//if dns providers is given
+	// if dns providers is given
 	if len(r.shootDnsProviders.Providers) != 0 {
 		for _, v := range r.shootDnsProviders.Providers {
 			dnsParamsToSet.Providers = append(dnsParamsToSet.Providers, &gqlschema.DNSProviderInput{
@@ -683,7 +688,7 @@ func (r *RuntimeInput) configureNetworking() error {
 	updateString(&r.provisionRuntimeInput.ClusterConfig.GardenerConfig.WorkerCidr,
 		&r.provisioningParameters.Parameters.Networking.NodesCidr)
 
-	//if the Networking section is set, then
+	// if the Networking section is set, then
 	r.provisionRuntimeInput.ClusterConfig.GardenerConfig.PodsCidr = ptr.String(networking.DefaultPodsCIDR)
 	updateString(r.provisionRuntimeInput.ClusterConfig.GardenerConfig.PodsCidr,
 		r.provisioningParameters.Parameters.Networking.PodsCidr)
@@ -784,6 +789,13 @@ func (r *RuntimeInput) setOIDCDefaultValuesIfEmpty(oidcConfig *gqlschema.OIDCCon
 	if oidcConfig.UsernamePrefix == "" {
 		oidcConfig.UsernamePrefix = r.oidcDefaultValues.UsernamePrefix
 	}
+}
+
+func (r *RuntimeInput) configureModules() error {
+	if r.provisioningParameters.Parameters.Modules != nil {
+		r.modules = *r.provisioningParameters.Parameters.Modules
+	}
+	return nil
 }
 
 func updateString(toUpdate *string, value *string) {

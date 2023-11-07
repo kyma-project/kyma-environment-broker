@@ -2,6 +2,7 @@
   "$schema": "http://json-schema.org/draft-04/schema#",
   "_controlsOrder": [
     "name",
+    "modules",
     "oidc",
     "administrators"
   ],
@@ -14,6 +15,86 @@
       },
       "title": "Administrators",
       "type": "array"
+    },
+    "modules": {
+      "_controlsOrder": [
+        "default",
+        "list"
+      ],
+      "description": "Use default modules or provide your custom list of modules.",
+      "oneOf": [
+        {
+          "additionalProperties": false,
+          "description": "Default modules",
+          "properties": {
+            "default": {
+              "default": true,
+              "description": "Check the default modules at: https://help.sap.com/docs/btp/sap-business-technology-platform/kyma-modules?version=Cloud.",
+              "readOnly": true,
+              "title": "Use Default",
+              "type": "boolean"
+            }
+          },
+          "title": "Default",
+          "type": "object"
+        },
+        {
+          "additionalProperties": false,
+          "description": "Define custom module list",
+          "properties": {
+            "list": {
+              "description": "Select a module technical name from the list available at: https://help.sap.com/docs/btp/sap-business-technology-platform/kyma-modules?version=Cloud. You can only use a module technical name once.",
+              "items": {
+                "_controlsOrder": [
+                  "name",
+                  "channel",
+                  "customResourcePolicy"
+                ],
+                "properties": {
+                  "channel": {
+                    "_enumDisplayName": {
+                      "fast": "Fast - latest version",
+                      "regular": "Regular - default version"
+                    },
+                    "default": "regular",
+                    "description": "Select your preferred release channel.",
+                    "enum": [
+                      "regular",
+                      "fast"
+                    ],
+                    "type": "string"
+                  },
+                  "customResourcePolicy": {
+                    "_enumDisplayName": {
+                      "CreateAndDelete": "CreateAndDelete - default module resource is created or deleted.",
+                      "Ignore": "Ignore - module resource is not created."
+                    },
+                    "default": "CreateAndDelete",
+                    "description": "Select your preferred CustomResourcePolicy setting.",
+                    "enum": [
+                      "CreateAndDelete",
+                      "Ignore"
+                    ],
+                    "type": "string"
+                  },
+                  "name": {
+                    "description": "Select a module technical name from the list available at: https://help.sap.com/docs/btp/sap-business-technology-platform/kyma-modules?version=Cloud. You can only use a module technical name once.",
+                    "minLength": 1,
+                    "title": "Name",
+                    "type": "string"
+                  }
+                },
+                "type": "object"
+              },
+              "type": "array",
+              "uniqueItems": true
+            }
+          },
+          "title": "Custom",
+          "type": "object"
+        }
+      ],
+      "type": "object"
     },
     "name": {
       "_BTPdefaultTemplate": {

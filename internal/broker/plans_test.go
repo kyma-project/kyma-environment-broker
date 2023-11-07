@@ -5,10 +5,10 @@ import (
 	"encoding/json"
 	"io/ioutil"
 	"path"
-	"reflect"
 	"testing"
 
 	"github.com/kyma-project/kyma-environment-broker/internal"
+	"github.com/stretchr/testify/assert"
 
 	"github.com/stretchr/testify/require"
 )
@@ -351,7 +351,7 @@ func validateSchema(t *testing.T, got []byte, file string) {
 			t.Fail()
 		}
 	}
-	if !reflect.DeepEqual(prettyGot.String(), prettyWant.String()) {
+	if !assert.JSONEq(t, prettyGot.String(), prettyWant.String()) {
 		t.Errorf("%v Schema() = \n######### GOT ###########%v\n######### ENDGOT ########, want \n##### WANT #####%v\n##### ENDWANT #####", file, prettyGot.String(), prettyWant.String())
 	}
 }

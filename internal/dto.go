@@ -5,6 +5,8 @@ import (
 	"net/url"
 	"reflect"
 	"strings"
+
+	"github.com/kyma-project/kyma-environment-broker/internal/ptr"
 )
 
 const (
@@ -180,7 +182,7 @@ type ProvisioningParametersDTO struct {
 	KymaVersion                 string   `json:"kymaVersion,omitempty"`
 	OverridesVersion            string   `json:"overridesVersion,omitempty"`
 	RuntimeAdministrators       []string `json:"administrators,omitempty"`
-	//Provider - used in Trial plan to determine which cloud provider to use during provisioning
+	// Provider - used in Trial plan to determine which cloud provider to use during provisioning
 	Provider *CloudProvider `json:"provider,omitempty"`
 
 	Kubeconfig  string `json:"kubeconfig,omitempty"`
@@ -189,6 +191,7 @@ type ProvisioningParametersDTO struct {
 
 	OIDC       *OIDCConfigDTO `json:"oidc,omitempty"`
 	Networking *NetworkingDTO `json:"networking,omitempty""`
+	Modules    *ModulesDTO    `json:"modules,omitempty"`
 }
 
 type UpdatingParametersDTO struct {
@@ -339,4 +342,29 @@ type ServiceManagerOperatorCredentials struct {
 	ServiceManagerURL string `json:"sm_url"`
 	URL               string `json:"url"`
 	XSAppName         string `json:"xsappname"`
+}
+
+type Channel *string
+
+var (
+	Fast    Channel = ptr.String("fast")
+	Regular Channel = ptr.String("regular")
+)
+
+type CustomResourcePolicy *string
+
+var (
+	Ignore          CustomResourcePolicy = ptr.String("Ignore")
+	CreateAndDelete CustomResourcePolicy = ptr.String("CreateAndDelete")
+)
+
+type ModulesDTO struct {
+	Default *bool        `json:"default,omitempty" yaml:"default,omitempty"`
+	List    []*ModuleDTO `json:"list,omitempty" yaml:"list,omitempty"`
+}
+
+type ModuleDTO struct {
+	Name                 string               `json:"name,omitempty" yaml:"name,omitempty"`
+	Channel              Channel              `json:"channel,omitempty" yaml:"channel,omitempty"`
+	CustomResourcePolicy CustomResourcePolicy `json:"customResourcePolicy,omitempty" yaml:"customResourcePolicy,omitempty"`
 }

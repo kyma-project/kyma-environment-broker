@@ -63,8 +63,12 @@ spec:
           image: "{{ .Values.global.images.container_registry.path }}/{{ .Values.global.images.kyma_environment_broker.dir }}kyma-environment-broker:{{ .Values.global.images.kyma_environment_broker.version }}"
           imagePullPolicy: {{ .Values.deployment.image.pullPolicy }}
           env:
+            - name: APP_BROKER_REGION_PARAMETER_IS_REQUIRED
+              value: "{{ .Values.regionParameterIsRequired }}"
             - name: APP_BROKER_ALLOW_NETWORKING_PARAMETERS
               value: "{{ .Values.allowNetworkingParameters }}"
+            - name: APP_BROKER_ALLOW_MODULES_PARAMETERS
+              value: "{{ .Values.allowModulesParameters }}"
             - name: APP_DISABLE_PROCESS_OPERATIONS_IN_PROGRESS
               value: "{{ .Values.disableProcessOperationsInProgress }}"
             - name: APP_BROKER_ENABLE_PLANS
@@ -302,6 +306,8 @@ spec:
               value: "{{ .Values.avs.providerTagClassId }}"
             - name: APP_AVS_SHOOT_NAME_TAG_CLASS_ID
               value: "{{ .Values.avs.shootNameTagClassId }}"
+            - name: APP_AVS_EXTERNAL_TESTER_DISABLED
+              value: "{{ .Values.avs.externalTesterDisabled }}"
             - name: APP_AVS_MAINTENANCE_MODE_DURING_UPGRADE_DISABLED
               value: "{{ .Values.avs.maintenanceModeDuringUpgrade.disabled }}"
             - name: APP_AVS_MAINTENANCE_MODE_DURING_UPGRADE_ALWAYS_DISABLED_GLOBAL_ACCOUNTS_FILE_PATH

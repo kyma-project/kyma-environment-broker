@@ -2,9 +2,12 @@
 package main
 
 import (
+	"bytes"
+	"encoding/json"
 	"fmt"
 	"io"
 	"net/http"
+	"os"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -12,18 +15,61 @@ import (
 	"github.com/google/uuid"
 	reconcilerApi "github.com/kyma-incubator/reconciler/pkg/keb"
 	"github.com/kyma-project/control-plane/components/provisioner/pkg/gqlschema"
+	"github.com/pivotal-cf/brokerapi/v8/domain"
+	"github.com/stretchr/testify/assert"
+
 	"github.com/kyma-project/kyma-environment-broker/common/hyperscaler"
 	"github.com/kyma-project/kyma-environment-broker/internal"
 	"github.com/kyma-project/kyma-environment-broker/internal/broker"
 	"github.com/kyma-project/kyma-environment-broker/internal/fixture"
 	"github.com/kyma-project/kyma-environment-broker/internal/ptr"
-	"github.com/pivotal-cf/brokerapi/v8/domain"
-	"github.com/stretchr/testify/assert"
 )
 
 const (
 	workersAmount int = 5
 )
+
+func TestCatalog(t *testing.T) {
+	// this test is used for human-testing the catalog response
+	t.Skip()
+	catalogTestFile := "catalog-test.json"
+	catalogTestFilePerm := os.FileMode.Perm(0666)
+	outputToFile := false
+	prettyJson := false
+	prettify := func(content []byte) *bytes.Buffer {
+		var prettyJSON bytes.Buffer
+		err := json.Indent(&prettyJSON, content, "", "    ")
+		assert.NoError(t, err)
+		return &prettyJSON
+	}
+
+	// given
+	suite := NewBrokerSuiteTest(t)
+	defer suite.TearDown()
+
+	// when
+	resp := suite.CallAPI("GET", fmt.Sprintf("oauth/v2/catalog"), ``)
+
+	content, err := io.ReadAll(resp.Body)
+	assert.NoError(t, err)
+	defer resp.Body.Close()
+
+	if outputToFile {
+		if prettyJson {
+			err = os.WriteFile(catalogTestFile, prettify(content).Bytes(), catalogTestFilePerm)
+			assert.NoError(t, err)
+		} else {
+			err = os.WriteFile(catalogTestFile, content, catalogTestFilePerm)
+			assert.NoError(t, err)
+		}
+	} else {
+		if prettyJson {
+			fmt.Println(prettify(content).String())
+		} else {
+			fmt.Println(string(content))
+		}
+	}
+}
 
 func TestProvisioning_HappyPath(t *testing.T) {
 	// given
@@ -113,22 +159,6 @@ func TestProvisioning_Preview(t *testing.T) {
 	})
 	suite.AssertKymaLabelNotExists(opID, "kyma-project.io/platform-region")
 	suite.AssertSecretWithKubeconfigExists(opID)
-}
-
-func TestCatalog(t *testing.T) {
-	// this test is used for human-testing the catalog response
-	t.Skip()
-	// given
-	suite := NewBrokerSuiteTest(t)
-	defer suite.TearDown()
-
-	// when
-	resp := suite.CallAPI("GET", fmt.Sprintf("oauth/v2/catalog"), ``)
-
-	m, _ := io.ReadAll(resp.Body)
-	defer resp.Body.Close()
-
-	fmt.Println(string(m))
 }
 
 func TestProvisioning_NetworkingParametersForAWS(t *testing.T) {
@@ -1226,4 +1256,222 @@ func TestProvisioning_PRVersionWithoutOverrides(t *testing.T) {
 
 	// then
 	suite.WaitForProvisioningState(opID, domain.Failed)
+}
+
+func TestProvisioning_Modules(t *testing.T) {
+
+	const defaultModules = "kyma-with-keda-and-btp-operator.yaml"
+
+	t.Run("with given custom list of modules [btp-operator, ked]", func(t *testing.T) {
+		// given
+		suite := NewBrokerSuiteTest(t)
+		defer suite.TearDown()
+		iid := uuid.New().String()
+
+		// when
+		resp := suite.CallAPI("PUT", fmt.Sprintf("oauth/v2/service_instances/%s?accepts_incomplete=true", iid),
+			`{
+					"service_id": "47c9dcbf-ff30-448e-ab36-d3bad66ba281",
+					"plan_id": "361c511f-f939-4621-b228-d0fb79a1fe15",
+					"context": {
+							"globalaccount_id": "whitelisted-global-account-id",
+							"subaccount_id": "sub-id",
+							"user_id": "john.smith@email.com"
+					},
+					"parameters": {
+						"name": "test",
+						"region": "eu-central-1",
+						"modules": {
+							"list": [
+								{
+									"name": "btp-operator",
+									"customResourcePolicy": "CreateAndDelete"
+								},
+								{
+									"name": "keda",
+									"channel": "fast"
+								}
+							]
+						}
+					}
+				}`)
+		opID := suite.DecodeOperationID(resp)
+
+		suite.processProvisioningAndReconcilingByOperationID(opID)
+
+		suite.WaitForOperationState(opID, domain.Succeeded)
+		op, err := suite.db.Operations().GetOperationByID(opID)
+		assert.NoError(t, err)
+		assert.YAMLEq(t, internal.GetKymaTemplateForTests(t, "kyma-with-keda-and-btp-operator.yaml"), op.KymaTemplate)
+	})
+
+	t.Run("with given empty list of modules", func(t *testing.T) {
+		// given
+		suite := NewBrokerSuiteTest(t)
+		defer suite.TearDown()
+		iid := uuid.New().String()
+
+		// when
+		resp := suite.CallAPI("PUT", fmt.Sprintf("oauth/v2/service_instances/%s?accepts_incomplete=true", iid),
+			`{
+					"service_id": "47c9dcbf-ff30-448e-ab36-d3bad66ba281",
+					"plan_id": "361c511f-f939-4621-b228-d0fb79a1fe15",
+					"context": {
+							"globalaccount_id": "whitelisted-global-account-id",
+							"subaccount_id": "sub-id",
+							"user_id": "john.smith@email.com"
+					},
+					"parameters": {
+						"name": "test",
+						"region": "eu-central-1",
+						"modules": {
+							"list": []
+						}
+					}
+				}`)
+		opID := suite.DecodeOperationID(resp)
+
+		suite.processProvisioningAndReconcilingByOperationID(opID)
+
+		suite.WaitForOperationState(opID, domain.Succeeded)
+		op, err := suite.db.Operations().GetOperationByID(opID)
+		assert.NoError(t, err)
+		assert.YAMLEq(t, internal.GetKymaTemplateForTests(t, "kyma-no-modules.yaml"), op.KymaTemplate)
+	})
+
+	t.Run("with given default as false", func(t *testing.T) {
+		// given
+		suite := NewBrokerSuiteTest(t)
+		defer suite.TearDown()
+		iid := uuid.New().String()
+
+		// when
+		resp := suite.CallAPI("PUT", fmt.Sprintf("oauth/v2/service_instances/%s?accepts_incomplete=true", iid),
+			`{
+					"service_id": "47c9dcbf-ff30-448e-ab36-d3bad66ba281",
+					"plan_id": "361c511f-f939-4621-b228-d0fb79a1fe15",
+					"context": {
+							"globalaccount_id": "whitelisted-global-account-id",
+							"subaccount_id": "sub-id",
+							"user_id": "john.smith@email.com"
+					},
+					"parameters": {
+						"name": "test",
+						"region": "eu-central-1",
+						"modules": {
+							"default": false
+						}
+					}
+				}`)
+
+		opID := suite.DecodeOperationID(resp)
+
+		suite.processProvisioningAndReconcilingByOperationID(opID)
+
+		suite.WaitForOperationState(opID, domain.Succeeded)
+		op, err := suite.db.Operations().GetOperationByID(opID)
+		assert.NoError(t, err)
+		assert.YAMLEq(t, internal.GetKymaTemplateForTests(t, "kyma-no-modules.yaml"), op.KymaTemplate)
+	})
+
+	t.Run("with given default as true", func(t *testing.T) {
+		// given
+		suite := NewBrokerSuiteTest(t)
+		defer suite.TearDown()
+		iid := uuid.New().String()
+
+		// when
+		resp := suite.CallAPI("PUT", fmt.Sprintf("oauth/v2/service_instances/%s?accepts_incomplete=true", iid),
+			`{
+					"service_id": "47c9dcbf-ff30-448e-ab36-d3bad66ba281",
+					"plan_id": "7d55d31d-35ae-4438-bf13-6ffdfa107d9f",
+					"context": {
+							"globalaccount_id": "whitelisted-global-account-id",
+							"subaccount_id": "sub-id",
+							"user_id": "john.smith@email.com"
+					},
+					"parameters": {
+						"name": "test",
+						"modules": {
+							"default": true
+						}
+					}
+				}`)
+
+		opID := suite.DecodeOperationID(resp)
+
+		suite.processProvisioningAndReconcilingByOperationID(opID)
+
+		suite.WaitForOperationState(opID, domain.Succeeded)
+		op, err := suite.db.Operations().GetOperationByID(opID)
+		assert.NoError(t, err)
+		assert.YAMLEq(t, internal.GetKymaTemplateForTests(t, defaultModules), op.KymaTemplate)
+	})
+
+	t.Run("oneOf validation fail when two params are set", func(t *testing.T) {
+		// given
+		suite := NewBrokerSuiteTest(t)
+		defer suite.TearDown()
+		iid := uuid.New().String()
+
+		// when
+		resp := suite.CallAPI("PUT", fmt.Sprintf("oauth/v2/service_instances/%s?accepts_incomplete=true", iid),
+			`{
+			"service_id": "47c9dcbf-ff30-448e-ab36-d3bad66ba281",
+			"plan_id": "361c511f-f939-4621-b228-d0fb79a1fe15",
+			"context": {
+					"globalaccount_id": "whitelisted-global-account-id",
+					"subaccount_id": "sub-id",
+					"user_id": "john.smith@email.com"
+			},
+			"parameters": {
+				"name": "test",
+				"region": "eu-central-1",
+				"modules": {
+					"default": false,
+					"list": [
+						{
+							"name": "btp-operator",
+							"channel": "regular",
+							"customResourcePolicy": "CreateAndDelete"
+						},
+						{
+							"name": "keda",
+							"channel": "fast",
+							"customResourcePolicy": "Ignore"
+						}
+					]
+				}
+			}
+		}`)
+
+		assert.Equal(t, http.StatusBadRequest, resp.StatusCode)
+	})
+
+	t.Run("oneOf validation fail when no any modules param is set", func(t *testing.T) {
+		// given
+		suite := NewBrokerSuiteTest(t)
+		defer suite.TearDown()
+		iid := uuid.New().String()
+
+		// when
+		resp := suite.CallAPI("PUT", fmt.Sprintf("oauth/v2/service_instances/%s?accepts_incomplete=true", iid),
+			`{
+					"service_id": "47c9dcbf-ff30-448e-ab36-d3bad66ba281",
+					"plan_id": "361c511f-f939-4621-b228-d0fb79a1fe15",
+					"context": {
+							"globalaccount_id": "whitelisted-global-account-id",
+							"subaccount_id": "sub-id",
+							"user_id": "john.smith@email.com"
+					},
+					"parameters": {
+							"name": "test",
+							"region": "eu-central-1",
+							"modules": {}
+						}
+					}
+				}`)
+
+		assert.Equal(t, http.StatusBadRequest, resp.StatusCode)
+	})
 }

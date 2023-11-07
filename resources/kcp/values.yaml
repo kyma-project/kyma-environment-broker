@@ -38,7 +38,6 @@ global:
     - ory
     - eventing
     - serverless
-    - rma
   provisioning:
     enabled: false
   provisioner:

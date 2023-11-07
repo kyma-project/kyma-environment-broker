@@ -17,6 +17,7 @@ To create a Kyma runtime with a custom IP range for worker nodes, specify the ad
        },
        \"parameters\": {
            \"name\": \"$NAME\",
+           \"region\": \"$REGION\",
            \"networking\": {
               \"nodes\": \"10.250.0.0/20\"
            }

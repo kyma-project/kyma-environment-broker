@@ -1,17 +1,13 @@
 package steps
 
 import (
-	"bytes"
 	"time"
+
+	"github.com/sirupsen/logrus"
 
 	"github.com/kyma-project/kyma-environment-broker/internal"
 	"github.com/kyma-project/kyma-environment-broker/internal/process"
 	"github.com/kyma-project/kyma-environment-broker/internal/storage"
-	"github.com/sirupsen/logrus"
-	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
-	"k8s.io/apimachinery/pkg/runtime"
-	"k8s.io/apimachinery/pkg/runtime/serializer/yaml"
-	yamlutil "k8s.io/apimachinery/pkg/util/yaml"
 )
 
 type InitKymaTemplate struct {
@@ -54,22 +50,4 @@ func InitKymaTemplateUpgradeKyma(os storage.Operations) initKymaTemplateUpgradeK
 func (s initKymaTemplateUpgradeKyma) Run(o internal.UpgradeKymaOperation, logger logrus.FieldLogger) (internal.UpgradeKymaOperation, time.Duration, error) {
 	operation, w, err := s.InitKymaTemplate.Run(o.Operation, logger)
 	return internal.UpgradeKymaOperation{operation}, w, err
-}
-
-func DecodeKymaTemplate(template string) (*unstructured.Unstructured, error) {
-	tmpl := []byte(template)
-
-	decoder := yamlutil.NewYAMLOrJSONDecoder(bytes.NewReader(tmpl), 512)
-	var rawObj runtime.RawExtension
-	if err := decoder.Decode(&rawObj); err != nil {
-		return nil, err
-	}
-	obj, _, err := yaml.NewDecodingSerializer(unstructured.UnstructuredJSONScheme).Decode(rawObj.Raw, nil, nil)
-	if err != nil {
-		return nil, err
-	}
-
-	unstructuredMap, err := runtime.DefaultUnstructuredConverter.ToUnstructured(obj)
-	unstructuredObj := &unstructured.Unstructured{Object: unstructuredMap}
-	return unstructuredObj, err
 }

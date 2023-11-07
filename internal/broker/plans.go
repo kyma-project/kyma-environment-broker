@@ -133,6 +133,7 @@ func OpenStackSchema(machineTypesDisplay map[string]string, machineTypes []strin
 	properties.AutoScalerMax.Maximum = 40
 	if !update {
 		properties.AutoScalerMax.Default = 8
+		properties.Modules = NewModulesSchema()
 	}
 	if regionParameterIsRequired {
 		properties.Region.MinLength = 1
@@ -146,6 +147,7 @@ func PreviewSchema(machineTypesDisplay map[string]string, machineTypes []string,
 	properties.AutoScalerMax.Minimum = 3
 	properties.AutoScalerMin.Minimum = 3
 	properties.Networking = NewNetworkingSchema()
+	properties.Modules = NewModulesSchema()
 	if regionParameterIsRequired {
 		properties.Region.MinLength = 1
 	}
@@ -220,6 +222,7 @@ func FreemiumSchema(provider internal.CloudProvider, additionalParams, update bo
 	}
 	if !update {
 		properties.Networking = NewNetworkingSchema()
+		properties.Modules = NewModulesSchema()
 	}
 	if regionParameterIsRequired {
 		properties.Region.MinLength = 1
@@ -231,6 +234,10 @@ func FreemiumSchema(provider internal.CloudProvider, additionalParams, update bo
 func TrialSchema(additionalParams, update bool) *map[string]interface{} {
 	properties := ProvisioningProperties{
 		Name: NameProperty(),
+	}
+
+	if !update {
+		properties.Modules = NewModulesSchema()
 	}
 
 	if update && !additionalParams {
@@ -253,6 +260,7 @@ func OwnClusterSchema(update bool) *map[string]interface{} {
 	if update {
 		return createSchemaWith(properties.UpdateProperties, update, requiredOwnClusterSchemaProperties())
 	} else {
+		properties.Modules = NewModulesSchema()
 		return createSchemaWith(properties, update, requiredOwnClusterSchemaProperties())
 	}
 }

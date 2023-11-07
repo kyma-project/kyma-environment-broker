@@ -539,7 +539,11 @@ kyma-template: |-
       sync:
           strategy: secret
       channel: stable
-      modules: []
+      modules:
+          - name: btp-operator
+            customResourcePolicy: CreateAndDelete
+          - name: keda
+            channel: fast
 
 additional-components:
   - name: "btp-operator"
@@ -997,9 +1001,11 @@ func fixConfig() *Config {
 		EnableOnDemandVersion:   true,
 		UpdateProcessingEnabled: true,
 		Broker: broker.Config{
-			EnablePlans:               []string{"azure", "trial", "aws", "own_cluster", "preview"},
-			AllowNetworkingParameters: true,
-			RegionParameterIsRequired: true,
+			EnablePlans:                    []string{"azure", "trial", "aws", "own_cluster", "preview"},
+			AllowNetworkingParameters:      true,
+			RegionParameterIsRequired:      true,
+			ExposeSchemaWithRegionRequired: true,
+			AllowModulesParameters:         true,
 		},
 		Avs: avs.Config{},
 		IAS: ias.Config{

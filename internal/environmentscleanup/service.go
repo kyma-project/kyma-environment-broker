@@ -179,10 +179,10 @@ func (s *Service) shootToRuntime(st unstructured.Unstructured) (*runtime, error)
 func (s *Service) cleanUp(runtimesToDelete []runtime) error {
 	kebInstancesToDelete, err := s.getInstancesForRuntimes(runtimesToDelete)
 	if err != nil {
-		err = fmt.Errorf("while getting instance IDs for Runtimes: %w", err)
-		s.logger.Error(err)
+		errMsg := fmt.Errorf("while getting instance IDs for Runtimes: %w", err)
+		s.logger.Error(errMsg)
 		if !dberr.IsNotFound(err) {
-			return err
+			return errMsg
 		}
 	}
 

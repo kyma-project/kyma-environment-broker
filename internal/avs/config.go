@@ -19,6 +19,7 @@ type Config struct {
 	InternalTesterAccessId                          int64
 	InternalTesterService                           string `envconfig:"optional"`
 	GroupId                                         int64
+	ExternalTesterDisabled                          bool
 	ExternalTesterAccessId                          int64
 	ExternalTesterService                           string `envconfig:"optional"`
 	ParentId                                        int64

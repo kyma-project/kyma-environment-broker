@@ -58,6 +58,10 @@ func NewProvisioningProcessingQueue(ctx context.Context, provisionManager *proce
 			step:  steps.NewInitKymaTemplate(db.Operations()),
 		},
 		{
+			stage: createRuntimeStageName,
+			step:  provisioning.NewOverrideKymaModules(db.Operations()),
+		},
+		{
 			stage:     createRuntimeStageName,
 			step:      provisioning.NewResolveCredentialsStep(db.Operations(), accountProvider),
 			condition: provisioning.SkipForOwnClusterPlan,
