@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"net/http"
 	"time"
-	
+
 	"github.com/google/uuid"
 	"github.com/gorilla/mux"
 	"github.com/kyma-project/kyma-environment-broker/common/orchestration"
@@ -46,10 +46,10 @@ func (h *handler) AttachRoutes(router *mux.Router) {
 
 func (h *handler) expireInstance(w http.ResponseWriter, req *http.Request) {
 	instanceID := mux.Vars(req)["instance_id"]
-	
+
 	h.log.Info("Expiration triggered for instanceID: ", instanceID)
 	logger := h.log.WithField("instanceID", instanceID)
-	
+
 	instance, err := h.instances.GetByID(instanceID)
 	if err != nil {
 		logger.Errorf("unable to get instance: %s", err.Error())
@@ -61,38 +61,38 @@ func (h *handler) expireInstance(w http.ResponseWriter, req *http.Request) {
 		}
 		return
 	}
-	
+
 	if instance.ServicePlanID != broker.TrialPlanID {
 		msg := fmt.Sprintf("unsupported plan: %s", broker.PlanNamesMapping[instance.ServicePlanID])
 		logger.Warn(msg)
 		httputil.WriteErrorResponse(w, http.StatusBadRequest, errors.New(msg))
 		return
 	}
-	
+
 	instance, err = h.setInstanceExpirationTime(instance, logger)
 	if err != nil {
 		logger.Errorf("unable to update the instance in the database after setting expiration time: %s", err.Error())
 		httputil.WriteErrorResponse(w, http.StatusInternalServerError, err)
 		return
 	}
-	
+
 	instance, err = h.suspendInstance(instance, logger)
 	if err != nil {
 		logger.Errorf("unable to create suspension operation: %s", err.Error())
 		httputil.WriteErrorResponse(w, http.StatusInternalServerError, err)
 		return
 	}
-	
+
 	instance, err = h.deactivateInstance(instance, logger)
 	if err != nil {
 		logger.Errorf("unable to update the instance in the database after deactivating: %s", err.Error())
 		httputil.WriteErrorResponse(w, http.StatusInternalServerError, err)
 		return
 	}
-	
+
 	logger.Infof("the instance has been expired and awaits suspension")
 	w.WriteHeader(http.StatusAccepted)
-	
+
 	return
 }
 
@@ -112,7 +112,7 @@ func (h *handler) suspendInstance(instance *internal.Instance, log *logrus.Entry
 	if err != nil && !dberr.IsNotFound(err) {
 		return instance, err
 	}
-	
+
 	if lastDeprovisioningOp != nil {
 		opType := "deprovisioning"
 		if lastDeprovisioningOp.Temporary {
@@ -129,7 +129,7 @@ func (h *handler) suspendInstance(instance *internal.Instance, log *logrus.Entry
 			log.Infof("triggering suspension after previous failed %s", opType)
 		}
 	}
-	
+
 	id := uuid.New().String()
 	suspensionOp := internal.NewSuspensionOperationWithID(id, instance)
 	if err := h.operations.InsertDeprovisioningOperation(suspensionOp); err != nil {
@@ -137,7 +137,7 @@ func (h *handler) suspendInstance(instance *internal.Instance, log *logrus.Entry
 	}
 	h.deprovisioningQueue.Add(suspensionOp.ID)
 	log.Infof("suspension operation %s added to queue", suspensionOp.ID)
-	
+
 	return instance, nil
 }
 
