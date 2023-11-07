@@ -3,7 +3,7 @@
 ## Overview
 
 EU Access requires, among others, that Data Residency is in the European Economic Area or Switzerland. 
-For more information, see [EU Access Overview](https://wiki.one.int.sap/wiki/display/IntBusComp/EU+Access+Overview). 
+For more information, see [EU Access Overview](https://wiki.one.int.sap/wiki/display/IntBusComp/EU+Access+Overview) (VPN required). 
 
 SAP BTP, Kyma runtime supports the BTP `cf-eu11` AWS and BTP `cf-ch20` Azure subaccount regions which are
 called EU Access BTP subaccount regions. 
@@ -19,25 +19,12 @@ When the PlatformRegion is an EU access BTP subaccount region:
 ## Access 
 Due to limited availability, the provisioning request for the EU Access only regions can succeed only if GlobalAccountId 
 is added to the list of allowed GlobalAccountIds (the whitelist).
-The list is configured in the [management-plane-config repository](https://github.tools.sap/kyma/management-plane-config) 
-in the `resources/control-plane/<landscape>/values.yaml` files.
-
-Here you can find an example configuration of the whitelist with two GlobalAccountIds listed:
-```yaml
-kcp-prod:
-  kyma-environment-broker:
-    euAccessWhitelistedGlobalAccountIds: |-
-      whitelist:
-        - 2358e708-68f0-4af0-94b6-cf4e8407aff8
-        - 4a8fa8f1-d76b-4682-89ba-84fe7591a07c
-```
-
 Before attempting to provision Kyma clusters in the EU Access only regions, you must open a support ticket to have your 
 GlobalAccountId added to the whitelist.
 
 If the GlobalAccountId for the provisioning request is not whitelisted, the Kyma Environment Broker responds 
 with `http code 400` (Bad Request) and the message preconfigured in `management-plane-config`. 
-The user gets the following message in the BTP Cockpit.   
+The user gets the following message in the SAP BTP cockpit.   
 ```yaml
 kcp-prod:
   kyma-environment-broker:

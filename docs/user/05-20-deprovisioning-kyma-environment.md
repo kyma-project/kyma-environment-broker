@@ -38,7 +38,7 @@ A successful call returns the operation ID:
 ## Subaccount Cleanup Job
 
 The standard workflow for [SAP BTP Service Operator](https://github.com/SAP/sap-btp-service-operator) resources is to keep them untouched by KEB because users may intend to
-keep the external services provisioned through the SAP BTP Service Operator still operational. In this case, when calling deprovisioning in the BTP cockpit, users are informed
+keep the external services provisioned through the SAP BTP Service Operator still operational. In this case, when calling deprovisioning in the SAP BTP cockpit, users are informed
 there are still instances provisioned by SAP BTP Service Operator, and the user is expected to handle the cleanup.
 
 There is one exception, and that is the [Subaccount Cleanup CronJob](../contributor/06-30-subaccount-cleanup-cronjob.md). KEB [parses the `User-Agent` HTTP header](../../internal/process/deprovisioning/btp_operator_cleanup.go#L87) for

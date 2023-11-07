@@ -203,6 +203,8 @@ The mapping between the platform region and the provider region (Azure, AWS or G
 
 ## Own cluster plan
 
+> **NOTE:** The `own_cluster` plan has been deprecated.
+
 These are the provisioning parameters for the `own_cluster` plan that you configure:
 
 <div tabs name="own_cluster-plan" group="own_cluster-plan">
