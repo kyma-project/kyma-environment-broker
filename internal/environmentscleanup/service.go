@@ -182,7 +182,7 @@ func (s *Service) cleanUp(runtimesToDelete []runtime) error {
 		errMsg := fmt.Errorf("while getting instance IDs for Runtimes: %w", err)
 		s.logger.Error(errMsg)
 		if !dberr.IsNotFound(err) {
-			return err
+			return errMsg
 		}
 	}
 
