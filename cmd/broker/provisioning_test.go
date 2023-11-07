@@ -31,11 +31,11 @@ const (
 
 func TestCatalog(t *testing.T) {
 	// this test is used for human-testing the catalog response
-	t.Skip()
+	// t.Skip()
 	catalogTestFile := "catalog-test.json"
 	catalogTestFilePerm := os.FileMode.Perm(0666)
-	outputToFile := false
-	prettyJson := false
+	outputToFile := true
+	prettyJson := true
 	prettify := func(content []byte) *bytes.Buffer {
 		var prettyJSON bytes.Buffer
 		err := json.Indent(&prettyJSON, content, "", "    ")
