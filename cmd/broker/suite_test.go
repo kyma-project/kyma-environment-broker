@@ -1001,10 +1001,11 @@ func fixConfig() *Config {
 		EnableOnDemandVersion:   true,
 		UpdateProcessingEnabled: true,
 		Broker: broker.Config{
-			EnablePlans:               []string{"azure", "trial", "aws", "own_cluster", "preview"},
-			AllowNetworkingParameters: true,
-			RegionParameterIsRequired: true,
-			AllowModulesParameters:    true,
+			EnablePlans:                    []string{"azure", "trial", "aws", "own_cluster", "preview"},
+			AllowNetworkingParameters:      true,
+			RegionParameterIsRequired:      true,
+			ExposeSchemaWithRegionRequired: true,
+			AllowModulesParameters:         true,
 		},
 		Avs: avs.Config{},
 		IAS: ias.Config{
