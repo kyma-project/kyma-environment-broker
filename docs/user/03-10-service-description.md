@@ -11,12 +11,19 @@ The supported plans are as follows:
 | `azure` | `4deee563-e5ec-4731-b9b1-53b42d855f0c` |Installs Kyma runtime on the Azure cluster. |
 | `azure_lite` | `8cb22518-aa26-44c5-91a0-e669ec9bf443` | Installs Kyma Lite on the Azure cluster. |
 | `aws` | `361c511f-f939-4621-b228-d0fb79a1fe15` | Installs Kyma runtime on the AWS cluster. |
-| `openstack` | `03b812ac-c991-4528-b5bd-08b303523a63` | Installs Kyma runtime on the OpenStack cluster. |
 | `gcp` | `ca6e5357-707f-4565-bbbd-b3ab732597c6` | Installs Kyma runtime on the GCP cluster. |
 | `trial` | `7d55d31d-35ae-4438-bf13-6ffdfa107d9f` | Installs Kyma trial plan on Azure, AWS or GCP. |
 | `free` | `b1a5764e-2ea1-4f95-94c0-2b4538b37b55` | Installs Kyma free plan on Azure or AWS. |
+
+There are also three experimental plans:
+
+| Plan name | Plan ID | Description |
+|-----------|---------|-------------|
+| `openstack` | `03b812ac-c991-4528-b5bd-08b303523a63` | Installs Kyma runtime on the OpenStack cluster. |
 | `own_cluster` | `03e3cb66-a4c6-4c6a-b4b0-5d42224debea` | Installs Kyma runtime on a custom Kubernetes cluster. |
 | `preview` | `5cb3d976-b85c-42ea-a636-79cadda109a9` | Installs Kyma runtime on AWS using Lifecycle Manager. |
+
+> **CAUTION:** The experimental plans may fail to work or be removed.
 
 ## Provisioning parameters
 
@@ -166,7 +173,7 @@ The trial plan allows you to install Kyma runtime on Azure, AWS, or GCP. The pla
 - Kyma runtime is uninstalled after 14 days and the Kyma cluster is deprovisioned after this time.
 - It's possible to provision only one Kyma runtime per global account.
 
-To reduce the costs, the trial plan skips one of the [provisioning steps](./03-03-runtime-operations.md#provisioning), that is, `AVS External Evaluation`.
+To reduce the costs, the trial plan skips one of the [provisioning steps](./03-20-runtime-operations.md#provisioning), that is, `AVS External Evaluation`.
 
 ### Provisioning parameters
 
@@ -240,6 +247,6 @@ These are the provisioning parameters for the `preview` plan that you configure:
 
 </details>
 </div>
-
+<br>
 <a name="version"><sup>1</sup> This parameter will not be available after all Kyma components become independent modules.</a> <br>
 <a name="update"><sup>2</sup> This parameter is available for `PATCH` as well, and can be updated with the same constraints as during provisioning.</a> 

@@ -28,7 +28,7 @@ To create an SAP BTP, Kyma runtime with a custom OIDC (Open ID Connect) configur
        }
    }"
 ```
->NOTE: `clientID` and `issuerURL` values are mandatory for custom OIDC configuration.
+> **NOTE:** `clientID` and `issuerURL` values are mandatory for custom OIDC configuration.
 
 If you do not provide the `oidc` object in the provisioning request or leave all object's properties empty, the default OIDC configuration is used.
 However, if you do not provide the `oidc` object in the update request or leave all object’s properties empty, the saved OIDC configuration stays untouched.
@@ -87,40 +87,40 @@ The update operation overwrites the OIDC configuration values provided in JSON. 
 
    1. An existing instance has the following OIDC configuration:
    ```
-   ClientID: 9bd05ed7-a930-44e6-8c79-e6defeb7dec9
-   IssuerURL: https://kymatest.accounts400.ondemand.com
-   GroupsClaim: groups
-   UsernameClaim: sub
-   UsernamePrefix: -
-   SigningAlgs: RS256
+    ClientID: 9bd05ed7-a930-44e6-8c79-e6defeb7dec9
+    IssuerURL: https://kymatest.accounts400.ondemand.com
+    GroupsClaim: groups
+    UsernameClaim: sub
+    UsernamePrefix: -
+    SigningAlgs: RS256
    ```
    2. A user sends an update request (HTTP PUT) with the following JSON in the payload:
-```json
-{
-  "service_id" : "47c9dcbf-ff30-448e-ab36-d3bad66ba281",
-  "plan_id" : "4deee563-e5ec-4731-b9b1-53b42d855f0c",
-  "context" : {
-    "globalaccount_id" : {GLOBAL_ACCOUNT_ID}
-  },
-  "parameters" : {
-    "name" : {CLUSTER_NAME},
-    "oidc" : {
-      "clientID" : "new-client-id",
-      "issuerURL" : "https://new-issuer-url.local.com",
-      "groupsClaim" : "",
-      "signingAlgs" : [],
-      "usernamePrefix" : "",
-      "usernameClaim" : ""
+   ```json
+    {
+      "service_id" : "47c9dcbf-ff30-448e-ab36-d3bad66ba281",
+      "plan_id" : "4deee563-e5ec-4731-b9b1-53b42d855f0c",
+      "context" : {
+        "globalaccount_id" : {GLOBAL_ACCOUNT_ID}
+      },
+      "parameters" : {
+        "name" : {CLUSTER_NAME},
+       "oidc" : {
+          "clientID" : "new-client-id",
+          "issuerURL" : "https://new-issuer-url.local.com",
+          "groupsClaim" : "",
+          "signingAlgs" : [],
+          "usernamePrefix" : "",
+          "usernameClaim" : ""
+        }
+      }
     }
-  }
-}
-```
+  ```
    3. The OIDC configuration is updated to include the values of the `oidc` object from JSON provided in the update request:
    ```
-   ClientID: new-client-id
-   IssuerURL: https://new-issuer-url.local.com
-   GroupsClaim:
-   UsernameClaim:
-   UsernamePrefix:
-   SigningAlgs:
+    ClientID: new-client-id
+    IssuerURL: https://new-issuer-url.local.com
+    GroupsClaim:
+    UsernameClaim:
+    UsernamePrefix:
+    SigningAlgs:
    ```

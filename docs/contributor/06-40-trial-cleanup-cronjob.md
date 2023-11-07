@@ -32,7 +32,7 @@ Use the following environment variables to configure the Job:
 | Environment variable | Description                                                                                                               | Default value                            |
 |---|---------------------------------------------------------------------------------------------------------------------------|------------------------------------------|
 | **APP_DRY_RUN** | Specifies whether to run the Job in the [`dry-run` mode](#details).                                                       | `true`                                   |
-| **APP_EXPIRATION_PERIOD** | Specifies the [expiration period](#trial-cleanup-job) for the instances with the `trial` plan.                            | `336h`                                    |
+| **APP_EXPIRATION_PERIOD** | Specifies the [expiration period](#trial-cleanup-cronjob) for the instances with the `trial` plan.                            | `336h`                                    |
 | **APP_DATABASE_USER** | Specifies the username for the database.                                                                                  | `postgres`                               |
 | **APP_DATABASE_PASSWORD** | Specifies the user password for the database.                                                                             | `password`                               |
 | **APP_DATABASE_HOST** | Specifies the host of the database.                                                                                       | `localhost`                              |

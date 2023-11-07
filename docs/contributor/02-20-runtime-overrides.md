@@ -2,7 +2,7 @@
 
 > **NOTE:** Once all Kyma components become independent modules, Kyma Environment Broker will no longer be required to send overrides to Reconciler and this document will be deprecated as irrelevant.
 
-You can set overrides to customize your SAP BTP, Kyma runtime. To provision a cluster with custom overrides, add a Secret or a ConfigMap with a specific label. Kyma Environment Broker (KEB) uses this Secret and/or ConfigMap to prepare a request to the Runtime Provisioner.
+You can set overrides to customize your SAP BTP, Kyma runtime. To provision a cluster with custom overrides, add a Secret or a ConfigMap with a specific label. Kyma Environment Broker (KEB) uses this Secret and/or ConfigMap to prepare a request to Runtime Provisioner.
 
 > **NOTE:** Create all overrides in the `kcp-system` Namespace.
 

@@ -2,8 +2,8 @@
 
 Kyma Environment Broker (KEB) allows you to configure operations that you can run on a SAP BTP, Kyma runtime. Each operation consists of several steps and each step is represented by a separate file. As every step can be re-launched multiple times, for each step, you should determine a behavior in case of a processing failure. It can either:
 
-- return an error, which interrupts the entire process, or
-- repeat the entire operation after the specified period.
+- Return an error, which interrupts the entire process, or
+- Repeat the entire operation after the specified period.
 
 > **NOTE:** It's important to set lower timeouts for the Kyma installation in the Runtime Provisioner.
 
@@ -11,7 +11,7 @@ Kyma Environment Broker (KEB) allows you to configure operations that you can ru
 
 The provisioning process is executed when the instance is created, or an unsuspension is triggered.
 Each provisioning step is responsible for a separate part of preparing Kyma runtime. For example, in a step you can provide tokens, credentials, or URLs to integrate SAP BTP, Kyma runtime with external systems.
-You can find all the provisioning steps in the [provisioning](../cmd/broker/provisioning.go) file.
+You can find all the provisioning steps in the [provisioning](../../cmd/broker/provisioning.go) file.
 
 > **NOTE:** The timeout for processing this operation is set to `24h`.
 
@@ -21,25 +21,25 @@ Each deprovisioning step is responsible for a separate part of cleaning Kyma run
 
 None of the deprovisioning steps should block the entire deprovisioning operation. Use the `RetryOperationWithoutFail` function from the `DeprovisionOperationManager` struct to skip a step in case of a retry timeout. Set a 5-minute, at the most, timeout for retries in a step.
 Only one step may fail the operation, namely `Check_Runtime_Removal`. It fails the operation in case of a timeout while checking for the Provisioner to remove the shoot. 
-Once the step is successfully executed, it isn't retried (every deprovisioning step is defined in a separate stage). If a step has been skipped due to a retry timeout or error, the [Cron Job](03-16-deprovision-retrigger-cronjob.md) tries to deprovision all remaining Kyma runtime dependencies again at a scheduled time.
-You can find all the deprovisioning steps in the [deprovisioning](../cmd/broker/deprovisioning.go) file.
+Once the step is successfully executed, it isn't retried (every deprovisioning step is defined in a separate stage). If a step has been skipped due to a retry timeout or error, the [Cron Job](../contributor/06-50-deprovision-retrigger-cronjob.md) tries to deprovision all remaining Kyma runtime dependencies again at a scheduled time.
+You can find all the deprovisioning steps in the [deprovisioning](../../cmd/broker/deprovisioning.go) file.
 
 > **NOTE:** The timeout for processing this operation is set to `24h`.
 
 ## Update
 
 The update process is triggered by an [OSB API update operation](https://github.com/openservicebrokerapi/servicebroker/blob/master/spec.md#updating-a-service-instance) request.
-You can find all the updating steps in the [update](../cmd/broker/update.go) file.
+You can find all the updating steps in the [update](../../cmd/broker/update.go) file.
 
 ## Upgrade cluster
 
 The upgrade cluster process is triggered by upgrade cluster orchestration.
-You can find all the upgrading cluster steps in the [upgrade_cluster](../cmd/broker/upgrade_cluster.go) file.
+You can find all the upgrading cluster steps in the [upgrade_cluster](../../cmd/broker/upgrade_cluster.go) file.
 
 ## Upgrade Kyma
 
 The upgrade Kyma process is triggered by upgrade Kyma orchestration.
-You can find all the upgrading Kyma steps in the [upgrade_kyma](../cmd/broker/upgrade_kyma.go) file.
+You can find all the upgrading Kyma steps in the [upgrade_kyma](../../cmd/broker/upgrade_kyma.go) file.
 
 ## Provide additional steps
 
@@ -51,7 +51,7 @@ You can configure SAP BTP, Kyma runtime operations by providing additional steps
   Provisioning
   </summary>
 
-1. Create a new file in [this directory](../internal/process/provisioning).
+1. Create a new file in [this directory](../../internal/process/provisioning).
 
 2. Implement the following interface in your provisioning or deprovisioning step:
 
@@ -183,7 +183,7 @@ You can configure SAP BTP, Kyma runtime operations by providing additional steps
     }
     ```
 
-3. Add the step to the [`/cmd/broker/provisioning.go`](../cmd/broker/provisioning.go) file:
+3. Add the step to the [`/cmd/broker/provisioning.go`](../../cmd/broker/provisioning.go) file:
 
     ```go
     provisioningSteps := []struct {
@@ -206,7 +206,7 @@ You can configure SAP BTP, Kyma runtime operations by providing additional steps
   Upgrade
   </summary>
 
-1. Create a new file in [this directory](../internal/process/upgrade_kyma).
+1. Create a new file in [this directory](../../internal/process/upgrade_kyma).
 
 2. Implement the following interface in your upgrade step:
 
@@ -321,7 +321,7 @@ You can configure SAP BTP, Kyma runtime operations by providing additional steps
     }
     ```
 
-3. Add the step to the [`/cmd/broker/upgrade_cluster.go`](../cmd/broker/upgrade_cluster.go) or [`/cmd/broker/upgrade_kyma.go`](../cmd/broker/upgrade_kyma.go) file:
+3. Add the step to the [`/cmd/broker/upgrade_cluster.go`](../../cmd/broker/upgrade_cluster.go) or [`/cmd/broker/upgrade_kyma.go`](../../cmd/broker/upgrade_kyma.go) file:
 
     ```go
     upgradeSteps := []struct {

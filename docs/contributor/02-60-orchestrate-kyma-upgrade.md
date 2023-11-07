@@ -10,7 +10,7 @@ This tutorial shows how to upgrade SAP BTP, Kyma runtime using Kyma Environment 
 
 ## Steps
 
-1. [Get the OIDC ID token in the JWT format](03-10-orchestration.md). Export this variable based on the token you got from the OIDC client:
+1. [Get the OIDC ID token in the JWT format](02-50-orchestration.md). Export this variable based on the token you got from the OIDC client:
 
    ```bash
    export AUTHORIZATION_HEADER="Authorization: Bearer $ID_TOKEN"
@@ -45,7 +45,7 @@ This tutorial shows how to upgrade SAP BTP, Kyma runtime using Kyma Environment 
 
 >**NOTE:** If the **dryRun** parameter specified in the request body is set to `true`, the upgrade is executed but the upgrade request is not sent to Runtime Provisioner.
 
-3. If you want to configure [the strategy of your orchestration](03-10-orchestration.md#strategies), use the following request example:
+3. If you want to configure [the strategy of your orchestration](02-50-orchestration.md#strategies), use the following request example:
 
 ```bash
 curl --request POST "https://$BROKER_URL/upgrade/kyma" \
@@ -82,6 +82,6 @@ A successful call returns the orchestration ID:
    }
    ```
 
-4. [Check the orchestration status](08-06-orchestration-status.md).
+4. [Check the orchestration status](02-70-orchestration-status.md).
 
 >**NOTE:** Only one orchestration request can be processed at the same time. If KEB is already processing an orchestration, the newly created request waits for processing with the `PENDING` state.

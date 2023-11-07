@@ -11,10 +11,10 @@ Kyma Control Plane manages `cf-eu11` Kyma runtimes in a separate AWS hyperscaler
 `cf-ch20` Kyma runtimes in a separate Azure hyperscaler account pool.
 
 When the PlatformRegion is an EU access BTP subaccount region:
-- Kyma Environment Broker (KEB) provides the `euAccess` parameter to Provisioner
+- Kyma Environment Broker (KEB) provides the **euAccess** parameter to Provisioner
 - KEB services catalog handler exposes:
-  - `eu-central-1` as the only possible value for the `region` parameter for `cf-eu11` 
-  - `switzerlandnorth` as the only possible value for the `region` parameter for `cf-ch20`
+  - `eu-central-1` as the only possible value for the **region** parameter for `cf-eu11` 
+  - `switzerlandnorth` as the only possible value for the **region** parameter for `cf-ch20`
 
 ## Access 
 Due to limited availability, the provisioning request for the EU Access only regions can succeed only if GlobalAccountId 

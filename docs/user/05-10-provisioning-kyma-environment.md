@@ -22,7 +22,7 @@ This tutorial shows how to provision SAP BTP, Kyma runtime on Azure using Kyma E
 
    > **NOTE:** INSTANCE_ID and NAME must be unique. It is recommended to use UUID as an INSTANCE_ID.
 
-1. Get the [access token](03-05-authorization.md#get-the-access-token). Export this variable based on the token you got from the OAuth client:
+2. Get the [access token](../contributor/01-10-authorization.md#get-the-access-token). Export this variable based on the token you got from the OAuth client:
 
    ```bash
    export AUTHORIZATION_HEADER="Authorization: Bearer $ACCESS_TOKEN"
@@ -34,7 +34,7 @@ This tutorial shows how to provision SAP BTP, Kyma runtime on Azure using Kyma E
      kubectl port-forward -n kcp-system deployments/kcp-kyma-environment-broker 8080
    ```
 
-2. Make a call to KEB to create a Kyma runtime on Azure. Find the list of possible request parameters [here](03-01-service-description.md).
+3. Make a call to KEB to create a Kyma runtime on Azure. Find the list of possible request parameters in the [Service description](03-10-service-description.md) document.
 
    ```bash
    curl --request PUT "https://$BROKER_URL/oauth/v2/service_instances/$INSTANCE_ID?accepts_incomplete=true" \
@@ -62,11 +62,11 @@ This tutorial shows how to provision SAP BTP, Kyma runtime on Azure using Kyma E
    }
    ```  
 
-3. Check the operation status as described [here](08-03-operation-status.md).
+4. Check the operation status as described in the [Check operation status](05-30-operation-status.md) document.
 
-## BTP Operator
+## SAP BTP Service Operator
 
-If you need a BTP Operator component installed, obtain [BTP Operator access credentials](https://github.com/SAP/sap-btp-service-operator/blob/v0.2.5/README.md#setup) and provide them in the provisioning request. See the following example:
+If you need a SAP BTP Service Operator component installed, obtain [SAP BTP Service Operator access credentials](https://github.com/SAP/sap-btp-service-operator/blob/v0.2.5/README.md#setup) and provide them in the provisioning request. See the following example:
  ```bash
    curl --request PUT "https://$BROKER_URL/oauth/v2/service_instances/$INSTANCE_ID?accepts_incomplete=true" \
    --header 'X-Broker-API-Version: 2.14' \
