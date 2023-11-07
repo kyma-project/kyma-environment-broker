@@ -4,7 +4,7 @@
 
 EU Access requires, among others, that Data Residency is in the European Economic Area or Switzerland. 
 
-SAP BTP, Kyma runtime supports the BTP `cf-eu11` AWS and BTP `cf-ch20` Azure subaccount regions which are
+SAP BTP, Kyma runtime supports the BTP `cf-eu11` AWS and BTP `cf-ch20` Azure subaccount regions, which are
 called EU Access BTP subaccount regions. 
 Kyma Control Plane manages `cf-eu11` Kyma runtimes in a separate AWS hyperscaler account pool and 
 `cf-ch20` Kyma runtimes in a separate Azure hyperscaler account pool.
@@ -28,3 +28,4 @@ The user gets the following message in the SAP BTP cockpit.
 kcp-prod:
   kyma-environment-broker:
     euAccessRejectionMessage: "Due to limited availability, you must open a support ticket before attempting to provision Kyma clusters in the EU Access only regions"
+```
