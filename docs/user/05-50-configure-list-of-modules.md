@@ -1,12 +1,12 @@
 # Configure list of modules
 
-By default, Kyma Environment Broker applies the Kyma CR, including the default modules selected by Kyma, to a cluster.
-You can configure your custom list of modules by setting the "modules" object in the JSON schema.
+By default, Kyma Environment Broker (KEB) applies the Kyma custom resource, including the default modules selected by Kyma, to a cluster.
+You can configure your custom list of modules by setting the **modules** object in the JSON schema.
 To do that, use the following two fields:
 - **default** (bool) - defines whether to use the default list of modules
 - **list** (array) - defines a custom list of modules
 
-API for module configuration is built on the "oneOf" feature from the JSON schema. If the "modules" object is passed to API, it must have only one valid option. Thus, to pass JSON API Validator, you must set only one field. See examples below.
+API for module configuration is built on the **oneOf** feature from the JSON schema. If the **modules** object is passed to API, it must have only one valid option. Thus, to pass JSON API Validator, you must set only one field. See examples below.
 
 ## Correct API calls
 
@@ -51,13 +51,13 @@ API for module configuration is built on the "oneOf" feature from the JSON schem
 
 ## Incorrect API calls
 
-- A call with the **modules** section empty fails due to using the "oneOf" feature in the JSON schema.
+- A call with the **modules** section empty fails due to using the **oneOf** feature in the JSON schema.
 
    ```
    "modules": {}
    ```
 
-- A call with the **modules** section with both parameters filled in fails due to using the "oneOf" feature in the JSON schema.
+- A call with the **modules** section with both parameters filled in fails due to using the **oneOf** feature in the JSON schema.
 
    ```
    "modules": {

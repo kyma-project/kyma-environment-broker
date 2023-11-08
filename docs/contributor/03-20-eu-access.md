@@ -21,7 +21,7 @@ is added to the list of allowed GlobalAccountIds (the whitelist).
 Before attempting to provision Kyma clusters in the EU Access only regions, you must open a support ticket to have your 
 GlobalAccountId added to the whitelist.
 
-If the GlobalAccountId for the provisioning request is not whitelisted, the Kyma Environment Broker responds 
+If the GlobalAccountId for the provisioning request is not whitelisted, KEB responds 
 with `http code 400` (Bad Request) and the message preconfigured in `management-plane-config`. 
 The user gets the following message in the SAP BTP cockpit.   
 ```yaml

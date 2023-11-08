@@ -53,5 +53,5 @@ KEB binary allows you to override some configuration parameters. You can specify
 
 ## Read more
 
-To learn more about how to use Kyma Environment Broker, read the documentation in the [`user`](./docs/user/) directory.
+To learn more about how to use KEB, read the documentation in the [`user`](./docs/user/) directory.
 For more technical details on KEB, go to the [`contributor`](./docs/contributor/) directory.

@@ -12,4 +12,4 @@ The workflow:
 
 This [workflow](/.github/workflows/markdown-link-check.yaml) checks for broken links in all Markdown files. It is triggered:
 - As a periodic check that runs daily at midnight on the main branch in the repository 
-- On every pull request that creates new or introduces changes to the existing Markdown files
+- On every pull request that creates new Markdown files or introduces changes to the existing ones

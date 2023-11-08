@@ -12,7 +12,7 @@ This tutorial shows how to get the SAP BTP, Kyma runtime instance details.
 
    > **NOTE:** Ensure that the BROKER_URL and INSTANCE_ID environment variables are exported as well before you proceed.
 
-2. Make a call to the Kyma Environment Broker with a proper **Authorization** [request header](../contributor/01-10-authorization.md) to verify that provisioning/deprovisioning succeeded:
+2. Make a call to Kyma Environment Broker with a proper **Authorization** [request header](../contributor/01-10-authorization.md) to verify that provisioning/deprovisioning succeeded:
 
    ```bash
    curl --request GET "https://$BROKER_URL/oauth/v2/service_instances/$INSTANCE_ID" \
