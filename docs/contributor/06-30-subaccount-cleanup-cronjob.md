@@ -2,7 +2,7 @@
 
 Each SAP BTP, Kyma runtime instance in the Kyma Environment Broker (KEB) database belongs to a global account and to a subaccount.
 Subaccount Cleanup is an application that periodically calls the CIS service and notifies about `SUBACCOUNT_DELETE` events.
-Based on these events, Subaccount Cleanup triggers the deprovisioning action on the Kyma runtime instance to which a given subaccount belongs.
+Based on these events, Subaccount Cleanup triggers the deprovisioning action on the Kyma runtime instances belonging to the given subaccount.
 
 ## Details
 

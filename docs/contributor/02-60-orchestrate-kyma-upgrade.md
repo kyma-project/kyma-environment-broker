@@ -10,7 +10,7 @@ This tutorial shows how to upgrade SAP BTP, Kyma runtime using Kyma Environment 
 
 ## Steps
 
-1. [Get the OIDC ID token in the JWT format](02-50-orchestration.md). Export this variable based on the token you got from the OIDC client:
+1. [Get the OIDC ID token in the JWT format](01-10-authorization.md). Export this variable based on the token you got from the OIDC client:
 
    ```bash
    export AUTHORIZATION_HEADER="Authorization: Bearer $ID_TOKEN"
