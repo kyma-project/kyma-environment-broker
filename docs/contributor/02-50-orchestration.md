@@ -43,7 +43,7 @@ The example strategy configuration looks as follows:
 }
 ```
 
-## Cancellation
+## Cancelation
 
 You can cancel any orchestration that is in progress or pending using the `PUT /orchestrations/{orchestration_id}/cancel` endpoint.
 After you cancel an orchestration, KEB sets its state to `Canceling`. An orchestration with such a state does not schedule any new operations.
