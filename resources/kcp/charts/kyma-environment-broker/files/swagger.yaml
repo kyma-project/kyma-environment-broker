@@ -2393,7 +2393,7 @@ components:
           example: Kyma Environment
         documentationUrl:
           type: string
-          example: https://github.com/kyma-project/control-plane/tree/main/docs/kyma-environment-broker
+          example: https://github.com/kyma-project/kyma-environment-broker/tree/main/docs
         imageUrl:
           type: string
           example: data:image/svg+xml;base64,imgURL
@@ -2439,4 +2439,4 @@ components:
 
 externalDocs:
   description: The offical Kyma Environment Broker documentation
-  url: 'https://github.com/kyma-project/control-plane/tree/main/docs/kyma-environment-broker'
+  url: 'https://github.com/kyma-project/kyma-environment-broker/tree/main/docs'
