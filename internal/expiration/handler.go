@@ -102,7 +102,7 @@ func (h *handler) setInstanceExpirationTime(instance *internal.Instance, log log
 		return instance, nil
 	}
 	log.Infof("setting expiration time for the instance created at %s", instance.CreatedAt)
-	instance.ExpiredAt = ptr.Time(time.Now())
+	instance.ExpiredAt = ptr.Time(time.Now().UTC())
 	instance, err := h.instances.Update(*instance)
 	return instance, err
 }
@@ -130,8 +130,8 @@ func (h *handler) suspendInstance(instance *internal.Instance, log *logrus.Entry
 		}
 	}
 
-	id := uuid.New().String()
-	suspensionOp := internal.NewSuspensionOperationWithID(id, instance)
+	opID := uuid.New().String()
+	suspensionOp := internal.NewSuspensionOperationWithID(opID, instance)
 	if err := h.operations.InsertDeprovisioningOperation(suspensionOp); err != nil {
 		return instance, err
 	}

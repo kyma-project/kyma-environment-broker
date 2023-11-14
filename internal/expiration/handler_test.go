@@ -167,4 +167,48 @@ func TestExpiration(t *testing.T) {
 		assert.False(t, *actualInstance.Parameters.ErsContext.Active)
 		assert.NotNil(t, actualInstance.ExpiredAt)
 	})
+
+	t.Run("should retry expiration on in progress suspension", func(t *testing.T) {
+		// given
+		instanceID := "inst-trial-04"
+		trialInstance := fixture.FixInstance(instanceID)
+		trialInstance.ServicePlanID = broker.TrialPlanID
+		trialInstance.ServicePlanName = broker.TrialPlanName
+		err := storage.Instances().Insert(trialInstance)
+		require.NoError(t, err)
+
+		deprovisioningOpID := "inst-trial-04-suspension-in-progress"
+		deprovisioningOp := fixture.FixDeprovisioningOperation(deprovisioningOpID, instanceID)
+		deprovisioningOp.Temporary = true
+		deprovisioningOp.State = domain.InProgress
+		err = storage.Operations().InsertDeprovisioningOperation(deprovisioningOp)
+		require.NoError(t, err)
+
+		reqPath := fmt.Sprintf(requestPathFormat, instanceID)
+		req := httptest.NewRequest("PUT", reqPath, nil)
+		w := httptest.NewRecorder()
+
+		// when
+		router.ServeHTTP(w, req)
+		resp := w.Result()
+
+		// then
+		assert.Equal(t, http.StatusAccepted, resp.StatusCode)
+
+		// when
+		actualInstance, err := storage.Instances().GetByID(instanceID)
+		require.NoError(t, err)
+
+		// then
+		assert.False(t, *actualInstance.Parameters.ErsContext.Active)
+		assert.NotNil(t, actualInstance.ExpiredAt)
+
+		// when
+		actualLastOp, err := storage.Operations().GetLastOperation(instanceID)
+		require.NoError(t, err)
+
+		// then
+		assert.True(t, actualLastOp.ID == deprovisioningOpID)
+		assert.Equal(t, domain.InProgress, actualLastOp.State)
+	})
 }
