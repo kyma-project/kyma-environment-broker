@@ -26,6 +26,7 @@ type Config struct {
 	AuthURL              string
 	EventServiceURL      string
 	PageSize             string        `envconfig:"optional"`
+	RequestInterval      time.Duration `envconfig:"default=200ms,optional"`
 	RateLimitingInterval time.Duration `envconfig:"default=2s,optional"`
 	MaxRequestRetries    int           `envconfig:"default=3,optional"`
 }
@@ -102,6 +103,7 @@ func (c *Client) fetchSubaccountsFromDeleteEvents(subaccs *subaccounts) error {
 		c.appendSubaccountsFromDeleteEvents(&cisResponse, subaccs)
 		retries = 0
 		currentPage++
+		time.Sleep(c.config.RequestInterval)
 	}
 
 	return nil
