@@ -4,7 +4,7 @@ SAP BTP, Kyma runtime with the trial plan has a limited lifespan of 14 days, cou
 
 ## Details
 
-Trial Cleanup CronJob triggers the trial expiration by sending a `PUT` request to `/expire/service_instance/{instanceID}` KEB API endpoint, where `instanceID` must be a trial instance ID. The possible KEB responses are:
+Trial Cleanup CronJob triggers the trial instance expiration by sending a `PUT` request to `/expire/service_instance/{instanceID}` KEB API endpoint, where `instanceID` must be a trial instance ID. The possible KEB responses are:
 
 | Status Code | Description                                                                                             |
 | --- |---------------------------------------------------------------------------------------------------------|
