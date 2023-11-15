@@ -1,13 +1,12 @@
 #!/usr/bin/env bash
 
 # This script has the following arguments:
-#                       binary image reference (mandatory)
-#                       filename of file to be created (optional)
-#                       release tag (optional)
+#                       filename of file to be created (mandatory)
+#                       release tag (mandatory)
 # ./create_scan_config image temp_scan_config.yaml tag      - use when bumping the config on the main branch
 
-FILENAME=${1-../sec-scanners-config.yaml}
-TAG=${2:-}
+FILENAME=${1}
+TAG=${2}
 
 # standard bash error handling
 set -o nounset  # treat unset variables as an error and exit immediately.
