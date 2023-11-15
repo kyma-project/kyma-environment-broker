@@ -19,7 +19,7 @@ require (
 	github.com/gocraft/dbr v0.0.0-20190714181702-8114670a83bd
 	github.com/google/go-github v17.0.0+incompatible
 	github.com/google/uuid v1.4.0
-	github.com/gorilla/handlers v1.5.1
+	github.com/gorilla/handlers v1.5.2
 	github.com/gorilla/mux v1.8.1
 	github.com/hashicorp/go-multierror v1.1.1
 	github.com/kennygrant/sanitize v1.2.4
