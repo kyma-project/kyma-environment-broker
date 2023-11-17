@@ -5,7 +5,7 @@ env:
   KYMA_ENVIRONMENT_BROKER_REPO: ${{ github.repository_owner }}/kyma-environment-broker
 #  GIT_EMAIL: team-gopher+1@sap.com
 #  GIT_NAME: kyma-btp-manager-bot
-#  BRANCH_NAME: sec-scanners-config-${{ inputs.name }}
+  BRANCH_NAME: sec-scanners-config-${{ inputs.name }}
 
 on:
   workflow_dispatch:
@@ -37,9 +37,6 @@ jobs:
           fi
 
       - name: Check for existing artifacts from previous release runs
-        env:
-          IMAGE_REPO: ${{ env.IMAGE_REPO }}
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: "./scripts/check_artifacts_existence.sh ${{ inputs.name }}"
 
 # TODO: uncomment - labels validation
