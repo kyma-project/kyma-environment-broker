@@ -32,9 +32,6 @@ func (s *ResolveCredentialsStep) Name() string {
 }
 
 func (s *ResolveCredentialsStep) Run(operation internal.Operation, log logrus.FieldLogger) (internal.Operation, time.Duration, error) {
-	if operation.ProvisioningParameters.Parameters.TargetSecret != nil {
-		return operation, 0, nil
-	}
 
 	hypType, err := hyperscaler.FromCloudProvider(operation.InputCreator.Provider())
 	if err != nil {
