@@ -254,7 +254,7 @@ jobs:
 
   publish-release:
     name: Publish release
-    needs: [wait-for-prow-jobs, run-unit-tests]
+    needs: [create-draft, wait-for-prow-jobs, run-unit-tests]
     runs-on: ubuntu-latest
 
     steps:
