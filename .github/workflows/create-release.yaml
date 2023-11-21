@@ -105,6 +105,7 @@ jobs:
 
   run-unit-tests:
     name: Unit tests, go mod tidy
+    needs: [validate-release]
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
@@ -170,7 +171,7 @@ jobs:
           timeoutSeconds: "300"
           ref: ${{ needs.bump-sec-scanners-config.outputs.latest_commit}}
 
-      - name: Check if post-keb-release-build status is success
+      - name: Check if post-keb-release-build status is not success
         if: steps.wait-for-post-keb-release-build.outputs.state != 'success'
         run: |
             echo 'post-keb-release-build failed.'
@@ -185,7 +186,7 @@ jobs:
           timeoutSeconds: "300"
           ref: ${{ needs.bump-sec-scanners-config.outputs.latest_commit}}
 
-      - name: Check if post-keb-runtime-reconciler-job-release-build status is success
+      - name: Check if post-keb-runtime-reconciler-job-release-build status is not success
         if: steps.wait-for-post-keb-runtime-reconciler-job-release-build.outputs.state != 'success'
         run: |
           echo 'post-keb-runtime-reconciler-job-release-build failed.'
@@ -200,7 +201,7 @@ jobs:
           timeoutSeconds: "300"
           ref: ${{ needs.bump-sec-scanners-config.outputs.latest_commit}}
 
-      - name: Check if post-keb-subaccount-cleanup-job-release-build status is success
+      - name: Check if post-keb-subaccount-cleanup-job-release-build status is not success
         if: steps.wait-for-post-keb-subaccount-cleanup-job-release-build.outputs.state != 'success'
         run: |
           echo 'post-keb-subaccount-cleanup-job-release-build failed.'
@@ -215,7 +216,7 @@ jobs:
           timeoutSeconds: "300"
           ref: ${{ needs.bump-sec-scanners-config.outputs.latest_commit}}
 
-      - name: Check if post-keb-trial-cleanup-job-release-build status is success
+      - name: Check if post-keb-trial-cleanup-job-release-build status is not success
         if: steps.wait-for-post-keb-trial-cleanup-job-release-build.outputs.state != 'success'
         run: |
           echo 'wait-for-post-keb-trial-cleanup-job-release-build failed.'
@@ -230,7 +231,7 @@ jobs:
           timeoutSeconds: "300"
           ref: ${{ needs.bump-sec-scanners-config.outputs.latest_commit}}
 
-      - name: Check if post-keb-cleanup-job-release-build status is success
+      - name: Check if post-keb-cleanup-job-release-build status is not success
         if: steps.wait-for-post-keb-cleanup-job-release-build.outputs.state != 'success'
         run: |
           echo 'post-keb-cleanup-job-release-build failed.'
@@ -245,7 +246,7 @@ jobs:
           timeoutSeconds: "300"
           ref: ${{ needs.bump-sec-scanners-config.outputs.latest_commit}}
 
-      - name: Check if post-keb-deprovision-retrigger-job-release-build status is success
+      - name: Check if post-keb-deprovision-retrigger-job-release-build status is not success
         if: steps.wait-for-post-keb-deprovision-retrigger-job-release-build.outputs.state != 'success'
         run: |
           echo 'post-keb-deprovision-retrigger-job-release-build failed.'
