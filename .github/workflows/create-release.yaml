@@ -52,7 +52,6 @@ jobs:
 
     steps:
       - name: Checkout code
-        if: ${{ inputs.sec-scanners-config }}
         uses: actions/checkout@v3
         with:
           fetch-depth: 0
@@ -155,10 +154,106 @@ jobs:
 
     outputs:
       release_id: ${{ steps.create-draft.outputs.release_id }}
+    
+  wait-for-prow-jobs:
+    name: Wait for prow jobs
+    needs: [create-draft, bump-sec-scanners-config]
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Wait for post-keb-release-build status
+        uses: autotelic/action-wait-for-status-check@6556cf50c8fb6608412945382eae73581f56cbb4
+        id: wait-for-post-keb-release-build
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          statusName: "post-keb-release-build"
+          timeoutSeconds: "300"
+          ref: ${{ needs.bump-sec-scanners-config.outputs.latest_commit}}
+
+      - name: Check if post-keb-release-build status is success
+        if: steps.wait-for-post-keb-release-build.outputs.state != 'success'
+        run: |
+            echo 'post-keb-release-build failed.'
+            exit 1
+
+      - name: Wait for post-keb-runtime-reconciler-job-release-build status
+        uses: autotelic/action-wait-for-status-check@6556cf50c8fb6608412945382eae73581f56cbb4
+        id: wait-for-post-keb-runtime-reconciler-job-release-build
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          statusName: "post-keb-runtime-reconciler-job-release-build"
+          timeoutSeconds: "300"
+          ref: ${{ needs.bump-sec-scanners-config.outputs.latest_commit}}
+
+      - name: Check if post-keb-runtime-reconciler-job-release-build status is success
+        if: steps.wait-for-post-keb-runtime-reconciler-job-release-build.outputs.state != 'success'
+        run: |
+          echo 'post-keb-runtime-reconciler-job-release-build failed.'
+          exit 1
+
+      - name: Wait for post-keb-subaccount-cleanup-job-release-build status
+        uses: autotelic/action-wait-for-status-check@6556cf50c8fb6608412945382eae73581f56cbb4
+        id: wait-for-post-keb-subaccount-cleanup-job-release-build
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          statusName: "post-keb-subaccount-cleanup-job-release-build"
+          timeoutSeconds: "300"
+          ref: ${{ needs.bump-sec-scanners-config.outputs.latest_commit}}
+
+      - name: Check if post-keb-subaccount-cleanup-job-release-build status is success
+        if: steps.wait-for-post-keb-subaccount-cleanup-job-release-build.outputs.state != 'success'
+        run: |
+          echo 'post-keb-subaccount-cleanup-job-release-build failed.'
+          exit 1
+
+      - name: Wait for post-keb-trial-cleanup-job-release-build status
+        uses: autotelic/action-wait-for-status-check@6556cf50c8fb6608412945382eae73581f56cbb4
+        id: wait-for-post-keb-trial-cleanup-job-release-build
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          statusName: "post-keb-trial-cleanup-job-release-build"
+          timeoutSeconds: "300"
+          ref: ${{ needs.bump-sec-scanners-config.outputs.latest_commit}}
+
+      - name: Check if post-keb-trial-cleanup-job-release-build status is success
+        if: steps.wait-for-post-keb-trial-cleanup-job-release-build.outputs.state != 'success'
+        run: |
+          echo 'wait-for-post-keb-trial-cleanup-job-release-build failed.'
+          exit 1
+
+      - name: Wait for post-keb-cleanup-job-release-build status
+        uses: autotelic/action-wait-for-status-check@6556cf50c8fb6608412945382eae73581f56cbb4
+        id: wait-for-post-keb-cleanup-job-release-build
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          statusName: "post-keb-cleanup-job-release-build"
+          timeoutSeconds: "300"
+          ref: ${{ needs.bump-sec-scanners-config.outputs.latest_commit}}
+
+      - name: Check if post-keb-cleanup-job-release-build status is success
+        if: steps.wait-for-post-keb-cleanup-job-release-build.outputs.state != 'success'
+        run: |
+          echo 'post-keb-cleanup-job-release-build failed.'
+          exit 1
+
+      - name: Wait for post-keb-deprovision-retrigger-job-release-build status
+        uses: autotelic/action-wait-for-status-check@6556cf50c8fb6608412945382eae73581f56cbb4
+        id: wait-for-post-keb-deprovision-retrigger-job-release-build
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          statusName: "post-keb-deprovision-retrigger-job-release-build"
+          timeoutSeconds: "300"
+          ref: ${{ needs.bump-sec-scanners-config.outputs.latest_commit}}
+
+      - name: Check if post-keb-deprovision-retrigger-job-release-build status is success
+        if: steps.wait-for-post-keb-deprovision-retrigger-job-release-build.outputs.state != 'success'
+        run: |
+          echo 'post-keb-deprovision-retrigger-job-release-build failed.'
+          exit 1
 
   publish-release:
     name: Publish release
-    needs: [ create-draft, run-unit-tests]
+    needs: [wait-for-prow-jobs, run-unit-tests]
     runs-on: ubuntu-latest
 
     steps:
