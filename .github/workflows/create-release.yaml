@@ -25,7 +25,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           fetch-depth: 0
 
@@ -52,7 +52,7 @@ jobs:
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           fetch-depth: 0
 
@@ -109,7 +109,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       - name: Set up go environment
         uses: actions/setup-go@v4
@@ -129,7 +129,7 @@ jobs:
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           fetch-depth: 0
           ref: ${{ needs.bump-sec-scanners-config.outputs.latest_commit}}
@@ -145,12 +145,7 @@ jobs:
 
       - name: Create lightweight tag
         run: |
-          git pull
           git tag ${{ github.event.inputs.name }}
-
-# Push the tag requires permissions on the repo: Settings -> Actions -> General -> "Read and write permissions"
-      - name: Push the tag
-        run: |
           git push origin ${{ github.event.inputs.name }}
 
     outputs:
@@ -259,7 +254,7 @@ jobs:
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           fetch-depth: 0
 
