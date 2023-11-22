@@ -1,12 +1,12 @@
 module-name: kyma-environment-broker
-rc-tag: 0.0.2
+rc-tag: 0.0.3
 protecode:
-  - europe-docker.pkg.dev/kyma-project/prod/kyma-environment-broker:0.0.2
-  - europe-docker.pkg.dev/kyma-project/prod/kyma-environment-deprovision-retrigger-job:0.0.2
-  - europe-docker.pkg.dev/kyma-project/prod/kyma-environments-cleanup-job:0.0.2
-  - europe-docker.pkg.dev/kyma-project/prod/kyma-environment-runtime-reconciler:0.0.2
-  - europe-docker.pkg.dev/kyma-project/prod/kyma-environment-trial-cleanup-job:0.0.2
-  - europe-docker.pkg.dev/kyma-project/prod/kyma-environment-subscription-cleanup-job:0.0.2
+  - europe-docker.pkg.dev/kyma-project/prod/kyma-environment-broker:0.0.3
+  - europe-docker.pkg.dev/kyma-project/prod/kyma-environment-deprovision-retrigger-job:0.0.3
+  - europe-docker.pkg.dev/kyma-project/prod/kyma-environments-cleanup-job:0.0.3
+  - europe-docker.pkg.dev/kyma-project/prod/kyma-environment-runtime-reconciler:0.0.3
+  - europe-docker.pkg.dev/kyma-project/prod/kyma-environment-trial-cleanup-job:0.0.3
+  - europe-docker.pkg.dev/kyma-project/prod/kyma-environment-subscription-cleanup-job:0.0.3
 whitesource:
   language: golang-mod
   subprojects: false
