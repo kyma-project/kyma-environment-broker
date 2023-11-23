@@ -33,16 +33,11 @@ func (s *ResolveCredentialsStep) Name() string {
 
 func (s *ResolveCredentialsStep) Run(operation internal.Operation, log logrus.FieldLogger) (internal.Operation, time.Duration, error) {
 
-	hypType, err := hyperscaler.FromCloudProvider(operation.InputCreator.Provider())
+	hypType, err := FromOperation(operation)
 	if err != nil {
 		msg := fmt.Sprintf("failing to determine the type of Hyperscaler to use for planID: %s", operation.ProvisioningParameters.PlanID)
 		log.Errorf("Aborting after %s", msg)
 		return s.operationManager.OperationFailed(operation, msg, err, log)
-	}
-
-	if hypType.GetName() == "openstack" {
-		openstackRegion := getOpenstackRegion(operation)
-		hypType.SetRegion(openstackRegion)
 	}
 
 	euAccess := internal.IsEuAccess(operation.ProvisioningParameters.PlatformRegion)
@@ -91,4 +86,20 @@ func getOpenstackRegion(operation internal.Operation) string {
 	clusterInput, _ := operation.InputCreator.CreateProvisionClusterInput()
 	defaultRegion := clusterInput.ClusterConfig.GardenerConfig.Region
 	return defaultRegion
+}
+
+func FromOperation(operation internal.Operation) (hyperscaler.Type, error) {
+	cloudProvider := operation.InputCreator.Provider()
+	switch cloudProvider {
+	case internal.Azure:
+		return hyperscaler.Azure(), nil
+	case internal.AWS:
+		return hyperscaler.AWS(), nil
+	case internal.GCP:
+		return hyperscaler.GCP(), nil
+	case internal.Openstack:
+		return hyperscaler.Openstack(getOpenstackRegion(operation)), nil
+	default:
+		return hyperscaler.Type{}, fmt.Errorf("cannot determine the type of Hyperscaler to use for cloud provider %s", cloudProvider)
+	}
 }

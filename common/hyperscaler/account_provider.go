@@ -40,7 +40,7 @@ func FromCloudProvider(cp internal.CloudProvider) (Type, error) {
 	case internal.GCP:
 		return GCP(), nil
 	case internal.Openstack:
-		return Openstack(), nil
+		return Openstack(""), nil
 	default:
 		return Type{}, fmt.Errorf("cannot determine the type of Hyperscaler to use for cloud provider %s", cp)
 	}

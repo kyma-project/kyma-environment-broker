@@ -23,9 +23,10 @@ func AWS() Type {
 	}
 }
 
-func Openstack() Type {
+func Openstack(region string) Type {
 	return Type{
-		hyperscalerName: "openstack",
+		hyperscalerName:   "openstack",
+		hyperscalerRegion: region,
 	}
 }
 
@@ -33,8 +34,8 @@ func (t Type) GetName() string {
 	return t.hyperscalerName
 }
 
-func (t *Type) SetRegion(region string) {
-	t.hyperscalerRegion = region
+func (t Type) SetRegion(region string) {
+	t.hyperscalerName = region
 }
 
 func (t Type) GetKey() string {
