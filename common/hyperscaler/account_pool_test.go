@@ -37,36 +37,36 @@ func TestCredentialsSecretBinding(t *testing.T) {
 		expectedError             string
 	}{
 		{"In-use credential for tenant1, GCP returns existing secret",
-			"tenant1", GCP, "secretBinding1", ""},
+			"tenant1", GCP(), "secretBinding1", ""},
 
 		{"In-use credential for tenant1, Azure returns existing secret",
-			"tenant1", Azure, "secretBinding2", ""},
+			"tenant1", Azure(), "secretBinding2", ""},
 
 		{"In-use credential for tenant2, GCP returns existing secret",
-			"tenant2", GCP, "secretBinding3", ""},
+			"tenant2", GCP(), "secretBinding3", ""},
 
 		{"Available credential for tenant3, AWS labels and returns existing secret",
-			"tenant3", GCP, "secretBinding4", ""},
+			"tenant3", GCP(), "secretBinding4", ""},
 
 		{"Available credential for tenant4, GCP labels and returns existing secret",
-			"tenant4", AWS, "secretBinding5", ""},
+			"tenant4", AWS(), "secretBinding5", ""},
 
 		{"There is only dirty Secret for tenant9, Azure labels and returns a new existing secret",
-			"tenant9", Azure, "secretBinding9", ""},
+			"tenant9", Azure(), "secretBinding9", ""},
 
 		{"No Available credential for tenant5, Azure returns error",
-			"tenant5", Azure, "",
+			"tenant5", Azure(), "",
 			"failed to find unassigned secret binding for hyperscalerType: azure"},
 
 		{"No Available credential for tenant6, GCP returns error - ignore secret binding with label shared=true",
-			"tenant6", GCP, "",
+			"tenant6", GCP(), "",
 			"failed to find unassigned secret binding for hyperscalerType: gcp"},
 
 		{"Available credential for tenant7, AWS labels and returns existing secret from different namespace",
-			"tenant7", AWS, "secretBinding7", ""},
+			"tenant7", AWS(), "secretBinding7", ""},
 
 		{"No Available credential for tenant8, AWS returns error - failed to get referenced secret",
-			"tenant8", AWS, "",
+			"tenant8", AWS(), "",
 			"failed to find unassigned secret binding for hyperscalerType: aws"},
 	}
 	for _, testcase := range testcases {
@@ -79,7 +79,7 @@ func TestCredentialsSecretBinding(t *testing.T) {
 				assert.Equal(t, testcase.expectedError, actualError)
 			} else {
 				assert.Equal(t, testcase.expectedSecretBindingName, secretBinding.GetName())
-				assert.Equal(t, string(testcase.hyperscalerType), secretBinding.GetLabels()["hyperscalerType"])
+				assert.Equal(t, testcase.hyperscalerType.GetKey(), secretBinding.GetLabels()["hyperscalerType"])
 				assert.Equal(t, testcase.expectedError, actualError)
 			}
 		})
@@ -94,7 +94,7 @@ func TestSecretsAccountPool_IsSecretBindingInternal(t *testing.T) {
 				accPool, _ := newTestAccountPoolWithSecretBindingInternal(euAccess)
 
 				//when
-				internal, err := accPool.IsSecretBindingInternal("azure", "tenant1", euAccess)
+				internal, err := accPool.IsSecretBindingInternal(Azure(), "tenant1", euAccess)
 
 				//then
 				require.NoError(t, err)
@@ -106,7 +106,7 @@ func TestSecretsAccountPool_IsSecretBindingInternal(t *testing.T) {
 				accPool := newTestAccountPool()
 
 				//when
-				internal, err := accPool.IsSecretBindingInternal("azure", "tenant1", euAccess)
+				internal, err := accPool.IsSecretBindingInternal(Azure(), "tenant1", euAccess)
 
 				//then
 				require.NoError(t, err)
@@ -118,7 +118,7 @@ func TestSecretsAccountPool_IsSecretBindingInternal(t *testing.T) {
 				accPool := newEmptyTestAccountPool()
 
 				//when
-				internal, err := accPool.IsSecretBindingInternal("azure", "tenant1", euAccess)
+				internal, err := accPool.IsSecretBindingInternal(Azure(), "tenant1", euAccess)
 
 				//then
 				require.NoError(t, err)
@@ -136,7 +136,7 @@ func TestSecretsAccountPool_IsSecretBindingDirty(t *testing.T) {
 				accPool, _ := newTestAccountPoolWithSecretBindingDirty(euAccess)
 
 				//when
-				isdirty, err := accPool.IsSecretBindingDirty("azure", "tenant1", euAccess)
+				isdirty, err := accPool.IsSecretBindingDirty(Azure(), "tenant1", euAccess)
 
 				//then
 				require.NoError(t, err)
@@ -148,7 +148,7 @@ func TestSecretsAccountPool_IsSecretBindingDirty(t *testing.T) {
 				accPool := newTestAccountPool()
 
 				//when
-				isdirty, err := accPool.IsSecretBindingDirty("azure", "tenant1", euAccess)
+				isdirty, err := accPool.IsSecretBindingDirty(Azure(), "tenant1", euAccess)
 
 				//then
 				require.NoError(t, err)
@@ -166,7 +166,7 @@ func TestSecretsAccountPool_IsSecretBindingUsed(t *testing.T) {
 				accPool, _ := newTestAccountPoolWithSingleShoot(euAccess)
 
 				//when
-				used, err := accPool.IsSecretBindingUsed("azure", "tenant1", euAccess)
+				used, err := accPool.IsSecretBindingUsed(Azure(), "tenant1", euAccess)
 
 				//then
 				require.NoError(t, err)
@@ -178,7 +178,7 @@ func TestSecretsAccountPool_IsSecretBindingUsed(t *testing.T) {
 				accPool, _ := newTestAccountPoolWithoutShoots(euAccess)
 
 				//when
-				used, err := accPool.IsSecretBindingUsed("azure", "tenant1", euAccess)
+				used, err := accPool.IsSecretBindingUsed(Azure(), "tenant1", euAccess)
 
 				//then
 				require.NoError(t, err)
@@ -196,7 +196,7 @@ func TestSecretsAccountPool_MarkSecretBindingAsDirty(t *testing.T) {
 				accPool, gardenerClient := newTestAccountPoolWithoutShoots(euAccess)
 
 				//when
-				err := accPool.MarkSecretBindingAsDirty("azure", "tenant1", euAccess)
+				err := accPool.MarkSecretBindingAsDirty(Azure(), "tenant1", euAccess)
 
 				//then
 				require.NoError(t, err)

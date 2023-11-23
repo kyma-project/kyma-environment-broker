@@ -35,7 +35,7 @@ func TestSharedPool_SharedCredentialsSecretBinding(t *testing.T) {
 					newShoot("sh3", "sb1"),
 					newShoot("sh4", "sb2"),
 				},
-				hyperscaler:    "gcp",
+				hyperscaler:    GCP(),
 				expectedSecret: "s1",
 			},
 			{
@@ -51,7 +51,7 @@ func TestSharedPool_SharedCredentialsSecretBinding(t *testing.T) {
 					newShoot("sh3", "sb1"),
 					newShoot("sh4", "sb2"),
 				},
-				hyperscaler:    "gcp",
+				hyperscaler:    GCP(),
 				expectedSecret: "s1",
 			},
 			{
@@ -69,7 +69,7 @@ func TestSharedPool_SharedCredentialsSecretBinding(t *testing.T) {
 					newShoot("sh5", "sb2"),
 					newShoot("sh6", "sb3"),
 				},
-				hyperscaler:    "gcp",
+				hyperscaler:    GCP(),
 				expectedSecret: "s3",
 			},
 			{
@@ -84,7 +84,7 @@ func TestSharedPool_SharedCredentialsSecretBinding(t *testing.T) {
 					newShoot("sh2", "sb1"),
 					newShoot("sh3", "sb2"),
 				},
-				hyperscaler:    "azure",
+				hyperscaler:    Azure(),
 				expectedSecret: "s2",
 			},
 			{
@@ -96,7 +96,7 @@ func TestSharedPool_SharedCredentialsSecretBinding(t *testing.T) {
 				shoots: []runtime.Object{
 					newShoot("sh1", "sb2"),
 				},
-				hyperscaler:    "aws",
+				hyperscaler:    AWS(),
 				expectedSecret: "s1",
 			},
 		} {
@@ -126,7 +126,7 @@ func TestSharedPool_SharedCredentialsSecretBinding_Errors(t *testing.T) {
 		pool := NewSharedGardenerAccountPool(gardenerFake, testNamespace)
 
 		// when
-		_, err := pool.SharedCredentialsSecretBinding("gcp", false)
+		_, err := pool.SharedCredentialsSecretBinding(GCP(), false)
 
 		// then
 		require.Error(t, err)

@@ -18,7 +18,7 @@ func TestGardenerSecretName(t *testing.T) {
 		accountProvider := NewAccountProvider(nil, nil)
 
 		//when
-		_, err := accountProvider.GardenerSecretName(GCP, "tenantname", false)
+		_, err := accountProvider.GardenerSecretName(GCP(), "tenantname", false)
 		require.Error(t, err)
 
 		//then
@@ -33,7 +33,7 @@ func TestGardenerSecretName(t *testing.T) {
 		accountProvider := NewAccountProvider(accountPool, nil)
 
 		//when
-		secretName, err := accountProvider.GardenerSecretName(Azure, "tenantname", false)
+		secretName, err := accountProvider.GardenerSecretName(Azure(), "tenantname", false)
 
 		//then
 		require.NoError(t, err)
@@ -64,7 +64,7 @@ func TestGardenerSecretName(t *testing.T) {
 		accountProvider := NewAccountProvider(accountPool, nil)
 
 		//when
-		secretName, err := accountProvider.GardenerSecretName(Azure, "tenantname", false)
+		secretName, err := accountProvider.GardenerSecretName(Azure(), "tenantname", false)
 
 		//then
 		require.NoError(t, err)
@@ -79,7 +79,7 @@ func TestGardenerSecretName(t *testing.T) {
 		accountProvider := NewAccountProvider(accountPool, nil)
 
 		//when
-		_, err := accountProvider.GardenerSecretName(Azure, "tenantname", false)
+		_, err := accountProvider.GardenerSecretName(Azure(), "tenantname", false)
 
 		//then
 		require.Error(t, err)
@@ -92,7 +92,7 @@ func TestGardenerSharedSecretName(t *testing.T) {
 		accountProvider := NewAccountProvider(nil, nil)
 
 		//when
-		_, err := accountProvider.GardenerSharedSecretName(GCP, false)
+		_, err := accountProvider.GardenerSharedSecretName(GCP(), false)
 		require.Error(t, err)
 
 		//then
@@ -107,7 +107,7 @@ func TestGardenerSharedSecretName(t *testing.T) {
 		accountProvider := NewAccountProvider(nil, sharedAccountPool)
 
 		//when
-		secretName, err := accountProvider.GardenerSharedSecretName(Azure, false)
+		secretName, err := accountProvider.GardenerSharedSecretName(Azure(), false)
 
 		//then
 		require.NoError(t, err)
@@ -139,7 +139,7 @@ func TestGardenerSharedSecretName(t *testing.T) {
 		accountProvider := NewAccountProvider(nil, sharedAccountPool)
 
 		//when
-		secretName, err := accountProvider.GardenerSharedSecretName(Azure, false)
+		secretName, err := accountProvider.GardenerSharedSecretName(Azure(), false)
 
 		//then
 		require.NoError(t, err)
@@ -154,7 +154,7 @@ func TestGardenerSharedSecretName(t *testing.T) {
 		accountProvider := NewAccountProvider(nil, sharedAccountPool)
 
 		//when
-		_, err := accountProvider.GardenerSharedSecretName(Azure, false)
+		_, err := accountProvider.GardenerSharedSecretName(Azure(), false)
 
 		//then
 		require.Error(t, err)
@@ -172,7 +172,7 @@ func TestMarkUnusedGardenerSecretBindingAsDirty(t *testing.T) {
 				accountProvider := NewAccountProvider(pool, nil)
 
 				//when
-				err := accountProvider.MarkUnusedGardenerSecretBindingAsDirty(Type("azure"), "tenant1", euAccess)
+				err := accountProvider.MarkUnusedGardenerSecretBindingAsDirty(Azure(), "tenant1", euAccess)
 
 				//then
 				require.NoError(t, err)
@@ -188,7 +188,7 @@ func TestMarkUnusedGardenerSecretBindingAsDirty(t *testing.T) {
 				accountProvider := NewAccountProvider(pool, nil)
 
 				//when
-				err := accountProvider.MarkUnusedGardenerSecretBindingAsDirty(Type("azure"), "tenant1", euAccess)
+				err := accountProvider.MarkUnusedGardenerSecretBindingAsDirty(Azure(), "tenant1", euAccess)
 
 				//then
 				require.NoError(t, err)
@@ -204,7 +204,7 @@ func TestMarkUnusedGardenerSecretBindingAsDirty(t *testing.T) {
 				accountProvider := NewAccountProvider(pool, nil)
 
 				//when
-				err := accountProvider.MarkUnusedGardenerSecretBindingAsDirty(Type("azure"), "tenant1", euAccess)
+				err := accountProvider.MarkUnusedGardenerSecretBindingAsDirty(Azure(), "tenant1", euAccess)
 
 				//then
 				require.NoError(t, err)
@@ -220,7 +220,7 @@ func TestMarkUnusedGardenerSecretBindingAsDirty(t *testing.T) {
 				accountProvider := NewAccountProvider(pool, nil)
 
 				//when
-				err := accountProvider.MarkUnusedGardenerSecretBindingAsDirty(Type("azure"), "tenant1", euAccess)
+				err := accountProvider.MarkUnusedGardenerSecretBindingAsDirty(Azure(), "tenant1", euAccess)
 
 				//then
 				require.NoError(t, err)
@@ -236,7 +236,7 @@ func TestMarkUnusedGardenerSecretBindingAsDirty(t *testing.T) {
 				accountProvider := NewAccountProvider(pool, nil)
 
 				//when
-				err := accountProvider.MarkUnusedGardenerSecretBindingAsDirty(Type("azure"), "tenant1", euAccess)
+				err := accountProvider.MarkUnusedGardenerSecretBindingAsDirty(Azure(), "tenant1", euAccess)
 
 				//then
 				require.NoError(t, err)
@@ -250,7 +250,7 @@ func TestMarkUnusedGardenerSecretBindingAsDirty(t *testing.T) {
 				accountProvider := NewAccountProvider(nil, nil)
 
 				//when
-				err := accountProvider.MarkUnusedGardenerSecretBindingAsDirty(Type("gcp"), "tenant1", euAccess)
+				err := accountProvider.MarkUnusedGardenerSecretBindingAsDirty(GCP(), "tenant1", euAccess)
 
 				//when
 				require.Error(t, err)
