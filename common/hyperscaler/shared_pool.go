@@ -27,7 +27,7 @@ type sharedAccountPool struct {
 }
 
 func (sp *sharedAccountPool) SharedCredentialsSecretBinding(hyperscalerType Type, euAccess bool) (*gardener.SecretBinding, error) {
-	labelSelector := fmt.Sprintf("shared=true,hyperscalerType=%s", hyperscalerType)
+	labelSelector := fmt.Sprintf("shared=true,hyperscalerType=%s", hyperscalerType.GetKey())
 	secretBindings, err := sp.getSecretBindings(labelSelector)
 	if err != nil {
 		return nil, fmt.Errorf("getting secret binding: %w", err)
