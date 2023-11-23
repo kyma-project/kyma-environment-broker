@@ -34,15 +34,15 @@ func NewAccountProvider(gardenerPool AccountPool, sharedGardenerPool SharedPool)
 func FromCloudProvider(cp internal.CloudProvider) (Type, error) {
 	switch cp {
 	case internal.Azure:
-		return Azure, nil
+		return Azure(), nil
 	case internal.AWS:
-		return AWS, nil
+		return AWS(), nil
 	case internal.GCP:
-		return GCP, nil
+		return GCP(), nil
 	case internal.Openstack:
-		return Openstack, nil
+		return Openstack(), nil
 	default:
-		return "", fmt.Errorf("cannot determine the type of Hyperscaler to use for cloud provider %s", cp)
+		return Type{}, fmt.Errorf("cannot determine the type of Hyperscaler to use for cloud provider %s", cp)
 	}
 }
 

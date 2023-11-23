@@ -846,7 +846,7 @@ func TestProvisioning_ClusterParameters(t *testing.T) {
 		expectedMaximumNumberOfNodes        int
 		expectedMachineType                 string
 		expectedSharedSubscription          bool
-		expectedSubscriptionHyperscalerType string
+		expectedSubscriptionHyperscalerType hyperscaler.Type
 	}{
 		"Regular trial": {
 			planID: broker.TrialPlanID,
@@ -857,7 +857,7 @@ func TestProvisioning_ClusterParameters(t *testing.T) {
 			expectedProfile:                     gqlschema.KymaProfileEvaluation,
 			expectedProvider:                    "azure",
 			expectedSharedSubscription:          true,
-			expectedSubscriptionHyperscalerType: hyperscaler.Azure,
+			expectedSubscriptionHyperscalerType: hyperscaler.Azure(),
 		},
 		"Freemium aws": {
 			planID:           broker.FreemiumPlanID,
@@ -869,7 +869,7 @@ func TestProvisioning_ClusterParameters(t *testing.T) {
 			expectedProvider:                    "aws",
 			expectedSharedSubscription:          false,
 			expectedMachineType:                 "m5.xlarge",
-			expectedSubscriptionHyperscalerType: hyperscaler.AWS,
+			expectedSubscriptionHyperscalerType: hyperscaler.AWS(),
 		},
 		"Freemium azure": {
 			planID:           broker.FreemiumPlanID,
@@ -881,7 +881,7 @@ func TestProvisioning_ClusterParameters(t *testing.T) {
 			expectedProvider:                    "azure",
 			expectedSharedSubscription:          false,
 			expectedMachineType:                 "Standard_D4_v3",
-			expectedSubscriptionHyperscalerType: hyperscaler.Azure,
+			expectedSubscriptionHyperscalerType: hyperscaler.Azure(),
 		},
 		"Production Azure": {
 			planID:    broker.AzurePlanID,
@@ -895,7 +895,7 @@ func TestProvisioning_ClusterParameters(t *testing.T) {
 			expectedProfile:                     gqlschema.KymaProfileProduction,
 			expectedProvider:                    "azure",
 			expectedSharedSubscription:          false,
-			expectedSubscriptionHyperscalerType: hyperscaler.Azure,
+			expectedSubscriptionHyperscalerType: hyperscaler.Azure(),
 		},
 		"Production Multi-AZ Azure": {
 			planID:                       broker.AzurePlanID,
@@ -910,7 +910,7 @@ func TestProvisioning_ClusterParameters(t *testing.T) {
 			expectedProfile:                     gqlschema.KymaProfileProduction,
 			expectedProvider:                    "azure",
 			expectedSharedSubscription:          false,
-			expectedSubscriptionHyperscalerType: hyperscaler.Azure,
+			expectedSubscriptionHyperscalerType: hyperscaler.Azure(),
 		},
 		"Production AWS": {
 			planID:    broker.AWSPlanID,
@@ -924,7 +924,7 @@ func TestProvisioning_ClusterParameters(t *testing.T) {
 			expectedProfile:                     gqlschema.KymaProfileProduction,
 			expectedProvider:                    "aws",
 			expectedSharedSubscription:          false,
-			expectedSubscriptionHyperscalerType: hyperscaler.AWS,
+			expectedSubscriptionHyperscalerType: hyperscaler.AWS(),
 		},
 		"Production Multi-AZ AWS": {
 			planID:                       broker.AWSPlanID,
@@ -939,7 +939,7 @@ func TestProvisioning_ClusterParameters(t *testing.T) {
 			expectedProfile:                     gqlschema.KymaProfileProduction,
 			expectedProvider:                    "aws",
 			expectedSharedSubscription:          false,
-			expectedSubscriptionHyperscalerType: hyperscaler.AWS,
+			expectedSubscriptionHyperscalerType: hyperscaler.AWS(),
 		},
 		"Production GCP": {
 			planID:    broker.GCPPlanID,
@@ -953,7 +953,7 @@ func TestProvisioning_ClusterParameters(t *testing.T) {
 			expectedProfile:                     gqlschema.KymaProfileProduction,
 			expectedProvider:                    "gcp",
 			expectedSharedSubscription:          false,
-			expectedSubscriptionHyperscalerType: hyperscaler.GCP,
+			expectedSubscriptionHyperscalerType: hyperscaler.GCP(),
 		},
 		"Production Multi-AZ GCP": {
 			planID:                       broker.GCPPlanID,
@@ -968,7 +968,7 @@ func TestProvisioning_ClusterParameters(t *testing.T) {
 			expectedProfile:                     gqlschema.KymaProfileProduction,
 			expectedProvider:                    "gcp",
 			expectedSharedSubscription:          false,
-			expectedSubscriptionHyperscalerType: hyperscaler.GCP,
+			expectedSubscriptionHyperscalerType: hyperscaler.GCP(),
 		},
 	} {
 		t.Run(tn, func(t *testing.T) {

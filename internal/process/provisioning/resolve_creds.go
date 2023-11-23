@@ -40,26 +40,24 @@ func (s *ResolveCredentialsStep) Run(operation internal.Operation, log logrus.Fi
 		return s.operationManager.OperationFailed(operation, msg, err, log)
 	}
 
-	var openstackRegion, composedHypType string
-	composedHypType = string(hypType)
-	if hypType == hyperscaler.Openstack {
-		openstackRegion = getOpenstackRegion(operation)
-		composedHypType += "-" + openstackRegion
+	if hypType.GetName() == "openstack" {
+		openstackRegion := getOpenstackRegion(operation)
+		hypType.SetRegion(openstackRegion)
 	}
 
 	euAccess := internal.IsEuAccess(operation.ProvisioningParameters.PlatformRegion)
 
-	log.Infof("HAP lookup for credentials secret binding to provision cluster for global account ID %s on Hyperscaler %s, euAccess %v", operation.ProvisioningParameters.ErsContext.GlobalAccountID, composedHypType, euAccess)
+	log.Infof("HAP lookup for credentials secret binding to provision cluster for global account ID %s on Hyperscaler %s, euAccess %v", operation.ProvisioningParameters.ErsContext.GlobalAccountID, hypType.GetKey(), euAccess)
 
 	var secretName string
 	if !broker.IsTrialPlan(operation.ProvisioningParameters.PlanID) {
-		secretName, err = s.accountProvider.GardenerSecretName(composedHypType, operation.ProvisioningParameters.ErsContext.GlobalAccountID, euAccess)
+		secretName, err = s.accountProvider.GardenerSecretName(hypType, operation.ProvisioningParameters.ErsContext.GlobalAccountID, euAccess)
 	} else {
 		log.Infof("HAP lookup for shared secret binding")
 		secretName, err = s.accountProvider.GardenerSharedSecretName(hypType, euAccess)
 	}
 	if err != nil {
-		msg := fmt.Sprintf("HAP lookup for secret binding to provision cluster for global account ID %s on Hyperscaler %s has failed", operation.ProvisioningParameters.ErsContext.GlobalAccountID, composedHypType)
+		msg := fmt.Sprintf("HAP lookup for secret binding to provision cluster for global account ID %s on Hyperscaler %s has failed", operation.ProvisioningParameters.ErsContext.GlobalAccountID, hypType.GetKey())
 		errMsg := fmt.Sprintf("%s: %s", msg, err)
 		log.Info(errMsg)
 
@@ -70,7 +68,7 @@ func (s *ResolveCredentialsStep) Run(operation internal.Operation, log logrus.Fi
 			return operation, 10 * time.Second, nil
 		}
 
-		log.Errorf("Aborting after 10 minutes of failing to resolve provisioning secret binding for global account ID %s on Hyperscaler %s", operation.ProvisioningParameters.ErsContext.GlobalAccountID, composedHypType)
+		log.Errorf("Aborting after 10 minutes of failing to resolve provisioning secret binding for global account ID %s on Hyperscaler %s", operation.ProvisioningParameters.ErsContext.GlobalAccountID, hypType.GetKey())
 
 		return s.operationManager.OperationFailed(operation, msg, err, log)
 	}
@@ -81,7 +79,7 @@ func (s *ResolveCredentialsStep) Run(operation internal.Operation, log logrus.Fi
 		return operation, 1 * time.Minute, nil
 	}
 
-	log.Infof("Resolved %s as target secret name to use for cluster provisioning for global account ID %s on Hyperscaler %s", *operation.ProvisioningParameters.Parameters.TargetSecret, operation.ProvisioningParameters.ErsContext.GlobalAccountID, composedHypType)
+	log.Infof("Resolved %s as target secret name to use for cluster provisioning for global account ID %s on Hyperscaler %s", *operation.ProvisioningParameters.Parameters.TargetSecret, operation.ProvisioningParameters.ErsContext.GlobalAccountID, hypType.GetKey())
 
 	return *updatedOperation, 0, nil
 }

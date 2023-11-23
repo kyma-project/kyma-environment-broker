@@ -935,7 +935,7 @@ func (s *ProvisioningSuite) AssertZonesCount(zonesCount *int, planID string) {
 	}
 }
 
-func (s *ProvisioningSuite) AssertSubscription(shared bool, ht string) {
+func (s *ProvisioningSuite) AssertSubscription(shared bool, ht hyperscaler.Type) {
 	input := s.fetchProvisionInput()
 	secretName := input.ClusterConfig.GardenerConfig.TargetSecret
 	if shared {
@@ -969,11 +969,11 @@ func (s *ProvisioningSuite) AssertControlPlaneFailureTolerance(level string) {
 }
 
 func regularSubscription(ht hyperscaler.Type) string {
-	return fmt.Sprintf("regular-%s", ht)
+	return fmt.Sprintf("regular-%s", ht.GetKey())
 }
 
 func sharedSubscription(ht hyperscaler.Type) string {
-	return fmt.Sprintf("shared-%s", ht)
+	return fmt.Sprintf("shared-%s", ht.GetKey())
 }
 
 func fixConfig() *Config {
@@ -1091,13 +1091,13 @@ func fixAccountProvider() *hyperscalerautomock.AccountProvider {
 	accountProvider.On("GardenerSecretName", mock.Anything, mock.Anything, mock.Anything).Return(
 		func(ht hyperscaler.Type, tn string, euaccess bool) string { return regularSubscription(ht) }, nil)
 
-	accountProvider.On("GardenerSharedSecretName", hyperscaler.Azure, mock.Anything).Return(
+	accountProvider.On("GardenerSharedSecretName", hyperscaler.Azure(), mock.Anything).Return(
 		func(ht hyperscaler.Type, euaccess bool) string { return sharedSubscription(ht) }, nil)
 
-	accountProvider.On("GardenerSharedSecretName", hyperscaler.AWS, mock.Anything).Return(
+	accountProvider.On("GardenerSharedSecretName", hyperscaler.AWS(), mock.Anything).Return(
 		func(ht hyperscaler.Type, euaccess bool) string { return sharedSubscription(ht) }, nil)
 
-	accountProvider.On("MarkUnusedGardenerSecretBindingAsDirty", hyperscaler.Azure, mock.Anything, mock.Anything).Return(nil)
-	accountProvider.On("MarkUnusedGardenerSecretBindingAsDirty", hyperscaler.AWS, mock.Anything, mock.Anything).Return(nil)
+	accountProvider.On("MarkUnusedGardenerSecretBindingAsDirty", hyperscaler.Azure(), mock.Anything, mock.Anything).Return(nil)
+	accountProvider.On("MarkUnusedGardenerSecretBindingAsDirty", hyperscaler.AWS(), mock.Anything, mock.Anything).Return(nil)
 	return &accountProvider
 }

@@ -11,15 +11,6 @@ import (
 	"k8s.io/client-go/dynamic"
 )
 
-type Type string
-
-const (
-	GCP       Type = "gcp"
-	Azure     Type = "azure"
-	AWS       Type = "aws"
-	Openstack Type = "openstack"
-)
-
 type AccountPool interface {
 	CredentialsSecretBinding(hyperscalerType Type, tenantName string, euAccess bool) (*gardener.SecretBinding, error)
 	MarkSecretBindingAsDirty(hyperscalerType Type, tenantName string, euAccess bool) error
