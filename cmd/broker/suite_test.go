@@ -463,6 +463,7 @@ func fixK8sResources(defaultKymaVersion string, additionalKymaVersions []string)
 				"overrides-plan-free":         "true",
 				"overrides-plan-gcp":          "true",
 				"overrides-plan-own_cluster":  "true",
+				"overrides-plan-openstack":    "true",
 				"overrides-version-2.0.0-rc4": "true",
 				"overrides-version-2.0.0":     "true",
 			},
@@ -934,7 +935,7 @@ func (s *ProvisioningSuite) AssertZonesCount(zonesCount *int, planID string) {
 	}
 }
 
-func (s *ProvisioningSuite) AssertSubscription(shared bool, ht hyperscaler.Type) {
+func (s *ProvisioningSuite) AssertSubscription(shared bool, ht string) {
 	input := s.fetchProvisionInput()
 	secretName := input.ClusterConfig.GardenerConfig.TargetSecret
 	if shared {
@@ -1001,9 +1002,63 @@ func fixConfig() *Config {
 		EnableOnDemandVersion:   true,
 		UpdateProcessingEnabled: true,
 		Broker: broker.Config{
-			EnablePlans:                    []string{"azure", "trial", "aws", "own_cluster", "preview"},
+			EnablePlans:                    []string{"azure", "trial", "aws", "own_cluster", "preview", "openstack"},
 			AllowNetworkingParameters:      true,
 			RegionParameterIsRequired:      true,
+			ExposeSchemaWithRegionRequired: true,
+			AllowModulesParameters:         true,
+		},
+		Avs: avs.Config{},
+		IAS: ias.Config{
+			IdentityProvider: ias.FakeIdentityProviderName,
+		},
+		Notification: notification.Config{
+			Url: "http://host:8080/",
+		},
+		OrchestrationConfig: kebOrchestration.Config{
+			KymaVersion: defaultKymaVer,
+			Namespace:   "kcp-system",
+			Name:        "orchestration-config",
+		},
+		MaxPaginationPage:                         100,
+		FreemiumProviders:                         []string{"aws", "azure"},
+		EuAccessWhitelistedGlobalAccountsFilePath: "testdata/eu_access_whitelist.yaml",
+		EuAccessRejectionMessage:                  "EU Access Rejection Message - see: http://google.pl",
+
+		Provisioning:   process.StagedManagerConfiguration{MaxStepProcessingTime: time.Minute},
+		Deprovisioning: process.StagedManagerConfiguration{MaxStepProcessingTime: time.Minute},
+		Update:         process.StagedManagerConfiguration{MaxStepProcessingTime: time.Minute},
+	}
+}
+func fixBrokerConfigWithOptionalRegion() *Config {
+	return &Config{
+		DbInMemory:                         true,
+		DisableProcessOperationsInProgress: false,
+		DevelopmentMode:                    true,
+		DumpProvisionerRequests:            true,
+		OperationTimeout:                   2 * time.Minute,
+		Provisioner: input.Config{
+			ProvisioningTimeout:   2 * time.Minute,
+			DeprovisioningTimeout: 2 * time.Minute,
+		},
+		Reconciler: reconciler.Config{
+			ProvisioningTimeout: 5 * time.Second,
+		},
+		Director: director.Config{},
+		Database: storage.Config{
+			SecretKey: dbSecretKey,
+		},
+		Gardener: gardener.Config{
+			Project:     "kyma",
+			ShootDomain: "kyma.sap.com",
+		},
+		KymaVersion:             defaultKymaVer,
+		EnableOnDemandVersion:   true,
+		UpdateProcessingEnabled: true,
+		Broker: broker.Config{
+			EnablePlans:                    []string{"azure", "trial", "aws", "own_cluster", "preview", "openstack"},
+			AllowNetworkingParameters:      true,
+			RegionParameterIsRequired:      false,
 			ExposeSchemaWithRegionRequired: true,
 			AllowModulesParameters:         true,
 		},
