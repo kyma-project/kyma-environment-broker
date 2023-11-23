@@ -6,14 +6,14 @@ Kyma Environment Broker (KEB) serves the functionality of composing the list of 
 
 ![runtime-components-architecture](../assets/runtime-components.svg)
 
-1. During KEB initialization, the broker reads two files that contain lists of components to be installed in a Kyma runtime:  
+1. The user provisions SAP BTP, Kyma runtime and selects optional components that they want to install.
 
-   * `kyma-installer-cluster.yaml` file with the given Kyma version
-   * `managed-offering-components.yaml` file with additional managed components that are added at the end of the base components list
+2. At the beginning of the runtime provisioning, the broker fetches lists of components from the following resources:  
 
-2. The user provisions a Kyma runtime and selects optional components that they want to install.
+   * `kyma-components.yaml` file which contains required components list and is an asset attached to every Kyma release
+   * [KEB's ConfigMap](./02-40-broker-configuration-for-given-version-and-plan.md) which contains additional components that are added at the end of the base components list
 
-3. KEB composes the final list of components by removing components that were not selected by the user. It also adds the proper global and components overrides and sends the whole provisioning information to the Runtime Provisioner.
+3. KEB composes the final list of components by removing components that were not selected by the user. It also adds the proper global and components overrides and sends the whole provisioning information to Reconciler.
 
 There is a defined [list of the components and their names](../../internal/runtime/components/components.go). Use these names in your implementation.
 
@@ -49,7 +49,7 @@ type OptionalComponentDisabler interface {
 
 >**TIP**: Check the [CustomDisablerExample](../../internal/runtime/custom_disabler_example.go) as an example of custom service for disabling components.
 
-In each method, the framework injects the  **components** parameter which is a list of components that are sent to the Runtime Provisioner. The implemented method is responsible for disabling a component and, as a result, returns a modified list.
+In each method, the framework injects the  **components** parameter which is a list of components that are sent to Reconciler. The implemented method is responsible for disabling a component and, as a result, returns a modified list.
 
 This interface allows you to easily register the disabler in the [`cmd/broker/main.go`](../../cmd/broker/main.go) file by adding a new entry in the **optionalComponentsDisablers** list:
 
