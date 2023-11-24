@@ -32,4 +32,7 @@ whitesource:
   exclude:
     - "**/*_test.go"
     - "testing/**"
+    - "**/automock/**"
+    - "**/*fake*.go"
+    - "**/*mock*.go"
 EOF
