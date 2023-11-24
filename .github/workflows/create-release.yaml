@@ -55,6 +55,7 @@ jobs:
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
+      - run: git pull
 
       - name: Update sec-scanners-config.yaml
         if: ${{ inputs.sec-scanners-config }}
@@ -79,7 +80,7 @@ jobs:
 
       - name: Await PR merge
         if: ${{ inputs.sec-scanners-config }}
-        timeout-minutes: 10
+        timeout-minutes: 45
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
@@ -95,6 +96,7 @@ jobs:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           git checkout main
+          git stash
           git pull
           LATEST_COMMIT=$(git rev-parse HEAD)
           echo "latest_commit=$LATEST_COMMIT" >> $GITHUB_OUTPUT
