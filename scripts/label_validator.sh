@@ -42,7 +42,7 @@ function runOnRelease() {
               -H "Accept: application/vnd.github+json" \
               -H "X-GitHub-Api-Version: 2022-11-28" \
               -H "Authorization: Bearer ${GITHUB_TOKEN}" \
-              "https://api.github.com/search/issues?q=$commit+repo:$GITHUB_ORG/btp-manager+type:pr" |
+              "https://api.github.com/search/issues?q=$commit+repo:$GITHUB_ORG/kyma-environment-broker+type:pr" |
               jq 'if (.items | length) == 1 then .items[0].number else empty end')
 
     if [[ -z $pr_id ]]; then
@@ -59,7 +59,7 @@ function runOnRelease() {
     present_labels=$(curl -sL \
                     -H "Accept: application/vnd.github+json" \
                     -H "X-GitHub-Api-Version: 2022-11-28" \
-                    https://api.github.com/repos/$GITHUB_ORG/btp-manager/issues/${pr_id} | 
+                    https://api.github.com/repos/$GITHUB_ORG/kyma-environment-broker/issues/${pr_id} | 
                     jq -r 'if (.labels | length) > 0 then .labels[] | objects | .name else empty end')
                     
     if [[ -z $present_labels ]]; then 
@@ -86,7 +86,7 @@ function runOnRelease() {
       echo "following PRs do not have correct number of /kind labels"
       for pr in "${notValidPrs[@]}"
       do
-        echo "https://github.com/$GITHUB_ORG/btp-manager/pull/$pr"
+        echo "https://github.com/$GITHUB_ORG/kyma-environment-broker/pull/$pr"
       done
       exit 1
   fi
@@ -118,7 +118,7 @@ function runOnPr() {
               -H "Accept: application/vnd.github+json" \
               -H "X-GitHub-Api-Version: 2022-11-28" \
               -H "Authorization: Bearer ${GITHUB_TOKEN}" \
-              https://api.github.com/repos/$GITHUB_ORG/btp-manager/issues/${PR_ID}/comments |
+              https://api.github.com/repos/$GITHUB_ORG/kyma-environment-broker/issues/${PR_ID}/comments |
               jq -r 'if (.[] | length) > 0 then .[] | objects | .body else empty end')
 
   if [[ ! " ${comments[*]} " =~ " ${help_message} " ]]; then
@@ -134,7 +134,7 @@ function runOnPr() {
             -H "Accept: application/vnd.github+json" \
             -H "Authorization: Bearer ${GITHUB_TOKEN}" \
             -H "X-GitHub-Api-Version: 2022-11-28" \
-            https://api.github.com/repos/$GITHUB_ORG/btp-manager/issues/${PR_ID}/comments \
+            https://api.github.com/repos/$GITHUB_ORG/kyma-environment-broker/issues/${PR_ID}/comments \
             -d "$payload")
 
     echo "create comment with help result: $response"
@@ -144,7 +144,7 @@ function runOnPr() {
                     -H "Accept: application/vnd.github+json" \
                     -H "X-GitHub-Api-Version: 2022-11-28" \
                     -H "Authorization: Bearer ${GITHUB_TOKEN}" \
-                    https://api.github.com/repos/$GITHUB_ORG/btp-manager/issues/${PR_ID} | 
+                    https://api.github.com/repos/$GITHUB_ORG/kyma-environment-broker/issues/${PR_ID} | 
                     jq -r 'if (.labels | length) > 0 then .labels[] | objects | .name else empty end')
 
   count_of_required_labels=$(grep -o -w -F -c "${supported_labels}" <<< "$present_labels" || true)
