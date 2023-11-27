@@ -103,9 +103,6 @@ func (s *ResolveCredentialsStep) getTargetSecretFromGardener(operation internal.
 }
 
 func getEffectiveRegion(operation internal.Operation) string {
-	if operation.Region != "" {
-		return operation.Region
-	}
 	clusterInput, _ := operation.InputCreator.CreateProvisionClusterInput()
 	effectiveRegion := clusterInput.ClusterConfig.GardenerConfig.Region
 	return effectiveRegion
