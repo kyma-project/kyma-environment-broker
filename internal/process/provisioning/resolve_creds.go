@@ -8,7 +8,9 @@ import (
 	"github.com/kyma-project/kyma-environment-broker/internal"
 	"github.com/kyma-project/kyma-environment-broker/internal/broker"
 	"github.com/kyma-project/kyma-environment-broker/internal/process"
+	"github.com/kyma-project/kyma-environment-broker/internal/ptr"
 	"github.com/kyma-project/kyma-environment-broker/internal/storage"
+
 	"github.com/sirupsen/logrus"
 )
 
@@ -69,6 +71,13 @@ func (s *ResolveCredentialsStep) Run(operation internal.Operation, log logrus.Fi
 	}
 	operation.ProvisioningParameters.Parameters.TargetSecret = &secretName
 
+	if hypType.GetName() == "openstack" {
+		// Overwrite the region parameter in case default region is used. This is necessary until region is mandatory (Jan 2024).
+		// This is the simples way to made region available during deprovisioning
+		//operation.ProvisioningParameters.Parameters.Region = &effectiveRegion
+		operation.ProvisioningParameters.Parameters.Region = ptr.String(getEffectiveRegion(operation))
+	}
+
 	updatedOperation, err := s.opStorage.UpdateOperation(operation)
 	if err != nil {
 		return operation, 1 * time.Minute, nil
@@ -79,13 +88,13 @@ func (s *ResolveCredentialsStep) Run(operation internal.Operation, log logrus.Fi
 	return *updatedOperation, 0, nil
 }
 
-func getOpenstackRegion(operation internal.Operation) string {
+func getEffectiveRegion(operation internal.Operation) string {
 	if operation.Region != "" {
 		return operation.Region
 	}
 	clusterInput, _ := operation.InputCreator.CreateProvisionClusterInput()
-	defaultRegion := clusterInput.ClusterConfig.GardenerConfig.Region
-	return defaultRegion
+	effectiveRegion := clusterInput.ClusterConfig.GardenerConfig.Region
+	return effectiveRegion
 }
 
 func FromOperation(operation internal.Operation) (hyperscaler.Type, error) {
@@ -98,7 +107,8 @@ func FromOperation(operation internal.Operation) (hyperscaler.Type, error) {
 	case internal.GCP:
 		return hyperscaler.GCP(), nil
 	case internal.Openstack:
-		return hyperscaler.Openstack(getOpenstackRegion(operation)), nil
+		effectiveRegion := getEffectiveRegion(operation)
+		return hyperscaler.Openstack(effectiveRegion), nil
 	default:
 		return hyperscaler.Type{}, fmt.Errorf("cannot determine the type of Hyperscaler to use for cloud provider %s", cloudProvider)
 	}
