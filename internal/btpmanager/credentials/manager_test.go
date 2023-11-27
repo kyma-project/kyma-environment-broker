@@ -362,10 +362,10 @@ func (e *Environment) createClusters(count int) {
 	wg := &sync.WaitGroup{}
 	for i := 0; i <= count; i++ {
 		wg.Add(1)
-		func(i int) {
+		go func(i int) {
 			defer wg.Done()
 			if i == count {
-				//KCP
+				// KCP
 				testEnv := &envtest.Environment{
 					CRDDirectoryPaths: []string{"testdata/crds/kyma.yaml"},
 				}
@@ -389,7 +389,7 @@ func (e *Environment) createClusters(count int) {
 					return
 				}
 			} else {
-				//SKR
+				// SKR
 				testEnv := &envtest.Environment{}
 				_, err := testEnv.Start()
 				if err != nil {
