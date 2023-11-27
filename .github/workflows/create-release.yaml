@@ -39,11 +39,10 @@ jobs:
       - name: Check for existing artifacts from previous release runs
         run: "./scripts/check_artifacts_existence.sh ${{ inputs.name }}"
 
-# TODO: uncomment - labels validation
-#      - name: Validate Labels
-#        env:
-#          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-#        run: ./scripts/label_validator.sh "RELEASE"
+      - name: Validate Labels
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: ./scripts/label_validator.sh "RELEASE"
 
   bump-sec-scanners-config:
     name: Bump sec-scanners-config
