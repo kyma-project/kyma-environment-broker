@@ -82,9 +82,9 @@ func (s *ResolveCredentialsStep) overwriteProvisioningParameters(operation *inte
 	operation.ProvisioningParameters.Parameters.TargetSecret = &targetSecret
 
 	if hypType.GetName() == "openstack" {
-		// Overwrite the region parameter in case default region is used. This is necessary until region is mandatory (Jan 2024).
+		// TODO: Overwrite the region parameter in case default region is used. This is necessary until region is mandatory (Jan 2024).
 		// This is the simplest way to make the region available during deprovisioning when we release subscription
-		effectiveRegion := getEffectiveRegion(*operation)
+		effectiveRegion := hypType.GetRegion()
 		operation.ProvisioningParameters.Parameters.Region = &effectiveRegion
 	}
 }
@@ -102,14 +102,10 @@ func (s *ResolveCredentialsStep) getTargetSecretFromGardener(operation internal.
 	return secretName, err
 }
 
-func getEffectiveRegion(operation internal.Operation) string {
-	clusterInput, _ := operation.InputCreator.CreateProvisionClusterInput()
-	effectiveRegion := clusterInput.ClusterConfig.GardenerConfig.Region
-	return effectiveRegion
-}
-
 func HypTypeFromOperation(operation internal.Operation) (hyperscaler.Type, error) {
 	cloudProvider := operation.InputCreator.Provider()
+	clusterInput, _ := operation.InputCreator.CreateProvisionClusterInput()
+	effectiveRegion := clusterInput.ClusterConfig.GardenerConfig.Region
 	switch cloudProvider {
 	case internal.Azure:
 		return hyperscaler.Azure(), nil
@@ -118,7 +114,7 @@ func HypTypeFromOperation(operation internal.Operation) (hyperscaler.Type, error
 	case internal.GCP:
 		return hyperscaler.GCP(), nil
 	case internal.Openstack:
-		return hyperscaler.Openstack(getEffectiveRegion(operation)), nil
+		return hyperscaler.Openstack(effectiveRegion), nil
 	default:
 		return hyperscaler.Type{}, fmt.Errorf("cannot determine the type of Hyperscaler to use for cloud provider %s", cloudProvider)
 	}

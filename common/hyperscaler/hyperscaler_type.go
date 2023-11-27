@@ -34,8 +34,9 @@ func (t Type) GetName() string {
 	return t.hyperscalerName
 }
 
-func (t Type) SetRegion(region string) {
-	t.hyperscalerName = region
+// TODO remove when regions are mandatory, and the hack in resolve_creds is no longer needed
+func (t Type) GetRegion() string {
+	return t.hyperscalerRegion
 }
 
 func (t Type) GetKey() string {
