@@ -29,7 +29,7 @@ func TestReleaseSubscriptionStep_HappyPath(t *testing.T) {
 	assert.NoError(t, err)
 
 	accountProviderMock := &hyperscalerMocks.AccountProvider{}
-	accountProviderMock.On("MarkUnusedGardenerSecretBindingAsDirty", hyperscaler.GCP, instance.GetSubscriptionGlobalAccoundID(), false).Return(nil)
+	accountProviderMock.On("MarkUnusedGardenerSecretBindingAsDirty", hyperscaler.GCP(), instance.GetSubscriptionGlobalAccoundID(), false).Return(nil)
 
 	step := NewReleaseSubscriptionStep(memoryStorage.Operations(), memoryStorage.Instances(), accountProviderMock)
 
