@@ -11,6 +11,7 @@ import (
 	"github.com/kyma-project/kyma-environment-broker/internal"
 	"github.com/kyma-project/kyma-environment-broker/internal/broker"
 	"github.com/kyma-project/kyma-environment-broker/internal/fixture"
+	"github.com/kyma-project/kyma-environment-broker/internal/ptr"
 	"github.com/kyma-project/kyma-environment-broker/internal/storage"
 	"github.com/pivotal-cf/brokerapi/v8/domain"
 	"github.com/sirupsen/logrus"
@@ -101,6 +102,34 @@ func TestReleaseSubscriptionStep_OwnClusterPlan(t *testing.T) {
 	assert.Equal(t, domain.Succeeded, operation.State)
 }
 
+func TestReleaseSubscriptionStep_Openstack_HappyPath(t *testing.T) {
+	// given
+	log := logrus.New()
+	memoryStorage := storage.NewMemoryStorage()
+
+	operation := fixDeprovisioningOperationForOpenstack()
+	instance := fixOpenstackInstance(operation.InstanceID)
+
+	err := memoryStorage.Instances().Insert(instance)
+	assert.NoError(t, err)
+
+	accountProviderMock := &hyperscalerMocks.AccountProvider{}
+	accountProviderMock.On("MarkUnusedGardenerSecretBindingAsDirty", hyperscaler.Openstack("eu-de-1"), instance.GetSubscriptionGlobalAccoundID(), false).Return(nil)
+
+	step := NewReleaseSubscriptionStep(memoryStorage.Operations(), memoryStorage.Instances(), accountProviderMock)
+
+	// when
+	operation, repeat, err := step.Run(operation, log)
+
+	assert.NoError(t, err)
+
+	// then
+	accountProviderMock.AssertNumberOfCalls(t, "MarkUnusedGardenerSecretBindingAsDirty", 1)
+	assert.NoError(t, err)
+	assert.Equal(t, time.Duration(0), repeat)
+	assert.Equal(t, domain.Succeeded, operation.State)
+}
+
 func TestReleaseSubscriptionStep_InstanceNotFound(t *testing.T) {
 	// given
 	log := logrus.New()
@@ -186,7 +215,13 @@ func TestReleaseSubscriptionStepGardener_CallFails(t *testing.T) {
 
 func fixGCPInstance(instanceID string) internal.Instance {
 	instance := fixture.FixInstance(instanceID)
-	instance.Provider = "GCP"
+	instance.Provider = internal.GCP
+	return instance
+}
+
+func fixOpenstackInstance(instanceID string) internal.Instance {
+	instance := fixture.FixInstance(instanceID)
+	instance.Provider = internal.Openstack
 	return instance
 }
 
@@ -195,5 +230,14 @@ func fixDeprovisioningOperationWithPlanID(planID string) internal.Operation {
 	deprovisioningOperation.ProvisioningParameters.PlanID = planID
 	deprovisioningOperation.ProvisioningParameters.ErsContext.GlobalAccountID = globalAccountID
 	deprovisioningOperation.ProvisioningParameters.ErsContext.SubAccountID = subAccountID
+	return deprovisioningOperation
+}
+
+func fixDeprovisioningOperationForOpenstack() internal.Operation {
+	deprovisioningOperation := fixture.FixDeprovisioningOperationAsOperation(operationID, instanceID)
+	deprovisioningOperation.ProvisioningParameters.PlanID = broker.OpenStackPlanID
+	deprovisioningOperation.ProvisioningParameters.ErsContext.GlobalAccountID = globalAccountID
+	deprovisioningOperation.ProvisioningParameters.ErsContext.SubAccountID = subAccountID
+	deprovisioningOperation.ProvisioningParameters.Parameters.Region = ptr.String("eu-de-1")
 	return deprovisioningOperation
 }
