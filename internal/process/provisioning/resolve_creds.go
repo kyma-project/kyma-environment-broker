@@ -102,10 +102,14 @@ func (s *ResolveCredentialsStep) getTargetSecretFromGardener(operation internal.
 	return secretName, err
 }
 
-func HypTypeFromOperation(operation internal.Operation) (hyperscaler.Type, error) {
-	cloudProvider := operation.InputCreator.Provider()
+func getEffectiveRegion(operation internal.Operation) string {
 	clusterInput, _ := operation.InputCreator.CreateProvisionClusterInput()
 	effectiveRegion := clusterInput.ClusterConfig.GardenerConfig.Region
+	return effectiveRegion
+}
+
+func HypTypeFromOperation(operation internal.Operation) (hyperscaler.Type, error) {
+	cloudProvider := operation.InputCreator.Provider()
 	switch cloudProvider {
 	case internal.Azure:
 		return hyperscaler.Azure(), nil
@@ -114,7 +118,7 @@ func HypTypeFromOperation(operation internal.Operation) (hyperscaler.Type, error
 	case internal.GCP:
 		return hyperscaler.GCP(), nil
 	case internal.Openstack:
-		return hyperscaler.Openstack(effectiveRegion), nil
+		return hyperscaler.Openstack(getEffectiveRegion(operation)), nil
 	default:
 		return hyperscaler.Type{}, fmt.Errorf("cannot determine the type of Hyperscaler to use for cloud provider %s", cloudProvider)
 	}
