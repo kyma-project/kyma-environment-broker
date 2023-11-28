@@ -13,7 +13,7 @@ import (
 
 func mapRegion(credentials hyperscaler.Credentials, parameters internal.ProvisioningParameters) (string, error) {
 	if credentials.HyperscalerType.GetKey() != hyperscaler.Azure().GetKey() {
-		return "", fmt.Errorf("cannot use credential for hyperscaler of type %v on hyperscaler of type %v", credentials.HyperscalerType, hyperscaler.Azure)
+		return "", fmt.Errorf("cannot use credential for hyperscaler of type %v on hyperscaler of type %v", credentials.HyperscalerType.GetKey(), hyperscaler.Azure().GetKey())
 	}
 	if parameters.Parameters.Region == nil || *(parameters.Parameters.Region) == "" {
 		return provider.DefaultAzureRegion, nil
