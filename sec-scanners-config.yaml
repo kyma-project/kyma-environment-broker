@@ -6,7 +6,7 @@ protecode:
   - europe-docker.pkg.dev/kyma-project/prod/kyma-environments-cleanup-job:0.0.6
   - europe-docker.pkg.dev/kyma-project/prod/kyma-environment-runtime-reconciler:0.0.6
   - europe-docker.pkg.dev/kyma-project/prod/kyma-environment-trial-cleanup-job:0.0.6
-  - europe-docker.pkg.dev/kyma-project/prod/kyma-environment-subscription-cleanup-job:0.0.6
+  - europe-docker.pkg.dev/kyma-project/prod/kyma-environment-subaccount-cleanup-job:0.0.6
 whitesource:
   language: golang-mod
   subprojects: false
