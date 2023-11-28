@@ -53,7 +53,7 @@ func (s ReleaseSubscriptionStep) Run(operation internal.Operation, log logrus.Fi
 			return operation, 0, nil
 		}
 
-		hypType, err := hyperscaler.FromCloudProvider(instance.Provider)
+		hypType, err := hyperscaler.HypTypeFromCloudProviderWithRegion(instance.Provider, operation.ProvisioningParameters.Parameters.Region)
 		if err != nil {
 			msg := fmt.Sprintf("after successful deprovisioning failing to release hyperscaler subscription - determine the type of hyperscaler to use for planID [%s]: %s", planID, err.Error())
 			operation, repeat, err := s.operationManager.MarkStepAsExcutedButNotCompleted(operation, s.Name(), msg, log)
