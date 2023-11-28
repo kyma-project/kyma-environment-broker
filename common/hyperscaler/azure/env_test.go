@@ -26,7 +26,7 @@ func Test_mapRegion(t *testing.T) {
 		{
 			name: "invalid gcp mapping",
 			args: args{
-				hyperscalerType: hyperscaler.Azure,
+				hyperscalerType: hyperscaler.Azure(),
 				planID:          broker.GCPPlanID,
 				region:          "munich",
 			},
@@ -36,7 +36,7 @@ func Test_mapRegion(t *testing.T) {
 		{
 			name: "valid gcp mapping",
 			args: args{
-				hyperscalerType: hyperscaler.Azure,
+				hyperscalerType: hyperscaler.Azure(),
 				planID:          broker.GCPPlanID,
 				region:          "europe-west1",
 			},
@@ -46,7 +46,7 @@ func Test_mapRegion(t *testing.T) {
 		{
 			name: "unknown planid",
 			args: args{
-				hyperscalerType: hyperscaler.Azure,
+				hyperscalerType: hyperscaler.Azure(),
 				planID:          "microsoftcloud",
 				region:          "",
 			},
@@ -56,7 +56,7 @@ func Test_mapRegion(t *testing.T) {
 		{
 			name: "unknown hyperscaler",
 			args: args{
-				hyperscalerType: "microsoftcloud",
+				hyperscalerType: hyperscaler.Type{},
 				planID:          broker.AzurePlanID,
 				region:          "",
 			},
@@ -66,7 +66,7 @@ func Test_mapRegion(t *testing.T) {
 		{
 			name: "empty azure region",
 			args: args{
-				hyperscalerType: hyperscaler.Azure,
+				hyperscalerType: hyperscaler.Azure(),
 				planID:          broker.AzurePlanID,
 				region:          "",
 			},
@@ -76,7 +76,7 @@ func Test_mapRegion(t *testing.T) {
 		{
 			name: "valid azure region",
 			args: args{
-				hyperscalerType: hyperscaler.Azure,
+				hyperscalerType: hyperscaler.Azure(),
 				planID:          broker.AzurePlanID,
 				region:          "westeurope",
 			},
@@ -86,7 +86,7 @@ func Test_mapRegion(t *testing.T) {
 		{
 			name: "valid azure lite region",
 			args: args{
-				hyperscalerType: hyperscaler.Azure,
+				hyperscalerType: hyperscaler.Azure(),
 				planID:          broker.AzureLitePlanID,
 				region:          "japaneast",
 			},
