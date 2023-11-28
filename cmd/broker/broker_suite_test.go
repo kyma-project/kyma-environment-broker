@@ -131,153 +131,22 @@ func (s *BrokerSuiteTest) TearDown() {
 }
 
 func NewBrokerSuiteTest(t *testing.T, version ...string) *BrokerSuiteTest {
-	ctx := context.Background()
-	sch := internal.NewSchemeForTests()
-	apiextensionsv1.AddToScheme(sch)
-	additionalKymaVersions := []string{"1.19", "1.20", "main", "2.0"}
-	additionalKymaVersions = append(additionalKymaVersions, version...)
-	cli := fake.NewClientBuilder().WithScheme(sch).WithRuntimeObjects(fixK8sResources(defaultKymaVer, additionalKymaVersions)...).Build()
 	cfg := fixConfig()
-	if len(version) == 1 {
-		cfg.KymaVersion = version[0] // overriden to
-	}
-
-	optionalComponentsDisablers := kebRuntime.ComponentsDisablers{}
-	optComponentsSvc := kebRuntime.NewOptionalComponentsService(optionalComponentsDisablers)
-
-	disabledComponentsProvider := kebRuntime.NewDisabledComponentsProvider()
-
-	installerYAML := kebRuntime.ReadYAMLFromFile(t, "kyma-installer-cluster.yaml")
-	componentsYAML := kebRuntime.ReadYAMLFromFile(t, "kyma-components.yaml")
-	fakeHTTPClient := kebRuntime.NewTestClient(t, installerYAML, componentsYAML, http.StatusOK)
-
-	configProvider := kebConfig.NewConfigProvider(
-		kebConfig.NewConfigMapReader(ctx, cli, logrus.New(), defaultKymaVer),
-		kebConfig.NewConfigMapKeysValidator(),
-		kebConfig.NewConfigMapConverter())
-
-	componentListProvider := kebRuntime.NewComponentsListProvider(
-		path.Join("testdata", "managed-runtime-components.yaml"),
-		path.Join("testdata", "additional-runtime-components.yaml")).WithHTTPClient(fakeHTTPClient)
-	decoratedComponentListProvider := componentProviderDecorated{
-		componentProvider: componentListProvider,
-		decorator:         make(map[string]internal.KymaComponent),
-	}
-
-	inputFactory, err := input.NewInputBuilderFactory(optComponentsSvc, disabledComponentsProvider, decoratedComponentListProvider,
-		configProvider, input.Config{
-			MachineImageVersion:         "253",
-			KubernetesVersion:           "1.18",
-			MachineImage:                "coreos",
-			URL:                         "http://localhost",
-			DefaultGardenerShootPurpose: "testing",
-			DefaultTrialProvider:        internal.AWS,
-		}, defaultKymaVer, map[string]string{"cf-eu10": "europe", "cf-us10": "us"}, cfg.FreemiumProviders, defaultOIDCValues())
-
-	db := storage.NewMemoryStorage()
-
-	require.NoError(t, err)
-
-	logs := logrus.New()
-	logs.SetLevel(logrus.DebugLevel)
-
-	gardenerClient := gardener.NewDynamicFakeClient()
-
-	provisionerClient := provisioner.NewFakeClientWithGardener(gardenerClient, "kcp-system")
-	eventBroker := event.NewPubSub(logs)
-
-	runtimeOverrides := runtimeoverrides.NewRuntimeOverrides(ctx, cli)
-	accountVersionMapping := runtimeversion.NewAccountVersionMapping(ctx, cli, cfg.VersionConfig.Namespace, cfg.VersionConfig.Name, logs)
-	runtimeVerConfigurator := runtimeversion.NewRuntimeVersionConfigurator(cfg.KymaVersion, accountVersionMapping, nil)
-
-	directorClient := director.NewFakeClient()
-	avsDel, externalEvalCreator, internalEvalAssistant, externalEvalAssistant := createFakeAvsDelegator(t, db, cfg)
-
-	iasFakeClient := ias.NewFakeClient()
-	reconcilerClient := reconciler.NewFakeClient()
-	bundleBuilder := ias.NewBundleBuilder(iasFakeClient, cfg.IAS)
-	edpClient := edp.NewFakeClient()
-	accountProvider := fixAccountProvider()
-	require.NoError(t, err)
-
-	fakeK8sSKRClient := fake.NewClientBuilder().WithScheme(sch).Build()
-	provisionManager := process.NewStagedManager(db.Operations(), eventBroker, cfg.OperationTimeout, cfg.Provisioning, logs.WithField("provisioning", "manager"))
-	provisioningQueue := NewProvisioningProcessingQueue(context.Background(), provisionManager, workersAmount, cfg, db, provisionerClient, inputFactory,
-		avsDel, internalEvalAssistant, externalEvalCreator, runtimeVerConfigurator, runtimeOverrides,
-		edpClient, accountProvider, reconcilerClient, fakeK8sClientProvider(fakeK8sSKRClient), cli, logs)
-
-	provisioningQueue.SpeedUp(10000)
-	provisionManager.SpeedUp(10000)
-
-	updateManager := process.NewStagedManager(db.Operations(), eventBroker, time.Hour, cfg.Update, logs)
-	rvc := runtimeversion.NewRuntimeVersionConfigurator(cfg.KymaVersion, nil, db.RuntimeStates())
-	updateQueue := NewUpdateProcessingQueue(context.Background(), updateManager, 1, db, inputFactory, provisionerClient,
-		eventBroker, rvc, db.RuntimeStates(), decoratedComponentListProvider, reconcilerClient, *cfg, fakeK8sClientProvider(fakeK8sSKRClient), cli, logs)
-	updateQueue.SpeedUp(10000)
-	updateManager.SpeedUp(10000)
-
-	deprovisionManager := process.NewStagedManager(db.Operations(), eventBroker, time.Hour, cfg.Deprovisioning, logs.WithField("deprovisioning", "manager"))
-	deprovisioningQueue := NewDeprovisioningProcessingQueue(ctx, workersAmount, deprovisionManager, cfg, db, eventBroker,
-		provisionerClient, avsDel, internalEvalAssistant, externalEvalAssistant,
-		bundleBuilder, edpClient, accountProvider, reconcilerClient, fakeK8sClientProvider(fakeK8sSKRClient), fakeK8sSKRClient, configProvider, logs,
-	)
-	deprovisionManager.SpeedUp(10000)
-
-	deprovisioningQueue.SpeedUp(10000)
-
-	ts := &BrokerSuiteTest{
-		db:                  db,
-		provisionerClient:   provisionerClient,
-		directorClient:      directorClient,
-		reconcilerClient:    reconcilerClient,
-		gardenerClient:      gardenerClient,
-		router:              mux.NewRouter(),
-		t:                   t,
-		inputBuilderFactory: inputFactory,
-		componentProvider:   decoratedComponentListProvider,
-		k8sKcp:              cli,
-		k8sSKR:              fakeK8sSKRClient,
-		poller:              &broker.DefaultPoller{PollInterval: 3 * time.Millisecond, PollTimeout: 2 * time.Second},
-	}
-
-	ts.CreateAPI(inputFactory, cfg, db, provisioningQueue, deprovisioningQueue, updateQueue, logs)
-
-	notificationFakeClient := notification.NewFakeClient()
-	notificationBundleBuilder := notification.NewBundleBuilder(notificationFakeClient, cfg.Notification)
-
-	upgradeEvaluationManager := avs.NewEvaluationManager(avsDel, avs.Config{})
-	runtimeLister := kebOrchestration.NewRuntimeLister(db.Instances(), db.Operations(), kebRuntime.NewConverter(defaultRegion), logs)
-	runtimeResolver := orchestration.NewGardenerRuntimeResolver(gardenerClient, fixedGardenerNamespace, runtimeLister, logs)
-	kymaQueue := NewKymaOrchestrationProcessingQueue(ctx, db, runtimeOverrides, provisionerClient, eventBroker, inputFactory, &upgrade_kyma.TimeSchedule{
-		Retry:              10 * time.Millisecond,
-		StatusCheck:        100 * time.Millisecond,
-		UpgradeKymaTimeout: 4 * time.Second,
-	}, 250*time.Millisecond, runtimeVerConfigurator, runtimeResolver, upgradeEvaluationManager, cfg, avs.NewInternalEvalAssistant(cfg.Avs), reconcilerClient, notificationBundleBuilder, logs, cli, 1000)
-
-	clusterQueue := NewClusterOrchestrationProcessingQueue(ctx, db, provisionerClient, eventBroker, inputFactory, &upgrade_cluster.TimeSchedule{
-		Retry:                 10 * time.Millisecond,
-		StatusCheck:           100 * time.Millisecond,
-		UpgradeClusterTimeout: 4 * time.Second,
-	}, 250*time.Millisecond, runtimeResolver, upgradeEvaluationManager, notificationBundleBuilder, logs, cli, *cfg, 1000)
-
-	kymaQueue.SpeedUp(1000)
-	clusterQueue.SpeedUp(1000)
-
-	// TODO: in case of cluster upgrade the same Azure Zones must be send to the Provisioner
-	orchestrationHandler := orchestrate.NewOrchestrationHandler(db, kymaQueue, clusterQueue, cfg.MaxPaginationPage, logs)
-	orchestrationHandler.AttachRoutes(ts.router)
-	ts.httpServer = httptest.NewServer(ts.router)
-	return ts
+	return NewBrokerSuiteTestWithConfig(t, cfg, version...)
 }
 
 func NewBrokerSuiteTestWithOptionalRegion(t *testing.T, version ...string) *BrokerSuiteTest {
+	cfg := fixBrokerConfigWithOptionalRegion()
+	return NewBrokerSuiteTestWithConfig(t, cfg, version...)
+}
+
+func NewBrokerSuiteTestWithConfig(t *testing.T, cfg *Config, version ...string) *BrokerSuiteTest {
 	ctx := context.Background()
 	sch := internal.NewSchemeForTests()
 	apiextensionsv1.AddToScheme(sch)
 	additionalKymaVersions := []string{"1.19", "1.20", "main", "2.0"}
 	additionalKymaVersions = append(additionalKymaVersions, version...)
 	cli := fake.NewClientBuilder().WithScheme(sch).WithRuntimeObjects(fixK8sResources(defaultKymaVer, additionalKymaVersions)...).Build()
-	cfg := fixBrokerConfigWithOptionalRegion()
 	if len(version) == 1 {
 		cfg.KymaVersion = version[0] // overriden to
 	}
