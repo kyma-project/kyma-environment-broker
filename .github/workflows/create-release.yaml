@@ -106,22 +106,8 @@ jobs:
 
   run-unit-tests:
     name: Unit tests, go mod tidy
-    needs: [validate-release]
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Set up go environment
-        uses: actions/setup-go@v4
-        with:
-          go-version-file: 'go.mod'
-
-      - name: go mod check
-        run: make go-mod-check
-
-      - name: Run make test
-        run: make test
+    needs: validate-release
+    uses: "./.github/workflows/run-unit-tests-reusable.yaml"
 
   create-draft:
     name: Create draft release
