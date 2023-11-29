@@ -70,7 +70,9 @@ jobs:
           helm install istio-base istio/base -n istio-system --set defaultRevision=default
 
       - name: Apply helm chart
-        run: helm template . | kubectl apply -f -
+        run: |
+          cd resources/keb
+          helm template . | kubectl apply -f -
 
 
   finish-e2e-tests:
