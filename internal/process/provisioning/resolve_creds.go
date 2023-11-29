@@ -55,7 +55,8 @@ func (s *ResolveCredentialsStep) Run(operation internal.Operation, log logrus.Fi
 		return s.retryOrFailOperation(operation, log, hypType, err)
 	}
 
-	s.overwriteProvisioningParameters(&operation, targetSecret, hypType)
+	operation.ProvisioningParameters.Parameters.TargetSecret = &targetSecret
+
 	updatedOperation, err := s.opStorage.UpdateOperation(operation)
 	if err != nil {
 		return operation, 1 * time.Minute, nil
@@ -81,17 +82,6 @@ func (s *ResolveCredentialsStep) retryOrFailOperation(operation internal.Operati
 	log.Errorf("Aborting after 10 minutes of failing to resolve provisioning secret binding for global account ID %s on Hyperscaler %s", operation.ProvisioningParameters.ErsContext.GlobalAccountID, hypType.GetKey())
 
 	return s.operationManager.OperationFailed(operation, msg, err, log)
-}
-
-func (s *ResolveCredentialsStep) overwriteProvisioningParameters(operation *internal.Operation, targetSecret string, hypType hyperscaler.Type) {
-	operation.ProvisioningParameters.Parameters.TargetSecret = &targetSecret
-
-	if hypType.GetName() == "openstack" {
-		// TODO: Overwrite the region parameter in case default region is used. This is to be removed when region is mandatory (Jan 2024).
-		// This is the simplest way to make the region available during deprovisioning when we release subscription
-		effectiveRegion := hypType.GetRegion()
-		operation.ProvisioningParameters.Parameters.Region = &effectiveRegion
-	}
 }
 
 func (s *ResolveCredentialsStep) getTargetSecretFromGardener(operation internal.Operation, log logrus.FieldLogger, hypType hyperscaler.Type, euAccess bool) (string, error) {
