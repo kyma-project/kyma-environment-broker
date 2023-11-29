@@ -1,0 +1,18 @@
+name: Run helm template
+
+on:
+  pull_request:
+    branches: [ main ]
+    types:
+      - opened
+      - reopened
+      - synchronize
+      - ready_for_review
+
+jobs:
+  run-e2e-tests:
+    uses: "./.github/workflows/run-helm-template-reusable.yaml"
+    if: ${{ !github.event.pull_request.draft }}
+    with:
+      last-k3s-versions: 3
+
