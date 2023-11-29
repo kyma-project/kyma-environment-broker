@@ -441,6 +441,15 @@ func IsTrialPlan(planID string) bool {
 	}
 }
 
+func IsOpenstackPlan(planID string) bool {
+	switch planID {
+	case OpenStackPlanID:
+		return true
+	default:
+		return false
+	}
+}
+
 func IsPreviewPlan(planID string) bool {
 	switch planID {
 	case PreviewPlanID:

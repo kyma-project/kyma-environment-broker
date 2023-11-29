@@ -37,7 +37,7 @@ func (s ReleaseSubscriptionStep) Name() string {
 func (s ReleaseSubscriptionStep) Run(operation internal.Operation, log logrus.FieldLogger) (internal.Operation, time.Duration, error) {
 
 	planID := operation.ProvisioningParameters.PlanID
-	if !broker.IsTrialPlan(planID) && !broker.IsOwnClusterPlan(planID) {
+	if needsRelease(planID) {
 		instance, err := s.instanceStorage.GetByID(operation.InstanceID)
 		if err != nil {
 			msg := fmt.Sprintf("after successful deprovisioning failing to release hyperscaler subscription - get the instance data for instanceID [%s]: %s", operation.InstanceID, err.Error())
@@ -71,4 +71,8 @@ func (s ReleaseSubscriptionStep) Run(operation internal.Operation, log logrus.Fi
 		}
 	}
 	return operation, 0, nil
+}
+
+func needsRelease(planID string) bool {
+	return !broker.IsTrialPlan(planID) && !broker.IsOwnClusterPlan(planID) && !broker.IsOpenstackPlan(planID)
 }

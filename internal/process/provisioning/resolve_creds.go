@@ -87,20 +87,20 @@ func (s *ResolveCredentialsStep) retryOrFailOperation(operation internal.Operati
 func (s *ResolveCredentialsStep) getTargetSecretFromGardener(operation internal.Operation, log logrus.FieldLogger, hypType hyperscaler.Type, euAccess bool) (string, error) {
 	var secretName string
 	var err error
-	if !broker.IsTrialPlan(operation.ProvisioningParameters.PlanID) {
-		log.Infof("HAP lookup for secret binding")
-		secretName, err = s.accountProvider.GardenerSecretName(hypType, operation.ProvisioningParameters.ErsContext.GlobalAccountID, euAccess)
-	} else {
+	if broker.IsTrialPlan(operation.ProvisioningParameters.PlanID) || broker.IsOpenstackPlan(operation.ProvisioningParameters.PlanID) {
 		log.Infof("HAP lookup for shared secret binding")
 		secretName, err = s.accountProvider.GardenerSharedSecretName(hypType, euAccess)
+	} else {
+		log.Infof("HAP lookup for secret binding")
+		secretName, err = s.accountProvider.GardenerSecretName(hypType, operation.ProvisioningParameters.ErsContext.GlobalAccountID, euAccess)
 	}
 	return secretName, err
 }
 
 // TODO: Calculate the region parameter using default Openstack region. This is to be removed when region is mandatory (Jan 2024).
-func getEffectiveRegionForOpenstack(pprovisioningParametersRegion *string) string {
-	if pprovisioningParametersRegion != nil && *pprovisioningParametersRegion != "" {
-		return *pprovisioningParametersRegion
+func getEffectiveRegionForOpenstack(provisioningParametersRegion *string) string {
+	if provisioningParametersRegion != nil && *provisioningParametersRegion != "" {
+		return *provisioningParametersRegion
 	}
 	return provider.DefaultOpenStackRegion
 }
