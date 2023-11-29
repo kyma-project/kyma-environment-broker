@@ -14,5 +14,5 @@ jobs:
 
     - name: Run helm template
       run: |
-        cd resource/keb
+        cd resources/keb
         helm template .

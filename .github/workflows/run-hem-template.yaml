@@ -1,4 +1,4 @@
-name: Run unit tests
+name: Run helm template
 
 on:
   push:
