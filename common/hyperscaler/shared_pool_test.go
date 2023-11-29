@@ -28,6 +28,8 @@ func TestSharedPool_SharedCredentialsSecretBinding(t *testing.T) {
 					newSecretBinding("sb1", "s1", "gcp", true, euAccess),
 					newSecretBinding("sb2", "s2", "azure", true, euAccess),
 					newSecretBinding("sb3", "s3", "aws", true, euAccess),
+					newSecretBinding("sb4", "s4", "openstack_eu-de-1", true, euAccess),
+					newSecretBinding("sb5", "s5", "openstack_eu-de-2", true, euAccess),
 				},
 				shoots: []runtime.Object{
 					newShoot("sh1", "sb1"),
@@ -37,6 +39,42 @@ func TestSharedPool_SharedCredentialsSecretBinding(t *testing.T) {
 				},
 				hyperscaler:    GCP(),
 				expectedSecret: "s1",
+			},
+			{
+				description: "should get only Secret Bindings with proper hyperscaler and region",
+				secretBindings: []runtime.Object{
+					newSecretBinding("sb1", "s1", "gcp", true, euAccess),
+					newSecretBinding("sb2", "s2", "azure", true, euAccess),
+					newSecretBinding("sb3", "s3", "aws", true, euAccess),
+					newSecretBinding("sb4", "s4", "openstack_eu-de-1", true, euAccess),
+					newSecretBinding("sb5", "s5", "openstack_eu-de-2", true, euAccess),
+				},
+				shoots: []runtime.Object{
+					newShoot("sh1", "sb1"),
+					newShoot("sh2", "sb1"),
+					newShoot("sh3", "sb1"),
+					newShoot("sh4", "sb2"),
+				},
+				hyperscaler:    Openstack("eu-de-1"),
+				expectedSecret: "s4",
+			},
+			{
+				description: "should get only Secret Bindings with proper hyperscaler and region",
+				secretBindings: []runtime.Object{
+					newSecretBinding("sb1", "s1", "gcp", true, euAccess),
+					newSecretBinding("sb2", "s2", "azure", true, euAccess),
+					newSecretBinding("sb3", "s3", "aws", true, euAccess),
+					newSecretBinding("sb4", "s4", "openstack_eu-de-1", true, euAccess),
+					newSecretBinding("sb5", "s5", "openstack_eu-de-2", true, euAccess),
+				},
+				shoots: []runtime.Object{
+					newShoot("sh1", "sb1"),
+					newShoot("sh2", "sb1"),
+					newShoot("sh3", "sb1"),
+					newShoot("sh4", "sb2"),
+				},
+				hyperscaler:    Openstack("eu-de-2"),
+				expectedSecret: "s5",
 			},
 			{
 				description: "should ignore not shared Secret Bindings",
@@ -98,6 +136,27 @@ func TestSharedPool_SharedCredentialsSecretBinding(t *testing.T) {
 				},
 				hyperscaler:    AWS(),
 				expectedSecret: "s1",
+			},
+			{
+				description: "should get the least used Secret Binding for openstack and region eu-de-1",
+				secretBindings: []runtime.Object{
+					newSecretBinding("sb1", "s1", "gcp", true, euAccess),
+					newSecretBinding("sb2", "s2", "azure", true, euAccess),
+					newSecretBinding("sb3", "s3", "aws", true, euAccess),
+					newSecretBinding("sb4", "s4", "openstack_eu-de-1", true, euAccess),
+					newSecretBinding("sb5", "s5", "openstack_eu-de-2", true, euAccess),
+					newSecretBinding("sb6", "s6", "openstack_eu-de-1", true, euAccess),
+				},
+				shoots: []runtime.Object{
+					newShoot("sh1", "sb4"),
+					newShoot("sh2", "sb4"),
+					newShoot("sh3", "sb4"),
+					newShoot("sh4", "sb6"),
+					newShoot("sh5", "sb6"),
+					newShoot("sh6", "sb5"),
+				},
+				hyperscaler:    Openstack("eu-de-1"),
+				expectedSecret: "s6",
 			},
 		} {
 			t.Run(testCase.description, func(t *testing.T) {
