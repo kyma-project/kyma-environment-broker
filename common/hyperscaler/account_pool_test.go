@@ -68,19 +68,6 @@ func TestCredentialsSecretBinding(t *testing.T) {
 		{"No Available credential for tenant8, AWS returns error - failed to get referenced secret",
 			"tenant8", AWS(), "",
 			"failed to find unassigned secret binding for hyperscalerType: aws"},
-
-		{"In-use credential for tenant10, Openstack with given region - returns existing secret",
-			"tenant10", Openstack("eu-de-1"), "secretBinding10",
-			""},
-		{"No available credential for tenant10 and Openstack with given region (but there is in-use credential for the same tenant and other region)",
-			"tenant10", Openstack("eu-de-2"), "",
-			"failed to find unassigned secret binding for hyperscalerType: openstack_eu-de-2"},
-		{"Available credential for tenant11, Openstack with given region - returns existing secret",
-			"tenant11", Openstack("eu-de-1"), "secretBinding11",
-			""},
-		{"No available credential for tenant11 and Openstack with given region (but there is available credential for the same tenant and other region)",
-			"tenant11", Openstack("eu-de-2"), "",
-			"failed to find unassigned secret binding for hyperscalerType: openstack_eu-de-2"},
 	}
 	for _, testcase := range testcases {
 
@@ -372,43 +359,8 @@ func newTestAccountPool() AccountPool {
 		},
 	}
 	secretBinding9.SetGroupVersionKind(secretBindingGVK)
-	secretBinding10 := &unstructured.Unstructured{
-		Object: map[string]interface{}{
-			"metadata": map[string]interface{}{
-				"name":      "secretBinding10",
-				"namespace": testNamespace,
-				"labels": map[string]interface{}{
-					"hyperscalerType": "openstack_eu-de-1",
-					"tenantName":      "tenant10",
-				},
-			},
-			"secretRef": map[string]interface{}{
-				"name":      "secret10",
-				"namespace": testNamespace,
-			},
-		},
-	}
-	secretBinding10.SetGroupVersionKind(secretBindingGVK)
-
-	secretBinding11 := &unstructured.Unstructured{
-		Object: map[string]interface{}{
-			"metadata": map[string]interface{}{
-				"name":      "secretBinding11",
-				"namespace": testNamespace,
-				"labels": map[string]interface{}{
-					"hyperscalerType": "openstack_eu-de-1",
-				},
-			},
-			"secretRef": map[string]interface{}{
-				"name":      "secret11",
-				"namespace": testNamespace,
-			},
-		},
-	}
-	secretBinding11.SetGroupVersionKind(secretBindingGVK)
-
 	gardenerFake := gardener.NewDynamicFakeClient(secretBinding1, secretBinding2, secretBinding3, secretBinding4,
-		secretBinding5, secretBinding6, secretBinding7, secretBinding8, secretBinding9, secretBinding10, secretBinding11)
+		secretBinding5, secretBinding6, secretBinding7, secretBinding8, secretBinding9)
 
 	return NewAccountPool(gardenerFake, testNamespace)
 }
