@@ -1,4 +1,4 @@
-name: Validate keb chart (reusable)
+name: Validate KEB chart (reusable)
 
 on:
   workflow_call:
@@ -16,7 +16,7 @@ jobs:
     - name: Checkout code
       uses: actions/checkout@v4
 
-    - name: Validate keb helm chart
+    - name: Validate KEB helm chart
       run: |
         cd resources/keb
         helm template .
@@ -68,7 +68,7 @@ jobs:
           helm repo add istio https://istio-release.storage.googleapis.com/charts
           helm install istio-base istio/base -n istio-system --set defaultRevision=default
 
-      - name: Deploy keb helm chart
+      - name: Deploy KEB helm chart
         run: |
           cd resources/keb
           helm template . | kubectl apply -f -
@@ -80,7 +80,7 @@ jobs:
     outputs:
       success: ${{ steps.set-output.outputs.success }}
     steps:
-      - name: Confirm keb chart tests result
+      - name: Confirm KEB chart tests result
         id: set-output
         run: echo "success=true" >> "${GITHUB_OUTPUT}"
 
@@ -89,10 +89,10 @@ jobs:
     if: always()
     needs: confirm-keb-chart-tests-result
     steps:
-      - name: Check keb chart tests result
+      - name: Check KEB chart tests result
         run: |
           if [ "${{ needs.confirm-keb-chart-tests-result.outputs.success }}" != "true" ]; then
-            echo "keb chart tests failed"
+            echo "KEB chart tests failed"
             exit 1
           fi
-          echo "keb chart tests passed"
+          echo "KEB chart tests passed"

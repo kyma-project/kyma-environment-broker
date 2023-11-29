@@ -1,4 +1,4 @@
-name: Validate keb chart
+name: Validate KEB chart
 
 on:
   pull_request:

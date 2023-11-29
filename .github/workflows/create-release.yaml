@@ -113,7 +113,7 @@ jobs:
     uses: "./.github/workflows/run-unit-tests-reusable.yaml"
 
   run-keb-chart-tests:
-    name: Validate keb chart 
+    name: Validate KEB chart 
     needs: validate-release
     uses: "./.github/workflows/run-keb-chart-tests-reusable.yaml"
     secrets: inherit
