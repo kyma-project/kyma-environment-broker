@@ -64,11 +64,6 @@ jobs:
           kubectl create namespace kyma-system
           kubectl create namespace istio-system
 
-      - name: Install istio
-        run: |
-          helm repo add istio https://istio-release.storage.googleapis.com/charts
-          helm install istio-base istio/base -n istio-system --set defaultRevision=default
-
       - name: Apply helm chart
         run: |
           cd resources/keb
