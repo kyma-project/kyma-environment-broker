@@ -25,6 +25,7 @@ jobs:
   
   prepare-tests:
     runs-on: ubuntu-latest
+    needs: helm-template
     outputs:
       versions: ${{ steps.get-versions.outputs.k3s_versions }}
     steps:
