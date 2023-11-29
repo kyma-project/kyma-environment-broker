@@ -74,7 +74,7 @@ jobs:
         run: |
           cd resources/keb
           helm template . | kubectl apply -f -
-  
+
   check-e2e-status:
     needs: run-e2e-matrix
     runs-on: ubuntu-latest
@@ -88,15 +88,15 @@ jobs:
   finish-e2e-tests:
     runs-on: ubuntu-latest
     if: always()
-    needs: [run-e2e-matrix, check-e2e-status]
+    needs: [check-e2e-status]
     steps:
       - name: Final step
         run: |
           passed="${{ needs.check-e2e-status.outputs.success }}"
           if [[ $passed == "true" ]]; then
-            echo "Shards passed"
+            echo "Tests passed"
             exit 0
           else
-            echo "Shards failed"
+            echo "Tests failed"
             exit 1
           fi
