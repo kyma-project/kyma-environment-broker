@@ -1,0 +1,18 @@
+# Call this workflow from other jobs to execute helm template in the current context
+
+name: Run helm template (reusable)
+
+on:
+  workflow_call:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Run helm template
+      run: |
+        cd resource/keb
+        helm template .
