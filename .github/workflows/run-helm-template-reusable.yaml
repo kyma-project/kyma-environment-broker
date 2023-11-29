@@ -83,7 +83,7 @@ jobs:
       success: ${{ steps.setoutput.outputs.success }}
     steps:
       - id: setoutput
-        run: echo "::set-output name=success::true"
+        run: echo "success=true" >> "${GITHUB_OUTPUT}"
 
   finish-e2e-tests:
     runs-on: ubuntu-latest
