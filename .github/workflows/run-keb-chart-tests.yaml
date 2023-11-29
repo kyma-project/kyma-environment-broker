@@ -1,4 +1,4 @@
-name: Validate and deploy keb helm chart 
+name: Validate keb chart
 
 on:
   pull_request:

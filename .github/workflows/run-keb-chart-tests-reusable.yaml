@@ -1,4 +1,4 @@
-name: Validate and deploy keb helm chart (reusable)
+name: Validate keb chart (reusable)
 
 on:
   workflow_call:
