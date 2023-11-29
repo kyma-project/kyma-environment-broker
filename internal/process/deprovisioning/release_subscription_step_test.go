@@ -222,6 +222,7 @@ func fixGCPInstance(instanceID string) internal.Instance {
 func fixOpenstackInstance(instanceID string) internal.Instance {
 	instance := fixture.FixInstance(instanceID)
 	instance.Provider = internal.Openstack
+	instance.ProviderRegion = "eu-de-1"
 	return instance
 }
 
