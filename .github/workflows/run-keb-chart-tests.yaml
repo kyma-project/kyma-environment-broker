@@ -1,4 +1,4 @@
-name: Run helm template
+name: Validate and deploy keb helm chart 
 
 on:
   pull_request:
@@ -10,8 +10,8 @@ on:
       - ready_for_review
 
 jobs:
-  run-e2e-tests:
-    uses: "./.github/workflows/run-helm-template-reusable.yaml"
+  run-keb-chart-tests:
+    uses: "./.github/workflows/run-keb-chart-tests-reusable.yaml"
     if: ${{ !github.event.pull_request.draft }}
     with:
       last-k3s-versions: 3

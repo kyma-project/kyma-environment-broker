@@ -1,6 +1,4 @@
-# Call this workflow from other jobs to execute helm template in the current context
-
-name: Run helm template (reusable)
+name: Validate and deploy keb helm chart (reusable)
 
 on:
   workflow_call:
@@ -12,20 +10,20 @@ on:
         type: string
 
 jobs:
-  helm-template:
+  validate-keb-helm-chart:
     runs-on: ubuntu-latest
     steps:
     - name: Checkout code
       uses: actions/checkout@v4
 
-    - name: Run helm template
+    - name: Validate keb helm chart
       run: |
         cd resources/keb
         helm template .
   
   prepare-tests:
     runs-on: ubuntu-latest
-    needs: helm-template
+    needs: validate-keb-helm-chart
     outputs:
       versions: ${{ steps.get-versions.outputs.k3s_versions }}
     steps:
@@ -46,7 +44,7 @@ jobs:
           MATRIX_AS_JSON=$(echo ${VERSIONS[*]} | awk 'END {printf "{\"include\":[";for (i = 1; i < NF; i++) printf "{\"version\":%s},",$i;printf "{\"version\":%s}]}",$i }'|jq -c)
           echo "k3s_versions=${MATRIX_AS_JSON}" >> "${GITHUB_OUTPUT}"
 
-  run-e2e-matrix:
+  run-keb-chart-matrix:
     runs-on: ubuntu-latest
     needs: prepare-tests
     timeout-minutes: 5
@@ -70,33 +68,31 @@ jobs:
           helm repo add istio https://istio-release.storage.googleapis.com/charts
           helm install istio-base istio/base -n istio-system --set defaultRevision=default
 
-      - name: Apply helm chart
+      - name: Deploy keb helm chart
         run: |
           cd resources/keb
           helm template . | kubectl apply -f -
 
-  check-e2e-status:
-    needs: run-e2e-matrix
+  confirm-keb-chart-tests-result:
+    needs: run-keb-chart-matrix
     runs-on: ubuntu-latest
     if: success() 
     outputs:
-      success: ${{ steps.setoutput.outputs.success }}
+      success: ${{ steps.set-output.outputs.success }}
     steps:
-      - id: setoutput
+      - name: Confirm keb chart tests result
+        id: set-output
         run: echo "success=true" >> "${GITHUB_OUTPUT}"
 
-  finish-e2e-tests:
+  finish-keb-chart-tests:
     runs-on: ubuntu-latest
     if: always()
-    needs: [check-e2e-status]
+    needs: confirm-keb-chart-tests-result
     steps:
-      - name: Final step
+      - name: Check keb chart tests result
         run: |
-          passed="${{ needs.check-e2e-status.outputs.success }}"
-          if [[ $passed == "true" ]]; then
-            echo "Tests passed"
-            exit 0
-          else
-            echo "Tests failed"
+          if [ "${{ needs.confirm-keb-chart-tests-result.outputs.success }}" != "true" ]; then
+            echo "keb chart tests failed"
             exit 1
           fi
+          echo "keb chart tests passed"
