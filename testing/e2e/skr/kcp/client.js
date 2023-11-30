@@ -375,6 +375,24 @@ class KCPWrapper {
       throw new Error(`kcp command failed: ${err.toString()}`);
     }
   }
+
+  async ensureLatestGivenOperationTypeIsInGivenState(instanceID, operationType, operationState, timeout = 5) {
+    debug(`Waiting for ${operationType} to be in state: ${operationState}...`);
+    try {
+      await this.login();
+      const res = await wait(
+          () => this.runtimes({instanceID: instanceID, ops: true}),
+          (res) => res && res.data[0].status.hasOwnProperty(operationType) && res.data[0].status[operationType].data[0].state === operationState,
+          1000 * 60 * timeout,
+          1000 * 60, // 1 minute
+      );
+
+      return res;
+    } catch (error) {
+      debug(error);
+      throw new Error('failed during ensureLatestGivenOperationTypeIsInGivenState');
+    }
+  }
 }
 
 module.exports = {
