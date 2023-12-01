@@ -382,7 +382,9 @@ class KCPWrapper {
       await this.login();
       const res = await wait(
           () => this.runtimes({instanceID: instanceID, ops: true}),
-          (res) => res && res.data[0].status.hasOwnProperty(operationType) && res.data[0].status[operationType].data[0].state === operationState,
+          (res) => res &&
+              res.data[0].status.hasOwnProperty(operationType) &&
+              res.data[0].status[operationType].data[0].state === operationState,
           1000 * 60 * timeout,
           1000 * 60, // 1 minute
       );
