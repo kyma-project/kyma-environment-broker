@@ -4,6 +4,7 @@ const {gatherOptions} = require('../skr-test/helpers');
 const {getOrProvisionSKR} = require('../skr-test/provision/provision-skr');
 const {ensureOperationSucceeded} = require('../kyma-environment-broker/helpers');
 const {deprovisionAndUnregisterSKR} = require('../skr-test/provision/deprovision-skr');
+const {debug} = require('../utils');
 
 const kcp = new KCPWrapper(KCPConfig.fromEnv());
 const keb = new KEBClient(KEBConfig.fromEnv());
@@ -32,9 +33,11 @@ describe('SKR Trial suspension test', function() {
     const rs = await kcp.ensureLatestGivenOperationTypeIsInGivenState(options.instanceID,
         suspensionOperationType, inProgressOperationState, trialCleanupTriggerTimeout);
     suspensionOpID = rs.data[0].status[suspensionOperationType].data[0].operationID;
+    assert.isDefined(suspensionOpID, `suspension operation ID: ${suspensionOpID}`);
   });
 
   it('should wait until suspension succeeds', async function() {
+    debug(`Waiting until suspension succeeds...`);
     await ensureOperationSucceeded(keb, kcp, options.instanceID, suspensionOpID, suspensionTimeout);
   });
 

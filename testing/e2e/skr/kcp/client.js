@@ -385,7 +385,7 @@ class KCPWrapper {
           (res) => res &&
               res.data[0].status.hasOwnProperty(operationType) &&
               res.data[0].status[operationType].data[0].state === operationState,
-          1000 * 60 * timeout,
+          timeout,
           1000 * 60, // 1 minute
       );
 
