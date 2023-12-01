@@ -10,7 +10,7 @@ require (
 	github.com/Azure/go-autorest/autorest/adal v0.9.23
 	github.com/Masterminds/semver v1.5.0
 	github.com/Masterminds/sprig v2.22.0+incompatible
-	github.com/aws/aws-sdk-go-v2/credentials v1.16.7
+	github.com/aws/aws-sdk-go-v2/credentials v1.16.9
 	github.com/aws/aws-sdk-go-v2/service/ec2 v1.137.1
 	github.com/dlmiddlecote/sqlstats v1.0.2
 	github.com/docker/docker v24.0.7+incompatible
@@ -53,11 +53,11 @@ require (
 )
 
 require (
-	github.com/aws/aws-sdk-go-v2 v1.23.3
-	github.com/aws/aws-sdk-go-v2/internal/configsources v1.2.6 // indirect
-	github.com/aws/aws-sdk-go-v2/internal/endpoints/v2 v2.5.6 // indirect
-	github.com/aws/aws-sdk-go-v2/service/internal/presigned-url v1.10.6 // indirect
-	github.com/aws/smithy-go v1.18.0 // indirect
+	github.com/aws/aws-sdk-go-v2 v1.23.5
+	github.com/aws/aws-sdk-go-v2/internal/configsources v1.2.8 // indirect
+	github.com/aws/aws-sdk-go-v2/internal/endpoints/v2 v2.5.8 // indirect
+	github.com/aws/aws-sdk-go-v2/service/internal/presigned-url v1.10.8 // indirect
+	github.com/aws/smithy-go v1.18.1 // indirect
 	github.com/jmespath/go-jmespath v0.4.0 // indirect
 )
 
@@ -73,7 +73,7 @@ require (
 	github.com/Microsoft/go-winio v0.6.1 // indirect
 	github.com/agnivade/levenshtein v1.1.1 // indirect
 	github.com/asaskevich/govalidator v0.0.0-20230301143203-a9d515a09cc2 // indirect
-	github.com/aws/aws-sdk-go-v2/service/internal/accept-encoding v1.10.2 // indirect
+	github.com/aws/aws-sdk-go-v2/service/internal/accept-encoding v1.10.3 // indirect
 	github.com/beorn7/perks v1.0.1 // indirect
 	github.com/cespare/xxhash/v2 v2.2.0 // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
