@@ -37,7 +37,7 @@ describe('SKR Trial suspension test', function() {
   });
 
   it('should wait until suspension succeeds', async function() {
-    debug(`Waiting until suspension succeeds...`);
+    debug(`Waiting until suspension operation succeeds...`);
     await ensureOperationSucceeded(keb, kcp, options.instanceID, suspensionOpID, suspensionTimeout);
   });
 

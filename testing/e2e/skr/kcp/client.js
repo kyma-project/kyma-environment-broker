@@ -377,7 +377,7 @@ class KCPWrapper {
   }
 
   async ensureLatestGivenOperationTypeIsInGivenState(instanceID, operationType, operationState, timeout) {
-    debug(`Waiting for ${operationType} to be in state: ${operationState}...`);
+    debug(`Waiting for "${operationType}" operation to be in state "${operationState}"...`);
     try {
       await this.login();
       const res = await wait(
