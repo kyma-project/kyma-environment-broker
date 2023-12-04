@@ -29,6 +29,8 @@ type Config struct {
 	Broker           broker.ClientConfig
 	DryRun           bool          `envconfig:"default=true"`
 	ExpirationPeriod time.Duration `envconfig:"default=336h"`
+	TestRun          bool          `envconfig:"default=false"`
+	TestSubaccountID string        `envconfig:"default=prow-keb-trial-suspension"`
 }
 
 type TrialCleanupService struct {
@@ -92,6 +94,9 @@ func newTrialCleanupService(cfg Config, brokerClient BrokerClient, instances sto
 func (s *TrialCleanupService) PerformCleanup() error {
 
 	trialInstancesFilter := dbmodel.InstanceFilter{PlanIDs: []string{trialPlanID}}
+	if s.cfg.TestRun {
+		trialInstancesFilter.SubAccountIDs = []string{s.cfg.TestSubaccountID}
+	}
 	trialInstances, trialInstancesCount, err := s.getInstances(trialInstancesFilter)
 
 	if err != nil {
