@@ -5,6 +5,7 @@ const {getOrProvisionSKR} = require('../skr-test/provision/provision-skr');
 const {ensureOperationSucceeded} = require('../kyma-environment-broker/helpers');
 const {deprovisionAndUnregisterSKR} = require('../skr-test/provision/deprovision-skr');
 const {debug} = require('../utils');
+const {assert} = require('chai');
 
 const kcp = new KCPWrapper(KCPConfig.fromEnv());
 const keb = new KEBClient(KEBConfig.fromEnv());
