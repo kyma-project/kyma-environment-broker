@@ -108,7 +108,7 @@ func (b *UpdateEndpoint) Update(_ context.Context, instanceID string, details do
 
 	// validation of incoming input
 	if err := b.validateWithJsonSchemaValidator(details, instance); err != nil {
-		return domain.UpdateServiceSpec{}, err
+		return domain.UpdateServiceSpec{}, apiresponses.NewFailureResponse(err, http.StatusUnprocessableEntity, "")
 	}
 
 	// If the param contains "expired" - then process expiration (save it in the instance)
