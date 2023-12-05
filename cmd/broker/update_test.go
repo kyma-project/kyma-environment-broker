@@ -2022,7 +2022,7 @@ func TestUpdateAutoscalerWrongParams(t *testing.T) {
 }`)
 
 	// then
-	assert.Equal(t, http.StatusUnprocessableEntity, resp.StatusCode)
+	assert.Equal(t, http.StatusBadRequest, resp.StatusCode)
 }
 
 func TestUpdateAutoscalerPartialSequence(t *testing.T) {
@@ -2069,7 +2069,7 @@ func TestUpdateAutoscalerPartialSequence(t *testing.T) {
 }`)
 
 	// then
-	assert.Equal(t, http.StatusUnprocessableEntity, resp.StatusCode)
+	assert.Equal(t, http.StatusBadRequest, resp.StatusCode)
 
 	// when
 	resp = suite.CallAPI("PATCH", fmt.Sprintf("oauth/cf-eu10/v2/service_instances/%s?accepts_incomplete=true", id), `
@@ -2160,7 +2160,7 @@ func TestUpdateAutoscalerPartialSequence(t *testing.T) {
 }`)
 
 	// then
-	assert.Equal(t, http.StatusUnprocessableEntity, resp.StatusCode)
+	assert.Equal(t, http.StatusBadRequest, resp.StatusCode)
 }
 
 func TestUpdateWhenBothErsContextAndUpdateParametersProvided(t *testing.T) {
