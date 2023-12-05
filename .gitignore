@@ -4,6 +4,7 @@
 testing/e2e/skr/node_modules/
 
 testing/e2e/skr/junit_keb-e2e-skr.xml
+testing/e2e/skr/config.yaml
 
 .idea/
 
