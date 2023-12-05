@@ -49,4 +49,4 @@ if invalid_prs:
     print('\n'.join([f"PR: {pr}" for pr in invalid_prs]))
     sys.exit(1) 
 
-print("\nAll PRs have exactly one label from the pool")
+print("\nAll PRs have exactly one required label")
