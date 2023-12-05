@@ -300,7 +300,7 @@ func TestUpdateEndpoint_UpdateAutoscalerParams(t *testing.T) {
 		assert.ErrorContains(t, err, "while validating update parameters:")
 		assert.IsType(t, err, &apiresponses.FailureResponse{}, "Updating returned error of unexpected type")
 		apierr := err.(*apiresponses.FailureResponse)
-		assert.Equal(t, apierr.ValidatedStatusCode(nil), http.StatusUnprocessableEntity, "Updating status code not matching")
+		assert.Equal(t, apierr.ValidatedStatusCode(nil), http.StatusBadRequest, "Updating status code not matching")
 		assert.False(t, response.IsAsync)
 	})
 
@@ -320,7 +320,7 @@ func TestUpdateEndpoint_UpdateAutoscalerParams(t *testing.T) {
 		assert.ErrorContains(t, err, "AutoScalerMax 3 should be larger than AutoScalerMin 4")
 		assert.IsType(t, err, &apiresponses.FailureResponse{}, "Updating returned error of unexpected type")
 		apierr := err.(*apiresponses.FailureResponse)
-		assert.Equal(t, apierr.ValidatedStatusCode(nil), http.StatusUnprocessableEntity, "Updating status code not matching")
+		assert.Equal(t, apierr.ValidatedStatusCode(nil), http.StatusBadRequest, "Updating status code not matching")
 		assert.False(t, response.IsAsync)
 	})
 
@@ -340,7 +340,7 @@ func TestUpdateEndpoint_UpdateAutoscalerParams(t *testing.T) {
 		assert.ErrorContains(t, err, "while validating update parameters:")
 		assert.IsType(t, err, &apiresponses.FailureResponse{}, "Updating returned error of unexpected type")
 		apierr := err.(*apiresponses.FailureResponse)
-		assert.Equal(t, apierr.ValidatedStatusCode(nil), http.StatusUnprocessableEntity, "Updating status code not matching")
+		assert.Equal(t, apierr.ValidatedStatusCode(nil), http.StatusBadRequest, "Updating status code not matching")
 		assert.False(t, response.IsAsync)
 	})
 }

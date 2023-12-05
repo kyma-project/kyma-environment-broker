@@ -108,7 +108,7 @@ func (b *UpdateEndpoint) Update(_ context.Context, instanceID string, details do
 
 	// validation of incoming input
 	if err := b.validateWithJsonSchemaValidator(details, instance); err != nil {
-		return domain.UpdateServiceSpec{}, apiresponses.NewFailureResponse(err, http.StatusUnprocessableEntity, "")
+		return domain.UpdateServiceSpec{}, apiresponses.NewFailureResponse(err, http.StatusBadRequest, "")
 	}
 
 	// If the param contains "expired" - then process expiration (save it in the instance)
@@ -247,7 +247,7 @@ func (b *UpdateEndpoint) processUpdateParameters(instance *internal.Instance, de
 	}
 	if err := operation.ProvisioningParameters.Parameters.AutoScalerParameters.Validate(autoscalerMin, autoscalerMax); err != nil {
 		logger.Errorf("invalid autoscaler parameters: %s", err.Error())
-		return domain.UpdateServiceSpec{}, apiresponses.NewFailureResponse(err, http.StatusUnprocessableEntity, err.Error())
+		return domain.UpdateServiceSpec{}, apiresponses.NewFailureResponse(err, http.StatusBadRequest, err.Error())
 	}
 	err = b.operationStorage.InsertOperation(operation)
 	if err != nil {
