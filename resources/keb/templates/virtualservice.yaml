@@ -3,7 +3,7 @@
 apiVersion: networking.istio.io/v1beta1
 kind: VirtualService
 metadata:
-  name: {{ template "fullname" . }}
+  name:  {{ include "kyma-env-broker.fullname" . }}
   annotations:
     argocd.argoproj.io/sync-options: Prune=false
 spec:
