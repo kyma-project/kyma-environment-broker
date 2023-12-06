@@ -41,7 +41,7 @@ func (t Type) GetRegion() string {
 
 func (t Type) GetKey() string {
 	if t.hyperscalerName == "openstack" && t.hyperscalerRegion != "" {
-		return t.hyperscalerName + "_" + t.hyperscalerRegion
+		return t.hyperscalerName + "-" + t.hyperscalerRegion
 	}
 	return t.hyperscalerName
 }
