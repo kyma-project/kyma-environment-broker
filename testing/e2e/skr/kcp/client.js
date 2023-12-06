@@ -20,6 +20,14 @@ class KCPConfig {
     this.password = getEnvOrThrow('KCP_TECH_USER_PASSWORD');
     this.clientID = getEnvOrThrow('KCP_OIDC_CLIENT_ID');
 
+    if (process.env.KCP_OIDC_CLIENT_SECRET) {
+      this.clientSecret = getEnvOrThrow('KCP_OIDC_CLIENT_SECRET');
+    } else {
+      this.oauthClientID = getEnvOrThrow('KCP_OAUTH2_CLIENT_ID');
+      this.oauthSecret = getEnvOrThrow('KCP_OAUTH2_CLIENT_SECRET');
+      this.oauthIssuer = getEnvOrThrow('KCP_OAUTH2_ISSUER_URL');
+    }
+
     this.motherShipApiUrl = getEnvOrThrow('KCP_MOTHERSHIP_API_URL');
     this.kubeConfigApiUrl = getEnvOrThrow('KCP_KUBECONFIG_API_URL');
   }
@@ -201,7 +209,7 @@ class KCPWrapper {
 
   async getRuntimeStatusOperations(instanceID) {
     await this.login();
-    const runtimeStatus = await this.runtimes({instanceID: instanceID, ops: true});
+    const runtimeStatus = await this.runtimes({instanceID: instanceID, ops: true, state: 'all'});
 
     return JSON.stringify(runtimeStatus, null, '\t');
   }

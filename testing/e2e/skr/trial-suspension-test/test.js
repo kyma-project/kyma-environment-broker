@@ -2,10 +2,10 @@ const {KCPWrapper, KCPConfig} = require('../kcp/client');
 const {KEBClient, KEBConfig} = require('../kyma-environment-broker');
 const {gatherOptions} = require('../skr-test/helpers');
 const {getOrProvisionSKR} = require('../skr-test/provision/provision-skr');
-const {ensureOperationSucceeded} = require('../kyma-environment-broker/helpers');
 const {deprovisionAndUnregisterSKR} = require('../skr-test/provision/deprovision-skr');
 const {debug} = require('../utils');
 const {assert} = require('chai');
+const {ensureSuspensionSucceeded, callFuncAndPrintElapsedTime} = require('./helpers');
 
 const kcp = new KCPWrapper(KCPConfig.fromEnv());
 const keb = new KEBClient(KEBConfig.fromEnv());
@@ -27,22 +27,25 @@ describe('SKR Trial suspension test', function() {
   const options = gatherOptions();
 
   before('Ensure SKR Trial is provisioned', async function() {
-    await getOrProvisionSKR(options, false, provisioningTimeout);
+    await callFuncAndPrintElapsedTime(getOrProvisionSKR(options, false, provisioningTimeout));
   });
 
   it('should wait until Trial Cleanup CronJob triggers suspension', async function() {
-    const rs = await kcp.ensureLatestGivenOperationTypeIsInGivenState(options.instanceID,
-        suspensionOperationType, inProgressOperationState, trialCleanupTriggerTimeout);
+    const rs = await callFuncAndPrintElapsedTime(kcp.ensureLatestGivenOperationTypeIsInGivenState(options.instanceID,
+        suspensionOperationType, inProgressOperationState, trialCleanupTriggerTimeout));
     suspensionOpID = rs.data[0].status[suspensionOperationType].data[0].operationID;
     assert.isDefined(suspensionOpID, `suspension operation ID: ${suspensionOpID}`);
   });
 
   it('should wait until suspension succeeds', async function() {
     debug(`Waiting until suspension operation succeeds...`);
-    await ensureOperationSucceeded(keb, kcp, options.instanceID, suspensionOpID, suspensionTimeout);
+    await callFuncAndPrintElapsedTime(
+        ensureSuspensionSucceeded(keb, kcp, options.instanceID, suspensionOpID, suspensionTimeout));
   });
 
   after('Cleanup the resources', async function() {
-    await deprovisionAndUnregisterSKR(options, deprovisioningAfterSuspensionTimeout, false, true);
+    await callFuncAndPrintElapsedTime(
+        deprovisionAndUnregisterSKR(
+            options, deprovisioningAfterSuspensionTimeout, false, true));
   });
 });
