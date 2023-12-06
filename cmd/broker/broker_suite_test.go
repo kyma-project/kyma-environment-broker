@@ -136,7 +136,8 @@ func NewBrokerSuiteTest(t *testing.T, version ...string) *BrokerSuiteTest {
 }
 
 func NewBrokerSuiteTestWithOptionalRegion(t *testing.T, version ...string) *BrokerSuiteTest {
-	cfg := fixBrokerConfigWithOptionalRegion()
+	cfg := fixConfig()
+	cfg.Broker.RegionParameterIsRequired = false
 	return NewBrokerSuiteTestWithConfig(t, cfg, version...)
 }
 
