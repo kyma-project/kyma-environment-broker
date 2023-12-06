@@ -383,6 +383,7 @@ class KCPWrapper {
       const res = await wait(
           () => this.runtimes({instanceID: instanceID, ops: true}),
           (res) => res &&
+              res.data.length > 0 &&
               res.data[0].status.hasOwnProperty(operationType) &&
               res.data[0].status[operationType].data[0].state === operationState,
           timeout,
