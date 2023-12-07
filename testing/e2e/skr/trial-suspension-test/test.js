@@ -41,6 +41,7 @@ describe('SKR Trial suspension test', function() {
 
   it('should wait until Trial Cleanup CronJob triggers suspension', async function() {
     if (skipTests) {
+      console.log(`skipping test due to failures`);
       this.skip();
     }
 
@@ -58,6 +59,7 @@ describe('SKR Trial suspension test', function() {
 
   it('should wait until suspension succeeds', async function() {
     if (skipTests) {
+      console.log(`skipping test due to failures`);
       this.skip();
     }
 
