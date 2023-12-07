@@ -19,12 +19,12 @@ The Kyma Environment Broker release pipeline creates proper artifacts:
 To create a release, follow these steps:
 
 1. Run GitHub action **Create release**:  
-   i.  go to the **Actions** tab  
-   ii. click on **Create release** workflow   
-   iii. click  **Run workflow** on the right  
-   iv. provide a version, for example, 1.2.0  
-   v. choose whether to bump or not to bump the security scanner config  
-   vi. enter a number of last k3s versions to be used for KEB chart tests or leave empty (default value is 3)
+   i.  Go to the **Actions** tab  
+   ii. Click on **Create release** workflow   
+   iii. Click  **Run workflow** on the right  
+   iv. Provide a version, for example, 1.2.0  
+   v. Choose whether to bump or not to bump the security scanner config  
+   vi. Enter a number of the last k3s versions to be used for KEB chart tests or leave empty (default value is `3`)
    
 2. The GitHub action, defined in the [`create-release.yaml`](/.github/workflows/create-release.yaml) file, validates the release by checking if the GitHub tag already exists, if there are any old Docker images for that GitHub tag, and if merged PRs that will be part of this release are labeled correctly.
 3. The GitHub action asynchronously initiates unit tests, KEB chart tests, and if you chose in step 1.v to bump the security scanner config, the GitHub action creates a PR with a new security scanner config that includes the new GitHub tag version.
