@@ -2,7 +2,7 @@
 
 ## ESLint workflow
 
-This [workflow](/.github/workflows/run-eslint.yaml) runs the ESLint.
+This [workflow](/.github/workflows/run-eslint.yaml) is triggered by PRs on the `main` branch. It runs the ESLint.
 
 The workflow:
 - Checks out code 
@@ -20,15 +20,15 @@ See [Kyma Environment Broker release pipeline](04-20-release.md) to learn more a
 
 ## Label validator workflow
 
-This workflow is triggered by PRs on the `main` branch. It checks the labels on the PR and requires that the PR has exactly one of the labels listed [here](/.github/release.yaml).
+This [workflow](/.github/workflows/label-validator.yaml) is triggered by PRs on the `main` branch. It checks the labels on the PR and requires that the PR has exactly one of the labels listed [here](/.github/release.yml).
 
 ## Unit tests workflow
 
-This workflow is triggered by PRs on the `main` branch. Then it calls the reusable [workflow](/.github/workflows/run-unit-tests-reusable.yaml).
+This [workflow](/.github/workflows/run-unit-tests.yaml) is triggered by PRs on the `main` branch. Then it calls the reusable [workflow](/.github/workflows/run-unit-tests-reusable.yaml).
 
 ## KEB chart tests workflow
 
-This workflow is triggered by PRs on the `main` branch. Then it calls the reusable [workflow](/.github/workflows/run-keb-chart-tests-reusable.yaml). 
+This [workflow](/.github/workflows/run-keb-chart-tests.yaml) is triggered by PRs on the `main` branch. Then it calls the reusable [workflow](/.github/workflows/run-keb-chart-tests-reusable.yaml). 
 
 ## Reusable workflows
 
