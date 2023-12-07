@@ -59,7 +59,7 @@ This [workflow](/.github/workflows/run-unit-tests-reusable.yaml) runs the unit t
 No parameters are passed from the calling workflow (callee).
 
 The workflow:
-- checks out code and sets up the cache
-- sets up the Go environment
-- invokes `make go-mod-check`
-- invokes `make test`
+- Checks out code and sets up the cache
+- Sets up the Go environment
+- Invokes `make go-mod-check`
+- Invokes `make test`
