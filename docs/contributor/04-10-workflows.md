@@ -20,7 +20,7 @@ See [Kyma Environment Broker release pipeline](04-20-release.md) to learn more a
 
 ## Label validator workflow
 
-This [workflow](/.github/workflows/label-validator.yaml) is triggered by PRs on the `main` branch. It checks the labels on the PR and requires that the PR has exactly one of the labels listed [here](/.github/release.yml).
+This [workflow](/.github/workflows/label-validator.yml) is triggered by PRs on the `main` branch. It checks the labels on the PR and requires that the PR has exactly one of the labels listed [here](/.github/release.yml).
 
 ## Unit tests workflow
 
@@ -36,7 +36,7 @@ There are reusable workflows created. Anyone with access to a reusable workflow 
 
 ### KEB chart tests
 
-This [workflow](/.github/workflows/run-keb-chart-tests-reusable) applies the KEB chart on the k3s cluster. 
+This [workflow](/.github/workflows/run-keb-chart-tests-reusable.yaml) applies the KEB chart on the k3s cluster. 
 You pass the following parameters from the calling workflow:
 
 | Parameter name  | Required | Description                                                          |
