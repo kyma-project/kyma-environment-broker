@@ -45,13 +45,13 @@ You pass the following parameters from the calling workflow:
 
 
 The workflow:
-- checks if the KEB chart is rendered by helm
-- fetches the **last-k3s-versions** tag versions of k3s releases 
-- prepares the **last-k3s-versions** k3s clusters with the Docker registries using the list of versions from the previous step
-- creates required namespaces
-- installs required dependencies by the KEB charts
-- renders and applies the KEB chart on the k3s cluster
-- waits for all tests to finish
+- Checks if the KEB chart is rendered by Helm
+- Fetches the **last-k3s-versions** tag versions of k3s releases 
+- Prepares the **last-k3s-versions** k3s clusters with the Docker registries using the list of versions from the previous step
+- Creates required Namespaces
+- Installs required dependencies by the KEB charts
+- Renders and applies the KEB chart on the k3s cluster
+- Waits for all tests to finish
 
 ### Unit tests
 
