@@ -354,6 +354,8 @@ trialCleanup:
   schedule: "0,15,30,45 * * * *"
   dryRun: true
   expirationPeriod: 336h
+  testRun: false
+  testSubaccountID: "prow-keb-trial-suspension"
 
 deprovisionRetrigger:
   schedule: "0 2 * * *"

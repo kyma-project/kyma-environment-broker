@@ -74,6 +74,10 @@ spec:
                   value: /secrets/cloudsql-sslrootcert/server-ca.pem
                 - name: APP_BROKER_URL
                   value: "http://{{ include "kyma-env-broker.fullname" . }}"
+                - name: APP_TEST_RUN
+                  value: "{{ .Values.trialCleanup.testRun }}"
+                - name: APP_TEST_SUBACCOUNT_ID
+                  value: "{{ .Values.trialCleanup.testSubaccountID }}"
               command:
                 - "/bin/main"
               volumeMounts:
