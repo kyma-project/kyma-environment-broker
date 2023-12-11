@@ -190,7 +190,7 @@ func TestProvisioning_HappyPathOpenstackWithDefaultRegion(t *testing.T) {
 
 	suite.AssertKymaResourceExists(opID)
 	suite.AssertKymaAnnotationExists(opID, "compass-runtime-id-for-migration")
-	suite.AssertKymaLabelsExist(opID, map[string]string{"kyma-project.io/region": "eu-de-2"})
+	suite.AssertKymaLabelsExist(opID, map[string]string{"kyma-project.io/region": "eu-de-1"})
 	suite.AssertKymaLabelNotExists(opID, "kyma-project.io/platform-region")
 	suite.AssertSecretWithKubeconfigExists(opID)
 }
