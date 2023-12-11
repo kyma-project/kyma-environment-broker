@@ -110,7 +110,7 @@ func AWSRegions(euRestrictedAccess bool) []string {
 }
 
 func OpenStackRegions() []string {
-	return []string{"eu-de-1", "ap-sa-1"}
+	return []string{"eu-de-1"}
 }
 
 func requiredSchemaProperties(regionParameterIsRequired bool) []string {
