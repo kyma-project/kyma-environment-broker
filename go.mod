@@ -27,7 +27,6 @@ require (
 	github.com/kyma-incubator/reconciler v0.0.0-20230804125401-cbf3faa2a51f
 	github.com/kyma-project/control-plane/components/provisioner v0.0.0-20230829053645-089304053b8d
 	github.com/kyma-project/control-plane/components/schema-migrator v0.0.0-20230810075630-49303a9997f0
-	github.com/kyma-project/kyma/components/kyma-operator v0.0.0-20220112092842-4cb8388cc0c6
 	github.com/kyma-project/runtime-watcher/listener v0.0.0-20230718122209-eca66822e727
 	github.com/lib/pq v1.10.9
 	github.com/machinebox/graphql v0.2.3-0.20181106130121-3a9253180225
@@ -88,6 +87,7 @@ require (
 	github.com/go-openapi/jsonreference v0.20.2 // indirect
 	github.com/go-openapi/swag v0.22.4 // indirect
 	github.com/go-ozzo/ozzo-validation/v4 v4.3.0 // indirect
+	github.com/go-sql-driver/mysql v1.5.0 // indirect
 	github.com/gogo/protobuf v1.3.2 // indirect
 	github.com/golang-jwt/jwt/v4 v4.5.0 // indirect
 	github.com/golang/protobuf v1.5.3 // indirect
