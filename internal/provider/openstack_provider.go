@@ -64,8 +64,6 @@ func (p *OpenStackInput) Provider() internal.CloudProvider {
 // The table is tested in a unit test to check if all necessary regions are covered
 var openstackZones = map[string]string{
 	"eu-de-1": "abd",
-	"eu-de-2": "abd",
-	"ap-sa-1": "a",
 }
 
 func ZonesForOpenStack(region string) []string {

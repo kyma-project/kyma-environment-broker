@@ -143,8 +143,7 @@
     },
     "region": {
       "enum": [
-        "eu-de-1",
-        "ap-sa-1"
+        "eu-de-1"
       ],
       "type": "string"
     }
