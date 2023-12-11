@@ -8,22 +8,22 @@ global:
       path: europe-docker.pkg.dev/kyma-project/prod
     schema_migrator:
       dir: "control-plane"
-      version: "v20230120-865831c1"
+      version: "v20231211-c10b7b03"
     kyma_environment_broker:
       dir:
-      version: "v20231211-32d86927"
+      version: "v20231211-c10b7b03"
     kyma_environments_subaccount_cleanup_job:
       dir:
-      version: "v20231211-32d86927"
+      version: "v20231211-c10b7b03"
     kyma_environment_trial_cleanup_job:
       dir:
-      version: "v20231211-32d86927"
+      version: "v20231211-c10b7b03"
     kyma_environment_deprovision_retrigger_job:
       dir:
-      version: "v20231211-32d86927"
+      version: "v20231211-c10b7b03"
     kyma_environment_runtime_reconciler:
       dir:
-      version: "v20231211-32d86927"
+      version: "v20231211-c10b7b03"
   kyma_environment_broker:
     enabled: false
     serviceAccountName: "kcp-kyma-environment-broker"
