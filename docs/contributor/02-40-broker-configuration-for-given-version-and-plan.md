@@ -7,7 +7,7 @@ A default configuration must be defined for the chosen Kyma version. This config
   
 While processing requests, KEB reads a configuration from a ConfigMap which holds data about processable Kyma versions and configurable units for a given plan. Only one ConfigMap can exist for a given Kyma version, but it also can be set for multiple Kyma versions if the configuration is the same for every targeted version.
 
-> **NOTE:** Create all configurations in the `kcp-system` Namespace.
+> **NOTE:** Create all configurations in the `kcp-system` namespace.
 
 > **NOTE:** As this is the first iteration of the KEB configuration concept, only the additional components list can be configured.
 

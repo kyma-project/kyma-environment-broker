@@ -48,7 +48,7 @@ The workflow:
 - Checks if the KEB chart is rendered by Helm
 - Fetches the **last-k3s-versions** tag versions of k3s releases 
 - Prepares the **last-k3s-versions** k3s clusters with the Docker registries using the list of versions from the previous step
-- Creates required Namespaces
+- Creates required namespaces
 - Installs required dependencies by the KEB charts
 - Renders and applies the KEB chart on the k3s cluster
 - Waits for all tests to finish
