@@ -1,4 +1,4 @@
-# Check orchestration status
+# Check Orchestration Status
 
 This tutorial shows how to check the orchestration status. Using this API, you can fetch data about:
 - A single orchestration
@@ -6,7 +6,7 @@ This tutorial shows how to check the orchestration status. Using this API, you c
 - Upgrade operations scheduled by a given orchestration
 - A single operation with details, such as parameters sent to Runtime Provisioner
 
-## Fetch a single orchestration status
+## Fetch a Single Orchestration Status
 
 1. Export the orchestration ID that you obtained during the upgrade call as an environment variable:
 
@@ -48,7 +48,7 @@ This tutorial shows how to check the orchestration status. Using this API, you c
       }
    ```
 
-## Fetch all orchestrations status
+## Fetch All Orchestrations Status
 
 Make a call to KEB with a proper **Authorization** [request header](01-10-authorization.md) to verify that the orchestration succeeded.
 
@@ -87,7 +87,7 @@ A successful call returns the list of all orchestrations:
 ]
    ```
 
-## List upgrade operations scheduled by an orchestration
+## List Upgrade Operations Scheduled by an Orchestration
 
 1. Export the orchestration ID that you obtained during the upgrade call as an environment variable:
 
@@ -138,7 +138,7 @@ A successful call returns the list of all orchestrations:
    }
       ```
 
-## Fetch the detailed operation status
+## Fetch the Detailed Operation Status
 
 1. Export the following values as the environment variables:
 

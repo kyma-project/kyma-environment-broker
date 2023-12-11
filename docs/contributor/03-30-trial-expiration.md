@@ -1,6 +1,6 @@
-# Trial expiration
+# Trial Expiration
 
-SAP BTP, Kyma runtime with the trial plan has a limited lifespan of 14 days, counting from its creation time (as described in [Service description](../user/03-10-service-description.md#trial-plan)). After 14 days, [Trial Cleanup CronJob](./06-40-trial-cleanup-cronjob.md) sends a request to Kyma Environment Broker (KEB) to expire the trial instance. KEB suspends the instance without the possibility to unsuspend it.
+SAP BTP, Kyma runtime with the trial plan has a limited lifespan of 14 days, counting from its creation time (as described in [Service Description](../user/03-10-service-description.md#trial-plan)). After 14 days, [Trial Cleanup CronJob](./06-40-trial-cleanup-cronjob.md) sends a request to Kyma Environment Broker (KEB) to expire the trial instance. KEB suspends the instance without the possibility to unsuspend it.
 
 ## Details
 

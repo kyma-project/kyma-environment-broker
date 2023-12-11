@@ -1,8 +1,8 @@
-# Service description
+# Service Description
 
 Kyma Environment Broker (KEB) is compatible with the [Open Service Broker API](https://www.openservicebrokerapi.org/) (OSBAPI) specification. It provides a ServiceClass that provisions SAP BTP, Kyma runtime on a cluster.
 
-## Service plans
+## Service Plans
 
 The supported plans are as follows:
 
@@ -25,11 +25,11 @@ There are also three experimental plans:
 
 > **CAUTION:** The experimental plans may fail to work or be removed.
 
-## Provisioning parameters
+## Provisioning Parameters
 
 There are two types of configurable provisioning parameters: the ones that are compliant for all providers and provider-specific ones.
 
-### Parameters compliant for all providers
+### Parameters Compliant for All Providers
 
 These are the provisioning parameters that you can configure:
 
@@ -46,11 +46,11 @@ These are the provisioning parameters that you can configure:
 | **context.tenant_id** | string | Provides a tenant ID for a Kyma runtime. | No | None |
 | **context.subaccount_id** | string | Provides a subaccount ID for a Kyma runtime. | No | None |
 | **context.globalaccount_id** | string | Provides a global account ID for a Kyma runtime. | No | None |
-| **context.sm_operator_credentials.clientid** | string | Provides a client ID for SAP BTP Service Operator. | No | None |
-| **context.sm_operator_credentials.clientsecret** | string | Provides a client secret for SAP BTP Service Operator. | No | None |
-| **context.sm_operator_credentials.sm_url** | string | Provides a SAP Service Manager URL for SAP BTP Service Operator. | No | None |
-| **context.sm_operator_credentials.url** | string | Provides an authentication URL for SAP BTP Service Operator. | No | None |
-| **context.sm_operator_credentials.xsappname** | string | Provides an XSApp name for SAP BTP Service Operator. | No | None |
+| **context.sm_operator_credentials.clientid** | string | Provides a client ID for SAP BTP service operator. | No | None |
+| **context.sm_operator_credentials.clientsecret** | string | Provides a client secret for the SAP BTP service operator. | No | None |
+| **context.sm_operator_credentials.sm_url** | string | Provides a SAP Service Manager URL for the SAP BTP service operator. | No | None |
+| **context.sm_operator_credentials.url** | string | Provides an authentication URL for the SAP BTP service operator. | No | None |
+| **context.sm_operator_credentials.xsappname** | string | Provides an XSApp name for the SAP BTP service operator. | No | None |
 | **context.user_id** | string | Provides a user ID for a Kyma runtime. | No | None |
 | **oidc.clientID** | string | Provides an OIDC client ID for a Kyma runtime. | No | None |
 | **oidc.groupsClaim** | string | Provides an OIDC groups claim for a Kyma runtime. | No | `groups` |
@@ -63,7 +63,7 @@ These are the provisioning parameters that you can configure:
 | **modules.default** | bool | Defines whether to use a default list of modules | No | None |
 | **modules.list** | array | Defines a custom list of modules  | No | None |
 
-### Provider-specific parameters
+### Provider-specific Parameters
 
 These are the provisioning parameters for Azure that you can configure:
 
@@ -169,7 +169,7 @@ These are the provisioning parameters for OpenStack that you can configure:
  </details>
  </div>
 
-## Trial plan
+## Trial Plan
 
 The trial plan allows you to install Kyma runtime on Azure, AWS, or GCP. The plan assumptions are as follows:
 - Kyma runtime is uninstalled after 14 days and the Kyma cluster is deprovisioned after this time.
@@ -177,7 +177,7 @@ The trial plan allows you to install Kyma runtime on Azure, AWS, or GCP. The pla
 
 To reduce the costs, the trial plan skips one of the [provisioning steps](./03-20-runtime-operations.md#provisioning), that is, `AVS External Evaluation`.
 
-### Provisioning parameters
+### Provisioning Parameters
 
 These are the provisioning parameters for the Trial plan that you can configure:
 
@@ -203,7 +203,7 @@ The mapping between the platform region and the provider region (Azure, AWS or G
  </details>
  </div>
 
-## Own cluster plan
+## Own Cluster Plan
 
 > **NOTE:** The `own_cluster` plan has been deprecated.
 
@@ -224,11 +224,11 @@ These are the provisioning parameters for the `own_cluster` plan that you config
 </details>
 </div>
 
-## Preview cluster plan
+## Preview Cluster Plan
 
 The preview plan allows to test integration with Lifecycle Manager. The preview plan skips steps which integrate KEB and Reconciler.
 
-### Provisioning parameters
+### Provisioning Parameters
 
 These are the provisioning parameters for the `preview` plan that you configure:
 

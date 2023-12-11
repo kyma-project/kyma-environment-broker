@@ -1,4 +1,4 @@
-# SAP BTP, Kyma runtime components
+# SAP BTP, Kyma Runtime Components
 
 > **NOTE:** Once all Kyma components become independent modules, Kyma Environment Broker will no longer be required to send components to Reconciler and this document will be deprecated as irrelevant.
 
@@ -17,19 +17,19 @@ Kyma Environment Broker (KEB) serves the functionality of composing the list of 
 
 There is a defined [list of the components and their names](../../internal/runtime/components/components.go). Use these names in your implementation.
 
-## Disabled components
+## Disabled Components
 
 To disable a component for a [specific plan](../user/03-10-service-description.md#service-plans), add it to the [disabled components list](../../internal/runtime/disabled_components.go).
 To disable a component for all plans, add its name under the **AllPlansSelector** parameter.
 
-## Optional components
+## Optional Components
 
 An optional component is a component that is disabled by default but can be enabled in the [provisioning request](../user/05-10-provisioning-kyma-environment.md). Currently, the optional components are:
 
 * Kiali
 * Tracing
 
-### Add an optional component to the disabled components list
+### Add an Optional Component to the Disabled Components List
 
 If you want to add the optional component, you can do it in two ways:
 
@@ -64,6 +64,6 @@ optionalComponentsDisablers := runtime.ComponentsDisablers{
 }
 ```
 
-### Remove an optional component from the disabled components list
+### Remove an Optional Component from the Disabled Components List
 
 If you want to remove the option to disable components and make them required during SAP BTP, Kyma runtime installation, remove a given entry from the **optionalComponentsDisablers** list in the [`cmd/broker/main.go`](../../cmd/broker/main.go) file.

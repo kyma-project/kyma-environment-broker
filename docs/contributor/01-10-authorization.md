@@ -15,7 +15,7 @@ You must also specify the `Authorization: Bearer` request header:
 Authorization: Bearer {ACCESS_TOKEN}
 ```
 
-## Get the access token
+## Get the Access Token
 
 Follow these steps to obtain a new access token:
 

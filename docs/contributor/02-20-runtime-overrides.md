@@ -1,4 +1,4 @@
-# Set overrides for SAP BTP, Kyma runtime
+# Set Overrides for SAP BTP, Kyma Runtime
 
 > **NOTE:** Once all Kyma components become independent modules, Kyma Environment Broker will no longer be required to send overrides to Reconciler and this document will be deprecated as irrelevant.
 
@@ -32,7 +32,7 @@ data:
   global.disableLegacyConnectivity: "true"
 ```
 
-### Use Kyma default overrides for specific plan and version
+### Use Kyma Default Overrides for Specific Plan and Version
 
 By default, the overrides lookup mechanism expects at least one ConfigMap present for each plan and version pair. Otherwise, it fails. To allow Kyma installation without providing any additional overrides, create an empty ConfigMap.
 

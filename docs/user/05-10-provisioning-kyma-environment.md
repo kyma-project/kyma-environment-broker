@@ -1,4 +1,4 @@
-# Provision SAP BTP, Kyma runtime using Kyma Environment Broker
+# Provision SAP BTP, Kyma Runtime Using Kyma Environment Broker
 
 This tutorial shows how to provision SAP BTP, Kyma runtime on Azure using Kyma Environment Broker (KEB).
 
@@ -68,7 +68,7 @@ This tutorial shows how to provision SAP BTP, Kyma runtime on Azure using Kyma E
 
 ## SAP BTP Service Operator
 
-If you need a SAP BTP Service Operator component installed, obtain [SAP BTP Service Operator access credentials](https://github.com/SAP/sap-btp-service-operator/blob/v0.2.5/README.md#setup) and provide them in the provisioning request. See the following example:
+If you need the SAP BTP service operator component installed, obtain the [SAP BTP service operator access credentials](https://github.com/SAP/sap-btp-service-operator/blob/v0.2.5/README.md#setup) and provide them in the provisioning request. See the following example:
  ```bash
    curl --request PUT "https://$BROKER_URL/oauth/v2/service_instances/$INSTANCE_ID?accepts_incomplete=true" \
    --header 'X-Broker-API-Version: 2.14' \

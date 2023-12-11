@@ -1,4 +1,4 @@
-# Kyma Environment Broker architecture
+# Kyma Environment Broker Architecture
 
 The diagram and steps describe the Kyma Environment Broker (KEB) workflow and the roles of specific components in this process:
 
@@ -18,4 +18,4 @@ The diagram and steps describe the Kyma Environment Broker (KEB) workflow and th
 
 7. Lifecycle Manager manages Kyma modules.
 
-> **NOTE:** In the future, Provisioner and Reconciler will be deprecated.  KEB will then integrate with Infrastructure Manager. To learn about the planned KEB workflow, read [Kyma Environment Broker target architecture](01-20-target-architecture.md).
+> **NOTE:** In the future, Provisioner and Reconciler will be deprecated.  KEB will then integrate with Infrastructure Manager. To learn about the planned KEB workflow, read [Kyma Environment Broker Target Architecture](01-20-target-architecture.md).

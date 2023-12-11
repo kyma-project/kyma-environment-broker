@@ -1,4 +1,4 @@
-# SAP BTP, Kyma runtime operations
+# SAP BTP, Kyma Runtime Operations
 
 Kyma Environment Broker (KEB) allows you to configure operations that you can run on a SAP BTP, Kyma runtime. Each operation consists of several steps and each step is represented by a separate file. As every step can be re-launched multiple times, for each step, you should determine a behavior in case of a processing failure. It can either:
 
@@ -31,7 +31,7 @@ You can find all the deprovisioning steps in the [deprovisioning](../../cmd/brok
 The update process is triggered by an [OSB API update operation](https://github.com/openservicebrokerapi/servicebroker/blob/master/spec.md#updating-a-service-instance) request.
 You can find all the updating steps in the [update](../../cmd/broker/update.go) file.
 
-## Upgrade cluster
+## Upgrade Cluster
 
 The upgrade cluster process is triggered by upgrade cluster orchestration.
 You can find all the upgrading cluster steps in the [upgrade_cluster](../../cmd/broker/upgrade_cluster.go) file.
@@ -41,7 +41,7 @@ You can find all the upgrading cluster steps in the [upgrade_cluster](../../cmd/
 The upgrade Kyma process is triggered by upgrade Kyma orchestration.
 You can find all the upgrading Kyma steps in the [upgrade_kyma](../../cmd/broker/upgrade_kyma.go) file.
 
-## Provide additional steps
+## Provide Additional Steps
 
 You can configure SAP BTP, Kyma runtime operations by providing additional steps. To add a new step, follow these tutorials:
 

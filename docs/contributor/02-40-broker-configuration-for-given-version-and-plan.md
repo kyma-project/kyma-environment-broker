@@ -1,4 +1,4 @@
-# Kyma Environment Broker configuration for a given Kyma version and plan
+# Kyma Environment Broker Configuration for a Given Kyma Version and Plan
 
 > **NOTE:** Once all Kyma components become independent modules, Kyma version configuration will not be possible.
 

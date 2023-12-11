@@ -1,4 +1,4 @@
-# End-to-end tests of Kyma Environment Broker
+# End-to-end Tests of Kyma Environment Broker
 
 ## Overview
 
@@ -8,13 +8,13 @@ There are three tests:
 - `skr-aws-upgrade-integration` for checking Kyma runtime provisioning, upgrading, and deprovisioning
 - `keb-endpoints-test` for checking if `kyma-environment-broker` endpoints require authorization
 
-## E2E SKR tests
+## E2E SKR Tests
 
 ### Usage
 
 You can use the SKR test in two modes - with or without provisioning.
 
-#### With provisioning
+#### With Provisioning
 
 In this mode, the test executes the following steps:
 1. Provisions a Kyma runtime cluster.
@@ -23,7 +23,7 @@ In this mode, the test executes the following steps:
 4. Runs the machine type update test.
 5. Deprovisions the Kyma runtime instance and cleans up the resources.
 
-#### Without provisioning
+#### Without Provisioning
 
 In this mode the test additionally needs the following environment variables:
 - **SKIP_PROVISIONING** set to `true`
@@ -34,7 +34,7 @@ In this mode, the test executes the following steps:
 2. Runs the OIDC test.
 3. Cleans up the resources.
  
-### Test execution
+### Test Execution
 
 1. Before you run the test, prepare the `.env` file based on this [`.env.template`](/testing/e2e/skr/skr-test/.env.template).
 2. To set up the environment variables in your system, run:
@@ -55,7 +55,7 @@ In this mode, the test executes the following steps:
         make skr SKIP_PROVISIONING=true
         ```
 
-## E2E SKR AWS upgrade integration test
+## E2E SKR AWS Upgrade Integration Test
 
 ### Usage
 
@@ -64,7 +64,7 @@ The test executes the following steps:
 2. Runs a Kyma runtime upgrade.
 3. Deprovisions the Kyma runtime instance and cleans up the resources.
 
-### Test execution 
+### Test Execution 
 
 1. Before you run the test, prepare the `.env` file based on this [`.env.template`](/testing/e2e/skr/skr-aws-upgrade-integration/.env.template).
 2. To set up the environment variables in your system, run:
@@ -79,7 +79,7 @@ The test executes the following steps:
     make skr-aws-upgrade-integration
     ```
 
-## KEB endpoints test
+## KEB Endpoints Test
 
 ### Usage
 
@@ -87,7 +87,7 @@ The test executes the following steps:
 1. Calls KEB endpoints without an authorization token.
 2. Checks whether the call was rejected.
 
-### Test execution 
+### Test Execution 
 
 1. Before you run the test, prepare the `.env` file based on this [`.env.template`](/testing/e2e/skr/keb-endpoints-test/.env.template).
 2. To set up the environment variables in your system, run:
@@ -102,7 +102,7 @@ The test executes the following steps:
     make keb-endpoints
     ```
 
-## Networking parameter tests
+## Networking Parameter Tests
 
 ### Usage
 
@@ -112,7 +112,7 @@ The test executes the following steps:
 3. Provisions a cluster with custom networking parameters.
 4. Deprovisions the cluster.
 
-### Test execution
+### Test Execution
 
 1. Before you run the test, prepare the `.env` file based on this [`.env.template`](/testing/e2e/skr/skr-networking-test/.env.template).
 2. To set up the environment variables in your system, run:
@@ -126,7 +126,7 @@ export $(xargs < .env)
 make skr-networking-test
 ```
 
-## CI pipelines
+## CI Pipelines
 
 The tests are run once per day at 01:05 by the given Prow jobs:
 - `skr-azure-integration-dev` - SKR test

@@ -1,4 +1,4 @@
-# Check SAP BTP, Kyma runtime instance details
+# Check SAP BTP, Kyma Runtime Instance Details
 
 This tutorial shows how to get the SAP BTP, Kyma runtime instance details.
 

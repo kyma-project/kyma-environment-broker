@@ -1,4 +1,4 @@
-# Kyma Environment Broker release pipeline
+# Kyma Environment Broker Release Pipeline
 
 ## Overview
 
@@ -10,9 +10,9 @@ The Kyma Environment Broker release pipeline creates proper artifacts:
  - kyma-environment-trial-cleanup-job Docker image in the [registry](https://console.cloud.google.com/artifacts/docker/kyma-project/europe/prod/kyma-environment-trial-cleanup-job)
  - kyma-environment-subaccount-cleanup-job Docker image in the [registry](https://console.cloud.google.com/artifacts/docker/kyma-project/europe/prod/kyma-environment-subaccount-cleanup-job)
 
-## Run the pipeline
+## Run the Pipeline
 
-### Create a release
+### Create a Release
 
 ![Release diagram](../assets/release.svg)
 
@@ -42,10 +42,10 @@ To create a release, follow these steps:
 9. If the unit tests, KEB chart tests, and Prow job status await are completed successfully, the GitHub action publishes the release.
 
 
-### Replace an existing release
+### Replace an Existing Release
 
 To regenerate an existing release, perform the following steps:
 
-1. Delete the GitHub release.
-2. Delete the GitHub tag.
-3. Run the [**Create release**](#create-a-release) pipeline. 
+1. Delete the GitHub release
+2. Delete the GitHub tag
+3. Run the [**Create release**](#create-a-release) pipeline

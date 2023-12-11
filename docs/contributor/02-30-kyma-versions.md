@@ -1,4 +1,4 @@
-# Configure Kyma version
+# Configure Kyma Version
 
 > **NOTE:** Once all Kyma components become independent modules, Kyma Environment Broker will no longer be required to send components to Reconciler and this document will be deprecated as irrelevant.
 
