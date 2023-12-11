@@ -1332,6 +1332,28 @@ func (s *BrokerSuiteTest) fixExpectedComponentListWithSMOperator(opID, smCluster
 	return []reconcilerApi.Component{
 		{
 			URL:       "",
+			Component: "cluster-essentials",
+			Namespace: "kyma-system",
+			Configuration: []reconcilerApi.Configuration{
+				{
+					Key:    "global.domainName",
+					Value:  fmt.Sprintf("%s.kyma.sap.com", s.ShootName(opID)),
+					Secret: false,
+				},
+				{
+					Key:    "foo",
+					Value:  "bar",
+					Secret: false,
+				},
+				{
+					Key:    "global.booleanOverride.enabled",
+					Value:  false,
+					Secret: false,
+				},
+			},
+		},
+		{
+			URL:       "",
 			Component: "ory",
 			Namespace: "kyma-system",
 			Configuration: []reconcilerApi.Configuration{
