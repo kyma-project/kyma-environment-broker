@@ -18,6 +18,10 @@ const (
 	onDemandComponentsURLFormat = "https://storage.googleapis.com/kyma-development-artifacts/%s/kyma-components.yaml"
 )
 
+type HTTPDoer interface {
+	Do(req *http.Request) (*http.Response, error)
+}
+
 // ComponentsProvider provides the list of required and additional components for creating a Kyma Runtime
 type ComponentsProvider struct {
 	mu         sync.Mutex

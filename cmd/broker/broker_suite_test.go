@@ -8,7 +8,6 @@ import (
 	"io"
 	"net/http"
 	"net/http/httptest"
-	"path"
 	"reflect"
 	"sort"
 	"testing"
@@ -149,18 +148,12 @@ func NewBrokerSuiteTest(t *testing.T, version ...string) *BrokerSuiteTest {
 
 	disabledComponentsProvider := kebRuntime.NewDisabledComponentsProvider()
 
-	installerYAML := kebRuntime.ReadYAMLFromFile(t, "kyma-installer-cluster.yaml")
-	componentsYAML := kebRuntime.ReadYAMLFromFile(t, "kyma-components.yaml")
-	fakeHTTPClient := kebRuntime.NewTestClient(t, installerYAML, componentsYAML, http.StatusOK)
-
 	configProvider := kebConfig.NewConfigProvider(
 		kebConfig.NewConfigMapReader(ctx, cli, logrus.New(), defaultKymaVer),
 		kebConfig.NewConfigMapKeysValidator(),
 		kebConfig.NewConfigMapConverter())
 
-	componentListProvider := kebRuntime.NewComponentsListProvider(
-		path.Join("testdata", "managed-runtime-components.yaml"),
-		path.Join("testdata", "additional-runtime-components.yaml")).WithHTTPClient(fakeHTTPClient)
+	componentListProvider := kebRuntime.NewFakeComponentsProvider()
 	decoratedComponentListProvider := componentProviderDecorated{
 		componentProvider: componentListProvider,
 		decorator:         make(map[string]internal.KymaComponent),
