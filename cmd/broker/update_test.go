@@ -2333,14 +2333,16 @@ func TestUpdateBTPOperatorCredsSuccess(t *testing.T) {
 	assert.Equal(t, opID, rs.OperationID, "runtime state provisioning operation ID")
 	assert.NoError(t, err, "getting runtime state after provisioning, before update")
 	assert.ElementsMatch(t, rs.KymaConfig.Components, []*gqlschema.ComponentConfigurationInput{})
-	assert.ElementsMatch(t, componentNames(rs.ClusterSetup.KymaConfig.Components), []string{"ory", "monitoring", "btp-operator"})
+	assert.ElementsMatch(t, componentNames(rs.ClusterSetup.KymaConfig.Components),
+		[]string{"cluster-essentials", "ory", "monitoring", "btp-operator"})
 
 	rsu1, err := suite.db.RuntimeStates().GetLatestWithReconcilerInputByRuntimeID(i.RuntimeID)
 	assert.NoError(t, err, "getting runtime after update")
 	i, err = suite.db.Instances().GetByID(id)
 	assert.NoError(t, err, "getting instance after update")
 	assert.ElementsMatch(t, rsu1.KymaConfig.Components, []*gqlschema.ComponentConfigurationInput{})
-	assert.ElementsMatch(t, componentNames(rsu1.ClusterSetup.KymaConfig.Components), []string{"ory", "monitoring", "btp-operator"})
+	assert.ElementsMatch(t, componentNames(rsu1.ClusterSetup.KymaConfig.Components),
+		[]string{"cluster-essentials", "ory", "monitoring", "btp-operator"})
 	for _, c := range rsu1.ClusterSetup.KymaConfig.Components {
 		if c.Component == "btp-operator" {
 			exp := reconcilerApi.Component{
@@ -2393,7 +2395,8 @@ func TestUpdateBTPOperatorCredsSuccess(t *testing.T) {
 	i, err = suite.db.Instances().GetByID(id)
 	assert.NoError(t, err, "getting instance after update")
 	assert.ElementsMatch(t, rsu2.KymaConfig.Components, []*gqlschema.ComponentConfigurationInput{})
-	assert.ElementsMatch(t, componentNames(rsu2.ClusterSetup.KymaConfig.Components), []string{"ory", "monitoring", "btp-operator"})
+	assert.ElementsMatch(t, componentNames(rsu2.ClusterSetup.KymaConfig.Components),
+		[]string{"cluster-essentials", "ory", "monitoring", "btp-operator"})
 	for _, c := range rsu2.ClusterSetup.KymaConfig.Components {
 		if c.Component == "btp-operator" {
 			exp := reconcilerApi.Component{

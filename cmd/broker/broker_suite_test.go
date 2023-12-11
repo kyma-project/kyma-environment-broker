@@ -104,7 +104,7 @@ type BrokerSuiteTest struct {
 	t                   *testing.T
 	inputBuilderFactory input.CreatorForPlan
 
-	componentProvider componentProviderDecorated
+	componentProvider input.ComponentListProvider
 
 	k8sKcp client.Client
 	k8sSKR client.Client
@@ -115,16 +115,6 @@ type BrokerSuiteTest struct {
 type componentProviderDecorated struct {
 	componentProvider input.ComponentListProvider
 	decorator         map[string]internal.KymaComponent
-}
-
-func (s componentProviderDecorated) AllComponents(kymaVersion internal.RuntimeVersionData, config *internal.ConfigForPlan) ([]internal.KymaComponent, error) {
-	all, err := s.componentProvider.AllComponents(kymaVersion, config)
-	for i, c := range all {
-		if dc, found := s.decorator[c.Name]; found {
-			all[i] = dc
-		}
-	}
-	return all, err
 }
 
 func (s *BrokerSuiteTest) TearDown() {
@@ -153,13 +143,9 @@ func NewBrokerSuiteTest(t *testing.T, version ...string) *BrokerSuiteTest {
 		kebConfig.NewConfigMapKeysValidator(),
 		kebConfig.NewConfigMapConverter())
 
-	componentListProvider := kebRuntime.NewFakeComponentsProvider()
-	decoratedComponentListProvider := componentProviderDecorated{
-		componentProvider: componentListProvider,
-		decorator:         make(map[string]internal.KymaComponent),
-	}
+	componentProvider := kebRuntime.NewFakeComponentsProvider()
 
-	inputFactory, err := input.NewInputBuilderFactory(optComponentsSvc, disabledComponentsProvider, decoratedComponentListProvider,
+	inputFactory, err := input.NewInputBuilderFactory(optComponentsSvc, disabledComponentsProvider, componentProvider,
 		configProvider, input.Config{
 			MachineImageVersion:         "253",
 			KubernetesVersion:           "1.18",
@@ -207,7 +193,7 @@ func NewBrokerSuiteTest(t *testing.T, version ...string) *BrokerSuiteTest {
 	updateManager := process.NewStagedManager(db.Operations(), eventBroker, time.Hour, cfg.Update, logs)
 	rvc := runtimeversion.NewRuntimeVersionConfigurator(cfg.KymaVersion, nil, db.RuntimeStates())
 	updateQueue := NewUpdateProcessingQueue(context.Background(), updateManager, 1, db, inputFactory, provisionerClient,
-		eventBroker, rvc, db.RuntimeStates(), decoratedComponentListProvider, reconcilerClient, *cfg, fakeK8sClientProvider(fakeK8sSKRClient), cli, logs)
+		eventBroker, rvc, db.RuntimeStates(), componentProvider, reconcilerClient, *cfg, fakeK8sClientProvider(fakeK8sSKRClient), cli, logs)
 	updateQueue.SpeedUp(10000)
 	updateManager.SpeedUp(10000)
 
@@ -229,7 +215,7 @@ func NewBrokerSuiteTest(t *testing.T, version ...string) *BrokerSuiteTest {
 		router:              mux.NewRouter(),
 		t:                   t,
 		inputBuilderFactory: inputFactory,
-		componentProvider:   decoratedComponentListProvider,
+		componentProvider:   componentProvider,
 		k8sKcp:              cli,
 		k8sSKR:              fakeK8sSKRClient,
 	}
