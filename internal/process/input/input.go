@@ -34,7 +34,7 @@ type Config struct {
 	MachineImage                  string                 `envconfig:"optional"`
 	MachineImageVersion           string                 `envconfig:"optional"`
 	TrialNodesNumber              int                    `envconfig:"optional"`
-	DefaultTrialProvider          internal.CloudProvider `envconfig:"default=Azure"` // could be: Azure, AWS, GCP, Openstack, unknown
+	DefaultTrialProvider          internal.CloudProvider `envconfig:"default=Azure"` // could be: Azure, AWS, GCP, SapConvergedCloud, unknown
 	OpenstackFloatingPoolName     string                 `envconfig:"default=FloatingIP-external-cp-kyma"`
 	AutoUpdateKubernetesVersion   bool                   `envconfig:"default=false"`
 	AutoUpdateMachineImageVersion bool                   `envconfig:"default=false"`

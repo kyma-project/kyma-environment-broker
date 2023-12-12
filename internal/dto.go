@@ -120,11 +120,11 @@ func (p ProvisioningParameters) IsEqual(input ProvisioningParameters) bool {
 type CloudProvider string
 
 const (
-	Azure           CloudProvider = "Azure"
-	AWS             CloudProvider = "AWS"
-	GCP             CloudProvider = "GCP"
-	UnknownProvider CloudProvider = "unknown"
-	Openstack       CloudProvider = "OpenStack"
+	Azure             CloudProvider = "Azure"
+	AWS               CloudProvider = "AWS"
+	GCP               CloudProvider = "GCP"
+	UnknownProvider   CloudProvider = "unknown"
+	SapConvergedCloud CloudProvider = "OpenStack"
 )
 
 type AutoScalerParameters struct {

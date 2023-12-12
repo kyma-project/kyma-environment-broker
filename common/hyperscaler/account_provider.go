@@ -39,7 +39,7 @@ func HypTypeFromCloudProviderWithRegion(cloudProvider internal.CloudProvider, re
 		return AWS(), nil
 	case internal.GCP:
 		return GCP(), nil
-	case internal.Openstack:
+	case internal.SapConvergedCloud:
 		return Openstack(*regionForOpenstack), nil
 	default:
 		return Type{}, fmt.Errorf("cannot determine the type of Hyperscaler to use for cloud provider %s", cloudProvider)

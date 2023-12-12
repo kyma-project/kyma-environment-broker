@@ -57,7 +57,7 @@ func (p *SapConvergedCloudInput) Profile() gqlschema.KymaProfile {
 }
 
 func (p *SapConvergedCloudInput) Provider() internal.CloudProvider {
-	return internal.Openstack
+	return internal.SapConvergedCloud
 }
 
 // sapConvergedCloudZones defines a possible suffixes for given OpenStack regions

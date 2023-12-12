@@ -97,7 +97,7 @@ func (s *ResolveCredentialsStep) getTargetSecretFromGardener(operation internal.
 	return secretName, err
 }
 
-// TODO: Calculate the region parameter using default Openstack region. This is to be removed when region is mandatory (Jan 2024).
+// TODO: Calculate the region parameter using default SapConvergedCloud region. This is to be removed when region is mandatory (Jan 2024).
 func getEffectiveRegionForOpenstack(provisioningParametersRegion *string) string {
 	if provisioningParametersRegion != nil && *provisioningParametersRegion != "" {
 		return *provisioningParametersRegion
