@@ -24,7 +24,7 @@ const (
 	TrialPlanID        = "7d55d31d-35ae-4438-bf13-6ffdfa107d9f"
 	TrialPlanName      = "trial"
 	OpenStackPlanID    = "03b812ac-c991-4528-b5bd-08b303523a63"
-	OpenStackPlanName  = "openstack"
+	OpenStackPlanName  = "sap-converged-cloud"
 	FreemiumPlanID     = "b1a5764e-2ea1-4f95-94c0-2b4538b37b55"
 	FreemiumPlanName   = "free"
 	OwnClusterPlanID   = "03e3cb66-a4c6-4c6a-b4b0-5d42224debea"
