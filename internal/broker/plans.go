@@ -129,49 +129,33 @@ func requiredOwnClusterSchemaProperties() []string {
 }
 
 func SapConvergedCloudSchema(machineTypesDisplay map[string]string, machineTypes []string, additionalParams, update bool, regionParameterIsRequired, modulesEnabled bool) *map[string]interface{} {
-	properties := NewProvisioningProperties(machineTypesDisplay, machineTypes, SapConvergedCloudRegions(), update, modulesEnabled)
-	if regionParameterIsRequired {
-		properties.Region.MinLength = 1
-	}
-
+	properties := NewProvisioningProperties(machineTypesDisplay, machineTypes, SapConvergedCloudRegions(), regionParameterIsRequired, update, modulesEnabled)
 	return createSchemaWithProperties(properties, additionalParams, update, requiredSchemaProperties(regionParameterIsRequired))
 }
 
 func PreviewSchema(machineTypesDisplay map[string]string, machineTypes []string, additionalParams, update bool, euAccessRestricted bool, regionParameterIsRequired, modulesEnabled bool) *map[string]interface{} {
-	properties := NewProvisioningProperties(machineTypesDisplay, machineTypes, AWSRegions(euAccessRestricted), update, modulesEnabled)
+	properties := NewProvisioningProperties(machineTypesDisplay, machineTypes, AWSRegions(euAccessRestricted), regionParameterIsRequired, update, modulesEnabled)
 	properties.Networking = NewNetworkingSchema()
-	if regionParameterIsRequired {
-		properties.Region.MinLength = 1
-	}
 	return createSchemaWithProperties(properties, additionalParams, update, requiredSchemaProperties(regionParameterIsRequired))
 }
 
 func GCPSchema(machineTypesDisplay map[string]string, machineTypes []string, additionalParams, update bool, regionParameterIsRequired, modulesEnabled bool) *map[string]interface{} {
-	properties := NewProvisioningProperties(machineTypesDisplay, machineTypes, GCPRegions(), update, modulesEnabled)
-	if regionParameterIsRequired {
-		properties.Region.MinLength = 1
-	}
+	properties := NewProvisioningProperties(machineTypesDisplay, machineTypes, GCPRegions(), regionParameterIsRequired, update, modulesEnabled)
 	return createSchemaWithProperties(properties, additionalParams, update, requiredSchemaProperties(regionParameterIsRequired))
 }
 
 func AWSSchema(machineTypesDisplay map[string]string, machineTypes []string, additionalParams, update bool, euAccessRestricted bool, regionParameterIsRequired, modulesEnabled bool) *map[string]interface{} {
-	properties := NewProvisioningProperties(machineTypesDisplay, machineTypes, AWSRegions(euAccessRestricted), update, modulesEnabled)
-	if regionParameterIsRequired {
-		properties.Region.MinLength = 1
-	}
+	properties := NewProvisioningProperties(machineTypesDisplay, machineTypes, AWSRegions(euAccessRestricted), regionParameterIsRequired, update, modulesEnabled)
 	return createSchemaWithProperties(properties, additionalParams, update, requiredSchemaProperties(regionParameterIsRequired))
 }
 
 func AzureSchema(machineTypesDisplay map[string]string, machineTypes []string, additionalParams, update bool, euAccessRestricted bool, regionParameterIsRequired, modulesEnabled bool) *map[string]interface{} {
-	properties := NewProvisioningProperties(machineTypesDisplay, machineTypes, AzureRegions(euAccessRestricted), update, modulesEnabled)
-	if regionParameterIsRequired {
-		properties.Region.MinLength = 1
-	}
+	properties := NewProvisioningProperties(machineTypesDisplay, machineTypes, AzureRegions(euAccessRestricted), regionParameterIsRequired, update, modulesEnabled)
 	return createSchemaWithProperties(properties, additionalParams, update, requiredSchemaProperties(regionParameterIsRequired))
 }
 
 func AzureLiteSchema(machineTypesDisplay map[string]string, machineTypes []string, additionalParams, update bool, euAccessRestricted bool, regionParameterIsRequired, modulesEnabled bool) *map[string]interface{} {
-	properties := NewProvisioningProperties(machineTypesDisplay, machineTypes, AzureRegions(euAccessRestricted), update, modulesEnabled)
+	properties := NewProvisioningProperties(machineTypesDisplay, machineTypes, AzureRegions(euAccessRestricted), regionParameterIsRequired, update, modulesEnabled)
 
 	properties.AutoScalerMax.Minimum = 2
 	properties.AutoScalerMin.Minimum = 2
@@ -180,9 +164,6 @@ func AzureLiteSchema(machineTypesDisplay map[string]string, machineTypes []strin
 	if !update {
 		properties.AutoScalerMax.Default = 10
 		properties.AutoScalerMin.Default = 2
-	}
-	if regionParameterIsRequired {
-		properties.Region.MinLength = 1
 	}
 
 	return createSchemaWithProperties(properties, additionalParams, update, requiredSchemaProperties(regionParameterIsRequired))
