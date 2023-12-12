@@ -21,7 +21,7 @@ func TestServices_Services(t *testing.T) {
 		)
 
 		cfg := broker.Config{
-			EnablePlans: []string{"gcp", "azure", "openstack", "aws", "free"},
+			EnablePlans: []string{"gcp", "azure", "sap-converged-cloud", "aws", "free"},
 		}
 		servicesConfig := map[string]broker.Service{
 			broker.KymaServiceName: {
@@ -52,7 +52,7 @@ func TestServices_Services(t *testing.T) {
 		)
 
 		cfg := broker.Config{
-			EnablePlans:                     []string{"gcp", "azure", "openstack", "aws", "free"},
+			EnablePlans:                     []string{"gcp", "azure", "sap-converged-cloud", "aws", "free"},
 			IncludeAdditionalParamsInSchema: true,
 		}
 		servicesConfig := map[string]broker.Service{
@@ -88,7 +88,7 @@ func TestServices_Services(t *testing.T) {
 		)
 
 		cfg := broker.Config{
-			EnablePlans:                     []string{"gcp", "azure", "openstack", "aws", "free"},
+			EnablePlans:                     []string{"gcp", "azure", "sap-converged-cloud", "aws", "free"},
 			IncludeAdditionalParamsInSchema: true,
 		}
 		servicesConfig := map[string]broker.Service{
@@ -124,7 +124,7 @@ func TestServices_Services(t *testing.T) {
 		)
 
 		cfg := broker.Config{
-			EnablePlans:                     []string{"gcp", "azure", "openstack", "aws", "free"},
+			EnablePlans:                     []string{"gcp", "azure", "sap-converged-cloud", "aws", "free"},
 			IncludeAdditionalParamsInSchema: true,
 			RegionParameterIsRequired:       false,
 			ExposeSchemaWithRegionRequired:  true,
@@ -164,7 +164,7 @@ func TestServices_Services(t *testing.T) {
 		)
 
 		cfg := broker.Config{
-			EnablePlans:                     []string{"gcp", "azure", "openstack", "aws", "free"},
+			EnablePlans:                     []string{"gcp", "azure", "sap-converged-cloud", "aws", "free"},
 			IncludeAdditionalParamsInSchema: true,
 			RegionParameterIsRequired:       true,
 			ExposeSchemaWithRegionRequired:  true,
@@ -204,7 +204,7 @@ func TestServices_Services(t *testing.T) {
 		)
 
 		cfg := broker.Config{
-			EnablePlans:                     []string{"gcp", "azure", "openstack", "aws", "free"},
+			EnablePlans:                     []string{"gcp", "azure", "sap-converged-cloud", "aws", "free"},
 			IncludeAdditionalParamsInSchema: true,
 			RegionParameterIsRequired:       true,
 			ExposeSchemaWithRegionRequired:  false,
@@ -244,7 +244,7 @@ func TestServices_Services(t *testing.T) {
 		)
 
 		cfg := broker.Config{
-			EnablePlans:                     []string{"gcp", "azure", "openstack", "aws", "free"},
+			EnablePlans:                     []string{"gcp", "azure", "sap-converged-cloud", "aws", "free"},
 			IncludeAdditionalParamsInSchema: true,
 			RegionParameterIsRequired:       false,
 			ExposeSchemaWithRegionRequired:  false,
