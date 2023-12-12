@@ -1027,7 +1027,7 @@ func fixConfig() *Config {
 		EnableOnDemandVersion:   true,
 		UpdateProcessingEnabled: true,
 		Broker: broker.Config{
-			EnablePlans:                    []string{"azure", "trial", "aws", "own_cluster", "preview", "openstack"},
+			EnablePlans:                    []string{"azure", "trial", "aws", "own_cluster", "preview", "sap-converged-cloud"},
 			AllowNetworkingParameters:      true,
 			RegionParameterIsRequired:      true,
 			ExposeSchemaWithRegionRequired: true,
