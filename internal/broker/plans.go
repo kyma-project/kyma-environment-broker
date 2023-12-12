@@ -130,9 +130,6 @@ func requiredOwnClusterSchemaProperties() []string {
 
 func SapConvergedCloudSchema(machineTypesDisplay map[string]string, machineTypes []string, additionalParams, update bool, regionParameterIsRequired, modulesEnabled bool) *map[string]interface{} {
 	properties := NewProvisioningProperties(machineTypesDisplay, machineTypes, SapConvergedCloudRegions(), update, modulesEnabled)
-	properties.AutoScalerMax.Minimum = 3
-	properties.AutoScalerMin.Minimum = 3
-	properties.Networking = NewNetworkingSchema()
 	if regionParameterIsRequired {
 		properties.Region.MinLength = 1
 	}
@@ -142,8 +139,6 @@ func SapConvergedCloudSchema(machineTypesDisplay map[string]string, machineTypes
 
 func PreviewSchema(machineTypesDisplay map[string]string, machineTypes []string, additionalParams, update bool, euAccessRestricted bool, regionParameterIsRequired, modulesEnabled bool) *map[string]interface{} {
 	properties := NewProvisioningProperties(machineTypesDisplay, machineTypes, AWSRegions(euAccessRestricted), update, modulesEnabled)
-	properties.AutoScalerMax.Minimum = 3
-	properties.AutoScalerMin.Minimum = 3
 	properties.Networking = NewNetworkingSchema()
 	if regionParameterIsRequired {
 		properties.Region.MinLength = 1
@@ -153,8 +148,6 @@ func PreviewSchema(machineTypesDisplay map[string]string, machineTypes []string,
 
 func GCPSchema(machineTypesDisplay map[string]string, machineTypes []string, additionalParams, update bool, regionParameterIsRequired, modulesEnabled bool) *map[string]interface{} {
 	properties := NewProvisioningProperties(machineTypesDisplay, machineTypes, GCPRegions(), update, modulesEnabled)
-	properties.AutoScalerMax.Minimum = 3
-	properties.AutoScalerMin.Minimum = 3
 	if regionParameterIsRequired {
 		properties.Region.MinLength = 1
 	}
@@ -163,8 +156,6 @@ func GCPSchema(machineTypesDisplay map[string]string, machineTypes []string, add
 
 func AWSSchema(machineTypesDisplay map[string]string, machineTypes []string, additionalParams, update bool, euAccessRestricted bool, regionParameterIsRequired, modulesEnabled bool) *map[string]interface{} {
 	properties := NewProvisioningProperties(machineTypesDisplay, machineTypes, AWSRegions(euAccessRestricted), update, modulesEnabled)
-	properties.AutoScalerMax.Minimum = 3
-	properties.AutoScalerMin.Minimum = 3
 	if regionParameterIsRequired {
 		properties.Region.MinLength = 1
 	}
@@ -173,8 +164,6 @@ func AWSSchema(machineTypesDisplay map[string]string, machineTypes []string, add
 
 func AzureSchema(machineTypesDisplay map[string]string, machineTypes []string, additionalParams, update bool, euAccessRestricted bool, regionParameterIsRequired, modulesEnabled bool) *map[string]interface{} {
 	properties := NewProvisioningProperties(machineTypesDisplay, machineTypes, AzureRegions(euAccessRestricted), update, modulesEnabled)
-	properties.AutoScalerMax.Minimum = 3
-	properties.AutoScalerMin.Minimum = 3
 	if regionParameterIsRequired {
 		properties.Region.MinLength = 1
 	}
@@ -183,6 +172,9 @@ func AzureSchema(machineTypesDisplay map[string]string, machineTypes []string, a
 
 func AzureLiteSchema(machineTypesDisplay map[string]string, machineTypes []string, additionalParams, update bool, euAccessRestricted bool, regionParameterIsRequired, modulesEnabled bool) *map[string]interface{} {
 	properties := NewProvisioningProperties(machineTypesDisplay, machineTypes, AzureRegions(euAccessRestricted), update, modulesEnabled)
+
+	properties.AutoScalerMax.Minimum = 2
+	properties.AutoScalerMin.Minimum = 2
 	properties.AutoScalerMax.Maximum = 40
 
 	if !update {
