@@ -130,10 +130,9 @@ func requiredOwnClusterSchemaProperties() []string {
 
 func OpenStackSchema(machineTypesDisplay map[string]string, machineTypes []string, additionalParams, update bool, regionParameterIsRequired, modulesEnabled bool) *map[string]interface{} {
 	properties := NewProvisioningProperties(machineTypesDisplay, machineTypes, OpenStackRegions(), update, modulesEnabled)
-	properties.AutoScalerMax.Maximum = 40
-	if !update {
-		properties.AutoScalerMax.Default = 8
-	}
+	properties.AutoScalerMax.Minimum = 3
+	properties.AutoScalerMin.Minimum = 3
+	properties.Networking = NewNetworkingSchema()
 	if regionParameterIsRequired {
 		properties.Region.MinLength = 1
 	}
