@@ -272,26 +272,26 @@ func TestSchemaGenerator(t *testing.T) {
 			updateFileOIDC: "update-gcp-schema-additional-params.json",
 		},
 		{
-			name: "OpenStack schema is correct",
+			name: "SapConvergedCloud schema is correct",
 			generator: func(machinesDisplay map[string]string, machines []string, additionalParams, update bool) *map[string]interface{} {
 				return SapConvergedCloudSchema(machinesDisplay, machines, additionalParams, update, false, modulesEnabled)
 			},
 			machineTypes:   []string{"g_c4_m16", "g_c8_m32"},
-			file:           "openstack-schema.json",
-			updateFile:     "update-openstack-schema.json",
-			fileOIDC:       "openstack-schema-additional-params.json",
-			updateFileOIDC: "update-openstack-schema-additional-params.json",
+			file:           "sap-converged-cloud-schema.json",
+			updateFile:     "update-sap-converged-cloud-schema.json",
+			fileOIDC:       "sap-converged-cloud-schema-additional-params.json",
+			updateFileOIDC: "update-sap-converged-cloud-schema-additional-params.json",
 		},
 		{
-			name: "OpenStack schema with region required is correct",
+			name: "SapConvergedCloud schema with region required is correct",
 			generator: func(machinesDisplay map[string]string, machines []string, additionalParams, update bool) *map[string]interface{} {
 				return SapConvergedCloudSchema(machinesDisplay, machines, additionalParams, update, true, modulesEnabled)
 			},
 			machineTypes:   []string{"g_c4_m16", "g_c8_m32"},
-			file:           "openstack-schema-region-required.json",
-			updateFile:     "update-openstack-schema.json",
-			fileOIDC:       "openstack-schema-additional-params-region-required.json",
-			updateFileOIDC: "update-openstack-schema-additional-params.json",
+			file:           "sap-converged-cloud-schema-region-required.json",
+			updateFile:     "update-sap-converged-cloud-schema.json",
+			fileOIDC:       "sap-converged-cloud-schema-additional-params-region-required.json",
+			updateFileOIDC: "update-sap-converged-cloud-schema-additional-params.json",
 		},
 		{
 			name: "Trial schema is correct",
