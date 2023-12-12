@@ -9,7 +9,7 @@ While processing requests, KEB reads a configuration from a ConfigMap which hold
 
 > **NOTE:** Create all configurations in the `kcp-system` namespace.
 
-> **NOTE:** As this is the first iteration of the KEB configuration concept, only the additional components list can be configured.
+> **NOTE:** Currently, only the Kyma Custom Resource template and the additional components list can be configured.
 
 > **NOTE:** If there is no configuration defined for custom Kyma version (starting with `PR-*` or `main-*`), then KEB reads the configuration for the latest official Kyma release version.
 
@@ -31,14 +31,28 @@ The actual configuration is stored in ConfigMap's `data` object. Add `default` k
 ```yaml
 data:
   default: |-
+    kyma-template: |-
+      apiVersion: operator.kyma-project.io/v1beta2
+      kind: Kyma
+      metadata:
+        labels:
+          "operator.kyma-project.io/managed-by": "lifecycle-manager"
+          "operator.kyma-project.io/beta": "true"
+        name: tbd
+        namespace: kcp-system
+      spec:
+        channel: regular
+        modules:
+        - name: module1
+        - name: module2
     additional-components:
       - name: "additional-component1"
         namespace: "kyma-system"
 ```
 
-You must define a default configuration that is selected when the supported plan key is missing. This means that, for example, if there are no other plan keys under the `data` object, the default configuration applies to all the plans. 
+You must define a default configuration that is selected when the supported plan key is missing. This means that, for example, if there are no other plan keys under the `data` object, the default configuration applies to all the plans. You do not have to change `tbd` value of `kyma-template.metadata.name` field as KEB generates the name for Kyma CR during provisioning operation.
 
-> **NOTE:** `additional-components` configuration is required.
+> **NOTE:** `kyma-template` and `additional-components` configurations are required.
 
 See the example of a ConfigMap with a configuration for Kyma version `2.5.3` and `plan1`, `plan2`, and `trial` plans:
 
@@ -53,6 +67,20 @@ metadata:
     runtime-version-2.5.3: "true"
 data:
   default: |-
+    kyma-template: |-
+      apiVersion: operator.kyma-project.io/v1beta2
+      kind: Kyma
+      metadata:
+        labels:
+          "operator.kyma-project.io/managed-by": "lifecycle-manager"
+          "operator.kyma-project.io/beta": "true"
+        name: tbd
+        namespace: kcp-system
+      spec:
+        channel: regular
+        modules:
+        - name: api-gateway
+        - name: istio
     additional-components:
       - name: "additional-component1"
         namespace: "kyma-system"
@@ -63,6 +91,21 @@ data:
         source:
           url: "https://example.source.url.local/artifacts/additional-component3-0.0.1.tgz"
   plan1: |-
+    kyma-template: |-
+      apiVersion: operator.kyma-project.io/v1beta2
+      kind: Kyma
+      metadata:
+        labels:
+          "operator.kyma-project.io/managed-by": "lifecycle-manager"
+          "operator.kyma-project.io/beta": "true"
+        name: tbd
+        namespace: kcp-system
+      spec:
+        channel: fast
+        modules:
+        - name: api-gateway
+        - name: istio
+        - name: btp-operator
     additional-components:
       - name: "additional-component1"
         namespace: "kyma-system"
@@ -71,6 +114,23 @@ data:
         source:
           url: "https://example.source.url.local/artifacts/additional-component3-0.0.1.tgz"
   plan2: |-
+    kyma-template: |-
+      apiVersion: operator.kyma-project.io/v1beta2
+      kind: Kyma
+      metadata:
+        labels:
+          "operator.kyma-project.io/managed-by": "lifecycle-manager"
+          "operator.kyma-project.io/beta": "true"
+        name: tbd
+        namespace: kcp-system
+      spec:
+        channel: fast
+        modules:
+        - name: api-gateway
+        - name: istio
+        - name: btp-operator
+        - name: keda
+        - name: serverless
     additional-components:
       - name: "additional-component2"
         namespace: "kyma-system"
@@ -79,6 +139,18 @@ data:
         source:
           url: "https://example.source.url.local/artifacts/additional-component3-0.0.1.tgz"
   trial: |-
+    kyma-template: |-
+      apiVersion: operator.kyma-project.io/v1beta2
+      kind: Kyma
+      metadata:
+        labels:
+          "operator.kyma-project.io/managed-by": "lifecycle-manager"
+          "operator.kyma-project.io/beta": "true"
+        name: tbd
+        namespace: kcp-system
+      spec:
+        channel: regular
+        modules: []
     additional-components:
 # No components
 
