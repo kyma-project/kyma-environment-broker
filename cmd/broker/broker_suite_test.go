@@ -361,8 +361,8 @@ func (s *BrokerSuiteTest) CreateAPI(inputFactory broker.PlanValidator, cfg *Conf
 					Description: broker.AWSPlanName,
 					Metadata:    broker.PlanMetadata{},
 				},
-				broker.OpenStackPlanName: {
-					Description: broker.OpenStackPlanName,
+				broker.SapConvergedCloudPlanName: {
+					Description: broker.SapConvergedCloudPlanName,
 					Metadata:    broker.PlanMetadata{},
 				},
 			},

@@ -13,48 +13,48 @@ import (
 const (
 	AllPlansSelector = "all_plans"
 
-	GCPPlanID          = "ca6e5357-707f-4565-bbbd-b3ab732597c6"
-	GCPPlanName        = "gcp"
-	AWSPlanID          = "361c511f-f939-4621-b228-d0fb79a1fe15"
-	AWSPlanName        = "aws"
-	AzurePlanID        = "4deee563-e5ec-4731-b9b1-53b42d855f0c"
-	AzurePlanName      = "azure"
-	AzureLitePlanID    = "8cb22518-aa26-44c5-91a0-e669ec9bf443"
-	AzureLitePlanName  = "azure_lite"
-	TrialPlanID        = "7d55d31d-35ae-4438-bf13-6ffdfa107d9f"
-	TrialPlanName      = "trial"
-	OpenStackPlanID    = "03b812ac-c991-4528-b5bd-08b303523a63"
-	OpenStackPlanName  = "sap-converged-cloud"
-	FreemiumPlanID     = "b1a5764e-2ea1-4f95-94c0-2b4538b37b55"
-	FreemiumPlanName   = "free"
-	OwnClusterPlanID   = "03e3cb66-a4c6-4c6a-b4b0-5d42224debea"
-	OwnClusterPlanName = "own_cluster"
-	PreviewPlanID      = "5cb3d976-b85c-42ea-a636-79cadda109a9"
-	PreviewPlanName    = "preview"
+	GCPPlanID                 = "ca6e5357-707f-4565-bbbd-b3ab732597c6"
+	GCPPlanName               = "gcp"
+	AWSPlanID                 = "361c511f-f939-4621-b228-d0fb79a1fe15"
+	AWSPlanName               = "aws"
+	AzurePlanID               = "4deee563-e5ec-4731-b9b1-53b42d855f0c"
+	AzurePlanName             = "azure"
+	AzureLitePlanID           = "8cb22518-aa26-44c5-91a0-e669ec9bf443"
+	AzureLitePlanName         = "azure_lite"
+	TrialPlanID               = "7d55d31d-35ae-4438-bf13-6ffdfa107d9f"
+	TrialPlanName             = "trial"
+	SapConvergedCloudPlanID   = "03b812ac-c991-4528-b5bd-08b303523a63"
+	SapConvergedCloudPlanName = "sap-converged-cloud"
+	FreemiumPlanID            = "b1a5764e-2ea1-4f95-94c0-2b4538b37b55"
+	FreemiumPlanName          = "free"
+	OwnClusterPlanID          = "03e3cb66-a4c6-4c6a-b4b0-5d42224debea"
+	OwnClusterPlanName        = "own_cluster"
+	PreviewPlanID             = "5cb3d976-b85c-42ea-a636-79cadda109a9"
+	PreviewPlanName           = "preview"
 )
 
 var PlanNamesMapping = map[string]string{
-	GCPPlanID:        GCPPlanName,
-	AWSPlanID:        AWSPlanName,
-	AzurePlanID:      AzurePlanName,
-	AzureLitePlanID:  AzureLitePlanName,
-	TrialPlanID:      TrialPlanName,
-	OpenStackPlanID:  OpenStackPlanName,
-	FreemiumPlanID:   FreemiumPlanName,
-	OwnClusterPlanID: OwnClusterPlanName,
-	PreviewPlanID:    PreviewPlanName,
+	GCPPlanID:               GCPPlanName,
+	AWSPlanID:               AWSPlanName,
+	AzurePlanID:             AzurePlanName,
+	AzureLitePlanID:         AzureLitePlanName,
+	TrialPlanID:             TrialPlanName,
+	SapConvergedCloudPlanID: SapConvergedCloudPlanName,
+	FreemiumPlanID:          FreemiumPlanName,
+	OwnClusterPlanID:        OwnClusterPlanName,
+	PreviewPlanID:           PreviewPlanName,
 }
 
 var PlanIDsMapping = map[string]string{
-	AzurePlanName:      AzurePlanID,
-	AWSPlanName:        AWSPlanID,
-	AzureLitePlanName:  AzureLitePlanID,
-	GCPPlanName:        GCPPlanID,
-	TrialPlanName:      TrialPlanID,
-	OpenStackPlanName:  OpenStackPlanID,
-	FreemiumPlanName:   FreemiumPlanID,
-	OwnClusterPlanName: OwnClusterPlanID,
-	PreviewPlanName:    PreviewPlanID,
+	AzurePlanName:             AzurePlanID,
+	AWSPlanName:               AWSPlanID,
+	AzureLitePlanName:         AzureLitePlanID,
+	GCPPlanName:               GCPPlanID,
+	TrialPlanName:             TrialPlanID,
+	SapConvergedCloudPlanName: SapConvergedCloudPlanID,
+	FreemiumPlanName:          FreemiumPlanID,
+	OwnClusterPlanName:        OwnClusterPlanID,
+	PreviewPlanName:           PreviewPlanID,
 }
 
 type TrialCloudRegion string
@@ -375,15 +375,15 @@ func Plans(plans PlansConfig, provider internal.CloudProvider, includeAdditional
 	previewCatalogSchema := PreviewSchema(awsMachinesDisplay, awsMachines, includeAdditionalParamsInSchema, false, euAccessRestricted, regionParameterIsRequired, modulesEnabled)
 
 	outputPlans := map[string]domain.ServicePlan{
-		AWSPlanID:        defaultServicePlan(AWSPlanID, AWSPlanName, plans, awsCatalogSchema, AWSSchema(awsMachinesDisplay, awsMachines, includeAdditionalParamsInSchema, true, euAccessRestricted, regionParameterIsRequired, false)),
-		GCPPlanID:        defaultServicePlan(GCPPlanID, GCPPlanName, plans, gcpSchema, GCPSchema(gcpMachinesDisplay, gcpMachines, includeAdditionalParamsInSchema, true, regionParameterIsRequired, false)),
-		OpenStackPlanID:  defaultServicePlan(OpenStackPlanID, OpenStackPlanName, plans, openstackSchema, OpenStackSchema(openStackMachinesDisplay, openStackMachines, includeAdditionalParamsInSchema, true, regionParameterIsRequired, false)),
-		AzurePlanID:      defaultServicePlan(AzurePlanID, AzurePlanName, plans, azureSchema, AzureSchema(azureMachinesDisplay, azureMachines, includeAdditionalParamsInSchema, true, euAccessRestricted, regionParameterIsRequired, false)),
-		AzureLitePlanID:  defaultServicePlan(AzureLitePlanID, AzureLitePlanName, plans, azureLiteSchema, AzureLiteSchema(azureLiteMachinesDisplay, azureLiteMachines, includeAdditionalParamsInSchema, true, euAccessRestricted, regionParameterIsRequired, false)),
-		FreemiumPlanID:   defaultServicePlan(FreemiumPlanID, FreemiumPlanName, plans, freemiumSchema, FreemiumSchema(provider, includeAdditionalParamsInSchema, true, euAccessRestricted, regionParameterIsRequired, false)),
-		TrialPlanID:      defaultServicePlan(TrialPlanID, TrialPlanName, plans, trialSchema, TrialSchema(includeAdditionalParamsInSchema, true, false)),
-		OwnClusterPlanID: defaultServicePlan(OwnClusterPlanID, OwnClusterPlanName, plans, ownClusterSchema, OwnClusterSchema(true, false)),
-		PreviewPlanID:    defaultServicePlan(PreviewPlanID, PreviewPlanName, plans, previewCatalogSchema, AWSSchema(awsMachinesDisplay, awsMachines, includeAdditionalParamsInSchema, true, euAccessRestricted, regionParameterIsRequired, false)),
+		AWSPlanID:               defaultServicePlan(AWSPlanID, AWSPlanName, plans, awsCatalogSchema, AWSSchema(awsMachinesDisplay, awsMachines, includeAdditionalParamsInSchema, true, euAccessRestricted, regionParameterIsRequired, false)),
+		GCPPlanID:               defaultServicePlan(GCPPlanID, GCPPlanName, plans, gcpSchema, GCPSchema(gcpMachinesDisplay, gcpMachines, includeAdditionalParamsInSchema, true, regionParameterIsRequired, false)),
+		SapConvergedCloudPlanID: defaultServicePlan(SapConvergedCloudPlanID, SapConvergedCloudPlanName, plans, openstackSchema, OpenStackSchema(openStackMachinesDisplay, openStackMachines, includeAdditionalParamsInSchema, true, regionParameterIsRequired, false)),
+		AzurePlanID:             defaultServicePlan(AzurePlanID, AzurePlanName, plans, azureSchema, AzureSchema(azureMachinesDisplay, azureMachines, includeAdditionalParamsInSchema, true, euAccessRestricted, regionParameterIsRequired, false)),
+		AzureLitePlanID:         defaultServicePlan(AzureLitePlanID, AzureLitePlanName, plans, azureLiteSchema, AzureLiteSchema(azureLiteMachinesDisplay, azureLiteMachines, includeAdditionalParamsInSchema, true, euAccessRestricted, regionParameterIsRequired, false)),
+		FreemiumPlanID:          defaultServicePlan(FreemiumPlanID, FreemiumPlanName, plans, freemiumSchema, FreemiumSchema(provider, includeAdditionalParamsInSchema, true, euAccessRestricted, regionParameterIsRequired, false)),
+		TrialPlanID:             defaultServicePlan(TrialPlanID, TrialPlanName, plans, trialSchema, TrialSchema(includeAdditionalParamsInSchema, true, false)),
+		OwnClusterPlanID:        defaultServicePlan(OwnClusterPlanID, OwnClusterPlanName, plans, ownClusterSchema, OwnClusterSchema(true, false)),
+		PreviewPlanID:           defaultServicePlan(PreviewPlanID, PreviewPlanName, plans, previewCatalogSchema, AWSSchema(awsMachinesDisplay, awsMachines, includeAdditionalParamsInSchema, true, euAccessRestricted, regionParameterIsRequired, false)),
 	}
 
 	return outputPlans
@@ -440,9 +440,9 @@ func IsTrialPlan(planID string) bool {
 	}
 }
 
-func IsOpenstackPlan(planID string) bool {
+func IsSapConvergedCloudPlan(planID string) bool {
 	switch planID {
-	case OpenStackPlanID:
+	case SapConvergedCloudPlanID:
 		return true
 	default:
 		return false

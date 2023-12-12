@@ -87,7 +87,7 @@ func (s *ResolveCredentialsStep) retryOrFailOperation(operation internal.Operati
 func (s *ResolveCredentialsStep) getTargetSecretFromGardener(operation internal.Operation, log logrus.FieldLogger, hypType hyperscaler.Type, euAccess bool) (string, error) {
 	var secretName string
 	var err error
-	if broker.IsTrialPlan(operation.ProvisioningParameters.PlanID) || broker.IsOpenstackPlan(operation.ProvisioningParameters.PlanID) {
+	if broker.IsTrialPlan(operation.ProvisioningParameters.PlanID) || broker.IsSapConvergedCloudPlan(operation.ProvisioningParameters.PlanID) {
 		log.Infof("HAP lookup for shared secret binding")
 		secretName, err = s.accountProvider.GardenerSharedSecretName(hypType, euAccess)
 	} else {

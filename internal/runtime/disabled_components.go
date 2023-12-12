@@ -23,7 +23,7 @@ func NewDisabledComponentsProvider() DisabledComponentsProvider {
 			components.Backup:     {},
 			components.BackupInit: {},
 		},
-		broker.OpenStackPlanID: {
+		broker.SapConvergedCloudPlanID: {
 			components.KnativeEventingKafka: {},
 		},
 		broker.GCPPlanID: {

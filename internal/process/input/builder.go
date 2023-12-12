@@ -99,7 +99,7 @@ func (f *InputBuilderFactory) SetDefaultTrialProvider(p internal.CloudProvider) 
 func (f *InputBuilderFactory) IsPlanSupport(planID string) bool {
 	switch planID {
 	case broker.AWSPlanID, broker.GCPPlanID, broker.AzurePlanID, broker.FreemiumPlanID,
-		broker.AzureLitePlanID, broker.TrialPlanID, broker.OpenStackPlanID, broker.OwnClusterPlanID, broker.PreviewPlanID:
+		broker.AzureLitePlanID, broker.TrialPlanID, broker.SapConvergedCloudPlanID, broker.OwnClusterPlanID, broker.PreviewPlanID:
 		return true
 	default:
 		return false
@@ -124,7 +124,7 @@ func (f *InputBuilderFactory) getHyperscalerProviderForPlanID(planID string, pla
 		}
 	case broker.FreemiumPlanID:
 		return f.forFreemiumPlan(platformProvider)
-	case broker.OpenStackPlanID:
+	case broker.SapConvergedCloudPlanID:
 		provider = &cloudProvider.OpenStackInput{
 			FloatingPoolName: f.config.OpenstackFloatingPoolName,
 		}

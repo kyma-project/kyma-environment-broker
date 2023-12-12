@@ -139,7 +139,7 @@ func TestEDPRegistrationStep_selectServicePlan(t *testing.T) {
 			expected: "standard",
 		},
 		"OpenStack": {
-			planID:   broker.OpenStackPlanID,
+			planID:   broker.SapConvergedCloudPlanID,
 			expected: "standard",
 		},
 		"Freemium": {

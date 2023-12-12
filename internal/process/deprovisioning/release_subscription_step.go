@@ -74,5 +74,5 @@ func (s ReleaseSubscriptionStep) Run(operation internal.Operation, log logrus.Fi
 }
 
 func needsRelease(planID string) bool {
-	return !broker.IsTrialPlan(planID) && !broker.IsOwnClusterPlan(planID) && !broker.IsOpenstackPlan(planID)
+	return !broker.IsTrialPlan(planID) && !broker.IsOwnClusterPlan(planID) && !broker.IsSapConvergedCloudPlan(planID)
 }

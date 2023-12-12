@@ -139,7 +139,7 @@ func providerCodeByPlan(planID string) string {
 		return "AZR"
 	case broker.TrialPlanID, broker.FreemiumPlanID:
 		return "AZR"
-	case broker.OpenStackPlanID:
+	case broker.SapConvergedCloudPlanID:
 		return "CC"
 	default:
 		return "AZR"

@@ -25,7 +25,7 @@ var (
 		broker.AzureLitePlanID,
 		broker.AWSPlanID,
 		broker.GCPPlanID,
-		broker.OpenStackPlanID,
+		broker.SapConvergedCloudPlanID,
 		broker.TrialPlanID,
 		broker.FreemiumPlanID,
 		broker.PreviewPlanName,
