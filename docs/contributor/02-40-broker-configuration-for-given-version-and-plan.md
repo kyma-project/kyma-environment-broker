@@ -9,7 +9,7 @@ While processing requests, KEB reads a configuration from a ConfigMap which hold
 
 > **NOTE:** Create all configurations in the `kcp-system` namespace.
 
-> **NOTE:** Currently, only the Kyma Custom Resource template and the additional components list can be configured.
+> **NOTE:** Currently, only the Kyma custom resource template and the additional components list can be configured.
 
 > **NOTE:** If there is no configuration defined for custom Kyma version (starting with `PR-*` or `main-*`), then KEB reads the configuration for the latest official Kyma release version.
 
