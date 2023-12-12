@@ -17,11 +17,11 @@ const (
 	DefaultExposureClass           = "converged-cloud-internet"
 )
 
-type OpenStackInput struct {
+type SapConvergedCloudInput struct {
 	FloatingPoolName string
 }
 
-func (p *OpenStackInput) Defaults() *gqlschema.ClusterConfigInput {
+func (p *SapConvergedCloudInput) Defaults() *gqlschema.ClusterConfigInput {
 	return &gqlschema.ClusterConfigInput{
 		GardenerConfig: &gqlschema.GardenerConfigInput{
 			DiskType:          nil,
@@ -46,17 +46,17 @@ func (p *OpenStackInput) Defaults() *gqlschema.ClusterConfigInput {
 	}
 }
 
-func (p *OpenStackInput) ApplyParameters(input *gqlschema.ClusterConfigInput, pp internal.ProvisioningParameters) {
+func (p *SapConvergedCloudInput) ApplyParameters(input *gqlschema.ClusterConfigInput, pp internal.ProvisioningParameters) {
 	if pp.Parameters.Region != nil && *pp.Parameters.Region != "" {
 		input.GardenerConfig.ProviderSpecificConfig.OpenStackConfig.Zones = ZonesForSapConvergedCloud(*pp.Parameters.Region)
 	}
 }
 
-func (p *OpenStackInput) Profile() gqlschema.KymaProfile {
+func (p *SapConvergedCloudInput) Profile() gqlschema.KymaProfile {
 	return gqlschema.KymaProfileProduction
 }
 
-func (p *OpenStackInput) Provider() internal.CloudProvider {
+func (p *SapConvergedCloudInput) Provider() internal.CloudProvider {
 	return internal.Openstack
 }
 
