@@ -8,7 +8,7 @@ import (
 )
 
 func TestZonesForOpenStackZones(t *testing.T) {
-	regions := broker.OpenStackRegions()
+	regions := broker.SapConvergedCloudRegions()
 	for _, region := range regions {
 		_, exists := openstackZones[region]
 		assert.True(t, exists)

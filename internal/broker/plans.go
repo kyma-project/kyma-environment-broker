@@ -109,7 +109,7 @@ func AWSRegions(euRestrictedAccess bool) []string {
 		"ap-northeast-1", "ap-northeast-2", "ap-south-1", "ap-southeast-1", "ap-southeast-2"}
 }
 
-func OpenStackRegions() []string {
+func SapConvergedCloudRegions() []string {
 	return []string{"eu-de-1"}
 }
 
@@ -128,8 +128,8 @@ func requiredOwnClusterSchemaProperties() []string {
 	return []string{"name", "kubeconfig", "shootName", "shootDomain"}
 }
 
-func OpenStackSchema(machineTypesDisplay map[string]string, machineTypes []string, additionalParams, update bool, regionParameterIsRequired, modulesEnabled bool) *map[string]interface{} {
-	properties := NewProvisioningProperties(machineTypesDisplay, machineTypes, OpenStackRegions(), update, modulesEnabled)
+func SapConvergedCloudSchema(machineTypesDisplay map[string]string, machineTypes []string, additionalParams, update bool, regionParameterIsRequired, modulesEnabled bool) *map[string]interface{} {
+	properties := NewProvisioningProperties(machineTypesDisplay, machineTypes, SapConvergedCloudRegions(), update, modulesEnabled)
 	properties.AutoScalerMax.Minimum = 3
 	properties.AutoScalerMin.Minimum = 3
 	properties.Networking = NewNetworkingSchema()
@@ -336,7 +336,7 @@ func Plans(plans PlansConfig, provider internal.CloudProvider, includeAdditional
 		"g_c4_m16": "g_c4_m16 (4vCPU, 16GB RAM)",
 		"g_c8_m32": "g_c8_m32 (8vCPU, 32GB RAM)",
 	}
-	openstackSchema := OpenStackSchema(openStackMachinesDisplay, openStackMachines, includeAdditionalParamsInSchema, false, regionParameterIsRequired, modulesEnabled)
+	openstackSchema := SapConvergedCloudSchema(openStackMachinesDisplay, openStackMachines, includeAdditionalParamsInSchema, false, regionParameterIsRequired, modulesEnabled)
 
 	// source: https://docs.microsoft.com/en-us/azure/cloud-services/cloud-services-sizes-specs#dv3-series
 	azureMachines := []string{"Standard_D4_v3", "Standard_D8_v3", "Standard_D16_v3", "Standard_D32_v3", "Standard_D48_v3", "Standard_D64_v3"}
@@ -377,7 +377,7 @@ func Plans(plans PlansConfig, provider internal.CloudProvider, includeAdditional
 	outputPlans := map[string]domain.ServicePlan{
 		AWSPlanID:               defaultServicePlan(AWSPlanID, AWSPlanName, plans, awsCatalogSchema, AWSSchema(awsMachinesDisplay, awsMachines, includeAdditionalParamsInSchema, true, euAccessRestricted, regionParameterIsRequired, false)),
 		GCPPlanID:               defaultServicePlan(GCPPlanID, GCPPlanName, plans, gcpSchema, GCPSchema(gcpMachinesDisplay, gcpMachines, includeAdditionalParamsInSchema, true, regionParameterIsRequired, false)),
-		SapConvergedCloudPlanID: defaultServicePlan(SapConvergedCloudPlanID, SapConvergedCloudPlanName, plans, openstackSchema, OpenStackSchema(openStackMachinesDisplay, openStackMachines, includeAdditionalParamsInSchema, true, regionParameterIsRequired, false)),
+		SapConvergedCloudPlanID: defaultServicePlan(SapConvergedCloudPlanID, SapConvergedCloudPlanName, plans, openstackSchema, SapConvergedCloudSchema(openStackMachinesDisplay, openStackMachines, includeAdditionalParamsInSchema, true, regionParameterIsRequired, false)),
 		AzurePlanID:             defaultServicePlan(AzurePlanID, AzurePlanName, plans, azureSchema, AzureSchema(azureMachinesDisplay, azureMachines, includeAdditionalParamsInSchema, true, euAccessRestricted, regionParameterIsRequired, false)),
 		AzureLitePlanID:         defaultServicePlan(AzureLitePlanID, AzureLitePlanName, plans, azureLiteSchema, AzureLiteSchema(azureLiteMachinesDisplay, azureLiteMachines, includeAdditionalParamsInSchema, true, euAccessRestricted, regionParameterIsRequired, false)),
 		FreemiumPlanID:          defaultServicePlan(FreemiumPlanID, FreemiumPlanName, plans, freemiumSchema, FreemiumSchema(provider, includeAdditionalParamsInSchema, true, euAccessRestricted, regionParameterIsRequired, false)),

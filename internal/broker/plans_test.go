@@ -274,7 +274,7 @@ func TestSchemaGenerator(t *testing.T) {
 		{
 			name: "OpenStack schema is correct",
 			generator: func(machinesDisplay map[string]string, machines []string, additionalParams, update bool) *map[string]interface{} {
-				return OpenStackSchema(machinesDisplay, machines, additionalParams, update, false, modulesEnabled)
+				return SapConvergedCloudSchema(machinesDisplay, machines, additionalParams, update, false, modulesEnabled)
 			},
 			machineTypes:   []string{"g_c4_m16", "g_c8_m32"},
 			file:           "openstack-schema.json",
@@ -285,7 +285,7 @@ func TestSchemaGenerator(t *testing.T) {
 		{
 			name: "OpenStack schema with region required is correct",
 			generator: func(machinesDisplay map[string]string, machines []string, additionalParams, update bool) *map[string]interface{} {
-				return OpenStackSchema(machinesDisplay, machines, additionalParams, update, true, modulesEnabled)
+				return SapConvergedCloudSchema(machinesDisplay, machines, additionalParams, update, true, modulesEnabled)
 			},
 			machineTypes:   []string{"g_c4_m16", "g_c8_m32"},
 			file:           "openstack-schema-region-required.json",
