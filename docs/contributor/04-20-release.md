@@ -26,7 +26,7 @@ To create a release, follow these steps:
    v. Choose whether to bump or not to bump the security scanner config  
    vi. Enter a number of the last k3s versions to be used for KEB chart tests or leave empty (default value is `3`)
    
-2. The GitHub action, defined in the [`create-release.yaml`](/.github/workflows/create-release.yaml) file, validates the release by checking if the GitHub tag already exists, if there are any old Docker images for that GitHub tag, and if merged PRs that will be part of this release are labeled correctly.
+2. The GitHub action, defined in the [`create-release`](/.github/workflows/create-release.yaml) file, validates the release by checking if the GitHub tag already exists, if there are any old Docker images for that GitHub tag, and if merged PRs that will be part of this release are labeled correctly.
 3. The GitHub action asynchronously initiates unit tests, KEB chart tests. It also asynchronously initiates the bump of the security scanner config if you chose this option in step 1.v. In such a case, the GitHub action creates a PR with a new security scanner config that includes the new GitHub tag version.
 4. A code owner approves the PR with the security scanner config bump. 
 5. The GitHub action creates a GitHub tag and draft release with the provided name.
