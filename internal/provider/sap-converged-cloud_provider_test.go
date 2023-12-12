@@ -7,7 +7,7 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestZonesForOpenStackZones(t *testing.T) {
+func TestZonesForSapConvergedCloudZones(t *testing.T) {
 	regions := broker.SapConvergedCloudRegions()
 	for _, region := range regions {
 		_, exists := sapConvergedCloudZones[region]

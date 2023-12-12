@@ -616,7 +616,7 @@ func Test_UpgradeShootInputToGraphQL(t *testing.T) {
 	assert.Equal(t, exp, got)
 }
 
-func TestOpenstack(t *testing.T) {
+func TestSapConvergedCloud(t *testing.T) {
 	// given
 	input := gqlschema.ProviderSpecificInput{
 		OpenStackConfig: &gqlschema.OpenStackProviderConfigInput{
