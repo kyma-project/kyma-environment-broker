@@ -102,5 +102,5 @@ func getEffectiveRegionForOpenstack(provisioningParametersRegion *string) string
 	if provisioningParametersRegion != nil && *provisioningParametersRegion != "" {
 		return *provisioningParametersRegion
 	}
-	return provider.DefaultOpenStackRegion
+	return provider.DefaultSapConvergedCloudRegion
 }

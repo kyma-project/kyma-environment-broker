@@ -13,8 +13,8 @@ import (
 )
 
 const (
-	DefaultOpenStackRegion = "eu-de-1"
-	DefaultExposureClass   = "converged-cloud-internet"
+	DefaultSapConvergedCloudRegion = "eu-de-1"
+	DefaultExposureClass           = "converged-cloud-internet"
 )
 
 type OpenStackInput struct {
@@ -26,17 +26,17 @@ func (p *OpenStackInput) Defaults() *gqlschema.ClusterConfigInput {
 		GardenerConfig: &gqlschema.GardenerConfigInput{
 			DiskType:          nil,
 			MachineType:       "g_c4_m16",
-			Region:            DefaultOpenStackRegion,
+			Region:            DefaultSapConvergedCloudRegion,
 			Provider:          "openstack",
 			WorkerCidr:        networking.DefaultNodesCIDR,
-			AutoScalerMin:     4,
-			AutoScalerMax:     8,
+			AutoScalerMin:     3,
+			AutoScalerMax:     20,
 			MaxSurge:          1,
 			MaxUnavailable:    0,
 			ExposureClassName: ptr.String(DefaultExposureClass),
 			ProviderSpecificConfig: &gqlschema.ProviderSpecificInput{
 				OpenStackConfig: &gqlschema.OpenStackProviderConfigInput{
-					Zones:                ZonesForOpenStack(DefaultOpenStackRegion),
+					Zones:                ZonesForOpenStack(DefaultSapConvergedCloudRegion),
 					FloatingPoolName:     p.FloatingPoolName,
 					CloudProfileName:     "converged-cloud-cp",
 					LoadBalancerProvider: "f5",

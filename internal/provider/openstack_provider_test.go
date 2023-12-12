@@ -13,6 +13,6 @@ func TestZonesForOpenStackZones(t *testing.T) {
 		_, exists := openstackZones[region]
 		assert.True(t, exists)
 	}
-	_, exists := openstackZones[DefaultOpenStackRegion]
+	_, exists := openstackZones[DefaultSapConvergedCloudRegion]
 	assert.True(t, exists)
 }
