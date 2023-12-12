@@ -36,7 +36,7 @@ func (p *OpenStackInput) Defaults() *gqlschema.ClusterConfigInput {
 			ExposureClassName: ptr.String(DefaultExposureClass),
 			ProviderSpecificConfig: &gqlschema.ProviderSpecificInput{
 				OpenStackConfig: &gqlschema.OpenStackProviderConfigInput{
-					Zones:                ZonesForOpenStack(DefaultSapConvergedCloudRegion),
+					Zones:                ZonesForSapConvergedCloud(DefaultSapConvergedCloudRegion),
 					FloatingPoolName:     p.FloatingPoolName,
 					CloudProfileName:     "converged-cloud-cp",
 					LoadBalancerProvider: "f5",
@@ -48,7 +48,7 @@ func (p *OpenStackInput) Defaults() *gqlschema.ClusterConfigInput {
 
 func (p *OpenStackInput) ApplyParameters(input *gqlschema.ClusterConfigInput, pp internal.ProvisioningParameters) {
 	if pp.Parameters.Region != nil && *pp.Parameters.Region != "" {
-		input.GardenerConfig.ProviderSpecificConfig.OpenStackConfig.Zones = ZonesForOpenStack(*pp.Parameters.Region)
+		input.GardenerConfig.ProviderSpecificConfig.OpenStackConfig.Zones = ZonesForSapConvergedCloud(*pp.Parameters.Region)
 	}
 }
 
@@ -60,14 +60,14 @@ func (p *OpenStackInput) Provider() internal.CloudProvider {
 	return internal.Openstack
 }
 
-// openstackZones defines a possible suffixes for given OpenStack regions
+// sapConvergedCloudZones defines a possible suffixes for given OpenStack regions
 // The table is tested in a unit test to check if all necessary regions are covered
-var openstackZones = map[string]string{
+var sapConvergedCloudZones = map[string]string{
 	"eu-de-1": "abd",
 }
 
-func ZonesForOpenStack(region string) []string {
-	zones, found := openstackZones[region]
+func ZonesForSapConvergedCloud(region string) []string {
+	zones, found := sapConvergedCloudZones[region]
 	if !found {
 		zones = "a"
 	}
