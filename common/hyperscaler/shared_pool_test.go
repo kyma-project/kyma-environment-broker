@@ -55,7 +55,7 @@ func TestSharedPool_SharedCredentialsSecretBinding(t *testing.T) {
 					newShoot("sh3", "sb1"),
 					newShoot("sh4", "sb2"),
 				},
-				hyperscaler:    Openstack("eu-de-1"),
+				hyperscaler:    SapConvergedCloud("eu-de-1"),
 				expectedSecret: "s4",
 			},
 			{
@@ -73,7 +73,7 @@ func TestSharedPool_SharedCredentialsSecretBinding(t *testing.T) {
 					newShoot("sh3", "sb1"),
 					newShoot("sh4", "sb2"),
 				},
-				hyperscaler:    Openstack("eu-de-2"),
+				hyperscaler:    SapConvergedCloud("eu-de-2"),
 				expectedSecret: "s5",
 			},
 			{
@@ -155,7 +155,7 @@ func TestSharedPool_SharedCredentialsSecretBinding(t *testing.T) {
 					newShoot("sh5", "sb6"),
 					newShoot("sh6", "sb5"),
 				},
-				hyperscaler:    Openstack("eu-de-1"),
+				hyperscaler:    SapConvergedCloud("eu-de-1"),
 				expectedSecret: "s6",
 			},
 		} {

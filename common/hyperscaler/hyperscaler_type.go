@@ -23,7 +23,7 @@ func AWS() Type {
 	}
 }
 
-func Openstack(region string) Type {
+func SapConvergedCloud(region string) Type {
 	return Type{
 		hyperscalerName:   "openstack",
 		hyperscalerRegion: region,

@@ -1068,10 +1068,10 @@ func fixAccountProvider() *hyperscalerautomock.AccountProvider {
 	accountProvider.On("GardenerSharedSecretName", hyperscaler.AWS(), mock.Anything).Return(
 		func(ht hyperscaler.Type, euaccess bool) string { return sharedSubscription(ht) }, nil)
 
-	accountProvider.On("GardenerSharedSecretName", hyperscaler.Openstack("eu-de-2"), mock.Anything).Return(
+	accountProvider.On("GardenerSharedSecretName", hyperscaler.SapConvergedCloud("eu-de-2"), mock.Anything).Return(
 		func(ht hyperscaler.Type, euaccess bool) string { return sharedSubscription(ht) }, nil)
 
-	accountProvider.On("GardenerSharedSecretName", hyperscaler.Openstack("eu-de-1"), mock.Anything).Return(
+	accountProvider.On("GardenerSharedSecretName", hyperscaler.SapConvergedCloud("eu-de-1"), mock.Anything).Return(
 		func(ht hyperscaler.Type, euaccess bool) string { return sharedSubscription(ht) }, nil)
 
 	accountProvider.On("MarkUnusedGardenerSecretBindingAsDirty", hyperscaler.Azure(), mock.Anything, mock.Anything).Return(nil)

@@ -31,7 +31,7 @@ func NewAccountProvider(gardenerPool AccountPool, sharedGardenerPool SharedPool)
 	}
 }
 
-func HypTypeFromCloudProviderWithRegion(cloudProvider internal.CloudProvider, regionForOpenstack *string) (Type, error) {
+func HypTypeFromCloudProviderWithRegion(cloudProvider internal.CloudProvider, regionForSapConvergedCloud *string) (Type, error) {
 	switch cloudProvider {
 	case internal.Azure:
 		return Azure(), nil
@@ -40,7 +40,7 @@ func HypTypeFromCloudProviderWithRegion(cloudProvider internal.CloudProvider, re
 	case internal.GCP:
 		return GCP(), nil
 	case internal.SapConvergedCloud:
-		return Openstack(*regionForOpenstack), nil
+		return SapConvergedCloud(*regionForSapConvergedCloud), nil
 	default:
 		return Type{}, fmt.Errorf("cannot determine the type of Hyperscaler to use for cloud provider %s", cloudProvider)
 	}
