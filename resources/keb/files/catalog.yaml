@@ -54,10 +54,10 @@ services:
         description: "Free"
         metadata:
           displayName: "Free"
-      openstack:
-        description: "Openstack"
+      sap-converged-cloud:
+        description: "SAP Converged Cloud"
         metadata:
-          displayName: "Openstack"
+          displayName: "SAP Converged Cloud"
       gcp:
         description: "GCP"
         metadata:
