@@ -37,7 +37,12 @@
     "machineType": {
       "enum": [
         "g_c4_m16",
-        "g_c8_m32"
+        "g_c6_m24",
+        "g_c8_m32",
+        "g_c12_m48",
+        "g_c16_m64",
+        "g_c32_m128",
+        "g_c64_m256"
       ],
       "type": "string"
     },

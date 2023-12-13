@@ -304,10 +304,23 @@ func Plans(plans PlansConfig, provider internal.CloudProvider, includeAdditional
 	}
 	gcpSchema := GCPSchema(gcpMachinesDisplay, gcpMachines, includeAdditionalParamsInSchema, false, regionParameterIsRequired, modulesEnabled)
 
-	sapConvergedCloudMachines := []string{"g_c4_m16", "g_c8_m32"}
+	sapConvergedCloudMachines := []string{
+		"g_c4_m16",
+		"g_c6_m24",
+		"g_c8_m32",
+		"g_c12_m48",
+		"g_c16_m64",
+		"g_c32_m128",
+		"g_c64_m256",
+	}
 	sapConvergedCloudMachinesDisplay := map[string]string{
-		"g_c4_m16": "g_c4_m16 (4vCPU, 16GB RAM)",
-		"g_c8_m32": "g_c8_m32 (8vCPU, 32GB RAM)",
+		"g_c4_m16":   "g_c4_m16 (4vCPU, 16GB RAM)",
+		"g_c6_m24":   "g_c6_m24 (6vCPU, 24GB RAM)",
+		"g_c8_m32":   "g_c8_m32 (8vCPU, 32GB RAM)",
+		"g_c12_m48":  "g_c12_m48 (12vCPU, 48GB RAM)",
+		"g_c16_m64":  "g_c16_m64 (16vCPU, 64GB RAM)",
+		"g_c32_m128": "g_c32_m128 (32vCPU, 128GB RAM)",
+		"g_c64_m256": "g_c64_m256 (64vCPU, 256GB RAM)",
 	}
 	sapConvergedCloudSchema := SapConvergedCloudSchema(sapConvergedCloudMachinesDisplay, sapConvergedCloudMachines, includeAdditionalParamsInSchema, false, regionParameterIsRequired, modulesEnabled)
 
