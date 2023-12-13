@@ -124,7 +124,7 @@ const (
 	AWS               CloudProvider = "AWS"
 	GCP               CloudProvider = "GCP"
 	UnknownProvider   CloudProvider = "unknown"
-	SapConvergedCloud CloudProvider = "OpenStack"
+	SapConvergedCloud CloudProvider = "sap-converged-cloud"
 )
 
 type AutoScalerParameters struct {
