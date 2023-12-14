@@ -1,7 +1,6 @@
 package broker
 
 import (
-	"bytes"
 	"context"
 	"encoding/json"
 	"fmt"
@@ -20,6 +19,7 @@ const (
 	AccountCleanupJob = "accountcleanup-job"
 
 	instancesURL       = "/oauth/v2/service_instances"
+	expireInstanceURL  = "/expire/service_instance"
 	deprovisionTmpl    = "%s%s/%s?service_id=%s&plan_id=%s"
 	updateInstanceTmpl = "%s%s/%s"
 	getInstanceTmpl    = "%s%s/%s"
@@ -129,7 +129,7 @@ func (c *Client) Deprovision(instance internal.Instance) (string, error) {
 
 // SendExpirationRequest requests Runtime suspension due to expiration
 func (c *Client) SendExpirationRequest(instance internal.Instance) (suspensionUnderWay bool, err error) {
-	request, err := preparePatchRequest(instance, c.brokerConfig.URL)
+	request, err := prepareExpirationRequest(instance, c.brokerConfig.URL)
 	if err != nil {
 		return false, err
 	}
@@ -214,17 +214,12 @@ func decodeErrorResponse(resp *http.Response) (string, string, error) {
 	return response.Description, response.Error, nil
 }
 
-func preparePatchRequest(instance internal.Instance, brokerConfigURL string) (*http.Request, error) {
-	updateInstanceUrl := fmt.Sprintf(updateInstanceTmpl, brokerConfigURL, instancesURL, instance.InstanceID)
-
-	jsonPayload, err := preparePayload(instance)
-	if err != nil {
-		return nil, fmt.Errorf("while marshaling payload for instanceID: %s: %w", instance.InstanceID, err)
-	}
+func prepareExpirationRequest(instance internal.Instance, brokerConfigURL string) (*http.Request, error) {
+	expireInstanceUrl := fmt.Sprintf(updateInstanceTmpl, brokerConfigURL, expireInstanceURL, instance.InstanceID)
 
 	log.Infof("Requesting expiration of the environment with instanceID: %q", instance.InstanceID)
 
-	request, err := http.NewRequest(http.MethodPatch, updateInstanceUrl, bytes.NewBuffer(jsonPayload))
+	request, err := http.NewRequest(http.MethodPut, expireInstanceUrl, nil)
 	if err != nil {
 		return nil, fmt.Errorf("while creating request for instanceID: %s: %w", instance.InstanceID, err)
 	}
@@ -241,21 +236,6 @@ func prepareGetRequest(instanceID string, brokerConfigURL string) (*http.Request
 	}
 	request.Header.Set("X-Broker-API-Version", "2.14")
 	return request, nil
-}
-
-func preparePayload(instance internal.Instance) ([]byte, error) {
-	expired := true
-	active := false
-	payload := serviceUpdatePatchDTO{
-		ServiceID: KymaServiceID,
-		PlanID:    instance.ServicePlanID,
-		Context: contextDTO{
-			GlobalAccountID: instance.SubscriptionGlobalAccountID,
-			SubAccountID:    instance.SubAccountID,
-			Active:          &active},
-		Parameters: parametersDTO{Expired: &expired}}
-	jsonPayload, err := json.Marshal(payload)
-	return jsonPayload, err
 }
 
 func (c *Client) formatDeprovisionUrl(instance internal.Instance) (string, error) {
