@@ -402,3 +402,9 @@ runtimeReconciler:
 
 migratorJobs:
   enabled: true
+  helmhook:
+    enabled: true
+    weight: "1"
+  argosync:
+    enabled: false
+    syncwave: "0"
