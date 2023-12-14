@@ -13,6 +13,7 @@ spec:
       labels:
         cronjob: kyma-environments-cleanup
     spec:
+      activeDeadlineSeconds: 1800
       template:
         metadata:
           name: kyma-environments-cleanup-job
