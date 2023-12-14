@@ -1,5 +1,5 @@
 const {
-  getSKRConfig,
+  //getSKRConfig,
   withSuffix,
   withInstanceID,
   gatherOptions,
@@ -16,25 +16,10 @@ const {
 const {provisionSKR}= require('../../kyma-environment-broker');
 const {BTPOperatorCreds} = require('../../smctl/helpers');
 
-async function getOrProvisionSKR(options, skipProvisioning, provisioningTimeout) {
+async function getOrProvisionSKR(options, provisioningTimeout) {
   let shoot;
-  if (skipProvisioning) {
-    console.log('Gather information from externally provisioned SKR and prepare resources');
-    const instanceID = getEnvOrThrow('INSTANCE_ID');
-    console.log(`SKR Instance Id: ${instanceID}`);
-    let suffix = process.env.TEST_SUFFIX;
-    if (suffix === undefined) {
-      suffix = genRandom(4);
-    }
-    options = gatherOptions(
-        withInstanceID(instanceID),
-        withSuffix(suffix),
-    );
-    shoot = await getSKRConfig(instanceID);
-  } else {
-    console.log('Provisioning new SKR instance...');
-    shoot = await provisionSKRInstance(options, provisioningTimeout);
-  }
+  console.log('Provisioning new SKR instance...');
+  shoot = await provisionSKRInstance(options, provisioningTimeout);
 
   console.log('Initiating K8s config...');
   await initK8sConfig(shoot);

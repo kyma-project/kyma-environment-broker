@@ -26,7 +26,7 @@ describe('Provision SKR instance', function() {
   it('should provision SKR cluster', async function() {
     this.timeout(provisioningTimeout);
     console.log(`SKR Instance ID: ${options.instanceID}`);
-    skr = await getOrProvisionSKR(options, false, provisioningTimeout);
+    skr = await getOrProvisionSKR(options, provisioningTimeout);
     options = skr.options;
     isSKRProvisioned = true;
   });

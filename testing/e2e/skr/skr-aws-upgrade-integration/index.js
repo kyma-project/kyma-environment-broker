@@ -11,7 +11,6 @@ const {getOrProvisionSKR} = require('../skr-test/provision/provision-skr');
 const {deprovisionAndUnregisterSKR} = require('../skr-test/provision/deprovision-skr');
 const {upgradeSKRInstance} = require('./upgrade/upgrade-skr');
 
-const skipProvisioning = process.env.SKIP_PROVISIONING === 'true';
 const provisioningTimeout = 1000 * 60 * 60; // 1h
 const deprovisioningTimeout = 1000 * 60 * 30; // 30m
 const upgradeTimeoutMin = 30; // 30m
@@ -23,10 +22,8 @@ const kymaUpgradeVersion = getEnvOrThrow('KYMA_UPGRADE_VERSION');
 
 describe('SKR-Upgrade-test', function() {
   switchDebug(true);
-
-  if (!skipProvisioning) {
-    globalTimeout += provisioningTimeout + deprovisioningTimeout; // 3h
-  }
+  globalTimeout += provisioningTimeout + deprovisioningTimeout; // 3h
+  
   this.timeout(globalTimeout);
   this.slow(slowTime);
 
@@ -46,7 +43,7 @@ describe('SKR-Upgrade-test', function() {
 
   before(`Provision SKR with ID ${options.instanceID} and version ${kymaVersion}`, async function() {
     this.timeout(provisioningTimeout);
-    skr = await getOrProvisionSKR(options, skipProvisioning, provisioningTimeout);
+    skr = await getOrProvisionSKR(options, provisioningTimeout);
     console.log('SKR provisioned');
     options = skr.options;
   });
@@ -63,7 +60,7 @@ describe('SKR-Upgrade-test', function() {
   if (skipCleanup === 'FALSE') {
     after('Cleanup the resources', async function() {
       this.timeout(deprovisioningTimeout);
-      await deprovisionAndUnregisterSKR(options, deprovisioningTimeout, skipProvisioning, true);
+      await deprovisionAndUnregisterSKR(options, deprovisioningTimeout, true);
     });
   }
 });

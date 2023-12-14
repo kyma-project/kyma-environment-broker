@@ -31,7 +31,7 @@ describe('SKR Trial suspension test', function() {
 
   before('Ensure SKR Trial is provisioned', async function() {
     try {
-      await callFuncAndPrintExecutionTime(getOrProvisionSKR, [options, false, provisioningTimeout]);
+      await callFuncAndPrintExecutionTime(getOrProvisionSKR, [options, provisioningTimeout]);
     } catch (e) {
       throw new Error(`${e.toString()}\n`);
     }
@@ -60,6 +60,6 @@ describe('SKR Trial suspension test', function() {
 
   after('Cleanup the resources', async function() {
     await callFuncAndPrintExecutionTime(deprovisionAndUnregisterSKR,
-        [options, deprovisioningAfterSuspensionTimeout, false, true]);
+        [options, deprovisioningAfterSuspensionTimeout, true]);
   });
 });

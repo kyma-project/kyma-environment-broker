@@ -25,6 +25,6 @@ describe('De-provision SKR instance', function() {
   it('should de-provision SKR cluster', async function() {
     this.timeout(deprovisioningTimeout);
     console.log(`SKR Instance ID: ${options.instanceID}`);
-    await deprovisionAndUnregisterSKR(options, deprovisioningTimeout, false, true);
+    await deprovisionAndUnregisterSKR(options, deprovisioningTimeout, true);
   });
 });
