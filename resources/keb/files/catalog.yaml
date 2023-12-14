@@ -58,6 +58,10 @@ services:
         description: "Openstack"
         metadata:
           displayName: "Openstack"
+      sap-converged-cloud:
+        description: "SAP Converged Cloud"
+        metadata:
+          displayName: "SAP Converged Cloud"
       gcp:
         description: "GCP"
         metadata:
