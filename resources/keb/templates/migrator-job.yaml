@@ -108,22 +108,22 @@ spec:
               mountPath: /secrets/cloudsql-sslrootcert
               readOnly: true
             {{- end }}
-          volumes:
-            - name: kyma-environment-broker
-              configMap:
-                name: kyma-environment-broker-migrations
-            {{- if and (eq .Values.global.database.embedded.enabled false) (eq .Values.global.database.cloudsqlproxy.enabled true) (eq .Values.global.database.cloudsqlproxy.workloadIdentity.enabled false)}}
-            - name: cloudsql-instance-credentials
-              secret:
-                secretName: cloudsql-instance-credentials
-            {{- end }}
-            {{- if and (eq .Values.global.database.embedded.enabled false) (eq .Values.global.database.cloudsqlproxy.enabled false) }}
-            - name: cloudsql-sslrootcert
-              secret:
-                secretName: kcp-postgresql
-                items:
-                  - key: postgresql-sslRootCert
-                    path: server-ca.pem
-                optional: true
-            {{- end}}
+      volumes:
+        - name: kyma-environment-broker
+          configMap:
+            name: kyma-environment-broker-migrations
+        {{- if and (eq .Values.global.database.embedded.enabled false) (eq .Values.global.database.cloudsqlproxy.enabled true) (eq .Values.global.database.cloudsqlproxy.workloadIdentity.enabled false)}}
+        - name: cloudsql-instance-credentials
+          secret:
+            secretName: cloudsql-instance-credentials
+        {{- end }}
+        {{- if and (eq .Values.global.database.embedded.enabled false) (eq .Values.global.database.cloudsqlproxy.enabled false) }}
+        - name: cloudsql-sslrootcert
+          secret:
+            secretName: kcp-postgresql
+            items:
+              - key: postgresql-sslRootCert
+                path: server-ca.pem
+            optional: true
+          {{- end}}
 {{ end }}
