@@ -57,7 +57,7 @@ func TestInstance(t *testing.T) {
 		require.NoError(t, err)
 
 		fixInstance.DashboardURL = "diff"
-		fixInstance.Provider = "OpenStack"
+		fixInstance.Provider = internal.SapConvergedCloud
 		_, err = brokerStorage.Instances().Update(fixInstance)
 		require.NoError(t, err)
 

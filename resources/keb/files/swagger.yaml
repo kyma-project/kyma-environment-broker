@@ -2136,7 +2136,7 @@ components:
             type: string
         provider:
           type: string
-          enum: ["Azure", "AWS", "GCP", "OpenStack"]
+          enum: ["Azure", "AWS", "GCP", "ConvergedCloud"]
         oidc:
           $ref: '#/components/schemas/OIDC'
         service_id:
