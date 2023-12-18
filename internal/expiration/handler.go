@@ -20,6 +20,10 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
+type expirationResponse struct {
+	SuspensionOpID string `json:"operation"`
+}
+
 type Handler interface {
 	AttachRoutes(router *mux.Router)
 }
@@ -76,7 +80,7 @@ func (h *handler) expireInstance(w http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	instance, err = h.suspendInstance(instance, logger)
+	instance, suspensionOpID, err := h.suspendInstance(instance, logger)
 	if err != nil {
 		logger.Errorf("unable to create suspension operation: %s", err.Error())
 		httputil.WriteErrorResponse(w, http.StatusInternalServerError, err)
@@ -91,7 +95,8 @@ func (h *handler) expireInstance(w http.ResponseWriter, req *http.Request) {
 	}
 
 	logger.Infof("the instance has been expired and awaits suspension")
-	w.WriteHeader(http.StatusAccepted)
+	res := expirationResponse{suspensionOpID}
+	httputil.WriteResponse(w, http.StatusAccepted, res)
 
 	return
 }
@@ -107,10 +112,10 @@ func (h *handler) setInstanceExpirationTime(instance *internal.Instance, log log
 	return instance, err
 }
 
-func (h *handler) suspendInstance(instance *internal.Instance, log *logrus.Entry) (*internal.Instance, error) {
+func (h *handler) suspendInstance(instance *internal.Instance, log *logrus.Entry) (*internal.Instance, string, error) {
 	lastDeprovisioningOp, err := h.operations.GetDeprovisioningOperationByInstanceID(instance.InstanceID)
 	if err != nil && !dberr.IsNotFound(err) {
-		return instance, err
+		return instance, "", err
 	}
 
 	if lastDeprovisioningOp != nil {
@@ -121,10 +126,10 @@ func (h *handler) suspendInstance(instance *internal.Instance, log *logrus.Entry
 		switch lastDeprovisioningOp.State {
 		case orchestration.Pending:
 			log.Infof("%s pending", opType)
-			return instance, nil
+			return instance, lastDeprovisioningOp.ID, nil
 		case domain.InProgress:
 			log.Infof("%s in progress", opType)
-			return instance, nil
+			return instance, lastDeprovisioningOp.ID, nil
 		case domain.Failed:
 			log.Infof("triggering suspension after previous failed %s", opType)
 		}
@@ -133,12 +138,12 @@ func (h *handler) suspendInstance(instance *internal.Instance, log *logrus.Entry
 	opID := uuid.New().String()
 	suspensionOp := internal.NewSuspensionOperationWithID(opID, instance)
 	if err := h.operations.InsertDeprovisioningOperation(suspensionOp); err != nil {
-		return instance, err
+		return instance, "", err
 	}
 	h.deprovisioningQueue.Add(suspensionOp.ID)
 	log.Infof("suspension operation %s added to queue", suspensionOp.ID)
 
-	return instance, nil
+	return instance, suspensionOp.ID, nil
 }
 
 func (h *handler) deactivateInstance(instance *internal.Instance, log logrus.FieldLogger) (*internal.Instance, error) {
