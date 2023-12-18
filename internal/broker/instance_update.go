@@ -111,19 +111,12 @@ func (b *UpdateEndpoint) Update(_ context.Context, instanceID string, details do
 		return domain.UpdateServiceSpec{}, apiresponses.NewFailureResponse(err, http.StatusBadRequest, "validation failed")
 	}
 
-	// If the param contains "expired" - then process expiration (save it in the instance)
-	instance, err = b.processExpirationParam(instance, details, ersContext, logger)
-	if err != nil {
-		logger.Errorf("Unable to update the instance: %s", err.Error())
-		return domain.UpdateServiceSpec{}, err
-	}
-
 	lastProvisioningOperation, err := b.operationStorage.GetProvisioningOperationByInstanceID(instance.InstanceID)
 	if err != nil {
 		logger.Errorf("cannot fetch provisioning lastProvisioningOperation for instance with ID: %s : %s", instance.InstanceID, err.Error())
 		return domain.UpdateServiceSpec{}, fmt.Errorf("unable to process the update")
 	}
-	if lastProvisioningOperation.State == domain.Failed && !instance.IsExpired() {
+	if lastProvisioningOperation.State == domain.Failed {
 		return domain.UpdateServiceSpec{}, apiresponses.NewFailureResponse(fmt.Errorf("Unable to process an update of a failed instance"), http.StatusUnprocessableEntity, "")
 	}
 
@@ -133,7 +126,7 @@ func (b *UpdateEndpoint) Update(_ context.Context, instanceID string, details do
 		return domain.UpdateServiceSpec{}, fmt.Errorf("unable to process the update")
 	}
 	if err == nil {
-		if !lastDeprovisioningOperation.Temporary && !instance.IsExpired() {
+		if !lastDeprovisioningOperation.Temporary {
 			// it is not a suspension, but real deprovisioning
 			logger.Warnf("Cannot process update, the instance has started deprovisioning process (operationID=%s)", lastDeprovisioningOperation.Operation.ID)
 			return domain.UpdateServiceSpec{}, apiresponses.NewFailureResponse(fmt.Errorf("Unable to process an update of a deprovisioned instance"), http.StatusUnprocessableEntity, "")
@@ -378,39 +371,6 @@ func (b *UpdateEndpoint) isKyma2(instance *internal.Instance) (bool, string, err
 	}
 	kv := s.GetKymaVersion()
 	return internal.DetermineMajorVersion(kv) == 2, kv, nil
-}
-
-// processExpirationParam returns true, if expired
-func (b *UpdateEndpoint) processExpirationParam(instance *internal.Instance, details domain.UpdateDetails, ers internal.ERSContext, logger logrus.FieldLogger) (*internal.Instance, error) {
-	// if the instance was expired before (in the past), then no need to do any work
-	if instance.IsExpired() {
-		return instance, nil
-	}
-	if len(details.RawParameters) != 0 {
-		var params internal.UpdatingParametersDTO
-		err := json.Unmarshal(details.RawParameters, &params)
-		if err != nil {
-			return instance, err
-		}
-		if params.Expired {
-			if !IsTrialPlan(instance.ServicePlanID) {
-				logger.Warn("Expiration of a non-trial instance is not supported")
-				return instance, apiresponses.NewFailureResponse(fmt.Errorf("expiration of a non-trial instance is not supported"), http.StatusBadRequest, "")
-			}
-
-			if ers.Active == nil || *ers.Active {
-				logger.Warn("Parameter 'expired' requires `context.active=false`")
-				return instance, apiresponses.NewFailureResponse(fmt.Errorf("context.active=false is required for expiration"), http.StatusBadRequest, "")
-			}
-
-			logger.Infof("Saving expiration param for an instance created at %s", instance.CreatedAt)
-			instance.ExpiredAt = ptr.Time(time.Now())
-			instance, err := b.instanceStorage.Update(*instance)
-			return instance, err
-		}
-	}
-	return instance, nil
-
 }
 
 func (b *UpdateEndpoint) getJsonSchemaValidator(provider internal.CloudProvider, planID string, platformRegion string) (JSONSchemaValidator, error) {
