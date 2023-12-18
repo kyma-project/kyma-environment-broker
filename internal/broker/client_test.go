@@ -2,11 +2,11 @@ package broker
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"net/http"
 	"net/http/httptest"
 	"path"
+	"strings"
 	"testing"
 
 	"github.com/gorilla/mux"
@@ -15,9 +15,10 @@ import (
 )
 
 const (
-	fixInstanceID = "72b83910-ac12-4dcb-b91d-960cca2b36abx"
-	fixRuntimeID  = "24da44ea-0295-4b1c-b5c1-6fd26efa4f24"
-	fixOpID       = "04f91bff-9e17-45cb-a246-84d511274ef1"
+	fixInstanceID      = "72b83910-ac12-4dcb-b91d-960cca2b36abx"
+	fixTrialInstanceID = "46955f0b-9d81-4eb0-935a-52013c96f7bf"
+	fixRuntimeID       = "24da44ea-0295-4b1c-b5c1-6fd26efa4f24"
+	fixOpID            = "04f91bff-9e17-45cb-a246-84d511274ef1"
 
 	gcpPlanID   = "ca6e5357-707f-4565-bbbd-b3ab732597c6"
 	azurePlanID = "4deee563-e5ec-4731-b9b1-53b42d855f0c"
@@ -87,7 +88,7 @@ func TestClient_ExpirationRequest(t *testing.T) {
 		client.setHttpClient(testServer.Client())
 
 		instance := internal.Instance{
-			InstanceID:    fixInstanceID,
+			InstanceID:    fixTrialInstanceID,
 			RuntimeID:     fixRuntimeID,
 			ServicePlanID: TrialPlanID,
 		}
@@ -125,7 +126,7 @@ func TestClient_ExpirationRequest(t *testing.T) {
 		assert.False(t, suspensionUnderWay)
 	})
 
-	t.Run("should return error when update fails", func(t *testing.T) {
+	t.Run("should return error when expiration request fails", func(t *testing.T) {
 		// given
 		testServer := fixHTTPServer(requestFailureServerError)
 		defer testServer.Close()
@@ -135,31 +136,6 @@ func TestClient_ExpirationRequest(t *testing.T) {
 		}
 		client := NewClientWithPoller(context.Background(), config, NewPassthroughPoller())
 
-		client.setHttpClient(testServer.Client())
-
-		instance := internal.Instance{
-			InstanceID:    fixInstanceID,
-			RuntimeID:     fixRuntimeID,
-			ServicePlanID: TrialPlanID,
-		}
-
-		// when
-		suspensionUnderWay, err := client.SendExpirationRequest(instance)
-
-		// then
-		assert.Error(t, err)
-		assert.False(t, suspensionUnderWay)
-	})
-
-	t.Run("should return false on unprocessable entity", func(t *testing.T) {
-		// given
-		testServer := fixHTTPServer(requestFailureUnprocessableEntity)
-		defer testServer.Close()
-
-		config := ClientConfig{
-			URL: testServer.URL,
-		}
-		client := NewClientWithPoller(context.Background(), config, NewPassthroughPoller())
 		client.setHttpClient(testServer.Client())
 
 		instance := internal.Instance{
@@ -208,25 +184,25 @@ func fixHTTPServer(requestFailureFunc func(http.ResponseWriter, *http.Request)) 
 		r := mux.NewRouter()
 		r.HandleFunc("/oauth/v2/service_instances/{instance_id}", requestFailureFunc).Methods(http.MethodDelete)
 		r.HandleFunc("/oauth/v2/service_instances/{instance_id}", requestFailureFunc).Methods(http.MethodPatch)
+		r.HandleFunc("/expire/service_instance/{instance_id}", requestFailureFunc).Methods(http.MethodPut)
 		return httptest.NewServer(r)
 	}
 
 	r := mux.NewRouter()
 	r.HandleFunc("/oauth/v2/service_instances/{instance_id}", deprovision).Methods(http.MethodDelete)
-	r.HandleFunc("/oauth/v2/service_instances/{instance_id}", serviceUpdateWithExpiration).Methods(http.MethodPatch)
+	r.HandleFunc("/expire/service_instance/{instance_id}", expiration).Methods(http.MethodPut)
 	r.HandleFunc("/oauth/v2/service_instances/{instance_id}", getInstance).Methods(http.MethodGet)
 	return httptest.NewServer(r)
 }
 
-func serviceUpdateWithExpiration(w http.ResponseWriter, r *http.Request) {
-	responseDTO := serviceUpdatePatchDTO{}
-	err := json.NewDecoder(r.Body).Decode(&responseDTO)
-
-	validRequest := err == nil && responseDTO.PlanID == TrialPlanID &&
-		*responseDTO.Parameters.Expired && !*responseDTO.Context.Active
-
-	if !validRequest {
+func expiration(w http.ResponseWriter, r *http.Request) {
+	instanceID := strings.Split(r.URL.Path, "/")[3]
+	if instanceID == fixInstanceID {
 		w.WriteHeader(http.StatusBadRequest)
+		return
+	}
+	if instanceID != fixTrialInstanceID {
+		w.WriteHeader(http.StatusNotFound)
 		return
 	}
 
