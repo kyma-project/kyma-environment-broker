@@ -11,19 +11,19 @@ global:
       version: "v20230120-865831c1" # do not update along with the other images
     kyma_environment_broker:
       dir:
-      version: "v20231214-403d47b9"
+      version: "1.0.0"
     kyma_environments_subaccount_cleanup_job:
       dir:
-      version: "v20231211-c10b7b03"
+      version: "1.0.0"
     kyma_environment_trial_cleanup_job:
       dir:
-      version: "v20231211-c10b7b03"
+      version: "1.0.0"
     kyma_environment_deprovision_retrigger_job:
       dir:
-      version: "v20231211-c10b7b03"
+      version: "1.0.0"
     kyma_environment_runtime_reconciler:
       dir:
-      version: "v20231211-c10b7b03"
+      version: "1.0.0"
   kyma_environment_broker:
     enabled: false
     serviceAccountName: "kcp-kyma-environment-broker"
