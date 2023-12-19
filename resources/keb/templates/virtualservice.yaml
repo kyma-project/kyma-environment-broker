@@ -122,6 +122,22 @@ spec:
           host: {{ include "kyma-env-broker.fullname" . }}
           port:
             number: 80
+  - corsPolicy:
+      allowHeaders:
+        - Authorization
+        - Content-Type
+        - X-Broker-API-Version
+      allowMethods: ["PUT"]
+      allowOrigins:
+        - regex: ".*"
+    match:
+      - uri:
+          regex: /expire/service_instance/.*
+    route:
+      - destination:
+          host: {{ include "kyma-env-broker.fullname" . }}
+          port:
+            number: 80
   {{- if .Values.swagger.virtualService.enabled }}
   # swagger exposed without authorization on root endpoint also needs access to static resources placed under /swagger folder
   - corsPolicy:
