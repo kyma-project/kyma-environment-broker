@@ -223,7 +223,6 @@ func prepareExpirationRequest(instance internal.Instance, brokerConfigURL string
 	if err != nil {
 		return nil, fmt.Errorf("while creating request for instanceID: %s: %w", instance.InstanceID, err)
 	}
-	request.Header.Set("X-Broker-API-Version", "2.14")
 	return request, nil
 }
 
