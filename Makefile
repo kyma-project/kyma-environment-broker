@@ -15,7 +15,7 @@ include $(SCRIPTS_DIR)/generic_make_go.mk
 
 .DEFAULT_GOAL := custom-verify
 
-custom-verify: testing-with-database-network mod-verify go-mod-check check-fmt
+custom-verify: mod-verify go-mod-check check-fmt
 
 verify:: custom-verify
 
