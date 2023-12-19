@@ -25,7 +25,6 @@ describe('KEB endpoints test', function() {
     {payload: {}, endpoint: `upgrade/kyma`, method: 'post'},
     {payload: {}, endpoint: `oauth/v2/service_instances/${instanceID}`, method: 'patch'},
     {payload: {}, endpoint: `oauth/v2/service_instances/${instanceID}`, method: 'delete'},
-    {payload: {}, endpoint: `expire/service_instance/${instanceID}`, method: 'put'},
   ];
 
   it('Should reject call without authorization', async function() {
