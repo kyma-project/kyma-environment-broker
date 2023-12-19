@@ -1188,74 +1188,74 @@ func TestUpdateNotExistingInstance(t *testing.T) {
 	})
 }
 
-//func TestUpdateDefaultAdminNotChanged(t *testing.T) {
-//	// given
-//	suite := NewBrokerSuiteTest(t)
-//	defer suite.TearDown()
-//	id := uuid.New().String()
-//	expectedAdmins := []string{"john.smith@email.com"}
-//
-//	resp := suite.CallAPI("PUT", fmt.Sprintf("oauth/cf-eu10/v2/service_instances/%s?accepts_incomplete=true&plan_id=7d55d31d-35ae-4438-bf13-6ffdfa107d9f&service_id=47c9dcbf-ff30-448e-ab36-d3bad66ba281", id),
-//		`{
-//			"service_id": "47c9dcbf-ff30-448e-ab36-d3bad66ba281",
-//			"plan_id": "7d55d31d-35ae-4438-bf13-6ffdfa107d9f",
-//			"context": {
-//				"sm_operator_credentials": {
-//					"clientid": "cid",
-//					"clientsecret": "cs",
-//					"url": "url",
-//					"sm_url": "sm_url"
-//				},
-//				"globalaccount_id": "g-account-id",
-//				"subaccount_id": "sub-id",
-//				"user_id": "john.smith@email.com"
-//			},
-//			"parameters": {
-//				"name": "testing-cluster"
-//			}
-//		}`)
-//
-//	opID := suite.DecodeOperationID(resp)
-//	suite.processProvisioningAndReconcilingByOperationID(opID)
-//
-//	// when
-//	resp = suite.CallAPI("PATCH", fmt.Sprintf("oauth/cf-eu10/v2/service_instances/%s?accepts_incomplete=true", id),
-//		`{
-//       "service_id": "47c9dcbf-ff30-448e-ab36-d3bad66ba281",
-//       "plan_id": "7d55d31d-35ae-4438-bf13-6ffdfa107d9f",
-//       "context": {
-//           "globalaccount_id": "g-account-id",
-//			"user_id": "jack.anvil@email.com"
-//       },
-//		"parameters": {
-//		}
-//   }`)
-//
-//	// then
-//	assert.Equal(t, http.StatusAccepted, resp.StatusCode)
-//
-//	// when
-//	upgradeOperationID := suite.DecodeOperationID(resp)
-//	suite.FinishUpdatingOperationByProvisioner(upgradeOperationID)
-//
-//	// then
-//	suite.WaitForOperationState(upgradeOperationID, domain.Succeeded)
-//	disabled := false
-//	suite.AssertShootUpgrade(upgradeOperationID, gqlschema.UpgradeShootInput{
-//		GardenerConfig: &gqlschema.GardenerUpgradeInput{
-//			OidcConfig: &gqlschema.OIDCConfigInput{
-//				ClientID:       "client-id-oidc",
-//				GroupsClaim:    "groups",
-//				IssuerURL:      "https://issuer.url",
-//				SigningAlgs:    []string{"RS256"},
-//				UsernameClaim:  "sub",
-//				UsernamePrefix: "-",
-//			},
-//			ShootNetworkingFilterDisabled: &disabled,
-//		},
-//		Administrators: expectedAdmins,
-//	})
-//}
+func TestUpdateDefaultAdminNotChanged(t *testing.T) {
+	// given
+	suite := NewBrokerSuiteTest(t)
+	defer suite.TearDown()
+	id := uuid.New().String()
+	expectedAdmins := []string{"john.smith@email.com"}
+
+	resp := suite.CallAPI("PUT", fmt.Sprintf("oauth/cf-eu10/v2/service_instances/%s?accepts_incomplete=true&plan_id=7d55d31d-35ae-4438-bf13-6ffdfa107d9f&service_id=47c9dcbf-ff30-448e-ab36-d3bad66ba281", id),
+		`{
+			"service_id": "47c9dcbf-ff30-448e-ab36-d3bad66ba281",
+			"plan_id": "7d55d31d-35ae-4438-bf13-6ffdfa107d9f",
+			"context": {
+				"sm_operator_credentials": {
+					"clientid": "cid",
+					"clientsecret": "cs",
+					"url": "url",
+					"sm_url": "sm_url"
+				},
+				"globalaccount_id": "g-account-id",
+				"subaccount_id": "sub-id",
+				"user_id": "john.smith@email.com"
+			},
+			"parameters": {
+				"name": "testing-cluster"
+			}
+		}`)
+
+	opID := suite.DecodeOperationID(resp)
+	suite.processProvisioningAndReconcilingByOperationID(opID)
+
+	// when
+	resp = suite.CallAPI("PATCH", fmt.Sprintf("oauth/cf-eu10/v2/service_instances/%s?accepts_incomplete=true", id),
+		`{
+      "service_id": "47c9dcbf-ff30-448e-ab36-d3bad66ba281",
+      "plan_id": "7d55d31d-35ae-4438-bf13-6ffdfa107d9f",
+      "context": {
+          "globalaccount_id": "g-account-id",
+			"user_id": "jack.anvil@email.com"
+      },
+		"parameters": {
+		}
+  }`)
+
+	// then
+	assert.Equal(t, http.StatusAccepted, resp.StatusCode)
+
+	// when
+	upgradeOperationID := suite.DecodeOperationID(resp)
+	suite.FinishUpdatingOperationByProvisioner(upgradeOperationID)
+
+	// then
+	suite.WaitForOperationState(upgradeOperationID, domain.Succeeded)
+	disabled := false
+	suite.AssertShootUpgrade(upgradeOperationID, gqlschema.UpgradeShootInput{
+		GardenerConfig: &gqlschema.GardenerUpgradeInput{
+			OidcConfig: &gqlschema.OIDCConfigInput{
+				ClientID:       "client-id-oidc",
+				GroupsClaim:    "groups",
+				IssuerURL:      "https://issuer.url",
+				SigningAlgs:    []string{"RS256"},
+				UsernameClaim:  "sub",
+				UsernamePrefix: "-",
+			},
+			ShootNetworkingFilterDisabled: &disabled,
+		},
+		Administrators: expectedAdmins,
+	})
+}
 
 func TestUpdateDefaultAdminNotChangedWithCustomOIDC(t *testing.T) {
 	// given
