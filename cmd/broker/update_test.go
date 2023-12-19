@@ -1236,6 +1236,8 @@ func TestUpdateDefaultAdminNotChanged(t *testing.T) {
 
 	// when
 	upgradeOperationID := suite.DecodeOperationID(resp)
+	assert.NotEmpty(t, upgradeOperationID)
+
 	suite.FinishUpdatingOperationByProvisioner(upgradeOperationID)
 
 	// then
@@ -1309,6 +1311,8 @@ func TestUpdateDefaultAdminNotChangedWithCustomOIDC(t *testing.T) {
 
 	// when
 	upgradeOperationID := suite.DecodeOperationID(resp)
+	assert.NotEmpty(t, upgradeOperationID)
+
 	suite.FinishUpdatingOperationByProvisioner(upgradeOperationID)
 
 	// then
@@ -1386,6 +1390,8 @@ func TestUpdateDefaultAdminNotChangedWithOIDCUpdate(t *testing.T) {
 
 	// when
 	upgradeOperationID := suite.DecodeOperationID(resp)
+	assert.NotEmpty(t, upgradeOperationID)
+
 	suite.FinishUpdatingOperationByProvisioner(upgradeOperationID)
 
 	// then
@@ -1456,6 +1462,8 @@ func TestUpdateDefaultAdminOverwritten(t *testing.T) {
 
 	// when
 	upgradeOperationID := suite.DecodeOperationID(resp)
+	assert.NotEmpty(t, upgradeOperationID)
+
 	suite.FinishUpdatingOperationByProvisioner(upgradeOperationID)
 
 	// then
@@ -1527,6 +1535,8 @@ func TestUpdateCustomAdminsNotChanged(t *testing.T) {
 
 	// when
 	upgradeOperationID := suite.DecodeOperationID(resp)
+	assert.NotEmpty(t, upgradeOperationID)
+
 	suite.FinishUpdatingOperationByProvisioner(upgradeOperationID)
 
 	// then
@@ -1602,6 +1612,8 @@ func TestUpdateCustomAdminsNotChangedWithOIDCUpdate(t *testing.T) {
 
 	// when
 	upgradeOperationID := suite.DecodeOperationID(resp)
+	assert.NotEmpty(t, upgradeOperationID)
+
 	suite.FinishUpdatingOperationByProvisioner(upgradeOperationID)
 
 	// then
@@ -1674,6 +1686,8 @@ func TestUpdateCustomAdminsOverwritten(t *testing.T) {
 
 	// when
 	upgradeOperationID := suite.DecodeOperationID(resp)
+	assert.NotEmpty(t, upgradeOperationID)
+
 	suite.FinishUpdatingOperationByProvisioner(upgradeOperationID)
 
 	// then
@@ -1825,6 +1839,8 @@ func TestUpdateCustomAdminsOverwrittenTwice(t *testing.T) {
 
 	// when
 	upgradeOperationID := suite.DecodeOperationID(resp)
+	assert.NotEmpty(t, upgradeOperationID)
+
 	suite.FinishUpdatingOperationByProvisioner(upgradeOperationID)
 
 	// then
@@ -1945,6 +1961,7 @@ func TestUpdateAutoscalerParams(t *testing.T) {
 
 	// when
 	upgradeOperationID := suite.DecodeOperationID(resp)
+	assert.NotEmpty(t, upgradeOperationID)
 	suite.FinishUpdatingOperationByProvisioner(upgradeOperationID)
 
 	min, max, surge, unav := 15, 25, 10, 7
@@ -2088,6 +2105,8 @@ func TestUpdateAutoscalerPartialSequence(t *testing.T) {
 	// then
 	assert.Equal(t, http.StatusAccepted, resp.StatusCode)
 	upgradeOperationID := suite.DecodeOperationID(resp)
+	assert.NotEmpty(t, upgradeOperationID)
+
 	suite.FinishUpdatingOperationByProvisioner(upgradeOperationID)
 	suite.WaitForOperationState(upgradeOperationID, domain.Succeeded)
 	max := 15
