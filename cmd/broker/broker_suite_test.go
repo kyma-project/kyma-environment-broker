@@ -502,10 +502,7 @@ func (s *BrokerSuiteTest) FinishUpdatingOperationByProvisioner(operationID strin
 	var op *internal.Operation
 	err := s.poller.Invoke(func() (done bool, err error) {
 		op, _ = s.db.Operations().GetOperationByID(operationID)
-		if op.RuntimeID == "" {
-			return false, nil
-		}
-		if op.ProvisionerOperationID == "" {
+		if op == nil || op.RuntimeID == "" || op.ProvisionerOperationID == "" {
 			return false, nil
 		}
 		return true, nil
