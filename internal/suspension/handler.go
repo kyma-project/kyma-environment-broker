@@ -70,14 +70,16 @@ func (h *ContextUpdateHandler) handleContextChange(newCtx internal.ERSContext, i
 		if isActivated {
 			// instance is marked as Active and incoming context update is unsuspension
 			// TODO: consider retriggering failed unsuspension here
+			l.Infof("Context.Active flag is true - not triggering suspension for instance ID %s", instance.InstanceID)
 			return false, nil
 		}
 		if !isActivated {
 			// instance is inactive and incoming context update is suspension - verify if KEB should retrigger the operation
 			if lastDeprovisioning.State == domain.Failed {
-				l.Infof("Retriggering suspension for instance id %s", instance.InstanceID)
+				l.Infof("triggering suspension again for instance id %s", instance.InstanceID)
 				return true, h.suspend(instance, l)
 			}
+			l.Infof("last deprovisioning is not in Failed state - not triggering suspension for instance ID %s", instance.InstanceID)
 			return false, nil
 		}
 	}
