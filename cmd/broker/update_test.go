@@ -189,6 +189,9 @@ func TestExpiration(t *testing.T) {
 	opID = suite.LastOperation(iid).ID
 	suite.FailDeprovisioningByReconciler(opID)
 	suite.FailDeprovisioningOperationByProvisioner(opID)
+
+	suite.WaitForLastOperation(iid, domain.Failed)
+
 	instance := suite.GetInstance(iid)
 	assert.True(suite.t, instance.IsExpired())
 
@@ -211,7 +214,7 @@ func TestExpiration(t *testing.T) {
 	assert.Equal(t, http.StatusOK, resp.StatusCode)
 
 	// when
-	// OSB update: retrigger suspension when lat suspension failed
+	// OSB update: retrigger suspension when last suspension failed
 	resp = suite.CallAPI("PATCH", fmt.Sprintf("oauth/cf-eu10/v2/service_instances/%s?accepts_incomplete=true", iid),
 		`{
        "service_id": "47c9dcbf-ff30-448e-ab36-d3bad66ba281",
@@ -225,10 +228,20 @@ func TestExpiration(t *testing.T) {
 			
 		}
    }`)
-	// expired instance does not support an update
 	assert.Equal(t, http.StatusOK, resp.StatusCode)
-	// we expect new suspension in progress operation (the last operation before is failed)
+	// we expect new suspension operation in progress (the last operation before failed one) so there should be
+	// provisioning - succeeded
+	// deprovisioning - failed
+	// deprovisioning - in progress
 	suite.WaitForLastOperation(iid, domain.InProgress)
+
+	// then we expect deprovisioning to succeed
+	secondSuspensionOpID := suite.DecodeOperationID(resp)
+	suite.FinishDeprovisioningOperationByProvisioner(secondSuspensionOpID)
+	suite.WaitForOperationState(secondSuspensionOpID, domain.Succeeded)
+
+	suite.WaitForLastOperation(iid, domain.Succeeded)
+
 	suite.AssertKymaResourceExists(opID)
 	suite.AssertKymaLabelsExist(opID, map[string]string{
 		"kyma-project.io/region":          "eu-west-1",
