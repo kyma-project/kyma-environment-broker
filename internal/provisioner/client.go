@@ -57,6 +57,9 @@ func (c *client) ProvisionRuntime(accountID, subAccountID string, config schema.
 		return schema.OperationStatus{}, fmt.Errorf("failed to convert Provision Runtime Input to query: %w", err)
 	}
 
+	//TODO remove immediately after verification
+	fmt.Println(provisionRuntimeIptGQL)
+
 	query := c.queryProvider.provisionRuntime(provisionRuntimeIptGQL)
 	req := gcli.NewRequest(query)
 	req.Header.Add(accountIDKey, accountID)
