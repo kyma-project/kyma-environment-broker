@@ -13,11 +13,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/kyma-project/kyma-environment-broker/internal/process/steps"
-
-	corev1 "k8s.io/api/core/v1"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-
 	"code.cloudfoundry.org/lager"
 	"github.com/google/uuid"
 	"github.com/gorilla/mux"
@@ -32,6 +27,7 @@ import (
 	kebConfig "github.com/kyma-project/kyma-environment-broker/internal/config"
 	"github.com/kyma-project/kyma-environment-broker/internal/edp"
 	"github.com/kyma-project/kyma-environment-broker/internal/event"
+	"github.com/kyma-project/kyma-environment-broker/internal/expiration"
 	"github.com/kyma-project/kyma-environment-broker/internal/fixture"
 	"github.com/kyma-project/kyma-environment-broker/internal/ias"
 	"github.com/kyma-project/kyma-environment-broker/internal/notification"
@@ -40,6 +36,7 @@ import (
 	"github.com/kyma-project/kyma-environment-broker/internal/process"
 	"github.com/kyma-project/kyma-environment-broker/internal/process/input"
 	"github.com/kyma-project/kyma-environment-broker/internal/process/provisioning"
+	"github.com/kyma-project/kyma-environment-broker/internal/process/steps"
 	"github.com/kyma-project/kyma-environment-broker/internal/process/update"
 	"github.com/kyma-project/kyma-environment-broker/internal/process/upgrade_cluster"
 	"github.com/kyma-project/kyma-environment-broker/internal/process/upgrade_kyma"
@@ -55,7 +52,9 @@ import (
 	"github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	corev1 "k8s.io/api/core/v1"
 	apiextensionsv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -257,6 +256,10 @@ func NewBrokerSuiteTestWithConfig(t *testing.T, cfg *Config, version ...string) 
 	// TODO: in case of cluster upgrade the same Azure Zones must be send to the Provisioner
 	orchestrationHandler := orchestrate.NewOrchestrationHandler(db, kymaQueue, clusterQueue, cfg.MaxPaginationPage, logs)
 	orchestrationHandler.AttachRoutes(ts.router)
+
+	expirationHandler := expiration.NewHandler(db.Instances(), db.Operations(), deprovisioningQueue, logs)
+	expirationHandler.AttachRoutes(ts.router)
+
 	ts.httpServer = httptest.NewServer(ts.router)
 	return ts
 }
