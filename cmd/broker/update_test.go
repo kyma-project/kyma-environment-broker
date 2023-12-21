@@ -189,6 +189,7 @@ func TestExpiration(t *testing.T) {
 	opID = suite.LastOperation(iid).ID
 	suite.FailDeprovisioningByReconciler(opID)
 	suite.FailDeprovisioningOperationByProvisioner(opID)
+	suite.WaitForLastOperation(iid, domain.Failed)
 	instance := suite.GetInstance(iid)
 	assert.True(suite.t, instance.IsExpired())
 
@@ -776,6 +777,8 @@ func TestUnsuspensionTrialKyma20(t *testing.T) {
 		}`)
 	opID := suite.DecodeOperationID(resp)
 	suite.processProvisioningAndReconcilingByOperationID(opID)
+
+	suite.WaitForOperationState(opID, domain.Succeeded)
 
 	suite.fixServiceBindingAndInstances(t)
 
