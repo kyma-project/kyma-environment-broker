@@ -63,7 +63,7 @@ describe('SKR-Upgrade-test', function() {
   if (skipCleanup === 'FALSE') {
     after('Cleanup the resources', async function() {
       this.timeout(deprovisioningTimeout);
-      await deprovisionAndUnregisterSKR(options, deprovisioningTimeout, skipProvisioning, false);
+      await deprovisionAndUnregisterSKR(options, deprovisioningTimeout, skipProvisioning, true);
     });
   }
 });
