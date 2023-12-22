@@ -14,7 +14,7 @@ const slowTime = 5000;
 
 describe('SKR test', function() {
   globalTimeout += provisioningTimeout + deprovisioningTimeout;
-  
+
   this.timeout(globalTimeout);
   this.slow(slowTime);
 

@@ -16,7 +16,7 @@ const slowTime = 5000;
 
 describe('SKR AWS networking test', function() {
   globalTimeout += provisioningTimeout + deprovisioningTimeout;
-  
+
   this.timeout(globalTimeout);
   this.slow(slowTime);
 

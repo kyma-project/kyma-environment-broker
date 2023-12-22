@@ -23,7 +23,7 @@ const kymaUpgradeVersion = getEnvOrThrow('KYMA_UPGRADE_VERSION');
 describe('SKR-Upgrade-test', function() {
   switchDebug(true);
   globalTimeout += provisioningTimeout + deprovisioningTimeout; // 3h
-  
+
   this.timeout(globalTimeout);
   this.slow(slowTime);
 
