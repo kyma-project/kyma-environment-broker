@@ -21,7 +21,7 @@ describe('SKR test', function() {
   let options = gatherOptions(); // with default values
   let skr;
   const getShootInfoFunc = function() {
-    return null;
+    return skr.shoot;
   };
   const getShootOptionsFunc = function() {
     return options;
