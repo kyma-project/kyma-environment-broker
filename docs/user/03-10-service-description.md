@@ -6,21 +6,20 @@ Kyma Environment Broker (KEB) is compatible with the [Open Service Broker API](h
 
 The supported plans are as follows:
 
-| Plan name | Plan ID | Description |
-|-----------|---------|-------------|
-| `azure` | `4deee563-e5ec-4731-b9b1-53b42d855f0c` |Installs Kyma runtime on the Azure cluster. |
-| `azure_lite` | `8cb22518-aa26-44c5-91a0-e669ec9bf443` | Installs Kyma Lite on the Azure cluster. |
-| `aws` | `361c511f-f939-4621-b228-d0fb79a1fe15` | Installs Kyma runtime on the AWS cluster. |
-| `gcp` | `ca6e5357-707f-4565-bbbd-b3ab732597c6` | Installs Kyma runtime on the GCP cluster. |
-| `trial` | `7d55d31d-35ae-4438-bf13-6ffdfa107d9f` | Installs Kyma trial plan on Azure, AWS or GCP. |
-| `free` | `b1a5764e-2ea1-4f95-94c0-2b4538b37b55` | Installs Kyma free plan on Azure or AWS. |
+| Plan name             | Plan ID | Description                                             |
+|-----------------------|---------|---------------------------------------------------------|
+| `azure`               | `4deee563-e5ec-4731-b9b1-53b42d855f0c` | Installs Kyma runtime on the Azure cluster.             |
+| `azure_lite`          | `8cb22518-aa26-44c5-91a0-e669ec9bf443` | Installs Kyma Lite on the Azure cluster.                |
+| `aws`                 | `361c511f-f939-4621-b228-d0fb79a1fe15` | Installs Kyma runtime on the AWS cluster.               |
+| `gcp`                 | `ca6e5357-707f-4565-bbbd-b3ab732597c6` | Installs Kyma runtime on the GCP cluster.               |
+| `trial`               | `7d55d31d-35ae-4438-bf13-6ffdfa107d9f` | Installs Kyma trial plan on Azure, AWS or GCP.          |
+| `sap-converged-cloud` | `03b812ac-c991-4528-b5bd-08b303523a63` | Installs Kyma runtime on the SapConvergedCloud cluster. |
+| `free`                | `b1a5764e-2ea1-4f95-94c0-2b4538b37b55` | Installs Kyma free plan on Azure or AWS.                |
 
 There are also three experimental plans:
 
 | Plan name | Plan ID | Description |
 |-----------|---------|-------------|
-| `openstack` | `03b812ac-c991-4528-b5bd-08b303523a63` | Installs Kyma runtime on the OpenStack cluster. |
-| `own_cluster` | `03e3cb66-a4c6-4c6a-b4b0-5d42224debea` | Installs Kyma runtime on a custom Kubernetes cluster. |
 | `preview` | `5cb3d976-b85c-42ea-a636-79cadda109a9` | Installs Kyma runtime on AWS using Lifecycle Manager. |
 
 > **CAUTION:** The experimental plans may fail to work or be removed.
@@ -147,24 +146,24 @@ These are the provisioning parameters for GCP that you can configure:
  </details>
  </div>
 
-These are the provisioning parameters for OpenStack that you can configure:
+These are the provisioning parameters for SapConvergedCloud that you can configure:
 
-<div tabs name="openstack-plans" group="openstack-plans">
+<div tabs name="sap-converged-cloud-plans" group="sap-converged-cloud-plans">
   <details>
-  <summary label="openstack-plan">
-  OpenStack
+  <summary label="sap-converged-cloud-plan">
+  SapConvergedCloud
   </summary>
 
 | Parameter name | Type | Description | Required | Default value |
 | ---------------|-------|-------------|:----------:|---------------|
-| **machineType** | string | Specifies the provider-specific virtual machine type. | No | `m2.xlarge` |
-| **volumeSizeGb** | int | Specifies the size of the root volume. | No | `30` |
-| **region** | string | Defines the cluster region. | Yes | None |
-| **zones** | string | Defines the list of zones in which Runtime Provisioner creates a cluster. | No | `["a"]` |
-| **autoScalerMin[<sup>2</sup>](#update)** | int | Specifies the minimum number of virtual machines to create. | No | `2` |
-| **autoScalerMax[<sup>2</sup>](#update)** | int | Specifies the maximum number of virtual machines to create. | No | `10` |
-| **maxSurge[<sup>2</sup>](#update)** | int | Specifies the maximum number of virtual machines that are created during an update. | No | `4` |
-| **maxUnavailable[<sup>2</sup>](#update)** | int | Specifies the maximum number of virtual machines that can be unavailable during an update. | No | `1` |
+| **machineType** | string | Specifies the provider-specific virtual machine type. | No | `m2.xlarge`   |
+| **volumeSizeGb** | int | Specifies the size of the root volume. | No | `30`          |
+| **region** | string | Defines the cluster region. | Yes | None          |
+| **zones** | string | Defines the list of zones in which Runtime Provisioner creates a cluster. | No | `["a"]`       |
+| **autoScalerMin[<sup>2</sup>](#update)** | int | Specifies the minimum number of virtual machines to create. | No | `3`           |
+| **autoScalerMax[<sup>2</sup>](#update)** | int | Specifies the maximum number of virtual machines to create. | No | `20`          |
+| **maxSurge[<sup>2</sup>](#update)** | int | Specifies the maximum number of virtual machines that are created during an update. | No | `4`           |
+| **maxUnavailable[<sup>2</sup>](#update)** | int | Specifies the maximum number of virtual machines that can be unavailable during an update. | No | `1`           |
 
  </details>
  </div>
