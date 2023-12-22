@@ -242,13 +242,13 @@ func NewBrokerSuiteTestWithConfig(t *testing.T, cfg *Config, version ...string) 
 	kymaQueue := NewKymaOrchestrationProcessingQueue(ctx, db, runtimeOverrides, provisionerClient, eventBroker, inputFactory, &upgrade_kyma.TimeSchedule{
 		Retry:              10 * time.Millisecond,
 		StatusCheck:        100 * time.Millisecond,
-		UpgradeKymaTimeout: 4 * time.Second,
+		UpgradeKymaTimeout: 3 * time.Second,
 	}, 250*time.Millisecond, runtimeVerConfigurator, runtimeResolver, upgradeEvaluationManager, cfg, avs.NewInternalEvalAssistant(cfg.Avs), reconcilerClient, notificationBundleBuilder, logs, cli, 1000)
 
 	clusterQueue := NewClusterOrchestrationProcessingQueue(ctx, db, provisionerClient, eventBroker, inputFactory, &upgrade_cluster.TimeSchedule{
 		Retry:                 10 * time.Millisecond,
 		StatusCheck:           100 * time.Millisecond,
-		UpgradeClusterTimeout: 4 * time.Second,
+		UpgradeClusterTimeout: 3 * time.Second,
 	}, 250*time.Millisecond, runtimeResolver, upgradeEvaluationManager, notificationBundleBuilder, logs, cli, *cfg, 1000)
 
 	kymaQueue.SpeedUp(1000)
