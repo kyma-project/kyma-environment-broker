@@ -1,7 +1,7 @@
 const {
   gatherOptions,
 } = require('../skr-test');
-const {getOrProvisionSKR} = require('../skr-test/provision/provision-skr');
+const {provisionSKRAndInitK8sConfig} = require('../skr-test/provision/provision-skr');
 const {deprovisionAndUnregisterSKR} = require('../skr-test/provision/deprovision-skr');
 const {withCustomParams} = require('../skr-test');
 const {expect} = require('chai');
@@ -63,7 +63,7 @@ describe('SKR AWS networking test', function() {
   });
   it('Perform provisioning', async function() {
     this.timeout(provisioningTimeout);
-    skr = await getOrProvisionSKR(options, provisioningTimeout);
+    skr = await provisionSKRAndInitK8sConfig(options, provisioningTimeout);
     options = skr.options;
   });
 

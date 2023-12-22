@@ -4,7 +4,7 @@ const {
   machineTypeE2ETest,
   btpManagerSecretTest,
 } = require('./index');
-const {getOrProvisionSKR} = require('./provision/provision-skr');
+const {provisionSKRAndInitK8sConfig} = require('./provision/provision-skr');
 const {deprovisionAndUnregisterSKR} = require('./provision/deprovision-skr');
 
 const provisioningTimeout = 1000 * 60 * 30; // 30m
@@ -29,7 +29,7 @@ describe('SKR test', function() {
 
   before('Ensure SKR is provisioned', async function() {
     this.timeout(provisioningTimeout);
-    skr = await getOrProvisionSKR(options, provisioningTimeout);
+    skr = await provisionSKRAndInitK8sConfig(options, provisioningTimeout);
     options = skr.options;
   });
 

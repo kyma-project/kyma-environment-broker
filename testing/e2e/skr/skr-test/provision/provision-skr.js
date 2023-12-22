@@ -10,7 +10,7 @@ const {
 const {provisionSKR}= require('../../kyma-environment-broker');
 const {BTPOperatorCreds} = require('../../smctl/helpers');
 
-async function getOrProvisionSKR(options, provisioningTimeout) {
+async function provisionSKRAndInitK8sConfig(options, provisioningTimeout) {
   console.log('Provisioning new SKR instance...');
   const shoot = await provisionSKRInstance(options, provisioningTimeout);
 
@@ -62,7 +62,7 @@ async function getSKRKymaVersion(instanceID) {
 }
 
 module.exports = {
-  getOrProvisionSKR,
+  provisionSKRAndInitK8sConfig,
   getSKRKymaVersion,
 };
 

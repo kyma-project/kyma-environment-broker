@@ -7,7 +7,7 @@ const {
   getEnvOrThrow,
   switchDebug,
 } = require('../utils');
-const {getOrProvisionSKR} = require('../skr-test/provision/provision-skr');
+const {provisionSKRAndInitK8sConfig} = require('../skr-test/provision/provision-skr');
 const {deprovisionAndUnregisterSKR} = require('../skr-test/provision/deprovision-skr');
 const {upgradeSKRInstance} = require('./upgrade/upgrade-skr');
 
@@ -43,7 +43,7 @@ describe('SKR-Upgrade-test', function() {
 
   before(`Provision SKR with ID ${options.instanceID} and version ${kymaVersion}`, async function() {
     this.timeout(provisioningTimeout);
-    skr = await getOrProvisionSKR(options, provisioningTimeout);
+    skr = await provisionSKRAndInitK8sConfig(options, provisioningTimeout);
     console.log('SKR provisioned');
     options = skr.options;
   });

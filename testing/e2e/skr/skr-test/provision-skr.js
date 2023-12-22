@@ -1,7 +1,7 @@
 const {
   gatherOptions,
 } = require('./index');
-const {getOrProvisionSKR, getSKRKymaVersion} = require('./provision/provision-skr');
+const {provisionSKRAndInitK8sConfig, getSKRKymaVersion} = require('./provision/provision-skr');
 const {expect} = require('chai');
 
 const provisioningTimeout = 1000 * 60 * 30; // 30m
@@ -26,7 +26,7 @@ describe('Provision SKR instance', function() {
   it('should provision SKR cluster', async function() {
     this.timeout(provisioningTimeout);
     console.log(`SKR Instance ID: ${options.instanceID}`);
-    skr = await getOrProvisionSKR(options, provisioningTimeout);
+    skr = await provisionSKRAndInitK8sConfig(options, provisioningTimeout);
     options = skr.options;
     isSKRProvisioned = true;
   });
