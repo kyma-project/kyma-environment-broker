@@ -48,7 +48,7 @@ metadata:
 ```
 
 ### Shared Credentials for `sap-converged-cloud` Plan
-For a sap-converged-cloud plan each region is treated as a separate hyperscaler. Hence Secrets are labeled with **openstack_{region name}** e.g. **openstack_eu-de-1**.
+For the `sap-converged-cloud` plan, each region is treated as a separate hyperscaler. Hence, Secrets are labeled with **openstack_{region name}**, for example, **openstack_eu-de-1**.
 
 ## EU Access
 
