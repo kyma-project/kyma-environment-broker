@@ -26,7 +26,8 @@ import (
 )
 
 const (
-	workersAmount int = 5
+	workersAmount                 int = 5
+	provisioningRequestPathFormat     = "oauth/cf-eu10/v2/service_instances/%s"
 )
 
 func TestCatalog(t *testing.T) {
