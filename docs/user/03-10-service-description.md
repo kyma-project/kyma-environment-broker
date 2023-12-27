@@ -16,7 +16,7 @@ The supported plans are as follows:
 | `sap-converged-cloud` | `03b812ac-c991-4528-b5bd-08b303523a63` | Installs Kyma runtime on the SapConvergedCloud cluster. |
 | `free`                | `b1a5764e-2ea1-4f95-94c0-2b4538b37b55` | Installs Kyma free plan on Azure or AWS.                |
 
-There are also three experimental plans:
+There is also an experimental plan:
 
 | Plan name | Plan ID | Description |
 |-----------|---------|-------------|
