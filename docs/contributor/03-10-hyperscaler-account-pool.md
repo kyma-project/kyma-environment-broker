@@ -32,7 +32,7 @@ metadata:
 
 For a certain type of SAP BTP, Kyma runtimes, KEB can use the same credentials for multiple tenants.
 In such a case, the Secret with credentials must be labeled differently by adding the **shared** label set to `true`. Shared credentials will not be assigned to any tenant.
-The Secret with credentials can be shared by multiple tenants i.e. many shoots (Shoot resources) can refer to the same Secret (this reference is represented by the SecretBinding resource).
+Multiple tenants can share the Secret with credentials. That is, many shoots (Shoot resources) can refer to the same Secret. This reference is represented by the SecretBinding resource.
 When KEB queries for a Secret for the given hyperscaler, the least used Secret is chosen.  
 
 This is an example of a Kubernetes Secret that stores shared credentials:
