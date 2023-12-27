@@ -22,7 +22,7 @@ There is also an experimental plan:
 |-----------|---------|-------------|
 | `preview` | `5cb3d976-b85c-42ea-a636-79cadda109a9` | Installs Kyma runtime on AWS using Lifecycle Manager. |
 
-> **CAUTION:** The experimental plans may fail to work or be removed.
+> **CAUTION:** The experimental plan may fail to work or be removed.
 
 ## Provisioning Parameters
 
