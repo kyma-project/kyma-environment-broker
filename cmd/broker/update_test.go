@@ -14,6 +14,8 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+const updateRequestPathFormat = "oauth/v2/service_instances/%s?accepts_incomplete=true"
+
 func TestUpdate(t *testing.T) {
 	// given
 	suite := NewBrokerSuiteTest(t)
