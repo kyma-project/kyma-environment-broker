@@ -163,7 +163,7 @@ func TestExpiration(t *testing.T) {
 			unsuspensionRequestBody)
 
 		// then
-		assert.Equal(t, http.StatusOK, resp.StatusCode)
+		assert.Equal(t, http.StatusBadRequest, resp.StatusCode)
 
 		actualInstance = suite.GetInstance(instanceID)
 		actualLastOperation := suite.LastOperation(instanceID)
