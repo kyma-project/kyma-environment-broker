@@ -36,6 +36,31 @@ const trialProvisioningRequestBody = `{
   }
 }`
 
+const awsProvisioningRequestBody = `{
+"service_id": "47c9dcbf-ff30-448e-ab36-d3bad66ba281",
+"plan_id": "361c511f-f939-4621-b228-d0fb79a1fe15",
+  "context": {
+    "sm_operator_credentials": {
+      "clientid": "sm-operator-client-id",
+      "clientsecret": "sm-operator-client-secret",
+      "url": "sm-operator-url",
+      "sm_url": "sm-operator-url"
+    },
+    "globalaccount_id": "global-account-id",
+    "subaccount_id": "subaccount-id",
+    "user_id": "john.smith@email.com"
+  },
+  "parameters": {
+    "name": "aws-test",
+    "region": "eu-central-1",
+    "oidc": {
+      "clientID": "client-id",
+      "signingAlgs": ["PS512"],
+      "issuerURL": "https://issuer.url.com"
+    }
+  }
+}`
+
 func TestExpiration(t *testing.T) {
 	// before all
 	suite := NewBrokerSuiteTest(t)
@@ -68,5 +93,26 @@ func TestExpiration(t *testing.T) {
 
 		actualInstance := suite.GetInstance(instanceID)
 		assert.True(t, actualInstance.IsExpired())
+	})
+
+	t.Run("should reject an expiration request of non-trial instance", func(t *testing.T) {
+		// given
+		instanceID := uuid.NewString()
+		resp := suite.CallAPI(http.MethodPut,
+			fmt.Sprintf(provisioningRequestPathFormat, instanceID),
+			awsProvisioningRequestBody)
+		provisioningOpID := suite.DecodeOperationID(resp)
+		suite.processProvisioningAndReconcilingByOperationID(provisioningOpID)
+
+		// when
+		resp = suite.CallAPI(http.MethodPut,
+			fmt.Sprintf(expirationRequestPathFormat, instanceID),
+			"")
+
+		// then
+		assert.Equal(t, http.StatusBadRequest, resp.StatusCode)
+
+		actualInstance := suite.GetInstance(instanceID)
+		assert.False(t, actualInstance.IsExpired())
 	})
 }
