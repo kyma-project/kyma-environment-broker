@@ -35,7 +35,7 @@ endif
 
 TAG := $(DOCKER_TAG)
 # BASE_PKG is a root package of the component
-BASE_PKG := github.com/kyma-project/control-plane
+BASE_PKG := github.com/kyma-project/kyma-environment-broker
 # IMG_GOPATH is a path to go path in the container
 IMG_GOPATH := /workspace/go
 # IMG_GOCACHE is a path to go cache in the container
