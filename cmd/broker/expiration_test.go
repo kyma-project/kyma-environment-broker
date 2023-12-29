@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	"github.com/google/uuid"
+	"github.com/kyma-project/kyma-environment-broker/internal/broker"
 	"github.com/pivotal-cf/brokerapi/v8/domain"
 	"github.com/stretchr/testify/assert"
 )
@@ -70,6 +71,11 @@ const unsuspensionRequestBody = `{
     "user_id": "john.smith@email.com",
     "active": true
   }
+}`
+
+const trialDeprovisioningRequestBody = `{
+  "service_id": "47c9dcbf-ff30-448e-ab36-d3bad66ba281",
+  "plan_id": "7d55d31d-35ae-4438-bf13-6ffdfa107d9f"
 }`
 
 func TestExpiration(t *testing.T) {
@@ -162,6 +168,49 @@ func TestExpiration(t *testing.T) {
 			trialProvisioningRequestBody)
 		provisioningOpID := suite.DecodeOperationID(resp)
 		suite.failProvisioningByOperationID(provisioningOpID)
+
+		// when
+		resp = suite.CallAPI(http.MethodPut,
+			fmt.Sprintf(expirationRequestPathFormat, instanceID),
+			"")
+
+		// then
+		assert.Equal(t, http.StatusAccepted, resp.StatusCode)
+
+		suspensionOpID := suite.DecodeOperationID(resp)
+		assert.NotEmpty(t, suspensionOpID)
+
+		suite.WaitForOperationState(suspensionOpID, domain.InProgress)
+		suite.FinishDeprovisioningOperationByProvisionerForGivenOpId(suspensionOpID)
+		suite.WaitForOperationState(suspensionOpID, domain.Succeeded)
+
+		actualInstance := suite.GetInstance(instanceID)
+		assert.True(t, actualInstance.IsExpired())
+		assert.False(t, *actualInstance.Parameters.ErsContext.Active)
+	})
+
+	t.Run("should expire a trial instance after failed deprovisioning", func(t *testing.T) {
+		// given
+		instanceID := uuid.NewString()
+		resp := suite.CallAPI(http.MethodPut,
+			fmt.Sprintf(provisioningRequestPathFormat, instanceID),
+			trialProvisioningRequestBody)
+		provisioningOpID := suite.DecodeOperationID(resp)
+		suite.processProvisioningAndReconcilingByOperationID(provisioningOpID)
+
+		assert.Equal(t, http.StatusAccepted, resp.StatusCode)
+		suite.WaitForOperationState(provisioningOpID, domain.Succeeded)
+
+		resp = suite.CallAPI(http.MethodDelete,
+			fmt.Sprintf(deprovisioningRequestPathFormat, instanceID, broker.TrialPlanID),
+			trialDeprovisioningRequestBody)
+
+		assert.Equal(t, http.StatusAccepted, resp.StatusCode)
+
+		deprovisioningOpID := suite.DecodeOperationID(resp)
+		suite.FailDeprovisioningByReconciler(deprovisioningOpID)
+		suite.FailDeprovisioningOperationByProvisioner(deprovisioningOpID)
+		suite.WaitForOperationState(deprovisioningOpID, domain.Failed)
 
 		// when
 		resp = suite.CallAPI(http.MethodPut,

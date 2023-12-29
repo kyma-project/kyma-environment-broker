@@ -7,6 +7,8 @@ import (
 	"github.com/pivotal-cf/brokerapi/v8/domain"
 )
 
+const deprovisioningRequestPathFormat = "oauth/v2/service_instances/%s?accepts_incomplete=true&service_id=47c9dcbf-ff30-448e-ab36-d3bad66ba281&plan_id=%s"
+
 func TestKymaDeprovision(t *testing.T) {
 	// given
 	runtimeOptions := RuntimeOptions{
