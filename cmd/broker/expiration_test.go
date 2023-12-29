@@ -89,8 +89,11 @@ func TestExpiration(t *testing.T) {
 		resp := suite.CallAPI(http.MethodPut,
 			fmt.Sprintf(provisioningRequestPathFormat, instanceID),
 			trialProvisioningRequestBody)
+		assert.Equal(t, http.StatusAccepted, resp.StatusCode)
+
 		provisioningOpID := suite.DecodeOperationID(resp)
 		suite.processProvisioningAndReconcilingByOperationID(provisioningOpID)
+		suite.WaitForOperationState(provisioningOpID, domain.Succeeded)
 
 		// when
 		resp = suite.CallAPI(http.MethodPut,
@@ -119,8 +122,11 @@ func TestExpiration(t *testing.T) {
 		resp := suite.CallAPI(http.MethodPut,
 			fmt.Sprintf(provisioningRequestPathFormat, instanceID),
 			trialProvisioningRequestBody)
+		assert.Equal(t, http.StatusAccepted, resp.StatusCode)
+
 		provisioningOpID := suite.DecodeOperationID(resp)
 		suite.processProvisioningAndReconcilingByOperationID(provisioningOpID)
+		suite.WaitForOperationState(provisioningOpID, domain.Succeeded)
 
 		// when
 		resp = suite.CallAPI(http.MethodPut,
@@ -166,8 +172,11 @@ func TestExpiration(t *testing.T) {
 		resp := suite.CallAPI(http.MethodPut,
 			fmt.Sprintf(provisioningRequestPathFormat, instanceID),
 			trialProvisioningRequestBody)
+		assert.Equal(t, http.StatusAccepted, resp.StatusCode)
+
 		provisioningOpID := suite.DecodeOperationID(resp)
 		suite.failProvisioningByOperationID(provisioningOpID)
+		suite.WaitForOperationState(provisioningOpID, domain.Failed)
 
 		// when
 		resp = suite.CallAPI(http.MethodPut,
@@ -195,10 +204,10 @@ func TestExpiration(t *testing.T) {
 		resp := suite.CallAPI(http.MethodPut,
 			fmt.Sprintf(provisioningRequestPathFormat, instanceID),
 			trialProvisioningRequestBody)
+		assert.Equal(t, http.StatusAccepted, resp.StatusCode)
+
 		provisioningOpID := suite.DecodeOperationID(resp)
 		suite.processProvisioningAndReconcilingByOperationID(provisioningOpID)
-
-		assert.Equal(t, http.StatusAccepted, resp.StatusCode)
 		suite.WaitForOperationState(provisioningOpID, domain.Succeeded)
 
 		resp = suite.CallAPI(http.MethodDelete,
@@ -238,8 +247,11 @@ func TestExpiration(t *testing.T) {
 		resp := suite.CallAPI(http.MethodPut,
 			fmt.Sprintf(provisioningRequestPathFormat, instanceID),
 			awsProvisioningRequestBody)
+		assert.Equal(t, http.StatusAccepted, resp.StatusCode)
+
 		provisioningOpID := suite.DecodeOperationID(resp)
 		suite.processProvisioningAndReconcilingByOperationID(provisioningOpID)
+		suite.WaitForOperationState(provisioningOpID, domain.Succeeded)
 
 		// when
 		resp = suite.CallAPI(http.MethodPut,
@@ -260,8 +272,11 @@ func TestExpiration(t *testing.T) {
 		resp := suite.CallAPI(http.MethodPut,
 			fmt.Sprintf(provisioningRequestPathFormat, instanceID),
 			trialProvisioningRequestBody)
+		assert.Equal(t, http.StatusAccepted, resp.StatusCode)
+
 		provisioningOpID := suite.DecodeOperationID(resp)
 		suite.processProvisioningAndReconcilingByOperationID(provisioningOpID)
+		suite.WaitForOperationState(provisioningOpID, domain.Succeeded)
 
 		// when
 		resp = suite.CallAPI(http.MethodPut,
