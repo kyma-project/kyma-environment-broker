@@ -145,7 +145,11 @@ func TestUpdateEndpoint_UpdateOfExpiredTrial(t *testing.T) {
 	}, true)
 
 	// then
-	assert.NoError(t, err)
+	assert.Error(t, err)
+	assert.ErrorContains(t, err, "cannot update an expired instance")
+	assert.IsType(t, err, &apiresponses.FailureResponse{}, "Updating returned error of unexpected type")
+	apierr := err.(*apiresponses.FailureResponse)
+	assert.Equal(t, apierr.ValidatedStatusCode(nil), http.StatusBadRequest, "Updating status code not matching")
 	assert.False(t, response.IsAsync)
 }
 
