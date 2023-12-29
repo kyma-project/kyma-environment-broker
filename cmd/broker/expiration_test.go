@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	"github.com/google/uuid"
+	"github.com/kyma-project/kyma-environment-broker/internal"
 	"github.com/kyma-project/kyma-environment-broker/internal/broker"
 	"github.com/pivotal-cf/brokerapi/v8/domain"
 	"github.com/stretchr/testify/assert"
@@ -112,8 +113,7 @@ func TestExpiration(t *testing.T) {
 		suite.WaitForOperationState(suspensionOpID, domain.Succeeded)
 
 		actualInstance := suite.GetInstance(instanceID)
-		assert.True(t, actualInstance.IsExpired())
-		assert.False(t, *actualInstance.Parameters.ErsContext.Active)
+		assertInstanceIsExpired(t, actualInstance)
 	})
 
 	t.Run("should retrigger expiration (suspension) on already expired instance", func(t *testing.T) {
@@ -145,8 +145,7 @@ func TestExpiration(t *testing.T) {
 		suite.WaitForOperationState(suspensionOpID, domain.Succeeded)
 
 		actualInstance := suite.GetInstance(instanceID)
-		assert.True(t, actualInstance.IsExpired())
-		assert.False(t, *actualInstance.Parameters.ErsContext.Active)
+		assertInstanceIsExpired(t, actualInstance)
 
 		// when
 		resp = suite.CallAPI(http.MethodPut,
@@ -158,12 +157,12 @@ func TestExpiration(t *testing.T) {
 
 		suspensionOpID2 := suite.DecodeOperationID(resp)
 		assert.NotEmpty(t, suspensionOpID2)
+		assert.NotEqual(t, suspensionOpID, suspensionOpID2)
 
 		suite.WaitForOperationState(suspensionOpID2, domain.Succeeded)
 
 		actualInstance = suite.GetInstance(instanceID)
-		assert.True(t, actualInstance.IsExpired())
-		assert.False(t, *actualInstance.Parameters.ErsContext.Active)
+		assertInstanceIsExpired(t, actualInstance)
 	})
 
 	t.Run("should expire a trial instance after failed provisioning", func(t *testing.T) {
@@ -194,8 +193,7 @@ func TestExpiration(t *testing.T) {
 		suite.WaitForOperationState(suspensionOpID, domain.Succeeded)
 
 		actualInstance := suite.GetInstance(instanceID)
-		assert.True(t, actualInstance.IsExpired())
-		assert.False(t, *actualInstance.Parameters.ErsContext.Active)
+		assertInstanceIsExpired(t, actualInstance)
 	})
 
 	t.Run("should expire a trial instance after failed deprovisioning", func(t *testing.T) {
@@ -237,8 +235,7 @@ func TestExpiration(t *testing.T) {
 		suite.WaitForOperationState(suspensionOpID, domain.Succeeded)
 
 		actualInstance := suite.GetInstance(instanceID)
-		assert.True(t, actualInstance.IsExpired())
-		assert.False(t, *actualInstance.Parameters.ErsContext.Active)
+		assertInstanceIsExpired(t, actualInstance)
 	})
 
 	t.Run("should reject an expiration request of non-trial instance", func(t *testing.T) {
@@ -295,7 +292,7 @@ func TestExpiration(t *testing.T) {
 		suite.WaitForOperationState(suspensionOpID, domain.Succeeded)
 
 		actualInstance := suite.GetInstance(instanceID)
-		assert.True(t, actualInstance.IsExpired())
+		assertInstanceIsExpired(t, actualInstance)
 
 		// when
 		resp = suite.CallAPI(http.MethodPatch,
@@ -305,11 +302,15 @@ func TestExpiration(t *testing.T) {
 		// then
 		assert.Equal(t, http.StatusBadRequest, resp.StatusCode)
 
-		actualInstance = suite.GetInstance(instanceID)
 		actualLastOperation := suite.LastOperation(instanceID)
 		assert.Equal(t, suspensionOpID, actualLastOperation.ID)
-		assert.True(t, actualInstance.IsExpired())
-		assert.Empty(t, actualInstance.RuntimeID)
-		assert.False(t, *actualInstance.Parameters.ErsContext.Active)
+		actualInstance = suite.GetInstance(instanceID)
+		assertInstanceIsExpired(t, actualInstance)
 	})
+}
+
+func assertInstanceIsExpired(t *testing.T, i *internal.Instance) {
+	assert.True(t, i.IsExpired())
+	assert.False(t, *i.Parameters.ErsContext.Active)
+	assert.Empty(t, i.RuntimeID)
 }
