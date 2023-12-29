@@ -107,6 +107,53 @@ func TestExpiration(t *testing.T) {
 		assert.False(t, *actualInstance.Parameters.ErsContext.Active)
 	})
 
+	t.Run("should retrigger expiration (suspension) on already expired instance", func(t *testing.T) {
+		// given
+		instanceID := uuid.NewString()
+		resp := suite.CallAPI(http.MethodPut,
+			fmt.Sprintf(provisioningRequestPathFormat, instanceID),
+			trialProvisioningRequestBody)
+		provisioningOpID := suite.DecodeOperationID(resp)
+		suite.processProvisioningAndReconcilingByOperationID(provisioningOpID)
+
+		// when
+		resp = suite.CallAPI(http.MethodPut,
+			fmt.Sprintf(expirationRequestPathFormat, instanceID),
+			"")
+
+		// then
+		assert.Equal(t, http.StatusAccepted, resp.StatusCode)
+
+		suspensionOpID := suite.DecodeOperationID(resp)
+		assert.NotEmpty(t, suspensionOpID)
+
+		suite.WaitForOperationState(suspensionOpID, domain.InProgress)
+		suite.MarkClusterConfigurationDeleted(instanceID)
+		suite.FinishDeprovisioningOperationByProvisionerForGivenOpId(suspensionOpID)
+		suite.WaitForOperationState(suspensionOpID, domain.Succeeded)
+
+		actualInstance := suite.GetInstance(instanceID)
+		assert.True(t, actualInstance.IsExpired())
+		assert.False(t, *actualInstance.Parameters.ErsContext.Active)
+
+		// when
+		resp = suite.CallAPI(http.MethodPut,
+			fmt.Sprintf(expirationRequestPathFormat, instanceID),
+			"")
+
+		// then
+		assert.Equal(t, http.StatusAccepted, resp.StatusCode)
+
+		suspensionOpID2 := suite.DecodeOperationID(resp)
+		assert.NotEmpty(t, suspensionOpID2)
+
+		suite.WaitForOperationState(suspensionOpID2, domain.Succeeded)
+
+		actualInstance = suite.GetInstance(instanceID)
+		assert.True(t, actualInstance.IsExpired())
+		assert.False(t, *actualInstance.Parameters.ErsContext.Active)
+	})
+
 	t.Run("should reject an expiration request of non-trial instance", func(t *testing.T) {
 		// given
 		instanceID := uuid.NewString()
