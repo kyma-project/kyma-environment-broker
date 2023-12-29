@@ -154,6 +154,35 @@ func TestExpiration(t *testing.T) {
 		assert.False(t, *actualInstance.Parameters.ErsContext.Active)
 	})
 
+	t.Run("should expire a trial instance after failed provisioning", func(t *testing.T) {
+		// given
+		instanceID := uuid.NewString()
+		resp := suite.CallAPI(http.MethodPut,
+			fmt.Sprintf(provisioningRequestPathFormat, instanceID),
+			trialProvisioningRequestBody)
+		provisioningOpID := suite.DecodeOperationID(resp)
+		suite.failProvisioningByOperationID(provisioningOpID)
+
+		// when
+		resp = suite.CallAPI(http.MethodPut,
+			fmt.Sprintf(expirationRequestPathFormat, instanceID),
+			"")
+
+		// then
+		assert.Equal(t, http.StatusAccepted, resp.StatusCode)
+
+		suspensionOpID := suite.DecodeOperationID(resp)
+		assert.NotEmpty(t, suspensionOpID)
+
+		suite.WaitForOperationState(suspensionOpID, domain.InProgress)
+		suite.FinishDeprovisioningOperationByProvisionerForGivenOpId(suspensionOpID)
+		suite.WaitForOperationState(suspensionOpID, domain.Succeeded)
+
+		actualInstance := suite.GetInstance(instanceID)
+		assert.True(t, actualInstance.IsExpired())
+		assert.False(t, *actualInstance.Parameters.ErsContext.Active)
+	})
+
 	t.Run("should reject an expiration request of non-trial instance", func(t *testing.T) {
 		// given
 		instanceID := uuid.NewString()

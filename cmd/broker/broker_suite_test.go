@@ -528,6 +528,16 @@ func (s *BrokerSuiteTest) FinishDeprovisioningOperationByProvisionerForGivenOpId
 	})
 	assert.NoError(s.t, err, "timeout waiting for the operation with runtimeID. The existing operation %+v", op)
 
+	uns, err := s.gardenerClient.Resource(gardener.ShootResource).
+		Namespace(fixedGardenerNamespace).
+		List(context.Background(), v1.ListOptions{})
+	require.NoError(s.t, err)
+	if len(uns.Items) == 0 {
+		s.Log(fmt.Sprintf("shoot %s doesn't exist", op.ShootName))
+		s.finishOperationByOpIDByProvisioner(gqlschema.OperationTypeDeprovision, gqlschema.OperationStateSucceeded, op.ID)
+		return
+	}
+
 	err = s.gardenerClient.Resource(gardener.ShootResource).
 		Namespace(fixedGardenerNamespace).
 		Delete(context.Background(), op.ShootName, v1.DeleteOptions{})
