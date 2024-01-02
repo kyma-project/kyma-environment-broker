@@ -408,3 +408,8 @@ migratorJobs:
   argosync:
     enabled: false
     syncwave: "0"
+
+landscape:
+  dev: true
+  prod: false
+  stage: false
