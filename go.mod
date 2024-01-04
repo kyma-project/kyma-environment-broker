@@ -1,6 +1,8 @@
 module github.com/kyma-project/kyma-environment-broker
 
-go 1.20
+go 1.21
+
+toolchain go1.21.5
 
 require (
 	code.cloudfoundry.org/lager v2.0.0+incompatible
@@ -25,7 +27,7 @@ require (
 	github.com/kennygrant/sanitize v1.2.4
 	github.com/kyma-incubator/compass/components/director v0.0.0-20230809132955-b02e11a4eec7
 	github.com/kyma-incubator/reconciler v0.0.0-20230804125401-cbf3faa2a51f
-	github.com/kyma-project/control-plane/components/provisioner v0.0.0-20230829053645-089304053b8d
+	github.com/kyma-project/control-plane/components/provisioner v0.0.0-20231229142643-f0ac935b7fae
 	github.com/kyma-project/control-plane/components/schema-migrator v0.0.0-20230810075630-49303a9997f0
 	github.com/kyma-project/runtime-watcher/listener v0.0.0-20230718122209-eca66822e727
 	github.com/lib/pq v1.10.9
@@ -127,14 +129,14 @@ require (
 	github.com/xeipuuv/gojsonschema v1.2.0 // indirect
 	go.uber.org/atomic v1.11.0 // indirect
 	go.uber.org/multierr v1.9.0 // indirect
-	golang.org/x/crypto v0.15.0 // indirect
-	golang.org/x/net v0.18.0 // indirect
-	golang.org/x/sys v0.14.0 // indirect
-	golang.org/x/term v0.14.0 // indirect
+	golang.org/x/crypto v0.16.0 // indirect
+	golang.org/x/net v0.19.0 // indirect
+	golang.org/x/sys v0.15.0 // indirect
+	golang.org/x/term v0.15.0 // indirect
 	golang.org/x/text v0.14.0 // indirect
 	golang.org/x/time v0.3.0 // indirect
-	golang.org/x/tools v0.13.0 // indirect
-	google.golang.org/appengine v1.6.7 // indirect
+	golang.org/x/tools v0.16.0 // indirect
+	google.golang.org/appengine v1.6.8 // indirect
 	google.golang.org/protobuf v1.31.0 // indirect
 	gopkg.in/inf.v0 v0.9.1 // indirect
 	gotest.tools/v3 v3.1.0 // indirect
