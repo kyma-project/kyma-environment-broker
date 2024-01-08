@@ -1288,7 +1288,7 @@ func TestNetworkingValidation(t *testing.T) {
 			}
 			// #create provisioner endpoint
 			provisionEndpoint := broker.NewProvision(
-				broker.Config{EnablePlans: []string{"gcp", "azure", "free"}, AllowNetworkingParameters: true},
+				broker.Config{EnablePlans: []string{"gcp", "azure", "free"}},
 				gardener.Config{Project: "test", ShootDomain: "example.com", DNSProviders: fixDNSProviders()},
 				memoryStorage.Operations(),
 				memoryStorage.Instances(),

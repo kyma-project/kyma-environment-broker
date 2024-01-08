@@ -255,10 +255,6 @@ func (b *ProvisionEndpoint) validateAndExtract(details domain.ProvisionDetails, 
 		return ersContext, parameters, fmt.Errorf("while obtaining plan defaults: %w", err)
 	}
 
-	// TODO: remove when the feature (networking params) is completed and tested on prod
-	if !b.config.AllowNetworkingParameters && parameters.Networking != nil {
-		return ersContext, parameters, fmt.Errorf("providing networking parameters is not allowed")
-	}
 	if err := b.validateNetworking(parameters); err != nil {
 		return ersContext, parameters, err
 	}
