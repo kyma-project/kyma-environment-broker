@@ -52,11 +52,11 @@ require (
 )
 
 require (
-	github.com/aws/aws-sdk-go-v2 v1.23.5
+	github.com/aws/aws-sdk-go-v2 v1.24.1
 	github.com/aws/aws-sdk-go-v2/internal/configsources v1.2.8 // indirect
 	github.com/aws/aws-sdk-go-v2/internal/endpoints/v2 v2.5.8 // indirect
 	github.com/aws/aws-sdk-go-v2/service/internal/presigned-url v1.10.8 // indirect
-	github.com/aws/smithy-go v1.18.1 // indirect
+	github.com/aws/smithy-go v1.19.0 // indirect
 	github.com/jmespath/go-jmespath v0.4.0 // indirect
 )
 
