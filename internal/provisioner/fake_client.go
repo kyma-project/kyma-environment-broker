@@ -164,8 +164,9 @@ func (c *FakeClient) ProvisionRuntimeWithIDs(accountID, subAccountID, runtimeID,
 	}
 
 	return schema.OperationStatus{
-		RuntimeID: &runtimeID,
-		ID:        &operationID,
+		RuntimeID:        &runtimeID,
+		ID:               &operationID,
+		CompassRuntimeID: &runtimeID,
 	}, nil
 }
 
