@@ -99,6 +99,9 @@ class KCPWrapper {
     if (query.ops) {
       args = args.concat('--ops');
     }
+    if (query.clusterConfig) {
+      args = args.concat('--cluster-config');
+    }
     const result = await this.exec(args);
     return JSON.parse(result);
   }
@@ -187,6 +190,20 @@ class KCPWrapper {
     }
   };
 
+  async kubeconfig(shoot) {
+    let args = ['kubeconfig', '--shoot', `${shoot}`];
+    const result = await this.exec(args);
+    return result;
+  }
+
+  async getKubeconfig(shoot) {
+    await this.login();
+    const result = await this.kubeconfig(shoot);
+    let words = result.split(" ");
+    let kubeconfigPath = words[words.length - 1];
+    return kubeconfigPath;
+  }
+
   async getReconciliationsOperations(runtimeID) {
     await this.login();
     const reconciliationsOperations = await this.reconciliations({parameter: 'operations',
@@ -212,6 +229,13 @@ class KCPWrapper {
     const runtimeStatus = await this.runtimes({instanceID: instanceID, ops: true, state: 'all'});
 
     return JSON.stringify(runtimeStatus, null, '\t');
+  }
+
+  async getRuntimeClusterConfig(shoot) {
+    await this.login();
+    const clusterConfig = await this.runtimes({shoot: shoot, clusterConfig: true});
+
+    return JSON.stringify(clusterConfig, null, '\t');
   }
 
   async getOrchestrationsOperations(orchestrationID) {

@@ -5,6 +5,7 @@ const {
   keb,
   initK8sConfig,
   getSKRRuntimeStatus,
+  initializeK8sClient,
 } = require('../helpers');
 
 const {provisionSKR}= require('../../kyma-environment-broker');
@@ -14,8 +15,8 @@ async function provisionSKRAndInitK8sConfig(options, provisioningTimeout) {
   console.log('Provisioning new SKR instance...');
   const shoot = await provisionSKRInstance(options, provisioningTimeout);
 
-  console.log('Initiating K8s config...');
-  await initK8sConfig(shoot);
+  console.log('Initiating K8s client...');
+  await initializeK8sClient({kubeconfigPath: shoot.kubeconfig});
   console.log('Initialization of K8s finished...');
 
   return {

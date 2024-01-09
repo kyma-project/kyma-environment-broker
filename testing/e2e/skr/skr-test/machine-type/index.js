@@ -1,5 +1,5 @@
 const {expect} = require('chai');
-const {updateSKR, getCatalog} = require('../../kyma-environment-broker');
+const {updateSKR, getCatalog, getShoot} = require('../../kyma-environment-broker');
 const {keb, kcp} = require('../helpers');
 const {GardenerClient, GardenerConfig} = require('../../gardener');
 const {getEnvOrThrow} = require('../../utils');
@@ -13,7 +13,7 @@ function machineTypeE2ETest(getShootOptionsFunc, getShootInfoFunc) {
     let updateMachineType = undefined;
     let defaultMachineType = undefined;
     const planID = getEnvOrThrow('KEB_PLAN_ID');
-    const gardener = new GardenerClient(GardenerConfig.fromEnv());
+    const gardener = null;
 
     before('Get provisioned Shoot Info', async function() {
       shoot = getShootInfoFunc();
@@ -100,9 +100,9 @@ function machineTypeE2ETest(getShootOptionsFunc, getShootInfoFunc) {
 }
 
 async function getMachineType(gardener, shoot) {
-  await gardener.waitForShoot(shoot, 'Reconcile');
-  const sh = await gardener.getShoot(shoot);
-  return sh.spec.provider.workers[0].machine.type;
+  //await gardener.waitForShoot(shoot, 'Reconcile');
+  const sh = await getShoot(kcp, shoot);
+  return sh.spec
 }
 
 module.exports = {

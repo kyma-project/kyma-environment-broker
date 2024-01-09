@@ -7,7 +7,7 @@ const os = require('os');
 const {expect} = require('chai');
 
 const keb = new KEBClient(KEBConfig.fromEnv());
-const gardener = new GardenerClient(GardenerConfig.fromEnv());
+const gardener = null;
 const kcp = new KCPWrapper(KCPConfig.fromEnv());
 const testNS = 'skr-test';
 const DEBUG = process.env.DEBUG === 'true';
@@ -185,4 +185,5 @@ module.exports = {
   saveKubeconfig,
   log,
   initK8sConfig,
+  initializeK8sClient,
 };
