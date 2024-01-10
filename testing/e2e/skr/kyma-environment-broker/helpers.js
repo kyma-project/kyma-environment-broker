@@ -32,7 +32,6 @@ async function provisionSKR(
   const runtimeStatus = await kcp.getRuntimeStatusOperations(instanceID);
   const objRuntimeStatus = JSON.parse(runtimeStatus);
   expect(objRuntimeStatus).to.have.nested.property('data[0].shootName').not.empty;
-  debug('Fetching shoot info using kcp cli...');
   let shoot
   if (process.env['GARDENER_KUBECONFIG']) {
     debug('Fetching shoot info from gardener...');
