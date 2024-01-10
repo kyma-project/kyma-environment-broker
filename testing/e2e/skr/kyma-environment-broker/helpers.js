@@ -32,7 +32,7 @@ async function provisionSKR(
   const runtimeStatus = await kcp.getRuntimeStatusOperations(instanceID);
   const objRuntimeStatus = JSON.parse(runtimeStatus);
   expect(objRuntimeStatus).to.have.nested.property('data[0].shootName').not.empty;
-  let shoot
+  let shoot;
   if (process.env['GARDENER_KUBECONFIG']) {
     debug('Fetching shoot info from gardener...');
     shoot = await gardener.getShoot(objRuntimeStatus.data[0].shootName);
@@ -52,7 +52,7 @@ async function getShoot(kcp, shootName) {
   debug(`Fetching shoot: ${shootName}`);
 
   const kubeconfigPath = await kcp.getKubeconfig(shootName);
-  
+
   const runtimeClusterConfig = await kcp.getRuntimeClusterConfig(shootName);
   const objRuntimeClusterConfig = JSON.parse(runtimeClusterConfig);
   expect(objRuntimeClusterConfig).to.have.nested.property('data[0].clusterConfig.oidcConfig').not.empty;
@@ -111,7 +111,7 @@ async function updateSKR(keb,
 
   await ensureOperationSucceeded(keb, kcp, instanceID, operationID, timeout);
 
-  let shoot
+  let shoot;
 
   if (process.env['GARDENER_KUBECONFIG']) {
     shoot = await gardener.getShoot(shootName);

@@ -1,5 +1,5 @@
 const k8s = require('@kubernetes/client-node');
-const {fromBase64, getEnvOrThrow, debug, error} = require('../utils');
+const {fromBase64, debug, error} = require('../utils');
 
 const GARDENER_PROJECT = process.env.KCP_GARDENER_NAMESPACE || 'garden-kyma-dev';
 const COMPASS_ID_ANNOTATION_KEY = 'compass.provisioner.kyma-project.io/runtime-id';
@@ -36,11 +36,13 @@ class GardenerClient {
     config = config || {};
     const kc = new k8s.KubeConfig();
     if (config.kubeconfigPath) {
+      console.log('Using Gardener kubeconfig');
       kc.loadFromFile(config.kubeconfigPath);
     } else if (config.kubeconfig) {
+      console.log('Using Gardener kubeconfig');
       kc.loadFromString(config.kubeconfig);
     } else {
-      console.log('Unable to create GardenerClient - no kubeconfig provided');
+      console.log('Unable to create GardenerClient - no Gardener kubeconfig provided');
       return null;
     }
 

@@ -191,7 +191,7 @@ class KCPWrapper {
   };
 
   async kubeconfig(shoot) {
-    let args = ['kubeconfig', '--shoot', `${shoot}`];
+    const args = ['kubeconfig', '--shoot', `${shoot}`];
     const result = await this.exec(args);
     return result;
   }
@@ -199,8 +199,8 @@ class KCPWrapper {
   async getKubeconfig(shoot) {
     await this.login();
     const result = await this.kubeconfig(shoot);
-    let words = result.split(" ");
-    let kubeconfigPath = words[words.length - 1];
+    const words = result.split(' ');
+    const kubeconfigPath = words[words.length - 1];
     return kubeconfigPath;
   }
 
