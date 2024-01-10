@@ -40,7 +40,8 @@ class GardenerClient {
     } else if (config.kubeconfig) {
       kc.loadFromString(config.kubeconfig);
     } else {
-      throw new Error('Unable to create GardenerClient - no kubeconfig');
+      console.log('Unable to create GardenerClient - no kubeconfig provided');
+      return null;
     }
 
     this.coreV1API = kc.makeApiClient(k8s.CoreV1Api);
