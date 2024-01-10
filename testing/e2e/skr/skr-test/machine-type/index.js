@@ -13,7 +13,7 @@ function machineTypeE2ETest(getShootOptionsFunc, getShootInfoFunc) {
     let updateMachineType = undefined;
     let defaultMachineType = undefined;
     const planID = getEnvOrThrow('KEB_PLAN_ID');
-    const gardener = null;
+    const gardener = new GardenerClient(GardenerConfig.fromEnv());
 
     before('Get provisioned Shoot Info', async function() {
       shoot = getShootInfoFunc();
@@ -100,7 +100,13 @@ function machineTypeE2ETest(getShootOptionsFunc, getShootInfoFunc) {
 }
 
 async function getMachineType(gardener, shoot) {
-  //await gardener.waitForShoot(shoot, 'Reconcile');
+  if (process.env['GARDENER_KUBECONFIG']) {
+    await gardener.waitForShoot(shoot, 'Reconcile');
+    const sh = await gardener.getShoot(shoot);
+    return sh.spec.provider.workers[0].machine.type;
+  }
+  
+  shoot = await getShoot(kcp, shootName);
   const sh = await getShoot(kcp, shoot);
   return sh.spec
 }

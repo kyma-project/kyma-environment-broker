@@ -33,8 +33,15 @@ async function provisionSKR(
   const objRuntimeStatus = JSON.parse(runtimeStatus);
   expect(objRuntimeStatus).to.have.nested.property('data[0].shootName').not.empty;
   debug('Fetching shoot info using kcp cli...');
-  const shoot = await getShoot(kcp, objRuntimeStatus.data[0].shootName);
-  //debug(`Compass ID ${shoot.compassID}`);
+  let shoot
+  if (process.env['GARDENER_KUBECONFIG']) {
+    debug('Fetching shoot info from gardener...');
+    shoot = await gardener.getShoot(objRuntimeStatus.data[0].shootName);
+    debug(`Compass ID ${shoot.compassID}`);
+  } else {
+    debug('Fetching shoot info using kcp cli...');
+    shoot = await getShoot(kcp, objRuntimeStatus.data[0].shootName);
+  }
 
   return {
     operationID,
@@ -105,7 +112,13 @@ async function updateSKR(keb,
 
   await ensureOperationSucceeded(keb, kcp, instanceID, operationID, timeout);
 
-  const shoot = await getShoot(kcp, shootName);
+  let shoot
+
+  if (process.env['GARDENER_KUBECONFIG']) {
+    shoot = await gardener.getShoot(shootName);
+  } else {
+    shoot = await getShoot(kcp, shootName);
+  }
 
   return {
     operationID,

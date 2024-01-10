@@ -15,9 +15,15 @@ async function provisionSKRAndInitK8sConfig(options, provisioningTimeout) {
   console.log('Provisioning new SKR instance...');
   const shoot = await provisionSKRInstance(options, provisioningTimeout);
 
-  console.log('Initiating K8s client...');
-  await initializeK8sClient({kubeconfigPath: shoot.kubeconfig});
-  console.log('Initialization of K8s finished...');
+  if (process.env['GARDENER_KUBECONFIG']) {
+    console.log('Initiating K8s config...');
+    await initK8sConfig(shoot);
+  } else {
+    console.log('Initiating K8s client...');
+    await initializeK8sClient({kubeconfigPath: shoot.kubeconfig});
+    console.log('Initialization of K8s finished...');
+  }
+
 
   return {
     options,
