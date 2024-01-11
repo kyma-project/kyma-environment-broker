@@ -32,9 +32,12 @@ prs_since_last_release = [
 
 valid_prs = []
 invalid_prs = []
+feature_prs = []
 for pr in prs_since_last_release:
     labels = [label['name'] for label in pr['labels']]
     common_labels = set(labels).intersection(label_pool)
+    if 'kind/feature' in common_labels:
+        feature_prs.append(pr['html_url'])
     if len(common_labels) != 1:
         invalid_prs.append(pr['html_url'])
     else:
@@ -50,3 +53,13 @@ if invalid_prs:
     sys.exit(1) 
 
 print("\nAll PRs have exactly one required label")
+
+if feature_prs:
+    latest_release_name = latest_release['name'].split(".")
+    new_release_name = os.getenv('NAME').split(".")
+    if latest_release_name[0] == new_release_name[0] and latest_release_name[1] == new_release_name[1]:
+        print("\nThese PRs have feature label, but only the patch version has changed:")
+        print('\n'.join([f"PR: {pr}" for pr in feature_prs]))
+        sys.exit(1)
+
+print("\nVersion name is correct")
