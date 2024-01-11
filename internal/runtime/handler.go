@@ -364,6 +364,7 @@ func (h *Handler) setRuntimeOptionalAttributes(instance internal.Instance, dto *
 				dto.KymaConfig = &config
 			}
 			if clusterConfig && dto.ClusterConfig == nil && state.ClusterConfig.Provider != "" {
+				fmt.Printf("Updating cluster-config %s: %s \n", state.ClusterConfig.MachineType, state.CreatedAt)
 				config := state.ClusterConfig
 				dto.ClusterConfig = &config
 			}
