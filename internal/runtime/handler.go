@@ -352,6 +352,9 @@ func (h *Handler) setRuntimeLastOperation(instance internal.Instance, dto *pkg.R
 func (h *Handler) setRuntimeOptionalAttributes(instance internal.Instance, dto *pkg.RuntimeDTO, kymaConfig, clusterConfig bool) error {
 	if kymaConfig || clusterConfig {
 		states, err := h.runtimeStatesDb.ListByRuntimeID(instance.RuntimeID)
+		for i, state := range states {
+			fmt.Printf("%d, States in order %s: %s \n", i, state.ClusterConfig.MachineType, state.CreatedAt)
+		}
 		if err != nil && !dberr.IsNotFound(err) {
 			return fmt.Errorf("while fetching runtime states for instance %s: %w", instance.InstanceID, err)
 		}
