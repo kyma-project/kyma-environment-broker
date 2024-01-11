@@ -353,18 +353,20 @@ func (h *Handler) setRuntimeOptionalAttributes(instance internal.Instance, dto *
 	if kymaConfig || clusterConfig {
 		states, err := h.runtimeStatesDb.ListByRuntimeID(instance.RuntimeID)
 		for i, state := range states {
-			fmt.Printf("%d, States in order %s: %s \n", i, state.ClusterConfig.MachineType, state.CreatedAt)
+			fmt.Printf("%d, States in order %s: %s, provider %s \n", i, state.ClusterConfig.MachineType, state.CreatedAt, state.ClusterConfig.Provider)
+
 		}
 		if err != nil && !dberr.IsNotFound(err) {
 			return fmt.Errorf("while fetching runtime states for instance %s: %w", instance.InstanceID, err)
 		}
-		for _, state := range states {
+		for i, state := range states {
+			fmt.Printf("%d, States in main loop order %s: %s, provider: %s \n", i, state.ClusterConfig.MachineType, state.CreatedAt, state.ClusterConfig.Provider)
 			if kymaConfig && dto.KymaConfig == nil && state.KymaConfig.Version != "" {
 				config := state.KymaConfig
 				dto.KymaConfig = &config
 			}
 			if clusterConfig && dto.ClusterConfig == nil && state.ClusterConfig.Provider != "" {
-				fmt.Printf("Updating cluster-config %s: %s \n", state.ClusterConfig.MachineType, state.CreatedAt)
+				fmt.Printf("%d, Updating cluster-config %s: %s, provider %s \n", i, state.ClusterConfig.MachineType, state.CreatedAt, state.ClusterConfig.Provider)
 				config := state.ClusterConfig
 				dto.ClusterConfig = &config
 			}
