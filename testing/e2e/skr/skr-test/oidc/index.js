@@ -65,7 +65,7 @@ function oidcE2ETest(getShootOptionsFunc, getShootInfoFunc) {
       }
     });
 
-    /*it('Assure updated OIDC config is applied on shoot cluster', async function() {
+    /* it('Assure updated OIDC config is applied on shoot cluster', async function() {
       ensureValidShootOIDCConfig(shoot, options.oidc1);
     });*/
 
