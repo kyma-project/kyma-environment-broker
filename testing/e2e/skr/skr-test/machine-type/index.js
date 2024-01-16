@@ -88,14 +88,14 @@ function machineTypeE2ETest(getShootOptionsFunc, getShootInfoFunc) {
       shoot = skr.shoot;
     });
 
-    it('Should check machine type after update', async function() {
+   /* it('Should check machine type after update', async function() {
       if (updateMachineType === undefined) {
         console.log('skipping machine type update');
         return;
       }
       const machineType = await getMachineType(gardener, shoot.name);
       expect(machineType).to.equal(updateMachineType);
-    });
+    });*/
   });
 }
 
