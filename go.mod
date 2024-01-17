@@ -144,6 +144,8 @@ require (
 )
 
 replace (
+	github.com/99designs/gqlgen => github.com/99designs/gqlgen v0.17.42
+
 	// Version required by github.com/Peripli/service-manager@v0.23.3
 	github.com/antlr/antlr4/runtime/Go/antlr => github.com/antlr/antlr4/runtime/Go/antlr v0.0.0-20210826220005-b48c857c3a0e
 
