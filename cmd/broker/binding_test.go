@@ -2,10 +2,11 @@ package main
 
 import (
 	"fmt"
-	"github.com/google/uuid"
-	"github.com/pivotal-cf/brokerapi/v8/domain"
 	"io"
 	"testing"
+
+	"github.com/google/uuid"
+	"github.com/pivotal-cf/brokerapi/v8/domain"
 )
 
 func TestBinding(t *testing.T) {
