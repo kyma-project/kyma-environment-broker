@@ -44,6 +44,8 @@ type Config struct {
 
 	RegionParameterIsRequired      bool `envconfig:"default=false"`
 	ExposeSchemaWithRegionRequired bool `envconfig:"default=false"`
+
+	Binding BindingConfig
 }
 
 type ServicesConfig map[string]Service
@@ -111,4 +113,14 @@ func (m *EnablePlans) Unmarshal(in string) error {
 
 	*m = plans
 	return nil
+}
+
+func (m *EnablePlans) Contains(name string) bool {
+	lowerName := strings.ToLower(name)
+	for _, plan := range *m {
+		if lowerName == strings.ToLower(plan) {
+			return true
+		}
+	}
+	return false
 }

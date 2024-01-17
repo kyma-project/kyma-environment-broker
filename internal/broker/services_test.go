@@ -2,6 +2,7 @@ package broker_test
 
 import (
 	"context"
+	"strings"
 	"testing"
 
 	"github.com/kyma-project/kyma-environment-broker/internal/broker"
@@ -275,6 +276,58 @@ func TestServices_Services(t *testing.T) {
 		}
 
 	})
+
+	t.Run("should contain 'bindable' set to true", func(t *testing.T) {
+		// given
+		var (
+			name       = "testServiceName"
+			supportURL = "example.com/support"
+		)
+		cfg := broker.Config{
+			EnablePlans:                     []string{"gcp", "azure", "sap-converged-cloud", "aws", "free"},
+			IncludeAdditionalParamsInSchema: true,
+			RegionParameterIsRequired:       false,
+			ExposeSchemaWithRegionRequired:  false,
+			Binding: broker.BindingConfig{
+				Enabled:       true,
+				BindablePlans: []string{"aws", "gcp"},
+			},
+		}
+		servicesConfig := map[string]broker.Service{
+			broker.KymaServiceName: {
+				Metadata: broker.ServiceMetadata{
+					DisplayName: name,
+					SupportUrl:  supportURL,
+				},
+			},
+		}
+		servicesEndpoint := broker.NewServices(cfg, servicesConfig, logrus.StandardLogger())
+
+		// when
+		services, err := servicesEndpoint.Services(context.TODO())
+		require.NoError(t, err)
+		assertBindableForPlan(t, services, "aws")
+		assertBindableForPlan(t, services, "gcp")
+		assertNotBindableForPlan(t, services, "azure")
+	})
+}
+
+func assertBindableForPlan(t *testing.T, services []domain.Service, planName string) {
+	for _, plan := range services[0].Plans {
+		if strings.ToLower(plan.Name) == planName {
+			assert.True(t, *plan.Bindable)
+			return
+		}
+	}
+}
+
+func assertNotBindableForPlan(t *testing.T, services []domain.Service, planName string) {
+	for _, plan := range services[0].Plans {
+		if strings.ToLower(plan.Name) == planName {
+			assert.True(t, plan.Bindable == nil || !*plan.Bindable)
+			return
+		}
+	}
 }
 
 func assertPlansContainPropertyInSchemas(t *testing.T, service domain.Service, property string) {

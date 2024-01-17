@@ -488,7 +488,7 @@ func createAPI(router *mux.Router, servicesConfig broker.ServicesConfig, planVal
 			planDefaults, logs, cfg.KymaDashboardConfig),
 		GetInstanceEndpoint:          broker.NewGetInstance(cfg.Broker, db.Instances(), db.Operations(), logs),
 		LastOperationEndpoint:        broker.NewLastOperation(db.Operations(), logs),
-		BindEndpoint:                 broker.NewBind(logs),
+		BindEndpoint:                 broker.NewBind(cfg.Broker.Binding, db.Instances(), logs),
 		UnbindEndpoint:               broker.NewUnbind(logs),
 		GetBindingEndpoint:           broker.NewGetBinding(logs),
 		LastBindingOperationEndpoint: broker.NewLastBindingOperation(logs),

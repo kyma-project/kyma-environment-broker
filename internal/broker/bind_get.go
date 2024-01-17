@@ -2,8 +2,6 @@ package broker
 
 import (
 	"context"
-	"fmt"
-
 	"github.com/pivotal-cf/brokerapi/v8/domain"
 	"github.com/sirupsen/logrus"
 )
@@ -23,5 +21,7 @@ func (b *GetBindingEndpoint) GetBinding(_ context.Context, instanceID, bindingID
 	b.log.Infof("GetBinding instanceID: %s", instanceID)
 	b.log.Infof("GetBinding bindingID: %s", bindingID)
 
-	return domain.GetBindingSpec{}, fmt.Errorf("not supported")
+	return domain.GetBindingSpec{
+		Credentials: dummyCredentials,
+	}, nil
 }
