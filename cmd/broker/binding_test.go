@@ -30,7 +30,7 @@ func TestBinding(t *testing.T) {
 					}
 		}`)
 	opID := suite.DecodeOperationID(resp)
-	suite.processProvisioningAndReconcilingByOperationID(opID)
+	suite.processProvisioningByOperationID(opID)
 	suite.WaitForOperationState(opID, domain.Succeeded)
 
 	resp = suite.CallAPI("PUT", fmt.Sprintf("oauth/v2/service_instances/%s/service_bindings/%s", iid, bid),
