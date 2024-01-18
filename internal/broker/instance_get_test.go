@@ -72,7 +72,7 @@ func TestGetEndpoint_GetProvisioningInstance(t *testing.T) {
 	createSvc.Provision(fixRequestContext(t, "req-region"), instanceID, domain.ProvisionDetails{
 		ServiceID:     serviceID,
 		PlanID:        planID,
-		RawParameters: json.RawMessage(fmt.Sprintf(`{"name": "%s"}`, clusterName)),
+		RawParameters: json.RawMessage(fmt.Sprintf(`{"name": "%s", "region": "%s"}`, clusterName, clusterRegion)),
 		RawContext:    json.RawMessage(fmt.Sprintf(`{"globalaccount_id": "%s", "subaccount_id": "%s", "user_id": "%s"}`, globalAccountID, subAccountID, userID)),
 	}, true)
 
