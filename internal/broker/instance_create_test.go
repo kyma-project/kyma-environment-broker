@@ -1426,6 +1426,7 @@ func TestRegionValidation(t *testing.T) {
 
 func fixExistOperation() internal.Operation {
 	provisioningOperation := fixture.FixProvisioningOperation(existOperationID, instanceID)
+	ptrClusterRegion := clusterRegion
 	provisioningOperation.ProvisioningParameters = internal.ProvisioningParameters{
 		PlanID:    planID,
 		ServiceID: serviceID,
@@ -1435,7 +1436,8 @@ func fixExistOperation() internal.Operation {
 			UserID:          userID,
 		},
 		Parameters: internal.ProvisioningParametersDTO{
-			Name: clusterName,
+			Name:   clusterName,
+			Region: &ptrClusterRegion,
 		},
 		PlatformRegion: region,
 	}
