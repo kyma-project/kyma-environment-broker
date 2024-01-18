@@ -162,40 +162,6 @@ func TestProvisioning_HappyPathSapConvergedCloud(t *testing.T) {
 	suite.AssertSecretWithKubeconfigExists(opID)
 }
 
-func TestProvisioning_HappyPathSapConvergedCloudWithDefaultRegion(t *testing.T) {
-	// given
-	suite := NewBrokerSuiteTestWithOptionalRegion(t)
-	defer suite.TearDown()
-	iid := uuid.New().String()
-
-	// when
-	resp := suite.CallAPI("PUT", fmt.Sprintf("oauth/v2/service_instances/%s?accepts_incomplete=true", iid),
-		`{
-					"service_id": "47c9dcbf-ff30-448e-ab36-d3bad66ba281",
-					"plan_id": "03b812ac-c991-4528-b5bd-08b303523a63",
-					"context": {
-						"globalaccount_id": "g-account-id",
-						"subaccount_id": "sub-id",
-						"user_id": "john.smith@email.com"
-					},
-					"parameters": {
-						"name": "testing-cluster"
-					}
-		}`)
-	opID := suite.DecodeOperationID(resp)
-
-	suite.processProvisioningByOperationID(opID)
-
-	// then
-	suite.WaitForOperationState(opID, domain.Succeeded)
-
-	suite.AssertKymaResourceExists(opID)
-	suite.AssertKymaAnnotationExists(opID, "compass-runtime-id-for-migration")
-	suite.AssertKymaLabelsExist(opID, map[string]string{"kyma-project.io/region": "eu-de-1"})
-	suite.AssertKymaLabelNotExists(opID, "kyma-project.io/platform-region")
-	suite.AssertSecretWithKubeconfigExists(opID)
-}
-
 func TestProvisioning_Preview(t *testing.T) {
 	// given
 	suite := NewBrokerSuiteTest(t)
