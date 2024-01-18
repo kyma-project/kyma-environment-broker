@@ -42,8 +42,7 @@ type Config struct {
 	SubaccountsIdsToShowTrialExpirationInfo string `envconfig:"default="`
 	TrialDocsURL                            string `envconfig:"default="`
 
-	RegionParameterIsRequired      bool `envconfig:"default=false"`
-	ExposeSchemaWithRegionRequired bool `envconfig:"default=false"`
+	RegionParameterIsRequired bool `envconfig:"default=false"`
 
 	Binding BindingConfig
 }
