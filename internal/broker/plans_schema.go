@@ -265,7 +265,7 @@ func ShootDomainProperty() *Type {
 
 // NewProvisioningProperties creates a new properties for different plans
 // Note that the order of properties will be the same in the form on the website
-func NewProvisioningProperties(machineTypesDisplay map[string]string, machineTypes, regions []string, regionParameterIsRequired, update bool) ProvisioningProperties {
+func NewProvisioningProperties(machineTypesDisplay map[string]string, machineTypes, regions []string, update bool) ProvisioningProperties {
 
 	properties := ProvisioningProperties{
 		UpdateProperties: UpdateProperties{
@@ -290,8 +290,9 @@ func NewProvisioningProperties(machineTypesDisplay map[string]string, machineTyp
 		},
 		Name: NameProperty(),
 		Region: &Type{
-			Type: "string",
-			Enum: ToInterfaceSlice(regions),
+			Type:      "string",
+			Enum:      ToInterfaceSlice(regions),
+			MinLength: 1,
 		},
 		Networking: NewNetworkingSchema(),
 		Modules:    NewModulesSchema(),
@@ -300,10 +301,6 @@ func NewProvisioningProperties(machineTypesDisplay map[string]string, machineTyp
 	if update {
 		properties.AutoScalerMax.Default = nil
 		properties.AutoScalerMin.Default = nil
-	}
-
-	if regionParameterIsRequired {
-		properties.Region.MinLength = 1
 	}
 
 	return properties
