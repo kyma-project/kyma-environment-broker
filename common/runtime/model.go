@@ -122,6 +122,7 @@ const (
 	KymaConfigParam      = "kyma_config"
 	ClusterConfigParam   = "cluster_config"
 	ExpiredParam         = "expired"
+	GardenerConfigParam  = "gardener_config"
 )
 
 type OperationDetail string
