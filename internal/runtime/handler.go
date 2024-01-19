@@ -141,6 +141,7 @@ func (h *Handler) getRuntimes(w http.ResponseWriter, req *http.Request) {
 	opDetail := getOpDetail(req)
 	kymaConfig := getBoolParam(pkg.KymaConfigParam, req)
 	clusterConfig := getBoolParam(pkg.ClusterConfigParam, req)
+	gardenerConfig := getBoolParam(pkg.GardenerConfigParam, req)
 
 	instances, count, totalCount, err := h.listInstances(filter)
 	if err != nil {
@@ -171,7 +172,7 @@ func (h *Handler) getRuntimes(w http.ResponseWriter, req *http.Request) {
 			httputil.WriteErrorResponse(w, http.StatusInternalServerError, err)
 			return
 		}
-		err = h.setRuntimeOptionalAttributes(instance, &dto, kymaConfig, clusterConfig)
+		err = h.setRuntimeOptionalAttributes(instance, &dto, kymaConfig, clusterConfig, gardenerConfig)
 		if err != nil {
 			httputil.WriteErrorResponse(w, http.StatusInternalServerError, err)
 			return
@@ -351,13 +352,8 @@ func (h *Handler) setRuntimeLastOperation(instance internal.Instance, dto *pkg.R
 	return nil
 }
 
-func (h *Handler) setRuntimeOptionalAttributes(instance internal.Instance, dto *pkg.RuntimeDTO, kymaConfig, clusterConfig bool) error {
+func (h *Handler) setRuntimeOptionalAttributes(instance internal.Instance, dto *pkg.RuntimeDTO, kymaConfig, clusterConfig, gardenerConfig bool) error {
 	if kymaConfig || clusterConfig {
-		runtimeStatus, err := h.provisionerClient.RuntimeStatus(instance.GlobalAccountID, instance.RuntimeID)
-		if err != nil {
-			return fmt.Errorf("while fetching runtime status from provisioner for instance %s: %w", instance.InstanceID, err)
-		}
-		dto.Status.GardenerConfig = runtimeStatus.RuntimeConfiguration.ClusterConfig
 		states, err := h.runtimeStatesDb.ListByRuntimeID(instance.RuntimeID)
 		if err != nil && !dberr.IsNotFound(err) {
 			return fmt.Errorf("while fetching runtime states for instance %s: %w", instance.InstanceID, err)
@@ -375,6 +371,14 @@ func (h *Handler) setRuntimeOptionalAttributes(instance internal.Instance, dto *
 				break
 			}
 		}
+	}
+
+	if gardenerConfig {
+		runtimeStatus, err := h.provisionerClient.RuntimeStatus(instance.GlobalAccountID, instance.RuntimeID)
+		if err != nil {
+			return fmt.Errorf("while fetching runtime status from provisioner for instance %s: %w", instance.InstanceID, err)
+		}
+		dto.Status.GardenerConfig = runtimeStatus.RuntimeConfiguration.ClusterConfig
 	}
 
 	return nil
