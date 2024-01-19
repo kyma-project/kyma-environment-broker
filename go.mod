@@ -24,14 +24,13 @@ require (
 	github.com/hashicorp/go-multierror v1.1.1
 	github.com/kennygrant/sanitize v1.2.4
 	github.com/kyma-incubator/compass/components/director v0.0.0-20230809132955-b02e11a4eec7
-	github.com/kyma-incubator/reconciler v0.0.0-20230804125401-cbf3faa2a51f
 	github.com/kyma-project/control-plane/components/provisioner v0.0.0-20231229142643-f0ac935b7fae
 	github.com/kyma-project/control-plane/components/schema-migrator v0.0.0-20230810075630-49303a9997f0
 	github.com/kyma-project/runtime-watcher/listener v0.0.0-20230718122209-eca66822e727
 	github.com/lib/pq v1.10.9
 	github.com/machinebox/graphql v0.2.3-0.20181106130121-3a9253180225
 	github.com/matryer/is v1.4.1
-	github.com/opencontainers/image-spec v1.1.0-rc2
+	github.com/opencontainers/image-spec v1.1.0-rc.6
 	github.com/pivotal-cf/brokerapi/v8 v8.2.3
 	github.com/pkg/errors v0.9.1
 	github.com/prometheus/client_golang v1.18.0
