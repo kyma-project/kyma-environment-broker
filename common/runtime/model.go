@@ -57,18 +57,19 @@ type RuntimeDTO struct {
 }
 
 type RuntimeStatus struct {
-	CreatedAt        time.Time       `json:"createdAt"`
-	ModifiedAt       time.Time       `json:"modifiedAt"`
-	ExpiredAt        *time.Time      `json:"expiredAt,omitempty"`
-	DeletedAt        *time.Time      `json:"deletedAt,omitempty"`
-	State            State           `json:"state"`
-	Provisioning     *Operation      `json:"provisioning,omitempty"`
-	Deprovisioning   *Operation      `json:"deprovisioning,omitempty"`
-	UpgradingKyma    *OperationsData `json:"upgradingKyma,omitempty"`
-	UpgradingCluster *OperationsData `json:"upgradingCluster,omitempty"`
-	Update           *OperationsData `json:"update,omitempty"`
-	Suspension       *OperationsData `json:"suspension,omitempty"`
-	Unsuspension     *OperationsData `json:"unsuspension,omitempty"`
+	CreatedAt        time.Time                 `json:"createdAt"`
+	ModifiedAt       time.Time                 `json:"modifiedAt"`
+	ExpiredAt        *time.Time                `json:"expiredAt,omitempty"`
+	DeletedAt        *time.Time                `json:"deletedAt,omitempty"`
+	State            State                     `json:"state"`
+	Provisioning     *Operation                `json:"provisioning,omitempty"`
+	Deprovisioning   *Operation                `json:"deprovisioning,omitempty"`
+	UpgradingKyma    *OperationsData           `json:"upgradingKyma,omitempty"`
+	UpgradingCluster *OperationsData           `json:"upgradingCluster,omitempty"`
+	Update           *OperationsData           `json:"update,omitempty"`
+	Suspension       *OperationsData           `json:"suspension,omitempty"`
+	Unsuspension     *OperationsData           `json:"unsuspension,omitempty"`
+	GardenerConfig   *gqlschema.GardenerConfig `json:"gardenerConfig,omitempty"`
 }
 
 type OperationType string

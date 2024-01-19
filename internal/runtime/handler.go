@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/kyma-project/kyma-environment-broker/internal/provisioner"
 	"github.com/kyma-project/kyma-environment-broker/internal/ptr"
 	"github.com/pivotal-cf/brokerapi/v8/domain"
 	"golang.org/x/exp/slices"
@@ -23,21 +24,22 @@ import (
 const numberOfUpgradeOperationsToReturn = 2
 
 type Handler struct {
-	instancesDb     storage.Instances
-	operationsDb    storage.Operations
-	runtimeStatesDb storage.RuntimeStates
-	converter       Converter
-
-	defaultMaxPage int
+	instancesDb       storage.Instances
+	operationsDb      storage.Operations
+	runtimeStatesDb   storage.RuntimeStates
+	converter         Converter
+	defaultMaxPage    int
+	provisionerClient provisioner.Client
 }
 
-func NewHandler(instanceDb storage.Instances, operationDb storage.Operations, runtimeStatesDb storage.RuntimeStates, defaultMaxPage int, defaultRequestRegion string) *Handler {
+func NewHandler(instanceDb storage.Instances, operationDb storage.Operations, runtimeStatesDb storage.RuntimeStates, defaultMaxPage int, defaultRequestRegion string, provisionerClient provisioner.Client) *Handler {
 	return &Handler{
-		instancesDb:     instanceDb,
-		operationsDb:    operationDb,
-		runtimeStatesDb: runtimeStatesDb,
-		converter:       NewConverter(defaultRequestRegion),
-		defaultMaxPage:  defaultMaxPage,
+		instancesDb:       instanceDb,
+		operationsDb:      operationDb,
+		runtimeStatesDb:   runtimeStatesDb,
+		converter:         NewConverter(defaultRequestRegion),
+		defaultMaxPage:    defaultMaxPage,
+		provisionerClient: provisionerClient,
 	}
 }
 
@@ -351,6 +353,11 @@ func (h *Handler) setRuntimeLastOperation(instance internal.Instance, dto *pkg.R
 
 func (h *Handler) setRuntimeOptionalAttributes(instance internal.Instance, dto *pkg.RuntimeDTO, kymaConfig, clusterConfig bool) error {
 	if kymaConfig || clusterConfig {
+		runtimeStatus, err := h.provisionerClient.RuntimeStatus(instance.GlobalAccountID, instance.RuntimeID)
+		if err != nil {
+			return fmt.Errorf("while fetching runtime status from provisioner for instance %s: %w", instance.InstanceID, err)
+		}
+		dto.Status.GardenerConfig = runtimeStatus.RuntimeConfiguration.ClusterConfig
 		states, err := h.runtimeStatesDb.ListByRuntimeID(instance.RuntimeID)
 		if err != nil && !dberr.IsNotFound(err) {
 			return fmt.Errorf("while fetching runtime states for instance %s: %w", instance.InstanceID, err)
