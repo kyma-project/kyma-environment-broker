@@ -144,6 +144,8 @@ func (h *ContextUpdateHandler) unsuspend(instance *internal.Instance, log logrus
 	// RuntimeID must be cleaned  - this mean that there is no runtime in the provisioner/director
 	operation.RuntimeID = ""
 	operation.DashboardURL = instance.DashboardURL
+	operation.InstanceDetails.KymaResourceName = ""
+	operation.GardenerClusterName = ""
 
 	err = h.operations.InsertProvisioningOperation(operation)
 	if err != nil {

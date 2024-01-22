@@ -479,6 +479,10 @@ func TestUnsuspensionTrialKyma20(t *testing.T) {
 	assert.Equal(t, http.StatusOK, resp.StatusCode)
 	suite.processProvisioningByInstanceID(iid)
 
+	println(
+		"RuntimeIDD " + suite.GetInstance(iid).RuntimeID +
+			"\nGardenerClusterName " + suite.GetInstance(iid).InstanceDetails.GardenerClusterName +
+			"\nKymaResourceName " + suite.GetInstance(iid).InstanceDetails.KymaResourceName)
 	suite.AssertKymaResourceExists(opID)
 	suite.AssertKymaLabelsExist(opID, map[string]string{
 		"kyma-project.io/region": "eu-west-1",
