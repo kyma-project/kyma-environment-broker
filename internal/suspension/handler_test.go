@@ -137,7 +137,6 @@ func TestUnsuspension(t *testing.T) {
 	instance := fixInstance(fixInactiveErsContext())
 	instance.InstanceDetails.ShootName = "c-012345"
 	instance.InstanceDetails.ShootDomain = "c-012345.sap.com"
-	instance.InstanceDetails.GardenerClusterName = "runtime-instance-id"
 
 	st.Instances().Insert(*instance)
 
@@ -160,8 +159,6 @@ func TestUnsuspension(t *testing.T) {
 	assert.Equal(t, instance.InstanceID, op.InstanceID)
 	assert.Equal(t, "c-012345", op.ShootName)
 	assert.Equal(t, "c-012345.sap.com", op.ShootDomain)
-	assert.Equal(t, "", op.KymaResourceName)
-	assert.Equal(t, "", op.GardenerClusterName)
 }
 
 func TestUnsuspensionForDeprovisioningInstance(t *testing.T) {

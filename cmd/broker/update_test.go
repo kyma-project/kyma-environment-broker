@@ -405,6 +405,79 @@ func TestUpdateContext(t *testing.T) {
 
 }
 
+func TestKymaResourceNameAndGardenerClusterNameAfterUnsuspension(t *testing.T) {
+	suite := NewBrokerSuiteTest(t)
+	defer suite.TearDown()
+	iid := uuid.New().String()
+
+	resp := suite.CallAPI("PUT", fmt.Sprintf("oauth/v2/service_instances/%s?accepts_incomplete=true&plan_id=7d55d31d-35ae-4438-bf13-6ffdfa107d9f&service_id=47c9dcbf-ff30-448e-ab36-d3bad66ba281", iid),
+		`{
+			"service_id": "47c9dcbf-ff30-448e-ab36-d3bad66ba281",
+			"plan_id": "7d55d31d-35ae-4438-bf13-6ffdfa107d9f",
+			"context": {
+				"sm_operator_credentials": {
+					"clientid": "cid",
+					"clientsecret": "cs",
+					"url": "url",
+					"sm_url": "sm_url"
+				},
+				"globalaccount_id": "g-account-id",
+				"subaccount_id": "sub-id",
+				"user_id": "john.smith@email.com"
+			},
+			"parameters": {
+				"name": "testing-cluster"
+			}
+		}`)
+	opID := suite.DecodeOperationID(resp)
+	suite.processProvisioningByOperationID(opID)
+
+	suite.WaitForOperationState(opID, domain.Succeeded)
+
+	suite.Log("*** Suspension ***")
+
+	// Process Suspension
+	// OSB context update (suspension)
+	suite.SetReconcilerResponseStatus(reconcilerApi.StatusDeleted)
+	resp = suite.CallAPI("PATCH", fmt.Sprintf("oauth/v2/service_instances/%s?accepts_incomplete=true", iid),
+		`{
+       "service_id": "47c9dcbf-ff30-448e-ab36-d3bad66ba281",
+       "plan_id": "7d55d31d-35ae-4438-bf13-6ffdfa107d9f",
+       "context": {
+           "globalaccount_id": "g-account-id",
+           "user_id": "john.smith@email.com",
+           "active": false
+       }
+   }`)
+	assert.Equal(t, http.StatusOK, resp.StatusCode)
+	suspensionOpID := suite.WaitForLastOperation(iid, domain.InProgress)
+
+	suite.FinishDeprovisioningOperationByProvisioner(suspensionOpID)
+	suite.WaitForOperationState(suspensionOpID, domain.Succeeded)
+
+	// OSB update
+	suite.Log("*** Unsuspension ***")
+	suite.SetReconcilerResponseStatus(reconcilerApi.StatusReady)
+	resp = suite.CallAPI("PATCH", fmt.Sprintf("oauth/v2/service_instances/%s?accepts_incomplete=true", iid),
+		`{
+       "service_id": "47c9dcbf-ff30-448e-ab36-d3bad66ba281",
+       "plan_id": "7d55d31d-35ae-4438-bf13-6ffdfa107d9f",
+       "context": {
+           "globalaccount_id": "g-account-id",
+           "user_id": "john.smith@email.com",
+			"active": true
+       }
+       
+   }`)
+	assert.Equal(t, http.StatusOK, resp.StatusCode)
+	suite.processProvisioningByInstanceID(iid)
+
+	suite.AssertKymaResourceExists(opID)
+	instance := suite.GetInstance(iid)
+	assert.Equal(t, instance.RuntimeID, instance.InstanceDetails.KymaResourceName)
+	assert.Equal(t, instance.RuntimeID, instance.InstanceDetails.GardenerClusterName)
+}
+
 func TestUnsuspensionTrialKyma20(t *testing.T) {
 	suite := NewBrokerSuiteTest(t)
 	defer suite.TearDown()
@@ -479,10 +552,6 @@ func TestUnsuspensionTrialKyma20(t *testing.T) {
 	assert.Equal(t, http.StatusOK, resp.StatusCode)
 	suite.processProvisioningByInstanceID(iid)
 
-	println(
-		"RuntimeIDD " + suite.GetInstance(iid).RuntimeID +
-			"\nGardenerClusterName " + suite.GetInstance(iid).InstanceDetails.GardenerClusterName +
-			"\nKymaResourceName " + suite.GetInstance(iid).InstanceDetails.KymaResourceName)
 	suite.AssertKymaResourceExists(opID)
 	suite.AssertKymaLabelsExist(opID, map[string]string{
 		"kyma-project.io/region": "eu-west-1",
