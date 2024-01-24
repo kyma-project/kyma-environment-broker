@@ -143,6 +143,8 @@ type ListParameters struct {
 	KymaConfig bool
 	// ClusterConfig specifies whether Gardener cluster configuration details should be included in the response for each runtime
 	ClusterConfig bool
+	// GardenerConfig specifies whether current Gardener cluster configuration details from provisioner should be included in the response for each runtime
+	GardenerConfig bool
 	// GlobalAccountIDs parameter filters runtimes by specified global account IDs
 	GlobalAccountIDs []string
 	// SubAccountIDs parameter filters runtimes by specified subaccount IDs
