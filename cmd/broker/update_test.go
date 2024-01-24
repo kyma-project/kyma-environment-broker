@@ -206,12 +206,7 @@ func TestUpdateDeprovisioningInstance(t *testing.T) {
 
 	assert.Equal(t, "Unable to process an update of a deprovisioned instance", errResponse.Description)
 
-	suite.AssertKymaResourceExists(opID)
-	suite.AssertKymaLabelsExist(opID, map[string]string{
-		"kyma-project.io/region":          "eu-west-1",
-		"kyma-project.io/platform-region": "cf-eu10",
-	})
-
+	suite.AssertKymaResourceNotExists(opID)
 }
 
 func TestUpdateWithNoOIDCParams(t *testing.T) {
@@ -472,10 +467,11 @@ func TestKymaResourceNameAndGardenerClusterNameAfterUnsuspension(t *testing.T) {
 	assert.Equal(t, http.StatusOK, resp.StatusCode)
 	suite.processProvisioningByInstanceID(iid)
 
-	suite.AssertKymaResourceExists(opID)
+	suite.AssertKymaResourceNotExists(opID)
 	instance := suite.GetInstance(iid)
 	assert.Equal(t, instance.RuntimeID, instance.InstanceDetails.KymaResourceName)
 	assert.Equal(t, instance.RuntimeID, instance.InstanceDetails.GardenerClusterName)
+	suite.AssertKymaResourceExistsByInstanceID(iid)
 }
 
 func TestUnsuspensionTrialKyma20(t *testing.T) {
@@ -552,12 +548,9 @@ func TestUnsuspensionTrialKyma20(t *testing.T) {
 	assert.Equal(t, http.StatusOK, resp.StatusCode)
 	suite.processProvisioningByInstanceID(iid)
 
-	suite.AssertKymaResourceExists(opID)
-	suite.AssertKymaLabelsExist(opID, map[string]string{
-		"kyma-project.io/region": "eu-west-1",
-	})
+	suite.AssertKymaResourceNotExists(opID)
 	suite.AssertKymaLabelNotExists(opID, "kyma-project.io/platform-region")
-
+	suite.AssertKymaResourceExistsByInstanceID(iid)
 }
 
 func TestUnsuspensionTrialWithDefaultProviderChangedForNonDefaultRegion(t *testing.T) {
@@ -632,12 +625,8 @@ func TestUnsuspensionTrialWithDefaultProviderChangedForNonDefaultRegion(t *testi
 	// check that the region and zone is set
 	suite.AssertAWSRegionAndZone("us-east-1")
 
-	suite.AssertKymaResourceExists(opID)
-	suite.AssertKymaLabelsExist(opID, map[string]string{
-		"kyma-project.io/region":          "us-east-1",
-		"kyma-project.io/platform-region": "cf-us10",
-	})
-
+	suite.AssertKymaResourceNotExists(opID)
+	suite.AssertKymaResourceExistsByInstanceID(iid)
 }
 
 func TestUpdateWithOwnClusterPlan(t *testing.T) {
@@ -803,12 +792,8 @@ func TestUpdateOidcForSuspendedInstance(t *testing.T) {
 	input := suite.LastProvisionInput(iid)
 	assert.Equal(t, "id-oooxx", input.ClusterConfig.GardenerConfig.OidcConfig.ClientID)
 
-	suite.AssertKymaResourceExists(opID)
-	suite.AssertKymaLabelsExist(opID, map[string]string{
-		"kyma-project.io/region":          "eu-west-1",
-		"kyma-project.io/platform-region": "cf-eu10",
-	})
-
+	suite.AssertKymaResourceNotExists(opID)
+	suite.AssertKymaResourceExistsByInstanceID(iid)
 }
 
 func TestUpdateOidcForPreview(t *testing.T) {
