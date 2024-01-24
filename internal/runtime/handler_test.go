@@ -715,7 +715,8 @@ func TestRuntimeHandler(t *testing.T) {
 		input, err := operation.InputCreator.CreateProvisionRuntimeInput()
 		require.NoError(t, err)
 
-		provisionerClient.ProvisionRuntimeWithIDs(operation.GlobalAccountID, operation.SubAccountID, operation.RuntimeID, operation.ID, input)
+		_, err = provisionerClient.ProvisionRuntimeWithIDs(operation.GlobalAccountID, operation.SubAccountID, operation.RuntimeID, operation.ID, input)
+		require.NoError(t, err)
 
 		runtimeHandler := runtime.NewHandler(instances, operations, states, 2, "", provisionerClient)
 
