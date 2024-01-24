@@ -693,6 +693,56 @@ func TestRuntimeHandler(t *testing.T) {
 		require.NotNil(t, out.Data[0].ClusterConfig)
 		assert.Equal(t, "1.19.19", out.Data[0].ClusterConfig.KubernetesVersion)
 	})
+
+	t.Run("test gardener_config optional attribute", func(t *testing.T) {
+		// given
+		provisionerClient := provisioner.NewFakeClient()
+		operations := memory.NewOperation()
+		instances := memory.NewInstance(operations)
+		states := memory.NewRuntimeStates()
+		testID := "Test1"
+		testTime := time.Now()
+		testInstance := fixInstance(testID, testTime)
+		testInstance.Provider = "aws"
+		testInstance.RuntimeID = fmt.Sprintf("runtime-%s", testID)
+		err := instances.Insert(testInstance)
+		require.NoError(t, err)
+
+		operation := fixture.FixProvisioningOperation(fixRandomID(), testID)
+		err = operations.InsertOperation(operation)
+		require.NoError(t, err)
+
+		input, err := operation.InputCreator.CreateProvisionRuntimeInput()
+		require.NoError(t, err)
+
+		provisionerClient.ProvisionRuntimeWithIDs(operation.GlobalAccountID, operation.SubAccountID, operation.RuntimeID, operation.ID, input)
+
+		runtimeHandler := runtime.NewHandler(instances, operations, states, 2, "", provisionerClient)
+
+		rr := httptest.NewRecorder()
+		router := mux.NewRouter()
+		runtimeHandler.AttachRoutes(router)
+
+		// when
+		req, err := http.NewRequest("GET", "/runtimes?gardener_config=true", nil)
+		require.NoError(t, err)
+		router.ServeHTTP(rr, req)
+
+		// then
+		require.Equal(t, http.StatusOK, rr.Code)
+
+		var out pkg.RuntimesPage
+
+		err = json.Unmarshal(rr.Body.Bytes(), &out)
+		require.NoError(t, err)
+
+		require.Equal(t, 1, out.TotalCount)
+		require.Equal(t, 1, out.Count)
+		assert.Equal(t, testID, out.Data[0].InstanceID)
+		require.NotNil(t, out.Data[0].Status.GardenerConfig)
+		assert.Equal(t, "fake-region", *out.Data[0].Status.GardenerConfig.Region)
+	})
+
 }
 
 func fixInstance(id string, t time.Time) internal.Instance {

@@ -210,9 +210,10 @@ func (c *FakeClient) RuntimeStatus(accountID, runtimeID string) (schema.RuntimeS
 			return schema.RuntimeStatus{
 				RuntimeConfiguration: &schema.RuntimeConfig{
 					ClusterConfig: &schema.GardenerConfig{
-						Name:   ptr.String("fake-name"),
-						Region: ptr.String("fake-region"),
-						Seed:   ptr.String("fake-seed"),
+						Name:     ptr.String("fake-name"),
+						Region:   ptr.String("fake-region"),
+						Seed:     ptr.String("fake-seed"),
+						Provider: ptr.String("aws"),
 					},
 					Kubeconfig: ptr.String("kubeconfig-content"),
 				},
