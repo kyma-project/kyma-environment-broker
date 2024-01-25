@@ -162,6 +162,7 @@ provisioner:
   timeout: "12h"
   provisioningTimeout: "6h"
   deprovisioningTimeout: "5h"
+  checkGardenerClusterStepTimeout: "3min"
 
   sapConvergedCloud:
     floatingPoolName: "FloatingIP-external-kyma-01"

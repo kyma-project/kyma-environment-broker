@@ -132,7 +132,7 @@ func TestCheckGardenerCluster_RunWhenReady(t *testing.T) {
 	existingGC := NewGardenerCluster("runtime-id-000", "kcp-system")
 	existingGC.SetState("Ready")
 	k8sClient := fake.NewClientBuilder().WithRuntimeObjects(existingGC.ToUnstructured()).Build()
-	step := NewCheckGardenerCluster(os, k8sClient)
+	step := NewCheckGardenerCluster(os, k8sClient, time.Second)
 	operation := fixture.FixProvisioningOperation("op", "instance-id")
 	operation.KymaResourceNamespace = "kcp-system"
 	operation.RuntimeID = "runtime-id-000"
@@ -154,7 +154,7 @@ func TestCheckGardenerCluster_RunWhenNotReady_OperationFail(t *testing.T) {
 	existingGC.SetState("In progress")
 	existingGC.SetStatusConditions("some condition")
 	k8sClient := fake.NewClientBuilder().WithRuntimeObjects(existingGC.ToUnstructured()).Build()
-	step := NewCheckGardenerCluster(os, k8sClient)
+	step := NewCheckGardenerCluster(os, k8sClient, time.Second)
 	operation := fixture.FixProvisioningOperation("op", "instance-id")
 	operation.KymaResourceNamespace = "kcp-system"
 	operation.RuntimeID = "runtime-id-000"
@@ -178,7 +178,7 @@ func TestCheckGardenerCluster_RunWhenNotReady_Retry(t *testing.T) {
 	existingGC.SetState("In progress")
 	existingGC.SetStatusConditions("some condition")
 	k8sClient := fake.NewClientBuilder().WithRuntimeObjects(existingGC.ToUnstructured()).Build()
-	step := NewCheckGardenerCluster(os, k8sClient)
+	step := NewCheckGardenerCluster(os, k8sClient, time.Second)
 	operation := fixture.FixProvisioningOperation("op", "instance-id")
 	operation.KymaResourceNamespace = "kcp-system"
 	operation.RuntimeID = "runtime-id-000"
