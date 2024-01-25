@@ -27,18 +27,18 @@ func NewSyncGardenerCluster(os storage.Operations, k8sClient client.Client) *syn
 	}
 }
 
-func NewCheckGardenerCluster(os storage.Operations, k8sClient client.Client, checkGardenerClusterStepTimeout time.Duration) *checkGardenerCluster {
+func NewCheckGardenerCluster(os storage.Operations, k8sClient client.Client, gardenerClusterStepTimeout time.Duration) *checkGardenerCluster {
 	return &checkGardenerCluster{
-		k8sClient:                   k8sClient,
-		operationManager:            process.NewOperationManager(os),
-		checkGardenerClusterTimeout: checkGardenerClusterStepTimeout,
+		k8sClient:                  k8sClient,
+		operationManager:           process.NewOperationManager(os),
+		gardenerClusterStepTimeout: gardenerClusterStepTimeout,
 	}
 }
 
 type checkGardenerCluster struct {
-	k8sClient                   client.Client
-	operationManager            *process.OperationManager
-	checkGardenerClusterTimeout time.Duration
+	k8sClient                  client.Client
+	operationManager           *process.OperationManager
+	gardenerClusterStepTimeout time.Duration
 }
 
 func (_ *checkGardenerCluster) Name() string {
@@ -56,7 +56,7 @@ func (s *checkGardenerCluster) Run(operation internal.Operation, log logrus.Fiel
 	state := gc.GetState()
 	log.Infof("GardenerCluster state: %s", state)
 	if state != GardenerClusterStateReady {
-		if time.Since(operation.UpdatedAt) > s.checkGardenerClusterTimeout {
+		if time.Since(operation.UpdatedAt) > s.gardenerClusterStepTimeout {
 			description := fmt.Sprintf("Waiting for GardenerCluster (%s/%s) ready state timeout.", operation.KymaResourceNamespace, operation.RuntimeID)
 			log.Error(description)
 			log.Infof("GardenerCluster status: %s", gc.StatusAsString())
