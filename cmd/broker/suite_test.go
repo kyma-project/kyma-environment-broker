@@ -1015,8 +1015,9 @@ func fixConfig() *Config {
 		DumpProvisionerRequests:            true,
 		OperationTimeout:                   2 * time.Minute,
 		Provisioner: input.Config{
-			ProvisioningTimeout:   2 * time.Minute,
-			DeprovisioningTimeout: 2 * time.Minute,
+			ProvisioningTimeout:        2 * time.Minute,
+			DeprovisioningTimeout:      2 * time.Minute,
+			GardenerClusterStepTimeout: time.Second,
 		},
 		Reconciler: reconciler.Config{
 			ProvisioningTimeout: 5 * time.Second,
