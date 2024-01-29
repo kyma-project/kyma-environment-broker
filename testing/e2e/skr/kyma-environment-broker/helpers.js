@@ -53,18 +53,16 @@ async function getShoot(kcp, shootName) {
 
   const kubeconfigPath = await kcp.getKubeconfig(shootName);
 
-  const runtimeClusterConfig = await kcp.getRuntimeClusterConfig(shootName);
-  const objRuntimeClusterConfig = JSON.parse(runtimeClusterConfig);
-  expect(objRuntimeClusterConfig).to.have.nested.property('data[0].clusterConfig.oidcConfig').not.empty;
-  expect(objRuntimeClusterConfig).to.have.nested.property('data[0].clusterConfig.dnsConfig.domain').not.empty;
-  expect(objRuntimeClusterConfig).to.have.nested.property('data[0].clusterConfig.machineType').not.empty;
+  const runtimeGardenerConfig = await kcp.getRuntimeGardenerConfig(shootName);
+  const objRuntimeGardenerConfig = JSON.parse(runtimeGardenerConfig);
+  expect(objRuntimeGardenerConfig).to.have.nested.property('data[0].status.gardenerConfig.oidcConfig').not.empty;
+  expect(objRuntimeGardenerConfig).to.have.nested.property('data[0].status.gardenerConfig.machineType').not.empty;
 
   return {
     name: shootName,
     kubeconfig: kubeconfigPath,
-    oidcConfig: objRuntimeClusterConfig.data[0].clusterConfig.oidcConfig,
-    shootDomain: objRuntimeClusterConfig.data[0].clusterConfig.dnsConfig.domain,
-    spec: objRuntimeClusterConfig.data[0].clusterConfig.machineType,
+    oidcConfig: objRuntimeGardenerConfig.data[0].status.gardenerConfig.oidcConfig,
+    machineType: objRuntimeGardenerConfig.data[0].status.gardenerConfig.machineType,
   };
 }
 
