@@ -22,6 +22,10 @@ on:
       k3s-versions:
         type: number
         description: 'Number of last k3s versions to be used for tests'
+      dry-run:
+        type: boolean
+        description: 'Do not publish'
+        default: false
 
 jobs:
   validate-release:
@@ -260,6 +264,7 @@ jobs:
   publish-release:
     name: Publish release
     needs: [create-draft, wait-for-prow-jobs, run-unit-tests, run-keb-chart-tests]
+    if: ${{ !inputs.dry-run }}
     runs-on: ubuntu-latest
 
     steps:

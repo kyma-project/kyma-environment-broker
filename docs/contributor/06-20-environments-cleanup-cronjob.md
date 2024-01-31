@@ -2,14 +2,17 @@
 
 >**CAUTION:** The CronJob must run only in the development environment. You must be connected to the development Kubernetes cluster before applying the CronJob.
 
+>**NOTE:** Environments Cleanup CronJob is applied manually. There is no automatic release process for the job because of its destructiveness. To get more details on using the job, visit its [`README`](../../utils/kyma-environments-cleanup-job/README.md). 
+
 Environments Cleanup CronJob removes Kyma Environments which are older than 24h. The CronJob is scheduled to run daily at midnight local time defined in the system.
 
 ## Prerequisites
 
 Environments Cleanup requires access to:
-- Gardener project of choice to filter Shoots without a proper label
+- Gardener project of choice to filter Shoots without a proper label and remove lingering shoots
 - the Kyma Environment Broker (KEB) database to get an Instance ID for each SAP BTP, Kyma runtime marked for deletion
 - KEB to trigger Kyma runtime deprovisioning
+- Provisioner endpoints to cleanup clusters provisioned directly in Provisioner omitting KEB
 
 ## Configuration
 
@@ -28,8 +31,7 @@ The Environments Cleanup binary allows you to override some configuration parame
 | **APP_DATABASE_NAME** | Specifies the name of the database. | `provisioner` |
 | **APP_DATABASE_SSLMODE** | Activates the SSL mode for PostgrSQL. See [all the possible values](https://www.postgresql.org/docs/9.1/libpq-ssl.html).  | `disable`|
 | **APP_DATABASE_SSLROOTCERT** | Specifies the location of CA cert of PostgreSQL. (Optional)  | None |
+| **APP_DATABASE_SECRET_KEY** | Database encryption key. (Optional) | None |
 | **APP_BROKER_URL**  | Specifies the KEB URL. | `https://kyma-env-broker.kyma.local` |
-| **APP_BROKER_TOKEN_URL**  | Specifies the KEB OAuth token endpoint. | `https://oauth.2kyma.local/oauth2/token` |
-| **APP_BROKER_CLIENT_ID** | Specifies the username for the OAuth2 authentication in KEB. | None |
-| **APP_BROKER_CLIENT_SECRET** | Specifies the password for the OAuth2 authentication in KEB. | None |
-| **APP_BROKER_SCOPE** | Specifies the scope for the OAuth2 authentication in KEB. | None |
+| **APP_PROVISIONER_URL** | Url to the provisioner endpoint. | `kcp-provisioner:3000` | 
+| **APP_PROVISIONER_QUERY_DUMPING** | Allows for logging GraphQL queries sent to Provisioner. | `false` |

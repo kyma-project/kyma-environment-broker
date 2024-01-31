@@ -1,10 +1,8 @@
 package postsql_test
 
 import (
-	"context"
 	"testing"
 
-	"github.com/kyma-project/kyma-environment-broker/internal/storage"
 	"github.com/kyma-project/kyma-environment-broker/internal/storage/postsql"
 	"github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/assert"
@@ -12,39 +10,27 @@ import (
 )
 
 const (
-	maxDbAccessRetries = 20
+	maxTestDbAccessRetries = 20
 )
 
 func TestInitialization(t *testing.T) {
 
-	ctx := context.Background()
-
 	t.Run("Should initialize database when schema not applied", func(t *testing.T) {
-		containerCleanupFunc, cfg, err := storage.InitTestDBContainer(t.Logf, ctx, "test_DB_1")
+		storageCleanup, brokerStorage, err := GetStorageForTests()
 		require.NoError(t, err)
-		defer containerCleanupFunc()
-
-		// when
-		connection, err := postsql.InitializeDatabase(cfg.ConnectionURL(), maxDbAccessRetries, logrus.New())
-		require.NoError(t, err)
-		require.NotNil(t, connection)
-
-		defer storage.CloseDatabase(t, connection)
-
-		// then
-		assert.NoError(t, err)
+		require.NotNil(t, brokerStorage)
+		defer func() {
+			err := storageCleanup()
+			assert.NoError(t, err)
+		}()
 	})
 
-	t.Run("Should return error when failed to connect to the database", func(t *testing.T) {
-		containerCleanupFunc, _, err := storage.InitTestDBContainer(t.Logf, ctx, "test_DB_3")
-		require.NoError(t, err)
-		defer containerCleanupFunc()
-
+	t.Run("Should return error when failed to connect to the database with bad connection string", func(t *testing.T) {
 		// given
 		connString := "bad connection string"
 
 		// when
-		connection, err := postsql.InitializeDatabase(connString, maxDbAccessRetries, logrus.New())
+		connection, err := postsql.InitializeDatabase(connString, 3, logrus.New())
 
 		// then
 		assert.Error(t, err)

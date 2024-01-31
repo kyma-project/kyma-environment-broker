@@ -22,9 +22,10 @@ See [Kyma Environment Broker Release Pipeline](04-20-release.md) to learn more a
 
 This [workflow](/.github/workflows/label-validator.yml) is triggered by PRs on the `main` branch. It checks the labels on the PR and requires that the PR has exactly one of the labels listed in this [file](/.github/release.yml).
 
-## Unit Tests Workflow
+## Verify KEB Workflow
 
-This [workflow](/.github/workflows/run-unit-tests.yaml) is triggered by PRs on the `main` branch. Then it calls the reusable [workflow](/.github/workflows/run-unit-tests-reusable.yaml).
+This [workflow](/.github/workflows/run-verify.yaml) is triggered by PRs on the `main` branch. Then it calls the reusable [workflow](/.github/workflows/run-unit-tests-reusable.yaml) with unit tests.
+Besides the tests, it also runs Go-related checks and Go linter.
 
 ## KEB Chart Tests Workflow
 

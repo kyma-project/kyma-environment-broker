@@ -150,11 +150,13 @@
         "asia-south1",
         "us-central1"
       ],
+      "minLength": 1,
       "type": "string"
     }
   },
   "required": [
-    "name"
+    "name",
+    "region"
   ],
   "type": "object"
 }

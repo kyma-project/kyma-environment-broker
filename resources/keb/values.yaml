@@ -3,7 +3,7 @@ global:
   ingress:
     domainName: localhost
   images:
-    cloudsql_proxy_image: "europe-docker.pkg.dev/kyma-project/prod/tpi/cloudsql-docker/gce-proxy:v1.33.8-afb993b8"
+    cloudsql_proxy_image: "europe-docker.pkg.dev/kyma-project/prod/tpi/cloudsql-docker/gce-proxy:v1.33.16-133356bc"
     container_registry:
       path: europe-docker.pkg.dev/kyma-project/prod
     schema_migrator:
@@ -11,19 +11,19 @@ global:
       version: "v20231219-d6bc8703" # do not update along with the other images
     kyma_environment_broker:
       dir:
-      version: "1.1.3"
+      version: "1.1.6"
     kyma_environments_subaccount_cleanup_job:
       dir:
-      version: "1.1.3"
+      version: "1.1.6"
     kyma_environment_trial_cleanup_job:
       dir:
-      version: "1.1.3"
+      version: "1.1.6"
     kyma_environment_deprovision_retrigger_job:
       dir:
-      version: "1.1.3"
+      version: "1.1.6"
     kyma_environment_runtime_reconciler:
       dir:
-      version: "1.1.3"
+      version: "1.1.6"
   kyma_environment_broker:
     enabled: false
     serviceAccountName: "kcp-kyma-environment-broker"
@@ -162,6 +162,7 @@ provisioner:
   timeout: "12h"
   provisioningTimeout: "6h"
   deprovisioningTimeout: "5h"
+  gardenerClusterStepTimeout: "3m"
 
   sapConvergedCloud:
     floatingPoolName: "FloatingIP-external-kyma-01"
@@ -222,8 +223,6 @@ includeAdditionalParamsInSchema: "false"
 showTrialExpirationInfo: "false"
 subaccountsIdsToShowTrialExpirationInfo: "a45be5d8-eddc-4001-91cf-48cc644d571f"
 trialDocsURL: "https://help.sap.com/docs/"
-exposeSchemaWithRegionRequired: "false"
-regionParameterIsRequired: "false"
 
 osbUpdateProcessingEnabled: "false"
 

@@ -1,0 +1,52 @@
+name: Verify KEB
+
+on:
+  pull_request:
+    branches: [ main ]
+    types:
+      - opened
+      - reopened
+      - synchronize
+      - ready_for_review
+  
+permissions:
+  contents: read
+  pull-requests: read
+  checks: write
+
+jobs:
+  run-go-tests:
+    uses: "./.github/workflows/run-unit-tests-reusable.yaml"
+
+  run-go-linter:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Set up go environment
+      uses: actions/setup-go@v4
+      with:
+        go-version-file: 'go.mod'
+        
+    - name: Go linter
+      uses: golangci/golangci-lint-action@v3
+      with:
+        version: v1.55.2
+        skip-cache: true
+        only-new-issues: true
+        args: --timeout 2m0s
+
+  run-go-checks:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up go environment
+        uses: actions/setup-go@v4
+        with:
+          go-version-file: 'go.mod'
+
+      - name: Run go checks
+        run: make checks

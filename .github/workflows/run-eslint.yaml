@@ -1,4 +1,4 @@
-name: Run eslint
+name: Run JS linter
 
 on:
   pull_request:
@@ -12,5 +12,5 @@ jobs:
     - name: Checkout code
       uses: actions/checkout@v4
 
-    - name: Run eslint
+    - name: Run JS linter
       run: make lint -C testing/e2e/skr

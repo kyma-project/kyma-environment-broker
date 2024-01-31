@@ -109,6 +109,9 @@ func setQuery(url *url.URL, params ListParameters) {
 	if params.ClusterConfig {
 		query.Add(ClusterConfigParam, "true")
 	}
+	if params.GardenerConfig {
+		query.Add(GardenerConfigParam, "true")
+	}
 	if params.Expired {
 		query.Add(ExpiredParam, "true")
 	}

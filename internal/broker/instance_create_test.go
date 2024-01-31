@@ -31,6 +31,7 @@ import (
 const (
 	serviceID                  = "47c9dcbf-ff30-448e-ab36-d3bad66ba281"
 	planID                     = "4deee563-e5ec-4731-b9b1-53b42d855f0c"
+	clusterRegion              = "westeurope"
 	globalAccountID            = "e8f7ec0a-0cd6-41f0-905d-5d1efa9fb6c4"
 	whitelistedGlobalAccountID = "whitelisted-global-account-id"
 	subAccountID               = "3cb65e5b-e455-4799-bf35-be46e8f5a533"
@@ -91,7 +92,7 @@ func TestProvision_Provision(t *testing.T) {
 		response, err := provisionEndpoint.Provision(fixRequestContext(t, "req-region"), instanceID, domain.ProvisionDetails{
 			ServiceID:     serviceID,
 			PlanID:        planID,
-			RawParameters: json.RawMessage(fmt.Sprintf(`{"name": "%s"}`, clusterName)),
+			RawParameters: json.RawMessage(fmt.Sprintf(`{"name": "%s", "region": "%s"}`, clusterName, clusterRegion)),
 			RawContext:    json.RawMessage(fmt.Sprintf(`{"globalaccount_id": "%s", "subaccount_id": "%s", "user_id": "%s"}`, globalAccountID, subAccountID, "Test@Test.pl")),
 		}, true)
 		t.Logf("%+v\n", *provisionEndpoint)
@@ -363,7 +364,7 @@ func TestProvision_Provision(t *testing.T) {
 		response, err := provisionEndpoint.Provision(fixRequestContext(t, "req-region"), instanceID, domain.ProvisionDetails{
 			ServiceID:     serviceID,
 			PlanID:        planID,
-			RawParameters: json.RawMessage(fmt.Sprintf(`{"name": "%s", "kubeconfig": "%s", "shootName":"%s", "shootDomain":"%s"}`, clusterName, notEncodedKubeconfig, shootName, shootDomain)),
+			RawParameters: json.RawMessage(fmt.Sprintf(`{"name": "%s", "region": "%s", "kubeconfig": "%s", "shootName":"%s", "shootDomain":"%s"}`, clusterName, clusterRegion, notEncodedKubeconfig, shootName, shootDomain)),
 			RawContext:    json.RawMessage(fmt.Sprintf(`{"globalaccount_id": "%s", "subaccount_id": "%s", "user_id": "%s"}`, globalAccountID, subAccountID, "Test@Test.pl")),
 		}, true)
 		t.Logf("%+v\n", *provisionEndpoint)
@@ -438,7 +439,7 @@ func TestProvision_Provision(t *testing.T) {
 		response, err := provisionEndpoint.Provision(fixRequestContext(t, region), instanceID, domain.ProvisionDetails{
 			ServiceID:     serviceID,
 			PlanID:        planID,
-			RawParameters: json.RawMessage(fmt.Sprintf(`{"name": "%s"}`, clusterName)),
+			RawParameters: json.RawMessage(fmt.Sprintf(`{"name": "%s", "region": "%s"}`, clusterName, clusterRegion)),
 			RawContext:    json.RawMessage(fmt.Sprintf(`{"globalaccount_id": "%s", "subaccount_id": "%s", "user_id": "%s"}`, globalAccountID, subAccountID, userID)),
 		}, true)
 
@@ -707,7 +708,7 @@ func TestProvision_Provision(t *testing.T) {
 		response, err := provisionEndpoint.Provision(fixRequestContext(t, "dummy"), instanceID, domain.ProvisionDetails{
 			ServiceID:     serviceID,
 			PlanID:        planID,
-			RawParameters: json.RawMessage(fmt.Sprintf(`{"name": "%s"}`, clusterName)),
+			RawParameters: json.RawMessage(fmt.Sprintf(`{"name": "%s", "region": "%s"}`, clusterName, clusterRegion)),
 			RawContext:    json.RawMessage(fmt.Sprintf(`{"globalaccount_id": "%s", "subaccount_id": "%s", "user_id": "%s"}`, "1cafb9c8-c8f8-478a-948a-9cb53bb76aa4", subAccountID, userID)),
 		}, true)
 
@@ -751,8 +752,9 @@ func TestProvision_Provision(t *testing.T) {
 			PlanID:    planID,
 			RawParameters: json.RawMessage(fmt.Sprintf(`{
 								"name": "%s",
+								"region": "%s",
 								"kymaVersion": "main-00e83e99"
-								}`, clusterName)),
+								}`, clusterName, clusterRegion)),
 			RawContext: json.RawMessage(fmt.Sprintf(`{"globalaccount_id": "%s", "subaccount_id": "%s", "user_id": "%s"}`, "1cafb9c8-c8f8-478a-948a-9cb53bb76aa4", subAccountID, userID)),
 		}, true)
 		assert.NoError(t, err)
@@ -835,8 +837,9 @@ func TestProvision_Provision(t *testing.T) {
 			PlanID:    planID,
 			RawParameters: json.RawMessage(fmt.Sprintf(`{
 								"name": "%s",
+								"region": "%s",
 								"kymaVersion": "main-00e83e99"
-								}`, clusterName)),
+								}`, clusterName, clusterRegion)),
 			RawContext: json.RawMessage(fmt.Sprintf(`{"globalaccount_id": "%s", "subaccount_id": "%s", "user_id": "%s"}`, "1cafb9c8-c8f8-478a-948a-9cb53bb76aa4", subAccountID, userID)),
 		}, true)
 		assert.NoError(t, err)
@@ -881,7 +884,7 @@ func TestProvision_Provision(t *testing.T) {
 		response, err := provisionEndpoint.Provision(fixRequestContext(t, "dummy"), instanceID, domain.ProvisionDetails{
 			ServiceID:     serviceID,
 			PlanID:        broker.AzureLitePlanID,
-			RawParameters: json.RawMessage(fmt.Sprintf(`{"name": "%s"}`, clusterName)),
+			RawParameters: json.RawMessage(fmt.Sprintf(`{"name": "%s", "region": "%s"}`, clusterName, clusterRegion)),
 			RawContext:    json.RawMessage(fmt.Sprintf(`{"globalaccount_id": "%s", "subaccount_id": "%s", "user_id": "%s"}`, "1cafb9c8-c8f8-478a-948a-9cb53bb76aa4", subAccountID, userID)),
 		}, true)
 		assert.NoError(t, err)
@@ -982,7 +985,7 @@ func TestProvision_Provision(t *testing.T) {
 		_, err = provisionEndpoint.Provision(fixRequestContext(t, "req-region"), instanceID, domain.ProvisionDetails{
 			ServiceID:     serviceID,
 			PlanID:        planID,
-			RawParameters: json.RawMessage(fmt.Sprintf(`{"name": "%s","oidc":{ %s }}`, clusterName, oidcParams)),
+			RawParameters: json.RawMessage(fmt.Sprintf(`{"name": "%s", "region": "%s","oidc":{ %s }}`, clusterName, clusterRegion, oidcParams)),
 			RawContext:    json.RawMessage(fmt.Sprintf(`{"globalaccount_id": "%s", "subaccount_id": "%s", "user_id": "%s"}`, globalAccountID, subAccountID, "Test@Test.pl")),
 		}, true)
 		t.Logf("%+v\n", *provisionEndpoint)
@@ -1039,7 +1042,7 @@ func TestProvision_Provision(t *testing.T) {
 		_, err = provisionEndpoint.Provision(fixRequestContext(t, "req-region"), instanceID, domain.ProvisionDetails{
 			ServiceID:     serviceID,
 			PlanID:        planID,
-			RawParameters: json.RawMessage(fmt.Sprintf(`{"name": "%s","oidc":{ %s }}`, clusterName, oidcParams)),
+			RawParameters: json.RawMessage(fmt.Sprintf(`{"name": "%s", "region": "%s","oidc":{ %s }}`, clusterName, clusterRegion, oidcParams)),
 			RawContext:    json.RawMessage(fmt.Sprintf(`{"globalaccount_id": "%s", "subaccount_id": "%s", "user_id": "%s"}`, globalAccountID, subAccountID, "Test@Test.pl")),
 		}, true)
 		t.Logf("%+v\n", *provisionEndpoint)
@@ -1096,7 +1099,7 @@ func TestProvision_Provision(t *testing.T) {
 		_, err = provisionEndpoint.Provision(fixRequestContext(t, "req-region"), instanceID, domain.ProvisionDetails{
 			ServiceID:     serviceID,
 			PlanID:        planID,
-			RawParameters: json.RawMessage(fmt.Sprintf(`{"name": "%s","oidc":{ %s }}`, clusterName, oidcParams)),
+			RawParameters: json.RawMessage(fmt.Sprintf(`{"name": "%s", "region": "%s","oidc":{ %s }}`, clusterName, clusterRegion, oidcParams)),
 			RawContext:    json.RawMessage(fmt.Sprintf(`{"globalaccount_id": "%s", "subaccount_id": "%s", "user_id": "%s"}`, globalAccountID, subAccountID, "Test@Test.pl")),
 		}, true)
 		t.Logf("%+v\n", *provisionEndpoint)
@@ -1150,7 +1153,7 @@ func TestProvision_Provision(t *testing.T) {
 		_, err := provisionEndpoint.Provision(fixRequestContext(t, "cf-eu11"), instanceID, domain.ProvisionDetails{
 			ServiceID:     serviceID,
 			PlanID:        planID,
-			RawParameters: json.RawMessage(fmt.Sprintf(`{"name": "%s","oidc":{ %s }}`, clusterName, oidcParams)),
+			RawParameters: json.RawMessage(fmt.Sprintf(`{"name": "%s", "region": "%s","oidc":{ %s }}`, clusterName, "switzerlandnorth", oidcParams)),
 			RawContext:    json.RawMessage(fmt.Sprintf(`{"globalaccount_id": "%s", "subaccount_id": "%s", "user_id": "%s"}`, whitelistedGlobalAccountID, subAccountID, "Test@Test.pl")),
 		}, true)
 		t.Logf("%+v\n", *provisionEndpoint)
@@ -1203,7 +1206,7 @@ func TestProvision_Provision(t *testing.T) {
 		_, err = provisionEndpoint.Provision(fixRequestContext(t, "cf-eu11"), instanceID, domain.ProvisionDetails{
 			ServiceID:     serviceID,
 			PlanID:        planID,
-			RawParameters: json.RawMessage(fmt.Sprintf(`{"name": "%s","oidc":{ %s }}`, clusterName, oidcParams)),
+			RawParameters: json.RawMessage(fmt.Sprintf(`{"name": "%s", "region": "%s", "oidc":{ %s }}`, clusterName, "switzerlandnorth", oidcParams)),
 			RawContext:    json.RawMessage(fmt.Sprintf(`{"globalaccount_id": "%s", "subaccount_id": "%s", "user_id": "%s"}`, globalAccountID, subAccountID, "Test@Test.pl")),
 		}, true)
 		t.Logf("%+v\n", *provisionEndpoint)
@@ -1308,7 +1311,7 @@ func TestNetworkingValidation(t *testing.T) {
 				domain.ProvisionDetails{
 					ServiceID:     serviceID,
 					PlanID:        broker.AzurePlanID,
-					RawParameters: json.RawMessage(fmt.Sprintf(`{"name": "cluster-name", "networking": %s}`, tc.givenNetworking)),
+					RawParameters: json.RawMessage(fmt.Sprintf(`{"name": "cluster-name", "region": "%s", "networking": %s}`, clusterRegion, tc.givenNetworking)),
 					RawContext:    json.RawMessage(fmt.Sprintf(`{"globalaccount_id": "%s", "subaccount_id": "%s", "user_id": "%s"}`, globalAccountID, subAccountID, userID)),
 				}, true)
 
@@ -1423,6 +1426,7 @@ func TestRegionValidation(t *testing.T) {
 
 func fixExistOperation() internal.Operation {
 	provisioningOperation := fixture.FixProvisioningOperation(existOperationID, instanceID)
+	ptrClusterRegion := clusterRegion
 	provisioningOperation.ProvisioningParameters = internal.ProvisioningParameters{
 		PlanID:    planID,
 		ServiceID: serviceID,
@@ -1432,7 +1436,8 @@ func fixExistOperation() internal.Operation {
 			UserID:          userID,
 		},
 		Parameters: internal.ProvisioningParametersDTO{
-			Name: clusterName,
+			Name:   clusterName,
+			Region: &ptrClusterRegion,
 		},
 		PlatformRegion: region,
 	}

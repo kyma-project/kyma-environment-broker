@@ -57,18 +57,19 @@ type RuntimeDTO struct {
 }
 
 type RuntimeStatus struct {
-	CreatedAt        time.Time       `json:"createdAt"`
-	ModifiedAt       time.Time       `json:"modifiedAt"`
-	ExpiredAt        *time.Time      `json:"expiredAt,omitempty"`
-	DeletedAt        *time.Time      `json:"deletedAt,omitempty"`
-	State            State           `json:"state"`
-	Provisioning     *Operation      `json:"provisioning,omitempty"`
-	Deprovisioning   *Operation      `json:"deprovisioning,omitempty"`
-	UpgradingKyma    *OperationsData `json:"upgradingKyma,omitempty"`
-	UpgradingCluster *OperationsData `json:"upgradingCluster,omitempty"`
-	Update           *OperationsData `json:"update,omitempty"`
-	Suspension       *OperationsData `json:"suspension,omitempty"`
-	Unsuspension     *OperationsData `json:"unsuspension,omitempty"`
+	CreatedAt        time.Time                 `json:"createdAt"`
+	ModifiedAt       time.Time                 `json:"modifiedAt"`
+	ExpiredAt        *time.Time                `json:"expiredAt,omitempty"`
+	DeletedAt        *time.Time                `json:"deletedAt,omitempty"`
+	State            State                     `json:"state"`
+	Provisioning     *Operation                `json:"provisioning,omitempty"`
+	Deprovisioning   *Operation                `json:"deprovisioning,omitempty"`
+	UpgradingKyma    *OperationsData           `json:"upgradingKyma,omitempty"`
+	UpgradingCluster *OperationsData           `json:"upgradingCluster,omitempty"`
+	Update           *OperationsData           `json:"update,omitempty"`
+	Suspension       *OperationsData           `json:"suspension,omitempty"`
+	Unsuspension     *OperationsData           `json:"unsuspension,omitempty"`
+	GardenerConfig   *gqlschema.GardenerConfig `json:"gardenerConfig,omitempty"`
 }
 
 type OperationType string
@@ -121,6 +122,7 @@ const (
 	KymaConfigParam      = "kyma_config"
 	ClusterConfigParam   = "cluster_config"
 	ExpiredParam         = "expired"
+	GardenerConfigParam  = "gardener_config"
 )
 
 type OperationDetail string
@@ -141,6 +143,8 @@ type ListParameters struct {
 	KymaConfig bool
 	// ClusterConfig specifies whether Gardener cluster configuration details should be included in the response for each runtime
 	ClusterConfig bool
+	// GardenerConfig specifies whether current Gardener cluster configuration details from provisioner should be included in the response for each runtime
+	GardenerConfig bool
 	// GlobalAccountIDs parameter filters runtimes by specified global account IDs
 	GlobalAccountIDs []string
 	// SubAccountIDs parameter filters runtimes by specified subaccount IDs

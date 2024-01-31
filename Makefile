@@ -1,42 +1,39 @@
-APP_NAME = kyma-environment-broker
-APP_PATH = components/kyma-environment-broker
-APP_CLEANUP_NAME = kyma-environments-cleanup-job
-APP_SUBACCOUNT_CLEANUP_NAME = kyma-environment-subaccount-cleanup-job
-APP_TRIAL_CLEANUP_NAME = kyma-environment-trial-cleanup-job
+GOLINT_VER = v1.55.2
 
-ENTRYPOINT = cmd/broker/
-BUILDPACK = eu.gcr.io/kyma-project/test-infra/buildpack-golang:v20221215-c20ffd65
-SCRIPTS_DIR = $(realpath $(shell pwd))/scripts
-DOCKER_SOCKET = /var/run/docker.sock
-TESTING_DB_NETWORK = test_network
+ ## The headers are represented by '##@' like 'General' and the descriptions of given command is text after '##''.
+.PHONY: help
+help: 
+	@awk 'BEGIN {FS = ":.*##"; printf "\nUsage:\n  make \033[36m<target>\033[0m\n"} /^[a-zA-Z_0-9-]+:.*?##/ { printf "  \033[36m%-15s\033[0m %s\n", $$1, $$2 } /^##@/ { printf "\n\033[1m%s\033[0m\n", substr($$0, 5) } ' $(MAKEFILE_LIST)
 
-include $(SCRIPTS_DIR)/generic_make_go.mk
+##@ General
 
-.DEFAULT_GOAL := custom-verify
+.PHONY: verify
+verify: test checks go-lint ## verify simulates same behaviour as 'verify' GitHub Action which run on every PR
 
-custom-verify: testing-with-database-network mod-verify go-mod-check check-fmt
+.PHONY: checks
+checks: check-go-mod-tidy ## run different Go related checks
 
-verify:: custom-verify
+.PHONY: go-lint
+go-lint: go-lint-install ## linter config in file at root of project -> '.golangci.yaml'
+	golangci-lint run --new
 
-resolve-local:
-	GO111MODULE=on go mod vendor -v
+go-lint-install: ## linter config in file at root of project -> '.golangci.yaml'
+	@if [ "$(shell command golangci-lint version --format short)" != "$(GOLINT_VER)" ]; then \
+  		echo golangci in version $(GOLINT_VER) not found. will be downloaded; \
+		go install github.com/golangci/golangci-lint/cmd/golangci-lint@$(GOLINT_VER); \
+		echo golangci installed with version: $(shell command golangci-lint version --format short); \
+	fi;
+	
+##@ Tests
 
-ensure-local:
-	@echo "Go modules present in component - omitting."
+.PHONY: test 
+test: ## run Go tests
+	go test ./...
 
-dep-status:
-	@echo "Go modules present in component - omitting."
+##@ Go checks 
 
-dep-status-local:
-	@echo "Go modules present in component - omitting."
-
-mod-verify: mod-verify-local
-mod-verify-local:
-	GO111MODULE=on go mod verify
-
-go-mod-check: go-mod-check-local
-go-mod-check-local:
-	@echo make go-mod-check
+.PHONY: check-go-mod-tidy
+check-go-mod-tidy: ## check if go mod tidy needed
 	go mod tidy
 	@if [ -n "$$(git status -s go.*)" ]; then \
 		echo -e "${RED}✗ go mod tidy modified go.mod or go.sum files${NC}"; \
@@ -44,44 +41,9 @@ go-mod-check-local:
 		exit 1; \
 	fi;
 
-# We have to override test-local and errcheck, because we need to run provisioner with database
-#as docker container connected with custom network and the buildpack container itsefl has to be connected to the network
+##@ Development support commands
 
-test-local: ;
-errcheck-local: ;
-
-# TODO: there is no errcheck in go1.13 buildpack, consider creating buildpack-toolbox with go1.13 version
-# errcheck-local:
-# 	@docker run $(DOCKER_INTERACTIVE) \
-# 		-v $(COMPONENT_DIR):$(WORKSPACE_COMPONENT_DIR):delegated \
-# 		$(DOCKER_CREATE_OPTS) errcheck -blank -asserts -ignorepkg '$$($(DIRS_TO_CHECK) | tr '\n' ',')' -ignoregenerated ./...
-
-test-integration-local:
-	go test ./... -tags=integration
-
-test-integration:
-	@echo make test-integration-local
-	@docker run $(DOCKER_INTERACTIVE) \
-		-v $(COMPONENT_DIR):$(WORKSPACE_COMPONENT_DIR):delegated \
-		$(DOCKER_CREATE_OPTS) make test-integration-local
-
-testing-with-database-network:
-	@docker version
-	@echo testing-with-database-network
-	@docker network inspect $(TESTING_DB_NETWORK) >/dev/null 2>&1 || \
-	docker network create --driver bridge $(TESTING_DB_NETWORK)
-	@docker run $(DOCKER_INTERACTIVE) \
-		-v $(DOCKER_SOCKET):$(DOCKER_SOCKET) \
-		-v $(COMPONENT_DIR)/../../:$(WORKSPACE_COMPONENT_DIR)/../../ \
-		--network=$(TESTING_DB_NETWORK) \
-		-v $(COMPONENT_DIR):$(WORKSPACE_COMPONENT_DIR):delegated \
-		--env PIPELINE_BUILD=1 --env GO111MODULE=on \
-		$(DOCKER_CREATE_OPTS) go test -tags=database_integration ./...
-	@docker network rm $(TESTING_DB_NETWORK) || true
-
-clean-up:
-	@docker network rm $(TESTING_DB_NETWORK) || true
-
-.PHONY: test
-test:
-	go test ./...
+.PHONY: fix
+fix: go-lint-install ## try to fix automatically issues
+	go mod tidy
+	golangci-lint run --fix --new

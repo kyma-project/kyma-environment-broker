@@ -40,6 +40,7 @@ type Config struct {
 	AutoUpdateMachineImageVersion     bool                   `envconfig:"default=false"`
 	MultiZoneCluster                  bool                   `envconfig:"default=false"`
 	ControlPlaneFailureTolerance      string                 `envconfig:"optional"`
+	GardenerClusterStepTimeout        time.Duration          `envconfig:"default=3m"`
 }
 
 type RuntimeInput struct {
