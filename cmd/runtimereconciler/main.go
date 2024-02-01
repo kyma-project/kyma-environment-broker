@@ -51,7 +51,7 @@ func main() {
 	if cfg.JobEnabled && err != nil {
 		fatalOnError(err)
 	}
-	fatalOnError(err)
+
 	logs.Infof("runtime-listener runing as dry run? %t", cfg.DryRun)
 
 	cipher := storage.NewEncrypter(cfg.Database.SecretKey)
