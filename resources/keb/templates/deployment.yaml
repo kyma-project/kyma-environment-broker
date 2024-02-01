@@ -386,6 +386,8 @@ spec:
               value: "{{ .Values.dashboardConfig.landscapeURL }}"
             - name: APP_EVENTS_ENABLED
               value: "{{ .Values.broker.events.enabled }}"
+            - name: APP_BROKER_INCLUDE_NEW_MACHINE_TYPES_IN_SCHEMA
+              value: "{{ .Values.includeNewMachineTypesInSchema }}"
           ports:
             - name: http
               containerPort: {{ .Values.broker.port }}
