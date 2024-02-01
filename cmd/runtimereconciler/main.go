@@ -48,7 +48,9 @@ func main() {
 		return
 	}
 	jobReconciliationDelay, err := time.ParseDuration(cfg.JobReconciliationDelay)
-	fatalOnError(err)
+	if cfg.JobEnabled && err != nil {
+		fatalOnError(err)
+	}
 
 	logs.Infof("runtime-listener runing as dry run? %t", cfg.DryRun)
 
