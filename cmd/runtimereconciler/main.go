@@ -69,7 +69,8 @@ func main() {
 		btpManagerCredentialsJob := btpmanager.NewJob(btpOperatorManager, logs)
 		logs.Infof("runtime-reconciler created job every %d m", cfg.JobInterval)
 
-		jobReconciliationDelay, _ := time.ParseDuration(cfg.JobReconciliationDelay)
+		jobReconciliationDelay, err := time.ParseDuration(cfg.JobReconciliationDelay)
+		fatalOnError(err)
 		btpManagerCredentialsJob.Start(cfg.JobInterval, jobReconciliationDelay)
 	}
 
