@@ -9,6 +9,7 @@ import (
 	"github.com/kyma-project/kyma-environment-broker/internal/logger"
 	"github.com/kyma-project/kyma-environment-broker/internal/storage"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	"sigs.k8s.io/controller-runtime/pkg/client/fake"
 )
 
@@ -35,7 +36,7 @@ func TestDeleteKymaResource_HappyFlow(t *testing.T) {
 	err := memoryStorage.Operations().InsertOperation(operation)
 	assert.NoError(t, err)
 
-	step := NewDeleteKymaResourceStep(memoryStorage.Operations(), kcpClient, fakeConfigProvider{}, "2.0")
+	step := NewDeleteKymaResourceStep(memoryStorage.Operations(), memoryStorage.Instances(), kcpClient, fakeConfigProvider{}, "2.0")
 	memoryStorage.Operations().InsertOperation(operation)
 
 	// When
@@ -51,14 +52,17 @@ func TestDeleteKymaResource_EmptyRuntimeIDAndKymaResourceName(t *testing.T) {
 	operation.KymaResourceNamespace = "kyma-system"
 	operation.RuntimeID = ""
 	operation.KymaResourceName = ""
+	instance := fixture.FixInstance(fixInstanceID)
 
 	kcpClient := fake.NewClientBuilder().Build()
 	memoryStorage := storage.NewMemoryStorage()
 	err := memoryStorage.Operations().InsertOperation(operation)
 	assert.NoError(t, err)
 
-	step := NewDeleteKymaResourceStep(memoryStorage.Operations(), kcpClient, fakeConfigProvider{}, "2.0")
+	step := NewDeleteKymaResourceStep(memoryStorage.Operations(), memoryStorage.Instances(), kcpClient, fakeConfigProvider{}, "2.0")
 	memoryStorage.Operations().InsertOperation(operation)
+	err = memoryStorage.Instances().Insert(instance)
+	require.NoError(t, err)
 
 	// When
 	_, backoff, err := step.Run(operation, logger.NewLogSpy().Logger)

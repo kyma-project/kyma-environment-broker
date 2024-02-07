@@ -19,9 +19,6 @@ on:
         type: boolean
         description: 'Create PR with sec-scanners-config bump'
         default: true
-      k3s-versions:
-        type: number
-        description: 'Number of last k3s versions to be used for tests'
       dry-run:
         type: boolean
         description: 'Do not publish'
@@ -134,7 +131,7 @@ jobs:
     uses: "./.github/workflows/run-keb-chart-tests-reusable.yaml"
     secrets: inherit
     with:
-      last-k3s-versions: ${{ github.event.inputs.k3s-versions || vars.LAST_K3S_VERSIONS }}
+      last-k3s-versions: ${{ vars.LAST_K3S_VERSIONS }}
 
   create-draft:
     name: Create draft release

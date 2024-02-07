@@ -619,13 +619,13 @@
       "tableColumn": "",
       "targets": [
         {
-          "expr": "round(sum(increase(compass_keb_operations_provisioning_succeeded_total[$__range])))/(round(sum(increase(compass_keb_operations_provisioning_failed_total[$__range])))+round(sum(increase(compass_keb_operations_provisioning_succeeded_total[$__range]))))*100",
+          "expr": "round(sum(increase_prometheus(compass_keb_operations_provisioning_succeeded_total[$__range])))/(round(sum(increase_prometheus(compass_keb_operations_provisioning_failed_total[$__range])))+round(sum(increase_prometheus(compass_keb_operations_provisioning_succeeded_total[$__range]))))*100",
           "interval": "",
           "legendFormat": "Provision",
           "refId": "A"
         },
         {
-          "expr": "round(sum(increase(compass_keb_operations_deprovisioning_succeeded_total[$__range])))/(round(sum(increase(compass_keb_operations_deprovisioning_failed_total[$__range])))+round(sum(increase(compass_keb_operations_deprovisioning_succeeded_total[$__range]))))*100",
+          "expr": "round(sum(increase_prometheus(compass_keb_operations_deprovisioning_succeeded_total[$__range])))/(round(sum(increase_prometheus(compass_keb_operations_deprovisioning_failed_total[$__range])))+round(sum(increase_prometheus(compass_keb_operations_deprovisioning_succeeded_total[$__range]))))*100",
           "hide": false,
           "interval": "",
           "legendFormat": "Deprovision",
@@ -860,14 +860,14 @@
       },
       "targets": [
         {
-          "expr": "round(sum(increase(compass_keb_operations_provisioning_succeeded_total{plan_id=\"$plan_id\"}[$__range]) + increase(compass_keb_operations_provisioning_failed_total{plan_id=\"$plan_id\"}[$__range])))",
+          "expr": "round(sum(increase_prometheus(compass_keb_operations_provisioning_succeeded_total{plan_id=\"$plan_id\"}[$__range]) + increase_prometheus(compass_keb_operations_provisioning_failed_total{plan_id=\"$plan_id\"}[$__range])))",
           "hide": false,
           "interval": "",
           "legendFormat": "Total Provision ",
           "refId": "A"
         },
         {
-          "expr": "round(sum(increase(compass_keb_operations_provisioning_succeeded_total{plan_id=\"$plan_id\"}[$__range])))",
+          "expr": "round(sum(increase_prometheus(compass_keb_operations_provisioning_succeeded_total{plan_id=\"$plan_id\"}[$__range])))",
           "interval": "",
           "legendFormat": "Succeeded",
           "refId": "B"
@@ -882,7 +882,7 @@
           "refId": "C"
         },
         {
-          "expr": "sum(increase(compass_keb_operations_provisioning_succeeded_total{plan_id=\"$plan_id\"}[$__range])) / (sum(increase(compass_keb_operations_provisioning_succeeded_total{plan_id=\"$plan_id\"}[$__range]) + increase(compass_keb_operations_provisioning_failed_total{plan_id=\"$plan_id\"}[$__range])) > 0 ) *100 or vector(0)",
+          "expr": "sum(increase_prometheus(compass_keb_operations_provisioning_succeeded_total{plan_id=\"$plan_id\"}[$__range])) / (sum(increase_prometheus(compass_keb_operations_provisioning_succeeded_total{plan_id=\"$plan_id\"}[$__range]) + increase_prometheus(compass_keb_operations_provisioning_failed_total{plan_id=\"$plan_id\"}[$__range])) > 0 ) *100 or vector(0)",
           "hide": false,
           "interval": "",
           "legendFormat": "Success Rate",
@@ -1090,14 +1090,14 @@
       },
       "targets": [
         {
-          "expr": "round(sum(increase(compass_keb_operations_deprovisioning_succeeded_total{plan_id=\"$plan_id\"}[$__range]) + increase(compass_keb_operations_deprovisioning_failed_total{plan_id=\"$plan_id\"}[$__range])))",
+          "expr": "round(sum(increase_prometheus(compass_keb_operations_deprovisioning_succeeded_total{plan_id=\"$plan_id\"}[$__range]) + increase_prometheus(compass_keb_operations_deprovisioning_failed_total{plan_id=\"$plan_id\"}[$__range])))",
           "hide": false,
           "interval": "",
           "legendFormat": "Total Deprovision ",
           "refId": "A"
         },
         {
-          "expr": "round(sum(increase(compass_keb_operations_deprovisioning_succeeded_total{plan_id=\"$plan_id\"}[$__range])))",
+          "expr": "round(sum(increase_prometheus(compass_keb_operations_deprovisioning_succeeded_total{plan_id=\"$plan_id\"}[$__range])))",
           "interval": "",
           "legendFormat": "Succeeded",
           "refId": "B"
@@ -1110,7 +1110,7 @@
           "refId": "C"
         },
         {
-          "expr": "sum(increase(compass_keb_operations_deprovisioning_succeeded_total{plan_id=\"$plan_id\"}[$__range])) / (sum(increase(compass_keb_operations_deprovisioning_succeeded_total{plan_id=\"$plan_id\"}[$__range]) + increase(compass_keb_operations_deprovisioning_failed_total{plan_id=\"$plan_id\"}[$__range])) > 0 ) *100 or vector(0)",
+          "expr": "sum(increase_prometheus(compass_keb_operations_deprovisioning_succeeded_total{plan_id=\"$plan_id\"}[$__range])) / (sum(increase_prometheus(compass_keb_operations_deprovisioning_succeeded_total{plan_id=\"$plan_id\"}[$__range]) + increase_prometheus(compass_keb_operations_deprovisioning_failed_total{plan_id=\"$plan_id\"}[$__range])) > 0 ) *100 or vector(0)",
           "hide": false,
           "interval": "",
           "legendFormat": "Success Rate",
