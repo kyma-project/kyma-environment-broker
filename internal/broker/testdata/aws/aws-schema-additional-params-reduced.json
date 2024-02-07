@@ -36,34 +36,28 @@
     },
     "machineType": {
       "_enumDisplayName": {
-        "Standard_D2s_v5":  "Standard_D2s_v5 (2vCPU, 8GB RAM)",
-        "Standard_D4s_v5":  "Standard_D4s_v5 (4vCPU, 16GB RAM)",
-        "Standard_D8s_v5":  "Standard_D8s_v5 (8vCPU, 32GB RAM)",
-        "Standard_D16s_v5": "Standard_D16s_v5 (16vCPU, 64GB RAM)",
-        "Standard_D32s_v5": "Standard_D32s_v5 (32vCPU, 128GB RAM)",
-        "Standard_D48s_v5": "Standard_D48s_v5 (48vCPU, 192GB RAM)",
-        "Standard_D64s_v5": "Standard_D64s_v5 (64vCPU, 256GB RAM)",
-        "Standard_D4_v3":   "Standard_D4_v3 (4vCPU, 16GB RAM)",
-        "Standard_D8_v3":   "Standard_D8_v3 (8vCPU, 32GB RAM)",
-        "Standard_D16_v3":  "Standard_D16_v3 (16vCPU, 64GB RAM)",
-        "Standard_D32_v3":  "Standard_D32_v3 (32vCPU, 128GB RAM)",
-        "Standard_D48_v3":  "Standard_D48_v3 (48vCPU, 192GB RAM)",
-        "Standard_D64_v3":  "Standard_D64_v3 (64vCPU, 256GB RAM)"
+        "m5.xlarge":    "m5.xlarge (4vCPU, 16GB RAM)",
+        "m5.2xlarge":   "m5.2xlarge (8vCPU, 32GB RAM)",
+        "m5.4xlarge":   "m5.4xlarge (16vCPU, 64GB RAM)",
+        "m5.8xlarge":   "m5.8xlarge (32vCPU, 128GB RAM)",
+        "m5.12xlarge":  "m5.12xlarge (48vCPU, 192GB RAM)",
+        "m6i.xlarge":   "m6i.xlarge (4vCPU, 16GB RAM)",
+        "m6i.2xlarge":  "m6i.2xlarge (8vCPU, 32GB RAM)",
+        "m6i.4xlarge":  "m6i.4xlarge (16vCPU, 64GB RAM)",
+        "m6i.8xlarge":  "m6i.8xlarge (32vCPU, 128GB RAM)",
+        "m6i.12xlarge": "m6i.12xlarge (48vCPU, 192GB RAM)"
       },
       "enum": [
-        "Standard_D2s_v5",
-        "Standard_D4s_v5",
-        "Standard_D8s_v5",
-        "Standard_D16s_v5",
-        "Standard_D32s_v5",
-        "Standard_D48s_v5",
-        "Standard_D64s_v5",
-        "Standard_D4_v3",
-        "Standard_D8_v3",
-        "Standard_D16_v3",
-        "Standard_D32_v3",
-        "Standard_D48_v3",
-        "Standard_D64_v3"
+        "m5.xlarge",
+        "m5.2xlarge",
+        "m5.4xlarge",
+        "m5.8xlarge",
+        "m5.12xlarge",
+        "m6i.xlarge",
+        "m6i.2xlarge",
+        "m6i.4xlarge",
+        "m6i.8xlarge",
+        "m6i.12xlarge"
       ],
       "type": "string"
     },
@@ -216,7 +210,17 @@
     },
     "region": {
       "enum": [
-        "switzerlandnorth"
+        "eu-central-1",
+        "eu-west-2",
+        "ca-central-1",
+        "sa-east-1",
+        "us-east-1",
+        "us-west-1",
+        "ap-northeast-1",
+        "ap-northeast-2",
+        "ap-south-1",
+        "ap-southeast-1",
+        "ap-southeast-2"
       ],
       "minLength": 1,
       "type": "string"

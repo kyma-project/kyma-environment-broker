@@ -3,7 +3,7 @@ package broker
 import (
 	"bytes"
 	"encoding/json"
-	"io/ioutil"
+	"os"
 	"path"
 	"testing"
 
@@ -14,6 +14,13 @@ import (
 )
 
 func TestSchemaGenerator(t *testing.T) {
+	awsMachineNamesReduced := AwsMachinesNames()
+	awsMachinesDisplayReduced := AwsMachinesDisplay()
+
+	awsMachineNamesReduced = removeMachinesNamesFromList(awsMachineNamesReduced, "m5.large", "m6i.large")
+	delete(awsMachinesDisplayReduced, "m5.large")
+	delete(awsMachinesDisplayReduced, "m6i.large")
+
 	tests := []struct {
 		name                string
 		generator           func(map[string]string, []string, bool, bool) *map[string]interface{}
@@ -30,32 +37,47 @@ func TestSchemaGenerator(t *testing.T) {
 			generator: func(machinesDisplay map[string]string, machines []string, additionalParams, update bool) *map[string]interface{} {
 				return AWSSchema(machinesDisplay, machines, additionalParams, update, false)
 			},
-			machineTypes:   []string{"m5.xlarge", "m5.2xlarge", "m5.4xlarge", "m5.8xlarge", "m5.12xlarge", "m6i.xlarge", "m6i.2xlarge", "m6i.4xlarge", "m6i.8xlarge", "m6i.12xlarge"},
-			path:           "aws",
-			file:           "aws-schema.json",
-			updateFile:     "update-aws-schema.json",
-			fileOIDC:       "aws-schema-additional-params.json",
-			updateFileOIDC: "update-aws-schema-additional-params.json",
+			machineTypes:        AwsMachinesNames(),
+			machineTypesDisplay: AwsMachinesDisplay(),
+			path:                "aws",
+			file:                "aws-schema.json",
+			updateFile:          "update-aws-schema.json",
+			fileOIDC:            "aws-schema-additional-params.json",
+			updateFileOIDC:      "update-aws-schema-additional-params.json",
+		},
+		{
+			name: "AWS reduced schema is correct",
+			generator: func(machinesDisplay map[string]string, machines []string, additionalParams, update bool) *map[string]interface{} {
+				return AWSSchema(machinesDisplay, machines, additionalParams, update, false)
+			},
+			machineTypes:        awsMachineNamesReduced,
+			machineTypesDisplay: awsMachinesDisplayReduced,
+			path:                "aws",
+			file:                "aws-schema-reduced.json",
+			updateFile:          "update-aws-schema-reduced.json",
+			fileOIDC:            "aws-schema-additional-params-reduced.json",
+			updateFileOIDC:      "update-aws-schema-additional-params-reduced.json",
 		},
 		{
 			name: "AWS schema with EU access restriction is correct",
 			generator: func(machinesDisplay map[string]string, machines []string, additionalParams, update bool) *map[string]interface{} {
 				return AWSSchema(machinesDisplay, machines, additionalParams, update, true)
 			},
-			machineTypes:   []string{"m5.xlarge", "m5.2xlarge", "m5.4xlarge", "m5.8xlarge", "m5.12xlarge", "m6i.xlarge", "m6i.2xlarge", "m6i.4xlarge", "m6i.8xlarge", "m6i.12xlarge"},
-			path:           "aws",
-			file:           "aws-schema-eu.json",
-			updateFile:     "update-aws-schema.json",
-			fileOIDC:       "aws-schema-additional-params-eu.json",
-			updateFileOIDC: "update-aws-schema-additional-params.json",
+			machineTypes:        AwsMachinesNames(),
+			machineTypesDisplay: AwsMachinesDisplay(),
+			path:                "aws",
+			file:                "aws-schema-eu.json",
+			updateFile:          "update-aws-schema.json",
+			fileOIDC:            "aws-schema-additional-params-eu.json",
+			updateFileOIDC:      "update-aws-schema-additional-params.json",
 		},
 		{
 			name: "Azure schema is correct",
 			generator: func(machinesDisplay map[string]string, machines []string, additionalParams, update bool) *map[string]interface{} {
 				return AzureSchema(machinesDisplay, machines, additionalParams, update, false)
 			},
-			machineTypes:        AzureMachinesTypes(),
-			machineTypesDisplay: AzureMachinesDisplayNames(),
+			machineTypes:        AzureMachinesNames(),
+			machineTypesDisplay: AzureMachinesDisplay(),
 			path:                "azure",
 			file:                "azure-schema.json",
 			updateFile:          "update-azure-schema.json",
@@ -67,8 +89,8 @@ func TestSchemaGenerator(t *testing.T) {
 			generator: func(machinesDisplay map[string]string, machines []string, additionalParams, update bool) *map[string]interface{} {
 				return AzureSchema(machinesDisplay, machines, additionalParams, update, true)
 			},
-			machineTypes:        AzureMachinesTypes(),
-			machineTypesDisplay: AzureMachinesDisplayNames(),
+			machineTypes:        AzureMachinesNames(),
+			machineTypesDisplay: AzureMachinesDisplay(),
 			path:                "azure",
 			file:                "azure-schema-eu.json",
 			updateFile:          "update-azure-schema.json",
@@ -80,8 +102,8 @@ func TestSchemaGenerator(t *testing.T) {
 			generator: func(machinesDisplay map[string]string, machines []string, additionalParams, update bool) *map[string]interface{} {
 				return AzureLiteSchema(machinesDisplay, machines, additionalParams, update, false)
 			},
-			machineTypes:        AzureLiteMachinesTypes(),
-			machineTypesDisplay: AzureLiteMachinesDisplayNames(),
+			machineTypes:        AzureLiteMachinesNames(),
+			machineTypesDisplay: AzureLiteMachinesDisplay(),
 			path:                "azure",
 			file:                "azure-lite-schema.json",
 			updateFile:          "update-azure-lite-schema.json",
@@ -93,8 +115,8 @@ func TestSchemaGenerator(t *testing.T) {
 			generator: func(machinesDisplay map[string]string, machines []string, additionalParams, update bool) *map[string]interface{} {
 				return AzureLiteSchema(machinesDisplay, machines, additionalParams, update, true)
 			},
-			machineTypes:        AzureLiteMachinesTypes(),
-			machineTypesDisplay: AzureLiteMachinesDisplayNames(),
+			machineTypes:        AzureLiteMachinesNames(),
+			machineTypesDisplay: AzureLiteMachinesDisplay(),
 			path:                "azure",
 			file:                "azure-lite-schema-eu.json",
 			updateFile:          "update-azure-lite-schema.json",
@@ -154,24 +176,26 @@ func TestSchemaGenerator(t *testing.T) {
 			generator: func(machinesDisplay map[string]string, machines []string, additionalParams, update bool) *map[string]interface{} {
 				return GCPSchema(machinesDisplay, machines, additionalParams, update)
 			},
-			machineTypes:   []string{"n2-standard-4", "n2-standard-8", "n2-standard-16", "n2-standard-32", "n2-standard-48"},
-			path:           "gcp",
-			file:           "gcp-schema.json",
-			updateFile:     "update-gcp-schema.json",
-			fileOIDC:       "gcp-schema-additional-params.json",
-			updateFileOIDC: "update-gcp-schema-additional-params.json",
+			machineTypes:        GcpMachinesNames(),
+			machineTypesDisplay: GcpMachinesDisplay(),
+			path:                "gcp",
+			file:                "gcp-schema.json",
+			updateFile:          "update-gcp-schema.json",
+			fileOIDC:            "gcp-schema-additional-params.json",
+			updateFileOIDC:      "update-gcp-schema-additional-params.json",
 		},
 		{
 			name: "SapConvergedCloud schema is correct",
 			generator: func(machinesDisplay map[string]string, machines []string, additionalParams, update bool) *map[string]interface{} {
 				return SapConvergedCloudSchema(machinesDisplay, machines, additionalParams, update)
 			},
-			machineTypes:   []string{"g_c4_m16", "g_c6_m24", "g_c8_m32", "g_c12_m48", "g_c16_m64", "g_c32_m128", "g_c64_m256"},
-			path:           "sap-converged-cloud",
-			file:           "sap-converged-cloud-schema.json",
-			updateFile:     "update-sap-converged-cloud-schema.json",
-			fileOIDC:       "sap-converged-cloud-schema-additional-params.json",
-			updateFileOIDC: "update-sap-converged-cloud-schema-additional-params.json",
+			machineTypes:        SapConvergedCloudMachinesNames(),
+			machineTypesDisplay: SapConvergedCloudMachinesDisplay(),
+			path:                "sap-converged-cloud",
+			file:                "sap-converged-cloud-schema.json",
+			updateFile:          "update-sap-converged-cloud-schema.json",
+			fileOIDC:            "sap-converged-cloud-schema-additional-params.json",
+			updateFileOIDC:      "update-sap-converged-cloud-schema-additional-params.json",
 		},
 		{
 			name: "Trial schema is correct",
@@ -243,8 +267,8 @@ func readJsonFile(t *testing.T, file string) string {
 	t.Helper()
 
 	filename := path.Join("testdata", file)
-	yamlFile, err := ioutil.ReadFile(filename)
+	jsonFile, err := os.ReadFile(filename)
 	require.NoError(t, err)
 
-	return string(yamlFile)
+	return string(jsonFile)
 }
