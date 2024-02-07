@@ -8,7 +8,7 @@ metadata:
     argocd.argoproj.io/sync-options: Prune=false
 spec:
   gateways:
-    - {{ .Values.global.istio.gateway.namespace }}/{{ .Values.global.istio.gateway.name }}
+    - {{ .Values.global.istio.gateway | required "Please specify .global.istio.gateway"}}
     {{- if .Values.global.istio.additionalGateways }}
     {{ toYaml .Values.global.istio.additionalGateways | nindent 4 }}
     {{- end }}

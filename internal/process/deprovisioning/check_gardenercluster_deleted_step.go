@@ -74,5 +74,7 @@ func (step *CheckGardenerClusterDeletedStep) Run(operation internal.Operation, l
 		return step.operationManager.RetryOperationWithoutFail(operation, step.Name(), "unable to check GardenerCluster resource existence", backoffForK8SOperation, timeoutForK8sOperation, logger)
 	}
 
-	return operation, 0, nil
+	return step.operationManager.UpdateOperation(operation, func(op *internal.Operation) {
+		op.GardenerClusterName = ""
+	}, logger)
 }

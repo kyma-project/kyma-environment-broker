@@ -27,7 +27,7 @@ func TestDeleteGardenerClusterResource_HappyFlowNoObject(t *testing.T) {
 	err := memoryStorage.Operations().InsertOperation(operation)
 	assert.NoError(t, err)
 
-	step := NewDeleteGardenerClusterStep(memoryStorage.Operations(), kcpClient)
+	step := NewDeleteGardenerClusterStep(memoryStorage.Operations(), kcpClient, memoryStorage.Instances())
 	memoryStorage.Operations().InsertOperation(operation)
 
 	// When
@@ -57,7 +57,7 @@ func TestDeleteGardenerClusterResource_HappyFlow(t *testing.T) {
 	err := memoryStorage.Operations().InsertOperation(operation)
 	assert.NoError(t, err)
 
-	step := NewDeleteGardenerClusterStep(memoryStorage.Operations(), kcpClient)
+	step := NewDeleteGardenerClusterStep(memoryStorage.Operations(), kcpClient, memoryStorage.Instances())
 	memoryStorage.Operations().InsertOperation(operation)
 
 	// When
