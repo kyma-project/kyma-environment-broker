@@ -45,10 +45,6 @@ global:
           host: compass-gateway-auth-oauth
     mtls:
       host: compass-gateway-mtls
-  istio:
-    gateway:
-      name: "kyma-gateway"
-      namespace: "kyma-system"
     proxy:
       port: 15020
   database:
