@@ -49,7 +49,7 @@ func NewDeprovisioningProcessingQueue(ctx context.Context, workersAmount int, de
 		},
 		{
 			disabled: cfg.LifecycleManagerIntegrationDisabled,
-			step:     deprovisioning.NewDeleteKymaResourceStep(db.Operations(), cli, configProvider, cfg.KymaVersion),
+			step:     deprovisioning.NewDeleteKymaResourceStep(db.Operations(), db.Instances(), cli, configProvider, cfg.KymaVersion),
 		},
 		{
 			disabled: cfg.LifecycleManagerIntegrationDisabled,
@@ -64,7 +64,7 @@ func NewDeprovisioningProcessingQueue(ctx context.Context, workersAmount int, de
 			step:     deprovisioning.NewCheckClusterDeregistrationStep(db.Operations(), reconcilerClient, 90*time.Minute),
 		},
 		{
-			step: deprovisioning.NewDeleteGardenerClusterStep(db.Operations(), cli),
+			step: deprovisioning.NewDeleteGardenerClusterStep(db.Operations(), cli, db.Instances()),
 		},
 		{
 			step: deprovisioning.NewCheckGardenerClusterDeletedStep(db.Operations(), cli),

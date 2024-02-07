@@ -57,8 +57,6 @@ func (s *RemoveInstanceStep) Run(operation internal.Operation, log logrus.FieldL
 		log.Info("Removing the RuntimeID field from the operation")
 		operation, backoff, _ = s.operationManager.UpdateOperation(operation, func(operation *internal.Operation) {
 			operation.RuntimeID = ""
-			operation.GardenerClusterName = ""
-			operation.KymaResourceName = ""
 		}, log)
 	} else if operation.ExcutedButNotCompleted != nil {
 		log.Info("Marking the instance needs to retry some steps")

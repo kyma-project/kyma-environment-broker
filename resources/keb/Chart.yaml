@@ -3,5 +3,5 @@ appVersion: "0.1.0"
 name: keb
 description:
 description: Kyma Environment Broker Helm chart for Kubernetes
-version: 0.1.0
+version: 0.1.1
 type: application

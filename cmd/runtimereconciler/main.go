@@ -47,6 +47,11 @@ func main() {
 		logs.Info("both job and listener are disabled, module stopped.")
 		return
 	}
+	jobReconciliationDelay, err := time.ParseDuration(cfg.JobReconciliationDelay)
+	if cfg.JobEnabled && err != nil {
+		fatalOnError(err)
+	}
+
 	logs.Infof("runtime-listener runing as dry run? %t", cfg.DryRun)
 
 	cipher := storage.NewEncrypter(cfg.Database.SecretKey)
@@ -68,8 +73,6 @@ func main() {
 	if cfg.JobEnabled {
 		btpManagerCredentialsJob := btpmanager.NewJob(btpOperatorManager, logs)
 		logs.Infof("runtime-reconciler created job every %d m", cfg.JobInterval)
-
-		jobReconciliationDelay, _ := time.ParseDuration(cfg.JobReconciliationDelay)
 		btpManagerCredentialsJob.Start(cfg.JobInterval, jobReconciliationDelay)
 	}
 
