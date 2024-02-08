@@ -476,7 +476,7 @@ func Plans(plans PlansConfig, provider internal.CloudProvider, includeAdditional
 	}
 
 	if !includeNewMachineTypes {
-		outputPlans[AWSPlanID] = defaultServicePlan(AWSPlanID, AWSPlanName, plans, awsCatalogSchema, AWSSchema(awsMachinesDisplay, awsCatalogMachines, includeAdditionalParamsInSchema, true, euAccessRestricted))
+		outputPlans[AWSPlanID] = defaultServicePlan(AWSPlanID, AWSPlanName, plans, awsCatalogSchema, AWSSchema(awsMachinesDisplay, awsMachineNames, includeAdditionalParamsInSchema, true, euAccessRestricted))
 	}
 
 	return outputPlans
