@@ -10,6 +10,7 @@ import (
 	"os"
 	"testing"
 
+	"github.com/kyma-project/kyma-environment-broker/internal/provider"
 	"github.com/stretchr/testify/require"
 
 	"github.com/google/uuid"
@@ -867,7 +868,7 @@ func TestProvisioning_ClusterParameters(t *testing.T) {
 			expectedZonesCount:                  ptr.Integer(1),
 			expectedMinimalNumberOfNodes:        3,
 			expectedMaximumNumberOfNodes:        20,
-			expectedMachineType:                 "Standard_D4s_v5",
+			expectedMachineType:                 provider.DefaultAzureMachineType,
 			expectedProfile:                     gqlschema.KymaProfileProduction,
 			expectedProvider:                    "azure",
 			expectedSharedSubscription:          false,
@@ -882,7 +883,7 @@ func TestProvisioning_ClusterParameters(t *testing.T) {
 			expectedZonesCount:                  ptr.Integer(3),
 			expectedMinimalNumberOfNodes:        3,
 			expectedMaximumNumberOfNodes:        20,
-			expectedMachineType:                 "Standard_D4s_v5",
+			expectedMachineType:                 provider.DefaultAzureMachineType,
 			expectedProfile:                     gqlschema.KymaProfileProduction,
 			expectedProvider:                    "azure",
 			expectedSharedSubscription:          false,
@@ -896,7 +897,7 @@ func TestProvisioning_ClusterParameters(t *testing.T) {
 			expectedZonesCount:                  ptr.Integer(1),
 			expectedMinimalNumberOfNodes:        3,
 			expectedMaximumNumberOfNodes:        20,
-			expectedMachineType:                 "m5.xlarge",
+			expectedMachineType:                 provider.DefaultAWSMachineType,
 			expectedProfile:                     gqlschema.KymaProfileProduction,
 			expectedProvider:                    "aws",
 			expectedSharedSubscription:          false,
@@ -911,7 +912,7 @@ func TestProvisioning_ClusterParameters(t *testing.T) {
 			expectedZonesCount:                  ptr.Integer(3),
 			expectedMinimalNumberOfNodes:        3,
 			expectedMaximumNumberOfNodes:        20,
-			expectedMachineType:                 "m5.xlarge",
+			expectedMachineType:                 provider.DefaultAWSMachineType,
 			expectedProfile:                     gqlschema.KymaProfileProduction,
 			expectedProvider:                    "aws",
 			expectedSharedSubscription:          false,
@@ -925,7 +926,7 @@ func TestProvisioning_ClusterParameters(t *testing.T) {
 			expectedZonesCount:                  ptr.Integer(1),
 			expectedMinimalNumberOfNodes:        3,
 			expectedMaximumNumberOfNodes:        20,
-			expectedMachineType:                 "n2-standard-4",
+			expectedMachineType:                 provider.DefaultGCPMachineType,
 			expectedProfile:                     gqlschema.KymaProfileProduction,
 			expectedProvider:                    "gcp",
 			expectedSharedSubscription:          false,
@@ -940,7 +941,7 @@ func TestProvisioning_ClusterParameters(t *testing.T) {
 			expectedZonesCount:                  ptr.Integer(3),
 			expectedMinimalNumberOfNodes:        3,
 			expectedMaximumNumberOfNodes:        20,
-			expectedMachineType:                 "n2-standard-4",
+			expectedMachineType:                 provider.DefaultGCPMachineType,
 			expectedProfile:                     gqlschema.KymaProfileProduction,
 			expectedProvider:                    "gcp",
 			expectedSharedSubscription:          false,
