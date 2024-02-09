@@ -115,35 +115,35 @@ func SapConvergedCloudRegions() []string {
 
 func AwsMachinesNames() []string {
 	return []string{
-		"m5.large", // new machine
-		"m5.xlarge",
-		"m5.2xlarge",
-		"m5.4xlarge",
-		"m5.8xlarge",
-		"m5.12xlarge",
 		"m6i.large", // new machine
 		"m6i.xlarge",
 		"m6i.2xlarge",
 		"m6i.4xlarge",
 		"m6i.8xlarge",
 		"m6i.12xlarge",
+		"m5.large", // new machine
+		"m5.xlarge",
+		"m5.2xlarge",
+		"m5.4xlarge",
+		"m5.8xlarge",
+		"m5.12xlarge",
 	}
 }
 
 func AwsMachinesDisplay() map[string]string {
 	return map[string]string{
-		"m5.large":     "m5.large (2vCPU, 8GB RAM)", // new machine
-		"m5.xlarge":    "m5.xlarge (4vCPU, 16GB RAM)",
-		"m5.2xlarge":   "m5.2xlarge (8vCPU, 32GB RAM)",
-		"m5.4xlarge":   "m5.4xlarge (16vCPU, 64GB RAM)",
-		"m5.8xlarge":   "m5.8xlarge (32vCPU, 128GB RAM)",
-		"m5.12xlarge":  "m5.12xlarge (48vCPU, 192GB RAM)",
 		"m6i.large":    "m6i.large (2vCPU, 8GB RAM)", // new machine
 		"m6i.xlarge":   "m6i.xlarge (4vCPU, 16GB RAM)",
 		"m6i.2xlarge":  "m6i.2xlarge (8vCPU, 32GB RAM)",
 		"m6i.4xlarge":  "m6i.4xlarge (16vCPU, 64GB RAM)",
 		"m6i.8xlarge":  "m6i.8xlarge (32vCPU, 128GB RAM)",
 		"m6i.12xlarge": "m6i.12xlarge (48vCPU, 192GB RAM)",
+		"m5.large":     "m5.large (2vCPU, 8GB RAM)", // new machine
+		"m5.xlarge":    "m5.xlarge (4vCPU, 16GB RAM)",
+		"m5.2xlarge":   "m5.2xlarge (8vCPU, 32GB RAM)",
+		"m5.4xlarge":   "m5.4xlarge (16vCPU, 64GB RAM)",
+		"m5.8xlarge":   "m5.8xlarge (32vCPU, 128GB RAM)",
+		"m5.12xlarge":  "m5.12xlarge (48vCPU, 192GB RAM)",
 	}
 }
 
