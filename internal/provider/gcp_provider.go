@@ -16,7 +16,7 @@ import (
 
 const (
 	DefaultGCPRegion         = "europe-west3"
-	DefaultGCPMachineType    = "n2-standard-4"
+	DefaultGCPMachineType    = "n2-standard-2"
 	DefaultGCPMultiZoneCount = 3
 )
 

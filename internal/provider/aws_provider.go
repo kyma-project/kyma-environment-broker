@@ -21,6 +21,7 @@ const (
 	DefaultAWSTrialRegion    = "eu-west-1"
 	DefaultEuAccessAWSRegion = "eu-central-1"
 	DefaultAWSMultiZoneCount = 3
+	DefaultAWSMachineType    = "m6i.large"
 )
 
 var europeAWS = "eu-west-1"
@@ -57,7 +58,7 @@ func (p *AWSInput) Defaults() *gqlschema.ClusterConfigInput {
 		GardenerConfig: &gqlschema.GardenerConfigInput{
 			DiskType:       ptr.String("gp2"),
 			VolumeSizeGb:   ptr.Integer(50),
-			MachineType:    "m5.xlarge",
+			MachineType:    DefaultAWSMachineType,
 			Region:         DefaultAWSRegion,
 			Provider:       "aws",
 			WorkerCidr:     networking.DefaultNodesCIDR,
