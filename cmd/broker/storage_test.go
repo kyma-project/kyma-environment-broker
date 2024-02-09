@@ -2,8 +2,6 @@ package main
 
 import (
 	"fmt"
-	"github.com/kyma-project/kyma-environment-broker/internal"
-	"golang.org/x/exp/slices"
 	"log"
 	"os"
 	"strings"
@@ -11,10 +9,12 @@ import (
 	"time"
 
 	"github.com/gocraft/dbr"
+	"github.com/kyma-project/kyma-environment-broker/internal"
 	"github.com/kyma-project/kyma-environment-broker/internal/events"
 	"github.com/kyma-project/kyma-environment-broker/internal/storage"
 	"github.com/kyma-project/kyma-environment-broker/internal/storage/postsql"
 	"github.com/sirupsen/logrus"
+	"golang.org/x/exp/slices"
 )
 
 type migrationOrder int
