@@ -59,7 +59,14 @@ func NewDeprovisioningSuite(t *testing.T) *DeprovisioningSuite {
 	cfg := fixConfig()
 	cfg.EDP.Environment = edpEnvironment
 
-	db := storage.NewMemoryStorage()
+	storageCleanup, db, err := GetStorageForTests()
+	assert.NoError(t, err)
+	t.Cleanup(func() {
+		if storageCleanup != nil {
+			err := storageCleanup()
+			assert.NoError(t, err)
+		}
+	})
 	eventBroker := event.NewPubSub(logs)
 	provisionerClient := provisioner.NewFakeClient()
 

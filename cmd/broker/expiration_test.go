@@ -82,10 +82,6 @@ const trialDeprovisioningRequestBody = `{
 }`
 
 func TestExpiration(t *testing.T) {
-	// before all
-	suite := NewBrokerSuiteTest(t)
-	defer suite.TearDown()
-
 	t.Run("should expire a trial instance", func(t *testing.T) {
 		suite := NewBrokerSuiteTest(t)
 		defer suite.TearDown()

@@ -183,6 +183,9 @@ func TestUpdateDeprovisioningInstance(t *testing.T) {
 
 	suite.WaitForOperationState(depOpID, domain.InProgress)
 
+	suite.FinishDeprovisioningOperationByProvisioner(depOpID)
+	suite.WaitForOperationState(depOpID, domain.Succeeded)
+
 	// when
 	// OSB update:
 	resp = suite.CallAPI("PATCH", fmt.Sprintf("oauth/cf-eu10/v2/service_instances/%s?accepts_incomplete=true", iid),

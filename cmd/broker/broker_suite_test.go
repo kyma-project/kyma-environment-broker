@@ -94,6 +94,7 @@ var (
 // The starting point of a test could be an HTTP call to Broker API.
 type BrokerSuiteTest struct {
 	db                storage.BrokerStorage
+	storageCleanup    func() error
 	provisionerClient *provisioner.FakeClient
 	directorClient    *director.FakeClient
 	reconcilerClient  *reconciler.FakeClient
@@ -120,6 +121,10 @@ type componentProviderDecorated struct {
 
 func (s *BrokerSuiteTest) TearDown() {
 	s.httpServer.Close()
+	if s.storageCleanup != nil {
+		err := s.storageCleanup()
+		assert.NoError(s.t, err)
+	}
 }
 
 func NewBrokerSuiteTest(t *testing.T, version ...string) *BrokerSuiteTest {
@@ -165,7 +170,8 @@ func NewBrokerSuiteTestWithConfig(t *testing.T, cfg *Config, version ...string) 
 			DefaultTrialProvider:        internal.AWS,
 		}, defaultKymaVer, map[string]string{"cf-eu10": "europe", "cf-us10": "us"}, cfg.FreemiumProviders, defaultOIDCValues())
 
-	db := storage.NewMemoryStorage()
+	storageCleanup, db, err := GetStorageForTests()
+	assert.NoError(t, err)
 
 	require.NoError(t, err)
 
@@ -219,6 +225,7 @@ func NewBrokerSuiteTestWithConfig(t *testing.T, cfg *Config, version ...string) 
 
 	ts := &BrokerSuiteTest{
 		db:                  db,
+		storageCleanup:      storageCleanup,
 		provisionerClient:   provisionerClient,
 		directorClient:      directorClient,
 		reconcilerClient:    reconcilerClient,
