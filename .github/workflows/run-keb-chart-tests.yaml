@@ -15,4 +15,5 @@ jobs:
     if: ${{ !github.event.pull_request.draft }}
     with:
       last-k3s-versions: 3
+      release: "false"
 
