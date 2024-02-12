@@ -2,7 +2,7 @@
 
 ## ESLint Workflow
 
-This [workflow](/.github/workflows/run-eslint.yaml) runs the ESLint. It is triggered by PRs on the `main` branch that change at lest one of the following:
+This [workflow](/.github/workflows/run-eslint.yaml) runs the ESLint. It is triggered by PRs on the `main` branch that change at least one of the following:
 - `/.github` directory content
 - `/testing/e2e/skr` directory content
 - `Makefile` file
@@ -28,7 +28,7 @@ This [workflow](/.github/workflows/label-validator.yml) is triggered by PRs on t
 ## Verify KEB Workflow
 
 This [workflow](/.github/workflows/run-verify.yaml) calls the reusable [workflow](/.github/workflows/run-unit-tests-reusable.yaml) with unit tests.
-Besides the tests, it also runs Go-related checks and Go linter. It is triggered by PRs on the `main` branch that change at lest one of the following:
+Besides the tests, it also runs Go-related checks and Go linter. It is triggered by PRs on the `main` branch that change at least one of the following:
 - `/.github` directory content
 - `/cmd` directory content
 - `/common` directory content
@@ -46,7 +46,10 @@ Besides the tests, it also runs Go-related checks and Go linter. It is triggered
 
 ## KEB Chart Tests Workflow
 
-This [workflow](/.github/workflows/run-keb-chart-tests.yaml) is triggered by PRs on the `main` branch. Then it calls the reusable [workflow](/.github/workflows/run-keb-chart-tests-reusable.yaml). 
+This [workflow](/.github/workflows/run-keb-chart-tests.yaml) Calls the reusable [workflow](/.github/workflows/run-keb-chart-tests-reusable.yaml). It is triggered by PRs on the `main` branch that change at least one of the following:
+- `/resources` directory content
+- `/scripts` directory content
+- `Makefile` file
 
 ## Reusable Workflows
 
