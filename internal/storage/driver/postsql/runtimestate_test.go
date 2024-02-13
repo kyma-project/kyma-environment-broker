@@ -17,7 +17,7 @@ import (
 func TestRuntimeState(t *testing.T) {
 
 	t.Run("should insert and fetch RuntimeState", func(t *testing.T) {
-		storageCleanup, brokerStorage, err := GetStorageForTests()
+		storageCleanup, brokerStorage, err := GetStorageForDatabaseTests()
 		require.NoError(t, err)
 		require.NotNil(t, brokerStorage)
 		defer func() {
@@ -48,7 +48,7 @@ func TestRuntimeState(t *testing.T) {
 	})
 
 	t.Run("should insert and fetch RuntimeState with Reconciler input", func(t *testing.T) {
-		storageCleanup, brokerStorage, err := GetStorageForTests()
+		storageCleanup, brokerStorage, err := GetStorageForDatabaseTests()
 		require.NoError(t, err)
 		require.NotNil(t, brokerStorage)
 		defer func() {
@@ -84,7 +84,7 @@ func TestRuntimeState(t *testing.T) {
 	})
 
 	t.Run("should distinguish between latest RuntimeStates with and without Reconciler input", func(t *testing.T) {
-		storageCleanup, brokerStorage, err := GetStorageForTests()
+		storageCleanup, brokerStorage, err := GetStorageForDatabaseTests()
 		require.NoError(t, err)
 		require.NotNil(t, brokerStorage)
 		defer func() {
@@ -146,7 +146,7 @@ func TestRuntimeState(t *testing.T) {
 	})
 
 	t.Run("should fetch latest RuntimeState with Kyma version", func(t *testing.T) {
-		storageCleanup, brokerStorage, err := GetStorageForTests()
+		storageCleanup, brokerStorage, err := GetStorageForDatabaseTests()
 		require.NoError(t, err)
 		require.NotNil(t, brokerStorage)
 		defer func() {
@@ -204,7 +204,7 @@ func TestRuntimeState(t *testing.T) {
 	})
 
 	t.Run("should fetch latest RuntimeState with Kyma version stored only in the kyma_version field", func(t *testing.T) {
-		storageCleanup, brokerStorage, err := GetStorageForTests()
+		storageCleanup, brokerStorage, err := GetStorageForDatabaseTests()
 		require.NoError(t, err)
 		require.NotNil(t, brokerStorage)
 		defer func() {
@@ -256,7 +256,7 @@ func TestRuntimeState(t *testing.T) {
 	})
 
 	t.Run("should fetch latest RuntimeState with OIDC config", func(t *testing.T) {
-		storageCleanup, brokerStorage, err := GetStorageForTests()
+		storageCleanup, brokerStorage, err := GetStorageForDatabaseTests()
 		require.NoError(t, err)
 		require.NotNil(t, brokerStorage)
 		defer func() {

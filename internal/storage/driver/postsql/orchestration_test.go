@@ -14,7 +14,7 @@ import (
 func TestOrchestration(t *testing.T) {
 
 	t.Run("Orchestrations", func(t *testing.T) {
-		storageCleanup, brokerStorage, err := GetStorageForTests()
+		storageCleanup, brokerStorage, err := GetStorageForDatabaseTests()
 		require.NoError(t, err)
 		require.NotNil(t, brokerStorage)
 		defer func() {

@@ -19,7 +19,7 @@ import (
 func TestOperation(t *testing.T) {
 
 	t.Run("Operations - provisioning and deprovisioning", func(t *testing.T) {
-		storageCleanup, brokerStorage, err := GetStorageForTests()
+		storageCleanup, brokerStorage, err := GetStorageForDatabaseTests()
 		require.NoError(t, err)
 		require.NotNil(t, brokerStorage)
 		defer func() {
@@ -114,7 +114,7 @@ func TestOperation(t *testing.T) {
 	})
 
 	t.Run("Provisioning", func(t *testing.T) {
-		storageCleanup, brokerStorage, err := GetStorageForTests()
+		storageCleanup, brokerStorage, err := GetStorageForDatabaseTests()
 		require.NoError(t, err)
 		require.NotNil(t, brokerStorage)
 		defer func() {
@@ -213,7 +213,7 @@ func TestOperation(t *testing.T) {
 	})
 
 	t.Run("Deprovisioning", func(t *testing.T) {
-		storageCleanup, brokerStorage, err := GetStorageForTests()
+		storageCleanup, brokerStorage, err := GetStorageForDatabaseTests()
 		require.NoError(t, err)
 		require.NotNil(t, brokerStorage)
 		defer func() {
@@ -279,7 +279,7 @@ func TestOperation(t *testing.T) {
 	})
 
 	t.Run("Upgrade Kyma", func(t *testing.T) {
-		storageCleanup, brokerStorage, err := GetStorageForTests()
+		storageCleanup, brokerStorage, err := GetStorageForDatabaseTests()
 		require.NoError(t, err)
 		require.NotNil(t, brokerStorage)
 		defer func() {
@@ -348,7 +348,7 @@ func TestOperation(t *testing.T) {
 	})
 
 	t.Run("Upgrade Cluster", func(t *testing.T) {
-		storageCleanup, brokerStorage, err := GetStorageForTests()
+		storageCleanup, brokerStorage, err := GetStorageForDatabaseTests()
 		require.NoError(t, err)
 		require.NotNil(t, brokerStorage)
 		defer func() {

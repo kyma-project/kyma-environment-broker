@@ -125,7 +125,7 @@ func NewOrchestrationSuite(t *testing.T, additionalKymaVersions []string) *Orche
 	oidcDefaults := fixture.FixOIDCConfigDTO()
 
 	ctx, _ := context.WithTimeout(context.Background(), 20*time.Minute)
-	storageCleanup, db, err := GetStorageForTests()
+	storageCleanup, db, err := GetStorageForE2ETests()
 	assert.NoError(t, err)
 	t.Cleanup(func() {
 		if storageCleanup != nil {
@@ -593,7 +593,7 @@ type ProvisioningSuite struct {
 func NewProvisioningSuite(t *testing.T, multiZoneCluster bool, controlPlaneFailureTolerance string) *ProvisioningSuite {
 	ctx, _ := context.WithTimeout(context.Background(), 20*time.Minute)
 	logs := logrus.New()
-	storageCleanup, db, err := GetStorageForTests()
+	storageCleanup, db, err := GetStorageForE2ETests()
 	assert.NoError(t, err)
 	t.Cleanup(func() {
 		if storageCleanup != nil {

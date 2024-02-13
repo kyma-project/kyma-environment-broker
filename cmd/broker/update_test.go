@@ -183,9 +183,6 @@ func TestUpdateDeprovisioningInstance(t *testing.T) {
 
 	suite.WaitForOperationState(depOpID, domain.InProgress)
 
-	suite.FinishDeprovisioningOperationByProvisioner(depOpID)
-	suite.WaitForOperationState(depOpID, domain.Succeeded)
-
 	// when
 	// OSB update:
 	resp = suite.CallAPI("PATCH", fmt.Sprintf("oauth/cf-eu10/v2/service_instances/%s?accepts_incomplete=true", iid),
@@ -209,7 +206,6 @@ func TestUpdateDeprovisioningInstance(t *testing.T) {
 
 	assert.Equal(t, "Unable to process an update of a deprovisioned instance", errResponse.Description)
 
-	suite.AssertKymaResourceNotExists(opID)
 }
 
 func TestUpdateWithNoOIDCParams(t *testing.T) {

@@ -16,7 +16,7 @@ const (
 func TestInitialization(t *testing.T) {
 
 	t.Run("Should initialize database when schema not applied", func(t *testing.T) {
-		storageCleanup, brokerStorage, err := GetStorageForTests()
+		storageCleanup, brokerStorage, err := GetStorageForDatabaseTests()
 		require.NoError(t, err)
 		require.NotNil(t, brokerStorage)
 		defer func() {

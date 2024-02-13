@@ -26,7 +26,7 @@ import (
 func TestInstance(t *testing.T) {
 
 	t.Run("Should create and update instance", func(t *testing.T) {
-		storageCleanup, brokerStorage, err := GetStorageForTests()
+		storageCleanup, brokerStorage, err := GetStorageForDatabaseTests()
 		require.NoError(t, err)
 		require.NotNil(t, brokerStorage)
 		defer func() {
@@ -114,7 +114,7 @@ func TestInstance(t *testing.T) {
 	})
 
 	t.Run("Should fetch instance statistics", func(t *testing.T) {
-		storageCleanup, brokerStorage, err := GetStorageForTests()
+		storageCleanup, brokerStorage, err := GetStorageForDatabaseTests()
 		require.NoError(t, err)
 		require.NotNil(t, brokerStorage)
 		defer func() {
@@ -159,7 +159,7 @@ func TestInstance(t *testing.T) {
 	})
 
 	t.Run("Should fetch instances along with their operations", func(t *testing.T) {
-		storageCleanup, brokerStorage, err := GetStorageForTests()
+		storageCleanup, brokerStorage, err := GetStorageForDatabaseTests()
 		require.NoError(t, err)
 		require.NotNil(t, brokerStorage)
 		defer func() {
@@ -230,7 +230,7 @@ func TestInstance(t *testing.T) {
 	})
 
 	t.Run("Should fetch instances based on subaccount list", func(t *testing.T) {
-		storageCleanup, brokerStorage, err := GetStorageForTests()
+		storageCleanup, brokerStorage, err := GetStorageForDatabaseTests()
 		require.NoError(t, err)
 		require.NotNil(t, brokerStorage)
 		defer func() {
@@ -265,7 +265,7 @@ func TestInstance(t *testing.T) {
 	})
 
 	t.Run("Should list instances based on page and page size", func(t *testing.T) {
-		storageCleanup, brokerStorage, err := GetStorageForTests()
+		storageCleanup, brokerStorage, err := GetStorageForDatabaseTests()
 		require.NoError(t, err)
 		require.NotNil(t, brokerStorage)
 		defer func() {
@@ -318,7 +318,7 @@ func TestInstance(t *testing.T) {
 	})
 
 	t.Run("Should list instances based on filters", func(t *testing.T) {
-		storageCleanup, brokerStorage, err := GetStorageForTests()
+		storageCleanup, brokerStorage, err := GetStorageForDatabaseTests()
 		require.NoError(t, err)
 		require.NotNil(t, brokerStorage)
 		defer func() {
@@ -436,7 +436,7 @@ func TestInstance(t *testing.T) {
 	})
 
 	t.Run("Should list instances based on filters", func(t *testing.T) {
-		storageCleanup, brokerStorage, err := GetStorageForTests()
+		storageCleanup, brokerStorage, err := GetStorageForDatabaseTests()
 		require.NoError(t, err)
 		require.NotNil(t, brokerStorage)
 		defer func() {
@@ -554,7 +554,7 @@ func TestInstance(t *testing.T) {
 	})
 
 	t.Run("Should list trial instances", func(t *testing.T) {
-		storageCleanup, brokerStorage, err := GetStorageForTests()
+		storageCleanup, brokerStorage, err := GetStorageForDatabaseTests()
 		require.NoError(t, err)
 		require.NotNil(t, brokerStorage)
 		defer func() {
@@ -637,7 +637,7 @@ func TestInstance(t *testing.T) {
 	})
 
 	t.Run("Should list regular instances and not completely deprovisioned instances", func(t *testing.T) {
-		storageCleanup, brokerStorage, err := GetStorageForTests()
+		storageCleanup, brokerStorage, err := GetStorageForDatabaseTests()
 		require.NoError(t, err)
 		require.NotNil(t, brokerStorage)
 		defer func() {
@@ -714,7 +714,7 @@ func TestInstance(t *testing.T) {
 	})
 
 	t.Run("Should list not completely deprovisioned instances", func(t *testing.T) {
-		storageCleanup, brokerStorage, err := GetStorageForTests()
+		storageCleanup, brokerStorage, err := GetStorageForDatabaseTests()
 		require.NoError(t, err)
 		require.NotNil(t, brokerStorage)
 		defer func() {

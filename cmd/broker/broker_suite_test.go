@@ -170,7 +170,7 @@ func NewBrokerSuiteTestWithConfig(t *testing.T, cfg *Config, version ...string) 
 			DefaultTrialProvider:        internal.AWS,
 		}, defaultKymaVer, map[string]string{"cf-eu10": "europe", "cf-us10": "us"}, cfg.FreemiumProviders, defaultOIDCValues())
 
-	storageCleanup, db, err := GetStorageForTests()
+	storageCleanup, db, err := GetStorageForE2ETests()
 	assert.NoError(t, err)
 
 	require.NoError(t, err)

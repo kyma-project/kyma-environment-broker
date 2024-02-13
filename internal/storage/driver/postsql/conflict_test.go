@@ -17,7 +17,7 @@ func TestConflict(t *testing.T) {
 	t.Run("Conflict Operations", func(t *testing.T) {
 
 		t.Run("Plain operations - provisioning", func(t *testing.T) {
-			storageCleanup, brokerStorage, err := GetStorageForTests()
+			storageCleanup, brokerStorage, err := GetStorageForDatabaseTests()
 			require.NoError(t, err)
 			require.NotNil(t, brokerStorage)
 			defer func() {
@@ -63,7 +63,7 @@ func TestConflict(t *testing.T) {
 		})
 
 		t.Run("Plain operations - deprovisioning", func(t *testing.T) {
-			storageCleanup, brokerStorage, err := GetStorageForTests()
+			storageCleanup, brokerStorage, err := GetStorageForDatabaseTests()
 			require.NoError(t, err)
 			require.NotNil(t, brokerStorage)
 			defer func() {
@@ -108,7 +108,7 @@ func TestConflict(t *testing.T) {
 		})
 
 		t.Run("Provisioning", func(t *testing.T) {
-			storageCleanup, brokerStorage, err := GetStorageForTests()
+			storageCleanup, brokerStorage, err := GetStorageForDatabaseTests()
 			require.NoError(t, err)
 			require.NotNil(t, brokerStorage)
 			defer func() {
@@ -153,7 +153,7 @@ func TestConflict(t *testing.T) {
 		})
 
 		t.Run("Deprovisioning", func(t *testing.T) {
-			storageCleanup, brokerStorage, err := GetStorageForTests()
+			storageCleanup, brokerStorage, err := GetStorageForDatabaseTests()
 			require.NoError(t, err)
 			require.NotNil(t, brokerStorage)
 			defer func() {
@@ -197,7 +197,7 @@ func TestConflict(t *testing.T) {
 	})
 
 	t.Run("Conflict Instances", func(t *testing.T) {
-		storageCleanup, brokerStorage, err := GetStorageForTests()
+		storageCleanup, brokerStorage, err := GetStorageForDatabaseTests()
 		require.NoError(t, err)
 		require.NotNil(t, brokerStorage)
 		defer func() {

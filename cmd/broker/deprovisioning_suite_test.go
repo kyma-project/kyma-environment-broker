@@ -59,7 +59,7 @@ func NewDeprovisioningSuite(t *testing.T) *DeprovisioningSuite {
 	cfg := fixConfig()
 	cfg.EDP.Environment = edpEnvironment
 
-	storageCleanup, db, err := GetStorageForTests()
+	storageCleanup, db, err := GetStorageForE2ETests()
 	assert.NoError(t, err)
 	t.Cleanup(func() {
 		if storageCleanup != nil {
