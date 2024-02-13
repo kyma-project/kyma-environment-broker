@@ -1,12 +1,13 @@
 # SAP BTP, Kyma Runtime Components
 
-> **NOTE:** Once all Kyma components become independent modules, Kyma Environment Broker will no longer be required to send components to Reconciler and this document will be deprecated as irrelevant.
+> [!NOTE] 
+> Once all Kyma components become independent modules, Kyma Environment Broker will no longer be required to send components to Reconciler and this document will be deprecated as irrelevant.
 
 Kyma Environment Broker (KEB) serves the functionality of composing the list of components that are installed in SAP BTP, Kyma runtime. The diagram and steps describe the KEB workflow in terms of calculating and processing Kyma runtime components:
 
 ![runtime-components-architecture](../assets/runtime-components.svg)
 
-1. The user provisions SAP BTP, Kyma runtime and selects optional components that they want to install.
+1. The user provisions Kyma runtime and selects optional components that they want to install.
 
 2. At the beginning of the runtime provisioning, the broker fetches lists of components from the following resources:  
 
@@ -47,7 +48,7 @@ type OptionalComponentDisabler interface {
 	Disable(components internal.ComponentConfigurationInputList) internal.ComponentConfigurationInputList
 ```
 
->**TIP**: Check the [CustomDisablerExample](../../internal/runtime/custom_disabler_example.go) as an example of custom service for disabling components.
+> **TIP:** Check the [CustomDisablerExample](../../internal/runtime/custom_disabler_example.go) as an example of custom service for disabling components.
 
 In each method, the framework injects the  **components** parameter which is a list of components that are sent to Reconciler. The implemented method is responsible for disabling a component and, as a result, returns a modified list.
 

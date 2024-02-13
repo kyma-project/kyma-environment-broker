@@ -6,9 +6,9 @@ The diagram and steps describe the Kyma Environment Broker (KEB) workflow and th
 
 1. The user sends a request to create a new cluster with SAP BTP, Kyma runtime.
 
-2. KEB sends the request to create a new cluster to the Runtime Provisioner component.
+2. KEB sends the request to create a new cluster to Runtime Provisioner.
 
-3. Provisioner creates a new cluster.
+3. Runtime Provisioner creates a new cluster.
 
 4. KEB creates a GardenerCluster resource.
 
@@ -22,4 +22,5 @@ The diagram and steps describe the Kyma Environment Broker (KEB) workflow and th
 
 9. Lifecycle Manager manages Kyma modules.
 
-> **NOTE:** In the future, Provisioner and Reconciler will be deprecated.  KEB will then integrate with Infrastructure Manager. To learn about the planned KEB workflow, read [Kyma Environment Broker Target Architecture](01-20-target-architecture.md).
+> [!NOTE] 
+> In the future, Runtime Provisioner and Reconciler will be deprecated.  KEB will then integrate with Infrastructure Manager. To learn about the planned KEB workflow, read [Kyma Environment Broker Target Architecture](01-20-target-architecture.md).

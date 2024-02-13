@@ -16,14 +16,13 @@ When the PlatformRegion is an EU access BTP subaccount region:
   - `switzerlandnorth` as the only possible value for the **region** parameter for `cf-ch20`
 
 ## Access 
-Due to limited availability, the provisioning request for the EU Access only regions can succeed only if GlobalAccountId 
+Due to limited availability, the provisioning request for the EU Access only regions can succeed only if its GlobalAccountId 
 is added to the list of allowed GlobalAccountIds (the whitelist).
 Before attempting to provision Kyma clusters in the EU Access only regions, you must open a support ticket to have your 
 GlobalAccountId added to the whitelist.
 
 If the GlobalAccountId for the provisioning request is not whitelisted, KEB responds 
-with `http code 400` (Bad Request) and the message preconfigured in `management-plane-config`. 
-The user gets the following message in the SAP BTP cockpit.   
+with `http code 400` (Bad Request) and the following message in the SAP BTP cockpit.   
 ```yaml
 kcp-prod:
   kyma-environment-broker:

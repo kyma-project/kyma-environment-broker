@@ -1,12 +1,14 @@
 # Orchestration
 
-> **NOTE:** Once all Kyma components become modules, they will be upgraded independently of one another and of Kyma Environment Broker (KEB). This document will be deprecated as irrelevant.
+> [!NOTE] 
+> Once all Kyma components become modules, they will be upgraded independently of one another and of Kyma Environment Broker (KEB). This document will be deprecated as irrelevant.
 
 Orchestration is a mechanism that allows you to upgrade SAP BTP, Kyma runtimes. To create an orchestration, [follow this tutorial](02-60-orchestrate-kyma-upgrade.md). After sending the request, the orchestration is processed by `KymaUpgradeManager`. It lists Shoots (Kyma runtimes) in the Gardener cluster and narrows them to the IDs that you have specified in the request body. Then, `KymaUpgradeManager` performs the [upgrade steps](../user/03-20-runtime-operations.md#upgrade-kyma) logic on the selected Kyma runtimes.
 
 If Kyma Environment Broker is restarted, it reprocesses the orchestrations that are in the `CANCELING`, `IN PROGRESS`, and `PENDING` state.
 
->**NOTE:** You need an OIDC ID token in the JWT format issued by a (configurable) OIDC provider which is trusted by Kyma Environment Broker. The `groups` claim must be present in the token, and furthermore the user must belong to the configurable admin group (`runtimeAdmin` by default) to create an orchestration. To fetch the orchestrations, the user must belong to the configurable operator group (`runtimeOperator` by default).
+> [!NOTE] 
+> You need an OIDC ID token in the JWT format issued by a (configurable) OIDC provider which is trusted by Kyma Environment Broker. The `groups` claim must be present in the token, and furthermore the user must belong to the configurable admin group (`runtimeAdmin` by default) to create an orchestration. To fetch the orchestrations, the user must belong to the configurable operator group (`runtimeOperator` by default).
 
 Orchestration API consist of the following handlers:
 

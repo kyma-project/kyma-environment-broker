@@ -1,6 +1,7 @@
 # Kyma Environment Broker Target Architecture
 
-> **NOTE:** After Runtime Provisioner and Reconciler are deprecated, Kyma Environment Broker (KEB) will integrate with Infrastructure Manager. The diagram and description in this doc present the KEB target architecture. To read about the current KEB workflow, go to [Kyma Environment Broker Architecture](01-10-architecture.md).
+> [!NOTE] 
+> After Runtime Provisioner and Reconciler are deprecated, Kyma Environment Broker (KEB) will integrate with Infrastructure Manager. The diagram and description in this doc present the KEB target architecture. To read about the current KEB workflow, go to [Kyma Environment Broker Architecture](01-10-architecture.md).
 
 ![KEB target architecture](../assets/target-keb-arch.svg)
 
@@ -12,7 +13,8 @@
 6. Lifecycle Manager reads the Secret every time it's needed.
 7. Lifecycle Manager manages modules within SAP BTP, Kyma runtime.
 
-> **NOTE:** Once the planned changes are implemented, the following documents will be deprecated as irrelevant:
+> [!NOTE] 
+> Once the planned changes are implemented, the following documents will be deprecated as irrelevant:
 > - [Runtime Components](../contributor/02-10-runtime-components.md)
 > - [Set Overrides for Kyma Runtime](../contributor/02-20-runtime-overrides.md)
 > - [Configure Kyma Version](../contributor/02-30-kyma-versions.md)

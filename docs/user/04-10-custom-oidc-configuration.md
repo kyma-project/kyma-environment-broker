@@ -1,6 +1,11 @@
 # Custom OIDC Configuration
 
-To create an SAP BTP, Kyma runtime with a custom Open ID Connect (OIDC) configuration, specify the additional `oidc` provisioning parameters. See the example:
+To create an SAP BTP, Kyma runtime with a custom Open ID Connect (OIDC) configuration, specify the additional `oidc` provisioning parameters. 
+
+> [!NOTE] 
+> `clientID` and `issuerURL` values are mandatory for custom OIDC configuration.
+
+See the example:
 
 ```bash
    export VERSION=1.15.0
@@ -29,7 +34,6 @@ To create an SAP BTP, Kyma runtime with a custom Open ID Connect (OIDC) configur
        }
    }"
 ```
-> **NOTE:** `clientID` and `issuerURL` values are mandatory for custom OIDC configuration.
 
 If you do not provide the `oidc` object in the provisioning request or leave all object's properties empty, the default OIDC configuration is used.
 However, if you do not provide the `oidc` object in the update request or leave all object’s properties empty, the saved OIDC configuration stays untouched.

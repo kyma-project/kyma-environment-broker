@@ -1,6 +1,6 @@
 # Service Description
 
-Kyma Environment Broker (KEB) is compatible with the [Open Service Broker API](https://www.openservicebrokerapi.org/) (OSBAPI) specification. It provides a ServiceClass that provisions SAP BTP, Kyma runtime on a cluster.
+Kyma Environment Broker (KEB) is compatible with the [Open Service Broker API (OSBAPI)](https://www.openservicebrokerapi.org/) specification. It provides a ServiceClass that provisions SAP BTP, Kyma runtime on a cluster.
 
 ## Service Plans
 
@@ -22,7 +22,8 @@ There is also an experimental plan:
 |-----------|---------|-------------|
 | `preview` | `5cb3d976-b85c-42ea-a636-79cadda109a9` | Installs Kyma runtime on AWS using Lifecycle Manager. |
 
-> **CAUTION:** The experimental plan may fail to work or be removed.
+> [!WARNING] 
+> The experimental plan may fail to work or be removed.
 
 ## Provisioning Parameters
 
@@ -204,7 +205,8 @@ The mapping between the platform region and the provider region (Azure, AWS or G
 
 ## Own Cluster Plan
 
-> **NOTE:** The `own_cluster` plan has been deprecated.
+> [!NOTE] 
+> The `own_cluster` plan has been deprecated.
 
 These are the provisioning parameters for the `own_cluster` plan that you configure:
 

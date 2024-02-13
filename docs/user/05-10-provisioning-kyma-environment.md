@@ -21,7 +21,8 @@ This tutorial shows how to provision SAP BTP, Kyma runtime on Azure using Kyma E
    export REGION={CLUSTER_REGION}
    ```
 
-   > **NOTE:** INSTANCE_ID and NAME must be unique. It is recommended to use UUID as an INSTANCE_ID.
+   > [!NOTE] 
+   > **INSTANCE_ID** and **NAME** must be unique. It is recommended to use UUID as an **INSTANCE_ID**.
 
 2. Get the [access token](../contributor/01-10-authorization.md#get-the-access-token). Export this variable based on the token you got from the OAuth client:
 
