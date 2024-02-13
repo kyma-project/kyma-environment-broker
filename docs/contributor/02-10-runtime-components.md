@@ -36,19 +36,19 @@ If you want to add the optional component, you can do it in two ways:
 
 * If disabling a given component only means removing it from the installation list, use the generic disabler:
 
-```go
-runtime.NewGenericComponentDisabler("component-name", "component-namespace")
-```
+   ```go
+   runtime.NewGenericComponentDisabler("component-name", "component-namespace")
+   ```
 
 * If disabling a given component requires more complex logic, create a new file called `internal/runtime/{component-name}_disabler.go` and implement a service that fulfills the following interface:
 
-```go
-// OptionalComponentDisabler disables component from the given list and returns a modified list
-type OptionalComponentDisabler interface {
-	Disable(components internal.ComponentConfigurationInputList) internal.ComponentConfigurationInputList
-```
+   ```go
+   // OptionalComponentDisabler disables component from the given list and returns a modified list
+   type OptionalComponentDisabler interface {
+   	Disable(components internal.ComponentConfigurationInputList) internal.ComponentConfigurationInputList
+   ```
 
-> **TIP:** Check the [CustomDisablerExample](../../internal/runtime/custom_disabler_example.go) as an example of custom service for disabling components.
+    > **TIP:** Check the [CustomDisablerExample](../../internal/runtime/custom_disabler_example.go) as an example of custom service for disabling components.
 
 In each method, the framework injects the  **components** parameter which is a list of components that are sent to Reconciler. The implemented method is responsible for disabling a component and, as a result, returns a modified list.
 

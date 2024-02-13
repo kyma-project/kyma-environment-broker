@@ -58,7 +58,7 @@ This tutorial shows how to upgrade SAP BTP, Kyma runtime using Kyma Environment 
                \"globalAccount\": \"uuid-sdasd-sda23t-efs\",\
                \"subAccount\": \"uuid-sdasd-sda23t-efs\",\
                \"planName\": \"azure\",\
-               \"region\": \"europewest\",\
+               \"region\": \"europewest\"\
             }]\
        },\
        \"strategy\": {\
@@ -66,7 +66,7 @@ This tutorial shows how to upgrade SAP BTP, Kyma runtime using Kyma Environment 
                \"schedule\": \"maintenanceWindow\",\
                \"parallel\": {\
                  \"workers\": 5\
-               },\
+               }\
        },\
        \"dryRun\": false\
    }"
@@ -84,4 +84,4 @@ This tutorial shows how to upgrade SAP BTP, Kyma runtime using Kyma Environment 
 
 4. [Check the orchestration status](02-70-orchestration-status.md).
 
-> **NOTE:** Only one orchestration request can be processed at the same time. If KEB is already processing an orchestration, the newly created request waits for processing with the `PENDING` state.
+   > **NOTE:** Only one orchestration request can be processed at the same time. If KEB is already processing an orchestration, the newly created request waits for processing with the `PENDING` state.

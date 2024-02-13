@@ -3,12 +3,12 @@
 ## Overview
 
 The Kyma Environment Broker release pipeline creates proper artifacts:
- - kyma-environment-broker Docker image in the [registry](https://console.cloud.google.com/artifacts/docker/kyma-project/europe/prod/kyma-environment-broker)
- - kyma-environment-deprovision-retrigger Docker image in the [registry](https://console.cloud.google.com/artifacts/docker/kyma-project/europe/prod/kyma-environment-deprovision-retrigger)
- - kyma-environments-cleanup-job Docker image in the [registry](https://console.cloud.google.com/artifacts/docker/kyma-project/europe/prod/kyma-environments-cleanup-job )
- - kyma-environment-runtime-reconciler Docker image in the [registry](https://console.cloud.google.com/artifacts/docker/kyma-project/europe/prod/kyma-environment-runtime-reconciler)
- - kyma-environment-trial-cleanup-job Docker image in the [registry](https://console.cloud.google.com/artifacts/docker/kyma-project/europe/prod/kyma-environment-trial-cleanup-job)
- - kyma-environment-subaccount-cleanup-job Docker image in the [registry](https://console.cloud.google.com/artifacts/docker/kyma-project/europe/prod/kyma-environment-subaccount-cleanup-job)
+ - `kyma-environment-broker` Docker image in the [registry](https://console.cloud.google.com/artifacts/docker/kyma-project/europe/prod/kyma-environment-broker)
+ - `kyma-environment-deprovision-retrigger` Docker image in the [registry](https://console.cloud.google.com/artifacts/docker/kyma-project/europe/prod/kyma-environment-deprovision-retrigger)
+ - `kyma-environments-cleanup-job` Docker image in the [registry](https://console.cloud.google.com/artifacts/docker/kyma-project/europe/prod/kyma-environments-cleanup-job )
+ - `kyma-environment-runtime-reconciler` Docker image in the [registry](https://console.cloud.google.com/artifacts/docker/kyma-project/europe/prod/kyma-environment-runtime-reconciler)
+ - `kyma-environment-trial-cleanup-job` Docker image in the [registry](https://console.cloud.google.com/artifacts/docker/kyma-project/europe/prod/kyma-environment-trial-cleanup-job)
+ - `kyma-environment-subaccount-cleanup-job` Docker image in the [registry](https://console.cloud.google.com/artifacts/docker/kyma-project/europe/prod/kyma-environment-subaccount-cleanup-job)
 
 ## Run the Pipeline
 
@@ -31,15 +31,15 @@ To create a release, follow these steps:
 4. A code owner approves the PR with the security scanner config bump. 
 5. The GitHub action creates a GitHub tag and draft release with the provided name.
 6. The GitHub action initiates an await for Prow Jobs status.
-7. The tag creation triggers Prow jobs defined in [`kyma-environment-broker-build.yaml`](https://github.com/kyma-project/test-infra/blob/main/prow/jobs/kyma-project/kyma-environment-broker/kyma-environment-broker-build.yaml):
+7. The tag creation triggers ProwJobs defined in [`kyma-environment-broker-build.yaml`](https://github.com/kyma-project/test-infra/blob/main/prow/jobs/kyma-project/kyma-environment-broker/kyma-environment-broker-build.yaml):
 - `post-keb-release-build`
 - `post-keb-deprovision-retrigger-job-release-build`
 - `post-keb-cleanup-job-release-build`
 - `post-keb-runtime-reconciler-job-release-build`
 - `post-keb-trial-cleanup-job-release-build` 
 - `post-keb-subaccount-cleanup-job-release-build`
-8. The Prow jobs upload the binary images.
-9. If the unit tests, KEB chart tests, and Prow job status await are completed successfully, the GitHub action publishes the release.
+8. The ProwJobs upload the binary images.
+9. If the unit tests, KEB chart tests, and ProwJob status await are completed successfully, the GitHub action publishes the release.
 
 
 ### Replace an Existing Release

@@ -6,7 +6,7 @@ Kyma Environment Broker (KEB) allows you to configure operations you can run on 
 - Repeat the entire operation after a specified period.
 
 > [!NOTE] 
-> It's important to set lower timeouts for the Kyma installation in the Runtime Provisioner.
+> It's important to set lower timeouts for the Kyma installation in Runtime Provisioner.
 
 ## Stages
 
