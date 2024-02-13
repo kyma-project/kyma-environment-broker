@@ -37,7 +37,7 @@ type OperationDTO struct {
 type OperationStatEntry struct {
 	Type       string
 	State      string
-	PlanID     string
+	PlanID     sql.NullString
 	InstanceID string
 }
 

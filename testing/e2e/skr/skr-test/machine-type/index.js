@@ -1,4 +1,4 @@
-// const {expect} = require('chai');
+const {expect} = require('chai');
 const {updateSKR, getCatalog, getShoot} = require('../../kyma-environment-broker');
 const {keb, kcp} = require('../helpers');
 const {GardenerClient, GardenerConfig} = require('../../gardener');
@@ -88,14 +88,14 @@ function machineTypeE2ETest(getShootOptionsFunc, getShootInfoFunc) {
       shoot = skr.shoot;
     });
 
-    /* it('Should check machine type after update', async function() {
+    it('Should check machine type after update', async function() {
       if (updateMachineType === undefined) {
         console.log('skipping machine type update');
         return;
       }
       const machineType = await getMachineType(gardener, shoot.name);
       expect(machineType).to.equal(updateMachineType);
-    });*/
+    });
   });
 }
 
@@ -107,7 +107,7 @@ async function getMachineType(gardener, shoot) {
   }
 
   const sh = await getShoot(kcp, shoot);
-  return sh.spec;
+  return sh.machineType;
 }
 
 module.exports = {

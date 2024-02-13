@@ -1,7 +1,6 @@
 package postsql_test
 
 import (
-	"context"
 	"fmt"
 	"testing"
 	"time"
@@ -9,33 +8,24 @@ import (
 	"github.com/kyma-project/kyma-environment-broker/common/orchestration"
 	"github.com/kyma-project/kyma-environment-broker/internal"
 	"github.com/kyma-project/kyma-environment-broker/internal/broker"
-	"github.com/kyma-project/kyma-environment-broker/internal/events"
 	"github.com/kyma-project/kyma-environment-broker/internal/fixture"
 	"github.com/kyma-project/kyma-environment-broker/internal/storage"
 	"github.com/kyma-project/kyma-environment-broker/internal/storage/dbmodel"
 	"github.com/pivotal-cf/brokerapi/v8/domain"
-	"github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
 func TestOperation(t *testing.T) {
 
-	ctx := context.Background()
-
 	t.Run("Operations - provisioning and deprovisioning", func(t *testing.T) {
-		containerCleanupFunc, cfg, err := storage.InitTestDBContainer(t.Logf, ctx, "test_DB_1")
-		require.NoError(t, err)
-		defer containerCleanupFunc()
-
-		tablesCleanupFunc, err := storage.InitTestDBTables(t, cfg.ConnectionURL())
-		require.NoError(t, err)
-		defer tablesCleanupFunc()
-
-		cipher := storage.NewEncrypter(cfg.SecretKey)
-		brokerStorage, _, err := storage.NewFromConfig(cfg, events.Config{}, cipher, logrus.StandardLogger())
+		storageCleanup, brokerStorage, err := GetStorageForTests()
 		require.NoError(t, err)
 		require.NotNil(t, brokerStorage)
+		defer func() {
+			err := storageCleanup()
+			assert.NoError(t, err)
+		}()
 
 		orchestrationID := "orch-id"
 
@@ -124,18 +114,13 @@ func TestOperation(t *testing.T) {
 	})
 
 	t.Run("Provisioning", func(t *testing.T) {
-		containerCleanupFunc, cfg, err := storage.InitTestDBContainer(t.Logf, ctx, "test_DB_1")
-		require.NoError(t, err)
-		defer containerCleanupFunc()
-
-		tablesCleanupFunc, err := storage.InitTestDBTables(t, cfg.ConnectionURL())
-		require.NoError(t, err)
-		defer tablesCleanupFunc()
-
-		cipher := storage.NewEncrypter(cfg.SecretKey)
-		brokerStorage, _, err := storage.NewFromConfig(cfg, events.Config{}, cipher, logrus.StandardLogger())
+		storageCleanup, brokerStorage, err := GetStorageForTests()
 		require.NoError(t, err)
 		require.NotNil(t, brokerStorage)
+		defer func() {
+			err := storageCleanup()
+			assert.NoError(t, err)
+		}()
 
 		orchestrationID := "orch-id"
 
@@ -228,18 +213,13 @@ func TestOperation(t *testing.T) {
 	})
 
 	t.Run("Deprovisioning", func(t *testing.T) {
-		containerCleanupFunc, cfg, err := storage.InitTestDBContainer(t.Logf, ctx, "test_DB_1")
-		require.NoError(t, err)
-		defer containerCleanupFunc()
-
-		tablesCleanupFunc, err := storage.InitTestDBTables(t, cfg.ConnectionURL())
-		require.NoError(t, err)
-		defer tablesCleanupFunc()
-
-		cipher := storage.NewEncrypter(cfg.SecretKey)
-		brokerStorage, _, err := storage.NewFromConfig(cfg, events.Config{}, cipher, logrus.StandardLogger())
+		storageCleanup, brokerStorage, err := GetStorageForTests()
 		require.NoError(t, err)
 		require.NotNil(t, brokerStorage)
+		defer func() {
+			err := storageCleanup()
+			assert.NoError(t, err)
+		}()
 
 		givenOperation := fixture.FixDeprovisioningOperation("operation-id", "inst-id")
 		givenOperation.State = domain.InProgress
@@ -299,18 +279,13 @@ func TestOperation(t *testing.T) {
 	})
 
 	t.Run("Upgrade Kyma", func(t *testing.T) {
-		containerCleanupFunc, cfg, err := storage.InitTestDBContainer(t.Logf, ctx, "test_DB_1")
-		require.NoError(t, err)
-		defer containerCleanupFunc()
-
-		tablesCleanupFunc, err := storage.InitTestDBTables(t, cfg.ConnectionURL())
-		require.NoError(t, err)
-		defer tablesCleanupFunc()
-
-		cipher := storage.NewEncrypter(cfg.SecretKey)
-		brokerStorage, _, err := storage.NewFromConfig(cfg, events.Config{}, cipher, logrus.StandardLogger())
+		storageCleanup, brokerStorage, err := GetStorageForTests()
 		require.NoError(t, err)
 		require.NotNil(t, brokerStorage)
+		defer func() {
+			err := storageCleanup()
+			assert.NoError(t, err)
+		}()
 
 		orchestrationID := "orchestration-id"
 
@@ -373,18 +348,13 @@ func TestOperation(t *testing.T) {
 	})
 
 	t.Run("Upgrade Cluster", func(t *testing.T) {
-		containerCleanupFunc, cfg, err := storage.InitTestDBContainer(t.Logf, ctx, "test_DB_1")
-		require.NoError(t, err)
-		defer containerCleanupFunc()
-
-		tablesCleanupFunc, err := storage.InitTestDBTables(t, cfg.ConnectionURL())
-		require.NoError(t, err)
-		defer tablesCleanupFunc()
-
-		cipher := storage.NewEncrypter(cfg.SecretKey)
-		brokerStorage, _, err := storage.NewFromConfig(cfg, events.Config{}, cipher, logrus.StandardLogger())
+		storageCleanup, brokerStorage, err := GetStorageForTests()
 		require.NoError(t, err)
 		require.NotNil(t, brokerStorage)
+		defer func() {
+			err := storageCleanup()
+			assert.NoError(t, err)
+		}()
 
 		orchestrationID := "orchestration-id"
 

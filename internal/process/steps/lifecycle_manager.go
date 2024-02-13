@@ -54,6 +54,10 @@ func KymaName(operation internal.Operation) string {
 	return strings.ToLower(operation.RuntimeID)
 }
 
+func KymaNameFromInstance(instance *internal.Instance) string {
+	return strings.ToLower(instance.RuntimeID)
+}
+
 func isKymaResourceInternal(operation internal.Operation) bool {
 	return !*operation.ProvisioningParameters.ErsContext.DisableEnterprisePolicyFilter()
 }

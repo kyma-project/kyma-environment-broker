@@ -211,7 +211,7 @@ func NewBrokerSuiteTestWithConfig(t *testing.T, cfg *Config, version ...string) 
 	deprovisionManager := process.NewStagedManager(db.Operations(), eventBroker, time.Hour, cfg.Deprovisioning, logs.WithField("deprovisioning", "manager"))
 	deprovisioningQueue := NewDeprovisioningProcessingQueue(ctx, workersAmount, deprovisionManager, cfg, db, eventBroker,
 		provisionerClient, avsDel, internalEvalAssistant, externalEvalAssistant,
-		bundleBuilder, edpClient, accountProvider, reconcilerClient, k8sClientProvider, fakeK8sSKRClient, configProvider, logs,
+		bundleBuilder, edpClient, accountProvider, reconcilerClient, k8sClientProvider, cli, configProvider, logs,
 	)
 	deprovisionManager.SpeedUp(10000)
 
@@ -1466,6 +1466,41 @@ func (s *BrokerSuiteTest) AssertKymaResourceExists(opId string) {
 	err = s.k8sKcp.Get(context.Background(), client.ObjectKeyFromObject(obj), obj)
 
 	assert.NoError(s.t, err)
+}
+
+func (s *BrokerSuiteTest) AssertKymaResourceExistsByInstanceID(instanceID string) {
+	instance := s.GetInstance(instanceID)
+
+	obj := &unstructured.Unstructured{}
+	obj.SetName(instance.RuntimeID)
+	obj.SetNamespace("kyma-system")
+	obj.SetGroupVersionKind(schema.GroupVersionKind{
+		Group:   "operator.kyma-project.io",
+		Version: "v1beta2",
+		Kind:    "Kyma",
+	})
+
+	err := s.k8sKcp.Get(context.Background(), client.ObjectKeyFromObject(obj), obj)
+
+	assert.NoError(s.t, err)
+}
+
+func (s *BrokerSuiteTest) AssertKymaResourceNotExists(opId string) {
+	operation, err := s.db.Operations().GetOperationByID(opId)
+	assert.NoError(s.t, err)
+
+	obj := &unstructured.Unstructured{}
+	obj.SetName(operation.RuntimeID)
+	obj.SetNamespace("kyma-system")
+	obj.SetGroupVersionKind(schema.GroupVersionKind{
+		Group:   "operator.kyma-project.io",
+		Version: "v1beta2",
+		Kind:    "Kyma",
+	})
+
+	err = s.k8sKcp.Get(context.Background(), client.ObjectKeyFromObject(obj), obj)
+
+	assert.Error(s.t, err)
 }
 
 func (s *BrokerSuiteTest) AssertKymaAnnotationExists(opId, annotationName string) {

@@ -16,8 +16,10 @@ import (
 // For performance reasons, it is not possible to query entire operations database table,
 // so instead KEB queries the database for last 14 days worth of data and then for deltas
 // during the ellapsed time
-var Retention = 14 * 24 * time.Hour
-var PollingInterval = 30 * time.Second
+const (
+	Retention       = 14 * 24 * time.Hour
+	PollingInterval = 30 * time.Second
+)
 
 type operationsGetter interface {
 	ListOperationsInTimeRange(from, to time.Time) ([]internal.Operation, error)

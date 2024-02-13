@@ -1,9 +1,3 @@
-ifeq (,$(shell go env GOBIN))
-GOBIN=$(shell go env GOPATH)/bin
-else
-GOBIN=$(shell go env GOBIN)
-endif
-
 GOLINT_VER = v1.55.2
 
  ## The headers are represented by '##@' like 'General' and the descriptions of given command is text after '##''.
@@ -26,8 +20,8 @@ go-lint: go-lint-install ## linter config in file at root of project -> '.golang
 go-lint-install: ## linter config in file at root of project -> '.golangci.yaml'
 	@if [ "$(shell command golangci-lint version --format short)" != "$(GOLINT_VER)" ]; then \
   		echo golangci in version $(GOLINT_VER) not found. will be downloaded; \
-		GOBIN= go install github.com/golangci/golangci-lint/cmd/golangci-lint@$(GOLINT_VER); \
-		echo golangci installed in $(GOBIN) with version: $(shell golangci-lint version --format short); \
+		go install github.com/golangci/golangci-lint/cmd/golangci-lint@$(GOLINT_VER); \
+		echo golangci installed with version: $(shell command golangci-lint version --format short); \
 	fi;
 	
 ##@ Tests

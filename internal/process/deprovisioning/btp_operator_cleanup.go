@@ -87,18 +87,6 @@ func (s *BTPOperatorCleanupStep) Run(operation internal.Operation, log logrus.Fi
 		log.Info("RuntimeID is empty, skipping")
 		return operation, 0, nil
 	}
-	kclient, err := s.k8sClientProvider.K8sClientForRuntimeID(operation.RuntimeID)
-	if err != nil {
-		if kubeconfig.IsNotFound(err) {
-			log.Info("Kubeconfig does not exists, skipping")
-			return operation, 0, nil
-		}
-		return s.operationManager.RetryOperationWithoutFail(operation, s.Name(), "failed to get kube client", time.Second, 30*time.Second, log)
-	}
-	if operation.UserAgent == broker.AccountCleanupJob {
-		log.Info("executing soft delete cleanup for accountcleanup-job")
-		return s.softDelete(operation, kclient, log)
-	}
 	if !operation.Temporary {
 		log.Info("cleanup executed only for suspensions")
 		return operation, 0, nil
@@ -106,6 +94,20 @@ func (s *BTPOperatorCleanupStep) Run(operation internal.Operation, log logrus.Fi
 	if operation.ProvisioningParameters.PlanID != broker.TrialPlanID {
 		log.Info("cleanup executed only for trial plan")
 		return operation, 0, nil
+	}
+	kclient, err := s.k8sClientProvider.K8sClientForRuntimeID(operation.RuntimeID)
+	if err != nil {
+		if kubeconfig.IsNotFound(err) {
+			log.Info("Kubeconfig does not exists, skipping")
+			return operation, 0, nil
+		}
+		log.Warnf("Error: %+v", err)
+
+		return s.operationManager.RetryOperationWithoutFail(operation, s.Name(), fmt.Sprintf("failed to get kube client: %s", err.Error()), time.Second, 30*time.Second, log)
+	}
+	if operation.UserAgent == broker.AccountCleanupJob {
+		log.Info("executing soft delete cleanup for accountcleanup-job")
+		return s.softDelete(operation, kclient, log)
 	}
 	if operation.RuntimeID == "" {
 		log.Info("instance has been deprovisioned already")

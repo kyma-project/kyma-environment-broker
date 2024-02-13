@@ -413,23 +413,25 @@ func (s *operations) GetOperationStatsByPlan() (map[string]internal.OperationSta
 	}
 	result := make(map[string]internal.OperationStats)
 
-	for _, e := range entries {
-		if e.PlanID == "" {
+	for _, entry := range entries {
+		if !entry.PlanID.Valid || entry.PlanID.String == "" {
 			continue
 		}
-		if _, ok := result[e.PlanID]; !ok {
-			result[e.PlanID] = internal.OperationStats{
+		planId := entry.PlanID.String
+		if _, ok := result[planId]; !ok {
+			result[planId] = internal.OperationStats{
 				Provisioning:   make(map[domain.LastOperationState]int),
 				Deprovisioning: make(map[domain.LastOperationState]int),
 			}
 		}
-		switch internal.OperationType(e.Type) {
+		switch internal.OperationType(entry.Type) {
 		case internal.OperationTypeProvision:
-			result[e.PlanID].Provisioning[domain.LastOperationState(e.State)] += 1
+			result[planId].Provisioning[domain.LastOperationState(entry.State)] += 1
 		case internal.OperationTypeDeprovision:
-			result[e.PlanID].Deprovisioning[domain.LastOperationState(e.State)] += 1
+			result[planId].Deprovisioning[domain.LastOperationState(entry.State)] += 1
 		}
 	}
+
 	return result, nil
 }
 
@@ -451,7 +453,7 @@ func calFailedStatusForOrchestration(entries []dbmodel.OperationStatEntry) ([]st
 			if status == Failed {
 				failedFound = true
 			}
-			//In Progress/Retrying/Succeeded means new operation for same instance_id is ongoing/succeeded.
+			// In Progress/Retrying/Succeeded means new operation for same instance_id is ongoing/succeeded.
 			if status == Succeeded || status == Retrying || status == InProgress {
 				invalidFailed = true
 			}
@@ -602,7 +604,7 @@ func (s *operations) ListUpgradeKymaOperationsByOrchestrationID(orchestrationID 
 		filter.States = states
 	}
 
-	//excluded "failed" states
+	// excluded "failed" states
 	if !filterFailedFound || (filterFailedFound && len(filter.States) > 0) {
 		operations, count, totalCount, err = s.showUpgradeKymaOperationDTOByOrchestrationID(orchestrationID, filter)
 		if err != nil {
@@ -610,7 +612,7 @@ func (s *operations) ListUpgradeKymaOperationsByOrchestrationID(orchestrationID 
 		}
 	}
 
-	//only for "failed" states
+	// only for "failed" states
 	if filterFailedFound {
 		filter = dbmodel.OperationFilter{States: []string{"failed"}}
 		failedOperations, failedCount, failedtotalCount, err := s.showUpgradeKymaOperationDTOByOrchestrationID(orchestrationID, filter)

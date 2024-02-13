@@ -41,6 +41,7 @@ func TestClient_ListRuntimes(t *testing.T) {
 			OperationDetail:  LastOperation,
 			KymaConfig:       true,
 			ClusterConfig:    true,
+			GardenerConfig:   true,
 			GlobalAccountIDs: []string{"sa1", "ga2"},
 			SubAccountIDs:    []string{"sa1", "sa2"},
 			InstanceIDs:      []string{"id1", "id2"},
@@ -61,6 +62,7 @@ func TestClient_ListRuntimes(t *testing.T) {
 			assert.ElementsMatch(t, []string{string(LastOperation)}, query[OperationDetailParam])
 			assert.ElementsMatch(t, []string{"true"}, query[KymaConfigParam])
 			assert.ElementsMatch(t, []string{"true"}, query[ClusterConfigParam])
+			assert.ElementsMatch(t, []string{"true"}, query[GardenerConfigParam])
 			assert.ElementsMatch(t, params.GlobalAccountIDs, query[GlobalAccountIDParam])
 			assert.ElementsMatch(t, params.SubAccountIDs, query[SubAccountIDParam])
 			assert.ElementsMatch(t, params.InstanceIDs, query[InstanceIDParam])
