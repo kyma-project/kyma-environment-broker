@@ -205,7 +205,6 @@ func TestUpdateDeprovisioningInstance(t *testing.T) {
 	errResponse := suite.DecodeErrorResponse(resp)
 
 	assert.Equal(t, "Unable to process an update of a deprovisioned instance", errResponse.Description)
-
 }
 
 func TestUpdateWithNoOIDCParams(t *testing.T) {
