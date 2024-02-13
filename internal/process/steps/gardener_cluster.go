@@ -161,6 +161,10 @@ func GardenerClusterName(operation *internal.Operation) string {
 	return strings.ToLower(operation.RuntimeID)
 }
 
+func GardenerClusterNameFromInstance(instance *internal.Instance) string {
+	return strings.ToLower(instance.RuntimeID)
+}
+
 type GardenerCluster struct {
 	obj *unstructured.Unstructured
 }

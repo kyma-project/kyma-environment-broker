@@ -260,6 +260,8 @@ func TestBTPOperatorCleanupStep_SoftDelete(t *testing.T) {
 		require.NoError(t, err)
 
 		op := fixture.FixDeprovisioningOperation(fixOperationID, fixInstanceID)
+		op.Temporary = true
+		op.ProvisioningParameters.PlanID = broker.TrialPlanID
 		op.UserAgent = broker.AccountCleanupJob
 		op.State = "in progress"
 		step := NewBTPOperatorCleanupStep(ms.Operations(), kubeconfig.NewFakeK8sClientProvider(k8sCli))
@@ -301,6 +303,8 @@ func TestBTPOperatorCleanupStep_SoftDelete(t *testing.T) {
 		op := fixture.FixDeprovisioningOperation(fixOperationID, fixInstanceID)
 		op.UserAgent = broker.AccountCleanupJob
 		op.State = "in progress"
+		op.Temporary = true
+		op.ProvisioningParameters.PlanID = broker.TrialPlanID
 		step := NewBTPOperatorCleanupStep(ms.Operations(), kubeconfig.NewFakeK8sClientProvider(k8sCli))
 
 		// when

@@ -99,8 +99,8 @@ class KCPWrapper {
     if (query.ops) {
       args = args.concat('--ops');
     }
-    if (query.clusterConfig) {
-      args = args.concat('--cluster-config');
+    if (query.gardenerConfig) {
+      args = args.concat('--gardener-config');
     }
     const result = await this.exec(args);
     return JSON.parse(result);
@@ -231,11 +231,11 @@ class KCPWrapper {
     return JSON.stringify(runtimeStatus, null, '\t');
   }
 
-  async getRuntimeClusterConfig(shoot) {
+  async getRuntimeGardenerConfig(shoot) {
     await this.login();
-    const clusterConfig = await this.runtimes({shoot: shoot, clusterConfig: true});
+    const gardenerConfig = await this.runtimes({shoot: shoot, gardenerConfig: true});
 
-    return JSON.stringify(clusterConfig, null, '\t');
+    return JSON.stringify(gardenerConfig, null, '\t');
   }
 
   async getOrchestrationsOperations(orchestrationID) {
