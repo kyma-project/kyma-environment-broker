@@ -11,7 +11,7 @@ import (
 
 const defaultPageSize = 100
 
-// Client is the interface to interact with the KEB /deprovision API as an HTTP client using OIDC ID token in JWT format. //
+// Client is the interface to interact with the KEB /deprovision API as an HTTP client using OIDC ID token in JWT format.
 type Client interface {
 	DeprovisionRuntime(params DeprovisionParameters) error
 }
