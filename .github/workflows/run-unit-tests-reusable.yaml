@@ -22,6 +22,7 @@ jobs:
       uses: tj-actions/changed-files@90a06d6ba9543371ab4df8eeca0be07ca6054959
       with:
         files: |
+          .github/**
           cmd/**
           common/**
           files/**
