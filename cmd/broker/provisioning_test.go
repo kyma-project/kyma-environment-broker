@@ -964,9 +964,10 @@ func TestProvisioning_ClusterParameters(t *testing.T) {
 			expectedSubscriptionHyperscalerType: hyperscaler.GCP(),
 		},
 		"Production GCP w/ new machine type": {
-			planID:    broker.GCPPlanID,
-			region:    "us-central1",
-			multiZone: false,
+			planID:                 broker.GCPPlanID,
+			region:                 "us-central1",
+			multiZone:              false,
+			includeNewMachineTypes: true,
 
 			expectedZonesCount:                  ptr.Integer(1),
 			expectedMinimalNumberOfNodes:        3,
