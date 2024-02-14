@@ -31,7 +31,7 @@ jobs:
           **/*.sh
 
     - name: Validate KEB helm chart
-      if: ${{ steps.changed-files-specific.outputs.any_modified == 'true' || inputs.release }}
+      if: ${{ steps.changed-files-specific.outputs.any_modified == 'true' || inputs.release == 'true' }}
       run: |
         cd resources/keb
         helm template .
@@ -57,7 +57,7 @@ jobs:
 
       - id: get-versions
         name: Get K3s versions
-        if: ${{ steps.changed-files-specific.outputs.any_modified == 'true' || inputs.release }}
+        if: ${{ steps.changed-files-specific.outputs.any_modified == 'true' || inputs.release == 'true' }}
         # prepare json representing GitHub matrix:
         # {"include": [
         #    {"version":"v1.26.10+k3s1"},
