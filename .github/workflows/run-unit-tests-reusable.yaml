@@ -35,6 +35,7 @@ jobs:
           go.mod
           go.sum
           Makefile
+          **/*.go
 
     - name: Set up go environment
       if: ${{ steps.changed-files-specific.outputs.any_modified == 'true' || inputs.release == 'true' }}
