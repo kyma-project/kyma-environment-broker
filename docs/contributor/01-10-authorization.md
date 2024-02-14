@@ -6,7 +6,7 @@ Kyma Environment Broker endpoints are secured by OAuth2 authorization. It is con
 To access the KEB Open Service Broker (OSB) endpoints, use the `/oauth` prefix before OSB API paths. For example:
 
 ```shell
-/oauth/{region}/v2/catalog
+/oauth/{region}/v2/catalog .
 ```
 
 You must also specify the `Authorization: Bearer` request header:
