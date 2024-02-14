@@ -59,8 +59,8 @@ The workflow:
 This [workflow](/.github/workflows/run-unit-tests-reusable.yaml) runs the unit tests.
 No parameters are passed from the calling workflow (callee).
 The end-to-end unit tests use a PostgreSQL database in a Docker container as the default storage solution, which allows 
-the execution of SQL statements during these tests. You do have the option to switch to in-memory storage 
-by setting the `DB_IN_MEMORY` environment variable to true. However, by using PostgreSQL, the tests can effectively perform 
+the execution of SQL statements during these tests. You can switch to in-memory storage 
+by setting the **DB_IN_MEMORY** environment variable to `true`. However, by using PostgreSQL, the tests can effectively perform 
 instance details serialization and deserialization, providing a clearer understanding of the impacts and outcomes of these processes.
 
 The workflow:
