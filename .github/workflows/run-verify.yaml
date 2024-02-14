@@ -45,6 +45,7 @@ jobs:
           go.sum
           Makefile
           **/*.go
+          **/*.sh
 
     - name: Set up go environment
       if: steps.changed-files-specific.outputs.any_modified == 'true'
@@ -86,6 +87,7 @@ jobs:
             go.sum
             Makefile
             **/*.go
+            **/*.sh
 
       - name: Set up go environment
         if: steps.changed-files-specific.outputs.any_modified == 'true'
