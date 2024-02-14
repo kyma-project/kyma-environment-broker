@@ -3,6 +3,7 @@ package main
 import (
 	"log"
 	"os"
+	"strconv"
 	"testing"
 	"time"
 
@@ -10,7 +11,7 @@ import (
 	"github.com/kyma-project/kyma-environment-broker/internal/storage"
 )
 
-func brokerStorageTestConfig() storage.Config {
+func brokerStorageE2ETestConfig() storage.Config {
 	return storage.Config{
 		Host:            "localhost",
 		User:            "test",
@@ -31,8 +32,8 @@ func TestMain(m *testing.M) {
 		os.Exit(exitVal)
 	}()
 
-	if os.Getenv("DB_IN_MEMORY") != "true" {
-		config := brokerStorageTestConfig()
+	if !dbInMemory() {
+		config := brokerStorageE2ETestConfig()
 
 		docker, err := internal.NewDockerHandler()
 		if err != nil {
@@ -51,7 +52,7 @@ func TestMain(m *testing.M) {
 			Password:      config.Password,
 			Name:          config.Name,
 			Host:          config.Host,
-			ContainerName: "e2e-tests",
+			ContainerName: "keb-e2e-tests",
 			Image:         "postgres:11",
 		})
 		defer func() {
@@ -71,8 +72,13 @@ func TestMain(m *testing.M) {
 }
 
 func GetStorageForE2ETests() (func() error, storage.BrokerStorage, error) {
-	if os.Getenv("DB_IN_MEMORY") == "true" {
+	if dbInMemory() {
 		return nil, storage.NewMemoryStorage(), nil
 	}
-	return storage.GetStorageForTest(brokerStorageTestConfig())
+	return storage.GetStorageForTest(brokerStorageE2ETestConfig())
+}
+
+func dbInMemory() bool {
+	v, _ := strconv.ParseBool(os.Getenv("DB_IN_MEMORY"))
+	return v
 }

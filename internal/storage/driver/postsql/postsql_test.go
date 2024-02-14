@@ -10,7 +10,7 @@ import (
 	"github.com/kyma-project/kyma-environment-broker/internal/storage"
 )
 
-func brokerStorageTestConfig() storage.Config {
+func brokerStorageDatabaseTestConfig() storage.Config {
 	return storage.Config{
 		Host:            "localhost",
 		User:            "test",
@@ -31,7 +31,7 @@ func TestMain(m *testing.M) {
 		os.Exit(exitVal)
 	}()
 
-	config := brokerStorageTestConfig()
+	config := brokerStorageDatabaseTestConfig()
 
 	docker, err := internal.NewDockerHandler()
 	if err != nil {
@@ -69,5 +69,5 @@ func TestMain(m *testing.M) {
 }
 
 func GetStorageForDatabaseTests() (func() error, storage.BrokerStorage, error) {
-	return storage.GetStorageForTest(brokerStorageTestConfig())
+	return storage.GetStorageForTest(brokerStorageDatabaseTestConfig())
 }
