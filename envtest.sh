@@ -17,7 +17,7 @@ fi
 
 output=$("$LOCAL_BIN"/setup-envtest use --bin-dir "$LOCAL_BIN" -p path "$K8S_VERSION")
 if [ $? -ne 0 ]; then
-  echo "Error: failed to run setup-envtest"
+  echo "Error: failed to run setup-envtest fi"
   exit $?
-fi asg
+fi
 echo "$output"
