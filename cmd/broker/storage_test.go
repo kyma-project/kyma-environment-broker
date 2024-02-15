@@ -32,7 +32,7 @@ func TestMain(m *testing.M) {
 		os.Exit(exitVal)
 	}()
 
-	if !dbInMemory() {
+	if !dbInMemoryForE2ETests() {
 		config := brokerStorageE2ETestConfig()
 
 		docker, err := internal.NewDockerHandler()
@@ -72,13 +72,13 @@ func TestMain(m *testing.M) {
 }
 
 func GetStorageForE2ETests() (func() error, storage.BrokerStorage, error) {
-	if dbInMemory() {
+	if dbInMemoryForE2ETests() {
 		return nil, storage.NewMemoryStorage(), nil
 	}
 	return storage.GetStorageForTest(brokerStorageE2ETestConfig())
 }
 
-func dbInMemory() bool {
-	v, _ := strconv.ParseBool(os.Getenv("DB_IN_MEMORY"))
+func dbInMemoryForE2ETests() bool {
+	v, _ := strconv.ParseBool(os.Getenv("DB_IN_MEMORY_FOR_E2E_TESTS"))
 	return v
 }
