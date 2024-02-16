@@ -53,7 +53,7 @@ func GetStorageForTest(config Config) (func() error, BrokerStorage, error) {
 		fmt.Println("cleaned up")
 		err = connection.Close()
 		if err != nil {
-			fmt.Printf("failed to close connection: %s\n", err.Error())
+			return fmt.Errorf("failed to close connection: %w", err)
 		}
 		return nil
 	}
