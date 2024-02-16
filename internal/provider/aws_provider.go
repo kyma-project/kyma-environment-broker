@@ -21,6 +21,8 @@ const (
 	DefaultAWSTrialRegion    = "eu-west-1"
 	DefaultEuAccessAWSRegion = "eu-central-1"
 	DefaultAWSMultiZoneCount = 3
+	DefaultAWSMachineType    = "m6i.large"
+	DefaultOldAWSMachineType = "m5.xlarge"
 )
 
 var europeAWS = "eu-west-1"
@@ -37,6 +39,7 @@ type (
 	AWSInput struct {
 		MultiZone                    bool
 		ControlPlaneFailureTolerance string
+		IncludeNewMachineTypes       bool
 	}
 	AWSTrialInput struct {
 		PlatformRegionMapping map[string]string
@@ -53,11 +56,15 @@ func (p *AWSInput) Defaults() *gqlschema.ClusterConfigInput {
 	if p.ControlPlaneFailureTolerance != "" {
 		controlPlaneFailureTolerance = &p.ControlPlaneFailureTolerance
 	}
+	machineType := DefaultOldAWSMachineType
+	if p.IncludeNewMachineTypes {
+		machineType = DefaultAWSMachineType
+	}
 	return &gqlschema.ClusterConfigInput{
 		GardenerConfig: &gqlschema.GardenerConfigInput{
 			DiskType:       ptr.String("gp2"),
 			VolumeSizeGb:   ptr.Integer(50),
-			MachineType:    "m5.xlarge",
+			MachineType:    machineType,
 			Region:         DefaultAWSRegion,
 			Provider:       "aws",
 			WorkerCidr:     networking.DefaultNodesCIDR,

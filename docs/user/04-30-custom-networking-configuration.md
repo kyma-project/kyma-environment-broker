@@ -1,6 +1,6 @@
 # Custom Networking Configuration
 
-To create a Kyma runtime with a custom IP range for worker nodes, specify the additional `networking` provisioning parameters. See the example:
+To create a Kyma runtime with a custom IP range for worker Nodes, specify the additional **networking** provisioning parameters. See the example:
 
 ```bash
    export VERSION=1.15.0
@@ -24,9 +24,10 @@ To create a Kyma runtime with a custom IP range for worker nodes, specify the ad
        }
    }"
 ```
-> **NOTE:** The `nodes` value is a mandatory field, but the `networking` section is optional.
+> [!NOTE] 
+> The **nodes** value is a mandatory field, but the **networking** section is optional.
 
-If you do not provide the `networking` object in the provisioning request, the default configuration is used.
+If you do not provide the **networking** object in the provisioning request, the default configuration is used.
 The configuration is immutable - it cannot be changed later in an update request.
 The provided IP range must not overlap with ranges of potential seed clusters (see [GardenerSeedCIDRs definition](https://github.com/kyma-project/kyma-environment-broker/blob/main/internal/networking/cidr.go)).
-The suffix must not be greater than 23 because the IP range is divided between the zones and nodes. Additionally, two ranges are reserved for `pods` and `services` which also must not overlap with the IP range for nodes.
+The suffix must not be greater than 23 because the IP range is divided between the zones and Nodes. Additionally, two ranges are reserved for `pods` and `services` which also must not overlap with the IP range for Nodes.

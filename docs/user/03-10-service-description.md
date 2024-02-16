@@ -1,13 +1,13 @@
 # Service Description
 
-Kyma Environment Broker (KEB) is compatible with the [Open Service Broker API](https://www.openservicebrokerapi.org/) (OSBAPI) specification. It provides a ServiceClass that provisions SAP BTP, Kyma runtime on a cluster.
+Kyma Environment Broker (KEB) is compatible with the [Open Service Broker API (OSBAPI)](https://www.openservicebrokerapi.org/) specification. It provides a ServiceClass that provisions SAP BTP, Kyma runtime on a cluster.
 
 ## Service Plans
 
 The supported plans are as follows:
 
-| Plan name             | Plan ID | Description                                             |
-|-----------------------|---------|---------------------------------------------------------|
+| Plan name             | Plan ID                                | Description                                             |
+|-----------------------|----------------------------------------|---------------------------------------------------------|
 | `azure`               | `4deee563-e5ec-4731-b9b1-53b42d855f0c` | Installs Kyma runtime on the Azure cluster.             |
 | `azure_lite`          | `8cb22518-aa26-44c5-91a0-e669ec9bf443` | Installs Kyma Lite on the Azure cluster.                |
 | `aws`                 | `361c511f-f939-4621-b228-d0fb79a1fe15` | Installs Kyma runtime on the AWS cluster.               |
@@ -18,11 +18,12 @@ The supported plans are as follows:
 
 There is also an experimental plan:
 
-| Plan name | Plan ID | Description |
-|-----------|---------|-------------|
+| Plan name | Plan ID                                | Description                                           |
+|-----------|----------------------------------------|-------------------------------------------------------|
 | `preview` | `5cb3d976-b85c-42ea-a636-79cadda109a9` | Installs Kyma runtime on AWS using Lifecycle Manager. |
 
-> **CAUTION:** The experimental plan may fail to work or be removed.
+> [!WARNING] 
+> The experimental plan may fail to work or be removed.
 
 ## Provisioning Parameters
 
@@ -32,35 +33,35 @@ There are two types of configurable provisioning parameters: the ones that are c
 
 These are the provisioning parameters that you can configure:
 
-| Parameter name | Type | Description | Required | Default value |
-|----------------|-------|-------------|:----------:|---------------|
-| **name** | string | Specifies the name of the cluster. | Yes | None |
-| **components** | array | Defines optional components that are installed in a Kyma runtime. The possible values are `kiali` and `tracing`. | No | [] |
-| **kymaVersion[<sup>1</sup>](#version)** | string | Provides a Kyma version on demand. | No | None |
-| **overridesVersion[<sup>1</sup>](#version)** | string | Provides an overrides version for a specific Kyma version. | No | None |
-| **purpose** | string | Provides a purpose for a Kyma runtime. | No | None |
-| **targetSecret** | string | Provides the name of the Secret that contains hyperscaler's credentials for a Kyma runtime. | No | None |
-| **platform_region** | string | Defines the platform region that is sent in the request path. | No | None |
-| **platform_provider** | string | Defines the platform provider for a Kyma runtime. | No | None |
-| **context.tenant_id** | string | Provides a tenant ID for a Kyma runtime. | No | None |
-| **context.subaccount_id** | string | Provides a subaccount ID for a Kyma runtime. | No | None |
-| **context.globalaccount_id** | string | Provides a global account ID for a Kyma runtime. | No | None |
-| **context.sm_operator_credentials.clientid** | string | Provides a client ID for SAP BTP service operator. | No | None |
-| **context.sm_operator_credentials.clientsecret** | string | Provides a client secret for the SAP BTP service operator. | No | None |
-| **context.sm_operator_credentials.sm_url** | string | Provides a SAP Service Manager URL for the SAP BTP service operator. | No | None |
-| **context.sm_operator_credentials.url** | string | Provides an authentication URL for the SAP BTP service operator. | No | None |
-| **context.sm_operator_credentials.xsappname** | string | Provides an XSApp name for the SAP BTP service operator. | No | None |
-| **context.user_id** | string | Provides a user ID for a Kyma runtime. | No | None |
-| **oidc.clientID** | string | Provides an OIDC client ID for a Kyma runtime. | No | None |
-| **oidc.groupsClaim** | string | Provides an OIDC groups claim for a Kyma runtime. | No | `groups` |
-| **oidc.issuerURL** | string | Provides an OIDC issuer URL for a Kyma runtime. | No | None |
-| **oidc.signingAlgs** | string | Provides the OIDC signing algorithms for a Kyma runtime. | No | `RS256` |
-| **oidc.usernameClaim** | string | Provides an OIDC username claim for a Kyma runtime. | No | `email` |
-| **oidc.usernamePrefix** | string | Provides an OIDC username prefix for a Kyma runtime. | No | None |
-| **administrators** | string | Provides administrators for a Kyma runtime. | No | None |
-| **networking.nodes** | string | The Node network's CIDR. | No | `10.250.0.0/22` |
-| **modules.default** | bool | Defines whether to use a default list of modules | No | None |
-| **modules.list** | array | Defines a custom list of modules  | No | None |
+| Parameter name                                   | Type   | Description                                                                                                      | Required | Default value   |
+|--------------------------------------------------|--------|------------------------------------------------------------------------------------------------------------------|:--------:|-----------------|
+| **name**                                         | string | Specifies the name of the cluster.                                                                               |   Yes    | None            |
+| **components**                                   | array  | Defines optional components that are installed in a Kyma runtime. The possible values are `kiali` and `tracing`. |    No    | []              |
+| **kymaVersion[<sup>1</sup>](#version)**          | string | Provides a Kyma version on demand.                                                                               |    No    | None            |
+| **overridesVersion[<sup>1</sup>](#version)**     | string | Provides an overrides version for a specific Kyma version.                                                       |    No    | None            |
+| **purpose**                                      | string | Provides a purpose for a Kyma runtime.                                                                           |    No    | None            |
+| **targetSecret**                                 | string | Provides the name of the Secret that contains hyperscaler's credentials for a Kyma runtime.                      |    No    | None            |
+| **platform_region**                              | string | Defines the platform region that is sent in the request path.                                                    |    No    | None            |
+| **platform_provider**                            | string | Defines the platform provider for a Kyma runtime.                                                                |    No    | None            |
+| **context.tenant_id**                            | string | Provides a tenant ID for a Kyma runtime.                                                                         |    No    | None            |
+| **context.subaccount_id**                        | string | Provides a subaccount ID for a Kyma runtime.                                                                     |    No    | None            |
+| **context.globalaccount_id**                     | string | Provides a global account ID for a Kyma runtime.                                                                 |    No    | None            |
+| **context.sm_operator_credentials.clientid**     | string | Provides a client ID for SAP BTP service operator.                                                               |    No    | None            |
+| **context.sm_operator_credentials.clientsecret** | string | Provides a client secret for the SAP BTP service operator.                                                       |    No    | None            |
+| **context.sm_operator_credentials.sm_url**       | string | Provides a SAP Service Manager URL for the SAP BTP service operator.                                             |    No    | None            |
+| **context.sm_operator_credentials.url**          | string | Provides an authentication URL for the SAP BTP service operator.                                                 |    No    | None            |
+| **context.sm_operator_credentials.xsappname**    | string | Provides an XSApp name for the SAP BTP service operator.                                                         |    No    | None            |
+| **context.user_id**                              | string | Provides a user ID for a Kyma runtime.                                                                           |    No    | None            |
+| **oidc.clientID**                                | string | Provides an OIDC client ID for a Kyma runtime.                                                                   |    No    | None            |
+| **oidc.groupsClaim**                             | string | Provides an OIDC groups claim for a Kyma runtime.                                                                |    No    | `groups`        |
+| **oidc.issuerURL**                               | string | Provides an OIDC issuer URL for a Kyma runtime.                                                                  |    No    | None            |
+| **oidc.signingAlgs**                             | string | Provides the OIDC signing algorithms for a Kyma runtime.                                                         |    No    | `RS256`         |
+| **oidc.usernameClaim**                           | string | Provides an OIDC username claim for a Kyma runtime.                                                              |    No    | `email`         |
+| **oidc.usernamePrefix**                          | string | Provides an OIDC username prefix for a Kyma runtime.                                                             |    No    | None            |
+| **administrators**                               | string | Provides administrators for a Kyma runtime.                                                                      |    No    | None            |
+| **networking.nodes**                             | string | The Node network's CIDR.                                                                                         |    No    | `10.250.0.0/22` |
+| **modules.default**                              | bool   | Defines whether to use a default list of modules                                                                 |    No    | None            |
+| **modules.list**                                 | array  | Defines a custom list of modules                                                                                 |    No    | None            |
 
 ### Provider-specific Parameters
 
@@ -72,16 +73,16 @@ These are the provisioning parameters for Azure that you can configure:
   Azure
   </summary>
 
-| Parameter name | Type | Description | Required | Default value                                 |
-| ---------------|-------|-------------|:----------:|-----------------------------------------------|
-| **machineType** | string | Specifies the provider-specific virtual machine type. | No | `Standard_D4s_v5`                              |
-| **volumeSizeGb** | int | Specifies the size of the root volume. | No | `50`                                          |
-| **region** | string | Defines the cluster region. | Yes | None  |
-| **zones** | string | Defines the list of zones in which Runtime Provisioner creates a cluster. | No | `["1"]`                                       |
-| **autoScalerMin[<sup>2</sup>](#update)** | int | Specifies the minimum number of virtual machines to create. | No | `2`                                           |
-| **autoScalerMax[<sup>2</sup>](#update)** | int | Specifies the maximum number of virtual machines to create, up to `40` allowed. | No | `10`                                          |
-| **maxSurge[<sup>2</sup>](#update)** | int | Specifies the maximum number of virtual machines that are created during an update. | No | `4`                                           |
-| **maxUnavailable[<sup>2</sup>](#update)** | int | Specifies the maximum number of VMs that can be unavailable during an update. | No | `1`                                           |
+| Parameter name                            | Type   | Description                                                                         | Required | Default value     |
+|-------------------------------------------|--------|-------------------------------------------------------------------------------------|:--------:|-------------------|
+| **machineType**                           | string | Specifies the provider-specific virtual machine type.                               |    No    | `Standard_D2s_v5` |
+| **volumeSizeGb**                          | int    | Specifies the size of the root volume.                                              |    No    | `50`              |
+| **region**                                | string | Defines the cluster region.                                                         |   Yes    | None              |
+| **zones**                                 | string | Defines the list of zones in which Runtime Provisioner creates a cluster.           |    No    | `["1"]`           |
+| **autoScalerMin[<sup>2</sup>](#update)**  | int    | Specifies the minimum number of virtual machines to create.                         |    No    | `2`               |
+| **autoScalerMax[<sup>2</sup>](#update)**  | int    | Specifies the maximum number of virtual machines to create, up to `40` allowed.     |    No    | `10`              |
+| **maxSurge[<sup>2</sup>](#update)**       | int    | Specifies the maximum number of virtual machines that are created during an update. |    No    | `4`               |
+| **maxUnavailable[<sup>2</sup>](#update)** | int    | Specifies the maximum number of VMs that can be unavailable during an update.       |    No    | `1`               |
 
   </details>
   <details>
@@ -89,16 +90,16 @@ These are the provisioning parameters for Azure that you can configure:
   Azure Lite
   </summary>
 
-| Parameter name | Type | Description | Required | Default value                                |
-| ---------------|-------|-------------|:----------:|----------------------------------------------|
-| **machineType** | string | Specifies the provider-specific virtual machine type. | No | `Standard_D4s_v5`                             |
-| **volumeSizeGb** | int | Specifies the size of the root volume. | No | `50`                                         |
-| **region** | string | Defines the cluster region. | Yes | None |
-| **zones** | string | Defines the list of zones in which Runtime Provisioner creates a cluster. | No | `["1"]`                                      |
-| **autoScalerMin[<sup>2</sup>](#update)** | int | Specifies the minimum number of virtual machines to create. | No | `2`                                          |
-| **autoScalerMax[<sup>2</sup>](#update)** | int | Specifies the maximum number of virtual machines to create, up to `40` allowed. | No | `10`                                         |
-| **maxSurge[<sup>2</sup>](#update)** | int | Specifies the maximum number of virtual machines that are created during an update. | No | `4`                                          |
-| **maxUnavailable[<sup>2</sup>](#update)** | int | Specifies the maximum number of VMs that can be unavailable during an update. | No | `1`                                          |
+| Parameter name                            | Type   | Description                                                                         | Required | Default value     |
+|-------------------------------------------|--------|-------------------------------------------------------------------------------------|:--------:|-------------------|
+| **machineType**                           | string | Specifies the provider-specific virtual machine type.                               |    No    | `Standard_D4s_v5` |
+| **volumeSizeGb**                          | int    | Specifies the size of the root volume.                                              |    No    | `50`              |
+| **region**                                | string | Defines the cluster region.                                                         |   Yes    | None              |
+| **zones**                                 | string | Defines the list of zones in which Runtime Provisioner creates a cluster.           |    No    | `["1"]`           |
+| **autoScalerMin[<sup>2</sup>](#update)**  | int    | Specifies the minimum number of virtual machines to create.                         |    No    | `2`               |
+| **autoScalerMax[<sup>2</sup>](#update)**  | int    | Specifies the maximum number of virtual machines to create, up to `40` allowed.     |    No    | `10`              |
+| **maxSurge[<sup>2</sup>](#update)**       | int    | Specifies the maximum number of virtual machines that are created during an update. |    No    | `4`               |
+| **maxUnavailable[<sup>2</sup>](#update)** | int    | Specifies the maximum number of VMs that can be unavailable during an update.       |    No    | `1`               |
 
  </details>
  </div>
@@ -110,16 +111,16 @@ These are the provisioning parameters for AWS that you can configure:
   AWS
   </summary>
 
-| Parameter name | Type | Description | Required | Default value |
-| ---------------|-------|-------------|:----------:|---------------|
-| **machineType** | string | Specifies the provider-specific virtual machine type. | No | `m5.2xlarge` |
-| **volumeSizeGb** | int | Specifies the size of the root volume. | No | `50` |
-| **region** | string | Defines the cluster region. | Yes | None |
-| **zones** | string | Defines the list of zones in which Runtime Provisioner creates a cluster. | No | `["1"]` |
-| **autoScalerMin[<sup>2</sup>](#update)** | int | Specifies the minimum number of virtual machines to create. | No | `3` |
-| **autoScalerMax[<sup>2</sup>](#update)** | int | Specifies the maximum number of virtual machines to create, up to `40` allowed. | No | `10` |
-| **maxSurge[<sup>2</sup>](#update)** | int | Specifies the maximum number of virtual machines that are created during an update. | No | `4` |
-| **maxUnavailable[<sup>2</sup>](#update)** | int | Specifies the maximum number of virtual machines that can be unavailable during an update. | No | `1` |
+| Parameter name                            | Type   | Description                                                                                | Required | Default value |
+|-------------------------------------------|--------|--------------------------------------------------------------------------------------------|:--------:|---------------|
+| **machineType**                           | string | Specifies the provider-specific virtual machine type.                                      |    No    | `m6i.large`   |
+| **volumeSizeGb**                          | int    | Specifies the size of the root volume.                                                     |    No    | `50`          |
+| **region**                                | string | Defines the cluster region.                                                                |   Yes    | None          |
+| **zones**                                 | string | Defines the list of zones in which Runtime Provisioner creates a cluster.                  |    No    | `["1"]`       |
+| **autoScalerMin[<sup>2</sup>](#update)**  | int    | Specifies the minimum number of virtual machines to create.                                |    No    | `3`           |
+| **autoScalerMax[<sup>2</sup>](#update)**  | int    | Specifies the maximum number of virtual machines to create, up to `40` allowed.            |    No    | `10`          |
+| **maxSurge[<sup>2</sup>](#update)**       | int    | Specifies the maximum number of virtual machines that are created during an update.        |    No    | `4`           |
+| **maxUnavailable[<sup>2</sup>](#update)** | int    | Specifies the maximum number of virtual machines that can be unavailable during an update. |    No    | `1`           |
 
   </details>
  </div>
@@ -132,16 +133,16 @@ These are the provisioning parameters for GCP that you can configure:
   GCP
   </summary>
 
-| Parameter name | Type | Description | Required | Default value |
-| ---------------|-------|-------------|:----------:|---------------|
-| **machineType** | string | Specifies the provider-specific virtual machine type. | No | `n2-standard-8` |
-| **volumeSizeGb** | int | Specifies the size of the root volume. | No | `30` |
-| **region** | string | Defines the cluster region. | Yes | None |
-| **zones** | string | Defines the list of zones in which Runtime Provisioner creates a cluster. | No | `["a"]` |
-| **autoScalerMin[<sup>2</sup>](#update)** | int | Specifies the minimum number of virtual machines to create. | No | `3` |
-| **autoScalerMax[<sup>2</sup>](#update)** | int | Specifies the maximum number of virtual machines to create. | No | `4` |
-| **maxSurge[<sup>2</sup>](#update)** | int | Specifies the maximum number of virtual machines that are created during an update. | No | `4` |
-| **maxUnavailable[<sup>2</sup>](#update)** | int | Specifies the maximum number of VMs that can be unavailable during an update. | No | `1` |
+| Parameter name                            | Type   | Description                                                                         | Required | Default value   |
+|-------------------------------------------|--------|-------------------------------------------------------------------------------------|:--------:|-----------------|
+| **machineType**                           | string | Specifies the provider-specific virtual machine type.                               |    No    | `n2-standard-2` |
+| **volumeSizeGb**                          | int    | Specifies the size of the root volume.                                              |    No    | `30`            |
+| **region**                                | string | Defines the cluster region.                                                         |   Yes    | None            |
+| **zones**                                 | string | Defines the list of zones in which Runtime Provisioner creates a cluster.           |    No    | `["a"]`         |
+| **autoScalerMin[<sup>2</sup>](#update)**  | int    | Specifies the minimum number of virtual machines to create.                         |    No    | `3`             |
+| **autoScalerMax[<sup>2</sup>](#update)**  | int    | Specifies the maximum number of virtual machines to create.                         |    No    | `4`             |
+| **maxSurge[<sup>2</sup>](#update)**       | int    | Specifies the maximum number of virtual machines that are created during an update. |    No    | `4`             |
+| **maxUnavailable[<sup>2</sup>](#update)** | int    | Specifies the maximum number of VMs that can be unavailable during an update.       |    No    | `1`             |
 
  </details>
  </div>
@@ -154,16 +155,16 @@ These are the provisioning parameters for SapConvergedCloud that you can configu
   SapConvergedCloud
   </summary>
 
-| Parameter name | Type | Description | Required | Default value |
-| ---------------|-------|-------------|:----------:|---------------|
-| **machineType** | string | Specifies the provider-specific virtual machine type. | No | `m2.xlarge`   |
-| **volumeSizeGb** | int | Specifies the size of the root volume. | No | `30`          |
-| **region** | string | Defines the cluster region. | Yes | None          |
-| **zones** | string | Defines the list of zones in which Runtime Provisioner creates a cluster. | No | `["a"]`       |
-| **autoScalerMin[<sup>2</sup>](#update)** | int | Specifies the minimum number of virtual machines to create. | No | `3`           |
-| **autoScalerMax[<sup>2</sup>](#update)** | int | Specifies the maximum number of virtual machines to create. | No | `20`          |
-| **maxSurge[<sup>2</sup>](#update)** | int | Specifies the maximum number of virtual machines that are created during an update. | No | `4`           |
-| **maxUnavailable[<sup>2</sup>](#update)** | int | Specifies the maximum number of virtual machines that can be unavailable during an update. | No | `1`           |
+| Parameter name                            | Type   | Description                                                                                | Required | Default value |
+|-------------------------------------------|--------|--------------------------------------------------------------------------------------------|:--------:|---------------|
+| **machineType**                           | string | Specifies the provider-specific virtual machine type.                                      |    No    | `g_c2_m8`     |
+| **volumeSizeGb**                          | int    | Specifies the size of the root volume.                                                     |    No    | `30`          |
+| **region**                                | string | Defines the cluster region.                                                                |   Yes    | None          |
+| **zones**                                 | string | Defines the list of zones in which Runtime Provisioner creates a cluster.                  |    No    | `["a"]`       |
+| **autoScalerMin[<sup>2</sup>](#update)**  | int    | Specifies the minimum number of virtual machines to create.                                |    No    | `3`           |
+| **autoScalerMax[<sup>2</sup>](#update)**  | int    | Specifies the maximum number of virtual machines to create.                                |    No    | `20`          |
+| **maxSurge[<sup>2</sup>](#update)**       | int    | Specifies the maximum number of virtual machines that are created during an update.        |    No    | `4`           |
+| **maxUnavailable[<sup>2</sup>](#update)** | int    | Specifies the maximum number of virtual machines that can be unavailable during an update. |    No    | `1`           |
 
  </details>
  </div>
@@ -186,12 +187,12 @@ These are the provisioning parameters for the Trial plan that you can configure:
   Trial plan
   </summary>
 
-| Parameter name | Type | Description | Required | Possible values| Default value |
-| ---------------|-------|-------------|----------|---------------|---------------|
-| **name** | string | Specifies the name of the Kyma runtime. | Yes | Any string| None |
-| **region** | string | Defines the cluster region. | No | `europe`,`us`, `asia` | Calculated from the platform region |
-| **provider** | string | Specifies the cloud provider used during provisioning. | No | `Azure`, `AWS`, `GCP` | `Azure` |
-| **context.active** | string | Specifies if the Kyma runtime should be suspended or unsuspended. | No | `true`, `false` | None |
+| Parameter name     | Type   | Description                                                       | Required | Possible values       | Default value                       |
+|--------------------|--------|-------------------------------------------------------------------|----------|-----------------------|-------------------------------------|
+| **name**           | string | Specifies the name of the Kyma runtime.                           | Yes      | Any string            | None                                |
+| **region**         | string | Defines the cluster region.                                       | No       | `europe`,`us`, `asia` | Calculated from the platform region |
+| **provider**       | string | Specifies the cloud provider used during provisioning.            | No       | `Azure`, `AWS`, `GCP` | `Azure`                             |
+| **context.active** | string | Specifies if the Kyma runtime should be suspended or unsuspended. | No       | `true`, `false`       | None                                |
 
 The **region** parameter is optional. If not specified, the region is calculated from platform region specified in this path:
 ```shell
@@ -204,7 +205,8 @@ The mapping between the platform region and the provider region (Azure, AWS or G
 
 ## Own Cluster Plan
 
-> **NOTE:** The `own_cluster` plan has been deprecated.
+> [!NOTE] 
+> The `own_cluster` plan has been deprecated.
 
 These are the provisioning parameters for the `own_cluster` plan that you configure:
 
@@ -214,11 +216,11 @@ These are the provisioning parameters for the `own_cluster` plan that you config
   Own cluster plan
   </summary>
 
-| Parameter name | Type | Description | Required | Default value |
-| ---------------|-------|-------------|----------|---------------|
-| **kubeconfig** | string | Kubeconfig that points to the cluster where you instal Kyma runtime. | Yes | None |
-| **shootDomain** | string | Domain of the shoot where you install Kyma runtime. | Yes | None |
-| **shootName** | string | Name of the shoot where you install Kyma runtime. | Yes | None |
+| Parameter name  | Type   | Description                                                          | Required | Default value |
+|-----------------|--------|----------------------------------------------------------------------|----------|---------------|
+| **kubeconfig**  | string | Kubeconfig that points to the cluster where you instal Kyma runtime. | Yes      | None          |
+| **shootDomain** | string | Domain of the shoot where you install Kyma runtime.                  | Yes      | None          |
+| **shootName**   | string | Name of the shoot where you install Kyma runtime.                    | Yes      | None          |
 
 </details>
 </div>
@@ -237,16 +239,16 @@ These are the provisioning parameters for the `preview` plan that you configure:
   Preview cluster plan
   </summary>
 
-| Parameter name | Type | Description | Required | Default value |
-| ---------------|-------|-------------|:----------:|---------------|
-| **machineType** | string | Specifies the provider-specific virtual machine type. | No | `m5.2xlarge` |
-| **volumeSizeGb** | int | Specifies the size of the root volume. | No | `50` |
-| **region** | string | Defines the cluster region. | Yes | None |
-| **zones** | string | Defines the list of zones in which Runtime Provisioner creates a cluster. | No | `["1"]` |
-| **autoScalerMin[<sup>2</sup>](#update)** | int | Specifies the minimum number of virtual machines to create. | No | `3` |
-| **autoScalerMax[<sup>2</sup>](#update)** | int | Specifies the maximum number of virtual machines to create, up to `40` allowed. | No | `10` |
-| **maxSurge[<sup>2</sup>](#update)** | int | Specifies the maximum number of virtual machines that are created during an update. | No | `4` |
-| **maxUnavailable[<sup>2</sup>](#update)** | int | Specifies the maximum number of virtual machines that can be unavailable during an update. | No | `1` |
+| Parameter name                            | Type   | Description                                                                                | Required | Default value |
+|-------------------------------------------|--------|--------------------------------------------------------------------------------------------|:--------:|---------------|
+| **machineType**                           | string | Specifies the provider-specific virtual machine type.                                      |    No    | `m6i.large`   |
+| **volumeSizeGb**                          | int    | Specifies the size of the root volume.                                                     |    No    | `50`          |
+| **region**                                | string | Defines the cluster region.                                                                |   Yes    | None          |
+| **zones**                                 | string | Defines the list of zones in which Runtime Provisioner creates a cluster.                  |    No    | `["1"]`       |
+| **autoScalerMin[<sup>2</sup>](#update)**  | int    | Specifies the minimum number of virtual machines to create.                                |    No    | `3`           |
+| **autoScalerMax[<sup>2</sup>](#update)**  | int    | Specifies the maximum number of virtual machines to create, up to `40` allowed.            |    No    | `10`          |
+| **maxSurge[<sup>2</sup>](#update)**       | int    | Specifies the maximum number of virtual machines that are created during an update.        |    No    | `4`           |
+| **maxUnavailable[<sup>2</sup>](#update)** | int    | Specifies the maximum number of virtual machines that can be unavailable during an update. |    No    | `1`           |
 
 </details>
 </div>

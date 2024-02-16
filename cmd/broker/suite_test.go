@@ -150,7 +150,7 @@ func NewOrchestrationSuite(t *testing.T, additionalKymaVersions []string) *Orche
 			ProvisioningTimeout:         time.Minute,
 			URL:                         "http://localhost",
 			DefaultGardenerShootPurpose: "testing",
-		}, kymaVer, map[string]string{"cf-eu10": "europe"}, cfg.FreemiumProviders, oidcDefaults)
+		}, kymaVer, map[string]string{"cf-eu10": "europe"}, cfg.FreemiumProviders, oidcDefaults, cfg.Broker.IncludeNewMachineTypesInSchema)
 	require.NoError(t, err)
 
 	reconcilerClient := reconciler.NewFakeClient()
@@ -590,7 +590,7 @@ type ProvisioningSuite struct {
 	k8sKcpCli        client.Client
 }
 
-func NewProvisioningSuite(t *testing.T, multiZoneCluster bool, controlPlaneFailureTolerance string) *ProvisioningSuite {
+func NewProvisioningSuite(t *testing.T, multiZoneCluster bool, controlPlaneFailureTolerance string, includeNewMachineTypes bool) *ProvisioningSuite {
 	ctx, _ := context.WithTimeout(context.Background(), 20*time.Minute)
 	logs := logrus.New()
 	storageCleanup, db, err := GetStorageForE2ETests()
@@ -634,7 +634,7 @@ func NewProvisioningSuite(t *testing.T, multiZoneCluster bool, controlPlaneFailu
 			DefaultGardenerShootPurpose:  "testing",
 			MultiZoneCluster:             multiZoneCluster,
 			ControlPlaneFailureTolerance: controlPlaneFailureTolerance,
-		}, defaultKymaVer, map[string]string{"cf-eu10": "europe"}, cfg.FreemiumProviders, oidcDefaults)
+		}, defaultKymaVer, map[string]string{"cf-eu10": "europe"}, cfg.FreemiumProviders, oidcDefaults, includeNewMachineTypes)
 	require.NoError(t, err)
 
 	server := avs.NewMockAvsServer(t)

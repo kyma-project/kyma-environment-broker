@@ -41,6 +41,7 @@ type Config struct {
 	ShowTrialExpirationInfo                 bool   `envconfig:"default=false"`
 	SubaccountsIdsToShowTrialExpirationInfo string `envconfig:"default="`
 	TrialDocsURL                            string `envconfig:"default="`
+	IncludeNewMachineTypesInSchema          bool   `envconfig:"default=false"`
 
 	Binding BindingConfig
 }

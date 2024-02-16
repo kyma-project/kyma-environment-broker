@@ -16,7 +16,8 @@ import (
 
 const (
 	DefaultGCPRegion         = "europe-west3"
-	DefaultGCPMachineType    = "n2-standard-4"
+	DefaultGCPMachineType    = "n2-standard-2"
+	DefaultOldGCPMachineType = "n2-standard-4"
 	DefaultGCPMultiZoneCount = 3
 )
 
@@ -34,6 +35,7 @@ type (
 	GcpInput struct {
 		MultiZone                    bool
 		ControlPlaneFailureTolerance string
+		IncludeNewMachineTypes       bool
 	}
 	GcpTrialInput struct {
 		PlatformRegionMapping map[string]string
@@ -49,11 +51,15 @@ func (p *GcpInput) Defaults() *gqlschema.ClusterConfigInput {
 	if p.ControlPlaneFailureTolerance != "" {
 		controlPlaneFailureTolerance = &p.ControlPlaneFailureTolerance
 	}
+	machineType := DefaultOldGCPMachineType
+	if p.IncludeNewMachineTypes {
+		machineType = DefaultGCPMachineType
+	}
 	return &gqlschema.ClusterConfigInput{
 		GardenerConfig: &gqlschema.GardenerConfigInput{
 			DiskType:       ptr.String("pd-standard"),
 			VolumeSizeGb:   ptr.Integer(50),
-			MachineType:    DefaultGCPMachineType,
+			MachineType:    machineType,
 			Region:         DefaultGCPRegion,
 			Provider:       "gcp",
 			WorkerCidr:     networking.DefaultNodesCIDR,

@@ -2,7 +2,10 @@
 
 ## ESLint Workflow
 
-This [workflow](/.github/workflows/run-eslint.yaml) is triggered by PRs on the `main` branch. It runs the ESLint.
+This [workflow](/.github/workflows/run-eslint.yaml) runs the ESLint. It is triggered by PRs on the `main` branch that change at least one of the following:
+- `/.github` directory content
+- `/testing/e2e/skr` directory content
+- `Makefile` file
 
 The workflow:
 - Checks out code 
@@ -24,12 +27,33 @@ This [workflow](/.github/workflows/label-validator.yml) is triggered by PRs on t
 
 ## Verify KEB Workflow
 
-This [workflow](/.github/workflows/run-verify.yaml) is triggered by PRs on the `main` branch. Then it calls the reusable [workflow](/.github/workflows/run-unit-tests-reusable.yaml) with unit tests.
-Besides the tests, it also runs Go-related checks and Go linter.
+This [workflow](/.github/workflows/run-verify.yaml) calls the reusable [workflow](/.github/workflows/run-unit-tests-reusable.yaml) with unit tests.
+Besides the tests, it also runs Go-related checks and Go linter. It is triggered by PRs on the `main` branch that change at least one of the following:
+- `/.github` directory content
+- `/cmd` directory content
+- `/common` directory content
+- `/files` directory content
+- `/internal` directory content
+- `/scripts` directory content
+- `/utils/edp-registrator` directory conent
+- `.golangci.yml` file
+- `Dockerfile.job` file 
+- `Dockerfile.keb` file
+- `Dockerfile.runtimereconciler` file
+- `go.mod` file
+- `go.sum` file
+- `Makefile` file
+- any `*.go` file
+- any `*.sh` file
 
 ## KEB Chart Tests Workflow
 
-This [workflow](/.github/workflows/run-keb-chart-tests.yaml) is triggered by PRs on the `main` branch. Then it calls the reusable [workflow](/.github/workflows/run-keb-chart-tests-reusable.yaml). 
+This [workflow](/.github/workflows/run-keb-chart-tests.yaml) calls the reusable [workflow](/.github/workflows/run-keb-chart-tests-reusable.yaml). It is triggered by PRs on the `main` branch that change at least one of the following:
+- `/.github` directory conent
+- `/resources` directory content
+- `/scripts` directory content
+- `Makefile` file
+- any `*.sh` file 
 
 ## Reusable Workflows
 

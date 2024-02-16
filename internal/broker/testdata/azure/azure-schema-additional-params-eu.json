@@ -36,6 +36,7 @@
     },
     "machineType": {
       "_enumDisplayName": {
+        "Standard_D2s_v5":  "Standard_D2s_v5 (2vCPU, 8GB RAM)",
         "Standard_D4s_v5":  "Standard_D4s_v5 (4vCPU, 16GB RAM)",
         "Standard_D8s_v5":  "Standard_D8s_v5 (8vCPU, 32GB RAM)",
         "Standard_D16s_v5": "Standard_D16s_v5 (16vCPU, 64GB RAM)",
@@ -50,6 +51,7 @@
         "Standard_D64_v3":  "Standard_D64_v3 (64vCPU, 256GB RAM)"
       },
       "enum": [
+        "Standard_D2s_v5",
         "Standard_D4s_v5",
         "Standard_D8s_v5",
         "Standard_D16s_v5",

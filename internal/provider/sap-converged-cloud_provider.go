@@ -13,19 +13,26 @@ import (
 )
 
 const (
-	DefaultSapConvergedCloudRegion = "eu-de-1"
-	DefaultExposureClass           = "converged-cloud-internet"
+	DefaultSapConvergedCloudRegion         = "eu-de-1"
+	DefaultExposureClass                   = "converged-cloud-internet"
+	DefaultSapConvergedCloudMachineType    = "g_c2_m8"
+	DefaultOldSapConvergedCloudMachineType = "g_c4_m16"
 )
 
 type SapConvergedCloudInput struct {
-	FloatingPoolName string
+	FloatingPoolName       string
+	IncludeNewMachineTypes bool
 }
 
 func (p *SapConvergedCloudInput) Defaults() *gqlschema.ClusterConfigInput {
+	machineType := DefaultOldSapConvergedCloudMachineType
+	if p.IncludeNewMachineTypes {
+		machineType = DefaultSapConvergedCloudMachineType
+	}
 	return &gqlschema.ClusterConfigInput{
 		GardenerConfig: &gqlschema.GardenerConfigInput{
 			DiskType:          nil,
-			MachineType:       "g_c4_m16",
+			MachineType:       machineType,
 			Region:            DefaultSapConvergedCloudRegion,
 			Provider:          "openstack",
 			WorkerCidr:        networking.DefaultNodesCIDR,
