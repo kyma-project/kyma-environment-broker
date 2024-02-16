@@ -85,10 +85,6 @@ func (c *FakeClient) GetCluster(clusterName string, configVersion int64) (*recon
 	if existingCluster.numberOfGetStatusCalls == 0 && c.expectedStatus != nil {
 		state.Status = *c.expectedStatus
 	}
-	_, exists = c.deleted[clusterName]
-	if exists {
-		state.Status = reconcilerApi.StatusDeleted
-	}
 	return state, nil
 }
 
