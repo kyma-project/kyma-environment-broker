@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"log"
 	"os"
 	"strconv"
@@ -80,5 +81,10 @@ func GetStorageForE2ETests() (func() error, storage.BrokerStorage, error) {
 
 func dbInMemoryForE2ETests() bool {
 	v, _ := strconv.ParseBool(os.Getenv("DB_IN_MEMORY_FOR_E2E_TESTS"))
+	if v {
+		fmt.Println("running e2e test on database in memory")
+	} else {
+		fmt.Println("running e2e test on real postgres database")
+	}
 	return v
 }
