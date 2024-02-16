@@ -20,8 +20,8 @@ func brokerStorageE2ETestConfig() storage.Config {
 		Name:            "test-e2e",
 		SSLMode:         "disable",
 		SecretKey:       "################################",
-		MaxOpenConns:    2,
-		MaxIdleConns:    2,
+		MaxOpenConns:    1,
+		MaxIdleConns:    1,
 		ConnMaxLifetime: time.Minute,
 	}
 }
