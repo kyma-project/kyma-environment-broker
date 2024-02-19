@@ -129,6 +129,7 @@ func (f *InputBuilderFactory) getHyperscalerProviderForPlanID(planID string, pla
 		return f.forFreemiumPlan(platformProvider)
 	case broker.SapConvergedCloudPlanID:
 		provider = &cloudProvider.SapConvergedCloudInput{
+			MultiZone:              f.config.MultiZoneCluster,
 			FloatingPoolName:       f.config.SapConvergedCloudFloatingPoolName,
 			IncludeNewMachineTypes: f.includeNewMachineTypes,
 		}

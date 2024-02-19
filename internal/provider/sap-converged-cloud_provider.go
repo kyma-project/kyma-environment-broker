@@ -3,6 +3,7 @@ package provider
 import (
 	"fmt"
 	"math/rand"
+	"strings"
 
 	"github.com/kyma-project/kyma-environment-broker/internal/networking"
 
@@ -17,14 +18,20 @@ const (
 	DefaultExposureClass                   = "converged-cloud-internet"
 	DefaultSapConvergedCloudMachineType    = "g_c2_m8"
 	DefaultOldSapConvergedCloudMachineType = "g_c4_m16"
+	DefaultSapConvergedCloudMultiZoneCount = 3
 )
 
 type SapConvergedCloudInput struct {
+	MultiZone              bool
 	FloatingPoolName       string
 	IncludeNewMachineTypes bool
 }
 
 func (p *SapConvergedCloudInput) Defaults() *gqlschema.ClusterConfigInput {
+	zonesCount := 1
+	if p.MultiZone {
+		zonesCount = DefaultSapConvergedCloudMultiZoneCount
+	}
 	machineType := DefaultOldSapConvergedCloudMachineType
 	if p.IncludeNewMachineTypes {
 		machineType = DefaultSapConvergedCloudMachineType
@@ -43,7 +50,7 @@ func (p *SapConvergedCloudInput) Defaults() *gqlschema.ClusterConfigInput {
 			ExposureClassName: ptr.String(DefaultExposureClass),
 			ProviderSpecificConfig: &gqlschema.ProviderSpecificInput{
 				OpenStackConfig: &gqlschema.OpenStackProviderConfigInput{
-					Zones:                ZonesForSapConvergedCloud(DefaultSapConvergedCloudRegion),
+					Zones:                ZonesForSapConvergedCloud(DefaultSapConvergedCloudRegion, zonesCount),
 					FloatingPoolName:     p.FloatingPoolName,
 					CloudProfileName:     "converged-cloud-cp",
 					LoadBalancerProvider: "f5",
@@ -54,8 +61,12 @@ func (p *SapConvergedCloudInput) Defaults() *gqlschema.ClusterConfigInput {
 }
 
 func (p *SapConvergedCloudInput) ApplyParameters(input *gqlschema.ClusterConfigInput, pp internal.ProvisioningParameters) {
+	zonesCount := 1
+	if p.MultiZone {
+		zonesCount = DefaultSapConvergedCloudMultiZoneCount
+	}
 	if pp.Parameters.Region != nil && *pp.Parameters.Region != "" {
-		input.GardenerConfig.ProviderSpecificConfig.OpenStackConfig.Zones = ZonesForSapConvergedCloud(*pp.Parameters.Region)
+		input.GardenerConfig.ProviderSpecificConfig.OpenStackConfig.Zones = ZonesForSapConvergedCloud(*pp.Parameters.Region, zonesCount)
 	}
 }
 
@@ -73,11 +84,25 @@ var sapConvergedCloudZones = map[string]string{
 	"eu-de-1": "abd",
 }
 
-func ZonesForSapConvergedCloud(region string) []string {
+func ZonesForSapConvergedCloud(region string, zonesCount int) []string {
 	zones, found := sapConvergedCloudZones[region]
 	if !found {
 		zones = "a"
+		zonesCount = 1
 	}
-	zone := string(zones[rand.Intn(len(zones))])
-	return []string{fmt.Sprintf("%s%s", region, zone)}
+
+	availableZones := strings.Split(zones, "")
+	rand.Shuffle(len(availableZones), func(i, j int) { availableZones[i], availableZones[j] = availableZones[j], availableZones[i] })
+	if zonesCount > len(availableZones) {
+		// get maximum number of zones for region
+		zonesCount = len(availableZones)
+	}
+
+	availableZones = availableZones[:zonesCount]
+
+	var generatedZones []string
+	for _, zone := range availableZones {
+		generatedZones = append(generatedZones, fmt.Sprintf("%s%s", region, zone))
+	}
+	return generatedZones
 }
