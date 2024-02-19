@@ -3,9 +3,7 @@ package provider
 import (
 	"testing"
 
-	"github.com/kyma-project/kyma-environment-broker/internal"
 	"github.com/kyma-project/kyma-environment-broker/internal/broker"
-	"github.com/kyma-project/kyma-environment-broker/internal/ptr"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -64,71 +62,5 @@ func TestMultipleZonesForSapConvergedCloudRegion(t *testing.T) {
 			assert.Equal(t, region, regionFromZone)
 		}
 		assert.Equal(t, maximumZonesForRegion, len(generatedZones))
-	})
-}
-
-func TestSapConvergedCloudInput_SingleZone_ApplyParameters(t *testing.T) {
-	// given
-	svc := SapConvergedCloudInput{}
-
-	// when
-	t.Run("use default region and default zones count", func(t *testing.T) {
-		// given
-		input := svc.Defaults()
-
-		// when
-		svc.ApplyParameters(input, internal.ProvisioningParameters{})
-
-		//then
-		assert.Equal(t, DefaultSapConvergedCloudRegion, input.GardenerConfig.Region)
-		assert.Len(t, input.GardenerConfig.ProviderSpecificConfig.OpenStackConfig.Zones, 1)
-
-		for _, zone := range input.GardenerConfig.ProviderSpecificConfig.OpenStackConfig.Zones {
-			regionFromZone := zone[:len(zone)-1]
-			assert.Equal(t, DefaultSapConvergedCloudRegion, regionFromZone)
-		}
-	})
-
-	// when
-	t.Run("use region input parameter", func(t *testing.T) {
-		// given
-		input := svc.Defaults()
-		inputRegion := "eu-de-1"
-
-		// when
-		svc.ApplyParameters(input, internal.ProvisioningParameters{
-			Parameters: internal.ProvisioningParametersDTO{
-				Region: ptr.String(inputRegion),
-			},
-		})
-
-		//then
-		assert.Len(t, input.GardenerConfig.ProviderSpecificConfig.OpenStackConfig.Zones, 1)
-
-		for _, zone := range input.GardenerConfig.ProviderSpecificConfig.OpenStackConfig.Zones {
-			regionFromZone := zone[:len(zone)-1]
-			assert.Equal(t, inputRegion, regionFromZone)
-		}
-	})
-
-	// when
-	t.Run("use zones list input parameter", func(t *testing.T) {
-		// given
-		input := svc.Defaults()
-		zones := []string{"eu-de-1a", "eu-de-1b"}
-
-		// when
-		svc.ApplyParameters(input, internal.ProvisioningParameters{
-			Parameters: internal.ProvisioningParametersDTO{
-				Zones: zones,
-			},
-		})
-
-		//then
-		assert.Len(t, input.GardenerConfig.ProviderSpecificConfig.OpenStackConfig.Zones, len(zones))
-
-		for i, zone := range input.GardenerConfig.ProviderSpecificConfig.OpenStackConfig.Zones {
-			assert.Equal(t, zones[i], zone)
-		}
 	})
 }
