@@ -10,8 +10,8 @@ Currently, there is one task for Runtime Reconciler. It reconciles BTP Manager S
 
 ## Prerequisites
 
-- the KEB Go packages so that Runtime Reconciler can reuse them
-- the KEB database for storing the Kubernetes Secrets that match the Secrets on Kyma runtimes
+- The KEB Go packages so that Runtime Reconciler can reuse them
+- The KEB database for storing the Kubernetes Secrets that match the Secrets on Kyma runtimes
 - Provisioner API for fetching kubeconfigs
 
 ## Configuration

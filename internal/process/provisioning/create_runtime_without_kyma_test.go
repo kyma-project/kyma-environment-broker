@@ -7,6 +7,7 @@ import (
 
 	"github.com/kyma-project/control-plane/components/provisioner/pkg/gqlschema"
 	"github.com/kyma-project/kyma-environment-broker/internal/broker"
+	"github.com/kyma-project/kyma-environment-broker/internal/provider"
 	provisionerAutomock "github.com/kyma-project/kyma-environment-broker/internal/provisioner/automock"
 	"github.com/kyma-project/kyma-environment-broker/internal/ptr"
 	"github.com/kyma-project/kyma-environment-broker/internal/storage"
@@ -126,7 +127,7 @@ func fixProvisionerInput(disabled bool, euAccess bool) gqlschema.ProvisionRuntim
 				KubernetesVersion:                   k8sVersion,
 				DiskType:                            ptr.String("pd-standard"),
 				VolumeSizeGb:                        ptr.Integer(50),
-				MachineType:                         "n2-standard-4",
+				MachineType:                         provider.DefaultOldGCPMachineType,
 				Region:                              "europe-west3",
 				Provider:                            "gcp",
 				Purpose:                             &shootPurpose,

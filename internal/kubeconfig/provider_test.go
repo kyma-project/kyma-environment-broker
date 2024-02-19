@@ -2,11 +2,10 @@ package kubeconfig
 
 import (
 	"context"
-	"os"
-	"os/exec"
-	"strings"
+	"testing"
 	"time"
 
+	"github.com/kyma-project/kyma-environment-broker/internal"
 	"k8s.io/apimachinery/pkg/util/wait"
 
 	"github.com/stretchr/testify/assert"
@@ -16,15 +15,11 @@ import (
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/clientcmd"
 
-	"testing"
-
 	"sigs.k8s.io/controller-runtime/pkg/client/fake"
 	"sigs.k8s.io/controller-runtime/pkg/envtest"
 
 	clientcmdapi "k8s.io/client-go/tools/clientcmd/api"
 )
-
-const envTestAssets = "KUBEBUILDER_ASSETS"
 
 func TestSecretProvider_NoValueInSecret(t *testing.T) {
 	// given
@@ -93,13 +88,7 @@ func TestSecretProvider_KubernetesAndK8sClientForRuntimeID(t *testing.T) {
 	// Given
 
 	// prepare envtest to provide valid kubeconfig
-	if os.Getenv(envTestAssets) == "" {
-		out, err := exec.Command("/bin/sh", "../../setup-envtest.sh").Output()
-		require.NoError(t, err)
-		path := strings.Replace(string(out), "\n", "", -1)
-		os.Setenv(envTestAssets, path)
-	}
-
+	internal.SetupEnvtest(t)
 	env := envtest.Environment{
 		ControlPlaneStartTimeout: 40 * time.Second,
 	}

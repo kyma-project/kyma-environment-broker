@@ -5,7 +5,8 @@ Kyma Environment Broker (KEB) allows you to configure operations you can run on 
 - Return an error, which interrupts the entire process, or skip step execution.
 - Repeat the entire operation after a specified period.
 
-> **NOTE:** It's important to set lower timeouts for the Kyma installation in the Runtime Provisioner.
+> [!NOTE] 
+> It's important to set lower timeouts for the Kyma installation in Runtime Provisioner.
 
 ## Stages
 
@@ -17,7 +18,8 @@ The provisioning process is executed when the instance is created, or an unsuspe
 Each provisioning step is responsible for a separate part of preparing Kyma runtime. For example, in a step you can provide tokens, credentials, or URLs to integrate SAP BTP, Kyma runtime with external systems.
 You can find all the provisioning steps in the [provisioning](../../cmd/broker/provisioning.go) file.
 
-> **NOTE:** The timeout for processing this operation is set to `24h`.
+> [!NOTE] 
+> The timeout for processing this operation is set to `24h`.
 
 ## Deprovision
 
@@ -28,7 +30,8 @@ Only one step may fail the operation, namely `Check_Runtime_Removal`. It fails t
 Once the step is successfully executed, it isn't retried (every deprovisioning step is defined in a separate stage). If a step has been skipped due to a retry timeout or error, the [Cron Job](../contributor/06-50-deprovision-retrigger-cronjob.md) tries to deprovision all remaining Kyma runtime dependencies again at a scheduled time.
 You can find all the deprovisioning steps in the [deprovisioning](../../cmd/broker/deprovisioning.go) file.
 
-> **NOTE:** The timeout for processing this operation is set to `24h`.
+> [!NOTE] 
+> The timeout for processing this operation is set to `24h`.
 
 ## Update
 

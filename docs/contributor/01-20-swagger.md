@@ -4,7 +4,7 @@ Using the Swagger UI, you can visualize Kyma Environment Broker's (KEB's) APIs o
 
 The Swagger UI static files are copied from the [official source](https://github.com/swagger-api/swagger-ui/tree/master/dist) and then they are injected into KEB's container which exposes them on the root endpoint.
 
-KEB uses a [Swagger schema](https://github.com/kyma-project/kyma-environment-broker/blob/main/resources/keb/files/swagger.yaml) file that is mounted as a volume to the Pod. You can use templates in the Swagger schema file to configure it.
+KEB uses a [Swagger schema](https://github.com/kyma-project/kyma-environment-broker/blob/main/resources/keb/files/swagger.yaml) file mounted as a volume to the Pod. You can use templates in the Swagger schema file to configure it.
 
 ## Port-forward the Pod
 

@@ -63,4 +63,4 @@ A successful call returns the instance details:
    }
    ```
 
-   > **NOTE:** The **dashboard_url** field is available only if the Kyma runtime was provisioned successfully and the Runtime Agent registered the Kyma runtime in the Director. Fields under the **parameters** field can differ depending on the provisioning input.
+  > **NOTE:** The **dashboard_url** field is available only if the Kyma runtime was provisioned successfully and the Runtime Agent registered the Kyma runtime in the Director. Fields under the **parameters** field can differ depending on the provisioning input.

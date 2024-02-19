@@ -19,7 +19,16 @@
       "type": "integer"
     },
     "machineType": {
+      "_enumDisplayName": {
+        "n2-standard-2":  "n2-standard-2 (2vCPU, 8GB RAM)",
+        "n2-standard-4":  "n2-standard-4 (4vCPU, 16GB RAM)",
+        "n2-standard-8":  "n2-standard-8 (8vCPU, 32GB RAM)",
+        "n2-standard-16": "n2-standard-16 (16vCPU, 64GB RAM)",
+        "n2-standard-32": "n2-standard-32 (32vCPU, 128GB RAM)",
+        "n2-standard-48": "n2-standard-48 (48vCPU, 192B RAM)"
+      },
       "enum": [
+        "n2-standard-2",
         "n2-standard-4",
         "n2-standard-8",
         "n2-standard-16",

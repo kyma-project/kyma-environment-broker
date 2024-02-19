@@ -1,6 +1,7 @@
 # Configure Kyma Version
 
-> **NOTE:** Once all Kyma components become independent modules, Kyma Environment Broker will no longer be required to send components to Reconciler and this document will be deprecated as irrelevant.
+> [!NOTE] 
+> Once all Kyma components become independent modules, Kyma Environment Broker will no longer be required to send components to Reconciler and this document will be deprecated as irrelevant.
 
 Kyma Environment Broker (KEB) is configured with a default Kyma version specified in the **APP_KYMA_VERSION** environment variable. This means that each SAP BTP, Kyma runtime provisioned by KEB in a given global account is installed in the default Kyma version.
 You can also specify a different Kyma version for a global account or subaccount using a ConfigMap. To specify a version for a given account, use the following prefixes in ConfigMap keys:
@@ -23,9 +24,10 @@ data:
 
 This ConfigMap contains a default version for a global account and a subaccount. The **3e64ebae-38b5-46a0-b1ed-9ccee153a0ae** parameter is a global account ID, and the value is the Kyma version specified for this global account. The **df29c526-0c3d-4e2c-ba41-8b69cde41961** and **4abbc9b5-055a-4571-b762-9d61b4b8a2e7** parameters are a subaccount IDs, and the values are the Kyma versions specified for those subaccounts.
 
-The Kyma version value could be either a Github tag (e.g. `1.15.0-rc1` or `1.16.0`), a version built from a pull request (e.g. `PR-3721`), or a version from the `main` branch with the specific commit hash, for example: `1ab234`.
+The Kyma version value could be either a GitHub tag (for example, `1.15.0-rc1` or `1.16.0`), a version built from a pull request (for example, `PR-3721`), or a version from the `main` branch with the specific commit hash, for example: `1ab234`.
 
->**NOTE:** From April 8, 2021, the default branch on the `kyma` repository switched from `master` to `main`. For this reason, versions with commits from before this date are not supported.
+> [!NOTE] 
+> From April 8, 2021, the default branch on the `kyma` repository switched from `master` to `main`. For this reason, versions with commits from before this date are not supported.
 
 You can also specify a Kyma version using the **kymaVersion** provisioning parameter, for example:
 

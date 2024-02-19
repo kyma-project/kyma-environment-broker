@@ -139,6 +139,7 @@ func (c *OperationsCollector) Describe(ch chan<- *prometheus.Desc) {
 func (c *OperationsCollector) Collect(ch chan<- prometheus.Metric) {
 	stats, err := c.statsGetter.GetOperationStatsByPlan()
 	if err != nil {
+		logrus.Errorf("unable to get operation stats from db: %s", err.Error())
 		return
 	}
 
