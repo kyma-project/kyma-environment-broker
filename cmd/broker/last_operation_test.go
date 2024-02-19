@@ -91,7 +91,7 @@ func TestLastOperationNotExistingInstance(t *testing.T) {
 	//then
 	assert.Equal(t, http.StatusNotFound, resp.StatusCode)
 	errResponse := suite.DecodeErrorResponse(resp)
-	assert.Regexp(t, fmt.Sprintf("(?i)operation with instance_id %s not (found|exist)", iid), errResponse.Description)
+	assert.Contains(t, errResponse.Description, fmt.Sprintf("Operation with instance_id %s not exist", iid))
 }
 
 func TestLastOperationNotExistingOperation(t *testing.T) {
@@ -107,7 +107,7 @@ func TestLastOperationNotExistingOperation(t *testing.T) {
 	//then
 	assert.Equal(t, http.StatusNotFound, resp.StatusCode)
 	errResponse := suite.DecodeErrorResponse(resp)
-	assert.Regexp(t, fmt.Sprintf("(?i)operation with id %s not (found|exist)", oid), errResponse.Description)
+	assert.Contains(t, errResponse.Description, fmt.Sprintf("Operation with id %s not exist", oid))
 }
 
 func TestLastOperationWithOperationIDAndNotExistingInstanceID(t *testing.T) {

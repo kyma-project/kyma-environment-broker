@@ -403,7 +403,7 @@ func (s *operations) GetLastOperation(instanceID string) (*internal.Operation, e
 	}
 
 	if len(rows) == 0 {
-		return nil, dberr.NotFound("instance operation with instance_id %s not found", instanceID)
+		return nil, dberr.NotFound("Operation with instance_id %s not exist", instanceID)
 	}
 
 	sort.Slice(rows, func(i, j int) bool {
@@ -437,7 +437,7 @@ func (s *operations) GetOperationByID(operationID string) (*internal.Operation, 
 	}
 
 	if res == nil {
-		return nil, dberr.NotFound("instance operation with id %s not found", operationID)
+		return nil, dberr.NotFound("Operation with id %s not exist", operationID)
 	}
 
 	return res, nil
