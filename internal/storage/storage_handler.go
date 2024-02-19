@@ -43,21 +43,21 @@ func GetStorageForTest(config Config) (func() error, BrokerStorage, error) {
 	}
 	log.Println("db created")
 
-	cleanup := func() error {
+	cleanup := func() (error error) {
 		defer func() {
 			err = connection.Close()
 			if err != nil {
-				fmt.Println("failed to close connection: ", err.Error())
+				error = fmt.Errorf("failed to close connection: %w", err)
 			}
 		}()
 		failOnIncorrectDB(connection, config)
 		fmt.Println("cleaning up")
-		err := runMigrations(connection, Down)
+		err = runMigrations(connection, Down)
 		if err != nil {
 			return fmt.Errorf("failed to clear DB tables: %w", err)
 		}
 		fmt.Println("cleaned up")
-		return nil
+		return
 	}
 
 	return cleanup, storage, nil
