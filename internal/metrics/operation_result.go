@@ -12,7 +12,7 @@ import (
 )
 
 const (
-	prometheusNamespace = "compass"
+	prometheusNamespace = ""
 	prometheusSubsystem = "keb"
 
 	resultFailed        float64 = 0
@@ -35,9 +35,9 @@ const (
 )
 
 // OperationResultCollector provides the following metrics:
-// - compass_keb_provisioning_result{"operation_id", "instance_id", "global_account_id", "plan_id"}
-// - compass_keb_deprovisioning_result{"operation_id", "instance_id", "global_account_id", "plan_id"}
-// - compass_keb_upgrade_result{"operation_id", "instance_id", "global_account_id", "plan_id"}
+// - keb_provisioning_result{"operation_id", "instance_id", "global_account_id", "plan_id"}
+// - keb_deprovisioning_result{"operation_id", "instance_id", "global_account_id", "plan_id"}
+// - keb_upgrade_result{"operation_id", "instance_id", "global_account_id", "plan_id"}
 // These gauges show the status of the operation.
 // The value of the gauge could be:
 // 0 - Failed
