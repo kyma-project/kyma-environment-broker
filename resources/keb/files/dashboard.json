@@ -873,7 +873,7 @@
           "refId": "B"
         },
         {
-          "expr": "count((compass_keb_provisioning_result{plan_id=\"$plan_id\", error_category=~\"$error_category\", error_reason=~\"$error_reason\"} == 0) unless (compass_keb_provisioning_result{plan_id=\"$plan_id\", error_category=~\"$error_category\", error_reason=~\"$error_reason\"} offset $__range == 0)) or vector(0)",
+          "expr": "round(sum(increase_prometheus(compass_keb_operations_provisioning_failed_total{plan_id=\"$plan_id\"}[$__range])))",
           "format": "time_series",
           "hide": false,
           "instant": false,
@@ -1103,7 +1103,7 @@
           "refId": "B"
         },
         {
-          "expr": "count((compass_keb_deprovisioning_result{plan_id=\"$plan_id\", error_category=~\"$error_category\", error_reason=~\"$error_reason\"} == 0) unless (compass_keb_deprovisioning_result{plan_id=\"$plan_id\", error_category=~\"$error_category\", error_reason=~\"$error_reason\"} offset $__range == 0)) or vector(0)",
+          "expr": "round(sum(increase_prometheus(compass_keb_operations_deprovisioning_failed_total{plan_id=\"$plan_id\"}[$__range])))",
           "hide": false,
           "interval": "",
           "legendFormat": "Failed",
@@ -2868,5 +2868,5 @@
   "timezone": "",
   "title": "KCP / Kyma Environment Broker",
   "uid": "_MIdIJiZh",
-  "version": 6
+  "version": 7
 }
