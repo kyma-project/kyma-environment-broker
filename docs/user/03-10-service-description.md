@@ -1,6 +1,6 @@
 # Service Description
 
-Kyma Environment Broker (KEB) is compatible with the [Open Service Broker API (OSBAPI)](https://www.openservicebrokerapi.org/) specification. It provides a ServiceClass that provisions SAP BTP, Kyma runtime on a cluster.
+Kyma Environment Broker (KEB) is compatible with the [Open Service Broker API (OSBAPI)](https://www.openservicebrokerapi.org/) specification. It provides a ServiceClass that provisions SAP BTP, Kyma runtime in a cluster.
 
 ## Service Plans
 
@@ -8,12 +8,12 @@ The supported plans are as follows:
 
 | Plan name             | Plan ID                                | Description                                             |
 |-----------------------|----------------------------------------|---------------------------------------------------------|
-| `azure`               | `4deee563-e5ec-4731-b9b1-53b42d855f0c` | Installs Kyma runtime on the Azure cluster.             |
-| `azure_lite`          | `8cb22518-aa26-44c5-91a0-e669ec9bf443` | Installs Kyma Lite on the Azure cluster.                |
-| `aws`                 | `361c511f-f939-4621-b228-d0fb79a1fe15` | Installs Kyma runtime on the AWS cluster.               |
-| `gcp`                 | `ca6e5357-707f-4565-bbbd-b3ab732597c6` | Installs Kyma runtime on the GCP cluster.               |
+| `azure`               | `4deee563-e5ec-4731-b9b1-53b42d855f0c` | Installs Kyma runtime in the Azure cluster.             |
+| `azure_lite`          | `8cb22518-aa26-44c5-91a0-e669ec9bf443` | Installs Kyma Lite in the Azure cluster.                |
+| `aws`                 | `361c511f-f939-4621-b228-d0fb79a1fe15` | Installs Kyma runtime in the AWS cluster.               |
+| `gcp`                 | `ca6e5357-707f-4565-bbbd-b3ab732597c6` | Installs Kyma runtime in the GCP cluster.               |
 | `trial`               | `7d55d31d-35ae-4438-bf13-6ffdfa107d9f` | Installs Kyma trial plan on Azure, AWS or GCP.          |
-| `sap-converged-cloud` | `03b812ac-c991-4528-b5bd-08b303523a63` | Installs Kyma runtime on the SapConvergedCloud cluster. |
+| `sap-converged-cloud` | `03b812ac-c991-4528-b5bd-08b303523a63` | Installs Kyma runtime in the SapConvergedCloud cluster. |
 | `free`                | `b1a5764e-2ea1-4f95-94c0-2b4538b37b55` | Installs Kyma free plan on Azure or AWS.                |
 
 There is also an experimental plan:

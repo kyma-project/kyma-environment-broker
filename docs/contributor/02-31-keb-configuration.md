@@ -32,7 +32,7 @@ Kyma Environment Broker (KEB) binary allows you to override some configuration p
 | **APP_VERSION_CONFIG_NAME** | Defines the name of the ConfigMap that contains Kyma versions for global accounts configuration. | None |
 | **APP_PROVISIONING_MACHINE_IMAGE** | Defines the Gardener machine image used in a provisioned Node. | None |
 | **APP_PROVISIONING_MACHINE_IMAGE_VERSION** | Defines the Gardener image version used in a provisioned cluster. | None |
-| **APP_PROVISIONING_TRIAL_NODES_NUMBER** | Defines the number of Nodes for Kyma runtime trial account. This parameter is optional. If not enabled, the trial account runs on the 1-Node cluster. If enabled, the trial account runs on the number of Nodes defined in the **trialNodesNumber** parameter. | defined in the **trialNodesNumber** parameter |
+| **APP_PROVISIONING_TRIAL_NODES_NUMBER** | Defines the number of Nodes for Kyma runtime trial account. This parameter is optional. If not enabled, the trial account runs in the 1-Node cluster. If enabled, the trial account runs on the number of Nodes defined in the **trialNodesNumber** parameter. | defined in the **trialNodesNumber** parameter |
 | **APP_TRIAL_REGION_MAPPING_FILE_PATH** | Defines a path to the file which contains a mapping between the platform region and the trial plan region. | None |
 | **APP_GARDENER_PROJECT** | Defines the project in which the cluster is created. | `kyma-dev` |
 | **APP_GARDENER_SHOOT_DOMAIN** | Defines the domain for clusters created in Gardener. | `shoot.canary.k8s-hana.ondemand.com` |

@@ -61,7 +61,7 @@ There are reusable workflows created. Anyone with access to a reusable workflow 
 
 ### KEB Chart Tests
 
-This [workflow](/.github/workflows/run-keb-chart-tests-reusable.yaml) applies the KEB chart on the k3s cluster. 
+This [workflow](/.github/workflows/run-keb-chart-tests-reusable.yaml) applies the KEB chart in the k3s cluster. 
 You pass the following parameters from the calling workflow:
 
 | Parameter name  | Required | Description                                                          |
@@ -75,7 +75,7 @@ The workflow:
 - Prepares the **last-k3s-versions** k3s clusters with the Docker registries using the list of versions from the previous step
 - Creates required namespaces
 - Installs required dependencies by the KEB charts
-- Renders and applies the KEB chart on the k3s cluster
+- Renders and applies the KEB chart in the k3s cluster
 - Waits for all tests to finish
 
 ### Unit Tests
