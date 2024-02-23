@@ -2,6 +2,7 @@ package metrics
 
 import (
 	"github.com/kyma-project/kyma-environment-broker/internal/event"
+	"github.com/kyma-project/kyma-environment-broker/internal/metricsv2"
 	"github.com/kyma-project/kyma-environment-broker/internal/process"
 	"github.com/prometheus/client_golang/prometheus"
 )
@@ -28,4 +29,7 @@ func RegisterAll(sub event.Subscriber, operationStatsGetter OperationsStatsGette
 	sub.Subscribe(process.OperationSucceeded{}, opResultCollector.OnOperationSucceeded)
 	sub.Subscribe(process.OperationSucceeded{}, opDurationCollector.OnOperationSucceeded)
 	sub.Subscribe(process.OperationStepProcessed{}, opDurationCollector.OnOperationStepProcessed)
+
+	// test of metrics for upcoming new implementation
+	metricsv2.Register(sub)
 }

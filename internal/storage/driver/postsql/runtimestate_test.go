@@ -321,4 +321,36 @@ func TestRuntimeState(t *testing.T) {
 		assert.Nil(t, gotRuntimeState.ClusterSetup)
 		assert.Equal(t, expectedOIDCConfig, *gotRuntimeState.ClusterConfig.OidcConfig)
 	})
+
+	t.Run("should delete runtime states by operation ID", func(t *testing.T) {
+		// given
+		rs1 := fixture.FixRuntimeState("id1", "rid1", "op-01")
+		rs2 := fixture.FixRuntimeState("id2", "rid1", "op-02")
+		rs3 := fixture.FixRuntimeState("id3", "rid1", "op-01")
+
+		storageCleanup, brokerStorage, err := GetStorageForDatabaseTests()
+		require.NoError(t, err)
+		require.NotNil(t, brokerStorage)
+		defer func() {
+			err := storageCleanup()
+			assert.NoError(t, err)
+		}()
+		storage := brokerStorage.RuntimeStates()
+		err = storage.Insert(rs1)
+		require.NoError(t, err)
+		err = storage.Insert(rs2)
+		require.NoError(t, err)
+		err = storage.Insert(rs3)
+		require.NoError(t, err)
+
+		// when
+		err = storage.DeleteByOperationID("op-02")
+		require.NoError(t, err)
+
+		// then
+		rutimeStates, e := storage.ListByRuntimeID("rid1")
+		require.NoError(t, e)
+		assert.Equal(t, 2, len(rutimeStates))
+
+	})
 }

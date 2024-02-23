@@ -21,6 +21,22 @@ func NewRuntimeStates() *runtimeState {
 	}
 }
 
+func (s *runtimeState) DeleteByOperationID(opID string) error {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
+	toDelete := []string{}
+	for id, state := range s.runtimeStates {
+		if state.OperationID == opID {
+			toDelete = append(toDelete, id)
+		}
+	}
+	for _, id := range toDelete {
+		delete(s.runtimeStates, id)
+	}
+	return nil
+}
+
 func (s *runtimeState) Insert(runtimeState internal.RuntimeState) error {
 	s.mu.Lock()
 	defer s.mu.Unlock()

@@ -338,6 +338,27 @@ type ProvisioningOperation struct {
 	Operation
 }
 
+type InstanceArchived struct {
+	InstanceID                  string
+	GlobalAccountID             string
+	SubaccountID                string
+	SubscriptionGlobalAccountID string
+	PlanID                      string
+	PlanName                    string
+	SubaccountRegion            string
+	Region                      string
+	Provider                    string
+	LastRuntimeID               string
+	InternalUser                bool
+	ShootName                   string
+
+	ProvisioningStartedAt         time.Time
+	ProvisioningFinishedAt        time.Time
+	FirstDeprovisioningStartedAt  time.Time
+	FirstDeprovisioningFinishedAt time.Time
+	LastDeprovisioningFinishedAt  time.Time
+}
+
 type MonitoringData struct {
 	Username string `json:"username"`
 	Password string `json:"password"`

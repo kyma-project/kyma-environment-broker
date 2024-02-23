@@ -18,6 +18,34 @@ import (
 
 func TestOperation(t *testing.T) {
 
+	t.Run("should delete operation by ID", func(t *testing.T) {
+		// given
+		storageCleanup, brokerStorage, err := GetStorageForDatabaseTests()
+		require.NoError(t, err)
+		require.NotNil(t, brokerStorage)
+		defer func() {
+			err := storageCleanup()
+			assert.NoError(t, err)
+		}()
+		op1 := fixture.FixProvisioningOperation("op-to-delete", "inst1")
+		op2 := fixture.FixProvisioningOperation("op-to-keep", "inst1")
+
+		err = brokerStorage.Operations().InsertOperation(op1)
+		require.NoError(t, err)
+		err = brokerStorage.Operations().InsertOperation(op2)
+		require.NoError(t, err)
+
+		// when
+		err = brokerStorage.Operations().DeleteByID("op-to-delete")
+		require.NoError(t, err)
+
+		// then
+		ops, err := brokerStorage.Operations().ListOperationsByInstanceID("inst1")
+		require.NoError(t, err)
+		assert.Equal(t, 1, len(ops))
+		assert.Equal(t, "op-to-keep", ops[0].ID)
+	})
+
 	t.Run("Operations - provisioning and deprovisioning", func(t *testing.T) {
 		storageCleanup, brokerStorage, err := GetStorageForDatabaseTests()
 		require.NoError(t, err)

@@ -39,6 +39,14 @@ func NewOperation() *operations {
 	}
 }
 
+func (s *operations) DeleteByID(operationID string) error {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
+	delete(s.operations, operationID)
+	return nil
+}
+
 func (s *operations) InsertProvisioningOperation(operation internal.ProvisioningOperation) error {
 	s.mu.Lock()
 	defer s.mu.Unlock()

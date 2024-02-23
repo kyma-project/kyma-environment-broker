@@ -23,6 +23,7 @@ type BrokerStorage interface {
 	Orchestrations() Orchestrations
 	RuntimeStates() RuntimeStates
 	Events() Events
+	InstancesArchived() InstancesArchived
 }
 
 const (
@@ -46,22 +47,24 @@ func NewFromConfig(cfg Config, evcfg events.Config, cipher postgres.Cipher, log 
 
 	operation := postgres.NewOperation(fact, cipher)
 	return storage{
-		instance:       postgres.NewInstance(fact, operation, cipher),
-		operation:      operation,
-		orchestrations: postgres.NewOrchestrations(fact),
-		runtimeStates:  postgres.NewRuntimeStates(fact, cipher),
-		events:         events.New(evcfg, eventstorage.New(fact, log)),
+		instance:          postgres.NewInstance(fact, operation, cipher),
+		operation:         operation,
+		orchestrations:    postgres.NewOrchestrations(fact),
+		runtimeStates:     postgres.NewRuntimeStates(fact, cipher),
+		events:            events.New(evcfg, eventstorage.New(fact, log)),
+		instancesArchived: postgres.NewInstanceArchived(fact),
 	}, connection, nil
 }
 
 func NewMemoryStorage() BrokerStorage {
 	op := memory.NewOperation()
 	return storage{
-		operation:      op,
-		instance:       memory.NewInstance(op),
-		orchestrations: memory.NewOrchestrations(),
-		runtimeStates:  memory.NewRuntimeStates(),
-		events:         events.New(events.Config{}, NewInMemoryEvents()),
+		operation:         op,
+		instance:          memory.NewInstance(op),
+		orchestrations:    memory.NewOrchestrations(),
+		runtimeStates:     memory.NewRuntimeStates(),
+		events:            events.New(events.Config{}, NewInMemoryEvents()),
+		instancesArchived: memory.NewInstanceArchivedInMemoryStorage(),
 	}
 }
 
@@ -114,11 +117,12 @@ func requiredContains[T comparable](el *T, sl []T) bool {
 }
 
 type storage struct {
-	instance       Instances
-	operation      Operations
-	orchestrations Orchestrations
-	runtimeStates  RuntimeStates
-	events         Events
+	instance          Instances
+	operation         Operations
+	orchestrations    Orchestrations
+	runtimeStates     RuntimeStates
+	events            Events
+	instancesArchived InstancesArchived
 }
 
 func (s storage) Instances() Instances {
@@ -147,4 +151,8 @@ func (s storage) RuntimeStates() RuntimeStates {
 
 func (s storage) Events() Events {
 	return s.events
+}
+
+func (s storage) InstancesArchived() InstancesArchived {
+	return s.instancesArchived
 }

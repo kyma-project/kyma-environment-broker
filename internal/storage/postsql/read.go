@@ -67,6 +67,23 @@ func (r readSession) GetInstanceByID(instanceID string) (dbmodel.InstanceDTO, db
 	return instance, nil
 }
 
+func (r readSession) GetInstanceArchivedByID(instanceId string) (dbmodel.InstanceArchivedDTO, error) {
+	var result dbmodel.InstanceArchivedDTO
+
+	err := r.session.Select("*").
+		From(InstancesArchivedTableName).
+		Where(dbr.Eq("instance_id", instanceId)).
+		LoadOne(&result)
+
+	if err != nil {
+		if err == dbr.ErrNotFound {
+			return dbmodel.InstanceArchivedDTO{}, dberr.NotFound("unable to find InstanceArchived %s", instanceId)
+		}
+		return dbmodel.InstanceArchivedDTO{}, dberr.Internal("Failed to get instance archived %s: %s", instanceId, err.Error())
+	}
+	return result, nil
+}
+
 func (r readSession) FindAllInstancesForRuntimes(runtimeIdList []string) ([]dbmodel.InstanceDTO, dberr.Error) {
 	var instances []dbmodel.InstanceDTO
 

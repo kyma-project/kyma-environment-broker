@@ -120,8 +120,6 @@ func (c *OperationDurationCollector) OnOperationSucceeded(ctx context.Context, e
 		pp := operationSucceeded.Operation.ProvisioningParameters
 		minutes := op.UpdatedAt.Sub(op.CreatedAt).Minutes()
 		c.deprovisioningHistogram.WithLabelValues(pp.PlanID).Observe(minutes)
-	default:
-		return fmt.Errorf("unsupported OperationStep %+v for OnOperationSucceeded handler", operationSucceeded.Operation.Type)
 	}
 
 	return nil

@@ -27,6 +27,10 @@ func NewRuntimeStates(sess postsql.Factory, cipher Cipher) *runtimeState {
 	}
 }
 
+func (s *runtimeState) DeleteByOperationID(operationID string) error {
+	return s.NewWriteSession().DeleteRuntimeStatesByOperationID(operationID)
+}
+
 func (s *runtimeState) Insert(runtimeState internal.RuntimeState) error {
 	state, err := s.runtimeStateToDB(runtimeState)
 	if err != nil {

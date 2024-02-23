@@ -897,6 +897,10 @@ func (s *operations) ListUpgradeClusterOperationsByOrchestrationID(orchestration
 	return ret, count, totalCount, nil
 }
 
+func (s *operations) DeleteByID(operationID string) error {
+	return s.NewWriteSession().DeleteOperationByID(operationID)
+}
+
 func (s *operations) operationToDB(op internal.Operation) (dbmodel.OperationDTO, error) {
 	err := s.cipher.EncryptSMCreds(&op.ProvisioningParameters)
 	if err != nil {

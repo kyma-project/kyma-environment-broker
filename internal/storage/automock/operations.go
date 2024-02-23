@@ -16,6 +16,19 @@ type Operations struct {
 	mock.Mock
 }
 
+func (_m *Operations) DeleteByID(operationID string) error {
+	ret := _m.Called(operationID)
+	var r0 error
+	if rf, ok := ret.Get(0).(func(string) error); ok {
+		r0 = rf(operationID)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(error)
+		}
+	}
+	return r0
+}
+
 // GetDeprovisioningOperationByID provides a mock function with given fields: operationID
 func (_m *Operations) GetDeprovisioningOperationByID(operationID string) (*internal.DeprovisioningOperation, error) {
 	ret := _m.Called(operationID)

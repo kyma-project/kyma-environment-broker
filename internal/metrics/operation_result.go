@@ -145,9 +145,9 @@ func (c *OperationResultCollector) OnOperationStepProcessed(ctx context.Context,
 			StepProcessed: e.StepProcessed,
 			Operation:     internal.DeprovisioningOperation{Operation: e.Operation},
 		})
-	default:
-		return fmt.Errorf("expected OperationStep of types [%s, %s] but got %+v", internal.OperationTypeProvision, internal.OperationTypeDeprovision, e.Operation.Type)
 	}
+
+	return nil
 }
 
 func (c *OperationResultCollector) OnProvisioningSucceeded(ctx context.Context, ev interface{}) error {
@@ -243,8 +243,6 @@ func (c *OperationResultCollector) OnOperationSucceeded(ctx context.Context, ev 
 		if err != nil {
 			return err
 		}
-	} else {
-		return fmt.Errorf("expected OperationStep of type %s but got %+v", internal.OperationTypeProvision, operationSucceeded.Operation.Type)
 	}
 
 	return nil

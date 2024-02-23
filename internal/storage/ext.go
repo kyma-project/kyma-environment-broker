@@ -28,6 +28,11 @@ type Instances interface {
 	ListWithoutDecryption(dbmodel.InstanceFilter) ([]internal.Instance, int, int, error)
 }
 
+type InstancesArchived interface {
+	GetByInstanceID(instanceId string) (internal.InstanceArchived, error)
+	Insert(instance internal.InstanceArchived) error
+}
+
 //go:generate mockery --name=Operations --output=automock --outpkg=mocks --case=underscore
 type Operations interface {
 	Provisioning
@@ -50,6 +55,8 @@ type Operations interface {
 	ListOperationsByInstanceID(instanceID string) ([]internal.Operation, error)
 	ListOperationsByOrchestrationID(orchestrationID string, filter dbmodel.OperationFilter) ([]internal.Operation, int, int, error)
 	ListOperationsInTimeRange(from, to time.Time) ([]internal.Operation, error)
+
+	DeleteByID(operationID string) error
 }
 
 type Provisioning interface {
@@ -84,6 +91,7 @@ type RuntimeStates interface {
 	GetLatestWithReconcilerInputByRuntimeID(runtimeID string) (internal.RuntimeState, error)
 	GetLatestWithKymaVersionByRuntimeID(runtimeID string) (internal.RuntimeState, error)
 	GetLatestWithOIDCConfigByRuntimeID(runtimeID string) (internal.RuntimeState, error)
+	DeleteByOperationID(operationID string) error
 }
 
 type UpgradeKyma interface {
