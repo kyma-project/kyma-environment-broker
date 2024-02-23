@@ -13,8 +13,8 @@ import (
 )
 
 // StepResultCollector provides the following metrics:
-// - compass_keb_provisioning_step_result{"operation_id",  "instance_id", "step_name", "global_account_id", "plan_id"}
-// - compass_keb_deprovisioning_step_result{"operation_id",  "instance_id", "step_name", "global_account_id", "plan_id"}
+// - kcp_keb_provisioning_step_result{"operation_id",  "instance_id", "step_name", "global_account_id", "plan_id"}
+// - kcp_keb_deprovisioning_step_result{"operation_id",  "instance_id", "step_name", "global_account_id", "plan_id"}
 // These gauges show the status of the operation step.
 // The value of the gauge could be:
 // 0 - Failed

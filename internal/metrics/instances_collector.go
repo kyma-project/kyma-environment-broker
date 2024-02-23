@@ -10,9 +10,9 @@ import (
 //
 //	(instance exists but the cluster was removed manually from the gardener):
 //
-// - compass_keb_instances_total - total number of all instances
-// - compass_keb_global_account_id_instances_total - total number of all instances per global account
-// - compass_keb_ers_context_license_type_total - count of instances grouped by license types
+// - kcp_keb_instances_total - total number of all instances
+// - kcp_keb_global_account_id_instances_total - total number of all instances per global account
+// - kcp_keb_ers_context_license_type_total - count of instances grouped by license types
 type InstancesStatsGetter interface {
 	GetInstanceStats() (internal.InstanceStats, error)
 	GetERSContextStats() (internal.ERSContextStats, error)

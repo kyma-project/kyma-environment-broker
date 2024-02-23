@@ -41,7 +41,7 @@ type opsMetricService struct {
 // consistency and the operation result state is exposed as a label instead of a value to
 // enable common gauge aggregation.
 
-// compass_keb_operation_result
+// kcp_keb_operation_result
 
 func StartOpsMetricService(ctx context.Context, db operationsGetter, logger logrus.FieldLogger) {
 	svc := &opsMetricService{

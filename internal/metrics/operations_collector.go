@@ -12,12 +12,12 @@ import (
 
 // OperationsStatsGetter provides metrics, which shows how many operations were done for the following plans:
 
-// - compass_keb_operations_{plan_name}_provisioning_failed_total
-// - compass_keb_operations_{plan_name}_provisioning_in_progress_total
-// - compass_keb_operations_{plan_name}_provisioning_succeeded_total
-// - compass_keb_operations_{plan_name}_deprovisioning_failed_total
-// - compass_keb_operations_{plan_name}_deprovisioning_in_progress_total
-// - compass_keb_operations_{plan_name}_deprovisioning_succeeded_total
+// - kcp_keb_operations_{plan_name}_provisioning_failed_total
+// - kcp_keb_operations_{plan_name}_provisioning_in_progress_total
+// - kcp_keb_operations_{plan_name}_provisioning_succeeded_total
+// - kcp_keb_operations_{plan_name}_deprovisioning_failed_total
+// - kcp_keb_operations_{plan_name}_deprovisioning_in_progress_total
+// - kcp_keb_operations_{plan_name}_deprovisioning_succeeded_total
 
 var (
 	supportedPlansIDs = []string{
