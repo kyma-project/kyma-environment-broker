@@ -44,20 +44,22 @@ func TestService_PerformCleanup(t *testing.T) {
 		pMock.On("DeprovisionRuntime", fixAccountID, fixRuntimeID3).Return("", nil)
 
 		memoryStorage := storage.NewMemoryStorage()
-		memoryStorage.Instances().Insert(internal.Instance{
+		err := memoryStorage.Instances().Insert(internal.Instance{
 			InstanceID: fixInstanceID1,
 			RuntimeID:  fixRuntimeID1,
 		})
-		memoryStorage.Instances().Insert(internal.Instance{
+		assert.NoError(t, err)
+		err = memoryStorage.Instances().Insert(internal.Instance{
 			InstanceID: fixInstanceID2,
 			RuntimeID:  fixRuntimeID2,
 		})
+		assert.NoError(t, err)
 		logger := logrus.New()
 
 		svc := NewService(gcMock, bcMock, pMock, memoryStorage.Instances(), logger, maxShootAge, shootLabelSelector)
 
 		// when
-		err := svc.PerformCleanup()
+		err = svc.PerformCleanup()
 
 		// then
 		bcMock.AssertExpectations(t)
@@ -102,24 +104,27 @@ func TestService_PerformCleanup(t *testing.T) {
 		pMock.On("DeprovisionRuntime", fixAccountID, fixRuntimeID3).Return("", nil)
 
 		memoryStorage := storage.NewMemoryStorage()
-		memoryStorage.Instances().Insert(internal.Instance{
+		err := memoryStorage.Instances().Insert(internal.Instance{
 			InstanceID: "some-instance-id",
 			RuntimeID:  "not-matching-id",
 		})
-		memoryStorage.Instances().Insert(internal.Instance{
+		assert.NoError(t, err)
+		err = memoryStorage.Instances().Insert(internal.Instance{
 			InstanceID: fixInstanceID1,
 			RuntimeID:  fixRuntimeID1,
 		})
-		memoryStorage.Instances().Insert(internal.Instance{
+		assert.NoError(t, err)
+		err = memoryStorage.Instances().Insert(internal.Instance{
 			InstanceID: fixInstanceID2,
 			RuntimeID:  fixRuntimeID2,
 		})
+		assert.NoError(t, err)
 		logger := logrus.New()
 
 		svc := NewService(gcMock, bcMock, pMock, memoryStorage.Instances(), logger, maxShootAge, shootLabelSelector)
 
 		// when
-		err := svc.PerformCleanup()
+		err = svc.PerformCleanup()
 
 		// then
 		bcMock.AssertExpectations(t)
@@ -140,26 +145,28 @@ func TestService_PerformCleanup(t *testing.T) {
 		pMock := &mocks.ProvisionerClient{}
 
 		memoryStorage := storage.NewMemoryStorage()
-		memoryStorage.Instances().Insert(internal.Instance{
+		err := memoryStorage.Instances().Insert(internal.Instance{
 			InstanceID: fixInstanceID1,
 			RuntimeID:  fixRuntimeID1,
 		})
-		memoryStorage.Instances().Insert(internal.Instance{
+		assert.NoError(t, err)
+		err = memoryStorage.Instances().Insert(internal.Instance{
 			InstanceID: fixInstanceID2,
 			RuntimeID:  fixRuntimeID2,
 		})
-
-		memoryStorage.Instances().Insert(internal.Instance{
+		assert.NoError(t, err)
+		err = memoryStorage.Instances().Insert(internal.Instance{
 			InstanceID: fixInstanceID3,
 			RuntimeID:  fixRuntimeID3,
 		})
+		assert.NoError(t, err)
 
 		logger := logrus.New()
 
 		svc := NewService(gcMock, bcMock, pMock, memoryStorage.Instances(), logger, maxShootAge, shootLabelSelector)
 
 		// when
-		err := svc.PerformCleanup()
+		err = svc.PerformCleanup()
 
 		// then
 		bcMock.AssertExpectations(t)
@@ -181,17 +188,18 @@ func TestService_PerformCleanup(t *testing.T) {
 		pMock.On("DeprovisionRuntime", fixAccountID, fixRuntimeID3).Return("", fmt.Errorf("some other error"))
 
 		memoryStorage := storage.NewMemoryStorage()
-		memoryStorage.Instances().Insert(internal.Instance{
+		err := memoryStorage.Instances().Insert(internal.Instance{
 			InstanceID: fixInstanceID1,
 			RuntimeID:  fixRuntimeID1,
 		})
+		assert.NoError(t, err)
 
 		logger := logrus.New()
 
 		svc := NewService(gcMock, bcMock, pMock, memoryStorage.Instances(), logger, maxShootAge, shootLabelSelector)
 
 		// when
-		err := svc.PerformCleanup()
+		err = svc.PerformCleanup()
 
 		// then
 		bcMock.AssertExpectations(t)
@@ -245,10 +253,11 @@ func TestService_PerformCleanup(t *testing.T) {
 		pMock := &mocks.ProvisionerClient{}
 
 		memoryStorage := storage.NewMemoryStorage()
-		memoryStorage.Instances().Insert(internal.Instance{
+		err := memoryStorage.Instances().Insert(internal.Instance{
 			InstanceID: fixInstanceID1,
 			RuntimeID:  fixRuntimeID1,
 		})
+		assert.NoError(t, err)
 
 		var actualLog bytes.Buffer
 		logger := logrus.New()
@@ -260,7 +269,7 @@ func TestService_PerformCleanup(t *testing.T) {
 		svc := NewService(gcMock, bcMock, pMock, memoryStorage.Instances(), logger, maxShootAge, shootLabelSelector)
 
 		// when
-		err := svc.PerformCleanup()
+		err = svc.PerformCleanup()
 
 		// then
 		bcMock.AssertExpectations(t)

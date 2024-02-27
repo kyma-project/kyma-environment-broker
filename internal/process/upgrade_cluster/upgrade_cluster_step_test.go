@@ -50,7 +50,7 @@ func TestUpgradeClusterStep_Run(t *testing.T) {
 		UsernameClaim:  expectedOIDC.UsernameClaim,
 		UsernamePrefix: expectedOIDC.UsernamePrefix,
 	}
-	memoryStorage.RuntimeStates().Insert(runtimeState)
+	err = memoryStorage.RuntimeStates().Insert(runtimeState)
 	assert.NoError(t, err)
 
 	// as autoscaler values are not nil in provisioningParameters, the provider values are not used

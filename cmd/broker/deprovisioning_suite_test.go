@@ -51,7 +51,7 @@ type DeprovisioningSuite struct {
 }
 
 func NewDeprovisioningSuite(t *testing.T) *DeprovisioningSuite {
-	ctx, _ := context.WithTimeout(context.Background(), 20*time.Minute)
+	ctx, cancel := context.WithTimeout(context.Background(), 20*time.Minute)
 
 	logs := logrus.New()
 	logs.Formatter.(*logrus.TextFormatter).TimestampFormat = "15:04:05.000"
@@ -62,6 +62,7 @@ func NewDeprovisioningSuite(t *testing.T) *DeprovisioningSuite {
 	storageCleanup, db, err := GetStorageForE2ETests()
 	assert.NoError(t, err)
 	t.Cleanup(func() {
+		defer cancel()
 		if storageCleanup != nil {
 			err := storageCleanup()
 			assert.NoError(t, err)
@@ -97,8 +98,10 @@ func NewDeprovisioningSuite(t *testing.T) *DeprovisioningSuite {
 	deprovisionManager := process.NewStagedManager(db.Operations(), eventBroker, time.Minute, cfg.Deprovisioning, logs.WithField("deprovisioning", "manager"))
 	deprovisionManager.SpeedUp(1000)
 	scheme := runtime.NewScheme()
-	apiextensionsv1.AddToScheme(scheme)
-	corev1.AddToScheme(scheme)
+	err = apiextensionsv1.AddToScheme(scheme)
+	assert.NoError(t, err)
+	err = corev1.AddToScheme(scheme)
+	assert.NoError(t, err)
 	fakeK8sSKRClient := fake.NewClientBuilder().WithScheme(scheme).Build()
 
 	sch := internal.NewSchemeForTests()
@@ -265,7 +268,7 @@ func (s *DeprovisioningSuite) AssertInstanceNotRemoved(instanceId string) {
 
 func fixEDPClient() *edp.FakeClient {
 	client := edp.NewFakeClient()
-	client.CreateDataTenant(edp.DataTenantPayload{
+	_ = client.CreateDataTenant(edp.DataTenantPayload{
 		Name:        subAccountID,
 		Environment: edpEnvironment,
 		Secret:      base64.StdEncoding.EncodeToString([]byte(fmt.Sprintf("%s%s", subAccountID, edpEnvironment))),
@@ -279,7 +282,7 @@ func fixEDPClient() *edp.FakeClient {
 	}
 
 	for _, key := range metadataTenantKeys {
-		client.CreateMetadataTenant(subAccountID, edpEnvironment, edp.MetadataTenantPayload{
+		_ = client.CreateMetadataTenant(subAccountID, edpEnvironment, edp.MetadataTenantPayload{
 			Key:   key,
 			Value: "-",
 		})

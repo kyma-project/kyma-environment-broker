@@ -58,7 +58,8 @@ func TestSyncGardenerCluster_RunWithExistingResource(t *testing.T) {
 	operation.KymaResourceNamespace = "kcp-system"
 	operation.RuntimeID = "runtime-id-000"
 	operation.ShootName = "c-12345"
-	os.InsertOperation(operation)
+	err := os.InsertOperation(operation)
+	assert.NoError(t, err)
 	svc := NewSyncGardenerCluster(os, k8sClient)
 
 	// when
@@ -101,7 +102,8 @@ func TestSyncGardenerCluster_Run(t *testing.T) {
 	operation.KymaResourceNamespace = "kcp-system"
 	operation.RuntimeID = "runtime-id-000"
 	operation.ShootName = "c-12345"
-	os.InsertOperation(operation)
+	err := os.InsertOperation(operation)
+	assert.NoError(t, err)
 
 	// when
 	_, backoff, err := svc.Run(operation, logrus.New())
@@ -137,7 +139,8 @@ func TestCheckGardenerCluster_RunWhenReady(t *testing.T) {
 	operation.KymaResourceNamespace = "kcp-system"
 	operation.RuntimeID = "runtime-id-000"
 	operation.ShootName = "c-12345"
-	os.InsertOperation(operation)
+	err := os.InsertOperation(operation)
+	assert.NoError(t, err)
 
 	// when
 	_, backoff, err := step.Run(operation, logrus.New())
@@ -160,7 +163,8 @@ func TestCheckGardenerCluster_RunWhenNotReady_OperationFail(t *testing.T) {
 	operation.RuntimeID = "runtime-id-000"
 	operation.ShootName = "c-12345"
 	operation.UpdatedAt = time.Now().Add(-1 * time.Hour)
-	os.InsertOperation(operation)
+	err := os.InsertOperation(operation)
+	assert.NoError(t, err)
 
 	// when
 	op, backoff, err := step.Run(operation, logrus.New())
@@ -184,7 +188,8 @@ func TestCheckGardenerCluster_RunWhenNotReady_Retry(t *testing.T) {
 	operation.RuntimeID = "runtime-id-000"
 	operation.ShootName = "c-12345"
 	operation.UpdatedAt = time.Now()
-	os.InsertOperation(operation)
+	err := os.InsertOperation(operation)
+	assert.NoError(t, err)
 
 	// when
 	_, backoff, err := step.Run(operation, logrus.New())

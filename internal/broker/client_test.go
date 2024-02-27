@@ -207,7 +207,7 @@ func expiration(w http.ResponseWriter, r *http.Request) {
 	}
 
 	w.WriteHeader(http.StatusAccepted)
-	w.Write([]byte(fmt.Sprintf(`{"operation": "%s"}`, fixOpID)))
+	_, _ = w.Write([]byte(fmt.Sprintf(`{"operation": "%s"}`, fixOpID)))
 }
 
 func deprovision(w http.ResponseWriter, r *http.Request) {
@@ -224,7 +224,7 @@ func deprovision(w http.ResponseWriter, r *http.Request) {
 	}
 
 	w.WriteHeader(http.StatusAccepted)
-	w.Write([]byte(fmt.Sprintf(`{"operation": "%s"}`, fixOpID)))
+	_, _ = w.Write([]byte(fmt.Sprintf(`{"operation": "%s"}`, fixOpID)))
 }
 
 func requestFailureServerError(w http.ResponseWriter, _ *http.Request) {
@@ -240,7 +240,7 @@ func getInstance(w http.ResponseWriter, r *http.Request) {
 	if instance == "non-existent" {
 		w.WriteHeader(http.StatusNotFound)
 	} else {
-		w.Write([]byte(fmt.Sprintf(`{"instanceID": "%s"}`, instance)))
+		_, _ = w.Write([]byte(fmt.Sprintf(`{"instanceID": "%s"}`, instance)))
 		w.WriteHeader(http.StatusOK)
 	}
 }

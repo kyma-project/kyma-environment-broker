@@ -213,7 +213,8 @@ func TestResolveCredentials_IntegrationAWS(t *testing.T) {
 	accountProvider := hyperscaler.NewAccountProvider(hyperscaler.NewAccountPool(gc, namespace), hyperscaler.NewSharedGardenerAccountPool(gc, namespace))
 
 	op := fixOperationWithPlatformRegion("cf-us10", internal.AWS)
-	memoryStorage.Operations().InsertOperation(op)
+	err := memoryStorage.Operations().InsertOperation(op)
+	assert.NoError(t, err)
 	step := NewResolveCredentialsStep(memoryStorage.Operations(), accountProvider)
 
 	// when
@@ -237,7 +238,8 @@ func TestResolveCredentials_IntegrationAWSEuAccess(t *testing.T) {
 	accountProvider := hyperscaler.NewAccountProvider(hyperscaler.NewAccountPool(gc, namespace), hyperscaler.NewSharedGardenerAccountPool(gc, namespace))
 
 	op := fixOperationWithPlatformRegion("cf-eu11", internal.AWS)
-	memoryStorage.Operations().InsertOperation(op)
+	err := memoryStorage.Operations().InsertOperation(op)
+	assert.NoError(t, err)
 	step := NewResolveCredentialsStep(memoryStorage.Operations(), accountProvider)
 
 	// when
@@ -259,7 +261,8 @@ func TestResolveCredentials_IntegrationAzure(t *testing.T) {
 	accountProvider := hyperscaler.NewAccountProvider(hyperscaler.NewAccountPool(gc, namespace), hyperscaler.NewSharedGardenerAccountPool(gc, namespace))
 
 	op := fixOperationWithPlatformRegion("cf-eu21", internal.Azure)
-	memoryStorage.Operations().InsertOperation(op)
+	err := memoryStorage.Operations().InsertOperation(op)
+	assert.NoError(t, err)
 	step := NewResolveCredentialsStep(memoryStorage.Operations(), accountProvider)
 
 	// when
@@ -283,7 +286,8 @@ func TestResolveCredentials_IntegrationAzureEuAccess(t *testing.T) {
 	accountProvider := hyperscaler.NewAccountProvider(hyperscaler.NewAccountPool(gc, namespace), hyperscaler.NewSharedGardenerAccountPool(gc, namespace))
 
 	op := fixOperationWithPlatformRegion("cf-ch20", internal.Azure)
-	memoryStorage.Operations().InsertOperation(op)
+	err := memoryStorage.Operations().InsertOperation(op)
+	assert.NoError(t, err)
 	step := NewResolveCredentialsStep(memoryStorage.Operations(), accountProvider)
 
 	// when

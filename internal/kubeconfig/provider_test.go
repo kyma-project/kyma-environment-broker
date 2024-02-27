@@ -24,12 +24,13 @@ import (
 func TestSecretProvider_NoValueInSecret(t *testing.T) {
 	// given
 	kcpClient := fake.NewClientBuilder().Build()
-	kcpClient.Create(context.Background(), &v1.Secret{
+	err := kcpClient.Create(context.Background(), &v1.Secret{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      "kubeconfig-runtime00",
 			Namespace: "kcp-system",
 		},
 	})
+	assert.NoError(t, err)
 	provider := SecretProvider{
 		kcpK8sClient: kcpClient,
 	}
@@ -64,7 +65,7 @@ func TestSecretProvider_NoSecret(t *testing.T) {
 func TestSecretProvider_BadKubeconfig(t *testing.T) {
 	// given
 	kcpClient := fake.NewClientBuilder().Build()
-	kcpClient.Create(context.Background(), &v1.Secret{
+	err := kcpClient.Create(context.Background(), &v1.Secret{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      "kubeconfig-runtime00",
 			Namespace: "kcp-system",
@@ -73,6 +74,7 @@ func TestSecretProvider_BadKubeconfig(t *testing.T) {
 			"config": []byte("bad-kubeconfig"),
 		},
 	})
+	assert.NoError(t, err)
 	provider := SecretProvider{
 		kcpK8sClient: kcpClient,
 	}
@@ -94,7 +96,7 @@ func TestSecretProvider_KubernetesAndK8sClientForRuntimeID(t *testing.T) {
 	}
 	var errEnvTest error
 	var config *rest.Config
-	wait.Poll(500*time.Millisecond, 5*time.Second, func() (done bool, err error) {
+	_ = wait.Poll(500*time.Millisecond, 5*time.Second, func() (done bool, err error) {
 		config, errEnvTest = env.Start()
 		if err != nil {
 			t.Logf("envtest could not start, retrying: %s", errEnvTest.Error())
@@ -103,12 +105,15 @@ func TestSecretProvider_KubernetesAndK8sClientForRuntimeID(t *testing.T) {
 		return true, nil
 	})
 	require.NoError(t, errEnvTest)
-	defer env.Stop()
+	defer func(env *envtest.Environment) {
+		err := env.Stop()
+		assert.NoError(t, err)
+	}(&env)
 	kubeconfig := createKubeconfigFileForRestConfig(*config)
 
 	// prepare a k8s client to store a secret with kubeconfig
 	kcpClient := fake.NewClientBuilder().Build()
-	kcpClient.Create(context.Background(), &v1.Secret{
+	err := kcpClient.Create(context.Background(), &v1.Secret{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      "kubeconfig-runtime00",
 			Namespace: "kcp-system",
@@ -117,6 +122,7 @@ func TestSecretProvider_KubernetesAndK8sClientForRuntimeID(t *testing.T) {
 			"config": kubeconfig,
 		},
 	})
+	assert.NoError(t, err)
 	provider := SecretProvider{
 		kcpK8sClient: kcpClient,
 	}

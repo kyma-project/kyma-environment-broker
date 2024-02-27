@@ -23,9 +23,12 @@ func TestStartStep_RunIfDeprovisioningInProgress(t *testing.T) {
 	pOp.State = orchestration.Pending
 	inst := fixture.FixInstance("instance-id")
 
-	st.Instances().Insert(inst)
-	st.Operations().InsertDeprovisioningOperation(dOp)
-	st.Operations().InsertOperation(pOp)
+	err := st.Instances().Insert(inst)
+	assert.NoError(t, err)
+	err = st.Operations().InsertDeprovisioningOperation(dOp)
+	assert.NoError(t, err)
+	err = st.Operations().InsertOperation(pOp)
+	assert.NoError(t, err)
 
 	// when
 	operation, retry, err := step.Run(pOp, logrus.New())
@@ -47,9 +50,12 @@ func TestStartStep_RunIfDeprovisioningDone(t *testing.T) {
 	pOp.State = orchestration.Pending
 	inst := fixture.FixInstance("instance-id")
 
-	st.Instances().Insert(inst)
-	st.Operations().InsertDeprovisioningOperation(dOp)
-	st.Operations().InsertOperation(pOp)
+	err := st.Instances().Insert(inst)
+	assert.NoError(t, err)
+	err = st.Operations().InsertDeprovisioningOperation(dOp)
+	assert.NoError(t, err)
+	err = st.Operations().InsertOperation(pOp)
+	assert.NoError(t, err)
 
 	// when
 	operation, retry, err := step.Run(pOp, logrus.New())

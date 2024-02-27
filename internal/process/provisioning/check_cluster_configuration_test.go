@@ -53,17 +53,19 @@ func TestCheckClusterConfigurationStep_ClusterReady(t *testing.T) {
 	operation := fixture.FixProvisioningOperation("op-id", "inst-id")
 	operation.ClusterConfigurationVersion = 1
 	recClient := reconciler.NewFakeClient()
-	recClient.ApplyClusterConfig(reconcilerApi.Cluster{
+	_, err := recClient.ApplyClusterConfig(reconcilerApi.Cluster{
 		RuntimeID:    operation.RuntimeID,
 		RuntimeInput: reconcilerApi.RuntimeInput{},
 		KymaConfig:   reconcilerApi.KymaConfig{},
 		Metadata:     reconcilerApi.Metadata{},
 		Kubeconfig:   "kubeconfig",
 	})
+	require.NoError(t, err)
 	recClient.ChangeClusterState(operation.RuntimeID, 1, reconcilerApi.StatusReady)
 
 	step := NewCheckClusterConfigurationStep(st.Operations(), recClient, time.Minute)
-	st.Operations().InsertOperation(operation)
+	err = st.Operations().InsertOperation(operation)
+	require.NoError(t, err)
 
 	// when
 	_, d, err := step.Run(operation, logger.NewLogSpy().Logger)
@@ -80,17 +82,19 @@ func TestCheckClusterConfigurationStep_InProgress(t *testing.T) {
 			operation := fixture.FixProvisioningOperation("op-id", "inst-id")
 			operation.ClusterConfigurationVersion = 1
 			recClient := reconciler.NewFakeClient()
-			recClient.ApplyClusterConfig(reconcilerApi.Cluster{
+			_, err := recClient.ApplyClusterConfig(reconcilerApi.Cluster{
 				RuntimeID:    operation.RuntimeID,
 				RuntimeInput: reconcilerApi.RuntimeInput{},
 				KymaConfig:   reconcilerApi.KymaConfig{},
 				Metadata:     reconcilerApi.Metadata{},
 				Kubeconfig:   "kubeconfig",
 			})
+			require.NoError(t, err)
 			recClient.ChangeClusterState(operation.RuntimeID, 1, state)
 
 			step := NewCheckClusterConfigurationStep(st.Operations(), recClient, time.Minute)
-			st.Operations().InsertOperation(operation)
+			err = st.Operations().InsertOperation(operation)
+			require.NoError(t, err)
 
 			// when
 			_, d, err := step.Run(operation, logger.NewLogSpy().Logger)
@@ -107,17 +111,19 @@ func TestCheckClusterConfigurationStep_ClusterFailed(t *testing.T) {
 	operation := fixture.FixProvisioningOperation("op-id", "inst-id")
 	operation.ClusterConfigurationVersion = 1
 	recClient := reconciler.NewFakeClient()
-	recClient.ApplyClusterConfig(reconcilerApi.Cluster{
+	_, err := recClient.ApplyClusterConfig(reconcilerApi.Cluster{
 		RuntimeID:    operation.RuntimeID,
 		RuntimeInput: reconcilerApi.RuntimeInput{},
 		KymaConfig:   reconcilerApi.KymaConfig{},
 		Metadata:     reconcilerApi.Metadata{},
 		Kubeconfig:   "kubeconfig",
 	})
+	require.NoError(t, err)
 	recClient.ChangeClusterState(operation.RuntimeID, 1, reconcilerApi.StatusError)
 
 	step := NewCheckClusterConfigurationStep(st.Operations(), recClient, time.Minute)
-	st.Operations().InsertOperation(operation)
+	err = st.Operations().InsertOperation(operation)
+	require.NoError(t, err)
 
 	// when
 	op, d, _ := step.Run(operation, logger.NewLogSpy().Logger)

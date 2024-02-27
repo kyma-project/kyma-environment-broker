@@ -38,7 +38,8 @@ func TestEDPRegistration_Run(t *testing.T) {
 			},
 		},
 	}
-	memoryStorage.Operations().InsertOperation(operation)
+	err := memoryStorage.Operations().InsertOperation(operation)
+	assert.NoError(t, err)
 
 	// when
 	_, repeat, err := step.Run(operation, logger.NewLogDummy())

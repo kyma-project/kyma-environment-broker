@@ -15,7 +15,8 @@ func TestInitKymaTemplate_Run(t *testing.T) {
 	// given
 	db := storage.NewMemoryStorage()
 	operation := fixture.FixOperation("op-id", "inst-id", internal.OperationTypeProvision)
-	db.Operations().InsertOperation(operation)
+	err := db.Operations().InsertOperation(operation)
+	require.NoError(t, err)
 	svc := NewInitKymaTemplate(db.Operations())
 	ic := fixture.FixInputCreator("aws")
 	ic.Config = &internal.ConfigForPlan{

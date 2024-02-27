@@ -41,17 +41,19 @@ func TestCheckClusterDeregistrationStep(t *testing.T) {
 			operation.ClusterConfigurationVersion = 1
 			operation.ClusterConfigurationDeleted = true
 			recClient := reconciler.NewFakeClient()
-			recClient.ApplyClusterConfig(reconcilerApi.Cluster{
+			_, err := recClient.ApplyClusterConfig(reconcilerApi.Cluster{
 				RuntimeID:    operation.RuntimeID,
 				RuntimeInput: reconcilerApi.RuntimeInput{},
 				KymaConfig:   reconcilerApi.KymaConfig{},
 				Metadata:     reconcilerApi.Metadata{},
 				Kubeconfig:   "kubeconfig",
 			})
+			assert.NoError(t, err)
 			recClient.ChangeClusterState(operation.RuntimeID, 1, tc.State)
 
 			step := NewCheckClusterDeregistrationStep(st.Operations(), recClient, time.Minute)
-			st.Operations().InsertDeprovisioningOperation(operation)
+			err = st.Operations().InsertDeprovisioningOperation(operation)
+			assert.NoError(t, err)
 
 			// when
 			_, d, err := step.Run(operation.Operation, logger.NewLogSpy().Logger)

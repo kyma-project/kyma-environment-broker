@@ -44,7 +44,8 @@ func TestCreatingKymaResource(t *testing.T) {
 	operation, cli := fixOperationForApplyKymaResource(t)
 	*operation.ProvisioningParameters.ErsContext.LicenseType = "CUSTOMER"
 	storage := storage.NewMemoryStorage()
-	storage.Operations().InsertOperation(operation)
+	err := storage.Operations().InsertOperation(operation)
+	require.NoError(t, err)
 	svc := NewApplyKymaStep(storage.Operations(), cli)
 
 	// when
@@ -56,11 +57,13 @@ func TestCreatingKymaResource(t *testing.T) {
 	aList := unstructured.UnstructuredList{}
 	aList.SetGroupVersionKind(schema.GroupVersionKind{Group: "operator.kyma-project.io", Version: "v1beta2", Kind: "KymaList"})
 
-	cli.List(context.Background(), &aList)
+	err = cli.List(context.Background(), &aList)
+	require.NoError(t, err)
 	assert.Equal(t, 1, len(aList.Items))
 	assertLabelsExistsForExternalKymaResource(t, aList.Items[0])
 
-	svc.Run(operation, logrus.New())
+	_, _, err = svc.Run(operation, logrus.New())
+	require.NoError(t, err)
 }
 
 func TestCreatingInternalKymaResource(t *testing.T) {
@@ -68,7 +71,8 @@ func TestCreatingInternalKymaResource(t *testing.T) {
 		// given
 		operation, cli := fixOperationForApplyKymaResource(t)
 		storage := storage.NewMemoryStorage()
-		storage.Operations().InsertOperation(operation)
+		err := storage.Operations().InsertOperation(operation)
+		require.NoError(t, err)
 		svc := NewApplyKymaStep(storage.Operations(), cli)
 
 		// when
@@ -80,12 +84,14 @@ func TestCreatingInternalKymaResource(t *testing.T) {
 		aList := unstructured.UnstructuredList{}
 		aList.SetGroupVersionKind(schema.GroupVersionKind{Group: "operator.kyma-project.io", Version: "v1beta2", Kind: "KymaList"})
 
-		cli.List(context.Background(), &aList)
+		err = cli.List(context.Background(), &aList)
+		require.NoError(t, err)
 		assert.Equal(t, 1, len(aList.Items))
 		assertLabelsExistsForInternalKymaResource(t, aList.Items[0])
 
 		assertCompassRuntimeIdAnnotationExists(t, aList.Items[0])
-		svc.Run(operation, logrus.New())
+		_, _, err = svc.Run(operation, logrus.New())
+		require.NoError(t, err)
 	})
 
 	t.Run("Without compass runtime ID", func(t *testing.T) {
@@ -93,7 +99,8 @@ func TestCreatingInternalKymaResource(t *testing.T) {
 		operation, cli := fixOperationForApplyKymaResource(t)
 		operation.SetCompassRuntimeIdNotRegisteredByProvisioner()
 		storage := storage.NewMemoryStorage()
-		storage.Operations().InsertOperation(operation)
+		err := storage.Operations().InsertOperation(operation)
+		require.NoError(t, err)
 		svc := NewApplyKymaStep(storage.Operations(), cli)
 
 		// when
@@ -105,12 +112,14 @@ func TestCreatingInternalKymaResource(t *testing.T) {
 		aList := unstructured.UnstructuredList{}
 		aList.SetGroupVersionKind(schema.GroupVersionKind{Group: "operator.kyma-project.io", Version: "v1beta2", Kind: "KymaList"})
 
-		cli.List(context.Background(), &aList)
+		err = cli.List(context.Background(), &aList)
+		require.NoError(t, err)
 		assert.Equal(t, 1, len(aList.Items))
 		assertLabelsExistsForInternalKymaResource(t, aList.Items[0])
 
 		assertCompassRuntimeIdAnnotationNotExists(t, aList.Items[0])
-		svc.Run(operation, logrus.New())
+		_, _, err = svc.Run(operation, logrus.New())
+		require.NoError(t, err)
 	})
 }
 
@@ -120,7 +129,8 @@ func TestCreatingKymaResource_UseNamespaceFromTimeOfCreationNotTemplate(t *testi
 	operation.KymaResourceNamespace = "namespace-in-time-of-creation"
 	*operation.ProvisioningParameters.ErsContext.LicenseType = "CUSTOMER"
 	storage := storage.NewMemoryStorage()
-	storage.Operations().InsertOperation(operation)
+	err := storage.Operations().InsertOperation(operation)
+	require.NoError(t, err)
 	svc := NewApplyKymaStep(storage.Operations(), cli)
 
 	// when
@@ -132,11 +142,13 @@ func TestCreatingKymaResource_UseNamespaceFromTimeOfCreationNotTemplate(t *testi
 	aList := unstructured.UnstructuredList{}
 	aList.SetGroupVersionKind(schema.GroupVersionKind{Group: "operator.kyma-project.io", Version: "v1beta2", Kind: "KymaList"})
 
-	cli.List(context.Background(), &aList)
+	err = cli.List(context.Background(), &aList)
+	require.NoError(t, err)
 	assert.Equal(t, 1, len(aList.Items))
 	assertLabelsExistsForExternalKymaResource(t, aList.Items[0])
 
-	svc.Run(operation, logrus.New())
+	_, _, err = svc.Run(operation, logrus.New())
+	require.NoError(t, err)
 	assert.Equal(t, "namespace-in-time-of-creation", operation.KymaResourceNamespace)
 }
 
@@ -145,7 +157,8 @@ func TestCreatingInternalKymaResource_UseNamespaceFromTimeOfCreationNotTemplate(
 	operation, cli := fixOperationForApplyKymaResource(t)
 	operation.KymaResourceNamespace = "namespace-in-time-of-creation"
 	storage := storage.NewMemoryStorage()
-	storage.Operations().InsertOperation(operation)
+	err := storage.Operations().InsertOperation(operation)
+	require.NoError(t, err)
 	svc := NewApplyKymaStep(storage.Operations(), cli)
 
 	// when
@@ -157,11 +170,13 @@ func TestCreatingInternalKymaResource_UseNamespaceFromTimeOfCreationNotTemplate(
 	aList := unstructured.UnstructuredList{}
 	aList.SetGroupVersionKind(schema.GroupVersionKind{Group: "operator.kyma-project.io", Version: "v1beta2", Kind: "KymaList"})
 
-	cli.List(context.Background(), &aList)
+	err = cli.List(context.Background(), &aList)
+	require.NoError(t, err)
 	assert.Equal(t, 1, len(aList.Items))
 	assertLabelsExistsForInternalKymaResource(t, aList.Items[0])
 
-	svc.Run(operation, logrus.New())
+	_, _, err = svc.Run(operation, logrus.New())
+	require.NoError(t, err)
 	assert.Equal(t, "namespace-in-time-of-creation", operation.KymaResourceNamespace)
 }
 
@@ -170,9 +185,10 @@ func TestUpdatinglKymaResourceIfExists(t *testing.T) {
 	operation, cli := fixOperationForApplyKymaResource(t)
 	*operation.ProvisioningParameters.ErsContext.LicenseType = "CUSTOMER"
 	storage := storage.NewMemoryStorage()
-	storage.Operations().InsertOperation(operation)
+	err := storage.Operations().InsertOperation(operation)
+	require.NoError(t, err)
 	svc := NewApplyKymaStep(storage.Operations(), cli)
-	err := cli.Create(context.Background(), &unstructured.Unstructured{Object: map[string]interface{}{
+	err = cli.Create(context.Background(), &unstructured.Unstructured{Object: map[string]interface{}{
 		"apiVersion": "operator.kyma-project.io/v1beta2",
 		"kind":       "Kyma",
 		"metadata": map[string]interface{}{
@@ -194,7 +210,8 @@ func TestUpdatinglKymaResourceIfExists(t *testing.T) {
 	aList := unstructured.UnstructuredList{}
 	aList.SetGroupVersionKind(schema.GroupVersionKind{Group: "operator.kyma-project.io", Version: "v1beta2", Kind: "KymaList"})
 
-	cli.List(context.Background(), &aList)
+	err = cli.List(context.Background(), &aList)
+	require.NoError(t, err)
 	assert.Equal(t, 1, len(aList.Items))
 	assertLabelsExistsForExternalKymaResource(t, aList.Items[0])
 }
@@ -203,9 +220,10 @@ func TestUpdatinInternalKymaResourceIfExists(t *testing.T) {
 	// given
 	operation, cli := fixOperationForApplyKymaResource(t)
 	storage := storage.NewMemoryStorage()
-	storage.Operations().InsertOperation(operation)
+	err := storage.Operations().InsertOperation(operation)
+	require.NoError(t, err)
 	svc := NewApplyKymaStep(storage.Operations(), cli)
-	err := cli.Create(context.Background(), &unstructured.Unstructured{Object: map[string]interface{}{
+	err = cli.Create(context.Background(), &unstructured.Unstructured{Object: map[string]interface{}{
 		"apiVersion": "operator.kyma-project.io/v1beta2",
 		"kind":       "Kyma",
 		"metadata": map[string]interface{}{
@@ -227,7 +245,8 @@ func TestUpdatinInternalKymaResourceIfExists(t *testing.T) {
 	aList := unstructured.UnstructuredList{}
 	aList.SetGroupVersionKind(schema.GroupVersionKind{Group: "operator.kyma-project.io", Version: "v1beta2", Kind: "KymaList"})
 
-	cli.List(context.Background(), &aList)
+	err = cli.List(context.Background(), &aList)
+	require.NoError(t, err)
 	assert.Equal(t, 1, len(aList.Items))
 	assertLabelsExistsForInternalKymaResource(t, aList.Items[0])
 }

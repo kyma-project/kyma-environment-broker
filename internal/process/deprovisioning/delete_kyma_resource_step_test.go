@@ -37,7 +37,7 @@ func TestDeleteKymaResource_HappyFlow(t *testing.T) {
 	assert.NoError(t, err)
 
 	step := NewDeleteKymaResourceStep(memoryStorage.Operations(), memoryStorage.Instances(), kcpClient, fakeConfigProvider{}, "2.0")
-	memoryStorage.Operations().InsertOperation(operation)
+	_ = memoryStorage.Operations().InsertOperation(operation)
 
 	// When
 	_, backoff, err := step.Run(operation, logger.NewLogSpy().Logger)
@@ -60,7 +60,7 @@ func TestDeleteKymaResource_EmptyRuntimeIDAndKymaResourceName(t *testing.T) {
 	assert.NoError(t, err)
 
 	step := NewDeleteKymaResourceStep(memoryStorage.Operations(), memoryStorage.Instances(), kcpClient, fakeConfigProvider{}, "2.0")
-	memoryStorage.Operations().InsertOperation(operation)
+	_ = memoryStorage.Operations().InsertOperation(operation)
 	err = memoryStorage.Instances().Insert(instance)
 	require.NoError(t, err)
 

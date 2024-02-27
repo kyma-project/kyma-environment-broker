@@ -27,7 +27,8 @@ func TestSuspension(t *testing.T) {
 
 	svc := NewContextUpdateHandler(st.Operations(), provisioning, deprovisioning, logrus.New())
 	instance := fixInstance(fixActiveErsContext())
-	st.Instances().Insert(*instance)
+	err := st.Instances().Insert(*instance)
+	require.NoError(t, err)
 
 	// when
 	changed, err := svc.Handle(instance, fixInactiveErsContext())
@@ -52,8 +53,9 @@ func TestSuspension_Retrigger(t *testing.T) {
 
 		svc := NewContextUpdateHandler(st.Operations(), provisioning, deprovisioning, logrus.New())
 		instance := fixInstance(fixInactiveErsContext())
-		st.Instances().Insert(*instance)
-		st.Operations().InsertDeprovisioningOperation(internal.DeprovisioningOperation{
+		err := st.Instances().Insert(*instance)
+		require.NoError(t, err)
+		err = st.Operations().InsertDeprovisioningOperation(internal.DeprovisioningOperation{
 			Operation: internal.Operation{
 				ID:         "suspended-op-id",
 				Version:    0,
@@ -65,6 +67,7 @@ func TestSuspension_Retrigger(t *testing.T) {
 				Type:       internal.OperationTypeDeprovision,
 			},
 		})
+		require.NoError(t, err)
 
 		// when
 		changed, err := svc.Handle(instance, fixInactiveErsContext())
@@ -88,8 +91,9 @@ func TestSuspension_Retrigger(t *testing.T) {
 
 		svc := NewContextUpdateHandler(st.Operations(), provisioning, deprovisioning, logrus.New())
 		instance := fixInstance(fixInactiveErsContext())
-		st.Instances().Insert(*instance)
-		st.Operations().InsertDeprovisioningOperation(internal.DeprovisioningOperation{
+		err := st.Instances().Insert(*instance)
+		require.NoError(t, err)
+		err = st.Operations().InsertDeprovisioningOperation(internal.DeprovisioningOperation{
 			Operation: internal.Operation{
 				ID:         "suspended-op-id",
 				Version:    0,
@@ -101,6 +105,7 @@ func TestSuspension_Retrigger(t *testing.T) {
 				Type:       internal.OperationTypeDeprovision,
 			},
 		})
+		require.NoError(t, err)
 
 		// when
 		changed, err := svc.Handle(instance, fixInactiveErsContext())
@@ -138,11 +143,13 @@ func TestUnsuspension(t *testing.T) {
 	instance.InstanceDetails.ShootName = "c-012345"
 	instance.InstanceDetails.ShootDomain = "c-012345.sap.com"
 
-	st.Instances().Insert(*instance)
+	err := st.Instances().Insert(*instance)
+	require.NoError(t, err)
 
 	deprovisioningOperation := fixture.FixDeprovisioningOperation("d-op", "instance-id")
 	deprovisioningOperation.Temporary = true
-	st.Operations().InsertDeprovisioningOperation(deprovisioningOperation)
+	err = st.Operations().InsertDeprovisioningOperation(deprovisioningOperation)
+	require.NoError(t, err)
 
 	// when
 	changed, err := svc.Handle(instance, fixActiveErsContext())
@@ -172,10 +179,12 @@ func TestUnsuspensionForDeprovisioningInstance(t *testing.T) {
 	instance.InstanceDetails.ShootName = "c-012345"
 	instance.InstanceDetails.ShootDomain = "c-012345.sap.com"
 
-	st.Instances().Insert(*instance)
+	err := st.Instances().Insert(*instance)
+	require.NoError(t, err)
 	deprovisioningOperation := fixture.FixDeprovisioningOperation("d-op", "instance-id")
 	deprovisioningOperation.Temporary = false
-	st.Operations().InsertDeprovisioningOperation(deprovisioningOperation)
+	err = st.Operations().InsertDeprovisioningOperation(deprovisioningOperation)
+	require.NoError(t, err)
 
 	// when
 	changed, err := svc.Handle(instance, fixActiveErsContext())
@@ -201,7 +210,8 @@ func TestUnsuspensionForExpiredInstance(t *testing.T) {
 	instance.InstanceDetails.ShootDomain = "c-012345.sap.com"
 	instance.ExpiredAt = ptr.Time(time.Now())
 
-	st.Instances().Insert(*instance)
+	err := st.Instances().Insert(*instance)
+	require.NoError(t, err)
 
 	// when
 	changed, err := svc.Handle(instance, fixActiveErsContext())

@@ -32,11 +32,13 @@ func TestGetKubeconfigStep(t *testing.T) {
 		step := NewGetKubeconfigStep(st.Operations(), provisionerClient)
 		operation := fixture.FixProvisioningOperation("operation-id", "inst-id")
 		operation.Kubeconfig = ""
-		st.Operations().InsertOperation(operation)
+		err = st.Operations().InsertOperation(operation)
+		require.NoError(t, err)
 
 		input, err := operation.InputCreator.CreateProvisionRuntimeInput()
 		require.NoError(t, err)
-		provisionerClient.ProvisionRuntimeWithIDs(operation.GlobalAccountID, operation.SubAccountID, operation.RuntimeID, operation.ID, input)
+		_, err = provisionerClient.ProvisionRuntimeWithIDs(operation.GlobalAccountID, operation.SubAccountID, operation.RuntimeID, operation.ID, input)
+		require.NoError(t, err)
 
 		// when
 		processedOperation, d, err := step.Run(operation, logrus.New())
@@ -59,7 +61,8 @@ func TestGetKubeconfigStep(t *testing.T) {
 		operation.Kubeconfig = ""
 		operation.ProvisioningParameters.Parameters.Kubeconfig = kubeconfigContentsFromParameters
 		operation.ProvisioningParameters.PlanID = broker.OwnClusterPlanID
-		st.Operations().InsertOperation(operation)
+		err = st.Operations().InsertOperation(operation)
+		require.NoError(t, err)
 
 		// when
 		processedOperation, d, err := step.Run(operation, logrus.New())
@@ -80,7 +83,8 @@ func TestGetKubeconfigStep(t *testing.T) {
 		operation := fixture.FixProvisioningOperation("operation-id", "inst-id")
 		operation.Kubeconfig = kubeconfigFromPreviousOperation
 		operation.ProvisioningParameters.Parameters.Kubeconfig = ""
-		st.Operations().InsertOperation(operation)
+		err = st.Operations().InsertOperation(operation)
+		require.NoError(t, err)
 
 		// when
 		processedOperation, d, err := step.Run(operation, logrus.New())
@@ -102,7 +106,8 @@ func TestGetKubeconfigStep(t *testing.T) {
 		operation := fixture.FixProvisioningOperation("operation-id", "inst-id")
 		operation.Kubeconfig = ""
 		operation.RuntimeID = ""
-		st.Operations().InsertOperation(operation)
+		err = st.Operations().InsertOperation(operation)
+		require.NoError(t, err)
 
 		// when
 		_, _, err = step.Run(operation, logrus.New())

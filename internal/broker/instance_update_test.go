@@ -55,10 +55,14 @@ func TestUpdateEndpoint_UpdateSuspension(t *testing.T) {
 		},
 	}
 	st := storage.NewMemoryStorage()
-	st.Instances().Insert(instance)
-	st.Operations().InsertProvisioningOperation(fixProvisioningOperation("01"))
-	st.Operations().InsertDeprovisioningOperation(fixSuspensionOperation())
-	st.Operations().InsertProvisioningOperation(fixProvisioningOperation("02"))
+	err := st.Instances().Insert(instance)
+	require.NoError(t, err)
+	err = st.Operations().InsertProvisioningOperation(fixProvisioningOperation("01"))
+	require.NoError(t, err)
+	err = st.Operations().InsertDeprovisioningOperation(fixSuspensionOperation())
+	require.NoError(t, err)
+	err = st.Operations().InsertProvisioningOperation(fixProvisioningOperation("02"))
+	require.NoError(t, err)
 
 	handler := &handler{}
 	q := &automock.Queue{}
@@ -122,8 +126,10 @@ func TestUpdateEndpoint_UpdateOfExpiredTrial(t *testing.T) {
 		ExpiredAt: ptr.Time(time.Now()),
 	}
 	st := storage.NewMemoryStorage()
-	st.Instances().Insert(instance)
-	st.Operations().InsertProvisioningOperation(fixProvisioningOperation("01"))
+	err := st.Instances().Insert(instance)
+	require.NoError(t, err)
+	err = st.Operations().InsertProvisioningOperation(fixProvisioningOperation("01"))
+	require.NoError(t, err)
 
 	handler := &handler{}
 	q := &automock.Queue{}
@@ -169,8 +175,10 @@ func TestUpdateEndpoint_UpdateAutoscalerParams(t *testing.T) {
 		},
 	}
 	st := storage.NewMemoryStorage()
-	st.Instances().Insert(instance)
-	st.Operations().InsertProvisioningOperation(fixProvisioningOperation("01"))
+	err := st.Instances().Insert(instance)
+	require.NoError(t, err)
+	err = st.Operations().InsertProvisioningOperation(fixProvisioningOperation("01"))
+	require.NoError(t, err)
 
 	handler := &handler{}
 	q := &automock.Queue{}
@@ -258,9 +266,12 @@ func TestUpdateEndpoint_UpdateUnsuspension(t *testing.T) {
 		},
 	}
 	st := storage.NewMemoryStorage()
-	st.Instances().Insert(instance)
-	st.Operations().InsertProvisioningOperation(fixProvisioningOperation("01"))
-	st.Operations().InsertDeprovisioningOperation(fixSuspensionOperation())
+	err := st.Instances().Insert(instance)
+	require.NoError(t, err)
+	err = st.Operations().InsertProvisioningOperation(fixProvisioningOperation("01"))
+	require.NoError(t, err)
+	err = st.Operations().InsertDeprovisioningOperation(fixSuspensionOperation())
+	require.NoError(t, err)
 
 	handler := &handler{}
 	q := &automock.Queue{}
@@ -272,7 +283,7 @@ func TestUpdateEndpoint_UpdateUnsuspension(t *testing.T) {
 		planDefaults, logrus.New(), dashboardConfig)
 
 	// when
-	svc.Update(context.Background(), instanceID, domain.UpdateDetails{
+	_, err = svc.Update(context.Background(), instanceID, domain.UpdateDetails{
 		ServiceID:       "",
 		PlanID:          TrialPlanID,
 		RawParameters:   nil,
@@ -280,6 +291,7 @@ func TestUpdateEndpoint_UpdateUnsuspension(t *testing.T) {
 		RawContext:      json.RawMessage("{\"active\":true}"),
 		MaintenanceInfo: nil,
 	}, true)
+	require.NoError(t, err)
 
 	// then
 
@@ -307,8 +319,10 @@ func TestUpdateEndpoint_UpdateInstanceWithWrongActiveValue(t *testing.T) {
 		},
 	}
 	st := storage.NewMemoryStorage()
-	st.Instances().Insert(instance)
-	st.Operations().InsertProvisioningOperation(fixProvisioningOperation("01"))
+	err := st.Instances().Insert(instance)
+	require.NoError(t, err)
+	err = st.Operations().InsertProvisioningOperation(fixProvisioningOperation("01"))
+	require.NoError(t, err)
 	handler := &handler{}
 	q := &automock.Queue{}
 	q.On("Add", mock.AnythingOfType("string"))
@@ -319,7 +333,7 @@ func TestUpdateEndpoint_UpdateInstanceWithWrongActiveValue(t *testing.T) {
 		planDefaults, logrus.New(), dashboardConfig)
 
 	// when
-	svc.Update(context.Background(), instanceID, domain.UpdateDetails{
+	_, err = svc.Update(context.Background(), instanceID, domain.UpdateDetails{
 		ServiceID:       "",
 		PlanID:          TrialPlanID,
 		RawParameters:   nil,
@@ -327,6 +341,7 @@ func TestUpdateEndpoint_UpdateInstanceWithWrongActiveValue(t *testing.T) {
 		RawContext:      json.RawMessage("{\"active\":false}"),
 		MaintenanceInfo: nil,
 	}, true)
+	require.NoError(t, err)
 
 	// then
 	assert.Equal(t, internal.ERSContext{
@@ -395,10 +410,14 @@ func TestUpdateEndpoint_UpdateGlobalAccountID(t *testing.T) {
 	}
 	newGlobalAccountID := "updated-account-id"
 	st := storage.NewMemoryStorage()
-	st.Instances().Insert(instance)
-	st.Operations().InsertProvisioningOperation(fixProvisioningOperation("01"))
-	st.Operations().InsertDeprovisioningOperation(fixSuspensionOperation())
-	st.Operations().InsertProvisioningOperation(fixProvisioningOperation("02"))
+	err := st.Instances().Insert(instance)
+	require.NoError(t, err)
+	err = st.Operations().InsertProvisioningOperation(fixProvisioningOperation("01"))
+	require.NoError(t, err)
+	err = st.Operations().InsertDeprovisioningOperation(fixSuspensionOperation())
+	require.NoError(t, err)
+	err = st.Operations().InsertProvisioningOperation(fixProvisioningOperation("02"))
+	require.NoError(t, err)
 
 	handler := &handler{}
 	q := &automock.Queue{}
@@ -438,8 +457,10 @@ func TestUpdateEndpoint_UpdateParameters(t *testing.T) {
 	// given
 	instance := fixture.FixInstance(instanceID)
 	st := storage.NewMemoryStorage()
-	st.Instances().Insert(instance)
-	st.Operations().InsertProvisioningOperation(fixProvisioningOperation("provisioning01"))
+	err := st.Instances().Insert(instance)
+	require.NoError(t, err)
+	err = st.Operations().InsertProvisioningOperation(fixProvisioningOperation("provisioning01"))
+	require.NoError(t, err)
 
 	handler := &handler{}
 	q := &automock.Queue{}
@@ -565,8 +586,10 @@ func TestUpdateEndpoint_UpdateWithEnabledDashboard(t *testing.T) {
 		DashboardURL: "https://console.cd6e47b.example.com",
 	}
 	st := storage.NewMemoryStorage()
-	st.Instances().Insert(instance)
-	st.Operations().InsertProvisioningOperation(fixProvisioningOperation("01"))
+	err := st.Instances().Insert(instance)
+	require.NoError(t, err)
+	err = st.Operations().InsertProvisioningOperation(fixProvisioningOperation("01"))
+	require.NoError(t, err)
 	// st.Operations().InsertDeprovisioningOperation(fixSuspensionOperation())
 	// st.Operations().InsertProvisioningOperation(fixProvisioningOperation("02"))
 

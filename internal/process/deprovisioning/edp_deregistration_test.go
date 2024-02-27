@@ -146,14 +146,14 @@ func TestEDPDeregistration_RunWithOtherInstancesInDeprovisioningState(t *testing
 }
 
 func prepareEDP(subaccountId string, client *edp.FakeClient) {
-	client.CreateDataTenant(edp.DataTenantPayload{
+	_ = client.CreateDataTenant(edp.DataTenantPayload{
 		Name:        subaccountId,
 		Environment: edpEnvironment,
 		Secret:      base64.StdEncoding.EncodeToString([]byte(fmt.Sprintf("%s%s", edpName, edpEnvironment))),
 	})
 
 	for _, key := range metadataTenantKeys {
-		client.CreateMetadataTenant(subaccountId, edpEnvironment, edp.MetadataTenantPayload{
+		_ = client.CreateMetadataTenant(subaccountId, edpEnvironment, edp.MetadataTenantPayload{
 			Key:   key,
 			Value: "-",
 		})
@@ -166,8 +166,8 @@ func prepareProvisionedInstanceWithSubaccount(subaccountId string, instances sto
 	instance.SubAccountID = subaccountId
 	operation := fixture.FixProvisioningOperation(uuid.New().String(), instanceID)
 	operation.SubAccountID = subaccountId
-	instances.Insert(instance)
-	operations.InsertOperation(operation)
+	_ = instances.Insert(instance)
+	_ = operations.InsertOperation(operation)
 
 	return instance, operation
 }
@@ -178,8 +178,8 @@ func prepareDeprovisioningInstanceWithSubaccount(subaccountId string, instances 
 	instance.SubAccountID = subaccountId
 	operation := fixture.FixDeprovisioningOperationAsOperation(uuid.New().String(), instanceID)
 	operation.SubAccountID = subaccountId
-	instances.Insert(instance)
-	operations.InsertOperation(operation)
+	_ = instances.Insert(instance)
+	_ = operations.InsertOperation(operation)
 
 	return instance, operation
 }

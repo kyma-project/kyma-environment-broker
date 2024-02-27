@@ -18,11 +18,13 @@ func TestDeregisterClusterStep_Run(t *testing.T) {
 	step := NewDeregisterClusterStep(memoryStorage.Operations(), cli)
 	op := fixDeprovisioningOperation()
 	op.ClusterConfigurationVersion = 1
-	memoryStorage.Operations().InsertDeprovisioningOperation(op)
+	err := memoryStorage.Operations().InsertDeprovisioningOperation(op)
+	require.NoError(t, err)
 	op.RuntimeID = "runtime-id"
-	cli.ApplyClusterConfig(reconcilerApi.Cluster{
+	_, err = cli.ApplyClusterConfig(reconcilerApi.Cluster{
 		RuntimeID: op.RuntimeID,
 	})
+	require.NoError(t, err)
 
 	// when
 	_, d, err := step.Run(op.Operation, logrus.New())
@@ -41,7 +43,8 @@ func TestDeregisterClusterStep_RunForNotExistingCluster(t *testing.T) {
 	op := fixDeprovisioningOperation()
 	op.ClusterConfigurationVersion = 1
 	op.ClusterConfigurationDeleted = true
-	memoryStorage.Operations().InsertDeprovisioningOperation(op)
+	err := memoryStorage.Operations().InsertDeprovisioningOperation(op)
+	require.NoError(t, err)
 	op.RuntimeID = "runtime-id"
 
 	// when

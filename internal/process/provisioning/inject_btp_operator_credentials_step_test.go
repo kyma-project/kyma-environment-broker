@@ -63,7 +63,8 @@ func TestInjectBTPOperatorCredentialsStep(t *testing.T) {
 		memoryStorage := storage.NewMemoryStorage()
 
 		scheme := internal.NewSchemeForTests()
-		apiextensionsv1.AddToScheme(scheme)
+		err := apiextensionsv1.AddToScheme(scheme)
+		assert.NoError(t, err)
 
 		k8sClient := fake.NewClientBuilder().WithScheme(scheme).Build()
 

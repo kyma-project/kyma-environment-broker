@@ -113,7 +113,8 @@ func TestReleaseSubscriptionStep_InstanceNotFound(t *testing.T) {
 	accountProviderMock.On("MarkUnusedGardenerSecretBindingAsDirty", hyperscaler.GCP(), instance.GetSubscriptionGlobalAccoundID(), false).Return(nil)
 
 	step := NewReleaseSubscriptionStep(memoryStorage.Operations(), memoryStorage.Instances(), accountProviderMock)
-	memoryStorage.Operations().InsertOperation(operation)
+	err := memoryStorage.Operations().InsertOperation(operation)
+	assert.NoError(t, err)
 
 	// when
 	operation, repeat, err := step.Run(operation, log)
@@ -143,7 +144,8 @@ func TestReleaseSubscriptionStep_ProviderNotFound(t *testing.T) {
 	accountProviderMock.On("MarkUnusedGardenerSecretBindingAsDirty", hyperscaler.GCP(), instance.GetSubscriptionGlobalAccoundID(), false).Return(nil)
 
 	step := NewReleaseSubscriptionStep(memoryStorage.Operations(), memoryStorage.Instances(), accountProviderMock)
-	memoryStorage.Operations().InsertOperation(operation)
+	err = memoryStorage.Operations().InsertOperation(operation)
+	assert.NoError(t, err)
 
 	// when
 	operation, repeat, err := step.Run(operation, log)

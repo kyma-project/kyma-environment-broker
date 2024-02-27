@@ -30,9 +30,12 @@ func Test_runtimeState_GetLatestByRuntimeID(t *testing.T) {
 	expectedRuntimeState.ClusterSetup = &reconcilerApi.Cluster{RuntimeID: fixRuntimeID}
 	expectedRuntimeState.CreatedAt = expectedRuntimeState.CreatedAt.Add(time.Hour * 2)
 
-	runtimeStates.Insert(olderRuntimeState)
-	runtimeStates.Insert(expectedRuntimeState)
-	runtimeStates.Insert(newerRuntimeState)
+	err := runtimeStates.Insert(olderRuntimeState)
+	assert.NoError(t, err)
+	err = runtimeStates.Insert(expectedRuntimeState)
+	assert.NoError(t, err)
+	err = runtimeStates.Insert(newerRuntimeState)
+	assert.NoError(t, err)
 
 	// when
 	gotRuntimeState, _ := runtimeStates.GetLatestByRuntimeID(fixRuntimeID)
@@ -60,9 +63,12 @@ func Test_runtimeState_GetLatestWithReconcilerInputByRuntimeID(t *testing.T) {
 	expectedRuntimeState.ClusterSetup = &reconcilerApi.Cluster{RuntimeID: fixRuntimeID}
 	expectedRuntimeState.CreatedAt = expectedRuntimeState.CreatedAt.Add(time.Hour * 1)
 
-	runtimeStates.Insert(olderRuntimeState)
-	runtimeStates.Insert(expectedRuntimeState)
-	runtimeStates.Insert(newestRuntimeStateWithoutReconcilerInput)
+	err := runtimeStates.Insert(olderRuntimeState)
+	assert.NoError(t, err)
+	err = runtimeStates.Insert(expectedRuntimeState)
+	assert.NoError(t, err)
+	err = runtimeStates.Insert(newestRuntimeStateWithoutReconcilerInput)
+	assert.NoError(t, err)
 
 	// when
 	gotRuntimeState, _ := runtimeStates.GetLatestWithReconcilerInputByRuntimeID(fixRuntimeID)

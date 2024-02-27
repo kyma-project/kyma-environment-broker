@@ -124,10 +124,11 @@ func NewOrchestrationSuite(t *testing.T, additionalKymaVersions []string) *Orche
 
 	oidcDefaults := fixture.FixOIDCConfigDTO()
 
-	ctx, _ := context.WithTimeout(context.Background(), 20*time.Minute)
+	ctx, cancel := context.WithTimeout(context.Background(), 20*time.Minute)
 	storageCleanup, db, err := GetStorageForE2ETests()
 	assert.NoError(t, err)
 	t.Cleanup(func() {
+		defer cancel()
 		if storageCleanup != nil {
 			err := storageCleanup()
 			assert.NoError(t, err)
@@ -373,7 +374,8 @@ func (s *OrchestrationSuite) CreateProvisionedRuntime(options RuntimeOptions) st
 	require.NoError(s.t, err)
 
 	provisioningOperation.InputCreator = fixture.FixInputCreator(internal.Azure)
-	s.provisionerClient.Provision(provisioningOperation)
+	_, err = s.provisionerClient.Provision(provisioningOperation)
+	require.NoError(s.t, err)
 
 	return runtimeID
 }
@@ -591,11 +593,12 @@ type ProvisioningSuite struct {
 }
 
 func NewProvisioningSuite(t *testing.T, multiZoneCluster bool, controlPlaneFailureTolerance string, includeNewMachineTypes bool) *ProvisioningSuite {
-	ctx, _ := context.WithTimeout(context.Background(), 20*time.Minute)
+	ctx, cancel := context.WithTimeout(context.Background(), 20*time.Minute)
 	logs := logrus.New()
 	storageCleanup, db, err := GetStorageForE2ETests()
 	assert.NoError(t, err)
 	t.Cleanup(func() {
+		defer cancel()
 		if storageCleanup != nil {
 			err := storageCleanup()
 			assert.NoError(t, err)
@@ -772,7 +775,8 @@ func (s *ProvisioningSuite) CreateUnsuspension(options RuntimeOptions) string {
 	suspensionOp := internal.NewSuspensionOperationWithID("susp-id", instance)
 	suspensionOp.CreatedAt = time.Now().AddDate(0, 0, -10)
 	suspensionOp.State = domain.Succeeded
-	s.storage.Operations().InsertDeprovisioningOperation(suspensionOp)
+	err = s.storage.Operations().InsertDeprovisioningOperation(suspensionOp)
+	require.NoError(s.t, err)
 
 	s.provisioningQueue.Add(operation.ID)
 	return operation.ID
@@ -799,7 +803,8 @@ func (s *ProvisioningSuite) ProcessInfrastructureManagerProvisioningByRuntimeID(
 			return false, nil
 		}
 
-		unstructured.SetNestedField(gardenerCluster.Object, "Ready", "status", "state")
+		err = unstructured.SetNestedField(gardenerCluster.Object, "Ready", "status", "state")
+		assert.NoError(s.t, err)
 		err = s.k8sKcpCli.Update(context.Background(), gardenerCluster)
 		return err == nil, nil
 	})

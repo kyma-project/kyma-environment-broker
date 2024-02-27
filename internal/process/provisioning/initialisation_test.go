@@ -33,8 +33,10 @@ func TestInitialisationStep_Run(t *testing.T) {
 	// given
 	st := storage.NewMemoryStorage()
 	operation := fixOperationRuntimeStatus(broker.GCPPlanID, internal.GCP)
-	st.Operations().InsertOperation(operation)
-	st.Instances().Insert(fixture.FixInstance(operation.InstanceID))
+	err := st.Operations().InsertOperation(operation)
+	assert.NoError(t, err)
+	err = st.Instances().Insert(fixture.FixInstance(operation.InstanceID))
+	assert.NoError(t, err)
 	rvc := &automock.RuntimeVersionConfiguratorForProvisioning{}
 	v := &internal.RuntimeVersionData{
 		Version: "1.21.0",

@@ -140,7 +140,8 @@ func NewBrokerSuiteTestWithOptionalRegion(t *testing.T, version ...string) *Brok
 func NewBrokerSuiteTestWithConfig(t *testing.T, cfg *Config, version ...string) *BrokerSuiteTest {
 	ctx := context.Background()
 	sch := internal.NewSchemeForTests()
-	apiextensionsv1.AddToScheme(sch)
+	err := apiextensionsv1.AddToScheme(sch)
+	require.NoError(t, err)
 	additionalKymaVersions := []string{"1.19", "1.20", "main", "2.0"}
 	additionalKymaVersions = append(additionalKymaVersions, version...)
 	cli := fake.NewClientBuilder().WithScheme(sch).WithRuntimeObjects(fixK8sResources(defaultKymaVer, additionalKymaVersions)...).Build()
@@ -313,7 +314,8 @@ func (s *BrokerSuiteTest) ProcessInfrastructureManagerProvisioningByRuntimeID(ru
 			return false, nil
 		}
 
-		unstructured.SetNestedField(gardenerCluster.Object, "Ready", "status", "state")
+		err = unstructured.SetNestedField(gardenerCluster.Object, "Ready", "status", "state")
+		assert.NoError(s.t, err)
 		err = s.k8sKcp.Update(context.Background(), gardenerCluster)
 		return err == nil, nil
 	})
@@ -599,7 +601,8 @@ func (s *BrokerSuiteTest) MarkClusterConfigurationDeleted(iid string) {
 
 func (s *BrokerSuiteTest) RemoveFromReconcilerByInstanceID(iid string) {
 	op, _ := s.db.Operations().GetDeprovisioningOperationByInstanceID(iid)
-	s.reconcilerClient.DeleteCluster(op.RuntimeID)
+	err := s.reconcilerClient.DeleteCluster(op.RuntimeID)
+	assert.NoError(s.t, err)
 }
 
 func (s *BrokerSuiteTest) FinishProvisioningOperationByReconciler(operationID string) {

@@ -69,15 +69,16 @@ func TestGetEndpoint_GetProvisioningInstance(t *testing.T) {
 	getSvc := broker.NewGetInstance(broker.Config{EnableKubeconfigURLLabel: true}, st.Instances(), st.Operations(), logrus.New())
 
 	// when
-	createSvc.Provision(fixRequestContext(t, "req-region"), instanceID, domain.ProvisionDetails{
+	_, err := createSvc.Provision(fixRequestContext(t, "req-region"), instanceID, domain.ProvisionDetails{
 		ServiceID:     serviceID,
 		PlanID:        planID,
 		RawParameters: json.RawMessage(fmt.Sprintf(`{"name": "%s", "region": "%s"}`, clusterName, clusterRegion)),
 		RawContext:    json.RawMessage(fmt.Sprintf(`{"globalaccount_id": "%s", "subaccount_id": "%s", "user_id": "%s"}`, globalAccountID, subAccountID, userID)),
 	}, true)
+	assert.NoError(t, err)
 
 	// then
-	_, err := getSvc.GetInstance(context.Background(), instanceID, domain.FetchInstanceDetails{})
+	_, err = getSvc.GetInstance(context.Background(), instanceID, domain.FetchInstanceDetails{})
 	assert.IsType(t, err, &apiresponses.FailureResponse{}, "Get returned error of unexpected type")
 	apierr := err.(*apiresponses.FailureResponse)
 	assert.Equal(t, http.StatusNotFound, apierr.ValidatedStatusCode(nil), "Get status code not matching")
@@ -86,7 +87,8 @@ func TestGetEndpoint_GetProvisioningInstance(t *testing.T) {
 	// when
 	op, _ := st.Operations().GetProvisioningOperationByInstanceID(instanceID)
 	op.State = domain.Succeeded
-	st.Operations().UpdateProvisioningOperation(*op)
+	_, err = st.Operations().UpdateProvisioningOperation(*op)
+	assert.NoError(t, err)
 
 	// then
 	response, err := getSvc.GetInstance(context.Background(), instanceID, domain.FetchInstanceDetails{})

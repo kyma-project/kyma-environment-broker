@@ -26,7 +26,8 @@ func TestInitialisationStep_OtherOperationIsInProgress(t *testing.T) {
 			beforeFunc: func(os storage.Operations) {
 				provisioningOperation := fixture.FixProvisioningOperation("p-id", "iid")
 				provisioningOperation.State = domain.InProgress
-				os.InsertOperation(provisioningOperation)
+				err := os.InsertOperation(provisioningOperation)
+				require.NoError(t, err)
 			},
 			expectedRepeat: true,
 		},
@@ -34,7 +35,8 @@ func TestInitialisationStep_OtherOperationIsInProgress(t *testing.T) {
 			beforeFunc: func(os storage.Operations) {
 				provisioningOperation := fixture.FixProvisioningOperation("p-id", "iid")
 				provisioningOperation.State = domain.Succeeded
-				os.InsertOperation(provisioningOperation)
+				err := os.InsertOperation(provisioningOperation)
+				require.NoError(t, err)
 			},
 			expectedRepeat: false,
 		},
@@ -42,7 +44,8 @@ func TestInitialisationStep_OtherOperationIsInProgress(t *testing.T) {
 			beforeFunc: func(os storage.Operations) {
 				op := fixture.FixUpgradeClusterOperation("op-id", "iid")
 				op.State = domain.InProgress
-				os.InsertUpgradeClusterOperation(op)
+				err := os.InsertUpgradeClusterOperation(op)
+				require.NoError(t, err)
 			},
 			expectedRepeat: true,
 		},
@@ -50,7 +53,8 @@ func TestInitialisationStep_OtherOperationIsInProgress(t *testing.T) {
 			beforeFunc: func(os storage.Operations) {
 				op := fixture.FixUpgradeKymaOperation("op-id", "iid")
 				op.State = domain.InProgress
-				os.InsertUpgradeKymaOperation(op)
+				err := os.InsertUpgradeKymaOperation(op)
+				require.NoError(t, err)
 			},
 			expectedRepeat: true,
 		},
@@ -58,7 +62,8 @@ func TestInitialisationStep_OtherOperationIsInProgress(t *testing.T) {
 			beforeFunc: func(os storage.Operations) {
 				op := fixture.FixUpdatingOperation("op-id", "iid")
 				op.State = domain.InProgress
-				os.InsertUpdatingOperation(op)
+				err := os.InsertUpdatingOperation(op)
+				require.NoError(t, err)
 			},
 			expectedRepeat: true,
 		},
@@ -66,7 +71,8 @@ func TestInitialisationStep_OtherOperationIsInProgress(t *testing.T) {
 			beforeFunc: func(os storage.Operations) {
 				op := fixture.FixDeprovisioningOperation("op-id", "iid")
 				op.State = domain.InProgress
-				os.InsertDeprovisioningOperation(op)
+				err := os.InsertDeprovisioningOperation(op)
+				require.NoError(t, err)
 			},
 			expectedRepeat: true,
 		},
@@ -78,8 +84,10 @@ func TestInitialisationStep_OtherOperationIsInProgress(t *testing.T) {
 			rs := db.RuntimeStates()
 			inst := fixture.FixInstance("iid")
 			state := fixture.FixRuntimeState("op-id", "Runtime-iid", "op-id")
-			is.Insert(inst)
-			rs.Insert(state)
+			err := is.Insert(inst)
+			require.NoError(t, err)
+			err = rs.Insert(state)
+			require.NoError(t, err)
 			ver := &internal.RuntimeVersionData{
 				Version: "2.4.0",
 				Origin:  internal.Defaults,
@@ -95,7 +103,8 @@ func TestInitialisationStep_OtherOperationIsInProgress(t *testing.T) {
 			step := NewInitialisationStep(is, os, rvc, builder)
 			updatingOperation := fixture.FixUpdatingOperation("up-id", "iid")
 			updatingOperation.State = orchestration.Pending
-			os.InsertOperation(updatingOperation.Operation)
+			err = os.InsertOperation(updatingOperation.Operation)
+			require.NoError(t, err)
 			tc.beforeFunc(os)
 
 			// when

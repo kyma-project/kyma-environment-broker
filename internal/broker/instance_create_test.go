@@ -565,12 +565,13 @@ func TestProvision_Provision(t *testing.T) {
 	t.Run("provision trial", func(t *testing.T) {
 		// given
 		memoryStorage := storage.NewMemoryStorage()
-		memoryStorage.Instances().Insert(internal.Instance{
+		err := memoryStorage.Instances().Insert(internal.Instance{
 			InstanceID:      instanceID,
 			GlobalAccountID: "other-global-account",
 			ServiceID:       serviceID,
 			ServicePlanID:   broker.TrialPlanID,
 		})
+		require.NoError(t, err)
 
 		queue := &automock.Queue{}
 		queue.On("Add", mock.AnythingOfType("string"))
@@ -628,12 +629,13 @@ func TestProvision_Provision(t *testing.T) {
 	t.Run("fail if trial with invalid region", func(t *testing.T) {
 		// given
 		memoryStorage := storage.NewMemoryStorage()
-		memoryStorage.Instances().Insert(internal.Instance{
+		err := memoryStorage.Instances().Insert(internal.Instance{
 			InstanceID:      instanceID,
 			GlobalAccountID: "other-global-account",
 			ServiceID:       serviceID,
 			ServicePlanID:   broker.TrialPlanID,
 		})
+		require.NoError(t, err)
 
 		queue := &automock.Queue{}
 		queue.On("Add", mock.AnythingOfType("string"))
@@ -661,7 +663,7 @@ func TestProvision_Provision(t *testing.T) {
 		)
 
 		// when
-		_, err := provisionEndpoint.Provision(fixRequestContext(t, "req-region"), instanceID, domain.ProvisionDetails{
+		_, err = provisionEndpoint.Provision(fixRequestContext(t, "req-region"), instanceID, domain.ProvisionDetails{
 			ServiceID:     serviceID,
 			PlanID:        broker.TrialPlanID,
 			RawParameters: json.RawMessage(fmt.Sprintf(`{"name": "%s", "region":"invalid-region"}`, clusterName)),

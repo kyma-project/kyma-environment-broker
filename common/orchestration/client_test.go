@@ -368,11 +368,12 @@ func TestClient_RetryOrchestration(t *testing.T) {
 			}
 
 			buf := new(bytes.Buffer)
-			buf.ReadFrom(r.Body)
+			_, err := buf.ReadFrom(r.Body)
+			require.NoError(t, err)
 			body := buf.String()
 			assert.Equal(t, strings.Join(operationIDs, "&"), body)
 
-			err := respondRetry(w, orch1.OrchestrationID, operationIDs)
+			err = respondRetry(w, orch1.OrchestrationID, operationIDs)
 			require.NoError(t, err)
 
 		}))

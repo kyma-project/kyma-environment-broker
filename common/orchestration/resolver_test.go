@@ -203,10 +203,9 @@ func TestResolver_Resolve(t *testing.T) {
 
 func TestResolver_Resolve_GardenerFailure(t *testing.T) {
 	// given
-	fake := k8stesting.Fake{}
 	client := gardener.NewDynamicFakeClient()
-	client.Fake = fake
-	fake.AddReactor("list", "shoots", func(action k8stesting.Action) (bool, k8s.Object, error) {
+	client.Fake = k8stesting.Fake{}
+	client.Fake.AddReactor("list", "shoots", func(action k8stesting.Action) (bool, k8s.Object, error) {
 		return true, nil, fmt.Errorf("fake gardener client failure")
 	})
 	lister := newRuntimeListerMock()
@@ -433,7 +432,7 @@ func assertRuntimeTargets(t *testing.T, expectedRuntimes []expectedRuntime, runt
 
 	for _, e := range expectedRuntimes {
 		r := lookupRuntime(e.runtime.RuntimeID, runtimes)
-		s := gardener.Shoot{*e.shoot}
+		s := gardener.Shoot{Unstructured: *e.shoot}
 		require.NotNil(t, r)
 		assert.Equal(t, e.runtime.InstanceID, r.InstanceID)
 		assert.Equal(t, e.runtime.GlobalAccountID, r.GlobalAccountID)

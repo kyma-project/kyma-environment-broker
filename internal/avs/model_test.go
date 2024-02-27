@@ -52,7 +52,8 @@ func TestAvsEvaluationConfigs(t *testing.T) {
 
 	// verify confg as json
 	tags, testTag := externalEvalAssistant.ProvideTags(params), Tag{}
-	json.Unmarshal([]byte(`{"content":"","tag_class_id":0,"tag_class_name":""}`), &testTag)
+	err := json.Unmarshal([]byte(`{"content":"","tag_class_id":0,"tag_class_name":""}`), &testTag)
+	assert.NoError(err)
 	assert.Equal(testTag, *tags[0])
 
 }

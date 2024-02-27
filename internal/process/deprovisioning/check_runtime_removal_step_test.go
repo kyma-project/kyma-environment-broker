@@ -31,10 +31,11 @@ func TestCheckRuntimeRemovalStep(t *testing.T) {
 			provisionerClient := provisioner.NewFakeClient()
 			svc := NewCheckRuntimeRemovalStep(memoryStorage.Operations(), memoryStorage.Instances(), provisionerClient, time.Minute)
 			dOp := fixDeprovisioningOperation().Operation
-			memoryStorage.Instances().Insert(internal.Instance{
+			err := memoryStorage.Instances().Insert(internal.Instance{
 				GlobalAccountID: "global-acc",
 				InstanceID:      dOp.InstanceID,
 			})
+			require.NoError(t, err)
 			provisionerOp, _ := provisionerClient.DeprovisionRuntime(dOp.GlobalAccountID, dOp.RuntimeID)
 			provisionerClient.FinishProvisionerOperation(provisionerOp, tc.givenState)
 			dOp.ProvisionerOperationID = provisionerOp
@@ -56,11 +57,13 @@ func TestCheckRuntimeRemovalStep_ProvisionerFailed(t *testing.T) {
 	provisionerClient := provisioner.NewFakeClient()
 	svc := NewCheckRuntimeRemovalStep(memoryStorage.Operations(), memoryStorage.Instances(), provisionerClient, time.Minute)
 	dOp := fixDeprovisioningOperation().Operation
-	memoryStorage.Operations().InsertOperation(dOp)
-	memoryStorage.Instances().Insert(internal.Instance{
+	err := memoryStorage.Operations().InsertOperation(dOp)
+	require.NoError(t, err)
+	err = memoryStorage.Instances().Insert(internal.Instance{
 		GlobalAccountID: "global-acc",
 		InstanceID:      dOp.InstanceID,
 	})
+	require.NoError(t, err)
 	provisionerOp, _ := provisionerClient.DeprovisionRuntime(dOp.GlobalAccountID, dOp.RuntimeID)
 	provisionerClient.FinishProvisionerOperation(provisionerOp, gqlschema.OperationStateFailed)
 	dOp.ProvisionerOperationID = provisionerOp
@@ -80,7 +83,8 @@ func TestCheckRuntimeRemovalStep_InstanceDeleted(t *testing.T) {
 	provisionerClient := provisioner.NewFakeClient()
 	svc := NewCheckRuntimeRemovalStep(memoryStorage.Operations(), memoryStorage.Instances(), provisionerClient, time.Minute)
 	dOp := fixDeprovisioningOperation().Operation
-	memoryStorage.Operations().InsertOperation(dOp)
+	err := memoryStorage.Operations().InsertOperation(dOp)
+	require.NoError(t, err)
 
 	// when
 	_, backoff, err := svc.Run(dOp, log)
@@ -96,10 +100,11 @@ func TestCheckRuntimeRemovalStep_NoProvisionerOperationID(t *testing.T) {
 	memoryStorage := storage.NewMemoryStorage()
 	svc := NewCheckRuntimeRemovalStep(memoryStorage.Operations(), memoryStorage.Instances(), nil, time.Minute)
 	dOp := fixDeprovisioningOperation().Operation
-	memoryStorage.Instances().Insert(internal.Instance{
+	err := memoryStorage.Instances().Insert(internal.Instance{
 		GlobalAccountID: "global-acc",
 		InstanceID:      dOp.InstanceID,
 	})
+	require.NoError(t, err)
 	dOp.ProvisionerOperationID = ""
 
 	// when
