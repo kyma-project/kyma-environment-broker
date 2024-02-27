@@ -461,7 +461,7 @@ type httpHandler struct {
 }
 
 func (h httpHandler) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
-	_, _ = rw.Write([]byte(h.r))
+	rw.Write([]byte(h.r))
 }
 
 func fixHandler(resp string) http.Handler {

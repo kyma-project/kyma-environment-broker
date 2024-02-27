@@ -2,6 +2,7 @@ package deprovisioning
 
 import (
 	"context"
+	"fmt"
 	"testing"
 
 	"github.com/kyma-project/kyma-environment-broker/internal/process/steps"
@@ -28,7 +29,8 @@ func TestDeleteGardenerClusterResource_HappyFlowNoObject(t *testing.T) {
 	assert.NoError(t, err)
 
 	step := NewDeleteGardenerClusterStep(memoryStorage.Operations(), kcpClient, memoryStorage.Instances())
-	_ = memoryStorage.Operations().InsertOperation(operation)
+	err = memoryStorage.Operations().InsertOperation(operation)
+	assert.Contains(t, err.Error(), fmt.Sprintf("instance operation with id %s already exist", fixOperationID))
 
 	// When
 	_, backoff, err := step.Run(operation, logger.NewLogSpy().Logger)
@@ -58,7 +60,8 @@ func TestDeleteGardenerClusterResource_HappyFlow(t *testing.T) {
 	assert.NoError(t, err)
 
 	step := NewDeleteGardenerClusterStep(memoryStorage.Operations(), kcpClient, memoryStorage.Instances())
-	_ = memoryStorage.Operations().InsertOperation(operation)
+	err = memoryStorage.Operations().InsertOperation(operation)
+	assert.Contains(t, err.Error(), fmt.Sprintf("instance operation with id %s already exist", fixOperationID))
 
 	// When
 	_, backoff, err := step.Run(operation, logger.NewLogSpy().Logger)

@@ -32,7 +32,7 @@ func TestHappyPath(t *testing.T) {
 	// given
 	const opID = "op-0001234"
 	operation := FixOperation("op-0001234")
-	mgr, operationStorage, eventCollector := SetupStagedManager(operation)
+	mgr, operationStorage, eventCollector := SetupStagedManager(t, operation)
 	err := mgr.AddStep("stage-1", &testingStep{name: "first", eventPublisher: eventCollector}, nil)
 	assert.NoError(t, err)
 	err = mgr.AddStep("stage-1", &testingStep{name: "second", eventPublisher: eventCollector}, nil)
@@ -57,7 +57,7 @@ func TestHappyPathWithStepCondition(t *testing.T) {
 	// given
 	const opID = "op-0001234"
 	operation := FixOperation("op-0001234")
-	mgr, operationStorage, eventCollector := SetupStagedManager(operation)
+	mgr, operationStorage, eventCollector := SetupStagedManager(t, operation)
 	err := mgr.AddStep("stage-1", &testingStep{name: "first", eventPublisher: eventCollector}, nil)
 	assert.NoError(t, err)
 	err = mgr.AddStep("stage-1", &testingStep{name: "second", eventPublisher: eventCollector}, func(_ internal.Operation) bool {
@@ -86,7 +86,7 @@ func TestWithRetry(t *testing.T) {
 	// given
 	const opID = "op-0001234"
 	operation := FixOperation("op-0001234")
-	mgr, operationStorage, eventCollector := SetupStagedManager(operation)
+	mgr, operationStorage, eventCollector := SetupStagedManager(t, operation)
 	err := mgr.AddStep("stage-1", &testingStep{name: "first", eventPublisher: eventCollector}, nil)
 	assert.NoError(t, err)
 	err = mgr.AddStep("stage-1", &testingStep{name: "second", eventPublisher: eventCollector}, nil)
@@ -113,7 +113,7 @@ func TestWithPanic(t *testing.T) {
 	// given
 	const opID = "op-0001234"
 	operation := FixOperation("op-0001234")
-	mgr, operationStorage, eventCollector := SetupStagedManager(operation)
+	mgr, operationStorage, eventCollector := SetupStagedManager(t, operation)
 	err := mgr.AddStep("stage-1", &testingStep{name: "first", eventPublisher: eventCollector}, nil)
 	assert.NoError(t, err)
 	err = mgr.AddStep("stage-1", &testingStep{name: "second", eventPublisher: eventCollector}, nil)
@@ -141,7 +141,7 @@ func TestSkipFinishedStage(t *testing.T) {
 	operation := FixOperation("op-0001234")
 	operation.FinishStage("stage-1")
 
-	mgr, operationStorage, eventCollector := SetupStagedManager(operation)
+	mgr, operationStorage, eventCollector := SetupStagedManager(t, operation)
 	err := mgr.AddStep("stage-1", &testingStep{name: "first", eventPublisher: eventCollector}, nil)
 	assert.NoError(t, err)
 	err = mgr.AddStep("stage-1", &testingStep{name: "second", eventPublisher: eventCollector}, nil)
@@ -162,9 +162,10 @@ func TestSkipFinishedStage(t *testing.T) {
 	assert.True(t, op.IsStageFinished("stage-2"))
 }
 
-func SetupStagedManager(op internal.Operation) (*process.StagedManager, storage.Operations, *CollectingEventHandler) {
+func SetupStagedManager(t *testing.T, op internal.Operation) (*process.StagedManager, storage.Operations, *CollectingEventHandler) {
 	memoryStorage := storage.NewMemoryStorage()
-	_ = memoryStorage.Operations().InsertOperation(op)
+	err := memoryStorage.Operations().InsertOperation(op)
+	assert.NoError(t, err)
 
 	eventCollector := &CollectingEventHandler{}
 	l := logrus.New()
@@ -274,9 +275,9 @@ func (h *CollectingEventHandler) OnStepProcessed(_ context.Context, ev interface
 func (h *CollectingEventHandler) Publish(ctx context.Context, ev interface{}) {
 	switch ev.(type) {
 	case process.OperationStepProcessed:
-		_ = h.OnStepProcessed(ctx, ev)
+		h.OnStepProcessed(ctx, ev)
 	case string:
-		_ = h.OnStepExecuted(ctx, ev)
+		h.OnStepExecuted(ctx, ev)
 	}
 }
 
@@ -332,9 +333,10 @@ func (rc *resultCollector) AssertDurationGreaterThanZero(t *testing.T) {
 	assert.Greater(t, rc.duration, 0.0)
 }
 
-func SetupStagedManager2(op internal.Operation) (*process.StagedManager, storage.Operations, *event.PubSub) {
+func SetupStagedManager2(t *testing.T, op internal.Operation) (*process.StagedManager, storage.Operations, *event.PubSub) {
 	memoryStorage := storage.NewMemoryStorage()
-	_ = memoryStorage.Operations().InsertOperation(op)
+	err := memoryStorage.Operations().InsertOperation(op)
+	assert.NoError(t, err)
 
 	l := logrus.New()
 	l.SetLevel(logrus.DebugLevel)
@@ -350,7 +352,7 @@ func TestOperationSucceededEvent(t *testing.T) {
 	// given
 	const opID = "op-0001234"
 	operation := FixOperation("op-0001234")
-	mgr, _, pubSub := SetupStagedManager2(operation)
+	mgr, _, pubSub := SetupStagedManager2(t, operation)
 	err := mgr.AddStep("stage-1", &testingStep{name: "first", eventPublisher: pubSub}, nil)
 	assert.NoError(t, err)
 

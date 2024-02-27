@@ -25,8 +25,8 @@ func TestInitStep_happyPath(t *testing.T) {
 	// given
 	log := logrus.New()
 	memoryStorage := storage.NewMemoryStorage()
-	prepareProvisionedInstance(memoryStorage)
-	dOp := prepareDeprovisioningOperation(memoryStorage, orchestration.Pending)
+	prepareProvisionedInstance(t, memoryStorage)
+	dOp := prepareDeprovisioningOperation(t, memoryStorage, orchestration.Pending)
 
 	svc := NewInitStep(memoryStorage.Operations(), memoryStorage.Instances(), 90*time.Second)
 
@@ -45,12 +45,12 @@ func TestInitStep_existingUpdatingOperation(t *testing.T) {
 	// given
 	log := logrus.New()
 	memoryStorage := storage.NewMemoryStorage()
-	prepareProvisionedInstance(memoryStorage)
+	prepareProvisionedInstance(t, memoryStorage)
 	uOp := fixture.FixUpdatingOperation("uop-id", instanceID)
 	uOp.State = domain.InProgress
 	err := memoryStorage.Operations().InsertOperation(uOp.Operation)
 	assert.NoError(t, err)
-	dOp := prepareDeprovisioningOperation(memoryStorage, orchestration.Pending)
+	dOp := prepareDeprovisioningOperation(t, memoryStorage, orchestration.Pending)
 
 	svc := NewInitStep(memoryStorage.Operations(), memoryStorage.Instances(), 90*time.Second)
 
@@ -65,17 +65,20 @@ func TestInitStep_existingUpdatingOperation(t *testing.T) {
 	assert.Equal(t, orchestration.Pending, string(dbOp.State))
 }
 
-func prepareProvisionedInstance(s storage.BrokerStorage) {
+func prepareProvisionedInstance(t *testing.T, s storage.BrokerStorage) {
 	inst := fixture.FixInstance(instanceID)
-	_ = s.Instances().Insert(inst)
+	err := s.Instances().Insert(inst)
+	assert.NoError(t, err)
 	pOp := fixture.FixProvisioningOperation("pop-id", instanceID)
-	_ = s.Operations().InsertOperation(pOp)
+	err = s.Operations().InsertOperation(pOp)
+	assert.NoError(t, err)
 }
 
-func prepareDeprovisioningOperation(s storage.BrokerStorage, state domain.LastOperationState) internal.Operation {
+func prepareDeprovisioningOperation(t *testing.T, s storage.BrokerStorage, state domain.LastOperationState) internal.Operation {
 	dOperation := fixture.FixDeprovisioningOperation("dop-id", instanceID)
 	dOperation.State = state
-	_ = s.Operations().InsertOperation(dOperation.Operation)
+	err := s.Operations().InsertOperation(dOperation.Operation)
+	assert.NoError(t, err)
 	return dOperation.Operation
 }
 

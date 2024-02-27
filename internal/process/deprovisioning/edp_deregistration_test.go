@@ -31,10 +31,10 @@ var metadataTenantKeys = []string{
 func TestEDPDeregistration_Run(t *testing.T) {
 	// given
 	client := edp.NewFakeClient()
-	prepareEDP(edpName, client)
+	prepareEDP(t, edpName, client)
 
 	memoryStorage := storage.NewMemoryStorage()
-	_, operation := prepareDeprovisioningInstanceWithSubaccount(edpName, memoryStorage.Instances(), memoryStorage.Operations())
+	_, operation := prepareDeprovisioningInstanceWithSubaccount(t, edpName, memoryStorage.Instances(), memoryStorage.Operations())
 
 	step := NewEDPDeregistrationStep(memoryStorage.Operations(), memoryStorage.Instances(), client, edp.Config{
 		Environment: edpEnvironment,
@@ -61,11 +61,11 @@ func TestEDPDeregistration_Run(t *testing.T) {
 func TestEDPDeregistration_RunWithOtherInstances(t *testing.T) {
 	// given
 	client := edp.NewFakeClient()
-	prepareEDP(edpName, client)
+	prepareEDP(t, edpName, client)
 
 	memoryStorage := storage.NewMemoryStorage()
-	_, _ = prepareProvisionedInstanceWithSubaccount(edpName, memoryStorage.Instances(), memoryStorage.Operations())
-	_, operation := prepareDeprovisioningInstanceWithSubaccount(edpName, memoryStorage.Instances(), memoryStorage.Operations())
+	_, _ = prepareProvisionedInstanceWithSubaccount(t, edpName, memoryStorage.Instances(), memoryStorage.Operations())
+	_, operation := prepareDeprovisioningInstanceWithSubaccount(t, edpName, memoryStorage.Instances(), memoryStorage.Operations())
 
 	step := NewEDPDeregistrationStep(memoryStorage.Operations(), memoryStorage.Instances(), client, edp.Config{
 		Environment: edpEnvironment,
@@ -90,11 +90,11 @@ func TestEDPDeregistration_RunWithOtherInstances(t *testing.T) {
 func TestEDPDeregistration_RunWithOtherInstancesButDifferentSubaccount(t *testing.T) {
 	// given
 	client := edp.NewFakeClient()
-	prepareEDP(edpName, client)
+	prepareEDP(t, edpName, client)
 
 	memoryStorage := storage.NewMemoryStorage()
-	_, _ = prepareProvisionedInstanceWithSubaccount("subaccount-other", memoryStorage.Instances(), memoryStorage.Operations())
-	_, operation := prepareDeprovisioningInstanceWithSubaccount(edpName, memoryStorage.Instances(), memoryStorage.Operations())
+	_, _ = prepareProvisionedInstanceWithSubaccount(t, "subaccount-other", memoryStorage.Instances(), memoryStorage.Operations())
+	_, operation := prepareDeprovisioningInstanceWithSubaccount(t, edpName, memoryStorage.Instances(), memoryStorage.Operations())
 
 	step := NewEDPDeregistrationStep(memoryStorage.Operations(), memoryStorage.Instances(), client, edp.Config{
 		Environment: edpEnvironment,
@@ -119,11 +119,11 @@ func TestEDPDeregistration_RunWithOtherInstancesButDifferentSubaccount(t *testin
 func TestEDPDeregistration_RunWithOtherInstancesInDeprovisioningState(t *testing.T) {
 	// given
 	client := edp.NewFakeClient()
-	prepareEDP(edpName, client)
+	prepareEDP(t, edpName, client)
 
 	memoryStorage := storage.NewMemoryStorage()
-	_, _ = prepareDeprovisioningInstanceWithSubaccount(edpName, memoryStorage.Instances(), memoryStorage.Operations())
-	_, operation := prepareDeprovisioningInstanceWithSubaccount(edpName, memoryStorage.Instances(), memoryStorage.Operations())
+	_, _ = prepareDeprovisioningInstanceWithSubaccount(t, edpName, memoryStorage.Instances(), memoryStorage.Operations())
+	_, operation := prepareDeprovisioningInstanceWithSubaccount(t, edpName, memoryStorage.Instances(), memoryStorage.Operations())
 
 	step := NewEDPDeregistrationStep(memoryStorage.Operations(), memoryStorage.Instances(), client, edp.Config{
 		Environment: edpEnvironment,
@@ -145,41 +145,47 @@ func TestEDPDeregistration_RunWithOtherInstancesInDeprovisioningState(t *testing
 	assert.False(t, dataTenantExists)
 }
 
-func prepareEDP(subaccountId string, client *edp.FakeClient) {
-	_ = client.CreateDataTenant(edp.DataTenantPayload{
+func prepareEDP(t *testing.T, subaccountId string, client *edp.FakeClient) {
+	err := client.CreateDataTenant(edp.DataTenantPayload{
 		Name:        subaccountId,
 		Environment: edpEnvironment,
 		Secret:      base64.StdEncoding.EncodeToString([]byte(fmt.Sprintf("%s%s", edpName, edpEnvironment))),
 	})
+	assert.NoError(t, err)
 
 	for _, key := range metadataTenantKeys {
-		_ = client.CreateMetadataTenant(subaccountId, edpEnvironment, edp.MetadataTenantPayload{
+		err = client.CreateMetadataTenant(subaccountId, edpEnvironment, edp.MetadataTenantPayload{
 			Key:   key,
 			Value: "-",
 		})
+		assert.NoError(t, err)
 	}
 }
 
-func prepareProvisionedInstanceWithSubaccount(subaccountId string, instances storage.Instances, operations storage.Operations) (internal.Instance, internal.Operation) {
+func prepareProvisionedInstanceWithSubaccount(t *testing.T, subaccountId string, instances storage.Instances, operations storage.Operations) (internal.Instance, internal.Operation) {
 	instanceID := uuid.New().String()
 	instance := fixture.FixInstance(instanceID)
 	instance.SubAccountID = subaccountId
 	operation := fixture.FixProvisioningOperation(uuid.New().String(), instanceID)
 	operation.SubAccountID = subaccountId
-	_ = instances.Insert(instance)
-	_ = operations.InsertOperation(operation)
+	err := instances.Insert(instance)
+	assert.NoError(t, err)
+	err = operations.InsertOperation(operation)
+	assert.NoError(t, err)
 
 	return instance, operation
 }
 
-func prepareDeprovisioningInstanceWithSubaccount(subaccountId string, instances storage.Instances, operations storage.Operations) (internal.Instance, internal.Operation) {
+func prepareDeprovisioningInstanceWithSubaccount(t *testing.T, subaccountId string, instances storage.Instances, operations storage.Operations) (internal.Instance, internal.Operation) {
 	instanceID := uuid.New().String()
 	instance := fixture.FixInstance(instanceID)
 	instance.SubAccountID = subaccountId
 	operation := fixture.FixDeprovisioningOperationAsOperation(uuid.New().String(), instanceID)
 	operation.SubAccountID = subaccountId
-	_ = instances.Insert(instance)
-	_ = operations.InsertOperation(operation)
+	err := instances.Insert(instance)
+	assert.NoError(t, err)
+	err = operations.InsertOperation(operation)
+	assert.NoError(t, err)
 
 	return instance, operation
 }

@@ -24,10 +24,14 @@ const (
 	azurePlanID = "4deee563-e5ec-4731-b9b1-53b42d855f0c"
 )
 
+type ClientTest struct {
+	t *testing.T
+}
+
 func TestClient_Deprovision(t *testing.T) {
 	t.Run("should return deprovisioning operation ID on success", func(t *testing.T) {
 		// given
-		testServer := fixHTTPServer(nil)
+		testServer := fixHTTPServer(t, nil)
 		defer testServer.Close()
 
 		config := NewClientConfig(testServer.URL)
@@ -50,7 +54,7 @@ func TestClient_Deprovision(t *testing.T) {
 
 	t.Run("should return error on failed request execution", func(t *testing.T) {
 		// given
-		testServer := fixHTTPServer(requestFailureServerError)
+		testServer := fixHTTPServer(t, requestFailureServerError)
 		defer testServer.Close()
 
 		config := NewClientConfig(testServer.URL)
@@ -78,7 +82,7 @@ func TestClient_ExpirationRequest(t *testing.T) {
 
 	t.Run("should return true on successfully commenced suspension", func(t *testing.T) {
 		// given
-		testServer := fixHTTPServer(nil)
+		testServer := fixHTTPServer(t, nil)
 		defer testServer.Close()
 
 		config := ClientConfig{
@@ -103,7 +107,7 @@ func TestClient_ExpirationRequest(t *testing.T) {
 
 	t.Run("should return error when trying to make other plan than trial expired", func(t *testing.T) {
 		// given
-		testServer := fixHTTPServer(nil)
+		testServer := fixHTTPServer(t, nil)
 		defer testServer.Close()
 
 		config := ClientConfig{
@@ -128,7 +132,7 @@ func TestClient_ExpirationRequest(t *testing.T) {
 
 	t.Run("should return error when expiration request fails", func(t *testing.T) {
 		// given
-		testServer := fixHTTPServer(requestFailureServerError)
+		testServer := fixHTTPServer(t, requestFailureServerError)
 		defer testServer.Close()
 
 		config := ClientConfig{
@@ -154,7 +158,7 @@ func TestClient_ExpirationRequest(t *testing.T) {
 
 	t.Run("should return true for non-existent instanceId and false for existing", func(t *testing.T) {
 		// given
-		testServer := fixHTTPServer(nil)
+		testServer := fixHTTPServer(t, nil)
 		defer testServer.Close()
 
 		config := ClientConfig{
@@ -179,7 +183,7 @@ func TestClient_ExpirationRequest(t *testing.T) {
 	})
 }
 
-func fixHTTPServer(requestFailureFunc func(http.ResponseWriter, *http.Request)) *httptest.Server {
+func fixHTTPServer(t *testing.T, requestFailureFunc func(http.ResponseWriter, *http.Request)) *httptest.Server {
 	if requestFailureFunc != nil {
 		r := mux.NewRouter()
 		r.HandleFunc("/oauth/v2/service_instances/{instance_id}", requestFailureFunc).Methods(http.MethodDelete)
@@ -188,14 +192,15 @@ func fixHTTPServer(requestFailureFunc func(http.ResponseWriter, *http.Request)) 
 		return httptest.NewServer(r)
 	}
 
+	clientTest := &ClientTest{t: t}
 	r := mux.NewRouter()
-	r.HandleFunc("/oauth/v2/service_instances/{instance_id}", deprovision).Methods(http.MethodDelete)
-	r.HandleFunc("/expire/service_instance/{instance_id}", expiration).Methods(http.MethodPut)
-	r.HandleFunc("/oauth/v2/service_instances/{instance_id}", getInstance).Methods(http.MethodGet)
+	r.HandleFunc("/oauth/v2/service_instances/{instance_id}", clientTest.deprovision).Methods(http.MethodDelete)
+	r.HandleFunc("/expire/service_instance/{instance_id}", clientTest.expiration).Methods(http.MethodPut)
+	r.HandleFunc("/oauth/v2/service_instances/{instance_id}", clientTest.getInstance).Methods(http.MethodGet)
 	return httptest.NewServer(r)
 }
 
-func expiration(w http.ResponseWriter, r *http.Request) {
+func (c *ClientTest) expiration(w http.ResponseWriter, r *http.Request) {
 	instanceID := strings.Split(r.URL.Path, "/")[3]
 	if instanceID == fixInstanceID {
 		w.WriteHeader(http.StatusBadRequest)
@@ -207,10 +212,11 @@ func expiration(w http.ResponseWriter, r *http.Request) {
 	}
 
 	w.WriteHeader(http.StatusAccepted)
-	_, _ = w.Write([]byte(fmt.Sprintf(`{"operation": "%s"}`, fixOpID)))
+	_, err := w.Write([]byte(fmt.Sprintf(`{"operation": "%s"}`, fixOpID)))
+	assert.NoError(c.t, err)
 }
 
-func deprovision(w http.ResponseWriter, r *http.Request) {
+func (c *ClientTest) deprovision(w http.ResponseWriter, r *http.Request) {
 	params := r.URL.Query()
 	_, okServiceID := params["service_id"]
 	if !okServiceID {
@@ -224,7 +230,8 @@ func deprovision(w http.ResponseWriter, r *http.Request) {
 	}
 
 	w.WriteHeader(http.StatusAccepted)
-	_, _ = w.Write([]byte(fmt.Sprintf(`{"operation": "%s"}`, fixOpID)))
+	_, err := w.Write([]byte(fmt.Sprintf(`{"operation": "%s"}`, fixOpID)))
+	assert.NoError(c.t, err)
 }
 
 func requestFailureServerError(w http.ResponseWriter, _ *http.Request) {
@@ -235,12 +242,13 @@ func requestFailureUnprocessableEntity(w http.ResponseWriter, _ *http.Request) {
 	w.WriteHeader(http.StatusUnprocessableEntity)
 }
 
-func getInstance(w http.ResponseWriter, r *http.Request) {
+func (c *ClientTest) getInstance(w http.ResponseWriter, r *http.Request) {
 	instance := path.Base(r.URL.Path)
 	if instance == "non-existent" {
 		w.WriteHeader(http.StatusNotFound)
 	} else {
-		_, _ = w.Write([]byte(fmt.Sprintf(`{"instanceID": "%s"}`, instance)))
+		_, err := w.Write([]byte(fmt.Sprintf(`{"instanceID": "%s"}`, instance)))
+		assert.NoError(c.t, err)
 		w.WriteHeader(http.StatusOK)
 	}
 }

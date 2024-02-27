@@ -28,7 +28,7 @@ func TestHappyPath(t *testing.T) {
 	// given
 	const opID = "op-0001234"
 	operation := FixUpdatingOperation("op-0001234")
-	mgr, operationStorage, eventCollector := SetupStagedManager(operation)
+	mgr, operationStorage, eventCollector := SetupStagedManager(t, operation)
 	err := mgr.AddStep("stage-1", &testingStep{name: "first", eventPublisher: eventCollector}, always)
 	assert.NoError(t, err)
 	err = mgr.AddStep("stage-1", &testingStep{name: "second", eventPublisher: eventCollector}, always)
@@ -53,7 +53,7 @@ func TestWithRetry(t *testing.T) {
 	// given
 	const opID = "op-0001234"
 	operation := FixUpdatingOperation("op-0001234")
-	mgr, operationStorage, eventCollector := SetupStagedManager(operation)
+	mgr, operationStorage, eventCollector := SetupStagedManager(t, operation)
 	err := mgr.AddStep("stage-1", &testingStep{name: "first", eventPublisher: eventCollector}, always)
 	assert.NoError(t, err)
 	err = mgr.AddStep("stage-1", &testingStep{name: "second", eventPublisher: eventCollector}, always)
@@ -81,7 +81,7 @@ func TestSkipFinishedStage(t *testing.T) {
 	operation := FixUpdatingOperation("op-0001234")
 	operation.FinishStage("stage-1")
 
-	mgr, operationStorage, eventCollector := SetupStagedManager(operation)
+	mgr, operationStorage, eventCollector := SetupStagedManager(t, operation)
 	err := mgr.AddStep("stage-1", &testingStep{name: "first", eventPublisher: eventCollector}, always)
 	assert.NoError(t, err)
 	err = mgr.AddStep("stage-1", &testingStep{name: "second", eventPublisher: eventCollector}, always)
@@ -102,9 +102,10 @@ func TestSkipFinishedStage(t *testing.T) {
 	assert.True(t, op.IsStageFinished("stage-2"))
 }
 
-func SetupStagedManager(op internal.UpdatingOperation) (*update.Manager, storage.Operations, *CollectingEventHandler) {
+func SetupStagedManager(t *testing.T, op internal.UpdatingOperation) (*update.Manager, storage.Operations, *CollectingEventHandler) {
 	memoryStorage := storage.NewMemoryStorage()
-	_ = memoryStorage.Operations().InsertUpdatingOperation(op)
+	err := memoryStorage.Operations().InsertUpdatingOperation(op)
+	assert.NoError(t, err)
 
 	eventCollector := &CollectingEventHandler{}
 	l := logrus.New()
@@ -180,9 +181,9 @@ func (h *CollectingEventHandler) OnStepProcessed(_ context.Context, ev interface
 func (h *CollectingEventHandler) Publish(ctx context.Context, ev interface{}) {
 	switch ev.(type) {
 	case process.UpdatingStepProcessed:
-		_ = h.OnStepProcessed(ctx, ev)
+		h.OnStepProcessed(ctx, ev)
 	case string:
-		_ = h.OnStepExecuted(ctx, ev)
+		h.OnStepExecuted(ctx, ev)
 	}
 }
 

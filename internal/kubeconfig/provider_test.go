@@ -96,7 +96,7 @@ func TestSecretProvider_KubernetesAndK8sClientForRuntimeID(t *testing.T) {
 	}
 	var errEnvTest error
 	var config *rest.Config
-	_ = wait.Poll(500*time.Millisecond, 5*time.Second, func() (done bool, err error) {
+	err := wait.Poll(500*time.Millisecond, 5*time.Second, func() (done bool, err error) {
 		config, errEnvTest = env.Start()
 		if err != nil {
 			t.Logf("envtest could not start, retrying: %s", errEnvTest.Error())
@@ -104,6 +104,7 @@ func TestSecretProvider_KubernetesAndK8sClientForRuntimeID(t *testing.T) {
 		}
 		return true, nil
 	})
+	require.NoError(t, err)
 	require.NoError(t, errEnvTest)
 	defer func(env *envtest.Environment) {
 		err := env.Stop()
@@ -113,7 +114,7 @@ func TestSecretProvider_KubernetesAndK8sClientForRuntimeID(t *testing.T) {
 
 	// prepare a k8s client to store a secret with kubeconfig
 	kcpClient := fake.NewClientBuilder().Build()
-	err := kcpClient.Create(context.Background(), &v1.Secret{
+	err = kcpClient.Create(context.Background(), &v1.Secret{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      "kubeconfig-runtime00",
 			Namespace: "kcp-system",
