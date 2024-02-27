@@ -5,10 +5,10 @@ import (
 	"math/rand"
 	"strings"
 
-	"github.com/kyma-project/kyma-environment-broker/internal/networking"
-
 	"github.com/kyma-project/control-plane/components/provisioner/pkg/gqlschema"
+
 	"github.com/kyma-project/kyma-environment-broker/internal"
+	"github.com/kyma-project/kyma-environment-broker/internal/networking"
 )
 
 const (
@@ -34,15 +34,15 @@ func (p *SapConvergedCloudInput) Defaults() *gqlschema.ClusterConfigInput {
 	}
 	return &gqlschema.ClusterConfigInput{
 		GardenerConfig: &gqlschema.GardenerConfigInput{
-			DiskType:          nil,
-			MachineType:       machineType,
-			Region:            DefaultSapConvergedCloudRegion,
-			Provider:          "openstack",
-			WorkerCidr:        networking.DefaultNodesCIDR,
-			AutoScalerMin:     3,
-			AutoScalerMax:     20,
-			MaxSurge:          1,
-			MaxUnavailable:    0,
+			DiskType:       nil,
+			MachineType:    machineType,
+			Region:         DefaultSapConvergedCloudRegion,
+			Provider:       "openstack",
+			WorkerCidr:     networking.DefaultNodesCIDR,
+			AutoScalerMin:  3,
+			AutoScalerMax:  20,
+			MaxSurge:       1,
+			MaxUnavailable: 0,
 			ProviderSpecificConfig: &gqlschema.ProviderSpecificInput{
 				OpenStackConfig: &gqlschema.OpenStackProviderConfigInput{
 					Zones:                ZonesForSapConvergedCloud(DefaultSapConvergedCloudRegion, zonesCount),
