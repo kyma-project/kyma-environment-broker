@@ -89,7 +89,7 @@ func NewDeprovisioningSuite(t *testing.T) *DeprovisioningSuite {
 	iasFakeClient := ias.NewFakeClient()
 	bundleBuilder := ias.NewBundleBuilder(iasFakeClient, cfg.IAS)
 
-	edpClient := fixEDPClient()
+	edpClient := fixEDPClient(t)
 	reconcilerClient := reconciler.NewFakeClient()
 
 	accountProvider := fixAccountProvider()
@@ -265,13 +265,14 @@ func (s *DeprovisioningSuite) AssertInstanceNotRemoved(instanceId string) {
 	assert.NotNil(s.t, instance)
 }
 
-func fixEDPClient() *edp.FakeClient {
+func fixEDPClient(t *testing.T) *edp.FakeClient {
 	client := edp.NewFakeClient()
-	_ = client.CreateDataTenant(edp.DataTenantPayload{
+	err := client.CreateDataTenant(edp.DataTenantPayload{
 		Name:        subAccountID,
 		Environment: edpEnvironment,
 		Secret:      base64.StdEncoding.EncodeToString([]byte(fmt.Sprintf("%s%s", subAccountID, edpEnvironment))),
 	})
+	assert.NoError(t, err)
 
 	metadataTenantKeys := []string{
 		edp.MaasConsumerEnvironmentKey,
@@ -281,10 +282,11 @@ func fixEDPClient() *edp.FakeClient {
 	}
 
 	for _, key := range metadataTenantKeys {
-		_ = client.CreateMetadataTenant(subAccountID, edpEnvironment, edp.MetadataTenantPayload{
+		err = client.CreateMetadataTenant(subAccountID, edpEnvironment, edp.MetadataTenantPayload{
 			Key:   key,
 			Value: "-",
 		})
+		assert.NoError(t, err)
 	}
 
 	return client
