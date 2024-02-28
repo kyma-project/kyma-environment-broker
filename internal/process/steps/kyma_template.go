@@ -49,5 +49,5 @@ func InitKymaTemplateUpgradeKyma(os storage.Operations) initKymaTemplateUpgradeK
 
 func (s initKymaTemplateUpgradeKyma) Run(o internal.UpgradeKymaOperation, logger logrus.FieldLogger) (internal.UpgradeKymaOperation, time.Duration, error) {
 	operation, w, err := s.InitKymaTemplate.Run(o.Operation, logger)
-	return internal.UpgradeKymaOperation{operation}, w, err
+	return internal.UpgradeKymaOperation{Operation: operation}, w, err
 }

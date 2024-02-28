@@ -190,9 +190,8 @@ func (s *operations) ListOperationsByInstanceID(instanceID string) ([]internal.O
 	return operations, nil
 }
 
-func (s *operations) ListOperationsInTimeRange(from, to time.Time) ([]internal.Operation, error) {
+func (s *operations) ListOperationsInTimeRange(time.Time, time.Time) ([]internal.Operation, error) {
 	panic("not implemented") //also not used in any tests
-	return nil, nil
 }
 
 func (s *operations) InsertDeprovisioningOperation(operation internal.DeprovisioningOperation) error {

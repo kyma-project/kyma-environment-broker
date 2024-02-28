@@ -183,11 +183,7 @@ func (u *upgradeKymaFactory) RetryOperations(retryOps []string) ([]orchestration
 	result := []orchestration.RuntimeOperation{}
 
 	for _, opId := range retryOps {
-		runtimeop, err := u.operationStorage.GetUpgradeKymaOperationByID(opId)
-		if err != nil {
-			fmt.Errorf("while geting (retrying) upgrade kyma operation %s in storage: %w", opId, err)
-		}
-
+		runtimeop, _ := u.operationStorage.GetUpgradeKymaOperationByID(opId)
 		result = append(result, runtimeop.RuntimeOperation)
 	}
 

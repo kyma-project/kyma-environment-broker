@@ -94,5 +94,5 @@ func SyncKubeconfigUpgradeKyma(os storage.Operations, k8sClient client.Client) s
 
 func (s syncKubeconfigUpgradeKyma) Run(o internal.UpgradeKymaOperation, logger logrus.FieldLogger) (internal.UpgradeKymaOperation, time.Duration, error) {
 	o2, w, err := s.syncKubeconfig.Run(o.Operation, logger)
-	return internal.UpgradeKymaOperation{o2}, w, err
+	return internal.UpgradeKymaOperation{Operation: o2}, w, err
 }

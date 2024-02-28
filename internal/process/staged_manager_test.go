@@ -220,11 +220,10 @@ func (s *panicStep) Name() string {
 	return s.name
 }
 
-func (s *panicStep) Run(operation internal.Operation, logger logrus.FieldLogger) (internal.Operation, time.Duration, error) {
+func (s *panicStep) Run(_ internal.Operation, logger logrus.FieldLogger) (internal.Operation, time.Duration, error) {
 	s.eventPublisher.Publish(context.Background(), s.name)
 	logger.Infof("Panic!")
 	panic("Panicking just for test")
-	return operation, 0, nil
 }
 
 func fixProvisioningParametersWithPlanID(planID, region string) internal.ProvisioningParameters {
