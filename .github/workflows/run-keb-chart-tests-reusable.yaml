@@ -12,6 +12,10 @@ on:
         description: 'Determines if the workflow is called from release'
         default: "true"
         type: string
+      version:
+        description: 'Release version'
+        default: "0.0.0.0"
+        type: string
 
 jobs:
   validate-keb-helm-chart:
@@ -30,6 +34,10 @@ jobs:
           scripts/**
           Makefile
           **/*.sh
+
+    - name: Prepare chart for next KEB version
+      if: inputs.release == 'true'
+      run: scripts/bump_keb_chart.sh ${{ inputs.version }}
 
     - name: Validate KEB helm chart
       if: ${{ steps.changed-files-specific.outputs.any_modified == 'true' || inputs.release == 'true' }}
@@ -114,6 +122,10 @@ jobs:
         if: ${{ steps.changed-files-specific.outputs.any_modified == 'true' || inputs.release == 'true' }}
         run: |
           kubectl create -f https://raw.githubusercontent.com/prometheus-operator/prometheus-operator/master/bundle.yaml
+
+      - name: Prepare chart for next KEB version
+        if: inputs.release == 'true'
+        run: scripts/bump_keb_chart.sh ${{ inputs.version }}
 
       - name: Deploy KEB helm chart
         if: ${{ steps.changed-files-specific.outputs.any_modified == 'true' || inputs.release == 'true' }}
