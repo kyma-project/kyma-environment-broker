@@ -139,7 +139,7 @@ func NewBrokerSuiteTestWithOptionalRegion(t *testing.T, version ...string) *Brok
 
 func NewBrokerSuiteTestWithConfig(t *testing.T, cfg *Config, version ...string) *BrokerSuiteTest {
 	ctx := context.Background()
-	sch := internal.NewSchemeForTests()
+	sch := internal.NewSchemeForTests(t)
 	err := apiextensionsv1.AddToScheme(sch)
 	require.NoError(t, err)
 	additionalKymaVersions := []string{"1.19", "1.20", "main", "2.0"}

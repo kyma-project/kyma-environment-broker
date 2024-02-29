@@ -26,7 +26,7 @@ func TestGetKubeconfigStep(t *testing.T) {
 		st := storage.NewMemoryStorage()
 		provisionerClient := provisioner.NewFakeClient()
 
-		scheme := internal.NewSchemeForTests()
+		scheme := internal.NewSchemeForTests(t)
 		err := apiextensionsv1.AddToScheme(scheme)
 
 		step := NewGetKubeconfigStep(st.Operations(), provisionerClient)
@@ -53,7 +53,7 @@ func TestGetKubeconfigStep(t *testing.T) {
 		// given
 		st := storage.NewMemoryStorage()
 
-		scheme := internal.NewSchemeForTests()
+		scheme := internal.NewSchemeForTests(t)
 		err := apiextensionsv1.AddToScheme(scheme)
 
 		step := NewGetKubeconfigStep(st.Operations(), nil)
@@ -76,7 +76,7 @@ func TestGetKubeconfigStep(t *testing.T) {
 		// given
 		st := storage.NewMemoryStorage()
 
-		scheme := internal.NewSchemeForTests()
+		scheme := internal.NewSchemeForTests(t)
 		err := apiextensionsv1.AddToScheme(scheme)
 
 		step := NewGetKubeconfigStep(st.Operations(), nil)
@@ -99,7 +99,7 @@ func TestGetKubeconfigStep(t *testing.T) {
 		st := storage.NewMemoryStorage()
 		provisionerClient := provisioner.NewFakeClient()
 
-		scheme := internal.NewSchemeForTests()
+		scheme := internal.NewSchemeForTests(t)
 		err := apiextensionsv1.AddToScheme(scheme)
 
 		step := NewGetKubeconfigStep(st.Operations(), provisionerClient)

@@ -30,10 +30,12 @@ var envtestInstallMutex sync.Mutex
 // KEB tests can run in parallel resulting in concurrent access to scheme maps
 // if the global scheme from client-go is used. For this reason, KEB tests each have
 // their own scheme.
-func NewSchemeForTests() *k8sruntime.Scheme {
+func NewSchemeForTests(t *testing.T) *k8sruntime.Scheme {
 	sch := k8sruntime.NewScheme()
-	corev1.AddToScheme(sch)
-	apiextensionsv1.AddToScheme(sch)
+	err := corev1.AddToScheme(sch)
+	assert.NoError(t, err)
+	err = apiextensionsv1.AddToScheme(sch)
+	assert.NoError(t, err)
 	return sch
 }
 

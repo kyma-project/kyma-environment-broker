@@ -210,20 +210,24 @@ func periodicProfile(logger lager.Logger, profiler ProfilerConfig) {
 		if err != nil {
 			logger.Error(fmt.Sprintf("Creating periodic memory profile %v failed", profName), err)
 		}
-		pprof.Lookup("allocs").WriteTo(profFile, 0)
+		err = pprof.Lookup("allocs").WriteTo(profFile, 0)
+		if err != nil {
+			logger.Error(fmt.Sprintf("Failed to write periodic memory profile to %v file", profName), err)
+		}
 		gruntime.GC()
 		time.Sleep(profiler.Sampling)
 	}
 }
 
 func main() {
-	apiextensionsv1.AddToScheme(scheme.Scheme)
+	err := apiextensionsv1.AddToScheme(scheme.Scheme)
+	panicOnError(err)
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
 	// create and fill config
 	var cfg Config
-	err := envconfig.InitWithPrefix(&cfg, "APP")
+	err = envconfig.InitWithPrefix(&cfg, "APP")
 	fatalOnError(err)
 
 	// check default Kyma versions

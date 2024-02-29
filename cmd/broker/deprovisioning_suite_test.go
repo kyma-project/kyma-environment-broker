@@ -104,7 +104,7 @@ func NewDeprovisioningSuite(t *testing.T) *DeprovisioningSuite {
 	assert.NoError(t, err)
 	fakeK8sSKRClient := fake.NewClientBuilder().WithScheme(scheme).Build()
 
-	sch := internal.NewSchemeForTests()
+	sch := internal.NewSchemeForTests(t)
 	cli := fake.NewClientBuilder().WithScheme(sch).WithRuntimeObjects(fixK8sResources(defaultKymaVer, []string{})...).Build()
 
 	configProvider := kebConfig.NewConfigProvider(

@@ -269,7 +269,7 @@ func TestClient_ReconnectRuntimeAgent(t *testing.T) {
 	})
 
 	t.Run("provisioner returns bad request code error", func(t *testing.T) {
-		server := fixHTTPMockServer(`{
+		server := fixHTTPMockServer(t, `{
 			  "errors": [
 				{
 				  "message": "tenant header is empty",
@@ -303,7 +303,7 @@ func TestClient_ReconnectRuntimeAgent(t *testing.T) {
 	})
 
 	t.Run("provisioner returns temporary code error", func(t *testing.T) {
-		server := fixHTTPMockServer(`{
+		server := fixHTTPMockServer(t, `{
 			  "errors": [
 				{
 				  "message": "tenant header is empty",
@@ -457,21 +457,26 @@ type testResolver struct {
 }
 
 type httpHandler struct {
+	t *testing.T
 	r string
 }
 
 func (h httpHandler) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
-	rw.Write([]byte(h.r))
+	_, err := rw.Write([]byte(h.r))
+	if err != nil {
+		assert.NoError(h.t, err)
+	}
 }
 
-func fixHandler(resp string) http.Handler {
+func fixHandler(t *testing.T, resp string) http.Handler {
 	return httpHandler{
+		t: t,
 		r: resp,
 	}
 }
 
-func fixHTTPMockServer(resp string) *httptest.Server {
-	return httptest.NewServer(fixHandler(resp))
+func fixHTTPMockServer(t *testing.T, resp string) *httptest.Server {
+	return httptest.NewServer(fixHandler(t, resp))
 }
 
 func fixHTTPServer(tr *testResolver) *httptest.Server {
