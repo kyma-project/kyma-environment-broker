@@ -265,12 +265,14 @@ func (c *Client) closeResponseBody(response *http.Response) (error error) {
 	if response.Body == nil {
 		return
 	}
+	defer func() {
+		if err := response.Body.Close(); err != nil {
+			error = err
+		}
+	}()
 	// drain the body to let the transport reuse the connection
 	if _, err := io.Copy(io.Discard, response.Body); err != nil {
-		error = err
-	}
-	if err := response.Body.Close(); err != nil {
-		error = err
+		return err
 	}
 	return
 }
