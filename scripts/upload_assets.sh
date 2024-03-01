@@ -36,11 +36,11 @@ uploadFile() {
   fi
 }
 
-KEB_CHART_PATH="./$KEB_CHART"
+
 UPLOAD_URL="https://uploads.github.com/repos/kyma-project/kyma-environment-broker/releases/${RELEASE_ID}/assets"
 
 echo -e "\n--- Updating GitHub release ${RELEASE_ID} with ${KEB_CHART} asset"
 
-[[ ! -e ${KEB_CHART_PATH} ]] && echo "::error ::Packaged KEB chart does not exist" && exit 1
+[[ ! -e ${KEB_CHART} ]] && echo "::error ::Packaged KEB chart does not exist" && exit 1
 
-uploadFile "${KEB_CHART_PATH}" "${UPLOAD_URL}?name=${KEB_CHART}"
+uploadFile "${KEB_CHART}" "${UPLOAD_URL}?name=${KEB_CHART}"
