@@ -9,6 +9,3 @@ changelog:
     - title: Fixed bugs
       labels:
         - kind/bug # Use it when you fix a bug
-  exclude:
-    authors:
-      - kyma-gopher-bot

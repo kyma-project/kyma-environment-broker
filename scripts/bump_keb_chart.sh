@@ -3,7 +3,7 @@
 # This script bumps the KEB images in the chart, utils and the KEB chart version.
 # It has the following arguments:
 #   - release tag (mandatory)
-# ./bump_keb.sh 0.0.0
+# ./bump_keb_chart.sh 0.0.0
 
 # standard bash error handling
 set -o nounset  # treat unset variables as an error and exit immediately.
@@ -31,4 +31,5 @@ done
 
 yq e ".spec.jobTemplate.spec.template.spec.containers[0].image = \"europe-docker.pkg.dev/kyma-project/prod/kyma-environments-cleanup-job:$RELEASE_TAG\"" -i utils/kyma-environments-cleanup-job/kyma-environments-cleanup-job.yaml
 yq e ".version = \"$RELEASE_TAG\"" -i resources/keb/Chart.yaml
+yq e ".appVersion = \"$RELEASE_TAG\"" -i resources/keb/Chart.yaml
 
