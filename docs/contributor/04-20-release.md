@@ -39,7 +39,10 @@ To create a release, follow these steps:
 - `post-keb-trial-cleanup-job-release-build` 
 - `post-keb-subaccount-cleanup-job-release-build`
 8. The ProwJobs upload the binary images.
-9. If the unit tests, KEB chart tests, and ProwJob status await are completed successfully, the GitHub action publishes the release.
+9. The GitHub action initiates the bump of KEB images and KEB chart version.
+10. A code owner approves the PR with the KEB images and KEB chart version bump.
+11. The GitHub action commits the new KEB chart metadata to `gh-pages` branch.
+12. The GitHub action publishes the release.
 
 
 ### Replace an Existing Release
