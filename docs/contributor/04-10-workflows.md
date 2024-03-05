@@ -37,9 +37,7 @@ Besides the tests, it also runs Go-related checks and Go linter. It is triggered
 - `/scripts` directory content
 - `/utils/edp-registrator` directory content
 - `.golangci.yml` file
-- `Dockerfile.job` file 
-- `Dockerfile.keb` file
-- `Dockerfile.runtimereconciler` file
+- any `Dockerfile.*` file
 - `go.mod` file
 - `go.sum` file
 - `Makefile` file
@@ -57,9 +55,7 @@ This [workflow](/.github/workflows/run-govulncheck.yaml) runs the Govulncheck. I
 - `/scripts` directory content
 - `/utils/edp-registrator` directory content
 - `.golangci.yml` file
-- `Dockerfile.job` file
-- `Dockerfile.keb` file
-- `Dockerfile.runtimereconciler` file
+- any `Dockerfile.*` file
 - `go.mod` file
 - `go.sum` file
 - `Makefile` file

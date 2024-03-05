@@ -39,9 +39,7 @@ jobs:
           scripts/**
           utils/edp-registrator/**
           .golangci.yml
-          Dockerfile.job
-          Dockerfile.keb
-          Dockerfile.runtimereconciler
+          Dockerfile.*
           go.mod
           go.sum
           Makefile
@@ -82,9 +80,7 @@ jobs:
             scripts/**
             utils/edp-registrator/**
             .golangci.yml
-            Dockerfile.job
-            Dockerfile.keb
-            Dockerfile.runtimereconciler
+            Dockerfile.*
             go.mod
             go.sum
             Makefile
