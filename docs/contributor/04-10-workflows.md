@@ -35,7 +35,7 @@ Besides the tests, it also runs Go-related checks and Go linter. It is triggered
 - `/files` directory content
 - `/internal` directory content
 - `/scripts` directory content
-- `/utils/edp-registrator` directory conent
+- `/utils/edp-registrator` directory content
 - `.golangci.yml` file
 - `Dockerfile.job` file 
 - `Dockerfile.keb` file
@@ -55,7 +55,7 @@ This [workflow](/.github/workflows/run-govulncheck.yaml) runs the Govulncheck. I
 - `/files` directory content
 - `/internal` directory content
 - `/scripts` directory content
-- `/utils/edp-registrator` directory conent
+- `/utils/edp-registrator` directory content
 - `.golangci.yml` file
 - `Dockerfile.job` file
 - `Dockerfile.keb` file
@@ -69,7 +69,7 @@ This [workflow](/.github/workflows/run-govulncheck.yaml) runs the Govulncheck. I
 ## KEB Chart Tests Workflow
 
 This [workflow](/.github/workflows/run-keb-chart-tests.yaml) calls the reusable [workflow](/.github/workflows/run-keb-chart-tests-reusable.yaml). It is triggered by PRs on the `main` branch that change at least one of the following:
-- `/.github` directory conent
+- `/.github` directory content
 - `/resources` directory content
 - `/scripts` directory content
 - `Makefile` file
