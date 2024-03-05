@@ -118,9 +118,8 @@ func (b *AppBuilder) Cleanup() {
 	}
 
 	err = cleaner.HaltIstioSidecar()
-	if err != nil {
-		FatalOnError(err)
-	}
+	FatalOnError(err)
+
 	// do not use defer, close must be done before halting
 	err = cleaner.Halt()
 	if err != nil {
