@@ -646,6 +646,21 @@ func (o *Operation) IsStageFinished(stage string) bool {
 	return false
 }
 
+func (o *Operation) SuccessMustBeSaved() bool {
+
+	// if the operation is temporary, it must be saved
+	if o.Temporary {
+		return true
+	}
+
+	// if the operation is not temporary and the last stage is success, it must not be saved
+	// because all operations for that instance are gone
+	if o.Type == OperationTypeDeprovision {
+		return false
+	}
+	return true
+}
+
 type ComponentConfigurationInputList []*gqlschema.ComponentConfigurationInput
 
 func (l ComponentConfigurationInputList) DeepCopy() []*gqlschema.ComponentConfigurationInput {

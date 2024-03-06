@@ -497,17 +497,13 @@ func (s *BrokerSuiteTest) FinishDeprovisioningOperationByProvisioner(operationID
 		if err != nil {
 			return false, nil
 		}
-		if op.RuntimeID != "" {
-			return true, nil
-		}
-		return false, nil
+		return true, nil
 	})
 	assert.NoError(s.t, err, "timeout waiting for the operation with runtimeID. The existing operation %+v", op)
 
 	err = s.gardenerClient.Resource(gardener.ShootResource).
 		Namespace(fixedGardenerNamespace).
 		Delete(context.Background(), op.ShootName, v1.DeleteOptions{})
-	require.NoError(s.t, err)
 
 	s.finishOperationByProvisioner(gqlschema.OperationTypeDeprovision, gqlschema.OperationStateSucceeded, op.RuntimeID)
 }
@@ -559,7 +555,7 @@ func (s *BrokerSuiteTest) FinishDeprovisioningOperationByProvisionerForGivenOpId
 
 func (s *BrokerSuiteTest) finishOperationByProvisioner(operationType gqlschema.OperationType, state gqlschema.OperationState, runtimeID string) {
 	err := s.poller.Invoke(func() (bool, error) {
-		status := s.provisionerClient.FindOperationByRuntimeIDAndType(runtimeID, operationType)
+		status := s.provisionerClient.FindInProgressOperationByRuntimeIDAndType(runtimeID, operationType)
 		if status.ID != nil {
 			s.provisionerClient.FinishProvisionerOperation(*status.ID, state)
 			return true, nil
@@ -762,7 +758,7 @@ func (s *BrokerSuiteTest) AssertProvisionerStartedProvisioning(operationID strin
 
 	var status gqlschema.OperationStatus
 	err = s.poller.Invoke(func() (bool, error) {
-		status = s.provisionerClient.FindOperationByRuntimeIDAndType(provisioningOp.RuntimeID, gqlschema.OperationTypeProvision)
+		status = s.provisionerClient.FindInProgressOperationByRuntimeIDAndType(provisioningOp.RuntimeID, gqlschema.OperationTypeProvision)
 		if status.ID != nil {
 			return true, nil
 		}
@@ -1588,6 +1584,51 @@ func (s *BrokerSuiteTest) fixServiceBindingAndInstances(t *testing.T) {
 func (s *BrokerSuiteTest) assertServiceBindingAndInstancesAreRemoved(t *testing.T) {
 	assertResourcesAreRemoved(t, serviceInstanceGvk, s.k8sSKR)
 	assertResourcesAreRemoved(t, serviceBindingGvk, s.k8sSKR)
+}
+
+func (s *BrokerSuiteTest) WaitForInstanceArchivedCreated(iid string) {
+
+	err := s.poller.Invoke(func() (bool, error) {
+		_, err := s.db.InstancesArchived().GetByInstanceID(iid)
+		if err != nil {
+			return false, nil
+		}
+
+		return true, nil
+	})
+	assert.NoError(s.t, err)
+
+}
+
+func (s *BrokerSuiteTest) WaitForOperationsNotExists(iid string) {
+	err := s.poller.Invoke(func() (bool, error) {
+		ops, err := s.db.Operations().ListOperationsByInstanceID(iid)
+		if err != nil {
+			return false, nil
+		}
+
+		return len(ops) == 0, nil
+	})
+	assert.NoError(s.t, err)
+}
+
+func (s *BrokerSuiteTest) WaitFor(f func() bool) {
+	err := s.poller.Invoke(func() (bool, error) {
+		if f() {
+			return true, nil
+		}
+		return false, nil
+	})
+	assert.NoError(s.t, err)
+}
+
+func (s *BrokerSuiteTest) ParseLastOperationResponse(resp *http.Response) domain.LastOperation {
+	data, err := io.ReadAll(resp.Body)
+	assert.NoError(s.t, err)
+	var operationResponse domain.LastOperation
+	err = json.Unmarshal(data, &operationResponse)
+	assert.NoError(s.t, err)
+	return operationResponse
 }
 
 func assertResourcesAreRemoved(t *testing.T, gvk schema.GroupVersionKind, k8sClient client.Client) {

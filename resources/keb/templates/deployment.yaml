@@ -67,6 +67,14 @@ spec:
               value: "{{ .Values.disableProcessOperationsInProgress }}"
             - name: APP_BROKER_ENABLE_PLANS
               value: "{{ .Values.enablePlans }}"
+            - name: APP_ARCHIVING_ENABLED
+              value: "{{ .Values.archiving.enabled }}"
+            - name: APP_ARCHIVING_DRY_RUN
+              value: "{{ .Values.archiving.dryRun }}"
+            - name: APP_CLEANING_ENABLED
+              value: "{{ .Values.cleaning.enabled }}"
+            - name: APP_CLEANING_DRY_RUN
+              value: "{{ .Values.cleaning.dryRun }}"
             - name: APP_BROKER_BINDING_ENABLED
               value: "{{ .Values.binding.enabled}}"
             - name: APP_BROKER_ONLY_SINGLE_TRIAL_PER_GA

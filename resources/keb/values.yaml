@@ -404,3 +404,10 @@ migratorJobs:
   argosync:
     enabled: false
     syncwave: "0"
+
+archiving:
+  enabled: false
+  dryRun: true
+cleaning:
+  enabled: false
+  dryRun: true

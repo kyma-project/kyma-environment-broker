@@ -70,12 +70,12 @@ func (c *FakeClient) FinishProvisionerOperation(id string, state schema.Operatio
 	c.operations[id] = op
 }
 
-func (c *FakeClient) FindOperationByRuntimeIDAndType(runtimeID string, operationType schema.OperationType) schema.OperationStatus {
+func (c *FakeClient) FindInProgressOperationByRuntimeIDAndType(runtimeID string, operationType schema.OperationType) schema.OperationStatus {
 	c.mu.Lock()
 	defer c.mu.Unlock()
 
 	for _, status := range c.operations {
-		if *status.RuntimeID == runtimeID && status.Operation == operationType {
+		if *status.RuntimeID == runtimeID && status.Operation == operationType && status.State == schema.OperationStateInProgress {
 			return status
 		}
 	}

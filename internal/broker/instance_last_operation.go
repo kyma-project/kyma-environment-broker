@@ -14,15 +14,17 @@ import (
 )
 
 type LastOperationEndpoint struct {
-	operationStorage storage.Operations
+	operationStorage  storage.Operations
+	instancesArchived storage.InstancesArchived
 
 	log logrus.FieldLogger
 }
 
-func NewLastOperation(os storage.Operations, log logrus.FieldLogger) *LastOperationEndpoint {
+func NewLastOperation(os storage.Operations, ia storage.InstancesArchived, log logrus.FieldLogger) *LastOperationEndpoint {
 	return &LastOperationEndpoint{
-		operationStorage: os,
-		log:              log.WithField("service", "LastOperationEndpoint"),
+		operationStorage:  os,
+		instancesArchived: ia,
+		log:               log.WithField("service", "LastOperationEndpoint"),
 	}
 }
 
@@ -35,11 +37,11 @@ func (b *LastOperationEndpoint) LastOperation(ctx context.Context, instanceID st
 	if details.OperationData == "" {
 		lastOp, err := b.operationStorage.GetLastOperation(instanceID)
 		if err != nil {
-			logger.Errorf("cannot get operation from storage: %s", err)
 			statusCode := http.StatusInternalServerError
 			if dberr.IsNotFound(err) {
-				statusCode = http.StatusNotFound
+				return b.responseFromInstanceArchived(instanceID, logger)
 			}
+			logger.Errorf("cannot get operation from storage: %s", err)
 			return domain.LastOperation{}, apiresponses.NewFailureResponse(err, statusCode,
 				fmt.Sprintf("while getting last operation from storage"))
 		}
@@ -51,11 +53,11 @@ func (b *LastOperationEndpoint) LastOperation(ctx context.Context, instanceID st
 
 	operation, err := b.operationStorage.GetOperationByID(details.OperationData)
 	if err != nil {
-		logger.Errorf("cannot get operation from storage: %s", err)
 		statusCode := http.StatusInternalServerError
 		if dberr.IsNotFound(err) {
-			statusCode = http.StatusNotFound
+			return b.responseFromInstanceArchived(instanceID, logger)
 		}
+		logger.Errorf("cannot get operation from storage: %s", err)
 		return domain.LastOperation{}, apiresponses.NewFailureResponse(err, statusCode,
 			fmt.Sprintf("while getting operation from storage"))
 	}
@@ -70,6 +72,23 @@ func (b *LastOperationEndpoint) LastOperation(ctx context.Context, instanceID st
 		State:       mapStateToOSBCompliantState(operation.State),
 		Description: operation.Description,
 	}, nil
+}
+
+func (b *LastOperationEndpoint) responseFromInstanceArchived(instanceID string, logger *logrus.Entry) (domain.LastOperation, error) {
+	_, err := b.instancesArchived.GetByInstanceID(instanceID)
+
+	switch {
+	case err == nil:
+		return domain.LastOperation{
+			State:       domain.Succeeded,
+			Description: "Operation succeeded. The instance was deprovisioned.",
+		}, nil
+	case dberr.IsNotFound(err):
+		return domain.LastOperation{}, apiresponses.NewFailureResponse(fmt.Errorf("Operation not found"), http.StatusNotFound, "Instance not found")
+	default:
+		logger.Errorf("unable to get instance from archived storage: %s", err.Error())
+		return domain.LastOperation{}, apiresponses.NewFailureResponse(err, http.StatusInternalServerError, "")
+	}
 }
 
 func mapStateToOSBCompliantState(opState domain.LastOperationState) domain.LastOperationState {

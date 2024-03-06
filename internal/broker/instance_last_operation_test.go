@@ -27,7 +27,7 @@ func TestLastOperation_LastOperation(t *testing.T) {
 		err := memoryStorage.Operations().InsertOperation(fixOperation())
 		assert.NoError(t, err)
 
-		lastOperationEndpoint := broker.NewLastOperation(memoryStorage.Operations(), logrus.StandardLogger())
+		lastOperationEndpoint := broker.NewLastOperation(memoryStorage.Operations(), memoryStorage.InstancesArchived(), logrus.StandardLogger())
 
 		// when
 		response, err := lastOperationEndpoint.LastOperation(context.TODO(), instID, domain.PollDetails{OperationData: operationID})
@@ -45,7 +45,7 @@ func TestLastOperation_LastOperation(t *testing.T) {
 		err := memoryStorage.Operations().InsertOperation(fixOperation())
 		assert.NoError(t, err)
 
-		lastOperationEndpoint := broker.NewLastOperation(memoryStorage.Operations(), logrus.StandardLogger())
+		lastOperationEndpoint := broker.NewLastOperation(memoryStorage.Operations(), memoryStorage.InstancesArchived(), logrus.StandardLogger())
 
 		// when
 		response, err := lastOperationEndpoint.LastOperation(context.TODO(), instID, domain.PollDetails{OperationData: ""})
@@ -65,7 +65,7 @@ func TestLastOperation_LastOperation(t *testing.T) {
 		err := memoryStorage.Operations().InsertUpdatingOperation(updateOp)
 		assert.NoError(t, err)
 
-		lastOperationEndpoint := broker.NewLastOperation(memoryStorage.Operations(), logrus.StandardLogger())
+		lastOperationEndpoint := broker.NewLastOperation(memoryStorage.Operations(), memoryStorage.InstancesArchived(), logrus.StandardLogger())
 
 		// when
 		response, err := lastOperationEndpoint.LastOperation(context.TODO(), instID, domain.PollDetails{OperationData: ""})
@@ -93,7 +93,7 @@ func TestLastOperation_LastOperation(t *testing.T) {
 		err := memoryStorage.Operations().InsertUpdatingOperation(updateOp)
 		assert.NoError(t, err)
 
-		lastOperationEndpoint := broker.NewLastOperation(memoryStorage.Operations(), logrus.StandardLogger())
+		lastOperationEndpoint := broker.NewLastOperation(memoryStorage.Operations(), memoryStorage.InstancesArchived(), logrus.StandardLogger())
 
 		// when
 		response, err := lastOperationEndpoint.LastOperation(context.TODO(), instID, domain.PollDetails{OperationData: ""})
@@ -124,7 +124,7 @@ func TestLastOperation_LastOperation(t *testing.T) {
 		err := memoryStorage.Operations().InsertUpdatingOperation(updateOp)
 		assert.NoError(t, err)
 
-		lastOperationEndpoint := broker.NewLastOperation(memoryStorage.Operations(), logrus.StandardLogger())
+		lastOperationEndpoint := broker.NewLastOperation(memoryStorage.Operations(), memoryStorage.InstancesArchived(), logrus.StandardLogger())
 
 		// when
 		response, err := lastOperationEndpoint.LastOperation(context.TODO(), instID, domain.PollDetails{OperationData: ""})
@@ -140,7 +140,6 @@ func TestLastOperation_LastOperation(t *testing.T) {
 		response, err = lastOperationEndpoint.LastOperation(context.TODO(), instID,
 			domain.PollDetails{OperationData: operationID})
 		assert.NoError(t, err)
-
 		// then
 		assert.Equal(t, domain.LastOperation{
 			State:       domain.Succeeded,
@@ -155,7 +154,7 @@ func TestLastOperation_LastOperation(t *testing.T) {
 		err := memoryStorage.Operations().InsertUpdatingOperation(updateOp)
 		assert.NoError(t, err)
 
-		lastOperationEndpoint := broker.NewLastOperation(memoryStorage.Operations(), logrus.StandardLogger())
+		lastOperationEndpoint := broker.NewLastOperation(memoryStorage.Operations(), memoryStorage.InstancesArchived(), logrus.StandardLogger())
 
 		// when
 		response, err := lastOperationEndpoint.LastOperation(context.TODO(), instID, domain.PollDetails{OperationData: ""})

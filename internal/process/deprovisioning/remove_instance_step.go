@@ -1,6 +1,7 @@
 package deprovisioning
 
 import (
+	"strings"
 	"time"
 
 	"github.com/kyma-project/kyma-environment-broker/internal/storage/dberr"
@@ -59,13 +60,15 @@ func (s *RemoveInstanceStep) Run(operation internal.Operation, log logrus.FieldL
 			operation.RuntimeID = ""
 		}, log)
 	} else if operation.ExcutedButNotCompleted != nil {
-		log.Info("Marking the instance needs to retry some steps")
+		log.Infof("Marking the instance needs to retry some steps (%s)", strings.Join(operation.ExcutedButNotCompleted, ", "))
 		backoff = s.markInstanceNeedsRetrySomeSteps(operation.InstanceID, log)
 		if backoff != 0 {
 			return operation, backoff, nil
 		}
 	} else {
 		log.Info("Removing the instance permanently")
+
+		// todo: the instance is needed in the next step
 		backoff = s.removeInstancePermanently(operation.InstanceID, log)
 		if backoff != 0 {
 			return operation, backoff, nil

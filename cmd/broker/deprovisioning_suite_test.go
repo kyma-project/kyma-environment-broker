@@ -154,7 +154,7 @@ func (s *DeprovisioningSuite) CreateProvisionedRuntime(options RuntimeOptions) s
 
 func (s *DeprovisioningSuite) finishProvisioningOperationByProvisioner(operationType gqlschema.OperationType, runtimeID string) {
 	err := wait.Poll(pollingInterval, 2*time.Second, func() (bool, error) {
-		status := s.provisionerClient.FindOperationByRuntimeIDAndType(runtimeID, operationType)
+		status := s.provisionerClient.FindInProgressOperationByRuntimeIDAndType(runtimeID, operationType)
 		if status.ID != nil {
 			s.provisionerClient.FinishProvisionerOperation(*status.ID, gqlschema.OperationStateSucceeded)
 			return true, nil

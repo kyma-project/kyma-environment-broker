@@ -186,12 +186,8 @@ func (s *operations) ListOperationsByInstanceID(instanceID string) ([]internal.O
 		}
 	}
 
-	if len(operations) != 0 {
-		s.sortOperationsByCreatedAtDesc(operations)
-		return operations, nil
-	}
-
-	return nil, dberr.NotFound("instance provisioning operations with instanceID %s not found", instanceID)
+	s.sortOperationsByCreatedAtDesc(operations)
+	return operations, nil
 }
 
 func (s *operations) ListOperationsInTimeRange(from, to time.Time) ([]internal.Operation, error) {

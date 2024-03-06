@@ -406,7 +406,7 @@ func (s *OrchestrationSuite) CreateUpgradeClusterOrchestration(params orchestrat
 
 func (s *OrchestrationSuite) finishOperationByProvisioner(operationType gqlschema.OperationType, runtimeID string) {
 	err := wait.Poll(time.Millisecond*100, 2*time.Second, func() (bool, error) {
-		status := s.provisionerClient.FindOperationByRuntimeIDAndType(runtimeID, operationType)
+		status := s.provisionerClient.FindInProgressOperationByRuntimeIDAndType(runtimeID, operationType)
 		if status.ID != nil {
 			s.provisionerClient.FinishProvisionerOperation(*status.ID, gqlschema.OperationStateSucceeded)
 			return true, nil
@@ -851,7 +851,7 @@ func (s *ProvisioningSuite) AssertProvisionerStartedProvisioning(operationID str
 
 	var status gqlschema.OperationStatus
 	err = wait.Poll(pollingInterval, 2*time.Second, func() (bool, error) {
-		status = s.provisionerClient.FindOperationByRuntimeIDAndType(provisioningOp.RuntimeID, gqlschema.OperationTypeProvision)
+		status = s.provisionerClient.FindInProgressOperationByRuntimeIDAndType(provisioningOp.RuntimeID, gqlschema.OperationTypeProvision)
 		if status.ID != nil {
 			return true, nil
 		}
@@ -887,7 +887,7 @@ func (s *ProvisioningSuite) finishOperationByReconciler(op *internal.Operation) 
 
 func (s *ProvisioningSuite) finishOperationByProvisioner(operationType gqlschema.OperationType, runtimeID string) {
 	err := wait.Poll(pollingInterval, 2*time.Second, func() (bool, error) {
-		status := s.provisionerClient.FindOperationByRuntimeIDAndType(runtimeID, operationType)
+		status := s.provisionerClient.FindInProgressOperationByRuntimeIDAndType(runtimeID, operationType)
 		if status.ID != nil {
 			s.provisionerClient.FinishProvisionerOperation(*status.ID, gqlschema.OperationStateSucceeded)
 			return true, nil
@@ -1057,6 +1057,7 @@ func fixConfig() *Config {
 				BindablePlans: []string{"aws", "azure"},
 			},
 		},
+
 		Avs: avs.Config{},
 		IAS: ias.Config{
 			IdentityProvider: ias.FakeIdentityProviderName,
@@ -1077,6 +1078,9 @@ func fixConfig() *Config {
 		Provisioning:   process.StagedManagerConfiguration{MaxStepProcessingTime: time.Minute},
 		Deprovisioning: process.StagedManagerConfiguration{MaxStepProcessingTime: time.Minute},
 		Update:         process.StagedManagerConfiguration{MaxStepProcessingTime: time.Minute},
+
+		ArchiveEnabled:  true,
+		CleaningEnabled: true,
 	}
 }
 

@@ -7,6 +7,8 @@ import (
 	"sync"
 	"time"
 
+	"github.com/kyma-project/kyma-environment-broker/internal/storage/dberr"
+
 	"github.com/pkg/errors"
 
 	"github.com/kyma-project/kyma-environment-broker/internal"
@@ -173,7 +175,9 @@ func (m *StagedManager) Execute(operationID string) (time.Duration, error) {
 		}
 
 		processedOperation, err = m.saveFinishedStage(processedOperation, stage, logOperation)
-		if err != nil {
+
+		// it is ok, when operation deos not exists in the DB - it can happen at the end of a deprovisioning process
+		if err != nil && !dberr.IsNotFound(err) {
 			return time.Second, nil
 		}
 	}
@@ -187,7 +191,8 @@ func (m *StagedManager) Execute(operationID string) (time.Duration, error) {
 	})
 
 	_, err = m.operationStorage.UpdateOperation(processedOperation)
-	if err != nil {
+	// it is ok, when operation deos not exists in the DB - it can happen at the end of a deprovisioning process
+	if err != nil && !dberr.IsNotFound(err) {
 		logOperation.Infof("Unable to save operation with finished the provisioning process")
 		return time.Second, err
 	}
@@ -198,7 +203,8 @@ func (m *StagedManager) Execute(operationID string) (time.Duration, error) {
 func (m *StagedManager) saveFinishedStage(operation internal.Operation, s *stage, log logrus.FieldLogger) (internal.Operation, error) {
 	operation.FinishStage(s.name)
 	op, err := m.operationStorage.UpdateOperation(operation)
-	if err != nil {
+	// it is ok, when operation deos not exists in the DB - it can happen at the end of a deprovisioning process
+	if err != nil && !dberr.IsNotFound(err) {
 		log.Infof("Unable to save operation with finished stage %s: %s", s.name, err.Error())
 		return operation, err
 	}
