@@ -714,3 +714,11 @@ func (c *ConfigForPlan) ContainsAdditionalComponent(componentName string) bool {
 	}
 	return false
 }
+
+type SubaccountState struct {
+	ID string `json:"id"`
+
+	BetaEnabled       string `json:"betaEnabled"`
+	UsedForProduction string `json:"usedForProduction"`
+	ModifiedAt        int64  `json:"modifiedAt"`
+}

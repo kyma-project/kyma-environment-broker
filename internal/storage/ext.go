@@ -19,6 +19,7 @@ type Instances interface {
 	Delete(instanceID string) error
 	GetInstanceStats() (internal.InstanceStats, error)
 	GetERSContextStats() (internal.ERSContextStats, error)
+	GetDistinctSubAccounts() ([]string, error)
 	GetNumberOfInstancesForGlobalAccountID(globalAccountID string) (int, error)
 	List(dbmodel.InstanceFilter) ([]internal.Instance, int, int, error)
 
@@ -122,4 +123,10 @@ type Updating interface {
 type Events interface {
 	InsertEvent(level events.EventLevel, message, instanceID, operationID string)
 	ListEvents(filter events.EventFilter) ([]events.EventDTO, error)
+}
+
+type SubaccountStates interface {
+	UpsertState(state internal.SubaccountState) error
+	DeleteState(subaccountID string) error
+	ListStates() ([]internal.SubaccountState, error)
 }

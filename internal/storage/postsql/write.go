@@ -247,6 +247,41 @@ func (ws writeSession) DeleteRuntimeStatesByOperationID(operationID string) erro
 	return nil
 }
 
+func (ws writeSession) UpsertSubaccountState(state dbmodel.SubaccountStateDTO) dberr.Error {
+	result, err := ws.update(SubaccountStatesTableName).
+		Where(dbr.Eq("id", state.ID)).
+		Set("beta_enabled", state.BetaEnabled).
+		Set("used_for_production", state.UsedForProduction).
+		Set("modified_at", state.ModifiedAt).
+		Exec()
+	if err != nil {
+		return dberr.Internal("Failed to update record to subaccount_states table: %s", err)
+	}
+	rAffected, err := result.RowsAffected()
+	if rAffected == int64(0) {
+		_, err = ws.insertInto(SubaccountStatesTableName).
+			Pair("id", state.ID).
+			Pair("beta_enabled", state.BetaEnabled).
+			Pair("used_for_production", state.UsedForProduction).
+			Pair("modified_at", state.ModifiedAt).
+			Exec()
+		if err != nil {
+			return dberr.Internal("Failed to upsert record to subaccount_states table: %s", err)
+		}
+	}
+	return nil
+}
+
+func (ws writeSession) DeleteState(subaccountID string) dberr.Error {
+	_, err := ws.deleteFrom(SubaccountStatesTableName).
+		Where(dbr.Eq("id", subaccountID)).
+		Exec()
+	if err != nil {
+		return dberr.Internal("failed to delete state for subaccount %s: %v", subaccountID, err)
+	}
+	return nil
+}
+
 func (ws writeSession) UpdateOperation(op dbmodel.OperationDTO) dberr.Error {
 	res, err := ws.update(OperationTableName).
 		Where(dbr.Eq("id", op.ID)).
