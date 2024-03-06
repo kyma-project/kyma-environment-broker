@@ -1,8 +1,9 @@
 package postsql_test
 
 import (
-	"github.com/kyma-project/kyma-environment-broker/internal"
 	"testing"
+
+	"github.com/kyma-project/kyma-environment-broker/internal"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
