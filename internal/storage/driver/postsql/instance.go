@@ -22,6 +22,27 @@ type Instance struct {
 	cipher     Cipher
 }
 
+func (s *Instance) GetDistinctSubAccounts() ([]string, error) {
+	sess := s.NewReadSession()
+	var (
+		subAccounts []string
+		lastErr     dberr.Error
+	)
+	err := wait.PollImmediate(defaultRetryInterval, defaultRetryTimeout, func() (bool, error) {
+		subAccounts, lastErr = sess.GetDistinctSubAccounts()
+		if lastErr != nil {
+			log.Errorf("while fetching distinct subaccounts list: %v", lastErr)
+			return false, nil
+		}
+		return true, nil
+	})
+	if err != nil {
+		return nil, lastErr
+	}
+
+	return subAccounts, nil
+}
+
 func NewInstance(sess postsql.Factory, operations *operations, cipher Cipher) *Instance {
 	return &Instance{
 		Factory:    sess,

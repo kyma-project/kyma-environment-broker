@@ -17,8 +17,9 @@ const (
 	OperationTableName         = "operations"
 	OrchestrationTableName     = "orchestrations"
 	RuntimeStateTableName      = "runtime_states"
-	InstancesArchivedTableName = "instances_archived"
+	SubaccountStatesTableName  = "subaccount_states"
 	CreatedAtField             = "created_at"
+	InstancesArchivedTableName = "instances_archived"
 )
 
 // InitializeDatabase opens database connection and initializes schema if it does not exist

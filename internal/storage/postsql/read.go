@@ -21,6 +21,35 @@ type readSession struct {
 	session *dbr.Session
 }
 
+func (r readSession) ListSubaccountStates() ([]dbmodel.SubaccountStateDTO, dberr.Error) {
+	var states []dbmodel.SubaccountStateDTO
+
+	_, err := r.session.
+		Select("*").
+		From(SubaccountStatesTableName).
+		Load(&states)
+	if err != nil {
+		return nil, dberr.Internal("Failed to get subaccount states: %s", err)
+	}
+	return states, nil
+}
+
+func (r readSession) GetDistinctSubAccounts() ([]string, dberr.Error) {
+	var subAccounts []string
+
+	err := r.session.
+		Select("distinct(sub_account_id)").
+		From(InstancesTableName).
+		Where(dbr.Neq("runtime_id", "")).
+		LoadOne(&subAccounts)
+
+	if err != nil {
+		return []string{}, dberr.Internal("Failed to get distinct subaccounts: %s", err)
+	}
+
+	return subAccounts, nil
+}
+
 func (r readSession) getInstancesJoinedWithOperationStatement() *dbr.SelectStmt {
 	join := fmt.Sprintf("%s.instance_id = %s.instance_id", InstancesTableName, OperationTableName)
 	stmt := r.session.

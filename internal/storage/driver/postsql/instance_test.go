@@ -158,6 +158,39 @@ func TestInstance(t *testing.T) {
 		assert.Equal(t, 0, numberOfInstancesB)
 	})
 
+	t.Run("Should get distinct subaccounts from active instances", func(t *testing.T) {
+		storageCleanup, brokerStorage, err := GetStorageForDatabaseTests()
+		require.NoError(t, err)
+		require.NotNil(t, brokerStorage)
+		defer func() {
+			err := storageCleanup()
+			assert.NoError(t, err)
+		}()
+
+		// populate database with samples
+		fixInstances := []internal.Instance{
+			*fixInstance(instanceData{val: "A1", globalAccountID: "ga1", subAccountID: "sa1", runtimeID: "runtimeID1"}),
+			*fixInstance(instanceData{val: "A2", globalAccountID: "ga1", subAccountID: "sa1", runtimeID: "runtimeID2"}),
+			*fixInstance(instanceData{val: "A3", globalAccountID: "ga1", subAccountID: "sa2", runtimeID: "runtimeID3"}),
+			*fixInstance(instanceData{val: "A4", globalAccountID: "ga2", subAccountID: "sa3", runtimeID: "runtimeID4"}),
+			*fixInstance(instanceData{val: "A5", globalAccountID: "ga2", subAccountID: "sa4", runtimeID: "runtimeID5"}),
+			*fixInstance(instanceData{val: "A6", globalAccountID: "ga2", subAccountID: "sa5", runtimeID: ""}),
+			*fixInstance(instanceData{val: "A7", globalAccountID: "ga2", subAccountID: "sa6", runtimeID: "runtimeID7"}),
+		}
+
+		for _, i := range fixInstances {
+			err = brokerStorage.Instances().Insert(i)
+			require.NoError(t, err)
+		}
+
+		// when
+		subaccounts, err := brokerStorage.Instances().GetDistinctSubAccounts()
+		require.NoError(t, err)
+
+		// then
+		assert.Equal(t, 6, len(subaccounts))
+	})
+
 	t.Run("Should fetch instances along with their operations", func(t *testing.T) {
 		storageCleanup, brokerStorage, err := GetStorageForDatabaseTests()
 		require.NoError(t, err)
@@ -813,6 +846,7 @@ type instanceData struct {
 	val             string
 	globalAccountID string
 	subAccountID    string
+	runtimeID       string
 	expired         bool
 	trial           bool
 	deletedAt       time.Time
