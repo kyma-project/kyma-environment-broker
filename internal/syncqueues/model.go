@@ -1,8 +1,8 @@
 package syncqueues
 
 const (
-	// MaxQueueSize is the maximum size of the queue
-	MaxQueueSize = 2048
+	// InitialQueueSize is the initial size of the queue
+	InitialQueueSize = 2048
 )
 
 type PriorityQueue interface {

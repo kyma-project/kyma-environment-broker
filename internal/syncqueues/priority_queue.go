@@ -22,7 +22,16 @@ type SubaccountAwarePriorityQueue struct {
 
 func NewPriorityQueue(log *slog.Logger) *SubaccountAwarePriorityQueue {
 	return &SubaccountAwarePriorityQueue{
-		elements: make([]QueueElement, MaxQueueSize),
+		elements: make([]QueueElement, InitialQueueSize),
+		idx:      make(map[string]int),
+		size:     0,
+		log:      log,
+	}
+}
+
+func NewPriorityQueueForTests(log *slog.Logger, initialQueueSize int) *SubaccountAwarePriorityQueue {
+	return &SubaccountAwarePriorityQueue{
+		elements: make([]QueueElement, initialQueueSize),
 		idx:      make(map[string]int),
 		size:     0,
 		log:      log,
@@ -32,11 +41,11 @@ func NewPriorityQueue(log *slog.Logger) *SubaccountAwarePriorityQueue {
 func (q *SubaccountAwarePriorityQueue) Insert(e QueueElement) {
 	q.mutex.Lock()
 	defer q.mutex.Unlock()
-	if q.size == MaxQueueSize {
-		// log error
-		// TODO resize and log info
-		q.log.Error("SimplePriorityQueue is full, cannot insert element")
-		return
+	if q.size == cap(q.elements) {
+		newElements := make([]QueueElement, q.size*2)
+		copy(newElements, q.elements)
+		q.elements = newElements
+		q.log.Info(fmt.Sprintf("SimplePriorityQueue is full, resized to %v", q.size*2))
 	}
 	if idx, ok := q.idx[e.SubaccountID]; ok {
 		if q.elements[idx].ModifiedAt > e.ModifiedAt {
