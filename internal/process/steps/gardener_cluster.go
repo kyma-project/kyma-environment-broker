@@ -111,10 +111,12 @@ func (s *syncGardenerCluster) Run(operation internal.Operation, log logrus.Field
 	err = gardenerCluster.SetShootName(operation.ShootName)
 	if err != nil {
 		log.Errorf("unable to set GardenerCluster shoot name: %s", err)
+		return s.operationManager.RetryOperation(operation, "unable to set GardenerCluster shoot name", err, 3*time.Second, 20*time.Second, log)
 	}
 	err = gardenerCluster.SetKubecofigSecret(fmt.Sprintf("kubeconfig-%s", operation.RuntimeID), operation.KymaResourceNamespace)
 	if err != nil {
 		log.Errorf("unable to set GardenerCluster kubeconfig secret: %s", err)
+		return s.operationManager.RetryOperation(operation, "unable to set GardenerCluster kubeconfig secret", err, 3*time.Second, 20*time.Second, log)
 	}
 
 	obj := gardenerCluster.ToUnstructured()
@@ -196,17 +198,17 @@ func (c *GardenerCluster) SetShootName(shootName string) error {
 	return unstructured.SetNestedField(c.obj.Object, shootName, "spec", "shoot", "name")
 }
 
-func (c *GardenerCluster) SetKubecofigSecret(name, namespace string) (error error) {
+func (c *GardenerCluster) SetKubecofigSecret(name, namespace string) error {
 	if err := unstructured.SetNestedField(c.obj.Object, name, "spec", "kubeconfig", "secret", "name"); err != nil {
-		error = err
+		return err
 	}
 	if err := unstructured.SetNestedField(c.obj.Object, namespace, "spec", "kubeconfig", "secret", "namespace"); err != nil {
-		error = err
+		return err
 	}
 	if err := unstructured.SetNestedField(c.obj.Object, "config", "spec", "kubeconfig", "secret", "key"); err != nil {
-		error = err
+		return err
 	}
-	return
+	return nil
 }
 
 func (c *GardenerCluster) ToUnstructured() *unstructured.Unstructured {
