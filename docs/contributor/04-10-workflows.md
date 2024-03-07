@@ -68,13 +68,13 @@ You pass the following parameters from the calling workflow:
 
 
 The workflow:
-- Checks if the KEB chart is rendered by Helm
-- Fetches the **last-k3s-versions** tag versions of k3s releases 
-- Prepares the **last-k3s-versions** k3s clusters with the Docker registries using the list of versions from the previous step
-- Creates required namespaces
-- Installs required dependencies by the KEB charts
-- Renders and applies the KEB chart in the k3s cluster
-- Waits for all tests to finish
+1. Checks if the KEB chart is rendered by Helm
+1. Fetches the **last-k3s-versions** tag versions of k3s releases 
+1. Prepares the **last-k3s-versions** k3s clusters with the Docker registries using the list of versions from the previous step
+1. Creates required namespaces
+1. Installs required dependencies by the KEB charts
+1. Renders and applies the KEB chart in the k3s cluster
+1. Waits for all tests to finish
 
 ### Unit Tests
 
@@ -86,7 +86,7 @@ by setting the **DB_IN_MEMORY_FOR_E2E_TESTS** environment variable to `true`. Ho
 instance details serialization and deserialization, providing a clearer understanding of the impacts and outcomes of these processes.
 
 The workflow:
-- Checks out code and sets up the cache
-- Sets up the Go environment
-- Invokes `make go-mod-check`
-- Invokes `make test`
+1. Checks out code and sets up the cache
+1. Sets up the Go environment
+1. Invokes `make go-mod-check`
+1. Invokes `make test`
