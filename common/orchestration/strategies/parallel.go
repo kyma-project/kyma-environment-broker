@@ -229,10 +229,7 @@ func (p *ParallelOrchestrationStrategy) updateMaintenanceWindow(execID string, o
 
 		duration = time.Until(op.MaintenanceWindowBegin)
 	} else {
-		err := p.executor.Reschedule(id, strategy.ScheduleTime, strategy.ScheduleTime)
-		if err != nil {
-			return duration, fmt.Errorf("while rescheduling operation by executor (still continuing with new schedule): %w", err)
-		}
+		p.executor.Reschedule(id, strategy.ScheduleTime, strategy.ScheduleTime) //nolint:errcheck
 		duration = time.Until(strategy.ScheduleTime)
 	}
 
