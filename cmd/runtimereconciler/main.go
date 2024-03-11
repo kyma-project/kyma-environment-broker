@@ -76,13 +76,6 @@ func main() {
 		btpManagerCredentialsJob.Start(cfg.JobInterval, jobReconciliationDelay)
 	}
 
-	logs.Infof("watcher enabled? %t", cfg.WatcherEnabled)
-	if cfg.WatcherEnabled {
-		btpManagerCredentialsWatcher := btpmanager.NewWatcher(ctx, cfg.BtpManagerSecretWatcherAddr, cfg.BtpManagerSecretWatcherComponentName, btpOperatorManager, logs)
-		logs.Infof("runtime-reconciler created watcher %s on %s", cfg.BtpManagerSecretWatcherComponentName, cfg.BtpManagerSecretWatcherAddr)
-		go btpManagerCredentialsWatcher.ReactOnSkrEvent()
-	}
-
 	<-ctx.Done()
 }
 
