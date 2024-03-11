@@ -218,6 +218,8 @@ func (s *operations) ListOperationsByInstanceIDGroupByType(instanceID string) (*
 
 		case internal.OperationTypeUpdate:
 			grouped.UpdateOperations = append(grouped.UpdateOperations, internal.UpdatingOperation{Operation: op})
+		default:
+			panic("Invalid type of operation")
 		}
 	}
 
