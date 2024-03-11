@@ -971,8 +971,6 @@ github.com/kyma-project/control-plane/components/provisioner v0.0.0-202312291426
 github.com/kyma-project/control-plane/components/provisioner v0.0.0-20231229142643-f0ac935b7fae/go.mod h1:3UauvLolLfEtdf9iI0mMuLapp2B4C2Xs2+oUz9Ba4hc=
 github.com/kyma-project/control-plane/components/schema-migrator v0.0.0-20240222095836-b3942869fc28 h1:MptO0pv3+BjTxfQFF0YGR+/YL42jlNY3wi9Lq+kNr84=
 github.com/kyma-project/control-plane/components/schema-migrator v0.0.0-20240222095836-b3942869fc28/go.mod h1:vABrhytVuZpchbdlIVdUDlhB/Q/3GIZld2JmdS2rZ6I=
-github.com/kyma-project/runtime-watcher/listener v0.0.0-20240221090636-51d3747d28f1 h1:lr1t+A68MHQ/hM/rshSvU8u4Ris3+SuguEzMjOh6L8E=
-github.com/kyma-project/runtime-watcher/listener v0.0.0-20240221090636-51d3747d28f1/go.mod h1:xKKp/P7w7HtAdQozn216aqsFyibmFTaxo/fpKd13D/g=
 github.com/lib/pq v1.0.0/go.mod h1:5WUZQaWbwv1U+lTReE5YruASi9Al49XbQIvNi/34Woo=
 github.com/lib/pq v1.1.1/go.mod h1:5WUZQaWbwv1U+lTReE5YruASi9Al49XbQIvNi/34Woo=
 github.com/lib/pq v1.10.9 h1:YXG7RB+JIjhP29X+OtkiDnYaXQwpS4JEWq7dtCCRUEw=
