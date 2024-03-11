@@ -120,7 +120,7 @@ spec:
       key: config
       name: kubeconfig-%s
       namespace: kcp-system`, name, namespace, name)
-	scheme := internal.NewSchemeForTests()
+	scheme := internal.NewSchemeForTests(t)
 	decoder := serializer.NewCodecFactory(scheme).UniversalDeserializer()
 	unstructuredObject := &unstructured.Unstructured{}
 	_, _, err := decoder.Decode([]byte(obj), nil, unstructuredObject)

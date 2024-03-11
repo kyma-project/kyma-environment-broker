@@ -5,6 +5,8 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/kyma-project/kyma-environment-broker/internal/broker"
+
 	"github.com/kyma-project/kyma-environment-broker/internal/provisioner"
 	"github.com/kyma-project/kyma-environment-broker/internal/ptr"
 	"github.com/pivotal-cf/brokerapi/v8/domain"
@@ -24,22 +26,24 @@ import (
 const numberOfUpgradeOperationsToReturn = 2
 
 type Handler struct {
-	instancesDb       storage.Instances
-	operationsDb      storage.Operations
-	runtimeStatesDb   storage.RuntimeStates
-	converter         Converter
-	defaultMaxPage    int
-	provisionerClient provisioner.Client
+	instancesDb         storage.Instances
+	operationsDb        storage.Operations
+	runtimeStatesDb     storage.RuntimeStates
+	instancesArchivedDb storage.InstancesArchived
+	converter           Converter
+	defaultMaxPage      int
+	provisionerClient   provisioner.Client
 }
 
-func NewHandler(instanceDb storage.Instances, operationDb storage.Operations, runtimeStatesDb storage.RuntimeStates, defaultMaxPage int, defaultRequestRegion string, provisionerClient provisioner.Client) *Handler {
+func NewHandler(instanceDb storage.Instances, operationDb storage.Operations, runtimeStatesDb storage.RuntimeStates, instancesArchived storage.InstancesArchived, defaultMaxPage int, defaultRequestRegion string, provisionerClient provisioner.Client) *Handler {
 	return &Handler{
-		instancesDb:       instanceDb,
-		operationsDb:      operationDb,
-		runtimeStatesDb:   runtimeStatesDb,
-		converter:         NewConverter(defaultRequestRegion),
-		defaultMaxPage:    defaultMaxPage,
-		provisionerClient: provisionerClient,
+		instancesDb:         instanceDb,
+		operationsDb:        operationDb,
+		runtimeStatesDb:     runtimeStatesDb,
+		converter:           NewConverter(defaultRequestRegion),
+		defaultMaxPage:      defaultMaxPage,
+		provisionerClient:   provisionerClient,
+		instancesArchivedDb: instancesArchived,
 	}
 }
 
@@ -119,12 +123,52 @@ func (h *Handler) listInstances(filter dbmodel.InstanceFilter) ([]internal.Insta
 		}
 		instancesFromOperations := recreateInstances(operations)
 
-		// return union of both sets of instances
-		instancesUnion := unionInstances(instances, instancesFromOperations)
+		var archived []internal.Instance
+		if len(instancesFromOperations) == 0 && len(filter.InstanceIDs) == 1 {
+			instanceArchived, err := h.instancesArchivedDb.GetByInstanceID(filter.InstanceIDs[0])
+			if err != nil && !dberr.IsNotFound(err) {
+				return instances, instancesCount, instancesTotalCount, err
+			}
+			instance := h.InstanceFromInstanceArchived(instanceArchived)
+			archived = append(archived, instance)
+		}
+
+		// return union of all sets of instances
+		instancesUnion := unionInstances(instances, instancesFromOperations, archived)
 		count := len(instancesFromOperations)
 		return instancesUnion, count + instancesCount, count + instancesTotalCount, nil
 	}
 	return h.instancesDb.List(filter)
+}
+
+func (h *Handler) InstanceFromInstanceArchived(archived internal.InstanceArchived) internal.Instance {
+	return internal.Instance{
+		InstanceID:                  archived.InstanceID,
+		RuntimeID:                   archived.LastRuntimeID,
+		GlobalAccountID:             archived.GlobalAccountID,
+		SubscriptionGlobalAccountID: archived.SubscriptionGlobalAccountID,
+		SubAccountID:                archived.SubaccountID,
+		ServiceID:                   broker.KymaServiceID,
+		ServiceName:                 broker.KymaServiceName,
+		ServicePlanID:               archived.PlanID,
+		ServicePlanName:             archived.PlanName,
+		ProviderRegion:              archived.Region,
+		CreatedAt:                   archived.ProvisioningStartedAt,
+		Provider:                    internal.CloudProvider(archived.Provider),
+		Reconcilable:                false,
+
+		InstanceDetails: internal.InstanceDetails{
+			ShootName: archived.ShootName,
+		},
+
+		Parameters: internal.ProvisioningParameters{
+			ErsContext: internal.ERSContext{
+				UserID: archived.UserID(),
+			},
+			Parameters:     internal.ProvisioningParametersDTO{},
+			PlatformRegion: archived.SubaccountRegion,
+		},
+	}
 }
 
 func (h *Handler) getRuntimes(w http.ResponseWriter, req *http.Request) {

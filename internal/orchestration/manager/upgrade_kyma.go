@@ -185,9 +185,8 @@ func (u *upgradeKymaFactory) RetryOperations(retryOps []string) ([]orchestration
 	for _, opId := range retryOps {
 		runtimeop, err := u.operationStorage.GetUpgradeKymaOperationByID(opId)
 		if err != nil {
-			fmt.Errorf("while geting (retrying) upgrade kyma operation %s in storage: %w", opId, err)
+			fmt.Errorf("while geting (retrying) upgrade Kyma operation %s in storage: %w", opId, err) //nolint:govet
 		}
-
 		result = append(result, runtimeop.RuntimeOperation)
 	}
 

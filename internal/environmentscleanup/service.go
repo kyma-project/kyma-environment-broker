@@ -159,7 +159,7 @@ func (s *Service) getStaleRuntimesByShoots(labelSelector string) ([]runtime, []u
 }
 
 func (s *Service) shootToRuntime(st unstructured.Unstructured) (*runtime, error) {
-	shoot := gardener.Shoot{st}
+	shoot := gardener.Shoot{Unstructured: st}
 	runtimeID, ok := shoot.GetAnnotations()[shootAnnotationRuntimeId]
 	if !ok {
 		return nil, fmt.Errorf("shoot %q has no runtime-id annotation", shoot.GetName())

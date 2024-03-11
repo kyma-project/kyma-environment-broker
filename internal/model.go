@@ -367,6 +367,13 @@ type InstanceArchived struct {
 	LastDeprovisioningFinishedAt  time.Time
 }
 
+func (a InstanceArchived) UserID() string {
+	if a.InternalUser {
+		return "somebody (at) sap.com"
+	}
+	return "- deleted -"
+}
+
 type MonitoringData struct {
 	Username string `json:"username"`
 	Password string `json:"password"`
@@ -498,6 +505,13 @@ func (r *RuntimeState) buildKymaConfigFromClusterSetup() gqlschema.KymaConfigInp
 type OperationStats struct {
 	Provisioning   map[domain.LastOperationState]int
 	Deprovisioning map[domain.LastOperationState]int
+}
+
+type OperationStatsV2 struct {
+	Count  int
+	Type   OperationType
+	State  domain.LastOperationState
+	PlanID string
 }
 
 // InstanceStats provide number of instances per Global Account ID
@@ -721,4 +735,12 @@ func (c *ConfigForPlan) ContainsAdditionalComponent(componentName string) bool {
 		}
 	}
 	return false
+}
+
+type SubaccountState struct {
+	ID string `json:"id"`
+
+	BetaEnabled       string `json:"betaEnabled"`
+	UsedForProduction string `json:"usedForProduction"`
+	ModifiedAt        int64  `json:"modifiedAt"`
 }

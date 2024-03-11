@@ -229,7 +229,7 @@ func (p *ParallelOrchestrationStrategy) updateMaintenanceWindow(execID string, o
 
 		duration = time.Until(op.MaintenanceWindowBegin)
 	} else {
-		p.executor.Reschedule(id, strategy.ScheduleTime, strategy.ScheduleTime)
+		p.executor.Reschedule(id, strategy.ScheduleTime, strategy.ScheduleTime) //nolint:errcheck
 		duration = time.Until(strategy.ScheduleTime)
 	}
 

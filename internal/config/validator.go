@@ -47,7 +47,7 @@ func (v *ConfigMapKeysValidator) getKeysFromConfigString(cfgString string) ([]st
 	}
 
 	keys := make([]string, 0)
-	for k, _ := range keysAndValues {
+	for k := range keysAndValues {
 		keys = append(keys, k)
 	}
 

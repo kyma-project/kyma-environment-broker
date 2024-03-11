@@ -1,14 +1,20 @@
 package main
 
 import (
+	"encoding/json"
 	"fmt"
+	"io"
 	"net/http"
 	"testing"
 
+	"github.com/stretchr/testify/require"
+
 	"github.com/google/uuid"
 	reconcilerApi "github.com/kyma-incubator/reconciler/pkg/keb"
+	"github.com/kyma-project/kyma-environment-broker/common/runtime"
 	"github.com/kyma-project/kyma-environment-broker/internal"
 	"github.com/pivotal-cf/brokerapi/v8/domain"
+	"github.com/stretchr/testify/assert"
 )
 
 const deprovisioningRequestPathFormat = "oauth/v2/service_instances/%s?accepts_incomplete=true&service_id=47c9dcbf-ff30-448e-ab36-d3bad66ba281&plan_id=%s"
@@ -155,4 +161,57 @@ func TestDeprovisioning_HappyPathAWS(t *testing.T) {
 	})
 	suite.WaitForOperationsNotExists(iid)
 
+}
+
+func TestRuntimesEndpointForDeprovisionedInstance(t *testing.T) {
+	// given
+	cfg := fixConfig()
+	cfg.EDP.Disabled = true
+	suite := NewBrokerSuiteTestWithConfig(t, cfg)
+	defer suite.TearDown()
+	iid := uuid.New().String()
+
+	resp := suite.CallAPI("PUT", fmt.Sprintf("oauth/cf-eu10/v2/service_instances/%s?accepts_incomplete=true&plan_id=7d55d31d-35ae-4438-bf13-6ffdfa107d9f&service_id=47c9dcbf-ff30-448e-ab36-d3bad66ba281", iid),
+		`{
+				   "service_id": "47c9dcbf-ff30-448e-ab36-d3bad66ba281",
+				   "plan_id": "7d55d31d-35ae-4438-bf13-6ffdfa107d9f",
+				   "context": {
+					   "sm_operator_credentials": {
+						   "clientid": "cid",
+						   "clientsecret": "cs",
+						   "url": "url",
+						   "sm_url": "sm_url"
+					   },
+					   "globalaccount_id": "g-account-id",
+					   "subaccount_id": "sub-id",
+					   "user_id": "john.smith@email.com"
+				   },
+					"parameters": {
+						"name": "testing-cluster"
+				}
+   }`)
+	opID := suite.DecodeOperationID(resp)
+	suite.processProvisioningByOperationID(opID)
+
+	// deprovision
+	suite.SetReconcilerResponseStatus(reconcilerApi.StatusDeleted)
+	resp = suite.CallAPI("DELETE", fmt.Sprintf("oauth/cf-eu10/v2/service_instances/%s?accepts_incomplete=true&plan_id=7d55d31d-35ae-4438-bf13-6ffdfa107d9f&service_id=47c9dcbf-ff30-448e-ab36-d3bad66ba281", iid),
+		``)
+	depOpID := suite.DecodeOperationID(resp)
+
+	suite.FinishDeprovisioningOperationByProvisioner(depOpID)
+	suite.WaitForOperationsNotExists(iid) // deprovisioning completed, no operations in the DB
+	// when
+	resp = suite.CallAPI("GET", fmt.Sprintf("runtimes?instance_id=%s&state=deprovisioned", iid), "")
+
+	// then
+	assert.Equal(t, http.StatusOK, resp.StatusCode)
+	var runtimes runtime.RuntimesPage
+	response, err := io.ReadAll(resp.Body)
+	assert.NoError(t, err)
+	err = json.Unmarshal(response, &runtimes)
+	require.NoError(t, err)
+
+	assert.Len(t, runtimes.Data, 1)
+	assert.Equal(t, iid, runtimes.Data[0].InstanceID)
 }

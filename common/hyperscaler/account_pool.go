@@ -105,7 +105,7 @@ func (p *secretBindingsAccountPool) IsSecretBindingUsed(hyperscalerType Type, te
 	}
 
 	for _, shoot := range shootlist.Items {
-		sh := gardener.Shoot{shoot}
+		sh := gardener.Shoot{Unstructured: shoot}
 		if sh.GetSpecSecretBindingName() == secretBinding.GetName() {
 			return true, nil
 		}
@@ -148,7 +148,7 @@ func (p *secretBindingsAccountPool) CredentialsSecretBinding(hyperscalerType Typ
 		return nil, fmt.Errorf("updating secret binding with tenantName: %s: %w", tenantName, err)
 	}
 
-	return &gardener.SecretBinding{*updatedSecretBinding}, nil
+	return &gardener.SecretBinding{Unstructured: *updatedSecretBinding}, nil
 }
 
 func (p *secretBindingsAccountPool) getSecretBinding(labelSelector string) (*gardener.SecretBinding, error) {
@@ -160,7 +160,7 @@ func (p *secretBindingsAccountPool) getSecretBinding(labelSelector string) (*gar
 	}
 
 	if secretBindings != nil && len(secretBindings.Items) > 0 {
-		return &gardener.SecretBinding{secretBindings.Items[0]}, nil
+		return &gardener.SecretBinding{Unstructured: secretBindings.Items[0]}, nil
 	}
 	return nil, nil
 }

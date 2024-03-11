@@ -2,7 +2,6 @@ package storage
 
 import (
 	"fmt"
-	"log"
 	"os"
 	"path"
 	"runtime"
@@ -41,7 +40,6 @@ func GetStorageForTest(config Config) (func() error, BrokerStorage, error) {
 	if err != nil {
 		return nil, nil, fmt.Errorf("while applying migration files: %w", err)
 	}
-	log.Println("db created")
 
 	cleanup := func() (error error) {
 		defer func() {
@@ -51,12 +49,10 @@ func GetStorageForTest(config Config) (func() error, BrokerStorage, error) {
 			}
 		}()
 		failOnIncorrectDB(connection, config)
-		fmt.Println("cleaning up")
 		err = runMigrations(connection, Down)
 		if err != nil {
 			return fmt.Errorf("failed to clear DB tables: %w", err)
 		}
-		fmt.Println("cleaned up")
 		return
 	}
 

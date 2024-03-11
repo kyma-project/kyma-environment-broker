@@ -21,6 +21,35 @@ type readSession struct {
 	session *dbr.Session
 }
 
+func (r readSession) ListSubaccountStates() ([]dbmodel.SubaccountStateDTO, dberr.Error) {
+	var states []dbmodel.SubaccountStateDTO
+
+	_, err := r.session.
+		Select("*").
+		From(SubaccountStatesTableName).
+		Load(&states)
+	if err != nil {
+		return nil, dberr.Internal("Failed to get subaccount states: %s", err)
+	}
+	return states, nil
+}
+
+func (r readSession) GetDistinctSubAccounts() ([]string, dberr.Error) {
+	var subAccounts []string
+
+	err := r.session.
+		Select("distinct(sub_account_id)").
+		From(InstancesTableName).
+		Where(dbr.Neq("runtime_id", "")).
+		LoadOne(&subAccounts)
+
+	if err != nil {
+		return []string{}, dberr.Internal("Failed to get distinct subaccounts: %s", err)
+	}
+
+	return subAccounts, nil
+}
+
 func (r readSession) getInstancesJoinedWithOperationStatement() *dbr.SelectStmt {
 	join := fmt.Sprintf("%s.instance_id = %s.instance_id", InstancesTableName, OperationTableName)
 	stmt := r.session.
@@ -611,6 +640,12 @@ func (r readSession) GetOperationStats() ([]dbmodel.OperationStatEntry, error) {
 	var rows []dbmodel.OperationStatEntry
 	_, err := r.session.SelectBySql(fmt.Sprintf("select type, state, provisioning_parameters ->> 'plan_id' AS plan_id from %s",
 		OperationTableName)).Load(&rows)
+	return rows, err
+}
+
+func (r readSession) GetOperationsStatsV2() ([]dbmodel.OperationStatEntryV2, error) {
+	var rows []dbmodel.OperationStatEntryV2
+	_, err := r.session.SelectBySql(fmt.Sprintf("select count(*), type, state, provisioning_parameters ->> 'plan_id' AS plan_id from %s where state='in progress' group by type, state, plan_id", OperationTableName)).Load(&rows)
 	return rows, err
 }
 

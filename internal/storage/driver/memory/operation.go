@@ -232,7 +232,6 @@ func (s *operations) ListOperationsByInstanceIDGroupByType(instanceID string) (*
 
 func (s *operations) ListOperationsInTimeRange(from, to time.Time) ([]internal.Operation, error) {
 	panic("not implemented") //also not used in any tests
-	return nil, nil
 }
 
 func (s *operations) InsertDeprovisioningOperation(operation internal.DeprovisioningOperation) error {
@@ -569,6 +568,37 @@ func (s *operations) GetOperationStatsByPlan() (map[string]internal.OperationSta
 		}
 	}
 	return result, nil
+}
+
+func (s *operations) GetOperationStatsByPlanV2() ([]internal.OperationStatsV2, error) {
+	stats := make([]internal.OperationStatsV2, 0)
+	exists := func(item internal.OperationStatsV2) int {
+		for idx, state := range stats {
+			if state.State == item.State && state.Type == item.Type && state.PlanID == item.PlanID {
+				return idx
+			}
+		}
+		return -1
+	}
+
+	for _, op := range s.operations {
+		if op.State == domain.InProgress {
+			o := internal.OperationStatsV2{
+				PlanID: op.ProvisioningParameters.PlanID,
+				Type:   op.Type,
+				State:  op.State,
+			}
+
+			if idx := exists(o); idx >= 0 {
+				stats[idx].Count++
+			} else {
+				o.Count = 1
+				stats = append(stats, o)
+			}
+		}
+	}
+
+	return stats, nil
 }
 
 func (s *operations) GetOperationStatsForOrchestration(orchestrationID string) (map[string]int, error) {

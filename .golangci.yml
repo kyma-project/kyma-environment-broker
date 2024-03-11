@@ -11,3 +11,4 @@ linters:
     - errcheck
     - goimports
     - govet
+    - gofmt

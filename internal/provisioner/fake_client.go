@@ -160,7 +160,7 @@ func (c *FakeClient) ProvisionRuntimeWithIDs(accountID, subAccountID, runtimeID,
 				},
 			},
 		}
-		c.gardenerClient.Resource(gardener.ShootResource).Namespace(c.gardenerNamespace).Create(context.Background(), &shoot, v1.CreateOptions{})
+		_, _ = c.gardenerClient.Resource(gardener.ShootResource).Namespace(c.gardenerNamespace).Create(context.Background(), &shoot, v1.CreateOptions{})
 	}
 
 	return schema.OperationStatus{

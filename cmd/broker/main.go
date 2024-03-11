@@ -210,20 +210,24 @@ func periodicProfile(logger lager.Logger, profiler ProfilerConfig) {
 		if err != nil {
 			logger.Error(fmt.Sprintf("Creating periodic memory profile %v failed", profName), err)
 		}
-		pprof.Lookup("allocs").WriteTo(profFile, 0)
+		err = pprof.Lookup("allocs").WriteTo(profFile, 0)
+		if err != nil {
+			logger.Error(fmt.Sprintf("Failed to write periodic memory profile to %v file", profName), err)
+		}
 		gruntime.GC()
 		time.Sleep(profiler.Sampling)
 	}
 }
 
 func main() {
-	apiextensionsv1.AddToScheme(scheme.Scheme)
+	err := apiextensionsv1.AddToScheme(scheme.Scheme)
+	panicOnError(err)
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
 	// create and fill config
 	var cfg Config
-	err := envconfig.InitWithPrefix(&cfg, "APP")
+	err = envconfig.InitWithPrefix(&cfg, "APP")
 	fatalOnError(err)
 
 	// check default Kyma versions
@@ -354,8 +358,8 @@ func main() {
 	eventBroker := event.NewPubSub(logs)
 
 	// metrics collectors
-	metrics.RegisterAll(eventBroker, db.Operations(), db.Instances())
-	metrics.StartOpsMetricService(ctx, db.Operations(), logs)
+	metrics.Register(ctx, eventBroker, db.Operations(), db.Instances(), logs)
+
 	// setup runtime overrides appender
 	runtimeOverrides := runtimeoverrides.NewRuntimeOverrides(ctx, cli)
 
@@ -430,7 +434,7 @@ func main() {
 	orchestrationHandler.AttachRoutes(router)
 
 	// create list runtimes endpoint
-	runtimeHandler := runtime.NewHandler(db.Instances(), db.Operations(), db.RuntimeStates(), cfg.MaxPaginationPage, cfg.DefaultRequestRegion, provisionerClient)
+	runtimeHandler := runtime.NewHandler(db.Instances(), db.Operations(), db.RuntimeStates(), db.InstancesArchived(), cfg.MaxPaginationPage, cfg.DefaultRequestRegion, provisionerClient)
 	runtimeHandler.AttachRoutes(router)
 
 	// create expiration endpoint

@@ -108,8 +108,16 @@ func (s *syncGardenerCluster) Run(operation internal.Operation, log logrus.Field
 		log.Errorf("unable to get GardenerCluster %s/%s", operation.KymaResourceNamespace, operation.RuntimeID)
 		return s.operationManager.RetryOperation(operation, "unable to get GardenerCluster", err, 3*time.Second, 20*time.Second, log)
 	}
-	gardenerCluster.SetShootName(operation.ShootName)
-	gardenerCluster.SetKubecofigSecret(fmt.Sprintf("kubeconfig-%s", operation.RuntimeID), operation.KymaResourceNamespace)
+	err = gardenerCluster.SetShootName(operation.ShootName)
+	if err != nil {
+		log.Errorf("unable to set GardenerCluster shoot name: %s", err)
+		return s.operationManager.RetryOperation(operation, "unable to set GardenerCluster shoot name", err, 3*time.Second, 20*time.Second, log)
+	}
+	err = gardenerCluster.SetKubecofigSecret(fmt.Sprintf("kubeconfig-%s", operation.RuntimeID), operation.KymaResourceNamespace)
+	if err != nil {
+		log.Errorf("unable to set GardenerCluster kubeconfig secret: %s", err)
+		return s.operationManager.RetryOperation(operation, "unable to set GardenerCluster kubeconfig secret", err, 3*time.Second, 20*time.Second, log)
+	}
 
 	obj := gardenerCluster.ToUnstructured()
 	ApplyLabelsAndAnnotationsForLM(obj, operation)
@@ -186,14 +194,21 @@ func (c *GardenerCluster) ObjectKey() client.ObjectKey {
 	return client.ObjectKeyFromObject(c.obj)
 }
 
-func (c *GardenerCluster) SetShootName(shootName string) {
-	unstructured.SetNestedField(c.obj.Object, shootName, "spec", "shoot", "name")
+func (c *GardenerCluster) SetShootName(shootName string) error {
+	return unstructured.SetNestedField(c.obj.Object, shootName, "spec", "shoot", "name")
 }
 
-func (c *GardenerCluster) SetKubecofigSecret(name, namespace string) {
-	unstructured.SetNestedField(c.obj.Object, name, "spec", "kubeconfig", "secret", "name")
-	unstructured.SetNestedField(c.obj.Object, namespace, "spec", "kubeconfig", "secret", "namespace")
-	unstructured.SetNestedField(c.obj.Object, "config", "spec", "kubeconfig", "secret", "key")
+func (c *GardenerCluster) SetKubecofigSecret(name, namespace string) error {
+	if err := unstructured.SetNestedField(c.obj.Object, name, "spec", "kubeconfig", "secret", "name"); err != nil {
+		return err
+	}
+	if err := unstructured.SetNestedField(c.obj.Object, namespace, "spec", "kubeconfig", "secret", "namespace"); err != nil {
+		return err
+	}
+	if err := unstructured.SetNestedField(c.obj.Object, "config", "spec", "kubeconfig", "secret", "key"); err != nil {
+		return err
+	}
+	return nil
 }
 
 func (c *GardenerCluster) ToUnstructured() *unstructured.Unstructured {
@@ -229,10 +244,10 @@ func (c *GardenerCluster) StatusAsString() string {
 	return string(bytes)
 }
 
-func (c *GardenerCluster) SetState(state string) {
-	unstructured.SetNestedField(c.obj.Object, state, "status", "state")
+func (c *GardenerCluster) SetState(state string) error {
+	return unstructured.SetNestedField(c.obj.Object, state, "status", "state")
 }
 
-func (c *GardenerCluster) SetStatusConditions(conditions interface{}) {
-	unstructured.SetNestedField(c.obj.Object, conditions, "status", "conditions")
+func (c *GardenerCluster) SetStatusConditions(conditions interface{}) error {
+	return unstructured.SetNestedField(c.obj.Object, conditions, "status", "conditions")
 }

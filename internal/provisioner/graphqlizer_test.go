@@ -303,7 +303,7 @@ func Test_GardenerConfigInputToGraphQLWithDNS(t *testing.T) {
 		DNSConfig: &gqlschema.DNSConfigInput{
 			Domain: name + ".kymatest.ondemand.com",
 			Providers: []*gqlschema.DNSProviderInput{
-				&gqlschema.DNSProviderInput{
+				{
 					DomainsInclude: []string{"kymatest.ondemand.com"},
 					Primary:        true,
 					SecretName:     "aws-secret-for-custom-domain",

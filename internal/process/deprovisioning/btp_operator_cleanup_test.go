@@ -72,7 +72,7 @@ func TestRemoveServiceInstanceStep(t *testing.T) {
 		}}
 		ns := &corev1.Namespace{ObjectMeta: metav1.ObjectMeta{Name: "kyma-system"}}
 
-		scheme := internal.NewSchemeForTests()
+		scheme := internal.NewSchemeForTests(t)
 		err := apiextensionsv1.AddToScheme(scheme)
 		decoder := serializer.NewCodecFactory(scheme).UniversalDeserializer()
 		obj, gvk, err := decoder.Decode(siCRD, nil, nil)
@@ -121,7 +121,7 @@ func TestRemoveServiceInstanceStep(t *testing.T) {
 		}}
 		ns := &corev1.Namespace{ObjectMeta: metav1.ObjectMeta{Name: "kyma-system"}}
 
-		scheme := internal.NewSchemeForTests()
+		scheme := internal.NewSchemeForTests(t)
 		err := apiextensionsv1.AddToScheme(scheme)
 		decoder := serializer.NewCodecFactory(scheme).UniversalDeserializer()
 		obj, gvk, err := decoder.Decode(siCRD, nil, nil)
@@ -170,7 +170,7 @@ func TestRemoveServiceInstanceStep(t *testing.T) {
 		}}
 		ns := &corev1.Namespace{ObjectMeta: metav1.ObjectMeta{Name: "kyma-system"}}
 
-		scheme := internal.NewSchemeForTests()
+		scheme := internal.NewSchemeForTests(t)
 		err := apiextensionsv1.AddToScheme(scheme)
 		decoder := serializer.NewCodecFactory(scheme).UniversalDeserializer()
 		obj, gvk, err := decoder.Decode(siCRD, nil, nil)
@@ -214,7 +214,7 @@ func TestBTPOperatorCleanupStep_SoftDelete(t *testing.T) {
 		ms := storage.NewMemoryStorage()
 		ns := &corev1.Namespace{ObjectMeta: metav1.ObjectMeta{Name: "kyma-system"}}
 
-		scheme := internal.NewSchemeForTests()
+		scheme := internal.NewSchemeForTests(t)
 		err := apiextensionsv1.AddToScheme(scheme)
 
 		k8sCli := &fakeK8sClientWrapper{fake: fake.NewClientBuilder().WithScheme(scheme).WithRuntimeObjects(ns).Build()}
@@ -248,7 +248,7 @@ func TestBTPOperatorCleanupStep_SoftDelete(t *testing.T) {
 		}}
 		ns := &corev1.Namespace{ObjectMeta: metav1.ObjectMeta{Name: "kyma-system"}}
 
-		scheme := internal.NewSchemeForTests()
+		scheme := internal.NewSchemeForTests(t)
 		err := apiextensionsv1.AddToScheme(scheme)
 		decoder := serializer.NewCodecFactory(scheme).UniversalDeserializer()
 		obj, gvk, err := decoder.Decode(siCRD, nil, nil)
@@ -289,7 +289,7 @@ func TestBTPOperatorCleanupStep_SoftDelete(t *testing.T) {
 		}}
 		ns := &corev1.Namespace{ObjectMeta: metav1.ObjectMeta{Name: "kyma-system"}}
 
-		scheme := internal.NewSchemeForTests()
+		scheme := internal.NewSchemeForTests(t)
 		err := apiextensionsv1.AddToScheme(scheme)
 		decoder := serializer.NewCodecFactory(scheme).UniversalDeserializer()
 		obj, gvk, err := decoder.Decode(sbCRD, nil, nil)
@@ -321,7 +321,7 @@ func TestBTPOperatorCleanupStep_SoftDelete(t *testing.T) {
 func TestBTPOperatorCleanupStep_NoKubeconfig(t *testing.T) {
 	// given
 	ms := storage.NewMemoryStorage()
-	scheme := internal.NewSchemeForTests()
+	scheme := internal.NewSchemeForTests(t)
 	// k8s client to an "empty" K8s
 	k8sCli := fake.NewClientBuilder().WithScheme(scheme).Build()
 	step := NewBTPOperatorCleanupStep(ms.Operations(), kubeconfig.NewK8sClientFromSecretProvider(k8sCli))
@@ -340,7 +340,7 @@ func TestBTPOperatorCleanupStep_NoKubeconfig(t *testing.T) {
 func TestBTPOperatorCleanupStep_NoRuntimeID(t *testing.T) {
 	// given
 	ms := storage.NewMemoryStorage()
-	scheme := internal.NewSchemeForTests()
+	scheme := internal.NewSchemeForTests(t)
 	// k8s client to an "empty" K8s
 	k8sCli := fake.NewClientBuilder().WithScheme(scheme).Build()
 	step := NewBTPOperatorCleanupStep(ms.Operations(), kubeconfig.NewFakeK8sClientProvider(k8sCli))

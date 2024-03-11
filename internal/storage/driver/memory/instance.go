@@ -29,6 +29,20 @@ func NewInstance(operations *operations) *instances {
 	}
 }
 
+func (s *instances) GetDistinctSubAccounts() ([]string, error) {
+	//iterate over instances and return distinct subaccounts
+	collectedSubAccounts := make(map[string]struct{})
+	for _, v := range s.instances {
+		collectedSubAccounts[v.SubAccountID] = struct{}{}
+	}
+	//convert map keys to slice
+	var subAccounts []string
+	for k := range collectedSubAccounts {
+		subAccounts = append(subAccounts, k)
+	}
+	return subAccounts, nil
+}
+
 func (s *instances) InsertWithoutEncryption(instance internal.Instance) error {
 	return errors.New("not implemented")
 }

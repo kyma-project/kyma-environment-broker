@@ -639,7 +639,7 @@ func TestCreateProvisionRuntimeInput_ConfigureDNS(t *testing.T) {
 		expectedDnsValues := &gqlschema.DNSConfigInput{
 			Domain: "shoot-name.domain.sap",
 			Providers: []*gqlschema.DNSProviderInput{
-				&gqlschema.DNSProviderInput{
+				{
 					DomainsInclude: []string{"devtest.kyma.ondemand.com"},
 					Primary:        true,
 					SecretName:     "aws_dns_domain_secrets_test_incustom",

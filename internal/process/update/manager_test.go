@@ -164,18 +164,16 @@ type CollectingEventHandler struct {
 	stepsExecuted  []string // collects events from testing steps
 }
 
-func (h *CollectingEventHandler) OnStepExecuted(_ context.Context, ev interface{}) error {
+func (h *CollectingEventHandler) OnStepExecuted(_ context.Context, ev interface{}) {
 	h.mu.Lock()
 	defer h.mu.Unlock()
 	h.stepsExecuted = append(h.stepsExecuted, ev.(string))
-	return nil
 }
 
-func (h *CollectingEventHandler) OnStepProcessed(_ context.Context, ev interface{}) error {
+func (h *CollectingEventHandler) OnStepProcessed(_ context.Context, ev interface{}) {
 	h.mu.Lock()
 	defer h.mu.Unlock()
 	h.StepsProcessed = append(h.StepsProcessed, ev.(process.UpdatingStepProcessed).StepName)
-	return nil
 }
 
 func (h *CollectingEventHandler) Publish(ctx context.Context, ev interface{}) {

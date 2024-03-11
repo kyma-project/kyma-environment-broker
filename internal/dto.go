@@ -190,7 +190,7 @@ type ProvisioningParametersDTO struct {
 	ShootDomain string `json:"shootDomain,omitempty"`
 
 	OIDC       *OIDCConfigDTO `json:"oidc,omitempty"`
-	Networking *NetworkingDTO `json:"networking,omitempty""`
+	Networking *NetworkingDTO `json:"networking,omitempty"`
 	Modules    *ModulesDTO    `json:"modules,omitempty"`
 }
 

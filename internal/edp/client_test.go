@@ -237,7 +237,7 @@ func (s *server) deleteDataTenant(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	for dtName, _ := range s.dataTenant {
+	for dtName := range s.dataTenant {
 		if dtName == name {
 			delete(s.dataTenant, dtName)
 			w.WriteHeader(http.StatusNoContent)
