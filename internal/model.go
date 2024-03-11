@@ -241,6 +241,14 @@ type Operation struct {
 	KymaTemplate string `json:"KymaTemplate"`
 }
 
+type GroupedOperations struct {
+	ProvisionOperations      []ProvisioningOperation
+	DeprovisionOperations    []DeprovisioningOperation
+	UpgradeKymaOperations    []UpgradeKymaOperation
+	UpgradeClusterOperations []UpgradeClusterOperation
+	UpdateOperations         []UpdatingOperation
+}
+
 func (o *Operation) IsFinished() bool {
 	return o.State != orchestration.InProgress && o.State != orchestration.Pending && o.State != orchestration.Canceling && o.State != orchestration.Retrying
 }

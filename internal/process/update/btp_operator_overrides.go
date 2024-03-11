@@ -1,6 +1,7 @@
 package update
 
 import (
+	"fmt"
 	"time"
 
 	reconcilerApi "github.com/kyma-incubator/reconciler/pkg/keb"
@@ -93,4 +94,31 @@ func (s *BTPOperatorOverridesStep) setBTPOperatorOverrides(c *reconcilerApi.Comp
 		return err
 	}
 	return nil
+}
+
+func getComponentInput(componentProvider input.ComponentListProvider, component string,
+	kymaVersion internal.RuntimeVersionData, cfg *internal.ConfigForPlan) (reconcilerApi.Component, error) {
+	c, err := getComponent(componentProvider, component, kymaVersion, cfg)
+	if err != nil {
+		return reconcilerApi.Component{}, err
+	}
+	return reconcilerApi.Component{
+		Component: c.Name,
+		Namespace: c.Namespace,
+		URL:       c.Source.URL,
+	}, nil
+}
+
+func getComponent(componentProvider input.ComponentListProvider, component string,
+	kymaVersion internal.RuntimeVersionData, cfg *internal.ConfigForPlan) (*internal.KymaComponent, error) {
+	allComponents, err := componentProvider.AllComponents(kymaVersion, cfg)
+	if err != nil {
+		return nil, err
+	}
+	for _, c := range allComponents {
+		if c.Name == component {
+			return &c, nil
+		}
+	}
+	return nil, fmt.Errorf("failed to find %v component in all component list", component)
 }

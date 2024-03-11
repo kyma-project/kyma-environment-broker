@@ -169,6 +169,63 @@ func (s *operations) ListOperationsByInstanceID(instanceID string) ([]internal.O
 	return ret, nil
 }
 
+func (s *operations) ListOperationsByInstanceIDGroupByType(instanceID string) (*internal.GroupedOperations, error) {
+
+	operations, err := s.listOperationsByInstanceId(instanceID)
+	if err != nil {
+		return nil, fmt.Errorf("while loading operations list: %w", err)
+	}
+
+	grouped := internal.GroupedOperations{
+		ProvisionOperations:      make([]internal.ProvisioningOperation, 0),
+		DeprovisionOperations:    make([]internal.DeprovisioningOperation, 0),
+		UpgradeKymaOperations:    make([]internal.UpgradeKymaOperation, 0),
+		UpgradeClusterOperations: make([]internal.UpgradeClusterOperation, 0),
+		UpdateOperations:         make([]internal.UpdatingOperation, 0),
+	}
+
+	for _, op := range operations {
+		switch op.Type {
+		case internal.OperationTypeProvision:
+			ret, err := s.toProvisioningOperation(&op)
+			if err != nil {
+				return nil, fmt.Errorf("while converting DTO to Operation: %w", err)
+			}
+			grouped.ProvisionOperations = append(grouped.ProvisionOperations, *ret)
+
+		case internal.OperationTypeDeprovision:
+			ret, err := s.toDeprovisioningOperation(&op)
+			if err != nil {
+				return nil, fmt.Errorf("while converting DTO to Operation: %w", err)
+			}
+			grouped.DeprovisionOperations = append(grouped.DeprovisionOperations, *ret)
+
+		case internal.OperationTypeUpgradeKyma:
+			ret, err := s.toUpgradeKymaOperation(&op)
+			if err != nil {
+				return nil, fmt.Errorf("while converting DTO to Operation: %w", err)
+			}
+			grouped.UpgradeKymaOperations = append(grouped.UpgradeKymaOperations, *ret)
+		case internal.OperationTypeUpgradeCluster:
+			ret, err := s.toUpgradeClusterOperation(&op)
+			if err != nil {
+				return nil, fmt.Errorf("while converting DTO to Operation: %w", err)
+			}
+			grouped.UpgradeClusterOperations = append(grouped.UpgradeClusterOperations, *ret)
+		case internal.OperationTypeUpdate:
+			ret, err := s.toUpdateOperation(&op)
+			if err != nil {
+				return nil, fmt.Errorf("while converting DTO to Operation: %w", err)
+			}
+			grouped.UpdateOperations = append(grouped.UpdateOperations, *ret)
+		default:
+			return nil, fmt.Errorf("while converting DTO to Operation: unrecognized type of operation")
+		}
+	}
+
+	return &grouped, nil
+}
+
 // InsertDeprovisioningOperation insert new DeprovisioningOperation to storage
 func (s *operations) InsertDeprovisioningOperation(operation internal.DeprovisioningOperation) error {
 

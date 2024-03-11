@@ -15,8 +15,8 @@ func TestRemoveInstanceStep_HappyPathForPermanentRemoval(t *testing.T) {
 	log := logrus.New()
 	memoryStorage := storage.NewMemoryStorage()
 
-	operation := fixture.FixDeprovisioningOperationAsOperation(operationID, instanceID)
-	instance := fixture.FixInstance(instanceID)
+	operation := fixture.FixDeprovisioningOperationAsOperation(testOperationID, testInstanceID)
+	instance := fixture.FixInstance(testInstanceID)
 
 	err := memoryStorage.Instances().Insert(instance)
 	assert.NoError(t, err)
@@ -32,11 +32,11 @@ func TestRemoveInstanceStep_HappyPathForPermanentRemoval(t *testing.T) {
 	assert.NoError(t, err)
 
 	// then
-	operationFromStorage, err := memoryStorage.Operations().GetOperationByID(operationID)
+	operationFromStorage, err := memoryStorage.Operations().GetOperationByID(testOperationID)
 	assert.NoError(t, err)
 	assert.Equal(t, 0, len(operationFromStorage.ProvisioningParameters.ErsContext.UserID))
 
-	_, err = memoryStorage.Instances().GetByID(instanceID)
+	_, err = memoryStorage.Instances().GetByID(testInstanceID)
 	assert.ErrorContains(t, err, "not exist")
 
 	assert.Equal(t, time.Duration(0), backoff)
@@ -47,8 +47,8 @@ func TestRemoveInstanceStep_UpdateOperationFailsForPermanentRemoval(t *testing.T
 	log := logrus.New()
 	memoryStorage := storage.NewMemoryStorage()
 
-	operation := fixture.FixDeprovisioningOperationAsOperation(operationID, instanceID)
-	instance := fixture.FixInstance(instanceID)
+	operation := fixture.FixDeprovisioningOperationAsOperation(testOperationID, testInstanceID)
+	instance := fixture.FixInstance(testInstanceID)
 
 	err := memoryStorage.Instances().Insert(instance)
 	assert.NoError(t, err)
@@ -69,8 +69,8 @@ func TestRemoveInstanceStep_HappyPathForSuspension(t *testing.T) {
 	log := logrus.New()
 	memoryStorage := storage.NewMemoryStorage()
 
-	operation := fixture.FixSuspensionOperationAsOperation(operationID, instanceID)
-	instance := fixture.FixInstance(instanceID)
+	operation := fixture.FixSuspensionOperationAsOperation(testOperationID, testInstanceID)
+	instance := fixture.FixInstance(testInstanceID)
 	instance.DeletedAt = time.Time{}
 
 	err := memoryStorage.Instances().Insert(instance)
@@ -87,11 +87,11 @@ func TestRemoveInstanceStep_HappyPathForSuspension(t *testing.T) {
 	assert.NoError(t, err)
 
 	// then
-	operationFromStorage, err := memoryStorage.Operations().GetOperationByID(operationID)
+	operationFromStorage, err := memoryStorage.Operations().GetOperationByID(testOperationID)
 	assert.NoError(t, err)
 	assert.Equal(t, 0, len(operationFromStorage.RuntimeID))
 
-	instanceFromStorage, err := memoryStorage.Instances().GetByID(instanceID)
+	instanceFromStorage, err := memoryStorage.Instances().GetByID(testInstanceID)
 	assert.Equal(t, 0, len(instanceFromStorage.RuntimeID))
 	assert.Equal(t, time.Time{}, instanceFromStorage.DeletedAt)
 
@@ -103,9 +103,9 @@ func TestRemoveInstanceStep_InstanceHasExecutedButNotCompletedOperationSteps(t *
 	log := logrus.New()
 	memoryStorage := storage.NewMemoryStorage()
 
-	operation := fixture.FixDeprovisioningOperationAsOperation(operationID, instanceID)
+	operation := fixture.FixDeprovisioningOperationAsOperation(testOperationID, testInstanceID)
 	operation.ExcutedButNotCompleted = append(operation.ExcutedButNotCompleted, "De-provision_AVS_Evaluations")
-	instance := fixture.FixInstance(instanceID)
+	instance := fixture.FixInstance(testInstanceID)
 	instance.DeletedAt = time.Time{}
 
 	err := memoryStorage.Instances().Insert(instance)
@@ -122,11 +122,11 @@ func TestRemoveInstanceStep_InstanceHasExecutedButNotCompletedOperationSteps(t *
 	assert.NoError(t, err)
 
 	// then
-	operationFromStorage, err := memoryStorage.Operations().GetOperationByID(operationID)
+	operationFromStorage, err := memoryStorage.Operations().GetOperationByID(testOperationID)
 	assert.NoError(t, err)
 	assert.Equal(t, false, operationFromStorage.Temporary)
 
-	instanceFromStorage, err := memoryStorage.Instances().GetByID(instanceID)
+	instanceFromStorage, err := memoryStorage.Instances().GetByID(testInstanceID)
 	assert.NoError(t, err)
 	assert.NotEqual(t, time.Time{}, instanceFromStorage.DeletedAt)
 
@@ -138,7 +138,7 @@ func TestRemoveInstanceStep_InstanceDeleted(t *testing.T) {
 	log := logrus.New()
 	memoryStorage := storage.NewMemoryStorage()
 
-	operation := fixture.FixDeprovisioningOperationAsOperation(operationID, instanceID)
+	operation := fixture.FixDeprovisioningOperationAsOperation(testOperationID, testInstanceID)
 
 	err := memoryStorage.Operations().InsertOperation(operation)
 	assert.NoError(t, err)

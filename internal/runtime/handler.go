@@ -276,10 +276,12 @@ func (h *Handler) determineStatusModifiedAt(dto *pkg.RuntimeDTO) error {
 }
 
 func (h *Handler) setRuntimeAllOperations(instance internal.Instance, dto *pkg.RuntimeDTO) error {
-	provOprs, err := h.operationsDb.ListProvisioningOperationsByInstanceID(instance.InstanceID)
+	operationsGroup, err := h.operationsDb.ListOperationsByInstanceIDGroupByType(instance.InstanceID)
 	if err != nil && !dberr.IsNotFound(err) {
-		return fmt.Errorf("while fetching provisioning operations list for instance %s: %w", instance.InstanceID, err)
+		return fmt.Errorf("while fetching operations for instance %s: %w", instance.InstanceID, err)
 	}
+
+	provOprs := operationsGroup.ProvisionOperations
 	if len(provOprs) != 0 {
 		firstProvOp := &provOprs[len(provOprs)-1]
 		lastProvOp := provOprs[0]
@@ -291,10 +293,7 @@ func (h *Handler) setRuntimeAllOperations(instance internal.Instance, dto *pkg.R
 		}
 	}
 
-	deprovOprs, err := h.operationsDb.ListDeprovisioningOperationsByInstanceID(instance.InstanceID)
-	if err != nil && !dberr.IsNotFound(err) {
-		return fmt.Errorf("while fetching deprovisioning operations list for instance %s: %w", instance.InstanceID, err)
-	}
+	deprovOprs := operationsGroup.DeprovisionOperations
 	var deprovOp *internal.DeprovisioningOperation
 	if len(deprovOprs) != 0 {
 		for _, op := range deprovOprs {
@@ -307,25 +306,16 @@ func (h *Handler) setRuntimeAllOperations(instance internal.Instance, dto *pkg.R
 	h.converter.ApplyDeprovisioningOperation(dto, deprovOp)
 	h.converter.ApplySuspensionOperations(dto, deprovOprs)
 
-	ukOprs, err := h.operationsDb.ListUpgradeKymaOperationsByInstanceID(instance.InstanceID)
-	if err != nil && !dberr.IsNotFound(err) {
-		return fmt.Errorf("while fetching upgrade kyma operation for instance %s: %w", instance.InstanceID, err)
-	}
+	ukOprs := operationsGroup.UpgradeKymaOperations
 	dto.KymaVersion = determineKymaVersion(provOprs, ukOprs)
 	ukOprs, totalCount := h.takeLastNonDryRunOperations(ukOprs)
 	h.converter.ApplyUpgradingKymaOperations(dto, ukOprs, totalCount)
 
-	ucOprs, err := h.operationsDb.ListUpgradeClusterOperationsByInstanceID(instance.InstanceID)
-	if err != nil && !dberr.IsNotFound(err) {
-		return fmt.Errorf("while fetching upgrade cluster operation for instance %s: %w", instance.InstanceID, err)
-	}
+	ucOprs := operationsGroup.UpgradeClusterOperations
 	ucOprs, totalCount = h.takeLastNonDryRunClusterOperations(ucOprs)
 	h.converter.ApplyUpgradingClusterOperations(dto, ucOprs, totalCount)
 
-	uOprs, err := h.operationsDb.ListUpdatingOperationsByInstanceID(instance.InstanceID)
-	if err != nil && !dberr.IsNotFound(err) {
-		return fmt.Errorf("while fetching update operation for instance %s: %w", instance.InstanceID, err)
-	}
+	uOprs := operationsGroup.UpdateOperations
 	totalCount = len(uOprs)
 	if len(uOprs) > numberOfUpgradeOperationsToReturn {
 		uOprs = uOprs[0:numberOfUpgradeOperationsToReturn]

@@ -46,7 +46,7 @@ func TestInitStep_existingUpdatingOperation(t *testing.T) {
 	log := logrus.New()
 	memoryStorage := storage.NewMemoryStorage()
 	prepareProvisionedInstance(t, memoryStorage)
-	uOp := fixture.FixUpdatingOperation("uop-id", instanceID)
+	uOp := fixture.FixUpdatingOperation("uop-id", testInstanceID)
 	uOp.State = domain.InProgress
 	err := memoryStorage.Operations().InsertOperation(uOp.Operation)
 	assert.NoError(t, err)
@@ -66,16 +66,16 @@ func TestInitStep_existingUpdatingOperation(t *testing.T) {
 }
 
 func prepareProvisionedInstance(t *testing.T, s storage.BrokerStorage) {
-	inst := fixture.FixInstance(instanceID)
+	inst := fixture.FixInstance(testInstanceID)
 	err := s.Instances().Insert(inst)
 	assert.NoError(t, err)
-	pOp := fixture.FixProvisioningOperation("pop-id", instanceID)
+	pOp := fixture.FixProvisioningOperation("pop-id", testInstanceID)
 	err = s.Operations().InsertOperation(pOp)
 	assert.NoError(t, err)
 }
 
 func prepareDeprovisioningOperation(t *testing.T, s storage.BrokerStorage, state domain.LastOperationState) internal.Operation {
-	dOperation := fixture.FixDeprovisioningOperation("dop-id", instanceID)
+	dOperation := fixture.FixDeprovisioningOperation("dop-id", testInstanceID)
 	dOperation.State = state
 	err := s.Operations().InsertOperation(dOperation.Operation)
 	assert.NoError(t, err)

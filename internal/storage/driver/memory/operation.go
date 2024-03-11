@@ -190,7 +190,49 @@ func (s *operations) ListOperationsByInstanceID(instanceID string) ([]internal.O
 	return operations, nil
 }
 
-func (s *operations) ListOperationsInTimeRange(time.Time, time.Time) ([]internal.Operation, error) {
+func (s *operations) ListOperationsByInstanceIDGroupByType(instanceID string) (*internal.GroupedOperations, error) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
+	grouped := internal.GroupedOperations{
+		ProvisionOperations:      make([]internal.ProvisioningOperation, 0),
+		DeprovisionOperations:    make([]internal.DeprovisioningOperation, 0),
+		UpgradeKymaOperations:    make([]internal.UpgradeKymaOperation, 0),
+		UpgradeClusterOperations: make([]internal.UpgradeClusterOperation, 0),
+		UpdateOperations:         make([]internal.UpdatingOperation, 0),
+	}
+
+	for _, op := range s.operations {
+		switch op.Type {
+		case internal.OperationTypeProvision:
+			grouped.ProvisionOperations = append(grouped.ProvisionOperations, internal.ProvisioningOperation{Operation: op})
+
+		case internal.OperationTypeDeprovision:
+			grouped.DeprovisionOperations = append(grouped.DeprovisionOperations, internal.DeprovisioningOperation{Operation: op})
+
+		case internal.OperationTypeUpgradeKyma:
+			grouped.UpgradeKymaOperations = append(grouped.UpgradeKymaOperations, internal.UpgradeKymaOperation{Operation: op})
+
+		case internal.OperationTypeUpgradeCluster:
+			grouped.UpgradeClusterOperations = append(grouped.UpgradeClusterOperations, internal.UpgradeClusterOperation{Operation: op})
+
+		case internal.OperationTypeUpdate:
+			grouped.UpdateOperations = append(grouped.UpdateOperations, internal.UpdatingOperation{Operation: op})
+		default:
+			panic("Invalid type of operation")
+		}
+	}
+
+	s.sortProvisioningByCreatedAtDesc(grouped.ProvisionOperations)
+	s.sortDeprovisioningByCreatedAtDesc(grouped.DeprovisionOperations)
+	s.sortUpgradeClusterByCreatedAt(grouped.UpgradeClusterOperations)
+	s.sortUpgradeKymaByCreatedAt(grouped.UpgradeKymaOperations)
+	s.sortUpdateByCreatedAt(grouped.UpdateOperations)
+
+	return &grouped, nil
+}
+
+func (s *operations) ListOperationsInTimeRange(from, to time.Time) ([]internal.Operation, error) {
 	panic("not implemented") //also not used in any tests
 }
 
@@ -832,6 +874,12 @@ func (s *operations) sortUpgradeClusterByCreatedAt(operations []internal.Upgrade
 func (s *operations) sortUpgradeClusterByCreatedAtDesc(operations []internal.UpgradeClusterOperation) {
 	sort.Slice(operations, func(i, j int) bool {
 		return operations[i].CreatedAt.After(operations[j].CreatedAt)
+	})
+}
+
+func (s *operations) sortUpdateByCreatedAt(operations []internal.UpdatingOperation) {
+	sort.Slice(operations, func(i, j int) bool {
+		return operations[i].CreatedAt.Before(operations[j].CreatedAt)
 	})
 }
 

@@ -55,6 +55,7 @@ type Operations interface {
 	GetOperationByInstanceID(instanceID string) (*internal.Operation, error)
 	UpdateOperation(operation internal.Operation) (*internal.Operation, error)
 	ListOperationsByInstanceID(instanceID string) ([]internal.Operation, error)
+	ListOperationsByInstanceIDGroupByType(instanceID string) (*internal.GroupedOperations, error)
 	ListOperationsByOrchestrationID(orchestrationID string, filter dbmodel.OperationFilter) ([]internal.Operation, int, int, error)
 	ListOperationsInTimeRange(from, to time.Time) ([]internal.Operation, error)
 

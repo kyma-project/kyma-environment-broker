@@ -192,9 +192,9 @@ func fixGCPInstance(instanceID string) internal.Instance {
 	return instance
 }
 func fixDeprovisioningOperationWithPlanID(planID string) internal.Operation {
-	deprovisioningOperation := fixture.FixDeprovisioningOperationAsOperation(operationID, instanceID)
+	deprovisioningOperation := fixture.FixDeprovisioningOperationAsOperation(testOperationID, testInstanceID)
 	deprovisioningOperation.ProvisioningParameters.PlanID = planID
-	deprovisioningOperation.ProvisioningParameters.ErsContext.GlobalAccountID = globalAccountID
-	deprovisioningOperation.ProvisioningParameters.ErsContext.SubAccountID = subAccountID
+	deprovisioningOperation.ProvisioningParameters.ErsContext.GlobalAccountID = testGlobalAccountID
+	deprovisioningOperation.ProvisioningParameters.ErsContext.SubAccountID = testSubAccountID
 	return deprovisioningOperation
 }
