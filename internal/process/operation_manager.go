@@ -107,6 +107,7 @@ func (om *OperationManager) UpdateOperation(operation internal.Operation, update
 				log.Errorf("while getting operation: %v", err)
 				return operation, 1 * time.Minute, err
 			}
+			om.mergeOperations(op, &operation)
 			update(op)
 			op, err = om.storage.UpdateOperation(*op)
 			if err != nil {
@@ -140,4 +141,24 @@ func (om *OperationManager) update(operation internal.Operation, state domain.La
 		operation.State = state
 		operation.Description = description
 	}, log)
+}
+
+func (om *OperationManager) mergeOperations(persistentOperation, inMemoryOperation *internal.Operation) {
+	persistentOperation.InputCreator = inMemoryOperation.InputCreator
+	persistentOperation.LastError = inMemoryOperation.LastError
+	persistentOperation.RuntimeVersion = inMemoryOperation.RuntimeVersion
+	persistentOperation.DashboardURL = inMemoryOperation.DashboardURL
+	persistentOperation.Temporary = inMemoryOperation.Temporary
+	persistentOperation.ClusterConfigurationDeleted = inMemoryOperation.ClusterConfigurationDeleted
+	persistentOperation.Retries = inMemoryOperation.Retries
+	persistentOperation.ReconcilerDeregistrationAt = inMemoryOperation.ReconcilerDeregistrationAt
+	persistentOperation.ExcutedButNotCompleted = inMemoryOperation.ExcutedButNotCompleted
+	persistentOperation.UserAgent = inMemoryOperation.UserAgent
+	persistentOperation.UpdatingParameters = inMemoryOperation.UpdatingParameters
+	persistentOperation.CheckReconcilerStatus = inMemoryOperation.CheckReconcilerStatus
+	persistentOperation.LastRuntimeState = inMemoryOperation.LastRuntimeState
+	persistentOperation.RequiresReconcilerUpdate = inMemoryOperation.RequiresReconcilerUpdate
+	persistentOperation.RuntimeOperation = inMemoryOperation.RuntimeOperation
+	persistentOperation.ClusterConfigurationApplied = inMemoryOperation.ClusterConfigurationApplied
+	persistentOperation.KymaTemplate = inMemoryOperation.KymaTemplate
 }
