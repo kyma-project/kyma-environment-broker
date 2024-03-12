@@ -22,13 +22,13 @@ const (
 )
 
 type Updater struct {
-	k8sClient *dynamic.DynamicClient
+	k8sClient dynamic.Interface
 	queue     syncqueues.PriorityQueue
 	kymaGVR   schema.GroupVersionResource
 	logger    *slog.Logger
 }
 
-func NewUpdater(k8sClient *dynamic.DynamicClient, queue syncqueues.PriorityQueue, gvr schema.GroupVersionResource) (*Updater, error) {
+func NewUpdater(k8sClient dynamic.Interface, queue syncqueues.PriorityQueue, gvr schema.GroupVersionResource) (*Updater, error) {
 	logger := slog.New(slog.NewTextHandler(os.Stdout, nil))
 
 	return &Updater{
@@ -50,18 +50,18 @@ func (u *Updater) Run() error {
 			LabelSelector: fmt.Sprintf(subaccountIdLabelFormat, item.SubaccountID),
 		})
 		if err != nil {
-			u.logger.Warn("while listing Kyma CRs", err, "adding item back to the queue")
+			u.logger.Warn("while listing Kyma CRs: " + err.Error() + "adding item back to the queue")
 			u.queue.Insert(item)
 			continue
 		}
 		if len(unstructuredList.Items) == 0 {
-			u.logger.Info("no Kyma CRs found for subaccount", item.SubaccountID)
+			u.logger.Info("no Kyma CRs found for subaccount" + item.SubaccountID)
 			continue
 		}
 		retryRequired := false
 		for _, kymaCrUnstructured := range unstructuredList.Items {
 			if err := u.updateBetaEnabledLabel(kymaCrUnstructured, item.BetaEnabled); err != nil {
-				u.logger.Warn("while updating Kyma CR", err, "item will be added back to the queue")
+				u.logger.Warn("while updating Kyma CR: " + err.Error() + "item will be added back to the queue")
 				retryRequired = true
 			}
 		}
