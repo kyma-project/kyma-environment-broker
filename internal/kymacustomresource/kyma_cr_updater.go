@@ -12,7 +12,6 @@ import (
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/client-go/dynamic"
-	"k8s.io/client-go/rest"
 )
 
 const (
@@ -29,13 +28,8 @@ type Updater struct {
 	logger    *slog.Logger
 }
 
-func NewUpdater(restCfg *rest.Config, queue syncqueues.PriorityQueue, gvr schema.GroupVersionResource) (*Updater, error) {
+func NewUpdater(k8sClient *dynamic.DynamicClient, queue syncqueues.PriorityQueue, gvr schema.GroupVersionResource) (*Updater, error) {
 	logger := slog.New(slog.NewTextHandler(os.Stdout, nil))
-
-	k8sClient, err := dynamic.NewForConfig(restCfg)
-	if err != nil {
-		return nil, fmt.Errorf("while creating k8s client: %w", err)
-	}
 
 	return &Updater{
 		k8sClient: k8sClient,
