@@ -22,15 +22,14 @@ const (
 	emptyQueueSleepDuration = 30 * time.Second
 )
 
-var kymaGVR schema.GroupVersionResource
-
 type Updater struct {
 	k8sClient *dynamic.DynamicClient
 	queue     syncqueues.PriorityQueue
+	kymaGVR   schema.GroupVersionResource
 	logger    *slog.Logger
 }
 
-func NewUpdater(restCfg *rest.Config, queue syncqueues.PriorityQueue) (*Updater, error) {
+func NewUpdater(restCfg *rest.Config, queue syncqueues.PriorityQueue, gvr schema.GroupVersionResource) (*Updater, error) {
 	logger := slog.New(slog.NewTextHandler(os.Stdout, nil))
 
 	k8sClient, err := dynamic.NewForConfig(restCfg)
@@ -41,6 +40,7 @@ func NewUpdater(restCfg *rest.Config, queue syncqueues.PriorityQueue) (*Updater,
 	return &Updater{
 		k8sClient: k8sClient,
 		queue:     queue,
+		kymaGVR:   gvr,
 		logger:    logger,
 	}, nil
 }
@@ -52,7 +52,7 @@ func (u *Updater) Run() error {
 			continue
 		}
 		item := u.queue.Extract()
-		unstructuredList, err := u.k8sClient.Resource(kymaGVR).Namespace(namespace).List(context.Background(), metav1.ListOptions{
+		unstructuredList, err := u.k8sClient.Resource(u.kymaGVR).Namespace(namespace).List(context.Background(), metav1.ListOptions{
 			LabelSelector: fmt.Sprintf(subaccountIdLabelFormat, item.SubaccountID),
 		})
 		if err != nil {
@@ -86,6 +86,6 @@ func (u *Updater) updateBetaEnabledLabel(un unstructured.Unstructured, betaEnabl
 	labels[betaEnabledLabelKey] = betaEnabled
 	un.SetLabels(labels)
 
-	_, err := u.k8sClient.Resource(kymaGVR).Namespace(namespace).Update(context.Background(), &un, metav1.UpdateOptions{})
+	_, err := u.k8sClient.Resource(u.kymaGVR).Namespace(namespace).Update(context.Background(), &un, metav1.UpdateOptions{})
 	return err
 }
