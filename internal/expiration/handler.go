@@ -135,6 +135,8 @@ func (h *handler) suspendInstance(instance *internal.Instance, log *logrus.Entry
 			if len(lastDeprovisioningOp.ExcutedButNotCompleted) == 0 {
 				log.Info("no steps to retry - not creating a new operation")
 				return instance, lastDeprovisioningOp.ID, nil
+			} else {
+				log.Infof("triggering suspension after previous %s with steps to retry", opType)
 			}
 		}
 	}
