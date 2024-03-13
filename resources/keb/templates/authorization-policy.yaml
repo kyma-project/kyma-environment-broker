@@ -151,6 +151,7 @@ spec:
       values:
       - {{ .Values.oidc.groups.admin }}
       - {{ .Values.oidc.groups.operator }}
+      - {{ .Values.oidc.groups.viewer }}
   - to:
     - operation:
         methods:
