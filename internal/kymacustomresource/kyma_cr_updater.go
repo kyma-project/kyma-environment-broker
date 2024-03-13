@@ -16,6 +16,7 @@ import (
 
 const (
 	namespace               = "kcp-system"
+	subaccountIdLabelKey    = "kyma-project.io/subaccount-id"
 	subaccountIdLabelFormat = "kyma-project.io/subaccount-id=%s"
 	betaEnabledLabelKey     = "kyma-project.io/beta-enabled"
 	emptyQueueSleepDuration = 30 * time.Second
