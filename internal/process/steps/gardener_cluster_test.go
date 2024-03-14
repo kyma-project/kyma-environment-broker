@@ -21,8 +21,10 @@ import (
 func TestGardenerCluster(t *testing.T) {
 	// Given
 	g := NewGardenerCluster("gc", "kcp-system")
-	g.SetKubecofigSecret("kubeconfig-gc", "kcp-system")
-	g.SetShootName("c-12345")
+	err := g.SetKubecofigSecret("kubeconfig-gc", "kcp-system")
+	assert.NoError(t, err)
+	err = g.SetShootName("c-12345")
+	assert.NoError(t, err)
 
 	// When
 	d, _ := g.ToYaml()
@@ -50,7 +52,8 @@ func TestSyncGardenerCluster_RunWithExistingResource(t *testing.T) {
 	// given
 	os := storage.NewMemoryStorage().Operations()
 	existingGC := NewGardenerCluster("runtime-id-000", "kcp-system")
-	existingGC.SetShootName("abcd")
+	err := existingGC.SetShootName("abcd")
+	assert.NoError(t, err)
 	existingAsUnstructured := existingGC.ToUnstructured()
 	existingAsUnstructured.SetLabels(map[string]string{"my-label": "01234"})
 	k8sClient := fake.NewClientBuilder().WithRuntimeObjects(existingAsUnstructured).Build()
@@ -58,7 +61,7 @@ func TestSyncGardenerCluster_RunWithExistingResource(t *testing.T) {
 	operation.KymaResourceNamespace = "kcp-system"
 	operation.RuntimeID = "runtime-id-000"
 	operation.ShootName = "c-12345"
-	err := os.InsertOperation(operation)
+	err = os.InsertOperation(operation)
 	assert.NoError(t, err)
 	svc := NewSyncGardenerCluster(os, k8sClient)
 
@@ -132,14 +135,15 @@ func TestCheckGardenerCluster_RunWhenReady(t *testing.T) {
 	// given
 	os := storage.NewMemoryStorage().Operations()
 	existingGC := NewGardenerCluster("runtime-id-000", "kcp-system")
-	existingGC.SetState("Ready")
+	err := existingGC.SetState("Ready")
+	assert.NoError(t, err)
 	k8sClient := fake.NewClientBuilder().WithRuntimeObjects(existingGC.ToUnstructured()).Build()
 	step := NewCheckGardenerCluster(os, k8sClient, time.Second)
 	operation := fixture.FixProvisioningOperation("op", "instance-id")
 	operation.KymaResourceNamespace = "kcp-system"
 	operation.RuntimeID = "runtime-id-000"
 	operation.ShootName = "c-12345"
-	err := os.InsertOperation(operation)
+	err = os.InsertOperation(operation)
 	assert.NoError(t, err)
 
 	// when
@@ -154,8 +158,10 @@ func TestCheckGardenerCluster_RunWhenNotReady_OperationFail(t *testing.T) {
 	// given
 	os := storage.NewMemoryStorage().Operations()
 	existingGC := NewGardenerCluster("runtime-id-000", "kcp-system")
-	existingGC.SetState("In progress")
-	existingGC.SetStatusConditions("some condition")
+	err := existingGC.SetState("In progress")
+	assert.NoError(t, err)
+	err = existingGC.SetStatusConditions("some condition")
+	assert.NoError(t, err)
 	k8sClient := fake.NewClientBuilder().WithRuntimeObjects(existingGC.ToUnstructured()).Build()
 	step := NewCheckGardenerCluster(os, k8sClient, time.Second)
 	operation := fixture.FixProvisioningOperation("op", "instance-id")
@@ -163,7 +169,7 @@ func TestCheckGardenerCluster_RunWhenNotReady_OperationFail(t *testing.T) {
 	operation.RuntimeID = "runtime-id-000"
 	operation.ShootName = "c-12345"
 	operation.UpdatedAt = time.Now().Add(-1 * time.Hour)
-	err := os.InsertOperation(operation)
+	err = os.InsertOperation(operation)
 	assert.NoError(t, err)
 
 	// when
@@ -179,8 +185,10 @@ func TestCheckGardenerCluster_RunWhenNotReady_Retry(t *testing.T) {
 	// given
 	os := storage.NewMemoryStorage().Operations()
 	existingGC := NewGardenerCluster("runtime-id-000", "kcp-system")
-	existingGC.SetState("In progress")
-	existingGC.SetStatusConditions("some condition")
+	err := existingGC.SetState("In progress")
+	assert.NoError(t, err)
+	err = existingGC.SetStatusConditions("some condition")
+	assert.NoError(t, err)
 	k8sClient := fake.NewClientBuilder().WithRuntimeObjects(existingGC.ToUnstructured()).Build()
 	step := NewCheckGardenerCluster(os, k8sClient, time.Second)
 	operation := fixture.FixProvisioningOperation("op", "instance-id")
@@ -188,7 +196,7 @@ func TestCheckGardenerCluster_RunWhenNotReady_Retry(t *testing.T) {
 	operation.RuntimeID = "runtime-id-000"
 	operation.ShootName = "c-12345"
 	operation.UpdatedAt = time.Now()
-	err := os.InsertOperation(operation)
+	err = os.InsertOperation(operation)
 	assert.NoError(t, err)
 
 	// when
@@ -200,7 +208,7 @@ func TestCheckGardenerCluster_RunWhenNotReady_Retry(t *testing.T) {
 }
 
 func assertGardenerClusterSpec(t *testing.T, s string, k8sClient client.Client) {
-	scheme := internal.NewSchemeForTests()
+	scheme := internal.NewSchemeForTests(t)
 	decoder := serializer.NewCodecFactory(scheme).UniversalDeserializer()
 	expected := unstructured.Unstructured{}
 	_, _, err := decoder.Decode([]byte(s), nil, &expected)

@@ -65,5 +65,4 @@ func NewInstanceArchivedFromOperations(operations []internal.Operation) (interna
 	result.LastDeprovisioningFinishedAt = lastDeprovisioning.UpdatedAt
 
 	return result, nil
-
 }

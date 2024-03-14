@@ -64,11 +64,11 @@ func (sp *sharedAccountPool) getLeastUsed(secretBindings []unstructured.Unstruct
 	}
 
 	if shoots == nil || len(shoots.Items) == 0 {
-		return &gardener.SecretBinding{secretBindings[0]}, nil
+		return &gardener.SecretBinding{Unstructured: secretBindings[0]}, nil
 	}
 
 	for _, shoot := range shoots.Items {
-		s := gardener.Shoot{shoot}
+		s := gardener.Shoot{Unstructured: shoot}
 		count, found := usageCount[s.GetSpecSecretBindingName()]
 		if !found {
 			continue
@@ -87,5 +87,5 @@ func (sp *sharedAccountPool) getLeastUsed(secretBindings []unstructured.Unstruct
 		}
 	}
 
-	return &gardener.SecretBinding{secretBindings[minIndex]}, nil
+	return &gardener.SecretBinding{Unstructured: secretBindings[minIndex]}, nil
 }

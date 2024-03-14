@@ -1,7 +1,9 @@
 package expiration_test
 
 import (
+	"encoding/json"
 	"fmt"
+	"io"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -210,5 +212,114 @@ func TestExpiration(t *testing.T) {
 		// then
 		assert.True(t, actualLastOp.ID == deprovisioningOpID)
 		assert.Equal(t, domain.InProgress, actualLastOp.State)
+	})
+
+	t.Run("should skip suspension when previous suspension completed all steps", func(t *testing.T) {
+		// given
+		instanceID := "inst-trial-05"
+		trialInstance := fixture.FixInstance(instanceID)
+		trialInstance.ServicePlanID = broker.TrialPlanID
+		trialInstance.ServicePlanName = broker.TrialPlanName
+		expectedExpirationTime := time.Now().UTC()
+		trialInstance.ExpiredAt = &expectedExpirationTime
+		expectedActiveValue := false
+		trialInstance.Parameters.ErsContext.Active = &expectedActiveValue
+		err := storage.Instances().Insert(trialInstance)
+		require.NoError(t, err)
+
+		suspensionOpID := "inst-trial-05-suspension-successfully-completed"
+		suspensionOp := fixture.FixDeprovisioningOperation(suspensionOpID, instanceID)
+		suspensionOp.Temporary = true
+		suspensionOp.State = domain.Succeeded
+		err = storage.Operations().InsertDeprovisioningOperation(suspensionOp)
+		require.NoError(t, err)
+
+		reqPath := fmt.Sprintf(requestPathFormat, instanceID)
+		req := httptest.NewRequest("PUT", reqPath, nil)
+		w := httptest.NewRecorder()
+
+		// when
+		router.ServeHTTP(w, req)
+		resp := w.Result()
+
+		// then
+		assert.Equal(t, http.StatusAccepted, resp.StatusCode)
+
+		// when
+		actualInstance, err := storage.Instances().GetByID(instanceID)
+		require.NoError(t, err)
+
+		// then
+		assert.False(t, *actualInstance.Parameters.ErsContext.Active)
+		assert.Equal(t, expectedExpirationTime, *actualInstance.ExpiredAt)
+
+		actualOp, err := storage.Operations().GetLastOperation(instanceID)
+		require.NoError(t, err)
+		assert.Equal(t, suspensionOpID, actualOp.ID)
+	})
+
+	t.Run("should retrigger suspension when previous suspension has incomplete steps", func(t *testing.T) {
+		// given
+		instanceID := "inst-trial-06"
+		trialInstance := fixture.FixInstance(instanceID)
+		trialInstance.ServicePlanID = broker.TrialPlanID
+		trialInstance.ServicePlanName = broker.TrialPlanName
+		expectedExpirationTime := time.Now().UTC()
+		trialInstance.ExpiredAt = &expectedExpirationTime
+		expectedActiveValue := false
+		trialInstance.Parameters.ErsContext.Active = &expectedActiveValue
+		err := storage.Instances().Insert(trialInstance)
+		require.NoError(t, err)
+
+		suspensionOpID := "inst-trial-06-suspension-not-completed"
+		suspensionOp := fixture.FixDeprovisioningOperation(suspensionOpID, instanceID)
+		suspensionOp.CreatedAt = time.Date(2024, 3, 13, 0, 0, 0, 0, time.UTC)
+		suspensionOp.Temporary = true
+		suspensionOp.State = domain.Succeeded
+		suspensionOp.ExcutedButNotCompleted = []string{"step-1", "step-2"}
+		err = storage.Operations().InsertDeprovisioningOperation(suspensionOp)
+		require.NoError(t, err)
+
+		reqPath := fmt.Sprintf(requestPathFormat, instanceID)
+		req := httptest.NewRequest("PUT", reqPath, nil)
+		w := httptest.NewRecorder()
+
+		// when
+		router.ServeHTTP(w, req)
+		resp := w.Result()
+
+		// then
+		assert.Equal(t, http.StatusAccepted, resp.StatusCode)
+
+		// when
+		actualInstance, err := storage.Instances().GetByID(instanceID)
+		require.NoError(t, err)
+
+		// then
+		assert.False(t, *actualInstance.Parameters.ErsContext.Active)
+		assert.Equal(t, expectedExpirationTime, *actualInstance.ExpiredAt)
+
+		// simulate the new suspension operation processing
+		type temp struct {
+			Operation string
+		}
+
+		body, err := io.ReadAll(resp.Body)
+		require.NoError(t, err)
+		defer resp.Body.Close()
+
+		var newOperationIDResp temp
+		require.NoError(t, json.Unmarshal(body, &newOperationIDResp))
+
+		newSuspensionOp, err := storage.Operations().GetDeprovisioningOperationByID(newOperationIDResp.Operation)
+		require.NoError(t, err)
+
+		newSuspensionOp.State = domain.InProgress
+		_, err = storage.Operations().UpdateDeprovisioningOperation(*newSuspensionOp)
+		require.NoError(t, err)
+
+		actualOp, err := storage.Operations().GetLastOperation(instanceID)
+		require.NoError(t, err)
+		assert.Equal(t, newSuspensionOp.ID, actualOp.ID)
 	})
 }

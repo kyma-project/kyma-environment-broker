@@ -10,6 +10,9 @@ import (
 	"github.com/kyma-project/kyma-environment-broker/internal"
 )
 
+type PlanID string
+type PlanName string
+
 const (
 	AllPlansSelector = "all_plans"
 

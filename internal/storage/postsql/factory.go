@@ -3,7 +3,7 @@ package postsql
 import (
 	"time"
 
-	dbr "github.com/gocraft/dbr"
+	"github.com/gocraft/dbr"
 	"github.com/kyma-project/kyma-environment-broker/common/events"
 	"github.com/kyma-project/kyma-environment-broker/internal"
 	"github.com/kyma-project/kyma-environment-broker/internal/storage/dberr"
@@ -52,7 +52,10 @@ type ReadSession interface {
 	GetLatestRuntimeStateWithKymaVersionByRuntimeID(runtimeID string) (dbmodel.RuntimeStateDTO, dberr.Error)
 	GetLatestRuntimeStateWithOIDCConfigByRuntimeID(runtimeID string) (dbmodel.RuntimeStateDTO, dberr.Error)
 	ListEvents(filter events.EventFilter) ([]events.EventDTO, error)
+	GetDistinctSubAccounts() ([]string, dberr.Error)
+	ListSubaccountStates() ([]dbmodel.SubaccountStateDTO, dberr.Error)
 	GetInstanceArchivedByID(id string) (dbmodel.InstanceArchivedDTO, error)
+	GetOperationsStatsV2() ([]dbmodel.OperationStatEntryV2, error)
 }
 
 //go:generate mockery --name=WriteSession
@@ -67,6 +70,8 @@ type WriteSession interface {
 	InsertRuntimeState(state dbmodel.RuntimeStateDTO) dberr.Error
 	InsertEvent(level events.EventLevel, message, instanceID, operationID string) dberr.Error
 	DeleteEvents(until time.Time) dberr.Error
+	UpsertSubaccountState(state dbmodel.SubaccountStateDTO) dberr.Error
+	DeleteState(id string) dberr.Error
 	DeleteRuntimeStatesByOperationID(operationID string) error
 	DeleteOperationByID(operationID string) dberr.Error
 	InsertInstanceArchived(instance dbmodel.InstanceArchivedDTO) dberr.Error

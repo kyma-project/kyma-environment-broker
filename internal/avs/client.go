@@ -258,17 +258,23 @@ func (c *Client) execute(request *http.Request, allowNotFound bool, allowResetTo
 	return response, NewAvsError("unsupported status code: %d for %s.", response.StatusCode, request.URL.String())
 }
 
-func (c *Client) closeResponseBody(response *http.Response) error {
+func (c *Client) closeResponseBody(response *http.Response) (error error) {
 	if response == nil {
-		return nil
+		return
 	}
 	if response.Body == nil {
-		return nil
+		return
 	}
+	defer func() {
+		if err := response.Body.Close(); err != nil {
+			error = err
+		}
+	}()
 	// drain the body to let the transport reuse the connection
-	io.Copy(io.Discard, response.Body)
-
-	return response.Body.Close()
+	if _, err := io.Copy(io.Discard, response.Body); err != nil {
+		return err
+	}
+	return
 }
 
 func responseBody(resp *http.Response) string {

@@ -22,5 +22,5 @@ func NewApplyKymaStep(os storage.Operations, cli client.Client) *ApplyKymaStep {
 
 func (s *ApplyKymaStep) Run(o internal.UpgradeKymaOperation, logger logrus.FieldLogger) (internal.UpgradeKymaOperation, time.Duration, error) {
 	o2, w, err := s.ApplyKymaStep.Run(o.Operation, logger)
-	return internal.UpgradeKymaOperation{o2}, w, err
+	return internal.UpgradeKymaOperation{Operation: o2}, w, err
 }

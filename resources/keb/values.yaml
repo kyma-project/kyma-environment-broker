@@ -11,19 +11,19 @@ global:
       version: "v20240307-f250dc83" # do not update along with the other images
     kyma_environment_broker:
       dir:
-      version: "1.2.6"
+      version: "1.2.10"
     kyma_environments_subaccount_cleanup_job:
       dir:
-      version: "1.2.6"
+      version: "1.2.10"
     kyma_environment_trial_cleanup_job:
       dir:
-      version: "1.2.6"
+      version: "1.2.10"
     kyma_environment_deprovision_retrigger_job:
       dir:
-      version: "1.2.6"
+      version: "1.2.10"
     kyma_environment_runtime_reconciler:
       dir:
-      version: "1.2.6"
+      version: "1.2.10"
   kyma_environment_broker:
     enabled: false
     serviceAccountName: "kcp-kyma-environment-broker"
@@ -338,6 +338,7 @@ oidc:
     admin: runtimeAdmin
     operator: runtimeOperator
     orchestrations: orchestrationsAdmin
+    viewer: runtimeViewer
 
 kebClient:
   scope: "broker:write cld:read"
@@ -392,9 +393,6 @@ runtimeReconciler:
   jobEnabled: false
   jobInterval: 1440
   jobReconciliationDelay: 1s
-  watcherEnabled: false
-  watcherAddress: 8888
-  watcherName: btp-manager-secret-watcher
 
 migratorJobs:
   enabled: true
@@ -411,3 +409,6 @@ archiving:
 cleaning:
   enabled: false
   dryRun: true
+
+metricsv2:
+  enabled: false

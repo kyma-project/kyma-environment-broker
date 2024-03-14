@@ -96,7 +96,10 @@ func (k *OverrideKymaModules) replaceModulesSpec(kymaTemplate *unstructured.Unst
 	if err != nil {
 		return err
 	}
-	unstructured.SetNestedField(kymaTemplate.Object, toInsertUnmarshaled, "spec", "modules")
+	err = unstructured.SetNestedField(kymaTemplate.Object, toInsertUnmarshaled, "spec", "modules")
+	if err != nil {
+		return err
+	}
 	k.logger.Info("custom modules replaced in Kyma template successfully.")
 	return nil
 }

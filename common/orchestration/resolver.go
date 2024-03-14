@@ -136,7 +136,7 @@ func (resolver *GardenerRuntimeResolver) resolveRuntimeTarget(rt RuntimeTarget, 
 	runtimes := []Runtime{}
 	// Iterate over all shoots. Evaluate target specs. If multiple are specified, all must match for a given shoot.
 	for _, s := range shoots {
-		shoot := &gardener.Shoot{s}
+		shoot := &gardener.Shoot{Unstructured: s}
 		runtimeID := shoot.GetAnnotations()[runtimeIDAnnotation]
 		if runtimeID == "" {
 			resolver.logger.Errorf("Failed to get runtimeID from %s annotation for Shoot %s", runtimeIDAnnotation, shoot.GetName())

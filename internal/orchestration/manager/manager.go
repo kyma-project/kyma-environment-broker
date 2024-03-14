@@ -73,7 +73,7 @@ func (m *orchestrationManager) Execute(orchestrationID string) (time.Duration, e
 
 	operations, runtimeNums, err := m.waitForStart(o)
 	if err != nil {
-		m.failOrchestration(o, fmt.Errorf("failed while waiting start for operations: %w", err))
+		m.failOrchestration(o, fmt.Errorf("failed while waiting start for operations: %w", err)) //nolint:errcheck
 	}
 
 	if o.Parameters.Kyma == nil || o.Parameters.Kyma.Version == "" {

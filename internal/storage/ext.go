@@ -19,6 +19,7 @@ type Instances interface {
 	Delete(instanceID string) error
 	GetInstanceStats() (internal.InstanceStats, error)
 	GetERSContextStats() (internal.ERSContextStats, error)
+	GetDistinctSubAccounts() ([]string, error)
 	GetNumberOfInstancesForGlobalAccountID(globalAccountID string) (int, error)
 	List(dbmodel.InstanceFilter) ([]internal.Instance, int, int, error)
 
@@ -45,6 +46,7 @@ type Operations interface {
 	GetOperationByID(operationID string) (*internal.Operation, error)
 	GetNotFinishedOperationsByType(operationType internal.OperationType) ([]internal.Operation, error)
 	GetOperationStatsByPlan() (map[string]internal.OperationStats, error)
+	GetOperationStatsByPlanV2() ([]internal.OperationStatsV2, error)
 	GetOperationsForIDs(operationIDList []string) ([]internal.Operation, error)
 	GetOperationStatsForOrchestration(orchestrationID string) (map[string]int, error)
 	ListOperations(filter dbmodel.OperationFilter) ([]internal.Operation, int, int, error)
@@ -53,6 +55,7 @@ type Operations interface {
 	GetOperationByInstanceID(instanceID string) (*internal.Operation, error)
 	UpdateOperation(operation internal.Operation) (*internal.Operation, error)
 	ListOperationsByInstanceID(instanceID string) ([]internal.Operation, error)
+	ListOperationsByInstanceIDGroupByType(instanceID string) (*internal.GroupedOperations, error)
 	ListOperationsByOrchestrationID(orchestrationID string, filter dbmodel.OperationFilter) ([]internal.Operation, int, int, error)
 	ListOperationsInTimeRange(from, to time.Time) ([]internal.Operation, error)
 
@@ -122,4 +125,10 @@ type Updating interface {
 type Events interface {
 	InsertEvent(level events.EventLevel, message, instanceID, operationID string)
 	ListEvents(filter events.EventFilter) ([]events.EventDTO, error)
+}
+
+type SubaccountStates interface {
+	UpsertState(state internal.SubaccountState) error
+	DeleteState(subaccountID string) error
+	ListStates() ([]internal.SubaccountState, error)
 }

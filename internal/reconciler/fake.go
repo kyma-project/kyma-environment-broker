@@ -98,7 +98,7 @@ func intKeys(states map[int64]*reconcilerApi.HTTPClusterResponse) string {
 
 func stringKeys(clusters map[string]*registeredCluster) string {
 	result := ""
-	for k, _ := range clusters {
+	for k := range clusters {
 		result = result + ", " + k
 	}
 	return result

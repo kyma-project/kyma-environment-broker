@@ -94,7 +94,6 @@ func (h *handler) expireInstance(w http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	logger.Infof("the instance has been expired and awaits suspension")
 	res := expirationResponse{suspensionOpID}
 	httputil.WriteResponse(w, http.StatusAccepted, res)
 
@@ -132,6 +131,13 @@ func (h *handler) suspendInstance(instance *internal.Instance, log *logrus.Entry
 			return instance, lastDeprovisioningOp.ID, nil
 		case domain.Failed:
 			log.Infof("triggering suspension after previous failed %s", opType)
+		case domain.Succeeded:
+			if len(lastDeprovisioningOp.ExcutedButNotCompleted) == 0 {
+				log.Info("no steps to retry - not creating a new operation")
+				return instance, lastDeprovisioningOp.ID, nil
+			} else {
+				log.Infof("triggering suspension after previous %s with steps to retry", opType)
+			}
 		}
 	}
 

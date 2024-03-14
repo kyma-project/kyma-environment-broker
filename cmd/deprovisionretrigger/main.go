@@ -67,7 +67,8 @@ func main() {
 		fatalOnError(err)
 	}
 
-	cleaner.HaltIstioSidecar()
+	err = cleaner.HaltIstioSidecar()
+	logOnError(err)
 	// do not use defer, close must be done before halting
 	err = cleaner.Halt()
 	fatalOnError(err)
@@ -163,5 +164,11 @@ func fatalOnError(err error) {
 		// exit with 0 to avoid any side effects - we ignore all errors only logging those
 		log.Error(err)
 		os.Exit(0)
+	}
+}
+
+func logOnError(err error) {
+	if err != nil {
+		log.Error(err)
 	}
 }

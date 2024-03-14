@@ -17,16 +17,13 @@ import (
 )
 
 type Config struct {
-	Database                             storage.Config
-	Events                               events.Config
-	Provisioner                          input.Config
-	DryRun                               bool   `envconfig:"default=true"`
-	BtpManagerSecretWatcherAddr          string `envconfig:"default=0"`
-	BtpManagerSecretWatcherComponentName string `envconfig:"default=NA"`
-	WatcherEnabled                       bool   `envconfig:"default=false"`
-	JobEnabled                           bool   `envconfig:"default=false"`
-	JobInterval                          int    `envconfig:"default=24"`
-	JobReconciliationDelay               string `envconfig:"default=0s"`
+	Database               storage.Config
+	Events                 events.Config
+	Provisioner            input.Config
+	DryRun                 bool   `envconfig:"default=true"`
+	JobEnabled             bool   `envconfig:"default=false"`
+	JobInterval            int    `envconfig:"default=24"`
+	JobReconciliationDelay string `envconfig:"default=0s"`
 }
 
 func main() {
@@ -43,8 +40,8 @@ func main() {
 	err := envconfig.InitWithPrefix(&cfg, "RUNTIME_RECONCILER")
 	fatalOnError(err)
 	logs.Info("runtime-reconciler config loaded")
-	if !cfg.JobEnabled && !cfg.WatcherEnabled {
-		logs.Info("both job and listener are disabled, module stopped.")
+	if !cfg.JobEnabled {
+		logs.Info("job disabled, module stopped.")
 		return
 	}
 	jobReconciliationDelay, err := time.ParseDuration(cfg.JobReconciliationDelay)
@@ -74,13 +71,6 @@ func main() {
 		btpManagerCredentialsJob := btpmanager.NewJob(btpOperatorManager, logs)
 		logs.Infof("runtime-reconciler created job every %d m", cfg.JobInterval)
 		btpManagerCredentialsJob.Start(cfg.JobInterval, jobReconciliationDelay)
-	}
-
-	logs.Infof("watcher enabled? %t", cfg.WatcherEnabled)
-	if cfg.WatcherEnabled {
-		btpManagerCredentialsWatcher := btpmanager.NewWatcher(ctx, cfg.BtpManagerSecretWatcherAddr, cfg.BtpManagerSecretWatcherComponentName, btpOperatorManager, logs)
-		logs.Infof("runtime-reconciler created watcher %s on %s", cfg.BtpManagerSecretWatcherComponentName, cfg.BtpManagerSecretWatcherAddr)
-		go btpManagerCredentialsWatcher.ReactOnSkrEvent()
 	}
 
 	<-ctx.Done()

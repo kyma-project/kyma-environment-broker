@@ -51,7 +51,7 @@ type DeprovisioningSuite struct {
 }
 
 func NewDeprovisioningSuite(t *testing.T) *DeprovisioningSuite {
-	ctx, _ := context.WithTimeout(context.Background(), 20*time.Minute)
+	ctx, cancel := context.WithTimeout(context.Background(), 20*time.Minute)
 
 	logs := logrus.New()
 	logs.Formatter.(*logrus.TextFormatter).TimestampFormat = "15:04:05.000"
@@ -62,6 +62,7 @@ func NewDeprovisioningSuite(t *testing.T) *DeprovisioningSuite {
 	storageCleanup, db, err := GetStorageForE2ETests()
 	assert.NoError(t, err)
 	t.Cleanup(func() {
+		defer cancel()
 		if storageCleanup != nil {
 			err := storageCleanup()
 			assert.NoError(t, err)
@@ -103,7 +104,7 @@ func NewDeprovisioningSuite(t *testing.T) *DeprovisioningSuite {
 	assert.NoError(t, err)
 	fakeK8sSKRClient := fake.NewClientBuilder().WithScheme(scheme).Build()
 
-	sch := internal.NewSchemeForTests()
+	sch := internal.NewSchemeForTests(t)
 	cli := fake.NewClientBuilder().WithScheme(sch).WithRuntimeObjects(fixK8sResources(defaultKymaVer, []string{})...).Build()
 
 	configProvider := kebConfig.NewConfigProvider(

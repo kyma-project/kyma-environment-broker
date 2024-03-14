@@ -22,6 +22,7 @@ type BrokerStorage interface {
 	Deprovisioning() Deprovisioning
 	Orchestrations() Orchestrations
 	RuntimeStates() RuntimeStates
+	SubaccountStates() SubaccountStates
 	Events() Events
 	InstancesArchived() InstancesArchived
 }
@@ -52,6 +53,7 @@ func NewFromConfig(cfg Config, evcfg events.Config, cipher postgres.Cipher, log 
 		orchestrations:    postgres.NewOrchestrations(fact),
 		runtimeStates:     postgres.NewRuntimeStates(fact, cipher),
 		events:            events.New(evcfg, eventstorage.New(fact, log)),
+		subaccountStates:  postgres.NewSubaccountStates(fact),
 		instancesArchived: postgres.NewInstanceArchived(fact),
 	}, connection, nil
 }
@@ -64,6 +66,7 @@ func NewMemoryStorage() BrokerStorage {
 		orchestrations:    memory.NewOrchestrations(),
 		runtimeStates:     memory.NewRuntimeStates(),
 		events:            events.New(events.Config{}, NewInMemoryEvents()),
+		subaccountStates:  memory.NewSubaccountStates(),
 		instancesArchived: memory.NewInstanceArchivedInMemoryStorage(),
 	}
 }
@@ -122,6 +125,7 @@ type storage struct {
 	orchestrations    Orchestrations
 	runtimeStates     RuntimeStates
 	events            Events
+	subaccountStates  SubaccountStates
 	instancesArchived InstancesArchived
 }
 
@@ -151,6 +155,10 @@ func (s storage) RuntimeStates() RuntimeStates {
 
 func (s storage) Events() Events {
 	return s.events
+}
+
+func (s storage) SubaccountStates() SubaccountStates {
+	return s.subaccountStates
 }
 
 func (s storage) InstancesArchived() InstancesArchived {

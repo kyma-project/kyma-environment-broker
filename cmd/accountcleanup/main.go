@@ -67,7 +67,8 @@ func main() {
 		fatalOnError(err)
 	}
 
-	cleaner.HaltIstioSidecar()
+	err = cleaner.HaltIstioSidecar()
+	logOnError(err)
 	err = cleaner.Halt()
 	fatalOnError(err)
 
@@ -77,5 +78,11 @@ func main() {
 func fatalOnError(err error) {
 	if err != nil {
 		logrus.Fatal(err)
+	}
+}
+
+func logOnError(err error) {
+	if err != nil {
+		logrus.Error(err)
 	}
 }

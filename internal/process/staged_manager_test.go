@@ -220,11 +220,10 @@ func (s *panicStep) Name() string {
 	return s.name
 }
 
-func (s *panicStep) Run(operation internal.Operation, logger logrus.FieldLogger) (internal.Operation, time.Duration, error) {
+func (s *panicStep) Run(_ internal.Operation, logger logrus.FieldLogger) (internal.Operation, time.Duration, error) {
 	s.eventPublisher.Publish(context.Background(), s.name)
 	logger.Infof("Panic!")
 	panic("Panicking just for test")
-	return operation, 0, nil
 }
 
 func fixProvisioningParametersWithPlanID(planID, region string) internal.ProvisioningParameters {
@@ -258,18 +257,16 @@ type CollectingEventHandler struct {
 	stepsExecuted  []string // collects events from testing steps
 }
 
-func (h *CollectingEventHandler) OnStepExecuted(_ context.Context, ev interface{}) error {
+func (h *CollectingEventHandler) OnStepExecuted(_ context.Context, ev interface{}) {
 	h.mu.Lock()
 	defer h.mu.Unlock()
 	h.stepsExecuted = append(h.stepsExecuted, ev.(string))
-	return nil
 }
 
-func (h *CollectingEventHandler) OnStepProcessed(_ context.Context, ev interface{}) error {
+func (h *CollectingEventHandler) OnStepProcessed(_ context.Context, ev interface{}) {
 	h.mu.Lock()
 	defer h.mu.Unlock()
 	h.StepsProcessed = append(h.StepsProcessed, ev.(process.OperationStepProcessed).StepName)
-	return nil
 }
 
 func (h *CollectingEventHandler) Publish(ctx context.Context, ev interface{}) {
