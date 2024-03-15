@@ -97,7 +97,22 @@ type OrchestrationSuite struct {
 	t *testing.T
 }
 
+func (s *OrchestrationSuite) TearDown() {
+	if r := recover(); r != nil {
+		err := cleanupContainer()
+		assert.NoError(s.t, err)
+		panic(r)
+	}
+}
+
 func NewOrchestrationSuite(t *testing.T, additionalKymaVersions []string) *OrchestrationSuite {
+	defer func() {
+		if r := recover(); r != nil {
+			err := cleanupContainer()
+			assert.NoError(t, err)
+			panic(r)
+		}
+	}()
 	logs := logrus.New()
 	logs.Formatter.(*logrus.TextFormatter).TimestampFormat = "15:04:05.000"
 
@@ -592,7 +607,22 @@ type ProvisioningSuite struct {
 	k8sKcpCli        client.Client
 }
 
+func (s *ProvisioningSuite) TearDown() {
+	if r := recover(); r != nil {
+		err := cleanupContainer()
+		assert.NoError(s.t, err)
+		panic(r)
+	}
+}
+
 func NewProvisioningSuite(t *testing.T, multiZoneCluster bool, controlPlaneFailureTolerance string, includeNewMachineTypes bool) *ProvisioningSuite {
+	defer func() {
+		if r := recover(); r != nil {
+			err := cleanupContainer()
+			assert.NoError(t, err)
+			panic(r)
+		}
+	}()
 	ctx, cancel := context.WithTimeout(context.Background(), 20*time.Minute)
 	logs := logrus.New()
 	storageCleanup, db, err := GetStorageForE2ETests()
