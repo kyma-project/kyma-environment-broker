@@ -1,6 +1,7 @@
 package upgrade_kyma
 
 import (
+	"fmt"
 	"time"
 
 	"github.com/kyma-project/kyma-environment-broker/internal"
@@ -27,6 +28,9 @@ func (s *BTPOperatorOverridesStep) Name() string {
 }
 
 func (s *BTPOperatorOverridesStep) Run(operation internal.UpgradeKymaOperation, log logrus.FieldLogger) (internal.UpgradeKymaOperation, time.Duration, error) {
+	if operation.InputCreator == nil {
+		return operation, 0, fmt.Errorf("input creator is nil")
+	}
 	if !operation.InputCreator.Configuration().ContainsAdditionalComponent(internal.BTPOperatorComponentName) {
 		log.Infof("BTP operator is not in the list of additional components, skipping")
 		return operation, 0, nil

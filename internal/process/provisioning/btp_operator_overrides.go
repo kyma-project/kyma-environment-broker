@@ -1,6 +1,7 @@
 package provisioning
 
 import (
+	"fmt"
 	"time"
 
 	"github.com/google/uuid"
@@ -28,6 +29,9 @@ func (s *BTPOperatorOverridesStep) Run(operation internal.Operation, log logrus.
 	clusterID := uuid.NewString()
 	f := func(op *internal.Operation) {
 		op.InstanceDetails.ServiceManagerClusterID = clusterID
+	}
+	if operation.InputCreator == nil {
+		return operation, 0, fmt.Errorf("input creator is nil")
 	}
 	if !operation.InputCreator.Configuration().ContainsAdditionalComponent(internal.BTPOperatorComponentName) {
 		log.Infof("BTP operator is not in the list of additional components, skipping preparing overrides")

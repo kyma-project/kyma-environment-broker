@@ -52,6 +52,9 @@ func (s *ApplyClusterConfigurationStep) Run(operation internal.UpgradeKymaOperat
 		return s.operationManager.RetryOperation(operation, "unable to get kubeconfig", err, time.Second, time.Minute, log)
 	}
 
+	if operation.InputCreator == nil {
+		return operation, 0, fmt.Errorf("input creator is nil")
+	}
 	operation.InputCreator.SetRuntimeID(operation.InstanceDetails.RuntimeID).
 		SetKubeconfig(string(kcfg)).
 		SetInstanceID(operation.InstanceID).

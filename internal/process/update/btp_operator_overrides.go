@@ -37,6 +37,9 @@ func (s *BTPOperatorOverridesStep) Run(operation internal.Operation, logger logr
 		logger.Infof("no last runtime state found, skipping")
 		return operation, 0, nil
 	}
+	if operation.InputCreator == nil {
+		return operation, 0, fmt.Errorf("input creator is nil")
+	}
 	if !operation.InputCreator.Configuration().ContainsAdditionalComponent(internal.BTPOperatorComponentName) {
 		logger.Infof("BTP operator is not in the list of additional components, skipping")
 		return operation, 0, nil
