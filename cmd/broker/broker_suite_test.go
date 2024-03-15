@@ -120,6 +120,11 @@ type componentProviderDecorated struct {
 }
 
 func (s *BrokerSuiteTest) TearDown() {
+	if r := recover(); r != nil {
+		err := cleanupContainer()
+		assert.NoError(s.t, err)
+		panic(r)
+	}
 	s.httpServer.Close()
 	if s.storageCleanup != nil {
 		err := s.storageCleanup()
@@ -138,6 +143,13 @@ func NewBrokerSuiteTestWithOptionalRegion(t *testing.T, version ...string) *Brok
 }
 
 func NewBrokerSuiteTestWithConfig(t *testing.T, cfg *Config, version ...string) *BrokerSuiteTest {
+	defer func() {
+		if r := recover(); r != nil {
+			err := cleanupContainer()
+			assert.NoError(t, err)
+			panic(r)
+		}
+	}()
 	ctx := context.Background()
 	sch := internal.NewSchemeForTests(t)
 	err := apiextensionsv1.AddToScheme(sch)

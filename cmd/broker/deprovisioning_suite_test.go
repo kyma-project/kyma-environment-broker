@@ -50,7 +50,22 @@ type DeprovisioningSuite struct {
 	t *testing.T
 }
 
+func (s *DeprovisioningSuite) TearDown() {
+	if r := recover(); r != nil {
+		err := cleanupContainer()
+		assert.NoError(s.t, err)
+		panic(r)
+	}
+}
+
 func NewDeprovisioningSuite(t *testing.T) *DeprovisioningSuite {
+	defer func() {
+		if r := recover(); r != nil {
+			err := cleanupContainer()
+			assert.NoError(t, err)
+			panic(r)
+		}
+	}()
 	ctx, cancel := context.WithTimeout(context.Background(), 20*time.Minute)
 
 	logs := logrus.New()

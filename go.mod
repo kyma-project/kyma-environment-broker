@@ -13,7 +13,7 @@ require (
 	github.com/Masterminds/semver v1.5.0
 	github.com/Masterminds/sprig v2.22.0+incompatible
 	github.com/dlmiddlecote/sqlstats v1.0.2
-	github.com/docker/docker v25.0.3+incompatible
+	github.com/docker/docker v25.0.4+incompatible
 	github.com/docker/go-connections v0.5.0
 	github.com/go-co-op/gocron v1.37.0
 	github.com/gocraft/dbr v0.0.0-20190714181702-8114670a83bd
@@ -39,7 +39,7 @@ require (
 	github.com/vrischmann/envconfig v1.3.0
 	golang.org/x/exp v0.0.0-20240213143201-ec583247a57a
 	golang.org/x/mod v0.16.0
-	golang.org/x/oauth2 v0.17.0
+	golang.org/x/oauth2 v0.18.0
 	gopkg.in/yaml.v2 v2.4.0
 	gopkg.in/yaml.v3 v3.0.1
 	k8s.io/api v0.29.2

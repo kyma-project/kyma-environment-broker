@@ -11,6 +11,7 @@ func TestKymaUpgrade_OneRuntimeHappyPath(t *testing.T) {
 	// given
 
 	suite := NewOrchestrationSuite(t, nil)
+	defer suite.TearDown()
 	runtimeID := suite.CreateProvisionedRuntime(RuntimeOptions{})
 	otherRuntimeID := suite.CreateProvisionedRuntime(RuntimeOptions{})
 	orchestrationParams := fixOrchestrationParams(runtimeID)
@@ -32,6 +33,7 @@ func TestKymaUpgrade_VersionParameter(t *testing.T) {
 	// given
 	givenVersion := "2.0.0-rc5"
 	suite := NewOrchestrationSuite(t, []string{givenVersion})
+	defer suite.TearDown()
 	runtimeID := suite.CreateProvisionedRuntime(RuntimeOptions{})
 	otherRuntimeID := suite.CreateProvisionedRuntime(RuntimeOptions{})
 	orchestrationParams := fixOrchestrationParams(runtimeID)
@@ -53,6 +55,7 @@ func TestKymaUpgrade_VersionParameter(t *testing.T) {
 func TestClusterUpgrade_OneRuntimeHappyPath(t *testing.T) {
 	// given
 	suite := NewOrchestrationSuite(t, nil)
+	defer suite.TearDown()
 	runtimeID := suite.CreateProvisionedRuntime(RuntimeOptions{})
 	otherRuntimeID := suite.CreateProvisionedRuntime(RuntimeOptions{})
 	orchestrationParams := fixOrchestrationParams(runtimeID)
