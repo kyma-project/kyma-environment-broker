@@ -5,6 +5,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
@@ -76,4 +77,8 @@ func Test_OperationManager_RetryOperation(t *testing.T) {
 	// when - second call => retry
 	assert.True(t, when > 0)
 	assert.Nil(t, err)
+}
+
+func fixLogger() logrus.FieldLogger {
+	return logrus.StandardLogger()
 }
