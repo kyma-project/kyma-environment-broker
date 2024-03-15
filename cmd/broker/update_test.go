@@ -683,9 +683,9 @@ func TestUpdateWithOwnClusterPlan(t *testing.T) {
 func TestUpdateOidcForSuspendedInstance(t *testing.T) {
 	// given
 	suite := NewBrokerSuiteTest(t)
+	defer suite.TearDown()
 	// uncomment to see graphql queries
 	//suite.EnableDumpingProvisionerRequests()
-	defer suite.TearDown()
 	iid := uuid.New().String()
 
 	resp := suite.CallAPI("PUT", fmt.Sprintf("oauth/cf-eu10/v2/service_instances/%s?accepts_incomplete=true&plan_id=7d55d31d-35ae-4438-bf13-6ffdfa107d9f&service_id=47c9dcbf-ff30-448e-ab36-d3bad66ba281", iid),
@@ -797,9 +797,9 @@ func TestUpdateOidcForSuspendedInstance(t *testing.T) {
 func TestUpdateOidcForPreview(t *testing.T) {
 	// given
 	suite := NewBrokerSuiteTest(t)
+	defer suite.TearDown()
 	// uncomment to see graphql queries
 	//suite.EnableDumpingProvisionerRequests()
-	defer suite.TearDown()
 	iid := uuid.New().String()
 
 	resp := suite.CallAPI("PUT", fmt.Sprintf("oauth/cf-eu10/v2/service_instances/%s?accepts_incomplete=true&plan_id=7d55d31d-35ae-4438-bf13-6ffdfa107d9f&service_id=47c9dcbf-ff30-448e-ab36-d3bad66ba281", iid),
@@ -1918,9 +1918,9 @@ func TestUpdateAutoscalerPartialSequence(t *testing.T) {
 func TestUpdateWhenBothErsContextAndUpdateParametersProvided(t *testing.T) {
 	// given
 	suite := NewBrokerSuiteTest(t)
+	defer suite.TearDown()
 	// uncomment to see graphql queries
 	//suite.EnableDumpingProvisionerRequests()
-	defer suite.TearDown()
 	iid := uuid.New().String()
 
 	resp := suite.CallAPI("PUT", fmt.Sprintf("oauth/cf-eu10/v2/service_instances/%s?accepts_incomplete=true&plan_id=7d55d31d-35ae-4438-bf13-6ffdfa107d9f&service_id=47c9dcbf-ff30-448e-ab36-d3bad66ba281", iid),
@@ -1989,8 +1989,8 @@ func TestUpdateWhenBothErsContextAndUpdateParametersProvided(t *testing.T) {
 func TestUpdateMachineType(t *testing.T) {
 	// given
 	suite := NewBrokerSuiteTest(t)
-	mockBTPOperatorClusterID()
 	defer suite.TearDown()
+	mockBTPOperatorClusterID()
 	id := "InstanceID-machineType"
 
 	resp := suite.CallAPI("PUT", fmt.Sprintf("oauth/cf-eu10/v2/service_instances/%s?accepts_incomplete=true&plan_id=7d55d31d-35ae-4438-bf13-6ffdfa107d9f&service_id=47c9dcbf-ff30-448e-ab36-d3bad66ba281", id), `
@@ -2049,8 +2049,8 @@ func TestUpdateMachineType(t *testing.T) {
 func TestUpdateBTPOperatorCredsSuccess(t *testing.T) {
 	// given
 	suite := NewBrokerSuiteTest(t)
-	mockBTPOperatorClusterID()
 	defer suite.TearDown()
+	mockBTPOperatorClusterID()
 	id := "InstanceID-BTPOperator"
 
 	resp := suite.CallAPI("PUT", fmt.Sprintf("oauth/cf-eu10/v2/service_instances/%s?accepts_incomplete=true&plan_id=7d55d31d-35ae-4438-bf13-6ffdfa107d9f&service_id=47c9dcbf-ff30-448e-ab36-d3bad66ba281", id), `
@@ -2249,8 +2249,8 @@ func TestUpdateNetworkFilterPersisted(t *testing.T) {
 func TestUpdateStoreNetworkFilterAndUpdate(t *testing.T) {
 	// given
 	suite := NewBrokerSuiteTest(t, "2.0")
-	mockBTPOperatorClusterID()
 	defer suite.TearDown()
+	mockBTPOperatorClusterID()
 	id := uuid.New().String()
 
 	resp := suite.CallAPI("PUT", fmt.Sprintf("oauth/v2/service_instances/%s?accepts_incomplete=true", id),
@@ -2320,8 +2320,8 @@ func TestUpdateStoreNetworkFilterAndUpdate(t *testing.T) {
 func TestMultipleUpdateNetworkFilterPersisted(t *testing.T) {
 	// given
 	suite := NewBrokerSuiteTest(t, "2.0")
-	mockBTPOperatorClusterID()
 	defer suite.TearDown()
+	mockBTPOperatorClusterID()
 	id := uuid.New().String()
 
 	resp := suite.CallAPI("PUT", fmt.Sprintf("oauth/v2/service_instances/%s?accepts_incomplete=true", id),

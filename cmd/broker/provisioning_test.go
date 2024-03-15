@@ -76,6 +76,7 @@ func TestCatalog(t *testing.T) {
 func TestProvisioning_HappyPath(t *testing.T) {
 	// given
 	suite := NewProvisioningSuite(t, false, "", false)
+	defer suite.TearDown()
 
 	// when
 	provisioningOperationID := suite.CreateProvisioning(RuntimeOptions{})
@@ -997,6 +998,7 @@ func TestProvisioning_ClusterParameters(t *testing.T) {
 		t.Run(tn, func(t *testing.T) {
 			// given
 			suite := NewProvisioningSuite(t, tc.multiZone, tc.controlPlaneFailureTolerance, tc.includeNewMachineTypes)
+			defer suite.TearDown()
 
 			// when
 			provisioningOperationID := suite.CreateProvisioning(RuntimeOptions{
@@ -1035,6 +1037,7 @@ func TestProvisioning_OIDCValues(t *testing.T) {
 	t.Run("should apply default OIDC values when OIDC object is nil", func(t *testing.T) {
 		// given
 		suite := NewProvisioningSuite(t, false, "", false)
+		defer suite.TearDown()
 		defaultOIDC := fixture.FixOIDCConfigDTO()
 		expectedOIDC := gqlschema.OIDCConfigInput{
 			ClientID:       defaultOIDC.ClientID,
@@ -1065,6 +1068,7 @@ func TestProvisioning_OIDCValues(t *testing.T) {
 	t.Run("should apply default OIDC values when all OIDC object's fields are empty", func(t *testing.T) {
 		// given
 		suite := NewProvisioningSuite(t, false, "", false)
+		defer suite.TearDown()
 		defaultOIDC := fixture.FixOIDCConfigDTO()
 		expectedOIDC := gqlschema.OIDCConfigInput{
 			ClientID:       defaultOIDC.ClientID,
@@ -1098,6 +1102,7 @@ func TestProvisioning_OIDCValues(t *testing.T) {
 	t.Run("should apply provided OIDC configuration", func(t *testing.T) {
 		// given
 		suite := NewProvisioningSuite(t, false, "", false)
+		defer suite.TearDown()
 		providedOIDC := internal.OIDCConfigDTO{
 			ClientID:       "fake-client-id-1",
 			GroupsClaim:    "fakeGroups",
@@ -1136,6 +1141,7 @@ func TestProvisioning_OIDCValues(t *testing.T) {
 	t.Run("should apply default OIDC values on empty OIDC params from input", func(t *testing.T) {
 		// given
 		suite := NewProvisioningSuite(t, false, "", false)
+		defer suite.TearDown()
 		providedOIDC := internal.OIDCConfigDTO{
 			ClientID:  "fake-client-id-1",
 			IssuerURL: "https://testurl.local",
@@ -1173,6 +1179,7 @@ func TestProvisioning_RuntimeAdministrators(t *testing.T) {
 	t.Run("should use UserID as default value for admins list", func(t *testing.T) {
 		// given
 		suite := NewProvisioningSuite(t, false, "", false)
+		defer suite.TearDown()
 		options := RuntimeOptions{
 			UserID: "fake-user-id",
 		}
@@ -1198,6 +1205,7 @@ func TestProvisioning_RuntimeAdministrators(t *testing.T) {
 	t.Run("should apply new admins list", func(t *testing.T) {
 		// given
 		suite := NewProvisioningSuite(t, false, "", false)
+		defer suite.TearDown()
 		options := RuntimeOptions{
 			UserID:        "fake-user-id",
 			RuntimeAdmins: []string{"admin1@test.com", "admin2@test.com"},
@@ -1224,6 +1232,7 @@ func TestProvisioning_RuntimeAdministrators(t *testing.T) {
 	t.Run("should apply empty admin value (list is not empty)", func(t *testing.T) {
 		// given
 		suite := NewProvisioningSuite(t, false, "", false)
+		defer suite.TearDown()
 		options := RuntimeOptions{
 			UserID:        "fake-user-id",
 			RuntimeAdmins: []string{""},
