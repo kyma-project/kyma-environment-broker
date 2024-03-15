@@ -261,6 +261,26 @@ func (o *Operation) EventErrorf(err error, fmt string, args ...any) {
 	events.Errorf(o.InstanceID, o.ID, err, fmt, args...)
 }
 
+func (o *Operation) Merge(operation *Operation) {
+	o.InputCreator = operation.InputCreator
+	o.LastError = operation.LastError
+	o.RuntimeVersion = operation.RuntimeVersion
+	o.DashboardURL = operation.DashboardURL
+	o.Temporary = operation.Temporary
+	o.ClusterConfigurationDeleted = operation.ClusterConfigurationDeleted
+	o.Retries = operation.Retries
+	o.ReconcilerDeregistrationAt = operation.ReconcilerDeregistrationAt
+	o.ExcutedButNotCompleted = operation.ExcutedButNotCompleted
+	o.UserAgent = operation.UserAgent
+	o.UpdatingParameters = operation.UpdatingParameters
+	o.CheckReconcilerStatus = operation.CheckReconcilerStatus
+	o.LastRuntimeState = operation.LastRuntimeState
+	o.RequiresReconcilerUpdate = operation.RequiresReconcilerUpdate
+	o.RuntimeOperation = operation.RuntimeOperation
+	o.ClusterConfigurationApplied = operation.ClusterConfigurationApplied
+	o.KymaTemplate = operation.KymaTemplate
+}
+
 // Orchestration holds all information about an orchestration.
 // Orchestration performs operations of a specific type (UpgradeKymaOperation, UpgradeClusterOperation)
 // on specific targets of SKRs.

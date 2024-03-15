@@ -87,6 +87,7 @@ func (om *UpgradeKymaOperationManager) UpdateOperation(operation internal.Upgrad
 				log.Errorf("while getting operation: %v", err)
 				return operation, 1 * time.Minute, err
 			}
+			op.Merge(&operation.Operation)
 			update(op)
 			updatedOperation, err = om.storage.UpdateUpgradeKymaOperation(*op)
 			if err != nil {
