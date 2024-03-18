@@ -15,7 +15,6 @@
     "editable": true,
     "gnetId": null,
     "graphTooltip": 0,
-    "id": 67,
     "iteration": 1710499040305,
     "links": [],
     "panels": [
@@ -95,7 +94,7 @@
             "mode": "single"
           }
         },
-        "pluginVersion": "7.5.29",
+        "pluginVersion": "",
         "targets": [
           {
             "exemplar": true,
@@ -334,7 +333,7 @@
             }
           ]
         },
-        "pluginVersion": "7.5.29",
+        "pluginVersion": "",
         "targets": [
           {
             "exemplar": true,
@@ -618,7 +617,7 @@
             "mode": "single"
           }
         },
-        "pluginVersion": "7.5.29",
+        "pluginVersion": "",
         "targets": [
           {
             "exemplar": true,
@@ -638,7 +637,10 @@
     ],
     "schemaVersion": 27,
     "style": "dark",
-    "tags": [],
+    "tags": [
+      "kyma-environment-broker",
+      "kcp"
+    ],
     "templating": {
       "list": [
         {
@@ -786,6 +788,6 @@
     "timepicker": {},
     "timezone": "",
     "title": "KCP / Kyma Environment Broker - Provisioned Dev Infrastructure Usage - Business Metrics",
-    "uid": "acHkSW1Ik",
+    "uid": "acHkSW2Ik",
     "version": 27
   }
