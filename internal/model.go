@@ -185,9 +185,7 @@ const (
 )
 
 type Operation struct {
-	// following fields are serialized to JSON and stored in the storage
-	InstanceDetails
-
+	// following fields are stored in the storage
 	ID        string        `json:"-"`
 	Version   int           `json:"-"`
 	CreatedAt time.Time     `json:"-"`
@@ -200,12 +198,12 @@ type Operation struct {
 	Description            string                    `json:"-"`
 	ProvisioningParameters ProvisioningParameters    `json:"-"`
 
-	InputCreator ProvisionerInputCreator `json:"-"`
-
 	// OrchestrationID specifies the origin orchestration which triggers the operation, empty for OSB operations (provisioning/deprovisioning)
-	OrchestrationID string             `json:"-"`
-	FinishedStages  []string           `json:"-"`
-	LastError       kebError.LastError `json:"-"`
+	OrchestrationID string   `json:"-"`
+	FinishedStages  []string `json:"-"`
+
+	// following fields are serialized to JSON and stored in the storage
+	InstanceDetails
 
 	// PROVISIONING
 	RuntimeVersion RuntimeVersionData `json:"runtime_version"`
@@ -215,7 +213,6 @@ type Operation struct {
 	// Temporary indicates that this deprovisioning operation must not remove the instance
 	Temporary                   bool      `json:"temporary"`
 	ClusterConfigurationDeleted bool      `json:"clusterConfigurationDeleted"`
-	Retries                     int       `json:"-"`
 	ReconcilerDeregistrationAt  time.Time `json:"reconcilerDeregistrationAt"`
 	ExcutedButNotCompleted      []string  `json:"excutedButNotCompleted"`
 	UserAgent                   string    `json:"userAgent,omitempty"`
@@ -224,7 +221,17 @@ type Operation struct {
 	UpdatingParameters    UpdatingParametersDTO `json:"updating_parameters"`
 	CheckReconcilerStatus bool                  `json:"check_reconciler_status"`
 
-	// following fields are not stored in the storage
+	// UPGRADE KYMA
+	orchestration.RuntimeOperation `json:"runtime_operation"`
+	ClusterConfigurationApplied    bool `json:"cluster_configuration_applied"`
+
+	// KymaTemplate is read from the configuration then used in the apply_kyma step
+	KymaTemplate string `json:"KymaTemplate"`
+
+	// following fields are not stored in the storage and should be added to the Merge function
+	InputCreator ProvisionerInputCreator `json:"-"`
+	LastError    kebError.LastError      `json:"-"`
+	Retries      int                     `json:"-"`
 
 	// Last runtime state payload
 	LastRuntimeState RuntimeState `json:"-"`
@@ -232,13 +239,6 @@ type Operation struct {
 	// Flag used by the steps regarding BTP-Operator credentials update
 	// denotes whether the payload to reconciler differs from last runtime state
 	RequiresReconcilerUpdate bool `json:"-"`
-
-	// UPGRADE KYMA
-	orchestration.RuntimeOperation `json:"runtime_operation"`
-	ClusterConfigurationApplied    bool `json:"cluster_configuration_applied"`
-
-	// KymaTemplate is read from the configuration then used in the apply_kyma step
-	KymaTemplate string `json:"KymaTemplate"`
 }
 
 type GroupedOperations struct {
@@ -264,21 +264,9 @@ func (o *Operation) EventErrorf(err error, fmt string, args ...any) {
 func (o *Operation) Merge(operation *Operation) {
 	o.InputCreator = operation.InputCreator
 	o.LastError = operation.LastError
-	o.RuntimeVersion = operation.RuntimeVersion
-	o.DashboardURL = operation.DashboardURL
-	o.Temporary = operation.Temporary
-	o.ClusterConfigurationDeleted = operation.ClusterConfigurationDeleted
 	o.Retries = operation.Retries
-	o.ReconcilerDeregistrationAt = operation.ReconcilerDeregistrationAt
-	o.ExcutedButNotCompleted = operation.ExcutedButNotCompleted
-	o.UserAgent = operation.UserAgent
-	o.UpdatingParameters = operation.UpdatingParameters
-	o.CheckReconcilerStatus = operation.CheckReconcilerStatus
 	o.LastRuntimeState = operation.LastRuntimeState
 	o.RequiresReconcilerUpdate = operation.RequiresReconcilerUpdate
-	o.RuntimeOperation = operation.RuntimeOperation
-	o.ClusterConfigurationApplied = operation.ClusterConfigurationApplied
-	o.KymaTemplate = operation.KymaTemplate
 }
 
 // Orchestration holds all information about an orchestration.
