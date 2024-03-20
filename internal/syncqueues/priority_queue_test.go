@@ -191,7 +191,7 @@ func TestPriorityQueueWithCallbacks(t *testing.T) {
 	})
 	t.Run("should extract empty element", func(t *testing.T) {
 		e, ok := q.Extract()
-		assert.True(t, ok)
+		assert.False(t, ok)
 		assert.Equal(t, "", e.SubaccountID)
 		assert.Equal(t, "", e.BetaEnabled)
 		assert.Equal(t, int64(0), e.ModifiedAt)
