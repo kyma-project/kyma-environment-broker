@@ -24,12 +24,12 @@ const (
 
 type Updater struct {
 	k8sClient dynamic.Interface
-	queue     syncqueues.PriorityQueue
+	queue     syncqueues.MultiConsumerPriorityQueue
 	kymaGVR   schema.GroupVersionResource
 	logger    *slog.Logger
 }
 
-func NewUpdater(k8sClient dynamic.Interface, queue syncqueues.PriorityQueue, gvr schema.GroupVersionResource) (*Updater, error) {
+func NewUpdater(k8sClient dynamic.Interface, queue syncqueues.MultiConsumerPriorityQueue, gvr schema.GroupVersionResource) (*Updater, error) {
 	logger := slog.New(slog.NewTextHandler(os.Stdout, nil))
 
 	return &Updater{
@@ -42,11 +42,11 @@ func NewUpdater(k8sClient dynamic.Interface, queue syncqueues.PriorityQueue, gvr
 
 func (u *Updater) Run() error {
 	for {
-		if u.queue.IsEmpty() {
+		item, ok := u.queue.Extract()
+		if !ok {
 			time.Sleep(emptyQueueSleepDuration)
 			continue
 		}
-		item := u.queue.Extract()
 		unstructuredList, err := u.k8sClient.Resource(u.kymaGVR).Namespace(namespace).List(context.Background(), metav1.ListOptions{
 			LabelSelector: fmt.Sprintf(subaccountIdLabelFormat, item.SubaccountID),
 		})

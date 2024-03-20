@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"log/slog"
 	"sync"
+	"time"
 )
 
 // Modified priority queue implementation based on heap
@@ -12,32 +13,40 @@ import (
 // 		we insert element with non-existing subaccountID,
 // 		we update element with existing subaccountID if it is outdated
 
-type SubaccountAwarePriorityQueue struct {
-	elements []QueueElement
-	idx      map[string]int
-	size     int
-	mutex    sync.Mutex
-	log      *slog.Logger
+type SubaccountAwarePriorityQueueWithCallbacks struct {
+	elements     []ElementWrapper
+	idx          map[string]int
+	size         int
+	mutex        sync.Mutex
+	log          *slog.Logger
+	eventHandler *EventHandler
 }
 
-func NewPriorityQueue(log *slog.Logger) *SubaccountAwarePriorityQueue {
-	return NewPriorityQueueForSize(log, DefaultQueueSize)
+func NewPriorityQueueWithCallbacks(log *slog.Logger, eventHandler *EventHandler) *SubaccountAwarePriorityQueueWithCallbacks {
+	return NewPriorityQueueWithCallbacksForSize(log, eventHandler, DefaultQueueSize)
 }
 
-func NewPriorityQueueForSize(log *slog.Logger, initialQueueSize int) *SubaccountAwarePriorityQueue {
-	return &SubaccountAwarePriorityQueue{
-		elements: make([]QueueElement, initialQueueSize),
-		idx:      make(map[string]int),
-		size:     0,
-		log:      log,
+func NewPriorityQueueWithCallbacksForSize(log *slog.Logger, eventHandler *EventHandler, initialQueueSize int) *SubaccountAwarePriorityQueueWithCallbacks {
+	return &SubaccountAwarePriorityQueueWithCallbacks{
+		elements:     make([]ElementWrapper, initialQueueSize),
+		idx:          make(map[string]int),
+		size:         0,
+		log:          log,
+		eventHandler: eventHandler,
 	}
 }
 
-func (q *SubaccountAwarePriorityQueue) Insert(e QueueElement) {
+func (q *SubaccountAwarePriorityQueueWithCallbacks) Insert(element QueueElement) {
 	q.mutex.Lock()
 	defer q.mutex.Unlock()
+
+	e := ElementWrapper{
+		QueueElement: element,
+		entryTime:    time.Now().UnixNano(),
+	}
+
 	if q.size == cap(q.elements) {
-		newElements := make([]QueueElement, q.size*2)
+		newElements := make([]ElementWrapper, q.size*2)
 		copy(newElements, q.elements)
 		q.elements = newElements
 		q.log.Debug(fmt.Sprintf("Queue is full, resized to %v", q.size*2))
@@ -61,34 +70,43 @@ func (q *SubaccountAwarePriorityQueue) Insert(e QueueElement) {
 	q.elements[q.size] = e
 	q.size++
 	q.siftUp()
+
+	if q.eventHandler != nil && q.eventHandler.OnInsert != nil {
+		q.eventHandler.OnInsert(q.size)
+	}
 }
 
-func (q *SubaccountAwarePriorityQueue) Extract() QueueElement {
+func (q *SubaccountAwarePriorityQueueWithCallbacks) Extract() (QueueElement, bool) {
 	q.mutex.Lock()
 	defer q.mutex.Unlock()
 	if q.size == 0 {
-		return QueueElement{}
+		return QueueElement{}, false
 	}
 	e := q.elements[0]
 	q.swap(0, q.size-1)
 	q.size--
 	delete(q.idx, e.SubaccountID)
 	q.siftDown()
-	return e
+
+	if q.eventHandler != nil && q.eventHandler.OnExtract != nil {
+		q.eventHandler.OnExtract(q.size, e.entryTime-time.Now().UnixNano())
+	}
+	return e.QueueElement, true
 }
 
-func (q *SubaccountAwarePriorityQueue) IsEmpty() bool {
+func (q *SubaccountAwarePriorityQueueWithCallbacks) IsEmpty() bool {
 	q.mutex.Lock()
 	defer q.mutex.Unlock()
+
 	return q.size == 0
 }
 
-func (q *SubaccountAwarePriorityQueue) siftUp() {
+func (q *SubaccountAwarePriorityQueueWithCallbacks) siftUp() {
 	i := q.size - 1
 	q.siftUpFrom(i)
 }
 
-func (q *SubaccountAwarePriorityQueue) siftUpFrom(i int) {
+func (q *SubaccountAwarePriorityQueueWithCallbacks) siftUpFrom(i int) {
 	for i > 0 {
 		parent := (i - 1) / 2
 		if q.elements[i].ModifiedAt < q.elements[parent].ModifiedAt {
@@ -100,14 +118,14 @@ func (q *SubaccountAwarePriorityQueue) siftUpFrom(i int) {
 	}
 }
 
-func (q *SubaccountAwarePriorityQueue) swap(i int, parent int) {
+func (q *SubaccountAwarePriorityQueueWithCallbacks) swap(i int, parent int) {
 	q.elements[i],
 		q.elements[parent],
 		q.idx[q.elements[i].SubaccountID],
 		q.idx[q.elements[parent].SubaccountID] = q.elements[parent], q.elements[i], q.idx[q.elements[parent].SubaccountID], q.idx[q.elements[i].SubaccountID]
 }
 
-func (q *SubaccountAwarePriorityQueue) siftDown() {
+func (q *SubaccountAwarePriorityQueueWithCallbacks) siftDown() {
 	i := 0
 	for {
 		left := 2*i + 1

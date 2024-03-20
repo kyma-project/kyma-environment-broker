@@ -3,6 +3,8 @@ package kymacustomresource
 import (
 	"context"
 	"fmt"
+	"log/slog"
+	"os"
 	"testing"
 	"time"
 
@@ -31,6 +33,8 @@ const (
 	timeout      = 2 * time.Second
 )
 
+var log = slog.New(slog.NewTextHandler(os.Stderr, nil))
+
 func TestUpdater(t *testing.T) {
 	// given
 	gvr := schema.GroupVersionResource{Group: group, Version: version, Resource: resource}
@@ -54,8 +58,7 @@ func TestUpdater(t *testing.T) {
 		mockKymaCR.SetNamespace(namespace)
 		require.NoError(t, unstructured.SetNestedField(mockKymaCR.Object, nil, "metadata", "creationTimestamp"))
 
-		var queue syncqueues.PriorityQueue
-		queue = &fakePriorityQueue{}
+		queue := syncqueues.NewPriorityQueueWithCallbacksForSize(log, nil, 4)
 		fakeK8sClient := fake.NewSimpleDynamicClient(scheme, mockKymaCR)
 		updater, err := NewUpdater(fakeK8sClient, queue, gvr)
 		require.NoError(t, err)
@@ -83,8 +86,7 @@ func TestUpdater(t *testing.T) {
 		mockKymaCR.SetLabels(map[string]string{subaccountIdLabelKey: subaccountID})
 		require.NoError(t, unstructured.SetNestedField(mockKymaCR.Object, nil, "metadata", "creationTimestamp"))
 
-		var queue syncqueues.PriorityQueue
-		queue = &fakePriorityQueue{}
+		queue := syncqueues.NewPriorityQueueWithCallbacksForSize(log, nil, 4)
 		queue.Insert(syncqueues.QueueElement{
 			SubaccountID: subaccountID,
 			BetaEnabled:  "true",
@@ -127,8 +129,8 @@ func TestUpdater(t *testing.T) {
 		mockKymaCR2 := mockKymaCR1.DeepCopy()
 		mockKymaCR2.SetName(kymaCRName2)
 
-		var queue syncqueues.PriorityQueue
-		queue = &fakePriorityQueue{}
+		queue := syncqueues.NewPriorityQueueWithCallbacksForSize(log, nil, 4)
+
 		queue.Insert(syncqueues.QueueElement{
 			SubaccountID: subaccountID,
 			BetaEnabled:  "true",
@@ -178,8 +180,7 @@ func TestUpdater(t *testing.T) {
 		mockKymaCR1.SetLabels(map[string]string{subaccountIdLabelKey: subaccountID})
 		mockKymaCR2.SetLabels(map[string]string{subaccountIdLabelKey: otherSubaccountID})
 
-		var queue syncqueues.PriorityQueue
-		queue = &fakePriorityQueue{}
+		queue := syncqueues.NewPriorityQueueWithCallbacksForSize(log, nil, 4)
 		queue.Insert(syncqueues.QueueElement{
 			SubaccountID: subaccountID,
 			BetaEnabled:  "true",
@@ -215,22 +216,4 @@ func TestUpdater(t *testing.T) {
 		assert.NotContains(t, actual.GetLabels(), betaEnabledLabelKey)
 		assert.True(t, queue.IsEmpty())
 	})
-}
-
-type fakePriorityQueue struct {
-	elements []syncqueues.QueueElement
-}
-
-func (f *fakePriorityQueue) Insert(e syncqueues.QueueElement) {
-	f.elements = append(f.elements, e)
-}
-
-func (f *fakePriorityQueue) Extract() syncqueues.QueueElement {
-	extractedElement := f.elements[0]
-	f.elements = f.elements[1:]
-	return extractedElement
-}
-
-func (f *fakePriorityQueue) IsEmpty() bool {
-	return len(f.elements) == 0
 }

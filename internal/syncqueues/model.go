@@ -4,12 +4,6 @@ const (
 	DefaultQueueSize = 2048
 )
 
-type PriorityQueue interface {
-	Insert(QueueElement)
-	Extract() QueueElement
-	IsEmpty() bool
-}
-
 type MultiConsumerPriorityQueue interface {
 	Insert(QueueElement)
 	Extract() (QueueElement, bool)
