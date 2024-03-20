@@ -30,7 +30,7 @@
     "closestEntitlementManagedParentGUID": "54130280-9eef-4fab-94b6-be2bea4fa1d0",
     "region": "eu10-canary",
     "subdomain": "subaccount-2-efgh",
-    "betaEnabled": false,
+    "betaEnabled": true,
     "usedForProduction": "NOT_USED_FOR_PRODUCTION",
     "description": null,
     "state": "OK",
