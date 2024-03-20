@@ -63,18 +63,18 @@ func (q *SubaccountAwarePriorityQueue) Insert(e QueueElement) {
 	q.siftUp()
 }
 
-func (q *SubaccountAwarePriorityQueue) Extract() (QueueElement, bool) {
+func (q *SubaccountAwarePriorityQueue) Extract() QueueElement {
 	q.mutex.Lock()
 	defer q.mutex.Unlock()
 	if q.size == 0 {
-		return QueueElement{}, false
+		return QueueElement{}
 	}
 	e := q.elements[0]
 	q.swap(0, q.size-1)
 	q.size--
 	delete(q.idx, e.SubaccountID)
 	q.siftDown()
-	return e, true
+	return e
 }
 
 func (q *SubaccountAwarePriorityQueue) IsEmpty() bool {

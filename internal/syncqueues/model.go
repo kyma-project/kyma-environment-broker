@@ -10,6 +10,12 @@ type PriorityQueue interface {
 	IsEmpty() bool
 }
 
+type MultiConsumerPriorityQueue interface {
+	Insert(QueueElement)
+	Extract() (QueueElement, bool)
+	IsEmpty() bool
+}
+
 type ElementWrapper struct {
 	QueueElement
 	entryTime int64
