@@ -6,7 +6,7 @@ const (
 
 type PriorityQueue interface {
 	Insert(QueueElement)
-	Extract() (QueueElement, bool)
+	Extract() QueueElement
 	IsEmpty() bool
 }
 
