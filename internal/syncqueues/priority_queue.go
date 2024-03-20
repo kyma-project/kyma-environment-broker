@@ -40,7 +40,7 @@ func (q *SubaccountAwarePriorityQueue) Insert(e QueueElement) {
 		newElements := make([]QueueElement, q.size*2)
 		copy(newElements, q.elements)
 		q.elements = newElements
-		q.log.Info(fmt.Sprintf("Queue is full, resized to %v", q.size*2))
+		q.log.Debug(fmt.Sprintf("Queue is full, resized to %v", q.size*2))
 	}
 	if idx, ok := q.idx[e.SubaccountID]; ok {
 		if q.elements[idx].ModifiedAt > e.ModifiedAt {
@@ -63,19 +63,18 @@ func (q *SubaccountAwarePriorityQueue) Insert(e QueueElement) {
 	q.siftUp()
 }
 
-func (q *SubaccountAwarePriorityQueue) Extract() QueueElement {
+func (q *SubaccountAwarePriorityQueue) Extract() (QueueElement, bool) {
 	q.mutex.Lock()
 	defer q.mutex.Unlock()
 	if q.size == 0 {
-		q.log.Error("Queue is empty, cannot extract element")
-		return QueueElement{}
+		return QueueElement{}, false
 	}
 	e := q.elements[0]
 	q.swap(0, q.size-1)
 	q.size--
 	delete(q.idx, e.SubaccountID)
 	q.siftDown()
-	return e
+	return e, true
 }
 
 func (q *SubaccountAwarePriorityQueue) IsEmpty() bool {
