@@ -23,7 +23,7 @@ func TestSchemaGenerator(t *testing.T) {
 
 	tests := []struct {
 		name                string
-		generator           func(map[string]string, []string, bool, bool) *map[string]interface{}
+		generator           func(map[string]string, map[string]string, []string, bool, bool) *map[string]interface{}
 		machineTypes        []string
 		machineTypesDisplay map[string]string
 		regionDisplay       map[string]string
@@ -35,8 +35,8 @@ func TestSchemaGenerator(t *testing.T) {
 	}{
 		{
 			name: "AWS schema is correct",
-			generator: func(machinesDisplay map[string]string, machines []string, additionalParams, update bool) *map[string]interface{} {
-				return AWSSchema(machinesDisplay, machines, additionalParams, update, false)
+			generator: func(machinesDisplay, regionsDisplay map[string]string, machines []string, additionalParams, update bool) *map[string]interface{} {
+				return AWSSchema(machinesDisplay, regionsDisplay, machines, additionalParams, update, false)
 			},
 			machineTypes:        AwsMachinesNames(),
 			machineTypesDisplay: AwsMachinesDisplay(),
@@ -48,8 +48,8 @@ func TestSchemaGenerator(t *testing.T) {
 		},
 		{
 			name: "AWS reduced schema is correct",
-			generator: func(machinesDisplay map[string]string, machines []string, additionalParams, update bool) *map[string]interface{} {
-				return AWSSchema(machinesDisplay, machines, additionalParams, update, false)
+			generator: func(machinesDisplay, regionsDisplay map[string]string, machines []string, additionalParams, update bool) *map[string]interface{} {
+				return AWSSchema(machinesDisplay, regionsDisplay, machines, additionalParams, update, false)
 			},
 			machineTypes:        awsMachineNamesReduced,
 			machineTypesDisplay: awsMachinesDisplayReduced,
@@ -61,8 +61,8 @@ func TestSchemaGenerator(t *testing.T) {
 		},
 		{
 			name: "AWS schema with EU access restriction is correct",
-			generator: func(machinesDisplay map[string]string, machines []string, additionalParams, update bool) *map[string]interface{} {
-				return AWSSchema(machinesDisplay, machines, additionalParams, update, true)
+			generator: func(machinesDisplay, regionsDisplay map[string]string, machines []string, additionalParams, update bool) *map[string]interface{} {
+				return AWSSchema(machinesDisplay, regionsDisplay, machines, additionalParams, update, true)
 			},
 			machineTypes:        AwsMachinesNames(),
 			machineTypesDisplay: AwsMachinesDisplay(),
@@ -74,8 +74,8 @@ func TestSchemaGenerator(t *testing.T) {
 		},
 		{
 			name: "Azure schema is correct",
-			generator: func(machinesDisplay map[string]string, machines []string, additionalParams, update bool) *map[string]interface{} {
-				return AzureSchema(machinesDisplay, machines, additionalParams, update, false)
+			generator: func(machinesDisplay, regionsDisplay map[string]string, machines []string, additionalParams, update bool) *map[string]interface{} {
+				return AzureSchema(machinesDisplay, regionsDisplay, machines, additionalParams, update, false)
 			},
 			machineTypes:        AzureMachinesNames(),
 			machineTypesDisplay: AzureMachinesDisplay(),
@@ -87,8 +87,8 @@ func TestSchemaGenerator(t *testing.T) {
 		},
 		{
 			name: "Azure schema with EU access restriction is correct",
-			generator: func(machinesDisplay map[string]string, machines []string, additionalParams, update bool) *map[string]interface{} {
-				return AzureSchema(machinesDisplay, machines, additionalParams, update, true)
+			generator: func(machinesDisplay, regionsDisplay map[string]string, machines []string, additionalParams, update bool) *map[string]interface{} {
+				return AzureSchema(machinesDisplay, regionsDisplay, machines, additionalParams, update, true)
 			},
 			machineTypes:        AzureMachinesNames(),
 			machineTypesDisplay: AzureMachinesDisplay(),
@@ -100,8 +100,8 @@ func TestSchemaGenerator(t *testing.T) {
 		},
 		{
 			name: "AzureLite schema is correct",
-			generator: func(machinesDisplay map[string]string, machines []string, additionalParams, update bool) *map[string]interface{} {
-				return AzureLiteSchema(machinesDisplay, machines, additionalParams, update, false)
+			generator: func(machinesDisplay, regionsDisplay map[string]string, machines []string, additionalParams, update bool) *map[string]interface{} {
+				return AzureLiteSchema(machinesDisplay, regionsDisplay, machines, additionalParams, update, false)
 			},
 			machineTypes:        AzureLiteMachinesNames(),
 			machineTypesDisplay: AzureLiteMachinesDisplay(),
@@ -113,8 +113,8 @@ func TestSchemaGenerator(t *testing.T) {
 		},
 		{
 			name: "AzureLite schema with EU access restriction is correct",
-			generator: func(machinesDisplay map[string]string, machines []string, additionalParams, update bool) *map[string]interface{} {
-				return AzureLiteSchema(machinesDisplay, machines, additionalParams, update, true)
+			generator: func(machinesDisplay, regionsDisplay map[string]string, machines []string, additionalParams, update bool) *map[string]interface{} {
+				return AzureLiteSchema(machinesDisplay, regionsDisplay, machines, additionalParams, update, true)
 			},
 			machineTypes:        AzureLiteMachinesNames(),
 			machineTypesDisplay: AzureLiteMachinesDisplay(),
@@ -126,7 +126,7 @@ func TestSchemaGenerator(t *testing.T) {
 		},
 		{
 			name: "Freemium schema is correct",
-			generator: func(machinesDisplay map[string]string, machines []string, additionalParams, update bool) *map[string]interface{} {
+			generator: func(machinesDisplay, regionsDisplay map[string]string, machines []string, additionalParams, update bool) *map[string]interface{} {
 				return FreemiumSchema(internal.Azure, additionalParams, update, false)
 			},
 			machineTypes:   []string{},
@@ -138,7 +138,7 @@ func TestSchemaGenerator(t *testing.T) {
 		},
 		{
 			name: " Freemium schema is correct",
-			generator: func(machinesDisplay map[string]string, machines []string, additionalParams, update bool) *map[string]interface{} {
+			generator: func(machinesDisplay, regionsDisplay map[string]string, machines []string, additionalParams, update bool) *map[string]interface{} {
 				return FreemiumSchema(internal.AWS, additionalParams, update, false)
 			},
 			machineTypes:   []string{},
@@ -150,7 +150,7 @@ func TestSchemaGenerator(t *testing.T) {
 		},
 		{
 			name: "Freemium schema with EU access restriction is correct",
-			generator: func(machinesDisplay map[string]string, machines []string, additionalParams, update bool) *map[string]interface{} {
+			generator: func(machinesDisplay, regionsDisplay map[string]string, machines []string, additionalParams, update bool) *map[string]interface{} {
 				return FreemiumSchema(internal.Azure, additionalParams, update, true)
 			},
 			machineTypes:   []string{},
@@ -162,7 +162,7 @@ func TestSchemaGenerator(t *testing.T) {
 		},
 		{
 			name: "Freemium schema with EU access restriction is correct",
-			generator: func(machinesDisplay map[string]string, machines []string, additionalParams, update bool) *map[string]interface{} {
+			generator: func(machinesDisplay, regionsDisplay map[string]string, machines []string, additionalParams, update bool) *map[string]interface{} {
 				return FreemiumSchema(internal.AWS, additionalParams, update, true)
 			},
 			machineTypes:   []string{},
@@ -174,12 +174,12 @@ func TestSchemaGenerator(t *testing.T) {
 		},
 		{
 			name: "GCP schema is correct",
-			generator: func(machinesDisplay map[string]string, machines []string, additionalParams, update bool) *map[string]interface{} {
-				return GCPSchema(machinesDisplay, machines, additionalParams, update)
+			generator: func(machinesDisplay, regionsDisplay map[string]string, machines []string, additionalParams, update bool) *map[string]interface{} {
+				return GCPSchema(machinesDisplay, regionsDisplay, machines, additionalParams, update)
 			},
 			machineTypes:        GcpMachinesNames(),
 			machineTypesDisplay: GcpMachinesDisplay(),
-			regionDisplay:       GCPRegionsDisplay(),
+			regionDisplay:       GcpRegionsDisplay(),
 			path:                "gcp",
 			file:                "gcp-schema.json",
 			updateFile:          "update-gcp-schema.json",
@@ -188,8 +188,8 @@ func TestSchemaGenerator(t *testing.T) {
 		},
 		{
 			name: "SapConvergedCloud schema is correct",
-			generator: func(machinesDisplay map[string]string, machines []string, additionalParams, update bool) *map[string]interface{} {
-				return SapConvergedCloudSchema(machinesDisplay, machines, additionalParams, update)
+			generator: func(machinesDisplay, regionsDisplay map[string]string, machines []string, additionalParams, update bool) *map[string]interface{} {
+				return SapConvergedCloudSchema(machinesDisplay, regionsDisplay, machines, additionalParams, update)
 			},
 			machineTypes:        SapConvergedCloudMachinesNames(),
 			machineTypesDisplay: SapConvergedCloudMachinesDisplay(),
@@ -201,7 +201,7 @@ func TestSchemaGenerator(t *testing.T) {
 		},
 		{
 			name: "Trial schema is correct",
-			generator: func(machinesDisplay map[string]string, machines []string, additionalParams, update bool) *map[string]interface{} {
+			generator: func(machinesDisplay, regionsDisplay map[string]string, machines []string, additionalParams, update bool) *map[string]interface{} {
 				return TrialSchema(additionalParams, update)
 			},
 			machineTypes:   []string{},
@@ -213,7 +213,7 @@ func TestSchemaGenerator(t *testing.T) {
 		},
 		{
 			name: "Own cluster schema is correct",
-			generator: func(machinesDisplay map[string]string, machines []string, additionalParams, update bool) *map[string]interface{} {
+			generator: func(machinesDisplay, regionsDisplay map[string]string, machines []string, additionalParams, update bool) *map[string]interface{} {
 				return OwnClusterSchema(update)
 			},
 			machineTypes:   []string{},
@@ -226,16 +226,16 @@ func TestSchemaGenerator(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got := tt.generator(tt.machineTypesDisplay, tt.machineTypes, false, false)
+			got := tt.generator(tt.machineTypesDisplay, tt.regionDisplay, tt.machineTypes, false, false)
 			validateSchema(t, Marshal(got), tt.path+"/"+tt.file)
 
-			got = tt.generator(tt.machineTypesDisplay, tt.machineTypes, false, true)
+			got = tt.generator(tt.machineTypesDisplay, tt.regionDisplay, tt.machineTypes, false, true)
 			validateSchema(t, Marshal(got), tt.path+"/"+tt.updateFile)
 
-			got = tt.generator(tt.machineTypesDisplay, tt.machineTypes, true, false)
+			got = tt.generator(tt.machineTypesDisplay, tt.regionDisplay, tt.machineTypes, true, false)
 			validateSchema(t, Marshal(got), tt.path+"/"+tt.fileOIDC)
 
-			got = tt.generator(tt.machineTypesDisplay, tt.machineTypes, true, true)
+			got = tt.generator(tt.machineTypesDisplay, tt.regionDisplay, tt.machineTypes, true, true)
 			validateSchema(t, Marshal(got), tt.path+"/"+tt.updateFileOIDC)
 		})
 	}
