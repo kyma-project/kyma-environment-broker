@@ -26,6 +26,7 @@ func TestSchemaGenerator(t *testing.T) {
 		generator           func(map[string]string, []string, bool, bool) *map[string]interface{}
 		machineTypes        []string
 		machineTypesDisplay map[string]string
+		regionDisplay       map[string]string
 		path                string
 		file                string
 		updateFile          string
@@ -178,6 +179,7 @@ func TestSchemaGenerator(t *testing.T) {
 			},
 			machineTypes:        GcpMachinesNames(),
 			machineTypesDisplay: GcpMachinesDisplay(),
+			regionDisplay:       GCPRegionsDisplay(),
 			path:                "gcp",
 			file:                "gcp-schema.json",
 			updateFile:          "update-gcp-schema.json",

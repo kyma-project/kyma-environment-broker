@@ -100,7 +100,19 @@ func GCPRegions() []string {
 	return []string{
 		"europe-west3",
 		"asia-south1",
-		"us-central1"}
+		"us-central1",
+		"me-central2",
+		"asia-northeast2"}
+}
+
+func GCPRegionsDisplay() map[string]string {
+	return map[string]string{
+		"europe-west3":    "europe-west3 (Europe, Frankfurt)",
+		"asia-south1":     "asia-south1 (India, Mumbai)",
+		"us-central1":     "us-central1 (US Central, IA)",
+		"me-central2":     "me-central2 (KSA, Dammam)",
+		"asia-northeast2": "asia-northeast2 (Japan, Osaka)",
+	}
 }
 
 func AWSRegions(euRestrictedAccess bool) []string {
@@ -275,33 +287,33 @@ func requiredOwnClusterSchemaProperties() []string {
 }
 
 func SapConvergedCloudSchema(machineTypesDisplay map[string]string, machineTypes []string, additionalParams, update bool) *map[string]interface{} {
-	properties := NewProvisioningProperties(machineTypesDisplay, machineTypes, SapConvergedCloudRegions(), update)
+	properties := NewProvisioningProperties(machineTypesDisplay, nil, machineTypes, SapConvergedCloudRegions(), update)
 	return createSchemaWithProperties(properties, additionalParams, update, requiredSchemaProperties())
 }
 
 func PreviewSchema(machineTypesDisplay map[string]string, machineTypes []string, additionalParams, update bool, euAccessRestricted bool) *map[string]interface{} {
-	properties := NewProvisioningProperties(machineTypesDisplay, machineTypes, AWSRegions(euAccessRestricted), update)
+	properties := NewProvisioningProperties(machineTypesDisplay, nil, machineTypes, AWSRegions(euAccessRestricted), update)
 	properties.Networking = NewNetworkingSchema()
 	return createSchemaWithProperties(properties, additionalParams, update, requiredSchemaProperties())
 }
 
 func GCPSchema(machineTypesDisplay map[string]string, machineTypes []string, additionalParams, update bool) *map[string]interface{} {
-	properties := NewProvisioningProperties(machineTypesDisplay, machineTypes, GCPRegions(), update)
+	properties := NewProvisioningProperties(machineTypesDisplay, GCPRegionsDisplay(), machineTypes, GCPRegions(), update)
 	return createSchemaWithProperties(properties, additionalParams, update, requiredSchemaProperties())
 }
 
 func AWSSchema(machineTypesDisplay map[string]string, machineTypes []string, additionalParams, update bool, euAccessRestricted bool) *map[string]interface{} {
-	properties := NewProvisioningProperties(machineTypesDisplay, machineTypes, AWSRegions(euAccessRestricted), update)
+	properties := NewProvisioningProperties(machineTypesDisplay, nil, machineTypes, AWSRegions(euAccessRestricted), update)
 	return createSchemaWithProperties(properties, additionalParams, update, requiredSchemaProperties())
 }
 
 func AzureSchema(machineTypesDisplay map[string]string, machineTypes []string, additionalParams, update bool, euAccessRestricted bool) *map[string]interface{} {
-	properties := NewProvisioningProperties(machineTypesDisplay, machineTypes, AzureRegions(euAccessRestricted), update)
+	properties := NewProvisioningProperties(machineTypesDisplay, nil, machineTypes, AzureRegions(euAccessRestricted), update)
 	return createSchemaWithProperties(properties, additionalParams, update, requiredSchemaProperties())
 }
 
 func AzureLiteSchema(machineTypesDisplay map[string]string, machineTypes []string, additionalParams, update bool, euAccessRestricted bool) *map[string]interface{} {
-	properties := NewProvisioningProperties(machineTypesDisplay, machineTypes, AzureRegions(euAccessRestricted), update)
+	properties := NewProvisioningProperties(machineTypesDisplay, nil, machineTypes, AzureRegions(euAccessRestricted), update)
 
 	properties.AutoScalerMax.Minimum = 2
 	properties.AutoScalerMin.Minimum = 2
