@@ -191,6 +191,23 @@ func TestInstance(t *testing.T) {
 		assert.Equal(t, 6, len(subaccounts))
 	})
 
+	t.Run("Should no distinct subaccounts from empty table of active instances", func(t *testing.T) {
+		storageCleanup, brokerStorage, err := GetStorageForDatabaseTests()
+		require.NoError(t, err)
+		require.NotNil(t, brokerStorage)
+		defer func() {
+			err := storageCleanup()
+			assert.NoError(t, err)
+		}()
+
+		// when
+		subaccounts, err := brokerStorage.Instances().GetDistinctSubAccounts()
+		require.NoError(t, err)
+
+		// then
+		assert.Equal(t, 0, len(subaccounts))
+	})
+
 	t.Run("Should fetch instances along with their operations", func(t *testing.T) {
 		storageCleanup, brokerStorage, err := GetStorageForDatabaseTests()
 		require.NoError(t, err)

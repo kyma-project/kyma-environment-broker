@@ -44,6 +44,9 @@ func (r readSession) GetDistinctSubAccounts() ([]string, dberr.Error) {
 		LoadOne(&subAccounts)
 
 	if err != nil {
+		if err == dbr.ErrNotFound {
+			return []string{}, nil
+		}
 		return []string{}, dberr.Internal("Failed to get distinct subaccounts: %s", err)
 	}
 

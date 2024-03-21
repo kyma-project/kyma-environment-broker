@@ -44,7 +44,7 @@ func NewGetInstance(cfg Config,
 // GET /v2/service_instances/{instance_id}
 func (b *GetInstanceEndpoint) GetInstance(_ context.Context, instanceID string, _ domain.FetchInstanceDetails) (domain.GetInstanceDetailsSpec, error) {
 	logger := b.log.WithField("instanceID", instanceID)
-	logger.Infof("GetInstance called")
+	logger.Infof("	GetInstance called")
 
 	instance, err := b.instancesStorage.GetByID(instanceID)
 	if err != nil {
