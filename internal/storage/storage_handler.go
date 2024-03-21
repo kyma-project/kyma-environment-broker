@@ -137,19 +137,13 @@ func failOnNotEmptyDb(db *dbr.Connection) {
 		return exists, nil
 	}
 
-	exists, err := tableExists(postsql.OperationTableName)
-	if err != nil {
-		panic(fmt.Sprintf("cannot verify if table %s exists: %s", postsql.OperationTableName, err.Error()))
-	}
-	if exists {
-		panic(fmt.Sprintf("in db, data for %s are in table", postsql.OperationTableName))
-	}
-
-	exists, err = tableExists(postsql.InstancesTableName)
-	if err != nil {
-		panic(fmt.Sprintf("cannot verify if table %s exists: %s", postsql.InstancesTableName, err.Error()))
-	}
-	if exists {
-		panic(fmt.Sprintf("in db, data for %s are in table", postsql.InstancesTableName))
+	for _, table := range []string{postsql.OperationTableName, postsql.SubaccountStatesTableName, postsql.InstancesTableName} {
+		exists, err := tableExists(table)
+		if err != nil {
+			panic(fmt.Sprintf("cannot verify if table %s exists: %s", table, err.Error()))
+		}
+		if exists {
+			panic(fmt.Sprintf("in db, data for %s are in table", table))
+		}
 	}
 }

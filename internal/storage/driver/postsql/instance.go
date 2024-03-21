@@ -553,3 +553,27 @@ func (s *Instance) List(filter dbmodel.InstanceFilter) ([]internal.Instance, int
 	}
 	return instances, count, totalCount, err
 }
+
+func (s *Instance) ListDeletedInstanceIDs(batchSize int) ([]string, error) {
+	ids, err := s.NewReadSession().ListDeletedInstanceIDs(batchSize)
+	if err != nil {
+		return nil, err
+	}
+	return ids, nil
+}
+
+func (s *Instance) DeletedInstancesStatistics() (internal.DeletedStats, error) {
+	numberOfOperations, err := s.NewReadSession().NumberOfOperationsForDeletedInstances()
+	if err != nil {
+		return internal.DeletedStats{}, err
+	}
+
+	numberOfInstances, err := s.NewReadSession().NumberOfDeletedInstances()
+	if err != nil {
+		return internal.DeletedStats{}, err
+	}
+	return internal.DeletedStats{
+		NumberOfDeletedInstances:              numberOfInstances,
+		NumberOfOperationsForDeletedInstances: numberOfOperations,
+	}, nil
+}

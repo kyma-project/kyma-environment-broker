@@ -27,11 +27,15 @@ type Instances interface {
 	InsertWithoutEncryption(instance internal.Instance) error
 	UpdateWithoutEncryption(instance internal.Instance) (*internal.Instance, error)
 	ListWithoutDecryption(dbmodel.InstanceFilter) ([]internal.Instance, int, int, error)
+	ListDeletedInstanceIDs(int) ([]string, error)
+
+	DeletedInstancesStatistics() (internal.DeletedStats, error)
 }
 
 type InstancesArchived interface {
 	GetByInstanceID(instanceId string) (internal.InstanceArchived, error)
 	Insert(instance internal.InstanceArchived) error
+	TotalNumberOfInstancesArchived() (int, error)
 }
 
 //go:generate mockery --name=Operations --output=automock --outpkg=mocks --case=underscore

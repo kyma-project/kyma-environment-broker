@@ -44,6 +44,9 @@ func (r readSession) GetDistinctSubAccounts() ([]string, dberr.Error) {
 		LoadOne(&subAccounts)
 
 	if err != nil {
+		if err == dbr.ErrNotFound {
+			return []string{}, nil
+		}
 		return []string{}, dberr.Internal("Failed to get distinct subaccounts: %s", err)
 	}
 
@@ -942,5 +945,55 @@ func (r readSession) getOrchestrationCount(filter dbmodel.OrchestrationFilter) (
 	addOrchestrationFilters(stmt, filter)
 	err := stmt.LoadOne(&res)
 
+	return res.Total, err
+}
+
+func (r readSession) ListDeletedInstanceIDs(amount int) ([]string, error) {
+	rows, err := r.session.Query(fmt.Sprintf("select distinct(instance_id) from operations where instance_id not in (select instance_id from instances) limit %d", amount))
+	if err != nil {
+		return []string{}, err
+	}
+	defer rows.Close()
+	var ids []string
+	for rows.Next() {
+		var id string
+		err := rows.Scan(&id)
+		if err != nil {
+			return ids, err
+		}
+		ids = append(ids, id)
+	}
+	return ids, err
+}
+
+func (r readSession) NumberOfOperationsForDeletedInstances() (int, error) {
+	var res struct {
+		Total int
+	}
+	err := r.session.Select("count(*) as total").
+		From(OperationTableName).
+		Where("instance_id not in (select instance_id from instances)").
+		LoadOne(&res)
+	return res.Total, err
+}
+
+func (r readSession) NumberOfDeletedInstances() (int, error) {
+	var res struct {
+		Total int
+	}
+	err := r.session.Select("count(distinct(instance_id)) as total").
+		From(OperationTableName).
+		Where("instance_id not in (select instance_id from instances)").
+		LoadOne(&res)
+	return res.Total, err
+}
+
+func (r readSession) TotalNumberOfInstancesArchived() (int, error) {
+	var res struct {
+		Total int
+	}
+	err := r.session.Select("count(*) as total").
+		From(InstancesArchivedTableName).
+		LoadOne(&res)
 	return res.Total, err
 }

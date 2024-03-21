@@ -372,3 +372,23 @@ func (s *instances) matchInstanceState(instanceID string, states []dbmodel.Insta
 
 	return false
 }
+
+func (s *instances) ListDeletedInstanceIDs(int) ([]string, error) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	resultMap := make(map[string]struct{})
+	for _, op := range s.operationsStorage.operations {
+		if _, exists := s.instances[op.InstanceID]; !exists {
+			resultMap[op.InstanceID] = struct{}{}
+		}
+	}
+	var result []string
+	for k := range resultMap {
+		result = append(result, k)
+	}
+	return result, nil
+}
+
+func (s *instances) DeletedInstancesStatistics() (internal.DeletedStats, error) {
+	panic("not implemented")
+}

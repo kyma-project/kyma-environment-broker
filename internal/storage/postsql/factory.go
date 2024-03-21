@@ -56,6 +56,10 @@ type ReadSession interface {
 	ListSubaccountStates() ([]dbmodel.SubaccountStateDTO, dberr.Error)
 	GetInstanceArchivedByID(id string) (dbmodel.InstanceArchivedDTO, error)
 	GetOperationsStatsV2() ([]dbmodel.OperationStatEntryV2, error)
+	ListDeletedInstanceIDs(amount int) ([]string, error)
+	NumberOfOperationsForDeletedInstances() (int, error)
+	TotalNumberOfInstancesArchived() (int, error)
+	NumberOfDeletedInstances() (int, error)
 }
 
 //go:generate mockery --name=WriteSession

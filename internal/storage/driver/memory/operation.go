@@ -803,6 +803,10 @@ func (s *operations) InsertUpdatingOperation(operation internal.UpdatingOperatio
 	return nil
 }
 
+func (s *operations) ListShortOperationsByInstanceID(instanceID string) ([]internal.Operation, error) {
+	panic("not implemented")
+}
+
 func (s *operations) GetUpdatingOperationByID(operationID string) (*internal.UpdatingOperation, error) {
 	s.mu.Lock()
 	defer s.mu.Unlock()

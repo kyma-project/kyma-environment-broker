@@ -1,0 +1,20 @@
+# Build image
+FROM golang:1.22.1-alpine3.18 AS build
+
+WORKDIR /go/src/github.com/kyma-project/kyma-environment-broker
+
+COPY cmd cmd
+COPY common common
+COPY internal internal
+COPY go.mod go.mod
+COPY go.sum go.sum
+
+RUN CGO_ENABLED=0 go build -o /bin/subaccount-sync cmd/subaccountsync/main.go
+
+# Final image
+FROM scratch
+LABEL source=git@github.com:kyma-project/kyma-environment-broker.git
+
+COPY --from=build /bin/subaccount-sync /bin/subaccount-sync
+
+CMD ["/bin/subaccount-sync"]

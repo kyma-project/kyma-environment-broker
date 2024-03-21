@@ -38,3 +38,7 @@ func (s *InstanceArchivedInMemoryStorage) Insert(instance internal.InstanceArchi
 	s.data[instance.InstanceID] = instance
 	return nil
 }
+
+func (s *InstanceArchivedInMemoryStorage) TotalNumberOfInstancesArchived() (int, error) {
+	return len(s.data), nil
+}

@@ -752,3 +752,8 @@ type SubaccountState struct {
 	UsedForProduction string `json:"usedForProduction"`
 	ModifiedAt        int64  `json:"modifiedAt"`
 }
+
+type DeletedStats struct {
+	NumberOfDeletedInstances              int
+	NumberOfOperationsForDeletedInstances int
+}
