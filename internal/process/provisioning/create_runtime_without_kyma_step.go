@@ -146,9 +146,6 @@ func (s *CreateRuntimeWithoutKymaStep) updateInstance(id, runtimeID, region stri
 }
 
 func (s *CreateRuntimeWithoutKymaStep) createProvisionInput(operation internal.Operation) (gqlschema.ProvisionRuntimeInput, error) {
-	if operation.InputCreator == nil {
-		return gqlschema.ProvisionRuntimeInput{}, fmt.Errorf("input creator is nil")
-	}
 	operation.InputCreator.SetProvisioningParameters(operation.ProvisioningParameters)
 	operation.InputCreator.SetShootName(operation.ShootName)
 	operation.InputCreator.SetShootDomain(operation.ShootDomain)

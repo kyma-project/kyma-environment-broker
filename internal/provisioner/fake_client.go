@@ -111,9 +111,6 @@ func (c *FakeClient) ProvisionRuntime(accountID, subAccountID string, config sch
 }
 
 func (c *FakeClient) Provision(operation internal.ProvisioningOperation) (schema.OperationStatus, error) {
-	if operation.InputCreator == nil {
-		return schema.OperationStatus{}, fmt.Errorf("input creator is nil")
-	}
 	input, err := operation.InputCreator.CreateProvisionClusterInput()
 
 	if err != nil {

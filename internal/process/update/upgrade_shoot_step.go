@@ -92,9 +92,6 @@ func (s *UpgradeShootStep) Run(operation internal.Operation, log logrus.FieldLog
 }
 
 func (s *UpgradeShootStep) createUpgradeShootInput(operation internal.Operation) (gqlschema.UpgradeShootInput, error) {
-	if operation.InputCreator == nil {
-		return gqlschema.UpgradeShootInput{}, fmt.Errorf("input creator is nil")
-	}
 	operation.InputCreator.SetProvisioningParameters(operation.ProvisioningParameters)
 	if operation.LastRuntimeState.ClusterConfig.OidcConfig != nil {
 		operation.InputCreator.SetOIDCLastValues(*operation.LastRuntimeState.ClusterConfig.OidcConfig)

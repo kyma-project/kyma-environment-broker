@@ -1,7 +1,6 @@
 package steps
 
 import (
-	"fmt"
 	"time"
 
 	"github.com/sirupsen/logrus"
@@ -26,9 +25,6 @@ func (s *InitKymaTemplate) Name() string {
 }
 
 func (s *InitKymaTemplate) Run(operation internal.Operation, logger logrus.FieldLogger) (internal.Operation, time.Duration, error) {
-	if operation.InputCreator == nil {
-		return operation, 0, fmt.Errorf("input creator is nil")
-	}
 	tmpl := operation.InputCreator.Configuration().KymaTemplate
 	obj, err := DecodeKymaTemplate(tmpl)
 	if err != nil {

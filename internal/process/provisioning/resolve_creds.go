@@ -35,9 +35,6 @@ func (s *ResolveCredentialsStep) Name() string {
 }
 
 func (s *ResolveCredentialsStep) Run(operation internal.Operation, log logrus.FieldLogger) (internal.Operation, time.Duration, error) {
-	if operation.InputCreator == nil {
-		return operation, 0, fmt.Errorf("input creator is nil")
-	}
 	cloudProvider := operation.InputCreator.Provider()
 	effectiveRegion := getEffectiveRegionForSapConvergedCloud(operation.ProvisioningParameters.Parameters.Region)
 

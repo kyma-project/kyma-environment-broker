@@ -41,9 +41,6 @@ func (s *CreateClusterConfigurationStep) Run(operation internal.Operation, log l
 		log.Debugf("Cluster configuration already created, skipping")
 		return operation, 0, nil
 	}
-	if operation.InputCreator == nil {
-		return operation, 0, fmt.Errorf("input creator is nil")
-	}
 	log.Infof("Runtime id is %v", operation.RuntimeID)
 	operation.InputCreator.SetRuntimeID(operation.RuntimeID).
 		SetInstanceID(operation.InstanceID).
