@@ -8,6 +8,7 @@ import (
 	"net/http/httptest"
 	"os"
 	"strconv"
+	"strings"
 	"time"
 )
 
@@ -129,12 +130,20 @@ func (e *eventsEndpoint) getEvents(w http.ResponseWriter, r *http.Request) {
 	query := r.URL.Query()
 	eventTypeFilter := query.Get("eventType")
 	actionTimeFilter := query.Get("fromActionTime")
+	sortField := query.Get("sortField")
+	sortOrder := strings.ToUpper(query.Get("sortOrder"))
 
 	if eventTypeFilter != "" {
 		events.filterEventsByEventType(eventTypeFilter)
 	}
 	if actionTimeFilter != "" {
 		events.filterEventsByActionTime(actionTimeFilter)
+	}
+	if sortOrder == "" || (sortOrder != "ASC" && sortOrder != "DESC") {
+		sortOrder = "ASC"
+	}
+	if sortField != "" {
+		events.sortEvents(sortField, sortOrder)
 	}
 
 	data, err := json.Marshal(events)
@@ -186,6 +195,54 @@ func (e *mutableEvents) filterEventsByActionTime(actionTimeFilter string) {
 		actualActionTime := time.UnixMilli(actualActionTimeInUnixMilli)
 		if actualActionTime.Before(timeFilter) {
 			*e = append((*e)[:i], (*e)[i+1:]...)
+		}
+	}
+}
+
+func (e *mutableEvents) sortEvents(sortField, sortOrder string) {
+	switch sortField {
+	case "actionTime":
+		e.sortEventsByActionTime(sortOrder)
+	default:
+		log.Println("unsupported sort field")
+	}
+}
+
+func (e *mutableEvents) sortEventsByActionTime(sortOrder string) {
+	for i := 0; i < len(*e); i++ {
+		for j := i + 1; j < len(*e); j++ {
+			ival1, ok := (*e)[i][actionTimeJSONKey]
+			if !ok {
+				log.Println("missing actionTime key in one of events")
+				continue
+			}
+			actionTime1, ok := ival1.(int64)
+			if !ok {
+				log.Println("cannot cast actionTime value to int64 - wrong value in one of events")
+				continue
+			}
+
+			ival2, ok := (*e)[j][actionTimeJSONKey]
+			if !ok {
+				log.Println("missing actionTime key in one of events")
+				continue
+			}
+			actionTime2, ok := ival2.(int64)
+			if !ok {
+				log.Println("cannot cast actionTime value to int64 - wrong value in one of events")
+				continue
+			}
+
+			switch sortOrder {
+			case "ASC":
+				if actionTime1 > actionTime2 {
+					(*e)[i], (*e)[j] = (*e)[j], (*e)[i]
+				}
+			case "DESC":
+				if actionTime1 < actionTime2 {
+					(*e)[i], (*e)[j] = (*e)[j], (*e)[i]
+				}
+			}
 		}
 	}
 }
