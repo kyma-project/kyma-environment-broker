@@ -26,6 +26,7 @@ const (
 type fakeServer struct {
 	*httptest.Server
 	subaccountsEndpoint *subaccountsEndpoint
+	eventsEndpoint      *eventsEndpoint
 }
 
 type subaccountsEndpoint struct {
@@ -48,15 +49,18 @@ type eventsEndpointResponse struct {
 
 func NewFakeServer() *fakeServer {
 	se := newSubaccountsEndpoint()
+	ee := newEventsEndpoint()
 
 	mux := http.NewServeMux()
 	mux.HandleFunc("GET /accounts/v1/technical/subaccounts/{subaccountID}", se.getSubaccount)
+	mux.HandleFunc("GET /events/v1/events/central", ee.getEvents)
 
 	srv := httptest.NewServer(mux)
 
 	return &fakeServer{
 		Server:              srv,
 		subaccountsEndpoint: se,
+		eventsEndpoint:      ee,
 	}
 }
 
