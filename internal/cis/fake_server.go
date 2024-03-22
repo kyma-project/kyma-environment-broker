@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"log"
+	"math"
 	"net/http"
 	"net/http/httptest"
 	"os"
@@ -36,6 +37,14 @@ type eventsEndpoint struct {
 }
 
 type mutableEvents []map[string]interface{}
+
+type eventsEndpointResponse struct {
+	Total      int           `json:"total"`
+	TotalPages int           `json:"totalPages"`
+	PageNum    int           `json:"pageNum"`
+	MorePages  bool          `json:"morePages"`
+	Events     mutableEvents `json:"events"`
+}
 
 func NewFakeServer() *fakeServer {
 	se := newSubaccountsEndpoint()
@@ -126,12 +135,16 @@ func newEventsEndpoint() *eventsEndpoint {
 func (e *eventsEndpoint) getEvents(w http.ResponseWriter, r *http.Request) {
 	events := make(mutableEvents, len(e.events))
 	events = append(events, e.events...)
+	pageSize, _ := strconv.Atoi(defaultPageSize)
+	pageNumber, eventsNumber := 0, len(events)
 
 	query := r.URL.Query()
 	eventTypeFilter := query.Get("eventType")
 	actionTimeFilter := query.Get("fromActionTime")
 	sortField := query.Get("sortField")
 	sortOrder := strings.ToUpper(query.Get("sortOrder"))
+	pageSizeLimit := query.Get("pageSize")
+	pageNumberRequest := query.Get("pageNum")
 
 	if eventTypeFilter != "" {
 		events.filterEventsByEventType(eventTypeFilter)
@@ -145,8 +158,29 @@ func (e *eventsEndpoint) getEvents(w http.ResponseWriter, r *http.Request) {
 	if sortField != "" {
 		events.sortEvents(sortField, sortOrder)
 	}
+	if pageSizeLimit != "" {
+		sizeLimit, err := strconv.Atoi(pageSizeLimit)
+		if err == nil && sizeLimit > 1 {
+			pageSize = sizeLimit
+		}
+	}
+	if pageNumberRequest != "" {
+		requestedPageNumber, err := strconv.Atoi(pageNumberRequest)
+		if err == nil && requestedPageNumber >= 0 {
+			pageNumber = requestedPageNumber
+		}
+	}
+	pagesNumber := int(math.Ceil(float64(eventsNumber) / float64(pageSize)))
 
-	data, err := json.Marshal(events)
+	resp := eventsEndpointResponse{
+		Total:      eventsNumber,
+		TotalPages: pagesNumber,
+		PageNum:    pageNumber,
+		MorePages:  pageNumber < pagesNumber-1,
+		Events:     events[pageNumber*pageSize : (pageNumber+1)*pageSize],
+	}
+
+	data, err := json.Marshal(resp)
 	if err != nil {
 		log.Fatal(fmt.Errorf("while marshalling events data: %w", err))
 	}
