@@ -147,7 +147,7 @@ func (e *eventsEndpoint) getEvents(w http.ResponseWriter, r *http.Request) {
 	events := make(mutableEvents, 0, len(e.events))
 	events = append(events, e.events...)
 	pageSize, _ := strconv.Atoi(defaultPageSize)
-	pageNumber, eventsNumber := 0, len(events)
+	pageNumber := 0
 
 	query := r.URL.Query()
 	eventTypeFilter := query.Get("eventType")
@@ -181,6 +181,8 @@ func (e *eventsEndpoint) getEvents(w http.ResponseWriter, r *http.Request) {
 			pageNumber = requestedPageNumber
 		}
 	}
+
+	eventsNumber := len(events)
 	pagesNumber := int(math.Ceil(float64(eventsNumber) / float64(pageSize)))
 
 	eventsForResponse := make([]map[string]interface{}, 0)
@@ -215,20 +217,23 @@ func (e *eventsEndpoint) getEvents(w http.ResponseWriter, r *http.Request) {
 }
 
 func (e *mutableEvents) filterEventsByEventType(eventTypeFilter string) {
-	for i, event := range *e {
-		ival, ok := event[eventTypeJSONKey]
+	for i := 0; i < len(*e); {
+		currentEvent := (*e)[i]
+		ival, ok := currentEvent[eventTypeJSONKey]
 		if !ok {
 			log.Println("missing eventType key in one of events")
-			continue
+			break
 		}
 		actualEventType, ok := ival.(string)
 		if !ok {
 			log.Println("cannot cast eventType value to string - wrong value in one of events")
-			continue
+			break
 		}
 		if actualEventType != eventTypeFilter {
 			*e = append((*e)[:i], (*e)[i+1:]...)
+			continue
 		}
+		i++
 	}
 }
 
@@ -240,21 +245,25 @@ func (e *mutableEvents) filterEventsByActionTime(actionTimeFilter string) {
 	}
 
 	timeFilter := time.UnixMilli(filterInUnixMilli)
-	for i, event := range *e {
-		ival, ok := event[actionTimeJSONKey]
+	for i := 0; i < len(*e); {
+		currentEvent := (*e)[i]
+		ival, ok := currentEvent[actionTimeJSONKey]
 		if !ok {
 			log.Println("missing actionTime key in one of events")
-			continue
+			break
 		}
-		actualActionTimeInUnixMilli, ok := ival.(int64)
+		eventActionTimeFloat, ok := ival.(float64)
 		if !ok {
 			log.Println("cannot cast actionTime value to int64 - wrong value in one of events")
-			continue
+			break
 		}
-		actualActionTime := time.UnixMilli(actualActionTimeInUnixMilli)
+		eventActionTimeInUnixMilli := int64(eventActionTimeFloat)
+		actualActionTime := time.UnixMilli(eventActionTimeInUnixMilli)
 		if actualActionTime.Before(timeFilter) {
 			*e = append((*e)[:i], (*e)[i+1:]...)
+			continue
 		}
+		i++
 	}
 }
 
