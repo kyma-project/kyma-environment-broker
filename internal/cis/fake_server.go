@@ -2,6 +2,7 @@ package cis
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"log"
 	"math"
@@ -107,21 +108,26 @@ func (e *subaccountsEndpoint) getSubaccount(w http.ResponseWriter, r *http.Reque
 	subaccountID := r.PathValue("subaccountID")
 	if len(subaccountID) == 0 {
 		w.WriteHeader(http.StatusBadRequest)
+		return
 	}
 	_, found := e.subaccounts[subaccountID]
 	if !found {
 		w.WriteHeader(http.StatusNotFound)
+		return
 	}
 
 	data, err := json.Marshal(e.subaccounts[subaccountID])
 	if err != nil {
 		log.Println("error while marshalling subaccount data: %w", err)
+		w.WriteHeader(http.StatusInternalServerError)
+		return
 	}
 
 	w.WriteHeader(http.StatusOK)
 	if _, err = w.Write(data); err != nil {
 		w.WriteHeader(http.StatusBadRequest)
 		log.Println("error while writing subaccount data: %w", err)
+		return
 	}
 }
 
@@ -158,16 +164,25 @@ func (e *eventsEndpoint) getEvents(w http.ResponseWriter, r *http.Request) {
 	pageNumberRequest := query.Get("pageNum")
 
 	if eventTypeFilter != "" {
-		events.filterEventsByEventType(eventTypeFilter)
+		if err := events.filterEventsByEventType(eventTypeFilter); err != nil {
+			w.WriteHeader(http.StatusInternalServerError)
+			return
+		}
 	}
 	if actionTimeFilter != "" {
-		events.filterEventsByActionTime(actionTimeFilter)
+		if err := events.filterEventsByActionTime(actionTimeFilter); err != nil {
+			w.WriteHeader(http.StatusInternalServerError)
+			return
+		}
 	}
 	if sortOrder == "" || (sortOrder != "ASC" && sortOrder != "DESC") {
 		sortOrder = "ASC"
 	}
 	if sortField != "" {
-		events.sortEvents(sortField, sortOrder)
+		if err := events.sortEvents(sortField, sortOrder); err != nil {
+			w.WriteHeader(http.StatusInternalServerError)
+			return
+		}
 	}
 	if pageSizeLimit != "" {
 		sizeLimit, err := strconv.Atoi(pageSizeLimit)
@@ -207,27 +222,29 @@ func (e *eventsEndpoint) getEvents(w http.ResponseWriter, r *http.Request) {
 
 	data, err := json.Marshal(resp)
 	if err != nil {
-		log.Fatal(fmt.Errorf("while marshalling events data: %w", err))
+		log.Println("error while marshalling events data: %w", err)
+		w.WriteHeader(http.StatusInternalServerError)
+		return
 	}
 
 	w.WriteHeader(http.StatusOK)
 	if _, err = w.Write(data); err != nil {
+		log.Println("error while writing events data: %w", err)
 		w.WriteHeader(http.StatusInternalServerError)
+		return
 	}
 }
 
-func (e *mutableEvents) filterEventsByEventType(eventTypeFilter string) {
+func (e *mutableEvents) filterEventsByEventType(eventTypeFilter string) error {
 	for i := 0; i < len(*e); {
 		currentEvent := (*e)[i]
 		ival, ok := currentEvent[eventTypeJSONKey]
 		if !ok {
-			log.Println("missing eventType key in one of events")
-			break
+			return errors.New("missing eventType key in one of events")
 		}
 		actualEventType, ok := ival.(string)
 		if !ok {
-			log.Println("cannot cast eventType value to string - wrong value in one of events")
-			break
+			return errors.New("cannot cast eventType value to string - wrong value in one of events")
 		}
 		if actualEventType != eventTypeFilter {
 			*e = append((*e)[:i], (*e)[i+1:]...)
@@ -235,13 +252,14 @@ func (e *mutableEvents) filterEventsByEventType(eventTypeFilter string) {
 		}
 		i++
 	}
+
+	return nil
 }
 
-func (e *mutableEvents) filterEventsByActionTime(actionTimeFilter string) {
+func (e *mutableEvents) filterEventsByActionTime(actionTimeFilter string) error {
 	filterInUnixMilli, err := strconv.ParseInt(actionTimeFilter, 10, 64)
 	if err != nil {
-		log.Println("cannot parse actionTime filter to int64")
-		return
+		return errors.New("cannot parse actionTime filter to int64")
 	}
 
 	timeFilter := time.UnixMilli(filterInUnixMilli)
@@ -249,13 +267,11 @@ func (e *mutableEvents) filterEventsByActionTime(actionTimeFilter string) {
 		currentEvent := (*e)[i]
 		ival, ok := currentEvent[actionTimeJSONKey]
 		if !ok {
-			log.Println("missing actionTime key in one of events")
-			break
+			return errors.New("missing actionTime key in one of events")
 		}
 		eventActionTimeFloat, ok := ival.(float64)
 		if !ok {
-			log.Println("cannot cast actionTime value to int64 - wrong value in one of events")
-			break
+			return errors.New("cannot cast actionTime value to int64 - wrong value in one of events")
 		}
 		eventActionTimeInUnixMilli := int64(eventActionTimeFloat)
 		actualActionTime := time.UnixMilli(eventActionTimeInUnixMilli)
@@ -265,40 +281,38 @@ func (e *mutableEvents) filterEventsByActionTime(actionTimeFilter string) {
 		}
 		i++
 	}
+
+	return nil
 }
 
-func (e *mutableEvents) sortEvents(sortField, sortOrder string) {
+func (e *mutableEvents) sortEvents(sortField, sortOrder string) error {
 	switch sortField {
 	case "actionTime":
-		e.sortEventsByActionTime(sortOrder)
+		return e.sortEventsByActionTime(sortOrder)
 	default:
-		log.Println("unsupported sort field")
+		return errors.New("unsupported sort field")
 	}
 }
 
-func (e *mutableEvents) sortEventsByActionTime(sortOrder string) {
+func (e *mutableEvents) sortEventsByActionTime(sortOrder string) error {
 	for i := 0; i < len(*e); i++ {
 		for j := i + 1; j < len(*e); j++ {
 			ival1, ok := (*e)[i][actionTimeJSONKey]
 			if !ok {
-				log.Println("missing actionTime key in one of events")
-				continue
+				return errors.New("missing actionTime key in one of events")
 			}
 			actionTime1, ok := ival1.(int64)
 			if !ok {
-				log.Println("cannot cast actionTime value to int64 - wrong value in one of events")
-				continue
+				return errors.New("cannot cast actionTime value to int64 - wrong value in one of events")
 			}
 
 			ival2, ok := (*e)[j][actionTimeJSONKey]
 			if !ok {
-				log.Println("missing actionTime key in one of events")
-				continue
+				return errors.New("missing actionTime key in one of events")
 			}
 			actionTime2, ok := ival2.(int64)
 			if !ok {
-				log.Println("cannot cast actionTime value to int64 - wrong value in one of events")
-				continue
+				return errors.New("cannot cast actionTime value to int64 - wrong value in one of events")
 			}
 
 			switch sortOrder {
@@ -313,4 +327,6 @@ func (e *mutableEvents) sortEventsByActionTime(sortOrder string) {
 			}
 		}
 	}
+
+	return nil
 }
