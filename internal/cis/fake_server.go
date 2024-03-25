@@ -144,7 +144,7 @@ func newEventsEndpoint() (*eventsEndpoint, error) {
 }
 
 func (e *eventsEndpoint) getEvents(w http.ResponseWriter, r *http.Request) {
-	events := make(mutableEvents, len(e.events))
+	events := make(mutableEvents, 0, len(e.events))
 	events = append(events, e.events...)
 	pageSize, _ := strconv.Atoi(defaultPageSize)
 	pageNumber, eventsNumber := 0, len(events)
@@ -183,12 +183,24 @@ func (e *eventsEndpoint) getEvents(w http.ResponseWriter, r *http.Request) {
 	}
 	pagesNumber := int(math.Ceil(float64(eventsNumber) / float64(pageSize)))
 
+	eventsForResponse := make([]map[string]interface{}, 0)
+	if len(events) < pageSize {
+		eventsForResponse = append(eventsForResponse, events...)
+	} else {
+		startIndex := pageNumber * pageSize
+		endIndex := startIndex + pageSize
+		if endIndex > eventsNumber {
+			endIndex = eventsNumber
+		}
+		eventsForResponse = append(eventsForResponse, events[startIndex:endIndex]...)
+	}
+
 	resp := eventsEndpointResponse{
 		Total:      eventsNumber,
 		TotalPages: pagesNumber,
 		PageNum:    pageNumber,
 		MorePages:  pageNumber < pagesNumber-1,
-		Events:     events[pageNumber*pageSize : (pageNumber+1)*pageSize],
+		Events:     eventsForResponse,
 	}
 
 	data, err := json.Marshal(resp)
