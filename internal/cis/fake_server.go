@@ -47,9 +47,15 @@ type eventsEndpointResponse struct {
 	Events     mutableEvents `json:"events"`
 }
 
-func NewFakeServer() *fakeServer {
-	se := newSubaccountsEndpoint()
-	ee := newEventsEndpoint()
+func NewFakeServer() (*fakeServer, error) {
+	se, err := newSubaccountsEndpoint()
+	if err != nil {
+		return nil, fmt.Errorf("while creating new subaccounts endpoint: %w", err)
+	}
+	ee, err := newEventsEndpoint()
+	if err != nil {
+		return nil, fmt.Errorf("while creating new events endpoint: %w", err)
+	}
 
 	mux := http.NewServeMux()
 	mux.HandleFunc("GET /accounts/v1/technical/subaccounts/{subaccountID}", se.getSubaccount)
@@ -61,16 +67,16 @@ func NewFakeServer() *fakeServer {
 		Server:              srv,
 		subaccountsEndpoint: se,
 		eventsEndpoint:      ee,
-	}
+	}, nil
 }
 
-func newSubaccountsEndpoint() *subaccountsEndpoint {
+func newSubaccountsEndpoint() (*subaccountsEndpoint, error) {
 	endpoint := &subaccountsEndpoint{subaccounts: make(map[string]map[string]interface{}, 0)}
 
 	f, err := os.Open(subaccountsJSONPath)
 	defer f.Close()
 	if err != nil {
-		log.Fatal(fmt.Errorf("while reading subaccounts JSON file: %w", err))
+		return nil, fmt.Errorf("while reading subaccounts JSON file: %w", err)
 	}
 
 	type jsonObjects []map[string]interface{}
@@ -79,61 +85,62 @@ func newSubaccountsEndpoint() *subaccountsEndpoint {
 	d := json.NewDecoder(f)
 	err = d.Decode(&temp)
 	if err != nil {
-		log.Fatal(fmt.Errorf("while decoding subaccounts JSON: %w", err))
+		return nil, fmt.Errorf("while decoding subaccounts JSON: %w", err)
 	}
 
 	for _, saData := range temp {
 		ival, ok := saData[subaccountIDJSONKey]
 		if !ok {
-			log.Fatal(fmt.Errorf("subaccounts JSON file is invalid - one of objects missing %s key", subaccountIDJSONKey))
+			return nil, fmt.Errorf("subaccounts JSON file is invalid - one of objects missing %s key", subaccountIDJSONKey)
 		}
 		subaccountID, ok := ival.(string)
 		if !ok {
-			log.Fatal(fmt.Errorf("subaccounts JSON file is invalid - in one of objects value for %s is not a string", subaccountIDJSONKey))
+			return nil, fmt.Errorf("subaccounts JSON file is invalid - in one of objects value for %s is not a string", subaccountIDJSONKey)
 		}
 		endpoint.subaccounts[subaccountID] = saData
 	}
 
-	return endpoint
+	return endpoint, nil
 }
 
 func (e *subaccountsEndpoint) getSubaccount(w http.ResponseWriter, r *http.Request) {
 	subaccountID := r.PathValue("subaccountID")
 	if len(subaccountID) == 0 {
 		w.WriteHeader(http.StatusBadRequest)
-		return
 	}
 	_, found := e.subaccounts[subaccountID]
 	if !found {
 		w.WriteHeader(http.StatusNotFound)
-		return
 	}
 
 	data, err := json.Marshal(e.subaccounts[subaccountID])
 	if err != nil {
-		log.Fatal(fmt.Errorf("while marshalling subaccount data: %w", err))
+		log.Println("error while marshalling subaccount data: %w", err)
 	}
 
 	w.WriteHeader(http.StatusOK)
-	w.Write(data)
+	if _, err = w.Write(data); err != nil {
+		w.WriteHeader(http.StatusBadRequest)
+		log.Println("error while writing subaccount data: %w", err)
+	}
 }
 
-func newEventsEndpoint() *eventsEndpoint {
+func newEventsEndpoint() (*eventsEndpoint, error) {
 	endpoint := &eventsEndpoint{events: make([]map[string]interface{}, 0)}
 
 	f, err := os.Open(eventsJSONPath)
 	defer f.Close()
 	if err != nil {
-		log.Fatal(fmt.Errorf("while reading events JSON file: %w", err))
+		return nil, fmt.Errorf("while reading events JSON file: %w", err)
 	}
 
 	d := json.NewDecoder(f)
 	err = d.Decode(&endpoint.events)
 	if err != nil {
-		log.Fatal(fmt.Errorf("while decoding events JSON: %w", err))
+		return nil, fmt.Errorf("while decoding events JSON: %w", err)
 	}
 
-	return endpoint
+	return endpoint, nil
 }
 
 func (e *eventsEndpoint) getEvents(w http.ResponseWriter, r *http.Request) {
@@ -190,7 +197,9 @@ func (e *eventsEndpoint) getEvents(w http.ResponseWriter, r *http.Request) {
 	}
 
 	w.WriteHeader(http.StatusOK)
-	w.Write(data)
+	if _, err = w.Write(data); err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+	}
 }
 
 func (e *mutableEvents) filterEventsByEventType(eventTypeFilter string) {
