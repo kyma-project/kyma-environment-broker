@@ -92,4 +92,4 @@ jobs:
               echo "PR already exists, no need to create new one"
               exit 0
           fi
-          gh pr create -B chart/keb-sap -H ${{ vars.GIT_USER_NAME }}:${BRANCH_NAME} -R ${{ env.MANAGEMENT_PLANE_CHARTS }} --title "Bump keb to ${TAG}" --fill --body "${{env.KEB_RELEASES_URL }}/${TAG}"
+          gh pr create -B chart/keb-sap --title "Bump keb to ${TAG}" --fill --body "${{env.KEB_RELEASES_URL }}/${TAG}"
