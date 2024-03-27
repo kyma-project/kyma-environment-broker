@@ -238,17 +238,28 @@ func (e *eventsEndpoint) getEvents(w http.ResponseWriter, r *http.Request) {
 func (e *mutableEvents) filterEventsByEventType(eventTypeFilter string) error {
 	for i := 0; i < len(*e); {
 		currentEvent := (*e)[i]
-		ival, ok := currentEvent[eventTypeJSONKey]
-		if !ok {
-			return errors.New("missing eventType key in one of events")
-		}
-		actualEventType, ok := ival.(string)
-		if !ok {
-			return errors.New("cannot cast eventType value to string - wrong value in one of events")
-		}
-		if actualEventType != eventTypeFilter {
-			*e = append((*e)[:i], (*e)[i+1:]...)
-			continue
+		// split filter by comma to support multiple event types
+		eventTypes := strings.Split(eventTypeFilter, ",")
+		//iterate over all event types in filter
+		for _, token := range eventTypes {
+			if token == "" {
+				continue
+			}
+			ival, ok := currentEvent[eventTypeJSONKey]
+			if !ok {
+				return errors.New("missing eventType key in one of events")
+			}
+			actualEventType, ok := ival.(string)
+			if !ok {
+				return errors.New("cannot cast eventType value to string - wrong value in one of events")
+			}
+			if token == actualEventType {
+				break
+			}
+			if token != actualEventType {
+				*e = append((*e)[:i], (*e)[i+1:]...)
+				continue
+			}
 		}
 		i++
 	}

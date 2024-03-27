@@ -108,4 +108,29 @@ func TestCisFakeServer(t *testing.T) {
 			assert.GreaterOrEqual(t, actualActionTimeInUnixMilli, actionTime)
 		}
 	})
+	t.Run("should get Subaccount_Update and Subaccount_Creation events from the given action time", func(t *testing.T) {
+		var actionTime int64 = 1710761400000
+		actionTimeFilter := "1710761400000"
+		resp, err := client.Get(srv.URL + "/events/v1/events/central?eventType=Subaccount_Update,Subaccount_Creation&fromActionTime=" + actionTimeFilter)
+		require.NoError(t, err)
+
+		var eventsData eventsEndpointResponse
+		err = json.NewDecoder(resp.Body).Decode(&eventsData)
+		require.NoError(t, err)
+
+		assert.Equal(t, 1, eventsData.Total)
+		assert.Equal(t, 1, eventsData.TotalPages)
+		assert.False(t, eventsData.MorePages)
+		assert.Len(t, eventsData.Events, 1)
+
+		for _, event := range eventsData.Events {
+			assert.True(t, event["eventType"] == "Subaccount_Update" || event["eventType"] == "Subaccount_Creation")
+			ival, ok := event[actionTimeJSONKey]
+			require.True(t, ok)
+			actualActionTimeFloat, ok := ival.(float64)
+			require.True(t, ok)
+			actualActionTimeInUnixMilli := int64(actualActionTimeFloat)
+			assert.GreaterOrEqual(t, actualActionTimeInUnixMilli, actionTime)
+		}
+	})
 }
