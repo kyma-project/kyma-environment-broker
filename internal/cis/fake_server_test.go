@@ -2,6 +2,7 @@ package cis
 
 import (
 	"encoding/json"
+	"fmt"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -60,8 +61,7 @@ func TestCisFakeServer(t *testing.T) {
 
 	t.Run("should get all events from the given action time", func(t *testing.T) {
 		var actionTime int64 = 1710760200000
-		actionTimeFilter := "1710760200000"
-		resp, err := client.Get(srv.URL + "/events/v1/events/central?fromActionTime=" + actionTimeFilter)
+		resp, err := client.Get(srv.URL + "/events/v1/events/central?fromActionTime=" + fmt.Sprintf("%d", actionTime))
 		require.NoError(t, err)
 
 		var eventsData eventsEndpointResponse
@@ -85,8 +85,7 @@ func TestCisFakeServer(t *testing.T) {
 
 	t.Run("should get Subaccount_Update events from the given action time", func(t *testing.T) {
 		var actionTime int64 = 1710761400000
-		actionTimeFilter := "1710761400000"
-		resp, err := client.Get(srv.URL + "/events/v1/events/central?eventType=Subaccount_Update&fromActionTime=" + actionTimeFilter)
+		resp, err := client.Get(srv.URL + "/events/v1/events/central?eventType=Subaccount_Update&fromActionTime=" + fmt.Sprintf("%d", actionTime))
 		require.NoError(t, err)
 
 		var eventsData eventsEndpointResponse
@@ -109,19 +108,18 @@ func TestCisFakeServer(t *testing.T) {
 		}
 	})
 	t.Run("should get Subaccount_Update and Subaccount_Creation events from the given action time", func(t *testing.T) {
-		var actionTime int64 = 1710761400000
-		actionTimeFilter := "1710761400000"
-		resp, err := client.Get(srv.URL + "/events/v1/events/central?eventType=Subaccount_Update,Subaccount_Creation&fromActionTime=" + actionTimeFilter)
+		var actionTime int64 = 1710759300000
+		resp, err := client.Get(srv.URL + "/events/v1/events/central?eventType=Subaccount_Update,Subaccount_Creation&fromActionTime=" + fmt.Sprintf("%d", actionTime))
 		require.NoError(t, err)
 
 		var eventsData eventsEndpointResponse
 		err = json.NewDecoder(resp.Body).Decode(&eventsData)
 		require.NoError(t, err)
 
-		assert.Equal(t, 1, eventsData.Total)
+		assert.Equal(t, 3, eventsData.Total)
 		assert.Equal(t, 1, eventsData.TotalPages)
 		assert.False(t, eventsData.MorePages)
-		assert.Len(t, eventsData.Events, 1)
+		assert.Len(t, eventsData.Events, 3)
 
 		for _, event := range eventsData.Events {
 			assert.True(t, event["eventType"] == "Subaccount_Update" || event["eventType"] == "Subaccount_Creation")

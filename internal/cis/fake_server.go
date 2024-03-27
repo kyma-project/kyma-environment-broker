@@ -241,6 +241,7 @@ func (e *mutableEvents) filterEventsByEventType(eventTypeFilter string) error {
 		// split filter by comma to support multiple event types
 		eventTypes := strings.Split(eventTypeFilter, ",")
 		//iterate over all event types in filter
+		keep := false
 		for _, token := range eventTypes {
 			if token == "" {
 				continue
@@ -253,13 +254,11 @@ func (e *mutableEvents) filterEventsByEventType(eventTypeFilter string) error {
 			if !ok {
 				return errors.New("cannot cast eventType value to string - wrong value in one of events")
 			}
-			if token == actualEventType {
-				break
-			}
-			if token != actualEventType {
-				*e = append((*e)[:i], (*e)[i+1:]...)
-				continue
-			}
+			keep = keep || token == actualEventType
+		}
+		if !keep {
+			*e = append((*e)[:i], (*e)[i+1:]...)
+			continue
 		}
 		i++
 	}
