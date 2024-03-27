@@ -2,6 +2,7 @@ name: Promote KEB to dev
 
 env:
   MANAGEMENT_PLANE_CHARTS:  "https://${{ vars.GH_TOOLS_HOST }}/kyma/${{ vars.MP_CHARTS_REPO_NAME }}.git"
+  MANAGEMENT_PLANE_CHARTS_WITH_USER: "https://${{ vars.GIT_USER_NAME }}:${{ secrets.BOT_TOKEN_GITHUB_TOOLS }}@${{ vars.GH_TOOLS_HOST }}/kyma/${{ vars.MP_CHARTS_REPO_NAME }}.git"
   KEB_API_URL: "https://api.github.com/repos/kyma-project/kyma-environment-broker"
   KEB_RELEASES_URL: "https://github.com/kyma-project/kyma-environment-broker/releases"
   # needed by gh cli for GitHub enterprise
@@ -48,13 +49,13 @@ jobs:
           fi
 
       - name: Set branch name
-        run: echo "BRANCH_NAME=btp-manager-${TAG}" >> $GITHUB_ENV
+        run: echo "BRANCH_NAME=keb-${TAG}" >> $GITHUB_ENV
 
       - name: Setup git and clone repo
         run: |
           git config --global user.email ${{ vars.GIT_USER_EMAIL }}
           git config --global user.name ${{ vars.GIT_USER_NAME }}
-          git clone ${MANAGEMENT_PLANE_CHARTS}
+          git clone ${MANAGEMENT_PLANE_CHARTS_WITH_USER}
         env:
           GH_TOKEN: ${{ secrets.BOT_TOKEN_GITHUB_TOOLS }}
 
