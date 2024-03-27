@@ -236,10 +236,10 @@ func (e *eventsEndpoint) getEvents(w http.ResponseWriter, r *http.Request) {
 }
 
 func (e *mutableEvents) filterEventsByEventType(eventTypeFilter string) error {
+	// split filter by comma to support multiple event typ es
+	eventTypes := strings.Split(eventTypeFilter, ",")
 	for i := 0; i < len(*e); {
 		currentEvent := (*e)[i]
-		// split filter by comma to support multiple event types
-		eventTypes := strings.Split(eventTypeFilter, ",")
 		//iterate over all event types in filter
 		keep := false
 		for _, token := range eventTypes {
