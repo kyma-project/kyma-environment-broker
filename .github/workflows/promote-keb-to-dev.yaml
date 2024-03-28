@@ -82,6 +82,7 @@ jobs:
         run: |
           git add .
           git commit -m "Bump keb to ${TAG}"
+          git remote set-url origin ${MANAGEMENT_PLANE_CHARTS_WITH_USER}
           git push origin ${BRANCH_NAME}
 
       - name: Create PR if needed
