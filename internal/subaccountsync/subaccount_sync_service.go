@@ -166,7 +166,7 @@ func CreateAccountsClient(ctx context.Context, accountsConfig CisEndpointConfig,
 	accountsClient := NewRateLimitedCisClient(ctx, accountsConfig, logs.With("client", "CIS-Accounts"))
 	digest1 := sha256.Sum256([]byte(accountsConfig.ClientSecret))
 	digest2 := sha256.Sum256([]byte(accountsConfig.ClientID))
-	logs.Info(fmt.Sprintf("digest: %x, digest: %x, first: %s", digest2, digest1, accountsConfig.ClientID[0:1]))
+	logs.Info(fmt.Sprintf("digest: %x, digest: %x, len: %d", digest2, digest1, len(accountsConfig.ClientID)))
 	return accountsClient
 }
 
