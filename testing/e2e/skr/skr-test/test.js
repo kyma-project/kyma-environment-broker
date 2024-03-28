@@ -44,6 +44,8 @@ describe('SKR test', function() {
 
   after('Cleanup the resources', async function() {
     this.timeout(deprovisioningTimeout);
-    await deprovisionAndUnregisterSKR(options, deprovisioningTimeout, true);
+    if (!process.env['SKIP_DEPROVISIONING']) {
+      await deprovisionAndUnregisterSKR(options, deprovisioningTimeout, true);
+    }
   });
 });
