@@ -16,6 +16,9 @@ on:
         default: 'use latest release'
         required: true
 
+permissions:
+  contents: write
+
 jobs:
   promote:
     runs-on: ubuntu-latest
