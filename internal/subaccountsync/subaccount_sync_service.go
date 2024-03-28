@@ -2,7 +2,6 @@ package subaccountsync
 
 import (
 	"context"
-	"crypto/sha256"
 	"fmt"
 	"log/slog"
 	"net/http"
@@ -164,9 +163,6 @@ func (s *SyncService) Run() {
 
 func CreateAccountsClient(ctx context.Context, accountsConfig CisEndpointConfig, logs *slog.Logger) *RateLimitedCisClient {
 	accountsClient := NewRateLimitedCisClient(ctx, accountsConfig, logs.With("client", "CIS-Accounts"))
-	digest1 := sha256.Sum256([]byte(accountsConfig.ClientSecret))
-	digest2 := sha256.Sum256([]byte(accountsConfig.ClientID))
-	logs.Info(fmt.Sprintf("digest: %x, digest: %x, len: %d", digest2, digest1, len(accountsConfig.ClientID)))
 	return accountsClient
 }
 
