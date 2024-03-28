@@ -37,6 +37,7 @@ func (ws writeSession) InsertInstanceArchived(instance dbmodel.InstanceArchivedD
 		Pair("shoot_name", instance.ShootName).
 		Pair("provisioning_started_at", instance.ProvisioningStartedAt).
 		Pair("provisioning_finished_at", instance.ProvisioningFinishedAt).
+		Pair("provisioning_state", instance.ProvisioningState).
 		Pair("first_deprovisioning_started_at", instance.FirstDeprovisioningStartedAt).
 		Pair("first_deprovisioning_finished_at", instance.FirstDeprovisioningFinishedAt).
 		Pair("last_deprovisioning_finished_at", instance.LastDeprovisioningFinishedAt).

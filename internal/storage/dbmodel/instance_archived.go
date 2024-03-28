@@ -3,6 +3,8 @@ package dbmodel
 import (
 	"time"
 
+	"github.com/pivotal-cf/brokerapi/v8/domain"
+
 	"github.com/kyma-project/kyma-environment-broker/internal"
 )
 
@@ -22,6 +24,7 @@ type InstanceArchivedDTO struct {
 
 	ProvisioningStartedAt         time.Time
 	ProvisioningFinishedAt        time.Time
+	ProvisioningState             domain.LastOperationState
 	FirstDeprovisioningStartedAt  time.Time
 	FirstDeprovisioningFinishedAt time.Time
 	LastDeprovisioningFinishedAt  time.Time
@@ -43,6 +46,7 @@ func NewInstanceArchivedDTO(obj internal.InstanceArchived) InstanceArchivedDTO {
 		ShootName:                     obj.ShootName,
 		ProvisioningStartedAt:         obj.ProvisioningStartedAt,
 		ProvisioningFinishedAt:        obj.ProvisioningFinishedAt,
+		ProvisioningState:             obj.ProvisioningState,
 		FirstDeprovisioningStartedAt:  obj.FirstDeprovisioningStartedAt,
 		FirstDeprovisioningFinishedAt: obj.FirstDeprovisioningFinishedAt,
 		LastDeprovisioningFinishedAt:  obj.LastDeprovisioningFinishedAt,
@@ -65,6 +69,7 @@ func NewInstanceArchivedFromDTO(obj InstanceArchivedDTO) internal.InstanceArchiv
 		ShootName:                     obj.ShootName,
 		ProvisioningStartedAt:         obj.ProvisioningStartedAt,
 		ProvisioningFinishedAt:        obj.ProvisioningFinishedAt,
+		ProvisioningState:             obj.ProvisioningState,
 		FirstDeprovisioningStartedAt:  obj.FirstDeprovisioningStartedAt,
 		FirstDeprovisioningFinishedAt: obj.FirstDeprovisioningFinishedAt,
 		LastDeprovisioningFinishedAt:  obj.LastDeprovisioningFinishedAt,

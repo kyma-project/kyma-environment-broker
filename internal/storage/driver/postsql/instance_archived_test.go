@@ -5,6 +5,8 @@ import (
 	"testing"
 	"time"
 
+	"github.com/pivotal-cf/brokerapi/v8/domain"
+
 	"github.com/kyma-project/kyma-environment-broker/internal"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -30,6 +32,7 @@ func TestInstanceArchived(t *testing.T) {
 			ShootName:                     "shoot-00001",
 			ProvisioningStartedAt:         time1,
 			ProvisioningFinishedAt:        time1.Add(10 * time.Minute),
+			ProvisioningState:             domain.Succeeded,
 			FirstDeprovisioningStartedAt:  time1.Add(time.Hour),
 			FirstDeprovisioningFinishedAt: time1.Add(3 * time.Hour),
 			LastDeprovisioningFinishedAt:  time1.Add(4 * time.Hour),
@@ -50,6 +53,7 @@ func TestInstanceArchived(t *testing.T) {
 			ShootName:                     "shoot-00002",
 			ProvisioningStartedAt:         time2.Add(-1 * time.Hour),
 			ProvisioningFinishedAt:        time2.Add(10 * time.Minute),
+			ProvisioningState:             domain.Succeeded,
 			FirstDeprovisioningStartedAt:  time2.Add(time.Hour),
 			FirstDeprovisioningFinishedAt: time2.Add(3 * time.Hour),
 			LastDeprovisioningFinishedAt:  time2.Add(4 * time.Hour),
@@ -90,9 +94,11 @@ func assertInstanceArchived(t *testing.T, expected internal.InstanceArchived, go
 	assert.True(t, expected.LastDeprovisioningFinishedAt.Equal(got.LastDeprovisioningFinishedAt))
 	assert.True(t, expected.ProvisioningStartedAt.Equal(got.ProvisioningStartedAt), fmt.Sprintf("%v %v", expected.ProvisioningStartedAt, got.ProvisioningStartedAt))
 	assert.True(t, expected.ProvisioningFinishedAt.Equal(got.ProvisioningFinishedAt), fmt.Sprintf("%v %v", expected.ProvisioningFinishedAt, got.ProvisioningFinishedAt))
+	assert.Equal(t, expected.ProvisioningState, got.ProvisioningState)
 
 	expected.ProvisioningFinishedAt = got.ProvisioningFinishedAt
 	expected.ProvisioningStartedAt = got.ProvisioningStartedAt
+	expected.ProvisioningState = got.ProvisioningState
 	expected.LastDeprovisioningFinishedAt = got.LastDeprovisioningFinishedAt
 	expected.FirstDeprovisioningFinishedAt = got.FirstDeprovisioningFinishedAt
 	expected.FirstDeprovisioningStartedAt = got.FirstDeprovisioningStartedAt

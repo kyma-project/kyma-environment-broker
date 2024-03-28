@@ -370,6 +370,7 @@ type InstanceArchived struct {
 
 	ProvisioningStartedAt         time.Time
 	ProvisioningFinishedAt        time.Time
+	ProvisioningState             domain.LastOperationState
 	FirstDeprovisioningStartedAt  time.Time
 	FirstDeprovisioningFinishedAt time.Time
 	LastDeprovisioningFinishedAt  time.Time

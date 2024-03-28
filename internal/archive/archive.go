@@ -41,6 +41,7 @@ func NewInstanceArchivedFromOperations(operations []internal.Operation) (interna
 	provisioningOperation := operations[0]
 	result.ProvisioningStartedAt = provisioningOperation.CreatedAt
 	result.ProvisioningFinishedAt = provisioningOperation.UpdatedAt
+	result.ProvisioningState = provisioningOperation.State
 	result.PlanID = provisioningOperation.ProvisioningParameters.PlanID
 	result.PlanName = broker.PlanNamesMapping[result.PlanID]
 	result.InstanceID = provisioningOperation.InstanceID
