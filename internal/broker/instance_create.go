@@ -47,15 +47,16 @@ type (
 )
 
 type ProvisionEndpoint struct {
-	config            Config
-	operationsStorage storage.Operations
-	instanceStorage   storage.Instances
-	queue             Queue
-	builderFactory    PlanValidator
-	enabledPlanIDs    map[string]struct{}
-	plansConfig       PlansConfig
-	kymaVerOnDemand   bool
-	planDefaults      PlanDefaults
+	config                  Config
+	operationsStorage       storage.Operations
+	instanceStorage         storage.Instances
+	instanceArchivedStorage storage.InstancesArchived
+	queue                   Queue
+	builderFactory          PlanValidator
+	enabledPlanIDs          map[string]struct{}
+	plansConfig             PlansConfig
+	kymaVerOnDemand         bool
+	planDefaults            PlanDefaults
 
 	shootDomain       string
 	shootProject      string
@@ -73,6 +74,7 @@ func NewProvision(cfg Config,
 	gardenerConfig gardener.Config,
 	operationsStorage storage.Operations,
 	instanceStorage storage.Instances,
+	instanceArchivedStorage storage.InstancesArchived,
 	queue Queue,
 	builderFactory PlanValidator,
 	plansConfig PlansConfig,
@@ -93,6 +95,7 @@ func NewProvision(cfg Config,
 		config:                   cfg,
 		operationsStorage:        operationsStorage,
 		instanceStorage:          instanceStorage,
+		instanceArchivedStorage:  instanceArchivedStorage,
 		queue:                    queue,
 		builderFactory:           builderFactory,
 		log:                      log.WithField("service", "ProvisionEndpoint"),
@@ -335,6 +338,18 @@ func (b *ProvisionEndpoint) validateAndExtract(details domain.ProvisionDetails, 
 		if count > 0 {
 			logger.Info("Provisioning Trial SKR rejected, such instance was already created for this Global Account")
 			return ersContext, parameters, fmt.Errorf("trial Kyma was created for the global account, but there is only one allowed")
+		}
+	}
+
+	if IsFreemiumPlan(details.PlanID) && b.config.OnlyOneFreePerGA {
+		count, err := b.instanceArchivedStorage.TotalNumberOfInstancesArchivedForGlobalAccountID(ersContext.GlobalAccountID, FreemiumPlanID)
+		if err != nil {
+			return ersContext, parameters, fmt.Errorf("while checking if a free Kyma instance existed for given global account: %w", err)
+		}
+
+		if count > 0 {
+			logger.Info("Provisioning Free SKR rejected, such instance was already created for this Global Account")
+			return ersContext, parameters, fmt.Errorf("free Kyma was created for the global account, but there is only one allowed")
 		}
 	}
 

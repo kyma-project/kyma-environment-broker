@@ -56,6 +56,7 @@ func TestGetEndpoint_GetProvisioningInstance(t *testing.T) {
 		gardener.Config{Project: "test", ShootDomain: "example.com"},
 		st.Operations(),
 		st.Instances(),
+		st.InstancesArchived(),
 		queue,
 		factoryBuilder,
 		broker.PlansConfig{},

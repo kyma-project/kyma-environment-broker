@@ -997,3 +997,17 @@ func (r readSession) TotalNumberOfInstancesArchived() (int, error) {
 		LoadOne(&res)
 	return res.Total, err
 }
+
+func (r readSession) TotalNumberOfInstancesArchivedForGlobalAccountID(globalAccountID string, planID string) (int, error) {
+	var res struct {
+		Total int
+	}
+	err := r.session.Select("count(*) as total").
+		From(InstancesArchivedTableName).
+		Where(dbr.Eq("global_account_id", globalAccountID)).
+		Where(dbr.Eq("plan_id", planID)).
+		Where(dbr.Eq("provisioning_state", domain.Succeeded)).
+		LoadOne(&res)
+
+	return res.Total, err
+}

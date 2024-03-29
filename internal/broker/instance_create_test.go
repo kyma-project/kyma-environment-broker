@@ -77,6 +77,7 @@ func TestProvision_Provision(t *testing.T) {
 			gardener.Config{Project: "test", ShootDomain: "example.com", DNSProviders: fixDNSProviders()},
 			memoryStorage.Operations(),
 			memoryStorage.Instances(),
+			memoryStorage.InstancesArchived(),
 			queue,
 			factoryBuilder,
 			broker.PlansConfig{},
@@ -150,6 +151,7 @@ func TestProvision_Provision(t *testing.T) {
 			gardener.Config{Project: "test", ShootDomain: "example.com", DNSProviders: fixDNSProviders()},
 			memoryStorage.Operations(),
 			memoryStorage.Instances(),
+			memoryStorage.InstancesArchived(),
 			queue,
 			factoryBuilder,
 			broker.PlansConfig{},
@@ -227,6 +229,7 @@ func TestProvision_Provision(t *testing.T) {
 			gardener.Config{Project: "test", ShootDomain: "example.com", DNSProviders: fixDNSProviders()},
 			memoryStorage.Operations(),
 			memoryStorage.Instances(),
+			memoryStorage.InstancesArchived(),
 			queue,
 			factoryBuilder,
 			broker.PlansConfig{},
@@ -276,6 +279,7 @@ func TestProvision_Provision(t *testing.T) {
 			gardener.Config{Project: "test", ShootDomain: "example.com", DNSProviders: fixDNSProviders()},
 			memoryStorage.Operations(),
 			memoryStorage.Instances(),
+			memoryStorage.InstancesArchived(),
 			queue,
 			factoryBuilder,
 			broker.PlansConfig{},
@@ -349,6 +353,7 @@ func TestProvision_Provision(t *testing.T) {
 			gardener.Config{Project: "test", ShootDomain: "example.com", DNSProviders: fixDNSProviders()},
 			memoryStorage.Operations(),
 			memoryStorage.Instances(),
+			memoryStorage.InstancesArchived(),
 			queue,
 			factoryBuilder,
 			broker.PlansConfig{},
@@ -424,6 +429,7 @@ func TestProvision_Provision(t *testing.T) {
 			gardener.Config{Project: "test", ShootDomain: "example.com", DNSProviders: fixDNSProviders()},
 			memoryStorage.Operations(),
 			memoryStorage.Instances(),
+			memoryStorage.InstancesArchived(),
 			nil,
 			factoryBuilder,
 			broker.PlansConfig{},
@@ -473,6 +479,7 @@ func TestProvision_Provision(t *testing.T) {
 			gardener.Config{Project: "test", ShootDomain: "example.com", DNSProviders: fixDNSProviders()},
 			memoryStorage.Operations(),
 			memoryStorage.Instances(),
+			memoryStorage.InstancesArchived(),
 			nil,
 			factoryBuilder,
 			broker.PlansConfig{},
@@ -523,6 +530,7 @@ func TestProvision_Provision(t *testing.T) {
 			gardener.Config{Project: "test", ShootDomain: "example.com", DNSProviders: fixDNSProviders()},
 			memoryStorage.Operations(),
 			memoryStorage.Instances(),
+			memoryStorage.InstancesArchived(),
 			queue,
 			factoryBuilder,
 			broker.PlansConfig{},
@@ -587,6 +595,7 @@ func TestProvision_Provision(t *testing.T) {
 			gardener.Config{Project: "test", ShootDomain: "example.com", DNSProviders: fixDNSProviders()},
 			memoryStorage.Operations(),
 			memoryStorage.Instances(),
+			memoryStorage.InstancesArchived(),
 			queue,
 			factoryBuilder,
 			broker.PlansConfig{},
@@ -651,6 +660,7 @@ func TestProvision_Provision(t *testing.T) {
 			gardener.Config{Project: "test", ShootDomain: "example.com", DNSProviders: fixDNSProviders()},
 			memoryStorage.Operations(),
 			memoryStorage.Instances(),
+			memoryStorage.InstancesArchived(),
 			queue,
 			factoryBuilder,
 			broker.PlansConfig{},
@@ -695,6 +705,7 @@ func TestProvision_Provision(t *testing.T) {
 			gardener.Config{Project: "test", ShootDomain: "example.com", DNSProviders: fixDNSProviders()},
 			memoryStorage.Operations(),
 			memoryStorage.Instances(),
+			memoryStorage.InstancesArchived(),
 			nil,
 			factoryBuilder,
 			broker.PlansConfig{},
@@ -737,6 +748,7 @@ func TestProvision_Provision(t *testing.T) {
 			gardener.Config{Project: "test", ShootDomain: "example.com", DNSProviders: fixDNSProviders()},
 			memoryStorage.Operations(),
 			memoryStorage.Instances(),
+			memoryStorage.InstancesArchived(),
 			queue,
 			factoryBuilder,
 			broker.PlansConfig{},
@@ -782,6 +794,7 @@ func TestProvision_Provision(t *testing.T) {
 			nil,
 			nil,
 			nil,
+			nil,
 			factoryBuilder,
 			broker.PlansConfig{},
 			true,
@@ -822,6 +835,7 @@ func TestProvision_Provision(t *testing.T) {
 			gardener.Config{Project: "test", ShootDomain: "example.com", DNSProviders: fixDNSProviders()},
 			memoryStorage.Operations(),
 			memoryStorage.Instances(),
+			memoryStorage.InstancesArchived(),
 			queue,
 			factoryBuilder,
 			broker.PlansConfig{},
@@ -871,6 +885,7 @@ func TestProvision_Provision(t *testing.T) {
 			gardener.Config{Project: "test", ShootDomain: "example.com", DNSProviders: fixDNSProviders()},
 			memoryStorage.Operations(),
 			memoryStorage.Instances(),
+			memoryStorage.InstancesArchived(),
 			queue,
 			factoryBuilder,
 			broker.PlansConfig{},
@@ -916,6 +931,7 @@ func TestProvision_Provision(t *testing.T) {
 			gardener.Config{Project: "test", ShootDomain: "example.com", DNSProviders: fixDNSProviders()},
 			memoryStorage.Operations(),
 			memoryStorage.Instances(),
+			memoryStorage.InstancesArchived(),
 			queue,
 			factoryBuilder,
 			broker.PlansConfig{},
@@ -967,6 +983,7 @@ func TestProvision_Provision(t *testing.T) {
 			gardener.Config{Project: "test", ShootDomain: "example.com", DNSProviders: fixDNSProviders()},
 			memoryStorage.Operations(),
 			memoryStorage.Instances(),
+			memoryStorage.InstancesArchived(),
 			queue,
 			factoryBuilder,
 			broker.PlansConfig{},
@@ -1024,6 +1041,7 @@ func TestProvision_Provision(t *testing.T) {
 			gardener.Config{Project: "test", ShootDomain: "example.com", DNSProviders: fixDNSProviders()},
 			memoryStorage.Operations(),
 			memoryStorage.Instances(),
+			memoryStorage.InstancesArchived(),
 			queue,
 			factoryBuilder,
 			broker.PlansConfig{},
@@ -1081,6 +1099,7 @@ func TestProvision_Provision(t *testing.T) {
 			gardener.Config{Project: "test", ShootDomain: "example.com", DNSProviders: fixDNSProviders()},
 			memoryStorage.Operations(),
 			memoryStorage.Instances(),
+			memoryStorage.InstancesArchived(),
 			queue,
 			factoryBuilder,
 			broker.PlansConfig{},
@@ -1138,6 +1157,7 @@ func TestProvision_Provision(t *testing.T) {
 			gardener.Config{Project: "test", ShootDomain: "example.com", DNSProviders: fixDNSProviders()},
 			memoryStorage.Operations(),
 			memoryStorage.Instances(),
+			memoryStorage.InstancesArchived(),
 			queue,
 			factoryBuilder,
 			broker.PlansConfig{},
@@ -1188,6 +1208,7 @@ func TestProvision_Provision(t *testing.T) {
 			gardener.Config{Project: "test", ShootDomain: "example.com", DNSProviders: fixDNSProviders()},
 			memoryStorage.Operations(),
 			memoryStorage.Instances(),
+			memoryStorage.InstancesArchived(),
 			queue,
 			factoryBuilder,
 			broker.PlansConfig{},
@@ -1219,6 +1240,159 @@ func TestProvision_Provision(t *testing.T) {
 		apierr := err.(*apiresponses.FailureResponse)
 		assert.Equal(t, expectedErr.ValidatedStatusCode(nil), apierr.ValidatedStatusCode(nil))
 		assert.Equal(t, expectedErr.LoggerAction(), apierr.LoggerAction())
+	})
+
+	t.Run("first freemium is allowed", func(t *testing.T) {
+		// given
+		memoryStorage := storage.NewMemoryStorage()
+
+		queue := &automock.Queue{}
+		queue.On("Add", mock.AnythingOfType("string"))
+
+		factoryBuilder := &automock.PlanValidator{}
+		factoryBuilder.On("IsPlanSupport", broker.FreemiumPlanID).Return(true)
+
+		planDefaults := func(planID string, platformProvider internal.CloudProvider, provider *internal.CloudProvider) (*gqlschema.ClusterConfigInput, error) {
+			return &gqlschema.ClusterConfigInput{}, nil
+		}
+		provisionEndpoint := broker.NewProvision(
+			broker.Config{EnablePlans: []string{"gcp", "azure", "azure_lite", broker.FreemiumPlanName}, OnlyOneFreePerGA: true},
+			gardener.Config{Project: "test", ShootDomain: "example.com", DNSProviders: fixDNSProviders()},
+			memoryStorage.Operations(),
+			memoryStorage.Instances(),
+			memoryStorage.InstancesArchived(),
+			queue,
+			factoryBuilder,
+			broker.PlansConfig{},
+			false,
+			planDefaults,
+			euaccess.WhitelistSet{},
+			"request rejected, your globalAccountId is not whitelisted",
+			logrus.StandardLogger(),
+			dashboardConfig,
+		)
+
+		// when
+		response, err := provisionEndpoint.Provision(fixRequestContext(t, "dummy"), instanceID, domain.ProvisionDetails{
+			ServiceID:     serviceID,
+			PlanID:        broker.FreemiumPlanID,
+			RawParameters: json.RawMessage(fmt.Sprintf(`{"name": "%s", "region": "%s"}`, clusterName, clusterRegion)),
+			RawContext:    json.RawMessage(fmt.Sprintf(`{"globalaccount_id": "%s", "subaccount_id": "%s", "user_id": "%s"}`, globalAccountID, subAccountID, userID)),
+		}, true)
+		assert.NoError(t, err)
+
+		// then
+		operation, err := memoryStorage.Operations().GetProvisioningOperationByID(response.OperationData)
+		require.NoError(t, err)
+		assert.Equal(t, instanceID, operation.InstanceID)
+		assert.Equal(t, globalAccountID, operation.ProvisioningParameters.ErsContext.GlobalAccountID)
+
+		instance, err := memoryStorage.Instances().GetByID(instanceID)
+		require.NoError(t, err)
+		assert.Equal(t, broker.FreemiumPlanID, instance.ServicePlanID)
+	})
+
+	t.Run("freemium is allowed if provisioning failed", func(t *testing.T) {
+		// given
+		memoryStorage := storage.NewMemoryStorage()
+		err := memoryStorage.InstancesArchived().Insert(internal.InstanceArchived{
+			InstanceID:        instanceID,
+			GlobalAccountID:   globalAccountID,
+			PlanID:            broker.FreemiumPlanID,
+			ProvisioningState: domain.Failed,
+		})
+		assert.NoError(t, err)
+
+		queue := &automock.Queue{}
+		queue.On("Add", mock.AnythingOfType("string"))
+
+		factoryBuilder := &automock.PlanValidator{}
+		factoryBuilder.On("IsPlanSupport", broker.FreemiumPlanID).Return(true)
+
+		planDefaults := func(planID string, platformProvider internal.CloudProvider, provider *internal.CloudProvider) (*gqlschema.ClusterConfigInput, error) {
+			return &gqlschema.ClusterConfigInput{}, nil
+		}
+		provisionEndpoint := broker.NewProvision(
+			broker.Config{EnablePlans: []string{"gcp", "azure", "azure_lite", broker.FreemiumPlanName}, OnlyOneFreePerGA: true},
+			gardener.Config{Project: "test", ShootDomain: "example.com", DNSProviders: fixDNSProviders()},
+			memoryStorage.Operations(),
+			memoryStorage.Instances(),
+			memoryStorage.InstancesArchived(),
+			queue,
+			factoryBuilder,
+			broker.PlansConfig{},
+			false,
+			planDefaults,
+			euaccess.WhitelistSet{},
+			"request rejected, your globalAccountId is not whitelisted",
+			logrus.StandardLogger(),
+			dashboardConfig,
+		)
+
+		// when
+		response, err := provisionEndpoint.Provision(fixRequestContext(t, "dummy"), instanceID, domain.ProvisionDetails{
+			ServiceID:     serviceID,
+			PlanID:        broker.FreemiumPlanID,
+			RawParameters: json.RawMessage(fmt.Sprintf(`{"name": "%s", "region": "%s"}`, clusterName, clusterRegion)),
+			RawContext:    json.RawMessage(fmt.Sprintf(`{"globalaccount_id": "%s", "subaccount_id": "%s", "user_id": "%s"}`, globalAccountID, subAccountID, userID)),
+		}, true)
+		assert.NoError(t, err)
+
+		// then
+		operation, err := memoryStorage.Operations().GetProvisioningOperationByID(response.OperationData)
+		require.NoError(t, err)
+		assert.Equal(t, instanceID, operation.InstanceID)
+		assert.Equal(t, globalAccountID, operation.ProvisioningParameters.ErsContext.GlobalAccountID)
+
+		instance, err := memoryStorage.Instances().GetByID(instanceID)
+		require.NoError(t, err)
+		assert.Equal(t, broker.FreemiumPlanID, instance.ServicePlanID)
+	})
+
+	t.Run("more than one freemium is not allowed", func(t *testing.T) {
+		// given
+		memoryStorage := storage.NewMemoryStorage()
+		err := memoryStorage.InstancesArchived().Insert(internal.InstanceArchived{
+			InstanceID:        instanceID,
+			GlobalAccountID:   globalAccountID,
+			PlanID:            broker.FreemiumPlanID,
+			ProvisioningState: domain.Succeeded,
+		})
+		assert.NoError(t, err)
+
+		factoryBuilder := &automock.PlanValidator{}
+		factoryBuilder.On("IsPlanSupport", broker.FreemiumPlanID).Return(true)
+
+		planDefaults := func(planID string, platformProvider internal.CloudProvider, provider *internal.CloudProvider) (*gqlschema.ClusterConfigInput, error) {
+			return &gqlschema.ClusterConfigInput{}, nil
+		}
+		provisionEndpoint := broker.NewProvision(
+			broker.Config{EnablePlans: []string{"gcp", "azure", "azure_lite", broker.FreemiumPlanName}, OnlyOneFreePerGA: true},
+			gardener.Config{Project: "test", ShootDomain: "example.com", DNSProviders: fixDNSProviders()},
+			memoryStorage.Operations(),
+			memoryStorage.Instances(),
+			memoryStorage.InstancesArchived(),
+			nil,
+			factoryBuilder,
+			broker.PlansConfig{},
+			false,
+			planDefaults,
+			euaccess.WhitelistSet{},
+			"request rejected, your globalAccountId is not whitelisted",
+			logrus.StandardLogger(),
+			dashboardConfig,
+		)
+
+		// when
+		_, err = provisionEndpoint.Provision(fixRequestContext(t, "dummy"), instanceID, domain.ProvisionDetails{
+			ServiceID:     serviceID,
+			PlanID:        broker.FreemiumPlanID,
+			RawParameters: json.RawMessage(fmt.Sprintf(`{"name": "%s", "region": "%s"}`, clusterName, clusterRegion)),
+			RawContext:    json.RawMessage(fmt.Sprintf(`{"globalaccount_id": "%s", "subaccount_id": "%s", "user_id": "%s"}`, globalAccountID, subAccountID, userID)),
+		}, true)
+
+		// then
+		assert.EqualError(t, err, "free Kyma was created for the global account, but there is only one allowed")
 	})
 }
 
@@ -1297,6 +1471,7 @@ func TestNetworkingValidation(t *testing.T) {
 				gardener.Config{Project: "test", ShootDomain: "example.com", DNSProviders: fixDNSProviders()},
 				memoryStorage.Operations(),
 				memoryStorage.Instances(),
+				memoryStorage.InstancesArchived(),
 				queue,
 				factoryBuilder,
 				broker.PlansConfig{},
@@ -1393,6 +1568,7 @@ func TestRegionValidation(t *testing.T) {
 				gardener.Config{Project: "test", ShootDomain: "example.com", DNSProviders: fixDNSProviders()},
 				memoryStorage.Operations(),
 				memoryStorage.Instances(),
+				memoryStorage.InstancesArchived(),
 				queue,
 				factoryBuilder,
 				broker.PlansConfig{},
