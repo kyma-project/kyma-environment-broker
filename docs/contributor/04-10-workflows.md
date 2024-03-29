@@ -21,6 +21,10 @@ This [workflow](/.github/workflows/markdown-link-check.yaml) checks for broken l
 
 See [Kyma Environment Broker Release Pipeline](04-20-release.md) to learn more about the release workflow.
 
+## Promote KEB to dev Workflow
+
+This [workflow](/.github/workflows/promote-keb-to-dev.yaml) creates a PR to management-plane-charts with the given KEB release version. The default version is the latest KEB release. 
+
 ## Label Validator Workflow
 
 This [workflow](/.github/workflows/label-validator.yml) is triggered by PRs on the `main` branch. It checks the labels on the PR and requires that the PR has exactly one of the labels listed in this [file](/.github/release.yml).
