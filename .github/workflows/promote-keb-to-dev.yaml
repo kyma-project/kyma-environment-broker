@@ -55,12 +55,12 @@ jobs:
         run: echo "BRANCH_NAME=keb-${TAG}" >> $GITHUB_ENV
 
       - name: Setup git and clone repo
+        env:
+          GH_TOKEN: ${{ secrets.BOT_TOKEN_GITHUB_TOOLS }}
         run: |
           git config --global user.email ${{ vars.GIT_USER_EMAIL }}
           git config --global user.name ${{ vars.GIT_USER_NAME }}
           git clone ${MANAGEMENT_PLANE_CHARTS_WITH_USER}
-        env:
-          GH_TOKEN: ${{ secrets.BOT_TOKEN_GITHUB_TOOLS }}
 
       - name: Setup python
         uses: actions/setup-python@v4
@@ -92,6 +92,7 @@ jobs:
         working-directory: management-plane-charts
         env:
           MANAGEMENT_PLANE_CHARTS_REPO_URL: "https://${{ vars.GH_TOOLS_HOST }}/kyma/${{ vars.MP_CHARTS_REPO_NAME }}"
+          # needed by gh cli for GitHub enterprise
           GH_HOST: ${{ vars.GH_TOOLS_HOST }}
         run: |
           prs=$(gh pr list -R "${MANAGEMENT_PLANE_CHARTS_REPO_URL}" -A ${{ vars.GIT_USER_NAME }} --state open --json headRefName | jq -r '.[] | .headRefName')
