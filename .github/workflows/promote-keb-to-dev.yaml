@@ -90,8 +90,10 @@ jobs:
 
       - name: Create PR if needed
         working-directory: management-plane-charts
+        env:
+          MANAGEMENT_PLANE_CHARTS_REPO_URL: "https://${{ vars.GH_TOOLS_HOST }}/kyma/${{ vars.MP_CHARTS_REPO_NAME }}"
         run: |
-          prs=$(gh pr list -R "${{ env.MANAGEMENT_PLANE_CHARTS }}" -A ${{ vars.GIT_USER_NAME }} --state open --json headRefName | jq -r '.[] | .headRefName')
+          prs=$(gh pr list -R "${MANAGEMENT_PLANE_CHARTS_REPO_URL}" -A ${{ vars.GIT_USER_NAME }} --state open --json headRefName | jq -r '.[] | .headRefName')
 
           if  echo $prs | tr " " '\n' | grep -F -q -x ${BRANCH_NAME}; then
               echo "PR already exists, no need to create new one"
