@@ -92,6 +92,7 @@ jobs:
         working-directory: management-plane-charts
         env:
           MANAGEMENT_PLANE_CHARTS_REPO_URL: "https://${{ vars.GH_TOOLS_HOST }}/kyma/${{ vars.MP_CHARTS_REPO_NAME }}"
+          GH_HOST: ${{ vars.GH_TOOLS_HOST }}
         run: |
           prs=$(gh pr list -R "${MANAGEMENT_PLANE_CHARTS_REPO_URL}" -A ${{ vars.GIT_USER_NAME }} --state open --json headRefName | jq -r '.[] | .headRefName')
 
