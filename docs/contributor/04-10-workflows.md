@@ -23,7 +23,7 @@ See [Kyma Environment Broker Release Pipeline](04-20-release.md) to learn more a
 
 ## Promote KEB to DEV Workflow
 
-This [workflow](/.github/workflows/promote-keb-to-dev.yaml) creates a PR to management-plane-charts with the given KEB release version. The default version is the latest KEB release. 
+This [workflow](/.github/workflows/promote-keb-to-dev.yaml) creates a PR to the `management-plane-charts` repository with the given KEB release version. The default version is the latest KEB release. 
 
 ## Label Validator Workflow
 
