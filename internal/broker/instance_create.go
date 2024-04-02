@@ -10,6 +10,8 @@ import (
 	"net/netip"
 	"strings"
 
+	"github.com/kyma-project/kyma-environment-broker/internal/storage/dbmodel"
+
 	"github.com/kyma-project/kyma-environment-broker/internal/networking"
 
 	"github.com/hashicorp/go-multierror"
@@ -343,6 +345,21 @@ func (b *ProvisionEndpoint) validateAndExtract(details domain.ProvisionDetails, 
 
 	if IsFreemiumPlan(details.PlanID) && b.config.OnlyOneFreePerGA {
 		count, err := b.instanceArchivedStorage.TotalNumberOfInstancesArchivedForGlobalAccountID(ersContext.GlobalAccountID, FreemiumPlanID)
+		if err != nil {
+			return ersContext, parameters, fmt.Errorf("while checking if a free Kyma instance existed for given global account: %w", err)
+		}
+
+		if count > 0 {
+			logger.Info("Provisioning Free SKR rejected, such instance was already created for this Global Account")
+			return ersContext, parameters, fmt.Errorf("free Kyma was created for the global account, but there is only one allowed")
+		}
+
+		filter := dbmodel.InstanceFilter{
+			GlobalAccountIDs: []string{ersContext.GlobalAccountID},
+			PlanIDs:          []string{FreemiumPlanID},
+			States:           []dbmodel.InstanceState{dbmodel.InstanceSucceeded},
+		}
+		_, _, count, err = b.instanceStorage.List(filter)
 		if err != nil {
 			return ersContext, parameters, fmt.Errorf("while checking if a free Kyma instance existed for given global account: %w", err)
 		}
