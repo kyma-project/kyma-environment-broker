@@ -69,6 +69,8 @@ type ProvisionEndpoint struct {
 	euAccessWhitelist        euaccess.WhitelistSet
 	euAccessRejectionMessage string
 
+	freemiumWhiteList euaccess.WhitelistSet
+
 	log logrus.FieldLogger
 }
 
@@ -86,6 +88,7 @@ func NewProvision(cfg Config,
 	euRejectMessage string,
 	log logrus.FieldLogger,
 	dashboardConfig dashboard.Config,
+	freemiumWhitelist euaccess.WhitelistSet,
 ) *ProvisionEndpoint {
 	enabledPlanIDs := map[string]struct{}{}
 	for _, planName := range cfg.EnablePlans {
@@ -111,6 +114,7 @@ func NewProvision(cfg Config,
 		euAccessWhitelist:        euAccessWhitelist,
 		euAccessRejectionMessage: euRejectMessage,
 		dashboardConfig:          dashboardConfig,
+		freemiumWhiteList:        freemiumWhitelist,
 	}
 }
 
@@ -343,7 +347,7 @@ func (b *ProvisionEndpoint) validateAndExtract(details domain.ProvisionDetails, 
 		}
 	}
 
-	if IsFreemiumPlan(details.PlanID) && b.config.OnlyOneFreePerGA {
+	if IsFreemiumPlan(details.PlanID) && b.config.OnlyOneFreePerGA && euaccess.IsNotWhitelisted(ersContext.GlobalAccountID, b.freemiumWhiteList) {
 		count, err := b.instanceArchivedStorage.TotalNumberOfInstancesArchivedForGlobalAccountID(ersContext.GlobalAccountID, FreemiumPlanID)
 		if err != nil {
 			return ersContext, parameters, fmt.Errorf("while checking if a free Kyma instance existed for given global account: %w", err)

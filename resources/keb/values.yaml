@@ -414,3 +414,6 @@ cleaning:
 
 metricsv2:
   enabled: false
+
+freemiumWhitelistedGlobalAccountIds: |-
+  whitelist:

@@ -400,6 +400,8 @@ spec:
               value: "{{ .Values.includeNewMachineTypesInSchema }}"
             - name: APP_METRICSV2_ENABLED
               value: "{{ .Values.metricsv2.enabled }}"
+            - name: APP_FREEMIUM_WHITELISTED_GLOBAL_ACCOUNTS_FILE_PATH
+              value: /config/freemiumWhitelistedGlobalAccountIds.yaml
           ports:
             - name: http
               containerPort: {{ .Values.broker.port }}

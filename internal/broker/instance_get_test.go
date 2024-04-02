@@ -66,6 +66,7 @@ func TestGetEndpoint_GetProvisioningInstance(t *testing.T) {
 		"request rejected, your globalAccountId is not whitelisted",
 		logrus.StandardLogger(),
 		dashboardConfig,
+		euaccess.WhitelistSet{},
 	)
 	getSvc := broker.NewGetInstance(broker.Config{EnableKubeconfigURLLabel: true}, st.Instances(), st.Operations(), logrus.New())
 

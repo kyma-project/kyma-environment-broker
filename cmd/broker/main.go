@@ -155,6 +155,8 @@ type Config struct {
 	// FreemiumProviders is a list of providers for freemium
 	FreemiumProviders []string `envconfig:"default=aws"`
 
+	FreemiumWhitelistedGlobalAccountsFilePath string
+
 	DomainName string
 
 	// Enable/disable profiler configuration. The profiler samples will be stored
@@ -489,12 +491,16 @@ func createAPI(router *mux.Router, servicesConfig broker.ServicesConfig, planVal
 	fatalOnError(err)
 	logs.Infof("Number of globalAccountIds for EU Access: %d\n", len(whitelistedGlobalAccountIds))
 
+	freemiumGlobalAccountIds, err := euaccess.ReadWhitelistedGlobalAccountIdsFromFile(cfg.FreemiumWhitelistedGlobalAccountsFilePath)
+	fatalOnError(err)
+	logs.Infof("Number of globalAccountIds for unlimited freeemium: %d\n", len(freemiumGlobalAccountIds))
+
 	// create KymaEnvironmentBroker endpoints
 	kymaEnvBroker := &broker.KymaEnvironmentBroker{
 		ServicesEndpoint: broker.NewServices(cfg.Broker, servicesConfig, logs),
 		ProvisionEndpoint: broker.NewProvision(cfg.Broker, cfg.Gardener, db.Operations(), db.Instances(), db.InstancesArchived(),
 			provisionQueue, planValidator, defaultPlansConfig, cfg.EnableOnDemandVersion,
-			planDefaults, whitelistedGlobalAccountIds, cfg.EuAccessRejectionMessage, logs, cfg.KymaDashboardConfig),
+			planDefaults, whitelistedGlobalAccountIds, cfg.EuAccessRejectionMessage, logs, cfg.KymaDashboardConfig, freemiumGlobalAccountIds),
 		DeprovisionEndpoint: broker.NewDeprovision(db.Instances(), db.Operations(), deprovisionQueue, logs),
 		UpdateEndpoint: broker.NewUpdate(cfg.Broker, db.Instances(), db.RuntimeStates(), db.Operations(),
 			suspensionCtxHandler, cfg.UpdateProcessingEnabled, cfg.UpdateSubAccountMovementEnabled, updateQueue, defaultPlansConfig,
