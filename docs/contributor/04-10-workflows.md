@@ -2,7 +2,7 @@
 
 ## ESLint Workflow
 
-This [workflow](/.github/workflows/run-eslint.yaml) runs the ESLint. It is triggered by PRs on the `main` branch that change at least one of the following:
+This [workflow](/.github/workflows/run-eslint.yaml) runs the ESLint. It is triggered by pull requests (PRs) on the `main` branch that change at least one of the following:
 - `/.github` directory content
 - `/testing/e2e/skr` directory content
 - `Makefile` file
