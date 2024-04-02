@@ -21,7 +21,7 @@ This [workflow](/.github/workflows/markdown-link-check.yaml) checks for broken l
 
 See [Kyma Environment Broker Release Pipeline](04-20-release.md) to learn more about the release workflow.
 
-## Promote KEB to dev Workflow
+## Promote KEB to DEV Workflow
 
 This [workflow](/.github/workflows/promote-keb-to-dev.yaml) creates a PR to management-plane-charts with the given KEB release version. The default version is the latest KEB release. 
 
