@@ -352,22 +352,36 @@ func (b *ProvisionEndpoint) validateAndExtract(details domain.ProvisionDetails, 
 		if err != nil {
 			return ersContext, parameters, fmt.Errorf("while checking if a free Kyma instance existed for given global account: %w", err)
 		}
-
 		if count > 0 {
 			logger.Info("Provisioning Free SKR rejected, such instance was already created for this Global Account")
 			return ersContext, parameters, fmt.Errorf("free Kyma was created for the global account, but there is only one allowed")
 		}
 
-		filter := dbmodel.InstanceFilter{
+		instanceFilter := dbmodel.InstanceFilter{
 			GlobalAccountIDs: []string{ersContext.GlobalAccountID},
 			PlanIDs:          []string{FreemiumPlanID},
 			States:           []dbmodel.InstanceState{dbmodel.InstanceSucceeded},
 		}
-		_, _, count, err = b.instanceStorage.List(filter)
+		_, _, count, err = b.instanceStorage.List(instanceFilter)
 		if err != nil {
 			return ersContext, parameters, fmt.Errorf("while checking if a free Kyma instance existed for given global account: %w", err)
 		}
+		if count > 0 {
+			logger.Info("Provisioning Free SKR rejected, such instance was already created for this Global Account")
+			return ersContext, parameters, fmt.Errorf("free Kyma was created for the global account, but there is only one allowed")
+		}
 
+		//TODO remove after running the archiver (operations table will be empty)
+		operationFilter := dbmodel.OperationFilter{
+			GlobalAccountIDs: []string{ersContext.GlobalAccountID},
+			PlanIDs:          []string{FreemiumPlanID},
+			Types:            []string{string(internal.OperationTypeProvision)},
+			States:           []string{string(domain.Succeeded)},
+		}
+		_, _, count, err = b.operationsStorage.ListOperations(operationFilter)
+		if err != nil {
+			return ersContext, parameters, fmt.Errorf("while checking if a free Kyma instance existed for given global account: %w", err)
+		}
 		if count > 0 {
 			logger.Info("Provisioning Free SKR rejected, such instance was already created for this Global Account")
 			return ersContext, parameters, fmt.Errorf("free Kyma was created for the global account, but there is only one allowed")
