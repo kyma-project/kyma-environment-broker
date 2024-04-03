@@ -7,7 +7,7 @@ import (
 	"net/http"
 	"testing"
 
-	"github.com/kyma-project/kyma-environment-broker/internal/euaccess"
+	"github.com/kyma-project/kyma-environment-broker/internal/whitelist"
 
 	"github.com/pivotal-cf/brokerapi/v8/domain/apiresponses"
 
@@ -83,11 +83,11 @@ func TestProvision_Provision(t *testing.T) {
 			broker.PlansConfig{},
 			false,
 			planDefaults,
-			euaccess.WhitelistSet{},
+			whitelist.Set{},
 			"request rejected, your globalAccountId is not whitelisted",
 			logrus.StandardLogger(),
 			dashboardConfig,
-			euaccess.WhitelistSet{},
+			whitelist.Set{},
 		)
 
 		// when
@@ -158,11 +158,11 @@ func TestProvision_Provision(t *testing.T) {
 			broker.PlansConfig{},
 			false,
 			planDefaults,
-			euaccess.WhitelistSet{},
+			whitelist.Set{},
 			"request rejected, your globalAccountId is not whitelisted",
 			logrus.StandardLogger(),
 			dashboardConfig,
-			euaccess.WhitelistSet{},
+			whitelist.Set{},
 		)
 
 		// when
@@ -237,11 +237,11 @@ func TestProvision_Provision(t *testing.T) {
 			broker.PlansConfig{},
 			false,
 			planDefaults,
-			euaccess.WhitelistSet{},
+			whitelist.Set{},
 			"request rejected, your globalAccountId is not whitelisted",
 			logrus.StandardLogger(),
 			dashboardConfig,
-			euaccess.WhitelistSet{},
+			whitelist.Set{},
 		)
 
 		// when
@@ -288,11 +288,11 @@ func TestProvision_Provision(t *testing.T) {
 			broker.PlansConfig{},
 			false,
 			planDefaults,
-			euaccess.WhitelistSet{},
+			whitelist.Set{},
 			"request rejected, your globalAccountId is not whitelisted",
 			logrus.StandardLogger(),
 			dashboardConfig,
-			euaccess.WhitelistSet{},
+			whitelist.Set{},
 		)
 
 		// when shootDomain is missing
@@ -363,11 +363,11 @@ func TestProvision_Provision(t *testing.T) {
 			broker.PlansConfig{},
 			false,
 			planDefaults,
-			euaccess.WhitelistSet{},
+			whitelist.Set{},
 			"request rejected, your globalAccountId is not whitelisted",
 			logrus.StandardLogger(),
 			dashboardConfig,
-			euaccess.WhitelistSet{},
+			whitelist.Set{},
 		)
 
 		// when
@@ -440,11 +440,11 @@ func TestProvision_Provision(t *testing.T) {
 			broker.PlansConfig{},
 			false,
 			planDefaults,
-			euaccess.WhitelistSet{},
+			whitelist.Set{},
 			"request rejected, your globalAccountId is not whitelisted",
 			logrus.StandardLogger(),
 			dashboardConfig,
-			euaccess.WhitelistSet{},
+			whitelist.Set{},
 		)
 
 		// when
@@ -491,11 +491,11 @@ func TestProvision_Provision(t *testing.T) {
 			broker.PlansConfig{},
 			false,
 			planDefaults,
-			euaccess.WhitelistSet{},
+			whitelist.Set{},
 			"request rejected, your globalAccountId is not whitelisted",
 			logrus.StandardLogger(),
 			dashboardConfig,
-			euaccess.WhitelistSet{},
+			whitelist.Set{},
 		)
 
 		// when
@@ -543,11 +543,11 @@ func TestProvision_Provision(t *testing.T) {
 			broker.PlansConfig{},
 			false,
 			planDefaults,
-			euaccess.WhitelistSet{},
+			whitelist.Set{},
 			"request rejected, your globalAccountId is not whitelisted",
 			logrus.StandardLogger(),
 			dashboardConfig,
-			euaccess.WhitelistSet{},
+			whitelist.Set{},
 		)
 
 		// when
@@ -609,11 +609,11 @@ func TestProvision_Provision(t *testing.T) {
 			broker.PlansConfig{},
 			false,
 			planDefaults,
-			euaccess.WhitelistSet{},
+			whitelist.Set{},
 			"request rejected, your globalAccountId is not whitelisted",
 			logrus.StandardLogger(),
 			dashboardConfig,
-			euaccess.WhitelistSet{},
+			whitelist.Set{},
 		)
 
 		// when
@@ -675,11 +675,11 @@ func TestProvision_Provision(t *testing.T) {
 			broker.PlansConfig{},
 			false,
 			planDefaults,
-			euaccess.WhitelistSet{},
+			whitelist.Set{},
 			"request rejected, your globalAccountId is not whitelisted",
 			logrus.StandardLogger(),
 			dashboardConfig,
-			euaccess.WhitelistSet{},
+			whitelist.Set{},
 		)
 
 		// when
@@ -721,11 +721,11 @@ func TestProvision_Provision(t *testing.T) {
 			broker.PlansConfig{},
 			false,
 			planDefaults,
-			euaccess.WhitelistSet{},
+			whitelist.Set{},
 			"request rejected, your globalAccountId is not whitelisted",
 			logrus.StandardLogger(),
 			dashboardConfig,
-			euaccess.WhitelistSet{},
+			whitelist.Set{},
 		)
 
 		// when
@@ -765,11 +765,11 @@ func TestProvision_Provision(t *testing.T) {
 			broker.PlansConfig{},
 			true,
 			planDefaults,
-			euaccess.WhitelistSet{},
+			whitelist.Set{},
 			"request rejected, your globalAccountId is not whitelisted",
 			logrus.StandardLogger(),
 			dashboardConfig,
-			euaccess.WhitelistSet{},
+			whitelist.Set{},
 		)
 
 		// when
@@ -811,11 +811,11 @@ func TestProvision_Provision(t *testing.T) {
 			broker.PlansConfig{},
 			true,
 			planDefaults,
-			euaccess.WhitelistSet{},
+			whitelist.Set{},
 			"request rejected, your globalAccountId is not whitelisted",
 			logrus.StandardLogger(),
 			dashboardConfig,
-			euaccess.WhitelistSet{},
+			whitelist.Set{},
 		)
 
 		// when
@@ -854,11 +854,11 @@ func TestProvision_Provision(t *testing.T) {
 			broker.PlansConfig{},
 			false,
 			planDefaults,
-			euaccess.WhitelistSet{},
+			whitelist.Set{},
 			"request rejected, your globalAccountId is not whitelisted",
 			logrus.StandardLogger(),
 			dashboardConfig,
-			euaccess.WhitelistSet{},
+			whitelist.Set{},
 		)
 
 		// when
@@ -905,11 +905,11 @@ func TestProvision_Provision(t *testing.T) {
 			broker.PlansConfig{},
 			false,
 			planDefaults,
-			euaccess.WhitelistSet{},
+			whitelist.Set{},
 			"request rejected, your globalAccountId is not whitelisted",
 			logrus.StandardLogger(),
 			dashboardConfig,
-			euaccess.WhitelistSet{},
+			whitelist.Set{},
 		)
 
 		// when
@@ -952,11 +952,11 @@ func TestProvision_Provision(t *testing.T) {
 			broker.PlansConfig{},
 			false,
 			planDefaults,
-			euaccess.WhitelistSet{},
+			whitelist.Set{},
 			"request rejected, your globalAccountId is not whitelisted",
 			logrus.StandardLogger(),
 			dashboardConfig,
-			euaccess.WhitelistSet{},
+			whitelist.Set{},
 		)
 
 		// when
@@ -1005,11 +1005,11 @@ func TestProvision_Provision(t *testing.T) {
 			broker.PlansConfig{},
 			false,
 			planDefaults,
-			euaccess.WhitelistSet{},
+			whitelist.Set{},
 			"request rejected, your globalAccountId is not whitelisted",
 			logrus.StandardLogger(),
 			dashboardConfig,
-			euaccess.WhitelistSet{},
+			whitelist.Set{},
 		)
 
 		oidcParams := `"clientID":"client-id"`
@@ -1064,11 +1064,11 @@ func TestProvision_Provision(t *testing.T) {
 			broker.PlansConfig{},
 			false,
 			planDefaults,
-			euaccess.WhitelistSet{},
+			whitelist.Set{},
 			"request rejected, your globalAccountId is not whitelisted",
 			logrus.StandardLogger(),
 			dashboardConfig,
-			euaccess.WhitelistSet{},
+			whitelist.Set{},
 		)
 
 		oidcParams := `"issuerURL":"https://test.local"`
@@ -1123,11 +1123,11 @@ func TestProvision_Provision(t *testing.T) {
 			broker.PlansConfig{},
 			false,
 			planDefaults,
-			euaccess.WhitelistSet{},
+			whitelist.Set{},
 			"request rejected, your globalAccountId is not whitelisted",
 			logrus.StandardLogger(),
 			dashboardConfig,
-			euaccess.WhitelistSet{},
+			whitelist.Set{},
 		)
 
 		oidcParams := `"clientID":"client-id","issuerURL":"https://test.local","signingAlgs":["RS256","notValid"]`
@@ -1182,11 +1182,11 @@ func TestProvision_Provision(t *testing.T) {
 			broker.PlansConfig{},
 			false,
 			planDefaults,
-			euaccess.WhitelistSet{whitelistedGlobalAccountID: struct{}{}},
+			whitelist.Set{whitelistedGlobalAccountID: struct{}{}},
 			"request rejected, your globalAccountId is not whitelisted",
 			logrus.StandardLogger(),
 			dashboardConfig,
-			euaccess.WhitelistSet{},
+			whitelist.Set{},
 		)
 
 		oidcParams := `"clientID":"client-id","issuerURL":"https://test.local","signingAlgs":["RS256"]`
@@ -1234,11 +1234,11 @@ func TestProvision_Provision(t *testing.T) {
 			broker.PlansConfig{},
 			false,
 			planDefaults,
-			euaccess.WhitelistSet{},
+			whitelist.Set{},
 			"request rejected, your globalAccountId is not whitelisted",
 			logrus.StandardLogger(),
 			dashboardConfig,
-			euaccess.WhitelistSet{},
+			whitelist.Set{},
 		)
 
 		oidcParams := `"clientID":"client-id","issuerURL":"https://test.local","signingAlgs":["RS256"]`
@@ -1287,11 +1287,11 @@ func TestProvision_Provision(t *testing.T) {
 			broker.PlansConfig{},
 			false,
 			planDefaults,
-			euaccess.WhitelistSet{},
+			whitelist.Set{},
 			"request rejected, your globalAccountId is not whitelisted",
 			logrus.StandardLogger(),
 			dashboardConfig,
-			euaccess.WhitelistSet{},
+			whitelist.Set{},
 		)
 
 		// when
@@ -1355,11 +1355,11 @@ func TestProvision_Provision(t *testing.T) {
 			broker.PlansConfig{},
 			false,
 			planDefaults,
-			euaccess.WhitelistSet{},
+			whitelist.Set{},
 			"request rejected, your globalAccountId is not whitelisted",
 			logrus.StandardLogger(),
 			dashboardConfig,
-			euaccess.WhitelistSet{},
+			whitelist.Set{},
 		)
 
 		// when
@@ -1413,11 +1413,11 @@ func TestProvision_Provision(t *testing.T) {
 			broker.PlansConfig{},
 			false,
 			planDefaults,
-			euaccess.WhitelistSet{},
+			whitelist.Set{},
 			"request rejected, your globalAccountId is not whitelisted",
 			logrus.StandardLogger(),
 			dashboardConfig,
-			euaccess.WhitelistSet{globalAccountID: struct{}{}},
+			whitelist.Set{globalAccountID: struct{}{}},
 		)
 
 		// when
@@ -1464,11 +1464,11 @@ func TestProvision_Provision(t *testing.T) {
 			broker.PlansConfig{},
 			false,
 			planDefaults,
-			euaccess.WhitelistSet{},
+			whitelist.Set{},
 			"request rejected, your globalAccountId is not whitelisted",
 			logrus.StandardLogger(),
 			dashboardConfig,
-			euaccess.WhitelistSet{},
+			whitelist.Set{},
 		)
 
 		// when
@@ -1513,11 +1513,11 @@ func TestProvision_Provision(t *testing.T) {
 			broker.PlansConfig{},
 			false,
 			planDefaults,
-			euaccess.WhitelistSet{},
+			whitelist.Set{},
 			"request rejected, your globalAccountId is not whitelisted",
 			logrus.StandardLogger(),
 			dashboardConfig,
-			euaccess.WhitelistSet{},
+			whitelist.Set{},
 		)
 
 		// when
@@ -1560,11 +1560,11 @@ func TestProvision_Provision(t *testing.T) {
 			broker.PlansConfig{},
 			false,
 			planDefaults,
-			euaccess.WhitelistSet{},
+			whitelist.Set{},
 			"request rejected, your globalAccountId is not whitelisted",
 			logrus.StandardLogger(),
 			dashboardConfig,
-			euaccess.WhitelistSet{},
+			whitelist.Set{},
 		)
 
 		// when
@@ -1661,11 +1661,11 @@ func TestNetworkingValidation(t *testing.T) {
 				broker.PlansConfig{},
 				false,
 				planDefaults,
-				euaccess.WhitelistSet{},
+				whitelist.Set{},
 				"request rejected, your globalAccountId is not whitelisted",
 				logrus.StandardLogger(),
 				dashboardConfig,
-				euaccess.WhitelistSet{},
+				whitelist.Set{},
 			)
 
 			// when
@@ -1759,11 +1759,11 @@ func TestRegionValidation(t *testing.T) {
 				broker.PlansConfig{},
 				false,
 				planDefaults,
-				euaccess.WhitelistSet{},
+				whitelist.Set{},
 				"request rejected, your globalAccountId is not whitelisted",
 				logrus.StandardLogger(),
 				dashboardConfig,
-				euaccess.WhitelistSet{},
+				whitelist.Set{},
 			)
 
 			// when

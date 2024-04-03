@@ -10,6 +10,8 @@ import (
 	"net/netip"
 	"strings"
 
+	"github.com/kyma-project/kyma-environment-broker/internal/whitelist"
+
 	"github.com/kyma-project/kyma-environment-broker/internal/storage/dbmodel"
 
 	"github.com/kyma-project/kyma-environment-broker/internal/networking"
@@ -66,10 +68,10 @@ type ProvisionEndpoint struct {
 
 	dashboardConfig dashboard.Config
 
-	euAccessWhitelist        euaccess.WhitelistSet
+	euAccessWhitelist        whitelist.Set
 	euAccessRejectionMessage string
 
-	freemiumWhiteList euaccess.WhitelistSet
+	freemiumWhiteList whitelist.Set
 
 	log logrus.FieldLogger
 }
@@ -84,11 +86,11 @@ func NewProvision(cfg Config,
 	plansConfig PlansConfig,
 	kvod bool,
 	planDefaults PlanDefaults,
-	euAccessWhitelist euaccess.WhitelistSet,
+	euAccessWhitelist whitelist.Set,
 	euRejectMessage string,
 	log logrus.FieldLogger,
 	dashboardConfig dashboard.Config,
-	freemiumWhitelist euaccess.WhitelistSet,
+	freemiumWhitelist whitelist.Set,
 ) *ProvisionEndpoint {
 	enabledPlanIDs := map[string]struct{}{}
 	for _, planName := range cfg.EnablePlans {
@@ -297,7 +299,7 @@ func (b *ProvisionEndpoint) validateAndExtract(details domain.ProvisionDetails, 
 	// EU Access: reject requests for not whitelisted globalAccountIds
 	if isEuRestrictedAccess(ctx) {
 		logger.Infof("EU Access restricted instance creation")
-		if euaccess.IsNotWhitelisted(ersContext.GlobalAccountID, b.euAccessWhitelist) {
+		if whitelist.IsNotWhitelisted(ersContext.GlobalAccountID, b.euAccessWhitelist) {
 			logger.Infof(b.euAccessRejectionMessage)
 			err = fmt.Errorf(b.euAccessRejectionMessage)
 			return ersContext, parameters, apiresponses.NewFailureResponse(err, http.StatusBadRequest, "provisioning")
@@ -347,7 +349,7 @@ func (b *ProvisionEndpoint) validateAndExtract(details domain.ProvisionDetails, 
 		}
 	}
 
-	if IsFreemiumPlan(details.PlanID) && b.config.OnlyOneFreePerGA && euaccess.IsNotWhitelisted(ersContext.GlobalAccountID, b.freemiumWhiteList) {
+	if IsFreemiumPlan(details.PlanID) && b.config.OnlyOneFreePerGA && whitelist.IsNotWhitelisted(ersContext.GlobalAccountID, b.freemiumWhiteList) {
 		count, err := b.instanceArchivedStorage.TotalNumberOfInstancesArchivedForGlobalAccountID(ersContext.GlobalAccountID, FreemiumPlanID)
 		if err != nil {
 			return ersContext, parameters, fmt.Errorf("while checking if a free Kyma instance existed for given global account: %w", err)

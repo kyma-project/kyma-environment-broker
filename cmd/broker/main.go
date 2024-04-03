@@ -14,7 +14,8 @@ import (
 	"sort"
 	"time"
 
-	"github.com/kyma-project/kyma-environment-broker/internal/euaccess"
+	"github.com/kyma-project/kyma-environment-broker/internal/whitelist"
+
 	"github.com/kyma-project/kyma-environment-broker/internal/expiration"
 	"github.com/kyma-project/kyma-environment-broker/internal/metricsv2"
 
@@ -487,11 +488,11 @@ func createAPI(router *mux.Router, servicesConfig broker.ServicesConfig, planVal
 	logger.RegisterSink(errorSink)
 
 	// EU Access whitelisting
-	whitelistedGlobalAccountIds, err := euaccess.ReadWhitelistedGlobalAccountIdsFromFile(cfg.EuAccessWhitelistedGlobalAccountsFilePath)
+	whitelistedGlobalAccountIds, err := whitelist.ReadWhitelistedGlobalAccountIdsFromFile(cfg.EuAccessWhitelistedGlobalAccountsFilePath)
 	fatalOnError(err)
 	logs.Infof("Number of globalAccountIds for EU Access: %d\n", len(whitelistedGlobalAccountIds))
 
-	freemiumGlobalAccountIds, err := euaccess.ReadWhitelistedGlobalAccountIdsFromFile(cfg.FreemiumWhitelistedGlobalAccountsFilePath)
+	freemiumGlobalAccountIds, err := whitelist.ReadWhitelistedGlobalAccountIdsFromFile(cfg.FreemiumWhitelistedGlobalAccountsFilePath)
 	fatalOnError(err)
 	logs.Infof("Number of globalAccountIds for unlimited freeemium: %d\n", len(freemiumGlobalAccountIds))
 

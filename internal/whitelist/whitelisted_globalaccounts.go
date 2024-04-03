@@ -1,4 +1,4 @@
-package euaccess
+package whitelist
 
 import (
 	"fmt"
@@ -8,19 +8,19 @@ import (
 )
 
 const (
-	WhitelistKey = "whitelist"
+	Key = "whitelist"
 )
 
-type WhitelistSet map[string]struct{}
+type Set map[string]struct{}
 
-func IsNotWhitelisted(globalAccountId string, whitelist WhitelistSet) bool {
+func IsNotWhitelisted(globalAccountId string, whitelist Set) bool {
 	_, found := whitelist[globalAccountId]
 	return !found
 }
 
-func ReadWhitelistedGlobalAccountIdsFromFile(filename string) (WhitelistSet, error) {
+func ReadWhitelistedGlobalAccountIdsFromFile(filename string) (Set, error) {
 	yamlData := make(map[string][]string)
-	whitelistSet := WhitelistSet{}
+	whitelistSet := Set{}
 	var whitelist, err = os.ReadFile(filename)
 	if err != nil {
 		return whitelistSet, fmt.Errorf("while reading %s file with whitelisted GlobalAccountIds config: %w", filename, err)
@@ -29,7 +29,7 @@ func ReadWhitelistedGlobalAccountIdsFromFile(filename string) (WhitelistSet, err
 	if err != nil {
 		return whitelistSet, fmt.Errorf("while unmarshalling a file with whitelisted GlobalAccountIds config: %w", err)
 	}
-	for _, id := range yamlData[WhitelistKey] {
+	for _, id := range yamlData[Key] {
 		whitelistSet[id] = struct{}{}
 	}
 	return whitelistSet, nil
