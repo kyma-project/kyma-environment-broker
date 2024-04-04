@@ -60,6 +60,7 @@ type ReadSession interface {
 	NumberOfOperationsForDeletedInstances() (int, error)
 	TotalNumberOfInstancesArchived() (int, error)
 	NumberOfDeletedInstances() (int, error)
+	TotalNumberOfInstancesArchivedForGlobalAccountID(globalAccountID string, planID string) (int, error)
 }
 
 //go:generate mockery --name=WriteSession

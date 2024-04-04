@@ -3,6 +3,8 @@ package memory
 import (
 	"sync"
 
+	"github.com/pivotal-cf/brokerapi/v8/domain"
+
 	"github.com/kyma-project/kyma-environment-broker/internal"
 	"github.com/kyma-project/kyma-environment-broker/internal/storage/dberr"
 )
@@ -41,4 +43,20 @@ func (s *InstanceArchivedInMemoryStorage) Insert(instance internal.InstanceArchi
 
 func (s *InstanceArchivedInMemoryStorage) TotalNumberOfInstancesArchived() (int, error) {
 	return len(s.data), nil
+}
+
+func (s *InstanceArchivedInMemoryStorage) TotalNumberOfInstancesArchivedForGlobalAccountID(globalAccountID string, planID string) (int, error) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
+	numberOfInstances := 0
+	for _, inst := range s.data {
+		if inst.GlobalAccountID == globalAccountID &&
+			inst.PlanID == planID &&
+			inst.ProvisioningState == domain.Succeeded {
+			numberOfInstances++
+		}
+	}
+
+	return numberOfInstances, nil
 }

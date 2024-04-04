@@ -420,3 +420,6 @@ metricsv2:
   operationResultRetentionPeriod: 336h
   operationResultPoolingInterval: 1m
   operationStatsPoolingInterval: 1m
+
+freemiumWhitelistedGlobalAccountIds: |-
+  whitelist:

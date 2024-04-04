@@ -1098,6 +1098,7 @@ func fixConfig() *Config {
 		},
 		MaxPaginationPage:                         100,
 		FreemiumProviders:                         []string{"aws", "azure"},
+		FreemiumWhitelistedGlobalAccountsFilePath: "testdata/freemium_whitelist.yaml",
 		EuAccessWhitelistedGlobalAccountsFilePath: "testdata/eu_access_whitelist.yaml",
 		EuAccessRejectionMessage:                  "EU Access Rejection Message - see: http://google.pl",
 

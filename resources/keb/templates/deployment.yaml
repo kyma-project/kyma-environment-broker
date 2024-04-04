@@ -406,6 +406,8 @@ spec:
               value: "{{ .Values.metricsv2.operationResultPoolingInterval }}"
             - name: APP_METRICSV2_OPERATION_STATS_POOLING_INTERVAL
               value: "{{ .Values.metricsv2.operationStatsPoolingInterval }}"
+            - name: APP_FREEMIUM_WHITELISTED_GLOBAL_ACCOUNTS_FILE_PATH
+              value: /config/freemiumWhitelistedGlobalAccountIds.yaml
           ports:
             - name: http
               containerPort: {{ .Values.broker.port }}

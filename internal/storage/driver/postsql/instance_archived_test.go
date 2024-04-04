@@ -5,6 +5,8 @@ import (
 	"testing"
 	"time"
 
+	"github.com/kyma-project/kyma-environment-broker/internal/broker"
+
 	"github.com/pivotal-cf/brokerapi/v8/domain"
 
 	"github.com/kyma-project/kyma-environment-broker/internal"
@@ -84,6 +86,87 @@ func TestInstanceArchived(t *testing.T) {
 		assertInstanceArchived(t, givenInstance2, got2)
 	})
 
+	t.Run("get total number of instances archived for global accounts", func(t *testing.T) {
+		// given
+		givenInstance1 := fixInstanceArchive(instanceArchiveData{
+			InstanceID:        "instance-id1",
+			GlobalAccountID:   "gaidA",
+			PlanID:            broker.FreemiumPlanID,
+			PlanName:          broker.FreemiumPlanName,
+			ProvisioningState: domain.Succeeded,
+		})
+		givenInstance2 := fixInstanceArchive(instanceArchiveData{
+			InstanceID:        "instance-id2",
+			GlobalAccountID:   "gaidA",
+			PlanID:            broker.FreemiumPlanID,
+			PlanName:          broker.FreemiumPlanName,
+			ProvisioningState: domain.Succeeded,
+		})
+		givenInstance3 := fixInstanceArchive(instanceArchiveData{
+			InstanceID:        "instance-id3",
+			GlobalAccountID:   "gaidA",
+			PlanID:            broker.FreemiumPlanID,
+			PlanName:          broker.FreemiumPlanName,
+			ProvisioningState: domain.Failed,
+		})
+		givenInstance4 := fixInstanceArchive(instanceArchiveData{
+			InstanceID:        "instance-id4",
+			GlobalAccountID:   "gaidB",
+			PlanID:            broker.FreemiumPlanID,
+			PlanName:          broker.FreemiumPlanName,
+			ProvisioningState: domain.Succeeded,
+		})
+		givenInstance5 := fixInstanceArchive(instanceArchiveData{
+			InstanceID:        "instance-id5",
+			GlobalAccountID:   "gaidB",
+			PlanID:            broker.TrialPlanID,
+			PlanName:          broker.TrialPlanName,
+			ProvisioningState: domain.Succeeded,
+		})
+		givenInstance6 := fixInstanceArchive(instanceArchiveData{
+			InstanceID:        "instance-id6",
+			GlobalAccountID:   "gaidB",
+			PlanID:            broker.TrialPlanID,
+			PlanName:          broker.TrialPlanName,
+			ProvisioningState: domain.Failed,
+		})
+
+		storageCleanup, brokerStorage, err := GetStorageForDatabaseTests()
+		require.NoError(t, err)
+		require.NotNil(t, brokerStorage)
+		defer func() {
+			err := storageCleanup()
+			assert.NoError(t, err)
+		}()
+		db := brokerStorage.InstancesArchived()
+
+		// when
+		err = db.Insert(givenInstance1)
+		require.NoError(t, err)
+		err = db.Insert(givenInstance2)
+		require.NoError(t, err)
+		err = db.Insert(givenInstance3)
+		require.NoError(t, err)
+		err = db.Insert(givenInstance4)
+		require.NoError(t, err)
+		err = db.Insert(givenInstance5)
+		require.NoError(t, err)
+		err = db.Insert(givenInstance6)
+		require.NoError(t, err)
+
+		// then
+		require.NoError(t, err)
+		numberOfInstancesA, err := db.TotalNumberOfInstancesArchivedForGlobalAccountID("gaidA", broker.FreemiumPlanID)
+		require.NoError(t, err)
+		numberOfInstancesB, err := db.TotalNumberOfInstancesArchivedForGlobalAccountID("gaidB", broker.FreemiumPlanID)
+		require.NoError(t, err)
+		numberOfInstancesC, err := db.TotalNumberOfInstancesArchivedForGlobalAccountID("gaidC", broker.FreemiumPlanID)
+		require.NoError(t, err)
+
+		assert.Equal(t, 2, numberOfInstancesA)
+		assert.Equal(t, 1, numberOfInstancesB)
+		assert.Equal(t, 0, numberOfInstancesC)
+	})
 }
 
 func assertInstanceArchived(t *testing.T, expected internal.InstanceArchived, got internal.InstanceArchived) {
@@ -104,4 +187,36 @@ func assertInstanceArchived(t *testing.T, expected internal.InstanceArchived, go
 	expected.FirstDeprovisioningStartedAt = got.FirstDeprovisioningStartedAt
 
 	assert.Equal(t, expected, got)
+}
+
+type instanceArchiveData struct {
+	InstanceID        string
+	GlobalAccountID   string
+	PlanID            string
+	PlanName          string
+	ProvisioningState domain.LastOperationState
+}
+
+func fixInstanceArchive(testData instanceArchiveData) internal.InstanceArchived {
+	provisioningTime, _ := time.Parse("2006-01-02T15:04:05", "2022-12-05T18:22:41")
+	return internal.InstanceArchived{
+		InstanceID:                    testData.InstanceID,
+		GlobalAccountID:               testData.GlobalAccountID,
+		SubaccountID:                  testData.GlobalAccountID,
+		SubscriptionGlobalAccountID:   testData.GlobalAccountID,
+		PlanID:                        testData.PlanID,
+		PlanName:                      testData.PlanName,
+		SubaccountRegion:              "cf-eu20",
+		Region:                        "westeurope",
+		Provider:                      "azure",
+		LastRuntimeID:                 "runtime-id",
+		InternalUser:                  false,
+		ShootName:                     "shoot-0000",
+		ProvisioningStartedAt:         provisioningTime.Add(-1 * time.Hour),
+		ProvisioningFinishedAt:        provisioningTime.Add(10 * time.Minute),
+		ProvisioningState:             testData.ProvisioningState,
+		FirstDeprovisioningStartedAt:  provisioningTime.Add(time.Hour),
+		FirstDeprovisioningFinishedAt: provisioningTime.Add(3 * time.Hour),
+		LastDeprovisioningFinishedAt:  provisioningTime.Add(4 * time.Hour),
+	}
 }

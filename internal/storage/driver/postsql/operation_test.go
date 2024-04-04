@@ -463,6 +463,72 @@ func TestOperation(t *testing.T) {
 		require.NoError(t, err)
 		assertUpgradeClusterOperation(t, *op, *got)
 	})
+
+	t.Run("Should list operations based on filters", func(t *testing.T) {
+		storageCleanup, brokerStorage, err := GetStorageForDatabaseTests()
+		require.NoError(t, err)
+		require.NotNil(t, brokerStorage)
+		defer func() {
+			err := storageCleanup()
+			assert.NoError(t, err)
+		}()
+
+		globalAccountID := "dummy-ga-id"
+
+		op1 := fixture.FixOperation("op1", "inst1", internal.OperationTypeProvision)
+		op1.ProvisioningParameters.ErsContext.GlobalAccountID = globalAccountID
+		err = brokerStorage.Operations().InsertOperation(op1)
+		require.NoError(t, err)
+
+		op2 := fixture.FixOperation("op2", "inst2", internal.OperationTypeProvision)
+		op2.State = domain.Failed
+		op2.ProvisioningParameters.ErsContext.GlobalAccountID = globalAccountID
+		err = brokerStorage.Operations().InsertOperation(op2)
+		require.NoError(t, err)
+
+		op3 := fixture.FixOperation("op3", "inst3", internal.OperationTypeProvision)
+		op3.ProvisioningParameters.PlanID = broker.FreemiumPlanID
+		op3.ProvisioningParameters.ErsContext.GlobalAccountID = globalAccountID
+		err = brokerStorage.Operations().InsertOperation(op3)
+		require.NoError(t, err)
+
+		op4 := fixture.FixOperation("op4", "inst4", internal.OperationTypeDeprovision)
+		op4.ProvisioningParameters.PlanID = broker.FreemiumPlanID
+		err = brokerStorage.Operations().InsertOperation(op4)
+		require.NoError(t, err)
+
+		// when
+		_, count, totalCount, err := brokerStorage.Operations().ListOperations(dbmodel.OperationFilter{Types: []string{string(internal.OperationTypeProvision)}})
+
+		// then
+		require.NoError(t, err)
+		require.Equal(t, 3, count)
+		require.Equal(t, 3, totalCount)
+
+		// when
+		_, count, totalCount, err = brokerStorage.Operations().ListOperations(dbmodel.OperationFilter{States: []string{string(domain.Failed)}})
+
+		// then
+		require.NoError(t, err)
+		require.Equal(t, 1, count)
+		require.Equal(t, 1, totalCount)
+
+		// when
+		_, count, totalCount, err = brokerStorage.Operations().ListOperations(dbmodel.OperationFilter{PlanIDs: []string{broker.FreemiumPlanID}})
+
+		// then
+		require.NoError(t, err)
+		require.Equal(t, 2, count)
+		require.Equal(t, 2, totalCount)
+
+		// when
+		_, count, totalCount, err = brokerStorage.Operations().ListOperations(dbmodel.OperationFilter{GlobalAccountIDs: []string{globalAccountID}})
+
+		// then
+		require.NoError(t, err)
+		require.Equal(t, 3, count)
+		require.Equal(t, 3, totalCount)
+	})
 }
 
 func assertUpdateState(t *testing.T, svc storage.Operations, orchestrationID string, latestOp *internal.Operation) {
