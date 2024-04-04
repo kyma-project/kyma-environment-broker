@@ -28,9 +28,10 @@ const (
 )
 
 const (
-	subaccountID = "subaccount-id-1"
-	interval     = 100 * time.Millisecond
-	timeout      = 2 * time.Second
+	subaccountID        = "subaccount-id-1"
+	betaEnabledLabelKey = "operator.kyma-project.io/beta"
+	interval            = 100 * time.Millisecond
+	timeout             = 2 * time.Second
 )
 
 var log = slog.New(slog.NewTextHandler(os.Stderr, nil))
@@ -60,7 +61,7 @@ func TestUpdater(t *testing.T) {
 
 		queue := syncqueues.NewPriorityQueueWithCallbacksForSize(log, nil, 4)
 		fakeK8sClient := fake.NewSimpleDynamicClient(scheme, mockKymaCR)
-		updater, err := NewUpdater(fakeK8sClient, queue, gvr)
+		updater, err := NewUpdater(fakeK8sClient, queue, gvr, timeout, betaEnabledLabelKey)
 		require.NoError(t, err)
 
 		// when
@@ -95,7 +96,7 @@ func TestUpdater(t *testing.T) {
 		assert.False(t, queue.IsEmpty())
 
 		fakeK8sClient := fake.NewSimpleDynamicClient(scheme, mockKymaCR)
-		updater, err := NewUpdater(fakeK8sClient, queue, gvr)
+		updater, err := NewUpdater(fakeK8sClient, queue, gvr, timeout, betaEnabledLabelKey)
 		require.NoError(t, err)
 
 		// when
@@ -139,7 +140,7 @@ func TestUpdater(t *testing.T) {
 		assert.False(t, queue.IsEmpty())
 
 		fakeK8sClient := fake.NewSimpleDynamicClient(scheme, mockKymaCR1, mockKymaCR2)
-		updater, err := NewUpdater(fakeK8sClient, queue, gvr)
+		updater, err := NewUpdater(fakeK8sClient, queue, gvr, timeout, betaEnabledLabelKey)
 		require.NoError(t, err)
 
 		// when
@@ -189,7 +190,7 @@ func TestUpdater(t *testing.T) {
 		assert.False(t, queue.IsEmpty())
 
 		fakeK8sClient := fake.NewSimpleDynamicClient(scheme, mockKymaCR1, mockKymaCR2)
-		updater, err := NewUpdater(fakeK8sClient, queue, gvr)
+		updater, err := NewUpdater(fakeK8sClient, queue, gvr, timeout, betaEnabledLabelKey)
 		require.NoError(t, err)
 
 		// when
