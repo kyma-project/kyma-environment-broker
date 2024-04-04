@@ -311,7 +311,7 @@ func (e *mutableEvents) sortEventsByActionTime(sortOrder string) error {
 			if !ok {
 				return errors.New("missing actionTime key in one of events")
 			}
-			actionTime1, ok := ival1.(int64)
+			actionTime1, ok := ival1.(float64)
 			if !ok {
 				return errors.New("cannot cast actionTime value to int64 - wrong value in one of events")
 			}
@@ -320,7 +320,7 @@ func (e *mutableEvents) sortEventsByActionTime(sortOrder string) error {
 			if !ok {
 				return errors.New("missing actionTime key in one of events")
 			}
-			actionTime2, ok := ival2.(int64)
+			actionTime2, ok := ival2.(float64)
 			if !ok {
 				return errors.New("cannot cast actionTime value to int64 - wrong value in one of events")
 			}
