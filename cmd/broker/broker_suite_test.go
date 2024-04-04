@@ -114,8 +114,8 @@ type BrokerSuiteTest struct {
 
 	poller broker.Poller
 
-	eventBroker    *event.PubSub
-	operationStats *metricsv2.OperationStats
+	eventBroker *event.PubSub
+	metrics     *metricsv2.RegisterContainer
 }
 
 type componentProviderDecorated struct {
@@ -143,8 +143,7 @@ func NewBrokerSuiteTest(t *testing.T, version ...string) *BrokerSuiteTest {
 
 func NewBrokerSuitTestWithMetrics(t *testing.T, cfg *Config, version ...string) *BrokerSuiteTest {
 	broker := NewBrokerSuiteTestWithConfig(t, cfg, version...)
-	_, operationStats := metricsv2.Register(context.Background(), broker.eventBroker, broker.db.Operations(), broker.db.Instances(), logrus.New())
-	broker.operationStats = operationStats
+	broker.metrics = metricsv2.Register(context.Background(), broker.eventBroker, broker.db.Operations(), broker.db.Instances(), cfg.MetricsV2, logrus.New())
 	broker.router.Handle("/metrics", promhttp.Handler())
 	return broker
 }
@@ -1659,7 +1658,7 @@ func (s *BrokerSuiteTest) ParseLastOperationResponse(resp *http.Response) domain
 }
 
 func (s *BrokerSuiteTest) AssertMetric(operationType internal.OperationType, state domain.LastOperationState, plan string, expected int) {
-	metric, err := s.operationStats.Metric(operationType, state, broker.PlanID(plan))
+	metric, err := s.metrics.OperationStats.Metric(operationType, state, broker.PlanID(plan))
 	assert.NoError(s.t, err)
 	assert.NotNil(s.t, metric)
 	assert.Equal(s.t, float64(expected), testutil.ToFloat64(metric), fmt.Sprintf("expected %s metric for %s plan to be %d", operationType, plan, expected))

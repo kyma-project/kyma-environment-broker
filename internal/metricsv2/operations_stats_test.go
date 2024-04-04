@@ -70,8 +70,14 @@ func TestOperationsCounter(t *testing.T) {
 	key7, err := ctr.makeKey(opType7, opState7, broker.PlanID(opPlan7))
 	assert.NoError(t, err)
 
+	cfg := Config{
+		OperationStatsPoolingInterval:  1 * time.Millisecond,
+		OperationResultPoolingInterval: 1 * time.Millisecond,
+		OperationResultRetentionPeriod: 1 * time.Minute,
+	}
+
 	t.Run("create counter key", func(t *testing.T) {
-		ctr = NewOperationsStats(operations, 1*time.Millisecond, log.WithField("metrics", "test"))
+		ctr = NewOperationsStats(operations, cfg, log.WithField("metrics", "test"))
 		ctr.MustRegister(context.Background())
 	})
 

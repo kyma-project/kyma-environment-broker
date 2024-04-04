@@ -125,7 +125,6 @@ type Config struct {
 	ReconcilerIntegrationDisabled                                       bool   `envconfig:"default=false"`
 	InfrastructureManagerIntegrationDisabled                            bool   `envconfig:"default=true"`
 	AvsMaintenanceModeDuringUpgradeAlwaysDisabledGlobalAccountsFilePath string
-	Metricsv2Enabled                                                    bool `envconfig:"default=false"`
 	Broker                                                              broker.Config
 	CatalogFilePath                                                     string
 
@@ -166,6 +165,8 @@ type Config struct {
 	Profiler ProfilerConfig
 
 	Events events.Config
+
+	MetricsV2 metricsv2.Config
 
 	Provisioning    process.StagedManagerConfiguration
 	Deprovisioning  process.StagedManagerConfiguration
@@ -363,9 +364,8 @@ func main() {
 
 	// metrics collectors
 	metrics.Register(ctx, eventBroker, db.Operations(), db.Instances(), logs)
-	if cfg.Metricsv2Enabled {
-		logs.Infof("Metricsv2 enabled")
-		_, _ = metricsv2.Register(ctx, eventBroker, db.Operations(), db.Instances(), logs)
+	if cfg.MetricsV2.Enabled {
+		_ = metricsv2.Register(ctx, eventBroker, db.Operations(), db.Instances(), cfg.MetricsV2, logs)
 	}
 
 	// setup runtime overrides appender

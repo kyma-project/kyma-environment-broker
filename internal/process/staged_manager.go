@@ -165,6 +165,7 @@ func (m *StagedManager) Execute(operationID string) (time.Duration, error) {
 				logStep.Infof("Operation %q got status %s. Process finished.", operation.ID, processedOperation.State)
 				operation.EventInfof("operation processing %v", processedOperation.State)
 				m.publishOperationFinishedEvent(processedOperation)
+				m.publishDeprovisioningSucceeded(&processedOperation)
 				return 0, nil
 			}
 
@@ -286,11 +287,7 @@ func (m *StagedManager) publishEventOnSuccess(operation *internal.Operation) {
 
 	m.publishOperationFinishedEvent(*operation)
 
-	if operation.State == domain.Succeeded && operation.Type == internal.OperationTypeDeprovision {
-		m.publisher.Publish(context.TODO(), DeprovisioningSucceeded{
-			Operation: internal.DeprovisioningOperation{Operation: *operation},
-		})
-	}
+	m.publishDeprovisioningSucceeded(operation)
 }
 
 func (m *StagedManager) publishOperationFinishedEvent(operation internal.Operation) {
@@ -300,4 +297,14 @@ func (m *StagedManager) publishOperationFinishedEvent(operation internal.Operati
 		OpState: operation.State,
 		OpType:  operation.Type,
 	})
+}
+
+func (m *StagedManager) publishDeprovisioningSucceeded(operation *internal.Operation) {
+	if operation.State == domain.Succeeded && operation.Type == internal.OperationTypeDeprovision {
+		m.publisher.Publish(
+			context.TODO(), DeprovisioningSucceeded{
+				Operation: internal.DeprovisioningOperation{Operation: *operation},
+			},
+		)
+	}
 }

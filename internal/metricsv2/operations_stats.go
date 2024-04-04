@@ -68,13 +68,13 @@ type OperationStats struct {
 
 var _ Exposer = (*OperationStats)(nil)
 
-func NewOperationsStats(operations storage.Operations, poolingInterval time.Duration, logger logrus.FieldLogger) *OperationStats {
+func NewOperationsStats(operations storage.Operations, cfg Config, logger logrus.FieldLogger) *OperationStats {
 	return &OperationStats{
-		logger:          logger.WithField("source", "@metricsv2"),
+		logger:          logger,
 		gauges:          make(map[metricKey]prometheus.Gauge, len(plans)*len(opTypes)*1),
 		counters:        make(map[metricKey]prometheus.Counter, len(plans)*len(opTypes)*2),
 		operations:      operations,
-		poolingInterval: poolingInterval,
+		poolingInterval: cfg.OperationStatsPoolingInterval,
 	}
 }
 
@@ -164,6 +164,7 @@ func (s *OperationStats) Job(ctx context.Context) {
 	if err := s.updateMetrics(); err != nil {
 		s.logger.Error("failed to update metrics metrics", err)
 	}
+
 	ticker := time.NewTicker(s.poolingInterval)
 	for {
 		select {

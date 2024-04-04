@@ -2,6 +2,7 @@ package metricsv2
 
 import (
 	"context"
+	"fmt"
 	"time"
 
 	"github.com/kyma-project/kyma-environment-broker/internal/event"
@@ -14,6 +15,7 @@ import (
 const (
 	prometheusNamespacev2 = "kcp"
 	prometheusSubsystemv2 = "keb_v2"
+	logPrefix             = "@metricsv2"
 )
 
 // Exposer gathers metrics and keeps these in memory and exposes to prometheus for fetching, it gathers them by:
@@ -25,23 +27,47 @@ type Exposer interface {
 	Job(ctx context.Context)
 }
 
-func Register(ctx context.Context, sub event.Subscriber, operations storage.Operations, instances storage.Instances, logger logrus.FieldLogger) (*operationsResult, *OperationStats) {
+type Config struct {
+	Enabled                        bool          `envconfig:"default=false"`
+	OperationResultRetentionPeriod time.Duration `envconfig:"default=336h"`
+	OperationResultPoolingInterval time.Duration `envconfig:"default=1m"`
+	OperationStatsPoolingInterval  time.Duration `envconfig:"default=1m"`
+}
 
-	opDurationCollector := NewOperationDurationCollector()
+type RegisterContainer struct {
+	OperationResult            *operationsResult
+	OperationStats             *OperationStats
+	OperationDurationCollector *OperationDurationCollector
+	InstancesCollector         *InstancesCollector
+}
+
+func Register(ctx context.Context, sub event.Subscriber, operations storage.Operations, instances storage.Instances, cfg Config, logger logrus.FieldLogger) *RegisterContainer {
+	logger = logger.WithField("from:", logPrefix)
+
+	opDurationCollector := NewOperationDurationCollector(logger)
 	prometheus.MustRegister(opDurationCollector)
-	prometheus.MustRegister(NewInstancesCollector(instances))
+
+	opInstanceCollector := NewInstancesCollector(instances, logger)
+	prometheus.MustRegister(opInstanceCollector)
+
+	opResult := NewOperationResult(ctx, operations, cfg, logger)
+
+	opStats := NewOperationsStats(operations, cfg, logger)
+	opStats.MustRegister(ctx)
 
 	sub.Subscribe(process.ProvisioningSucceeded{}, opDurationCollector.OnProvisioningSucceeded)
 	sub.Subscribe(process.DeprovisioningStepProcessed{}, opDurationCollector.OnDeprovisioningStepProcessed)
 	sub.Subscribe(process.OperationSucceeded{}, opDurationCollector.OnOperationSucceeded)
 	sub.Subscribe(process.OperationStepProcessed{}, opDurationCollector.OnOperationStepProcessed)
-
-	operationResult := NewOperationResult(ctx, operations, logger, time.Second*30, time.Hour*24*14)
-
-	opStats := NewOperationsStats(operations, time.Second*30, logger)
-	opStats.MustRegister(ctx)
-
 	sub.Subscribe(process.OperationFinished{}, opStats.Handler)
-	sub.Subscribe(process.DeprovisioningSucceeded{}, operationResult.Handler)
-	return operationResult, opStats
+	sub.Subscribe(process.DeprovisioningSucceeded{}, opResult.Handler)
+
+	logger.Infof(fmt.Sprintf("%s -> enabled", logPrefix))
+
+	return &RegisterContainer{
+		OperationResult:            opResult,
+		OperationStats:             opStats,
+		OperationDurationCollector: opDurationCollector,
+		InstancesCollector:         opInstanceCollector,
+	}
 }

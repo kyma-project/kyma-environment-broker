@@ -19,7 +19,7 @@ spec:
           {{- end }}
           restartPolicy: Never
           containers:
-            - image: "{{ .Values.global.images.container_registry.path }}/{{ .Values.global.images.kyma_environment_trial_cleanup_job.dir }}kyma-environment-trial-cleanup-job:{{ .Values.global.images.kyma_environment_trial_cleanup_job.version }}"
+            - image: "{{ .Values.global.images.container_registry.path }}/{{ .Values.global.images.kyma_environment_expirator_job.dir }}kyma-environment-expirator-job:{{ .Values.global.images.kyma_environment_expirator_job.version }}"
               name: trial-cleanup-job
               env:
                 {{if eq .Values.global.database.embedded.enabled true}}
@@ -78,6 +78,8 @@ spec:
                   value: "{{ .Values.trialCleanup.testRun }}"
                 - name: APP_TEST_SUBACCOUNT_ID
                   value: "{{ .Values.trialCleanup.testSubaccountID }}"
+                - name: APP_PLAN_ID
+                  value: "7d55d31d-35ae-4438-bf13-6ffdfa107d9f"
               command:
                 - "/bin/main"
               volumeMounts:
