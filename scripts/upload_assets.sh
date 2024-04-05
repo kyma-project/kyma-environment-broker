@@ -37,7 +37,7 @@ uploadFile() {
 }
 
 
-UPLOAD_URL="https://uploads.github.com/repos/kyma-project/kyma-environment-broker/releases/${RELEASE_ID}/assets"
+UPLOAD_URL="https://uploads.github.com/repos/MarekMichali/kyma-environment-broker/releases/${RELEASE_ID}/assets"
 
 echo -e "\n--- Updating GitHub release ${RELEASE_ID} with ${KEB_CHART} asset"
 
