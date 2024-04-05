@@ -146,7 +146,7 @@ jobs:
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
-          ref: ${{ needs.bump-sec-scanners-config.outputs.latest_commit}}
+          ref: ${{ needs.bumps.outputs.latest_commit}}
 
       - name: Create draft release
         id: create-draft
@@ -167,7 +167,7 @@ jobs:
     
   wait-for-prow-jobs:
     name: Wait for prow jobs
-    needs: create-draft
+    needs: [create-draft, bumps]
     runs-on: ubuntu-latest
 
     steps:
@@ -178,7 +178,7 @@ jobs:
           token: ${{ secrets.GITHUB_TOKEN }}
           statusName: "post-keb-release-build"
           timeoutSeconds: "300"
-          ref: ${{ needs.bump-sec-scanners-config.outputs.latest_commit}}
+          ref: ${{ needs.bumps.outputs.latest_commit}}
 
       - name: Check if post-keb-release-build status is not success
         if: steps.wait-for-post-keb-release-build.outputs.state != 'success'
@@ -193,7 +193,7 @@ jobs:
           token: ${{ secrets.GITHUB_TOKEN }}
           statusName: "post-keb-runtime-reconciler-job-release-build"
           timeoutSeconds: "300"
-          ref: ${{ needs.bump-sec-scanners-config.outputs.latest_commit}}
+          ref: ${{ needs.bumps.outputs.latest_commit}}
 
       - name: Check if post-keb-runtime-reconciler-job-release-build status is not success
         if: steps.wait-for-post-keb-runtime-reconciler-job-release-build.outputs.state != 'success'
@@ -208,7 +208,7 @@ jobs:
           token: ${{ secrets.GITHUB_TOKEN }}
           statusName: "post-keb-subaccount-cleanup-job-release-build"
           timeoutSeconds: "300"
-          ref: ${{ needs.bump-sec-scanners-config.outputs.latest_commit}}
+          ref: ${{ needs.bumps.outputs.latest_commit}}
 
       - name: Check if post-keb-subaccount-cleanup-job-release-build status is not success
         if: steps.wait-for-post-keb-subaccount-cleanup-job-release-build.outputs.state != 'success'
@@ -223,7 +223,7 @@ jobs:
           token: ${{ secrets.GITHUB_TOKEN }}
           statusName: "post-keb-trial-cleanup-job-release-build"
           timeoutSeconds: "300"
-          ref: ${{ needs.bump-sec-scanners-config.outputs.latest_commit}}
+          ref: ${{ needs.bumps.outputs.latest_commit}}
 
       - name: Check if post-keb-trial-cleanup-job-release-build status is not success
         if: steps.wait-for-post-keb-trial-cleanup-job-release-build.outputs.state != 'success'
@@ -238,7 +238,7 @@ jobs:
           token: ${{ secrets.GITHUB_TOKEN }}
           statusName: "post-keb-cleanup-job-release-build"
           timeoutSeconds: "300"
-          ref: ${{ needs.bump-sec-scanners-config.outputs.latest_commit}}
+          ref: ${{ needs.bumps.outputs.latest_commit}}
 
       - name: Check if post-keb-cleanup-job-release-build status is not success
         if: steps.wait-for-post-keb-cleanup-job-release-build.outputs.state != 'success'
@@ -253,7 +253,7 @@ jobs:
           token: ${{ secrets.GITHUB_TOKEN }}
           statusName: "post-keb-deprovision-retrigger-job-release-build"
           timeoutSeconds: "300"
-          ref: ${{ needs.bump-sec-scanners-config.outputs.latest_commit}}
+          ref: ${{ needs.bumps.outputs.latest_commit}}
 
       - name: Check if post-keb-deprovision-retrigger-job-release-build status is not success
         if: steps.wait-for-post-keb-deprovision-retrigger-job-release-build.outputs.state != 'success'
@@ -263,7 +263,7 @@ jobs:
 
   publish-release:
     name: Publish release
-    needs: wait-for-prow-jobs
+    needs: [wait-for-prow-jobs, bumps, create-draft]
     if: ${{ !inputs.dry-run }}
     runs-on: ubuntu-latest
 
@@ -272,7 +272,7 @@ jobs:
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
-          ref: ${{ needs.bumps.latest_commit}}
+          ref: ${{ needs.bumps.outputs.latest_commit}}
       - run: |
           git checkout main
           git pull
