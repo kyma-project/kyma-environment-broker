@@ -205,7 +205,7 @@ jobs:
       - name: Update KEB chart metadata
         run: |
           git checkout gh-pages
-          helm repo index --url https://github.com/MarekMichali/kyma-environment-broker/releases/download/${{ inputs.name }} --merge ./index.yaml ./
+          helm repo index --url https://github.com/${{ env.KYMA_ENVIRONMENT_BROKER_REPO }}/releases/download/${{ inputs.name }} --merge ./index.yaml ./
 
       - name: Commit KEB chart metadata to gh-pages branch
         run: |
@@ -218,6 +218,7 @@ jobs:
       - name: Publish release
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          REPOSITORY: ${{ github.repository_owner }}/kyma-environment-broker
         run: |
           git checkout main
           ./scripts/publish_release.sh ${{ needs.create-draft.outputs.release_id }}

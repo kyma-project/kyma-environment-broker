@@ -15,7 +15,8 @@ set -E          # needs to be set if we want the ERR trap
 set -o pipefail # prevents errors in a pipeline from being masked
 
 # Expected variables:
-#   BOT_GITHUB_TOKEN - github token used to upload the asset
+#   BOT_GITHUB_TOKEN              - github token used to upload the asset
+#   KYMA_ENVIRONMENT_BROKER_REPO  - Kyma repository
 
 uploadFile() {
   filePath=${1}
@@ -37,7 +38,7 @@ uploadFile() {
 }
 
 
-UPLOAD_URL="https://uploads.github.com/repos/MarekMichali/kyma-environment-broker/releases/${RELEASE_ID}/assets"
+UPLOAD_URL="https://uploads.github.com/repos/${KYMA_ENVIRONMENT_BROKER_REPO}/releases/${RELEASE_ID}/assets"
 
 echo -e "\n--- Updating GitHub release ${RELEASE_ID} with ${KEB_CHART} asset"
 
