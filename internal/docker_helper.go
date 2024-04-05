@@ -104,14 +104,14 @@ func (d *DockerHelper) CreateDBContainer(config ContainerCreateRequest) (func() 
 			return fmt.Errorf("during container stop: %w", err)
 		}
 
-		err = d.client.ContainerRemove(context.Background(), response.ID, types.ContainerRemoveOptions{RemoveVolumes: true, RemoveLinks: false, Force: true})
+		err = d.client.ContainerRemove(context.Background(), response.ID, container.RemoveOptions{RemoveVolumes: true, RemoveLinks: false, Force: true})
 		if err != nil {
 			return fmt.Errorf("during container removal: %w", err)
 		}
 		return nil
 	}
 
-	if err := d.client.ContainerStart(context.Background(), response.ID, types.ContainerStartOptions{}); err != nil {
+	if err := d.client.ContainerStart(context.Background(), response.ID, container.StartOptions{}); err != nil {
 		return cleanup, fmt.Errorf("during container startup: %w", err)
 	}
 
