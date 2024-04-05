@@ -133,6 +133,9 @@ jobs:
           echo "latest_commit=$LATEST_COMMIT" >> $GITHUB_OUTPUT
           echo "Latest commit ref $LATEST_COMMIT"
 
+      - name: Delete ${{ env.BUMP_CHART_AND_IMAGES }} branch
+        run: git push origin --delete ${{ env.BUMP_CHART_AND_IMAGES }}
+
     outputs:
       latest_commit: ${{ steps.pull-ref.outputs.latest_commit }}
 
