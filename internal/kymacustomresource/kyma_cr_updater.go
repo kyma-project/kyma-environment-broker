@@ -18,25 +18,27 @@ const (
 	namespace               = "kcp-system"
 	subaccountIdLabelKey    = "kyma-project.io/subaccount-id"
 	subaccountIdLabelFormat = "kyma-project.io/subaccount-id=%s"
-	betaEnabledLabelKey     = "kyma-project.io/beta-enabled"
-	emptyQueueSleepDuration = 30 * time.Second
 )
 
 type Updater struct {
-	k8sClient dynamic.Interface
-	queue     syncqueues.MultiConsumerPriorityQueue
-	kymaGVR   schema.GroupVersionResource
-	logger    *slog.Logger
+	k8sClient     dynamic.Interface
+	queue         syncqueues.MultiConsumerPriorityQueue
+	kymaGVR       schema.GroupVersionResource
+	sleepDuration time.Duration
+	labelKey      string
+	logger        *slog.Logger
 }
 
-func NewUpdater(k8sClient dynamic.Interface, queue syncqueues.MultiConsumerPriorityQueue, gvr schema.GroupVersionResource) (*Updater, error) {
+func NewUpdater(k8sClient dynamic.Interface, queue syncqueues.MultiConsumerPriorityQueue, gvr schema.GroupVersionResource, sleepDuration time.Duration, labelKey string) (*Updater, error) {
 	logger := slog.New(slog.NewTextHandler(os.Stdout, nil))
 
 	return &Updater{
-		k8sClient: k8sClient,
-		queue:     queue,
-		kymaGVR:   gvr,
-		logger:    logger,
+		k8sClient:     k8sClient,
+		queue:         queue,
+		kymaGVR:       gvr,
+		logger:        logger,
+		sleepDuration: sleepDuration,
+		labelKey:      labelKey,
 	}, nil
 }
 
@@ -44,7 +46,7 @@ func (u *Updater) Run() error {
 	for {
 		item, ok := u.queue.Extract()
 		if !ok {
-			time.Sleep(emptyQueueSleepDuration)
+			time.Sleep(u.sleepDuration)
 			continue
 		}
 		unstructuredList, err := u.k8sClient.Resource(u.kymaGVR).Namespace(namespace).List(context.Background(), metav1.ListOptions{
@@ -78,9 +80,8 @@ func (u *Updater) updateBetaEnabledLabel(un unstructured.Unstructured, betaEnabl
 	if labels == nil {
 		labels = make(map[string]string)
 	}
-	labels[betaEnabledLabelKey] = betaEnabled
+	labels[u.labelKey] = betaEnabled
 	un.SetLabels(labels)
-
 	_, err := u.k8sClient.Resource(u.kymaGVR).Namespace(namespace).Update(context.Background(), &un, metav1.UpdateOptions{})
 	return err
 }

@@ -11,19 +11,22 @@ global:
       version: "v20240307-f250dc83" # do not update along with the other images
     kyma_environment_broker:
       dir:
-      version: "1.3.1"
+      version: "1.3.5"
     kyma_environments_subaccount_cleanup_job:
       dir:
-      version: "1.3.1"
+      version: "1.3.5"
     kyma_environment_trial_cleanup_job:
       dir:
-      version: "1.3.1"
+      version: "1.3.5"
+    kyma_environment_expirator_job:
+      dir:
+      version: "1.3.5"
     kyma_environment_deprovision_retrigger_job:
       dir:
-      version: "1.3.1"
+      version: "1.3.5"
     kyma_environment_runtime_reconciler:
       dir:
-      version: "1.3.1"
+      version: "1.3.5"
   kyma_environment_broker:
     enabled: false
     serviceAccountName: "kcp-kyma-environment-broker"
@@ -216,6 +219,8 @@ onlySingleTrialPerGA: "true"
 enableKubeconfigURLLabel: "false"
 includeAdditionalParamsInSchema: "false"
 showTrialExpirationInfo: "false"
+showFreeExpirationInfo: "false"
+onlyOneFreePerGA: "false"
 subaccountsIdsToShowTrialExpirationInfo: "a45be5d8-eddc-4001-91cf-48cc644d571f"
 trialDocsURL: "https://help.sap.com/docs/"
 includeNewMachineTypesInSchema: "false"
@@ -412,3 +417,9 @@ cleaning:
 
 metricsv2:
   enabled: false
+  operationResultRetentionPeriod: 336h
+  operationResultPoolingInterval: 1m
+  operationStatsPoolingInterval: 1m
+
+freemiumWhitelistedGlobalAccountIds: |-
+  whitelist:

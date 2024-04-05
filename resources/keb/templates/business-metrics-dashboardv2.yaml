@@ -1,0 +1,15 @@
+{{ if .Values.metricsv2.enabled }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "kyma-env-broker.fullname" . }}-business-metrics-dashboardv2
+  namespace: {{ .Release.Namespace }}
+  labels:
+    grafana_dashboard: "1"
+    app: monitoring-grafana
+  annotations:
+    argocd.argoproj.io/sync-options: Prune=false
+data:
+  {{ include "kyma-env-broker.fullname" . }}-business-metrics-dashboardv2.json: |-
+{{ .Files.Get "files/business-metrics-dashboardv2.json" | indent 4 }}
+{{ end }}

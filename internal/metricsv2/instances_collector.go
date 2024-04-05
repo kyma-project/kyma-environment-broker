@@ -28,12 +28,13 @@ type InstancesCollector struct {
 	instancesDesc        *prometheus.Desc
 	instancesPerGAIDDesc *prometheus.Desc
 	licenseTypeDesc      *prometheus.Desc
+	logger               logrus.FieldLogger
 }
 
-func NewInstancesCollector(statsGetter InstancesStatsGetter) *InstancesCollector {
+func NewInstancesCollector(statsGetter InstancesStatsGetter, logger logrus.FieldLogger) *InstancesCollector {
 	return &InstancesCollector{
 		statsGetter: statsGetter,
-
+		logger:      logger,
 		instancesDesc: prometheus.NewDesc(
 			prometheus.BuildFQName(prometheusNamespacev2, prometheusSubsystemv2, "instances_total"),
 			"The total number of instances",
@@ -62,7 +63,7 @@ func (c *InstancesCollector) Describe(ch chan<- *prometheus.Desc) {
 func (c *InstancesCollector) Collect(ch chan<- prometheus.Metric) {
 	stats, err := c.statsGetter.GetInstanceStats()
 	if err != nil {
-		logrus.Error(err)
+		c.logger.Error(err)
 	} else {
 		collect(ch, c.instancesDesc, stats.TotalNumberOfInstances)
 
@@ -73,17 +74,13 @@ func (c *InstancesCollector) Collect(ch chan<- prometheus.Metric) {
 
 	stats2, err := c.statsGetter.GetERSContextStats()
 	if err != nil {
-		logrus.Error(err)
+		c.logger.Error(err)
 		return
 	}
 	for t, num := range stats2.LicenseType {
 		collect(ch, c.licenseTypeDesc, num, t)
 	}
 }
-
-//
-// COPY OF THE internal/metrics/operations_collector.go for test purposes, will be refactored
-//
 
 func collect(ch chan<- prometheus.Metric, desc *prometheus.Desc, value int, labelValues ...string) {
 	m, err := prometheus.NewConstMetric(

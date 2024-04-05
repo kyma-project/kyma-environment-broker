@@ -23,7 +23,6 @@ import (
 	"github.com/gorilla/mux"
 	reconcilerApi "github.com/kyma-incubator/reconciler/pkg/keb"
 	"github.com/kyma-project/control-plane/components/provisioner/pkg/gqlschema"
-	"github.com/kyma-project/kyma-environment-broker/common/director"
 	"github.com/kyma-project/kyma-environment-broker/common/gardener"
 	"github.com/kyma-project/kyma-environment-broker/common/orchestration"
 	"github.com/kyma-project/kyma-environment-broker/internal"
@@ -99,7 +98,6 @@ type BrokerSuiteTest struct {
 	db                storage.BrokerStorage
 	storageCleanup    func() error
 	provisionerClient *provisioner.FakeClient
-	directorClient    *director.FakeClient
 	reconcilerClient  *reconciler.FakeClient
 	gardenerClient    dynamic.Interface
 
@@ -116,8 +114,8 @@ type BrokerSuiteTest struct {
 
 	poller broker.Poller
 
-	eventBroker    *event.PubSub
-	operationStats *metricsv2.OperationStats
+	eventBroker *event.PubSub
+	metrics     *metricsv2.RegisterContainer
 }
 
 type componentProviderDecorated struct {
@@ -145,8 +143,7 @@ func NewBrokerSuiteTest(t *testing.T, version ...string) *BrokerSuiteTest {
 
 func NewBrokerSuitTestWithMetrics(t *testing.T, cfg *Config, version ...string) *BrokerSuiteTest {
 	broker := NewBrokerSuiteTestWithConfig(t, cfg, version...)
-	_, operationStats := metricsv2.Register(context.Background(), broker.eventBroker, broker.db.Operations(), broker.db.Instances(), logrus.New())
-	broker.operationStats = operationStats
+	broker.metrics = metricsv2.Register(context.Background(), broker.eventBroker, broker.db.Operations(), broker.db.Instances(), cfg.MetricsV2, logrus.New())
 	broker.router.Handle("/metrics", promhttp.Handler())
 	return broker
 }
@@ -214,7 +211,6 @@ func NewBrokerSuiteTestWithConfig(t *testing.T, cfg *Config, version ...string) 
 	accountVersionMapping := runtimeversion.NewAccountVersionMapping(ctx, cli, cfg.VersionConfig.Namespace, cfg.VersionConfig.Name, logs)
 	runtimeVerConfigurator := runtimeversion.NewRuntimeVersionConfigurator(cfg.KymaVersion, accountVersionMapping, nil)
 
-	directorClient := director.NewFakeClient()
 	avsDel, externalEvalCreator, internalEvalAssistant, externalEvalAssistant := createFakeAvsDelegator(t, db, cfg)
 
 	iasFakeClient := ias.NewFakeClient()
@@ -254,7 +250,6 @@ func NewBrokerSuiteTestWithConfig(t *testing.T, cfg *Config, version ...string) 
 		db:                  db,
 		storageCleanup:      storageCleanup,
 		provisionerClient:   provisionerClient,
-		directorClient:      directorClient,
 		reconcilerClient:    reconcilerClient,
 		gardenerClient:      gardenerClient,
 		router:              mux.NewRouter(),
@@ -1663,7 +1658,7 @@ func (s *BrokerSuiteTest) ParseLastOperationResponse(resp *http.Response) domain
 }
 
 func (s *BrokerSuiteTest) AssertMetric(operationType internal.OperationType, state domain.LastOperationState, plan string, expected int) {
-	metric, err := s.operationStats.Metric(operationType, state, broker.PlanID(plan))
+	metric, err := s.metrics.OperationStats.Metric(operationType, state, broker.PlanID(plan))
 	assert.NoError(s.t, err)
 	assert.NotNil(s.t, metric)
 	assert.Equal(s.t, float64(expected), testutil.ToFloat64(metric), fmt.Sprintf("expected %s metric for %s plan to be %d", operationType, plan, expected))

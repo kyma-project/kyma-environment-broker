@@ -1,0 +1,140 @@
+[
+  {
+    "id": 6,
+    "actionTime": 1710750600000,
+    "creationTime": 1710750900000,
+    "details": {
+      "description": "Subaccount updated.",
+      "guid": "cad2806a-3545-4aa0-8a7c-4fc246dba684",
+      "technicalName": "cad2806a-3545-4aa0-8a7c-4fc246dba684",
+      "parentGuid": "bbecf441-f9bd-4d09-8a3d-877a7519b949",
+      "displayName": "subaccount-1",
+      "subaccountDescription": "subaccount-1 for testing",
+      "region": "eu10-canary",
+      "jobLocation": null,
+      "subdomain": "subaccount-1-subdomain",
+      "betaEnabled": false,
+      "labels": {}
+    },
+    "globalAccountGUID": "bbecf441-f9bd-4d09-8a3d-877a7519b949",
+    "entityId": "cad2806a-3545-4aa0-8a7c-4fc246dba684",
+    "entityType": "Subaccount",
+    "eventOrigin": "accounts-service",
+    "eventType": "Subaccount_Update"
+  },
+  {
+    "id": 5,
+    "actionTime": 1710761400000,
+    "creationTime": 1710761700000,
+    "details": {
+      "description": "Subaccount updated.",
+      "guid": "17b8dcc2-3de1-4884-bcd3-b1c4657d81be",
+      "technicalName": "17b8dcc2-3de1-4884-bcd3-b1c4657d81be",
+      "parentGuid": "54130280-9eef-4fab-94b6-be2bea4fa1d0",
+      "displayName": "subaccount-2",
+      "subaccountDescription": "subaccount-2 for testing",
+      "region": "eu10-canary",
+      "jobLocation": null,
+      "subdomain": "subaccount-2-subdomain",
+      "betaEnabled": true,
+      "labels": {}
+    },
+    "globalAccountGUID": "54130280-9eef-4fab-94b6-be2bea4fa1d0",
+    "entityId": "17b8dcc2-3de1-4884-bcd3-b1c4657d81be",
+    "entityType": "Subaccount",
+    "eventOrigin": "accounts-service",
+    "eventType": "Subaccount_Update"
+  },
+  {
+    "id": 4,
+    "actionTime": 1710760200000,
+    "creationTime": 1710760500000,
+    "details": {
+      "description": "Subaccount updated.",
+      "guid": "17b8dcc2-3de1-4884-bcd3-b1c4657d81be",
+      "technicalName": "17b8dcc2-3de1-4884-bcd3-b1c4657d81be",
+      "parentGuid": "54130280-9eef-4fab-94b6-be2bea4fa1d0",
+      "displayName": "subaccount-2",
+      "subaccountDescription": "subaccount-2 for testing",
+      "region": "eu10-canary",
+      "jobLocation": null,
+      "subdomain": "subaccount-2-subdomain",
+      "betaEnabled": true,
+      "labels": {}
+    },
+    "globalAccountGUID": "54130280-9eef-4fab-94b6-be2bea4fa1d0",
+    "entityId": "17b8dcc2-3de1-4884-bcd3-b1c4657d81be",
+    "entityType": "Subaccount",
+    "eventOrigin": "accounts-service",
+    "eventType": "Subaccount_Update"
+  },
+  {
+    "id": 3,
+    "actionTime": 1710759300000,
+    "creationTime": 1710759600000,
+    "details": {
+      "description": "Subaccount created.",
+      "guid": "17b8dcc2-3de1-4884-bcd3-b1c4657d81be",
+      "technicalName": "17b8dcc2-3de1-4884-bcd3-b1c4657d81be",
+      "parentGuid": "54130280-9eef-4fab-94b6-be2bea4fa1d0",
+      "displayName": "subaccount-2",
+      "subaccountDescription": "subaccount-2 for testing",
+      "region": "eu10-canary",
+      "jobLocation": null,
+      "subdomain": "subaccount-2-subdomain",
+      "betaEnabled": false,
+      "labels": {}
+    },
+    "globalAccountGUID": "54130280-9eef-4fab-94b6-be2bea4fa1d0",
+    "entityId": "17b8dcc2-3de1-4884-bcd3-b1c4657d81be",
+    "entityType": "Subaccount",
+    "eventOrigin": "accounts-service",
+    "eventType": "Subaccount_Creation"
+  },
+  {
+    "id": 2,
+    "actionTime": 1710749400000,
+    "creationTime": 1710749700000,
+    "details": {
+      "description": "Subaccount updated.",
+      "guid": "cad2806a-3545-4aa0-8a7c-4fc246dba684",
+      "technicalName": "cad2806a-3545-4aa0-8a7c-4fc246dba684",
+      "parentGuid": "bbecf441-f9bd-4d09-8a3d-877a7519b949",
+      "displayName": "subaccount-1",
+      "subaccountDescription": "subaccount-1 for testing",
+      "region": "eu10-canary",
+      "jobLocation": null,
+      "subdomain": "subaccount-1-subdomain",
+      "betaEnabled": false,
+      "labels": {}
+    },
+    "globalAccountGUID": "bbecf441-f9bd-4d09-8a3d-877a7519b949",
+    "entityId": "cad2806a-3545-4aa0-8a7c-4fc246dba684",
+    "entityType": "Subaccount",
+    "eventOrigin": "accounts-service",
+    "eventType": "Subaccount_Update"
+  },
+  {
+    "id": 1,
+    "actionTime": 1710748500000,
+    "creationTime": 1710748800000,
+    "details": {
+      "description": "Subaccount created.",
+      "guid": "cad2806a-3545-4aa0-8a7c-4fc246dba684",
+      "technicalName": "cad2806a-3545-4aa0-8a7c-4fc246dba684",
+      "parentGuid": "bbecf441-f9bd-4d09-8a3d-877a7519b949",
+      "displayName": "subaccount-1",
+      "subaccountDescription": "subaccount-1 for testing",
+      "region": "eu10-canary",
+      "jobLocation": null,
+      "subdomain": "subaccount-1-subdomain",
+      "betaEnabled": false,
+      "labels": {}
+    },
+    "globalAccountGUID": "bbecf441-f9bd-4d09-8a3d-877a7519b949",
+    "entityId": "cad2806a-3545-4aa0-8a7c-4fc246dba684",
+    "entityType": "Subaccount",
+    "eventOrigin": "accounts-service",
+    "eventType": "Subaccount_Creation"
+  }
+]

@@ -65,8 +65,9 @@ func (h *handler) expireInstance(w http.ResponseWriter, req *http.Request) {
 		}
 		return
 	}
+	logger = logger.WithField("planName", instance.ServicePlanName)
 
-	if instance.ServicePlanID != broker.TrialPlanID {
+	if instance.ServicePlanID != broker.TrialPlanID && instance.ServicePlanID != broker.FreemiumPlanID {
 		msg := fmt.Sprintf("unsupported plan: %s", broker.PlanNamesMapping[instance.ServicePlanID])
 		logger.Warn(msg)
 		httputil.WriteErrorResponse(w, http.StatusBadRequest, errors.New(msg))

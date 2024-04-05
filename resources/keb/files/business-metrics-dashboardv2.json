@@ -1,0 +1,793 @@
+{
+  "annotations": {
+    "list": [
+      {
+        "builtIn": 1,
+        "datasource": "-- Plutono --",
+        "enable": true,
+        "hide": true,
+        "iconColor": "rgba(0, 211, 255, 1)",
+        "name": "Annotations & Alerts",
+        "type": "dashboard"
+      }
+    ]
+  },
+  "editable": true,
+  "gnetId": null,
+  "graphTooltip": 0,
+  "iteration": 1710499040305,
+  "links": [],
+  "panels": [
+    {
+      "collapsed": false,
+      "datasource": null,
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 0
+      },
+      "id": 7,
+      "panels": [],
+      "title": "Provisioned SKR by Dev-GA",
+      "type": "row"
+    },
+    {
+      "datasource": null,
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "drawStyle": "line",
+            "fillOpacity": 0,
+            "gradientMode": "none",
+            "hideFrom": {
+              "graph": false,
+              "legend": false,
+              "tooltip": false
+            },
+            "lineInterpolation": "linear",
+            "lineWidth": 1,
+            "pointSize": 5,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "auto",
+            "spanNulls": false
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 24,
+        "x": 0,
+        "y": 1
+      },
+      "id": 10,
+      "options": {
+        "legend": {
+          "calcs": [],
+          "displayMode": "list",
+          "placement": "bottom"
+        },
+        "tooltipOptions": {
+          "mode": "single"
+        }
+      },
+      "pluginVersion": "",
+      "targets": [
+        {
+          "exemplar": true,
+          "expr": "sum(kcp_keb_v2_global_account_id_instances_total{service=\"kcp-kyma-environment-broker\", global_account_id=~\"461f6292-8085-41c8-af0c-e185f39b5e18|1815c4ab-caa7-4b52-87ff-65ed47424dd6|310bc4e2-eb25-4ade-969b-eba2fb399a43\"})",
+          "instant": false,
+          "interval": "",
+          "legendFormat": "kyma-framefrog",
+          "refId": "A"
+        },
+        {
+          "exemplar": true,
+          "expr": "sum(kcp_keb_v2_global_account_id_instances_total{service=\"kcp-kyma-environment-broker\", global_account_id=~\"34c2ccd2-e10e-4eff-90bd-5267ef559c50|a97fcb49-d8f2-4096-8af8-37320f73954f|c82f30da-913e-4798-b5b1-32084625b74f\"})",
+          "hide": false,
+          "instant": false,
+          "interval": "",
+          "legendFormat": "kyma-goat",
+          "refId": "B"
+        },
+        {
+          "exemplar": true,
+          "expr": "sum(kcp_keb_v2_global_account_id_instances_total{service=\"kcp-kyma-environment-broker\", global_account_id=~\"8cd57dc2-edb2-45e0-af8b-7d881006e516|156d610b-eda1-44ab-a093-4977fca4e43e|0d74e214-e62f-4317-9133-c57d13c16aa1\"})",
+          "hide": false,
+          "instant": false,
+          "interval": "",
+          "legendFormat": "kyma-gopher",
+          "refId": "C"
+        },
+        {
+          "exemplar": true,
+          "expr": "sum(kcp_keb_v2_global_account_id_instances_total{service=\"kcp-kyma-environment-broker\", global_account_id=~\"49bbad39-abfd-4e75-82ad-1764a9c8addf\"})",
+          "hide": false,
+          "instant": false,
+          "interval": "",
+          "legendFormat": "kyma-hasselhoff",
+          "refId": "D"
+        },
+        {
+          "exemplar": true,
+          "expr": "sum(kcp_keb_v2_global_account_id_instances_total{service=\"kcp-kyma-environment-broker\", global_account_id=~\"793f8ccd-89eb-4513-a51d-ac8f08e477d1|dacce822-b68b-4cb8-9600-2ad630a10a17|1760a2dd-0563-46b2-8d73-754bdcd5952c\"})",
+          "hide": false,
+          "instant": false,
+          "interval": "",
+          "legendFormat": "kyma-huskies",
+          "refId": "E"
+        },
+        {
+          "exemplar": true,
+          "expr": "sum(kcp_keb_v2_global_account_id_instances_total{service=\"kcp-kyma-environment-broker\", global_account_id=~\"05b379c8-4c64-4ecc-8acb-d8b479520950|6b8cfc9c-a2e7-492a-84f0-d137e29f86e7|0645e6b9-1c12-48c7-b987-4358be44acd3\"})",
+          "hide": false,
+          "instant": false,
+          "interval": "",
+          "legendFormat": "kyma-jellyfish",
+          "refId": "F"
+        },
+        {
+          "exemplar": true,
+          "expr": "sum(kcp_keb_v2_global_account_id_instances_total{service=\"kcp-kyma-environmenvt-broker\", global_account_id=~\"1d05d38f-cd58-4500-ba5c-e82ea4fb1e26|2b7cf308-c24e-42fe-bff3-5fcad0f8003b|6be53a18-3a03-4ed3-9453-7cb230cc22d8\"})",
+          "hide": false,
+          "instant": false,
+          "interval": "",
+          "legendFormat": "kyma-otters",
+          "refId": "G"
+        },
+        {
+          "exemplar": true,
+          "expr": "sum(kcp_keb_v2_global_account_id_instances_total{service=\"kcp-kyma-environment-broker\", global_account_id=~\"32246602-008e-4319-b2bb-a9233d6a25c1|6034adc9-3441-494c-b438-a0eba4c5045a|d19eb6d8-586e-4e59-8c7b-967632a06507\"})",
+          "hide": false,
+          "instant": false,
+          "interval": "",
+          "legendFormat": " kyma-phoenix",
+          "refId": "H"
+        },
+        {
+          "exemplar": true,
+          "expr": "sum(kcp_keb_v2_global_account_id_instances_total{service=\"kcp-kyma-environment-broker\", global_account_id=~\"fa1ae4d9-6ca4-4970-8bf0-9a23a2876b41|fcd6aaf5-559a-4988-9e58-ecf319de56be|586e1621-875c-4b38-8666-16a7112edff9\"})",
+          "hide": false,
+          "instant": false,
+          "interval": "",
+          "legendFormat": "kyma-tunas",
+          "refId": "I"
+        },
+        {
+          "exemplar": true,
+          "expr": "sum(kcp_keb_v2_global_account_id_instances_total{service=\"kcp-kyma-environment-broker\", global_account_id=~\"ec3b7d19-e3b0-46ba-9e7d-84c4ff7f5519|4f1d8ec1-9678-4f84-848f-eb953a18dc9a\"})",
+          "hide": false,
+          "instant": false,
+          "interval": "",
+          "legendFormat": "kyma-release",
+          "refId": "J"
+        },
+        {
+          "exemplar": true,
+          "expr": "sum(kcp_keb_v2_global_account_id_instances_total{service=\"kcp-kyma-environment-broker\", global_account_id=~\"8d8980d4-34da-46c8-a76e-4baa907234fd|22d14010-e19d-41c9-8d1e-38406db1c14d\"})",
+          "hide": false,
+          "instant": false,
+          "interval": "",
+          "legendFormat": "kyma-sre",
+          "refId": "K"
+        },
+        {
+          "exemplar": true,
+          "expr": "sum(kcp_keb_v2_global_account_id_instances_total{service=\"kcp-kyma-environment-broker\", global_account_id=~\"41bb3a1e-2c13-454e-976f-d9734acad3c4|c8bca201-77fd-4e94-9f4a-68729b7fcd8c\"})",
+          "hide": false,
+          "instant": false,
+          "interval": "",
+          "legendFormat": "kyma-adoption",
+          "refId": "L"
+        },
+        {
+          "exemplar": true,
+          "expr": "sum(kcp_keb_v2_global_account_id_instances_total{service=\"kcp-kyma-environment-broker\", global_account_id=~\"4c526f8b-cca9-4837-8b43-87824e3a4d10\"})",
+          "hide": false,
+          "interval": "",
+          "legendFormat": "poster",
+          "refId": "T"
+        },
+        {
+          "exemplar": true,
+          "expr": "sum(kcp_keb_v2_global_account_id_instances_total{service=\"kcp-kyma-environment-broker\", global_account_id=~\"ce9ba63b-c7c3-4066-bc11-9c1ce1800526\"})",
+          "hide": false,
+          "instant": false,
+          "interval": "",
+          "legendFormat": "kyma-sunandmoon",
+          "refId": "M"
+        },
+        {
+          "exemplar": true,
+          "expr": "sum(kcp_keb_v2_global_account_id_instances_total{service=\"kcp-kyma-environment-broker\", global_account_id=~\"7805ffd3-d842-4bc0-a116-213ff5e6c3d9\"})",
+          "hide": false,
+          "instant": false,
+          "interval": "",
+          "legendFormat": "kyma-ai-force",
+          "refId": "N"
+        },
+        {
+          "exemplar": true,
+          "expr": "sum(kcp_keb_v2_global_account_id_instances_total{service=\"kcp-kyma-environment-broker\", global_account_id=~\"7283a47f-29db-420d-ba28-cf4e4162cf48\"})",
+          "hide": false,
+          "instant": false,
+          "interval": "",
+          "legendFormat": "ais-kyma",
+          "refId": "O"
+        },
+        {
+          "exemplar": true,
+          "expr": "sum(kcp_keb_v2_global_account_id_instances_total{service=\"kcp-kyma-environment-broker\", global_account_id=~\"e449f875-b5b2-4485-b7c0-98725c0571bf|d4037436-f01a-4adc-aa2b-52836f459bfe|c8bca201-77fd-4e94-9f4a-68729b7fcd8c\"})",
+          "hide": false,
+          "instant": false,
+          "interval": "",
+          "legendFormat": "kyma-integration",
+          "refId": "P"
+        },
+        {
+          "exemplar": true,
+          "expr": "sum(kcp_keb_v2_global_account_id_instances_total{service=\"kcp-kyma-environment-broker\", global_account_id=~\"03364233-e9de-4fca-879e-60bab540dfd6|efa590e3-4441-4aad-8325-bcd0d5da3ee1\"})",
+          "hide": false,
+          "instant": false,
+          "interval": "",
+          "legendFormat": "kyma-test",
+          "refId": "Q"
+        },
+        {
+          "exemplar": true,
+          "expr": "sum(kcp_keb_v2_global_account_id_instances_total{service=\"kcp-kyma-environment-broker\", global_account_id=~\"c3732052-3836-4906-b9cc-5e25cfa137e9\"})",
+          "hide": false,
+          "instant": false,
+          "interval": "",
+          "legendFormat": "pb-testing",
+          "refId": "R"
+        },
+        {
+          "exemplar": true,
+          "expr": "sum(kcp_keb_v2_global_account_id_instances_total{service=\"kcp-kyma-environment-broker\", global_account_id=~\"0ee91222-0406-46f4-bfb8-4df880eba49b\"})",
+          "hide": false,
+          "instant": false,
+          "interval": "",
+          "legendFormat": "wilt-kyma-test",
+          "refId": "S"
+        },
+        {
+          "exemplar": true,
+          "expr": "sum(kcp_keb_v2_global_account_id_instances_total{service=\"kcp-kyma-environment-broker\", global_account_id=~\"f9322087-6ddd-485b-9615-e8073d5df800\"})",
+          "hide": false,
+          "interval": "",
+          "legendFormat": "pb-canary",
+          "refId": "U"
+        }
+      ],
+      "timeFrom": null,
+      "timeShift": null,
+      "title": "Number of SKR's per GA over time",
+      "type": "timeseries"
+    },
+    {
+      "datasource": null,
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "custom": {
+            "align": "center",
+            "displayMode": "auto",
+            "filterable": false
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 7,
+        "w": 5,
+        "x": 0,
+        "y": 9
+      },
+      "id": 11,
+      "options": {
+        "showHeader": false,
+        "sortBy": [
+          {
+            "desc": true,
+            "displayName": "Last"
+          }
+        ]
+      },
+      "pluginVersion": "",
+      "targets": [
+        {
+          "exemplar": true,
+          "expr": "sum(kcp_keb_v2_global_account_id_instances_total{service=\"kcp-kyma-environment-broker\", global_account_id=~\"461f6292-8085-41c8-af0c-e185f39b5e18|1815c4ab-caa7-4b52-87ff-65ed47424dd6|310bc4e2-eb25-4ade-969b-eba2fb399a43\"})",
+          "format": "time_series",
+          "instant": true,
+          "interval": "",
+          "intervalFactor": 1,
+          "legendFormat": "kyma-framefrog",
+          "refId": "A"
+        },
+        {
+          "exemplar": true,
+          "expr": "sum(kcp_keb_v2_global_account_id_instances_total{service=\"kcp-kyma-environment-broker\", global_account_id=~\"34c2ccd2-e10e-4eff-90bd-5267ef559c50|a97fcb49-d8f2-4096-8af8-37320f73954f|c82f30da-913e-4798-b5b1-32084625b74f\"})",
+          "hide": false,
+          "instant": true,
+          "interval": "",
+          "legendFormat": "kyma-goat",
+          "refId": "B"
+        },
+        {
+          "exemplar": true,
+          "expr": "sum(kcp_keb_v2_global_account_id_instances_total{service=\"kcp-kyma-environment-broker\", global_account_id=~\"8cd57dc2-edb2-45e0-af8b-7d881006e516|156d610b-eda1-44ab-a093-4977fca4e43e|0d74e214-e62f-4317-9133-c57d13c16aa1\"})",
+          "hide": false,
+          "instant": true,
+          "interval": "",
+          "legendFormat": "kyma-gopher",
+          "refId": "C"
+        },
+        {
+          "exemplar": true,
+          "expr": "sum(kcp_keb_v2_global_account_id_instances_total{service=\"kcp-kyma-environment-broker\", global_account_id=~\"49bbad39-abfd-4e75-82ad-1764a9c8addf\"})",
+          "hide": false,
+          "instant": true,
+          "interval": "",
+          "legendFormat": "kyma-hasselhoff",
+          "refId": "D"
+        },
+        {
+          "exemplar": true,
+          "expr": "sum(kcp_keb_v2_global_account_id_instances_total{service=\"kcp-kyma-environment-broker\", global_account_id=~\"793f8ccd-89eb-4513-a51d-ac8f08e477d1|dacce822-b68b-4cb8-9600-2ad630a10a17|1760a2dd-0563-46b2-8d73-754bdcd5952c\"})",
+          "hide": false,
+          "instant": true,
+          "interval": "",
+          "legendFormat": "kyma-huskies",
+          "refId": "E"
+        },
+        {
+          "exemplar": true,
+          "expr": "sum(kcp_keb_v2_global_account_id_instances_total{service=\"kcp-kyma-environment-broker\", global_account_id=~\"05b379c8-4c64-4ecc-8acb-d8b479520950|6b8cfc9c-a2e7-492a-84f0-d137e29f86e7|0645e6b9-1c12-48c7-b987-4358be44acd3\"})",
+          "hide": false,
+          "instant": true,
+          "interval": "",
+          "legendFormat": "kyma-jellyfish",
+          "refId": "F"
+        },
+        {
+          "exemplar": true,
+          "expr": "sum(kcp_keb_v2_global_account_id_instances_total{service=\"kcp-kyma-environment-broker\", global_account_id=~\"1d05d38f-cd58-4500-ba5c-e82ea4fb1e26|2b7cf308-c24e-42fe-bff3-5fcad0f8003b|6be53a18-3a03-4ed3-9453-7cb230cc22d8\"})",
+          "hide": false,
+          "instant": true,
+          "interval": "",
+          "legendFormat": "kyma-otters",
+          "refId": "G"
+        },
+        {
+          "exemplar": true,
+          "expr": "sum(kcp_keb_v2_global_account_id_instances_total{service=\"kcp-kyma-environment-broker\", global_account_id=~\"32246602-008e-4319-b2bb-a9233d6a25c1|6034adc9-3441-494c-b438-a0eba4c5045a|d19eb6d8-586e-4e59-8c7b-967632a06507\"})",
+          "hide": false,
+          "instant": true,
+          "interval": "",
+          "legendFormat": " kyma-phoenix",
+          "refId": "H"
+        },
+        {
+          "exemplar": true,
+          "expr": "sum(kcp_keb_v2_global_account_id_instances_total{service=\"kcp-kyma-environment-broker\", global_account_id=~\"fa1ae4d9-6ca4-4970-8bf0-9a23a2876b41|fcd6aaf5-559a-4988-9e58-ecf319de56be|586e1621-875c-4b38-8666-16a7112edff9\"})",
+          "hide": false,
+          "instant": true,
+          "interval": "",
+          "legendFormat": "kyma-tunas",
+          "refId": "I"
+        },
+        {
+          "exemplar": true,
+          "expr": "sum(kcp_keb_v2_global_account_id_instances_total{service=\"kcp-kyma-environment-broker\", global_account_id=~\"ec3b7d19-e3b0-46ba-9e7d-84c4ff7f5519|4f1d8ec1-9678-4f84-848f-eb953a18dc9a\"})",
+          "hide": false,
+          "instant": true,
+          "interval": "",
+          "legendFormat": "kyma-release",
+          "refId": "J"
+        },
+        {
+          "exemplar": true,
+          "expr": "sum(kcp_keb_v2_global_account_id_instances_total{service=\"kcp-kyma-environment-broker\", global_account_id=~\"8d8980d4-34da-46c8-a76e-4baa907234fd|22d14010-e19d-41c9-8d1e-38406db1c14d\"})",
+          "hide": false,
+          "instant": true,
+          "interval": "",
+          "legendFormat": "kyma-sre",
+          "refId": "K"
+        },
+        {
+          "exemplar": true,
+          "expr": "sum(kcp_keb_v2_global_account_id_instances_total{service=\"kcp-kyma-environment-broker\", global_account_id=~\"41bb3a1e-2c13-454e-976f-d9734acad3c4|c8bca201-77fd-4e94-9f4a-68729b7fcd8c\"})",
+          "hide": false,
+          "instant": true,
+          "interval": "",
+          "legendFormat": "kyma-adoption",
+          "refId": "L"
+        },
+        {
+          "exemplar": true,
+          "expr": "sum(kcp_keb_v2_global_account_id_instances_total{service=\"kcp-kyma-environment-broker\", global_account_id=~\"4c526f8b-cca9-4837-8b43-87824e3a4d10\"})",
+          "hide": false,
+          "instant": true,
+          "interval": "",
+          "legendFormat": "poster",
+          "refId": "T"
+        },
+        {
+          "exemplar": true,
+          "expr": "sum(kcp_keb_v2_global_account_id_instances_total{service=\"kcp-kyma-environment-broker\", global_account_id=~\"ce9ba63b-c7c3-4066-bc11-9c1ce1800526\"})",
+          "hide": false,
+          "instant": true,
+          "interval": "",
+          "legendFormat": "kyma-sunandmoon",
+          "refId": "M"
+        },
+        {
+          "exemplar": true,
+          "expr": "sum(kcp_keb_v2_global_account_id_instances_total{service=\"kcp-kyma-environment-broker\", global_account_id=~\"7805ffd3-d842-4bc0-a116-213ff5e6c3d9\"})",
+          "hide": false,
+          "instant": true,
+          "interval": "",
+          "legendFormat": "kyma-ai-force",
+          "refId": "N"
+        },
+        {
+          "exemplar": true,
+          "expr": "sum(kcp_keb_v2_global_account_id_instances_total{service=\"kcp-kyma-environment-broker\", global_account_id=~\"7283a47f-29db-420d-ba28-cf4e4162cf48\"})",
+          "hide": false,
+          "instant": true,
+          "interval": "",
+          "legendFormat": "ais-kyma",
+          "refId": "O"
+        },
+        {
+          "exemplar": true,
+          "expr": "sum(kcp_keb_v2_global_account_id_instances_total{service=\"kcp-kyma-environment-broker\", global_account_id=~\"e449f875-b5b2-4485-b7c0-98725c0571bf|d4037436-f01a-4adc-aa2b-52836f459bfe|c8bca201-77fd-4e94-9f4a-68729b7fcd8c\"})",
+          "hide": false,
+          "instant": true,
+          "interval": "",
+          "legendFormat": "kyma-integration",
+          "refId": "P"
+        },
+        {
+          "exemplar": true,
+          "expr": "sum(kcp_keb_v2_global_account_id_instances_total{service=\"kcp-kyma-environment-broker\", global_account_id=~\"03364233-e9de-4fca-879e-60bab540dfd6|efa590e3-4441-4aad-8325-bcd0d5da3ee1\"})",
+          "hide": false,
+          "instant": true,
+          "interval": "",
+          "legendFormat": "kyma-test",
+          "refId": "Q"
+        },
+        {
+          "exemplar": true,
+          "expr": "sum(kcp_keb_v2_global_account_id_instances_total{service=\"kcp-kyma-environment-broker\", global_account_id=~\"c3732052-3836-4906-b9cc-5e25cfa137e9\"})",
+          "hide": false,
+          "instant": true,
+          "interval": "",
+          "legendFormat": "pb-testing",
+          "refId": "R"
+        },
+        {
+          "exemplar": true,
+          "expr": "sum(kcp_keb_v2_global_account_id_instances_total{service=\"kcp-kyma-environment-broker\", global_account_id=~\"0ee91222-0406-46f4-bfb8-4df880eba49b\"})",
+          "hide": false,
+          "instant": true,
+          "interval": "",
+          "legendFormat": "wilt-kyma-test",
+          "refId": "S"
+        },
+        {
+          "exemplar": true,
+          "expr": "sum(kcp_keb_v2_global_account_id_instances_total{service=\"kcp-kyma-environment-broker\", global_account_id=~\"f9322087-6ddd-485b-9615-e8073d5df800\"})",
+          "hide": false,
+          "instant": true,
+          "interval": "",
+          "legendFormat": "pb-canary",
+          "refId": "U"
+        }
+      ],
+      "timeFrom": null,
+      "timeShift": null,
+      "title": "Number of SKR's per GA",
+      "transformations": [
+        {
+          "id": "reduce",
+          "options": {
+            "includeTimeField": false,
+            "mode": "seriesToRows",
+            "reducers": [
+              "last"
+            ]
+          }
+        },
+        {
+          "id": "sortBy",
+          "options": {
+            "fields": {},
+            "sort": [
+              {
+                "desc": true,
+                "field": "Last"
+              }
+            ]
+          }
+        }
+      ],
+      "type": "table"
+    },
+    {
+      "datasource": null,
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "drawStyle": "line",
+            "fillOpacity": 0,
+            "gradientMode": "none",
+            "hideFrom": {
+              "graph": false,
+              "legend": false,
+              "tooltip": false
+            },
+            "lineInterpolation": "linear",
+            "lineWidth": 1,
+            "pointSize": 5,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "auto",
+            "spanNulls": false
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 7,
+        "w": 19,
+        "x": 5,
+        "y": 9
+      },
+      "id": 9,
+      "options": {
+        "legend": {
+          "calcs": [],
+          "displayMode": "list",
+          "placement": "bottom"
+        },
+        "tooltipOptions": {
+          "mode": "single"
+        }
+      },
+      "pluginVersion": "",
+      "targets": [
+        {
+          "exemplar": true,
+          "expr": "sum(kcp_keb_v2_global_account_id_instances_total{service=\"kcp-kyma-environment-broker\", global_account_id=~\"$GA\"})",
+          "hide": false,
+          "instant": false,
+          "interval": "",
+          "legendFormat": "${GA:text}",
+          "refId": "A"
+        }
+      ],
+      "timeFrom": null,
+      "timeShift": null,
+      "title": "Number of SKR's for ${GA:text} over time",
+      "type": "timeseries"
+    }
+  ],
+  "schemaVersion": 27,
+  "style": "dark",
+  "tags": [
+    "kyma-environment-broker",
+    "kcp"
+  ],
+  "templating": {
+    "list": [
+      {
+        "allValue": null,
+        "current": {
+          "selected": false,
+          "text": "kyma-integration",
+          "value": "e449f875-b5b2-4485-b7c0-98725c0571bf|d4037436-f01a-4adc-aa2b-52836f459bfe|c8bca201-77fd-4e94-9f4a-68729b7fcd8c"
+        },
+        "description": null,
+        "error": null,
+        "hide": 0,
+        "includeAll": false,
+        "label": null,
+        "multi": false,
+        "name": "GA",
+        "options": [
+          {
+            "selected": false,
+            "text": "ais-kyma",
+            "value": "7283a47f-29db-420d-ba28-cf4e4162cf48"
+          },
+          {
+            "selected": false,
+            "text": "kyma-adoption",
+            "value": "41bb3a1e-2c13-454e-976f-d9734acad3c4|c8bca201-77fd-4e94-9f4a-68729b7fcd8c"
+          },
+          {
+            "selected": false,
+            "text": "kyma-ai-force",
+            "value": "7805ffd3-d842-4bc0-a116-213ff5e6c3d9"
+          },
+          {
+            "selected": false,
+            "text": "kyma-framefrog",
+            "value": "461f6292-8085-41c8-af0c-e185f39b5e18|1815c4ab-caa7-4b52-87ff-65ed47424dd6|310bc4e2-eb25-4ade-969b-eba2fb399a43"
+          },
+          {
+            "selected": false,
+            "text": "kyma-goat",
+            "value": "34c2ccd2-e10e-4eff-90bd-5267ef559c50|a97fcb49-d8f2-4096-8af8-37320f73954f|c82f30da-913e-4798-b5b1-32084625b74f"
+          },
+          {
+            "selected": false,
+            "text": "kyma-gopher",
+            "value": "8cd57dc2-edb2-45e0-af8b-7d881006e516|156d610b-eda1-44ab-a093-4977fca4e43e|0d74e214-e62f-4317-9133-c57d13c16aa1"
+          },
+          {
+            "selected": false,
+            "text": "kyma-hasselhoff",
+            "value": "49bbad39-abfd-4e75-82ad-1764a9c8addf"
+          },
+          {
+            "selected": false,
+            "text": "kyma-huskies",
+            "value": "793f8ccd-89eb-4513-a51d-ac8f08e477d1|dacce822-b68b-4cb8-9600-2ad630a10a17|1760a2dd-0563-46b2-8d73-754bdcd5952c"
+          },
+          {
+            "selected": true,
+            "text": "kyma-integration",
+            "value": "e449f875-b5b2-4485-b7c0-98725c0571bf|d4037436-f01a-4adc-aa2b-52836f459bfe|c8bca201-77fd-4e94-9f4a-68729b7fcd8c"
+          },
+          {
+            "selected": false,
+            "text": "kyma-jellyfish",
+            "value": "05b379c8-4c64-4ecc-8acb-d8b479520950|6b8cfc9c-a2e7-492a-84f0-d137e29f86e7|0645e6b9-1c12-48c7-b987-4358be44acd3"
+          },
+          {
+            "selected": false,
+            "text": "kyma-otters",
+            "value": "1d05d38f-cd58-4500-ba5c-e82ea4fb1e26|2b7cf308-c24e-42fe-bff3-5fcad0f8003b|6be53a18-3a03-4ed3-9453-7cb230cc22d8"
+          },
+          {
+            "selected": false,
+            "text": "kyma-phoenix",
+            "value": "32246602-008e-4319-b2bb-a9233d6a25c1|6034adc9-3441-494c-b438-a0eba4c5045a|d19eb6d8-586e-4e59-8c7b-967632a06507"
+          },
+          {
+            "selected": false,
+            "text": "kyma-release",
+            "value": "ec3b7d19-e3b0-46ba-9e7d-84c4ff7f5519|4f1d8ec1-9678-4f84-848f-eb953a18dc9a"
+          },
+          {
+            "selected": false,
+            "text": "kyma-sre",
+            "value": "8d8980d4-34da-46c8-a76e-4baa907234fd|22d14010-e19d-41c9-8d1e-38406db1c14d"
+          },
+          {
+            "selected": false,
+            "text": "kyma-sunandmoon",
+            "value": "ce9ba63b-c7c3-4066-bc11-9c1ce1800526"
+          },
+          {
+            "selected": false,
+            "text": "kyma-test",
+            "value": "03364233-e9de-4fca-879e-60bab540dfd6|efa590e3-4441-4aad-8325-bcd0d5da3ee1"
+          },
+          {
+            "selected": false,
+            "text": "kyma-tunas",
+            "value": "fa1ae4d9-6ca4-4970-8bf0-9a23a2876b41|fcd6aaf5-559a-4988-9e58-ecf319de56be|586e1621-875c-4b38-8666-16a7112edff9"
+          },
+          {
+            "selected": false,
+            "text": "pb-canary",
+            "value": "f9322087-6ddd-485b-9615-e8073d5df800"
+          },
+          {
+            "selected": false,
+            "text": "pb-testing",
+            "value": "c3732052-3836-4906-b9cc-5e25cfa137e9"
+          },
+          {
+            "selected": false,
+            "text": "poster",
+            "value": "4c526f8b-cca9-4837-8b43-87824e3a4d10"
+          },
+          {
+            "selected": false,
+            "text": "wilt-kyma-test",
+            "value": "0ee91222-0406-46f4-bfb8-4df880eba49b"
+          }
+        ],
+        "query": "ais-kyma : 7283a47f-29db-420d-ba28-cf4e4162cf48, kyma-adoption : 41bb3a1e-2c13-454e-976f-d9734acad3c4|c8bca201-77fd-4e94-9f4a-68729b7fcd8c, kyma-ai-force : 7805ffd3-d842-4bc0-a116-213ff5e6c3d9, kyma-framefrog : 461f6292-8085-41c8-af0c-e185f39b5e18|1815c4ab-caa7-4b52-87ff-65ed47424dd6|310bc4e2-eb25-4ade-969b-eba2fb399a43, kyma-goat : 34c2ccd2-e10e-4eff-90bd-5267ef559c50|a97fcb49-d8f2-4096-8af8-37320f73954f|c82f30da-913e-4798-b5b1-32084625b74f, kyma-gopher : 8cd57dc2-edb2-45e0-af8b-7d881006e516|156d610b-eda1-44ab-a093-4977fca4e43e|0d74e214-e62f-4317-9133-c57d13c16aa1, kyma-hasselhoff : 49bbad39-abfd-4e75-82ad-1764a9c8addf, kyma-huskies : 793f8ccd-89eb-4513-a51d-ac8f08e477d1|dacce822-b68b-4cb8-9600-2ad630a10a17|1760a2dd-0563-46b2-8d73-754bdcd5952c, kyma-integration : e449f875-b5b2-4485-b7c0-98725c0571bf|d4037436-f01a-4adc-aa2b-52836f459bfe|c8bca201-77fd-4e94-9f4a-68729b7fcd8c, kyma-jellyfish : 05b379c8-4c64-4ecc-8acb-d8b479520950|6b8cfc9c-a2e7-492a-84f0-d137e29f86e7|0645e6b9-1c12-48c7-b987-4358be44acd3, kyma-otters : 1d05d38f-cd58-4500-ba5c-e82ea4fb1e26|2b7cf308-c24e-42fe-bff3-5fcad0f8003b|6be53a18-3a03-4ed3-9453-7cb230cc22d8, kyma-phoenix : 32246602-008e-4319-b2bb-a9233d6a25c1|6034adc9-3441-494c-b438-a0eba4c5045a|d19eb6d8-586e-4e59-8c7b-967632a06507, kyma-release : ec3b7d19-e3b0-46ba-9e7d-84c4ff7f5519|4f1d8ec1-9678-4f84-848f-eb953a18dc9a, kyma-sre : 8d8980d4-34da-46c8-a76e-4baa907234fd|22d14010-e19d-41c9-8d1e-38406db1c14d, kyma-sunandmoon : ce9ba63b-c7c3-4066-bc11-9c1ce1800526, kyma-test : 03364233-e9de-4fca-879e-60bab540dfd6|efa590e3-4441-4aad-8325-bcd0d5da3ee1, kyma-tunas : fa1ae4d9-6ca4-4970-8bf0-9a23a2876b41|fcd6aaf5-559a-4988-9e58-ecf319de56be|586e1621-875c-4b38-8666-16a7112edff9, pb-canary : f9322087-6ddd-485b-9615-e8073d5df800, pb-testing : c3732052-3836-4906-b9cc-5e25cfa137e9, poster : 4c526f8b-cca9-4837-8b43-87824e3a4d10, wilt-kyma-test : 0ee91222-0406-46f4-bfb8-4df880eba49b",
+        "queryValue": "",
+        "skipUrlSync": false,
+        "type": "custom"
+      },
+      {
+        "description": null,
+        "error": null,
+        "hide": 2,
+        "label": null,
+        "name": "frog",
+        "query": "461f6292-8085-41c8-af0c-e185f39b5e18|1815c4ab-caa7-4b52-87ff-65ed47424dd6|310bc4e2-eb25-4ade-969b-eba2fb399a43",
+        "skipUrlSync": false,
+        "type": "constant"
+      }
+    ]
+  },
+  "time": {
+    "from": "now-7d",
+    "to": "now"
+  },
+  "timepicker": {},
+  "timezone": "",
+  "title": "KCP / Kyma Environment Broker - Provisioned Dev Infrastructure Usage - Business Metrics v2",
+  "uid": "acHkSW2Ik2",
+  "version": 27
+}

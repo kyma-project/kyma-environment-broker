@@ -287,6 +287,9 @@ func (s *instances) filterInstances(filter dbmodel.InstanceFilter) []internal.In
 		if ok = matchFilter(v.ServicePlanName, filter.Plans, equal); !ok {
 			continue
 		}
+		if ok = matchFilter(v.ServicePlanID, filter.PlanIDs, equal); !ok {
+			continue
+		}
 		if ok = matchFilter(v.ProviderRegion, filter.Regions, equal); !ok {
 			continue
 		}

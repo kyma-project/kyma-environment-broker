@@ -900,6 +900,15 @@ func addOperationFilters(stmt *dbr.SelectStmt, filter dbmodel.OperationFilter) {
 	if len(filter.States) > 0 {
 		stmt.Where("o.state IN ?", filter.States)
 	}
+	if len(filter.Types) > 0 {
+		stmt.Where("o.type IN ?", filter.Types)
+	}
+	if len(filter.GlobalAccountIDs) > 0 {
+		stmt.Where("o.provisioning_parameters::json->'ers_context'->>'globalaccount_id' IN ?", filter.GlobalAccountIDs)
+	}
+	if len(filter.PlanIDs) > 0 {
+		stmt.Where("o.provisioning_parameters::json->>'plan_id' IN ?", filter.PlanIDs)
+	}
 	if filter.InstanceFilter != nil {
 		fi := filter.InstanceFilter
 		if slices.Contains(filter.States, string(dbmodel.InstanceDeprovisioned)) {
@@ -995,5 +1004,19 @@ func (r readSession) TotalNumberOfInstancesArchived() (int, error) {
 	err := r.session.Select("count(*) as total").
 		From(InstancesArchivedTableName).
 		LoadOne(&res)
+	return res.Total, err
+}
+
+func (r readSession) TotalNumberOfInstancesArchivedForGlobalAccountID(globalAccountID string, planID string) (int, error) {
+	var res struct {
+		Total int
+	}
+	err := r.session.Select("count(*) as total").
+		From(InstancesArchivedTableName).
+		Where(dbr.Eq("global_account_id", globalAccountID)).
+		Where(dbr.Eq("plan_id", planID)).
+		Where(dbr.Eq("provisioning_state", domain.Succeeded)).
+		LoadOne(&res)
+
 	return res.Total, err
 }

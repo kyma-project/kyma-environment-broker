@@ -6,6 +6,7 @@ import (
 
 	"github.com/kyma-project/kyma-environment-broker/internal"
 	"github.com/kyma-project/kyma-environment-broker/internal/process"
+	"github.com/sirupsen/logrus"
 
 	"github.com/pivotal-cf/brokerapi/v8/domain"
 	"github.com/prometheus/client_golang/prometheus"
@@ -21,9 +22,10 @@ import (
 type OperationDurationCollector struct {
 	provisioningHistogram   *prometheus.HistogramVec
 	deprovisioningHistogram *prometheus.HistogramVec
+	logger                  logrus.FieldLogger
 }
 
-func NewOperationDurationCollector() *OperationDurationCollector {
+func NewOperationDurationCollector(logger logrus.FieldLogger) *OperationDurationCollector {
 	return &OperationDurationCollector{
 		provisioningHistogram: prometheus.NewHistogramVec(prometheus.HistogramOpts{
 			Namespace: prometheusNamespacev2,
@@ -39,6 +41,7 @@ func NewOperationDurationCollector() *OperationDurationCollector {
 			Help:      "The time of the deprovisioning process",
 			Buckets:   prometheus.LinearBuckets(10, 2, 56),
 		}, []string{"plan_id"}),
+		logger: logger,
 	}
 }
 

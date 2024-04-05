@@ -919,9 +919,6 @@ func (s *operations) getAll() ([]internal.Operation, error) {
 	for _, op := range s.operations {
 		ops = append(ops, op)
 	}
-	if len(ops) == 0 {
-		return nil, dberr.NotFound("operations not found")
-	}
 
 	return ops, nil
 }
@@ -934,6 +931,15 @@ func (s *operations) filterAll(filter dbmodel.OperationFilter) ([]internal.Opera
 	}
 	for _, op := range ops {
 		if ok := matchFilter(string(op.State), filter.States, s.equalFilter); !ok {
+			continue
+		}
+		if ok := matchFilter(op.ProvisioningParameters.ErsContext.GlobalAccountID, filter.GlobalAccountIDs, s.equalFilter); !ok {
+			continue
+		}
+		if ok := matchFilter(op.ProvisioningParameters.PlanID, filter.PlanIDs, s.equalFilter); !ok {
+			continue
+		}
+		if ok := matchFilter(string(op.Type), filter.Types, s.equalFilter); !ok {
 			continue
 		}
 		result = append(result, op)

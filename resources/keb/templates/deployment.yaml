@@ -85,6 +85,8 @@ spec:
               value: "{{ .Values.enableKubeconfigURLLabel }}"
             - name: APP_BROKER_INCLUDE_ADDITIONAL_PARAMS_IN_SCHEMA
               value: "{{ .Values.includeAdditionalParamsInSchema }}"
+            - name: APP_BROKER_SHOW_FREE_EXPIRATION_INFO
+              value: "{{ .Values.showFreeExpirationInfo }}"
             - name: APP_BROKER_SHOW_TRIAL_EXPIRATION_INFO
               value: "{{ .Values.showTrialExpirationInfo }}"
             - name: APP_BROKER_SUBACCOUNTS_IDS_TO_SHOW_TRIAL_EXPIRATION_INFO
@@ -332,6 +334,8 @@ spec:
               value: "{{ .Values.euAccessRejectionMessage }}"
             - name: APP_FREEMIUM_PROVIDERS
               value: "{{ .Values.gardener.freemiumProviders }}"
+            - name: APP_BROKER_ONLY_ONE_FREE_PER_GA
+              value: "{{ .Values.onlyOneFreePerGA }}"
             - name: APP_CATALOG_FILE_PATH
               value: /config/catalog.yaml
             - name: APP_GARDENER_PROJECT
@@ -396,6 +400,14 @@ spec:
               value: "{{ .Values.includeNewMachineTypesInSchema }}"
             - name: APP_METRICSV2_ENABLED
               value: "{{ .Values.metricsv2.enabled }}"
+            - name: APP_METRICSV2_OPERATION_RESULT_RETENTION_PERIOD
+              value: "{{ .Values.metricsv2.operationResultRetentionPeriod }}"
+            - name: APP_METRICSV2_OPERATION_RESULT_POOLING_INTERVAL
+              value: "{{ .Values.metricsv2.operationResultPoolingInterval }}"
+            - name: APP_METRICSV2_OPERATION_STATS_POOLING_INTERVAL
+              value: "{{ .Values.metricsv2.operationStatsPoolingInterval }}"
+            - name: APP_FREEMIUM_WHITELISTED_GLOBAL_ACCOUNTS_FILE_PATH
+              value: /config/freemiumWhitelistedGlobalAccountIds.yaml
           ports:
             - name: http
               containerPort: {{ .Values.broker.port }}

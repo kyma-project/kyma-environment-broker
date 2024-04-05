@@ -8,7 +8,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/kyma-project/kyma-environment-broker/internal/euaccess"
+	"github.com/kyma-project/kyma-environment-broker/internal/whitelist"
 
 	"github.com/kyma-project/control-plane/components/provisioner/pkg/gqlschema"
 	"github.com/kyma-project/kyma-environment-broker/common/gardener"
@@ -56,15 +56,17 @@ func TestGetEndpoint_GetProvisioningInstance(t *testing.T) {
 		gardener.Config{Project: "test", ShootDomain: "example.com"},
 		st.Operations(),
 		st.Instances(),
+		st.InstancesArchived(),
 		queue,
 		factoryBuilder,
 		broker.PlansConfig{},
 		false,
 		planDefaults,
-		euaccess.WhitelistSet{},
+		whitelist.Set{},
 		"request rejected, your globalAccountId is not whitelisted",
 		logrus.StandardLogger(),
 		dashboardConfig,
+		whitelist.Set{},
 	)
 	getSvc := broker.NewGetInstance(broker.Config{EnableKubeconfigURLLabel: true}, st.Instances(), st.Operations(), logrus.New())
 

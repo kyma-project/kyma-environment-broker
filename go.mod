@@ -1,8 +1,6 @@
 module github.com/kyma-project/kyma-environment-broker
 
-go 1.21.1
-
-toolchain go1.22.0
+go 1.22.1
 
 require (
 	code.cloudfoundry.org/lager v2.0.0+incompatible
@@ -28,7 +26,6 @@ require (
 	github.com/kyma-project/control-plane/components/provisioner v0.0.0-20231229142643-f0ac935b7fae
 	github.com/kyma-project/control-plane/components/schema-migrator v0.0.0-20240222095836-b3942869fc28
 	github.com/lib/pq v1.10.9
-	github.com/machinebox/graphql v0.2.3-0.20181106130121-3a9253180225
 	github.com/matryer/is v1.4.1
 	github.com/pivotal-cf/brokerapi/v8 v8.2.3
 	github.com/pkg/errors v0.9.1
@@ -60,7 +57,6 @@ require (
 	github.com/Masterminds/goutils v1.1.1 // indirect
 	github.com/Microsoft/go-winio v0.6.1 // indirect
 	github.com/agnivade/levenshtein v1.1.1 // indirect
-	github.com/asaskevich/govalidator v0.0.0-20230301143203-a9d515a09cc2 // indirect
 	github.com/beorn7/perks v1.0.1 // indirect
 	github.com/cespare/xxhash/v2 v2.2.0 // indirect
 	github.com/containerd/log v0.1.0 // indirect
@@ -77,7 +73,6 @@ require (
 	github.com/go-openapi/jsonpointer v0.20.2 // indirect
 	github.com/go-openapi/jsonreference v0.20.4 // indirect
 	github.com/go-openapi/swag v0.22.9 // indirect
-	github.com/go-ozzo/ozzo-validation/v4 v4.3.0 // indirect
 	github.com/go-sql-driver/mysql v1.5.0 // indirect
 	github.com/gogo/protobuf v1.3.2 // indirect
 	github.com/golang-jwt/jwt/v4 v4.5.0 // indirect

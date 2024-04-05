@@ -2,7 +2,7 @@
 
 ## ESLint Workflow
 
-This [workflow](/.github/workflows/run-eslint.yaml) runs the ESLint. It is triggered by PRs on the `main` branch that change at least one of the following:
+This [workflow](/.github/workflows/run-eslint.yaml) runs the ESLint. It is triggered by pull requests (PRs) on the `main` branch that change at least one of the following:
 - `/.github` directory content
 - `/testing/e2e/skr` directory content
 - `Makefile` file
@@ -20,6 +20,10 @@ This [workflow](/.github/workflows/markdown-link-check.yaml) checks for broken l
 ## Release Workflow
 
 See [Kyma Environment Broker Release Pipeline](04-20-release.md) to learn more about the release workflow.
+
+## Promote KEB to DEV Workflow
+
+This [workflow](/.github/workflows/promote-keb-to-dev.yaml) creates a PR to the `management-plane-charts` repository with the given KEB release version. The default version is the latest KEB release. 
 
 ## Label Validator Workflow
 

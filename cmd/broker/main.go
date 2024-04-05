@@ -14,7 +14,8 @@ import (
 	"sort"
 	"time"
 
-	"github.com/kyma-project/kyma-environment-broker/internal/euaccess"
+	"github.com/kyma-project/kyma-environment-broker/internal/whitelist"
+
 	"github.com/kyma-project/kyma-environment-broker/internal/expiration"
 	"github.com/kyma-project/kyma-environment-broker/internal/metricsv2"
 
@@ -22,7 +23,6 @@ import (
 	"github.com/dlmiddlecote/sqlstats"
 	"github.com/gorilla/handlers"
 	"github.com/gorilla/mux"
-	"github.com/kyma-project/kyma-environment-broker/common/director"
 	"github.com/kyma-project/kyma-environment-broker/common/gardener"
 	"github.com/kyma-project/kyma-environment-broker/common/hyperscaler"
 	orchestrationExt "github.com/kyma-project/kyma-environment-broker/common/orchestration"
@@ -108,7 +108,6 @@ type Config struct {
 
 	Provisioner input.Config
 	Reconciler  reconciler.Config
-	Director    director.Config
 	Database    storage.Config
 	Gardener    gardener.Config
 	Kubeconfig  kubeconfig.Config
@@ -126,7 +125,6 @@ type Config struct {
 	ReconcilerIntegrationDisabled                                       bool   `envconfig:"default=false"`
 	InfrastructureManagerIntegrationDisabled                            bool   `envconfig:"default=true"`
 	AvsMaintenanceModeDuringUpgradeAlwaysDisabledGlobalAccountsFilePath string
-	Metricsv2Enabled                                                    bool `envconfig:"default=false"`
 	Broker                                                              broker.Config
 	CatalogFilePath                                                     string
 
@@ -157,6 +155,8 @@ type Config struct {
 	// FreemiumProviders is a list of providers for freemium
 	FreemiumProviders []string `envconfig:"default=aws"`
 
+	FreemiumWhitelistedGlobalAccountsFilePath string
+
 	DomainName string
 
 	// Enable/disable profiler configuration. The profiler samples will be stored
@@ -165,6 +165,8 @@ type Config struct {
 	Profiler ProfilerConfig
 
 	Events events.Config
+
+	MetricsV2 metricsv2.Config
 
 	Provisioning    process.StagedManagerConfiguration
 	Deprovisioning  process.StagedManagerConfiguration
@@ -244,7 +246,9 @@ func main() {
 	logger.Info("Starting Kyma Environment Broker")
 
 	logs := logrus.New()
-	logs.SetFormatter(&logrus.JSONFormatter{})
+	logs.SetFormatter(&logrus.JSONFormatter{
+		TimestampFormat: time.RFC3339Nano,
+	})
 	if cfg.LogLevel != "" {
 		l, _ := logrus.ParseLevel(cfg.LogLevel)
 		logs.SetLevel(l)
@@ -360,9 +364,8 @@ func main() {
 
 	// metrics collectors
 	metrics.Register(ctx, eventBroker, db.Operations(), db.Instances(), logs)
-	if cfg.Metricsv2Enabled {
-		logs.Infof("Metricsv2 enabled")
-		_, _ = metricsv2.Register(ctx, eventBroker, db.Operations(), db.Instances(), logs)
+	if cfg.MetricsV2.Enabled {
+		_ = metricsv2.Register(ctx, eventBroker, db.Operations(), db.Instances(), cfg.MetricsV2, logs)
 	}
 
 	// setup runtime overrides appender
@@ -485,16 +488,20 @@ func createAPI(router *mux.Router, servicesConfig broker.ServicesConfig, planVal
 	logger.RegisterSink(errorSink)
 
 	// EU Access whitelisting
-	whitelistedGlobalAccountIds, err := euaccess.ReadWhitelistedGlobalAccountIdsFromFile(cfg.EuAccessWhitelistedGlobalAccountsFilePath)
+	whitelistedGlobalAccountIds, err := whitelist.ReadWhitelistedGlobalAccountIdsFromFile(cfg.EuAccessWhitelistedGlobalAccountsFilePath)
 	fatalOnError(err)
 	logs.Infof("Number of globalAccountIds for EU Access: %d\n", len(whitelistedGlobalAccountIds))
+
+	freemiumGlobalAccountIds, err := whitelist.ReadWhitelistedGlobalAccountIdsFromFile(cfg.FreemiumWhitelistedGlobalAccountsFilePath)
+	fatalOnError(err)
+	logs.Infof("Number of globalAccountIds for unlimited freeemium: %d\n", len(freemiumGlobalAccountIds))
 
 	// create KymaEnvironmentBroker endpoints
 	kymaEnvBroker := &broker.KymaEnvironmentBroker{
 		ServicesEndpoint: broker.NewServices(cfg.Broker, servicesConfig, logs),
-		ProvisionEndpoint: broker.NewProvision(cfg.Broker, cfg.Gardener, db.Operations(), db.Instances(),
+		ProvisionEndpoint: broker.NewProvision(cfg.Broker, cfg.Gardener, db.Operations(), db.Instances(), db.InstancesArchived(),
 			provisionQueue, planValidator, defaultPlansConfig, cfg.EnableOnDemandVersion,
-			planDefaults, whitelistedGlobalAccountIds, cfg.EuAccessRejectionMessage, logs, cfg.KymaDashboardConfig),
+			planDefaults, whitelistedGlobalAccountIds, cfg.EuAccessRejectionMessage, logs, cfg.KymaDashboardConfig, freemiumGlobalAccountIds),
 		DeprovisionEndpoint: broker.NewDeprovision(db.Instances(), db.Operations(), deprovisionQueue, logs),
 		UpdateEndpoint: broker.NewUpdate(cfg.Broker, db.Instances(), db.RuntimeStates(), db.Operations(),
 			suspensionCtxHandler, cfg.UpdateProcessingEnabled, cfg.UpdateSubAccountMovementEnabled, updateQueue, defaultPlansConfig,

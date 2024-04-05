@@ -1,9 +1,9 @@
 package error
 
 import (
-	"strings"
-
+	"encoding/json"
 	"errors"
+	"strings"
 
 	gcli "github.com/kyma-project/kyma-environment-broker/internal/third_party/machinebox/graphql"
 	apierr "k8s.io/apimachinery/pkg/api/errors"
@@ -12,6 +12,12 @@ import (
 
 const OperationTimeOutMsg string = "operation has reached the time limit"
 
+type ErrorReporter interface {
+	error
+	Reason() ErrReason
+	Component() ErrComponent
+}
+
 // error reporter
 type LastError struct {
 	message   string
@@ -19,10 +25,10 @@ type LastError struct {
 	component ErrComponent
 }
 
-type ErrorReporter interface {
-	error
-	Reason() ErrReason
-	Component() ErrComponent
+type LastErrorJSON struct {
+	Message   string       `json:"message"`
+	Reason    ErrReason    `json:"reason"`
+	Component ErrComponent `json:"component"`
 }
 
 type ErrReason string
@@ -194,4 +200,24 @@ func UnwrapAll(err error) error {
 		break
 	}
 	return err
+}
+
+func (l LastError) MarshalJSON() ([]byte, error) {
+	return json.Marshal(
+		LastErrorJSON{
+			Message:   l.message,
+			Reason:    l.reason,
+			Component: l.component,
+		})
+}
+
+func (l *LastError) UnmarshalJSON(data []byte) error {
+	tmp := &LastErrorJSON{}
+	if err := json.Unmarshal(data, &tmp); err != nil {
+		return err
+	}
+	l.message = tmp.Message
+	l.reason = tmp.Reason
+	l.component = tmp.Component
+	return nil
 }

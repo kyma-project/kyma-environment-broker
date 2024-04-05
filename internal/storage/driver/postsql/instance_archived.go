@@ -28,3 +28,7 @@ func (s *instanceArchived) Insert(instance internal.InstanceArchived) error {
 func (s *instanceArchived) TotalNumberOfInstancesArchived() (int, error) {
 	return s.factory.NewReadSession().TotalNumberOfInstancesArchived()
 }
+
+func (s *instanceArchived) TotalNumberOfInstancesArchivedForGlobalAccountID(globalAccountID string, planID string) (int, error) {
+	return s.factory.NewReadSession().TotalNumberOfInstancesArchivedForGlobalAccountID(globalAccountID, planID)
+}

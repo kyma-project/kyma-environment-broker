@@ -97,7 +97,6 @@ func (s *opsMetricService) updateMetrics() (err error) {
 	if err != nil {
 		return fmt.Errorf("failed to list operations: %v", err)
 	}
-	s.logger.Infof("updating operations metrics for: %v operations", len(operations))
 	for _, op := range operations {
 		s.updateOperation(op)
 	}

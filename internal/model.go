@@ -228,9 +228,10 @@ type Operation struct {
 	// KymaTemplate is read from the configuration then used in the apply_kyma step
 	KymaTemplate string `json:"KymaTemplate"`
 
+	LastError kebError.LastError `json:"last_error"`
+
 	// following fields are not stored in the storage and should be added to the Merge function
 	InputCreator ProvisionerInputCreator `json:"-"`
-	LastError    kebError.LastError      `json:"-"`
 	Retries      int                     `json:"-"`
 
 	// Last runtime state payload
@@ -263,7 +264,6 @@ func (o *Operation) EventErrorf(err error, fmt string, args ...any) {
 
 func (o *Operation) Merge(operation *Operation) {
 	o.InputCreator = operation.InputCreator
-	o.LastError = operation.LastError
 	o.Retries = operation.Retries
 	o.LastRuntimeState = operation.LastRuntimeState
 	o.RequiresReconcilerUpdate = operation.RequiresReconcilerUpdate
@@ -370,6 +370,7 @@ type InstanceArchived struct {
 
 	ProvisioningStartedAt         time.Time
 	ProvisioningFinishedAt        time.Time
+	ProvisioningState             domain.LastOperationState
 	FirstDeprovisioningStartedAt  time.Time
 	FirstDeprovisioningFinishedAt time.Time
 	LastDeprovisioningFinishedAt  time.Time

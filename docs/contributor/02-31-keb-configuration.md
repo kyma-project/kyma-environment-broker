@@ -14,11 +14,6 @@ Kyma Environment Broker (KEB) binary allows you to override some configuration p
 | **APP_PROVISIONING_AZURE_SECRET_NAME** | Defines the name of the Secret which holds credentials to Azure. | None |
 | **APP_AUTH_USERNAME** | Specifies the Kyma Environment Service Broker authentication username. | None |
 | **APP_AUTH_PASSWORD** | Specifies the Kyma Environment Service Broker authentication password. | None |
-| **APP_DIRECTOR_URL** | Specifies the Director's URL. | `http://compass-director.compass-system.svc.cluster.local:3000/graphql` |
-| **APP_DIRECTOR_OAUTH_TOKEN_URL** | Specifies the URL for OAuth authentication. | None |
-| **APP_DIRECTOR_OAUTH_CLIENT_ID** | Specifies the client ID for OAuth authentication. | None |
-| **APP_DIRECTOR_OAUTH_SECRET** | Specifies the client Secret for OAuth authentication. | None |
-| **APP_DIRECTOR_OAUTH_SCOPE** | Specifies the scopes for OAuth authentication. | `runtime:read runtime:write` |
 | **APP_DATABASE_USER** | Defines the database username. | `postgres` |
 | **APP_DATABASE_PASSWORD** | Defines the database user password. | `password` |
 | **APP_DATABASE_HOST** | Defines the database host. | `localhost` |

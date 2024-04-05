@@ -1,4 +1,4 @@
-package euaccess
+package whitelist
 
 import (
 	"testing"
@@ -9,7 +9,7 @@ import (
 
 func TestReadWhitelistedGlobalAccountIdsFromFile(t *testing.T) {
 	// given/when
-	d, err := ReadWhitelistedGlobalAccountIdsFromFile("test/eu_access_whitelist.yaml")
+	d, err := ReadWhitelistedGlobalAccountIdsFromFile("test/whitelist.yaml")
 
 	// then
 	require.NoError(t, err)

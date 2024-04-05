@@ -27,10 +27,10 @@ type operationsResult struct {
 
 var _ Exposer = (*operationsResult)(nil)
 
-func NewOperationResult(ctx context.Context, db storage.Operations, logger logrus.FieldLogger, poolingInterval time.Duration, retention time.Duration) *operationsResult {
+func NewOperationResult(ctx context.Context, db storage.Operations, cfg Config, logger logrus.FieldLogger) *operationsResult {
 	opInfo := &operationsResult{
 		operations: db,
-		lastUpdate: time.Now().Add(-retention),
+		lastUpdate: time.Now().Add(-cfg.OperationResultRetentionPeriod),
 		logger:     logger,
 		cache:      make(map[string]internal.Operation),
 		metrics: promauto.NewGaugeVec(prometheus.GaugeOpts{
@@ -39,7 +39,7 @@ func NewOperationResult(ctx context.Context, db storage.Operations, logger logru
 			Name:      "operation_result",
 			Help:      "Results of metrics",
 		}, []string{"operation_id", "instance_id", "global_account_id", "plan_id", "type", "state", "error_category", "error_reason", "error"}),
-		poolingInterval: poolingInterval,
+		poolingInterval: cfg.OperationResultPoolingInterval,
 	}
 	go opInfo.Job(ctx)
 	return opInfo
@@ -50,7 +50,7 @@ func (s *operationsResult) setOperation(op internal.Operation, val float64) {
 	labels["operation_id"] = op.ID
 	labels["instance_id"] = op.InstanceID
 	labels["global_account_id"] = op.GlobalAccountID
-	labels["plan_id"] = op.Plan
+	labels["plan_id"] = op.ProvisioningParameters.PlanID
 	labels["type"] = string(op.Type)
 	labels["state"] = string(op.State)
 	labels["error_category"] = string(op.LastError.Component())
@@ -91,7 +91,6 @@ func (s *operationsResult) updateMetrics() (err error) {
 	if err != nil {
 		return fmt.Errorf("failed to list metrics: %v", err)
 	}
-	s.logger.Infof("updating metrics for number of ops: %d", len(operations))
 	for _, op := range operations {
 		s.updateOperation(op)
 	}
@@ -119,7 +118,6 @@ func (s *operationsResult) Handler(ctx context.Context, event interface{}) error
 }
 
 func (s *operationsResult) Job(ctx context.Context) {
-
 	defer func() {
 		if recovery := recover(); recovery != nil {
 			s.logger.Errorf("panic recovered while performing operation info job: %v", recovery)
