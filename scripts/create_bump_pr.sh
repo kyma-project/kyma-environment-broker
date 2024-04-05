@@ -12,7 +12,7 @@ set -o pipefail # prevents errors in a pipeline from being masked
 #   GIT_EMAIL                     - email setting for PR to be created
 #   GIT_NAME                      - user name setting for PR to be created
 #   KYMA_ENVIRONMENT_BROKER_REPO  - Kyma repository
-#   BUMP_CHART_AND_IMAGES         - branch with updated sec-scanners-config, KEB images and Chart
+#   BUMP_CHART_AND_IMAGES         - branch with updated sec-scanners-config and KEB Chart
 
 TAG=$1
 
