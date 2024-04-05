@@ -6,8 +6,7 @@ env:
   KYMA_ENVIRONMENT_BROKER_REPO: ${{ github.repository_owner }}/kyma-environment-broker
   GIT_EMAIL: team-gopher+1@sap.com
   GIT_NAME: kyma-gopher-bot
-  BUMP_SEC_SCANNERS_BRANCH_NAME: sec-scanners-config-${{ inputs.name }}
-  BUMP_KEB_BRANCH_NAME: bump-keb-${{ inputs.name }}
+  BUMP_CHART_AND_IMAGES: bump-chart-and-images-${{ inputs.name }}
 
 on:
   workflow_dispatch:
@@ -61,9 +60,24 @@ jobs:
           NAME: ${{ inputs.name }}
         run: python3 scripts/python/release_label_validator.py
 
-  bump-sec-scanners-config:
-    name: Bump sec-scanners-config
-    needs: validate-release
+  run-unit-tests:
+    name: Unit tests, go mod tidy
+    uses: "./.github/workflows/run-unit-tests-reusable.yaml"
+    with:
+      release: "true"
+
+  run-keb-chart-tests:
+    name: Validate KEB chart 
+    uses: "./.github/workflows/run-keb-chart-tests-reusable.yaml"
+    secrets: inherit
+    with:
+      last-k3s-versions: ${{ vars.LAST_K3S_VERSIONS }}
+      release: "true"
+      version: ${{ inputs.name }}
+
+  bumps:
+    name: Bump sec-scanners-config, KEB chart
+    needs: [validate-release, run-unit-tests, run-keb-chart-tests]
     runs-on: ubuntu-latest
 
     steps:
@@ -77,25 +91,26 @@ jobs:
         if: ${{ inputs.sec-scanners-config }}
         run: scripts/create_scan_config.sh "sec-scanners-config.yaml" ${{ inputs.name }}
 
+      - name: Bump KEB chart
+        run: scripts/bump_keb_chart.sh ${{ inputs.name }}
+
       - name: Create PR if anything changed
-        if: ${{ inputs.sec-scanners-config }}
         env:
           GH_TOKEN: ${{ secrets.BOT_TOKEN }}
         run: |
           prs=$(gh pr list -A ${{ env.GIT_NAME }} --state open --json headRefName | jq -r '.[] | .headRefName')
-          if echo $prs | tr " " '\n' | grep -F -q -x ${{ env.BUMP_SEC_SCANNERS_BRANCH_NAME }}; then
+          if echo $prs | tr " " '\n' | grep -F -q -x ${{ env.BUMP_CHART_AND_IMAGES }}; then
             echo "PR already exists, no need to create a new one"
-            echo "PR_NUMBER=$(gh pr list --search "base:main head:${{ env.BUMP_SEC_SCANNERS_BRANCH_NAME }}" --json number | jq -r '.[] | .number')" >> $GITHUB_ENV
+            echo "PR_NUMBER=$(gh pr list --search "base:main head:${{ env.BUMP_CHART_AND_IMAGES }}" --json number | jq -r '.[] | .number')" >> $GITHUB_ENV
           elif [ -z "$(git status --porcelain)" ]; then
             echo "Nothing changed, no need to create PR"
             echo "PR_NUMBER=-1" >> $GITHUB_ENV
           else
-            PR_STATUS=$(scripts/create_sec_scanner_bump_pr.sh ${{ inputs.name }})
+            PR_STATUS=$(scripts/create_bump_pr.sh ${{ inputs.name }})
             echo "PR_NUMBER=$(echo "$PR_STATUS" | tail -n 1)" >> $GITHUB_ENV
           fi
 
       - name: Await PR merge
-        if: ${{ inputs.sec-scanners-config }}
         timeout-minutes: 45
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -121,26 +136,9 @@ jobs:
     outputs:
       latest_commit: ${{ steps.pull-ref.outputs.latest_commit }}
 
-  run-unit-tests:
-    name: Unit tests, go mod tidy
-    needs: validate-release
-    uses: "./.github/workflows/run-unit-tests-reusable.yaml"
-    with:
-      release: "true"
-
-  run-keb-chart-tests:
-    name: Validate KEB chart 
-    needs: validate-release
-    uses: "./.github/workflows/run-keb-chart-tests-reusable.yaml"
-    secrets: inherit
-    with:
-      last-k3s-versions: ${{ vars.LAST_K3S_VERSIONS }}
-      release: "true"
-      version: ${{ inputs.name }}
-
   create-draft:
     name: Create draft release
-    needs: [bump-sec-scanners-config,validate-release]
+    needs: bumps
     runs-on: ubuntu-latest
 
     steps:
@@ -169,7 +167,7 @@ jobs:
     
   wait-for-prow-jobs:
     name: Wait for prow jobs
-    needs: [create-draft, bump-sec-scanners-config]
+    needs: create-draft
     runs-on: ubuntu-latest
 
     steps:
@@ -263,69 +261,9 @@ jobs:
           echo 'post-keb-deprovision-retrigger-job-release-build failed.'
           exit 1
 
-  bump-keb-chart:
-    name: Bump KEB chart
-    needs: [bump-sec-scanners-config, wait-for-prow-jobs]
-    runs-on: ubuntu-latest
-
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-          ref: ${{ needs.bump-sec-scanners-config.outputs.latest_commit}}
-      - run: |
-          git checkout main
-          git pull
-
-      - name: Bump KEB chart
-        run: scripts/bump_keb_chart.sh ${{ inputs.name }}
-
-      - name: Create PR if anything changed
-        env:
-          GH_TOKEN: ${{ secrets.BOT_TOKEN }}
-        run: |
-          prs=$(gh pr list -A ${{ env.GIT_NAME }} --state open --json headRefName | jq -r '.[] | .headRefName')
-          if echo $prs | tr " " '\n' | grep -F -q -x ${{ env.BUMP_KEB_BRANCH_NAME }}; then
-            echo "PR already exists, no need to create a new one"
-            echo "PR_NUMBER=$(gh pr list --search "base:main head:${{ env.BUMP_KEB_BRANCH_NAME }}" --json number | jq -r '.[] | .number')" >> $GITHUB_ENV
-          elif [ -z "$(git status --porcelain)" ]; then
-            echo "Nothing changed, no need to create PR"
-            echo "PR_NUMBER=-1" >> $GITHUB_ENV
-          else
-            PR_STATUS=$(scripts/create_bump_keb_chart_pr.sh ${{ inputs.name }})
-            echo "PR_NUMBER=$(echo "$PR_STATUS" | tail -n 1)" >> $GITHUB_ENV
-          fi
-
-      - name: Await PR merge
-        timeout-minutes: 45
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          if [ "$PR_NUMBER" -gt 0 ]; then
-            scripts/await_pr_merge.sh
-          else
-            echo "Step skipped"
-          fi
-
-      - name: Save latest commit ref
-        id: pull-ref
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          git checkout main
-          git stash
-          git pull
-          LATEST_COMMIT=$(git rev-parse HEAD)
-          echo "latest_commit=$LATEST_COMMIT" >> $GITHUB_OUTPUT
-          echo "Latest commit ref $LATEST_COMMIT"
-
-    outputs:
-      latest_commit: ${{ steps.pull-ref.outputs.latest_commit }}
-
   publish-release:
     name: Publish release
-    needs: [create-draft, run-unit-tests, run-keb-chart-tests, bump-keb-chart]
+    needs: wait-for-prow-jobs
     if: ${{ !inputs.dry-run }}
     runs-on: ubuntu-latest
 
@@ -334,7 +272,7 @@ jobs:
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
-          ref: ${{ needs.bump-keb-chart.outputs.latest_commit}}
+          ref: ${{ needs.bumps.latest_commit}}
       - run: |
           git checkout main
           git pull
