@@ -45,12 +45,6 @@ func (q *SubaccountAwarePriorityQueueWithCallbacks) Insert(element QueueElement)
 		entryTime:    time.Now().UnixNano(),
 	}
 
-	if q.size == cap(q.elements) {
-		newElements := make([]ElementWrapper, q.size*2)
-		copy(newElements, q.elements)
-		q.elements = newElements
-		q.log.Debug(fmt.Sprintf("Queue is full, resized to %v", q.size*2))
-	}
 	if idx, ok := q.idx[e.SubaccountID]; ok {
 		if q.elements[idx].ModifiedAt > e.ModifiedAt {
 			// event is outdated, do not insert
@@ -67,7 +61,12 @@ func (q *SubaccountAwarePriorityQueueWithCallbacks) Insert(element QueueElement)
 	} else {
 		q.idx[e.SubaccountID] = q.size
 	}
-	q.elements[q.size] = e
+	if q.size == cap(q.elements) {
+		q.elements = append(q.elements, e)
+		q.log.Debug(fmt.Sprintf("Queue was full, resized - cap: %d, size: %d", cap(q.elements), q.size))
+	} else {
+		q.elements[q.size] = e
+	}
 	q.size++
 	q.siftUp()
 
