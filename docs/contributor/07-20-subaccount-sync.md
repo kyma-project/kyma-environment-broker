@@ -1,14 +1,18 @@
 # Subaccount Sync
 
-Subaccount Sync is an application that performs reconciliation tasks on SAP BTP, Kyma runtime, synchronizing Kyma Custom Resource labels with subaccount attributes.
+Subaccount Sync is an application that performs reconciliation tasks on SAP BTP, Kyma runtime, synchronizing Kyma Custom
+Resource labels with subaccount attributes.
 
 ## Details
 
-The `operator.kyma-project.io/beta` labels of all Kyma CRs for given subaccount are synchronized with the `Enable beta features` attribute of this subaccount. 
+The `operator.kyma-project.io/beta` labels of all Kyma CRs for given subaccount are synchronized with
+the `Enable beta features` attribute of this subaccount.
 Current state of the attribute is persisted in the database table `subaccount_states`.
-The `Used for production` is monitored as well and the state is persisted in the same table, however it does not affect any resources.
+The `Used for production` is monitored as well and the state is persisted in the same table, however it does not affect
+any resources.
 
 The application periodically:
+
 - Fetches data for selected subaccounts from CIS Account service
 - Fetches events from CIS Event service for configurable time window
 - Monitors Kyma CRs using informer and detects changes in the labels
@@ -26,19 +30,34 @@ The application is defined as a Kubernetes deployment.
 
 Use the following environment variables to configure the application:
 
-| Environment variable                                             | Description                                                                                                                      | Default value |
-| ---------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------- | ------------- |
-| **SUBACCOUNT_SYNC_WATCHER_ENABLED**                           | Specifies whether the application should use Runtime Watcher for reconciliation.                                                                   | `false`        |
-| **SUBACCOUNT_SYNC_JOB_ENABLED**                               | Specifies whether the application should use the job to reconcile.                                                                       | `false`        |
-| **SUBACCOUNT_SYNC_DRY_RUN**                                   | Specifies whether to run the application in the dry-run mode.                                                                    | `true`        |
-| **SUBACCOUNT_SYNC_BTP_MANAGER_SECRET_WATCHER_ADDR**           | Specifies Runtime Watcher's port.                                                                                                       | `0`           |
-| **SUBACCOUNT_SYNC_BTP_MANAGER_SECRET_WATCHER_COMPONENT_NAME** | Specifies the component name for Runtime Watcher.                                                                                               | `NA`          |
-| **SUBACCOUNT_SYNC_AUTO_RECONCILE_INTERVAL**                   | Specifies at what intervals the job runs  (in hours).                                                                       | `24`          |
-| **SUBACCOUNT_SYNC_DATABASE_SECRET_KEY**                       | Specifies the secret key for the database.                                                                                       | optional      |
-| **SUBACCOUNT_SYNC_DATABASE_USER**                             | Specifies the username for the database.                                                                                         | `postgres`    |
-| **SUBACCOUNT_SYNC_DATABASE_PASSWORD**                         | Specifies the user password for the database.                                                                                    | `password`    |
-| **SUBACCOUNT_SYNC_DATABASE_HOST**                             | Specifies the host of the database.                                                                                              | `localhost`   |
-| **SUBACCOUNT_SYNC_DATABASE_PORT**                             | Specifies the port for the database.                                                                                             | `5432`        |
-| **SUBACCOUNT_SYNC_DATABASE_NAME**                             | Specifies the name of the database.                                                                                              | `broker`      |
-| **SUBACCOUNT_SYNC_DATABASE_SSLMODE**                          | Activates the SSL mode for PostgreSQL. See [all the possible values](https://www.postgresql.org/docs/9.1/libpq-ssl.html).       | `disable`     |
-| **SUBACCOUNT_SYNC_DATABASE_SSLROOTCERT**                      | Specifies the location of CA cert of PostgreSQL. (Optional)                                                                      |  optional     |
+| Environment variable                                       | Description                                                                                                               | Default value |
+|------------------------------------------------------------|---------------------------------------------------------------------------------------------------------------------------|---------------|
+| **SUBACCOUNT_SYNC_SUBACCOUNT_SYNC_KYMA_VERSION**           | Specifies current Kyma version to support dynamic Kyma Custom Resource specification.                                     | `false`       |
+| **SUBACCOUNT_SYNC_SUBACCOUNT_SYNC_METRICS_PORT**           | Specifies port where metrics are exposed for scrapion.                                                                    | `8081`        |
+| **SUBACCOUNT_SYNC_UPDATE_RESOURCES**                       | Specifies whether to run the updater which updates Kyma Custom Resources.                                                 | `false`       |
+| **SUBACCOUNT_SYNC_SUBACCOUNT_SYNC_LOG_LEVEL**              | Specifies log level.                                                                                                      | `info`        |
+| **SUBACCOUNT_SYNC_ACCOUNTS_SYNC_INTERVAL**                 | Specifies at what intervals subaccounts data is fetched.                                                                  | `24h`         |
+| **SUBACCOUNT_SYNC_STORAGE_SYNC_INTERVAL**                  | Specifies at what intervals subaccount states are persisted in database.                                                  | `2m`          |
+| **SUBACCOUNT_SYNC_EVENTS_WINDOW_SIZE**                     | Specifies size of events window.                                                                                          | `20m`         |
+| **SUBACCOUNT_SYNC_EVENTS_WINDOW_INTERVAL**                 | Specifies at what intervals we fetch events.                                                                              | `15m`         |
+| **SUBACCOUNT_SYNC_QUEUE_SLEEP_INTERVAL**                   | Specifies how long the updater sleeps if queue is empty.                                                                  | `30s`         |
+| **SUBACCOUNT_SYNC_CIS_EVENTS_CLIENT_ID**                   | Specifies the CLIENT_ID for client accessing events.                                                                      |               |
+| **SUBACCOUNT_SYNC_CIS_EVENTS_CLIENT_SECRET**               | Specifies the CLIENT_SECRET for client accessing events.                                                                  |               |
+| **SUBACCOUNT_SYNC_CIS_EVENTS_AUTH_URL**                    | Specifies the authorization URL for events endpoint.                                                                      |               |
+| **SUBACCOUNT_SYNC_CIS_EVENTS_SERVICE_URL**                 | Specifies the URL for events endpoint.                                                                                    |               |
+| **SUBACCOUNT_SYNC_CIS_EVENTS_RATE_LIMITING_INTERVAL**      | Specifies rate limiting interval for events endpoint.                                                                     |               |
+| **SUBACCOUNT_SYNC_CIS_EVENTS_MAX_REQUESTS_PER_INTERVAL**   | Specifies the number of allowed requests per interval for events endpoint.                                                |               |
+| **SUBACCOUNT_SYNC_CIS_ACCOUNTS_CLIENT_ID**                 | Specifies the CLIENT_ID for client accessing accounts.                                                                    |               |
+| **SUBACCOUNT_SYNC_CIS_ACCOUNTS_CLIENT_SECRET**             | Specifies the CLIENT_SECRET for client accessing accounts.                                                                |               |
+| **SUBACCOUNT_SYNC_CIS_ACCOUNTS_AUTH_URL**                  | Specifies the authorization URL for accounts endpoint.                                                                    |               |
+| **SUBACCOUNT_SYNC_CIS_ACCOUNTS_SERVICE_URL**               | Specifies the URL for accounts endpoint.                                                                                  |               |
+| **SUBACCOUNT_SYNC_CIS_ACCOUNTS_RATE_LIMITING_INTERVAL**    | Specifies rate limiting interval for accounts endpoint.                                                                   |               |
+| **SUBACCOUNT_SYNC_CIS_ACCOUNTS_MAX_REQUESTS_PER_INTERVAL** | Specifies the number of allowed requests per interval for accounts endpoint.                                              |               |
+| **SUBACCOUNT_SYNC_DATABASE_SECRET_KEY**                    | Specifies the secret key for the database.                                                                                | optional      |
+| **SUBACCOUNT_SYNC_DATABASE_USER**                          | Specifies the username for the database.                                                                                  | `postgres`    |
+| **SUBACCOUNT_SYNC_DATABASE_PASSWORD**                      | Specifies the user password for the database.                                                                             | `password`    |
+| **SUBACCOUNT_SYNC_DATABASE_HOST**                          | Specifies the host of the database.                                                                                       | `localhost`   |
+| **SUBACCOUNT_SYNC_DATABASE_PORT**                          | Specifies the port for the database.                                                                                      | `5432`        |
+| **SUBACCOUNT_SYNC_DATABASE_NAME**                          | Specifies the name of the database.                                                                                       | `broker`      |
+| **SUBACCOUNT_SYNC_DATABASE_SSLMODE**                       | Activates the SSL mode for PostgreSQL. See [all the possible values](https://www.postgresql.org/docs/9.1/libpq-ssl.html). | `disable`     |
+| **SUBACCOUNT_SYNC_DATABASE_SSLROOTCERT**                   | Specifies the location of CA cert of PostgreSQL. (Optional)                                                               | optional      |
