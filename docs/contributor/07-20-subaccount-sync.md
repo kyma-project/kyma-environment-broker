@@ -32,7 +32,7 @@ Use the following environment variables to configure the application:
 
 | Environment variable                                       | Description                                                                                                               | Default value |
 |------------------------------------------------------------|---------------------------------------------------------------------------------------------------------------------------|---------------|
-| **SUBACCOUNT_SYNC_SUBACCOUNT_SYNC_KYMA_VERSION**           | Specifies current Kyma version to support dynamic Kyma Custom Resource specification.                                     | `false`       |
+| **SUBACCOUNT_SYNC_SUBACCOUNT_SYNC_KYMA_VERSION**           | Specifies current Kyma version to get proper Kyma Custom Resource Definition.                                             | `false`       |
 | **SUBACCOUNT_SYNC_SUBACCOUNT_SYNC_METRICS_PORT**           | Specifies port where metrics are exposed for scrapion.                                                                    | `8081`        |
 | **SUBACCOUNT_SYNC_UPDATE_RESOURCES**                       | Specifies whether to run the updater which updates Kyma Custom Resources.                                                 | `false`       |
 | **SUBACCOUNT_SYNC_SUBACCOUNT_SYNC_LOG_LEVEL**              | Specifies log level.                                                                                                      | `info`        |
@@ -45,14 +45,14 @@ Use the following environment variables to configure the application:
 | **SUBACCOUNT_SYNC_CIS_EVENTS_CLIENT_SECRET**               | Specifies the CLIENT_SECRET for client accessing events.                                                                  |               |
 | **SUBACCOUNT_SYNC_CIS_EVENTS_AUTH_URL**                    | Specifies the authorization URL for events endpoint.                                                                      |               |
 | **SUBACCOUNT_SYNC_CIS_EVENTS_SERVICE_URL**                 | Specifies the URL for events endpoint.                                                                                    |               |
-| **SUBACCOUNT_SYNC_CIS_EVENTS_RATE_LIMITING_INTERVAL**      | Specifies rate limiting interval for events endpoint.                                                                     |               |
-| **SUBACCOUNT_SYNC_CIS_EVENTS_MAX_REQUESTS_PER_INTERVAL**   | Specifies the number of allowed requests per interval for events endpoint.                                                |               |
+| **SUBACCOUNT_SYNC_CIS_EVENTS_RATE_LIMITING_INTERVAL**      | Specifies rate limiting interval for events endpoint.                                                                     | `2s`          |
+| **SUBACCOUNT_SYNC_CIS_EVENTS_MAX_REQUESTS_PER_INTERVAL**   | Specifies the number of allowed requests per interval for events endpoint.                                                | 5             |
 | **SUBACCOUNT_SYNC_CIS_ACCOUNTS_CLIENT_ID**                 | Specifies the CLIENT_ID for client accessing accounts.                                                                    |               |
 | **SUBACCOUNT_SYNC_CIS_ACCOUNTS_CLIENT_SECRET**             | Specifies the CLIENT_SECRET for client accessing accounts.                                                                |               |
 | **SUBACCOUNT_SYNC_CIS_ACCOUNTS_AUTH_URL**                  | Specifies the authorization URL for accounts endpoint.                                                                    |               |
 | **SUBACCOUNT_SYNC_CIS_ACCOUNTS_SERVICE_URL**               | Specifies the URL for accounts endpoint.                                                                                  |               |
-| **SUBACCOUNT_SYNC_CIS_ACCOUNTS_RATE_LIMITING_INTERVAL**    | Specifies rate limiting interval for accounts endpoint.                                                                   |               |
-| **SUBACCOUNT_SYNC_CIS_ACCOUNTS_MAX_REQUESTS_PER_INTERVAL** | Specifies the number of allowed requests per interval for accounts endpoint.                                              |               |
+| **SUBACCOUNT_SYNC_CIS_ACCOUNTS_RATE_LIMITING_INTERVAL**    | Specifies rate limiting interval for accounts endpoint.                                                                   | `2s`          |
+| **SUBACCOUNT_SYNC_CIS_ACCOUNTS_MAX_REQUESTS_PER_INTERVAL** | Specifies the number of allowed requests per interval for accounts endpoint.                                              | 5             |
 | **SUBACCOUNT_SYNC_DATABASE_SECRET_KEY**                    | Specifies the secret key for the database.                                                                                | optional      |
 | **SUBACCOUNT_SYNC_DATABASE_USER**                          | Specifies the username for the database.                                                                                  | `postgres`    |
 | **SUBACCOUNT_SYNC_DATABASE_PASSWORD**                      | Specifies the user password for the database.                                                                             | `password`    |
