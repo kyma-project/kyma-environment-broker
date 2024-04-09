@@ -89,7 +89,7 @@ func (b *GetInstanceEndpoint) GetInstance(_ context.Context, instanceID string, 
 	}
 
 	if b.config.ShowFreeExpirationInfo && instance.ServicePlanID == FreemiumPlanID {
-		spec.Metadata.Labels = ResponseLabelsWithExpirationInfo(*op, *instance, b.config.URL, b.config.FreeDocsURL, b.config.EnableKubeconfigURLLabel, freeDocsKey, freeExpireDuration, freeExpiryDetailsKey, freeExpiredInfoFormat)
+		spec.Metadata.Labels = ResponseLabelsWithExpirationInfo(*op, *instance, b.config.URL, b.config.FreeDocsURL, b.config.EnableKubeconfigURLLabel, freeDocsKey, b.config.FreeExpirationPeriod, freeExpiryDetailsKey, freeExpiredInfoFormat)
 	}
 
 	return spec, nil

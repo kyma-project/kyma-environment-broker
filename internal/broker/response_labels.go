@@ -19,7 +19,6 @@ const (
 		" To continue using Kyma, you must create a new cluster. To learn how, follow the link to the trial account documentation."
 	freeExpiryDetailsKey  = "Free plan expiration details"
 	freeDocsKey           = "Available plans documentation"
-	freeExpireDuration    = time.Hour * 24 * 30
 	freeExpiredInfoFormat = "Your cluster has expired. It is not operational, and the link to Kyma dashboard is no longer valid." +
 		"  To continue using Kyma, you must use a paid service plan. To learn more about the available plans, follow the link to the documentation."
 )
