@@ -75,7 +75,6 @@ jobs:
     name: Bump sec-scanners-config, KEB chart
     needs: [validate-release, run-unit-tests, run-keb-chart-tests]
     runs-on: ubuntu-latest
-
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -112,6 +111,7 @@ jobs:
         run: |
           if [ "$PR_NUMBER" -gt 0 ]; then
             scripts/await_pr_merge.sh
+            git push origin -d ${{ env.BUMP_CHART_AND_IMAGES }}
           else
             echo "Step skipped"
           fi
@@ -135,7 +135,6 @@ jobs:
     name: Create draft release
     needs: bumps
     runs-on: ubuntu-latest
-
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -160,109 +159,85 @@ jobs:
     outputs:
       release_id: ${{ steps.create-draft.outputs.release_id }}
     
-  wait-for-prow-jobs:
-    name: Wait for prow jobs
+  wait-for-commit-statuses:
+    name: Wait for commit statuses
     needs: [create-draft, bumps]
     runs-on: ubuntu-latest
-
     steps:
-      - name: Wait for post-keb-release-build status
-        uses: autotelic/action-wait-for-status-check@6556cf50c8fb6608412945382eae73581f56cbb4
-        id: wait-for-post-keb-release-build
+      - name: Checkout code
+        uses: actions/checkout@v4
         with:
-          token: ${{ secrets.GITHUB_TOKEN }}
+          fetch-depth: 0
+          ref: ${{ needs.bumps.outputs.latest_commit}}
+
+      - name: Check post-keb-release-build status
+        uses: ./.github/workflows/check-commit-status
+        with:
           statusName: "post-keb-release-build"
-          timeoutSeconds: "300"
-          ref: ${{ needs.bumps.outputs.latest_commit}}
+          githubToken: ${{ secrets.GITHUB_TOKEN }}
+          commitRef: ${{ needs.bumps.outputs.latest_commit }}
 
-      - name: Check if post-keb-release-build status is not success
-        if: steps.wait-for-post-keb-release-build.outputs.state != 'success'
-        run: |
-            echo 'post-keb-release-build failed.'
-            exit 1
-
-      - name: Wait for post-keb-runtime-reconciler-job-release-build status
-        uses: autotelic/action-wait-for-status-check@6556cf50c8fb6608412945382eae73581f56cbb4
-        id: wait-for-post-keb-runtime-reconciler-job-release-build
+      - name: Check post-keb-runtime-reconciler-job-release-build status
+        uses: ./.github/workflows/check-commit-status
         with:
-          token: ${{ secrets.GITHUB_TOKEN }}
           statusName: "post-keb-runtime-reconciler-job-release-build"
-          timeoutSeconds: "300"
-          ref: ${{ needs.bumps.outputs.latest_commit}}
+          githubToken: ${{ secrets.GITHUB_TOKEN }}
+          commitRef: ${{ needs.bumps.outputs.latest_commit }}
 
-      - name: Check if post-keb-runtime-reconciler-job-release-build status is not success
-        if: steps.wait-for-post-keb-runtime-reconciler-job-release-build.outputs.state != 'success'
-        run: |
-          echo 'post-keb-runtime-reconciler-job-release-build failed.'
-          exit 1
-
-      - name: Wait for post-keb-subaccount-cleanup-job-release-build status
-        uses: autotelic/action-wait-for-status-check@6556cf50c8fb6608412945382eae73581f56cbb4
-        id: wait-for-post-keb-subaccount-cleanup-job-release-build
+      - name: Check post-keb-subaccount-cleanup-job-release-build status
+        uses: ./.github/workflows/check-commit-status
         with:
-          token: ${{ secrets.GITHUB_TOKEN }}
           statusName: "post-keb-subaccount-cleanup-job-release-build"
-          timeoutSeconds: "300"
-          ref: ${{ needs.bumps.outputs.latest_commit}}
+          githubToken: ${{ secrets.GITHUB_TOKEN }}
+          commitRef: ${{ needs.bumps.outputs.latest_commit }}
 
-      - name: Check if post-keb-subaccount-cleanup-job-release-build status is not success
-        if: steps.wait-for-post-keb-subaccount-cleanup-job-release-build.outputs.state != 'success'
-        run: |
-          echo 'post-keb-subaccount-cleanup-job-release-build failed.'
-          exit 1
-
-      - name: Wait for post-keb-trial-cleanup-job-release-build status
-        uses: autotelic/action-wait-for-status-check@6556cf50c8fb6608412945382eae73581f56cbb4
-        id: wait-for-post-keb-trial-cleanup-job-release-build
+      - name: Check post-keb-trial-cleanup-job-release-build status
+        uses: ./.github/workflows/check-commit-status
         with:
-          token: ${{ secrets.GITHUB_TOKEN }}
           statusName: "post-keb-trial-cleanup-job-release-build"
-          timeoutSeconds: "300"
-          ref: ${{ needs.bumps.outputs.latest_commit}}
+          githubToken: ${{ secrets.GITHUB_TOKEN }}
+          commitRef: ${{ needs.bumps.outputs.latest_commit }}
 
-      - name: Check if post-keb-trial-cleanup-job-release-build status is not success
-        if: steps.wait-for-post-keb-trial-cleanup-job-release-build.outputs.state != 'success'
-        run: |
-          echo 'wait-for-post-keb-trial-cleanup-job-release-build failed.'
-          exit 1
-
-      - name: Wait for post-keb-cleanup-job-release-build status
-        uses: autotelic/action-wait-for-status-check@6556cf50c8fb6608412945382eae73581f56cbb4
-        id: wait-for-post-keb-cleanup-job-release-build
+      - name: Check post-keb-cleanup-job-release-build status
+        uses: ./.github/workflows/check-commit-status
         with:
-          token: ${{ secrets.GITHUB_TOKEN }}
           statusName: "post-keb-cleanup-job-release-build"
-          timeoutSeconds: "300"
-          ref: ${{ needs.bumps.outputs.latest_commit}}
+          githubToken: ${{ secrets.GITHUB_TOKEN }}
+          commitRef: ${{ needs.bumps.outputs.latest_commit }}
 
-      - name: Check if post-keb-cleanup-job-release-build status is not success
-        if: steps.wait-for-post-keb-cleanup-job-release-build.outputs.state != 'success'
-        run: |
-          echo 'post-keb-cleanup-job-release-build failed.'
-          exit 1
-          
-      - name: Wait for post-keb-deprovision-retrigger-job-release-build status
-        uses: autotelic/action-wait-for-status-check@6556cf50c8fb6608412945382eae73581f56cbb4
-        id: wait-for-post-keb-deprovision-retrigger-job-release-build
+      - name: Check post-keb-deprovision-retrigger-job-release-build status
+        uses: ./.github/workflows/check-commit-status
         with:
-          token: ${{ secrets.GITHUB_TOKEN }}
           statusName: "post-keb-deprovision-retrigger-job-release-build"
-          timeoutSeconds: "300"
-          ref: ${{ needs.bumps.outputs.latest_commit}}
+          githubToken: ${{ secrets.GITHUB_TOKEN }}
+          commitRef: ${{ needs.bumps.outputs.latest_commit }}
 
-      - name: Check if post-keb-deprovision-retrigger-job-release-build status is not success
-        if: steps.wait-for-post-keb-deprovision-retrigger-job-release-build.outputs.state != 'success'
-        run: |
-          echo 'post-keb-deprovision-retrigger-job-release-build failed.'
-          exit 1
+      - name: Check post-keb-archiver-job-release-build status
+        uses: ./.github/workflows/check-commit-status
+        with:
+          statusName: "post-keb-archiver-job-release-build"
+          githubToken: ${{ secrets.GITHUB_TOKEN }}
+          commitRef: ${{ needs.bumps.outputs.latest_commit }}
 
+      - name: Check post-keb-expirator-release-build status
+        uses: ./.github/workflows/check-commit-status
+        with:
+          statusName: "post-keb-expirator-release-build"
+          githubToken: ${{ secrets.GITHUB_TOKEN }}
+          commitRef: ${{ needs.bumps.outputs.latest_commit }}
+
+      - name: Check post-keb-subaccount-sync-release-build status
+        uses: ./.github/workflows/check-commit-status
+        with:
+          statusName: "post-keb-subaccount-sync-release-build"
+          githubToken: ${{ secrets.GITHUB_TOKEN }}
+          commitRef: ${{ needs.bumps.outputs.latest_commit }}
 
   publish-release:
     name: Publish release
-    needs: [wait-for-prow-jobs, bumps, create-draft]
+    needs: [wait-for-commit-statuses, bumps, create-draft]
     if: ${{ !inputs.dry-run }}
     runs-on: ubuntu-latest
-
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
