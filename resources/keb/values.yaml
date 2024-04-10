@@ -319,26 +319,26 @@ ems:
 
 cis:
   v1:
-    authURL: "TBD"
-    eventServiceURL: "TBD"
-    id: "TBD"
-    secret: "TBD"
+    authURL:
+    eventServiceURL:
+    id:
+    secret:
     secretName: "cis-creds-v1"
   v2:
-    authURL: "TBD"
-    eventServiceURL: "TBD"
-    id: "TBD"
-    secret: "TBD"
+    authURL:
+    eventServiceURL:
+    id:
+    secret:
     secretName: "cis-creds-v2"
     requestInterval: "200ms"
     rateLimitingInterval: "2s"
     maxRequestRetries: "3"
     jobRetries: 6
   accounts:
-    authURL: "TBD"
-    serviceURL: "TBD"
-    id: "TBD"
-    secret: "TBD"
+    authURL:
+    serviceURL:
+    id:
+    secret:
     secretName: "cis-creds-accounts"
 
 
