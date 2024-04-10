@@ -334,6 +334,13 @@ cis:
     rateLimitingInterval: "2s"
     maxRequestRetries: "3"
     jobRetries: 6
+  accounts:
+    authURL: "TBD"
+    serviceURL: "TBD"
+    id: "TBD"
+    secret: "TBD"
+    secretName: "cis-creds-accounts"
+
 
 notification:
   url: "TBD"
@@ -385,19 +392,13 @@ subaccountSync:
   queueSleepInterval: "30s"
   metricsPort: "8081"
   logLevel: "info"
-  cis:
+  cisRateLimits:
     events:
       rateLimitingInterval: "2s"
       maxRequestsPerInterval: "5"
     accounts:
-      authURL: "TBD"
-      serviceURL: "TBD"
-      id: "TBD"
-      secret: "TBD"
-      secretName: "cis-creds-accounts"
       rateLimitingInterval: "2s"
       maxRequestsPerInterval: "5"
-
 
 serviceMonitor:
   enabled: true
