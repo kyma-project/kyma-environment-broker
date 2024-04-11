@@ -1,6 +1,7 @@
 package upgrade_kyma
 
 import (
+	"fmt"
 	"time"
 
 	"github.com/kyma-project/kyma-environment-broker/internal/broker"
@@ -54,8 +55,8 @@ func (s *OverridesFromSecretsAndConfigStep) Run(operation internal.UpgradeKymaOp
 	}
 
 	if err := s.runtimeOverrides.Append(operation.InputCreator, planName, version.Version); err != nil {
-		log.Errorf(err.Error())
-		return s.operationManager.OperationFailed(operation, "error while appending runtime overrides", err, log)
+		errMsg := fmt.Sprintf("error when appending runtime overrides for operation %s: %s", operation.ID, err.Error())
+		return s.operationManager.RetryOperation(operation, errMsg, err, time.Second, 10*time.Second, log)
 	}
 
 	return operation, 0, nil
