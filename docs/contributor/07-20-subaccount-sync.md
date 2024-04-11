@@ -11,6 +11,16 @@ Current state of the attribute is persisted in the database table `subaccount_st
 The `Used for production` is monitored as well and the state is persisted in the same table, however it does not affect
 any resources.
 
+The table structure:
+
+| Column name             | Type         | Description                                               |
+|-------------------------|--------------|-----------------------------------------------------------|
+| **id**                  | VARCHAR(255) | Subaccount ID                                             |
+| **enable_beta**         | VARCHAR(255) | Enable beta                                               |
+| **used_for_production** | VARCHAR(255) | Used for production                                       |
+| **modified_at**         | BIGINT       | Last modification timestamp as Unix epoch in milliseconds |
+
+
 The application periodically:
 
 - Fetches data for selected subaccounts from CIS Account service
