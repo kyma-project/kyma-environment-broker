@@ -52,7 +52,7 @@ Use the following environment variables to configure the application:
 | **SUBACCOUNT_SYNC_EVENTS_WINDOW_INTERVAL**                 | Specifies at what intervals we fetch events.                                                                              | `15m`         |
 | **SUBACCOUNT_SYNC_QUEUE_SLEEP_INTERVAL**                   | Specifies how long the updater sleeps if queue is empty.                                                                  | `30s`         |
 | **SUBACCOUNT_SYNC_CIS_EVENTS_CLIENT_ID**                   | Specifies the **CLIENT_ID** for client accessing events.                                                                      |               |
-| **SUBACCOUNT_SYNC_CIS_EVENTS_CLIENT_SECRET**               | Specifies the CLIENT_SECRET for client accessing events.                                                                  |               |
+| **SUBACCOUNT_SYNC_CIS_EVENTS_CLIENT_SECRET**               | Specifies the **CLIENT_SECRET** for the client accessing events.                                                                  |               |
 | **SUBACCOUNT_SYNC_CIS_EVENTS_AUTH_URL**                    | Specifies the authorization URL for events endpoint.                                                                      |               |
 | **SUBACCOUNT_SYNC_CIS_EVENTS_SERVICE_URL**                 | Specifies the URL for events endpoint.                                                                                    |               |
 | **SUBACCOUNT_SYNC_CIS_EVENTS_RATE_LIMITING_INTERVAL**      | Specifies the rate limiting interval for events endpoint.                                                                 | `2s`          |
