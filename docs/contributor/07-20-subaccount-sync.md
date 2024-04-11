@@ -1,7 +1,7 @@
 # Subaccount Sync
 
-Subaccount Sync is an application that performs reconciliation tasks on SAP BTP, Kyma runtime, synchronizing Kyma Custom
-Resource labels with subaccount attributes.
+Subaccount Sync is an application that performs reconciliation tasks on SAP BTP, Kyma runtime, synchronizing Kyma custom
+resource (CR) labels with subaccount attributes.
 
 ## Details
 
