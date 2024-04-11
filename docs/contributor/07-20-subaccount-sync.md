@@ -47,7 +47,7 @@ Use the following environment variables to configure the application:
 | **SUBACCOUNT_SYNC_UPDATE_RESOURCES**                       | Specifies whether to run the updater process which updates Kyma CR.                                         | `false`       |
 | **SUBACCOUNT_SYNC_LOG_LEVEL**                              | Specifies log level.                                                                                                      | `info`        |
 | **SUBACCOUNT_SYNC_ACCOUNTS_SYNC_INTERVAL**                 | Specifies at what intervals subaccounts data is fetched.                                                                  | `24h`         |
-| **SUBACCOUNT_SYNC_STORAGE_SYNC_INTERVAL**                  | Specifies at what intervals subaccount states are persisted in database.                                                  | `2m`          |
+| **SUBACCOUNT_SYNC_STORAGE_SYNC_INTERVAL**                  | Specifies at what intervals subaccount states are persisted in the database.                                                  | `2m`          |
 | **SUBACCOUNT_SYNC_EVENTS_WINDOW_SIZE**                     | Specifies size of events window.                                                                                          | `20m`         |
 | **SUBACCOUNT_SYNC_EVENTS_WINDOW_INTERVAL**                 | Specifies at what intervals we fetch events.                                                                              | `15m`         |
 | **SUBACCOUNT_SYNC_QUEUE_SLEEP_INTERVAL**                   | Specifies how long the updater sleeps if queue is empty.                                                                  | `30s`         |
