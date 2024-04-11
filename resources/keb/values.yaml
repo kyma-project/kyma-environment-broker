@@ -11,22 +11,25 @@ global:
       version: "v20240307-f250dc83" # do not update along with the other images
     kyma_environment_broker:
       dir:
-      version: "1.3.5"
+      version: "1.3.6"
     kyma_environments_subaccount_cleanup_job:
       dir:
-      version: "1.3.5"
+      version: "1.3.6"
     kyma_environment_trial_cleanup_job:
       dir:
-      version: "1.3.5"
+      version: "1.3.6"
     kyma_environment_expirator_job:
       dir:
-      version: "1.3.5"
+      version: "1.3.6"
     kyma_environment_deprovision_retrigger_job:
       dir:
-      version: "1.3.5"
+      version: "1.3.6"
     kyma_environment_runtime_reconciler:
       dir:
-      version: "1.3.5"
+      version: "1.3.6"
+    kyma_environment_subaccount_sync:
+      dir:
+      version: "1.3.6"
   kyma_environment_broker:
     enabled: false
     serviceAccountName: "kcp-kyma-environment-broker"
@@ -333,6 +336,12 @@ cis:
     rateLimitingInterval: "2s"
     maxRequestRetries: "3"
     jobRetries: 6
+  accounts:
+    authURL: "TBD"
+    serviceURL: "TBD"
+    id: "TBD"
+    secret: "TBD"
+    secretName: "cis-creds-accounts"
 
 notification:
   url: "TBD"
@@ -364,20 +373,33 @@ trialCleanup:
   testRun: false
   testSubaccountID: "prow-keb-trial-suspension"
 
+freeCleanup:
+  schedule: "0,15,30,45 * * * *"
+  dryRun: true
+  expirationPeriod: 2160h # 90 days
+  testRun: false
+  testSubaccountID: "prow-keb-trial-suspension"
+
 deprovisionRetrigger:
   schedule: "0 2 * * *"
   dryRun: true
-  # The following section should be uncommented when deprovision-regtrigger-job is going to be switched
-  #   to the generic job
-  # name: "deprovision-retrigger-job"
-  # schedule: "0 2 * * *"
-  # imageName: "kyma-environment-deprovision-retrigger-job"
-  # cronJobName: "deprovision-retrigger-job"
-  # maxAge: "24h"
-  # version: "PR-2476"
-  # dir:
-  # envs:
-  #   - APP_DRY_RUN: "\{\{ .Values.deprovisionRetrigger.dryRun \}\}" # remove escape slashes when uncommenting the section
+
+subaccountSync:
+  updateResources: "false"
+  accountSyncInterval: "24h"
+  storageSyncInterval: "5m"
+  eventsWindowSize: "20m"
+  eventsWindowInterval: "15m"
+  queueSleepInterval: "30s"
+  metricsPort: "8081"
+  logLevel: "info"
+  cisRateLimits:
+    events:
+      rateLimitingInterval: "2s"
+      maxRequestsPerInterval: "5"
+    accounts:
+      rateLimitingInterval: "2s"
+      maxRequestsPerInterval: "5"
 
 serviceMonitor:
   enabled: true
