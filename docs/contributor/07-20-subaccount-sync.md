@@ -44,7 +44,7 @@ Use the following environment variables to configure the application:
 |------------------------------------------------------------|---------------------------------------------------------------------------------------------------------------------------|---------------|
 | **SUBACCOUNT_SYNC_KYMA_VERSION**                           | Specifies current Kyma version to get proper Kyma Custom Resource Definition (CRD).                                             | `false`       |
 | **SUBACCOUNT_SYNC_METRICS_PORT**                           | Specifies port where metrics are exposed for scraping.                                                                    | `8081`        |
-| **SUBACCOUNT_SYNC_UPDATE_RESOURCES**                       | Specifies whether to run the updater process which updates Kyma Custom Resources.                                         | `false`       |
+| **SUBACCOUNT_SYNC_UPDATE_RESOURCES**                       | Specifies whether to run the updater process which updates Kyma CR.                                         | `false`       |
 | **SUBACCOUNT_SYNC_LOG_LEVEL**                              | Specifies log level.                                                                                                      | `info`        |
 | **SUBACCOUNT_SYNC_ACCOUNTS_SYNC_INTERVAL**                 | Specifies at what intervals subaccounts data is fetched.                                                                  | `24h`         |
 | **SUBACCOUNT_SYNC_STORAGE_SYNC_INTERVAL**                  | Specifies at what intervals subaccount states are persisted in database.                                                  | `2m`          |
