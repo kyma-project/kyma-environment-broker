@@ -57,8 +57,8 @@ Use the following environment variables to configure the application:
 | **SUBACCOUNT_SYNC_CIS_EVENTS_SERVICE_URL**                 | Specifies the URL for events endpoint.                                                                                    |               |
 | **SUBACCOUNT_SYNC_CIS_EVENTS_RATE_LIMITING_INTERVAL**      | Specifies the rate limiting interval for events endpoint.                                                                 | `2s`          |
 | **SUBACCOUNT_SYNC_CIS_EVENTS_MAX_REQUESTS_PER_INTERVAL**   | Specifies the number of allowed requests per interval for events endpoint.                                                | 5             |
-| **SUBACCOUNT_SYNC_CIS_ACCOUNTS_CLIENT_ID**                 | Specifies the CLIENT_ID for client accessing accounts.                                                                    |               |
-| **SUBACCOUNT_SYNC_CIS_ACCOUNTS_CLIENT_SECRET**             | Specifies the CLIENT_SECRET for client accessing accounts.                                                                |               |
+| **SUBACCOUNT_SYNC_CIS_ACCOUNTS_CLIENT_ID**                 | Specifies the **CLIENT_ID** for the client accessing accounts.                                                                    |               |
+| **SUBACCOUNT_SYNC_CIS_ACCOUNTS_CLIENT_SECRET**             | Specifies the **CLIENT_SECRET** for the client accessing accounts.                                                                |               |
 | **SUBACCOUNT_SYNC_CIS_ACCOUNTS_AUTH_URL**                  | Specifies the authorization URL for accounts endpoint.                                                                    |               |
 | **SUBACCOUNT_SYNC_CIS_ACCOUNTS_SERVICE_URL**               | Specifies the URL for accounts endpoint.                                                                                  |               |
 | **SUBACCOUNT_SYNC_CIS_ACCOUNTS_RATE_LIMITING_INTERVAL**    | Specifies the rate limiting interval for accounts endpoint.                                                               | `2s`          |
