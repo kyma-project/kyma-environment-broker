@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"strings"
+	"time"
 
 	"gopkg.in/yaml.v2"
 
@@ -36,14 +37,16 @@ type Config struct {
 	EnablePlans                             EnablePlans `envconfig:"default=azure"`
 	OnlySingleTrialPerGA                    bool        `envconfig:"default=true"`
 	URL                                     string
-	EnableKubeconfigURLLabel                bool   `envconfig:"default=false"`
-	IncludeAdditionalParamsInSchema         bool   `envconfig:"default=false"`
-	ShowTrialExpirationInfo                 bool   `envconfig:"default=false"`
-	ShowFreeExpirationInfo                  bool   `envconfig:"default=false"`
-	OnlyOneFreePerGA                        bool   `envconfig:"default=false"`
-	SubaccountsIdsToShowTrialExpirationInfo string `envconfig:"default="`
-	TrialDocsURL                            string `envconfig:"default="`
-	IncludeNewMachineTypesInSchema          bool   `envconfig:"default=false"`
+	EnableKubeconfigURLLabel                bool          `envconfig:"default=false"`
+	IncludeAdditionalParamsInSchema         bool          `envconfig:"default=false"`
+	ShowTrialExpirationInfo                 bool          `envconfig:"default=false"`
+	ShowFreeExpirationInfo                  bool          `envconfig:"default=false"`
+	OnlyOneFreePerGA                        bool          `envconfig:"default=false"`
+	FreeDocsURL                             string        `envconfig:"default="`
+	FreeExpirationPeriod                    time.Duration `envconfig:"default=720h"` // 30 days
+	SubaccountsIdsToShowTrialExpirationInfo string        `envconfig:"default="`
+	TrialDocsURL                            string        `envconfig:"default="`
+	IncludeNewMachineTypesInSchema          bool          `envconfig:"default=false"`
 
 	Binding BindingConfig
 }

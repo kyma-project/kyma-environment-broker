@@ -165,7 +165,7 @@ func (c *OperationResultCollector) OnProvisioningSucceeded(ctx context.Context, 
 }
 
 func (c *OperationResultCollector) OnDeprovisioningSucceeded(ctx context.Context, ev interface{}) error {
-	deprovisioningOperation, ok := ev.(internal.DeprovisioningOperation)
+	deprovisioningOperation, ok := ev.(process.DeprovisioningSucceeded)
 	if !ok {
 		return fmt.Errorf("expected DeprovisioningSucceeded but got %+v", ev)
 	}

@@ -87,6 +87,10 @@ spec:
               value: "{{ .Values.includeAdditionalParamsInSchema }}"
             - name: APP_BROKER_SHOW_FREE_EXPIRATION_INFO
               value: "{{ .Values.showFreeExpirationInfo }}"
+            - name: APP_BROKER_FREE_DOCS_URL
+              value: "{{ .Values.freeDocsURL }}"
+            - name: APP_BROKER_FREE_EXPIRATION_PERIOD
+              value: "{{ .Values.freeExpirationPeriod }}"
             - name: APP_BROKER_SHOW_TRIAL_EXPIRATION_INFO
               value: "{{ .Values.showTrialExpirationInfo }}"
             - name: APP_BROKER_SUBACCOUNTS_IDS_TO_SHOW_TRIAL_EXPIRATION_INFO
