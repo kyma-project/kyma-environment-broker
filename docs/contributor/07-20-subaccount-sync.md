@@ -78,5 +78,5 @@ The dry run mode does not perform any changes on the control plane. Setting **SU
 Updater is not created and no changes are made to the Kyma CRs. The application only fetches
 data from CIS and updates the database.
 Differences between the desired and current state of the attributes cause that the queue is filled with entries.
-Since this is augmented queue with one entry for each subaccount, the length will not exceed the number of subaccounts.
+Since this is an augmented queue with one entry for each subaccount, the length does not exceed the number of subaccounts.
 
