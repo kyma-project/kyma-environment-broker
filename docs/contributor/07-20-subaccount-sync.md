@@ -34,7 +34,7 @@ Use the following environment variables to configure the application:
 |------------------------------------------------------------|---------------------------------------------------------------------------------------------------------------------------|---------------|
 | **SUBACCOUNT_SYNC_SUBACCOUNT_SYNC_KYMA_VERSION**           | Specifies current Kyma version to get proper Kyma Custom Resource Definition.                                             | `false`       |
 | **SUBACCOUNT_SYNC_SUBACCOUNT_SYNC_METRICS_PORT**           | Specifies port where metrics are exposed for scrapion.                                                                    | `8081`        |
-| **SUBACCOUNT_SYNC_UPDATE_RESOURCES**                       | Specifies whether to run the updater which updates Kyma Custom Resources.                                                 | `false`       |
+| **SUBACCOUNT_SYNC_UPDATE_RESOURCES**                       | Specifies whether to run the updater process which updates Kyma Custom Resources.                                         | `false`       |
 | **SUBACCOUNT_SYNC_SUBACCOUNT_SYNC_LOG_LEVEL**              | Specifies log level.                                                                                                      | `info`        |
 | **SUBACCOUNT_SYNC_ACCOUNTS_SYNC_INTERVAL**                 | Specifies at what intervals subaccounts data is fetched.                                                                  | `24h`         |
 | **SUBACCOUNT_SYNC_STORAGE_SYNC_INTERVAL**                  | Specifies at what intervals subaccount states are persisted in database.                                                  | `2m`          |
@@ -45,13 +45,13 @@ Use the following environment variables to configure the application:
 | **SUBACCOUNT_SYNC_CIS_EVENTS_CLIENT_SECRET**               | Specifies the CLIENT_SECRET for client accessing events.                                                                  |               |
 | **SUBACCOUNT_SYNC_CIS_EVENTS_AUTH_URL**                    | Specifies the authorization URL for events endpoint.                                                                      |               |
 | **SUBACCOUNT_SYNC_CIS_EVENTS_SERVICE_URL**                 | Specifies the URL for events endpoint.                                                                                    |               |
-| **SUBACCOUNT_SYNC_CIS_EVENTS_RATE_LIMITING_INTERVAL**      | Specifies rate limiting interval for events endpoint.                                                                     | `2s`          |
+| **SUBACCOUNT_SYNC_CIS_EVENTS_RATE_LIMITING_INTERVAL**      | Specifies the rate limiting interval for events endpoint.                                                                 | `2s`          |
 | **SUBACCOUNT_SYNC_CIS_EVENTS_MAX_REQUESTS_PER_INTERVAL**   | Specifies the number of allowed requests per interval for events endpoint.                                                | 5             |
 | **SUBACCOUNT_SYNC_CIS_ACCOUNTS_CLIENT_ID**                 | Specifies the CLIENT_ID for client accessing accounts.                                                                    |               |
 | **SUBACCOUNT_SYNC_CIS_ACCOUNTS_CLIENT_SECRET**             | Specifies the CLIENT_SECRET for client accessing accounts.                                                                |               |
 | **SUBACCOUNT_SYNC_CIS_ACCOUNTS_AUTH_URL**                  | Specifies the authorization URL for accounts endpoint.                                                                    |               |
 | **SUBACCOUNT_SYNC_CIS_ACCOUNTS_SERVICE_URL**               | Specifies the URL for accounts endpoint.                                                                                  |               |
-| **SUBACCOUNT_SYNC_CIS_ACCOUNTS_RATE_LIMITING_INTERVAL**    | Specifies rate limiting interval for accounts endpoint.                                                                   | `2s`          |
+| **SUBACCOUNT_SYNC_CIS_ACCOUNTS_RATE_LIMITING_INTERVAL**    | Specifies the rate limiting interval for accounts endpoint.                                                               | `2s`          |
 | **SUBACCOUNT_SYNC_CIS_ACCOUNTS_MAX_REQUESTS_PER_INTERVAL** | Specifies the number of allowed requests per interval for accounts endpoint.                                              | 5             |
 | **SUBACCOUNT_SYNC_DATABASE_SECRET_KEY**                    | Specifies the secret key for the database.                                                                                | optional      |
 | **SUBACCOUNT_SYNC_DATABASE_USER**                          | Specifies the username for the database.                                                                                  | `postgres`    |
@@ -64,7 +64,10 @@ Use the following environment variables to configure the application:
 
 ### Dry Run mode
 
-The dry run mode does not perform any changes on the control plane. Setting `SUBACCOUNT_SYNC_UPDATE_RESOURCES` to false will run the application in dry run mode.
-Updater would not be created and no changes would be made to the Kyma Custom Resources. The queue would be filled with the changes that would be made if the updater was running.
-Since this is augmented queue with one entry for each subaccount, to length of would not exceed the number of subaccounts.
+The dry run mode does not perform any changes on the control plane. Setting `SUBACCOUNT_SYNC_UPDATE_RESOURCES` to false
+will run the application in dry run mode.
+Updater would not be created and no changes would be made to the Kyma Custom Resources. The application will only fetch
+data from CIS and update the database.
+Differences between the desired and current state of the attributes will cause queue to be filled with entries.
+Since this is augmented queue with one entry for each subaccount, the length will not exceed the number of subaccounts.
 
