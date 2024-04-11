@@ -74,8 +74,7 @@ Use the following environment variables to configure the application:
 
 ### Dry Run Mode
 
-The dry run mode does not perform any changes on the control plane. Setting `SUBACCOUNT_SYNC_UPDATE_RESOURCES` to false
-will run the application in dry run mode.
+The dry run mode does not perform any changes on the control plane. Setting **SUBACCOUNT_SYNC_UPDATE_RESOURCES** to `false` runs the application in dry run mode.
 Updater would not be created and no changes would be made to the Kyma Custom Resources. The application will only fetch
 data from CIS and update the database.
 Differences between the desired and current state of the attributes will cause queue to be filled with entries.
