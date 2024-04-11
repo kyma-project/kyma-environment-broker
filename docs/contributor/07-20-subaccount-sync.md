@@ -72,7 +72,7 @@ Use the following environment variables to configure the application:
 | **SUBACCOUNT_SYNC_DATABASE_SSLMODE**                       | Activates the SSL mode for PostgreSQL. See [all the possible values](https://www.postgresql.org/docs/9.1/libpq-ssl.html). | `disable`     |
 | **SUBACCOUNT_SYNC_DATABASE_SSLROOTCERT**                   | Specifies the location of CA cert of PostgreSQL. (Optional)                                                               | optional      |
 
-### Dry Run mode
+### Dry Run Mode
 
 The dry run mode does not perform any changes on the control plane. Setting `SUBACCOUNT_SYNC_UPDATE_RESOURCES` to false
 will run the application in dry run mode.
