@@ -213,7 +213,7 @@ func (s *BTPOperatorCleanupStep) retryOnError(op internal.Operation, kclient cli
 func (s *BTPOperatorCleanupStep) attemptToRemoveFinalizers(op internal.Operation, k8sClient client.Client, log logrus.FieldLogger) {
 	namespaces := corev1.NamespaceList{}
 	if err := k8sClient.List(context.Background(), &namespaces); err != nil {
-		log.Errorf("failed to list namespaces to remove finalizers", err)
+		log.Errorf("failed to list namespaces to remove finalizers: %v", err)
 		return
 	}
 	if err := s.removeFinalizers(k8sClient, namespaces, schema.GroupVersionKind{Group: btpOperatorGroup, Version: btpOperatorApiVer, Kind: btpOperatorBinding}); err != nil {
