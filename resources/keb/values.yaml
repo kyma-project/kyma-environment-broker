@@ -385,7 +385,7 @@ deprovisionRetrigger:
   dryRun: true
 
 subaccountSync:
-  enable: true
+  enabled: true
   updateResources: false
   accountSyncInterval: 24h
   storageSyncInterval: 5m
