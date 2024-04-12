@@ -43,7 +43,7 @@ spec:
             - name: SUBACCOUNT_SYNC_STORAGE_SYNC_INTERVAL
               value: {{ .Values.subaccountSync.storageSyncInterval | quote }}
             - name: SUBACCOUNT_SYNC_EVENTS_WINDOW_SIZE
-              value: {{ .Values.subaccountSync.eventsWindowSize | quote }}
+              value: {{ .Values.subaccountSync.eventsWindowSize }}
             - name: SUBACCOUNT_SYNC_EVENTS_WINDOW_INTERVAL
               value: {{ .Values.subaccountSync.eventsWindowInterval | quote }}
             - name: SUBACCOUNT_SYNC_QUEUE_SLEEP_INTERVAL
