@@ -21,7 +21,7 @@ spec:
       serviceAccountName: {{ .Values.global.kyma_environment_broker.serviceAccountName }}
       {{- with .Values.deployment.securityContext }}
       securityContext:
-        {{ toYaml . }}
+        {{ toYaml . | nindent 12 }}
       {{- end }}
       containers:
         - name: subaccount-sync
@@ -83,7 +83,7 @@ spec:
             - name: SUBACCOUNT_SYNC_CIS_ACCOUNTS_RATE_LIMITING_INTERVAL
               value: {{ .Values.subaccountSync.cisRateLimits.accounts.rateLimitingInterval | quote }}
             - name: SUBACCOUNT_SYNC_CIS_ACCOUNTS_MAX_REQUESTS_PER_INTERVAL
-              value: {{ .Values.subaccountSync.cisRateLimits.accounts.maxRequestsPerInterval }}
+              value: {{ .Values.subaccountSync.cisRateLimits.accounts.maxRequestsPerInterval | quote }}
             - name: SUBACCOUNT_SYNC_DATABASE_SECRET_KEY
               valueFrom:
                 secretKeyRef:
