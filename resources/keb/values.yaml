@@ -385,21 +385,22 @@ deprovisionRetrigger:
   dryRun: true
 
 subaccountSync:
-  updateResources: "false"
-  accountSyncInterval: "24h"
-  storageSyncInterval: "5m"
-  eventsWindowSize: "20m"
-  eventsWindowInterval: "15m"
-  queueSleepInterval: "30s"
-  metricsPort: "8081"
-  logLevel: "info"
+  enable: true
+  updateResources: false
+  accountSyncInterval: 24h
+  storageSyncInterval: 5m
+  eventsWindowSize: 20m
+  eventsWindowInterval: 15m
+  queueSleepInterval: 30s
+  metricsPort: 8081
+  logLevel: info
   cisRateLimits:
     events:
-      rateLimitingInterval: "2s"
-      maxRequestsPerInterval: "5"
+      rateLimitingInterval: 2s
+      maxRequestsPerInterval: 5
     accounts:
-      rateLimitingInterval: "2s"
-      maxRequestsPerInterval: "5"
+      rateLimitingInterval: 2s
+      maxRequestsPerInterval: 5
 
 serviceMonitor:
   enabled: true
