@@ -21,7 +21,7 @@ spec:
       serviceAccountName: {{ .Values.global.kyma_environment_broker.serviceAccountName }}
       {{- with .Values.deployment.securityContext }}
       securityContext:
-        {{ toYaml . | nindent 12 }}
+        {{ toYaml . }}
       {{- end }}
       containers:
         - name: subaccount-sync
