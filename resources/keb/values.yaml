@@ -98,10 +98,10 @@ deployment:
     pullPolicy: Always
   securityContext:
     runAsUser: 2000
-  strategy: {} # Read more: https://kubernetes.io/docs/concepts/workloads/controllers/deployment/#strategy
-  nodeSelector: {}
+  strategy: { } # Read more: https://kubernetes.io/docs/concepts/workloads/controllers/deployment/#strategy
+  nodeSelector: { }
 
-imagePullSecrets: []
+imagePullSecrets: [ ]
 namePrefix: "kcp"
 nameOverride: "kyma-environment-broker"
 fullnameOverride: "kcp-kyma-environment-broker"
@@ -131,7 +131,7 @@ swagger:
     enabled: true
 
 resources:
-  {}
+  { }
   # We usually recommend not to specify default resources and to leave this as a conscious
   # choice for the user. This also increases chances charts run on environments with little
   # resources, such as Minikube. If you do want to specify resources, uncomment the following
@@ -141,10 +141,10 @@ resources:
   #   memory: 128Mi
   # requests:
   #   cpu: 100m
-  #   memory: 128Mi
+#   memory: 128Mi
 
 serviceAccount:
-  annotations: {}
+  annotations: { }
 
 reconciler:
   URL: "http://kcp-mothership-reconciler.kcp-system.svc.cluster.local"
@@ -293,7 +293,7 @@ avs:
   trialParentId: "0"
   maintenanceModeDuringUpgrade:
     disabled: false # disable AvS maintenance mode during upgrade, false until SKR ZDM is done
-    alwaysDisabledGlobalAccountIDs: [] # list of GA IDs where maintenance mode is always disabled during upgrade
+    alwaysDisabledGlobalAccountIDs: [ ] # list of GA IDs where maintenance mode is always disabled during upgrade
 
 ias:
   secretName: "ias-creds"
@@ -385,21 +385,22 @@ deprovisionRetrigger:
   dryRun: true
 
 subaccountSync:
-  updateResources: "false"
-  accountSyncInterval: "24h"
-  storageSyncInterval: "5m"
-  eventsWindowSize: "20m"
-  eventsWindowInterval: "15m"
-  queueSleepInterval: "30s"
-  metricsPort: "8081"
-  logLevel: "info"
+  enabled: false
+  updateResources: false
+  accountSyncInterval: 24h
+  storageSyncInterval: 5m
+  eventsWindowSize: 20m
+  eventsWindowInterval: 15m
+  queueSleepInterval: 30s
+  metricsPort: 8081
+  logLevel: info
   cisRateLimits:
     events:
-      rateLimitingInterval: "2s"
-      maxRequestsPerInterval: "5"
+      rateLimitingInterval: 2s
+      maxRequestsPerInterval: 5
     accounts:
-      rateLimitingInterval: "2s"
-      maxRequestsPerInterval: "5"
+      rateLimitingInterval: 2s
+      maxRequestsPerInterval: 5
 
 serviceMonitor:
   enabled: true
