@@ -82,7 +82,7 @@ func main() {
 
 	fatalOnError(err)
 
-	slog.Info("Trial cleanup job finished successfully!")
+	slog.Info("Expirator job finished successfully!")
 
 	err = conn.Close()
 	if err != nil {
