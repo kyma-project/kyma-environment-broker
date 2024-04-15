@@ -95,7 +95,8 @@ func (s *SyncService) Run() {
 	http.Handle("/metrics", promHandler)
 
 	go func() {
-		err := http.ListenAndServe(s.cfg.MetricsPort, nil)
+		address := fmt.Sprintf(":%d", s.cfg.MetricsPort)
+		err := http.ListenAndServe(address, nil)
 		if err != nil {
 			logger.Error(fmt.Sprintf("while serving metrics: %s", err))
 		}
