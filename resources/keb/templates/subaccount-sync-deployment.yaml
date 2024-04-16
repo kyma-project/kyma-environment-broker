@@ -59,9 +59,9 @@ spec:
                   name: {{ .Values.cis.v2.secretName | required "please specify .Values.cis.v2.secretName" | quote }}
                   key: secret
             - name: SUBACCOUNT_SYNC_CIS_EVENTS_AUTH_URL
-              value: {{ .Values.cis.accounts.authURL | required "please specify .Values.cis.accounts.authURL" | quote }}
+              value: {{ .Values.cis.accounts.authURL | required "please specify .Values.cis.events.authURL" | quote }}
             - name: SUBACCOUNT_SYNC_CIS_EVENTS_SERVICE_URL
-              value: {{ .Values.cis.accounts.serviceURL | required "please specify .Values.cis.accounts.serviceURL" | quote }}
+              value: {{ .Values.cis.accounts.serviceURL | required "please specify .Values.cis.events.serviceURL" | quote }}
             - name: SUBACCOUNT_SYNC_CIS_EVENTS_RATE_LIMITING_INTERVAL
               value: {{ .Values.subaccountSync.cisRateLimits.events.rateLimitingInterval | quote }}
             - name: SUBACCOUNT_SYNC_CIS_EVENTS_MAX_REQUESTS_PER_INTERVAL
