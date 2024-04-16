@@ -19,8 +19,9 @@ const (
 )
 
 type SapConvergedCloudInput struct {
-	MultiZone              bool
-	IncludeNewMachineTypes bool
+	MultiZone                    bool
+	IncludeNewMachineTypes       bool
+	ControlPlaneFailureTolerance string
 }
 
 func (p *SapConvergedCloudInput) Defaults() *gqlschema.ClusterConfigInput {
@@ -32,16 +33,20 @@ func (p *SapConvergedCloudInput) Defaults() *gqlschema.ClusterConfigInput {
 	if p.IncludeNewMachineTypes {
 		machineType = DefaultSapConvergedCloudMachineType
 	}
+	var controlPlaneFailureTolerance *string = nil
+	if p.ControlPlaneFailureTolerance != "" {
+		controlPlaneFailureTolerance = &p.ControlPlaneFailureTolerance
+	}
 	return &gqlschema.ClusterConfigInput{
 		GardenerConfig: &gqlschema.GardenerConfigInput{
-			DiskType:       nil,
-			MachineType:    machineType,
-			Region:         DefaultSapConvergedCloudRegion,
 			Provider:       "openstack",
+			Region:         DefaultSapConvergedCloudRegion,
+			MachineType:    machineType,
+			DiskType:       nil,
 			WorkerCidr:     networking.DefaultNodesCIDR,
 			AutoScalerMin:  3,
 			AutoScalerMax:  20,
-			MaxSurge:       1,
+			MaxSurge:       zonesCount,
 			MaxUnavailable: 0,
 			ProviderSpecificConfig: &gqlschema.ProviderSpecificInput{
 				OpenStackConfig: &gqlschema.OpenStackProviderConfigInput{
@@ -49,6 +54,7 @@ func (p *SapConvergedCloudInput) Defaults() *gqlschema.ClusterConfigInput {
 					LoadBalancerProvider: "f5",
 				},
 			},
+			ControlPlaneFailureTolerance: controlPlaneFailureTolerance,
 		},
 	}
 }

@@ -93,11 +93,27 @@ func AzureRegions(euRestrictedAccess bool) []string {
 		"westeurope",
 		"japaneast",
 		"southeastasia",
+		"australiaeast",
 	}
 }
 
-func AzureRegionsDisplay() map[string]string {
-	return nil
+func AzureRegionsDisplay(euRestrictedAccess bool) map[string]string {
+	if euRestrictedAccess {
+		return map[string]string{
+			"switzerlandnorth": "switzerlandnorth (Switzerland, Zurich)",
+		}
+	}
+	return map[string]string{
+		"eastus":        "eastus (US East, VA)",
+		"centralus":     "centralus (US Central, IA)",
+		"westus2":       "westus2 (US West, WA)",
+		"uksouth":       "uksouth (UK South, London)",
+		"northeurope":   "northeurope (Europe, Ireland)",
+		"westeurope":    "westeurope (Europe, Netherlands)",
+		"japaneast":     "japaneast (Japan, Tokyo)",
+		"southeastasia": "southeastasia (Asia Pacific, Singapore)",
+		"australiaeast": "australiaeast (Australia, Sydney)",
+	}
 }
 
 func GcpRegions() []string {
@@ -339,7 +355,7 @@ func AzureLiteSchema(machineTypesDisplay, regionsDisplay map[string]string, mach
 	return createSchemaWithProperties(properties, additionalParams, update, requiredSchemaProperties())
 }
 
-func FreemiumSchema(provider internal.CloudProvider, additionalParams, update bool, euAccessRestricted bool) *map[string]interface{} {
+func FreemiumSchema(provider internal.CloudProvider, regionsDisplay map[string]string, additionalParams, update bool, euAccessRestricted bool) *map[string]interface{} {
 	if update && !additionalParams {
 		return empty()
 	}
@@ -356,9 +372,10 @@ func FreemiumSchema(provider internal.CloudProvider, additionalParams, update bo
 	properties := ProvisioningProperties{
 		Name: NameProperty(),
 		Region: &Type{
-			Type:      "string",
-			Enum:      ToInterfaceSlice(regions),
-			MinLength: 1,
+			Type:            "string",
+			Enum:            ToInterfaceSlice(regions),
+			MinLength:       1,
+			EnumDisplayName: regionsDisplay,
 		},
 	}
 	if !update {
@@ -448,7 +465,7 @@ func Plans(plans PlansConfig, provider internal.CloudProvider, includeAdditional
 	awsRegionsDisplay := AWSRegionsDisplay()
 	azureMachinesNames := AzureMachinesNames()
 	azureMachinesDisplay := AzureMachinesDisplay()
-	azureRegionsDisplay := AzureRegionsDisplay()
+	azureRegionsDisplay := AzureRegionsDisplay(euAccessRestricted)
 	azureLiteMachinesNames := AzureLiteMachinesNames()
 	azureLiteMachinesDisplay := AzureLiteMachinesDisplay()
 	gcpMachinesNames := GcpMachinesNames()
@@ -487,7 +504,7 @@ func Plans(plans PlansConfig, provider internal.CloudProvider, includeAdditional
 	// awsHASchema := AWSHASchema(awsMachinesDisplay, awsMachines, includeAdditionalParamsInSchema, false)
 	azureSchema := AzureSchema(azureMachinesDisplay, azureRegionsDisplay, azureMachinesNames, includeAdditionalParamsInSchema, false, euAccessRestricted)
 	azureLiteSchema := AzureLiteSchema(azureLiteMachinesDisplay, azureRegionsDisplay, azureLiteMachinesNames, includeAdditionalParamsInSchema, false, euAccessRestricted)
-	freemiumSchema := FreemiumSchema(provider, includeAdditionalParamsInSchema, false, euAccessRestricted)
+	freemiumSchema := FreemiumSchema(provider, azureRegionsDisplay, includeAdditionalParamsInSchema, false, euAccessRestricted)
 	gcpSchema := GCPSchema(gcpMachinesDisplay, gcpRegionsDisplay, gcpMachinesNames, includeAdditionalParamsInSchema, false)
 	ownClusterSchema := OwnClusterSchema(false)
 	previewCatalogSchema := PreviewSchema(awsMachinesDisplay, awsRegionsDisplay, awsMachineNames, includeAdditionalParamsInSchema, false, euAccessRestricted)
@@ -500,7 +517,7 @@ func Plans(plans PlansConfig, provider internal.CloudProvider, includeAdditional
 		SapConvergedCloudPlanID: defaultServicePlan(SapConvergedCloudPlanID, SapConvergedCloudPlanName, plans, sapConvergedCloudSchema, SapConvergedCloudSchema(sapConvergedCloudMachinesDisplay, sapConvergedCloudRegionsDisplay, sapConvergedCloudMachinesNames, includeAdditionalParamsInSchema, true)),
 		AzurePlanID:             defaultServicePlan(AzurePlanID, AzurePlanName, plans, azureSchema, AzureSchema(azureMachinesDisplay, azureRegionsDisplay, azureMachinesNames, includeAdditionalParamsInSchema, true, euAccessRestricted)),
 		AzureLitePlanID:         defaultServicePlan(AzureLitePlanID, AzureLitePlanName, plans, azureLiteSchema, AzureLiteSchema(azureLiteMachinesDisplay, azureRegionsDisplay, azureLiteMachinesNames, includeAdditionalParamsInSchema, true, euAccessRestricted)),
-		FreemiumPlanID:          defaultServicePlan(FreemiumPlanID, FreemiumPlanName, plans, freemiumSchema, FreemiumSchema(provider, includeAdditionalParamsInSchema, true, euAccessRestricted)),
+		FreemiumPlanID:          defaultServicePlan(FreemiumPlanID, FreemiumPlanName, plans, freemiumSchema, FreemiumSchema(provider, azureRegionsDisplay, includeAdditionalParamsInSchema, true, euAccessRestricted)),
 		TrialPlanID:             defaultServicePlan(TrialPlanID, TrialPlanName, plans, trialSchema, TrialSchema(includeAdditionalParamsInSchema, true)),
 		OwnClusterPlanID:        defaultServicePlan(OwnClusterPlanID, OwnClusterPlanName, plans, ownClusterSchema, OwnClusterSchema(true)),
 		PreviewPlanID:           defaultServicePlan(PreviewPlanID, PreviewPlanName, plans, previewCatalogSchema, AWSSchema(awsMachinesDisplay, awsRegionsDisplay, awsMachineNames, includeAdditionalParamsInSchema, true, euAccessRestricted)),

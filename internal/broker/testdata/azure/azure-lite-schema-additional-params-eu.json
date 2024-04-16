@@ -193,6 +193,9 @@
       "type": "object"
     },
     "region": {
+        "_enumDisplayName": {
+            "switzerlandnorth": "switzerlandnorth (Switzerland, Zurich)"
+        },
       "enum": [
         "switzerlandnorth"
       ],
