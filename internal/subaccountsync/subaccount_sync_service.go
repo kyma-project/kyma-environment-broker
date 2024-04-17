@@ -134,7 +134,7 @@ func (s *SyncService) Run() {
 		updater:          updater,
 		syncQueue:        priorityQueue,
 		metrics:          metrics,
-		eventWindow:      NewEventWindow(s.cfg.EventsWindowSize.Milliseconds(), logger.With("component", "event-window"), epochInMillis),
+		eventWindow:      NewEventWindow(s.cfg.EventsWindowSize.Milliseconds(), epochInMillis),
 	}
 
 	stateReconciler.recreateStateFromDB()

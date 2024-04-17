@@ -1200,7 +1200,7 @@ func createNewReconcilerWithFakeCisServer(brokerStorage storage.BrokerStorage, c
 		db:             brokerStorage,
 		accountsClient: rtlClient,
 		eventsClient:   rtlClient,
-		eventWindow: NewEventWindow(60*1000, logger, func() int64 {
+		eventWindow: NewEventWindow(60*1000, func() int64 {
 			return epochInStubs
 		}),
 	}
