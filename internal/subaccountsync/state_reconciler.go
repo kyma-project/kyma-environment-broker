@@ -125,6 +125,7 @@ func (reconciler *stateReconcilerType) periodicEventsSync(fromActionTime int64) 
 		reconciler.reconcileCisEvent(event)
 		ew.UpdateToTime(event.ActionTime)
 	}
+	logs.Debug(fmt.Sprintf("Events synchronization finished, last event time: %d", reconciler.eventWindow.lastToTime))
 }
 
 func (reconciler *stateReconcilerType) getAllSubaccountIDsFromState() subaccountsSetType {
@@ -139,16 +140,16 @@ func (reconciler *stateReconcilerType) runCronJobs(cfg Config, ctx context.Conte
 	s := gocron.NewScheduler(time.UTC)
 
 	logs := reconciler.logger
-	ew := reconciler.eventWindow
 
 	_, err := s.Every(cfg.EventsSyncInterval).Do(func() {
 		// establish actual time window
-		eventsFrom := ew.GetNextFromTime()
+		eventsFrom := reconciler.eventWindow.GetNextFromTime()
 
 		reconciler.periodicEventsSync(eventsFrom)
 		reconciler.metrics.cisRequests.With(prometheus.Labels{"endpoint": "events"}).Inc()
 
-		ew.UpdateFromTime(eventsFrom)
+		reconciler.eventWindow.UpdateFromTime(eventsFrom)
+		logs.Info(fmt.Sprintf("Running events synchronization from epoch: %d, ew=%v", eventsFrom, reconciler.eventWindow))
 	})
 	if err != nil {
 		logs.Error(fmt.Sprintf("while scheduling events sync job: %s", err))
