@@ -62,7 +62,7 @@ func (step *CheckKymaResourceDeletedStep) Run(operation internal.Operation, logg
 
 	if err == nil {
 		logger.Infof("Kyma resource still exists")
-		return step.operationManager.RetryOperationWithoutFail(operation, step.Name(), "Kyma resource still exists", 15*time.Second, step.kymaResourceDeletionTimeout, logger)
+		return step.operationManager.RetryOperationWithoutFail(operation, step.Name(), "Kyma resource still exists", 5*time.Second, step.kymaResourceDeletionTimeout, logger)
 	}
 
 	if !errors.IsNotFound(err) {
