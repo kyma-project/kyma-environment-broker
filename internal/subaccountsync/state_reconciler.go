@@ -124,7 +124,7 @@ func (reconciler *stateReconcilerType) periodicEventsSync(fromActionTime int64) 
 		reconciler.reconcileCisEvent(event)
 		reconciler.eventWindow.UpdateToTime(event.ActionTime)
 	}
-	logs.Debug(fmt.Sprintf("Events synchronization finished, last event time: %d", reconciler.eventWindow.lastToTime))
+	logs.Info(fmt.Sprintf("Events synchronization finished, last event time: %d", reconciler.eventWindow.lastToTime))
 }
 
 func (reconciler *stateReconcilerType) getAllSubaccountIDsFromState() subaccountsSetType {
