@@ -120,10 +120,9 @@ func (reconciler *stateReconcilerType) periodicEventsSync(fromActionTime int64) 
 		// we will retry in the next run
 	}
 
-	ew := reconciler.eventWindow
 	for _, event := range eventsOfInterest {
 		reconciler.reconcileCisEvent(event)
-		ew.UpdateToTime(event.ActionTime)
+		reconciler.eventWindow.UpdateToTime(event.ActionTime)
 	}
 	logs.Debug(fmt.Sprintf("Events synchronization finished, last event time: %d", reconciler.eventWindow.lastToTime))
 }
