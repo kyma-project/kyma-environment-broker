@@ -1,6 +1,7 @@
 package subaccountsync
 
 import (
+	"log/slog"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -10,7 +11,9 @@ const windowSize = 20 * 60 * 1000
 
 func TestEventWindow(t *testing.T) {
 	now := int64(0)
-	ew := NewEventWindow(windowSize, func() int64 { return now })
+	logger := slog.Default()
+
+	ew := NewEventWindow(windowSize, logger, func() int64 { return now })
 
 	t.Run("should not return negative value", func(t *testing.T) {
 		from := ew.GetNextFromTime()
