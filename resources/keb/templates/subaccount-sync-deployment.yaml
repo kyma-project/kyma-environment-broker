@@ -61,7 +61,7 @@ spec:
             - name: SUBACCOUNT_SYNC_CIS_EVENTS_AUTH_URL
               value: {{ .Values.cis.v2.authURL | required "please specify .Values.cis.v2.authURL" | quote }}
             - name: SUBACCOUNT_SYNC_CIS_EVENTS_SERVICE_URL
-              value: {{ .Values.cis.events.serviceURL | required "please specify .Values.cis.events.serviceURL" | quote }}
+              value: {{ .Values.cis.v2.serviceURL | required "please specify .Values.cis.v2.serviceURL" | quote }}
             - name: SUBACCOUNT_SYNC_CIS_EVENTS_RATE_LIMITING_INTERVAL
               value: {{ .Values.subaccountSync.cisRateLimits.events.rateLimitingInterval | quote }}
             - name: SUBACCOUNT_SYNC_CIS_EVENTS_MAX_REQUESTS_PER_INTERVAL
