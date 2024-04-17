@@ -1,27 +1,37 @@
 package subaccountsync
 
+import (
+	"fmt"
+	log "github.com/sirupsen/logrus"
+	"log/slog"
+)
+
 type EventWindow struct {
 	lastFromTime  int64
 	lastToTime    int64
 	windowSize    int64
 	nowMillisFunc func() int64
+	log           slog.Logger
 }
 
-func NewEventWindow(windowSize int64, nowFunc func() int64) *EventWindow {
+func NewEventWindow(windowSize int64, log *slog.Logger, nowFunc func() int64) *EventWindow {
 	return &EventWindow{
 		nowMillisFunc: nowFunc,
 		windowSize:    windowSize,
+		log:           *log,
 	}
 }
 
 func (ew *EventWindow) GetNextFromTime() int64 {
-	eventsFrom := ew.nowMillisFunc() - ew.windowSize
+	epochNow := ew.nowMillisFunc()
+	eventsFrom := epochNow - ew.windowSize
 	if eventsFrom > ew.lastToTime {
 		eventsFrom = ew.lastToTime
 	}
 	if eventsFrom < 0 {
 		eventsFrom = 0
 	}
+	log.Info(fmt.Sprintf("Now: %d, From: %d, LastTo:% d", epochNow, eventsFrom, ew.lastToTime))
 	return eventsFrom
 }
 
