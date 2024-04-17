@@ -53,7 +53,7 @@ func NewDeprovisioningProcessingQueue(ctx context.Context, workersAmount int, de
 		},
 		{
 			disabled: cfg.LifecycleManagerIntegrationDisabled,
-			step:     deprovisioning.NewCheckKymaResourceDeletedStep(db.Operations(), cli),
+			step:     deprovisioning.NewCheckKymaResourceDeletedStep(db.Operations(), cli, cfg.KymaResourceDeletionTimeout),
 		},
 		{
 			disabled: cfg.ReconcilerIntegrationDisabled,

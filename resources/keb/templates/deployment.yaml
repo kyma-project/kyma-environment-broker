@@ -412,6 +412,8 @@ spec:
               value: "{{ .Values.metricsv2.operationStatsPoolingInterval }}"
             - name: APP_FREEMIUM_WHITELISTED_GLOBAL_ACCOUNTS_FILE_PATH
               value: /config/freemiumWhitelistedGlobalAccountIds.yaml
+            - name: APP_KYMA_RESOURCE_DELETION_TIMEOUT
+              value: "{{ .Values.kymaResourceDeletionTimeout }}"
           ports:
             - name: http
               containerPort: {{ .Values.broker.port }}

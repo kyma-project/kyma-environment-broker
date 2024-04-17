@@ -3,6 +3,7 @@ package deprovisioning
 import (
 	"context"
 	"testing"
+	"time"
 
 	"k8s.io/apimachinery/pkg/runtime/schema"
 
@@ -34,7 +35,7 @@ func TestCheckKymaResourceDeleted_HappyFlow(t *testing.T) {
 	err = memoryStorage.Operations().InsertOperation(operation)
 	assert.NoError(t, err)
 
-	step := NewCheckKymaResourceDeletedStep(memoryStorage.Operations(), kcpClient)
+	step := NewCheckKymaResourceDeletedStep(memoryStorage.Operations(), kcpClient, 30*time.Second)
 
 	// When
 	_, backoff, err := step.Run(operation, logger.NewLogSpy().Logger)
@@ -61,7 +62,7 @@ func TestCheckKymaResourceDeleted_EmptyKymaResourceName(t *testing.T) {
 	err = memoryStorage.Operations().InsertOperation(operation)
 	assert.NoError(t, err)
 
-	step := NewCheckKymaResourceDeletedStep(memoryStorage.Operations(), kcpClient)
+	step := NewCheckKymaResourceDeletedStep(memoryStorage.Operations(), kcpClient, 30*time.Second)
 
 	// When
 	_, backoff, err := step.Run(operation, logger.NewLogSpy().Logger)
@@ -86,7 +87,7 @@ func TestCheckKymaResourceDeleted_RetryWhenStillExists(t *testing.T) {
 	err = memoryStorage.Operations().InsertOperation(operation)
 	require.NoError(t, err)
 
-	step := NewCheckKymaResourceDeletedStep(memoryStorage.Operations(), kcpClient)
+	step := NewCheckKymaResourceDeletedStep(memoryStorage.Operations(), kcpClient, 30*time.Second)
 
 	// When
 	_, backoff, err := step.Run(operation, logger.NewLogSpy().Logger)
