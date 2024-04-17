@@ -59,7 +59,7 @@ spec:
                   name: {{ .Values.cis.v2.secretName | required "please specify .Values.cis.v2.secretName" | quote }}
                   key: secret
             - name: SUBACCOUNT_SYNC_CIS_EVENTS_AUTH_URL
-              value: {{ .Values.cis.events.authURL | required "please specify .Values.cis.events.authURL" | quote }}
+              value: {{ .Values.cis.v2.authURL | required "please specify .Values.cis.v2.authURL" | quote }}
             - name: SUBACCOUNT_SYNC_CIS_EVENTS_SERVICE_URL
               value: {{ .Values.cis.events.serviceURL | required "please specify .Values.cis.events.serviceURL" | quote }}
             - name: SUBACCOUNT_SYNC_CIS_EVENTS_RATE_LIMITING_INTERVAL
