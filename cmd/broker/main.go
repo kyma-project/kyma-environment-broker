@@ -175,6 +175,8 @@ type Config struct {
 	ArchiveDryRun   bool `envconfig:"default=true"`
 	CleaningEnabled bool `envconfig:"default=false"`
 	CleaningDryRun  bool `envconfig:"default=true"`
+
+	KymaResourceDeletionTimeout time.Duration `envconfig:"default=30s"`
 }
 
 type ProfilerConfig struct {

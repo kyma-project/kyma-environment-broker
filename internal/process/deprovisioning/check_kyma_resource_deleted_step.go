@@ -18,14 +18,16 @@ import (
 )
 
 type CheckKymaResourceDeletedStep struct {
-	operationManager *process.OperationManager
-	kcpClient        client.Client
+	operationManager            *process.OperationManager
+	kcpClient                   client.Client
+	kymaResourceDeletionTimeout time.Duration
 }
 
-func NewCheckKymaResourceDeletedStep(operations storage.Operations, kcpClient client.Client) *CheckKymaResourceDeletedStep {
+func NewCheckKymaResourceDeletedStep(operations storage.Operations, kcpClient client.Client, kymaResourceDeletionTimeout time.Duration) *CheckKymaResourceDeletedStep {
 	return &CheckKymaResourceDeletedStep{
-		operationManager: process.NewOperationManager(operations),
-		kcpClient:        kcpClient,
+		operationManager:            process.NewOperationManager(operations),
+		kcpClient:                   kcpClient,
+		kymaResourceDeletionTimeout: kymaResourceDeletionTimeout,
 	}
 }
 
@@ -60,7 +62,7 @@ func (step *CheckKymaResourceDeletedStep) Run(operation internal.Operation, logg
 
 	if err == nil {
 		logger.Infof("Kyma resource still exists")
-		return step.operationManager.RetryOperationWithoutFail(operation, step.Name(), "Kyma resource still exists", 15*time.Second, 30*time.Minute, logger)
+		return step.operationManager.RetryOperationWithoutFail(operation, step.Name(), "Kyma resource still exists", 5*time.Second, step.kymaResourceDeletionTimeout, logger)
 	}
 
 	if !errors.IsNotFound(err) {

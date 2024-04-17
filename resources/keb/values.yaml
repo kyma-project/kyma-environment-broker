@@ -448,3 +448,5 @@ metricsv2:
 
 freemiumWhitelistedGlobalAccountIds: |-
   whitelist:
+
+kymaResourceDeletionTimeout: 30s
