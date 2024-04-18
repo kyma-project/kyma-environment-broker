@@ -54,12 +54,11 @@ func (p *AWSInput) Defaults() *gqlschema.ClusterConfigInput {
 	if p.ControlPlaneFailureTolerance != "" {
 		controlPlaneFailureTolerance = &p.ControlPlaneFailureTolerance
 	}
-	machineType := DefaultAWSMachineType
 	return &gqlschema.ClusterConfigInput{
 		GardenerConfig: &gqlschema.GardenerConfigInput{
 			DiskType:       ptr.String("gp2"),
 			VolumeSizeGb:   ptr.Integer(50),
-			MachineType:    machineType,
+			MachineType:    DefaultAWSMachineType,
 			Region:         DefaultAWSRegion,
 			Provider:       "aws",
 			WorkerCidr:     networking.DefaultNodesCIDR,

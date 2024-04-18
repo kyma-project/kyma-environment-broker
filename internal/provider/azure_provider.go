@@ -54,12 +54,11 @@ func (p *AzureInput) Defaults() *gqlschema.ClusterConfigInput {
 	if p.ControlPlaneFailureTolerance != "" {
 		controlPlaneFailureTolerance = &p.ControlPlaneFailureTolerance
 	}
-	machineType := DefaultAzureMachineType
 	return &gqlschema.ClusterConfigInput{
 		GardenerConfig: &gqlschema.GardenerConfigInput{
 			DiskType:       ptr.String("Standard_LRS"),
 			VolumeSizeGb:   ptr.Integer(50),
-			MachineType:    machineType,
+			MachineType:    DefaultAzureMachineType,
 			Region:         DefaultAzureRegion,
 			Provider:       "azure",
 			WorkerCidr:     networking.DefaultNodesCIDR,

@@ -32,12 +32,11 @@ func (p *SapConvergedCloudInput) Defaults() *gqlschema.ClusterConfigInput {
 	if p.ControlPlaneFailureTolerance != "" {
 		controlPlaneFailureTolerance = &p.ControlPlaneFailureTolerance
 	}
-	machineType := DefaultSapConvergedCloudMachineType
 	return &gqlschema.ClusterConfigInput{
 		GardenerConfig: &gqlschema.GardenerConfigInput{
 			Provider:       "openstack",
 			Region:         DefaultSapConvergedCloudRegion,
-			MachineType:    machineType,
+			MachineType:    DefaultSapConvergedCloudMachineType,
 			DiskType:       nil,
 			WorkerCidr:     networking.DefaultNodesCIDR,
 			AutoScalerMin:  3,

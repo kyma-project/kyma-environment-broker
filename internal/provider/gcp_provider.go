@@ -49,12 +49,11 @@ func (p *GcpInput) Defaults() *gqlschema.ClusterConfigInput {
 	if p.ControlPlaneFailureTolerance != "" {
 		controlPlaneFailureTolerance = &p.ControlPlaneFailureTolerance
 	}
-	machineType := DefaultGCPMachineType
 	return &gqlschema.ClusterConfigInput{
 		GardenerConfig: &gqlschema.GardenerConfigInput{
 			DiskType:       ptr.String("pd-standard"),
 			VolumeSizeGb:   ptr.Integer(50),
-			MachineType:    machineType,
+			MachineType:    DefaultGCPMachineType,
 			Region:         DefaultGCPRegion,
 			Provider:       "gcp",
 			WorkerCidr:     networking.DefaultNodesCIDR,
