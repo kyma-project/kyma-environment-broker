@@ -40,19 +40,6 @@ func TestSchemaGenerator(t *testing.T) {
 			updateFileOIDC:      "update-aws-schema-additional-params.json",
 		},
 		{
-			name: "AWS reduced schema is correct",
-			generator: func(machinesDisplay, regionsDisplay map[string]string, machines []string, additionalParams, update bool) *map[string]interface{} {
-				return AWSSchema(machinesDisplay, regionsDisplay, machines, additionalParams, update, false)
-			},
-			machineTypes:        AwsMachinesNames(),
-			machineTypesDisplay: AwsMachinesDisplay(),
-			path:                "aws",
-			file:                "aws-schema-reduced.json",
-			updateFile:          "update-aws-schema-reduced.json",
-			fileOIDC:            "aws-schema-additional-params-reduced.json",
-			updateFileOIDC:      "update-aws-schema-additional-params-reduced.json",
-		},
-		{
 			name: "AWS schema with EU access restriction is correct",
 			generator: func(machinesDisplay, regionsDisplay map[string]string, machines []string, additionalParams, update bool) *map[string]interface{} {
 				return AWSSchema(machinesDisplay, regionsDisplay, machines, additionalParams, update, true)

@@ -461,21 +461,7 @@ func Plans(plans PlansConfig, provider internal.CloudProvider, includeAdditional
 	sapConvergedCloudMachinesDisplay := SapConvergedCloudMachinesDisplay()
 	sapConvergedCloudRegionsDisplay := SapConvergedCloudRegionsDisplay()
 
-	// Schemas exposed on v2/catalog endpoint - different from provisioningRawSchema to allow backwards compatibility
-	// when a machine type switch is introduced
-	// switch to m6 if m6 is available in all regions
-	awsCatalogMachines := []string{"m5.xlarge", "m5.2xlarge", "m5.4xlarge", "m5.8xlarge", "m5.12xlarge"}
-	awsCatalogMachinesDisplay := map[string]string{
-		"m5.xlarge":   awsMachinesDisplay["m5.xlarge"],
-		"m5.2xlarge":  awsMachinesDisplay["m5.2xlarge"],
-		"m5.4xlarge":  awsMachinesDisplay["m5.4xlarge"],
-		"m5.8xlarge":  awsMachinesDisplay["m5.8xlarge"],
-		"m5.12xlarge": awsMachinesDisplay["m5.12xlarge"],
-	}
-
-	awsSchema := AWSSchema(awsMachinesDisplay, awsRegionsDisplay, awsMachineNames, includeAdditionalParamsInSchema, false, euAccessRestricted)
-	awsCatalogSchema := AWSSchema(awsCatalogMachinesDisplay, awsRegionsDisplay, awsCatalogMachines, includeAdditionalParamsInSchema, false, euAccessRestricted)
-	// awsHASchema := AWSHASchema(awsMachinesDisplay, awsMachines, includeAdditionalParamsInSchema, false)
+	awsSchema := AWSSchema(awsMachinesDisplay, awsRegionsDisplay, awsMachineNames, includeAdditionalParamsInSchema, false, euAccessRestricted) // awsHASchema := AWSHASchema(awsMachinesDisplay, awsMachines, includeAdditionalParamsInSchema, false)
 	azureSchema := AzureSchema(azureMachinesDisplay, azureRegionsDisplay, azureMachinesNames, includeAdditionalParamsInSchema, false, euAccessRestricted)
 	azureLiteSchema := AzureLiteSchema(azureLiteMachinesDisplay, azureRegionsDisplay, azureLiteMachinesNames, includeAdditionalParamsInSchema, false, euAccessRestricted)
 	freemiumSchema := FreemiumSchema(provider, azureRegionsDisplay, includeAdditionalParamsInSchema, false, euAccessRestricted)
@@ -495,10 +481,6 @@ func Plans(plans PlansConfig, provider internal.CloudProvider, includeAdditional
 		TrialPlanID:             defaultServicePlan(TrialPlanID, TrialPlanName, plans, trialSchema, TrialSchema(includeAdditionalParamsInSchema, true)),
 		OwnClusterPlanID:        defaultServicePlan(OwnClusterPlanID, OwnClusterPlanName, plans, ownClusterSchema, OwnClusterSchema(true)),
 		PreviewPlanID:           defaultServicePlan(PreviewPlanID, PreviewPlanName, plans, previewCatalogSchema, AWSSchema(awsMachinesDisplay, awsRegionsDisplay, awsMachineNames, includeAdditionalParamsInSchema, true, euAccessRestricted)),
-	}
-
-	if !includeNewMachineTypes {
-		outputPlans[AWSPlanID] = defaultServicePlan(AWSPlanID, AWSPlanName, plans, awsCatalogSchema, AWSSchema(awsMachinesDisplay, awsRegionsDisplay, awsMachineNames, includeAdditionalParamsInSchema, true, euAccessRestricted))
 	}
 
 	return outputPlans
