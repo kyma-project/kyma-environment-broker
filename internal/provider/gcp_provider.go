@@ -34,7 +34,6 @@ type (
 	GcpInput struct {
 		MultiZone                    bool
 		ControlPlaneFailureTolerance string
-		IncludeNewMachineTypes       bool
 	}
 	GcpTrialInput struct {
 		PlatformRegionMapping map[string]string
