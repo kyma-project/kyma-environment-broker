@@ -14,13 +14,6 @@ import (
 )
 
 func TestSchemaGenerator(t *testing.T) {
-	awsMachineNamesReduced := AwsMachinesNames()
-	awsMachinesDisplayReduced := AwsMachinesDisplay()
-
-	awsMachineNamesReduced = removeMachinesNamesFromList(awsMachineNamesReduced, "m5.large", "m6i.large")
-	delete(awsMachinesDisplayReduced, "m5.large")
-	delete(awsMachinesDisplayReduced, "m6i.large")
-
 	tests := []struct {
 		name                string
 		generator           func(map[string]string, map[string]string, []string, bool, bool) *map[string]interface{}
@@ -51,8 +44,8 @@ func TestSchemaGenerator(t *testing.T) {
 			generator: func(machinesDisplay, regionsDisplay map[string]string, machines []string, additionalParams, update bool) *map[string]interface{} {
 				return AWSSchema(machinesDisplay, regionsDisplay, machines, additionalParams, update, false)
 			},
-			machineTypes:        awsMachineNamesReduced,
-			machineTypesDisplay: awsMachinesDisplayReduced,
+			machineTypes:        AwsMachinesNames(),
+			machineTypesDisplay: AwsMachinesDisplay(),
 			path:                "aws",
 			file:                "aws-schema-reduced.json",
 			updateFile:          "update-aws-schema-reduced.json",

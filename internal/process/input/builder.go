@@ -66,13 +66,12 @@ type InputBuilderFactory struct {
 	trialPlatformRegionMapping map[string]string
 	enabledFreemiumProviders   map[string]struct{}
 	oidcDefaultValues          internal.OIDCConfigDTO
-	includeNewMachineTypes     bool
 }
 
 func NewInputBuilderFactory(optComponentsSvc OptionalComponentService, disabledComponentsProvider DisabledComponentsProvider,
 	componentsListProvider ComponentListProvider, configProvider ConfigurationProvider,
 	config Config, defaultKymaVersion string, trialPlatformRegionMapping map[string]string,
-	enabledFreemiumProviders []string, oidcValues internal.OIDCConfigDTO, includeNewMachineTypes bool) (CreatorForPlan, error) {
+	enabledFreemiumProviders []string, oidcValues internal.OIDCConfigDTO) (CreatorForPlan, error) {
 
 	freemiumProviders := map[string]struct{}{}
 	for _, p := range enabledFreemiumProviders {
@@ -89,7 +88,6 @@ func NewInputBuilderFactory(optComponentsSvc OptionalComponentService, disabledC
 		trialPlatformRegionMapping: trialPlatformRegionMapping,
 		enabledFreemiumProviders:   freemiumProviders,
 		oidcDefaultValues:          oidcValues,
-		includeNewMachineTypes:     includeNewMachineTypes,
 	}, nil
 }
 
@@ -123,21 +121,18 @@ func (f *InputBuilderFactory) getHyperscalerProviderForPlanID(planID string, pla
 		provider = &cloudProvider.GcpInput{
 			MultiZone:                    f.config.MultiZoneCluster,
 			ControlPlaneFailureTolerance: f.config.ControlPlaneFailureTolerance,
-			IncludeNewMachineTypes:       f.includeNewMachineTypes,
 		}
 	case broker.FreemiumPlanID:
 		return f.forFreemiumPlan(platformProvider)
 	case broker.SapConvergedCloudPlanID:
 		provider = &cloudProvider.SapConvergedCloudInput{
 			MultiZone:                    f.config.MultiZoneCluster,
-			IncludeNewMachineTypes:       f.includeNewMachineTypes,
 			ControlPlaneFailureTolerance: f.config.ControlPlaneFailureTolerance,
 		}
 	case broker.AzurePlanID:
 		provider = &cloudProvider.AzureInput{
 			MultiZone:                    f.config.MultiZoneCluster,
 			ControlPlaneFailureTolerance: f.config.ControlPlaneFailureTolerance,
-			IncludeNewMachineTypes:       f.includeNewMachineTypes,
 		}
 	case broker.AzureLitePlanID:
 		provider = &cloudProvider.AzureLiteInput{}
@@ -147,7 +142,6 @@ func (f *InputBuilderFactory) getHyperscalerProviderForPlanID(planID string, pla
 		provider = &cloudProvider.AWSInput{
 			MultiZone:                    f.config.MultiZoneCluster,
 			ControlPlaneFailureTolerance: f.config.ControlPlaneFailureTolerance,
-			IncludeNewMachineTypes:       f.includeNewMachineTypes,
 		}
 	case broker.OwnClusterPlanID:
 		provider = &cloudProvider.NoHyperscalerInput{}
@@ -156,7 +150,6 @@ func (f *InputBuilderFactory) getHyperscalerProviderForPlanID(planID string, pla
 		provider = &cloudProvider.AWSInput{
 			MultiZone:                    f.config.MultiZoneCluster,
 			ControlPlaneFailureTolerance: f.config.ControlPlaneFailureTolerance,
-			IncludeNewMachineTypes:       f.includeNewMachineTypes,
 		}
 	default:
 		return nil, fmt.Errorf("case with plan %s is not supported", planID)

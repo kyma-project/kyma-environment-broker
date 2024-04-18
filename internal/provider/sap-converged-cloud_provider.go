@@ -14,13 +14,11 @@ import (
 const (
 	DefaultSapConvergedCloudRegion         = "eu-de-1"
 	DefaultSapConvergedCloudMachineType    = "g_c2_m8"
-	DefaultOldSapConvergedCloudMachineType = "g_c4_m16"
 	DefaultSapConvergedCloudMultiZoneCount = 3
 )
 
 type SapConvergedCloudInput struct {
 	MultiZone                    bool
-	IncludeNewMachineTypes       bool
 	ControlPlaneFailureTolerance string
 }
 
@@ -29,14 +27,12 @@ func (p *SapConvergedCloudInput) Defaults() *gqlschema.ClusterConfigInput {
 	if p.MultiZone {
 		zonesCount = DefaultSapConvergedCloudMultiZoneCount
 	}
-	machineType := DefaultOldSapConvergedCloudMachineType
-	if p.IncludeNewMachineTypes {
-		machineType = DefaultSapConvergedCloudMachineType
-	}
+
 	var controlPlaneFailureTolerance *string = nil
 	if p.ControlPlaneFailureTolerance != "" {
 		controlPlaneFailureTolerance = &p.ControlPlaneFailureTolerance
 	}
+	machineType := DefaultSapConvergedCloudMachineType
 	return &gqlschema.ClusterConfigInput{
 		GardenerConfig: &gqlschema.GardenerConfigInput{
 			Provider:       "openstack",

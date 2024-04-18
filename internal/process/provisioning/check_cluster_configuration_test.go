@@ -237,7 +237,7 @@ func fixInputCreator(t *testing.T) internal.ProvisionerInputCreator {
 			AutoUpdateMachineImageVersion: autoUpdateMachineImageVersion,
 			MultiZoneCluster:              true,
 			ControlPlaneFailureTolerance:  "zone",
-		}, kymaVersion, fixTrialRegionMapping(), fixFreemiumProviders(), fixture.FixOIDCConfigDTO(), false)
+		}, kymaVersion, fixTrialRegionMapping(), fixFreemiumProviders(), fixture.FixOIDCConfigDTO())
 	assert.NoError(t, err)
 
 	pp := internal.ProvisioningParameters{
