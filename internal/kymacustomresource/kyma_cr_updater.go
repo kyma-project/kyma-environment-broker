@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"log/slog"
-	"os"
 	"time"
 
 	"github.com/kyma-project/kyma-environment-broker/internal/syncqueues"
@@ -29,8 +28,7 @@ type Updater struct {
 	logger        *slog.Logger
 }
 
-func NewUpdater(k8sClient dynamic.Interface, queue syncqueues.MultiConsumerPriorityQueue, gvr schema.GroupVersionResource, sleepDuration time.Duration, labelKey string) (*Updater, error) {
-	logger := slog.New(slog.NewJSONHandler(os.Stdout, nil))
+func NewUpdater(k8sClient dynamic.Interface, queue syncqueues.MultiConsumerPriorityQueue, gvr schema.GroupVersionResource, sleepDuration time.Duration, labelKey string, logger *slog.Logger) (*Updater, error) {
 
 	logger.Info(fmt.Sprintf("Creating Kyma CR updater for label: %s", labelKey))
 
