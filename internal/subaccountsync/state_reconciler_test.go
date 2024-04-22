@@ -357,6 +357,164 @@ func TestStateReconcilerWithFakeCisServer(t *testing.T) {
 	})
 }
 
+func TestOutdatedPredicate(t *testing.T) {
+
+	reconciler := createNewReconciler(nil)
+
+	t.Run("should detect difference between false and true", func(t *testing.T) {
+		state := subaccountStateType{
+			cisState: CisStateType{BetaEnabled: false, ModifiedDate: veryOldTime},
+			resourcesState: subaccountRuntimesType{
+				runtimeId11: runtimeStateType{betaEnabled: "true"},
+			},
+		}
+		assert.True(t, reconciler.isResourceOutdated(state))
+	})
+	t.Run("should detect difference between true and false", func(t *testing.T) {
+		state := subaccountStateType{
+			cisState: CisStateType{BetaEnabled: true, ModifiedDate: veryOldTime},
+			resourcesState: subaccountRuntimesType{
+				runtimeId11: runtimeStateType{betaEnabled: "false"},
+			},
+		}
+		assert.True(t, reconciler.isResourceOutdated(state)) // outdated
+	})
+	t.Run("should detect difference between true and any other than boolean", func(t *testing.T) {
+		state := subaccountStateType{
+			cisState: CisStateType{BetaEnabled: true, ModifiedDate: veryOldTime},
+			resourcesState: subaccountRuntimesType{
+				runtimeId11: runtimeStateType{betaEnabled: "any"},
+			},
+		}
+		assert.True(t, reconciler.isResourceOutdated(state)) // outdated
+	})
+	t.Run("should detect difference between false and any other than boolean", func(t *testing.T) {
+		state := subaccountStateType{
+			cisState: CisStateType{BetaEnabled: false, ModifiedDate: veryOldTime},
+			resourcesState: subaccountRuntimesType{
+				runtimeId11: runtimeStateType{betaEnabled: "any"},
+			},
+		}
+		assert.True(t, reconciler.isResourceOutdated(state)) // outdated
+	})
+	t.Run("should detect difference between true and empty", func(t *testing.T) {
+		state := subaccountStateType{
+			cisState: CisStateType{BetaEnabled: true, ModifiedDate: veryOldTime},
+			resourcesState: subaccountRuntimesType{
+				runtimeId11: runtimeStateType{betaEnabled: ""},
+			},
+		}
+		assert.True(t, reconciler.isResourceOutdated(state)) // outdated
+	})
+	t.Run("should detect difference between false and empty", func(t *testing.T) {
+		state := subaccountStateType{
+			cisState: CisStateType{BetaEnabled: false, ModifiedDate: veryOldTime},
+			resourcesState: subaccountRuntimesType{
+				runtimeId11: runtimeStateType{betaEnabled: ""},
+			},
+		}
+		assert.True(t, reconciler.isResourceOutdated(state)) // outdated
+	})
+	t.Run("should treat as up-to-date true and true", func(t *testing.T) {
+		state := subaccountStateType{
+			cisState: CisStateType{BetaEnabled: true, ModifiedDate: veryOldTime},
+			resourcesState: subaccountRuntimesType{
+				runtimeId11: runtimeStateType{betaEnabled: "true"},
+			},
+		}
+		assert.False(t, reconciler.isResourceOutdated(state))
+	})
+	t.Run("should treat as up-to-date false and false", func(t *testing.T) {
+		state := subaccountStateType{
+			cisState: CisStateType{BetaEnabled: false, ModifiedDate: veryOldTime},
+			resourcesState: subaccountRuntimesType{
+				runtimeId11: runtimeStateType{betaEnabled: "false"},
+			},
+		}
+		assert.False(t, reconciler.isResourceOutdated(state))
+	})
+	t.Run("should detect difference between false and true if one is true", func(t *testing.T) {
+		state := subaccountStateType{
+			cisState: CisStateType{BetaEnabled: false, ModifiedDate: veryOldTime},
+			resourcesState: subaccountRuntimesType{
+				runtimeId11: runtimeStateType{betaEnabled: "true"},
+				runtimeId12: runtimeStateType{betaEnabled: "false"},
+			},
+		}
+		assert.True(t, reconciler.isResourceOutdated(state))
+	})
+	t.Run("should detect difference between true and false if one is false", func(t *testing.T) {
+		state := subaccountStateType{
+			cisState: CisStateType{BetaEnabled: true, ModifiedDate: veryOldTime},
+			resourcesState: subaccountRuntimesType{
+				runtimeId11: runtimeStateType{betaEnabled: "false"},
+				runtimeId12: runtimeStateType{betaEnabled: "true"},
+			},
+		}
+		assert.True(t, reconciler.isResourceOutdated(state)) // outdated
+	})
+	t.Run("should detect difference between true and any other than boolean", func(t *testing.T) {
+		state := subaccountStateType{
+			cisState: CisStateType{BetaEnabled: true, ModifiedDate: veryOldTime},
+			resourcesState: subaccountRuntimesType{
+				runtimeId11: runtimeStateType{betaEnabled: "any"},
+				runtimeId12: runtimeStateType{betaEnabled: "true"},
+			},
+		}
+		assert.True(t, reconciler.isResourceOutdated(state)) // outdated
+	})
+	t.Run("should detect difference between false and any other than boolean if one is not boolean", func(t *testing.T) {
+		state := subaccountStateType{
+			cisState: CisStateType{BetaEnabled: false, ModifiedDate: veryOldTime},
+			resourcesState: subaccountRuntimesType{
+				runtimeId11: runtimeStateType{betaEnabled: "any"},
+				runtimeId12: runtimeStateType{betaEnabled: "false"},
+			},
+		}
+		assert.True(t, reconciler.isResourceOutdated(state)) // outdated
+	})
+	t.Run("should detect difference between true and empty if one is empty", func(t *testing.T) {
+		state := subaccountStateType{
+			cisState: CisStateType{BetaEnabled: true, ModifiedDate: veryOldTime},
+			resourcesState: subaccountRuntimesType{
+				runtimeId11: runtimeStateType{betaEnabled: ""},
+				runtimeId12: runtimeStateType{betaEnabled: "true"},
+			},
+		}
+		assert.True(t, reconciler.isResourceOutdated(state)) // outdated
+	})
+	t.Run("should detect difference between false and empty if one is empty", func(t *testing.T) {
+		state := subaccountStateType{
+			cisState: CisStateType{BetaEnabled: false, ModifiedDate: veryOldTime},
+			resourcesState: subaccountRuntimesType{
+				runtimeId11: runtimeStateType{betaEnabled: ""},
+				runtimeId12: runtimeStateType{betaEnabled: "false"},
+			},
+		}
+		assert.True(t, reconciler.isResourceOutdated(state)) // outdated
+	})
+	t.Run("should treat as up-to-date true and all true", func(t *testing.T) {
+		state := subaccountStateType{
+			cisState: CisStateType{BetaEnabled: true, ModifiedDate: veryOldTime},
+			resourcesState: subaccountRuntimesType{
+				runtimeId11: runtimeStateType{betaEnabled: "true"},
+				runtimeId12: runtimeStateType{betaEnabled: "true"},
+			},
+		}
+		assert.False(t, reconciler.isResourceOutdated(state))
+	})
+	t.Run("should treat as up-to-date false and all false", func(t *testing.T) {
+		state := subaccountStateType{
+			cisState: CisStateType{BetaEnabled: false, ModifiedDate: veryOldTime},
+			resourcesState: subaccountRuntimesType{
+				runtimeId11: runtimeStateType{betaEnabled: "false"},
+				runtimeId12: runtimeStateType{betaEnabled: "false"},
+			},
+		}
+		assert.False(t, reconciler.isResourceOutdated(state))
+	})
+}
+
 func TestStateReconciler(t *testing.T) {
 	teardownSuite := setupSuite(t)
 	defer teardownSuite(t)

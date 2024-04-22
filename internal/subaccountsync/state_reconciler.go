@@ -293,8 +293,8 @@ func (reconciler *stateReconcilerType) isResourceOutdated(state subaccountStateT
 		cisState := state.cisState
 		for _, runtimeState := range runtimes {
 			outdated = outdated || runtimeState.betaEnabled == "" // label not set at all
-			outdated = outdated || (cisState.BetaEnabled && runtimeState.betaEnabled == "false")
-			outdated = outdated || (!cisState.BetaEnabled && runtimeState.betaEnabled == "true") // label set to different value
+			outdated = outdated || (cisState.BetaEnabled && runtimeState.betaEnabled != "true")
+			outdated = outdated || (!cisState.BetaEnabled && runtimeState.betaEnabled != "false")
 		}
 	}
 	return outdated
