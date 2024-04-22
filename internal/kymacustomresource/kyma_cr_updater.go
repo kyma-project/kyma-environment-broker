@@ -49,6 +49,7 @@ func (u *Updater) Run() error {
 			time.Sleep(u.sleepDuration)
 			continue
 		}
+		u.logger.Debug(fmt.Sprintf("dequeueing item - subaccountID: %s, betaEnabled %s", item.SubaccountID, item.BetaEnabled))
 		unstructuredList, err := u.k8sClient.Resource(u.kymaGVR).Namespace(namespace).List(context.Background(), metav1.ListOptions{
 			LabelSelector: fmt.Sprintf(subaccountIdLabelFormat, item.SubaccountID),
 		})
@@ -62,6 +63,7 @@ func (u *Updater) Run() error {
 			continue
 		}
 		retryRequired := false
+		u.logger.Debug(fmt.Sprintf("found %d Kyma CRs for subaccount", len(unstructuredList.Items)))
 		for _, kymaCrUnstructured := range unstructuredList.Items {
 			if err := u.updateBetaEnabledLabel(kymaCrUnstructured, item.BetaEnabled); err != nil {
 				u.logger.Warn("while updating Kyma CR: " + err.Error() + "item will be added back to the queue")
@@ -69,7 +71,7 @@ func (u *Updater) Run() error {
 			}
 		}
 		if retryRequired {
-			u.logger.Info("adding item back to the queue")
+			u.logger.Info(fmt.Sprintf("requeue item for SA: %s", item.SubaccountID))
 			u.queue.Insert(item)
 		}
 	}
