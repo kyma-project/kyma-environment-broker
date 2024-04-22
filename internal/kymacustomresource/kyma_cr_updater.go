@@ -75,7 +75,7 @@ func (u *Updater) Run() error {
 			}
 		}
 		if retryRequired {
-			u.logger.Info(fmt.Sprintf("Requeue item for SA: %s", item.SubaccountID))
+			u.logger.Info(fmt.Sprintf("Requeue item for subaccount: %s", item.SubaccountID))
 			u.queue.Insert(item)
 		}
 	}
