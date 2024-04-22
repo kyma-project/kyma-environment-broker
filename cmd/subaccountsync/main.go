@@ -49,8 +49,9 @@ func main() {
 		Level: logLevel,
 	})).With("service", "subaccount-sync"))
 
-	slog.Info(fmt.Sprintf("Configuration: event window size:%s, event sync interval:%s, accounts sync interval: %s, storage sync interval: %s, queue sleep interval: %s",
+	slog.Info(fmt.Sprintf("Configuration: \n\tevent window size:%s, \n\tevent sync interval:%s, \n\taccounts sync interval: %s, \n\tstorage sync interval: %s, \n\tqueue sleep interval: %s",
 		cfg.EventsWindowSize, cfg.EventsSyncInterval, cfg.AccountsSyncInterval, cfg.StorageSyncInterval, cfg.SyncQueueSleepInterval))
+	slog.Info(fmt.Sprintf("\tupdateResources: %t", cfg.UpdateResources))
 
 	// create config provider - provider still uses logrus logger
 	configProvider := kebConfig.NewConfigProvider(
