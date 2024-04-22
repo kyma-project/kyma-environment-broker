@@ -14,13 +14,6 @@ import (
 )
 
 func TestSchemaGenerator(t *testing.T) {
-	awsMachineNamesReduced := AwsMachinesNames()
-	awsMachinesDisplayReduced := AwsMachinesDisplay()
-
-	awsMachineNamesReduced = removeMachinesNamesFromList(awsMachineNamesReduced, "m5.large", "m6i.large")
-	delete(awsMachinesDisplayReduced, "m5.large")
-	delete(awsMachinesDisplayReduced, "m6i.large")
-
 	tests := []struct {
 		name                string
 		generator           func(map[string]string, map[string]string, []string, bool, bool) *map[string]interface{}
@@ -45,19 +38,6 @@ func TestSchemaGenerator(t *testing.T) {
 			updateFile:          "update-aws-schema.json",
 			fileOIDC:            "aws-schema-additional-params.json",
 			updateFileOIDC:      "update-aws-schema-additional-params.json",
-		},
-		{
-			name: "AWS reduced schema is correct",
-			generator: func(machinesDisplay, regionsDisplay map[string]string, machines []string, additionalParams, update bool) *map[string]interface{} {
-				return AWSSchema(machinesDisplay, regionsDisplay, machines, additionalParams, update, false)
-			},
-			machineTypes:        awsMachineNamesReduced,
-			machineTypesDisplay: awsMachinesDisplayReduced,
-			path:                "aws",
-			file:                "aws-schema-reduced.json",
-			updateFile:          "update-aws-schema-reduced.json",
-			fileOIDC:            "aws-schema-additional-params-reduced.json",
-			updateFileOIDC:      "update-aws-schema-additional-params-reduced.json",
 		},
 		{
 			name: "AWS schema with EU access restriction is correct",

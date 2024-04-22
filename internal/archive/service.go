@@ -61,12 +61,14 @@ func (s *Service) Run() (error, int, int) {
 
 		operations, err := s.operations.ListOperationsByInstanceID(instanceId)
 		if err != nil {
-			return err, numberOfInstancesProcessed, numberOfOperationsDeleted
+			logger.Error(fmt.Sprintf("Unable to get operations for instance: %s", err.Error()))
+			continue
 		}
 
 		archived, err := NewInstanceArchivedFromOperations(operations)
 		if err != nil {
-			return err, numberOfInstancesProcessed, numberOfOperationsDeleted
+			logger.Error(fmt.Sprintf("Unable to create archived instance: %s", err.Error()))
+			continue
 		}
 
 		if s.dryRun {
@@ -96,12 +98,14 @@ func (s *Service) Run() (error, int, int) {
 			log.Debug("Deleting runtime states for operation")
 			err := s.runtimeStates.DeleteByOperationID(operation.ID)
 			if err != nil {
-				return err, numberOfInstancesProcessed, numberOfOperationsDeleted
+				logger.Error(fmt.Sprintf("Unable to delete runtime states for operation: %s", err.Error()))
+				continue
 			}
 			log.Debug("Deleting operation")
 			err = s.operations.DeleteByID(operation.ID)
 			if err != nil {
-				return err, numberOfInstancesProcessed, numberOfOperationsDeleted
+				logger.Error(fmt.Sprintf("Unable to delete operation: %s", err.Error()))
+				continue
 			}
 			numberOfOperationsDeleted++
 		}

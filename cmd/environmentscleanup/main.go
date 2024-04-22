@@ -12,7 +12,6 @@ func main() {
 	builder.WithBrokerClient()
 	builder.WithProvisionerClient()
 	builder.WithStorage()
-	builder.WithLogger()
 
 	defer builder.Cleanup()
 

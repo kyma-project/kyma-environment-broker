@@ -158,13 +158,13 @@ func SapConvergedCloudRegionsDisplay() map[string]string {
 
 func AwsMachinesNames() []string {
 	return []string{
-		"m6i.large", // new machine
+		"m6i.large",
 		"m6i.xlarge",
 		"m6i.2xlarge",
 		"m6i.4xlarge",
 		"m6i.8xlarge",
 		"m6i.12xlarge",
-		"m5.large", // new machine
+		"m5.large",
 		"m5.xlarge",
 		"m5.2xlarge",
 		"m5.4xlarge",
@@ -175,13 +175,13 @@ func AwsMachinesNames() []string {
 
 func AwsMachinesDisplay() map[string]string {
 	return map[string]string{
-		"m6i.large":    "m6i.large (2vCPU, 8GB RAM)", // new machine
+		"m6i.large":    "m6i.large (2vCPU, 8GB RAM)",
 		"m6i.xlarge":   "m6i.xlarge (4vCPU, 16GB RAM)",
 		"m6i.2xlarge":  "m6i.2xlarge (8vCPU, 32GB RAM)",
 		"m6i.4xlarge":  "m6i.4xlarge (16vCPU, 64GB RAM)",
 		"m6i.8xlarge":  "m6i.8xlarge (32vCPU, 128GB RAM)",
 		"m6i.12xlarge": "m6i.12xlarge (48vCPU, 192GB RAM)",
-		"m5.large":     "m5.large (2vCPU, 8GB RAM)", // new machine
+		"m5.large":     "m5.large (2vCPU, 8GB RAM)",
 		"m5.xlarge":    "m5.xlarge (4vCPU, 16GB RAM)",
 		"m5.2xlarge":   "m5.2xlarge (8vCPU, 32GB RAM)",
 		"m5.4xlarge":   "m5.4xlarge (16vCPU, 64GB RAM)",
@@ -192,7 +192,7 @@ func AwsMachinesDisplay() map[string]string {
 
 func AzureMachinesNames() []string {
 	return []string{
-		"Standard_D2s_v5", // new machine
+		"Standard_D2s_v5",
 		"Standard_D4s_v5",
 		"Standard_D8s_v5",
 		"Standard_D16s_v5",
@@ -210,7 +210,7 @@ func AzureMachinesNames() []string {
 
 func AzureMachinesDisplay() map[string]string {
 	return map[string]string{
-		"Standard_D2s_v5":  "Standard_D2s_v5 (2vCPU, 8GB RAM)", // new machine
+		"Standard_D2s_v5":  "Standard_D2s_v5 (2vCPU, 8GB RAM)",
 		"Standard_D4s_v5":  "Standard_D4s_v5 (4vCPU, 16GB RAM)",
 		"Standard_D8s_v5":  "Standard_D8s_v5 (8vCPU, 32GB RAM)",
 		"Standard_D16s_v5": "Standard_D16s_v5 (16vCPU, 64GB RAM)",
@@ -242,7 +242,7 @@ func AzureLiteMachinesDisplay() map[string]string {
 
 func GcpMachinesNames() []string {
 	return []string{
-		"n2-standard-2", // new machine
+		"n2-standard-2",
 		"n2-standard-4",
 		"n2-standard-8",
 		"n2-standard-16",
@@ -253,7 +253,7 @@ func GcpMachinesNames() []string {
 
 func GcpMachinesDisplay() map[string]string {
 	return map[string]string{
-		"n2-standard-2":  "n2-standard-2 (2vCPU, 8GB RAM)", // new machine
+		"n2-standard-2":  "n2-standard-2 (2vCPU, 8GB RAM)",
 		"n2-standard-4":  "n2-standard-4 (4vCPU, 16GB RAM)",
 		"n2-standard-8":  "n2-standard-8 (8vCPU, 32GB RAM)",
 		"n2-standard-16": "n2-standard-16 (16vCPU, 64GB RAM)",
@@ -264,7 +264,7 @@ func GcpMachinesDisplay() map[string]string {
 
 func SapConvergedCloudMachinesNames() []string {
 	return []string{
-		"g_c2_m8", // new machine
+		"g_c2_m8",
 		"g_c4_m16",
 		"g_c6_m24",
 		"g_c8_m32",
@@ -277,7 +277,7 @@ func SapConvergedCloudMachinesNames() []string {
 
 func SapConvergedCloudMachinesDisplay() map[string]string {
 	return map[string]string{
-		"g_c2_m8":    "g_c2_m8 (2vCPU, 8GB RAM)", // new machine
+		"g_c2_m8":    "g_c2_m8 (2vCPU, 8GB RAM)",
 		"g_c4_m16":   "g_c4_m16 (4vCPU, 16GB RAM)",
 		"g_c6_m24":   "g_c6_m24 (6vCPU, 24GB RAM)",
 		"g_c8_m32":   "g_c8_m32 (8vCPU, 32GB RAM)",
@@ -286,20 +286,6 @@ func SapConvergedCloudMachinesDisplay() map[string]string {
 		"g_c32_m128": "g_c32_m128 (32vCPU, 128GB RAM)",
 		"g_c64_m256": "g_c64_m256 (64vCPU, 256GB RAM)",
 	}
-}
-
-func removeMachinesNamesFromList(machinesNames []string, machinesNamesToRemove ...string) []string {
-	for i, machineName := range machinesNames {
-		for _, machineNameToRemove := range machinesNamesToRemove {
-			if machineName == machineNameToRemove {
-				copy(machinesNames[i:], machinesNames[i+1:])
-				machinesNames[len(machinesNames)-1] = ""
-				machinesNames = machinesNames[:len(machinesNames)-1]
-			}
-		}
-	}
-
-	return machinesNames
 }
 
 func requiredSchemaProperties() []string {
@@ -459,7 +445,7 @@ func unmarshalSchema(schema *RootSchema) *map[string]interface{} {
 
 // Plans is designed to hold plan defaulting logic
 // keep internal/hyperscaler/azure/config.go in sync with any changes to available zones
-func Plans(plans PlansConfig, provider internal.CloudProvider, includeAdditionalParamsInSchema bool, euAccessRestricted bool, includeNewMachineTypes bool) map[string]domain.ServicePlan {
+func Plans(plans PlansConfig, provider internal.CloudProvider, includeAdditionalParamsInSchema bool, euAccessRestricted bool) map[string]domain.ServicePlan {
 	awsMachineNames := AwsMachinesNames()
 	awsMachinesDisplay := AwsMachinesDisplay()
 	awsRegionsDisplay := AWSRegionsDisplay()
@@ -475,32 +461,7 @@ func Plans(plans PlansConfig, provider internal.CloudProvider, includeAdditional
 	sapConvergedCloudMachinesDisplay := SapConvergedCloudMachinesDisplay()
 	sapConvergedCloudRegionsDisplay := SapConvergedCloudRegionsDisplay()
 
-	if !includeNewMachineTypes {
-		awsMachineNames = removeMachinesNamesFromList(awsMachineNames, "m5.large", "m6i.large")
-		delete(awsMachinesDisplay, "m5.large")
-		delete(awsMachinesDisplay, "m6i.large")
-		azureMachinesNames = removeMachinesNamesFromList(azureMachinesNames, "Standard_D2s_v5")
-		delete(azureMachinesDisplay, "Standard_D2s_v5")
-		gcpMachinesNames = removeMachinesNamesFromList(gcpMachinesNames, "n2-standard-2")
-		delete(gcpMachinesDisplay, "n2-standard-2")
-		sapConvergedCloudMachinesNames = removeMachinesNamesFromList(sapConvergedCloudMachinesNames, "g_c2_m8")
-		delete(sapConvergedCloudMachinesDisplay, "g_c2_m8")
-	}
-
-	// Schemas exposed on v2/catalog endpoint - different from provisioningRawSchema to allow backwards compatibility
-	// when a machine type switch is introduced
-	// switch to m6 if m6 is available in all regions
-	awsCatalogMachines := []string{"m5.xlarge", "m5.2xlarge", "m5.4xlarge", "m5.8xlarge", "m5.12xlarge"}
-	awsCatalogMachinesDisplay := map[string]string{
-		"m5.xlarge":   awsMachinesDisplay["m5.xlarge"],
-		"m5.2xlarge":  awsMachinesDisplay["m5.2xlarge"],
-		"m5.4xlarge":  awsMachinesDisplay["m5.4xlarge"],
-		"m5.8xlarge":  awsMachinesDisplay["m5.8xlarge"],
-		"m5.12xlarge": awsMachinesDisplay["m5.12xlarge"],
-	}
-
 	awsSchema := AWSSchema(awsMachinesDisplay, awsRegionsDisplay, awsMachineNames, includeAdditionalParamsInSchema, false, euAccessRestricted)
-	awsCatalogSchema := AWSSchema(awsCatalogMachinesDisplay, awsRegionsDisplay, awsCatalogMachines, includeAdditionalParamsInSchema, false, euAccessRestricted)
 	// awsHASchema := AWSHASchema(awsMachinesDisplay, awsMachines, includeAdditionalParamsInSchema, false)
 	azureSchema := AzureSchema(azureMachinesDisplay, azureRegionsDisplay, azureMachinesNames, includeAdditionalParamsInSchema, false, euAccessRestricted)
 	azureLiteSchema := AzureLiteSchema(azureLiteMachinesDisplay, azureRegionsDisplay, azureLiteMachinesNames, includeAdditionalParamsInSchema, false, euAccessRestricted)
@@ -521,10 +482,6 @@ func Plans(plans PlansConfig, provider internal.CloudProvider, includeAdditional
 		TrialPlanID:             defaultServicePlan(TrialPlanID, TrialPlanName, plans, trialSchema, TrialSchema(includeAdditionalParamsInSchema, true)),
 		OwnClusterPlanID:        defaultServicePlan(OwnClusterPlanID, OwnClusterPlanName, plans, ownClusterSchema, OwnClusterSchema(true)),
 		PreviewPlanID:           defaultServicePlan(PreviewPlanID, PreviewPlanName, plans, previewCatalogSchema, AWSSchema(awsMachinesDisplay, awsRegionsDisplay, awsMachineNames, includeAdditionalParamsInSchema, true, euAccessRestricted)),
-	}
-
-	if !includeNewMachineTypes {
-		outputPlans[AWSPlanID] = defaultServicePlan(AWSPlanID, AWSPlanName, plans, awsCatalogSchema, AWSSchema(awsMachinesDisplay, awsRegionsDisplay, awsMachineNames, includeAdditionalParamsInSchema, true, euAccessRestricted))
 	}
 
 	return outputPlans

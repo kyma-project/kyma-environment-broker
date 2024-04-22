@@ -56,9 +56,7 @@ import (
 	"github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	corev1 "k8s.io/api/core/v1"
 	apiextensionsv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -192,7 +190,7 @@ func NewBrokerSuiteTestWithConfig(t *testing.T, cfg *Config, version ...string) 
 			URL:                         "http://localhost",
 			DefaultGardenerShootPurpose: "testing",
 			DefaultTrialProvider:        internal.AWS,
-		}, defaultKymaVer, map[string]string{"cf-eu10": "europe", "cf-us10": "us"}, cfg.FreemiumProviders, defaultOIDCValues(), cfg.Broker.IncludeNewMachineTypesInSchema)
+		}, defaultKymaVer, map[string]string{"cf-eu10": "europe", "cf-us10": "us"}, cfg.FreemiumProviders, defaultOIDCValues())
 
 	storageCleanup, db, err := GetStorageForE2ETests()
 	assert.NoError(t, err)
@@ -1584,22 +1582,6 @@ func (s *BrokerSuiteTest) AssertKymaLabelNotExists(opId string, notExpectedLabel
 	err = s.k8sKcp.Get(context.Background(), client.ObjectKeyFromObject(obj), obj)
 
 	assert.NotContains(s.t, obj.GetLabels(), notExpectedLabel)
-}
-
-func (s *BrokerSuiteTest) AssertSecretWithKubeconfigExists(opId string) {
-	operation, err := s.db.Operations().GetOperationByID(opId)
-	assert.NoError(s.t, err)
-	secret := &corev1.Secret{
-		ObjectMeta: metav1.ObjectMeta{
-			Namespace: "kyma-system",
-			Name:      fmt.Sprintf("kubeconfig-%s", operation.RuntimeID),
-		},
-		StringData: map[string]string{},
-	}
-	err = s.k8sKcp.Get(context.Background(), client.ObjectKeyFromObject(secret), secret)
-
-	assert.NoError(s.t, err)
-
 }
 
 func (s *BrokerSuiteTest) fixServiceBindingAndInstances(t *testing.T) {

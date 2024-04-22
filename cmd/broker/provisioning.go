@@ -120,9 +120,10 @@ func NewProvisioningProcessingQueue(ctx context.Context, provisionManager *proce
 			step:  provisioning.NewGetKubeconfigStep(db.Operations(), provisionerClient),
 		},
 		{ // TODO: this step must be removed when kubeconfig is created by IM and own_cluster plan is permanently removed
-			disabled: cfg.LifecycleManagerIntegrationDisabled,
-			stage:    createRuntimeStageName,
-			step:     steps.SyncKubeconfig(db.Operations(), cli),
+			disabled:  cfg.LifecycleManagerIntegrationDisabled,
+			stage:     createRuntimeStageName,
+			step:      steps.SyncKubeconfig(db.Operations(), cli),
+			condition: provisioning.DoForOwnClusterPlanOnly,
 		},
 		{ // must be run after the secret with kubeconfig is created ("syncKubeconfig" or "checkGardenerCluster")
 			condition: provisioning.WhenBTPOperatorCredentialsProvided,

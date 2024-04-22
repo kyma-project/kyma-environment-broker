@@ -61,7 +61,7 @@ func main() {
 	kcpK8sClient, err := client.New(kcpK8sConfig, client.Options{})
 	fatalOnError(err, logs)
 
-	provisionerClient := provisioner.NewProvisionerClient(cfg.Provisioner.URL, false)
+	provisionerClient := provisioner.NewProvisionerClient(cfg.Provisioner.URL, false, logs.WithField("service", "provisioner"))
 
 	btpOperatorManager := btpmanager.NewManager(ctx, kcpK8sClient, db.Instances(), logs, cfg.DryRun, provisionerClient)
 

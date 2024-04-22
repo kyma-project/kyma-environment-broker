@@ -52,7 +52,9 @@ type App interface {
 }
 
 func NewAppBuilder() AppBuilder {
-	return AppBuilder{}
+	return AppBuilder{
+		logger: log.New(),
+	}
 }
 
 func (b *AppBuilder) WithConfig() {
@@ -91,7 +93,11 @@ func (b *AppBuilder) WithBrokerClient() {
 }
 
 func (b *AppBuilder) WithProvisionerClient() {
-	b.provisionerClient = provisioner.NewProvisionerClient(b.cfg.Provisioner.URL, b.cfg.Provisioner.QueryDumping)
+	if b.logger == nil {
+		panic("Logger is not defined")
+	}
+
+	b.provisionerClient = provisioner.NewProvisionerClient(b.cfg.Provisioner.URL, b.cfg.Provisioner.QueryDumping, b.logger)
 }
 
 func (b *AppBuilder) WithStorage() {
@@ -105,10 +111,6 @@ func (b *AppBuilder) WithStorage() {
 	dbStatsCollector := sqlstats.NewStatsCollector("broker", b.conn)
 	prometheus.MustRegister(dbStatsCollector)
 
-}
-
-func (b *AppBuilder) WithLogger() {
-	b.logger = log.New()
 }
 
 func (b *AppBuilder) Cleanup() {

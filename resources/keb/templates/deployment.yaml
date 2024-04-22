@@ -67,9 +67,9 @@ spec:
               value: "{{ .Values.disableProcessOperationsInProgress }}"
             - name: APP_BROKER_ENABLE_PLANS
               value: "{{ .Values.enablePlans }}"
-            - name: APP_ARCHIVING_ENABLED
+            - name: APP_ARCHIVE_ENABLED
               value: "{{ .Values.archiving.enabled }}"
-            - name: APP_ARCHIVING_DRY_RUN
+            - name: APP_ARCHIVE_DRY_RUN
               value: "{{ .Values.archiving.dryRun }}"
             - name: APP_CLEANING_ENABLED
               value: "{{ .Values.cleaning.enabled }}"
@@ -400,8 +400,6 @@ spec:
               value: "{{ .Values.dashboardConfig.landscapeURL }}"
             - name: APP_EVENTS_ENABLED
               value: "{{ .Values.broker.events.enabled }}"
-            - name: APP_BROKER_INCLUDE_NEW_MACHINE_TYPES_IN_SCHEMA
-              value: "{{ .Values.includeNewMachineTypesInSchema }}"
             - name: APP_METRICSV2_ENABLED
               value: "{{ .Values.metricsv2.enabled }}"
             - name: APP_METRICSV2_OPERATION_RESULT_RETENTION_PERIOD
