@@ -12,6 +12,7 @@ import (
 	"github.com/kyma-project/kyma-environment-broker/internal/storage"
 	queues "github.com/kyma-project/kyma-environment-broker/internal/syncqueues"
 	"github.com/prometheus/client_golang/prometheus"
+	"github.com/prometheus/client_golang/prometheus/collectors"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -90,13 +91,14 @@ func (s *SyncService) Run() {
 
 	// create and register metrics
 	metricsRegistry := prometheus.NewRegistry()
+	metricsRegistry.MustRegister(collectors.NewGoCollector())
+
 	metrics := NewMetrics(metricsRegistry, s.appName)
-	promHandler := promhttp.HandlerFor(metricsRegistry, promhttp.HandlerOpts{})
+	promHandler := promhttp.HandlerFor(metricsRegistry, promhttp.HandlerOpts{Registry: metricsRegistry})
 	http.Handle("/metrics", promHandler)
 
 	go func() {
-		address := fmt.Sprintf(":%s", s.cfg.MetricsPort)
-		err := http.ListenAndServe(address, nil)
+		err := http.ListenAndServe(s.cfg.MetricsPort, nil)
 		if err != nil {
 			logger.Error(fmt.Sprintf("while serving metrics: %s", err))
 		}
