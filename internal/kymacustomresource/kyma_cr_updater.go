@@ -32,6 +32,8 @@ type Updater struct {
 func NewUpdater(k8sClient dynamic.Interface, queue syncqueues.MultiConsumerPriorityQueue, gvr schema.GroupVersionResource, sleepDuration time.Duration, labelKey string) (*Updater, error) {
 	logger := slog.New(slog.NewJSONHandler(os.Stdout, nil))
 
+	logger.Info(fmt.Sprintf("Creating Kyma CR updater for label: %s", labelKey))
+
 	return &Updater{
 		k8sClient:     k8sClient,
 		queue:         queue,
@@ -49,7 +51,7 @@ func (u *Updater) Run() error {
 			time.Sleep(u.sleepDuration)
 			continue
 		}
-		u.logger.Debug(fmt.Sprintf("dequeueing item - subaccountID: %s, betaEnabled %s", item.SubaccountID, item.BetaEnabled))
+		u.logger.Debug(fmt.Sprintf("Dequeueing item - subaccountID: %s, betaEnabled %s", item.SubaccountID, item.BetaEnabled))
 		unstructuredList, err := u.k8sClient.Resource(u.kymaGVR).Namespace(namespace).List(context.Background(), metav1.ListOptions{
 			LabelSelector: fmt.Sprintf(subaccountIdLabelFormat, item.SubaccountID),
 		})
@@ -71,7 +73,7 @@ func (u *Updater) Run() error {
 			}
 		}
 		if retryRequired {
-			u.logger.Info(fmt.Sprintf("requeue item for SA: %s", item.SubaccountID))
+			u.logger.Info(fmt.Sprintf("Requeue item for SA: %s", item.SubaccountID))
 			u.queue.Insert(item)
 		}
 	}
