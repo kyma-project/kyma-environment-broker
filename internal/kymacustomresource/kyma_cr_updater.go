@@ -48,7 +48,9 @@ func (u *Updater) Run() error {
 	for {
 		item, ok := u.queue.Extract()
 		if !ok {
+			u.logger.Debug("Updater goes to sleep, queue is empty")
 			time.Sleep(u.sleepDuration)
+			u.logger.Debug("Updater wakes up")
 			continue
 		}
 		u.logger.Debug(fmt.Sprintf("Dequeueing item - subaccountID: %s, betaEnabled %s", item.SubaccountID, item.BetaEnabled))
