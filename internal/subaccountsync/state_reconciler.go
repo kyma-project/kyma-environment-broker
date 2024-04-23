@@ -1,7 +1,6 @@
 package subaccountsync
 
 import (
-	"context"
 	"fmt"
 	"time"
 
@@ -135,7 +134,7 @@ func (reconciler *stateReconcilerType) getAllSubaccountIDsFromState() subaccount
 	return subaccountsMap
 }
 
-func (reconciler *stateReconcilerType) runCronJobs(cfg Config, ctx context.Context) {
+func (reconciler *stateReconcilerType) runCronJobs(cfg Config) {
 	s := gocron.NewScheduler(time.UTC)
 
 	logs := reconciler.logger

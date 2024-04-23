@@ -122,7 +122,7 @@ func (s *SyncService) Run() {
 	var err error
 	if s.cfg.UpdateResources {
 		logger.Debug("Resource update is enabled, creating updater")
-		updater, err = kymacustomresource.NewUpdater(s.k8sClient, priorityQueue, s.kymaGVR, s.cfg.SyncQueueSleepInterval, betaEnabledLabel, logger.With("component", "updater"))
+		updater, err = kymacustomresource.NewUpdater(s.k8sClient, priorityQueue, s.kymaGVR, s.cfg.SyncQueueSleepInterval, betaEnabledLabel, s.ctx, logger.With("component", "updater"))
 		fatalOnError(err)
 	}
 
@@ -148,7 +148,7 @@ func (s *SyncService) Run() {
 
 	configureInformer(&informer, &stateReconciler, logger.With("component", "informer"), metrics)
 
-	go stateReconciler.runCronJobs(s.cfg, s.ctx)
+	go stateReconciler.runCronJobs(s.cfg)
 
 	if s.cfg.UpdateResources && stateReconciler.updater != nil {
 		logger.Info("Starting updater")
