@@ -170,7 +170,7 @@ func (s *OperationStats) Job(ctx context.Context) {
 		select {
 		case <-ticker.C:
 			if err := s.updateMetrics(); err != nil {
-				s.logger.Error("failed to update operation stats metrics", err)
+				s.logger.Error("failed to update operation stats metrics: ", err)
 			}
 		case <-ctx.Done():
 			return
@@ -240,7 +240,7 @@ func (s *OperationStats) makeKey(opType internal.OperationType, opState domain.L
 	fmtState := formatOpState(opState)
 	fmtType := formatOpType(opType)
 	if fmtType == "" || fmtState == "" || plan == "" {
-		return "", fmt.Errorf("cannot build key for operation: type: %s, state: %s with planID: %s", opType, opState, plan)
+		return "", fmt.Errorf("cannot build key for operation: type - '%s', state - '%s' with planID - '%s'", opType, opState, plan)
 	}
 	return metricKey(fmt.Sprintf("%s_%s_%s", fmtType, fmtState, plan)), nil
 }
@@ -251,6 +251,10 @@ func formatOpType(opType internal.OperationType) string {
 		return string(opType + "ing")
 	case internal.OperationTypeUpdate:
 		return "updating"
+	case internal.OperationTypeUpgradeCluster:
+		return "upgrading_cluster"
+	case internal.OperationTypeUpgradeKyma:
+		return "upgrading_kyma"
 	default:
 		return ""
 	}
