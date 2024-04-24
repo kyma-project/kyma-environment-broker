@@ -54,7 +54,7 @@ jobs:
         
     - name: Go linter
       if: steps.changed-files-specific.outputs.any_modified == 'true'
-      run: make go-lint GOLINT_TIMEOUT=${{ vars.GOLINT_TIMEOUT }}
+      run: make go-lint GOLINT_TIMEOUT = ${{ vars.GOLINT_TIMEOUT }}
 
   run-go-checks:
     runs-on: ubuntu-latest
