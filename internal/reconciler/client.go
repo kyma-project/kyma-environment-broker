@@ -104,6 +104,7 @@ func (c *client) DeleteCluster(clusterName string) error {
 		c.log.Error(err)
 		return kebError.NewTemporaryError(err.Error())
 	}
+	defer res.Body.Close()
 	switch {
 	case res.StatusCode == http.StatusNotFound:
 		return nil
