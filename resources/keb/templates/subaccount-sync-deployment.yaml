@@ -12,11 +12,11 @@ spec:
   replicas: 1
   selector:
     matchLabels:
-      app: subaccount-sync
+      app.kubernetes.io/name: subaccount-sync
   template:
     metadata:
       labels:
-        app: subaccount-sync
+        app.kubernetes.io/name: subaccount-sync
     spec:
       serviceAccountName: {{ .Values.global.kyma_environment_broker.serviceAccountName }}
       {{- with .Values.deployment.securityContext }}
