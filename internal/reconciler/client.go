@@ -44,7 +44,7 @@ func NewReconcilerClient(httpClient *http.Client, log logrus.FieldLogger, cfg *C
 }
 
 // POST /v1/clusters
-func (c *client) ApplyClusterConfig(cluster reconcilerApi.Cluster) (*reconcilerApi.HTTPClusterResponse, error) {
+func (c *client) ApplyClusterConfig(cluster reconcilerApi.Cluster) (_ *reconcilerApi.HTTPClusterResponse, err error) {
 	reqBody, err := json.Marshal(cluster)
 	if err != nil {
 		c.log.Error(err)
@@ -60,11 +60,15 @@ func (c *client) ApplyClusterConfig(cluster reconcilerApi.Cluster) (*reconcilerA
 	}
 
 	res, err := c.httpClient.Do(request)
+	defer func() {
+		if closeErr := c.closeResponseBody(res); closeErr != nil {
+			err = kebError.AsTemporaryError(closeErr, "while closing apply cluster config response")
+		}
+	}()
 	if err != nil {
 		c.log.Error(err)
 		return &reconcilerApi.HTTPClusterResponse{}, kebError.NewTemporaryError(err.Error())
 	}
-	defer res.Body.Close()
 
 	c.log.Debugf("Got response: statusCode=%d", res.StatusCode)
 	switch {
@@ -92,7 +96,7 @@ func (c *client) ApplyClusterConfig(cluster reconcilerApi.Cluster) (*reconcilerA
 }
 
 // DELETE /v1/clusters/{clusterName}
-func (c *client) DeleteCluster(clusterName string) error {
+func (c *client) DeleteCluster(clusterName string) (err error) {
 	request, err := http.NewRequest("DELETE", fmt.Sprintf("%s/v1/clusters/%s", c.config.URL, clusterName), nil)
 	if err != nil {
 		c.log.Error(err)
@@ -100,10 +104,16 @@ func (c *client) DeleteCluster(clusterName string) error {
 	}
 
 	res, err := c.httpClient.Do(request)
+	defer func() {
+		if closeErr := c.closeResponseBody(res); closeErr != nil {
+			err = kebError.AsTemporaryError(closeErr, "while closing delete cluster response")
+		}
+	}()
 	if err != nil {
 		c.log.Error(err)
 		return kebError.NewTemporaryError(err.Error())
 	}
+
 	switch {
 	case res.StatusCode == http.StatusNotFound:
 		return nil
@@ -118,7 +128,7 @@ func (c *client) DeleteCluster(clusterName string) error {
 }
 
 // GET /v1/clusters/{clusterName}/configs/{configVersion}/status
-func (c *client) GetCluster(clusterName string, configVersion int64) (*reconcilerApi.HTTPClusterResponse, error) {
+func (c *client) GetCluster(clusterName string, configVersion int64) (_ *reconcilerApi.HTTPClusterResponse, err error) {
 	request, err := http.NewRequest("GET", fmt.Sprintf("%s/v1/clusters/%s/configs/%d/status", c.config.URL, clusterName, configVersion), nil)
 	if err != nil {
 		c.log.Error(err)
@@ -126,11 +136,16 @@ func (c *client) GetCluster(clusterName string, configVersion int64) (*reconcile
 	}
 
 	res, err := c.httpClient.Do(request)
+	defer func() {
+		if closeErr := c.closeResponseBody(res); closeErr != nil {
+			err = kebError.AsTemporaryError(closeErr, "while closing get cluster response")
+		}
+	}()
 	if err != nil {
 		c.log.Error(err)
 		return &reconcilerApi.HTTPClusterResponse{}, kebError.NewTemporaryError(err.Error())
 	}
-	defer res.Body.Close()
+
 	switch {
 	case res.StatusCode == http.StatusNotFound:
 		return &reconcilerApi.HTTPClusterResponse{}, kebError.NotFoundError{}
@@ -155,7 +170,7 @@ func (c *client) GetCluster(clusterName string, configVersion int64) (*reconcile
 }
 
 // GET v1/clusters/{clusterName}/status
-func (c *client) GetLatestCluster(clusterName string) (*reconcilerApi.HTTPClusterResponse, error) {
+func (c *client) GetLatestCluster(clusterName string) (_ *reconcilerApi.HTTPClusterResponse, err error) {
 	request, err := http.NewRequest("GET", fmt.Sprintf("%s/v1/clusters/%s/status", c.config.URL, clusterName), nil)
 	if err != nil {
 		c.log.Error(err)
@@ -163,11 +178,15 @@ func (c *client) GetLatestCluster(clusterName string) (*reconcilerApi.HTTPCluste
 	}
 
 	res, err := c.httpClient.Do(request)
+	defer func() {
+		if closeErr := c.closeResponseBody(res); closeErr != nil {
+			err = kebError.AsTemporaryError(closeErr, "while closing get latest cluster response")
+		}
+	}()
 	if err != nil {
 		c.log.Error(err)
 		return &reconcilerApi.HTTPClusterResponse{}, kebError.NewTemporaryError(err.Error())
 	}
-	defer res.Body.Close()
 
 	getClusterResponse, err := ioutil.ReadAll(res.Body)
 	if err != nil {
@@ -185,7 +204,7 @@ func (c *client) GetLatestCluster(clusterName string) (*reconcilerApi.HTTPCluste
 
 // GET v1/clusters/{clusterName}/statusChanges/{offset}
 // offset is parsed to time.Duration
-func (c *client) GetStatusChange(clusterName, offset string) ([]*reconcilerApi.StatusChange, error) {
+func (c *client) GetStatusChange(clusterName, offset string) (_ []*reconcilerApi.StatusChange, err error) {
 	request, err := http.NewRequest("GET", fmt.Sprintf("%s/v1/clusters/%s/statusChanges/%s", c.config.URL, clusterName, offset), nil)
 	if err != nil {
 		c.log.Error(err)
@@ -193,11 +212,15 @@ func (c *client) GetStatusChange(clusterName, offset string) ([]*reconcilerApi.S
 	}
 
 	res, err := c.httpClient.Do(request)
+	defer func() {
+		if closeErr := c.closeResponseBody(res); closeErr != nil {
+			err = kebError.AsTemporaryError(closeErr, "while closing get status change response")
+		}
+	}()
 	if err != nil {
 		c.log.Error(err)
 		return []*reconcilerApi.StatusChange{}, err
 	}
-	defer res.Body.Close()
 
 	getStatusChangeResponse, err := ioutil.ReadAll(res.Body)
 	if err != nil {
@@ -211,6 +234,16 @@ func (c *client) GetStatusChange(clusterName, offset string) ([]*reconcilerApi.S
 		return []*reconcilerApi.StatusChange{}, err
 	}
 	return response, nil
+}
+
+func (c *client) closeResponseBody(response *http.Response) error {
+	if response == nil {
+		return nil
+	}
+	if response.Body == nil {
+		return nil
+	}
+	return response.Body.Close()
 }
 
 func httpStatusCodeError(code int) kebError.LastError {
