@@ -28,7 +28,9 @@ spec:
           image: "{{ .Values.global.images.container_registry.path }}/{{ .Values.global.images.kyma_environment_broker.dir }}kyma-environment-subaccount-sync:{{ .Values.global.images.kyma_environment_subaccount_sync.version }}"
           imagePullPolicy: Always
           ports:
-          - containerPort: 80
+          - containerPort: 8081
+            name: http
+            protocol: TCP
           env:
             - name: SUBACCOUNT_SYNC_KYMA_VERSION
               value: {{ .Values.kymaVersion | required "please specify Values.kymaVersion" | quote}}
