@@ -1,5 +1,7 @@
 GOLINT_VER = v1.55.2
-GOLINT_TIMEOUT ?= 1m
+ifeq (,$(GOLINT_TIMEOUT))
+GOLINT_TIMEOUT=1m
+endif
 
  ## The headers are represented by '##@' like 'General' and the descriptions of given command is text after '##''.
 .PHONY: help
