@@ -31,7 +31,7 @@ spec:
           - containerPort: 80
             protocol: TCP
           - containerPort: {{ .Values.subaccountSync.metricsPort }}
-            name: metrics
+            name: http
             protocol: TCP
           env:
             - name: SUBACCOUNT_SYNC_KYMA_VERSION

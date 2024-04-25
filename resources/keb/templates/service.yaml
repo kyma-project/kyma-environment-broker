@@ -34,7 +34,7 @@ spec:
     - name: http
       port: {{ .Values.subaccountSync.metricsPort }}
       protocol: TCP
-      targetPort: metrics
+      targetPort: http
     - name: proxy-status
       port: {{ .Values.global.istio.proxy.port }}
       protocol: TCP

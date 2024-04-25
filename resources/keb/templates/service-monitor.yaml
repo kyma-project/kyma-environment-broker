@@ -44,4 +44,24 @@ spec:
   selector:
     matchLabels:
 {{ include "kyma-env-broker.labels" . | indent 8 }}
+---
+apiVersion: operator.victoriametrics.com/v1beta1
+kind: VMServiceScrape
+metadata:
+  labels:
+    app.kubernetes.io/name: subaccount-sync
+  name: subaccount-sync
+  namespace: kcp-system
+spec:
+  endpoints:
+    - attach_metadata: {}
+      interval: 30s
+      port: http
+      scrapeTimeout: 10s
+  namespaceSelector:
+    matchNames:
+      - kcp-system
+  selector:
+    matchLabels:
+      app: subaccount-sync
 {{- end }}
