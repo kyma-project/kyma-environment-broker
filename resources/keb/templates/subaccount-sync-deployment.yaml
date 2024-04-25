@@ -5,7 +5,7 @@ metadata:
   name: subaccount-sync
   namespace: kcp-system
   labels:
-    app: subaccount-sync
+    app.kubernetes.io/name: subaccount-sync
   annotations:
     argocd.argoproj.io/sync-options: Prune=false
 spec:

@@ -17,7 +17,7 @@ apiVersion: security.istio.io/v1beta1
 kind: PeerAuthentication
 metadata:
   labels:
-    app: subaccount-sync
+    app.kubernetes.io/name: subaccount-sync
   name: subaccount-sync
   namespace: kcp-system
 spec:
@@ -25,4 +25,4 @@ spec:
     mode: PERMISSIVE
   selector:
     matchLabels:
-      app: subaccount-sync
+      app.kubernetes.io/name: subaccount-sync

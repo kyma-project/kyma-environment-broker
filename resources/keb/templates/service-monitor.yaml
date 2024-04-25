@@ -63,5 +63,5 @@ spec:
       - kcp-system
   selector:
     matchLabels:
-      app: subaccount-sync
+      app.kubernetes.io/name: subaccount-sync
 {{- end }}
