@@ -29,7 +29,6 @@ spec:
           imagePullPolicy: Always
           ports:
           - containerPort: 8081
-            name: http
             protocol: TCP
           env:
             - name: SUBACCOUNT_SYNC_KYMA_VERSION
