@@ -4,7 +4,7 @@ go 1.22.2
 
 require (
 	code.cloudfoundry.org/lager v2.0.0+incompatible
-	github.com/99designs/gqlgen v0.17.28
+	github.com/99designs/gqlgen v0.17.45
 	github.com/Azure/azure-sdk-for-go v68.0.0+incompatible
 	github.com/Azure/go-autorest/autorest v0.11.29
 	github.com/Azure/go-autorest/autorest/adal v0.9.23
@@ -21,9 +21,9 @@ require (
 	github.com/gorilla/mux v1.8.1
 	github.com/hashicorp/go-multierror v1.1.1
 	github.com/kennygrant/sanitize v1.2.4
-	github.com/kyma-incubator/compass/components/director v0.0.0-20230809132955-b02e11a4eec7
+	github.com/kyma-incubator/compass/components/director v0.0.0-20240329103248-7710e72be80a
 	github.com/kyma-incubator/reconciler v0.0.0-20230804125401-cbf3faa2a51f
-	github.com/kyma-project/control-plane/components/provisioner v0.0.0-20231229142643-f0ac935b7fae
+	github.com/kyma-project/control-plane/components/provisioner v0.0.0-20240423072319-9dbba9db6909
 	github.com/kyma-project/control-plane/components/schema-migrator v0.0.0-20240222095836-b3942869fc28
 	github.com/lib/pq v1.10.9
 	github.com/matryer/is v1.4.1
@@ -108,6 +108,7 @@ require (
 	github.com/prometheus/procfs v0.12.0 // indirect
 	github.com/robfig/cron/v3 v3.0.1 // indirect
 	github.com/sergi/go-diff v1.3.1 // indirect
+	github.com/sosodev/duration v1.2.0 // indirect
 	github.com/spf13/pflag v1.0.5 // indirect
 	github.com/stretchr/objx v0.5.2 // indirect
 	github.com/tidwall/gjson v1.17.1 // indirect
@@ -130,7 +131,7 @@ require (
 	golang.org/x/sys v0.18.0 // indirect
 	golang.org/x/term v0.18.0 // indirect
 	golang.org/x/text v0.14.0 // indirect
-	golang.org/x/tools v0.18.0 // indirect
+	golang.org/x/tools v0.19.0 // indirect
 	google.golang.org/protobuf v1.33.0 // indirect
 	gopkg.in/inf.v0 v0.9.1 // indirect
 	gotest.tools/v3 v3.1.0 // indirect

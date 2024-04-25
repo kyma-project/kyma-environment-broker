@@ -214,6 +214,10 @@ func (c *FakeClient) RuntimeStatus(accountID, runtimeID string) (schema.RuntimeS
 						Region:   ptr.String("fake-region"),
 						Seed:     ptr.String("fake-seed"),
 						Provider: ptr.String("aws"),
+						ProviderSpecificConfig: &schema.AWSProviderConfig{
+							AwsZones: []*schema.AWSZone{},
+							VpcCidr:  ptr.String("0.0.0.0/25"),
+						},
 					},
 					Kubeconfig: ptr.String("kubeconfig-content"),
 				},
