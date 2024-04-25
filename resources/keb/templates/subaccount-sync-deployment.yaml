@@ -28,7 +28,10 @@ spec:
           image: "{{ .Values.global.images.container_registry.path }}/{{ .Values.global.images.kyma_environment_broker.dir }}kyma-environment-subaccount-sync:{{ .Values.global.images.kyma_environment_subaccount_sync.version }}"
           imagePullPolicy: Always
           ports:
-          - containerPort: 8081
+          - containerPort: 80
+            protocol: TCP
+          - containerPort: {{ .Values.subaccountSync.metricsPort }}
+            name: metrics
             protocol: TCP
           env:
             - name: SUBACCOUNT_SYNC_KYMA_VERSION
