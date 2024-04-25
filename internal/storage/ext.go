@@ -48,6 +48,7 @@ type Operations interface {
 	Updating
 
 	GetLastOperation(instanceID string) (*internal.Operation, error)
+	GetLastOperationByTypes(instanceID string, types []internal.OperationType) (*internal.Operation, error)
 	GetOperationByID(operationID string) (*internal.Operation, error)
 	GetNotFinishedOperationsByType(operationType internal.OperationType) ([]internal.Operation, error)
 	GetOperationStatsByPlan() (map[string]internal.OperationStats, error)

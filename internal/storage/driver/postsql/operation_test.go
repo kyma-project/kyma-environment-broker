@@ -115,6 +115,10 @@ func TestOperation(t *testing.T) {
 		require.NoError(t, err)
 		assert.Equal(t, latestOperation.ID, lastOp.ID)
 
+		lastProvisioning, err := svc.GetLastOperationByTypes("inst-id", []internal.OperationType{internal.OperationTypeProvision})
+		require.NoError(t, err)
+		assert.Equal(t, givenOperation.ID, lastProvisioning.ID)
+
 		latestOp, err := svc.GetOperationByInstanceID("inst-id")
 		require.NoError(t, err)
 		assert.Equal(t, latestPendingOperation.ID, latestOp.ID)
@@ -207,6 +211,10 @@ func TestOperation(t *testing.T) {
 		lastOp, err := svc.GetLastOperation("inst-id")
 		require.NoError(t, err)
 		assert.Equal(t, latestOperation.ID, lastOp.ID)
+
+		lastProvisioning, err := svc.GetLastOperationByTypes("inst-id", []internal.OperationType{internal.OperationTypeProvision})
+		require.NoError(t, err)
+		assert.Equal(t, latestOperation.ID, lastProvisioning.ID)
 
 		// then
 		assertOperation(t, givenOperation, gotOperation.Operation)
@@ -366,6 +374,10 @@ func TestOperation(t *testing.T) {
 		require.NoError(t, err)
 		assert.Equal(t, givenOperation2.Operation.ID, lastOp.ID)
 
+		lastKymaUpgrade, err := svc.GetLastOperationByTypes("inst-id", []internal.OperationType{internal.OperationTypeUpgradeKyma})
+		require.NoError(t, err)
+		assert.Equal(t, givenOperation2.Operation.ID, lastKymaUpgrade.ID)
+
 		assertUpgradeKymaOperation(t, givenOperation3, *op)
 
 		ops, count, totalCount, err := svc.ListUpgradeKymaOperationsByOrchestrationID(orchestrationID, dbmodel.OperationFilter{PageSize: 10, Page: 1})
@@ -439,6 +451,10 @@ func TestOperation(t *testing.T) {
 		lastOp, err := svc.GetLastOperation("inst-id")
 		require.NoError(t, err)
 		assert.Equal(t, givenOperation2.Operation.ID, lastOp.ID)
+
+		lastClusterUpgrade, err := svc.GetLastOperationByTypes("inst-id", []internal.OperationType{internal.OperationTypeUpgradeCluster})
+		require.NoError(t, err)
+		assert.Equal(t, givenOperation2.Operation.ID, lastClusterUpgrade.ID)
 
 		ops, count, totalCount, err := svc.ListUpgradeClusterOperationsByOrchestrationID(orchestrationID, dbmodel.OperationFilter{PageSize: 10, Page: 1})
 		require.NoError(t, err)
@@ -529,6 +545,91 @@ func TestOperation(t *testing.T) {
 		require.Equal(t, 3, count)
 		require.Equal(t, 3, totalCount)
 	})
+
+	t.Run("Last operation based on types", func(t *testing.T) {
+		storageCleanup, brokerStorage, err := GetStorageForDatabaseTests()
+		require.NoError(t, err)
+		require.NotNil(t, brokerStorage)
+		defer func() {
+			err := storageCleanup()
+			assert.NoError(t, err)
+		}()
+
+		provisioning := fixture.FixOperation("provisioning-id", "inst-id", internal.OperationTypeProvision)
+		provisioning.CreatedAt = provisioning.CreatedAt.Truncate(time.Millisecond)
+		provisioning.UpdatedAt = provisioning.UpdatedAt.Truncate(time.Millisecond)
+
+		update := fixture.FixOperation("update-id", "inst-id", internal.OperationTypeUpdate)
+		update.CreatedAt = update.CreatedAt.Truncate(time.Millisecond).Add(time.Minute)
+		update.UpdatedAt = update.UpdatedAt.Truncate(time.Millisecond).Add(2 * time.Minute)
+
+		deprovisioning := fixture.FixOperation("deprovisioning-id", "inst-id", internal.OperationTypeDeprovision)
+		deprovisioning.CreatedAt = deprovisioning.CreatedAt.Truncate(time.Millisecond).Add(10 * time.Minute)
+		deprovisioning.UpdatedAt = deprovisioning.UpdatedAt.Truncate(time.Millisecond).Add(12 * time.Minute)
+
+		kymaUpgrade := fixture.FixOperation("kyma-upgrade-id", "inst-id", internal.OperationTypeUpgradeKyma)
+		kymaUpgrade.CreatedAt = kymaUpgrade.CreatedAt.Truncate(time.Millisecond).Add(20 * time.Minute)
+		kymaUpgrade.UpdatedAt = kymaUpgrade.UpdatedAt.Truncate(time.Millisecond).Add(22 * time.Minute)
+
+		clusterUpgrade := fixture.FixOperation("cluster-upgrade-id", "inst-id", internal.OperationTypeUpgradeCluster)
+		clusterUpgrade.CreatedAt = clusterUpgrade.CreatedAt.Truncate(time.Millisecond).Add(30 * time.Minute)
+		clusterUpgrade.UpdatedAt = clusterUpgrade.UpdatedAt.Truncate(time.Millisecond).Add(32 * time.Minute)
+
+		svc := brokerStorage.Operations()
+
+		// when
+		err = svc.InsertOperation(provisioning)
+		require.NoError(t, err)
+		err = svc.InsertOperation(update)
+		require.NoError(t, err)
+		err = svc.InsertOperation(deprovisioning)
+		require.NoError(t, err)
+		err = svc.InsertOperation(kymaUpgrade)
+		require.NoError(t, err)
+		err = svc.InsertOperation(clusterUpgrade)
+		require.NoError(t, err)
+
+		// then
+		operation, err := svc.GetLastOperationByTypes("inst-id", []internal.OperationType{
+			internal.OperationTypeProvision,
+			internal.OperationTypeUpdate,
+			internal.OperationTypeDeprovision,
+			internal.OperationTypeUpgradeKyma,
+			internal.OperationTypeUpgradeCluster,
+		})
+		require.NoError(t, err)
+		assert.Equal(t, clusterUpgrade.ID, operation.ID)
+
+		operation, err = svc.GetLastOperationByTypes("inst-id", []internal.OperationType{
+			internal.OperationTypeProvision,
+			internal.OperationTypeUpdate,
+			internal.OperationTypeDeprovision,
+			internal.OperationTypeUpgradeKyma,
+		})
+		require.NoError(t, err)
+		assert.Equal(t, kymaUpgrade.ID, operation.ID)
+
+		operation, err = svc.GetLastOperationByTypes("inst-id", []internal.OperationType{
+			internal.OperationTypeProvision,
+			internal.OperationTypeUpdate,
+			internal.OperationTypeDeprovision,
+		})
+		require.NoError(t, err)
+		assert.Equal(t, deprovisioning.ID, operation.ID)
+
+		operation, err = svc.GetLastOperationByTypes("inst-id", []internal.OperationType{
+			internal.OperationTypeProvision,
+			internal.OperationTypeUpdate,
+		})
+		require.NoError(t, err)
+		assert.Equal(t, update.ID, operation.ID)
+
+		operation, err = svc.GetLastOperationByTypes("inst-id", []internal.OperationType{
+			internal.OperationTypeProvision,
+		})
+		require.NoError(t, err)
+		assert.Equal(t, provisioning.ID, operation.ID)
+	})
 }
 
 func assertUpdateState(t *testing.T, svc storage.Operations, orchestrationID string, latestOp *internal.Operation) {
@@ -586,6 +687,9 @@ func assertEmptyResultForNonExistingIds(t *testing.T, svc storage.Operations) {
 	require.Error(t, err, "Operation with instance_id inst-id not exist")
 
 	_, err = svc.GetLastOperation("non-existing-inst-id")
+	require.Error(t, err, "Operation with instance_id inst-id not exist")
+
+	_, err = svc.GetLastOperationByTypes("non-existing-inst-id", []internal.OperationType{})
 	require.Error(t, err, "Operation with instance_id inst-id not exist")
 
 	_, err = svc.GetOperationByInstanceID("non-existing-inst-id")

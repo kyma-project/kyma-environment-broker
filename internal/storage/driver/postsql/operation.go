@@ -400,7 +400,7 @@ func (s *operations) GetLastOperation(instanceID string) (*internal.Operation, e
 	op := internal.Operation{}
 	var lastErr dberr.Error
 	err := wait.PollImmediate(defaultRetryInterval, defaultRetryTimeout, func() (bool, error) {
-		operation, lastErr = session.GetLastOperation(instanceID)
+		operation, lastErr = session.GetLastOperation(instanceID, []internal.OperationType{})
 		if lastErr != nil {
 			if dberr.IsNotFound(lastErr) {
 				lastErr = dberr.NotFound("Operation with instance_id %s not exist", instanceID)
@@ -423,6 +423,26 @@ func (s *operations) GetLastOperation(instanceID string) (*internal.Operation, e
 		return nil, err
 	}
 	return &op, nil
+}
+
+// GetLastOperationByTypes returns Operation (with one of given types) for given instance ID which is not in 'pending' state. Returns an error if the operation does not exist.
+func (s *operations) GetLastOperationByTypes(instanceID string, types []internal.OperationType) (*internal.Operation, error) {
+	session := s.NewReadSession()
+	dto, dbErr := session.GetLastOperation(instanceID, types)
+	if dbErr != nil {
+		return nil, dbErr
+	}
+
+	operation := internal.Operation{}
+	err := json.Unmarshal([]byte(dto.Data), &operation)
+	if err != nil {
+		return nil, fmt.Errorf("while unmarshalling operation data: %w", err)
+	}
+	operation, err = s.toOperation(&dto, operation)
+	if err != nil {
+		return nil, err
+	}
+	return &operation, nil
 }
 
 // GetOperationByID returns Operation with given ID. Returns an error if the operation does not exist.

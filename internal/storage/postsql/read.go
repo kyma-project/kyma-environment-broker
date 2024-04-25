@@ -152,10 +152,13 @@ func (r readSession) FindAllInstancesForSubAccounts(subAccountslist []string) ([
 	return instances, nil
 }
 
-func (r readSession) GetLastOperation(instanceID string) (dbmodel.OperationDTO, dberr.Error) {
+func (r readSession) GetLastOperation(instanceID string, types []internal.OperationType) (dbmodel.OperationDTO, dberr.Error) {
 	inst := dbr.Eq("instance_id", instanceID)
 	state := dbr.Neq("state", []string{orchestration.Pending, orchestration.Canceled})
 	condition := dbr.And(inst, state)
+	if len(types) > 0 {
+		condition = dbr.And(condition, dbr.Expr("type IN ?", types))
+	}
 	operation, err := r.getLastOperation(condition)
 	if err != nil {
 		switch {

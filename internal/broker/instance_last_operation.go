@@ -6,6 +6,7 @@ import (
 	"net/http"
 
 	"github.com/kyma-project/kyma-environment-broker/common/orchestration"
+	"github.com/kyma-project/kyma-environment-broker/internal"
 	"github.com/kyma-project/kyma-environment-broker/internal/storage"
 	"github.com/kyma-project/kyma-environment-broker/internal/storage/dberr"
 	"github.com/pivotal-cf/brokerapi/v8/domain"
@@ -35,7 +36,14 @@ func (b *LastOperationEndpoint) LastOperation(ctx context.Context, instanceID st
 	logger := b.log.WithField("instanceID", instanceID).WithField("operationID", details.OperationData)
 
 	if details.OperationData == "" {
-		lastOp, err := b.operationStorage.GetLastOperation(instanceID)
+		lastOp, err := b.operationStorage.GetLastOperationByTypes(
+			instanceID,
+			[]internal.OperationType{
+				internal.OperationTypeProvision,
+				internal.OperationTypeDeprovision,
+				internal.OperationTypeUpdate,
+			},
+		)
 		if err != nil {
 			statusCode := http.StatusInternalServerError
 			if dberr.IsNotFound(err) {
