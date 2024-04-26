@@ -2,6 +2,7 @@ package deprovisioning
 
 import (
 	"context"
+	"fmt"
 	"time"
 
 	"github.com/kyma-project/kyma-environment-broker/internal/broker"
@@ -52,7 +53,8 @@ func (step *DeleteKymaResourceStep) Run(operation internal.Operation, logger log
 	if operation.KymaTemplate == "" {
 		cfg, err := step.configProvider.ProvideForGivenVersionAndPlan(step.defaultKymaVersion, broker.PlanNamesMapping[operation.Plan])
 		if err != nil {
-			return step.operationManager.RetryOperationWithoutFail(operation, step.Name(), "unable to get config for given version and plan", 5*time.Second, 30*time.Second, logger)
+			return step.operationManager.RetryOperationWithoutFail(operation, step.Name(), "unable to get config for given version and plan", 5*time.Second, 30*time.Second, logger,
+				fmt.Errorf("unable to get config for given version and plan"))
 		}
 		modifiedOperation, backoff, err := step.operationManager.UpdateOperation(operation, func(op *internal.Operation) {
 			op.KymaTemplate = cfg.KymaTemplate
@@ -64,7 +66,8 @@ func (step *DeleteKymaResourceStep) Run(operation internal.Operation, logger log
 	}
 	obj, err := steps.DecodeKymaTemplate(operation.KymaTemplate)
 	if err != nil {
-		return step.operationManager.RetryOperationWithoutFail(operation, step.Name(), "unable to decode kyma template", 5*time.Second, 30*time.Second, logger)
+		return step.operationManager.RetryOperationWithoutFail(operation, step.Name(), "unable to decode kyma template", 5*time.Second, 30*time.Second, logger,
+			fmt.Errorf("unable to decode kyma template"))
 	}
 
 	if operation.KymaResourceNamespace == "" {
@@ -77,8 +80,8 @@ func (step *DeleteKymaResourceStep) Run(operation internal.Operation, logger log
 
 		instance, err := step.instances.GetByID(operation.InstanceID)
 		if err != nil {
-			logger.Errorf("Unable to get instance: %s", err.Error())
-			return step.operationManager.RetryOperationWithoutFail(operation, err.Error(), "unable to get instance", 15*time.Second, 2*time.Minute, logger)
+			logger.Warnf("Unable to get instance: %s", err.Error())
+			return step.operationManager.RetryOperationWithoutFail(operation, err.Error(), "unable to get instance", 15*time.Second, 2*time.Minute, logger, err)
 		}
 		kymaResourceName = steps.KymaNameFromInstance(instance)
 		// save the kyma resource name if it was taken from the instance.runtimeID
@@ -107,8 +110,8 @@ func (step *DeleteKymaResourceStep) Run(operation internal.Operation, logger log
 		if errors.IsNotFound(err) {
 			logger.Info("no Kyma resource to delete - ignoring")
 		} else {
-			logger.Errorf("unable to delete the Kyma resource: %s", err)
-			return step.operationManager.RetryOperationWithoutFail(operation, step.Name(), "unable to delete the Kyma resource", backoffForK8SOperation, timeoutForK8sOperation, logger)
+			logger.Warnf("unable to delete the Kyma resource: %s", err)
+			return step.operationManager.RetryOperationWithoutFail(operation, step.Name(), "unable to delete the Kyma resource", backoffForK8SOperation, timeoutForK8sOperation, logger, err)
 		}
 	}
 

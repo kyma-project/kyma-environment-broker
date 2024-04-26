@@ -69,9 +69,13 @@ func (om *OperationManager) RetryOperation(operation internal.Operation, errorMe
 }
 
 // RetryOperationWithoutFail checks if operation should be retried or updates the status to InProgress, but omits setting the operation to failed if maxTime is reached
-func (om *OperationManager) RetryOperationWithoutFail(operation internal.Operation, stepName string, description string, retryInterval, maxTime time.Duration, log logrus.FieldLogger) (internal.Operation, time.Duration, error) {
-	log.Infof("Retry Operation was triggered with message: %s", description)
-	log.Infof("Retrying for %s in %s steps", maxTime.String(), retryInterval.String())
+func (om *OperationManager) RetryOperationWithoutFail(operation internal.Operation, stepName string, description string, retryInterval, maxTime time.Duration, log logrus.FieldLogger, opErr error) (internal.Operation, time.Duration, error) {
+
+	if opErr != nil {
+		log.Warnf("error while invoking the step: %s", opErr.Error())
+	}
+
+	log.Infof("retrying for %s in %s steps", maxTime.String(), retryInterval.String())
 	if time.Since(operation.UpdatedAt) < maxTime {
 		return operation, retryInterval, nil
 	}
@@ -86,7 +90,11 @@ func (om *OperationManager) RetryOperationWithoutFail(operation internal.Operati
 	}
 
 	op.EventErrorf(fmt.Errorf(description), "step %s failed retries: operation continues", stepName)
-	log.Errorf("Omitting after %s of failing retries", maxTime.String())
+	if opErr != nil {
+		log.Errorf("omitting after %s of failing retries, last error: %s", maxTime.String(), opErr.Error())
+	} else {
+		log.Errorf("omitting after %s of failing retries", maxTime.String())
+	}
 	return op, 0, nil
 }
 

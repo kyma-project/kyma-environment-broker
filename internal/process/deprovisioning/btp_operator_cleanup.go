@@ -103,7 +103,7 @@ func (s *BTPOperatorCleanupStep) Run(operation internal.Operation, log logrus.Fi
 		}
 		log.Warnf("Error: %+v", err)
 
-		return s.operationManager.RetryOperationWithoutFail(operation, s.Name(), fmt.Sprintf("failed to get kube client: %s", err.Error()), time.Second, 30*time.Second, log)
+		return s.operationManager.RetryOperationWithoutFail(operation, s.Name(), fmt.Sprintf("failed to get kube client: %s", err.Error()), time.Second, 30*time.Second, log, err)
 	}
 	if operation.UserAgent == broker.AccountCleanupJob {
 		log.Info("executing soft delete cleanup for accountcleanup-job")

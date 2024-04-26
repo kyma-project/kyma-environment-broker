@@ -61,7 +61,7 @@ func (step *CheckGardenerClusterDeletedStep) Run(operation internal.Operation, l
 	if err == nil {
 		logger.Infof("GardenerCluster resource still exists")
 		//TODO: extract the timeout as a configuration setting
-		return step.operationManager.RetryOperationWithoutFail(operation, step.Name(), "GardenerCluster resource still exists", 5*time.Second, 1*time.Minute, logger)
+		return step.operationManager.RetryOperationWithoutFail(operation, step.Name(), "GardenerCluster resource still exists", 5*time.Second, 1*time.Minute, logger, nil)
 	}
 
 	if !errors.IsNotFound(err) {
@@ -70,8 +70,8 @@ func (step *CheckGardenerClusterDeletedStep) Run(operation internal.Operation, l
 			return operation, 0, nil
 		}
 
-		logger.Errorf("unable to check GardenerCluster resource existence: %s", err)
-		return step.operationManager.RetryOperationWithoutFail(operation, step.Name(), "unable to check GardenerCluster resource existence", backoffForK8SOperation, timeoutForK8sOperation, logger)
+		logger.Warnf("unable to check GardenerCluster resource existence: %s", err)
+		return step.operationManager.RetryOperationWithoutFail(operation, step.Name(), "unable to check GardenerCluster resource existence", backoffForK8SOperation, timeoutForK8sOperation, logger, err)
 	}
 
 	return step.operationManager.UpdateOperation(operation, func(op *internal.Operation) {
