@@ -8,6 +8,7 @@ type Metrics struct {
 	cisRequests *prometheus.CounterVec
 	states      *prometheus.GaugeVec
 	informer    *prometheus.CounterVec
+	timeInQueue prometheus.Gauge
 }
 
 func NewMetrics(reg prometheus.Registerer, namespace string) *Metrics {
@@ -36,6 +37,11 @@ func NewMetrics(reg prometheus.Registerer, namespace string) *Metrics {
 			Namespace: namespace,
 			Name:      "priority_queue_size",
 			Help:      "Queue size.",
+		}),
+		timeInQueue: prometheus.NewGauge(prometheus.GaugeOpts{
+			Namespace: namespace,
+			Name:      "time_in_queue",
+			Help:      "Time spent in queue.",
 		}),
 	}
 	reg.MustRegister(m.queue, m.queueOps, m.states, m.informer, m.cisRequests)

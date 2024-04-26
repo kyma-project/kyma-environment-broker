@@ -114,6 +114,7 @@ func (s *SyncService) Run() {
 		OnExtract: func(queueSize int, timeEnqueued int64) {
 			metrics.queue.Set(float64(queueSize))
 			metrics.queueOps.With(prometheus.Labels{"operation": "extract"}).Inc()
+			metrics.timeInQueue.Set(float64(epochInMillis() - timeEnqueued))
 		},
 	})
 
