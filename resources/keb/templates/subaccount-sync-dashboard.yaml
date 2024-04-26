@@ -1,7 +1,7 @@
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: subaccount-sync-dashboard
+  name: {{ include "kyma-env-broker.fullname" . }}-subaccount-sync-dashboard
   namespace: {{ .Release.Namespace }}
   labels:
     grafana_dashboard: "1"
@@ -9,5 +9,5 @@ metadata:
   annotations:
     argocd.argoproj.io/sync-options: Prune=false
 data:
-  subaccount-sync-dashboard.json: |-
+  {{ include "kyma-env-broker.fullname" . }}-subaccount-sync-dashboard.json: |-
 {{ .Files.Get "files/subaccount-sync-dashboard.json" | indent 4 }}
