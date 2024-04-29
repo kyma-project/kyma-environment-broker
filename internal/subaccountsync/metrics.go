@@ -17,7 +17,7 @@ func NewMetrics(reg prometheus.Registerer, namespace string) *Metrics {
 			Namespace: namespace,
 			Name:      "in_memory_states",
 			Help:      "Information about in-memory states.",
-		}, []string{"type"}),
+		}, []string{"type", "value"}),
 		queueOps: prometheus.NewCounterVec(prometheus.CounterOpts{
 			Namespace: namespace,
 			Name:      "priority_queue_ops",
@@ -27,7 +27,7 @@ func NewMetrics(reg prometheus.Registerer, namespace string) *Metrics {
 			Namespace: namespace,
 			Name:      "cis_requests",
 			Help:      "CIS requests.",
-		}, []string{"endpoint"}),
+		}, []string{"endpoint", "status"}),
 		informer: prometheus.NewCounterVec(prometheus.CounterOpts{
 			Namespace: namespace,
 			Name:      "informer",

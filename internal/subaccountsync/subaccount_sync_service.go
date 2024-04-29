@@ -111,10 +111,11 @@ func (s *SyncService) Run() {
 			metrics.queue.Set(float64(queueSize))
 			metrics.queueOps.With(prometheus.Labels{"operation": "insert"}).Inc()
 		},
-		OnExtract: func(queueSize int, timeEnqueued int64) {
+		OnExtract: func(queueSize int, timeEnqueuedNano int64) {
 			metrics.queue.Set(float64(queueSize))
 			metrics.queueOps.With(prometheus.Labels{"operation": "extract"}).Inc()
-			metrics.timeInQueue.Set(float64(epochInMillis() - timeEnqueued))
+			timeEnqueuedMillis := timeEnqueuedNano / int64(time.Millisecond)
+			metrics.timeInQueue.Set(float64(timeEnqueuedMillis))
 		},
 	})
 
