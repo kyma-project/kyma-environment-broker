@@ -133,13 +133,13 @@ func (s *OperationStats) Handler(_ context.Context, event interface{}) error {
 		return fmt.Errorf("expected process.OperationStepProcessed but got %+v", event)
 	}
 
-	opState := payload.OpState
+	opState := payload.Operation.State
 
 	if opState != domain.Failed && opState != domain.Succeeded {
-		return fmt.Errorf("operation state is %s, but operation counter support events only from failed or succeded operations", payload.OpState)
+		return fmt.Errorf("operation state is %s, but operation counter support events only from failed or succeded operations", payload.Operation.State)
 	}
 
-	key, err := s.makeKey(payload.OpType, opState, payload.PlanID)
+	key, err := s.makeKey(payload.Operation.Type, opState, payload.PlanID)
 	if err != nil {
 		s.logger.Error(err)
 		return err

@@ -441,9 +441,10 @@ cleaning:
 
 metricsv2:
   enabled: false
-  operationResultRetentionPeriod: 336h
+  operationResultRetentionPeriod: 1h
   operationResultPoolingInterval: 1m
   operationStatsPoolingInterval: 1m
+  operationResultFinishedOperationRetentionPeriod: 3h
 
 freemiumWhitelistedGlobalAccountIds: |-
   whitelist:

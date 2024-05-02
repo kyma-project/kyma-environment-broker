@@ -18,7 +18,7 @@ import (
 // so instead KEB queries the database for last 14 days worth of data and then for deltas
 // during the ellapsed time
 const (
-	Retention       = 14 * 24 * time.Hour
+	Retention       = 1 * time.Hour
 	PollingInterval = 30 * time.Second
 )
 

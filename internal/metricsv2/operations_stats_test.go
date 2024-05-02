@@ -111,10 +111,8 @@ func TestOperationsCounter(t *testing.T) {
 				go func() {
 					defer wg.Done()
 					err := ctr.Handler(context.TODO(), process.OperationFinished{
-						OpId:    "test1",
-						PlanID:  opPlan1,
-						OpState: opState1,
-						OpType:  opType1,
+						PlanID:    opPlan1,
+						Operation: internal.Operation{Type: opType1, State: opState1, ID: "test1"},
 					})
 					assert.NoError(t, err)
 				}()
@@ -130,10 +128,8 @@ func TestOperationsCounter(t *testing.T) {
 				go func() {
 					defer wg.Done()
 					err := ctr.Handler(context.TODO(), process.OperationFinished{
-						OpId:    "test2",
-						PlanID:  opPlan2,
-						OpState: opState2,
-						OpType:  opType2,
+						PlanID:    opPlan2,
+						Operation: internal.Operation{Type: opType2, State: opState2, ID: "test2"},
 					})
 					assert.NoError(t, err)
 				}()
@@ -149,10 +145,8 @@ func TestOperationsCounter(t *testing.T) {
 				go func() {
 					defer wg.Done()
 					err := ctr.Handler(context.TODO(), process.OperationFinished{
-						OpId:    "test3",
-						PlanID:  opPlan3,
-						OpState: opState3,
-						OpType:  opType3,
+						PlanID:    opPlan3,
+						Operation: internal.Operation{Type: opType3, State: opState3, ID: "test3"},
 					})
 					assert.NoError(t, err)
 				}()

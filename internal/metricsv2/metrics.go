@@ -28,10 +28,11 @@ type Exposer interface {
 }
 
 type Config struct {
-	Enabled                        bool          `envconfig:"default=false"`
-	OperationResultRetentionPeriod time.Duration `envconfig:"default=336h"`
-	OperationResultPoolingInterval time.Duration `envconfig:"default=1m"`
-	OperationStatsPoolingInterval  time.Duration `envconfig:"default=1m"`
+	Enabled                                         bool          `envconfig:"default=false"`
+	OperationResultRetentionPeriod                  time.Duration `envconfig:"default=1h"`
+	OperationResultPoolingInterval                  time.Duration `envconfig:"default=1m"`
+	OperationStatsPoolingInterval                   time.Duration `envconfig:"default=1m"`
+	OperationResultFinishedOperationRetentionPeriod time.Duration `envconfig:"default=3h"`
 }
 
 type RegisterContainer struct {
@@ -60,7 +61,7 @@ func Register(ctx context.Context, sub event.Subscriber, operations storage.Oper
 	sub.Subscribe(process.OperationSucceeded{}, opDurationCollector.OnOperationSucceeded)
 	sub.Subscribe(process.OperationStepProcessed{}, opDurationCollector.OnOperationStepProcessed)
 	sub.Subscribe(process.OperationFinished{}, opStats.Handler)
-	sub.Subscribe(process.DeprovisioningSucceeded{}, opResult.Handler)
+	sub.Subscribe(process.OperationFinished{}, opResult.Handler)
 
 	logger.Infof(fmt.Sprintf("%s -> enabled", logPrefix))
 

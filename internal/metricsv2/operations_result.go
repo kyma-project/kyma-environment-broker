@@ -6,8 +6,9 @@ import (
 	"sync"
 	"time"
 
-	"github.com/kyma-project/kyma-environment-broker/internal"
 	"github.com/kyma-project/kyma-environment-broker/internal/process"
+
+	"github.com/kyma-project/kyma-environment-broker/internal"
 	"github.com/kyma-project/kyma-environment-broker/internal/storage"
 	"github.com/pivotal-cf/brokerapi/v8/domain"
 	"github.com/prometheus/client_golang/prometheus"
@@ -16,13 +17,14 @@ import (
 )
 
 type operationsResult struct {
-	logger          logrus.FieldLogger
-	metrics         *prometheus.GaugeVec
-	lastUpdate      time.Time
-	operations      storage.Operations
-	cache           map[string]internal.Operation
-	poolingInterval time.Duration
-	sync            sync.Mutex
+	logger                           logrus.FieldLogger
+	metrics                          *prometheus.GaugeVec
+	lastUpdate                       time.Time
+	operations                       storage.Operations
+	cache                            map[string]internal.Operation
+	poolingInterval                  time.Duration
+	sync                             sync.Mutex
+	finishedOperationRetentionPeriod time.Duration // zero means metrics are stored forever, otherwise they are deleted after this period (starting from the time of operation finish)
 }
 
 var _ Exposer = (*operationsResult)(nil)
@@ -39,7 +41,8 @@ func NewOperationResult(ctx context.Context, db storage.Operations, cfg Config, 
 			Name:      "operation_result",
 			Help:      "Results of metrics",
 		}, []string{"operation_id", "instance_id", "global_account_id", "plan_id", "type", "state", "error_category", "error_reason", "error"}),
-		poolingInterval: cfg.OperationResultPoolingInterval,
+		poolingInterval:                  cfg.OperationResultPoolingInterval,
+		finishedOperationRetentionPeriod: cfg.OperationResultFinishedOperationRetentionPeriod,
 	}
 	go opInfo.Job(ctx)
 	return opInfo
@@ -70,15 +73,20 @@ func (s *operationsResult) updateOperation(op internal.Operation) {
 	oldOp, found := s.cache[op.ID]
 	if found {
 		s.setOperation(oldOp, 0)
-		Debug(s.logger, "@Debug", fmt.Sprintf("@metricsv2 : operation ID %s set to 0 with state %s and type %s", op.ID, op.State, op.Type))
 	}
 	s.setOperation(op, 1)
-	Debug(s.logger, "@Debug", fmt.Sprintf("@metricsv2 : operation ID %s set to 1 with state %s and type %s", op.ID, op.State, op.Type))
 	if op.State == domain.Failed || op.State == domain.Succeeded {
-		Debug(s.logger, "@Debug", fmt.Sprintf("@metricsv2 : deleting operation ID %s from cache with status %s and type %s", op.ID, op.State, op.Type))
 		delete(s.cache, op.ID)
+
+		// keep those metric and remove after finishedOperationRetentionPeriod
+		if s.finishedOperationRetentionPeriod > 0 {
+			go func(id string) {
+				time.Sleep(s.finishedOperationRetentionPeriod)
+				count := s.metrics.DeletePartialMatch(prometheus.Labels{"operation_id": id})
+				s.logger.Debugf("Deleted %d metrics for operation %s", count, id)
+			}(op.ID)
+		}
 	} else {
-		Debug(s.logger, "@Debug", fmt.Sprintf("@metricsv2 : adding operation ID %s to cache with status %s and type %s", op.ID, op.State, op.Type))
 		s.cache[op.ID] = op
 	}
 }
@@ -86,64 +94,51 @@ func (s *operationsResult) updateOperation(op internal.Operation) {
 func (s *operationsResult) updateMetrics() (err error) {
 	defer func() {
 		if r := recover(); r != nil {
-			Debug(s.logger, "@Debug", "panic recovered while updateMetrics()")
 			err = fmt.Errorf("panic recovered: %v", r)
 		}
 	}()
 
 	now := time.Now()
+
 	operations, err := s.operations.ListOperationsInTimeRange(s.lastUpdate, now)
-	Debug(s.logger, "@Debug", fmt.Sprintf("@metricsv2 : getting operations from window %s to %s", s.lastUpdate, now))
+	s.logger.Debug("UpdateMetrics: %d operations found", len(operations))
+
 	if err != nil {
 		return fmt.Errorf("failed to list metrics: %v", err)
 	}
-	Debug(s.logger, "@Debug", fmt.Sprintf("@metricsv2 : number of %d operations processing start", len(operations)))
 	for _, op := range operations {
-		Debug(s.logger, "@Debug", fmt.Sprintf("@metricsv2 : processing operation ID %s, created_at %s updated_at %s", op.ID, op.CreatedAt, op.UpdatedAt))
 		s.updateOperation(op)
 	}
-	Debug(s.logger, "@Debug", fmt.Sprintf("@metricsv2 : number of %d operations processing end", len(operations)))
 	s.lastUpdate = now
 	return nil
 }
 
-func (s *operationsResult) Handler(ctx context.Context, event interface{}) error {
-	defer s.sync.Unlock()
-	s.sync.Lock()
-
+func (s *operationsResult) Handler(_ context.Context, event interface{}) error {
 	defer func() {
-		Debug(s.logger, "@metricsv2", "Handler event func end")
 		if recovery := recover(); recovery != nil {
-			Debug(s.logger, "@metricsv2", "Handler func end with recovery from panic")
-			s.logger.Errorf("panic recovered while handling operation info event: %v", recovery)
+			s.logger.Errorf("panic recovered while handling operation finished event: %v", recovery)
 		}
 	}()
 
 	switch ev := event.(type) {
-	case process.DeprovisioningSucceeded:
-		Debug(s.logger, "@metricsv2", "DeprovisioningSucceeded event received")
-		s.updateOperation(ev.Operation.Operation)
+	case process.OperationFinished:
+		s.logger.Debug("Handling OperationFinished event: OpID=%s State=%s", ev.Operation.ID, ev.Operation.State)
+		s.updateOperation(ev.Operation)
 	default:
-		Debug(s.logger, "@metricsv2", fmt.Sprintf("unexpected event type: %T", event))
-		s.logger.Errorf("unexpected event type: %T", event)
+		s.logger.Errorf("Handling OperationFinished, unexpected event type: %T", event)
 	}
+
 	return nil
 }
 
 func (s *operationsResult) Job(ctx context.Context) {
-	Debug(s.logger, "@metricsv2", "run tick ticker")
 	defer func() {
-		Debug(s.logger, "@metricsv2", "Job ended")
 		if recovery := recover(); recovery != nil {
-			Debug(s.logger, "@metricsv2", "Panic happen in Job")
 			s.logger.Errorf("panic recovered while performing operation info job: %v", recovery)
 		}
 	}()
 
-	s.logger.Errorf("updateMetrics called")
-	Debug(s.logger, "@metricsv2", "Job started fist time")
 	if err := s.updateMetrics(); err != nil {
-		Debug(s.logger, "@metricsv2", "Job started first time failed")
 		s.logger.Error("failed to update metrics metrics", err)
 	}
 
@@ -151,14 +146,10 @@ func (s *operationsResult) Job(ctx context.Context) {
 	for {
 		select {
 		case <-ticker.C:
-			Debug(s.logger, "@metricsv2", "tick tick")
 			if err := s.updateMetrics(); err != nil {
-				Debug(s.logger, "@metricsv2", "in Job loop failed to update metrics")
 				s.logger.Error("failed to update operation info metrics", err)
 			}
 		case <-ctx.Done():
-			Debug(s.logger, "@metricsv2", "ctx done")
-			s.logger.Info("ctx done")
 			return
 		}
 	}

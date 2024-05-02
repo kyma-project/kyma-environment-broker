@@ -404,6 +404,8 @@ spec:
               value: "{{ .Values.metricsv2.enabled }}"
             - name: APP_METRICSV2_OPERATION_RESULT_RETENTION_PERIOD
               value: "{{ .Values.metricsv2.operationResultRetentionPeriod }}"
+            - name: APP_METRICSV2_OPERATION_RESULT_FINISHED_OPERATION_RETENTION_PERIOD
+              value: "{{ .Values.metricsv2.operationResultFinishedOperationRetentionPeriod }}"
             - name: APP_METRICSV2_OPERATION_RESULT_POOLING_INTERVAL
               value: "{{ .Values.metricsv2.operationResultPoolingInterval }}"
             - name: APP_METRICSV2_OPERATION_STATS_POOLING_INTERVAL

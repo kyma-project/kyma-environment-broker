@@ -16,7 +16,7 @@ spec:
       containers:
         - name: kyma-environments-broker-archiver
           command: ["/bin/main"]
-          image: europe-docker.pkg.dev/kyma-project/prod/kyma-environment-archiver-job:1.5.1
+          image: europe-docker.pkg.dev/kyma-project/prod/kyma-environment-archiver-job:1.5.7
           imagePullPolicy: IfNotPresent
           env:
             - name: APP_LOG_LEVEL
@@ -24,9 +24,9 @@ spec:
             - name: APP_BATCH_SIZE
               value: "100"
             - name: APP_DRY_RUN
-              value: "true"
-            - name: APP_PERFORM_DELETION
               value: "false"
+            - name: APP_PERFORM_DELETION
+              value: "true"
             - name: APP_DATABASE_SECRET_KEY
               valueFrom:
                 secretKeyRef:
