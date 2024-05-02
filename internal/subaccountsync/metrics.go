@@ -4,11 +4,11 @@ import "github.com/prometheus/client_golang/prometheus"
 
 type Metrics struct {
 	queue       prometheus.Gauge
+	timeInQueue prometheus.Gauge
 	queueOps    *prometheus.CounterVec
 	cisRequests *prometheus.CounterVec
 	states      *prometheus.GaugeVec
 	informer    *prometheus.CounterVec
-	timeInQueue prometheus.Gauge
 }
 
 func NewMetrics(reg prometheus.Registerer, namespace string) *Metrics {
@@ -44,6 +44,6 @@ func NewMetrics(reg prometheus.Registerer, namespace string) *Metrics {
 			Help:      "Time spent in queue.",
 		}),
 	}
-	reg.MustRegister(m.queue, m.queueOps, m.states, m.informer, m.cisRequests)
+	reg.MustRegister(m.queue, m.queueOps, m.states, m.informer, m.cisRequests, m.timeInQueue)
 	return m
 }
