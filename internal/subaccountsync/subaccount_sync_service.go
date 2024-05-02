@@ -115,6 +115,7 @@ func (s *SyncService) Run() {
 			metrics.queue.Set(float64(queueSize))
 			metrics.queueOps.With(prometheus.Labels{"operation": "extract"}).Inc()
 			timeEnqueuedMillis := timeEnqueuedNano / int64(time.Millisecond)
+			logger.Debug(fmt.Sprintf("Item extracted from the queue after %d ms", timeEnqueuedMillis))
 			metrics.timeInQueue.Set(float64(timeEnqueuedMillis))
 		},
 	})
