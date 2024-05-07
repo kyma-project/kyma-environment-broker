@@ -71,9 +71,12 @@ func (reconciler *stateReconcilerType) setMetrics() {
 	}
 	total := len(reconciler.inMemoryState)
 	reconciler.metrics.states.With(prometheus.Labels{"type": "total", "value": "total"}).Set(float64(total))
+
 	//count subaccounts with beta enabled
 	betaEnabled := 0
 	betaDisabled := 0
+	resourcesStates := 0
+
 	//create map for UsedForProduction
 	usedForProduction := make(map[string]int)
 	for _, state := range reconciler.inMemoryState {
@@ -85,10 +88,16 @@ func (reconciler *stateReconcilerType) setMetrics() {
 			}
 			//increment counter for UsedForProduction
 			usedForProduction[state.cisState.UsedForProduction]++
+			if state.resourcesState != nil {
+				resourcesStates++
+			}
 		}
 	}
+
 	reconciler.metrics.states.With(prometheus.Labels{"type": "betaEnabled", "value": "true"}).Set(float64(betaEnabled))
 	reconciler.metrics.states.With(prometheus.Labels{"type": "betaEnabled", "value": "false"}).Set(float64(betaDisabled))
+	reconciler.metrics.states.With(prometheus.Labels{"type": "total", "value": "cis-states"}).Set(float64(betaEnabled + betaDisabled))
+	reconciler.metrics.states.With(prometheus.Labels{"type": "total", "value": "resources-states"}).Set(float64(resourcesStates))
 
 	others := 0
 	for key, value := range usedForProduction {
