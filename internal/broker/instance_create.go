@@ -356,7 +356,7 @@ func (b *ProvisionEndpoint) validateAndExtract(details domain.ProvisionDetails, 
 		}
 		if count > 0 {
 			logger.Info("Provisioning Free SKR rejected, such instance was already created for this Global Account")
-			return ersContext, parameters, fmt.Errorf("free Kyma was created for the global account, but there is only one allowed")
+			return ersContext, parameters, fmt.Errorf("provisioning request rejected, you have already used the available free service plan quota in this global account")
 		}
 
 		instanceFilter := dbmodel.InstanceFilter{
@@ -370,7 +370,7 @@ func (b *ProvisionEndpoint) validateAndExtract(details domain.ProvisionDetails, 
 		}
 		if count > 0 {
 			logger.Info("Provisioning Free SKR rejected, such instance was already created for this Global Account")
-			return ersContext, parameters, fmt.Errorf("free Kyma was created for the global account, but there is only one allowed")
+			return ersContext, parameters, fmt.Errorf("provisioning request rejected, you have already used the available free service plan quota in this global account")
 		}
 
 		//TODO remove after running the archiver (operations table will be empty)
@@ -386,7 +386,7 @@ func (b *ProvisionEndpoint) validateAndExtract(details domain.ProvisionDetails, 
 		}
 		if count > 0 {
 			logger.Info("Provisioning Free SKR rejected, such instance was already created for this Global Account")
-			return ersContext, parameters, fmt.Errorf("free Kyma was created for the global account, but there is only one allowed")
+			return ersContext, parameters, fmt.Errorf("provisioning request rejected, you have already used the available free service plan quota in this global account")
 		}
 	}
 
