@@ -1,14 +1,14 @@
 module-name: kyma-environment-broker
-rc-tag: 1.5.14
+rc-tag: 1.5.15
 protecode:
-  - europe-docker.pkg.dev/kyma-project/prod/kyma-environment-broker:1.5.14
-  - europe-docker.pkg.dev/kyma-project/prod/kyma-environment-deprovision-retrigger-job:1.5.14
-  - europe-docker.pkg.dev/kyma-project/prod/kyma-environments-cleanup-job:1.5.14
-  - europe-docker.pkg.dev/kyma-project/prod/kyma-environment-runtime-reconciler:1.5.14
-  - europe-docker.pkg.dev/kyma-project/prod/kyma-environment-archiver-job:1.5.14
-  - europe-docker.pkg.dev/kyma-project/prod/kyma-environment-expirator-job:1.5.14
-  - europe-docker.pkg.dev/kyma-project/prod/kyma-environment-subaccount-cleanup-job:1.5.14
-  - europe-docker.pkg.dev/kyma-project/prod/kyma-environment-subaccount-sync:1.5.14
+  - europe-docker.pkg.dev/kyma-project/prod/kyma-environment-broker:1.5.15
+  - europe-docker.pkg.dev/kyma-project/prod/kyma-environment-deprovision-retrigger-job:1.5.15
+  - europe-docker.pkg.dev/kyma-project/prod/kyma-environments-cleanup-job:1.5.15
+  - europe-docker.pkg.dev/kyma-project/prod/kyma-environment-runtime-reconciler:1.5.15
+  - europe-docker.pkg.dev/kyma-project/prod/kyma-environment-archiver-job:1.5.15
+  - europe-docker.pkg.dev/kyma-project/prod/kyma-environment-expirator-job:1.5.15
+  - europe-docker.pkg.dev/kyma-project/prod/kyma-environment-subaccount-cleanup-job:1.5.15
+  - europe-docker.pkg.dev/kyma-project/prod/kyma-environment-subaccount-sync:1.5.15
 whitesource:
   language: golang-mod
   subprojects: false
