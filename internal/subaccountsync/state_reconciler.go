@@ -72,32 +72,38 @@ func (reconciler *stateReconcilerType) setMetrics() {
 	total := len(reconciler.inMemoryState)
 	reconciler.metrics.states.With(prometheus.Labels{"type": "total", "value": "total"}).Set(float64(total))
 
-	//count subaccounts with beta enabled
-	betaEnabled := 0
-	betaDisabled := 0
-	resourcesStates := 0
+	betaEnabledCount := 0
+	betaDisabledCount := 0
+	resourcesStatesCount := 0
+	runtimesCount := 0
+	pendingDeleteCount := 0
 
-	//create map for UsedForProduction
 	usedForProduction := make(map[string]int)
 	for _, state := range reconciler.inMemoryState {
 		if state.cisState != (CisStateType{}) {
 			if state.cisState.BetaEnabled {
-				betaEnabled++
+				betaEnabledCount++
 			} else {
-				betaDisabled++
+				betaDisabledCount++
 			}
-			//increment counter for UsedForProduction
 			usedForProduction[state.cisState.UsedForProduction]++
-			if state.resourcesState != nil {
-				resourcesStates++
-			}
+		}
+		if state.resourcesState != nil {
+			resourcesStatesCount++
+			runtimesCount += len(state.resourcesState)
+		}
+		if state.pendingDelete {
+			pendingDeleteCount++
 		}
 	}
 
-	reconciler.metrics.states.With(prometheus.Labels{"type": "betaEnabled", "value": "true"}).Set(float64(betaEnabled))
-	reconciler.metrics.states.With(prometheus.Labels{"type": "betaEnabled", "value": "false"}).Set(float64(betaDisabled))
-	reconciler.metrics.states.With(prometheus.Labels{"type": "total", "value": "cis-states"}).Set(float64(betaEnabled + betaDisabled))
-	reconciler.metrics.states.With(prometheus.Labels{"type": "total", "value": "resources-states"}).Set(float64(resourcesStates))
+	totalResourcesStatesCount := betaEnabledCount + betaDisabledCount
+	reconciler.metrics.states.With(prometheus.Labels{"type": "betaEnabled", "value": "true"}).Set(float64(betaEnabledCount))
+	reconciler.metrics.states.With(prometheus.Labels{"type": "betaEnabled", "value": "false"}).Set(float64(betaDisabledCount))
+	reconciler.metrics.states.With(prometheus.Labels{"type": "total", "value": "cis-states"}).Set(float64(totalResourcesStatesCount))
+	reconciler.metrics.states.With(prometheus.Labels{"type": "total", "value": "resources-states"}).Set(float64(resourcesStatesCount))
+	reconciler.metrics.states.With(prometheus.Labels{"type": "total", "value": "pending-delete"}).Set(float64(pendingDeleteCount))
+	reconciler.metrics.states.With(prometheus.Labels{"type": "total", "value": "runtimes"}).Set(float64(runtimesCount))
 
 	others := 0
 	for key, value := range usedForProduction {

@@ -15,7 +15,6 @@
   "editable": true,
   "gnetId": null,
   "graphTooltip": 0,
-  "iteration": 1715070316194,
   "links": [],
   "panels": [
     {
@@ -223,7 +222,7 @@
       "targets": [
         {
           "exemplar": true,
-          "expr": "sum by (service) (subaccount_sync_in_memory_states{service=\"subaccount-sync\", type=\"betaEnabled\", value=\"true\"}) + sum by (service) (subaccount_sync_in_memory_states{service=\"subaccount-sync\", type=\"betaEnabled\", value=\"false\"})",
+          "expr": "sum by (service) (subaccount_sync_in_memory_states{service=\"subaccount-sync\", type=\"total\", value=\"cis-states\"})",
           "hide": false,
           "interval": "",
           "legendFormat": "CIS subaccounts",
@@ -231,9 +230,17 @@
         },
         {
           "exemplar": true,
+          "expr": "sum by (service) (subaccount_sync_in_memory_states{service=\"subaccount-sync\", type=\"total\", value=\"resources-states\"})",
+          "hide": false,
+          "interval": "",
+          "legendFormat": "Subaccounts with resources",
+          "refId": "C"
+        },
+        {
+          "exemplar": true,
           "expr": "sum by (service) (subaccount_sync_in_memory_states{service=\"subaccount-sync\", type=\"total\", value=\"total\"})",
           "interval": "",
-          "legendFormat": "total subaccounts",
+          "legendFormat": "States in total",
           "refId": "A"
         }
       ],
@@ -302,7 +309,7 @@
           "exemplar": true,
           "expr": "sum by (service) (subaccount_sync_cis_requests{service=\"subaccount-sync\", exported_endpoint=\"accounts\", status=\"success\"}) / sum by (service) (subaccount_sync_cis_requests{service=\"subaccount-sync\", exported_endpoint=\"accounts\"}) * 100",
           "interval": "",
-          "legendFormat": "Accounts",
+          "legendFormat": "Accounts service",
           "refId": "A"
         },
         {
@@ -310,7 +317,7 @@
           "expr": "sum by (service) (subaccount_sync_cis_requests{service=\"subaccount-sync\", exported_endpoint=\"events\", status=\"success\"}) / sum by (service) (subaccount_sync_cis_requests{service=\"subaccount-sync\", exported_endpoint=\"events\"}) * 100",
           "hide": false,
           "interval": "",
-          "legendFormat": "Events",
+          "legendFormat": "Events service",
           "refId": "B"
         }
       ],
@@ -365,7 +372,7 @@
           "exemplar": true,
           "expr": "sum by (service) (subaccount_sync_cis_requests{service=\"subaccount-sync\", exported_endpoint=\"events\"})",
           "interval": "",
-          "legendFormat": "Total",
+          "legendFormat": "Events service",
           "refId": "A"
         },
         {
@@ -373,7 +380,7 @@
           "expr": "sum by (service) (subaccount_sync_cis_requests{service=\"subaccount-sync\", exported_endpoint=\"accounts\"})",
           "hide": false,
           "interval": "",
-          "legendFormat": "Success rate",
+          "legendFormat": "Accounts service",
           "refId": "B"
         }
       ],
@@ -1927,5 +1934,5 @@
   "timezone": "",
   "title": "KCP / Kyma Environment Broker / Subaccount Sync",
   "uid": "PcrNxoBSz",
-  "version": 1
+  "version": 2
 }
