@@ -362,6 +362,7 @@ func (reconciler *stateReconcilerType) storeStateInDb() {
 			}
 			deleteCnt++
 			delete(reconciler.inMemoryState, subaccount)
+			logs.Debug(fmt.Sprintf("Subaccount %s state deleted from persistent storage", subaccount))
 		} else {
 			err := reconciler.db.SubaccountStates().UpsertState(internal.SubaccountState{
 				ID:                string(subaccount),
