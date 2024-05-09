@@ -177,7 +177,7 @@ func (reconciler *stateReconcilerType) runCronJobs(cfg Config, ctx context.Conte
 
 	logs := reconciler.logger
 
-	_, err := s.Every(cfg.EventsSyncInterval).Do(func() {
+	_, err := s.Every(cfg.EventsWindowInterval).Do(func() {
 		// establish actual time window
 		eventsFrom := reconciler.eventWindow.GetNextFromTime()
 
@@ -371,7 +371,7 @@ func (reconciler *stateReconcilerType) storeStateInDb() {
 			})
 			if err != nil {
 				failureCnt++
-				logs.Error(fmt.Sprintf("while deleting subaccount:%s state from persistent storage: %s", subaccount, err))
+				logs.Error(fmt.Sprintf("while updating subaccount:%s state from persistent storage: %s", subaccount, err))
 				continue
 			}
 			upsertCnt++

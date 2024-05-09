@@ -15,7 +15,7 @@ type (
 		Database               storage.Config
 		UpdateResources        bool          `envconfig:"default=false"`
 		EventsWindowSize       time.Duration `envconfig:"default=20m"`
-		EventsSyncInterval     time.Duration `envconfig:"default=15m"`
+		EventsWindowInterval   time.Duration `envconfig:"default=15m"`
 		AccountsSyncInterval   time.Duration `envconfig:"default=24h"`
 		StorageSyncInterval    time.Duration `envconfig:"default=10m"`
 		SyncQueueSleepInterval time.Duration `envconfig:"default=30s"`

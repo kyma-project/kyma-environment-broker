@@ -3,6 +3,9 @@ package main
 import (
 	"context"
 	"fmt"
+	"github.com/dlmiddlecote/sqlstats"
+	"github.com/prometheus/client_golang/prometheus"
+	"github.com/prometheus/client_golang/prometheus/collectors"
 	"log/slog"
 	"os"
 	"os/signal"
@@ -49,8 +52,8 @@ func main() {
 		Level: logLevel,
 	})).With("service", "subaccount-sync"))
 
-	slog.Info(fmt.Sprintf("Configuration: event window size:%s, event sync interval:%s, accounts sync interval: %s, storage sync interval: %s, queue sleep interval: %s",
-		cfg.EventsWindowSize, cfg.EventsSyncInterval, cfg.AccountsSyncInterval, cfg.StorageSyncInterval, cfg.SyncQueueSleepInterval))
+	slog.Info(fmt.Sprintf("Configuration: events window size:%s, events sync interval:%s, accounts sync interval: %s, storage sync interval: %s, queue sleep interval: %s",
+		cfg.EventsWindowSize, cfg.EventsWindowInterval, cfg.AccountsSyncInterval, cfg.StorageSyncInterval, cfg.SyncQueueSleepInterval))
 	slog.Info(fmt.Sprintf("Configuration: updateResources: %t", cfg.UpdateResources))
 
 	// create config provider - provider still uses logrus logger
@@ -65,6 +68,14 @@ func main() {
 	// create DB connection
 	cipher := storage.NewEncrypter(cfg.Database.SecretKey)
 	db, dbConn, err := storage.NewFromConfig(cfg.Database, events.Config{}, cipher, logrus.WithField("service", "storage"))
+
+	// create and register metrics
+	metricsRegistry := prometheus.NewRegistry()
+	metricsRegistry.MustRegister(collectors.NewGoCollector())
+
+	dbStatsCollector := sqlstats.NewStatsCollector("broker", dbConn)
+	metricsRegistry.MustRegister(dbStatsCollector)
+
 	if err != nil {
 		fatalOnError(err)
 	}
@@ -82,7 +93,7 @@ func main() {
 	dynamicK8sClient := createDynamicK8sClient()
 
 	// create service
-	syncService := subsync.NewSyncService(AppPrefix, ctx, cfg, kymaGVR, db, dynamicK8sClient)
+	syncService := subsync.NewSyncService(AppPrefix, ctx, cfg, kymaGVR, db, dynamicK8sClient, metricsRegistry)
 	syncService.Run()
 }
 
