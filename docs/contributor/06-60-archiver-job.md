@@ -1,6 +1,6 @@
 # Archiver Job
 
-The archiver job is a tool for archiving and cleaning the data about already deprovisioned instances. The archiver job is run once. All data about deprovisioned instances in the future will be archived and cleaned by proper deprovisioning steps.
+The archiver job is a tool for archiving and cleaning the data about already deprovisioned instances. The archiver job is run once. All data about deprovisioned instances in the future will be archived and cleaned by proper deprovisioning steps. The scenario of running the job is describe in the [scenario.md](./../../utils/archiver/scenario.md) file.
 
 ## Running Modes
 
