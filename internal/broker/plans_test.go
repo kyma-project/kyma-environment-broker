@@ -14,13 +14,6 @@ import (
 )
 
 func TestSchemaGenerator(t *testing.T) {
-	awsMachineNamesReduced := AwsMachinesNames()
-	awsMachinesDisplayReduced := AwsMachinesDisplay()
-
-	awsMachineNamesReduced = removeMachinesNamesFromList(awsMachineNamesReduced, "m5.large", "m6i.large")
-	delete(awsMachinesDisplayReduced, "m5.large")
-	delete(awsMachinesDisplayReduced, "m6i.large")
-
 	tests := []struct {
 		name                string
 		generator           func(map[string]string, map[string]string, []string, bool, bool) *map[string]interface{}
@@ -47,19 +40,6 @@ func TestSchemaGenerator(t *testing.T) {
 			updateFileOIDC:      "update-aws-schema-additional-params.json",
 		},
 		{
-			name: "AWS reduced schema is correct",
-			generator: func(machinesDisplay, regionsDisplay map[string]string, machines []string, additionalParams, update bool) *map[string]interface{} {
-				return AWSSchema(machinesDisplay, regionsDisplay, machines, additionalParams, update, false)
-			},
-			machineTypes:        awsMachineNamesReduced,
-			machineTypesDisplay: awsMachinesDisplayReduced,
-			path:                "aws",
-			file:                "aws-schema-reduced.json",
-			updateFile:          "update-aws-schema-reduced.json",
-			fileOIDC:            "aws-schema-additional-params-reduced.json",
-			updateFileOIDC:      "update-aws-schema-additional-params-reduced.json",
-		},
-		{
 			name: "AWS schema with EU access restriction is correct",
 			generator: func(machinesDisplay, regionsDisplay map[string]string, machines []string, additionalParams, update bool) *map[string]interface{} {
 				return AWSSchema(machinesDisplay, regionsDisplay, machines, additionalParams, update, true)
@@ -79,6 +59,7 @@ func TestSchemaGenerator(t *testing.T) {
 			},
 			machineTypes:        AzureMachinesNames(),
 			machineTypesDisplay: AzureMachinesDisplay(),
+			regionDisplay:       AzureRegionsDisplay(false),
 			path:                "azure",
 			file:                "azure-schema.json",
 			updateFile:          "update-azure-schema.json",
@@ -92,6 +73,7 @@ func TestSchemaGenerator(t *testing.T) {
 			},
 			machineTypes:        AzureMachinesNames(),
 			machineTypesDisplay: AzureMachinesDisplay(),
+			regionDisplay:       AzureRegionsDisplay(true),
 			path:                "azure",
 			file:                "azure-schema-eu.json",
 			updateFile:          "update-azure-schema.json",
@@ -105,6 +87,7 @@ func TestSchemaGenerator(t *testing.T) {
 			},
 			machineTypes:        AzureLiteMachinesNames(),
 			machineTypesDisplay: AzureLiteMachinesDisplay(),
+			regionDisplay:       AzureRegionsDisplay(false),
 			path:                "azure",
 			file:                "azure-lite-schema.json",
 			updateFile:          "update-azure-lite-schema.json",
@@ -118,6 +101,7 @@ func TestSchemaGenerator(t *testing.T) {
 			},
 			machineTypes:        AzureLiteMachinesNames(),
 			machineTypesDisplay: AzureLiteMachinesDisplay(),
+			regionDisplay:       AzureRegionsDisplay(true),
 			path:                "azure",
 			file:                "azure-lite-schema-eu.json",
 			updateFile:          "update-azure-lite-schema.json",
@@ -127,9 +111,10 @@ func TestSchemaGenerator(t *testing.T) {
 		{
 			name: "Freemium schema is correct",
 			generator: func(machinesDisplay, regionsDisplay map[string]string, machines []string, additionalParams, update bool) *map[string]interface{} {
-				return FreemiumSchema(internal.Azure, additionalParams, update, false)
+				return FreemiumSchema(internal.Azure, regionsDisplay, additionalParams, update, false)
 			},
 			machineTypes:   []string{},
+			regionDisplay:  AzureRegionsDisplay(false),
 			path:           "azure",
 			file:           "free-azure-schema.json",
 			updateFile:     "update-free-azure-schema.json",
@@ -139,7 +124,7 @@ func TestSchemaGenerator(t *testing.T) {
 		{
 			name: " Freemium schema is correct",
 			generator: func(machinesDisplay, regionsDisplay map[string]string, machines []string, additionalParams, update bool) *map[string]interface{} {
-				return FreemiumSchema(internal.AWS, additionalParams, update, false)
+				return FreemiumSchema(internal.AWS, regionsDisplay, additionalParams, update, false)
 			},
 			machineTypes:   []string{},
 			path:           "aws",
@@ -151,9 +136,10 @@ func TestSchemaGenerator(t *testing.T) {
 		{
 			name: "Freemium schema with EU access restriction is correct",
 			generator: func(machinesDisplay, regionsDisplay map[string]string, machines []string, additionalParams, update bool) *map[string]interface{} {
-				return FreemiumSchema(internal.Azure, additionalParams, update, true)
+				return FreemiumSchema(internal.Azure, regionsDisplay, additionalParams, update, true)
 			},
 			machineTypes:   []string{},
+			regionDisplay:  AzureRegionsDisplay(true),
 			path:           "azure",
 			file:           "free-azure-schema-eu.json",
 			updateFile:     "update-free-azure-schema.json",
@@ -163,7 +149,7 @@ func TestSchemaGenerator(t *testing.T) {
 		{
 			name: "Freemium schema with EU access restriction is correct",
 			generator: func(machinesDisplay, regionsDisplay map[string]string, machines []string, additionalParams, update bool) *map[string]interface{} {
-				return FreemiumSchema(internal.AWS, additionalParams, update, true)
+				return FreemiumSchema(internal.AWS, regionsDisplay, additionalParams, update, true)
 			},
 			machineTypes:   []string{},
 			path:           "aws",

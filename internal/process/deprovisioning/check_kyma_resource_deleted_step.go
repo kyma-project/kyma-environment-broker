@@ -2,6 +2,7 @@ package deprovisioning
 
 import (
 	"context"
+	"fmt"
 	"time"
 
 	"github.com/kyma-project/kyma-environment-broker/internal/process/steps"
@@ -18,14 +19,16 @@ import (
 )
 
 type CheckKymaResourceDeletedStep struct {
-	operationManager *process.OperationManager
-	kcpClient        client.Client
+	operationManager            *process.OperationManager
+	kcpClient                   client.Client
+	kymaResourceDeletionTimeout time.Duration
 }
 
-func NewCheckKymaResourceDeletedStep(operations storage.Operations, kcpClient client.Client) *CheckKymaResourceDeletedStep {
+func NewCheckKymaResourceDeletedStep(operations storage.Operations, kcpClient client.Client, kymaResourceDeletionTimeout time.Duration) *CheckKymaResourceDeletedStep {
 	return &CheckKymaResourceDeletedStep{
-		operationManager: process.NewOperationManager(operations),
-		kcpClient:        kcpClient,
+		operationManager:            process.NewOperationManager(operations),
+		kcpClient:                   kcpClient,
+		kymaResourceDeletionTimeout: kymaResourceDeletionTimeout,
 	}
 }
 
@@ -46,7 +49,8 @@ func (step *CheckKymaResourceDeletedStep) Run(operation internal.Operation, logg
 
 	obj, err := steps.DecodeKymaTemplate(operation.KymaTemplate)
 	if err != nil {
-		return step.operationManager.RetryOperationWithoutFail(operation, step.Name(), "unable to decode kyma template", 5*time.Second, 30*time.Second, logger)
+		return step.operationManager.RetryOperationWithoutFail(operation, step.Name(), "unable to decode kyma template", 5*time.Second, 30*time.Second, logger,
+			fmt.Errorf("unable to decode kyma template"))
 	}
 
 	logger.Infof("Checking existence of Kyma resource: %s in namespace:%s", kymaResourceName, operation.KymaResourceNamespace)
@@ -60,12 +64,12 @@ func (step *CheckKymaResourceDeletedStep) Run(operation internal.Operation, logg
 
 	if err == nil {
 		logger.Infof("Kyma resource still exists")
-		return step.operationManager.RetryOperationWithoutFail(operation, step.Name(), "Kyma resource still exists", 15*time.Second, 30*time.Minute, logger)
+		return step.operationManager.RetryOperationWithoutFail(operation, step.Name(), "Kyma resource still exists", 5*time.Second, step.kymaResourceDeletionTimeout, logger, nil)
 	}
 
 	if !errors.IsNotFound(err) {
 		logger.Errorf("unable to check Kyma resource existence: %s", err)
-		return step.operationManager.RetryOperationWithoutFail(operation, step.Name(), "unable to check Kyma resource existence", backoffForK8SOperation, timeoutForK8sOperation, logger)
+		return step.operationManager.RetryOperationWithoutFail(operation, step.Name(), "unable to check Kyma resource existence", backoffForK8SOperation, timeoutForK8sOperation, logger, err)
 	}
 
 	return step.operationManager.UpdateOperation(operation, func(op *internal.Operation) {

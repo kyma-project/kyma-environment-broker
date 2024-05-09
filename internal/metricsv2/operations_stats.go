@@ -41,7 +41,7 @@ var (
 		broker.SapConvergedCloudPlanID,
 		broker.TrialPlanID,
 		broker.FreemiumPlanID,
-		broker.PreviewPlanName,
+		broker.PreviewPlanID,
 	}
 	opTypes = []internal.OperationType{
 		internal.OperationTypeProvision,
@@ -133,13 +133,13 @@ func (s *OperationStats) Handler(_ context.Context, event interface{}) error {
 		return fmt.Errorf("expected process.OperationStepProcessed but got %+v", event)
 	}
 
-	opState := payload.OpState
+	opState := payload.Operation.State
 
 	if opState != domain.Failed && opState != domain.Succeeded {
-		return fmt.Errorf("operation state is %s, but operation counter support events only from failed or succeded operations", payload.OpState)
+		return fmt.Errorf("operation state is %s, but operation counter support events only from failed or succeded operations", payload.Operation.State)
 	}
 
-	key, err := s.makeKey(payload.OpType, opState, payload.PlanID)
+	key, err := s.makeKey(payload.Operation.Type, opState, payload.PlanID)
 	if err != nil {
 		s.logger.Error(err)
 		return err
@@ -170,7 +170,7 @@ func (s *OperationStats) Job(ctx context.Context) {
 		select {
 		case <-ticker.C:
 			if err := s.updateMetrics(); err != nil {
-				s.logger.Error("failed to update operation stats metrics", err)
+				s.logger.Error("failed to update operation stats metrics: ", err)
 			}
 		case <-ctx.Done():
 			return
@@ -240,7 +240,7 @@ func (s *OperationStats) makeKey(opType internal.OperationType, opState domain.L
 	fmtState := formatOpState(opState)
 	fmtType := formatOpType(opType)
 	if fmtType == "" || fmtState == "" || plan == "" {
-		return "", fmt.Errorf("cannot build key for operation: type: %s, state: %s with planID: %s", opType, opState, plan)
+		return "", fmt.Errorf("cannot build key for operation: type - '%s', state - '%s' with planID - '%s'", opType, opState, plan)
 	}
 	return metricKey(fmt.Sprintf("%s_%s_%s", fmtType, fmtState, plan)), nil
 }
@@ -251,6 +251,10 @@ func formatOpType(opType internal.OperationType) string {
 		return string(opType + "ing")
 	case internal.OperationTypeUpdate:
 		return "updating"
+	case internal.OperationTypeUpgradeCluster:
+		return "upgrading_cluster"
+	case internal.OperationTypeUpgradeKyma:
+		return "upgrading_kyma"
 	default:
 		return ""
 	}

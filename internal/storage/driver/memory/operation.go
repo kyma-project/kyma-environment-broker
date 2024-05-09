@@ -233,7 +233,23 @@ func (s *operations) ListOperationsByInstanceIDGroupByType(instanceID string) (*
 }
 
 func (s *operations) ListOperationsInTimeRange(from, to time.Time) ([]internal.Operation, error) {
-	panic("not implemented") //also not used in any tests
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
+	operations := make([]internal.Operation, 0)
+	for _, op := range s.operations {
+		if (op.CreatedAt.After(from) || op.CreatedAt == from) && (op.CreatedAt.Before(to) || op.CreatedAt == to) {
+			operations = append(operations, op)
+			continue
+		}
+
+		if (op.UpdatedAt.After(from) || op.UpdatedAt == from) && (op.UpdatedAt.Before(to) || op.UpdatedAt == to) {
+			operations = append(operations, op)
+			continue
+		}
+	}
+
+	return operations, nil
 }
 
 func (s *operations) InsertDeprovisioningOperation(operation internal.DeprovisioningOperation) error {
@@ -423,6 +439,63 @@ func (s *operations) UpdateUpgradeClusterOperation(op internal.UpgradeClusterOpe
 	s.upgradeClusterOperations[op.Operation.ID] = op
 
 	return &op, nil
+}
+
+func (s *operations) GetLastOperationByTypes(instanceID string, types []internal.OperationType) (*internal.Operation, error) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
+	var rows []internal.Operation
+
+	for _, op := range s.operations {
+		if op.InstanceID == instanceID && op.State != orchestration.Pending {
+			if len(types) > 0 {
+				for _, t := range types {
+					if op.Type == t {
+						rows = append(rows, op)
+					}
+				}
+			} else {
+				rows = append(rows, op)
+			}
+		}
+	}
+	for _, op := range s.upgradeClusterOperations {
+		if op.InstanceID == instanceID && op.State != orchestration.Pending {
+			if len(types) > 0 {
+				for _, t := range types {
+					if op.Type == t {
+						rows = append(rows, op.Operation)
+					}
+				}
+			} else {
+				rows = append(rows, op.Operation)
+			}
+		}
+	}
+	for _, op := range s.updateOperations {
+		if op.InstanceID == instanceID && op.State != orchestration.Pending {
+			if len(types) > 0 {
+				for _, t := range types {
+					if op.Type == t {
+						rows = append(rows, op.Operation)
+					}
+				}
+			} else {
+				rows = append(rows, op.Operation)
+			}
+		}
+	}
+
+	if len(rows) == 0 {
+		return nil, dberr.NotFound("Operation with instance_id %s not exist", instanceID)
+	}
+
+	sort.Slice(rows, func(i, j int) bool {
+		return rows[i].CreatedAt.After(rows[j].CreatedAt)
+	})
+
+	return &rows[0], nil
 }
 
 func (s *operations) GetLastOperation(instanceID string) (*internal.Operation, error) {
@@ -1032,4 +1105,12 @@ func (s *operations) filterUpgradeClusterByInstanceID(instanceID string, filter 
 
 func (s *operations) equalFilter(a, b string) bool {
 	return a == b
+}
+
+func (s *operations) GetAllOperations() ([]internal.Operation, error) {
+	ops := make([]internal.Operation, 0)
+	for _, k := range s.operations {
+		ops = append(ops, k)
+	}
+	return ops, nil
 }

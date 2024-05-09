@@ -738,7 +738,6 @@ type ConfigForPlan struct {
 
 func (c *ConfigForPlan) ContainsAdditionalComponent(componentName string) bool {
 	for _, c := range c.AdditionalComponents {
-		fmt.Println(c.Name)
 		if c.Name == componentName {
 			return true
 		}

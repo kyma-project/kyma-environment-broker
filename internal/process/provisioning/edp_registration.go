@@ -102,13 +102,13 @@ func (s *EDPRegistrationStep) handleError(operation internal.Operation, err erro
 	if kebError.IsTemporaryError(err) {
 		since := time.Since(operation.UpdatedAt)
 		if since < time.Minute*30 {
-			log.Errorf("request to EDP failed: %s. Retry...", err)
+			log.Warnf("request to EDP failed: %s. Retry...", err)
 			return operation, 10 * time.Second, nil
 		}
 	}
 
 	if !s.config.Required {
-		log.Errorf("Step %s failed. Step is not required. Skip step.", s.Name())
+		log.Warnf("Step %s failed. Step is not required. Skip step.", s.Name())
 		return operation, 0, nil
 	}
 

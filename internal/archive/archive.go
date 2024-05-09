@@ -25,9 +25,8 @@ func NewInstanceArchivedFromOperations(operations []internal.Operation) (interna
 	cmp := func(a, b internal.Operation) int {
 		return a.CreatedAt.Compare(b.CreatedAt)
 	}
-
-	if len(operations) < 2 {
-		return result, fmt.Errorf("cannot create archived instacne - not enough operations")
+	if len(operations) == 0 {
+		return result, fmt.Errorf("operations cannot be empty")
 	}
 
 	// sort operations - the older one must be the first one
@@ -45,15 +44,25 @@ func NewInstanceArchivedFromOperations(operations []internal.Operation) (interna
 	result.PlanID = provisioningOperation.ProvisioningParameters.PlanID
 	result.PlanName = broker.PlanNamesMapping[result.PlanID]
 	result.InstanceID = provisioningOperation.InstanceID
+	result.GlobalAccountID = provisioningOperation.ProvisioningParameters.ErsContext.GlobalAccountID
+	result.SubaccountID = provisioningOperation.ProvisioningParameters.ErsContext.SubAccountID
+	if provisioningOperation.ProvisioningParameters.Parameters.Region != nil {
+		result.Region = *provisioningOperation.ProvisioningParameters.Parameters.Region
+	}
 
-	lastDeprovisioning := operations[len(operations)-1]
-	result.SubaccountID = lastDeprovisioning.SubAccountID
-	result.GlobalAccountID = lastDeprovisioning.GlobalAccountID
+	if len(operations) > 1 {
+		lastDeprovisioning := operations[len(operations)-1]
+		result.ShootName = lastDeprovisioning.ShootName
+		result.Region = lastDeprovisioning.Region
+		result.LastRuntimeID = lastDeprovisioning.RuntimeID
+		result.LastDeprovisioningFinishedAt = lastDeprovisioning.UpdatedAt
+
+		// if GA or SA has been changed, let's take it from the last deprovisioning operation
+		result.GlobalAccountID = lastDeprovisioning.ProvisioningParameters.ErsContext.GlobalAccountID
+		result.SubaccountID = lastDeprovisioning.ProvisioningParameters.ErsContext.SubAccountID
+	}
 	result.InternalUser = strings.Contains(provisioningOperation.ProvisioningParameters.ErsContext.UserID, "@sap.com")
-	result.ShootName = lastDeprovisioning.ShootName
-	result.Region = lastDeprovisioning.Region
 	result.SubaccountRegion = provisioningOperation.ProvisioningParameters.PlatformRegion
-	result.LastRuntimeID = lastDeprovisioning.RuntimeID
 
 	// find first deprovisioning
 	for _, op := range operations {
@@ -63,7 +72,6 @@ func NewInstanceArchivedFromOperations(operations []internal.Operation) (interna
 			break
 		}
 	}
-	result.LastDeprovisioningFinishedAt = lastDeprovisioning.UpdatedAt
 
 	return result, nil
 }

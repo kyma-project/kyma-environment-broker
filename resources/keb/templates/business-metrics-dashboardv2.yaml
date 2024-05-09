@@ -7,8 +7,6 @@ metadata:
   labels:
     grafana_dashboard: "1"
     app: monitoring-grafana
-  annotations:
-    argocd.argoproj.io/sync-options: Prune=false
 data:
   {{ include "kyma-env-broker.fullname" . }}-business-metrics-dashboardv2.json: |-
 {{ .Files.Get "files/business-metrics-dashboardv2.json" | indent 4 }}

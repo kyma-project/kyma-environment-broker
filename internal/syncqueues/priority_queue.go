@@ -89,7 +89,7 @@ func (q *SubaccountAwarePriorityQueueWithCallbacks) Extract() (QueueElement, boo
 	q.siftDown()
 
 	if q.eventHandler != nil && q.eventHandler.OnExtract != nil {
-		q.eventHandler.OnExtract(q.size, e.entryTime-time.Now().UnixNano())
+		q.eventHandler.OnExtract(q.size, time.Now().UnixNano()-e.entryTime)
 	}
 	return e.QueueElement, true
 }

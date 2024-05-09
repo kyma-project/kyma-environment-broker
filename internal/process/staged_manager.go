@@ -3,11 +3,11 @@ package process
 import (
 	"context"
 	"fmt"
-	"log"
 	"sync"
 	"time"
 
 	"github.com/kyma-project/kyma-environment-broker/internal/broker"
+
 	"github.com/kyma-project/kyma-environment-broker/internal/storage/dberr"
 
 	"github.com/pkg/errors"
@@ -217,7 +217,7 @@ func (m *StagedManager) runStep(step Step, operation internal.Operation, logger 
 	var start time.Time
 	defer func() {
 		if pErr := recover(); pErr != nil {
-			log.Println("panic in RunStep in staged manager: ", pErr)
+			logger.Println("panic in RunStep in staged manager: ", pErr)
 			err = errors.New(fmt.Sprintf("%v", pErr))
 			om := NewOperationManager(m.operationStorage)
 			processedOperation, _, _ = om.OperationFailed(operation, "recovered from panic", err, m.log)
@@ -229,15 +229,16 @@ func (m *StagedManager) runStep(step Step, operation internal.Operation, logger 
 	for {
 		start = time.Now()
 		logger.Infof("Start step")
-		processedOperation, backoff, err = step.Run(processedOperation, logger)
+		stepLogger := logger.WithFields(logrus.Fields{"step": step.Name(), "operation": processedOperation.ID})
+		processedOperation, backoff, err = step.Run(processedOperation, stepLogger)
 		if err != nil {
 			processedOperation.LastError = kebError.ReasonForError(err)
-			logOperation := m.log.WithFields(logrus.Fields{"operation": processedOperation.ID, "error_component": processedOperation.LastError.Component(), "error_reason": processedOperation.LastError.Reason()})
-			logOperation.Errorf("Last error from step %s: %s", step.Name(), processedOperation.LastError.Error())
+			logOperation := stepLogger.WithFields(logrus.Fields{"error_component": processedOperation.LastError.Component(), "error_reason": processedOperation.LastError.Reason()})
+			logOperation.Warnf("Last error from step: %s", processedOperation.LastError.Error())
 			// only save to storage, skip for alerting if error
 			_, err = m.operationStorage.UpdateOperation(processedOperation)
 			if err != nil {
-				logOperation.Errorf("Unable to save operation with resolved last error from step: %s", step.Name())
+				logOperation.Errorf("unable to save operation with resolved last error from step, additionally, see previous logs for ealier errors")
 			}
 		}
 
@@ -257,6 +258,10 @@ func (m *StagedManager) runStep(step Step, operation internal.Operation, logger 
 		// - step returns an error
 		// - the loop takes too much time (to not block the worker too long)
 		if backoff == 0 || err != nil || time.Since(begin) > m.cfg.MaxStepProcessingTime {
+			if err != nil {
+				logOperation := m.log.WithFields(logrus.Fields{"step": step.Name(), "operation": processedOperation.ID, "error_component": processedOperation.LastError.Component(), "error_reason": processedOperation.LastError.Reason()})
+				logOperation.Errorf("Last Error that terminated the step: %s", processedOperation.LastError.Error())
+			}
 			return processedOperation, backoff, err
 		}
 		operation.EventInfof("step %v sleeping for %v", step.Name(), backoff)
@@ -292,10 +297,8 @@ func (m *StagedManager) publishEventOnSuccess(operation *internal.Operation) {
 
 func (m *StagedManager) publishOperationFinishedEvent(operation internal.Operation) {
 	m.publisher.Publish(context.TODO(), OperationFinished{
-		OpId:    operation.ID,
-		PlanID:  broker.PlanID(operation.ProvisioningParameters.PlanID),
-		OpState: operation.State,
-		OpType:  operation.Type,
+		Operation: operation,
+		PlanID:    broker.PlanID(operation.ProvisioningParameters.PlanID),
 	})
 }
 

@@ -41,11 +41,11 @@ func NewDeprovisionClient(parameters DeprovisionParameters) *DeprovisionClient {
 }
 
 func (c DeprovisionClient) DeprovisionRuntime(instanceID string) error {
-	logrus.Info("DeprovisionRuntime is called")
+	c.log.Info("DeprovisionRuntime is called")
 	url := c.URL + "/oauth/v2/service_instances/" +
 		instanceID + "?accepts_incomplete=true&service_id=faebbe18-0a84-11e5-ab14-d663bd873d97&plan_id=0c712d43-b1e6-470s-9fe5-8e1d552aa6a5"
 
-	logrus.Infof("url: %s", url)
+	c.log.Infof("url: %s", url)
 	request, err := http.NewRequest("DELETE", url, nil)
 	if err != nil {
 		return fmt.Errorf("while creating the HTTP Delete request for deprovisioning: %w", err)
@@ -65,7 +65,6 @@ func (c DeprovisionClient) DeprovisionRuntime(instanceID string) error {
 	if response.StatusCode != http.StatusOK {
 		return fmt.Errorf("calling %s returned %d (%s) status", request.URL.String(), response.StatusCode, response.Status)
 	}
-	logrus.Infof("Deprovisioning request returned code: " + response.Status)
 	c.log.Infof("Deprovisioning request returned code: " + response.Status)
 
 	return err

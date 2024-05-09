@@ -3,9 +3,9 @@ package process
 import (
 	"time"
 
-	"github.com/kyma-project/kyma-environment-broker/internal"
 	"github.com/kyma-project/kyma-environment-broker/internal/broker"
-	"github.com/pivotal-cf/brokerapi/v8/domain"
+
+	"github.com/kyma-project/kyma-environment-broker/internal"
 )
 
 type StepProcessed struct {
@@ -58,11 +58,13 @@ type OperationSucceeded struct {
 	Operation internal.Operation
 }
 
+type OperationFailed struct {
+	Operation internal.Operation
+}
+
 type OperationFinished struct {
-	OpId    string
-	PlanID  broker.PlanID
-	OpState domain.LastOperationState
-	OpType  internal.OperationType
+	Operation internal.Operation
+	PlanID    broker.PlanID
 }
 
 type DeprovisioningSucceeded struct {

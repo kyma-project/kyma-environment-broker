@@ -7,8 +7,6 @@ metadata:
 {{ include "kyma-env-broker.labels" . | indent 4 }}
   name: {{ include "kyma-env-broker.fullname" . }}
   namespace: {{ .Release.Namespace }}
-  annotations:
-    argocd.argoproj.io/sync-options: Prune=false
 spec:
   endpoints:
   - port: http
@@ -30,8 +28,6 @@ metadata:
 {{ include "kyma-env-broker.labels" . | indent 4 }}
   name: {{ include "kyma-env-broker.fullname" . }}
   namespace: {{ .Release.Namespace }}
-  annotations:
-    argocd.argoproj.io/sync-options: Prune=false
 spec:
   endpoints:
   - attach_metadata: {}
@@ -44,4 +40,24 @@ spec:
   selector:
     matchLabels:
 {{ include "kyma-env-broker.labels" . | indent 8 }}
+---
+apiVersion: operator.victoriametrics.com/v1beta1
+kind: VMServiceScrape
+metadata:
+  labels:
+    app.kubernetes.io/name: subaccount-sync
+  name: subaccount-sync
+  namespace: kcp-system
+spec:
+  endpoints:
+    - attach_metadata: {}
+      interval: 30s
+      port: http
+      scrapeTimeout: 10s
+  namespaceSelector:
+    matchNames:
+      - kcp-system
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: subaccount-sync
 {{- end }}

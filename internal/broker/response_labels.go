@@ -10,13 +10,17 @@ import (
 )
 
 const (
-	kubeconfigURLKey      = "KubeconfigURL"
-	trialExpiryDetailsKey = "Trial expiration details"
-	trialDocsKey          = "Trial documentation"
-	expireDuration        = time.Hour * 24 * 14
-	notExpiredInfoFormat  = "Your cluster expires %s."
-	expiredInfoFormat     = "Your cluster has expired. It is not operational and the link to the Dashboard is no longer valid." +
-		" To continue using Kyma, you must create a new cluster. To learn how, follow the link to the trial documentation."
+	kubeconfigURLKey       = "KubeconfigURL"
+	notExpiredInfoFormat   = "Your cluster expires %s."
+	trialExpiryDetailsKey  = "Trial account expiration details"
+	trialDocsKey           = "Trial account documentation"
+	trialExpireDuration    = time.Hour * 24 * 14
+	trialExpiredInfoFormat = "Your cluster has expired. It is not operational and the link to Kyma dashboard is no longer valid." +
+		" To continue using Kyma, you must create a new cluster. To learn how, follow the link to the trial account documentation."
+	freeExpiryDetailsKey  = "Free plan expiration details"
+	freeDocsKey           = "Available plans documentation"
+	freeExpiredInfoFormat = "Your cluster has expired. It is not operational, and the link to Kyma dashboard is no longer valid." +
+		"  To continue using Kyma, you must use a paid service plan. To learn more about the available plans, follow the link to the documentation."
 )
 
 func ResponseLabels(op internal.ProvisioningOperation, instance internal.Instance, brokerURL string, enableKubeconfigLabel bool) map[string]string {
@@ -32,15 +36,25 @@ func ResponseLabels(op internal.ProvisioningOperation, instance internal.Instanc
 	return responseLabels
 }
 
-func ResponseLabelsWithExpirationInfo(op internal.ProvisioningOperation, instance internal.Instance, brokerURL string, trialDocsURL string, enableKubeconfigLabel bool) map[string]string {
+func ResponseLabelsWithExpirationInfo(
+	op internal.ProvisioningOperation,
+	instance internal.Instance,
+	brokerURL string,
+	docsURL string,
+	enableKubeconfigLabel bool,
+	docsKey string,
+	expireDuration time.Duration,
+	expiryDetailsKey string,
+	expiredInfoFormat string,
+) map[string]string {
 	labels := ResponseLabels(op, instance, brokerURL, enableKubeconfigLabel)
 
 	expireTime := instance.CreatedAt.Add(expireDuration)
 	hoursLeft := calculateHoursLeft(expireTime)
 	if instance.IsExpired() {
 		delete(labels, kubeconfigURLKey)
-		labels[trialExpiryDetailsKey] = expiredInfoFormat
-		labels[trialDocsKey] = trialDocsURL
+		labels[expiryDetailsKey] = expiredInfoFormat
+		labels[docsKey] = docsURL
 	} else {
 		if hoursLeft < 0 {
 			hoursLeft = 0
@@ -48,12 +62,12 @@ func ResponseLabelsWithExpirationInfo(op internal.ProvisioningOperation, instanc
 		daysLeft := math.Round(hoursLeft / 24)
 		switch {
 		case daysLeft == 0:
-			labels[trialExpiryDetailsKey] = fmt.Sprintf(notExpiredInfoFormat, "today")
+			labels[expiryDetailsKey] = fmt.Sprintf(notExpiredInfoFormat, "today")
 		case daysLeft == 1:
-			labels[trialExpiryDetailsKey] = fmt.Sprintf(notExpiredInfoFormat, "tomorrow")
+			labels[expiryDetailsKey] = fmt.Sprintf(notExpiredInfoFormat, "tomorrow")
 		default:
 			daysLeftNotice := fmt.Sprintf("in %2.f days", daysLeft)
-			labels[trialExpiryDetailsKey] = fmt.Sprintf(notExpiredInfoFormat, daysLeftNotice)
+			labels[expiryDetailsKey] = fmt.Sprintf(notExpiredInfoFormat, daysLeftNotice)
 		}
 	}
 

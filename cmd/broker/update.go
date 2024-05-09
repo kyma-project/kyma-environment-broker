@@ -69,7 +69,7 @@ func NewUpdateProcessingQueue(ctx context.Context, manager *process.StagedManage
 	for _, step := range updateSteps {
 		err := manager.AddStep(step.stage, step.step, step.condition)
 		if err != nil {
-			fatalOnError(err)
+			fatalOnError(err, logs)
 		}
 	}
 	queue := process.NewQueue(manager, logs)

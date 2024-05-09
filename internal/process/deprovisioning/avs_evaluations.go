@@ -1,6 +1,7 @@
 package deprovisioning
 
 import (
+	"fmt"
 	"time"
 
 	"github.com/kyma-project/kyma-environment-broker/internal/broker"
@@ -40,8 +41,8 @@ func (ars *AvsEvaluationRemovalStep) Run(operation internal.Operation, logger lo
 
 	operation, err := ars.delegator.DeleteAvsEvaluation(operation, logger, ars.internalEvalAssistant)
 	if err != nil {
-		logger.Warnf("unable to delete internal evaluation: %s", err.Error())
-		return ars.deProvisioningManager.RetryOperationWithoutFail(operation, ars.Name(), "error while deleting avs internal evaluation", 10*time.Second, 1*time.Minute, logger)
+		return ars.deProvisioningManager.RetryOperationWithoutFail(operation, ars.Name(), "error while deleting avs internal evaluation", 10*time.Second, 1*time.Minute, logger,
+			fmt.Errorf("unable to delete internal evaluation: %s", err.Error()))
 	}
 
 	if broker.IsTrialPlan(operation.ProvisioningParameters.PlanID) || broker.IsFreemiumPlan(operation.ProvisioningParameters.PlanID) {
@@ -50,8 +51,8 @@ func (ars *AvsEvaluationRemovalStep) Run(operation internal.Operation, logger lo
 	}
 	operation, err = ars.delegator.DeleteAvsEvaluation(operation, logger, ars.externalEvalAssistant)
 	if err != nil {
-		logger.Warnf("unable to delete external evaluation: %s", err.Error())
-		return ars.deProvisioningManager.RetryOperationWithoutFail(operation, ars.Name(), "error while deleting avs external evaluation", 10*time.Second, 1*time.Minute, logger)
+		return ars.deProvisioningManager.RetryOperationWithoutFail(operation, ars.Name(), "error while deleting avs external evaluation", 10*time.Second, 1*time.Minute, logger,
+			fmt.Errorf("unable to delete external evaluation: %s", err.Error()))
 	}
 
 	return operation, 0, nil

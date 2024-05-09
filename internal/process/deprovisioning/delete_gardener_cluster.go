@@ -50,8 +50,8 @@ func (step *DeleteGardenerClusterStep) Run(operation internal.Operation, logger 
 		logger.Infof("Using instance.RuntimeID")
 		instance, err := step.instances.GetByID(operation.InstanceID)
 		if err != nil {
-			logger.Errorf("Unable to get instance: %s", err.Error())
-			return step.operationManager.RetryOperationWithoutFail(operation, step.Name(), "unable to get instance", 15*time.Second, 2*time.Minute, logger)
+			logger.Warnf("Unable to get instance: %s", err.Error())
+			return step.operationManager.RetryOperationWithoutFail(operation, step.Name(), "unable to get instance", 15*time.Second, 2*time.Minute, logger, err)
 		}
 		resourceName = steps.GardenerClusterNameFromInstance(instance)
 
@@ -84,8 +84,8 @@ func (step *DeleteGardenerClusterStep) Run(operation internal.Operation, logger 
 		} else if meta.IsNoMatchError(err) {
 			logger.Info("No CRD installed, skipping")
 		} else {
-			logger.Errorf("unable to delete the GardenerCluster resource: %s", err)
-			return step.operationManager.RetryOperationWithoutFail(operation, step.Name(), "unable to delete the GardenerCluster resource", backoffForK8SOperation, timeoutForK8sOperation, logger)
+			logger.Warnf("unable to delete the GardenerCluster resource: %s", err)
+			return step.operationManager.RetryOperationWithoutFail(operation, step.Name(), "unable to delete the GardenerCluster resource", backoffForK8SOperation, timeoutForK8sOperation, logger, err)
 		}
 	}
 

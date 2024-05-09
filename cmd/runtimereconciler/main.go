@@ -2,7 +2,6 @@ package main
 
 import (
 	"context"
-	"log"
 	"time"
 
 	btpmanager "github.com/kyma-project/kyma-environment-broker/internal/btpmanager/credentials"
@@ -38,7 +37,7 @@ func main() {
 
 	var cfg Config
 	err := envconfig.InitWithPrefix(&cfg, "RUNTIME_RECONCILER")
-	fatalOnError(err)
+	fatalOnError(err, logs)
 	logs.Info("runtime-reconciler config loaded")
 	if !cfg.JobEnabled {
 		logs.Info("job disabled, module stopped.")
@@ -46,7 +45,7 @@ func main() {
 	}
 	jobReconciliationDelay, err := time.ParseDuration(cfg.JobReconciliationDelay)
 	if cfg.JobEnabled && err != nil {
-		fatalOnError(err)
+		fatalOnError(err, logs)
 	}
 
 	logs.Infof("runtime-listener runing as dry run? %t", cfg.DryRun)
@@ -54,15 +53,15 @@ func main() {
 	cipher := storage.NewEncrypter(cfg.Database.SecretKey)
 
 	db, _, err := storage.NewFromConfig(cfg.Database, cfg.Events, cipher, logs.WithField("service", "storage"))
-	fatalOnError(err)
+	fatalOnError(err, logs)
 	logs.Info("runtime-reconciler connected to database")
 
 	kcpK8sConfig, err := config.GetConfig()
-	fatalOnError(err)
+	fatalOnError(err, logs)
 	kcpK8sClient, err := client.New(kcpK8sConfig, client.Options{})
-	fatalOnError(err)
+	fatalOnError(err, logs)
 
-	provisionerClient := provisioner.NewProvisionerClient(cfg.Provisioner.URL, false)
+	provisionerClient := provisioner.NewProvisionerClient(cfg.Provisioner.URL, false, logs.WithField("service", "provisioner"))
 
 	btpOperatorManager := btpmanager.NewManager(ctx, kcpK8sClient, db.Instances(), logs, cfg.DryRun, provisionerClient)
 
@@ -76,7 +75,7 @@ func main() {
 	<-ctx.Done()
 }
 
-func fatalOnError(err error) {
+func fatalOnError(err error, log *logrus.Logger) {
 	if err != nil {
 		log.Fatal(err)
 	}

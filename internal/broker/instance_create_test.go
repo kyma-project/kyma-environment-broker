@@ -1480,7 +1480,7 @@ func TestProvision_Provision(t *testing.T) {
 		}, true)
 
 		// then
-		assert.EqualError(t, err, "free Kyma was created for the global account, but there is only one allowed")
+		assert.EqualError(t, err, "provisioning request rejected, you have already used the available free service plan quota in this global account")
 	})
 
 	t.Run("more than one freemium in instances is not allowed", func(t *testing.T) {
@@ -1529,7 +1529,7 @@ func TestProvision_Provision(t *testing.T) {
 		}, true)
 
 		// then
-		assert.EqualError(t, err, "free Kyma was created for the global account, but there is only one allowed")
+		assert.EqualError(t, err, "provisioning request rejected, you have already used the available free service plan quota in this global account")
 	})
 
 	t.Run("more than one freemium in instances archive is not allowed", func(t *testing.T) {
@@ -1576,7 +1576,7 @@ func TestProvision_Provision(t *testing.T) {
 		}, true)
 
 		// then
-		assert.EqualError(t, err, "free Kyma was created for the global account, but there is only one allowed")
+		assert.EqualError(t, err, "provisioning request rejected, you have already used the available free service plan quota in this global account")
 	})
 }
 

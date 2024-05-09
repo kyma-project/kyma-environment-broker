@@ -3,6 +3,7 @@ package broker_test
 import (
 	"context"
 	"testing"
+	"time"
 
 	"github.com/kyma-project/kyma-environment-broker/common/orchestration"
 	"github.com/kyma-project/kyma-environment-broker/internal"
@@ -175,6 +176,39 @@ func TestLastOperation_LastOperation(t *testing.T) {
 		assert.Equal(t, domain.LastOperation{
 			State:       domain.Succeeded,
 			Description: updateOp.Description,
+		}, response)
+	})
+	t.Run("Should return provisioning operation", func(t *testing.T) {
+		// given
+		memoryStorage := storage.NewMemoryStorage()
+
+		provisioning := fixOperation()
+		provisioning.ID = "provisioning-id"
+		provisioning.Description = "Provisioning description"
+		provisioning.CreatedAt = provisioning.CreatedAt.Truncate(time.Millisecond)
+		provisioning.UpdatedAt = provisioning.UpdatedAt.Truncate(time.Millisecond)
+		err := memoryStorage.Operations().InsertOperation(provisioning)
+		assert.NoError(t, err)
+
+		kymaUpgrade := fixOperation()
+		kymaUpgrade.ID = "kyma-upgrade-id"
+		kymaUpgrade.Type = internal.OperationTypeUpgradeKyma
+		kymaUpgrade.Description = "Kyma upgrade description"
+		kymaUpgrade.CreatedAt = kymaUpgrade.CreatedAt.Truncate(time.Millisecond).Add(10 * time.Minute)
+		kymaUpgrade.UpdatedAt = kymaUpgrade.UpdatedAt.Truncate(time.Millisecond).Add(12 * time.Minute)
+		err = memoryStorage.Operations().InsertOperation(kymaUpgrade)
+		assert.NoError(t, err)
+
+		lastOperationEndpoint := broker.NewLastOperation(memoryStorage.Operations(), memoryStorage.InstancesArchived(), logrus.StandardLogger())
+
+		// when
+		response, err := lastOperationEndpoint.LastOperation(context.TODO(), instID, domain.PollDetails{OperationData: ""})
+		assert.NoError(t, err)
+
+		// then
+		assert.Equal(t, domain.LastOperation{
+			State:       domain.Succeeded,
+			Description: "Provisioning description",
 		}, response)
 	})
 }

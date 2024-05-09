@@ -19,7 +19,6 @@ const (
 	DefaultEuAccessAzureRegion = "switzerlandnorth"
 	DefaultAzureMultiZoneCount = 3
 	DefaultAzureMachineType    = "Standard_D2s_v5"
-	DefaultOldAzureMachineType = "Standard_D4s_v5"
 )
 
 var europeAzure = "westeurope"
@@ -38,7 +37,6 @@ type (
 	AzureInput struct {
 		MultiZone                    bool
 		ControlPlaneFailureTolerance string
-		IncludeNewMachineTypes       bool
 	}
 	AzureLiteInput  struct{}
 	AzureTrialInput struct {
@@ -56,15 +54,11 @@ func (p *AzureInput) Defaults() *gqlschema.ClusterConfigInput {
 	if p.ControlPlaneFailureTolerance != "" {
 		controlPlaneFailureTolerance = &p.ControlPlaneFailureTolerance
 	}
-	machineType := DefaultOldAzureMachineType
-	if p.IncludeNewMachineTypes {
-		machineType = DefaultAzureMachineType
-	}
 	return &gqlschema.ClusterConfigInput{
 		GardenerConfig: &gqlschema.GardenerConfigInput{
 			DiskType:       ptr.String("Standard_LRS"),
 			VolumeSizeGb:   ptr.Integer(50),
-			MachineType:    machineType,
+			MachineType:    DefaultAzureMachineType,
 			Region:         DefaultAzureRegion,
 			Provider:       "azure",
 			WorkerCidr:     networking.DefaultNodesCIDR,

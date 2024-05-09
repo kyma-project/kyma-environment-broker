@@ -76,6 +76,7 @@ jobs:
           git checkout -B ${BRANCH_NAME}
           make bump-patch
           yq -i '.dependencies |= map(select(.name == "keb").version="'${TAG}'")' keb-sap/Chart.yaml
+          yq e ".appVersion = \"${TAG}\"" -i keb-sap/Chart.yaml
 
       - name: Commit and push changes
         working-directory: management-plane-charts

@@ -400,7 +400,7 @@ func (s *operations) GetLastOperation(instanceID string) (*internal.Operation, e
 	op := internal.Operation{}
 	var lastErr dberr.Error
 	err := wait.PollImmediate(defaultRetryInterval, defaultRetryTimeout, func() (bool, error) {
-		operation, lastErr = session.GetLastOperation(instanceID)
+		operation, lastErr = session.GetLastOperation(instanceID, []internal.OperationType{})
 		if lastErr != nil {
 			if dberr.IsNotFound(lastErr) {
 				lastErr = dberr.NotFound("Operation with instance_id %s not exist", instanceID)
@@ -423,6 +423,26 @@ func (s *operations) GetLastOperation(instanceID string) (*internal.Operation, e
 		return nil, err
 	}
 	return &op, nil
+}
+
+// GetLastOperationByTypes returns Operation (with one of given types) for given instance ID which is not in 'pending' state. Returns an error if the operation does not exist.
+func (s *operations) GetLastOperationByTypes(instanceID string, types []internal.OperationType) (*internal.Operation, error) {
+	session := s.NewReadSession()
+	dto, dbErr := session.GetLastOperation(instanceID, types)
+	if dbErr != nil {
+		return nil, dbErr
+	}
+
+	operation := internal.Operation{}
+	err := json.Unmarshal([]byte(dto.Data), &operation)
+	if err != nil {
+		return nil, fmt.Errorf("while unmarshalling operation data: %w", err)
+	}
+	operation, err = s.toOperation(&dto, operation)
+	if err != nil {
+		return nil, err
+	}
+	return &operation, nil
 }
 
 // GetOperationByID returns Operation with given ID. Returns an error if the operation does not exist.
@@ -604,6 +624,16 @@ func (s *operations) ListOperations(filter dbmodel.OperationFilter) ([]internal.
 	result, err := s.toOperations(operations)
 
 	return result, size, total, err
+}
+
+func (s *operations) GetAllOperations() ([]internal.Operation, error) {
+	session := s.NewReadSession()
+	operations, err := session.GetAllOperations()
+	if err != nil {
+		return nil, err
+	}
+	result, err := s.toOperations(operations)
+	return result, err
 }
 
 func (s *operations) fetchFailedStatusForOrchestration(entries []dbmodel.OperationDTO) ([]dbmodel.OperationDTO, int, int) {
@@ -832,7 +862,6 @@ func (s *operations) UpdateUpdatingOperation(operation internal.UpdatingOperatio
 
 			// the operation exists but the version is different
 			lastErr = dberr.Conflict("operation update conflict, operation ID: %s", operation.Operation.ID)
-			log.Warn(lastErr.Error())
 			return false, lastErr
 		}
 		return true, nil
@@ -896,7 +925,6 @@ func (s *operations) UpdateUpgradeClusterOperation(operation internal.UpgradeClu
 
 			// the operation exists but the version is different
 			lastErr = dberr.Conflict("operation update conflict, operation ID: %s", operation.Operation.ID)
-			log.Warn(lastErr.Error())
 			return false, lastErr
 		}
 		return true, nil
@@ -1447,7 +1475,6 @@ func (s *operations) update(operation dbmodel.OperationDTO) error {
 
 			// the operation exists but the version is different
 			lastErr = dberr.Conflict("operation update conflict, operation ID: %s", operation.ID)
-			log.Warn(lastErr.Error())
 			return false, lastErr
 		}
 		return true, nil

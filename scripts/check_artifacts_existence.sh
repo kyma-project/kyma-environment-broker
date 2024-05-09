@@ -20,7 +20,7 @@ IMAGE_NAMES=(
   kyma-environment-deprovision-retrigger-job
   kyma-environment-runtime-reconciler
   kyma-environment-subaccount-cleanup-job
-  kyma-environment-trial-cleanup-job
+  kyma-environment-expirator-job
   kyma-environments-cleanup-job
 )
 
