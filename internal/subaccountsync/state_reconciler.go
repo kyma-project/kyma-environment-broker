@@ -125,7 +125,7 @@ func (reconciler *stateReconcilerType) periodicAccountsSync() (successes int, fa
 
 	for subaccountID := range subaccountsSet {
 		subaccountDataFromCis, err := reconciler.accountsClient.GetSubaccountData(string(subaccountID))
-		if subaccountDataFromCis == (CisStateType{}) {
+		if subaccountDataFromCis == (CisStateType{}) && err == nil {
 			logs.Warn(fmt.Sprintf("subaccount %s not found in CIS", subaccountID))
 			continue
 		}
