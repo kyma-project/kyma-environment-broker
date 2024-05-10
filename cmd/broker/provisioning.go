@@ -78,12 +78,14 @@ func NewProvisioningProcessingQueue(ctx context.Context, provisionManager *proce
 			condition: provisioning.SkipForOwnClusterPlan,
 		},
 		{
-			stage: createRuntimeStageName,
-			step:  provisioning.NewOverridesFromSecretsAndConfigStep(db.Operations(), runtimeOverrides, runtimeVerConfigurator),
+			disabled: cfg.ReconcilerIntegrationDisabled,
+			stage:    createRuntimeStageName,
+			step:     provisioning.NewOverridesFromSecretsAndConfigStep(db.Operations(), runtimeOverrides, runtimeVerConfigurator),
 			// Preview plan does not call Reconciler so it does not need overrides
 			condition: skipForPreviewPlan,
 		},
 		{
+			disabled:  cfg.ReconcilerIntegrationDisabled,
 			condition: provisioning.WhenBTPOperatorCredentialsProvided,
 			stage:     createRuntimeStageName,
 			step:      provisioning.NewBTPOperatorOverridesStep(db.Operations()),

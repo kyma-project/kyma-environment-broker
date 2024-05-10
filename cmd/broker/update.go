@@ -27,6 +27,7 @@ func NewUpdateProcessingQueue(ctx context.Context, manager *process.StagedManage
 	}
 	manager.DefineStages([]string{"cluster", "btp-operator", "btp-operator-check", "check"})
 	updateSteps := []struct {
+		disabled  bool
 		stage     string
 		step      process.Step
 		condition process.StepCondition
@@ -45,16 +46,19 @@ func NewUpdateProcessingQueue(ctx context.Context, manager *process.StagedManage
 			step:  update.NewInitKymaVersionStep(db.Operations(), runtimeVerConfigurator, runtimeStatesDb),
 		},
 		{
+			disabled:  cfg.ReconcilerIntegrationDisabled,
 			stage:     "btp-operator",
 			step:      update.NewBTPOperatorOverridesStep(db.Operations(), runtimeProvider),
 			condition: update.RequiresBTPOperatorCredentials,
 		},
 		{
+			disabled:  cfg.ReconcilerIntegrationDisabled,
 			stage:     "btp-operator",
 			step:      update.NewApplyReconcilerConfigurationStep(db.Operations(), db.RuntimeStates(), reconcilerClient),
 			condition: requiresReconcilerUpdate,
 		},
 		{
+			disabled:  cfg.ReconcilerIntegrationDisabled,
 			stage:     "btp-operator-check",
 			step:      update.NewCheckReconcilerState(db.Operations(), reconcilerClient),
 			condition: update.CheckReconcilerStatus,
@@ -67,9 +71,11 @@ func NewUpdateProcessingQueue(ctx context.Context, manager *process.StagedManage
 	}
 
 	for _, step := range updateSteps {
-		err := manager.AddStep(step.stage, step.step, step.condition)
-		if err != nil {
-			fatalOnError(err, logs)
+		if !step.disabled {
+			err := manager.AddStep(step.stage, step.step, step.condition)
+			if err != nil {
+				fatalOnError(err, logs)
+			}
 		}
 	}
 	queue := process.NewQueue(manager, logs)
