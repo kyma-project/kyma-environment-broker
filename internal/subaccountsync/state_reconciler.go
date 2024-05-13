@@ -161,7 +161,7 @@ func (reconciler *stateReconcilerType) periodicEventsSync(fromActionTime int64) 
 		reconciler.reconcileCisEvent(event)
 		reconciler.eventWindow.UpdateToTime(event.ActionTime)
 	}
-	logs.Debug(fmt.Sprintf("Events synchronization finished with success, the most recent reconciled event time: %d", reconciler.eventWindow.lastToTime))
+	logs.Debug(fmt.Sprintf("Events synchronization finished with succcess==%t, the most recent reconciled event time: %d", success, reconciler.eventWindow.lastToTime))
 	return success
 }
 
@@ -199,7 +199,8 @@ func (reconciler *stateReconcilerType) runCronJobs(cfg Config, ctx context.Conte
 	_, err = s.Every(cfg.AccountsSyncInterval).Do(func() {
 		successes, failures := reconciler.periodicAccountsSync()
 
-		reconciler.metrics.cisRequests.With(prometheus.Labels{"endpoint": "accounts", "status": "failure"}).Add(float64(failures))
+		//TODO remove after testing
+		reconciler.metrics.cisRequests.With(prometheus.Labels{"endpoint": "accounts", "status": "failure"}).Add(float64(failures + 1))
 		reconciler.metrics.cisRequests.With(prometheus.Labels{"endpoint": "accounts", "status": "success"}).Add(float64(successes))
 	})
 	if err != nil {
