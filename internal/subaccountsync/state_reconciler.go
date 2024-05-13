@@ -116,7 +116,7 @@ func (reconciler *stateReconcilerType) setMetrics() {
 	reconciler.metrics.states.With(prometheus.Labels{"type": usedForProductionLabel, "value": "others"}).Set(float64(others))
 }
 
-func (reconciler *stateReconcilerType) periodicAccountsSync() (successes int, failures int) {
+func (reconciler *stateReconcilerType) periodicAccountsSync() (found int, notfound int, failures int) {
 	logs := reconciler.logger
 
 	// get distinct subaccounts from inMemoryState
@@ -125,19 +125,21 @@ func (reconciler *stateReconcilerType) periodicAccountsSync() (successes int, fa
 
 	for subaccountID := range subaccountsSet {
 		subaccountDataFromCis, err := reconciler.accountsClient.GetSubaccountData(string(subaccountID))
-		if subaccountDataFromCis == (CisStateType{}) {
+		if subaccountDataFromCis == (CisStateType{}) && err == nil {
 			logs.Warn(fmt.Sprintf("subaccount %s not found in CIS", subaccountID))
+			notfound++
 			continue
 		}
 		if err != nil {
 			failures++
 			logs.Error(fmt.Sprintf("while getting data for subaccount:%s", err))
 		} else {
-			successes++
+			found++
 			reconciler.reconcileCisAccount(subaccountID, subaccountDataFromCis)
 		}
 	}
-	return successes, failures
+	logs.Debug(fmt.Sprintf("Accounts synchronization finished: found: %d, notfound %d, failures: %d", found, notfound, failures))
+	return found, notfound, failures
 }
 
 func (reconciler *stateReconcilerType) periodicEventsSync(fromActionTime int64) (success bool) {
@@ -160,7 +162,7 @@ func (reconciler *stateReconcilerType) periodicEventsSync(fromActionTime int64) 
 		reconciler.reconcileCisEvent(event)
 		reconciler.eventWindow.UpdateToTime(event.ActionTime)
 	}
-	logs.Debug(fmt.Sprintf("Events synchronization finished, the most recent reconciled event time: %d", reconciler.eventWindow.lastToTime))
+	logs.Debug(fmt.Sprintf("Events synchronization finished with succcess==%t, the most recent reconciled event time: %d", success, reconciler.eventWindow.lastToTime))
 	return success
 }
 
@@ -196,10 +198,12 @@ func (reconciler *stateReconcilerType) runCronJobs(cfg Config, ctx context.Conte
 	}
 
 	_, err = s.Every(cfg.AccountsSyncInterval).Do(func() {
-		successes, failures := reconciler.periodicAccountsSync()
+		found, notfound, failures := reconciler.periodicAccountsSync()
 
 		reconciler.metrics.cisRequests.With(prometheus.Labels{"endpoint": "accounts", "status": "failure"}).Add(float64(failures))
-		reconciler.metrics.cisRequests.With(prometheus.Labels{"endpoint": "accounts", "status": "success"}).Add(float64(successes))
+		reconciler.metrics.cisRequests.With(prometheus.Labels{"endpoint": "accounts", "status": "success"}).Add(float64(found + notfound))
+		reconciler.metrics.cisRequests.With(prometheus.Labels{"endpoint": "accounts", "status": "notfound"}).Add(float64(notfound))
+
 	})
 	if err != nil {
 		logs.Error(fmt.Sprintf("while scheduling accounts sync job: %s", err))
@@ -224,8 +228,9 @@ func (reconciler *stateReconcilerType) reconcileCisAccount(subaccountID subaccou
 
 	state, ok := reconciler.inMemoryState[subaccountID]
 	if !ok {
-		logs.Warn(fmt.Sprintf("subaccount %s for which we called accounts not found in in-memory state - should not happen", subaccountID))
-		return
+		// possible case when subaccount was deleted from the state and then Kyma resource was created again
+		logs.Warn(fmt.Sprintf("subaccount %s for account not found in in-memory state", subaccountID))
+		state.cisState = newCisState
 	}
 	if newCisState.ModifiedDate >= state.cisState.ModifiedDate {
 		state.cisState = newCisState
@@ -244,8 +249,8 @@ func (reconciler *stateReconcilerType) reconcileCisEvent(event Event) {
 	subaccount := subaccountIDType(event.SubaccountID)
 	state, ok := reconciler.inMemoryState[subaccount]
 	if !ok {
-		// possible case when subaccount was deleted from the state and then created after the last full sync, we will sync it next time
-		logs.Warn(fmt.Sprintf("subaccount %s for event not found in state", subaccount))
+		// possible case when subaccount was deleted from the state and then Kyma resource was created again
+		logs.Warn(fmt.Sprintf("subaccount %s for event not found in in-memory state", subaccount))
 	}
 	if event.ActionTime >= state.cisState.ModifiedDate {
 		cisState := CisStateType{
