@@ -72,7 +72,6 @@ func TestUpdateEndpoint_UpdateSuspension(t *testing.T) {
 		return &gqlschema.ClusterConfigInput{}, nil
 	}
 	kcBuilder := &kcMock.KcBuilder{}
-
 	svc := NewUpdate(
 		Config{},
 		st.Instances(),
@@ -142,7 +141,6 @@ func TestUpdateEndpoint_UpdateOfExpiredTrial(t *testing.T) {
 		return &gqlschema.ClusterConfigInput{}, nil
 	}
 	kcBuilder := &kcMock.KcBuilder{}
-
 	svc := NewUpdate(Config{}, st.Instances(), st.RuntimeStates(), st.Operations(), handler, true, false, q, PlansConfig{},
 		planDefaults, logrus.New(), dashboardConfig, kcBuilder)
 
@@ -193,7 +191,6 @@ func TestUpdateEndpoint_UpdateAutoscalerParams(t *testing.T) {
 		return &gqlschema.ClusterConfigInput{}, nil
 	}
 	kcBuilder := &kcMock.KcBuilder{}
-
 	svc := NewUpdate(Config{}, st.Instances(), st.RuntimeStates(), st.Operations(), handler, true, false, q, PlansConfig{},
 		planDefaults, logrus.New(), dashboardConfig, kcBuilder)
 
@@ -288,7 +285,6 @@ func TestUpdateEndpoint_UpdateUnsuspension(t *testing.T) {
 		return &gqlschema.ClusterConfigInput{}, nil
 	}
 	kcBuilder := &kcMock.KcBuilder{}
-
 	svc := NewUpdate(Config{}, st.Instances(), st.RuntimeStates(), st.Operations(), handler, true, false, q, PlansConfig{},
 		planDefaults, logrus.New(), dashboardConfig, kcBuilder)
 
@@ -340,7 +336,6 @@ func TestUpdateEndpoint_UpdateInstanceWithWrongActiveValue(t *testing.T) {
 		return &gqlschema.ClusterConfigInput{}, nil
 	}
 	kcBuilder := &kcMock.KcBuilder{}
-
 	svc := NewUpdate(Config{}, st.Instances(), st.RuntimeStates(), st.Operations(), handler, true, false, q, PlansConfig{},
 		planDefaults, logrus.New(), dashboardConfig, kcBuilder)
 
@@ -373,7 +368,6 @@ func TestUpdateEndpoint_UpdateNonExistingInstance(t *testing.T) {
 		return &gqlschema.ClusterConfigInput{}, nil
 	}
 	kcBuilder := &kcMock.KcBuilder{}
-
 	svc := NewUpdate(Config{}, st.Instances(), st.RuntimeStates(), st.Operations(), handler, true, false, q, PlansConfig{},
 		planDefaults, logrus.New(), dashboardConfig, kcBuilder)
 
@@ -440,7 +434,6 @@ func TestUpdateEndpoint_UpdateGlobalAccountID(t *testing.T) {
 		return &gqlschema.ClusterConfigInput{}, nil
 	}
 	kcBuilder := &kcMock.KcBuilder{}
-
 	svc := NewUpdate(Config{}, st.Instances(), st.RuntimeStates(), st.Operations(), handler, true, true, q, PlansConfig{},
 		planDefaults, logrus.New(), dashboardConfig, kcBuilder)
 
@@ -485,7 +478,6 @@ func TestUpdateEndpoint_UpdateParameters(t *testing.T) {
 		return &gqlschema.ClusterConfigInput{}, nil
 	}
 	kcBuilder := &kcMock.KcBuilder{}
-
 	svc := NewUpdate(Config{}, st.Instances(), st.RuntimeStates(), st.Operations(), handler, true, true, q, PlansConfig{},
 		planDefaults, logrus.New(), dashboardConfig, kcBuilder)
 
@@ -617,7 +609,6 @@ func TestUpdateEndpoint_UpdateWithEnabledDashboard(t *testing.T) {
 		return &gqlschema.ClusterConfigInput{}, nil
 	}
 	kcBuilder := &kcMock.KcBuilder{}
-
 	svc := NewUpdate(Config{}, st.Instances(), st.RuntimeStates(), st.Operations(), handler, true, false, q, PlansConfig{},
 		planDefaults, logrus.New(), dashboardConfig, kcBuilder)
 
