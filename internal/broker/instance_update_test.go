@@ -17,6 +17,7 @@ import (
 	"github.com/kyma-project/kyma-environment-broker/internal/dashboard"
 
 	"github.com/kyma-project/kyma-environment-broker/internal/fixture"
+	kcMock "github.com/kyma-project/kyma-environment-broker/internal/kubeconfig/automock"
 	"github.com/kyma-project/kyma-environment-broker/internal/ptr"
 	"github.com/kyma-project/kyma-environment-broker/internal/storage"
 	"github.com/pivotal-cf/brokerapi/v8/domain"
@@ -70,6 +71,8 @@ func TestUpdateEndpoint_UpdateSuspension(t *testing.T) {
 	planDefaults := func(planID string, platformProvider internal.CloudProvider, provider *internal.CloudProvider) (*gqlschema.ClusterConfigInput, error) {
 		return &gqlschema.ClusterConfigInput{}, nil
 	}
+	kcBuilder := &kcMock.KcBuilder{}
+
 	svc := NewUpdate(
 		Config{},
 		st.Instances(),
@@ -82,7 +85,8 @@ func TestUpdateEndpoint_UpdateSuspension(t *testing.T) {
 		PlansConfig{},
 		planDefaults,
 		logrus.New(),
-		dashboardConfig)
+		dashboardConfig,
+		kcBuilder)
 
 	// when
 	response, err := svc.Update(context.Background(), instanceID, domain.UpdateDetails{
@@ -137,8 +141,10 @@ func TestUpdateEndpoint_UpdateOfExpiredTrial(t *testing.T) {
 	planDefaults := func(planID string, platformProvider internal.CloudProvider, provider *internal.CloudProvider) (*gqlschema.ClusterConfigInput, error) {
 		return &gqlschema.ClusterConfigInput{}, nil
 	}
+	kcBuilder := &kcMock.KcBuilder{}
+
 	svc := NewUpdate(Config{}, st.Instances(), st.RuntimeStates(), st.Operations(), handler, true, false, q, PlansConfig{},
-		planDefaults, logrus.New(), dashboardConfig)
+		planDefaults, logrus.New(), dashboardConfig, kcBuilder)
 
 	// when
 	response, err := svc.Update(context.Background(), instanceID, domain.UpdateDetails{
@@ -186,8 +192,10 @@ func TestUpdateEndpoint_UpdateAutoscalerParams(t *testing.T) {
 	planDefaults := func(planID string, platformProvider internal.CloudProvider, provider *internal.CloudProvider) (*gqlschema.ClusterConfigInput, error) {
 		return &gqlschema.ClusterConfigInput{}, nil
 	}
+	kcBuilder := &kcMock.KcBuilder{}
+
 	svc := NewUpdate(Config{}, st.Instances(), st.RuntimeStates(), st.Operations(), handler, true, false, q, PlansConfig{},
-		planDefaults, logrus.New(), dashboardConfig)
+		planDefaults, logrus.New(), dashboardConfig, kcBuilder)
 
 	t.Run("Should fail on invalid (too low) autoScalerMin and autoScalerMax", func(t *testing.T) {
 
@@ -279,8 +287,10 @@ func TestUpdateEndpoint_UpdateUnsuspension(t *testing.T) {
 	planDefaults := func(planID string, platformProvider internal.CloudProvider, provider *internal.CloudProvider) (*gqlschema.ClusterConfigInput, error) {
 		return &gqlschema.ClusterConfigInput{}, nil
 	}
+	kcBuilder := &kcMock.KcBuilder{}
+
 	svc := NewUpdate(Config{}, st.Instances(), st.RuntimeStates(), st.Operations(), handler, true, false, q, PlansConfig{},
-		planDefaults, logrus.New(), dashboardConfig)
+		planDefaults, logrus.New(), dashboardConfig, kcBuilder)
 
 	// when
 	_, err = svc.Update(context.Background(), instanceID, domain.UpdateDetails{
@@ -329,8 +339,10 @@ func TestUpdateEndpoint_UpdateInstanceWithWrongActiveValue(t *testing.T) {
 	planDefaults := func(planID string, platformProvider internal.CloudProvider, provider *internal.CloudProvider) (*gqlschema.ClusterConfigInput, error) {
 		return &gqlschema.ClusterConfigInput{}, nil
 	}
+	kcBuilder := &kcMock.KcBuilder{}
+
 	svc := NewUpdate(Config{}, st.Instances(), st.RuntimeStates(), st.Operations(), handler, true, false, q, PlansConfig{},
-		planDefaults, logrus.New(), dashboardConfig)
+		planDefaults, logrus.New(), dashboardConfig, kcBuilder)
 
 	// when
 	_, err = svc.Update(context.Background(), instanceID, domain.UpdateDetails{
@@ -360,8 +372,10 @@ func TestUpdateEndpoint_UpdateNonExistingInstance(t *testing.T) {
 	planDefaults := func(planID string, platformProvider internal.CloudProvider, provider *internal.CloudProvider) (*gqlschema.ClusterConfigInput, error) {
 		return &gqlschema.ClusterConfigInput{}, nil
 	}
+	kcBuilder := &kcMock.KcBuilder{}
+
 	svc := NewUpdate(Config{}, st.Instances(), st.RuntimeStates(), st.Operations(), handler, true, false, q, PlansConfig{},
-		planDefaults, logrus.New(), dashboardConfig)
+		planDefaults, logrus.New(), dashboardConfig, kcBuilder)
 
 	// when
 	_, err := svc.Update(context.Background(), instanceID, domain.UpdateDetails{
@@ -425,8 +439,10 @@ func TestUpdateEndpoint_UpdateGlobalAccountID(t *testing.T) {
 	planDefaults := func(planID string, platformProvider internal.CloudProvider, provider *internal.CloudProvider) (*gqlschema.ClusterConfigInput, error) {
 		return &gqlschema.ClusterConfigInput{}, nil
 	}
+	kcBuilder := &kcMock.KcBuilder{}
+
 	svc := NewUpdate(Config{}, st.Instances(), st.RuntimeStates(), st.Operations(), handler, true, true, q, PlansConfig{},
-		planDefaults, logrus.New(), dashboardConfig)
+		planDefaults, logrus.New(), dashboardConfig, kcBuilder)
 
 	// when
 	response, err := svc.Update(context.Background(), instanceID, domain.UpdateDetails{
@@ -468,9 +484,10 @@ func TestUpdateEndpoint_UpdateParameters(t *testing.T) {
 	planDefaults := func(planID string, platformProvider internal.CloudProvider, provider *internal.CloudProvider) (*gqlschema.ClusterConfigInput, error) {
 		return &gqlschema.ClusterConfigInput{}, nil
 	}
+	kcBuilder := &kcMock.KcBuilder{}
 
 	svc := NewUpdate(Config{}, st.Instances(), st.RuntimeStates(), st.Operations(), handler, true, true, q, PlansConfig{},
-		planDefaults, logrus.New(), dashboardConfig)
+		planDefaults, logrus.New(), dashboardConfig, kcBuilder)
 
 	t.Run("Should fail on invalid OIDC params", func(t *testing.T) {
 		// given
@@ -599,8 +616,10 @@ func TestUpdateEndpoint_UpdateWithEnabledDashboard(t *testing.T) {
 	planDefaults := func(planID string, platformProvider internal.CloudProvider, provider *internal.CloudProvider) (*gqlschema.ClusterConfigInput, error) {
 		return &gqlschema.ClusterConfigInput{}, nil
 	}
+	kcBuilder := &kcMock.KcBuilder{}
+
 	svc := NewUpdate(Config{}, st.Instances(), st.RuntimeStates(), st.Operations(), handler, true, false, q, PlansConfig{},
-		planDefaults, logrus.New(), dashboardConfig)
+		planDefaults, logrus.New(), dashboardConfig, kcBuilder)
 
 	// when
 	response, err := svc.Update(context.Background(), instanceID, domain.UpdateDetails{

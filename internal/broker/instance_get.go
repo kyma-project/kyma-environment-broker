@@ -8,6 +8,7 @@ import (
 
 	"github.com/kyma-project/kyma-environment-broker/internal"
 
+	"github.com/kyma-project/kyma-environment-broker/internal/kubeconfig"
 	"github.com/kyma-project/kyma-environment-broker/internal/storage"
 	"github.com/kyma-project/kyma-environment-broker/internal/storage/dberr"
 
@@ -23,19 +24,21 @@ type GetInstanceEndpoint struct {
 	instancesStorage  storage.Instances
 	operationsStorage storage.Provisioning
 	brokerURL         string
-
-	log logrus.FieldLogger
+	kcBuilder         kubeconfig.KcBuilder
+	log               logrus.FieldLogger
 }
 
 func NewGetInstance(cfg Config,
 	instancesStorage storage.Instances,
 	operationsStorage storage.Provisioning,
+	kcBuilder kubeconfig.KcBuilder,
 	log logrus.FieldLogger,
 ) *GetInstanceEndpoint {
 	return &GetInstanceEndpoint{
 		config:            cfg,
 		instancesStorage:  instancesStorage,
 		operationsStorage: operationsStorage,
+		kcBuilder:         kcBuilder,
 		log:               log.WithField("service", "GetInstanceEndpoint"),
 	}
 }
@@ -77,7 +80,7 @@ func (b *GetInstanceEndpoint) GetInstance(_ context.Context, instanceID string, 
 		DashboardURL: instance.DashboardURL,
 		Parameters:   parameters,
 		Metadata: domain.InstanceMetadata{
-			Labels: ResponseLabels(*op, *instance, b.config.URL, b.config.EnableKubeconfigURLLabel),
+			Labels: ResponseLabels(*op, *instance, b.config.URL, b.config.EnableKubeconfigURLLabel, b.kcBuilder),
 		},
 	}
 
@@ -85,11 +88,11 @@ func (b *GetInstanceEndpoint) GetInstance(_ context.Context, instanceID string, 
 		instance.ServicePlanID == TrialPlanID &&
 		(b.config.SubaccountsIdsToShowTrialExpirationInfo == allSubaccountsIDs ||
 			strings.Contains(b.config.SubaccountsIdsToShowTrialExpirationInfo, instance.SubAccountID)) {
-		spec.Metadata.Labels = ResponseLabelsWithExpirationInfo(*op, *instance, b.config.URL, b.config.TrialDocsURL, b.config.EnableKubeconfigURLLabel, trialDocsKey, trialExpireDuration, trialExpiryDetailsKey, trialExpiredInfoFormat)
+		spec.Metadata.Labels = ResponseLabelsWithExpirationInfo(*op, *instance, b.config.URL, b.config.TrialDocsURL, b.config.EnableKubeconfigURLLabel, trialDocsKey, trialExpireDuration, trialExpiryDetailsKey, trialExpiredInfoFormat, b.kcBuilder)
 	}
 
 	if b.config.ShowFreeExpirationInfo && instance.ServicePlanID == FreemiumPlanID {
-		spec.Metadata.Labels = ResponseLabelsWithExpirationInfo(*op, *instance, b.config.URL, b.config.FreeDocsURL, b.config.EnableKubeconfigURLLabel, freeDocsKey, b.config.FreeExpirationPeriod, freeExpiryDetailsKey, freeExpiredInfoFormat)
+		spec.Metadata.Labels = ResponseLabelsWithExpirationInfo(*op, *instance, b.config.URL, b.config.FreeDocsURL, b.config.EnableKubeconfigURLLabel, freeDocsKey, b.config.FreeExpirationPeriod, freeExpiryDetailsKey, freeExpiredInfoFormat, b.kcBuilder)
 	}
 
 	return spec, nil

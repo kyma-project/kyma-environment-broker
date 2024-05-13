@@ -2,15 +2,18 @@ package broker
 
 import (
 	"fmt"
+	"log/slog"
 	"math"
 	"strings"
 	"time"
 
 	"github.com/kyma-project/kyma-environment-broker/internal"
+	"github.com/kyma-project/kyma-environment-broker/internal/kubeconfig"
 )
 
 const (
 	kubeconfigURLKey       = "KubeconfigURL"
+	apiServerURLKey        = "APIServerURL"
 	notExpiredInfoFormat   = "Your cluster expires %s."
 	trialExpiryDetailsKey  = "Trial account expiration details"
 	trialDocsKey           = "Trial account documentation"
@@ -23,7 +26,7 @@ const (
 		"  To continue using Kyma, you must use a paid service plan. To learn more about the available plans, follow the link to the documentation."
 )
 
-func ResponseLabels(op internal.ProvisioningOperation, instance internal.Instance, brokerURL string, enableKubeconfigLabel bool) map[string]string {
+func ResponseLabels(op internal.ProvisioningOperation, instance internal.Instance, brokerURL string, enableKubeconfigLabel bool, kubeconfigBuilder kubeconfig.KcBuilder) map[string]string {
 	brokerURL = strings.TrimLeft(brokerURL, "https://")
 	brokerURL = strings.TrimLeft(brokerURL, "http://")
 
@@ -31,6 +34,13 @@ func ResponseLabels(op internal.ProvisioningOperation, instance internal.Instanc
 	responseLabels["Name"] = op.ProvisioningParameters.Parameters.Name
 	if enableKubeconfigLabel && !IsOwnClusterPlan(instance.ServicePlanID) {
 		responseLabels[kubeconfigURLKey] = fmt.Sprintf("https://%s/kubeconfig/%s", brokerURL, instance.InstanceID)
+		apiServerUrl, err := kubeconfigBuilder.GetServerURL(instance.RuntimeID)
+		if err != nil {
+			slog.Error(fmt.Sprintf("while getting APIServerURL: %s", err))
+			return responseLabels
+		}
+		responseLabels[apiServerURLKey] = apiServerUrl
+
 	}
 
 	return responseLabels
@@ -46,13 +56,15 @@ func ResponseLabelsWithExpirationInfo(
 	expireDuration time.Duration,
 	expiryDetailsKey string,
 	expiredInfoFormat string,
+	kubeconfigBuilder kubeconfig.KcBuilder,
 ) map[string]string {
-	labels := ResponseLabels(op, instance, brokerURL, enableKubeconfigLabel)
+	labels := ResponseLabels(op, instance, brokerURL, enableKubeconfigLabel, kubeconfigBuilder)
 
 	expireTime := instance.CreatedAt.Add(expireDuration)
 	hoursLeft := calculateHoursLeft(expireTime)
 	if instance.IsExpired() {
 		delete(labels, kubeconfigURLKey)
+		delete(labels, apiServerURLKey)
 		labels[expiryDetailsKey] = expiredInfoFormat
 		labels[docsKey] = docsURL
 	} else {

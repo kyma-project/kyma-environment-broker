@@ -10,6 +10,7 @@ import (
 	"net/netip"
 	"strings"
 
+	"github.com/kyma-project/kyma-environment-broker/internal/kubeconfig"
 	"github.com/kyma-project/kyma-environment-broker/internal/whitelist"
 
 	"github.com/kyma-project/kyma-environment-broker/internal/storage/dbmodel"
@@ -67,6 +68,7 @@ type ProvisionEndpoint struct {
 	shootDnsProviders gardener.DNSProvidersData
 
 	dashboardConfig dashboard.Config
+	kcBuilder       kubeconfig.KcBuilder
 
 	euAccessWhitelist        whitelist.Set
 	euAccessRejectionMessage string
@@ -90,6 +92,7 @@ func NewProvision(cfg Config,
 	euRejectMessage string,
 	log logrus.FieldLogger,
 	dashboardConfig dashboard.Config,
+	kcBuilder kubeconfig.KcBuilder,
 	freemiumWhitelist whitelist.Set,
 ) *ProvisionEndpoint {
 	enabledPlanIDs := map[string]struct{}{}
@@ -117,6 +120,7 @@ func NewProvision(cfg Config,
 		euAccessRejectionMessage: euRejectMessage,
 		dashboardConfig:          dashboardConfig,
 		freemiumWhiteList:        freemiumWhitelist,
+		kcBuilder:                kcBuilder,
 	}
 }
 
@@ -223,7 +227,7 @@ func (b *ProvisionEndpoint) Provision(ctx context.Context, instanceID string, de
 		OperationData: operation.ID,
 		DashboardURL:  dashboardURL,
 		Metadata: domain.InstanceMetadata{
-			Labels: ResponseLabels(operation, instance, b.config.URL, b.config.EnableKubeconfigURLLabel),
+			Labels: ResponseLabels(operation, instance, b.config.URL, b.config.EnableKubeconfigURLLabel, b.kcBuilder),
 		},
 	}, nil
 }
@@ -462,7 +466,7 @@ func (b *ProvisionEndpoint) handleExistingOperation(operation *internal.Provisio
 		OperationData: operation.ID,
 		DashboardURL:  operation.DashboardURL,
 		Metadata: domain.InstanceMetadata{
-			Labels: ResponseLabels(*operation, *instance, b.config.URL, b.config.EnableKubeconfigURLLabel),
+			Labels: ResponseLabels(*operation, *instance, b.config.URL, b.config.EnableKubeconfigURLLabel, b.kcBuilder),
 		},
 	}, nil
 }

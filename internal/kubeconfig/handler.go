@@ -5,8 +5,6 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/kyma-project/kyma-environment-broker/internal/broker"
-
 	"github.com/kennygrant/sanitize"
 
 	"github.com/kyma-project/kyma-environment-broker/common/orchestration"
@@ -27,6 +25,7 @@ const attachmentName = "kubeconfig.yaml"
 type KcBuilder interface {
 	Build(*internal.Instance) (string, error)
 	BuildFromAdminKubeconfig(instance *internal.Instance, adminKubeconfig string) (string, error)
+	GetServerURL(runtimeID string) (string, error)
 }
 
 type Handler struct {
@@ -34,15 +33,17 @@ type Handler struct {
 	allowOrigins      string
 	instanceStorage   storage.Instances
 	operationStorage  storage.Operations
+	ownClusterPlanID  string
 	log               logrus.FieldLogger
 }
 
-func NewHandler(storage storage.BrokerStorage, b KcBuilder, origins string, log logrus.FieldLogger) *Handler {
+func NewHandler(storage storage.BrokerStorage, b KcBuilder, origins string, ownClusterPlanID string, log logrus.FieldLogger) *Handler {
 	return &Handler{
 		instanceStorage:   storage.Instances(),
 		operationStorage:  storage.Operations(),
 		kubeconfigBuilder: b,
 		allowOrigins:      origins,
+		ownClusterPlanID:  ownClusterPlanID,
 		log:               log,
 	}
 }
@@ -75,7 +76,7 @@ func (h *Handler) GetKubeconfig(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if broker.IsOwnClusterPlan(instance.ServicePlanID) {
+	if h.ownClusterPlanID == instance.ServicePlanID {
 		h.handleResponse(w, http.StatusNotFound, fmt.Errorf("kubeconfig for instance %s does not exist", instanceID))
 		return
 	}
@@ -111,7 +112,7 @@ func (h *Handler) GetKubeconfig(w http.ResponseWriter, r *http.Request) {
 	}
 
 	var newKubeconfig string
-	if instance.ServicePlanID == broker.OwnClusterPlanID {
+	if instance.ServicePlanID == h.ownClusterPlanID {
 		newKubeconfig, err = h.kubeconfigBuilder.BuildFromAdminKubeconfig(instance, instance.InstanceDetails.Kubeconfig)
 	} else {
 		newKubeconfig, err = h.kubeconfigBuilder.Build(instance)

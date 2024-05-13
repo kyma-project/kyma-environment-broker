@@ -18,6 +18,7 @@ import (
 	"github.com/kyma-project/kyma-environment-broker/internal/broker/automock"
 	"github.com/kyma-project/kyma-environment-broker/internal/dashboard"
 	"github.com/kyma-project/kyma-environment-broker/internal/fixture"
+	kcMock "github.com/kyma-project/kyma-environment-broker/internal/kubeconfig/automock"
 	"github.com/kyma-project/kyma-environment-broker/internal/middleware"
 	"github.com/kyma-project/kyma-environment-broker/internal/ptr"
 	"github.com/kyma-project/kyma-environment-broker/internal/storage"
@@ -66,6 +67,8 @@ func TestProvision_Provision(t *testing.T) {
 		planDefaults := func(planID string, platformProvider internal.CloudProvider, provider *internal.CloudProvider) (*gqlschema.ClusterConfigInput, error) {
 			return &gqlschema.ClusterConfigInput{}, nil
 		}
+		kcBuilder := &kcMock.KcBuilder{}
+		kcBuilder.On("GetServerURL", "").Return("", fmt.Errorf("error"))
 		// #create provisioner endpoint
 		provisionEndpoint := broker.NewProvision(
 			broker.Config{
@@ -87,6 +90,7 @@ func TestProvision_Provision(t *testing.T) {
 			"request rejected, your globalAccountId is not whitelisted",
 			logrus.StandardLogger(),
 			dashboardConfig,
+			kcBuilder,
 			whitelist.Set{},
 		)
 
@@ -106,6 +110,7 @@ func TestProvision_Provision(t *testing.T) {
 		assert.Regexp(t, `^https:\/\/dashboard\.example\.com\/\?kubeconfigID=`, response.DashboardURL)
 		assert.Equal(t, clusterName, response.Metadata.Labels["Name"])
 		assert.Equal(t, fmt.Sprintf("https://%s/kubeconfig/%s", brokerURL, instanceID), response.Metadata.Labels["KubeconfigURL"])
+		assert.NotContains(t, response.Metadata.Labels, "APIServerURL")
 
 		operation, err := memoryStorage.Operations().GetProvisioningOperationByID(response.OperationData)
 		require.NoError(t, err)
@@ -141,6 +146,7 @@ func TestProvision_Provision(t *testing.T) {
 		planDefaults := func(planID string, platformProvider internal.CloudProvider, provider *internal.CloudProvider) (*gqlschema.ClusterConfigInput, error) {
 			return &gqlschema.ClusterConfigInput{}, nil
 		}
+		kcBuilder := &kcMock.KcBuilder{}
 		// #create provisioner endpoint
 		provisionEndpoint := broker.NewProvision(
 			broker.Config{
@@ -162,6 +168,7 @@ func TestProvision_Provision(t *testing.T) {
 			"request rejected, your globalAccountId is not whitelisted",
 			logrus.StandardLogger(),
 			dashboardConfig,
+			kcBuilder,
 			whitelist.Set{},
 		)
 
@@ -182,6 +189,7 @@ func TestProvision_Provision(t *testing.T) {
 		assert.Equal(t, `https://dashboard.example.com`, response.DashboardURL)
 		assert.Equal(t, clusterName, response.Metadata.Labels["Name"])
 		assert.NotContains(t, response.Metadata.Labels, "KubeconfigURL")
+		assert.NotContains(t, response.Metadata.Labels, "APIServerURL")
 
 		operation, err := memoryStorage.Operations().GetProvisioningOperationByID(response.OperationData)
 		require.NoError(t, err)
@@ -220,6 +228,7 @@ func TestProvision_Provision(t *testing.T) {
 		planDefaults := func(planID string, platformProvider internal.CloudProvider, provider *internal.CloudProvider) (*gqlschema.ClusterConfigInput, error) {
 			return &gqlschema.ClusterConfigInput{}, nil
 		}
+		kcBuilder := &kcMock.KcBuilder{}
 		// #create provisioner endpoint
 		provisionEndpoint := broker.NewProvision(
 			broker.Config{
@@ -241,6 +250,7 @@ func TestProvision_Provision(t *testing.T) {
 			"request rejected, your globalAccountId is not whitelisted",
 			logrus.StandardLogger(),
 			dashboardConfig,
+			kcBuilder,
 			whitelist.Set{},
 		)
 
@@ -271,6 +281,7 @@ func TestProvision_Provision(t *testing.T) {
 		planDefaults := func(planID string, platformProvider internal.CloudProvider, provider *internal.CloudProvider) (*gqlschema.ClusterConfigInput, error) {
 			return &gqlschema.ClusterConfigInput{}, nil
 		}
+		kcBuilder := &kcMock.KcBuilder{}
 		// #create provisioner endpoint
 		provisionEndpoint := broker.NewProvision(
 			broker.Config{
@@ -292,6 +303,7 @@ func TestProvision_Provision(t *testing.T) {
 			"request rejected, your globalAccountId is not whitelisted",
 			logrus.StandardLogger(),
 			dashboardConfig,
+			kcBuilder,
 			whitelist.Set{},
 		)
 
@@ -346,6 +358,8 @@ func TestProvision_Provision(t *testing.T) {
 		planDefaults := func(planID string, platformProvider internal.CloudProvider, provider *internal.CloudProvider) (*gqlschema.ClusterConfigInput, error) {
 			return &gqlschema.ClusterConfigInput{}, nil
 		}
+		kcBuilder := &kcMock.KcBuilder{}
+		kcBuilder.On("GetServerURL", "").Return("", fmt.Errorf("error"))
 		// #create provisioner endpoint
 		provisionEndpoint := broker.NewProvision(
 			broker.Config{
@@ -367,6 +381,7 @@ func TestProvision_Provision(t *testing.T) {
 			"request rejected, your globalAccountId is not whitelisted",
 			logrus.StandardLogger(),
 			dashboardConfig,
+			kcBuilder,
 			whitelist.Set{},
 		)
 
@@ -387,6 +402,7 @@ func TestProvision_Provision(t *testing.T) {
 		assert.Regexp(t, `^https:\/\/dashboard\.example\.com\/\?kubeconfigID=`, response.DashboardURL)
 		assert.Equal(t, clusterName, response.Metadata.Labels["Name"])
 		assert.Equal(t, fmt.Sprintf("https://%s/kubeconfig/%s", brokerURL, instanceID), response.Metadata.Labels["KubeconfigURL"])
+		assert.NotContains(t, response.Metadata.Labels, "APIServerURL")
 
 		operation, err := memoryStorage.Operations().GetProvisioningOperationByID(response.OperationData)
 		require.NoError(t, err)
@@ -424,6 +440,8 @@ func TestProvision_Provision(t *testing.T) {
 		planDefaults := func(planID string, platformProvider internal.CloudProvider, provider *internal.CloudProvider) (*gqlschema.ClusterConfigInput, error) {
 			return &gqlschema.ClusterConfigInput{}, nil
 		}
+		kcBuilder := &kcMock.KcBuilder{}
+		kcBuilder.On("GetServerURL", mock.AnythingOfType("string")).Return("", fmt.Errorf("error"))
 		// #create provisioner endpoint
 		provisionEndpoint := broker.NewProvision(
 			broker.Config{
@@ -444,6 +462,7 @@ func TestProvision_Provision(t *testing.T) {
 			"request rejected, your globalAccountId is not whitelisted",
 			logrus.StandardLogger(),
 			dashboardConfig,
+			kcBuilder,
 			whitelist.Set{},
 		)
 
@@ -480,6 +499,7 @@ func TestProvision_Provision(t *testing.T) {
 		planDefaults := func(planID string, platformProvider internal.CloudProvider, provider *internal.CloudProvider) (*gqlschema.ClusterConfigInput, error) {
 			return &gqlschema.ClusterConfigInput{}, nil
 		}
+		kcBuilder := &kcMock.KcBuilder{}
 		provisionEndpoint := broker.NewProvision(
 			broker.Config{EnablePlans: []string{"gcp", "azure", "azure_lite", broker.TrialPlanName}, OnlySingleTrialPerGA: true},
 			gardener.Config{Project: "test", ShootDomain: "example.com", DNSProviders: fixDNSProviders()},
@@ -495,6 +515,7 @@ func TestProvision_Provision(t *testing.T) {
 			"request rejected, your globalAccountId is not whitelisted",
 			logrus.StandardLogger(),
 			dashboardConfig,
+			kcBuilder,
 			whitelist.Set{},
 		)
 
@@ -532,6 +553,7 @@ func TestProvision_Provision(t *testing.T) {
 		planDefaults := func(planID string, platformProvider internal.CloudProvider, provider *internal.CloudProvider) (*gqlschema.ClusterConfigInput, error) {
 			return &gqlschema.ClusterConfigInput{}, nil
 		}
+		kcBuilder := &kcMock.KcBuilder{}
 		provisionEndpoint := broker.NewProvision(
 			broker.Config{EnablePlans: []string{"gcp", "azure", "azure_lite", broker.TrialPlanName}, OnlySingleTrialPerGA: false},
 			gardener.Config{Project: "test", ShootDomain: "example.com", DNSProviders: fixDNSProviders()},
@@ -547,6 +569,7 @@ func TestProvision_Provision(t *testing.T) {
 			"request rejected, your globalAccountId is not whitelisted",
 			logrus.StandardLogger(),
 			dashboardConfig,
+			kcBuilder,
 			whitelist.Set{},
 		)
 
@@ -598,6 +621,7 @@ func TestProvision_Provision(t *testing.T) {
 		planDefaults := func(planID string, platformProvider internal.CloudProvider, provider *internal.CloudProvider) (*gqlschema.ClusterConfigInput, error) {
 			return &gqlschema.ClusterConfigInput{}, nil
 		}
+		kcBuilder := &kcMock.KcBuilder{}
 		provisionEndpoint := broker.NewProvision(
 			broker.Config{EnablePlans: []string{"gcp", "azure", "trial"}, OnlySingleTrialPerGA: true},
 			gardener.Config{Project: "test", ShootDomain: "example.com", DNSProviders: fixDNSProviders()},
@@ -613,6 +637,7 @@ func TestProvision_Provision(t *testing.T) {
 			"request rejected, your globalAccountId is not whitelisted",
 			logrus.StandardLogger(),
 			dashboardConfig,
+			kcBuilder,
 			whitelist.Set{},
 		)
 
@@ -664,6 +689,7 @@ func TestProvision_Provision(t *testing.T) {
 		planDefaults := func(planID string, platformProvider internal.CloudProvider, provider *internal.CloudProvider) (*gqlschema.ClusterConfigInput, error) {
 			return &gqlschema.ClusterConfigInput{}, nil
 		}
+		kcBuilder := &kcMock.KcBuilder{}
 		provisionEndpoint := broker.NewProvision(
 			broker.Config{EnablePlans: []string{"gcp", "azure", "trial"}, OnlySingleTrialPerGA: true},
 			gardener.Config{Project: "test", ShootDomain: "example.com", DNSProviders: fixDNSProviders()},
@@ -679,6 +705,7 @@ func TestProvision_Provision(t *testing.T) {
 			"request rejected, your globalAccountId is not whitelisted",
 			logrus.StandardLogger(),
 			dashboardConfig,
+			kcBuilder,
 			whitelist.Set{},
 		)
 
@@ -709,6 +736,7 @@ func TestProvision_Provision(t *testing.T) {
 		planDefaults := func(planID string, platformProvider internal.CloudProvider, provider *internal.CloudProvider) (*gqlschema.ClusterConfigInput, error) {
 			return &gqlschema.ClusterConfigInput{}, nil
 		}
+		kcBuilder := &kcMock.KcBuilder{}
 		// #create provisioner endpoint
 		provisionEndpoint := broker.NewProvision(
 			broker.Config{EnablePlans: []string{"gcp", "azure", "azure_lite"}, OnlySingleTrialPerGA: true},
@@ -725,6 +753,7 @@ func TestProvision_Provision(t *testing.T) {
 			"request rejected, your globalAccountId is not whitelisted",
 			logrus.StandardLogger(),
 			dashboardConfig,
+			kcBuilder,
 			whitelist.Set{},
 		)
 
@@ -754,6 +783,7 @@ func TestProvision_Provision(t *testing.T) {
 		planDefaults := func(planID string, platformProvider internal.CloudProvider, provider *internal.CloudProvider) (*gqlschema.ClusterConfigInput, error) {
 			return &gqlschema.ClusterConfigInput{}, nil
 		}
+		kcBuilder := &kcMock.KcBuilder{}
 		provisionEndpoint := broker.NewProvision(
 			broker.Config{EnablePlans: []string{"gcp", "azure", "azure_lite"}, OnlySingleTrialPerGA: true},
 			gardener.Config{Project: "test", ShootDomain: "example.com", DNSProviders: fixDNSProviders()},
@@ -769,6 +799,7 @@ func TestProvision_Provision(t *testing.T) {
 			"request rejected, your globalAccountId is not whitelisted",
 			logrus.StandardLogger(),
 			dashboardConfig,
+			kcBuilder,
 			whitelist.Set{},
 		)
 
@@ -800,6 +831,7 @@ func TestProvision_Provision(t *testing.T) {
 		planDefaults := func(planID string, platformProvider internal.CloudProvider, provider *internal.CloudProvider) (*gqlschema.ClusterConfigInput, error) {
 			return &gqlschema.ClusterConfigInput{}, nil
 		}
+		kcBuilder := &kcMock.KcBuilder{}
 		provisionEndpoint := broker.NewProvision(
 			broker.Config{EnablePlans: []string{"gcp", "azure", "azure_lite"}, OnlySingleTrialPerGA: true},
 			gardener.Config{Project: "test", ShootDomain: "example.com", DNSProviders: fixDNSProviders()},
@@ -815,6 +847,7 @@ func TestProvision_Provision(t *testing.T) {
 			"request rejected, your globalAccountId is not whitelisted",
 			logrus.StandardLogger(),
 			dashboardConfig,
+			kcBuilder,
 			whitelist.Set{},
 		)
 
@@ -843,6 +876,7 @@ func TestProvision_Provision(t *testing.T) {
 		planDefaults := func(planID string, platformProvider internal.CloudProvider, provider *internal.CloudProvider) (*gqlschema.ClusterConfigInput, error) {
 			return &gqlschema.ClusterConfigInput{}, nil
 		}
+		kcBuilder := &kcMock.KcBuilder{}
 		provisionEndpoint := broker.NewProvision(
 			broker.Config{EnablePlans: []string{"gcp", "azure", "azure_lite"}, OnlySingleTrialPerGA: true},
 			gardener.Config{Project: "test", ShootDomain: "example.com", DNSProviders: fixDNSProviders()},
@@ -858,6 +892,7 @@ func TestProvision_Provision(t *testing.T) {
 			"request rejected, your globalAccountId is not whitelisted",
 			logrus.StandardLogger(),
 			dashboardConfig,
+			kcBuilder,
 			whitelist.Set{},
 		)
 
@@ -894,6 +929,7 @@ func TestProvision_Provision(t *testing.T) {
 		planDefaults := func(planID string, platformProvider internal.CloudProvider, provider *internal.CloudProvider) (*gqlschema.ClusterConfigInput, error) {
 			return &gqlschema.ClusterConfigInput{}, nil
 		}
+		kcBuilder := &kcMock.KcBuilder{}
 		provisionEndpoint := broker.NewProvision(
 			broker.Config{EnablePlans: []string{"gcp", "azure", "azure_lite"}, OnlySingleTrialPerGA: true},
 			gardener.Config{Project: "test", ShootDomain: "example.com", DNSProviders: fixDNSProviders()},
@@ -909,6 +945,7 @@ func TestProvision_Provision(t *testing.T) {
 			"request rejected, your globalAccountId is not whitelisted",
 			logrus.StandardLogger(),
 			dashboardConfig,
+			kcBuilder,
 			whitelist.Set{},
 		)
 
@@ -941,6 +978,7 @@ func TestProvision_Provision(t *testing.T) {
 		planDefaults := func(planID string, platformProvider internal.CloudProvider, provider *internal.CloudProvider) (*gqlschema.ClusterConfigInput, error) {
 			return &gqlschema.ClusterConfigInput{}, nil
 		}
+		kcBuilder := &kcMock.KcBuilder{}
 		provisionEndpoint := broker.NewProvision(
 			broker.Config{EnablePlans: []string{"gcp", "azure", "azure_lite", "trial"}, OnlySingleTrialPerGA: true},
 			gardener.Config{Project: "test", ShootDomain: "example.com", DNSProviders: fixDNSProviders()},
@@ -956,6 +994,7 @@ func TestProvision_Provision(t *testing.T) {
 			"request rejected, your globalAccountId is not whitelisted",
 			logrus.StandardLogger(),
 			dashboardConfig,
+			kcBuilder,
 			whitelist.Set{},
 		)
 
@@ -988,6 +1027,7 @@ func TestProvision_Provision(t *testing.T) {
 		planDefaults := func(planID string, platformProvider internal.CloudProvider, provider *internal.CloudProvider) (*gqlschema.ClusterConfigInput, error) {
 			return &gqlschema.ClusterConfigInput{}, nil
 		}
+		kcBuilder := &kcMock.KcBuilder{}
 		// #create provisioner endpoint
 		provisionEndpoint := broker.NewProvision(
 			broker.Config{
@@ -1009,6 +1049,7 @@ func TestProvision_Provision(t *testing.T) {
 			"request rejected, your globalAccountId is not whitelisted",
 			logrus.StandardLogger(),
 			dashboardConfig,
+			kcBuilder,
 			whitelist.Set{},
 		)
 
@@ -1047,6 +1088,7 @@ func TestProvision_Provision(t *testing.T) {
 		planDefaults := func(planID string, platformProvider internal.CloudProvider, provider *internal.CloudProvider) (*gqlschema.ClusterConfigInput, error) {
 			return &gqlschema.ClusterConfigInput{}, nil
 		}
+		kcBuilder := &kcMock.KcBuilder{}
 		// #create provisioner endpoint
 		provisionEndpoint := broker.NewProvision(
 			broker.Config{
@@ -1068,6 +1110,7 @@ func TestProvision_Provision(t *testing.T) {
 			"request rejected, your globalAccountId is not whitelisted",
 			logrus.StandardLogger(),
 			dashboardConfig,
+			kcBuilder,
 			whitelist.Set{},
 		)
 
@@ -1106,6 +1149,7 @@ func TestProvision_Provision(t *testing.T) {
 		planDefaults := func(planID string, platformProvider internal.CloudProvider, provider *internal.CloudProvider) (*gqlschema.ClusterConfigInput, error) {
 			return &gqlschema.ClusterConfigInput{}, nil
 		}
+		kcBuilder := &kcMock.KcBuilder{}
 		// #create provisioner endpoint
 		provisionEndpoint := broker.NewProvision(
 			broker.Config{
@@ -1127,6 +1171,7 @@ func TestProvision_Provision(t *testing.T) {
 			"request rejected, your globalAccountId is not whitelisted",
 			logrus.StandardLogger(),
 			dashboardConfig,
+			kcBuilder,
 			whitelist.Set{},
 		)
 
@@ -1165,6 +1210,8 @@ func TestProvision_Provision(t *testing.T) {
 		planDefaults := func(planID string, platformProvider internal.CloudProvider, provider *internal.CloudProvider) (*gqlschema.ClusterConfigInput, error) {
 			return &gqlschema.ClusterConfigInput{}, nil
 		}
+		kcBuilder := &kcMock.KcBuilder{}
+		kcBuilder.On("GetServerURL", "").Return("", fmt.Errorf("error"))
 		// #create provisioner endpoint
 		provisionEndpoint := broker.NewProvision(
 			broker.Config{
@@ -1186,6 +1233,7 @@ func TestProvision_Provision(t *testing.T) {
 			"request rejected, your globalAccountId is not whitelisted",
 			logrus.StandardLogger(),
 			dashboardConfig,
+			kcBuilder,
 			whitelist.Set{},
 		)
 
@@ -1217,6 +1265,7 @@ func TestProvision_Provision(t *testing.T) {
 		planDefaults := func(planID string, platformProvider internal.CloudProvider, provider *internal.CloudProvider) (*gqlschema.ClusterConfigInput, error) {
 			return &gqlschema.ClusterConfigInput{}, nil
 		}
+		kcBuilder := &kcMock.KcBuilder{}
 		// #create provisioner endpoint
 		provisionEndpoint := broker.NewProvision(
 			broker.Config{
@@ -1238,6 +1287,7 @@ func TestProvision_Provision(t *testing.T) {
 			"request rejected, your globalAccountId is not whitelisted",
 			logrus.StandardLogger(),
 			dashboardConfig,
+			kcBuilder,
 			whitelist.Set{},
 		)
 
@@ -1276,6 +1326,7 @@ func TestProvision_Provision(t *testing.T) {
 		planDefaults := func(planID string, platformProvider internal.CloudProvider, provider *internal.CloudProvider) (*gqlschema.ClusterConfigInput, error) {
 			return &gqlschema.ClusterConfigInput{}, nil
 		}
+		kcBuilder := &kcMock.KcBuilder{}
 		provisionEndpoint := broker.NewProvision(
 			broker.Config{EnablePlans: []string{"gcp", "azure", "azure_lite", broker.FreemiumPlanName}, OnlyOneFreePerGA: true},
 			gardener.Config{Project: "test", ShootDomain: "example.com", DNSProviders: fixDNSProviders()},
@@ -1291,6 +1342,7 @@ func TestProvision_Provision(t *testing.T) {
 			"request rejected, your globalAccountId is not whitelisted",
 			logrus.StandardLogger(),
 			dashboardConfig,
+			kcBuilder,
 			whitelist.Set{},
 		)
 
@@ -1344,6 +1396,7 @@ func TestProvision_Provision(t *testing.T) {
 		planDefaults := func(planID string, platformProvider internal.CloudProvider, provider *internal.CloudProvider) (*gqlschema.ClusterConfigInput, error) {
 			return &gqlschema.ClusterConfigInput{}, nil
 		}
+		kcBuilder := &kcMock.KcBuilder{}
 		provisionEndpoint := broker.NewProvision(
 			broker.Config{EnablePlans: []string{"gcp", "azure", "azure_lite", broker.FreemiumPlanName}, OnlyOneFreePerGA: true},
 			gardener.Config{Project: "test", ShootDomain: "example.com", DNSProviders: fixDNSProviders()},
@@ -1359,6 +1412,7 @@ func TestProvision_Provision(t *testing.T) {
 			"request rejected, your globalAccountId is not whitelisted",
 			logrus.StandardLogger(),
 			dashboardConfig,
+			kcBuilder,
 			whitelist.Set{},
 		)
 
@@ -1402,6 +1456,7 @@ func TestProvision_Provision(t *testing.T) {
 		planDefaults := func(planID string, platformProvider internal.CloudProvider, provider *internal.CloudProvider) (*gqlschema.ClusterConfigInput, error) {
 			return &gqlschema.ClusterConfigInput{}, nil
 		}
+		kcBuilder := &kcMock.KcBuilder{}
 		provisionEndpoint := broker.NewProvision(
 			broker.Config{EnablePlans: []string{"gcp", "azure", "azure_lite", broker.FreemiumPlanName}, OnlyOneFreePerGA: true},
 			gardener.Config{Project: "test", ShootDomain: "example.com", DNSProviders: fixDNSProviders()},
@@ -1417,6 +1472,7 @@ func TestProvision_Provision(t *testing.T) {
 			"request rejected, your globalAccountId is not whitelisted",
 			logrus.StandardLogger(),
 			dashboardConfig,
+			kcBuilder,
 			whitelist.Set{globalAccountID: struct{}{}},
 		)
 
@@ -1453,6 +1509,7 @@ func TestProvision_Provision(t *testing.T) {
 		planDefaults := func(planID string, platformProvider internal.CloudProvider, provider *internal.CloudProvider) (*gqlschema.ClusterConfigInput, error) {
 			return &gqlschema.ClusterConfigInput{}, nil
 		}
+		kcBuilder := &kcMock.KcBuilder{}
 		provisionEndpoint := broker.NewProvision(
 			broker.Config{EnablePlans: []string{"gcp", "azure", "azure_lite", broker.FreemiumPlanName}, OnlyOneFreePerGA: true},
 			gardener.Config{Project: "test", ShootDomain: "example.com", DNSProviders: fixDNSProviders()},
@@ -1468,6 +1525,7 @@ func TestProvision_Provision(t *testing.T) {
 			"request rejected, your globalAccountId is not whitelisted",
 			logrus.StandardLogger(),
 			dashboardConfig,
+			kcBuilder,
 			whitelist.Set{},
 		)
 
@@ -1502,6 +1560,7 @@ func TestProvision_Provision(t *testing.T) {
 		planDefaults := func(planID string, platformProvider internal.CloudProvider, provider *internal.CloudProvider) (*gqlschema.ClusterConfigInput, error) {
 			return &gqlschema.ClusterConfigInput{}, nil
 		}
+		kcBuilder := &kcMock.KcBuilder{}
 		provisionEndpoint := broker.NewProvision(
 			broker.Config{EnablePlans: []string{"gcp", "azure", "azure_lite", broker.FreemiumPlanName}, OnlyOneFreePerGA: true},
 			gardener.Config{Project: "test", ShootDomain: "example.com", DNSProviders: fixDNSProviders()},
@@ -1517,6 +1576,7 @@ func TestProvision_Provision(t *testing.T) {
 			"request rejected, your globalAccountId is not whitelisted",
 			logrus.StandardLogger(),
 			dashboardConfig,
+			kcBuilder,
 			whitelist.Set{},
 		)
 
@@ -1549,6 +1609,7 @@ func TestProvision_Provision(t *testing.T) {
 		planDefaults := func(planID string, platformProvider internal.CloudProvider, provider *internal.CloudProvider) (*gqlschema.ClusterConfigInput, error) {
 			return &gqlschema.ClusterConfigInput{}, nil
 		}
+		kcBuilder := &kcMock.KcBuilder{}
 		provisionEndpoint := broker.NewProvision(
 			broker.Config{EnablePlans: []string{"gcp", "azure", "azure_lite", broker.FreemiumPlanName}, OnlyOneFreePerGA: true},
 			gardener.Config{Project: "test", ShootDomain: "example.com", DNSProviders: fixDNSProviders()},
@@ -1564,6 +1625,7 @@ func TestProvision_Provision(t *testing.T) {
 			"request rejected, your globalAccountId is not whitelisted",
 			logrus.StandardLogger(),
 			dashboardConfig,
+			kcBuilder,
 			whitelist.Set{},
 		)
 
@@ -1649,6 +1711,7 @@ func TestNetworkingValidation(t *testing.T) {
 			planDefaults := func(planID string, platformProvider internal.CloudProvider, provider *internal.CloudProvider) (*gqlschema.ClusterConfigInput, error) {
 				return &gqlschema.ClusterConfigInput{}, nil
 			}
+			kcBuilder := &kcMock.KcBuilder{}
 			// #create provisioner endpoint
 			provisionEndpoint := broker.NewProvision(
 				broker.Config{EnablePlans: []string{"gcp", "azure", "free"}},
@@ -1665,6 +1728,7 @@ func TestNetworkingValidation(t *testing.T) {
 				"request rejected, your globalAccountId is not whitelisted",
 				logrus.StandardLogger(),
 				dashboardConfig,
+				kcBuilder,
 				whitelist.Set{},
 			)
 
@@ -1747,6 +1811,7 @@ func TestRegionValidation(t *testing.T) {
 			planDefaults := func(planID string, platformProvider internal.CloudProvider, provider *internal.CloudProvider) (*gqlschema.ClusterConfigInput, error) {
 				return &gqlschema.ClusterConfigInput{}, nil
 			}
+			kcBuilder := &kcMock.KcBuilder{}
 			// #create provisioner endpoint
 			provisionEndpoint := broker.NewProvision(
 				broker.Config{EnablePlans: []string{"gcp", "azure", "free"}, OnlySingleTrialPerGA: true},
@@ -1763,6 +1828,7 @@ func TestRegionValidation(t *testing.T) {
 				"request rejected, your globalAccountId is not whitelisted",
 				logrus.StandardLogger(),
 				dashboardConfig,
+				kcBuilder,
 				whitelist.Set{},
 			)
 

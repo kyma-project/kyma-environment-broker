@@ -10,6 +10,7 @@ import (
 
 	"github.com/kyma-incubator/compass/components/director/pkg/jsonschema"
 	"github.com/kyma-project/kyma-environment-broker/internal/euaccess"
+	"github.com/kyma-project/kyma-environment-broker/internal/kubeconfig"
 
 	"github.com/google/uuid"
 	"github.com/pivotal-cf/brokerapi/v8/domain"
@@ -47,6 +48,7 @@ type UpdateEndpoint struct {
 	planDefaults PlanDefaults
 
 	dashboardConfig dashboard.Config
+	kcBuilder       kubeconfig.KcBuilder
 }
 
 func NewUpdate(cfg Config,
@@ -61,6 +63,7 @@ func NewUpdate(cfg Config,
 	planDefaults PlanDefaults,
 	log logrus.FieldLogger,
 	dashboardConfig dashboard.Config,
+	kcBuilder kubeconfig.KcBuilder,
 ) *UpdateEndpoint {
 	return &UpdateEndpoint{
 		config:                    cfg,
@@ -75,6 +78,7 @@ func NewUpdate(cfg Config,
 		plansConfig:               plansConfig,
 		planDefaults:              planDefaults,
 		dashboardConfig:           dashboardConfig,
+		kcBuilder:                 kcBuilder,
 	}
 }
 
@@ -161,7 +165,7 @@ func (b *UpdateEndpoint) Update(_ context.Context, instanceID string, details do
 		DashboardURL:  dashboardURL,
 		OperationData: "",
 		Metadata: domain.InstanceMetadata{
-			Labels: ResponseLabels(*lastProvisioningOperation, *instance, b.config.URL, b.config.EnableKubeconfigURLLabel),
+			Labels: ResponseLabels(*lastProvisioningOperation, *instance, b.config.URL, b.config.EnableKubeconfigURLLabel, b.kcBuilder),
 		},
 	}, nil
 }
@@ -198,7 +202,7 @@ func (b *UpdateEndpoint) processUpdateParameters(instance *internal.Instance, de
 			DashboardURL:  instance.DashboardURL,
 			OperationData: "",
 			Metadata: domain.InstanceMetadata{
-				Labels: ResponseLabels(*lastProvisioningOperation, *instance, b.config.URL, b.config.EnableKubeconfigURLLabel),
+				Labels: ResponseLabels(*lastProvisioningOperation, *instance, b.config.URL, b.config.EnableKubeconfigURLLabel, b.kcBuilder),
 			},
 		}, nil
 	}
@@ -292,7 +296,7 @@ func (b *UpdateEndpoint) processUpdateParameters(instance *internal.Instance, de
 		DashboardURL:  instance.DashboardURL,
 		OperationData: operation.ID,
 		Metadata: domain.InstanceMetadata{
-			Labels: ResponseLabels(*lastProvisioningOperation, *instance, b.config.URL, b.config.EnableKubeconfigURLLabel),
+			Labels: ResponseLabels(*lastProvisioningOperation, *instance, b.config.URL, b.config.EnableKubeconfigURLLabel, b.kcBuilder),
 		},
 	}, nil
 }
