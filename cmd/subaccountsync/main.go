@@ -57,6 +57,11 @@ func main() {
 		cfg.EventsWindowSize, cfg.EventsWindowInterval, cfg.AccountsSyncInterval, cfg.StorageSyncInterval, cfg.SyncQueueSleepInterval))
 	slog.Info(fmt.Sprintf("Configuration: updateResources: %t", cfg.UpdateResources))
 
+	if cfg.EventsWindowSize < cfg.EventsWindowInterval {
+		slog.Warn("Events window size is smaller than events sync interval. This might cause missing events so we set window size to the interval.")
+		cfg.EventsWindowSize = cfg.EventsWindowInterval
+	}
+
 	// create config provider - provider still uses logrus logger
 	configProvider := kebConfig.NewConfigProvider(
 		kebConfig.NewConfigMapReader(ctx, cli, logrus.WithField("service", "storage"), cfg.KymaVersion),
