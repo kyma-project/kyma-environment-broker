@@ -137,6 +137,7 @@ func (reconciler *stateReconcilerType) periodicAccountsSync() (successes int, fa
 			reconciler.reconcileCisAccount(subaccountID, subaccountDataFromCis)
 		}
 	}
+	logs.Debug(fmt.Sprintf("Accounts synchronization finished: successess: %d, failures: %d", successes, failures))
 	return successes, failures
 }
 
@@ -160,7 +161,7 @@ func (reconciler *stateReconcilerType) periodicEventsSync(fromActionTime int64) 
 		reconciler.reconcileCisEvent(event)
 		reconciler.eventWindow.UpdateToTime(event.ActionTime)
 	}
-	logs.Debug(fmt.Sprintf("Events synchronization finished, the most recent reconciled event time: %d", reconciler.eventWindow.lastToTime))
+	logs.Debug(fmt.Sprintf("Events synchronization finished with success, the most recent reconciled event time: %d", reconciler.eventWindow.lastToTime))
 	return success
 }
 
