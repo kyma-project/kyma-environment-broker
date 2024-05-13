@@ -6,8 +6,6 @@ metadata:
   namespace: kcp-system
   labels:
     app.kubernetes.io/name: subaccount-sync
-  annotations:
-    argocd.argoproj.io/sync-options: Prune=false
 spec:
   replicas: 1
   selector:

@@ -7,8 +7,6 @@ metadata:
 {{ include "kyma-env-broker.labels" . | indent 4 }}
   name: {{ include "kyma-env-broker.fullname" . }}
   namespace: {{ .Release.Namespace }}
-  annotations:
-    argocd.argoproj.io/sync-options: Prune=false
 spec:
   endpoints:
   - port: http
@@ -30,8 +28,6 @@ metadata:
 {{ include "kyma-env-broker.labels" . | indent 4 }}
   name: {{ include "kyma-env-broker.fullname" . }}
   namespace: {{ .Release.Namespace }}
-  annotations:
-    argocd.argoproj.io/sync-options: Prune=false
 spec:
   endpoints:
   - attach_metadata: {}

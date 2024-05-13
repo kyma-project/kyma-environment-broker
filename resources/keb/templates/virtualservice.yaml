@@ -4,8 +4,6 @@ apiVersion: networking.istio.io/v1beta1
 kind: VirtualService
 metadata:
   name: {{ include "kyma-env-broker.fullname" . }}
-  annotations:
-    argocd.argoproj.io/sync-options: Prune=false
 spec:
   gateways:
     - {{ .Values.global.istio.gateway | required "Please specify .global.istio.gateway"}}

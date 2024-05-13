@@ -15,6 +15,7 @@
   "editable": true,
   "gnetId": null,
   "graphTooltip": 0,
+  "iteration": 1715180469772,
   "links": [],
   "panels": [
     {
@@ -39,7 +40,6 @@
           "color": {
             "mode": "thresholds"
           },
-          "custom": {},
           "mappings": [
             {
               "id": 0,
@@ -100,7 +100,7 @@
         "text": {},
         "textMode": "auto"
       },
-      "pluginVersion": "7.4.0",
+      "pluginVersion": "7.5.29",
       "targets": [
         {
           "expr": "SUM(kcp_keb_v2_instances_total{service=\"kcp-kyma-environment-broker\"})",
@@ -121,7 +121,6 @@
           "color": {
             "mode": "thresholds"
           },
-          "custom": {},
           "mappings": [],
           "thresholds": {
             "mode": "absolute",
@@ -167,7 +166,7 @@
         "showUnfilled": true,
         "text": {}
       },
-      "pluginVersion": "7.4.0",
+      "pluginVersion": "7.5.29",
       "targets": [
         {
           "expr": "topk(16, kcp_keb_v2_global_account_id_instances_total{service=\"kcp-kyma-environment-broker\"})",
@@ -191,7 +190,6 @@
           "color": {
             "mode": "thresholds"
           },
-          "custom": {},
           "mappings": [
             {
               "id": 0,
@@ -252,7 +250,7 @@
         "text": {},
         "textMode": "auto"
       },
-      "pluginVersion": "7.4.0",
+      "pluginVersion": "7.5.29",
       "targets": [
         {
           "expr": "count(kcp_keb_v2_global_account_id_instances_total{service=\"kcp-kyma-environment-broker\"})",
@@ -282,7 +280,6 @@
           "color": {
             "mode": "thresholds"
           },
-          "custom": {},
           "mappings": [],
           "thresholds": {
             "mode": "absolute",
@@ -346,7 +343,7 @@
         "text": {},
         "textMode": "auto"
       },
-      "pluginVersion": "7.4.0",
+      "pluginVersion": "7.5.29",
       "postfix": "",
       "postfixFontSize": "50%",
       "prefix": "",
@@ -405,7 +402,6 @@
           "color": {
             "mode": "thresholds"
           },
-          "custom": {},
           "mappings": [],
           "thresholds": {
             "mode": "absolute",
@@ -469,7 +465,7 @@
         "text": {},
         "textMode": "auto"
       },
-      "pluginVersion": "7.4.0",
+      "pluginVersion": "7.5.29",
       "postfix": "",
       "postfixFontSize": "50%",
       "prefix": "",
@@ -528,7 +524,6 @@
           "color": {
             "mode": "thresholds"
           },
-          "custom": {},
           "mappings": [],
           "thresholds": {
             "mode": "absolute",
@@ -596,7 +591,7 @@
         "text": {},
         "textMode": "auto"
       },
-      "pluginVersion": "",
+      "pluginVersion": "7.5.29",
       "postfix": "",
       "postfixFontSize": "50%",
       "prefix": "",
@@ -655,7 +650,6 @@
           "color": {
             "mode": "thresholds"
           },
-          "custom": {},
           "displayName": "${__series.name}",
           "mappings": [],
           "thresholds": {
@@ -701,13 +695,14 @@
         "showUnfilled": true,
         "text": {}
       },
-      "pluginVersion": "",
+      "pluginVersion": "7.5.29",
       "targets": [
         {
-          "expr": "topk(3, count by (error_category, error_reason) (kcp_keb_v2_provisioning_result{plan_id=~\"$plan_id\"} == 0 unless (kcp_keb_v2_provisioning_result{plan_id=~\"$plan_id\"} offset $__range == 0)))",
+          "exemplar": true,
+          "expr": " topk(3, count by (error, error_category, error_reason) (kcp_keb_v2_operation_result{state=\"failed\", type=\"provision\"} == 1 unless (kcp_keb_v2_operation_result{state=\"failed\", type=\"provision\"} offset $__range == 1)))",
           "instant": true,
           "interval": "",
-          "legendFormat": "{{error_category}} - {{error_reason}}",
+          "legendFormat": "{{error}} - {{error_category}} - {{error_reason}}",
           "refId": "A"
         }
       ],
@@ -724,7 +719,6 @@
           "color": {
             "mode": "thresholds"
           },
-          "custom": {},
           "displayName": "${__series.name}",
           "mappings": [],
           "thresholds": {
@@ -770,10 +764,11 @@
         "showUnfilled": true,
         "text": {}
       },
-      "pluginVersion": "",
+      "pluginVersion": "7.5.29",
       "targets": [
         {
-          "expr": "topk(3, count by (error_category, error_reason) (kcp_keb_v2_deprovisioning_result{plan_id=~\"$plan_id\"} == 0 unless (kcp_keb_v2_deprovisioning_result{plan_id=~\"$plan_id\"} offset $__range == 0)))",
+          "exemplar": true,
+          "expr": " topk(3, count by (error, error_category, error_reason) (kcp_keb_v2_operation_result{state=\"failed\", type=\"deprovision\"} == 1 unless (kcp_keb_v2_operation_result{state=\"failed\", type=\"deprovision\"} offset $__range == 1)))",
           "instant": true,
           "interval": "",
           "legendFormat": "{{error_category}} - {{error_reason}}",
@@ -799,7 +794,7 @@
       "repeat": "plan_id",
       "scopedVars": {
         "plan_id": {
-          "selected": true,
+          "selected": false,
           "text": "aws",
           "value": "361c511f-f939-4621-b228-d0fb79a1fe15"
         }
@@ -814,7 +809,6 @@
           "color": {
             "mode": "thresholds"
           },
-          "custom": {},
           "mappings": [],
           "thresholds": {
             "mode": "absolute",
@@ -850,10 +844,10 @@
         "text": {},
         "textMode": "auto"
       },
-      "pluginVersion": "7.4.0",
+      "pluginVersion": "7.5.29",
       "scopedVars": {
         "plan_id": {
-          "selected": true,
+          "selected": false,
           "text": "aws",
           "value": "361c511f-f939-4621-b228-d0fb79a1fe15"
         }
@@ -900,7 +894,6 @@
           "color": {
             "mode": "thresholds"
           },
-          "custom": {},
           "mappings": [],
           "thresholds": {
             "mode": "absolute",
@@ -937,10 +930,10 @@
         "text": {},
         "textMode": "value"
       },
-      "pluginVersion": "7.4.0",
+      "pluginVersion": "7.5.29",
       "scopedVars": {
         "plan_id": {
-          "selected": true,
+          "selected": false,
           "text": "aws",
           "value": "361c511f-f939-4621-b228-d0fb79a1fe15"
         }
@@ -965,7 +958,6 @@
           "color": {
             "mode": "thresholds"
           },
-          "custom": {},
           "mappings": [],
           "thresholds": {
             "mode": "absolute",
@@ -1003,10 +995,10 @@
         "showThresholdMarkers": true,
         "text": {}
       },
-      "pluginVersion": "7.4.0",
+      "pluginVersion": "7.5.29",
       "scopedVars": {
         "plan_id": {
-          "selected": true,
+          "selected": false,
           "text": "aws",
           "value": "361c511f-f939-4621-b228-d0fb79a1fe15"
         }
@@ -1044,7 +1036,6 @@
           "color": {
             "mode": "thresholds"
           },
-          "custom": {},
           "mappings": [],
           "thresholds": {
             "mode": "absolute",
@@ -1080,10 +1071,10 @@
         "text": {},
         "textMode": "auto"
       },
-      "pluginVersion": "7.4.0",
+      "pluginVersion": "7.5.29",
       "scopedVars": {
         "plan_id": {
-          "selected": true,
+          "selected": false,
           "text": "aws",
           "value": "361c511f-f939-4621-b228-d0fb79a1fe15"
         }
@@ -1128,7 +1119,6 @@
           "color": {
             "mode": "thresholds"
           },
-          "custom": {},
           "mappings": [],
           "thresholds": {
             "mode": "absolute",
@@ -1165,10 +1155,10 @@
         "text": {},
         "textMode": "value"
       },
-      "pluginVersion": "7.4.0",
+      "pluginVersion": "7.5.29",
       "scopedVars": {
         "plan_id": {
-          "selected": true,
+          "selected": false,
           "text": "aws",
           "value": "361c511f-f939-4621-b228-d0fb79a1fe15"
         }
@@ -1193,7 +1183,6 @@
           "color": {
             "mode": "thresholds"
           },
-          "custom": {},
           "mappings": [],
           "thresholds": {
             "mode": "absolute",
@@ -1231,12 +1220,2970 @@
         "showThresholdMarkers": true,
         "text": {}
       },
-      "pluginVersion": "7.4.0",
+      "pluginVersion": "7.5.29",
       "scopedVars": {
         "plan_id": {
-          "selected": true,
+          "selected": false,
           "text": "aws",
           "value": "361c511f-f939-4621-b228-d0fb79a1fe15"
+        }
+      },
+      "targets": [
+        {
+          "expr": "max(avg_over_time(kcp_keb_v2_deprovisioning_duration_minutes_sum{plan_id=\"$plan_id\"}[$__range]))",
+          "hide": false,
+          "interval": "",
+          "legendFormat": "Max",
+          "refId": "A"
+        },
+        {
+          "expr": "min(avg_over_time(kcp_keb_v2_deprovisioning_duration_minutes_sum{plan_id=\"$plan_id\"}[$__range]))",
+          "hide": false,
+          "interval": "",
+          "legendFormat": "Min",
+          "refId": "B"
+        },
+        {
+          "expr": "avg(avg_over_time(kcp_keb_v2_deprovisioning_duration_minutes_sum{plan_id=\"$plan_id\"}[$__range]))",
+          "hide": false,
+          "interval": "",
+          "legendFormat": "Average",
+          "refId": "C"
+        }
+      ],
+      "title": "Deprovision Duration ($plan_id)",
+      "type": "gauge"
+    },
+    {
+      "collapsed": false,
+      "datasource": null,
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 23
+      },
+      "id": 199,
+      "panels": [],
+      "repeatIteration": 1715180469772,
+      "repeatPanelId": 159,
+      "scopedVars": {
+        "plan_id": {
+          "selected": false,
+          "text": "azure",
+          "value": "4deee563-e5ec-4731-b9b1-53b42d855f0c"
+        }
+      },
+      "title": "Provision/Deprovision [$plan_id]",
+      "type": "row"
+    },
+    {
+      "datasource": null,
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 5,
+        "w": 6,
+        "x": 0,
+        "y": 24
+      },
+      "id": 200,
+      "options": {
+        "colorMode": "value",
+        "graphMode": "area",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": [
+            "last"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "text": {},
+        "textMode": "auto"
+      },
+      "pluginVersion": "7.5.29",
+      "repeatIteration": 1715180469772,
+      "repeatPanelId": 188,
+      "repeatedByRow": true,
+      "scopedVars": {
+        "plan_id": {
+          "selected": false,
+          "text": "azure",
+          "value": "4deee563-e5ec-4731-b9b1-53b42d855f0c"
+        }
+      },
+      "targets": [
+        {
+          "expr": "round(sum(increase_prometheus(kcp_keb_v2_operations_provisioning_succeeded_total{plan_id=\"$plan_id\"}[$__range]) + increase_prometheus(kcp_keb_v2_operations_provisioning_failed_total{plan_id=\"$plan_id\"}[$__range])))",
+          "hide": false,
+          "interval": "",
+          "legendFormat": "Total Provision ",
+          "refId": "A"
+        },
+        {
+          "expr": "round(sum(increase_prometheus(kcp_keb_v2_operations_provisioning_succeeded_total{plan_id=\"$plan_id\"}[$__range])))",
+          "interval": "",
+          "legendFormat": "Succeeded",
+          "refId": "B"
+        },
+        {
+          "expr": "round(sum(increase_prometheus(kcp_keb_v2_operations_provisioning_failed_total{plan_id=\"$plan_id\"}[$__range])))",
+          "format": "time_series",
+          "hide": false,
+          "instant": false,
+          "interval": "",
+          "legendFormat": "Failed",
+          "refId": "C"
+        },
+        {
+          "expr": "sum(increase_prometheus(kcp_keb_v2_operations_provisioning_succeeded_total{plan_id=\"$plan_id\"}[$__range])) / (sum(increase_prometheus(kcp_keb_v2_operations_provisioning_succeeded_total{plan_id=\"$plan_id\"}[$__range]) + increase_prometheus(kcp_keb_v2_operations_provisioning_failed_total{plan_id=\"$plan_id\"}[$__range])) > 0 ) *100 or vector(0)",
+          "hide": false,
+          "interval": "",
+          "legendFormat": "Success Rate",
+          "refId": "D"
+        }
+      ],
+      "title": "Provision ($plan_id)",
+      "type": "stat"
+    },
+    {
+      "datasource": null,
+      "description": "",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 5,
+        "w": 2,
+        "x": 6,
+        "y": 24
+      },
+      "id": 201,
+      "interval": null,
+      "options": {
+        "colorMode": "value",
+        "graphMode": "area",
+        "justifyMode": "center",
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": [
+            "last"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "text": {},
+        "textMode": "value"
+      },
+      "pluginVersion": "7.5.29",
+      "repeatIteration": 1715180469772,
+      "repeatPanelId": 189,
+      "repeatedByRow": true,
+      "scopedVars": {
+        "plan_id": {
+          "selected": false,
+          "text": "azure",
+          "value": "4deee563-e5ec-4731-b9b1-53b42d855f0c"
+        }
+      },
+      "targets": [
+        {
+          "expr": "sum(kcp_keb_v2_operations_provisioning_in_progress_total{plan_id=\"$plan_id\", service=\"kcp-kyma-environment-broker\"})",
+          "instant": false,
+          "interval": "",
+          "legendFormat": "",
+          "refId": "A"
+        }
+      ],
+      "title": "Provisioning (${plan_id})",
+      "transformations": [],
+      "type": "stat"
+    },
+    {
+      "datasource": null,
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 5,
+        "w": 4,
+        "x": 8,
+        "y": 24
+      },
+      "id": 202,
+      "options": {
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "showThresholdLabels": false,
+        "showThresholdMarkers": true,
+        "text": {}
+      },
+      "pluginVersion": "7.5.29",
+      "repeatIteration": 1715180469772,
+      "repeatPanelId": 178,
+      "repeatedByRow": true,
+      "scopedVars": {
+        "plan_id": {
+          "selected": false,
+          "text": "azure",
+          "value": "4deee563-e5ec-4731-b9b1-53b42d855f0c"
+        }
+      },
+      "targets": [
+        {
+          "expr": "avg(avg_over_time(kcp_keb_v2_provisioning_duration_minutes_sum{plan_id=\"$plan_id\"}[$__range]))",
+          "hide": false,
+          "interval": "",
+          "legendFormat": "Average",
+          "refId": "A"
+        },
+        {
+          "expr": "max(avg_over_time(kcp_keb_v2_provisioning_duration_minutes_sum{plan_id=\"$plan_id\"}[$__range]))",
+          "hide": false,
+          "interval": "",
+          "legendFormat": "Max",
+          "refId": "B"
+        },
+        {
+          "expr": "min(avg_over_time(kcp_keb_v2_provisioning_duration_minutes_sum{plan_id=\"$plan_id\"}[$__range]))",
+          "hide": false,
+          "interval": "",
+          "legendFormat": "Min",
+          "refId": "C"
+        }
+      ],
+      "title": "Provision Duration ($plan_id)",
+      "type": "gauge"
+    },
+    {
+      "datasource": null,
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 5,
+        "w": 6,
+        "x": 12,
+        "y": 24
+      },
+      "id": 203,
+      "options": {
+        "colorMode": "value",
+        "graphMode": "area",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "text": {},
+        "textMode": "auto"
+      },
+      "pluginVersion": "7.5.29",
+      "repeatIteration": 1715180469772,
+      "repeatPanelId": 190,
+      "repeatedByRow": true,
+      "scopedVars": {
+        "plan_id": {
+          "selected": false,
+          "text": "azure",
+          "value": "4deee563-e5ec-4731-b9b1-53b42d855f0c"
+        }
+      },
+      "targets": [
+        {
+          "expr": "round(sum(increase_prometheus(kcp_keb_v2_operations_deprovisioning_succeeded_total{plan_id=\"$plan_id\"}[$__range]) + increase_prometheus(kcp_keb_v2_operations_deprovisioning_failed_total{plan_id=\"$plan_id\"}[$__range])))",
+          "hide": false,
+          "interval": "",
+          "legendFormat": "Total Deprovision ",
+          "refId": "A"
+        },
+        {
+          "expr": "round(sum(increase_prometheus(kcp_keb_v2_operations_deprovisioning_succeeded_total{plan_id=\"$plan_id\"}[$__range])))",
+          "interval": "",
+          "legendFormat": "Succeeded",
+          "refId": "B"
+        },
+        {
+          "expr": "round(sum(increase_prometheus(kcp_keb_v2_operations_deprovisioning_failed_total{plan_id=\"$plan_id\"}[$__range])))",
+          "hide": false,
+          "interval": "",
+          "legendFormat": "Failed",
+          "refId": "C"
+        },
+        {
+          "expr": "sum(increase_prometheus(kcp_keb_v2_operations_deprovisioning_succeeded_total{plan_id=\"$plan_id\"}[$__range])) / (sum(increase_prometheus(kcp_keb_v2_operations_deprovisioning_succeeded_total{plan_id=\"$plan_id\"}[$__range]) + increase_prometheus(kcp_keb_v2_operations_deprovisioning_failed_total{plan_id=\"$plan_id\"}[$__range])) > 0 ) *100 or vector(0)",
+          "hide": false,
+          "interval": "",
+          "legendFormat": "Success Rate",
+          "refId": "D"
+        }
+      ],
+      "title": "Deprovision (${plan_id} )",
+      "type": "stat"
+    },
+    {
+      "datasource": null,
+      "description": "",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 5,
+        "w": 2,
+        "x": 18,
+        "y": 24
+      },
+      "id": 204,
+      "interval": null,
+      "options": {
+        "colorMode": "value",
+        "graphMode": "area",
+        "justifyMode": "center",
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": [
+            "last"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "text": {},
+        "textMode": "value"
+      },
+      "pluginVersion": "7.5.29",
+      "repeatIteration": 1715180469772,
+      "repeatPanelId": 191,
+      "repeatedByRow": true,
+      "scopedVars": {
+        "plan_id": {
+          "selected": false,
+          "text": "azure",
+          "value": "4deee563-e5ec-4731-b9b1-53b42d855f0c"
+        }
+      },
+      "targets": [
+        {
+          "expr": "sum(kcp_keb_v2_operations_deprovisioning_in_progress_total{plan_id=\"$plan_id\", service=\"kcp-kyma-environment-broker\"})",
+          "instant": false,
+          "interval": "",
+          "legendFormat": "",
+          "refId": "A"
+        }
+      ],
+      "title": "Deprovisioning (${plan_id})",
+      "transformations": [],
+      "type": "stat"
+    },
+    {
+      "datasource": null,
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 5,
+        "w": 4,
+        "x": 20,
+        "y": 24
+      },
+      "id": 205,
+      "options": {
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "showThresholdLabels": false,
+        "showThresholdMarkers": true,
+        "text": {}
+      },
+      "pluginVersion": "7.5.29",
+      "repeatIteration": 1715180469772,
+      "repeatPanelId": 168,
+      "repeatedByRow": true,
+      "scopedVars": {
+        "plan_id": {
+          "selected": false,
+          "text": "azure",
+          "value": "4deee563-e5ec-4731-b9b1-53b42d855f0c"
+        }
+      },
+      "targets": [
+        {
+          "expr": "max(avg_over_time(kcp_keb_v2_deprovisioning_duration_minutes_sum{plan_id=\"$plan_id\"}[$__range]))",
+          "hide": false,
+          "interval": "",
+          "legendFormat": "Max",
+          "refId": "A"
+        },
+        {
+          "expr": "min(avg_over_time(kcp_keb_v2_deprovisioning_duration_minutes_sum{plan_id=\"$plan_id\"}[$__range]))",
+          "hide": false,
+          "interval": "",
+          "legendFormat": "Min",
+          "refId": "B"
+        },
+        {
+          "expr": "avg(avg_over_time(kcp_keb_v2_deprovisioning_duration_minutes_sum{plan_id=\"$plan_id\"}[$__range]))",
+          "hide": false,
+          "interval": "",
+          "legendFormat": "Average",
+          "refId": "C"
+        }
+      ],
+      "title": "Deprovision Duration ($plan_id)",
+      "type": "gauge"
+    },
+    {
+      "collapsed": false,
+      "datasource": null,
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 29
+      },
+      "id": 206,
+      "panels": [],
+      "repeatIteration": 1715180469772,
+      "repeatPanelId": 159,
+      "scopedVars": {
+        "plan_id": {
+          "selected": false,
+          "text": "azure_lite",
+          "value": "8cb22518-aa26-44c5-91a0-e669ec9bf443"
+        }
+      },
+      "title": "Provision/Deprovision [$plan_id]",
+      "type": "row"
+    },
+    {
+      "datasource": null,
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 5,
+        "w": 6,
+        "x": 0,
+        "y": 30
+      },
+      "id": 207,
+      "options": {
+        "colorMode": "value",
+        "graphMode": "area",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": [
+            "last"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "text": {},
+        "textMode": "auto"
+      },
+      "pluginVersion": "7.5.29",
+      "repeatIteration": 1715180469772,
+      "repeatPanelId": 188,
+      "repeatedByRow": true,
+      "scopedVars": {
+        "plan_id": {
+          "selected": false,
+          "text": "azure_lite",
+          "value": "8cb22518-aa26-44c5-91a0-e669ec9bf443"
+        }
+      },
+      "targets": [
+        {
+          "expr": "round(sum(increase_prometheus(kcp_keb_v2_operations_provisioning_succeeded_total{plan_id=\"$plan_id\"}[$__range]) + increase_prometheus(kcp_keb_v2_operations_provisioning_failed_total{plan_id=\"$plan_id\"}[$__range])))",
+          "hide": false,
+          "interval": "",
+          "legendFormat": "Total Provision ",
+          "refId": "A"
+        },
+        {
+          "expr": "round(sum(increase_prometheus(kcp_keb_v2_operations_provisioning_succeeded_total{plan_id=\"$plan_id\"}[$__range])))",
+          "interval": "",
+          "legendFormat": "Succeeded",
+          "refId": "B"
+        },
+        {
+          "expr": "round(sum(increase_prometheus(kcp_keb_v2_operations_provisioning_failed_total{plan_id=\"$plan_id\"}[$__range])))",
+          "format": "time_series",
+          "hide": false,
+          "instant": false,
+          "interval": "",
+          "legendFormat": "Failed",
+          "refId": "C"
+        },
+        {
+          "expr": "sum(increase_prometheus(kcp_keb_v2_operations_provisioning_succeeded_total{plan_id=\"$plan_id\"}[$__range])) / (sum(increase_prometheus(kcp_keb_v2_operations_provisioning_succeeded_total{plan_id=\"$plan_id\"}[$__range]) + increase_prometheus(kcp_keb_v2_operations_provisioning_failed_total{plan_id=\"$plan_id\"}[$__range])) > 0 ) *100 or vector(0)",
+          "hide": false,
+          "interval": "",
+          "legendFormat": "Success Rate",
+          "refId": "D"
+        }
+      ],
+      "title": "Provision ($plan_id)",
+      "type": "stat"
+    },
+    {
+      "datasource": null,
+      "description": "",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 5,
+        "w": 2,
+        "x": 6,
+        "y": 30
+      },
+      "id": 208,
+      "interval": null,
+      "options": {
+        "colorMode": "value",
+        "graphMode": "area",
+        "justifyMode": "center",
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": [
+            "last"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "text": {},
+        "textMode": "value"
+      },
+      "pluginVersion": "7.5.29",
+      "repeatIteration": 1715180469772,
+      "repeatPanelId": 189,
+      "repeatedByRow": true,
+      "scopedVars": {
+        "plan_id": {
+          "selected": false,
+          "text": "azure_lite",
+          "value": "8cb22518-aa26-44c5-91a0-e669ec9bf443"
+        }
+      },
+      "targets": [
+        {
+          "expr": "sum(kcp_keb_v2_operations_provisioning_in_progress_total{plan_id=\"$plan_id\", service=\"kcp-kyma-environment-broker\"})",
+          "instant": false,
+          "interval": "",
+          "legendFormat": "",
+          "refId": "A"
+        }
+      ],
+      "title": "Provisioning (${plan_id})",
+      "transformations": [],
+      "type": "stat"
+    },
+    {
+      "datasource": null,
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 5,
+        "w": 4,
+        "x": 8,
+        "y": 30
+      },
+      "id": 209,
+      "options": {
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "showThresholdLabels": false,
+        "showThresholdMarkers": true,
+        "text": {}
+      },
+      "pluginVersion": "7.5.29",
+      "repeatIteration": 1715180469772,
+      "repeatPanelId": 178,
+      "repeatedByRow": true,
+      "scopedVars": {
+        "plan_id": {
+          "selected": false,
+          "text": "azure_lite",
+          "value": "8cb22518-aa26-44c5-91a0-e669ec9bf443"
+        }
+      },
+      "targets": [
+        {
+          "expr": "avg(avg_over_time(kcp_keb_v2_provisioning_duration_minutes_sum{plan_id=\"$plan_id\"}[$__range]))",
+          "hide": false,
+          "interval": "",
+          "legendFormat": "Average",
+          "refId": "A"
+        },
+        {
+          "expr": "max(avg_over_time(kcp_keb_v2_provisioning_duration_minutes_sum{plan_id=\"$plan_id\"}[$__range]))",
+          "hide": false,
+          "interval": "",
+          "legendFormat": "Max",
+          "refId": "B"
+        },
+        {
+          "expr": "min(avg_over_time(kcp_keb_v2_provisioning_duration_minutes_sum{plan_id=\"$plan_id\"}[$__range]))",
+          "hide": false,
+          "interval": "",
+          "legendFormat": "Min",
+          "refId": "C"
+        }
+      ],
+      "title": "Provision Duration ($plan_id)",
+      "type": "gauge"
+    },
+    {
+      "datasource": null,
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 5,
+        "w": 6,
+        "x": 12,
+        "y": 30
+      },
+      "id": 210,
+      "options": {
+        "colorMode": "value",
+        "graphMode": "area",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "text": {},
+        "textMode": "auto"
+      },
+      "pluginVersion": "7.5.29",
+      "repeatIteration": 1715180469772,
+      "repeatPanelId": 190,
+      "repeatedByRow": true,
+      "scopedVars": {
+        "plan_id": {
+          "selected": false,
+          "text": "azure_lite",
+          "value": "8cb22518-aa26-44c5-91a0-e669ec9bf443"
+        }
+      },
+      "targets": [
+        {
+          "expr": "round(sum(increase_prometheus(kcp_keb_v2_operations_deprovisioning_succeeded_total{plan_id=\"$plan_id\"}[$__range]) + increase_prometheus(kcp_keb_v2_operations_deprovisioning_failed_total{plan_id=\"$plan_id\"}[$__range])))",
+          "hide": false,
+          "interval": "",
+          "legendFormat": "Total Deprovision ",
+          "refId": "A"
+        },
+        {
+          "expr": "round(sum(increase_prometheus(kcp_keb_v2_operations_deprovisioning_succeeded_total{plan_id=\"$plan_id\"}[$__range])))",
+          "interval": "",
+          "legendFormat": "Succeeded",
+          "refId": "B"
+        },
+        {
+          "expr": "round(sum(increase_prometheus(kcp_keb_v2_operations_deprovisioning_failed_total{plan_id=\"$plan_id\"}[$__range])))",
+          "hide": false,
+          "interval": "",
+          "legendFormat": "Failed",
+          "refId": "C"
+        },
+        {
+          "expr": "sum(increase_prometheus(kcp_keb_v2_operations_deprovisioning_succeeded_total{plan_id=\"$plan_id\"}[$__range])) / (sum(increase_prometheus(kcp_keb_v2_operations_deprovisioning_succeeded_total{plan_id=\"$plan_id\"}[$__range]) + increase_prometheus(kcp_keb_v2_operations_deprovisioning_failed_total{plan_id=\"$plan_id\"}[$__range])) > 0 ) *100 or vector(0)",
+          "hide": false,
+          "interval": "",
+          "legendFormat": "Success Rate",
+          "refId": "D"
+        }
+      ],
+      "title": "Deprovision (${plan_id} )",
+      "type": "stat"
+    },
+    {
+      "datasource": null,
+      "description": "",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 5,
+        "w": 2,
+        "x": 18,
+        "y": 30
+      },
+      "id": 211,
+      "interval": null,
+      "options": {
+        "colorMode": "value",
+        "graphMode": "area",
+        "justifyMode": "center",
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": [
+            "last"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "text": {},
+        "textMode": "value"
+      },
+      "pluginVersion": "7.5.29",
+      "repeatIteration": 1715180469772,
+      "repeatPanelId": 191,
+      "repeatedByRow": true,
+      "scopedVars": {
+        "plan_id": {
+          "selected": false,
+          "text": "azure_lite",
+          "value": "8cb22518-aa26-44c5-91a0-e669ec9bf443"
+        }
+      },
+      "targets": [
+        {
+          "expr": "sum(kcp_keb_v2_operations_deprovisioning_in_progress_total{plan_id=\"$plan_id\", service=\"kcp-kyma-environment-broker\"})",
+          "instant": false,
+          "interval": "",
+          "legendFormat": "",
+          "refId": "A"
+        }
+      ],
+      "title": "Deprovisioning (${plan_id})",
+      "transformations": [],
+      "type": "stat"
+    },
+    {
+      "datasource": null,
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 5,
+        "w": 4,
+        "x": 20,
+        "y": 30
+      },
+      "id": 212,
+      "options": {
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "showThresholdLabels": false,
+        "showThresholdMarkers": true,
+        "text": {}
+      },
+      "pluginVersion": "7.5.29",
+      "repeatIteration": 1715180469772,
+      "repeatPanelId": 168,
+      "repeatedByRow": true,
+      "scopedVars": {
+        "plan_id": {
+          "selected": false,
+          "text": "azure_lite",
+          "value": "8cb22518-aa26-44c5-91a0-e669ec9bf443"
+        }
+      },
+      "targets": [
+        {
+          "expr": "max(avg_over_time(kcp_keb_v2_deprovisioning_duration_minutes_sum{plan_id=\"$plan_id\"}[$__range]))",
+          "hide": false,
+          "interval": "",
+          "legendFormat": "Max",
+          "refId": "A"
+        },
+        {
+          "expr": "min(avg_over_time(kcp_keb_v2_deprovisioning_duration_minutes_sum{plan_id=\"$plan_id\"}[$__range]))",
+          "hide": false,
+          "interval": "",
+          "legendFormat": "Min",
+          "refId": "B"
+        },
+        {
+          "expr": "avg(avg_over_time(kcp_keb_v2_deprovisioning_duration_minutes_sum{plan_id=\"$plan_id\"}[$__range]))",
+          "hide": false,
+          "interval": "",
+          "legendFormat": "Average",
+          "refId": "C"
+        }
+      ],
+      "title": "Deprovision Duration ($plan_id)",
+      "type": "gauge"
+    },
+    {
+      "collapsed": false,
+      "datasource": null,
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 35
+      },
+      "id": 213,
+      "panels": [],
+      "repeatIteration": 1715180469772,
+      "repeatPanelId": 159,
+      "scopedVars": {
+        "plan_id": {
+          "selected": false,
+          "text": "gcp",
+          "value": "ca6e5357-707f-4565-bbbd-b3ab732597c6"
+        }
+      },
+      "title": "Provision/Deprovision [$plan_id]",
+      "type": "row"
+    },
+    {
+      "datasource": null,
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 5,
+        "w": 6,
+        "x": 0,
+        "y": 36
+      },
+      "id": 214,
+      "options": {
+        "colorMode": "value",
+        "graphMode": "area",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": [
+            "last"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "text": {},
+        "textMode": "auto"
+      },
+      "pluginVersion": "7.5.29",
+      "repeatIteration": 1715180469772,
+      "repeatPanelId": 188,
+      "repeatedByRow": true,
+      "scopedVars": {
+        "plan_id": {
+          "selected": false,
+          "text": "gcp",
+          "value": "ca6e5357-707f-4565-bbbd-b3ab732597c6"
+        }
+      },
+      "targets": [
+        {
+          "expr": "round(sum(increase_prometheus(kcp_keb_v2_operations_provisioning_succeeded_total{plan_id=\"$plan_id\"}[$__range]) + increase_prometheus(kcp_keb_v2_operations_provisioning_failed_total{plan_id=\"$plan_id\"}[$__range])))",
+          "hide": false,
+          "interval": "",
+          "legendFormat": "Total Provision ",
+          "refId": "A"
+        },
+        {
+          "expr": "round(sum(increase_prometheus(kcp_keb_v2_operations_provisioning_succeeded_total{plan_id=\"$plan_id\"}[$__range])))",
+          "interval": "",
+          "legendFormat": "Succeeded",
+          "refId": "B"
+        },
+        {
+          "expr": "round(sum(increase_prometheus(kcp_keb_v2_operations_provisioning_failed_total{plan_id=\"$plan_id\"}[$__range])))",
+          "format": "time_series",
+          "hide": false,
+          "instant": false,
+          "interval": "",
+          "legendFormat": "Failed",
+          "refId": "C"
+        },
+        {
+          "expr": "sum(increase_prometheus(kcp_keb_v2_operations_provisioning_succeeded_total{plan_id=\"$plan_id\"}[$__range])) / (sum(increase_prometheus(kcp_keb_v2_operations_provisioning_succeeded_total{plan_id=\"$plan_id\"}[$__range]) + increase_prometheus(kcp_keb_v2_operations_provisioning_failed_total{plan_id=\"$plan_id\"}[$__range])) > 0 ) *100 or vector(0)",
+          "hide": false,
+          "interval": "",
+          "legendFormat": "Success Rate",
+          "refId": "D"
+        }
+      ],
+      "title": "Provision ($plan_id)",
+      "type": "stat"
+    },
+    {
+      "datasource": null,
+      "description": "",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 5,
+        "w": 2,
+        "x": 6,
+        "y": 36
+      },
+      "id": 215,
+      "interval": null,
+      "options": {
+        "colorMode": "value",
+        "graphMode": "area",
+        "justifyMode": "center",
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": [
+            "last"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "text": {},
+        "textMode": "value"
+      },
+      "pluginVersion": "7.5.29",
+      "repeatIteration": 1715180469772,
+      "repeatPanelId": 189,
+      "repeatedByRow": true,
+      "scopedVars": {
+        "plan_id": {
+          "selected": false,
+          "text": "gcp",
+          "value": "ca6e5357-707f-4565-bbbd-b3ab732597c6"
+        }
+      },
+      "targets": [
+        {
+          "expr": "sum(kcp_keb_v2_operations_provisioning_in_progress_total{plan_id=\"$plan_id\", service=\"kcp-kyma-environment-broker\"})",
+          "instant": false,
+          "interval": "",
+          "legendFormat": "",
+          "refId": "A"
+        }
+      ],
+      "title": "Provisioning (${plan_id})",
+      "transformations": [],
+      "type": "stat"
+    },
+    {
+      "datasource": null,
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 5,
+        "w": 4,
+        "x": 8,
+        "y": 36
+      },
+      "id": 216,
+      "options": {
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "showThresholdLabels": false,
+        "showThresholdMarkers": true,
+        "text": {}
+      },
+      "pluginVersion": "7.5.29",
+      "repeatIteration": 1715180469772,
+      "repeatPanelId": 178,
+      "repeatedByRow": true,
+      "scopedVars": {
+        "plan_id": {
+          "selected": false,
+          "text": "gcp",
+          "value": "ca6e5357-707f-4565-bbbd-b3ab732597c6"
+        }
+      },
+      "targets": [
+        {
+          "expr": "avg(avg_over_time(kcp_keb_v2_provisioning_duration_minutes_sum{plan_id=\"$plan_id\"}[$__range]))",
+          "hide": false,
+          "interval": "",
+          "legendFormat": "Average",
+          "refId": "A"
+        },
+        {
+          "expr": "max(avg_over_time(kcp_keb_v2_provisioning_duration_minutes_sum{plan_id=\"$plan_id\"}[$__range]))",
+          "hide": false,
+          "interval": "",
+          "legendFormat": "Max",
+          "refId": "B"
+        },
+        {
+          "expr": "min(avg_over_time(kcp_keb_v2_provisioning_duration_minutes_sum{plan_id=\"$plan_id\"}[$__range]))",
+          "hide": false,
+          "interval": "",
+          "legendFormat": "Min",
+          "refId": "C"
+        }
+      ],
+      "title": "Provision Duration ($plan_id)",
+      "type": "gauge"
+    },
+    {
+      "datasource": null,
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 5,
+        "w": 6,
+        "x": 12,
+        "y": 36
+      },
+      "id": 217,
+      "options": {
+        "colorMode": "value",
+        "graphMode": "area",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "text": {},
+        "textMode": "auto"
+      },
+      "pluginVersion": "7.5.29",
+      "repeatIteration": 1715180469772,
+      "repeatPanelId": 190,
+      "repeatedByRow": true,
+      "scopedVars": {
+        "plan_id": {
+          "selected": false,
+          "text": "gcp",
+          "value": "ca6e5357-707f-4565-bbbd-b3ab732597c6"
+        }
+      },
+      "targets": [
+        {
+          "expr": "round(sum(increase_prometheus(kcp_keb_v2_operations_deprovisioning_succeeded_total{plan_id=\"$plan_id\"}[$__range]) + increase_prometheus(kcp_keb_v2_operations_deprovisioning_failed_total{plan_id=\"$plan_id\"}[$__range])))",
+          "hide": false,
+          "interval": "",
+          "legendFormat": "Total Deprovision ",
+          "refId": "A"
+        },
+        {
+          "expr": "round(sum(increase_prometheus(kcp_keb_v2_operations_deprovisioning_succeeded_total{plan_id=\"$plan_id\"}[$__range])))",
+          "interval": "",
+          "legendFormat": "Succeeded",
+          "refId": "B"
+        },
+        {
+          "expr": "round(sum(increase_prometheus(kcp_keb_v2_operations_deprovisioning_failed_total{plan_id=\"$plan_id\"}[$__range])))",
+          "hide": false,
+          "interval": "",
+          "legendFormat": "Failed",
+          "refId": "C"
+        },
+        {
+          "expr": "sum(increase_prometheus(kcp_keb_v2_operations_deprovisioning_succeeded_total{plan_id=\"$plan_id\"}[$__range])) / (sum(increase_prometheus(kcp_keb_v2_operations_deprovisioning_succeeded_total{plan_id=\"$plan_id\"}[$__range]) + increase_prometheus(kcp_keb_v2_operations_deprovisioning_failed_total{plan_id=\"$plan_id\"}[$__range])) > 0 ) *100 or vector(0)",
+          "hide": false,
+          "interval": "",
+          "legendFormat": "Success Rate",
+          "refId": "D"
+        }
+      ],
+      "title": "Deprovision (${plan_id} )",
+      "type": "stat"
+    },
+    {
+      "datasource": null,
+      "description": "",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 5,
+        "w": 2,
+        "x": 18,
+        "y": 36
+      },
+      "id": 218,
+      "interval": null,
+      "options": {
+        "colorMode": "value",
+        "graphMode": "area",
+        "justifyMode": "center",
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": [
+            "last"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "text": {},
+        "textMode": "value"
+      },
+      "pluginVersion": "7.5.29",
+      "repeatIteration": 1715180469772,
+      "repeatPanelId": 191,
+      "repeatedByRow": true,
+      "scopedVars": {
+        "plan_id": {
+          "selected": false,
+          "text": "gcp",
+          "value": "ca6e5357-707f-4565-bbbd-b3ab732597c6"
+        }
+      },
+      "targets": [
+        {
+          "expr": "sum(kcp_keb_v2_operations_deprovisioning_in_progress_total{plan_id=\"$plan_id\", service=\"kcp-kyma-environment-broker\"})",
+          "instant": false,
+          "interval": "",
+          "legendFormat": "",
+          "refId": "A"
+        }
+      ],
+      "title": "Deprovisioning (${plan_id})",
+      "transformations": [],
+      "type": "stat"
+    },
+    {
+      "datasource": null,
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 5,
+        "w": 4,
+        "x": 20,
+        "y": 36
+      },
+      "id": 219,
+      "options": {
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "showThresholdLabels": false,
+        "showThresholdMarkers": true,
+        "text": {}
+      },
+      "pluginVersion": "7.5.29",
+      "repeatIteration": 1715180469772,
+      "repeatPanelId": 168,
+      "repeatedByRow": true,
+      "scopedVars": {
+        "plan_id": {
+          "selected": false,
+          "text": "gcp",
+          "value": "ca6e5357-707f-4565-bbbd-b3ab732597c6"
+        }
+      },
+      "targets": [
+        {
+          "expr": "max(avg_over_time(kcp_keb_v2_deprovisioning_duration_minutes_sum{plan_id=\"$plan_id\"}[$__range]))",
+          "hide": false,
+          "interval": "",
+          "legendFormat": "Max",
+          "refId": "A"
+        },
+        {
+          "expr": "min(avg_over_time(kcp_keb_v2_deprovisioning_duration_minutes_sum{plan_id=\"$plan_id\"}[$__range]))",
+          "hide": false,
+          "interval": "",
+          "legendFormat": "Min",
+          "refId": "B"
+        },
+        {
+          "expr": "avg(avg_over_time(kcp_keb_v2_deprovisioning_duration_minutes_sum{plan_id=\"$plan_id\"}[$__range]))",
+          "hide": false,
+          "interval": "",
+          "legendFormat": "Average",
+          "refId": "C"
+        }
+      ],
+      "title": "Deprovision Duration ($plan_id)",
+      "type": "gauge"
+    },
+    {
+      "collapsed": false,
+      "datasource": null,
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 41
+      },
+      "id": 220,
+      "panels": [],
+      "repeatIteration": 1715180469772,
+      "repeatPanelId": 159,
+      "scopedVars": {
+        "plan_id": {
+          "selected": false,
+          "text": "sap-converged-cloud",
+          "value": "03b812ac-c991-4528-b5bd-08b303523a63"
+        }
+      },
+      "title": "Provision/Deprovision [$plan_id]",
+      "type": "row"
+    },
+    {
+      "datasource": null,
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 5,
+        "w": 6,
+        "x": 0,
+        "y": 42
+      },
+      "id": 221,
+      "options": {
+        "colorMode": "value",
+        "graphMode": "area",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": [
+            "last"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "text": {},
+        "textMode": "auto"
+      },
+      "pluginVersion": "7.5.29",
+      "repeatIteration": 1715180469772,
+      "repeatPanelId": 188,
+      "repeatedByRow": true,
+      "scopedVars": {
+        "plan_id": {
+          "selected": false,
+          "text": "sap-converged-cloud",
+          "value": "03b812ac-c991-4528-b5bd-08b303523a63"
+        }
+      },
+      "targets": [
+        {
+          "expr": "round(sum(increase_prometheus(kcp_keb_v2_operations_provisioning_succeeded_total{plan_id=\"$plan_id\"}[$__range]) + increase_prometheus(kcp_keb_v2_operations_provisioning_failed_total{plan_id=\"$plan_id\"}[$__range])))",
+          "hide": false,
+          "interval": "",
+          "legendFormat": "Total Provision ",
+          "refId": "A"
+        },
+        {
+          "expr": "round(sum(increase_prometheus(kcp_keb_v2_operations_provisioning_succeeded_total{plan_id=\"$plan_id\"}[$__range])))",
+          "interval": "",
+          "legendFormat": "Succeeded",
+          "refId": "B"
+        },
+        {
+          "expr": "round(sum(increase_prometheus(kcp_keb_v2_operations_provisioning_failed_total{plan_id=\"$plan_id\"}[$__range])))",
+          "format": "time_series",
+          "hide": false,
+          "instant": false,
+          "interval": "",
+          "legendFormat": "Failed",
+          "refId": "C"
+        },
+        {
+          "expr": "sum(increase_prometheus(kcp_keb_v2_operations_provisioning_succeeded_total{plan_id=\"$plan_id\"}[$__range])) / (sum(increase_prometheus(kcp_keb_v2_operations_provisioning_succeeded_total{plan_id=\"$plan_id\"}[$__range]) + increase_prometheus(kcp_keb_v2_operations_provisioning_failed_total{plan_id=\"$plan_id\"}[$__range])) > 0 ) *100 or vector(0)",
+          "hide": false,
+          "interval": "",
+          "legendFormat": "Success Rate",
+          "refId": "D"
+        }
+      ],
+      "title": "Provision ($plan_id)",
+      "type": "stat"
+    },
+    {
+      "datasource": null,
+      "description": "",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 5,
+        "w": 2,
+        "x": 6,
+        "y": 42
+      },
+      "id": 222,
+      "interval": null,
+      "options": {
+        "colorMode": "value",
+        "graphMode": "area",
+        "justifyMode": "center",
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": [
+            "last"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "text": {},
+        "textMode": "value"
+      },
+      "pluginVersion": "7.5.29",
+      "repeatIteration": 1715180469772,
+      "repeatPanelId": 189,
+      "repeatedByRow": true,
+      "scopedVars": {
+        "plan_id": {
+          "selected": false,
+          "text": "sap-converged-cloud",
+          "value": "03b812ac-c991-4528-b5bd-08b303523a63"
+        }
+      },
+      "targets": [
+        {
+          "expr": "sum(kcp_keb_v2_operations_provisioning_in_progress_total{plan_id=\"$plan_id\", service=\"kcp-kyma-environment-broker\"})",
+          "instant": false,
+          "interval": "",
+          "legendFormat": "",
+          "refId": "A"
+        }
+      ],
+      "title": "Provisioning (${plan_id})",
+      "transformations": [],
+      "type": "stat"
+    },
+    {
+      "datasource": null,
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 5,
+        "w": 4,
+        "x": 8,
+        "y": 42
+      },
+      "id": 223,
+      "options": {
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "showThresholdLabels": false,
+        "showThresholdMarkers": true,
+        "text": {}
+      },
+      "pluginVersion": "7.5.29",
+      "repeatIteration": 1715180469772,
+      "repeatPanelId": 178,
+      "repeatedByRow": true,
+      "scopedVars": {
+        "plan_id": {
+          "selected": false,
+          "text": "sap-converged-cloud",
+          "value": "03b812ac-c991-4528-b5bd-08b303523a63"
+        }
+      },
+      "targets": [
+        {
+          "expr": "avg(avg_over_time(kcp_keb_v2_provisioning_duration_minutes_sum{plan_id=\"$plan_id\"}[$__range]))",
+          "hide": false,
+          "interval": "",
+          "legendFormat": "Average",
+          "refId": "A"
+        },
+        {
+          "expr": "max(avg_over_time(kcp_keb_v2_provisioning_duration_minutes_sum{plan_id=\"$plan_id\"}[$__range]))",
+          "hide": false,
+          "interval": "",
+          "legendFormat": "Max",
+          "refId": "B"
+        },
+        {
+          "expr": "min(avg_over_time(kcp_keb_v2_provisioning_duration_minutes_sum{plan_id=\"$plan_id\"}[$__range]))",
+          "hide": false,
+          "interval": "",
+          "legendFormat": "Min",
+          "refId": "C"
+        }
+      ],
+      "title": "Provision Duration ($plan_id)",
+      "type": "gauge"
+    },
+    {
+      "datasource": null,
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 5,
+        "w": 6,
+        "x": 12,
+        "y": 42
+      },
+      "id": 224,
+      "options": {
+        "colorMode": "value",
+        "graphMode": "area",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "text": {},
+        "textMode": "auto"
+      },
+      "pluginVersion": "7.5.29",
+      "repeatIteration": 1715180469772,
+      "repeatPanelId": 190,
+      "repeatedByRow": true,
+      "scopedVars": {
+        "plan_id": {
+          "selected": false,
+          "text": "sap-converged-cloud",
+          "value": "03b812ac-c991-4528-b5bd-08b303523a63"
+        }
+      },
+      "targets": [
+        {
+          "expr": "round(sum(increase_prometheus(kcp_keb_v2_operations_deprovisioning_succeeded_total{plan_id=\"$plan_id\"}[$__range]) + increase_prometheus(kcp_keb_v2_operations_deprovisioning_failed_total{plan_id=\"$plan_id\"}[$__range])))",
+          "hide": false,
+          "interval": "",
+          "legendFormat": "Total Deprovision ",
+          "refId": "A"
+        },
+        {
+          "expr": "round(sum(increase_prometheus(kcp_keb_v2_operations_deprovisioning_succeeded_total{plan_id=\"$plan_id\"}[$__range])))",
+          "interval": "",
+          "legendFormat": "Succeeded",
+          "refId": "B"
+        },
+        {
+          "expr": "round(sum(increase_prometheus(kcp_keb_v2_operations_deprovisioning_failed_total{plan_id=\"$plan_id\"}[$__range])))",
+          "hide": false,
+          "interval": "",
+          "legendFormat": "Failed",
+          "refId": "C"
+        },
+        {
+          "expr": "sum(increase_prometheus(kcp_keb_v2_operations_deprovisioning_succeeded_total{plan_id=\"$plan_id\"}[$__range])) / (sum(increase_prometheus(kcp_keb_v2_operations_deprovisioning_succeeded_total{plan_id=\"$plan_id\"}[$__range]) + increase_prometheus(kcp_keb_v2_operations_deprovisioning_failed_total{plan_id=\"$plan_id\"}[$__range])) > 0 ) *100 or vector(0)",
+          "hide": false,
+          "interval": "",
+          "legendFormat": "Success Rate",
+          "refId": "D"
+        }
+      ],
+      "title": "Deprovision (${plan_id} )",
+      "type": "stat"
+    },
+    {
+      "datasource": null,
+      "description": "",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 5,
+        "w": 2,
+        "x": 18,
+        "y": 42
+      },
+      "id": 225,
+      "interval": null,
+      "options": {
+        "colorMode": "value",
+        "graphMode": "area",
+        "justifyMode": "center",
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": [
+            "last"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "text": {},
+        "textMode": "value"
+      },
+      "pluginVersion": "7.5.29",
+      "repeatIteration": 1715180469772,
+      "repeatPanelId": 191,
+      "repeatedByRow": true,
+      "scopedVars": {
+        "plan_id": {
+          "selected": false,
+          "text": "sap-converged-cloud",
+          "value": "03b812ac-c991-4528-b5bd-08b303523a63"
+        }
+      },
+      "targets": [
+        {
+          "expr": "sum(kcp_keb_v2_operations_deprovisioning_in_progress_total{plan_id=\"$plan_id\", service=\"kcp-kyma-environment-broker\"})",
+          "instant": false,
+          "interval": "",
+          "legendFormat": "",
+          "refId": "A"
+        }
+      ],
+      "title": "Deprovisioning (${plan_id})",
+      "transformations": [],
+      "type": "stat"
+    },
+    {
+      "datasource": null,
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 5,
+        "w": 4,
+        "x": 20,
+        "y": 42
+      },
+      "id": 226,
+      "options": {
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "showThresholdLabels": false,
+        "showThresholdMarkers": true,
+        "text": {}
+      },
+      "pluginVersion": "7.5.29",
+      "repeatIteration": 1715180469772,
+      "repeatPanelId": 168,
+      "repeatedByRow": true,
+      "scopedVars": {
+        "plan_id": {
+          "selected": false,
+          "text": "sap-converged-cloud",
+          "value": "03b812ac-c991-4528-b5bd-08b303523a63"
+        }
+      },
+      "targets": [
+        {
+          "expr": "max(avg_over_time(kcp_keb_v2_deprovisioning_duration_minutes_sum{plan_id=\"$plan_id\"}[$__range]))",
+          "hide": false,
+          "interval": "",
+          "legendFormat": "Max",
+          "refId": "A"
+        },
+        {
+          "expr": "min(avg_over_time(kcp_keb_v2_deprovisioning_duration_minutes_sum{plan_id=\"$plan_id\"}[$__range]))",
+          "hide": false,
+          "interval": "",
+          "legendFormat": "Min",
+          "refId": "B"
+        },
+        {
+          "expr": "avg(avg_over_time(kcp_keb_v2_deprovisioning_duration_minutes_sum{plan_id=\"$plan_id\"}[$__range]))",
+          "hide": false,
+          "interval": "",
+          "legendFormat": "Average",
+          "refId": "C"
+        }
+      ],
+      "title": "Deprovision Duration ($plan_id)",
+      "type": "gauge"
+    },
+    {
+      "collapsed": false,
+      "datasource": null,
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 47
+      },
+      "id": 227,
+      "panels": [],
+      "repeatIteration": 1715180469772,
+      "repeatPanelId": 159,
+      "scopedVars": {
+        "plan_id": {
+          "selected": false,
+          "text": "trial",
+          "value": "7d55d31d-35ae-4438-bf13-6ffdfa107d9f"
+        }
+      },
+      "title": "Provision/Deprovision [$plan_id]",
+      "type": "row"
+    },
+    {
+      "datasource": null,
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 5,
+        "w": 6,
+        "x": 0,
+        "y": 48
+      },
+      "id": 228,
+      "options": {
+        "colorMode": "value",
+        "graphMode": "area",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": [
+            "last"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "text": {},
+        "textMode": "auto"
+      },
+      "pluginVersion": "7.5.29",
+      "repeatIteration": 1715180469772,
+      "repeatPanelId": 188,
+      "repeatedByRow": true,
+      "scopedVars": {
+        "plan_id": {
+          "selected": false,
+          "text": "trial",
+          "value": "7d55d31d-35ae-4438-bf13-6ffdfa107d9f"
+        }
+      },
+      "targets": [
+        {
+          "expr": "round(sum(increase_prometheus(kcp_keb_v2_operations_provisioning_succeeded_total{plan_id=\"$plan_id\"}[$__range]) + increase_prometheus(kcp_keb_v2_operations_provisioning_failed_total{plan_id=\"$plan_id\"}[$__range])))",
+          "hide": false,
+          "interval": "",
+          "legendFormat": "Total Provision ",
+          "refId": "A"
+        },
+        {
+          "expr": "round(sum(increase_prometheus(kcp_keb_v2_operations_provisioning_succeeded_total{plan_id=\"$plan_id\"}[$__range])))",
+          "interval": "",
+          "legendFormat": "Succeeded",
+          "refId": "B"
+        },
+        {
+          "expr": "round(sum(increase_prometheus(kcp_keb_v2_operations_provisioning_failed_total{plan_id=\"$plan_id\"}[$__range])))",
+          "format": "time_series",
+          "hide": false,
+          "instant": false,
+          "interval": "",
+          "legendFormat": "Failed",
+          "refId": "C"
+        },
+        {
+          "expr": "sum(increase_prometheus(kcp_keb_v2_operations_provisioning_succeeded_total{plan_id=\"$plan_id\"}[$__range])) / (sum(increase_prometheus(kcp_keb_v2_operations_provisioning_succeeded_total{plan_id=\"$plan_id\"}[$__range]) + increase_prometheus(kcp_keb_v2_operations_provisioning_failed_total{plan_id=\"$plan_id\"}[$__range])) > 0 ) *100 or vector(0)",
+          "hide": false,
+          "interval": "",
+          "legendFormat": "Success Rate",
+          "refId": "D"
+        }
+      ],
+      "title": "Provision ($plan_id)",
+      "type": "stat"
+    },
+    {
+      "datasource": null,
+      "description": "",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 5,
+        "w": 2,
+        "x": 6,
+        "y": 48
+      },
+      "id": 229,
+      "interval": null,
+      "options": {
+        "colorMode": "value",
+        "graphMode": "area",
+        "justifyMode": "center",
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": [
+            "last"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "text": {},
+        "textMode": "value"
+      },
+      "pluginVersion": "7.5.29",
+      "repeatIteration": 1715180469772,
+      "repeatPanelId": 189,
+      "repeatedByRow": true,
+      "scopedVars": {
+        "plan_id": {
+          "selected": false,
+          "text": "trial",
+          "value": "7d55d31d-35ae-4438-bf13-6ffdfa107d9f"
+        }
+      },
+      "targets": [
+        {
+          "expr": "sum(kcp_keb_v2_operations_provisioning_in_progress_total{plan_id=\"$plan_id\", service=\"kcp-kyma-environment-broker\"})",
+          "instant": false,
+          "interval": "",
+          "legendFormat": "",
+          "refId": "A"
+        }
+      ],
+      "title": "Provisioning (${plan_id})",
+      "transformations": [],
+      "type": "stat"
+    },
+    {
+      "datasource": null,
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 5,
+        "w": 4,
+        "x": 8,
+        "y": 48
+      },
+      "id": 230,
+      "options": {
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "showThresholdLabels": false,
+        "showThresholdMarkers": true,
+        "text": {}
+      },
+      "pluginVersion": "7.5.29",
+      "repeatIteration": 1715180469772,
+      "repeatPanelId": 178,
+      "repeatedByRow": true,
+      "scopedVars": {
+        "plan_id": {
+          "selected": false,
+          "text": "trial",
+          "value": "7d55d31d-35ae-4438-bf13-6ffdfa107d9f"
+        }
+      },
+      "targets": [
+        {
+          "expr": "avg(avg_over_time(kcp_keb_v2_provisioning_duration_minutes_sum{plan_id=\"$plan_id\"}[$__range]))",
+          "hide": false,
+          "interval": "",
+          "legendFormat": "Average",
+          "refId": "A"
+        },
+        {
+          "expr": "max(avg_over_time(kcp_keb_v2_provisioning_duration_minutes_sum{plan_id=\"$plan_id\"}[$__range]))",
+          "hide": false,
+          "interval": "",
+          "legendFormat": "Max",
+          "refId": "B"
+        },
+        {
+          "expr": "min(avg_over_time(kcp_keb_v2_provisioning_duration_minutes_sum{plan_id=\"$plan_id\"}[$__range]))",
+          "hide": false,
+          "interval": "",
+          "legendFormat": "Min",
+          "refId": "C"
+        }
+      ],
+      "title": "Provision Duration ($plan_id)",
+      "type": "gauge"
+    },
+    {
+      "datasource": null,
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 5,
+        "w": 6,
+        "x": 12,
+        "y": 48
+      },
+      "id": 231,
+      "options": {
+        "colorMode": "value",
+        "graphMode": "area",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "text": {},
+        "textMode": "auto"
+      },
+      "pluginVersion": "7.5.29",
+      "repeatIteration": 1715180469772,
+      "repeatPanelId": 190,
+      "repeatedByRow": true,
+      "scopedVars": {
+        "plan_id": {
+          "selected": false,
+          "text": "trial",
+          "value": "7d55d31d-35ae-4438-bf13-6ffdfa107d9f"
+        }
+      },
+      "targets": [
+        {
+          "expr": "round(sum(increase_prometheus(kcp_keb_v2_operations_deprovisioning_succeeded_total{plan_id=\"$plan_id\"}[$__range]) + increase_prometheus(kcp_keb_v2_operations_deprovisioning_failed_total{plan_id=\"$plan_id\"}[$__range])))",
+          "hide": false,
+          "interval": "",
+          "legendFormat": "Total Deprovision ",
+          "refId": "A"
+        },
+        {
+          "expr": "round(sum(increase_prometheus(kcp_keb_v2_operations_deprovisioning_succeeded_total{plan_id=\"$plan_id\"}[$__range])))",
+          "interval": "",
+          "legendFormat": "Succeeded",
+          "refId": "B"
+        },
+        {
+          "expr": "round(sum(increase_prometheus(kcp_keb_v2_operations_deprovisioning_failed_total{plan_id=\"$plan_id\"}[$__range])))",
+          "hide": false,
+          "interval": "",
+          "legendFormat": "Failed",
+          "refId": "C"
+        },
+        {
+          "expr": "sum(increase_prometheus(kcp_keb_v2_operations_deprovisioning_succeeded_total{plan_id=\"$plan_id\"}[$__range])) / (sum(increase_prometheus(kcp_keb_v2_operations_deprovisioning_succeeded_total{plan_id=\"$plan_id\"}[$__range]) + increase_prometheus(kcp_keb_v2_operations_deprovisioning_failed_total{plan_id=\"$plan_id\"}[$__range])) > 0 ) *100 or vector(0)",
+          "hide": false,
+          "interval": "",
+          "legendFormat": "Success Rate",
+          "refId": "D"
+        }
+      ],
+      "title": "Deprovision (${plan_id} )",
+      "type": "stat"
+    },
+    {
+      "datasource": null,
+      "description": "",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 5,
+        "w": 2,
+        "x": 18,
+        "y": 48
+      },
+      "id": 232,
+      "interval": null,
+      "options": {
+        "colorMode": "value",
+        "graphMode": "area",
+        "justifyMode": "center",
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": [
+            "last"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "text": {},
+        "textMode": "value"
+      },
+      "pluginVersion": "7.5.29",
+      "repeatIteration": 1715180469772,
+      "repeatPanelId": 191,
+      "repeatedByRow": true,
+      "scopedVars": {
+        "plan_id": {
+          "selected": false,
+          "text": "trial",
+          "value": "7d55d31d-35ae-4438-bf13-6ffdfa107d9f"
+        }
+      },
+      "targets": [
+        {
+          "expr": "sum(kcp_keb_v2_operations_deprovisioning_in_progress_total{plan_id=\"$plan_id\", service=\"kcp-kyma-environment-broker\"})",
+          "instant": false,
+          "interval": "",
+          "legendFormat": "",
+          "refId": "A"
+        }
+      ],
+      "title": "Deprovisioning (${plan_id})",
+      "transformations": [],
+      "type": "stat"
+    },
+    {
+      "datasource": null,
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 5,
+        "w": 4,
+        "x": 20,
+        "y": 48
+      },
+      "id": 233,
+      "options": {
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "showThresholdLabels": false,
+        "showThresholdMarkers": true,
+        "text": {}
+      },
+      "pluginVersion": "7.5.29",
+      "repeatIteration": 1715180469772,
+      "repeatPanelId": 168,
+      "repeatedByRow": true,
+      "scopedVars": {
+        "plan_id": {
+          "selected": false,
+          "text": "trial",
+          "value": "7d55d31d-35ae-4438-bf13-6ffdfa107d9f"
+        }
+      },
+      "targets": [
+        {
+          "expr": "max(avg_over_time(kcp_keb_v2_deprovisioning_duration_minutes_sum{plan_id=\"$plan_id\"}[$__range]))",
+          "hide": false,
+          "interval": "",
+          "legendFormat": "Max",
+          "refId": "A"
+        },
+        {
+          "expr": "min(avg_over_time(kcp_keb_v2_deprovisioning_duration_minutes_sum{plan_id=\"$plan_id\"}[$__range]))",
+          "hide": false,
+          "interval": "",
+          "legendFormat": "Min",
+          "refId": "B"
+        },
+        {
+          "expr": "avg(avg_over_time(kcp_keb_v2_deprovisioning_duration_minutes_sum{plan_id=\"$plan_id\"}[$__range]))",
+          "hide": false,
+          "interval": "",
+          "legendFormat": "Average",
+          "refId": "C"
+        }
+      ],
+      "title": "Deprovision Duration ($plan_id)",
+      "type": "gauge"
+    },
+    {
+      "collapsed": false,
+      "datasource": null,
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 53
+      },
+      "id": 234,
+      "panels": [],
+      "repeatIteration": 1715180469772,
+      "repeatPanelId": 159,
+      "scopedVars": {
+        "plan_id": {
+          "selected": false,
+          "text": "free",
+          "value": "b1a5764e-2ea1-4f95-94c0-2b4538b37b55"
+        }
+      },
+      "title": "Provision/Deprovision [$plan_id]",
+      "type": "row"
+    },
+    {
+      "datasource": null,
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 5,
+        "w": 6,
+        "x": 0,
+        "y": 54
+      },
+      "id": 235,
+      "options": {
+        "colorMode": "value",
+        "graphMode": "area",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": [
+            "last"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "text": {},
+        "textMode": "auto"
+      },
+      "pluginVersion": "7.5.29",
+      "repeatIteration": 1715180469772,
+      "repeatPanelId": 188,
+      "repeatedByRow": true,
+      "scopedVars": {
+        "plan_id": {
+          "selected": false,
+          "text": "free",
+          "value": "b1a5764e-2ea1-4f95-94c0-2b4538b37b55"
+        }
+      },
+      "targets": [
+        {
+          "expr": "round(sum(increase_prometheus(kcp_keb_v2_operations_provisioning_succeeded_total{plan_id=\"$plan_id\"}[$__range]) + increase_prometheus(kcp_keb_v2_operations_provisioning_failed_total{plan_id=\"$plan_id\"}[$__range])))",
+          "hide": false,
+          "interval": "",
+          "legendFormat": "Total Provision ",
+          "refId": "A"
+        },
+        {
+          "expr": "round(sum(increase_prometheus(kcp_keb_v2_operations_provisioning_succeeded_total{plan_id=\"$plan_id\"}[$__range])))",
+          "interval": "",
+          "legendFormat": "Succeeded",
+          "refId": "B"
+        },
+        {
+          "expr": "round(sum(increase_prometheus(kcp_keb_v2_operations_provisioning_failed_total{plan_id=\"$plan_id\"}[$__range])))",
+          "format": "time_series",
+          "hide": false,
+          "instant": false,
+          "interval": "",
+          "legendFormat": "Failed",
+          "refId": "C"
+        },
+        {
+          "expr": "sum(increase_prometheus(kcp_keb_v2_operations_provisioning_succeeded_total{plan_id=\"$plan_id\"}[$__range])) / (sum(increase_prometheus(kcp_keb_v2_operations_provisioning_succeeded_total{plan_id=\"$plan_id\"}[$__range]) + increase_prometheus(kcp_keb_v2_operations_provisioning_failed_total{plan_id=\"$plan_id\"}[$__range])) > 0 ) *100 or vector(0)",
+          "hide": false,
+          "interval": "",
+          "legendFormat": "Success Rate",
+          "refId": "D"
+        }
+      ],
+      "title": "Provision ($plan_id)",
+      "type": "stat"
+    },
+    {
+      "datasource": null,
+      "description": "",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 5,
+        "w": 2,
+        "x": 6,
+        "y": 54
+      },
+      "id": 236,
+      "interval": null,
+      "options": {
+        "colorMode": "value",
+        "graphMode": "area",
+        "justifyMode": "center",
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": [
+            "last"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "text": {},
+        "textMode": "value"
+      },
+      "pluginVersion": "7.5.29",
+      "repeatIteration": 1715180469772,
+      "repeatPanelId": 189,
+      "repeatedByRow": true,
+      "scopedVars": {
+        "plan_id": {
+          "selected": false,
+          "text": "free",
+          "value": "b1a5764e-2ea1-4f95-94c0-2b4538b37b55"
+        }
+      },
+      "targets": [
+        {
+          "expr": "sum(kcp_keb_v2_operations_provisioning_in_progress_total{plan_id=\"$plan_id\", service=\"kcp-kyma-environment-broker\"})",
+          "instant": false,
+          "interval": "",
+          "legendFormat": "",
+          "refId": "A"
+        }
+      ],
+      "title": "Provisioning (${plan_id})",
+      "transformations": [],
+      "type": "stat"
+    },
+    {
+      "datasource": null,
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 5,
+        "w": 4,
+        "x": 8,
+        "y": 54
+      },
+      "id": 237,
+      "options": {
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "showThresholdLabels": false,
+        "showThresholdMarkers": true,
+        "text": {}
+      },
+      "pluginVersion": "7.5.29",
+      "repeatIteration": 1715180469772,
+      "repeatPanelId": 178,
+      "repeatedByRow": true,
+      "scopedVars": {
+        "plan_id": {
+          "selected": false,
+          "text": "free",
+          "value": "b1a5764e-2ea1-4f95-94c0-2b4538b37b55"
+        }
+      },
+      "targets": [
+        {
+          "expr": "avg(avg_over_time(kcp_keb_v2_provisioning_duration_minutes_sum{plan_id=\"$plan_id\"}[$__range]))",
+          "hide": false,
+          "interval": "",
+          "legendFormat": "Average",
+          "refId": "A"
+        },
+        {
+          "expr": "max(avg_over_time(kcp_keb_v2_provisioning_duration_minutes_sum{plan_id=\"$plan_id\"}[$__range]))",
+          "hide": false,
+          "interval": "",
+          "legendFormat": "Max",
+          "refId": "B"
+        },
+        {
+          "expr": "min(avg_over_time(kcp_keb_v2_provisioning_duration_minutes_sum{plan_id=\"$plan_id\"}[$__range]))",
+          "hide": false,
+          "interval": "",
+          "legendFormat": "Min",
+          "refId": "C"
+        }
+      ],
+      "title": "Provision Duration ($plan_id)",
+      "type": "gauge"
+    },
+    {
+      "datasource": null,
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 5,
+        "w": 6,
+        "x": 12,
+        "y": 54
+      },
+      "id": 238,
+      "options": {
+        "colorMode": "value",
+        "graphMode": "area",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "text": {},
+        "textMode": "auto"
+      },
+      "pluginVersion": "7.5.29",
+      "repeatIteration": 1715180469772,
+      "repeatPanelId": 190,
+      "repeatedByRow": true,
+      "scopedVars": {
+        "plan_id": {
+          "selected": false,
+          "text": "free",
+          "value": "b1a5764e-2ea1-4f95-94c0-2b4538b37b55"
+        }
+      },
+      "targets": [
+        {
+          "expr": "round(sum(increase_prometheus(kcp_keb_v2_operations_deprovisioning_succeeded_total{plan_id=\"$plan_id\"}[$__range]) + increase_prometheus(kcp_keb_v2_operations_deprovisioning_failed_total{plan_id=\"$plan_id\"}[$__range])))",
+          "hide": false,
+          "interval": "",
+          "legendFormat": "Total Deprovision ",
+          "refId": "A"
+        },
+        {
+          "expr": "round(sum(increase_prometheus(kcp_keb_v2_operations_deprovisioning_succeeded_total{plan_id=\"$plan_id\"}[$__range])))",
+          "interval": "",
+          "legendFormat": "Succeeded",
+          "refId": "B"
+        },
+        {
+          "expr": "round(sum(increase_prometheus(kcp_keb_v2_operations_deprovisioning_failed_total{plan_id=\"$plan_id\"}[$__range])))",
+          "hide": false,
+          "interval": "",
+          "legendFormat": "Failed",
+          "refId": "C"
+        },
+        {
+          "expr": "sum(increase_prometheus(kcp_keb_v2_operations_deprovisioning_succeeded_total{plan_id=\"$plan_id\"}[$__range])) / (sum(increase_prometheus(kcp_keb_v2_operations_deprovisioning_succeeded_total{plan_id=\"$plan_id\"}[$__range]) + increase_prometheus(kcp_keb_v2_operations_deprovisioning_failed_total{plan_id=\"$plan_id\"}[$__range])) > 0 ) *100 or vector(0)",
+          "hide": false,
+          "interval": "",
+          "legendFormat": "Success Rate",
+          "refId": "D"
+        }
+      ],
+      "title": "Deprovision (${plan_id} )",
+      "type": "stat"
+    },
+    {
+      "datasource": null,
+      "description": "",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 5,
+        "w": 2,
+        "x": 18,
+        "y": 54
+      },
+      "id": 239,
+      "interval": null,
+      "options": {
+        "colorMode": "value",
+        "graphMode": "area",
+        "justifyMode": "center",
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": [
+            "last"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "text": {},
+        "textMode": "value"
+      },
+      "pluginVersion": "7.5.29",
+      "repeatIteration": 1715180469772,
+      "repeatPanelId": 191,
+      "repeatedByRow": true,
+      "scopedVars": {
+        "plan_id": {
+          "selected": false,
+          "text": "free",
+          "value": "b1a5764e-2ea1-4f95-94c0-2b4538b37b55"
+        }
+      },
+      "targets": [
+        {
+          "expr": "sum(kcp_keb_v2_operations_deprovisioning_in_progress_total{plan_id=\"$plan_id\", service=\"kcp-kyma-environment-broker\"})",
+          "instant": false,
+          "interval": "",
+          "legendFormat": "",
+          "refId": "A"
+        }
+      ],
+      "title": "Deprovisioning (${plan_id})",
+      "transformations": [],
+      "type": "stat"
+    },
+    {
+      "datasource": null,
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 5,
+        "w": 4,
+        "x": 20,
+        "y": 54
+      },
+      "id": 240,
+      "options": {
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "showThresholdLabels": false,
+        "showThresholdMarkers": true,
+        "text": {}
+      },
+      "pluginVersion": "7.5.29",
+      "repeatIteration": 1715180469772,
+      "repeatPanelId": 168,
+      "repeatedByRow": true,
+      "scopedVars": {
+        "plan_id": {
+          "selected": false,
+          "text": "free",
+          "value": "b1a5764e-2ea1-4f95-94c0-2b4538b37b55"
         }
       },
       "targets": [
@@ -1272,7 +4219,7 @@
         "h": 1,
         "w": 24,
         "x": 0,
-        "y": 52
+        "y": 59
       },
       "id": 193,
       "panels": [
@@ -1322,7 +4269,7 @@
           "pluginVersion": "7.4.0",
           "scopedVars": {
             "plan_id": {
-              "selected": true,
+              "selected": false,
               "text": "aws",
               "value": "361c511f-f939-4621-b228-d0fb79a1fe15"
             }
@@ -1413,7 +4360,7 @@
           "pluginVersion": "7.4.0",
           "scopedVars": {
             "plan_id": {
-              "selected": true,
+              "selected": false,
               "text": "aws",
               "value": "361c511f-f939-4621-b228-d0fb79a1fe15"
             }
@@ -1489,7 +4436,7 @@
           "pluginVersion": "7.4.0",
           "scopedVars": {
             "plan_id": {
-              "selected": true,
+              "selected": false,
               "text": "aws",
               "value": "361c511f-f939-4621-b228-d0fb79a1fe15"
             }
@@ -1580,7 +4527,7 @@
           "pluginVersion": "7.4.0",
           "scopedVars": {
             "plan_id": {
-              "selected": true,
+              "selected": false,
               "text": "aws",
               "value": "361c511f-f939-4621-b228-d0fb79a1fe15"
             }
@@ -1614,7 +4561,7 @@
       "repeat": "plan_id",
       "scopedVars": {
         "plan_id": {
-          "selected": true,
+          "selected": false,
           "text": "aws",
           "value": "361c511f-f939-4621-b228-d0fb79a1fe15"
         }
@@ -1629,7 +4576,2227 @@
         "h": 1,
         "w": 24,
         "x": 0,
-        "y": 157
+        "y": 60
+      },
+      "id": 241,
+      "panels": [
+        {
+          "datasource": null,
+          "fieldConfig": {
+            "defaults": {
+              "color": {
+                "mode": "thresholds"
+              },
+              "custom": {},
+              "mappings": [],
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  {
+                    "color": "green",
+                    "value": null
+                  }
+                ]
+              }
+            },
+            "overrides": []
+          },
+          "gridPos": {
+            "h": 5,
+            "w": 8,
+            "x": 0,
+            "y": 53
+          },
+          "id": 242,
+          "options": {
+            "colorMode": "value",
+            "graphMode": "area",
+            "justifyMode": "auto",
+            "orientation": "auto",
+            "reduceOptions": {
+              "calcs": [
+                "lastNotNull"
+              ],
+              "fields": "",
+              "values": false
+            },
+            "text": {},
+            "textMode": "auto"
+          },
+          "pluginVersion": "7.4.0",
+          "repeatIteration": 1715180469772,
+          "repeatPanelId": 161,
+          "repeatedByRow": true,
+          "scopedVars": {
+            "plan_id": {
+              "selected": false,
+              "text": "azure",
+              "value": "4deee563-e5ec-4731-b9b1-53b42d855f0c"
+            }
+          },
+          "targets": [
+            {
+              "expr": "count(kcp_keb_v2_operation_result{plan_id=\"$plan_id\", type=\"upgradeCluster\"} == 1 unless kcp_keb_v2_operation_result{plan_id=\"$plan_id\", type=\"upgradeCluster\"} == 1 offset $__range == 0) or vector(0)",
+              "interval": "",
+              "legendFormat": "Total",
+              "refId": "A"
+            },
+            {
+              "exemplar": false,
+              "expr": "count(kcp_keb_v2_operation_result{plan_id=\"$plan_id\", type=\"upgradeCluster\", state=\"succeeded\"} unless kcp_keb_v2_operation_result{plan_id=\"$plan_id\", type=\"upgradeCluster\", state=\"succeeded\"} offset $__range == 0) or vector(0)",
+              "hide": false,
+              "interval": "",
+              "legendFormat": "Succeeded",
+              "refId": "B"
+            },
+            {
+              "expr": "count(kcp_keb_v2_operation_result{plan_id=\"$plan_id\", type=\"upgradeCluster\", state=\"failed\"} unless kcp_keb_v2_operation_result{plan_id=\"$plan_id\", type=\"upgradeCluster\", state=\"succeeded\"} offset $__range == 0) or vector(0)",
+              "hide": false,
+              "interval": "",
+              "legendFormat": "Failed",
+              "refId": "C"
+            },
+            {
+              "expr": "count(kcp_keb_v2_operation_result{plan_id=\"$plan_id\", type=\"upgradeCluster\", state=\"canceled\"} unless kcp_keb_v2_operation_result{plan_id=\"$plan_id\", type=\"upgradeCluster\", state=\"succeeded\"} offset $__range == 0) or vector(0)",
+              "hide": false,
+              "interval": "",
+              "legendFormat": "Canceled",
+              "refId": "D"
+            },
+            {
+              "expr": "count(kcp_keb_v2_operation_result{plan_id=\"$plan_id\", type=\"upgradeCluster\", state=\"succeeded\"} unless kcp_keb_v2_operation_result{plan_id=\"$plan_id\", type=\"upgradeCluster\", state=\"succeeded\"} offset $__range == 0) / count(kcp_keb_v2_operation_result{plan_id=\"$plan_id\", type=\"upgradeCluster\"} == 1 unless kcp_keb_v2_operation_result{plan_id=\"$plan_id\", type=\"upgradeCluster\"} == 1 offset $__range == 0) * 100 or vector(0)",
+              "hide": false,
+              "interval": "",
+              "legendFormat": "Success Rate",
+              "refId": "E"
+            }
+          ],
+          "title": "Upgrade Cluster ($plan_id)",
+          "type": "stat"
+        },
+        {
+          "datasource": null,
+          "fieldConfig": {
+            "defaults": {
+              "color": {
+                "mode": "thresholds"
+              },
+              "custom": {},
+              "mappings": [],
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  {
+                    "color": "green",
+                    "value": null
+                  }
+                ]
+              }
+            },
+            "overrides": []
+          },
+          "gridPos": {
+            "h": 5,
+            "w": 4,
+            "x": 8,
+            "y": 53
+          },
+          "id": 243,
+          "options": {
+            "colorMode": "value",
+            "graphMode": "area",
+            "justifyMode": "auto",
+            "orientation": "auto",
+            "reduceOptions": {
+              "calcs": [
+                "last"
+              ],
+              "fields": "",
+              "values": false
+            },
+            "text": {},
+            "textMode": "auto"
+          },
+          "pluginVersion": "7.4.0",
+          "repeatIteration": 1715180469772,
+          "repeatPanelId": 184,
+          "repeatedByRow": true,
+          "scopedVars": {
+            "plan_id": {
+              "selected": false,
+              "text": "azure",
+              "value": "4deee563-e5ec-4731-b9b1-53b42d855f0c"
+            }
+          },
+          "targets": [
+            {
+              "expr": "count(kcp_keb_v2_operation_result{plan_id=\"$plan_id\", type=\"upgradeCluster\", state=\"in_progress\"} unless kcp_keb_v2_operation_result{plan_id=\"$plan_id\", type=\"in_progress\", state=\"succeeded\"} offset $__range == 0) or vector(0)",
+              "interval": "",
+              "legendFormat": "In Progress",
+              "refId": "A"
+            },
+            {
+              "expr": "count(kcp_keb_v2_operation_result{plan_id=\"$plan_id\", type=\"upgradeCluster\", state=\"pending\"} unless kcp_keb_v2_operation_result{plan_id=\"$plan_id\", type=\"upgradeCluster\", state=\"pending\"} offset $__range == 0) or vector(0)",
+              "hide": false,
+              "interval": "",
+              "legendFormat": "Pending",
+              "refId": "B"
+            },
+            {
+              "expr": "count(kcp_keb_v2_operation_result{plan_id=\"$plan_id\", type=\"upgradeCluster\", state=\"canceled\"} unless kcp_keb_v2_operation_result{plan_id=\"$plan_id\", type=\"upgradeCluster\", state=\"canceled\"} offset $__range == 0) or vector(0)",
+              "hide": false,
+              "interval": "",
+              "legendFormat": "Canceling",
+              "refId": "C"
+            }
+          ],
+          "title": "Upgrade Cluster Progressing ($plan_id)",
+          "type": "stat"
+        },
+        {
+          "datasource": null,
+          "fieldConfig": {
+            "defaults": {
+              "color": {
+                "mode": "thresholds"
+              },
+              "custom": {},
+              "mappings": [],
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  {
+                    "color": "green",
+                    "value": null
+                  }
+                ]
+              }
+            },
+            "overrides": []
+          },
+          "gridPos": {
+            "h": 5,
+            "w": 8,
+            "x": 12,
+            "y": 53
+          },
+          "id": 244,
+          "options": {
+            "colorMode": "value",
+            "graphMode": "area",
+            "justifyMode": "auto",
+            "orientation": "auto",
+            "reduceOptions": {
+              "calcs": [
+                "lastNotNull"
+              ],
+              "fields": "",
+              "values": false
+            },
+            "text": {},
+            "textMode": "auto"
+          },
+          "pluginVersion": "7.4.0",
+          "repeatIteration": 1715180469772,
+          "repeatPanelId": 182,
+          "repeatedByRow": true,
+          "scopedVars": {
+            "plan_id": {
+              "selected": false,
+              "text": "azure",
+              "value": "4deee563-e5ec-4731-b9b1-53b42d855f0c"
+            }
+          },
+          "targets": [
+            {
+              "expr": "count(kcp_keb_v2_operation_result{plan_id=\"$plan_id\", type=\"upgradeKyma\"} == 1 unless kcp_keb_v2_operation_result{plan_id=\"$plan_id\", type=\"upgradeKyma\"} == 1 offset $__range == 0) or vector(0)",
+              "interval": "",
+              "legendFormat": "Total",
+              "refId": "A"
+            },
+            {
+              "exemplar": false,
+              "expr": "count(kcp_keb_v2_operation_result{plan_id=\"$plan_id\", type=\"upgradeKyma\", state=\"succeeded\"} unless kcp_keb_v2_operation_result{plan_id=\"$plan_id\", type=\"upgradeKyma\", state=\"succeeded\"} offset $__range == 0) or vector(0)",
+              "hide": false,
+              "interval": "",
+              "legendFormat": "Succeeded",
+              "refId": "B"
+            },
+            {
+              "expr": "count(kcp_keb_v2_operation_result{plan_id=\"$plan_id\", type=\"upgradeKyma\", state=\"failed\"} unless kcp_keb_v2_operation_result{plan_id=\"$plan_id\", type=\"upgradeKyma\", state=\"succeeded\"} offset $__range == 0) or vector(0)",
+              "hide": false,
+              "interval": "",
+              "legendFormat": "Failed",
+              "refId": "C"
+            },
+            {
+              "expr": "count(kcp_keb_v2_operation_result{plan_id=\"$plan_id\", type=\"upgradeKyma\", state=\"canceled\"} unless kcp_keb_v2_operation_result{plan_id=\"$plan_id\", type=\"upgradeKyma\", state=\"succeeded\"} offset $__range == 0) or vector(0)",
+              "hide": false,
+              "interval": "",
+              "legendFormat": "Canceled",
+              "refId": "D"
+            },
+            {
+              "expr": "count(kcp_keb_v2_operation_result{plan_id=\"$plan_id\", type=\"upgradeKyma\", state=\"succeeded\"} unless kcp_keb_v2_operation_result{plan_id=\"$plan_id\", type=\"upgradeKyma\", state=\"succeeded\"} offset $__range == 0) / count(kcp_keb_v2_operation_result{plan_id=\"$plan_id\", type=\"upgradeKyma\"} == 1 unless kcp_keb_v2_operation_result{plan_id=\"$plan_id\", type=\"upgradeKyma\"} == 1 offset $__range == 0) * 100 or vector(0)",
+              "hide": false,
+              "interval": "",
+              "legendFormat": "Success Rate",
+              "refId": "E"
+            }
+          ],
+          "title": "Upgrade Kyma ($plan_id)",
+          "type": "stat"
+        },
+        {
+          "datasource": null,
+          "fieldConfig": {
+            "defaults": {
+              "color": {
+                "mode": "thresholds"
+              },
+              "custom": {},
+              "mappings": [],
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  {
+                    "color": "green",
+                    "value": null
+                  }
+                ]
+              }
+            },
+            "overrides": []
+          },
+          "gridPos": {
+            "h": 5,
+            "w": 4,
+            "x": 20,
+            "y": 53
+          },
+          "id": 245,
+          "options": {
+            "colorMode": "value",
+            "graphMode": "area",
+            "justifyMode": "auto",
+            "orientation": "auto",
+            "reduceOptions": {
+              "calcs": [
+                "last"
+              ],
+              "fields": "",
+              "values": false
+            },
+            "text": {},
+            "textMode": "auto"
+          },
+          "pluginVersion": "7.4.0",
+          "repeatIteration": 1715180469772,
+          "repeatPanelId": 185,
+          "repeatedByRow": true,
+          "scopedVars": {
+            "plan_id": {
+              "selected": false,
+              "text": "azure",
+              "value": "4deee563-e5ec-4731-b9b1-53b42d855f0c"
+            }
+          },
+          "targets": [
+            {
+              "expr": "count(kcp_keb_v2_operation_result{plan_id=\"$plan_id\", type=\"upgradeKyma\", state=\"in_progress\"} unless kcp_keb_v2_operation_result{plan_id=\"$plan_id\", type=\"upgradeKyma\", state=\"succeeded\"} offset $__range == 0) or vector(0)",
+              "interval": "",
+              "legendFormat": "In Progress",
+              "refId": "A"
+            },
+            {
+              "expr": "count(kcp_keb_v2_operation_result{plan_id=\"$plan_id\", type=\"upgradeKyma\", state=\"pending\"} unless kcp_keb_v2_operation_result{plan_id=\"$plan_id\", type=\"upgradeKyma\", state=\"pending\"} offset $__range == 0) or vector(0)",
+              "hide": false,
+              "interval": "",
+              "legendFormat": "Pending",
+              "refId": "B"
+            },
+            {
+              "expr": "count(kcp_keb_v2_operation_result{plan_id=\"$plan_id\", type=\"upgradeKyma\", state=\"canceled\"} unless kcp_keb_v2_operation_result{plan_id=\"$plan_id\", type=\"upgradeKyma\", state=\"canceled\"} offset $__range == 0) or vector(0)",
+              "hide": false,
+              "interval": "",
+              "legendFormat": "Canceling",
+              "refId": "C"
+            }
+          ],
+          "title": "Upgrade Kyma Progressing ($plan_id)",
+          "type": "stat"
+        }
+      ],
+      "repeatIteration": 1715180469772,
+      "repeatPanelId": 193,
+      "scopedVars": {
+        "plan_id": {
+          "selected": false,
+          "text": "azure",
+          "value": "4deee563-e5ec-4731-b9b1-53b42d855f0c"
+        }
+      },
+      "title": "Upgrades [$plan_id]",
+      "type": "row"
+    },
+    {
+      "collapsed": true,
+      "datasource": null,
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 61
+      },
+      "id": 246,
+      "panels": [
+        {
+          "datasource": null,
+          "fieldConfig": {
+            "defaults": {
+              "color": {
+                "mode": "thresholds"
+              },
+              "custom": {},
+              "mappings": [],
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  {
+                    "color": "green",
+                    "value": null
+                  }
+                ]
+              }
+            },
+            "overrides": []
+          },
+          "gridPos": {
+            "h": 5,
+            "w": 8,
+            "x": 0,
+            "y": 53
+          },
+          "id": 247,
+          "options": {
+            "colorMode": "value",
+            "graphMode": "area",
+            "justifyMode": "auto",
+            "orientation": "auto",
+            "reduceOptions": {
+              "calcs": [
+                "lastNotNull"
+              ],
+              "fields": "",
+              "values": false
+            },
+            "text": {},
+            "textMode": "auto"
+          },
+          "pluginVersion": "7.4.0",
+          "repeatIteration": 1715180469772,
+          "repeatPanelId": 161,
+          "repeatedByRow": true,
+          "scopedVars": {
+            "plan_id": {
+              "selected": false,
+              "text": "azure_lite",
+              "value": "8cb22518-aa26-44c5-91a0-e669ec9bf443"
+            }
+          },
+          "targets": [
+            {
+              "expr": "count(kcp_keb_v2_operation_result{plan_id=\"$plan_id\", type=\"upgradeCluster\"} == 1 unless kcp_keb_v2_operation_result{plan_id=\"$plan_id\", type=\"upgradeCluster\"} == 1 offset $__range == 0) or vector(0)",
+              "interval": "",
+              "legendFormat": "Total",
+              "refId": "A"
+            },
+            {
+              "exemplar": false,
+              "expr": "count(kcp_keb_v2_operation_result{plan_id=\"$plan_id\", type=\"upgradeCluster\", state=\"succeeded\"} unless kcp_keb_v2_operation_result{plan_id=\"$plan_id\", type=\"upgradeCluster\", state=\"succeeded\"} offset $__range == 0) or vector(0)",
+              "hide": false,
+              "interval": "",
+              "legendFormat": "Succeeded",
+              "refId": "B"
+            },
+            {
+              "expr": "count(kcp_keb_v2_operation_result{plan_id=\"$plan_id\", type=\"upgradeCluster\", state=\"failed\"} unless kcp_keb_v2_operation_result{plan_id=\"$plan_id\", type=\"upgradeCluster\", state=\"succeeded\"} offset $__range == 0) or vector(0)",
+              "hide": false,
+              "interval": "",
+              "legendFormat": "Failed",
+              "refId": "C"
+            },
+            {
+              "expr": "count(kcp_keb_v2_operation_result{plan_id=\"$plan_id\", type=\"upgradeCluster\", state=\"canceled\"} unless kcp_keb_v2_operation_result{plan_id=\"$plan_id\", type=\"upgradeCluster\", state=\"succeeded\"} offset $__range == 0) or vector(0)",
+              "hide": false,
+              "interval": "",
+              "legendFormat": "Canceled",
+              "refId": "D"
+            },
+            {
+              "expr": "count(kcp_keb_v2_operation_result{plan_id=\"$plan_id\", type=\"upgradeCluster\", state=\"succeeded\"} unless kcp_keb_v2_operation_result{plan_id=\"$plan_id\", type=\"upgradeCluster\", state=\"succeeded\"} offset $__range == 0) / count(kcp_keb_v2_operation_result{plan_id=\"$plan_id\", type=\"upgradeCluster\"} == 1 unless kcp_keb_v2_operation_result{plan_id=\"$plan_id\", type=\"upgradeCluster\"} == 1 offset $__range == 0) * 100 or vector(0)",
+              "hide": false,
+              "interval": "",
+              "legendFormat": "Success Rate",
+              "refId": "E"
+            }
+          ],
+          "title": "Upgrade Cluster ($plan_id)",
+          "type": "stat"
+        },
+        {
+          "datasource": null,
+          "fieldConfig": {
+            "defaults": {
+              "color": {
+                "mode": "thresholds"
+              },
+              "custom": {},
+              "mappings": [],
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  {
+                    "color": "green",
+                    "value": null
+                  }
+                ]
+              }
+            },
+            "overrides": []
+          },
+          "gridPos": {
+            "h": 5,
+            "w": 4,
+            "x": 8,
+            "y": 53
+          },
+          "id": 248,
+          "options": {
+            "colorMode": "value",
+            "graphMode": "area",
+            "justifyMode": "auto",
+            "orientation": "auto",
+            "reduceOptions": {
+              "calcs": [
+                "last"
+              ],
+              "fields": "",
+              "values": false
+            },
+            "text": {},
+            "textMode": "auto"
+          },
+          "pluginVersion": "7.4.0",
+          "repeatIteration": 1715180469772,
+          "repeatPanelId": 184,
+          "repeatedByRow": true,
+          "scopedVars": {
+            "plan_id": {
+              "selected": false,
+              "text": "azure_lite",
+              "value": "8cb22518-aa26-44c5-91a0-e669ec9bf443"
+            }
+          },
+          "targets": [
+            {
+              "expr": "count(kcp_keb_v2_operation_result{plan_id=\"$plan_id\", type=\"upgradeCluster\", state=\"in_progress\"} unless kcp_keb_v2_operation_result{plan_id=\"$plan_id\", type=\"in_progress\", state=\"succeeded\"} offset $__range == 0) or vector(0)",
+              "interval": "",
+              "legendFormat": "In Progress",
+              "refId": "A"
+            },
+            {
+              "expr": "count(kcp_keb_v2_operation_result{plan_id=\"$plan_id\", type=\"upgradeCluster\", state=\"pending\"} unless kcp_keb_v2_operation_result{plan_id=\"$plan_id\", type=\"upgradeCluster\", state=\"pending\"} offset $__range == 0) or vector(0)",
+              "hide": false,
+              "interval": "",
+              "legendFormat": "Pending",
+              "refId": "B"
+            },
+            {
+              "expr": "count(kcp_keb_v2_operation_result{plan_id=\"$plan_id\", type=\"upgradeCluster\", state=\"canceled\"} unless kcp_keb_v2_operation_result{plan_id=\"$plan_id\", type=\"upgradeCluster\", state=\"canceled\"} offset $__range == 0) or vector(0)",
+              "hide": false,
+              "interval": "",
+              "legendFormat": "Canceling",
+              "refId": "C"
+            }
+          ],
+          "title": "Upgrade Cluster Progressing ($plan_id)",
+          "type": "stat"
+        },
+        {
+          "datasource": null,
+          "fieldConfig": {
+            "defaults": {
+              "color": {
+                "mode": "thresholds"
+              },
+              "custom": {},
+              "mappings": [],
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  {
+                    "color": "green",
+                    "value": null
+                  }
+                ]
+              }
+            },
+            "overrides": []
+          },
+          "gridPos": {
+            "h": 5,
+            "w": 8,
+            "x": 12,
+            "y": 53
+          },
+          "id": 249,
+          "options": {
+            "colorMode": "value",
+            "graphMode": "area",
+            "justifyMode": "auto",
+            "orientation": "auto",
+            "reduceOptions": {
+              "calcs": [
+                "lastNotNull"
+              ],
+              "fields": "",
+              "values": false
+            },
+            "text": {},
+            "textMode": "auto"
+          },
+          "pluginVersion": "7.4.0",
+          "repeatIteration": 1715180469772,
+          "repeatPanelId": 182,
+          "repeatedByRow": true,
+          "scopedVars": {
+            "plan_id": {
+              "selected": false,
+              "text": "azure_lite",
+              "value": "8cb22518-aa26-44c5-91a0-e669ec9bf443"
+            }
+          },
+          "targets": [
+            {
+              "expr": "count(kcp_keb_v2_operation_result{plan_id=\"$plan_id\", type=\"upgradeKyma\"} == 1 unless kcp_keb_v2_operation_result{plan_id=\"$plan_id\", type=\"upgradeKyma\"} == 1 offset $__range == 0) or vector(0)",
+              "interval": "",
+              "legendFormat": "Total",
+              "refId": "A"
+            },
+            {
+              "exemplar": false,
+              "expr": "count(kcp_keb_v2_operation_result{plan_id=\"$plan_id\", type=\"upgradeKyma\", state=\"succeeded\"} unless kcp_keb_v2_operation_result{plan_id=\"$plan_id\", type=\"upgradeKyma\", state=\"succeeded\"} offset $__range == 0) or vector(0)",
+              "hide": false,
+              "interval": "",
+              "legendFormat": "Succeeded",
+              "refId": "B"
+            },
+            {
+              "expr": "count(kcp_keb_v2_operation_result{plan_id=\"$plan_id\", type=\"upgradeKyma\", state=\"failed\"} unless kcp_keb_v2_operation_result{plan_id=\"$plan_id\", type=\"upgradeKyma\", state=\"succeeded\"} offset $__range == 0) or vector(0)",
+              "hide": false,
+              "interval": "",
+              "legendFormat": "Failed",
+              "refId": "C"
+            },
+            {
+              "expr": "count(kcp_keb_v2_operation_result{plan_id=\"$plan_id\", type=\"upgradeKyma\", state=\"canceled\"} unless kcp_keb_v2_operation_result{plan_id=\"$plan_id\", type=\"upgradeKyma\", state=\"succeeded\"} offset $__range == 0) or vector(0)",
+              "hide": false,
+              "interval": "",
+              "legendFormat": "Canceled",
+              "refId": "D"
+            },
+            {
+              "expr": "count(kcp_keb_v2_operation_result{plan_id=\"$plan_id\", type=\"upgradeKyma\", state=\"succeeded\"} unless kcp_keb_v2_operation_result{plan_id=\"$plan_id\", type=\"upgradeKyma\", state=\"succeeded\"} offset $__range == 0) / count(kcp_keb_v2_operation_result{plan_id=\"$plan_id\", type=\"upgradeKyma\"} == 1 unless kcp_keb_v2_operation_result{plan_id=\"$plan_id\", type=\"upgradeKyma\"} == 1 offset $__range == 0) * 100 or vector(0)",
+              "hide": false,
+              "interval": "",
+              "legendFormat": "Success Rate",
+              "refId": "E"
+            }
+          ],
+          "title": "Upgrade Kyma ($plan_id)",
+          "type": "stat"
+        },
+        {
+          "datasource": null,
+          "fieldConfig": {
+            "defaults": {
+              "color": {
+                "mode": "thresholds"
+              },
+              "custom": {},
+              "mappings": [],
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  {
+                    "color": "green",
+                    "value": null
+                  }
+                ]
+              }
+            },
+            "overrides": []
+          },
+          "gridPos": {
+            "h": 5,
+            "w": 4,
+            "x": 20,
+            "y": 53
+          },
+          "id": 250,
+          "options": {
+            "colorMode": "value",
+            "graphMode": "area",
+            "justifyMode": "auto",
+            "orientation": "auto",
+            "reduceOptions": {
+              "calcs": [
+                "last"
+              ],
+              "fields": "",
+              "values": false
+            },
+            "text": {},
+            "textMode": "auto"
+          },
+          "pluginVersion": "7.4.0",
+          "repeatIteration": 1715180469772,
+          "repeatPanelId": 185,
+          "repeatedByRow": true,
+          "scopedVars": {
+            "plan_id": {
+              "selected": false,
+              "text": "azure_lite",
+              "value": "8cb22518-aa26-44c5-91a0-e669ec9bf443"
+            }
+          },
+          "targets": [
+            {
+              "expr": "count(kcp_keb_v2_operation_result{plan_id=\"$plan_id\", type=\"upgradeKyma\", state=\"in_progress\"} unless kcp_keb_v2_operation_result{plan_id=\"$plan_id\", type=\"upgradeKyma\", state=\"succeeded\"} offset $__range == 0) or vector(0)",
+              "interval": "",
+              "legendFormat": "In Progress",
+              "refId": "A"
+            },
+            {
+              "expr": "count(kcp_keb_v2_operation_result{plan_id=\"$plan_id\", type=\"upgradeKyma\", state=\"pending\"} unless kcp_keb_v2_operation_result{plan_id=\"$plan_id\", type=\"upgradeKyma\", state=\"pending\"} offset $__range == 0) or vector(0)",
+              "hide": false,
+              "interval": "",
+              "legendFormat": "Pending",
+              "refId": "B"
+            },
+            {
+              "expr": "count(kcp_keb_v2_operation_result{plan_id=\"$plan_id\", type=\"upgradeKyma\", state=\"canceled\"} unless kcp_keb_v2_operation_result{plan_id=\"$plan_id\", type=\"upgradeKyma\", state=\"canceled\"} offset $__range == 0) or vector(0)",
+              "hide": false,
+              "interval": "",
+              "legendFormat": "Canceling",
+              "refId": "C"
+            }
+          ],
+          "title": "Upgrade Kyma Progressing ($plan_id)",
+          "type": "stat"
+        }
+      ],
+      "repeatIteration": 1715180469772,
+      "repeatPanelId": 193,
+      "scopedVars": {
+        "plan_id": {
+          "selected": false,
+          "text": "azure_lite",
+          "value": "8cb22518-aa26-44c5-91a0-e669ec9bf443"
+        }
+      },
+      "title": "Upgrades [$plan_id]",
+      "type": "row"
+    },
+    {
+      "collapsed": true,
+      "datasource": null,
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 62
+      },
+      "id": 251,
+      "panels": [
+        {
+          "datasource": null,
+          "fieldConfig": {
+            "defaults": {
+              "color": {
+                "mode": "thresholds"
+              },
+              "custom": {},
+              "mappings": [],
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  {
+                    "color": "green",
+                    "value": null
+                  }
+                ]
+              }
+            },
+            "overrides": []
+          },
+          "gridPos": {
+            "h": 5,
+            "w": 8,
+            "x": 0,
+            "y": 53
+          },
+          "id": 252,
+          "options": {
+            "colorMode": "value",
+            "graphMode": "area",
+            "justifyMode": "auto",
+            "orientation": "auto",
+            "reduceOptions": {
+              "calcs": [
+                "lastNotNull"
+              ],
+              "fields": "",
+              "values": false
+            },
+            "text": {},
+            "textMode": "auto"
+          },
+          "pluginVersion": "7.4.0",
+          "repeatIteration": 1715180469772,
+          "repeatPanelId": 161,
+          "repeatedByRow": true,
+          "scopedVars": {
+            "plan_id": {
+              "selected": false,
+              "text": "gcp",
+              "value": "ca6e5357-707f-4565-bbbd-b3ab732597c6"
+            }
+          },
+          "targets": [
+            {
+              "expr": "count(kcp_keb_v2_operation_result{plan_id=\"$plan_id\", type=\"upgradeCluster\"} == 1 unless kcp_keb_v2_operation_result{plan_id=\"$plan_id\", type=\"upgradeCluster\"} == 1 offset $__range == 0) or vector(0)",
+              "interval": "",
+              "legendFormat": "Total",
+              "refId": "A"
+            },
+            {
+              "exemplar": false,
+              "expr": "count(kcp_keb_v2_operation_result{plan_id=\"$plan_id\", type=\"upgradeCluster\", state=\"succeeded\"} unless kcp_keb_v2_operation_result{plan_id=\"$plan_id\", type=\"upgradeCluster\", state=\"succeeded\"} offset $__range == 0) or vector(0)",
+              "hide": false,
+              "interval": "",
+              "legendFormat": "Succeeded",
+              "refId": "B"
+            },
+            {
+              "expr": "count(kcp_keb_v2_operation_result{plan_id=\"$plan_id\", type=\"upgradeCluster\", state=\"failed\"} unless kcp_keb_v2_operation_result{plan_id=\"$plan_id\", type=\"upgradeCluster\", state=\"succeeded\"} offset $__range == 0) or vector(0)",
+              "hide": false,
+              "interval": "",
+              "legendFormat": "Failed",
+              "refId": "C"
+            },
+            {
+              "expr": "count(kcp_keb_v2_operation_result{plan_id=\"$plan_id\", type=\"upgradeCluster\", state=\"canceled\"} unless kcp_keb_v2_operation_result{plan_id=\"$plan_id\", type=\"upgradeCluster\", state=\"succeeded\"} offset $__range == 0) or vector(0)",
+              "hide": false,
+              "interval": "",
+              "legendFormat": "Canceled",
+              "refId": "D"
+            },
+            {
+              "expr": "count(kcp_keb_v2_operation_result{plan_id=\"$plan_id\", type=\"upgradeCluster\", state=\"succeeded\"} unless kcp_keb_v2_operation_result{plan_id=\"$plan_id\", type=\"upgradeCluster\", state=\"succeeded\"} offset $__range == 0) / count(kcp_keb_v2_operation_result{plan_id=\"$plan_id\", type=\"upgradeCluster\"} == 1 unless kcp_keb_v2_operation_result{plan_id=\"$plan_id\", type=\"upgradeCluster\"} == 1 offset $__range == 0) * 100 or vector(0)",
+              "hide": false,
+              "interval": "",
+              "legendFormat": "Success Rate",
+              "refId": "E"
+            }
+          ],
+          "title": "Upgrade Cluster ($plan_id)",
+          "type": "stat"
+        },
+        {
+          "datasource": null,
+          "fieldConfig": {
+            "defaults": {
+              "color": {
+                "mode": "thresholds"
+              },
+              "custom": {},
+              "mappings": [],
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  {
+                    "color": "green",
+                    "value": null
+                  }
+                ]
+              }
+            },
+            "overrides": []
+          },
+          "gridPos": {
+            "h": 5,
+            "w": 4,
+            "x": 8,
+            "y": 53
+          },
+          "id": 253,
+          "options": {
+            "colorMode": "value",
+            "graphMode": "area",
+            "justifyMode": "auto",
+            "orientation": "auto",
+            "reduceOptions": {
+              "calcs": [
+                "last"
+              ],
+              "fields": "",
+              "values": false
+            },
+            "text": {},
+            "textMode": "auto"
+          },
+          "pluginVersion": "7.4.0",
+          "repeatIteration": 1715180469772,
+          "repeatPanelId": 184,
+          "repeatedByRow": true,
+          "scopedVars": {
+            "plan_id": {
+              "selected": false,
+              "text": "gcp",
+              "value": "ca6e5357-707f-4565-bbbd-b3ab732597c6"
+            }
+          },
+          "targets": [
+            {
+              "expr": "count(kcp_keb_v2_operation_result{plan_id=\"$plan_id\", type=\"upgradeCluster\", state=\"in_progress\"} unless kcp_keb_v2_operation_result{plan_id=\"$plan_id\", type=\"in_progress\", state=\"succeeded\"} offset $__range == 0) or vector(0)",
+              "interval": "",
+              "legendFormat": "In Progress",
+              "refId": "A"
+            },
+            {
+              "expr": "count(kcp_keb_v2_operation_result{plan_id=\"$plan_id\", type=\"upgradeCluster\", state=\"pending\"} unless kcp_keb_v2_operation_result{plan_id=\"$plan_id\", type=\"upgradeCluster\", state=\"pending\"} offset $__range == 0) or vector(0)",
+              "hide": false,
+              "interval": "",
+              "legendFormat": "Pending",
+              "refId": "B"
+            },
+            {
+              "expr": "count(kcp_keb_v2_operation_result{plan_id=\"$plan_id\", type=\"upgradeCluster\", state=\"canceled\"} unless kcp_keb_v2_operation_result{plan_id=\"$plan_id\", type=\"upgradeCluster\", state=\"canceled\"} offset $__range == 0) or vector(0)",
+              "hide": false,
+              "interval": "",
+              "legendFormat": "Canceling",
+              "refId": "C"
+            }
+          ],
+          "title": "Upgrade Cluster Progressing ($plan_id)",
+          "type": "stat"
+        },
+        {
+          "datasource": null,
+          "fieldConfig": {
+            "defaults": {
+              "color": {
+                "mode": "thresholds"
+              },
+              "custom": {},
+              "mappings": [],
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  {
+                    "color": "green",
+                    "value": null
+                  }
+                ]
+              }
+            },
+            "overrides": []
+          },
+          "gridPos": {
+            "h": 5,
+            "w": 8,
+            "x": 12,
+            "y": 53
+          },
+          "id": 254,
+          "options": {
+            "colorMode": "value",
+            "graphMode": "area",
+            "justifyMode": "auto",
+            "orientation": "auto",
+            "reduceOptions": {
+              "calcs": [
+                "lastNotNull"
+              ],
+              "fields": "",
+              "values": false
+            },
+            "text": {},
+            "textMode": "auto"
+          },
+          "pluginVersion": "7.4.0",
+          "repeatIteration": 1715180469772,
+          "repeatPanelId": 182,
+          "repeatedByRow": true,
+          "scopedVars": {
+            "plan_id": {
+              "selected": false,
+              "text": "gcp",
+              "value": "ca6e5357-707f-4565-bbbd-b3ab732597c6"
+            }
+          },
+          "targets": [
+            {
+              "expr": "count(kcp_keb_v2_operation_result{plan_id=\"$plan_id\", type=\"upgradeKyma\"} == 1 unless kcp_keb_v2_operation_result{plan_id=\"$plan_id\", type=\"upgradeKyma\"} == 1 offset $__range == 0) or vector(0)",
+              "interval": "",
+              "legendFormat": "Total",
+              "refId": "A"
+            },
+            {
+              "exemplar": false,
+              "expr": "count(kcp_keb_v2_operation_result{plan_id=\"$plan_id\", type=\"upgradeKyma\", state=\"succeeded\"} unless kcp_keb_v2_operation_result{plan_id=\"$plan_id\", type=\"upgradeKyma\", state=\"succeeded\"} offset $__range == 0) or vector(0)",
+              "hide": false,
+              "interval": "",
+              "legendFormat": "Succeeded",
+              "refId": "B"
+            },
+            {
+              "expr": "count(kcp_keb_v2_operation_result{plan_id=\"$plan_id\", type=\"upgradeKyma\", state=\"failed\"} unless kcp_keb_v2_operation_result{plan_id=\"$plan_id\", type=\"upgradeKyma\", state=\"succeeded\"} offset $__range == 0) or vector(0)",
+              "hide": false,
+              "interval": "",
+              "legendFormat": "Failed",
+              "refId": "C"
+            },
+            {
+              "expr": "count(kcp_keb_v2_operation_result{plan_id=\"$plan_id\", type=\"upgradeKyma\", state=\"canceled\"} unless kcp_keb_v2_operation_result{plan_id=\"$plan_id\", type=\"upgradeKyma\", state=\"succeeded\"} offset $__range == 0) or vector(0)",
+              "hide": false,
+              "interval": "",
+              "legendFormat": "Canceled",
+              "refId": "D"
+            },
+            {
+              "expr": "count(kcp_keb_v2_operation_result{plan_id=\"$plan_id\", type=\"upgradeKyma\", state=\"succeeded\"} unless kcp_keb_v2_operation_result{plan_id=\"$plan_id\", type=\"upgradeKyma\", state=\"succeeded\"} offset $__range == 0) / count(kcp_keb_v2_operation_result{plan_id=\"$plan_id\", type=\"upgradeKyma\"} == 1 unless kcp_keb_v2_operation_result{plan_id=\"$plan_id\", type=\"upgradeKyma\"} == 1 offset $__range == 0) * 100 or vector(0)",
+              "hide": false,
+              "interval": "",
+              "legendFormat": "Success Rate",
+              "refId": "E"
+            }
+          ],
+          "title": "Upgrade Kyma ($plan_id)",
+          "type": "stat"
+        },
+        {
+          "datasource": null,
+          "fieldConfig": {
+            "defaults": {
+              "color": {
+                "mode": "thresholds"
+              },
+              "custom": {},
+              "mappings": [],
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  {
+                    "color": "green",
+                    "value": null
+                  }
+                ]
+              }
+            },
+            "overrides": []
+          },
+          "gridPos": {
+            "h": 5,
+            "w": 4,
+            "x": 20,
+            "y": 53
+          },
+          "id": 255,
+          "options": {
+            "colorMode": "value",
+            "graphMode": "area",
+            "justifyMode": "auto",
+            "orientation": "auto",
+            "reduceOptions": {
+              "calcs": [
+                "last"
+              ],
+              "fields": "",
+              "values": false
+            },
+            "text": {},
+            "textMode": "auto"
+          },
+          "pluginVersion": "7.4.0",
+          "repeatIteration": 1715180469772,
+          "repeatPanelId": 185,
+          "repeatedByRow": true,
+          "scopedVars": {
+            "plan_id": {
+              "selected": false,
+              "text": "gcp",
+              "value": "ca6e5357-707f-4565-bbbd-b3ab732597c6"
+            }
+          },
+          "targets": [
+            {
+              "expr": "count(kcp_keb_v2_operation_result{plan_id=\"$plan_id\", type=\"upgradeKyma\", state=\"in_progress\"} unless kcp_keb_v2_operation_result{plan_id=\"$plan_id\", type=\"upgradeKyma\", state=\"succeeded\"} offset $__range == 0) or vector(0)",
+              "interval": "",
+              "legendFormat": "In Progress",
+              "refId": "A"
+            },
+            {
+              "expr": "count(kcp_keb_v2_operation_result{plan_id=\"$plan_id\", type=\"upgradeKyma\", state=\"pending\"} unless kcp_keb_v2_operation_result{plan_id=\"$plan_id\", type=\"upgradeKyma\", state=\"pending\"} offset $__range == 0) or vector(0)",
+              "hide": false,
+              "interval": "",
+              "legendFormat": "Pending",
+              "refId": "B"
+            },
+            {
+              "expr": "count(kcp_keb_v2_operation_result{plan_id=\"$plan_id\", type=\"upgradeKyma\", state=\"canceled\"} unless kcp_keb_v2_operation_result{plan_id=\"$plan_id\", type=\"upgradeKyma\", state=\"canceled\"} offset $__range == 0) or vector(0)",
+              "hide": false,
+              "interval": "",
+              "legendFormat": "Canceling",
+              "refId": "C"
+            }
+          ],
+          "title": "Upgrade Kyma Progressing ($plan_id)",
+          "type": "stat"
+        }
+      ],
+      "repeatIteration": 1715180469772,
+      "repeatPanelId": 193,
+      "scopedVars": {
+        "plan_id": {
+          "selected": false,
+          "text": "gcp",
+          "value": "ca6e5357-707f-4565-bbbd-b3ab732597c6"
+        }
+      },
+      "title": "Upgrades [$plan_id]",
+      "type": "row"
+    },
+    {
+      "collapsed": true,
+      "datasource": null,
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 63
+      },
+      "id": 256,
+      "panels": [
+        {
+          "datasource": null,
+          "fieldConfig": {
+            "defaults": {
+              "color": {
+                "mode": "thresholds"
+              },
+              "custom": {},
+              "mappings": [],
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  {
+                    "color": "green",
+                    "value": null
+                  }
+                ]
+              }
+            },
+            "overrides": []
+          },
+          "gridPos": {
+            "h": 5,
+            "w": 8,
+            "x": 0,
+            "y": 53
+          },
+          "id": 257,
+          "options": {
+            "colorMode": "value",
+            "graphMode": "area",
+            "justifyMode": "auto",
+            "orientation": "auto",
+            "reduceOptions": {
+              "calcs": [
+                "lastNotNull"
+              ],
+              "fields": "",
+              "values": false
+            },
+            "text": {},
+            "textMode": "auto"
+          },
+          "pluginVersion": "7.4.0",
+          "repeatIteration": 1715180469772,
+          "repeatPanelId": 161,
+          "repeatedByRow": true,
+          "scopedVars": {
+            "plan_id": {
+              "selected": false,
+              "text": "sap-converged-cloud",
+              "value": "03b812ac-c991-4528-b5bd-08b303523a63"
+            }
+          },
+          "targets": [
+            {
+              "expr": "count(kcp_keb_v2_operation_result{plan_id=\"$plan_id\", type=\"upgradeCluster\"} == 1 unless kcp_keb_v2_operation_result{plan_id=\"$plan_id\", type=\"upgradeCluster\"} == 1 offset $__range == 0) or vector(0)",
+              "interval": "",
+              "legendFormat": "Total",
+              "refId": "A"
+            },
+            {
+              "exemplar": false,
+              "expr": "count(kcp_keb_v2_operation_result{plan_id=\"$plan_id\", type=\"upgradeCluster\", state=\"succeeded\"} unless kcp_keb_v2_operation_result{plan_id=\"$plan_id\", type=\"upgradeCluster\", state=\"succeeded\"} offset $__range == 0) or vector(0)",
+              "hide": false,
+              "interval": "",
+              "legendFormat": "Succeeded",
+              "refId": "B"
+            },
+            {
+              "expr": "count(kcp_keb_v2_operation_result{plan_id=\"$plan_id\", type=\"upgradeCluster\", state=\"failed\"} unless kcp_keb_v2_operation_result{plan_id=\"$plan_id\", type=\"upgradeCluster\", state=\"succeeded\"} offset $__range == 0) or vector(0)",
+              "hide": false,
+              "interval": "",
+              "legendFormat": "Failed",
+              "refId": "C"
+            },
+            {
+              "expr": "count(kcp_keb_v2_operation_result{plan_id=\"$plan_id\", type=\"upgradeCluster\", state=\"canceled\"} unless kcp_keb_v2_operation_result{plan_id=\"$plan_id\", type=\"upgradeCluster\", state=\"succeeded\"} offset $__range == 0) or vector(0)",
+              "hide": false,
+              "interval": "",
+              "legendFormat": "Canceled",
+              "refId": "D"
+            },
+            {
+              "expr": "count(kcp_keb_v2_operation_result{plan_id=\"$plan_id\", type=\"upgradeCluster\", state=\"succeeded\"} unless kcp_keb_v2_operation_result{plan_id=\"$plan_id\", type=\"upgradeCluster\", state=\"succeeded\"} offset $__range == 0) / count(kcp_keb_v2_operation_result{plan_id=\"$plan_id\", type=\"upgradeCluster\"} == 1 unless kcp_keb_v2_operation_result{plan_id=\"$plan_id\", type=\"upgradeCluster\"} == 1 offset $__range == 0) * 100 or vector(0)",
+              "hide": false,
+              "interval": "",
+              "legendFormat": "Success Rate",
+              "refId": "E"
+            }
+          ],
+          "title": "Upgrade Cluster ($plan_id)",
+          "type": "stat"
+        },
+        {
+          "datasource": null,
+          "fieldConfig": {
+            "defaults": {
+              "color": {
+                "mode": "thresholds"
+              },
+              "custom": {},
+              "mappings": [],
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  {
+                    "color": "green",
+                    "value": null
+                  }
+                ]
+              }
+            },
+            "overrides": []
+          },
+          "gridPos": {
+            "h": 5,
+            "w": 4,
+            "x": 8,
+            "y": 53
+          },
+          "id": 258,
+          "options": {
+            "colorMode": "value",
+            "graphMode": "area",
+            "justifyMode": "auto",
+            "orientation": "auto",
+            "reduceOptions": {
+              "calcs": [
+                "last"
+              ],
+              "fields": "",
+              "values": false
+            },
+            "text": {},
+            "textMode": "auto"
+          },
+          "pluginVersion": "7.4.0",
+          "repeatIteration": 1715180469772,
+          "repeatPanelId": 184,
+          "repeatedByRow": true,
+          "scopedVars": {
+            "plan_id": {
+              "selected": false,
+              "text": "sap-converged-cloud",
+              "value": "03b812ac-c991-4528-b5bd-08b303523a63"
+            }
+          },
+          "targets": [
+            {
+              "expr": "count(kcp_keb_v2_operation_result{plan_id=\"$plan_id\", type=\"upgradeCluster\", state=\"in_progress\"} unless kcp_keb_v2_operation_result{plan_id=\"$plan_id\", type=\"in_progress\", state=\"succeeded\"} offset $__range == 0) or vector(0)",
+              "interval": "",
+              "legendFormat": "In Progress",
+              "refId": "A"
+            },
+            {
+              "expr": "count(kcp_keb_v2_operation_result{plan_id=\"$plan_id\", type=\"upgradeCluster\", state=\"pending\"} unless kcp_keb_v2_operation_result{plan_id=\"$plan_id\", type=\"upgradeCluster\", state=\"pending\"} offset $__range == 0) or vector(0)",
+              "hide": false,
+              "interval": "",
+              "legendFormat": "Pending",
+              "refId": "B"
+            },
+            {
+              "expr": "count(kcp_keb_v2_operation_result{plan_id=\"$plan_id\", type=\"upgradeCluster\", state=\"canceled\"} unless kcp_keb_v2_operation_result{plan_id=\"$plan_id\", type=\"upgradeCluster\", state=\"canceled\"} offset $__range == 0) or vector(0)",
+              "hide": false,
+              "interval": "",
+              "legendFormat": "Canceling",
+              "refId": "C"
+            }
+          ],
+          "title": "Upgrade Cluster Progressing ($plan_id)",
+          "type": "stat"
+        },
+        {
+          "datasource": null,
+          "fieldConfig": {
+            "defaults": {
+              "color": {
+                "mode": "thresholds"
+              },
+              "custom": {},
+              "mappings": [],
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  {
+                    "color": "green",
+                    "value": null
+                  }
+                ]
+              }
+            },
+            "overrides": []
+          },
+          "gridPos": {
+            "h": 5,
+            "w": 8,
+            "x": 12,
+            "y": 53
+          },
+          "id": 259,
+          "options": {
+            "colorMode": "value",
+            "graphMode": "area",
+            "justifyMode": "auto",
+            "orientation": "auto",
+            "reduceOptions": {
+              "calcs": [
+                "lastNotNull"
+              ],
+              "fields": "",
+              "values": false
+            },
+            "text": {},
+            "textMode": "auto"
+          },
+          "pluginVersion": "7.4.0",
+          "repeatIteration": 1715180469772,
+          "repeatPanelId": 182,
+          "repeatedByRow": true,
+          "scopedVars": {
+            "plan_id": {
+              "selected": false,
+              "text": "sap-converged-cloud",
+              "value": "03b812ac-c991-4528-b5bd-08b303523a63"
+            }
+          },
+          "targets": [
+            {
+              "expr": "count(kcp_keb_v2_operation_result{plan_id=\"$plan_id\", type=\"upgradeKyma\"} == 1 unless kcp_keb_v2_operation_result{plan_id=\"$plan_id\", type=\"upgradeKyma\"} == 1 offset $__range == 0) or vector(0)",
+              "interval": "",
+              "legendFormat": "Total",
+              "refId": "A"
+            },
+            {
+              "exemplar": false,
+              "expr": "count(kcp_keb_v2_operation_result{plan_id=\"$plan_id\", type=\"upgradeKyma\", state=\"succeeded\"} unless kcp_keb_v2_operation_result{plan_id=\"$plan_id\", type=\"upgradeKyma\", state=\"succeeded\"} offset $__range == 0) or vector(0)",
+              "hide": false,
+              "interval": "",
+              "legendFormat": "Succeeded",
+              "refId": "B"
+            },
+            {
+              "expr": "count(kcp_keb_v2_operation_result{plan_id=\"$plan_id\", type=\"upgradeKyma\", state=\"failed\"} unless kcp_keb_v2_operation_result{plan_id=\"$plan_id\", type=\"upgradeKyma\", state=\"succeeded\"} offset $__range == 0) or vector(0)",
+              "hide": false,
+              "interval": "",
+              "legendFormat": "Failed",
+              "refId": "C"
+            },
+            {
+              "expr": "count(kcp_keb_v2_operation_result{plan_id=\"$plan_id\", type=\"upgradeKyma\", state=\"canceled\"} unless kcp_keb_v2_operation_result{plan_id=\"$plan_id\", type=\"upgradeKyma\", state=\"succeeded\"} offset $__range == 0) or vector(0)",
+              "hide": false,
+              "interval": "",
+              "legendFormat": "Canceled",
+              "refId": "D"
+            },
+            {
+              "expr": "count(kcp_keb_v2_operation_result{plan_id=\"$plan_id\", type=\"upgradeKyma\", state=\"succeeded\"} unless kcp_keb_v2_operation_result{plan_id=\"$plan_id\", type=\"upgradeKyma\", state=\"succeeded\"} offset $__range == 0) / count(kcp_keb_v2_operation_result{plan_id=\"$plan_id\", type=\"upgradeKyma\"} == 1 unless kcp_keb_v2_operation_result{plan_id=\"$plan_id\", type=\"upgradeKyma\"} == 1 offset $__range == 0) * 100 or vector(0)",
+              "hide": false,
+              "interval": "",
+              "legendFormat": "Success Rate",
+              "refId": "E"
+            }
+          ],
+          "title": "Upgrade Kyma ($plan_id)",
+          "type": "stat"
+        },
+        {
+          "datasource": null,
+          "fieldConfig": {
+            "defaults": {
+              "color": {
+                "mode": "thresholds"
+              },
+              "custom": {},
+              "mappings": [],
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  {
+                    "color": "green",
+                    "value": null
+                  }
+                ]
+              }
+            },
+            "overrides": []
+          },
+          "gridPos": {
+            "h": 5,
+            "w": 4,
+            "x": 20,
+            "y": 53
+          },
+          "id": 260,
+          "options": {
+            "colorMode": "value",
+            "graphMode": "area",
+            "justifyMode": "auto",
+            "orientation": "auto",
+            "reduceOptions": {
+              "calcs": [
+                "last"
+              ],
+              "fields": "",
+              "values": false
+            },
+            "text": {},
+            "textMode": "auto"
+          },
+          "pluginVersion": "7.4.0",
+          "repeatIteration": 1715180469772,
+          "repeatPanelId": 185,
+          "repeatedByRow": true,
+          "scopedVars": {
+            "plan_id": {
+              "selected": false,
+              "text": "sap-converged-cloud",
+              "value": "03b812ac-c991-4528-b5bd-08b303523a63"
+            }
+          },
+          "targets": [
+            {
+              "expr": "count(kcp_keb_v2_operation_result{plan_id=\"$plan_id\", type=\"upgradeKyma\", state=\"in_progress\"} unless kcp_keb_v2_operation_result{plan_id=\"$plan_id\", type=\"upgradeKyma\", state=\"succeeded\"} offset $__range == 0) or vector(0)",
+              "interval": "",
+              "legendFormat": "In Progress",
+              "refId": "A"
+            },
+            {
+              "expr": "count(kcp_keb_v2_operation_result{plan_id=\"$plan_id\", type=\"upgradeKyma\", state=\"pending\"} unless kcp_keb_v2_operation_result{plan_id=\"$plan_id\", type=\"upgradeKyma\", state=\"pending\"} offset $__range == 0) or vector(0)",
+              "hide": false,
+              "interval": "",
+              "legendFormat": "Pending",
+              "refId": "B"
+            },
+            {
+              "expr": "count(kcp_keb_v2_operation_result{plan_id=\"$plan_id\", type=\"upgradeKyma\", state=\"canceled\"} unless kcp_keb_v2_operation_result{plan_id=\"$plan_id\", type=\"upgradeKyma\", state=\"canceled\"} offset $__range == 0) or vector(0)",
+              "hide": false,
+              "interval": "",
+              "legendFormat": "Canceling",
+              "refId": "C"
+            }
+          ],
+          "title": "Upgrade Kyma Progressing ($plan_id)",
+          "type": "stat"
+        }
+      ],
+      "repeatIteration": 1715180469772,
+      "repeatPanelId": 193,
+      "scopedVars": {
+        "plan_id": {
+          "selected": false,
+          "text": "sap-converged-cloud",
+          "value": "03b812ac-c991-4528-b5bd-08b303523a63"
+        }
+      },
+      "title": "Upgrades [$plan_id]",
+      "type": "row"
+    },
+    {
+      "collapsed": true,
+      "datasource": null,
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 64
+      },
+      "id": 261,
+      "panels": [
+        {
+          "datasource": null,
+          "fieldConfig": {
+            "defaults": {
+              "color": {
+                "mode": "thresholds"
+              },
+              "custom": {},
+              "mappings": [],
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  {
+                    "color": "green",
+                    "value": null
+                  }
+                ]
+              }
+            },
+            "overrides": []
+          },
+          "gridPos": {
+            "h": 5,
+            "w": 8,
+            "x": 0,
+            "y": 53
+          },
+          "id": 262,
+          "options": {
+            "colorMode": "value",
+            "graphMode": "area",
+            "justifyMode": "auto",
+            "orientation": "auto",
+            "reduceOptions": {
+              "calcs": [
+                "lastNotNull"
+              ],
+              "fields": "",
+              "values": false
+            },
+            "text": {},
+            "textMode": "auto"
+          },
+          "pluginVersion": "7.4.0",
+          "repeatIteration": 1715180469772,
+          "repeatPanelId": 161,
+          "repeatedByRow": true,
+          "scopedVars": {
+            "plan_id": {
+              "selected": false,
+              "text": "trial",
+              "value": "7d55d31d-35ae-4438-bf13-6ffdfa107d9f"
+            }
+          },
+          "targets": [
+            {
+              "expr": "count(kcp_keb_v2_operation_result{plan_id=\"$plan_id\", type=\"upgradeCluster\"} == 1 unless kcp_keb_v2_operation_result{plan_id=\"$plan_id\", type=\"upgradeCluster\"} == 1 offset $__range == 0) or vector(0)",
+              "interval": "",
+              "legendFormat": "Total",
+              "refId": "A"
+            },
+            {
+              "exemplar": false,
+              "expr": "count(kcp_keb_v2_operation_result{plan_id=\"$plan_id\", type=\"upgradeCluster\", state=\"succeeded\"} unless kcp_keb_v2_operation_result{plan_id=\"$plan_id\", type=\"upgradeCluster\", state=\"succeeded\"} offset $__range == 0) or vector(0)",
+              "hide": false,
+              "interval": "",
+              "legendFormat": "Succeeded",
+              "refId": "B"
+            },
+            {
+              "expr": "count(kcp_keb_v2_operation_result{plan_id=\"$plan_id\", type=\"upgradeCluster\", state=\"failed\"} unless kcp_keb_v2_operation_result{plan_id=\"$plan_id\", type=\"upgradeCluster\", state=\"succeeded\"} offset $__range == 0) or vector(0)",
+              "hide": false,
+              "interval": "",
+              "legendFormat": "Failed",
+              "refId": "C"
+            },
+            {
+              "expr": "count(kcp_keb_v2_operation_result{plan_id=\"$plan_id\", type=\"upgradeCluster\", state=\"canceled\"} unless kcp_keb_v2_operation_result{plan_id=\"$plan_id\", type=\"upgradeCluster\", state=\"succeeded\"} offset $__range == 0) or vector(0)",
+              "hide": false,
+              "interval": "",
+              "legendFormat": "Canceled",
+              "refId": "D"
+            },
+            {
+              "expr": "count(kcp_keb_v2_operation_result{plan_id=\"$plan_id\", type=\"upgradeCluster\", state=\"succeeded\"} unless kcp_keb_v2_operation_result{plan_id=\"$plan_id\", type=\"upgradeCluster\", state=\"succeeded\"} offset $__range == 0) / count(kcp_keb_v2_operation_result{plan_id=\"$plan_id\", type=\"upgradeCluster\"} == 1 unless kcp_keb_v2_operation_result{plan_id=\"$plan_id\", type=\"upgradeCluster\"} == 1 offset $__range == 0) * 100 or vector(0)",
+              "hide": false,
+              "interval": "",
+              "legendFormat": "Success Rate",
+              "refId": "E"
+            }
+          ],
+          "title": "Upgrade Cluster ($plan_id)",
+          "type": "stat"
+        },
+        {
+          "datasource": null,
+          "fieldConfig": {
+            "defaults": {
+              "color": {
+                "mode": "thresholds"
+              },
+              "custom": {},
+              "mappings": [],
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  {
+                    "color": "green",
+                    "value": null
+                  }
+                ]
+              }
+            },
+            "overrides": []
+          },
+          "gridPos": {
+            "h": 5,
+            "w": 4,
+            "x": 8,
+            "y": 53
+          },
+          "id": 263,
+          "options": {
+            "colorMode": "value",
+            "graphMode": "area",
+            "justifyMode": "auto",
+            "orientation": "auto",
+            "reduceOptions": {
+              "calcs": [
+                "last"
+              ],
+              "fields": "",
+              "values": false
+            },
+            "text": {},
+            "textMode": "auto"
+          },
+          "pluginVersion": "7.4.0",
+          "repeatIteration": 1715180469772,
+          "repeatPanelId": 184,
+          "repeatedByRow": true,
+          "scopedVars": {
+            "plan_id": {
+              "selected": false,
+              "text": "trial",
+              "value": "7d55d31d-35ae-4438-bf13-6ffdfa107d9f"
+            }
+          },
+          "targets": [
+            {
+              "expr": "count(kcp_keb_v2_operation_result{plan_id=\"$plan_id\", type=\"upgradeCluster\", state=\"in_progress\"} unless kcp_keb_v2_operation_result{plan_id=\"$plan_id\", type=\"in_progress\", state=\"succeeded\"} offset $__range == 0) or vector(0)",
+              "interval": "",
+              "legendFormat": "In Progress",
+              "refId": "A"
+            },
+            {
+              "expr": "count(kcp_keb_v2_operation_result{plan_id=\"$plan_id\", type=\"upgradeCluster\", state=\"pending\"} unless kcp_keb_v2_operation_result{plan_id=\"$plan_id\", type=\"upgradeCluster\", state=\"pending\"} offset $__range == 0) or vector(0)",
+              "hide": false,
+              "interval": "",
+              "legendFormat": "Pending",
+              "refId": "B"
+            },
+            {
+              "expr": "count(kcp_keb_v2_operation_result{plan_id=\"$plan_id\", type=\"upgradeCluster\", state=\"canceled\"} unless kcp_keb_v2_operation_result{plan_id=\"$plan_id\", type=\"upgradeCluster\", state=\"canceled\"} offset $__range == 0) or vector(0)",
+              "hide": false,
+              "interval": "",
+              "legendFormat": "Canceling",
+              "refId": "C"
+            }
+          ],
+          "title": "Upgrade Cluster Progressing ($plan_id)",
+          "type": "stat"
+        },
+        {
+          "datasource": null,
+          "fieldConfig": {
+            "defaults": {
+              "color": {
+                "mode": "thresholds"
+              },
+              "custom": {},
+              "mappings": [],
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  {
+                    "color": "green",
+                    "value": null
+                  }
+                ]
+              }
+            },
+            "overrides": []
+          },
+          "gridPos": {
+            "h": 5,
+            "w": 8,
+            "x": 12,
+            "y": 53
+          },
+          "id": 264,
+          "options": {
+            "colorMode": "value",
+            "graphMode": "area",
+            "justifyMode": "auto",
+            "orientation": "auto",
+            "reduceOptions": {
+              "calcs": [
+                "lastNotNull"
+              ],
+              "fields": "",
+              "values": false
+            },
+            "text": {},
+            "textMode": "auto"
+          },
+          "pluginVersion": "7.4.0",
+          "repeatIteration": 1715180469772,
+          "repeatPanelId": 182,
+          "repeatedByRow": true,
+          "scopedVars": {
+            "plan_id": {
+              "selected": false,
+              "text": "trial",
+              "value": "7d55d31d-35ae-4438-bf13-6ffdfa107d9f"
+            }
+          },
+          "targets": [
+            {
+              "expr": "count(kcp_keb_v2_operation_result{plan_id=\"$plan_id\", type=\"upgradeKyma\"} == 1 unless kcp_keb_v2_operation_result{plan_id=\"$plan_id\", type=\"upgradeKyma\"} == 1 offset $__range == 0) or vector(0)",
+              "interval": "",
+              "legendFormat": "Total",
+              "refId": "A"
+            },
+            {
+              "exemplar": false,
+              "expr": "count(kcp_keb_v2_operation_result{plan_id=\"$plan_id\", type=\"upgradeKyma\", state=\"succeeded\"} unless kcp_keb_v2_operation_result{plan_id=\"$plan_id\", type=\"upgradeKyma\", state=\"succeeded\"} offset $__range == 0) or vector(0)",
+              "hide": false,
+              "interval": "",
+              "legendFormat": "Succeeded",
+              "refId": "B"
+            },
+            {
+              "expr": "count(kcp_keb_v2_operation_result{plan_id=\"$plan_id\", type=\"upgradeKyma\", state=\"failed\"} unless kcp_keb_v2_operation_result{plan_id=\"$plan_id\", type=\"upgradeKyma\", state=\"succeeded\"} offset $__range == 0) or vector(0)",
+              "hide": false,
+              "interval": "",
+              "legendFormat": "Failed",
+              "refId": "C"
+            },
+            {
+              "expr": "count(kcp_keb_v2_operation_result{plan_id=\"$plan_id\", type=\"upgradeKyma\", state=\"canceled\"} unless kcp_keb_v2_operation_result{plan_id=\"$plan_id\", type=\"upgradeKyma\", state=\"succeeded\"} offset $__range == 0) or vector(0)",
+              "hide": false,
+              "interval": "",
+              "legendFormat": "Canceled",
+              "refId": "D"
+            },
+            {
+              "expr": "count(kcp_keb_v2_operation_result{plan_id=\"$plan_id\", type=\"upgradeKyma\", state=\"succeeded\"} unless kcp_keb_v2_operation_result{plan_id=\"$plan_id\", type=\"upgradeKyma\", state=\"succeeded\"} offset $__range == 0) / count(kcp_keb_v2_operation_result{plan_id=\"$plan_id\", type=\"upgradeKyma\"} == 1 unless kcp_keb_v2_operation_result{plan_id=\"$plan_id\", type=\"upgradeKyma\"} == 1 offset $__range == 0) * 100 or vector(0)",
+              "hide": false,
+              "interval": "",
+              "legendFormat": "Success Rate",
+              "refId": "E"
+            }
+          ],
+          "title": "Upgrade Kyma ($plan_id)",
+          "type": "stat"
+        },
+        {
+          "datasource": null,
+          "fieldConfig": {
+            "defaults": {
+              "color": {
+                "mode": "thresholds"
+              },
+              "custom": {},
+              "mappings": [],
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  {
+                    "color": "green",
+                    "value": null
+                  }
+                ]
+              }
+            },
+            "overrides": []
+          },
+          "gridPos": {
+            "h": 5,
+            "w": 4,
+            "x": 20,
+            "y": 53
+          },
+          "id": 265,
+          "options": {
+            "colorMode": "value",
+            "graphMode": "area",
+            "justifyMode": "auto",
+            "orientation": "auto",
+            "reduceOptions": {
+              "calcs": [
+                "last"
+              ],
+              "fields": "",
+              "values": false
+            },
+            "text": {},
+            "textMode": "auto"
+          },
+          "pluginVersion": "7.4.0",
+          "repeatIteration": 1715180469772,
+          "repeatPanelId": 185,
+          "repeatedByRow": true,
+          "scopedVars": {
+            "plan_id": {
+              "selected": false,
+              "text": "trial",
+              "value": "7d55d31d-35ae-4438-bf13-6ffdfa107d9f"
+            }
+          },
+          "targets": [
+            {
+              "expr": "count(kcp_keb_v2_operation_result{plan_id=\"$plan_id\", type=\"upgradeKyma\", state=\"in_progress\"} unless kcp_keb_v2_operation_result{plan_id=\"$plan_id\", type=\"upgradeKyma\", state=\"succeeded\"} offset $__range == 0) or vector(0)",
+              "interval": "",
+              "legendFormat": "In Progress",
+              "refId": "A"
+            },
+            {
+              "expr": "count(kcp_keb_v2_operation_result{plan_id=\"$plan_id\", type=\"upgradeKyma\", state=\"pending\"} unless kcp_keb_v2_operation_result{plan_id=\"$plan_id\", type=\"upgradeKyma\", state=\"pending\"} offset $__range == 0) or vector(0)",
+              "hide": false,
+              "interval": "",
+              "legendFormat": "Pending",
+              "refId": "B"
+            },
+            {
+              "expr": "count(kcp_keb_v2_operation_result{plan_id=\"$plan_id\", type=\"upgradeKyma\", state=\"canceled\"} unless kcp_keb_v2_operation_result{plan_id=\"$plan_id\", type=\"upgradeKyma\", state=\"canceled\"} offset $__range == 0) or vector(0)",
+              "hide": false,
+              "interval": "",
+              "legendFormat": "Canceling",
+              "refId": "C"
+            }
+          ],
+          "title": "Upgrade Kyma Progressing ($plan_id)",
+          "type": "stat"
+        }
+      ],
+      "repeatIteration": 1715180469772,
+      "repeatPanelId": 193,
+      "scopedVars": {
+        "plan_id": {
+          "selected": false,
+          "text": "trial",
+          "value": "7d55d31d-35ae-4438-bf13-6ffdfa107d9f"
+        }
+      },
+      "title": "Upgrades [$plan_id]",
+      "type": "row"
+    },
+    {
+      "collapsed": true,
+      "datasource": null,
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 65
+      },
+      "id": 266,
+      "panels": [
+        {
+          "datasource": null,
+          "fieldConfig": {
+            "defaults": {
+              "color": {
+                "mode": "thresholds"
+              },
+              "custom": {},
+              "mappings": [],
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  {
+                    "color": "green",
+                    "value": null
+                  }
+                ]
+              }
+            },
+            "overrides": []
+          },
+          "gridPos": {
+            "h": 5,
+            "w": 8,
+            "x": 0,
+            "y": 53
+          },
+          "id": 267,
+          "options": {
+            "colorMode": "value",
+            "graphMode": "area",
+            "justifyMode": "auto",
+            "orientation": "auto",
+            "reduceOptions": {
+              "calcs": [
+                "lastNotNull"
+              ],
+              "fields": "",
+              "values": false
+            },
+            "text": {},
+            "textMode": "auto"
+          },
+          "pluginVersion": "7.4.0",
+          "repeatIteration": 1715180469772,
+          "repeatPanelId": 161,
+          "repeatedByRow": true,
+          "scopedVars": {
+            "plan_id": {
+              "selected": false,
+              "text": "free",
+              "value": "b1a5764e-2ea1-4f95-94c0-2b4538b37b55"
+            }
+          },
+          "targets": [
+            {
+              "expr": "count(kcp_keb_v2_operation_result{plan_id=\"$plan_id\", type=\"upgradeCluster\"} == 1 unless kcp_keb_v2_operation_result{plan_id=\"$plan_id\", type=\"upgradeCluster\"} == 1 offset $__range == 0) or vector(0)",
+              "interval": "",
+              "legendFormat": "Total",
+              "refId": "A"
+            },
+            {
+              "exemplar": false,
+              "expr": "count(kcp_keb_v2_operation_result{plan_id=\"$plan_id\", type=\"upgradeCluster\", state=\"succeeded\"} unless kcp_keb_v2_operation_result{plan_id=\"$plan_id\", type=\"upgradeCluster\", state=\"succeeded\"} offset $__range == 0) or vector(0)",
+              "hide": false,
+              "interval": "",
+              "legendFormat": "Succeeded",
+              "refId": "B"
+            },
+            {
+              "expr": "count(kcp_keb_v2_operation_result{plan_id=\"$plan_id\", type=\"upgradeCluster\", state=\"failed\"} unless kcp_keb_v2_operation_result{plan_id=\"$plan_id\", type=\"upgradeCluster\", state=\"succeeded\"} offset $__range == 0) or vector(0)",
+              "hide": false,
+              "interval": "",
+              "legendFormat": "Failed",
+              "refId": "C"
+            },
+            {
+              "expr": "count(kcp_keb_v2_operation_result{plan_id=\"$plan_id\", type=\"upgradeCluster\", state=\"canceled\"} unless kcp_keb_v2_operation_result{plan_id=\"$plan_id\", type=\"upgradeCluster\", state=\"succeeded\"} offset $__range == 0) or vector(0)",
+              "hide": false,
+              "interval": "",
+              "legendFormat": "Canceled",
+              "refId": "D"
+            },
+            {
+              "expr": "count(kcp_keb_v2_operation_result{plan_id=\"$plan_id\", type=\"upgradeCluster\", state=\"succeeded\"} unless kcp_keb_v2_operation_result{plan_id=\"$plan_id\", type=\"upgradeCluster\", state=\"succeeded\"} offset $__range == 0) / count(kcp_keb_v2_operation_result{plan_id=\"$plan_id\", type=\"upgradeCluster\"} == 1 unless kcp_keb_v2_operation_result{plan_id=\"$plan_id\", type=\"upgradeCluster\"} == 1 offset $__range == 0) * 100 or vector(0)",
+              "hide": false,
+              "interval": "",
+              "legendFormat": "Success Rate",
+              "refId": "E"
+            }
+          ],
+          "title": "Upgrade Cluster ($plan_id)",
+          "type": "stat"
+        },
+        {
+          "datasource": null,
+          "fieldConfig": {
+            "defaults": {
+              "color": {
+                "mode": "thresholds"
+              },
+              "custom": {},
+              "mappings": [],
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  {
+                    "color": "green",
+                    "value": null
+                  }
+                ]
+              }
+            },
+            "overrides": []
+          },
+          "gridPos": {
+            "h": 5,
+            "w": 4,
+            "x": 8,
+            "y": 53
+          },
+          "id": 268,
+          "options": {
+            "colorMode": "value",
+            "graphMode": "area",
+            "justifyMode": "auto",
+            "orientation": "auto",
+            "reduceOptions": {
+              "calcs": [
+                "last"
+              ],
+              "fields": "",
+              "values": false
+            },
+            "text": {},
+            "textMode": "auto"
+          },
+          "pluginVersion": "7.4.0",
+          "repeatIteration": 1715180469772,
+          "repeatPanelId": 184,
+          "repeatedByRow": true,
+          "scopedVars": {
+            "plan_id": {
+              "selected": false,
+              "text": "free",
+              "value": "b1a5764e-2ea1-4f95-94c0-2b4538b37b55"
+            }
+          },
+          "targets": [
+            {
+              "expr": "count(kcp_keb_v2_operation_result{plan_id=\"$plan_id\", type=\"upgradeCluster\", state=\"in_progress\"} unless kcp_keb_v2_operation_result{plan_id=\"$plan_id\", type=\"in_progress\", state=\"succeeded\"} offset $__range == 0) or vector(0)",
+              "interval": "",
+              "legendFormat": "In Progress",
+              "refId": "A"
+            },
+            {
+              "expr": "count(kcp_keb_v2_operation_result{plan_id=\"$plan_id\", type=\"upgradeCluster\", state=\"pending\"} unless kcp_keb_v2_operation_result{plan_id=\"$plan_id\", type=\"upgradeCluster\", state=\"pending\"} offset $__range == 0) or vector(0)",
+              "hide": false,
+              "interval": "",
+              "legendFormat": "Pending",
+              "refId": "B"
+            },
+            {
+              "expr": "count(kcp_keb_v2_operation_result{plan_id=\"$plan_id\", type=\"upgradeCluster\", state=\"canceled\"} unless kcp_keb_v2_operation_result{plan_id=\"$plan_id\", type=\"upgradeCluster\", state=\"canceled\"} offset $__range == 0) or vector(0)",
+              "hide": false,
+              "interval": "",
+              "legendFormat": "Canceling",
+              "refId": "C"
+            }
+          ],
+          "title": "Upgrade Cluster Progressing ($plan_id)",
+          "type": "stat"
+        },
+        {
+          "datasource": null,
+          "fieldConfig": {
+            "defaults": {
+              "color": {
+                "mode": "thresholds"
+              },
+              "custom": {},
+              "mappings": [],
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  {
+                    "color": "green",
+                    "value": null
+                  }
+                ]
+              }
+            },
+            "overrides": []
+          },
+          "gridPos": {
+            "h": 5,
+            "w": 8,
+            "x": 12,
+            "y": 53
+          },
+          "id": 269,
+          "options": {
+            "colorMode": "value",
+            "graphMode": "area",
+            "justifyMode": "auto",
+            "orientation": "auto",
+            "reduceOptions": {
+              "calcs": [
+                "lastNotNull"
+              ],
+              "fields": "",
+              "values": false
+            },
+            "text": {},
+            "textMode": "auto"
+          },
+          "pluginVersion": "7.4.0",
+          "repeatIteration": 1715180469772,
+          "repeatPanelId": 182,
+          "repeatedByRow": true,
+          "scopedVars": {
+            "plan_id": {
+              "selected": false,
+              "text": "free",
+              "value": "b1a5764e-2ea1-4f95-94c0-2b4538b37b55"
+            }
+          },
+          "targets": [
+            {
+              "expr": "count(kcp_keb_v2_operation_result{plan_id=\"$plan_id\", type=\"upgradeKyma\"} == 1 unless kcp_keb_v2_operation_result{plan_id=\"$plan_id\", type=\"upgradeKyma\"} == 1 offset $__range == 0) or vector(0)",
+              "interval": "",
+              "legendFormat": "Total",
+              "refId": "A"
+            },
+            {
+              "exemplar": false,
+              "expr": "count(kcp_keb_v2_operation_result{plan_id=\"$plan_id\", type=\"upgradeKyma\", state=\"succeeded\"} unless kcp_keb_v2_operation_result{plan_id=\"$plan_id\", type=\"upgradeKyma\", state=\"succeeded\"} offset $__range == 0) or vector(0)",
+              "hide": false,
+              "interval": "",
+              "legendFormat": "Succeeded",
+              "refId": "B"
+            },
+            {
+              "expr": "count(kcp_keb_v2_operation_result{plan_id=\"$plan_id\", type=\"upgradeKyma\", state=\"failed\"} unless kcp_keb_v2_operation_result{plan_id=\"$plan_id\", type=\"upgradeKyma\", state=\"succeeded\"} offset $__range == 0) or vector(0)",
+              "hide": false,
+              "interval": "",
+              "legendFormat": "Failed",
+              "refId": "C"
+            },
+            {
+              "expr": "count(kcp_keb_v2_operation_result{plan_id=\"$plan_id\", type=\"upgradeKyma\", state=\"canceled\"} unless kcp_keb_v2_operation_result{plan_id=\"$plan_id\", type=\"upgradeKyma\", state=\"succeeded\"} offset $__range == 0) or vector(0)",
+              "hide": false,
+              "interval": "",
+              "legendFormat": "Canceled",
+              "refId": "D"
+            },
+            {
+              "expr": "count(kcp_keb_v2_operation_result{plan_id=\"$plan_id\", type=\"upgradeKyma\", state=\"succeeded\"} unless kcp_keb_v2_operation_result{plan_id=\"$plan_id\", type=\"upgradeKyma\", state=\"succeeded\"} offset $__range == 0) / count(kcp_keb_v2_operation_result{plan_id=\"$plan_id\", type=\"upgradeKyma\"} == 1 unless kcp_keb_v2_operation_result{plan_id=\"$plan_id\", type=\"upgradeKyma\"} == 1 offset $__range == 0) * 100 or vector(0)",
+              "hide": false,
+              "interval": "",
+              "legendFormat": "Success Rate",
+              "refId": "E"
+            }
+          ],
+          "title": "Upgrade Kyma ($plan_id)",
+          "type": "stat"
+        },
+        {
+          "datasource": null,
+          "fieldConfig": {
+            "defaults": {
+              "color": {
+                "mode": "thresholds"
+              },
+              "custom": {},
+              "mappings": [],
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  {
+                    "color": "green",
+                    "value": null
+                  }
+                ]
+              }
+            },
+            "overrides": []
+          },
+          "gridPos": {
+            "h": 5,
+            "w": 4,
+            "x": 20,
+            "y": 53
+          },
+          "id": 270,
+          "options": {
+            "colorMode": "value",
+            "graphMode": "area",
+            "justifyMode": "auto",
+            "orientation": "auto",
+            "reduceOptions": {
+              "calcs": [
+                "last"
+              ],
+              "fields": "",
+              "values": false
+            },
+            "text": {},
+            "textMode": "auto"
+          },
+          "pluginVersion": "7.4.0",
+          "repeatIteration": 1715180469772,
+          "repeatPanelId": 185,
+          "repeatedByRow": true,
+          "scopedVars": {
+            "plan_id": {
+              "selected": false,
+              "text": "free",
+              "value": "b1a5764e-2ea1-4f95-94c0-2b4538b37b55"
+            }
+          },
+          "targets": [
+            {
+              "expr": "count(kcp_keb_v2_operation_result{plan_id=\"$plan_id\", type=\"upgradeKyma\", state=\"in_progress\"} unless kcp_keb_v2_operation_result{plan_id=\"$plan_id\", type=\"upgradeKyma\", state=\"succeeded\"} offset $__range == 0) or vector(0)",
+              "interval": "",
+              "legendFormat": "In Progress",
+              "refId": "A"
+            },
+            {
+              "expr": "count(kcp_keb_v2_operation_result{plan_id=\"$plan_id\", type=\"upgradeKyma\", state=\"pending\"} unless kcp_keb_v2_operation_result{plan_id=\"$plan_id\", type=\"upgradeKyma\", state=\"pending\"} offset $__range == 0) or vector(0)",
+              "hide": false,
+              "interval": "",
+              "legendFormat": "Pending",
+              "refId": "B"
+            },
+            {
+              "expr": "count(kcp_keb_v2_operation_result{plan_id=\"$plan_id\", type=\"upgradeKyma\", state=\"canceled\"} unless kcp_keb_v2_operation_result{plan_id=\"$plan_id\", type=\"upgradeKyma\", state=\"canceled\"} offset $__range == 0) or vector(0)",
+              "hide": false,
+              "interval": "",
+              "legendFormat": "Canceling",
+              "refId": "C"
+            }
+          ],
+          "title": "Upgrade Kyma Progressing ($plan_id)",
+          "type": "stat"
+        }
+      ],
+      "repeatIteration": 1715180469772,
+      "repeatPanelId": 193,
+      "scopedVars": {
+        "plan_id": {
+          "selected": false,
+          "text": "free",
+          "value": "b1a5764e-2ea1-4f95-94c0-2b4538b37b55"
+        }
+      },
+      "title": "Upgrades [$plan_id]",
+      "type": "row"
+    },
+    {
+      "collapsed": true,
+      "datasource": null,
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 66
       },
       "id": 42,
       "panels": [
@@ -2310,7 +7477,7 @@
         "h": 1,
         "w": 24,
         "x": 0,
-        "y": 158
+        "y": 67
       },
       "id": 38,
       "panels": [
@@ -2788,6 +7955,7 @@
         "label": null,
         "multi": true,
         "name": "error_category",
+        "options": [],
         "query": {
           "query": "label_values({__name__=~\"kcp_keb_v2_provisioning_result|kcp_keb_v2_deprovisioning_result\", plan_id=~\"$plan_id\"}, error_category)",
           "refId": "StandardVariableQuery"
@@ -2822,6 +7990,7 @@
         "label": null,
         "multi": true,
         "name": "error_reason",
+        "options": [],
         "query": {
           "query": "label_values({__name__=~\"kcp_keb_v2_provisioning_result|kcp_keb_v2_deprovisioning_result\", plan_id=~\"$plan_id\", error_category=~\"$error_category\"}, error_reason)",
           "refId": "StandardVariableQuery"

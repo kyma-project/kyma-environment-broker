@@ -91,6 +91,11 @@ func (s *Service) Run() (error, int, int) {
 				continue
 			}
 
+			if !s.performDeletion {
+				logger.Debug("PerformDeletion is disabled, skipping operation deletion")
+				continue
+			}
+
 			// first - delete all runtime states
 			// second - delete the operation
 			// If the deletion of operation fails, it can be retried, because such instance ID will be fetched by

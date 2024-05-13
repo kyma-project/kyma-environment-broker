@@ -54,6 +54,8 @@ jobs:
         
     - name: Go linter
       if: steps.changed-files-specific.outputs.any_modified == 'true'
+      env:
+        GOLINT_TIMEOUT: ${{ vars.GOLINT_TIMEOUT }}
       run: make go-lint
 
   run-go-checks:

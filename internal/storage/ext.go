@@ -66,6 +66,7 @@ type Operations interface {
 	ListOperationsInTimeRange(from, to time.Time) ([]internal.Operation, error)
 
 	DeleteByID(operationID string) error
+	GetAllOperations() ([]internal.Operation, error)
 }
 
 type Provisioning interface {

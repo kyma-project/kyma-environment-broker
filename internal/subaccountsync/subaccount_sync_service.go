@@ -12,7 +12,6 @@ import (
 	"github.com/kyma-project/kyma-environment-broker/internal/storage"
 	queues "github.com/kyma-project/kyma-environment-broker/internal/syncqueues"
 	"github.com/prometheus/client_golang/prometheus"
-	"github.com/prometheus/client_golang/prometheus/collectors"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -62,22 +61,26 @@ type (
 )
 
 type SyncService struct {
-	appName   string
-	ctx       context.Context
-	cfg       Config
-	kymaGVR   schema.GroupVersionResource
-	db        storage.BrokerStorage
-	k8sClient dynamic.Interface
+	appName         string
+	ctx             context.Context
+	cfg             Config
+	kymaGVR         schema.GroupVersionResource
+	db              storage.BrokerStorage
+	k8sClient       dynamic.Interface
+	metricsRegistry *prometheus.Registry
 }
 
-func NewSyncService(appName string, ctx context.Context, cfg Config, kymaGVR schema.GroupVersionResource, db storage.BrokerStorage, dynamicClient dynamic.Interface) *SyncService {
+func NewSyncService(appName string, ctx context.Context,
+	cfg Config, kymaGVR schema.GroupVersionResource, db storage.BrokerStorage,
+	dynamicClient dynamic.Interface, metricsRegistry *prometheus.Registry) *SyncService {
 	return &SyncService{
-		appName:   appName,
-		ctx:       ctx,
-		cfg:       cfg,
-		kymaGVR:   kymaGVR,
-		db:        db,
-		k8sClient: dynamicClient,
+		appName:         appName,
+		ctx:             ctx,
+		cfg:             cfg,
+		kymaGVR:         kymaGVR,
+		db:              db,
+		k8sClient:       dynamicClient,
+		metricsRegistry: metricsRegistry,
 	}
 }
 
@@ -89,12 +92,8 @@ func (s *SyncService) Run() {
 	eventsClient := CreateEventsClient(s.ctx, s.cfg.CisEvents, logger)
 	accountsClient := CreateAccountsClient(s.ctx, s.cfg.CisAccounts, logger)
 
-	// create and register metrics
-	metricsRegistry := prometheus.NewRegistry()
-	metricsRegistry.MustRegister(collectors.NewGoCollector())
-
-	metrics := NewMetrics(metricsRegistry, s.appName)
-	promHandler := promhttp.HandlerFor(metricsRegistry, promhttp.HandlerOpts{Registry: metricsRegistry})
+	metrics := NewMetrics(s.metricsRegistry, s.appName)
+	promHandler := promhttp.HandlerFor(s.metricsRegistry, promhttp.HandlerOpts{Registry: s.metricsRegistry})
 	http.Handle("/metrics", promHandler)
 
 	go func() {

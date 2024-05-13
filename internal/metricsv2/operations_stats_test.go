@@ -16,7 +16,7 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestOperationsCounter(t *testing.T) {
+func TestOperationsStats(t *testing.T) {
 	var ctr *OperationStats
 
 	opType1 := internal.OperationTypeProvision

@@ -227,6 +227,19 @@ func (r readSession) ListOperations(filter dbmodel.OperationFilter) ([]dbmodel.O
 		nil
 }
 
+func (r readSession) GetAllOperations() ([]dbmodel.OperationDTO, error) {
+	var operations []dbmodel.OperationDTO
+
+	_, err := r.session.Select("*").
+		From(OperationTableName).
+		Load(&operations)
+
+	if err != nil {
+		return nil, dberr.Internal("Failed to get operations: %s", err)
+	}
+	return operations, nil
+}
+
 func (r readSession) GetOrchestrationByID(oID string) (dbmodel.OrchestrationDTO, dberr.Error) {
 	condition := dbr.Eq("orchestration_id", oID)
 	operation, err := r.getOrchestration(condition)
