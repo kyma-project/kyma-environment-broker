@@ -6,8 +6,6 @@ spec:
   jobTemplate:
     metadata:
       name: trial-cleanup-job
-      annotations:
-        argocd.argoproj.io/sync-options: Prune=false
     spec:
       template:
         spec:

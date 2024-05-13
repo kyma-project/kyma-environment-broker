@@ -626,6 +626,16 @@ func (s *operations) ListOperations(filter dbmodel.OperationFilter) ([]internal.
 	return result, size, total, err
 }
 
+func (s *operations) GetAllOperations() ([]internal.Operation, error) {
+	session := s.NewReadSession()
+	operations, err := session.GetAllOperations()
+	if err != nil {
+		return nil, err
+	}
+	result, err := s.toOperations(operations)
+	return result, err
+}
+
 func (s *operations) fetchFailedStatusForOrchestration(entries []dbmodel.OperationDTO) ([]dbmodel.OperationDTO, int, int) {
 	resPerInstanceID := make(map[string][]dbmodel.OperationDTO)
 	for _, entry := range entries {

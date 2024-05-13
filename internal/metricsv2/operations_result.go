@@ -32,7 +32,7 @@ var _ Exposer = (*operationsResult)(nil)
 func NewOperationResult(ctx context.Context, db storage.Operations, cfg Config, logger logrus.FieldLogger) *operationsResult {
 	opInfo := &operationsResult{
 		operations: db,
-		lastUpdate: time.Now().Add(-cfg.OperationResultRetentionPeriod),
+		lastUpdate: time.Now().UTC().Add(-cfg.OperationResultRetentionPeriod),
 		logger:     logger,
 		cache:      make(map[string]internal.Operation),
 		metrics: promauto.NewGaugeVec(prometheus.GaugeOpts{
@@ -48,17 +48,12 @@ func NewOperationResult(ctx context.Context, db storage.Operations, cfg Config, 
 	return opInfo
 }
 
+func (s *operationsResult) Metrics() *prometheus.GaugeVec {
+	return s.metrics
+}
+
 func (s *operationsResult) setOperation(op internal.Operation, val float64) {
-	labels := make(map[string]string)
-	labels["operation_id"] = op.ID
-	labels["instance_id"] = op.InstanceID
-	labels["global_account_id"] = op.GlobalAccountID
-	labels["plan_id"] = op.ProvisioningParameters.PlanID
-	labels["type"] = string(op.Type)
-	labels["state"] = string(op.State)
-	labels["error_category"] = string(op.LastError.Component())
-	labels["error_reason"] = string(op.LastError.Reason())
-	labels["error"] = op.LastError.Error()
+	labels := GetLabels(op)
 	s.metrics.With(labels).Set(val)
 }
 
@@ -98,14 +93,16 @@ func (s *operationsResult) updateMetrics() (err error) {
 		}
 	}()
 
-	now := time.Now()
+	now := time.Now().UTC()
 
 	operations, err := s.operations.ListOperationsInTimeRange(s.lastUpdate, now)
-	s.logger.Debug("UpdateMetrics: %d operations found", len(operations))
-
+	if len(operations) != 0 {
+		s.logger.Debug("UpdateMetrics: %d operations found", len(operations))
+	}
 	if err != nil {
 		return fmt.Errorf("failed to list metrics: %v", err)
 	}
+
 	for _, op := range operations {
 		s.updateOperation(op)
 	}

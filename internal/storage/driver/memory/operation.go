@@ -233,7 +233,23 @@ func (s *operations) ListOperationsByInstanceIDGroupByType(instanceID string) (*
 }
 
 func (s *operations) ListOperationsInTimeRange(from, to time.Time) ([]internal.Operation, error) {
-	panic("not implemented") //also not used in any tests
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
+	operations := make([]internal.Operation, 0)
+	for _, op := range s.operations {
+		if (op.CreatedAt.After(from) || op.CreatedAt == from) && (op.CreatedAt.Before(to) || op.CreatedAt == to) {
+			operations = append(operations, op)
+			continue
+		}
+
+		if (op.UpdatedAt.After(from) || op.UpdatedAt == from) && (op.UpdatedAt.Before(to) || op.UpdatedAt == to) {
+			operations = append(operations, op)
+			continue
+		}
+	}
+
+	return operations, nil
 }
 
 func (s *operations) InsertDeprovisioningOperation(operation internal.DeprovisioningOperation) error {
@@ -1089,4 +1105,12 @@ func (s *operations) filterUpgradeClusterByInstanceID(instanceID string, filter 
 
 func (s *operations) equalFilter(a, b string) bool {
 	return a == b
+}
+
+func (s *operations) GetAllOperations() ([]internal.Operation, error) {
+	ops := make([]internal.Operation, 0)
+	for _, k := range s.operations {
+		ops = append(ops, k)
+	}
+	return ops, nil
 }

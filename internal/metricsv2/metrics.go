@@ -3,11 +3,15 @@ package metricsv2
 import (
 	"context"
 	"fmt"
+	"math/rand"
 	"time"
 
+	"github.com/google/uuid"
+	"github.com/kyma-project/kyma-environment-broker/internal"
 	"github.com/kyma-project/kyma-environment-broker/internal/event"
 	"github.com/kyma-project/kyma-environment-broker/internal/process"
 	"github.com/kyma-project/kyma-environment-broker/internal/storage"
+	"github.com/pivotal-cf/brokerapi/v8/domain"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/sirupsen/logrus"
 )
@@ -71,4 +75,52 @@ func Register(ctx context.Context, sub event.Subscriber, operations storage.Oper
 		OperationDurationCollector: opDurationCollector,
 		InstancesCollector:         opInstanceCollector,
 	}
+}
+
+func randomState() domain.LastOperationState {
+	return opStates[rand.Intn(len(opStates))]
+}
+
+func randomType() internal.OperationType {
+	return opTypes[rand.Intn(len(opTypes))]
+}
+
+func randomPlanId() string {
+	return string(plans[rand.Intn(len(plans))])
+}
+
+func randomCreatedAt() time.Time {
+	return time.Now().UTC().Add(-time.Duration(rand.Intn(60)) * time.Minute)
+}
+
+func randomUpdatedAtAfterCreatedAt() time.Time {
+	return randomCreatedAt().Add(time.Duration(rand.Intn(10)) * time.Minute)
+}
+
+func GetRandom(createdAt time.Time, state domain.LastOperationState) internal.Operation {
+	return internal.Operation{
+		ID:         uuid.New().String(),
+		InstanceID: uuid.New().String(),
+		ProvisioningParameters: internal.ProvisioningParameters{
+			PlanID: randomPlanId(),
+		},
+		CreatedAt: createdAt,
+		UpdatedAt: randomUpdatedAtAfterCreatedAt(),
+		Type:      randomType(),
+		State:     state,
+	}
+}
+
+func GetLabels(op internal.Operation) map[string]string {
+	labels := make(map[string]string)
+	labels["operation_id"] = op.ID
+	labels["instance_id"] = op.InstanceID
+	labels["global_account_id"] = op.GlobalAccountID
+	labels["plan_id"] = op.ProvisioningParameters.PlanID
+	labels["type"] = string(op.Type)
+	labels["state"] = string(op.State)
+	labels["error_category"] = string(op.LastError.Component())
+	labels["error_reason"] = string(op.LastError.Reason())
+	labels["error"] = op.LastError.Error()
+	return labels
 }

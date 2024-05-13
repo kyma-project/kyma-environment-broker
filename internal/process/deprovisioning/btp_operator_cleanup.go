@@ -88,17 +88,17 @@ func (s *BTPOperatorCleanupStep) Run(operation internal.Operation, log logrus.Fi
 		return operation, 0, nil
 	}
 	if !operation.Temporary {
-		log.Info("cleanup executed only for suspensions")
+		log.Info("skipping BTP cleanup step for real deprovisioning, not suspension")
 		return operation, 0, nil
 	}
 	if operation.ProvisioningParameters.PlanID != broker.TrialPlanID {
-		log.Info("cleanup executed only for trial plan")
+		log.Info("skipping BTP cleanup step, cleanup executed only for trial plan, and this is not trial plan")
 		return operation, 0, nil
 	}
 	kclient, err := s.k8sClientProvider.K8sClientForRuntimeID(operation.RuntimeID)
 	if err != nil {
 		if kubeconfig.IsNotFound(err) {
-			log.Info("Kubeconfig does not exists, skipping")
+			log.Info("Kubeconfig does not exists, skipping BTPOperator cleanup step")
 			return operation, 0, nil
 		}
 		log.Warnf("Error: %+v", err)

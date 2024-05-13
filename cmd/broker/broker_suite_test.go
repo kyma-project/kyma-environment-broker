@@ -140,6 +140,13 @@ func NewBrokerSuiteTest(t *testing.T, version ...string) *BrokerSuiteTest {
 }
 
 func NewBrokerSuitTestWithMetrics(t *testing.T, cfg *Config, version ...string) *BrokerSuiteTest {
+	defer func() {
+		if r := recover(); r != nil {
+			err := cleanupContainer()
+			assert.NoError(t, err)
+			panic(r)
+		}
+	}()
 	broker := NewBrokerSuiteTestWithConfig(t, cfg, version...)
 	broker.metrics = metricsv2.Register(context.Background(), broker.eventBroker, broker.db.Operations(), broker.db.Instances(), cfg.MetricsV2, logrus.New())
 	broker.router.Handle("/metrics", promhttp.Handler())
@@ -451,6 +458,16 @@ func (s *BrokerSuiteTest) WaitForOperationState(operationID string, state domain
 		return op.State == state, nil
 	})
 	assert.NoError(s.t, err, "timeout waiting for the operation expected state %s != %s. The existing operation %+v", state, op.State, op)
+}
+
+func (s *BrokerSuiteTest) GetOperation(operationID string) *internal.Operation {
+	var op *internal.Operation
+	_ = s.poller.Invoke(func() (done bool, err error) {
+		op, err = s.db.Operations().GetOperationByID(operationID)
+		return err != nil, nil
+	})
+
+	return op
 }
 
 func (s *BrokerSuiteTest) WaitForLastOperation(iid string, state domain.LastOperationState) string {
@@ -1644,6 +1661,16 @@ func (s *BrokerSuiteTest) AssertMetric(operationType internal.OperationType, sta
 	assert.NoError(s.t, err)
 	assert.NotNil(s.t, metric)
 	assert.Equal(s.t, float64(expected), testutil.ToFloat64(metric), fmt.Sprintf("expected %s metric for %s plan to be %d", operationType, plan, expected))
+}
+
+func (s *BrokerSuiteTest) AssertMetrics2(expected int, operation internal.Operation) {
+	if expected == 0 && operation.ID == "" {
+		assert.Truef(s.t, true, "expected 0 metrics for operation %s", operation.ID)
+		return
+	}
+	a := s.metrics.OperationResult.Metrics().With(metricsv2.GetLabels(operation))
+	assert.NotNil(s.t, a)
+	assert.Equal(s.t, float64(expected), testutil.ToFloat64(a))
 }
 
 func assertResourcesAreRemoved(t *testing.T, gvk schema.GroupVersionKind, k8sClient client.Client) {

@@ -1,4 +1,7 @@
 GOLINT_VER = v1.55.2
+ifeq (,$(GOLINT_TIMEOUT))
+GOLINT_TIMEOUT=1m
+endif
 
  ## The headers are represented by '##@' like 'General' and the descriptions of given command is text after '##''.
 .PHONY: help
@@ -15,7 +18,7 @@ checks: check-go-mod-tidy ## run different Go related checks
 
 .PHONY: go-lint
 go-lint: go-lint-install ## linter config in file at root of project -> '.golangci.yaml'
-	golangci-lint run
+	golangci-lint run --timeout=$(GOLINT_TIMEOUT)
 
 go-lint-install: ## linter config in file at root of project -> '.golangci.yaml'
 	@if [ "$(shell command golangci-lint version --format short)" != "$(GOLINT_VER)" ]; then \
