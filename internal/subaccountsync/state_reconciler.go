@@ -125,7 +125,7 @@ func (reconciler *stateReconcilerType) periodicAccountsSync() (successes int, fa
 
 	for subaccountID := range subaccountsSet {
 		subaccountDataFromCis, err := reconciler.accountsClient.GetSubaccountData(string(subaccountID))
-		if subaccountDataFromCis == (CisStateType{}) {
+		if subaccountDataFromCis == (CisStateType{}) && err == nil {
 			logs.Warn(fmt.Sprintf("subaccount %s not found in CIS", subaccountID))
 			continue
 		}
@@ -224,8 +224,9 @@ func (reconciler *stateReconcilerType) reconcileCisAccount(subaccountID subaccou
 
 	state, ok := reconciler.inMemoryState[subaccountID]
 	if !ok {
-		logs.Warn(fmt.Sprintf("subaccount %s for which we called accounts not found in in-memory state - should not happen", subaccountID))
-		return
+		// possible case when subaccount was deleted from the state and then Kyma resource was created again
+		logs.Warn(fmt.Sprintf("subaccount %s for account not found in in-memory state", subaccountID))
+		state.cisState = newCisState
 	}
 	if newCisState.ModifiedDate >= state.cisState.ModifiedDate {
 		state.cisState = newCisState
@@ -244,8 +245,8 @@ func (reconciler *stateReconcilerType) reconcileCisEvent(event Event) {
 	subaccount := subaccountIDType(event.SubaccountID)
 	state, ok := reconciler.inMemoryState[subaccount]
 	if !ok {
-		// possible case when subaccount was deleted from the state and then created after the last full sync, we will sync it next time
-		logs.Warn(fmt.Sprintf("subaccount %s for event not found in state", subaccount))
+		// possible case when subaccount was deleted from the state and then Kyma resource was created again
+		logs.Warn(fmt.Sprintf("subaccount %s for event not found in in-memory state", subaccount))
 	}
 	if event.ActionTime >= state.cisState.ModifiedDate {
 		cisState := CisStateType{
