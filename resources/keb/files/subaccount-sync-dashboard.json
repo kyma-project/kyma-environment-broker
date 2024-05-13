@@ -327,67 +327,6 @@
       "type": "gauge"
     },
     {
-      "datasource": null,
-      "description": "Calls to events and accounts endpoints",
-      "fieldConfig": {
-        "defaults": {
-          "color": {
-            "mode": "thresholds"
-          },
-          "mappings": [],
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "color": "green",
-                "value": null
-              }
-            ]
-          }
-        },
-        "overrides": []
-      },
-      "gridPos": {
-        "h": 8,
-        "w": 12,
-        "x": 12,
-        "y": 18
-      },
-      "id": 62,
-      "options": {
-        "reduceOptions": {
-          "calcs": [
-            "lastNotNull"
-          ],
-          "fields": "",
-          "values": false
-        },
-        "showThresholdLabels": false,
-        "showThresholdMarkers": true,
-        "text": {}
-      },
-      "pluginVersion": "7.5.29",
-      "targets": [
-        {
-          "exemplar": true,
-          "expr": "sum by (service) (subaccount_sync_cis_requests{service=\"subaccount-sync\", exported_endpoint=\"events\"})",
-          "interval": "",
-          "legendFormat": "Events service",
-          "refId": "A"
-        },
-        {
-          "exemplar": true,
-          "expr": "sum by (service) (subaccount_sync_cis_requests{service=\"subaccount-sync\", exported_endpoint=\"accounts\"})",
-          "hide": false,
-          "interval": "",
-          "legendFormat": "Accounts service",
-          "refId": "B"
-        }
-      ],
-      "title": "Total calls",
-      "type": "gauge"
-    },
-    {
       "collapsed": false,
       "datasource": null,
       "gridPos": {
@@ -1909,7 +1848,7 @@
     "list": []
   },
   "time": {
-    "from": "now-30m",
+    "from": "now-7d",
     "to": "now"
   },
   "timepicker": {
@@ -1938,5 +1877,5 @@
   "timezone": "",
   "title": "KCP / Kyma Environment Broker / Subaccount Sync",
   "uid": "PcrNxoBSz",
-  "version": 3
+  "version": 1
 }
