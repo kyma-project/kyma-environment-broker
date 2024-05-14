@@ -263,6 +263,7 @@
     },
     {
       "datasource": null,
+      "description": "Ratio over 24h period based on counter increase",
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -307,14 +308,14 @@
       "targets": [
         {
           "exemplar": true,
-          "expr": "sum by (service) (subaccount_sync_cis_requests{service=\"subaccount-sync\", exported_endpoint=\"accounts\", status=\"success\"}) / sum by (service) (subaccount_sync_cis_requests{service=\"subaccount-sync\", exported_endpoint=\"accounts\"}) * 100",
+          "expr": "(sum by (service) (subaccount_sync_cis_requests{service=\"subaccount-sync\", exported_endpoint=\"accounts\", status=\"success\"} - subaccount_sync_cis_requests{service=\"subaccount-sync\", exported_endpoint=\"accounts\", status=\"success\"} offset 1d))/(sum by (service) (subaccount_sync_cis_requests{service=\"subaccount-sync\", exported_endpoint=\"accounts\"} - subaccount_sync_cis_requests{service=\"subaccount-sync\", exported_endpoint=\"accounts\"} offset 1d)) * 100\n",
           "interval": "",
           "legendFormat": "Accounts service",
           "refId": "A"
         },
         {
           "exemplar": true,
-          "expr": "sum by (service) (subaccount_sync_cis_requests{service=\"subaccount-sync\", exported_endpoint=\"events\", status=\"success\"}) / sum by (service) (subaccount_sync_cis_requests{service=\"subaccount-sync\", exported_endpoint=\"events\"}) * 100",
+          "expr": "(sum by (service) (subaccount_sync_cis_requests{service=\"subaccount-sync\", exported_endpoint=\"events\", status=\"success\"} - subaccount_sync_cis_requests{service=\"subaccount-sync\", exported_endpoint=\"events\", status=\"success\"} offset 1d))/(sum by (service) (subaccount_sync_cis_requests{service=\"subaccount-sync\", exported_endpoint=\"events\"} - subaccount_sync_cis_requests{service=\"subaccount-sync\", exported_endpoint=\"events\"} offset 1d)) * 100\n",
           "hide": false,
           "interval": "",
           "legendFormat": "Events service",
@@ -323,7 +324,7 @@
       ],
       "timeFrom": null,
       "timeShift": null,
-      "title": "Success rates",
+      "title": "Success rates over 24h",
       "type": "gauge"
     },
     {
@@ -703,14 +704,14 @@
       "targets": [
         {
           "exemplar": true,
-          "expr": "increase(subaccount_sync_informer{service=\"subaccount-sync\", event=\"add\"})",
+          "expr": "increase(sum by (service) (subaccount_sync_informer{service=\"subaccount-sync\", event=\"add\"}))",
           "interval": "",
           "legendFormat": "add",
           "refId": "A"
         },
         {
           "exemplar": true,
-          "expr": "increase(subaccount_sync_informer{service=\"subaccount-sync\", event=\"update\"})",
+          "expr": "increase(sum by (service) (subaccount_sync_informer{service=\"subaccount-sync\", event=\"update\"}))",
           "hide": false,
           "interval": "",
           "legendFormat": "update",
@@ -718,7 +719,7 @@
         },
         {
           "exemplar": true,
-          "expr": "increase(subaccount_sync_informer{service=\"subaccount-sync\", event=\"delete\"})",
+          "expr": "increase(sum by (service) (subaccount_sync_informer{service=\"subaccount-sync\", event=\"delete\"}))",
           "hide": false,
           "interval": "",
           "legendFormat": "delete",
@@ -1877,5 +1878,5 @@
   "timezone": "",
   "title": "KCP / Kyma Environment Broker / Subaccount Sync",
   "uid": "PcrNxoBSz",
-  "version": 1
+  "version": 2
 }
