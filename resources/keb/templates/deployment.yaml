@@ -412,6 +412,8 @@ spec:
               value: /config/freemiumWhitelistedGlobalAccountIds.yaml
             - name: APP_KYMA_RESOURCE_DELETION_TIMEOUT
               value: "{{ .Values.kymaResourceDeletionTimeout }}"
+            - name: APP_RECONCILER_INTEGRATION_DISABLED
+              value: "{{ .Values.reconcilerIntegrationDisabled }}"
           ports:
             - name: http
               containerPort: {{ .Values.broker.port }}
