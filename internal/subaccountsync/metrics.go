@@ -5,6 +5,7 @@ import "github.com/prometheus/client_golang/prometheus"
 type Metrics struct {
 	queue       prometheus.Gauge
 	timeInQueue prometheus.Gauge
+	dryRun      prometheus.Gauge
 	queueOps    *prometheus.CounterVec
 	cisRequests *prometheus.CounterVec
 	states      *prometheus.GaugeVec
@@ -43,7 +44,12 @@ func NewMetrics(reg prometheus.Registerer, namespace string) *Metrics {
 			Name:      "time_in_queue",
 			Help:      "Time spent in queue.",
 		}),
+		dryRun: prometheus.NewGauge(prometheus.GaugeOpts{
+			Namespace: namespace,
+			Name:      "dry_run",
+			Help:      "Resources are not updated.",
+		}),
 	}
-	reg.MustRegister(m.queue, m.queueOps, m.states, m.informer, m.cisRequests, m.timeInQueue)
+	reg.MustRegister(m.queue, m.queueOps, m.states, m.informer, m.cisRequests, m.timeInQueue, m.dryRun)
 	return m
 }

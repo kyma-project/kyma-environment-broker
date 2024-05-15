@@ -133,6 +133,9 @@ func (s *SyncService) Run() {
 			s.ctx,
 			logger.With("component", "updater"))
 		fatalOnError(err)
+		metrics.dryRun.Set(0)
+	} else {
+		metrics.dryRun.Set(1)
 	}
 
 	// create state reconciler
