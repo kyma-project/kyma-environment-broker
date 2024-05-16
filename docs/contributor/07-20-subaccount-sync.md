@@ -80,3 +80,9 @@ data from CIS and updates the database.
 Differences between the desired and current state of the attributes cause that the queue is filled with entries.
 Since this is an augmented queue with one entry for each subaccount, the length does not exceed the number of subaccounts.
 
+### Resources
+
+- subaccount-sync deployment defined in `subaccount-sync-deployment.yaml` - deployment configuration
+- subaccount-sync service defined in `service.yaml` - service configuration, required for metrics scraping
+- subaccount-sync VMServiceScrape defined in `service-monitor.yaml` - Prometheus scrape configuration referring to the service, required for metrics scraping
+- subaccount-sync PeerAuthentication defined in `policy.yaml` - PeerAuthentication configuration, required for metrics scraping
