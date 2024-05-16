@@ -84,5 +84,5 @@ Since this is an augmented queue with one entry for each subaccount, the length 
 
 - subaccount-sync deployment defined in [subaccount-sync-deployment.yaml](../../resources/keb/templates/subaccount-sync-deployment.yaml) - deployment configuration
 - subaccount-sync service defined in [service.yaml](../../resources/keb/templates/service.yaml) - service configuration, required for metrics scraping
-- subaccount-sync VMServiceScrape defined in [service-monitor.yaml](../../resources/keb/templates/service-monitor.yaml) - Prometheus scrape configuration referring to the service, required for metrics scraping
-- subaccount-sync PeerAuthentication defined in [policy.yaml](../../resources/keb/templates/policy.yaml) - PeerAuthentication configuration, required for metrics scraping
+- subaccount-sync VMServiceScrape defined in [service-monitor.yaml](../../resources/keb/templates/service-monitor.yaml) - Prometheus scrape configuration referring to the service required for metrics scraping
+- subaccount-sync PeerAuthentication defined in [policy.yaml](../../resources/keb/templates/policy.yaml) - PeerAuthentication configuration required for metrics scraping
