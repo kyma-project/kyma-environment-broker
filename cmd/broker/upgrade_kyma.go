@@ -22,7 +22,7 @@ import (
 )
 
 func NewKymaOrchestrationProcessingQueue(ctx context.Context, db storage.BrokerStorage,
-	runtimeOverrides upgrade_kyma.RuntimeOverridesAppender, provisionerClient provisioner.Client, pub event.Publisher,
+	provisionerClient provisioner.Client, pub event.Publisher,
 	inputFactory input.CreatorForPlan, icfg *upgrade_kyma.TimeSchedule, pollingInterval time.Duration,
 	runtimeVerConfigurator *runtimeversion.RuntimeVersionConfigurator, runtimeResolver orchestrationExt.RuntimeResolver,
 	upgradeEvalManager *avs.EvaluationManager, cfg *Config, internalEvalAssistant *avs.InternalEvalAssistant,
@@ -63,11 +63,6 @@ func NewKymaOrchestrationProcessingQueue(ctx context.Context, db storage.BrokerS
 			weight:   3,
 			cnd:      upgrade_kyma.WhenBTPOperatorCredentialsProvided,
 			step:     upgrade_kyma.NewBTPOperatorOverridesStep(db.Operations()),
-		},
-		{
-			disabled: cfg.ReconcilerIntegrationDisabled,
-			weight:   4,
-			step:     upgrade_kyma.NewOverridesFromSecretsAndConfigStep(db.Operations(), runtimeOverrides, runtimeVerConfigurator),
 		},
 		{
 			weight: 8,

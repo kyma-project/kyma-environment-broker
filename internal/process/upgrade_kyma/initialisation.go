@@ -34,6 +34,11 @@ const (
 
 const postUpgradeDescription = "Performing post-upgrade tasks"
 
+//go:generate mockery --name=RuntimeVersionConfiguratorForUpgrade --output=automock --outpkg=automock --case=underscore
+type RuntimeVersionConfiguratorForUpgrade interface {
+	ForUpgrade(op internal.UpgradeKymaOperation) (*internal.RuntimeVersionData, error)
+}
+
 type InitialisationStep struct {
 	operationManager       *process.UpgradeKymaOperationManager
 	operationStorage       storage.Operations

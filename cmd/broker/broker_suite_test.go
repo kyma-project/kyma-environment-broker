@@ -48,7 +48,6 @@ import (
 	"github.com/kyma-project/kyma-environment-broker/internal/provisioner"
 	"github.com/kyma-project/kyma-environment-broker/internal/reconciler"
 	kebRuntime "github.com/kyma-project/kyma-environment-broker/internal/runtime"
-	"github.com/kyma-project/kyma-environment-broker/internal/runtimeoverrides"
 	"github.com/kyma-project/kyma-environment-broker/internal/runtimeversion"
 	"github.com/kyma-project/kyma-environment-broker/internal/storage"
 	"github.com/pivotal-cf/brokerapi/v8/domain"
@@ -213,7 +212,6 @@ func NewBrokerSuiteTestWithConfig(t *testing.T, cfg *Config, version ...string) 
 	provisionerClient := provisioner.NewFakeClientWithGardener(gardenerClient, "kcp-system")
 	eventBroker := event.NewPubSub(logs)
 
-	runtimeOverrides := runtimeoverrides.NewRuntimeOverrides(ctx, cli)
 	accountVersionMapping := runtimeversion.NewAccountVersionMapping(ctx, cli, cfg.VersionConfig.Namespace, cfg.VersionConfig.Name, logs)
 	runtimeVerConfigurator := runtimeversion.NewRuntimeVersionConfigurator(cfg.KymaVersion, accountVersionMapping, nil)
 
@@ -230,7 +228,7 @@ func NewBrokerSuiteTestWithConfig(t *testing.T, cfg *Config, version ...string) 
 	k8sClientProvider := kubeconfig.NewFakeK8sClientProvider(fakeK8sSKRClient)
 	provisionManager := process.NewStagedManager(db.Operations(), eventBroker, cfg.OperationTimeout, cfg.Provisioning, logs.WithField("provisioning", "manager"))
 	provisioningQueue := NewProvisioningProcessingQueue(context.Background(), provisionManager, workersAmount, cfg, db, provisionerClient, inputFactory,
-		avsDel, internalEvalAssistant, externalEvalCreator, runtimeVerConfigurator, runtimeOverrides,
+		avsDel, internalEvalAssistant, externalEvalCreator, runtimeVerConfigurator,
 		edpClient, accountProvider, reconcilerClient, k8sClientProvider, cli, logs)
 
 	provisioningQueue.SpeedUp(10000)
@@ -276,7 +274,7 @@ func NewBrokerSuiteTestWithConfig(t *testing.T, cfg *Config, version ...string) 
 	upgradeEvaluationManager := avs.NewEvaluationManager(avsDel, avs.Config{})
 	runtimeLister := kebOrchestration.NewRuntimeLister(db.Instances(), db.Operations(), kebRuntime.NewConverter(defaultRegion), logs)
 	runtimeResolver := orchestration.NewGardenerRuntimeResolver(gardenerClient, fixedGardenerNamespace, runtimeLister, logs)
-	kymaQueue := NewKymaOrchestrationProcessingQueue(ctx, db, runtimeOverrides, provisionerClient, eventBroker, inputFactory, &upgrade_kyma.TimeSchedule{
+	kymaQueue := NewKymaOrchestrationProcessingQueue(ctx, db, provisionerClient, eventBroker, inputFactory, &upgrade_kyma.TimeSchedule{
 		Retry:              10 * time.Millisecond,
 		StatusCheck:        100 * time.Millisecond,
 		UpgradeKymaTimeout: 3 * time.Second,
@@ -1365,135 +1363,6 @@ func (s *BrokerSuiteTest) fixExpectedComponentListWithoutSMProxy(opID string) []
 					Key:    "global.booleanOverride.enabled",
 					Value:  false,
 					Secret: false,
-				},
-			},
-		},
-	}
-}
-
-// fixExpectedComponentListWithSMOperator provides a fixed components list for Service Management 2.0 - when `sm_operator_credentials`
-// object is provided: btp-opeartor component should be installed
-func (s *BrokerSuiteTest) fixExpectedComponentListWithSMOperator(opID, smClusterID string) []reconcilerApi.Component {
-	return []reconcilerApi.Component{
-		{
-			URL:       "",
-			Component: "cluster-essentials",
-			Namespace: "kyma-system",
-			Configuration: []reconcilerApi.Configuration{
-				{
-					Key:    "global.domainName",
-					Value:  fmt.Sprintf("%s.kyma.sap.com", s.ShootName(opID)),
-					Secret: false,
-				},
-				{
-					Key:    "foo",
-					Value:  "bar",
-					Secret: false,
-				},
-				{
-					Key:    "global.booleanOverride.enabled",
-					Value:  false,
-					Secret: false,
-				},
-			},
-		},
-		{
-			URL:       "",
-			Component: "ory",
-			Namespace: "kyma-system",
-			Configuration: []reconcilerApi.Configuration{
-				{
-					Key:    "global.domainName",
-					Value:  fmt.Sprintf("%s.kyma.sap.com", s.ShootName(opID)),
-					Secret: false,
-				},
-				{
-					Key:    "foo",
-					Value:  "bar",
-					Secret: false,
-				},
-				{
-					Key:    "global.booleanOverride.enabled",
-					Value:  false,
-					Secret: false,
-				},
-			},
-		},
-		{
-			URL:       "",
-			Component: "monitoring",
-			Namespace: "kyma-system",
-			Configuration: []reconcilerApi.Configuration{
-				{
-					Key:    "global.domainName",
-					Value:  fmt.Sprintf("%s.kyma.sap.com", s.ShootName(opID)),
-					Secret: false,
-				},
-				{
-					Key:    "foo",
-					Value:  "bar",
-					Secret: false,
-				},
-				{
-					Key:    "global.booleanOverride.enabled",
-					Value:  false,
-					Secret: false,
-				},
-			},
-		},
-		{
-			URL:       "https://btp-operator",
-			Component: "btp-operator",
-			Namespace: "kyma-system",
-			Configuration: []reconcilerApi.Configuration{
-				{
-					Key:    "global.domainName",
-					Value:  fmt.Sprintf("%s.kyma.sap.com", s.ShootName(opID)),
-					Secret: false,
-				},
-				{
-					Key:    "foo",
-					Value:  "bar",
-					Secret: false,
-				},
-				{
-					Key:    "global.booleanOverride.enabled",
-					Value:  false,
-					Secret: false,
-				},
-				{
-					Key:    "manager.secret.clientid",
-					Value:  "testClientID",
-					Secret: true,
-				},
-				{
-					Key:    "manager.secret.clientsecret",
-					Value:  "testClientSecret",
-					Secret: true,
-				},
-				{
-					Key:    "manager.secret.url",
-					Value:  "https://service-manager.kyma.com",
-					Secret: false,
-				},
-				{
-					Key:    "manager.secret.sm_url",
-					Value:  "https://service-manager.kyma.com",
-					Secret: false,
-				},
-				{
-					Key:    "manager.secret.tokenurl",
-					Value:  "https://test.auth.com",
-					Secret: false,
-				},
-				{
-					Key:    "cluster.id",
-					Value:  smClusterID,
-					Secret: false,
-				},
-				{
-					Key:   "manager.priorityClassName",
-					Value: "kyma-system",
 				},
 			},
 		},

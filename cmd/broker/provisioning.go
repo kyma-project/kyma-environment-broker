@@ -21,7 +21,7 @@ func NewProvisioningProcessingQueue(ctx context.Context, provisionManager *proce
 	db storage.BrokerStorage, provisionerClient provisioner.Client, inputFactory input.CreatorForPlan, avsDel *avs.Delegator,
 	internalEvalAssistant *avs.InternalEvalAssistant, externalEvalCreator *provisioning.ExternalEvalCreator,
 	runtimeVerConfigurator *runtimeversion.RuntimeVersionConfigurator,
-	runtimeOverrides provisioning.RuntimeOverridesAppender, edpClient provisioning.EDPClient, accountProvider hyperscaler.AccountProvider,
+	edpClient provisioning.EDPClient, accountProvider hyperscaler.AccountProvider,
 	reconcilerClient reconciler.Client, k8sClientProvider provisioning.K8sClientProvider, cli client.Client, logs logrus.FieldLogger) *process.Queue {
 
 	const postActionsStageName = "post_actions"
@@ -76,13 +76,6 @@ func NewProvisioningProcessingQueue(ctx context.Context, provisionManager *proce
 			step:      provisioning.NewEDPRegistrationStep(db.Operations(), edpClient, cfg.EDP),
 			disabled:  cfg.EDP.Disabled,
 			condition: provisioning.SkipForOwnClusterPlan,
-		},
-		{
-			disabled: cfg.ReconcilerIntegrationDisabled,
-			stage:    createRuntimeStageName,
-			step:     provisioning.NewOverridesFromSecretsAndConfigStep(db.Operations(), runtimeOverrides, runtimeVerConfigurator),
-			// Preview plan does not call Reconciler so it does not need overrides
-			condition: skipForPreviewPlan,
 		},
 		{
 			disabled:  cfg.ReconcilerIntegrationDisabled,
