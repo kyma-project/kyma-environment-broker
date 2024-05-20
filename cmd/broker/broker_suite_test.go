@@ -14,13 +14,15 @@ import (
 	"time"
 
 	"github.com/kyma-project/kyma-environment-broker/internal/kubeconfig"
+	"github.com/kyma-project/kyma-environment-broker/internal/metricsv2"
+	"github.com/prometheus/client_golang/prometheus/promhttp"
+	"github.com/prometheus/client_golang/prometheus/testutil"
 
 	"code.cloudfoundry.org/lager"
 	"github.com/google/uuid"
 	"github.com/gorilla/mux"
 	reconcilerApi "github.com/kyma-incubator/reconciler/pkg/keb"
 	"github.com/kyma-project/control-plane/components/provisioner/pkg/gqlschema"
-	"github.com/kyma-project/kyma-environment-broker/common/director"
 	"github.com/kyma-project/kyma-environment-broker/common/gardener"
 	"github.com/kyma-project/kyma-environment-broker/common/orchestration"
 	"github.com/kyma-project/kyma-environment-broker/internal"
@@ -32,6 +34,7 @@ import (
 	"github.com/kyma-project/kyma-environment-broker/internal/expiration"
 	"github.com/kyma-project/kyma-environment-broker/internal/fixture"
 	"github.com/kyma-project/kyma-environment-broker/internal/ias"
+	kcMock "github.com/kyma-project/kyma-environment-broker/internal/kubeconfig/automock"
 	"github.com/kyma-project/kyma-environment-broker/internal/notification"
 	kebOrchestration "github.com/kyma-project/kyma-environment-broker/internal/orchestration"
 	orchestrate "github.com/kyma-project/kyma-environment-broker/internal/orchestration/handlers"
@@ -54,9 +57,7 @@ import (
 	"github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	corev1 "k8s.io/api/core/v1"
 	apiextensionsv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -96,7 +97,6 @@ type BrokerSuiteTest struct {
 	db                storage.BrokerStorage
 	storageCleanup    func() error
 	provisionerClient *provisioner.FakeClient
-	directorClient    *director.FakeClient
 	reconcilerClient  *reconciler.FakeClient
 	gardenerClient    dynamic.Interface
 
@@ -112,6 +112,9 @@ type BrokerSuiteTest struct {
 	k8sSKR client.Client
 
 	poller broker.Poller
+
+	eventBroker *event.PubSub
+	metrics     *metricsv2.RegisterContainer
 }
 
 type componentProviderDecorated struct {
@@ -120,6 +123,11 @@ type componentProviderDecorated struct {
 }
 
 func (s *BrokerSuiteTest) TearDown() {
+	if r := recover(); r != nil {
+		err := cleanupContainer()
+		assert.NoError(s.t, err)
+		panic(r)
+	}
 	s.httpServer.Close()
 	if s.storageCleanup != nil {
 		err := s.storageCleanup()
@@ -132,12 +140,33 @@ func NewBrokerSuiteTest(t *testing.T, version ...string) *BrokerSuiteTest {
 	return NewBrokerSuiteTestWithConfig(t, cfg, version...)
 }
 
+func NewBrokerSuitTestWithMetrics(t *testing.T, cfg *Config, version ...string) *BrokerSuiteTest {
+	defer func() {
+		if r := recover(); r != nil {
+			err := cleanupContainer()
+			assert.NoError(t, err)
+			panic(r)
+		}
+	}()
+	broker := NewBrokerSuiteTestWithConfig(t, cfg, version...)
+	broker.metrics = metricsv2.Register(context.Background(), broker.eventBroker, broker.db.Operations(), broker.db.Instances(), cfg.MetricsV2, logrus.New())
+	broker.router.Handle("/metrics", promhttp.Handler())
+	return broker
+}
+
 func NewBrokerSuiteTestWithOptionalRegion(t *testing.T, version ...string) *BrokerSuiteTest {
 	cfg := fixConfig()
 	return NewBrokerSuiteTestWithConfig(t, cfg, version...)
 }
 
 func NewBrokerSuiteTestWithConfig(t *testing.T, cfg *Config, version ...string) *BrokerSuiteTest {
+	defer func() {
+		if r := recover(); r != nil {
+			err := cleanupContainer()
+			assert.NoError(t, err)
+			panic(r)
+		}
+	}()
 	ctx := context.Background()
 	sch := internal.NewSchemeForTests(t)
 	err := apiextensionsv1.AddToScheme(sch)
@@ -169,7 +198,7 @@ func NewBrokerSuiteTestWithConfig(t *testing.T, cfg *Config, version ...string) 
 			URL:                         "http://localhost",
 			DefaultGardenerShootPurpose: "testing",
 			DefaultTrialProvider:        internal.AWS,
-		}, defaultKymaVer, map[string]string{"cf-eu10": "europe", "cf-us10": "us"}, cfg.FreemiumProviders, defaultOIDCValues(), cfg.Broker.IncludeNewMachineTypesInSchema)
+		}, defaultKymaVer, map[string]string{"cf-eu10": "europe", "cf-us10": "us"}, cfg.FreemiumProviders, defaultOIDCValues())
 
 	storageCleanup, db, err := GetStorageForE2ETests()
 	assert.NoError(t, err)
@@ -188,7 +217,6 @@ func NewBrokerSuiteTestWithConfig(t *testing.T, cfg *Config, version ...string) 
 	accountVersionMapping := runtimeversion.NewAccountVersionMapping(ctx, cli, cfg.VersionConfig.Namespace, cfg.VersionConfig.Name, logs)
 	runtimeVerConfigurator := runtimeversion.NewRuntimeVersionConfigurator(cfg.KymaVersion, accountVersionMapping, nil)
 
-	directorClient := director.NewFakeClient()
 	avsDel, externalEvalCreator, internalEvalAssistant, externalEvalAssistant := createFakeAvsDelegator(t, db, cfg)
 
 	iasFakeClient := ias.NewFakeClient()
@@ -228,7 +256,6 @@ func NewBrokerSuiteTestWithConfig(t *testing.T, cfg *Config, version ...string) 
 		db:                  db,
 		storageCleanup:      storageCleanup,
 		provisionerClient:   provisionerClient,
-		directorClient:      directorClient,
 		reconcilerClient:    reconcilerClient,
 		gardenerClient:      gardenerClient,
 		router:              mux.NewRouter(),
@@ -237,6 +264,7 @@ func NewBrokerSuiteTestWithConfig(t *testing.T, cfg *Config, version ...string) 
 		componentProvider:   componentProvider,
 		k8sKcp:              cli,
 		k8sSKR:              fakeK8sSKRClient,
+		eventBroker:         eventBroker,
 	}
 	ts.poller = &broker.TimerPoller{PollInterval: 3 * time.Millisecond, PollTimeout: 3 * time.Second, Log: ts.t.Log}
 
@@ -270,10 +298,11 @@ func NewBrokerSuiteTestWithConfig(t *testing.T, cfg *Config, version ...string) 
 	expirationHandler := expiration.NewHandler(db.Instances(), db.Operations(), deprovisioningQueue, logs)
 	expirationHandler.AttachRoutes(ts.router)
 
-	runtimeHandler := kebRuntime.NewHandler(db.Instances(), db.Operations(), db.RuntimeStates(), db.InstancesArchived(), cfg.MaxPaginationPage, cfg.DefaultRequestRegion, provisionerClient)
+	runtimeHandler := kebRuntime.NewHandler(db.Instances(), db.Operations(), db.RuntimeStates(), db.InstancesArchived(), cfg.MaxPaginationPage, cfg.DefaultRequestRegion, provisionerClient, logs)
 	runtimeHandler.AttachRoutes(ts.router)
 
 	ts.httpServer = httptest.NewServer(ts.router)
+
 	return ts
 }
 
@@ -367,7 +396,9 @@ func (s *BrokerSuiteTest) CreateAPI(inputFactory broker.PlanValidator, cfg *Conf
 	planDefaults := func(planID string, platformProvider internal.CloudProvider, provider *internal.CloudProvider) (*gqlschema.ClusterConfigInput, error) {
 		return &gqlschema.ClusterConfigInput{}, nil
 	}
-	createAPI(s.router, servicesConfig, inputFactory, cfg, db, provisioningQueue, deprovisionQueue, updateQueue, lager.NewLogger("api"), logs, planDefaults)
+	kcBuilder := &kcMock.KcBuilder{}
+	kcBuilder.On("Build", nil).Return("--kubeconfig file", nil)
+	createAPI(s.router, servicesConfig, inputFactory, cfg, db, provisioningQueue, deprovisionQueue, updateQueue, lager.NewLogger("api"), logs, planDefaults, kcBuilder)
 
 	s.httpServer = httptest.NewServer(s.router)
 }
@@ -430,6 +461,16 @@ func (s *BrokerSuiteTest) WaitForOperationState(operationID string, state domain
 		return op.State == state, nil
 	})
 	assert.NoError(s.t, err, "timeout waiting for the operation expected state %s != %s. The existing operation %+v", state, op.State, op)
+}
+
+func (s *BrokerSuiteTest) GetOperation(operationID string) *internal.Operation {
+	var op *internal.Operation
+	_ = s.poller.Invoke(func() (done bool, err error) {
+		op, err = s.db.Operations().GetOperationByID(operationID)
+		return err != nil, nil
+	})
+
+	return op
 }
 
 func (s *BrokerSuiteTest) WaitForLastOperation(iid string, state domain.LastOperationState) string {
@@ -1563,22 +1604,6 @@ func (s *BrokerSuiteTest) AssertKymaLabelNotExists(opId string, notExpectedLabel
 	assert.NotContains(s.t, obj.GetLabels(), notExpectedLabel)
 }
 
-func (s *BrokerSuiteTest) AssertSecretWithKubeconfigExists(opId string) {
-	operation, err := s.db.Operations().GetOperationByID(opId)
-	assert.NoError(s.t, err)
-	secret := &corev1.Secret{
-		ObjectMeta: metav1.ObjectMeta{
-			Namespace: "kyma-system",
-			Name:      fmt.Sprintf("kubeconfig-%s", operation.RuntimeID),
-		},
-		StringData: map[string]string{},
-	}
-	err = s.k8sKcp.Get(context.Background(), client.ObjectKeyFromObject(secret), secret)
-
-	assert.NoError(s.t, err)
-
-}
-
 func (s *BrokerSuiteTest) fixServiceBindingAndInstances(t *testing.T) {
 	createResource(t, serviceInstanceGvk, s.k8sSKR, kymaNamespace, instanceName)
 	createResource(t, serviceBindingGvk, s.k8sSKR, kymaNamespace, bindingName)
@@ -1632,6 +1657,23 @@ func (s *BrokerSuiteTest) ParseLastOperationResponse(resp *http.Response) domain
 	err = json.Unmarshal(data, &operationResponse)
 	assert.NoError(s.t, err)
 	return operationResponse
+}
+
+func (s *BrokerSuiteTest) AssertMetric(operationType internal.OperationType, state domain.LastOperationState, plan string, expected int) {
+	metric, err := s.metrics.OperationStats.Metric(operationType, state, broker.PlanID(plan))
+	assert.NoError(s.t, err)
+	assert.NotNil(s.t, metric)
+	assert.Equal(s.t, float64(expected), testutil.ToFloat64(metric), fmt.Sprintf("expected %s metric for %s plan to be %d", operationType, plan, expected))
+}
+
+func (s *BrokerSuiteTest) AssertMetrics2(expected int, operation internal.Operation) {
+	if expected == 0 && operation.ID == "" {
+		assert.Truef(s.t, true, "expected 0 metrics for operation %s", operation.ID)
+		return
+	}
+	a := s.metrics.OperationResult.Metrics().With(metricsv2.GetLabels(operation))
+	assert.NotNil(s.t, a)
+	assert.Equal(s.t, float64(expected), testutil.ToFloat64(a))
 }
 
 func assertResourcesAreRemoved(t *testing.T, gvk schema.GroupVersionKind, k8sClient client.Client) {

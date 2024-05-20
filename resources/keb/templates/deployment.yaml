@@ -4,8 +4,6 @@ metadata:
   name: {{ include "kyma-env-broker.fullname" . }}
   labels:
 {{ include "kyma-env-broker.labels" . | indent 4 }}
-  annotations:
-    argocd.argoproj.io/sync-options: Prune=false
 spec:
   replicas: {{ .Values.deployment.replicaCount }}
   selector:
@@ -67,9 +65,9 @@ spec:
               value: "{{ .Values.disableProcessOperationsInProgress }}"
             - name: APP_BROKER_ENABLE_PLANS
               value: "{{ .Values.enablePlans }}"
-            - name: APP_ARCHIVING_ENABLED
+            - name: APP_ARCHIVE_ENABLED
               value: "{{ .Values.archiving.enabled }}"
-            - name: APP_ARCHIVING_DRY_RUN
+            - name: APP_ARCHIVE_DRY_RUN
               value: "{{ .Values.archiving.dryRun }}"
             - name: APP_CLEANING_ENABLED
               value: "{{ .Values.cleaning.enabled }}"
@@ -85,6 +83,12 @@ spec:
               value: "{{ .Values.enableKubeconfigURLLabel }}"
             - name: APP_BROKER_INCLUDE_ADDITIONAL_PARAMS_IN_SCHEMA
               value: "{{ .Values.includeAdditionalParamsInSchema }}"
+            - name: APP_BROKER_SHOW_FREE_EXPIRATION_INFO
+              value: "{{ .Values.showFreeExpirationInfo }}"
+            - name: APP_BROKER_FREE_DOCS_URL
+              value: "{{ .Values.freeDocsURL }}"
+            - name: APP_BROKER_FREE_EXPIRATION_PERIOD
+              value: "{{ .Values.freeExpirationPeriod }}"
             - name: APP_BROKER_SHOW_TRIAL_EXPIRATION_INFO
               value: "{{ .Values.showTrialExpirationInfo }}"
             - name: APP_BROKER_SUBACCOUNTS_IDS_TO_SHOW_TRIAL_EXPIRATION_INFO
@@ -332,6 +336,8 @@ spec:
               value: "{{ .Values.euAccessRejectionMessage }}"
             - name: APP_FREEMIUM_PROVIDERS
               value: "{{ .Values.gardener.freemiumProviders }}"
+            - name: APP_BROKER_ONLY_ONE_FREE_PER_GA
+              value: "{{ .Values.onlyOneFreePerGA }}"
             - name: APP_CATALOG_FILE_PATH
               value: /config/catalog.yaml
             - name: APP_GARDENER_PROJECT
@@ -392,8 +398,20 @@ spec:
               value: "{{ .Values.dashboardConfig.landscapeURL }}"
             - name: APP_EVENTS_ENABLED
               value: "{{ .Values.broker.events.enabled }}"
-            - name: APP_BROKER_INCLUDE_NEW_MACHINE_TYPES_IN_SCHEMA
-              value: "{{ .Values.includeNewMachineTypesInSchema }}"
+            - name: APP_METRICSV2_ENABLED
+              value: "{{ .Values.metricsv2.enabled }}"
+            - name: APP_METRICSV2_OPERATION_RESULT_RETENTION_PERIOD
+              value: "{{ .Values.metricsv2.operationResultRetentionPeriod }}"
+            - name: APP_METRICSV2_OPERATION_RESULT_FINISHED_OPERATION_RETENTION_PERIOD
+              value: "{{ .Values.metricsv2.operationResultFinishedOperationRetentionPeriod }}"
+            - name: APP_METRICSV2_OPERATION_RESULT_POOLING_INTERVAL
+              value: "{{ .Values.metricsv2.operationResultPoolingInterval }}"
+            - name: APP_METRICSV2_OPERATION_STATS_POOLING_INTERVAL
+              value: "{{ .Values.metricsv2.operationStatsPoolingInterval }}"
+            - name: APP_FREEMIUM_WHITELISTED_GLOBAL_ACCOUNTS_FILE_PATH
+              value: /config/freemiumWhitelistedGlobalAccountIds.yaml
+            - name: APP_KYMA_RESOURCE_DELETION_TIMEOUT
+              value: "{{ .Values.kymaResourceDeletionTimeout }}"
           ports:
             - name: http
               containerPort: {{ .Values.broker.port }}

@@ -7,6 +7,7 @@ import (
 
 	kebError "github.com/kyma-project/kyma-environment-broker/internal/error"
 	"github.com/kyma-project/kyma-environment-broker/internal/httputil"
+	"github.com/sirupsen/logrus"
 
 	schema "github.com/kyma-project/control-plane/components/provisioner/pkg/gqlschema"
 	gcli "github.com/kyma-project/kyma-environment-broker/internal/third_party/machinebox/graphql"
@@ -36,11 +37,11 @@ type client struct {
 	graphqlizer   Graphqlizer
 }
 
-func NewProvisionerClient(endpoint string, queryDumping bool) Client {
+func NewProvisionerClient(endpoint string, queryDumping bool, log logrus.FieldLogger) Client {
 	graphQlClient := gcli.NewClient(endpoint, gcli.WithHTTPClient(httputil.NewClient(120, false)))
 	if queryDumping {
 		graphQlClient.Log = func(s string) {
-			fmt.Println(s)
+			log.Infof("graphql message: %s", s)
 		}
 	}
 

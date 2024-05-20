@@ -16,8 +16,8 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestOperationsCounter(t *testing.T) {
-	var ctr *operationStats
+func TestOperationsStats(t *testing.T) {
+	var ctr *OperationStats
 
 	opType1 := internal.OperationTypeProvision
 	opState1 := domain.Succeeded
@@ -70,8 +70,14 @@ func TestOperationsCounter(t *testing.T) {
 	key7, err := ctr.makeKey(opType7, opState7, broker.PlanID(opPlan7))
 	assert.NoError(t, err)
 
+	cfg := Config{
+		OperationStatsPoolingInterval:  1 * time.Millisecond,
+		OperationResultPoolingInterval: 1 * time.Millisecond,
+		OperationResultRetentionPeriod: 1 * time.Minute,
+	}
+
 	t.Run("create counter key", func(t *testing.T) {
-		ctr = NewOperationsCounters(operations, 1*time.Millisecond, log.WithField("metrics", "test"))
+		ctr = NewOperationsStats(operations, cfg, log.WithField("metrics", "test"))
 		ctr.MustRegister(context.Background())
 	})
 
@@ -104,11 +110,9 @@ func TestOperationsCounter(t *testing.T) {
 				wg.Add(1)
 				go func() {
 					defer wg.Done()
-					err := ctr.Handler(context.TODO(), process.OperationCounting{
-						OpId:    "test1",
-						PlanID:  opPlan1,
-						OpState: opState1,
-						OpType:  opType1,
+					err := ctr.Handler(context.TODO(), process.OperationFinished{
+						PlanID:    opPlan1,
+						Operation: internal.Operation{Type: opType1, State: opState1, ID: "test1"},
 					})
 					assert.NoError(t, err)
 				}()
@@ -123,11 +127,9 @@ func TestOperationsCounter(t *testing.T) {
 				wg.Add(1)
 				go func() {
 					defer wg.Done()
-					err := ctr.Handler(context.TODO(), process.OperationCounting{
-						OpId:    "test2",
-						PlanID:  opPlan2,
-						OpState: opState2,
-						OpType:  opType2,
+					err := ctr.Handler(context.TODO(), process.OperationFinished{
+						PlanID:    opPlan2,
+						Operation: internal.Operation{Type: opType2, State: opState2, ID: "test2"},
 					})
 					assert.NoError(t, err)
 				}()
@@ -142,11 +144,9 @@ func TestOperationsCounter(t *testing.T) {
 				wg.Add(1)
 				go func() {
 					defer wg.Done()
-					err := ctr.Handler(context.TODO(), process.OperationCounting{
-						OpId:    "test3",
-						PlanID:  opPlan3,
-						OpState: opState3,
-						OpType:  opType3,
+					err := ctr.Handler(context.TODO(), process.OperationFinished{
+						PlanID:    opPlan3,
+						Operation: internal.Operation{Type: opType3, State: opState3, ID: "test3"},
 					})
 					assert.NoError(t, err)
 				}()

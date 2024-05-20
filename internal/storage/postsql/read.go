@@ -44,6 +44,9 @@ func (r readSession) GetDistinctSubAccounts() ([]string, dberr.Error) {
 		LoadOne(&subAccounts)
 
 	if err != nil {
+		if err == dbr.ErrNotFound {
+			return []string{}, nil
+		}
 		return []string{}, dberr.Internal("Failed to get distinct subaccounts: %s", err)
 	}
 
@@ -149,10 +152,13 @@ func (r readSession) FindAllInstancesForSubAccounts(subAccountslist []string) ([
 	return instances, nil
 }
 
-func (r readSession) GetLastOperation(instanceID string) (dbmodel.OperationDTO, dberr.Error) {
+func (r readSession) GetLastOperation(instanceID string, types []internal.OperationType) (dbmodel.OperationDTO, dberr.Error) {
 	inst := dbr.Eq("instance_id", instanceID)
 	state := dbr.Neq("state", []string{orchestration.Pending, orchestration.Canceled})
 	condition := dbr.And(inst, state)
+	if len(types) > 0 {
+		condition = dbr.And(condition, dbr.Expr("type IN ?", types))
+	}
 	operation, err := r.getLastOperation(condition)
 	if err != nil {
 		switch {
@@ -219,6 +225,19 @@ func (r readSession) ListOperations(filter dbmodel.OperationFilter) ([]dbmodel.O
 		len(operations),
 		totalCount,
 		nil
+}
+
+func (r readSession) GetAllOperations() ([]dbmodel.OperationDTO, error) {
+	var operations []dbmodel.OperationDTO
+
+	_, err := r.session.Select("*").
+		From(OperationTableName).
+		Load(&operations)
+
+	if err != nil {
+		return nil, dberr.Internal("Failed to get operations: %s", err)
+	}
+	return operations, nil
 }
 
 func (r readSession) GetOrchestrationByID(oID string) (dbmodel.OrchestrationDTO, dberr.Error) {
@@ -897,6 +916,15 @@ func addOperationFilters(stmt *dbr.SelectStmt, filter dbmodel.OperationFilter) {
 	if len(filter.States) > 0 {
 		stmt.Where("o.state IN ?", filter.States)
 	}
+	if len(filter.Types) > 0 {
+		stmt.Where("o.type IN ?", filter.Types)
+	}
+	if len(filter.GlobalAccountIDs) > 0 {
+		stmt.Where("o.provisioning_parameters::json->'ers_context'->>'globalaccount_id' IN ?", filter.GlobalAccountIDs)
+	}
+	if len(filter.PlanIDs) > 0 {
+		stmt.Where("o.provisioning_parameters::json->>'plan_id' IN ?", filter.PlanIDs)
+	}
 	if filter.InstanceFilter != nil {
 		fi := filter.InstanceFilter
 		if slices.Contains(filter.States, string(dbmodel.InstanceDeprovisioned)) {
@@ -941,6 +969,70 @@ func (r readSession) getOrchestrationCount(filter dbmodel.OrchestrationFilter) (
 	stmt := r.session.Select("count(*) as total").From(OrchestrationTableName)
 	addOrchestrationFilters(stmt, filter)
 	err := stmt.LoadOne(&res)
+
+	return res.Total, err
+}
+
+func (r readSession) ListDeletedInstanceIDs(amount int) ([]string, error) {
+	rows, err := r.session.Query(fmt.Sprintf("select distinct(instance_id) from operations where instance_id not in (select instance_id from instances) limit %d", amount))
+	if err != nil {
+		return []string{}, err
+	}
+	defer rows.Close()
+	var ids []string
+	for rows.Next() {
+		var id string
+		err := rows.Scan(&id)
+		if err != nil {
+			return ids, err
+		}
+		ids = append(ids, id)
+	}
+	return ids, err
+}
+
+func (r readSession) NumberOfOperationsForDeletedInstances() (int, error) {
+	var res struct {
+		Total int
+	}
+	err := r.session.Select("count(*) as total").
+		From(OperationTableName).
+		Where("instance_id not in (select instance_id from instances)").
+		LoadOne(&res)
+	return res.Total, err
+}
+
+func (r readSession) NumberOfDeletedInstances() (int, error) {
+	var res struct {
+		Total int
+	}
+	err := r.session.Select("count(distinct(instance_id)) as total").
+		From(OperationTableName).
+		Where("instance_id not in (select instance_id from instances)").
+		LoadOne(&res)
+	return res.Total, err
+}
+
+func (r readSession) TotalNumberOfInstancesArchived() (int, error) {
+	var res struct {
+		Total int
+	}
+	err := r.session.Select("count(*) as total").
+		From(InstancesArchivedTableName).
+		LoadOne(&res)
+	return res.Total, err
+}
+
+func (r readSession) TotalNumberOfInstancesArchivedForGlobalAccountID(globalAccountID string, planID string) (int, error) {
+	var res struct {
+		Total int
+	}
+	err := r.session.Select("count(*) as total").
+		From(InstancesArchivedTableName).
+		Where(dbr.Eq("global_account_id", globalAccountID)).
+		Where(dbr.Eq("plan_id", planID)).
+		Where(dbr.Eq("provisioning_state", domain.Succeeded)).
+		LoadOne(&res)
 
 	return res.Total, err
 }

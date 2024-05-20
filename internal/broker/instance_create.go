@@ -10,6 +10,11 @@ import (
 	"net/netip"
 	"strings"
 
+	"github.com/kyma-project/kyma-environment-broker/internal/kubeconfig"
+	"github.com/kyma-project/kyma-environment-broker/internal/whitelist"
+
+	"github.com/kyma-project/kyma-environment-broker/internal/storage/dbmodel"
+
 	"github.com/kyma-project/kyma-environment-broker/internal/networking"
 
 	"github.com/hashicorp/go-multierror"
@@ -47,24 +52,28 @@ type (
 )
 
 type ProvisionEndpoint struct {
-	config            Config
-	operationsStorage storage.Operations
-	instanceStorage   storage.Instances
-	queue             Queue
-	builderFactory    PlanValidator
-	enabledPlanIDs    map[string]struct{}
-	plansConfig       PlansConfig
-	kymaVerOnDemand   bool
-	planDefaults      PlanDefaults
+	config                  Config
+	operationsStorage       storage.Operations
+	instanceStorage         storage.Instances
+	instanceArchivedStorage storage.InstancesArchived
+	queue                   Queue
+	builderFactory          PlanValidator
+	enabledPlanIDs          map[string]struct{}
+	plansConfig             PlansConfig
+	kymaVerOnDemand         bool
+	planDefaults            PlanDefaults
 
 	shootDomain       string
 	shootProject      string
 	shootDnsProviders gardener.DNSProvidersData
 
 	dashboardConfig dashboard.Config
+	kcBuilder       kubeconfig.KcBuilder
 
-	euAccessWhitelist        euaccess.WhitelistSet
+	euAccessWhitelist        whitelist.Set
 	euAccessRejectionMessage string
+
+	freemiumWhiteList whitelist.Set
 
 	log logrus.FieldLogger
 }
@@ -73,15 +82,18 @@ func NewProvision(cfg Config,
 	gardenerConfig gardener.Config,
 	operationsStorage storage.Operations,
 	instanceStorage storage.Instances,
+	instanceArchivedStorage storage.InstancesArchived,
 	queue Queue,
 	builderFactory PlanValidator,
 	plansConfig PlansConfig,
 	kvod bool,
 	planDefaults PlanDefaults,
-	euAccessWhitelist euaccess.WhitelistSet,
+	euAccessWhitelist whitelist.Set,
 	euRejectMessage string,
 	log logrus.FieldLogger,
 	dashboardConfig dashboard.Config,
+	kcBuilder kubeconfig.KcBuilder,
+	freemiumWhitelist whitelist.Set,
 ) *ProvisionEndpoint {
 	enabledPlanIDs := map[string]struct{}{}
 	for _, planName := range cfg.EnablePlans {
@@ -93,6 +105,7 @@ func NewProvision(cfg Config,
 		config:                   cfg,
 		operationsStorage:        operationsStorage,
 		instanceStorage:          instanceStorage,
+		instanceArchivedStorage:  instanceArchivedStorage,
 		queue:                    queue,
 		builderFactory:           builderFactory,
 		log:                      log.WithField("service", "ProvisionEndpoint"),
@@ -106,6 +119,8 @@ func NewProvision(cfg Config,
 		euAccessWhitelist:        euAccessWhitelist,
 		euAccessRejectionMessage: euRejectMessage,
 		dashboardConfig:          dashboardConfig,
+		freemiumWhiteList:        freemiumWhitelist,
+		kcBuilder:                kcBuilder,
 	}
 }
 
@@ -212,7 +227,7 @@ func (b *ProvisionEndpoint) Provision(ctx context.Context, instanceID string, de
 		OperationData: operation.ID,
 		DashboardURL:  dashboardURL,
 		Metadata: domain.InstanceMetadata{
-			Labels: ResponseLabels(operation, instance, b.config.URL, b.config.EnableKubeconfigURLLabel),
+			Labels: ResponseLabels(operation, instance, b.config.URL, b.config.EnableKubeconfigURLLabel, b.kcBuilder),
 		},
 	}, nil
 }
@@ -288,7 +303,7 @@ func (b *ProvisionEndpoint) validateAndExtract(details domain.ProvisionDetails, 
 	// EU Access: reject requests for not whitelisted globalAccountIds
 	if isEuRestrictedAccess(ctx) {
 		logger.Infof("EU Access restricted instance creation")
-		if euaccess.IsNotWhitelisted(ersContext.GlobalAccountID, b.euAccessWhitelist) {
+		if whitelist.IsNotWhitelisted(ersContext.GlobalAccountID, b.euAccessWhitelist) {
 			logger.Infof(b.euAccessRejectionMessage)
 			err = fmt.Errorf(b.euAccessRejectionMessage)
 			return ersContext, parameters, apiresponses.NewFailureResponse(err, http.StatusBadRequest, "provisioning")
@@ -335,6 +350,47 @@ func (b *ProvisionEndpoint) validateAndExtract(details domain.ProvisionDetails, 
 		if count > 0 {
 			logger.Info("Provisioning Trial SKR rejected, such instance was already created for this Global Account")
 			return ersContext, parameters, fmt.Errorf("trial Kyma was created for the global account, but there is only one allowed")
+		}
+	}
+
+	if IsFreemiumPlan(details.PlanID) && b.config.OnlyOneFreePerGA && whitelist.IsNotWhitelisted(ersContext.GlobalAccountID, b.freemiumWhiteList) {
+		count, err := b.instanceArchivedStorage.TotalNumberOfInstancesArchivedForGlobalAccountID(ersContext.GlobalAccountID, FreemiumPlanID)
+		if err != nil {
+			return ersContext, parameters, fmt.Errorf("while checking if a free Kyma instance existed for given global account: %w", err)
+		}
+		if count > 0 {
+			logger.Info("Provisioning Free SKR rejected, such instance was already created for this Global Account")
+			return ersContext, parameters, fmt.Errorf("provisioning request rejected, you have already used the available free service plan quota in this global account")
+		}
+
+		instanceFilter := dbmodel.InstanceFilter{
+			GlobalAccountIDs: []string{ersContext.GlobalAccountID},
+			PlanIDs:          []string{FreemiumPlanID},
+			States:           []dbmodel.InstanceState{dbmodel.InstanceSucceeded},
+		}
+		_, _, count, err = b.instanceStorage.List(instanceFilter)
+		if err != nil {
+			return ersContext, parameters, fmt.Errorf("while checking if a free Kyma instance existed for given global account: %w", err)
+		}
+		if count > 0 {
+			logger.Info("Provisioning Free SKR rejected, such instance was already created for this Global Account")
+			return ersContext, parameters, fmt.Errorf("provisioning request rejected, you have already used the available free service plan quota in this global account")
+		}
+
+		//TODO remove after running the archiver (operations table will be empty)
+		operationFilter := dbmodel.OperationFilter{
+			GlobalAccountIDs: []string{ersContext.GlobalAccountID},
+			PlanIDs:          []string{FreemiumPlanID},
+			Types:            []string{string(internal.OperationTypeProvision)},
+			States:           []string{string(domain.Succeeded)},
+		}
+		_, _, count, err = b.operationsStorage.ListOperations(operationFilter)
+		if err != nil {
+			return ersContext, parameters, fmt.Errorf("while checking if a free Kyma instance existed for given global account: %w", err)
+		}
+		if count > 0 {
+			logger.Info("Provisioning Free SKR rejected, such instance was already created for this Global Account")
+			return ersContext, parameters, fmt.Errorf("provisioning request rejected, you have already used the available free service plan quota in this global account")
 		}
 	}
 
@@ -410,7 +466,7 @@ func (b *ProvisionEndpoint) handleExistingOperation(operation *internal.Provisio
 		OperationData: operation.ID,
 		DashboardURL:  operation.DashboardURL,
 		Metadata: domain.InstanceMetadata{
-			Labels: ResponseLabels(*operation, *instance, b.config.URL, b.config.EnableKubeconfigURLLabel),
+			Labels: ResponseLabels(*operation, *instance, b.config.URL, b.config.EnableKubeconfigURLLabel, b.kcBuilder),
 		},
 	}, nil
 }
@@ -425,7 +481,7 @@ func (b *ProvisionEndpoint) determineLicenceType(planId string) *string {
 
 func (b *ProvisionEndpoint) validator(details *domain.ProvisionDetails, provider internal.CloudProvider, ctx context.Context) (JSONSchemaValidator, error) {
 	platformRegion, _ := middleware.RegionFromContext(ctx)
-	plans := Plans(b.plansConfig, provider, b.config.IncludeAdditionalParamsInSchema, euaccess.IsEURestrictedAccess(platformRegion), b.config.IncludeNewMachineTypesInSchema)
+	plans := Plans(b.plansConfig, provider, b.config.IncludeAdditionalParamsInSchema, euaccess.IsEURestrictedAccess(platformRegion))
 	plan := plans[details.PlanID]
 	schema := string(Marshal(plan.Schemas.Instance.Create.Parameters))
 

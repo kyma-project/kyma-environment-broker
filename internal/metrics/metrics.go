@@ -2,10 +2,8 @@ package metrics
 
 import (
 	"context"
-	"time"
 
 	"github.com/kyma-project/kyma-environment-broker/internal/event"
-	"github.com/kyma-project/kyma-environment-broker/internal/metricsv2"
 	"github.com/kyma-project/kyma-environment-broker/internal/process"
 	"github.com/kyma-project/kyma-environment-broker/internal/storage"
 	"github.com/prometheus/client_golang/prometheus"
@@ -36,10 +34,4 @@ func Register(ctx context.Context, sub event.Subscriber, operations storage.Oper
 	sub.Subscribe(process.OperationStepProcessed{}, opDurationCollector.OnOperationStepProcessed)
 
 	StartOpsMetricService(ctx, operations, logger)
-
-	// test of metrics for upcoming new implementation
-	operationsCounter := metricsv2.NewOperationsCounters(operations, 5*time.Second, logger)
-	operationsCounter.MustRegister(ctx)
-
-	sub.Subscribe(process.OperationCounting{}, operationsCounter.Handler)
 }

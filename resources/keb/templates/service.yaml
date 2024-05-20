@@ -4,8 +4,6 @@ metadata:
   name: {{ include "kyma-env-broker.fullname" . }}
   labels:
 {{ include "kyma-env-broker.labels" . | indent 4 }}
-  annotations:
-    argocd.argoproj.io/sync-options: Prune=false
 spec:
   type: {{ .Values.service.type }}
   ports:
@@ -19,3 +17,24 @@ spec:
   selector:
     app.kubernetes.io/name: {{ include "kyma-env-broker.name" . }}
     app.kubernetes.io/instance: {{ .Values.namePrefix }}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    app.kubernetes.io/name: subaccount-sync
+    argocd.argoproj.io/instance: keb
+  name: subaccount-sync
+  namespace: kcp-system
+spec:
+  type: {{ .Values.service.type }}
+  ports:
+    - name: http
+      port: {{ .Values.subaccountSync.metricsPort }}
+      protocol: TCP
+      targetPort: http
+    - name: proxy-status
+      port: {{ .Values.global.istio.proxy.port }}
+      protocol: TCP
+  selector:
+    app.kubernetes.io/name: subaccount-sync

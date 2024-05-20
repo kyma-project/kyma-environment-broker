@@ -86,6 +86,7 @@ func (om *UpgradeClusterOperationManager) UpdateOperation(operation internal.Upg
 				log.Errorf("while getting operation: %v", err)
 				return operation, 1 * time.Minute, err
 			}
+			op.Merge(&operation.Operation)
 			update(op)
 			updatedOperation, err = om.storage.UpdateUpgradeClusterOperation(*op)
 			if err != nil {

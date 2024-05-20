@@ -22,6 +22,7 @@ func TestNewInstanceArchivedFromOperations(t *testing.T) {
 	require.NoError(t, err)
 	assert.True(t, op1.CreatedAt.Equal(archived.ProvisioningStartedAt))
 	assert.True(t, op1.UpdatedAt.Equal(archived.ProvisioningFinishedAt))
+	assert.Equal(t, op1.State, archived.ProvisioningState)
 
 	assert.True(t, op2.CreatedAt.Equal(archived.FirstDeprovisioningStartedAt))
 	assert.True(t, op2.UpdatedAt.Equal(archived.FirstDeprovisioningFinishedAt))

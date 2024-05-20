@@ -8,7 +8,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/kyma-project/kyma-environment-broker/internal/euaccess"
+	"github.com/kyma-project/kyma-environment-broker/internal/whitelist"
 
 	"github.com/kyma-project/control-plane/components/provisioner/pkg/gqlschema"
 	"github.com/kyma-project/kyma-environment-broker/common/gardener"
@@ -16,6 +16,7 @@ import (
 	"github.com/kyma-project/kyma-environment-broker/internal/broker"
 	"github.com/kyma-project/kyma-environment-broker/internal/broker/automock"
 	"github.com/kyma-project/kyma-environment-broker/internal/fixture"
+	kcMock "github.com/kyma-project/kyma-environment-broker/internal/kubeconfig/automock"
 	"github.com/kyma-project/kyma-environment-broker/internal/storage"
 	"github.com/pivotal-cf/brokerapi/v8/domain"
 	"github.com/pivotal-cf/brokerapi/v8/domain/apiresponses"
@@ -28,7 +29,8 @@ import (
 func TestGetEndpoint_GetNonExistingInstance(t *testing.T) {
 	// given
 	st := storage.NewMemoryStorage()
-	svc := broker.NewGetInstance(broker.Config{}, st.Instances(), st.Operations(), logrus.New())
+	kcBuilder := &kcMock.KcBuilder{}
+	svc := broker.NewGetInstance(broker.Config{}, st.Instances(), st.Operations(), kcBuilder, logrus.New())
 
 	// when
 	_, err := svc.GetInstance(context.Background(), instanceID, domain.FetchInstanceDetails{})
@@ -51,22 +53,27 @@ func TestGetEndpoint_GetProvisioningInstance(t *testing.T) {
 	planDefaults := func(planID string, platformProvider internal.CloudProvider, provider *internal.CloudProvider) (*gqlschema.ClusterConfigInput, error) {
 		return &gqlschema.ClusterConfigInput{}, nil
 	}
+	kcBuilder := &kcMock.KcBuilder{}
+	kcBuilder.On("GetServerURL", "").Return("", fmt.Errorf("error"))
 	createSvc := broker.NewProvision(
 		broker.Config{EnablePlans: []string{"gcp", "azure"}, OnlySingleTrialPerGA: true},
 		gardener.Config{Project: "test", ShootDomain: "example.com"},
 		st.Operations(),
 		st.Instances(),
+		st.InstancesArchived(),
 		queue,
 		factoryBuilder,
 		broker.PlansConfig{},
 		false,
 		planDefaults,
-		euaccess.WhitelistSet{},
+		whitelist.Set{},
 		"request rejected, your globalAccountId is not whitelisted",
 		logrus.StandardLogger(),
 		dashboardConfig,
+		kcBuilder,
+		whitelist.Set{},
 	)
-	getSvc := broker.NewGetInstance(broker.Config{EnableKubeconfigURLLabel: true}, st.Instances(), st.Operations(), logrus.New())
+	getSvc := broker.NewGetInstance(broker.Config{EnableKubeconfigURLLabel: true}, st.Instances(), st.Operations(), kcBuilder, logrus.New())
 
 	// when
 	_, err := createSvc.Provision(fixRequestContext(t, "req-region"), instanceID, domain.ProvisionDetails{
@@ -114,6 +121,7 @@ func TestGetEndpoint_DoNotReturnInstanceWhereDeletedAtIsNotZero(t *testing.T) {
 
 	instance := fixture.FixInstance(instanceID)
 	instance.DeletedAt = time.Now()
+	kcBuilder := &kcMock.KcBuilder{}
 
 	err := st.Operations().InsertOperation(op)
 	require.NoError(t, err)
@@ -121,7 +129,7 @@ func TestGetEndpoint_DoNotReturnInstanceWhereDeletedAtIsNotZero(t *testing.T) {
 	err = st.Instances().Insert(instance)
 	require.NoError(t, err)
 
-	svc := broker.NewGetInstance(cfg, st.Instances(), st.Operations(), logrus.New())
+	svc := broker.NewGetInstance(cfg, st.Instances(), st.Operations(), kcBuilder, logrus.New())
 
 	// when
 	_, err = svc.GetInstance(context.Background(), instanceID, domain.FetchInstanceDetails{})
@@ -149,6 +157,8 @@ func TestGetEndpoint_GetExpiredInstanceWithExpirationDetails(t *testing.T) {
 	op := fixture.FixProvisioningOperation(operationID, instanceID)
 
 	instance := fixture.FixInstance(instanceID)
+	kcBuilder := &kcMock.KcBuilder{}
+	kcBuilder.On("GetServerURL", instance.RuntimeID).Return("https://api.ac0d8d9.kyma-dev.shoot.canary.k8s-hana.ondemand.com", nil)
 	instance.SubAccountID = cfg.SubaccountsIdsToShowTrialExpirationInfo
 	instance.ServicePlanID = broker.TrialPlanID
 	instance.CreatedAt = time.Date(2022, 1, 1, 0, 0, 0, 0, time.UTC)
@@ -161,8 +171,7 @@ func TestGetEndpoint_GetExpiredInstanceWithExpirationDetails(t *testing.T) {
 	err = st.Instances().Insert(instance)
 	require.NoError(t, err)
 
-	svc := broker.NewGetInstance(cfg, st.Instances(), st.Operations(), logrus.New())
-
+	svc := broker.NewGetInstance(cfg, st.Instances(), st.Operations(), kcBuilder, logrus.New())
 	// when
 	response, err := svc.GetInstance(context.Background(), instanceID, domain.FetchInstanceDetails{})
 
@@ -171,8 +180,9 @@ func TestGetEndpoint_GetExpiredInstanceWithExpirationDetails(t *testing.T) {
 	assert.True(t, instance.IsExpired())
 	assert.Equal(t, instance.ServiceID, response.ServiceID)
 	assert.NotContains(t, response.Metadata.Labels, "KubeconfigURL")
-	assert.Contains(t, response.Metadata.Labels, "Trial expiration details")
-	assert.Contains(t, response.Metadata.Labels, "Trial documentation")
+	assert.NotContains(t, response.Metadata.Labels, "APIServerURL")
+	assert.Contains(t, response.Metadata.Labels, "Trial account expiration details")
+	assert.Contains(t, response.Metadata.Labels, "Trial account documentation")
 }
 
 func TestGetEndpoint_GetExpiredInstanceWithExpirationDetailsAllSubaccountsIDs(t *testing.T) {
@@ -197,6 +207,8 @@ func TestGetEndpoint_GetExpiredInstanceWithExpirationDetailsAllSubaccountsIDs(t 
 	instance.CreatedAt = time.Date(2022, 1, 1, 0, 0, 0, 0, time.UTC)
 	expireTime := instance.CreatedAt.Add(time.Hour * 24 * 14)
 	instance.ExpiredAt = &expireTime
+	kcBuilder := &kcMock.KcBuilder{}
+	kcBuilder.On("GetServerURL", instance.RuntimeID).Return("https://api.ac0d8d9.kyma-dev.shoot.canary.k8s-hana.ondemand.com", nil)
 
 	err := st.Operations().InsertOperation(op)
 	require.NoError(t, err)
@@ -204,7 +216,7 @@ func TestGetEndpoint_GetExpiredInstanceWithExpirationDetailsAllSubaccountsIDs(t 
 	err = st.Instances().Insert(instance)
 	require.NoError(t, err)
 
-	svc := broker.NewGetInstance(cfg, st.Instances(), st.Operations(), logrus.New())
+	svc := broker.NewGetInstance(cfg, st.Instances(), st.Operations(), kcBuilder, logrus.New())
 
 	// when
 	response, err := svc.GetInstance(context.Background(), instanceID, domain.FetchInstanceDetails{})
@@ -214,8 +226,9 @@ func TestGetEndpoint_GetExpiredInstanceWithExpirationDetailsAllSubaccountsIDs(t 
 	assert.True(t, instance.IsExpired())
 	assert.Equal(t, instance.ServiceID, response.ServiceID)
 	assert.NotContains(t, response.Metadata.Labels, "KubeconfigURL")
-	assert.Contains(t, response.Metadata.Labels, "Trial expiration details")
-	assert.Contains(t, response.Metadata.Labels, "Trial documentation")
+	assert.NotContains(t, response.Metadata.Labels, "APIServerURL")
+	assert.Contains(t, response.Metadata.Labels, "Trial account expiration details")
+	assert.Contains(t, response.Metadata.Labels, "Trial account documentation")
 }
 
 func TestGetEndpoint_GetExpiredInstanceWithoutExpirationInfo(t *testing.T) {
@@ -240,6 +253,8 @@ func TestGetEndpoint_GetExpiredInstanceWithoutExpirationInfo(t *testing.T) {
 	instance.CreatedAt = time.Date(2022, 1, 1, 0, 0, 0, 0, time.UTC)
 	expireTime := instance.CreatedAt.Add(time.Hour * 24 * 14)
 	instance.ExpiredAt = &expireTime
+	kcBuilder := &kcMock.KcBuilder{}
+	kcBuilder.On("GetServerURL", instance.RuntimeID).Return("https://api.ac0d8d9.kyma-dev.shoot.canary.k8s-hana.ondemand.com", nil)
 
 	err := st.Operations().InsertOperation(op)
 	require.NoError(t, err)
@@ -247,7 +262,7 @@ func TestGetEndpoint_GetExpiredInstanceWithoutExpirationInfo(t *testing.T) {
 	err = st.Instances().Insert(instance)
 	require.NoError(t, err)
 
-	svc := broker.NewGetInstance(cfg, st.Instances(), st.Operations(), logrus.New())
+	svc := broker.NewGetInstance(cfg, st.Instances(), st.Operations(), kcBuilder, logrus.New())
 
 	// when
 	response, err := svc.GetInstance(context.Background(), instanceID, domain.FetchInstanceDetails{})
@@ -257,6 +272,51 @@ func TestGetEndpoint_GetExpiredInstanceWithoutExpirationInfo(t *testing.T) {
 	assert.True(t, instance.IsExpired())
 	assert.Equal(t, instance.ServiceID, response.ServiceID)
 	assert.Contains(t, response.Metadata.Labels, "KubeconfigURL")
+	assert.Contains(t, response.Metadata.Labels, "APIServerURL")
 	assert.NotContains(t, response.Metadata.Labels, "Trial expiration details")
 	assert.NotContains(t, response.Metadata.Labels, "Trial documentation")
+}
+
+func TestGetEndpoint_GetExpiredFreeInstanceWithExpirationDetails(t *testing.T) {
+	// given
+	st := storage.NewMemoryStorage()
+	cfg := broker.Config{
+		URL:                      "https://test-broker.local",
+		EnableKubeconfigURLLabel: true,
+		ShowFreeExpirationInfo:   true,
+	}
+
+	const (
+		instanceID  = "cluster-test"
+		operationID = "operationID"
+	)
+	op := fixture.FixProvisioningOperation(operationID, instanceID)
+
+	instance := fixture.FixInstance(instanceID)
+	instance.ServicePlanID = broker.FreemiumPlanID
+	instance.CreatedAt = time.Date(2022, 1, 1, 0, 0, 0, 0, time.UTC)
+	expireTime := instance.CreatedAt.Add(time.Hour * 24 * 30)
+	instance.ExpiredAt = &expireTime
+	kcBuilder := &kcMock.KcBuilder{}
+	kcBuilder.On("GetServerURL", instance.RuntimeID).Return("https://api.ac0d8d9.kyma-dev.shoot.canary.k8s-hana.ondemand.com", nil)
+
+	err := st.Operations().InsertOperation(op)
+	require.NoError(t, err)
+
+	err = st.Instances().Insert(instance)
+	require.NoError(t, err)
+
+	svc := broker.NewGetInstance(cfg, st.Instances(), st.Operations(), kcBuilder, logrus.New())
+
+	// when
+	response, err := svc.GetInstance(context.Background(), instanceID, domain.FetchInstanceDetails{})
+
+	// then
+	require.NoError(t, err)
+	assert.True(t, instance.IsExpired())
+	assert.Equal(t, instance.ServiceID, response.ServiceID)
+	assert.NotContains(t, response.Metadata.Labels, "KubeconfigURL")
+	assert.NotContains(t, response.Metadata.Labels, "APIServerURL")
+	assert.Contains(t, response.Metadata.Labels, "Free plan expiration details")
+	assert.Contains(t, response.Metadata.Labels, "Available plans documentation")
 }

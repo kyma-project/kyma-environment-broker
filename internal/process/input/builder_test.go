@@ -24,7 +24,7 @@ func TestInputBuilderFactory_IsPlanSupport(t *testing.T) {
 	configProvider := mockConfigProvider()
 
 	ibf, err := NewInputBuilderFactory(nil, runtime.NewDisabledComponentsProvider(), componentsProvider,
-		configProvider, Config{}, "1.10", fixTrialRegionMapping(), fixTrialProviders(), fixture.FixOIDCConfigDTO(), false)
+		configProvider, Config{}, "1.10", fixTrialRegionMapping(), fixTrialProviders(), fixture.FixOIDCConfigDTO())
 	assert.NoError(t, err)
 
 	// when/then
@@ -46,7 +46,7 @@ func TestInputBuilderFactory_ForPlan(t *testing.T) {
 		configProvider := mockConfigProvider()
 
 		ibf, err := NewInputBuilderFactory(nil, runtime.NewDisabledComponentsProvider(), componentsProvider,
-			configProvider, Config{}, "1.10", fixTrialRegionMapping(), fixTrialProviders(), fixture.FixOIDCConfigDTO(), false)
+			configProvider, Config{}, "1.10", fixTrialRegionMapping(), fixTrialProviders(), fixture.FixOIDCConfigDTO())
 		assert.NoError(t, err)
 		pp := fixProvisioningParameters(broker.GCPPlanID, "")
 
@@ -76,7 +76,7 @@ func TestInputBuilderFactory_ForPlan(t *testing.T) {
 		configProvider := mockConfigProvider()
 
 		ibf, err := NewInputBuilderFactory(nil, runtime.NewDisabledComponentsProvider(), componentsProvider,
-			configProvider, Config{}, "1.10", fixTrialRegionMapping(), fixTrialProviders(), fixture.FixOIDCConfigDTO(), false)
+			configProvider, Config{}, "1.10", fixTrialRegionMapping(), fixTrialProviders(), fixture.FixOIDCConfigDTO())
 		assert.NoError(t, err)
 		pp := fixProvisioningParameters(broker.GCPPlanID, "")
 
@@ -101,7 +101,7 @@ func TestInputBuilderFactory_ForPlan(t *testing.T) {
 		configProvider := mockConfigProvider()
 
 		ibf, err := NewInputBuilderFactory(nil, runtime.NewDisabledComponentsProvider(), componentsProvider,
-			configProvider, Config{}, "1.10", fixTrialRegionMapping(), fixTrialProviders(), fixture.FixOIDCConfigDTO(), false)
+			configProvider, Config{}, "1.10", fixTrialRegionMapping(), fixTrialProviders(), fixture.FixOIDCConfigDTO())
 		assert.NoError(t, err)
 		pp := fixProvisioningParameters(broker.GCPPlanID, "")
 
@@ -125,7 +125,7 @@ func TestInputBuilderFactory_ForPlan(t *testing.T) {
 		configProvider := mockConfigProvider()
 
 		ibf, err := NewInputBuilderFactory(nil, runtime.NewDisabledComponentsProvider(), componentsProvider,
-			configProvider, Config{}, "1.10", fixTrialRegionMapping(), fixTrialProviders(), fixture.FixOIDCConfigDTO(), false)
+			configProvider, Config{}, "1.10", fixTrialRegionMapping(), fixTrialProviders(), fixture.FixOIDCConfigDTO())
 		assert.NoError(t, err)
 		pp := fixProvisioningParameters(broker.GCPPlanID, "PR-1")
 
@@ -147,7 +147,7 @@ func TestInputBuilderFactory_ForPlan(t *testing.T) {
 		configProvider := mockConfigProvider()
 
 		ibf, err := NewInputBuilderFactory(nil, runtime.NewDisabledComponentsProvider(), componentsProvider,
-			configProvider, Config{}, "1.10", fixTrialRegionMapping(), fixTrialProviders(), fixture.FixOIDCConfigDTO(), false)
+			configProvider, Config{}, "1.10", fixTrialRegionMapping(), fixTrialProviders(), fixture.FixOIDCConfigDTO())
 		assert.NoError(t, err)
 		pp := fixProvisioningParameters(broker.GCPPlanID, "")
 
@@ -186,7 +186,7 @@ func TestInputBuilderFactory_ForPlan(t *testing.T) {
 		configProvider := mockConfigProvider()
 
 		ibf, err := NewInputBuilderFactory(nil, runtime.NewDisabledComponentsProvider(), componentsProvider,
-			configProvider, Config{}, "1.10", fixTrialRegionMapping(), fixTrialProviders(), fixture.FixOIDCConfigDTO(), false)
+			configProvider, Config{}, "1.10", fixTrialRegionMapping(), fixTrialProviders(), fixture.FixOIDCConfigDTO())
 		assert.NoError(t, err)
 		pp := fixProvisioningParameters(broker.GCPPlanID, "")
 
@@ -229,7 +229,7 @@ func TestInputBuilderFactory_ForPlan(t *testing.T) {
 		configProvider := mockConfigProvider()
 
 		ibf, err := NewInputBuilderFactory(nil, runtime.NewDisabledComponentsProvider(), componentsProvider,
-			configProvider, Config{}, "1.10", fixTrialRegionMapping(), fixTrialProviders(), fixture.FixOIDCConfigDTO(), false)
+			configProvider, Config{}, "1.10", fixTrialRegionMapping(), fixTrialProviders(), fixture.FixOIDCConfigDTO())
 		assert.NoError(t, err)
 		pp := fixProvisioningParameters(broker.GCPPlanID, "")
 		provider = &cloudProvider.GcpInput{} // for broker.GCPPlanID

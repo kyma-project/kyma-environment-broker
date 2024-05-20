@@ -54,7 +54,7 @@ func TestRuntimeHandler(t *testing.T) {
 		err = instances.Insert(testInstance2)
 		require.NoError(t, err)
 
-		runtimeHandler := runtime.NewHandler(instances, operations, states, archived, 2, "", provisionerClient)
+		runtimeHandler := runtime.NewHandler(instances, operations, states, archived, 2, "", provisionerClient, logrus.New())
 
 		req, err := http.NewRequest("GET", "/runtimes?page_size=1", nil)
 		require.NoError(t, err)
@@ -108,7 +108,7 @@ func TestRuntimeHandler(t *testing.T) {
 		states := db.RuntimeStates()
 		archived := db.InstancesArchived()
 
-		runtimeHandler := runtime.NewHandler(instances, operations, states, archived, 2, "region", provisionerClient)
+		runtimeHandler := runtime.NewHandler(instances, operations, states, archived, 2, "region", provisionerClient, logrus.New())
 
 		req, err := http.NewRequest("GET", "/runtimes?page_size=a", nil)
 		require.NoError(t, err)
@@ -166,7 +166,7 @@ func TestRuntimeHandler(t *testing.T) {
 		err = operations.InsertOperation(testOp2)
 		require.NoError(t, err)
 
-		runtimeHandler := runtime.NewHandler(instances, operations, states, archived, 2, "", provisionerClient)
+		runtimeHandler := runtime.NewHandler(instances, operations, states, archived, 2, "", provisionerClient, logrus.New())
 
 		req, err := http.NewRequest("GET", fmt.Sprintf("/runtimes?account=%s&subaccount=%s&instance_id=%s&runtime_id=%s&region=%s&shoot=%s", testID1, testID1, testID1, testID1, testID1, fmt.Sprintf("Shoot-%s", testID1)), nil)
 		require.NoError(t, err)
@@ -242,7 +242,7 @@ func TestRuntimeHandler(t *testing.T) {
 		err = operations.InsertDeprovisioningOperation(deprovOp3)
 		require.NoError(t, err)
 
-		runtimeHandler := runtime.NewHandler(instances, operations, states, archived, 2, "", provisionerClient)
+		runtimeHandler := runtime.NewHandler(instances, operations, states, archived, 2, "", provisionerClient, logrus.New())
 
 		rr := httptest.NewRecorder()
 		router := mux.NewRouter()
@@ -351,7 +351,7 @@ func TestRuntimeHandler(t *testing.T) {
 		})
 		require.NoError(t, err)
 
-		runtimeHandler := runtime.NewHandler(instances, operations, states, archived, 2, "", provisionerClient)
+		runtimeHandler := runtime.NewHandler(instances, operations, states, archived, 2, "", provisionerClient, logrus.New())
 
 		req, err := http.NewRequest("GET", "/runtimes", nil)
 		require.NoError(t, err)
@@ -424,7 +424,7 @@ func TestRuntimeHandler(t *testing.T) {
 		})
 		require.NoError(t, err)
 
-		runtimeHandler := runtime.NewHandler(instances, operations, states, archived, 2, "", provisionerClient)
+		runtimeHandler := runtime.NewHandler(instances, operations, states, archived, 2, "", provisionerClient, logrus.New())
 
 		req, err := http.NewRequest("GET", "/runtimes", nil)
 		require.NoError(t, err)
@@ -496,7 +496,7 @@ func TestRuntimeHandler(t *testing.T) {
 		})
 		require.NoError(t, err)
 
-		runtimeHandler := runtime.NewHandler(instances, operations, states, archived, 2, "", provisionerClient)
+		runtimeHandler := runtime.NewHandler(instances, operations, states, archived, 2, "", provisionerClient, logrus.New())
 
 		req, err := http.NewRequest("GET", "/runtimes", nil)
 		require.NoError(t, err)
@@ -551,7 +551,7 @@ func TestRuntimeHandler(t *testing.T) {
 		err = operations.InsertUpgradeKymaOperation(upgOp)
 		require.NoError(t, err)
 
-		runtimeHandler := runtime.NewHandler(instances, operations, states, archived, 2, "", provisionerClient)
+		runtimeHandler := runtime.NewHandler(instances, operations, states, archived, 2, "", provisionerClient, logrus.New())
 
 		rr := httptest.NewRecorder()
 		router := mux.NewRouter()
@@ -685,7 +685,7 @@ func TestRuntimeHandler(t *testing.T) {
 		err = states.Insert(fixOpgClusterState)
 		require.NoError(t, err)
 
-		runtimeHandler := runtime.NewHandler(instances, operations, states, archived, 2, "", provisionerClient)
+		runtimeHandler := runtime.NewHandler(instances, operations, states, archived, 2, "", provisionerClient, logrus.New())
 
 		rr := httptest.NewRecorder()
 		router := mux.NewRouter()
@@ -739,7 +739,7 @@ func TestRuntimeHandler(t *testing.T) {
 		_, err = provisionerClient.ProvisionRuntimeWithIDs(operation.GlobalAccountID, operation.SubAccountID, operation.RuntimeID, operation.ID, input)
 		require.NoError(t, err)
 
-		runtimeHandler := runtime.NewHandler(instances, operations, states, archived, 2, "", provisionerClient)
+		runtimeHandler := runtime.NewHandler(instances, operations, states, archived, 2, "", provisionerClient, logrus.New())
 
 		rr := httptest.NewRecorder()
 		router := mux.NewRouter()

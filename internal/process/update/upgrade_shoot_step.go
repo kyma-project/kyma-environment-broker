@@ -61,7 +61,7 @@ func (s *UpgradeShootStep) Run(operation internal.Operation, log logrus.FieldLog
 		provisionerResponse, err = s.provisionerClient.UpgradeShoot(operation.ProvisioningParameters.ErsContext.GlobalAccountID, operation.RuntimeID, input)
 		if err != nil {
 			log.Errorf("call to provisioner failed: %s", err)
-			return operation, retryDuration, nil
+			return s.operationManager.RetryOperation(operation, "call to provisioner failed", err, retryDuration, time.Minute, log)
 		}
 
 		repeat := time.Duration(0)

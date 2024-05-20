@@ -8,7 +8,6 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"github.com/kyma-project/kyma-environment-broker/internal/broker"
 	"github.com/stretchr/testify/assert"
 
 	"github.com/kyma-project/kyma-environment-broker/common/orchestration"
@@ -26,6 +25,7 @@ const (
 	instanceID        = "93241a34-8ab5-4f10-978e-eaa6f8ad551c"
 	operationID       = "306f2406-e972-4fae-8edd-50fc50e56817"
 	instanceRuntimeID = "e04813ba-244a-4150-8670-506c37959388"
+	ownClusterPlanID  = "03e3cb66-a4c6-4c6a-b4b0-5d42224debea"
 )
 
 func TestHandler_GetKubeconfig(t *testing.T) {
@@ -121,7 +121,7 @@ func TestHandler_GetKubeconfig(t *testing.T) {
 
 			router := mux.NewRouter()
 
-			handler := NewHandler(db, builder, "", logger.NewLogDummy())
+			handler := NewHandler(db, builder, "", ownClusterPlanID, logger.NewLogDummy())
 			handler.AttachRoutes(router)
 
 			server := httptest.NewServer(router)
@@ -167,7 +167,7 @@ func TestHandler_GetKubeconfigForOwnCluster(t *testing.T) {
 		},
 		InstanceID:    instanceID,
 		RuntimeID:     runtimeID,
-		ServicePlanID: broker.OwnClusterPlanID,
+		ServicePlanID: ownClusterPlanID,
 	}
 
 	operation := internal.ProvisioningOperation{
@@ -194,7 +194,7 @@ func TestHandler_GetKubeconfigForOwnCluster(t *testing.T) {
 
 	router := mux.NewRouter()
 
-	handler := NewHandler(db, builder, "", logger.NewLogDummy())
+	handler := NewHandler(db, builder, "", ownClusterPlanID, logger.NewLogDummy())
 	handler.AttachRoutes(router)
 
 	server := httptest.NewServer(router)
@@ -255,7 +255,7 @@ func TestHandler_specifyAllowOriginHeader(t *testing.T) {
 			request := &http.Request{Header: d.requestHeader}
 			response := &httptest.ResponseRecorder{}
 
-			handler := NewHandler(storage.NewMemoryStorage(), nil, d.origins, nil)
+			handler := NewHandler(storage.NewMemoryStorage(), nil, d.origins, ownClusterPlanID, nil)
 
 			// when
 			handler.specifyAllowOriginHeader(request, response)

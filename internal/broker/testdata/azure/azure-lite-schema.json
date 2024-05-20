@@ -146,6 +146,17 @@
       "type": "object"
     },
     "region": {
+      "_enumDisplayName": {
+        "eastus": "eastus (US East, VA)",
+        "centralus": "centralus (US Central, IA)",
+        "westus2": "westus2 (US West, WA)",
+        "uksouth": "uksouth (UK South, London)",
+        "northeurope": "northeurope (Europe, Ireland)",
+        "westeurope": "westeurope (Europe, Netherlands)",
+        "japaneast": "japaneast (Japan, Tokyo)",
+        "southeastasia": "southeastasia (Asia Pacific, Singapore)",
+        "australiaeast": "australiaeast (Australia, Sydney)"
+      },
       "enum": [
         "eastus",
         "centralus",
@@ -154,7 +165,8 @@
         "northeurope",
         "westeurope",
         "japaneast",
-        "southeastasia"
+        "southeastasia",
+        "australiaeast"
       ],
       "minLength": 1,
       "type": "string"

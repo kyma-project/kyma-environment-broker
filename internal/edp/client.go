@@ -40,10 +40,9 @@ type Config struct {
 type Client struct {
 	config     Config
 	httpClient *http.Client
-	log        logrus.FieldLogger
 }
 
-func NewClient(config Config, log logrus.FieldLogger) *Client {
+func NewClient(config Config) *Client {
 	cfg := clientcredentials.Config{
 		ClientID:     fmt.Sprintf("edp-namespace;%s", config.Namespace),
 		ClientSecret: config.Secret,
@@ -56,7 +55,6 @@ func NewClient(config Config, log logrus.FieldLogger) *Client {
 	return &Client{
 		config:     config,
 		httpClient: httpClientOAuth,
-		log:        log,
 	}
 }
 
@@ -68,16 +66,16 @@ func (c *Client) metadataTenantURL(name, env string) string {
 	return fmt.Sprintf(metadataTenantTmpl, c.config.AdminURL, c.config.Namespace, name, env)
 }
 
-func (c *Client) CreateDataTenant(data DataTenantPayload) error {
+func (c *Client) CreateDataTenant(data DataTenantPayload, log logrus.FieldLogger) error {
 	rawData, err := json.Marshal(data)
 	if err != nil {
 		return fmt.Errorf("while marshaling dataTenant payload: %w", err)
 	}
 
-	return c.post(c.dataTenantURL(), rawData, data.Name)
+	return c.post(c.dataTenantURL(), rawData, data.Name, log)
 }
 
-func (c *Client) DeleteDataTenant(name, env string) (err error) {
+func (c *Client) DeleteDataTenant(name, env string, log logrus.FieldLogger) (err error) {
 	URL := fmt.Sprintf("%s/%s/%s", c.dataTenantURL(), name, env)
 	request, err := http.NewRequest(http.MethodDelete, URL, nil)
 	if err != nil {
@@ -94,19 +92,19 @@ func (c *Client) DeleteDataTenant(name, env string) (err error) {
 		return kebError.AsTemporaryError(err, "while requesting about delete dataTenant")
 	}
 
-	return c.processResponse(response, true, name)
+	return c.processResponse(response, true, name, log)
 }
 
-func (c *Client) CreateMetadataTenant(name, env string, data MetadataTenantPayload) error {
+func (c *Client) CreateMetadataTenant(name, env string, data MetadataTenantPayload, log logrus.FieldLogger) error {
 	rawData, err := json.Marshal(data)
 	if err != nil {
 		return fmt.Errorf("while marshaling tenant metadata payload: %w", err)
 	}
 
-	return c.post(c.metadataTenantURL(name, env), rawData, name)
+	return c.post(c.metadataTenantURL(name, env), rawData, name, log)
 }
 
-func (c *Client) DeleteMetadataTenant(name, env, key string) (err error) {
+func (c *Client) DeleteMetadataTenant(name, env, key string, log logrus.FieldLogger) (err error) {
 	URL := fmt.Sprintf("%s/%s", c.metadataTenantURL(name, env), key)
 	request, err := http.NewRequest(http.MethodDelete, URL, nil)
 	if err != nil {
@@ -123,7 +121,7 @@ func (c *Client) DeleteMetadataTenant(name, env, key string) (err error) {
 		return kebError.AsTemporaryError(err, "while requesting about delete metadata")
 	}
 
-	return c.processResponse(response, true, name)
+	return c.processResponse(response, true, name, log)
 }
 
 func (c *Client) GetMetadataTenant(name, env string) (_ []MetadataItem, err error) {
@@ -154,7 +152,7 @@ func (c *Client) GetMetadataTenant(name, env string) (_ []MetadataItem, err erro
 	return metadata, nil
 }
 
-func (c *Client) post(URL string, data []byte, id string) (err error) {
+func (c *Client) post(URL string, data []byte, id string, log logrus.FieldLogger) (err error) {
 	request, err := http.NewRequest(http.MethodPost, URL, bytes.NewBuffer(data))
 	if err != nil {
 		return fmt.Errorf("while creating POST request for %s: %w", URL, err)
@@ -171,10 +169,10 @@ func (c *Client) post(URL string, data []byte, id string) (err error) {
 		return kebError.AsTemporaryError(err, "while sending POST request on %s", URL)
 	}
 
-	return c.processResponse(response, false, id)
+	return c.processResponse(response, false, id, log)
 }
 
-func (c *Client) processResponse(response *http.Response, allowNotFound bool, id string) error {
+func (c *Client) processResponse(response *http.Response, allowNotFound bool, id string, log logrus.FieldLogger) error {
 	byteBody, err := ioutil.ReadAll(response.Body)
 	if err != nil {
 		return fmt.Errorf("while reading response body (status code %d): %w", response.StatusCode, err)
@@ -183,35 +181,35 @@ func (c *Client) processResponse(response *http.Response, allowNotFound bool, id
 
 	switch response.StatusCode {
 	case http.StatusCreated:
-		c.log.Infof("Resource created: %s", responseLog(response))
+		log.Infof("Resource created: %s", responseLog(response))
 		return nil
 	case http.StatusConflict:
-		c.log.Warnf("Resource already exist: %s", responseLog(response))
+		log.Warnf("Resource already exist: %s", responseLog(response))
 		return NewEDPConflictError(id, "Resource %s already exists", id)
 	case http.StatusNoContent:
-		c.log.Infof("Action executed correctly: %s", responseLog(response))
+		log.Infof("Action executed correctly: %s", responseLog(response))
 		return nil
 	case http.StatusNotFound:
-		c.log.Infof("Resource not found: %s", responseLog(response))
+		log.Warnf("Resource not found: %s", responseLog(response))
 		if allowNotFound {
 			return nil
 		}
-		c.log.Errorf("Body content: %s", body)
+		log.Warnf("Body content: %s", body)
 		return NewEDPNotFoundError(id, "Not Found: %s", responseLog(response))
 	case http.StatusRequestTimeout:
-		c.log.Errorf("Request timeout %s: %s", responseLog(response), body)
+		log.Warnf("Request timeout %s: %s", responseLog(response), body)
 		return kebError.WrapNewTemporaryError(NewEDPOtherError(id, http.StatusRequestTimeout, "Request timeout: %s", responseLog(response)))
 	case http.StatusBadRequest:
-		c.log.Errorf("Bad request %s: %s", responseLog(response), body)
+		log.Warnf("Bad request %s: %s", responseLog(response), body)
 		return NewEDPBadRequestError(id, "Bad request: %s", responseLog(response))
 	}
 
 	if response.StatusCode >= 500 {
-		c.log.Errorf("EDP server returns failed status %s: %s", responseLog(response), body)
+		log.Infof("EDP server returns failed status %s: %s", responseLog(response), body)
 		return kebError.WrapNewTemporaryError(NewEDPOtherError(id, response.StatusCode, "EDP server returns failed status %s", responseLog(response)))
 	}
 
-	c.log.Errorf("EDP server not supported response %s: %s", responseLog(response), body)
+	log.Warnf("EDP server not supported response %s: %s", responseLog(response), body)
 	return NewEDPOtherError(id, response.StatusCode, "Undefined/empty/notsupported status code response %s", responseLog(response))
 }
 

@@ -1,5 +1,6 @@
 run:
   allow-parallel-runners: true
+  timeout: 2m
 output:
   format: "colored-tab:stderr,github-actions:stdout"
   print-issued-lines: true

@@ -3,11 +3,11 @@ package process
 import (
 	"context"
 	"fmt"
-	"log"
 	"sync"
 	"time"
 
 	"github.com/kyma-project/kyma-environment-broker/internal/broker"
+
 	"github.com/kyma-project/kyma-environment-broker/internal/storage/dberr"
 
 	"github.com/pkg/errors"
@@ -164,6 +164,8 @@ func (m *StagedManager) Execute(operationID string) (time.Duration, error) {
 			if processedOperation.State == domain.Failed || processedOperation.State == domain.Succeeded {
 				logStep.Infof("Operation %q got status %s. Process finished.", operation.ID, processedOperation.State)
 				operation.EventInfof("operation processing %v", processedOperation.State)
+				m.publishOperationFinishedEvent(processedOperation)
+				m.publishDeprovisioningSucceeded(&processedOperation)
 				return 0, nil
 			}
 
@@ -215,7 +217,7 @@ func (m *StagedManager) runStep(step Step, operation internal.Operation, logger 
 	var start time.Time
 	defer func() {
 		if pErr := recover(); pErr != nil {
-			log.Println("panic in RunStep in staged manager: ", pErr)
+			logger.Println("panic in RunStep in staged manager: ", pErr)
 			err = errors.New(fmt.Sprintf("%v", pErr))
 			om := NewOperationManager(m.operationStorage)
 			processedOperation, _, _ = om.OperationFailed(operation, "recovered from panic", err, m.log)
@@ -227,15 +229,16 @@ func (m *StagedManager) runStep(step Step, operation internal.Operation, logger 
 	for {
 		start = time.Now()
 		logger.Infof("Start step")
-		processedOperation, backoff, err = step.Run(processedOperation, logger)
+		stepLogger := logger.WithFields(logrus.Fields{"step": step.Name(), "operation": processedOperation.ID})
+		processedOperation, backoff, err = step.Run(processedOperation, stepLogger)
 		if err != nil {
 			processedOperation.LastError = kebError.ReasonForError(err)
-			logOperation := m.log.WithFields(logrus.Fields{"operation": processedOperation.ID, "error_component": processedOperation.LastError.Component(), "error_reason": processedOperation.LastError.Reason()})
-			logOperation.Errorf("Last error from step %s: %s", step.Name(), processedOperation.LastError.Error())
+			logOperation := stepLogger.WithFields(logrus.Fields{"error_component": processedOperation.LastError.Component(), "error_reason": processedOperation.LastError.Reason()})
+			logOperation.Warnf("Last error from step: %s", processedOperation.LastError.Error())
 			// only save to storage, skip for alerting if error
 			_, err = m.operationStorage.UpdateOperation(processedOperation)
 			if err != nil {
-				logOperation.Errorf("Unable to save operation with resolved last error from step: %s", step.Name())
+				logOperation.Errorf("unable to save operation with resolved last error from step, additionally, see previous logs for ealier errors")
 			}
 		}
 
@@ -255,6 +258,10 @@ func (m *StagedManager) runStep(step Step, operation internal.Operation, logger 
 		// - step returns an error
 		// - the loop takes too much time (to not block the worker too long)
 		if backoff == 0 || err != nil || time.Since(begin) > m.cfg.MaxStepProcessingTime {
+			if err != nil {
+				logOperation := m.log.WithFields(logrus.Fields{"step": step.Name(), "operation": processedOperation.ID, "error_component": processedOperation.LastError.Component(), "error_reason": processedOperation.LastError.Reason()})
+				logOperation.Errorf("Last Error that terminated the step: %s", processedOperation.LastError.Error())
+			}
 			return processedOperation, backoff, err
 		}
 		operation.EventInfof("step %v sleeping for %v", step.Name(), backoff)
@@ -266,12 +273,7 @@ func (m *StagedManager) publishEventOnFail(operation *internal.Operation, err er
 	logOperation := m.log.WithFields(logrus.Fields{"operation": operation.ID, "error_component": operation.LastError.Component(), "error_reason": operation.LastError.Reason()})
 	logOperation.Errorf("Last error: %s", operation.LastError.Error())
 
-	m.publisher.Publish(context.TODO(), OperationCounting{
-		OpId:    operation.ID,
-		PlanID:  broker.PlanID(operation.ProvisioningParameters.PlanID),
-		OpState: domain.LastOperationState(string(operation.State)),
-		OpType:  internal.OperationType(string(operation.Type)),
-	})
+	m.publishOperationFinishedEvent(*operation)
 
 	m.publisher.Publish(context.TODO(), OperationStepProcessed{
 		StepProcessed: StepProcessed{
@@ -284,13 +286,28 @@ func (m *StagedManager) publishEventOnFail(operation *internal.Operation, err er
 }
 
 func (m *StagedManager) publishEventOnSuccess(operation *internal.Operation) {
-	m.publisher.Publish(context.TODO(), OperationCounting{
-		OpId:    operation.ID,
-		PlanID:  broker.PlanID(operation.ProvisioningParameters.PlanID),
-		OpState: domain.LastOperationState(string(operation.State)),
-		OpType:  internal.OperationType(string(operation.Type)),
-	})
 	m.publisher.Publish(context.TODO(), OperationSucceeded{
 		Operation: *operation,
 	})
+
+	m.publishOperationFinishedEvent(*operation)
+
+	m.publishDeprovisioningSucceeded(operation)
+}
+
+func (m *StagedManager) publishOperationFinishedEvent(operation internal.Operation) {
+	m.publisher.Publish(context.TODO(), OperationFinished{
+		Operation: operation,
+		PlanID:    broker.PlanID(operation.ProvisioningParameters.PlanID),
+	})
+}
+
+func (m *StagedManager) publishDeprovisioningSucceeded(operation *internal.Operation) {
+	if operation.State == domain.Succeeded && operation.Type == internal.OperationTypeDeprovision {
+		m.publisher.Publish(
+			context.TODO(), DeprovisioningSucceeded{
+				Operation: internal.DeprovisioningOperation{Operation: *operation},
+			},
+		)
+	}
 }

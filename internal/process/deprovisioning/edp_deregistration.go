@@ -16,8 +16,8 @@ import (
 
 //go:generate mockery --name=EDPClient --output=automock --outpkg=automock --case=underscore
 type EDPClient interface {
-	DeleteDataTenant(name, env string) error
-	DeleteMetadataTenant(name, env, key string) error
+	DeleteDataTenant(name, env string, log logrus.FieldLogger) error
+	DeleteMetadataTenant(name, env, key string, log logrus.FieldLogger) error
 }
 
 type EDPDeregistrationStep struct {
@@ -81,14 +81,14 @@ func (s *EDPDeregistrationStep) Run(operation internal.Operation, log logrus.Fie
 		edp.MaasConsumerSubAccountKey,
 		edp.MaasConsumerServicePlan,
 	} {
-		err := s.client.DeleteMetadataTenant(subAccountID, s.config.Environment, key)
+		err := s.client.DeleteMetadataTenant(subAccountID, s.config.Environment, key, log)
 		if err != nil {
 			return s.handleError(operation, err, log, fmt.Sprintf("cannot remove DataTenant metadata with key: %s", key))
 		}
 	}
 
 	log.Info("Delete DataTenant")
-	err = s.client.DeleteDataTenant(subAccountID, s.config.Environment)
+	err = s.client.DeleteDataTenant(subAccountID, s.config.Environment, log)
 	if err != nil {
 		return s.handleError(operation, err, log, "cannot remove DataTenant")
 	}
@@ -97,12 +97,10 @@ func (s *EDPDeregistrationStep) Run(operation internal.Operation, log logrus.Fie
 }
 
 func (s *EDPDeregistrationStep) handleError(operation internal.Operation, err error, log logrus.FieldLogger, msg string) (internal.Operation, time.Duration, error) {
-	log.Errorf("%s: %s", msg, err)
-
 	if kebError.IsTemporaryError(err) {
 		since := time.Since(operation.UpdatedAt)
 		if since < time.Minute*30 {
-			log.Errorf("request to EDP failed: %s. Retry...", err)
+			log.Warnf("request to EDP failed: %s. Retry...", err)
 			return operation, 10 * time.Second, nil
 		}
 	}
@@ -112,5 +110,8 @@ func (s *EDPDeregistrationStep) handleError(operation internal.Operation, err er
 	if repeat != 0 {
 		return operation, repeat, err
 	}
+
+	log.Errorf("%s: %s", msg, err)
+
 	return operation, 0, nil
 }

@@ -22,7 +22,6 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/kyma-project/control-plane/components/provisioner/pkg/gqlschema"
-	"github.com/kyma-project/kyma-environment-broker/common/director"
 	"github.com/kyma-project/kyma-environment-broker/common/gardener"
 	"github.com/kyma-project/kyma-environment-broker/common/hyperscaler"
 	hyperscalerautomock "github.com/kyma-project/kyma-environment-broker/common/hyperscaler/automock"
@@ -97,7 +96,22 @@ type OrchestrationSuite struct {
 	t *testing.T
 }
 
+func (s *OrchestrationSuite) TearDown() {
+	if r := recover(); r != nil {
+		err := cleanupContainer()
+		assert.NoError(s.t, err)
+		panic(r)
+	}
+}
+
 func NewOrchestrationSuite(t *testing.T, additionalKymaVersions []string) *OrchestrationSuite {
+	defer func() {
+		if r := recover(); r != nil {
+			err := cleanupContainer()
+			assert.NoError(t, err)
+			panic(r)
+		}
+	}()
 	logs := logrus.New()
 	logs.Formatter.(*logrus.TextFormatter).TimestampFormat = "15:04:05.000"
 
@@ -151,7 +165,7 @@ func NewOrchestrationSuite(t *testing.T, additionalKymaVersions []string) *Orche
 			ProvisioningTimeout:         time.Minute,
 			URL:                         "http://localhost",
 			DefaultGardenerShootPurpose: "testing",
-		}, kymaVer, map[string]string{"cf-eu10": "europe"}, cfg.FreemiumProviders, oidcDefaults, cfg.Broker.IncludeNewMachineTypesInSchema)
+		}, kymaVer, map[string]string{"cf-eu10": "europe"}, cfg.FreemiumProviders, oidcDefaults)
 	require.NoError(t, err)
 
 	reconcilerClient := reconciler.NewFakeClient()
@@ -584,7 +598,6 @@ type ProvisioningSuite struct {
 	provisioningManager *process.StagedManager
 	provisioningQueue   *process.Queue
 	storage             storage.BrokerStorage
-	directorClient      *director.FakeClient
 
 	t                *testing.T
 	avsServer        *avs.MockAvsServer
@@ -592,7 +605,22 @@ type ProvisioningSuite struct {
 	k8sKcpCli        client.Client
 }
 
-func NewProvisioningSuite(t *testing.T, multiZoneCluster bool, controlPlaneFailureTolerance string, includeNewMachineTypes bool) *ProvisioningSuite {
+func (s *ProvisioningSuite) TearDown() {
+	if r := recover(); r != nil {
+		err := cleanupContainer()
+		assert.NoError(s.t, err)
+		panic(r)
+	}
+}
+
+func NewProvisioningSuite(t *testing.T, multiZoneCluster bool, controlPlaneFailureTolerance string) *ProvisioningSuite {
+	defer func() {
+		if r := recover(); r != nil {
+			err := cleanupContainer()
+			assert.NoError(t, err)
+			panic(r)
+		}
+	}()
 	ctx, cancel := context.WithTimeout(context.Background(), 20*time.Minute)
 	logs := logrus.New()
 	storageCleanup, db, err := GetStorageForE2ETests()
@@ -637,7 +665,7 @@ func NewProvisioningSuite(t *testing.T, multiZoneCluster bool, controlPlaneFailu
 			DefaultGardenerShootPurpose:  "testing",
 			MultiZoneCluster:             multiZoneCluster,
 			ControlPlaneFailureTolerance: controlPlaneFailureTolerance,
-		}, defaultKymaVer, map[string]string{"cf-eu10": "europe"}, cfg.FreemiumProviders, oidcDefaults, includeNewMachineTypes)
+		}, defaultKymaVer, map[string]string{"cf-eu10": "europe"}, cfg.FreemiumProviders, oidcDefaults)
 	require.NoError(t, err)
 
 	server := avs.NewMockAvsServer(t)
@@ -662,8 +690,6 @@ func NewProvisioningSuite(t *testing.T, multiZoneCluster bool, controlPlaneFailu
 
 	accountProvider := fixAccountProvider()
 
-	directorClient := director.NewFakeClient()
-
 	reconcilerClient := reconciler.NewFakeClient()
 
 	eventBroker := event.NewPubSub(logs)
@@ -681,7 +707,6 @@ func NewProvisioningSuite(t *testing.T, multiZoneCluster bool, controlPlaneFailu
 		provisioningManager: provisionManager,
 		provisioningQueue:   provisioningQueue,
 		storage:             db,
-		directorClient:      directorClient,
 		avsServer:           server,
 		reconcilerClient:    reconcilerClient,
 		k8sKcpCli:           cli,
@@ -1041,7 +1066,6 @@ func fixConfig() *Config {
 		Reconciler: reconciler.Config{
 			ProvisioningTimeout: 5 * time.Second,
 		},
-		Director: director.Config{},
 		Database: storage.Config{
 			SecretKey: dbSecretKey,
 		},
@@ -1053,7 +1077,7 @@ func fixConfig() *Config {
 		EnableOnDemandVersion:   true,
 		UpdateProcessingEnabled: true,
 		Broker: broker.Config{
-			EnablePlans: []string{"azure", "trial", "aws", "own_cluster", "preview", "sap-converged-cloud"},
+			EnablePlans: []string{"azure", "trial", "aws", "own_cluster", "preview", "sap-converged-cloud", "gcp", "free"},
 			Binding: broker.BindingConfig{
 				Enabled:       true,
 				BindablePlans: []string{"aws", "azure"},
@@ -1074,6 +1098,7 @@ func fixConfig() *Config {
 		},
 		MaxPaginationPage:                         100,
 		FreemiumProviders:                         []string{"aws", "azure"},
+		FreemiumWhitelistedGlobalAccountsFilePath: "testdata/freemium_whitelist.yaml",
 		EuAccessWhitelistedGlobalAccountsFilePath: "testdata/eu_access_whitelist.yaml",
 		EuAccessRejectionMessage:                  "EU Access Rejection Message - see: http://google.pl",
 

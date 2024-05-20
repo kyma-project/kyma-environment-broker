@@ -150,14 +150,14 @@ func prepareEDP(t *testing.T, subaccountId string, client *edp.FakeClient) {
 		Name:        subaccountId,
 		Environment: edpEnvironment,
 		Secret:      base64.StdEncoding.EncodeToString([]byte(fmt.Sprintf("%s%s", edpName, edpEnvironment))),
-	})
+	}, logrus.New())
 	assert.NoError(t, err)
 
 	for _, key := range metadataTenantKeys {
 		err = client.CreateMetadataTenant(subaccountId, edpEnvironment, edp.MetadataTenantPayload{
 			Key:   key,
 			Value: "-",
-		})
+		}, logrus.New())
 		assert.NoError(t, err)
 	}
 }

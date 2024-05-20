@@ -23,13 +23,12 @@ var subaccountId string
 func main() {
 
 	subaccountId = os.Args[2]
-	logger := logrus.New()
 
 	err := envconfig.InitWithPrefix(&configuration, "APP")
 	if err != nil {
 		panic(err)
 	}
-	edpClient = edp.NewClient(configuration.EDP, logger)
+	edpClient = edp.NewClient(configuration.EDP)
 
 	switch os.Args[1] {
 	case "get":
@@ -67,14 +66,14 @@ func DeregisterCommand() {
 		edp.MaasConsumerSubAccountKey,
 		edp.MaasConsumerServicePlan,
 	} {
-		err := edpClient.DeleteMetadataTenant(subAccountID, configuration.EDP.Environment, key)
+		err := edpClient.DeleteMetadataTenant(subAccountID, configuration.EDP.Environment, key, logrus.New())
 		if err != nil {
 			panic(err)
 		}
 	}
 
 	fmt.Println("Delete DataTenant")
-	err := edpClient.DeleteDataTenant(subAccountID, configuration.EDP.Environment)
+	err := edpClient.DeleteDataTenant(subAccountID, configuration.EDP.Environment, logrus.New())
 	if err != nil {
 		panic(err)
 	}
@@ -90,7 +89,7 @@ func RegisterCommand() {
 		Name:        subaccountId,
 		Environment: configuration.EDP.Environment,
 		Secret:      generateSecret(subaccountId, configuration.EDP.Environment),
-	})
+	}, logrus.New())
 	if err != nil {
 		fmt.Println("Unable to create data tenant")
 		panic(err)
@@ -108,7 +107,7 @@ func RegisterCommand() {
 			Value: value,
 		}
 		fmt.Printf("Sending metadata %s: %s\n", payload.Key, payload.Value)
-		err = edpClient.CreateMetadataTenant(subaccountId, configuration.EDP.Environment, payload)
+		err = edpClient.CreateMetadataTenant(subaccountId, configuration.EDP.Environment, payload, logrus.New())
 		if err != nil {
 			if edp.IsConflictError(err) {
 				fmt.Println("Metadata already exists.")

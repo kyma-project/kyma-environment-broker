@@ -78,12 +78,14 @@ func NewProvisioningProcessingQueue(ctx context.Context, provisionManager *proce
 			condition: provisioning.SkipForOwnClusterPlan,
 		},
 		{
-			stage: createRuntimeStageName,
-			step:  provisioning.NewOverridesFromSecretsAndConfigStep(db.Operations(), runtimeOverrides, runtimeVerConfigurator),
+			disabled: cfg.ReconcilerIntegrationDisabled,
+			stage:    createRuntimeStageName,
+			step:     provisioning.NewOverridesFromSecretsAndConfigStep(db.Operations(), runtimeOverrides, runtimeVerConfigurator),
 			// Preview plan does not call Reconciler so it does not need overrides
 			condition: skipForPreviewPlan,
 		},
 		{
+			disabled:  cfg.ReconcilerIntegrationDisabled,
 			condition: provisioning.WhenBTPOperatorCredentialsProvided,
 			stage:     createRuntimeStageName,
 			step:      provisioning.NewBTPOperatorOverridesStep(db.Operations()),
@@ -120,9 +122,10 @@ func NewProvisioningProcessingQueue(ctx context.Context, provisionManager *proce
 			step:  provisioning.NewGetKubeconfigStep(db.Operations(), provisionerClient),
 		},
 		{ // TODO: this step must be removed when kubeconfig is created by IM and own_cluster plan is permanently removed
-			disabled: cfg.LifecycleManagerIntegrationDisabled,
-			stage:    createRuntimeStageName,
-			step:     steps.SyncKubeconfig(db.Operations(), cli),
+			disabled:  cfg.LifecycleManagerIntegrationDisabled,
+			stage:     createRuntimeStageName,
+			step:      steps.SyncKubeconfig(db.Operations(), cli),
+			condition: provisioning.DoForOwnClusterPlanOnly,
 		},
 		{ // must be run after the secret with kubeconfig is created ("syncKubeconfig" or "checkGardenerCluster")
 			condition: provisioning.WhenBTPOperatorCredentialsProvided,
@@ -161,7 +164,7 @@ func NewProvisioningProcessingQueue(ctx context.Context, provisionManager *proce
 		if !step.disabled {
 			err := provisionManager.AddStep(step.stage, step.step, step.condition)
 			if err != nil {
-				fatalOnError(err)
+				fatalOnError(err, logs)
 			}
 		}
 	}

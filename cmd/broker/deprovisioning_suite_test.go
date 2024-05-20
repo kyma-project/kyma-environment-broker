@@ -50,7 +50,22 @@ type DeprovisioningSuite struct {
 	t *testing.T
 }
 
+func (s *DeprovisioningSuite) TearDown() {
+	if r := recover(); r != nil {
+		err := cleanupContainer()
+		assert.NoError(s.t, err)
+		panic(r)
+	}
+}
+
 func NewDeprovisioningSuite(t *testing.T) *DeprovisioningSuite {
+	defer func() {
+		if r := recover(); r != nil {
+			err := cleanupContainer()
+			assert.NoError(t, err)
+			panic(r)
+		}
+	}()
 	ctx, cancel := context.WithTimeout(context.Background(), 20*time.Minute)
 
 	logs := logrus.New()
@@ -272,7 +287,7 @@ func fixEDPClient(t *testing.T) *edp.FakeClient {
 		Name:        subAccountID,
 		Environment: edpEnvironment,
 		Secret:      base64.StdEncoding.EncodeToString([]byte(fmt.Sprintf("%s%s", subAccountID, edpEnvironment))),
-	})
+	}, logrus.New())
 	assert.NoError(t, err)
 
 	metadataTenantKeys := []string{
@@ -286,7 +301,7 @@ func fixEDPClient(t *testing.T) *edp.FakeClient {
 		err = client.CreateMetadataTenant(subAccountID, edpEnvironment, edp.MetadataTenantPayload{
 			Key:   key,
 			Value: "-",
-		})
+		}, logrus.New())
 		assert.NoError(t, err)
 	}
 

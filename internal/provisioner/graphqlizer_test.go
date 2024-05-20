@@ -621,8 +621,8 @@ func TestSapConvergedCloud(t *testing.T) {
 	input := gqlschema.ProviderSpecificInput{
 		OpenStackConfig: &gqlschema.OpenStackProviderConfigInput{
 			Zones:                []string{"z1"},
-			FloatingPoolName:     "fp",
-			CloudProfileName:     "cp",
+			FloatingPoolName:     ptr.String("fp"),
+			CloudProfileName:     ptr.String("cp"),
 			LoadBalancerProvider: "lbp",
 		},
 	}

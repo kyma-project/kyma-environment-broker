@@ -24,3 +24,11 @@ func (s *instanceArchived) GetByInstanceID(instanceId string) (internal.Instance
 func (s *instanceArchived) Insert(instance internal.InstanceArchived) error {
 	return s.factory.NewWriteSession().InsertInstanceArchived(dbmodel.NewInstanceArchivedDTO(instance))
 }
+
+func (s *instanceArchived) TotalNumberOfInstancesArchived() (int, error) {
+	return s.factory.NewReadSession().TotalNumberOfInstancesArchived()
+}
+
+func (s *instanceArchived) TotalNumberOfInstancesArchivedForGlobalAccountID(globalAccountID string, planID string) (int, error) {
+	return s.factory.NewReadSession().TotalNumberOfInstancesArchivedForGlobalAccountID(globalAccountID, planID)
+}

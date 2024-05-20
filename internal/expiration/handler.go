@@ -65,8 +65,9 @@ func (h *handler) expireInstance(w http.ResponseWriter, req *http.Request) {
 		}
 		return
 	}
+	logger = logger.WithField("planName", instance.ServicePlanName)
 
-	if instance.ServicePlanID != broker.TrialPlanID {
+	if instance.ServicePlanID != broker.TrialPlanID && instance.ServicePlanID != broker.FreemiumPlanID {
 		msg := fmt.Sprintf("unsupported plan: %s", broker.PlanNamesMapping[instance.ServicePlanID])
 		logger.Warn(msg)
 		httputil.WriteErrorResponse(w, http.StatusBadRequest, errors.New(msg))
@@ -94,7 +95,6 @@ func (h *handler) expireInstance(w http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	logger.Infof("the instance has been expired and awaits suspension")
 	res := expirationResponse{suspensionOpID}
 	httputil.WriteResponse(w, http.StatusAccepted, res)
 
@@ -132,6 +132,13 @@ func (h *handler) suspendInstance(instance *internal.Instance, log *logrus.Entry
 			return instance, lastDeprovisioningOp.ID, nil
 		case domain.Failed:
 			log.Infof("triggering suspension after previous failed %s", opType)
+		case domain.Succeeded:
+			if len(lastDeprovisioningOp.ExcutedButNotCompleted) == 0 {
+				log.Info("no steps to retry - not creating a new operation")
+				return instance, lastDeprovisioningOp.ID, nil
+			} else {
+				log.Infof("triggering suspension after previous %s with steps to retry", opType)
+			}
 		}
 	}
 

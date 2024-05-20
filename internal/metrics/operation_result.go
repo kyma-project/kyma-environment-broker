@@ -164,6 +164,20 @@ func (c *OperationResultCollector) OnProvisioningSucceeded(ctx context.Context, 
 	return nil
 }
 
+func (c *OperationResultCollector) OnDeprovisioningSucceeded(ctx context.Context, ev interface{}) error {
+	deprovisioningOperation, ok := ev.(process.DeprovisioningSucceeded)
+	if !ok {
+		return fmt.Errorf("expected DeprovisioningSucceeded but got %+v", ev)
+	}
+	op := deprovisioningOperation.Operation
+	pp := op.ProvisioningParameters
+	c.deprovisioningResultGauge.WithLabelValues(
+		op.ID, op.InstanceID, pp.ErsContext.GlobalAccountID, pp.PlanID, "", "").
+		Set(resultSucceeded)
+
+	return nil
+}
+
 func (c *OperationResultCollector) OnProvisioningStepProcessed(ctx context.Context, ev interface{}) error {
 	stepProcessed, ok := ev.(process.ProvisioningStepProcessed)
 	if !ok {
@@ -240,6 +254,14 @@ func (c *OperationResultCollector) OnOperationSucceeded(ctx context.Context, ev 
 			Operation: internal.ProvisioningOperation{Operation: operationSucceeded.Operation},
 		}
 		err := c.OnProvisioningSucceeded(ctx, provisioningOperation)
+		if err != nil {
+			return err
+		}
+	} else if operationSucceeded.Operation.Type == internal.OperationTypeDeprovision {
+		operation := process.DeprovisioningSucceeded{
+			Operation: internal.DeprovisioningOperation{Operation: operationSucceeded.Operation},
+		}
+		err := c.OnDeprovisioningSucceeded(ctx, operation)
 		if err != nil {
 			return err
 		}

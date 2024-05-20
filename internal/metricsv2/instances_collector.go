@@ -1,0 +1,97 @@
+package metricsv2
+
+import (
+	"github.com/kyma-project/kyma-environment-broker/internal"
+	"github.com/prometheus/client_golang/prometheus"
+	"github.com/sirupsen/logrus"
+)
+
+//
+// COPY OF THE internal/metrics/instances_collector.go for test purposes, will be refactored
+//
+
+// InstancesStatsGetter provides number of all instances failed, succeeded or orphaned
+//
+//	(instance exists but the cluster was removed manually from the gardener):
+//
+// - kcp_keb_instances_total - total number of all instances
+// - kcp_keb_global_account_id_instances_total - total number of all instances per global account
+// - kcp_keb_ers_context_license_type_total - count of instances grouped by license types
+type InstancesStatsGetter interface {
+	GetInstanceStats() (internal.InstanceStats, error)
+	GetERSContextStats() (internal.ERSContextStats, error)
+}
+
+type InstancesCollector struct {
+	statsGetter InstancesStatsGetter
+
+	instancesDesc        *prometheus.Desc
+	instancesPerGAIDDesc *prometheus.Desc
+	licenseTypeDesc      *prometheus.Desc
+	logger               logrus.FieldLogger
+}
+
+func NewInstancesCollector(statsGetter InstancesStatsGetter, logger logrus.FieldLogger) *InstancesCollector {
+	return &InstancesCollector{
+		statsGetter: statsGetter,
+		logger:      logger,
+		instancesDesc: prometheus.NewDesc(
+			prometheus.BuildFQName(prometheusNamespacev2, prometheusSubsystemv2, "instances_total"),
+			"The total number of instances",
+			[]string{},
+			nil),
+		instancesPerGAIDDesc: prometheus.NewDesc(
+			prometheus.BuildFQName(prometheusNamespacev2, prometheusSubsystemv2, "global_account_id_instances_total"),
+			"The total number of instances by Global Account ID",
+			[]string{"global_account_id"},
+			nil),
+		licenseTypeDesc: prometheus.NewDesc(
+			prometheus.BuildFQName(prometheusNamespacev2, prometheusSubsystemv2, "ers_context_license_type_total"),
+			"count of instances grouped by license types",
+			[]string{"license_type"},
+			nil),
+	}
+}
+
+func (c *InstancesCollector) Describe(ch chan<- *prometheus.Desc) {
+	ch <- c.instancesDesc
+	ch <- c.instancesPerGAIDDesc
+	ch <- c.licenseTypeDesc
+}
+
+// Collect implements the prometheus.Collector interface.
+func (c *InstancesCollector) Collect(ch chan<- prometheus.Metric) {
+	stats, err := c.statsGetter.GetInstanceStats()
+	if err != nil {
+		c.logger.Error(err)
+	} else {
+		collect(ch, c.instancesDesc, stats.TotalNumberOfInstances)
+
+		for globalAccountID, num := range stats.PerGlobalAccountID {
+			collect(ch, c.instancesPerGAIDDesc, num, globalAccountID)
+		}
+	}
+
+	stats2, err := c.statsGetter.GetERSContextStats()
+	if err != nil {
+		c.logger.Error(err)
+		return
+	}
+	for t, num := range stats2.LicenseType {
+		collect(ch, c.licenseTypeDesc, num, t)
+	}
+}
+
+func collect(ch chan<- prometheus.Metric, desc *prometheus.Desc, value int, labelValues ...string) {
+	m, err := prometheus.NewConstMetric(
+		desc,
+		prometheus.GaugeValue,
+		float64(value),
+		labelValues...)
+
+	if err != nil {
+		logrus.Errorf("unable to register metric %s", err.Error())
+		return
+	}
+	ch <- m
+}

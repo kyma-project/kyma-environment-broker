@@ -28,6 +28,7 @@ func TestKymaReDeprovisionFailed(t *testing.T) {
 	}
 
 	suite := NewDeprovisioningSuite(t)
+	defer suite.TearDown()
 	instanceId := suite.CreateProvisionedRuntime(runtimeOptions)
 	// when
 	deprovisioningOperationID := suite.CreateDeprovisioning(deprovisioningOpID, instanceId)

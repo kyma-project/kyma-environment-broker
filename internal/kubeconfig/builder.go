@@ -79,6 +79,25 @@ func (b *Builder) Build(instance *internal.Instance) (string, error) {
 	return b.BuildFromAdminKubeconfig(instance, "")
 }
 
+func (b *Builder) GetServerURL(runtimeID string) (string, error) {
+	if runtimeID == "" {
+		return "", fmt.Errorf("runtimeID must not be empty")
+	}
+	var kubeCfg kubeconfig
+	kubeconfigContent, err := b.kubeconfigProvider.KubeconfigForRuntimeID(runtimeID)
+	if err != nil {
+		return "", err
+	}
+	err = yaml.Unmarshal(kubeconfigContent, &kubeCfg)
+	if err != nil {
+		return "", fmt.Errorf("while unmarshaling kubeconfig: %w", err)
+	}
+	if err := b.validKubeconfig(kubeCfg); err != nil {
+		return "", fmt.Errorf("while validation kubeconfig fetched by provisioner: %w", err)
+	}
+	return kubeCfg.Clusters[0].Cluster.Server, nil
+}
+
 func (b *Builder) parseTemplate(payload kubeconfigData) (string, error) {
 	var result bytes.Buffer
 	t := template.New("kubeconfigParser")

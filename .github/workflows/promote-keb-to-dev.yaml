@@ -1,0 +1,102 @@
+name: Promote KEB to dev
+
+env:
+  MANAGEMENT_PLANE_CHARTS:  "https://${{ vars.GH_TOOLS_HOST }}/kyma/${{ vars.MP_CHARTS_REPO_NAME }}.git"
+  MANAGEMENT_PLANE_CHARTS_WITH_USER: "https://${{ vars.GIT_USER_NAME }}:${{ secrets.BOT_TOKEN_GITHUB_TOOLS }}@${{ vars.GH_TOOLS_HOST }}/kyma/${{ vars.MP_CHARTS_REPO_NAME }}.git"
+  KEB_API_URL: "https://api.github.com/repos/kyma-project/kyma-environment-broker"
+  KEB_RELEASES_URL: "https://github.com/kyma-project/kyma-environment-broker/releases"
+  # needed by gh cli for GitHub enterprise
+  GH_ENTERPRISE_TOKEN: ${{ secrets.BOT_TOKEN_GITHUB_TOOLS }}
+
+on:
+  workflow_dispatch:
+    inputs:
+      releaseTag:
+        description: "Release Tag"
+        default: 'use latest release'
+        required: true
+
+jobs:
+  promote:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Validate required environment variables
+        run: |
+          [ -z "${{ vars.GIT_USER_EMAIL }}" ] && echo "GIT_USER_EMAIL is required" && exit 1 
+          [ -z "${{ vars.GIT_USER_NAME }}" ] && echo "GIT_USER_NAME is required" && exit 1 
+          [ -z "${{ vars.GH_TOOLS_HOST }}" ] && echo "GH_TOOLS_HOST is required" && exit 1 
+          [ -z "${{ vars.MP_CHARTS_REPO_NAME }}" ] && echo "MP_CHARTS_REPO_NAME is required" && exit 1 
+          echo "Validated"
+
+      - name: Use default (latest) Release Tag
+        if: inputs.releaseTag == 'use latest release'
+        run: |
+          latest=$(curl -s -H "Accept: application/vnd.github+json" ${KEB_API_URL}/releases/latest | jq -r '.tag_name') 
+          echo "TAG=${latest}" >> $GITHUB_ENV
+
+      - name: Validate given release tag
+        if: inputs.releaseTag != 'use latest release'
+        run: |
+          tags=$(curl -s -H "Accept: application/vnd.github+json" ${KEB_API_URL}/tags | jq -r '.[] | .name')
+          
+          if  echo $tags | tr " " '\n' | grep -F -q -x ${{ inputs.releaseTag }}; then
+              echo "TAG=${{ inputs.releaseTag }}" >> $GITHUB_ENV
+              echo "tag found"
+          else
+              echo "tag not found: ${{ inputs.releaseTag }}"
+              exit 1  
+          fi
+
+      - name: Set branch name
+        run: echo "BRANCH_NAME=keb-${TAG}" >> $GITHUB_ENV
+
+      - name: Setup git and clone repo
+        env:
+          GH_TOKEN: ${{ secrets.BOT_TOKEN_GITHUB_TOOLS }}
+        run: |
+          git config --global user.email ${{ vars.GIT_USER_EMAIL }}
+          git config --global user.name ${{ vars.GIT_USER_NAME }}
+          git clone ${MANAGEMENT_PLANE_CHARTS_WITH_USER}
+
+      - name: Setup python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.9'
+          cache: 'pip'
+
+      - name: Install requirements
+        working-directory: management-plane-charts
+        run: pip install -r tools/requirements.txt
+
+      - name: Bump keb version
+        working-directory: management-plane-charts
+        run: |
+          git checkout chart/keb-sap
+          git checkout -B ${BRANCH_NAME}
+          make bump-patch
+          yq -i '.dependencies |= map(select(.name == "keb").version="'${TAG}'")' keb-sap/Chart.yaml
+          yq e ".appVersion = \"${TAG}\"" -i keb-sap/Chart.yaml
+
+      - name: Commit and push changes
+        working-directory: management-plane-charts
+        run: |
+          git add .
+          git commit -m "Bump keb to ${TAG}"
+          git remote set-url origin ${MANAGEMENT_PLANE_CHARTS_WITH_USER}
+          git push origin ${BRANCH_NAME}
+
+      - name: Create PR if needed
+        working-directory: management-plane-charts
+        env:
+          MANAGEMENT_PLANE_CHARTS_REPO_URL: "https://${{ vars.GH_TOOLS_HOST }}/kyma/${{ vars.MP_CHARTS_REPO_NAME }}"
+          # needed by gh cli for GitHub enterprise
+          GH_HOST: ${{ vars.GH_TOOLS_HOST }}
+        run: |
+          prs=$(gh pr list -R "${MANAGEMENT_PLANE_CHARTS_REPO_URL}" -A ${{ vars.GIT_USER_NAME }} --state open --json headRefName | jq -r '.[] | .headRefName')
+
+          if  echo $prs | tr " " '\n' | grep -F -q -x ${BRANCH_NAME}; then
+              echo "PR already exists, no need to create new one"
+              exit 0
+          fi
+          gh pr create -B chart/keb-sap --title "Bump keb to ${TAG}" --fill --body "${{env.KEB_RELEASES_URL }}/${TAG}"

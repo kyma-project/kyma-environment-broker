@@ -2,12 +2,6 @@
 
 This tutorial shows how to provision SAP BTP, Kyma runtime on Azure using Kyma Environment Broker (KEB).
 
-## Prerequisites
-
-- Compass with:
-  * Runtime Provisioner [configured](https://github.com/kyma-project/control-plane/blob/main/docs/provisioner/08-02-provisioning-gardener.md) for Azure provider
-  * KEB configured and chosen [overrides](https://kyma-project.io/#/04-operation-guides/operations/03-change-kyma-config-values) set up
-
 ## Steps
 
 1. Export these values as environment variables:

@@ -88,22 +88,22 @@ func (s *BTPOperatorCleanupStep) Run(operation internal.Operation, log logrus.Fi
 		return operation, 0, nil
 	}
 	if !operation.Temporary {
-		log.Info("cleanup executed only for suspensions")
+		log.Info("skipping BTP cleanup step for real deprovisioning, not suspension")
 		return operation, 0, nil
 	}
 	if operation.ProvisioningParameters.PlanID != broker.TrialPlanID {
-		log.Info("cleanup executed only for trial plan")
+		log.Info("skipping BTP cleanup step, cleanup executed only for trial plan, and this is not trial plan")
 		return operation, 0, nil
 	}
 	kclient, err := s.k8sClientProvider.K8sClientForRuntimeID(operation.RuntimeID)
 	if err != nil {
 		if kubeconfig.IsNotFound(err) {
-			log.Info("Kubeconfig does not exists, skipping")
+			log.Info("Kubeconfig does not exists, skipping BTPOperator cleanup step")
 			return operation, 0, nil
 		}
 		log.Warnf("Error: %+v", err)
 
-		return s.operationManager.RetryOperationWithoutFail(operation, s.Name(), fmt.Sprintf("failed to get kube client: %s", err.Error()), time.Second, 30*time.Second, log)
+		return s.operationManager.RetryOperationWithoutFail(operation, s.Name(), fmt.Sprintf("failed to get kube client: %s", err.Error()), time.Second, 30*time.Second, log, err)
 	}
 	if operation.UserAgent == broker.AccountCleanupJob {
 		log.Info("executing soft delete cleanup for accountcleanup-job")
@@ -213,7 +213,7 @@ func (s *BTPOperatorCleanupStep) retryOnError(op internal.Operation, kclient cli
 func (s *BTPOperatorCleanupStep) attemptToRemoveFinalizers(op internal.Operation, k8sClient client.Client, log logrus.FieldLogger) {
 	namespaces := corev1.NamespaceList{}
 	if err := k8sClient.List(context.Background(), &namespaces); err != nil {
-		log.Errorf("failed to list namespaces to remove finalizers", err)
+		log.Errorf("failed to list namespaces to remove finalizers: %v", err)
 		return
 	}
 	if err := s.removeFinalizers(k8sClient, namespaces, schema.GroupVersionKind{Group: btpOperatorGroup, Version: btpOperatorApiVer, Kind: btpOperatorBinding}); err != nil {

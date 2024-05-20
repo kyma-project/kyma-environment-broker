@@ -30,6 +30,7 @@ do
 done
 
 yq e ".spec.jobTemplate.spec.template.spec.containers[0].image = \"europe-docker.pkg.dev/kyma-project/prod/kyma-environments-cleanup-job:$RELEASE_TAG\"" -i utils/kyma-environments-cleanup-job/kyma-environments-cleanup-job.yaml
+yq e ".spec.jobTemplate.spec.template.spec.containers[0].image = \"europe-docker.pkg.dev/kyma-project/prod/kyma-environment-archiver-job:$RELEASE_TAG\"" -i utils/archiver/kyma-environment-broker-archiver.yaml
 yq e ".version = \"$RELEASE_TAG\"" -i resources/keb/Chart.yaml
 yq e ".appVersion = \"$RELEASE_TAG\"" -i resources/keb/Chart.yaml
 

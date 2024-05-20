@@ -3,8 +3,6 @@ kind: PeerAuthentication
 metadata:
   name: {{ include "kyma-env-broker.fullname" . }}
   namespace: {{ .Release.Namespace }}
-  annotations:
-    argocd.argoproj.io/sync-options: Prune=false
 spec:
   selector:
     matchLabels:
@@ -12,3 +10,17 @@ spec:
       app.kubernetes.io/instance: {{ .Values.namePrefix }}
   mtls:
     mode: PERMISSIVE
+---
+apiVersion: security.istio.io/v1beta1
+kind: PeerAuthentication
+metadata:
+  labels:
+    app.kubernetes.io/name: subaccount-sync
+  name: subaccount-sync
+  namespace: kcp-system
+spec:
+  mtls:
+    mode: PERMISSIVE
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: subaccount-sync

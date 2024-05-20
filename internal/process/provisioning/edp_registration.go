@@ -18,11 +18,11 @@ import (
 
 //go:generate mockery --name=EDPClient --output=automock --outpkg=automock --case=underscore
 type EDPClient interface {
-	CreateDataTenant(data edp.DataTenantPayload) error
-	CreateMetadataTenant(name, env string, data edp.MetadataTenantPayload) error
+	CreateDataTenant(data edp.DataTenantPayload, log logrus.FieldLogger) error
+	CreateMetadataTenant(name, env string, data edp.MetadataTenantPayload, log logrus.FieldLogger) error
 
-	DeleteDataTenant(name, env string) error
-	DeleteMetadataTenant(name, env, key string) error
+	DeleteDataTenant(name, env string, log logrus.FieldLogger) error
+	DeleteMetadataTenant(name, env, key string, log logrus.FieldLogger) error
 }
 
 type EDPRegistrationStep struct {
@@ -54,7 +54,7 @@ func (s *EDPRegistrationStep) Run(operation internal.Operation, log logrus.Field
 		Name:        subAccountID,
 		Environment: s.config.Environment,
 		Secret:      s.generateSecret(subAccountID, s.config.Environment),
-	})
+	}, log.WithField("service", "edpClient"))
 	if err != nil {
 		if edp.IsConflictError(err) {
 			log.Warnf("Data Tenant already exists, deleting")
@@ -75,7 +75,7 @@ func (s *EDPRegistrationStep) Run(operation internal.Operation, log logrus.Field
 			Value: value,
 		}
 		log.Infof("Sending metadata %s: %s", payload.Key, payload.Value)
-		err = s.client.CreateMetadataTenant(subAccountID, s.config.Environment, payload)
+		err = s.client.CreateMetadataTenant(subAccountID, s.config.Environment, payload, log.WithField("service", "edpClient"))
 		if err != nil {
 			if edp.IsConflictError(err) {
 				log.Warnf("Metadata already exists, deleting")
@@ -97,18 +97,18 @@ func (s *EDPRegistrationStep) Run(operation internal.Operation, log logrus.Field
 }
 
 func (s *EDPRegistrationStep) handleError(operation internal.Operation, err error, log logrus.FieldLogger, msg string) (internal.Operation, time.Duration, error) {
-	log.Errorf("%s: %s", msg, err)
+	log.Warnf("%s: %s", msg, err)
 
 	if kebError.IsTemporaryError(err) {
 		since := time.Since(operation.UpdatedAt)
 		if since < time.Minute*30 {
-			log.Errorf("request to EDP failed: %s. Retry...", err)
+			log.Warnf("request to EDP failed: %s. Retry...", err)
 			return operation, 10 * time.Second, nil
 		}
 	}
 
 	if !s.config.Required {
-		log.Errorf("Step %s failed. Step is not required. Skip step.", s.Name())
+		log.Warnf("Step %s failed. Step is not required. Skip step.", s.Name())
 		return operation, 0, nil
 	}
 
@@ -155,14 +155,14 @@ func (s *EDPRegistrationStep) handleConflict(operation internal.Operation, log l
 		edp.MaasConsumerServicePlan,
 	} {
 		log.Infof("Deleting DataTenant metadata %s (%s): %s", operation.SubAccountID, s.config.Environment, key)
-		err := s.client.DeleteMetadataTenant(operation.SubAccountID, s.config.Environment, key)
+		err := s.client.DeleteMetadataTenant(operation.SubAccountID, s.config.Environment, key, log.WithField("service", "edpClient"))
 		if err != nil {
 			return s.handleError(operation, err, log, fmt.Sprintf("cannot remove DataTenant metadata with key: %s", key))
 		}
 	}
 
 	log.Infof("Deleting DataTenant %s (%s)", operation.SubAccountID, s.config.Environment)
-	err := s.client.DeleteDataTenant(operation.SubAccountID, s.config.Environment)
+	err := s.client.DeleteDataTenant(operation.SubAccountID, s.config.Environment, log.WithField("service", "edpClient"))
 	if err != nil {
 		return s.handleError(operation, err, log, "cannot remove DataTenant")
 	}

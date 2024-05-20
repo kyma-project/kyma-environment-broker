@@ -12,6 +12,8 @@ import (
 	"github.com/kyma-project/kyma-environment-broker/internal/storage"
 )
 
+var cleanupContainer func() error
+
 func brokerStorageE2ETestConfig() storage.Config {
 	return storage.Config{
 		Host:            "localhost",
@@ -47,7 +49,7 @@ func TestMain(m *testing.M) {
 			}
 		}(docker)
 
-		cleanupContainer, err := docker.CreateDBContainer(internal.ContainerCreateRequest{
+		cleanupContainer, err = docker.CreateDBContainer(internal.ContainerCreateRequest{
 			Port:          config.Port,
 			User:          config.User,
 			Password:      config.Password,

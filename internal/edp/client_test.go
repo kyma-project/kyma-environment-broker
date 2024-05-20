@@ -7,7 +7,7 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"github.com/kyma-project/kyma-environment-broker/internal/logger"
+	"github.com/sirupsen/logrus"
 
 	"github.com/gorilla/mux"
 	"github.com/stretchr/testify/assert"
@@ -28,14 +28,14 @@ func TestClient_CreateDataTenant(t *testing.T) {
 		AdminURL:  testServer.URL,
 		Namespace: testNamespace,
 	}
-	client := NewClient(config, logger.NewLogDummy())
+	client := NewClient(config)
 	client.setHttpClient(testServer.Client())
 
 	// when
 	err := client.CreateDataTenant(DataTenantPayload{
 		Name:        subAccountID,
 		Environment: environment,
-	})
+	}, logrus.New())
 
 	// then
 	assert.NoError(t, err)
@@ -60,17 +60,17 @@ func TestClient_DeleteDataTenant(t *testing.T) {
 		AdminURL:  testServer.URL,
 		Namespace: testNamespace,
 	}
-	client := NewClient(config, logger.NewLogDummy())
+	client := NewClient(config)
 	client.setHttpClient(testServer.Client())
 
 	err := client.CreateDataTenant(DataTenantPayload{
 		Name:        subAccountID,
 		Environment: environment,
-	})
+	}, logrus.New())
 	assert.NoError(t, err)
 
 	// when
-	err = client.DeleteDataTenant(subAccountID, environment)
+	err = client.DeleteDataTenant(subAccountID, environment, logrus.New())
 
 	// then
 	assert.NoError(t, err)
@@ -89,14 +89,14 @@ func TestClient_CreateMetadataTenant(t *testing.T) {
 		AdminURL:  testServer.URL,
 		Namespace: testNamespace,
 	}
-	client := NewClient(config, logger.NewLogDummy())
+	client := NewClient(config)
 	client.setHttpClient(testServer.Client())
 
 	// when
-	err := client.CreateMetadataTenant(subAccountID, environment, MetadataTenantPayload{Key: "tK", Value: "tV"})
+	err := client.CreateMetadataTenant(subAccountID, environment, MetadataTenantPayload{Key: "tK", Value: "tV"}, logrus.New())
 	assert.NoError(t, err)
 
-	err = client.CreateMetadataTenant(subAccountID, environment, MetadataTenantPayload{Key: "tK2", Value: "tV2"})
+	err = client.CreateMetadataTenant(subAccountID, environment, MetadataTenantPayload{Key: "tK2", Value: "tV2"}, logrus.New())
 	assert.NoError(t, err)
 
 	// then
@@ -117,14 +117,14 @@ func TestClient_DeleteMetadataTenant(t *testing.T) {
 		AdminURL:  testServer.URL,
 		Namespace: testNamespace,
 	}
-	client := NewClient(config, logger.NewLogDummy())
+	client := NewClient(config)
 	client.setHttpClient(testServer.Client())
 
-	err := client.CreateMetadataTenant(subAccountID, environment, MetadataTenantPayload{Key: key, Value: "tV"})
+	err := client.CreateMetadataTenant(subAccountID, environment, MetadataTenantPayload{Key: key, Value: "tV"}, logrus.New())
 	assert.NoError(t, err)
 
 	// when
-	err = client.DeleteMetadataTenant(subAccountID, environment, key)
+	err = client.DeleteMetadataTenant(subAccountID, environment, key, logrus.New())
 
 	// then
 	assert.NoError(t, err)

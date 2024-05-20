@@ -27,11 +27,16 @@ type Instances interface {
 	InsertWithoutEncryption(instance internal.Instance) error
 	UpdateWithoutEncryption(instance internal.Instance) (*internal.Instance, error)
 	ListWithoutDecryption(dbmodel.InstanceFilter) ([]internal.Instance, int, int, error)
+	ListDeletedInstanceIDs(int) ([]string, error)
+
+	DeletedInstancesStatistics() (internal.DeletedStats, error)
 }
 
 type InstancesArchived interface {
 	GetByInstanceID(instanceId string) (internal.InstanceArchived, error)
 	Insert(instance internal.InstanceArchived) error
+	TotalNumberOfInstancesArchived() (int, error)
+	TotalNumberOfInstancesArchivedForGlobalAccountID(globalAccountID string, planID string) (int, error)
 }
 
 //go:generate mockery --name=Operations --output=automock --outpkg=mocks --case=underscore
@@ -43,6 +48,7 @@ type Operations interface {
 	Updating
 
 	GetLastOperation(instanceID string) (*internal.Operation, error)
+	GetLastOperationByTypes(instanceID string, types []internal.OperationType) (*internal.Operation, error)
 	GetOperationByID(operationID string) (*internal.Operation, error)
 	GetNotFinishedOperationsByType(operationType internal.OperationType) ([]internal.Operation, error)
 	GetOperationStatsByPlan() (map[string]internal.OperationStats, error)
@@ -60,6 +66,7 @@ type Operations interface {
 	ListOperationsInTimeRange(from, to time.Time) ([]internal.Operation, error)
 
 	DeleteByID(operationID string) error
+	GetAllOperations() ([]internal.Operation, error)
 }
 
 type Provisioning interface {

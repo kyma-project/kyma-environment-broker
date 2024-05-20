@@ -185,9 +185,7 @@ const (
 )
 
 type Operation struct {
-	// following fields are serialized to JSON and stored in the storage
-	InstanceDetails
-
+	// following fields are stored in the storage
 	ID        string        `json:"-"`
 	Version   int           `json:"-"`
 	CreatedAt time.Time     `json:"-"`
@@ -200,12 +198,12 @@ type Operation struct {
 	Description            string                    `json:"-"`
 	ProvisioningParameters ProvisioningParameters    `json:"-"`
 
-	InputCreator ProvisionerInputCreator `json:"-"`
-
 	// OrchestrationID specifies the origin orchestration which triggers the operation, empty for OSB operations (provisioning/deprovisioning)
-	OrchestrationID string             `json:"-"`
-	FinishedStages  []string           `json:"-"`
-	LastError       kebError.LastError `json:"-"`
+	OrchestrationID string   `json:"-"`
+	FinishedStages  []string `json:"-"`
+
+	// following fields are serialized to JSON and stored in the storage
+	InstanceDetails
 
 	// PROVISIONING
 	RuntimeVersion RuntimeVersionData `json:"runtime_version"`
@@ -215,7 +213,6 @@ type Operation struct {
 	// Temporary indicates that this deprovisioning operation must not remove the instance
 	Temporary                   bool      `json:"temporary"`
 	ClusterConfigurationDeleted bool      `json:"clusterConfigurationDeleted"`
-	Retries                     int       `json:"-"`
 	ReconcilerDeregistrationAt  time.Time `json:"reconcilerDeregistrationAt"`
 	ExcutedButNotCompleted      []string  `json:"excutedButNotCompleted"`
 	UserAgent                   string    `json:"userAgent,omitempty"`
@@ -224,7 +221,18 @@ type Operation struct {
 	UpdatingParameters    UpdatingParametersDTO `json:"updating_parameters"`
 	CheckReconcilerStatus bool                  `json:"check_reconciler_status"`
 
-	// following fields are not stored in the storage
+	// UPGRADE KYMA
+	orchestration.RuntimeOperation `json:"runtime_operation"`
+	ClusterConfigurationApplied    bool `json:"cluster_configuration_applied"`
+
+	// KymaTemplate is read from the configuration then used in the apply_kyma step
+	KymaTemplate string `json:"KymaTemplate"`
+
+	LastError kebError.LastError `json:"last_error"`
+
+	// following fields are not stored in the storage and should be added to the Merge function
+	InputCreator ProvisionerInputCreator `json:"-"`
+	Retries      int                     `json:"-"`
 
 	// Last runtime state payload
 	LastRuntimeState RuntimeState `json:"-"`
@@ -232,13 +240,6 @@ type Operation struct {
 	// Flag used by the steps regarding BTP-Operator credentials update
 	// denotes whether the payload to reconciler differs from last runtime state
 	RequiresReconcilerUpdate bool `json:"-"`
-
-	// UPGRADE KYMA
-	orchestration.RuntimeOperation `json:"runtime_operation"`
-	ClusterConfigurationApplied    bool `json:"cluster_configuration_applied"`
-
-	// KymaTemplate is read from the configuration then used in the apply_kyma step
-	KymaTemplate string `json:"KymaTemplate"`
 }
 
 type GroupedOperations struct {
@@ -259,6 +260,13 @@ func (o *Operation) EventInfof(fmt string, args ...any) {
 
 func (o *Operation) EventErrorf(err error, fmt string, args ...any) {
 	events.Errorf(o.InstanceID, o.ID, err, fmt, args...)
+}
+
+func (o *Operation) Merge(operation *Operation) {
+	o.InputCreator = operation.InputCreator
+	o.Retries = operation.Retries
+	o.LastRuntimeState = operation.LastRuntimeState
+	o.RequiresReconcilerUpdate = operation.RequiresReconcilerUpdate
 }
 
 // Orchestration holds all information about an orchestration.
@@ -362,6 +370,7 @@ type InstanceArchived struct {
 
 	ProvisioningStartedAt         time.Time
 	ProvisioningFinishedAt        time.Time
+	ProvisioningState             domain.LastOperationState
 	FirstDeprovisioningStartedAt  time.Time
 	FirstDeprovisioningFinishedAt time.Time
 	LastDeprovisioningFinishedAt  time.Time
@@ -729,7 +738,6 @@ type ConfigForPlan struct {
 
 func (c *ConfigForPlan) ContainsAdditionalComponent(componentName string) bool {
 	for _, c := range c.AdditionalComponents {
-		fmt.Println(c.Name)
 		if c.Name == componentName {
 			return true
 		}
@@ -743,4 +751,9 @@ type SubaccountState struct {
 	BetaEnabled       string `json:"betaEnabled"`
 	UsedForProduction string `json:"usedForProduction"`
 	ModifiedAt        int64  `json:"modifiedAt"`
+}
+
+type DeletedStats struct {
+	NumberOfDeletedInstances              int
+	NumberOfOperationsForDeletedInstances int
 }

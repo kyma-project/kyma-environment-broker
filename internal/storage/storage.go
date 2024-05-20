@@ -1,7 +1,6 @@
 package storage
 
 import (
-	"log"
 	"time"
 
 	"github.com/gocraft/dbr"
@@ -73,11 +72,13 @@ func NewMemoryStorage() BrokerStorage {
 
 type inMemoryEvents struct {
 	events []eventsapi.EventDTO
+	log    *logrus.Logger
 }
 
 func NewInMemoryEvents() *inMemoryEvents {
 	return &inMemoryEvents{
 		events: make([]eventsapi.EventDTO, 0),
+		log:    logrus.New(),
 	}
 }
 
@@ -87,7 +88,7 @@ func (_ inMemoryEvents) RunGarbageCollection(pollingPeriod, retention time.Durat
 
 func (e *inMemoryEvents) InsertEvent(eventLevel eventsapi.EventLevel, message, instanceID, operationID string) {
 	e.events = append(e.events, eventsapi.EventDTO{Level: eventLevel, InstanceID: &instanceID, OperationID: &operationID, Message: message})
-	log.Printf("EVENT [%v/%v] %v: %v\n", instanceID, operationID, eventLevel, message)
+	e.log.Printf("EVENT [%v/%v] %v: %v\n", instanceID, operationID, eventLevel, message)
 }
 
 func (e *inMemoryEvents) ListEvents(filter eventsapi.EventFilter) ([]eventsapi.EventDTO, error) {

@@ -6,8 +6,7 @@ env:
   KYMA_ENVIRONMENT_BROKER_REPO: ${{ github.repository_owner }}/kyma-environment-broker
   GIT_EMAIL: team-gopher+1@sap.com
   GIT_NAME: kyma-gopher-bot
-  BUMP_SEC_SCANNERS_BRANCH_NAME: sec-scanners-config-${{ inputs.name }}
-  BUMP_KEB_BRANCH_NAME: bump-keb-${{ inputs.name }}
+  BUMP_CHART_AND_IMAGES: bump-chart-and-images-${{ inputs.name }}
 
 on:
   workflow_dispatch:
@@ -16,10 +15,6 @@ on:
         description: 'Create release'
         default: ""
         required: true
-      sec-scanners-config:
-        type: boolean
-        description: 'Create PR with sec-scanners-config bump'
-        default: true
       dry-run:
         type: boolean
         description: 'Do not publish'
@@ -61,11 +56,25 @@ jobs:
           NAME: ${{ inputs.name }}
         run: python3 scripts/python/release_label_validator.py
 
-  bump-sec-scanners-config:
-    name: Bump sec-scanners-config
-    needs: validate-release
-    runs-on: ubuntu-latest
+  run-unit-tests:
+    name: Unit tests, go mod tidy
+    uses: "./.github/workflows/run-unit-tests-reusable.yaml"
+    with:
+      release: "true"
 
+  run-keb-chart-tests:
+    name: Validate KEB chart 
+    uses: "./.github/workflows/run-keb-chart-tests-reusable.yaml"
+    secrets: inherit
+    with:
+      last-k3s-versions: ${{ vars.LAST_K3S_VERSIONS }}
+      release: "true"
+      version: ${{ inputs.name }}
+
+  bumps:
+    name: Bump sec-scanners-config, KEB chart
+    needs: [validate-release, run-unit-tests, run-keb-chart-tests]
+    runs-on: ubuntu-latest
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -74,34 +83,35 @@ jobs:
       - run: git pull
 
       - name: Update sec-scanners-config.yaml
-        if: ${{ inputs.sec-scanners-config }}
         run: scripts/create_scan_config.sh "sec-scanners-config.yaml" ${{ inputs.name }}
 
+      - name: Bump KEB chart
+        run: scripts/bump_keb_chart.sh ${{ inputs.name }}
+
       - name: Create PR if anything changed
-        if: ${{ inputs.sec-scanners-config }}
         env:
           GH_TOKEN: ${{ secrets.BOT_TOKEN }}
         run: |
           prs=$(gh pr list -A ${{ env.GIT_NAME }} --state open --json headRefName | jq -r '.[] | .headRefName')
-          if echo $prs | tr " " '\n' | grep -F -q -x ${{ env.BUMP_SEC_SCANNERS_BRANCH_NAME }}; then
+          if echo $prs | tr " " '\n' | grep -F -q -x ${{ env.BUMP_CHART_AND_IMAGES }}; then
             echo "PR already exists, no need to create a new one"
-            echo "PR_NUMBER=$(gh pr list --search "base:main head:${{ env.BUMP_SEC_SCANNERS_BRANCH_NAME }}" --json number | jq -r '.[] | .number')" >> $GITHUB_ENV
+            echo "PR_NUMBER=$(gh pr list --search "base:main head:${{ env.BUMP_CHART_AND_IMAGES }}" --json number | jq -r '.[] | .number')" >> $GITHUB_ENV
           elif [ -z "$(git status --porcelain)" ]; then
             echo "Nothing changed, no need to create PR"
             echo "PR_NUMBER=-1" >> $GITHUB_ENV
           else
-            PR_STATUS=$(scripts/create_sec_scanner_bump_pr.sh ${{ inputs.name }})
+            PR_STATUS=$(scripts/create_bump_pr.sh ${{ inputs.name }})
             echo "PR_NUMBER=$(echo "$PR_STATUS" | tail -n 1)" >> $GITHUB_ENV
           fi
 
       - name: Await PR merge
-        if: ${{ inputs.sec-scanners-config }}
         timeout-minutes: 45
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           if [ "$PR_NUMBER" -gt 0 ]; then
             scripts/await_pr_merge.sh
+            git push origin -d ${{ env.BUMP_CHART_AND_IMAGES }}
           else
             echo "Step skipped"
           fi
@@ -121,34 +131,16 @@ jobs:
     outputs:
       latest_commit: ${{ steps.pull-ref.outputs.latest_commit }}
 
-  run-unit-tests:
-    name: Unit tests, go mod tidy
-    needs: validate-release
-    uses: "./.github/workflows/run-unit-tests-reusable.yaml"
-    with:
-      release: "true"
-
-  run-keb-chart-tests:
-    name: Validate KEB chart 
-    needs: validate-release
-    uses: "./.github/workflows/run-keb-chart-tests-reusable.yaml"
-    secrets: inherit
-    with:
-      last-k3s-versions: ${{ vars.LAST_K3S_VERSIONS }}
-      release: "true"
-      version: ${{ inputs.name }}
-
   create-draft:
     name: Create draft release
-    needs: [bump-sec-scanners-config,validate-release]
+    needs: bumps
     runs-on: ubuntu-latest
-
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
-          ref: ${{ needs.bump-sec-scanners-config.outputs.latest_commit}}
+          ref: ${{ needs.bumps.outputs.latest_commit}}
 
       - name: Create draft release
         id: create-draft
@@ -167,174 +159,84 @@ jobs:
     outputs:
       release_id: ${{ steps.create-draft.outputs.release_id }}
     
-  wait-for-prow-jobs:
-    name: Wait for prow jobs
-    needs: [create-draft, bump-sec-scanners-config]
+  wait-for-commit-statuses:
+    name: Wait for commit statuses
+    needs: [create-draft, bumps]
     runs-on: ubuntu-latest
-
-    steps:
-      - name: Wait for post-keb-release-build status
-        uses: autotelic/action-wait-for-status-check@6556cf50c8fb6608412945382eae73581f56cbb4
-        id: wait-for-post-keb-release-build
-        with:
-          token: ${{ secrets.GITHUB_TOKEN }}
-          statusName: "post-keb-release-build"
-          timeoutSeconds: "300"
-          ref: ${{ needs.bump-sec-scanners-config.outputs.latest_commit}}
-
-      - name: Check if post-keb-release-build status is not success
-        if: steps.wait-for-post-keb-release-build.outputs.state != 'success'
-        run: |
-            echo 'post-keb-release-build failed.'
-            exit 1
-
-      - name: Wait for post-keb-runtime-reconciler-job-release-build status
-        uses: autotelic/action-wait-for-status-check@6556cf50c8fb6608412945382eae73581f56cbb4
-        id: wait-for-post-keb-runtime-reconciler-job-release-build
-        with:
-          token: ${{ secrets.GITHUB_TOKEN }}
-          statusName: "post-keb-runtime-reconciler-job-release-build"
-          timeoutSeconds: "300"
-          ref: ${{ needs.bump-sec-scanners-config.outputs.latest_commit}}
-
-      - name: Check if post-keb-runtime-reconciler-job-release-build status is not success
-        if: steps.wait-for-post-keb-runtime-reconciler-job-release-build.outputs.state != 'success'
-        run: |
-          echo 'post-keb-runtime-reconciler-job-release-build failed.'
-          exit 1
-
-      - name: Wait for post-keb-subaccount-cleanup-job-release-build status
-        uses: autotelic/action-wait-for-status-check@6556cf50c8fb6608412945382eae73581f56cbb4
-        id: wait-for-post-keb-subaccount-cleanup-job-release-build
-        with:
-          token: ${{ secrets.GITHUB_TOKEN }}
-          statusName: "post-keb-subaccount-cleanup-job-release-build"
-          timeoutSeconds: "300"
-          ref: ${{ needs.bump-sec-scanners-config.outputs.latest_commit}}
-
-      - name: Check if post-keb-subaccount-cleanup-job-release-build status is not success
-        if: steps.wait-for-post-keb-subaccount-cleanup-job-release-build.outputs.state != 'success'
-        run: |
-          echo 'post-keb-subaccount-cleanup-job-release-build failed.'
-          exit 1
-
-      - name: Wait for post-keb-trial-cleanup-job-release-build status
-        uses: autotelic/action-wait-for-status-check@6556cf50c8fb6608412945382eae73581f56cbb4
-        id: wait-for-post-keb-trial-cleanup-job-release-build
-        with:
-          token: ${{ secrets.GITHUB_TOKEN }}
-          statusName: "post-keb-trial-cleanup-job-release-build"
-          timeoutSeconds: "300"
-          ref: ${{ needs.bump-sec-scanners-config.outputs.latest_commit}}
-
-      - name: Check if post-keb-trial-cleanup-job-release-build status is not success
-        if: steps.wait-for-post-keb-trial-cleanup-job-release-build.outputs.state != 'success'
-        run: |
-          echo 'wait-for-post-keb-trial-cleanup-job-release-build failed.'
-          exit 1
-
-      - name: Wait for post-keb-cleanup-job-release-build status
-        uses: autotelic/action-wait-for-status-check@6556cf50c8fb6608412945382eae73581f56cbb4
-        id: wait-for-post-keb-cleanup-job-release-build
-        with:
-          token: ${{ secrets.GITHUB_TOKEN }}
-          statusName: "post-keb-cleanup-job-release-build"
-          timeoutSeconds: "300"
-          ref: ${{ needs.bump-sec-scanners-config.outputs.latest_commit}}
-
-      - name: Check if post-keb-cleanup-job-release-build status is not success
-        if: steps.wait-for-post-keb-cleanup-job-release-build.outputs.state != 'success'
-        run: |
-          echo 'post-keb-cleanup-job-release-build failed.'
-          exit 1
-
-      - name: Wait for post-keb-deprovision-retrigger-job-release-build status
-        uses: autotelic/action-wait-for-status-check@6556cf50c8fb6608412945382eae73581f56cbb4
-        id: wait-for-post-keb-deprovision-retrigger-job-release-build
-        with:
-          token: ${{ secrets.GITHUB_TOKEN }}
-          statusName: "post-keb-deprovision-retrigger-job-release-build"
-          timeoutSeconds: "300"
-          ref: ${{ needs.bump-sec-scanners-config.outputs.latest_commit}}
-
-      - name: Check if post-keb-deprovision-retrigger-job-release-build status is not success
-        if: steps.wait-for-post-keb-deprovision-retrigger-job-release-build.outputs.state != 'success'
-        run: |
-          echo 'post-keb-deprovision-retrigger-job-release-build failed.'
-          exit 1
-
-  bump-keb-chart:
-    name: Bump KEB chart
-    needs: [bump-sec-scanners-config, wait-for-prow-jobs]
-    runs-on: ubuntu-latest
-
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
-          ref: ${{ needs.bump-sec-scanners-config.outputs.latest_commit}}
-      - run: |
-          git checkout main
-          git pull
+          ref: ${{ needs.bumps.outputs.latest_commit}}
 
-      - name: Bump KEB chart
-        run: scripts/bump_keb_chart.sh ${{ inputs.name }}
+      - name: Check post-keb-release-build status
+        uses: ./.github/workflows/check-commit-status
+        with:
+          statusName: "post-keb-release-build"
+          githubToken: ${{ secrets.GITHUB_TOKEN }}
+          commitRef: ${{ needs.bumps.outputs.latest_commit }}
 
-      - name: Create PR if anything changed
-        env:
-          GH_TOKEN: ${{ secrets.BOT_TOKEN }}
-        run: |
-          prs=$(gh pr list -A ${{ env.GIT_NAME }} --state open --json headRefName | jq -r '.[] | .headRefName')
-          if echo $prs | tr " " '\n' | grep -F -q -x ${{ env.BUMP_KEB_BRANCH_NAME }}; then
-            echo "PR already exists, no need to create a new one"
-            echo "PR_NUMBER=$(gh pr list --search "base:main head:${{ env.BUMP_KEB_BRANCH_NAME }}" --json number | jq -r '.[] | .number')" >> $GITHUB_ENV
-          elif [ -z "$(git status --porcelain)" ]; then
-            echo "Nothing changed, no need to create PR"
-            echo "PR_NUMBER=-1" >> $GITHUB_ENV
-          else
-            PR_STATUS=$(scripts/create_bump_keb_chart_pr.sh ${{ inputs.name }})
-            echo "PR_NUMBER=$(echo "$PR_STATUS" | tail -n 1)" >> $GITHUB_ENV
-          fi
+      - name: Check post-keb-runtime-reconciler-job-release-build status
+        uses: ./.github/workflows/check-commit-status
+        with:
+          statusName: "post-keb-runtime-reconciler-job-release-build"
+          githubToken: ${{ secrets.GITHUB_TOKEN }}
+          commitRef: ${{ needs.bumps.outputs.latest_commit }}
 
-      - name: Await PR merge
-        timeout-minutes: 45
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          if [ "$PR_NUMBER" -gt 0 ]; then
-            scripts/await_pr_merge.sh
-          else
-            echo "Step skipped"
-          fi
+      - name: Check post-keb-subaccount-cleanup-job-release-build status
+        uses: ./.github/workflows/check-commit-status
+        with:
+          statusName: "post-keb-subaccount-cleanup-job-release-build"
+          githubToken: ${{ secrets.GITHUB_TOKEN }}
+          commitRef: ${{ needs.bumps.outputs.latest_commit }}
 
-      - name: Save latest commit ref
-        id: pull-ref
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          git checkout main
-          git stash
-          git pull
-          LATEST_COMMIT=$(git rev-parse HEAD)
-          echo "latest_commit=$LATEST_COMMIT" >> $GITHUB_OUTPUT
-          echo "Latest commit ref $LATEST_COMMIT"
+      - name: Check post-keb-cleanup-job-release-build status
+        uses: ./.github/workflows/check-commit-status
+        with:
+          statusName: "post-keb-cleanup-job-release-build"
+          githubToken: ${{ secrets.GITHUB_TOKEN }}
+          commitRef: ${{ needs.bumps.outputs.latest_commit }}
 
-    outputs:
-      latest_commit: ${{ steps.pull-ref.outputs.latest_commit }}
+      - name: Check post-keb-deprovision-retrigger-job-release-build status
+        uses: ./.github/workflows/check-commit-status
+        with:
+          statusName: "post-keb-deprovision-retrigger-job-release-build"
+          githubToken: ${{ secrets.GITHUB_TOKEN }}
+          commitRef: ${{ needs.bumps.outputs.latest_commit }}
+
+      - name: Check post-keb-archiver-job-release-build status
+        uses: ./.github/workflows/check-commit-status
+        with:
+          statusName: "post-keb-archiver-job-release-build"
+          githubToken: ${{ secrets.GITHUB_TOKEN }}
+          commitRef: ${{ needs.bumps.outputs.latest_commit }}
+
+      - name: Check post-keb-expirator-release-build status
+        uses: ./.github/workflows/check-commit-status
+        with:
+          statusName: "post-keb-expirator-release-build"
+          githubToken: ${{ secrets.GITHUB_TOKEN }}
+          commitRef: ${{ needs.bumps.outputs.latest_commit }}
+
+      - name: Check post-keb-subaccount-sync-release-build status
+        uses: ./.github/workflows/check-commit-status
+        with:
+          statusName: "post-keb-subaccount-sync-release-build"
+          githubToken: ${{ secrets.GITHUB_TOKEN }}
+          commitRef: ${{ needs.bumps.outputs.latest_commit }}
 
   publish-release:
     name: Publish release
-    needs: [create-draft, run-unit-tests, run-keb-chart-tests, bump-keb-chart]
+    needs: [wait-for-commit-statuses, bumps, create-draft]
     if: ${{ !inputs.dry-run }}
     runs-on: ubuntu-latest
-
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
-          ref: ${{ needs.bump-keb-chart.outputs.latest_commit}}
+          ref: ${{ needs.bumps.outputs.latest_commit}}
       - run: |
           git checkout main
           git pull
@@ -353,7 +255,7 @@ jobs:
       - name: Update KEB chart metadata
         run: |
           git checkout gh-pages
-          helm repo index --url https://github.com/kyma-project/kyma-environment-broker/releases/download/${{ inputs.name }} --merge ./index.yaml ./
+          helm repo index --url https://github.com/${{ env.KYMA_ENVIRONMENT_BROKER_REPO }}/releases/download/${{ inputs.name }} --merge ./index.yaml ./
 
       - name: Commit KEB chart metadata to gh-pages branch
         run: |
@@ -366,6 +268,7 @@ jobs:
       - name: Publish release
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          REPOSITORY: ${{ github.repository_owner }}/kyma-environment-broker
         run: |
           git checkout main
           ./scripts/publish_release.sh ${{ needs.create-draft.outputs.release_id }}

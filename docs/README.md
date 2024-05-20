@@ -16,6 +16,7 @@ If you want to know how to use KEB, read the documents in the [`user`](user) dir
 * [Check Operation Status](./user/05-30-operation-status.md)
 * [Check SAP BTP, Kyma Runtime Instance Details](./user/05-40-instance-details.md)
 * [Configure List of Modules](./user/05-50-configure-list-of-modules.md)
+* [Kyma Environment Broker Metrics](./user/06-10-metrics.md)
 
 For technical details of KEB, go to the `contributor` directory:  
 * [Authorization](./contributor/01-10-authorization.md)
@@ -39,7 +40,9 @@ For technical details of KEB, go to the `contributor` directory:
 * [Subaccount Cleanup CronJob](./contributor/06-30-subaccount-cleanup-cronjob.md)
 * [Trial Cleanup CronJob](./contributor/06-40-trial-cleanup-cronjob.md)
 * [Deprovision Retrigger CronJob](./contributor/06-50-deprovision-retrigger-cronjob.md)
+* [Archiver Job](./contributor/06-60-archiver-job.md)
 * [Runtime Reconciler](./contributor/07-10-runtime-reconciler.md)
+* [Cleaning and Archiving](./contributor/08-10-cleaning-and-archiving.md)
 
 You can also read about:  
 * [Event Data Platform Tools](https://github.com/kyma-project/kyma-environment-broker/blob/main/utils/edp-registrator/README.md)

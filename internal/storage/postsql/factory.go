@@ -24,7 +24,7 @@ type ReadSession interface {
 	FindAllInstancesForRuntimes(runtimeIdList []string) ([]dbmodel.InstanceDTO, dberr.Error)
 	FindAllInstancesForSubAccounts(subAccountslist []string) ([]dbmodel.InstanceDTO, dberr.Error)
 	GetInstanceByID(instanceID string) (dbmodel.InstanceDTO, dberr.Error)
-	GetLastOperation(instanceID string) (dbmodel.OperationDTO, dberr.Error)
+	GetLastOperation(instanceID string, types []internal.OperationType) (dbmodel.OperationDTO, dberr.Error)
 	GetOperationByID(opID string) (dbmodel.OperationDTO, dberr.Error)
 	GetNotFinishedOperationsByType(operationType internal.OperationType) ([]dbmodel.OperationDTO, dberr.Error)
 	CountNotFinishedOperationsByInstanceID(instanceID string) (int, dberr.Error)
@@ -56,6 +56,12 @@ type ReadSession interface {
 	ListSubaccountStates() ([]dbmodel.SubaccountStateDTO, dberr.Error)
 	GetInstanceArchivedByID(id string) (dbmodel.InstanceArchivedDTO, error)
 	GetOperationsStatsV2() ([]dbmodel.OperationStatEntryV2, error)
+	ListDeletedInstanceIDs(amount int) ([]string, error)
+	NumberOfOperationsForDeletedInstances() (int, error)
+	TotalNumberOfInstancesArchived() (int, error)
+	NumberOfDeletedInstances() (int, error)
+	TotalNumberOfInstancesArchivedForGlobalAccountID(globalAccountID string, planID string) (int, error)
+	GetAllOperations() ([]dbmodel.OperationDTO, error)
 }
 
 //go:generate mockery --name=WriteSession

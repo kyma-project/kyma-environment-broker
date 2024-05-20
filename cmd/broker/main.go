@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"io"
-	"log"
 	"math/rand"
 	"net/http"
 	"os"
@@ -12,15 +11,16 @@ import (
 	"sort"
 	"time"
 
-	"github.com/kyma-project/kyma-environment-broker/internal/euaccess"
+	"github.com/kyma-project/kyma-environment-broker/internal/whitelist"
+
 	"github.com/kyma-project/kyma-environment-broker/internal/expiration"
+	"github.com/kyma-project/kyma-environment-broker/internal/metricsv2"
 	"github.com/kyma-project/kyma-environment-broker/internal/profiler"
 
 	"code.cloudfoundry.org/lager"
 	"github.com/dlmiddlecote/sqlstats"
 	"github.com/gorilla/handlers"
 	"github.com/gorilla/mux"
-	"github.com/kyma-project/kyma-environment-broker/common/director"
 	"github.com/kyma-project/kyma-environment-broker/common/gardener"
 	"github.com/kyma-project/kyma-environment-broker/common/hyperscaler"
 	orchestrationExt "github.com/kyma-project/kyma-environment-broker/common/orchestration"
@@ -106,7 +106,6 @@ type Config struct {
 
 	Provisioner input.Config
 	Reconciler  reconciler.Config
-	Director    director.Config
 	Database    storage.Config
 	Gardener    gardener.Config
 	Kubeconfig  kubeconfig.Config
@@ -124,9 +123,8 @@ type Config struct {
 	ReconcilerIntegrationDisabled                                       bool   `envconfig:"default=false"`
 	InfrastructureManagerIntegrationDisabled                            bool   `envconfig:"default=true"`
 	AvsMaintenanceModeDuringUpgradeAlwaysDisabledGlobalAccountsFilePath string
-
-	Broker          broker.Config
-	CatalogFilePath string
+	Broker                                                              broker.Config
+	CatalogFilePath                                                     string
 
 	Avs avs.Config
 	IAS ias.Config
@@ -155,6 +153,8 @@ type Config struct {
 	// FreemiumProviders is a list of providers for freemium
 	FreemiumProviders []string `envconfig:"default=aws"`
 
+	FreemiumWhitelistedGlobalAccountsFilePath string
+
 	DomainName string
 
 	// Enable/disable profiler configuration. The profiler samples will be stored
@@ -164,6 +164,8 @@ type Config struct {
 
 	Events events.Config
 
+	MetricsV2 metricsv2.Config
+
 	Provisioning    process.StagedManagerConfiguration
 	Deprovisioning  process.StagedManagerConfiguration
 	Update          process.StagedManagerConfiguration
@@ -171,6 +173,8 @@ type Config struct {
 	ArchiveDryRun   bool `envconfig:"default=true"`
 	CleaningEnabled bool `envconfig:"default=false"`
 	CleaningDryRun  bool `envconfig:"default=true"`
+
+	KymaResourceDeletionTimeout time.Duration `envconfig:"default=30s"`
 }
 
 type K8sClientProvider interface {
@@ -194,10 +198,24 @@ func main() {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
+	// set default formatted
+	logrus.SetFormatter(&logrus.JSONFormatter{
+		TimestampFormat: time.RFC3339Nano,
+	})
+	logs := logrus.New()
+	logs.SetFormatter(&logrus.JSONFormatter{
+		TimestampFormat: time.RFC3339Nano,
+	})
+
 	// create and fill config
 	var cfg Config
 	err = envconfig.InitWithPrefix(&cfg, "APP")
-	fatalOnError(err)
+	fatalOnError(err, logs)
+
+	if cfg.LogLevel != "" {
+		l, _ := logrus.ParseLevel(cfg.LogLevel)
+		logs.SetLevel(l)
+	}
 
 	// check default Kyma versions
 	err = checkDefaultVersions(cfg.KymaVersion)
@@ -211,13 +229,6 @@ func main() {
 
 	logger.Info("Starting Kyma Environment Broker")
 
-	logs := logrus.New()
-	logs.SetFormatter(&logrus.JSONFormatter{})
-	if cfg.LogLevel != "" {
-		l, _ := logrus.ParseLevel(cfg.LogLevel)
-		logs.SetLevel(l)
-	}
-
 	logger.Info("Registering healthz endpoint for health probes")
 	health.NewServer(cfg.Host, cfg.StatusPort, logs).ServeAsync()
 	profiler := profiler.NewProfiler(cfg.Profiler, logger)
@@ -227,17 +238,19 @@ func main() {
 	logs.Infof("Setting reconciler timeout: provisioning=%s", cfg.Reconciler.ProvisioningTimeout)
 	logs.Infof("Setting staged manager configuration: provisioning=%s, deprovisioning=%s, update=%s", cfg.Provisioning, cfg.Deprovisioning, cfg.Update)
 	logs.Infof("InfrastructureManagerIntegrationDisabled: %v", cfg.InfrastructureManagerIntegrationDisabled)
+	logs.Infof("Archiving enabled: %v, dry run: %v", cfg.ArchiveEnabled, cfg.ArchiveDryRun)
+	logs.Infof("Cleaning enabled: %v, dry run: %v", cfg.CleaningEnabled, cfg.CleaningDryRun)
 
 	// create provisioner client
-	provisionerClient := provisioner.NewProvisionerClient(cfg.Provisioner.URL, cfg.DumpProvisionerRequests)
+	provisionerClient := provisioner.NewProvisionerClient(cfg.Provisioner.URL, cfg.DumpProvisionerRequests, logs.WithField("service", "provisioner"))
 
 	reconcilerClient := reconciler.NewReconcilerClient(http.DefaultClient, logs.WithField("service", "reconciler"), &cfg.Reconciler)
 
 	// create kubernetes client
 	k8sCfg, err := config.GetConfig()
-	fatalOnError(err)
+	fatalOnError(err, logs)
 	cli, err := initClient(k8sCfg)
-	fatalOnError(err)
+	fatalOnError(err, logs)
 	skrK8sClientProvider := kubeconfig.NewK8sClientFromSecretProvider(cli)
 
 	// create storage
@@ -247,7 +260,7 @@ func main() {
 		db = storage.NewMemoryStorage()
 	} else {
 		store, conn, err := storage.NewFromConfig(cfg.Database, cfg.Events, cipher, logs.WithField("service", "storage"))
-		fatalOnError(err)
+		fatalOnError(err, logs)
 		db = store
 		dbStatsCollector := sqlstats.NewStatsCollector("broker", conn)
 		prometheus.MustRegister(dbStatsCollector)
@@ -279,11 +292,11 @@ func main() {
 		kebConfig.NewConfigMapConverter())
 	componentsProvider := runtime.NewComponentsProvider()
 	gardenerClusterConfig, err := gardener.NewGardenerClusterConfig(cfg.Gardener.KubeconfigPath)
-	fatalOnError(err)
+	fatalOnError(err, logs)
 	cfg.Gardener.DNSProviders, err = gardener.ReadDNSProvidersValuesFromYAML(cfg.SkrDnsProvidersValuesYAMLFilePath)
-	fatalOnError(err)
+	fatalOnError(err, logs)
 	dynamicGardener, err := dynamic.NewForConfig(gardenerClusterConfig)
-	fatalOnError(err)
+	fatalOnError(err, logs)
 
 	gardenerNamespace := fmt.Sprintf("garden-%v", cfg.Gardener.Project)
 	gardenerAccountPool := hyperscaler.NewAccountPool(dynamicGardener, gardenerNamespace)
@@ -291,21 +304,21 @@ func main() {
 	accountProvider := hyperscaler.NewAccountProvider(gardenerAccountPool, gardenerSharedPool)
 
 	regions, err := provider.ReadPlatformRegionMappingFromFile(cfg.TrialRegionMappingFilePath)
-	fatalOnError(err)
+	fatalOnError(err, logs)
 	logs.Infof("Platform region mapping for trial: %v", regions)
 
 	oidcDefaultValues, err := runtime.ReadOIDCDefaultValuesFromYAML(cfg.SkrOidcDefaultValuesYAMLFilePath)
-	fatalOnError(err)
+	fatalOnError(err, logs)
 	inputFactory, err := input.NewInputBuilderFactory(optComponentsSvc, disabledComponentsProvider, componentsProvider,
-		configProvider, cfg.Provisioner, cfg.KymaVersion, regions, cfg.FreemiumProviders, oidcDefaultValues, cfg.Broker.IncludeNewMachineTypesInSchema)
-	fatalOnError(err)
+		configProvider, cfg.Provisioner, cfg.KymaVersion, regions, cfg.FreemiumProviders, oidcDefaultValues)
+	fatalOnError(err, logs)
 
-	edpClient := edp.NewClient(cfg.EDP, logs.WithField("service", "edpClient"))
+	edpClient := edp.NewClient(cfg.EDP)
 
 	panicOnError(cfg.Avs.ReadMaintenanceModeDuringUpgradeAlwaysDisabledGAIDsFromYaml(
 		cfg.AvsMaintenanceModeDuringUpgradeAlwaysDisabledGlobalAccountsFilePath))
 	avsClient, err := avs.NewClient(ctx, cfg.Avs, logs)
-	fatalOnError(err)
+	fatalOnError(err, logs)
 	avsDel := avs.NewDelegator(avsClient, cfg.Avs, db.Operations())
 	externalEvalAssistant := avs.NewExternalEvalAssistant(cfg.Avs)
 	internalEvalAssistant := avs.NewInternalEvalAssistant(cfg.Avs)
@@ -329,6 +342,9 @@ func main() {
 
 	// metrics collectors
 	metrics.Register(ctx, eventBroker, db.Operations(), db.Instances(), logs)
+	if cfg.MetricsV2.Enabled {
+		_ = metricsv2.Register(ctx, eventBroker, db.Operations(), db.Instances(), cfg.MetricsV2, logs)
+	}
 
 	// setup runtime overrides appender
 	runtimeOverrides := runtimeoverrides.NewRuntimeOverrides(ctx, cli)
@@ -353,20 +369,22 @@ func main() {
 		runtimeVerConfigurator, db.RuntimeStates(), componentsProvider, reconcilerClient, cfg, skrK8sClientProvider, cli, logs)
 	/***/
 	servicesConfig, err := broker.NewServicesConfigFromFile(cfg.CatalogFilePath)
-	fatalOnError(err)
+	fatalOnError(err, logs)
+
+	// create kubeconfig builder
+	kcBuilder := kubeconfig.NewBuilder(provisionerClient, skrK8sClientProvider)
 
 	// create server
 	router := mux.NewRouter()
 	profiler.AttachRoutesIfSwitched(router)
 
-	createAPI(router, servicesConfig, inputFactory, &cfg, db, provisionQueue, deprovisionQueue, updateQueue, logger, logs, inputFactory.GetPlanDefaults)
+	createAPI(router, servicesConfig, inputFactory, &cfg, db, provisionQueue, deprovisionQueue, updateQueue, logger, logs, inputFactory.GetPlanDefaults, kcBuilder)
 
 	// create metrics endpoint
 	router.Handle("/metrics", promhttp.Handler())
 
 	// create SKR kubeconfig endpoint
-	kcBuilder := kubeconfig.NewBuilder(provisionerClient, skrK8sClientProvider)
-	kcHandler := kubeconfig.NewHandler(db, kcBuilder, cfg.Kubeconfig.AllowOrigins, logs.WithField("service", "kubeconfigHandle"))
+	kcHandler := kubeconfig.NewHandler(db, kcBuilder, cfg.Kubeconfig.AllowOrigins, broker.OwnClusterPlanID, logs.WithField("service", "kubeconfigHandle"))
 	kcHandler.AttachRoutes(router)
 
 	runtimeLister := orchestration.NewRuntimeLister(db.Instances(), db.Operations(), runtime.NewConverter(cfg.DefaultRequestRegion), logs)
@@ -381,15 +399,15 @@ func main() {
 
 	if !cfg.DisableProcessOperationsInProgress {
 		err = processOperationsInProgressByType(internal.OperationTypeProvision, db.Operations(), provisionQueue, logs)
-		fatalOnError(err)
+		fatalOnError(err, logs)
 		err = processOperationsInProgressByType(internal.OperationTypeDeprovision, db.Operations(), deprovisionQueue, logs)
-		fatalOnError(err)
+		fatalOnError(err, logs)
 		err = processOperationsInProgressByType(internal.OperationTypeUpdate, db.Operations(), updateQueue, logs)
-		fatalOnError(err)
+		fatalOnError(err, logs)
 		err = reprocessOrchestrations(orchestrationExt.UpgradeKymaOrchestration, db.Orchestrations(), db.Operations(), kymaQueue, logs)
-		fatalOnError(err)
+		fatalOnError(err, logs)
 		err = reprocessOrchestrations(orchestrationExt.UpgradeClusterOrchestration, db.Orchestrations(), db.Operations(), clusterQueue, logs)
-		fatalOnError(err)
+		fatalOnError(err, logs)
 	} else {
 		logger.Info("Skipping processing operation in progress on start")
 	}
@@ -399,13 +417,15 @@ func main() {
 		"domain": cfg.DomainName,
 	}
 	err = swagger.NewTemplate("/swagger", swaggerTemplates).Execute()
-	fatalOnError(err)
+	fatalOnError(err, logs)
 
 	// create /orchestration
 	orchestrationHandler.AttachRoutes(router)
 
 	// create list runtimes endpoint
-	runtimeHandler := runtime.NewHandler(db.Instances(), db.Operations(), db.RuntimeStates(), db.InstancesArchived(), cfg.MaxPaginationPage, cfg.DefaultRequestRegion, provisionerClient)
+	runtimeHandler := runtime.NewHandler(db.Instances(), db.Operations(),
+		db.RuntimeStates(), db.InstancesArchived(), cfg.MaxPaginationPage,
+		cfg.DefaultRequestRegion, provisionerClient, logs)
 	runtimeHandler.AttachRoutes(router)
 
 	// create expiration endpoint
@@ -417,7 +437,7 @@ func main() {
 		logs.Infof("Call handled: method=%s url=%s statusCode=%d size=%d", params.Request.Method, params.URL.Path, params.StatusCode, params.Size)
 	})
 
-	fatalOnError(http.ListenAndServe(cfg.Host+":"+cfg.Port, svr))
+	fatalOnError(http.ListenAndServe(cfg.Host+":"+cfg.Port, svr), logs)
 }
 
 func checkDefaultVersions(versions ...string) error {
@@ -437,35 +457,39 @@ func isVersionFollowingSemanticVersioning(version string) bool {
 	return false
 }
 
-func createAPI(router *mux.Router, servicesConfig broker.ServicesConfig, planValidator broker.PlanValidator, cfg *Config, db storage.BrokerStorage, provisionQueue, deprovisionQueue, updateQueue *process.Queue, logger lager.Logger, logs logrus.FieldLogger, planDefaults broker.PlanDefaults) {
+func createAPI(router *mux.Router, servicesConfig broker.ServicesConfig, planValidator broker.PlanValidator, cfg *Config, db storage.BrokerStorage, provisionQueue, deprovisionQueue, updateQueue *process.Queue, logger lager.Logger, logs logrus.FieldLogger, planDefaults broker.PlanDefaults, kcBuilder kubeconfig.KcBuilder) {
 	suspensionCtxHandler := suspension.NewContextUpdateHandler(db.Operations(), provisionQueue, deprovisionQueue, logs)
 
 	defaultPlansConfig, err := servicesConfig.DefaultPlansConfig()
-	fatalOnError(err)
+	fatalOnError(err, logs)
 
 	debugSink, err := lager.NewRedactingSink(lager.NewWriterSink(os.Stdout, lager.DEBUG), []string{"instance-details"}, []string{})
-	fatalOnError(err)
+	fatalOnError(err, logs)
 	logger.RegisterSink(debugSink)
 	errorSink, err := lager.NewRedactingSink(lager.NewWriterSink(os.Stderr, lager.ERROR), []string{"instance-details"}, []string{})
-	fatalOnError(err)
+	fatalOnError(err, logs)
 	logger.RegisterSink(errorSink)
 
 	// EU Access whitelisting
-	whitelistedGlobalAccountIds, err := euaccess.ReadWhitelistedGlobalAccountIdsFromFile(cfg.EuAccessWhitelistedGlobalAccountsFilePath)
-	fatalOnError(err)
+	whitelistedGlobalAccountIds, err := whitelist.ReadWhitelistedGlobalAccountIdsFromFile(cfg.EuAccessWhitelistedGlobalAccountsFilePath)
+	fatalOnError(err, logs)
 	logs.Infof("Number of globalAccountIds for EU Access: %d\n", len(whitelistedGlobalAccountIds))
+
+	freemiumGlobalAccountIds, err := whitelist.ReadWhitelistedGlobalAccountIdsFromFile(cfg.FreemiumWhitelistedGlobalAccountsFilePath)
+	fatalOnError(err, logs)
+	logs.Infof("Number of globalAccountIds for unlimited freeemium: %d\n", len(freemiumGlobalAccountIds))
 
 	// create KymaEnvironmentBroker endpoints
 	kymaEnvBroker := &broker.KymaEnvironmentBroker{
 		ServicesEndpoint: broker.NewServices(cfg.Broker, servicesConfig, logs),
-		ProvisionEndpoint: broker.NewProvision(cfg.Broker, cfg.Gardener, db.Operations(), db.Instances(),
+		ProvisionEndpoint: broker.NewProvision(cfg.Broker, cfg.Gardener, db.Operations(), db.Instances(), db.InstancesArchived(),
 			provisionQueue, planValidator, defaultPlansConfig, cfg.EnableOnDemandVersion,
-			planDefaults, whitelistedGlobalAccountIds, cfg.EuAccessRejectionMessage, logs, cfg.KymaDashboardConfig),
+			planDefaults, whitelistedGlobalAccountIds, cfg.EuAccessRejectionMessage, logs, cfg.KymaDashboardConfig, kcBuilder, freemiumGlobalAccountIds),
 		DeprovisionEndpoint: broker.NewDeprovision(db.Instances(), db.Operations(), deprovisionQueue, logs),
 		UpdateEndpoint: broker.NewUpdate(cfg.Broker, db.Instances(), db.RuntimeStates(), db.Operations(),
 			suspensionCtxHandler, cfg.UpdateProcessingEnabled, cfg.UpdateSubAccountMovementEnabled, updateQueue, defaultPlansConfig,
-			planDefaults, logs, cfg.KymaDashboardConfig),
-		GetInstanceEndpoint:          broker.NewGetInstance(cfg.Broker, db.Instances(), db.Operations(), logs),
+			planDefaults, logs, cfg.KymaDashboardConfig, kcBuilder),
+		GetInstanceEndpoint:          broker.NewGetInstance(cfg.Broker, db.Instances(), db.Operations(), kcBuilder, logs),
 		LastOperationEndpoint:        broker.NewLastOperation(db.Operations(), db.InstancesArchived(), logs),
 		BindEndpoint:                 broker.NewBind(cfg.Broker.Binding, db.Instances(), logs),
 		UnbindEndpoint:               broker.NewUnbind(logs),
@@ -595,7 +619,7 @@ func initClient(cfg *rest.Config) (client.Client, error) {
 	return cli, nil
 }
 
-func fatalOnError(err error) {
+func fatalOnError(err error, log logrus.FieldLogger) {
 	if err != nil {
 		log.Fatal(err)
 	}

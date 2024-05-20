@@ -127,7 +127,7 @@ func fixProvisionerInput(disabled bool, euAccess bool) gqlschema.ProvisionRuntim
 				KubernetesVersion:                   k8sVersion,
 				DiskType:                            ptr.String("pd-standard"),
 				VolumeSizeGb:                        ptr.Integer(50),
-				MachineType:                         provider.DefaultOldGCPMachineType,
+				MachineType:                         provider.DefaultGCPMachineType,
 				Region:                              "europe-west3",
 				Provider:                            "gcp",
 				Purpose:                             &shootPurpose,

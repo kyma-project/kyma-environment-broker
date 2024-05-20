@@ -201,10 +201,19 @@
       "type": "object"
     },
     "region": {
+      "_enumDisplayName": {
+        "europe-west3": "europe-west3 (Europe, Frankfurt)",
+        "asia-south1": "asia-south1 (India, Mumbai)",
+        "us-central1": "us-central1 (US Central, IA)",
+        "me-central2": "me-central2 (KSA, Dammam)",
+        "asia-northeast2": "asia-northeast2 (Japan, Osaka)"
+      },
       "enum": [
         "europe-west3",
         "asia-south1",
-        "us-central1"
+        "us-central1",
+        "me-central2",
+        "asia-northeast2"
       ],
       "minLength": 1,
       "type": "string"
