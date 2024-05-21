@@ -187,9 +187,7 @@ func (f *InputBuilderFactory) CreateProvisionInput(provisioningParameters intern
 
 	return &RuntimeInput{
 		provisionRuntimeInput:     initInput,
-		overrides:                 make(map[string][]*gqlschema.ConfigEntryInput, 0),
 		labels:                    make(map[string]string),
-		globalOverrides:           make([]*gqlschema.ConfigEntryInput, 0),
 		config:                    cfg,
 		hyperscalerInputProvider:  provider,
 		optionalComponentsService: f.optComponentsSvc,
@@ -309,8 +307,6 @@ func (f *InputBuilderFactory) CreateUpgradeInput(provisioningParameters internal
 	return &RuntimeInput{
 		provisionRuntimeInput:     kymaInput,
 		upgradeRuntimeInput:       upgradeKymaInput,
-		overrides:                 make(map[string][]*gqlschema.ConfigEntryInput, 0),
-		globalOverrides:           make([]*gqlschema.ConfigEntryInput, 0),
 		optionalComponentsService: f.optComponentsSvc,
 		componentsDisabler:        runtime.NewDisabledComponentsService(disabledComponents),
 		enabledOptionalComponents: map[string]struct{}{},

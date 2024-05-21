@@ -13,14 +13,12 @@ import (
 
 func newInputCreator() *simpleInputCreator {
 	return &simpleInputCreator{
-		overrides:         make(map[string][]*gqlschema.ConfigEntryInput, 0),
 		labels:            make(map[string]string),
 		enabledComponents: []string{},
 	}
 }
 
 type simpleInputCreator struct {
-	overrides         map[string][]*gqlschema.ConfigEntryInput
 	labels            map[string]string
 	enabledComponents []string
 	shootName         *string
@@ -28,11 +26,6 @@ type simpleInputCreator struct {
 	shootDnsProviders gardener.DNSProvidersData
 	clusterName       string
 	config            *internal.ConfigForPlan
-}
-
-func (c *simpleInputCreator) EnableOptionalComponent(name string) internal.ProvisionerInputCreator {
-	c.enabledComponents = append(c.enabledComponents, name)
-	return c
 }
 
 func (c *simpleInputCreator) DisableOptionalComponent(name string) internal.ProvisionerInputCreator {
@@ -69,10 +62,6 @@ func (c *simpleInputCreator) SetShootDNSProviders(providers gardener.DNSProvider
 	return c
 }
 
-func (c *simpleInputCreator) SetOverrides(component string, overrides []*gqlschema.ConfigEntryInput) internal.ProvisionerInputCreator {
-	return c
-}
-
 func (c *simpleInputCreator) CreateProvisionRuntimeInput() (gqlschema.ProvisionRuntimeInput, error) {
 	return gqlschema.ProvisionRuntimeInput{}, nil
 }
@@ -89,38 +78,12 @@ func (c *simpleInputCreator) SetProvisioningParameters(params internal.Provision
 	return c
 }
 
-func (c *simpleInputCreator) AppendOverrides(component string, overrides []*gqlschema.ConfigEntryInput) internal.ProvisionerInputCreator {
-	c.overrides[component] = append(c.overrides[component], overrides...)
-	return c
-}
-
 func (c *simpleInputCreator) Configuration() *internal.ConfigForPlan {
 	return c.config
 }
 
 func (c *simpleInputCreator) Provider() internal.CloudProvider {
 	return internal.GCP
-}
-
-func (c *simpleInputCreator) AppendGlobalOverrides(overrides []*gqlschema.ConfigEntryInput) internal.ProvisionerInputCreator {
-	return c
-}
-
-func (c *simpleInputCreator) AssertOverride(t *testing.T, component string, cei gqlschema.ConfigEntryInput) {
-	cmpOverrides, found := c.overrides[component]
-	require.True(t, found)
-
-	for _, item := range cmpOverrides {
-		if item.Key == cei.Key {
-			assert.Equal(t, cei, *item)
-			return
-		}
-	}
-	assert.Failf(t, "Overrides assert failed", "Expected component override not found: %+v", cei)
-}
-
-func (c *simpleInputCreator) AssertNoOverrides(t *testing.T) {
-	assert.Empty(t, c.overrides)
 }
 
 func (c *simpleInputCreator) AssertLabel(t *testing.T, key, expectedValue string) {

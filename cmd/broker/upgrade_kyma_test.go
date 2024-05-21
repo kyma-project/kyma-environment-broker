@@ -129,7 +129,6 @@ func TestKymaUpgradeScheduledToFutureMaintenanceWindow(t *testing.T) {
 	// given
 	suite := NewBrokerSuiteTest(t)
 	defer suite.TearDown()
-	mockBTPOperatorClusterID()
 	iid := uuid.New().String()
 
 	// Create an SKR with a default autoscaler params

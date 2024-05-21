@@ -16,7 +16,3 @@ func ForKyma1(op internal.UpgradeKymaOperation) bool {
 func SkipForPreviewPlan(op internal.UpgradeKymaOperation) bool {
 	return !broker.IsPreviewPlan(op.ProvisioningParameters.PlanID)
 }
-
-func WhenBTPOperatorCredentialsProvided(op internal.UpgradeKymaOperation) bool {
-	return op.ProvisioningParameters.ErsContext.SMOperatorCredentials != nil
-}

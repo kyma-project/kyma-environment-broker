@@ -59,12 +59,6 @@ func NewKymaOrchestrationProcessingQueue(ctx context.Context, db storage.BrokerS
 			step:     upgrade_kyma.NewApplyKymaStep(db.Operations(), cli),
 		},
 		{
-			disabled: cfg.ReconcilerIntegrationDisabled,
-			weight:   3,
-			cnd:      upgrade_kyma.WhenBTPOperatorCredentialsProvided,
-			step:     upgrade_kyma.NewBTPOperatorOverridesStep(db.Operations()),
-		},
-		{
 			weight: 8,
 			step:   upgrade_kyma.NewSendNotificationStep(db.Operations(), notificationBuilder),
 		},

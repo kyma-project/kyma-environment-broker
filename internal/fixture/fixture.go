@@ -33,7 +33,6 @@ const (
 )
 
 type SimpleInputCreator struct {
-	Overrides         map[string][]*gqlschema.ConfigEntryInput
 	Labels            map[string]string
 	EnabledComponents []string
 	ShootName         *string
@@ -185,7 +184,6 @@ func FixOperation(id, instanceId string, opType internal.OperationType) internal
 
 func FixInputCreator(provider internal.CloudProvider) *SimpleInputCreator {
 	return &SimpleInputCreator{
-		Overrides:         make(map[string][]*gqlschema.ConfigEntryInput, 0),
 		Labels:            make(map[string]string),
 		EnabledComponents: []string{"istio-configuration"},
 		ShootName:         ptr.String("ShootName"),
@@ -408,20 +406,7 @@ func (c *SimpleInputCreator) SetRuntimeID(runtimeID string) internal.Provisioner
 	return c
 }
 
-func (c *SimpleInputCreator) SetOverrides(component string, overrides []*gqlschema.ConfigEntryInput) internal.ProvisionerInputCreator {
-	return c
-}
-
 func (c *SimpleInputCreator) SetOIDCLastValues(oidcConfig gqlschema.OIDCConfigInput) internal.ProvisionerInputCreator {
-	return c
-}
-
-func (c *SimpleInputCreator) AppendOverrides(component string, overrides []*gqlschema.ConfigEntryInput) internal.ProvisionerInputCreator {
-	c.Overrides[component] = append(c.Overrides[component], overrides...)
-	return c
-}
-
-func (c *SimpleInputCreator) AppendGlobalOverrides(overrides []*gqlschema.ConfigEntryInput) internal.ProvisionerInputCreator {
 	return c
 }
 
@@ -446,11 +431,6 @@ func (c *SimpleInputCreator) CreateUpgradeRuntimeInput() (gqlschema.UpgradeRunti
 
 func (c *SimpleInputCreator) CreateUpgradeShootInput() (gqlschema.UpgradeShootInput, error) {
 	return gqlschema.UpgradeShootInput{}, nil
-}
-
-func (c *SimpleInputCreator) EnableOptionalComponent(name string) internal.ProvisionerInputCreator {
-	c.EnabledComponents = append(c.EnabledComponents, name)
-	return c
 }
 
 func (c *SimpleInputCreator) DisableOptionalComponent(name string) internal.ProvisionerInputCreator {

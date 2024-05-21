@@ -78,12 +78,6 @@ func NewProvisioningProcessingQueue(ctx context.Context, provisionManager *proce
 			condition: provisioning.SkipForOwnClusterPlan,
 		},
 		{
-			disabled:  cfg.ReconcilerIntegrationDisabled,
-			condition: provisioning.WhenBTPOperatorCredentialsProvided,
-			stage:     createRuntimeStageName,
-			step:      provisioning.NewBTPOperatorOverridesStep(db.Operations()),
-		},
-		{
 			condition: provisioning.SkipForOwnClusterPlan,
 			stage:     createRuntimeStageName,
 			step:      provisioning.NewCreateRuntimeWithoutKymaStep(db.Operations(), db.RuntimeStates(), db.Instances(), provisionerClient),

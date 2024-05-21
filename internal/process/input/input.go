@@ -44,14 +44,11 @@ type Config struct {
 type RuntimeInput struct {
 	muOptionalComponents sync.Mutex
 	muLabels             sync.Mutex
-	muOverrides          sync.Mutex
 
 	provisionRuntimeInput gqlschema.ProvisionRuntimeInput
 	upgradeRuntimeInput   gqlschema.UpgradeRuntimeInput
 	upgradeShootInput     gqlschema.UpgradeShootInput
-	overrides             map[string][]*gqlschema.ConfigEntryInput
 	labels                map[string]string
-	globalOverrides       []*gqlschema.ConfigEntryInput
 
 	config                    *internal.ConfigForPlan
 	hyperscalerInputProvider  HyperscalerInputProvider
@@ -75,13 +72,6 @@ type RuntimeInput struct {
 
 func (r *RuntimeInput) Configuration() *internal.ConfigForPlan {
 	return r.config
-}
-
-func (r *RuntimeInput) EnableOptionalComponent(componentName string) internal.ProvisionerInputCreator {
-	r.muOptionalComponents.Lock()
-	defer r.muOptionalComponents.Unlock()
-	r.enabledOptionalComponents[componentName] = struct{}{}
-	return r
 }
 
 func (r *RuntimeInput) DisableOptionalComponent(componentName string) internal.ProvisionerInputCreator {
@@ -140,60 +130,6 @@ func (r *RuntimeInput) SetOIDCLastValues(oidcConfig gqlschema.OIDCConfigInput) i
 	return r
 }
 
-// SetOverrides sets the overrides for the given component and discard the previous ones.
-//
-// Deprecated: use AppendOverrides
-func (r *RuntimeInput) SetOverrides(component string, overrides []*gqlschema.ConfigEntryInput) internal.ProvisionerInputCreator {
-	// currently same as in AppendOverrides function, as we working on the same underlying object.
-	r.muOverrides.Lock()
-	defer r.muOverrides.Unlock()
-
-	r.overrides[component] = overrides
-	return r
-}
-
-// AppendOverrides appends overrides for the given components, the existing overrides are preserved.
-func (r *RuntimeInput) AppendOverrides(component string, overrides []*gqlschema.ConfigEntryInput) internal.ProvisionerInputCreator {
-	r.muOverrides.Lock()
-	defer r.muOverrides.Unlock()
-
-	for _, o2 := range overrides {
-		found := false
-		for i, o1 := range r.overrides[component] {
-			if o1.Key == o2.Key {
-				found = true
-				r.overrides[component][i].Secret = o2.Secret
-				r.overrides[component][i].Value = o2.Value
-			}
-		}
-		if !found {
-			r.overrides[component] = append(r.overrides[component], o2)
-		}
-	}
-	return r
-}
-
-// AppendGlobalOverrides appends overrides, the existing overrides are preserved.
-func (r *RuntimeInput) AppendGlobalOverrides(overrides []*gqlschema.ConfigEntryInput) internal.ProvisionerInputCreator {
-	r.muOverrides.Lock()
-	defer r.muOverrides.Unlock()
-
-	for _, o2 := range overrides {
-		found := false
-		for i, o1 := range r.globalOverrides {
-			if o1.Key == o2.Key {
-				found = true
-				r.globalOverrides[i].Secret = o2.Secret
-				r.globalOverrides[i].Value = o2.Value
-			}
-		}
-		if !found {
-			r.globalOverrides = append(r.globalOverrides, o2)
-		}
-	}
-	return r
-}
-
 func (r *RuntimeInput) SetLabel(key, value string) internal.ProvisionerInputCreator {
 	r.muLabels.Lock()
 	defer r.muLabels.Unlock()
@@ -222,14 +158,6 @@ func (r *RuntimeInput) CreateProvisionRuntimeInput() (gqlschema.ProvisionRuntime
 		{
 			name:    "disabling optional components that were not selected",
 			execute: r.resolveOptionalComponentsForProvisionRuntime,
-		},
-		{
-			name:    "applying components overrides",
-			execute: r.applyOverridesForProvisionRuntime,
-		},
-		{
-			name:    "applying global overrides",
-			execute: r.applyGlobalOverridesForProvisionRuntime,
 		},
 		{
 			name:    "applying global configuration",
@@ -276,14 +204,6 @@ func (r *RuntimeInput) CreateUpgradeRuntimeInput() (gqlschema.UpgradeRuntimeInpu
 		{
 			name:    "disabling optional components that were not selected",
 			execute: r.resolveOptionalComponentsForUpgradeRuntime,
-		},
-		{
-			name:    "applying components overrides",
-			execute: r.applyOverridesForUpgradeRuntime,
-		},
-		{
-			name:    "applying global overrides",
-			execute: r.applyGlobalOverridesForUpgradeRuntime,
 		},
 		{
 			name:    "applying global configuration",
@@ -564,38 +484,6 @@ func (r *RuntimeInput) disableComponentsForUpgradeRuntime() error {
 
 	r.upgradeRuntimeInput.KymaConfig.Components = filterOut
 
-	return nil
-}
-
-func (r *RuntimeInput) applyOverridesForProvisionRuntime() error {
-	for i := range r.provisionRuntimeInput.KymaConfig.Components {
-		if entry, found := r.overrides[r.provisionRuntimeInput.KymaConfig.Components[i].Component]; found {
-			r.provisionRuntimeInput.KymaConfig.Components[i].Configuration = []*gqlschema.ConfigEntryInput{}
-			r.provisionRuntimeInput.KymaConfig.Components[i].Configuration = append(r.provisionRuntimeInput.KymaConfig.Components[i].Configuration, entry...)
-		}
-	}
-
-	return nil
-}
-
-func (r *RuntimeInput) applyOverridesForUpgradeRuntime() error {
-	for i := range r.upgradeRuntimeInput.KymaConfig.Components {
-		if entry, found := r.overrides[r.upgradeRuntimeInput.KymaConfig.Components[i].Component]; found {
-			r.upgradeRuntimeInput.KymaConfig.Components[i].Configuration = []*gqlschema.ConfigEntryInput{}
-			r.upgradeRuntimeInput.KymaConfig.Components[i].Configuration = append(r.upgradeRuntimeInput.KymaConfig.Components[i].Configuration, entry...)
-		}
-	}
-
-	return nil
-}
-
-func (r *RuntimeInput) applyGlobalOverridesForProvisionRuntime() error {
-	r.provisionRuntimeInput.KymaConfig.Configuration = r.globalOverrides
-	return nil
-}
-
-func (r *RuntimeInput) applyGlobalOverridesForUpgradeRuntime() error {
-	r.upgradeRuntimeInput.KymaConfig.Configuration = r.globalOverrides
 	return nil
 }
 

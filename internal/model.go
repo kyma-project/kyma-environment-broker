@@ -25,14 +25,9 @@ type ProvisionerInputCreator interface {
 	SetProvisioningParameters(params ProvisioningParameters) ProvisionerInputCreator
 	SetShootName(string) ProvisionerInputCreator
 	SetLabel(key, value string) ProvisionerInputCreator
-	// Deprecated, use: AppendOverrides
-	SetOverrides(component string, overrides []*gqlschema.ConfigEntryInput) ProvisionerInputCreator
-	AppendOverrides(component string, overrides []*gqlschema.ConfigEntryInput) ProvisionerInputCreator
-	AppendGlobalOverrides(overrides []*gqlschema.ConfigEntryInput) ProvisionerInputCreator
 	CreateProvisionRuntimeInput() (gqlschema.ProvisionRuntimeInput, error)
 	CreateUpgradeRuntimeInput() (gqlschema.UpgradeRuntimeInput, error)
 	CreateUpgradeShootInput() (gqlschema.UpgradeShootInput, error)
-	EnableOptionalComponent(componentName string) ProvisionerInputCreator
 	DisableOptionalComponent(componentName string) ProvisionerInputCreator
 	Provider() CloudProvider
 	Configuration() *ConfigForPlan
@@ -734,15 +729,6 @@ type ComponentSource struct {
 type ConfigForPlan struct {
 	AdditionalComponents []KymaComponent `json:"additional-components" yaml:"additional-components"`
 	KymaTemplate         string          `json:"kyma-template" yaml:"kyma-template"`
-}
-
-func (c *ConfigForPlan) ContainsAdditionalComponent(componentName string) bool {
-	for _, c := range c.AdditionalComponents {
-		if c.Name == componentName {
-			return true
-		}
-	}
-	return false
 }
 
 type SubaccountState struct {
