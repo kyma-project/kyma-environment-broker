@@ -10,7 +10,6 @@ import (
 	"github.com/kyma-project/kyma-environment-broker/internal/process/provisioning"
 	"github.com/kyma-project/kyma-environment-broker/internal/process/steps"
 	"github.com/kyma-project/kyma-environment-broker/internal/provisioner"
-	"github.com/kyma-project/kyma-environment-broker/internal/reconciler"
 	"github.com/kyma-project/kyma-environment-broker/internal/runtimeversion"
 	"github.com/kyma-project/kyma-environment-broker/internal/storage"
 	"github.com/sirupsen/logrus"
@@ -21,8 +20,8 @@ func NewProvisioningProcessingQueue(ctx context.Context, provisionManager *proce
 	db storage.BrokerStorage, provisionerClient provisioner.Client, inputFactory input.CreatorForPlan, avsDel *avs.Delegator,
 	internalEvalAssistant *avs.InternalEvalAssistant, externalEvalCreator *provisioning.ExternalEvalCreator,
 	runtimeVerConfigurator *runtimeversion.RuntimeVersionConfigurator,
-	runtimeOverrides provisioning.RuntimeOverridesAppender, edpClient provisioning.EDPClient, accountProvider hyperscaler.AccountProvider,
-	reconcilerClient reconciler.Client, k8sClientProvider provisioning.K8sClientProvider, cli client.Client, logs logrus.FieldLogger) *process.Queue {
+	edpClient provisioning.EDPClient, accountProvider hyperscaler.AccountProvider,
+	k8sClientProvider provisioning.K8sClientProvider, cli client.Client, logs logrus.FieldLogger) *process.Queue {
 
 	const postActionsStageName = "post_actions"
 	provisionManager.DefineStages([]string{startStageName, createRuntimeStageName,
@@ -78,19 +77,6 @@ func NewProvisioningProcessingQueue(ctx context.Context, provisionManager *proce
 			condition: provisioning.SkipForOwnClusterPlan,
 		},
 		{
-			disabled: cfg.ReconcilerIntegrationDisabled,
-			stage:    createRuntimeStageName,
-			step:     provisioning.NewOverridesFromSecretsAndConfigStep(db.Operations(), runtimeOverrides, runtimeVerConfigurator),
-			// Preview plan does not call Reconciler so it does not need overrides
-			condition: skipForPreviewPlan,
-		},
-		{
-			disabled:  cfg.ReconcilerIntegrationDisabled,
-			condition: provisioning.WhenBTPOperatorCredentialsProvided,
-			stage:     createRuntimeStageName,
-			step:      provisioning.NewBTPOperatorOverridesStep(db.Operations()),
-		},
-		{
 			condition: provisioning.SkipForOwnClusterPlan,
 			stage:     createRuntimeStageName,
 			step:      provisioning.NewCreateRuntimeWithoutKymaStep(db.Operations(), db.RuntimeStates(), db.Instances(), provisionerClient),
@@ -131,18 +117,6 @@ func NewProvisioningProcessingQueue(ctx context.Context, provisionManager *proce
 			condition: provisioning.WhenBTPOperatorCredentialsProvided,
 			stage:     createRuntimeStageName,
 			step:      provisioning.NewInjectBTPOperatorCredentialsStep(db.Operations(), k8sClientProvider),
-		},
-		{
-			disabled:  cfg.ReconcilerIntegrationDisabled,
-			stage:     createRuntimeStageName,
-			step:      provisioning.NewCreateClusterConfiguration(db.Operations(), db.RuntimeStates(), reconcilerClient),
-			condition: skipForPreviewPlan,
-		},
-		{
-			disabled:  cfg.ReconcilerIntegrationDisabled,
-			stage:     checkKymaStageName,
-			step:      provisioning.NewCheckClusterConfigurationStep(db.Operations(), reconcilerClient, cfg.Reconciler.ProvisioningTimeout),
-			condition: skipForPreviewPlan,
 		},
 		{
 			disabled: cfg.LifecycleManagerIntegrationDisabled,

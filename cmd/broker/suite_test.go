@@ -682,7 +682,6 @@ func NewProvisioningSuite(t *testing.T, multiZoneCluster bool, controlPlaneFailu
 	internalEvalAssistant := avs.NewInternalEvalAssistant(cfg.Avs)
 	externalEvalCreator := provisioning.NewExternalEvalCreator(avsDel, cfg.Avs.Disabled, externalEvalAssistant)
 
-	runtimeOverrides := runtimeoverrides.NewRuntimeOverrides(ctx, cli)
 	accountVersionMapping := runtimeversion.NewAccountVersionMapping(ctx, cli, cfg.VersionConfig.Namespace, cfg.VersionConfig.Name, logs)
 	runtimeVerConfigurator := runtimeversion.NewRuntimeVersionConfigurator(cfg.KymaVersion, accountVersionMapping, nil)
 
@@ -696,8 +695,8 @@ func NewProvisioningSuite(t *testing.T, multiZoneCluster bool, controlPlaneFailu
 
 	provisionManager := process.NewStagedManager(db.Operations(), eventBroker, cfg.OperationTimeout, cfg.Provisioning, logs.WithField("provisioning", "manager"))
 	provisioningQueue := NewProvisioningProcessingQueue(ctx, provisionManager, workersAmount, cfg, db, provisionerClient, inputFactory, avsDel,
-		internalEvalAssistant, externalEvalCreator, runtimeVerConfigurator, runtimeOverrides, edpClient, accountProvider,
-		reconcilerClient, kubeconfig.NewFakeK8sClientProvider(cli), cli, logs)
+		internalEvalAssistant, externalEvalCreator, runtimeVerConfigurator, edpClient, accountProvider,
+		kubeconfig.NewFakeK8sClientProvider(cli), cli, logs)
 
 	provisioningQueue.SpeedUp(10000)
 	provisionManager.SpeedUp(10000)

@@ -28,6 +28,11 @@ type KymaVersionConfigurator interface {
 	ForGlobalAccount(string) (string, bool, error)
 }
 
+//go:generate mockery --name=RuntimeVersionConfiguratorForProvisioning --output=automock --outpkg=automock --case=underscore
+type RuntimeVersionConfiguratorForProvisioning interface {
+	ForProvisioning(op internal.Operation) (*internal.RuntimeVersionData, error)
+}
+
 type InitialisationStep struct {
 	operationManager       *process.OperationManager
 	inputBuilder           input.CreatorForPlan

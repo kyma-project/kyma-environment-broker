@@ -230,8 +230,8 @@ func NewBrokerSuiteTestWithConfig(t *testing.T, cfg *Config, version ...string) 
 	k8sClientProvider := kubeconfig.NewFakeK8sClientProvider(fakeK8sSKRClient)
 	provisionManager := process.NewStagedManager(db.Operations(), eventBroker, cfg.OperationTimeout, cfg.Provisioning, logs.WithField("provisioning", "manager"))
 	provisioningQueue := NewProvisioningProcessingQueue(context.Background(), provisionManager, workersAmount, cfg, db, provisionerClient, inputFactory,
-		avsDel, internalEvalAssistant, externalEvalCreator, runtimeVerConfigurator, runtimeOverrides,
-		edpClient, accountProvider, reconcilerClient, k8sClientProvider, cli, logs)
+		avsDel, internalEvalAssistant, externalEvalCreator, runtimeVerConfigurator,
+		edpClient, accountProvider, k8sClientProvider, cli, logs)
 
 	provisioningQueue.SpeedUp(10000)
 	provisionManager.SpeedUp(10000)

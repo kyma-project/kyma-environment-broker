@@ -387,7 +387,7 @@ func main() {
 	provisionManager := process.NewStagedManager(db.Operations(), eventBroker, cfg.OperationTimeout, cfg.Provisioning, logs.WithField("provisioning", "manager"))
 	provisionQueue := NewProvisioningProcessingQueue(ctx, provisionManager, cfg.Provisioning.WorkersAmount, &cfg, db, provisionerClient, inputFactory,
 		avsDel, internalEvalAssistant, externalEvalCreator, runtimeVerConfigurator,
-		runtimeOverrides, edpClient, accountProvider, reconcilerClient, skrK8sClientProvider, cli, logs)
+		edpClient, accountProvider, skrK8sClientProvider, cli, logs)
 
 	deprovisionManager := process.NewStagedManager(db.Operations(), eventBroker, cfg.OperationTimeout, cfg.Deprovisioning, logs.WithField("deprovisioning", "manager"))
 	deprovisionQueue := NewDeprovisioningProcessingQueue(ctx, cfg.Deprovisioning.WorkersAmount, deprovisionManager, &cfg, db, eventBroker, provisionerClient,
@@ -657,8 +657,4 @@ func panicOnError(err error) {
 	if err != nil {
 		panic(err)
 	}
-}
-
-func skipForPreviewPlan(operation internal.Operation) bool {
-	return !broker.IsPreviewPlan(operation.ProvisioningParameters.PlanID)
 }
