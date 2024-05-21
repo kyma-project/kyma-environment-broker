@@ -11,7 +11,6 @@ import (
 
 	kebConfig "github.com/kyma-project/kyma-environment-broker/internal/config"
 
-	"github.com/kyma-project/kyma-environment-broker/internal/reconciler"
 	"github.com/kyma-project/kyma-environment-broker/internal/storage/dberr"
 	corev1 "k8s.io/api/core/v1"
 	apiextensionsv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
@@ -106,7 +105,6 @@ func NewDeprovisioningSuite(t *testing.T) *DeprovisioningSuite {
 	bundleBuilder := ias.NewBundleBuilder(iasFakeClient, cfg.IAS)
 
 	edpClient := fixEDPClient(t)
-	reconcilerClient := reconciler.NewFakeClient()
 
 	accountProvider := fixAccountProvider()
 
@@ -129,7 +127,7 @@ func NewDeprovisioningSuite(t *testing.T) *DeprovisioningSuite {
 
 	deprovisioningQueue := NewDeprovisioningProcessingQueue(ctx, workersAmount, deprovisionManager, cfg, db, eventBroker,
 		provisionerClient, avsDel, internalEvalAssistant, externalEvalAssistant,
-		bundleBuilder, edpClient, accountProvider, reconcilerClient, kubeconfig.NewFakeK8sClientProvider(fakeK8sSKRClient), fakeK8sSKRClient, configProvider, logs,
+		bundleBuilder, edpClient, accountProvider, kubeconfig.NewFakeK8sClientProvider(fakeK8sSKRClient), fakeK8sSKRClient, configProvider, logs,
 	)
 
 	deprovisioningQueue.SpeedUp(10000)

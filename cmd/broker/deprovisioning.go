@@ -13,7 +13,6 @@ import (
 	"github.com/kyma-project/kyma-environment-broker/internal/process/input"
 	"github.com/kyma-project/kyma-environment-broker/internal/process/steps"
 	"github.com/kyma-project/kyma-environment-broker/internal/provisioner"
-	"github.com/kyma-project/kyma-environment-broker/internal/reconciler"
 	"github.com/kyma-project/kyma-environment-broker/internal/storage"
 	"github.com/sirupsen/logrus"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -23,7 +22,7 @@ func NewDeprovisioningProcessingQueue(ctx context.Context, workersAmount int, de
 	cfg *Config, db storage.BrokerStorage, pub event.Publisher,
 	provisionerClient provisioner.Client, avsDel *avs.Delegator, internalEvalAssistant *avs.InternalEvalAssistant,
 	externalEvalAssistant *avs.ExternalEvalAssistant, bundleBuilder ias.BundleBuilder,
-	edpClient deprovisioning.EDPClient, accountProvider hyperscaler.AccountProvider, reconcilerClient reconciler.Client,
+	edpClient deprovisioning.EDPClient, accountProvider hyperscaler.AccountProvider,
 	k8sClientProvider K8sClientProvider, cli client.Client, configProvider input.ConfigurationProvider, logs logrus.FieldLogger) *process.Queue {
 
 	deprovisioningSteps := []struct {
@@ -54,14 +53,6 @@ func NewDeprovisioningProcessingQueue(ctx context.Context, workersAmount int, de
 		{
 			disabled: cfg.LifecycleManagerIntegrationDisabled,
 			step:     deprovisioning.NewCheckKymaResourceDeletedStep(db.Operations(), cli, cfg.KymaResourceDeletionTimeout),
-		},
-		{
-			disabled: cfg.ReconcilerIntegrationDisabled,
-			step:     deprovisioning.NewDeregisterClusterStep(db.Operations(), reconcilerClient),
-		},
-		{
-			disabled: cfg.ReconcilerIntegrationDisabled,
-			step:     deprovisioning.NewCheckClusterDeregistrationStep(db.Operations(), reconcilerClient, 90*time.Minute),
 		},
 		{
 			step: deprovisioning.NewDeleteGardenerClusterStep(db.Operations(), cli, db.Instances()),
