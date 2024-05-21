@@ -4,13 +4,11 @@ import (
 	"context"
 	"time"
 
-	"github.com/kyma-project/kyma-environment-broker/internal"
 	"github.com/kyma-project/kyma-environment-broker/internal/event"
 	"github.com/kyma-project/kyma-environment-broker/internal/process"
 	"github.com/kyma-project/kyma-environment-broker/internal/process/input"
 	"github.com/kyma-project/kyma-environment-broker/internal/process/update"
 	"github.com/kyma-project/kyma-environment-broker/internal/provisioner"
-	"github.com/kyma-project/kyma-environment-broker/internal/reconciler"
 	"github.com/kyma-project/kyma-environment-broker/internal/runtimeversion"
 	"github.com/kyma-project/kyma-environment-broker/internal/storage"
 	"github.com/sirupsen/logrus"
@@ -19,12 +17,8 @@ import (
 
 func NewUpdateProcessingQueue(ctx context.Context, manager *process.StagedManager, workersAmount int, db storage.BrokerStorage, inputFactory input.CreatorForPlan,
 	provisionerClient provisioner.Client, publisher event.Publisher, runtimeVerConfigurator *runtimeversion.RuntimeVersionConfigurator, runtimeStatesDb storage.RuntimeStates,
-	runtimeProvider input.ComponentListProvider, reconcilerClient reconciler.Client, cfg Config, k8sClientProvider K8sClientProvider, cli client.Client, logs logrus.FieldLogger) *process.Queue {
+	cfg Config, k8sClientProvider K8sClientProvider, cli client.Client, logs logrus.FieldLogger) *process.Queue {
 
-	requiresReconcilerUpdate := update.RequiresReconcilerUpdate
-	if cfg.ReconcilerIntegrationDisabled {
-		requiresReconcilerUpdate = func(op internal.Operation) bool { return false }
-	}
 	manager.DefineStages([]string{"cluster", "btp-operator", "btp-operator-check", "check"})
 	updateSteps := []struct {
 		disabled  bool
@@ -44,24 +38,6 @@ func NewUpdateProcessingQueue(ctx context.Context, manager *process.StagedManage
 		{
 			stage: "btp-operator",
 			step:  update.NewInitKymaVersionStep(db.Operations(), runtimeVerConfigurator, runtimeStatesDb),
-		},
-		{
-			disabled:  cfg.ReconcilerIntegrationDisabled,
-			stage:     "btp-operator",
-			step:      update.NewBTPOperatorOverridesStep(db.Operations(), runtimeProvider),
-			condition: update.RequiresBTPOperatorCredentials,
-		},
-		{
-			disabled:  cfg.ReconcilerIntegrationDisabled,
-			stage:     "btp-operator",
-			step:      update.NewApplyReconcilerConfigurationStep(db.Operations(), db.RuntimeStates(), reconcilerClient),
-			condition: requiresReconcilerUpdate,
-		},
-		{
-			disabled:  cfg.ReconcilerIntegrationDisabled,
-			stage:     "btp-operator-check",
-			step:      update.NewCheckReconcilerState(db.Operations(), reconcilerClient),
-			condition: update.CheckReconcilerStatus,
 		},
 		{
 			stage:     "check",

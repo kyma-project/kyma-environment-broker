@@ -42,7 +42,6 @@ import (
 	"github.com/kyma-project/kyma-environment-broker/internal/process/input"
 	"github.com/kyma-project/kyma-environment-broker/internal/process/provisioning"
 	"github.com/kyma-project/kyma-environment-broker/internal/process/steps"
-	"github.com/kyma-project/kyma-environment-broker/internal/process/update"
 	"github.com/kyma-project/kyma-environment-broker/internal/process/upgrade_cluster"
 	"github.com/kyma-project/kyma-environment-broker/internal/process/upgrade_kyma"
 	"github.com/kyma-project/kyma-environment-broker/internal/provisioner"
@@ -239,7 +238,7 @@ func NewBrokerSuiteTestWithConfig(t *testing.T, cfg *Config, version ...string) 
 	updateManager := process.NewStagedManager(db.Operations(), eventBroker, time.Hour, cfg.Update, logs)
 	rvc := runtimeversion.NewRuntimeVersionConfigurator(cfg.KymaVersion, nil, db.RuntimeStates())
 	updateQueue := NewUpdateProcessingQueue(context.Background(), updateManager, 1, db, inputFactory, provisionerClient,
-		eventBroker, rvc, db.RuntimeStates(), componentProvider, reconcilerClient, *cfg, k8sClientProvider, cli, logs)
+		eventBroker, rvc, db.RuntimeStates(), *cfg, k8sClientProvider, cli, logs)
 	updateQueue.SpeedUp(10000)
 	updateManager.SpeedUp(10000)
 
@@ -1697,6 +1696,5 @@ func mockBTPOperatorClusterID() {
 	mock := func(string) (string, error) {
 		return "cluster_id", nil
 	}
-	update.ConfigMapGetter = mock
 	upgrade_kyma.ConfigMapGetter = mock
 }

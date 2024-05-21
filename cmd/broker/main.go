@@ -396,7 +396,7 @@ func main() {
 
 	updateManager := process.NewStagedManager(db.Operations(), eventBroker, cfg.OperationTimeout, cfg.Update, logs.WithField("update", "manager"))
 	updateQueue := NewUpdateProcessingQueue(ctx, updateManager, cfg.Update.WorkersAmount, db, inputFactory, provisionerClient, eventBroker,
-		runtimeVerConfigurator, db.RuntimeStates(), componentsProvider, reconcilerClient, cfg, skrK8sClientProvider, cli, logs)
+		runtimeVerConfigurator, db.RuntimeStates(), cfg, skrK8sClientProvider, cli, logs)
 	/***/
 	servicesConfig, err := broker.NewServicesConfigFromFile(cfg.CatalogFilePath)
 	fatalOnError(err, logs)
