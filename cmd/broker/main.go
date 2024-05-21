@@ -52,7 +52,6 @@ import (
 	"github.com/kyma-project/kyma-environment-broker/internal/reconciler"
 	"github.com/kyma-project/kyma-environment-broker/internal/runtime"
 	"github.com/kyma-project/kyma-environment-broker/internal/runtime/components"
-	"github.com/kyma-project/kyma-environment-broker/internal/runtimeoverrides"
 	"github.com/kyma-project/kyma-environment-broker/internal/runtimeversion"
 	"github.com/kyma-project/kyma-environment-broker/internal/storage"
 	"github.com/kyma-project/kyma-environment-broker/internal/storage/dbmodel"
@@ -274,8 +273,6 @@ func main() {
 	// create provisioner client
 	provisionerClient := provisioner.NewProvisionerClient(cfg.Provisioner.URL, cfg.DumpProvisionerRequests, logs.WithField("service", "provisioner"))
 
-	reconcilerClient := reconciler.NewReconcilerClient(http.DefaultClient, logs.WithField("service", "reconciler"), &cfg.Reconciler)
-
 	// create kubernetes client
 	k8sCfg, err := config.GetConfig()
 	fatalOnError(err, logs)
@@ -376,9 +373,6 @@ func main() {
 		_ = metricsv2.Register(ctx, eventBroker, db.Operations(), db.Instances(), cfg.MetricsV2, logs)
 	}
 
-	// setup runtime overrides appender
-	runtimeOverrides := runtimeoverrides.NewRuntimeOverrides(ctx, cli)
-
 	// define steps
 	accountVersionMapping := runtimeversion.NewAccountVersionMapping(ctx, cli, cfg.VersionConfig.Namespace, cfg.VersionConfig.Name, logs)
 	runtimeVerConfigurator := runtimeversion.NewRuntimeVersionConfigurator(cfg.KymaVersion, accountVersionMapping, db.RuntimeStates())
@@ -418,7 +412,7 @@ func main() {
 	runtimeLister := orchestration.NewRuntimeLister(db.Instances(), db.Operations(), runtime.NewConverter(cfg.DefaultRequestRegion), logs)
 	runtimeResolver := orchestrationExt.NewGardenerRuntimeResolver(dynamicGardener, gardenerNamespace, runtimeLister, logs)
 
-	kymaQueue := NewKymaOrchestrationProcessingQueue(ctx, db, runtimeOverrides, provisionerClient, eventBroker, inputFactory, nil, time.Minute, runtimeVerConfigurator, runtimeResolver, upgradeEvalManager, &cfg, internalEvalAssistant, reconcilerClient, notificationBuilder, skrK8sClientProvider, logs, cli, 1)
+	kymaQueue := NewKymaOrchestrationProcessingQueue(ctx, db, provisionerClient, eventBroker, inputFactory, nil, time.Minute, runtimeVerConfigurator, runtimeResolver, upgradeEvalManager, &cfg, internalEvalAssistant, notificationBuilder, logs, cli, 1)
 	clusterQueue := NewClusterOrchestrationProcessingQueue(ctx, db, provisionerClient, eventBroker, inputFactory,
 		nil, time.Minute, runtimeResolver, upgradeEvalManager, notificationBuilder, logs, cli, cfg, 1)
 

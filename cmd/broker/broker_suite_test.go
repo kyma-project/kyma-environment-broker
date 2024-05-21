@@ -47,7 +47,6 @@ import (
 	"github.com/kyma-project/kyma-environment-broker/internal/provisioner"
 	"github.com/kyma-project/kyma-environment-broker/internal/reconciler"
 	kebRuntime "github.com/kyma-project/kyma-environment-broker/internal/runtime"
-	"github.com/kyma-project/kyma-environment-broker/internal/runtimeoverrides"
 	"github.com/kyma-project/kyma-environment-broker/internal/runtimeversion"
 	"github.com/kyma-project/kyma-environment-broker/internal/storage"
 	"github.com/pivotal-cf/brokerapi/v8/domain"
@@ -212,7 +211,6 @@ func NewBrokerSuiteTestWithConfig(t *testing.T, cfg *Config, version ...string) 
 	provisionerClient := provisioner.NewFakeClientWithGardener(gardenerClient, "kcp-system")
 	eventBroker := event.NewPubSub(logs)
 
-	runtimeOverrides := runtimeoverrides.NewRuntimeOverrides(ctx, cli)
 	accountVersionMapping := runtimeversion.NewAccountVersionMapping(ctx, cli, cfg.VersionConfig.Namespace, cfg.VersionConfig.Name, logs)
 	runtimeVerConfigurator := runtimeversion.NewRuntimeVersionConfigurator(cfg.KymaVersion, accountVersionMapping, nil)
 
@@ -275,11 +273,11 @@ func NewBrokerSuiteTestWithConfig(t *testing.T, cfg *Config, version ...string) 
 	upgradeEvaluationManager := avs.NewEvaluationManager(avsDel, avs.Config{})
 	runtimeLister := kebOrchestration.NewRuntimeLister(db.Instances(), db.Operations(), kebRuntime.NewConverter(defaultRegion), logs)
 	runtimeResolver := orchestration.NewGardenerRuntimeResolver(gardenerClient, fixedGardenerNamespace, runtimeLister, logs)
-	kymaQueue := NewKymaOrchestrationProcessingQueue(ctx, db, runtimeOverrides, provisionerClient, eventBroker, inputFactory, &upgrade_kyma.TimeSchedule{
+	kymaQueue := NewKymaOrchestrationProcessingQueue(ctx, db, provisionerClient, eventBroker, inputFactory, &upgrade_kyma.TimeSchedule{
 		Retry:              10 * time.Millisecond,
 		StatusCheck:        100 * time.Millisecond,
 		UpgradeKymaTimeout: 3 * time.Second,
-	}, 250*time.Millisecond, runtimeVerConfigurator, runtimeResolver, upgradeEvaluationManager, cfg, avs.NewInternalEvalAssistant(cfg.Avs), reconcilerClient, notificationBundleBuilder, k8sClientProvider, logs, cli, 1000)
+	}, 250*time.Millisecond, runtimeVerConfigurator, runtimeResolver, upgradeEvaluationManager, cfg, avs.NewInternalEvalAssistant(cfg.Avs), notificationBundleBuilder, logs, cli, 1000)
 
 	clusterQueue := NewClusterOrchestrationProcessingQueue(ctx, db, provisionerClient, eventBroker, inputFactory, &upgrade_cluster.TimeSchedule{
 		Retry:                 10 * time.Millisecond,
@@ -1690,11 +1688,4 @@ func createResource(t *testing.T, gvk schema.GroupVersionKind, k8sClient client.
 	object.SetName(name)
 	err := k8sClient.Create(context.TODO(), object)
 	assert.NoError(t, err)
-}
-
-func mockBTPOperatorClusterID() {
-	mock := func(string) (string, error) {
-		return "cluster_id", nil
-	}
-	upgrade_kyma.ConfigMapGetter = mock
 }

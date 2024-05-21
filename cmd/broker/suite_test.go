@@ -42,7 +42,6 @@ import (
 	"github.com/kyma-project/kyma-environment-broker/internal/process/upgrade_kyma"
 	"github.com/kyma-project/kyma-environment-broker/internal/provisioner"
 	kebRuntime "github.com/kyma-project/kyma-environment-broker/internal/runtime"
-	"github.com/kyma-project/kyma-environment-broker/internal/runtimeoverrides"
 	"github.com/kyma-project/kyma-environment-broker/internal/runtimeversion"
 	"github.com/kyma-project/kyma-environment-broker/internal/storage"
 	"github.com/pivotal-cf/brokerapi/v8/domain"
@@ -176,8 +175,6 @@ func NewOrchestrationSuite(t *testing.T, additionalKymaVersions []string) *Orche
 
 	eventBroker := event.NewPubSub(logs)
 
-	runtimeOverrides := runtimeoverrides.NewRuntimeOverrides(ctx, cli)
-
 	runtimeVerConfigurator := runtimeversion.NewRuntimeVersionConfigurator(kymaVer, runtimeversion.NewAccountVersionMapping(ctx, cli, defaultNamespace, kymaVersionsConfigName, logs), nil)
 
 	avsClient, _ := avs.NewClient(ctx, avs.Config{}, logs)
@@ -189,13 +186,11 @@ func NewOrchestrationSuite(t *testing.T, additionalKymaVersions []string) *Orche
 	notificationFakeClient := notification.NewFakeClient()
 	notificationBundleBuilder := notification.NewBundleBuilder(notificationFakeClient, cfg.Notification)
 
-	k8sClientProvider := kubeconfig.NewFakeK8sClientProvider(cli)
-
-	kymaQueue := NewKymaOrchestrationProcessingQueue(ctx, db, runtimeOverrides, provisionerClient, eventBroker, inputFactory, &upgrade_kyma.TimeSchedule{
+	kymaQueue := NewKymaOrchestrationProcessingQueue(ctx, db, provisionerClient, eventBroker, inputFactory, &upgrade_kyma.TimeSchedule{
 		Retry:              2 * time.Millisecond,
 		StatusCheck:        20 * time.Millisecond,
 		UpgradeKymaTimeout: 4 * time.Second,
-	}, 250*time.Millisecond, runtimeVerConfigurator, runtimeResolver, upgradeEvaluationManager, &cfg, avs.NewInternalEvalAssistant(cfg.Avs), reconcilerClient, notificationBundleBuilder, k8sClientProvider, logs, cli, 1000)
+	}, 250*time.Millisecond, runtimeVerConfigurator, runtimeResolver, upgradeEvaluationManager, &cfg, avs.NewInternalEvalAssistant(cfg.Avs), notificationBundleBuilder, logs, cli, 1000)
 
 	clusterQueue := NewClusterOrchestrationProcessingQueue(ctx, db, provisionerClient, eventBroker, inputFactory, &upgrade_cluster.TimeSchedule{
 		Retry:                 2 * time.Millisecond,
