@@ -57,7 +57,7 @@ func TestClusterUpgrade_UpgradeAfterUpdateWithNetworkPolicy(t *testing.T) {
 	suite.FinishUpdatingOperationByProvisioner(updateOperationID)
 	suite.WaitForOperationState(updateOperationID, domain.Succeeded)
 	i, err := suite.db.Instances().GetByID(id)
-	rsu1, err := suite.db.RuntimeStates().GetLatestWithReconcilerInputByRuntimeID(i.RuntimeID)
+	rsu1, err := suite.db.RuntimeStates().GetLatestByRuntimeID(i.RuntimeID)
 
 	// ensure license type is persisted and network filter enabled
 	instance2 := suite.GetInstance(id)
@@ -101,7 +101,7 @@ func TestClusterUpgrade_UpgradeAfterUpdateWithNetworkPolicy(t *testing.T) {
 	// ensure component list after upgrade didn't get changed
 	i, err = suite.db.Instances().GetByID(id)
 	assert.NoError(t, err, "getting instance after upgrade")
-	rsu2, err := suite.db.RuntimeStates().GetLatestWithReconcilerInputByRuntimeID(i.RuntimeID)
+	rsu2, err := suite.db.RuntimeStates().GetLatestByRuntimeID(i.RuntimeID)
 	assert.NoError(t, err, "getting runtime after upgrade")
 	assert.Equal(t, rsu1.ClusterConfig.Name, rsu2.ClusterConfig.Name)
 

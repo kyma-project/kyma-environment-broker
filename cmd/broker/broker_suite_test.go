@@ -631,17 +631,6 @@ func (s *BrokerSuiteTest) finishOperationByOpIDByProvisioner(operationType gqlsc
 	assert.NoError(s.t, err, "timeout waiting for provisioner operation to exist")
 }
 
-func (s *BrokerSuiteTest) MarkClusterConfigurationDeleted(iid string) {
-	op, _ := s.db.Operations().GetDeprovisioningOperationByInstanceID(iid)
-	s.reconcilerClient.ChangeClusterState(op.RuntimeID, op.ClusterConfigurationVersion, reconcilerApi.StatusDeleted)
-}
-
-func (s *BrokerSuiteTest) RemoveFromReconcilerByInstanceID(iid string) {
-	op, _ := s.db.Operations().GetDeprovisioningOperationByInstanceID(iid)
-	err := s.reconcilerClient.DeleteCluster(op.RuntimeID)
-	assert.NoError(s.t, err)
-}
-
 func (s *BrokerSuiteTest) FinishProvisioningOperationByReconciler(operationID string) {
 	// wait until ProvisioningOperation reaches CreateRuntime step
 	var provisioningOp *internal.ProvisioningOperation
@@ -721,24 +710,6 @@ func (s *BrokerSuiteTest) FinishReconciliation(opID string) {
 		}
 		if state.Cluster != "" {
 			s.reconcilerClient.ChangeClusterState(provisioningOp.RuntimeID, provisioningOp.ClusterConfigurationVersion, reconcilerApi.StatusReady)
-			return true, nil
-		}
-		return false, nil
-	})
-	assert.NoError(s.t, err)
-}
-
-func (s *BrokerSuiteTest) FinishUpdatingOperationByReconciler(operationID string) {
-	op, err := s.db.Operations().GetOperationByID(operationID)
-	assert.NoError(s.t, err)
-	var state *reconcilerApi.HTTPClusterResponse
-	err = s.poller.Invoke(func() (bool, error) {
-		state, err = s.reconcilerClient.GetCluster(op.RuntimeID, op.ClusterConfigurationVersion)
-		if err != nil {
-			return false, err
-		}
-		if state.Cluster != "" {
-			s.reconcilerClient.ChangeClusterState(op.RuntimeID, op.ClusterConfigurationVersion, reconcilerApi.StatusReady)
 			return true, nil
 		}
 		return false, nil

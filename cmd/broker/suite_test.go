@@ -830,7 +830,7 @@ func (s *ProvisioningSuite) ProcessInfrastructureManagerProvisioningByRuntimeID(
 	assert.NoError(s.t, err)
 }
 
-func (s *ProvisioningSuite) FinishProvisioningOperationByProvisionerAndReconciler(operationID string) {
+func (s *ProvisioningSuite) FinishProvisioningOperationByProvisioner(operationID string) {
 	var op *internal.Operation
 	err := wait.PollImmediate(pollingInterval, 2*time.Second, func() (done bool, err error) {
 		op, _ = s.storage.Operations().GetOperationByID(operationID)
@@ -844,16 +844,6 @@ func (s *ProvisioningSuite) FinishProvisioningOperationByProvisionerAndReconcile
 	s.finishOperationByProvisioner(gqlschema.OperationTypeProvision, op.RuntimeID)
 
 	s.ProcessInfrastructureManagerProvisioningByRuntimeID(op.RuntimeID)
-	err = wait.PollImmediate(pollingInterval, 2*time.Second, func() (done bool, err error) {
-		op, _ = s.storage.Operations().GetOperationByID(operationID)
-		if op.ClusterConfigurationVersion != 0 {
-			return true, nil
-		}
-		return false, nil
-	})
-	assert.NoError(s.t, err, "timeout waiting for the operation with Cluster Configuration Version. The existing operation %+v", op)
-
-	s.finishOperationByReconciler(op)
 }
 
 func (s *ProvisioningSuite) AssertProvisionerStartedProvisioning(operationID string) {
@@ -890,22 +880,6 @@ func (s *ProvisioningSuite) AssertAllStagesFinished(operationID string) {
 	}
 }
 
-func (s *ProvisioningSuite) finishOperationByReconciler(op *internal.Operation) {
-	time.Sleep(50 * time.Millisecond)
-	err := wait.Poll(pollingInterval, 10*time.Second, func() (bool, error) {
-		state, err := s.reconcilerClient.GetCluster(op.RuntimeID, op.ClusterConfigurationVersion)
-		if err != nil {
-			return false, err
-		}
-		if state.Cluster != "" {
-			s.reconcilerClient.ChangeClusterState(op.RuntimeID, op.ClusterConfigurationVersion, reconcilerApi.StatusReady)
-			return true, nil
-		}
-		return false, nil
-	})
-	assert.NoError(s.t, err)
-}
-
 func (s *ProvisioningSuite) finishOperationByProvisioner(operationType gqlschema.OperationType, runtimeID string) {
 	err := wait.Poll(pollingInterval, 2*time.Second, func() (bool, error) {
 		status := s.provisionerClient.FindInProgressOperationByRuntimeIDAndType(runtimeID, operationType)
@@ -925,14 +899,6 @@ func (s *ProvisioningSuite) AssertProvisioningRequest() {
 	assert.Equal(s.t, instanceID, labels["broker_instance_id"])
 	assert.Contains(s.t, labels, "global_subaccount_id")
 	assert.NotEmpty(s.t, input.ClusterConfig.GardenerConfig.Name)
-}
-
-func (s *ProvisioningSuite) AssertKymaProfile(opID string, expectedProfile gqlschema.KymaProfile) {
-	operation, _ := s.storage.Operations().GetProvisioningOperationByID(opID)
-	s.fetchProvisionInput()
-	c, _ := s.reconcilerClient.LastClusterConfig(operation.RuntimeID)
-
-	assert.Equal(s.t, string(expectedProfile), c.KymaConfig.Profile)
 }
 
 func (s *ProvisioningSuite) AssertProvider(provider string) {

@@ -14,7 +14,6 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/google/uuid"
-	reconcilerApi "github.com/kyma-incubator/reconciler/pkg/keb"
 	"github.com/kyma-project/control-plane/components/provisioner/pkg/gqlschema"
 	"github.com/pivotal-cf/brokerapi/v8/domain"
 	"github.com/stretchr/testify/assert"
@@ -86,7 +85,7 @@ func TestProvisioning_HappyPath(t *testing.T) {
 	suite.AssertProvisionerStartedProvisioning(provisioningOperationID)
 
 	// when
-	suite.FinishProvisioningOperationByProvisionerAndReconciler(provisioningOperationID)
+	suite.FinishProvisioningOperationByProvisioner(provisioningOperationID)
 
 	// then
 	suite.WaitForProvisioningState(provisioningOperationID, domain.Succeeded)
@@ -551,7 +550,6 @@ func TestProvisioning_OwnCluster(t *testing.T) {
 					}
 		}`)
 	opID := suite.DecodeOperationID(resp)
-	suite.FinishReconciliation(opID)
 
 	// then
 	suite.WaitForOperationState(opID, domain.Succeeded)
@@ -678,133 +676,6 @@ func TestProvisioning_HandleExistingOperation(t *testing.T) {
 	assert.Equal(t, string(firstBodyBytes), string(secondBodyBytes))
 }
 
-func TestProvisioningWithReconciler_HappyPath(t *testing.T) {
-	// given
-	suite := NewBrokerSuiteTest(t, "2.0")
-	defer suite.TearDown()
-	iid := uuid.New().String()
-
-	// when
-	resp := suite.CallAPI("PUT", fmt.Sprintf("oauth/cf-eu10/v2/service_instances/%s?accepts_incomplete=true", iid),
-		`{
-			"service_id": "47c9dcbf-ff30-448e-ab36-d3bad66ba281",
-			"plan_id": "7d55d31d-35ae-4438-bf13-6ffdfa107d9f",
-			"context": {
-				"url": "https://sm.url",
-				"sm_operator_credentials": {
-					"clientid": "testClientID",
-					"clientsecret": "testClientSecret",
-					"sm_url": "https://service-manager.kyma.com",
-					"url": "https://test.auth.com",
-					"xsappname": "testXsappname"
-				},
-				"globalaccount_id": "g-account-id",
-				"subaccount_id": "sub-id",
-				"user_id": "john.smith@email.com"
-			},
-			"parameters": {
-				"name": "testing-cluster"
-			}
-		}`)
-
-	opID := suite.DecodeOperationID(resp)
-	suite.processProvisioningByOperationID(opID)
-	suite.WaitForOperationState(opID, domain.Succeeded)
-	provisioningOp, _ := suite.db.Operations().GetProvisioningOperationByID(opID)
-	clusterID := provisioningOp.InstanceDetails.ServiceManagerClusterID
-
-	// then
-	suite.AssertProvider("aws")
-	suite.AssertProvisionRuntimeInputWithoutKymaConfig()
-
-	suite.AssertClusterMetadata(opID, reconcilerApi.Metadata{
-		GlobalAccountID: "g-account-id",
-		SubAccountID:    "sub-id",
-		ServiceID:       "47c9dcbf-ff30-448e-ab36-d3bad66ba281",
-		ServicePlanID:   "7d55d31d-35ae-4438-bf13-6ffdfa107d9f",
-		ServicePlanName: "trial",
-		ShootName:       suite.ShootName(opID),
-		InstanceID:      iid,
-		Region:          "eu-west-1",
-	})
-
-	suite.AssertClusterKymaConfig(opID, reconcilerApi.KymaConfig{
-		Version:        "2.0",
-		Profile:        "Evaluation",
-		Administrators: []string{"john.smith@email.com"},
-		Components:     suite.fixExpectedComponentListWithSMOperator(opID, clusterID),
-	})
-	suite.AssertClusterConfigWithKubeconfig(opID)
-	suite.AssertKymaLabelsExist(opID, map[string]string{
-		"kyma-project.io/region":          "eu-west-1",
-		"kyma-project.io/platform-region": "cf-eu10",
-	})
-
-}
-
-func TestProvisioningWithReconcilerWithBTPOperator_HappyPath(t *testing.T) {
-	// given
-	suite := NewBrokerSuiteTest(t, "2.0")
-	defer suite.TearDown()
-	iid := uuid.New().String()
-
-	// when
-	resp := suite.CallAPI("PUT", fmt.Sprintf("oauth/cf-eu10/v2/service_instances/%s?accepts_incomplete=true", iid),
-		`{
-					"service_id": "47c9dcbf-ff30-448e-ab36-d3bad66ba281",
-					"plan_id": "7d55d31d-35ae-4438-bf13-6ffdfa107d9f",
-					"context": {
-						"sm_operator_credentials": {
-						  "clientid": "testClientID",
-						  "clientsecret": "testClientSecret",
-						  "sm_url": "https://service-manager.kyma.com",
-						  "url": "https://test.auth.com",
-						  "xsappname": "testXsappname"
-						},
-						"globalaccount_id": "g-account-id",
-						"subaccount_id": "sub-id",
-						"user_id": "john.smith@email.com"
-					},
-					"parameters": {
-						"name": "testing-cluster"
-					}
-		}`)
-
-	opID := suite.DecodeOperationID(resp)
-	suite.processProvisioningByOperationID(opID)
-	suite.WaitForOperationState(opID, domain.Succeeded)
-
-	// then
-	suite.AssertProvider("aws")
-	suite.AssertProvisionRuntimeInputWithoutKymaConfig()
-
-	suite.AssertClusterMetadata(opID, reconcilerApi.Metadata{
-		GlobalAccountID: "g-account-id",
-		SubAccountID:    "sub-id",
-		ServiceID:       "47c9dcbf-ff30-448e-ab36-d3bad66ba281",
-		ServicePlanID:   "7d55d31d-35ae-4438-bf13-6ffdfa107d9f",
-		ServicePlanName: "trial",
-		ShootName:       suite.ShootName(opID),
-		InstanceID:      iid,
-		Region:          "eu-west-1",
-	})
-
-	op, _ := suite.db.Operations().GetProvisioningOperationByID(opID)
-	suite.AssertClusterKymaConfig(opID, reconcilerApi.KymaConfig{
-		Version:        "2.0",
-		Profile:        "Evaluation",
-		Administrators: []string{"john.smith@email.com"},
-		Components:     suite.fixExpectedComponentListWithSMOperator(opID, op.InstanceDetails.ServiceManagerClusterID),
-	})
-
-	suite.AssertClusterConfigWithKubeconfig(opID)
-	suite.AssertKymaLabelsExist(opID, map[string]string{
-		"kyma-project.io/region":          "eu-west-1",
-		"kyma-project.io/platform-region": "cf-eu10",
-	})
-
-}
-
 func TestProvisioning_ClusterParameters(t *testing.T) {
 	for tn, tc := range map[string]struct {
 		planID                       string
@@ -815,7 +686,6 @@ func TestProvisioning_ClusterParameters(t *testing.T) {
 		controlPlaneFailureTolerance string
 
 		expectedZonesCount                  *int
-		expectedProfile                     gqlschema.KymaProfile
 		expectedProvider                    string
 		expectedMinimalNumberOfNodes        int
 		expectedMaximumNumberOfNodes        int
@@ -829,7 +699,6 @@ func TestProvisioning_ClusterParameters(t *testing.T) {
 			expectedMinimalNumberOfNodes:        1,
 			expectedMaximumNumberOfNodes:        1,
 			expectedMachineType:                 "Standard_D4s_v5",
-			expectedProfile:                     gqlschema.KymaProfileEvaluation,
 			expectedProvider:                    "azure",
 			expectedSharedSubscription:          true,
 			expectedSubscriptionHyperscalerType: hyperscaler.Azure(),
@@ -840,7 +709,6 @@ func TestProvisioning_ClusterParameters(t *testing.T) {
 
 			expectedMinimalNumberOfNodes:        1,
 			expectedMaximumNumberOfNodes:        1,
-			expectedProfile:                     gqlschema.KymaProfileEvaluation,
 			expectedProvider:                    "aws",
 			expectedSharedSubscription:          false,
 			expectedMachineType:                 "m5.xlarge",
@@ -852,7 +720,6 @@ func TestProvisioning_ClusterParameters(t *testing.T) {
 
 			expectedMinimalNumberOfNodes:        1,
 			expectedMaximumNumberOfNodes:        1,
-			expectedProfile:                     gqlschema.KymaProfileEvaluation,
 			expectedProvider:                    "azure",
 			expectedSharedSubscription:          false,
 			expectedMachineType:                 "Standard_D4s_v5",
@@ -867,7 +734,6 @@ func TestProvisioning_ClusterParameters(t *testing.T) {
 			expectedMinimalNumberOfNodes:        3,
 			expectedMaximumNumberOfNodes:        20,
 			expectedMachineType:                 provider.DefaultAzureMachineType,
-			expectedProfile:                     gqlschema.KymaProfileProduction,
 			expectedProvider:                    "azure",
 			expectedSharedSubscription:          false,
 			expectedSubscriptionHyperscalerType: hyperscaler.Azure(),
@@ -882,7 +748,6 @@ func TestProvisioning_ClusterParameters(t *testing.T) {
 			expectedMinimalNumberOfNodes:        3,
 			expectedMaximumNumberOfNodes:        20,
 			expectedMachineType:                 provider.DefaultAzureMachineType,
-			expectedProfile:                     gqlschema.KymaProfileProduction,
 			expectedProvider:                    "azure",
 			expectedSharedSubscription:          false,
 			expectedSubscriptionHyperscalerType: hyperscaler.Azure(),
@@ -896,7 +761,6 @@ func TestProvisioning_ClusterParameters(t *testing.T) {
 			expectedMinimalNumberOfNodes:        3,
 			expectedMaximumNumberOfNodes:        20,
 			expectedMachineType:                 provider.DefaultAWSMachineType,
-			expectedProfile:                     gqlschema.KymaProfileProduction,
 			expectedProvider:                    "aws",
 			expectedSharedSubscription:          false,
 			expectedSubscriptionHyperscalerType: hyperscaler.AWS(),
@@ -911,7 +775,6 @@ func TestProvisioning_ClusterParameters(t *testing.T) {
 			expectedMinimalNumberOfNodes:        3,
 			expectedMaximumNumberOfNodes:        20,
 			expectedMachineType:                 provider.DefaultAWSMachineType,
-			expectedProfile:                     gqlschema.KymaProfileProduction,
 			expectedProvider:                    "aws",
 			expectedSharedSubscription:          false,
 			expectedSubscriptionHyperscalerType: hyperscaler.AWS(),
@@ -925,7 +788,6 @@ func TestProvisioning_ClusterParameters(t *testing.T) {
 			expectedMinimalNumberOfNodes:        3,
 			expectedMaximumNumberOfNodes:        20,
 			expectedMachineType:                 provider.DefaultGCPMachineType,
-			expectedProfile:                     gqlschema.KymaProfileProduction,
 			expectedProvider:                    "gcp",
 			expectedSharedSubscription:          false,
 			expectedSubscriptionHyperscalerType: hyperscaler.GCP(),
@@ -940,7 +802,6 @@ func TestProvisioning_ClusterParameters(t *testing.T) {
 			expectedMinimalNumberOfNodes:        3,
 			expectedMaximumNumberOfNodes:        20,
 			expectedMachineType:                 provider.DefaultGCPMachineType,
-			expectedProfile:                     gqlschema.KymaProfileProduction,
 			expectedProvider:                    "gcp",
 			expectedSharedSubscription:          false,
 			expectedSubscriptionHyperscalerType: hyperscaler.GCP(),
@@ -964,13 +825,12 @@ func TestProvisioning_ClusterParameters(t *testing.T) {
 			suite.AssertProvisionerStartedProvisioning(provisioningOperationID)
 
 			// when
-			suite.FinishProvisioningOperationByProvisionerAndReconciler(provisioningOperationID)
+			suite.FinishProvisioningOperationByProvisioner(provisioningOperationID)
 
 			// then
 			suite.WaitForProvisioningState(provisioningOperationID, domain.Succeeded)
 			suite.AssertAllStagesFinished(provisioningOperationID)
 
-			suite.AssertKymaProfile(provisioningOperationID, tc.expectedProfile)
 			suite.AssertProvider(tc.expectedProvider)
 			suite.AssertMinimalNumberOfNodes(tc.expectedMinimalNumberOfNodes)
 			suite.AssertMaximumNumberOfNodes(tc.expectedMaximumNumberOfNodes)
@@ -1007,7 +867,7 @@ func TestProvisioning_OIDCValues(t *testing.T) {
 		suite.AssertProvisionerStartedProvisioning(provisioningOperationID)
 
 		// when
-		suite.FinishProvisioningOperationByProvisionerAndReconciler(provisioningOperationID)
+		suite.FinishProvisioningOperationByProvisioner(provisioningOperationID)
 
 		// then
 		suite.WaitForProvisioningState(provisioningOperationID, domain.Succeeded)
@@ -1041,7 +901,7 @@ func TestProvisioning_OIDCValues(t *testing.T) {
 		suite.AssertProvisionerStartedProvisioning(provisioningOperationID)
 
 		// when
-		suite.FinishProvisioningOperationByProvisionerAndReconciler(provisioningOperationID)
+		suite.FinishProvisioningOperationByProvisioner(provisioningOperationID)
 
 		// then
 		suite.WaitForProvisioningState(provisioningOperationID, domain.Succeeded)
@@ -1080,7 +940,7 @@ func TestProvisioning_OIDCValues(t *testing.T) {
 		suite.AssertProvisionerStartedProvisioning(provisioningOperationID)
 
 		// when
-		suite.FinishProvisioningOperationByProvisionerAndReconciler(provisioningOperationID)
+		suite.FinishProvisioningOperationByProvisioner(provisioningOperationID)
 
 		// then
 		suite.WaitForProvisioningState(provisioningOperationID, domain.Succeeded)
@@ -1116,7 +976,7 @@ func TestProvisioning_OIDCValues(t *testing.T) {
 		suite.AssertProvisionerStartedProvisioning(provisioningOperationID)
 
 		// when
-		suite.FinishProvisioningOperationByProvisionerAndReconciler(provisioningOperationID)
+		suite.FinishProvisioningOperationByProvisioner(provisioningOperationID)
 
 		// then
 		suite.WaitForProvisioningState(provisioningOperationID, domain.Succeeded)
@@ -1144,7 +1004,7 @@ func TestProvisioning_RuntimeAdministrators(t *testing.T) {
 		suite.AssertProvisionerStartedProvisioning(provisioningOperationID)
 
 		// when
-		suite.FinishProvisioningOperationByProvisionerAndReconciler(provisioningOperationID)
+		suite.FinishProvisioningOperationByProvisioner(provisioningOperationID)
 
 		// then
 		suite.WaitForProvisioningState(provisioningOperationID, domain.Succeeded)
@@ -1171,7 +1031,7 @@ func TestProvisioning_RuntimeAdministrators(t *testing.T) {
 		suite.AssertProvisionerStartedProvisioning(provisioningOperationID)
 
 		// when
-		suite.FinishProvisioningOperationByProvisionerAndReconciler(provisioningOperationID)
+		suite.FinishProvisioningOperationByProvisioner(provisioningOperationID)
 
 		// then
 		suite.WaitForProvisioningState(provisioningOperationID, domain.Succeeded)
@@ -1198,7 +1058,7 @@ func TestProvisioning_RuntimeAdministrators(t *testing.T) {
 		suite.AssertProvisionerStartedProvisioning(provisioningOperationID)
 
 		// when
-		suite.FinishProvisioningOperationByProvisionerAndReconciler(provisioningOperationID)
+		suite.FinishProvisioningOperationByProvisioner(provisioningOperationID)
 
 		// then
 		suite.WaitForProvisioningState(provisioningOperationID, domain.Succeeded)
