@@ -653,7 +653,6 @@ func TestUpdateWithOwnClusterPlan(t *testing.T) {
 			}
    }`)
 	opID := suite.DecodeOperationID(resp)
-	suite.FinishReconciliation(opID)
 	suite.WaitForOperationState(opID, domain.Succeeded)
 
 	// when
@@ -672,8 +671,10 @@ func TestUpdateWithOwnClusterPlan(t *testing.T) {
    }`)
 	assert.Equal(t, http.StatusAccepted, resp.StatusCode)
 	upgradeOperationID := suite.DecodeOperationID(resp)
-
-	suite.WaitForOperationState(upgradeOperationID, domain.Succeeded)
+	suite.AssertKymaResourceExists(upgradeOperationID)
+	suite.AssertKymaLabelsExist(upgradeOperationID, map[string]string{
+		"kyma-project.io/platform-region": "cf-eu10",
+	})
 }
 
 func TestUpdateOidcForSuspendedInstance(t *testing.T) {

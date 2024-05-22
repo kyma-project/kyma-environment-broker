@@ -697,26 +697,6 @@ func (s *BrokerSuiteTest) FailProvisioningOperationByReconciler(operationID stri
 	assert.NoError(s.t, err)
 }
 
-func (s *BrokerSuiteTest) FinishReconciliation(opID string) {
-	var state *reconcilerApi.HTTPClusterResponse
-	err := s.poller.Invoke(func() (bool, error) {
-		provisioningOp, err := s.db.Operations().GetProvisioningOperationByID(opID)
-		if err != nil {
-			return false, nil
-		}
-		state, err = s.reconcilerClient.GetCluster(provisioningOp.RuntimeID, provisioningOp.ClusterConfigurationVersion)
-		if err != nil {
-			return false, nil
-		}
-		if state.Cluster != "" {
-			s.reconcilerClient.ChangeClusterState(provisioningOp.RuntimeID, provisioningOp.ClusterConfigurationVersion, reconcilerApi.StatusReady)
-			return true, nil
-		}
-		return false, nil
-	})
-	assert.NoError(s.t, err)
-}
-
 func (s *BrokerSuiteTest) AssertProvisionerStartedProvisioning(operationID string) {
 	// wait until ProvisioningOperation reaches CreateRuntime step
 	var provisioningOp *internal.ProvisioningOperation
