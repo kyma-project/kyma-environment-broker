@@ -90,16 +90,13 @@ func TestReDeprovision(t *testing.T) {
 	suite.WaitForOperationState(opID, domain.Succeeded)
 
 	// FIRST DEPROVISION
-	suite.SetReconcilerResponseStatus(reconcilerApi.StatusDeleteError)
 	resp = suite.CallAPI("DELETE", fmt.Sprintf("oauth/v2/service_instances/%s?accepts_incomplete=true&plan_id=7d55d31d-35ae-4438-bf13-6ffdfa107d9f&service_id=47c9dcbf-ff30-448e-ab36-d3bad66ba281", iid),
 		``)
 	deprovisioningID := suite.DecodeOperationID(resp)
-	suite.FinishDeprovisioningOperationByProvisioner(deprovisioningID)
-
-	suite.WaitForOperationState(deprovisioningID, domain.Succeeded)
+	suite.FailDeprovisioningOperationByProvisioner(deprovisioningID)
+	suite.WaitForOperationState(deprovisioningID, domain.Failed)
 
 	// SECOND DEPROVISION
-	suite.SetReconcilerResponseStatus(reconcilerApi.StatusDeleted)
 	resp = suite.CallAPI("DELETE", fmt.Sprintf("oauth/v2/service_instances/%s?accepts_incomplete=true&plan_id=7d55d31d-35ae-4438-bf13-6ffdfa107d9f&service_id=47c9dcbf-ff30-448e-ab36-d3bad66ba281", iid),
 		``)
 	deprovisioningID = suite.DecodeOperationID(resp)

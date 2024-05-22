@@ -13,7 +13,6 @@ import (
 	"github.com/kyma-project/kyma-environment-broker/internal/process/steps"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
-	reconcilerApi "github.com/kyma-incubator/reconciler/pkg/keb"
 	kebConfig "github.com/kyma-project/kyma-environment-broker/internal/config"
 
 	"github.com/kyma-project/kyma-environment-broker/internal/reconciler"
@@ -406,10 +405,6 @@ func (s *OrchestrationSuite) createOrchestration(oType orchestration.Type, queue
 	return o.OrchestrationID
 }
 
-func (s *OrchestrationSuite) CreateUpgradeKymaOrchestration(params orchestration.Parameters) string {
-	return s.createOrchestration(orchestration.UpgradeKymaOrchestration, s.kymaQueue, params)
-}
-
 func (s *OrchestrationSuite) CreateUpgradeClusterOrchestration(params orchestration.Parameters) string {
 	return s.createOrchestration(orchestration.UpgradeClusterOrchestration, s.clusterQueue, params)
 }
@@ -426,22 +421,6 @@ func (s *OrchestrationSuite) finishOperationByProvisioner(operationType gqlschem
 	assert.NoError(s.t, err, "timeout waiting for provisioner operation to exist")
 }
 
-func (s *OrchestrationSuite) FinishUpgradeOperationByReconciler(runtimeID string) {
-	err := wait.Poll(time.Millisecond*20, 2*time.Second, func() (bool, error) {
-		c, err := s.reconcilerClient.GetLatestCluster(runtimeID)
-		if err != nil {
-			return false, nil
-		}
-		if c.ConfigurationVersion == 0 {
-			return false, nil
-		}
-		s.reconcilerClient.ChangeClusterState(runtimeID, c.ConfigurationVersion, reconcilerApi.StatusReady)
-		return true, nil
-	})
-
-	assert.NoError(s.t, err, "timeout waiting for reconciler cluster to exist")
-}
-
 func (s *OrchestrationSuite) FinishUpgradeShootOperationByProvisioner(runtimeID string) {
 	s.finishOperationByProvisioner(gqlschema.OperationTypeUpgradeShoot, runtimeID)
 }
@@ -453,17 +432,6 @@ func (s *OrchestrationSuite) WaitForOrchestrationState(orchestrationID string, s
 		return orchestration.State == state, nil
 	})
 	assert.NoError(s.t, err, "timeout waiting for the orchestration expected state %s. The existing orchestration %+v", state, orchestration)
-}
-
-func (s *OrchestrationSuite) AssertRuntimeUpgraded(runtimeID string, version string) {
-	c, _ := s.reconcilerClient.LastClusterConfig(runtimeID)
-	assert.Equal(s.t, version, c.KymaConfig.Version, "The runtime %s expected to be upgraded", runtimeID)
-}
-
-func (s *OrchestrationSuite) AssertRuntimeNotUpgraded(runtimeID string) {
-	_, err := s.reconcilerClient.LastClusterConfig(runtimeID)
-	// error means not found
-	assert.Error(s.t, err)
 }
 
 func (s *OrchestrationSuite) AssertShootUpgraded(runtimeID string) {

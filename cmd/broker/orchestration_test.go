@@ -7,51 +7,6 @@ import (
 	"github.com/kyma-project/kyma-environment-broker/common/orchestration"
 )
 
-func TestKymaUpgrade_OneRuntimeHappyPath(t *testing.T) {
-	// given
-
-	suite := NewOrchestrationSuite(t, nil)
-	defer suite.TearDown()
-	runtimeID := suite.CreateProvisionedRuntime(RuntimeOptions{})
-	otherRuntimeID := suite.CreateProvisionedRuntime(RuntimeOptions{})
-	orchestrationParams := fixOrchestrationParams(runtimeID)
-	orchestrationID := suite.CreateUpgradeKymaOrchestration(orchestrationParams)
-
-	suite.WaitForOrchestrationState(orchestrationID, orchestration.InProgress)
-
-	// when
-	suite.FinishUpgradeOperationByReconciler(runtimeID)
-
-	// then
-	suite.WaitForOrchestrationState(orchestrationID, orchestration.Succeeded)
-
-	suite.AssertRuntimeUpgraded(runtimeID, defaultKymaVer)
-	suite.AssertRuntimeNotUpgraded(otherRuntimeID)
-}
-
-func TestKymaUpgrade_VersionParameter(t *testing.T) {
-	// given
-	givenVersion := "2.0.0-rc5"
-	suite := NewOrchestrationSuite(t, []string{givenVersion})
-	defer suite.TearDown()
-	runtimeID := suite.CreateProvisionedRuntime(RuntimeOptions{})
-	otherRuntimeID := suite.CreateProvisionedRuntime(RuntimeOptions{})
-	orchestrationParams := fixOrchestrationParams(runtimeID)
-	orchestrationParams.Kyma.Version = givenVersion
-	orchestrationID := suite.CreateUpgradeKymaOrchestration(orchestrationParams)
-
-	suite.WaitForOrchestrationState(orchestrationID, orchestration.InProgress)
-
-	// when
-	suite.FinishUpgradeOperationByReconciler(runtimeID)
-
-	// then
-	suite.WaitForOrchestrationState(orchestrationID, orchestration.Succeeded)
-
-	suite.AssertRuntimeUpgraded(runtimeID, givenVersion)
-	suite.AssertRuntimeNotUpgraded(otherRuntimeID)
-}
-
 func TestClusterUpgrade_OneRuntimeHappyPath(t *testing.T) {
 	// given
 	suite := NewOrchestrationSuite(t, nil)
