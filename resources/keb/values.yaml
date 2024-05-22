@@ -255,6 +255,7 @@ kubeconfig:
   allowOrigins: "*"
 
 avs:
+  disabled: false
   secretName: "avs-creds"
   apiEndpoint: "TBD"
   apiKey: "TBD"
