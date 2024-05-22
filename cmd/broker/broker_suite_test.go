@@ -728,40 +728,6 @@ func (s *BrokerSuiteTest) FinishReconciliation(opID string) {
 	assert.NoError(s.t, err)
 }
 
-func (s *BrokerSuiteTest) FinishDeprovisioningByReconciler(opID string) {
-
-	err := s.poller.Invoke(func() (bool, error) {
-		op, err := s.db.Operations().GetDeprovisioningOperationByID(opID)
-		if err != nil {
-			return false, nil
-		}
-		_, err = s.reconcilerClient.GetCluster(op.RuntimeID, op.ClusterConfigurationVersion)
-		if err != nil {
-			return false, err
-		}
-		s.reconcilerClient.ChangeClusterState(op.RuntimeID, op.ClusterConfigurationVersion, reconcilerApi.StatusDeleted)
-		return true, nil
-	})
-	assert.NoError(s.t, err)
-}
-
-func (s *BrokerSuiteTest) FailDeprovisioningByReconciler(opID string) {
-
-	err := s.poller.Invoke(func() (bool, error) {
-		op, err := s.db.Operations().GetDeprovisioningOperationByID(opID)
-		if err != nil {
-			return false, nil
-		}
-		_, err = s.reconcilerClient.GetCluster(op.RuntimeID, op.ClusterConfigurationVersion)
-		if err != nil {
-			return false, err
-		}
-		s.reconcilerClient.ChangeClusterState(op.RuntimeID, op.ClusterConfigurationVersion, reconcilerApi.StatusDeleteError)
-		return true, nil
-	})
-	assert.NoError(s.t, err)
-}
-
 func (s *BrokerSuiteTest) FinishUpdatingOperationByReconciler(operationID string) {
 	op, err := s.db.Operations().GetOperationByID(operationID)
 	assert.NoError(s.t, err)

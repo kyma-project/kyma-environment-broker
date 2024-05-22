@@ -5,8 +5,6 @@ import (
 	"net/http"
 	"testing"
 
-	reconcilerApi "github.com/kyma-incubator/reconciler/pkg/keb"
-
 	"github.com/google/uuid"
 	"github.com/kyma-project/kyma-environment-broker/internal"
 	"github.com/kyma-project/kyma-environment-broker/internal/broker"
@@ -126,7 +124,6 @@ func TestExpiration(t *testing.T) {
 				suite.WaitForOperationState(provisioningOpID, domain.Succeeded)
 
 				// when
-				suite.SetReconcilerResponseStatus(reconcilerApi.StatusDeleted)
 				resp = suite.CallAPI(http.MethodPut,
 					fmt.Sprintf(expirationRequestPathFormat, instanceID),
 					"")
@@ -160,7 +157,6 @@ func TestExpiration(t *testing.T) {
 				suite.WaitForOperationState(provisioningOpID, domain.Succeeded)
 
 				// when
-				suite.SetReconcilerResponseStatus(reconcilerApi.StatusDeleted)
 				resp = suite.CallAPI(http.MethodPut,
 					fmt.Sprintf(expirationRequestPathFormat, instanceID),
 					"")
@@ -211,7 +207,6 @@ func TestExpiration(t *testing.T) {
 				suite.WaitForOperationState(provisioningOpID, domain.Failed)
 
 				// when
-				suite.SetReconcilerResponseStatus(reconcilerApi.StatusDeleted)
 				resp = suite.CallAPI(http.MethodPut,
 					fmt.Sprintf(expirationRequestPathFormat, instanceID),
 					"")
@@ -244,7 +239,6 @@ func TestExpiration(t *testing.T) {
 				suite.processProvisioningByOperationID(provisioningOpID)
 				suite.WaitForOperationState(provisioningOpID, domain.Succeeded)
 
-				suite.SetReconcilerResponseStatus(reconcilerApi.StatusDeleteError)
 				resp = suite.CallAPI(http.MethodDelete,
 					fmt.Sprintf(deprovisioningRequestPathFormat, instanceID, broker.TrialPlanID),
 					trialDeprovisioningRequestBody)
@@ -252,12 +246,10 @@ func TestExpiration(t *testing.T) {
 				assert.Equal(t, http.StatusAccepted, resp.StatusCode)
 
 				deprovisioningOpID := suite.DecodeOperationID(resp)
-				suite.FailDeprovisioningByReconciler(deprovisioningOpID)
 				suite.FailDeprovisioningOperationByProvisioner(deprovisioningOpID)
 				suite.WaitForOperationState(deprovisioningOpID, domain.Failed)
 
 				// when
-				suite.SetReconcilerResponseStatus(reconcilerApi.StatusDeleted)
 				resp = suite.CallAPI(http.MethodPut,
 					fmt.Sprintf(expirationRequestPathFormat, instanceID),
 					"")
@@ -291,7 +283,6 @@ func TestExpiration(t *testing.T) {
 				suite.WaitForOperationState(provisioningOpID, domain.Succeeded)
 
 				// when
-				suite.SetReconcilerResponseStatus(reconcilerApi.StatusDeleted)
 				resp = suite.CallAPI(http.MethodPut,
 					fmt.Sprintf(expirationRequestPathFormat, instanceID),
 					"")

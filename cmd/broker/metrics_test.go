@@ -7,7 +7,6 @@ import (
 	"time"
 
 	"github.com/google/uuid"
-	reconcilerApi "github.com/kyma-incubator/reconciler/pkg/keb"
 	"github.com/kyma-project/kyma-environment-broker/internal"
 	"github.com/kyma-project/kyma-environment-broker/internal/broker"
 	"github.com/pivotal-cf/brokerapi/v8/domain"
@@ -127,16 +126,13 @@ func TestMetrics(t *testing.T) {
 
 		opID = updateReq(instance5)
 		suite.FinishUpdatingOperationByProvisioner(opID)
-		suite.FinishUpdatingOperationByReconciler(opID)
 		suite.WaitForOperationState(opID, domain.Succeeded)
 		op8 := suite.GetOperation(opID)
 		assert.NotNil(t, op8)
 
 		// Deprovisioning
 
-		suite.SetReconcilerResponseStatus(reconcilerApi.StatusDeleted)
 		opID = deleteReq(instance1)
-		suite.FinishDeprovisioningByReconciler(opID)
 		suite.FinishDeprovisioningOperationByProvisioner(opID)
 		suite.WaitForInstanceArchivedCreated(instance1)
 		suite.WaitFor(
@@ -150,9 +146,7 @@ func TestMetrics(t *testing.T) {
 		op9 := suite.GetOperation(opID)
 		assert.Nil(t, op9)
 
-		suite.SetReconcilerResponseStatus(reconcilerApi.StatusDeleted)
 		opID = deleteReq(instance7)
-		suite.FinishDeprovisioningByReconciler(opID)
 		suite.FinishDeprovisioningOperationByProvisioner(opID)
 		suite.WaitForInstanceArchivedCreated(instance7)
 		suite.WaitFor(
@@ -166,14 +160,12 @@ func TestMetrics(t *testing.T) {
 		op10 := suite.GetOperation(opID)
 		assert.Nil(t, op10)
 
-		suite.SetReconcilerResponseStatus(reconcilerApi.StatusError)
 		opID = deleteReq(instance6)
 		suite.FailDeprovisioningOperationByProvisioner(opID)
 		suite.WaitForOperationState(opID, domain.Failed)
 		op11 := suite.GetOperation(opID)
 		assert.NotNil(t, op11)
 
-		suite.SetReconcilerResponseStatus(reconcilerApi.StatusError)
 		opID = deleteReq(instance3)
 		suite.FailDeprovisioningOperationByProvisioner(opID)
 		suite.WaitForOperationState(opID, domain.Failed)
