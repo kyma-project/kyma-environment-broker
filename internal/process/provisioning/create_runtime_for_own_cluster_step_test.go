@@ -130,27 +130,6 @@ func fixProvisioningParametersWithPlanID(planID, region string, platformRegion s
 
 func fixInputCreator(t *testing.T) internal.ProvisionerInputCreator {
 	optComponentsSvc := &inputAutomock.OptionalComponentService{}
-
-	optComponentsSvc.On("ComputeComponentsToDisable", []string{}).Return([]string{})
-	optComponentsSvc.On("ExecuteDisablers", internal.ComponentConfigurationInputList{
-		{
-			Component:     "to-remove-component",
-			Namespace:     "kyma-system",
-			Configuration: nil,
-		},
-		{
-			Component:     "keb",
-			Namespace:     "kyma-system",
-			Configuration: nil,
-		},
-	}).Return(internal.ComponentConfigurationInputList{
-		{
-			Component:     "keb",
-			Namespace:     "kyma-system",
-			Configuration: nil,
-		},
-	}, nil)
-
 	kymaComponentList := []internal.KymaComponent{
 		{
 			Name:      "to-remove-component",

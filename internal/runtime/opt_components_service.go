@@ -1,7 +1,6 @@
 package runtime
 
 import (
-	"fmt"
 	"strings"
 
 	"github.com/kyma-project/kyma-environment-broker/internal"
@@ -40,41 +39,6 @@ func (f *OptionalComponentsService) GetAllOptionalComponentsNames() []string {
 // AddComponentToDisable adds a component to the list of registered components disablers names
 func (f *OptionalComponentsService) AddComponentToDisable(name string, disabler ComponentDisabler) {
 	f.registered[name] = disabler
-}
-
-// ExecuteDisablers executes disablers on given input and returns modified list.
-//
-// BE AWARE: in current implementation the input is also modified.
-func (f *OptionalComponentsService) ExecuteDisablers(components internal.ComponentConfigurationInputList, names ...string) (internal.ComponentConfigurationInputList, error) {
-	var filterOut = components
-	for _, name := range names {
-		concreteDisabler, exists := f.registered[name]
-		if !exists {
-			return nil, fmt.Errorf("disabler for component %s was not found", name)
-		}
-
-		filterOut = concreteDisabler.Disable(filterOut)
-	}
-
-	return filterOut, nil
-}
-
-// ComputeComponentsToDisable returns disabler names that needs to be executed.
-// Comparing components names as case insensitive.
-func (f *OptionalComponentsService) ComputeComponentsToDisable(optComponentsToKeep []string) []string {
-	var (
-		allOptComponents       = f.GetAllOptionalComponentsNames()
-		optComponentsToInstall = toNormalizedMap(optComponentsToKeep)
-		optComponentsToDisable []string
-	)
-
-	for _, name := range allOptComponents {
-		if _, found := optComponentsToInstall[strings.ToLower(name)]; found {
-			continue
-		}
-		optComponentsToDisable = append(optComponentsToDisable, name)
-	}
-	return optComponentsToDisable
 }
 
 func toNormalizedMap(in []string) map[string]struct{} {

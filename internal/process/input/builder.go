@@ -18,8 +18,6 @@ import (
 
 type (
 	OptionalComponentService interface {
-		ExecuteDisablers(components internal.ComponentConfigurationInputList, names ...string) (internal.ComponentConfigurationInputList, error)
-		ComputeComponentsToDisable(optComponentsToKeep []string) []string
 		AddComponentToDisable(name string, disabler runtime.ComponentDisabler)
 	}
 
@@ -187,15 +185,12 @@ func (f *InputBuilderFactory) CreateProvisionInput(provisioningParameters intern
 
 	return &RuntimeInput{
 		provisionRuntimeInput:     initInput,
-		overrides:                 make(map[string][]*gqlschema.ConfigEntryInput, 0),
 		labels:                    make(map[string]string),
-		globalOverrides:           make([]*gqlschema.ConfigEntryInput, 0),
 		config:                    cfg,
 		hyperscalerInputProvider:  provider,
 		optionalComponentsService: f.optComponentsSvc,
 		provisioningParameters:    provisioningParameters,
 		componentsDisabler:        runtime.NewDisabledComponentsService(disabledComponents),
-		enabledOptionalComponents: map[string]struct{}{},
 		oidcDefaultValues:         f.oidcDefaultValues,
 		trialNodesNumber:          f.config.TrialNodesNumber,
 	}, nil
@@ -309,11 +304,8 @@ func (f *InputBuilderFactory) CreateUpgradeInput(provisioningParameters internal
 	return &RuntimeInput{
 		provisionRuntimeInput:     kymaInput,
 		upgradeRuntimeInput:       upgradeKymaInput,
-		overrides:                 make(map[string][]*gqlschema.ConfigEntryInput, 0),
-		globalOverrides:           make([]*gqlschema.ConfigEntryInput, 0),
 		optionalComponentsService: f.optComponentsSvc,
 		componentsDisabler:        runtime.NewDisabledComponentsService(disabledComponents),
-		enabledOptionalComponents: map[string]struct{}{},
 		trialNodesNumber:          f.config.TrialNodesNumber,
 		oidcDefaultValues:         f.oidcDefaultValues,
 		hyperscalerInputProvider:  provider,

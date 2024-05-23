@@ -25,19 +25,13 @@ type ProvisionerInputCreator interface {
 	SetProvisioningParameters(params ProvisioningParameters) ProvisionerInputCreator
 	SetShootName(string) ProvisionerInputCreator
 	SetLabel(key, value string) ProvisionerInputCreator
-	// Deprecated, use: AppendOverrides
-	SetOverrides(component string, overrides []*gqlschema.ConfigEntryInput) ProvisionerInputCreator
-	AppendOverrides(component string, overrides []*gqlschema.ConfigEntryInput) ProvisionerInputCreator
-	AppendGlobalOverrides(overrides []*gqlschema.ConfigEntryInput) ProvisionerInputCreator
 	CreateProvisionRuntimeInput() (gqlschema.ProvisionRuntimeInput, error)
 	CreateUpgradeRuntimeInput() (gqlschema.UpgradeRuntimeInput, error)
 	CreateUpgradeShootInput() (gqlschema.UpgradeShootInput, error)
-	EnableOptionalComponent(componentName string) ProvisionerInputCreator
 	DisableOptionalComponent(componentName string) ProvisionerInputCreator
 	Provider() CloudProvider
 	Configuration() *ConfigForPlan
 
-	CreateClusterConfiguration() (reconcilerApi.Cluster, error)
 	CreateProvisionClusterInput() (gqlschema.ProvisionRuntimeInput, error)
 	SetKubeconfig(kcfg string) ProvisionerInputCreator
 	SetRuntimeID(runtimeID string) ProvisionerInputCreator

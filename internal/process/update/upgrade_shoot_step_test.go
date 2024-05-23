@@ -80,27 +80,6 @@ func TestUpgradeShootStep_Run(t *testing.T) {
 
 func fixInputCreator(t *testing.T) internal.ProvisionerInputCreator {
 	optComponentsSvc := &inputAutomock.OptionalComponentService{}
-
-	optComponentsSvc.On("ComputeComponentsToDisable", []string{}).Return([]string{})
-	optComponentsSvc.On("ExecuteDisablers", internal.ComponentConfigurationInputList{
-		{
-			Component:     "to-remove-component",
-			Namespace:     "kyma-system",
-			Configuration: nil,
-		},
-		{
-			Component:     "keb",
-			Namespace:     "kyma-system",
-			Configuration: nil,
-		},
-	}).Return(internal.ComponentConfigurationInputList{
-		{
-			Component:     "keb",
-			Namespace:     "kyma-system",
-			Configuration: nil,
-		},
-	}, nil)
-
 	componentsProvider := &inputAutomock.ComponentListProvider{}
 	const kymaVersion = "1.20"
 	defer componentsProvider.AssertExpectations(t)

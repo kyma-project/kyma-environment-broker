@@ -8,7 +8,6 @@ import (
 	"sync"
 	"time"
 
-	reconcilerApi "github.com/kyma-incubator/reconciler/pkg/keb"
 	"github.com/kyma-project/control-plane/components/provisioner/pkg/gqlschema"
 
 	"github.com/kyma-project/kyma-environment-broker/common/gardener"
@@ -42,16 +41,12 @@ type Config struct {
 }
 
 type RuntimeInput struct {
-	muOptionalComponents sync.Mutex
-	muLabels             sync.Mutex
-	muOverrides          sync.Mutex
+	muLabels sync.Mutex
 
 	provisionRuntimeInput gqlschema.ProvisionRuntimeInput
 	upgradeRuntimeInput   gqlschema.UpgradeRuntimeInput
 	upgradeShootInput     gqlschema.UpgradeShootInput
-	overrides             map[string][]*gqlschema.ConfigEntryInput
 	labels                map[string]string
-	globalOverrides       []*gqlschema.ConfigEntryInput
 
 	config                    *internal.ConfigForPlan
 	hyperscalerInputProvider  HyperscalerInputProvider
@@ -59,10 +54,9 @@ type RuntimeInput struct {
 	provisioningParameters    internal.ProvisioningParameters
 	shootName                 *string
 
-	componentsDisabler        ComponentsDisabler
-	enabledOptionalComponents map[string]struct{}
-	oidcDefaultValues         internal.OIDCConfigDTO
-	oidcLastValues            gqlschema.OIDCConfigInput
+	componentsDisabler ComponentsDisabler
+	oidcDefaultValues  internal.OIDCConfigDTO
+	oidcLastValues     gqlschema.OIDCConfigInput
 
 	trialNodesNumber  int
 	instanceID        string
@@ -77,19 +71,8 @@ func (r *RuntimeInput) Configuration() *internal.ConfigForPlan {
 	return r.config
 }
 
-func (r *RuntimeInput) EnableOptionalComponent(componentName string) internal.ProvisionerInputCreator {
-	r.muOptionalComponents.Lock()
-	defer r.muOptionalComponents.Unlock()
-	r.enabledOptionalComponents[componentName] = struct{}{}
-	return r
-}
-
 func (r *RuntimeInput) DisableOptionalComponent(componentName string) internal.ProvisionerInputCreator {
-	r.muOptionalComponents.Lock()
-	defer r.muOptionalComponents.Unlock()
-
 	r.optionalComponentsService.AddComponentToDisable(componentName, runtime.NewGenericComponentDisabler(componentName))
-	delete(r.enabledOptionalComponents, componentName)
 	return r
 }
 
@@ -140,60 +123,6 @@ func (r *RuntimeInput) SetOIDCLastValues(oidcConfig gqlschema.OIDCConfigInput) i
 	return r
 }
 
-// SetOverrides sets the overrides for the given component and discard the previous ones.
-//
-// Deprecated: use AppendOverrides
-func (r *RuntimeInput) SetOverrides(component string, overrides []*gqlschema.ConfigEntryInput) internal.ProvisionerInputCreator {
-	// currently same as in AppendOverrides function, as we working on the same underlying object.
-	r.muOverrides.Lock()
-	defer r.muOverrides.Unlock()
-
-	r.overrides[component] = overrides
-	return r
-}
-
-// AppendOverrides appends overrides for the given components, the existing overrides are preserved.
-func (r *RuntimeInput) AppendOverrides(component string, overrides []*gqlschema.ConfigEntryInput) internal.ProvisionerInputCreator {
-	r.muOverrides.Lock()
-	defer r.muOverrides.Unlock()
-
-	for _, o2 := range overrides {
-		found := false
-		for i, o1 := range r.overrides[component] {
-			if o1.Key == o2.Key {
-				found = true
-				r.overrides[component][i].Secret = o2.Secret
-				r.overrides[component][i].Value = o2.Value
-			}
-		}
-		if !found {
-			r.overrides[component] = append(r.overrides[component], o2)
-		}
-	}
-	return r
-}
-
-// AppendGlobalOverrides appends overrides, the existing overrides are preserved.
-func (r *RuntimeInput) AppendGlobalOverrides(overrides []*gqlschema.ConfigEntryInput) internal.ProvisionerInputCreator {
-	r.muOverrides.Lock()
-	defer r.muOverrides.Unlock()
-
-	for _, o2 := range overrides {
-		found := false
-		for i, o1 := range r.globalOverrides {
-			if o1.Key == o2.Key {
-				found = true
-				r.globalOverrides[i].Secret = o2.Secret
-				r.globalOverrides[i].Value = o2.Value
-			}
-		}
-		if !found {
-			r.globalOverrides = append(r.globalOverrides, o2)
-		}
-	}
-	return r
-}
-
 func (r *RuntimeInput) SetLabel(key, value string) internal.ProvisionerInputCreator {
 	r.muLabels.Lock()
 	defer r.muLabels.Unlock()
@@ -218,18 +147,6 @@ func (r *RuntimeInput) CreateProvisionRuntimeInput() (gqlschema.ProvisionRuntime
 		{
 			name:    "disabling components",
 			execute: r.disableComponentsForProvisionRuntime,
-		},
-		{
-			name:    "disabling optional components that were not selected",
-			execute: r.resolveOptionalComponentsForProvisionRuntime,
-		},
-		{
-			name:    "applying components overrides",
-			execute: r.applyOverridesForProvisionRuntime,
-		},
-		{
-			name:    "applying global overrides",
-			execute: r.applyGlobalOverridesForProvisionRuntime,
 		},
 		{
 			name:    "applying global configuration",
@@ -272,18 +189,6 @@ func (r *RuntimeInput) CreateUpgradeRuntimeInput() (gqlschema.UpgradeRuntimeInpu
 		{
 			name:    "disabling components",
 			execute: r.disableComponentsForUpgradeRuntime,
-		},
-		{
-			name:    "disabling optional components that were not selected",
-			execute: r.resolveOptionalComponentsForUpgradeRuntime,
-		},
-		{
-			name:    "applying components overrides",
-			execute: r.applyOverridesForUpgradeRuntime,
-		},
-		{
-			name:    "applying global overrides",
-			execute: r.applyGlobalOverridesForUpgradeRuntime,
 		},
 		{
 			name:    "applying global configuration",
@@ -330,90 +235,6 @@ func (r *RuntimeInput) CreateUpgradeShootInput() (gqlschema.UpgradeShootInput, e
 
 func (r *RuntimeInput) Provider() internal.CloudProvider {
 	return r.hyperscalerInputProvider.Provider()
-}
-
-func (r *RuntimeInput) CreateClusterConfiguration() (reconcilerApi.Cluster, error) {
-	data, err := r.CreateProvisionRuntimeInput()
-	if err != nil {
-		return reconcilerApi.Cluster{}, err
-	}
-
-	if r.runtimeID == "" {
-		return reconcilerApi.Cluster{}, fmt.Errorf("missing runtime ID")
-	}
-	if r.instanceID == "" {
-		return reconcilerApi.Cluster{}, fmt.Errorf("missing instance ID")
-	}
-	if r.shootName == nil {
-		return reconcilerApi.Cluster{}, fmt.Errorf("missing shoot name")
-	}
-	if r.kubeconfig == "" {
-		return reconcilerApi.Cluster{}, fmt.Errorf("missing kubeconfig")
-	}
-
-	var componentConfigs []reconcilerApi.Component
-	for _, cmp := range data.KymaConfig.Components {
-		configs := []reconcilerApi.Configuration{
-			// because there is no section like global configuration, all "global" settings must
-			// be present in all component configurations.
-			{Key: "global.domainName", Value: r.shootDomain},
-		}
-		for _, globalCfg := range data.KymaConfig.Configuration {
-			configs = append(configs, reconcilerApi.Configuration{
-				Key:    globalCfg.Key,
-				Value:  resolveValueType(globalCfg.Value),
-				Secret: falseIfNil(globalCfg.Secret)})
-		}
-
-		for _, c := range cmp.Configuration {
-			configuration := reconcilerApi.Configuration{
-				Key:    c.Key,
-				Value:  resolveValueType(c.Value),
-				Secret: falseIfNil(c.Secret),
-			}
-			configs = append(configs, configuration)
-		}
-
-		componentConfig := reconcilerApi.Component{
-			Component:     cmp.Component,
-			Namespace:     cmp.Namespace,
-			Configuration: configs,
-		}
-		if cmp.SourceURL != nil {
-			componentConfig.URL = *cmp.SourceURL
-		}
-		componentConfigs = append(componentConfigs, componentConfig)
-	}
-
-	result := reconcilerApi.Cluster{
-		RuntimeID: r.runtimeID,
-		RuntimeInput: reconcilerApi.RuntimeInput{
-			Name:        r.provisionRuntimeInput.RuntimeInput.Name,
-			Description: emptyIfNil(data.RuntimeInput.Description),
-		},
-		KymaConfig: reconcilerApi.KymaConfig{
-			Version:        r.provisionRuntimeInput.KymaConfig.Version,
-			Profile:        string(*data.KymaConfig.Profile),
-			Components:     componentConfigs,
-			Administrators: data.ClusterConfig.Administrators,
-		},
-		Metadata: reconcilerApi.Metadata{
-			GlobalAccountID: r.provisioningParameters.ErsContext.GlobalAccountID,
-			SubAccountID:    r.provisioningParameters.ErsContext.SubAccountID,
-			ServiceID:       r.provisioningParameters.ServiceID,
-			ServicePlanID:   r.provisioningParameters.PlanID,
-			ServicePlanName: broker.PlanNamesMapping[r.provisioningParameters.PlanID],
-			ShootName:       *r.shootName,
-			InstanceID:      r.instanceID,
-		},
-		Kubeconfig: r.kubeconfig,
-	}
-
-	if r.provisionRuntimeInput.ClusterConfig != nil && r.provisionRuntimeInput.ClusterConfig.GardenerConfig != nil {
-		result.Metadata.Region = r.provisionRuntimeInput.ClusterConfig.GardenerConfig.Region
-	}
-
-	return result, nil
 }
 
 func emptyIfNil(p *string) string {
@@ -503,48 +324,6 @@ func (r *RuntimeInput) applyProvisioningParametersForUpgradeShoot() error {
 	return nil
 }
 
-func (r *RuntimeInput) resolveOptionalComponentsForProvisionRuntime() error {
-	r.muOptionalComponents.Lock()
-	defer r.muOptionalComponents.Unlock()
-
-	componentsToInstall := []string{}
-	componentsToInstall = append(componentsToInstall, r.provisioningParameters.Parameters.OptionalComponentsToInstall...)
-	for name := range r.enabledOptionalComponents {
-		componentsToInstall = append(componentsToInstall, name)
-	}
-	toDisable := r.optionalComponentsService.ComputeComponentsToDisable(componentsToInstall)
-
-	filterOut, err := r.optionalComponentsService.ExecuteDisablers(r.provisionRuntimeInput.KymaConfig.Components, toDisable...)
-	if err != nil {
-		return fmt.Errorf("while disabling components %v: %w", toDisable, err)
-	}
-
-	r.provisionRuntimeInput.KymaConfig.Components = filterOut
-
-	return nil
-}
-
-func (r *RuntimeInput) resolveOptionalComponentsForUpgradeRuntime() error {
-	r.muOptionalComponents.Lock()
-	defer r.muOptionalComponents.Unlock()
-
-	componentsToInstall := []string{}
-	componentsToInstall = append(componentsToInstall, r.provisioningParameters.Parameters.OptionalComponentsToInstall...)
-	for name := range r.enabledOptionalComponents {
-		componentsToInstall = append(componentsToInstall, name)
-	}
-	toDisable := r.optionalComponentsService.ComputeComponentsToDisable(componentsToInstall)
-
-	filterOut, err := r.optionalComponentsService.ExecuteDisablers(r.upgradeRuntimeInput.KymaConfig.Components, toDisable...)
-	if err != nil {
-		return fmt.Errorf("while disabling components %v: %w", toDisable, err)
-	}
-
-	r.upgradeRuntimeInput.KymaConfig.Components = filterOut
-
-	return nil
-}
-
 func (r *RuntimeInput) disableComponentsForProvisionRuntime() error {
 	filterOut, err := r.componentsDisabler.DisableComponents(r.provisionRuntimeInput.KymaConfig.Components)
 	if err != nil {
@@ -564,38 +343,6 @@ func (r *RuntimeInput) disableComponentsForUpgradeRuntime() error {
 
 	r.upgradeRuntimeInput.KymaConfig.Components = filterOut
 
-	return nil
-}
-
-func (r *RuntimeInput) applyOverridesForProvisionRuntime() error {
-	for i := range r.provisionRuntimeInput.KymaConfig.Components {
-		if entry, found := r.overrides[r.provisionRuntimeInput.KymaConfig.Components[i].Component]; found {
-			r.provisionRuntimeInput.KymaConfig.Components[i].Configuration = []*gqlschema.ConfigEntryInput{}
-			r.provisionRuntimeInput.KymaConfig.Components[i].Configuration = append(r.provisionRuntimeInput.KymaConfig.Components[i].Configuration, entry...)
-		}
-	}
-
-	return nil
-}
-
-func (r *RuntimeInput) applyOverridesForUpgradeRuntime() error {
-	for i := range r.upgradeRuntimeInput.KymaConfig.Components {
-		if entry, found := r.overrides[r.upgradeRuntimeInput.KymaConfig.Components[i].Component]; found {
-			r.upgradeRuntimeInput.KymaConfig.Components[i].Configuration = []*gqlschema.ConfigEntryInput{}
-			r.upgradeRuntimeInput.KymaConfig.Components[i].Configuration = append(r.upgradeRuntimeInput.KymaConfig.Components[i].Configuration, entry...)
-		}
-	}
-
-	return nil
-}
-
-func (r *RuntimeInput) applyGlobalOverridesForProvisionRuntime() error {
-	r.provisionRuntimeInput.KymaConfig.Configuration = r.globalOverrides
-	return nil
-}
-
-func (r *RuntimeInput) applyGlobalOverridesForUpgradeRuntime() error {
-	r.upgradeRuntimeInput.KymaConfig.Configuration = r.globalOverrides
 	return nil
 }
 
