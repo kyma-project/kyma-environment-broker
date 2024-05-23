@@ -59,7 +59,6 @@ function oidcE2ETest(getShootOptionsFunc, getShootInfoFunc) {
       try {
         const runtimeStatus = await kcp.getRuntimeStatusOperations(options.instanceID);
         console.log(`\nRuntime status: ${runtimeStatus}`);
-        await kcp.reconcileInformationLog(runtimeStatus);
       } catch (e) {
         console.log(`before hook failed: ${e.toString()}`);
       }
@@ -98,7 +97,6 @@ function oidcE2ETest(getShootOptionsFunc, getShootInfoFunc) {
     it('Should get Runtime Status after updating admins', async function() {
       const runtimeStatus = await kcp.getRuntimeStatusOperations(options.instanceID);
       console.log(`\nRuntime status: ${runtimeStatus}`);
-      await kcp.reconcileInformationLog(runtimeStatus);
     });
 
     it('Assure only new cluster admins are configured', async function() {

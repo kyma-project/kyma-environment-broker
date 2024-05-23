@@ -10,7 +10,6 @@ async function upgradeSKRInstance(options, kymaUpgradeVersion, timeout) {
     const runtimeStatus = await kcp.getRuntimeStatusOperations(options.instanceID);
     const events = await kcp.getRuntimeEvents(options.instanceID);
     console.log(`\nRuntime status after upgrade: ${runtimeStatus}\nEvents:\n${events}`);
-    await kcp.reconcileInformationLog(runtimeStatus);
   }
 }
 

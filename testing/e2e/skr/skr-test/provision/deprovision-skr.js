@@ -14,7 +14,6 @@ async function deprovisionSKRInstance(options, timeout, ensureSuccess=true) {
     const runtimeStatus = await kcp.getRuntimeStatusOperations(options.instanceID);
     const events = await kcp.getRuntimeEvents(options.instanceID);
     console.log(`\nRuntime status after de-provisioning: ${runtimeStatus}\nEvents:\n${events}`);
-    await kcp.reconcileInformationLog(runtimeStatus);
   }
 }
 

@@ -28,7 +28,6 @@ async function ensureSuspensionIsInProgress(kcp, instanceID, timeout) {
     const runtimeStatus = await kcp.getRuntimeStatusOperations(instanceID);
     const events = await kcp.getRuntimeEvents(instanceID);
     console.log(`Runtime status:\n${runtimeStatus}\nEvents:\n${events}`);
-    await kcp.reconcileInformationLog(runtimeStatus);
   }
 }
 
@@ -42,7 +41,6 @@ async function ensureSuspensionSucceeded(keb, kcp, instanceID, operationID, time
     const runtimeStatus = await kcp.getRuntimeStatusOperations(instanceID);
     const events = await kcp.getRuntimeEvents(instanceID);
     console.log(`Runtime status after suspension:\n${runtimeStatus}\nEvents:\n${events}`);
-    await kcp.reconcileInformationLog(runtimeStatus);
   }
 }
 
