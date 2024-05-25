@@ -120,9 +120,6 @@ func fixUpgradeClusterOperationWithInputCreator(t *testing.T) internal.UpgradeCl
 }
 
 func fixInputCreator(t *testing.T) internal.ProvisionerInputCreator {
-	componentsProvider := &automock.ComponentListProvider{}
-	defer componentsProvider.AssertExpectations(t)
-
 	configProvider := &automock.ConfigurationProvider{}
 	configProvider.On("ProvideForGivenVersionAndPlan",
 		mock.AnythingOfType("string"),
@@ -136,15 +133,14 @@ func fixInputCreator(t *testing.T) internal.ProvisionerInputCreator {
 			},
 		}, nil)
 
-	ibf, err := input.NewInputBuilderFactory(nil, nil, componentsProvider,
-		configProvider, input.Config{
-			KubernetesVersion:             fixKubernetesVersion,
-			MachineImage:                  fixMachineImage,
-			MachineImageVersion:           fixMachineImageVersion,
-			TrialNodesNumber:              1,
-			AutoUpdateKubernetesVersion:   fixAutoUpdateKubernetesVersion,
-			AutoUpdateMachineImageVersion: fixAutoUpdateMachineImageVersion,
-		}, fixKymaVersion, nil, nil, fixture.FixOIDCConfigDTO())
+	ibf, err := input.NewInputBuilderFactory(configProvider, input.Config{
+		KubernetesVersion:             fixKubernetesVersion,
+		MachineImage:                  fixMachineImage,
+		MachineImageVersion:           fixMachineImageVersion,
+		TrialNodesNumber:              1,
+		AutoUpdateKubernetesVersion:   fixAutoUpdateKubernetesVersion,
+		AutoUpdateMachineImageVersion: fixAutoUpdateMachineImageVersion,
+	}, fixKymaVersion, nil, nil, fixture.FixOIDCConfigDTO())
 	require.NoError(t, err, "Input factory creation error")
 
 	ver := internal.RuntimeVersionData{

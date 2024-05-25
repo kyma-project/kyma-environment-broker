@@ -47,11 +47,10 @@ type RuntimeInput struct {
 	upgradeShootInput     gqlschema.UpgradeShootInput
 	labels                map[string]string
 
-	config                    *internal.ConfigForPlan
-	hyperscalerInputProvider  HyperscalerInputProvider
-	optionalComponentsService OptionalComponentService
-	provisioningParameters    internal.ProvisioningParameters
-	shootName                 *string
+	config                   *internal.ConfigForPlan
+	hyperscalerInputProvider HyperscalerInputProvider
+	provisioningParameters   internal.ProvisioningParameters
+	shootName                *string
 
 	oidcDefaultValues internal.OIDCConfigDTO
 	oidcLastValues    gqlschema.OIDCConfigInput

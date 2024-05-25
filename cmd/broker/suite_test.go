@@ -35,7 +35,6 @@ import (
 	kebOrchestration "github.com/kyma-project/kyma-environment-broker/internal/orchestration"
 	"github.com/kyma-project/kyma-environment-broker/internal/process"
 	"github.com/kyma-project/kyma-environment-broker/internal/process/input"
-	"github.com/kyma-project/kyma-environment-broker/internal/process/input/automock"
 	"github.com/kyma-project/kyma-environment-broker/internal/process/provisioning"
 	"github.com/kyma-project/kyma-environment-broker/internal/process/upgrade_cluster"
 	"github.com/kyma-project/kyma-environment-broker/internal/process/upgrade_kyma"
@@ -125,15 +124,6 @@ func NewOrchestrationSuite(t *testing.T, additionalKymaVersions []string) *Orche
 		Url: "",
 	}
 
-	optionalComponentsDisablers := kebRuntime.ComponentsDisablers{}
-	optComponentsSvc := kebRuntime.NewOptionalComponentsService(optionalComponentsDisablers)
-
-	disabledComponentsProvider := kebRuntime.NewDisabledComponentsProvider()
-
-	componentListProvider := &automock.ComponentListProvider{}
-	componentListProvider.On("AllComponents", mock.AnythingOfType("internal.RuntimeVersionData"), mock.AnythingOfType("*internal.ConfigForPlan")).Return([]internal.
-		KymaComponent{}, nil)
-
 	oidcDefaults := fixture.FixOIDCConfigDTO()
 
 	ctx, cancel := context.WithTimeout(context.Background(), 20*time.Minute)
@@ -155,15 +145,14 @@ func NewOrchestrationSuite(t *testing.T, additionalKymaVersions []string) *Orche
 		kebConfig.NewConfigMapReader(ctx, cli, logrus.New(), defaultKymaVer),
 		kebConfig.NewConfigMapKeysValidator(),
 		kebConfig.NewConfigMapConverter())
-	inputFactory, err := input.NewInputBuilderFactory(optComponentsSvc, disabledComponentsProvider, componentListProvider,
-		configProvider, input.Config{
-			MachineImageVersion:         "coreos",
-			KubernetesVersion:           "1.18",
-			MachineImage:                "253",
-			ProvisioningTimeout:         time.Minute,
-			URL:                         "http://localhost",
-			DefaultGardenerShootPurpose: "testing",
-		}, kymaVer, map[string]string{"cf-eu10": "europe"}, cfg.FreemiumProviders, oidcDefaults)
+	inputFactory, err := input.NewInputBuilderFactory(configProvider, input.Config{
+		MachineImageVersion:         "coreos",
+		KubernetesVersion:           "1.18",
+		MachineImage:                "253",
+		ProvisioningTimeout:         time.Minute,
+		URL:                         "http://localhost",
+		DefaultGardenerShootPurpose: "testing",
+	}, kymaVer, map[string]string{"cf-eu10": "europe"}, cfg.FreemiumProviders, oidcDefaults)
 	require.NoError(t, err)
 
 	reconcilerClient := reconciler.NewFakeClient()
@@ -600,14 +589,6 @@ func NewProvisioningSuite(t *testing.T, multiZoneCluster bool, controlPlaneFailu
 
 	provisionerClient := provisioner.NewFakeClient()
 
-	optionalComponentsDisablers := kebRuntime.ComponentsDisablers{}
-	optComponentsSvc := kebRuntime.NewOptionalComponentsService(optionalComponentsDisablers)
-
-	disabledComponentsProvider := kebRuntime.NewDisabledComponentsProvider()
-
-	componentListProvider := &automock.ComponentListProvider{}
-	componentListProvider.On("AllComponents", mock.AnythingOfType("internal.RuntimeVersionData"), mock.AnythingOfType("*internal.ConfigForPlan")).Return([]internal.KymaComponent{}, nil)
-
 	oidcDefaults := fixture.FixOIDCConfigDTO()
 
 	sch := runtime.NewScheme()
@@ -618,17 +599,16 @@ func NewProvisioningSuite(t *testing.T, multiZoneCluster bool, controlPlaneFailu
 		kebConfig.NewConfigMapReader(ctx, cli, logrus.New(), defaultKymaVer),
 		kebConfig.NewConfigMapKeysValidator(),
 		kebConfig.NewConfigMapConverter())
-	inputFactory, err := input.NewInputBuilderFactory(optComponentsSvc, disabledComponentsProvider, componentListProvider,
-		configProvider, input.Config{
-			MachineImageVersion:          "coreos",
-			KubernetesVersion:            "1.18",
-			MachineImage:                 "253",
-			ProvisioningTimeout:          time.Minute,
-			URL:                          "http://localhost",
-			DefaultGardenerShootPurpose:  "testing",
-			MultiZoneCluster:             multiZoneCluster,
-			ControlPlaneFailureTolerance: controlPlaneFailureTolerance,
-		}, defaultKymaVer, map[string]string{"cf-eu10": "europe"}, cfg.FreemiumProviders, oidcDefaults)
+	inputFactory, err := input.NewInputBuilderFactory(configProvider, input.Config{
+		MachineImageVersion:          "coreos",
+		KubernetesVersion:            "1.18",
+		MachineImage:                 "253",
+		ProvisioningTimeout:          time.Minute,
+		URL:                          "http://localhost",
+		DefaultGardenerShootPurpose:  "testing",
+		MultiZoneCluster:             multiZoneCluster,
+		ControlPlaneFailureTolerance: controlPlaneFailureTolerance,
+	}, defaultKymaVer, map[string]string{"cf-eu10": "europe"}, cfg.FreemiumProviders, oidcDefaults)
 	require.NoError(t, err)
 
 	server := avs.NewMockAvsServer(t)

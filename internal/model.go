@@ -685,33 +685,6 @@ func (o *Operation) SuccessMustBeSaved() bool {
 	return true
 }
 
-type ComponentConfigurationInputList []*gqlschema.ComponentConfigurationInput
-
-func (l ComponentConfigurationInputList) DeepCopy() []*gqlschema.ComponentConfigurationInput {
-	var copiedList []*gqlschema.ComponentConfigurationInput
-	for _, component := range l {
-		var cpyCfg []*gqlschema.ConfigEntryInput
-		for _, cfg := range component.Configuration {
-			mapped := &gqlschema.ConfigEntryInput{
-				Key:   cfg.Key,
-				Value: cfg.Value,
-			}
-			if cfg.Secret != nil {
-				mapped.Secret = ptr.Bool(*cfg.Secret)
-			}
-			cpyCfg = append(cpyCfg, mapped)
-		}
-
-		copiedList = append(copiedList, &gqlschema.ComponentConfigurationInput{
-			Component:     component.Component,
-			Namespace:     component.Namespace,
-			SourceURL:     component.SourceURL,
-			Configuration: cpyCfg,
-		})
-	}
-	return copiedList
-}
-
 // KymaComponent represents single Kyma component
 type KymaComponent struct {
 	Name        string           `json:"name"`

@@ -50,7 +50,6 @@ import (
 	"github.com/kyma-project/kyma-environment-broker/internal/provisioner"
 	"github.com/kyma-project/kyma-environment-broker/internal/reconciler"
 	"github.com/kyma-project/kyma-environment-broker/internal/runtime"
-	"github.com/kyma-project/kyma-environment-broker/internal/runtime/components"
 	"github.com/kyma-project/kyma-environment-broker/internal/runtimeversion"
 	"github.com/kyma-project/kyma-environment-broker/internal/storage"
 	"github.com/kyma-project/kyma-environment-broker/internal/storage/dbmodel"
@@ -299,24 +298,11 @@ func main() {
 	})
 	notificationBuilder := notification.NewBundleBuilder(notificationClient, cfg.Notification)
 
-	// Register disabler. Convention:
-	// {component-name} : {component-disabler-service}
-	//
-	// Using map is intentional - we ensure that component name is not duplicated.
-	optionalComponentsDisablers := runtime.ComponentsDisablers{
-		components.Kiali:   runtime.NewGenericComponentDisabler(components.Kiali),
-		components.Tracing: runtime.NewGenericComponentDisabler(components.Tracing),
-	}
-	optComponentsSvc := runtime.NewOptionalComponentsService(optionalComponentsDisablers)
-
-	disabledComponentsProvider := runtime.NewDisabledComponentsProvider()
-
 	// provides configuration for specified Kyma version and plan
 	configProvider := kebConfig.NewConfigProvider(
 		kebConfig.NewConfigMapReader(ctx, cli, logs, cfg.KymaVersion),
 		kebConfig.NewConfigMapKeysValidator(),
 		kebConfig.NewConfigMapConverter())
-	componentsProvider := runtime.NewComponentsProvider()
 	gardenerClusterConfig, err := gardener.NewGardenerClusterConfig(cfg.Gardener.KubeconfigPath)
 	fatalOnError(err, logs)
 	cfg.Gardener.DNSProviders, err = gardener.ReadDNSProvidersValuesFromYAML(cfg.SkrDnsProvidersValuesYAMLFilePath)
@@ -335,8 +321,7 @@ func main() {
 
 	oidcDefaultValues, err := runtime.ReadOIDCDefaultValuesFromYAML(cfg.SkrOidcDefaultValuesYAMLFilePath)
 	fatalOnError(err, logs)
-	inputFactory, err := input.NewInputBuilderFactory(optComponentsSvc, disabledComponentsProvider, componentsProvider,
-		configProvider, cfg.Provisioner, cfg.KymaVersion, regions, cfg.FreemiumProviders, oidcDefaultValues)
+	inputFactory, err := input.NewInputBuilderFactory(configProvider, cfg.Provisioner, cfg.KymaVersion, regions, cfg.FreemiumProviders, oidcDefaultValues)
 	fatalOnError(err, logs)
 
 	edpClient := edp.NewClient(cfg.EDP)

@@ -10,7 +10,6 @@ import (
 	"github.com/kyma-project/kyma-environment-broker/internal/process/input"
 	inputAutomock "github.com/kyma-project/kyma-environment-broker/internal/process/input/automock"
 	"github.com/kyma-project/kyma-environment-broker/internal/provisioner"
-	"github.com/kyma-project/kyma-environment-broker/internal/runtime"
 	"github.com/kyma-project/kyma-environment-broker/internal/storage"
 	"github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/assert"
@@ -79,10 +78,7 @@ func TestUpgradeShootStep_Run(t *testing.T) {
 }
 
 func fixInputCreator(t *testing.T) internal.ProvisionerInputCreator {
-	optComponentsSvc := &inputAutomock.OptionalComponentService{}
-	componentsProvider := &inputAutomock.ComponentListProvider{}
 	const kymaVersion = "1.20"
-	defer componentsProvider.AssertExpectations(t)
 
 	configProvider := &inputAutomock.ConfigurationProvider{}
 	configProvider.On("ProvideForGivenVersionAndPlan",
@@ -98,11 +94,10 @@ func fixInputCreator(t *testing.T) internal.ProvisionerInputCreator {
 		}, nil)
 
 	const k8sVersion = "1.18"
-	ibf, err := input.NewInputBuilderFactory(optComponentsSvc, runtime.NewDisabledComponentsProvider(),
-		componentsProvider, configProvider, input.Config{
-			KubernetesVersion:           k8sVersion,
-			DefaultGardenerShootPurpose: "test",
-		}, kymaVersion, fixTrialRegionMapping(), fixFreemiumProviders(), fixture.FixOIDCConfigDTO())
+	ibf, err := input.NewInputBuilderFactory(configProvider, input.Config{
+		KubernetesVersion:           k8sVersion,
+		DefaultGardenerShootPurpose: "test",
+	}, kymaVersion, fixTrialRegionMapping(), fixFreemiumProviders(), fixture.FixOIDCConfigDTO())
 	assert.NoError(t, err)
 
 	pp := internal.ProvisioningParameters{

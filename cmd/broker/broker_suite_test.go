@@ -104,8 +104,6 @@ type BrokerSuiteTest struct {
 	t                   *testing.T
 	inputBuilderFactory input.CreatorForPlan
 
-	componentProvider input.ComponentListProvider
-
 	k8sKcp client.Client
 	k8sSKR client.Client
 
@@ -113,11 +111,6 @@ type BrokerSuiteTest struct {
 
 	eventBroker *event.PubSub
 	metrics     *metricsv2.RegisterContainer
-}
-
-type componentProviderDecorated struct {
-	componentProvider input.ComponentListProvider
-	decorator         map[string]internal.KymaComponent
 }
 
 func (s *BrokerSuiteTest) TearDown() {
@@ -176,27 +169,19 @@ func NewBrokerSuiteTestWithConfig(t *testing.T, cfg *Config, version ...string) 
 		cfg.KymaVersion = version[0] // overriden to
 	}
 
-	optionalComponentsDisablers := kebRuntime.ComponentsDisablers{}
-	optComponentsSvc := kebRuntime.NewOptionalComponentsService(optionalComponentsDisablers)
-
-	disabledComponentsProvider := kebRuntime.NewDisabledComponentsProvider()
-
 	configProvider := kebConfig.NewConfigProvider(
 		kebConfig.NewConfigMapReader(ctx, cli, logrus.New(), defaultKymaVer),
 		kebConfig.NewConfigMapKeysValidator(),
 		kebConfig.NewConfigMapConverter())
 
-	componentProvider := kebRuntime.NewFakeComponentsProvider()
-
-	inputFactory, err := input.NewInputBuilderFactory(optComponentsSvc, disabledComponentsProvider, componentProvider,
-		configProvider, input.Config{
-			MachineImageVersion:         "253",
-			KubernetesVersion:           "1.18",
-			MachineImage:                "coreos",
-			URL:                         "http://localhost",
-			DefaultGardenerShootPurpose: "testing",
-			DefaultTrialProvider:        internal.AWS,
-		}, defaultKymaVer, map[string]string{"cf-eu10": "europe", "cf-us10": "us"}, cfg.FreemiumProviders, defaultOIDCValues())
+	inputFactory, err := input.NewInputBuilderFactory(configProvider, input.Config{
+		MachineImageVersion:         "253",
+		KubernetesVersion:           "1.18",
+		MachineImage:                "coreos",
+		URL:                         "http://localhost",
+		DefaultGardenerShootPurpose: "testing",
+		DefaultTrialProvider:        internal.AWS,
+	}, defaultKymaVer, map[string]string{"cf-eu10": "europe", "cf-us10": "us"}, cfg.FreemiumProviders, defaultOIDCValues())
 
 	storageCleanup, db, err := GetStorageForE2ETests()
 	assert.NoError(t, err)
@@ -258,7 +243,6 @@ func NewBrokerSuiteTestWithConfig(t *testing.T, cfg *Config, version ...string) 
 		router:              mux.NewRouter(),
 		t:                   t,
 		inputBuilderFactory: inputFactory,
-		componentProvider:   componentProvider,
 		k8sKcp:              cli,
 		k8sSKR:              fakeK8sSKRClient,
 		eventBroker:         eventBroker,
