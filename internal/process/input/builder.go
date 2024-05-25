@@ -177,12 +177,6 @@ func (f *InputBuilderFactory) CreateProvisionInput(provisioningParameters intern
 		return nil, fmt.Errorf("while initializing ProvisionRuntimeInput: %w", err)
 	}
 
-	disabledForPlan, err := f.disabledComponentsProvider.DisabledComponentsPerPlan(provisioningParameters.PlanID)
-	if err != nil {
-		return nil, fmt.Errorf("while getting disabled components for plan %s: %w", provisioningParameters.PlanID, err)
-	}
-	disabledComponents := mergeMaps(disabledForPlan, f.disabledComponentsProvider.DisabledForAll())
-
 	return &RuntimeInput{
 		provisionRuntimeInput:     initInput,
 		labels:                    make(map[string]string),
@@ -190,7 +184,6 @@ func (f *InputBuilderFactory) CreateProvisionInput(provisioningParameters intern
 		hyperscalerInputProvider:  provider,
 		optionalComponentsService: f.optComponentsSvc,
 		provisioningParameters:    provisioningParameters,
-		componentsDisabler:        runtime.NewDisabledComponentsService(disabledComponents),
 		oidcDefaultValues:         f.oidcDefaultValues,
 		trialNodesNumber:          f.config.TrialNodesNumber,
 	}, nil
@@ -295,17 +288,10 @@ func (f *InputBuilderFactory) CreateUpgradeInput(provisioningParameters internal
 		return nil, fmt.Errorf("while initializing RuntimeInput: %w", err)
 	}
 
-	disabledForPlan, err := f.disabledComponentsProvider.DisabledComponentsPerPlan(provisioningParameters.PlanID)
-	if err != nil {
-		return nil, fmt.Errorf("every supported plan should be specified in the disabled components map: %w", err)
-	}
-	disabledComponents := mergeMaps(disabledForPlan, f.disabledComponentsProvider.DisabledForAll())
-
 	return &RuntimeInput{
 		provisionRuntimeInput:     kymaInput,
 		upgradeRuntimeInput:       upgradeKymaInput,
 		optionalComponentsService: f.optComponentsSvc,
-		componentsDisabler:        runtime.NewDisabledComponentsService(disabledComponents),
 		trialNodesNumber:          f.config.TrialNodesNumber,
 		oidcDefaultValues:         f.oidcDefaultValues,
 		hyperscalerInputProvider:  provider,
@@ -348,16 +334,6 @@ func mapToGQLComponentConfigurationInput(kymaComponents []internal.KymaComponent
 		})
 	}
 	return input
-}
-
-func mergeMaps(maps ...map[string]struct{}) map[string]struct{} {
-	res := map[string]struct{}{}
-	for _, m := range maps {
-		for k, v := range m {
-			res[k] = v
-		}
-	}
-	return res
 }
 
 func (f *InputBuilderFactory) CreateUpgradeShootInput(provisioningParameters internal.ProvisioningParameters, version internal.RuntimeVersionData) (internal.ProvisionerInputCreator, error) {

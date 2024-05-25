@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/kyma-project/kyma-environment-broker/internal/euaccess"
+
 	"github.com/kyma-project/kyma-environment-broker/internal/provider"
 
 	"github.com/kyma-project/kyma-environment-broker/common/hyperscaler"
@@ -45,7 +47,7 @@ func (s *ResolveCredentialsStep) Run(operation internal.Operation, log logrus.Fi
 		return s.operationManager.OperationFailed(operation, msg, err, log)
 	}
 
-	euAccess := internal.IsEuAccess(operation.ProvisioningParameters.PlatformRegion)
+	euAccess := euaccess.IsEURestrictedAccess(operation.ProvisioningParameters.PlatformRegion)
 
 	log.Infof("HAP lookup for credentials secret binding to provision cluster for global account ID %s on Hyperscaler %s, euAccess %v", operation.ProvisioningParameters.ErsContext.GlobalAccountID, hypType.GetKey(), euAccess)
 

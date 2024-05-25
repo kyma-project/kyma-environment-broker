@@ -28,7 +28,6 @@ type ProvisionerInputCreator interface {
 	CreateProvisionRuntimeInput() (gqlschema.ProvisionRuntimeInput, error)
 	CreateUpgradeRuntimeInput() (gqlschema.UpgradeRuntimeInput, error)
 	CreateUpgradeShootInput() (gqlschema.UpgradeShootInput, error)
-	DisableOptionalComponent(componentName string) ProvisionerInputCreator
 	Provider() CloudProvider
 	Configuration() *ConfigForPlan
 

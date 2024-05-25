@@ -34,7 +34,6 @@ const (
 
 type SimpleInputCreator struct {
 	Labels            map[string]string
-	EnabledComponents []string
 	ShootName         *string
 	ShootDomain       string
 	shootDnsProviders gardener.DNSProvidersData
@@ -184,10 +183,9 @@ func FixOperation(id, instanceId string, opType internal.OperationType) internal
 
 func FixInputCreator(provider internal.CloudProvider) *SimpleInputCreator {
 	return &SimpleInputCreator{
-		Labels:            make(map[string]string),
-		EnabledComponents: []string{"istio-configuration"},
-		ShootName:         ptr.String("ShootName"),
-		CloudProvider:     provider,
+		Labels:        make(map[string]string),
+		ShootName:     ptr.String("ShootName"),
+		CloudProvider: provider,
 	}
 }
 
@@ -424,15 +422,6 @@ func (c *SimpleInputCreator) CreateUpgradeRuntimeInput() (gqlschema.UpgradeRunti
 
 func (c *SimpleInputCreator) CreateUpgradeShootInput() (gqlschema.UpgradeShootInput, error) {
 	return gqlschema.UpgradeShootInput{}, nil
-}
-
-func (c *SimpleInputCreator) DisableOptionalComponent(name string) internal.ProvisionerInputCreator {
-	for i, cmp := range c.EnabledComponents {
-		if cmp == name {
-			c.EnabledComponents = append(c.EnabledComponents[:i], c.EnabledComponents[i+1:]...)
-		}
-	}
-	return c
 }
 
 func (c *SimpleInputCreator) Provider() internal.CloudProvider {

@@ -15,7 +15,6 @@ import (
 	"github.com/kyma-project/kyma-environment-broker/internal/broker"
 	"github.com/kyma-project/kyma-environment-broker/internal/networking"
 	"github.com/kyma-project/kyma-environment-broker/internal/ptr"
-	"github.com/kyma-project/kyma-environment-broker/internal/runtime"
 )
 
 const (
@@ -54,9 +53,8 @@ type RuntimeInput struct {
 	provisioningParameters    internal.ProvisioningParameters
 	shootName                 *string
 
-	componentsDisabler ComponentsDisabler
-	oidcDefaultValues  internal.OIDCConfigDTO
-	oidcLastValues     gqlschema.OIDCConfigInput
+	oidcDefaultValues internal.OIDCConfigDTO
+	oidcLastValues    gqlschema.OIDCConfigInput
 
 	trialNodesNumber  int
 	instanceID        string
@@ -69,11 +67,6 @@ type RuntimeInput struct {
 
 func (r *RuntimeInput) Configuration() *internal.ConfigForPlan {
 	return r.config
-}
-
-func (r *RuntimeInput) DisableOptionalComponent(componentName string) internal.ProvisionerInputCreator {
-	r.optionalComponentsService.AddComponentToDisable(componentName, runtime.NewGenericComponentDisabler(componentName))
-	return r
 }
 
 func (r *RuntimeInput) SetProvisioningParameters(params internal.ProvisioningParameters) internal.ProvisionerInputCreator {
@@ -145,10 +138,6 @@ func (r *RuntimeInput) CreateProvisionRuntimeInput() (gqlschema.ProvisionRuntime
 			execute: r.applyProvisioningParametersForProvisionRuntime,
 		},
 		{
-			name:    "disabling components",
-			execute: r.disableComponentsForProvisionRuntime,
-		},
-		{
 			name:    "applying global configuration",
 			execute: r.applyGlobalConfigurationForProvisionRuntime,
 		},
@@ -186,10 +175,6 @@ func (r *RuntimeInput) CreateUpgradeRuntimeInput() (gqlschema.UpgradeRuntimeInpu
 		name    string
 		execute func() error
 	}{
-		{
-			name:    "disabling components",
-			execute: r.disableComponentsForUpgradeRuntime,
-		},
 		{
 			name:    "applying global configuration",
 			execute: r.applyGlobalConfigurationForUpgradeRuntime,
@@ -320,28 +305,6 @@ func (r *RuntimeInput) applyProvisioningParametersForUpgradeShoot() error {
 
 	updateInt(r.upgradeShootInput.GardenerConfig.MaxSurge, r.provisioningParameters.Parameters.MaxSurge)
 	updateInt(r.upgradeShootInput.GardenerConfig.MaxUnavailable, r.provisioningParameters.Parameters.MaxUnavailable)
-
-	return nil
-}
-
-func (r *RuntimeInput) disableComponentsForProvisionRuntime() error {
-	filterOut, err := r.componentsDisabler.DisableComponents(r.provisionRuntimeInput.KymaConfig.Components)
-	if err != nil {
-		return err
-	}
-
-	r.provisionRuntimeInput.KymaConfig.Components = filterOut
-
-	return nil
-}
-
-func (r *RuntimeInput) disableComponentsForUpgradeRuntime() error {
-	filterOut, err := r.componentsDisabler.DisableComponents(r.upgradeRuntimeInput.KymaConfig.Components)
-	if err != nil {
-		return err
-	}
-
-	r.upgradeRuntimeInput.KymaConfig.Components = filterOut
 
 	return nil
 }

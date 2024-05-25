@@ -67,7 +67,6 @@ func (s *InitialisationStep) Run(operation internal.Operation, log logrus.FieldL
 	switch {
 	case err == nil:
 		operation.InputCreator = creator
-		operation.InputCreator.DisableOptionalComponent(internal.BTPOperatorComponentName)
 		err := s.updateInstance(operation.InstanceID, creator.Provider())
 		if err != nil {
 			return s.operationManager.RetryOperation(operation, "error while creating provisioning input creator", err, 1*time.Second, 5*time.Second, log)

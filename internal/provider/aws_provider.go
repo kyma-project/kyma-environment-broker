@@ -7,6 +7,8 @@ import (
 	"net/netip"
 	"strings"
 
+	"github.com/kyma-project/kyma-environment-broker/internal/euaccess"
+
 	"github.com/kyma-project/kyma-environment-broker/internal/networking"
 
 	"github.com/kyma-project/kyma-environment-broker/internal/ptr"
@@ -204,7 +206,7 @@ func (p *AWSInput) ApplyParameters(input *gqlschema.ClusterConfigInput, pp inter
 	}
 
 	// if the platformRegion is "EU Access" - switch the region to the eu-access
-	if internal.IsEuAccess(pp.PlatformRegion) {
+	if euaccess.IsEURestrictedAccess(pp.PlatformRegion) {
 		input.GardenerConfig.Region = DefaultEuAccessAWSRegion
 	}
 
@@ -266,7 +268,7 @@ func awsLiteDefaults(region string) *gqlschema.ClusterConfigInput {
 func (p *AWSTrialInput) ApplyParameters(input *gqlschema.ClusterConfigInput, pp internal.ProvisioningParameters) {
 	params := pp.Parameters
 
-	if internal.IsEuAccess(pp.PlatformRegion) {
+	if euaccess.IsEURestrictedAccess(pp.PlatformRegion) {
 		updateRegionWithZones(input, DefaultEuAccessAWSRegion)
 		return
 	}

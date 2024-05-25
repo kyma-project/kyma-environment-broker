@@ -12,28 +12,17 @@ import (
 
 func newInputCreator() *simpleInputCreator {
 	return &simpleInputCreator{
-		labels:            make(map[string]string),
-		enabledComponents: []string{},
+		labels: make(map[string]string),
 	}
 }
 
 type simpleInputCreator struct {
 	labels            map[string]string
-	enabledComponents []string
 	shootName         *string
 	provider          internal.CloudProvider
 	shootDomain       string
 	shootDnsProviders gardener.DNSProvidersData
 	config            *internal.ConfigForPlan
-}
-
-func (c *simpleInputCreator) DisableOptionalComponent(name string) internal.ProvisionerInputCreator {
-	for i, cmp := range c.enabledComponents {
-		if cmp == name {
-			c.enabledComponents = append(c.enabledComponents[:i], c.enabledComponents[i+1:]...)
-		}
-	}
-	return c
 }
 
 func (c *simpleInputCreator) Configuration() *internal.ConfigForPlan {
