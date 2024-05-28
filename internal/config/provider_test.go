@@ -40,7 +40,6 @@ func TestConfigProvider(t *testing.T) {
 
 		// then
 		require.NoError(t, err)
-		assert.Len(t, cfg.AdditionalComponents, len(expectedCfg.AdditionalComponents))
 		assert.ObjectsAreEqual(expectedCfg, cfg)
 	})
 
@@ -52,7 +51,6 @@ func TestConfigProvider(t *testing.T) {
 
 		// then
 		require.NoError(t, err)
-		assert.Len(t, cfg.AdditionalComponents, len(expectedCfg.AdditionalComponents))
 		assert.ObjectsAreEqual(expectedCfg, cfg)
 	})
 
@@ -65,7 +63,6 @@ func TestConfigProvider(t *testing.T) {
 
 		// then
 		require.NoError(t, err)
-		assert.Len(t, cfg.AdditionalComponents, len(expectedCfg.AdditionalComponents))
 		assert.ObjectsAreEqual(expectedCfg, cfg)
 	})
 
@@ -78,7 +75,6 @@ func TestConfigProvider(t *testing.T) {
 
 		// then
 		require.NoError(t, err)
-		assert.Len(t, cfg.AdditionalComponents, len(expectedCfg.AdditionalComponents))
 		assert.ObjectsAreEqual(expectedCfg, cfg)
 	})
 
@@ -113,22 +109,7 @@ func TestConfigProvider(t *testing.T) {
 }
 
 func fixAzureConfig() *internal.ConfigForPlan {
-	return &internal.ConfigForPlan{
-		AdditionalComponents: []internal.KymaComponent{
-			{
-				Name:      "additional-component1",
-				Namespace: "kyma-system",
-			},
-			{
-				Name:      "additional-component2",
-				Namespace: "test-system",
-			},
-			{
-				Name:      "azure-component",
-				Namespace: "azure-system",
-				Source:    &internal.ComponentSource{URL: "https://azure.domain/component/azure-component.git"},
-			},
-		}}
+	return &internal.ConfigForPlan{}
 }
 
 func fixDefault() *internal.ConfigForPlan {
@@ -142,19 +123,5 @@ spec:
   channel: stable
   modules:
   - name: istio`,
-		AdditionalComponents: []internal.KymaComponent{
-			{
-				Name:      "additional-component1",
-				Namespace: "kyma-system",
-			},
-			{
-				Name:      "additional-component2",
-				Namespace: "test-system",
-			},
-			{
-				Name:      "azure-component",
-				Namespace: "azure-system",
-				Source:    &internal.ComponentSource{URL: "https://azure.domain/component/azure-component.git"},
-			},
-		}}
+	}
 }

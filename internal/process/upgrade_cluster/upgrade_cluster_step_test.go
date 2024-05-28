@@ -124,14 +124,7 @@ func fixInputCreator(t *testing.T) internal.ProvisionerInputCreator {
 	configProvider.On("ProvideForGivenVersionAndPlan",
 		mock.AnythingOfType("string"),
 		mock.AnythingOfType("string")).
-		Return(&internal.ConfigForPlan{
-			AdditionalComponents: []internal.KymaComponent{
-				{
-					Name:      "kyma-component1",
-					Namespace: "kyma-system",
-				},
-			},
-		}, nil)
+		Return(&internal.ConfigForPlan{}, nil)
 
 	ibf, err := input.NewInputBuilderFactory(configProvider, input.Config{
 		KubernetesVersion:             fixKubernetesVersion,

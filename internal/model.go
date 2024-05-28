@@ -685,30 +685,8 @@ func (o *Operation) SuccessMustBeSaved() bool {
 	return true
 }
 
-// KymaComponent represents single Kyma component
-type KymaComponent struct {
-	Name        string           `json:"name"`
-	ReleaseName string           `json:"release"`
-	Namespace   string           `json:"namespace"`
-	Source      *ComponentSource `json:"source,omitempty"`
-}
-
-type ComponentSource struct {
-	URL string `json:"url"`
-}
-
 type ConfigForPlan struct {
-	AdditionalComponents []KymaComponent `json:"additional-components" yaml:"additional-components"`
-	KymaTemplate         string          `json:"kyma-template" yaml:"kyma-template"`
-}
-
-func (c *ConfigForPlan) ContainsAdditionalComponent(componentName string) bool {
-	for _, c := range c.AdditionalComponents {
-		if c.Name == componentName {
-			return true
-		}
-	}
-	return false
+	KymaTemplate string `json:"kyma-template" yaml:"kyma-template"`
 }
 
 type SubaccountState struct {

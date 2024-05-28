@@ -611,13 +611,6 @@ func mockConfigProvider() ConfigurationProvider {
 	configProvider.On("ProvideForGivenVersionAndPlan",
 		mock.AnythingOfType("string"),
 		mock.AnythingOfType("string")).
-		Return(&internal.ConfigForPlan{
-			AdditionalComponents: []internal.KymaComponent{
-				{
-					Name:      "kyma-component1",
-					Namespace: "kyma-system",
-				},
-			},
-		}, nil)
+		Return(&internal.ConfigForPlan{}, nil)
 	return configProvider
 }
