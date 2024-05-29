@@ -40,7 +40,9 @@ type (
 		MultiZone                    bool
 		ControlPlaneFailureTolerance string
 	}
-	AzureLiteInput  struct{}
+	AzureLiteInput struct {
+		UseSmallerTrialAndFreemiumMachineTypes bool
+	}
 	AzureTrialInput struct {
 		PlatformRegionMapping                  map[string]string
 		UseSmallerTrialAndFreemiumMachineTypes bool
@@ -124,11 +126,15 @@ func (p *AzureInput) Provider() internal.CloudProvider {
 }
 
 func (p *AzureLiteInput) Defaults() *gqlschema.ClusterConfigInput {
+	machineType := DefaultOldAzureTrialMachineType
+	if p.UseSmallerTrialAndFreemiumMachineTypes {
+		machineType = DefaultAzureMachineType
+	}
 	return &gqlschema.ClusterConfigInput{
 		GardenerConfig: &gqlschema.GardenerConfigInput{
 			DiskType:       ptr.String("Standard_LRS"),
 			VolumeSizeGb:   ptr.Integer(50),
-			MachineType:    "Standard_D4s_v5",
+			MachineType:    machineType,
 			Region:         DefaultAzureRegion,
 			Provider:       "azure",
 			WorkerCidr:     networking.DefaultNodesCIDR,
