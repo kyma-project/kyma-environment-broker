@@ -8,7 +8,6 @@ import (
 	"github.com/kyma-project/kyma-environment-broker/internal/avs"
 	"github.com/kyma-project/kyma-environment-broker/internal/edp"
 	kebError "github.com/kyma-project/kyma-environment-broker/internal/error"
-	"github.com/kyma-project/kyma-environment-broker/internal/reconciler"
 	"github.com/kyma-project/kyma-environment-broker/internal/storage/dberr"
 	"github.com/stretchr/testify/assert"
 	apierr "k8s.io/apimachinery/pkg/api/errors"
@@ -27,9 +26,6 @@ func TestLastError(t *testing.T) {
 		avsErr := fmt.Errorf("something: %w", avs.NewAvsError("avs server returned %d status code", http.StatusUnauthorized))
 		expectAvsMsg := fmt.Sprintf("something: avs server returned %d status code", http.StatusUnauthorized)
 
-		reccErr := fmt.Errorf("something: %w", reconciler.NewReconcilerError(nil, "reconciler error"))
-		expectReccMsg := "something: reconciler error"
-
 		dbErr := fmt.Errorf("something: %w", dberr.NotFound("Some NotFound apperror, %s", "Some pkg err"))
 		expectDbErr := fmt.Sprintf("something: Some NotFound apperror, Some pkg err")
 
@@ -40,7 +36,6 @@ func TestLastError(t *testing.T) {
 		edpLastErr := kebError.ReasonForError(edpErr)
 		edpConfLastErr := kebError.ReasonForError(edpConfErr)
 		avsLastErr := kebError.ReasonForError(avsErr)
-		reccLastErr := kebError.ReasonForError(reccErr)
 		dbLastErr := kebError.ReasonForError(dbErr)
 		timeoutLastErr := kebError.ReasonForError(timeoutErr)
 
@@ -58,10 +53,6 @@ func TestLastError(t *testing.T) {
 		assert.Equal(t, kebError.ErrAVS, avsLastErr.Component())
 		assert.Equal(t, expectAvsMsg, avsLastErr.Error())
 		assert.False(t, edp.IsConflictError(avsErr))
-
-		assert.Equal(t, kebError.ErrReconcilerNilFailures, reccLastErr.Reason())
-		assert.Equal(t, kebError.ErrReconciler, reccLastErr.Component())
-		assert.Equal(t, expectReccMsg, reccLastErr.Error())
 
 		assert.Equal(t, dberr.ErrDBNotFound, dbLastErr.Reason())
 		assert.Equal(t, kebError.ErrDB, dbLastErr.Component())

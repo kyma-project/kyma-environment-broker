@@ -15,8 +15,6 @@ import (
 
 	kebConfig "github.com/kyma-project/kyma-environment-broker/internal/config"
 
-	"github.com/kyma-project/kyma-environment-broker/internal/reconciler"
-
 	"github.com/kyma-project/kyma-environment-broker/internal/fixture"
 
 	"github.com/google/uuid"
@@ -88,7 +86,6 @@ type OrchestrationSuite struct {
 	clusterQueue      *process.Queue
 	storage           storage.BrokerStorage
 	gardenerClient    dynamic.Interface
-	reconcilerClient  *reconciler.FakeClient
 
 	t *testing.T
 }
@@ -116,9 +113,6 @@ func NewOrchestrationSuite(t *testing.T, additionalKymaVersions []string) *Orche
 	cfg.OrchestrationConfig = kebOrchestration.Config{
 		KymaVersion:       defaultKymaVer,
 		KubernetesVersion: "",
-	}
-	cfg.Reconciler = reconciler.Config{
-		ProvisioningTimeout: time.Second,
 	}
 	cfg.Notification = notification.Config{
 		Url: "",
@@ -155,7 +149,6 @@ func NewOrchestrationSuite(t *testing.T, additionalKymaVersions []string) *Orche
 	}, kymaVer, map[string]string{"cf-eu10": "europe"}, cfg.FreemiumProviders, oidcDefaults, cfg.Broker.UseSmallerMachineTypes)
 	require.NoError(t, err)
 
-	reconcilerClient := reconciler.NewFakeClient()
 	gardenerClient := gardener.NewDynamicFakeClient()
 	provisionerClient := provisioner.NewFakeClient()
 	const gardenerProject = "testing"
@@ -196,7 +189,6 @@ func NewOrchestrationSuite(t *testing.T, additionalKymaVersions []string) *Orche
 		clusterQueue:      clusterQueue,
 		storage:           db,
 		gardenerClient:    gardenerClient,
-		reconcilerClient:  reconcilerClient,
 
 		t: t,
 	}
@@ -551,10 +543,9 @@ type ProvisioningSuite struct {
 	provisioningQueue   *process.Queue
 	storage             storage.BrokerStorage
 
-	t                *testing.T
-	avsServer        *avs.MockAvsServer
-	reconcilerClient *reconciler.FakeClient
-	k8sKcpCli        client.Client
+	t         *testing.T
+	avsServer *avs.MockAvsServer
+	k8sKcpCli client.Client
 }
 
 func (s *ProvisioningSuite) TearDown() {
@@ -632,8 +623,6 @@ func NewProvisioningSuite(t *testing.T, multiZoneCluster bool, controlPlaneFailu
 
 	accountProvider := fixAccountProvider()
 
-	reconcilerClient := reconciler.NewFakeClient()
-
 	eventBroker := event.NewPubSub(logs)
 
 	provisionManager := process.NewStagedManager(db.Operations(), eventBroker, cfg.OperationTimeout, cfg.Provisioning, logs.WithField("provisioning", "manager"))
@@ -650,7 +639,6 @@ func NewProvisioningSuite(t *testing.T, multiZoneCluster bool, controlPlaneFailu
 		provisioningQueue:   provisioningQueue,
 		storage:             db,
 		avsServer:           server,
-		reconcilerClient:    reconcilerClient,
 		k8sKcpCli:           cli,
 
 		t: t,
@@ -970,9 +958,6 @@ func fixConfig() *Config {
 			ProvisioningTimeout:        2 * time.Minute,
 			DeprovisioningTimeout:      2 * time.Minute,
 			GardenerClusterStepTimeout: time.Second,
-		},
-		Reconciler: reconciler.Config{
-			ProvisioningTimeout: 5 * time.Second,
 		},
 		Database: storage.Config{
 			SecretKey: dbSecretKey,

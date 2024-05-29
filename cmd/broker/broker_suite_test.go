@@ -45,7 +45,6 @@ import (
 	"github.com/kyma-project/kyma-environment-broker/internal/process/upgrade_cluster"
 	"github.com/kyma-project/kyma-environment-broker/internal/process/upgrade_kyma"
 	"github.com/kyma-project/kyma-environment-broker/internal/provisioner"
-	"github.com/kyma-project/kyma-environment-broker/internal/reconciler"
 	kebRuntime "github.com/kyma-project/kyma-environment-broker/internal/runtime"
 	"github.com/kyma-project/kyma-environment-broker/internal/runtimeversion"
 	"github.com/kyma-project/kyma-environment-broker/internal/storage"
@@ -95,7 +94,6 @@ type BrokerSuiteTest struct {
 	db                storage.BrokerStorage
 	storageCleanup    func() error
 	provisionerClient *provisioner.FakeClient
-	reconcilerClient  *reconciler.FakeClient
 	gardenerClient    dynamic.Interface
 
 	httpServer *httptest.Server
@@ -202,7 +200,6 @@ func NewBrokerSuiteTestWithConfig(t *testing.T, cfg *Config, version ...string) 
 	avsDel, externalEvalCreator, internalEvalAssistant, externalEvalAssistant := createFakeAvsDelegator(t, db, cfg)
 
 	iasFakeClient := ias.NewFakeClient()
-	reconcilerClient := reconciler.NewFakeClient()
 	bundleBuilder := ias.NewBundleBuilder(iasFakeClient, cfg.IAS)
 	edpClient := edp.NewFakeClient()
 	accountProvider := fixAccountProvider()
@@ -238,7 +235,6 @@ func NewBrokerSuiteTestWithConfig(t *testing.T, cfg *Config, version ...string) 
 		db:                  db,
 		storageCleanup:      storageCleanup,
 		provisionerClient:   provisionerClient,
-		reconcilerClient:    reconcilerClient,
 		gardenerClient:      gardenerClient,
 		router:              mux.NewRouter(),
 		t:                   t,
@@ -615,72 +611,6 @@ func (s *BrokerSuiteTest) finishOperationByOpIDByProvisioner(operationType gqlsc
 	assert.NoError(s.t, err, "timeout waiting for provisioner operation to exist")
 }
 
-func (s *BrokerSuiteTest) FinishProvisioningOperationByReconciler(operationID string) {
-	// wait until ProvisioningOperation reaches CreateRuntime step
-	var provisioningOp *internal.ProvisioningOperation
-	err := s.poller.Invoke(func() (bool, error) {
-		op, err := s.db.Operations().GetProvisioningOperationByID(operationID)
-		if err != nil {
-			return false, nil
-		}
-		if op.ProvisionerOperationID != "" || broker.IsOwnClusterPlan(op.ProvisioningParameters.PlanID) {
-			provisioningOp = op
-			return true, nil
-		}
-		return false, nil
-	})
-	assert.NoError(s.t, err)
-
-	var state *reconcilerApi.HTTPClusterResponse
-	err = s.poller.Invoke(func() (bool, error) {
-		state, err = s.reconcilerClient.GetCluster(provisioningOp.RuntimeID, provisioningOp.ClusterConfigurationVersion)
-		if err != nil {
-			return false, err
-		}
-		if state.Cluster != "" {
-			s.reconcilerClient.ChangeClusterState(provisioningOp.RuntimeID, provisioningOp.ClusterConfigurationVersion, reconcilerApi.StatusReady)
-			return true, nil
-		}
-		return false, nil
-	})
-	assert.NoError(s.t, err)
-}
-
-func (c *BrokerSuiteTest) SetReconcilerResponseStatus(s reconcilerApi.Status) {
-	c.reconcilerClient.PrepareReconcilerClusterStatus(s)
-}
-
-func (s *BrokerSuiteTest) FailProvisioningOperationByReconciler(operationID string) {
-	// wait until ProvisioningOperation reaches CreateRuntime step
-	var provisioningOp *internal.ProvisioningOperation
-	err := s.poller.Invoke(func() (bool, error) {
-		op, err := s.db.Operations().GetProvisioningOperationByID(operationID)
-		if err != nil {
-			return false, nil
-		}
-		if op.ProvisionerOperationID != "" || broker.IsOwnClusterPlan(op.ProvisioningParameters.PlanID) {
-			provisioningOp = op
-			return true, nil
-		}
-		return false, nil
-	})
-	assert.NoError(s.t, err)
-
-	var state *reconcilerApi.HTTPClusterResponse
-	err = s.poller.Invoke(func() (bool, error) {
-		state, err = s.reconcilerClient.GetCluster(provisioningOp.RuntimeID, provisioningOp.ClusterConfigurationVersion)
-		if err != nil {
-			return false, err
-		}
-		if state.Cluster != "" {
-			s.reconcilerClient.ChangeClusterState(provisioningOp.RuntimeID, provisioningOp.ClusterConfigurationVersion, reconcilerApi.StatusError)
-			return true, nil
-		}
-		return false, nil
-	})
-	assert.NoError(s.t, err)
-}
-
 func (s *BrokerSuiteTest) AssertProvisionerStartedProvisioning(operationID string) {
 	// wait until ProvisioningOperation reaches CreateRuntime step
 	var provisioningOp *internal.ProvisioningOperation
@@ -710,36 +640,6 @@ func (s *BrokerSuiteTest) AssertProvisionerStartedProvisioning(operationID strin
 	assert.Equal(s.t, gqlschema.OperationStateInProgress, status.State)
 }
 
-func (s *BrokerSuiteTest) FinishUpgradeKymaOperationByReconciler(operationID string) {
-	var upgradeOp *internal.UpgradeKymaOperation
-	err := s.poller.Invoke(func() (bool, error) {
-		op, err := s.db.Operations().GetUpgradeKymaOperationByID(operationID)
-		if err != nil {
-			return false, nil
-		}
-		if op.ClusterConfigurationVersion != 0 {
-			upgradeOp = op
-			return true, nil
-		}
-		return false, nil
-	})
-	assert.NoError(s.t, err)
-
-	var state *reconcilerApi.HTTPClusterResponse
-	err = s.poller.Invoke(func() (bool, error) {
-		state, err = s.reconcilerClient.GetCluster(upgradeOp.InstanceDetails.RuntimeID, upgradeOp.ClusterConfigurationVersion)
-		if err != nil {
-			return false, err
-		}
-		if state.Cluster != "" {
-			s.reconcilerClient.ChangeClusterState(upgradeOp.InstanceDetails.RuntimeID, upgradeOp.ClusterConfigurationVersion, reconcilerApi.StatusReady)
-			return true, nil
-		}
-		return false, nil
-	})
-	assert.NoError(s.t, err)
-}
-
 func (s *BrokerSuiteTest) FinishUpgradeClusterOperationByProvisioner(operationID string) {
 	var upgradeOp *internal.UpgradeClusterOperation
 	err := s.poller.Invoke(func() (bool, error) {
@@ -753,59 +653,6 @@ func (s *BrokerSuiteTest) FinishUpgradeClusterOperationByProvisioner(operationID
 	assert.NoError(s.t, err)
 
 	s.finishOperationByOpIDByProvisioner(gqlschema.OperationTypeUpgradeShoot, gqlschema.OperationStateSucceeded, upgradeOp.Operation.ID)
-}
-
-func (s *BrokerSuiteTest) AssertReconcilerStartedReconcilingWhenProvisioning(provisioningOpID string) {
-	var provisioningOp *internal.ProvisioningOperation
-	err := s.poller.Invoke(func() (bool, error) {
-		op, err := s.db.Operations().GetProvisioningOperationByID(provisioningOpID)
-		if err != nil {
-			return false, nil
-		}
-		if op.ProvisionerOperationID != "" || broker.IsOwnClusterPlan(op.ProvisioningParameters.PlanID) {
-			provisioningOp = op
-			return true, nil
-		}
-		return false, nil
-	})
-	assert.NoError(s.t, err)
-
-	var state *reconcilerApi.HTTPClusterResponse
-	err = s.poller.Invoke(func() (bool, error) {
-		state, err = s.reconcilerClient.GetCluster(provisioningOp.RuntimeID, 1)
-		if state.Cluster != "" {
-			return true, nil
-		}
-		return false, nil
-	})
-	assert.NoError(s.t, err)
-	assert.Equal(s.t, reconcilerApi.StatusReconcilePending, state.Status)
-}
-
-func (s *BrokerSuiteTest) AssertReconcilerStartedReconcilingWhenUpgrading(opID string) {
-	// wait until UpgradeOperation reaches Apply_Cluster_Configuration step
-	var upgradeKymaOp *internal.UpgradeKymaOperation
-	err := s.poller.Invoke(func() (bool, error) {
-		op, err := s.db.Operations().GetUpgradeKymaOperationByID(opID)
-		upgradeKymaOp = op
-		return err == nil && op != nil, nil
-	})
-	assert.NoError(s.t, err)
-
-	var state *reconcilerApi.HTTPClusterResponse
-	err = s.poller.Invoke(func() (bool, error) {
-		fmt.Println(upgradeKymaOp)
-		state, err := s.reconcilerClient.GetCluster(upgradeKymaOp.InstanceDetails.RuntimeID, upgradeKymaOp.InstanceDetails.ClusterConfigurationVersion)
-		if err != nil {
-			return false, err
-		}
-		if state.Cluster != "" {
-			return true, nil
-		}
-		return false, nil
-	})
-	assert.NoError(s.t, err)
-	assert.Equal(s.t, reconcilerApi.StatusReconcilePending, state.Status)
 }
 
 func (s *BrokerSuiteTest) DecodeErrorResponse(resp *http.Response) apiresponses.ErrorResponse {
@@ -951,72 +798,10 @@ func (s *BrokerSuiteTest) AssertProvisionRuntimeInputWithoutKymaConfig() {
 	assert.Nil(s.t, input.KymaConfig)
 }
 
-func (s *BrokerSuiteTest) AssertClusterState(operationID string, expectedState reconcilerApi.HTTPClusterResponse) {
-	var provisioningOp *internal.ProvisioningOperation
-	err := s.poller.Invoke(func() (bool, error) {
-		op, err := s.db.Operations().GetProvisioningOperationByID(operationID)
-		assert.NoError(s.t, err)
-		if op.ProvisionerOperationID != "" {
-			provisioningOp = op
-			return true, nil
-		}
-		return false, nil
-	})
-	assert.NoError(s.t, err)
-
-	var state *reconcilerApi.HTTPClusterResponse
-	err = s.poller.Invoke(func() (bool, error) {
-		state, err = s.reconcilerClient.GetLatestCluster(provisioningOp.RuntimeID)
-		if err == nil {
-			return true, nil
-		}
-		return false, err
-	})
-	assert.NoError(s.t, err)
-
-	assert.Equal(s.t, expectedState, state)
-}
-
-func (s *BrokerSuiteTest) AssertClusterConfig(operationID string, expectedClusterConfig *reconcilerApi.Cluster) {
-	clusterConfig := s.getClusterConfig(operationID)
-
-	assert.Equal(s.t, *expectedClusterConfig, clusterConfig)
-}
-
-func (s *BrokerSuiteTest) AssertClusterKymaConfig(operationID string, expectedKymaConfig reconcilerApi.KymaConfig) {
-	clusterConfig := s.getClusterConfig(operationID)
-
-	// values in arrays need to be sorted, because globalOverrides are coming from a map and map's elements' order is not deterministic
-	for _, component := range clusterConfig.KymaConfig.Components {
-		sort.Slice(component.Configuration, func(i, j int) bool {
-			return component.Configuration[i].Key < component.Configuration[j].Key
-		})
-	}
-	for _, component := range expectedKymaConfig.Components {
-		sort.Slice(component.Configuration, func(i, j int) bool {
-			return component.Configuration[i].Key < component.Configuration[j].Key
-		})
-	}
-
-	assert.Equal(s.t, expectedKymaConfig, clusterConfig.KymaConfig)
-}
-
 func (s *BrokerSuiteTest) AssertComponent(a, b reconcilerApi.Component) {
 	sort.Slice(a.Configuration, func(i, j int) bool { return a.Configuration[i].Key < a.Configuration[j].Key })
 	sort.Slice(b.Configuration, func(i, j int) bool { return b.Configuration[i].Key < b.Configuration[j].Key })
 	assert.Equal(s.t, a, b)
-}
-
-func (s *BrokerSuiteTest) AssertClusterConfigWithKubeconfig(id string) {
-	clusterConfig := s.getClusterConfig(id)
-
-	assert.NotEmpty(s.t, clusterConfig.Kubeconfig)
-}
-
-func (s *BrokerSuiteTest) AssertClusterMetadata(id string, metadata reconcilerApi.Metadata) {
-	clusterConfig := s.getClusterConfig(id)
-
-	assert.Equal(s.t, metadata, clusterConfig.Metadata)
 }
 
 func (s *BrokerSuiteTest) AssertDisabledNetworkFilterForProvisioning(val *bool) {
@@ -1075,26 +860,6 @@ func (s *BrokerSuiteTest) AssertDisabledNetworkFilterRuntimeState(runtimeid, op 
 		err = fmt.Errorf("ShootNetworkingFilterDisabled expected %v, got %v", exp, got)
 	}
 	require.NoError(s.t, err)
-}
-
-func (s *BrokerSuiteTest) getClusterConfig(operationID string) reconcilerApi.Cluster {
-	provisioningOp, err := s.db.Operations().GetProvisioningOperationByID(operationID)
-	assert.NoError(s.t, err)
-
-	var clusterConfig *reconcilerApi.Cluster
-	err = s.poller.Invoke(func() (bool, error) {
-		clusterConfig, err = s.reconcilerClient.LastClusterConfig(provisioningOp.RuntimeID)
-		if err != nil {
-			return false, err
-		}
-		if clusterConfig.RuntimeID != "" {
-			return true, nil
-		}
-		return false, nil
-	})
-	require.NoError(s.t, err)
-
-	return *clusterConfig
 }
 
 func (s *BrokerSuiteTest) LastProvisionInput(iid string) gqlschema.ProvisionRuntimeInput {
@@ -1186,14 +951,6 @@ func (s *BrokerSuiteTest) fixGardenerShootForOperationID(opID string) *unstructu
 	}
 	un.SetGroupVersionKind(shootGVK)
 	return &un
-}
-
-func (s *BrokerSuiteTest) processReconcilingByOperationID(opID string) {
-	// Reconciler part
-	s.AssertReconcilerStartedReconcilingWhenProvisioning(opID)
-	s.FinishProvisioningOperationByReconciler(opID)
-
-	s.WaitForOperationState(opID, domain.Succeeded)
 }
 
 func (s *BrokerSuiteTest) processProvisioningByInstanceID(iid string) {

@@ -38,7 +38,6 @@ const (
 	ErrKEBTimeOut               ErrReason = "err_keb_timeout"
 	ErrProvisionerNilLastError  ErrReason = "err_provisioner_nil_last_error"
 	ErrHttpStatusCode           ErrReason = "err_http_status_code"
-	ErrReconcilerNilFailures    ErrReason = "err_reconciler_nil_failures"
 	ErrClusterNotFound          ErrReason = "err_cluster_not_found"
 	ErrK8SUnexpectedServerError ErrReason = "err_k8s_unexpected_server_error"
 	ErrK8SUnexpectedObjectError ErrReason = "err_k8s_unexpected_object_error"

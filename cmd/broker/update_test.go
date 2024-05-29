@@ -6,7 +6,6 @@ import (
 	"testing"
 
 	"github.com/google/uuid"
-	reconcilerApi "github.com/kyma-incubator/reconciler/pkg/keb"
 	"github.com/kyma-project/control-plane/components/provisioner/pkg/gqlschema"
 	"github.com/kyma-project/kyma-environment-broker/internal"
 	"github.com/pivotal-cf/brokerapi/v8/domain"
@@ -431,7 +430,6 @@ func TestKymaResourceNameAndGardenerClusterNameAfterUnsuspension(t *testing.T) {
 
 	// Process Suspension
 	// OSB context update (suspension)
-	suite.SetReconcilerResponseStatus(reconcilerApi.StatusDeleted)
 	resp = suite.CallAPI("PATCH", fmt.Sprintf("oauth/v2/service_instances/%s?accepts_incomplete=true", iid),
 		`{
        "service_id": "47c9dcbf-ff30-448e-ab36-d3bad66ba281",
@@ -450,7 +448,6 @@ func TestKymaResourceNameAndGardenerClusterNameAfterUnsuspension(t *testing.T) {
 
 	// OSB update
 	suite.Log("*** Unsuspension ***")
-	suite.SetReconcilerResponseStatus(reconcilerApi.StatusReady)
 	resp = suite.CallAPI("PATCH", fmt.Sprintf("oauth/v2/service_instances/%s?accepts_incomplete=true", iid),
 		`{
        "service_id": "47c9dcbf-ff30-448e-ab36-d3bad66ba281",
@@ -579,7 +576,6 @@ func TestUnsuspensionTrialWithDefaultProviderChangedForNonDefaultRegion(t *testi
 
 	// Process Suspension
 	// OSB context update (suspension)
-	suite.SetReconcilerResponseStatus(reconcilerApi.StatusDeleted)
 	resp = suite.CallAPI("PATCH", fmt.Sprintf("oauth/cf-us10/v2/service_instances/%s?accepts_incomplete=true", iid),
 		`{
        "service_id": "47c9dcbf-ff30-448e-ab36-d3bad66ba281",
@@ -600,7 +596,6 @@ func TestUnsuspensionTrialWithDefaultProviderChangedForNonDefaultRegion(t *testi
 	suite.ChangeDefaultTrialProvider(internal.AWS)
 	// OSB update
 	suite.Log("*** Unsuspension ***")
-	suite.SetReconcilerResponseStatus(reconcilerApi.StatusReady)
 	resp = suite.CallAPI("PATCH", fmt.Sprintf("oauth/cf-us10/v2/service_instances/%s?accepts_incomplete=true", iid),
 		`{
        "service_id": "47c9dcbf-ff30-448e-ab36-d3bad66ba281",
@@ -717,7 +712,6 @@ func TestUpdateOidcForSuspendedInstance(t *testing.T) {
 
 	// Process Suspension
 	// OSB context update (suspension)
-	suite.SetReconcilerResponseStatus(reconcilerApi.StatusDeleted)
 	resp = suite.CallAPI("PATCH", fmt.Sprintf("oauth/cf-eu10/v2/service_instances/%s?accepts_incomplete=true", iid),
 		`{
        "service_id": "47c9dcbf-ff30-448e-ab36-d3bad66ba281",
@@ -764,7 +758,6 @@ func TestUpdateOidcForSuspendedInstance(t *testing.T) {
 	// Start unsuspension
 	// OSB update (unsuspension)
 	suite.Log("*** Update (unsuspension) ***")
-	suite.SetReconcilerResponseStatus(reconcilerApi.StatusReady)
 	resp = suite.CallAPI("PATCH", fmt.Sprintf("oauth/cf-eu10/v2/service_instances/%s", iid),
 		`{
        "service_id": "47c9dcbf-ff30-448e-ab36-d3bad66ba281",
@@ -1953,7 +1946,6 @@ func TestUpdateWhenBothErsContextAndUpdateParametersProvided(t *testing.T) {
 	// when
 	// Process Suspension
 	// OSB context update (suspension)
-	suite.SetReconcilerResponseStatus(reconcilerApi.StatusDeleted)
 	resp = suite.CallAPI("PATCH", fmt.Sprintf("oauth/cf-eu10/v2/service_instances/%s?accepts_incomplete=true", iid),
 		`{
        "service_id": "47c9dcbf-ff30-448e-ab36-d3bad66ba281",

@@ -48,7 +48,6 @@ import (
 	"github.com/kyma-project/kyma-environment-broker/internal/process/provisioning"
 	"github.com/kyma-project/kyma-environment-broker/internal/provider"
 	"github.com/kyma-project/kyma-environment-broker/internal/provisioner"
-	"github.com/kyma-project/kyma-environment-broker/internal/reconciler"
 	"github.com/kyma-project/kyma-environment-broker/internal/runtime"
 	"github.com/kyma-project/kyma-environment-broker/internal/runtimeversion"
 	"github.com/kyma-project/kyma-environment-broker/internal/storage"
@@ -103,7 +102,6 @@ type Config struct {
 	StatusPort string `envconfig:"default=8071"`
 
 	Provisioner input.Config
-	Reconciler  reconciler.Config
 	Database    storage.Config
 	Gardener    gardener.Config
 	Kubeconfig  kubeconfig.Config
@@ -262,7 +260,6 @@ func main() {
 	go periodicProfile(logger, cfg.Profiler)
 
 	logs.Infof("Setting provisioner timeouts: provisioning=%s, deprovisioning=%s", cfg.Provisioner.ProvisioningTimeout, cfg.Provisioner.DeprovisioningTimeout)
-	logs.Infof("Setting reconciler timeout: provisioning=%s", cfg.Reconciler.ProvisioningTimeout)
 	logs.Infof("Setting staged manager configuration: provisioning=%s, deprovisioning=%s, update=%s", cfg.Provisioning, cfg.Deprovisioning, cfg.Update)
 	logs.Infof("InfrastructureManagerIntegrationDisabled: %v", cfg.InfrastructureManagerIntegrationDisabled)
 	logs.Infof("Archiving enabled: %v, dry run: %v", cfg.ArchiveEnabled, cfg.ArchiveDryRun)

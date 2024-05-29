@@ -10,7 +10,6 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/google/uuid"
-	reconcilerApi "github.com/kyma-incubator/reconciler/pkg/keb"
 	"github.com/kyma-project/kyma-environment-broker/common/runtime"
 	"github.com/kyma-project/kyma-environment-broker/internal"
 	"github.com/pivotal-cf/brokerapi/v8/domain"
@@ -143,7 +142,6 @@ func TestDeprovisioning_HappyPathAWS(t *testing.T) {
 	suite.WaitForOperationState(opID, domain.Succeeded)
 
 	// when
-	suite.SetReconcilerResponseStatus(reconcilerApi.StatusDeleted)
 	resp = suite.CallAPI("DELETE", fmt.Sprintf("oauth/v2/service_instances/%s?accepts_incomplete=true&plan_id=7d55d31d-35ae-4438-bf13-6ffdfa107d9f&service_id=47c9dcbf-ff30-448e-ab36-d3bad66ba281", iid),
 		``)
 	deprovisioningID := suite.WaitForLastOperation(iid, domain.InProgress)
@@ -192,7 +190,6 @@ func TestRuntimesEndpointForDeprovisionedInstance(t *testing.T) {
 	suite.processProvisioningByOperationID(opID)
 
 	// deprovision
-	suite.SetReconcilerResponseStatus(reconcilerApi.StatusDeleted)
 	resp = suite.CallAPI("DELETE", fmt.Sprintf("oauth/cf-eu10/v2/service_instances/%s?accepts_incomplete=true&plan_id=7d55d31d-35ae-4438-bf13-6ffdfa107d9f&service_id=47c9dcbf-ff30-448e-ab36-d3bad66ba281", iid),
 		``)
 	depOpID := suite.DecodeOperationID(resp)
