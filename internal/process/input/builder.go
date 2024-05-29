@@ -57,21 +57,22 @@ type (
 )
 
 type InputBuilderFactory struct {
-	kymaVersion                string
-	config                     Config
-	optComponentsSvc           OptionalComponentService
-	componentsProvider         ComponentListProvider
-	disabledComponentsProvider DisabledComponentsProvider
-	configProvider             ConfigurationProvider
-	trialPlatformRegionMapping map[string]string
-	enabledFreemiumProviders   map[string]struct{}
-	oidcDefaultValues          internal.OIDCConfigDTO
+	kymaVersion                            string
+	config                                 Config
+	optComponentsSvc                       OptionalComponentService
+	componentsProvider                     ComponentListProvider
+	disabledComponentsProvider             DisabledComponentsProvider
+	configProvider                         ConfigurationProvider
+	trialPlatformRegionMapping             map[string]string
+	enabledFreemiumProviders               map[string]struct{}
+	oidcDefaultValues                      internal.OIDCConfigDTO
+	useSmallerTrialAndFreemiumMachineTypes bool
 }
 
 func NewInputBuilderFactory(optComponentsSvc OptionalComponentService, disabledComponentsProvider DisabledComponentsProvider,
 	componentsListProvider ComponentListProvider, configProvider ConfigurationProvider,
 	config Config, defaultKymaVersion string, trialPlatformRegionMapping map[string]string,
-	enabledFreemiumProviders []string, oidcValues internal.OIDCConfigDTO) (CreatorForPlan, error) {
+	enabledFreemiumProviders []string, oidcValues internal.OIDCConfigDTO, useSmallerTrialAndFreemiumMachineTypes bool) (CreatorForPlan, error) {
 
 	freemiumProviders := map[string]struct{}{}
 	for _, p := range enabledFreemiumProviders {
@@ -79,15 +80,16 @@ func NewInputBuilderFactory(optComponentsSvc OptionalComponentService, disabledC
 	}
 
 	return &InputBuilderFactory{
-		kymaVersion:                defaultKymaVersion,
-		config:                     config,
-		optComponentsSvc:           optComponentsSvc,
-		componentsProvider:         componentsListProvider,
-		disabledComponentsProvider: disabledComponentsProvider,
-		configProvider:             configProvider,
-		trialPlatformRegionMapping: trialPlatformRegionMapping,
-		enabledFreemiumProviders:   freemiumProviders,
-		oidcDefaultValues:          oidcValues,
+		kymaVersion:                            defaultKymaVersion,
+		config:                                 config,
+		optComponentsSvc:                       optComponentsSvc,
+		componentsProvider:                     componentsListProvider,
+		disabledComponentsProvider:             disabledComponentsProvider,
+		configProvider:                         configProvider,
+		trialPlatformRegionMapping:             trialPlatformRegionMapping,
+		enabledFreemiumProviders:               freemiumProviders,
+		oidcDefaultValues:                      oidcValues,
+		useSmallerTrialAndFreemiumMachineTypes: useSmallerTrialAndFreemiumMachineTypes,
 	}, nil
 }
 
@@ -216,11 +218,13 @@ func (f *InputBuilderFactory) forTrialPlan(provider *internal.CloudProvider) Hyp
 		}
 	case internal.AWS:
 		return &cloudProvider.AWSTrialInput{
-			PlatformRegionMapping: f.trialPlatformRegionMapping,
+			PlatformRegionMapping:                  f.trialPlatformRegionMapping,
+			UseSmallerTrialAndFreemiumMachineTypes: f.useSmallerTrialAndFreemiumMachineTypes,
 		}
 	default:
 		return &cloudProvider.AzureTrialInput{
-			PlatformRegionMapping: f.trialPlatformRegionMapping,
+			PlatformRegionMapping:                  f.trialPlatformRegionMapping,
+			UseSmallerTrialAndFreemiumMachineTypes: f.useSmallerTrialAndFreemiumMachineTypes,
 		}
 	}
 
@@ -424,9 +428,13 @@ func (f *InputBuilderFactory) forFreemiumPlan(provider internal.CloudProvider) (
 	}
 	switch provider {
 	case internal.AWS:
-		return &cloudProvider.AWSFreemiumInput{}, nil
+		return &cloudProvider.AWSFreemiumInput{
+			UseSmallerTrialAndFreemiumMachineTypes: f.useSmallerTrialAndFreemiumMachineTypes,
+		}, nil
 	case internal.Azure:
-		return &cloudProvider.AzureFreemiumInput{}, nil
+		return &cloudProvider.AzureFreemiumInput{
+			UseSmallerTrialAndFreemiumMachineTypes: f.useSmallerTrialAndFreemiumMachineTypes,
+		}, nil
 	default:
 		return nil, fmt.Errorf("provider %s is not supported", provider)
 	}

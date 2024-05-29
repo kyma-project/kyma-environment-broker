@@ -123,7 +123,7 @@ func fixInputCreator(t *testing.T) internal.ProvisionerInputCreator {
 		componentsProvider, configProvider, input.Config{
 			KubernetesVersion:           k8sVersion,
 			DefaultGardenerShootPurpose: "test",
-		}, kymaVersion, fixTrialRegionMapping(), fixFreemiumProviders(), fixture.FixOIDCConfigDTO())
+		}, kymaVersion, fixTrialRegionMapping(), fixFreemiumProviders(), fixture.FixOIDCConfigDTO(), false)
 	assert.NoError(t, err)
 
 	pp := internal.ProvisioningParameters{

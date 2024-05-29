@@ -15,10 +15,12 @@ import (
 )
 
 const (
-	DefaultAzureRegion         = "eastus"
-	DefaultEuAccessAzureRegion = "switzerlandnorth"
-	DefaultAzureMultiZoneCount = 3
-	DefaultAzureMachineType    = "Standard_D2s_v5"
+	DefaultAzureRegion              = "eastus"
+	DefaultEuAccessAzureRegion      = "switzerlandnorth"
+	DefaultAzureMultiZoneCount      = 3
+	DefaultAzureMachineType         = "Standard_D2s_v5"
+	DefaultOldAzureTrialMachineType = "Standard_D4s_v5"
+	DefaultAzureTrialMachineType    = "Standard_D2s_v5"
 )
 
 var europeAzure = "westeurope"
@@ -40,9 +42,12 @@ type (
 	}
 	AzureLiteInput  struct{}
 	AzureTrialInput struct {
-		PlatformRegionMapping map[string]string
+		PlatformRegionMapping                  map[string]string
+		UseSmallerTrialAndFreemiumMachineTypes bool
 	}
-	AzureFreemiumInput struct{}
+	AzureFreemiumInput struct {
+		UseSmallerTrialAndFreemiumMachineTypes bool
+	}
 )
 
 func (p *AzureInput) Defaults() *gqlschema.ClusterConfigInput {
@@ -174,15 +179,19 @@ func (p *AzureLiteInput) Provider() internal.CloudProvider {
 }
 
 func (p *AzureTrialInput) Defaults() *gqlschema.ClusterConfigInput {
-	return azureTrialDefaults()
+	return azureTrialDefaults(p.UseSmallerTrialAndFreemiumMachineTypes)
 }
 
-func azureTrialDefaults() *gqlschema.ClusterConfigInput {
+func azureTrialDefaults(useSmallerTrialAndFreemiumMachineTypes bool) *gqlschema.ClusterConfigInput {
+	machineType := DefaultOldAzureTrialMachineType
+	if useSmallerTrialAndFreemiumMachineTypes {
+		machineType = DefaultAzureMachineType
+	}
 	return &gqlschema.ClusterConfigInput{
 		GardenerConfig: &gqlschema.GardenerConfigInput{
 			DiskType:       ptr.String("Standard_LRS"),
 			VolumeSizeGb:   ptr.Integer(50),
-			MachineType:    "Standard_D4s_v5",
+			MachineType:    machineType,
 			Region:         DefaultAzureRegion,
 			Provider:       "azure",
 			WorkerCidr:     networking.DefaultNodesCIDR,
@@ -240,7 +249,7 @@ func (p *AzureTrialInput) Profile() gqlschema.KymaProfile {
 }
 
 func (p *AzureFreemiumInput) Defaults() *gqlschema.ClusterConfigInput {
-	return azureTrialDefaults()
+	return azureTrialDefaults(p.UseSmallerTrialAndFreemiumMachineTypes)
 }
 
 func (p *AzureFreemiumInput) ApplyParameters(input *gqlschema.ClusterConfigInput, params internal.ProvisioningParameters) {
