@@ -225,14 +225,6 @@ type Operation struct {
 
 	// following fields are not stored in the storage and should be added to the Merge function
 	InputCreator ProvisionerInputCreator `json:"-"`
-	Retries      int                     `json:"-"`
-
-	// Last runtime state payload
-	LastRuntimeState RuntimeState `json:"-"`
-
-	// Flag used by the steps regarding BTP-Operator credentials update
-	// denotes whether the payload to reconciler differs from last runtime state
-	RequiresReconcilerUpdate bool `json:"-"`
 }
 
 type GroupedOperations struct {
@@ -257,9 +249,6 @@ func (o *Operation) EventErrorf(err error, fmt string, args ...any) {
 
 func (o *Operation) Merge(operation *Operation) {
 	o.InputCreator = operation.InputCreator
-	o.Retries = operation.Retries
-	o.LastRuntimeState = operation.LastRuntimeState
-	o.RequiresReconcilerUpdate = operation.RequiresReconcilerUpdate
 }
 
 // Orchestration holds all information about an orchestration.

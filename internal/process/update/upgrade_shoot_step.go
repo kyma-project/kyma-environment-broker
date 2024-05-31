@@ -48,9 +48,8 @@ func (s *UpgradeShootStep) Run(operation internal.Operation, log logrus.FieldLog
 	if err != nil {
 		return s.operationManager.RetryOperation(operation, err.Error(), err, 5*time.Second, 1*time.Minute, log)
 	}
-	operation.LastRuntimeState = latestRuntimeStateWithOIDC
 
-	input, err := s.createUpgradeShootInput(operation)
+	input, err := s.createUpgradeShootInput(operation, &latestRuntimeStateWithOIDC.ClusterConfig)
 	if err != nil {
 		return s.operationManager.OperationFailed(operation, "invalid operation data - cannot create upgradeShoot input", err, log)
 	}
@@ -91,10 +90,10 @@ func (s *UpgradeShootStep) Run(operation internal.Operation, log logrus.FieldLog
 
 }
 
-func (s *UpgradeShootStep) createUpgradeShootInput(operation internal.Operation) (gqlschema.UpgradeShootInput, error) {
+func (s *UpgradeShootStep) createUpgradeShootInput(operation internal.Operation, lastClusterConfig *gqlschema.GardenerConfigInput) (gqlschema.UpgradeShootInput, error) {
 	operation.InputCreator.SetProvisioningParameters(operation.ProvisioningParameters)
-	if operation.LastRuntimeState.ClusterConfig.OidcConfig != nil {
-		operation.InputCreator.SetOIDCLastValues(*operation.LastRuntimeState.ClusterConfig.OidcConfig)
+	if lastClusterConfig.OidcConfig != nil {
+		operation.InputCreator.SetOIDCLastValues(*lastClusterConfig.OidcConfig)
 	}
 	fullInput, err := operation.InputCreator.CreateUpgradeShootInput()
 	if err != nil {

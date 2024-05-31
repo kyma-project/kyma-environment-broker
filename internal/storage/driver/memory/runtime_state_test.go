@@ -43,36 +43,3 @@ func Test_runtimeState_GetLatestByRuntimeID(t *testing.T) {
 	// then
 	assert.Equal(t, expectedRuntimeState.ID, gotRuntimeState.ID)
 }
-
-func Test_runtimeState_GetLatestWithReconcilerInputByRuntimeID(t *testing.T) {
-	// given
-	runtimeStates := NewRuntimeStates()
-
-	olderRuntimeStateID := "older"
-	newestRuntimeStateID := "newest"
-	expectedRuntimeStateID := "expected"
-	fixRuntimeID := "runtime1"
-
-	olderRuntimeState := fixture.FixRuntimeState(olderRuntimeStateID, fixRuntimeID, uuid.NewString())
-	olderRuntimeState.ClusterSetup = &reconcilerApi.Cluster{RuntimeID: fixRuntimeID}
-
-	newestRuntimeStateWithoutReconcilerInput := fixture.FixRuntimeState(newestRuntimeStateID, fixRuntimeID, uuid.NewString())
-	newestRuntimeStateWithoutReconcilerInput.CreatedAt = newestRuntimeStateWithoutReconcilerInput.CreatedAt.Add(time.Hour * 2)
-
-	expectedRuntimeState := fixture.FixRuntimeState(expectedRuntimeStateID, fixRuntimeID, uuid.NewString())
-	expectedRuntimeState.ClusterSetup = &reconcilerApi.Cluster{RuntimeID: fixRuntimeID}
-	expectedRuntimeState.CreatedAt = expectedRuntimeState.CreatedAt.Add(time.Hour * 1)
-
-	err := runtimeStates.Insert(olderRuntimeState)
-	assert.NoError(t, err)
-	err = runtimeStates.Insert(expectedRuntimeState)
-	assert.NoError(t, err)
-	err = runtimeStates.Insert(newestRuntimeStateWithoutReconcilerInput)
-	assert.NoError(t, err)
-
-	// when
-	gotRuntimeState, _ := runtimeStates.GetLatestWithReconcilerInputByRuntimeID(fixRuntimeID)
-
-	// then
-	assert.Equal(t, expectedRuntimeState.ID, gotRuntimeState.ID)
-}

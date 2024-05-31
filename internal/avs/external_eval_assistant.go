@@ -80,10 +80,6 @@ func (eea *ExternalEvalAssistant) ProvideTags(operation internal.Operation) []*T
 	region := ""
 	if operation.ProvisioningParameters.Parameters.Region != nil {
 		region = *operation.ProvisioningParameters.Parameters.Region
-	} else if operation.LastRuntimeState.ClusterSetup != nil {
-		region = operation.LastRuntimeState.ClusterSetup.Metadata.Region
-	} else if operation.LastRuntimeState.ClusterConfig.Region != "" {
-		region = operation.LastRuntimeState.ClusterConfig.Region
 	} else if operation.Region != "" {
 		region = operation.Region
 	}

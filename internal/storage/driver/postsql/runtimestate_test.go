@@ -83,68 +83,6 @@ func TestRuntimeState(t *testing.T) {
 		assert.Equal(t, fixRuntimeID, state.ClusterSetup.RuntimeID)
 	})
 
-	t.Run("should distinguish between latest RuntimeStates with and without Reconciler input", func(t *testing.T) {
-		storageCleanup, brokerStorage, err := GetStorageForDatabaseTests()
-		require.NoError(t, err)
-		require.NotNil(t, brokerStorage)
-		defer func() {
-			err := storageCleanup()
-			assert.NoError(t, err)
-		}()
-
-		fixRuntimeID := "runtimeID"
-
-		fixRuntimeStateID1 := "runtimestate1"
-		fixOperationID1 := "operation1"
-		runtimeStateWithoutReconcilerInput1 := fixture.FixRuntimeState(fixRuntimeStateID1, fixRuntimeID, fixOperationID1)
-		runtimeStateWithoutReconcilerInput1.CreatedAt = runtimeStateWithoutReconcilerInput1.CreatedAt.Add(time.Hour * 2)
-
-		fixRuntimeStateID2 := "runtimestate2"
-		fixOperationID2 := "operation2"
-		runtimeStateWithReconcilerInput1 := fixture.FixRuntimeState(fixRuntimeStateID2, fixRuntimeID, fixOperationID2)
-		runtimeStateWithReconcilerInput1.CreatedAt = runtimeStateWithReconcilerInput1.CreatedAt.Add(time.Hour * 1)
-		runtimeStateWithReconcilerInput1.ClusterSetup = &reconcilerApi.Cluster{
-			RuntimeID: fixRuntimeID,
-		}
-
-		fixRuntimeStateID3 := "runtimestate3"
-		fixOperationID3 := "operation3"
-		runtimeStateWithoutReconcilerInput2 := fixture.FixRuntimeState(fixRuntimeStateID3, fixRuntimeID, fixOperationID3)
-
-		fixRuntimeStateID4 := "runtimestate4"
-		fixOperationID4 := "operation4"
-		runtimeStateWithReconcilerInput2 := fixture.FixRuntimeState(fixRuntimeStateID4, fixRuntimeID, fixOperationID4)
-		runtimeStateWithReconcilerInput2.ClusterSetup = &reconcilerApi.Cluster{
-			RuntimeID: fixRuntimeID,
-		}
-
-		storage := brokerStorage.RuntimeStates()
-
-		err = storage.Insert(runtimeStateWithoutReconcilerInput1)
-		require.NoError(t, err)
-		err = storage.Insert(runtimeStateWithReconcilerInput1)
-		require.NoError(t, err)
-		err = storage.Insert(runtimeStateWithoutReconcilerInput2)
-		require.NoError(t, err)
-		err = storage.Insert(runtimeStateWithReconcilerInput2)
-		require.NoError(t, err)
-
-		gotRuntimeStates, err := storage.ListByRuntimeID(fixRuntimeID)
-		require.NoError(t, err)
-		assert.Len(t, gotRuntimeStates, 4)
-
-		gotRuntimeState, err := storage.GetLatestByRuntimeID(fixRuntimeID)
-		require.NoError(t, err)
-		assert.Equal(t, gotRuntimeState.ID, runtimeStateWithoutReconcilerInput1.ID)
-		assert.Nil(t, gotRuntimeState.ClusterSetup)
-
-		gotRuntimeState, err = storage.GetLatestWithReconcilerInputByRuntimeID(fixRuntimeID)
-		require.NoError(t, err)
-		assert.Equal(t, gotRuntimeState.ID, runtimeStateWithReconcilerInput1.ID)
-		assert.NotNil(t, gotRuntimeState.ClusterSetup)
-		assert.Equal(t, gotRuntimeState.ClusterSetup.RuntimeID, runtimeStateWithReconcilerInput1.ClusterSetup.RuntimeID)
-	})
-
 	t.Run("should fetch latest RuntimeState with Kyma version", func(t *testing.T) {
 		storageCleanup, brokerStorage, err := GetStorageForDatabaseTests()
 		require.NoError(t, err)
