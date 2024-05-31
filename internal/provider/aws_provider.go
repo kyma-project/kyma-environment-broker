@@ -42,11 +42,11 @@ type (
 		ControlPlaneFailureTolerance string
 	}
 	AWSTrialInput struct {
-		PlatformRegionMapping                  map[string]string
-		UseSmallerTrialAndFreemiumMachineTypes bool
+		PlatformRegionMapping  map[string]string
+		UseSmallerMachineTypes bool
 	}
 	AWSFreemiumInput struct {
-		UseSmallerTrialAndFreemiumMachineTypes bool
+		UseSmallerMachineTypes bool
 	}
 )
 
@@ -241,12 +241,12 @@ func (p *AWSInput) Provider() internal.CloudProvider {
 }
 
 func (p *AWSTrialInput) Defaults() *gqlschema.ClusterConfigInput {
-	return awsLiteDefaults(DefaultAWSTrialRegion, p.UseSmallerTrialAndFreemiumMachineTypes)
+	return awsLiteDefaults(DefaultAWSTrialRegion, p.UseSmallerMachineTypes)
 }
 
-func awsLiteDefaults(region string, useSmallerTrialAndFreemiumMachineTypes bool) *gqlschema.ClusterConfigInput {
+func awsLiteDefaults(region string, useSmallerMachineTypes bool) *gqlschema.ClusterConfigInput {
 	machineType := DefaultOldAWSTrialMachineType
-	if useSmallerTrialAndFreemiumMachineTypes {
+	if useSmallerMachineTypes {
 		machineType = DefaultAWSMachineType
 	}
 	return &gqlschema.ClusterConfigInput{
@@ -310,7 +310,7 @@ func (p *AWSTrialInput) Provider() internal.CloudProvider {
 
 func (p *AWSFreemiumInput) Defaults() *gqlschema.ClusterConfigInput {
 	// Lite (freemium) must have the same defaults as Trial plan, but there was a requirement to change a region only for Trial.
-	defaults := awsLiteDefaults(DefaultAWSRegion, p.UseSmallerTrialAndFreemiumMachineTypes)
+	defaults := awsLiteDefaults(DefaultAWSRegion, p.UseSmallerMachineTypes)
 
 	return defaults
 }

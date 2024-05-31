@@ -41,14 +41,14 @@ type (
 		ControlPlaneFailureTolerance string
 	}
 	AzureLiteInput struct {
-		UseSmallerTrialAndFreemiumMachineTypes bool
+		UseSmallerMachineTypes bool
 	}
 	AzureTrialInput struct {
-		PlatformRegionMapping                  map[string]string
-		UseSmallerTrialAndFreemiumMachineTypes bool
+		PlatformRegionMapping  map[string]string
+		UseSmallerMachineTypes bool
 	}
 	AzureFreemiumInput struct {
-		UseSmallerTrialAndFreemiumMachineTypes bool
+		UseSmallerMachineTypes bool
 	}
 )
 
@@ -127,7 +127,7 @@ func (p *AzureInput) Provider() internal.CloudProvider {
 
 func (p *AzureLiteInput) Defaults() *gqlschema.ClusterConfigInput {
 	machineType := DefaultOldAzureTrialMachineType
-	if p.UseSmallerTrialAndFreemiumMachineTypes {
+	if p.UseSmallerMachineTypes {
 		machineType = DefaultAzureMachineType
 	}
 	return &gqlschema.ClusterConfigInput{
@@ -185,12 +185,12 @@ func (p *AzureLiteInput) Provider() internal.CloudProvider {
 }
 
 func (p *AzureTrialInput) Defaults() *gqlschema.ClusterConfigInput {
-	return azureTrialDefaults(p.UseSmallerTrialAndFreemiumMachineTypes)
+	return azureTrialDefaults(p.UseSmallerMachineTypes)
 }
 
-func azureTrialDefaults(useSmallerTrialAndFreemiumMachineTypes bool) *gqlschema.ClusterConfigInput {
+func azureTrialDefaults(useSmallerMachineTypes bool) *gqlschema.ClusterConfigInput {
 	machineType := DefaultOldAzureTrialMachineType
-	if useSmallerTrialAndFreemiumMachineTypes {
+	if useSmallerMachineTypes {
 		machineType = DefaultAzureMachineType
 	}
 	return &gqlschema.ClusterConfigInput{
@@ -255,7 +255,7 @@ func (p *AzureTrialInput) Profile() gqlschema.KymaProfile {
 }
 
 func (p *AzureFreemiumInput) Defaults() *gqlschema.ClusterConfigInput {
-	return azureTrialDefaults(p.UseSmallerTrialAndFreemiumMachineTypes)
+	return azureTrialDefaults(p.UseSmallerMachineTypes)
 }
 
 func (p *AzureFreemiumInput) ApplyParameters(input *gqlschema.ClusterConfigInput, params internal.ProvisioningParameters) {

@@ -47,8 +47,8 @@ type Config struct {
 	SubaccountsIdsToShowTrialExpirationInfo string        `envconfig:"default="`
 	TrialDocsURL                            string        `envconfig:"default="`
 
-	Binding                                BindingConfig
-	UseSmallerTrialAndFreemiumMachineTypes bool `envconfig:"default=false"`
+	Binding                BindingConfig
+	UseSmallerMachineTypes bool `envconfig:"default=false"`
 }
 
 type ServicesConfig map[string]Service

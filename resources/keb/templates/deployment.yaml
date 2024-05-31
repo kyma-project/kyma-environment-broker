@@ -414,8 +414,8 @@ spec:
               value: /config/freemiumWhitelistedGlobalAccountIds.yaml
             - name: APP_KYMA_RESOURCE_DELETION_TIMEOUT
               value: "{{ .Values.kymaResourceDeletionTimeout }}"
-            - name: APP_BROKER_USE_SMALLER_TRIAL_AND_FREEMIUM_MACHINE_TYPES
-              value: "{{ .Values.includeNewMachineTypesInSchema }}"
+            - name: APP_BROKER_USE_SMALLER_MACHINE_TYPES
+              value: "{{ .Values.useSmallerMachineTypes }}"
           ports:
             - name: http
               containerPort: {{ .Values.broker.port }}

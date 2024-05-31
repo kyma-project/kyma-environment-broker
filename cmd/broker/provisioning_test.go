@@ -678,13 +678,13 @@ func TestProvisioning_HandleExistingOperation(t *testing.T) {
 
 func TestProvisioning_ClusterParameters(t *testing.T) {
 	for tn, tc := range map[string]struct {
-		planID                                 string
-		platformRegion                         string
-		platformProvider                       internal.CloudProvider
-		region                                 string
-		multiZone                              bool
-		controlPlaneFailureTolerance           string
-		useSmallerTrialAndFreemiumMachineTypes bool
+		planID                       string
+		platformRegion               string
+		platformProvider             internal.CloudProvider
+		region                       string
+		multiZone                    bool
+		controlPlaneFailureTolerance string
+		useSmallerMachineTypes       bool
 
 		expectedZonesCount                  *int
 		expectedProvider                    string
@@ -705,8 +705,8 @@ func TestProvisioning_ClusterParameters(t *testing.T) {
 			expectedSubscriptionHyperscalerType: hyperscaler.Azure(),
 		},
 		"Regular trial with smaller machines": {
-			planID:                                 broker.TrialPlanID,
-			useSmallerTrialAndFreemiumMachineTypes: true,
+			planID:                 broker.TrialPlanID,
+			useSmallerMachineTypes: true,
 
 			expectedMinimalNumberOfNodes:        1,
 			expectedMaximumNumberOfNodes:        1,
@@ -727,9 +727,9 @@ func TestProvisioning_ClusterParameters(t *testing.T) {
 			expectedSubscriptionHyperscalerType: hyperscaler.AWS(),
 		},
 		"Freemium aws with smaller machines": {
-			planID:                                 broker.FreemiumPlanID,
-			platformProvider:                       internal.AWS,
-			useSmallerTrialAndFreemiumMachineTypes: true,
+			planID:                 broker.FreemiumPlanID,
+			platformProvider:       internal.AWS,
+			useSmallerMachineTypes: true,
 
 			expectedMinimalNumberOfNodes:        1,
 			expectedMaximumNumberOfNodes:        1,
@@ -750,9 +750,9 @@ func TestProvisioning_ClusterParameters(t *testing.T) {
 			expectedSubscriptionHyperscalerType: hyperscaler.Azure(),
 		},
 		"Freemium azure with smaller machines": {
-			planID:                                 broker.FreemiumPlanID,
-			platformProvider:                       internal.Azure,
-			useSmallerTrialAndFreemiumMachineTypes: true,
+			planID:                 broker.FreemiumPlanID,
+			platformProvider:       internal.Azure,
+			useSmallerMachineTypes: true,
 
 			expectedMinimalNumberOfNodes:        1,
 			expectedMaximumNumberOfNodes:        1,
@@ -845,7 +845,7 @@ func TestProvisioning_ClusterParameters(t *testing.T) {
 	} {
 		t.Run(tn, func(t *testing.T) {
 			// given
-			suite := NewProvisioningSuite(t, tc.multiZone, tc.controlPlaneFailureTolerance, tc.useSmallerTrialAndFreemiumMachineTypes)
+			suite := NewProvisioningSuite(t, tc.multiZone, tc.controlPlaneFailureTolerance, tc.useSmallerMachineTypes)
 			defer suite.TearDown()
 
 			// when

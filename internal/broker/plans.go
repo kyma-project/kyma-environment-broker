@@ -461,7 +461,7 @@ func unmarshalSchema(schema *RootSchema) *map[string]interface{} {
 
 // Plans is designed to hold plan defaulting logic
 // keep internal/hyperscaler/azure/config.go in sync with any changes to available zones
-func Plans(plans PlansConfig, provider internal.CloudProvider, includeAdditionalParamsInSchema bool, euAccessRestricted bool, useSmallerTrialAndFreemiumMachineTypes bool) map[string]domain.ServicePlan {
+func Plans(plans PlansConfig, provider internal.CloudProvider, includeAdditionalParamsInSchema bool, euAccessRestricted bool, useSmallerMachineTypes bool) map[string]domain.ServicePlan {
 	awsMachineNames := AwsMachinesNames()
 	awsMachinesDisplay := AwsMachinesDisplay()
 	awsRegionsDisplay := AWSRegionsDisplay()
@@ -477,7 +477,7 @@ func Plans(plans PlansConfig, provider internal.CloudProvider, includeAdditional
 	sapConvergedCloudMachinesDisplay := SapConvergedCloudMachinesDisplay()
 	sapConvergedCloudRegionsDisplay := SapConvergedCloudRegionsDisplay()
 
-	if !useSmallerTrialAndFreemiumMachineTypes {
+	if !useSmallerMachineTypes {
 		azureLiteMachinesNames = removeMachinesNamesFromList(awsMachineNames, "Standard_D2s_v5")
 		delete(azureLiteMachinesDisplay, "Standard_D2s_v5")
 	}
