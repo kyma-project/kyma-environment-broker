@@ -20,7 +20,6 @@ const (
 	DefaultAzureMultiZoneCount      = 3
 	DefaultAzureMachineType         = "Standard_D2s_v5"
 	DefaultOldAzureTrialMachineType = "Standard_D4s_v5"
-	DefaultAzureTrialMachineType    = "Standard_D2s_v5"
 )
 
 var europeAzure = "westeurope"

@@ -23,7 +23,6 @@ const (
 	DefaultAWSMultiZoneCount      = 3
 	DefaultAWSMachineType         = "m6i.large"
 	DefaultOldAWSTrialMachineType = "m5.xlarge"
-	DefaultAWSTrialMachineType    = "m6i.large"
 )
 
 var europeAWS = "eu-west-1"
