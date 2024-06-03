@@ -74,7 +74,7 @@ func TestCatalog(t *testing.T) {
 
 func TestProvisioning_HappyPath(t *testing.T) {
 	// given
-	suite := NewProvisioningSuite(t, false, "")
+	suite := NewProvisioningSuite(t, false, "", false)
 	defer suite.TearDown()
 
 	// when
@@ -684,6 +684,7 @@ func TestProvisioning_ClusterParameters(t *testing.T) {
 		region                       string
 		multiZone                    bool
 		controlPlaneFailureTolerance string
+		useSmallerMachineTypes       bool
 
 		expectedZonesCount                  *int
 		expectedProvider                    string
@@ -703,6 +704,17 @@ func TestProvisioning_ClusterParameters(t *testing.T) {
 			expectedSharedSubscription:          true,
 			expectedSubscriptionHyperscalerType: hyperscaler.Azure(),
 		},
+		"Regular trial with smaller machines": {
+			planID:                 broker.TrialPlanID,
+			useSmallerMachineTypes: true,
+
+			expectedMinimalNumberOfNodes:        1,
+			expectedMaximumNumberOfNodes:        1,
+			expectedMachineType:                 "Standard_D2s_v5",
+			expectedProvider:                    "azure",
+			expectedSharedSubscription:          true,
+			expectedSubscriptionHyperscalerType: hyperscaler.Azure(),
+		},
 		"Freemium aws": {
 			planID:           broker.FreemiumPlanID,
 			platformProvider: internal.AWS,
@@ -714,6 +726,18 @@ func TestProvisioning_ClusterParameters(t *testing.T) {
 			expectedMachineType:                 "m5.xlarge",
 			expectedSubscriptionHyperscalerType: hyperscaler.AWS(),
 		},
+		"Freemium aws with smaller machines": {
+			planID:                 broker.FreemiumPlanID,
+			platformProvider:       internal.AWS,
+			useSmallerMachineTypes: true,
+
+			expectedMinimalNumberOfNodes:        1,
+			expectedMaximumNumberOfNodes:        1,
+			expectedProvider:                    "aws",
+			expectedSharedSubscription:          false,
+			expectedMachineType:                 "m6i.large",
+			expectedSubscriptionHyperscalerType: hyperscaler.AWS(),
+		},
 		"Freemium azure": {
 			planID:           broker.FreemiumPlanID,
 			platformProvider: internal.Azure,
@@ -723,6 +747,18 @@ func TestProvisioning_ClusterParameters(t *testing.T) {
 			expectedProvider:                    "azure",
 			expectedSharedSubscription:          false,
 			expectedMachineType:                 "Standard_D4s_v5",
+			expectedSubscriptionHyperscalerType: hyperscaler.Azure(),
+		},
+		"Freemium azure with smaller machines": {
+			planID:                 broker.FreemiumPlanID,
+			platformProvider:       internal.Azure,
+			useSmallerMachineTypes: true,
+
+			expectedMinimalNumberOfNodes:        1,
+			expectedMaximumNumberOfNodes:        1,
+			expectedProvider:                    "azure",
+			expectedSharedSubscription:          false,
+			expectedMachineType:                 "Standard_D2s_v5",
 			expectedSubscriptionHyperscalerType: hyperscaler.Azure(),
 		},
 		"Production Azure": {
@@ -809,7 +845,7 @@ func TestProvisioning_ClusterParameters(t *testing.T) {
 	} {
 		t.Run(tn, func(t *testing.T) {
 			// given
-			suite := NewProvisioningSuite(t, tc.multiZone, tc.controlPlaneFailureTolerance)
+			suite := NewProvisioningSuite(t, tc.multiZone, tc.controlPlaneFailureTolerance, tc.useSmallerMachineTypes)
 			defer suite.TearDown()
 
 			// when
@@ -847,7 +883,7 @@ func TestProvisioning_OIDCValues(t *testing.T) {
 
 	t.Run("should apply default OIDC values when OIDC object is nil", func(t *testing.T) {
 		// given
-		suite := NewProvisioningSuite(t, false, "")
+		suite := NewProvisioningSuite(t, false, "", false)
 		defer suite.TearDown()
 		defaultOIDC := fixture.FixOIDCConfigDTO()
 		expectedOIDC := gqlschema.OIDCConfigInput{
@@ -878,7 +914,7 @@ func TestProvisioning_OIDCValues(t *testing.T) {
 
 	t.Run("should apply default OIDC values when all OIDC object's fields are empty", func(t *testing.T) {
 		// given
-		suite := NewProvisioningSuite(t, false, "")
+		suite := NewProvisioningSuite(t, false, "", false)
 		defer suite.TearDown()
 		defaultOIDC := fixture.FixOIDCConfigDTO()
 		expectedOIDC := gqlschema.OIDCConfigInput{
@@ -912,7 +948,7 @@ func TestProvisioning_OIDCValues(t *testing.T) {
 
 	t.Run("should apply provided OIDC configuration", func(t *testing.T) {
 		// given
-		suite := NewProvisioningSuite(t, false, "")
+		suite := NewProvisioningSuite(t, false, "", false)
 		defer suite.TearDown()
 		providedOIDC := internal.OIDCConfigDTO{
 			ClientID:       "fake-client-id-1",
@@ -951,7 +987,7 @@ func TestProvisioning_OIDCValues(t *testing.T) {
 
 	t.Run("should apply default OIDC values on empty OIDC params from input", func(t *testing.T) {
 		// given
-		suite := NewProvisioningSuite(t, false, "")
+		suite := NewProvisioningSuite(t, false, "", false)
 		defer suite.TearDown()
 		providedOIDC := internal.OIDCConfigDTO{
 			ClientID:  "fake-client-id-1",
@@ -989,7 +1025,7 @@ func TestProvisioning_OIDCValues(t *testing.T) {
 func TestProvisioning_RuntimeAdministrators(t *testing.T) {
 	t.Run("should use UserID as default value for admins list", func(t *testing.T) {
 		// given
-		suite := NewProvisioningSuite(t, false, "")
+		suite := NewProvisioningSuite(t, false, "", false)
 		defer suite.TearDown()
 		options := RuntimeOptions{
 			UserID: "fake-user-id",
@@ -1015,7 +1051,7 @@ func TestProvisioning_RuntimeAdministrators(t *testing.T) {
 
 	t.Run("should apply new admins list", func(t *testing.T) {
 		// given
-		suite := NewProvisioningSuite(t, false, "")
+		suite := NewProvisioningSuite(t, false, "", false)
 		defer suite.TearDown()
 		options := RuntimeOptions{
 			UserID:        "fake-user-id",
@@ -1042,7 +1078,7 @@ func TestProvisioning_RuntimeAdministrators(t *testing.T) {
 
 	t.Run("should apply empty admin value (list is not empty)", func(t *testing.T) {
 		// given
-		suite := NewProvisioningSuite(t, false, "")
+		suite := NewProvisioningSuite(t, false, "", false)
 		defer suite.TearDown()
 		options := RuntimeOptions{
 			UserID:        "fake-user-id",

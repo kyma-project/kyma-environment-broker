@@ -228,6 +228,7 @@ func AzureMachinesDisplay() map[string]string {
 
 func AzureLiteMachinesNames() []string {
 	return []string{
+		"Standard_D2s_v5",
 		"Standard_D4s_v5",
 		"Standard_D4_v3",
 	}
@@ -235,6 +236,7 @@ func AzureLiteMachinesNames() []string {
 
 func AzureLiteMachinesDisplay() map[string]string {
 	return map[string]string{
+		"Standard_D2s_v5": "Standard_D2s_v5 (2vCPU, 8GB RAM)",
 		"Standard_D4s_v5": "Standard_D4s_v5 (4vCPU, 16GB RAM)",
 		"Standard_D4_v3":  "Standard_D4_v3 (4vCPU, 16GB RAM)",
 	}
@@ -286,6 +288,20 @@ func SapConvergedCloudMachinesDisplay() map[string]string {
 		"g_c32_m128": "g_c32_m128 (32vCPU, 128GB RAM)",
 		"g_c64_m256": "g_c64_m256 (64vCPU, 256GB RAM)",
 	}
+}
+
+func removeMachinesNamesFromList(machinesNames []string, machinesNamesToRemove ...string) []string {
+	for i, machineName := range machinesNames {
+		for _, machineNameToRemove := range machinesNamesToRemove {
+			if machineName == machineNameToRemove {
+				copy(machinesNames[i:], machinesNames[i+1:])
+				machinesNames[len(machinesNames)-1] = ""
+				machinesNames = machinesNames[:len(machinesNames)-1]
+			}
+		}
+	}
+
+	return machinesNames
 }
 
 func requiredSchemaProperties() []string {
@@ -445,7 +461,7 @@ func unmarshalSchema(schema *RootSchema) *map[string]interface{} {
 
 // Plans is designed to hold plan defaulting logic
 // keep internal/hyperscaler/azure/config.go in sync with any changes to available zones
-func Plans(plans PlansConfig, provider internal.CloudProvider, includeAdditionalParamsInSchema bool, euAccessRestricted bool) map[string]domain.ServicePlan {
+func Plans(plans PlansConfig, provider internal.CloudProvider, includeAdditionalParamsInSchema bool, euAccessRestricted bool, useSmallerMachineTypes bool) map[string]domain.ServicePlan {
 	awsMachineNames := AwsMachinesNames()
 	awsMachinesDisplay := AwsMachinesDisplay()
 	awsRegionsDisplay := AWSRegionsDisplay()
@@ -460,6 +476,11 @@ func Plans(plans PlansConfig, provider internal.CloudProvider, includeAdditional
 	sapConvergedCloudMachinesNames := SapConvergedCloudMachinesNames()
 	sapConvergedCloudMachinesDisplay := SapConvergedCloudMachinesDisplay()
 	sapConvergedCloudRegionsDisplay := SapConvergedCloudRegionsDisplay()
+
+	if !useSmallerMachineTypes {
+		azureLiteMachinesNames = removeMachinesNamesFromList(awsMachineNames, "Standard_D2s_v5")
+		delete(azureLiteMachinesDisplay, "Standard_D2s_v5")
+	}
 
 	awsSchema := AWSSchema(awsMachinesDisplay, awsRegionsDisplay, awsMachineNames, includeAdditionalParamsInSchema, false, euAccessRestricted)
 	// awsHASchema := AWSHASchema(awsMachinesDisplay, awsMachines, includeAdditionalParamsInSchema, false)

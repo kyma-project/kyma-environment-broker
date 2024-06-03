@@ -26,12 +26,10 @@
     },
     "machineType":{
       "_enumDisplayName":{
-        "Standard_D2s_v5":"Standard_D2s_v5 (2vCPU, 8GB RAM)",
         "Standard_D4s_v5":"Standard_D4s_v5 (4vCPU, 16GB RAM)",
         "Standard_D4_v3":"Standard_D4_v3 (4vCPU, 16GB RAM)"
       },
       "enum":[
-        "Standard_D2s_v5",
         "Standard_D4s_v5",
         "Standard_D4_v3"
       ],
@@ -148,27 +146,11 @@
       "type": "object"
     },
     "region": {
-      "_enumDisplayName": {
-        "eastus": "eastus (US East, VA)",
-        "centralus": "centralus (US Central, IA)",
-        "westus2": "westus2 (US West, WA)",
-        "uksouth": "uksouth (UK South, London)",
-        "northeurope": "northeurope (Europe, Ireland)",
-        "westeurope": "westeurope (Europe, Netherlands)",
-        "japaneast": "japaneast (Japan, Tokyo)",
-        "southeastasia": "southeastasia (Asia Pacific, Singapore)",
-        "australiaeast": "australiaeast (Australia, Sydney)"
-      },
+        "_enumDisplayName": {
+            "switzerlandnorth": "switzerlandnorth (Switzerland, Zurich)"
+        },
       "enum": [
-        "eastus",
-        "centralus",
-        "westus2",
-        "uksouth",
-        "northeurope",
-        "westeurope",
-        "japaneast",
-        "southeastasia",
-        "australiaeast"
+        "switzerlandnorth"
       ],
       "minLength": 1,
       "type": "string"

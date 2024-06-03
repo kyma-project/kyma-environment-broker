@@ -17,7 +17,7 @@ func TestInputBuilderFactory_IsPlanSupport(t *testing.T) {
 	// given
 	configProvider := mockConfigProvider()
 
-	ibf, err := NewInputBuilderFactory(configProvider, Config{}, "1.10", fixTrialRegionMapping(), fixTrialProviders(), fixture.FixOIDCConfigDTO())
+	ibf, err := NewInputBuilderFactory(configProvider, Config{}, "1.10", fixTrialRegionMapping(), fixTrialProviders(), fixture.FixOIDCConfigDTO(), false)
 	assert.NoError(t, err)
 
 	// when/then
@@ -33,7 +33,7 @@ func TestInputBuilderFactory_ForPlan(t *testing.T) {
 		// given
 		configProvider := mockConfigProvider()
 
-		ibf, err := NewInputBuilderFactory(configProvider, Config{}, "1.10", fixTrialRegionMapping(), fixTrialProviders(), fixture.FixOIDCConfigDTO())
+		ibf, err := NewInputBuilderFactory(configProvider, Config{}, "1.10", fixTrialRegionMapping(), fixTrialProviders(), fixture.FixOIDCConfigDTO(), false)
 		assert.NoError(t, err)
 		pp := fixProvisioningParameters(broker.GCPPlanID, "")
 
@@ -57,7 +57,7 @@ func TestInputBuilderFactory_ForPlan(t *testing.T) {
 		// given
 		configProvider := mockConfigProvider()
 
-		ibf, err := NewInputBuilderFactory(configProvider, Config{}, "1.10", fixTrialRegionMapping(), fixTrialProviders(), fixture.FixOIDCConfigDTO())
+		ibf, err := NewInputBuilderFactory(configProvider, Config{}, "1.10", fixTrialRegionMapping(), fixTrialProviders(), fixture.FixOIDCConfigDTO(), false)
 		assert.NoError(t, err)
 		pp := fixProvisioningParameters(broker.GCPPlanID, "")
 
@@ -76,7 +76,7 @@ func TestInputBuilderFactory_ForPlan(t *testing.T) {
 		// given
 		configProvider := mockConfigProvider()
 
-		ibf, err := NewInputBuilderFactory(configProvider, Config{}, "1.10", fixTrialRegionMapping(), fixTrialProviders(), fixture.FixOIDCConfigDTO())
+		ibf, err := NewInputBuilderFactory(configProvider, Config{}, "1.10", fixTrialRegionMapping(), fixTrialProviders(), fixture.FixOIDCConfigDTO(), false)
 		assert.NoError(t, err)
 		pp := fixProvisioningParameters(broker.GCPPlanID, "")
 
@@ -95,7 +95,7 @@ func TestInputBuilderFactory_ForPlan(t *testing.T) {
 		// given
 		configProvider := mockConfigProvider()
 
-		ibf, err := NewInputBuilderFactory(configProvider, Config{}, "1.10", fixTrialRegionMapping(), fixTrialProviders(), fixture.FixOIDCConfigDTO())
+		ibf, err := NewInputBuilderFactory(configProvider, Config{}, "1.10", fixTrialRegionMapping(), fixTrialProviders(), fixture.FixOIDCConfigDTO(), false)
 		assert.NoError(t, err)
 		pp := fixProvisioningParameters(broker.GCPPlanID, "PR-1")
 
@@ -111,7 +111,7 @@ func TestInputBuilderFactory_ForPlan(t *testing.T) {
 		// given
 		configProvider := mockConfigProvider()
 
-		ibf, err := NewInputBuilderFactory(configProvider, Config{}, "1.10", fixTrialRegionMapping(), fixTrialProviders(), fixture.FixOIDCConfigDTO())
+		ibf, err := NewInputBuilderFactory(configProvider, Config{}, "1.10", fixTrialRegionMapping(), fixTrialProviders(), fixture.FixOIDCConfigDTO(), false)
 		assert.NoError(t, err)
 		pp := fixProvisioningParameters(broker.GCPPlanID, "")
 
@@ -144,7 +144,7 @@ func TestInputBuilderFactory_ForPlan(t *testing.T) {
 		// given
 		configProvider := mockConfigProvider()
 
-		ibf, err := NewInputBuilderFactory(configProvider, Config{}, "1.10", fixTrialRegionMapping(), fixTrialProviders(), fixture.FixOIDCConfigDTO())
+		ibf, err := NewInputBuilderFactory(configProvider, Config{}, "1.10", fixTrialRegionMapping(), fixTrialProviders(), fixture.FixOIDCConfigDTO(), false)
 		assert.NoError(t, err)
 		pp := fixProvisioningParameters(broker.GCPPlanID, "")
 
@@ -182,7 +182,7 @@ func TestInputBuilderFactory_ForPlan(t *testing.T) {
 		var provider HyperscalerInputProvider
 		configProvider := mockConfigProvider()
 
-		ibf, err := NewInputBuilderFactory(configProvider, Config{}, "1.10", fixTrialRegionMapping(), fixTrialProviders(), fixture.FixOIDCConfigDTO())
+		ibf, err := NewInputBuilderFactory(configProvider, Config{}, "1.10", fixTrialRegionMapping(), fixTrialProviders(), fixture.FixOIDCConfigDTO(), false)
 		assert.NoError(t, err)
 		pp := fixProvisioningParameters(broker.GCPPlanID, "")
 		provider = &cloudProvider.GcpInput{} // for broker.GCPPlanID
