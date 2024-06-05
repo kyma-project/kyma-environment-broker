@@ -11,7 +11,6 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/gorilla/mux"
-	reconcilerApi "github.com/kyma-incubator/reconciler/pkg/keb"
 	"github.com/kyma-project/control-plane/components/provisioner/pkg/gqlschema"
 	"github.com/kyma-project/kyma-environment-broker/common/orchestration"
 	"github.com/kyma-project/kyma-environment-broker/internal"
@@ -346,41 +345,37 @@ func TestStatusHandler_AttachRoutes(t *testing.T) {
 		err = db.Operations().InsertUpgradeKymaOperation(upgradeKymaOp1)
 		require.NoError(t, err)
 
-		runtimeStateWithClusterSetupID := "runtimeStateWithClusterSetupID"
-		runtimeStateWithClusterSetup := internal.RuntimeState{
-			ID:          runtimeStateWithClusterSetupID,
+		runtimeStateID := "runtimeStateID"
+		runtimeState := internal.RuntimeState{
+			ID:          runtimeStateID,
 			RuntimeID:   uuid.NewString(),
 			OperationID: upgradeKymaOp1ID,
-			ClusterSetup: &reconcilerApi.Cluster{
-				RuntimeID: uuid.NewString(),
-				KymaConfig: reconcilerApi.KymaConfig{
-					Version: "2.0.0",
-					Profile: string(gqlschema.KymaProfileProduction),
-					Components: []reconcilerApi.Component{
-						{
-							URL:       "component1URL.local",
-							Component: "component1",
-							Namespace: "test",
-							Configuration: []reconcilerApi.Configuration{
-								{
-									Key:    "key1",
-									Value:  "value1",
-									Secret: false,
-								},
-								{
-									Key:    "key2",
-									Value:  "value2",
-									Secret: true,
-								},
+			KymaConfig: gqlschema.KymaConfigInput{
+				Version: "2.0.0",
+				Profile: (*gqlschema.KymaProfile)(ptr.String("Production")),
+				Components: []*gqlschema.ComponentConfigurationInput{
+					{
+						Component: "component1",
+						Namespace: "test",
+						SourceURL: ptr.String("component1URL.local"),
+						Configuration: []*gqlschema.ConfigEntryInput{
+							{
+								Key:    "key1",
+								Value:  "value1",
+								Secret: ptr.Bool(false),
+							},
+							{
+								Key:    "key2",
+								Value:  "value2",
+								Secret: ptr.Bool(true),
 							},
 						},
 					},
-					Administrators: []string{"admin1@test.com", "admin2@test.com"},
 				},
 			},
 		}
 
-		err = db.RuntimeStates().Insert(runtimeStateWithClusterSetup)
+		err = db.RuntimeStates().Insert(runtimeState)
 		require.NoError(t, err)
 
 		logs := logrus.New()
