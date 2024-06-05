@@ -3,7 +3,9 @@ global:
   ingress:
     domainName: localhost
   images:
-    cloudsql_proxy_image: "europe-docker.pkg.dev/kyma-project/prod/tpi/cloudsql-docker/gce-proxy:v1.33.16-133356bc"
+    cloudsql_proxy:
+      repository: eu.gcr.io/sap-ti-dx-kyma-mps-dev/images/cloudsql-proxy
+      tag: 2.11.3-sap
     container_registry:
       path: europe-docker.pkg.dev/kyma-project/prod
     schema_migrator:

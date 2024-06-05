@@ -14,6 +14,7 @@ The manifest contains three placeholders for values which are set by the shell s
 - `$SCRIPT_BROKER_URL` 
 - `$SCRIPT_DOMAIN`
 - `$SCRIPT_CLOUDSQL_PROXY_COMMAND`
+- `SCRIPT_CLOUDSQL_PROXY_IMAGE`
 
 The values are derived from Kyma Environment Broker Deployment which should be running in the cluster prior to the CronJob application.
 
