@@ -478,7 +478,7 @@ func Plans(plans PlansConfig, provider internal.CloudProvider, includeAdditional
 	sapConvergedCloudRegionsDisplay := SapConvergedCloudRegionsDisplay()
 
 	if !useSmallerMachineTypes {
-		azureLiteMachinesNames = removeMachinesNamesFromList(awsMachineNames, "Standard_D2s_v5")
+		azureLiteMachinesNames = removeMachinesNamesFromList(azureLiteMachinesNames, "Standard_D2s_v5")
 		delete(azureLiteMachinesDisplay, "Standard_D2s_v5")
 	}
 
