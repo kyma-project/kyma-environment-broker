@@ -24,7 +24,6 @@ import (
 	"github.com/kyma-project/kyma-environment-broker/internal/edp"
 	"github.com/kyma-project/kyma-environment-broker/internal/event"
 	"github.com/kyma-project/kyma-environment-broker/internal/fixture"
-	"github.com/kyma-project/kyma-environment-broker/internal/ias"
 	"github.com/kyma-project/kyma-environment-broker/internal/process"
 	"github.com/kyma-project/kyma-environment-broker/internal/provisioner"
 	"github.com/kyma-project/kyma-environment-broker/internal/storage"
@@ -101,9 +100,6 @@ func NewDeprovisioningSuite(t *testing.T) *DeprovisioningSuite {
 	externalEvalAssistant := avs.NewExternalEvalAssistant(cfg.Avs)
 	internalEvalAssistant := avs.NewInternalEvalAssistant(cfg.Avs)
 
-	iasFakeClient := ias.NewFakeClient()
-	bundleBuilder := ias.NewBundleBuilder(iasFakeClient, cfg.IAS)
-
 	edpClient := fixEDPClient(t)
 
 	accountProvider := fixAccountProvider()
@@ -127,7 +123,7 @@ func NewDeprovisioningSuite(t *testing.T) *DeprovisioningSuite {
 
 	deprovisioningQueue := NewDeprovisioningProcessingQueue(ctx, workersAmount, deprovisionManager, cfg, db, eventBroker,
 		provisionerClient, avsDel, internalEvalAssistant, externalEvalAssistant,
-		bundleBuilder, edpClient, accountProvider, kubeconfig.NewFakeK8sClientProvider(fakeK8sSKRClient), fakeK8sSKRClient, configProvider, logs,
+		edpClient, accountProvider, kubeconfig.NewFakeK8sClientProvider(fakeK8sSKRClient), fakeK8sSKRClient, configProvider, logs,
 	)
 
 	deprovisioningQueue.SpeedUp(10000)
