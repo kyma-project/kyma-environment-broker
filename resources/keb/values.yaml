@@ -60,11 +60,11 @@ global:
   database:
     manageSecrets: true
     cloudsqlproxy:
-      enabled: false
-      workloadIdentity:
-        enabled: false
-    embedded:
       enabled: true
+      workloadIdentity:
+        enabled: true
+    embedded:
+      enabled: false
       provisioner:
         name: "provisioner"
       broker:
