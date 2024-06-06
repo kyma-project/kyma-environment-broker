@@ -9,7 +9,6 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"reflect"
-	"sort"
 	"testing"
 	"time"
 
@@ -21,7 +20,6 @@ import (
 	"code.cloudfoundry.org/lager"
 	"github.com/google/uuid"
 	"github.com/gorilla/mux"
-	reconcilerApi "github.com/kyma-incubator/reconciler/pkg/keb"
 	"github.com/kyma-project/control-plane/components/provisioner/pkg/gqlschema"
 	"github.com/kyma-project/kyma-environment-broker/common/gardener"
 	"github.com/kyma-project/kyma-environment-broker/common/orchestration"
@@ -799,12 +797,6 @@ func (s *BrokerSuiteTest) AssertProvisionRuntimeInputWithoutKymaConfig() {
 	assert.Nil(s.t, input.KymaConfig)
 }
 
-func (s *BrokerSuiteTest) AssertComponent(a, b reconcilerApi.Component) {
-	sort.Slice(a.Configuration, func(i, j int) bool { return a.Configuration[i].Key < a.Configuration[j].Key })
-	sort.Slice(b.Configuration, func(i, j int) bool { return b.Configuration[i].Key < b.Configuration[j].Key })
-	assert.Equal(s.t, a, b)
-}
-
 func (s *BrokerSuiteTest) AssertDisabledNetworkFilterForProvisioning(val *bool) {
 	var got, exp string
 	err := s.poller.Invoke(func() (bool, error) {
@@ -960,12 +952,6 @@ func (s *BrokerSuiteTest) processProvisioningByInstanceID(iid string) {
 	s.processProvisioningByOperationID(opID)
 }
 
-func (s *BrokerSuiteTest) ShootName(id string) string {
-	op, err := s.db.Operations().GetProvisioningOperationByID(id)
-	require.NoError(s.t, err)
-	return op.ShootName
-}
-
 func (s *BrokerSuiteTest) AssertAWSRegionAndZone(region string) {
 	input := s.provisionerClient.GetLatestProvisionRuntimeInput()
 	assert.Equal(s.t, region, input.ClusterConfig.GardenerConfig.Region)
@@ -975,185 +961,6 @@ func (s *BrokerSuiteTest) AssertAWSRegionAndZone(region string) {
 func (s *BrokerSuiteTest) AssertAzureRegion(region string) {
 	input := s.provisionerClient.GetLatestProvisionRuntimeInput()
 	assert.Equal(s.t, region, input.ClusterConfig.GardenerConfig.Region)
-}
-
-// fixExpectedComponentListWithoutSMProxy provides a fixed components list for Service Management without BTP operator credentials provided
-func (s *BrokerSuiteTest) fixExpectedComponentListWithoutSMProxy(opID string) []reconcilerApi.Component {
-	return []reconcilerApi.Component{
-		{
-			URL:       "",
-			Component: "ory",
-			Namespace: "kyma-system",
-			Configuration: []reconcilerApi.Configuration{
-				{
-					Key:    "global.domainName",
-					Value:  fmt.Sprintf("%s.kyma.sap.com", s.ShootName(opID)),
-					Secret: false,
-				},
-				{
-					Key:    "foo",
-					Value:  "bar",
-					Secret: false,
-				},
-				{
-					Key:    "global.booleanOverride.enabled",
-					Value:  false,
-					Secret: false,
-				},
-			},
-		},
-		{
-			URL:       "",
-			Component: "monitoring",
-			Namespace: "kyma-system",
-			Configuration: []reconcilerApi.Configuration{
-				{
-					Key:    "global.domainName",
-					Value:  fmt.Sprintf("%s.kyma.sap.com", s.ShootName(opID)),
-					Secret: false,
-				},
-				{
-					Key:    "foo",
-					Value:  "bar",
-					Secret: false,
-				},
-				{
-					Key:    "global.booleanOverride.enabled",
-					Value:  false,
-					Secret: false,
-				},
-			},
-		},
-	}
-}
-
-// fixExpectedComponentListWithSMOperator provides a fixed components list for Service Management 2.0 - when `sm_operator_credentials`
-// object is provided: btp-opeartor component should be installed
-func (s *BrokerSuiteTest) fixExpectedComponentListWithSMOperator(opID, smClusterID string) []reconcilerApi.Component {
-	return []reconcilerApi.Component{
-		{
-			URL:       "",
-			Component: "cluster-essentials",
-			Namespace: "kyma-system",
-			Configuration: []reconcilerApi.Configuration{
-				{
-					Key:    "global.domainName",
-					Value:  fmt.Sprintf("%s.kyma.sap.com", s.ShootName(opID)),
-					Secret: false,
-				},
-				{
-					Key:    "foo",
-					Value:  "bar",
-					Secret: false,
-				},
-				{
-					Key:    "global.booleanOverride.enabled",
-					Value:  false,
-					Secret: false,
-				},
-			},
-		},
-		{
-			URL:       "",
-			Component: "ory",
-			Namespace: "kyma-system",
-			Configuration: []reconcilerApi.Configuration{
-				{
-					Key:    "global.domainName",
-					Value:  fmt.Sprintf("%s.kyma.sap.com", s.ShootName(opID)),
-					Secret: false,
-				},
-				{
-					Key:    "foo",
-					Value:  "bar",
-					Secret: false,
-				},
-				{
-					Key:    "global.booleanOverride.enabled",
-					Value:  false,
-					Secret: false,
-				},
-			},
-		},
-		{
-			URL:       "",
-			Component: "monitoring",
-			Namespace: "kyma-system",
-			Configuration: []reconcilerApi.Configuration{
-				{
-					Key:    "global.domainName",
-					Value:  fmt.Sprintf("%s.kyma.sap.com", s.ShootName(opID)),
-					Secret: false,
-				},
-				{
-					Key:    "foo",
-					Value:  "bar",
-					Secret: false,
-				},
-				{
-					Key:    "global.booleanOverride.enabled",
-					Value:  false,
-					Secret: false,
-				},
-			},
-		},
-		{
-			URL:       "https://btp-operator",
-			Component: "btp-operator",
-			Namespace: "kyma-system",
-			Configuration: []reconcilerApi.Configuration{
-				{
-					Key:    "global.domainName",
-					Value:  fmt.Sprintf("%s.kyma.sap.com", s.ShootName(opID)),
-					Secret: false,
-				},
-				{
-					Key:    "foo",
-					Value:  "bar",
-					Secret: false,
-				},
-				{
-					Key:    "global.booleanOverride.enabled",
-					Value:  false,
-					Secret: false,
-				},
-				{
-					Key:    "manager.secret.clientid",
-					Value:  "testClientID",
-					Secret: true,
-				},
-				{
-					Key:    "manager.secret.clientsecret",
-					Value:  "testClientSecret",
-					Secret: true,
-				},
-				{
-					Key:    "manager.secret.url",
-					Value:  "https://service-manager.kyma.com",
-					Secret: false,
-				},
-				{
-					Key:    "manager.secret.sm_url",
-					Value:  "https://service-manager.kyma.com",
-					Secret: false,
-				},
-				{
-					Key:    "manager.secret.tokenurl",
-					Value:  "https://test.auth.com",
-					Secret: false,
-				},
-				{
-					Key:    "cluster.id",
-					Value:  smClusterID,
-					Secret: false,
-				},
-				{
-					Key:   "manager.priorityClassName",
-					Value: "kyma-system",
-				},
-			},
-		},
-	}
 }
 
 func (s *BrokerSuiteTest) AssertKymaResourceExists(opId string) {
