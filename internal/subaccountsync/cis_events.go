@@ -34,7 +34,8 @@ func (c *RateLimitedCisClient) FetchEventsWindow(fromActionTime int64) ([]Event,
 		cisResponse, err := c.fetchEventsPage(currentPage, fromActionTime)
 		if err != nil {
 			c.log.Error(fmt.Sprintf("while getting subaccount events for %d page: %v", currentPage, err))
-			return nil, err
+			c.log.Debug(fmt.Sprintf("Event window fetched partially - pages: %d out of %d, events: %d, from epoch: %d", currentPage, cisResponse.TotalPages, len(events), fromActionTime))
+			return events, err
 		}
 		events = append(events, cisResponse.Events...)
 		currentPage++
@@ -42,7 +43,7 @@ func (c *RateLimitedCisClient) FetchEventsWindow(fromActionTime int64) ([]Event,
 			break
 		}
 	}
-	c.log.Debug(fmt.Sprintf("Fetched event window - pages: %d, events: %d, from epoch: %d", currentPage, len(events), fromActionTime))
+	c.log.Debug(fmt.Sprintf("Event window fetched - pages: %d, events: %d, from epoch: %d", currentPage, len(events), fromActionTime))
 	return events, nil
 }
 
@@ -78,8 +79,8 @@ func (c *RateLimitedCisClient) fetchEventsPage(page int, fromActionTime int64) (
 
 func (c *RateLimitedCisClient) getEventsForSubaccounts(fromActionTime int64, logs slog.Logger, subaccountsMap subaccountsSetType) ([]Event, error) {
 	rawEvents, err := c.FetchEventsWindow(fromActionTime)
-	if err != nil {
-		logs.Error(fmt.Sprintf("while getting subaccount delete events: %s", err))
+	if err != nil && len(rawEvents) == 0 {
+		logs.Error(fmt.Sprintf("while getting events: %s", err))
 		return nil, err
 	}
 
@@ -87,7 +88,7 @@ func (c *RateLimitedCisClient) getEventsForSubaccounts(fromActionTime int64, log
 	filteredEventsFromCis := filterEvents(rawEvents, subaccountsMap)
 	logs.Info(fmt.Sprintf("Raw events: %d, filtered: %d", len(rawEvents), len(filteredEventsFromCis)))
 
-	return filteredEventsFromCis, nil
+	return filteredEventsFromCis, err
 }
 
 func filterEvents(rawEvents []Event, subaccounts subaccountsSetType) []Event {
