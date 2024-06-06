@@ -606,6 +606,31 @@ func TestCreateUpgradeShootInput_ConfigureAutoscalerParams(t *testing.T) {
 	})
 }
 
+func TestShootAndSeedSameRegion(t *testing.T) {
+
+	t.Run("should set shootAndSeedSameRegion field on provisioner input if feature flag is enabled", func(t *testing.T) {
+		// given
+		configProvider := mockConfigProvider()
+
+		builder, err := NewInputBuilderFactory(configProvider, Config{EnableShootAndSeedSameRegion: true}, "not-important",
+			fixTrialRegionMapping(), fixTrialProviders(), fixture.FixOIDCConfigDTO(), false)
+		assert.NoError(t, err)
+
+		pp := fixture.FixProvisioningParameters("")
+		pp.Parameters.ShootAndSeedSameRegion = ptr.Bool(true)
+
+		// when
+		creator, err := builder.CreateProvisionInput(pp, internal.RuntimeVersionData{})
+		require.NoError(t, err)
+		input, err := creator.CreateProvisionRuntimeInput()
+
+		// then
+		require.NoError(t, err)
+		assert.NotNil(t, input.ClusterConfig.GardenerConfig.ShootAndSeedSameRegion)
+		assert.True(t, *input.ClusterConfig.GardenerConfig.ShootAndSeedSameRegion)
+	})
+}
+
 func mockConfigProvider() ConfigurationProvider {
 	configProvider := &automock.ConfigurationProvider{}
 	configProvider.On("ProvideForGivenVersionAndPlan",

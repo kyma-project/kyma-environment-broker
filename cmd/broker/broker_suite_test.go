@@ -173,12 +173,13 @@ func NewBrokerSuiteTestWithConfig(t *testing.T, cfg *Config, version ...string) 
 		kebConfig.NewConfigMapConverter())
 
 	inputFactory, err := input.NewInputBuilderFactory(configProvider, input.Config{
-		MachineImageVersion:         "253",
-		KubernetesVersion:           "1.18",
-		MachineImage:                "coreos",
-		URL:                         "http://localhost",
-		DefaultGardenerShootPurpose: "testing",
-		DefaultTrialProvider:        internal.AWS,
+		MachineImageVersion:          "253",
+		KubernetesVersion:            "1.18",
+		MachineImage:                 "coreos",
+		URL:                          "http://localhost",
+		DefaultGardenerShootPurpose:  "testing",
+		DefaultTrialProvider:         internal.AWS,
+		EnableShootAndSeedSameRegion: cfg.Provisioner.EnableShootAndSeedSameRegion,
 	}, defaultKymaVer, map[string]string{"cf-eu10": "europe", "cf-us10": "us"}, cfg.FreemiumProviders, defaultOIDCValues(), cfg.Broker.UseSmallerMachineTypes)
 
 	storageCleanup, db, err := GetStorageForE2ETests()

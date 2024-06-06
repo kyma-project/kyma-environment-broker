@@ -46,6 +46,7 @@ type Config struct {
 	FreeExpirationPeriod                    time.Duration `envconfig:"default=720h"` // 30 days
 	SubaccountsIdsToShowTrialExpirationInfo string        `envconfig:"default="`
 	TrialDocsURL                            string        `envconfig:"default="`
+	EnableShootAndSeedSameRegion            bool          `envconfig:"default=false"`
 
 	Binding                BindingConfig
 	UseSmallerMachineTypes bool `envconfig:"default=false"`

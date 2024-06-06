@@ -1006,15 +1006,6 @@ func (s *operations) filterAll(filter dbmodel.OperationFilter) ([]internal.Opera
 		if ok := matchFilter(string(op.State), filter.States, s.equalFilter); !ok {
 			continue
 		}
-		if ok := matchFilter(op.ProvisioningParameters.ErsContext.GlobalAccountID, filter.GlobalAccountIDs, s.equalFilter); !ok {
-			continue
-		}
-		if ok := matchFilter(op.ProvisioningParameters.PlanID, filter.PlanIDs, s.equalFilter); !ok {
-			continue
-		}
-		if ok := matchFilter(string(op.Type), filter.Types, s.equalFilter); !ok {
-			continue
-		}
 		result = append(result, op)
 	}
 	return result, nil

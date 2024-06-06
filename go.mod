@@ -7,10 +7,10 @@ require (
 	github.com/99designs/gqlgen v0.17.47
 	github.com/Azure/azure-sdk-for-go v68.0.0+incompatible
 	github.com/Azure/go-autorest/autorest v0.11.29
-	github.com/Azure/go-autorest/autorest/adal v0.9.23
+	github.com/Azure/go-autorest/autorest/adal v0.9.24
 	github.com/Masterminds/sprig v2.22.0+incompatible
 	github.com/dlmiddlecote/sqlstats v1.0.2
-	github.com/docker/docker v26.1.3+incompatible
+	github.com/docker/docker v26.1.4+incompatible
 	github.com/docker/go-connections v0.5.0
 	github.com/go-co-op/gocron v1.37.0
 	github.com/gocraft/dbr v0.0.0-20190714181702-8114670a83bd
@@ -22,7 +22,7 @@ require (
 	github.com/kennygrant/sanitize v1.2.4
 	github.com/kyma-incubator/compass/components/director v0.0.0-20240329103248-7710e72be80a
 	github.com/kyma-incubator/reconciler v0.0.0-20230804125401-cbf3faa2a51f
-	github.com/kyma-project/control-plane/components/provisioner v0.0.0-20240423072319-9dbba9db6909
+	github.com/kyma-project/control-plane/components/provisioner v0.0.0-20240529135026-c4ef757de24f
 	github.com/kyma-project/control-plane/components/schema-migrator v0.0.0-20240222095836-b3942869fc28
 	github.com/lib/pq v1.10.9
 	github.com/matryer/is v1.4.1
@@ -34,8 +34,8 @@ require (
 	github.com/stretchr/testify v1.9.0
 	github.com/vrischmann/envconfig v1.3.0
 	golang.org/x/exp v0.0.0-20240213143201-ec583247a57a
-	golang.org/x/mod v0.17.0
-	golang.org/x/oauth2 v0.20.0
+	golang.org/x/mod v0.18.0
+	golang.org/x/oauth2 v0.21.0
 	golang.org/x/time v0.5.0
 	gopkg.in/yaml.v2 v2.4.0
 	gopkg.in/yaml.v3 v3.0.1

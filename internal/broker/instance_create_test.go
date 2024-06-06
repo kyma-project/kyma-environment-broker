@@ -1495,52 +1495,6 @@ func TestProvision_Provision(t *testing.T) {
 		assert.Equal(t, broker.FreemiumPlanID, instance.ServicePlanID)
 	})
 
-	t.Run("more than one freemium in operations is not allowed", func(t *testing.T) {
-		// given
-		memoryStorage := storage.NewMemoryStorage()
-		op := fixOperation()
-		op.ProvisioningParameters.PlanID = broker.FreemiumPlanID
-		err := memoryStorage.Operations().InsertOperation(op)
-		assert.NoError(t, err)
-
-		factoryBuilder := &automock.PlanValidator{}
-		factoryBuilder.On("IsPlanSupport", broker.FreemiumPlanID).Return(true)
-
-		planDefaults := func(planID string, platformProvider internal.CloudProvider, provider *internal.CloudProvider) (*gqlschema.ClusterConfigInput, error) {
-			return &gqlschema.ClusterConfigInput{}, nil
-		}
-		kcBuilder := &kcMock.KcBuilder{}
-		provisionEndpoint := broker.NewProvision(
-			broker.Config{EnablePlans: []string{"gcp", "azure", "azure_lite", broker.FreemiumPlanName}, OnlyOneFreePerGA: true},
-			gardener.Config{Project: "test", ShootDomain: "example.com", DNSProviders: fixDNSProviders()},
-			memoryStorage.Operations(),
-			memoryStorage.Instances(),
-			memoryStorage.InstancesArchived(),
-			nil,
-			factoryBuilder,
-			broker.PlansConfig{},
-			false,
-			planDefaults,
-			whitelist.Set{},
-			"request rejected, your globalAccountId is not whitelisted",
-			logrus.StandardLogger(),
-			dashboardConfig,
-			kcBuilder,
-			whitelist.Set{},
-		)
-
-		// when
-		_, err = provisionEndpoint.Provision(fixRequestContext(t, "dummy"), instanceID, domain.ProvisionDetails{
-			ServiceID:     serviceID,
-			PlanID:        broker.FreemiumPlanID,
-			RawParameters: json.RawMessage(fmt.Sprintf(`{"name": "%s", "region": "%s"}`, clusterName, clusterRegion)),
-			RawContext:    json.RawMessage(fmt.Sprintf(`{"globalaccount_id": "%s", "subaccount_id": "%s", "user_id": "%s"}`, globalAccountID, subAccountID, userID)),
-		}, true)
-
-		// then
-		assert.EqualError(t, err, "provisioning request rejected, you have already used the available free service plan quota in this global account")
-	})
-
 	t.Run("more than one freemium in instances is not allowed", func(t *testing.T) {
 		// given
 		memoryStorage := storage.NewMemoryStorage()

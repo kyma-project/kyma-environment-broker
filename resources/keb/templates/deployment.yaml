@@ -340,6 +340,8 @@ spec:
               value: "{{ .Values.gardener.freemiumProviders }}"
             - name: APP_BROKER_ONLY_ONE_FREE_PER_GA
               value: "{{ .Values.onlyOneFreePerGA }}"
+            - name: APP_BROKER_ENABLE_SHOOT_AND_SEED_SAME_REGION
+              value: "{{ .Values.broker.EnableShootAndSeedSameRegion }}"
             - name: APP_CATALOG_FILE_PATH
               value: /config/catalog.yaml
             - name: APP_GARDENER_PROJECT
@@ -370,6 +372,8 @@ spec:
               value: "{{ .Values.gardener.multiZoneCluster }}"
             - name: APP_PROVISIONER_CONTROL_PLANE_FAILURE_TOLERANCE
               value: "{{ .Values.gardener.controlPlaneFailureTolerance }}"
+            - name: APP_PROVISIONER_ENABLE_SHOOT_AND_SEED_SAME_REGION
+              value: "{{ .Values.provisioner.gardener.EnableShootAndSeedSameRegion }}"
             - name: APP_DEFAULT_REQUEST_REGION
               value: "{{ .Values.broker.defaultRequestRegion }}"
             - name: APP_UPDATE_PROCESSING_ENABLED
@@ -456,14 +460,16 @@ spec:
           {{- end }}
         {{- if and (eq .Values.global.database.embedded.enabled false) (eq .Values.global.database.cloudsqlproxy.enabled true)}}
         - name: cloudsql-proxy
-          image: {{ .Values.global.images.cloudsql_proxy_image }}
+          image: {{ .Values.global.images.cloudsql_proxy.repository }}:{{ .Values.global.images.cloudsql_proxy.tag }}
           {{- if .Values.global.database.cloudsqlproxy.workloadIdentity.enabled }}
-          command: ["/cloud_sql_proxy",
-                    "-instances={{ .Values.global.database.managedGCP.instanceConnectionName }}=tcp:5432"]
+          command: ["/cloud-sql-proxy",
+                    "{{ .Values.global.database.managedGCP.instanceConnectionName }}",
+                    "--private-ip"]
           {{- else }}
-          command: ["/cloud_sql_proxy",
-                    "-instances={{ .Values.global.database.managedGCP.instanceConnectionName }}=tcp:5432",
-                    "-credential_file=/secrets/cloudsql-instance-credentials/credentials.json"]
+          command: ["/cloud-sql-proxy",
+                    "{{ .Values.global.database.managedGCP.instanceConnectionName }}",
+                    "--private-ip",
+                    "--credentials-file=/secrets/cloudsql-instance-credentials/credentials.json"]
           volumeMounts:
             - name: cloudsql-instance-credentials
               mountPath: /secrets/cloudsql-instance-credentials
@@ -473,7 +479,7 @@ spec:
           securityContext:
 {{ toYaml . | indent 12 }}
           {{- end }}
-       {{- end}}
+        {{- end}}
       volumes:
       - name: config-volume
         configMap:

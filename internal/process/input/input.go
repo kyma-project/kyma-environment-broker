@@ -37,6 +37,7 @@ type Config struct {
 	MultiZoneCluster              bool                   `envconfig:"default=false"`
 	ControlPlaneFailureTolerance  string                 `envconfig:"optional"`
 	GardenerClusterStepTimeout    time.Duration          `envconfig:"default=3m"`
+	EnableShootAndSeedSameRegion  bool                   `envconfig:"default=false"`
 }
 
 type RuntimeInput struct {
@@ -55,13 +56,14 @@ type RuntimeInput struct {
 	oidcDefaultValues internal.OIDCConfigDTO
 	oidcLastValues    gqlschema.OIDCConfigInput
 
-	trialNodesNumber  int
-	instanceID        string
-	runtimeID         string
-	kubeconfig        string
-	shootDomain       string
-	shootDnsProviders gardener.DNSProvidersData
-	clusterName       string
+	trialNodesNumber             int
+	instanceID                   string
+	runtimeID                    string
+	kubeconfig                   string
+	shootDomain                  string
+	shootDnsProviders            gardener.DNSProvidersData
+	clusterName                  string
+	enableShootAndSeedSameRegion bool
 }
 
 func (r *RuntimeInput) Configuration() *internal.ConfigForPlan {
@@ -252,6 +254,9 @@ func (r *RuntimeInput) applyProvisioningParametersForProvisionRuntime() error {
 		return nil
 	}
 
+	if r.enableShootAndSeedSameRegion {
+		r.provisionRuntimeInput.ClusterConfig.GardenerConfig.ShootAndSeedSameRegion = params.ShootAndSeedSameRegion
+	}
 	updateInt(&r.provisionRuntimeInput.ClusterConfig.GardenerConfig.MaxUnavailable, params.MaxUnavailable)
 	updateInt(&r.provisionRuntimeInput.ClusterConfig.GardenerConfig.MaxSurge, params.MaxSurge)
 	updateInt(&r.provisionRuntimeInput.ClusterConfig.GardenerConfig.AutoScalerMin, params.AutoScalerMin)
@@ -497,6 +502,12 @@ func (r *RuntimeInput) setOIDCDefaultValuesIfEmpty(oidcConfig *gqlschema.OIDCCon
 func updateString(toUpdate *string, value *string) {
 	if value != nil {
 		*toUpdate = *value
+	}
+}
+
+func updateBool(toUpdate *bool, value *bool) {
+	if value != nil {
+		toUpdate = value
 	}
 }
 

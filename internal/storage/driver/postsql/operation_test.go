@@ -514,36 +514,12 @@ func TestOperation(t *testing.T) {
 		require.NoError(t, err)
 
 		// when
-		_, count, totalCount, err := brokerStorage.Operations().ListOperations(dbmodel.OperationFilter{Types: []string{string(internal.OperationTypeProvision)}})
-
-		// then
-		require.NoError(t, err)
-		require.Equal(t, 3, count)
-		require.Equal(t, 3, totalCount)
-
-		// when
-		_, count, totalCount, err = brokerStorage.Operations().ListOperations(dbmodel.OperationFilter{States: []string{string(domain.Failed)}})
+		_, count, totalCount, err := brokerStorage.Operations().ListOperations(dbmodel.OperationFilter{States: []string{string(domain.Failed)}})
 
 		// then
 		require.NoError(t, err)
 		require.Equal(t, 1, count)
 		require.Equal(t, 1, totalCount)
-
-		// when
-		_, count, totalCount, err = brokerStorage.Operations().ListOperations(dbmodel.OperationFilter{PlanIDs: []string{broker.FreemiumPlanID}})
-
-		// then
-		require.NoError(t, err)
-		require.Equal(t, 2, count)
-		require.Equal(t, 2, totalCount)
-
-		// when
-		_, count, totalCount, err = brokerStorage.Operations().ListOperations(dbmodel.OperationFilter{GlobalAccountIDs: []string{globalAccountID}})
-
-		// then
-		require.NoError(t, err)
-		require.Equal(t, 3, count)
-		require.Equal(t, 3, totalCount)
 	})
 
 	t.Run("Last operation based on types", func(t *testing.T) {

@@ -288,6 +288,11 @@ func (c *FakeClient) IsShootUpgraded(runtimeID string) bool {
 	return found
 }
 
+func (c *FakeClient) IsSeedAndRegionValidationEnabled() bool {
+	input := c.LastProvisioning()
+	return input.ClusterConfig.GardenerConfig.ShootAndSeedSameRegion != nil
+}
+
 func (c *FakeClient) LastShootUpgrade(runtimeID string) (schema.UpgradeShootInput, bool) {
 	input, found := c.shootUpgrades[runtimeID]
 	return input, found

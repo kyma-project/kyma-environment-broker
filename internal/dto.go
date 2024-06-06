@@ -189,9 +189,10 @@ type ProvisioningParametersDTO struct {
 	ShootName   string `json:"shootName,omitempty"`
 	ShootDomain string `json:"shootDomain,omitempty"`
 
-	OIDC       *OIDCConfigDTO `json:"oidc,omitempty"`
-	Networking *NetworkingDTO `json:"networking,omitempty"`
-	Modules    *ModulesDTO    `json:"modules,omitempty"`
+	OIDC                   *OIDCConfigDTO `json:"oidc,omitempty"`
+	Networking             *NetworkingDTO `json:"networking,omitempty"`
+	Modules                *ModulesDTO    `json:"modules,omitempty"`
+	ShootAndSeedSameRegion *bool          `json:"shootAndSeedSameRegion,omitempty"`
 }
 
 type UpdatingParametersDTO struct {
