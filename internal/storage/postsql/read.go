@@ -916,15 +916,6 @@ func addOperationFilters(stmt *dbr.SelectStmt, filter dbmodel.OperationFilter) {
 	if len(filter.States) > 0 {
 		stmt.Where("o.state IN ?", filter.States)
 	}
-	if len(filter.Types) > 0 {
-		stmt.Where("o.type IN ?", filter.Types)
-	}
-	if len(filter.GlobalAccountIDs) > 0 {
-		stmt.Where("o.provisioning_parameters::json->'ers_context'->>'globalaccount_id' IN ?", filter.GlobalAccountIDs)
-	}
-	if len(filter.PlanIDs) > 0 {
-		stmt.Where("o.provisioning_parameters::json->>'plan_id' IN ?", filter.PlanIDs)
-	}
 	if filter.InstanceFilter != nil {
 		fi := filter.InstanceFilter
 		if slices.Contains(filter.States, string(dbmodel.InstanceDeprovisioned)) {

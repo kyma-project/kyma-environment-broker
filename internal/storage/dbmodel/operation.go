@@ -9,13 +9,10 @@ import (
 
 // OperationFilter holds the filters when listing multiple operations
 type OperationFilter struct {
-	InstanceFilter   *InstanceFilter
-	Page             int
-	PageSize         int
-	States           []string
-	GlobalAccountIDs []string
-	PlanIDs          []string
-	Types            []string
+	InstanceFilter *InstanceFilter
+	Page           int
+	PageSize       int
+	States         []string
 }
 
 type OperationDTO struct {
