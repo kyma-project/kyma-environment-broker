@@ -340,6 +340,8 @@ spec:
               value: "{{ .Values.gardener.freemiumProviders }}"
             - name: APP_BROKER_ONLY_ONE_FREE_PER_GA
               value: "{{ .Values.onlyOneFreePerGA }}"
+            - name: APP_BROKER_ENABLE_SHOOT_AND_SEED_SAME_REGION
+              value: "{{ .Values.gardener.EnableShootAndSeedSameRegion }}"
             - name: APP_CATALOG_FILE_PATH
               value: /config/catalog.yaml
             - name: APP_GARDENER_PROJECT

@@ -3,6 +3,7 @@
   "_controlsOrder": [
     "name",
     "region",
+    "shootAndSeedSameRegion",
     "machineType",
     "autoScalerMin",
     "autoScalerMax",
@@ -203,6 +204,12 @@
       ],
       "minLength": 1,
       "type": "string"
+    },
+    "shootAndSeedSameRegion": {
+      "default": false,
+      "description": "If set to true a Gardener seed will be placed in the same region as the selected region from the Region field. Provisioning process will fail if no seed is availabie in the region.",
+      "type": "boolean",
+      "title": "Enforce Same Location for Seed and Shoot" 
     }
   },
   "required": [
