@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"time"
 
-	reconcilerApi "github.com/kyma-incubator/reconciler/pkg/keb"
 	"github.com/kyma-project/control-plane/components/provisioner/pkg/gqlschema"
 	"github.com/kyma-project/kyma-environment-broker/common/gardener"
 	"github.com/kyma-project/kyma-environment-broker/common/orchestration"
@@ -344,21 +343,6 @@ func FixRuntimeState(id, runtimeID, operationID string) internal.RuntimeState {
 			ShootNetworkingFilterDisabled: &disabled,
 		},
 		ClusterSetup: nil,
-	}
-}
-
-func FixClusterSetup(runtimeID string) reconcilerApi.Cluster {
-	return reconcilerApi.Cluster{
-		Kubeconfig: "sample-kubeconfig",
-		KymaConfig: reconcilerApi.KymaConfig{
-			Administrators: nil,
-			Components:     nil,
-			Profile:        "",
-			Version:        "2.0.0",
-		},
-		Metadata:     reconcilerApi.Metadata{},
-		RuntimeID:    runtimeID,
-		RuntimeInput: reconcilerApi.RuntimeInput{},
 	}
 }
 
