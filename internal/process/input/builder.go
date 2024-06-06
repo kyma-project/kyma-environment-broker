@@ -107,7 +107,9 @@ func (f *InputBuilderFactory) getHyperscalerProviderForPlanID(planID string, pla
 			ControlPlaneFailureTolerance: f.config.ControlPlaneFailureTolerance,
 		}
 	case broker.AzureLitePlanID:
-		provider = &cloudProvider.AzureLiteInput{}
+		provider = &cloudProvider.AzureLiteInput{
+			UseSmallerMachineTypes: f.useSmallerMachineTypes,
+		}
 	case broker.TrialPlanID:
 		provider = f.forTrialPlan(parametersProvider)
 	case broker.AWSPlanID:
