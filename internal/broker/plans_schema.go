@@ -23,12 +23,13 @@ type RootSchema struct {
 type ProvisioningProperties struct {
 	UpdateProperties
 
-	Name        NameType        `json:"name"`
-	ShootName   *Type           `json:"shootName,omitempty"`
-	ShootDomain *Type           `json:"shootDomain,omitempty"`
-	Region      *Type           `json:"region,omitempty"`
-	Networking  *NetworkingType `json:"networking,omitempty"`
-	Modules     *Modules        `json:"modules,omitempty"`
+	Name                   NameType        `json:"name"`
+	ShootName              *Type           `json:"shootName,omitempty"`
+	ShootDomain            *Type           `json:"shootDomain,omitempty"`
+	Region                 *Type           `json:"region,omitempty"`
+	Networking             *NetworkingType `json:"networking,omitempty"`
+	Modules                *Modules        `json:"modules,omitempty"`
+	ShootAndSeedSameRegion *Type           `json:"shootAndSeedSameRegion,omitempty"`
 }
 
 type UpdateProperties struct {
@@ -263,6 +264,15 @@ func ShootDomainProperty() *Type {
 	}
 }
 
+func ShootAndSeedSameRegionProperty() *Type {
+	return &Type{
+		Type:        "boolean",
+		Title:       "Enforce Same Location for Seed and Shoot",
+		Default:     false,
+		Description: "If set to true a Gardener seed will be placed in the same region as the selected region from the Region field. Provisioning process will fail if no seed is availabie in the region.",
+	}
+}
+
 // NewProvisioningProperties creates a new properties for different plans
 // Note that the order of properties will be the same in the form on the website
 func NewProvisioningProperties(machineTypesDisplay, regionsDisplay map[string]string, machineTypes, regions []string, update bool) ProvisioningProperties {
@@ -370,7 +380,7 @@ func unmarshalOrPanic(from, to interface{}) interface{} {
 }
 
 func DefaultControlsOrder() []string {
-	return []string{"name", "kubeconfig", "shootName", "shootDomain", "region", "machineType", "autoScalerMin", "autoScalerMax", "zonesCount", "modules", "networking", "oidc", "administrators"}
+	return []string{"name", "kubeconfig", "shootName", "shootDomain", "region", "shootAndSeedSameRegion", "machineType", "autoScalerMin", "autoScalerMax", "zonesCount", "modules", "networking", "oidc", "administrators"}
 }
 
 func ToInterfaceSlice(input []string) []interface{} {
