@@ -2,7 +2,6 @@ package internal
 
 import (
 	"database/sql"
-	"fmt"
 	"strconv"
 	"strings"
 	"time"
@@ -10,7 +9,6 @@ import (
 	"github.com/kyma-project/kyma-environment-broker/internal/euaccess"
 
 	"github.com/google/uuid"
-	reconcilerApi "github.com/kyma-incubator/reconciler/pkg/keb"
 	"github.com/kyma-project/control-plane/components/provisioner/pkg/gqlschema"
 	"github.com/kyma-project/kyma-environment-broker/common/gardener"
 	"github.com/kyma-project/kyma-environment-broker/common/orchestration"
@@ -418,16 +416,6 @@ func NewRuntimeState(runtimeID, operationID string, kymaConfig *gqlschema.KymaCo
 	}
 }
 
-func NewRuntimeStateWithReconcilerInput(runtimeID, operationID string, reconcilerInput *reconcilerApi.Cluster) RuntimeState {
-	return RuntimeState{
-		ID:           uuid.New().String(),
-		CreatedAt:    time.Now(),
-		RuntimeID:    runtimeID,
-		OperationID:  operationID,
-		ClusterSetup: reconcilerInput,
-	}
-}
-
 type RuntimeState struct {
 	ID string `json:"id"`
 
@@ -438,58 +426,15 @@ type RuntimeState struct {
 
 	KymaConfig    gqlschema.KymaConfigInput     `json:"kymaConfig"`
 	ClusterConfig gqlschema.GardenerConfigInput `json:"clusterConfig"`
-	ClusterSetup  *reconcilerApi.Cluster        `json:"clusterSetup,omitempty"`
 
 	KymaVersion string `json:"kyma_version"`
-}
-
-func (r *RuntimeState) GetKymaConfig() gqlschema.KymaConfigInput {
-	if r.ClusterSetup != nil {
-		return r.buildKymaConfigFromClusterSetup()
-	}
-	return r.KymaConfig
 }
 
 func (r *RuntimeState) GetKymaVersion() string {
 	if r.KymaVersion != "" {
 		return r.KymaVersion
 	}
-	if r.ClusterSetup != nil {
-		return r.ClusterSetup.KymaConfig.Version
-	}
 	return r.KymaConfig.Version
-}
-
-func (r *RuntimeState) buildKymaConfigFromClusterSetup() gqlschema.KymaConfigInput {
-	var components []*gqlschema.ComponentConfigurationInput
-	for _, cmp := range r.ClusterSetup.KymaConfig.Components {
-		var config []*gqlschema.ConfigEntryInput
-		for _, cfg := range cmp.Configuration {
-			configEntryInput := &gqlschema.ConfigEntryInput{
-				Key:    cfg.Key,
-				Value:  fmt.Sprint(cfg.Value),
-				Secret: ptr.Bool(cfg.Secret),
-			}
-			config = append(config, configEntryInput)
-		}
-
-		componentConfigurationInput := &gqlschema.ComponentConfigurationInput{
-			Component:     cmp.Component,
-			Namespace:     cmp.Namespace,
-			SourceURL:     &cmp.URL,
-			Configuration: config,
-		}
-		components = append(components, componentConfigurationInput)
-	}
-
-	profile := gqlschema.KymaProfile(r.ClusterSetup.KymaConfig.Profile)
-	kymaConfig := gqlschema.KymaConfigInput{
-		Version:    r.ClusterSetup.KymaConfig.Version,
-		Profile:    &profile,
-		Components: components,
-	}
-
-	return kymaConfig
 }
 
 // OperationStats provide number of operations per type and state

@@ -342,7 +342,6 @@ func FixRuntimeState(id, runtimeID, operationID string) internal.RuntimeState {
 		ClusterConfig: gqlschema.GardenerConfigInput{
 			ShootNetworkingFilterDisabled: &disabled,
 		},
-		ClusterSetup: nil,
 	}
 }
 

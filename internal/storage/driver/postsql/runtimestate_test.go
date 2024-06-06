@@ -89,7 +89,6 @@ func TestRuntimeState(t *testing.T) {
 		gotRuntimeState, err := storage.GetLatestByRuntimeID(fixRuntimeID)
 		require.NoError(t, err)
 		assert.Equal(t, runtimeStateWithoutVersion.ID, gotRuntimeState.ID)
-		assert.Nil(t, gotRuntimeState.ClusterSetup)
 
 		gotRuntimeState, err = storage.GetLatestWithKymaVersionByRuntimeID(fixRuntimeID)
 		require.NoError(t, err)

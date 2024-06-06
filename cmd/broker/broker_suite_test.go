@@ -834,10 +834,6 @@ func (s *BrokerSuiteTest) AssertDisabledNetworkFilterRuntimeState(runtimeid, op 
 				// skip runtime states for different operations
 				continue
 			}
-			if rs.ClusterSetup != nil {
-				// skip reconciler runtime states, the test is interested only in provisioner rs
-				continue
-			}
 			if reflect.DeepEqual(val, rs.ClusterConfig.ShootNetworkingFilterDisabled) {
 				return true, nil
 			}

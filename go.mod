@@ -21,7 +21,6 @@ require (
 	github.com/hashicorp/go-multierror v1.1.1
 	github.com/kennygrant/sanitize v1.2.4
 	github.com/kyma-incubator/compass/components/director v0.0.0-20240329103248-7710e72be80a
-	github.com/kyma-incubator/reconciler v0.0.0-20230804125401-cbf3faa2a51f
 	github.com/kyma-project/control-plane/components/provisioner v0.0.0-20240529135026-c4ef757de24f
 	github.com/kyma-project/control-plane/components/schema-migrator v0.0.0-20240222095836-b3942869fc28
 	github.com/lib/pq v1.10.9

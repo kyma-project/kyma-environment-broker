@@ -95,9 +95,6 @@ func (s *runtimeState) GetLatestWithKymaVersionByRuntimeID(runtimeID string) (in
 		if state.KymaVersion != "" {
 			return state, nil
 		}
-		if state.ClusterSetup != nil && state.ClusterSetup.KymaConfig.Version != "" {
-			return state, nil
-		}
 		if state.KymaConfig.Version != "" {
 			return state, nil
 		}
