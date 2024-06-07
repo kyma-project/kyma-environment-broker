@@ -202,15 +202,13 @@ type Operation struct {
 
 	// DEPROVISIONING
 	// Temporary indicates that this deprovisioning operation must not remove the instance
-	Temporary                   bool      `json:"temporary"`
-	ClusterConfigurationDeleted bool      `json:"clusterConfigurationDeleted"`
-	ReconcilerDeregistrationAt  time.Time `json:"reconcilerDeregistrationAt"`
-	ExcutedButNotCompleted      []string  `json:"excutedButNotCompleted"`
-	UserAgent                   string    `json:"userAgent,omitempty"`
+	Temporary                   bool     `json:"temporary"`
+	ClusterConfigurationDeleted bool     `json:"clusterConfigurationDeleted"`
+	ExcutedButNotCompleted      []string `json:"excutedButNotCompleted"`
+	UserAgent                   string   `json:"userAgent,omitempty"`
 
 	// UPDATING
-	UpdatingParameters    UpdatingParametersDTO `json:"updating_parameters"`
-	CheckReconcilerStatus bool                  `json:"check_reconciler_status"`
+	UpdatingParameters UpdatingParametersDTO `json:"updating_parameters"`
 
 	// UPGRADE KYMA
 	orchestration.RuntimeOperation `json:"runtime_operation"`
@@ -371,13 +369,6 @@ type MonitoringData struct {
 // DeprovisioningOperation holds all information about de-provisioning operation
 type DeprovisioningOperation struct {
 	Operation
-}
-
-func (op *Operation) TimeSinceReconcilerDeregistrationTriggered() time.Duration {
-	if op.ReconcilerDeregistrationAt.IsZero() {
-		return 0
-	}
-	return time.Since(op.ReconcilerDeregistrationAt)
 }
 
 type UpdatingOperation struct {
