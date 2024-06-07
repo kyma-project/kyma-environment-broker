@@ -116,7 +116,6 @@ type Config struct {
 	UpdateProcessingEnabled                                             bool   `envconfig:"default=false"`
 	UpdateSubAccountMovementEnabled                                     bool   `envconfig:"default=false"`
 	LifecycleManagerIntegrationDisabled                                 bool   `envconfig:"default=true"`
-	ReconcilerIntegrationDisabled                                       bool   `envconfig:"default=false"`
 	InfrastructureManagerIntegrationDisabled                            bool   `envconfig:"default=true"`
 	AvsMaintenanceModeDuringUpgradeAlwaysDisabledGlobalAccountsFilePath string
 	Broker                                                              broker.Config
