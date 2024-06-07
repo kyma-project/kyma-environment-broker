@@ -3,6 +3,7 @@ package subaccountsync
 import (
 	"context"
 	"fmt"
+	"github.com/kyma-project/kyma-environment-broker/internal/storage/dbmodel"
 	"log/slog"
 	"net/http"
 	"sync"
@@ -189,11 +190,42 @@ func CreateEventsClient(ctx context.Context, eventsConfig CisEndpointConfig, log
 }
 
 func getDataFromLabels(u *unstructured.Unstructured) (subaccountID string, runtimeID string, betaEnabled string) {
-	labels := u.GetLabels()
-	subaccountID = labels[subaccountIDLabel]
-	runtimeID = labels[runtimeIDLabel]
-	betaEnabled = labels[betaEnabledLabel]
 	return
+}
+
+func getSubaccountIDFromDB(runtimeID string, db storage.BrokerStorage) (string, error) {
+	runtimeIDFilter := dbmodel.InstanceFilter{RuntimeIDs: []string{runtimeID}}
+	instances, _, _, err := db.Instances().List(runtimeIDFilter)
+	if err != nil {
+		return "", err
+	}
+	if len(instances) == 0 {
+		return "", fmt.Errorf("no instances found for runtime ID %s", runtimeID)
+	}
+	if len(instances) > 1 {
+		return "", fmt.Errorf("multiple instances found for runtime ID %s", runtimeID)
+	}
+	subaccountID := instances[0].SubAccountID
+	return subaccountID, nil
+}
+
+func getRequiredData(u *unstructured.Unstructured, logger *slog.Logger, stateReconciler *stateReconcilerType) (string, string, string, error) {
+	labels := u.GetLabels()
+	subaccountID := labels[subaccountIDLabel]
+	runtimeID := labels[runtimeIDLabel]
+	betaEnabled := labels[betaEnabledLabel]
+	if runtimeID == "" {
+		logger.Warn(fmt.Sprintf("Kyma resource has no runtime label, falling back to resource name: %s", u.GetName()))
+		runtimeID = u.GetName()
+	}
+	var err error
+	if subaccountID == "" {
+		subaccountID, err = getSubaccountIDFromDB(runtimeID, stateReconciler.db)
+		if err != nil {
+			return "", "", "", fmt.Errorf("cannot determine subaccountID for Kyma resource: %s - %s", u.GetName(), err)
+		}
+	}
+	return subaccountID, runtimeID, betaEnabled, nil
 }
 
 func fatalOnError(err error) {
