@@ -1,3 +1,4 @@
+{{ if .Values.freeCleanup.enabled }}
 apiVersion: batch/v1
 kind: CronJob
 metadata:
@@ -124,3 +125,4 @@ spec:
                 optional: true
           {{- end}}
   schedule: "{{ .Values.freeCleanup.schedule }}"
+{{ end }}

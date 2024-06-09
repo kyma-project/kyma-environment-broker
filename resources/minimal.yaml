@@ -1,0 +1,240 @@
+
+global:
+  defaultTenant: 3e64ebae-38b5-46a0-b1ed-9ccee153a0ae
+  ingress:
+    domainName: localhost
+  images:
+    cloudsql_proxy_image: "europe-docker.pkg.dev/kyma-project/prod/tpi/cloudsql-docker/gce-proxy:v1.33.16-133356bc"
+    container_registry:
+      path: 113663649212.dkr.ecr.cn-northwest-1.amazonaws.com.cn/kcp-cn
+    schema_migrator:
+      dir: ""
+      version: "v20240307-f250dc83" # do not update along with the other images
+    kyma_environment_broker:
+      dir:
+      version: "1.5.23"
+    database:
+      cloudsqlproxy:
+        enabled: false
+        workloadIdentity:
+          enabled: true
+      managedGCP:
+        broker:
+          name: broker
+          password: <path:kcp-prod/data/gcp#managed_gcp_postgresql_broker_password>
+          user: broker
+        dbUser: <path:kcp-prod/data/gcp#managed_gcp_postgresql_db_user>
+        # instanceConnectionName will be used when cloudsqlproxy enabled.
+        instanceConnectionName: sap-ti-dx-kyma-mps-prod:europe-west1:kyma-mps-prod-4665
+        serviceAccountKey: <path:kcp-prod/data/gcp#managed_gcp_postgresql_sa>
+        sslMode: disable
+    ingress:
+      domainName: cp.kyma.cloud.sap # **CN**
+    compass:
+      domain: mps.kyma.cloud.sap
+      registration:
+        enabled: false
+archiving:
+    enabled: true
+    dryRun: false
+cleaning:
+    enabled: true
+    dryRun: false
+
+
+# **CN** AvS configuration needed
+avs:
+#    apiEndpoint: <path:kcp-prod/data/avs#api_endpoint>
+#    apiKey: <path:kcp-prod/data/avs#api_key>
+#    clientId: <path:kcp-prod/data/avs#client_id>
+#    externalTesterAccessId: <path:kcp-prod/data/avs#external_tester_access_id>
+#    externalTesterService: SERVICE-493
+#    groupId: <path:kcp-prod/data/avs#group_id>
+#    internalTesterAccessId: <path:kcp-prod/data/avs#internal_tester_access_id>
+#    internalTesterService: SERVICE-493
+#    oauthPassword: <path:kcp-prod/data/avs#password>
+#    oauthTokenEndpoint: <path:kcp-prod/data/avs#oauth_token_endpoint>
+#    oauthUserName: <path:kcp-prod/data/avs#username>
+#    parentId: <path:kcp-prod/data/avs#parent_id>
+#    trialApiKey: <path:kcp-prod/data/avs#trial_api_key>
+#    trialGroupId: <path:kcp-prod/data/avs#trial_group_id>
+#    trialInternalTesterAccessId: <path:kcp-prod/data/avs#trial_internal_tester_access_id>
+#    trialParentId: <path:kcp-prod/data/avs#trial_parent_id>
+#    maintenanceModeDuringUpgrade:
+      disabled: true
+#      alwaysDisabledGlobalAccountIDs: []
+
+broker:
+    events:
+      enabled: true
+binding:
+    enabled: false
+cis:
+    v1:
+      authURL: https://oauthasservices-services.hana.ondemand.com/oauth2/api/v1/token
+      eventServiceURL: https://cisservices.hana.ondemand.com/com.sap.core.commercial.service.web
+      id: <path:kcp-prod/data/cis#v1_id>
+      secret: <path:kcp-prod/data/cis#v1_secret>
+    v2:
+      authURL: https://mp-auditlog.authentication.eu10.hana.ondemand.com/oauth/token
+      eventServiceURL: https://events-service.cfapps.eu10.hana.ondemand.com
+      id: <path:kcp-prod/data/cis#v2_id>
+      secret: <path:kcp-prod/data/cis#v2_secret>
+    accounts:
+      authURL:
+        https://55c19953-9680-473d-99dc-ff282ed77f5c.authentication.eu10.hana.ondemand.com/oauth/token
+      serviceURL: https://accounts-service.cfapps.eu10.hana.ondemand.com
+      id: <path:kcp-prod/data/cis#account_id>
+      secret: <path:kcp-prod/data/cis#account_secret>
+cls:
+    disabled: true
+dashboardConfig:
+    enabled: true
+    landscapeURL: https://dashboard.kyma.cloud.sap # **CN**
+
+    # **CN** EDP configuration needed
+edp:
+    disabled: true
+
+enableInstanceDetailsMigration: true
+enableInstanceParametersMigration: true
+enableKubeconfigURLLabel: true
+enableOperationsUserIDMigration: true
+
+# **CN** define enabled plans
+enablePlans: azure,gcp,azure_lite,aws,trial,free,sap-converged-cloud
+
+  # **CN** configure gardener settings
+#gardener:
+#    defaultShootPurpose: production
+#    defaultTrialProvider: AWS
+#    kubernetesVersion: '1.28'
+#    machineImage: gardenlinux
+#    machineImageVersion: 1312.3.0
+#    multiZoneCluster: true
+#    controlPlaneFailureTolerance: zone
+#    project: kyma
+#    shootDomain: kyma.ondemand.com
+#    trialNodesNumber: '1'
+
+ias:
+    disabled: true
+    # id: <path:kcp-prod/data/ias#kcp_client_id>
+    # identityProvider: https://accounts400.sap.com
+    # secret: <path:kcp-prod/data/ias#kcp_client_secret>
+    # url: https://kymatest.accounts400.ondemand.com
+includeAdditionalParamsInSchema: true
+kubeconfig:
+    allowOrigins: https://dashboard.kyma.cloud.sap
+    clientID: 12b13a26-d993-4d0c-aa08-5f5852bbdff6
+    issuerURL: https://kyma.accounts.ondemand.com
+kymaVersion: 2.20.0
+kymaVersionOnDemand: false
+lifecycleManager:
+    disabled: true
+infrastructureManager:
+    disabled: true
+lms:
+    # clusterType: ha
+    disabled: true
+    # enabledForGlobalAccounts: none
+    # environment: prod
+    # mandatory: true
+    # region: eu
+    # samlTenant: kyma.accounts.ondemand.com
+    # token: <path:kcp-prod/data/lms#token>
+    # url: https://api.lms.sap.cx
+oidc:
+    client: 12b13a26-d993-4d0c-aa08-5f5852bbdff6
+    issuer: https://kyma.accounts.ondemand.com
+    keysURL: https://kyma.accounts.ondemand.com/oauth2/certs
+osbUpdateProcessingEnabled: true
+provisioner:
+    dumpRequests: false
+    gardenerClusterStepTimeout: 3m
+runtimeAllowedPrincipals: |-
+    - cluster.local/ns/kcp-system/sa/kcp-kyma-metrics-collector
+    - cluster.local/ns/monitoring-system/sa/mop-agent
+serviceAccount:
+    annotations:
+      iam.gke.io/gcp-service-account: proxy-user@sap-ti-dx-kyma-mps-prod.iam.gserviceaccount.com
+serviceManager:
+    overrideMode: WhenNotSentInRequest
+    password: <path:kcp-prod/data/service-manager#password>
+    # subaccountWithRequestCredentials: "19ea2000-865d-42fd-8d6f-3e3e2dcce3c8"
+    url: <path:kcp-prod/data/service-manager#url>
+    username: <path:kcp-prod/data/service-manager#username>
+showTrialExpirationInfo: true
+skrDNSProvidersValues: |-
+    providers:
+    - domainsInclude: [ "kyma.ondemand.com" ]
+      primary: true
+      secretName: "aws-route53-secret-prod"
+      type: "aws-route53"
+skrOIDCDefaultValues: |-
+    issuerURL: "https://kyma.accounts.ondemand.com"
+    clientID: "12b13a26-d993-4d0c-aa08-5f5852bbdff6"
+    groupsClaim: "groups"
+    signingAlgs: [ "RS256" ]
+    usernamePrefix: "-"
+    usernameClaim: "sub"
+subaccountCleanup:
+    enabled: false
+subaccountsIdsToShowTrialExpirationInfo: all
+euAccessWhitelistedGlobalAccountIds: |-
+    whitelist:
+      - bf6d8afb-180c-4a41-bddd-d49f4724e027
+      - efa590e3-4441-4aad-8325-bcd0d5da3ee1
+      - SA0101044080
+      - 18bd7398-4f8b-47b8-a597-ab7d08f35a1b
+swagger:
+    virtualService:
+      enabled: false
+euAccessRejectionMessage: Due to limited availability, you need to open support
+    ticket before attempting to provision Kyma clusters in EU Access only regions
+trialCleanup:
+    enabled: false
+freeCleanup:
+    enabled: false
+runtimeReconciler:
+    enabled: false
+deprovisionRetrigger:
+    enabled: false
+    dryRun: false
+subaccountSync:
+    enabled: false
+    updateResources: false
+    accountSyncInterval: 24h
+    storageSyncInterval: 5m
+    eventsWindowSize: 10m
+    eventsWindowInterval: 5m
+    queueSleepInterval: 30s
+    metricsPort: 8081
+    logLevel: info
+    cisRateLimits:
+      events:
+        rateLimitingInterval: 2s
+        maxRequestsPerInterval: 5
+      accounts:
+        rateLimitingInterval: 2s
+        maxRequestsPerInterval: 5
+metricsv2:
+    enabled: true
+    operationResultRetentionPeriod: 336h
+    operationResultPoolingInterval: 1m
+    operationStatsPoolingInterval: 1m
+onlyOneFreePerGA: false
+freemiumWhitelistedGlobalAccountIds: |-
+    whitelist:
+      - d9994f8f-7e46-42a8-b2c1-1bfff8d2fe05
+showFreeExpirationInfo: false
+freeDocsURL:
+    https://help.sap.com/docs/btp/sap-business-technology-platform/available-plans-in-kyma-environment
+freeExpirationPeriod: 720h
+kymaResourceDeletionTimeout: 30s
+
+
+reconciler:
+  disabled: "true"
+serviceMonitor:
+  enabled: false

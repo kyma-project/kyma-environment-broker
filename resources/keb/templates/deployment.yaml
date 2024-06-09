@@ -20,6 +20,8 @@ spec:
       annotations:
         checksum/config: {{ include (print $.Template.BasePath "/app-config.yaml") . | sha256sum }}
     spec:
+      imagePullSecrets:
+        - name: k8s-ecr-login-renew-docker-secret
       {{ if .Values.global.isLocalEnv }}
       # HostAliases are used by Pod to resolve kyma.local domain
       hostAliases:

@@ -1,0 +1,73 @@
+apiVersion: v1
+data:
+  default: |-
+    kyma-template: |-
+      apiVersion: operator.kyma-project.io/v1beta2
+      kind: Kyma
+      metadata:
+        labels:
+          "operator.kyma-project.io/managed-by": "lifecycle-manager"
+        name: tbd
+        namespace: kcp-system
+      spec:
+        channel: fast
+        modules:
+        - name: api-gateway
+        - name: istio
+        - name: btp-operator
+    additional-components: []
+  own_cluster: |-
+    kyma-template: |-
+      apiVersion: operator.kyma-project.io/v1beta2
+      kind: Kyma
+      metadata:
+        labels:
+          "operator.kyma-project.io/managed-by": "lifecycle-manager"
+        name: tbd
+        namespace: kcp-system
+      spec:
+        channel: fast
+        modules: []
+    additional-components: {}
+kind: ConfigMap
+metadata:
+  annotations:
+    argocd.argoproj.io/sync-wave: "-1"
+    argocd.argoproj.io/tracking-id: kcp:/ConfigMap:kcp-system/keb-config-2.20
+    kubectl.kubernetes.io/last-applied-configuration: |
+      {"apiVersion":"v1","data":{"default":"kyma-template: |-\n  apiVersion: operator.kyma-project.io/v1beta2\n  kind: Kyma\n  metadata:\n    labels:\n      \"operator.kyma-project.io/managed-by\": \"lifecycle-manager\"\n    name: tbd\n    namespace: kcp-system\n  spec:\n    channel: fast\n    modules:\n    - name: api-gateway\n    - name: istio\n    - name: btp-operator\nadditional-components: []","own_cluster":"kyma-template: |-\n  apiVersion: operator.kyma-project.io/v1beta2\n  kind: Kyma\n  metadata:\n    labels:\n      \"operator.kyma-project.io/managed-by\": \"lifecycle-manager\"\n    name: tbd\n    namespace: kcp-system\n  spec:\n    channel: fast\n    modules: []\nadditional-components: {}"},"kind":"ConfigMap","metadata":{"annotations":{"argocd.argoproj.io/sync-wave":"-1","argocd.argoproj.io/tracking-id":"kcp:/ConfigMap:kcp-system/keb-config-2.20"},"labels":{"argocd.argoproj.io/instance":"kcp","keb-config":"true","kyma-project.io/installation":"","overrides-version-2.20.0":"true","overrides-version-2.20.0-rc1":"true","overrides-version-2.20.0-rc2":"true","overrides-version-2.20.0-rc3":"true","overrides-version-2.20.0-rc4":"true","overrides-version-2.20.1":"true","overrides-version-2.20.2":"true","overrides-version-2.20.3":"true","overrides-version-2.20.4":"true","overrides-version-2.20.5":"true","overrides-version-2.20.6":"true","overrides-version-2.20.7":"true","overrides-version-2.20.8":"true","runtime-version-2.20.0":"true","runtime-version-2.20.0-rc1":"true","runtime-version-2.20.0-rc2":"true","runtime-version-2.20.0-rc3":"true","runtime-version-2.20.0-rc4":"true","runtime-version-2.20.1":"true","runtime-version-2.20.2":"true","runtime-version-2.20.3":"true","runtime-version-2.20.4":"true","runtime-version-2.20.5":"true","runtime-version-2.20.6":"true","runtime-version-2.20.7":"true","runtime-version-2.20.8":"true"},"name":"keb-config-2.20","namespace":"kcp-system"}}
+  creationTimestamp: "2024-06-04T11:50:57Z"
+  labels:
+    argocd.argoproj.io/instance: kcp
+    keb-config: "true"
+    kyma-project.io/installation: ""
+    overrides-version-2.20.0: "true"
+    overrides-version-2.20.0-rc1: "true"
+    overrides-version-2.20.0-rc2: "true"
+    overrides-version-2.20.0-rc3: "true"
+    overrides-version-2.20.0-rc4: "true"
+    overrides-version-2.20.1: "true"
+    overrides-version-2.20.2: "true"
+    overrides-version-2.20.3: "true"
+    overrides-version-2.20.4: "true"
+    overrides-version-2.20.5: "true"
+    overrides-version-2.20.6: "true"
+    overrides-version-2.20.7: "true"
+    overrides-version-2.20.8: "true"
+    runtime-version-2.20.0: "true"
+    runtime-version-2.20.0-rc1: "true"
+    runtime-version-2.20.0-rc2: "true"
+    runtime-version-2.20.0-rc3: "true"
+    runtime-version-2.20.0-rc4: "true"
+    runtime-version-2.20.1: "true"
+    runtime-version-2.20.2: "true"
+    runtime-version-2.20.3: "true"
+    runtime-version-2.20.4: "true"
+    runtime-version-2.20.5: "true"
+    runtime-version-2.20.6: "true"
+    runtime-version-2.20.7: "true"
+    runtime-version-2.20.8: "true"
+  name: keb-config-2.20
+  namespace: kcp-system
+  resourceVersion: "3859090746"
+  uid: 9225253d-f74b-47e6-9f38-619515cc7c10

@@ -1,0 +1,39 @@
+apiVersion: v1
+data:
+  lorem: ipsum
+kind: ConfigMap
+metadata:
+  annotations:
+    argocd.argoproj.io/sync-wave: "-1"
+    argocd.argoproj.io/tracking-id: kcp:/ConfigMap:kcp-system/global-overrides-2.20
+    kubectl.kubernetes.io/last-applied-configuration: |
+      {"apiVersion":"v1","data":{"lorem":"ipsum"},"kind":"ConfigMap","metadata":{"annotations":{"argocd.argoproj.io/sync-wave":"-1","argocd.argoproj.io/tracking-id":"kcp:/ConfigMap:kcp-system/global-overrides-2.20"},"labels":{"argocd.argoproj.io/instance":"kcp","kyma-project.io/installation":"","overrides-plan-aws":"true","overrides-plan-azure":"true","overrides-plan-azure_lite":"true","overrides-plan-free":"true","overrides-plan-gcp":"true","overrides-plan-own_cluster":"true","overrides-plan-sap-converged-cloud":"true","overrides-plan-trial":"true","overrides-version-2.20.0":"true","overrides-version-2.20.0-rc1":"true","overrides-version-2.20.0-rc2":"true","overrides-version-2.20.0-rc3":"true","overrides-version-2.20.0-rc4":"true","overrides-version-2.20.1":"true","overrides-version-2.20.2":"true","overrides-version-2.20.3":"true","overrides-version-2.20.4":"true","overrides-version-2.20.5":"true","overrides-version-2.20.6":"true","overrides-version-2.20.7":"true","overrides-version-2.20.8":"true"},"name":"global-overrides-2.20","namespace":"kcp-system"}}
+  creationTimestamp: "2024-06-04T11:50:57Z"
+  labels:
+    argocd.argoproj.io/instance: kcp
+    kyma-project.io/installation: ""
+    overrides-plan-aws: "true"
+    overrides-plan-azure: "true"
+    overrides-plan-azure_lite: "true"
+    overrides-plan-free: "true"
+    overrides-plan-gcp: "true"
+    overrides-plan-own_cluster: "true"
+    overrides-plan-sap-converged-cloud: "true"
+    overrides-plan-trial: "true"
+    overrides-version-2.20.0: "true"
+    overrides-version-2.20.0-rc1: "true"
+    overrides-version-2.20.0-rc2: "true"
+    overrides-version-2.20.0-rc3: "true"
+    overrides-version-2.20.0-rc4: "true"
+    overrides-version-2.20.1: "true"
+    overrides-version-2.20.2: "true"
+    overrides-version-2.20.3: "true"
+    overrides-version-2.20.4: "true"
+    overrides-version-2.20.5: "true"
+    overrides-version-2.20.6: "true"
+    overrides-version-2.20.7: "true"
+    overrides-version-2.20.8: "true"
+  name: global-overrides-2.20
+  namespace: kcp-system
+  resourceVersion: "3859090747"
+  uid: 6682685e-bed7-4176-b309-d8810eede6ab
