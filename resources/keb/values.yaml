@@ -387,6 +387,7 @@ deprovisionRetrigger:
 subaccountSync:
   enabled: true
   updateResources: false
+  alwaysSubaccountFromDatabase: false
   accountSyncInterval: 24h
   storageSyncInterval: 5m
   eventsWindowSize: 20m
@@ -401,7 +402,6 @@ subaccountSync:
     accounts:
       rateLimitingInterval: 2s
       maxRequestsPerInterval: 5
-  alwaysSubaccountFromDatabase: false
 
 serviceMonitor:
   enabled: true

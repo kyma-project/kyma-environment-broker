@@ -38,6 +38,8 @@ spec:
               value: {{ .Values.subaccountSync.logLevel | quote }}
             - name: SUBACCOUNT_SYNC_UPDATE_RESOURCES
               value: {{ .Values.subaccountSync.updateResources | quote }}
+            - name: SUBACCOUNT_SYNC_ALWAYS_SUBACCOUNT_FROM_DATABASE
+              value: {{ .Values.subaccountSync.alwaysSubaccountFromDatabase | quote }}
             - name: SUBACCOUNT_SYNC_ACCOUNTS_SYNC_INTERVAL
               value: {{ .Values.subaccountSync.accountSyncInterval | quote }}
             - name: SUBACCOUNT_SYNC_STORAGE_SYNC_INTERVAL
