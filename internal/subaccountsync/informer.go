@@ -10,7 +10,7 @@ import (
 	"k8s.io/client-go/tools/cache"
 )
 
-func configureInformer(informer *cache.SharedIndexInformer, stateReconciler *stateReconcilerType, logger *slog.Logger, metrics *Metrics) {
+func configureInformer(informer *cache.SharedIndexInformer, stateReconciler *stateReconcilerType, logger *slog.Logger, metrics *Metrics, alwaysUseDB bool) {
 	_, err := (*informer).AddEventHandler(cache.ResourceEventHandlerFuncs{
 		AddFunc: func(obj interface{}) {
 			metrics.informer.With(prometheus.Labels{"event": "add"}).Inc()
@@ -19,7 +19,7 @@ func configureInformer(informer *cache.SharedIndexInformer, stateReconciler *sta
 				logger.Error(fmt.Sprintf("added Kyma resource is not an Unstructured: %s", obj))
 				return
 			}
-			subaccountID, runtimeID, betaEnabled, err := getRequiredData(u, logger, stateReconciler)
+			subaccountID, runtimeID, betaEnabled, err := getRequiredData(u, logger, stateReconciler, alwaysUseDB)
 			if err != nil {
 				return
 			}
@@ -39,7 +39,7 @@ func configureInformer(informer *cache.SharedIndexInformer, stateReconciler *sta
 				logger.Error(fmt.Sprintf("updated Kyma resource is not an Unstructured: %s", newObj))
 				return
 			}
-			subaccountID, runtimeID, betaEnabled, err := getRequiredData(u, logger, stateReconciler)
+			subaccountID, runtimeID, betaEnabled, err := getRequiredData(u, logger, stateReconciler, alwaysUseDB)
 			if err != nil {
 				return
 			}

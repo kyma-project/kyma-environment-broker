@@ -401,6 +401,7 @@ subaccountSync:
     accounts:
       rateLimitingInterval: 2s
       maxRequestsPerInterval: 5
+  alwaysSubaccountFromDatabase: false
 
 serviceMonitor:
   enabled: true

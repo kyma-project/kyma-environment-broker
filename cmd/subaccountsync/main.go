@@ -56,6 +56,7 @@ func main() {
 	slog.Info(fmt.Sprintf("Configuration: events window size:%s, events sync interval:%s, accounts sync interval: %s, storage sync interval: %s, queue sleep interval: %s",
 		cfg.EventsWindowSize, cfg.EventsWindowInterval, cfg.AccountsSyncInterval, cfg.StorageSyncInterval, cfg.SyncQueueSleepInterval))
 	slog.Info(fmt.Sprintf("Configuration: updateResources: %t", cfg.UpdateResources))
+	slog.Info(fmt.Sprintf("Configuration: alwaysSubaccountFromDatabase: %t", cfg.AlwaysSubaccountFromDatabase))
 
 	if cfg.EventsWindowSize < cfg.EventsWindowInterval {
 		slog.Warn("Events window size is smaller than events sync interval. This might cause missing events so we set window size to the interval.")

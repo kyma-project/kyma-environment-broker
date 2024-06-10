@@ -160,7 +160,7 @@ func (s *SyncService) Run() {
 	factory := dynamicinformer.NewFilteredDynamicSharedInformerFactory(s.k8sClient, time.Minute, "kcp-system", nil)
 	informer := factory.ForResource(s.kymaGVR).Informer()
 
-	configureInformer(&informer, &stateReconciler, logger.With("component", "informer"), metrics)
+	configureInformer(&informer, &stateReconciler, logger.With("component", "informer"), metrics, s.cfg.AlwaysSubaccountFromDatabase)
 
 	go stateReconciler.runCronJobs(s.cfg, s.ctx)
 
@@ -210,7 +210,7 @@ func getSubaccountIDFromDB(runtimeID string, db storage.BrokerStorage) (string, 
 	return subaccountID, nil
 }
 
-func getRequiredData(u *unstructured.Unstructured, logger *slog.Logger, stateReconciler *stateReconcilerType) (string, string, string, error) {
+func getRequiredData(u *unstructured.Unstructured, logger *slog.Logger, stateReconciler *stateReconcilerType, alwaysUseDB bool) (string, string, string, error) {
 	labels := u.GetLabels()
 	subaccountID := labels[subaccountIDLabel]
 	runtimeID := labels[runtimeIDLabel]
@@ -220,7 +220,7 @@ func getRequiredData(u *unstructured.Unstructured, logger *slog.Logger, stateRec
 		runtimeID = u.GetName()
 	}
 	var err error
-	if subaccountID == "" {
+	if subaccountID == "" || alwaysUseDB {
 		subaccountID, err = getSubaccountIDFromDB(runtimeID, stateReconciler.db)
 		if err != nil {
 			return "", "", "", fmt.Errorf("cannot determine subaccountID for Kyma resource: %s - %s", u.GetName(), err)
