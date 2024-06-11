@@ -10,7 +10,7 @@ global:
       path: europe-docker.pkg.dev/kyma-project/prod
     schema_migrator:
       dir: "control-plane"
-      version: "v20240307-f250dc83" # do not update along with the other images
+      version: "v20240610-ea747dbf" # do not update along with the other images
     kyma_environment_broker:
       dir:
       version: "1.5.28"
