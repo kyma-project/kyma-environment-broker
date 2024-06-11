@@ -141,6 +141,8 @@ type Config struct {
 	EuAccessWhitelistedGlobalAccountsFilePath string
 	EuAccessRejectionMessage                  string `envconfig:"default=Due to limited availability you need to open support ticket before attempting to provision Kyma clusters in EU Access only regions"`
 
+	EnableConvergedRegionMapping bool `envconfig:"default=false"`
+
 	MaxPaginationPage int `envconfig:"default=100"`
 
 	LogLevel string `envconfig:"default=info"`
