@@ -45,6 +45,7 @@ spec:
             - "/cloud-sql-proxy"
             - "{{ .Values.global.database.managedGCP.instanceConnectionName }}"
             - "--private-ip"
+            - "--exit-zero-on-sigterm",
             - "--credentials-file=/secrets/cloudsql-instance-credentials/credentials.json"
           volumeMounts:
             - name: cloudsql-instance-credentials
