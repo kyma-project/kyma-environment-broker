@@ -124,6 +124,8 @@ spec:
                   key: postgresql-sslMode
             - name: SUBACCOUNT_SYNC_DATABASE_SSLROOTCERT
               value: /secrets/cloudsql-sslrootcert/server-ca.pem
+            - name: SUBACCOUNT_SYNC_RUNTIME_CONFIGURATION_CONFIG_MAP_NAME
+              value: "{{ include "kyma-env-broker.fullname" . }}-runtime-configuration"
         {{- if and (eq .Values.global.database.embedded.enabled false) (eq .Values.global.database.cloudsqlproxy.enabled false)}}
           volumeMounts:
               - name: cloudsql-sslrootcert
