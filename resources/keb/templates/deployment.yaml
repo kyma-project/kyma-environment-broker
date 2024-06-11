@@ -416,8 +416,8 @@ spec:
               value: "{{ .Values.kymaResourceDeletionTimeout }}"
             - name: APP_BROKER_USE_SMALLER_MACHINE_TYPES
               value: "{{ .Values.useSmallerMachineTypes }}"
-            - name: APP_ENABLE_CONVERGED_REGION_MAPPING
-              value: "{{ .Values.enableConvergedRegionMapping }}"
+            - name: APP_ENABLE_CONVERGED_REGION_MAPPINGS
+              value: "{{ .Values.enableConvergedRegionMappings }}"
           ports:
             - name: http
               containerPort: {{ .Values.broker.port }}
