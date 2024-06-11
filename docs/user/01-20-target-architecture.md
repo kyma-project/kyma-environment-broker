@@ -15,6 +15,4 @@
 
 > [!NOTE] 
 > Once the planned changes are implemented, the following documents will be deprecated as irrelevant:
-> - [Set Overrides for Kyma Runtime](../contributor/02-20-runtime-overrides.md)
-> - [Configure Kyma Version](../contributor/02-30-kyma-versions.md)
 > - [Orchestration](../contributor/02-50-orchestration.md)

@@ -21,8 +21,6 @@ If you want to know how to use KEB, read the documents in the [`user`](user) dir
 For technical details of KEB, go to the `contributor` directory:  
 * [Authorization](./contributor/01-10-authorization.md)
 * [Check API Using Swagger](./contributor/01-20-swagger.md)
-* [Set Overrides for SAP BTP, Kyma Runtime](./contributor/02-20-runtime-overrides.md)
-* [Configure Kyma Version](./contributor/02-30-kyma-versions.md)
 * [Kyma Environment Broker Configuration](./contributor/02-31-keb-configuration.md)
 * [Kyma Environment Broker Configuration for a Given Kyma Version and Plan](./contributor/02-40-broker-configuration-for-given-version-and-plan.md)
 * [Orchestration](./contributor/02-50-orchestration.md)
