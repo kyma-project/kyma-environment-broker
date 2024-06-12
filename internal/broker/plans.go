@@ -122,7 +122,9 @@ func GcpRegions() []string {
 		"asia-south1",
 		"us-central1",
 		"me-central2",
-		"asia-northeast2"}
+		"asia-northeast2",
+		"me-west1",
+	}
 }
 
 func GcpRegionsDisplay() map[string]string {
@@ -132,6 +134,7 @@ func GcpRegionsDisplay() map[string]string {
 		"us-central1":     "us-central1 (US Central, IA)",
 		"me-central2":     "me-central2 (KSA, Dammam)",
 		"asia-northeast2": "asia-northeast2 (Japan, Osaka)",
+		"me-west1":        "me-west1 (Israel, Tel Aviv)",
 	}
 }
 
