@@ -461,7 +461,7 @@ spec:
           command: ["/cloud-sql-proxy",
                     "{{ .Values.global.database.managedGCP.instanceConnectionName }}",
                     "--exit-zero-on-sigterm",
-                    "--private-ip"]europe-docker.pkg.dev/kyma-project/prod/control-plane/schema-migrator:v20240612-83a7c0eb
+                    "--private-ip"]
           {{- else }}
           command: ["/cloud-sql-proxy",
                     "{{ .Values.global.database.managedGCP.instanceConnectionName }}",
