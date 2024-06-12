@@ -30,20 +30,22 @@ type (
 )
 
 type RuntimeInfoHandler struct {
-	instanceFinder          InstanceFinder
-	lastOperationFinder     LastOperationFinder
-	respWriter              ResponseWriter
-	plansConfig             broker.PlansConfig
-	defaultSubaccountRegion string
+	instanceFinder           InstanceFinder
+	lastOperationFinder      LastOperationFinder
+	respWriter               ResponseWriter
+	plansConfig              broker.PlansConfig
+	defaultSubaccountRegion  string
+	convergedRegionsProvider broker.ConvergedCloudRegionProvider
 }
 
-func NewRuntimeInfoHandler(instanceFinder InstanceFinder, lastOpFinder LastOperationFinder, plansConfig broker.PlansConfig, region string, respWriter ResponseWriter) *RuntimeInfoHandler {
+func NewRuntimeInfoHandler(instanceFinder InstanceFinder, lastOpFinder LastOperationFinder, plansConfig broker.PlansConfig, region string, respWriter ResponseWriter, convergedRegionsProvider broker.ConvergedCloudRegionProvider) *RuntimeInfoHandler {
 	return &RuntimeInfoHandler{
-		instanceFinder:          instanceFinder,
-		lastOperationFinder:     lastOpFinder,
-		respWriter:              respWriter,
-		plansConfig:             plansConfig,
-		defaultSubaccountRegion: region,
+		instanceFinder:           instanceFinder,
+		lastOperationFinder:      lastOpFinder,
+		respWriter:               respWriter,
+		plansConfig:              plansConfig,
+		defaultSubaccountRegion:  region,
+		convergedRegionsProvider: convergedRegionsProvider,
 	}
 }
 
@@ -157,7 +159,7 @@ func (h *RuntimeInfoHandler) planNameOrDefault(inst internal.InstanceWithOperati
 	if inst.ServicePlanName != "" {
 		return inst.ServicePlanName
 	}
-	return broker.Plans(h.plansConfig, "", false, false, false, false)[inst.ServicePlanID].Name
+	return broker.Plans(h.plansConfig, "", false, false, false, false, h.convergedRegionsProvider.GetRegions())[inst.ServicePlanID].Name
 }
 
 func getIfNotZero(in time.Time) *time.Time {

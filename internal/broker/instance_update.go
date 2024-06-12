@@ -49,6 +49,8 @@ type UpdateEndpoint struct {
 
 	dashboardConfig dashboard.Config
 	kcBuilder       kubeconfig.KcBuilder
+
+	convergedRegionsProvider ConvergedCloudRegionProvider
 }
 
 func NewUpdate(cfg Config,
@@ -64,6 +66,7 @@ func NewUpdate(cfg Config,
 	log logrus.FieldLogger,
 	dashboardConfig dashboard.Config,
 	kcBuilder kubeconfig.KcBuilder,
+	convergedRegionsProvider ConvergedCloudRegionProvider,
 ) *UpdateEndpoint {
 	return &UpdateEndpoint{
 		config:                    cfg,
@@ -79,6 +82,7 @@ func NewUpdate(cfg Config,
 		planDefaults:              planDefaults,
 		dashboardConfig:           dashboardConfig,
 		kcBuilder:                 kcBuilder,
+		convergedRegionsProvider:  convergedRegionsProvider,
 	}
 }
 
@@ -383,7 +387,7 @@ func (b *UpdateEndpoint) isKyma2(instance *internal.Instance) (bool, string, err
 
 func (b *UpdateEndpoint) getJsonSchemaValidator(provider internal.CloudProvider, planID string, platformRegion string) (JSONSchemaValidator, error) {
 	// shootAndSeedSameRegion is never enabled for update
-	plans := Plans(b.plansConfig, provider, b.config.IncludeAdditionalParamsInSchema, euaccess.IsEURestrictedAccess(platformRegion), b.config.UseSmallerMachineTypes, false)
+	plans := Plans(b.plansConfig, provider, b.config.IncludeAdditionalParamsInSchema, euaccess.IsEURestrictedAccess(platformRegion), b.config.UseSmallerMachineTypes, false, b.convergedRegionsProvider.GetRegions())
 	plan := plans[planID]
 	schema := string(Marshal(plan.Schemas.Instance.Update.Parameters))
 

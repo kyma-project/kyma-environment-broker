@@ -32,7 +32,7 @@ func TestServices_Services(t *testing.T) {
 				},
 			},
 		}
-		servicesEndpoint := broker.NewServices(cfg, servicesConfig, logrus.StandardLogger())
+		servicesEndpoint := broker.NewServices(cfg, servicesConfig, logrus.StandardLogger(), &broker.OneForAllConvergedCloudRegionsProvider{})
 
 		// when
 		services, err := servicesEndpoint.Services(context.TODO())
@@ -64,7 +64,7 @@ func TestServices_Services(t *testing.T) {
 				},
 			},
 		}
-		servicesEndpoint := broker.NewServices(cfg, servicesConfig, logrus.StandardLogger())
+		servicesEndpoint := broker.NewServices(cfg, servicesConfig, logrus.StandardLogger(), &broker.OneForAllConvergedCloudRegionsProvider{})
 
 		// when
 		services, err := servicesEndpoint.Services(context.TODO())
@@ -100,7 +100,7 @@ func TestServices_Services(t *testing.T) {
 				},
 			},
 		}
-		servicesEndpoint := broker.NewServices(cfg, servicesConfig, logrus.StandardLogger())
+		servicesEndpoint := broker.NewServices(cfg, servicesConfig, logrus.StandardLogger(), &broker.OneForAllConvergedCloudRegionsProvider{})
 
 		// when
 		services, err := servicesEndpoint.Services(context.TODO())
@@ -139,7 +139,7 @@ func TestServices_Services(t *testing.T) {
 				},
 			},
 		}
-		servicesEndpoint := broker.NewServices(cfg, servicesConfig, logrus.StandardLogger())
+		servicesEndpoint := broker.NewServices(cfg, servicesConfig, logrus.StandardLogger(), &broker.OneForAllConvergedCloudRegionsProvider{})
 
 		// when
 		services, err := servicesEndpoint.Services(context.TODO())
