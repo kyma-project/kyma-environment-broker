@@ -7,9 +7,9 @@ import (
 	"log"
 	"os"
 
-	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/api/types/container"
 	"github.com/docker/docker/api/types/filters"
+	imagetypes "github.com/docker/docker/api/types/image"
 	"github.com/docker/docker/client"
 	"github.com/docker/go-connections/nat"
 )
@@ -49,11 +49,11 @@ func (d *DockerHelper) CreateDBContainer(config ContainerCreateRequest) (func() 
 
 	filterBy := filters.NewArgs()
 	filterBy.Add("name", config.Image)
-	image, err := d.client.ImageList(context.Background(), types.ImageListOptions{Filters: filterBy})
+	image, err := d.client.ImageList(context.Background(), imagetypes.ListOptions{Filters: filterBy})
 
 	if err != nil || image == nil {
 		log.Print(fmt.Sprintf("image %s not found... pulling...", config.Image))
-		reader, err := d.client.ImagePull(context.Background(), config.Image, types.ImagePullOptions{})
+		reader, err := d.client.ImagePull(context.Background(), config.Image, imagetypes.PullOptions{})
 		if err != nil || reader == nil {
 			if reader != nil {
 				err := reader.Close()
