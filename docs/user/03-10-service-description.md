@@ -92,7 +92,7 @@ These are the provisioning parameters for Azure that you can configure:
 
 | Parameter name                            | Type   | Description                                                                         | Required | Default value     |
 |-------------------------------------------|--------|-------------------------------------------------------------------------------------|:--------:|-------------------|
-| **machineType**                           | string | Specifies the provider-specific virtual machine type.                               |    No    | `Standard_D4s_v5` |
+| **machineType**                           | string | Specifies the provider-specific virtual machine type.                               |    No    | `Standard_D2s_v5` |
 | **volumeSizeGb**                          | int    | Specifies the size of the root volume.                                              |    No    | `50`              |
 | **region**                                | string | Defines the cluster region.                                                         |   Yes    | None              |
 | **zones**                                 | string | Defines the list of zones in which Runtime Provisioner creates a cluster.           |    No    | `["1"]`           |
