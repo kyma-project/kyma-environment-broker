@@ -96,7 +96,7 @@ func TestRuntimeInfoHandlerSuccess(t *testing.T) {
 				memStorage = newInMemoryStorage(t, tc.instances, tc.provisionOp, tc.deprovisionOp)
 			)
 
-			handler := appinfo.NewRuntimeInfoHandler(memStorage.Instances(), memStorage.Operations(), broker.PlansConfig{}, "default-region", writer)
+			handler := appinfo.NewRuntimeInfoHandler(memStorage.Instances(), memStorage.Operations(), broker.PlansConfig{}, "default-region", writer, &broker.OneForAllConvergedCloudRegionsProvider{})
 
 			// when
 			handler.ServeHTTP(respSpy, fixReq)
@@ -127,7 +127,7 @@ func TestRuntimeInfoHandlerFailures(t *testing.T) {
 	storageMock := &automock.InstanceFinder{}
 	defer storageMock.AssertExpectations(t)
 	storageMock.On("FindAllJoinedWithOperations", mock.Anything).Return(nil, fmt.Errorf("ups.. internal info"))
-	handler := appinfo.NewRuntimeInfoHandler(storageMock, nil, broker.PlansConfig{}, "", writer)
+	handler := appinfo.NewRuntimeInfoHandler(storageMock, nil, broker.PlansConfig{}, "", writer, &broker.OneForAllConvergedCloudRegionsProvider{})
 
 	// when
 	handler.ServeHTTP(respSpy, fixReq)
@@ -222,7 +222,7 @@ func TestRuntimeInfoHandlerOperationRecognition(t *testing.T) {
 		require.NoError(t, err)
 
 		responseWriter := httputil.NewResponseWriter(logger.NewLogDummy(), true)
-		runtimesInfoHandler := appinfo.NewRuntimeInfoHandler(instances, operations, broker.PlansConfig{}, "", responseWriter)
+		runtimesInfoHandler := appinfo.NewRuntimeInfoHandler(instances, operations, broker.PlansConfig{}, "", responseWriter, &broker.OneForAllConvergedCloudRegionsProvider{})
 
 		rr := httptest.NewRecorder()
 		router := mux.NewRouter()
@@ -331,7 +331,7 @@ func TestRuntimeInfoHandlerOperationRecognition(t *testing.T) {
 		require.NoError(t, err)
 
 		responseWriter := httputil.NewResponseWriter(logger.NewLogDummy(), true)
-		runtimesInfoHandler := appinfo.NewRuntimeInfoHandler(instances, operations, broker.PlansConfig{}, "", responseWriter)
+		runtimesInfoHandler := appinfo.NewRuntimeInfoHandler(instances, operations, broker.PlansConfig{}, "", responseWriter, &broker.OneForAllConvergedCloudRegionsProvider{})
 
 		rr := httptest.NewRecorder()
 		router := mux.NewRouter()
@@ -469,7 +469,7 @@ func TestRuntimeInfoHandlerOperationRecognition(t *testing.T) {
 		require.NoError(t, err)
 
 		responseWriter := httputil.NewResponseWriter(logger.NewLogDummy(), true)
-		runtimesInfoHandler := appinfo.NewRuntimeInfoHandler(instances, operations, broker.PlansConfig{}, "", responseWriter)
+		runtimesInfoHandler := appinfo.NewRuntimeInfoHandler(instances, operations, broker.PlansConfig{}, "", responseWriter, &broker.OneForAllConvergedCloudRegionsProvider{})
 
 		rr := httptest.NewRecorder()
 		router := mux.NewRouter()

@@ -10,28 +10,28 @@ global:
       path: europe-docker.pkg.dev/kyma-project/prod
     schema_migrator:
       dir: "control-plane"
-      version: "v20240610-ea747dbf" # do not update along with the other images
+      version: "v20240612-83a7c0eb" # do not update along with the other images
     kyma_environment_broker:
       dir:
-      version: "1.5.31"
+      version: "1.5.34"
     kyma_environments_subaccount_cleanup_job:
       dir:
-      version: "1.5.31"
+      version: "1.5.34"
     kyma_environment_trial_cleanup_job:
       dir:
-      version: "1.5.31"
+      version: "1.5.34"
     kyma_environment_expirator_job:
       dir:
-      version: "1.5.31"
+      version: "1.5.34"
     kyma_environment_deprovision_retrigger_job:
       dir:
-      version: "1.5.31"
+      version: "1.5.34"
     kyma_environment_runtime_reconciler:
       dir:
-      version: "1.5.31"
+      version: "1.5.34"
     kyma_environment_subaccount_sync:
       dir:
-      version: "1.5.31"
+      version: "1.5.34"
   kyma_environment_broker:
     enabled: false
     serviceAccountName: "kcp-kyma-environment-broker"
@@ -210,6 +210,15 @@ skrDNSProvidersValues: |-
 euAccessWhitelistedGlobalAccountIds: |-
   whitelist:
 euAccessRejectionMessage: "Due to limited availability, you need to open support ticket before attempting to provision Kyma clusters in EU Access only regions"
+
+# Following data serves just as a template
+sapConvergedCloudPlanRegionMappings: |-
+  cf-eu20-staging:
+    - eu-de-1
+    - eu-de-2
+  cf-eu21-staging:
+    - eu-de-3
+    - eu-de-4
 
 kymaVersion: "2.0"
 kymaVersionOnDemand: "false"

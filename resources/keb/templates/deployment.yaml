@@ -330,6 +330,8 @@ spec:
               value: /config/trialRegionMapping.yaml
             - name: APP_EU_ACCESS_WHITELISTED_GLOBAL_ACCOUNTS_FILE_PATH
               value: /config/euAccessWhitelistedGlobalAccountIds.yaml
+            - name: APP_SAP_CONVERGED_CLOUD_REGION_MAPPINGS_FILE_PATH
+              value: /config/sapConvergedCloudPlanRegionMappings.yaml
             - name: APP_EU_ACCESS_REJECTION_MESSAGE
               value: "{{ .Values.euAccessRejectionMessage }}"
             - name: APP_FREEMIUM_PROVIDERS
@@ -460,11 +462,13 @@ spec:
           {{- if .Values.global.database.cloudsqlproxy.workloadIdentity.enabled }}
           command: ["/cloud-sql-proxy",
                     "{{ .Values.global.database.managedGCP.instanceConnectionName }}",
+                    "--exit-zero-on-sigterm",
                     "--private-ip"]
           {{- else }}
           command: ["/cloud-sql-proxy",
                     "{{ .Values.global.database.managedGCP.instanceConnectionName }}",
                     "--private-ip",
+                    "--exit-zero-on-sigterm",
                     "--credentials-file=/secrets/cloudsql-instance-credentials/credentials.json"]
           volumeMounts:
             - name: cloudsql-instance-credentials

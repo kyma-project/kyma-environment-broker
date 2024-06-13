@@ -22,7 +22,7 @@ require (
 	github.com/kennygrant/sanitize v1.2.4
 	github.com/kyma-incubator/compass/components/director v0.0.0-20240329103248-7710e72be80a
 	github.com/kyma-project/control-plane/components/provisioner v0.0.0-20240529135026-c4ef757de24f
-	github.com/kyma-project/control-plane/components/schema-migrator v0.0.0-20240610060838-ea747dbf0cac
+	github.com/kyma-project/control-plane/components/schema-migrator v0.0.0-20240612080429-83a7c0eb13b8
 	github.com/lib/pq v1.10.9
 	github.com/matryer/is v1.4.1
 	github.com/pivotal-cf/brokerapi/v8 v8.2.3

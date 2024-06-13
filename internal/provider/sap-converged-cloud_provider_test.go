@@ -8,7 +8,8 @@ import (
 )
 
 func TestZonesForSapConvergedCloudZones(t *testing.T) {
-	regions := broker.SapConvergedCloudRegions()
+	convergedCloudRegionProvider := broker.OneForAllConvergedCloudRegionsProvider{}
+	regions := convergedCloudRegionProvider.GetRegions("")
 	for _, region := range regions {
 		_, exists := sapConvergedCloudZones[region]
 		assert.True(t, exists)

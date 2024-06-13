@@ -156,7 +156,7 @@ func TestSchemaGenerator(t *testing.T) {
 			updateFileOIDC: "update-free-azure-schema-additional-params.json",
 		},
 		{
-			name: " Freemium schema is correct",
+			name: "Freemium schema is correct",
 			generator: func(machinesDisplay, regionsDisplay map[string]string, machines []string, additionalParams, update bool) *map[string]interface{} {
 				return FreemiumSchema(internal.AWS, regionsDisplay, additionalParams, update, false)
 			},
@@ -209,7 +209,8 @@ func TestSchemaGenerator(t *testing.T) {
 		{
 			name: "SapConvergedCloud schema is correct",
 			generator: func(machinesDisplay, regionsDisplay map[string]string, machines []string, additionalParams, update bool) *map[string]interface{} {
-				return SapConvergedCloudSchema(machinesDisplay, regionsDisplay, machines, additionalParams, update, additionalParams)
+				convergedCloudRegionProvider := &OneForAllConvergedCloudRegionsProvider{}
+				return SapConvergedCloudSchema(machinesDisplay, regionsDisplay, machines, additionalParams, update, additionalParams, convergedCloudRegionProvider.GetRegions(""))
 			},
 			machineTypes:        SapConvergedCloudMachinesNames(),
 			machineTypesDisplay: SapConvergedCloudMachinesDisplay(),
@@ -259,6 +260,45 @@ func TestSchemaGenerator(t *testing.T) {
 			validateSchema(t, Marshal(got), tt.path+"/"+tt.updateFileOIDC)
 		})
 	}
+}
+
+func TestSapConvergedSchema(t *testing.T) {
+
+	t.Run("SapConvergedCloud schema uses regions from parameter to display region list", func(t *testing.T) {
+		// given
+		regions := []string{"region1", "region2"}
+
+		// when
+		schema := Plans(nil, "", false, false, false, false, regions)
+		convergedSchema, found := schema[SapConvergedCloudPlanID]
+		schemaRegionsCreate := convergedSchema.Schemas.Instance.Create.Parameters["properties"].(map[string]interface{})["region"].(map[string]interface{})["enum"]
+
+		// then
+		assert.NotNil(t, schema)
+		assert.True(t, found)
+		assert.Equal(t, []interface{}([]interface{}{"region1", "region2"}), schemaRegionsCreate)
+	})
+
+	t.Run("SapConvergedCloud schema not generated if empty region list", func(t *testing.T) {
+		// given
+		regions := []string{}
+
+		// when
+		schema := Plans(nil, "", false, false, false, false, regions)
+		_, found := schema[SapConvergedCloudPlanID]
+
+		// then
+		assert.NotNil(t, schema)
+		assert.False(t, found)
+
+		// when
+		schema = Plans(nil, "", false, false, false, false, nil)
+		_, found = schema[SapConvergedCloudPlanID]
+
+		// then
+		assert.NotNil(t, schema)
+		assert.False(t, found)
+	})
 }
 
 func validateSchema(t *testing.T, got []byte, file string) {
