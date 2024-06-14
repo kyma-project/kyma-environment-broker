@@ -112,7 +112,7 @@ class KCPWrapper {
   async login() {
     let args;
     if (process.env.KCP_OIDC_CLIENT_SECRET) {
-      args = ['login', '-u', `${this.username}`, '-p', `${this.password}`];
+      args = ['login', '-u', `${this.username}`, '-p', `${this.password}`, '--auth-type', `${this.authType}`];
     } else {
       args = ['login'];
     }
