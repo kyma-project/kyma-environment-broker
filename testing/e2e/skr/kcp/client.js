@@ -13,6 +13,7 @@ class KCPConfig {
     return new KCPConfig();
   }
   constructor() {
+    this.authType = getEnvOrThrow('KCP_AUTH_TYPE')
     this.host = getEnvOrThrow('KCP_KEB_API_URL');
     this.issuerURL = getEnvOrThrow('KCP_OIDC_ISSUER_URL');
     this.gardenerNamespace = getEnvOrThrow('KCP_GARDENER_NAMESPACE');
@@ -35,6 +36,7 @@ class KCPConfig {
 
 class KCPWrapper {
   constructor(config) {
+    this.authType = config.authType;
     this.kcpConfigPath = config.kcpConfigPath;
     this.gardenerNamespace = config.gardenerNamespace;
     this.clientID = config.clientID;
@@ -54,6 +56,7 @@ class KCPWrapper {
     this.kcpConfigPath = 'config.yaml';
     const stream = fs.createWriteStream(`${this.kcpConfigPath}`);
     stream.once('open', (_) => {
+      stream.write(`auth-type: "${this.authType}"\n`)
       stream.write(`gardener-namespace: "${this.gardenerNamespace}"\n`);
       if (process.env.KCP_OIDC_CLIENT_SECRET) {
         stream.write(`oidc-client-id: "${this.clientID}"\n`);
