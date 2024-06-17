@@ -227,7 +227,7 @@ These are the provisioning parameters for the `own_cluster` plan that you config
 
 ## Preview Cluster Plan
 
-The preview plan allows to test integration with Lifecycle Manager. The preview plan skips steps which integrate KEB.
+The preview plan is designed for testing major changes in KEB's architecture.
 
 ### Provisioning Parameters
 
