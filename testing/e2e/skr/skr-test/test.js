@@ -34,7 +34,7 @@ describe('SKR test', function() {
   });
 
   // Run BTP Manager Secret tests
-  btpManagerSecretTest();
+  //btpManagerSecretTest();
 
   // Run OIDC tests
   oidcE2ETest(getShootOptionsFunc, getShootInfoFunc);

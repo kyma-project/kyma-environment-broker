@@ -51,7 +51,7 @@ async function provisionSKR(
 async function getShoot(kcp, shootName) {
   debug(`Fetching shoot: ${shootName}`);
 
-  const kubeconfigPath = await kcp.getKubeconfig(shootName);
+  // const kubeconfigPath = await kcp.getKubeconfig(shootName);
 
   const runtimeGardenerConfig = await kcp.getRuntimeGardenerConfig(shootName);
   const objRuntimeGardenerConfig = JSON.parse(runtimeGardenerConfig);
@@ -60,7 +60,7 @@ async function getShoot(kcp, shootName) {
 
   return {
     name: shootName,
-    kubeconfig: kubeconfigPath,
+    // kubeconfig: kubeconfigPath,
     oidcConfig: objRuntimeGardenerConfig.data[0].status.gardenerConfig.oidcConfig,
     machineType: objRuntimeGardenerConfig.data[0].status.gardenerConfig.machineType,
   };
