@@ -13,7 +13,7 @@ class KCPConfig {
     return new KCPConfig();
   }
   constructor() {
-    this.authType = getEnvOrThrow('KCP_AUTH_TYPE')
+    this.authType = getEnvOrThrow('KCP_AUTH_TYPE');
     this.host = getEnvOrThrow('KCP_KEB_API_URL');
     this.kubeConfigApiUrl = getEnvOrThrow('KCP_KUBECONFIG_API_URL');
     this.oauthClientID = getEnvOrThrow('KCP_OAUTH2_CLIENT_ID');
@@ -36,12 +36,12 @@ class KCPWrapper {
 
     const stream = fs.createWriteStream(`${this.kcpConfigPath}`);
     stream.once('open', (_) => {
-      stream.write(`auth-type: "${this.authType}"\n`)
+      stream.write(`auth-type: "${this.authType}"\n`);
       stream.write(`keb-api-url: "${this.host}"\n`);
       stream.write(`kubeconfig-api-url: "${this.kubeConfigApiUrl}"\n`);
       stream.write(`oauth2-client-id: "${this.oauthClientID}"\n`);
       stream.write(`oauth2-client-secret: "${this.oauthSecret}"\n`);
-      stream.write(`oauth2-issuer-url: "${this.oauthIssuer}"\n`);  
+      stream.write(`oauth2-issuer-url: "${this.oauthIssuer}"\n`);
       stream.write(`gardener-namespace: "${this.gardenerNamespace}"\n`);
       stream.end();
     });

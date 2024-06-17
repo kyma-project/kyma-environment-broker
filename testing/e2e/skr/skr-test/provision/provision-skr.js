@@ -20,7 +20,7 @@ async function provisionSKRAndInitK8sConfig(options, provisioningTimeout) {
     await initK8sConfig(shoot);
   } else {
     console.log('Initiating K8s client... skipped');
-    //await initializeK8sClient({kubeconfigPath: shoot.kubeconfig});
+    // await initializeK8sClient({kubeconfigPath: shoot.kubeconfig});
   }
 
   console.log('Initialization of K8s finished...');
