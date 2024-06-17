@@ -4,10 +4,10 @@ const {
   ensureValidShootOIDCConfig,
   ensureValidOIDCConfigInCustomerFacingKubeconfig,
 } = require('../../kyma-environment-broker');
-const {
+/* const {
   ensureKymaAdminBindingExistsForUser,
   ensureKymaAdminBindingDoesNotExistsForUser,
-} = require('../../utils');
+} = require('../../utils'); */
 const {keb, kcp, gardener} = require('../helpers');
 
 const updateTimeout = 1000 * 60 * 20; // 20m

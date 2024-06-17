@@ -2,7 +2,7 @@ const {
   gatherOptions,
   oidcE2ETest,
   machineTypeE2ETest,
-  btpManagerSecretTest,
+  // btpManagerSecretTest,
 } = require('./index');
 const {provisionSKRAndInitK8sConfig} = require('./provision/provision-skr');
 const {deprovisionAndUnregisterSKR} = require('./provision/deprovision-skr');

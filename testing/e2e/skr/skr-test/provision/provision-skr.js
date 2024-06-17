@@ -5,7 +5,7 @@ const {
   keb,
   initK8sConfig,
   getSKRRuntimeStatus,
-  initializeK8sClient,
+  // initializeK8sClient,
 } = require('../helpers');
 
 const {provisionSKR}= require('../../kyma-environment-broker');

@@ -81,9 +81,7 @@ class KCPWrapper {
   }
 
   async login() {
-    let args;
-    args = ['login'];
-
+    const args = ['login'];
     return await this.exec(args);
   }
 
