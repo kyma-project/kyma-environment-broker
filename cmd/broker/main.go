@@ -126,11 +126,6 @@ type Config struct {
 
 	Notification notification.Config
 
-	VersionConfig struct {
-		Namespace string
-		Name      string
-	}
-
 	KymaDashboardConfig dashboard.Config
 
 	OrchestrationConfig orchestration.Config
@@ -354,8 +349,7 @@ func main() {
 	_ = metricsv2.Register(ctx, eventBroker, db.Operations(), db.Instances(), cfg.MetricsV2, logs)
 
 	// define steps
-	accountVersionMapping := runtimeversion.NewAccountVersionMapping(ctx, cli, cfg.VersionConfig.Namespace, cfg.VersionConfig.Name, logs)
-	runtimeVerConfigurator := runtimeversion.NewRuntimeVersionConfigurator(cfg.KymaVersion, accountVersionMapping, db.RuntimeStates())
+	runtimeVerConfigurator := runtimeversion.NewRuntimeVersionConfigurator(cfg.KymaVersion, db.RuntimeStates())
 
 	// run queues
 	provisionManager := process.NewStagedManager(db.Operations(), eventBroker, cfg.OperationTimeout, cfg.Provisioning, logs.WithField("provisioning", "manager"))

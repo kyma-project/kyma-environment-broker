@@ -72,25 +72,6 @@ func TestInputBuilderFactory_ForPlan(t *testing.T) {
 		assert.NotNil(t, result.upgradeRuntimeInput)
 	})
 
-	t.Run("should build RuntimeInput with GA version Kyma components and UpgradeRuntimeInput", func(t *testing.T) {
-		// given
-		configProvider := mockConfigProvider()
-
-		ibf, err := NewInputBuilderFactory(configProvider, Config{}, "1.10", fixTrialRegionMapping(), fixTrialProviders(), fixture.FixOIDCConfigDTO(), false)
-		assert.NoError(t, err)
-		pp := fixProvisioningParameters(broker.GCPPlanID)
-
-		// when
-		input, err := ibf.CreateUpgradeInput(pp, internal.RuntimeVersionData{Version: "1.1.0", Origin: internal.AccountMapping})
-
-		// Then
-		assert.NoError(t, err)
-		require.IsType(t, &RuntimeInput{}, input)
-
-		result := input.(*RuntimeInput)
-		assert.NotNil(t, result.upgradeRuntimeInput)
-	})
-
 	t.Run("should build RuntimeInput with set version Kyma components", func(t *testing.T) {
 		// given
 		configProvider := mockConfigProvider()

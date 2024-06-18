@@ -378,10 +378,6 @@ spec:
               value: "{{ .Values.notification.url }}"
             - name: APP_NOTIFICATION_DISABLED
               value: "{{ .Values.notification.disabled }}"
-            - name: APP_VERSION_CONFIG_NAMESPACE
-              value: "{{ .Release.Namespace }}"
-            - name: APP_VERSION_CONFIG_NAME
-              value: "kyma-versions"
             - name: APP_DOMAIN_NAME
               value: "{{ .Values.global.ingress.domainName }}"
             - name: APP_SKR_OIDC_DEFAULT_VALUES_YAML_FILE_PATH
