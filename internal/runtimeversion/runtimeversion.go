@@ -45,26 +45,18 @@ func (rvc *RuntimeVersionConfigurator) ForProvisioning(op internal.Operation) (*
 
 	pp := op.ProvisioningParameters
 
-	if pp.Parameters.KymaVersion == "" {
-		version, found, err := rvc.accountMapping.Get(pp.ErsContext.GlobalAccountID, pp.ErsContext.SubAccountID)
-		if err != nil {
-			return nil, err
-		}
-		if found {
-			majorVer, err := determineMajorVersion(version, rvc.defaultVersion)
-			if err != nil {
-				return nil, fmt.Errorf("while determining Kyma's major version: %w", err)
-			}
-			return internal.NewRuntimeVersionFromAccountMapping(version, majorVer), nil
-		}
-		return internal.NewRuntimeVersionFromDefaults(rvc.defaultVersion), nil
-	}
-
-	majorVer, err := determineMajorVersion(pp.Parameters.KymaVersion, rvc.defaultVersion)
+	version, found, err := rvc.accountMapping.Get(pp.ErsContext.GlobalAccountID, pp.ErsContext.SubAccountID)
 	if err != nil {
-		return nil, fmt.Errorf("while determining Kyma's major version: %w", err)
+		return nil, err
 	}
-	return internal.NewRuntimeVersionFromParameters(pp.Parameters.KymaVersion, majorVer), nil
+	if found {
+		majorVer, err := determineMajorVersion(version, rvc.defaultVersion)
+		if err != nil {
+			return nil, fmt.Errorf("while determining Kyma's major version: %w", err)
+		}
+		return internal.NewRuntimeVersionFromAccountMapping(version, majorVer), nil
+	}
+	return internal.NewRuntimeVersionFromDefaults(rvc.defaultVersion), nil
 }
 
 func determineMajorVersion(version, defaultVersion string) (int, error) {

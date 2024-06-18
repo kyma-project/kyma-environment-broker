@@ -221,7 +221,6 @@ sapConvergedCloudPlanRegionMappings: |-
     - eu-de-4
 
 kymaVersion: "2.0"
-kymaVersionOnDemand: "false"
 
 disableProcessOperationsInProgress: "false"
 enablePlans: "azure,gcp,azure_lite,trial"

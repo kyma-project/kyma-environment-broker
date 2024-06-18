@@ -74,7 +74,7 @@ func (s *InitialisationStep) Run(operation internal.Operation, log logrus.FieldL
 
 		return operation, 0, nil
 	case kebError.IsTemporaryError(err):
-		log.Errorf("cannot create input creator at the moment for plan %s and version %s: %s", operation.ProvisioningParameters.PlanID, operation.ProvisioningParameters.Parameters.KymaVersion, err)
+		log.Errorf("cannot create input creator at the moment for plan %s: %s", operation.ProvisioningParameters.PlanID, err)
 		return s.operationManager.RetryOperation(operation, "error while creating provisioning input creator", err, 5*time.Second, 5*time.Minute, log)
 	default:
 		log.Errorf("cannot create input creator for plan %s: %s", operation.ProvisioningParameters.PlanID, err)

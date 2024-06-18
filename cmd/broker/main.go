@@ -107,7 +107,6 @@ type Config struct {
 	Kubeconfig  kubeconfig.Config
 
 	KymaVersion                                                         string
-	EnableOnDemandVersion                                               bool `envconfig:"default=false"`
 	ManagedRuntimeComponentsYAMLFilePath                                string
 	NewAdditionalRuntimeComponentsYAMLFilePath                          string
 	SkrOidcDefaultValuesYAMLFilePath                                    string
@@ -497,7 +496,7 @@ func createAPI(router *mux.Router, servicesConfig broker.ServicesConfig, planVal
 	kymaEnvBroker := &broker.KymaEnvironmentBroker{
 		ServicesEndpoint: broker.NewServices(cfg.Broker, servicesConfig, logs, convergedCloudRegionProvider),
 		ProvisionEndpoint: broker.NewProvision(cfg.Broker, cfg.Gardener, db.Operations(), db.Instances(), db.InstancesArchived(),
-			provisionQueue, planValidator, defaultPlansConfig, cfg.EnableOnDemandVersion,
+			provisionQueue, planValidator, defaultPlansConfig,
 			planDefaults, whitelistedGlobalAccountIds, cfg.EuAccessRejectionMessage, logs, cfg.KymaDashboardConfig, kcBuilder, freemiumGlobalAccountIds, convergedCloudRegionProvider,
 		),
 		DeprovisionEndpoint: broker.NewDeprovision(db.Instances(), db.Operations(), deprovisionQueue, logs),

@@ -88,8 +88,7 @@ func FixProvisioningParametersDTO() internal.ProvisioningParametersDTO {
 			MaxSurge:       ptr.Integer(4),
 			MaxUnavailable: ptr.Integer(1),
 		},
-		KymaVersion: KymaVersion,
-		Provider:    &trialCloudProvider,
+		Provider: &trialCloudProvider,
 	}
 }
 

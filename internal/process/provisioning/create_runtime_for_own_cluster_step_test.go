@@ -142,10 +142,8 @@ func fixInputCreator(t *testing.T) internal.ProvisionerInputCreator {
 	assert.NoError(t, err)
 
 	pp := internal.ProvisioningParameters{
-		PlanID: broker.GCPPlanID,
-		Parameters: internal.ProvisioningParametersDTO{
-			KymaVersion: "",
-		},
+		PlanID:     broker.GCPPlanID,
+		Parameters: internal.ProvisioningParametersDTO{},
 	}
 	version := internal.RuntimeVersionData{Version: kymaVersion, Origin: internal.Parameters}
 	creator, err := ibf.CreateProvisionInput(pp, version)

@@ -556,8 +556,7 @@ func TestProvisioning_Conflict(t *testing.T) {
 						"user_id": "john.smith@email.com"
 					},
 					"parameters": {
-						"name": "testing-cluster",
-						"kymaVersion": "2.4.0"
+						"name": "testing-cluster"
 					}
 		}`)
 	opID := suite.DecodeOperationID(resp)
@@ -579,8 +578,7 @@ func TestProvisioning_Conflict(t *testing.T) {
 						"user_id": "john.smith@email.com"
 					},
 					"parameters": {
-						"name": "testing-cluster",
-						"kymaVersion": "2.5.0"
+						"name": "testing-cluster-2"
 					}
 		}`)
 	// then

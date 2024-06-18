@@ -15,23 +15,6 @@ import (
 )
 
 func Test_RuntimeVersionConfigurator_ForProvisioning_FromParameters(t *testing.T) {
-	t.Run("should return version from ProvisioningParameters when version provided", func(t *testing.T) {
-		// given
-		runtimeVer := "1.1.1"
-		rvc := NewRuntimeVersionConfigurator("not-relevant", &AccountVersionMapping{}, nil)
-
-		// when
-		ver, err := rvc.ForProvisioning(
-			internal.Operation{
-				ProvisioningParameters: internal.ProvisioningParameters{Parameters: internal.ProvisioningParametersDTO{KymaVersion: runtimeVer}},
-			})
-
-		// then
-		require.NoError(t, err)
-		require.Equal(t, runtimeVer, ver.Version)
-		require.Equal(t, 1, ver.MajorVersion)
-		require.Equal(t, internal.Parameters, ver.Origin)
-	})
 	t.Run("should return version from Defaults when version not provided", func(t *testing.T) {
 		// given
 		runtimeVer := "1.1.1"
@@ -93,52 +76,6 @@ func Test_RuntimeVersionConfigurator_ForProvisioning_FromParameters(t *testing.T
 		require.Equal(t, 1, ver.MajorVersion)
 		require.Equal(t, internal.AccountMapping, ver.Origin)
 	})
-	t.Run("should return Kyma Version from ProvisioningParameters even when version provided", func(t *testing.T) {
-		// given
-		runtimeVer := "1.0.0"
-
-		operation := internal.Operation{
-			ProvisioningParameters: internal.ProvisioningParameters{
-				Parameters: internal.ProvisioningParametersDTO{KymaVersion: runtimeVer},
-			},
-		}
-
-		rvc := NewRuntimeVersionConfigurator(runtimeVer, fixAccountVersionMapping(t, map[string]string{}), nil)
-
-		// when
-		ver, err := rvc.ForProvisioning(operation)
-
-		// then
-		require.NoError(t, err)
-		require.Equal(t, runtimeVer, ver.Version)
-		require.Equal(t, 1, ver.MajorVersion)
-	})
-	t.Run("should panic if version not provided", func(t *testing.T) {
-
-		defer func() {
-			if r := recover(); r == nil {
-				t.Errorf("Panic expected")
-			}
-		}()
-
-		// given
-		runtimeVer := ""
-
-		operation := internal.Operation{
-			ProvisioningParameters: internal.ProvisioningParameters{
-				Parameters: internal.ProvisioningParametersDTO{KymaVersion: runtimeVer},
-			},
-		}
-
-		rvc := NewRuntimeVersionConfigurator(runtimeVer, fixAccountVersionMapping(t, map[string]string{}), nil)
-
-		// when
-		ver, err := rvc.ForProvisioning(operation)
-
-		// then
-		require.NoError(t, err)
-		require.Equal(t, 2, ver.MajorVersion)
-	})
 	t.Run("should return SA version when both GA and SA mapping provided", func(t *testing.T) {
 		// given
 		runtimeVer := "1.0.0"
@@ -161,50 +98,6 @@ func Test_RuntimeVersionConfigurator_ForProvisioning_FromParameters(t *testing.T
 		// then
 		require.NoError(t, err)
 		require.Equal(t, versionForSA, ver.Version)
-		require.Equal(t, 1, ver.MajorVersion)
-	})
-	t.Run("should return custom version from ProvisioningParameters and default Kyma major version", func(t *testing.T) {
-		// given
-		runtimeVer := "1.24.5"
-		customVer := "PR-123"
-		operation := internal.Operation{
-			ProvisioningParameters: internal.ProvisioningParameters{
-				Parameters: internal.ProvisioningParametersDTO{
-					KymaVersion: customVer,
-				},
-			},
-		}
-
-		rvc := NewRuntimeVersionConfigurator(runtimeVer, &AccountVersionMapping{}, nil)
-
-		// when
-		ver, err := rvc.ForProvisioning(operation)
-
-		// then
-		require.NoError(t, err)
-		require.Equal(t, customVer, ver.Version)
-		require.Equal(t, 1, ver.MajorVersion)
-	})
-	t.Run("should return custom version from ProvisioningParameters and default Kyma major version", func(t *testing.T) {
-		// given
-		runtimeVer := "1.24.5"
-		customVer := "PR-123"
-		operation := internal.Operation{
-			ProvisioningParameters: internal.ProvisioningParameters{
-				Parameters: internal.ProvisioningParametersDTO{
-					KymaVersion: customVer,
-				},
-			},
-		}
-
-		rvc := NewRuntimeVersionConfigurator(runtimeVer, &AccountVersionMapping{}, nil)
-
-		// when
-		ver, err := rvc.ForProvisioning(operation)
-
-		// then
-		require.NoError(t, err)
-		require.Equal(t, customVer, ver.Version)
 		require.Equal(t, 1, ver.MajorVersion)
 	})
 	t.Run("should return custom version from GlobalAccount mapping and default Kyma major version when only GlobalAccount mapping provided", func(t *testing.T) {

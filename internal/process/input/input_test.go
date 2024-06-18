@@ -31,7 +31,7 @@ func TestInputBuilderFactoryForAzurePlan(t *testing.T) {
 	factory, err := NewInputBuilderFactory(configProvider, config, "1.10.0", fixTrialRegionMapping(),
 		fixTrialProviders(), fixture.FixOIDCConfigDTO(), false)
 	assert.NoError(t, err)
-	pp := fixProvisioningParameters(broker.AzurePlanID, "")
+	pp := fixProvisioningParameters(broker.AzurePlanID)
 
 	// when
 	builder, err := factory.CreateProvisionInput(pp, internal.RuntimeVersionData{Version: "1.10.0", Origin: internal.Defaults})
@@ -104,7 +104,7 @@ func TestShouldAdjustRuntimeName(t *testing.T) {
 				fixTrialProviders(), fixture.FixOIDCConfigDTO(), false)
 			assert.NoError(t, err)
 
-			pp := fixProvisioningParameters(broker.TrialPlanID, "")
+			pp := fixProvisioningParameters(broker.TrialPlanID)
 			pp.Parameters.Name = tc.runtimeName
 
 			creator, err := builder.CreateProvisionInput(pp, internal.RuntimeVersionData{Version: "1.1.0", Origin: internal.Defaults})
@@ -138,7 +138,7 @@ func TestShouldSetNumberOfNodesForTrialPlan(t *testing.T) {
 		fixTrialRegionMapping(), fixTrialProviders(), fixture.FixOIDCConfigDTO(), false)
 	assert.NoError(t, err)
 
-	pp := fixProvisioningParameters(broker.TrialPlanID, "")
+	pp := fixProvisioningParameters(broker.TrialPlanID)
 
 	creator, err := builder.CreateProvisionInput(pp, internal.RuntimeVersionData{Version: "1.17.0", Origin: internal.Defaults})
 	require.NoError(t, err)
@@ -164,7 +164,7 @@ func TestShouldSetGlobalConfiguration(t *testing.T) {
 			fixTrialRegionMapping(), fixTrialProviders(), fixture.FixOIDCConfigDTO(), false)
 		assert.NoError(t, err)
 
-		pp := fixProvisioningParameters(broker.TrialPlanID, "")
+		pp := fixProvisioningParameters(broker.TrialPlanID)
 
 		creator, err := builder.CreateProvisionInput(pp, internal.RuntimeVersionData{Version: "", Origin: internal.Defaults})
 		require.NoError(t, err)
@@ -187,7 +187,7 @@ func TestShouldSetGlobalConfiguration(t *testing.T) {
 			fixTrialRegionMapping(), fixTrialProviders(), fixture.FixOIDCConfigDTO(), false)
 		assert.NoError(t, err)
 
-		pp := fixProvisioningParameters(broker.TrialPlanID, "")
+		pp := fixProvisioningParameters(broker.TrialPlanID)
 
 		creator, err := builder.CreateUpgradeInput(pp, internal.RuntimeVersionData{Version: "1.21.0", Origin: internal.Defaults})
 		require.NoError(t, err)
@@ -539,7 +539,7 @@ func TestCreateUpgradeShootInput_ConfigureAutoscalerParams(t *testing.T) {
 
 		//ar provider HyperscalerInputProvider
 
-		pp := fixProvisioningParameters(broker.GCPPlanID, "")
+		pp := fixProvisioningParameters(broker.GCPPlanID)
 		//provider = &cloudProvider.GcpInput{} // for broker.GCPPlanID
 
 		ver := internal.RuntimeVersionData{
@@ -574,7 +574,7 @@ func TestCreateUpgradeShootInput_ConfigureAutoscalerParams(t *testing.T) {
 			fixTrialRegionMapping(), fixTrialProviders(), fixture.FixOIDCConfigDTO(), false)
 		assert.NoError(t, err)
 
-		pp := fixProvisioningParameters(broker.GCPPlanID, "")
+		pp := fixProvisioningParameters(broker.GCPPlanID)
 		pp.Parameters.AutoScalerMin = nil
 		pp.Parameters.AutoScalerMax = nil
 		pp.Parameters.MaxSurge = nil

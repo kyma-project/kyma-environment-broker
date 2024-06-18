@@ -202,8 +202,6 @@ type RuntimeOptions struct {
 	Region           string
 	PlanID           string
 	Provider         internal.CloudProvider
-	KymaVersion      string
-	OverridesVersion string
 	OIDC             *internal.OIDCConfigDTO
 	UserID           string
 	RuntimeAdmins    []string
@@ -656,8 +654,6 @@ func (s *ProvisioningSuite) CreateProvisioning(options RuntimeOptions) string {
 		PlatformProvider: options.PlatformProvider,
 		Parameters: internal.ProvisioningParametersDTO{
 			Region:                options.ProvideRegion(),
-			KymaVersion:           options.KymaVersion,
-			OverridesVersion:      options.OverridesVersion,
 			OIDC:                  options.ProvideOIDC(),
 			RuntimeAdministrators: options.ProvideRuntimeAdmins(),
 		},
@@ -967,7 +963,6 @@ func fixConfig() *Config {
 			ShootDomain: "kyma.sap.com",
 		},
 		KymaVersion:             defaultKymaVer,
-		EnableOnDemandVersion:   true,
 		UpdateProcessingEnabled: true,
 		Broker: broker.Config{
 			EnablePlans: []string{"azure", "trial", "aws", "own_cluster", "preview", "sap-converged-cloud", "gcp", "free"},
