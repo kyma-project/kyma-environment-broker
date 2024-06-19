@@ -147,6 +147,88 @@ func TestUpdateFailedInstance(t *testing.T) {
 	assert.Equal(t, "Unable to process an update of a failed instance", errResponse.Description)
 }
 
+func TestUpdate_SapConvergedCloud(t *testing.T) {
+	// given
+	suite := NewBrokerSuiteTest(t)
+	defer suite.TearDown()
+	iid := uuid.New().String()
+
+	resp := suite.CallAPI("PUT", fmt.Sprintf("oauth/cf-eu20-staging/v2/service_instances/%s?accepts_incomplete=true&plan_id=03b812ac-c991-4528-b5bd-08b303523a63&service_id=47c9dcbf-ff30-448e-ab36-d3bad66ba281", iid),
+		`{
+				   "service_id": "47c9dcbf-ff30-448e-ab36-d3bad66ba281",
+				   "plan_id": "03b812ac-c991-4528-b5bd-08b303523a63",
+				   "context": {
+					   "sm_operator_credentials": {
+						   "clientid": "cid",
+						   "clientsecret": "cs",
+						   "url": "url",
+						   "sm_url": "sm_url"
+					   },
+					   "globalaccount_id": "g-account-id",
+					   "subaccount_id": "sub-id",
+					   "user_id": "john.smith@email.com"
+				   },
+					"parameters": {
+						"name": "testing-cluster",
+						"oidc": {
+							"clientID": "id-initial",
+							"signingAlgs": ["PS512"],
+                            "issuerURL": "https://issuer.url.com"
+						},
+						"region": "eu-de-1"
+
+			}
+   }`)
+	opID := suite.DecodeOperationID(resp)
+	suite.processProvisioningByOperationID(opID)
+
+	// when
+	// OSB update:
+	resp = suite.CallAPI("PATCH", fmt.Sprintf("oauth/cf-eu20-staging/v2/service_instances/%s?accepts_incomplete=true", iid),
+		`{
+       "service_id": "47c9dcbf-ff30-448e-ab36-d3bad66ba281",
+       "plan_id": "03b812ac-c991-4528-b5bd-08b303523a63",
+       "context": {
+           "globalaccount_id": "g-account-id",
+           "user_id": "john.smith@email.com"
+       },
+		"parameters": {
+			"oidc": {
+				"clientID": "id-ooo",
+				"signingAlgs": ["RS256"],
+                "issuerURL": "https://issuer.url.com"
+			}
+		}
+   }`)
+	assert.Equal(t, http.StatusAccepted, resp.StatusCode)
+	upgradeOperationID := suite.DecodeOperationID(resp)
+
+	suite.FinishUpdatingOperationByProvisioner(upgradeOperationID)
+
+	suite.WaitForOperationState(upgradeOperationID, domain.Succeeded)
+
+	disabled := false
+	suite.AssertShootUpgrade(upgradeOperationID, gqlschema.UpgradeShootInput{
+		GardenerConfig: &gqlschema.GardenerUpgradeInput{
+			OidcConfig: &gqlschema.OIDCConfigInput{
+				ClientID:       "id-ooo",
+				GroupsClaim:    "groups",
+				IssuerURL:      "https://issuer.url.com",
+				SigningAlgs:    []string{"RS256"},
+				UsernameClaim:  "sub",
+				UsernamePrefix: "-",
+			},
+			ShootNetworkingFilterDisabled: &disabled,
+		},
+		Administrators: []string{"john.smith@email.com"},
+	})
+	suite.AssertKymaResourceExists(opID)
+	suite.AssertKymaLabelsExist(opID, map[string]string{
+		"kyma-project.io/region":          "eu-de-1",
+		"kyma-project.io/platform-region": "cf-eu20-staging",
+	})
+}
+
 func TestUpdateDeprovisioningInstance(t *testing.T) {
 	// given
 	suite := NewBrokerSuiteTest(t)
