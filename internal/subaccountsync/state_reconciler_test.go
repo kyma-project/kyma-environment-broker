@@ -40,9 +40,10 @@ var logger = slog.New(slog.NewTextHandler(os.Stderr, nil))
 
 var useInMemoryStorage, _ = strconv.ParseBool(os.Getenv("DB_IN_MEMORY_FOR_E2E_TESTS"))
 
+var tearDownFunc func()
+
 func setupSuite(t testing.TB) func(t testing.TB) {
 	logger.Info("setup suite")
-	var tearDownFunc func()
 	if useInMemoryStorage {
 		logger.Info("using in-memory storage")
 	} else {
@@ -51,9 +52,13 @@ func setupSuite(t testing.TB) func(t testing.TB) {
 	}
 
 	return func(t testing.TB) {
+		r := recover()
 		logger.Info("teardown suite")
 		if tearDownFunc != nil {
 			tearDownFunc()
+		}
+		if r != nil {
+			panic(r)
 		}
 	}
 }
@@ -62,6 +67,12 @@ func setupTestNilStorage(t testing.TB) (func(t testing.TB), storage.BrokerStorag
 	logger.Info("setup test - no storage needed")
 
 	return func(t testing.TB) {
+		if r := recover(); r != nil {
+			if tearDownFunc != nil {
+				tearDownFunc()
+			}
+			panic(r)
+		}
 		logger.Info("teardown test")
 	}, nil
 }
@@ -73,6 +84,12 @@ func setupTestWithStorage(t testing.TB) (func(t testing.TB), storage.BrokerStora
 	require.NotNil(t, brokerStorage)
 
 	return func(t testing.TB) {
+		if r := recover(); r != nil {
+			if tearDownFunc != nil {
+				tearDownFunc()
+			}
+			panic(r)
+		}
 		if storageCleanup != nil {
 			logger.Info("teardown test - cleanup storage")
 			err := storageCleanup()
@@ -83,12 +100,11 @@ func setupTestWithStorage(t testing.TB) (func(t testing.TB), storage.BrokerStora
 
 func TestStateReconcilerWithFakeCisServer(t *testing.T) {
 	teardownSuite := setupSuite(t)
+	defer teardownSuite(t)
 
 	srv, err := cis.NewFakeServer()
 	defer srv.Close()
 	require.NoError(t, err)
-
-	defer teardownSuite(t)
 
 	cisClient := srv.Client()
 	cisConfig := CisEndpointConfig{
