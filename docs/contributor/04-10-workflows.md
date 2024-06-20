@@ -41,12 +41,12 @@ Besides the tests, it also runs Go-related checks and Go linter. It is triggered
 - `/scripts` directory content
 - `/utils/edp-registrator` directory content
 - `.golangci.yml` file
-- any `Dockerfile.*` file
+- Any `Dockerfile.*` file
 - `go.mod` file
 - `go.sum` file
 - `Makefile` file
-- any `*.go` file
-- any `*.sh` file
+- Any `*.go` file
+- Any `*.sh` file
 
 ## Govulncheck Workflow
 
@@ -59,12 +59,12 @@ This [workflow](/.github/workflows/run-govulncheck.yaml) runs the Govulncheck. I
 - `/scripts` directory content
 - `/utils/edp-registrator` directory content
 - `.golangci.yml` file
-- any `Dockerfile.*` file
+- Any `Dockerfile.*` file
 - `go.mod` file
 - `go.sum` file
 - `Makefile` file
-- any `*.go` file
-- any `*.sh` file
+- Any `*.go` file
+- Any `*.sh` file
 
 ## KEB Chart Tests Workflow
 
@@ -73,7 +73,7 @@ This [workflow](/.github/workflows/run-keb-chart-tests.yaml) calls the reusable 
 - `/resources` directory content
 - `/scripts` directory content
 - `Makefile` file
-- any `*.sh` file 
+- Any `*.sh` file 
 
 ## Reusable Workflows
 

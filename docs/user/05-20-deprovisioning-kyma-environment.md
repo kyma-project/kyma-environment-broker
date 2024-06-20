@@ -33,7 +33,7 @@ A successful call returns the operation ID:
    }
    ```
 
-4. Check the operation status as described in the [Check operation status](05-30-operation-status.md) document.
+4. Check the operation status as described in the [Check Operation Status](05-30-operation-status.md) document.
 
 ## Subaccount Cleanup Job
 

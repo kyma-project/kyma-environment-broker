@@ -56,6 +56,8 @@ A successful call returns the instance details:
            },
            "networking": {
              "nodes": "10.250.0.0/22"
+             "pods": "10.96.0.0/13"
+             "services": "10.104.0.0/13"
            }
        },
        "platform_region": "cf-us10-staging",

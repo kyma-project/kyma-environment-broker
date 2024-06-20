@@ -31,14 +31,14 @@ To create a release, follow these steps:
 4. A code owner approves the PR.
 5. The GitHub action creates a GitHub tag and draft release with the provided name.
 6. The GitHub action initiates an await for Prow Jobs status. The tag creation triggers ProwJobs defined in [`kyma-environment-broker-build.yaml`](https://github.com/kyma-project/test-infra/blob/main/prow/jobs/kyma-project/kyma-environment-broker/kyma-environment-broker-build.yaml):
-- `post-keb-release-build`
-- `post-keb-deprovision-retrigger-job-release-build`
-- `post-keb-cleanup-job-release-build`
-- `post-keb-runtime-reconciler-job-release-build`
-- `post-keb-subaccount-cleanup-job-release-build`
-- `post-keb-archiver-job-release-build`
-- `post-keb-expirator-release-build`
-- `post-keb-subaccount-sync-release-build`
+   - `post-keb-release-build`
+   - `post-keb-deprovision-retrigger-job-release-build`
+   - `post-keb-cleanup-job-release-build`
+   - `post-keb-runtime-reconciler-job-release-build`
+   - `post-keb-subaccount-cleanup-job-release-build`
+   - `post-keb-archiver-job-release-build`
+   - `post-keb-expirator-release-build`
+   - `post-keb-subaccount-sync-release-build`
 7. The ProwJobs upload the binary images.
 8. The GitHub action commits the new KEB chart metadata to the `gh-pages` branch.
 9. The GitHub action publishes the release.
