@@ -271,9 +271,8 @@ func (reconciler *stateReconcilerType) reconcileResourceUpdate(subaccountID suba
 
 	state, ok := reconciler.inMemoryState[subaccountID]
 	if !ok {
-		// we create new state, there is no state for this subaccount yet (no data form CIS to compare
-		//log
-		reconciler.logger.Debug(fmt.Sprintf("subaccount %s not found in state for updated Kyma CR", subaccountID))
+		// we create new state, there is no state for this subaccount yet (no data from CIS to compare)
+		reconciler.logger.Debug(fmt.Sprintf("subaccount %s not found in state - creating state", subaccountID))
 		reconciler.inMemoryState[subaccountID] = subaccountStateType{
 			resourcesState: subaccountRuntimesType{runtimeID: runtimeState},
 		}
@@ -330,7 +329,7 @@ func (reconciler *stateReconcilerType) enqueueSubaccountIfOutdated(subaccountID 
 		reconciler.syncQueue.Insert(element)
 		reconciler.logger.Debug(fmt.Sprintf("Enqueued subaccount: %s betaEnabled: %t", subaccountID, state.cisState.BetaEnabled))
 	} else {
-		reconciler.logger.Debug(fmt.Sprintf("Subaccount %s is up to date with betaEnabled %t", subaccountID, state.cisState.BetaEnabled))
+		reconciler.logger.Debug(fmt.Sprintf("Subaccount %s is not to be updated", subaccountID))
 	}
 }
 
