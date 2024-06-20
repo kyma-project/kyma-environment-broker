@@ -384,7 +384,7 @@ func TestOutdatedPredicate(t *testing.T) {
 				runtimeId11: runtimeStateType{betaEnabled: "true"},
 			},
 		}
-		assert.True(t, reconciler.isResourceOutdated(state))
+		assert.True(t, reconciler.isResourceOutdated(subaccountId1, state))
 	})
 	t.Run("should detect difference between true and false", func(t *testing.T) {
 		state := subaccountStateType{
@@ -393,7 +393,7 @@ func TestOutdatedPredicate(t *testing.T) {
 				runtimeId11: runtimeStateType{betaEnabled: "false"},
 			},
 		}
-		assert.True(t, reconciler.isResourceOutdated(state)) // outdated
+		assert.True(t, reconciler.isResourceOutdated(subaccountId1, state)) // outdated
 	})
 	t.Run("should detect difference between true and any other than boolean", func(t *testing.T) {
 		state := subaccountStateType{
@@ -402,7 +402,7 @@ func TestOutdatedPredicate(t *testing.T) {
 				runtimeId11: runtimeStateType{betaEnabled: "any"},
 			},
 		}
-		assert.True(t, reconciler.isResourceOutdated(state)) // outdated
+		assert.True(t, reconciler.isResourceOutdated(subaccountId1, state)) // outdated
 	})
 	t.Run("should detect difference between false and any other than boolean", func(t *testing.T) {
 		state := subaccountStateType{
@@ -411,7 +411,7 @@ func TestOutdatedPredicate(t *testing.T) {
 				runtimeId11: runtimeStateType{betaEnabled: "any"},
 			},
 		}
-		assert.True(t, reconciler.isResourceOutdated(state)) // outdated
+		assert.True(t, reconciler.isResourceOutdated(subaccountId1, state)) // outdated
 	})
 	t.Run("should detect difference between true and empty", func(t *testing.T) {
 		state := subaccountStateType{
@@ -420,7 +420,7 @@ func TestOutdatedPredicate(t *testing.T) {
 				runtimeId11: runtimeStateType{betaEnabled: ""},
 			},
 		}
-		assert.True(t, reconciler.isResourceOutdated(state)) // outdated
+		assert.True(t, reconciler.isResourceOutdated(subaccountId1, state)) // outdated
 	})
 	t.Run("should detect difference between false and empty", func(t *testing.T) {
 		state := subaccountStateType{
@@ -429,7 +429,7 @@ func TestOutdatedPredicate(t *testing.T) {
 				runtimeId11: runtimeStateType{betaEnabled: ""},
 			},
 		}
-		assert.True(t, reconciler.isResourceOutdated(state)) // outdated
+		assert.True(t, reconciler.isResourceOutdated(subaccountId1, state)) // outdated
 	})
 	t.Run("should treat as up-to-date true and true", func(t *testing.T) {
 		state := subaccountStateType{
@@ -438,7 +438,7 @@ func TestOutdatedPredicate(t *testing.T) {
 				runtimeId11: runtimeStateType{betaEnabled: "true"},
 			},
 		}
-		assert.False(t, reconciler.isResourceOutdated(state))
+		assert.False(t, reconciler.isResourceOutdated(subaccountId1, state))
 	})
 	t.Run("should treat as up-to-date false and false", func(t *testing.T) {
 		state := subaccountStateType{
@@ -447,7 +447,7 @@ func TestOutdatedPredicate(t *testing.T) {
 				runtimeId11: runtimeStateType{betaEnabled: "false"},
 			},
 		}
-		assert.False(t, reconciler.isResourceOutdated(state))
+		assert.False(t, reconciler.isResourceOutdated(subaccountId1, state))
 	})
 	t.Run("should detect difference between false and true if one is true", func(t *testing.T) {
 		state := subaccountStateType{
@@ -457,7 +457,7 @@ func TestOutdatedPredicate(t *testing.T) {
 				runtimeId12: runtimeStateType{betaEnabled: "false"},
 			},
 		}
-		assert.True(t, reconciler.isResourceOutdated(state))
+		assert.True(t, reconciler.isResourceOutdated(subaccountId1, state))
 	})
 	t.Run("should detect difference between true and false if one is false", func(t *testing.T) {
 		state := subaccountStateType{
@@ -467,7 +467,7 @@ func TestOutdatedPredicate(t *testing.T) {
 				runtimeId12: runtimeStateType{betaEnabled: "true"},
 			},
 		}
-		assert.True(t, reconciler.isResourceOutdated(state)) // outdated
+		assert.True(t, reconciler.isResourceOutdated(subaccountId1, state)) // outdated
 	})
 	t.Run("should detect difference between true and any other than boolean", func(t *testing.T) {
 		state := subaccountStateType{
@@ -477,7 +477,7 @@ func TestOutdatedPredicate(t *testing.T) {
 				runtimeId12: runtimeStateType{betaEnabled: "true"},
 			},
 		}
-		assert.True(t, reconciler.isResourceOutdated(state)) // outdated
+		assert.True(t, reconciler.isResourceOutdated(subaccountId1, state)) // outdated
 	})
 	t.Run("should detect difference between false and any other than boolean if one is not boolean", func(t *testing.T) {
 		state := subaccountStateType{
@@ -487,7 +487,7 @@ func TestOutdatedPredicate(t *testing.T) {
 				runtimeId12: runtimeStateType{betaEnabled: "false"},
 			},
 		}
-		assert.True(t, reconciler.isResourceOutdated(state)) // outdated
+		assert.True(t, reconciler.isResourceOutdated(subaccountId1, state)) // outdated
 	})
 	t.Run("should detect difference between true and empty if one is empty", func(t *testing.T) {
 		state := subaccountStateType{
@@ -497,7 +497,7 @@ func TestOutdatedPredicate(t *testing.T) {
 				runtimeId12: runtimeStateType{betaEnabled: "true"},
 			},
 		}
-		assert.True(t, reconciler.isResourceOutdated(state)) // outdated
+		assert.True(t, reconciler.isResourceOutdated(subaccountId1, state)) // outdated
 	})
 	t.Run("should detect difference between false and empty if one is empty", func(t *testing.T) {
 		state := subaccountStateType{
@@ -507,7 +507,7 @@ func TestOutdatedPredicate(t *testing.T) {
 				runtimeId12: runtimeStateType{betaEnabled: "false"},
 			},
 		}
-		assert.True(t, reconciler.isResourceOutdated(state)) // outdated
+		assert.True(t, reconciler.isResourceOutdated(subaccountId1, state)) // outdated
 	})
 	t.Run("should treat as up-to-date true and all true", func(t *testing.T) {
 		state := subaccountStateType{
@@ -517,7 +517,7 @@ func TestOutdatedPredicate(t *testing.T) {
 				runtimeId12: runtimeStateType{betaEnabled: "true"},
 			},
 		}
-		assert.False(t, reconciler.isResourceOutdated(state))
+		assert.False(t, reconciler.isResourceOutdated(subaccountId1, state))
 	})
 	t.Run("should treat as up-to-date false and all false", func(t *testing.T) {
 		state := subaccountStateType{
@@ -527,7 +527,7 @@ func TestOutdatedPredicate(t *testing.T) {
 				runtimeId12: runtimeStateType{betaEnabled: "false"},
 			},
 		}
-		assert.False(t, reconciler.isResourceOutdated(state))
+		assert.False(t, reconciler.isResourceOutdated(subaccountId1, state))
 	})
 }
 
