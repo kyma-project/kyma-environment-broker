@@ -347,7 +347,7 @@ func (reconciler *stateReconcilerType) isResourceOutdated(subaccountID subaccoun
 		}
 		reconciler.logger.Debug(fmt.Sprintf("Subaccount %s has %d runtimes, outdated: %t", subaccountID, len(runtimes), outdated))
 	} else {
-		reconciler.logger.Debug(fmt.Sprintf("Subaccount %s has no resources or cis state", subaccountID))
+		reconciler.logger.Debug(fmt.Sprintf("Subaccount %s has %d resources, cis state modified: %t: not outdated", subaccountID, len(state.resourcesState), state.cisState.ModifiedDate > 0))
 	}
 	return outdated
 }
