@@ -53,7 +53,6 @@ func NewUpdater(k8sClient dynamic.Interface,
 
 func (u *Updater) Run() error {
 	for {
-		u.logger.Debug("Checking if there is an item to process in the queue")
 		item, ok := u.queue.Extract()
 		if !ok {
 			time.Sleep(u.sleepDuration)
@@ -77,15 +76,15 @@ func (u *Updater) Run() error {
 			continue
 		}
 		retryRequired := false
-		u.logger.Debug(fmt.Sprintf("found %d Kyma CRs for subaccount", len(unstructuredList.Items)))
+		u.logger.Debug(fmt.Sprintf("found %d Kyma CRs for subaccount ", len(unstructuredList.Items)))
 		for _, kymaCrUnstructured := range unstructuredList.Items {
 			if err := u.updateBetaEnabledLabel(kymaCrUnstructured, item.BetaEnabled, ctxWithTimeout); err != nil {
-				u.logger.Warn("while updating Kyma CR: " + err.Error() + "item will be added back to the queue")
+				u.logger.Warn("while updating Kyma CR: " + err.Error() + " item will be added back to the queue")
 				retryRequired = true
 			}
 		}
 		if retryRequired {
-			u.logger.Info(fmt.Sprintf("Requeue item for subaccount: %s", item.SubaccountID))
+			u.logger.Debug(fmt.Sprintf("Requeue item for subaccount: %s", item.SubaccountID))
 			u.queue.Insert(item)
 		}
 	}

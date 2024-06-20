@@ -111,6 +111,7 @@ func (s *SyncService) Run() {
 		OnInsert: func(queueSize int) {
 			metrics.queue.Set(float64(queueSize))
 			metrics.queueOps.With(prometheus.Labels{"operation": "insert"}).Inc()
+			logger.Debug(fmt.Sprintf("Item inserted into the queue, current size: %d", queueSize))
 		},
 		OnExtract: func(queueSize int, timeEnqueuedNano int64) {
 			metrics.queue.Set(float64(queueSize))
@@ -118,6 +119,7 @@ func (s *SyncService) Run() {
 			timeEnqueuedMillis := timeEnqueuedNano / int64(time.Millisecond)
 			logger.Debug(fmt.Sprintf("Item extracted from the queue after %d ms", timeEnqueuedMillis))
 			metrics.timeInQueue.Set(float64(timeEnqueuedMillis))
+			logger.Debug(fmt.Sprintf("Item extracted from the queue, current size: %d", queueSize))
 		},
 	})
 
