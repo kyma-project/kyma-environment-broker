@@ -328,6 +328,7 @@ func (reconciler *stateReconcilerType) enqueueSubaccountIfOutdated(subaccountID 
 		state := reconciler.inMemoryState[subaccountID]
 		element := syncqueues.QueueElement{SubaccountID: string(subaccountID), ModifiedAt: state.cisState.ModifiedDate, BetaEnabled: fmt.Sprintf("%t", state.cisState.BetaEnabled)}
 		reconciler.syncQueue.Insert(element)
+		reconciler.logger.Debug(fmt.Sprintf("Enqueued subaccount: %s  betaEnabled: %t", subaccountID, state.cisState.BetaEnabled))
 	} else {
 		reconciler.logger.Debug(fmt.Sprintf("Subaccount %s is up to date with betaEnabled %t", subaccountID, state.cisState.BetaEnabled))
 	}
@@ -344,6 +345,9 @@ func (reconciler *stateReconcilerType) isResourceOutdated(state subaccountStateT
 			outdated = outdated || (cisState.BetaEnabled && runtimeState.betaEnabled != "true")
 			outdated = outdated || (!cisState.BetaEnabled && runtimeState.betaEnabled != "false")
 		}
+		reconciler.logger.Debug(fmt.Sprintf("Subaccount %s has %d runtimes, outdated: %t", state, len(runtimes), outdated))
+	} else {
+		reconciler.logger.Debug(fmt.Sprintf("Subaccount %s has no resources state or cis state", state))
 	}
 	return outdated
 }

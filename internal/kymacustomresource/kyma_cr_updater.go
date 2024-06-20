@@ -67,7 +67,7 @@ func (u *Updater) Run() error {
 			LabelSelector: fmt.Sprintf(subaccountIdLabelFormat, item.SubaccountID),
 		})
 		if err != nil {
-			u.logger.Warn("while listing Kyma CRs: " + err.Error() + "adding item back to the queue")
+			u.logger.Warn("while listing Kyma CRs: " + err.Error() + " requeue item")
 			u.queue.Insert(item)
 			continue
 		}
