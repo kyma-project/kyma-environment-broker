@@ -64,7 +64,9 @@ func (q *SubaccountAwarePriorityQueueWithCallbacks) Insert(element QueueElement)
 		q.elements[0] = q.elements[q.size-1]
 		q.size--
 		q.siftDown()
+		q.log.Debug(fmt.Sprintf("Element with subaccountID %s, betaEnabled %s is updated", e.SubaccountID, e.BetaEnabled))
 	} else {
+		q.log.Debug(fmt.Sprintf("Element with subaccountID %s, betaEnabled %s is inserted", e.SubaccountID, e.BetaEnabled))
 		q.idx[e.SubaccountID] = q.size
 	}
 	q.elements[q.size] = e
@@ -91,6 +93,7 @@ func (q *SubaccountAwarePriorityQueueWithCallbacks) Extract() (QueueElement, boo
 	if q.eventHandler != nil && q.eventHandler.OnExtract != nil {
 		q.eventHandler.OnExtract(q.size, time.Now().UnixNano()-e.entryTime)
 	}
+	q.log.Debug(fmt.Sprintf("Element dequeued - subaccountID: %s, betaEnabled %s", e.SubaccountID, e.BetaEnabled))
 	return e.QueueElement, true
 }
 
