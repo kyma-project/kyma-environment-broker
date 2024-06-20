@@ -229,7 +229,7 @@ func (reconciler *stateReconcilerType) reconcileCisAccount(subaccountID subaccou
 	state, ok := reconciler.inMemoryState[subaccountID]
 	if !ok {
 		// possible case when subaccount was deleted from the state and then Kyma resource was created again
-		logs.Warn(fmt.Sprintf("subaccount %s for account not found in in-memory state", subaccountID))
+		logs.Warn(fmt.Sprintf("subaccount %s not found in state when syncing accounts service", subaccountID))
 		state.cisState = newCisState
 	}
 	if newCisState.ModifiedDate >= state.cisState.ModifiedDate {
@@ -250,7 +250,7 @@ func (reconciler *stateReconcilerType) reconcileCisEvent(event Event) {
 	state, ok := reconciler.inMemoryState[subaccount]
 	if !ok {
 		// possible case when subaccount was deleted from the state and then Kyma resource was created again
-		logs.Warn(fmt.Sprintf("subaccount %s for event not found in in-memory state", subaccount))
+		logs.Warn(fmt.Sprintf("subaccount %s  not found in state when syncing events service", subaccount))
 	}
 	if event.ActionTime >= state.cisState.ModifiedDate {
 		cisState := CisStateType{
@@ -273,7 +273,7 @@ func (reconciler *stateReconcilerType) reconcileResourceUpdate(subaccountID suba
 	if !ok {
 		// we create new state, there is no state for this subaccount yet (no data form CIS to compare
 		//log
-		reconciler.logger.Debug(fmt.Sprintf("subaccount %s not found in state, creating new state", subaccountID))
+		reconciler.logger.Debug(fmt.Sprintf("subaccount %s not found in state for updated Kyma CR", subaccountID))
 		reconciler.inMemoryState[subaccountID] = subaccountStateType{
 			resourcesState: subaccountRuntimesType{runtimeID: runtimeState},
 		}
@@ -324,12 +324,12 @@ func (reconciler *stateReconcilerType) deleteRuntimeFromState(subaccountID subac
 
 func (reconciler *stateReconcilerType) enqueueSubaccountIfOutdated(subaccountID subaccountIDType, state subaccountStateType) {
 	if reconciler.isResourceOutdated(state) {
-		reconciler.logger.Debug(fmt.Sprintf("Subaccount %s is outdated, enqueuing for sync, setting betaEnabled %t", subaccountID, state.cisState.BetaEnabled))
+		reconciler.logger.Debug(fmt.Sprintf("Subaccount %s is outdated, enqueuing, setting betaEnabled %t", subaccountID, state.cisState.BetaEnabled))
 		state := reconciler.inMemoryState[subaccountID]
 		element := syncqueues.QueueElement{SubaccountID: string(subaccountID), ModifiedAt: state.cisState.ModifiedDate, BetaEnabled: fmt.Sprintf("%t", state.cisState.BetaEnabled)}
 		reconciler.syncQueue.Insert(element)
 	} else {
-		reconciler.logger.Debug(fmt.Sprintf("Subaccount %s is up to date", subaccountID))
+		reconciler.logger.Debug(fmt.Sprintf("Subaccount %s is up to date with betaEnabled %t", subaccountID, state.cisState.BetaEnabled))
 	}
 }
 

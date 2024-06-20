@@ -16,7 +16,7 @@ func configureInformer(informer *cache.SharedIndexInformer, stateReconciler *sta
 			metrics.informer.With(prometheus.Labels{"event": "add"}).Inc()
 			u, ok := obj.(*unstructured.Unstructured)
 			if !ok {
-				logger.Error(fmt.Sprintf("added Kyma resource is not an Unstructured: %s", obj))
+				logger.Error(fmt.Sprintf("added Kyma CR is not an Unstructured: %s", obj))
 				return
 			}
 			subaccountID, runtimeID, betaEnabled, err := getRequiredData(u, logger, stateReconciler, alwaysUseDB)
@@ -36,7 +36,7 @@ func configureInformer(informer *cache.SharedIndexInformer, stateReconciler *sta
 			metrics.informer.With(prometheus.Labels{"event": "update"}).Inc()
 			u, ok := newObj.(*unstructured.Unstructured)
 			if !ok {
-				logger.Error(fmt.Sprintf("updated Kyma resource is not an Unstructured: %s", newObj))
+				logger.Error(fmt.Sprintf("updated Kyma CR is not an Unstructured: %s", newObj))
 				return
 			}
 			subaccountID, runtimeID, betaEnabled, err := getRequiredData(u, logger, stateReconciler, alwaysUseDB)
@@ -51,10 +51,10 @@ func configureInformer(informer *cache.SharedIndexInformer, stateReconciler *sta
 			metrics.informer.With(prometheus.Labels{"event": "delete"}).Inc()
 			u, ok := obj.(*unstructured.Unstructured)
 			if !ok {
-				logger.Error(fmt.Sprintf("deleted Kyma resource is not an Unstructured: %s", obj))
+				logger.Error(fmt.Sprintf("deleted Kyma CR is not an Unstructured: %s", obj))
 				return
 			}
-			logger.Info(fmt.Sprintf("Kyma resource deleted: %s", u.GetName()))
+			logger.Info(fmt.Sprintf("Kyma CR deleted: %s", u.GetName()))
 			subaccountID, runtimeID, _ := getDataFromLabels(u)
 			if subaccountID == "" || runtimeID == "" {
 				// deleted kyma resource without subaccount label or runtime label - no need to make fuss, silently ignore
