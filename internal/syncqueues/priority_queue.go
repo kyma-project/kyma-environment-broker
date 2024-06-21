@@ -53,7 +53,8 @@ func (q *SubaccountAwarePriorityQueueWithCallbacks) Insert(element QueueElement)
 	}
 	if idx, ok := q.idx[e.SubaccountID]; ok {
 		if q.elements[idx].ModifiedAt > e.ModifiedAt {
-			// event is outdated, do not insert
+			// new element is older than one already in the queue, do not insert
+			q.log.Debug(fmt.Sprintf("Element with subaccountID %s, betaEnabled %s, modifiedAt %d is older than %d - ignoring", e.SubaccountID, e.BetaEnabled, e.ModifiedAt, q.elements[idx].ModifiedAt))
 			return
 		}
 		// extraction and re-insertion
