@@ -63,14 +63,18 @@ func (q *SubaccountAwarePriorityQueueWithCallbacks) Insert(element QueueElement)
 		// updated element is at the top of the heap
 		// remove it
 		q.elements[0] = q.elements[q.size-1]
+		q.idx[q.elements[0].SubaccountID] = 0
 		q.size--
 		q.siftDown()
-		q.log.Debug(fmt.Sprintf("Element with subaccountID %s, betaEnabled %s is updated", e.SubaccountID, e.BetaEnabled))
+		q.log.Debug(fmt.Sprintf("Element with subaccountID %s is updated with betaEnabled %s, modifiedAt %d", e.SubaccountID, e.BetaEnabled, e.ModifiedAt))
 	} else {
-		q.log.Debug(fmt.Sprintf("Element with subaccountID %s, betaEnabled %s is inserted", e.SubaccountID, e.BetaEnabled))
+		q.log.Debug(fmt.Sprintf("Element with subaccountID %s is inserted with betaEnabled %s, modifiedAt %d", e.SubaccountID, e.BetaEnabled, e.ModifiedAt))
 		q.idx[e.SubaccountID] = q.size
 	}
+
+	// insert new element
 	q.elements[q.size] = e
+	q.idx[e.SubaccountID] = q.size
 	q.size++
 	q.siftUp()
 
@@ -126,7 +130,11 @@ func (q *SubaccountAwarePriorityQueueWithCallbacks) swap(i int, parent int) {
 	q.elements[i],
 		q.elements[parent],
 		q.idx[q.elements[i].SubaccountID],
-		q.idx[q.elements[parent].SubaccountID] = q.elements[parent], q.elements[i], q.idx[q.elements[parent].SubaccountID], q.idx[q.elements[i].SubaccountID]
+		q.idx[q.elements[parent].SubaccountID] =
+		q.elements[parent],
+		q.elements[i],
+		q.idx[q.elements[parent].SubaccountID],
+		q.idx[q.elements[i].SubaccountID]
 }
 
 func (q *SubaccountAwarePriorityQueueWithCallbacks) siftDown() {
