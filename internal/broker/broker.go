@@ -48,8 +48,7 @@ type Config struct {
 	TrialDocsURL                            string        `envconfig:"default="`
 	EnableShootAndSeedSameRegion            bool          `envconfig:"default=false"`
 
-	Binding                BindingConfig
-	UseSmallerMachineTypes bool `envconfig:"default=false"`
+	Binding BindingConfig
 }
 
 type ServicesConfig map[string]Service

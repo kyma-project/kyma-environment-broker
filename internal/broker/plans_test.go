@@ -14,12 +14,6 @@ import (
 )
 
 func TestSchemaGenerator(t *testing.T) {
-	azureLiteMachineNamesReduced := AzureLiteMachinesNames()
-	azureLiteMachinesDisplayReduced := AzureLiteMachinesDisplay()
-
-	azureLiteMachineNamesReduced = removeMachinesNamesFromList(azureLiteMachineNamesReduced, "Standard_D2s_v5")
-	delete(azureLiteMachinesDisplayReduced, "Standard_D2s_v5")
-
 	tests := []struct {
 		name                string
 		generator           func(map[string]string, map[string]string, []string, bool, bool) *map[string]interface{}
@@ -101,20 +95,6 @@ func TestSchemaGenerator(t *testing.T) {
 			updateFileOIDC:      "update-azure-lite-schema-additional-params.json",
 		},
 		{
-			name: "AzureLite reduced schema is correct",
-			generator: func(machinesDisplay, regionsDisplay map[string]string, machines []string, additionalParams, update bool) *map[string]interface{} {
-				return AzureLiteSchema(machinesDisplay, regionsDisplay, machines, additionalParams, update, false, false)
-			},
-			machineTypes:        azureLiteMachineNamesReduced,
-			machineTypesDisplay: azureLiteMachinesDisplayReduced,
-			regionDisplay:       AzureRegionsDisplay(false),
-			path:                "azure",
-			file:                "azure-lite-schema-reduced.json",
-			updateFile:          "update-azure-lite-schema-reduced.json",
-			fileOIDC:            "azure-lite-schema-additional-params-reduced.json",
-			updateFileOIDC:      "update-azure-lite-schema-additional-params-reduced.json",
-		},
-		{
 			name: "AzureLite schema with EU access restriction is correct",
 			generator: func(machinesDisplay, regionsDisplay map[string]string, machines []string, additionalParams, update bool) *map[string]interface{} {
 				return AzureLiteSchema(machinesDisplay, regionsDisplay, machines, additionalParams, update, true, additionalParams)
@@ -127,20 +107,6 @@ func TestSchemaGenerator(t *testing.T) {
 			updateFile:          "update-azure-lite-schema.json",
 			fileOIDC:            "azure-lite-schema-additional-params-eu.json",
 			updateFileOIDC:      "update-azure-lite-schema-additional-params.json",
-		},
-		{
-			name: "AzureLite reduced schema with EU access restriction is correct",
-			generator: func(machinesDisplay, regionsDisplay map[string]string, machines []string, additionalParams, update bool) *map[string]interface{} {
-				return AzureLiteSchema(machinesDisplay, regionsDisplay, machines, additionalParams, update, true, false)
-			},
-			machineTypes:        azureLiteMachineNamesReduced,
-			machineTypesDisplay: azureLiteMachinesDisplayReduced,
-			regionDisplay:       AzureRegionsDisplay(true),
-			path:                "azure",
-			file:                "azure-lite-schema-eu-reduced.json",
-			updateFile:          "update-azure-lite-schema-reduced.json",
-			fileOIDC:            "azure-lite-schema-additional-params-eu-reduced.json",
-			updateFileOIDC:      "update-azure-lite-schema-additional-params-reduced.json",
 		},
 		{
 			name: "Freemium schema is correct",
@@ -269,7 +235,7 @@ func TestSapConvergedSchema(t *testing.T) {
 		regions := []string{"region1", "region2"}
 
 		// when
-		schema := Plans(nil, "", false, false, false, false, regions)
+		schema := Plans(nil, "", false, false, false, regions)
 		convergedSchema, found := schema[SapConvergedCloudPlanID]
 		schemaRegionsCreate := convergedSchema.Schemas.Instance.Create.Parameters["properties"].(map[string]interface{})["region"].(map[string]interface{})["enum"]
 
@@ -284,7 +250,7 @@ func TestSapConvergedSchema(t *testing.T) {
 		regions := []string{}
 
 		// when
-		schema := Plans(nil, "", false, false, false, false, regions)
+		schema := Plans(nil, "", false, false, false, regions)
 		_, found := schema[SapConvergedCloudPlanID]
 
 		// then
@@ -292,7 +258,7 @@ func TestSapConvergedSchema(t *testing.T) {
 		assert.False(t, found)
 
 		// when
-		schema = Plans(nil, "", false, false, false, false, nil)
+		schema = Plans(nil, "", false, false, false, nil)
 		_, found = schema[SapConvergedCloudPlanID]
 
 		// then

@@ -40,12 +40,11 @@ type InputBuilderFactory struct {
 	trialPlatformRegionMapping map[string]string
 	enabledFreemiumProviders   map[string]struct{}
 	oidcDefaultValues          internal.OIDCConfigDTO
-	useSmallerMachineTypes     bool
 }
 
 func NewInputBuilderFactory(configProvider ConfigurationProvider,
 	config Config, defaultKymaVersion string, trialPlatformRegionMapping map[string]string,
-	enabledFreemiumProviders []string, oidcValues internal.OIDCConfigDTO, useSmallerMachineTypes bool) (CreatorForPlan, error) {
+	enabledFreemiumProviders []string, oidcValues internal.OIDCConfigDTO) (CreatorForPlan, error) {
 
 	freemiumProviders := map[string]struct{}{}
 	for _, p := range enabledFreemiumProviders {
@@ -59,7 +58,6 @@ func NewInputBuilderFactory(configProvider ConfigurationProvider,
 		trialPlatformRegionMapping: trialPlatformRegionMapping,
 		enabledFreemiumProviders:   freemiumProviders,
 		oidcDefaultValues:          oidcValues,
-		useSmallerMachineTypes:     useSmallerMachineTypes,
 	}, nil
 }
 
@@ -107,9 +105,7 @@ func (f *InputBuilderFactory) getHyperscalerProviderForPlanID(planID string, pla
 			ControlPlaneFailureTolerance: f.config.ControlPlaneFailureTolerance,
 		}
 	case broker.AzureLitePlanID:
-		provider = &cloudProvider.AzureLiteInput{
-			UseSmallerMachineTypes: f.useSmallerMachineTypes,
-		}
+		provider = &cloudProvider.AzureLiteInput{}
 	case broker.TrialPlanID:
 		provider = f.forTrialPlan(parametersProvider)
 	case broker.AWSPlanID:
@@ -180,13 +176,11 @@ func (f *InputBuilderFactory) forTrialPlan(provider *internal.CloudProvider) Hyp
 		}
 	case internal.AWS:
 		return &cloudProvider.AWSTrialInput{
-			PlatformRegionMapping:  f.trialPlatformRegionMapping,
-			UseSmallerMachineTypes: f.useSmallerMachineTypes,
+			PlatformRegionMapping: f.trialPlatformRegionMapping,
 		}
 	default:
 		return &cloudProvider.AzureTrialInput{
-			PlatformRegionMapping:  f.trialPlatformRegionMapping,
-			UseSmallerMachineTypes: f.useSmallerMachineTypes,
+			PlatformRegionMapping: f.trialPlatformRegionMapping,
 		}
 	}
 
@@ -332,13 +326,9 @@ func (f *InputBuilderFactory) forFreemiumPlan(provider internal.CloudProvider) (
 	}
 	switch provider {
 	case internal.AWS:
-		return &cloudProvider.AWSFreemiumInput{
-			UseSmallerMachineTypes: f.useSmallerMachineTypes,
-		}, nil
+		return &cloudProvider.AWSFreemiumInput{}, nil
 	case internal.Azure:
-		return &cloudProvider.AzureFreemiumInput{
-			UseSmallerMachineTypes: f.useSmallerMachineTypes,
-		}, nil
+		return &cloudProvider.AzureFreemiumInput{}, nil
 	default:
 		return nil, fmt.Errorf("provider %s is not supported", provider)
 	}

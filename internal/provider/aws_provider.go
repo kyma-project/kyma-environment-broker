@@ -19,12 +19,11 @@ import (
 )
 
 const (
-	DefaultAWSRegion              = "eu-central-1"
-	DefaultAWSTrialRegion         = "eu-west-1"
-	DefaultEuAccessAWSRegion      = "eu-central-1"
-	DefaultAWSMultiZoneCount      = 3
-	DefaultAWSMachineType         = "m6i.large"
-	DefaultOldAWSTrialMachineType = "m5.xlarge"
+	DefaultAWSRegion         = "eu-central-1"
+	DefaultAWSTrialRegion    = "eu-west-1"
+	DefaultEuAccessAWSRegion = "eu-central-1"
+	DefaultAWSMultiZoneCount = 3
+	DefaultAWSMachineType    = "m6i.large"
 )
 
 var europeAWS = "eu-west-1"
@@ -43,12 +42,9 @@ type (
 		ControlPlaneFailureTolerance string
 	}
 	AWSTrialInput struct {
-		PlatformRegionMapping  map[string]string
-		UseSmallerMachineTypes bool
+		PlatformRegionMapping map[string]string
 	}
-	AWSFreemiumInput struct {
-		UseSmallerMachineTypes bool
-	}
+	AWSFreemiumInput struct{}
 )
 
 func (p *AWSInput) Defaults() *gqlschema.ClusterConfigInput {
@@ -242,19 +238,15 @@ func (p *AWSInput) Provider() internal.CloudProvider {
 }
 
 func (p *AWSTrialInput) Defaults() *gqlschema.ClusterConfigInput {
-	return awsLiteDefaults(DefaultAWSTrialRegion, p.UseSmallerMachineTypes)
+	return awsLiteDefaults(DefaultAWSTrialRegion)
 }
 
-func awsLiteDefaults(region string, useSmallerMachineTypes bool) *gqlschema.ClusterConfigInput {
-	machineType := DefaultOldAWSTrialMachineType
-	if useSmallerMachineTypes {
-		machineType = DefaultAWSMachineType
-	}
+func awsLiteDefaults(region string) *gqlschema.ClusterConfigInput {
 	return &gqlschema.ClusterConfigInput{
 		GardenerConfig: &gqlschema.GardenerConfigInput{
 			DiskType:       ptr.String("gp2"),
 			VolumeSizeGb:   ptr.Integer(50),
-			MachineType:    machineType,
+			MachineType:    DefaultAWSMachineType,
 			Region:         region,
 			Provider:       "aws",
 			WorkerCidr:     networking.DefaultNodesCIDR,
@@ -311,7 +303,7 @@ func (p *AWSTrialInput) Provider() internal.CloudProvider {
 
 func (p *AWSFreemiumInput) Defaults() *gqlschema.ClusterConfigInput {
 	// Lite (freemium) must have the same defaults as Trial plan, but there was a requirement to change a region only for Trial.
-	defaults := awsLiteDefaults(DefaultAWSRegion, p.UseSmallerMachineTypes)
+	defaults := awsLiteDefaults(DefaultAWSRegion)
 
 	return defaults
 }

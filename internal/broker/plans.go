@@ -289,20 +289,6 @@ func SapConvergedCloudMachinesDisplay() map[string]string {
 	}
 }
 
-func removeMachinesNamesFromList(machinesNames []string, machinesNamesToRemove ...string) []string {
-	for i, machineName := range machinesNames {
-		for _, machineNameToRemove := range machinesNamesToRemove {
-			if machineName == machineNameToRemove {
-				copy(machinesNames[i:], machinesNames[i+1:])
-				machinesNames[len(machinesNames)-1] = ""
-				machinesNames = machinesNames[:len(machinesNames)-1]
-			}
-		}
-	}
-
-	return machinesNames
-}
-
 func requiredSchemaProperties() []string {
 	return []string{"name", "region"}
 }
@@ -464,7 +450,7 @@ func unmarshalSchema(schema *RootSchema) *map[string]interface{} {
 
 // Plans is designed to hold plan defaulting logic
 // keep internal/hyperscaler/azure/config.go in sync with any changes to available zones
-func Plans(plans PlansConfig, provider internal.CloudProvider, includeAdditionalParamsInSchema bool, euAccessRestricted bool, useSmallerMachineTypes bool, shootAndSeedFeatureFlag bool, sapConvergedCloudRegions []string) map[string]domain.ServicePlan {
+func Plans(plans PlansConfig, provider internal.CloudProvider, includeAdditionalParamsInSchema bool, euAccessRestricted bool, shootAndSeedFeatureFlag bool, sapConvergedCloudRegions []string) map[string]domain.ServicePlan {
 	awsMachineNames := AwsMachinesNames()
 	awsMachinesDisplay := AwsMachinesDisplay()
 	awsRegionsDisplay := AWSRegionsDisplay()
@@ -476,11 +462,6 @@ func Plans(plans PlansConfig, provider internal.CloudProvider, includeAdditional
 	gcpMachinesNames := GcpMachinesNames()
 	gcpMachinesDisplay := GcpMachinesDisplay()
 	gcpRegionsDisplay := GcpRegionsDisplay()
-
-	if !useSmallerMachineTypes {
-		azureLiteMachinesNames = removeMachinesNamesFromList(azureLiteMachinesNames, "Standard_D2s_v5")
-		delete(azureLiteMachinesDisplay, "Standard_D2s_v5")
-	}
 
 	awsSchema := AWSSchema(awsMachinesDisplay, awsRegionsDisplay, awsMachineNames, includeAdditionalParamsInSchema, false, euAccessRestricted, shootAndSeedFeatureFlag)
 	// awsHASchema := AWSHASchema(awsMachinesDisplay, awsMachines, includeAdditionalParamsInSchema, false)

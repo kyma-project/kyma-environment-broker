@@ -388,7 +388,7 @@ func (b *UpdateEndpoint) isKyma2(instance *internal.Instance) (bool, string, err
 func (b *UpdateEndpoint) getJsonSchemaValidator(provider internal.CloudProvider, planID string, platformRegion string) (JSONSchemaValidator, error) {
 	// shootAndSeedSameRegion is never enabled for update
 	b.log.Printf("region is: %s", platformRegion)
-	plans := Plans(b.plansConfig, provider, b.config.IncludeAdditionalParamsInSchema, euaccess.IsEURestrictedAccess(platformRegion), b.config.UseSmallerMachineTypes, false, b.convergedCloudRegionsProvider.GetRegions(platformRegion))
+	plans := Plans(b.plansConfig, provider, b.config.IncludeAdditionalParamsInSchema, euaccess.IsEURestrictedAccess(platformRegion), false, b.convergedCloudRegionsProvider.GetRegions(platformRegion))
 	plan := plans[planID]
 	schema := string(Marshal(plan.Schemas.Instance.Update.Parameters))
 

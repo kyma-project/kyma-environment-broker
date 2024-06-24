@@ -315,7 +315,7 @@ func main() {
 
 	oidcDefaultValues, err := runtime.ReadOIDCDefaultValuesFromYAML(cfg.SkrOidcDefaultValuesYAMLFilePath)
 	fatalOnError(err, logs)
-	inputFactory, err := input.NewInputBuilderFactory(configProvider, cfg.Provisioner, cfg.KymaVersion, regions, cfg.FreemiumProviders, oidcDefaultValues, cfg.Broker.UseSmallerMachineTypes)
+	inputFactory, err := input.NewInputBuilderFactory(configProvider, cfg.Provisioner, cfg.KymaVersion, regions, cfg.FreemiumProviders, oidcDefaultValues)
 	fatalOnError(err, logs)
 
 	edpClient := edp.NewClient(cfg.EDP)

@@ -29,7 +29,7 @@ func TestInputBuilderFactoryForAzurePlan(t *testing.T) {
 	configProvider := mockConfigProvider()
 
 	factory, err := NewInputBuilderFactory(configProvider, config, "1.10.0", fixTrialRegionMapping(),
-		fixTrialProviders(), fixture.FixOIDCConfigDTO(), false)
+		fixTrialProviders(), fixture.FixOIDCConfigDTO())
 	assert.NoError(t, err)
 	pp := fixProvisioningParameters(broker.AzurePlanID)
 
@@ -101,7 +101,7 @@ func TestShouldAdjustRuntimeName(t *testing.T) {
 			configProvider := mockConfigProvider()
 
 			builder, err := NewInputBuilderFactory(configProvider, Config{TrialNodesNumber: 0}, "not-important", fixTrialRegionMapping(),
-				fixTrialProviders(), fixture.FixOIDCConfigDTO(), false)
+				fixTrialProviders(), fixture.FixOIDCConfigDTO())
 			assert.NoError(t, err)
 
 			pp := fixProvisioningParameters(broker.TrialPlanID)
@@ -135,7 +135,7 @@ func TestShouldSetNumberOfNodesForTrialPlan(t *testing.T) {
 	configProvider := mockConfigProvider()
 
 	builder, err := NewInputBuilderFactory(configProvider, Config{TrialNodesNumber: 2}, "not-important",
-		fixTrialRegionMapping(), fixTrialProviders(), fixture.FixOIDCConfigDTO(), false)
+		fixTrialRegionMapping(), fixTrialProviders(), fixture.FixOIDCConfigDTO())
 	assert.NoError(t, err)
 
 	pp := fixProvisioningParameters(broker.TrialPlanID)
@@ -161,7 +161,7 @@ func TestShouldSetGlobalConfiguration(t *testing.T) {
 		configProvider := mockConfigProvider()
 
 		builder, err := NewInputBuilderFactory(configProvider, Config{}, "",
-			fixTrialRegionMapping(), fixTrialProviders(), fixture.FixOIDCConfigDTO(), false)
+			fixTrialRegionMapping(), fixTrialProviders(), fixture.FixOIDCConfigDTO())
 		assert.NoError(t, err)
 
 		pp := fixProvisioningParameters(broker.TrialPlanID)
@@ -184,7 +184,7 @@ func TestShouldSetGlobalConfiguration(t *testing.T) {
 		configProvider := mockConfigProvider()
 
 		builder, err := NewInputBuilderFactory(configProvider, Config{}, "",
-			fixTrialRegionMapping(), fixTrialProviders(), fixture.FixOIDCConfigDTO(), false)
+			fixTrialRegionMapping(), fixTrialProviders(), fixture.FixOIDCConfigDTO())
 		assert.NoError(t, err)
 
 		pp := fixProvisioningParameters(broker.TrialPlanID)
@@ -224,7 +224,7 @@ func TestCreateProvisionRuntimeInput_ConfigureDNS(t *testing.T) {
 		configProvider := mockConfigProvider()
 
 		inputBuilder, err := NewInputBuilderFactory(configProvider, Config{}, "1.24.4", fixTrialRegionMapping(),
-			fixTrialProviders(), fixture.FixOIDCConfigDTO(), false)
+			fixTrialProviders(), fixture.FixOIDCConfigDTO())
 		assert.NoError(t, err)
 
 		provisioningParams := fixture.FixProvisioningParameters(id)
@@ -255,7 +255,7 @@ func TestCreateProvisionRuntimeInput_ConfigureDNS(t *testing.T) {
 		configProvider := mockConfigProvider()
 
 		inputBuilder, err := NewInputBuilderFactory(configProvider, Config{}, "1.24.4",
-			fixTrialRegionMapping(), fixTrialProviders(), fixture.FixOIDCConfigDTO(), false)
+			fixTrialRegionMapping(), fixTrialProviders(), fixture.FixOIDCConfigDTO())
 		assert.NoError(t, err)
 
 		provisioningParams := fixture.FixProvisioningParameters(id)
@@ -296,7 +296,7 @@ func TestCreateProvisionRuntimeInput_ConfigureOIDC(t *testing.T) {
 		configProvider := mockConfigProvider()
 
 		inputBuilder, err := NewInputBuilderFactory(configProvider, Config{}, "1.24.0",
-			fixTrialRegionMapping(), fixTrialProviders(), fixture.FixOIDCConfigDTO(), false)
+			fixTrialRegionMapping(), fixTrialProviders(), fixture.FixOIDCConfigDTO())
 		assert.NoError(t, err)
 
 		provisioningParams := fixture.FixProvisioningParameters(id)
@@ -331,7 +331,7 @@ func TestCreateProvisionRuntimeInput_ConfigureOIDC(t *testing.T) {
 		configProvider := mockConfigProvider()
 
 		inputBuilder, err := NewInputBuilderFactory(configProvider, Config{}, "1.24.0",
-			fixTrialRegionMapping(), fixTrialProviders(), fixture.FixOIDCConfigDTO(), false)
+			fixTrialRegionMapping(), fixTrialProviders(), fixture.FixOIDCConfigDTO())
 		assert.NoError(t, err)
 
 		provisioningParams := fixture.FixProvisioningParameters(id)
@@ -367,7 +367,7 @@ func TestCreateProvisionRuntimeInput_ConfigureOIDC(t *testing.T) {
 		configProvider := mockConfigProvider()
 
 		inputBuilder, err := NewInputBuilderFactory(configProvider, Config{}, "1.24.0",
-			fixTrialRegionMapping(), fixTrialProviders(), fixture.FixOIDCConfigDTO(), false)
+			fixTrialRegionMapping(), fixTrialProviders(), fixture.FixOIDCConfigDTO())
 		assert.NoError(t, err)
 
 		provisioningParams := fixture.FixProvisioningParameters(id)
@@ -405,7 +405,7 @@ func TestCreateProvisionRuntimeInput_ConfigureAdmins(t *testing.T) {
 		configProvider := mockConfigProvider()
 
 		inputBuilder, err := NewInputBuilderFactory(configProvider, Config{}, "1.24.0",
-			fixTrialRegionMapping(), fixTrialProviders(), fixture.FixOIDCConfigDTO(), false)
+			fixTrialRegionMapping(), fixTrialProviders(), fixture.FixOIDCConfigDTO())
 		assert.NoError(t, err)
 
 		provisioningParams := fixture.FixProvisioningParameters(id)
@@ -432,7 +432,7 @@ func TestCreateProvisionRuntimeInput_ConfigureAdmins(t *testing.T) {
 		configProvider := mockConfigProvider()
 
 		inputBuilder, err := NewInputBuilderFactory(configProvider, Config{}, "1.24.0",
-			fixTrialRegionMapping(), fixTrialProviders(), fixture.FixOIDCConfigDTO(), false)
+			fixTrialRegionMapping(), fixTrialProviders(), fixture.FixOIDCConfigDTO())
 		assert.NoError(t, err)
 
 		provisioningParams := fixture.FixProvisioningParameters(id)
@@ -470,7 +470,7 @@ func TestCreateUpgradeRuntimeInput_ConfigureAdmins(t *testing.T) {
 		configProvider := mockConfigProvider()
 
 		inputBuilder, err := NewInputBuilderFactory(configProvider, Config{}, "1.24.0",
-			fixTrialRegionMapping(), fixTrialProviders(), fixture.FixOIDCConfigDTO(), false)
+			fixTrialRegionMapping(), fixTrialProviders(), fixture.FixOIDCConfigDTO())
 		assert.NoError(t, err)
 
 		provisioningParams := fixture.FixProvisioningParameters(id)
@@ -503,7 +503,7 @@ func TestCreateUpgradeRuntimeInput_ConfigureAdmins(t *testing.T) {
 		configProvider := mockConfigProvider()
 
 		inputBuilder, err := NewInputBuilderFactory(configProvider, Config{}, "1.24.0",
-			fixTrialRegionMapping(), fixTrialProviders(), fixture.FixOIDCConfigDTO(), false)
+			fixTrialRegionMapping(), fixTrialProviders(), fixture.FixOIDCConfigDTO())
 		assert.NoError(t, err)
 
 		provisioningParams := fixture.FixProvisioningParameters(id)
@@ -534,7 +534,7 @@ func TestCreateUpgradeShootInput_ConfigureAutoscalerParams(t *testing.T) {
 		configProvider := mockConfigProvider()
 
 		ibf, err := NewInputBuilderFactory(configProvider, Config{}, "1.24.0",
-			fixTrialRegionMapping(), fixTrialProviders(), fixture.FixOIDCConfigDTO(), false)
+			fixTrialRegionMapping(), fixTrialProviders(), fixture.FixOIDCConfigDTO())
 		assert.NoError(t, err)
 
 		//ar provider HyperscalerInputProvider
@@ -571,7 +571,7 @@ func TestCreateUpgradeShootInput_ConfigureAutoscalerParams(t *testing.T) {
 		configProvider := mockConfigProvider()
 
 		ibf, err := NewInputBuilderFactory(configProvider, Config{}, "1.24.0",
-			fixTrialRegionMapping(), fixTrialProviders(), fixture.FixOIDCConfigDTO(), false)
+			fixTrialRegionMapping(), fixTrialProviders(), fixture.FixOIDCConfigDTO())
 		assert.NoError(t, err)
 
 		pp := fixProvisioningParameters(broker.GCPPlanID)
@@ -613,7 +613,7 @@ func TestShootAndSeedSameRegion(t *testing.T) {
 		configProvider := mockConfigProvider()
 
 		builder, err := NewInputBuilderFactory(configProvider, Config{EnableShootAndSeedSameRegion: true}, "not-important",
-			fixTrialRegionMapping(), fixTrialProviders(), fixture.FixOIDCConfigDTO(), false)
+			fixTrialRegionMapping(), fixTrialProviders(), fixture.FixOIDCConfigDTO())
 		assert.NoError(t, err)
 
 		pp := fixture.FixProvisioningParameters("")
