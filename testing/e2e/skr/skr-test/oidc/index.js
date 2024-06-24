@@ -4,10 +4,10 @@ const {
   ensureValidShootOIDCConfig,
   ensureValidOIDCConfigInCustomerFacingKubeconfig,
 } = require('../../kyma-environment-broker');
-/* const {
+const {
   ensureKymaAdminBindingExistsForUser,
   ensureKymaAdminBindingDoesNotExistsForUser,
-} = require('../../utils'); */
+} = require('../../utils');
 const {keb, kcp, gardener} = require('../helpers');
 
 const updateTimeout = 1000 * 60 * 20; // 20m
@@ -34,9 +34,9 @@ function oidcE2ETest(getShootOptionsFunc, getShootInfoFunc) {
       await ensureValidOIDCConfigInCustomerFacingKubeconfig(keb, options.instanceID, givenOidcConfig);
     });
 
-    //  it('Assure initial cluster admin', async function() {
-    //    await ensureKymaAdminBindingExistsForUser(options.kebUserId); // default user id
-    //  });
+    it('Assure initial cluster admin', async function() {
+      await ensureKymaAdminBindingExistsForUser(options.kebUserId); // default user id
+    });
 
     it('Update SKR service instance with OIDC config', async function() {
       this.timeout(updateTimeout);
@@ -72,9 +72,9 @@ function oidcE2ETest(getShootOptionsFunc, getShootInfoFunc) {
       await ensureValidOIDCConfigInCustomerFacingKubeconfig(keb, options.instanceID, options.oidc1);
     });
 
-    // it('Assure cluster admin is preserved', async function() {
-    //   await ensureKymaAdminBindingExistsForUser(options.kebUserId);
-    // });
+    it('Assure cluster admin is preserved', async function() {
+      await ensureKymaAdminBindingExistsForUser(options.kebUserId);
+    });
 
     it('Update SKR service instance with new admins', async function() {
       this.timeout(updateTimeout);
@@ -99,11 +99,11 @@ function oidcE2ETest(getShootOptionsFunc, getShootInfoFunc) {
       console.log(`\nRuntime status: ${runtimeStatus}`);
     });
 
-    /* it('Assure only new cluster admins are configured', async function() {
+    it('Assure only new cluster admins are configured', async function() {
       await ensureKymaAdminBindingExistsForUser(options.administrators1[0]);
       await ensureKymaAdminBindingExistsForUser(options.administrators1[1]);
       await ensureKymaAdminBindingDoesNotExistsForUser(options.kebUserId);
-    });*/
+    });
   });
 }
 

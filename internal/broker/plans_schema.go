@@ -47,7 +47,9 @@ func (up *UpdateProperties) IncludeAdditional() {
 }
 
 type NetworkingProperties struct {
-	Nodes Type `json:"nodes"`
+	Nodes    Type `json:"nodes"`
+	Services Type `json:"services"`
+	Pods     Type `json:"pods"`
 }
 
 type NetworkingType struct {
@@ -320,9 +322,13 @@ func NewProvisioningProperties(machineTypesDisplay, regionsDisplay map[string]st
 func NewNetworkingSchema() *NetworkingType {
 	seedCIDRs := strings.Join(networking.GardenerSeedCIDRs, ", ")
 	return &NetworkingType{
-		Type: Type{Type: "object", Description: "Networking configuration. These values are immutable and cannot be updated later."},
+		Type: Type{Type: "object", Description: "Networking configuration. These values are immutable and cannot be updated later. All provided CIDR ranges must not overlap one another."},
 		Properties: NetworkingProperties{
-			Nodes: Type{Type: "string", Title: "CIDR range for nodes", Description: fmt.Sprintf("CIDR range for nodes, must not overlap with the following CIDRs: %s, %s, %s", networking.DefaultPodsCIDR, networking.DefaultServicesCIDR, seedCIDRs),
+			Services: Type{Type: "string", Title: "CIDR range for Services", Description: fmt.Sprintf("CIDR range for Services, must not overlap with the following CIDRs: %s", seedCIDRs),
+				Default: networking.DefaultServicesCIDR},
+			Pods: Type{Type: "string", Title: "CIDR range for Pods", Description: fmt.Sprintf("CIDR range for Pods, must not overlap with the following CIDRs: %s", seedCIDRs),
+				Default: networking.DefaultPodsCIDR},
+			Nodes: Type{Type: "string", Title: "CIDR range for Nodes", Description: fmt.Sprintf("CIDR range for Nodes, must not overlap with the following CIDRs: %s", seedCIDRs),
 				Default: networking.DefaultNodesCIDR},
 		},
 		Required: []string{"nodes"},

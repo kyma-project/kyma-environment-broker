@@ -64,7 +64,6 @@ func TestGetEndpoint_GetProvisioningInstance(t *testing.T) {
 		queue,
 		factoryBuilder,
 		broker.PlansConfig{},
-		false,
 		planDefaults,
 		whitelist.Set{},
 		"request rejected, your globalAccountId is not whitelisted",

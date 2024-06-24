@@ -30,11 +30,15 @@ func (c *RateLimitedCisClient) buildEventRequest(page int, fromActionTime int64)
 func (c *RateLimitedCisClient) FetchEventsWindow(fromActionTime int64) ([]Event, error) {
 	var events []Event
 	var currentPage int
+	var totalPages int
 	for {
 		cisResponse, err := c.fetchEventsPage(currentPage, fromActionTime)
+		if cisResponse.TotalPages > 0 {
+			totalPages = cisResponse.TotalPages
+		}
 		if err != nil {
 			c.log.Error(fmt.Sprintf("while getting subaccount events for %d page: %v", currentPage, err))
-			c.log.Debug(fmt.Sprintf("Event window fetched partially - pages: %d out of %d, events: %d, from epoch: %d", currentPage, cisResponse.TotalPages, len(events), fromActionTime))
+			c.log.Debug(fmt.Sprintf("event window fetched partially - pages: %d out of %d, fetched events: %d, from epoch: %d", currentPage, totalPages, len(events), fromActionTime))
 			return events, err
 		}
 		events = append(events, cisResponse.Events...)

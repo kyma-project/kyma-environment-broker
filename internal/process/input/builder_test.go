@@ -35,7 +35,7 @@ func TestInputBuilderFactory_ForPlan(t *testing.T) {
 
 		ibf, err := NewInputBuilderFactory(configProvider, Config{}, "1.10", fixTrialRegionMapping(), fixTrialProviders(), fixture.FixOIDCConfigDTO(), false)
 		assert.NoError(t, err)
-		pp := fixProvisioningParameters(broker.GCPPlanID, "")
+		pp := fixProvisioningParameters(broker.GCPPlanID)
 
 		// when
 		input, err := ibf.CreateProvisionInput(pp, internal.RuntimeVersionData{
@@ -59,29 +59,10 @@ func TestInputBuilderFactory_ForPlan(t *testing.T) {
 
 		ibf, err := NewInputBuilderFactory(configProvider, Config{}, "1.10", fixTrialRegionMapping(), fixTrialProviders(), fixture.FixOIDCConfigDTO(), false)
 		assert.NoError(t, err)
-		pp := fixProvisioningParameters(broker.GCPPlanID, "")
+		pp := fixProvisioningParameters(broker.GCPPlanID)
 
 		// when
 		input, err := ibf.CreateUpgradeInput(pp, internal.RuntimeVersionData{Version: "1.1.0", Origin: internal.Defaults})
-
-		// Then
-		assert.NoError(t, err)
-		require.IsType(t, &RuntimeInput{}, input)
-
-		result := input.(*RuntimeInput)
-		assert.NotNil(t, result.upgradeRuntimeInput)
-	})
-
-	t.Run("should build RuntimeInput with GA version Kyma components and UpgradeRuntimeInput", func(t *testing.T) {
-		// given
-		configProvider := mockConfigProvider()
-
-		ibf, err := NewInputBuilderFactory(configProvider, Config{}, "1.10", fixTrialRegionMapping(), fixTrialProviders(), fixture.FixOIDCConfigDTO(), false)
-		assert.NoError(t, err)
-		pp := fixProvisioningParameters(broker.GCPPlanID, "")
-
-		// when
-		input, err := ibf.CreateUpgradeInput(pp, internal.RuntimeVersionData{Version: "1.1.0", Origin: internal.AccountMapping})
 
 		// Then
 		assert.NoError(t, err)
@@ -97,7 +78,7 @@ func TestInputBuilderFactory_ForPlan(t *testing.T) {
 
 		ibf, err := NewInputBuilderFactory(configProvider, Config{}, "1.10", fixTrialRegionMapping(), fixTrialProviders(), fixture.FixOIDCConfigDTO(), false)
 		assert.NoError(t, err)
-		pp := fixProvisioningParameters(broker.GCPPlanID, "PR-1")
+		pp := fixProvisioningParameters(broker.GCPPlanID)
 
 		// when
 		input, err := ibf.CreateProvisionInput(pp, internal.RuntimeVersionData{Version: "PR-1", Origin: internal.Parameters})
@@ -113,7 +94,7 @@ func TestInputBuilderFactory_ForPlan(t *testing.T) {
 
 		ibf, err := NewInputBuilderFactory(configProvider, Config{}, "1.10", fixTrialRegionMapping(), fixTrialProviders(), fixture.FixOIDCConfigDTO(), false)
 		assert.NoError(t, err)
-		pp := fixProvisioningParameters(broker.GCPPlanID, "")
+		pp := fixProvisioningParameters(broker.GCPPlanID)
 
 		// when
 		input, err := ibf.CreateProvisionInput(pp, internal.RuntimeVersionData{Version: "1.1.0", Origin: internal.Defaults})
@@ -126,7 +107,7 @@ func TestInputBuilderFactory_ForPlan(t *testing.T) {
 		assert.Equal(t, gqlschema.KymaProfileProduction, *result.provisionRuntimeInput.KymaConfig.Profile)
 
 		// given
-		pp = fixProvisioningParameters(broker.TrialPlanID, "")
+		pp = fixProvisioningParameters(broker.TrialPlanID)
 
 		// when
 		input, err = ibf.CreateProvisionInput(pp, internal.RuntimeVersionData{Version: "1.1.0", Origin: internal.Defaults})
@@ -146,7 +127,7 @@ func TestInputBuilderFactory_ForPlan(t *testing.T) {
 
 		ibf, err := NewInputBuilderFactory(configProvider, Config{}, "1.10", fixTrialRegionMapping(), fixTrialProviders(), fixture.FixOIDCConfigDTO(), false)
 		assert.NoError(t, err)
-		pp := fixProvisioningParameters(broker.GCPPlanID, "")
+		pp := fixProvisioningParameters(broker.GCPPlanID)
 
 		// when
 		input, err := ibf.CreateUpgradeInput(pp, internal.RuntimeVersionData{Version: "1.1.0", Origin: internal.Defaults})
@@ -161,7 +142,7 @@ func TestInputBuilderFactory_ForPlan(t *testing.T) {
 		assert.Equal(t, gqlschema.KymaProfileProduction, *result.upgradeRuntimeInput.KymaConfig.Profile)
 
 		// given
-		pp = fixProvisioningParameters(broker.TrialPlanID, "")
+		pp = fixProvisioningParameters(broker.TrialPlanID)
 		provider := internal.GCP
 		pp.Parameters.Provider = &provider
 		// when
@@ -184,7 +165,7 @@ func TestInputBuilderFactory_ForPlan(t *testing.T) {
 
 		ibf, err := NewInputBuilderFactory(configProvider, Config{}, "1.10", fixTrialRegionMapping(), fixTrialProviders(), fixture.FixOIDCConfigDTO(), false)
 		assert.NoError(t, err)
-		pp := fixProvisioningParameters(broker.GCPPlanID, "")
+		pp := fixProvisioningParameters(broker.GCPPlanID)
 		provider = &cloudProvider.GcpInput{} // for broker.GCPPlanID
 		ver := internal.RuntimeVersionData{
 			Version: "2.4.0",
@@ -211,10 +192,9 @@ func TestInputBuilderFactory_ForPlan(t *testing.T) {
 
 }
 
-func fixProvisioningParameters(planID, kymaVersion string) internal.ProvisioningParameters {
+func fixProvisioningParameters(planID string) internal.ProvisioningParameters {
 	pp := fixture.FixProvisioningParameters("")
 	pp.PlanID = planID
-	pp.Parameters.KymaVersion = kymaVersion
 	pp.Parameters.AutoScalerMin = ptr.Integer(1)
 	pp.Parameters.AutoScalerMax = ptr.Integer(1)
 

@@ -60,7 +60,6 @@ type ProvisionEndpoint struct {
 	builderFactory          PlanValidator
 	enabledPlanIDs          map[string]struct{}
 	plansConfig             PlansConfig
-	kymaVerOnDemand         bool
 	planDefaults            PlanDefaults
 
 	shootDomain       string
@@ -88,7 +87,6 @@ func NewProvision(cfg Config,
 	queue Queue,
 	builderFactory PlanValidator,
 	plansConfig PlansConfig,
-	kvod bool,
 	planDefaults PlanDefaults,
 	euAccessWhitelist whitelist.Set,
 	euRejectMessage string,
@@ -114,7 +112,6 @@ func NewProvision(cfg Config,
 		log:                           log.WithField("service", "ProvisionEndpoint"),
 		enabledPlanIDs:                enabledPlanIDs,
 		plansConfig:                   plansConfig,
-		kymaVerOnDemand:               kvod,
 		shootDomain:                   gardenerConfig.ShootDomain,
 		shootProject:                  gardenerConfig.Project,
 		shootDnsProviders:             gardenerConfig.DNSProviders,
@@ -322,11 +319,6 @@ func (b *ProvisionEndpoint) validateAndExtract(details domain.ProvisionDetails, 
 		}
 	}
 
-	if !b.kymaVerOnDemand {
-		logger.Infof("Kyma on demand functionality is disabled. Default Kyma version will be used instead %s", parameters.KymaVersion)
-		parameters.KymaVersion = ""
-		parameters.OverridesVersion = ""
-	}
 	parameters.LicenceType = b.determineLicenceType(details.PlanID)
 
 	found := b.builderFactory.IsPlanSupport(details.PlanID)
@@ -516,14 +508,6 @@ func (b *ProvisionEndpoint) validateNetworking(parameters internal.ProvisioningP
 		return nil
 	}
 
-	// currently we do not support Pod's and Service's
-	if parameters.Networking.PodsCidr != nil {
-		return fmt.Errorf("pod network's CIDR is not supported in the request")
-	}
-	if parameters.Networking.ServicesCidr != nil {
-		return fmt.Errorf("service network's CIDR is not supported in the request")
-	}
-
 	var nodes, services, pods *net.IPNet
 	if nodes, e = validateCidr(parameters.Networking.NodesCidr); e != nil {
 		err = multierror.Append(err, fmt.Errorf("while parsing nodes CIDR: %w", e))
@@ -532,17 +516,6 @@ func (b *ProvisionEndpoint) validateNetworking(parameters internal.ProvisioningP
 	cidr, _ := netip.ParsePrefix(parameters.Networking.NodesCidr)
 	if cidr.Bits() > 23 {
 		err = multierror.Append(err, fmt.Errorf("the suffix of the node CIDR must not be greater than 26"))
-	}
-
-	if err != nil {
-		return err
-	}
-
-	for _, seed := range networking.GardenerSeedCIDRs {
-		_, seedCidr, _ := net.ParseCIDR(seed)
-		if e := validateOverlapping(*nodes, *seedCidr); e != nil {
-			err = multierror.Append(err, fmt.Errorf("nodes CIDR must not overlap %s", seed))
-		}
 	}
 
 	if parameters.Networking.PodsCidr != nil {
@@ -563,11 +536,28 @@ func (b *ProvisionEndpoint) validateNetworking(parameters internal.ProvisioningP
 		return err
 	}
 
+	for _, seed := range networking.GardenerSeedCIDRs {
+		_, seedCidr, _ := net.ParseCIDR(seed)
+		if e := validateOverlapping(*nodes, *seedCidr); e != nil {
+			err = multierror.Append(err, fmt.Errorf("nodes CIDR must not overlap %s", seed))
+		}
+		if e := validateOverlapping(*services, *seedCidr); e != nil {
+			err = multierror.Append(err, fmt.Errorf("services CIDR must not overlap %s", seed))
+		}
+		if e := validateOverlapping(*pods, *seedCidr); e != nil {
+			err = multierror.Append(err, fmt.Errorf("pods CIDR must not overlap %s", seed))
+		}
+	}
+
+	if err != nil {
+		return err
+	}
+
 	if e := validateOverlapping(*nodes, *pods); e != nil {
-		err = multierror.Append(err, fmt.Errorf("nodes CIDR must not overlap %s", pods.String()))
+		err = multierror.Append(err, fmt.Errorf("nodes CIDR must not overlap pods CIDR"))
 	}
 	if e := validateOverlapping(*nodes, *services); e != nil {
-		err = multierror.Append(err, fmt.Errorf("nodes CIDR must not overlap %s", services.String()))
+		err = multierror.Append(err, fmt.Errorf("nodes CIDR must not overlap serivces CIDR"))
 	}
 	if e := validateOverlapping(*services, *pods); e != nil {
 		err = multierror.Append(err, fmt.Errorf("services CIDR must not overlap pods CIDR"))

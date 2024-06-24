@@ -199,7 +199,7 @@ func TestProvisioning_HappyPathSapConvergedCloud(t *testing.T) {
 	iid := uuid.New().String()
 
 	// when
-	resp := suite.CallAPI("PUT", fmt.Sprintf("oauth/v2/service_instances/%s?accepts_incomplete=true", iid),
+	resp := suite.CallAPI("PUT", fmt.Sprintf("oauth/cf-eu20-staging/v2/service_instances/%s?accepts_incomplete=true", iid),
 		`{
 					"service_id": "47c9dcbf-ff30-448e-ab36-d3bad66ba281",
 					"plan_id": "03b812ac-c991-4528-b5bd-08b303523a63",
@@ -223,7 +223,6 @@ func TestProvisioning_HappyPathSapConvergedCloud(t *testing.T) {
 	suite.AssertKymaResourceExists(opID)
 	suite.AssertKymaAnnotationExists(opID, "compass-runtime-id-for-migration")
 	suite.AssertKymaLabelsExist(opID, map[string]string{"kyma-project.io/region": "eu-de-1"})
-	suite.AssertKymaLabelNotExists(opID, "kyma-project.io/platform-region")
 }
 
 func TestProvisioning_Preview(t *testing.T) {
@@ -283,6 +282,42 @@ func TestProvisioning_NetworkingParametersForAWS(t *testing.T) {
 					"region": "eu-central-1",
 					"networking": {
 						"nodes": "192.168.48.0/20"
+					}
+				}
+			}
+		}`)
+	opID := suite.DecodeOperationID(resp)
+
+	suite.processProvisioningByOperationID(opID)
+
+	suite.WaitForOperationState(opID, domain.Succeeded)
+}
+
+func TestProvisioning_AllNetworkingParametersForAWS(t *testing.T) {
+	// given
+	suite := NewBrokerSuiteTest(t)
+	defer suite.TearDown()
+	iid := uuid.New().String()
+
+	// when
+	resp := suite.CallAPI("PUT", fmt.Sprintf("oauth/v2/service_instances/%s?accepts_incomplete=true", iid),
+		`{
+				"service_id": "47c9dcbf-ff30-448e-ab36-d3bad66ba281",
+				"plan_id": "361c511f-f939-4621-b228-d0fb79a1fe15",
+		
+				"context": {
+					"globalaccount_id": "e449f875-b5b2-4485-b7c0-98725c0571bf",
+						"subaccount_id": "test",
+					"user_id": "piotr.miskiewicz@sap.com"
+					
+				},
+				"parameters": {
+					"name": "test",
+					"region": "eu-central-1",
+					"networking": {
+						"nodes": "192.168.48.0/20",
+						"pods": "10.104.0.0/24",
+						"services": "10.105.0.0/24"
 					}
 				}
 			}
@@ -556,8 +591,7 @@ func TestProvisioning_Conflict(t *testing.T) {
 						"user_id": "john.smith@email.com"
 					},
 					"parameters": {
-						"name": "testing-cluster",
-						"kymaVersion": "2.4.0"
+						"name": "testing-cluster"
 					}
 		}`)
 	opID := suite.DecodeOperationID(resp)
@@ -579,8 +613,7 @@ func TestProvisioning_Conflict(t *testing.T) {
 						"user_id": "john.smith@email.com"
 					},
 					"parameters": {
-						"name": "testing-cluster",
-						"kymaVersion": "2.5.0"
+						"name": "testing-cluster-2"
 					}
 		}`)
 	// then

@@ -176,7 +176,7 @@ func (b *UpdateEndpoint) Update(_ context.Context, instanceID string, details do
 
 func (b *UpdateEndpoint) validateWithJsonSchemaValidator(details domain.UpdateDetails, instance *internal.Instance) error {
 	if len(details.RawParameters) > 0 {
-		planValidator, err := b.getJsonSchemaValidator(instance.Provider, instance.ServicePlanID, instance.ProviderRegion)
+		planValidator, err := b.getJsonSchemaValidator(instance.Provider, instance.ServicePlanID, instance.Parameters.PlatformRegion)
 		if err != nil {
 			return fmt.Errorf("while creating plan validator: %w", err)
 		}
@@ -387,6 +387,7 @@ func (b *UpdateEndpoint) isKyma2(instance *internal.Instance) (bool, string, err
 
 func (b *UpdateEndpoint) getJsonSchemaValidator(provider internal.CloudProvider, planID string, platformRegion string) (JSONSchemaValidator, error) {
 	// shootAndSeedSameRegion is never enabled for update
+	b.log.Printf("region is: %s", platformRegion)
 	plans := Plans(b.plansConfig, provider, b.config.IncludeAdditionalParamsInSchema, euaccess.IsEURestrictedAccess(platformRegion), b.config.UseSmallerMachineTypes, false, b.convergedCloudRegionsProvider.GetRegions(platformRegion))
 	plan := plans[planID]
 	schema := string(Marshal(plan.Schemas.Instance.Update.Parameters))

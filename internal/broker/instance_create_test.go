@@ -84,7 +84,6 @@ func TestProvision_Provision(t *testing.T) {
 			queue,
 			factoryBuilder,
 			broker.PlansConfig{},
-			false,
 			planDefaults,
 			whitelist.Set{},
 			"request rejected, your globalAccountId is not whitelisted",
@@ -163,7 +162,6 @@ func TestProvision_Provision(t *testing.T) {
 			queue,
 			factoryBuilder,
 			broker.PlansConfig{},
-			false,
 			planDefaults,
 			whitelist.Set{},
 			"request rejected, your globalAccountId is not whitelisted",
@@ -246,7 +244,6 @@ func TestProvision_Provision(t *testing.T) {
 			queue,
 			factoryBuilder,
 			broker.PlansConfig{},
-			false,
 			planDefaults,
 			whitelist.Set{},
 			"request rejected, your globalAccountId is not whitelisted",
@@ -300,7 +297,6 @@ func TestProvision_Provision(t *testing.T) {
 			queue,
 			factoryBuilder,
 			broker.PlansConfig{},
-			false,
 			planDefaults,
 			whitelist.Set{},
 			"request rejected, your globalAccountId is not whitelisted",
@@ -379,7 +375,6 @@ func TestProvision_Provision(t *testing.T) {
 			queue,
 			factoryBuilder,
 			broker.PlansConfig{},
-			false,
 			planDefaults,
 			whitelist.Set{},
 			"request rejected, your globalAccountId is not whitelisted",
@@ -461,7 +456,6 @@ func TestProvision_Provision(t *testing.T) {
 			nil,
 			factoryBuilder,
 			broker.PlansConfig{},
-			false,
 			planDefaults,
 			whitelist.Set{},
 			"request rejected, your globalAccountId is not whitelisted",
@@ -515,7 +509,6 @@ func TestProvision_Provision(t *testing.T) {
 			nil,
 			factoryBuilder,
 			broker.PlansConfig{},
-			false,
 			planDefaults,
 			whitelist.Set{},
 			"request rejected, your globalAccountId is not whitelisted",
@@ -570,7 +563,6 @@ func TestProvision_Provision(t *testing.T) {
 			queue,
 			factoryBuilder,
 			broker.PlansConfig{},
-			false,
 			planDefaults,
 			whitelist.Set{},
 			"request rejected, your globalAccountId is not whitelisted",
@@ -639,7 +631,6 @@ func TestProvision_Provision(t *testing.T) {
 			queue,
 			factoryBuilder,
 			broker.PlansConfig{},
-			false,
 			planDefaults,
 			whitelist.Set{},
 			"request rejected, your globalAccountId is not whitelisted",
@@ -708,7 +699,6 @@ func TestProvision_Provision(t *testing.T) {
 			queue,
 			factoryBuilder,
 			broker.PlansConfig{},
-			false,
 			planDefaults,
 			whitelist.Set{},
 			"request rejected, your globalAccountId is not whitelisted",
@@ -757,7 +747,6 @@ func TestProvision_Provision(t *testing.T) {
 			nil,
 			factoryBuilder,
 			broker.PlansConfig{},
-			false,
 			planDefaults,
 			whitelist.Set{},
 			"request rejected, your globalAccountId is not whitelisted",
@@ -781,60 +770,6 @@ func TestProvision_Provision(t *testing.T) {
 		assert.Empty(t, response.OperationData)
 	})
 
-	t.Run("kyma version parameters should be saved", func(t *testing.T) {
-		// given
-		memoryStorage := storage.NewMemoryStorage()
-
-		factoryBuilder := &automock.PlanValidator{}
-		factoryBuilder.On("IsPlanSupport", planID).Return(true)
-
-		queue := &automock.Queue{}
-		queue.On("Add", mock.AnythingOfType("string"))
-
-		planDefaults := func(planID string, platformProvider internal.CloudProvider, provider *internal.CloudProvider) (*gqlschema.ClusterConfigInput, error) {
-			return &gqlschema.ClusterConfigInput{}, nil
-		}
-		kcBuilder := &kcMock.KcBuilder{}
-		provisionEndpoint := broker.NewProvision(
-			broker.Config{EnablePlans: []string{"gcp", "azure", "azure_lite"}, OnlySingleTrialPerGA: true},
-			gardener.Config{Project: "test", ShootDomain: "example.com", DNSProviders: fixDNSProviders()},
-			memoryStorage.Operations(),
-			memoryStorage.Instances(),
-			memoryStorage.InstancesArchived(),
-			queue,
-			factoryBuilder,
-			broker.PlansConfig{},
-			true,
-			planDefaults,
-			whitelist.Set{},
-			"request rejected, your globalAccountId is not whitelisted",
-			logrus.StandardLogger(),
-			dashboardConfig,
-			kcBuilder,
-			whitelist.Set{},
-			&broker.OneForAllConvergedCloudRegionsProvider{},
-		)
-
-		// when
-		response, err := provisionEndpoint.Provision(fixRequestContext(t, "dummy"), instanceID, domain.ProvisionDetails{
-			ServiceID: serviceID,
-			PlanID:    planID,
-			RawParameters: json.RawMessage(fmt.Sprintf(`{
-								"name": "%s",
-								"region": "%s",
-								"kymaVersion": "main-00e83e99"
-								}`, clusterName, clusterRegion)),
-			RawContext: json.RawMessage(fmt.Sprintf(`{"globalaccount_id": "%s", "subaccount_id": "%s", "user_id": "%s"}`, "1cafb9c8-c8f8-478a-948a-9cb53bb76aa4", subAccountID, userID)),
-		}, true)
-		assert.NoError(t, err)
-
-		// then
-		operation, err := memoryStorage.Operations().GetProvisioningOperationByID(response.OperationData)
-		require.NoError(t, err)
-
-		assert.Equal(t, "main-00e83e99", operation.ProvisioningParameters.Parameters.KymaVersion)
-	})
-
 	t.Run("should return error when region is not specified", func(t *testing.T) {
 		// given
 		factoryBuilder := &automock.PlanValidator{}
@@ -853,7 +788,6 @@ func TestProvision_Provision(t *testing.T) {
 			nil,
 			factoryBuilder,
 			broker.PlansConfig{},
-			true,
 			planDefaults,
 			whitelist.Set{},
 			"request rejected, your globalAccountId is not whitelisted",
@@ -874,60 +808,6 @@ func TestProvision_Provision(t *testing.T) {
 
 		// then
 		require.EqualError(t, provisionErr, "No region specified in request.")
-	})
-
-	t.Run("kyma version parameters should NOT be saved", func(t *testing.T) {
-		// given
-		memoryStorage := storage.NewMemoryStorage()
-
-		factoryBuilder := &automock.PlanValidator{}
-		factoryBuilder.On("IsPlanSupport", planID).Return(true)
-
-		queue := &automock.Queue{}
-		queue.On("Add", mock.AnythingOfType("string"))
-
-		planDefaults := func(planID string, platformProvider internal.CloudProvider, provider *internal.CloudProvider) (*gqlschema.ClusterConfigInput, error) {
-			return &gqlschema.ClusterConfigInput{}, nil
-		}
-		kcBuilder := &kcMock.KcBuilder{}
-		provisionEndpoint := broker.NewProvision(
-			broker.Config{EnablePlans: []string{"gcp", "azure", "azure_lite"}, OnlySingleTrialPerGA: true},
-			gardener.Config{Project: "test", ShootDomain: "example.com", DNSProviders: fixDNSProviders()},
-			memoryStorage.Operations(),
-			memoryStorage.Instances(),
-			memoryStorage.InstancesArchived(),
-			queue,
-			factoryBuilder,
-			broker.PlansConfig{},
-			false,
-			planDefaults,
-			whitelist.Set{},
-			"request rejected, your globalAccountId is not whitelisted",
-			logrus.StandardLogger(),
-			dashboardConfig,
-			kcBuilder,
-			whitelist.Set{},
-			&broker.OneForAllConvergedCloudRegionsProvider{},
-		)
-
-		// when
-		response, err := provisionEndpoint.Provision(fixRequestContext(t, "dummy"), instanceID, domain.ProvisionDetails{
-			ServiceID: serviceID,
-			PlanID:    planID,
-			RawParameters: json.RawMessage(fmt.Sprintf(`{
-								"name": "%s",
-								"region": "%s",
-								"kymaVersion": "main-00e83e99"
-								}`, clusterName, clusterRegion)),
-			RawContext: json.RawMessage(fmt.Sprintf(`{"globalaccount_id": "%s", "subaccount_id": "%s", "user_id": "%s"}`, "1cafb9c8-c8f8-478a-948a-9cb53bb76aa4", subAccountID, userID)),
-		}, true)
-		assert.NoError(t, err)
-
-		// then
-		operation, err := memoryStorage.Operations().GetProvisioningOperationByID(response.OperationData)
-		require.NoError(t, err)
-
-		assert.Equal(t, "", operation.ProvisioningParameters.Parameters.KymaVersion)
 	})
 
 	t.Run("licence type lite should be saved in parameters", func(t *testing.T) {
@@ -953,7 +833,6 @@ func TestProvision_Provision(t *testing.T) {
 			queue,
 			factoryBuilder,
 			broker.PlansConfig{},
-			false,
 			planDefaults,
 			whitelist.Set{},
 			"request rejected, your globalAccountId is not whitelisted",
@@ -1003,7 +882,6 @@ func TestProvision_Provision(t *testing.T) {
 			queue,
 			factoryBuilder,
 			broker.PlansConfig{},
-			false,
 			planDefaults,
 			whitelist.Set{},
 			"request rejected, your globalAccountId is not whitelisted",
@@ -1059,7 +937,6 @@ func TestProvision_Provision(t *testing.T) {
 			queue,
 			factoryBuilder,
 			broker.PlansConfig{},
-			false,
 			planDefaults,
 			whitelist.Set{},
 			"request rejected, your globalAccountId is not whitelisted",
@@ -1121,7 +998,6 @@ func TestProvision_Provision(t *testing.T) {
 			queue,
 			factoryBuilder,
 			broker.PlansConfig{},
-			false,
 			planDefaults,
 			whitelist.Set{},
 			"request rejected, your globalAccountId is not whitelisted",
@@ -1183,7 +1059,6 @@ func TestProvision_Provision(t *testing.T) {
 			queue,
 			factoryBuilder,
 			broker.PlansConfig{},
-			false,
 			planDefaults,
 			whitelist.Set{},
 			"request rejected, your globalAccountId is not whitelisted",
@@ -1246,7 +1121,6 @@ func TestProvision_Provision(t *testing.T) {
 			queue,
 			factoryBuilder,
 			broker.PlansConfig{},
-			false,
 			planDefaults,
 			whitelist.Set{whitelistedGlobalAccountID: struct{}{}},
 			"request rejected, your globalAccountId is not whitelisted",
@@ -1301,7 +1175,6 @@ func TestProvision_Provision(t *testing.T) {
 			queue,
 			factoryBuilder,
 			broker.PlansConfig{},
-			false,
 			planDefaults,
 			whitelist.Set{},
 			"request rejected, your globalAccountId is not whitelisted",
@@ -1357,7 +1230,6 @@ func TestProvision_Provision(t *testing.T) {
 			queue,
 			factoryBuilder,
 			broker.PlansConfig{},
-			false,
 			planDefaults,
 			whitelist.Set{},
 			"request rejected, your globalAccountId is not whitelisted",
@@ -1428,7 +1300,6 @@ func TestProvision_Provision(t *testing.T) {
 			queue,
 			factoryBuilder,
 			broker.PlansConfig{},
-			false,
 			planDefaults,
 			whitelist.Set{},
 			"request rejected, your globalAccountId is not whitelisted",
@@ -1489,7 +1360,6 @@ func TestProvision_Provision(t *testing.T) {
 			queue,
 			factoryBuilder,
 			broker.PlansConfig{},
-			false,
 			planDefaults,
 			whitelist.Set{},
 			"request rejected, your globalAccountId is not whitelisted",
@@ -1548,7 +1418,6 @@ func TestProvision_Provision(t *testing.T) {
 			nil,
 			factoryBuilder,
 			broker.PlansConfig{},
-			false,
 			planDefaults,
 			whitelist.Set{},
 			"request rejected, your globalAccountId is not whitelisted",
@@ -1598,7 +1467,6 @@ func TestProvision_Provision(t *testing.T) {
 			nil,
 			factoryBuilder,
 			broker.PlansConfig{},
-			false,
 			planDefaults,
 			whitelist.Set{},
 			"request rejected, your globalAccountId is not whitelisted",
@@ -1702,7 +1570,6 @@ func TestNetworkingValidation(t *testing.T) {
 				queue,
 				factoryBuilder,
 				broker.PlansConfig{},
-				false,
 				planDefaults,
 				whitelist.Set{},
 				"request rejected, your globalAccountId is not whitelisted",
@@ -1803,7 +1670,6 @@ func TestRegionValidation(t *testing.T) {
 				queue,
 				factoryBuilder,
 				broker.PlansConfig{},
-				false,
 				planDefaults,
 				whitelist.Set{},
 				"request rejected, your globalAccountId is not whitelisted",

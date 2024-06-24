@@ -57,20 +57,18 @@ import (
 )
 
 const (
-	globalAccountLabel     = "account"
-	subAccountLabel        = "subaccount"
-	runtimeIDAnnotation    = "kcp.provisioner.kyma-project.io/runtime-id"
-	defaultNamespace       = "kcp-system"
-	defaultKymaVer         = "2.4.0"
-	kymaVersionsConfigName = "kyma-versions"
-	defaultRegion          = "cf-eu10"
-	globalAccountID        = "dummy-ga-id"
-	dashboardURL           = "http://console.garden-dummy.kyma.io"
-	operationID            = "provisioning-op-id"
-	deprovisioningOpID     = "deprovisioning-op-id"
-	reDeprovisioningOpID   = "re-deprovisioning-op-id"
-	instanceID             = "instance-id"
-	dbSecretKey            = "1234567890123456"
+	globalAccountLabel   = "account"
+	subAccountLabel      = "subaccount"
+	runtimeIDAnnotation  = "kcp.provisioner.kyma-project.io/runtime-id"
+	defaultKymaVer       = "2.4.0"
+	defaultRegion        = "cf-eu10"
+	globalAccountID      = "dummy-ga-id"
+	dashboardURL         = "http://console.garden-dummy.kyma.io"
+	operationID          = "provisioning-op-id"
+	deprovisioningOpID   = "deprovisioning-op-id"
+	reDeprovisioningOpID = "re-deprovisioning-op-id"
+	instanceID           = "instance-id"
+	dbSecretKey          = "1234567890123456"
 
 	pollingInterval = 3 * time.Millisecond
 )
@@ -156,7 +154,7 @@ func NewOrchestrationSuite(t *testing.T, additionalKymaVersions []string) *Orche
 
 	eventBroker := event.NewPubSub(logs)
 
-	runtimeVerConfigurator := runtimeversion.NewRuntimeVersionConfigurator(kymaVer, runtimeversion.NewAccountVersionMapping(ctx, cli, defaultNamespace, kymaVersionsConfigName, logs), nil)
+	runtimeVerConfigurator := runtimeversion.NewRuntimeVersionConfigurator(kymaVer, nil)
 
 	avsClient, _ := avs.NewClient(ctx, avs.Config{}, logs)
 	avsDel := avs.NewDelegator(avsClient, avs.Config{}, db.Operations())
@@ -202,8 +200,6 @@ type RuntimeOptions struct {
 	Region           string
 	PlanID           string
 	Provider         internal.CloudProvider
-	KymaVersion      string
-	OverridesVersion string
 	OIDC             *internal.OIDCConfigDTO
 	UserID           string
 	RuntimeAdmins    []string
@@ -616,8 +612,7 @@ func NewProvisioningSuite(t *testing.T, multiZoneCluster bool, controlPlaneFailu
 	internalEvalAssistant := avs.NewInternalEvalAssistant(cfg.Avs)
 	externalEvalCreator := provisioning.NewExternalEvalCreator(avsDel, cfg.Avs.Disabled, externalEvalAssistant)
 
-	accountVersionMapping := runtimeversion.NewAccountVersionMapping(ctx, cli, cfg.VersionConfig.Namespace, cfg.VersionConfig.Name, logs)
-	runtimeVerConfigurator := runtimeversion.NewRuntimeVersionConfigurator(cfg.KymaVersion, accountVersionMapping, nil)
+	runtimeVerConfigurator := runtimeversion.NewRuntimeVersionConfigurator(cfg.KymaVersion, nil)
 
 	edpClient := edp.NewFakeClient()
 
@@ -656,8 +651,6 @@ func (s *ProvisioningSuite) CreateProvisioning(options RuntimeOptions) string {
 		PlatformProvider: options.PlatformProvider,
 		Parameters: internal.ProvisioningParametersDTO{
 			Region:                options.ProvideRegion(),
-			KymaVersion:           options.KymaVersion,
-			OverridesVersion:      options.OverridesVersion,
 			OIDC:                  options.ProvideOIDC(),
 			RuntimeAdministrators: options.ProvideRuntimeAdmins(),
 		},
@@ -967,7 +960,6 @@ func fixConfig() *Config {
 			ShootDomain: "kyma.sap.com",
 		},
 		KymaVersion:             defaultKymaVer,
-		EnableOnDemandVersion:   true,
 		UpdateProcessingEnabled: true,
 		Broker: broker.Config{
 			EnablePlans: []string{"azure", "trial", "aws", "own_cluster", "preview", "sap-converged-cloud", "gcp", "free"},
@@ -999,8 +991,9 @@ func fixConfig() *Config {
 		Deprovisioning: process.StagedManagerConfiguration{MaxStepProcessingTime: time.Minute},
 		Update:         process.StagedManagerConfiguration{MaxStepProcessingTime: time.Minute},
 
-		ArchiveEnabled:  true,
-		CleaningEnabled: true,
+		ArchiveEnabled:                          true,
+		CleaningEnabled:                         true,
+		SapConvergedCloudRegionMappingsFilePath: "testdata/old-sap-converged-cloud-region-mappings.yaml",
 	}
 }
 

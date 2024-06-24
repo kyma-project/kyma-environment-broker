@@ -53,7 +53,8 @@ func (q *SubaccountAwarePriorityQueueWithCallbacks) Insert(element QueueElement)
 	}
 	if idx, ok := q.idx[e.SubaccountID]; ok {
 		if q.elements[idx].ModifiedAt > e.ModifiedAt {
-			// event is outdated, do not insert
+			// new element is older than one already in the queue, do not insert
+			q.log.Debug(fmt.Sprintf("Element with subaccountID %s, betaEnabled %s, modifiedAt %d is older than %d - ignoring", e.SubaccountID, e.BetaEnabled, e.ModifiedAt, q.elements[idx].ModifiedAt))
 			return
 		}
 		// extraction and re-insertion
@@ -62,12 +63,18 @@ func (q *SubaccountAwarePriorityQueueWithCallbacks) Insert(element QueueElement)
 		// updated element is at the top of the heap
 		// remove it
 		q.elements[0] = q.elements[q.size-1]
+		q.idx[q.elements[0].SubaccountID] = 0
 		q.size--
 		q.siftDown()
+		q.log.Debug(fmt.Sprintf("Element with subaccountID %s is updated with betaEnabled %s, modifiedAt %d", e.SubaccountID, e.BetaEnabled, e.ModifiedAt))
 	} else {
+		q.log.Debug(fmt.Sprintf("Element with subaccountID %s is inserted with betaEnabled %s, modifiedAt %d", e.SubaccountID, e.BetaEnabled, e.ModifiedAt))
 		q.idx[e.SubaccountID] = q.size
 	}
+
+	// insert new element
 	q.elements[q.size] = e
+	q.idx[e.SubaccountID] = q.size
 	q.size++
 	q.siftUp()
 
@@ -91,6 +98,7 @@ func (q *SubaccountAwarePriorityQueueWithCallbacks) Extract() (QueueElement, boo
 	if q.eventHandler != nil && q.eventHandler.OnExtract != nil {
 		q.eventHandler.OnExtract(q.size, time.Now().UnixNano()-e.entryTime)
 	}
+	q.log.Debug(fmt.Sprintf("Element dequeued - subaccountID: %s, betaEnabled %s", e.SubaccountID, e.BetaEnabled))
 	return e.QueueElement, true
 }
 
@@ -122,7 +130,11 @@ func (q *SubaccountAwarePriorityQueueWithCallbacks) swap(i int, parent int) {
 	q.elements[i],
 		q.elements[parent],
 		q.idx[q.elements[i].SubaccountID],
-		q.idx[q.elements[parent].SubaccountID] = q.elements[parent], q.elements[i], q.idx[q.elements[parent].SubaccountID], q.idx[q.elements[i].SubaccountID]
+		q.idx[q.elements[parent].SubaccountID] =
+		q.elements[parent],
+		q.elements[i],
+		q.idx[q.elements[parent].SubaccountID],
+		q.idx[q.elements[i].SubaccountID]
 }
 
 func (q *SubaccountAwarePriorityQueueWithCallbacks) siftDown() {

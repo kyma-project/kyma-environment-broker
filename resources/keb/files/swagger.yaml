@@ -2127,15 +2127,6 @@ components:
         maxUnavailable:
           type: integer
           example: 2
-        components:
-          type: array
-          items:
-            type: string
-        kymaVersion:
-          type: string
-          example: "2.0"
-        overridesVersion:
-          type: string
         administrators:
           type: array
           items:

@@ -76,6 +76,7 @@ func (p *SapConvergedCloudInput) Provider() internal.CloudProvider {
 // The table is tested in a unit test to check if all necessary regions are covered
 var sapConvergedCloudZones = map[string]string{
 	"eu-de-1": "abd",
+	"ap-au-1": "ab",
 }
 
 func ZonesForSapConvergedCloud(region string, zonesCount int) []string {

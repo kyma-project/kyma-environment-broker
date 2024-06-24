@@ -15,34 +15,63 @@ class KCPConfig {
   constructor() {
     this.authType = getEnvOrThrow('KCP_AUTH_TYPE');
     this.host = getEnvOrThrow('KCP_KEB_API_URL');
-    this.kubeConfigApiUrl = getEnvOrThrow('KCP_KUBECONFIG_API_URL');
-    this.oauthClientID = getEnvOrThrow('KCP_OAUTH2_CLIENT_ID');
-    this.oauthSecret = getEnvOrThrow('KCP_OAUTH2_CLIENT_SECRET');
-    this.oauthIssuer = getEnvOrThrow('KCP_OAUTH2_ISSUER_URL');
+    this.issuerURL = getEnvOrThrow('KCP_OIDC_ISSUER_URL');
     this.gardenerNamespace = getEnvOrThrow('KCP_GARDENER_NAMESPACE');
+    this.username = getEnvOrThrow('KCP_TECH_USER_LOGIN');
+    this.password = getEnvOrThrow('KCP_TECH_USER_PASSWORD');
+    this.clientID = getEnvOrThrow('KCP_OIDC_CLIENT_ID');
+
+    if (process.env.KCP_OIDC_CLIENT_SECRET) {
+      this.clientSecret = getEnvOrThrow('KCP_OIDC_CLIENT_SECRET');
+    } else {
+      this.oauthClientID = getEnvOrThrow('KCP_OAUTH2_CLIENT_ID');
+      this.oauthSecret = getEnvOrThrow('KCP_OAUTH2_CLIENT_SECRET');
+      this.oauthIssuer = getEnvOrThrow('KCP_OAUTH2_ISSUER_URL');
+    }
+
+    this.motherShipApiUrl = getEnvOrThrow('KCP_MOTHERSHIP_API_URL');
+    this.kubeConfigApiUrl = getEnvOrThrow('KCP_KUBECONFIG_API_URL');
   }
 }
 
 class KCPWrapper {
   constructor(config) {
     this.authType = config.authType;
+    this.kcpConfigPath = config.kcpConfigPath;
     this.gardenerNamespace = config.gardenerNamespace;
+    this.clientID = config.clientID;
+    this.clientSecret = config.clientSecret;
     this.oauthClientID = config.oauthClientID;
     this.oauthSecret = config.oauthSecret;
     this.oauthIssuer = config.oauthIssuer;
-    this.kubeConfigApiUrl = config.kubeConfigApiUrl;
-    this.host = config.host;
-    this.kcpConfigPath = 'config.yaml';
 
+    this.issuerURL = config.issuerURL;
+    this.motherShipApiUrl = config.motherShipApiUrl;
+    this.kubeConfigApiUrl = config.kubeConfigApiUrl;
+
+    this.username = config.username;
+    this.password = config.password;
+    this.host = config.host;
+
+    this.kcpConfigPath = 'config.yaml';
     const stream = fs.createWriteStream(`${this.kcpConfigPath}`);
     stream.once('open', (_) => {
       stream.write(`auth-type: "${this.authType}"\n`);
-      stream.write(`keb-api-url: "${this.host}"\n`);
-      stream.write(`kubeconfig-api-url: "${this.kubeConfigApiUrl}"\n`);
-      stream.write(`oauth2-client-id: "${this.oauthClientID}"\n`);
-      stream.write(`oauth2-client-secret: "${this.oauthSecret}"\n`);
-      stream.write(`oauth2-issuer-url: "${this.oauthIssuer}"\n`);
       stream.write(`gardener-namespace: "${this.gardenerNamespace}"\n`);
+      if (process.env.KCP_OIDC_CLIENT_SECRET) {
+        stream.write(`oidc-client-id: "${this.clientID}"\n`);
+        stream.write(`oidc-client-secret: ${this.clientSecret}\n`);
+        stream.write(`username: ${this.username}\n`);
+      } else {
+        stream.write(`oauth2-client-id: "${this.oauthClientID}"\n`);
+        stream.write(`oauth2-client-secret: "${this.oauthSecret}"\n`);
+        stream.write(`oauth2-issuer-url: "${this.oauthIssuer}"\n`);
+      }
+
+      stream.write(`keb-api-url: "${this.host}"\n`);
+      stream.write(`oidc-issuer-url: "${this.issuerURL}"\n`);
+      stream.write(`mothership-api-url: "${this.motherShipApiUrl}"\n`);
+      stream.write(`kubeconfig-api-url: "${this.kubeConfigApiUrl}"\n`);
       stream.end();
     });
   }
@@ -81,7 +110,13 @@ class KCPWrapper {
   }
 
   async login() {
-    const args = ['login'];
+    let args;
+    if (process.env.KCP_OIDC_CLIENT_SECRET) {
+      args = ['login', '-u', `${this.username}`, '-p', `${this.password}`];
+    } else {
+      args = ['login'];
+    }
+
     return await this.exec(args);
   }
 

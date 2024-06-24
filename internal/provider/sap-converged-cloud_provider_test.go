@@ -47,6 +47,34 @@ func TestMultipleZonesForSapConvergedCloudRegion(t *testing.T) {
 		})
 	})
 
+	t.Run("for valid zonesCount", func(t *testing.T) {
+		// given
+		region := "ap-au-1"
+
+		// when
+		generatedZones := ZonesForSapConvergedCloud(region, 2)
+
+		// then
+		for _, zone := range generatedZones {
+			regionFromZone := zone[:len(zone)-1]
+			assert.Equal(t, region, regionFromZone)
+		}
+		assert.Equal(t, 2, len(generatedZones))
+		// check if all zones are unique
+		assert.Condition(t, func() (success bool) {
+			var zones []string
+			for _, zone := range generatedZones {
+				for _, z := range zones {
+					if zone == z {
+						return false
+					}
+				}
+				zones = append(zones, zone)
+			}
+			return true
+		})
+	})
+
 	t.Run("for zonesCount exceeding maximum zones for region", func(t *testing.T) {
 		// given
 		region := "eu-de-1"
