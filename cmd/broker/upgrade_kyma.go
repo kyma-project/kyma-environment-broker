@@ -7,7 +7,6 @@ import (
 	orchestrationExt "github.com/kyma-project/kyma-environment-broker/common/orchestration"
 	"github.com/kyma-project/kyma-environment-broker/internal/avs"
 	"github.com/kyma-project/kyma-environment-broker/internal/event"
-	"github.com/kyma-project/kyma-environment-broker/internal/notification"
 	"github.com/kyma-project/kyma-environment-broker/internal/orchestration/manager"
 	"github.com/kyma-project/kyma-environment-broker/internal/process"
 	"github.com/kyma-project/kyma-environment-broker/internal/process/input"
@@ -25,7 +24,7 @@ func NewKymaOrchestrationProcessingQueue(ctx context.Context, db storage.BrokerS
 	inputFactory input.CreatorForPlan, icfg *upgrade_kyma.TimeSchedule, pollingInterval time.Duration,
 	runtimeVerConfigurator *runtimeversion.RuntimeVersionConfigurator, runtimeResolver orchestrationExt.RuntimeResolver,
 	upgradeEvalManager *avs.EvaluationManager, cfg *Config, internalEvalAssistant *avs.InternalEvalAssistant,
-	notificationBuilder notification.BundleBuilder, logs logrus.FieldLogger,
+	logs logrus.FieldLogger,
 	cli client.Client, speedFactor int) *process.Queue {
 
 	upgradeKymaManager := upgrade_kyma.NewManager(db.Operations(), pub, logs.WithField("upgradeKyma", "manager"))
@@ -47,10 +46,6 @@ func NewKymaOrchestrationProcessingQueue(ctx context.Context, db storage.BrokerS
 			weight:   2,
 			disabled: cfg.LifecycleManagerIntegrationDisabled,
 			step:     upgrade_kyma.NewApplyKymaStep(db.Operations(), cli),
-		},
-		{
-			weight: 8,
-			step:   upgrade_kyma.NewSendNotificationStep(db.Operations(), notificationBuilder),
 		},
 	}
 	for _, step := range upgradeKymaSteps {
