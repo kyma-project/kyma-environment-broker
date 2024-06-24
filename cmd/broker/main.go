@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"io"
-	"math/rand"
 	"net/http"
 	"os"
 	"regexp"
@@ -39,7 +38,6 @@ import (
 	"github.com/kyma-project/kyma-environment-broker/internal/httputil"
 	"github.com/kyma-project/kyma-environment-broker/internal/kubeconfig"
 	"github.com/kyma-project/kyma-environment-broker/internal/middleware"
-	"github.com/kyma-project/kyma-environment-broker/internal/notification"
 	"github.com/kyma-project/kyma-environment-broker/internal/orchestration"
 	orchestrate "github.com/kyma-project/kyma-environment-broker/internal/orchestration/handlers"
 	"github.com/kyma-project/kyma-environment-broker/internal/process"
@@ -66,10 +64,6 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client/apiutil"
 	"sigs.k8s.io/controller-runtime/pkg/client/config"
 )
-
-func init() {
-	rand.Seed(time.Now().UTC().UnixNano())
-}
 
 // Config holds configuration for the whole application
 type Config struct {
@@ -121,8 +115,6 @@ type Config struct {
 
 	Avs avs.Config
 	EDP edp.Config
-
-	Notification notification.Config
 
 	KymaDashboardConfig dashboard.Config
 
@@ -282,13 +274,6 @@ func main() {
 		dbStatsCollector := sqlstats.NewStatsCollector("broker", conn)
 		prometheus.MustRegister(dbStatsCollector)
 	}
-
-	// Customer Notification
-	clientHTTPForNotification := httputil.NewClient(60, true)
-	notificationClient := notification.NewClient(clientHTTPForNotification, notification.ClientConfig{
-		URL: cfg.Notification.Url,
-	})
-	notificationBuilder := notification.NewBundleBuilder(notificationClient, cfg.Notification)
 
 	// provides configuration for specified Kyma version and plan
 	configProvider := kebConfig.NewConfigProvider(
