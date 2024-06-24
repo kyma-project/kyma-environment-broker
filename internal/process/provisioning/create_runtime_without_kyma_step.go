@@ -97,7 +97,6 @@ func (s *CreateRuntimeWithoutKymaStep) Run(operation internal.Operation, log log
 	}
 
 	rs := internal.NewRuntimeState(*provisionerResponse.RuntimeID, operation.ID, requestInput.KymaConfig, requestInput.ClusterConfig.GardenerConfig)
-	rs.KymaVersion = operation.RuntimeVersion.Version
 	err = s.runtimeStateStorage.Insert(rs)
 
 	if err != nil {

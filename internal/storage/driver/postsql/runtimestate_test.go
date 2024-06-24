@@ -5,8 +5,6 @@ import (
 	"time"
 
 	"github.com/kyma-project/control-plane/components/provisioner/pkg/gqlschema"
-	"github.com/kyma-project/kyma-environment-broker/internal"
-
 	"github.com/kyma-project/kyma-environment-broker/internal/fixture"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -43,104 +41,6 @@ func TestRuntimeState(t *testing.T) {
 		require.NoError(t, err)
 		assert.Equal(t, fixID, state.KymaConfig.Version)
 		assert.Equal(t, fixID, state.ClusterConfig.KubernetesVersion)
-	})
-
-	t.Run("should fetch latest RuntimeState with Kyma version", func(t *testing.T) {
-		storageCleanup, brokerStorage, err := GetStorageForDatabaseTests()
-		require.NoError(t, err)
-		require.NotNil(t, brokerStorage)
-		defer func() {
-			err := storageCleanup()
-			assert.NoError(t, err)
-		}()
-
-		fixRuntimeID := "runtimeID"
-		fixKymaVersion := "2.0.3"
-
-		fixRuntimeStateID1 := "runtimestate1"
-		fixOperationID1 := "operation1"
-		runtimeState := fixture.FixRuntimeState(fixRuntimeStateID1, fixRuntimeID, fixOperationID1)
-		runtimeState.CreatedAt = runtimeState.CreatedAt.Add(time.Hour * 2)
-
-		fixRuntimeStateID2 := "runtimestate2"
-		fixOperationID2 := "operation2"
-		runtimeStateWithVersion := fixture.FixRuntimeState(fixRuntimeStateID2, fixRuntimeID, fixOperationID2)
-		runtimeStateWithVersion.CreatedAt = runtimeStateWithVersion.CreatedAt.Add(time.Hour * 1)
-		runtimeStateWithVersion.KymaVersion = fixKymaVersion
-
-		// runtimeStateWithoutVersion := fixture.FixRuntimeState("fixRuntimeStateID3", fixRuntimeID, fixOperationID2)
-		runtimeStateWithoutVersion := internal.NewRuntimeState(fixRuntimeID, fixOperationID2, nil, &gqlschema.GardenerConfigInput{})
-		runtimeStateWithoutVersion.ID = "fixRuntimeStateID3"
-		runtimeStateWithoutVersion.CreatedAt = runtimeStateWithVersion.CreatedAt.Add(time.Hour * 3)
-
-		storage := brokerStorage.RuntimeStates()
-
-		err = storage.Insert(runtimeState)
-		require.NoError(t, err)
-		err = storage.Insert(runtimeStateWithVersion)
-		require.NoError(t, err)
-		err = storage.Insert(runtimeStateWithoutVersion)
-		require.NoError(t, err)
-
-		gotRuntimeStates, err := storage.ListByRuntimeID(fixRuntimeID)
-		require.NoError(t, err)
-		assert.Len(t, gotRuntimeStates, 3)
-
-		gotRuntimeState, err := storage.GetLatestByRuntimeID(fixRuntimeID)
-		require.NoError(t, err)
-		assert.Equal(t, runtimeStateWithoutVersion.ID, gotRuntimeState.ID)
-
-		gotRuntimeState, err = storage.GetLatestWithKymaVersionByRuntimeID(fixRuntimeID)
-		require.NoError(t, err)
-		assert.Equal(t, gotRuntimeState.ID, runtimeStateWithVersion.ID)
-		assert.Equal(t, fixKymaVersion, gotRuntimeState.KymaVersion)
-	})
-
-	t.Run("should fetch latest RuntimeState with Kyma version stored only in the kyma_version field", func(t *testing.T) {
-		storageCleanup, brokerStorage, err := GetStorageForDatabaseTests()
-		require.NoError(t, err)
-		require.NotNil(t, brokerStorage)
-		defer func() {
-			err := storageCleanup()
-			assert.NoError(t, err)
-		}()
-
-		fixRuntimeID := "runtimeID"
-		fixKymaVersion := "2.0.3"
-
-		fixRuntimeStateID1 := "runtimestate1"
-		fixOperationID1 := "operation1"
-		runtimeState1 := fixture.FixRuntimeState(fixRuntimeStateID1, fixRuntimeID, fixOperationID1)
-		runtimeState1.CreatedAt = runtimeState1.CreatedAt.Add(time.Hour * 2)
-
-		fixRuntimeStateID2 := "runtimestate2"
-		fixOperationID2 := "operation2"
-		runtimeState2 := fixture.FixRuntimeState(fixRuntimeStateID2, fixRuntimeID, fixOperationID2)
-		runtimeState2.CreatedAt = runtimeState2.CreatedAt.Add(time.Hour * 1)
-		runtimeState2.KymaConfig.Version = fixKymaVersion
-
-		runtimeStatePlainVersion := internal.NewRuntimeState(fixRuntimeID, fixOperationID2, nil, &gqlschema.GardenerConfigInput{})
-		runtimeStatePlainVersion.ID = "fixRuntimeStateID3"
-		runtimeStatePlainVersion.CreatedAt = runtimeState2.CreatedAt.Add(time.Hour * 3)
-		runtimeStatePlainVersion.KymaVersion = "2.1.55"
-
-		storage := brokerStorage.RuntimeStates()
-
-		err = storage.Insert(runtimeState1)
-		require.NoError(t, err)
-		err = storage.Insert(runtimeState2)
-		require.NoError(t, err)
-		err = storage.Insert(runtimeStatePlainVersion)
-		require.NoError(t, err)
-
-		gotRuntimeStates, err := storage.ListByRuntimeID(fixRuntimeID)
-		require.NoError(t, err)
-		assert.Len(t, gotRuntimeStates, 3)
-
-		gotRuntimeState, err := storage.GetLatestWithKymaVersionByRuntimeID(fixRuntimeID)
-		require.NoError(t, err)
-		assert.Equal(t, runtimeStatePlainVersion.ID, gotRuntimeState.ID)
-		assert.Equal(t, "2.1.55", gotRuntimeState.GetKymaVersion())
 	})
 
 	t.Run("should fetch latest RuntimeState with OIDC config", func(t *testing.T) {

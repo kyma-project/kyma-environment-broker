@@ -51,7 +51,6 @@ type RuntimeDTO struct {
 	Status                      RuntimeStatus                  `json:"status"`
 	UserID                      string                         `json:"userID"`
 	AVSInternalEvaluationID     int64                          `json:"avsInternalEvaluationID"`
-	KymaVersion                 string                         `json:"kymaVersion,omitempty"`
 	KymaConfig                  *gqlschema.KymaConfigInput     `json:"kymaConfig,omitempty"`
 	ClusterConfig               *gqlschema.GardenerConfigInput `json:"clusterConfig,omitempty"`
 }
@@ -100,7 +99,6 @@ type Operation struct {
 	OrchestrationID              string        `json:"orchestrationID,omitempty"`
 	FinishedStages               []string      `json:"finishedStages"`
 	ExecutedButNotCompletedSteps []string      `json:"executedButNotCompletedSteps,omitempty"`
-	RuntimeVersion               string        `json:"runtimeVersion"`
 }
 
 type RuntimesPage struct {

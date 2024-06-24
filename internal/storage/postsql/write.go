@@ -219,7 +219,6 @@ func (ws writeSession) InsertRuntimeState(state dbmodel.RuntimeStateDTO) dberr.E
 		Pair("operation_id", state.OperationID).
 		Pair("runtime_id", state.RuntimeID).
 		Pair("created_at", state.CreatedAt).
-		Pair("kyma_version", state.KymaVersion).
 		Pair("k8s_version", state.K8SVersion).
 		Pair("kyma_config", state.KymaConfig).
 		Pair("cluster_config", state.ClusterConfig).

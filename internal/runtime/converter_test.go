@@ -232,20 +232,18 @@ func TestConverting_ProvisioningOperationConverter(t *testing.T) {
 	//expected stages in order
 	expected := []string{"start", "create_runtime", "check_kyma", "post_actions"}
 
-	t.Run("runtime and finished orders should be not set", func(t *testing.T) {
+	t.Run("finished orders should be not set", func(t *testing.T) {
 		svc.ApplyProvisioningOperation(&dto, fixProvisioningOperation(domain.Succeeded, time.Now()))
 
 		// then
 		assert.Equal(t, []string(nil), dto.Status.Provisioning.FinishedStages)
-		assert.Equal(t, "", dto.Status.Provisioning.RuntimeVersion)
 	})
 
-	t.Run("runtime and finished orders should be set in order", func(t *testing.T) {
+	t.Run("finished orders should be set in order", func(t *testing.T) {
 		svc.ApplyProvisioningOperation(&dto, fixProvisioningOperationWithStagesAndVersion(domain.Succeeded, time.Now()))
 
 		// then
 		assert.True(t, reflect.DeepEqual(expected, dto.Status.Provisioning.FinishedStages))
-		assert.Equal(t, "2.0", dto.Status.Provisioning.RuntimeVersion)
 	})
 }
 
@@ -297,11 +295,6 @@ func fixProvisioningOperationWithStagesAndVersion(state domain.LastOperationStat
 			ID:             "prov-id",
 			State:          state,
 			FinishedStages: []string{"start", "create_runtime", "check_kyma", "post_actions"},
-			RuntimeVersion: internal.RuntimeVersionData{
-				Version:      "2.0",
-				Origin:       "default",
-				MajorVersion: 2,
-			},
 		},
 	}
 }

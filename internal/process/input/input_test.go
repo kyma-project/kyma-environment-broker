@@ -34,7 +34,7 @@ func TestInputBuilderFactoryForAzurePlan(t *testing.T) {
 	pp := fixProvisioningParameters(broker.AzurePlanID)
 
 	// when
-	builder, err := factory.CreateProvisionInput(pp, internal.RuntimeVersionData{Version: "1.10.0", Origin: internal.Defaults})
+	builder, err := factory.CreateProvisionInput(pp)
 
 	// then
 	require.NoError(t, err)
@@ -107,7 +107,7 @@ func TestShouldAdjustRuntimeName(t *testing.T) {
 			pp := fixProvisioningParameters(broker.TrialPlanID)
 			pp.Parameters.Name = tc.runtimeName
 
-			creator, err := builder.CreateProvisionInput(pp, internal.RuntimeVersionData{Version: "1.1.0", Origin: internal.Defaults})
+			creator, err := builder.CreateProvisionInput(pp)
 			require.NoError(t, err)
 			creator.SetProvisioningParameters(pp)
 
@@ -140,7 +140,7 @@ func TestShouldSetNumberOfNodesForTrialPlan(t *testing.T) {
 
 	pp := fixProvisioningParameters(broker.TrialPlanID)
 
-	creator, err := builder.CreateProvisionInput(pp, internal.RuntimeVersionData{Version: "1.17.0", Origin: internal.Defaults})
+	creator, err := builder.CreateProvisionInput(pp)
 	require.NoError(t, err)
 	creator.SetProvisioningParameters(pp)
 
@@ -166,7 +166,7 @@ func TestShouldSetGlobalConfiguration(t *testing.T) {
 
 		pp := fixProvisioningParameters(broker.TrialPlanID)
 
-		creator, err := builder.CreateProvisionInput(pp, internal.RuntimeVersionData{Version: "", Origin: internal.Defaults})
+		creator, err := builder.CreateProvisionInput(pp)
 		require.NoError(t, err)
 		creator.SetProvisioningParameters(pp)
 
@@ -189,7 +189,7 @@ func TestShouldSetGlobalConfiguration(t *testing.T) {
 
 		pp := fixProvisioningParameters(broker.TrialPlanID)
 
-		creator, err := builder.CreateUpgradeInput(pp, internal.RuntimeVersionData{Version: "1.21.0", Origin: internal.Defaults})
+		creator, err := builder.CreateUpgradeInput(pp)
 		require.NoError(t, err)
 		creator.SetProvisioningParameters(pp)
 
@@ -229,7 +229,7 @@ func TestCreateProvisionRuntimeInput_ConfigureDNS(t *testing.T) {
 
 		provisioningParams := fixture.FixProvisioningParameters(id)
 
-		creator, err := inputBuilder.CreateProvisionInput(provisioningParams, internal.RuntimeVersionData{Version: "", Origin: internal.Defaults})
+		creator, err := inputBuilder.CreateProvisionInput(provisioningParams)
 		require.NoError(t, err)
 		setRuntimeProperties(creator)
 
@@ -260,7 +260,7 @@ func TestCreateProvisionRuntimeInput_ConfigureDNS(t *testing.T) {
 
 		provisioningParams := fixture.FixProvisioningParameters(id)
 
-		creator, err := inputBuilder.CreateProvisionInput(provisioningParams, internal.RuntimeVersionData{Version: "", Origin: internal.Defaults})
+		creator, err := inputBuilder.CreateProvisionInput(provisioningParams)
 		require.NoError(t, err)
 		setRuntimeProperties(creator)
 		creator.SetShootDNSProviders(gardener.DNSProvidersData{})
@@ -301,7 +301,7 @@ func TestCreateProvisionRuntimeInput_ConfigureOIDC(t *testing.T) {
 
 		provisioningParams := fixture.FixProvisioningParameters(id)
 
-		creator, err := inputBuilder.CreateProvisionInput(provisioningParams, internal.RuntimeVersionData{Version: "", Origin: internal.Defaults})
+		creator, err := inputBuilder.CreateProvisionInput(provisioningParams)
 		require.NoError(t, err)
 
 		// when
@@ -337,7 +337,7 @@ func TestCreateProvisionRuntimeInput_ConfigureOIDC(t *testing.T) {
 		provisioningParams := fixture.FixProvisioningParameters(id)
 		provisioningParams.Parameters.OIDC = &internal.OIDCConfigDTO{}
 
-		creator, err := inputBuilder.CreateProvisionInput(provisioningParams, internal.RuntimeVersionData{Version: "", Origin: internal.Defaults})
+		creator, err := inputBuilder.CreateProvisionInput(provisioningParams)
 		require.NoError(t, err)
 
 		// when
@@ -380,7 +380,7 @@ func TestCreateProvisionRuntimeInput_ConfigureOIDC(t *testing.T) {
 			UsernamePrefix: "<<",
 		}
 
-		creator, err := inputBuilder.CreateProvisionInput(provisioningParams, internal.RuntimeVersionData{Version: "", Origin: internal.Defaults})
+		creator, err := inputBuilder.CreateProvisionInput(provisioningParams)
 		require.NoError(t, err)
 
 		// when
@@ -411,7 +411,7 @@ func TestCreateProvisionRuntimeInput_ConfigureAdmins(t *testing.T) {
 		provisioningParams := fixture.FixProvisioningParameters(id)
 		provisioningParams.ErsContext.UserID = expectedAdmins[0]
 
-		creator, err := inputBuilder.CreateProvisionInput(provisioningParams, internal.RuntimeVersionData{Version: "", Origin: internal.Defaults})
+		creator, err := inputBuilder.CreateProvisionInput(provisioningParams)
 		require.NoError(t, err)
 		setRuntimeProperties(creator)
 
@@ -438,7 +438,7 @@ func TestCreateProvisionRuntimeInput_ConfigureAdmins(t *testing.T) {
 		provisioningParams := fixture.FixProvisioningParameters(id)
 		provisioningParams.Parameters.RuntimeAdministrators = expectedAdmins
 
-		creator, err := inputBuilder.CreateProvisionInput(provisioningParams, internal.RuntimeVersionData{Version: "", Origin: internal.Defaults})
+		creator, err := inputBuilder.CreateProvisionInput(provisioningParams)
 		require.NoError(t, err)
 		setRuntimeProperties(creator)
 
@@ -476,12 +476,7 @@ func TestCreateUpgradeRuntimeInput_ConfigureAdmins(t *testing.T) {
 		provisioningParams := fixture.FixProvisioningParameters(id)
 		provisioningParams.ErsContext.UserID = expectedAdmins[0]
 
-		ver := internal.RuntimeVersionData{
-			Version: "2.4.0",
-			Origin:  internal.Defaults,
-		}
-
-		creator, err := inputBuilder.CreateUpgradeShootInput(provisioningParams, ver)
+		creator, err := inputBuilder.CreateUpgradeShootInput(provisioningParams)
 		require.NoError(t, err)
 
 		// when
@@ -510,12 +505,7 @@ func TestCreateUpgradeRuntimeInput_ConfigureAdmins(t *testing.T) {
 		provisioningParams.ErsContext.UserID = userId
 		provisioningParams.Parameters.RuntimeAdministrators = expectedAdmins
 
-		ver := internal.RuntimeVersionData{
-			Version: "2.4.0",
-			Origin:  internal.Defaults,
-		}
-
-		creator, err := inputBuilder.CreateUpgradeShootInput(provisioningParams, ver)
+		creator, err := inputBuilder.CreateUpgradeShootInput(provisioningParams)
 		require.NoError(t, err)
 
 		// when
@@ -542,12 +532,7 @@ func TestCreateUpgradeShootInput_ConfigureAutoscalerParams(t *testing.T) {
 		pp := fixProvisioningParameters(broker.GCPPlanID)
 		//provider = &cloudProvider.GcpInput{} // for broker.GCPPlanID
 
-		ver := internal.RuntimeVersionData{
-			Version: "2.4.0",
-			Origin:  internal.Defaults,
-		}
-
-		rtinput, err := ibf.CreateUpgradeShootInput(pp, ver)
+		rtinput, err := ibf.CreateUpgradeShootInput(pp)
 
 		assert.NoError(t, err)
 		require.IsType(t, &RuntimeInput{}, rtinput)
@@ -582,12 +567,7 @@ func TestCreateUpgradeShootInput_ConfigureAutoscalerParams(t *testing.T) {
 
 		provider := &cloudProvider.GcpInput{} // for broker.GCPPlanID
 
-		ver := internal.RuntimeVersionData{
-			Version: "2.4.0",
-			Origin:  internal.Defaults,
-		}
-
-		rtinput, err := ibf.CreateUpgradeShootInput(pp, ver)
+		rtinput, err := ibf.CreateUpgradeShootInput(pp)
 
 		assert.NoError(t, err)
 		require.IsType(t, &RuntimeInput{}, rtinput)
@@ -620,7 +600,7 @@ func TestShootAndSeedSameRegion(t *testing.T) {
 		pp.Parameters.ShootAndSeedSameRegion = ptr.Bool(true)
 
 		// when
-		creator, err := builder.CreateProvisionInput(pp, internal.RuntimeVersionData{})
+		creator, err := builder.CreateProvisionInput(pp)
 		require.NoError(t, err)
 		input, err := creator.CreateProvisionRuntimeInput()
 

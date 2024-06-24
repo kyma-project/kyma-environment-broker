@@ -85,24 +85,6 @@ func (s *runtimeState) GetLatestByRuntimeID(runtimeID string) (internal.RuntimeS
 	return states[0], nil
 }
 
-func (s *runtimeState) GetLatestWithKymaVersionByRuntimeID(runtimeID string) (internal.RuntimeState, error) {
-	states, err := s.getRuntimeStatesByRuntimeID(runtimeID)
-	if err != nil {
-		return internal.RuntimeState{}, err
-	}
-
-	for _, state := range states {
-		if state.KymaVersion != "" {
-			return state, nil
-		}
-		if state.KymaConfig.Version != "" {
-			return state, nil
-		}
-	}
-
-	return internal.RuntimeState{}, dberr.NotFound("failed to find RuntimeState with kyma version for runtime %s", runtimeID)
-}
-
 func (s *runtimeState) GetLatestWithOIDCConfigByRuntimeID(runtimeID string) (internal.RuntimeState, error) {
 	states, err := s.getRuntimeStatesByRuntimeID(runtimeID)
 	if err != nil {

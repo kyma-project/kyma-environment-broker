@@ -2,8 +2,6 @@ package internal
 
 import (
 	"database/sql"
-	"strconv"
-	"strings"
 	"time"
 
 	"github.com/kyma-project/kyma-environment-broker/internal/euaccess"
@@ -60,45 +58,6 @@ type AvsLifecycleData struct {
 
 	AVSInternalEvaluationDeleted bool `json:"avs_internal_evaluation_deleted"`
 	AVSExternalEvaluationDeleted bool `json:"avs_external_evaluation_deleted"`
-}
-
-// RuntimeVersionOrigin defines the possible sources of the Kyma Version parameter
-type RuntimeVersionOrigin string
-
-const (
-	Parameters RuntimeVersionOrigin = "parameters"
-	Defaults   RuntimeVersionOrigin = "defaults"
-)
-
-// RuntimeVersionData describes the Kyma Version used for the cluster
-// provisioning or upgrade
-type RuntimeVersionData struct {
-	Version      string               `json:"version"`
-	Origin       RuntimeVersionOrigin `json:"origin"`
-	MajorVersion int                  `json:"major_version"`
-}
-
-func (rv RuntimeVersionData) IsEmpty() bool {
-	return rv.Version == ""
-}
-
-func NewEmptyRuntimeVersion() *RuntimeVersionData {
-	return &RuntimeVersionData{Version: "not-defined", Origin: Defaults, MajorVersion: 2}
-}
-
-func NewRuntimeVersionFromParameters(version string, majorVersion int) *RuntimeVersionData {
-	return &RuntimeVersionData{Version: version, Origin: Parameters, MajorVersion: majorVersion}
-}
-
-func NewRuntimeVersionFromDefaults(version string) *RuntimeVersionData {
-	defaultMajorVerNum := DetermineMajorVersion(version)
-	return &RuntimeVersionData{Version: version, Origin: Defaults, MajorVersion: defaultMajorVerNum}
-}
-
-func DetermineMajorVersion(version string) int {
-	splitVer := strings.Split(version, ".")
-	majorVerNum, _ := strconv.Atoi(splitVer[0])
-	return majorVerNum
 }
 
 type EventHub struct {
@@ -192,8 +151,7 @@ type Operation struct {
 	InstanceDetails
 
 	// PROVISIONING
-	RuntimeVersion RuntimeVersionData `json:"runtime_version"`
-	DashboardURL   string             `json:"dashboardURL"`
+	DashboardURL string `json:"dashboardURL"`
 
 	// DEPROVISIONING
 	// Temporary indicates that this deprovisioning operation must not remove the instance
@@ -412,15 +370,6 @@ type RuntimeState struct {
 
 	KymaConfig    gqlschema.KymaConfigInput     `json:"kymaConfig"`
 	ClusterConfig gqlschema.GardenerConfigInput `json:"clusterConfig"`
-
-	KymaVersion string `json:"kyma_version"`
-}
-
-func (r *RuntimeState) GetKymaVersion() string {
-	if r.KymaVersion != "" {
-		return r.KymaVersion
-	}
-	return r.KymaConfig.Version
 }
 
 // OperationStats provide number of operations per type and state

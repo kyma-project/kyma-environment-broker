@@ -4,17 +4,14 @@ import (
 	"testing"
 	"time"
 
-	automock2 "github.com/kyma-project/kyma-environment-broker/internal/process/input/automock"
-	"github.com/sirupsen/logrus"
-	"github.com/stretchr/testify/mock"
-
 	"github.com/kyma-project/kyma-environment-broker/internal"
 	"github.com/kyma-project/kyma-environment-broker/internal/avs"
 	"github.com/kyma-project/kyma-environment-broker/internal/broker"
 	"github.com/kyma-project/kyma-environment-broker/internal/fixture"
-	"github.com/kyma-project/kyma-environment-broker/internal/process/provisioning/automock"
+	automock2 "github.com/kyma-project/kyma-environment-broker/internal/process/input/automock"
 	"github.com/kyma-project/kyma-environment-broker/internal/storage"
 	"github.com/pivotal-cf/brokerapi/v8/domain"
+	"github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -37,12 +34,6 @@ func TestInitialisationStep_Run(t *testing.T) {
 	assert.NoError(t, err)
 	err = st.Instances().Insert(fixture.FixInstance(operation.InstanceID))
 	assert.NoError(t, err)
-	rvc := &automock.RuntimeVersionConfiguratorForProvisioning{}
-	v := &internal.RuntimeVersionData{
-		Version: "1.21.0",
-		Origin:  internal.Defaults,
-	}
-	rvc.On("ForProvisioning", mock.Anything).Return(v, nil)
 	ri := &simpleInputCreator{
 		provider: internal.GCP,
 		config: &internal.ConfigForPlan{
@@ -50,9 +41,9 @@ func TestInitialisationStep_Run(t *testing.T) {
 		},
 	}
 	builder := &automock2.CreatorForPlan{}
-	builder.On("CreateProvisionInput", operation.ProvisioningParameters, *v).Return(ri, nil)
+	builder.On("CreateProvisionInput", operation.ProvisioningParameters).Return(ri, nil)
 
-	step := NewInitialisationStep(st.Operations(), st.Instances(), builder, rvc)
+	step := NewInitialisationStep(st.Operations(), st.Instances(), builder)
 
 	// when
 	op, retry, err := step.Run(operation, logrus.New())
@@ -60,7 +51,6 @@ func TestInitialisationStep_Run(t *testing.T) {
 	// then
 	assert.NoError(t, err)
 	assert.Zero(t, retry)
-	assert.Equal(t, *v, op.RuntimeVersion)
 	assert.Equal(t, ri, op.InputCreator)
 
 	inst, _ := st.Instances().GetByID(operation.InstanceID)
@@ -75,7 +65,6 @@ func fixOperationRuntimeStatus(planId string, provider internal.CloudProvider) i
 	provisioningOperation.InstanceDetails.RuntimeID = runtimeID
 	provisioningOperation.ProvisioningParameters.PlanID = planId
 	provisioningOperation.ProvisioningParameters.ErsContext.GlobalAccountID = statusGlobalAccountID
-	provisioningOperation.RuntimeVersion = internal.RuntimeVersionData{}
 
 	return provisioningOperation
 }

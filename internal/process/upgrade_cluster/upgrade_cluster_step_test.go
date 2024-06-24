@@ -136,12 +136,7 @@ func fixInputCreator(t *testing.T) internal.ProvisionerInputCreator {
 	}, fixKymaVersion, nil, nil, fixture.FixOIDCConfigDTO(), false)
 	require.NoError(t, err, "Input factory creation error")
 
-	ver := internal.RuntimeVersionData{
-		Version: fixKymaVersion,
-		Origin:  internal.Defaults,
-	}
-
-	creator, err := ibf.CreateUpgradeShootInput(fixProvisioningParameters(), ver)
+	creator, err := ibf.CreateUpgradeShootInput(fixProvisioningParameters())
 	require.NoError(t, err, "Input creator creation error")
 
 	return creator

@@ -16,12 +16,12 @@ type CreatorForPlan struct {
 }
 
 // CreateProvisionInput provides a mock function with given fields: parameters, version
-func (_m *CreatorForPlan) CreateProvisionInput(parameters internal.ProvisioningParameters, version internal.RuntimeVersionData) (internal.ProvisionerInputCreator, error) {
-	ret := _m.Called(parameters, version)
+func (_m *CreatorForPlan) CreateProvisionInput(parameters internal.ProvisioningParameters) (internal.ProvisionerInputCreator, error) {
+	ret := _m.Called(parameters)
 
 	var r0 internal.ProvisionerInputCreator
-	if rf, ok := ret.Get(0).(func(internal.ProvisioningParameters, internal.RuntimeVersionData) internal.ProvisionerInputCreator); ok {
-		r0 = rf(parameters, version)
+	if rf, ok := ret.Get(0).(func(internal.ProvisioningParameters) internal.ProvisionerInputCreator); ok {
+		r0 = rf(parameters)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).(internal.ProvisionerInputCreator)
@@ -29,8 +29,8 @@ func (_m *CreatorForPlan) CreateProvisionInput(parameters internal.ProvisioningP
 	}
 
 	var r1 error
-	if rf, ok := ret.Get(1).(func(internal.ProvisioningParameters, internal.RuntimeVersionData) error); ok {
-		r1 = rf(parameters, version)
+	if rf, ok := ret.Get(1).(func(internal.ProvisioningParameters) error); ok {
+		r1 = rf(parameters)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -39,12 +39,12 @@ func (_m *CreatorForPlan) CreateProvisionInput(parameters internal.ProvisioningP
 }
 
 // CreateUpgradeInput provides a mock function with given fields: parameters, version
-func (_m *CreatorForPlan) CreateUpgradeInput(parameters internal.ProvisioningParameters, version internal.RuntimeVersionData) (internal.ProvisionerInputCreator, error) {
-	ret := _m.Called(parameters, version)
+func (_m *CreatorForPlan) CreateUpgradeInput(parameters internal.ProvisioningParameters) (internal.ProvisionerInputCreator, error) {
+	ret := _m.Called(parameters)
 
 	var r0 internal.ProvisionerInputCreator
-	if rf, ok := ret.Get(0).(func(internal.ProvisioningParameters, internal.RuntimeVersionData) internal.ProvisionerInputCreator); ok {
-		r0 = rf(parameters, version)
+	if rf, ok := ret.Get(0).(func(internal.ProvisioningParameters) internal.ProvisionerInputCreator); ok {
+		r0 = rf(parameters)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).(internal.ProvisionerInputCreator)
@@ -52,8 +52,8 @@ func (_m *CreatorForPlan) CreateUpgradeInput(parameters internal.ProvisioningPar
 	}
 
 	var r1 error
-	if rf, ok := ret.Get(1).(func(internal.ProvisioningParameters, internal.RuntimeVersionData) error); ok {
-		r1 = rf(parameters, version)
+	if rf, ok := ret.Get(1).(func(internal.ProvisioningParameters) error); ok {
+		r1 = rf(parameters)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -62,12 +62,12 @@ func (_m *CreatorForPlan) CreateUpgradeInput(parameters internal.ProvisioningPar
 }
 
 // CreateUpgradeShootInput provides a mock function with given fields: parameters, version
-func (_m *CreatorForPlan) CreateUpgradeShootInput(parameters internal.ProvisioningParameters, version internal.RuntimeVersionData) (internal.ProvisionerInputCreator, error) {
-	ret := _m.Called(parameters, version)
+func (_m *CreatorForPlan) CreateUpgradeShootInput(parameters internal.ProvisioningParameters) (internal.ProvisionerInputCreator, error) {
+	ret := _m.Called(parameters)
 
 	var r0 internal.ProvisionerInputCreator
-	if rf, ok := ret.Get(0).(func(internal.ProvisioningParameters, internal.RuntimeVersionData) internal.ProvisionerInputCreator); ok {
-		r0 = rf(parameters, version)
+	if rf, ok := ret.Get(0).(func(internal.ProvisioningParameters) internal.ProvisionerInputCreator); ok {
+		r0 = rf(parameters)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).(internal.ProvisionerInputCreator)
@@ -75,8 +75,8 @@ func (_m *CreatorForPlan) CreateUpgradeShootInput(parameters internal.Provisioni
 	}
 
 	var r1 error
-	if rf, ok := ret.Get(1).(func(internal.ProvisioningParameters, internal.RuntimeVersionData) error); ok {
-		r1 = rf(parameters, version)
+	if rf, ok := ret.Get(1).(func(internal.ProvisioningParameters) error); ok {
+		r1 = rf(parameters)
 	} else {
 		r1 = ret.Error(1)
 	}

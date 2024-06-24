@@ -22,9 +22,9 @@ type (
 
 	CreatorForPlan interface {
 		IsPlanSupport(planID string) bool
-		CreateProvisionInput(parameters internal.ProvisioningParameters, version internal.RuntimeVersionData) (internal.ProvisionerInputCreator, error)
-		CreateUpgradeInput(parameters internal.ProvisioningParameters, version internal.RuntimeVersionData) (internal.ProvisionerInputCreator, error)
-		CreateUpgradeShootInput(parameters internal.ProvisioningParameters, version internal.RuntimeVersionData) (internal.ProvisionerInputCreator, error)
+		CreateProvisionInput(parameters internal.ProvisioningParameters) (internal.ProvisionerInputCreator, error)
+		CreateUpgradeInput(parameters internal.ProvisioningParameters) (internal.ProvisionerInputCreator, error)
+		CreateUpgradeShootInput(parameters internal.ProvisioningParameters) (internal.ProvisionerInputCreator, error)
 		GetPlanDefaults(planID string, platformProvider internal.CloudProvider, parametersProvider *internal.CloudProvider) (*gqlschema.ClusterConfigInput, error)
 	}
 
@@ -131,7 +131,7 @@ func (f *InputBuilderFactory) getHyperscalerProviderForPlanID(planID string, pla
 	return provider, nil
 }
 
-func (f *InputBuilderFactory) CreateProvisionInput(provisioningParameters internal.ProvisioningParameters, version internal.RuntimeVersionData) (internal.ProvisionerInputCreator, error) {
+func (f *InputBuilderFactory) CreateProvisionInput(provisioningParameters internal.ProvisioningParameters) (internal.ProvisionerInputCreator, error) {
 	if !f.IsPlanSupport(provisioningParameters.PlanID) {
 		return nil, fmt.Errorf("plan %s in not supported", provisioningParameters.PlanID)
 	}
@@ -148,7 +148,7 @@ func (f *InputBuilderFactory) CreateProvisionInput(provisioningParameters intern
 		return nil, fmt.Errorf("during creating provision input: %w", err)
 	}
 
-	initInput, err := f.initProvisionRuntimeInput(provider, version)
+	initInput, err := f.initProvisionRuntimeInput(provider)
 	if err != nil {
 		return nil, fmt.Errorf("while initializing ProvisionRuntimeInput: %w", err)
 	}
@@ -192,7 +192,7 @@ func (f *InputBuilderFactory) forTrialPlan(provider *internal.CloudProvider) Hyp
 
 }
 
-func (f *InputBuilderFactory) initProvisionRuntimeInput(provider HyperscalerInputProvider, version internal.RuntimeVersionData) (gqlschema.ProvisionRuntimeInput, error) {
+func (f *InputBuilderFactory) initProvisionRuntimeInput(provider HyperscalerInputProvider) (gqlschema.ProvisionRuntimeInput, error) {
 	kymaProfile := provider.Profile()
 
 	provisionInput := gqlschema.ProvisionRuntimeInput{
@@ -200,7 +200,6 @@ func (f *InputBuilderFactory) initProvisionRuntimeInput(provider HyperscalerInpu
 		ClusterConfig: provider.Defaults(),
 		KymaConfig: &gqlschema.KymaConfigInput{
 			Profile: &kymaProfile,
-			Version: version.Version,
 		},
 	}
 
@@ -224,7 +223,7 @@ func (f *InputBuilderFactory) initProvisionRuntimeInput(provider HyperscalerInpu
 	return provisionInput, nil
 }
 
-func (f *InputBuilderFactory) CreateUpgradeInput(provisioningParameters internal.ProvisioningParameters, version internal.RuntimeVersionData) (internal.ProvisionerInputCreator, error) {
+func (f *InputBuilderFactory) CreateUpgradeInput(provisioningParameters internal.ProvisioningParameters) (internal.ProvisionerInputCreator, error) {
 	if !f.IsPlanSupport(provisioningParameters.PlanID) {
 		return nil, fmt.Errorf("plan %s in not supported", provisioningParameters.PlanID)
 	}
@@ -241,12 +240,12 @@ func (f *InputBuilderFactory) CreateUpgradeInput(provisioningParameters internal
 		return nil, fmt.Errorf("during createing provision input: %w", err)
 	}
 
-	upgradeKymaInput, err := f.initUpgradeRuntimeInput(version, provider)
+	upgradeKymaInput, err := f.initUpgradeRuntimeInput(provider)
 	if err != nil {
 		return nil, fmt.Errorf("while initializing UpgradeRuntimeInput: %w", err)
 	}
 
-	kymaInput, err := f.initProvisionRuntimeInput(provider, version)
+	kymaInput, err := f.initProvisionRuntimeInput(provider)
 	if err != nil {
 		return nil, fmt.Errorf("while initializing RuntimeInput: %w", err)
 	}
@@ -261,22 +260,17 @@ func (f *InputBuilderFactory) CreateUpgradeInput(provisioningParameters internal
 	}, nil
 }
 
-func (f *InputBuilderFactory) initUpgradeRuntimeInput(version internal.RuntimeVersionData, provider HyperscalerInputProvider) (gqlschema.UpgradeRuntimeInput, error) {
-	if version.Version == "" {
-		return gqlschema.UpgradeRuntimeInput{}, fmt.Errorf("desired runtime version cannot be empty")
-	}
-
+func (f *InputBuilderFactory) initUpgradeRuntimeInput(provider HyperscalerInputProvider) (gqlschema.UpgradeRuntimeInput, error) {
 	kymaProfile := provider.Profile()
 
 	return gqlschema.UpgradeRuntimeInput{
 		KymaConfig: &gqlschema.KymaConfigInput{
 			Profile: &kymaProfile,
-			Version: version.Version,
 		},
 	}, nil
 }
 
-func (f *InputBuilderFactory) CreateUpgradeShootInput(provisioningParameters internal.ProvisioningParameters, version internal.RuntimeVersionData) (internal.ProvisionerInputCreator, error) {
+func (f *InputBuilderFactory) CreateUpgradeShootInput(provisioningParameters internal.ProvisioningParameters) (internal.ProvisionerInputCreator, error) {
 	if !f.IsPlanSupport(provisioningParameters.PlanID) {
 		return nil, fmt.Errorf("plan %s in not supported", provisioningParameters.PlanID)
 	}

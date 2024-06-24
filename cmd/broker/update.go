@@ -9,14 +9,13 @@ import (
 	"github.com/kyma-project/kyma-environment-broker/internal/process/input"
 	"github.com/kyma-project/kyma-environment-broker/internal/process/update"
 	"github.com/kyma-project/kyma-environment-broker/internal/provisioner"
-	"github.com/kyma-project/kyma-environment-broker/internal/runtimeversion"
 	"github.com/kyma-project/kyma-environment-broker/internal/storage"
 	"github.com/sirupsen/logrus"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
 func NewUpdateProcessingQueue(ctx context.Context, manager *process.StagedManager, workersAmount int, db storage.BrokerStorage, inputFactory input.CreatorForPlan,
-	provisionerClient provisioner.Client, publisher event.Publisher, runtimeVerConfigurator *runtimeversion.RuntimeVersionConfigurator, runtimeStatesDb storage.RuntimeStates,
+	provisionerClient provisioner.Client, publisher event.Publisher,
 	cfg Config, k8sClientProvider K8sClientProvider, cli client.Client, logs logrus.FieldLogger) *process.Queue {
 
 	manager.DefineStages([]string{"cluster", "btp-operator", "btp-operator-check", "check"})
@@ -28,16 +27,12 @@ func NewUpdateProcessingQueue(ctx context.Context, manager *process.StagedManage
 	}{
 		{
 			stage: "cluster",
-			step:  update.NewInitialisationStep(db.Instances(), db.Operations(), runtimeVerConfigurator, inputFactory),
+			step:  update.NewInitialisationStep(db.Instances(), db.Operations(), inputFactory),
 		},
 		{
 			stage:     "cluster",
 			step:      update.NewUpgradeShootStep(db.Operations(), db.RuntimeStates(), provisionerClient),
 			condition: update.SkipForOwnClusterPlan,
-		},
-		{
-			stage: "btp-operator",
-			step:  update.NewInitKymaVersionStep(db.Operations(), runtimeVerConfigurator, runtimeStatesDb),
 		},
 		{
 			stage:     "check",

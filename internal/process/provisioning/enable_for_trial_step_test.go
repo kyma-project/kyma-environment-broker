@@ -60,10 +60,3 @@ func fixOperationWithPlanID(planID string) internal.Operation {
 
 	return Operation
 }
-
-func fixOperationWithPlanIDAndKymaVersion(planID, version string) internal.Operation {
-	Operation := fixOperationWithPlanID(planID)
-	Operation.RuntimeVersion.Version = version
-
-	return Operation
-}

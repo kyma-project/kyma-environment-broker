@@ -34,26 +34,20 @@ const (
 
 const postUpgradeDescription = "Performing post-upgrade tasks"
 
-//go:generate mockery --name=RuntimeVersionConfiguratorForUpgrade --output=automock --outpkg=automock --case=underscore
-type RuntimeVersionConfiguratorForUpgrade interface {
-	ForUpgrade(op internal.UpgradeKymaOperation) (*internal.RuntimeVersionData, error)
-}
-
 type InitialisationStep struct {
-	operationManager       *process.UpgradeKymaOperationManager
-	operationStorage       storage.Operations
-	orchestrationStorage   storage.Orchestrations
-	instanceStorage        storage.Instances
-	provisionerClient      provisioner.Client
-	inputBuilder           input.CreatorForPlan
-	evaluationManager      *avs.EvaluationManager
-	timeSchedule           TimeSchedule
-	runtimeVerConfigurator RuntimeVersionConfiguratorForUpgrade
-	bundleBuilder          notification.BundleBuilder
+	operationManager     *process.UpgradeKymaOperationManager
+	operationStorage     storage.Operations
+	orchestrationStorage storage.Orchestrations
+	instanceStorage      storage.Instances
+	provisionerClient    provisioner.Client
+	inputBuilder         input.CreatorForPlan
+	evaluationManager    *avs.EvaluationManager
+	timeSchedule         TimeSchedule
+	bundleBuilder        notification.BundleBuilder
 }
 
 func NewInitialisationStep(os storage.Operations, ors storage.Orchestrations, is storage.Instances, pc provisioner.Client, inputBuilder input.CreatorForPlan, em *avs.EvaluationManager,
-	timeSchedule *TimeSchedule, rvc RuntimeVersionConfiguratorForUpgrade, bundleBuilder notification.BundleBuilder) *InitialisationStep {
+	timeSchedule *TimeSchedule, bundleBuilder notification.BundleBuilder) *InitialisationStep {
 	ts := timeSchedule
 	if ts == nil {
 		ts = &TimeSchedule{
@@ -63,16 +57,15 @@ func NewInitialisationStep(os storage.Operations, ors storage.Orchestrations, is
 		}
 	}
 	return &InitialisationStep{
-		operationManager:       process.NewUpgradeKymaOperationManager(os),
-		operationStorage:       os,
-		orchestrationStorage:   ors,
-		instanceStorage:        is,
-		provisionerClient:      pc,
-		inputBuilder:           inputBuilder,
-		evaluationManager:      em,
-		timeSchedule:           *ts,
-		runtimeVerConfigurator: rvc,
-		bundleBuilder:          bundleBuilder,
+		operationManager:     process.NewUpgradeKymaOperationManager(os),
+		operationStorage:     os,
+		orchestrationStorage: ors,
+		instanceStorage:      is,
+		provisionerClient:    pc,
+		inputBuilder:         inputBuilder,
+		evaluationManager:    em,
+		timeSchedule:         *ts,
+		bundleBuilder:        bundleBuilder,
 	}
 }
 
@@ -149,12 +142,8 @@ func (s *InitialisationStep) Run(operation internal.UpgradeKymaOperation, log lo
 }
 
 func (s *InitialisationStep) initializeUpgradeRuntimeRequest(operation internal.UpgradeKymaOperation, log logrus.FieldLogger) (internal.UpgradeKymaOperation, time.Duration, error) {
-	if err := s.configureKymaVersion(&operation, log); err != nil {
-		return s.operationManager.RetryOperation(operation, "error while configuring kyma version", err, 5*time.Second, 5*time.Minute, log)
-	}
-
 	log.Infof("create provisioner input creator for plan ID %q", operation.ProvisioningParameters.PlanID)
-	creator, err := s.inputBuilder.CreateUpgradeInput(operation.ProvisioningParameters, operation.RuntimeVersion)
+	creator, err := s.inputBuilder.CreateUpgradeInput(operation.ProvisioningParameters)
 	switch {
 	case err == nil:
 		operation.InputCreator = creator
@@ -166,33 +155,6 @@ func (s *InitialisationStep) initializeUpgradeRuntimeRequest(operation internal.
 		log.Errorf("cannot create input creator for plan %s: %s", operation.ProvisioningParameters.PlanID, err)
 		return s.operationManager.OperationFailed(operation, "cannot create provisioning input creator", err, log)
 	}
-}
-
-func (s *InitialisationStep) configureKymaVersion(operation *internal.UpgradeKymaOperation, log logrus.FieldLogger) error {
-	if !operation.RuntimeVersion.IsEmpty() {
-		return nil
-	}
-
-	// set Kyma version from request or runtime parameters
-	var (
-		err     error
-		version *internal.RuntimeVersionData
-	)
-
-	version, err = s.runtimeVerConfigurator.ForUpgrade(*operation)
-	if err != nil {
-		return fmt.Errorf("while getting runtime version for upgrade: %w", err)
-	}
-
-	// update operation version
-	var repeat time.Duration
-	if *operation, repeat, err = s.operationManager.UpdateOperation(*operation, func(operation *internal.UpgradeKymaOperation) {
-		operation.RuntimeVersion = *version
-	}, log); repeat != 0 {
-		return fmt.Errorf("unable to update operation with RuntimeVersion property: %w", err)
-	}
-
-	return nil
 }
 
 // checkRuntimeStatus will check operation runtime status

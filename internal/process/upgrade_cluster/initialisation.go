@@ -99,16 +99,9 @@ func (s *InitialisationStep) Run(operation internal.UpgradeClusterOperation, log
 			}
 		}
 
-		if operation.RuntimeVersion.IsEmpty() {
-			operation.RuntimeVersion = internal.RuntimeVersionData{
-				Version: orchestration.Parameters.Kyma.Version,
-			}
-		}
-
 		op, delay, _ := s.operationManager.UpdateOperation(operation, func(op *internal.UpgradeClusterOperation) {
 			op.ProvisioningParameters.ErsContext = internal.InheritMissingERSContext(op.ProvisioningParameters.ErsContext, lastOp.ProvisioningParameters.ErsContext)
 			op.State = domain.InProgress
-			op.RuntimeVersion = operation.RuntimeVersion
 		}, log)
 		if delay != 0 {
 			return operation, delay, nil
@@ -127,7 +120,7 @@ func (s *InitialisationStep) Run(operation internal.UpgradeClusterOperation, log
 
 func (s *InitialisationStep) initializeUpgradeShootRequest(operation internal.UpgradeClusterOperation, log logrus.FieldLogger) (internal.UpgradeClusterOperation, time.Duration, error) {
 	log.Infof("create provisioner input creator for plan ID %q", operation.ProvisioningParameters)
-	creator, err := s.inputBuilder.CreateUpgradeShootInput(operation.ProvisioningParameters, operation.RuntimeVersion)
+	creator, err := s.inputBuilder.CreateUpgradeShootInput(operation.ProvisioningParameters)
 	switch {
 	case err == nil:
 		operation.InputCreator = creator

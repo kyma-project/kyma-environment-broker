@@ -123,39 +123,6 @@ func (s *runtimeState) GetLatestByRuntimeID(runtimeID string) (internal.RuntimeS
 	return result, nil
 }
 
-func (s *runtimeState) GetLatestWithKymaVersionByRuntimeID(runtimeID string) (internal.RuntimeState, error) {
-	sess := s.NewReadSession()
-	var state dbmodel.RuntimeStateDTO
-	var lastErr dberr.Error
-	err := wait.PollImmediate(defaultRetryInterval, defaultRetryTimeout, func() (bool, error) {
-		state, lastErr = sess.GetLatestRuntimeStateWithKymaVersionByRuntimeID(runtimeID)
-		if lastErr != nil {
-			if dberr.IsNotFound(lastErr) {
-				return false, dberr.NotFound("RuntimeState for runtime %s not found", runtimeID)
-			}
-			log.Errorf("while getting RuntimeState: %v", lastErr)
-			return false, nil
-		}
-		return true, nil
-	})
-	if err != nil {
-		return internal.RuntimeState{}, lastErr
-	}
-
-	result, err := s.toRuntimeState(&state)
-	if err != nil {
-		return internal.RuntimeState{}, fmt.Errorf("while converting runtime state: %w", err)
-	}
-	if result.KymaConfig.Version != "" {
-		return result, nil
-	}
-	if result.KymaVersion != "" {
-		return result, nil
-	}
-
-	return internal.RuntimeState{}, fmt.Errorf("failed to find RuntimeState with kyma version for runtime %s ", runtimeID)
-}
-
 func (s *runtimeState) GetLatestWithOIDCConfigByRuntimeID(runtimeID string) (internal.RuntimeState, error) {
 	sess := s.NewReadSession()
 	var state dbmodel.RuntimeStateDTO
@@ -208,7 +175,6 @@ func (s *runtimeState) runtimeStateToDB(state internal.RuntimeState) (dbmodel.Ru
 		OperationID:   state.OperationID,
 		KymaConfig:    string(encKymaCfg),
 		ClusterConfig: string(clusterCfg),
-		KymaVersion:   state.GetKymaVersion(),
 		K8SVersion:    state.ClusterConfig.KubernetesVersion,
 	}, nil
 }
@@ -239,7 +205,6 @@ func (s *runtimeState) toRuntimeState(dto *dbmodel.RuntimeStateDTO) (internal.Ru
 		OperationID:   dto.OperationID,
 		KymaConfig:    kymaCfg,
 		ClusterConfig: clusterCfg,
-		KymaVersion:   dto.KymaVersion,
 	}, nil
 }
 

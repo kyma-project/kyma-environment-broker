@@ -2,8 +2,6 @@ package manager
 
 import (
 	"fmt"
-	"strconv"
-	"strings"
 	"time"
 
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -78,40 +76,9 @@ func (u *upgradeKymaFactory) NewOperation(o internal.Orchestration, r orchestrat
 			},
 		},
 	}
-	if o.Parameters.Kyma.Version != "" {
-		var majorVer int
-		var err error
-
-		majorVer, err = determineMajorVersion(o.Parameters.Kyma.Version, u.defaultKymaVersion)
-		if err != nil {
-			return orchestration.RuntimeOperation{}, fmt.Errorf("while determining Kyma's major version: %w", err)
-		}
-
-		op.RuntimeVersion = *internal.NewRuntimeVersionFromParameters(o.Parameters.Kyma.Version, majorVer)
-	}
 
 	err = u.operationStorage.InsertUpgradeKymaOperation(op)
 	return op.RuntimeOperation, err
-}
-
-func determineMajorVersion(version string, defaultVersion string) (int, error) {
-	if isCustomVersion(version) {
-		return extractMajorVersionNumberFromVersionString(defaultVersion)
-	}
-	return extractMajorVersionNumberFromVersionString(version)
-}
-
-func isCustomVersion(version string) bool {
-	return strings.HasPrefix(version, "PR-") || strings.HasPrefix(version, "main-")
-}
-
-func extractMajorVersionNumberFromVersionString(version string) (int, error) {
-	splitVer := strings.Split(version, ".")
-	majorVerNum, err := strconv.Atoi(splitVer[0])
-	if err != nil {
-		return 0, fmt.Errorf("cannot convert major version to int")
-	}
-	return majorVerNum, nil
 }
 
 func (u *upgradeKymaFactory) ResumeOperations(orchestrationID string) ([]orchestration.RuntimeOperation, error) {

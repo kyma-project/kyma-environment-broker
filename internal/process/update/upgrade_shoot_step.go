@@ -77,7 +77,6 @@ func (s *UpgradeShootStep) Run(operation internal.Operation, log logrus.FieldLog
 	log.Infof("call to provisioner succeeded for update, got operation ID %q", *provisionerResponse.ID)
 
 	rs := internal.NewRuntimeState(*provisionerResponse.RuntimeID, operation.ID, nil, gardenerUpgradeInputToConfigInput(input))
-	rs.KymaVersion = operation.RuntimeVersion.Version
 	err = s.runtimeStateStorage.Insert(rs)
 	if err != nil {
 		log.Errorf("cannot insert runtimeState: %s", err)

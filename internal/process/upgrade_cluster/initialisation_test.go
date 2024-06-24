@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/kyma-project/control-plane/components/provisioner/pkg/gqlschema"
+	"github.com/kyma-project/kyma-environment-broker/internal/avs"
 	"github.com/kyma-project/kyma-environment-broker/internal/fixture"
 	"github.com/kyma-project/kyma-environment-broker/internal/notification"
 	notificationAutomock "github.com/kyma-project/kyma-environment-broker/internal/notification/mocks"
@@ -17,9 +18,6 @@ import (
 	"github.com/kyma-project/kyma-environment-broker/internal/ptr"
 	"github.com/pivotal-cf/brokerapi/v8/domain"
 	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/mock"
-
-	"github.com/kyma-project/kyma-environment-broker/internal/avs"
 
 	"github.com/stretchr/testify/require"
 
@@ -237,8 +235,7 @@ func TestInitialisationStep_Run(t *testing.T) {
 
 		provisionerClient := &provisionerAutomock.Client{}
 		inputBuilder := &automock.CreatorForPlan{}
-		inputBuilder.On("CreateUpgradeShootInput",
-			fixProvisioningParameters(), mock.AnythingOfType("internal.RuntimeVersionData")).
+		inputBuilder.On("CreateUpgradeShootInput", fixProvisioningParameters()).
 			Return(&input.RuntimeInput{},
 				nil)
 

@@ -376,15 +376,6 @@ func (b *UpdateEndpoint) extractActiveValue(id string, provisioning internal.Pro
 	return ptr.Bool(deprovisioning.CreatedAt.Before(provisioning.CreatedAt)), nil
 }
 
-func (b *UpdateEndpoint) isKyma2(instance *internal.Instance) (bool, string, error) {
-	s, err := b.runtimeStates.GetLatestWithKymaVersionByRuntimeID(instance.RuntimeID)
-	if err != nil {
-		return false, "", err
-	}
-	kv := s.GetKymaVersion()
-	return internal.DetermineMajorVersion(kv) == 2, kv, nil
-}
-
 func (b *UpdateEndpoint) getJsonSchemaValidator(provider internal.CloudProvider, planID string, platformRegion string) (JSONSchemaValidator, error) {
 	// shootAndSeedSameRegion is never enabled for update
 	b.log.Printf("region is: %s", platformRegion)

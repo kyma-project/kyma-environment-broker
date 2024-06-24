@@ -38,10 +38,7 @@ func TestInputBuilderFactory_ForPlan(t *testing.T) {
 		pp := fixProvisioningParameters(broker.GCPPlanID)
 
 		// when
-		input, err := ibf.CreateProvisionInput(pp, internal.RuntimeVersionData{
-			Version: "1.10",
-			Origin:  internal.Defaults,
-		})
+		input, err := ibf.CreateProvisionInput(pp)
 
 		// Then
 		assert.NoError(t, err)
@@ -62,7 +59,7 @@ func TestInputBuilderFactory_ForPlan(t *testing.T) {
 		pp := fixProvisioningParameters(broker.GCPPlanID)
 
 		// when
-		input, err := ibf.CreateUpgradeInput(pp, internal.RuntimeVersionData{Version: "1.1.0", Origin: internal.Defaults})
+		input, err := ibf.CreateUpgradeInput(pp)
 
 		// Then
 		assert.NoError(t, err)
@@ -81,7 +78,7 @@ func TestInputBuilderFactory_ForPlan(t *testing.T) {
 		pp := fixProvisioningParameters(broker.GCPPlanID)
 
 		// when
-		input, err := ibf.CreateProvisionInput(pp, internal.RuntimeVersionData{Version: "PR-1", Origin: internal.Parameters})
+		input, err := ibf.CreateProvisionInput(pp)
 
 		// Then
 		assert.NoError(t, err)
@@ -97,7 +94,7 @@ func TestInputBuilderFactory_ForPlan(t *testing.T) {
 		pp := fixProvisioningParameters(broker.GCPPlanID)
 
 		// when
-		input, err := ibf.CreateProvisionInput(pp, internal.RuntimeVersionData{Version: "1.1.0", Origin: internal.Defaults})
+		input, err := ibf.CreateProvisionInput(pp)
 
 		// Then
 		assert.NoError(t, err)
@@ -110,7 +107,7 @@ func TestInputBuilderFactory_ForPlan(t *testing.T) {
 		pp = fixProvisioningParameters(broker.TrialPlanID)
 
 		// when
-		input, err = ibf.CreateProvisionInput(pp, internal.RuntimeVersionData{Version: "1.1.0", Origin: internal.Defaults})
+		input, err = ibf.CreateProvisionInput(pp)
 
 		// Then
 		assert.NoError(t, err)
@@ -130,7 +127,7 @@ func TestInputBuilderFactory_ForPlan(t *testing.T) {
 		pp := fixProvisioningParameters(broker.GCPPlanID)
 
 		// when
-		input, err := ibf.CreateUpgradeInput(pp, internal.RuntimeVersionData{Version: "1.1.0", Origin: internal.Defaults})
+		input, err := ibf.CreateUpgradeInput(pp)
 
 		// Then
 		assert.NoError(t, err)
@@ -146,7 +143,7 @@ func TestInputBuilderFactory_ForPlan(t *testing.T) {
 		provider := internal.GCP
 		pp.Parameters.Provider = &provider
 		// when
-		input, err = ibf.CreateUpgradeInput(pp, internal.RuntimeVersionData{Version: "1.1.0", Origin: internal.Defaults})
+		input, err = ibf.CreateUpgradeInput(pp)
 
 		// Then
 		assert.NoError(t, err)
@@ -167,13 +164,9 @@ func TestInputBuilderFactory_ForPlan(t *testing.T) {
 		assert.NoError(t, err)
 		pp := fixProvisioningParameters(broker.GCPPlanID)
 		provider = &cloudProvider.GcpInput{} // for broker.GCPPlanID
-		ver := internal.RuntimeVersionData{
-			Version: "2.4.0",
-			Origin:  internal.Defaults,
-		}
 
 		// when
-		input, err := ibf.CreateUpgradeShootInput(pp, ver)
+		input, err := ibf.CreateUpgradeShootInput(pp)
 
 		// Then
 		assert.NoError(t, err)

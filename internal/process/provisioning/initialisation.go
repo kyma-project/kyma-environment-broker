@@ -28,24 +28,17 @@ type KymaVersionConfigurator interface {
 	ForGlobalAccount(string) (string, bool, error)
 }
 
-//go:generate mockery --name=RuntimeVersionConfiguratorForProvisioning --output=automock --outpkg=automock --case=underscore
-type RuntimeVersionConfiguratorForProvisioning interface {
-	ForProvisioning(op internal.Operation) (*internal.RuntimeVersionData, error)
-}
-
 type InitialisationStep struct {
-	operationManager       *process.OperationManager
-	inputBuilder           input.CreatorForPlan
-	runtimeVerConfigurator RuntimeVersionConfiguratorForProvisioning
-	instanceStorage        storage.Instances
+	operationManager *process.OperationManager
+	inputBuilder     input.CreatorForPlan
+	instanceStorage  storage.Instances
 }
 
-func NewInitialisationStep(os storage.Operations, is storage.Instances, b input.CreatorForPlan, rvc RuntimeVersionConfiguratorForProvisioning) *InitialisationStep {
+func NewInitialisationStep(os storage.Operations, is storage.Instances, b input.CreatorForPlan) *InitialisationStep {
 	return &InitialisationStep{
-		operationManager:       process.NewOperationManager(os),
-		inputBuilder:           b,
-		runtimeVerConfigurator: rvc,
-		instanceStorage:        is,
+		operationManager: process.NewOperationManager(os),
+		inputBuilder:     b,
+		instanceStorage:  is,
 	}
 }
 
@@ -54,15 +47,9 @@ func (s *InitialisationStep) Name() string {
 }
 
 func (s *InitialisationStep) Run(operation internal.Operation, log logrus.FieldLogger) (internal.Operation, time.Duration, error) {
-	// configure the Kyma version to use
-	err := s.configureKymaVersion(&operation, log)
-	if err != nil {
-		return s.operationManager.RetryOperation(operation, "error while configuring kyma version", err, 5*time.Second, 5*time.Minute, log)
-	}
-
 	// create Provisioner InputCreator
 	log.Infof("create provisioner input creator for %q plan ID", operation.ProvisioningParameters.PlanID)
-	creator, err := s.inputBuilder.CreateProvisionInput(operation.ProvisioningParameters, operation.RuntimeVersion)
+	creator, err := s.inputBuilder.CreateProvisionInput(operation.ProvisioningParameters)
 
 	switch {
 	case err == nil:
@@ -80,24 +67,6 @@ func (s *InitialisationStep) Run(operation internal.Operation, log logrus.FieldL
 		log.Errorf("cannot create input creator for plan %s: %s", operation.ProvisioningParameters.PlanID, err)
 		return s.operationManager.OperationFailed(operation, "cannot create provisioning input creator", err, log)
 	}
-}
-
-func (s *InitialisationStep) configureKymaVersion(operation *internal.Operation, log logrus.FieldLogger) error {
-	if !operation.RuntimeVersion.IsEmpty() {
-		return nil
-	}
-	version, err := s.runtimeVerConfigurator.ForProvisioning(*operation)
-	if err != nil {
-		return fmt.Errorf("while getting the runtime version: %w", err)
-	}
-
-	var repeat time.Duration
-	if *operation, repeat, err = s.operationManager.UpdateOperation(*operation, func(operation *internal.Operation) {
-		operation.RuntimeVersion = *version
-	}, log); repeat != 0 {
-		return fmt.Errorf("while updating operation with RuntimeVersion property: %w", err)
-	}
-	return nil
 }
 
 func (s *InitialisationStep) updateInstance(id string, provider internal.CloudProvider) error {

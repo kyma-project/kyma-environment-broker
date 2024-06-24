@@ -63,7 +63,6 @@ func (c *converter) applyOperation(source *internal.Operation, target *pkg.Opera
 		target.State = string(source.State)
 		target.Description = source.Description
 		target.OrchestrationID = source.OrchestrationID
-		target.RuntimeVersion = source.RuntimeVersion.Version
 		target.FinishedStages = source.FinishedStages
 		target.ExecutedButNotCompletedSteps = source.ExcutedButNotCompleted
 	}

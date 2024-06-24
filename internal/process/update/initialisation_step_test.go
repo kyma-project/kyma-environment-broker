@@ -4,10 +4,8 @@ import (
 	"testing"
 
 	"github.com/kyma-project/kyma-environment-broker/common/orchestration"
-	"github.com/kyma-project/kyma-environment-broker/internal"
 	"github.com/kyma-project/kyma-environment-broker/internal/fixture"
 	"github.com/kyma-project/kyma-environment-broker/internal/process/input/automock"
-	automock2 "github.com/kyma-project/kyma-environment-broker/internal/process/update/automock"
 	"github.com/kyma-project/kyma-environment-broker/internal/storage"
 	"github.com/pivotal-cf/brokerapi/v8/domain"
 	"github.com/sirupsen/logrus"
@@ -88,19 +86,10 @@ func TestInitialisationStep_OtherOperationIsInProgress(t *testing.T) {
 			require.NoError(t, err)
 			err = rs.Insert(state)
 			require.NoError(t, err)
-			ver := &internal.RuntimeVersionData{
-				Version: "2.4.0",
-				Origin:  internal.Defaults,
-			}
-			rvc := &automock2.RuntimeVersionConfiguratorForUpdating{}
-			rvc.On("ForUpdating",
-				mock.AnythingOfType("internal.Operation")).
-				Return(ver, nil)
 			builder := &automock.CreatorForPlan{}
-			builder.On("CreateUpgradeShootInput",
-				mock.Anything, mock.AnythingOfType("internal.RuntimeVersionData")).
+			builder.On("CreateUpgradeShootInput", mock.Anything).
 				Return(&fixture.SimpleInputCreator{}, nil)
-			step := NewInitialisationStep(is, os, rvc, builder)
+			step := NewInitialisationStep(is, os, builder)
 			updatingOperation := fixture.FixUpdatingOperation("up-id", "iid")
 			updatingOperation.State = orchestration.Pending
 			err = os.InsertOperation(updatingOperation.Operation)

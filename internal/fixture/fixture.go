@@ -26,7 +26,6 @@ const (
 	ServiceManagerURL           = "https://service-manager.local"
 	InstanceDashboardURL        = "https://dashboard.local"
 	XSUAADataXSAppName          = "XSApp"
-	KymaVersion                 = "1.19.0"
 	MonitoringUsername          = "username"
 	MonitoringPassword          = "password"
 )
@@ -189,10 +188,6 @@ func FixInputCreator(provider internal.CloudProvider) *SimpleInputCreator {
 
 func FixProvisioningOperation(operationId, instanceId string) internal.Operation {
 	o := FixOperation(operationId, instanceId, internal.OperationTypeProvision)
-	o.RuntimeVersion = internal.RuntimeVersionData{
-		Version: KymaVersion,
-		Origin:  internal.Defaults,
-	}
 	o.InputCreator = FixInputCreator(internal.Azure)
 	o.DashboardURL = "https://console.kyma.org"
 	return o
@@ -218,10 +213,6 @@ func FixUpdatingOperation(operationId, instanceId string) internal.UpdatingOpera
 
 func FixProvisioningOperationWithProvider(operationId, instanceId string, provider internal.CloudProvider) internal.Operation {
 	o := FixOperation(operationId, instanceId, internal.OperationTypeProvision)
-	o.RuntimeVersion = internal.RuntimeVersionData{
-		Version: KymaVersion,
-		Origin:  internal.Defaults,
-	}
 	o.InputCreator = FixInputCreator(provider)
 	o.DashboardURL = "https://console.kyma.org"
 	return o
@@ -276,10 +267,6 @@ func FixUpgradeKymaOperation(operationId, instanceId string) internal.UpgradeKym
 	o.RuntimeID = operationId
 	o.RuntimeOperation = FixRuntimeOperation(operationId)
 	o.InputCreator = FixInputCreator(internal.Azure)
-	o.RuntimeVersion = internal.RuntimeVersionData{
-		Version: KymaVersion,
-		Origin:  internal.Defaults,
-	}
 	o.Type = internal.OperationTypeUpgradeKyma
 	return internal.UpgradeKymaOperation{
 		Operation: o,

@@ -97,11 +97,7 @@ func fixInputCreator(t *testing.T) internal.ProvisionerInputCreator {
 		PlanID:     broker.GCPPlanID,
 		Parameters: internal.ProvisioningParametersDTO{},
 	}
-	ver := internal.RuntimeVersionData{
-		Version: kymaVersion,
-		Origin:  internal.Defaults,
-	}
-	creator, err := ibf.CreateUpgradeShootInput(pp, ver)
+	creator, err := ibf.CreateUpgradeShootInput(pp)
 	if err != nil {
 		t.Errorf("cannot create input creator for %q plan", broker.GCPPlanID)
 	}
