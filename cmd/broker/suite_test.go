@@ -28,7 +28,6 @@ import (
 	"github.com/kyma-project/kyma-environment-broker/internal/broker"
 	"github.com/kyma-project/kyma-environment-broker/internal/edp"
 	"github.com/kyma-project/kyma-environment-broker/internal/event"
-	"github.com/kyma-project/kyma-environment-broker/internal/ias"
 	"github.com/kyma-project/kyma-environment-broker/internal/notification"
 	kebOrchestration "github.com/kyma-project/kyma-environment-broker/internal/orchestration"
 	"github.com/kyma-project/kyma-environment-broker/internal/process"
@@ -970,9 +969,6 @@ func fixConfig() *Config {
 		},
 
 		Avs: avs.Config{},
-		IAS: ias.Config{
-			IdentityProvider: ias.FakeIdentityProviderName,
-		},
 		Notification: notification.Config{
 			Url: "http://host:8080/",
 		},

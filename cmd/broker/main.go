@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"io"
-	"math/rand"
 	"net/http"
 	"os"
 	"regexp"
@@ -37,7 +36,6 @@ import (
 	eventshandler "github.com/kyma-project/kyma-environment-broker/internal/events/handler"
 	"github.com/kyma-project/kyma-environment-broker/internal/health"
 	"github.com/kyma-project/kyma-environment-broker/internal/httputil"
-	"github.com/kyma-project/kyma-environment-broker/internal/ias"
 	"github.com/kyma-project/kyma-environment-broker/internal/kubeconfig"
 	"github.com/kyma-project/kyma-environment-broker/internal/middleware"
 	"github.com/kyma-project/kyma-environment-broker/internal/notification"
@@ -67,10 +65,6 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client/apiutil"
 	"sigs.k8s.io/controller-runtime/pkg/client/config"
 )
-
-func init() {
-	rand.Seed(time.Now().UTC().UnixNano())
-}
 
 // Config holds configuration for the whole application
 type Config struct {
@@ -121,7 +115,6 @@ type Config struct {
 	CatalogFilePath                                                     string
 
 	Avs avs.Config
-	IAS ias.Config
 	EDP edp.Config
 
 	Notification notification.Config
@@ -330,18 +323,6 @@ func main() {
 	externalEvalCreator := provisioning.NewExternalEvalCreator(avsDel, cfg.Avs.ExternalTesterDisabled, externalEvalAssistant)
 	upgradeEvalManager := avs.NewEvaluationManager(avsDel, cfg.Avs)
 
-	// IAS
-	clientHTTPForIAS := httputil.NewClient(60, cfg.IAS.SkipCertVerification)
-	if cfg.IAS.TLSRenegotiationEnable {
-		clientHTTPForIAS = httputil.NewRenegotiationTLSClient(30, cfg.IAS.SkipCertVerification)
-	}
-	iasClient := ias.NewClient(clientHTTPForIAS, ias.ClientConfig{
-		URL:    cfg.IAS.URL,
-		ID:     cfg.IAS.UserID,
-		Secret: cfg.IAS.UserSecret,
-	})
-	bundleBuilder := ias.NewBundleBuilder(iasClient, cfg.IAS)
-
 	// application event broker
 	eventBroker := event.NewPubSub(logs)
 
@@ -359,7 +340,7 @@ func main() {
 
 	deprovisionManager := process.NewStagedManager(db.Operations(), eventBroker, cfg.OperationTimeout, cfg.Deprovisioning, logs.WithField("deprovisioning", "manager"))
 	deprovisionQueue := NewDeprovisioningProcessingQueue(ctx, cfg.Deprovisioning.WorkersAmount, deprovisionManager, &cfg, db, eventBroker, provisionerClient,
-		avsDel, internalEvalAssistant, externalEvalAssistant, bundleBuilder, edpClient, accountProvider,
+		avsDel, internalEvalAssistant, externalEvalAssistant, edpClient, accountProvider,
 		skrK8sClientProvider, cli, configProvider, logs)
 
 	updateManager := process.NewStagedManager(db.Operations(), eventBroker, cfg.OperationTimeout, cfg.Update, logs.WithField("update", "manager"))
