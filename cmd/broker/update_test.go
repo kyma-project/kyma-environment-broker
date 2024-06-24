@@ -2082,7 +2082,7 @@ func TestUpdateMachineType(t *testing.T) {
 	rs, err := suite.db.RuntimeStates().ListByRuntimeID(i.RuntimeID)
 	assert.NoError(t, err, "runtime states after provisioning")
 	assert.Equal(t, 1, len(rs), "runtime states after provisioning")
-	assert.Equal(t, "m5.xlarge", rs[0].ClusterConfig.MachineType, "after provisioning")
+	assert.Equal(t, "m6i.large", rs[0].ClusterConfig.MachineType, "after provisioning")
 
 	// when patch to change machine type
 
