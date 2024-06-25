@@ -143,7 +143,7 @@ func NewOrchestrationSuite(t *testing.T, additionalKymaVersions []string) *Orche
 		ProvisioningTimeout:         time.Minute,
 		URL:                         "http://localhost",
 		DefaultGardenerShootPurpose: "testing",
-	}, kymaVer, map[string]string{"cf-eu10": "europe"}, cfg.FreemiumProviders, oidcDefaults)
+	}, kymaVer, map[string]string{"cf-eu10": "europe"}, cfg.FreemiumProviders, oidcDefaults, cfg.Broker.UseSmallerMachineTypes)
 	require.NoError(t, err)
 
 	gardenerClient := gardener.NewDynamicFakeClient()
@@ -551,7 +551,7 @@ func (s *ProvisioningSuite) TearDown() {
 	}
 }
 
-func NewProvisioningSuite(t *testing.T, multiZoneCluster bool, controlPlaneFailureTolerance string) *ProvisioningSuite {
+func NewProvisioningSuite(t *testing.T, multiZoneCluster bool, controlPlaneFailureTolerance string, useSmallerMachineTypes bool) *ProvisioningSuite {
 	defer func() {
 		if r := recover(); r != nil {
 			err := cleanupContainer()
@@ -594,7 +594,7 @@ func NewProvisioningSuite(t *testing.T, multiZoneCluster bool, controlPlaneFailu
 		DefaultGardenerShootPurpose:  "testing",
 		MultiZoneCluster:             multiZoneCluster,
 		ControlPlaneFailureTolerance: controlPlaneFailureTolerance,
-	}, defaultKymaVer, map[string]string{"cf-eu10": "europe"}, cfg.FreemiumProviders, oidcDefaults)
+	}, defaultKymaVer, map[string]string{"cf-eu10": "europe"}, cfg.FreemiumProviders, oidcDefaults, useSmallerMachineTypes)
 	require.NoError(t, err)
 
 	server := avs.NewMockAvsServer(t)

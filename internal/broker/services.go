@@ -60,6 +60,7 @@ func (b *ServicesEndpoint) Services(ctx context.Context) ([]domain.Service, erro
 		provider,
 		b.cfg.IncludeAdditionalParamsInSchema,
 		euaccess.IsEURestrictedAccess(platformRegion),
+		b.cfg.UseSmallerMachineTypes,
 		b.cfg.EnableShootAndSeedSameRegion,
 		b.convergedCloudRegionsProvider.GetRegions(platformRegion),
 	) {

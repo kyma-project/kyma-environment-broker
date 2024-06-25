@@ -133,7 +133,7 @@ func fixInputCreator(t *testing.T) internal.ProvisionerInputCreator {
 		TrialNodesNumber:              1,
 		AutoUpdateKubernetesVersion:   fixAutoUpdateKubernetesVersion,
 		AutoUpdateMachineImageVersion: fixAutoUpdateMachineImageVersion,
-	}, fixKymaVersion, nil, nil, fixture.FixOIDCConfigDTO())
+	}, fixKymaVersion, nil, nil, fixture.FixOIDCConfigDTO(), false)
 	require.NoError(t, err, "Input factory creation error")
 
 	ver := internal.RuntimeVersionData{
