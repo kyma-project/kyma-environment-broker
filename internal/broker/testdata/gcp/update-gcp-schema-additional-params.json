@@ -19,7 +19,7 @@
     },
     "autoScalerMax": {
       "description": "Specifies the maximum number of virtual machines to create",
-      "maximum": 80,
+      "maximum": 300,
       "minimum": 3,
       "type": "integer"
     },
