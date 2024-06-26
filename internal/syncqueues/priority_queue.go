@@ -84,8 +84,7 @@ func (q *SubaccountAwarePriorityQueueWithCallbacks) Insert(element QueueElement)
 
 	//integrity check
 	if q.size != len(q.idx) {
-		//log error
-		q.log.Error(fmt.Sprintf("Queue size %d is different from index size %d", q.size, len(q.idx)))
+		q.log.Warn(fmt.Sprintf("Queue size %d is different from index size %d", q.size, len(q.idx)))
 	}
 }
 
