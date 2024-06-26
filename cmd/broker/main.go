@@ -12,10 +12,9 @@ import (
 	"sort"
 	"time"
 
-	"github.com/kyma-project/kyma-environment-broker/internal/whitelist"
-
 	"github.com/kyma-project/kyma-environment-broker/internal/expiration"
 	"github.com/kyma-project/kyma-environment-broker/internal/metricsv2"
+	"github.com/kyma-project/kyma-environment-broker/internal/whitelist"
 
 	"code.cloudfoundry.org/lager"
 	"github.com/dlmiddlecote/sqlstats"
@@ -124,9 +123,6 @@ type Config struct {
 	OrchestrationConfig orchestration.Config
 
 	TrialRegionMappingFilePath string
-
-	EuAccessWhitelistedGlobalAccountsFilePath string
-	EuAccessRejectionMessage                  string `envconfig:"default=Due to limited availability you need to open support ticket before attempting to provision Kyma clusters in EU Access only regions"`
 
 	SapConvergedCloudRegionMappingsFilePath string
 
@@ -447,11 +443,6 @@ func createAPI(router *mux.Router, servicesConfig broker.ServicesConfig, planVal
 	fatalOnError(err, logs)
 	logger.RegisterSink(errorSink)
 
-	// EU Access whitelisting
-	whitelistedGlobalAccountIds, err := whitelist.ReadWhitelistedGlobalAccountIdsFromFile(cfg.EuAccessWhitelistedGlobalAccountsFilePath)
-	fatalOnError(err, logs)
-	logs.Infof("Number of globalAccountIds for EU Access: %d\n", len(whitelistedGlobalAccountIds))
-
 	freemiumGlobalAccountIds, err := whitelist.ReadWhitelistedGlobalAccountIdsFromFile(cfg.FreemiumWhitelistedGlobalAccountsFilePath)
 	fatalOnError(err, logs)
 	logs.Infof("Number of globalAccountIds for unlimited freeemium: %d\n", len(freemiumGlobalAccountIds))
@@ -466,7 +457,7 @@ func createAPI(router *mux.Router, servicesConfig broker.ServicesConfig, planVal
 		ServicesEndpoint: broker.NewServices(cfg.Broker, servicesConfig, logs, convergedCloudRegionProvider),
 		ProvisionEndpoint: broker.NewProvision(cfg.Broker, cfg.Gardener, db.Operations(), db.Instances(), db.InstancesArchived(),
 			provisionQueue, planValidator, defaultPlansConfig,
-			planDefaults, whitelistedGlobalAccountIds, cfg.EuAccessRejectionMessage, logs, cfg.KymaDashboardConfig, kcBuilder, freemiumGlobalAccountIds, convergedCloudRegionProvider,
+			planDefaults, logs, cfg.KymaDashboardConfig, kcBuilder, freemiumGlobalAccountIds, convergedCloudRegionProvider,
 		),
 		DeprovisionEndpoint: broker.NewDeprovision(db.Instances(), db.Operations(), deprovisionQueue, logs),
 		UpdateEndpoint: broker.NewUpdate(cfg.Broker, db.Instances(), db.RuntimeStates(), db.Operations(),

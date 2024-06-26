@@ -290,7 +290,7 @@ func NewProvisioningProperties(machineTypesDisplay, regionsDisplay map[string]st
 			AutoScalerMax: &Type{
 				Type:        "integer",
 				Minimum:     3,
-				Maximum:     80,
+				Maximum:     300,
 				Default:     20,
 				Description: "Specifies the maximum number of virtual machines to create",
 			},

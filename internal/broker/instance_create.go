@@ -69,9 +69,6 @@ type ProvisionEndpoint struct {
 	dashboardConfig dashboard.Config
 	kcBuilder       kubeconfig.KcBuilder
 
-	euAccessWhitelist        whitelist.Set
-	euAccessRejectionMessage string
-
 	freemiumWhiteList whitelist.Set
 
 	convergedCloudRegionsProvider ConvergedCloudRegionProvider
@@ -88,8 +85,6 @@ func NewProvision(cfg Config,
 	builderFactory PlanValidator,
 	plansConfig PlansConfig,
 	planDefaults PlanDefaults,
-	euAccessWhitelist whitelist.Set,
-	euRejectMessage string,
 	log logrus.FieldLogger,
 	dashboardConfig dashboard.Config,
 	kcBuilder kubeconfig.KcBuilder,
@@ -116,8 +111,6 @@ func NewProvision(cfg Config,
 		shootProject:                  gardenerConfig.Project,
 		shootDnsProviders:             gardenerConfig.DNSProviders,
 		planDefaults:                  planDefaults,
-		euAccessWhitelist:             euAccessWhitelist,
-		euAccessRejectionMessage:      euRejectMessage,
 		dashboardConfig:               dashboardConfig,
 		freemiumWhiteList:             freemiumWhitelist,
 		kcBuilder:                     kcBuilder,
@@ -309,14 +302,9 @@ func (b *ProvisionEndpoint) validateAndExtract(details domain.ProvisionDetails, 
 		return ersContext, parameters, fmt.Errorf("while validating input parameters: %w", result.Error)
 	}
 
-	// EU Access: reject requests for not whitelisted globalAccountIds
+	// EU Access
 	if isEuRestrictedAccess(ctx) {
 		logger.Infof("EU Access restricted instance creation")
-		if whitelist.IsNotWhitelisted(ersContext.GlobalAccountID, b.euAccessWhitelist) {
-			logger.Infof(b.euAccessRejectionMessage)
-			err = fmt.Errorf(b.euAccessRejectionMessage)
-			return ersContext, parameters, apiresponses.NewFailureResponse(err, http.StatusBadRequest, "provisioning")
-		}
 	}
 
 	parameters.LicenceType = b.determineLicenceType(details.PlanID)
