@@ -52,6 +52,8 @@ func (q *SubaccountAwarePriorityQueueWithCallbacks) Insert(element QueueElement)
 		q.log.Debug(fmt.Sprintf("Queue is full, resized to %v", q.size*2))
 	}
 	if idx, ok := q.idx[e.SubaccountID]; ok {
+		// check integrity
+
 		if q.elements[idx].ModifiedAt > e.ModifiedAt {
 			// new element is older than one already in the queue, do not insert
 			q.log.Debug(fmt.Sprintf("Element with subaccountID %s, betaEnabled %s, modifiedAt %d is older than %d - ignoring", e.SubaccountID, e.BetaEnabled, e.ModifiedAt, q.elements[idx].ModifiedAt))
@@ -80,6 +82,12 @@ func (q *SubaccountAwarePriorityQueueWithCallbacks) Insert(element QueueElement)
 
 	if q.eventHandler != nil && q.eventHandler.OnInsert != nil {
 		q.eventHandler.OnInsert(q.size)
+	}
+
+	//integrity check
+	if q.size != len(q.idx) {
+		//log error
+		q.log.Error(fmt.Sprintf("Queue size %d is different from index size %d", q.size, len(q.idx)))
 	}
 }
 
