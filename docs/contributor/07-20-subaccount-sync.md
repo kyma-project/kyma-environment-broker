@@ -42,7 +42,6 @@ Use the following environment variables to configure the application:
 
 | Environment variable                                       | Description                                                                                                               | Default value |
 |------------------------------------------------------------|---------------------------------------------------------------------------------------------------------------------------|---------------|
-| **SUBACCOUNT_SYNC_KYMA_VERSION**                           | Specifies current Kyma version to get proper Kyma Custom Resource Definition (CRD).                                             | `false`       |
 | **SUBACCOUNT_SYNC_METRICS_PORT**                           | Specifies port where metrics are exposed for scraping.                                                                    | `8081`        |
 | **SUBACCOUNT_SYNC_UPDATE_RESOURCES**                       | Specifies whether to run the updater process which updates Kyma CR.                                         | `false`       |
 | **SUBACCOUNT_SYNC_LOG_LEVEL**                              | Specifies log level.                                                                                                      | `info`        |

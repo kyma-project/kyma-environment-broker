@@ -28,7 +28,6 @@ import (
 	"github.com/kyma-project/kyma-environment-broker/internal/broker"
 	"github.com/kyma-project/kyma-environment-broker/internal/edp"
 	"github.com/kyma-project/kyma-environment-broker/internal/event"
-	"github.com/kyma-project/kyma-environment-broker/internal/ias"
 	"github.com/kyma-project/kyma-environment-broker/internal/notification"
 	kebOrchestration "github.com/kyma-project/kyma-environment-broker/internal/orchestration"
 	"github.com/kyma-project/kyma-environment-broker/internal/process"
@@ -965,9 +964,6 @@ func fixConfig() *Config {
 		},
 
 		Avs: avs.Config{},
-		IAS: ias.Config{
-			IdentityProvider: ias.FakeIdentityProviderName,
-		},
 		Notification: notification.Config{
 			Url: "http://host:8080/",
 		},
@@ -979,8 +975,6 @@ func fixConfig() *Config {
 		MaxPaginationPage:                         100,
 		FreemiumProviders:                         []string{"aws", "azure"},
 		FreemiumWhitelistedGlobalAccountsFilePath: "testdata/freemium_whitelist.yaml",
-		EuAccessWhitelistedGlobalAccountsFilePath: "testdata/eu_access_whitelist.yaml",
-		EuAccessRejectionMessage:                  "EU Access Rejection Message - see: http://google.pl",
 
 		Provisioning:   process.StagedManagerConfiguration{MaxStepProcessingTime: time.Minute},
 		Deprovisioning: process.StagedManagerConfiguration{MaxStepProcessingTime: time.Minute},

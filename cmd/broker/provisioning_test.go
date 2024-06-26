@@ -198,9 +198,38 @@ func TestProvisioning_HappyPathSapConvergedCloud(t *testing.T) {
 	defer suite.TearDown()
 	iid := uuid.New().String()
 
-	// when
-	resp := suite.CallAPI("PUT", fmt.Sprintf("oauth/cf-eu20-staging/v2/service_instances/%s?accepts_incomplete=true", iid),
-		`{
+	t.Run("should provision SAP Converged Cloud", func(t *testing.T) {
+		// when
+		resp := suite.CallAPI("PUT", fmt.Sprintf("oauth/cf-eu20-staging/v2/service_instances/%s?accepts_incomplete=true", iid),
+			`{
+						"service_id": "47c9dcbf-ff30-448e-ab36-d3bad66ba281",
+						"plan_id": "03b812ac-c991-4528-b5bd-08b303523a63",
+						"context": {
+							"globalaccount_id": "g-account-id",
+							"subaccount_id": "sub-id",
+							"user_id": "john.smith@email.com"
+						},
+						"parameters": {
+							"name": "testing-cluster",
+							"region": "eu-de-1"
+						}
+			}`)
+		opID := suite.DecodeOperationID(resp)
+
+		suite.processProvisioningByOperationID(opID)
+
+		// then
+		suite.WaitForOperationState(opID, domain.Succeeded)
+
+		suite.AssertKymaResourceExists(opID)
+		suite.AssertKymaAnnotationExists(opID, "compass-runtime-id-for-migration")
+		suite.AssertKymaLabelsExist(opID, map[string]string{"kyma-project.io/region": "eu-de-1"})
+	})
+
+	t.Run("should fail for invalid platform region - invalid platform region", func(t *testing.T) {
+		// when
+		resp := suite.CallAPI("PUT", fmt.Sprintf("oauth/invalid/v2/service_instances/%s?accepts_incomplete=true", iid),
+			`{
 					"service_id": "47c9dcbf-ff30-448e-ab36-d3bad66ba281",
 					"plan_id": "03b812ac-c991-4528-b5bd-08b303523a63",
 					"context": {
@@ -213,16 +242,52 @@ func TestProvisioning_HappyPathSapConvergedCloud(t *testing.T) {
 						"region": "eu-de-1"
 					}
 		}`)
-	opID := suite.DecodeOperationID(resp)
+		parsedResponse := suite.ReadResponse(resp)
+		assert.Contains(t, string(parsedResponse), "plan-id not in the catalog")
+	})
 
-	suite.processProvisioningByOperationID(opID)
+	t.Run("should fail for invalid platform region - default platform region", func(t *testing.T) {
 
-	// then
-	suite.WaitForOperationState(opID, domain.Succeeded)
+		// when
+		resp := suite.CallAPI("PUT", fmt.Sprintf("oauth/v2/service_instances/%s?accepts_incomplete=true", iid),
+			`{
+					"service_id": "47c9dcbf-ff30-448e-ab36-d3bad66ba281",
+					"plan_id": "03b812ac-c991-4528-b5bd-08b303523a63",
+					"context": {
+						"globalaccount_id": "g-account-id",
+						"subaccount_id": "sub-id",
+						"user_id": "john.smith@email.com"
+					},
+					"parameters": {
+						"name": "testing-cluster",
+						"region": "eu-de-1"
+					}
+		}`)
+		parsedResponse := suite.ReadResponse(resp)
+		assert.Contains(t, string(parsedResponse), "plan-id not in the catalog")
+	})
 
-	suite.AssertKymaResourceExists(opID)
-	suite.AssertKymaAnnotationExists(opID, "compass-runtime-id-for-migration")
-	suite.AssertKymaLabelsExist(opID, map[string]string{"kyma-project.io/region": "eu-de-1"})
+	t.Run("should fail for invalid platform region - invalid Kyma region", func(t *testing.T) {
+
+		// when
+		resp := suite.CallAPI("PUT", fmt.Sprintf("oauth/cf-eu20-staging/v2/service_instances/%s?accepts_incomplete=true", iid),
+			`{
+					"service_id": "47c9dcbf-ff30-448e-ab36-d3bad66ba281",
+					"plan_id": "03b812ac-c991-4528-b5bd-08b303523a63",
+					"context": {
+						"globalaccount_id": "g-account-id",
+						"subaccount_id": "sub-id",
+						"user_id": "john.smith@email.com"
+					},
+					"parameters": {
+						"name": "testing-cluster",
+						"region": "invalid"
+					}
+		}`)
+		parsedResponse := suite.ReadResponse(resp)
+		assert.Contains(t, string(parsedResponse), "while validating input parameters: region: region must be one of the following")
+	})
+
 }
 
 func TestProvisioning_Preview(t *testing.T) {

@@ -19,10 +19,6 @@ data:
 {{- with .Values.trialRegionsMapping }}
 {{ tpl . $ | indent 4 }}
 {{- end }}
-  euAccessWhitelistedGlobalAccountIds.yaml: |-
-{{- with .Values.euAccessWhitelistedGlobalAccountIds }}
-{{ tpl . $ | indent 4 }}
-{{- end }}
   sapConvergedCloudPlanRegionMappings.yaml: |-
 {{- with .Values.sapConvergedCloudPlanRegionMappings }}
 {{ tpl . $ | indent 4 }}

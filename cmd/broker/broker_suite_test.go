@@ -31,7 +31,6 @@ import (
 	"github.com/kyma-project/kyma-environment-broker/internal/event"
 	"github.com/kyma-project/kyma-environment-broker/internal/expiration"
 	"github.com/kyma-project/kyma-environment-broker/internal/fixture"
-	"github.com/kyma-project/kyma-environment-broker/internal/ias"
 	kcMock "github.com/kyma-project/kyma-environment-broker/internal/kubeconfig/automock"
 	"github.com/kyma-project/kyma-environment-broker/internal/notification"
 	kebOrchestration "github.com/kyma-project/kyma-environment-broker/internal/orchestration"
@@ -200,8 +199,6 @@ func NewBrokerSuiteTestWithConfig(t *testing.T, cfg *Config, version ...string) 
 
 	avsDel, externalEvalCreator, internalEvalAssistant, externalEvalAssistant := createFakeAvsDelegator(t, db, cfg)
 
-	iasFakeClient := ias.NewFakeClient()
-	bundleBuilder := ias.NewBundleBuilder(iasFakeClient, cfg.IAS)
 	edpClient := edp.NewFakeClient()
 	accountProvider := fixAccountProvider()
 	require.NoError(t, err)
@@ -225,7 +222,7 @@ func NewBrokerSuiteTestWithConfig(t *testing.T, cfg *Config, version ...string) 
 	deprovisionManager := process.NewStagedManager(db.Operations(), eventBroker, time.Hour, cfg.Deprovisioning, logs.WithField("deprovisioning", "manager"))
 	deprovisioningQueue := NewDeprovisioningProcessingQueue(ctx, workersAmount, deprovisionManager, cfg, db, eventBroker,
 		provisionerClient, avsDel, internalEvalAssistant, externalEvalAssistant,
-		bundleBuilder, edpClient, accountProvider, k8sClientProvider, cli, configProvider, logs,
+		edpClient, accountProvider, k8sClientProvider, cli, configProvider, logs,
 	)
 	deprovisionManager.SpeedUp(10000)
 
@@ -667,14 +664,19 @@ func (s *BrokerSuiteTest) DecodeErrorResponse(resp *http.Response) apiresponses.
 	return r
 }
 
-func (s *BrokerSuiteTest) DecodeOperationID(resp *http.Response) string {
+func (s *BrokerSuiteTest) ReadResponse(resp *http.Response) []byte {
 	m, err := io.ReadAll(resp.Body)
 	s.Log(string(m))
 	require.NoError(s.t, err)
+	return m
+}
+
+func (s *BrokerSuiteTest) DecodeOperationID(resp *http.Response) string {
+	m := s.ReadResponse(resp)
 	var provisioningResp struct {
 		Operation string `json:"operation"`
 	}
-	err = json.Unmarshal(m, &provisioningResp)
+	err := json.Unmarshal(m, &provisioningResp)
 	require.NoError(s.t, err)
 
 	return provisioningResp.Operation

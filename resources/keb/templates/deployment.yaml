@@ -143,26 +143,6 @@ spec:
                   optional: true
             - name: APP_DIRECTOR_OAUTH_SCOPE
               value: "{{ .Values.director.scope }}"
-            - name: APP_IAS_URL
-              value: "{{ .Values.ias.url }}"
-            - name: APP_IAS_USER_ID
-              valueFrom:
-                secretKeyRef:
-                  name: "{{ .Values.ias.secretName }}"
-                  key: id
-            - name: APP_IAS_USER_SECRET
-              valueFrom:
-                secretKeyRef:
-                  name: "{{ .Values.ias.secretName }}"
-                  key: secret
-            - name: APP_IAS_IDENTITY_PROVIDER
-              value: "{{ .Values.ias.identityProvider }}"
-            - name: APP_IAS_DISABLED
-              value: "{{ .Values.ias.disabled }}"
-            - name: APP_IAS_TLS_RENEGOTIATION_ENABLE
-              value: "{{ .Values.ias.tlsRenegotiationEnable }}"
-            - name: APP_IAS_TLS_SKIP_CERT_VERIFICATION
-              value: "{{ .Values.ias.tlsRenegotiationEnable }}"
             - name: APP_EDP_AUTH_URL
               value: "{{ .Values.edp.authURL }}"
             - name: APP_EDP_ADMIN_URL
@@ -326,12 +306,8 @@ spec:
               value: /config/additionalRuntimeComponents.yaml
             - name: APP_TRIAL_REGION_MAPPING_FILE_PATH
               value: /config/trialRegionMapping.yaml
-            - name: APP_EU_ACCESS_WHITELISTED_GLOBAL_ACCOUNTS_FILE_PATH
-              value: /config/euAccessWhitelistedGlobalAccountIds.yaml
             - name: APP_SAP_CONVERGED_CLOUD_REGION_MAPPINGS_FILE_PATH
               value: /config/sapConvergedCloudPlanRegionMappings.yaml
-            - name: APP_EU_ACCESS_REJECTION_MESSAGE
-              value: "{{ .Values.euAccessRejectionMessage }}"
             - name: APP_FREEMIUM_PROVIDERS
               value: "{{ .Values.gardener.freemiumProviders }}"
             - name: APP_BROKER_ONLY_ONE_FREE_PER_GA

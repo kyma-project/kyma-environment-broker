@@ -13,25 +13,25 @@ global:
       version: "v20240612-83a7c0eb" # do not update along with the other images
     kyma_environment_broker:
       dir:
-      version: "1.8.6"
+      version: "1.8.7"
     kyma_environments_subaccount_cleanup_job:
       dir:
-      version: "1.8.6"
+      version: "1.8.7"
     kyma_environment_trial_cleanup_job:
       dir:
-      version: "1.8.6"
+      version: "1.8.7"
     kyma_environment_expirator_job:
       dir:
-      version: "1.8.6"
+      version: "1.8.7"
     kyma_environment_deprovision_retrigger_job:
       dir:
-      version: "1.8.6"
+      version: "1.8.7"
     kyma_environment_runtime_reconciler:
       dir:
-      version: "1.8.6"
+      version: "1.8.7"
     kyma_environment_subaccount_sync:
       dir:
-      version: "1.8.6"
+      version: "1.8.7"
   kyma_environment_broker:
     enabled: false
     serviceAccountName: "kcp-kyma-environment-broker"
@@ -207,10 +207,6 @@ skrOIDCDefaultValues: |-
 skrDNSProvidersValues: |-
   providers: []
 
-euAccessWhitelistedGlobalAccountIds: |-
-  whitelist:
-euAccessRejectionMessage: "Due to limited availability, you need to open support ticket before attempting to provision Kyma clusters in EU Access only regions"
-
 # Following data serves just as a template
 sapConvergedCloudPlanRegionMappings: |-
   cf-eu20-staging:
@@ -302,16 +298,6 @@ avs:
   maintenanceModeDuringUpgrade:
     disabled: false # disable AvS maintenance mode during upgrade, false until SKR ZDM is done
     alwaysDisabledGlobalAccountIDs: [] # list of GA IDs where maintenance mode is always disabled during upgrade
-
-ias:
-  secretName: "ias-creds"
-  url: "TBD"
-  id: "TBD"
-  secret: "TBD"
-  identityProvider: "TBD"
-  disabled: true
-  tlsRenegotiationEnable: false
-  skipCertVerification: false
 
 edp:
   authURL: "TBD"

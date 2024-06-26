@@ -30,7 +30,7 @@ This tutorial shows how to provision SAP BTP, Kyma runtime on Azure using Kyma E
      kubectl port-forward -n kcp-system deployments/kcp-kyma-environment-broker 8080
    ```
 
-3. Make a call to KEB to create a Kyma runtime on Azure. Find the list of possible request parameters in the [Service description](03-10-service-description.md) document.
+3. Make a call to KEB to create a Kyma runtime on Azure. Find the list of possible request parameters in the [Service Description](03-10-service-description.md) document.
 
    ```bash
    curl --request PUT "https://$BROKER_URL/oauth/v2/service_instances/$INSTANCE_ID?accepts_incomplete=true" \
@@ -59,7 +59,7 @@ This tutorial shows how to provision SAP BTP, Kyma runtime on Azure using Kyma E
    }
    ```  
 
-4. Check the operation status as described in the [Check operation status](05-30-operation-status.md) document.
+4. Check the operation status as described in the [Check Operation Status](05-30-operation-status.md) document.
 
 ## SAP BTP Service Operator
 

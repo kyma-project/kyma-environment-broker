@@ -65,8 +65,6 @@ func TestGetEndpoint_GetProvisioningInstance(t *testing.T) {
 		factoryBuilder,
 		broker.PlansConfig{},
 		planDefaults,
-		whitelist.Set{},
-		"request rejected, your globalAccountId is not whitelisted",
 		logrus.StandardLogger(),
 		dashboardConfig,
 		kcBuilder,

@@ -6,7 +6,7 @@ The Swagger UI static files are copied from the [official source](https://github
 
 KEB uses a [Swagger schema](https://github.com/kyma-project/kyma-environment-broker/blob/main/resources/keb/files/swagger.yaml) file mounted as a volume to the Pod. You can use templates in the Swagger schema file to configure it.
 
-## Port-forward the Pod
+## Port-Forward the Pod
 
 You can port-forward the Pod to expose and use the Swagger UI. To do it, use the following command:
 

@@ -7,7 +7,6 @@ import (
 	"github.com/kyma-project/kyma-environment-broker/common/hyperscaler"
 	"github.com/kyma-project/kyma-environment-broker/internal/avs"
 	"github.com/kyma-project/kyma-environment-broker/internal/event"
-	"github.com/kyma-project/kyma-environment-broker/internal/ias"
 	"github.com/kyma-project/kyma-environment-broker/internal/process"
 	"github.com/kyma-project/kyma-environment-broker/internal/process/deprovisioning"
 	"github.com/kyma-project/kyma-environment-broker/internal/process/input"
@@ -21,7 +20,7 @@ import (
 func NewDeprovisioningProcessingQueue(ctx context.Context, workersAmount int, deprovisionManager *process.StagedManager,
 	cfg *Config, db storage.BrokerStorage, pub event.Publisher,
 	provisionerClient provisioner.Client, avsDel *avs.Delegator, internalEvalAssistant *avs.InternalEvalAssistant,
-	externalEvalAssistant *avs.ExternalEvalAssistant, bundleBuilder ias.BundleBuilder,
+	externalEvalAssistant *avs.ExternalEvalAssistant,
 	edpClient deprovisioning.EDPClient, accountProvider hyperscaler.AccountProvider,
 	k8sClientProvider K8sClientProvider, cli client.Client, configProvider input.ConfigurationProvider, logs logrus.FieldLogger) *process.Queue {
 
@@ -41,10 +40,6 @@ func NewDeprovisioningProcessingQueue(ctx context.Context, workersAmount int, de
 		{
 			step:     deprovisioning.NewEDPDeregistrationStep(db.Operations(), db.Instances(), edpClient, cfg.EDP),
 			disabled: cfg.EDP.Disabled,
-		},
-		{
-			step:     deprovisioning.NewIASDeregistrationStep(db.Operations(), bundleBuilder),
-			disabled: cfg.IAS.Disabled,
 		},
 		{
 			disabled: cfg.LifecycleManagerIntegrationDisabled,

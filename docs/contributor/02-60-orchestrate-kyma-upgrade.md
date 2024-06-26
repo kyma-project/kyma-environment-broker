@@ -1,5 +1,8 @@
 # Orchestrate Kyma Upgrade
 
+> [!NOTE]
+> This document has been deprecated.
+
 This tutorial shows how to upgrade SAP BTP, Kyma runtime using Kyma Environment Broker (KEB).
 
 ## Prerequisites

@@ -326,7 +326,6 @@ func (reconciler *stateReconcilerType) enqueueSubaccountIfOutdated(subaccountID 
 		state := reconciler.inMemoryState[subaccountID]
 		element := syncqueues.QueueElement{SubaccountID: string(subaccountID), ModifiedAt: state.cisState.ModifiedDate, BetaEnabled: fmt.Sprintf("%t", state.cisState.BetaEnabled)}
 		reconciler.syncQueue.Insert(element)
-		reconciler.logger.Debug(fmt.Sprintf("Enqueued subaccount: %s betaEnabled: %t", subaccountID, state.cisState.BetaEnabled))
 	} else {
 		reconciler.logger.Debug(fmt.Sprintf("Subaccount %s is not to be updated", subaccountID))
 	}

@@ -1,7 +1,7 @@
 # Kyma Environment Broker Target Architecture
 
 > [!NOTE] 
-> After Runtime Provisioner and Reconciler are deprecated, Kyma Environment Broker (KEB) will integrate with Infrastructure Manager. The diagram and description in this doc present the KEB target architecture. To read about the current KEB workflow, go to [Kyma Environment Broker Architecture](01-10-architecture.md).
+> After Runtime Provisioner is deprecated, Kyma Environment Broker (KEB) will integrate with Infrastructure Manager. The diagram and description in this document present the KEB target architecture. To read about the current KEB workflow, go to [Kyma Environment Broker Architecture](01-10-architecture.md).
 
 ![KEB target architecture](../assets/target-keb-arch.svg)
 
