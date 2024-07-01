@@ -14,7 +14,6 @@ require (
 	github.com/docker/go-connections v0.5.0
 	github.com/go-co-op/gocron v1.37.0
 	github.com/gocraft/dbr v0.0.0-20190714181702-8114670a83bd
-	github.com/google/go-github v17.0.0+incompatible
 	github.com/google/uuid v1.6.0
 	github.com/gorilla/handlers v1.5.2
 	github.com/gorilla/mux v1.8.1
@@ -33,7 +32,6 @@ require (
 	github.com/stretchr/testify v1.9.0
 	github.com/vrischmann/envconfig v1.3.0
 	golang.org/x/exp v0.0.0-20240213143201-ec583247a57a
-	golang.org/x/mod v0.18.0
 	golang.org/x/oauth2 v0.21.0
 	golang.org/x/time v0.5.0
 	gopkg.in/yaml.v2 v2.4.0
@@ -79,7 +77,6 @@ require (
 	github.com/golang/protobuf v1.5.4 // indirect
 	github.com/google/gnostic-models v0.6.9-0.20230804172637-c7be7c783f49 // indirect
 	github.com/google/go-cmp v0.6.0 // indirect
-	github.com/google/go-querystring v1.1.0 // indirect
 	github.com/google/gofuzz v1.2.0 // indirect
 	github.com/gorilla/websocket v1.5.0 // indirect
 	github.com/hashicorp/errwrap v1.1.0 // indirect
@@ -126,6 +123,7 @@ require (
 	go.uber.org/atomic v1.11.0 // indirect
 	go.uber.org/zap v1.27.0 // indirect
 	golang.org/x/crypto v0.24.0 // indirect
+	golang.org/x/mod v0.18.0 // indirect
 	golang.org/x/net v0.26.0 // indirect
 	golang.org/x/sync v0.7.0 // indirect
 	golang.org/x/sys v0.21.0 // indirect

@@ -40,7 +40,6 @@ import (
 	"github.com/kyma-project/kyma-environment-broker/internal/process/provisioning"
 	"github.com/kyma-project/kyma-environment-broker/internal/process/steps"
 	"github.com/kyma-project/kyma-environment-broker/internal/process/upgrade_cluster"
-	"github.com/kyma-project/kyma-environment-broker/internal/process/upgrade_kyma"
 	"github.com/kyma-project/kyma-environment-broker/internal/provisioner"
 	kebRuntime "github.com/kyma-project/kyma-environment-broker/internal/runtime"
 	"github.com/kyma-project/kyma-environment-broker/internal/storage"
@@ -250,11 +249,6 @@ func NewBrokerSuiteTestWithConfig(t *testing.T, cfg *Config, version ...string) 
 	upgradeEvaluationManager := avs.NewEvaluationManager(avsDel, avs.Config{})
 	runtimeLister := kebOrchestration.NewRuntimeLister(db.Instances(), db.Operations(), kebRuntime.NewConverter(defaultRegion), logs)
 	runtimeResolver := orchestration.NewGardenerRuntimeResolver(gardenerClient, fixedGardenerNamespace, runtimeLister, logs)
-	kymaQueue := NewKymaOrchestrationProcessingQueue(ctx, db, provisionerClient, eventBroker, inputFactory, &upgrade_kyma.TimeSchedule{
-		Retry:              10 * time.Millisecond,
-		StatusCheck:        100 * time.Millisecond,
-		UpgradeKymaTimeout: 3 * time.Second,
-	}, 250*time.Millisecond, runtimeResolver, upgradeEvaluationManager, cfg, avs.NewInternalEvalAssistant(cfg.Avs), notificationBundleBuilder, logs, cli, 1000)
 
 	clusterQueue := NewClusterOrchestrationProcessingQueue(ctx, db, provisionerClient, eventBroker, inputFactory, &upgrade_cluster.TimeSchedule{
 		Retry:                 10 * time.Millisecond,
@@ -262,11 +256,10 @@ func NewBrokerSuiteTestWithConfig(t *testing.T, cfg *Config, version ...string) 
 		UpgradeClusterTimeout: 3 * time.Second,
 	}, 250*time.Millisecond, runtimeResolver, upgradeEvaluationManager, notificationBundleBuilder, logs, cli, *cfg, 1000)
 
-	kymaQueue.SpeedUp(1000)
 	clusterQueue.SpeedUp(1000)
 
 	// TODO: in case of cluster upgrade the same Azure Zones must be send to the Provisioner
-	orchestrationHandler := orchestrate.NewOrchestrationHandler(db, kymaQueue, clusterQueue, cfg.MaxPaginationPage, logs)
+	orchestrationHandler := orchestrate.NewOrchestrationHandler(db, clusterQueue, cfg.MaxPaginationPage, logs)
 	orchestrationHandler.AttachRoutes(ts.router)
 
 	expirationHandler := expiration.NewHandler(db.Instances(), db.Operations(), deprovisioningQueue, logs)

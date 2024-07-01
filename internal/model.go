@@ -37,13 +37,6 @@ type ProvisionerInputCreator interface {
 	SetOIDCLastValues(oidcConfig gqlschema.OIDCConfigInput) ProvisionerInputCreator
 }
 
-// GitKymaProject and GitKymaRepo define public Kyma GitHub parameters used for
-// external evaluation.
-const (
-	GitKymaProject = "kyma-project"
-	GitKymaRepo    = "kyma"
-)
-
 type AvsEvaluationStatus struct {
 	Current  string `json:"current_value"`
 	Original string `json:"original_value"`

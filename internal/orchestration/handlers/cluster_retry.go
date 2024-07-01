@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"fmt"
+	"time"
 
 	commonOrchestration "github.com/kyma-project/kyma-environment-broker/common/orchestration"
 	"github.com/kyma-project/kyma-environment-broker/internal"
@@ -9,6 +10,13 @@ import (
 	"github.com/kyma-project/kyma-environment-broker/internal/storage"
 	"github.com/sirupsen/logrus"
 )
+
+type Retryer struct {
+	orchestrations storage.Orchestrations
+	operations     storage.Operations
+	queue          *process.Queue
+	log            logrus.FieldLogger
+}
 
 type clusterRetryer Retryer
 
@@ -151,4 +159,37 @@ func (r *clusterRetryer) latestOperationValidate(orchestrationID string, ops []i
 	}
 
 	return retryOps, oldIDs, nil
+}
+
+func orchestrationStateUpdate(orch *internal.Orchestration, orchestrations storage.Orchestrations, orchestrationID string, log logrus.FieldLogger) (string, error) {
+	o, err := orchestrations.GetByID(orchestrationID)
+	if err != nil {
+		log.Errorf("while getting orchestration %s: %v", orchestrationID, err)
+		return "", fmt.Errorf("while getting orchestration %s: %w", orchestrationID, err)
+	}
+	// last minute check in case in progress one got canceled.
+	state := o.State
+	if state == commonOrchestration.Canceling || state == commonOrchestration.Canceled {
+		log.Infof("orchestration %s was canceled right before retrying", orchestrationID)
+		return state, fmt.Errorf("orchestration %s was canceled right before retrying", orchestrationID)
+	}
+
+	o.UpdatedAt = time.Now()
+	o.Parameters.RetryOperation.RetryOperations = orch.Parameters.RetryOperation.RetryOperations
+	o.Parameters.RetryOperation.Immediate = orch.Parameters.RetryOperation.Immediate
+	if state == commonOrchestration.Failed {
+		o.Description += ", retrying"
+		o.State = commonOrchestration.Retrying
+	}
+	err = orchestrations.Update(*o)
+	if err != nil {
+		log.Errorf("while updating orchestration %s: %v", orchestrationID, err)
+		return state, fmt.Errorf("while updating orchestration %s: %w", orchestrationID, err)
+	}
+	return state, nil
+}
+
+func zeroValidOperationInfo(resp *commonOrchestration.RetryResponse, log logrus.FieldLogger) {
+	log.Infof("no valid operations to retry for orchestration %s", resp.OrchestrationID)
+	resp.Msg = fmt.Sprintf("No valid operations to retry for orchestration %s", resp.OrchestrationID)
 }

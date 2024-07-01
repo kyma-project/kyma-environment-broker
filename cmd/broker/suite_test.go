@@ -34,7 +34,6 @@ import (
 	"github.com/kyma-project/kyma-environment-broker/internal/process/input"
 	"github.com/kyma-project/kyma-environment-broker/internal/process/provisioning"
 	"github.com/kyma-project/kyma-environment-broker/internal/process/upgrade_cluster"
-	"github.com/kyma-project/kyma-environment-broker/internal/process/upgrade_kyma"
 	"github.com/kyma-project/kyma-environment-broker/internal/provisioner"
 	kebRuntime "github.com/kyma-project/kyma-environment-broker/internal/runtime"
 	"github.com/kyma-project/kyma-environment-broker/internal/storage"
@@ -78,7 +77,6 @@ var (
 type OrchestrationSuite struct {
 	gardenerNamespace string
 	provisionerClient *provisioner.FakeClient
-	kymaQueue         *process.Queue
 	clusterQueue      *process.Queue
 	storage           storage.BrokerStorage
 	gardenerClient    dynamic.Interface
@@ -161,25 +159,17 @@ func NewOrchestrationSuite(t *testing.T, additionalKymaVersions []string) *Orche
 	notificationFakeClient := notification.NewFakeClient()
 	notificationBundleBuilder := notification.NewBundleBuilder(notificationFakeClient, cfg.Notification)
 
-	kymaQueue := NewKymaOrchestrationProcessingQueue(ctx, db, provisionerClient, eventBroker, inputFactory, &upgrade_kyma.TimeSchedule{
-		Retry:              2 * time.Millisecond,
-		StatusCheck:        20 * time.Millisecond,
-		UpgradeKymaTimeout: 4 * time.Second,
-	}, 250*time.Millisecond, runtimeResolver, upgradeEvaluationManager, &cfg, avs.NewInternalEvalAssistant(cfg.Avs), notificationBundleBuilder, logs, cli, 1000)
-
 	clusterQueue := NewClusterOrchestrationProcessingQueue(ctx, db, provisionerClient, eventBroker, inputFactory, &upgrade_cluster.TimeSchedule{
 		Retry:                 2 * time.Millisecond,
 		StatusCheck:           20 * time.Millisecond,
 		UpgradeClusterTimeout: 4 * time.Second,
 	}, 250*time.Millisecond, runtimeResolver, upgradeEvaluationManager, notificationBundleBuilder, logs, cli, cfg, 1000)
 
-	kymaQueue.SpeedUp(1000)
 	clusterQueue.SpeedUp(1000)
 
 	return &OrchestrationSuite{
 		gardenerNamespace: gardenerNamespace,
 		provisionerClient: provisionerClient,
-		kymaQueue:         kymaQueue,
 		clusterQueue:      clusterQueue,
 		storage:           db,
 		gardenerClient:    gardenerClient,

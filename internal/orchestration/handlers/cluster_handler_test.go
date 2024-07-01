@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"testing"
+	"time"
 
 	"github.com/kyma-project/kyma-environment-broker/common/orchestration"
 	"github.com/kyma-project/kyma-environment-broker/internal/process"
@@ -65,4 +66,10 @@ func fixClusterHandler(t *testing.T) *clusterHandler {
 	handler := NewClusterHandler(db.Orchestrations(), q, logs)
 
 	return handler
+}
+
+type testExecutor struct{}
+
+func (t *testExecutor) Execute(opID string) (time.Duration, error) {
+	return 0, nil
 }

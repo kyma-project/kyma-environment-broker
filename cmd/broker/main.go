@@ -359,12 +359,11 @@ func main() {
 	runtimeLister := orchestration.NewRuntimeLister(db.Instances(), db.Operations(), runtime.NewConverter(cfg.DefaultRequestRegion), logs)
 	runtimeResolver := orchestrationExt.NewGardenerRuntimeResolver(dynamicGardener, gardenerNamespace, runtimeLister, logs)
 
-	kymaQueue := NewKymaOrchestrationProcessingQueue(ctx, db, provisionerClient, eventBroker, inputFactory, nil, time.Minute, runtimeResolver, upgradeEvalManager, &cfg, internalEvalAssistant, notificationBuilder, logs, cli, 1)
 	clusterQueue := NewClusterOrchestrationProcessingQueue(ctx, db, provisionerClient, eventBroker, inputFactory,
 		nil, time.Minute, runtimeResolver, upgradeEvalManager, notificationBuilder, logs, cli, cfg, 1)
 
 	// TODO: in case of cluster upgrade the same Azure Zones must be send to the Provisioner
-	orchestrationHandler := orchestrate.NewOrchestrationHandler(db, kymaQueue, clusterQueue, cfg.MaxPaginationPage, logs)
+	orchestrationHandler := orchestrate.NewOrchestrationHandler(db, clusterQueue, cfg.MaxPaginationPage, logs)
 
 	if !cfg.DisableProcessOperationsInProgress {
 		err = processOperationsInProgressByType(internal.OperationTypeProvision, db.Operations(), provisionQueue, logs)
@@ -372,8 +371,6 @@ func main() {
 		err = processOperationsInProgressByType(internal.OperationTypeDeprovision, db.Operations(), deprovisionQueue, logs)
 		fatalOnError(err, logs)
 		err = processOperationsInProgressByType(internal.OperationTypeUpdate, db.Operations(), updateQueue, logs)
-		fatalOnError(err, logs)
-		err = reprocessOrchestrations(orchestrationExt.UpgradeKymaOrchestration, db.Orchestrations(), db.Operations(), kymaQueue, logs)
 		fatalOnError(err, logs)
 		err = reprocessOrchestrations(orchestrationExt.UpgradeClusterOrchestration, db.Orchestrations(), db.Operations(), clusterQueue, logs)
 		fatalOnError(err, logs)

@@ -31,7 +31,6 @@ type orchestrationHandler struct {
 	log       logrus.FieldLogger
 
 	canceler       *Canceler
-	kymaRetryer    *kymaRetryer
 	clusterRetryer *clusterRetryer
 
 	defaultMaxPage int
@@ -41,7 +40,6 @@ type orchestrationHandler struct {
 func NewOrchestrationStatusHandler(operations storage.Operations,
 	orchestrations storage.Orchestrations,
 	runtimeStates storage.RuntimeStates,
-	kymaQueue *process.Queue,
 	clusterQueue *process.Queue,
 	defaultMaxPage int,
 	log logrus.FieldLogger) *orchestrationHandler {
@@ -53,7 +51,6 @@ func NewOrchestrationStatusHandler(operations storage.Operations,
 		defaultMaxPage: defaultMaxPage,
 		converter:      Converter{},
 		canceler:       NewCanceler(orchestrations, log),
-		kymaRetryer:    NewKymaRetryer(orchestrations, operations, kymaQueue, log),
 		clusterRetryer: NewClusterRetryer(orchestrations, operations, clusterQueue, log),
 	}
 }
@@ -119,7 +116,6 @@ func (h *orchestrationHandler) retryOrchestrationByID(w http.ResponseWriter, r *
 
 	orchestrationID := mux.Vars(r)["orchestration_id"]
 	operationIDs := []string{}
-	var immediateID string
 
 	if r.Body != nil {
 		if err := r.ParseForm(); err != nil {
@@ -129,7 +125,6 @@ func (h *orchestrationHandler) retryOrchestrationByID(w http.ResponseWriter, r *
 		}
 
 		operationIDs = r.Form["operation-id"]
-		immediateID = r.FormValue("immediate")
 	}
 
 	o, err := h.orchestrations.GetByID(orchestrationID)
@@ -145,19 +140,6 @@ func (h *orchestrationHandler) retryOrchestrationByID(w http.ResponseWriter, r *
 
 	var response commonOrchestration.RetryResponse
 	switch o.Type {
-	case commonOrchestration.UpgradeKymaOrchestration:
-		allOps, _, _, err := h.operations.ListUpgradeKymaOperationsByOrchestrationID(o.OrchestrationID, filter)
-		if err != nil {
-			h.log.Errorf("while getting operations: %v", err)
-			httputil.WriteErrorResponse(w, http.StatusInternalServerError, fmt.Errorf("while getting operations: %w", err))
-			return
-		}
-
-		response, err = h.kymaRetryer.orchestrationRetry(o, allOps, operationIDs, immediateID)
-		if err != nil {
-			httputil.WriteErrorResponse(w, http.StatusInternalServerError, err)
-			return
-		}
 
 	case commonOrchestration.UpgradeClusterOrchestration:
 		allOps, _, _, err := h.operations.ListUpgradeClusterOperationsByOrchestrationID(o.OrchestrationID, filter)
