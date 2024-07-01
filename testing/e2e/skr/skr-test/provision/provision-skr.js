@@ -31,7 +31,7 @@ async function provisionSKRAndInitK8sConfig(options, provisioningTimeout) {
         const kubeconfigPath = kcp.getKubeconfig(shootName);
         await initializeK8sClient({kubeconfigPath: kubeconfigPath});
       } else {
-        console.log("An error occurred while fetching the secret:", error.message);
+        console.log("An error occurred while fetching the secret");
       }
     }
 
