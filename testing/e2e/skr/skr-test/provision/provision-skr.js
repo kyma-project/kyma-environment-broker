@@ -28,7 +28,7 @@ async function provisionSKRAndInitK8sConfig(options, provisioningTimeout) {
     } catch (error) {
       if (error.response && error.response.status === 403) {
         console.log("Access to secrets is forbidden. Downloading the kubeconfig once again. Trying to initialize the client one last time");
-        const kubeconfigPath = kcp.getKubeconfig(shootName);
+        const kubeconfigPath = kcp.getKubeconfig(shoot.name);
         await initializeK8sClient({kubeconfigPath: kubeconfigPath});
       } else {
         console.log("An error occurred while fetching the secret");
