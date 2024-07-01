@@ -11,6 +11,7 @@ const {
 const {keb, kcp, gardener} = require('../helpers');
 
 const updateTimeout = 1000 * 60 * 20; // 20m
+const k8sCallTimeout = 1000 * 60 * 1; // 1m
 
 function oidcE2ETest(getShootOptionsFunc, getShootInfoFunc) {
   describe('OIDC Test', function() {
@@ -73,6 +74,7 @@ function oidcE2ETest(getShootOptionsFunc, getShootInfoFunc) {
     });
 
     it('Assure cluster admin is preserved', async function() {
+      this.timeout(k8sCallTimeout);
       await ensureKymaAdminBindingExistsForUser(options.kebUserId);
     });
 
