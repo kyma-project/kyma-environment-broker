@@ -7,33 +7,6 @@ info:
     name: Apache 2.0
     url: 'http://www.apache.org/licenses/LICENSE-2.0.html'
 paths:
-  /upgrade/kyma:
-    post:
-      tags:
-        - Orchestrations
-      summary: orchestrates Kyma upgrade
-      operationId: upgradeKyma
-      description: Starts the processing of Kyma upgrade, returns the orchestration ID
-      responses:
-        '202':
-          description: Upgrade started
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/UpgradeResponse'
-        '400':
-          description: Invalid input or object
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/OrchestrationError'
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/OrchestrationParameters'
-        description: Orchestration parameters to configure orchestration
-
   /upgrade/cluster:
     post:
       tags:
