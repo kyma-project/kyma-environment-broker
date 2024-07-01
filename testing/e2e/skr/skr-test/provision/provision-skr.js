@@ -10,6 +10,7 @@ const {
 
 const {provisionSKR}= require('../../kyma-environment-broker');
 const {BTPOperatorCreds} = require('../../smctl/helpers');
+const { getSecret } = require('../../utils');
 
 async function provisionSKRAndInitK8sConfig(options, provisioningTimeout) {
   console.log('Provisioning new SKR instance...');
@@ -21,10 +22,21 @@ async function provisionSKRAndInitK8sConfig(options, provisioningTimeout) {
   } else {
     console.log('Initiating K8s client...');
     await initializeK8sClient({kubeconfigPath: shoot.kubeconfig});
+
+    try {
+      getSecret("sap-btp-manager", "kyma-system");
+    } catch (error) {
+      if (error.response && error.response.status === 403) {
+        console.log("Access to secrets is forbidden. Downloading the kubeconfig once again. Trying to initialize the client one last time");
+        const kubeconfigPath = kcp.getKubeconfig(shootName);
+        await initializeK8sClient({kubeconfigPath: kubeconfigPath});
+      } else {
+        console.log("An error occurred while fetching the secret:", error.message);
+      }
+    }
+
   }
-
   console.log('Initialization of K8s finished...');
-
 
   return {
     options,
