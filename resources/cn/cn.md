@@ -1,6 +1,6 @@
-# Install KEB in the CN Region
+# Install Kyma Environment Broker in the CN Region
 
-This guide will help you install KEB in the CN region.
+This guide will help you install Kyma Environment Broker (KEB) in the CN region.
 
 ## Prerequisites
 
