@@ -43,11 +43,6 @@ You can find all the updating steps in the [update](../../cmd/broker/update.go) 
 The upgrade cluster process is triggered by upgrade cluster orchestration.
 You can find all the upgrading cluster steps in the [upgrade_cluster](../../cmd/broker/upgrade_cluster.go) file.
 
-## Upgrade Kyma
-
-The upgrade Kyma process is triggered by upgrade Kyma orchestration.
-You can find all the upgrading Kyma steps in the [upgrade_kyma](../../cmd/broker/upgrade_kyma.go) file.
-
 ## Provide Additional Steps
 
 You can configure SAP BTP, Kyma runtime operations by providing additional steps. Every operation (see the implementation of `internal.Operation` structure in [model.go](../../internal/model.go)) is based on the same Operation structure. The following examples present how to extend the KEB process based on provisioning operation. Extensions for other processes follow the same steps but require their specific structures.
