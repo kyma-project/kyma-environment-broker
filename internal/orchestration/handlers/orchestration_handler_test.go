@@ -9,15 +9,12 @@ import (
 	"testing"
 	"time"
 
-	"github.com/google/uuid"
 	"github.com/gorilla/mux"
 	"github.com/kyma-project/control-plane/components/provisioner/pkg/gqlschema"
 	"github.com/kyma-project/kyma-environment-broker/common/orchestration"
 	"github.com/kyma-project/kyma-environment-broker/internal"
-	"github.com/kyma-project/kyma-environment-broker/internal/broker"
 	"github.com/kyma-project/kyma-environment-broker/internal/fixture"
 	"github.com/kyma-project/kyma-environment-broker/internal/process"
-	"github.com/kyma-project/kyma-environment-broker/internal/ptr"
 	"github.com/kyma-project/kyma-environment-broker/internal/storage"
 	"github.com/pivotal-cf/brokerapi/v8/domain"
 	"github.com/sirupsen/logrus"
@@ -118,84 +115,6 @@ func TestStatusHandler_AttachRoutes(t *testing.T) {
 		assert.Equal(t, dto.OrchestrationID, fixID)
 		assert.Len(t, dto.OperationStats, 6)
 		assert.Equal(t, 1, dto.OperationStats[orchestration.Succeeded])
-	})
-
-	t.Run("kyma upgrade operations", func(t *testing.T) {
-		// given
-		db := storage.NewMemoryStorage()
-		secondID := "id-2"
-
-		err := db.Orchestrations().Insert(internal.Orchestration{OrchestrationID: fixID, Type: orchestration.UpgradeKymaOrchestration})
-		require.NoError(t, err)
-		err = db.Operations().InsertUpgradeKymaOperation(internal.UpgradeKymaOperation{
-			Operation: internal.Operation{
-				ID:              fixID,
-				InstanceID:      fixID,
-				OrchestrationID: fixID,
-				ProvisioningParameters: internal.ProvisioningParameters{
-					PlanID: "4deee563-e5ec-4731-b9b1-53b42d855f0c",
-				},
-				RuntimeOperation: orchestration.RuntimeOperation{
-					ID: fixID,
-				},
-			},
-		})
-		err = db.Operations().InsertProvisioningOperation(internal.ProvisioningOperation{
-			Operation: internal.Operation{
-				ID:         secondID,
-				InstanceID: fixID,
-			},
-		})
-		require.NoError(t, err)
-
-		err = db.RuntimeStates().Insert(internal.RuntimeState{ID: secondID, OperationID: secondID})
-		require.NoError(t, err)
-		err = db.RuntimeStates().Insert(internal.RuntimeState{ID: fixID, OperationID: fixID})
-		require.NoError(t, err)
-
-		logs := logrus.New()
-		kymaHandler := NewOrchestrationStatusHandler(db.Operations(), db.Orchestrations(), db.RuntimeStates(), nil, 100, logs)
-
-		urlPath := fmt.Sprintf("/orchestrations/%s/operations", fixID)
-		req, err := http.NewRequest("GET", urlPath, nil)
-		require.NoError(t, err)
-
-		rr := httptest.NewRecorder()
-		router := mux.NewRouter()
-		kymaHandler.AttachRoutes(router)
-
-		// when
-		router.ServeHTTP(rr, req)
-
-		// then
-		require.Equal(t, http.StatusOK, rr.Code)
-
-		var out orchestration.OperationResponseList
-
-		err = json.Unmarshal(rr.Body.Bytes(), &out)
-		require.NoError(t, err)
-		assert.Len(t, out.Data, 1)
-		assert.Equal(t, 1, out.TotalCount)
-		assert.Equal(t, 1, out.Count)
-
-		// given
-		urlPath = fmt.Sprintf("/orchestrations/%s/operations/%s", fixID, fixID)
-		req, err = http.NewRequest(http.MethodGet, urlPath, nil)
-		require.NoError(t, err)
-		rr = httptest.NewRecorder()
-
-		dto := orchestration.OperationDetailResponse{}
-
-		// when
-		router.ServeHTTP(rr, req)
-
-		// then
-		require.Equal(t, http.StatusOK, rr.Code)
-
-		err = json.Unmarshal(rr.Body.Bytes(), &dto)
-		require.NoError(t, err)
-		assert.Equal(t, dto.OrchestrationID, fixID)
-		assert.Equal(t, dto.OperationID, fixID)
 	})
 
 	t.Run("cluster upgrade operations", func(t *testing.T) {
@@ -299,156 +218,6 @@ func TestStatusHandler_AttachRoutes(t *testing.T) {
 		o, err := db.Orchestrations().GetByID(fixID)
 		require.NoError(t, err)
 		assert.Equal(t, orchestration.Canceling, o.State)
-	})
-
-	t.Run("Kyma 2.0 upgrade operation", func(t *testing.T) {
-		// given
-		db := storage.NewMemoryStorage()
-
-		instanceID := "instanceID"
-		provisioningOp1ID := "provisioningOp1ID"
-
-		provisioningOp1 := internal.ProvisioningOperation{
-			Operation: internal.Operation{
-				ID:         provisioningOp1ID,
-				InstanceID: instanceID,
-			},
-		}
-
-		err := db.Operations().InsertProvisioningOperation(provisioningOp1)
-		require.NoError(t, err)
-
-		orchestration1ID := "ochestration1ID"
-		orchestration1 := internal.Orchestration{
-			OrchestrationID: orchestration1ID,
-			Type:            orchestration.UpgradeKymaOrchestration,
-		}
-
-		err = db.Orchestrations().Insert(orchestration1)
-		require.NoError(t, err)
-
-		upgradeKymaOp1ID := "upgradeKymaOperation1ID"
-		upgradeKymaOp1 := internal.UpgradeKymaOperation{
-			Operation: internal.Operation{
-				ID:              upgradeKymaOp1ID,
-				InstanceID:      instanceID,
-				OrchestrationID: orchestration1ID,
-				ProvisioningParameters: internal.ProvisioningParameters{
-					PlanID: broker.AzurePlanID,
-				},
-				RuntimeOperation: orchestration.RuntimeOperation{
-					ID: upgradeKymaOp1ID,
-				},
-			},
-		}
-
-		err = db.Operations().InsertUpgradeKymaOperation(upgradeKymaOp1)
-		require.NoError(t, err)
-
-		runtimeStateID := "runtimeStateID"
-		runtimeState := internal.RuntimeState{
-			ID:          runtimeStateID,
-			RuntimeID:   uuid.NewString(),
-			OperationID: upgradeKymaOp1ID,
-			KymaConfig: gqlschema.KymaConfigInput{
-				Version: "2.0.0",
-				Profile: (*gqlschema.KymaProfile)(ptr.String("Production")),
-				Components: []*gqlschema.ComponentConfigurationInput{
-					{
-						Component: "component1",
-						Namespace: "test",
-						SourceURL: ptr.String("component1URL.local"),
-						Configuration: []*gqlschema.ConfigEntryInput{
-							{
-								Key:    "key1",
-								Value:  "value1",
-								Secret: ptr.Bool(false),
-							},
-							{
-								Key:    "key2",
-								Value:  "value2",
-								Secret: ptr.Bool(true),
-							},
-						},
-					},
-				},
-			},
-		}
-
-		err = db.RuntimeStates().Insert(runtimeState)
-		require.NoError(t, err)
-
-		logs := logrus.New()
-		kymaHandler := NewOrchestrationStatusHandler(db.Operations(), db.Orchestrations(), db.RuntimeStates(), nil, 100, logs)
-
-		urlPath := fmt.Sprintf("/orchestrations/%s/operations", orchestration1ID)
-		req, err := http.NewRequest("GET", urlPath, nil)
-		require.NoError(t, err)
-
-		rr := httptest.NewRecorder()
-		router := mux.NewRouter()
-		kymaHandler.AttachRoutes(router)
-
-		// when
-		router.ServeHTTP(rr, req)
-
-		// then
-		require.Equal(t, http.StatusOK, rr.Code)
-
-		var opResponseList orchestration.OperationResponseList
-
-		err = json.Unmarshal(rr.Body.Bytes(), &opResponseList)
-		require.NoError(t, err)
-
-		assert.Len(t, opResponseList.Data, 1)
-		assert.Equal(t, 1, opResponseList.TotalCount)
-		assert.Equal(t, 1, opResponseList.Count)
-
-		// given
-		urlPath = fmt.Sprintf("/orchestrations/%s/operations/%s", orchestration1ID, upgradeKymaOp1ID)
-		req, err = http.NewRequest(http.MethodGet, urlPath, nil)
-		require.NoError(t, err)
-
-		rr = httptest.NewRecorder()
-
-		// when
-		router.ServeHTTP(rr, req)
-
-		// then
-		require.Equal(t, http.StatusOK, rr.Code)
-
-		var opDetailResponse orchestration.OperationDetailResponse
-		err = json.Unmarshal(rr.Body.Bytes(), &opDetailResponse)
-		require.NoError(t, err)
-
-		expectedKymaConfig := gqlschema.KymaConfigInput{
-			Version: "2.0.0",
-			Profile: (*gqlschema.KymaProfile)(ptr.String("Production")),
-			Components: []*gqlschema.ComponentConfigurationInput{
-				{
-					Component: "component1",
-					Namespace: "test",
-					SourceURL: ptr.String("component1URL.local"),
-					Configuration: []*gqlschema.ConfigEntryInput{
-						{
-							Key:    "key1",
-							Value:  "value1",
-							Secret: ptr.Bool(false),
-						},
-						{
-							Key:    "key2",
-							Value:  "value2",
-							Secret: ptr.Bool(true),
-						},
-					},
-				},
-			},
-		}
-
-		assert.Equal(t, opDetailResponse.OrchestrationID, orchestration1ID)
-		assert.Equal(t, opDetailResponse.OperationID, upgradeKymaOp1ID)
-		assert.NotNil(t, opDetailResponse.KymaConfig)
-		assertKymaConfigValues(t, expectedKymaConfig, *opDetailResponse.KymaConfig)
 	})
 }
 

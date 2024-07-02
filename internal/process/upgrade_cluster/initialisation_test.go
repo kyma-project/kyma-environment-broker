@@ -6,13 +6,14 @@ import (
 	"testing"
 	"time"
 
+	"github.com/kyma-project/kyma-environment-broker/internal/process/upgrade_cluster/automock"
+
 	"github.com/kyma-project/control-plane/components/provisioner/pkg/gqlschema"
 	"github.com/kyma-project/kyma-environment-broker/internal/avs"
 	"github.com/kyma-project/kyma-environment-broker/internal/fixture"
 	"github.com/kyma-project/kyma-environment-broker/internal/notification"
 	notificationAutomock "github.com/kyma-project/kyma-environment-broker/internal/notification/mocks"
 	"github.com/kyma-project/kyma-environment-broker/internal/process/input"
-	"github.com/kyma-project/kyma-environment-broker/internal/process/upgrade_kyma/automock"
 	cloudProvider "github.com/kyma-project/kyma-environment-broker/internal/provider"
 	provisionerAutomock "github.com/kyma-project/kyma-environment-broker/internal/provisioner/automock"
 	"github.com/kyma-project/kyma-environment-broker/internal/ptr"

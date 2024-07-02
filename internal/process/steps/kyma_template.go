@@ -37,17 +37,3 @@ func (s *InitKymaTemplate) Run(operation internal.Operation, logger logrus.Field
 		op.KymaTemplate = tmpl
 	}, logger)
 }
-
-// NOTE: adapter for upgrade_kyma which is currently not using shared staged_manager
-type initKymaTemplateUpgradeKyma struct {
-	*InitKymaTemplate
-}
-
-func InitKymaTemplateUpgradeKyma(os storage.Operations) initKymaTemplateUpgradeKyma {
-	return initKymaTemplateUpgradeKyma{NewInitKymaTemplate(os)}
-}
-
-func (s initKymaTemplateUpgradeKyma) Run(o internal.UpgradeKymaOperation, logger logrus.FieldLogger) (internal.UpgradeKymaOperation, time.Duration, error) {
-	operation, w, err := s.InitKymaTemplate.Run(o.Operation, logger)
-	return internal.UpgradeKymaOperation{Operation: operation}, w, err
-}
