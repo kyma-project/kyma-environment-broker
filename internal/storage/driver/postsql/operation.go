@@ -305,87 +305,6 @@ func (s *operations) ListDeprovisioningOperations() ([]internal.DeprovisioningOp
 	return ret, nil
 }
 
-// InsertUpgradeKymaOperation insert new UpgradeKymaOperation to storage
-func (s *operations) InsertUpgradeKymaOperation(operation internal.UpgradeKymaOperation) error {
-	dto, err := s.upgradeKymaOperationToDTO(&operation)
-	if err != nil {
-		return fmt.Errorf("while inserting upgrade kyma operation (id: %s): %w", operation.Operation.ID, err)
-	}
-
-	return s.insert(dto)
-}
-
-// GetUpgradeKymaOperationByID fetches the UpgradeKymaOperation by given ID, returns error if not found
-func (s *operations) GetUpgradeKymaOperationByID(operationID string) (*internal.UpgradeKymaOperation, error) {
-	operation, err := s.getByID(operationID)
-	if err != nil {
-		return nil, fmt.Errorf("while getting operation by ID: %w", err)
-	}
-
-	ret, err := s.toUpgradeKymaOperation(operation)
-	if err != nil {
-		return nil, fmt.Errorf("while converting DTO to Operation: %w", err)
-	}
-
-	return ret, nil
-}
-
-// GetUpgradeKymaOperationByInstanceID fetches the latest UpgradeKymaOperation by given instanceID, returns error if not found
-func (s *operations) GetUpgradeKymaOperationByInstanceID(instanceID string) (*internal.UpgradeKymaOperation, error) {
-	operation, err := s.getByTypeAndInstanceID(instanceID, internal.OperationTypeUpgradeKyma)
-	if err != nil {
-		return nil, err
-	}
-	ret, err := s.toUpgradeKymaOperation(operation)
-	if err != nil {
-		return nil, fmt.Errorf("while converting DTO to Operation: %w", err)
-	}
-
-	return ret, nil
-}
-
-func (s *operations) ListUpgradeKymaOperations() ([]internal.UpgradeKymaOperation, error) {
-	var operations []dbmodel.OperationDTO
-
-	operations, err := s.listOperationsByType(internal.OperationTypeUpgradeKyma)
-	if err != nil {
-		return nil, err
-	}
-	ret, err := s.toUpgradeKymaOperationList(operations)
-	if err != nil {
-		return nil, fmt.Errorf("while converting DTO to Operation: %w", err)
-	}
-
-	return ret, nil
-}
-
-func (s *operations) ListUpgradeKymaOperationsByInstanceID(instanceID string) ([]internal.UpgradeKymaOperation, error) {
-	operations, err := s.listOperationsByInstanceIdAndType(instanceID, internal.OperationTypeUpgradeKyma)
-	if err != nil {
-		return nil, err
-	}
-
-	ret, err := s.toUpgradeKymaOperationList(operations)
-	if err != nil {
-		return nil, fmt.Errorf("while converting DTO to Operation: %w", err)
-	}
-
-	return ret, nil
-}
-
-// UpdateUpgradeKymaOperation updates UpgradeKymaOperation, fails if not exists or optimistic locking failure occurs.
-func (s *operations) UpdateUpgradeKymaOperation(operation internal.UpgradeKymaOperation) (*internal.UpgradeKymaOperation, error) {
-	operation.UpdatedAt = time.Now()
-	dto, err := s.upgradeKymaOperationToDTO(&operation)
-	if err != nil {
-		return nil, fmt.Errorf("while converting Operation to DTO: %w", err)
-	}
-
-	err = s.update(dto)
-	operation.Version = operation.Version + 1
-	return &operation, err
-}
-
 // GetLastOperation returns Operation for given instance ID which is not in 'pending' state. Returns an error if the operation does not exist.
 func (s *operations) GetLastOperation(instanceID string) (*internal.Operation, error) {
 	session := s.NewReadSession()
@@ -629,108 +548,6 @@ func (s *operations) GetAllOperations() ([]internal.Operation, error) {
 	return result, err
 }
 
-func (s *operations) fetchFailedStatusForOrchestration(entries []dbmodel.OperationDTO) ([]dbmodel.OperationDTO, int, int) {
-	resPerInstanceID := make(map[string][]dbmodel.OperationDTO)
-	for _, entry := range entries {
-		resPerInstanceID[entry.InstanceID] = append(resPerInstanceID[entry.InstanceID], entry)
-	}
-
-	var failedDatas []dbmodel.OperationDTO
-	for _, datas := range resPerInstanceID {
-		var invalidFailed bool
-		var failedFound bool
-		var faildEntry dbmodel.OperationDTO
-		for _, data := range datas {
-			if data.State == Succeeded || data.State == Retrying || data.State == InProgress {
-				invalidFailed = true
-				break
-			}
-			if data.State == Failed {
-				failedFound = true
-				if faildEntry.InstanceID == "" {
-					faildEntry = data
-				} else if faildEntry.CreatedAt.Before(data.CreatedAt) {
-					faildEntry = data
-				}
-			}
-		}
-		if failedFound && !invalidFailed {
-			failedDatas = append(failedDatas, faildEntry)
-		}
-	}
-	return failedDatas, len(failedDatas), len(failedDatas)
-}
-
-func (s *operations) showUpgradeKymaOperationDTOByOrchestrationID(orchestrationID string, filter dbmodel.OperationFilter) ([]dbmodel.OperationDTO, int, int, error) {
-	session := s.NewReadSession()
-	var (
-		operations        = make([]dbmodel.OperationDTO, 0)
-		lastErr           error
-		count, totalCount int
-	)
-	failedFilterFound, _ := s.searchFilter(filter, Failed)
-	if failedFilterFound {
-		filter.States = []string{}
-	}
-	err := wait.PollImmediate(defaultRetryInterval, defaultRetryTimeout, func() (bool, error) {
-		operations, count, totalCount, lastErr = session.ListOperationsByOrchestrationID(orchestrationID, filter)
-		if lastErr != nil {
-			if dberr.IsNotFound(lastErr) {
-				lastErr = dberr.NotFound("Operations for orchestration ID %s not exist", orchestrationID)
-				return false, lastErr
-			}
-			log.Errorf("while reading operation from the storage: %v", lastErr)
-			return false, nil
-		}
-		return true, nil
-	})
-	if err != nil {
-		return nil, -1, -1, fmt.Errorf("while getting operation by ID: %w", lastErr)
-	}
-	if failedFilterFound {
-		operations, count, totalCount = s.fetchFailedStatusForOrchestration(operations)
-	}
-	return operations, count, totalCount, nil
-}
-
-func (s *operations) ListUpgradeKymaOperationsByOrchestrationID(orchestrationID string, filter dbmodel.OperationFilter) ([]internal.UpgradeKymaOperation, int, int, error) {
-	var (
-		operations        = make([]dbmodel.OperationDTO, 0)
-		err               error
-		count, totalCount int
-	)
-	states, filterFailedFound := s.excludeFailedInFilterStates(filter, Failed)
-	if filterFailedFound {
-		filter.States = states
-	}
-
-	// excluded "failed" states
-	if !filterFailedFound || (filterFailedFound && len(filter.States) > 0) {
-		operations, count, totalCount, err = s.showUpgradeKymaOperationDTOByOrchestrationID(orchestrationID, filter)
-		if err != nil {
-			return nil, -1, -1, fmt.Errorf("while getting operation by ID: %w", err)
-		}
-	}
-
-	// only for "failed" states
-	if filterFailedFound {
-		filter = dbmodel.OperationFilter{States: []string{"failed"}}
-		failedOperations, failedCount, failedtotalCount, err := s.showUpgradeKymaOperationDTOByOrchestrationID(orchestrationID, filter)
-		if err != nil {
-			return nil, -1, -1, fmt.Errorf("while getting operation by ID: %w", err)
-		}
-		operations = append(operations, failedOperations...)
-		count = count + failedCount
-		totalCount = totalCount + failedtotalCount
-	}
-	ret, err := s.toUpgradeKymaOperationList(operations)
-	if err != nil {
-		return nil, -1, -1, fmt.Errorf("while converting DTO to Operation: %w", err)
-	}
-
-	return ret, count, totalCount, nil
-}
-
 func (s *operations) ListOperationsByOrchestrationID(orchestrationID string, filter dbmodel.OperationFilter) ([]internal.Operation, int, int, error) {
 	session := s.NewReadSession()
 	var (
@@ -759,32 +576,6 @@ func (s *operations) ListOperationsByOrchestrationID(orchestrationID string, fil
 	}
 
 	return ret, count, totalCount, nil
-}
-
-func (s *operations) excludeFailedInFilterStates(filter dbmodel.OperationFilter, state string) ([]string, bool) {
-	failedFilterFound, failedFilterIndex := s.searchFilter(filter, state)
-
-	if failedFilterFound {
-		filter.States = s.removeIndex(filter.States, failedFilterIndex)
-	}
-	return filter.States, failedFilterFound
-}
-
-func (s *operations) searchFilter(filter dbmodel.OperationFilter, inputState string) (bool, int) {
-	var filterFound bool
-	var filterIndex int
-	for index, state := range filter.States {
-		if strings.Contains(state, inputState) {
-			filterFound = true
-			filterIndex = index
-			break
-		}
-	}
-	return filterFound, filterIndex
-}
-
-func (s *operations) removeIndex(arr []string, index int) []string {
-	return append(arr[:index], arr[index+1:]...)
 }
 
 func (s *operations) ListOperationsInTimeRange(from, to time.Time) ([]internal.Operation, error) {
@@ -1196,28 +987,6 @@ func (s *operations) deprovisioningOperationToDTO(op *internal.DeprovisioningOpe
 	return ret, nil
 }
 
-func (s *operations) toUpgradeKymaOperation(op *dbmodel.OperationDTO) (*internal.UpgradeKymaOperation, error) {
-	if op.Type != internal.OperationTypeUpgradeKyma {
-		return nil, fmt.Errorf("expected operation type Upgrade Kyma, but was %s", op.Type)
-	}
-	var operation internal.UpgradeKymaOperation
-	var err error
-	err = json.Unmarshal([]byte(op.Data), &operation)
-	if err != nil {
-		return nil, fmt.Errorf("unable to unmarshall upgrade kyma data: %w", err)
-	}
-	operation.Operation, err = s.toOperation(op, operation.Operation)
-	if err != nil {
-		return nil, err
-	}
-	operation.RuntimeOperation.ID = op.ID
-	if op.OrchestrationID.Valid {
-		operation.OrchestrationID = op.OrchestrationID.String
-	}
-
-	return &operation, nil
-}
-
 func (s *operations) toOperationList(ops []dbmodel.OperationDTO) ([]internal.Operation, error) {
 	result := make([]internal.Operation, 0)
 
@@ -1238,36 +1007,6 @@ func (s *operations) toOperationList(ops []dbmodel.OperationDTO) ([]internal.Ope
 	}
 
 	return result, nil
-}
-
-func (s *operations) toUpgradeKymaOperationList(ops []dbmodel.OperationDTO) ([]internal.UpgradeKymaOperation, error) {
-	result := make([]internal.UpgradeKymaOperation, 0)
-
-	for _, op := range ops {
-		o, err := s.toUpgradeKymaOperation(&op)
-		if err != nil {
-			return nil, fmt.Errorf("while converting to upgrade kyma operation: %w", err)
-		}
-		result = append(result, *o)
-	}
-
-	return result, nil
-}
-
-func (s *operations) upgradeKymaOperationToDTO(op *internal.UpgradeKymaOperation) (dbmodel.OperationDTO, error) {
-	serialized, err := json.Marshal(op)
-	if err != nil {
-		return dbmodel.OperationDTO{}, fmt.Errorf("while serializing upgrade kyma data %v: %w", op, err)
-	}
-
-	ret, err := s.operationToDB(op.Operation)
-	if err != nil {
-		return dbmodel.OperationDTO{}, fmt.Errorf("while converting to operationDB %v: %w", op, err)
-	}
-	ret.Data = string(serialized)
-	ret.Type = internal.OperationTypeUpgradeKyma
-	ret.OrchestrationID = storage.StringToSQLNullString(op.OrchestrationID)
-	return ret, nil
 }
 
 func (s *operations) toUpgradeClusterOperation(op *dbmodel.OperationDTO) (*internal.UpgradeClusterOperation, error) {

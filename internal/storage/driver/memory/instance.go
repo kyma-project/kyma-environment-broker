@@ -66,10 +66,6 @@ func (s *instances) FindAllJoinedWithOperations(prct ...predicate.Predicate) ([]
 		if pErr != nil && !dberr.IsNotFound(pErr) {
 			return nil, pErr
 		}
-		uOps, uErr := s.operationsStorage.ListUpgradeKymaOperationsByInstanceID(id)
-		if uErr != nil && !dberr.IsNotFound(uErr) {
-			return nil, uErr
-		}
 
 		if !dberr.IsNotFound(dErr) {
 			for _, op := range dOps {
@@ -93,17 +89,6 @@ func (s *instances) FindAllJoinedWithOperations(prct ...predicate.Predicate) ([]
 					Description:    sql.NullString{String: op.Description, Valid: true},
 					OpCreatedAt:    op.CreatedAt,
 					IsSuspensionOp: false,
-				})
-			}
-		}
-
-		if !dberr.IsNotFound(uErr) {
-			for _, op := range uOps {
-				instances = append(instances, internal.InstanceWithOperation{
-					Instance:    v,
-					Type:        sql.NullString{String: string(internal.OperationTypeUpgradeKyma), Valid: true},
-					State:       sql.NullString{String: string(op.State), Valid: true},
-					Description: sql.NullString{String: op.Description, Valid: true},
 				})
 			}
 		}
@@ -355,7 +340,7 @@ func (s *instances) matchInstanceState(instanceID string, states []dbmodel.Insta
 				return true
 			}
 		case dbmodel.InstanceUpgrading:
-			if (op.Type == internal.OperationTypeUpgradeKyma || op.Type == internal.OperationTypeUpgradeCluster) && op.State == domain.InProgress {
+			if op.Type == internal.OperationTypeUpgradeCluster && op.State == domain.InProgress {
 				return true
 			}
 		case dbmodel.InstanceUpdating:

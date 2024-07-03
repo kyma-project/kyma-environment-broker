@@ -189,7 +189,7 @@ func (c *converter) adjustRuntimeState(dto *pkg.RuntimeDTO) {
 	case string(domain.Failed):
 		dto.Status.State = pkg.StateFailed
 		switch lastOp.Type {
-		case pkg.UpgradeKyma, pkg.UpgradeCluster, pkg.Update:
+		case pkg.UpgradeCluster, pkg.Update:
 			dto.Status.State = pkg.StateError
 		}
 	case string(domain.InProgress):
@@ -198,7 +198,7 @@ func (c *converter) adjustRuntimeState(dto *pkg.RuntimeDTO) {
 			dto.Status.State = pkg.StateProvisioning
 		case pkg.Deprovision, pkg.Suspension:
 			dto.Status.State = pkg.StateDeprovisioning
-		case pkg.UpgradeKyma, pkg.UpgradeCluster:
+		case pkg.UpgradeCluster:
 			dto.Status.State = pkg.StateUpgrading
 		case pkg.Update:
 			dto.Status.State = pkg.StateUpdating

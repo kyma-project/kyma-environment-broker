@@ -63,7 +63,6 @@ type RuntimeStatus struct {
 	State            State                     `json:"state"`
 	Provisioning     *Operation                `json:"provisioning,omitempty"`
 	Deprovisioning   *Operation                `json:"deprovisioning,omitempty"`
-	UpgradingKyma    *OperationsData           `json:"upgradingKyma,omitempty"`
 	UpgradingCluster *OperationsData           `json:"upgradingCluster,omitempty"`
 	Update           *OperationsData           `json:"update,omitempty"`
 	Suspension       *OperationsData           `json:"suspension,omitempty"`
@@ -76,7 +75,6 @@ type OperationType string
 const (
 	Provision      OperationType = "provision"
 	Deprovision    OperationType = "deprovision"
-	UpgradeKyma    OperationType = "kyma upgrade"
 	UpgradeCluster OperationType = "cluster upgrade"
 	Update         OperationType = "update"
 	Suspension     OperationType = "suspension"
@@ -176,11 +174,6 @@ func (rt RuntimeDTO) LastOperation() Operation {
 	if rt.Status.UpgradingCluster != nil && rt.Status.UpgradingCluster.Count > 0 {
 		op = rt.Status.UpgradingCluster.Data[0]
 		op.Type = UpgradeCluster
-	}
-	// Take the first upgrade operation, assuming that Data is sorted by CreatedAt DESC.
-	if rt.Status.UpgradingKyma != nil && rt.Status.UpgradingKyma.Count > 0 && rt.Status.UpgradingKyma.Data[0].CreatedAt.After(op.CreatedAt) {
-		op = rt.Status.UpgradingKyma.Data[0]
-		op.Type = UpgradeKyma
 	}
 
 	// Take the first unsuspension operation, assuming that Data is sorted by CreatedAt DESC.

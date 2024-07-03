@@ -470,10 +470,6 @@ func TestOperation(t *testing.T) {
 		deprovisioning.CreatedAt = deprovisioning.CreatedAt.Truncate(time.Millisecond).Add(10 * time.Minute)
 		deprovisioning.UpdatedAt = deprovisioning.UpdatedAt.Truncate(time.Millisecond).Add(12 * time.Minute)
 
-		kymaUpgrade := fixture.FixOperation("kyma-upgrade-id", "inst-id", internal.OperationTypeUpgradeKyma)
-		kymaUpgrade.CreatedAt = kymaUpgrade.CreatedAt.Truncate(time.Millisecond).Add(20 * time.Minute)
-		kymaUpgrade.UpdatedAt = kymaUpgrade.UpdatedAt.Truncate(time.Millisecond).Add(22 * time.Minute)
-
 		clusterUpgrade := fixture.FixOperation("cluster-upgrade-id", "inst-id", internal.OperationTypeUpgradeCluster)
 		clusterUpgrade.CreatedAt = clusterUpgrade.CreatedAt.Truncate(time.Millisecond).Add(30 * time.Minute)
 		clusterUpgrade.UpdatedAt = clusterUpgrade.UpdatedAt.Truncate(time.Millisecond).Add(32 * time.Minute)
@@ -487,8 +483,6 @@ func TestOperation(t *testing.T) {
 		require.NoError(t, err)
 		err = svc.InsertOperation(deprovisioning)
 		require.NoError(t, err)
-		err = svc.InsertOperation(kymaUpgrade)
-		require.NoError(t, err)
 		err = svc.InsertOperation(clusterUpgrade)
 		require.NoError(t, err)
 
@@ -497,20 +491,10 @@ func TestOperation(t *testing.T) {
 			internal.OperationTypeProvision,
 			internal.OperationTypeUpdate,
 			internal.OperationTypeDeprovision,
-			internal.OperationTypeUpgradeKyma,
 			internal.OperationTypeUpgradeCluster,
 		})
 		require.NoError(t, err)
 		assert.Equal(t, clusterUpgrade.ID, operation.ID)
-
-		operation, err = svc.GetLastOperationByTypes("inst-id", []internal.OperationType{
-			internal.OperationTypeProvision,
-			internal.OperationTypeUpdate,
-			internal.OperationTypeDeprovision,
-			internal.OperationTypeUpgradeKyma,
-		})
-		require.NoError(t, err)
-		assert.Equal(t, kymaUpgrade.ID, operation.ID)
 
 		operation, err = svc.GetLastOperationByTypes("inst-id", []internal.OperationType{
 			internal.OperationTypeProvision,

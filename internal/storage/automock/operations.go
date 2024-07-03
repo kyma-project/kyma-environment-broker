@@ -235,7 +235,6 @@ func (_m *Operations) GetOperationStatsByPlan() (map[string]internal.OperationSt
 		}
 	}
 
-
 	if rf, ok := ret.Get(1).(func() error); ok {
 		r1 = rf()
 	} else {
@@ -455,66 +454,6 @@ func (_m *Operations) GetUpgradeClusterOperationByID(operationID string) (*inter
 	return r0, r1
 }
 
-// GetUpgradeKymaOperationByID provides a mock function with given fields: operationID
-func (_m *Operations) GetUpgradeKymaOperationByID(operationID string) (*internal.UpgradeKymaOperation, error) {
-	ret := _m.Called(operationID)
-
-	if len(ret) == 0 {
-		panic("no return value specified for GetUpgradeKymaOperationByID")
-	}
-
-	var r0 *internal.UpgradeKymaOperation
-	var r1 error
-	if rf, ok := ret.Get(0).(func(string) (*internal.UpgradeKymaOperation, error)); ok {
-		return rf(operationID)
-	}
-	if rf, ok := ret.Get(0).(func(string) *internal.UpgradeKymaOperation); ok {
-		r0 = rf(operationID)
-	} else {
-		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*internal.UpgradeKymaOperation)
-		}
-	}
-
-	if rf, ok := ret.Get(1).(func(string) error); ok {
-		r1 = rf(operationID)
-	} else {
-		r1 = ret.Error(1)
-	}
-
-	return r0, r1
-}
-
-// GetUpgradeKymaOperationByInstanceID provides a mock function with given fields: instanceID
-func (_m *Operations) GetUpgradeKymaOperationByInstanceID(instanceID string) (*internal.UpgradeKymaOperation, error) {
-	ret := _m.Called(instanceID)
-
-	if len(ret) == 0 {
-		panic("no return value specified for GetUpgradeKymaOperationByInstanceID")
-	}
-
-	var r0 *internal.UpgradeKymaOperation
-	var r1 error
-	if rf, ok := ret.Get(0).(func(string) (*internal.UpgradeKymaOperation, error)); ok {
-		return rf(instanceID)
-	}
-	if rf, ok := ret.Get(0).(func(string) *internal.UpgradeKymaOperation); ok {
-		r0 = rf(instanceID)
-	} else {
-		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*internal.UpgradeKymaOperation)
-		}
-	}
-
-	if rf, ok := ret.Get(1).(func(string) error); ok {
-		r1 = rf(instanceID)
-	} else {
-		r1 = ret.Error(1)
-	}
-
-	return r0, r1
-}
-
 // InsertDeprovisioningOperation provides a mock function with given fields: operation
 func (_m *Operations) InsertDeprovisioningOperation(operation internal.DeprovisioningOperation) error {
 	ret := _m.Called(operation)
@@ -597,24 +536,6 @@ func (_m *Operations) InsertUpgradeClusterOperation(operation internal.UpgradeCl
 
 	var r0 error
 	if rf, ok := ret.Get(0).(func(internal.UpgradeClusterOperation) error); ok {
-		r0 = rf(operation)
-	} else {
-		r0 = ret.Error(0)
-	}
-
-	return r0
-}
-
-// InsertUpgradeKymaOperation provides a mock function with given fields: operation
-func (_m *Operations) InsertUpgradeKymaOperation(operation internal.UpgradeKymaOperation) error {
-	ret := _m.Called(operation)
-
-	if len(ret) == 0 {
-		panic("no return value specified for InsertUpgradeKymaOperation")
-	}
-
-	var r0 error
-	if rf, ok := ret.Get(0).(func(internal.UpgradeKymaOperation) error); ok {
 		r0 = rf(operation)
 	} else {
 		r0 = ret.Error(0)
@@ -995,110 +916,6 @@ func (_m *Operations) ListUpgradeClusterOperationsByOrchestrationID(orchestratio
 	return r0, r1, r2, r3
 }
 
-// ListUpgradeKymaOperations provides a mock function with given fields:
-func (_m *Operations) ListUpgradeKymaOperations() ([]internal.UpgradeKymaOperation, error) {
-	ret := _m.Called()
-
-	if len(ret) == 0 {
-		panic("no return value specified for ListUpgradeKymaOperations")
-	}
-
-	var r0 []internal.UpgradeKymaOperation
-	var r1 error
-	if rf, ok := ret.Get(0).(func() ([]internal.UpgradeKymaOperation, error)); ok {
-		return rf()
-	}
-	if rf, ok := ret.Get(0).(func() []internal.UpgradeKymaOperation); ok {
-		r0 = rf()
-	} else {
-		if ret.Get(0) != nil {
-			r0 = ret.Get(0).([]internal.UpgradeKymaOperation)
-		}
-	}
-
-	if rf, ok := ret.Get(1).(func() error); ok {
-		r1 = rf()
-	} else {
-		r1 = ret.Error(1)
-	}
-
-	return r0, r1
-}
-
-// ListUpgradeKymaOperationsByInstanceID provides a mock function with given fields: instanceID
-func (_m *Operations) ListUpgradeKymaOperationsByInstanceID(instanceID string) ([]internal.UpgradeKymaOperation, error) {
-	ret := _m.Called(instanceID)
-
-	if len(ret) == 0 {
-		panic("no return value specified for ListUpgradeKymaOperationsByInstanceID")
-	}
-
-	var r0 []internal.UpgradeKymaOperation
-	var r1 error
-	if rf, ok := ret.Get(0).(func(string) ([]internal.UpgradeKymaOperation, error)); ok {
-		return rf(instanceID)
-	}
-	if rf, ok := ret.Get(0).(func(string) []internal.UpgradeKymaOperation); ok {
-		r0 = rf(instanceID)
-	} else {
-		if ret.Get(0) != nil {
-			r0 = ret.Get(0).([]internal.UpgradeKymaOperation)
-		}
-	}
-
-	if rf, ok := ret.Get(1).(func(string) error); ok {
-		r1 = rf(instanceID)
-	} else {
-		r1 = ret.Error(1)
-	}
-
-	return r0, r1
-}
-
-// ListUpgradeKymaOperationsByOrchestrationID provides a mock function with given fields: orchestrationID, filter
-func (_m *Operations) ListUpgradeKymaOperationsByOrchestrationID(orchestrationID string, filter dbmodel.OperationFilter) ([]internal.UpgradeKymaOperation, int, int, error) {
-	ret := _m.Called(orchestrationID, filter)
-
-	if len(ret) == 0 {
-		panic("no return value specified for ListUpgradeKymaOperationsByOrchestrationID")
-	}
-
-	var r0 []internal.UpgradeKymaOperation
-	var r1 int
-	var r2 int
-	var r3 error
-	if rf, ok := ret.Get(0).(func(string, dbmodel.OperationFilter) ([]internal.UpgradeKymaOperation, int, int, error)); ok {
-		return rf(orchestrationID, filter)
-	}
-	if rf, ok := ret.Get(0).(func(string, dbmodel.OperationFilter) []internal.UpgradeKymaOperation); ok {
-		r0 = rf(orchestrationID, filter)
-	} else {
-		if ret.Get(0) != nil {
-			r0 = ret.Get(0).([]internal.UpgradeKymaOperation)
-		}
-	}
-
-	if rf, ok := ret.Get(1).(func(string, dbmodel.OperationFilter) int); ok {
-		r1 = rf(orchestrationID, filter)
-	} else {
-		r1 = ret.Get(1).(int)
-	}
-
-	if rf, ok := ret.Get(2).(func(string, dbmodel.OperationFilter) int); ok {
-		r2 = rf(orchestrationID, filter)
-	} else {
-		r2 = ret.Get(2).(int)
-	}
-
-	if rf, ok := ret.Get(3).(func(string, dbmodel.OperationFilter) error); ok {
-		r3 = rf(orchestrationID, filter)
-	} else {
-		r3 = ret.Error(3)
-	}
-
-	return r0, r1, r2, r3
-}
-
 // UpdateDeprovisioningOperation provides a mock function with given fields: operation
 func (_m *Operations) UpdateDeprovisioningOperation(operation internal.DeprovisioningOperation) (*internal.DeprovisioningOperation, error) {
 	ret := _m.Called(operation)
@@ -1241,36 +1058,6 @@ func (_m *Operations) UpdateUpgradeClusterOperation(operation internal.UpgradeCl
 	}
 
 	if rf, ok := ret.Get(1).(func(internal.UpgradeClusterOperation) error); ok {
-		r1 = rf(operation)
-	} else {
-		r1 = ret.Error(1)
-	}
-
-	return r0, r1
-}
-
-// UpdateUpgradeKymaOperation provides a mock function with given fields: operation
-func (_m *Operations) UpdateUpgradeKymaOperation(operation internal.UpgradeKymaOperation) (*internal.UpgradeKymaOperation, error) {
-	ret := _m.Called(operation)
-
-	if len(ret) == 0 {
-		panic("no return value specified for UpdateUpgradeKymaOperation")
-	}
-
-	var r0 *internal.UpgradeKymaOperation
-	var r1 error
-	if rf, ok := ret.Get(0).(func(internal.UpgradeKymaOperation) (*internal.UpgradeKymaOperation, error)); ok {
-		return rf(operation)
-	}
-	if rf, ok := ret.Get(0).(func(internal.UpgradeKymaOperation) *internal.UpgradeKymaOperation); ok {
-		r0 = rf(operation)
-	} else {
-		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*internal.UpgradeKymaOperation)
-		}
-	}
-
-	if rf, ok := ret.Get(1).(func(internal.UpgradeKymaOperation) error); ok {
 		r1 = rf(operation)
 	} else {
 		r1 = ret.Error(1)

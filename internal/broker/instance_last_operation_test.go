@@ -190,15 +190,6 @@ func TestLastOperation_LastOperation(t *testing.T) {
 		err := memoryStorage.Operations().InsertOperation(provisioning)
 		assert.NoError(t, err)
 
-		kymaUpgrade := fixOperation()
-		kymaUpgrade.ID = "kyma-upgrade-id"
-		kymaUpgrade.Type = internal.OperationTypeUpgradeKyma
-		kymaUpgrade.Description = "Kyma upgrade description"
-		kymaUpgrade.CreatedAt = kymaUpgrade.CreatedAt.Truncate(time.Millisecond).Add(10 * time.Minute)
-		kymaUpgrade.UpdatedAt = kymaUpgrade.UpdatedAt.Truncate(time.Millisecond).Add(12 * time.Minute)
-		err = memoryStorage.Operations().InsertOperation(kymaUpgrade)
-		assert.NoError(t, err)
-
 		lastOperationEndpoint := broker.NewLastOperation(memoryStorage.Operations(), memoryStorage.InstancesArchived(), logrus.StandardLogger())
 
 		// when

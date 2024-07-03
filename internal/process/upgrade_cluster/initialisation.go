@@ -93,7 +93,7 @@ func (s *InitialisationStep) Run(operation internal.UpgradeClusterOperation, log
 		// - unsuspension provisioning launched after suspension
 		// - kyma upgrade or cluster upgrade
 		switch lastOp.Type {
-		case internal.OperationTypeProvision, internal.OperationTypeUpgradeKyma, internal.OperationTypeUpgradeCluster:
+		case internal.OperationTypeProvision, internal.OperationTypeUpgradeCluster:
 			if !lastOp.IsFinished() {
 				return operation, s.timeSchedule.StatusCheck, nil
 			}

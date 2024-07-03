@@ -253,8 +253,6 @@ func formatOpType(opType internal.OperationType) string {
 		return "updating"
 	case internal.OperationTypeUpgradeCluster:
 		return "upgrading_cluster"
-	case internal.OperationTypeUpgradeKyma:
-		return "upgrading_kyma"
 	default:
 		return ""
 	}

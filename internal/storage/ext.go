@@ -43,7 +43,6 @@ type InstancesArchived interface {
 type Operations interface {
 	Provisioning
 	Deprovisioning
-	UpgradeKyma
 	UpgradeCluster
 	Updating
 
@@ -100,16 +99,6 @@ type RuntimeStates interface {
 	GetLatestByRuntimeID(runtimeID string) (internal.RuntimeState, error)
 	GetLatestWithOIDCConfigByRuntimeID(runtimeID string) (internal.RuntimeState, error)
 	DeleteByOperationID(operationID string) error
-}
-
-type UpgradeKyma interface {
-	InsertUpgradeKymaOperation(operation internal.UpgradeKymaOperation) error
-	UpdateUpgradeKymaOperation(operation internal.UpgradeKymaOperation) (*internal.UpgradeKymaOperation, error)
-	GetUpgradeKymaOperationByID(operationID string) (*internal.UpgradeKymaOperation, error)
-	GetUpgradeKymaOperationByInstanceID(instanceID string) (*internal.UpgradeKymaOperation, error)
-	ListUpgradeKymaOperations() ([]internal.UpgradeKymaOperation, error)
-	ListUpgradeKymaOperationsByInstanceID(instanceID string) ([]internal.UpgradeKymaOperation, error)
-	ListUpgradeKymaOperationsByOrchestrationID(orchestrationID string, filter dbmodel.OperationFilter) ([]internal.UpgradeKymaOperation, int, int, error)
 }
 
 type UpgradeCluster interface {

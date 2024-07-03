@@ -114,8 +114,6 @@ const (
 	OperationTypeDeprovision OperationType = "deprovision"
 	// OperationTypeUndefined means undefined OperationType
 	OperationTypeUndefined OperationType = ""
-	// OperationTypeUpgradeKyma means upgrade Kyma OperationType
-	OperationTypeUpgradeKyma OperationType = "upgradeKyma"
 	// OperationTypeUpdate means update
 	OperationTypeUpdate OperationType = "update"
 	// OperationTypeUpgradeCluster means upgrade cluster (shoot) OperationType
@@ -317,11 +315,6 @@ type DeprovisioningOperation struct {
 }
 
 type UpdatingOperation struct {
-	Operation
-}
-
-// UpgradeKymaOperation holds all information about upgrade Kyma operation
-type UpgradeKymaOperation struct {
 	Operation
 }
 
