@@ -41,7 +41,6 @@ func NewUpgradeClusterManager(orchestrationStorage storage.Orchestrations, opera
 		k8sClient:         cli,
 		configNamespace:   cfg.Namespace,
 		configName:        cfg.Name,
-		kymaVersion:       cfg.KymaVersion,
 		kubernetesVersion: cfg.KubernetesVersion,
 		bundleBuilder:     bundleBuilder,
 		speedFactor:       speedFactor,

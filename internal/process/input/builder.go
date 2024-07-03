@@ -34,7 +34,6 @@ type (
 )
 
 type InputBuilderFactory struct {
-	kymaVersion                string
 	config                     Config
 	configProvider             ConfigurationProvider
 	trialPlatformRegionMapping map[string]string
@@ -44,7 +43,7 @@ type InputBuilderFactory struct {
 }
 
 func NewInputBuilderFactory(configProvider ConfigurationProvider,
-	config Config, defaultKymaVersion string, trialPlatformRegionMapping map[string]string,
+	config Config, trialPlatformRegionMapping map[string]string,
 	enabledFreemiumProviders []string, oidcValues internal.OIDCConfigDTO, useSmallerMachineTypes bool) (CreatorForPlan, error) {
 
 	freemiumProviders := map[string]struct{}{}
@@ -53,7 +52,6 @@ func NewInputBuilderFactory(configProvider ConfigurationProvider,
 	}
 
 	return &InputBuilderFactory{
-		kymaVersion:                defaultKymaVersion,
 		config:                     config,
 		configProvider:             configProvider,
 		trialPlatformRegionMapping: trialPlatformRegionMapping,

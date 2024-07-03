@@ -304,8 +304,6 @@ spec:
               value: "{{ .Values.avs.maintenanceModeDuringUpgrade.disabled }}"
             - name: APP_AVS_MAINTENANCE_MODE_DURING_UPGRADE_ALWAYS_DISABLED_GLOBAL_ACCOUNTS_FILE_PATH
               value: /config/avsMaintenanceModeDuringUpgradeAlwaysDisabledGlobalAccountIDs.yaml
-            - name: APP_KYMA_VERSION
-              value: "{{ .Values.kymaVersion }}"
             - name: APP_MANAGED_RUNTIME_COMPONENTS_YAML_FILE_PATH
               value: /config/additionalRuntimeComponents.yaml
             - name: APP_TRIAL_REGION_MAPPING_FILE_PATH

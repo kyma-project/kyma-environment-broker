@@ -78,8 +78,6 @@ func TestUpgradeShootStep_Run(t *testing.T) {
 }
 
 func fixInputCreator(t *testing.T) internal.ProvisionerInputCreator {
-	const kymaVersion = "1.20"
-
 	configProvider := &inputAutomock.ConfigurationProvider{}
 	configProvider.On("ProvideForGivenPlan",
 		mock.AnythingOfType("string"),
@@ -90,7 +88,7 @@ func fixInputCreator(t *testing.T) internal.ProvisionerInputCreator {
 	ibf, err := input.NewInputBuilderFactory(configProvider, input.Config{
 		KubernetesVersion:           k8sVersion,
 		DefaultGardenerShootPurpose: "test",
-	}, kymaVersion, fixTrialRegionMapping(), fixFreemiumProviders(), fixture.FixOIDCConfigDTO(), false)
+	}, fixTrialRegionMapping(), fixFreemiumProviders(), fixture.FixOIDCConfigDTO(), false)
 	assert.NoError(t, err)
 
 	pp := internal.ProvisioningParameters{

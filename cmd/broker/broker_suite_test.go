@@ -164,9 +164,6 @@ func NewBrokerSuiteTestWithConfig(t *testing.T, cfg *Config, version ...string) 
 	additionalKymaVersions := []string{"1.19", "1.20", "main", "2.0"}
 	additionalKymaVersions = append(additionalKymaVersions, version...)
 	cli := fake.NewClientBuilder().WithScheme(sch).WithRuntimeObjects(fixK8sResources(defaultKymaVer, additionalKymaVersions)...).Build()
-	if len(version) == 1 {
-		cfg.KymaVersion = version[0] // overriden to
-	}
 
 	configProvider := kebConfig.NewConfigProvider(
 		kebConfig.NewConfigMapReader(ctx, cli, logrus.New(), "keb-runtime-config"),
@@ -181,7 +178,7 @@ func NewBrokerSuiteTestWithConfig(t *testing.T, cfg *Config, version ...string) 
 		DefaultGardenerShootPurpose:  "testing",
 		DefaultTrialProvider:         internal.AWS,
 		EnableShootAndSeedSameRegion: cfg.Provisioner.EnableShootAndSeedSameRegion,
-	}, defaultKymaVer, map[string]string{"cf-eu10": "europe", "cf-us10": "us"}, cfg.FreemiumProviders, defaultOIDCValues(), cfg.Broker.UseSmallerMachineTypes)
+	}, map[string]string{"cf-eu10": "europe", "cf-us10": "us"}, cfg.FreemiumProviders, defaultOIDCValues(), cfg.Broker.UseSmallerMachineTypes)
 
 	storageCleanup, db, err := GetStorageForE2ETests()
 	assert.NoError(t, err)

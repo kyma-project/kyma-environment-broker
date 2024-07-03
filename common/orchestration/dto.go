@@ -11,12 +11,10 @@ import (
 
 // Parameters hold the attributes of orchestration create (upgrade) requests.
 type Parameters struct {
-	Targets    TargetSpec            `json:"targets"`
-	Strategy   StrategySpec          `json:"strategy,omitempty"`
-	DryRun     bool                  `json:"dryRun,omitempty"`
-	Kubernetes *KubernetesParameters `json:"kubernetes,omitempty"`
-	// upgrade kyma specific parameters
-	Kyma           *KymaParameters          `json:"kyma,omitempty"`
+	Targets        TargetSpec               `json:"targets"`
+	Strategy       StrategySpec             `json:"strategy,omitempty"`
+	DryRun         bool                     `json:"dryRun,omitempty"`
+	Kubernetes     *KubernetesParameters    `json:"kubernetes,omitempty"`
 	RetryOperation RetryOperationParameters `json:"retryoperation,omitempty"`
 	// customer notification
 	Notification bool `json:"notification,omitempty"`
@@ -31,11 +29,6 @@ type KubernetesParameters struct {
 	KubernetesVersion   string `json:"kubernetesVersion"`
 	MachineImage        string `json:"machineImage"`
 	MachineImageVersion string `json:"machineImageVersion"`
-}
-
-// KymaParameters hold the attributes of kyma upgrade specific orchestration create requests.
-type KymaParameters struct {
-	Version string `json:"version,omitempty"`
 }
 
 const (

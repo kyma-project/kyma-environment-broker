@@ -19,7 +19,6 @@ import (
 )
 
 const (
-	fixKymaVersion                   = "1.19.0"
 	fixKubernetesVersion             = "1.17.16"
 	fixMachineImage                  = "gardenlinux"
 	fixMachineImageVersion           = "184.0.0"
@@ -133,7 +132,7 @@ func fixInputCreator(t *testing.T) internal.ProvisionerInputCreator {
 		TrialNodesNumber:              1,
 		AutoUpdateKubernetesVersion:   fixAutoUpdateKubernetesVersion,
 		AutoUpdateMachineImageVersion: fixAutoUpdateMachineImageVersion,
-	}, fixKymaVersion, nil, nil, fixture.FixOIDCConfigDTO(), false)
+	}, nil, nil, fixture.FixOIDCConfigDTO(), false)
 	require.NoError(t, err, "Input factory creation error")
 
 	creator, err := ibf.CreateUpgradeShootInput(fixProvisioningParameters())

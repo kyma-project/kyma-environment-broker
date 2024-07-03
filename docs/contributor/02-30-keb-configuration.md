@@ -21,7 +21,6 @@ Kyma Environment Broker (KEB) binary allows you to override some configuration p
 | **APP_DATABASE_NAME** | Defines the database name. | `broker` |
 | **APP_DATABASE_SSLMODE** | Specifies the SSL Mode for PostgreSQL. See [all the possible values](https://www.postgresql.org/docs/9.1/libpq-ssl.html).  | `disable`|
 | **APP_DATABASE_SSLROOTCERT** | Specifies the location of CA cert of PostgreSQL. (Optional)  | None |
-| **APP_KYMA_VERSION** | Specifies the default Kyma version. | None |
 | **APP_PROVISIONING_MACHINE_IMAGE** | Defines the Gardener machine image used in a provisioned Node. | None |
 | **APP_PROVISIONING_MACHINE_IMAGE_VERSION** | Defines the Gardener image version used in a provisioned cluster. | None |
 | **APP_PROVISIONING_TRIAL_NODES_NUMBER** | Defines the number of Nodes for Kyma runtime trial account. This parameter is optional. If not enabled, the trial account runs in the 1-Node cluster. If enabled, the trial account runs on the number of Nodes defined in the **trialNodesNumber** parameter. | defined in the **trialNodesNumber** parameter |

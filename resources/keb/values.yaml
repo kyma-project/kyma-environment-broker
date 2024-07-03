@@ -216,8 +216,6 @@ sapConvergedCloudPlanRegionMappings: |-
     - eu-de-3
     - eu-de-4
 
-kymaVersion: "2.0"
-
 disableProcessOperationsInProgress: "false"
 enablePlans: "azure,gcp,azure_lite,trial"
 onlySingleTrialPerGA: "true"

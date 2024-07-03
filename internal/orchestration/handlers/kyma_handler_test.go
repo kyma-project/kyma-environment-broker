@@ -28,9 +28,6 @@ func TestKymaHandler_AttachRoutes(t *testing.T) {
 			Kubernetes: &orchestration.KubernetesParameters{
 				KubernetesVersion: "",
 			},
-			Kyma: &orchestration.KymaParameters{
-				Version: "",
-			},
 			Strategy: orchestration.StrategySpec{
 				Schedule: "now",
 			},

@@ -42,6 +42,5 @@ func fixOrchestrationParams(runtimeID string) orchestration.Parameters {
 		},
 		DryRun:     false,
 		Kubernetes: &orchestration.KubernetesParameters{KubernetesVersion: ""},
-		Kyma:       &orchestration.KymaParameters{Version: ""},
 	}
 }

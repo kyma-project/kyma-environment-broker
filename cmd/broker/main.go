@@ -6,7 +6,6 @@ import (
 	"io"
 	"net/http"
 	"os"
-	"regexp"
 	gruntime "runtime"
 	"runtime/pprof"
 	"sort"
@@ -98,7 +97,6 @@ type Config struct {
 	Gardener    gardener.Config
 	Kubeconfig  kubeconfig.Config
 
-	KymaVersion                                                         string
 	ManagedRuntimeComponentsYAMLFilePath                                string
 	NewAdditionalRuntimeComponentsYAMLFilePath                          string
 	SkrOidcDefaultValuesYAMLFilePath                                    string
@@ -228,11 +226,6 @@ func main() {
 		logs.SetLevel(l)
 	}
 
-	// check default Kyma versions
-	err = checkDefaultVersions(cfg.KymaVersion)
-	panicOnError(err)
-
-	cfg.OrchestrationConfig.KymaVersion = cfg.KymaVersion
 	cfg.OrchestrationConfig.KubernetesVersion = cfg.Provisioner.KubernetesVersion
 
 	// create logger
@@ -303,7 +296,7 @@ func main() {
 
 	oidcDefaultValues, err := runtime.ReadOIDCDefaultValuesFromYAML(cfg.SkrOidcDefaultValuesYAMLFilePath)
 	fatalOnError(err, logs)
-	inputFactory, err := input.NewInputBuilderFactory(configProvider, cfg.Provisioner, cfg.KymaVersion, regions, cfg.FreemiumProviders, oidcDefaultValues, cfg.Broker.UseSmallerMachineTypes)
+	inputFactory, err := input.NewInputBuilderFactory(configProvider, cfg.Provisioner, regions, cfg.FreemiumProviders, oidcDefaultValues, cfg.Broker.UseSmallerMachineTypes)
 	fatalOnError(err, logs)
 
 	edpClient := edp.NewClient(cfg.EDP)
@@ -404,23 +397,6 @@ func main() {
 	})
 
 	fatalOnError(http.ListenAndServe(cfg.Host+":"+cfg.Port, svr), logs)
-}
-
-func checkDefaultVersions(versions ...string) error {
-	for _, version := range versions {
-		if !isVersionFollowingSemanticVersioning(version) {
-			return fmt.Errorf("Kyma default versions are not following semantic versioning")
-		}
-	}
-	return nil
-}
-
-func isVersionFollowingSemanticVersioning(version string) bool {
-	regexpToMatch := regexp.MustCompile("(^[0-9]+\\.{1}).*")
-	if regexpToMatch.MatchString(version) {
-		return true
-	}
-	return false
 }
 
 func createAPI(router *mux.Router, servicesConfig broker.ServicesConfig, planValidator broker.PlanValidator, cfg *Config, db storage.BrokerStorage, provisionQueue, deprovisionQueue, updateQueue *process.Queue, logger lager.Logger, logs logrus.FieldLogger, planDefaults broker.PlanDefaults, kcBuilder kubeconfig.KcBuilder) {

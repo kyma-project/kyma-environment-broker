@@ -27,20 +27,18 @@ const (
 )
 
 type DeleteKymaResourceStep struct {
-	operationManager   *process.OperationManager
-	kcpClient          client.Client
-	configProvider     input.ConfigurationProvider
-	defaultKymaVersion string
-	instances          storage.Instances
+	operationManager *process.OperationManager
+	kcpClient        client.Client
+	configProvider   input.ConfigurationProvider
+	instances        storage.Instances
 }
 
-func NewDeleteKymaResourceStep(operations storage.Operations, instances storage.Instances, kcpClient client.Client, configProvider input.ConfigurationProvider, defaultKymaVersion string) *DeleteKymaResourceStep {
+func NewDeleteKymaResourceStep(operations storage.Operations, instances storage.Instances, kcpClient client.Client, configProvider input.ConfigurationProvider) *DeleteKymaResourceStep {
 	return &DeleteKymaResourceStep{
-		operationManager:   process.NewOperationManager(operations),
-		kcpClient:          kcpClient,
-		configProvider:     configProvider,
-		defaultKymaVersion: defaultKymaVersion,
-		instances:          instances,
+		operationManager: process.NewOperationManager(operations),
+		kcpClient:        kcpClient,
+		configProvider:   configProvider,
+		instances:        instances,
 	}
 }
 

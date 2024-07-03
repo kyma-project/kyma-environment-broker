@@ -149,9 +149,6 @@ func TestInitialisationStep_Run(t *testing.T) {
 			OrchestrationID: fixOrchestrationID,
 			State:           orchestration.InProgress,
 			Parameters: orchestration.Parameters{
-				Kyma: &orchestration.KymaParameters{
-					Version: fixKymaVersion,
-				},
 				Notification: true,
 			},
 		}
@@ -1195,9 +1192,6 @@ func fixOrchestrationWithKymaVer() internal.Orchestration {
 		OrchestrationID: fixOrchestrationID,
 		State:           orchestration.InProgress,
 		Parameters: orchestration.Parameters{
-			Kyma: &orchestration.KymaParameters{
-				Version: fixKymaVersion,
-			},
 			Notification: true,
 		},
 	}

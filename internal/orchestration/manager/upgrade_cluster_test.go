@@ -28,7 +28,6 @@ const (
 func TestUpgradeClusterManager_Execute(t *testing.T) {
 	k8sClient := fake.NewFakeClient()
 	orchestrationConfig := internalOrchestration.Config{
-		KymaVersion:       "1.24.5",
 		KubernetesVersion: "1.22",
 		Namespace:         "default",
 		Name:              "policyConfig",
@@ -52,7 +51,6 @@ func TestUpgradeClusterManager_Execute(t *testing.T) {
 			State:           orchestration.Pending,
 			Type:            orchestration.UpgradeClusterOrchestration,
 			Parameters: orchestration.Parameters{
-				Kyma:       &orchestration.KymaParameters{Version: ""},
 				Kubernetes: &orchestration.KubernetesParameters{KubernetesVersion: ""},
 				Strategy: orchestration.StrategySpec{
 					ScheduleTime: time.Time{},
@@ -149,7 +147,6 @@ func TestUpgradeClusterManager_Execute(t *testing.T) {
 			Parameters: orchestration.Parameters{
 				DryRun:     true,
 				Kubernetes: &orchestration.KubernetesParameters{KubernetesVersion: ""},
-				Kyma:       &orchestration.KymaParameters{Version: ""},
 				Strategy: orchestration.StrategySpec{
 					ScheduleTime: time.Time{},
 				},

@@ -28,7 +28,7 @@ func TestInputBuilderFactoryForAzurePlan(t *testing.T) {
 	}
 	configProvider := mockConfigProvider()
 
-	factory, err := NewInputBuilderFactory(configProvider, config, "1.10.0", fixTrialRegionMapping(),
+	factory, err := NewInputBuilderFactory(configProvider, config, fixTrialRegionMapping(),
 		fixTrialProviders(), fixture.FixOIDCConfigDTO(), false)
 	assert.NoError(t, err)
 	pp := fixProvisioningParameters(broker.AzurePlanID)
@@ -100,7 +100,7 @@ func TestShouldAdjustRuntimeName(t *testing.T) {
 			// given
 			configProvider := mockConfigProvider()
 
-			builder, err := NewInputBuilderFactory(configProvider, Config{TrialNodesNumber: 0}, "not-important", fixTrialRegionMapping(),
+			builder, err := NewInputBuilderFactory(configProvider, Config{TrialNodesNumber: 0}, fixTrialRegionMapping(),
 				fixTrialProviders(), fixture.FixOIDCConfigDTO(), false)
 			assert.NoError(t, err)
 
@@ -134,7 +134,7 @@ func TestShouldSetNumberOfNodesForTrialPlan(t *testing.T) {
 	// given
 	configProvider := mockConfigProvider()
 
-	builder, err := NewInputBuilderFactory(configProvider, Config{TrialNodesNumber: 2}, "not-important",
+	builder, err := NewInputBuilderFactory(configProvider, Config{TrialNodesNumber: 2},
 		fixTrialRegionMapping(), fixTrialProviders(), fixture.FixOIDCConfigDTO(), false)
 	assert.NoError(t, err)
 
@@ -160,7 +160,7 @@ func TestShouldSetGlobalConfiguration(t *testing.T) {
 		// given
 		configProvider := mockConfigProvider()
 
-		builder, err := NewInputBuilderFactory(configProvider, Config{}, "",
+		builder, err := NewInputBuilderFactory(configProvider, Config{},
 			fixTrialRegionMapping(), fixTrialProviders(), fixture.FixOIDCConfigDTO(), false)
 		assert.NoError(t, err)
 
@@ -183,7 +183,7 @@ func TestShouldSetGlobalConfiguration(t *testing.T) {
 		// given
 		configProvider := mockConfigProvider()
 
-		builder, err := NewInputBuilderFactory(configProvider, Config{}, "",
+		builder, err := NewInputBuilderFactory(configProvider, Config{},
 			fixTrialRegionMapping(), fixTrialProviders(), fixture.FixOIDCConfigDTO(), false)
 		assert.NoError(t, err)
 
@@ -223,7 +223,7 @@ func TestCreateProvisionRuntimeInput_ConfigureDNS(t *testing.T) {
 
 		configProvider := mockConfigProvider()
 
-		inputBuilder, err := NewInputBuilderFactory(configProvider, Config{}, "1.24.4", fixTrialRegionMapping(),
+		inputBuilder, err := NewInputBuilderFactory(configProvider, Config{}, fixTrialRegionMapping(),
 			fixTrialProviders(), fixture.FixOIDCConfigDTO(), false)
 		assert.NoError(t, err)
 
@@ -254,7 +254,7 @@ func TestCreateProvisionRuntimeInput_ConfigureDNS(t *testing.T) {
 
 		configProvider := mockConfigProvider()
 
-		inputBuilder, err := NewInputBuilderFactory(configProvider, Config{}, "1.24.4",
+		inputBuilder, err := NewInputBuilderFactory(configProvider, Config{},
 			fixTrialRegionMapping(), fixTrialProviders(), fixture.FixOIDCConfigDTO(), false)
 		assert.NoError(t, err)
 
@@ -295,7 +295,7 @@ func TestCreateProvisionRuntimeInput_ConfigureOIDC(t *testing.T) {
 
 		configProvider := mockConfigProvider()
 
-		inputBuilder, err := NewInputBuilderFactory(configProvider, Config{}, "1.24.0",
+		inputBuilder, err := NewInputBuilderFactory(configProvider, Config{},
 			fixTrialRegionMapping(), fixTrialProviders(), fixture.FixOIDCConfigDTO(), false)
 		assert.NoError(t, err)
 
@@ -330,7 +330,7 @@ func TestCreateProvisionRuntimeInput_ConfigureOIDC(t *testing.T) {
 
 		configProvider := mockConfigProvider()
 
-		inputBuilder, err := NewInputBuilderFactory(configProvider, Config{}, "1.24.0",
+		inputBuilder, err := NewInputBuilderFactory(configProvider, Config{},
 			fixTrialRegionMapping(), fixTrialProviders(), fixture.FixOIDCConfigDTO(), false)
 		assert.NoError(t, err)
 
@@ -366,7 +366,7 @@ func TestCreateProvisionRuntimeInput_ConfigureOIDC(t *testing.T) {
 
 		configProvider := mockConfigProvider()
 
-		inputBuilder, err := NewInputBuilderFactory(configProvider, Config{}, "1.24.0",
+		inputBuilder, err := NewInputBuilderFactory(configProvider, Config{},
 			fixTrialRegionMapping(), fixTrialProviders(), fixture.FixOIDCConfigDTO(), false)
 		assert.NoError(t, err)
 
@@ -404,7 +404,7 @@ func TestCreateProvisionRuntimeInput_ConfigureAdmins(t *testing.T) {
 
 		configProvider := mockConfigProvider()
 
-		inputBuilder, err := NewInputBuilderFactory(configProvider, Config{}, "1.24.0",
+		inputBuilder, err := NewInputBuilderFactory(configProvider, Config{},
 			fixTrialRegionMapping(), fixTrialProviders(), fixture.FixOIDCConfigDTO(), false)
 		assert.NoError(t, err)
 
@@ -431,7 +431,7 @@ func TestCreateProvisionRuntimeInput_ConfigureAdmins(t *testing.T) {
 
 		configProvider := mockConfigProvider()
 
-		inputBuilder, err := NewInputBuilderFactory(configProvider, Config{}, "1.24.0",
+		inputBuilder, err := NewInputBuilderFactory(configProvider, Config{},
 			fixTrialRegionMapping(), fixTrialProviders(), fixture.FixOIDCConfigDTO(), false)
 		assert.NoError(t, err)
 
@@ -469,7 +469,7 @@ func TestCreateUpgradeRuntimeInput_ConfigureAdmins(t *testing.T) {
 
 		configProvider := mockConfigProvider()
 
-		inputBuilder, err := NewInputBuilderFactory(configProvider, Config{}, "1.24.0",
+		inputBuilder, err := NewInputBuilderFactory(configProvider, Config{},
 			fixTrialRegionMapping(), fixTrialProviders(), fixture.FixOIDCConfigDTO(), false)
 		assert.NoError(t, err)
 
@@ -497,7 +497,7 @@ func TestCreateUpgradeRuntimeInput_ConfigureAdmins(t *testing.T) {
 
 		configProvider := mockConfigProvider()
 
-		inputBuilder, err := NewInputBuilderFactory(configProvider, Config{}, "1.24.0",
+		inputBuilder, err := NewInputBuilderFactory(configProvider, Config{},
 			fixTrialRegionMapping(), fixTrialProviders(), fixture.FixOIDCConfigDTO(), false)
 		assert.NoError(t, err)
 
@@ -523,7 +523,7 @@ func TestCreateUpgradeShootInput_ConfigureAutoscalerParams(t *testing.T) {
 		// given
 		configProvider := mockConfigProvider()
 
-		ibf, err := NewInputBuilderFactory(configProvider, Config{}, "1.24.0",
+		ibf, err := NewInputBuilderFactory(configProvider, Config{},
 			fixTrialRegionMapping(), fixTrialProviders(), fixture.FixOIDCConfigDTO(), false)
 		assert.NoError(t, err)
 
@@ -555,7 +555,7 @@ func TestCreateUpgradeShootInput_ConfigureAutoscalerParams(t *testing.T) {
 		// given
 		configProvider := mockConfigProvider()
 
-		ibf, err := NewInputBuilderFactory(configProvider, Config{}, "1.24.0",
+		ibf, err := NewInputBuilderFactory(configProvider, Config{},
 			fixTrialRegionMapping(), fixTrialProviders(), fixture.FixOIDCConfigDTO(), false)
 		assert.NoError(t, err)
 
@@ -592,7 +592,7 @@ func TestShootAndSeedSameRegion(t *testing.T) {
 		// given
 		configProvider := mockConfigProvider()
 
-		builder, err := NewInputBuilderFactory(configProvider, Config{EnableShootAndSeedSameRegion: true}, "not-important",
+		builder, err := NewInputBuilderFactory(configProvider, Config{EnableShootAndSeedSameRegion: true},
 			fixTrialRegionMapping(), fixTrialProviders(), fixture.FixOIDCConfigDTO(), false)
 		assert.NoError(t, err)
 

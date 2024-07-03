@@ -105,7 +105,6 @@ func NewOrchestrationSuite(t *testing.T, additionalKymaVersions []string) *Orche
 
 	var cfg Config
 	cfg.OrchestrationConfig = kebOrchestration.Config{
-		KymaVersion:       defaultKymaVer,
 		KubernetesVersion: "",
 	}
 	cfg.Notification = notification.Config{
@@ -140,7 +139,7 @@ func NewOrchestrationSuite(t *testing.T, additionalKymaVersions []string) *Orche
 		ProvisioningTimeout:         time.Minute,
 		URL:                         "http://localhost",
 		DefaultGardenerShootPurpose: "testing",
-	}, kymaVer, map[string]string{"cf-eu10": "europe"}, cfg.FreemiumProviders, oidcDefaults, cfg.Broker.UseSmallerMachineTypes)
+	}, map[string]string{"cf-eu10": "europe"}, cfg.FreemiumProviders, oidcDefaults, cfg.Broker.UseSmallerMachineTypes)
 	require.NoError(t, err)
 
 	gardenerClient := gardener.NewDynamicFakeClient()
@@ -575,7 +574,7 @@ func NewProvisioningSuite(t *testing.T, multiZoneCluster bool, controlPlaneFailu
 		DefaultGardenerShootPurpose:  "testing",
 		MultiZoneCluster:             multiZoneCluster,
 		ControlPlaneFailureTolerance: controlPlaneFailureTolerance,
-	}, defaultKymaVer, map[string]string{"cf-eu10": "europe"}, cfg.FreemiumProviders, oidcDefaults, useSmallerMachineTypes)
+	}, map[string]string{"cf-eu10": "europe"}, cfg.FreemiumProviders, oidcDefaults, useSmallerMachineTypes)
 	require.NoError(t, err)
 
 	server := avs.NewMockAvsServer(t)
@@ -937,7 +936,6 @@ func fixConfig() *Config {
 			Project:     "kyma",
 			ShootDomain: "kyma.sap.com",
 		},
-		KymaVersion:             defaultKymaVer,
 		UpdateProcessingEnabled: true,
 		Broker: broker.Config{
 			EnablePlans: []string{"azure", "trial", "aws", "own_cluster", "preview", "sap-converged-cloud", "gcp", "free"},
@@ -952,9 +950,8 @@ func fixConfig() *Config {
 			Url: "http://host:8080/",
 		},
 		OrchestrationConfig: kebOrchestration.Config{
-			KymaVersion: defaultKymaVer,
-			Namespace:   "kcp-system",
-			Name:        "orchestration-config",
+			Namespace: "kcp-system",
+			Name:      "orchestration-config",
 		},
 		MaxPaginationPage:                         100,
 		FreemiumProviders:                         []string{"aws", "azure"},

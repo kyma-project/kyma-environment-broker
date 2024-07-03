@@ -46,7 +46,6 @@ type orchestrationManager struct {
 	k8sClient            client.Client
 	configNamespace      string
 	configName           string
-	kymaVersion          string
 	kubernetesVersion    string
 	bundleBuilder        notification.BundleBuilder
 	speedFactor          int
@@ -76,9 +75,6 @@ func (m *orchestrationManager) Execute(orchestrationID string) (time.Duration, e
 		m.failOrchestration(o, fmt.Errorf("failed while waiting start for operations: %w", err)) //nolint:errcheck
 	}
 
-	if o.Parameters.Kyma == nil || o.Parameters.Kyma.Version == "" {
-		o.Parameters.Kyma = &orchestration.KymaParameters{Version: m.kymaVersion}
-	}
 	if o.Parameters.Kubernetes == nil || o.Parameters.Kubernetes.KubernetesVersion == "" {
 		o.Parameters.Kubernetes = &orchestration.KubernetesParameters{KubernetesVersion: m.kubernetesVersion}
 	}
