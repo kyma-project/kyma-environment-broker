@@ -24,7 +24,7 @@ async function provisionSKRAndInitK8sConfig(options, provisioningTimeout) {
     await initializeK8sClient({kubeconfigPath: shoot.kubeconfig});
 
     try {
-      getSecret('sap-btp-manager', 'kyma-system');
+      await getSecret('sap-btp-manager', 'kyma-system');
     } catch (error) {
       if (error.response && error.response.status === 403) {
         console.log('Access to secrets is forbidden.');
