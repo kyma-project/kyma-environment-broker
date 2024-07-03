@@ -11,7 +11,6 @@ type Converter interface {
 	NewDTO(instance internal.Instance) (pkg.RuntimeDTO, error)
 	ApplyProvisioningOperation(dto *pkg.RuntimeDTO, pOpr *internal.ProvisioningOperation)
 	ApplyDeprovisioningOperation(dto *pkg.RuntimeDTO, dOpr *internal.DeprovisioningOperation)
-	ApplyUpgradingKymaOperations(dto *pkg.RuntimeDTO, oprs []internal.UpgradeKymaOperation, totalCount int)
 	ApplyUpgradingClusterOperations(dto *pkg.RuntimeDTO, oprs []internal.UpgradeClusterOperation, totalCount int)
 	ApplyUpdateOperations(dto *pkg.RuntimeDTO, oprs []internal.UpdatingOperation, totalCount int)
 	ApplySuspensionOperations(dto *pkg.RuntimeDTO, oprs []internal.DeprovisioningOperation)
@@ -96,22 +95,6 @@ func (c *converter) NewDTO(instance internal.Instance) (pkg.RuntimeDTO, error) {
 	c.setRegionOrDefault(instance, &toReturn)
 
 	return toReturn, nil
-}
-
-func (c *converter) ApplyUpgradingKymaOperations(dto *pkg.RuntimeDTO, oprs []internal.UpgradeKymaOperation, totalCount int) {
-	if len(oprs) <= 0 {
-		return
-	}
-	dto.Status.UpgradingKyma = &pkg.OperationsData{}
-	dto.Status.UpgradingKyma.TotalCount = totalCount
-	dto.Status.UpgradingKyma.Count = len(oprs)
-	dto.Status.UpgradingKyma.Data = make([]pkg.Operation, 0)
-	for _, o := range oprs {
-		op := pkg.Operation{}
-		c.applyOperation(&o.Operation, &op)
-		dto.Status.UpgradingKyma.Data = append(dto.Status.UpgradingKyma.Data, op)
-	}
-	c.adjustRuntimeState(dto)
 }
 
 func (c *converter) ApplyUpgradingClusterOperations(dto *pkg.RuntimeDTO, oprs []internal.UpgradeClusterOperation, totalCount int) {

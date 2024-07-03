@@ -172,7 +172,6 @@ type Operation struct {
 type GroupedOperations struct {
 	ProvisionOperations      []ProvisioningOperation
 	DeprovisionOperations    []DeprovisioningOperation
-	UpgradeKymaOperations    []UpgradeKymaOperation
 	UpgradeClusterOperations []UpgradeClusterOperation
 	UpdateOperations         []UpdatingOperation
 }
@@ -194,7 +193,7 @@ func (o *Operation) Merge(operation *Operation) {
 }
 
 // Orchestration holds all information about an orchestration.
-// Orchestration performs operations of a specific type (UpgradeKymaOperation, UpgradeClusterOperation)
+// Orchestration performs operations of a specific type UpgradeClusterOperation
 // on specific targets of SKRs.
 type Orchestration struct {
 	OrchestrationID string

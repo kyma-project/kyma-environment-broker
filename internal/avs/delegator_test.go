@@ -38,8 +38,8 @@ type testParams struct {
 	externalMonitor *BasicEvaluationCreateResponse
 }
 
-func newDelOpsParams(params testParams) (*Delegator, internal.UpgradeKymaOperation) {
-	operation := internal.UpgradeKymaOperation{}
+func newDelOpsParams(params testParams) (*Delegator, internal.Operation) {
+	operation := internal.Operation{}
 
 	*params.internalMonitor, *params.externalMonitor = createMonitors(params.client)
 
@@ -60,14 +60,14 @@ func newDelOpsParams(params testParams) (*Delegator, internal.UpgradeKymaOperati
 
 	ops := storage.NewMemoryStorage().Operations()
 	delegator := NewDelegator(params.client, params.avsCfg, ops)
-	err := ops.InsertUpgradeKymaOperation(operation)
+	err := ops.InsertOperation(operation)
 	assert.NoError(params.t, err)
 	assert.NotEqual(params.t, params.internalMonitor.Id, params.externalMonitor.Id)
 
 	return delegator, operation
 }
 
-func setOpAvsStatus(op *internal.UpgradeKymaOperation, current string, original string) (string, string) {
+func setOpAvsStatus(op *internal.Operation, current string, original string) (string, string) {
 	op.Avs.AvsInternalEvaluationStatus.Current = current
 	op.Avs.AvsInternalEvaluationStatus.Original = original
 

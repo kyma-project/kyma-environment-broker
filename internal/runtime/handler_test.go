@@ -222,19 +222,19 @@ func TestRuntimeHandler(t *testing.T) {
 		provOp2 := fixture.FixProvisioningOperation(fixRandomID(), testID2)
 		err = operations.InsertOperation(provOp2)
 		require.NoError(t, err)
-		upgOp2 := fixture.FixUpgradeKymaOperation(fixRandomID(), testID2)
-		upgOp2.State = domain.Failed
-		upgOp2.CreatedAt = upgOp2.CreatedAt.Add(time.Minute)
-		err = operations.InsertUpgradeKymaOperation(upgOp2)
+		updOp2 := fixture.FixUpdatingOperation(fixRandomID(), testID2)
+		updOp2.State = domain.Failed
+		updOp2.CreatedAt = updOp2.CreatedAt.Add(time.Minute)
+		err = operations.InsertUpdatingOperation(updOp2)
 		require.NoError(t, err)
 
 		provOp3 := fixture.FixProvisioningOperation(fixRandomID(), testID3)
 		err = operations.InsertOperation(provOp3)
 		require.NoError(t, err)
-		upgOp3 := fixture.FixUpgradeKymaOperation(fixRandomID(), testID3)
-		upgOp3.State = domain.Failed
-		upgOp3.CreatedAt = upgOp3.CreatedAt.Add(time.Minute)
-		err = operations.InsertUpgradeKymaOperation(upgOp3)
+		updOp3 := fixture.FixUpdatingOperation(fixRandomID(), testID3)
+		updOp3.State = domain.Failed
+		updOp3.CreatedAt = updOp3.CreatedAt.Add(time.Minute)
+		err = operations.InsertUpdatingOperation(updOp3)
 		require.NoError(t, err)
 		deprovOp3 := fixture.FixDeprovisioningOperation(fixRandomID(), testID3)
 		deprovOp3.State = domain.Succeeded
@@ -545,10 +545,10 @@ func TestRuntimeHandler(t *testing.T) {
 		provOp := fixture.FixProvisioningOperation(fixRandomID(), testID)
 		err = operations.InsertOperation(provOp)
 		require.NoError(t, err)
-		upgOp := fixture.FixUpgradeKymaOperation(fixRandomID(), testID)
-		upgOp.State = domain.Failed
-		upgOp.CreatedAt = upgOp.CreatedAt.Add(time.Minute)
-		err = operations.InsertUpgradeKymaOperation(upgOp)
+		updOp := fixture.FixUpdatingOperation(fixRandomID(), testID)
+		updOp.State = domain.Succeeded
+		updOp.CreatedAt = updOp.CreatedAt.Add(time.Minute)
+		err = operations.InsertUpdatingOperation(updOp)
 		require.NoError(t, err)
 
 		runtimeHandler := runtime.NewHandler(instances, operations, states, archived, 2, "", provisionerClient, logrus.New())
@@ -574,10 +574,8 @@ func TestRuntimeHandler(t *testing.T) {
 		require.Equal(t, 1, out.Count)
 		assert.Equal(t, testID, out.Data[0].InstanceID)
 		assert.NotNil(t, out.Data[0].Status.Provisioning)
-		assert.NotNil(t, out.Data[0].Status.UpgradingKyma)
-		assert.Equal(t, 1, out.Data[0].Status.UpgradingKyma.Count)
 		assert.Nil(t, out.Data[0].Status.Deprovisioning)
-		assert.Equal(t, pkg.StateError, out.Data[0].Status.State)
+		assert.Equal(t, pkg.StateSucceeded, out.Data[0].Status.State)
 
 		// when
 		rr = httptest.NewRecorder()
@@ -596,9 +594,8 @@ func TestRuntimeHandler(t *testing.T) {
 		require.Equal(t, 1, out.Count)
 		assert.Equal(t, testID, out.Data[0].InstanceID)
 		assert.Nil(t, out.Data[0].Status.Provisioning)
-		assert.NotNil(t, out.Data[0].Status.UpgradingKyma)
 		assert.Nil(t, out.Data[0].Status.Deprovisioning)
-		assert.Equal(t, pkg.StateError, out.Data[0].Status.State)
+		assert.Equal(t, pkg.StateSucceeded, out.Data[0].Status.State)
 	})
 
 	t.Run("test kyma_config and cluster_config optional attributes", func(t *testing.T) {
@@ -619,13 +616,13 @@ func TestRuntimeHandler(t *testing.T) {
 		provOp := fixture.FixProvisioningOperation(fixRandomID(), testID)
 		err = operations.InsertOperation(provOp)
 		require.NoError(t, err)
-		upgOp := fixture.FixUpgradeKymaOperation(fixRandomID(), testID)
-		upgOp.State = domain.Failed
-		upgOp.CreatedAt = upgOp.CreatedAt.Add(time.Minute)
-		err = operations.InsertUpgradeKymaOperation(upgOp)
+		updOp := fixture.FixUpdatingOperation(fixRandomID(), testID)
+		updOp.State = domain.Failed
+		updOp.CreatedAt = updOp.CreatedAt.Add(time.Minute)
+		err = operations.InsertUpdatingOperation(updOp)
 		require.NoError(t, err)
 		upgClOp := fixture.FixUpgradeClusterOperation(fixRandomID(), testID)
-		upgClOp.CreatedAt = upgOp.CreatedAt.Add(2 * time.Minute)
+		upgClOp.CreatedAt = updOp.CreatedAt.Add(2 * time.Minute)
 		err = operations.InsertUpgradeClusterOperation(upgClOp)
 		require.NoError(t, err)
 
@@ -647,9 +644,9 @@ func TestRuntimeHandler(t *testing.T) {
 		require.NoError(t, err)
 		fixUpgKymaState := internal.RuntimeState{
 			ID:          fixRandomID(),
-			CreatedAt:   upgOp.CreatedAt,
+			CreatedAt:   updOp.CreatedAt,
 			RuntimeID:   testInstance.RuntimeID,
-			OperationID: upgOp.Operation.ID,
+			OperationID: updOp.Operation.ID,
 			KymaConfig: gqlschema.KymaConfigInput{
 				Version: "1.23.0",
 				Profile: (*gqlschema.KymaProfile)(ptr.String("production")),

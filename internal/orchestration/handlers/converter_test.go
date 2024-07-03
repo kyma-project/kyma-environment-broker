@@ -46,66 +46,6 @@ func TestConverter_OrchestrationListToDTO(t *testing.T) {
 	assert.Equal(t, 5, resp.TotalCount)
 }
 
-func TestConverter_UpgradeKymaOperationToDTO(t *testing.T) {
-	// given
-	c := handlers.Converter{}
-
-	id := "id"
-	givenOperation := fixUpgradeKymaOperation(id)
-
-	// when
-	resp, err := c.UpgradeKymaOperationToDTO(givenOperation)
-
-	// then
-	require.NoError(t, err)
-	assert.Equal(t, id, resp.OrchestrationID)
-}
-
-func TestConverter_UpgradeKymaOperationListToDTO(t *testing.T) {
-	// given
-	c := handlers.Converter{}
-
-	id := "id"
-	givenOperations := []internal.UpgradeKymaOperation{
-		fixUpgradeKymaOperation(id),
-		fixUpgradeKymaOperation("another"),
-	}
-
-	// when
-	resp, err := c.UpgradeKymaOperationListToDTO(givenOperations, 2, 5)
-
-	// then
-	require.NoError(t, err)
-	require.Len(t, resp.Data, 2)
-	assert.Equal(t, id, resp.Data[0].OrchestrationID)
-	assert.Equal(t, 2, resp.Count)
-	assert.Equal(t, 5, resp.TotalCount)
-}
-
-func TestConverter_UpgradeKymaOperationToDetailDTO(t *testing.T) {
-	// given
-	c := handlers.Converter{}
-
-	id := "id"
-	givenOperation := fixUpgradeKymaOperation(id)
-	kymaConfig := gqlschema.KymaConfigInput{Version: id}
-
-	// when
-	resp, err := c.UpgradeKymaOperationToDetailDTO(givenOperation, &kymaConfig)
-
-	// then
-	require.NoError(t, err)
-	assert.Equal(t, id, resp.OrchestrationID)
-	assert.Equal(t, id, resp.KymaConfig.Version)
-}
-
-func fixUpgradeKymaOperation(id string) internal.UpgradeKymaOperation {
-	upgradeOperation := fixture.FixUpgradeKymaOperation("", "")
-	upgradeOperation.OrchestrationID = id
-
-	return upgradeOperation
-}
-
 func TestConverter_UpgradeClusterOperationToDTO(t *testing.T) {
 	// given
 	c := handlers.Converter{}

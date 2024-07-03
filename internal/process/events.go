@@ -32,12 +32,6 @@ type DeprovisioningStepProcessed struct {
 	Operation    internal.DeprovisioningOperation
 }
 
-type UpgradeKymaStepProcessed struct {
-	StepProcessed
-	OldOperation internal.UpgradeKymaOperation
-	Operation    internal.UpgradeKymaOperation
-}
-
 type UpgradeClusterStepProcessed struct {
 	StepProcessed
 	OldOperation internal.UpgradeClusterOperation

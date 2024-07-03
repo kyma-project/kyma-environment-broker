@@ -47,15 +47,6 @@ func TestInitialisationStep_OtherOperationIsInProgress(t *testing.T) {
 			},
 			expectedRepeat: true,
 		},
-		"in progress upgrade kyma": {
-			beforeFunc: func(os storage.Operations) {
-				op := fixture.FixUpgradeKymaOperation("op-id", "iid")
-				op.State = domain.InProgress
-				err := os.InsertUpgradeKymaOperation(op)
-				require.NoError(t, err)
-			},
-			expectedRepeat: true,
-		},
 		"in progress update": {
 			beforeFunc: func(os storage.Operations) {
 				op := fixture.FixUpdatingOperation("op-id", "iid")

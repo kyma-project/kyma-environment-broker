@@ -547,9 +547,7 @@ func processCancelingOrchestrations(orchestrationType orchestrationExt.Type, orc
 	for _, o := range orchestrations {
 		count := 0
 		err = nil
-		if orchestrationType == orchestrationExt.UpgradeKymaOrchestration {
-			_, count, _, err = operationsStorage.ListUpgradeKymaOperationsByOrchestrationID(o.OrchestrationID, dbmodel.OperationFilter{States: []string{orchestrationExt.InProgress}})
-		} else if orchestrationType == orchestrationExt.UpgradeClusterOrchestration {
+		if orchestrationType == orchestrationExt.UpgradeClusterOrchestration {
 			_, count, _, err = operationsStorage.ListUpgradeClusterOperationsByOrchestrationID(o.OrchestrationID, dbmodel.OperationFilter{States: []string{orchestrationExt.InProgress}})
 		}
 		if err != nil {

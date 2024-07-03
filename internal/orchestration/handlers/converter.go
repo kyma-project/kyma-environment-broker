@@ -42,53 +42,6 @@ func (c *Converter) OrchestrationListToDTO(orchestrations []internal.Orchestrati
 	}, nil
 }
 
-func (c *Converter) UpgradeKymaOperationToDTO(op internal.UpgradeKymaOperation) (orchestration.OperationResponse, error) {
-	return orchestration.OperationResponse{
-		OperationID:            op.Operation.ID,
-		RuntimeID:              op.RuntimeOperation.RuntimeID,
-		GlobalAccountID:        op.GlobalAccountID,
-		SubAccountID:           op.RuntimeOperation.SubAccountID,
-		OrchestrationID:        op.OrchestrationID,
-		ServicePlanID:          op.ProvisioningParameters.PlanID,
-		ServicePlanName:        broker.PlanNamesMapping[op.ProvisioningParameters.PlanID],
-		DryRun:                 op.DryRun,
-		ShootName:              op.RuntimeOperation.ShootName,
-		MaintenanceWindowBegin: op.MaintenanceWindowBegin,
-		MaintenanceWindowEnd:   op.MaintenanceWindowEnd,
-		State:                  string(op.Operation.State),
-		Description:            op.Operation.Description,
-	}, nil
-}
-
-func (c *Converter) UpgradeKymaOperationListToDTO(ops []internal.UpgradeKymaOperation, count, totalCount int) (orchestration.OperationResponseList, error) {
-	data := make([]orchestration.OperationResponse, 0)
-
-	for _, op := range ops {
-		o, err := c.UpgradeKymaOperationToDTO(op)
-		if err != nil {
-			return orchestration.OperationResponseList{}, fmt.Errorf("while converting operation to DTO: %w", err)
-		}
-		data = append(data, o)
-	}
-
-	return orchestration.OperationResponseList{
-		Data:       data,
-		Count:      count,
-		TotalCount: totalCount,
-	}, nil
-}
-
-func (c *Converter) UpgradeKymaOperationToDetailDTO(op internal.UpgradeKymaOperation, kymaConfig *gqlschema.KymaConfigInput) (orchestration.OperationDetailResponse, error) {
-	resp, err := c.UpgradeKymaOperationToDTO(op)
-	if err != nil {
-		return orchestration.OperationDetailResponse{}, fmt.Errorf("while converting operation to DTO: %w", err)
-	}
-	return orchestration.OperationDetailResponse{
-		OperationResponse: resp,
-		KymaConfig:        kymaConfig,
-	}, nil
-}
-
 func (c *Converter) UpgradeClusterOperationToDTO(op internal.UpgradeClusterOperation) (orchestration.OperationResponse, error) {
 	return orchestration.OperationResponse{
 		OperationID:            op.Operation.ID,

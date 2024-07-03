@@ -314,79 +314,6 @@ func TestOperation(t *testing.T) {
 		assert.Equal(t, 2, len(opList))
 	})
 
-	t.Run("Upgrade Kyma", func(t *testing.T) {
-		storageCleanup, brokerStorage, err := GetStorageForDatabaseTests()
-		require.NoError(t, err)
-		require.NotNil(t, brokerStorage)
-		defer func() {
-			err := storageCleanup()
-			assert.NoError(t, err)
-		}()
-
-		orchestrationID := "orchestration-id"
-
-		givenOperation1 := fixture.FixUpgradeKymaOperation("operation-id-1", "inst-id")
-		givenOperation1.State = domain.InProgress
-		givenOperation1.CreatedAt = time.Now().Truncate(time.Millisecond)
-		givenOperation1.UpdatedAt = time.Now().Truncate(time.Millisecond).Add(time.Second)
-		givenOperation1.ProvisionerOperationID = "target-op-id"
-		givenOperation1.Description = "description"
-		givenOperation1.OrchestrationID = orchestrationID
-		givenOperation1.InputCreator = nil
-		givenOperation1.Version = 1
-
-		givenOperation2 := fixture.FixUpgradeKymaOperation("operation-id-2", "inst-id")
-		givenOperation2.State = domain.InProgress
-		givenOperation2.CreatedAt = time.Now().Truncate(time.Millisecond).Add(time.Minute)
-		givenOperation2.UpdatedAt = time.Now().Truncate(time.Millisecond).Add(time.Second).Add(time.Minute)
-		givenOperation2.ProvisionerOperationID = "target-op-id"
-		givenOperation2.Description = "description"
-		givenOperation2.OrchestrationID = orchestrationID
-		givenOperation2.RuntimeOperation = fixRuntimeOperation("operation-id-2")
-		givenOperation2.InputCreator = nil
-		givenOperation2.Version = 1
-
-		givenOperation3 := fixture.FixUpgradeKymaOperation("operation-id-3", "inst-id")
-		givenOperation3.State = orchestration.Pending
-		givenOperation3.CreatedAt = time.Now().Truncate(time.Millisecond).Add(2 * time.Hour)
-		givenOperation3.UpdatedAt = time.Now().Truncate(time.Millisecond).Add(2 * time.Hour).Add(10 * time.Minute)
-		givenOperation3.ProvisionerOperationID = "target-op-id"
-		givenOperation3.Description = "pending-operation"
-		givenOperation3.OrchestrationID = orchestrationID
-		givenOperation3.RuntimeOperation = fixRuntimeOperation("operation-id-3")
-		givenOperation3.InputCreator = nil
-		givenOperation3.Version = 1
-
-		svc := brokerStorage.Operations()
-
-		// when
-		err = svc.InsertUpgradeKymaOperation(givenOperation1)
-		require.NoError(t, err)
-		err = svc.InsertUpgradeKymaOperation(givenOperation2)
-		require.NoError(t, err)
-		err = svc.InsertUpgradeKymaOperation(givenOperation3)
-		require.NoError(t, err)
-
-		op, err := svc.GetUpgradeKymaOperationByInstanceID("inst-id")
-		require.NoError(t, err)
-
-		lastOp, err := svc.GetLastOperation("inst-id")
-		require.NoError(t, err)
-		assert.Equal(t, givenOperation2.Operation.ID, lastOp.ID)
-
-		lastKymaUpgrade, err := svc.GetLastOperationByTypes("inst-id", []internal.OperationType{internal.OperationTypeUpgradeKyma})
-		require.NoError(t, err)
-		assert.Equal(t, givenOperation2.Operation.ID, lastKymaUpgrade.ID)
-
-		assertUpgradeKymaOperation(t, givenOperation3, *op)
-
-		ops, count, totalCount, err := svc.ListUpgradeKymaOperationsByOrchestrationID(orchestrationID, dbmodel.OperationFilter{PageSize: 10, Page: 1})
-		require.NoError(t, err)
-		assert.Len(t, ops, 3)
-		assert.Equal(t, count, 3)
-		assert.Equal(t, totalCount, 3)
-	})
-
 	t.Run("Upgrade Cluster", func(t *testing.T) {
 		storageCleanup, brokerStorage, err := GetStorageForDatabaseTests()
 		require.NoError(t, err)
@@ -693,22 +620,6 @@ func assertDeprovisioningOperation(t *testing.T, expected, got internal.Deprovis
 
 	expected.CreatedAt = got.CreatedAt
 	expected.UpdatedAt = got.UpdatedAt
-	expected.FinishedStages = got.FinishedStages
-
-	assert.Equal(t, expected, got)
-}
-
-func assertUpgradeKymaOperation(t *testing.T, expected, got internal.UpgradeKymaOperation) {
-	// do not check zones and monothonic clock, see: https://golang.org/pkg/time/#Time
-	assert.True(t, expected.CreatedAt.Equal(got.CreatedAt), fmt.Sprintf("Expected %s got %s", expected.CreatedAt, got.CreatedAt))
-	assert.True(t, expected.MaintenanceWindowBegin.Equal(got.MaintenanceWindowBegin))
-	assert.True(t, expected.MaintenanceWindowEnd.Equal(got.MaintenanceWindowEnd))
-	assert.Equal(t, expected.InstanceDetails, got.InstanceDetails)
-
-	expected.CreatedAt = got.CreatedAt
-	expected.UpdatedAt = got.UpdatedAt
-	expected.MaintenanceWindowBegin = got.MaintenanceWindowBegin
-	expected.MaintenanceWindowEnd = got.MaintenanceWindowEnd
 	expected.FinishedStages = got.FinishedStages
 
 	assert.Equal(t, expected, got)

@@ -79,7 +79,7 @@ func TestStatusHandler_AttachRoutes(t *testing.T) {
 		req, err = http.NewRequest(http.MethodGet, urlPath, nil)
 		require.NoError(t, err)
 		rr = httptest.NewRecorder()
-		err = db.Operations().InsertUpgradeKymaOperation(internal.UpgradeKymaOperation{
+		err = db.Operations().InsertUpgradeClusterOperation(internal.UpgradeClusterOperation{
 			Operation: internal.Operation{
 				ID:              fixID,
 				InstanceID:      fixID,
@@ -91,7 +91,7 @@ func TestStatusHandler_AttachRoutes(t *testing.T) {
 				RuntimeOperation: orchestration.RuntimeOperation{
 					ID: fixID,
 				},
-				Type: internal.OperationTypeUpgradeKyma,
+				Type: internal.OperationTypeUpgradeCluster,
 			},
 		})
 		err = db.Operations().InsertProvisioningOperation(internal.ProvisioningOperation{
@@ -566,24 +566,6 @@ func fixFailedOrchestrationOperations(db storage.BrokerStorage, orchestrationID 
 
 		for _, op := range operations {
 			err := db.Operations().InsertUpgradeClusterOperation(op)
-			if err != nil {
-				return err
-			}
-		}
-	case orchestration.UpgradeKymaOrchestration:
-		operations := []internal.UpgradeKymaOperation{}
-
-		for i, id := range operationIDs {
-			operations = append(operations, fixture.FixUpgradeKymaOperation(id, "instance-"+id))
-			operations[i].OrchestrationID = orchestrationID
-			if i%2 == 0 {
-				operations[i].State = orchestration.Failed
-				continue
-			}
-		}
-
-		for _, op := range operations {
-			err := db.Operations().InsertUpgradeKymaOperation(op)
 			if err != nil {
 				return err
 			}

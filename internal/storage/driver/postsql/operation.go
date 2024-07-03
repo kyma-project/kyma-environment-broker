@@ -179,7 +179,6 @@ func (s *operations) ListOperationsByInstanceIDGroupByType(instanceID string) (*
 	grouped := internal.GroupedOperations{
 		ProvisionOperations:      make([]internal.ProvisioningOperation, 0),
 		DeprovisionOperations:    make([]internal.DeprovisioningOperation, 0),
-		UpgradeKymaOperations:    make([]internal.UpgradeKymaOperation, 0),
 		UpgradeClusterOperations: make([]internal.UpgradeClusterOperation, 0),
 		UpdateOperations:         make([]internal.UpdatingOperation, 0),
 	}
@@ -200,12 +199,6 @@ func (s *operations) ListOperationsByInstanceIDGroupByType(instanceID string) (*
 			}
 			grouped.DeprovisionOperations = append(grouped.DeprovisionOperations, *ret)
 
-		case internal.OperationTypeUpgradeKyma:
-			ret, err := s.toUpgradeKymaOperation(&op)
-			if err != nil {
-				return nil, fmt.Errorf("while converting DTO to Operation: %w", err)
-			}
-			grouped.UpgradeKymaOperations = append(grouped.UpgradeKymaOperations, *ret)
 		case internal.OperationTypeUpgradeCluster:
 			ret, err := s.toUpgradeClusterOperation(&op)
 			if err != nil {

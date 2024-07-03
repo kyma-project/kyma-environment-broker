@@ -281,21 +281,6 @@ func (h *Handler) getRuntimes(w http.ResponseWriter, req *http.Request) {
 	httputil.WriteResponse(w, http.StatusOK, runtimePage)
 }
 
-func (h *Handler) takeLastNonDryRunOperations(oprs []internal.UpgradeKymaOperation) ([]internal.UpgradeKymaOperation, int) {
-	toReturn := make([]internal.UpgradeKymaOperation, 0)
-	totalCount := 0
-	for _, op := range oprs {
-		if op.DryRun {
-			continue
-		}
-		if len(toReturn) < numberOfUpgradeOperationsToReturn {
-			toReturn = append(toReturn, op)
-		}
-		totalCount = totalCount + 1
-	}
-	return toReturn, totalCount
-}
-
 func (h *Handler) takeLastNonDryRunClusterOperations(oprs []internal.UpgradeClusterOperation) ([]internal.UpgradeClusterOperation, int) {
 	toReturn := make([]internal.UpgradeClusterOperation, 0)
 	totalCount := 0
@@ -354,12 +339,8 @@ func (h *Handler) setRuntimeAllOperations(dto *pkg.RuntimeDTO) error {
 	h.converter.ApplyDeprovisioningOperation(dto, deprovOp)
 	h.converter.ApplySuspensionOperations(dto, deprovOprs)
 
-	ukOprs := operationsGroup.UpgradeKymaOperations
-	ukOprs, totalCount := h.takeLastNonDryRunOperations(ukOprs)
-	h.converter.ApplyUpgradingKymaOperations(dto, ukOprs, totalCount)
-
 	ucOprs := operationsGroup.UpgradeClusterOperations
-	ucOprs, totalCount = h.takeLastNonDryRunClusterOperations(ucOprs)
+	ucOprs, totalCount := h.takeLastNonDryRunClusterOperations(ucOprs)
 	h.converter.ApplyUpgradingClusterOperations(dto, ucOprs, totalCount)
 
 	uOprs := operationsGroup.UpdateOperations
@@ -408,13 +389,6 @@ func (h *Handler) setRuntimeLastOperation(dto *pkg.RuntimeDTO) error {
 		} else {
 			h.converter.ApplyDeprovisioningOperation(dto, deprovOp)
 		}
-
-	case internal.OperationTypeUpgradeKyma:
-		upgKymaOp, err := h.operationsDb.GetUpgradeKymaOperationByID(lastOp.ID)
-		if err != nil {
-			return fmt.Errorf("while fetching upgrade kyma operation for instance %s: %w", dto.InstanceID, err)
-		}
-		h.converter.ApplyUpgradingKymaOperations(dto, []internal.UpgradeKymaOperation{*upgKymaOp}, 1)
 
 	case internal.OperationTypeUpgradeCluster:
 		upgClusterOp, err := h.operationsDb.GetUpgradeClusterOperationByID(lastOp.ID)

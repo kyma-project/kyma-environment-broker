@@ -262,17 +262,6 @@ func FixRuntimeOperation(operationId string) orchestration.RuntimeOperation {
 	}
 }
 
-func FixUpgradeKymaOperation(operationId, instanceId string) internal.UpgradeKymaOperation {
-	o := FixOperation(operationId, instanceId, internal.OperationTypeUpgradeKyma)
-	o.RuntimeID = operationId
-	o.RuntimeOperation = FixRuntimeOperation(operationId)
-	o.InputCreator = FixInputCreator(internal.Azure)
-	o.Type = internal.OperationTypeUpgradeKyma
-	return internal.UpgradeKymaOperation{
-		Operation: o,
-	}
-}
-
 func FixUpgradeClusterOperation(operationId, instanceId string) internal.UpgradeClusterOperation {
 	o := FixOperation(operationId, instanceId, internal.OperationTypeUpgradeCluster)
 	o.RuntimeOperation = FixRuntimeOperation(operationId)

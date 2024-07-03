@@ -197,7 +197,6 @@ func (s *operations) ListOperationsByInstanceIDGroupByType(instanceID string) (*
 	grouped := internal.GroupedOperations{
 		ProvisionOperations:      make([]internal.ProvisioningOperation, 0),
 		DeprovisionOperations:    make([]internal.DeprovisioningOperation, 0),
-		UpgradeKymaOperations:    make([]internal.UpgradeKymaOperation, 0),
 		UpgradeClusterOperations: make([]internal.UpgradeClusterOperation, 0),
 		UpdateOperations:         make([]internal.UpdatingOperation, 0),
 	}
@@ -209,9 +208,6 @@ func (s *operations) ListOperationsByInstanceIDGroupByType(instanceID string) (*
 
 		case internal.OperationTypeDeprovision:
 			grouped.DeprovisionOperations = append(grouped.DeprovisionOperations, internal.DeprovisioningOperation{Operation: op})
-
-		case internal.OperationTypeUpgradeKyma:
-			grouped.UpgradeKymaOperations = append(grouped.UpgradeKymaOperations, internal.UpgradeKymaOperation{Operation: op})
 
 		case internal.OperationTypeUpgradeCluster:
 			grouped.UpgradeClusterOperations = append(grouped.UpgradeClusterOperations, internal.UpgradeClusterOperation{Operation: op})
@@ -226,7 +222,6 @@ func (s *operations) ListOperationsByInstanceIDGroupByType(instanceID string) (*
 	s.sortProvisioningByCreatedAtDesc(grouped.ProvisionOperations)
 	s.sortDeprovisioningByCreatedAtDesc(grouped.DeprovisionOperations)
 	s.sortUpgradeClusterByCreatedAt(grouped.UpgradeClusterOperations)
-	s.sortUpgradeKymaByCreatedAt(grouped.UpgradeKymaOperations)
 	s.sortUpdateByCreatedAt(grouped.UpdateOperations)
 
 	return &grouped, nil

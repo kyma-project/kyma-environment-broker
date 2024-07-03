@@ -61,19 +61,6 @@ func TestInstance(t *testing.T) {
 		err = brokerStorage.Operations().InsertOperation(fixProvisioningOperation2)
 		require.NoError(t, err)
 
-		upgradeOperation := fixture.FixUpgradeKymaOperation("operation-id-3", "inst-id")
-		upgradeOperation.State = orchestration.Pending
-		upgradeOperation.CreatedAt = time.Now().Truncate(time.Millisecond).Add(2 * time.Hour)
-		upgradeOperation.UpdatedAt = time.Now().Truncate(time.Millisecond).Add(2 * time.Hour).Add(10 * time.Minute)
-		upgradeOperation.ProvisionerOperationID = "target-op-id"
-		upgradeOperation.Description = "pending-operation"
-		upgradeOperation.Version = 1
-		upgradeOperation.OrchestrationID = "orch-id"
-		upgradeOperation.RuntimeOperation = fixRuntimeOperation("operation-id-3")
-
-		err = brokerStorage.Operations().InsertUpgradeKymaOperation(upgradeOperation)
-		require.NoError(t, err)
-
 		// then
 		inst, err := brokerStorage.Instances().GetByID(testInstanceId)
 		assert.NoError(t, err)
@@ -630,26 +617,16 @@ func TestInstance(t *testing.T) {
 		err = brokerStorage.Operations().InsertOperation(provOp1)
 		require.NoError(t, err)
 
-		// inst2 is in error state
+		// inst2 is in succeeded state
 		provOp2 := fixProvisionOperation("inst2")
 		provOp2.State = domain.Succeeded
 		err = brokerStorage.Operations().InsertOperation(provOp2)
 		require.NoError(t, err)
-		upgrOp2 := fixUpgradeKymaOperation("inst2")
-		upgrOp2.CreatedAt = upgrOp2.CreatedAt.Add(time.Minute)
-		upgrOp2.State = domain.Failed
-		err = brokerStorage.Operations().InsertUpgradeKymaOperation(upgrOp2)
-		require.NoError(t, err)
 
-		// inst3 is in suspended state
+		// inst3 is in succeeded state
 		provOp3 := fixProvisionOperation("inst3")
 		provOp3.State = domain.Succeeded
 		err = brokerStorage.Operations().InsertOperation(provOp3)
-		require.NoError(t, err)
-		upgrOp3 := fixUpgradeKymaOperation("inst3")
-		upgrOp3.CreatedAt = upgrOp2.CreatedAt.Add(time.Minute)
-		upgrOp3.State = domain.Failed
-		err = brokerStorage.Operations().InsertUpgradeKymaOperation(upgrOp3)
 		require.NoError(t, err)
 		deprovOp3 := fixDeprovisionOperation("inst3")
 		deprovOp3.Temporary = true
@@ -713,26 +690,16 @@ func TestInstance(t *testing.T) {
 		err = brokerStorage.Operations().InsertOperation(provOp1)
 		require.NoError(t, err)
 
-		// inst2 is in error state
+		// inst2 is in succeeded state
 		provOp2 := fixProvisionOperation("inst2")
 		provOp2.State = domain.Succeeded
 		err = brokerStorage.Operations().InsertOperation(provOp2)
 		require.NoError(t, err)
-		upgrOp2 := fixUpgradeKymaOperation("inst2")
-		upgrOp2.CreatedAt = upgrOp2.CreatedAt.Add(time.Minute)
-		upgrOp2.State = domain.Failed
-		err = brokerStorage.Operations().InsertUpgradeKymaOperation(upgrOp2)
-		require.NoError(t, err)
 
-		// inst3 is in suspended state
+		// inst3 is in succeeded state
 		provOp3 := fixProvisionOperation("inst3")
 		provOp3.State = domain.Succeeded
 		err = brokerStorage.Operations().InsertOperation(provOp3)
-		require.NoError(t, err)
-		upgrOp3 := fixUpgradeKymaOperation("inst3")
-		upgrOp3.CreatedAt = upgrOp2.CreatedAt.Add(time.Minute)
-		upgrOp3.State = domain.Failed
-		err = brokerStorage.Operations().InsertUpgradeKymaOperation(upgrOp3)
 		require.NoError(t, err)
 		deprovOp3 := fixDeprovisionOperation("inst3")
 		deprovOp3.Temporary = true
@@ -790,26 +757,16 @@ func TestInstance(t *testing.T) {
 		err = brokerStorage.Operations().InsertOperation(provOp1)
 		require.NoError(t, err)
 
-		// inst2 is in error state
+		// inst2 is in succeeded state
 		provOp2 := fixProvisionOperation("inst2")
 		provOp2.State = domain.Succeeded
 		err = brokerStorage.Operations().InsertOperation(provOp2)
 		require.NoError(t, err)
-		upgrOp2 := fixUpgradeKymaOperation("inst2")
-		upgrOp2.CreatedAt = upgrOp2.CreatedAt.Add(time.Minute)
-		upgrOp2.State = domain.Failed
-		err = brokerStorage.Operations().InsertUpgradeKymaOperation(upgrOp2)
-		require.NoError(t, err)
 
-		// inst3 is in suspended state
+		// inst3 is in succeeded state
 		provOp3 := fixProvisionOperation("inst3")
 		provOp3.State = domain.Succeeded
 		err = brokerStorage.Operations().InsertOperation(provOp3)
-		require.NoError(t, err)
-		upgrOp3 := fixUpgradeKymaOperation("inst3")
-		upgrOp3.CreatedAt = upgrOp2.CreatedAt.Add(time.Minute)
-		upgrOp3.State = domain.Failed
-		err = brokerStorage.Operations().InsertUpgradeKymaOperation(upgrOp3)
 		require.NoError(t, err)
 		deprovOp3 := fixDeprovisionOperation("inst3")
 		deprovOp3.Temporary = true
@@ -929,9 +886,4 @@ func fixProvisionOperation(instanceId string) internal.Operation {
 func fixDeprovisionOperation(instanceId string) internal.DeprovisioningOperation {
 	operationId := fmt.Sprintf("%s-%d", instanceId, rand.Int())
 	return fixture.FixDeprovisioningOperation(operationId, instanceId)
-}
-
-func fixUpgradeKymaOperation(testData string) internal.UpgradeKymaOperation {
-	operationId := fmt.Sprintf("%s-%d", testData, rand.Int())
-	return fixture.FixUpgradeKymaOperation(operationId, testData)
 }
