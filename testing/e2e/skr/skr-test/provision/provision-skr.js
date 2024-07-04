@@ -26,7 +26,7 @@ async function provisionSKRAndInitK8sConfig(options, provisioningTimeout) {
     try {
       await getSecret('sap-btp-manager', 'kyma-system');
     } catch (error) {
-      console.log('An error occurred while fetching the secret');
+      console.log('An error occurred while testing the K8s client');
       console.log('Downloading the kubeconfig once again. Trying to initialize the client one last time');
       const kubeconfigPath = kcp.getKubeconfig(shoot.name);
       await initializeK8sClient({kubeconfigPath: kubeconfigPath});
