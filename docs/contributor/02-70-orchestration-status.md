@@ -1,8 +1,5 @@
 # Check Orchestration Status
 
-> [!NOTE] 
-> This document has been deprecated.
-> 
 This tutorial shows how to check the orchestration status. Using this API, you can fetch data about:
 - A single orchestration
 - All orchestrations
