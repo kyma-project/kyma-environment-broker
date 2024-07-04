@@ -3,7 +3,7 @@
 > [!NOTE] 
 > This document has been deprecated.
 
-Orchestration is a mechanism that allows you to upgrade Kubernetes cluster. After sending the request, the orchestration is processed by `ClusterUpgradeManager`. It lists Shoots (Kyma runtimes) in the Gardener cluster and narrows them to the IDs that you have specified in the request body. Then, `ClusterUpgradeManager` performs the [upgrade steps](../user/03-20-runtime-operations.md#upgrade-cluster) logic on the selected Kyma runtimes.
+Orchestration is a mechanism that allows you to upgrade a Kubernetes cluster. After sending the request, the orchestration is processed by `ClusterUpgradeManager`, which lists Shoots (Kyma runtimes) in the Gardener cluster and narrows them to the IDs that you have specified in the request body. Then, `ClusterUpgradeManager` performs the [upgrade steps](../user/03-20-runtime-operations.md#upgrade-cluster) logic on the selected Kyma runtimes.
 
 If Kyma Environment Broker is restarted, it reprocesses the orchestrations that are in the `CANCELING`, `IN PROGRESS`, and `PENDING` state.
 
