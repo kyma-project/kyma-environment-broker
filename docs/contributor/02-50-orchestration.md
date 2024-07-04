@@ -3,7 +3,7 @@
 > [!NOTE] 
 > This document has been deprecated.
 
-Orchestration is a mechanism that allows you to upgrade SAP BTP, Kyma runtimes. After sending the request, the orchestration is processed by `KymaUpgradeManager`. It lists Shoots (Kyma runtimes) in the Gardener cluster and narrows them to the IDs that you have specified in the request body. Then, `KymaUpgradeManager` performs the [upgrade steps](../user/03-20-runtime-operations.md#upgrade-kyma) logic on the selected Kyma runtimes.
+Orchestration is a mechanism that allows you to upgrade SAP BTP, Kyma runtimes. After sending the request, the orchestration is processed by `ClusterUpgradeManager`. It lists Shoots (Kyma runtimes) in the Gardener cluster and narrows them to the IDs that you have specified in the request body. Then, `ClusterUpgradeManager` performs the [upgrade steps](../user/03-20-runtime-operations.md#upgrade-cluster) logic on the selected Kyma runtimes.
 
 If Kyma Environment Broker is restarted, it reprocesses the orchestrations that are in the `CANCELING`, `IN PROGRESS`, and `PENDING` state.
 
@@ -17,7 +17,7 @@ Orchestration API consist of the following handlers:
 - `PUT /orchestrations/{orchestration_id}/cancel` - cancels the orchestration with a given ID that is in progress or pending.
 - `GET /orchestrations/{orchestration_id}/operations` - exposes data about operations scheduled by the orchestration with a given ID.
 - `GET /orchestrations/{orchestration_id}/operations/{operation_id}` - exposes the detailed data about a single operation with a given ID.
-- `POST /upgrade/kyma` - schedules the orchestration. It requires specifying a request body.
+- `POST /upgrade/cluster` - schedules the orchestration. It requires specifying a request body.
 
 For more details, follow the tutorial on how to [check API using Swagger](01-20-swagger.md).
 

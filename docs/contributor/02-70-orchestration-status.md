@@ -171,11 +171,6 @@ A successful call returns the list of all orchestrations:
        "shootName": "c-3a3e0af",
        "maintenanceWindowBegin": "0000-01-01T04:00:00Z",
        "maintenanceWindowEnd": "0000-01-01T08:00:00Z",
-       "kymaConfig": {
-           "version": "1.15.1",
-           "components": [],
-           "configuration": []
-       },
        "clusterConfig": {}
    }
       ```
