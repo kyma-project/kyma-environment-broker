@@ -156,7 +156,7 @@ A successful call returns the list of all orchestrations:
    curl --request GET "https://$BROKER_URL/orchestrations/$ORCHESTRATION_ID/operations/$OPERATION_ID --header "$AUTHORIZATION_HEADER""
    ```
 
-   A successful call returns the upgrade operation object with the **kymaConfig** and **clusterConfig** fields:
+   A successful call returns the upgrade operation object with the **clusterConfig** fields:
 
       ```json
    {

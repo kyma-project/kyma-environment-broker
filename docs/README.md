@@ -24,7 +24,6 @@ For technical details of KEB, go to the `contributor` directory:
 * [Kyma Environment Broker Configuration](./contributor/02-30-keb-configuration.md)
 * [Kyma Environment Broker Configuration for a Given Kyma Version and Plan](./contributor/02-40-broker-configuration-for-given-version-and-plan.md)
 * [Orchestration](./contributor/02-50-orchestration.md)
-* [Orchestrate Kyma Upgrade](./contributor/02-60-orchestrate-kyma-upgrade.md)
 * [Check Orchestration Status](./contributor/02-70-orchestration-status.md)
 * [Hyperscaler Account Pool](./contributor/03-10-hyperscaler-account-pool.md)
 * [EU Access](./contributor/03-20-eu-access.md)
