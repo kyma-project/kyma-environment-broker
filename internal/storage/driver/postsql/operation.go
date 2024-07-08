@@ -211,6 +211,8 @@ func (s *operations) ListOperationsByInstanceIDGroupByType(instanceID string) (*
 				return nil, fmt.Errorf("while converting DTO to Operation: %w", err)
 			}
 			grouped.UpdateOperations = append(grouped.UpdateOperations, *ret)
+		case internal.OperationTypeUpgradeKyma:
+			continue
 		default:
 			return nil, fmt.Errorf("while converting DTO to Operation: unrecognized type of operation")
 		}
