@@ -100,10 +100,10 @@ deployment:
     pullPolicy: Always
   securityContext:
     runAsUser: 2000
-  strategy: {} # Read more: https://kubernetes.io/docs/concepts/workloads/controllers/deployment/#strategy
-  nodeSelector: {}
+  strategy: { } # Read more: https://kubernetes.io/docs/concepts/workloads/controllers/deployment/#strategy
+  nodeSelector: { }
 
-imagePullSecrets: []
+imagePullSecrets: [ ]
 namePrefix: "kcp"
 nameOverride: "kyma-environment-broker"
 fullnameOverride: "kcp-kyma-environment-broker"
@@ -134,7 +134,7 @@ swagger:
     enabled: true
 
 resources:
-  {}
+  { }
   # We usually recommend not to specify default resources and to leave this as a conscious
   # choice for the user. This also increases chances charts run on environments with little
   # resources, such as Minikube. If you do want to specify resources, uncomment the following
@@ -144,10 +144,10 @@ resources:
   #   memory: 128Mi
   # requests:
   #   cpu: 100m
-  #   memory: 128Mi
+#   memory: 128Mi
 
 serviceAccount:
-  annotations: {}
+  annotations: { }
 
 infrastructureManager:
   disabled: "true"
@@ -295,7 +295,7 @@ avs:
   trialParentId: "0"
   maintenanceModeDuringUpgrade:
     disabled: false # disable AvS maintenance mode during upgrade, false until SKR ZDM is done
-    alwaysDisabledGlobalAccountIDs: [] # list of GA IDs where maintenance mode is always disabled during upgrade
+    alwaysDisabledGlobalAccountIDs: [ ] # list of GA IDs where maintenance mode is always disabled during upgrade
 
 edp:
   authURL: "TBD"
@@ -338,6 +338,13 @@ cis:
 notification:
   url: "TBD"
   disabled: true
+
+kim:
+  enabled: false
+  dryRun: true
+  viewOnly: true
+  plans: "preview"  # comma separated list of plans where KIM will be used
+  kimOnlyPlans: "" # comma separated list of plans where KIM will be used exclusively
 
 oidc:
   issuer: https://kymatest.accounts400.ondemand.com

@@ -10,6 +10,7 @@ import (
 
 	"github.com/kyma-project/control-plane/components/provisioner/pkg/gqlschema"
 	"github.com/kyma-project/kyma-environment-broker/internal"
+	kim "github.com/kyma-project/kyma-environment-broker/internal/kim"
 )
 
 const (
@@ -49,6 +50,7 @@ type Config struct {
 	EnableShootAndSeedSameRegion            bool          `envconfig:"default=false"`
 
 	Binding                BindingConfig
+	KimConfig              kim.Config
 	UseSmallerMachineTypes bool `envconfig:"default=false"`
 }
 

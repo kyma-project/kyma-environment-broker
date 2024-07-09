@@ -2,7 +2,6 @@ package main
 
 import (
 	"context"
-
 	"github.com/kyma-project/kyma-environment-broker/common/hyperscaler"
 	"github.com/kyma-project/kyma-environment-broker/internal/avs"
 	"github.com/kyma-project/kyma-environment-broker/internal/process"
@@ -78,6 +77,16 @@ func NewProvisioningProcessingQueue(ctx context.Context, provisionManager *proce
 			condition: provisioning.SkipForOwnClusterPlan,
 			stage:     createRuntimeStageName,
 			step:      provisioning.NewCreateRuntimeWithoutKymaStep(db.Operations(), db.RuntimeStates(), db.Instances(), provisionerClient),
+		},
+		{
+			condition: provisioning.SkipForOwnClusterPlan,
+			stage:     createRuntimeStageName,
+			step:      provisioning.NewGenerateRuntimeIDStep(db.Operations(), db.RuntimeStates(), db.Instances()),
+		},
+		{
+			condition: provisioning.SkipForOwnClusterPlan,
+			stage:     createRuntimeStageName,
+			step:      provisioning.NewCreateRuntimeResourceStep(db.Operations(), db.RuntimeStates(), db.Instances(), cfg.Broker.KimConfig),
 		},
 		{
 			condition: provisioning.DoForOwnClusterPlanOnly,
