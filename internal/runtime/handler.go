@@ -109,7 +109,6 @@ func unionInstances(sets ...[]pkg.RuntimeDTO) (union []pkg.RuntimeDTO) {
 }
 
 func (h *Handler) listInstances(filter dbmodel.InstanceFilter) ([]pkg.RuntimeDTO, int, int, error) {
-	archived := []pkg.RuntimeDTO{}
 	if slices.Contains(filter.States, dbmodel.InstanceDeprovisioned) {
 		// try to list instances where deletion didn't finish successfully
 		// entry in the Instances table still exists but has deletion timestamp and contains list of incomplete steps
@@ -128,28 +127,9 @@ func (h *Handler) listInstances(filter dbmodel.InstanceFilter) ([]pkg.RuntimeDTO
 		}
 		instancesFromOperations := recreateInstances(operations)
 
-		if len(instancesFromOperations) == 0 && len(filter.InstanceIDs) == 1 {
-			instanceArchived, err := h.instancesArchivedDb.GetByInstanceID(filter.InstanceIDs[0])
-			if err != nil && !dberr.IsNotFound(err) {
-				return archived, instancesCount, instancesTotalCount, err
-			}
-			instance := h.InstanceFromInstanceArchived(instanceArchived)
-			dto, err := h.converter.NewDTO(instance)
-			dto.Status = pkg.RuntimeStatus{
-				Provisioning: &pkg.Operation{
-					CreatedAt: instanceArchived.ProvisioningStartedAt,
-					UpdatedAt: instanceArchived.ProvisioningFinishedAt,
-					State:     string(instanceArchived.ProvisioningState),
-				},
-				Deprovisioning: &pkg.Operation{
-					UpdatedAt: instanceArchived.LastDeprovisioningFinishedAt,
-				},
-			}
-
-			if err != nil {
-				return archived, instancesCount, instancesTotalCount, err
-			}
-			archived = append(archived, dto)
+		instancesArchived, instancesArchivedCount, instancesArchivedTotalCount, err := h.instancesArchivedDb.List(filter)
+		if err != nil {
+			return []pkg.RuntimeDTO{}, instancesArchivedCount, instancesArchivedTotalCount, err
 		}
 
 		// return union of all sets of instances
@@ -169,9 +149,28 @@ func (h *Handler) listInstances(filter dbmodel.InstanceFilter) ([]pkg.RuntimeDTO
 			}
 			instanceDTOsFromOperations = append(instanceDTOsFromOperations, dto)
 		}
+		archived := []pkg.RuntimeDTO{}
+		for _, i := range instancesArchived {
+			instance := h.InstanceFromInstanceArchived(i)
+			dto, err := h.converter.NewDTO(instance)
+			if err != nil {
+				return archived, instancesArchivedCount, instancesArchivedTotalCount, err
+			}
+			dto.Status = pkg.RuntimeStatus{
+				Provisioning: &pkg.Operation{
+					CreatedAt: i.ProvisioningStartedAt,
+					UpdatedAt: i.ProvisioningFinishedAt,
+					State:     string(i.ProvisioningState),
+				},
+				Deprovisioning: &pkg.Operation{
+					UpdatedAt: i.LastDeprovisioningFinishedAt,
+				},
+			}
+			archived = append(archived, dto)
+		}
 		instancesUnion := unionInstances(instanceDTOs, instanceDTOsFromOperations, archived)
 		count := len(instancesFromOperations)
-		return instancesUnion, count + instancesCount, count + instancesTotalCount, nil
+		return instancesUnion, count + instancesCount + instancesArchivedCount, count + instancesTotalCount + instancesArchivedTotalCount, nil
 	}
 
 	var result []pkg.RuntimeDTO
