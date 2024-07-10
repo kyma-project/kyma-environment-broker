@@ -10,7 +10,6 @@ import (
 
 	"github.com/kyma-project/kyma-environment-broker/internal/provisioner"
 	"github.com/kyma-project/kyma-environment-broker/internal/ptr"
-	"github.com/pivotal-cf/brokerapi/v8/domain"
 	"golang.org/x/exp/slices"
 
 	"github.com/gorilla/mux"
@@ -55,44 +54,6 @@ func (h *Handler) AttachRoutes(router *mux.Router) {
 	router.HandleFunc("/runtimes", h.getRuntimes)
 }
 
-func findLastDeprovisioning(operations []internal.Operation) internal.Operation {
-	for i := len(operations) - 1; i > 0; i-- {
-		o := operations[i]
-		if o.Type != internal.OperationTypeDeprovision {
-			continue
-		}
-		if o.State != domain.Succeeded {
-			continue
-		}
-		return o
-	}
-	return operations[len(operations)-1]
-}
-
-func recreateInstances(operations []internal.Operation) []internal.Instance {
-	byInstance := make(map[string][]internal.Operation)
-	for _, o := range operations {
-		byInstance[o.InstanceID] = append(byInstance[o.InstanceID], o)
-	}
-	var instances []internal.Instance
-	for id, op := range byInstance {
-		o := op[0]
-		last := findLastDeprovisioning(op)
-		instances = append(instances, internal.Instance{
-			InstanceID:      id,
-			GlobalAccountID: o.GlobalAccountID,
-			SubAccountID:    o.SubAccountID,
-			RuntimeID:       o.RuntimeID,
-			CreatedAt:       o.CreatedAt,
-			ServicePlanID:   o.ProvisioningParameters.PlanID,
-			DeletedAt:       last.UpdatedAt,
-			InstanceDetails: last.InstanceDetails,
-			Parameters:      last.ProvisioningParameters,
-		})
-	}
-	return instances
-}
-
 func unionInstances(sets ...[]pkg.RuntimeDTO) (union []pkg.RuntimeDTO) {
 	m := make(map[string]pkg.RuntimeDTO)
 	for _, s := range sets {
@@ -116,17 +77,6 @@ func (h *Handler) listInstances(filter dbmodel.InstanceFilter) ([]pkg.RuntimeDTO
 		filter.DeletionAttempted = &deletionAttempted
 		instances, instancesCount, instancesTotalCount, _ := h.instancesDb.List(filter)
 
-		// try to recreate instances from the operations table where entry in the instances table is gone
-		opFilter := dbmodel.OperationFilter{}
-		opFilter.InstanceFilter = &filter
-		opFilter.Page = filter.Page
-		opFilter.PageSize = filter.PageSize
-		operations, _, _, err := h.operationsDb.ListOperations(opFilter)
-		if err != nil {
-			return []pkg.RuntimeDTO{}, instancesCount, instancesTotalCount, err
-		}
-		instancesFromOperations := recreateInstances(operations)
-
 		instancesArchived, instancesArchivedCount, instancesArchivedTotalCount, err := h.instancesArchivedDb.List(filter)
 		if err != nil {
 			return []pkg.RuntimeDTO{}, instancesArchivedCount, instancesArchivedTotalCount, err
@@ -140,14 +90,6 @@ func (h *Handler) listInstances(filter dbmodel.InstanceFilter) ([]pkg.RuntimeDTO
 				return []pkg.RuntimeDTO{}, instancesCount, instancesTotalCount, err
 			}
 			instanceDTOs = append(instanceDTOs, dto)
-		}
-		instanceDTOsFromOperations := []pkg.RuntimeDTO{}
-		for _, i := range instancesFromOperations {
-			dto, err := h.converter.NewDTO(i)
-			if err != nil {
-				return []pkg.RuntimeDTO{}, instancesCount, instancesTotalCount, err
-			}
-			instanceDTOsFromOperations = append(instanceDTOsFromOperations, dto)
 		}
 		archived := []pkg.RuntimeDTO{}
 		for _, i := range instancesArchived {
@@ -168,9 +110,8 @@ func (h *Handler) listInstances(filter dbmodel.InstanceFilter) ([]pkg.RuntimeDTO
 			}
 			archived = append(archived, dto)
 		}
-		instancesUnion := unionInstances(instanceDTOs, instanceDTOsFromOperations, archived)
-		count := len(instancesFromOperations)
-		return instancesUnion, count + instancesCount + instancesArchivedCount, count + instancesTotalCount + instancesArchivedTotalCount, nil
+		instancesUnion := unionInstances(instanceDTOs, archived)
+		return instancesUnion, instancesCount + instancesArchivedCount, instancesTotalCount + instancesArchivedTotalCount, nil
 	}
 
 	var result []pkg.RuntimeDTO
