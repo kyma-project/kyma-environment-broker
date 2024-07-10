@@ -60,6 +60,7 @@ type ReadSession interface {
 	NumberOfDeletedInstances() (int, error)
 	TotalNumberOfInstancesArchivedForGlobalAccountID(globalAccountID string, planID string) (int, error)
 	GetAllOperations() ([]dbmodel.OperationDTO, error)
+	ListInstancesArchived(filter dbmodel.InstanceFilter) ([]dbmodel.InstanceArchivedDTO, int, int, error)
 }
 
 //go:generate mockery --name=WriteSession

@@ -37,6 +37,7 @@ type InstancesArchived interface {
 	Insert(instance internal.InstanceArchived) error
 	TotalNumberOfInstancesArchived() (int, error)
 	TotalNumberOfInstancesArchivedForGlobalAccountID(globalAccountID string, planID string) (int, error)
+	List(filter dbmodel.InstanceFilter) ([]internal.InstanceArchived, int, int, error)
 }
 
 //go:generate mockery --name=Operations --output=automock --outpkg=mocks --case=underscore

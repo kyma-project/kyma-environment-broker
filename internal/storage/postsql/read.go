@@ -975,3 +975,63 @@ func (r readSession) TotalNumberOfInstancesArchivedForGlobalAccountID(globalAcco
 
 	return res.Total, err
 }
+
+func (r readSession) ListInstancesArchived(filter dbmodel.InstanceFilter) ([]dbmodel.InstanceArchivedDTO, int, int, error) {
+	var instancesArchived []dbmodel.InstanceArchivedDTO
+
+	stmt := r.session.Select("*").
+		From(InstancesArchivedTableName).
+		OrderBy("last_deprovisioning_finished_at")
+
+	if filter.Page > 0 && filter.PageSize > 0 {
+		stmt.Paginate(uint64(filter.Page), uint64(filter.PageSize))
+	}
+
+	addInstanceArchivedFilter(stmt, filter)
+
+	_, err := stmt.Load(&instancesArchived)
+
+	totalCount, err := r.getInstanceArchivedCount(filter)
+	if err != nil {
+		return []dbmodel.InstanceArchivedDTO{}, -1, -1, err
+	}
+
+	return instancesArchived, len(instancesArchived), totalCount, nil
+}
+
+func (r readSession) getInstanceArchivedCount(filter dbmodel.InstanceFilter) (int, error) {
+	var res struct {
+		Total int
+	}
+	stmt := r.session.Select("count(*) as total").
+		From(InstancesArchivedTableName)
+
+	addInstanceArchivedFilter(stmt, filter)
+	err := stmt.LoadOne(&res)
+
+	return res.Total, err
+}
+
+func addInstanceArchivedFilter(stmt *dbr.SelectStmt, filter dbmodel.InstanceFilter) {
+	if len(filter.InstanceIDs) > 0 {
+		stmt.Where("instance_id IN ?", filter.InstanceIDs)
+	}
+	if len(filter.GlobalAccountIDs) > 0 {
+		stmt.Where("global_account_id IN ?", filter.GlobalAccountIDs)
+	}
+	if len(filter.SubAccountIDs) > 0 {
+		stmt.Where("subaccount_id IN ?", filter.SubAccountIDs)
+	}
+	if len(filter.Plans) > 0 {
+		stmt.Where("plan_name IN ?", filter.Plans)
+	}
+	if len(filter.Regions) > 0 {
+		stmt.Where("region IN ?", filter.Regions)
+	}
+	if len(filter.RuntimeIDs) > 0 {
+		stmt.Where("last_runtime_id IN ?", filter.RuntimeIDs)
+	}
+	if len(filter.Shoots) > 0 {
+		stmt.Where("shoot_name IN ?", filter.Shoots)
+	}
+}
