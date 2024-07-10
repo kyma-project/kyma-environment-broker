@@ -99,6 +99,7 @@ func (h *Handler) listInstances(filter dbmodel.InstanceFilter) ([]pkg.RuntimeDTO
 				return archived, instancesArchivedCount, instancesArchivedTotalCount, err
 			}
 			dto.Status = pkg.RuntimeStatus{
+				CreatedAt: i.ProvisioningStartedAt,
 				Provisioning: &pkg.Operation{
 					CreatedAt: i.ProvisioningStartedAt,
 					UpdatedAt: i.ProvisioningFinishedAt,
