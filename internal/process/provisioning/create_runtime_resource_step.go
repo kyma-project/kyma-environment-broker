@@ -42,6 +42,7 @@ func (s *CreateRuntimeResourceStep) Run(operation internal.Operation, log logrus
 
 	if !s.kimConfig.IsEnabledForPlan(broker.PlanNamesMapping[operation.ProvisioningParameters.PlanID]) {
 		log.Infof("KIM is not enabled for plan %s, skipping", broker.PlanNamesMapping[operation.ProvisioningParameters.PlanID])
+		return operation, 0, nil
 	}
 
 	runtimeCR, err := s.createRuntimeResourceObject(operation)
@@ -59,7 +60,7 @@ func (s *CreateRuntimeResourceStep) Run(operation internal.Operation, log logrus
 	} else {
 		err := s.CreateResource(runtimeCR)
 		if err != nil {
-			return s.operationManager.OperationFailed(operation, fmt.Sprintf("while creating Runtime CR object: %s", err), err, log)
+			return s.operationManager.OperationFailed(operation, fmt.Sprintf("while creating Runtime CR resource: %s", err), err, log)
 
 		}
 	}
@@ -75,6 +76,7 @@ func (s *CreateRuntimeResourceStep) CreateResource(cr imv1.Runtime) error {
 
 func (s *CreateRuntimeResourceStep) createRuntimeResourceObject(operation internal.Operation) (imv1.Runtime, error) {
 	runtime := imv1.Runtime{}
+	runtime.Spec.Shoot.Name = operation.ShootName
 
 	//operation.InputCreator.SetProvisioningParameters(operation.ProvisioningParameters)
 	//operation.InputCreator.SetShootName(operation.ShootName)
@@ -94,7 +96,7 @@ func (s *CreateRuntimeResourceStep) createRuntimeResourceObject(operation intern
 }
 
 func EncodeRuntimeCR(runtime imv1.Runtime) (string, error) {
-	result, err := yaml.Marshal(runtime)
+	result, err := yaml.Marshal(&runtime)
 	if err != nil {
 		return "", err
 	}

@@ -24,7 +24,7 @@ func TestCreateRuntimeResourceStep_HappyPath_YamlOnly(t *testing.T) {
 
 	kimConfig := kim.Config{
 		Enabled:  true,
-		Plans:    []string{"preview"},
+		Plans:    []string{"azure"},
 		ViewOnly: false,
 		DryRun:   true,
 	}
