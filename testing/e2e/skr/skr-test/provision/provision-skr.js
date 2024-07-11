@@ -23,13 +23,22 @@ async function provisionSKRAndInitK8sConfig(options, provisioningTimeout) {
     console.log('Initiating K8s client...');
     await initializeK8sClient({kubeconfigPath: shoot.kubeconfig});
 
-    try {
-      await getSecret('sap-btp-manager', 'kyma-system');
-    } catch (error) {
-      console.log('An error occurred while testing the K8s client');
-      console.log('Downloading the kubeconfig once again. Trying to initialize the client one last time');
-      const kubeconfigPath = kcp.getKubeconfig(shoot.name);
-      await initializeK8sClient({kubeconfigPath: kubeconfigPath});
+    let retryCount = 0;
+    const maxRetries = 10;
+    const cooldown = 1000 * 60 * 1; // 1m
+
+    while (retryCount < maxRetries) {
+      try {
+        await getSecret('sap-btp-manager', 'kyma-system');
+        break;
+      } catch (error) {
+        console.log('An error occurred while testing the K8s client');
+        console.log(`Downloading the kubeconfig again. Trying to initialize the client. Retry count: ${retryCount}`);
+        const kubeconfigPath = kcp.getKubeconfig(shoot.name);
+        await initializeK8sClient({kubeconfigPath: kubeconfigPath});
+        retryCount++;
+        await new Promise((resolve) => setTimeout(resolve, cooldown));
+      }
     }
   }
   console.log('Initialization of K8s finished...');
