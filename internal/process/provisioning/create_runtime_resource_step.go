@@ -125,7 +125,18 @@ func (s *CreateRuntimeResourceStep) createLabelsForRuntime(operation internal.Op
 
 func (s *CreateRuntimeResourceStep) createSecurityConfiguration(operation internal.Operation) imv1.Security {
 	security := imv1.Security{}
-	logrus.Info("Creating Security Configuration - TO BE IMPLEMENTED")
+	security.Administrators = operation.ProvisioningParameters.Parameters.RuntimeAdministrators
+	//TODO: Networking
+	//networking:
+	//filter:
+	//	# spec.security.networking.filter.egress.enabled is required
+	//egress:
+	//enabled: false
+	//	# spec.security.networking.filter.ingress.enabled is optional (default=false), not implemented in the first KIM release
+	//	ingress:
+	//	enabled: true
+
+	logrus.Info("Creating Security Configuration - UNDER CONSTRUCTION")
 	return security
 }
 
