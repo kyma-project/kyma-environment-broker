@@ -1,9 +1,10 @@
 package provisioning
 
 import (
+	"testing"
+
 	"github.com/kyma-project/kyma-environment-broker/internal/fixture"
 	"github.com/kyma-project/kyma-environment-broker/internal/kim"
-	"testing"
 
 	"github.com/kyma-project/kyma-environment-broker/internal/storage"
 	"github.com/sirupsen/logrus"

@@ -1,8 +1,9 @@
 package provisioning
 
 import (
-	"github.com/kyma-project/kyma-environment-broker/internal/fixture"
 	"testing"
+
+	"github.com/kyma-project/kyma-environment-broker/internal/fixture"
 
 	"github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/assert"

@@ -2,11 +2,12 @@ package provisioning
 
 import (
 	"fmt"
+	"time"
+
 	imv1 "github.com/kyma-project/infrastructure-manager/api/v1"
 	"github.com/kyma-project/kyma-environment-broker/internal/broker"
 	"github.com/kyma-project/kyma-environment-broker/internal/kim"
 	"gopkg.in/yaml.v3"
-	"time"
 
 	"github.com/kyma-project/kyma-environment-broker/internal"
 	"github.com/kyma-project/kyma-environment-broker/internal/process"
