@@ -91,6 +91,7 @@ func (s *CreateRuntimeResourceStep) createRuntimeResourceObject(operation intern
 	runtime.Spec.Shoot.Provider = s.createShootProvider(operation)
 	runtime.Spec.Shoot.Provider.Workers = []gardener.Worker{}
 	runtime.Spec.Shoot.Provider.Type = string(operation.ProvisioningParameters.PlatformProvider)
+	runtime.Spec.Security = s.createSecurityConfiguration(operation)
 	return &runtime, nil
 }
 
@@ -113,6 +114,12 @@ func (s *CreateRuntimeResourceStep) createLabelsForRuntime(operation internal.Op
 		"operator.kyma-project.io/kyma-name": kymaName,
 	}
 	return labels
+}
+
+func (s *CreateRuntimeResourceStep) createSecurityConfiguration(operation internal.Operation) imv1.Security {
+	security := imv1.Security{}
+	logrus.Info("Creating Security Configuration - TO BE IMPLEMENTED")
+	return security
 }
 
 func RuntimeToYaml(runtime *imv1.Runtime) (string, error) {
