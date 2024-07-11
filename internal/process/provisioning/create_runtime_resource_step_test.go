@@ -43,5 +43,4 @@ func TestCreateRuntimeResourceStep_HappyPath_YamlOnly(t *testing.T) {
 	_, err = memoryStorage.Instances().GetByID(preOperation.InstanceID)
 	assert.NoError(t, err)
 
-	//assert.YAMLEq(t, expectedKymaTemplate, op.KymaTemplate)
 }
