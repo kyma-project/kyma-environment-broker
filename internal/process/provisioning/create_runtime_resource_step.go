@@ -51,52 +51,36 @@ func (s *CreateRuntimeResourceStep) Run(operation internal.Operation, log logrus
 	}
 
 	if s.kimConfig.DryRun {
-		yaml, err := EncodeRuntimeCR(runtimeCR)
+		yaml, err := RuntimeToYaml(runtimeCR)
 		if err != nil {
-			log.Infof("Runtime CR yaml:%s", yaml)
-		} else {
 			log.Errorf("failed to encode Runtime CR to yaml: %s", err)
+		} else {
+			log.Infof("Runtime CR yaml:%s", yaml)
 		}
 	} else {
 		err := s.CreateResource(runtimeCR)
 		if err != nil {
 			return s.operationManager.OperationFailed(operation, fmt.Sprintf("while creating Runtime CR resource: %s", err), err, log)
-
 		}
+		log.Info("Runtime CR creation process finished successfully")
 	}
-	log.Info("Runtime CR creation process finished successfully")
 	return operation, 0, nil
 }
 
-func (s *CreateRuntimeResourceStep) CreateResource(cr imv1.Runtime) error {
+func (s *CreateRuntimeResourceStep) CreateResource(cr *imv1.Runtime) error {
+	logrus.Info("Creating Runtime CR - TO BE IMPLEMENTED")
 	return nil
 }
 
-//TODO remember - labels and annotations
-
-func (s *CreateRuntimeResourceStep) createRuntimeResourceObject(operation internal.Operation) (imv1.Runtime, error) {
+func (s *CreateRuntimeResourceStep) createRuntimeResourceObject(operation internal.Operation) (*imv1.Runtime, error) {
 	runtime := imv1.Runtime{}
-	runtime.Spec.Shoot.Name = operation.ShootName
+	runtime.Spec.Shoot.Name = "shoot-name"
 
-	//operation.InputCreator.SetProvisioningParameters(operation.ProvisioningParameters)
-	//operation.InputCreator.SetShootName(operation.ShootName)
-	//operation.InputCreator.SetShootDomain(operation.ShootDomain)
-	//operation.InputCreator.SetShootDNSProviders(operation.ShootDNSProviders)
-	//operation.InputCreator.SetLabel(brokerKeyPrefix+"instance_id", operation.InstanceID)
-	//operation.InputCreator.SetLabel(globalKeyPrefix+"subaccount_id", operation.ProvisioningParameters.ErsContext.SubAccountID)
-	//operation.InputCreator.SetLabel(grafanaURLLabel, fmt.Sprintf("https://grafana.%s", operation.ShootDomain))
-	//request, err, := operation.InputCreator.CreateProvisionClusterInput()
-	//if err != nil {
-	//	return imv1.Runtime{}, fmt.Errorf("while building input for provisioner: %w", err)
-	//}
-	//request.ClusterConfig.GardenerConfig.ShootNetworkingFilterDisabled = operation.ProvisioningParameters.ErsContext.DisableEnterprisePolicyFilter()
-	//request.ClusterConfig.GardenerConfig.EuAccess = &operation.InstanceDetails.EuAccess
-
-	return runtime, nil
+	return &runtime, nil
 }
 
-func EncodeRuntimeCR(runtime imv1.Runtime) (string, error) {
-	result, err := yaml.Marshal(&runtime)
+func RuntimeToYaml(runtime *imv1.Runtime) (string, error) {
+	result, err := yaml.Marshal(runtime)
 	if err != nil {
 		return "", err
 	}
