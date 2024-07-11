@@ -87,14 +87,20 @@ func (s *CreateRuntimeResourceStep) createRuntimeResourceObject(operation intern
 	runtime := imv1.Runtime{}
 	runtime.ObjectMeta.Name = operation.RuntimeID
 	runtime.ObjectMeta.Namespace = kymaNamespace
-	runtime.ObjectMeta.Labels = createLabelsForRuntime(operation, kymaName)
-	runtime.Spec.Shoot.Provider.Type = string(operation.ProvisioningParameters.PlatformProvider)
+	runtime.ObjectMeta.Labels = s.createLabelsForRuntime(operation, kymaName)
+	runtime.Spec.Shoot.Provider = s.createShootProvider(operation)
 	runtime.Spec.Shoot.Provider.Workers = []gardener.Worker{}
-
+	runtime.Spec.Shoot.Provider.Type = string(operation.ProvisioningParameters.PlatformProvider)
 	return &runtime, nil
 }
 
-func createLabelsForRuntime(operation internal.Operation, kymaName string) map[string]string {
+func (s *CreateRuntimeResourceStep) createShootProvider(operation internal.Operation) imv1.Provider {
+	provider := imv1.Provider{}
+	logrus.Info("Creating Shoot Provider - TO BE IMPLEMENTED")
+	return provider
+}
+
+func (s *CreateRuntimeResourceStep) createLabelsForRuntime(operation internal.Operation, kymaName string) map[string]string {
 	labels := map[string]string{
 		"kyma-project.io/instance-id":        operation.InstanceID,
 		"kyma-project.io/runtime-id":         operation.RuntimeID,
