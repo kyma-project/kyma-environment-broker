@@ -4,10 +4,13 @@ import (
 	"fmt"
 	"time"
 
+	"sigs.k8s.io/yaml"
+
+	gardener "github.com/gardener/gardener/pkg/apis/core/v1beta1"
 	imv1 "github.com/kyma-project/infrastructure-manager/api/v1"
 	"github.com/kyma-project/kyma-environment-broker/internal/broker"
+
 	"github.com/kyma-project/kyma-environment-broker/internal/kim"
-	"gopkg.in/yaml.v3"
 
 	"github.com/kyma-project/kyma-environment-broker/internal"
 	"github.com/kyma-project/kyma-environment-broker/internal/process"
@@ -54,9 +57,9 @@ func (s *CreateRuntimeResourceStep) Run(operation internal.Operation, log logrus
 	if s.kimConfig.DryRun {
 		yaml, err := RuntimeToYaml(runtimeCR)
 		if err != nil {
-			log.Errorf("failed to encode Runtime CR to yaml: %s", err)
+			log.Errorf("failed to encode Runtime CR as yaml: %s", err)
 		} else {
-			log.Infof("Runtime CR yaml:%s", yaml)
+			fmt.Println(yaml)
 		}
 	} else {
 		err := s.CreateResource(runtimeCR)
@@ -75,9 +78,28 @@ func (s *CreateRuntimeResourceStep) CreateResource(cr *imv1.Runtime) error {
 
 func (s *CreateRuntimeResourceStep) createRuntimeResourceObject(operation internal.Operation) (*imv1.Runtime, error) {
 	runtime := imv1.Runtime{}
-	runtime.Spec.Shoot.Name = "shoot-name"
+	runtime.ObjectMeta.Name = operation.RuntimeID
+	runtime.ObjectMeta.Namespace = operation.KymaResourceNamespace
+	runtime.ObjectMeta.Labels = createLabelsForRuntime(operation)
+	runtime.Spec.Shoot.Provider.Type = string(operation.ProvisioningParameters.PlatformProvider)
+	runtime.Spec.Shoot.Provider.Workers = []gardener.Worker{}
 
 	return &runtime, nil
+}
+
+func createLabelsForRuntime(operation internal.Operation) map[string]string {
+	labels := map[string]string{
+		"kyma-project.io/instance-id":        operation.InstanceID,
+		"kyma-project.io/runtime-id":         operation.RuntimeID,
+		"kyma-project.io/broker-plan-id":     operation.ProvisioningParameters.PlanID,
+		"kyma-project.io/broker-plan-name":   broker.PlanNamesMapping[operation.ProvisioningParameters.PlanID],
+		"kyma-project.io/global-account-id":  operation.ProvisioningParameters.ErsContext.GlobalAccountID,
+		"kyma-project.io/subaccount-id":      operation.ProvisioningParameters.ErsContext.SubAccountID,
+		"kyma-project.io/shoot-name":         operation.ShootName,
+		"kyma-project.io/region":             *operation.ProvisioningParameters.Parameters.Region,
+		"operator.kyma-project.io/kyma-name": operation.KymaResourceName,
+	}
+	return labels
 }
 
 func RuntimeToYaml(runtime *imv1.Runtime) (string, error) {
