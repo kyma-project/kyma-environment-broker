@@ -2,6 +2,7 @@ package provisioning
 
 import (
 	"fmt"
+	"github.com/kyma-project/kyma-environment-broker/internal/process/steps"
 	"time"
 
 	"sigs.k8s.io/yaml"
@@ -49,7 +50,12 @@ func (s *CreateRuntimeResourceStep) Run(operation internal.Operation, log logrus
 		return operation, 0, nil
 	}
 
-	runtimeCR, err := s.createRuntimeResourceObject(operation)
+	template, err := steps.DecodeKymaTemplate(operation.KymaTemplate)
+	if err != nil {
+		return s.operationManager.OperationFailed(operation, "unable to create a kyma template", err, log)
+	}
+
+	runtimeCR, err := s.createRuntimeResourceObject(operation, template.GetName(), template.GetNamespace())
 	if err != nil {
 		return s.operationManager.OperationFailed(operation, fmt.Sprintf("while creating Runtime CR object: %s", err), err, log)
 	}
@@ -76,18 +82,19 @@ func (s *CreateRuntimeResourceStep) CreateResource(cr *imv1.Runtime) error {
 	return nil
 }
 
-func (s *CreateRuntimeResourceStep) createRuntimeResourceObject(operation internal.Operation) (*imv1.Runtime, error) {
+func (s *CreateRuntimeResourceStep) createRuntimeResourceObject(operation internal.Operation, kymaName, kymaNamespace string) (*imv1.Runtime, error) {
+
 	runtime := imv1.Runtime{}
 	runtime.ObjectMeta.Name = operation.RuntimeID
-	runtime.ObjectMeta.Namespace = operation.KymaResourceNamespace
-	runtime.ObjectMeta.Labels = createLabelsForRuntime(operation)
+	runtime.ObjectMeta.Namespace = kymaNamespace
+	runtime.ObjectMeta.Labels = createLabelsForRuntime(operation, kymaName)
 	runtime.Spec.Shoot.Provider.Type = string(operation.ProvisioningParameters.PlatformProvider)
 	runtime.Spec.Shoot.Provider.Workers = []gardener.Worker{}
 
 	return &runtime, nil
 }
 
-func createLabelsForRuntime(operation internal.Operation) map[string]string {
+func createLabelsForRuntime(operation internal.Operation, kymaName string) map[string]string {
 	labels := map[string]string{
 		"kyma-project.io/instance-id":        operation.InstanceID,
 		"kyma-project.io/runtime-id":         operation.RuntimeID,
@@ -97,7 +104,7 @@ func createLabelsForRuntime(operation internal.Operation) map[string]string {
 		"kyma-project.io/subaccount-id":      operation.ProvisioningParameters.ErsContext.SubAccountID,
 		"kyma-project.io/shoot-name":         operation.ShootName,
 		"kyma-project.io/region":             *operation.ProvisioningParameters.Parameters.Region,
-		"operator.kyma-project.io/kyma-name": operation.KymaResourceName,
+		"operator.kyma-project.io/kyma-name": kymaName,
 	}
 	return labels
 }
