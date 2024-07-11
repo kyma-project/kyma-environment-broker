@@ -51,12 +51,9 @@ func (s *CreateRuntimeResourceStep) Run(operation internal.Operation, log logrus
 		return operation, 0, nil
 	}
 
-	template, err := steps.DecodeKymaTemplate(operation.KymaTemplate)
-	if err != nil {
-		return s.operationManager.OperationFailed(operation, "unable to create a kyma template", err, log)
-	}
+	kymaResourceName, kymaResourceNamespace := getKymaNames(operation)
 
-	runtimeCR, err := s.createRuntimeResourceObject(operation, template.GetName(), template.GetNamespace())
+	runtimeCR, err := s.createRuntimeResourceObject(operation, kymaResourceName, kymaResourceNamespace)
 	if err != nil {
 		return s.operationManager.OperationFailed(operation, fmt.Sprintf("while creating Runtime CR object: %s", err), err, log)
 	}
@@ -76,6 +73,15 @@ func (s *CreateRuntimeResourceStep) Run(operation internal.Operation, log logrus
 		log.Info("Runtime CR creation process finished successfully")
 	}
 	return operation, 0, nil
+}
+
+func getKymaNames(operation internal.Operation) (string, string) {
+	template, err := steps.DecodeKymaTemplate(operation.KymaTemplate)
+	if err != nil {
+		//TODO remove fallback
+		return "", ""
+	}
+	return template.GetName(), template.GetNamespace()
 }
 
 func (s *CreateRuntimeResourceStep) CreateResource(cr *imv1.Runtime) error {
