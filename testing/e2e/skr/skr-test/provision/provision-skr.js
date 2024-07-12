@@ -34,7 +34,7 @@ async function provisionSKRAndInitK8sConfig(options, provisioningTimeout) {
       } catch (error) {
         console.log('An error occurred while testing the K8s client');
         console.log(`Downloading the kubeconfig again. Trying to initialize the client. Retry count: ${retryCount}`);
-        const kubeconfigPath = kcp.getKubeconfig(shoot.name);
+        const kubeconfigPath = await kcp.getKubeconfig(shoot.name);
         await initializeK8sClient({kubeconfigPath: kubeconfigPath});
         retryCount++;
         await new Promise((resolve) => setTimeout(resolve, cooldown));
