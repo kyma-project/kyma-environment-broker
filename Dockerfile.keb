@@ -9,12 +9,8 @@ COPY internal internal
 COPY go.mod go.mod
 COPY go.sum go.sum
 
-RUN mkdir /user && \
-    echo 'appuser:x:2000:2000:appuser:/:' > /user/passwd && \
-    echo 'appuser:x:2000:' > /user/group
-
-RUN CGO_ENABLED=0 go build -o /bin/kyma-env-broker ./cmd/broker/
-RUN touch /swagger.yaml
+ARG BIN
+RUN CGO_ENABLED=0 go build -o /bin/main ./cmd/${BIN}/main.go
 
 # Get latest CA certs
 FROM alpine:latest as certs
@@ -25,12 +21,4 @@ FROM scratch
 LABEL source=git@github.com:kyma-project/kyma-environment-broker.git
 
 COPY --from=certs /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/ca-certificates.crt
-COPY --from=build /bin/kyma-env-broker /bin/kyma-env-broker
-COPY /files/swagger /swagger
-
-COPY --from=build /user/group /user/passwd /etc/
-USER appuser:appuser
-
-COPY --from=build --chown=appuser /swagger.yaml /swagger/swagger.yaml
-
-CMD ["/bin/kyma-env-broker"]
+COPY --from=build /bin/main /bin/main
