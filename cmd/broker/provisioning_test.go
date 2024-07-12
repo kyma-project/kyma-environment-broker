@@ -93,6 +93,42 @@ func TestProvisioning_HappyPath(t *testing.T) {
 	suite.AssertProvisioningRequest()
 }
 
+func TestProvisioningWithKIM(t *testing.T) {
+	// this test is used for developing KIM integration. The main reason is to just print the Runtime CR as YAML as a result of a process
+
+	cfg := fixConfig()
+	cfg.Broker.KimConfig.Enabled = true
+	cfg.Broker.KimConfig.Plans = []string{"aws", "preview"}
+	cfg.Broker.KimConfig.DryRun = true
+
+	suite := NewBrokerSuiteTestWithConfig(t, cfg)
+	defer suite.TearDown()
+	iid := uuid.New().String()
+	// when
+	resp := suite.CallAPI("PUT", fmt.Sprintf("oauth/v2/service_instances/%s?accepts_incomplete=true", iid),
+		`{
+					"service_id": "47c9dcbf-ff30-448e-ab36-d3bad66ba281",
+					"plan_id": "361c511f-f939-4621-b228-d0fb79a1fe15",
+					"context": {
+						"globalaccount_id": "g-account-id",
+						"subaccount_id": "sub-id",
+						"user_id": "john.smith@email.com"
+					},
+					"parameters": {
+						"name": "testing-cluster",
+						"region": "eu-central-1",
+						"administrators":["newAdmin1@kyma.cx", "newAdmin2@kyma.cx"]
+					}
+		}`)
+
+	opID := suite.DecodeOperationID(resp)
+
+	suite.processProvisioningByOperationID(opID)
+
+	// then
+	suite.WaitForOperationState(opID, domain.Succeeded)
+}
+
 func TestProvisioning_HappyPathAWS(t *testing.T) {
 	// given
 	suite := NewBrokerSuiteTest(t)
