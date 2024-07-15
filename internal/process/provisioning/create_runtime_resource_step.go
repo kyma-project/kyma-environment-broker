@@ -50,15 +50,18 @@ func (s *CreateRuntimeResourceStep) Run(operation internal.Operation, log logrus
 		return operation, 0, nil
 	}
 
-	kymaResourceName, kymaResourceNamespace := getKymaNames(operation)
+	kymaResourceName, err := getKymaName(operation)
+	if err != nil {
+		return s.operationManager.OperationFailed(operation, fmt.Sprintf("while getting Kyma name: %s", err), err, log)
+	}
 
-	runtimeCR, err := s.createRuntimeResourceObject(operation, kymaResourceName, kymaResourceNamespace)
+	runtimeCR, err := s.createRuntimeResourceObject(operation, kymaResourceName)
 	if err != nil {
 		return s.operationManager.OperationFailed(operation, fmt.Sprintf("while creating Runtime CR object: %s", err), err, log)
 	}
 
 	if s.kimConfig.DryRun {
-		yaml, err := RuntimeToYaml(runtimeCR)
+		yaml, err := runtimeToYaml(runtimeCR)
 		if err != nil {
 			log.Errorf("failed to encode Runtime CR as yaml: %s", err)
 		} else {
@@ -74,21 +77,12 @@ func (s *CreateRuntimeResourceStep) Run(operation internal.Operation, log logrus
 	return operation, 0, nil
 }
 
-func getKymaNames(operation internal.Operation) (string, string) {
-	template, err := steps.DecodeKymaTemplate(operation.KymaTemplate)
-	if err != nil {
-		//TODO remove fallback
-		return "", ""
-	}
-	return template.GetName(), template.GetNamespace()
-}
-
 func (s *CreateRuntimeResourceStep) CreateResource(cr *imv1.Runtime) error {
 	logrus.Info("Creating Runtime CR - TO BE IMPLEMENTED")
 	return nil
 }
 
-func (s *CreateRuntimeResourceStep) createRuntimeResourceObject(operation internal.Operation, kymaName, kymaNamespace string) (*imv1.Runtime, error) {
+func (s *CreateRuntimeResourceStep) createRuntimeResourceObject(operation internal.Operation, kymaName string) (*imv1.Runtime, error) {
 
 	runtime := imv1.Runtime{}
 	runtime.ObjectMeta.Name = operation.RuntimeID
