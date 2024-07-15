@@ -8,7 +8,6 @@ import (
 
 	"sigs.k8s.io/yaml"
 
-	gardener "github.com/gardener/gardener/pkg/apis/core/v1beta1"
 	imv1 "github.com/kyma-project/infrastructure-manager/api/v1"
 	"github.com/kyma-project/kyma-environment-broker/internal/broker"
 
@@ -93,11 +92,9 @@ func (s *CreateRuntimeResourceStep) createRuntimeResourceObject(operation intern
 
 	runtime := imv1.Runtime{}
 	runtime.ObjectMeta.Name = operation.RuntimeID
-	runtime.ObjectMeta.Namespace = kymaNamespace
+	runtime.ObjectMeta.Namespace = operation.KymaResourceNamespace
 	runtime.ObjectMeta.Labels = s.createLabelsForRuntime(operation, kymaName)
 	runtime.Spec.Shoot.Provider = s.createShootProvider(operation)
-	runtime.Spec.Shoot.Provider.Workers = []gardener.Worker{}
-	runtime.Spec.Shoot.Provider.Type = string(operation.ProvisioningParameters.PlatformProvider)
 	runtime.Spec.Security = s.createSecurityConfiguration(operation)
 	return &runtime, nil
 }
@@ -126,24 +123,30 @@ func (s *CreateRuntimeResourceStep) createLabelsForRuntime(operation internal.Op
 func (s *CreateRuntimeResourceStep) createSecurityConfiguration(operation internal.Operation) imv1.Security {
 	security := imv1.Security{}
 	security.Administrators = operation.ProvisioningParameters.Parameters.RuntimeAdministrators
-	//TODO: Networking
-	//networking:
-	//filter:
-	//	# spec.security.networking.filter.egress.enabled is required
-	//egress:
-	//enabled: false
-	//	# spec.security.networking.filter.ingress.enabled is optional (default=false), not implemented in the first KIM release
-	//	ingress:
-	//	enabled: true
+	security.Networking.Filter.Egress.Enabled = false
+	// spec.security.networking.filter.ingress.enabled is optional (default=false), not implemented in the first KIM release
+	security.Networking.Filter.Ingress = &imv1.Ingress{
+		Enabled: false,
+	}
 
-	logrus.Info("Creating Security Configuration - UNDER CONSTRUCTION")
 	return security
 }
 
-func RuntimeToYaml(runtime *imv1.Runtime) (string, error) {
+func runtimeToYaml(runtime *imv1.Runtime) (string, error) {
 	result, err := yaml.Marshal(runtime)
 	if err != nil {
 		return "", err
 	}
 	return string(result), nil
+}
+
+func getKymaName(operation internal.Operation) (string, error) {
+	if len(operation.KymaTemplate) == 0 {
+		return "", fmt.Errorf("KymaTemplate is empty")
+	}
+	template, err := steps.DecodeKymaTemplate(operation.KymaTemplate)
+	if err != nil {
+		return "", err
+	}
+	return template.GetName(), nil
 }

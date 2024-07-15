@@ -231,6 +231,7 @@ func (m *StagedManager) runStep(step Step, operation internal.Operation, logger 
 		logger.Infof("Start step")
 		stepLogger := logger.WithFields(logrus.Fields{"step": step.Name(), "operation": processedOperation.ID})
 		processedOperation, backoff, err = step.Run(processedOperation, stepLogger)
+		stepLogger.Infof("!!!KymaTemplate len: %d", len(processedOperation.KymaTemplate))
 		if err != nil {
 			processedOperation.LastError = kebError.ReasonForError(err)
 			logOperation := stepLogger.WithFields(logrus.Fields{"error_component": processedOperation.LastError.Component(), "error_reason": processedOperation.LastError.Reason()})

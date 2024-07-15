@@ -17,6 +17,19 @@ func TestCreateRuntimeResourceStep_HappyPath_YamlOnly(t *testing.T) {
 	memoryStorage := storage.NewMemoryStorage()
 
 	preOperation := fixture.FixProvisioningOperation(operationID, instanceID)
+	preOperation.KymaTemplate = `
+apiVersion: operator.kyma-project.io/v1beta2
+kind: Kyma
+metadata:
+    name: gophers-test-kyma
+    namespace: kyma-system
+spec:
+    sync:
+        strategy: secret
+    channel: stable
+    modules: []
+`
+	preOperation.KymaResourceNamespace = "kyma-system"
 	err := memoryStorage.Operations().InsertOperation(preOperation)
 	assert.NoError(t, err)
 
