@@ -98,8 +98,7 @@ func (a *ApplyKymaStep) addLabelsAndName(operation internal.Operation, obj *unst
 	}
 
 	// Kyma resource name must be created once again
-	operation.KymaResourceName = ""
-	obj.SetName(steps.KymaName(operation))
+	obj.SetName(steps.CreateKymaNameFromOperation(operation))
 	return !reflect.DeepEqual(obj.GetLabels(), oldLabels)
 }
 
