@@ -90,6 +90,7 @@ func NewProvisioningProcessingQueue(ctx context.Context, provisionManager *proce
 			stage:     createRuntimeStageName,
 			step:      provisioning.NewCreateKymaNameStep(db.Operations()),
 		},
+		// postcondition: operation.KymaResourceName is set
 		{
 			condition: provisioning.SkipForOwnClusterPlan,
 			stage:     createRuntimeStageName,
