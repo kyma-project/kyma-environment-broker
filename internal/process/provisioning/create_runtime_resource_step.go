@@ -58,7 +58,8 @@ func (s *CreateRuntimeResourceStep) Run(operation internal.Operation, log logrus
 		return operation, 0, nil
 	}
 
-	kymaResourceName, kymaResourceNamespace := getKymaNames(operation)
+	kymaResourceName := steps.KymaRuntimeResourceName(operation)
+	kymaResourceNamespace := operation.KymaResourceNamespace
 
 	runtimeCR, err := s.createRuntimeResourceObject(operation, kymaResourceName, kymaResourceNamespace)
 	if err != nil {
