@@ -2,8 +2,9 @@ package provisioning
 
 import (
 	"fmt"
-	"github.com/kyma-project/kyma-environment-broker/internal/process/steps"
 	"time"
+
+	"github.com/kyma-project/kyma-environment-broker/internal/process/steps"
 
 	"github.com/kyma-project/kyma-environment-broker/internal"
 	"github.com/kyma-project/kyma-environment-broker/internal/process"
