@@ -152,12 +152,18 @@ func (p *GcpTrialInput) Provider() internal.CloudProvider {
 }
 
 func ZonesForGCPRegion(region string, zonesCount int) []string {
-	zoneCodes := []string{"a", "b", "c"}
+	availableZones := []string{"a", "b", "c"}
 	var zones []string
-	rand.Shuffle(len(zoneCodes), func(i, j int) { zoneCodes[i], zoneCodes[j] = zoneCodes[j], zoneCodes[i] })
+	if zonesCount > len(availableZones) {
+		zonesCount = len(availableZones)
+	}
 
-	for i := 0; i < zonesCount && i < len(zoneCodes); i++ {
-		zones = append(zones, fmt.Sprintf("%s-%s", region, zoneCodes[i]))
+	availableZones = availableZones[:zonesCount]
+
+	rand.Shuffle(zonesCount, func(i, j int) { availableZones[i], availableZones[j] = availableZones[j], availableZones[i] })
+
+	for i := 0; i < zonesCount; i++ {
+		zones = append(zones, fmt.Sprintf("%s-%s", region, availableZones[i]))
 	}
 
 	return zones
