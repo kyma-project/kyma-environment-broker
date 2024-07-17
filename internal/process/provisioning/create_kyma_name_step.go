@@ -37,8 +37,7 @@ func (s *CreateKymaNameStep) Run(operation internal.Operation, log logrus.FieldL
 	}
 
 	// could be simplified but this provides single source of truth for Kyma name
-	operation.KymaResourceName = ""
-	operation.KymaResourceName = steps.KymaName(operation)
+	operation.KymaResourceName = steps.KymaNameFromOperation(operation)
 
 	return s.operationManager.UpdateOperation(operation, func(op *internal.Operation) {
 		op.RuntimeID = operation.RuntimeID

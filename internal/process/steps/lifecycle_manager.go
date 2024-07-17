@@ -51,7 +51,7 @@ func KymaName(operation internal.Operation) string {
 	if operation.KymaResourceName != "" {
 		return operation.KymaResourceName
 	}
-	return strings.ToLower(operation.RuntimeID)
+	return KymaNameFromOperation(operation)
 }
 
 func KymaRuntimeResourceName(operation internal.Operation) string {
@@ -60,6 +60,10 @@ func KymaRuntimeResourceName(operation internal.Operation) string {
 
 func KymaNameFromInstance(instance *internal.Instance) string {
 	return strings.ToLower(instance.RuntimeID)
+}
+
+func KymaNameFromOperation(operation internal.Operation) string {
+	return strings.ToLower(operation.RuntimeID)
 }
 
 func isKymaResourceInternal(operation internal.Operation) bool {
