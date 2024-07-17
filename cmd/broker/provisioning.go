@@ -83,7 +83,13 @@ func NewProvisioningProcessingQueue(ctx context.Context, provisionManager *proce
 			condition: provisioning.SkipForOwnClusterPlan,
 			stage:     createRuntimeStageName,
 			step:      provisioning.NewGenerateRuntimeIDStep(db.Operations(), db.RuntimeStates(), db.Instances()),
-		}, //TODO nowy krok ustawiający kymaResourceName na podstawie runtimeID i defensywnym ifem czy RuntimeID jest pusty
+		},
+		// postcondition: operation.RuntimeID is set
+		{
+			condition: provisioning.SkipForOwnClusterPlan,
+			stage:     createRuntimeStageName,
+			step:      provisioning.NewCreateKymaNameStep(db.Operations()),
+		},
 		{
 			condition: provisioning.SkipForOwnClusterPlan,
 			stage:     createRuntimeStageName,
