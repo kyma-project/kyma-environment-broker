@@ -6,6 +6,7 @@ import (
 	"io"
 	"net/http"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/require"
 
@@ -196,6 +197,8 @@ func TestRuntimesEndpointForDeprovisionedInstance(t *testing.T) {
 
 	suite.FinishDeprovisioningOperationByProvisioner(depOpID)
 	suite.WaitForOperationsNotExists(iid1) // deprovisioning completed, no operations in the DB
+
+	time.Sleep(1 * time.Second) // wait for the instance to be archived
 
 	iid2 := uuid.New().String()
 	resp = suite.CallAPI("PUT", fmt.Sprintf("oauth/cf-eu10/v2/service_instances/%s?accepts_incomplete=true&plan_id=b1a5764e-2ea1-4f95-94c0-2b4538b37b55&service_id=47c9dcbf-ff30-448e-ab36-d3bad66ba281", iid2),

@@ -3,6 +3,8 @@ package provisioning
 import (
 	"context"
 	"fmt"
+	"testing"
+
 	"github.com/kyma-project/kyma-environment-broker/common/gardener"
 	"github.com/kyma-project/kyma-environment-broker/internal"
 	"github.com/kyma-project/kyma-environment-broker/internal/broker"
@@ -16,7 +18,6 @@ import (
 	metaV1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	k8sruntime "k8s.io/apimachinery/pkg/runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client/fake"
-	"testing"
 
 	"github.com/kyma-project/kyma-environment-broker/internal/fixture"
 	"github.com/sirupsen/logrus"
