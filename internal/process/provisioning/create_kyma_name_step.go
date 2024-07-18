@@ -26,6 +26,7 @@ func (s *CreateKymaNameStep) Name() string {
 	return "Create_Kyma_Name"
 }
 
+// The runtimeID could be generated and set in two different steps so we separated the logic to generate the Kyma name in this step
 func (s *CreateKymaNameStep) Run(operation internal.Operation, log logrus.FieldLogger) (internal.Operation, time.Duration, error) {
 	if operation.RuntimeID == "" {
 		return s.operationManager.OperationFailed(operation, fmt.Sprint("RuntimeID not set, cannot create Kyma name"), nil, log)
