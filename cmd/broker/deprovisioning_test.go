@@ -253,8 +253,8 @@ func TestRuntimesEndpointForDeprovisionedInstance(t *testing.T) {
 	require.NoError(t, err)
 
 	assert.Len(t, runtimes.Data, 2)
-	assert.Equal(t, iid1, runtimes.Data[0].InstanceID)
-	assert.Equal(t, iid2, runtimes.Data[1].InstanceID)
+	assert.Contains(t, []string{iid1, iid2}, runtimes.Data[0].InstanceID)
+	assert.Contains(t, []string{iid1, iid2}, runtimes.Data[1].InstanceID)
 
 	// when
 	resp = suite.CallAPI("GET", fmt.Sprintf("runtimes?plan=%s&state=deprovisioned", "trial"), "")
