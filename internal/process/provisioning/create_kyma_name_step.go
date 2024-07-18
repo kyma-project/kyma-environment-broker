@@ -27,11 +27,6 @@ func (s *CreateKymaNameStep) Name() string {
 }
 
 func (s *CreateKymaNameStep) Run(operation internal.Operation, log logrus.FieldLogger) (internal.Operation, time.Duration, error) {
-	if time.Since(operation.UpdatedAt) > CreateRuntimeTimeout {
-		log.Infof("operation has reached the time limit: updated operation time: %s", operation.UpdatedAt)
-		return s.operationManager.OperationFailed(operation, fmt.Sprintf("operation has reached the time limit: %s", CreateRuntimeTimeout), nil, log)
-	}
-
 	if operation.RuntimeID == "" {
 		return s.operationManager.OperationFailed(operation, fmt.Sprint("RuntimeID not set, cannot create Kyma name"), nil, log)
 	}
