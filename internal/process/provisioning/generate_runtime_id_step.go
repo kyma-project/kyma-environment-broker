@@ -45,6 +45,7 @@ func (s *GenerateRuntimeIDStep) Run(operation internal.Operation, log logrus.Fie
 	repeatAfter := time.Duration(0)
 	operation, repeatAfter, _ = s.operationManager.UpdateOperation(operation, func(operation *internal.Operation) {
 		operation.RuntimeID = runtimeID
+		operation.ProvisionerOperationID = ""
 	}, log)
 	if repeatAfter != 0 {
 		log.Errorf("cannot save RuntimeID in operation")
