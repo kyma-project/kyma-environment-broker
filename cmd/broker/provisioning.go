@@ -81,7 +81,7 @@ func NewProvisioningProcessingQueue(ctx context.Context, provisionManager *proce
 		},
 		{
 			stage: createRuntimeStageName,
-			step:  provisioning.NewGenerateRuntimeIDStep(db.Operations(), db.RuntimeStates(), db.Instances()),
+			step:  provisioning.NewGenerateRuntimeIDStep(db.Operations(), db.Instances()),
 		},
 		// postcondition: operation.RuntimeID is set
 		{

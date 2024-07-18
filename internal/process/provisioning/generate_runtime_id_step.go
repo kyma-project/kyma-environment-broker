@@ -15,16 +15,14 @@ import (
 )
 
 type GenerateRuntimeIDStep struct {
-	operationManager    *process.OperationManager
-	instanceStorage     storage.Instances
-	runtimeStateStorage storage.RuntimeStates
+	operationManager *process.OperationManager
+	instanceStorage  storage.Instances
 }
 
-func NewGenerateRuntimeIDStep(os storage.Operations, runtimeStorage storage.RuntimeStates, is storage.Instances) *GenerateRuntimeIDStep {
+func NewGenerateRuntimeIDStep(os storage.Operations, is storage.Instances) *GenerateRuntimeIDStep {
 	return &GenerateRuntimeIDStep{
-		operationManager:    process.NewOperationManager(os),
-		instanceStorage:     is,
-		runtimeStateStorage: runtimeStorage,
+		operationManager: process.NewOperationManager(os),
+		instanceStorage:  is,
 	}
 }
 

@@ -26,7 +26,7 @@ func TestNewGenerateRuntimeIDStep_LeaveRuntimeIDIfNotEmpty(t *testing.T) {
 	err = memoryStorage.Operations().InsertOperation(operation)
 	assert.NoError(t, err)
 
-	step := NewGenerateRuntimeIDStep(memoryStorage.Operations(), memoryStorage.RuntimeStates(), memoryStorage.Instances())
+	step := NewGenerateRuntimeIDStep(memoryStorage.Operations(), memoryStorage.Instances())
 
 	// when
 	entry := log.WithFields(logrus.Fields{"step": "TEST"})
@@ -57,7 +57,7 @@ func TestNewGenerateRuntimeIDStep_LeaveCreateRuntimeIDIfEmpty(t *testing.T) {
 	err = memoryStorage.Instances().Insert(instance)
 	assert.NoError(t, err)
 
-	step := NewGenerateRuntimeIDStep(memoryStorage.Operations(), memoryStorage.RuntimeStates(), memoryStorage.Instances())
+	step := NewGenerateRuntimeIDStep(memoryStorage.Operations(), memoryStorage.Instances())
 
 	// when
 	entry := log.WithFields(logrus.Fields{"step": "TEST"})
