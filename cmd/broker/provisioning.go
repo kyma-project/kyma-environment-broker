@@ -83,7 +83,7 @@ func NewProvisioningProcessingQueue(ctx context.Context, provisionManager *proce
 			stage: createRuntimeStageName,
 			step:  provisioning.NewGenerateRuntimeIDStep(db.Operations(), db.RuntimeStates(), db.Instances()),
 		},
-		// postcondition: operation.RuntimeID is set if not OwnCluster plan
+		// postcondition: operation.RuntimeID is set
 		{
 			stage: createRuntimeStageName,
 			step:  provisioning.NewCreateKymaNameStep(db.Operations()),
