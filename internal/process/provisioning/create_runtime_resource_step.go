@@ -26,27 +26,26 @@ import (
 )
 
 type CreateRuntimeResourceStep struct {
-	operationManager    *process.OperationManager
-	instanceStorage     storage.Instances
-	runtimeStateStorage storage.RuntimeStates
-	k8sClient           client.Client
-	kimConfig           kim.Config
-
+	operationManager            *process.OperationManager
+	instanceStorage             storage.Instances
+	runtimeStateStorage         storage.RuntimeStates
+	k8sClient                   client.Client
+	kimConfig                   kim.Config
 	config                      input.Config
 	trialPlatformRegionMapping  map[string]string
 	useSmallerMachinesForTrials bool
 }
 
-func NewCreateRuntimeResourceStep(os storage.Operations, runtimeStorage storage.RuntimeStates, is storage.Instances, kimConfig kim.Config,
-	cfg input.Config, trialPlatformRegionMapping map[string]string, useSmallerMachinesForTials bool) *CreateRuntimeResourceStep {
+func NewCreateRuntimeResourceStep(os storage.Operations, is storage.Instances, k8sClient client.Client, kimConfig kim.Config, cfg input.Config,
+	trialPlatformRegionMapping map[string]string, useSmallerMachinesForTrials bool) *CreateRuntimeResourceStep {
 	return &CreateRuntimeResourceStep{
 		operationManager:            process.NewOperationManager(os),
 		instanceStorage:             is,
-		runtimeStateStorage:         runtimeStorage,
 		kimConfig:                   kimConfig,
+		k8sClient:                   k8sClient,
 		config:                      cfg,
 		trialPlatformRegionMapping:  trialPlatformRegionMapping,
-		useSmallerMachinesForTrials: useSmallerMachinesForTials,
+		useSmallerMachinesForTrials: useSmallerMachinesForTrials,
 	}
 }
 
@@ -89,15 +88,6 @@ func (s *CreateRuntimeResourceStep) Run(operation internal.Operation, log logrus
 		log.Infof("Runtime CR %s creation process finished successfully", operation.RuntimeID)
 	}
 	return operation, 0, nil
-}
-
-func getKymaNames(operation internal.Operation) (string, string) {
-	template, err := steps.DecodeKymaTemplate(operation.KymaTemplate)
-	if err != nil {
-		//TODO remove fallback
-		return "", ""
-	}
-	return template.GetName(), template.GetNamespace()
 }
 
 func (s *CreateRuntimeResourceStep) CreateResource(cr *imv1.Runtime) error {

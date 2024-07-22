@@ -49,8 +49,7 @@ func TestCreateRuntimeResourceStep_HappyPath_YamlOnly(t *testing.T) {
 		DryRun:   true,
 	}
 
-	step := NewCreateRuntimeResourceStep(memoryStorage.Operations(),
-		memoryStorage.RuntimeStates(), memoryStorage.Instances(), nil, kimConfig, input.Config{}, nil, false)
+	step := NewCreateRuntimeResourceStep(memoryStorage.Operations(), memoryStorage.Instances(), nil, kimConfig, input.Config{}, nil, false)
 
 	// when
 	entry := log.WithFields(logrus.Fields{"step": "TEST"})
@@ -90,8 +89,7 @@ func TestCreateRuntimeResourceStep_HappyPath_ActualCreation(t *testing.T) {
 
 	cli := getClientForTests(t)
 	inputConfig := input.Config{}
-	step := NewCreateRuntimeResourceStep(memoryStorage.Operations(), memoryStorage.RuntimeStates(), memoryStorage.Instances(), cli, kimConfig, inputConfig)
-		memoryStorage.RuntimeStates(), memoryStorage.Instances(), kimConfig, input.Config{}, nil, false)
+	step := NewCreateRuntimeResourceStep(memoryStorage.Operations(), memoryStorage.Instances(), cli, kimConfig, inputConfig, nil, false)
 
 	// when
 	entry := log.WithFields(logrus.Fields{"step": "TEST"})
