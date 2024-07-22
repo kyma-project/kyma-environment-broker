@@ -11,6 +11,8 @@ import (
 	"sort"
 	"time"
 
+	imv1 "github.com/kyma-project/infrastructure-manager/api/v1"
+
 	"github.com/kyma-project/kyma-environment-broker/internal/expiration"
 	"github.com/kyma-project/kyma-environment-broker/internal/metricsv2"
 	"github.com/kyma-project/kyma-environment-broker/internal/whitelist"
@@ -204,6 +206,9 @@ func periodicProfile(logger lager.Logger, profiler ProfilerConfig) {
 func main() {
 	err := apiextensionsv1.AddToScheme(scheme.Scheme)
 	panicOnError(err)
+	err = imv1.AddToScheme(scheme.Scheme)
+	panicOnError(err)
+
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 

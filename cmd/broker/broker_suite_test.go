@@ -12,6 +12,8 @@ import (
 	"testing"
 	"time"
 
+	imv1 "github.com/kyma-project/infrastructure-manager/api/v1"
+
 	"github.com/kyma-project/kyma-environment-broker/internal/kubeconfig"
 	"github.com/kyma-project/kyma-environment-broker/internal/metricsv2"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
@@ -160,6 +162,8 @@ func NewBrokerSuiteTestWithConfig(t *testing.T, cfg *Config, version ...string) 
 	ctx := context.Background()
 	sch := internal.NewSchemeForTests(t)
 	err := apiextensionsv1.AddToScheme(sch)
+	require.NoError(t, err)
+	err = imv1.AddToScheme(sch)
 	require.NoError(t, err)
 	additionalKymaVersions := []string{"1.19", "1.20", "main", "2.0"}
 	additionalKymaVersions = append(additionalKymaVersions, version...)

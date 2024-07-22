@@ -98,7 +98,7 @@ func NewProvisioningProcessingQueue(ctx context.Context, provisionManager *proce
 		// postcondition: operation.KymaResourceName is set
 		{
 			stage: createRuntimeStageName,
-			step:  provisioning.NewCreateRuntimeResourceStep(db.Operations(), db.RuntimeStates(), db.Instances(), cfg.Broker.KimConfig, cfg.Provisioner, trialRegionsMapping, cfg.Broker.UseSmallerMachineTypes),
+			step:  provisioning.NewCreateRuntimeResourceStep(db.Operations(), db.RuntimeStates(), db.Instances(), cli, cfg.Broker.KimConfig, cfg.Provisioner, trialRegionsMapping, cfg.Broker.UseSmallerMachineTypes),
 		},
 		{
 			stage:     createRuntimeStageName,
