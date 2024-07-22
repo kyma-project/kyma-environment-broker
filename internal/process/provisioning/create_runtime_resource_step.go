@@ -190,7 +190,6 @@ type Provider interface {
 func (s *CreateRuntimeResourceStep) providerValues(operation *internal.Operation) (provider.Values, error) {
 	var p Provider
 	switch operation.ProvisioningParameters.PlanID {
-	// TODO: implement input provider for Azure
 	case broker.AWSPlanID:
 		p = &provider.AWSInputProvider{
 			MultiZone:              s.config.MultiZoneCluster,
