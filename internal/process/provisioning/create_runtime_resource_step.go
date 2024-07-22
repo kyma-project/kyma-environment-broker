@@ -201,6 +201,11 @@ func (s *CreateRuntimeResourceStep) providerValues(operation *internal.Operation
 			MultiZone:              s.config.MultiZoneCluster,
 			ProvisioningParameters: operation.ProvisioningParameters,
 		}
+	case broker.GCPPlanID:
+		p = &provider.GCPInputProvider{
+			MultiZone:              s.config.MultiZoneCluster,
+			ProvisioningParameters: operation.ProvisioningParameters,
+		}
 	case broker.TrialPlanID:
 		var trialProvider internal.CloudProvider
 		if operation.ProvisioningParameters.Parameters.Provider == nil {
