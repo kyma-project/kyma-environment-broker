@@ -30,10 +30,10 @@ var europeAWS = "eu-west-1"
 var usAWS = "us-east-1"
 var asiaAWS = "ap-southeast-1"
 
-var toAWSSpecific = map[string]string{
-	string(broker.Europe): europeAWS,
-	string(broker.Us):     usAWS,
-	string(broker.Asia):   asiaAWS,
+var toAWSSpecific = map[string]*string{
+	string(broker.Europe): &europeAWS,
+	string(broker.Us):     &usAWS,
+	string(broker.Asia):   &asiaAWS,
 }
 
 type (
@@ -262,13 +262,13 @@ func (p *AWSTrialInput) ApplyParameters(input *gqlschema.ClusterConfigInput, pp 
 	if pp.PlatformRegion != "" {
 		abstractRegion, found := p.PlatformRegionMapping[pp.PlatformRegion]
 		if found {
-			r := toAWSSpecific[abstractRegion]
+			r := *toAWSSpecific[abstractRegion]
 			updateRegionWithZones(input, r)
 		}
 	}
 
 	if params.Region != nil && *params.Region != "" {
-		r := toAWSSpecific[*params.Region]
+		r := *toAWSSpecific[*params.Region]
 		updateRegionWithZones(input, r)
 	}
 }
