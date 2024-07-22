@@ -219,6 +219,11 @@ func (s *CreateRuntimeResourceStep) providerValues(operation *internal.Operation
 				UseSmallerMachineTypes: s.useSmallerMachinesForTrials,
 				ProvisioningParameters: operation.ProvisioningParameters,
 			}
+		case internal.GCP:
+			p = &provider.GCPTrialInputProvider{
+				PlatformRegionMapping:  s.trialPlatformRegionMapping,
+				ProvisioningParameters: operation.ProvisioningParameters,
+			}
 		default:
 			return provider.Values{}, fmt.Errorf("trial provider for %s not yet implemented", trialProvider)
 		}
