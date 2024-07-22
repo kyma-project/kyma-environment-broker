@@ -15,9 +15,10 @@ import (
 )
 
 const (
-	DefaultGCPRegion         = "europe-west3"
-	DefaultGCPMachineType    = "n2-standard-2"
-	DefaultGCPMultiZoneCount = 3
+	DefaultGCPRegion           = "europe-west3"
+	DefaultGCPMachineType      = "n2-standard-2"
+	DefaultGCPTrialMachineType = "n2-standard-4"
+	DefaultGCPMultiZoneCount   = 3
 )
 
 var europeGcp = "europe-west3"
@@ -102,7 +103,7 @@ func (p *GcpTrialInput) Defaults() *gqlschema.ClusterConfigInput {
 		GardenerConfig: &gqlschema.GardenerConfigInput{
 			DiskType:       ptr.String("pd-standard"),
 			VolumeSizeGb:   ptr.Integer(30),
-			MachineType:    "n2-standard-4",
+			MachineType:    DefaultGCPTrialMachineType,
 			Region:         DefaultGCPRegion,
 			Provider:       "gcp",
 			WorkerCidr:     "10.250.0.0/19",
