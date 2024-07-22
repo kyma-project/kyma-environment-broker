@@ -25,10 +25,10 @@ var europeGcp = "europe-west3"
 var usGcp = "us-central1"
 var asiaGcp = "asia-south1"
 
-var toGCPSpecific = map[string]*string{
-	string(broker.Europe): &europeGcp,
-	string(broker.Us):     &usGcp,
-	string(broker.Asia):   &asiaGcp,
+var toGCPSpecific = map[string]string{
+	string(broker.Europe): europeGcp,
+	string(broker.Us):     usGcp,
+	string(broker.Asia):   asiaGcp,
 }
 
 type (
@@ -128,13 +128,13 @@ func (p *GcpTrialInput) ApplyParameters(input *gqlschema.ClusterConfigInput, pp 
 	if pp.PlatformRegion != "" {
 		abstractRegion, found := p.PlatformRegionMapping[pp.PlatformRegion]
 		if found {
-			region = *toGCPSpecific[abstractRegion]
+			region = toGCPSpecific[abstractRegion]
 		}
 	}
 
 	// if the user provides a region - use this one
 	if params.Region != nil && *params.Region != "" {
-		region = *toGCPSpecific[*params.Region]
+		region = toGCPSpecific[*params.Region]
 	}
 
 	// region is not empty - it means override the default one

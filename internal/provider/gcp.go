@@ -2,7 +2,6 @@ package provider
 
 import (
 	"github.com/kyma-project/kyma-environment-broker/internal"
-	"github.com/kyma-project/kyma-environment-broker/internal/euaccess"
 )
 
 type (
@@ -13,7 +12,6 @@ type (
 
 	GCPTrialInputProvider struct {
 		PlatformRegionMapping  map[string]string
-		UseSmallerMachineTypes bool
 		ProvisioningParameters internal.ProvisioningParameters
 	}
 )
@@ -68,18 +66,25 @@ func (p *GCPTrialInputProvider) Provide() Values {
 	}
 }
 
+func (p *GCPTrialInputProvider) zones() []string {
+	region := DefaultGCPRegion
+	if p.ProvisioningParameters.Parameters.Region != nil {
+		region = *p.ProvisioningParameters.Parameters.Region
+	}
+	return ZonesForGCPRegion(region, 1)
+}
+
 func (p *GCPTrialInputProvider) region() string {
-	if euaccess.IsEURestrictedAccess(p.ProvisioningParameters.PlatformRegion) {
-		return DefaultEuAccessAWSRegion
-	} //TODO
 	if p.ProvisioningParameters.PlatformRegion != "" {
 		abstractRegion, found := p.PlatformRegionMapping[p.ProvisioningParameters.PlatformRegion]
 		if found {
-			return toAWSSpecific[abstractRegion]
-		} //TODO
+			return toGCPSpecific[abstractRegion]
+		}
 	}
+
 	if p.ProvisioningParameters.Parameters.Region != nil && *p.ProvisioningParameters.Parameters.Region != "" {
-		return toAWSSpecific[*p.ProvisioningParameters.Parameters.Region] //TODO
+		return toGCPSpecific[*p.ProvisioningParameters.Parameters.Region]
 	}
-	return DefaultAWSTrialRegion //TODO
+
+	return DefaultGCPRegion
 }
