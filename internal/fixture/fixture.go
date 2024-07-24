@@ -70,10 +70,20 @@ func FixERSContext(id string) internal.ERSContext {
 	}
 }
 
-func FixProvisioningParametersDTO() internal.ProvisioningParametersDTO {
+func FixProvisioningParametersWithDTO(id string, planID string, params internal.ProvisioningParametersDTO) internal.ProvisioningParameters {
+	return internal.ProvisioningParameters{
+		PlanID:         planID,
+		ServiceID:      ServiceId,
+		ErsContext:     FixERSContext(id),
+		Parameters:     params,
+		PlatformRegion: Region,
+	}
+}
+
+func FixProvisioningParameters(id string) internal.ProvisioningParameters {
 	trialCloudProvider := internal.Azure
 
-	return internal.ProvisioningParametersDTO{
+	provisioningParametersDTO := internal.ProvisioningParametersDTO{
 		Name:         "cluster-test",
 		VolumeSizeGb: ptr.Integer(50),
 		MachineType:  ptr.String("Standard_D8_v3"),
@@ -89,14 +99,12 @@ func FixProvisioningParametersDTO() internal.ProvisioningParametersDTO {
 		},
 		Provider: &trialCloudProvider,
 	}
-}
 
-func FixProvisioningParameters(id string) internal.ProvisioningParameters {
 	return internal.ProvisioningParameters{
 		PlanID:         PlanId,
 		ServiceID:      ServiceId,
 		ErsContext:     FixERSContext(id),
-		Parameters:     FixProvisioningParametersDTO(),
+		Parameters:     provisioningParametersDTO,
 		PlatformRegion: Region,
 	}
 }
@@ -128,7 +136,7 @@ func FixInstanceDetails(id string) internal.InstanceDetails {
 	}
 }
 
-func FixInstance(id string) internal.Instance {
+func FixInstanceWithProvisioningParameters(id string, params internal.ProvisioningParameters) internal.Instance {
 	var (
 		runtimeId    = fmt.Sprintf("runtime-%s", id)
 		subAccountId = fmt.Sprintf("SA-%s", id)
@@ -145,7 +153,7 @@ func FixInstance(id string) internal.Instance {
 		ServicePlanID:               PlanId,
 		ServicePlanName:             PlanName,
 		DashboardURL:                InstanceDashboardURL,
-		Parameters:                  FixProvisioningParameters(id),
+		Parameters:                  params,
 		ProviderRegion:              Region,
 		Provider:                    internal.Azure,
 		InstanceDetails:             FixInstanceDetails(id),
@@ -155,7 +163,11 @@ func FixInstance(id string) internal.Instance {
 	}
 }
 
-func FixOperation(id, instanceId string, opType internal.OperationType) internal.Operation {
+func FixInstance(id string) internal.Instance {
+	return FixInstanceWithProvisioningParameters(id, FixProvisioningParameters(id))
+}
+
+func FixOperationWithProvisioningParameters(id, instanceId string, opType internal.OperationType, params internal.ProvisioningParameters) internal.Operation {
 	var (
 		description     = fmt.Sprintf("Description for operation %s", id)
 		orchestrationId = fmt.Sprintf("Orchestration-%s", id)
@@ -172,10 +184,14 @@ func FixOperation(id, instanceId string, opType internal.OperationType) internal
 		ProvisionerOperationID: "",
 		State:                  domain.Succeeded,
 		Description:            description,
-		ProvisioningParameters: FixProvisioningParameters(id),
+		ProvisioningParameters: params,
 		OrchestrationID:        orchestrationId,
 		FinishedStages:         []string{"prepare", "check_provisioning"},
 	}
+}
+
+func FixOperation(id, instanceId string, opType internal.OperationType) internal.Operation {
+	return FixOperationWithProvisioningParameters(id, instanceId, opType, FixProvisioningParameters(id))
 }
 
 func FixInputCreator(provider internal.CloudProvider) *SimpleInputCreator {
@@ -188,6 +204,13 @@ func FixInputCreator(provider internal.CloudProvider) *SimpleInputCreator {
 
 func FixProvisioningOperation(operationId, instanceId string) internal.Operation {
 	o := FixOperation(operationId, instanceId, internal.OperationTypeProvision)
+	o.InputCreator = FixInputCreator(internal.Azure)
+	o.DashboardURL = "https://console.kyma.org"
+	return o
+}
+
+func FixProvisioningOperationWithProvisioningParameters(operationId, instanceId string, provisioningParameters internal.ProvisioningParameters) internal.Operation {
+	o := FixOperationWithProvisioningParameters(operationId, instanceId, internal.OperationTypeProvision, provisioningParameters)
 	o.InputCreator = FixInputCreator(internal.Azure)
 	o.DashboardURL = "https://console.kyma.org"
 	return o

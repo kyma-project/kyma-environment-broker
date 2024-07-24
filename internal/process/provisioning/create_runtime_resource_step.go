@@ -115,6 +115,7 @@ func (s *CreateRuntimeResourceStep) createRuntimeResourceObject(operation intern
 
 	runtime.Spec.Shoot.Provider = providerObj
 	runtime.Spec.Shoot.Region = values.Region
+	runtime.Spec.Shoot.Purpose = gardener.ShootPurpose(values.Purpose)
 	runtime.Spec.Shoot.PlatformRegion = operation.ProvisioningParameters.PlatformRegion
 
 	runtime.Spec.Security = s.createSecurityConfiguration(operation)
@@ -191,6 +192,11 @@ func (s *CreateRuntimeResourceStep) providerValues(operation *internal.Operation
 	var p Provider
 	switch operation.ProvisioningParameters.PlanID {
 	case broker.AWSPlanID:
+		p = &provider.AWSInputProvider{
+			MultiZone:              s.config.MultiZoneCluster,
+			ProvisioningParameters: operation.ProvisioningParameters,
+		}
+	case broker.PreviewPlanID:
 		p = &provider.AWSInputProvider{
 			MultiZone:              s.config.MultiZoneCluster,
 			ProvisioningParameters: operation.ProvisioningParameters,
