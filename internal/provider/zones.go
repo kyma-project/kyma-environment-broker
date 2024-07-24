@@ -6,8 +6,8 @@ import (
 	"strings"
 )
 
-func GenerateAzureZones(zonesCount int) []int {
-	zones := []int{1, 2, 3}
+func GenerateAzureZones(zonesCount int) []string {
+	zones := []string{"1", "2", "3"}
 	if zonesCount > 3 {
 		zonesCount = 3
 	}

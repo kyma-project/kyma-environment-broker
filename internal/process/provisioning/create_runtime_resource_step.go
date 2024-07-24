@@ -224,6 +224,12 @@ func (s *CreateRuntimeResourceStep) providerValues(operation *internal.Operation
 				PlatformRegionMapping:  s.trialPlatformRegionMapping,
 				ProvisioningParameters: operation.ProvisioningParameters,
 			}
+		case internal.Azure:
+			p = &provider.AzureTrialInputProvider{
+				PlatformRegionMapping:  s.trialPlatformRegionMapping,
+				UseSmallerMachineTypes: s.useSmallerMachinesForTrials,
+				ProvisioningParameters: operation.ProvisioningParameters,
+			}
 		default:
 			return provider.Values{}, fmt.Errorf("trial provider for %s not yet implemented", trialProvider)
 		}

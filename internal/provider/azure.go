@@ -1,14 +1,18 @@
 package provider
 
 import (
-	"math/rand"
-
 	"github.com/kyma-project/kyma-environment-broker/internal"
+	"github.com/kyma-project/kyma-environment-broker/internal/euaccess"
 )
 
 type (
 	AzureInputProvider struct {
 		MultiZone              bool
+		ProvisioningParameters internal.ProvisioningParameters
+	}
+	AzureTrialInputProvider struct {
+		PlatformRegionMapping  map[string]string
+		UseSmallerMachineTypes bool
 		ProvisioningParameters internal.ProvisioningParameters
 	}
 )
@@ -45,11 +49,47 @@ func (p *AzureInputProvider) zones() []string {
 }
 
 func (p *AzureInputProvider) generateRandomAzureZones(zonesCount int) []string {
-	zones := []string{"1", "2", "3"}
-	if zonesCount > 3 {
-		zonesCount = 3
-	}
+	return GenerateAzureZones(zonesCount)
+}
 
-	rand.Shuffle(len(zones), func(i, j int) { zones[i], zones[j] = zones[j], zones[i] })
-	return zones[:zonesCount]
+func (p *AzureTrialInputProvider) Provide() Values {
+	machineType := DefaultOldAzureTrialMachineType
+	if p.UseSmallerMachineTypes {
+		machineType = DefaultAzureMachineType
+	}
+	zones := p.zones()
+	region := DefaultAzureRegion
+	if p.ProvisioningParameters.Parameters.Region != nil {
+		region = *p.ProvisioningParameters.Parameters.Region
+	}
+	return Values{
+		DefaultAutoScalerMax: 1,
+		DefaultAutoScalerMin: 1,
+		ZonesCount:           1,
+		Zones:                zones,
+		ProviderType:         "azure",
+		DefaultMachineType:   machineType,
+		Region:               region,
+		Purpose:              PurposeEvaluation,
+	}
+}
+
+func (p *AzureTrialInputProvider) zones() []string {
+	return GenerateAzureZones(1)
+}
+
+func (p *AzureTrialInputProvider) region() string {
+	if euaccess.IsEURestrictedAccess(p.ProvisioningParameters.PlatformRegion) {
+		return DefaultEuAccessAzureRegion
+	}
+	if p.ProvisioningParameters.PlatformRegion != "" {
+		abstractRegion, found := p.PlatformRegionMapping[p.ProvisioningParameters.PlatformRegion]
+		if found {
+			return *toAzureSpecific[abstractRegion]
+		}
+	}
+	if p.ProvisioningParameters.Parameters.Region != nil && *p.ProvisioningParameters.Parameters.Region != "" {
+		return *toAzureSpecific[*p.ProvisioningParameters.Parameters.Region]
+	}
+	return DefaultAzureRegion
 }
