@@ -3,10 +3,11 @@ package provisioning
 import (
 	"context"
 	"fmt"
-	gardener "github.com/gardener/gardener/pkg/apis/core/v1beta1"
 	"os"
 	"strings"
 	"testing"
+
+	gardener "github.com/gardener/gardener/pkg/apis/core/v1beta1"
 
 	"github.com/kyma-project/kyma-environment-broker/internal/ptr"
 
