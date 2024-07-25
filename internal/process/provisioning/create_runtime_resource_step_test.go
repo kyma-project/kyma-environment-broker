@@ -3,8 +3,9 @@ package provisioning
 import (
 	"context"
 	"fmt"
+	gardener "github.com/gardener/gardener/pkg/apis/core/v1beta1"
+	"k8s.io/apimachinery/pkg/util/intstr"
 	"os"
-	"reflect"
 	"strings"
 	"testing"
 
@@ -29,6 +30,8 @@ import (
 
 	"k8s.io/client-go/kubernetes/scheme"
 )
+
+const SecretBindingName = "gardener-secret"
 
 var runtimeAdministrators = []string{"admin1@test.com", "admin2@test.com"}
 
@@ -319,6 +322,8 @@ func TestCreateRuntimeResourceStep_Defaults_AWS_SingleZone_ActualCreation(t *tes
 	assert.Equal(t, runtime.Spec.Shoot.Provider.Type, "aws")
 	assert.Equal(t, runtime.Spec.Shoot.Region, "eu-west-2")
 	assert.Equal(t, string(runtime.Spec.Shoot.Purpose), "production")
+	assert.Equal(t, runtime.Spec.Shoot.SecretBindingName, SecretBindingName)
+	//assertWorkers(t, runtime.Spec.Shoot.Provider.Workers, 1, 1)
 	assert.Len(t, runtime.Spec.Shoot.Provider.Workers, 1)
 	assert.Len(t, runtime.Spec.Shoot.Provider.Workers[0].Zones, 1) //TODO assert zone as an element from set
 
@@ -706,10 +711,10 @@ func TestCreateRuntimeResourceStep_Defaults_GCP_MultiZone_ActualCreation(t *test
 
 }
 
-// assertions and fixtures
+// assertions
 
 func assertSecurity(t *testing.T, runtime imv1.Runtime) {
-	assert.True(t, reflect.DeepEqual(runtime.Spec.Security.Administrators, runtimeAdministrators))
+	assert.ElementsMatch(t, runtime.Spec.Security.Administrators, runtimeAdministrators)
 	assert.Equal(t, runtime.Spec.Security.Networking.Filter.Egress, imv1.Egress(imv1.Egress{Enabled: false}))
 }
 
@@ -723,6 +728,19 @@ func assertLabels(t *testing.T, preOperation internal.Operation, runtime imv1.Ru
 	assert.Equal(t, preOperation.ShootName, runtime.Labels["kyma-project.io/shoot-name"])
 	assert.Equal(t, *preOperation.ProvisioningParameters.Parameters.Region, runtime.Labels["kyma-project.io/region"])
 }
+
+func assertWorkers(t *testing.T, workers []gardener.Worker, machine string, maximum, minimum int32, maxSurge, maxUnavailable *intstr.IntOrString, zoneCount int, zones []string) {
+	assert.Len(t, workers, 1)
+	assert.Len(t, workers[0].Zones, zoneCount)
+	assert.Subset(t, zones, workers[0].Zones)
+	assert.Equal(t, workers[0].Machine.Type, machine)
+	assert.Equal(t, workers[0].MaxSurge, maxSurge)
+	assert.Equal(t, workers[0].MaxUnavailable, maxUnavailable)
+	assert.Equal(t, workers[0].Maximum, maximum)
+	assert.Equal(t, workers[0].Minimum, minimum)
+}
+
+// test fixtures
 
 func fixOperationForCreateRuntimeResource(instanceID string, provisioningParameters internal.ProvisioningParameters) internal.Operation {
 	operation := fixture.FixProvisioningOperationWithProvisioningParameters("op-id", instanceID, provisioningParameters)
@@ -794,6 +812,6 @@ func fixProvisioningParametersDTOWithRegion(region string) internal.Provisioning
 		Name:                  "cluster-test",
 		Region:                ptr.String(region),
 		RuntimeAdministrators: runtimeAdministrators,
-		TargetSecret:          ptr.String("gardener-secret"),
+		TargetSecret:          ptr.String(SecretBindingName),
 	}
 }
