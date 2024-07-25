@@ -3,7 +3,9 @@ package provisioning
 import (
 	"context"
 	"fmt"
+	"github.com/kyma-project/kyma-environment-broker/internal/networking"
 	"os"
+	"reflect"
 	"strings"
 	"testing"
 
@@ -34,6 +36,11 @@ import (
 const SecretBindingName = "gardener-secret"
 
 var runtimeAdministrators = []string{"admin1@test.com", "admin2@test.com"}
+var defaultNetworking = imv1.Networking{
+	Nodes:    networking.DefaultNodesCIDR,
+	Pods:     networking.DefaultPodsCIDR,
+	Services: networking.DefaultServicesCIDR,
+}
 
 func TestCreateRuntimeResourceStep_Defaults_Azure_MultiZone_YamlOnly(t *testing.T) {
 	// given
@@ -294,9 +301,9 @@ func TestCreateRuntimeResourceStep_Defaults_AWS_SingleZone_ActualCreation(t *tes
 	assert.NoError(t, err)
 
 	kimConfig := fixKimConfig("aws", false)
+	inputConfig := input.Config{MultiZoneCluster: false, ControlPlaneFailureTolerance: "zone"}
 
 	cli := getClientForTests(t)
-	inputConfig := input.Config{MultiZoneCluster: false}
 	step := NewCreateRuntimeResourceStep(memoryStorage.Operations(), memoryStorage.Instances(), cli, kimConfig, inputConfig, nil, false)
 
 	// when
@@ -313,17 +320,19 @@ func TestCreateRuntimeResourceStep_Defaults_AWS_SingleZone_ActualCreation(t *tes
 		Name:      preOperation.RuntimeID,
 	}, &runtime)
 	assert.NoError(t, err)
-	assert.Equal(t, preOperation.RuntimeID, runtime.Name)
+	assert.Equal(t, runtime.Name, preOperation.RuntimeID)
 	assert.Equal(t, "runtime-58f8c703-1756-48ab-9299-a847974d1fee", runtime.Labels["operator.kyma-project.io/kyma-name"])
 
 	assertLabels(t, preOperation, runtime)
 	assertSecurity(t, runtime)
 
-	assert.Equal(t, runtime.Spec.Shoot.Provider.Type, "aws")
-	assert.Equal(t, runtime.Spec.Shoot.Region, "eu-west-2")
-	assert.Equal(t, string(runtime.Spec.Shoot.Purpose), "production")
-	assert.Equal(t, runtime.Spec.Shoot.SecretBindingName, SecretBindingName)
+	assert.Equal(t, "aws", runtime.Spec.Shoot.Provider.Type)
+	assert.Equal(t, "eu-west-2", runtime.Spec.Shoot.Region)
+	assert.Equal(t, "production", string(runtime.Spec.Shoot.Purpose))
+	assert.Equal(t, SecretBindingName, runtime.Spec.Shoot.SecretBindingName)
 	assertWorkers(t, runtime.Spec.Shoot.Provider.Workers, "m6i.large", 20, 3, 1, 0, 1, []string{"eu-west-2a", "eu-west-2b", "eu-west-2c"})
+	assert.Equal(t, "zone", string(runtime.Spec.Shoot.ControlPlane.HighAvailability.FailureTolerance.Type))
+	assertDefaultNetworking(t, runtime.Spec.Shoot.Networking)
 
 	_, err = memoryStorage.Instances().GetByID(preOperation.InstanceID)
 	assert.NoError(t, err)
@@ -366,15 +375,15 @@ func TestCreateRuntimeResourceStep_Defaults_AWS_MultiZone_ActualCreation(t *test
 		Name:      preOperation.RuntimeID,
 	}, &runtime)
 	assert.NoError(t, err)
-	assert.Equal(t, preOperation.RuntimeID, runtime.Name)
+	assert.Equal(t, runtime.Name, preOperation.RuntimeID)
 	assert.Equal(t, "runtime-58f8c703-1756-48ab-9299-a847974d1fee", runtime.Labels["operator.kyma-project.io/kyma-name"])
 
 	assertLabels(t, preOperation, runtime)
 	assertSecurity(t, runtime)
 
-	assert.Equal(t, runtime.Spec.Shoot.Provider.Type, "aws")
-	assert.Equal(t, runtime.Spec.Shoot.Region, "eu-west-2")
-	assert.Equal(t, string(runtime.Spec.Shoot.Purpose), "production")
+	assert.Equal(t, "aws", runtime.Spec.Shoot.Provider.Type)
+	assert.Equal(t, "eu-west-2", runtime.Spec.Shoot.Region)
+	assert.Equal(t, "production", string(runtime.Spec.Shoot.Purpose))
 	assertWorkers(t, runtime.Spec.Shoot.Provider.Workers, "m6i.large", 20, 3, 3, 0, 3, []string{"eu-west-2a", "eu-west-2b", "eu-west-2c"})
 
 	_, err = memoryStorage.Instances().GetByID(preOperation.InstanceID)
@@ -730,6 +739,14 @@ func assertWorkers(t *testing.T, workers []gardener.Worker, machine string, maxi
 	assert.Equal(t, workers[0].MaxUnavailable.IntValue(), maxUnavailable)
 	assert.Equal(t, workers[0].Maximum, int32(maximum))
 	assert.Equal(t, workers[0].Minimum, int32(minimum))
+}
+
+func assertNetworking(t *testing.T, expected imv1.Networking, actual imv1.Networking) {
+	assert.True(t, reflect.DeepEqual(expected, actual))
+}
+
+func assertDefaultNetworking(t *testing.T, actual imv1.Networking) {
+	assertNetworking(t, defaultNetworking, actual)
 }
 
 // test fixtures

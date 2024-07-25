@@ -3,6 +3,7 @@ package provisioning
 import (
 	"context"
 	"fmt"
+	"github.com/kyma-project/kyma-environment-broker/internal/networking"
 	"time"
 
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -115,11 +116,13 @@ func (s *CreateRuntimeResourceStep) createRuntimeResourceObject(operation intern
 
 	runtime.Spec.Shoot.Provider = providerObj
 	runtime.Spec.Shoot.Region = values.Region
+	runtime.Spec.Shoot.Name = operation.ShootName
 	runtime.Spec.Shoot.Purpose = gardener.ShootPurpose(values.Purpose)
 	runtime.Spec.Shoot.PlatformRegion = operation.ProvisioningParameters.PlatformRegion
 	runtime.Spec.Shoot.SecretBindingName = *operation.ProvisioningParameters.Parameters.TargetSecret
-
+	runtime.Spec.Shoot.ControlPlane.HighAvailability = s.createHighAvailabilityConfiguration()
 	runtime.Spec.Security = s.createSecurityConfiguration(operation)
+	runtime.Spec.Shoot.Networking = s.createNetworkingConfiguration(operation)
 	return &runtime, nil
 }
 
@@ -246,6 +249,44 @@ func (s *CreateRuntimeResourceStep) providerValues(operation *internal.Operation
 		return provider.Values{}, fmt.Errorf("plan %s not supported", operation.ProvisioningParameters.PlanID)
 	}
 	return p.Provide(), nil
+}
+
+func (s *CreateRuntimeResourceStep) createHighAvailabilityConfiguration() *gardener.HighAvailability {
+
+	var failureTolerance *gardener.HighAvailability
+	if s.config.ControlPlaneFailureTolerance == string(gardener.FailureToleranceTypeZone) {
+		failureTolerance = &gardener.HighAvailability{
+			FailureTolerance: gardener.FailureTolerance{
+				Type: gardener.FailureToleranceTypeZone,
+			},
+		}
+	} else {
+		failureTolerance = &gardener.HighAvailability{
+			FailureTolerance: gardener.FailureTolerance{
+				Type: gardener.FailureToleranceTypeNode,
+			},
+		}
+	}
+	return failureTolerance
+}
+
+func (s *CreateRuntimeResourceStep) createNetworkingConfiguration(operation internal.Operation) imv1.Networking {
+
+	networkingParams := operation.ProvisioningParameters.Parameters.Networking
+	if networkingParams == nil {
+		networkingParams = &internal.NetworkingDTO{}
+	}
+
+	nodes := networkingParams.NodesCidr
+	if nodes == "" {
+		nodes = networking.DefaultNodesCIDR
+	}
+
+	return imv1.Networking{
+		Pods:     DefaultIfParamNotSet(networking.DefaultPodsCIDR, networkingParams.PodsCidr),
+		Services: DefaultIfParamNotSet(networking.DefaultServicesCIDR, networkingParams.ServicesCidr),
+		Nodes:    nodes,
+	}
 }
 
 func DefaultIfParamNotSet[T interface{}](d T, param *T) T {

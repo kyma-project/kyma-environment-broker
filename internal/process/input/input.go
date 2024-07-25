@@ -31,7 +31,7 @@ type Config struct {
 	MachineImage                  string                 `envconfig:"optional"`
 	MachineImageVersion           string                 `envconfig:"optional"`
 	TrialNodesNumber              int                    `envconfig:"optional"`
-	DefaultTrialProvider          internal.CloudProvider `envconfig:"default=Azure"` // could be: Azure, AWS, GCP, SapConvergedCloud, unknown
+	DefaultTrialProvider          internal.CloudProvider `envconfig:"default=Azure"`
 	AutoUpdateKubernetesVersion   bool                   `envconfig:"default=false"`
 	AutoUpdateMachineImageVersion bool                   `envconfig:"default=false"`
 	MultiZoneCluster              bool                   `envconfig:"default=false"`

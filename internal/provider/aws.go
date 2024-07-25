@@ -33,11 +33,11 @@ func (p *AWSInputProvider) Provide() Values {
 		ProviderType:         "aws",
 		DefaultMachineType:   DefaultAWSMachineType,
 		Region:               region,
-		Purpose:              PurposeProduction,
+		Purpose:              PurposeProduction, //TODO - default value is define per landscape in mgmt plane config
 	}
 }
 
-func (p *AWSInputProvider) zonesCount() int { //TODO - reconsider this is called twice per provisioning
+func (p *AWSInputProvider) zonesCount() int { //TODO - this is called twice per provisioning
 	zonesCount := 1
 	if p.MultiZone {
 		zonesCount = DefaultAWSMultiZoneCount
