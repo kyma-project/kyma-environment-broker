@@ -641,8 +641,7 @@ func TestCreateRuntimeResourceStep_Defaults_GCP_SingleZone_ActualCreation(t *tes
 	assert.Equal(t, runtime.Spec.Shoot.Provider.Type, "gcp")
 	assert.Equal(t, runtime.Spec.Shoot.Region, "asia-south1")
 	assert.Equal(t, string(runtime.Spec.Shoot.Purpose), "production")
-	assert.Len(t, runtime.Spec.Shoot.Provider.Workers, 1)
-	assert.Len(t, runtime.Spec.Shoot.Provider.Workers[0].Zones, 1) //TODO assert zone as an element from set
+	assertWorkers(t, runtime.Spec.Shoot.Provider.Workers, "n2-standard-2", 20, 3, 1, 0, 1, []string{"asia-south1-a", "asia-south1-b", "asia-south1-c"})
 
 	_, err = memoryStorage.Instances().GetByID(preOperation.InstanceID)
 	assert.NoError(t, err)
@@ -696,8 +695,7 @@ func TestCreateRuntimeResourceStep_Defaults_GCP_MultiZone_ActualCreation(t *test
 	assert.Equal(t, runtime.Spec.Shoot.Provider.Type, "gcp")
 	assert.Equal(t, runtime.Spec.Shoot.Region, "asia-south1")
 	assert.Equal(t, string(runtime.Spec.Shoot.Purpose), "production")
-	assert.Len(t, runtime.Spec.Shoot.Provider.Workers, 1)
-	assert.Len(t, runtime.Spec.Shoot.Provider.Workers[0].Zones, 3) //TODO assert zones
+	assertWorkers(t, runtime.Spec.Shoot.Provider.Workers, "n2-standard-2", 20, 3, 3, 0, 3, []string{"asia-south1-a", "asia-south1-b", "asia-south1-c"})
 
 	_, err = memoryStorage.Instances().GetByID(preOperation.InstanceID)
 	assert.NoError(t, err)
