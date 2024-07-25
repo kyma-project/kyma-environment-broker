@@ -117,6 +117,7 @@ func (s *CreateRuntimeResourceStep) createRuntimeResourceObject(operation intern
 	runtime.Spec.Shoot.Region = values.Region
 	runtime.Spec.Shoot.Purpose = gardener.ShootPurpose(values.Purpose)
 	runtime.Spec.Shoot.PlatformRegion = operation.ProvisioningParameters.PlatformRegion
+	runtime.Spec.Shoot.SecretBindingName = *operation.ProvisioningParameters.Parameters.TargetSecret
 
 	runtime.Spec.Security = s.createSecurityConfiguration(operation)
 	return &runtime, nil

@@ -794,5 +794,6 @@ func fixProvisioningParametersDTOWithRegion(region string) internal.Provisioning
 		Name:                  "cluster-test",
 		Region:                ptr.String(region),
 		RuntimeAdministrators: runtimeAdministrators,
+		TargetSecret:          ptr.String("gardener-secret"),
 	}
 }
