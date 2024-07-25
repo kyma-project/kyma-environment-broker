@@ -4,7 +4,7 @@ package provider
 type Values struct {
 	DefaultAutoScalerMax int
 	DefaultAutoScalerMin int
-	ZonesCount           int
+	ZonesCount           int //TODO do we need this as separate value?
 	Zones                []string
 	ProviderType         string
 	DefaultMachineType   string

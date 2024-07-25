@@ -37,7 +37,7 @@ func (p *AWSInputProvider) Provide() Values {
 	}
 }
 
-func (p *AWSInputProvider) zonesCount() int {
+func (p *AWSInputProvider) zonesCount() int { //TODO - reconsider this is called twice per provisioning
 	zonesCount := 1
 	if p.MultiZone {
 		zonesCount = DefaultAWSMultiZoneCount

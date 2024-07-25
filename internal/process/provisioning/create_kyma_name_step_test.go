@@ -198,6 +198,55 @@ func fixConfigMap(defaultKymaVersion string) k8sruntime.Object {
 		Data: map[string]string{
 			"default": `kyma-template: "---"`},
 	}
-
 	return kebCfg
+}
+
+func fixProvisioningParameters(id string, planId string, platformRegion string, dto internal.ProvisioningParametersDTO) internal.ProvisioningParameters {
+	return internal.ProvisioningParameters{
+		PlanID:         planId,
+		ServiceID:      fixture.ServiceId,
+		ErsContext:     fixture.FixERSContext(id),
+		Parameters:     dto,
+		PlatformRegion: platformRegion,
+	}
+}
+
+func fixParametersForAzure() internal.ProvisioningParametersDTO {
+	provider := internal.Azure
+	return internal.ProvisioningParametersDTO{
+		Name:         "runtime-resource-test",
+		VolumeSizeGb: ptr.Integer(50),
+		MachineType:  ptr.String("Standard_D8_v3"),
+		Region:       ptr.String("Region"),
+		Purpose:      ptr.String("Purpose"),
+		LicenceType:  ptr.String("LicenceType"),
+		Zones:        []string{"1"},
+		AutoScalerParameters: internal.AutoScalerParameters{
+			AutoScalerMin:  ptr.Integer(3),
+			AutoScalerMax:  ptr.Integer(10),
+			MaxSurge:       ptr.Integer(4),
+			MaxUnavailable: ptr.Integer(1),
+		},
+		Provider: &provider,
+	}
+}
+
+func fixParametersForPreview() internal.ProvisioningParametersDTO {
+	provider := internal.AWS
+	return internal.ProvisioningParametersDTO{
+		Name:         "runtime-resource-test",
+		VolumeSizeGb: ptr.Integer(50),
+		MachineType:  ptr.String("Standard_D8_v3"),
+		Region:       ptr.String("Region"),
+		Purpose:      ptr.String("Purpose"),
+		LicenceType:  ptr.String("LicenceType"),
+		Zones:        []string{"1"},
+		AutoScalerParameters: internal.AutoScalerParameters{
+			AutoScalerMin:  ptr.Integer(3),
+			AutoScalerMax:  ptr.Integer(10),
+			MaxSurge:       ptr.Integer(4),
+			MaxUnavailable: ptr.Integer(1),
+		},
+		Provider: &provider,
+	}
 }
