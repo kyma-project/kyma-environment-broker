@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	gardener "github.com/gardener/gardener/pkg/apis/core/v1beta1"
-	"k8s.io/apimachinery/pkg/util/intstr"
 	"os"
 	"strings"
 	"testing"
@@ -323,9 +322,7 @@ func TestCreateRuntimeResourceStep_Defaults_AWS_SingleZone_ActualCreation(t *tes
 	assert.Equal(t, runtime.Spec.Shoot.Region, "eu-west-2")
 	assert.Equal(t, string(runtime.Spec.Shoot.Purpose), "production")
 	assert.Equal(t, runtime.Spec.Shoot.SecretBindingName, SecretBindingName)
-	//assertWorkers(t, runtime.Spec.Shoot.Provider.Workers, 1, 1)
-	assert.Len(t, runtime.Spec.Shoot.Provider.Workers, 1)
-	assert.Len(t, runtime.Spec.Shoot.Provider.Workers[0].Zones, 1) //TODO assert zone as an element from set
+	assertWorkers(t, runtime.Spec.Shoot.Provider.Workers, "m6i.large", 20, 3, 3, 0, 1, []string{"eu-west-2a", "eu-west-2b", "eu-west-2c"})
 
 	_, err = memoryStorage.Instances().GetByID(preOperation.InstanceID)
 	assert.NoError(t, err)
@@ -377,8 +374,7 @@ func TestCreateRuntimeResourceStep_Defaults_AWS_MultiZone_ActualCreation(t *test
 	assert.Equal(t, runtime.Spec.Shoot.Provider.Type, "aws")
 	assert.Equal(t, runtime.Spec.Shoot.Region, "eu-west-2")
 	assert.Equal(t, string(runtime.Spec.Shoot.Purpose), "production")
-	assert.Len(t, runtime.Spec.Shoot.Provider.Workers, 1)
-	assert.Len(t, runtime.Spec.Shoot.Provider.Workers[0].Zones, 3) //TODO assert zones
+	assertWorkers(t, runtime.Spec.Shoot.Provider.Workers, "m6i.large", 20, 3, 3, 0, 3, []string{"eu-west-2a", "eu-west-2b", "eu-west-2c"})
 
 	_, err = memoryStorage.Instances().GetByID(preOperation.InstanceID)
 	assert.NoError(t, err)
@@ -729,15 +725,15 @@ func assertLabels(t *testing.T, preOperation internal.Operation, runtime imv1.Ru
 	assert.Equal(t, *preOperation.ProvisioningParameters.Parameters.Region, runtime.Labels["kyma-project.io/region"])
 }
 
-func assertWorkers(t *testing.T, workers []gardener.Worker, machine string, maximum, minimum int32, maxSurge, maxUnavailable *intstr.IntOrString, zoneCount int, zones []string) {
+func assertWorkers(t *testing.T, workers []gardener.Worker, machine string, maximum, minimum, maxSurge, maxUnavailable int, zoneCount int, zones []string) {
 	assert.Len(t, workers, 1)
 	assert.Len(t, workers[0].Zones, zoneCount)
 	assert.Subset(t, zones, workers[0].Zones)
 	assert.Equal(t, workers[0].Machine.Type, machine)
-	assert.Equal(t, workers[0].MaxSurge, maxSurge)
-	assert.Equal(t, workers[0].MaxUnavailable, maxUnavailable)
-	assert.Equal(t, workers[0].Maximum, maximum)
-	assert.Equal(t, workers[0].Minimum, minimum)
+	assert.Equal(t, workers[0].MaxSurge.IntValue(), maxSurge)
+	assert.Equal(t, workers[0].MaxUnavailable.IntValue(), maxUnavailable)
+	assert.Equal(t, workers[0].Maximum, int32(maximum))
+	assert.Equal(t, workers[0].Minimum, int32(minimum))
 }
 
 // test fixtures
