@@ -322,7 +322,7 @@ func TestCreateRuntimeResourceStep_Defaults_AWS_SingleZone_ActualCreation(t *tes
 	assert.Equal(t, runtime.Spec.Shoot.Region, "eu-west-2")
 	assert.Equal(t, string(runtime.Spec.Shoot.Purpose), "production")
 	assert.Equal(t, runtime.Spec.Shoot.SecretBindingName, SecretBindingName)
-	assertWorkers(t, runtime.Spec.Shoot.Provider.Workers, "m6i.large", 20, 3, 3, 0, 1, []string{"eu-west-2a", "eu-west-2b", "eu-west-2c"})
+	assertWorkers(t, runtime.Spec.Shoot.Provider.Workers, "m6i.large", 20, 3, 1, 0, 1, []string{"eu-west-2a", "eu-west-2b", "eu-west-2c"})
 
 	_, err = memoryStorage.Instances().GetByID(preOperation.InstanceID)
 	assert.NoError(t, err)
