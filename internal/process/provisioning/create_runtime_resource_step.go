@@ -3,8 +3,9 @@ package provisioning
 import (
 	"context"
 	"fmt"
-	"github.com/kyma-project/kyma-environment-broker/internal/networking"
 	"time"
+
+	"github.com/kyma-project/kyma-environment-broker/internal/networking"
 
 	"sigs.k8s.io/controller-runtime/pkg/client"
 

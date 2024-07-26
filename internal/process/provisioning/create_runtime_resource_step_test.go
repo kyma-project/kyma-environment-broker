@@ -3,11 +3,12 @@ package provisioning
 import (
 	"context"
 	"fmt"
-	"github.com/kyma-project/kyma-environment-broker/internal/networking"
 	"os"
 	"reflect"
 	"strings"
 	"testing"
+
+	"github.com/kyma-project/kyma-environment-broker/internal/networking"
 
 	gardener "github.com/gardener/gardener/pkg/apis/core/v1beta1"
 
@@ -433,9 +434,9 @@ func TestCreateRuntimeResourceStep_Defaults_Preview_SingleZone_ActualCreation(t 
 	assertLabels(t, preOperation, runtime)
 	assertSecurity(t, runtime)
 
-	assert.Equal(t, runtime.Spec.Shoot.Provider.Type, "aws")
-	assert.Equal(t, runtime.Spec.Shoot.Region, "eu-west-2")
-	assert.Equal(t, string(runtime.Spec.Shoot.Purpose), "production")
+	assert.Equal(t, "aws", runtime.Spec.Shoot.Provider.Type)
+	assert.Equal(t, "eu-west-2", runtime.Spec.Shoot.Region)
+	assert.Equal(t, "production", string(runtime.Spec.Shoot.Purpose))
 	assertWorkers(t, runtime.Spec.Shoot.Provider.Workers, "m6i.large", 20, 3, 1, 0, 1, []string{"eu-west-2a", "eu-west-2b", "eu-west-2c"})
 
 	_, err = memoryStorage.Instances().GetByID(preOperation.InstanceID)
@@ -486,9 +487,9 @@ func TestCreateRuntimeResourceStep_Defaults_Preview_MultiZone_ActualCreation(t *
 	assertLabels(t, preOperation, runtime)
 	assertSecurity(t, runtime)
 
-	assert.Equal(t, runtime.Spec.Shoot.Provider.Type, "aws")
-	assert.Equal(t, runtime.Spec.Shoot.Region, "eu-west-2")
-	assert.Equal(t, string(runtime.Spec.Shoot.Purpose), "production")
+	assert.Equal(t, "aws", runtime.Spec.Shoot.Provider.Type)
+	assert.Equal(t, "eu-west-2", runtime.Spec.Shoot.Region)
+	assert.Equal(t, "production", string(runtime.Spec.Shoot.Purpose))
 	assertWorkers(t, runtime.Spec.Shoot.Provider.Workers, "m6i.large", 20, 3, 3, 0, 3, []string{"eu-west-2a", "eu-west-2b", "eu-west-2c"})
 
 	_, err = memoryStorage.Instances().GetByID(preOperation.InstanceID)
@@ -539,9 +540,9 @@ func TestCreateRuntimeResourceStep_Defaults_Azure_SingleZone_ActualCreation(t *t
 	assertLabels(t, preOperation, runtime)
 	assertSecurity(t, runtime)
 
-	assert.Equal(t, runtime.Spec.Shoot.Provider.Type, "azure")
-	assert.Equal(t, runtime.Spec.Shoot.Region, "westeurope")
-	assert.Equal(t, string(runtime.Spec.Shoot.Purpose), "production")
+	assert.Equal(t, "azure", runtime.Spec.Shoot.Provider.Type)
+	assert.Equal(t, "westeurope", runtime.Spec.Shoot.Region)
+	assert.Equal(t, "production", string(runtime.Spec.Shoot.Purpose))
 
 	assertWorkers(t, runtime.Spec.Shoot.Provider.Workers, "Standard_D2s_v5", 20, 3, 1, 0, 1, []string{"1", "2", "3"})
 
@@ -594,9 +595,10 @@ func TestCreateRuntimeResourceStep_Defaults_Azure_MultiZone_ActualCreation(t *te
 	assertLabels(t, preOperation, runtime)
 	assertSecurity(t, runtime)
 
-	assert.Equal(t, runtime.Spec.Shoot.Provider.Type, "azure")
-	assert.Equal(t, runtime.Spec.Shoot.Region, "westeurope")
-	assert.Equal(t, string(runtime.Spec.Shoot.Purpose), "production")
+	assert.Equal(t, "azure", runtime.Spec.Shoot.Provider.Type)
+	assert.Equal(t, "westeurope", runtime.Spec.Shoot.Region)
+	assert.Equal(t, "production", string(runtime.Spec.Shoot.Purpose))
+
 	assertWorkers(t, runtime.Spec.Shoot.Provider.Workers, "Standard_D2s_v5", 20, 3, 3, 0, 3, []string{"1", "2", "3"})
 
 	_, err = memoryStorage.Instances().GetByID(preOperation.InstanceID)
@@ -648,9 +650,10 @@ func TestCreateRuntimeResourceStep_Defaults_GCP_SingleZone_ActualCreation(t *tes
 	assertLabels(t, preOperation, runtime)
 	assertSecurity(t, runtime)
 
-	assert.Equal(t, runtime.Spec.Shoot.Provider.Type, "gcp")
-	assert.Equal(t, runtime.Spec.Shoot.Region, "asia-south1")
-	assert.Equal(t, string(runtime.Spec.Shoot.Purpose), "production")
+	assert.Equal(t, "gcp", runtime.Spec.Shoot.Provider.Type)
+	assert.Equal(t, "asia-south1", runtime.Spec.Shoot.Region)
+	assert.Equal(t, "production", string(runtime.Spec.Shoot.Purpose))
+
 	assertWorkers(t, runtime.Spec.Shoot.Provider.Workers, "n2-standard-2", 20, 3, 1, 0, 1, []string{"asia-south1-a", "asia-south1-b", "asia-south1-c"})
 
 	_, err = memoryStorage.Instances().GetByID(preOperation.InstanceID)
@@ -702,9 +705,9 @@ func TestCreateRuntimeResourceStep_Defaults_GCP_MultiZone_ActualCreation(t *test
 	assertLabels(t, preOperation, runtime)
 	assertSecurity(t, runtime)
 
-	assert.Equal(t, runtime.Spec.Shoot.Provider.Type, "gcp")
-	assert.Equal(t, runtime.Spec.Shoot.Region, "asia-south1")
-	assert.Equal(t, string(runtime.Spec.Shoot.Purpose), "production")
+	assert.Equal(t, "gcp", runtime.Spec.Shoot.Provider.Type)
+	assert.Equal(t, "asia-south1", runtime.Spec.Shoot.Region)
+	assert.Equal(t, "production", string(runtime.Spec.Shoot.Purpose))
 	assertWorkers(t, runtime.Spec.Shoot.Provider.Workers, "n2-standard-2", 20, 3, 3, 0, 3, []string{"asia-south1-a", "asia-south1-b", "asia-south1-c"})
 
 	_, err = memoryStorage.Instances().GetByID(preOperation.InstanceID)
