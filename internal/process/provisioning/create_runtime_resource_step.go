@@ -246,14 +246,14 @@ func (s *CreateRuntimeResourceStep) providerValues(operation *internal.Operation
 
 func (s *CreateRuntimeResourceStep) createHighAvailabilityConfiguration() *gardener.HighAvailability {
 
-	failureType := gardener.FailureToleranceTypeZone
+	failureToleranceType := gardener.FailureToleranceTypeZone
 	if s.config.ControlPlaneFailureTolerance != string(gardener.FailureToleranceTypeZone) {
-		failureType = gardener.FailureToleranceTypeNode
+		failureToleranceType = gardener.FailureToleranceTypeNode
 	}
 
 	return &gardener.HighAvailability{
 		FailureTolerance: gardener.FailureTolerance{
-			Type: failureType,
+			Type: failureToleranceType,
 		},
 	}
 }
