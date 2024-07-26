@@ -246,21 +246,16 @@ func (s *CreateRuntimeResourceStep) providerValues(operation *internal.Operation
 
 func (s *CreateRuntimeResourceStep) createHighAvailabilityConfiguration() *gardener.HighAvailability {
 
-	var failureTolerance *gardener.HighAvailability
-	if s.config.ControlPlaneFailureTolerance == string(gardener.FailureToleranceTypeZone) {
-		failureTolerance = &gardener.HighAvailability{
-			FailureTolerance: gardener.FailureTolerance{
-				Type: gardener.FailureToleranceTypeZone,
-			},
-		}
-	} else {
-		failureTolerance = &gardener.HighAvailability{
-			FailureTolerance: gardener.FailureTolerance{
-				Type: gardener.FailureToleranceTypeNode,
-			},
-		}
+	failureType := gardener.FailureToleranceTypeZone
+	if s.config.ControlPlaneFailureTolerance != string(gardener.FailureToleranceTypeZone) {
+		failureType = gardener.FailureToleranceTypeNode
 	}
-	return failureTolerance
+
+	return &gardener.HighAvailability{
+		FailureTolerance: gardener.FailureTolerance{
+			Type: failureType,
+		},
+	}
 }
 
 func (s *CreateRuntimeResourceStep) createNetworkingConfiguration(operation internal.Operation) imv1.Networking {
