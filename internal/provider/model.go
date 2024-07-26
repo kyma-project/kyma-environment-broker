@@ -9,7 +9,7 @@ type Values struct {
 	ProviderType         string
 	DefaultMachineType   string
 	Region               string
-	Purpose              string
+	Purpose              string //TODO default per landscape in configuration
 
 	// todo: add other plan specific values
 }

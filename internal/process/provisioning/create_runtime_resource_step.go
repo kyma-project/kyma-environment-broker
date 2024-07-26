@@ -151,14 +151,6 @@ func (s *CreateRuntimeResourceStep) createSecurityConfiguration(operation intern
 	return security
 }
 
-func RuntimeToYaml(runtime *imv1.Runtime) (string, error) {
-	result, err := yaml.Marshal(runtime)
-	if err != nil {
-		return "", err
-	}
-	return string(result), nil
-}
-
 func (s *CreateRuntimeResourceStep) createShootProvider(operation *internal.Operation, values provider.Values) (imv1.Provider, error) {
 
 	maxSurge := intstr.FromInt32(int32(DefaultIfParamNotSet(values.ZonesCount, operation.ProvisioningParameters.Parameters.MaxSurge)))
@@ -295,4 +287,12 @@ func DefaultIfParamNotSet[T interface{}](d T, param *T) T {
 		return d
 	}
 	return *param
+}
+
+func RuntimeToYaml(runtime *imv1.Runtime) (string, error) {
+	result, err := yaml.Marshal(runtime)
+	if err != nil {
+		return "", err
+	}
+	return string(result), nil
 }
