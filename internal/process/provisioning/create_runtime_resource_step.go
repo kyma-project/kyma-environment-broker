@@ -62,6 +62,10 @@ func (s *CreateRuntimeResourceStep) Run(operation internal.Operation, log logrus
 	}
 
 	if !s.kimConfig.IsEnabledForPlan(broker.PlanNamesMapping[operation.ProvisioningParameters.PlanID]) {
+		if !s.kimConfig.Enabled {
+			log.Infof("KIM is not enabled, skipping")
+			return operation, 0, nil
+		}
 		log.Infof("KIM is not enabled for plan %s, skipping", broker.PlanNamesMapping[operation.ProvisioningParameters.PlanID])
 		return operation, 0, nil
 	}
