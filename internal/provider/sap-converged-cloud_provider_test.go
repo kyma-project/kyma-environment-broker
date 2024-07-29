@@ -19,61 +19,64 @@ func TestZonesForSapConvergedCloudZones(t *testing.T) {
 }
 
 func TestMultipleZonesForSapConvergedCloudRegion(t *testing.T) {
-	t.Run("for valid zonesCount", func(t *testing.T) {
-		// given
-		region := "eu-de-1"
+	for tname, tcase := range map[string]struct {
+		region     string
+		zonesCount int
+	}{
+		"for valid zonesCount in eu-de-1": {
+			region:     "eu-de-1",
+			zonesCount: 3,
+		},
+		"for valid zonesCount in ap-au-1": {
+			region:     "ap-au-1",
+			zonesCount: 2,
+		},
+		"for valid zonesCount in na-us-1": {
+			region:     "na-us-1",
+			zonesCount: 3,
+		},
+		"for valid zonesCount in eu-de-2": {
+			region:     "eu-de-2",
+			zonesCount: 2,
+		},
+		"for valid zonesCount in na-us-2": {
+			region:     "na-us-2",
+			zonesCount: 2,
+		},
+		"for valid zonesCount in ap-jp-1": {
+			region:     "ap-jp-1",
+			zonesCount: 1,
+		},
+		"for valid zonesCount in ap-ae-1": {
+			region:     "ap-ae-1",
+			zonesCount: 2,
+		},
+	} {
+		t.Run(tname, func(t *testing.T) {
+			// when
+			generatedZones := ZonesForSapConvergedCloud(tcase.region, tcase.zonesCount)
 
-		// when
-		generatedZones := ZonesForSapConvergedCloud(region, 3)
-
-		// then
-		for _, zone := range generatedZones {
-			regionFromZone := zone[:len(zone)-1]
-			assert.Equal(t, region, regionFromZone)
-		}
-		assert.Equal(t, 3, len(generatedZones))
-		// check if all zones are unique
-		assert.Condition(t, func() (success bool) {
-			var zones []string
+			// then
 			for _, zone := range generatedZones {
-				for _, z := range zones {
-					if zone == z {
-						return false
-					}
-				}
-				zones = append(zones, zone)
+				regionFromZone := zone[:len(zone)-1]
+				assert.Equal(t, tcase.region, regionFromZone)
 			}
-			return true
-		})
-	})
-
-	t.Run("for valid zonesCount", func(t *testing.T) {
-		// given
-		region := "ap-au-1"
-
-		// when
-		generatedZones := ZonesForSapConvergedCloud(region, 2)
-
-		// then
-		for _, zone := range generatedZones {
-			regionFromZone := zone[:len(zone)-1]
-			assert.Equal(t, region, regionFromZone)
-		}
-		assert.Equal(t, 2, len(generatedZones))
-		// check if all zones are unique
-		assert.Condition(t, func() (success bool) {
-			var zones []string
-			for _, zone := range generatedZones {
-				for _, z := range zones {
-					if zone == z {
-						return false
+			assert.Equal(t, tcase.zonesCount, len(generatedZones))
+			// check if all zones are unique
+			assert.Condition(t, func() (success bool) {
+				var zones []string
+				for _, zone := range generatedZones {
+					for _, z := range zones {
+						if zone == z {
+							return false
+						}
 					}
+					zones = append(zones, zone)
 				}
-				zones = append(zones, zone)
-			}
-			return true
+				return true
+			})
 		})
-	})
+	}
 
 	t.Run("for zonesCount exceeding maximum zones for region", func(t *testing.T) {
 		// given

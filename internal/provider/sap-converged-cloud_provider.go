@@ -77,6 +77,11 @@ func (p *SapConvergedCloudInput) Provider() internal.CloudProvider {
 var sapConvergedCloudZones = map[string]string{
 	"eu-de-1": "abd",
 	"ap-au-1": "ab",
+	"na-us-1": "abd",
+	"eu-de-2": "ab",
+	"na-us-2": "ab",
+	"ap-jp-1": "a",
+	"ap-ae-1": "ab",
 }
 
 func ZonesForSapConvergedCloud(region string, zonesCount int) []string {
