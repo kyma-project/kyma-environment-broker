@@ -23,7 +23,7 @@ rules:
     resources: [ "kymas" ]
     verbs: [ "*" ]
   - apiGroups: [ "infrastructuremanager.kyma-project.io" ]
-    resources: [ "gardenerclusters" ]
+    resources: [ "gardenerclusters", "runtimes" ]
     verbs: [ "*" ]
 
 ---
