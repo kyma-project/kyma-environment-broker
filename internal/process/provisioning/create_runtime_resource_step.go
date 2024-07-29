@@ -143,6 +143,9 @@ func (s *CreateRuntimeResourceStep) createLabelsForRuntime(operation internal.Op
 		"kyma-project.io/region":             *operation.ProvisioningParameters.Parameters.Region,
 		"operator.kyma-project.io/kyma-name": kymaName,
 	}
+	if s.kimConfig.ViewOnly {
+		labels["kyma-project.io/controlled-by-provisioner"] = "true"
+	}
 	return labels
 }
 
