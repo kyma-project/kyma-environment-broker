@@ -369,7 +369,7 @@ func TestCreateRuntimeResourceStep_Defaults_Preview_SingleZone_ActualCreation(t 
 
 }
 
-func TestCreateRuntimeResourceStep_Defaults_Preview_SingleZone_ViewOnly_ActualCreation(t *testing.T) {
+func TestCreateRuntimeResourceStep_Defaults_Preview_SingleZone_ActualCreation_WithRetry(t *testing.T) {
 	// given
 	log := logrus.New()
 	memoryStorage := storage.NewMemoryStorage()
@@ -379,7 +379,7 @@ func TestCreateRuntimeResourceStep_Defaults_Preview_SingleZone_ViewOnly_ActualCr
 	instance, operation := fixInstanceAndOperation(broker.PreviewPlanID, "eu-west-2", "platform-region")
 	assertInsertions(t, memoryStorage, instance, operation)
 
-	kimConfig := fixKimConfigProvisionerDriven("preview", false)
+	kimConfig := fixKimConfig("preview", false)
 
 	cli := getClientForTests(t)
 	inputConfig := input.Config{MultiZoneCluster: false}
@@ -402,7 +402,27 @@ func TestCreateRuntimeResourceStep_Defaults_Preview_SingleZone_ViewOnly_ActualCr
 	assert.Equal(t, operation.RuntimeID, runtime.Name)
 	assert.Equal(t, "runtime-58f8c703-1756-48ab-9299-a847974d1fee", runtime.Labels["operator.kyma-project.io/kyma-name"])
 
-	assertLabelsProvisionerDriven(t, operation, runtime)
+	assertLabelsKIMDriven(t, operation, runtime)
+	assertSecurity(t, runtime)
+
+	assert.Equal(t, "aws", runtime.Spec.Shoot.Provider.Type)
+	assert.Equal(t, "eu-west-2", runtime.Spec.Shoot.Region)
+	assert.Equal(t, "production", string(runtime.Spec.Shoot.Purpose))
+	assertWorkers(t, runtime.Spec.Shoot.Provider.Workers, "m6i.large", 20, 3, 1, 0, 1, []string{"eu-west-2a", "eu-west-2b", "eu-west-2c"})
+
+	// then retry
+	_, repeat, err = step.Run(operation, entry)
+	assert.NoError(t, err)
+	assert.Zero(t, repeat)
+	err = cli.Get(context.Background(), client.ObjectKey{
+		Namespace: "kyma-system",
+		Name:      operation.RuntimeID,
+	}, &runtime)
+	assert.NoError(t, err)
+	assert.Equal(t, operation.RuntimeID, runtime.Name)
+	assert.Equal(t, "runtime-58f8c703-1756-48ab-9299-a847974d1fee", runtime.Labels["operator.kyma-project.io/kyma-name"])
+
+	assertLabelsKIMDriven(t, operation, runtime)
 	assertSecurity(t, runtime)
 
 	assert.Equal(t, "aws", runtime.Spec.Shoot.Provider.Type)
@@ -412,6 +432,7 @@ func TestCreateRuntimeResourceStep_Defaults_Preview_SingleZone_ViewOnly_ActualCr
 
 	_, err = memoryStorage.Instances().GetByID(operation.InstanceID)
 	assert.NoError(t, err)
+
 }
 
 func TestCreateRuntimeResourceStep_Defaults_Preview_MultiZone_ActualCreation(t *testing.T) {

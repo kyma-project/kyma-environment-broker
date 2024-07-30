@@ -5,7 +5,7 @@ type Config struct {
 	DryRun       bool     `envconfig:"default=true"`
 	ViewOnly     bool     `envconfig:"default=true"`
 	Plans        []string `envconfig:"default=preview"`
-	KimOnlyPlans []string `envconfig:"default="`
+	KimOnlyPlans []string `envconfig:"default=,"`
 }
 
 func (c *Config) IsEnabledForPlan(planName string) bool {
