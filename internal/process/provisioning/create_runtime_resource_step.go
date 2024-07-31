@@ -3,9 +3,10 @@ package provisioning
 import (
 	"context"
 	"fmt"
+	"time"
+
 	"github.com/kyma-project/kyma-environment-broker/internal/process/steps"
 	"k8s.io/apimachinery/pkg/api/errors"
-	"time"
 
 	"github.com/kyma-project/kyma-environment-broker/internal/networking"
 
