@@ -41,7 +41,6 @@ type (
 		MultiZone                    bool
 		ControlPlaneFailureTolerance string
 	}
-
 	AWSTrialInput struct {
 		PlatformRegionMapping  map[string]string
 		UseSmallerMachineTypes bool

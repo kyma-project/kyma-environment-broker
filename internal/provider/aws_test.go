@@ -8,6 +8,8 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
+var AWSTrialPlafomRegionMapping = map[string]string{"cf-eu10": "europe", "cf-us10": "us", "cf-ap21": "asia"}
+
 func TestAWSDefaults(t *testing.T) {
 
 	// given
@@ -66,6 +68,66 @@ func TestAWSSpecific(t *testing.T) {
 		DefaultMachineType:   "m6i.large",
 		Region:               "ap-southeast-1",
 		Purpose:              "production",
+	}, values)
+}
+
+func TestAWSTrialDefaults(t *testing.T) {
+
+	// given
+	aws := AWSTrialInputProvider{
+		PlatformRegionMapping: AWSTrialPlafomRegionMapping,
+		ProvisioningParameters: internal.ProvisioningParameters{
+			Parameters:     internal.ProvisioningParametersDTO{Region: ptr.String("eu-central-1")},
+			PlatformRegion: "cf-eu11",
+		},
+	}
+
+	// when
+	values := aws.Provide()
+
+	// then
+
+	assertValues(t, Values{
+		DefaultAutoScalerMax: 1,
+		DefaultAutoScalerMin: 1,
+		ZonesCount:           1,
+		Zones:                []string{"eu-central-1a", "eu-central-1b", "eu-central-1c"},
+		ProviderType:         "aws",
+		DefaultMachineType:   "m5.xlarge",
+		Region:               "eu-central-1",
+		Purpose:              "evaluation",
+	}, values)
+}
+
+func TestAWSTrialSpecific(t *testing.T) {
+
+	// given
+	aws := AWSTrialInputProvider{
+		PlatformRegionMapping: AWSTrialPlafomRegionMapping,
+		ProvisioningParameters: internal.ProvisioningParameters{
+			Parameters: internal.ProvisioningParametersDTO{
+				MachineType: ptr.String("m6i.xlarge"),
+				Region:      ptr.String("eu-central-1"),
+			},
+			PlatformRegion: "cf-ap21",
+		},
+	}
+
+	// when
+	values := aws.Provide()
+
+	// then
+
+	assertValues(t, Values{
+		// default values do not depend on provisioning parameters
+		DefaultAutoScalerMax: 1,
+		DefaultAutoScalerMin: 1,
+		ZonesCount:           1,
+		Zones:                []string{"ap-southeast-1a", "ap-southeast-1b", "ap-southeast-1c"},
+		ProviderType:         "aws",
+		DefaultMachineType:   "m5.xlarge",
+		Region:               "ap-southeast-1",
+		Purpose:              "evaluation",
 	}, values)
 }
 
