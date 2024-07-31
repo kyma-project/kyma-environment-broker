@@ -356,7 +356,7 @@ func TestCreateRuntimeResourceStep_Defaults_Preview_SingleZone_ActualCreation(t 
 	assert.Equal(t, operation.RuntimeID, runtime.Name)
 	assert.Equal(t, "runtime-58f8c703-1756-48ab-9299-a847974d1fee", runtime.Labels["operator.kyma-project.io/kyma-name"])
 
-	assertLabelsKIMDriven(t, preOperation, runtime)
+	assertLabelsKIMDriven(t, operation, runtime)
 	assertSecurity(t, runtime)
 
 	assert.Equal(t, "aws", runtime.Spec.Shoot.Provider.Type)
@@ -364,7 +364,7 @@ func TestCreateRuntimeResourceStep_Defaults_Preview_SingleZone_ActualCreation(t 
 	assert.Equal(t, "production", string(runtime.Spec.Shoot.Purpose))
 	assertWorkers(t, runtime.Spec.Shoot.Provider.Workers, "m6i.large", 20, 3, 1, 0, 1, []string{"eu-west-2a", "eu-west-2b", "eu-west-2c"})
 
-	_, err = memoryStorage.Instances().GetByID(preOperation.InstanceID)
+	_, err = memoryStorage.Instances().GetByID(operation.InstanceID)
 	assert.NoError(t, err)
 
 }
@@ -376,15 +376,8 @@ func TestCreateRuntimeResourceStep_Defaults_Preview_SingleZone_ViewOnly_ActualCr
 
 	err := imv1.AddToScheme(scheme.Scheme)
 
-	region := "eu-west-2"
-
-	instance := fixInstance()
-	err = memoryStorage.Instances().Insert(instance)
-	assert.NoError(t, err)
-
-	preOperation := fixOperationForCreateRuntimeResource(instance.InstanceID, fixture.FixProvisioningParametersWithDTO(operationID, broker.PreviewPlanID, fixProvisioningParametersDTOWithRegion(region)))
-	err = memoryStorage.Operations().InsertOperation(preOperation)
-	assert.NoError(t, err)
+	instance, operation := fixInstanceAndOperation(broker.PreviewPlanID, "eu-west-2", "platform-region")
+	assertInsertions(t, memoryStorage, instance, operation)
 
 	kimConfig := fixKimConfigProvisionerDriven("preview", false)
 
@@ -394,7 +387,7 @@ func TestCreateRuntimeResourceStep_Defaults_Preview_SingleZone_ViewOnly_ActualCr
 
 	// when
 	entry := log.WithFields(logrus.Fields{"step": "TEST"})
-	_, repeat, err := step.Run(preOperation, entry)
+	_, repeat, err := step.Run(operation, entry)
 
 	// then
 	assert.NoError(t, err)
@@ -403,10 +396,10 @@ func TestCreateRuntimeResourceStep_Defaults_Preview_SingleZone_ViewOnly_ActualCr
 	runtime := imv1.Runtime{}
 	err = cli.Get(context.Background(), client.ObjectKey{
 		Namespace: "kyma-system",
-		Name:      preOperation.RuntimeID,
+		Name:      operation.RuntimeID,
 	}, &runtime)
 	assert.NoError(t, err)
-	assert.Equal(t, preOperation.RuntimeID, runtime.Name)
+	assert.Equal(t, operation.RuntimeID, runtime.Name)
 	assert.Equal(t, "runtime-58f8c703-1756-48ab-9299-a847974d1fee", runtime.Labels["operator.kyma-project.io/kyma-name"])
 
 	assertLabelsProvisionerDriven(t, operation, runtime)
