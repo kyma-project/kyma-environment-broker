@@ -68,6 +68,7 @@ jobs:
       name:  kyma-environment-broker/ga
       dockerfile: Dockerfile.keb
       context: .
+      tags: ${{ inputs.name }}
 
   build-archiver-image:
     uses: kyma-project/test-infra/.github/workflows/image-builder.yml@main
@@ -76,6 +77,7 @@ jobs:
       dockerfile: Dockerfile.job
       context: .
       build-args: BIN=archiver
+      tags: ${{ inputs.name }}
 
   build-environments-cleanup-image:
     uses: kyma-project/test-infra/.github/workflows/image-builder.yml@main
@@ -84,6 +86,7 @@ jobs:
       dockerfile: Dockerfile.job
       context: .
       build-args: BIN=environmentscleanup
+      tags: ${{ inputs.name }}
 
   build-deprovision-retrigger-image:
     uses: kyma-project/test-infra/.github/workflows/image-builder.yml@main
@@ -92,6 +95,7 @@ jobs:
       dockerfile: Dockerfile.job
       context: .
       build-args: BIN=deprovisionretrigger
+      tags: ${{ inputs.name }}
 
   build-expirator-image:
     uses: kyma-project/test-infra/.github/workflows/image-builder.yml@main
@@ -100,6 +104,7 @@ jobs:
       dockerfile: Dockerfile.job
       context: .
       build-args: BIN=expirator
+      tags: ${{ inputs.name }}
 
   build-runtime-reconciler-image:
     uses: kyma-project/test-infra/.github/workflows/image-builder.yml@main
@@ -108,6 +113,7 @@ jobs:
       dockerfile: Dockerfile.runtimereconciler
       context: .
       build-args: BIN=runtime-reconciler
+      tags: ${{ inputs.name }}
 
   build-subaccount-cleanup-image:
     uses: kyma-project/test-infra/.github/workflows/image-builder.yml@main
@@ -116,6 +122,7 @@ jobs:
       dockerfile: Dockerfile.job
       context: .
       build-args: BIN=accountcleanup
+      tags: ${{ inputs.name }}
 
   build-subaccount-sync-image:
     uses: kyma-project/test-infra/.github/workflows/image-builder.yml@main
@@ -124,6 +131,7 @@ jobs:
       dockerfile: Dockerfile.subaccountsync
       context: .
       build-args: BIN=subaccount-sync
+      tags: ${{ inputs.name }}
 
   run-keb-chart-tests:
     name: Validate KEB chart 
