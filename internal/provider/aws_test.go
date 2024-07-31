@@ -28,7 +28,7 @@ func TestAWSDefaults(t *testing.T) {
 		DefaultAutoScalerMax: 20,
 		DefaultAutoScalerMin: 3,
 		ZonesCount:           3,
-		Zones:                []string{"eu-central-1a", "eu-central-1b", "ap-southeast-1c"},
+		Zones:                []string{"eu-central-1a", "eu-central-1b", "eu-central-1c"},
 		ProviderType:         "aws",
 		DefaultMachineType:   "m6i.large",
 		Region:               "eu-central-1",
@@ -70,7 +70,8 @@ func TestAWSSpecific(t *testing.T) {
 }
 
 func assertValues(t *testing.T, expected Values, got Values) {
-	assert.Len(t, expected.Zones, len(got.Zones))
+	assert.Equal(t, expected.ZonesCount, len(got.Zones))
+	assert.Subset(t, expected.Zones, got.Zones)
 	got.Zones = nil
 	expected.Zones = nil
 	assert.Equal(t, expected, got)

@@ -15,6 +15,10 @@ type (
 		UseSmallerMachineTypes bool
 		ProvisioningParameters internal.ProvisioningParameters
 	}
+	AzureLiteInputProvider struct {
+		UseSmallerMachineTypes bool
+		ProvisioningParameters internal.ProvisioningParameters
+	}
 )
 
 func (p *AzureInputProvider) Provide() Values {
@@ -57,11 +61,10 @@ func (p *AzureTrialInputProvider) Provide() Values {
 	if p.UseSmallerMachineTypes {
 		machineType = DefaultAzureMachineType
 	}
+
 	zones := p.zones()
-	region := DefaultAzureRegion
-	if p.ProvisioningParameters.Parameters.Region != nil {
-		region = *p.ProvisioningParameters.Parameters.Region
-	}
+	region := p.region()
+
 	return Values{
 		DefaultAutoScalerMax: 1,
 		DefaultAutoScalerMin: 1,
@@ -90,6 +93,39 @@ func (p *AzureTrialInputProvider) region() string {
 	}
 	if p.ProvisioningParameters.Parameters.Region != nil && *p.ProvisioningParameters.Parameters.Region != "" {
 		return *toAzureSpecific[*p.ProvisioningParameters.Parameters.Region]
+	}
+	return DefaultAzureRegion
+}
+
+func (p *AzureLiteInputProvider) Provide() Values {
+	machineType := DefaultOldAzureTrialMachineType
+	if p.UseSmallerMachineTypes {
+		machineType = DefaultAzureMachineType
+	}
+	zones := p.zones()
+	region := DefaultAzureRegion
+	if p.ProvisioningParameters.Parameters.Region != nil {
+		region = *p.ProvisioningParameters.Parameters.Region
+	}
+	return Values{
+		DefaultAutoScalerMax: 10,
+		DefaultAutoScalerMin: 2,
+		ZonesCount:           1,
+		Zones:                zones,
+		ProviderType:         "azure",
+		DefaultMachineType:   machineType,
+		Region:               region,
+		Purpose:              PurposeEvaluation,
+	}
+}
+
+func (p *AzureLiteInputProvider) zones() []string {
+	return GenerateAzureZones(1)
+}
+
+func (p *AzureLiteInputProvider) region() string {
+	if euaccess.IsEURestrictedAccess(p.ProvisioningParameters.PlatformRegion) {
+		return DefaultEuAccessAzureRegion
 	}
 	return DefaultAzureRegion
 }
