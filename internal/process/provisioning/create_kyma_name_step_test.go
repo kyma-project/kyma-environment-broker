@@ -45,8 +45,8 @@ func TestCreateKymaNameStep_HappyPath(t *testing.T) {
 	log := logrus.New()
 	memoryStorage := storage.NewMemoryStorage()
 
-	preOperation := fixture.FixProvisioningOperation(operationID, instanceID)
-	err := memoryStorage.Operations().InsertOperation(preOperation)
+	operation := fixProvisioningOperationWithEmptyResourceName()
+	err := memoryStorage.Operations().InsertOperation(operation)
 	assert.NoError(t, err)
 
 	err = memoryStorage.Instances().Insert(fixInstance())
@@ -56,17 +56,23 @@ func TestCreateKymaNameStep_HappyPath(t *testing.T) {
 
 	// when
 	entry := log.WithFields(logrus.Fields{"step": "TEST"})
-	postOperation, backoff, err := step.Run(preOperation, entry)
+	postOperation, backoff, err := step.Run(operation, entry)
 
 	// then
 	assert.NoError(t, err)
 	assert.Zero(t, backoff)
-	assert.Equal(t, preOperation.RuntimeID, postOperation.RuntimeID)
-	assert.Equal(t, postOperation.KymaResourceName, preOperation.RuntimeID)
+	assert.Equal(t, operation.RuntimeID, postOperation.RuntimeID)
+	assert.Equal(t, postOperation.KymaResourceName, operation.RuntimeID)
 	assert.Equal(t, postOperation.KymaResourceNamespace, "kyma-system")
-	_, err = memoryStorage.Instances().GetByID(preOperation.InstanceID)
+	_, err = memoryStorage.Instances().GetByID(operation.InstanceID)
 	assert.NoError(t, err)
 
+}
+
+func fixProvisioningOperationWithEmptyResourceName() internal.Operation {
+	preOperation := fixture.FixProvisioningOperation(operationID, instanceID)
+	preOperation.KymaResourceName = ""
+	return preOperation
 }
 
 func TestCreateKymaNameStep_NoRuntimeID(t *testing.T) {
@@ -74,11 +80,10 @@ func TestCreateKymaNameStep_NoRuntimeID(t *testing.T) {
 	log := logrus.New()
 	memoryStorage := storage.NewMemoryStorage()
 
-	preOperation := fixture.FixProvisioningOperation(operationID, instanceID)
+	operation := fixProvisioningOperationWithEmptyResourceName()
+	operation.RuntimeID = ""
 
-	preOperation.RuntimeID = ""
-
-	err := memoryStorage.Operations().InsertOperation(preOperation)
+	err := memoryStorage.Operations().InsertOperation(operation)
 	assert.NoError(t, err)
 
 	err = memoryStorage.Instances().Insert(fixInstance())
@@ -88,7 +93,7 @@ func TestCreateKymaNameStep_NoRuntimeID(t *testing.T) {
 
 	// when
 	entry := log.WithFields(logrus.Fields{"step": "TEST"})
-	_, backoff, err := step.Run(preOperation, entry)
+	_, backoff, err := step.Run(operation, entry)
 
 	// then
 	assert.ErrorContains(t, err, "RuntimeID not set, cannot create Kyma name")
