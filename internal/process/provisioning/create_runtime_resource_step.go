@@ -257,7 +257,7 @@ func (s *CreateRuntimeResourceStep) providerValues(operation *internal.Operation
 		case internal.AWS:
 			p = &provider.AWSTrialInputProvider{
 				PlatformRegionMapping:  s.trialPlatformRegionMapping,
-				UseSmallerMachineTypes: s.useSmallerMachinesForTrials,
+				UseSmallerMachineTypes: s.useSmallerMachineTypes,
 				ProvisioningParameters: operation.ProvisioningParameters,
 			}
 		case internal.GCP:
@@ -268,7 +268,7 @@ func (s *CreateRuntimeResourceStep) providerValues(operation *internal.Operation
 		case internal.Azure:
 			p = &provider.AzureTrialInputProvider{
 				PlatformRegionMapping:  s.trialPlatformRegionMapping,
-				UseSmallerMachineTypes: s.useSmallerMachinesForTrials,
+				UseSmallerMachineTypes: s.useSmallerMachinesTypes,
 				ProvisioningParameters: operation.ProvisioningParameters,
 			}
 		default:
