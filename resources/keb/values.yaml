@@ -344,7 +344,7 @@ kim:
   dryRun: true
   viewOnly: true
   plans: "preview"  # comma separated list of plans where KIM will be used
-  kimOnlyPlans: "" # comma separated list of plans where KIM will be used exclusively
+  kimOnlyPlans: "no-plan" # comma separated list of plans where KIM will be used exclusively
 
 oidc:
   issuer: https://kymatest.accounts400.ondemand.com
