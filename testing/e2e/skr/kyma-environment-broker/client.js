@@ -151,7 +151,6 @@ class KEBClient {
       },
       parameters: {
         name: name,
-        administrators: ['test-admin@sap.com'],
         // Trial plan doesn't require region
         ...(this.planID === trialPlanID ? {} : {region: this.region}),
         ...customParams,
