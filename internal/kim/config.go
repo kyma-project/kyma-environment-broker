@@ -19,3 +19,15 @@ func (c *Config) IsEnabledForPlan(planName string) bool {
 	}
 	return false
 }
+
+func (c *Config) DrivenByKimOnly(planName string) bool {
+	if !c.IsEnabledForPlan(planName) {
+		return false
+	}
+	for _, plan := range c.KimOnlyPlans {
+		if plan == planName {
+			return true
+		}
+	}
+	return false
+}
