@@ -231,11 +231,9 @@ func (s *CreateRuntimeResourceStep) providerValues(operation *internal.Operation
 	case broker.FreemiumPlanID:
 		var freemiumProvider internal.CloudProvider
 		if operation.ProvisioningParameters.Parameters.Provider == nil {
-			//TODO - default provider?
-			return provider.Values{}, fmt.Errorf("provider not definded for freemium plan")
-		} else {
-			freemiumProvider = *operation.ProvisioningParameters.Parameters.Provider
+			return provider.Values{}, fmt.Errorf("provider not defined for freemium plan")
 		}
+		freemiumProvider = *operation.ProvisioningParameters.Parameters.Provider
 		switch freemiumProvider {
 		case internal.AWS:
 			p = &provider.AWSFreemiumInputProvider{
