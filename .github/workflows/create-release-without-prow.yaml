@@ -58,7 +58,7 @@ jobs:
 
   run-unit-tests:
     name: Unit tests, go mod tidy
-    uses: "./.github/workflśows/run-unit-tests-reusable.yaml"
+    uses: "./.github/workflows/run-unit-tests-reusable.yaml"
     with:
       release: "true"
   
