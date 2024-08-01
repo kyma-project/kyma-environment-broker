@@ -31,26 +31,26 @@ import (
 )
 
 type CreateRuntimeResourceStep struct {
-	operationManager            *process.OperationManager
-	instanceStorage             storage.Instances
-	runtimeStateStorage         storage.RuntimeStates
-	k8sClient                   client.Client
-	kimConfig                   kim.Config
-	config                      input.Config
-	trialPlatformRegionMapping  map[string]string
-	useSmallerMachinesForTrials bool
+	operationManager           *process.OperationManager
+	instanceStorage            storage.Instances
+	runtimeStateStorage        storage.RuntimeStates
+	k8sClient                  client.Client
+	kimConfig                  kim.Config
+	config                     input.Config
+	trialPlatformRegionMapping map[string]string
+	useSmallerMachineTypes     bool
 }
 
 func NewCreateRuntimeResourceStep(os storage.Operations, is storage.Instances, k8sClient client.Client, kimConfig kim.Config, cfg input.Config,
-	trialPlatformRegionMapping map[string]string, useSmallerMachinesForTrials bool) *CreateRuntimeResourceStep {
+	trialPlatformRegionMapping map[string]string, useSmallerMachines bool) *CreateRuntimeResourceStep {
 	return &CreateRuntimeResourceStep{
-		operationManager:            process.NewOperationManager(os),
-		instanceStorage:             is,
-		kimConfig:                   kimConfig,
-		k8sClient:                   k8sClient,
-		config:                      cfg,
-		trialPlatformRegionMapping:  trialPlatformRegionMapping,
-		useSmallerMachinesForTrials: useSmallerMachinesForTrials,
+		operationManager:           process.NewOperationManager(os),
+		instanceStorage:            is,
+		kimConfig:                  kimConfig,
+		k8sClient:                  k8sClient,
+		config:                     cfg,
+		trialPlatformRegionMapping: trialPlatformRegionMapping,
+		useSmallerMachineTypes:     useSmallerMachines,
 	}
 }
 
@@ -228,6 +228,24 @@ func (s *CreateRuntimeResourceStep) providerValues(operation *internal.Operation
 			MultiZone:              s.config.MultiZoneCluster,
 			ProvisioningParameters: operation.ProvisioningParameters,
 		}
+	case broker.FreemiumPlanID:
+		var freemiumProvider internal.CloudProvider
+		if operation.ProvisioningParameters.Parameters.Provider == nil {
+			//TODO - default provider?
+			return provider.Values{}, fmt.Errorf("provider not definded for freemium plan")
+		} else {
+			freemiumProvider = *operation.ProvisioningParameters.Parameters.Provider
+		}
+		switch freemiumProvider {
+		case internal.AWS:
+			p = &provider.AWSFreemiumInputProvider{
+				UseSmallerMachineTypes: s.useSmallerMachineTypes,
+				ProvisioningParameters: operation.ProvisioningParameters,
+			}
+		default:
+			return provider.Values{}, fmt.Errorf("freemium provider for %s not yet implemented", freemiumProvider)
+		}
+
 	case broker.TrialPlanID:
 		var trialProvider internal.CloudProvider
 		if operation.ProvisioningParameters.Parameters.Provider == nil {

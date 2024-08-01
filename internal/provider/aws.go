@@ -10,9 +10,12 @@ type (
 		MultiZone              bool
 		ProvisioningParameters internal.ProvisioningParameters
 	}
-
 	AWSTrialInputProvider struct {
 		PlatformRegionMapping  map[string]string
+		UseSmallerMachineTypes bool
+		ProvisioningParameters internal.ProvisioningParameters
+	}
+	AWSFreemiumInputProvider struct {
 		UseSmallerMachineTypes bool
 		ProvisioningParameters internal.ProvisioningParameters
 	}
@@ -33,11 +36,11 @@ func (p *AWSInputProvider) Provide() Values {
 		ProviderType:         "aws",
 		DefaultMachineType:   DefaultAWSMachineType,
 		Region:               region,
-		Purpose:              PurposeProduction, //TODO - default value is define per landscape in mgmt plane config
+		Purpose:              PurposeProduction,
 	}
 }
 
-func (p *AWSInputProvider) zonesCount() int { //TODO - this is called twice per provisioning
+func (p *AWSInputProvider) zonesCount() int {
 	zonesCount := 1
 	if p.MultiZone {
 		zonesCount = DefaultAWSMultiZoneCount
@@ -86,4 +89,30 @@ func (p *AWSTrialInputProvider) region() string {
 		return *toAWSSpecific[*p.ProvisioningParameters.Parameters.Region]
 	}
 	return DefaultAWSTrialRegion
+}
+
+func (p *AWSFreemiumInputProvider) Provide() Values {
+	machineType := DefaultOldAWSTrialMachineType
+	if p.UseSmallerMachineTypes {
+		machineType = DefaultAWSMachineType
+	}
+	region := p.region()
+
+	return Values{
+		DefaultAutoScalerMax: 1,
+		DefaultAutoScalerMin: 1,
+		ZonesCount:           1,
+		Zones:                MultipleZonesForAWSRegion(region, 1),
+		ProviderType:         "aws",
+		DefaultMachineType:   machineType,
+		Region:               region,
+		Purpose:              PurposeEvaluation,
+	}
+}
+
+func (p *AWSFreemiumInputProvider) region() string {
+	if euaccess.IsEURestrictedAccess(p.ProvisioningParameters.PlatformRegion) {
+		return DefaultEuAccessAWSRegion
+	}
+	return DefaultAWSRegion
 }
