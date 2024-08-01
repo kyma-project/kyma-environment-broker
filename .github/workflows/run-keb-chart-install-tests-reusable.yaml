@@ -141,6 +141,7 @@ jobs:
       - name: Deploy KEB helm chart
         if: ${{ steps.changed-files-specific.outputs.any_modified == 'true' || inputs.release == 'true' }}
         run: |
+          cd resources/keb
           helm install keb ../keb --namespace kcp-system -f values.yaml --set global.database.embedded.enabled=false --debug
 
   confirm-keb-chart-tests-result:
