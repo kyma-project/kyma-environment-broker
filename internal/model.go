@@ -245,6 +245,7 @@ type InstanceDetails struct {
 	KymaResourceNamespace string `json:"kyma_resource_namespace"`
 	KymaResourceName      string `json:"kyma_resource_name"`
 	GardenerClusterName   string `json:"gardener_cluster_name"`
+	RuntimeResourceName   string `json:"runtime_resource_name"`
 
 	EuAccess bool `json:"eu_access"`
 

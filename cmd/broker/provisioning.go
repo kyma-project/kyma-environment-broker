@@ -93,7 +93,7 @@ func NewProvisioningProcessingQueue(ctx context.Context, provisionManager *proce
 		// postcondition: operation.RuntimeID is set
 		{
 			stage: createRuntimeStageName,
-			step:  provisioning.NewCreateKymaNameStep(db.Operations()),
+			step:  provisioning.NewCreateResourceNamesStep(db.Operations()),
 		},
 		// postcondition: operation.KymaResourceName is set
 		{

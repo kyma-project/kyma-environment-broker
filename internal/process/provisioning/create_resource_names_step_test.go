@@ -40,7 +40,7 @@ const (
 
 var shootPurpose = "evaluation"
 
-func TestCreateKymaNameStep_HappyPath(t *testing.T) {
+func TestCreateResourceNamesStep_HappyPath(t *testing.T) {
 	// given
 	log := logrus.New()
 	memoryStorage := storage.NewMemoryStorage()
@@ -52,7 +52,7 @@ func TestCreateKymaNameStep_HappyPath(t *testing.T) {
 	err = memoryStorage.Instances().Insert(fixInstance())
 	assert.NoError(t, err)
 
-	step := NewCreateKymaNameStep(memoryStorage.Operations())
+	step := NewCreateResourceNamesStep(memoryStorage.Operations())
 
 	// when
 	entry := log.WithFields(logrus.Fields{"step": "TEST"})
@@ -64,18 +64,20 @@ func TestCreateKymaNameStep_HappyPath(t *testing.T) {
 	assert.Equal(t, operation.RuntimeID, postOperation.RuntimeID)
 	assert.Equal(t, postOperation.KymaResourceName, operation.RuntimeID)
 	assert.Equal(t, postOperation.KymaResourceNamespace, "kyma-system")
+	assert.Equal(t, postOperation.RuntimeResourceName, operation.RuntimeID)
 	_, err = memoryStorage.Instances().GetByID(operation.InstanceID)
 	assert.NoError(t, err)
 
 }
 
 func fixProvisioningOperationWithEmptyResourceName() internal.Operation {
-	preOperation := fixture.FixProvisioningOperation(operationID, instanceID)
-	preOperation.KymaResourceName = ""
-	return preOperation
+	operation := fixture.FixProvisioningOperation(operationID, instanceID)
+	operation.KymaResourceName = ""
+	operation.RuntimeResourceName = ""
+	return operation
 }
 
-func TestCreateKymaNameStep_NoRuntimeID(t *testing.T) {
+func TestCreateResourceNamesStep_NoRuntimeID(t *testing.T) {
 	// given
 	log := logrus.New()
 	memoryStorage := storage.NewMemoryStorage()
@@ -89,14 +91,14 @@ func TestCreateKymaNameStep_NoRuntimeID(t *testing.T) {
 	err = memoryStorage.Instances().Insert(fixInstance())
 	assert.NoError(t, err)
 
-	step := NewCreateKymaNameStep(memoryStorage.Operations())
+	step := NewCreateResourceNamesStep(memoryStorage.Operations())
 
 	// when
 	entry := log.WithFields(logrus.Fields{"step": "TEST"})
 	_, backoff, err := step.Run(operation, entry)
 
 	// then
-	assert.ErrorContains(t, err, "RuntimeID not set, cannot create Kyma name")
+	assert.ErrorContains(t, err, "RuntimeID not set")
 	assert.Zero(t, backoff)
 }
 
@@ -204,54 +206,4 @@ func fixConfigMap(defaultKymaVersion string) k8sruntime.Object {
 			"default": `kyma-template: "---"`},
 	}
 	return kebCfg
-}
-
-func fixProvisioningParameters(id string, planId string, platformRegion string, dto internal.ProvisioningParametersDTO) internal.ProvisioningParameters {
-	return internal.ProvisioningParameters{
-		PlanID:         planId,
-		ServiceID:      fixture.ServiceId,
-		ErsContext:     fixture.FixERSContext(id),
-		Parameters:     dto,
-		PlatformRegion: platformRegion,
-	}
-}
-
-func fixParametersForAzure() internal.ProvisioningParametersDTO {
-	provider := internal.Azure
-	return internal.ProvisioningParametersDTO{
-		Name:         "runtime-resource-test",
-		VolumeSizeGb: ptr.Integer(50),
-		MachineType:  ptr.String("Standard_D8_v3"),
-		Region:       ptr.String("Region"),
-		Purpose:      ptr.String("Purpose"),
-		LicenceType:  ptr.String("LicenceType"),
-		Zones:        []string{"1"},
-		AutoScalerParameters: internal.AutoScalerParameters{
-			AutoScalerMin:  ptr.Integer(3),
-			AutoScalerMax:  ptr.Integer(10),
-			MaxSurge:       ptr.Integer(4),
-			MaxUnavailable: ptr.Integer(1),
-		},
-		Provider: &provider,
-	}
-}
-
-func fixParametersForPreview() internal.ProvisioningParametersDTO {
-	provider := internal.AWS
-	return internal.ProvisioningParametersDTO{
-		Name:         "runtime-resource-test",
-		VolumeSizeGb: ptr.Integer(50),
-		MachineType:  ptr.String("Standard_D8_v3"),
-		Region:       ptr.String("Region"),
-		Purpose:      ptr.String("Purpose"),
-		LicenceType:  ptr.String("LicenceType"),
-		Zones:        []string{"1"},
-		AutoScalerParameters: internal.AutoScalerParameters{
-			AutoScalerMin:  ptr.Integer(3),
-			AutoScalerMax:  ptr.Integer(10),
-			MaxSurge:       ptr.Integer(4),
-			MaxUnavailable: ptr.Integer(1),
-		},
-		Provider: &provider,
-	}
 }
