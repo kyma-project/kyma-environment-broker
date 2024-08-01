@@ -5,6 +5,9 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/kyma-project/kyma-environment-broker/internal/process/steps"
+	"k8s.io/apimachinery/pkg/api/errors"
+
 	"github.com/kyma-project/kyma-environment-broker/internal/networking"
 
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -62,57 +65,71 @@ func (s *CreateRuntimeResourceStep) Run(operation internal.Operation, log logrus
 	}
 
 	if !s.kimConfig.IsEnabledForPlan(broker.PlanNamesMapping[operation.ProvisioningParameters.PlanID]) {
+		if !s.kimConfig.Enabled {
+			log.Infof("KIM is not enabled, skipping")
+			return operation, 0, nil
+		}
 		log.Infof("KIM is not enabled for plan %s, skipping", broker.PlanNamesMapping[operation.ProvisioningParameters.PlanID])
 		return operation, 0, nil
 	}
 
 	kymaResourceName := operation.KymaResourceName
 	kymaResourceNamespace := operation.KymaResourceNamespace
-
-	runtimeCR, err := s.createRuntimeResourceObject(operation, kymaResourceName, kymaResourceNamespace)
-	if err != nil {
-		return s.operationManager.OperationFailed(operation, fmt.Sprintf("while creating Runtime CR object: %s", err), err, log)
-	}
+	runtimeResourceName := steps.KymaRuntimeResourceName(operation)
+	log.Infof("KymaResourceName: %s, KymaResourceNamespace: %s, RuntimeResourceName: %s", kymaResourceName, kymaResourceNamespace, runtimeResourceName)
 
 	if s.kimConfig.DryRun {
+		runtimeCR := &imv1.Runtime{}
+		err := s.updateRuntimeResourceObject(runtimeCR, operation, runtimeResourceName, kymaResourceName, kymaResourceNamespace)
+		if err != nil {
+			return s.operationManager.OperationFailed(operation, fmt.Sprintf("while updating Runtime resource object: %s", err), err, log)
+		}
 		yaml, err := RuntimeToYaml(runtimeCR)
 		if err != nil {
-			log.Errorf("failed to encode Runtime CR as yaml: %s", err)
+			log.Errorf("failed to encode Runtime resource as yaml: %s", err)
 		} else {
 			fmt.Println(yaml)
 		}
 	} else {
-		err := s.k8sClient.Create(context.Background(), runtimeCR)
+		runtimeCR, err := s.getEmptyOrExistingRuntimeResource(runtimeResourceName, kymaResourceNamespace)
 		if err != nil {
-			log.Error("unable to create Runtime resource: %s", err)
-			return s.operationManager.OperationFailed(operation, fmt.Sprintf("unable to Runtime resource: %s", err), err, log)
+			log.Errorf("unable to get Runtime resource %s/%s", operation.KymaResourceNamespace, runtimeResourceName)
+			return s.operationManager.RetryOperation(operation, "unable to get Runtime resource", err, 3*time.Second, 20*time.Second, log)
 		}
-		log.Infof("Runtime CR %s creation process finished successfully", operation.RuntimeID)
+		if runtimeCR.GetResourceVersion() != "" {
+			log.Infof("Runtime resource already created %s/%s: ", operation.KymaResourceNamespace, runtimeResourceName)
+			return operation, 0, nil
+		} else {
+			err := s.updateRuntimeResourceObject(runtimeCR, operation, runtimeResourceName, kymaResourceName, kymaResourceNamespace)
+			if err != nil {
+				return s.operationManager.OperationFailed(operation, fmt.Sprintf("while creating Runtime CR object: %s", err), err, log)
+			}
+			err = s.k8sClient.Create(context.Background(), runtimeCR)
+			if err != nil {
+				log.Errorf("unable to create Runtime resource: %s/%s: %s", operation.KymaResourceNamespace, runtimeResourceName, err.Error())
+				return s.operationManager.RetryOperation(operation, "unable to create Runtime resource", err, 3*time.Second, 20*time.Second, log)
+			}
+		}
+		log.Infof("Runtime resource %s/%s creation process finished successfully", operation.KymaResourceNamespace, runtimeResourceName)
 	}
 	return operation, 0, nil
 }
 
-func (s *CreateRuntimeResourceStep) CreateResource(cr *imv1.Runtime) error {
-	logrus.Info("Creating Runtime CR - TO BE IMPLEMENTED")
-	return nil
-}
+func (s *CreateRuntimeResourceStep) updateRuntimeResourceObject(runtime *imv1.Runtime, operation internal.Operation, runtimeName, kymaName, kymaNamespace string) error {
 
-func (s *CreateRuntimeResourceStep) createRuntimeResourceObject(operation internal.Operation, kymaName, kymaNamespace string) (*imv1.Runtime, error) {
-
-	runtime := imv1.Runtime{}
-	runtime.ObjectMeta.Name = operation.RuntimeID
+	runtime.ObjectMeta.Name = runtimeName
 	runtime.ObjectMeta.Namespace = kymaNamespace
 	runtime.ObjectMeta.Labels = s.createLabelsForRuntime(operation, kymaName)
 
 	// get plan specific values (like zones, default machine type etc.
 	values, err := s.providerValues(&operation)
 	if err != nil {
-		return nil, err
+		return err
 	}
 
 	providerObj, err := s.createShootProvider(&operation, values)
 	if err != nil {
-		return nil, err
+		return err
 	}
 
 	runtime.Spec.Shoot.Provider = providerObj
@@ -124,7 +141,7 @@ func (s *CreateRuntimeResourceStep) createRuntimeResourceObject(operation intern
 	runtime.Spec.Shoot.ControlPlane.HighAvailability = s.createHighAvailabilityConfiguration()
 	runtime.Spec.Security = s.createSecurityConfiguration(operation)
 	runtime.Spec.Shoot.Networking = s.createNetworkingConfiguration(operation)
-	return &runtime, nil
+	return nil
 }
 
 func (s *CreateRuntimeResourceStep) createLabelsForRuntime(operation internal.Operation, kymaName string) map[string]string {
@@ -138,6 +155,9 @@ func (s *CreateRuntimeResourceStep) createLabelsForRuntime(operation internal.Op
 		"kyma-project.io/shoot-name":         operation.ShootName,
 		"kyma-project.io/region":             *operation.ProvisioningParameters.Parameters.Region,
 		"operator.kyma-project.io/kyma-name": kymaName,
+	}
+	if s.kimConfig.ViewOnly {
+		labels["kyma-project.io/controlled-by-provisioner"] = "true"
 	}
 	return labels
 }
@@ -275,6 +295,19 @@ func (s *CreateRuntimeResourceStep) createNetworkingConfiguration(operation inte
 		Services: DefaultIfParamNotSet(networking.DefaultServicesCIDR, networkingParams.ServicesCidr),
 		Nodes:    nodes,
 	}
+}
+
+func (s *CreateRuntimeResourceStep) getEmptyOrExistingRuntimeResource(name, namespace string) (*imv1.Runtime, error) {
+	runtime := imv1.Runtime{}
+	err := s.k8sClient.Get(context.Background(), client.ObjectKey{
+		Namespace: namespace,
+		Name:      name,
+	}, &runtime)
+
+	if err != nil && !errors.IsNotFound(err) {
+		return nil, err
+	}
+	return &runtime, nil
 }
 
 func DefaultIfParamNotSet[T interface{}](d T, param *T) T {

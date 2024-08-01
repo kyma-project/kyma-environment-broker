@@ -390,15 +390,15 @@ spec:
               value: "{{ .Values.kymaResourceDeletionTimeout }}"
             - name: APP_BROKER_USE_SMALLER_MACHINE_TYPES
               value: "{{ .Values.useSmallerMachineTypes }}"
-            - name: APP_KIM_ENABLED
+            - name: APP_BROKER_KIM_CONFIG_ENABLED
               value: "{{ .Values.kim.enabled }}"
-            - name: APP_KIM_DRY_RUN
+            - name: APP_BROKER_KIM_CONFIG_DRY_RUN
               value: "{{ .Values.kim.dryRun }}"
-            - name: APP_KIM_VIEW_ONLY
+            - name: APP_BROKER_KIM_CONFIG_VIEW_ONLY
               value: "{{ .Values.kim.viewOnly }}"
-            - name: APP_KIM_PLANS
+            - name: APP_BROKER_KIM_CONFIG_PLANS
               value: "{{ .Values.kim.plans }}"
-            - name: APP_KIM_KIM_ONLY_PLANS
+            - name: APP_BROKER_KIM_CONFIG_KIM_ONLY_PLANS
               value: "{{ .Values.kim.kimOnlyPlans }}"
           ports:
             - name: http

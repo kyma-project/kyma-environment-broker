@@ -31,8 +31,7 @@ func (s *CreateKymaNameStep) Run(operation internal.Operation, log logrus.FieldL
 	if operation.RuntimeID == "" {
 		return s.operationManager.OperationFailed(operation, fmt.Sprint("RuntimeID not set, cannot create Kyma name"), nil, log)
 	}
-
 	return s.operationManager.UpdateOperation(operation, func(op *internal.Operation) {
-		operation.KymaResourceName = steps.CreateKymaNameFromOperation(operation)
+		op.KymaResourceName = steps.CreateKymaNameFromOperation(operation)
 	}, log)
 }
