@@ -268,7 +268,7 @@ func (s *CreateRuntimeResourceStep) providerValues(operation *internal.Operation
 		case internal.Azure:
 			p = &provider.AzureTrialInputProvider{
 				PlatformRegionMapping:  s.trialPlatformRegionMapping,
-				UseSmallerMachineTypes: s.useSmallerMachinesTypes,
+				UseSmallerMachineTypes: s.useSmallerMachineTypes,
 				ProvisioningParameters: operation.ProvisioningParameters,
 			}
 		default:
