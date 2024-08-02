@@ -471,3 +471,8 @@ runtimeConfiguration: |-
     additional-components: []
 
 imagePullSecret: ""
+
+testConfig:
+  kebDeployment:
+    useAnnotations: false
+    weight: "2"
