@@ -1,4 +1,4 @@
-name: Validate KEB chart (reusable)
+name: Validate KEB chart install (reusable)
 
 on:
   workflow_call:
@@ -134,9 +134,9 @@ jobs:
           KCFG=$(kubectl config view --raw)
           kubectl create secret generic gardener-credentials --from-literal=kubeconfig="$KCFG" -n kcp-system
 
-   #   - name: Prepare chart for next KEB version
-   #     if: inputs.release == 'true'
-   #     run: scripts/bump_keb_chart.sh ${{ inputs.version }}
+      - name: Prepare chart for next KEB version
+        if: inputs.release == 'true'
+        run: scripts/bump_keb_chart.sh ${{ inputs.version }}
 
       - name: Deploy KEB helm chart
         if: ${{ steps.changed-files-specific.outputs.any_modified == 'true' || inputs.release == 'true' }}
