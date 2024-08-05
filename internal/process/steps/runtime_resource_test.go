@@ -1,11 +1,12 @@
 package steps
 
 import (
+	"testing"
+	"time"
+
 	imv1 "github.com/kyma-project/infrastructure-manager/api/v1"
 	"github.com/kyma-project/kyma-environment-broker/internal/kim"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"testing"
-	"time"
 
 	"github.com/pivotal-cf/brokerapi/v8/domain"
 

@@ -3,9 +3,10 @@ package steps
 import (
 	"context"
 	"fmt"
+	"time"
+
 	"github.com/kyma-project/kyma-environment-broker/internal/broker"
 	"github.com/kyma-project/kyma-environment-broker/internal/kim"
-	"time"
 
 	imv1 "github.com/kyma-project/infrastructure-manager/api/v1"
 
