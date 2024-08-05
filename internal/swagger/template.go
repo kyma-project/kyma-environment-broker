@@ -23,7 +23,7 @@ func NewTemplate(swaggerFilesPath string, templates map[string]string) *Template
 }
 
 func (t *Template) Execute() error {
-	templateSchemaPath := t.SwaggerFilesPath + "/schema/swagger.yaml"
+	templateSchemaPath := t.SwaggerFilesPath + "/schemaa/swagger.yaml"
 	// this path is also set in the files/swagger/index.html file
 	outputSchemaPath := t.SwaggerFilesPath + "/swagger.yaml"
 
