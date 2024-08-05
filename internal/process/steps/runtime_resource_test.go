@@ -27,7 +27,7 @@ func TestCheckRuntimeResource_RunWhenReady(t *testing.T) {
 	k8sClient := fake.NewClientBuilder().WithRuntimeObjects(&existingRuntime).Build()
 	kimConfig := fixKimConfigForAzure()
 
-	step := NewCheckRuntimeResource(os, k8sClient, kimConfig, time.Second)
+	step := NewCheckRuntimeResourceStep(os, k8sClient, kimConfig, time.Second)
 	operation := fixture.FixProvisioningOperation("op", "instance-id")
 	operation.KymaResourceNamespace = "kcp-system"
 	operation.RuntimeID = "runtime-id-000"
@@ -55,7 +55,7 @@ func TestCheckRuntimeResource_RunWhenNotReady_OperationFail(t *testing.T) {
 	kimConfig := fixKimConfigForAzure()
 
 	k8sClient := fake.NewClientBuilder().WithRuntimeObjects(&existingRuntime).Build()
-	step := NewCheckRuntimeResource(os, k8sClient, kimConfig, time.Second)
+	step := NewCheckRuntimeResourceStep(os, k8sClient, kimConfig, time.Second)
 	operation := fixture.FixProvisioningOperation("op", "instance-id")
 	operation.KymaResourceNamespace = "kcp-system"
 	operation.RuntimeID = "runtime-id-000"
@@ -85,7 +85,7 @@ func TestCheckRuntimeResource_RunWhenNotReady_Retry(t *testing.T) {
 
 	k8sClient := fake.NewClientBuilder().WithRuntimeObjects(&existingRuntime).Build()
 
-	step := NewCheckRuntimeResource(os, k8sClient, kimConfig, time.Second)
+	step := NewCheckRuntimeResourceStep(os, k8sClient, kimConfig, time.Second)
 	operation := fixture.FixProvisioningOperation("op", "instance-id")
 	operation.KymaResourceNamespace = "kcp-system"
 	operation.RuntimeID = "runtime-id-000"
