@@ -28,7 +28,7 @@ func (t *Template) Execute() error {
 	outputSchemaPath := t.SwaggerFilesPath + "/swagger.yaml"
 
 	schema, err := template.ParseFiles(templateSchemaPath)
-	fmt.Print(schema)
+	return fmt.Errorf("error %w", schema)
 	if err != nil {
 		return fmt.Errorf("while parsing files: %w", err)
 	}
