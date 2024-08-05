@@ -24,13 +24,13 @@ RUN apk --update add ca-certificates
 FROM scratch
 LABEL source=git@github.com:kyma-project/kyma-environment-broker.git
 
-COPY --from=certs /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/ca-certificates.crt
-COPY --from=build /bin/kyma-env-broker /bin/kyma-env-broker
+COPY --from=certs --chown=appuser:appuser /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/ca-certificates.crt
+COPY --from=build --chown=appuser:appuser /bin/kyma-env-broker /bin/kyma-env-broker
 COPY /files/swagger /swagger
 
-COPY --from=build /user/group /user/passwd /etc/
+COPY --from=build --chown=appuser:appuser /user/group /user/passwd /etc/
 USER appuser:appuser
 
-COPY --from=build --chown=appuser /swagger.yaml /swagger/swagger.yaml
+COPY --from=build --chown=appuser:appuser /swagger.yaml /swagger/swagger.yaml
 
 CMD ["/bin/kyma-env-broker"]
