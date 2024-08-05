@@ -26,7 +26,7 @@ LABEL source=git@github.com:kyma-project/kyma-environment-broker.git
 
 COPY --from=certs --chown=appuser:appuser /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/ca-certificates.crt
 COPY --from=build --chown=appuser:appuser /bin/kyma-env-broker /bin/kyma-env-broker
-COPY /files/swagger /swagger
+COPY --chown=appuser:appuser /files/swagger /swagger
 
 COPY --from=build --chown=appuser:appuser /user/group /user/passwd /etc/
 USER appuser:appuser
