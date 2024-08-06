@@ -151,7 +151,11 @@ jobs:
         if: ${{ steps.changed-files-specific.outputs.any_modified == 'true' || inputs.release == 'true' }}
         run: |
           cd resources/keb
-          helm install keb ../keb --namespace kcp-system -f values.yaml --set global.database.embedded.enabled=false --set testConfig.kebDeployment.useAnnotations=true --debug --wait
+          if [ "${{ inputs.release }}" == "true" ]; then
+            helm install keb ../keb --namespace kcp-system -f values.yaml --set global.database.embedded.enabled=false --set testConfig.kebDeployment.useAnnotations=true --debug --wait
+          else
+            helm install keb ../keb --namespace kcp-system -f values.yaml --set global.database.embedded.enabled=false --set testConfig.kebDeployment.useAnnotations=true --set global.images.container_registry.path="europe-docker.pkg.dev/kyma-project/dev" --debug --wait
+          fi
 
   confirm-keb-chart-tests-result:
     needs: run-keb-chart-matrix
