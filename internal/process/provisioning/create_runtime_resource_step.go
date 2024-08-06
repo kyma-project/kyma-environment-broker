@@ -163,7 +163,13 @@ func (s *CreateRuntimeResourceStep) createLabelsForRuntime(operation internal.Op
 
 func (s *CreateRuntimeResourceStep) createSecurityConfiguration(operation internal.Operation) imv1.Security {
 	security := imv1.Security{}
-	security.Administrators = operation.ProvisioningParameters.Parameters.RuntimeAdministrators
+	if len(operation.ProvisioningParameters.Parameters.RuntimeAdministrators) == 0 {
+		// default admin set from UserID in ERSContext
+		security.Administrators = []string{operation.ProvisioningParameters.ErsContext.UserID}
+	} else {
+		security.Administrators = operation.ProvisioningParameters.Parameters.RuntimeAdministrators
+	}
+
 	security.Networking.Filter.Egress.Enabled = false
 	// Ingress is not supported yet, nevertheless we set it for completeness
 	security.Networking.Filter.Ingress = &imv1.Ingress{Enabled: false}
