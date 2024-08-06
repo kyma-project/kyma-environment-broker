@@ -30,8 +30,8 @@ COPY --from=build /bin/kyma-env-broker /bin/kyma-env-broker
 
 COPY --from=build /user/group /user/passwd /etc/
 USER appuser:appuser
-COPY --chown=appuser:appuser /files/swagger /swagger
+COPY --chown=appuser /files/swagger /swagger
 
-COPY --from=build --chown=appuser:appuser /swagger.yaml /swagger/swagger.yaml
+COPY --from=build --chown=appuser /swagger.yaml /swagger/swagger.yaml
 
 CMD ["/bin/kyma-env-broker"]
