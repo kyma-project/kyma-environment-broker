@@ -138,6 +138,7 @@ func (s *CreateRuntimeResourceStep) updateRuntimeResourceObject(runtime *imv1.Ru
 	runtime.Spec.Shoot.PlatformRegion = operation.ProvisioningParameters.PlatformRegion
 	runtime.Spec.Shoot.SecretBindingName = *operation.ProvisioningParameters.Parameters.TargetSecret
 	runtime.Spec.Shoot.ControlPlane.HighAvailability = s.createHighAvailabilityConfiguration()
+	runtime.Spec.Shoot.EnforceSeedLocation = operation.ProvisioningParameters.Parameters.ShootAndSeedSameRegion
 	runtime.Spec.Security = s.createSecurityConfiguration(operation)
 	runtime.Spec.Shoot.Networking = s.createNetworkingConfiguration(operation)
 	return nil
