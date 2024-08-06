@@ -32,5 +32,5 @@ COPY --from=build --chown=appuser:appuser /user/group /user/passwd /etc/
 USER appuser:appuser
 
 COPY --from=build --chown=appuser:appuser /swagger.yaml /swagger/swagger.yaml
-RUN chmod 777 /swagger/schema/swagger.yaml
+
 CMD ["/bin/kyma-env-broker"]
