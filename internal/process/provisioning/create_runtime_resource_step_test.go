@@ -650,6 +650,58 @@ func TestCreateRuntimeResourceStep_Defaults_GCP_MultiZone_ActualCreation(t *test
 	assert.NoError(t, err)
 }
 
+func TestCreateRuntimeResourceStep_SapConvergedCloud(t *testing.T) {
+
+	for _, testCase := range []struct {
+		name                string
+		gotProvider         internal.CloudProvider
+		expectedZonesCount  int
+		expectedProvider    string
+		expectedMachineType string
+		expectedRegion      string
+		possibleZones       []string
+	}{
+		{"Single zone", internal.SapConvergedCloud, 1, "openstack", "g_c2_m8", "eu-de-1", []string{"eu-de-1a", "eu-de-1b", "eu-de-1d"}},
+		{"Multi zone", internal.SapConvergedCloud, 3, "openstack", "g_c2_m8", "eu-de-1", []string{"eu-de-1a", "eu-de-1b", "eu-de-1d"}},
+	} {
+		t.Run(testCase.name, func(t *testing.T) {
+			log := logrus.New()
+			memoryStorage := storage.NewMemoryStorage()
+			err := imv1.AddToScheme(scheme.Scheme)
+			assert.NoError(t, err)
+			instance, operation := fixInstanceAndOperation(broker.SapConvergedCloudPlanID, "", "platform-region")
+			operation.ProvisioningParameters.PlatformProvider = testCase.gotProvider
+			assertInsertions(t, memoryStorage, instance, operation)
+			kimConfig := fixKimConfig("sap-converged-cloud", false)
+
+			cli := getClientForTests(t)
+			inputConfig := input.Config{MultiZoneCluster: testCase.expectedZonesCount > 1}
+			step := NewCreateRuntimeResourceStep(memoryStorage.Operations(), memoryStorage.Instances(), cli, kimConfig, inputConfig, nil, false)
+
+			// when
+			entry := log.WithFields(logrus.Fields{"step": "TEST"})
+			gotOperation, repeat, err := step.Run(operation, entry)
+
+			// then
+			assert.NoError(t, err)
+			assert.Zero(t, repeat)
+			assert.Equal(t, domain.InProgress, gotOperation.State)
+
+			runtime := imv1.Runtime{}
+			err = cli.Get(context.Background(), client.ObjectKey{
+				Namespace: "kyma-system",
+				Name:      operation.RuntimeID,
+			}, &runtime)
+			assert.NoError(t, err)
+			assert.Equal(t, operation.RuntimeID, runtime.Name)
+			assert.Equal(t, "runtime-58f8c703-1756-48ab-9299-a847974d1fee", runtime.Labels["operator.kyma-project.io/kyma-name"])
+			assert.Equal(t, testCase.expectedProvider, runtime.Spec.Shoot.Provider.Type)
+			assertWorkers(t, runtime.Spec.Shoot.Provider.Workers, testCase.expectedMachineType, 20, 3, testCase.expectedZonesCount, 0, testCase.expectedZonesCount, testCase.possibleZones)
+
+		})
+	}
+}
+
 func TestCreateRuntimeResourceStep_Defaults_Freemium(t *testing.T) {
 
 	for _, testCase := range []struct {
@@ -699,7 +751,6 @@ func TestCreateRuntimeResourceStep_Defaults_Freemium(t *testing.T) {
 
 		})
 	}
-
 }
 
 // assertions
