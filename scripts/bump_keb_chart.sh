@@ -17,7 +17,7 @@ TYPE=$2
 VALUES_YAML="resources/keb/values.yaml"
 
 KEYS=$(yq e '.global.images | keys | .[]' $VALUES_YAML | grep 'kyma_environment')
-
+# test
 # bump images in resources/keb/values.yaml
 for key in $KEYS
 do
