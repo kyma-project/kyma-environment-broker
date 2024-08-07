@@ -388,7 +388,7 @@ func TestCreateRuntimeResourceStep_Defaults_AWS_MultiZoneWithNetworking_ActualCr
 	instance, operation := fixInstanceAndOperation(broker.AWSPlanID, "eu-west-2", "platform-region")
 	operation.ProvisioningParameters.Parameters.Networking = &internal.NetworkingDTO{
 		NodesCidr:    "192.168.48.0/20",
-		PodsCidr:     ptr.String("192.168.48.0/20"),
+		PodsCidr:     ptr.String("10.104.0.0/24"),
 		ServicesCidr: ptr.String("10.105.0.0/24"),
 	}
 
@@ -426,7 +426,7 @@ func TestCreateRuntimeResourceStep_Defaults_AWS_MultiZoneWithNetworking_ActualCr
 	assertWorkers(t, runtime.Spec.Shoot.Provider.Workers, "m6i.large", 20, 3, 3, 0, 3, []string{"eu-west-2a", "eu-west-2b", "eu-west-2c"})
 	assertNetworking(t, imv1.Networking{
 		Nodes:    "192.168.48.0/20",
-		Pods:     "192.168.48.0/20",
+		Pods:     "10.104.0.0/24",
 		Services: "10.105.0.0/24",
 	}, runtime.Spec.Shoot.Networking)
 
