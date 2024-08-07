@@ -2,8 +2,9 @@
 
 # This script bumps the KEB images in the chart, utils and the KEB chart version.
 # It has the following arguments:
-#   - release tag (mandatory)
-# ./bump_keb_chart.sh 0.0.0
+#   - version (mandatory)
+#   - run type - release or pr (mandatory)
+# ./bump_keb_chart.sh 0.0.0 release
 
 # standard bash error handling
 set -o nounset  # treat unset variables as an error and exit immediately.
@@ -11,7 +12,8 @@ set -E          # needs to be set if we want the ERR trap
 set -o pipefail # prevents errors in a pipeline from being masked
 
 
-RELEASE_TAG=$1
+VERSION=$1
+TYPE=$2
 VALUES_YAML="resources/keb/values.yaml"
 
 KEYS=$(yq e '.global.images | keys | .[]' $VALUES_YAML | grep 'kyma_environment')
@@ -20,7 +22,7 @@ KEYS=$(yq e '.global.images | keys | .[]' $VALUES_YAML | grep 'kyma_environment'
 for key in $KEYS
 do
     # yq removes empty lines when editing files, so the diff and patch are used to preserve formatting.
-    yq e ".global.images.$key.version = \"$RELEASE_TAG\"" $VALUES_YAML > $VALUES_YAML.new
+    yq e ".global.images.$key.version = \"$VERSION\"" $VALUES_YAML > $VALUES_YAML.new
     yq '.' $VALUES_YAML > $VALUES_YAML.noblanks
     diff -B $VALUES_YAML.noblanks $VALUES_YAML.new > resources/keb/patch.file
     patch $VALUES_YAML resources/keb/patch.file 
@@ -29,8 +31,9 @@ do
     rm $VALUES_YAML.new
 done
 
-yq e ".spec.jobTemplate.spec.template.spec.containers[0].image = \"europe-docker.pkg.dev/kyma-project/prod/kyma-environments-cleanup-job:$RELEASE_TAG\"" -i utils/kyma-environments-cleanup-job/kyma-environments-cleanup-job.yaml
-yq e ".spec.jobTemplate.spec.template.spec.containers[0].image = \"europe-docker.pkg.dev/kyma-project/prod/kyma-environment-archiver-job:$RELEASE_TAG\"" -i utils/archiver/kyma-environment-broker-archiver.yaml
-yq e ".version = \"$RELEASE_TAG\"" -i resources/keb/Chart.yaml
-yq e ".appVersion = \"$RELEASE_TAG\"" -i resources/keb/Chart.yaml
-
+if [ "$TYPE" == "release" ]; then
+    yq e ".spec.jobTemplate.spec.template.spec.containers[0].image = \"europe-docker.pkg.dev/kyma-project/prod/kyma-environments-cleanup-job:$VERSION\"" -i utils/kyma-environments-cleanup-job/kyma-environments-cleanup-job.yaml
+    yq e ".spec.jobTemplate.spec.template.spec.containers[0].image = \"europe-docker.pkg.dev/kyma-project/prod/kyma-environment-archiver-job:$VERSION\"" -i utils/archiver/kyma-environment-broker-archiver.yaml
+    yq e ".version = \"$VERSION\"" -i resources/keb/Chart.yaml
+    yq e ".appVersion = \"$VERSION\"" -i resources/keb/Chart.yaml
+fi

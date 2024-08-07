@@ -314,7 +314,7 @@ func TestCreateRuntimeResourceStep_Defaults_Preview_SingleZone_ActualCreation(t 
 
 	err := imv1.AddToScheme(scheme.Scheme)
 
-	instance, operation := fixInstanceAndOperation(broker.PreviewPlanID, "eu-west-2", "platform-region")
+	instance, operation := fixInstanceAndOperation(broker.PreviewPlanID, "westeurope", "platform-region")
 	assertInsertions(t, memoryStorage, instance, operation)
 
 	kimConfig := fixKimConfig("preview", false)
@@ -343,10 +343,10 @@ func TestCreateRuntimeResourceStep_Defaults_Preview_SingleZone_ActualCreation(t 
 	assertLabelsKIMDriven(t, operation, runtime)
 	assertSecurity(t, runtime)
 
-	assert.Equal(t, "aws", runtime.Spec.Shoot.Provider.Type)
-	assert.Equal(t, "eu-west-2", runtime.Spec.Shoot.Region)
+	assert.Equal(t, "azure", runtime.Spec.Shoot.Provider.Type)
+	assert.Equal(t, "westeurope", runtime.Spec.Shoot.Region)
 	assert.Equal(t, "production", string(runtime.Spec.Shoot.Purpose))
-	assertWorkers(t, runtime.Spec.Shoot.Provider.Workers, "m6i.large", 20, 3, 1, 0, 1, []string{"eu-west-2a", "eu-west-2b", "eu-west-2c"})
+	assertWorkers(t, runtime.Spec.Shoot.Provider.Workers, "Standard_D2s_v5", 20, 3, 1, 0, 1, []string{"1", "2", "3"})
 
 	_, err = memoryStorage.Instances().GetByID(operation.InstanceID)
 	assert.NoError(t, err)
@@ -360,7 +360,7 @@ func TestCreateRuntimeResourceStep_Defaults_Preview_SingleZone_ActualCreation_Wi
 
 	err := imv1.AddToScheme(scheme.Scheme)
 
-	instance, operation := fixInstanceAndOperation(broker.PreviewPlanID, "eu-west-2", "platform-region")
+	instance, operation := fixInstanceAndOperation(broker.PreviewPlanID, "westeurope", "platform-region")
 	assertInsertions(t, memoryStorage, instance, operation)
 
 	kimConfig := fixKimConfig("preview", false)
@@ -389,10 +389,10 @@ func TestCreateRuntimeResourceStep_Defaults_Preview_SingleZone_ActualCreation_Wi
 	assertLabelsKIMDriven(t, operation, runtime)
 	assertSecurity(t, runtime)
 
-	assert.Equal(t, "aws", runtime.Spec.Shoot.Provider.Type)
-	assert.Equal(t, "eu-west-2", runtime.Spec.Shoot.Region)
+	assert.Equal(t, "azure", runtime.Spec.Shoot.Provider.Type)
+	assert.Equal(t, "westeurope", runtime.Spec.Shoot.Region)
 	assert.Equal(t, "production", string(runtime.Spec.Shoot.Purpose))
-	assertWorkers(t, runtime.Spec.Shoot.Provider.Workers, "m6i.large", 20, 3, 1, 0, 1, []string{"eu-west-2a", "eu-west-2b", "eu-west-2c"})
+	assertWorkers(t, runtime.Spec.Shoot.Provider.Workers, "Standard_D2s_v5", 20, 3, 1, 0, 1, []string{"1", "2", "3"})
 
 	// then retry
 	_, repeat, err = step.Run(operation, entry)
@@ -409,10 +409,10 @@ func TestCreateRuntimeResourceStep_Defaults_Preview_SingleZone_ActualCreation_Wi
 	assertLabelsKIMDriven(t, operation, runtime)
 	assertSecurity(t, runtime)
 
-	assert.Equal(t, "aws", runtime.Spec.Shoot.Provider.Type)
-	assert.Equal(t, "eu-west-2", runtime.Spec.Shoot.Region)
+	assert.Equal(t, "azure", runtime.Spec.Shoot.Provider.Type)
+	assert.Equal(t, "westeurope", runtime.Spec.Shoot.Region)
 	assert.Equal(t, "production", string(runtime.Spec.Shoot.Purpose))
-	assertWorkers(t, runtime.Spec.Shoot.Provider.Workers, "m6i.large", 20, 3, 1, 0, 1, []string{"eu-west-2a", "eu-west-2b", "eu-west-2c"})
+	assertWorkers(t, runtime.Spec.Shoot.Provider.Workers, "Standard_D2s_v5", 20, 3, 1, 0, 1, []string{"1", "2", "3"})
 
 	_, err = memoryStorage.Instances().GetByID(operation.InstanceID)
 	assert.NoError(t, err)
@@ -426,7 +426,7 @@ func TestCreateRuntimeResourceStep_Defaults_Preview_MultiZone_ActualCreation(t *
 
 	err := imv1.AddToScheme(scheme.Scheme)
 
-	instance, operation := fixInstanceAndOperation(broker.PreviewPlanID, "eu-west-2", "platform-region")
+	instance, operation := fixInstanceAndOperation(broker.PreviewPlanID, "westeurope", "platform-region")
 	assertInsertions(t, memoryStorage, instance, operation)
 
 	kimConfig := fixKimConfig("preview", false)
@@ -455,10 +455,10 @@ func TestCreateRuntimeResourceStep_Defaults_Preview_MultiZone_ActualCreation(t *
 	assertLabelsKIMDriven(t, operation, runtime)
 	assertSecurity(t, runtime)
 
-	assert.Equal(t, "aws", runtime.Spec.Shoot.Provider.Type)
-	assert.Equal(t, "eu-west-2", runtime.Spec.Shoot.Region)
+	assert.Equal(t, "azure", runtime.Spec.Shoot.Provider.Type)
+	assert.Equal(t, "westeurope", runtime.Spec.Shoot.Region)
 	assert.Equal(t, "production", string(runtime.Spec.Shoot.Purpose))
-	assertWorkers(t, runtime.Spec.Shoot.Provider.Workers, "m6i.large", 20, 3, 3, 0, 3, []string{"eu-west-2a", "eu-west-2b", "eu-west-2c"})
+	assertWorkers(t, runtime.Spec.Shoot.Provider.Workers, "Standard_D2s_v5", 20, 3, 3, 0, 3, []string{"1", "2", "3"})
 
 	_, err = memoryStorage.Instances().GetByID(operation.InstanceID)
 	assert.NoError(t, err)

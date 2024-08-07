@@ -59,7 +59,7 @@ spec:
           {{- end }}
         {{- end}}
         - name: migrator
-          image: {{ .Values.global.images.container_registry.path }}/{{ .Values.global.images.schema_migrator.dir }}schema-migrator:{{ .Values.global.images.schema_migrator.version }}
+          image: {{ .Values.global.images.schema_migrator.dir }}schema-migrator:{{ .Values.global.images.schema_migrator.version }}
           imagePullPolicy: IfNotPresent
           command:
             - /bin/program
