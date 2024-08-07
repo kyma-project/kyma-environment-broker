@@ -138,6 +138,7 @@ func (s *CreateRuntimeResourceStep) updateRuntimeResourceObject(runtime *imv1.Ru
 	runtime.Spec.Shoot.PlatformRegion = operation.ProvisioningParameters.PlatformRegion
 	runtime.Spec.Shoot.SecretBindingName = *operation.ProvisioningParameters.Parameters.TargetSecret
 	runtime.Spec.Shoot.ControlPlane.HighAvailability = s.createHighAvailabilityConfiguration()
+	runtime.Spec.Shoot.EnforceSeedLocation = operation.ProvisioningParameters.Parameters.ShootAndSeedSameRegion
 	runtime.Spec.Security = s.createSecurityConfiguration(operation)
 	runtime.Spec.Shoot.Networking = s.createNetworkingConfiguration(operation)
 	return nil
@@ -163,7 +164,13 @@ func (s *CreateRuntimeResourceStep) createLabelsForRuntime(operation internal.Op
 
 func (s *CreateRuntimeResourceStep) createSecurityConfiguration(operation internal.Operation) imv1.Security {
 	security := imv1.Security{}
-	security.Administrators = operation.ProvisioningParameters.Parameters.RuntimeAdministrators
+	if len(operation.ProvisioningParameters.Parameters.RuntimeAdministrators) == 0 {
+		// default admin set from UserID in ERSContext
+		security.Administrators = []string{operation.ProvisioningParameters.ErsContext.UserID}
+	} else {
+		security.Administrators = operation.ProvisioningParameters.Parameters.RuntimeAdministrators
+	}
+
 	security.Networking.Filter.Egress.Enabled = false
 	// Ingress is not supported yet, nevertheless we set it for completeness
 	security.Networking.Filter.Ingress = &imv1.Ingress{Enabled: false}
