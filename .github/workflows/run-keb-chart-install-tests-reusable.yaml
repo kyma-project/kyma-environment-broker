@@ -147,60 +147,60 @@ jobs:
             scripts/bump_keb_chart.sh PR-${{ inputs.version }} "pr"
           fi
 
-      - name: Check kyma-environment-broker-image status
+      - name: Check kyma-environment-broker-image build status
         if: ${{ steps.changed-files-specific.outputs.any_modified == 'true' && inputs.release == 'false' }}
         uses: ./.github/workflows/check-commit-status
         with:
-          statusName: "pull-build-images-ga / kyma-environment-broker-image / Build image "
+          statusName: "pull-build-images-ga / kyma-environment-broker-image / Build image (pull_request_target) "
           githubToken: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Check archiver-image status
+      - name: Check archiver-image build status
         if: ${{ steps.changed-files-specific.outputs.any_modified == 'true' && inputs.release == 'false' }}
         uses: ./.github/workflows/check-commit-status
         with:
-          statusName: "pull-build-images-ga / archiver-image / Build image"
+          statusName: "pull-build-images-ga / archiver-image / Build image (pull_request_target) "
           githubToken: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Check environments-cleanup-image status
+      - name: Check environments-cleanup-image build status
         if: ${{ steps.changed-files-specific.outputs.any_modified == 'true' && inputs.release == 'false' }}
         uses: ./.github/workflows/check-commit-status
         with:
-          statusName: "pull-build-images-ga / environments-cleanup-image / Build image"
+          statusName: "pull-build-images-ga / environments-cleanup-image / Build image (pull_request_target) "
           githubToken: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Check deprovision-retrigger-image status
+      - name: Check deprovision-retrigger-image build status
         if: ${{ steps.changed-files-specific.outputs.any_modified == 'true' && inputs.release == 'false' }}
         uses: ./.github/workflows/check-commit-status
         with:
-          statusName: "pull-build-images-ga / deprovision-retrigger-image / Build image"
+          statusName: "pull-build-images-ga / deprovision-retrigger-image / Build image (pull_request_target) "
           githubToken: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Check expirator-image status
+      - name: Check expirator-image build status
         if: ${{ steps.changed-files-specific.outputs.any_modified == 'true' && inputs.release == 'false' }}
         uses: ./.github/workflows/check-commit-status
         with:
-          statusName: "pull-build-images-ga / expirator-image / Build image"
+          statusName: "pull-build-images-ga / expirator-image / Build image (pull_request_target) "
           githubToken: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Check runtime-reconciler-image status
+      - name: Check runtime-reconciler-image build status
         if: ${{ steps.changed-files-specific.outputs.any_modified == 'true' && inputs.release == 'false' }}
         uses: ./.github/workflows/check-commit-status
         with:
-          statusName: "pull-build-images-ga / runtime-reconciler-image / Build image"
+          statusName: "pull-build-images-ga / runtime-reconciler-image / Build image (pull_request_target) "
           githubToken: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Check subaccount-cleanup-image status
+      - name: Check subaccount-cleanup-image build status
         if: ${{ steps.changed-files-specific.outputs.any_modified == 'true' && inputs.release == 'false' }}
         uses: ./.github/workflows/check-commit-status
         with:
-          statusName: "pull-build-images-ga / subaccount-cleanup-image / Build image"
+          statusName: "pull-build-images-ga / subaccount-cleanup-image / Build image (pull_request_target) "
           githubToken: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Check subaccount-sync-image status
+      - name: Check subaccount-sync-image build status
         if: ${{ steps.changed-files-specific.outputs.any_modified == 'true' && inputs.release == 'false' }}
         uses: ./.github/workflows/check-commit-status
         with:
-          statusName: "pull-build-images-ga / subaccount-sync-image / Build image"
+          statusName: "pull-build-images-ga / subaccount-sync-image / Build image (pull_request_target) "
           githubToken: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Deploy KEB helm chart
