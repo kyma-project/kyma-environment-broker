@@ -147,6 +147,62 @@ jobs:
             scripts/bump_keb_chart.sh PR-${{ inputs.version }} "pr"
           fi
 
+      - name: Check kyma-environment-broker-image status
+        if: ${{ steps.changed-files-specific.outputs.any_modified == 'true' && inputs.release == 'false' }}
+        uses: ./.github/workflows/check-commit-status
+        with:
+          statusName: "pull-build-images-ga / kyma-environment-broker-image / Build image "
+          githubToken: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Check archiver-image status
+        if: ${{ steps.changed-files-specific.outputs.any_modified == 'true' && inputs.release == 'false' }}
+        uses: ./.github/workflows/check-commit-status
+        with:
+          statusName: "pull-build-images-ga / archiver-image / Build image"
+          githubToken: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Check environments-cleanup-image status
+        if: ${{ steps.changed-files-specific.outputs.any_modified == 'true' && inputs.release == 'false' }}
+        uses: ./.github/workflows/check-commit-status
+        with:
+          statusName: "pull-build-images-ga / environments-cleanup-image / Build image"
+          githubToken: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Check deprovision-retrigger-image status
+        if: ${{ steps.changed-files-specific.outputs.any_modified == 'true' && inputs.release == 'false' }}
+        uses: ./.github/workflows/check-commit-status
+        with:
+          statusName: "pull-build-images-ga / deprovision-retrigger-image / Build image"
+          githubToken: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Check expirator-image status
+        if: ${{ steps.changed-files-specific.outputs.any_modified == 'true' && inputs.release == 'false' }}
+        uses: ./.github/workflows/check-commit-status
+        with:
+          statusName: "pull-build-images-ga / expirator-image / Build image"
+          githubToken: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Check runtime-reconciler-image status
+        if: ${{ steps.changed-files-specific.outputs.any_modified == 'true' && inputs.release == 'false' }}
+        uses: ./.github/workflows/check-commit-status
+        with:
+          statusName: "pull-build-images-ga / runtime-reconciler-image / Build image"
+          githubToken: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Check subaccount-cleanup-image status
+        if: ${{ steps.changed-files-specific.outputs.any_modified == 'true' && inputs.release == 'false' }}
+        uses: ./.github/workflows/check-commit-status
+        with:
+          statusName: "pull-build-images-ga / subaccount-cleanup-image / Build image"
+          githubToken: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Check subaccount-sync-image status
+        if: ${{ steps.changed-files-specific.outputs.any_modified == 'true' && inputs.release == 'false' }}
+        uses: ./.github/workflows/check-commit-status
+        with:
+          statusName: "pull-build-images-ga / subaccount-sync-image / Build image"
+          githubToken: ${{ secrets.GITHUB_TOKEN }}
+
       - name: Deploy KEB helm chart
         if: ${{ steps.changed-files-specific.outputs.any_modified == 'true' || inputs.release == 'true' }}
         run: |
