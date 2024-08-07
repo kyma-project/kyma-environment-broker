@@ -94,6 +94,52 @@ global:
       provisionerDBName: ""
       brokerDBName: ""
 
+  secrets:
+    enabled: true
+    mechanism: vso
+    vso:
+      namespace: kyma
+      refreshAfter: 30s
+
+vsoSecrets:
+  mount: kcp-dev
+  secrets:
+    dummy-secret1:
+      path: oauth2-mps
+      secretName: kcp-kyma-environment-broker-credentials-test
+      annotations:
+        fixanot: fix
+      labels:
+        fixLabel: fix
+      templating:
+        enabled: true
+        keys:
+          client_id: keb_client_id
+          client_secret: keb_client_secret
+          tokens_endpoint: tokens_endpoint
+        data:
+          client_id: {}
+          client_secret: {}
+          tokens_endpoint: {}
+
+    dummy-secret2:
+      path: ias
+      secretName: kcp-kyma-environment-broker-e2e-ias-oauth-test
+      annotations:
+        fixanot: fix
+      labels:
+        fixLabel: fix
+      templating:
+        enabled: true
+        keys:
+          client_id: keb_e2e_client_id
+          client_secret: keb_e2e_client_secret
+          tokens_endpoint: keb_e2e_tokens_endpoint
+        data:
+          client_id: {}
+          client_secret: {}
+          tokens_endpoint: {}
+
 deployment:
   replicaCount: 1
   image:
