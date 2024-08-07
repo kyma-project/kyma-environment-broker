@@ -9,7 +9,7 @@ global:
     container_registry:
       path: europe-docker.pkg.dev/kyma-project/prod
     schema_migrator:
-      dir: "control-plane/"
+      dir: "europe-docker.pkg.dev/kyma-project/prod/control-plane/"
       version: "v20240612-83a7c0eb" # do not update along with the other images
     kyma_environment_broker:
       dir:

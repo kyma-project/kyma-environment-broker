@@ -166,7 +166,7 @@ jobs:
         run: scripts/create_scan_config.sh "sec-scanners-config.yaml" ${{ inputs.name }}
 
       - name: Bump KEB chart
-        run: scripts/bump_keb_chart.sh ${{ inputs.name }}
+        run: scripts/bump_keb_chart.sh ${{ inputs.name }} "release"
 
       - name: Create PR if anything changed
         env:

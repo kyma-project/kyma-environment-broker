@@ -36,8 +36,13 @@ jobs:
           **/*.sh
 
     - name: Prepare chart for next KEB version
-      if: inputs.release == 'true'
-      run: scripts/bump_keb_chart.sh ${{ inputs.version }}
+      if: ${{ steps.changed-files-specific.outputs.any_modified == 'true' || inputs.release == 'true' }}
+      run: |
+        if [ "${{ inputs.release }}" == "true" ]; then
+          scripts/bump_keb_chart.sh ${{ inputs.version }} "release"
+        else
+          scripts/bump_keb_chart.sh PR-${{ inputs.version }} "pr"
+        fi
 
     - name: Validate KEB helm chart
       if: ${{ steps.changed-files-specific.outputs.any_modified == 'true' || inputs.release == 'true' }}
@@ -124,8 +129,12 @@ jobs:
           kubectl create -f https://raw.githubusercontent.com/prometheus-operator/prometheus-operator/master/bundle.yaml
 
       - name: Prepare chart for next KEB version
-        if: inputs.release == 'true'
-        run: scripts/bump_keb_chart.sh ${{ inputs.version }}
+        run: |
+          if [ "${{ inputs.release }}" == "true" ]; then
+            scripts/bump_keb_chart.sh ${{ inputs.version }} "release"
+          else
+            scripts/bump_keb_chart.sh PR-${{ inputs.version }} "pr"
+          fi
 
       - name: Deploy KEB helm chart
         if: ${{ steps.changed-files-specific.outputs.any_modified == 'true' || inputs.release == 'true' }}
