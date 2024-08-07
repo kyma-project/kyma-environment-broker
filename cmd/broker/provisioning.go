@@ -107,7 +107,7 @@ func NewProvisioningProcessingQueue(ctx context.Context, provisionManager *proce
 		},
 		{
 			stage: createRuntimeStageName,
-			step:  steps.NewCheckRuntimeResourceStep(db.Operations(), cli, cfg.Broker.KimConfig, cfg.Provisioner.GardenerClusterStepTimeout), //TODO create configurable timeout
+			step:  steps.NewCheckRuntimeResourceStep(db.Operations(), cli, cfg.Broker.KimConfig, cfg.Provisioner.RuntimeResourceStepTimeout), //TODO create configurable timeout
 		},
 		{
 			stage:     createRuntimeStageName,
@@ -118,7 +118,7 @@ func NewProvisioningProcessingQueue(ctx context.Context, provisionManager *proce
 		{
 			stage:     createRuntimeStageName,
 			disabled:  cfg.InfrastructureManagerIntegrationDisabled,
-			step:      steps.NewCheckGardenerCluster(db.Operations(), cli, cfg.Provisioner.RuntimeResourceStepTimeout),
+			step:      steps.NewCheckGardenerCluster(db.Operations(), cli, cfg.Provisioner.GardenerClusterStepTimeout),
 			condition: provisioning.SkipForOwnClusterPlan,
 		},
 		{ // TODO: this step must be removed when kubeconfig is created by IM only
