@@ -2,8 +2,8 @@
 
 # This script bumps the KEB images in the chart, utils and the KEB chart version.
 # It has the following arguments:
-#   - release tag (mandatory)
-#   - run type (mandatory)
+#   - version (mandatory)
+#   - run type, release or pr (mandatory)
 # ./bump_keb_chart.sh 0.0.0 release
 
 # standard bash error handling
