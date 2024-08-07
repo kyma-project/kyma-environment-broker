@@ -249,7 +249,11 @@ func (s *CreateRuntimeResourceStep) providerValues(operation *internal.Operation
 		default:
 			return provider.Values{}, fmt.Errorf("freemium provider for '%s' is not supported", operation.ProvisioningParameters.PlatformProvider)
 		}
-
+	case broker.SapConvergedCloudPlanID:
+		p = &provider.SapConvergedCloudInputProvider{
+			MultiZone:              s.config.MultiZoneCluster,
+			ProvisioningParameters: operation.ProvisioningParameters,
+		}
 	case broker.TrialPlanID:
 		var trialProvider internal.CloudProvider
 		if operation.ProvisioningParameters.Parameters.Provider == nil {
