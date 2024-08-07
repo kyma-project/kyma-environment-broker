@@ -424,7 +424,11 @@ func TestCreateRuntimeResourceStep_Defaults_AWS_MultiZoneWithNetworking_ActualCr
 	assert.Equal(t, "eu-west-2", runtime.Spec.Shoot.Region)
 	assert.Equal(t, "production", string(runtime.Spec.Shoot.Purpose))
 	assertWorkers(t, runtime.Spec.Shoot.Provider.Workers, "m6i.large", 20, 3, 3, 0, 3, []string{"eu-west-2a", "eu-west-2b", "eu-west-2c"})
-	assertDefaultNetworking(t, runtime.Spec.Shoot.Networking)
+	assertNetworking(t, imv1.Networking{
+		Nodes:    "192.168.48.0/20",
+		Pods:     "192.168.48.0/20",
+		Services: "10.105.0.0/24",
+	}, runtime.Spec.Shoot.Networking)
 
 	_, err = memoryStorage.Instances().GetByID(operation.InstanceID)
 	assert.NoError(t, err)
