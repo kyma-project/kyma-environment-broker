@@ -262,6 +262,62 @@ func TestCreateRuntimeResourceStep_Defaults_AWS_SingleZone_DryRun_ActualCreation
 	assert.NoError(t, err)
 }
 
+func TestCreateRuntimeResourceStep_Defaults_AWS_MultiZoneWithNetworking_ActualCreation(t *testing.T) {
+	// given
+	log := logrus.New()
+	memoryStorage := storage.NewMemoryStorage()
+
+	err := imv1.AddToScheme(scheme.Scheme)
+
+	instance, operation := fixInstanceAndOperation(broker.AWSPlanID, "eu-west-2", "platform-region")
+	operation.ProvisioningParameters.Parameters.Networking = &internal.NetworkingDTO{
+		NodesCidr:    "192.168.48.0/20",
+		PodsCidr:     ptr.String("10.104.0.0/24"),
+		ServicesCidr: ptr.String("10.105.0.0/24"),
+	}
+
+	assertInsertions(t, memoryStorage, instance, operation)
+
+	kimConfig := fixKimConfig("aws", false)
+
+	cli := getClientForTests(t)
+	inputConfig := input.Config{MultiZoneCluster: true}
+	step := NewCreateRuntimeResourceStep(memoryStorage.Operations(), memoryStorage.Instances(), cli, kimConfig, inputConfig, nil, false)
+
+	// when
+	entry := log.WithFields(logrus.Fields{"step": "TEST"})
+	_, repeat, err := step.Run(operation, entry)
+
+	// then
+	assert.NoError(t, err)
+	assert.Zero(t, repeat)
+
+	runtime := imv1.Runtime{}
+	err = cli.Get(context.Background(), client.ObjectKey{
+		Namespace: "kyma-system",
+		Name:      operation.RuntimeID,
+	}, &runtime)
+	assert.NoError(t, err)
+	assert.Equal(t, runtime.Name, operation.RuntimeID)
+	assert.Equal(t, "runtime-58f8c703-1756-48ab-9299-a847974d1fee", runtime.Labels["operator.kyma-project.io/kyma-name"])
+
+	assertLabelsKIMDriven(t, operation, runtime)
+	assertSecurity(t, runtime)
+
+	assert.Equal(t, "aws", runtime.Spec.Shoot.Provider.Type)
+	assert.Equal(t, "eu-west-2", runtime.Spec.Shoot.Region)
+	assert.Equal(t, "production", string(runtime.Spec.Shoot.Purpose))
+	assertWorkers(t, runtime.Spec.Shoot.Provider.Workers, "m6i.large", 20, 3, 3, 0, 3, []string{"eu-west-2a", "eu-west-2b", "eu-west-2c"})
+	assertNetworking(t, imv1.Networking{
+		Nodes:    "192.168.48.0/20",
+		Pods:     "10.104.0.0/24",
+		Services: "10.105.0.0/24",
+	}, runtime.Spec.Shoot.Networking)
+
+	_, err = memoryStorage.Instances().GetByID(operation.InstanceID)
+	assert.NoError(t, err)
+}
+
 func TestCreateRuntimeResourceStep_Defaults_AWS_MultiZone_ActualCreation(t *testing.T) {
 	// given
 	log := logrus.New()
