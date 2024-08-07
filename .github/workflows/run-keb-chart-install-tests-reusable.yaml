@@ -34,10 +34,26 @@ jobs:
           scripts/**
           Makefile
           **/*.sh
+          .github/**
+          cmd/**
+          common/**
+          files/**
+          internal/**
+          utils/edp-registrator/**
+          .golangci.yml
+          Dockerfile.*
+          go.mod
+          go.sum
+          **/*.go
 
     - name: Prepare chart for next KEB version
-      if: inputs.release == 'true'
-      run: scripts/bump_keb_chart.sh ${{ inputs.version }}
+      if: ${{ steps.changed-files-specific.outputs.any_modified == 'true' || inputs.release == 'true' }}
+      run: |
+        if [ "${{ inputs.release }}" == "true" ]; then
+          scripts/bump_keb_chart.sh ${{ inputs.version }} "release"
+        else
+          scripts/bump_keb_chart.sh PR-${{ inputs.version }} "pr"
+        fi
 
     - name: Validate KEB helm chart
       if: ${{ steps.changed-files-specific.outputs.any_modified == 'true' || inputs.release == 'true' }}
@@ -64,6 +80,16 @@ jobs:
             scripts/**
             Makefile
             **/*.sh
+            .github/**
+            cmd/**
+            common/**
+            files/**
+            internal/**
+            utils/edp-registrator/**
+            .golangci.yml
+            Dockerfile.*
+            go.mod
+            go.sum
 
       - id: get-versions
         name: Get K3s versions
@@ -100,6 +126,16 @@ jobs:
             scripts/**
             Makefile
             **/*.sh
+            .github/**
+            cmd/**
+            common/**
+            files/**
+            internal/**
+            utils/edp-registrator/**
+            .golangci.yml
+            Dockerfile.*
+            go.mod
+            go.sum
 
       - name: Prepare K3s cluster and docker registry
         if: ${{ steps.changed-files-specific.outputs.any_modified == 'true' || inputs.release == 'true' }}
@@ -135,14 +171,22 @@ jobs:
           kubectl create secret generic gardener-credentials --from-literal=kubeconfig="$KCFG" -n kcp-system
 
       - name: Prepare chart for next KEB version
-        if: inputs.release == 'true'
-        run: scripts/bump_keb_chart.sh ${{ inputs.version }}
+        run: |
+          if [ "${{ inputs.release }}" == "true" ]; then
+            scripts/bump_keb_chart.sh ${{ inputs.version }} "release"
+          else
+            scripts/bump_keb_chart.sh PR-${{ inputs.version }} "pr"
+          fi
 
       - name: Deploy KEB helm chart
         if: ${{ steps.changed-files-specific.outputs.any_modified == 'true' || inputs.release == 'true' }}
         run: |
           cd resources/keb
-          helm install keb ../keb --namespace kcp-system -f values.yaml --set global.database.embedded.enabled=false --set testConfig.kebDeployment.useAnnotations=true --debug --wait
+          if [ "${{ inputs.release }}" == "true" ]; then
+            helm install keb ../keb --namespace kcp-system -f values.yaml --set global.database.embedded.enabled=false --set testConfig.kebDeployment.useAnnotations=true --debug --wait
+          else
+            helm install keb ../keb --namespace kcp-system -f values.yaml --set global.database.embedded.enabled=false --set testConfig.kebDeployment.useAnnotations=true --set global.images.container_registry.path="europe-docker.pkg.dev/kyma-project/dev" --debug --wait
+          fi
 
   confirm-keb-chart-tests-result:
     needs: run-keb-chart-matrix
@@ -173,6 +217,16 @@ jobs:
             scripts/**
             Makefile
             **/*.sh
+            .github/**
+            cmd/**
+            common/**
+            files/**
+            internal/**
+            utils/edp-registrator/**
+            .golangci.yml
+            Dockerfile.*
+            go.mod
+            go.sum
 
       - name: Check KEB chart tests result
         if: ${{ steps.changed-files-specific.outputs.any_modified == 'true' || inputs.release == 'true' }}
