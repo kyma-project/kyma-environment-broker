@@ -2,7 +2,7 @@ name: Validate KEB chart
 
 on:
   workflow_run:
-    workflows: ["pull-build-images-ga"]
+    workflows: [pull-build-images-ga]
     types:
       - completed
 jobs:
