@@ -70,169 +70,51 @@ func TestCreateRuntimeResourceStep_Defaults_Azure_MultiZone_YamlOnly(t *testing.
 	assert.Zero(t, repeat)
 }
 
-func TestCreateRuntimeResourceStep_Defaults_Azure_SingleZone_YamlOnly(t *testing.T) {
-	// given
-	log := logrus.New()
-	memoryStorage := storage.NewMemoryStorage()
+func TestCreateRuntimeResourceStep_AllYamls(t *testing.T) {
 
-	instance, operation := fixInstanceAndOperation(broker.AzurePlanID, "westeurope", "platform-region")
-	assertInsertions(t, memoryStorage, instance, operation)
+	for _, testCase := range []struct {
+		name      string
+		planID    string
+		multiZone bool
+		region    string
+	}{
+		{"Azure Single Zone", broker.AzurePlanID, false, "westeurope"},
+		{"Azure Multi Zone", broker.AzurePlanID, true, "westeurope"},
+		{"GCP Single Zone", broker.GCPPlanID, false, "asia-south1"},
+		{"GCP Multi Zone", broker.GCPPlanID, true, "asia-south1"},
+		{"AWS Single Zone", broker.AWSPlanID, false, "eu-west-2"},
+		{"AWS Multi Zone", broker.AWSPlanID, true, "eu-west-2"},
+		{"Preview Single Zone", broker.PreviewPlanID, false, "eu-west-2"},
+		{"Preview Multi Zone", broker.PreviewPlanID, true, "eu-west-2"},
+		{"SAP Converged Cloud Single Zone", broker.PreviewPlanID, false, "eu-de-1"},
+		{"SAP Converged Cloud Multi Zone", broker.PreviewPlanID, true, "eu-de-1"},
+	} {
+		t.Run(testCase.name, func(t *testing.T) {
+			log := logrus.New()
+			memoryStorage := storage.NewMemoryStorage()
 
-	kimConfig := fixKimConfig("azure", true)
-	inputConfig := input.Config{MultiZoneCluster: false}
+			instance, operation := fixInstanceAndOperation(testCase.planID, testCase.region, "platform-region")
+			assertInsertions(t, memoryStorage, instance, operation)
 
-	step := NewCreateRuntimeResourceStep(memoryStorage.Operations(), memoryStorage.Instances(), nil, kimConfig, inputConfig, nil, false)
+			kimConfig := fixKimConfig(broker.PlanNamesMapping[testCase.planID], true)
+			inputConfig := input.Config{MultiZoneCluster: testCase.multiZone}
 
-	// when
-	entry := log.WithFields(logrus.Fields{"step": "TEST"})
-	_, repeat, err := step.Run(operation, entry)
+			step := NewCreateRuntimeResourceStep(memoryStorage.Operations(), memoryStorage.Instances(), nil, kimConfig, inputConfig, nil, false)
 
-	// then
-	assert.NoError(t, err)
-	assert.Zero(t, repeat)
-}
+			// when
+			entry := log.WithFields(logrus.Fields{"step": "TEST"})
+			_, repeat, err := step.Run(operation, entry)
 
-func TestCreateRuntimeResourceStep_Defaults_GCP_MultiZone_YamlOnly(t *testing.T) {
-	// given
-	log := logrus.New()
-	memoryStorage := storage.NewMemoryStorage()
-
-	instance, operation := fixInstanceAndOperation(broker.GCPPlanID, "asia-south1", "platform-region")
-	assertInsertions(t, memoryStorage, instance, operation)
-
-	kimConfig := fixKimConfig("gcp", true)
-	inputConfig := input.Config{MultiZoneCluster: true}
-
-	step := NewCreateRuntimeResourceStep(memoryStorage.Operations(), memoryStorage.Instances(), nil, kimConfig, inputConfig, nil, false)
-
-	// when
-	entry := log.WithFields(logrus.Fields{"step": "TEST"})
-	_, repeat, err := step.Run(operation, entry)
-
-	// then
-	assert.NoError(t, err)
-	assert.Zero(t, repeat)
-}
-
-func TestCreateRuntimeResourceStep_Defaults_GCP_SingleZone_YamlOnly(t *testing.T) {
-	// given
-	log := logrus.New()
-	memoryStorage := storage.NewMemoryStorage()
-
-	instance, operation := fixInstanceAndOperation(broker.GCPPlanID, "asia-south1", "platform-region")
-	assertInsertions(t, memoryStorage, instance, operation)
-
-	kimConfig := fixKimConfig("gcp", true)
-	inputConfig := input.Config{MultiZoneCluster: false}
-
-	step := NewCreateRuntimeResourceStep(memoryStorage.Operations(), memoryStorage.Instances(), nil, kimConfig, inputConfig, nil, false)
-
-	// when
-	entry := log.WithFields(logrus.Fields{"step": "TEST"})
-	_, repeat, err := step.Run(operation, entry)
-
-	// then
-	assert.NoError(t, err)
-	assert.Zero(t, repeat)
-}
-
-func TestCreateRuntimeResourceStep_Defaults_AWS_MultiZone_YamlOnly(t *testing.T) {
-	// given
-	log := logrus.New()
-	memoryStorage := storage.NewMemoryStorage()
-
-	instance, operation := fixInstanceAndOperation(broker.AWSPlanID, "eu-west-2", "platform-region")
-	assertInsertions(t, memoryStorage, instance, operation)
-
-	kimConfig := fixKimConfig("aws", true)
-	inputConfig := input.Config{MultiZoneCluster: true}
-
-	step := NewCreateRuntimeResourceStep(memoryStorage.Operations(), memoryStorage.Instances(), nil, kimConfig, inputConfig, nil, false)
-
-	// when
-	entry := log.WithFields(logrus.Fields{"step": "TEST"})
-	_, repeat, err := step.Run(operation, entry)
-
-	// then
-	assert.NoError(t, err)
-	assert.Zero(t, repeat)
-}
-
-func TestCreateRuntimeResourceStep_Defaults_AWS_SingleZone_YamlOnly(t *testing.T) {
-	// given
-	log := logrus.New()
-	memoryStorage := storage.NewMemoryStorage()
-
-	instance, operation := fixInstanceAndOperation(broker.AWSPlanID, "eu-west-2", "platform-region")
-	assertInsertions(t, memoryStorage, instance, operation)
-
-	kimConfig := fixKimConfig("aws", true)
-	inputConfig := input.Config{MultiZoneCluster: false}
-
-	step := NewCreateRuntimeResourceStep(memoryStorage.Operations(), memoryStorage.Instances(), nil, kimConfig, inputConfig, nil, false)
-
-	// when
-	entry := log.WithFields(logrus.Fields{"step": "TEST"})
-	_, repeat, err := step.Run(operation, entry)
-
-	// then
-	assert.NoError(t, err)
-	assert.Zero(t, repeat)
-}
-
-func TestCreateRuntimeResourceStep_Defaults_Preview_MultiZone_YamlOnly(t *testing.T) {
-	// given
-	log := logrus.New()
-	memoryStorage := storage.NewMemoryStorage()
-
-	instance, operation := fixInstanceAndOperation(broker.PreviewPlanID, "eu-west-2", "platform-region")
-	assertInsertions(t, memoryStorage, instance, operation)
-
-	kimConfig := fixKimConfig("preview", true)
-	inputConfig := input.Config{MultiZoneCluster: true}
-
-	step := NewCreateRuntimeResourceStep(memoryStorage.Operations(), memoryStorage.Instances(), nil, kimConfig, inputConfig, nil, false)
-
-	// when
-	entry := log.WithFields(logrus.Fields{"step": "TEST"})
-	postOperation, repeat, err := step.Run(operation, entry)
-
-	// then
-	assert.NoError(t, err)
-	assert.Zero(t, repeat)
-
-	_, err = memoryStorage.Instances().GetByID(postOperation.InstanceID)
-	assert.NoError(t, err)
-}
-
-func TestCreateRuntimeResourceStep_Defaults_Preview_SingleZone_YamlOnly(t *testing.T) {
-	// given
-	log := logrus.New()
-	memoryStorage := storage.NewMemoryStorage()
-
-	instance, operation := fixInstanceAndOperation(broker.PreviewPlanID, "eu-west-2", "platform-region")
-	assertInsertions(t, memoryStorage, instance, operation)
-
-	kimConfig := fixKimConfig("preview", true)
-	inputConfig := input.Config{MultiZoneCluster: false}
-
-	step := NewCreateRuntimeResourceStep(memoryStorage.Operations(), memoryStorage.Instances(), nil, kimConfig, inputConfig, nil, false)
-
-	// when
-	entry := log.WithFields(logrus.Fields{"step": "TEST"})
-	postOperation, repeat, err := step.Run(operation, entry)
-
-	// then
-	assert.NoError(t, err)
-	assert.Zero(t, repeat)
-
-	_, err = memoryStorage.Instances().GetByID(postOperation.InstanceID)
-	assert.NoError(t, err)
+			// then
+			assert.NoError(t, err)
+			assert.Zero(t, repeat)
+		})
+	}
 }
 
 // Actual creation tests
 
-func TestCreateRuntimeResourceStep_Defaults_AWS_SingleZone_ActualCreation(t *testing.T) {
+func TestCreateRuntimeResourceStep_Defaults_AWS_SingleZone_EnforceSeed_ActualCreation(t *testing.T) {
 	// given
 	log := logrus.New()
 	memoryStorage := storage.NewMemoryStorage()
@@ -240,6 +122,7 @@ func TestCreateRuntimeResourceStep_Defaults_AWS_SingleZone_ActualCreation(t *tes
 	err := imv1.AddToScheme(scheme.Scheme)
 
 	instance, operation := fixInstanceAndOperation(broker.AWSPlanID, "eu-west-2", "platform-region")
+	operation.ProvisioningParameters.Parameters.ShootAndSeedSameRegion = ptr.Bool(true)
 	assertInsertions(t, memoryStorage, instance, operation)
 
 	kimConfig := fixKimConfig("aws", false)
@@ -268,6 +151,7 @@ func TestCreateRuntimeResourceStep_Defaults_AWS_SingleZone_ActualCreation(t *tes
 	assertLabelsKIMDriven(t, operation, runtime)
 	assertSecurity(t, runtime)
 
+	assert.True(t, *runtime.Spec.Shoot.EnforceSeedLocation)
 	assert.Equal(t, "aws", runtime.Spec.Shoot.Provider.Type)
 	assert.Equal(t, "eu-west-2", runtime.Spec.Shoot.Region)
 	assert.Equal(t, "production", string(runtime.Spec.Shoot.Purpose))
