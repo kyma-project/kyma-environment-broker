@@ -1,14 +1,10 @@
 name: Validate KEB chart
 
 on:
-  pull_request:
-    branches: [ main ]
+  workflow_run:
+    workflows: ["pull-build-images-ga"]
     types:
-      - opened
-      - reopened
-      - synchronize
-      - ready_for_review
-
+      - completed
 jobs:
   run-keb-chart-tests:
     uses: "./.github/workflows/run-keb-chart-install-tests-reusable.yaml"
