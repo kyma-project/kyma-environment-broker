@@ -220,7 +220,7 @@ func (s *CreateRuntimeResourceStep) providerValues(operation *internal.Operation
 			ProvisioningParameters: operation.ProvisioningParameters,
 		}
 	case broker.PreviewPlanID:
-		p = &provider.AzureInputProvider{
+		p = &provider.AWSInputProvider{
 			MultiZone:              s.config.MultiZoneCluster,
 			ProvisioningParameters: operation.ProvisioningParameters,
 		}
