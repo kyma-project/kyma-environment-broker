@@ -1,13 +1,17 @@
 name: Validate KEB chart
 
 on:
-  workflow_run:
-    workflows: [pull-build-images-ga]
+  pull_request:
+    branches: [ main ]
     types:
-      - completed
+      - opened
+      - reopened
+      - synchronize
+      - ready_for_review
+
 jobs:
   run-keb-chart-tests:
-    uses: "./.github/workflows/run-keb-chart-install-tests-reusable.yaml"
+    uses: "./.github/workflows/run-keb-chart-tests-reusable.yaml"
     if: ${{ !github.event.pull_request.draft }}
     with:
       last-k3s-versions: 3
