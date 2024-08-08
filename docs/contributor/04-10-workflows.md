@@ -66,37 +66,9 @@ This [workflow](/.github/workflows/run-govulncheck.yaml) runs the Govulncheck. I
 - Any `*.go` file
 - Any `*.sh` file
 
-## KEB Chart Tests Workflow
-
-This [workflow](/.github/workflows/run-keb-chart-tests.yaml) calls the reusable [workflow](/.github/workflows/run-keb-chart-tests-reusable.yaml). It is triggered by PRs on the `main` branch that change at least one of the following:
-- `/.github` directory content
-- `/resources` directory content
-- `/scripts` directory content
-- `Makefile` file
-- Any `*.sh` file 
-
 ## Reusable Workflows
 
 There are reusable workflows created. Anyone with access to a reusable workflow can call it from another workflow.
-
-### KEB Chart Tests
-
-This [workflow](/.github/workflows/run-keb-chart-tests-reusable.yaml) applies the KEB chart in the k3s cluster. 
-You pass the following parameters from the calling workflow:
-
-| Parameter name  | Required | Description                                                          |
-| ------------- | ------------- |----------------------------------------------------------------------|
-| **last-k3s-versions**  | no  | number of most recent k3s versions to be used for tests, default = `1` |
-
-
-The workflow:
-- Checks if the KEB chart is rendered by Helm
-- Fetches the **last-k3s-versions** tag versions of k3s releases 
-- Prepares the **last-k3s-versions** k3s clusters with the Docker registries using the list of versions from the previous step
-- Creates required namespaces
-- Installs required dependencies by the KEB charts
-- Renders and applies the KEB chart in the k3s cluster
-- Waits for all tests to finish
 
 ### Unit Tests
 
