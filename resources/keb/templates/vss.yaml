@@ -1,4 +1,4 @@
-{{- if and .Values.global.secrets.enabled  ( eq .Values.global.secrets.mechanism "vso") }}
+{{- if and .Values.global.secrets.enabled ( .Capabilities.APIVersions.Has "secrets.hashicorp.com/v1beta1" ) ( eq .Values.global.secrets.mechanism "vso") }}
 {{- $root := .}}
 {{- $globalmount := get (get (default dict .Values.global.secrets) "vso" | default dict) "mount" }}
 {{- range $sname, $secret := .Values.vsoSecrets.secrets }}
@@ -55,9 +55,9 @@ spec:
             {{ tpl ($.Files.Get $fvalue.templateFile) (dict "Template" $.Template "keys" $secret.templating.keys "Values" $root.Values) | nindent 12 }}
           {{- else if hasKey $fvalue "template" }}
           text: |
-            {{- tpl $fvalue.template (dict "Template" $.Template "keys" $secret.templating.keys "Values" $root.Values) | nindent 12 -}}
+            {{ tpl $fvalue.template (dict "Template" $.Template "keys" $secret.templating.keys "Values" $root.Values) | nindent 12 }}
           {{- else if hasKey $fvalue "simpleValue" }}
-          text: {{-- $fvalue.simpleValue | quote -}}
+          text: {{ $fvalue.simpleValue | quote -}}
           {{- else }}
           text: |
             {{ printf "{{- get .Secrets \"%s\" -}}" (get $secret.templating.keys $fname) }}

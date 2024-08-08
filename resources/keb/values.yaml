@@ -136,22 +136,17 @@ vsoSecrets:
           internalTesterAccessId: {}
           externalTesterAccessId: {}
           internalTesterService:
-            template: |
-              {{ template "get.avs.internalTesterService" . -}}
+            simpleValue: ""
           externalTesterService: 
-            template: |
-              {{ template "get.avs.externalTesterService" . -}}
+            simpleValue: ""
           groupId: {}
           parentId: {}
           trialApiKey:
-            template: |
-              {{ template "get.avs.trialApiKey" . -}}
+            simpleValue: ""
           trialInternalTesterAccessId:
-            template: |
-              {{ template "get.avs.trialInternalTesterAccessId" . -}}
+            simpleValue: "0"
           trialGroupId:
-            template: |
-              {{ template "get.avs.trialGroupId" . -}}
+            simpleValue: "0"
           trialParentId:
             simpleValue: "0"
 #              {{ template "get.avs.trialParentId" . -}}
