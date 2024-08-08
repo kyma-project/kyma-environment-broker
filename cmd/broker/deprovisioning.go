@@ -50,6 +50,12 @@ func NewDeprovisioningProcessingQueue(ctx context.Context, workersAmount int, de
 			step:     deprovisioning.NewCheckKymaResourceDeletedStep(db.Operations(), cli, cfg.KymaResourceDeletionTimeout),
 		},
 		{
+			step: deprovisioning.NewDeleteRuntimeResourceStep(db.Operations(), cli),
+		},
+		{
+			step: deprovisioning.NewCheckRuntimeResourceDeletionStep(db.Operations(), cli),
+		},
+		{
 			step: deprovisioning.NewDeleteGardenerClusterStep(db.Operations(), cli, db.Instances()),
 		},
 		{
@@ -60,12 +66,6 @@ func NewDeprovisioningProcessingQueue(ctx context.Context, workersAmount int, de
 		},
 		{
 			step: deprovisioning.NewCheckRuntimeRemovalStep(db.Operations(), db.Instances(), provisionerClient, cfg.Provisioner.DeprovisioningTimeout),
-		},
-		{
-			step: deprovisioning.NewDeleteRuntimeResourceStep(db.Operations(), cli),
-		},
-		{
-			step: deprovisioning.NewCheckRuntimeResourceDeletionStep(db.Operations(), cli),
 		},
 		{
 			step: deprovisioning.NewReleaseSubscriptionStep(db.Operations(), db.Instances(), accountProvider),
