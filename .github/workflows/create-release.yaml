@@ -61,10 +61,90 @@ jobs:
     uses: "./.github/workflows/run-unit-tests-reusable.yaml"
     with:
       release: "true"
+  
+  build-keb-image:
+    needs: [validate-release]
+    uses: kyma-project/test-infra/.github/workflows/image-builder.yml@main
+    with: 
+      name:  kyma-environment-broker
+      dockerfile: Dockerfile.keb
+      context: .
+      tags: ${{ inputs.name }}
 
-  run-keb-chart-tests:
+  build-archiver-image:
+    needs: [validate-release]
+    uses: kyma-project/test-infra/.github/workflows/image-builder.yml@main
+    with: 
+      name: kyma-environment-archiver-job
+      dockerfile: Dockerfile.job
+      context: .
+      build-args: BIN=archiver
+      tags: ${{ inputs.name }}
+
+  build-environments-cleanup-image:
+    needs: [validate-release]
+    uses: kyma-project/test-infra/.github/workflows/image-builder.yml@main
+    with: 
+      name: kyma-environments-cleanup-job
+      dockerfile: Dockerfile.job
+      context: .
+      build-args: BIN=environmentscleanup
+      tags: ${{ inputs.name }}
+
+  build-deprovision-retrigger-image:
+    needs: [validate-release]
+    uses: kyma-project/test-infra/.github/workflows/image-builder.yml@main
+    with: 
+      name: kyma-environment-deprovision-retrigger-job
+      dockerfile: Dockerfile.job
+      context: .
+      build-args: BIN=deprovisionretrigger
+      tags: ${{ inputs.name }}
+
+  build-expirator-image:
+    needs: [validate-release]
+    uses: kyma-project/test-infra/.github/workflows/image-builder.yml@main
+    with: 
+      name: kyma-environment-expirator-job
+      dockerfile: Dockerfile.job
+      context: .
+      build-args: BIN=expirator
+      tags: ${{ inputs.name }}
+
+  build-runtime-reconciler-image:
+    needs: [validate-release]
+    uses: kyma-project/test-infra/.github/workflows/image-builder.yml@main
+    with: 
+      name: kyma-environment-runtime-reconciler
+      dockerfile: Dockerfile.runtimereconciler
+      context: .
+      build-args: BIN=runtime-reconciler
+      tags: ${{ inputs.name }}
+
+  build-subaccount-cleanup-image:
+    needs: [validate-release]
+    uses: kyma-project/test-infra/.github/workflows/image-builder.yml@main
+    with: 
+      name: kyma-environment-subaccount-cleanup-job
+      dockerfile: Dockerfile.job
+      context: .
+      build-args: BIN=accountcleanup
+      tags: ${{ inputs.name }}
+
+  build-subaccount-sync-image:
+    needs: [validate-release]
+    uses: kyma-project/test-infra/.github/workflows/image-builder.yml@main
+    with: 
+      name: kyma-environment-subaccount-sync
+      dockerfile: Dockerfile.subaccountsync
+      context: .
+      build-args: BIN=subaccount-sync
+      tags: ${{ inputs.name }}
+
+  run-keb-chart-install-tests:
     name: Validate KEB chart 
-    uses: "./.github/workflows/run-keb-chart-tests-reusable.yaml"
+    needs: [build-keb-image, build-archiver-image, build-environments-cleanup-image, build-deprovision-retrigger-image, build-expirator-image, build-runtime-reconciler-image, build-subaccount-cleanup-image, build-subaccount-sync-image]
+    uses: "./.github/workflows/run-keb-chart-install-tests-reusable.yaml"
     secrets: inherit
     with:
       last-k3s-versions: ${{ vars.LAST_K3S_VERSIONS }}
@@ -73,7 +153,7 @@ jobs:
 
   bumps:
     name: Bump sec-scanners-config, KEB chart
-    needs: [validate-release, run-unit-tests, run-keb-chart-tests]
+    needs: [validate-release, run-unit-tests, run-keb-chart-install-tests]
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
@@ -159,76 +239,9 @@ jobs:
     outputs:
       release_id: ${{ steps.create-draft.outputs.release_id }}
     
-  wait-for-commit-statuses:
-    name: Wait for commit statuses
-    needs: [create-draft, bumps]
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-          ref: ${{ needs.bumps.outputs.latest_commit}}
-
-      - name: Check post-keb-release-build status
-        uses: ./.github/workflows/check-commit-status
-        with:
-          statusName: "post-keb-release-build"
-          githubToken: ${{ secrets.GITHUB_TOKEN }}
-          commitRef: ${{ needs.bumps.outputs.latest_commit }}
-
-      - name: Check post-keb-runtime-reconciler-job-release-build status
-        uses: ./.github/workflows/check-commit-status
-        with:
-          statusName: "post-keb-runtime-reconciler-job-release-build"
-          githubToken: ${{ secrets.GITHUB_TOKEN }}
-          commitRef: ${{ needs.bumps.outputs.latest_commit }}
-
-      - name: Check post-keb-subaccount-cleanup-job-release-build status
-        uses: ./.github/workflows/check-commit-status
-        with:
-          statusName: "post-keb-subaccount-cleanup-job-release-build"
-          githubToken: ${{ secrets.GITHUB_TOKEN }}
-          commitRef: ${{ needs.bumps.outputs.latest_commit }}
-
-      - name: Check post-keb-cleanup-job-release-build status
-        uses: ./.github/workflows/check-commit-status
-        with:
-          statusName: "post-keb-cleanup-job-release-build"
-          githubToken: ${{ secrets.GITHUB_TOKEN }}
-          commitRef: ${{ needs.bumps.outputs.latest_commit }}
-
-      - name: Check post-keb-deprovision-retrigger-job-release-build status
-        uses: ./.github/workflows/check-commit-status
-        with:
-          statusName: "post-keb-deprovision-retrigger-job-release-build"
-          githubToken: ${{ secrets.GITHUB_TOKEN }}
-          commitRef: ${{ needs.bumps.outputs.latest_commit }}
-
-      - name: Check post-keb-archiver-job-release-build status
-        uses: ./.github/workflows/check-commit-status
-        with:
-          statusName: "post-keb-archiver-job-release-build"
-          githubToken: ${{ secrets.GITHUB_TOKEN }}
-          commitRef: ${{ needs.bumps.outputs.latest_commit }}
-
-      - name: Check post-keb-expirator-release-build status
-        uses: ./.github/workflows/check-commit-status
-        with:
-          statusName: "post-keb-expirator-release-build"
-          githubToken: ${{ secrets.GITHUB_TOKEN }}
-          commitRef: ${{ needs.bumps.outputs.latest_commit }}
-
-      - name: Check post-keb-subaccount-sync-release-build status
-        uses: ./.github/workflows/check-commit-status
-        with:
-          statusName: "post-keb-subaccount-sync-release-build"
-          githubToken: ${{ secrets.GITHUB_TOKEN }}
-          commitRef: ${{ needs.bumps.outputs.latest_commit }}
-
   publish-release:
     name: Publish release
-    needs: [wait-for-commit-statuses, bumps, create-draft]
+    needs: [bumps, create-draft]
     if: ${{ !inputs.dry-run }}
     runs-on: ubuntu-latest
     steps:
