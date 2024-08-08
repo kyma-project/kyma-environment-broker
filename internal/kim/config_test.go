@@ -15,6 +15,10 @@ func TestIsEnabled_KimDisabled(t *testing.T) {
 
 	assert.False(t, config.IsEnabledForPlan("gcp"))
 	assert.False(t, config.IsEnabledForPlan("preview"))
+	assert.False(t, config.IsDrivenByKim("gcp"))
+	assert.False(t, config.IsDrivenByKim("preview"))
+	assert.False(t, config.IsDrivenByKimOnly("gcp"))
+	assert.False(t, config.IsDrivenByKimOnly("preview"))
 }
 
 func TestIsEnabled_KimEnabledForPreview(t *testing.T) {
@@ -22,13 +26,34 @@ func TestIsEnabled_KimEnabledForPreview(t *testing.T) {
 		Enabled:  true,
 		Plans:    []string{"preview"},
 		ViewOnly: false,
+		DryRun:   false,
 	}
 
 	assert.False(t, config.IsEnabledForPlan("gcp"))
 	assert.True(t, config.IsEnabledForPlan("preview"))
+	assert.False(t, config.IsDrivenByKim("gcp"))
+	assert.True(t, config.IsDrivenByKim("preview"))
+	assert.False(t, config.IsDrivenByKimOnly("gcp"))
+	assert.False(t, config.IsDrivenByKimOnly("preview"))
 }
 
-func TestDrivenByKim_KimDisabled(t *testing.T) {
+func TestIsEnabled_KimEnabledForPreview_DryRun(t *testing.T) {
+	config := &Config{
+		Enabled:  true,
+		Plans:    []string{"preview"},
+		ViewOnly: false,
+		DryRun:   true,
+	}
+
+	assert.False(t, config.IsEnabledForPlan("gcp"))
+	assert.True(t, config.IsEnabledForPlan("preview"))
+	assert.False(t, config.IsDrivenByKim("gcp"))
+	assert.False(t, config.IsDrivenByKim("preview"))
+	assert.False(t, config.IsDrivenByKimOnly("gcp"))
+	assert.False(t, config.IsDrivenByKimOnly("preview"))
+}
+
+func TestDrivenByKimOnly_KimDisabled(t *testing.T) {
 	config := &Config{
 		Enabled:      false,
 		Plans:        []string{"gcp", "preview"},
@@ -36,11 +61,15 @@ func TestDrivenByKim_KimDisabled(t *testing.T) {
 		ViewOnly:     false,
 	}
 
-	assert.False(t, config.DrivenByKimOnly("gcp"))
-	assert.False(t, config.DrivenByKimOnly("preview"))
+	assert.False(t, config.IsDrivenByKimOnly("gcp"))
+	assert.False(t, config.IsDrivenByKimOnly("preview"))
+	assert.False(t, config.IsDrivenByKim("gcp"))
+	assert.False(t, config.IsDrivenByKim("preview"))
+	assert.False(t, config.IsDrivenByKimOnly("gcp"))
+	assert.False(t, config.IsDrivenByKimOnly("preview"))
 }
 
-func TestDrivenByKim_PreviewByKimOnly(t *testing.T) {
+func TestDrivenByKimOnly_PreviewByKimOnly(t *testing.T) {
 	config := &Config{
 		Enabled:      true,
 		Plans:        []string{"preview"},
@@ -49,10 +78,14 @@ func TestDrivenByKim_PreviewByKimOnly(t *testing.T) {
 	}
 
 	assert.False(t, config.IsEnabledForPlan("gcp"))
-	assert.True(t, config.DrivenByKimOnly("preview"))
+	assert.True(t, config.IsDrivenByKimOnly("preview"))
+	assert.False(t, config.IsDrivenByKim("gcp"))
+	assert.True(t, config.IsDrivenByKim("preview"))
+	assert.False(t, config.IsDrivenByKimOnly("gcp"))
+	assert.True(t, config.IsDrivenByKimOnly("preview"))
 }
 
-func TestDrivenByKim_PreviewByKimOnlyButNotEnabled(t *testing.T) {
+func TestDrivenByKimOnly_PreviewByKimOnlyButNotEnabled(t *testing.T) {
 	config := &Config{
 		Enabled:      true,
 		KimOnlyPlans: []string{"preview"},
@@ -60,5 +93,26 @@ func TestDrivenByKim_PreviewByKimOnlyButNotEnabled(t *testing.T) {
 	}
 
 	assert.False(t, config.IsEnabledForPlan("gcp"))
-	assert.False(t, config.DrivenByKimOnly("preview"))
+	assert.False(t, config.IsDrivenByKimOnly("preview"))
+	assert.False(t, config.IsDrivenByKim("gcp"))
+	assert.False(t, config.IsDrivenByKim("preview"))
+	assert.False(t, config.IsDrivenByKimOnly("gcp"))
+	assert.False(t, config.IsDrivenByKimOnly("preview"))
+}
+
+func TestDrivenByKim_ButNotByKimOnly(t *testing.T) {
+	config := &Config{
+		Enabled:      true,
+		KimOnlyPlans: []string{"no-plan"},
+		Plans:        []string{"preview"},
+		ViewOnly:     false,
+		DryRun:       false,
+	}
+
+	assert.False(t, config.IsEnabledForPlan("gcp"))
+	assert.False(t, config.IsDrivenByKimOnly("preview"))
+	assert.False(t, config.IsDrivenByKim("gcp"))
+	assert.True(t, config.IsDrivenByKim("preview"))
+	assert.False(t, config.IsDrivenByKimOnly("gcp"))
+	assert.False(t, config.IsDrivenByKimOnly("preview"))
 }

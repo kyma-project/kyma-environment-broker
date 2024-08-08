@@ -1,9 +1,9 @@
 package kim
 
 type Config struct {
-	Enabled      bool     `envconfig:"default=false"`
-	DryRun       bool     `envconfig:"default=true"`
-	ViewOnly     bool     `envconfig:"default=true"`
+	Enabled      bool     `envconfig:"default=false"` // if true, KIM will be used
+	DryRun       bool     `envconfig:"default=true"`  // if true, only yamls are generated, no resources are created
+	ViewOnly     bool     `envconfig:"default=true"`  // if true, provisioner will control the process
 	Plans        []string `envconfig:"default=preview"`
 	KimOnlyPlans []string `envconfig:"default=,"`
 }
@@ -20,7 +20,7 @@ func (c *Config) IsEnabledForPlan(planName string) bool {
 	return false
 }
 
-func (c *Config) DrivenByKimOnly(planName string) bool {
+func (c *Config) IsDrivenByKimOnly(planName string) bool {
 	if !c.IsEnabledForPlan(planName) {
 		return false
 	}
@@ -30,4 +30,8 @@ func (c *Config) DrivenByKimOnly(planName string) bool {
 		}
 	}
 	return false
+}
+
+func (c *Config) IsDrivenByKim(planName string) bool {
+	return (c.IsEnabledForPlan(planName) && !c.ViewOnly && !c.DryRun) || c.IsDrivenByKimOnly(planName)
 }
