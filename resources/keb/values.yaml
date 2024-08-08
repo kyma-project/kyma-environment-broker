@@ -105,40 +105,56 @@ vsoSecrets:
   mount: kcp-dev
   secrets:
     dummy-secret1:
-      path: oauth2-mps
-      secretName: kcp-kyma-environment-broker-credentials-test
-      annotations:
-        fixanot: fix
-      labels:
-        fixLabel: fix
+      path: avs
+      secretName: avs-creds-test
+      labels: >-
+        {{ template "kyma-env-broker.labels" . }}
       templating:
         enabled: true
         keys:
-          client_id: keb_client_id
-          client_secret: keb_client_secret
-          tokens_endpoint: tokens_endpoint
+          apiKey: api_key
+          clientId: client_id
+          oauthPassword: password
+          oauthTokenEndpoint: oauth_token_endpoint
+          oauthUserName: username
+          internalTesterAccessId: internal_tester_access_id
+          externalTesterAccessId: external_tester_access_id
+          #internalTesterService: ""
+          #externalTesterService: ""
+          groupId: group_id
+          parentId: parent_id
+          #trialApiKey: ""
+          #trialInternalTesterAccessId: "0"
+          #trialGroupId: "0"
+          #trialParentId: "0"
         data:
-          client_id: {}
-          client_secret: {}
-          tokens_endpoint: {}
-
-    dummy-secret2:
-      path: ias
-      secretName: kcp-kyma-environment-broker-e2e-ias-oauth-test
-      annotations:
-        fixanot: fix
-      labels:
-        fixLabel: fix
-      templating:
-        enabled: true
-        keys:
-          client_id: keb_e2e_client_id
-          client_secret: keb_e2e_client_secret
-          tokens_endpoint: keb_e2e_tokens_endpoint
-        data:
-          client_id: {}
-          client_secret: {}
-          tokens_endpoint: {}
+          apiKey: {}
+          clientId: {}
+          oauthPassword: {}
+          oauthTokenEndpoint: {}
+          oauthUserName: {}
+          internalTesterAccessId: {}
+          externalTesterAccessId: {}
+          internalTesterService:
+            template: |
+              {{ template "get.avs.internalTesterService" . -}}
+          externalTesterService: 
+            template: |
+              {{ template "get.avs.externalTesterService" . -}}
+          groupId: {}
+          parentId: {}
+          trialApiKey:
+            template: |
+              {{ template "get.avs.trialApiKey" . -}}
+          trialInternalTesterAccessId:
+            template: |
+              {{ template "get.avs.trialInternalTesterAccessId" . -}}
+          trialGroupId:
+            template: |
+              {{ template "get.avs.trialGroupId" . -}}
+          trialParentId:
+            simpleValue: "0"
+#              {{ template "get.avs.trialParentId" . -}}
 
 deployment:
   replicaCount: 1
