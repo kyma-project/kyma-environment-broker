@@ -229,6 +229,11 @@ func (s *CreateRuntimeResourceStep) providerValues(operation *internal.Operation
 			MultiZone:              s.config.MultiZoneCluster,
 			ProvisioningParameters: operation.ProvisioningParameters,
 		}
+	case broker.AzureLitePlanID:
+		p = &provider.AzureLiteInputProvider{
+			UseSmallerMachineTypes: s.useSmallerMachineTypes,
+			ProvisioningParameters: operation.ProvisioningParameters,
+		}
 	case broker.GCPPlanID:
 		p = &provider.GCPInputProvider{
 			MultiZone:              s.config.MultiZoneCluster,

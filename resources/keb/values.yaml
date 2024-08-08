@@ -164,6 +164,7 @@ provisioner:
   provisioningTimeout: "6h"
   deprovisioningTimeout: "5h"
   gardenerClusterStepTimeout: "3m"
+  runtimeResourceStepTimeout: "8m"
 
   gardener:
     # name of the secret with kubeconfig to the gardener cluster

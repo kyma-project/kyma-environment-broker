@@ -37,6 +37,7 @@ type Config struct {
 	MultiZoneCluster              bool                   `envconfig:"default=false"`
 	ControlPlaneFailureTolerance  string                 `envconfig:"optional"`
 	GardenerClusterStepTimeout    time.Duration          `envconfig:"default=3m"`
+	RuntimeResourceStepTimeout    time.Duration          `envconfig:"default=8m"`
 	EnableShootAndSeedSameRegion  bool                   `envconfig:"default=false"`
 }
 

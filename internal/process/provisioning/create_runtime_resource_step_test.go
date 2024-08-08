@@ -96,7 +96,7 @@ func TestCreateRuntimeResourceStep_AllYamls(t *testing.T) {
 			instance, operation := fixInstanceAndOperation(testCase.planID, testCase.region, "platform-region")
 			assertInsertions(t, memoryStorage, instance, operation)
 
-			kimConfig := fixKimConfig(broker.PlanNamesMapping[testCase.planID], true)
+			kimConfig := fixKimConfigWithAllPlans(true)
 			inputConfig := input.Config{MultiZoneCluster: testCase.multiZone}
 
 			step := NewCreateRuntimeResourceStep(memoryStorage.Operations(), memoryStorage.Instances(), nil, kimConfig, inputConfig, nil, false)
@@ -567,6 +567,53 @@ func TestCreateRuntimeResourceStep_Defaults_Azure_SingleZone_ActualCreation(t *t
 
 }
 
+func TestCreateRuntimeResourceStep_Defaults_AzureLite_ActualCreation(t *testing.T) {
+	// given
+	log := logrus.New()
+	memoryStorage := storage.NewMemoryStorage()
+
+	err := imv1.AddToScheme(scheme.Scheme)
+
+	instance, operation := fixInstanceAndOperation(broker.AzureLitePlanID, "westeurope", "platform-region")
+	assertInsertions(t, memoryStorage, instance, operation)
+
+	kimConfig := fixKimConfigWithAllPlans(false)
+
+	cli := getClientForTests(t)
+	inputConfig := input.Config{MultiZoneCluster: false}
+	step := NewCreateRuntimeResourceStep(memoryStorage.Operations(), memoryStorage.Instances(), cli, kimConfig, inputConfig, nil, false)
+
+	// when
+	entry := log.WithFields(logrus.Fields{"step": "TEST"})
+	_, repeat, err := step.Run(operation, entry)
+
+	// then
+	assert.NoError(t, err)
+	assert.Zero(t, repeat)
+
+	runtime := imv1.Runtime{}
+	err = cli.Get(context.Background(), client.ObjectKey{
+		Namespace: "kyma-system",
+		Name:      operation.RuntimeID,
+	}, &runtime)
+	assert.NoError(t, err)
+	assert.Equal(t, operation.RuntimeID, runtime.Name)
+	assert.Equal(t, "runtime-58f8c703-1756-48ab-9299-a847974d1fee", runtime.Labels["operator.kyma-project.io/kyma-name"])
+
+	assertLabelsKIMDriven(t, operation, runtime)
+	assertSecurity(t, runtime)
+
+	assert.Equal(t, "azure", runtime.Spec.Shoot.Provider.Type)
+	assert.Equal(t, "westeurope", runtime.Spec.Shoot.Region)
+	assert.Equal(t, "evaluation", string(runtime.Spec.Shoot.Purpose))
+
+	assertWorkers(t, runtime.Spec.Shoot.Provider.Workers, "Standard_D4s_v5", 10, 2, 1, 0, 1, []string{"1", "2", "3"})
+
+	_, err = memoryStorage.Instances().GetByID(operation.InstanceID)
+	assert.NoError(t, err)
+
+}
+
 func TestCreateRuntimeResourceStep_Defaults_Azure_MultiZone_ActualCreation(t *testing.T) {
 	// given
 	log := logrus.New()
@@ -898,6 +945,15 @@ func fixKimConfig(planName string, dryRun bool) kim.Config {
 	return kim.Config{
 		Enabled:  true,
 		Plans:    []string{planName},
+		ViewOnly: false,
+		DryRun:   dryRun,
+	}
+}
+
+func fixKimConfigWithAllPlans(dryRun bool) kim.Config {
+	return kim.Config{
+		Enabled:  true,
+		Plans:    []string{"azure", "gcp", "azure_lite", "trial", "aws", "free", "preview", "sap-converged-cloud"},
 		ViewOnly: false,
 		DryRun:   dryRun,
 	}
