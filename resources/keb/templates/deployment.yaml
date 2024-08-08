@@ -120,6 +120,8 @@ spec:
               value: "{{ .Values.provisioner.deprovisioningTimeout }}"
             - name: APP_PROVISIONER_GARDENER_CLUSTER_STEP_TIMEOUT
               value: "{{ .Values.provisioner.gardenerClusterStepTimeout }}"
+            - name: APP_PROVISIONER_RUNTIME_RESOURCE_STEP_TIMEOUT
+              value: "{{ .Values.provisioner.runtimeResourceStepTimeout }}"
             - name: APP_PROVISIONER_DEFAULT_GARDENER_SHOOT_PURPOSE
               value: "{{ .Values.gardener.defaultShootPurpose }}"
             - name: APP_PROVISIONER_DEFAULT_TRIAL_PROVIDER
