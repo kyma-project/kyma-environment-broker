@@ -2,9 +2,10 @@ package steps
 
 import (
 	"context"
-	"github.com/kyma-project/kyma-environment-broker/internal/kim"
 	"testing"
 	"time"
+
+	"github.com/kyma-project/kyma-environment-broker/internal/kim"
 
 	"github.com/pivotal-cf/brokerapi/v8/domain"
 

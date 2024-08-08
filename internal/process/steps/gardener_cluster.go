@@ -4,10 +4,11 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"github.com/kyma-project/kyma-environment-broker/internal/broker"
-	"github.com/kyma-project/kyma-environment-broker/internal/kim"
 	"strings"
 	"time"
+
+	"github.com/kyma-project/kyma-environment-broker/internal/broker"
+	"github.com/kyma-project/kyma-environment-broker/internal/kim"
 
 	"github.com/kyma-project/kyma-environment-broker/internal"
 	"github.com/kyma-project/kyma-environment-broker/internal/process"
