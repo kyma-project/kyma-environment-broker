@@ -1480,7 +1480,7 @@ func setupStorageContainer() func() {
 		Name:          config.Name,
 		Host:          config.Host,
 		ContainerName: "subaccount-sync-tests",
-		Image:         "postgres:11",
+		Image:         internal.PostgresImage,
 	})
 	return func() {
 		if cleanupContainer != nil {

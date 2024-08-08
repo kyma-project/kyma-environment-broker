@@ -51,7 +51,7 @@ func TestMain(m *testing.M) {
 		Name:          config.Name,
 		Host:          config.Host,
 		ContainerName: "keb-storage-tests",
-		Image:         "postgres:11",
+		Image:         internal.PostgresImage,
 	})
 	defer func() {
 		if cleanupContainer != nil {
