@@ -12,7 +12,7 @@ require (
 	github.com/dlmiddlecote/sqlstats v1.0.2
 	github.com/docker/docker v27.1.1+incompatible
 	github.com/docker/go-connections v0.5.0
-	github.com/gardener/gardener v1.100.0
+	github.com/gardener/gardener v1.101.0
 	github.com/go-co-op/gocron v1.37.0
 	github.com/gocraft/dbr v0.0.0-20190714181702-8114670a83bd
 	github.com/google/uuid v1.6.0
@@ -121,11 +121,11 @@ require (
 	go.opentelemetry.io/otel/sdk v1.23.1 // indirect
 	go.opentelemetry.io/otel/trace v1.24.0 // indirect
 	go.uber.org/atomic v1.11.0 // indirect
-	golang.org/x/crypto v0.25.0 // indirect
-	golang.org/x/net v0.27.0 // indirect
-	golang.org/x/sys v0.22.0 // indirect
-	golang.org/x/term v0.22.0 // indirect
-	golang.org/x/text v0.16.0 // indirect
+	golang.org/x/crypto v0.26.0 // indirect
+	golang.org/x/net v0.28.0 // indirect
+	golang.org/x/sys v0.23.0 // indirect
+	golang.org/x/term v0.23.0 // indirect
+	golang.org/x/text v0.17.0 // indirect
 	google.golang.org/protobuf v1.34.1 // indirect
 	gopkg.in/inf.v0 v0.9.1 // indirect
 	gotest.tools/v3 v3.1.0 // indirect
