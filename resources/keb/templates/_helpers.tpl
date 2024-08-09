@@ -69,6 +69,11 @@ Utility function for joining Avs tag list into string.
 {{/*
 Utility functions for VaultStaticSecret
 */}}
+{{- define "get.avs.apiEndpoint" -}}
+{{- .Values.avs.apiEndpoint -}}
+{{- end -}}
+
+
 {{- define "get.avs.internalTesterService" -}}
 {{- .Values.avs.internalTesterService -}}
 {{- end -}}

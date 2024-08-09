@@ -119,15 +119,12 @@ vsoSecrets:
           oauthUserName: username
           internalTesterAccessId: internal_tester_access_id
           externalTesterAccessId: external_tester_access_id
-          #internalTesterService: ""
-          #externalTesterService: ""
           groupId: group_id
           parentId: parent_id
-          #trialApiKey: ""
-          #trialInternalTesterAccessId: "0"
-          #trialGroupId: "0"
-          #trialParentId: "0"
         data:
+          apiEndpoint:
+            template: |-
+              {{- template "get.avs.apiEndpoint" . -}}
           apiKey: {}
           clientId: {}
           oauthPassword: {}
@@ -136,20 +133,25 @@ vsoSecrets:
           internalTesterAccessId: {}
           externalTesterAccessId: {}
           internalTesterService:
-            simpleValue: ""
+            template: |-
+              {{- template "get.avs.internalTesterService" . -}}
           externalTesterService: 
-            simpleValue: ""
+            template: |-
+              {{- template "get.avs.externalTesterService" . -}}
           groupId: {}
           parentId: {}
           trialApiKey:
-            simpleValue: ""
+            template: |-
+              {{- template "get.avs.trialApiKey" . -}}
           trialInternalTesterAccessId:
-            simpleValue: "0"
+            template: |-
+              {{- template "get.avs.trialInternalTesterAccessId" . -}}
           trialGroupId:
-            simpleValue: "0"
+            template: |-
+              {{- template "get.avs.trialGroupId" . -}}
           trialParentId:
-            simpleValue: "0"
-#              {{ template "get.avs.trialParentId" . -}}
+            template: |-
+              {{- template "get.avs.trialParentId" . -}}
 
 deployment:
   replicaCount: 1
