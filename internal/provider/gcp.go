@@ -32,6 +32,8 @@ func (p *GCPInputProvider) Provide() Values {
 		DefaultMachineType:   DefaultGCPMachineType,
 		Region:               region,
 		Purpose:              PurposeProduction,
+		VolumeSizeGb:         50,
+		DiskType:             "pd-standard",
 	}
 }
 
@@ -63,6 +65,8 @@ func (p *GCPTrialInputProvider) Provide() Values {
 		DefaultMachineType:   DefaultGCPTrialMachineType,
 		Region:               region,
 		Purpose:              PurposeEvaluation,
+		VolumeSizeGb:         30,
+		DiskType:             "pd-standard",
 	}
 }
 

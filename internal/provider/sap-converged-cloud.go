@@ -33,6 +33,7 @@ func (p *SapConvergedCloudInputProvider) Provide() Values {
 		DefaultMachineType:   DefaultSapConvergedCloudMachineType,
 		Region:               region,
 		Purpose:              PurposeProduction,
+		DiskType:             "",
 	}
 }
 

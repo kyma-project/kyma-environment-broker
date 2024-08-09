@@ -143,9 +143,11 @@ func (s *CreateRuntimeResourceStep) updateRuntimeResourceObject(runtime *imv1.Ru
 	runtime.Spec.Shoot.SecretBindingName = *operation.ProvisioningParameters.Parameters.TargetSecret
 	runtime.Spec.Shoot.ControlPlane.HighAvailability = s.createHighAvailabilityConfiguration()
 	runtime.Spec.Shoot.EnforceSeedLocation = operation.ProvisioningParameters.Parameters.ShootAndSeedSameRegion
-	runtime.Spec.Security = s.createSecurityConfiguration(operation)
 	runtime.Spec.Shoot.Networking = s.createNetworkingConfiguration(operation)
 	runtime.Spec.Shoot.Kubernetes = s.createKubernetesConfiguration(operation)
+
+	runtime.Spec.Security = s.createSecurityConfiguration(operation)
+
 	return nil
 }
 
@@ -190,10 +192,13 @@ func (s *CreateRuntimeResourceStep) createShootProvider(operation *internal.Oper
 	max := int32(DefaultIfParamNotSet(values.DefaultAutoScalerMax, operation.ProvisioningParameters.Parameters.AutoScalerMax))
 	min := int32(DefaultIfParamNotSet(values.DefaultAutoScalerMin, operation.ProvisioningParameters.Parameters.AutoScalerMin))
 
+	volumeSize := int32(DefaultIfParamNotSet(values.VolumeSizeGb, operation.ProvisioningParameters.Parameters.VolumeSizeGb))
+
 	providerObj := imv1.Provider{
 		Type: values.ProviderType,
 		Workers: []gardener.Worker{
 			{
+				Name: "cpu-worker-0",
 				Machine: gardener.Machine{
 					Type: DefaultIfParamNotSet(values.DefaultMachineType, operation.ProvisioningParameters.Parameters.MachineType),
 					Image: &gardener.ShootMachineImage{
@@ -206,6 +211,10 @@ func (s *CreateRuntimeResourceStep) createShootProvider(operation *internal.Oper
 				MaxSurge:       &maxSurge,
 				MaxUnavailable: &maxUnavailable,
 				Zones:          values.Zones,
+				Volume: &gardener.Volume{
+					Type:       ptr.String(values.DiskType),
+					VolumeSize: string(volumeSize),
+				},
 			},
 		},
 	}

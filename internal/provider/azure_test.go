@@ -34,6 +34,8 @@ func TestAzureDefaults(t *testing.T) {
 		DefaultMachineType:   "Standard_D2s_v5",
 		Region:               "eastus",
 		Purpose:              "production",
+		DiskType:             "Standard_LRS",
+		VolumeSizeGb:         50,
 	}, values)
 }
 
@@ -62,6 +64,8 @@ func TestAzureTrialDefaults(t *testing.T) {
 		DefaultMachineType:   "Standard_D4s_v5",
 		Region:               "switzerlandnorth",
 		Purpose:              "evaluation",
+		DiskType:             "Standard_LRS",
+		VolumeSizeGb:         50,
 	}, values)
 }
 
@@ -89,6 +93,8 @@ func TestAzureLiteDefaults(t *testing.T) {
 		DefaultMachineType:   "Standard_D4s_v5",
 		Region:               "eastus",
 		Purpose:              "evaluation",
+		DiskType:             "Standard_LRS",
+		VolumeSizeGb:         50,
 	}, values)
 }
 
@@ -122,6 +128,8 @@ func TestAzureSpecific(t *testing.T) {
 		DefaultMachineType:   "Standard_D2s_v5",
 		Region:               "uksouth",
 		Purpose:              "production",
+		DiskType:             "Standard_LRS",
+		VolumeSizeGb:         50,
 	}, values)
 }
 
@@ -156,6 +164,8 @@ func TestAzureTrialSpecific(t *testing.T) {
 		DefaultMachineType:   "Standard_D4s_v5",
 		Region:               "southeastasia",
 		Purpose:              "evaluation",
+		DiskType:             "Standard_LRS",
+		VolumeSizeGb:         50,
 	}, values)
 }
 
@@ -188,5 +198,7 @@ func TestAzureLiteSpecific(t *testing.T) {
 		DefaultMachineType:   "Standard_D4s_v5",
 		Region:               "uksouth",
 		Purpose:              "evaluation",
+		DiskType:             "Standard_LRS",
+		VolumeSizeGb:         50,
 	}, values)
 }
