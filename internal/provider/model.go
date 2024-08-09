@@ -4,12 +4,13 @@ package provider
 type Values struct {
 	DefaultAutoScalerMax int
 	DefaultAutoScalerMin int
-	ZonesCount           int //TODO do we need this as separate value?
+	ZonesCount           int
 	Zones                []string
 	ProviderType         string
 	DefaultMachineType   string
 	Region               string
 	Purpose              string //TODO default per landscape in configuration
-
+	VolumeSizeGb         int
+	DiskType             string
 	// todo: add other plan specific values
 }

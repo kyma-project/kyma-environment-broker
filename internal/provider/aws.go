@@ -37,6 +37,8 @@ func (p *AWSInputProvider) Provide() Values {
 		DefaultMachineType:   DefaultAWSMachineType,
 		Region:               region,
 		Purpose:              PurposeProduction,
+		VolumeSizeGb:         50,
+		DiskType:             "gp2",
 	}
 }
 
@@ -72,6 +74,8 @@ func (p *AWSTrialInputProvider) Provide() Values {
 		DefaultMachineType:   machineType,
 		Region:               region,
 		Purpose:              PurposeEvaluation,
+		VolumeSizeGb:         50,
+		DiskType:             "gp2",
 	}
 }
 
@@ -107,6 +111,8 @@ func (p *AWSFreemiumInputProvider) Provide() Values {
 		DefaultMachineType:   machineType,
 		Region:               region,
 		Purpose:              PurposeEvaluation,
+		VolumeSizeGb:         50,
+		DiskType:             "gp2",
 	}
 }
 
