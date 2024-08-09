@@ -66,6 +66,10 @@ This [workflow](/.github/workflows/run-govulncheck.yaml) runs the Govulncheck. I
 - Any `*.go` file
 - Any `*.sh` file
 
+## Image Build and Test Workflow
+
+This [workflow](/.github/workflows/run-govulncheck.yaml) builds images and calls the reusable [workflow](/.github/workflows/run-keb-chart-install-tests-reusable.yaml) to install the KEB chart with the new images in the k3s cluster. 
+
 ## Reusable Workflows
 
 There are reusable workflows created. Anyone with access to a reusable workflow can call it from another workflow.
@@ -84,3 +88,24 @@ The workflow:
 - Sets up the Go environment
 - Invokes `make go-mod-check`
 - Invokes `make test`
+
+### KEB Chart  Install Tests
+
+This [workflow](/.github/workflows/run-keb-chart-install-tests-reusable.yaml) installs the KEB chart in the k3s cluster. 
+You pass the following parameters from the calling workflow:
+
+| Parameter name  | Required | Description                                                          |
+| ------------- | ------------- |----------------------------------------------------------------------|
+| **last-k3s-versions**  | no  | number of most recent k3s versions to be used for tests, default = `1` |
+| **release**  | no  | determines if the workflow is called from release, default = `true` |
+| **version**  | no  | chart version, default = `0.0.0.0` |
+
+
+The workflow:
+- Checks if the KEB chart is rendered successfully by Helm
+- Fetches the **last-k3s-versions** tag versions of k3s releases 
+- Prepares the **last-k3s-versions** k3s clusters with the Docker registries using the list of versions from the previous step
+- Creates required namespaces
+- Installs required dependencies by the KEB chart
+- Installs the KEB chart in the k3s cluster using `helm install`
+- Waits for all tests to finish

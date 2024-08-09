@@ -16,7 +16,7 @@ The Kyma Environment Broker release pipeline creates proper artifacts:
 
 ### Create a Release
 
-![Release diagram](../assets/release.svg)
+![Release diagram](../assets/release.drawio.svg)
 
 To create a release, follow these steps:
 
@@ -26,12 +26,15 @@ To create a release, follow these steps:
    iii. Click  **Run workflow** on the right  
    iv. Provide a version, for example, 1.2.0  
    
-2. The GitHub action asynchronously initiates release validation, unit tests and KEB chart tests. The validation is done by checking if the GitHub tag already exists, if there are any old Docker images for that GitHub tag, and if merged PRs that are part of this release are labeled correctly. Additionally, it stops the release process if a feature has been added, but only the patch version number has been bumped up.
-3. The GitHub action initiates the bump of the security scanner config, KEB images and KEB chart version.
-4. A code owner approves the PR.
-5. The GitHub action creates a GitHub tag and draft release with the provided name.
-6. The GitHub action commits the new KEB chart metadata to the `gh-pages` branch.
-7. The GitHub action publishes the release.
+2. The GitHub action asynchronously initiates release validation and unit tests. The validation is done by checking if the GitHub tag already exists, if there are any old Docker images for that GitHub tag, and if merged PRs that are part of this release are labeled correctly. Additionally, it stops the release process if a feature has been added, but only the patch version number has been bumped up.
+3. The GitHub action initiates the image builders.
+4. The Image builders upload the binary images.
+5. The GitHub action initiates KEB chart install test.
+6. The GitHub action initiates the bump of the security scanner config, KEB images and KEB chart version.
+7. A code owner approves the PR.
+8. The GitHub action creates a GitHub tag and draft release with the provided name.
+9. The GitHub action commits the new KEB chart metadata to the `gh-pages` branch.
+10. The GitHub action publishes the release.
 
 
 ### Replace an Existing Release
