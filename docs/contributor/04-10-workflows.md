@@ -106,6 +106,6 @@ The workflow:
 - Fetches the **last-k3s-versions** tag versions of k3s releases 
 - Prepares the **last-k3s-versions** k3s clusters with the Docker registries using the list of versions from the previous step
 - Creates required namespaces
-- Installs required dependencies by the KEB 
+- Installs required dependencies by the KEB chart
 - Installs the KEB chart in the k3s cluster using `helm install`
 - Waits for all tests to finish
