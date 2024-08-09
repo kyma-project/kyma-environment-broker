@@ -104,7 +104,7 @@ global:
 vsoSecrets:
   mount: kcp-dev
   secrets:
-    dummy-secret1:
+    avs-creds:
       path: avs
       secretName: avs-creds-test
       labels: >-
@@ -152,6 +152,30 @@ vsoSecrets:
           trialParentId:
             template: |-
               {{- .Values.avs.trialParentId -}}
+    edp-secret:
+      path: edp
+      secretName: "{{ .Values.edp.secretName }}-test"
+      labels: >-
+        {{ template "kyma-env-broker.labels" . }}
+      templating:
+        enabled: true
+        keys:
+          secret: keb_edp_secret
+        data:
+          secret: {}
+          
+    cis-secre-v1:
+      path: cis
+      secretName: "{{ .Values.cis.v1.secretName | required \"please specify .Values.cis.v1.secretName\"}}-test"
+      labels: >-
+        {{ template "kyma-env-broker.labels" . }}
+      templating:
+        enabled: true
+        keys:
+          id: v1_id
+          secret: 
+        data:
+          id: {}
               
 #{{- template "get.avs.trialParentId" . -}}
 
