@@ -16,7 +16,7 @@ The Kyma Environment Broker release pipeline creates proper artifacts:
 
 ### Create a Release
 
-![Release diagram](../assets/release.svg)
+![Release diagram](../assets/release.drawio.svg)
 
 To create a release, follow these steps:
 
