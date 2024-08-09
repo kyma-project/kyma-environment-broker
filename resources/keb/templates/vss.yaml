@@ -52,14 +52,12 @@ spec:
         {{ $fname }}:
           {{- if hasKey $fvalue "templateFile" }}
           text: |-
-            {{ tpl ($.Files.Get $fvalue.templateFile) (dict "Template" $.Template "keys" $secret.templating.keys "Values" $root.Values) | nindent 12 }}
+            {{- tpl ($.Files.Get $fvalue.templateFile) (dict "Template" $.Template "keys" $secret.templating.keys "Values" $root.Values) | nindent 12 }}
           {{- else if hasKey $fvalue "template" }}
-          text: |
-            {{ tpl $fvalue.template (dict "Template" $.Template "keys" $secret.templating.keys "Values" $root.Values) | nindent 12 }}
-          {{- else if hasKey $fvalue "simpleValue" }}
-          text: {{ $fvalue.simpleValue | quote -}}
+          text: |-
+            {{- tpl $fvalue.template (dict "Template" $.Template "keys" $secret.templating.keys "Values" $root.Values) | nindent 12 }}
           {{- else }}
-          text: |
+          text: |-
             {{ printf "{{- get .Secrets \"%s\" -}}" (get $secret.templating.keys $fname) }}
           {{- end }}
         {{- end }}
