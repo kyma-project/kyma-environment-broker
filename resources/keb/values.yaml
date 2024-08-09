@@ -124,7 +124,7 @@ vsoSecrets:
         data:
           apiEndpoint:
             template: |-
-              {{- template "get.avs.apiEndpoint" . -}}
+              {{- .Values.avs.apiEndpoint -}}
           apiKey: {}
           clientId: {}
           oauthPassword: {}
@@ -134,24 +134,26 @@ vsoSecrets:
           externalTesterAccessId: {}
           internalTesterService:
             template: |-
-              {{- template "get.avs.internalTesterService" . -}}
+              {{- .Values.avs.internalTesterService -}}
           externalTesterService: 
             template: |-
-              {{- template "get.avs.externalTesterService" . -}}
+              {{- .Values.avs.externalTesterService -}}
           groupId: {}
           parentId: {}
           trialApiKey:
             template: |-
-              {{- template "get.avs.trialApiKey" . -}}
+              {{- .Values.avs.trialApiKey -}}
           trialInternalTesterAccessId:
             template: |-
-              {{- template "get.avs.trialInternalTesterAccessId" . -}}
+              {{- .Values.avs.trialInternalTesterAccessId -}}
           trialGroupId:
             template: |-
-              {{- template "get.avs.trialGroupId" . -}}
+              {{- .Values.avs.trialGroupId -}}
           trialParentId:
             template: |-
-              {{- template "get.avs.trialParentId" . -}}
+              {{- .Values.avs.trialParentId -}}
+              
+#{{- template "get.avs.trialParentId" . -}}
 
 deployment:
   replicaCount: 1

@@ -64,36 +64,3 @@ Utility function for joining Avs tag list into string.
 {{- $_ := set $local "first" false -}}
 {{- end -}}
 {{- end -}}
-
-
-{{/*
-Utility functions for VaultStaticSecret
-*/}}
-{{- define "get.avs.apiEndpoint" -}}
-{{- .Values.avs.apiEndpoint -}}
-{{- end -}}
-
-
-{{- define "get.avs.internalTesterService" -}}
-{{- .Values.avs.internalTesterService -}}
-{{- end -}}
-
-{{- define "get.avs.externalTesterService" -}}
-{{- .Values.avs.externalTesterService -}}
-{{- end -}}
-
-{{- define "get.avs.trialApiKey" -}}
-{{- .Values.avs.trialApiKey -}}
-{{- end -}}
-
-{{- define "get.avs.trialInternalTesterAccessId" -}}
-{{- .Values.avs.trialInternalTesterAccessId -}}
-{{- end -}}
-
-{{- define "get.avs.trialGroupId" -}}
-{{- .Values.avs.trialGroupId -}}
-{{- end -}}
-
-{{- define "get.avs.trialParentId" -}}
-{{- .Values.avs.trialParentId -}}
-{{- end -}}
