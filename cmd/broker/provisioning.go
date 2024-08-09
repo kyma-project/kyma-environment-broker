@@ -112,13 +112,13 @@ func NewProvisioningProcessingQueue(ctx context.Context, provisionManager *proce
 		{
 			stage:     createRuntimeStageName,
 			disabled:  cfg.InfrastructureManagerIntegrationDisabled,
-			step:      steps.NewSyncGardenerCluster(db.Operations(), cli),
+			step:      steps.NewSyncGardenerCluster(db.Operations(), cli, cfg.Broker.KimConfig),
 			condition: provisioning.SkipForOwnClusterPlan,
 		},
 		{
 			stage:     createRuntimeStageName,
 			disabled:  cfg.InfrastructureManagerIntegrationDisabled,
-			step:      steps.NewCheckGardenerCluster(db.Operations(), cli, cfg.Provisioner.GardenerClusterStepTimeout),
+			step:      steps.NewCheckGardenerCluster(db.Operations(), cli, cfg.Broker.KimConfig, cfg.Provisioner.GardenerClusterStepTimeout),
 			condition: provisioning.SkipForOwnClusterPlan,
 		},
 		{ // TODO: this step must be removed when kubeconfig is created by IM only
