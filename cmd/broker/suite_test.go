@@ -600,7 +600,7 @@ func NewProvisioningSuite(t *testing.T, multiZoneCluster bool, controlPlaneFailu
 	provisionManager := process.NewStagedManager(db.Operations(), eventBroker, cfg.OperationTimeout, cfg.Provisioning, logs.WithField("provisioning", "manager"))
 	provisioningQueue := NewProvisioningProcessingQueue(ctx, provisionManager, workersAmount, cfg, db, provisionerClient, inputFactory, avsDel,
 		internalEvalAssistant, externalEvalCreator, edpClient, accountProvider,
-		kubeconfig.NewFakeK8sClientProvider(cli), cli, logs)
+		kubeconfig.NewFakeK8sClientProvider(cli), cli, defaultOIDCValues(), logs)
 
 	provisioningQueue.SpeedUp(10000)
 	provisionManager.SpeedUp(10000)

@@ -4,6 +4,8 @@ import (
 	"context"
 	"time"
 
+	"github.com/kyma-project/kyma-environment-broker/internal/process/steps"
+
 	"github.com/kyma-project/kyma-environment-broker/internal"
 	"github.com/kyma-project/kyma-environment-broker/internal/process"
 	"github.com/kyma-project/kyma-environment-broker/internal/storage"
@@ -40,6 +42,10 @@ func (step *DeleteRuntimeResourceStep) Run(operation internal.Operation, logger 
 	resourceName := operation.RuntimeResourceName
 	resourceNamespace := operation.KymaResourceNamespace
 
+	// if the resource name stored in the operation is empty, try to get it from the RuntimeID (when it was created by KIM migration process, not by the KEB)
+	if resourceName == "" {
+		resourceName = steps.KymaRuntimeResourceName(operation)
+	}
 	if resourceName == "" {
 		logger.Infof("Runtime resource name is empty, skipping")
 		return operation, 0, nil

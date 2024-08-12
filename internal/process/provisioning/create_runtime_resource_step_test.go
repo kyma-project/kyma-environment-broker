@@ -47,6 +47,58 @@ var defaultNetworking = imv1.Networking{
 	Pods:     networking.DefaultPodsCIDR,
 	Services: networking.DefaultServicesCIDR,
 }
+var defaultOIDSConfig = internal.OIDCConfigDTO{
+	ClientID:       "client-id-default",
+	GroupsClaim:    "gc-default",
+	IssuerURL:      "issuer-url-default",
+	SigningAlgs:    []string{"sa-default"},
+	UsernameClaim:  "uc-default",
+	UsernamePrefix: "up-default",
+}
+
+func TestCreateRuntimeResourceStep_OIDC(t *testing.T) {
+	// given
+	err := imv1.AddToScheme(scheme.Scheme)
+	assert.NoError(t, err)
+	log := logrus.New()
+	memoryStorage := storage.NewMemoryStorage()
+	instance, operation := fixInstanceAndOperation(broker.AzurePlanID, "westeurope", "platform-region")
+	operation.ProvisioningParameters.Parameters.OIDC = &internal.OIDCConfigDTO{
+		ClientID:       "client-id-custom",
+		GroupsClaim:    "gc-custom",
+		IssuerURL:      "issuer-url-custom",
+		SigningAlgs:    []string{"sa-custom"},
+		UsernameClaim:  "uc-custom",
+		UsernamePrefix: "up-custom",
+	}
+	assertInsertions(t, memoryStorage, instance, operation)
+	kimConfig := fixKimConfig("azure", false)
+	inputConfig := input.Config{MultiZoneCluster: true}
+	cli := getClientForTests(t)
+	step := NewCreateRuntimeResourceStep(memoryStorage.Operations(), memoryStorage.Instances(), cli, kimConfig, inputConfig, nil, false, defaultOIDSConfig)
+
+	// when
+	entry := log.WithFields(logrus.Fields{"step": "TEST"})
+	_, repeat, err := step.Run(operation, entry)
+
+	// then
+	assert.NoError(t, err)
+	assert.Zero(t, repeat)
+	runtime := imv1.Runtime{}
+	err = cli.Get(context.Background(), client.ObjectKey{
+		Namespace: "kyma-system",
+		Name:      operation.RuntimeID,
+	}, &runtime)
+	assert.NoError(t, err)
+	assert.Equal(t, gardener.OIDCConfig{
+		ClientID:       ptr.String("client-id-custom"),
+		GroupsClaim:    ptr.String("gc-custom"),
+		IssuerURL:      ptr.String("issuer-url-custom"),
+		SigningAlgs:    []string{"sa-custom"},
+		UsernameClaim:  ptr.String("uc-custom"),
+		UsernamePrefix: ptr.String("up-custom"),
+	}, runtime.Spec.Shoot.Kubernetes.KubeAPIServer.OidcConfig)
+}
 
 func TestCreateRuntimeResourceStep_Defaults_Azure_MultiZone_YamlOnly(t *testing.T) {
 	// given
@@ -59,7 +111,7 @@ func TestCreateRuntimeResourceStep_Defaults_Azure_MultiZone_YamlOnly(t *testing.
 	kimConfig := fixKimConfig("azure", true)
 	inputConfig := input.Config{MultiZoneCluster: true}
 
-	step := NewCreateRuntimeResourceStep(memoryStorage.Operations(), memoryStorage.Instances(), nil, kimConfig, inputConfig, nil, false)
+	step := NewCreateRuntimeResourceStep(memoryStorage.Operations(), memoryStorage.Instances(), nil, kimConfig, inputConfig, nil, false, defaultOIDSConfig)
 
 	// when
 	entry := log.WithFields(logrus.Fields{"step": "TEST"})
@@ -96,10 +148,10 @@ func TestCreateRuntimeResourceStep_AllYamls(t *testing.T) {
 			instance, operation := fixInstanceAndOperation(testCase.planID, testCase.region, "platform-region")
 			assertInsertions(t, memoryStorage, instance, operation)
 
-			kimConfig := fixKimConfig(broker.PlanNamesMapping[testCase.planID], true)
+			kimConfig := fixKimConfigWithAllPlans(true)
 			inputConfig := input.Config{MultiZoneCluster: testCase.multiZone}
 
-			step := NewCreateRuntimeResourceStep(memoryStorage.Operations(), memoryStorage.Instances(), nil, kimConfig, inputConfig, nil, false)
+			step := NewCreateRuntimeResourceStep(memoryStorage.Operations(), memoryStorage.Instances(), nil, kimConfig, inputConfig, nil, false, defaultOIDSConfig)
 
 			// when
 			entry := log.WithFields(logrus.Fields{"step": "TEST"})
@@ -113,6 +165,88 @@ func TestCreateRuntimeResourceStep_AllYamls(t *testing.T) {
 }
 
 // Actual creation tests
+
+func TestCreateRuntimeResourceStep_ActualCreation(t *testing.T) {
+
+	for _, testCase := range []struct {
+		name           string
+		providerType   string
+		planID         string
+		multiZone      bool
+		region         string
+		purpose        string
+		machine        string
+		maximum        int
+		minimum        int
+		maxSurge       int
+		maxUnavailable int
+		zonesCount     int
+		zones          []string
+	}{
+		{"GCP Multi Zone", "gcp", broker.GCPPlanID, true, "asia-south1", "production", "n2-standard-2",
+			20, 3, 3, 0, 3, []string{"asia-south1-a", "asia-south1-b", "asia-south1-c"}},
+		{"GCP Single Zone", "gcp", broker.GCPPlanID, false, "asia-south1", "production", "n2-standard-2",
+			20, 3, 1, 0, 1, []string{"asia-south1-a", "asia-south1-b", "asia-south1-c"}},
+		{"Azure Multi Zone", "azure", broker.AzurePlanID, true, "westeurope", "production", "Standard_D2s_v5",
+			20, 3, 3, 0, 3, []string{"1", "2", "3"}},
+		{"Azure Single Zone", "azure", broker.AzurePlanID, false, "westeurope", "production", "Standard_D2s_v5",
+			20, 3, 1, 0, 1, []string{"1", "2", "3"}},
+		{"Azure Lite", "azure", broker.AzureLitePlanID, false, "westeurope", "evaluation", "Standard_D4s_v5",
+			10, 2, 1, 0, 1, []string{"1", "2", "3"}},
+		{"Preview Multi Zone", "aws", broker.PreviewPlanID, true, "eu-west-2", "production", "m6i.large",
+			20, 3, 3, 0, 3, []string{"eu-west-2a", "eu-west-2b", "eu-west-2c"}},
+		{"Preview Single Zone", "aws", broker.PreviewPlanID, false, "eu-west-2", "production", "m6i.large",
+			20, 3, 1, 0, 1, []string{"eu-west-2a", "eu-west-2b", "eu-west-2c"}},
+		{"AWS Multi Zone", "aws", broker.AWSPlanID, true, "eu-west-2", "production", "m6i.large",
+			20, 3, 3, 0, 3, []string{"eu-west-2a", "eu-west-2b", "eu-west-2c"}},
+		{"AWS Single Zone", "aws", broker.AWSPlanID, false, "eu-west-2", "production", "m6i.large",
+			20, 3, 1, 0, 1, []string{"eu-west-2a", "eu-west-2b", "eu-west-2c"}},
+	} {
+		t.Run(testCase.name, func(t *testing.T) {
+			// given
+			log := logrus.New()
+			memoryStorage := storage.NewMemoryStorage()
+			err := imv1.AddToScheme(scheme.Scheme)
+
+			instance, operation := fixInstanceAndOperation(testCase.planID, testCase.region, "platform-region")
+			assertInsertions(t, memoryStorage, instance, operation)
+
+			kimConfig := fixKimConfigWithAllPlans(false)
+
+			cli := getClientForTests(t)
+			inputConfig := input.Config{MultiZoneCluster: testCase.multiZone}
+			step := NewCreateRuntimeResourceStep(memoryStorage.Operations(), memoryStorage.Instances(), cli, kimConfig, inputConfig, nil, false, defaultOIDSConfig)
+
+			// when
+			entry := log.WithFields(logrus.Fields{"step": "TEST"})
+			_, repeat, err := step.Run(operation, entry)
+
+			// then
+			assert.NoError(t, err)
+			assert.Zero(t, repeat)
+
+			runtime := imv1.Runtime{}
+			err = cli.Get(context.Background(), client.ObjectKey{
+				Namespace: "kyma-system",
+				Name:      operation.RuntimeID,
+			}, &runtime)
+			assert.NoError(t, err)
+			assert.Equal(t, operation.RuntimeID, runtime.Name)
+			assert.Equal(t, "runtime-58f8c703-1756-48ab-9299-a847974d1fee", runtime.Labels["operator.kyma-project.io/kyma-name"])
+
+			assertLabelsKIMDriven(t, operation, runtime)
+			assertSecurity(t, runtime)
+
+			assert.Equal(t, testCase.providerType, runtime.Spec.Shoot.Provider.Type)
+			assert.Equal(t, testCase.region, runtime.Spec.Shoot.Region)
+			assert.Equal(t, testCase.purpose, string(runtime.Spec.Shoot.Purpose))
+			assertWorkers(t, runtime.Spec.Shoot.Provider.Workers, testCase.machine, testCase.maximum, testCase.minimum, testCase.maxSurge, testCase.maxUnavailable, testCase.zonesCount, testCase.zones)
+
+			_, err = memoryStorage.Instances().GetByID(operation.InstanceID)
+			assert.NoError(t, err)
+		})
+	}
+}
 
 func TestCreateRuntimeResourceStep_Defaults_AWS_SingleZone_EnforceSeed_ActualCreation(t *testing.T) {
 	// given
@@ -129,7 +263,7 @@ func TestCreateRuntimeResourceStep_Defaults_AWS_SingleZone_EnforceSeed_ActualCre
 	inputConfig := input.Config{MultiZoneCluster: false, ControlPlaneFailureTolerance: "zone"}
 
 	cli := getClientForTests(t)
-	step := NewCreateRuntimeResourceStep(memoryStorage.Operations(), memoryStorage.Instances(), cli, kimConfig, inputConfig, nil, false)
+	step := NewCreateRuntimeResourceStep(memoryStorage.Operations(), memoryStorage.Instances(), cli, kimConfig, inputConfig, nil, false, defaultOIDSConfig)
 
 	// when
 	entry := log.WithFields(logrus.Fields{"step": "TEST"})
@@ -179,7 +313,7 @@ func TestCreateRuntimeResourceStep_Defaults_AWS_SingleZone_DefaultAdmin_ActualCr
 	inputConfig := input.Config{MultiZoneCluster: false, ControlPlaneFailureTolerance: "zone"}
 
 	cli := getClientForTests(t)
-	step := NewCreateRuntimeResourceStep(memoryStorage.Operations(), memoryStorage.Instances(), cli, kimConfig, inputConfig, nil, false)
+	step := NewCreateRuntimeResourceStep(memoryStorage.Operations(), memoryStorage.Instances(), cli, kimConfig, inputConfig, nil, false, defaultOIDSConfig)
 
 	// when
 	entry := log.WithFields(logrus.Fields{"step": "TEST"})
@@ -228,7 +362,7 @@ func TestCreateRuntimeResourceStep_Defaults_AWS_SingleZone_DryRun_ActualCreation
 	inputConfig := input.Config{MultiZoneCluster: false, ControlPlaneFailureTolerance: "zone"}
 
 	cli := getClientForTests(t)
-	step := NewCreateRuntimeResourceStep(memoryStorage.Operations(), memoryStorage.Instances(), cli, kimConfig, inputConfig, nil, false)
+	step := NewCreateRuntimeResourceStep(memoryStorage.Operations(), memoryStorage.Instances(), cli, kimConfig, inputConfig, nil, false, defaultOIDSConfig)
 
 	// when
 	entry := log.WithFields(logrus.Fields{"step": "TEST"})
@@ -282,7 +416,7 @@ func TestCreateRuntimeResourceStep_Defaults_AWS_MultiZoneWithNetworking_ActualCr
 
 	cli := getClientForTests(t)
 	inputConfig := input.Config{MultiZoneCluster: true}
-	step := NewCreateRuntimeResourceStep(memoryStorage.Operations(), memoryStorage.Instances(), cli, kimConfig, inputConfig, nil, false)
+	step := NewCreateRuntimeResourceStep(memoryStorage.Operations(), memoryStorage.Instances(), cli, kimConfig, inputConfig, nil, false, defaultOIDSConfig)
 
 	// when
 	entry := log.WithFields(logrus.Fields{"step": "TEST"})
@@ -318,21 +452,21 @@ func TestCreateRuntimeResourceStep_Defaults_AWS_MultiZoneWithNetworking_ActualCr
 	assert.NoError(t, err)
 }
 
-func TestCreateRuntimeResourceStep_Defaults_AWS_MultiZone_ActualCreation(t *testing.T) {
+func TestCreateRuntimeResourceStep_Defaults_Preview_SingleZone_ActualCreation_WithRetry(t *testing.T) {
 	// given
 	log := logrus.New()
 	memoryStorage := storage.NewMemoryStorage()
 
 	err := imv1.AddToScheme(scheme.Scheme)
 
-	instance, operation := fixInstanceAndOperation(broker.AWSPlanID, "eu-west-2", "platform-region")
+	instance, operation := fixInstanceAndOperation(broker.PreviewPlanID, "eu-west-2", "platform-region")
 	assertInsertions(t, memoryStorage, instance, operation)
 
-	kimConfig := fixKimConfig("aws", false)
+	kimConfig := fixKimConfig("preview", false)
 
 	cli := getClientForTests(t)
-	inputConfig := input.Config{MultiZoneCluster: true}
-	step := NewCreateRuntimeResourceStep(memoryStorage.Operations(), memoryStorage.Instances(), cli, kimConfig, inputConfig, nil, false)
+	inputConfig := input.Config{MultiZoneCluster: false}
+	step := NewCreateRuntimeResourceStep(memoryStorage.Operations(), memoryStorage.Instances(), cli, kimConfig, inputConfig, nil, false, defaultOIDSConfig)
 
 	// when
 	entry := log.WithFields(logrus.Fields{"step": "TEST"})
@@ -348,7 +482,7 @@ func TestCreateRuntimeResourceStep_Defaults_AWS_MultiZone_ActualCreation(t *test
 		Name:      operation.RuntimeID,
 	}, &runtime)
 	assert.NoError(t, err)
-	assert.Equal(t, runtime.Name, operation.RuntimeID)
+	assert.Equal(t, operation.RuntimeID, runtime.Name)
 	assert.Equal(t, "runtime-58f8c703-1756-48ab-9299-a847974d1fee", runtime.Labels["operator.kyma-project.io/kyma-name"])
 
 	assertLabelsKIMDriven(t, operation, runtime)
@@ -357,98 +491,7 @@ func TestCreateRuntimeResourceStep_Defaults_AWS_MultiZone_ActualCreation(t *test
 	assert.Equal(t, "aws", runtime.Spec.Shoot.Provider.Type)
 	assert.Equal(t, "eu-west-2", runtime.Spec.Shoot.Region)
 	assert.Equal(t, "production", string(runtime.Spec.Shoot.Purpose))
-	assertWorkers(t, runtime.Spec.Shoot.Provider.Workers, "m6i.large", 20, 3, 3, 0, 3, []string{"eu-west-2a", "eu-west-2b", "eu-west-2c"})
-
-	_, err = memoryStorage.Instances().GetByID(operation.InstanceID)
-	assert.NoError(t, err)
-}
-
-func TestCreateRuntimeResourceStep_Defaults_Preview_SingleZone_ActualCreation(t *testing.T) {
-	// given
-	log := logrus.New()
-	memoryStorage := storage.NewMemoryStorage()
-
-	err := imv1.AddToScheme(scheme.Scheme)
-
-	instance, operation := fixInstanceAndOperation(broker.PreviewPlanID, "westeurope", "platform-region")
-	assertInsertions(t, memoryStorage, instance, operation)
-
-	kimConfig := fixKimConfig("preview", false)
-
-	cli := getClientForTests(t)
-	inputConfig := input.Config{MultiZoneCluster: false}
-	step := NewCreateRuntimeResourceStep(memoryStorage.Operations(), memoryStorage.Instances(), cli, kimConfig, inputConfig, nil, false)
-
-	// when
-	entry := log.WithFields(logrus.Fields{"step": "TEST"})
-	_, repeat, err := step.Run(operation, entry)
-
-	// then
-	assert.NoError(t, err)
-	assert.Zero(t, repeat)
-
-	runtime := imv1.Runtime{}
-	err = cli.Get(context.Background(), client.ObjectKey{
-		Namespace: "kyma-system",
-		Name:      operation.RuntimeID,
-	}, &runtime)
-	assert.NoError(t, err)
-	assert.Equal(t, operation.RuntimeID, runtime.Name)
-	assert.Equal(t, "runtime-58f8c703-1756-48ab-9299-a847974d1fee", runtime.Labels["operator.kyma-project.io/kyma-name"])
-
-	assertLabelsKIMDriven(t, operation, runtime)
-	assertSecurity(t, runtime)
-
-	assert.Equal(t, "azure", runtime.Spec.Shoot.Provider.Type)
-	assert.Equal(t, "westeurope", runtime.Spec.Shoot.Region)
-	assert.Equal(t, "production", string(runtime.Spec.Shoot.Purpose))
-	assertWorkers(t, runtime.Spec.Shoot.Provider.Workers, "Standard_D2s_v5", 20, 3, 1, 0, 1, []string{"1", "2", "3"})
-
-	_, err = memoryStorage.Instances().GetByID(operation.InstanceID)
-	assert.NoError(t, err)
-
-}
-
-func TestCreateRuntimeResourceStep_Defaults_Preview_SingleZone_ActualCreation_WithRetry(t *testing.T) {
-	// given
-	log := logrus.New()
-	memoryStorage := storage.NewMemoryStorage()
-
-	err := imv1.AddToScheme(scheme.Scheme)
-
-	instance, operation := fixInstanceAndOperation(broker.PreviewPlanID, "westeurope", "platform-region")
-	assertInsertions(t, memoryStorage, instance, operation)
-
-	kimConfig := fixKimConfig("preview", false)
-
-	cli := getClientForTests(t)
-	inputConfig := input.Config{MultiZoneCluster: false}
-	step := NewCreateRuntimeResourceStep(memoryStorage.Operations(), memoryStorage.Instances(), cli, kimConfig, inputConfig, nil, false)
-
-	// when
-	entry := log.WithFields(logrus.Fields{"step": "TEST"})
-	_, repeat, err := step.Run(operation, entry)
-
-	// then
-	assert.NoError(t, err)
-	assert.Zero(t, repeat)
-
-	runtime := imv1.Runtime{}
-	err = cli.Get(context.Background(), client.ObjectKey{
-		Namespace: "kyma-system",
-		Name:      operation.RuntimeID,
-	}, &runtime)
-	assert.NoError(t, err)
-	assert.Equal(t, operation.RuntimeID, runtime.Name)
-	assert.Equal(t, "runtime-58f8c703-1756-48ab-9299-a847974d1fee", runtime.Labels["operator.kyma-project.io/kyma-name"])
-
-	assertLabelsKIMDriven(t, operation, runtime)
-	assertSecurity(t, runtime)
-
-	assert.Equal(t, "azure", runtime.Spec.Shoot.Provider.Type)
-	assert.Equal(t, "westeurope", runtime.Spec.Shoot.Region)
-	assert.Equal(t, "production", string(runtime.Spec.Shoot.Purpose))
-	assertWorkers(t, runtime.Spec.Shoot.Provider.Workers, "Standard_D2s_v5", 20, 3, 1, 0, 1, []string{"1", "2", "3"})
+	assertWorkers(t, runtime.Spec.Shoot.Provider.Workers, "m6i.large", 20, 3, 1, 0, 1, []string{"eu-west-2a", "eu-west-2b", "eu-west-2c"})
 
 	// then retry
 	_, repeat, err = step.Run(operation, entry)
@@ -465,245 +508,14 @@ func TestCreateRuntimeResourceStep_Defaults_Preview_SingleZone_ActualCreation_Wi
 	assertLabelsKIMDriven(t, operation, runtime)
 	assertSecurity(t, runtime)
 
-	assert.Equal(t, "azure", runtime.Spec.Shoot.Provider.Type)
-	assert.Equal(t, "westeurope", runtime.Spec.Shoot.Region)
+	assert.Equal(t, "aws", runtime.Spec.Shoot.Provider.Type)
+	assert.Equal(t, "eu-west-2", runtime.Spec.Shoot.Region)
 	assert.Equal(t, "production", string(runtime.Spec.Shoot.Purpose))
-	assertWorkers(t, runtime.Spec.Shoot.Provider.Workers, "Standard_D2s_v5", 20, 3, 1, 0, 1, []string{"1", "2", "3"})
+	assertWorkers(t, runtime.Spec.Shoot.Provider.Workers, "m6i.large", 20, 3, 1, 0, 1, []string{"eu-west-2a", "eu-west-2b", "eu-west-2c"})
 
 	_, err = memoryStorage.Instances().GetByID(operation.InstanceID)
 	assert.NoError(t, err)
 
-}
-
-func TestCreateRuntimeResourceStep_Defaults_Preview_MultiZone_ActualCreation(t *testing.T) {
-	// given
-	log := logrus.New()
-	memoryStorage := storage.NewMemoryStorage()
-
-	err := imv1.AddToScheme(scheme.Scheme)
-
-	instance, operation := fixInstanceAndOperation(broker.PreviewPlanID, "westeurope", "platform-region")
-	assertInsertions(t, memoryStorage, instance, operation)
-
-	kimConfig := fixKimConfig("preview", false)
-
-	cli := getClientForTests(t)
-	inputConfig := input.Config{MultiZoneCluster: true}
-	step := NewCreateRuntimeResourceStep(memoryStorage.Operations(), memoryStorage.Instances(), cli, kimConfig, inputConfig, nil, false)
-
-	// when
-	entry := log.WithFields(logrus.Fields{"step": "TEST"})
-	_, repeat, err := step.Run(operation, entry)
-
-	// then
-	assert.NoError(t, err)
-	assert.Zero(t, repeat)
-
-	runtime := imv1.Runtime{}
-	err = cli.Get(context.Background(), client.ObjectKey{
-		Namespace: "kyma-system",
-		Name:      operation.RuntimeID,
-	}, &runtime)
-	assert.NoError(t, err)
-	assert.Equal(t, operation.RuntimeID, runtime.Name)
-	assert.Equal(t, "runtime-58f8c703-1756-48ab-9299-a847974d1fee", runtime.Labels["operator.kyma-project.io/kyma-name"])
-
-	assertLabelsKIMDriven(t, operation, runtime)
-	assertSecurity(t, runtime)
-
-	assert.Equal(t, "azure", runtime.Spec.Shoot.Provider.Type)
-	assert.Equal(t, "westeurope", runtime.Spec.Shoot.Region)
-	assert.Equal(t, "production", string(runtime.Spec.Shoot.Purpose))
-	assertWorkers(t, runtime.Spec.Shoot.Provider.Workers, "Standard_D2s_v5", 20, 3, 3, 0, 3, []string{"1", "2", "3"})
-
-	_, err = memoryStorage.Instances().GetByID(operation.InstanceID)
-	assert.NoError(t, err)
-}
-
-func TestCreateRuntimeResourceStep_Defaults_Azure_SingleZone_ActualCreation(t *testing.T) {
-	// given
-	log := logrus.New()
-	memoryStorage := storage.NewMemoryStorage()
-
-	err := imv1.AddToScheme(scheme.Scheme)
-
-	instance, operation := fixInstanceAndOperation(broker.AzurePlanID, "westeurope", "platform-region")
-	assertInsertions(t, memoryStorage, instance, operation)
-
-	kimConfig := fixKimConfig("azure", false)
-
-	cli := getClientForTests(t)
-	inputConfig := input.Config{MultiZoneCluster: false}
-	step := NewCreateRuntimeResourceStep(memoryStorage.Operations(), memoryStorage.Instances(), cli, kimConfig, inputConfig, nil, false)
-
-	// when
-	entry := log.WithFields(logrus.Fields{"step": "TEST"})
-	_, repeat, err := step.Run(operation, entry)
-
-	// then
-	assert.NoError(t, err)
-	assert.Zero(t, repeat)
-
-	runtime := imv1.Runtime{}
-	err = cli.Get(context.Background(), client.ObjectKey{
-		Namespace: "kyma-system",
-		Name:      operation.RuntimeID,
-	}, &runtime)
-	assert.NoError(t, err)
-	assert.Equal(t, operation.RuntimeID, runtime.Name)
-	assert.Equal(t, "runtime-58f8c703-1756-48ab-9299-a847974d1fee", runtime.Labels["operator.kyma-project.io/kyma-name"])
-
-	assertLabelsKIMDriven(t, operation, runtime)
-	assertSecurity(t, runtime)
-
-	assert.Equal(t, "azure", runtime.Spec.Shoot.Provider.Type)
-	assert.Equal(t, "westeurope", runtime.Spec.Shoot.Region)
-	assert.Equal(t, "production", string(runtime.Spec.Shoot.Purpose))
-
-	assertWorkers(t, runtime.Spec.Shoot.Provider.Workers, "Standard_D2s_v5", 20, 3, 1, 0, 1, []string{"1", "2", "3"})
-
-	_, err = memoryStorage.Instances().GetByID(operation.InstanceID)
-	assert.NoError(t, err)
-
-}
-
-func TestCreateRuntimeResourceStep_Defaults_Azure_MultiZone_ActualCreation(t *testing.T) {
-	// given
-	log := logrus.New()
-	memoryStorage := storage.NewMemoryStorage()
-
-	err := imv1.AddToScheme(scheme.Scheme)
-
-	instance, operation := fixInstanceAndOperation(broker.AzurePlanID, "westeurope", "platform-region")
-	assertInsertions(t, memoryStorage, instance, operation)
-
-	kimConfig := fixKimConfig("azure", false)
-
-	cli := getClientForTests(t)
-	inputConfig := input.Config{MultiZoneCluster: true}
-	step := NewCreateRuntimeResourceStep(memoryStorage.Operations(), memoryStorage.Instances(), cli, kimConfig, inputConfig, nil, false)
-
-	// when
-	entry := log.WithFields(logrus.Fields{"step": "TEST"})
-	_, repeat, err := step.Run(operation, entry)
-
-	// then
-	assert.NoError(t, err)
-	assert.Zero(t, repeat)
-
-	runtime := imv1.Runtime{}
-	err = cli.Get(context.Background(), client.ObjectKey{
-		Namespace: "kyma-system",
-		Name:      operation.RuntimeID,
-	}, &runtime)
-	assert.NoError(t, err)
-	assert.Equal(t, operation.RuntimeID, runtime.Name)
-	assert.Equal(t, "runtime-58f8c703-1756-48ab-9299-a847974d1fee", runtime.Labels["operator.kyma-project.io/kyma-name"])
-
-	assertLabelsKIMDriven(t, operation, runtime)
-	assertSecurity(t, runtime)
-
-	assert.Equal(t, "azure", runtime.Spec.Shoot.Provider.Type)
-	assert.Equal(t, "westeurope", runtime.Spec.Shoot.Region)
-	assert.Equal(t, "production", string(runtime.Spec.Shoot.Purpose))
-
-	assertWorkers(t, runtime.Spec.Shoot.Provider.Workers, "Standard_D2s_v5", 20, 3, 3, 0, 3, []string{"1", "2", "3"})
-
-	_, err = memoryStorage.Instances().GetByID(operation.InstanceID)
-	assert.NoError(t, err)
-
-}
-
-func TestCreateRuntimeResourceStep_Defaults_GCP_SingleZone_ActualCreation(t *testing.T) {
-	// given
-	log := logrus.New()
-	memoryStorage := storage.NewMemoryStorage()
-
-	err := imv1.AddToScheme(scheme.Scheme)
-
-	instance, operation := fixInstanceAndOperation(broker.GCPPlanID, "asia-south1", "platform-region")
-	assertInsertions(t, memoryStorage, instance, operation)
-
-	kimConfig := fixKimConfig("gcp", false)
-
-	cli := getClientForTests(t)
-	inputConfig := input.Config{MultiZoneCluster: false}
-	step := NewCreateRuntimeResourceStep(memoryStorage.Operations(), memoryStorage.Instances(), cli, kimConfig, inputConfig, nil, false)
-
-	// when
-	entry := log.WithFields(logrus.Fields{"step": "TEST"})
-	_, repeat, err := step.Run(operation, entry)
-
-	// then
-	assert.NoError(t, err)
-	assert.Zero(t, repeat)
-
-	runtime := imv1.Runtime{}
-	err = cli.Get(context.Background(), client.ObjectKey{
-		Namespace: "kyma-system",
-		Name:      operation.RuntimeID,
-	}, &runtime)
-	assert.NoError(t, err)
-	assert.Equal(t, operation.RuntimeID, runtime.Name)
-	assert.Equal(t, "runtime-58f8c703-1756-48ab-9299-a847974d1fee", runtime.Labels["operator.kyma-project.io/kyma-name"])
-
-	assertLabelsKIMDriven(t, operation, runtime)
-	assertSecurity(t, runtime)
-
-	assert.Equal(t, "gcp", runtime.Spec.Shoot.Provider.Type)
-	assert.Equal(t, "asia-south1", runtime.Spec.Shoot.Region)
-	assert.Equal(t, "production", string(runtime.Spec.Shoot.Purpose))
-
-	assertWorkers(t, runtime.Spec.Shoot.Provider.Workers, "n2-standard-2", 20, 3, 1, 0, 1, []string{"asia-south1-a", "asia-south1-b", "asia-south1-c"})
-
-	_, err = memoryStorage.Instances().GetByID(operation.InstanceID)
-	assert.NoError(t, err)
-
-}
-
-func TestCreateRuntimeResourceStep_Defaults_GCP_MultiZone_ActualCreation(t *testing.T) {
-	// given
-	log := logrus.New()
-	memoryStorage := storage.NewMemoryStorage()
-
-	err := imv1.AddToScheme(scheme.Scheme)
-
-	instance, operation := fixInstanceAndOperation(broker.GCPPlanID, "asia-south1", "platform-region")
-	assertInsertions(t, memoryStorage, instance, operation)
-
-	kimConfig := fixKimConfig("gcp", false)
-
-	cli := getClientForTests(t)
-	inputConfig := input.Config{MultiZoneCluster: true}
-	step := NewCreateRuntimeResourceStep(memoryStorage.Operations(), memoryStorage.Instances(), cli, kimConfig, inputConfig, nil, false)
-
-	// when
-	entry := log.WithFields(logrus.Fields{"step": "TEST"})
-	_, repeat, err := step.Run(operation, entry)
-
-	// then
-	assert.NoError(t, err)
-	assert.Zero(t, repeat)
-
-	runtime := imv1.Runtime{}
-	err = cli.Get(context.Background(), client.ObjectKey{
-		Namespace: "kyma-system",
-		Name:      operation.RuntimeID,
-	}, &runtime)
-	assert.NoError(t, err)
-	assert.Equal(t, operation.RuntimeID, runtime.Name)
-	assert.Equal(t, "runtime-58f8c703-1756-48ab-9299-a847974d1fee", runtime.Labels["operator.kyma-project.io/kyma-name"])
-
-	assertLabelsKIMDriven(t, operation, runtime)
-	assertSecurity(t, runtime)
-
-	assert.Equal(t, "gcp", runtime.Spec.Shoot.Provider.Type)
-	assert.Equal(t, "asia-south1", runtime.Spec.Shoot.Region)
-	assert.Equal(t, "production", string(runtime.Spec.Shoot.Purpose))
-	assertWorkers(t, runtime.Spec.Shoot.Provider.Workers, "n2-standard-2", 20, 3, 3, 0, 3, []string{"asia-south1-a", "asia-south1-b", "asia-south1-c"})
-
-	_, err = memoryStorage.Instances().GetByID(operation.InstanceID)
-	assert.NoError(t, err)
 }
 
 func TestCreateRuntimeResourceStep_SapConvergedCloud(t *testing.T) {
@@ -732,7 +544,7 @@ func TestCreateRuntimeResourceStep_SapConvergedCloud(t *testing.T) {
 
 			cli := getClientForTests(t)
 			inputConfig := input.Config{MultiZoneCluster: testCase.expectedZonesCount > 1}
-			step := NewCreateRuntimeResourceStep(memoryStorage.Operations(), memoryStorage.Instances(), cli, kimConfig, inputConfig, nil, false)
+			step := NewCreateRuntimeResourceStep(memoryStorage.Operations(), memoryStorage.Instances(), cli, kimConfig, inputConfig, nil, false, defaultOIDSConfig)
 
 			// when
 			entry := log.WithFields(logrus.Fields{"step": "TEST"})
@@ -783,7 +595,7 @@ func TestCreateRuntimeResourceStep_Defaults_Freemium(t *testing.T) {
 
 			cli := getClientForTests(t)
 			inputConfig := input.Config{MultiZoneCluster: true}
-			step := NewCreateRuntimeResourceStep(memoryStorage.Operations(), memoryStorage.Instances(), cli, kimConfig, inputConfig, nil, false)
+			step := NewCreateRuntimeResourceStep(memoryStorage.Operations(), memoryStorage.Instances(), cli, kimConfig, inputConfig, nil, false, defaultOIDSConfig)
 
 			// when
 			entry := log.WithFields(logrus.Fields{"step": "TEST"})
@@ -898,6 +710,15 @@ func fixKimConfig(planName string, dryRun bool) kim.Config {
 	return kim.Config{
 		Enabled:  true,
 		Plans:    []string{planName},
+		ViewOnly: false,
+		DryRun:   dryRun,
+	}
+}
+
+func fixKimConfigWithAllPlans(dryRun bool) kim.Config {
+	return kim.Config{
+		Enabled:  true,
+		Plans:    []string{"azure", "gcp", "azure_lite", "trial", "aws", "free", "preview", "sap-converged-cloud"},
 		ViewOnly: false,
 		DryRun:   dryRun,
 	}

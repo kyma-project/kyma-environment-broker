@@ -7,6 +7,9 @@ import (
 	"strings"
 	"time"
 
+	"github.com/kyma-project/kyma-environment-broker/internal/broker"
+	"github.com/kyma-project/kyma-environment-broker/internal/kim"
+
 	"github.com/kyma-project/kyma-environment-broker/internal"
 	"github.com/kyma-project/kyma-environment-broker/internal/process"
 	"github.com/kyma-project/kyma-environment-broker/internal/storage"
@@ -20,16 +23,18 @@ import (
 
 const GardenerClusterStateReady = "Ready"
 
-func NewSyncGardenerCluster(os storage.Operations, k8sClient client.Client) *syncGardenerCluster {
+func NewSyncGardenerCluster(os storage.Operations, k8sClient client.Client, kimConfig kim.Config) *syncGardenerCluster {
 	return &syncGardenerCluster{
 		k8sClient:        k8sClient,
+		kimConfig:        kimConfig,
 		operationManager: process.NewOperationManager(os),
 	}
 }
 
-func NewCheckGardenerCluster(os storage.Operations, k8sClient client.Client, gardenerClusterStepTimeout time.Duration) *checkGardenerCluster {
+func NewCheckGardenerCluster(os storage.Operations, k8sClient client.Client, kimConfig kim.Config, gardenerClusterStepTimeout time.Duration) *checkGardenerCluster {
 	return &checkGardenerCluster{
 		k8sClient:                  k8sClient,
+		kimConfig:                  kimConfig,
 		operationManager:           process.NewOperationManager(os),
 		gardenerClusterStepTimeout: gardenerClusterStepTimeout,
 	}
@@ -38,6 +43,7 @@ func NewCheckGardenerCluster(os storage.Operations, k8sClient client.Client, gar
 type checkGardenerCluster struct {
 	k8sClient                  client.Client
 	operationManager           *process.OperationManager
+	kimConfig                  kim.Config
 	gardenerClusterStepTimeout time.Duration
 }
 
@@ -46,6 +52,11 @@ func (_ *checkGardenerCluster) Name() string {
 }
 
 func (s *checkGardenerCluster) Run(operation internal.Operation, log logrus.FieldLogger) (internal.Operation, time.Duration, error) {
+	if s.kimConfig.IsDrivenByKim(broker.PlanNamesMapping[operation.ProvisioningParameters.PlanID]) {
+		log.Infof("KIM is driving the process for plan %s, skipping", broker.PlanNamesMapping[operation.ProvisioningParameters.PlanID])
+		return operation, 0, nil
+	}
+
 	gc, err := s.GetGardenerCluster(operation.RuntimeID, operation.KymaResourceNamespace)
 	if err != nil {
 		log.Errorf("unable to get GardenerCluster %s/%s", operation.KymaResourceNamespace, operation.RuntimeID)
@@ -85,6 +96,7 @@ func (s *checkGardenerCluster) GetGardenerCluster(name string, namespace string)
 
 type syncGardenerCluster struct {
 	k8sClient        client.Client
+	kimConfig        kim.Config
 	operationManager *process.OperationManager
 }
 
@@ -93,6 +105,11 @@ func (_ *syncGardenerCluster) Name() string {
 }
 
 func (s *syncGardenerCluster) Run(operation internal.Operation, log logrus.FieldLogger) (internal.Operation, time.Duration, error) {
+	if s.kimConfig.IsDrivenByKim(broker.PlanNamesMapping[operation.ProvisioningParameters.PlanID]) {
+		log.Infof("KIM is driving the process for plan %s, skipping", broker.PlanNamesMapping[operation.ProvisioningParameters.PlanID])
+		return operation, 0, nil
+	}
+
 	if operation.GardenerClusterName == "" {
 		modifiedOperation, backoff, _ := s.operationManager.UpdateOperation(operation, func(op *internal.Operation) {
 			op.GardenerClusterName = GardenerClusterName(op)

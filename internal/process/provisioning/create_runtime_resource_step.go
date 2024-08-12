@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/kyma-project/kyma-environment-broker/internal/ptr"
+
 	"github.com/kyma-project/kyma-environment-broker/internal/process/steps"
 	"k8s.io/apimachinery/pkg/api/errors"
 
@@ -39,10 +41,11 @@ type CreateRuntimeResourceStep struct {
 	config                     input.Config
 	trialPlatformRegionMapping map[string]string
 	useSmallerMachineTypes     bool
+	oidcDefaultValues          internal.OIDCConfigDTO
 }
 
 func NewCreateRuntimeResourceStep(os storage.Operations, is storage.Instances, k8sClient client.Client, kimConfig kim.Config, cfg input.Config,
-	trialPlatformRegionMapping map[string]string, useSmallerMachines bool) *CreateRuntimeResourceStep {
+	trialPlatformRegionMapping map[string]string, useSmallerMachines bool, oidcDefaultValues internal.OIDCConfigDTO) *CreateRuntimeResourceStep {
 	return &CreateRuntimeResourceStep{
 		operationManager:           process.NewOperationManager(os),
 		instanceStorage:            is,
@@ -51,6 +54,7 @@ func NewCreateRuntimeResourceStep(os storage.Operations, is storage.Instances, k
 		config:                     cfg,
 		trialPlatformRegionMapping: trialPlatformRegionMapping,
 		useSmallerMachineTypes:     useSmallerMachines,
+		oidcDefaultValues:          oidcDefaultValues,
 	}
 }
 
@@ -139,8 +143,11 @@ func (s *CreateRuntimeResourceStep) updateRuntimeResourceObject(runtime *imv1.Ru
 	runtime.Spec.Shoot.SecretBindingName = *operation.ProvisioningParameters.Parameters.TargetSecret
 	runtime.Spec.Shoot.ControlPlane.HighAvailability = s.createHighAvailabilityConfiguration()
 	runtime.Spec.Shoot.EnforceSeedLocation = operation.ProvisioningParameters.Parameters.ShootAndSeedSameRegion
-	runtime.Spec.Security = s.createSecurityConfiguration(operation)
 	runtime.Spec.Shoot.Networking = s.createNetworkingConfiguration(operation)
+	runtime.Spec.Shoot.Kubernetes = s.createKubernetesConfiguration(operation)
+
+	runtime.Spec.Security = s.createSecurityConfiguration(operation)
+
 	return nil
 }
 
@@ -185,10 +192,13 @@ func (s *CreateRuntimeResourceStep) createShootProvider(operation *internal.Oper
 	max := int32(DefaultIfParamNotSet(values.DefaultAutoScalerMax, operation.ProvisioningParameters.Parameters.AutoScalerMax))
 	min := int32(DefaultIfParamNotSet(values.DefaultAutoScalerMin, operation.ProvisioningParameters.Parameters.AutoScalerMin))
 
+	volumeSize := int32(DefaultIfParamNotSet(values.VolumeSizeGb, operation.ProvisioningParameters.Parameters.VolumeSizeGb))
+
 	providerObj := imv1.Provider{
 		Type: values.ProviderType,
 		Workers: []gardener.Worker{
 			{
+				Name: "cpu-worker-0",
 				Machine: gardener.Machine{
 					Type: DefaultIfParamNotSet(values.DefaultMachineType, operation.ProvisioningParameters.Parameters.MachineType),
 					Image: &gardener.ShootMachineImage{
@@ -201,6 +211,10 @@ func (s *CreateRuntimeResourceStep) createShootProvider(operation *internal.Oper
 				MaxSurge:       &maxSurge,
 				MaxUnavailable: &maxUnavailable,
 				Zones:          values.Zones,
+				Volume: &gardener.Volume{
+					Type:       ptr.String(values.DiskType),
+					VolumeSize: string(volumeSize),
+				},
 			},
 		},
 	}
@@ -220,13 +234,18 @@ func (s *CreateRuntimeResourceStep) providerValues(operation *internal.Operation
 			ProvisioningParameters: operation.ProvisioningParameters,
 		}
 	case broker.PreviewPlanID:
-		p = &provider.AzureInputProvider{
+		p = &provider.AWSInputProvider{
 			MultiZone:              s.config.MultiZoneCluster,
 			ProvisioningParameters: operation.ProvisioningParameters,
 		}
 	case broker.AzurePlanID:
 		p = &provider.AzureInputProvider{
 			MultiZone:              s.config.MultiZoneCluster,
+			ProvisioningParameters: operation.ProvisioningParameters,
+		}
+	case broker.AzureLitePlanID:
+		p = &provider.AzureLiteInputProvider{
+			UseSmallerMachineTypes: s.useSmallerMachineTypes,
 			ProvisioningParameters: operation.ProvisioningParameters,
 		}
 	case broker.GCPPlanID:
@@ -334,6 +353,45 @@ func (s *CreateRuntimeResourceStep) getEmptyOrExistingRuntimeResource(name, name
 		return nil, err
 	}
 	return &runtime, nil
+}
+
+func (s *CreateRuntimeResourceStep) createKubernetesConfiguration(operation internal.Operation) imv1.Kubernetes {
+	oidc := gardener.OIDCConfig{
+		ClientID:       &s.oidcDefaultValues.ClientID,
+		GroupsClaim:    &s.oidcDefaultValues.GroupsClaim,
+		IssuerURL:      &s.oidcDefaultValues.IssuerURL,
+		SigningAlgs:    s.oidcDefaultValues.SigningAlgs,
+		UsernameClaim:  &s.oidcDefaultValues.UsernameClaim,
+		UsernamePrefix: &s.oidcDefaultValues.UsernamePrefix,
+	}
+	if operation.ProvisioningParameters.Parameters.OIDC != nil {
+		if operation.ProvisioningParameters.Parameters.OIDC.ClientID != "" {
+			oidc.ClientID = &operation.ProvisioningParameters.Parameters.OIDC.ClientID
+		}
+		if operation.ProvisioningParameters.Parameters.OIDC.GroupsClaim != "" {
+			oidc.GroupsClaim = &operation.ProvisioningParameters.Parameters.OIDC.GroupsClaim
+		}
+		if operation.ProvisioningParameters.Parameters.OIDC.IssuerURL != "" {
+			oidc.IssuerURL = &operation.ProvisioningParameters.Parameters.OIDC.IssuerURL
+		}
+		if len(operation.ProvisioningParameters.Parameters.OIDC.SigningAlgs) > 0 {
+			oidc.SigningAlgs = operation.ProvisioningParameters.Parameters.OIDC.SigningAlgs
+		}
+		if operation.ProvisioningParameters.Parameters.OIDC.UsernameClaim != "" {
+			oidc.UsernameClaim = &operation.ProvisioningParameters.Parameters.OIDC.UsernameClaim
+		}
+		if operation.ProvisioningParameters.Parameters.OIDC.UsernamePrefix != "" {
+			oidc.UsernamePrefix = &operation.ProvisioningParameters.Parameters.OIDC.UsernamePrefix
+		}
+	}
+
+	return imv1.Kubernetes{
+		Version: ptr.String(s.config.KubernetesVersion),
+		KubeAPIServer: imv1.APIServer{
+			OidcConfig:           oidc,
+			AdditionalOidcConfig: nil,
+		},
+	}
 }
 
 func DefaultIfParamNotSet[T interface{}](d T, param *T) T {

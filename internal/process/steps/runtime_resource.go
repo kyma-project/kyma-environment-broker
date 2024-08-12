@@ -52,7 +52,6 @@ func (s *checkRuntimeResource) Run(operation internal.Operation, log logrus.Fiel
 	if s.kimConfig.ViewOnly {
 		log.Infof("Provisioner is controlling provisioning process, skipping")
 		return operation, 0, nil
-
 	}
 
 	if s.kimConfig.DryRun {

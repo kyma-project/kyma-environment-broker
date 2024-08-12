@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 
+	"github.com/kyma-project/kyma-environment-broker/internal"
 	"github.com/kyma-project/kyma-environment-broker/internal/provider"
 
 	"github.com/kyma-project/kyma-environment-broker/common/hyperscaler"
@@ -21,7 +22,7 @@ func NewProvisioningProcessingQueue(ctx context.Context, provisionManager *proce
 	db storage.BrokerStorage, provisionerClient provisioner.Client, inputFactory input.CreatorForPlan, avsDel *avs.Delegator,
 	internalEvalAssistant *avs.InternalEvalAssistant, externalEvalCreator *provisioning.ExternalEvalCreator,
 	edpClient provisioning.EDPClient, accountProvider hyperscaler.AccountProvider,
-	k8sClientProvider provisioning.K8sClientProvider, cli client.Client, logs logrus.FieldLogger) *process.Queue {
+	k8sClientProvider provisioning.K8sClientProvider, cli client.Client, defaultOIDC internal.OIDCConfigDTO, logs logrus.FieldLogger) *process.Queue {
 
 	trialRegionsMapping, err := provider.ReadPlatformRegionMappingFromFile(cfg.TrialRegionMappingFilePath)
 	if err != nil {
@@ -42,6 +43,8 @@ func NewProvisioningProcessingQueue(ctx context.Context, provisionManager *proce
 
 			Once the stage is done it will never be retried.
 	*/
+
+	fatalOnError(err, logs)
 
 	provisioningSteps := []struct {
 		disabled  bool
@@ -98,7 +101,7 @@ func NewProvisioningProcessingQueue(ctx context.Context, provisionManager *proce
 		// postcondition: operation.KymaResourceName, operation.RuntimeResourceName is set
 		{
 			stage: createRuntimeStageName,
-			step:  provisioning.NewCreateRuntimeResourceStep(db.Operations(), db.Instances(), cli, cfg.Broker.KimConfig, cfg.Provisioner, trialRegionsMapping, cfg.Broker.UseSmallerMachineTypes),
+			step:  provisioning.NewCreateRuntimeResourceStep(db.Operations(), db.Instances(), cli, cfg.Broker.KimConfig, cfg.Provisioner, trialRegionsMapping, cfg.Broker.UseSmallerMachineTypes, defaultOIDC),
 		},
 		{
 			stage:     createRuntimeStageName,
@@ -107,18 +110,18 @@ func NewProvisioningProcessingQueue(ctx context.Context, provisionManager *proce
 		},
 		{
 			stage: createRuntimeStageName,
-			step:  steps.NewCheckRuntimeResourceStep(db.Operations(), cli, cfg.Broker.KimConfig, cfg.Provisioner.GardenerClusterStepTimeout), //TODO create configurable timeout
+			step:  steps.NewCheckRuntimeResourceStep(db.Operations(), cli, cfg.Broker.KimConfig, cfg.Provisioner.RuntimeResourceStepTimeout),
 		},
 		{
 			stage:     createRuntimeStageName,
 			disabled:  cfg.InfrastructureManagerIntegrationDisabled,
-			step:      steps.NewSyncGardenerCluster(db.Operations(), cli),
+			step:      steps.NewSyncGardenerCluster(db.Operations(), cli, cfg.Broker.KimConfig),
 			condition: provisioning.SkipForOwnClusterPlan,
 		},
 		{
 			stage:     createRuntimeStageName,
 			disabled:  cfg.InfrastructureManagerIntegrationDisabled,
-			step:      steps.NewCheckGardenerCluster(db.Operations(), cli, cfg.Provisioner.GardenerClusterStepTimeout),
+			step:      steps.NewCheckGardenerCluster(db.Operations(), cli, cfg.Broker.KimConfig, cfg.Provisioner.GardenerClusterStepTimeout),
 			condition: provisioning.SkipForOwnClusterPlan,
 		},
 		{ // TODO: this step must be removed when kubeconfig is created by IM only

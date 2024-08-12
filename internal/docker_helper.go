@@ -14,6 +14,10 @@ import (
 	"github.com/docker/go-connections/nat"
 )
 
+const (
+	PostgresImage = "europe-docker.pkg.dev/kyma-project/prod/external/postgres:11.21-alpine3.18"
+)
+
 type DockerHelper struct {
 	client *client.Client
 }
