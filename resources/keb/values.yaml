@@ -103,6 +103,10 @@ global:
 
 vsoSecrets:
   mount: kcp-dev
+  restartTargets:
+    - kind: Deployment
+      name: >
+        {{- template "kyma-env-broker.fullname" . -}}
   secrets:
     avs-creds:
       path: avs
