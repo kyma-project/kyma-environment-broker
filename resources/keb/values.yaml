@@ -152,7 +152,7 @@ vsoSecrets:
           trialParentId:
             template: |-
               {{- .Values.avs.trialParentId -}}
-    edp-secret:
+    edp:
       path: edp
       secretName: "{{ .Values.edp.secretName }}-test"
       labels: >-
@@ -163,8 +163,7 @@ vsoSecrets:
           secret: keb_edp_secret
         data:
           secret: {}
-          
-    cis-secre-v1:
+    cis-v1:
       path: cis
       secretName: "{{ .Values.cis.v1.secretName | required \"please specify .Values.cis.v1.secretName\"}}-test"
       labels: >-
@@ -173,9 +172,36 @@ vsoSecrets:
         enabled: true
         keys:
           id: v1_id
-          secret: 
+          secret: v1_secret
         data:
           id: {}
+          secret: {}
+    cis-v2:
+      path: cis
+      secretName: "{{ .Values.cis.v2.secretName | required \"please specify .Values.cis.v2.secretName\"}}-test"
+      labels: >-
+        {{ template "kyma-env-broker.labels" . }}
+      templating:
+        enabled: true
+        keys:
+          id: v2_id
+          secret: v2_secret
+        data:
+          id: {}
+          secret: {}
+    cis-accounts:
+      path: cis
+      secretName: "{{ .Values.cis.accounts.secretName | required \"please specify .Values.cis.accounts.secretName\"}}-test"
+      labels: >-
+        {{ template "kyma-env-broker.labels" . }}
+      templating:
+        enabled: true
+        keys:
+          id: account_id
+          secret: account_secret
+        data:
+          id: {}
+          secret: {}
               
 #{{- template "get.avs.trialParentId" . -}}
 
