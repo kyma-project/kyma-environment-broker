@@ -103,13 +103,13 @@ global:
 
 vsoSecrets:
   mount: kcp-dev
-  restartTargets:
-    - kind: Deployment
-      name: >
-        {{- template "kyma-env-broker.fullname" . -}}
   secrets:
     avs-creds:
       path: avs
+      restartTargets:
+        - kind: Deployment
+          name: >
+            {{- template "kyma-env-broker.fullname" . -}}
       secretName: "{{ .Values.avs.secretName }}-test"
       labels: >-
         {{ template "kyma-env-broker.labels" . }}
@@ -158,6 +158,10 @@ vsoSecrets:
               {{- .Values.avs.trialParentId -}}
     edp:
       path: edp
+      restartTargets:
+        - kind: Deployment
+          name: >
+            {{- template "kyma-env-broker.fullname" . -}}
       secretName: "{{ .Values.edp.secretName }}-test"
       labels: >-
         {{ template "kyma-env-broker.labels" . }}
@@ -169,6 +173,9 @@ vsoSecrets:
           secret: {}
     cis-v1:
       path: cis
+      restartTargets:
+        - kind: CronJob
+          name: "{{- .Values.subaccountCleanup.nameV1 -}}"
       secretName: "{{ .Values.cis.v1.secretName | required \"please specify .Values.cis.v1.secretName\"}}-test"
       labels: >-
         {{ template "kyma-env-broker.labels" . }}
@@ -182,6 +189,9 @@ vsoSecrets:
           secret: {}
     cis-v2:
       path: cis
+      restartTargets:
+        - kind: CronJob
+          name: "{{- .Values.subaccountCleanup.nameV2 -}}"
       secretName: "{{ .Values.cis.v2.secretName | required \"please specify .Values.cis.v2.secretName\"}}-test"
       labels: >-
         {{ template "kyma-env-broker.labels" . }}
@@ -195,6 +205,9 @@ vsoSecrets:
           secret: {}
     cis-accounts:
       path: cis
+      restartTargets:
+        - kind: Deployment
+          name: "{{- .Values.subaccountSync.name -}}"
       secretName: "{{ .Values.cis.accounts.secretName | required \"please specify .Values.cis.accounts.secretName\"}}-test"
       labels: >-
         {{ template "kyma-env-broker.labels" . }}
@@ -478,6 +491,8 @@ runtimeAllowedPrincipals: |-
   - cluster.local/ns/kcp-system/sa/kcp-kyma-metrics-collector
 
 subaccountCleanup:
+  nameV1: "kcp-subaccount-cleaner-v1.0"
+  nameV2: "kcp-subaccount-cleaner-v2.0"
   enabled: "false"
   schedule: "0 1 * * *"
 
@@ -503,6 +518,7 @@ deprovisionRetrigger:
   enabled: true
 
 subaccountSync:
+  name: "subaccount-sync"
   enabled: true
   updateResources: false
   alwaysSubaccountFromDatabase: false

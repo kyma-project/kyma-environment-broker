@@ -2,7 +2,7 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: subaccount-sync
+  name: "{{- .Values.subaccountSync.name -}}"
   namespace: kcp-system
   labels:
     app.kubernetes.io/name: subaccount-sync
