@@ -40,17 +40,8 @@ func (_ *checkRuntimeResource) Name() string {
 }
 
 func (s *checkRuntimeResource) Run(operation internal.Operation, log logrus.FieldLogger) (internal.Operation, time.Duration, error) {
-	if !s.kimConfig.IsEnabledForPlan(broker.PlanNamesMapping[operation.ProvisioningParameters.PlanID]) {
-		if !s.kimConfig.Enabled {
-			log.Infof("KIM is not enabled, skipping")
-			return operation, 0, nil
-		}
-		log.Infof("KIM is not enabled for plan %s, skipping", broker.PlanNamesMapping[operation.ProvisioningParameters.PlanID])
-		return operation, 0, nil
-	}
-	if !s.kimConfig.IsDrivenByKimOnly(broker.PlanNamesMapping[operation.ProvisioningParameters.PlanID]) {
-		log.Infof("Provisioner is controlling provisioning process, skipping")
-		return operation, 0, nil
+	if !s.kimConfig.IsDrivenByKim(broker.PlanNamesMapping[operation.ProvisioningParameters.PlanID]) {
+		log.Infof("Only provisioner is controlling provisioning process, skipping")
 	}
 
 	runtime, err := s.GetRuntimeResource(operation.RuntimeID, operation.KymaResourceNamespace)
