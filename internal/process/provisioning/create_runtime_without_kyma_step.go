@@ -2,6 +2,8 @@ package provisioning
 
 import (
 	"fmt"
+	"github.com/kyma-project/kyma-environment-broker/internal/broker"
+	"github.com/kyma-project/kyma-environment-broker/internal/kim"
 	"time"
 
 	"github.com/kyma-project/control-plane/components/provisioner/pkg/gqlschema"
@@ -27,14 +29,16 @@ type CreateRuntimeWithoutKymaStep struct {
 	instanceStorage     storage.Instances
 	runtimeStateStorage storage.RuntimeStates
 	provisionerClient   provisioner.Client
+	kimConfig           kim.Config
 }
 
-func NewCreateRuntimeWithoutKymaStep(os storage.Operations, runtimeStorage storage.RuntimeStates, is storage.Instances, cli provisioner.Client) *CreateRuntimeWithoutKymaStep {
+func NewCreateRuntimeWithoutKymaStep(os storage.Operations, runtimeStorage storage.RuntimeStates, is storage.Instances, cli provisioner.Client, kimConfig kim.Config) *CreateRuntimeWithoutKymaStep {
 	return &CreateRuntimeWithoutKymaStep{
 		operationManager:    process.NewOperationManager(os),
 		instanceStorage:     is,
 		provisionerClient:   cli,
 		runtimeStateStorage: runtimeStorage,
+		kimConfig:           kimConfig,
 	}
 }
 
@@ -43,6 +47,11 @@ func (s *CreateRuntimeWithoutKymaStep) Name() string {
 }
 
 func (s *CreateRuntimeWithoutKymaStep) Run(operation internal.Operation, log logrus.FieldLogger) (internal.Operation, time.Duration, error) {
+	if s.kimConfig.IsDrivenByKim(broker.PlanNamesMapping[operation.ProvisioningParameters.PlanID]) {
+		log.Infof("KIM is driving the process for plan %s, skipping", broker.PlanNamesMapping[operation.ProvisioningParameters.PlanID])
+		return operation, 0, nil
+	}
+
 	if operation.RuntimeID != "" {
 		log.Infof("RuntimeID already set %s, skipping", operation.RuntimeID)
 		return operation, 0, nil
