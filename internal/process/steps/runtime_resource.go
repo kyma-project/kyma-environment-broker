@@ -48,18 +48,10 @@ func (s *checkRuntimeResource) Run(operation internal.Operation, log logrus.Fiel
 		log.Infof("KIM is not enabled for plan %s, skipping", broker.PlanNamesMapping[operation.ProvisioningParameters.PlanID])
 		return operation, 0, nil
 	}
-	if !s.kimConfig.IsDrivenByKim(broker.PlanNamesMapping[operation.ProvisioningParameters.PlanID]) {
-		if s.kimConfig.ViewOnly {
-			log.Infof("Provisioner is controlling provisioning process, skipping")
-			return operation, 0, nil
-		}
-
-		if s.kimConfig.DryRun {
-			log.Infof("KIM integration in dry-run mode, skipping")
-			return operation, 0, nil
-		}
+	if !s.kimConfig.IsDrivenByKimOnly(broker.PlanNamesMapping[operation.ProvisioningParameters.PlanID]) {
+		log.Infof("Provisioner is controlling provisioning process, skipping")
+		return operation, 0, nil
 	}
-	// post: KIM is enabled for the given plan
 
 	runtime, err := s.GetRuntimeResource(operation.RuntimeID, operation.KymaResourceNamespace)
 	if err != nil {
