@@ -110,7 +110,7 @@ vsoSecrets:
   secrets:
     avs-creds:
       path: avs
-      secretName: avs-creds-test
+      secretName: "{{ .Values.avs.secretName }}-test"
       labels: >-
         {{ template "kyma-env-broker.labels" . }}
       templating:
