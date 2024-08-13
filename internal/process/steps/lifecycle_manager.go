@@ -27,6 +27,7 @@ func ApplyLabelsAndAnnotationsForLM(object client.Object, operation internal.Ope
 	if operation.ProvisioningParameters.PlatformRegion != "" {
 		l["kyma-project.io/platform-region"] = operation.ProvisioningParameters.PlatformRegion
 	}
+	l["kyma-project.io/provider"] = string(operation.InputCreator.Provider())
 	l["operator.kyma-project.io/kyma-name"] = KymaName(operation)
 	l["operator.kyma-project.io/managed-by"] = "lifecycle-manager"
 	if isKymaResourceInternal(operation) {
