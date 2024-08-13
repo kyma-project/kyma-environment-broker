@@ -2,6 +2,7 @@ package provisioning
 
 import (
 	"fmt"
+	"github.com/kyma-project/kyma-environment-broker/internal/kim"
 	"reflect"
 	"testing"
 
@@ -30,6 +31,10 @@ func TestCreateRuntimeWithoutKyma_Run(t *testing.T) {
 	err = memoryStorage.Instances().Insert(fixInstance())
 	assert.NoError(t, err)
 
+	kimConfig := kim.Config{
+		Enabled: false,
+	}
+
 	disabled := false
 	provisionerInput := fixProvisionerInput(disabled, false)
 
@@ -47,7 +52,7 @@ func TestCreateRuntimeWithoutKyma_Run(t *testing.T) {
 		RuntimeID: ptr.String(runtimeID),
 	}, nil)
 
-	step := NewCreateRuntimeWithoutKymaStep(memoryStorage.Operations(), memoryStorage.RuntimeStates(), memoryStorage.Instances(), provisionerClient)
+	step := NewCreateRuntimeWithoutKymaStep(memoryStorage.Operations(), memoryStorage.RuntimeStates(), memoryStorage.Instances(), provisionerClient, kimConfig)
 
 	// when
 	entry := log.WithFields(logrus.Fields{"step": "TEST"})
@@ -76,6 +81,10 @@ func TestCreateRuntimeWithoutKyma_RunWithEuAccess(t *testing.T) {
 	err = memoryStorage.Instances().Insert(fixInstance())
 	assert.NoError(t, err)
 
+	kimConfig := kim.Config{
+		Enabled: false,
+	}
+
 	disabled := false
 	provisionerInput := fixProvisionerInput(disabled, true)
 
@@ -93,7 +102,7 @@ func TestCreateRuntimeWithoutKyma_RunWithEuAccess(t *testing.T) {
 		RuntimeID: ptr.String(runtimeID),
 	}, nil)
 
-	step := NewCreateRuntimeWithoutKymaStep(memoryStorage.Operations(), memoryStorage.RuntimeStates(), memoryStorage.Instances(), provisionerClient)
+	step := NewCreateRuntimeWithoutKymaStep(memoryStorage.Operations(), memoryStorage.RuntimeStates(), memoryStorage.Instances(), provisionerClient, kimConfig)
 
 	// when
 	entry := log.WithFields(logrus.Fields{"step": "TEST"})
@@ -184,13 +193,17 @@ func TestCreateRuntimeWithoutKymaStep_RunWithBadRequestError(t *testing.T) {
 	err := memoryStorage.Operations().InsertOperation(operation)
 	assert.NoError(t, err)
 
+	kimConfig := kim.Config{
+		Enabled: false,
+	}
+
 	err = memoryStorage.Instances().Insert(fixInstance())
 	assert.NoError(t, err)
 
 	provisionerClient := &provisionerAutomock.Client{}
 	provisionerClient.On("ProvisionRuntime", globalAccountID, subAccountID, mock.Anything).Return(gqlschema.OperationStatus{}, fmt.Errorf("some permanent error"))
 
-	step := NewCreateRuntimeWithoutKymaStep(memoryStorage.Operations(), memoryStorage.RuntimeStates(), memoryStorage.Instances(), provisionerClient)
+	step := NewCreateRuntimeWithoutKymaStep(memoryStorage.Operations(), memoryStorage.RuntimeStates(), memoryStorage.Instances(), provisionerClient, kimConfig)
 
 	// when
 	entry := log.WithFields(logrus.Fields{"step": "TEST"})
