@@ -2,9 +2,10 @@ package provisioning
 
 import (
 	"fmt"
-	"github.com/kyma-project/kyma-environment-broker/internal/kim"
 	"reflect"
 	"testing"
+
+	"github.com/kyma-project/kyma-environment-broker/internal/kim"
 
 	"github.com/kyma-project/control-plane/components/provisioner/pkg/gqlschema"
 	"github.com/kyma-project/kyma-environment-broker/internal/broker"
