@@ -981,8 +981,7 @@ func (r readSession) ListInstancesArchived(filter dbmodel.InstanceFilter) ([]dbm
 
 	stmt := r.session.Select("*").
 		From(InstancesArchivedTableName).
-		OrderBy("last_deprovisioning_finished_at").
-		Limit(1000)
+		OrderBy("last_deprovisioning_finished_at")
 
 	if filter.Page > 0 && filter.PageSize > 0 {
 		stmt.Paginate(uint64(filter.Page), uint64(filter.PageSize))

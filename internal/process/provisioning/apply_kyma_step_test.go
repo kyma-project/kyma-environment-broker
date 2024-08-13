@@ -291,6 +291,7 @@ spec:
     channel: stable
     modules: []
 `
+	operation.InputCreator = fixture.FixInputCreator("Test")
 	var cli client.Client
 	if len(os.Getenv("KUBECONFIG")) > 0 && strings.ToLower(os.Getenv("USE_KUBECONFIG")) == "true" {
 		config, err := clientcmd.BuildConfigFromFlags("", os.Getenv("KUBECONFIG"))
