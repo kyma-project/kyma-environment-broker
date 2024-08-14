@@ -2,6 +2,8 @@ package provisioning
 
 import (
 	"fmt"
+	"github.com/kyma-project/kyma-environment-broker/internal/broker"
+	"github.com/kyma-project/kyma-environment-broker/internal/kim"
 	"time"
 
 	"github.com/sirupsen/logrus"
@@ -18,15 +20,18 @@ type CheckRuntimeStep struct {
 	provisionerClient   provisioner.Client
 	operationManager    *process.OperationManager
 	provisioningTimeout time.Duration
+	kimConfig           kim.Config
 }
 
 func NewCheckRuntimeStep(os storage.Operations,
 	provisionerClient provisioner.Client,
-	provisioningTimeout time.Duration) *CheckRuntimeStep {
+	provisioningTimeout time.Duration,
+	kimConfig kim.Config) *CheckRuntimeStep {
 	return &CheckRuntimeStep{
 		provisionerClient:   provisionerClient,
 		operationManager:    process.NewOperationManager(os),
 		provisioningTimeout: provisioningTimeout,
+		kimConfig:           kimConfig,
 	}
 }
 
@@ -45,6 +50,11 @@ func (s *CheckRuntimeStep) Run(operation internal.Operation, log logrus.FieldLog
 }
 
 func (s *CheckRuntimeStep) checkRuntimeStatus(operation internal.Operation, log logrus.FieldLogger) (internal.Operation, time.Duration, error) {
+	if s.kimConfig.IsDrivenByKimOnly(broker.PlanNamesMapping[operation.ProvisioningParameters.PlanID]) {
+		log.Infof("KIM is driving the process for plan %s, skipping", broker.PlanNamesMapping[operation.ProvisioningParameters.PlanID])
+		return operation, 0, nil
+	}
+
 	if time.Since(operation.UpdatedAt) > s.provisioningTimeout {
 		log.Infof("operation has reached the time limit: updated operation time: %s", operation.UpdatedAt)
 		return s.operationManager.OperationFailed(operation, fmt.Sprintf("operation has reached the time limit: %s", s.provisioningTimeout), nil, log)

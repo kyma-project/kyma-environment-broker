@@ -1,6 +1,7 @@
 package provisioning
 
 import (
+	"github.com/kyma-project/kyma-environment-broker/internal/kim"
 	"testing"
 	"time"
 
@@ -42,6 +43,11 @@ func TestCheckRuntimeStep_RunProvisioningSucceeded(t *testing.T) {
 				Message:   nil,
 				RuntimeID: ptr.String(statusRuntimeID),
 			})
+
+			kimConfig := kim.Config{
+				Enabled: false,
+			}
+
 			st := storage.NewMemoryStorage()
 			operation := fixOperationRuntimeStatus(broker.GCPPlanID, internal.GCP)
 			operation.RuntimeID = statusRuntimeID
@@ -49,7 +55,7 @@ func TestCheckRuntimeStep_RunProvisioningSucceeded(t *testing.T) {
 			err := st.Operations().InsertOperation(operation)
 			assert.NoError(t, err)
 
-			step := NewCheckRuntimeStep(st.Operations(), provisionerClient, time.Second)
+			step := NewCheckRuntimeStep(st.Operations(), provisionerClient, time.Second, kimConfig)
 
 			// when
 			operation, repeat, err := step.Run(operation, logrus.New())
