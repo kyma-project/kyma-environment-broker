@@ -105,7 +105,7 @@ func NewProvisioningProcessingQueue(ctx context.Context, provisionManager *proce
 		},
 		{
 			stage:     createRuntimeStageName,
-			step:      provisioning.NewCheckRuntimeStep(db.Operations(), provisionerClient, cfg.Provisioner.ProvisioningTimeout),
+			step:      provisioning.NewCheckRuntimeStep(db.Operations(), provisionerClient, cfg.Provisioner.ProvisioningTimeout, cfg.Broker.KimConfig),
 			condition: provisioning.SkipForOwnClusterPlan,
 		},
 		{
