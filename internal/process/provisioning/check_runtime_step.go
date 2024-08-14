@@ -2,9 +2,10 @@ package provisioning
 
 import (
 	"fmt"
+	"time"
+
 	"github.com/kyma-project/kyma-environment-broker/internal/broker"
 	"github.com/kyma-project/kyma-environment-broker/internal/kim"
-	"time"
 
 	"github.com/sirupsen/logrus"
 
