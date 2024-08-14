@@ -491,7 +491,7 @@ func TestCreateRuntimeResourceStep_Defaults_AWS_MultiZoneWithNetworking_ActualCr
 	assert.Equal(t, "aws", runtime.Spec.Shoot.Provider.Type)
 	assert.Equal(t, "eu-west-2", runtime.Spec.Shoot.Region)
 	assert.Equal(t, "production", string(runtime.Spec.Shoot.Purpose))
-	assertWorkers(t, runtime.Spec.Shoot.Provider.Workers, "m6i.large", 20, 3, 3, 0, 3, []string{"eu-west-2a", "eu-west-2b", "eu-west-2c"})
+	assertWorkersWithVolume(t, runtime.Spec.Shoot.Provider.Workers, "m6i.large", 20, 3, 3, 0, 3, []string{"eu-west-2a", "eu-west-2b", "eu-west-2c"}, "50", "gp2")
 	assertNetworking(t, imv1.Networking{
 		Nodes:    "192.168.48.0/20",
 		Pods:     "10.104.0.0/24",
@@ -717,6 +717,19 @@ func assertWorkers(t *testing.T, workers []gardener.Worker, machine string, maxi
 	assert.Equal(t, workers[0].MaxUnavailable.IntValue(), maxUnavailable)
 	assert.Equal(t, workers[0].Maximum, int32(maximum))
 	assert.Equal(t, workers[0].Minimum, int32(minimum))
+}
+
+func assertWorkersWithVolume(t *testing.T, workers []gardener.Worker, machine string, maximum, minimum, maxSurge, maxUnavailable int, zoneCount int, zones []string, volumeSize, volumeType string) {
+	assert.Len(t, workers, 1)
+	assert.Len(t, workers[0].Zones, zoneCount)
+	assert.Subset(t, zones, workers[0].Zones)
+	assert.Equal(t, workers[0].Machine.Type, machine)
+	assert.Equal(t, workers[0].MaxSurge.IntValue(), maxSurge)
+	assert.Equal(t, workers[0].MaxUnavailable.IntValue(), maxUnavailable)
+	assert.Equal(t, workers[0].Maximum, int32(maximum))
+	assert.Equal(t, workers[0].Minimum, int32(minimum))
+	assert.Equal(t, workers[0].Volume.VolumeSize, volumeSize)
+	assert.Equal(t, *workers[0].Volume.Type, volumeType)
 }
 
 func assertNetworking(t *testing.T, expected imv1.Networking, actual imv1.Networking) {
