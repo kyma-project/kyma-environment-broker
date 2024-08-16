@@ -13,25 +13,25 @@ global:
       version: "v20240612-83a7c0eb" # do not update along with the other images
     kyma_environment_broker:
       dir:
-      version: "1.8.30"
+      version: "1.8.31"
     kyma_environments_subaccount_cleanup_job:
       dir:
-      version: "1.8.30"
+      version: "1.8.31"
     kyma_environment_trial_cleanup_job:
       dir:
-      version: "1.8.30"
+      version: "1.8.31"
     kyma_environment_expirator_job:
       dir:
-      version: "1.8.30"
+      version: "1.8.31"
     kyma_environment_deprovision_retrigger_job:
       dir:
-      version: "1.8.30"
+      version: "1.8.31"
     kyma_environment_runtime_reconciler:
       dir:
-      version: "1.8.30"
+      version: "1.8.31"
     kyma_environment_subaccount_sync:
       dir:
-      version: "1.8.30"
+      version: "1.8.31"
   kyma_environment_broker:
     enabled: false
     serviceAccountName: "kcp-kyma-environment-broker"
