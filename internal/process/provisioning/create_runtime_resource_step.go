@@ -213,7 +213,7 @@ func (s *CreateRuntimeResourceStep) createShootProvider(operation *internal.Oper
 				Zones:          values.Zones,
 				Volume: &gardener.Volume{
 					Type:       ptr.String(values.DiskType),
-					VolumeSize: string(volumeSize),
+					VolumeSize: fmt.Sprintf("%dGi", volumeSize),
 				},
 			},
 		},
