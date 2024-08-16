@@ -166,88 +166,6 @@ func TestCreateRuntimeResourceStep_AllYamls(t *testing.T) {
 
 // Actual creation tests
 
-func TestCreateRuntimeResourceStep_ActualCreation(t *testing.T) {
-
-	for _, testCase := range []struct {
-		name           string
-		providerType   string
-		planID         string
-		multiZone      bool
-		region         string
-		purpose        string
-		machine        string
-		maximum        int
-		minimum        int
-		maxSurge       int
-		maxUnavailable int
-		zonesCount     int
-		zones          []string
-	}{
-		{"GCP Multi Zone", "gcp", broker.GCPPlanID, true, "asia-south1", "production", "n2-standard-2",
-			20, 3, 3, 0, 3, []string{"asia-south1-a", "asia-south1-b", "asia-south1-c"}},
-		{"GCP Single Zone", "gcp", broker.GCPPlanID, false, "asia-south1", "production", "n2-standard-2",
-			20, 3, 1, 0, 1, []string{"asia-south1-a", "asia-south1-b", "asia-south1-c"}},
-		{"Azure Multi Zone", "azure", broker.AzurePlanID, true, "westeurope", "production", "Standard_D2s_v5",
-			20, 3, 3, 0, 3, []string{"1", "2", "3"}},
-		{"Azure Single Zone", "azure", broker.AzurePlanID, false, "westeurope", "production", "Standard_D2s_v5",
-			20, 3, 1, 0, 1, []string{"1", "2", "3"}},
-		{"Azure Lite", "azure", broker.AzureLitePlanID, false, "westeurope", "evaluation", "Standard_D4s_v5",
-			10, 2, 1, 0, 1, []string{"1", "2", "3"}},
-		{"Preview Multi Zone", "aws", broker.PreviewPlanID, true, "eu-west-2", "production", "m6i.large",
-			20, 3, 3, 0, 3, []string{"eu-west-2a", "eu-west-2b", "eu-west-2c"}},
-		{"Preview Single Zone", "aws", broker.PreviewPlanID, false, "eu-west-2", "production", "m6i.large",
-			20, 3, 1, 0, 1, []string{"eu-west-2a", "eu-west-2b", "eu-west-2c"}},
-		{"AWS Multi Zone", "aws", broker.AWSPlanID, true, "eu-west-2", "production", "m6i.large",
-			20, 3, 3, 0, 3, []string{"eu-west-2a", "eu-west-2b", "eu-west-2c"}},
-		{"AWS Single Zone", "aws", broker.AWSPlanID, false, "eu-west-2", "production", "m6i.large",
-			20, 3, 1, 0, 1, []string{"eu-west-2a", "eu-west-2b", "eu-west-2c"}},
-	} {
-		t.Run(testCase.name, func(t *testing.T) {
-			// given
-			log := logrus.New()
-			memoryStorage := storage.NewMemoryStorage()
-			err := imv1.AddToScheme(scheme.Scheme)
-
-			instance, operation := fixInstanceAndOperation(testCase.planID, testCase.region, "platform-region")
-			assertInsertions(t, memoryStorage, instance, operation)
-
-			kimConfig := fixKimConfigWithAllPlans(false)
-
-			cli := getClientForTests(t)
-			inputConfig := input.Config{MultiZoneCluster: testCase.multiZone}
-			step := NewCreateRuntimeResourceStep(memoryStorage.Operations(), memoryStorage.Instances(), cli, kimConfig, inputConfig, nil, false, defaultOIDSConfig)
-
-			// when
-			entry := log.WithFields(logrus.Fields{"step": "TEST"})
-			_, repeat, err := step.Run(operation, entry)
-
-			// then
-			assert.NoError(t, err)
-			assert.Zero(t, repeat)
-
-			runtime := imv1.Runtime{}
-			err = cli.Get(context.Background(), client.ObjectKey{
-				Namespace: "kyma-system",
-				Name:      operation.RuntimeID,
-			}, &runtime)
-			assert.NoError(t, err)
-			assert.Equal(t, operation.RuntimeID, runtime.Name)
-			assert.Equal(t, "runtime-58f8c703-1756-48ab-9299-a847974d1fee", runtime.Labels["operator.kyma-project.io/kyma-name"])
-
-			assertLabelsKIMDriven(t, operation, runtime)
-			assertSecurity(t, runtime)
-
-			assert.Equal(t, testCase.providerType, runtime.Spec.Shoot.Provider.Type)
-			assert.Equal(t, testCase.region, runtime.Spec.Shoot.Region)
-			assert.Equal(t, testCase.purpose, string(runtime.Spec.Shoot.Purpose))
-			assertWorkers(t, runtime.Spec.Shoot.Provider.Workers, testCase.machine, testCase.maximum, testCase.minimum, testCase.maxSurge, testCase.maxUnavailable, testCase.zonesCount, testCase.zones)
-
-			_, err = memoryStorage.Instances().GetByID(operation.InstanceID)
-			assert.NoError(t, err)
-		})
-	}
-}
-
 func TestCreateRuntimeResourceStep_Defaults_AWS_SingleZone_EnforceSeed_ActualCreation(t *testing.T) {
 	// given
 	log := logrus.New()
@@ -283,9 +201,59 @@ func TestCreateRuntimeResourceStep_Defaults_AWS_SingleZone_EnforceSeed_ActualCre
 	assert.Equal(t, "runtime-58f8c703-1756-48ab-9299-a847974d1fee", runtime.Labels["operator.kyma-project.io/kyma-name"])
 
 	assertLabelsKIMDriven(t, operation, runtime)
-	assertSecurity(t, runtime)
+	assertSecurityEgressEnabled(t, runtime)
 
 	assert.True(t, *runtime.Spec.Shoot.EnforceSeedLocation)
+	assert.Equal(t, "aws", runtime.Spec.Shoot.Provider.Type)
+	assert.Equal(t, "eu-west-2", runtime.Spec.Shoot.Region)
+	assert.Equal(t, "production", string(runtime.Spec.Shoot.Purpose))
+	assert.Equal(t, SecretBindingName, runtime.Spec.Shoot.SecretBindingName)
+	assertWorkers(t, runtime.Spec.Shoot.Provider.Workers, "m6i.large", 20, 3, 1, 0, 1, []string{"eu-west-2a", "eu-west-2b", "eu-west-2c"})
+	assert.Equal(t, "zone", string(runtime.Spec.Shoot.ControlPlane.HighAvailability.FailureTolerance.Type))
+	assertDefaultNetworking(t, runtime.Spec.Shoot.Networking)
+
+	_, err = memoryStorage.Instances().GetByID(operation.InstanceID)
+	assert.NoError(t, err)
+}
+
+func TestCreateRuntimeResourceStep_Defaults_AWS_SingleZone_DisableEnterpriseFilter_ActualCreation(t *testing.T) {
+	// given
+	log := logrus.New()
+	memoryStorage := storage.NewMemoryStorage()
+
+	err := imv1.AddToScheme(scheme.Scheme)
+
+	instance, operation := fixInstanceAndOperation(broker.AWSPlanID, "eu-west-2", "platform-region")
+	operation.ProvisioningParameters.ErsContext.LicenseType = ptr.String("PARTNER")
+	assertInsertions(t, memoryStorage, instance, operation)
+
+	kimConfig := fixKimConfig("aws", false)
+	inputConfig := input.Config{MultiZoneCluster: false, ControlPlaneFailureTolerance: "zone"}
+
+	cli := getClientForTests(t)
+	step := NewCreateRuntimeResourceStep(memoryStorage.Operations(), memoryStorage.Instances(), cli, kimConfig, inputConfig, nil, false, defaultOIDSConfig)
+
+	// when
+	entry := log.WithFields(logrus.Fields{"step": "TEST"})
+	_, repeat, err := step.Run(operation, entry)
+
+	// then
+	assert.NoError(t, err)
+	assert.Zero(t, repeat)
+
+	runtime := imv1.Runtime{}
+	err = cli.Get(context.Background(), client.ObjectKey{
+		Namespace: "kyma-system",
+		Name:      operation.RuntimeID,
+	}, &runtime)
+	assert.NoError(t, err)
+	assert.Equal(t, runtime.Name, operation.RuntimeID)
+	assert.Equal(t, "runtime-58f8c703-1756-48ab-9299-a847974d1fee", runtime.Labels["operator.kyma-project.io/kyma-name"])
+
+	assertLabelsKIMDriven(t, operation, runtime)
+
+	assertSecurityEgressDisabled(t, runtime)
+
 	assert.Equal(t, "aws", runtime.Spec.Shoot.Provider.Type)
 	assert.Equal(t, "eu-west-2", runtime.Spec.Shoot.Region)
 	assert.Equal(t, "production", string(runtime.Spec.Shoot.Purpose))
@@ -382,57 +350,7 @@ func TestCreateRuntimeResourceStep_Defaults_AWS_SingleZone_DryRun_ActualCreation
 	assert.Equal(t, "runtime-58f8c703-1756-48ab-9299-a847974d1fee", runtime.Labels["operator.kyma-project.io/kyma-name"])
 
 	assertLabelsProvisionerDriven(t, operation, runtime)
-	assertSecurity(t, runtime)
-
-	assert.Equal(t, "aws", runtime.Spec.Shoot.Provider.Type)
-	assert.Equal(t, "eu-west-2", runtime.Spec.Shoot.Region)
-	assert.Equal(t, "production", string(runtime.Spec.Shoot.Purpose))
-	assert.Equal(t, SecretBindingName, runtime.Spec.Shoot.SecretBindingName)
-	assertWorkers(t, runtime.Spec.Shoot.Provider.Workers, "m6i.large", 20, 3, 1, 0, 1, []string{"eu-west-2a", "eu-west-2b", "eu-west-2c"})
-	assert.Equal(t, "zone", string(runtime.Spec.Shoot.ControlPlane.HighAvailability.FailureTolerance.Type))
-	assertDefaultNetworking(t, runtime.Spec.Shoot.Networking)
-
-	_, err = memoryStorage.Instances().GetByID(operation.InstanceID)
-	assert.NoError(t, err)
-}
-
-func TestCreateRuntimeResourceStep_Defaults_AWS_SingleZone_DryRun_KimOnly_ActualCreation(t *testing.T) {
-	// given
-	log := logrus.New()
-	memoryStorage := storage.NewMemoryStorage()
-
-	err := imv1.AddToScheme(scheme.Scheme)
-
-	instance, operation := fixInstanceAndOperation(broker.AWSPlanID, "eu-west-2", "platform-region")
-	assertInsertions(t, memoryStorage, instance, operation)
-
-	kimConfig := fixKimConfig("aws", false)
-	kimConfig.KimOnlyPlans = []string{"aws"}
-	kimConfig.ViewOnly = true
-	inputConfig := input.Config{MultiZoneCluster: false, ControlPlaneFailureTolerance: "zone"}
-
-	cli := getClientForTests(t)
-	step := NewCreateRuntimeResourceStep(memoryStorage.Operations(), memoryStorage.Instances(), cli, kimConfig, inputConfig, nil, false, defaultOIDSConfig)
-
-	// when
-	entry := log.WithFields(logrus.Fields{"step": "TEST"})
-	_, repeat, err := step.Run(operation, entry)
-
-	// then
-	assert.NoError(t, err)
-	assert.Zero(t, repeat)
-
-	runtime := imv1.Runtime{}
-	err = cli.Get(context.Background(), client.ObjectKey{
-		Namespace: "kyma-system",
-		Name:      operation.RuntimeID,
-	}, &runtime)
-	assert.NoError(t, err)
-	assert.Equal(t, runtime.Name, operation.RuntimeID)
-	assert.Equal(t, "runtime-58f8c703-1756-48ab-9299-a847974d1fee", runtime.Labels["operator.kyma-project.io/kyma-name"])
-
-	assertLabelsKIMDriven(t, operation, runtime)
-	assertSecurity(t, runtime)
+	assertSecurityEgressEnabled(t, runtime)
 
 	assert.Equal(t, "aws", runtime.Spec.Shoot.Provider.Type)
 	assert.Equal(t, "eu-west-2", runtime.Spec.Shoot.Region)
@@ -486,7 +404,7 @@ func TestCreateRuntimeResourceStep_Defaults_AWS_MultiZoneWithNetworking_ActualCr
 	assert.Equal(t, "runtime-58f8c703-1756-48ab-9299-a847974d1fee", runtime.Labels["operator.kyma-project.io/kyma-name"])
 
 	assertLabelsKIMDriven(t, operation, runtime)
-	assertSecurity(t, runtime)
+	assertSecurityEgressEnabled(t, runtime)
 
 	assert.Equal(t, "aws", runtime.Spec.Shoot.Provider.Type)
 	assert.Equal(t, "eu-west-2", runtime.Spec.Shoot.Region)
@@ -500,6 +418,97 @@ func TestCreateRuntimeResourceStep_Defaults_AWS_MultiZoneWithNetworking_ActualCr
 
 	_, err = memoryStorage.Instances().GetByID(operation.InstanceID)
 	assert.NoError(t, err)
+}
+
+func TestCreateRuntimeResourceStep_Defaults_AWS_MultiZone_ActualCreation(t *testing.T) {
+	// given
+	log := logrus.New()
+	memoryStorage := storage.NewMemoryStorage()
+
+	err := imv1.AddToScheme(scheme.Scheme)
+
+	instance, operation := fixInstanceAndOperation(broker.AWSPlanID, "eu-west-2", "platform-region")
+	assertInsertions(t, memoryStorage, instance, operation)
+
+	kimConfig := fixKimConfig("aws", false)
+
+	cli := getClientForTests(t)
+	inputConfig := input.Config{MultiZoneCluster: true}
+	step := NewCreateRuntimeResourceStep(memoryStorage.Operations(), memoryStorage.Instances(), cli, kimConfig, inputConfig, nil, false, defaultOIDSConfig)
+
+	// when
+	entry := log.WithFields(logrus.Fields{"step": "TEST"})
+	_, repeat, err := step.Run(operation, entry)
+
+	// then
+	assert.NoError(t, err)
+	assert.Zero(t, repeat)
+
+	runtime := imv1.Runtime{}
+	err = cli.Get(context.Background(), client.ObjectKey{
+		Namespace: "kyma-system",
+		Name:      operation.RuntimeID,
+	}, &runtime)
+	assert.NoError(t, err)
+	assert.Equal(t, runtime.Name, operation.RuntimeID)
+	assert.Equal(t, "runtime-58f8c703-1756-48ab-9299-a847974d1fee", runtime.Labels["operator.kyma-project.io/kyma-name"])
+
+	assertLabelsKIMDriven(t, operation, runtime)
+	assertSecurityEgressEnabled(t, runtime)
+
+	assert.Equal(t, "aws", runtime.Spec.Shoot.Provider.Type)
+	assert.Equal(t, "eu-west-2", runtime.Spec.Shoot.Region)
+	assert.Equal(t, "production", string(runtime.Spec.Shoot.Purpose))
+	assertWorkers(t, runtime.Spec.Shoot.Provider.Workers, "m6i.large", 20, 3, 3, 0, 3, []string{"eu-west-2a", "eu-west-2b", "eu-west-2c"})
+
+	_, err = memoryStorage.Instances().GetByID(operation.InstanceID)
+	assert.NoError(t, err)
+}
+
+func TestCreateRuntimeResourceStep_Defaults_Preview_SingleZone_ActualCreation(t *testing.T) {
+	// given
+	log := logrus.New()
+	memoryStorage := storage.NewMemoryStorage()
+
+	err := imv1.AddToScheme(scheme.Scheme)
+
+	instance, operation := fixInstanceAndOperation(broker.PreviewPlanID, "eu-west-2", "platform-region")
+	assertInsertions(t, memoryStorage, instance, operation)
+
+	kimConfig := fixKimConfig("preview", false)
+
+	cli := getClientForTests(t)
+	inputConfig := input.Config{MultiZoneCluster: false}
+	step := NewCreateRuntimeResourceStep(memoryStorage.Operations(), memoryStorage.Instances(), cli, kimConfig, inputConfig, nil, false, defaultOIDSConfig)
+
+	// when
+	entry := log.WithFields(logrus.Fields{"step": "TEST"})
+	_, repeat, err := step.Run(operation, entry)
+
+	// then
+	assert.NoError(t, err)
+	assert.Zero(t, repeat)
+
+	runtime := imv1.Runtime{}
+	err = cli.Get(context.Background(), client.ObjectKey{
+		Namespace: "kyma-system",
+		Name:      operation.RuntimeID,
+	}, &runtime)
+	assert.NoError(t, err)
+	assert.Equal(t, operation.RuntimeID, runtime.Name)
+	assert.Equal(t, "runtime-58f8c703-1756-48ab-9299-a847974d1fee", runtime.Labels["operator.kyma-project.io/kyma-name"])
+
+	assertLabelsKIMDriven(t, operation, runtime)
+	assertSecurityEgressEnabled(t, runtime)
+
+	assert.Equal(t, "aws", runtime.Spec.Shoot.Provider.Type)
+	assert.Equal(t, "eu-west-2", runtime.Spec.Shoot.Region)
+	assert.Equal(t, "production", string(runtime.Spec.Shoot.Purpose))
+	assertWorkers(t, runtime.Spec.Shoot.Provider.Workers, "m6i.large", 20, 3, 1, 0, 1, []string{"eu-west-2a", "eu-west-2b", "eu-west-2c"})
+
+	_, err = memoryStorage.Instances().GetByID(operation.InstanceID)
+	assert.NoError(t, err)
+
 }
 
 func TestCreateRuntimeResourceStep_Defaults_Preview_SingleZone_ActualCreation_WithRetry(t *testing.T) {
@@ -536,7 +545,7 @@ func TestCreateRuntimeResourceStep_Defaults_Preview_SingleZone_ActualCreation_Wi
 	assert.Equal(t, "runtime-58f8c703-1756-48ab-9299-a847974d1fee", runtime.Labels["operator.kyma-project.io/kyma-name"])
 
 	assertLabelsKIMDriven(t, operation, runtime)
-	assertSecurity(t, runtime)
+	assertSecurityEgressEnabled(t, runtime)
 
 	assert.Equal(t, "aws", runtime.Spec.Shoot.Provider.Type)
 	assert.Equal(t, "eu-west-2", runtime.Spec.Shoot.Region)
@@ -556,7 +565,7 @@ func TestCreateRuntimeResourceStep_Defaults_Preview_SingleZone_ActualCreation_Wi
 	assert.Equal(t, "runtime-58f8c703-1756-48ab-9299-a847974d1fee", runtime.Labels["operator.kyma-project.io/kyma-name"])
 
 	assertLabelsKIMDriven(t, operation, runtime)
-	assertSecurity(t, runtime)
+	assertSecurityEgressEnabled(t, runtime)
 
 	assert.Equal(t, "aws", runtime.Spec.Shoot.Provider.Type)
 	assert.Equal(t, "eu-west-2", runtime.Spec.Shoot.Region)
@@ -671,16 +680,48 @@ func TestCreateRuntimeResourceStep_Defaults_Freemium(t *testing.T) {
 	}
 }
 
+// testing auxiliary functions
+
+func Test_Defaults(t *testing.T) {
+	//given
+	//when
+
+	nilToDefaultString := DefaultIfParamNotSet("default value", nil)
+	nonDefaultString := DefaultIfParamNotSet("default value", ptr.String("initial value"))
+
+	nilToDefaultInt := DefaultIfParamNotSet(42, nil)
+	nonDefaultInt := DefaultIfParamNotSet(42, ptr.Integer(7))
+
+	emptyToDefault := DefaultIfParamZero("default value", "")
+	nonEmpty := DefaultIfParamZero("default value", "initial value")
+
+	//then
+	assert.Equal(t, "initial value", nonDefaultString)
+	assert.Equal(t, "default value", nilToDefaultString)
+	assert.Equal(t, 42, nilToDefaultInt)
+	assert.Equal(t, 7, nonDefaultInt)
+	assert.Equal(t, "default value", emptyToDefault)
+	assert.Equal(t, "initial value", nonEmpty)
+}
+
 // assertions
 
 func assertSecurityWithDefaultAdministrator(t *testing.T, runtime imv1.Runtime) {
 	assert.ElementsMatch(t, runtime.Spec.Security.Administrators, []string{"User-operation-01"})
-	assert.Equal(t, runtime.Spec.Security.Networking.Filter.Egress, imv1.Egress(imv1.Egress{Enabled: false}))
+	assert.Equal(t, runtime.Spec.Security.Networking.Filter.Egress, imv1.Egress(imv1.Egress{Enabled: true}))
 }
 
-func assertSecurity(t *testing.T, runtime imv1.Runtime) {
+func assertSecurityEgressEnabled(t *testing.T, runtime imv1.Runtime) {
+	assertSecurityWithNetworkingFilter(t, runtime, true)
+}
+
+func assertSecurityEgressDisabled(t *testing.T, runtime imv1.Runtime) {
+	assertSecurityWithNetworkingFilter(t, runtime, false)
+}
+
+func assertSecurityWithNetworkingFilter(t *testing.T, runtime imv1.Runtime, egress bool) {
 	assert.ElementsMatch(t, runtime.Spec.Security.Administrators, runtimeAdministrators)
-	assert.Equal(t, runtime.Spec.Security.Networking.Filter.Egress, imv1.Egress(imv1.Egress{Enabled: false}))
+	assert.Equal(t, runtime.Spec.Security.Networking.Filter.Egress, imv1.Egress{Enabled: egress})
 }
 
 func assertLabelsKIMDriven(t *testing.T, preOperation internal.Operation, runtime imv1.Runtime) {

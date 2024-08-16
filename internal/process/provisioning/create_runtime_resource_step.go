@@ -3,6 +3,7 @@ package provisioning
 import (
 	"context"
 	"fmt"
+	"reflect"
 	"strconv"
 	"time"
 
@@ -179,7 +180,10 @@ func (s *CreateRuntimeResourceStep) createSecurityConfiguration(operation intern
 		security.Administrators = operation.ProvisioningParameters.Parameters.RuntimeAdministrators
 	}
 
-	security.Networking.Filter.Egress.Enabled = false
+	// In Runtime CR logic is positive, so we need to negate the value
+	disabled := *operation.ProvisioningParameters.ErsContext.DisableEnterprisePolicyFilter()
+	security.Networking.Filter.Egress.Enabled = !disabled
+
 	// Ingress is not supported yet, nevertheless we set it for completeness
 	security.Networking.Filter.Ingress = &imv1.Ingress{Enabled: false}
 	return security
@@ -331,15 +335,10 @@ func (s *CreateRuntimeResourceStep) createNetworkingConfiguration(operation inte
 		networkingParams = &internal.NetworkingDTO{}
 	}
 
-	nodes := networkingParams.NodesCidr
-	if nodes == "" {
-		nodes = networking.DefaultNodesCIDR
-	}
-
 	return imv1.Networking{
 		Pods:     DefaultIfParamNotSet(networking.DefaultPodsCIDR, networkingParams.PodsCidr),
 		Services: DefaultIfParamNotSet(networking.DefaultServicesCIDR, networkingParams.ServicesCidr),
-		Nodes:    nodes,
+		Nodes:    DefaultIfParamZero(networking.DefaultNodesCIDR, networkingParams.NodesCidr),
 	}
 }
 
@@ -356,6 +355,7 @@ func (s *CreateRuntimeResourceStep) getEmptyOrExistingRuntimeResource(name, name
 	return &runtime, nil
 }
 
+// TODO unit test
 func (s *CreateRuntimeResourceStep) createKubernetesConfiguration(operation internal.Operation) imv1.Kubernetes {
 	oidc := gardener.OIDCConfig{
 		ClientID:       &s.oidcDefaultValues.ClientID,
@@ -366,24 +366,12 @@ func (s *CreateRuntimeResourceStep) createKubernetesConfiguration(operation inte
 		UsernamePrefix: &s.oidcDefaultValues.UsernamePrefix,
 	}
 	if operation.ProvisioningParameters.Parameters.OIDC != nil {
-		if operation.ProvisioningParameters.Parameters.OIDC.ClientID != "" {
-			oidc.ClientID = &operation.ProvisioningParameters.Parameters.OIDC.ClientID
-		}
-		if operation.ProvisioningParameters.Parameters.OIDC.GroupsClaim != "" {
-			oidc.GroupsClaim = &operation.ProvisioningParameters.Parameters.OIDC.GroupsClaim
-		}
-		if operation.ProvisioningParameters.Parameters.OIDC.IssuerURL != "" {
-			oidc.IssuerURL = &operation.ProvisioningParameters.Parameters.OIDC.IssuerURL
-		}
-		if len(operation.ProvisioningParameters.Parameters.OIDC.SigningAlgs) > 0 {
-			oidc.SigningAlgs = operation.ProvisioningParameters.Parameters.OIDC.SigningAlgs
-		}
-		if operation.ProvisioningParameters.Parameters.OIDC.UsernameClaim != "" {
-			oidc.UsernameClaim = &operation.ProvisioningParameters.Parameters.OIDC.UsernameClaim
-		}
-		if operation.ProvisioningParameters.Parameters.OIDC.UsernamePrefix != "" {
-			oidc.UsernamePrefix = &operation.ProvisioningParameters.Parameters.OIDC.UsernamePrefix
-		}
+		oidc.SigningAlgs = DefaultIfParamZero(oidc.SigningAlgs, operation.ProvisioningParameters.Parameters.OIDC.SigningAlgs)
+		oidc.ClientID = DefaultIfParamZero(oidc.ClientID, &operation.ProvisioningParameters.Parameters.OIDC.ClientID)
+		oidc.GroupsClaim = DefaultIfParamZero(oidc.GroupsClaim, &operation.ProvisioningParameters.Parameters.OIDC.GroupsClaim)
+		oidc.IssuerURL = DefaultIfParamZero(oidc.IssuerURL, &operation.ProvisioningParameters.Parameters.OIDC.IssuerURL)
+		oidc.UsernameClaim = DefaultIfParamZero(oidc.UsernameClaim, &operation.ProvisioningParameters.Parameters.OIDC.UsernameClaim)
+		oidc.UsernamePrefix = DefaultIfParamZero(oidc.UsernamePrefix, &operation.ProvisioningParameters.Parameters.OIDC.UsernamePrefix)
 	}
 
 	return imv1.Kubernetes{
@@ -400,6 +388,14 @@ func DefaultIfParamNotSet[T interface{}](d T, param *T) T {
 		return d
 	}
 	return *param
+}
+
+func DefaultIfParamZero[T interface{}](d T, param T) T {
+	field := reflect.ValueOf(param)
+	if field.IsZero() {
+		return d
+	}
+	return param
 }
 
 func RuntimeToYaml(runtime *imv1.Runtime) (string, error) {
