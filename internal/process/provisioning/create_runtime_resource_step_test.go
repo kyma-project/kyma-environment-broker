@@ -42,11 +42,15 @@ const (
 )
 
 var runtimeAdministrators = []string{"admin1@test.com", "admin2@test.com"}
+
 var defaultNetworking = imv1.Networking{
 	Nodes:    networking.DefaultNodesCIDR,
 	Pods:     networking.DefaultPodsCIDR,
 	Services: networking.DefaultServicesCIDR,
+	//TODO: remove after KIM is handling this properly
+	Type: ptr.String("calico"),
 }
+
 var defaultOIDSConfig = internal.OIDCConfigDTO{
 	ClientID:       "client-id-default",
 	GroupsClaim:    "gc-default",
@@ -414,6 +418,8 @@ func TestCreateRuntimeResourceStep_Defaults_AWS_MultiZoneWithNetworking_ActualCr
 		Nodes:    "192.168.48.0/20",
 		Pods:     "10.104.0.0/24",
 		Services: "10.105.0.0/24",
+		//TODO remove after KIM is handling this properly
+		Type: ptr.String("calico"),
 	}, runtime.Spec.Shoot.Networking)
 
 	_, err = memoryStorage.Instances().GetByID(operation.InstanceID)
@@ -728,7 +734,7 @@ func assertLabelsKIMDriven(t *testing.T, preOperation internal.Operation, runtim
 	assertLabels(t, preOperation, runtime)
 
 	provisionerDriven, ok := runtime.Labels["kyma-project.io/controlled-by-provisioner"]
-	assert.True(t, !ok || provisionerDriven == "false")
+	assert.True(t, ok && provisionerDriven == "false")
 }
 
 func assertLabelsProvisionerDriven(t *testing.T, preOperation internal.Operation, runtime imv1.Runtime) {

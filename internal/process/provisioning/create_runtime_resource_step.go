@@ -167,6 +167,8 @@ func (s *CreateRuntimeResourceStep) createLabelsForRuntime(operation internal.Op
 	}
 	if s.kimConfig.ViewOnly && !s.kimConfig.IsDrivenByKimOnly(broker.PlanNamesMapping[operation.ProvisioningParameters.PlanID]) {
 		labels["kyma-project.io/controlled-by-provisioner"] = "true"
+	} else {
+		labels["kyma-project.io/controlled-by-provisioner"] = "false"
 	}
 	return labels
 }
@@ -339,6 +341,8 @@ func (s *CreateRuntimeResourceStep) createNetworkingConfiguration(operation inte
 		Pods:     DefaultIfParamNotSet(networking.DefaultPodsCIDR, networkingParams.PodsCidr),
 		Services: DefaultIfParamNotSet(networking.DefaultServicesCIDR, networkingParams.ServicesCidr),
 		Nodes:    DefaultIfParamZero(networking.DefaultNodesCIDR, networkingParams.NodesCidr),
+		//TODO remove when KIM is ready with setting this value
+		Type: ptr.String("calico"),
 	}
 }
 
