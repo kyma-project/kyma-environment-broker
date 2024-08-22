@@ -1,6 +1,7 @@
 package provisioning
 
 import (
+	"github.com/kyma-project/kyma-environment-broker/internal/kim"
 	"testing"
 
 	"github.com/kyma-project/kyma-environment-broker/internal"
@@ -21,6 +22,11 @@ const (
 )
 
 func TestGetKubeconfigStep(t *testing.T) {
+
+	kimConfig := kim.Config{
+		Enabled: false,
+	}
+
 	t.Run("should create k8s client using kubeconfig from RuntimeStatus", func(t *testing.T) {
 		// given
 		st := storage.NewMemoryStorage()
@@ -29,7 +35,7 @@ func TestGetKubeconfigStep(t *testing.T) {
 		scheme := internal.NewSchemeForTests(t)
 		err := apiextensionsv1.AddToScheme(scheme)
 
-		step := NewGetKubeconfigStep(st.Operations(), provisionerClient)
+		step := NewGetKubeconfigStep(st.Operations(), provisionerClient, kimConfig)
 		operation := fixture.FixProvisioningOperation("operation-id", "inst-id")
 		operation.Kubeconfig = ""
 		err = st.Operations().InsertOperation(operation)
@@ -56,7 +62,7 @@ func TestGetKubeconfigStep(t *testing.T) {
 		scheme := internal.NewSchemeForTests(t)
 		err := apiextensionsv1.AddToScheme(scheme)
 
-		step := NewGetKubeconfigStep(st.Operations(), nil)
+		step := NewGetKubeconfigStep(st.Operations(), nil, kimConfig)
 		operation := fixture.FixProvisioningOperation("operation-id", "inst-id")
 		operation.Kubeconfig = ""
 		operation.ProvisioningParameters.Parameters.Kubeconfig = kubeconfigContentsFromParameters
@@ -79,7 +85,7 @@ func TestGetKubeconfigStep(t *testing.T) {
 		scheme := internal.NewSchemeForTests(t)
 		err := apiextensionsv1.AddToScheme(scheme)
 
-		step := NewGetKubeconfigStep(st.Operations(), nil)
+		step := NewGetKubeconfigStep(st.Operations(), nil, kimConfig)
 		operation := fixture.FixProvisioningOperation("operation-id", "inst-id")
 		operation.Kubeconfig = kubeconfigFromPreviousOperation
 		operation.ProvisioningParameters.Parameters.Kubeconfig = ""
@@ -102,7 +108,7 @@ func TestGetKubeconfigStep(t *testing.T) {
 		scheme := internal.NewSchemeForTests(t)
 		err := apiextensionsv1.AddToScheme(scheme)
 
-		step := NewGetKubeconfigStep(st.Operations(), provisionerClient)
+		step := NewGetKubeconfigStep(st.Operations(), provisionerClient, kimConfig)
 		operation := fixture.FixProvisioningOperation("operation-id", "inst-id")
 		operation.Kubeconfig = ""
 		operation.RuntimeID = ""

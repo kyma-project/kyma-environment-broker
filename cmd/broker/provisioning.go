@@ -126,7 +126,7 @@ func NewProvisioningProcessingQueue(ctx context.Context, provisionManager *proce
 		},
 		{ // TODO: this step must be removed when kubeconfig is created by IM only
 			stage: createRuntimeStageName,
-			step:  provisioning.NewGetKubeconfigStep(db.Operations(), provisionerClient),
+			step:  provisioning.NewGetKubeconfigStep(db.Operations(), provisionerClient, cfg.Broker.KimConfig),
 		},
 		{ // TODO: this step must be removed when kubeconfig is created by IM and own_cluster plan is permanently removed
 			disabled:  cfg.LifecycleManagerIntegrationDisabled,
