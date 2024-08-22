@@ -1,8 +1,9 @@
 package provisioning
 
 import (
-	"github.com/kyma-project/kyma-environment-broker/internal/kim"
 	"testing"
+
+	"github.com/kyma-project/kyma-environment-broker/internal/kim"
 
 	"github.com/kyma-project/kyma-environment-broker/internal"
 	"github.com/kyma-project/kyma-environment-broker/internal/broker"

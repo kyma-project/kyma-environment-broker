@@ -1,8 +1,9 @@
 package provisioning
 
 import (
-	"github.com/kyma-project/kyma-environment-broker/internal/kim"
 	"time"
+
+	"github.com/kyma-project/kyma-environment-broker/internal/kim"
 
 	"github.com/kyma-project/kyma-environment-broker/internal/broker"
 	"github.com/sirupsen/logrus"
