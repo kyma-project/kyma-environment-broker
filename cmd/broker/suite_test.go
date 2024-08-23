@@ -631,6 +631,7 @@ func (s *ProvisioningSuite) CreateProvisioning(options RuntimeOptions) string {
 			OIDC:                  options.ProvideOIDC(),
 			RuntimeAdministrators: options.ProvideRuntimeAdmins(),
 		},
+		PlatformRegion: options.PlatformRegion,
 	}
 
 	shootName := gardener.CreateShootName()

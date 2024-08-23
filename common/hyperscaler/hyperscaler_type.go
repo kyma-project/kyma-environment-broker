@@ -1,13 +1,19 @@
 package hyperscaler
 
+const (
+	BTPRegionDammamGCP = "cf-sa30"
+)
+
 type Type struct {
 	hyperscalerName   string
 	hyperscalerRegion string
+	platformRegion    string
 }
 
-func GCP() Type {
+func GCP(platformRegion string) Type {
 	return Type{
 		hyperscalerName: "gcp",
+		platformRegion:  platformRegion,
 	}
 }
 
@@ -42,6 +48,9 @@ func (t Type) GetRegion() string {
 func (t Type) GetKey() string {
 	if t.hyperscalerName == "openstack" && t.hyperscalerRegion != "" {
 		return t.hyperscalerName + "_" + t.hyperscalerRegion
+	}
+	if t.hyperscalerName == "gcp" && t.platformRegion == BTPRegionDammamGCP {
+		return t.hyperscalerName + "_" + BTPRegionDammamGCP
 	}
 	return t.hyperscalerName
 }
