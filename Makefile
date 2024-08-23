@@ -1,6 +1,6 @@
 GOLINT_VER = v1.55.2
 ifeq (,$(GOLINT_TIMEOUT))
-GOLINT_TIMEOUT=1m
+GOLINT_TIMEOUT=2m
 endif
 
  ## The headers are represented by '##@' like 'General' and the descriptions of given command is text after '##''.
