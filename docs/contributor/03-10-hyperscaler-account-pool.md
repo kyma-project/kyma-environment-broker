@@ -68,7 +68,7 @@ metadata:
 
 ## Assured Workloads
 
-SAP BTP, Kyma runtime supports the BTP cf-sa30 GCP subaccount region, which use assured workloads KSA control package. Kyma Control Plane manages cf-sa30 Kyma runtimes in a separate 
+SAP BTP, Kyma runtime supports the BTP cf-sa30 GCP subaccount region. This region uses the Assured Workloads Kingdom of Saudi Arabia (KSA) control package. Kyma Control Plane manages cf-sa30 Kyma runtimes in a separate 
 GCP hyperscaler account pool. The Secret contains the label **hyperscaler-type** set to `gcp_cf-sa30`. This is an example of a Secret that uses assured workloads KSA control package:
 
 ```yaml
