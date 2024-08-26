@@ -53,6 +53,7 @@ type RuntimeDTO struct {
 	AVSInternalEvaluationID     int64                          `json:"avsInternalEvaluationID"`
 	KymaConfig                  *gqlschema.KymaConfigInput     `json:"kymaConfig,omitempty"`
 	ClusterConfig               *gqlschema.GardenerConfigInput `json:"clusterConfig,omitempty"`
+	RuntimeConfig               *map[string]interface{}        `json:"runtimeConfig,omitempty"`
 }
 
 type RuntimeStatus struct {
@@ -119,6 +120,7 @@ const (
 	ClusterConfigParam   = "cluster_config"
 	ExpiredParam         = "expired"
 	GardenerConfigParam  = "gardener_config"
+	RuntimeConfigParam   = "runtime_config"
 )
 
 type OperationDetail string
@@ -139,6 +141,8 @@ type ListParameters struct {
 	KymaConfig bool
 	// ClusterConfig specifies whether Gardener cluster configuration details should be included in the response for each runtime
 	ClusterConfig bool
+	// RuntimeResourceConfig specifies whether current Runtime Custom Resource details should be included in the response for each runtime
+	RuntimeResourceConfig bool
 	// GardenerConfig specifies whether current Gardener cluster configuration details from provisioner should be included in the response for each runtime
 	GardenerConfig bool
 	// GlobalAccountIDs parameter filters runtimes by specified global account IDs

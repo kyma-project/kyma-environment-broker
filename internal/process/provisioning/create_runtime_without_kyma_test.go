@@ -5,8 +5,6 @@ import (
 	"reflect"
 	"testing"
 
-	"github.com/kyma-project/kyma-environment-broker/internal/kim"
-
 	"github.com/kyma-project/control-plane/components/provisioner/pkg/gqlschema"
 	"github.com/kyma-project/kyma-environment-broker/internal/broker"
 	"github.com/kyma-project/kyma-environment-broker/internal/provider"
@@ -32,7 +30,7 @@ func TestCreateRuntimeWithoutKyma_Run(t *testing.T) {
 	err = memoryStorage.Instances().Insert(fixInstance())
 	assert.NoError(t, err)
 
-	kimConfig := kim.Config{
+	kimConfig := broker.KimConfig{
 		Enabled: false,
 	}
 
@@ -82,7 +80,7 @@ func TestCreateRuntimeWithoutKyma_SkipForKIM(t *testing.T) {
 	err = memoryStorage.Instances().Insert(fixInstance())
 	assert.NoError(t, err)
 
-	kimConfig := kim.Config{
+	kimConfig := broker.KimConfig{
 		Enabled:      true,
 		Plans:        []string{"gcp"},
 		KimOnlyPlans: []string{"gcp"},
@@ -130,7 +128,7 @@ func TestCreateRuntimeWithoutKyma_RunWithEuAccess(t *testing.T) {
 	err = memoryStorage.Instances().Insert(fixInstance())
 	assert.NoError(t, err)
 
-	kimConfig := kim.Config{
+	kimConfig := broker.KimConfig{
 		Enabled: false,
 	}
 
@@ -242,7 +240,7 @@ func TestCreateRuntimeWithoutKymaStep_RunWithBadRequestError(t *testing.T) {
 	err := memoryStorage.Operations().InsertOperation(operation)
 	assert.NoError(t, err)
 
-	kimConfig := kim.Config{
+	kimConfig := broker.KimConfig{
 		Enabled: false,
 	}
 

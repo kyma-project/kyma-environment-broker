@@ -5,7 +5,6 @@ import (
 	"time"
 
 	"github.com/kyma-project/kyma-environment-broker/internal/broker"
-	"github.com/kyma-project/kyma-environment-broker/internal/kim"
 
 	"github.com/sirupsen/logrus"
 
@@ -21,13 +20,13 @@ type CheckRuntimeStep struct {
 	provisionerClient   provisioner.Client
 	operationManager    *process.OperationManager
 	provisioningTimeout time.Duration
-	kimConfig           kim.Config
+	kimConfig           broker.KimConfig
 }
 
 func NewCheckRuntimeStep(os storage.Operations,
 	provisionerClient provisioner.Client,
 	provisioningTimeout time.Duration,
-	kimConfig kim.Config) *CheckRuntimeStep {
+	kimConfig broker.KimConfig) *CheckRuntimeStep {
 	return &CheckRuntimeStep{
 		provisionerClient:   provisionerClient,
 		operationManager:    process.NewOperationManager(os),

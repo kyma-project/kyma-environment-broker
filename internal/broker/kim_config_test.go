@@ -1,4 +1,4 @@
-package kim
+package broker
 
 import (
 	"testing"
@@ -7,7 +7,7 @@ import (
 )
 
 func TestIsEnabled_KimDisabled(t *testing.T) {
-	config := &Config{
+	config := &KimConfig{
 		Enabled:  false,
 		Plans:    []string{"gcp", "preview"},
 		ViewOnly: false,
@@ -22,7 +22,7 @@ func TestIsEnabled_KimDisabled(t *testing.T) {
 }
 
 func TestIsEnabled_KimEnabledForPreview(t *testing.T) {
-	config := &Config{
+	config := &KimConfig{
 		Enabled:  true,
 		Plans:    []string{"preview"},
 		ViewOnly: false,
@@ -38,7 +38,7 @@ func TestIsEnabled_KimEnabledForPreview(t *testing.T) {
 }
 
 func TestIsEnabled_KimEnabledForPreview_DryRun(t *testing.T) {
-	config := &Config{
+	config := &KimConfig{
 		Enabled:  true,
 		Plans:    []string{"preview"},
 		ViewOnly: false,
@@ -54,7 +54,7 @@ func TestIsEnabled_KimEnabledForPreview_DryRun(t *testing.T) {
 }
 
 func TestDrivenByKimOnly_KimDisabled(t *testing.T) {
-	config := &Config{
+	config := &KimConfig{
 		Enabled:      false,
 		Plans:        []string{"gcp", "preview"},
 		KimOnlyPlans: []string{"preview"},
@@ -67,10 +67,16 @@ func TestDrivenByKimOnly_KimDisabled(t *testing.T) {
 	assert.False(t, config.IsDrivenByKim("preview"))
 	assert.False(t, config.IsDrivenByKimOnly("gcp"))
 	assert.False(t, config.IsDrivenByKimOnly("preview"))
+	assert.False(t, config.IsPlanIdDrivenByKimOnly("ca6e5357-707f-4565-bbbd-b3ab732597c6"))
+	assert.False(t, config.IsPlanIdDrivenByKimOnly("5cb3d976-b85c-42ea-a636-79cadda109a9"))
+	assert.False(t, config.IsPlanIdDrivenByKim("ca6e5357-707f-4565-bbbd-b3ab732597c6"))
+	assert.False(t, config.IsPlanIdDrivenByKim("5cb3d976-b85c-42ea-a636-79cadda109a9"))
+	assert.False(t, config.IsPlanIdDrivenByKimOnly("ca6e5357-707f-4565-bbbd-b3ab732597c6"))
+	assert.False(t, config.IsPlanIdDrivenByKimOnly("5cb3d976-b85c-42ea-a636-79cadda109a9"))
 }
 
 func TestDrivenByKimOnly_PreviewByKimOnly(t *testing.T) {
-	config := &Config{
+	config := &KimConfig{
 		Enabled:      true,
 		Plans:        []string{"preview"},
 		KimOnlyPlans: []string{"preview"},
@@ -86,7 +92,7 @@ func TestDrivenByKimOnly_PreviewByKimOnly(t *testing.T) {
 }
 
 func TestDrivenByKimOnly_PreviewByKimOnlyButNotEnabled(t *testing.T) {
-	config := &Config{
+	config := &KimConfig{
 		Enabled:      true,
 		KimOnlyPlans: []string{"preview"},
 		ViewOnly:     false,
@@ -101,7 +107,7 @@ func TestDrivenByKimOnly_PreviewByKimOnlyButNotEnabled(t *testing.T) {
 }
 
 func TestDrivenByKim_ButNotByKimOnly(t *testing.T) {
-	config := &Config{
+	config := &KimConfig{
 		Enabled:      true,
 		KimOnlyPlans: []string{"no-plan"},
 		Plans:        []string{"preview"},

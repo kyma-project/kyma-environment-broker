@@ -385,7 +385,10 @@ func main() {
 	// create list runtimes endpoint
 	runtimeHandler := runtime.NewHandler(db.Instances(), db.Operations(),
 		db.RuntimeStates(), db.InstancesArchived(), cfg.MaxPaginationPage,
-		cfg.DefaultRequestRegion, provisionerClient, logs)
+		cfg.DefaultRequestRegion, provisionerClient,
+		cli,
+		cfg.Broker.KimConfig,
+		logs)
 	runtimeHandler.AttachRoutes(router)
 
 	// create expiration endpoint

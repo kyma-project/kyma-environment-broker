@@ -1,6 +1,6 @@
-package kim
+package broker
 
-type Config struct {
+type KimConfig struct {
 	Enabled      bool     `envconfig:"default=false"` // if true, KIM will be used
 	DryRun       bool     `envconfig:"default=true"`  // if true, only yamls are generated, no resources are created
 	ViewOnly     bool     `envconfig:"default=true"`  // if true, provisioner will control the process
@@ -8,7 +8,7 @@ type Config struct {
 	KimOnlyPlans []string `envconfig:"default=,"`
 }
 
-func (c *Config) IsEnabledForPlan(planName string) bool {
+func (c *KimConfig) IsEnabledForPlan(planName string) bool {
 	if c.Enabled == false {
 		return false
 	}
@@ -20,7 +20,7 @@ func (c *Config) IsEnabledForPlan(planName string) bool {
 	return false
 }
 
-func (c *Config) IsDrivenByKimOnly(planName string) bool {
+func (c *KimConfig) IsDrivenByKimOnly(planName string) bool {
 	if !c.IsEnabledForPlan(planName) {
 		return false
 	}
@@ -32,6 +32,21 @@ func (c *Config) IsDrivenByKimOnly(planName string) bool {
 	return false
 }
 
-func (c *Config) IsDrivenByKim(planName string) bool {
+func (c *KimConfig) IsPlanIdDrivenByKimOnly(planID string) bool {
+	planName := PlanIDsMapping[planID]
+	return c.IsDrivenByKimOnly(planName)
+}
+
+func (c *KimConfig) IsPlanIdDrivenByKim(planID string) bool {
+	planName := PlanIDsMapping[planID]
+	return c.IsDrivenByKim(planName)
+}
+
+func (c *KimConfig) IsDrivenByKim(planName string) bool {
 	return (c.IsEnabledForPlan(planName) && !c.ViewOnly && !c.DryRun) || c.IsDrivenByKimOnly(planName)
+}
+
+func (c *KimConfig) IsEnabledForPlanID(planID string) bool {
+	planName := PlanIDsMapping[planID]
+	return c.IsEnabledForPlan(planName)
 }

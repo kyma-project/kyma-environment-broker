@@ -3,8 +3,6 @@ package provisioning
 import (
 	"testing"
 
-	"github.com/kyma-project/kyma-environment-broker/internal/kim"
-
 	"github.com/kyma-project/kyma-environment-broker/internal"
 	"github.com/kyma-project/kyma-environment-broker/internal/broker"
 	"github.com/kyma-project/kyma-environment-broker/internal/fixture"
@@ -24,7 +22,7 @@ const (
 
 func TestGetKubeconfigStep(t *testing.T) {
 
-	kimConfig := kim.Config{
+	kimConfig := broker.KimConfig{
 		Enabled: false,
 	}
 

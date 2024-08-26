@@ -27,8 +27,6 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client/fake"
 
 	"github.com/kyma-project/kyma-environment-broker/internal/fixture"
-	"github.com/kyma-project/kyma-environment-broker/internal/kim"
-
 	"github.com/kyma-project/kyma-environment-broker/internal/storage"
 	"github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/assert"
@@ -816,8 +814,8 @@ func getClientForTests(t *testing.T) client.Client {
 	return cli
 }
 
-func fixKimConfig(planName string, dryRun bool) kim.Config {
-	return kim.Config{
+func fixKimConfig(planName string, dryRun bool) broker.KimConfig {
+	return broker.KimConfig{
 		Enabled:  true,
 		Plans:    []string{planName},
 		ViewOnly: false,
@@ -825,20 +823,11 @@ func fixKimConfig(planName string, dryRun bool) kim.Config {
 	}
 }
 
-func fixKimConfigWithAllPlans(dryRun bool) kim.Config {
-	return kim.Config{
+func fixKimConfigWithAllPlans(dryRun bool) broker.KimConfig {
+	return broker.KimConfig{
 		Enabled:  true,
 		Plans:    []string{"azure", "gcp", "azure_lite", "trial", "aws", "free", "preview", "sap-converged-cloud"},
 		ViewOnly: false,
-		DryRun:   dryRun,
-	}
-}
-
-func fixKimConfigProvisionerDriven(planName string, dryRun bool) kim.Config {
-	return kim.Config{
-		Enabled:  true,
-		Plans:    []string{planName},
-		ViewOnly: true,
 		DryRun:   dryRun,
 	}
 }
@@ -883,23 +872,4 @@ channel: stable
 modules: []
 `
 	return operation
-}
-
-func fixProvisionerParameters(cloudProvider internal.CloudProvider, region string) internal.ProvisioningParametersDTO {
-	return internal.ProvisioningParametersDTO{
-		Name:         "cluster-test",
-		VolumeSizeGb: ptr.Integer(50),
-		MachineType:  ptr.String("Standard_D8_v3"),
-		Region:       ptr.String(region),
-		Purpose:      ptr.String("Purpose"),
-		LicenceType:  ptr.String("LicenceType"),
-		Zones:        []string{"1"},
-		AutoScalerParameters: internal.AutoScalerParameters{
-			AutoScalerMin:  ptr.Integer(3),
-			AutoScalerMax:  ptr.Integer(10),
-			MaxSurge:       ptr.Integer(4),
-			MaxUnavailable: ptr.Integer(1),
-		},
-		Provider: &cloudProvider,
-	}
 }
