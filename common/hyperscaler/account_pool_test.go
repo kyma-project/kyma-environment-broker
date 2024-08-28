@@ -37,16 +37,16 @@ func TestCredentialsSecretBinding(t *testing.T) {
 		expectedError             string
 	}{
 		{"In-use credential for tenant1, GCP returns existing secret",
-			"tenant1", GCP(), "secretBinding1", ""},
+			"tenant1", GCP("cf-jp30"), "secretBinding1", ""},
 
 		{"In-use credential for tenant1, Azure returns existing secret",
 			"tenant1", Azure(), "secretBinding2", ""},
 
 		{"In-use credential for tenant2, GCP returns existing secret",
-			"tenant2", GCP(), "secretBinding3", ""},
+			"tenant2", GCP("cf-jp30"), "secretBinding3", ""},
 
 		{"Available credential for tenant3, AWS labels and returns existing secret",
-			"tenant3", GCP(), "secretBinding4", ""},
+			"tenant3", GCP("cf-jp30"), "secretBinding4", ""},
 
 		{"Available credential for tenant4, GCP labels and returns existing secret",
 			"tenant4", AWS(), "secretBinding5", ""},
@@ -59,7 +59,7 @@ func TestCredentialsSecretBinding(t *testing.T) {
 			"failed to find unassigned secret binding for hyperscalerType: azure"},
 
 		{"No Available credential for tenant6, GCP returns error - ignore secret binding with label shared=true",
-			"tenant6", GCP(), "",
+			"tenant6", GCP("cf-jp30"), "",
 			"failed to find unassigned secret binding for hyperscalerType: gcp"},
 
 		{"Available credential for tenant7, AWS labels and returns existing secret from different namespace",
@@ -68,6 +68,16 @@ func TestCredentialsSecretBinding(t *testing.T) {
 		{"No Available credential for tenant8, AWS returns error - failed to get referenced secret",
 			"tenant8", AWS(), "",
 			"failed to find unassigned secret binding for hyperscalerType: aws"},
+
+		{"In-use credential for tenant10, GCP returns existing secret",
+			"tenant10", GCP("cf-sa30"), "secretBinding10", ""},
+
+		{"Available credential for tenant11, GCP labels and returns existing secret",
+			"tenant11", GCP("cf-sa30"), "secretBinding11", ""},
+
+		{"No Available credential for tenant12, GCP returns error - ignore secret binding with label shared=true",
+			"tenant12", GCP("cf-sa30"), "",
+			"failed to find unassigned secret binding for hyperscalerType: gcp_cf-sa30"},
 	}
 	for _, testcase := range testcases {
 
@@ -359,8 +369,41 @@ func newTestAccountPool() AccountPool {
 		},
 	}
 	secretBinding9.SetGroupVersionKind(secretBindingGVK)
+	secretBinding10 := &unstructured.Unstructured{
+		Object: map[string]interface{}{
+			"metadata": map[string]interface{}{
+				"name":      "secretBinding10",
+				"namespace": testNamespace,
+				"labels": map[string]interface{}{
+					"tenantName":      "tenant10",
+					"hyperscalerType": "gcp_cf-sa30",
+				},
+			},
+			"secretRef": map[string]interface{}{
+				"name":      "secret10",
+				"namespace": testNamespace,
+			},
+		},
+	}
+	secretBinding10.SetGroupVersionKind(secretBindingGVK)
+	secretBinding11 := &unstructured.Unstructured{
+		Object: map[string]interface{}{
+			"metadata": map[string]interface{}{
+				"name":      "secretBinding11",
+				"namespace": testNamespace,
+				"labels": map[string]interface{}{
+					"hyperscalerType": "gcp_cf-sa30",
+				},
+			},
+			"secretRef": map[string]interface{}{
+				"name":      "secret11",
+				"namespace": testNamespace,
+			},
+		},
+	}
+	secretBinding11.SetGroupVersionKind(secretBindingGVK)
 	gardenerFake := gardener.NewDynamicFakeClient(secretBinding1, secretBinding2, secretBinding3, secretBinding4,
-		secretBinding5, secretBinding6, secretBinding7, secretBinding8, secretBinding9)
+		secretBinding5, secretBinding6, secretBinding7, secretBinding8, secretBinding9, secretBinding10, secretBinding11)
 
 	return NewAccountPool(gardenerFake, testNamespace)
 }

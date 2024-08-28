@@ -18,7 +18,7 @@ func TestGardenerSecretName(t *testing.T) {
 		accountProvider := NewAccountProvider(nil, nil)
 
 		//when
-		_, err := accountProvider.GardenerSecretName(GCP(), "tenantname", false)
+		_, err := accountProvider.GardenerSecretName(GCP("cf-jp30"), "tenantname", false)
 		require.Error(t, err)
 
 		//then
@@ -92,7 +92,7 @@ func TestGardenerSharedSecretName(t *testing.T) {
 		accountProvider := NewAccountProvider(nil, nil)
 
 		//when
-		_, err := accountProvider.GardenerSharedSecretName(GCP(), false)
+		_, err := accountProvider.GardenerSharedSecretName(GCP("cf-jp30"), false)
 		require.Error(t, err)
 
 		//then
@@ -250,7 +250,7 @@ func TestMarkUnusedGardenerSecretBindingAsDirty(t *testing.T) {
 				accountProvider := NewAccountProvider(nil, nil)
 
 				//when
-				err := accountProvider.MarkUnusedGardenerSecretBindingAsDirty(GCP(), "tenant1", euAccess)
+				err := accountProvider.MarkUnusedGardenerSecretBindingAsDirty(GCP("cf-jp30"), "tenant1", euAccess)
 
 				//when
 				require.Error(t, err)

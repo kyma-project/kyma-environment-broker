@@ -87,7 +87,7 @@ func NewProvisioningProcessingQueue(ctx context.Context, provisionManager *proce
 		{
 			condition: provisioning.SkipForOwnClusterPlan,
 			stage:     createRuntimeStageName,
-			step:      provisioning.NewCreateRuntimeWithoutKymaStep(db.Operations(), db.RuntimeStates(), db.Instances(), provisionerClient),
+			step:      provisioning.NewCreateRuntimeWithoutKymaStep(db.Operations(), db.RuntimeStates(), db.Instances(), provisionerClient, cfg.Broker.KimConfig),
 		},
 		{
 			stage: createRuntimeStageName,
@@ -105,7 +105,7 @@ func NewProvisioningProcessingQueue(ctx context.Context, provisionManager *proce
 		},
 		{
 			stage:     createRuntimeStageName,
-			step:      provisioning.NewCheckRuntimeStep(db.Operations(), provisionerClient, cfg.Provisioner.ProvisioningTimeout),
+			step:      provisioning.NewCheckRuntimeStep(db.Operations(), provisionerClient, cfg.Provisioner.ProvisioningTimeout, cfg.Broker.KimConfig),
 			condition: provisioning.SkipForOwnClusterPlan,
 		},
 		{
@@ -126,7 +126,7 @@ func NewProvisioningProcessingQueue(ctx context.Context, provisionManager *proce
 		},
 		{ // TODO: this step must be removed when kubeconfig is created by IM only
 			stage: createRuntimeStageName,
-			step:  provisioning.NewGetKubeconfigStep(db.Operations(), provisionerClient),
+			step:  provisioning.NewGetKubeconfigStep(db.Operations(), provisionerClient, cfg.Broker.KimConfig),
 		},
 		{ // TODO: this step must be removed when kubeconfig is created by IM and own_cluster plan is permanently removed
 			disabled:  cfg.LifecycleManagerIntegrationDisabled,

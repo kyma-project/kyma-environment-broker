@@ -71,7 +71,7 @@ func NewDeprovisioningProcessingQueue(ctx context.Context, workersAmount int, de
 			step: deprovisioning.NewReleaseSubscriptionStep(db.Operations(), db.Instances(), accountProvider),
 		},
 		{
-			disabled: cfg.LifecycleManagerIntegrationDisabled,
+			disabled: true,
 			step:     steps.DeleteKubeconfig(db.Operations(), cli),
 		},
 		{

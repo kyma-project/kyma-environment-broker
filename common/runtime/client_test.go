@@ -118,6 +118,32 @@ func TestClient_ListRuntimes(t *testing.T) {
 		assert.Equal(t, 4, rp.TotalCount)
 		assert.Len(t, rp.Data, 4)
 	})
+
+	t.Run("Test deprovisioned runtimes limit", func(t *testing.T) {
+		//given
+		params := ListParameters{
+			States: []State{StateDeprovisioned},
+		}
+		ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			runtimes := make([]RuntimeDTO, RuntimesLimit+10)
+			for i := range runtimes {
+				runtimes[i] = fixRuntimeDTO(strconv.Itoa(i))
+			}
+			err := respondRuntimes(w, runtimes, len(runtimes))
+			require.NoError(t, err)
+		}))
+		defer ts.Close()
+		client := NewClient(ts.URL, oauth2.NewClient(context.Background(), fixToken))
+
+		//when
+		rp, err := client.ListRuntimes(params)
+
+		//then
+		require.NoError(t, err)
+		assert.Equal(t, RuntimesLimit, rp.Count)
+		assert.Equal(t, RuntimesLimit+10, rp.TotalCount)
+		assert.Len(t, rp.Data, RuntimesLimit)
+	})
 }
 
 func fixRuntimeDTO(id string) RuntimeDTO {

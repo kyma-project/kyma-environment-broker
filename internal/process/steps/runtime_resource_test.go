@@ -104,12 +104,11 @@ func TestCheckRuntimeResource_RunWhenNotReady_Retry(t *testing.T) {
 }
 
 func fixKimConfigForAzure() kim.Config {
-	kimConfig := kim.Config{
+	return kim.Config{
 		Enabled:  true,
 		Plans:    []string{"azure"},
 		ViewOnly: false,
 	}
-	return kimConfig
 }
 
 func createRuntime(state imv1.State) imv1.Runtime {

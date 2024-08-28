@@ -3,6 +3,8 @@ package provisioning
 import (
 	"time"
 
+	"github.com/kyma-project/kyma-environment-broker/internal/kim"
+
 	"github.com/kyma-project/kyma-environment-broker/internal/broker"
 	"github.com/sirupsen/logrus"
 
@@ -16,13 +18,16 @@ type GetKubeconfigStep struct {
 	provisionerClient   provisioner.Client
 	operationManager    *process.OperationManager
 	provisioningTimeout time.Duration
+	kimConfig           kim.Config
 }
 
 func NewGetKubeconfigStep(os storage.Operations,
-	provisionerClient provisioner.Client) *GetKubeconfigStep {
+	provisionerClient provisioner.Client,
+	kimConfig kim.Config) *GetKubeconfigStep {
 	return &GetKubeconfigStep{
 		provisionerClient: provisionerClient,
 		operationManager:  process.NewOperationManager(os),
+		kimConfig:         kimConfig,
 	}
 }
 
@@ -33,6 +38,11 @@ func (s *GetKubeconfigStep) Name() string {
 }
 
 func (s *GetKubeconfigStep) Run(operation internal.Operation, log logrus.FieldLogger) (internal.Operation, time.Duration, error) {
+
+	if s.kimConfig.IsDrivenByKimOnly(broker.PlanNamesMapping[operation.ProvisioningParameters.PlanID]) {
+		log.Infof("KIM is driving the process for plan %s, skipping", broker.PlanNamesMapping[operation.ProvisioningParameters.PlanID])
+		return operation, 0, nil
+	}
 
 	if operation.Kubeconfig == "" {
 		if broker.IsOwnClusterPlan(operation.ProvisioningParameters.PlanID) {
