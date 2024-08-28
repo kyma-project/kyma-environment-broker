@@ -1,6 +1,9 @@
 {{- if and .Values.global.secrets.enabled ( .Capabilities.APIVersions.Has "secrets.hashicorp.com/v1beta1" ) ( eq .Values.global.secrets.mechanism "vso") }}
 {{- $root := .}}
-{{- $globalmount := get (get (default dict .Values.global.secrets) "vso" | default dict) "mount" }}
+{{- $globalvso := get (default dict .Values.global.secrets) "vso" | default dict }}
+{{- $globalmount := get $globalvso "mount" }}
+{{- $globalsyncconf := get $globalvso "syncConfig" | default dict }}
+{{- $globalinstantupdate := hasKey $globalsyncconf "instantUpdates" | ternary (get $globalsyncconf "instantUpdates") true }}
 {{- range $sname, $secret := .Values.vsoSecrets.secrets }}
 ---
 # {{ $globalmount }}
@@ -11,7 +14,7 @@ metadata:
   namespace: {{ get $secret "namespace" | default $root.Release.Namespace}}
 spec:
   namespace: {{ $root.Values.global.secrets.vso.namespace | required "Vault namespace not set"}}
-  refreshAfter: {{ get $secret "refreshAfter" | default $root.Values.global.secrets.vso.refreshAfter | default "5m" }}
+  refreshAfter: {{ get $secret "refreshAfter" | default $root.Values.global.secrets.vso.refreshAfter | default "1h" }}
   mount: {{ $secret.mount | default $root.Values.vsoSecrets.mount | default $globalmount | required "Secret mount not set" | quote }}
   path: {{ $secret.path | required "Secret path not set" | quote}}
   hmacSecretData: true
@@ -50,15 +53,23 @@ spec:
       templates:
         {{- range $fname, $fvalue := $secret.templating.data }}
         {{ $fname }}:
+          {{- if eq (kindOf $fvalue) "string" }}
+          text: |-
+            {{ printf "{{- get .Secrets \"%s\" -}}" $fvalue }}
+          {{- else if eq (kindOf $fvalue) "map" }}
+          {{- $tplContext := dict "Template" $.Template "keys" $secret.templating.keys "Values" $root.Values }}
           {{- if hasKey $fvalue "templateFile" }}
           text: |-
-            {{- tpl ($.Files.Get $fvalue.templateFile) (dict "Template" $.Template "keys" $secret.templating.keys "Values" $root.Values) | nindent 12 }}
+            {{- tpl ($.Files.Get $fvalue.templateFile) $tplContext | nindent 12 }}
           {{- else if hasKey $fvalue "template" }}
           text: |-
-            {{- tpl $fvalue.template (dict "Template" $.Template "keys" $secret.templating.keys "Values" $root.Values) | nindent 12 }}
+            {{- tpl $fvalue.template $tplContext | nindent 12 }}
           {{- else }}
           text: |-
             {{ printf "{{- get .Secrets \"%s\" -}}" (get $secret.templating.keys $fname) }}
+          {{- end }}
+          {{- else }}
+            {{ fail (printf "Unsupported type for value %s in secret.templating.data" $fname) }}
           {{- end }}
         {{- end }}
     {{- end }}
@@ -73,5 +84,11 @@ spec:
       name: {{ tpl .name $ | trim | quote }}
     {{- end }}
   {{- end }}
+  syncConfig:
+    {{- if hasKey (get $secret "syncConfig" | default dict) "instantUpdates" }}
+    instantUpdates: {{ $secret.syncConfig.instantUpdates }}
+    {{- else }}
+    instantUpdates: {{ $globalinstantupdate }}
+    {{- end }}
 {{- end }}
 {{- end }}

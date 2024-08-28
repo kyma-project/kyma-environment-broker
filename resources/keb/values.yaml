@@ -78,19 +78,14 @@ global:
     managedGCP:
       # secret with a secret key used to encrypt particular data
       encryptionSecretName: "kcp-storage-client-secret"
-      serviceAccountKey: ""
       instanceConnectionName: ""
       broker:
         name: ""
-        user: ""
-        password: ""
       host: "localhost"
       hostPort: "5432"
       sslMode: ""
       sslRootCert: ""
       #TODO remove below after migration to separate user will be done
-      dbUser: ""
-      dbPassword: ""
       provisionerDBName: ""
       brokerDBName: ""
 
@@ -100,22 +95,23 @@ global:
     vso:
       namespace: kyma
       refreshAfter: 30s
+      mount: kcp-dev
 
 vsoSecrets:
-  mount: kcp-dev
   secrets:
     avs-creds:
       path: avs
+      secretName: "{{ .Values.avs.secretName }}"
       restartTargets:
         - kind: Deployment
-          name: >
+          name: >-
             {{- template "kyma-env-broker.fullname" . -}}
-      secretName: "{{ .Values.avs.secretName }}-test"
       labels: >-
         {{ template "kyma-env-broker.labels" . }}
       templating:
         enabled: true
         keys:
+          apiEndpoint: api_endpoint
           apiKey: api_key
           clientId: client_id
           oauthPassword: password
@@ -126,9 +122,7 @@ vsoSecrets:
           groupId: group_id
           parentId: parent_id
         data:
-          apiEndpoint:
-            template: |-
-              {{- .Values.avs.apiEndpoint -}}
+          apiEndpoint: {}
           apiKey: {}
           clientId: {}
           oauthPassword: {}
@@ -158,11 +152,11 @@ vsoSecrets:
               {{- .Values.avs.trialParentId -}}
     edp:
       path: edp
+      secretName: "{{ .Values.edp.secretName }}"
       restartTargets:
         - kind: Deployment
-          name: >
+          name: >-
             {{- template "kyma-env-broker.fullname" . -}}
-      secretName: "{{ .Values.edp.secretName }}-test"
       labels: >-
         {{ template "kyma-env-broker.labels" . }}
       templating:
@@ -173,10 +167,7 @@ vsoSecrets:
           secret: {}
     cis-v1:
       path: cis
-      restartTargets:
-        - kind: CronJob
-          name: "{{- .Values.subaccountCleanup.nameV1 -}}"
-      secretName: "{{ .Values.cis.v1.secretName | required \"please specify .Values.cis.v1.secretName\"}}-test"
+      secretName: "{{ .Values.cis.v1.secretName | required \"please specify .Values.cis.v1.secretName\"}}"
       labels: >-
         {{ template "kyma-env-broker.labels" . }}
       templating:
@@ -189,10 +180,10 @@ vsoSecrets:
           secret: {}
     cis-v2:
       path: cis
+      secretName: "{{ .Values.cis.v2.secretName | required \"please specify .Values.cis.v2.secretName\"}}"
       restartTargets:
-        - kind: CronJob
-          name: "{{- .Values.subaccountCleanup.nameV2 -}}"
-      secretName: "{{ .Values.cis.v2.secretName | required \"please specify .Values.cis.v2.secretName\"}}-test"
+        - kind: Deployment
+          name: "{{- .Values.subaccountSync.name -}}"
       labels: >-
         {{ template "kyma-env-broker.labels" . }}
       templating:
@@ -205,10 +196,10 @@ vsoSecrets:
           secret: {}
     cis-accounts:
       path: cis
+      secretName: "{{ .Values.cis.accounts.secretName | required \"please specify .Values.cis.accounts.secretName\"}}"
       restartTargets:
         - kind: Deployment
           name: "{{- .Values.subaccountSync.name -}}"
-      secretName: "{{ .Values.cis.accounts.secretName | required \"please specify .Values.cis.accounts.secretName\"}}-test"
       labels: >-
         {{ template "kyma-env-broker.labels" . }}
       templating:
