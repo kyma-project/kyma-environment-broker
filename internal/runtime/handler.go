@@ -100,6 +100,7 @@ func (h *Handler) listInstances(filter dbmodel.InstanceFilter) ([]pkg.RuntimeDTO
 			}
 			dto.Status = pkg.RuntimeStatus{
 				CreatedAt: i.ProvisioningStartedAt,
+				DeletedAt: &i.LastDeprovisioningFinishedAt,
 				Provisioning: &pkg.Operation{
 					CreatedAt: i.ProvisioningStartedAt,
 					UpdatedAt: i.ProvisioningFinishedAt,
@@ -111,6 +112,8 @@ func (h *Handler) listInstances(filter dbmodel.InstanceFilter) ([]pkg.RuntimeDTO
 			}
 			archived = append(archived, dto)
 		}
+		// reverse instances to list them in correct order in KCP CLI
+		slices.Reverse(archived)
 		instancesUnion := unionInstances(instanceDTOs, archived)
 		return instancesUnion, instancesCount + instancesArchivedCount, instancesTotalCount + instancesArchivedTotalCount, nil
 	}
