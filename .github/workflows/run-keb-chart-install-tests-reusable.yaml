@@ -59,6 +59,7 @@ jobs:
       if: ${{ steps.changed-files-specific.outputs.any_modified == 'true' || inputs.release == 'true' }}
       run: |
         cd resources/keb
+        ls -l
         helm template .
   
   prepare-tests:
