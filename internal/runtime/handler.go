@@ -3,8 +3,9 @@ package runtime
 import (
 	"context"
 	"fmt"
-	"k8s.io/apimachinery/pkg/api/errors"
 	"net/http"
+
+	"k8s.io/apimachinery/pkg/api/errors"
 
 	"github.com/kyma-project/kyma-environment-broker/internal/process/steps"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
