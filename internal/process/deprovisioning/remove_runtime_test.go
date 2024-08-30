@@ -1,10 +1,9 @@
 package deprovisioning
 
 import (
+	"github.com/kyma-project/kyma-environment-broker/internal/broker"
 	"testing"
 	"time"
-
-	"github.com/kyma-project/kyma-environment-broker/internal/kim"
 
 	"github.com/kyma-project/kyma-environment-broker/internal/fixture"
 	provisionerAutomock "github.com/kyma-project/kyma-environment-broker/internal/provisioner/automock"
@@ -19,7 +18,7 @@ func TestRemoveRuntimeStep_Run(t *testing.T) {
 		log := logrus.New()
 		memoryStorage := storage.NewMemoryStorage()
 
-		kimConfig := kim.Config{
+		kimConfig := broker.KimConfig{
 			Enabled: false,
 		}
 		operation := fixture.FixDeprovisioningOperation(fixOperationID, fixInstanceID)
