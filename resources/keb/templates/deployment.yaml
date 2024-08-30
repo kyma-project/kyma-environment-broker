@@ -15,20 +15,7 @@ spec:
   template:
     metadata:
       labels:
-        app.kubernetes.io/name: {{ include "kyma-env-broker.name" . }}
-        app.kubernetes.io/instance: {{ .Values.namePrefix }}
-      annotations:
-        checksum/config: {{ include (print $.Template.BasePath "/app-config.yaml") . | sha256sum }}
-    spec:
-      {{- if ne .Values.imagePullSecret "" }}
-      imagePullSecrets:
-        - name: {{ .Values.imagePullSecret }}
-      {{- end }}
-      {{ if .Values.global.isLocalEnv }}
-      # HostAliases are used by Pod to resolve kyma.local domain
-      hostAliases:
-        - ip: {{ .Values.global.minikubeIP }}
-          hostnames:
+  
             # Used for calls to Director
             - "{{ .Values.global.compass.tls.secure.oauth.host }}.{{ .Values.global.compass.domain | default .Values.global.ingress.domainName }}"
             # Used for calls for oauth token
