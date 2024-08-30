@@ -39,8 +39,8 @@ func (s *RemoveRuntimeStep) Name() string {
 }
 
 func (s *RemoveRuntimeStep) Run(operation internal.Operation, log logrus.FieldLogger) (internal.Operation, time.Duration, error) {
-	if !s.kimConfig.IsDrivenByKim(broker.PlanNamesMapping[operation.ProvisioningParameters.PlanID]) {
-		log.Infof("KIM is driving the process for plan %s, skipping", broker.PlanNamesMapping[operation.ProvisioningParameters.PlanID])
+	if s.kimConfig.IsDrivenByKimOnly(broker.PlanNamesMapping[operation.ProvisioningParameters.PlanID]) {
+		log.Infof("Only KIM is driving the process for plan %s, skipping", broker.PlanNamesMapping[operation.ProvisioningParameters.PlanID])
 		return operation, 0, nil
 	}
 
