@@ -104,10 +104,10 @@ vsoSecrets:
     avs-creds:
       path: avs
       secretName: "{{ .Values.avs.secretName }}"
-      restartTargets:
-        - kind: Deployment
-          name: >-
-            {{- template "kyma-env-broker.fullname" . -}}
+      #restartTargets:
+      #  - kind: Deployment
+      #    name: >-
+      #      {{- template "kyma-env-broker.fullname" . -}}
       labels: >-
         {{ template "kyma-env-broker.labels" . }}
       templating:
@@ -155,10 +155,10 @@ vsoSecrets:
     edp:
       path: edp
       secretName: "{{ .Values.edp.secretName }}"
-      restartTargets:
-        - kind: Deployment
-          name: >-
-            {{- template "kyma-env-broker.fullname" . -}}
+      #restartTargets:
+      #  - kind: Deployment
+      #    name: >-
+      #      {{- template "kyma-env-broker.fullname" . -}}
       labels: >-
         {{ template "kyma-env-broker.labels" . }}
       templating:
@@ -183,9 +183,9 @@ vsoSecrets:
     cis-v2:
       path: cis
       secretName: "{{ .Values.cis.v2.secretName | required \"please specify .Values.cis.v2.secretName\"}}"
-      restartTargets:
-        - kind: Deployment
-          name: "{{- .Values.subaccountSync.name -}}"
+      #restartTargets:
+      #  - kind: Deployment
+      #    name: "{{- .Values.subaccountSync.name -}}"
       labels: >-
         {{ template "kyma-env-broker.labels" . }}
       templating:
@@ -199,9 +199,9 @@ vsoSecrets:
     cis-accounts:
       path: cis
       secretName: "{{ .Values.cis.accounts.secretName | required \"please specify .Values.cis.accounts.secretName\"}}"
-      restartTargets:
-        - kind: Deployment
-          name: "{{- .Values.subaccountSync.name -}}"
+      #restartTargets:
+      #  - kind: Deployment
+      #    name: "{{- .Values.subaccountSync.name -}}"
       labels: >-
         {{ template "kyma-env-broker.labels" . }}
       templating:
