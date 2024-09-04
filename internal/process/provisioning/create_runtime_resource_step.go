@@ -122,7 +122,7 @@ func (s *CreateRuntimeResourceStep) Run(operation internal.Operation, log logrus
 func (s *CreateRuntimeResourceStep) updateRuntimeResourceObject(runtime *imv1.Runtime, operation internal.Operation, runtimeName, kymaName, kymaNamespace string) error {
 
 	// get plan specific values (like zones, default machine type etc.
-	values, err := s.providerValues(&operation)
+	values, err := provider.GenerateValues(&operation, s.config.MultiZoneCluster, s.config.DefaultTrialProvider, s.useSmallerMachineTypes, s.trialPlatformRegionMapping)
 	if err != nil {
 		return err
 	}
@@ -224,94 +224,6 @@ func (s *CreateRuntimeResourceStep) createShootProvider(operation *internal.Oper
 		},
 	}
 	return providerObj, nil
-}
-
-type Provider interface {
-	Provide() provider.Values
-}
-
-func (s *CreateRuntimeResourceStep) providerValues(operation *internal.Operation) (provider.Values, error) {
-	var p Provider
-	switch operation.ProvisioningParameters.PlanID {
-	case broker.AWSPlanID:
-		p = &provider.AWSInputProvider{
-			MultiZone:              s.config.MultiZoneCluster,
-			ProvisioningParameters: operation.ProvisioningParameters,
-		}
-	case broker.PreviewPlanID:
-		p = &provider.AWSInputProvider{
-			MultiZone:              s.config.MultiZoneCluster,
-			ProvisioningParameters: operation.ProvisioningParameters,
-		}
-	case broker.AzurePlanID:
-		p = &provider.AzureInputProvider{
-			MultiZone:              s.config.MultiZoneCluster,
-			ProvisioningParameters: operation.ProvisioningParameters,
-		}
-	case broker.AzureLitePlanID:
-		p = &provider.AzureLiteInputProvider{
-			UseSmallerMachineTypes: s.useSmallerMachineTypes,
-			ProvisioningParameters: operation.ProvisioningParameters,
-		}
-	case broker.GCPPlanID:
-		p = &provider.GCPInputProvider{
-			MultiZone:              s.config.MultiZoneCluster,
-			ProvisioningParameters: operation.ProvisioningParameters,
-		}
-	case broker.FreemiumPlanID:
-		switch operation.ProvisioningParameters.PlatformProvider {
-		case internal.AWS:
-			p = &provider.AWSFreemiumInputProvider{
-				UseSmallerMachineTypes: s.useSmallerMachineTypes,
-				ProvisioningParameters: operation.ProvisioningParameters,
-			}
-		case internal.Azure:
-			p = &provider.AzureFreemiumInputProvider{
-				UseSmallerMachineTypes: s.useSmallerMachineTypes,
-				ProvisioningParameters: operation.ProvisioningParameters,
-			}
-		default:
-			return provider.Values{}, fmt.Errorf("freemium provider for '%s' is not supported", operation.ProvisioningParameters.PlatformProvider)
-		}
-	case broker.SapConvergedCloudPlanID:
-		p = &provider.SapConvergedCloudInputProvider{
-			MultiZone:              s.config.MultiZoneCluster,
-			ProvisioningParameters: operation.ProvisioningParameters,
-		}
-	case broker.TrialPlanID:
-		var trialProvider internal.CloudProvider
-		if operation.ProvisioningParameters.Parameters.Provider == nil {
-			trialProvider = s.config.DefaultTrialProvider
-		} else {
-			trialProvider = *operation.ProvisioningParameters.Parameters.Provider
-		}
-		switch trialProvider {
-		case internal.AWS:
-			p = &provider.AWSTrialInputProvider{
-				PlatformRegionMapping:  s.trialPlatformRegionMapping,
-				UseSmallerMachineTypes: s.useSmallerMachineTypes,
-				ProvisioningParameters: operation.ProvisioningParameters,
-			}
-		case internal.GCP:
-			p = &provider.GCPTrialInputProvider{
-				PlatformRegionMapping:  s.trialPlatformRegionMapping,
-				ProvisioningParameters: operation.ProvisioningParameters,
-			}
-		case internal.Azure:
-			p = &provider.AzureTrialInputProvider{
-				PlatformRegionMapping:  s.trialPlatformRegionMapping,
-				UseSmallerMachineTypes: s.useSmallerMachineTypes,
-				ProvisioningParameters: operation.ProvisioningParameters,
-			}
-		default:
-			return provider.Values{}, fmt.Errorf("trial provider for %s not yet implemented", trialProvider)
-		}
-
-		// todo: implement for all plans
-	default:
-		return provider.Values{}, fmt.Errorf("plan %s not supported", operation.ProvisioningParameters.PlanID)
-	}
-	return p.Provide(), nil
 }
 
 func (s *CreateRuntimeResourceStep) createHighAvailabilityConfiguration() *gardener.HighAvailability {
