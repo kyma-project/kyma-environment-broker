@@ -53,17 +53,31 @@ async function getShoot(kcp, shootName) {
 
   const kubeconfigPath = await kcp.getKubeconfig(shootName);
 
+  // try to get data from Provisioner (GardenerConfig) and Runtime resource
   const runtimeGardenerConfig = await kcp.getRuntimeGardenerConfig(shootName);
   const objRuntimeGardenerConfig = JSON.parse(runtimeGardenerConfig);
-  expect(objRuntimeGardenerConfig).to.have.nested.property('data[0].status.gardenerConfig.oidcConfig').not.empty;
-  expect(objRuntimeGardenerConfig).to.have.nested.property('data[0].status.gardenerConfig.machineType').not.empty;
-
-  return {
-    name: shootName,
-    kubeconfig: kubeconfigPath,
-    oidcConfig: objRuntimeGardenerConfig.data[0].status.gardenerConfig.oidcConfig,
-    machineType: objRuntimeGardenerConfig.data[0].status.gardenerConfig.machineType,
-  };
+  // use Gardener config or Runtime Config based on the presence of gardenerConfig field
+  if (objRuntimeGardenerConfig.data[0].status.gardenerConfig != null) {
+    expect(objRuntimeGardenerConfig).to.have.nested.property('data[0].status.gardenerConfig.oidcConfig').not.empty;
+    expect(objRuntimeGardenerConfig).to.have.nested.property('data[0].status.gardenerConfig.machineType').not.empty;
+    return {
+      name: shootName,
+      kubeconfig: kubeconfigPath,
+      oidcConfig: objRuntimeGardenerConfig.data[0].status.gardenerConfig.oidcConfig,
+      machineType: objRuntimeGardenerConfig.data[0].status.gardenerConfig.machineType,
+    };
+  } else {
+    expect(objRuntimeGardenerConfig).to.have.nested.
+        property('data[0].runtimeConfig.spec.shoot.kubernetes.kubeAPIServer.oidcConfig').not.empty;
+    expect(objRuntimeGardenerConfig).to.have.nested.
+        property('data[0].runtimeConfig.spec.shoot.provider.workers[0].machine.type').not.empty;
+    return {
+      name: shootName,
+      kubeconfig: kubeconfigPath,
+      oidcConfig: objRuntimeGardenerConfig.data[0].runtimeConfig.spec.shoot.kubernetes.kubeAPIServer.oidcConfig,
+      machineType: objRuntimeGardenerConfig.data[0].runtimeConfig.spec.shoot.provider.workers[0].machine.type,
+    };
+  }
 }
 
 function ensureValidShootOIDCConfig(shoot, targetOIDCConfig) {

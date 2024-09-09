@@ -183,9 +183,9 @@ jobs:
         run: |
           cd resources/keb
           if [ "${{ inputs.release }}" == "true" ]; then
-            helm install keb ../keb --namespace kcp-system -f values.yaml --set global.database.embedded.enabled=false --set testConfig.kebDeployment.useAnnotations=true --debug --wait
+            helm install keb ../keb --namespace kcp-system -f values.yaml --set global.database.embedded.enabled=false --set testConfig.kebDeployment.useAnnotations=true --set global.secrets.mechanism=secrets --debug --wait
           else
-            helm install keb ../keb --namespace kcp-system -f values.yaml --set global.database.embedded.enabled=false --set testConfig.kebDeployment.useAnnotations=true --set global.images.container_registry.path="europe-docker.pkg.dev/kyma-project/dev" --debug --wait
+            helm install keb ../keb --namespace kcp-system -f values.yaml --set global.database.embedded.enabled=false --set testConfig.kebDeployment.useAnnotations=true --set global.images.container_registry.path="europe-docker.pkg.dev/kyma-project/dev" --set global.secrets.mechanism=secrets --debug --wait
           fi
 
   confirm-keb-chart-tests-result:

@@ -5,10 +5,8 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/kyma-project/kyma-environment-broker/internal/broker"
-	"github.com/kyma-project/kyma-environment-broker/internal/kim"
-
 	imv1 "github.com/kyma-project/infrastructure-manager/api/v1"
+	"github.com/kyma-project/kyma-environment-broker/internal/broker"
 
 	"github.com/kyma-project/kyma-environment-broker/internal"
 	"github.com/kyma-project/kyma-environment-broker/internal/process"
@@ -19,7 +17,7 @@ import (
 
 const RuntimeResourceStateReady = "Ready"
 
-func NewCheckRuntimeResourceStep(os storage.Operations, k8sClient client.Client, kimConfig kim.Config, runtimeResourceStepTimeout time.Duration) *checkRuntimeResource {
+func NewCheckRuntimeResourceStep(os storage.Operations, k8sClient client.Client, kimConfig broker.KimConfig, runtimeResourceStepTimeout time.Duration) *checkRuntimeResource {
 	return &checkRuntimeResource{
 		k8sClient:                  k8sClient,
 		operationManager:           process.NewOperationManager(os),
@@ -30,7 +28,7 @@ func NewCheckRuntimeResourceStep(os storage.Operations, k8sClient client.Client,
 
 type checkRuntimeResource struct {
 	k8sClient                  client.Client
-	kimConfig                  kim.Config
+	kimConfig                  broker.KimConfig
 	operationManager           *process.OperationManager
 	runtimeResourceStepTimeout time.Duration
 }

@@ -94,7 +94,6 @@ func (b *UpdateEndpoint) Update(_ context.Context, instanceID string, details do
 	logger.Infof("Updating instanceID: %s", instanceID)
 	logger.Infof("Updating asyncAllowed: %v", asyncAllowed)
 	logger.Infof("Parameters: '%s'", string(details.RawParameters))
-
 	instance, err := b.instanceStorage.GetByID(instanceID)
 	if err != nil && dberr.IsNotFound(err) {
 		logger.Errorf("unable to get instance: %s", err.Error())
@@ -104,7 +103,6 @@ func (b *UpdateEndpoint) Update(_ context.Context, instanceID string, details do
 		return domain.UpdateServiceSpec{}, fmt.Errorf("unable to get instance")
 	}
 	logger.Infof("Plan ID/Name: %s/%s", instance.ServicePlanID, PlanNamesMapping[instance.ServicePlanID])
-
 	var ersContext internal.ERSContext
 	err = json.Unmarshal(details.RawContext, &ersContext)
 	if err != nil {
@@ -120,9 +118,19 @@ func (b *UpdateEndpoint) Update(_ context.Context, instanceID string, details do
 	}
 
 	if instance.IsExpired() {
+		if b.config.AllowUpdateExpiredInstanceWithContext {
+			// if only ersContext is pass, we respond with success for already expired instance, serviceID is exception as it is required by OSB API
+			onlyContextSet := (details.RawContext != nil && len(details.RawContext) > 0) &&
+				((details.RawParameters == nil || len(details.RawParameters) == 0) &&
+					details.PlanID == "" &&
+					details.MaintenanceInfo == nil &&
+					details.PreviousValues == domain.PreviousValues{})
+			if onlyContextSet {
+				return domain.UpdateServiceSpec{}, nil
+			}
+		}
 		return domain.UpdateServiceSpec{}, apiresponses.NewFailureResponse(fmt.Errorf("cannot update an expired instance"), http.StatusBadRequest, "")
 	}
-
 	lastProvisioningOperation, err := b.operationStorage.GetProvisioningOperationByInstanceID(instance.InstanceID)
 	if err != nil {
 		logger.Errorf("cannot fetch provisioning lastProvisioningOperation for instance with ID: %s : %s", instance.InstanceID, err.Error())
@@ -163,7 +171,6 @@ func (b *UpdateEndpoint) Update(_ context.Context, instanceID string, details do
 			return b.processUpdateParameters(instance, details, lastProvisioningOperation, asyncAllowed, ersContext, logger)
 		}
 	}
-
 	return domain.UpdateServiceSpec{
 		IsAsync:       false,
 		DashboardURL:  dashboardURL,

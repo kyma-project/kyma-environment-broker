@@ -631,6 +631,7 @@ func (s *ProvisioningSuite) CreateProvisioning(options RuntimeOptions) string {
 			OIDC:                  options.ProvideOIDC(),
 			RuntimeAdministrators: options.ProvideRuntimeAdmins(),
 		},
+		PlatformRegion: options.PlatformRegion,
 	}
 
 	shootName := gardener.CreateShootName()
@@ -946,6 +947,7 @@ func fixConfig() *Config {
 				Enabled:       true,
 				BindablePlans: []string{"aws", "azure"},
 			},
+			AllowUpdateExpiredInstanceWithContext: true,
 		},
 		TrialRegionMappingFilePath: "testdata/trial-regions.yaml",
 

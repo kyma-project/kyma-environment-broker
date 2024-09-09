@@ -1,8 +1,17 @@
 package runtime
 
 import (
+	"context"
 	"fmt"
 	"net/http"
+
+	"k8s.io/apimachinery/pkg/api/errors"
+
+	"github.com/kyma-project/kyma-environment-broker/internal/process/steps"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+	"k8s.io/apimachinery/pkg/runtime/schema"
+
+	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	"github.com/sirupsen/logrus"
 
@@ -32,12 +41,16 @@ type Handler struct {
 	converter           Converter
 	defaultMaxPage      int
 	provisionerClient   provisioner.Client
+	k8sClient           client.Client
+	kimConfig           broker.KimConfig
 	logger              logrus.FieldLogger
 }
 
 func NewHandler(instanceDb storage.Instances, operationDb storage.Operations, runtimeStatesDb storage.RuntimeStates,
 	instancesArchived storage.InstancesArchived, defaultMaxPage int, defaultRequestRegion string,
-	provisionerClient provisioner.Client, logger logrus.FieldLogger) *Handler {
+	provisionerClient provisioner.Client,
+	k8sClient client.Client, kimConfig broker.KimConfig,
+	logger logrus.FieldLogger) *Handler {
 	return &Handler{
 		instancesDb:         instanceDb,
 		operationsDb:        operationDb,
@@ -46,6 +59,8 @@ func NewHandler(instanceDb storage.Instances, operationDb storage.Operations, ru
 		defaultMaxPage:      defaultMaxPage,
 		provisionerClient:   provisionerClient,
 		instancesArchivedDb: instancesArchived,
+		kimConfig:           kimConfig,
+		k8sClient:           k8sClient,
 		logger:              logger.WithField("service", "RuntimeHandler"),
 	}
 }
@@ -100,6 +115,7 @@ func (h *Handler) listInstances(filter dbmodel.InstanceFilter) ([]pkg.RuntimeDTO
 			}
 			dto.Status = pkg.RuntimeStatus{
 				CreatedAt: i.ProvisioningStartedAt,
+				DeletedAt: &i.LastDeprovisioningFinishedAt,
 				Provisioning: &pkg.Operation{
 					CreatedAt: i.ProvisioningStartedAt,
 					UpdatedAt: i.ProvisioningFinishedAt,
@@ -176,6 +192,7 @@ func (h *Handler) getRuntimes(w http.ResponseWriter, req *http.Request) {
 	kymaConfig := getBoolParam(pkg.KymaConfigParam, req)
 	clusterConfig := getBoolParam(pkg.ClusterConfigParam, req)
 	gardenerConfig := getBoolParam(pkg.GardenerConfigParam, req)
+	runtimeResourceConfig := getBoolParam(pkg.RuntimeConfigParam, req)
 
 	instances, count, totalCount, err := h.listInstances(filter)
 	if err != nil {
@@ -204,11 +221,32 @@ func (h *Handler) getRuntimes(w http.ResponseWriter, req *http.Request) {
 			httputil.WriteErrorResponse(w, http.StatusInternalServerError, err)
 			return
 		}
-		err = h.setRuntimeOptionalAttributes(&dto, kymaConfig, clusterConfig, gardenerConfig)
+
+		instanceDrivenByKimOnly := h.kimConfig.IsDrivenByKimOnly(dto.ServicePlanName)
+
+		err = h.setRuntimeOptionalAttributes(&dto, kymaConfig, clusterConfig, gardenerConfig, instanceDrivenByKimOnly)
 		if err != nil {
 			h.logger.Warn(fmt.Sprintf("unable to set optional attributes: %s", err.Error()))
 			httputil.WriteErrorResponse(w, http.StatusInternalServerError, err)
 			return
+		}
+
+		if runtimeResourceConfig && dto.RuntimeID != "" {
+			runtimeResourceName, runtimeNamespaceName := h.getRuntimeNamesFromLastOperation(dto)
+
+			runtimeResourceObject := &unstructured.Unstructured{}
+			runtimeResourceObject.SetGroupVersionKind(RuntimeResourceGVK())
+			err = h.k8sClient.Get(context.Background(), client.ObjectKey{
+				Namespace: runtimeNamespaceName,
+				Name:      runtimeResourceName,
+			}, runtimeResourceObject)
+			switch {
+			case errors.IsNotFound(err):
+				h.logger.Info(fmt.Sprintf("Runtime resource %s/%s: is not found: %s", dto.InstanceID, dto.RuntimeID, err.Error()))
+			case err != nil:
+				h.logger.Warn(fmt.Sprintf("unable to get Runtime resource %s/%s: %s", dto.InstanceID, dto.RuntimeID, err.Error()))
+			}
+			dto.RuntimeConfig = &runtimeResourceObject.Object
 		}
 
 		toReturn = append(toReturn, dto)
@@ -220,6 +258,20 @@ func (h *Handler) getRuntimes(w http.ResponseWriter, req *http.Request) {
 		TotalCount: totalCount,
 	}
 	httputil.WriteResponse(w, http.StatusOK, runtimePage)
+}
+
+func (h *Handler) getRuntimeNamesFromLastOperation(dto pkg.RuntimeDTO) (string, string) {
+	// TODO get rid of additional DB query - we have this info fetched from DB but it is tedious to pass it through
+	op, err := h.operationsDb.GetLastOperation(dto.InstanceID)
+	runtimeResourceName := steps.KymaRuntimeResourceNameFromID(dto.RuntimeID)
+	runtimeNamespaceName := "kcp-system"
+	if err != nil || op.RuntimeResourceName != "" {
+		runtimeResourceName = op.RuntimeResourceName
+	}
+	if err != nil || op.KymaResourceNamespace != "" {
+		runtimeNamespaceName = op.KymaResourceNamespace
+	}
+	return runtimeResourceName, runtimeNamespaceName
 }
 
 func (h *Handler) takeLastNonDryRunClusterOperations(oprs []internal.UpgradeClusterOperation) ([]internal.UpgradeClusterOperation, int) {
@@ -352,7 +404,8 @@ func (h *Handler) setRuntimeLastOperation(dto *pkg.RuntimeDTO) error {
 	return nil
 }
 
-func (h *Handler) setRuntimeOptionalAttributes(dto *pkg.RuntimeDTO, kymaConfig, clusterConfig, gardenerConfig bool) error {
+func (h *Handler) setRuntimeOptionalAttributes(dto *pkg.RuntimeDTO, kymaConfig, clusterConfig, gardenerConfig, drivenByKimOnly bool) error {
+
 	if kymaConfig || clusterConfig {
 		states, err := h.runtimeStatesDb.ListByRuntimeID(dto.RuntimeID)
 		if err != nil && !dberr.IsNotFound(err) {
@@ -373,12 +426,14 @@ func (h *Handler) setRuntimeOptionalAttributes(dto *pkg.RuntimeDTO, kymaConfig, 
 		}
 	}
 
-	if gardenerConfig {
+	if gardenerConfig && dto.RuntimeID != "" && !drivenByKimOnly {
 		runtimeStatus, err := h.provisionerClient.RuntimeStatus(dto.GlobalAccountID, dto.RuntimeID)
 		if err != nil {
-			return fmt.Errorf("while fetching runtime status from provisioner for instance %s: %w", dto.InstanceID, err)
+			dto.Status.GardenerConfig = nil
+			h.logger.Warnf("unable to fetch runtime status for instance %s: %s", dto.InstanceID, err.Error())
+		} else {
+			dto.Status.GardenerConfig = runtimeStatus.RuntimeConfiguration.ClusterConfig
 		}
-		dto.Status.GardenerConfig = runtimeStatus.RuntimeConfiguration.ClusterConfig
 	}
 
 	return nil
@@ -464,4 +519,12 @@ func getBoolParam(param string, req *http.Request) bool {
 	}
 
 	return requested
+}
+
+func RuntimeResourceGVK() schema.GroupVersionKind {
+	return schema.GroupVersionKind{
+		Group:   "infrastructuremanager.kyma-project.io",
+		Version: "v1",
+		Kind:    "Runtime",
+	}
 }

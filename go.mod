@@ -10,9 +10,9 @@ require (
 	github.com/Azure/go-autorest/autorest/adal v0.9.24
 	github.com/Masterminds/sprig v2.22.0+incompatible
 	github.com/dlmiddlecote/sqlstats v1.0.2
-	github.com/docker/docker v27.1.2+incompatible
+	github.com/docker/docker v27.2.0+incompatible
 	github.com/docker/go-connections v0.5.0
-	github.com/gardener/gardener v1.101.1
+	github.com/gardener/gardener v1.102.0
 	github.com/go-co-op/gocron v1.37.0
 	github.com/gocraft/dbr v0.0.0-20190714181702-8114670a83bd
 	github.com/google/uuid v1.6.0
@@ -28,12 +28,12 @@ require (
 	github.com/matryer/is v1.4.1
 	github.com/pivotal-cf/brokerapi/v8 v8.2.3
 	github.com/pkg/errors v0.9.1
-	github.com/prometheus/client_golang v1.20.0
+	github.com/prometheus/client_golang v1.20.2
 	github.com/sebdah/goldie/v2 v2.5.5
 	github.com/sirupsen/logrus v1.9.3
 	github.com/stretchr/testify v1.9.0
 	github.com/vrischmann/envconfig v1.3.0
-	golang.org/x/exp v0.0.0-20240719175910-8a7402abbf56
+	golang.org/x/exp v0.0.0-20240808152545-0cdaa3abc0fa
 	golang.org/x/oauth2 v0.22.0
 	golang.org/x/time v0.6.0
 	gopkg.in/yaml.v2 v2.4.0

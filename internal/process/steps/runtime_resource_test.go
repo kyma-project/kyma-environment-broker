@@ -4,8 +4,9 @@ import (
 	"testing"
 	"time"
 
+	"github.com/kyma-project/kyma-environment-broker/internal/broker"
+
 	imv1 "github.com/kyma-project/infrastructure-manager/api/v1"
-	"github.com/kyma-project/kyma-environment-broker/internal/kim"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"github.com/pivotal-cf/brokerapi/v8/domain"
@@ -103,8 +104,8 @@ func TestCheckRuntimeResource_RunWhenNotReady_Retry(t *testing.T) {
 	assert.NotZero(t, backoff)
 }
 
-func fixKimConfigForAzure() kim.Config {
-	return kim.Config{
+func fixKimConfigForAzure() broker.KimConfig {
+	return broker.KimConfig{
 		Enabled:  true,
 		Plans:    []string{"azure"},
 		ViewOnly: false,

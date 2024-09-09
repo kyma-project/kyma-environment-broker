@@ -22,7 +22,7 @@ For technical details of KEB, go to the `contributor` directory:
 * [Authorization](./contributor/01-10-authorization.md)
 * [Check API Using Swagger](./contributor/01-20-swagger.md)
 * [Kyma Environment Broker Configuration](./contributor/02-30-keb-configuration.md)
-* [Kyma Environment Broker Configuration for a Given Kyma Version and Plan](./contributor/02-40-broker-configuration-for-given-version-and-plan.md)
+* [Kyma Environment Broker Configuration for a Given Plan](./contributor/02-40-broker-configuration-for-given-plan.md)
 * [Orchestration](./contributor/02-50-orchestration.md)
 * [Check Orchestration Status](./contributor/02-70-orchestration-status.md)
 * [Hyperscaler Account Pool](./contributor/03-10-hyperscaler-account-pool.md)

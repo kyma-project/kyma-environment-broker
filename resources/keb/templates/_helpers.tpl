@@ -64,6 +64,3 @@ Utility function for joining Avs tag list into string.
 {{- $_ := set $local "first" false -}}
 {{- end -}}
 {{- end -}}
-
-
-

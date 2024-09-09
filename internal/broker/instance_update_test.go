@@ -610,7 +610,7 @@ func TestUpdateEndpoint_UpdateWithEnabledDashboard(t *testing.T) {
 		return &gqlschema.ClusterConfigInput{}, nil
 	}
 	kcBuilder := &kcMock.KcBuilder{}
-	svc := NewUpdate(Config{}, st.Instances(), st.RuntimeStates(), st.Operations(), handler, true, false, q, PlansConfig{},
+	svc := NewUpdate(Config{AllowUpdateExpiredInstanceWithContext: true}, st.Instances(), st.RuntimeStates(), st.Operations(), handler, true, false, q, PlansConfig{},
 		planDefaults, logrus.New(), dashboardConfig, kcBuilder, &OneForAllConvergedCloudRegionsProvider{})
 
 	// when
@@ -632,4 +632,80 @@ func TestUpdateEndpoint_UpdateWithEnabledDashboard(t *testing.T) {
 	assert.Regexp(t, `^https:\/\/dashboard\.example\.com\/\?kubeconfigID=`, inst.DashboardURL)
 	// check if the API response is correct
 	assert.Regexp(t, `^https:\/\/dashboard\.example\.com\/\?kubeconfigID=`, response.DashboardURL)
+}
+
+func TestUpdateEndpoint_OnlyContextChanged(t *testing.T) {
+	instance := internal.Instance{
+		InstanceID:    instanceID,
+		ServicePlanID: TrialPlanID,
+		Parameters: internal.ProvisioningParameters{
+			PlanID:     TrialPlanID,
+			ErsContext: internal.ERSContext{},
+		},
+	}
+	expireTime := instance.CreatedAt.Add(time.Hour * 24 * 14)
+	instance.ExpiredAt = &expireTime
+
+	st := storage.NewMemoryStorage()
+	err := st.Instances().Insert(instance)
+	require.NoError(t, err)
+	err = st.Operations().InsertProvisioningOperation(fixProvisioningOperation("01"))
+	require.NoError(t, err)
+	kcBuilder := &kcMock.KcBuilder{}
+	handler := &handler{}
+	q := &automock.Queue{}
+	q.On("Add", mock.AnythingOfType("string"))
+	planDefaults := func(planID string, platformProvider internal.CloudProvider, provider *internal.CloudProvider) (*gqlschema.ClusterConfigInput, error) {
+		return &gqlschema.ClusterConfigInput{}, nil
+	}
+	svc := NewUpdate(Config{AllowUpdateExpiredInstanceWithContext: true}, st.Instances(), st.RuntimeStates(), st.Operations(), handler, true, false, q, PlansConfig{},
+		planDefaults, logrus.New(), dashboardConfig, kcBuilder, &OneForAllConvergedCloudRegionsProvider{})
+
+	_, err = svc.Update(context.Background(), instanceID, domain.UpdateDetails{
+		ServiceID:       "",
+		PlanID:          "",
+		RawParameters:   nil,
+		PreviousValues:  domain.PreviousValues{},
+		RawContext:      json.RawMessage("{\"globalaccount_id\":\"globalaccount_id_1\", \"active\":true}"),
+		MaintenanceInfo: nil,
+	}, true)
+	require.NoError(t, err)
+}
+
+func TestUpdateEndpoint_ContextAndParamsChanged(t *testing.T) {
+	instance := internal.Instance{
+		InstanceID:    instanceID,
+		ServicePlanID: TrialPlanID,
+		Parameters: internal.ProvisioningParameters{
+			PlanID:     TrialPlanID,
+			ErsContext: internal.ERSContext{},
+		},
+	}
+	expireTime := instance.CreatedAt.Add(time.Hour * 24 * 14)
+	instance.ExpiredAt = &expireTime
+
+	st := storage.NewMemoryStorage()
+	err := st.Instances().Insert(instance)
+	require.NoError(t, err)
+	err = st.Operations().InsertProvisioningOperation(fixProvisioningOperation("01"))
+	require.NoError(t, err)
+	kcBuilder := &kcMock.KcBuilder{}
+	handler := &handler{}
+	q := &automock.Queue{}
+	q.On("Add", mock.AnythingOfType("string"))
+	planDefaults := func(planID string, platformProvider internal.CloudProvider, provider *internal.CloudProvider) (*gqlschema.ClusterConfigInput, error) {
+		return &gqlschema.ClusterConfigInput{}, nil
+	}
+	svc := NewUpdate(Config{AllowUpdateExpiredInstanceWithContext: true}, st.Instances(), st.RuntimeStates(), st.Operations(), handler, true, false, q, PlansConfig{},
+		planDefaults, logrus.New(), dashboardConfig, kcBuilder, &OneForAllConvergedCloudRegionsProvider{})
+
+	_, err = svc.Update(context.Background(), instanceID, domain.UpdateDetails{
+		ServiceID:       "",
+		PlanID:          TrialPlanID,
+		PreviousValues:  domain.PreviousValues{},
+		RawContext:      json.RawMessage("{\"globalaccount_id\":\"globalaccount_id_1\", \"active\":true}"),
+		RawParameters:   json.RawMessage(`{"autoScalerMin": 4, "autoScalerMax": 3}`),
+		MaintenanceInfo: nil,
+	}, true)
+	require.Error(t, err)
 }

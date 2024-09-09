@@ -3,8 +3,6 @@ package provisioning
 import (
 	"time"
 
-	"github.com/kyma-project/kyma-environment-broker/internal/kim"
-
 	"github.com/kyma-project/kyma-environment-broker/internal/broker"
 	"github.com/sirupsen/logrus"
 
@@ -18,12 +16,12 @@ type GetKubeconfigStep struct {
 	provisionerClient   provisioner.Client
 	operationManager    *process.OperationManager
 	provisioningTimeout time.Duration
-	kimConfig           kim.Config
+	kimConfig           broker.KimConfig
 }
 
 func NewGetKubeconfigStep(os storage.Operations,
 	provisionerClient provisioner.Client,
-	kimConfig kim.Config) *GetKubeconfigStep {
+	kimConfig broker.KimConfig) *GetKubeconfigStep {
 	return &GetKubeconfigStep{
 		provisionerClient: provisionerClient,
 		operationManager:  process.NewOperationManager(os),

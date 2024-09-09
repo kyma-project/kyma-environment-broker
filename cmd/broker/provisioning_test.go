@@ -1027,7 +1027,21 @@ func TestProvisioning_ClusterParameters(t *testing.T) {
 			expectedMachineType:                 provider.DefaultGCPMachineType,
 			expectedProvider:                    "gcp",
 			expectedSharedSubscription:          false,
-			expectedSubscriptionHyperscalerType: hyperscaler.GCP(),
+			expectedSubscriptionHyperscalerType: hyperscaler.GCP("cf-us30"),
+		},
+		"Production GCP KSA": {
+			planID:         broker.GCPPlanID,
+			platformRegion: "cf-sa30",
+			region:         "me-central2",
+			multiZone:      false,
+
+			expectedZonesCount:                  ptr.Integer(1),
+			expectedMinimalNumberOfNodes:        3,
+			expectedMaximumNumberOfNodes:        20,
+			expectedMachineType:                 provider.DefaultGCPMachineType,
+			expectedProvider:                    "gcp",
+			expectedSharedSubscription:          false,
+			expectedSubscriptionHyperscalerType: hyperscaler.GCP("cf-sa30"),
 		},
 		"Production Multi-AZ GCP": {
 			planID:                       broker.GCPPlanID,
@@ -1041,7 +1055,7 @@ func TestProvisioning_ClusterParameters(t *testing.T) {
 			expectedMachineType:                 provider.DefaultGCPMachineType,
 			expectedProvider:                    "gcp",
 			expectedSharedSubscription:          false,
-			expectedSubscriptionHyperscalerType: hyperscaler.GCP(),
+			expectedSubscriptionHyperscalerType: hyperscaler.GCP("cf-us30"),
 		},
 	} {
 		t.Run(tn, func(t *testing.T) {

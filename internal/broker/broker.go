@@ -10,7 +10,6 @@ import (
 
 	"github.com/kyma-project/control-plane/components/provisioner/pkg/gqlschema"
 	"github.com/kyma-project/kyma-environment-broker/internal"
-	kim "github.com/kyma-project/kyma-environment-broker/internal/kim"
 )
 
 const (
@@ -48,9 +47,10 @@ type Config struct {
 	SubaccountsIdsToShowTrialExpirationInfo string        `envconfig:"default="`
 	TrialDocsURL                            string        `envconfig:"default="`
 	EnableShootAndSeedSameRegion            bool          `envconfig:"default=false"`
+	AllowUpdateExpiredInstanceWithContext   bool          `envconfig:"default=false"`
 
 	Binding                BindingConfig
-	KimConfig              kim.Config
+	KimConfig              KimConfig
 	UseSmallerMachineTypes bool `envconfig:"default=false"`
 
 	DisableSapConvergedCloud bool `envconfig:"default=false"`

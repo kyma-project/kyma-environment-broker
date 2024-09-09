@@ -7,10 +7,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/kyma-project/kyma-environment-broker/internal/broker"
-	"github.com/kyma-project/kyma-environment-broker/internal/kim"
-
 	"github.com/kyma-project/kyma-environment-broker/internal"
+	"github.com/kyma-project/kyma-environment-broker/internal/broker"
 	"github.com/kyma-project/kyma-environment-broker/internal/process"
 	"github.com/kyma-project/kyma-environment-broker/internal/storage"
 	"github.com/sirupsen/logrus"
@@ -23,7 +21,7 @@ import (
 
 const GardenerClusterStateReady = "Ready"
 
-func NewSyncGardenerCluster(os storage.Operations, k8sClient client.Client, kimConfig kim.Config) *syncGardenerCluster {
+func NewSyncGardenerCluster(os storage.Operations, k8sClient client.Client, kimConfig broker.KimConfig) *syncGardenerCluster {
 	return &syncGardenerCluster{
 		k8sClient:        k8sClient,
 		kimConfig:        kimConfig,
@@ -31,7 +29,7 @@ func NewSyncGardenerCluster(os storage.Operations, k8sClient client.Client, kimC
 	}
 }
 
-func NewCheckGardenerCluster(os storage.Operations, k8sClient client.Client, kimConfig kim.Config, gardenerClusterStepTimeout time.Duration) *checkGardenerCluster {
+func NewCheckGardenerCluster(os storage.Operations, k8sClient client.Client, kimConfig broker.KimConfig, gardenerClusterStepTimeout time.Duration) *checkGardenerCluster {
 	return &checkGardenerCluster{
 		k8sClient:                  k8sClient,
 		kimConfig:                  kimConfig,
@@ -43,7 +41,7 @@ func NewCheckGardenerCluster(os storage.Operations, k8sClient client.Client, kim
 type checkGardenerCluster struct {
 	k8sClient                  client.Client
 	operationManager           *process.OperationManager
-	kimConfig                  kim.Config
+	kimConfig                  broker.KimConfig
 	gardenerClusterStepTimeout time.Duration
 }
 
@@ -96,7 +94,7 @@ func (s *checkGardenerCluster) GetGardenerCluster(name string, namespace string)
 
 type syncGardenerCluster struct {
 	k8sClient        client.Client
-	kimConfig        kim.Config
+	kimConfig        broker.KimConfig
 	operationManager *process.OperationManager
 }
 

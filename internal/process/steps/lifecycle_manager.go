@@ -56,11 +56,15 @@ func KymaName(operation internal.Operation) string {
 }
 
 func KymaRuntimeResourceName(operation internal.Operation) string {
-	return strings.ToLower(operation.RuntimeID)
+	return KymaRuntimeResourceNameFromID(operation.RuntimeID)
 }
 
 func KymaNameFromInstance(instance *internal.Instance) string {
-	return strings.ToLower(instance.RuntimeID)
+	return KymaRuntimeResourceNameFromID(instance.RuntimeID)
+}
+
+func KymaRuntimeResourceNameFromID(ID string) string {
+	return strings.ToLower(ID)
 }
 
 func CreateKymaNameFromOperation(operation internal.Operation) string {

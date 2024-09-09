@@ -4,8 +4,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/kyma-project/kyma-environment-broker/internal/kim"
-
 	"github.com/kyma-project/control-plane/components/provisioner/pkg/gqlschema"
 	"github.com/kyma-project/kyma-environment-broker/internal"
 	"github.com/kyma-project/kyma-environment-broker/internal/broker"
@@ -45,7 +43,7 @@ func TestCheckRuntimeStep_RunProvisioningSucceeded(t *testing.T) {
 				RuntimeID: ptr.String(statusRuntimeID),
 			})
 
-			kimConfig := kim.Config{
+			kimConfig := broker.KimConfig{
 				Enabled: false,
 			}
 
@@ -92,7 +90,7 @@ func TestCheckRuntimeStep_RunProvisioningSucceeded_WithKimOnly(t *testing.T) {
 				RuntimeID: ptr.String(statusRuntimeID),
 			})
 
-			kimConfig := kim.Config{
+			kimConfig := broker.KimConfig{
 				Enabled:      true,
 				Plans:        []string{"gcp"},
 				KimOnlyPlans: []string{"gcp"},

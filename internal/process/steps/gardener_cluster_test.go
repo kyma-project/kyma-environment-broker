@@ -5,7 +5,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/kyma-project/kyma-environment-broker/internal/kim"
+	"github.com/kyma-project/kyma-environment-broker/internal/broker"
 
 	"github.com/pivotal-cf/brokerapi/v8/domain"
 
@@ -53,7 +53,7 @@ spec:
 func TestSyncGardenerCluster_RunWithExistingResource(t *testing.T) {
 	// given
 	os := storage.NewMemoryStorage().Operations()
-	kimConfig := kim.Config{
+	kimConfig := broker.KimConfig{
 		Enabled:  true,
 		Plans:    []string{"azure"},
 		ViewOnly: true,
@@ -107,7 +107,7 @@ spec:
 func TestSyncGardenerCluster_Run(t *testing.T) {
 	// given
 	os := storage.NewMemoryStorage().Operations()
-	kimConfig := kim.Config{
+	kimConfig := broker.KimConfig{
 		Enabled:  true,
 		Plans:    []string{"azure"},
 		ViewOnly: true,
@@ -149,13 +149,12 @@ spec:
 func TestCheckGardenerCluster_RunWhenReady(t *testing.T) {
 	// given
 	os := storage.NewMemoryStorage().Operations()
-	kimConfig := kim.Config{
+	kimConfig := broker.KimConfig{
 		Enabled:  true,
 		Plans:    []string{"azure"},
 		ViewOnly: true,
 		DryRun:   false,
 	}
-
 	existingGC := NewGardenerCluster("runtime-id-000", "kcp-system")
 	err := existingGC.SetState("Ready")
 	assert.NoError(t, err)
@@ -179,7 +178,7 @@ func TestCheckGardenerCluster_RunWhenReady(t *testing.T) {
 func TestCheckGardenerCluster_RunWhenNotReady_OperationFail(t *testing.T) {
 	// given
 	os := storage.NewMemoryStorage().Operations()
-	kimConfig := kim.Config{
+	kimConfig := broker.KimConfig{
 		Enabled:  true,
 		Plans:    []string{"azure"},
 		ViewOnly: true,
@@ -212,7 +211,7 @@ func TestCheckGardenerCluster_RunWhenNotReady_OperationFail(t *testing.T) {
 func TestCheckGardenerCluster_IgnoreWhenNotReadyButKimDrives(t *testing.T) {
 	// given
 	os := storage.NewMemoryStorage().Operations()
-	kimConfig := kim.Config{
+	kimConfig := broker.KimConfig{
 		Enabled:  true,
 		Plans:    []string{"azure"},
 		ViewOnly: false,
@@ -244,7 +243,7 @@ func TestCheckGardenerCluster_IgnoreWhenNotReadyButKimDrives(t *testing.T) {
 func TestCheckGardenerCluster_IgnoreWhenNotReadyButKimOnlyPlanUsed(t *testing.T) {
 	// given
 	os := storage.NewMemoryStorage().Operations()
-	kimConfig := kim.Config{
+	kimConfig := broker.KimConfig{
 		Enabled:      true,
 		Plans:        []string{"azure"},
 		KimOnlyPlans: []string{"azure"},
@@ -277,7 +276,7 @@ func TestCheckGardenerCluster_IgnoreWhenNotReadyButKimOnlyPlanUsed(t *testing.T)
 func TestCheckGardenerCluster_RunWhenNotReady_Retry(t *testing.T) {
 	// given
 	os := storage.NewMemoryStorage().Operations()
-	kimConfig := kim.Config{
+	kimConfig := broker.KimConfig{
 		Enabled:  true,
 		Plans:    []string{"azure"},
 		ViewOnly: true,

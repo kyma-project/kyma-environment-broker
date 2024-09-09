@@ -36,20 +36,21 @@ func TestClient_ListRuntimes(t *testing.T) {
 		//given
 		called := 0
 		params := ListParameters{
-			Page:             1,
-			PageSize:         50,
-			OperationDetail:  LastOperation,
-			KymaConfig:       true,
-			ClusterConfig:    true,
-			GardenerConfig:   true,
-			GlobalAccountIDs: []string{"sa1", "ga2"},
-			SubAccountIDs:    []string{"sa1", "sa2"},
-			InstanceIDs:      []string{"id1", "id2"},
-			RuntimeIDs:       []string{"rid1", "rid2"},
-			Regions:          []string{"region1", "region2"},
-			Shoots:           []string{"shoot1", "shoot2"},
-			Plans:            []string{"plan1", "plan2"},
-			States:           []State{StateFailed, StateSucceeded},
+			Page:                  1,
+			PageSize:              50,
+			OperationDetail:       LastOperation,
+			KymaConfig:            true,
+			ClusterConfig:         true,
+			GardenerConfig:        true,
+			RuntimeResourceConfig: true,
+			GlobalAccountIDs:      []string{"sa1", "ga2"},
+			SubAccountIDs:         []string{"sa1", "sa2"},
+			InstanceIDs:           []string{"id1", "id2"},
+			RuntimeIDs:            []string{"rid1", "rid2"},
+			Regions:               []string{"region1", "region2"},
+			Shoots:                []string{"shoot1", "shoot2"},
+			Plans:                 []string{"plan1", "plan2"},
+			States:                []State{StateFailed, StateSucceeded},
 		}
 		ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			called++
@@ -63,6 +64,7 @@ func TestClient_ListRuntimes(t *testing.T) {
 			assert.ElementsMatch(t, []string{"true"}, query[KymaConfigParam])
 			assert.ElementsMatch(t, []string{"true"}, query[ClusterConfigParam])
 			assert.ElementsMatch(t, []string{"true"}, query[GardenerConfigParam])
+			assert.ElementsMatch(t, []string{"true"}, query[RuntimeConfigParam])
 			assert.ElementsMatch(t, params.GlobalAccountIDs, query[GlobalAccountIDParam])
 			assert.ElementsMatch(t, params.SubAccountIDs, query[SubAccountIDParam])
 			assert.ElementsMatch(t, params.InstanceIDs, query[InstanceIDParam])

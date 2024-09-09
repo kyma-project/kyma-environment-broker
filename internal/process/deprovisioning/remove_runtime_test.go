@@ -4,6 +4,8 @@ import (
 	"testing"
 	"time"
 
+	"github.com/kyma-project/kyma-environment-broker/internal/broker"
+
 	"github.com/kyma-project/kyma-environment-broker/internal/fixture"
 	provisionerAutomock "github.com/kyma-project/kyma-environment-broker/internal/provisioner/automock"
 	"github.com/kyma-project/kyma-environment-broker/internal/storage"
@@ -17,6 +19,9 @@ func TestRemoveRuntimeStep_Run(t *testing.T) {
 		log := logrus.New()
 		memoryStorage := storage.NewMemoryStorage()
 
+		kimConfig := broker.KimConfig{
+			Enabled: false,
+		}
 		operation := fixture.FixDeprovisioningOperation(fixOperationID, fixInstanceID)
 		operation.GlobalAccountID = fixGlobalAccountID
 		operation.RuntimeID = fixRuntimeID
@@ -29,7 +34,7 @@ func TestRemoveRuntimeStep_Run(t *testing.T) {
 		provisionerClient := &provisionerAutomock.Client{}
 		provisionerClient.On("DeprovisionRuntime", fixGlobalAccountID, fixRuntimeID).Return(fixProvisionerOperationID, nil)
 
-		step := NewRemoveRuntimeStep(memoryStorage.Operations(), memoryStorage.Instances(), provisionerClient, time.Minute)
+		step := NewRemoveRuntimeStep(memoryStorage.Operations(), memoryStorage.Instances(), provisionerClient, time.Minute, kimConfig)
 
 		// when
 		entry := log.WithFields(logrus.Fields{"step": "TEST"})

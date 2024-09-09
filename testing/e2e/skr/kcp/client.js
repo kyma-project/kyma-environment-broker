@@ -105,6 +105,9 @@ class KCPWrapper {
     if (query.gardenerConfig) {
       args = args.concat('--gardener-config');
     }
+    if (query.runtimeConfig) {
+      args = args.concat('--runtime-config');
+    }
     const result = await this.exec(args);
     return JSON.parse(result);
   }
@@ -209,9 +212,9 @@ class KCPWrapper {
 
   async getRuntimeGardenerConfig(shoot) {
     await this.login();
-    const gardenerConfig = await this.runtimes({shoot: shoot, gardenerConfig: true});
+    const runtimeObjects = await this.runtimes({shoot: shoot, gardenerConfig: true, runtimeConfig: true});
 
-    return JSON.stringify(gardenerConfig, null, '\t');
+    return JSON.stringify(runtimeObjects, null, '\t');
   }
 
   async getOrchestrationsOperations(orchestrationID) {
