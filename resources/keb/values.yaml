@@ -336,6 +336,7 @@ sapConvergedCloudPlanRegionMappings: |-
   cf-eu21-staging:
     - eu-de-3
     - eu-de-4
+disableSapConvergedCloud: false
 
 disableProcessOperationsInProgress: "false"
 enablePlans: "azure,gcp,azure_lite,trial"

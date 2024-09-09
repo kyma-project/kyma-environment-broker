@@ -76,6 +76,10 @@ type ProvisionEndpoint struct {
 	log logrus.FieldLogger
 }
 
+const (
+	CONVERGED_CLOUD_BLOCKED_MSG = "This offer is currently not available."
+)
+
 func NewProvision(cfg Config,
 	gardenerConfig gardener.Config,
 	operationsStorage storage.Operations,
@@ -142,6 +146,11 @@ func (b *ProvisionEndpoint) Provision(ctx context.Context, instanceID string, de
 	if err != nil {
 		errMsg := fmt.Sprintf("[instanceID: %s] %s", instanceID, err)
 		return domain.ProvisionedServiceSpec{}, apiresponses.NewFailureResponse(err, http.StatusBadRequest, errMsg)
+	}
+
+	if b.config.DisableSapConvergedCloud && details.PlanID == SapConvergedCloudPlanID {
+		err := fmt.Errorf(CONVERGED_CLOUD_BLOCKED_MSG)
+		return domain.ProvisionedServiceSpec{}, apiresponses.NewFailureResponse(err, http.StatusBadRequest, CONVERGED_CLOUD_BLOCKED_MSG)
 	}
 
 	provisioningParameters := internal.ProvisioningParameters{
