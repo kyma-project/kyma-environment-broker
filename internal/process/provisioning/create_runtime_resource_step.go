@@ -164,9 +164,9 @@ func (s *CreateRuntimeResourceStep) createLabelsForRuntime(operation internal.Op
 		"operator.kyma-project.io/kyma-name": kymaName,
 	}
 	if s.kimConfig.ViewOnly && !s.kimConfig.IsDrivenByKimOnly(broker.PlanNamesMapping[operation.ProvisioningParameters.PlanID]) {
-		labels["kyma-project.io/controlled-by-provisioner"] = "true"
+		labels[imv1.LabelControlledByProvisioner] = "true"
 	} else {
-		labels["kyma-project.io/controlled-by-provisioner"] = "false"
+		labels[imv1.LabelControlledByProvisioner] = "false"
 	}
 	return labels
 }
