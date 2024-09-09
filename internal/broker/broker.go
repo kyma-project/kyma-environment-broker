@@ -52,6 +52,8 @@ type Config struct {
 	Binding                BindingConfig
 	KimConfig              kim.Config
 	UseSmallerMachineTypes bool `envconfig:"default=false"`
+
+	DisableSapConvergedCloud bool `envconfig:"default=false"`
 }
 
 type ServicesConfig map[string]Service
