@@ -8,6 +8,8 @@ import (
 	"strings"
 	"time"
 
+	"github.com/kyma-project/kyma-environment-broker/internal/assuredworkloads"
+
 	"github.com/kyma-incubator/compass/components/director/pkg/jsonschema"
 	"github.com/kyma-project/kyma-environment-broker/internal/euaccess"
 	"github.com/kyma-project/kyma-environment-broker/internal/kubeconfig"
@@ -386,7 +388,7 @@ func (b *UpdateEndpoint) extractActiveValue(id string, provisioning internal.Pro
 func (b *UpdateEndpoint) getJsonSchemaValidator(provider internal.CloudProvider, planID string, platformRegion string) (JSONSchemaValidator, error) {
 	// shootAndSeedSameRegion is never enabled for update
 	b.log.Printf("region is: %s", platformRegion)
-	plans := Plans(b.plansConfig, provider, b.config.IncludeAdditionalParamsInSchema, euaccess.IsEURestrictedAccess(platformRegion), b.config.UseSmallerMachineTypes, false, b.convergedCloudRegionsProvider.GetRegions(platformRegion))
+	plans := Plans(b.plansConfig, provider, b.config.IncludeAdditionalParamsInSchema, euaccess.IsEURestrictedAccess(platformRegion), b.config.UseSmallerMachineTypes, false, b.convergedCloudRegionsProvider.GetRegions(platformRegion), assuredworkloads.IsKSA(platformRegion))
 	plan := plans[planID]
 	schema := string(Marshal(plan.Schemas.Instance.Update.Parameters))
 
