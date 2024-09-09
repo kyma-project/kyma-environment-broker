@@ -75,7 +75,7 @@ func TestGcpTrialInput_ApplyParametersWithRegion(t *testing.T) {
 	})
 
 	// when
-	t.Run("use default region for not defined mapping", func(t *testing.T) {
+	t.Run("use default region for Assured Workloads", func(t *testing.T) {
 		// given
 		input := svc.Defaults()
 
