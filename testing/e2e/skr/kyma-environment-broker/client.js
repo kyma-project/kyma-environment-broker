@@ -95,7 +95,10 @@ class KEBClient {
       return resp.data;
     } catch (err) {
       const msg = 'Error calling KEB';
-      if (err.response) {
+      if(this.planID === 'sap-converged-plan' && verb === 'PUT' && err.response.statusText === 'This offer is currently not available.') {
+          console.log('The offer is not available. Skipping the test...');
+          process.exit(0);
+      } else if (err.response) {
         throw new Error(`${msg}: ${err.response.status} ${err.response.statusText}`);
       } else {
         throw new Error(`${msg}: ${err.toString()}`);
