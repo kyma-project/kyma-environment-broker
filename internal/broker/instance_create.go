@@ -76,7 +76,7 @@ type ProvisionEndpoint struct {
 	log logrus.FieldLogger
 }
 
-const (	
+const (
 	CONVERGED_CLOUD_BLOCKED_MSG = "This offer is currently not available."
 )
 

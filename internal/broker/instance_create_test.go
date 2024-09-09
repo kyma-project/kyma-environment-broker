@@ -1612,7 +1612,6 @@ func TestSapConvergedCloudBlocking(t *testing.T) {
 				EnablePlans:              []string{broker.SapConvergedCloudPlanName},
 				URL:                      brokerURL,
 				DisableSapConvergedCloud: false,
-
 			},
 			gardener.Config{Project: "test", ShootDomain: "example.com", DNSProviders: fixDNSProviders()},
 			memoryStorage.Operations(),
@@ -1730,7 +1729,7 @@ func TestSapConvergedCloudBlocking(t *testing.T) {
 			&broker.OneForAllConvergedCloudRegionsProvider{},
 		)
 
-		oidcParams := `"clientID":"client-id","issuerURL":"https://test.local","signingAlgs":["RS256"]`		
+		oidcParams := `"clientID":"client-id","issuerURL":"https://test.local","signingAlgs":["RS256"]`
 		err := fmt.Errorf(broker.CONVERGED_CLOUD_BLOCKED_MSG)
 		errMsg := broker.CONVERGED_CLOUD_BLOCKED_MSG
 		expectedErr := apiresponses.NewFailureResponse(err, http.StatusBadRequest, errMsg)
