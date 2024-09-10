@@ -54,7 +54,7 @@ func (s *checkRuntimeResource) Run(operation internal.Operation, log logrus.Fiel
 		if time.Since(operation.UpdatedAt) > s.runtimeResourceStepTimeout {
 			description := fmt.Sprintf("Waiting for Runtime resource (%s/%s) ready state timeout.", operation.KymaResourceNamespace, operation.RuntimeID)
 			log.Error(description)
-			log.Infof("Runtime resource status: %v", runtime.Status)
+			log.Infof("Runtime resource status: %v, timeout: %v", runtime.Status, s.runtimeResourceStepTimeout)
 			return s.operationManager.OperationFailed(operation, description, nil, log)
 		}
 		return operation, 500 * time.Millisecond, nil

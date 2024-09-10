@@ -932,6 +932,7 @@ func fixConfig() *Config {
 			MachineImage:               "gardenlinux",
 			MachineImageVersion:        "12345.6",
 			MultiZoneCluster:           true,
+			RuntimeResourceStepTimeout: time.Minute,
 		},
 		Database: storage.Config{
 			SecretKey: dbSecretKey,
@@ -948,6 +949,11 @@ func fixConfig() *Config {
 				BindablePlans: []string{"aws", "azure"},
 			},
 			AllowUpdateExpiredInstanceWithContext: true,
+			KimConfig: broker.KimConfig{
+				Enabled:      true,
+				Plans:        []string{"preview"},
+				KimOnlyPlans: []string{"preview"},
+			},
 		},
 		TrialRegionMappingFilePath: "testdata/trial-regions.yaml",
 

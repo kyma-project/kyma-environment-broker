@@ -360,6 +360,7 @@ func (b *UpdateEndpoint) processContext(instance *internal.Instance, details dom
 			}
 			instance.GlobalAccountID = ersContext.GlobalAccountID
 		}
+
 	}
 
 	newInstance, err := b.instanceStorage.Update(*instance)
