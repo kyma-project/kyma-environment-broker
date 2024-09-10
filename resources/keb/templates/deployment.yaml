@@ -407,6 +407,8 @@ spec:
               value: "{{ .Values.kim.plans }}"
             - name: APP_BROKER_KIM_CONFIG_KIM_ONLY_PLANS
               value: "{{ .Values.kim.kimOnlyPlans }}"
+            - name: APP_BROKER_DISABLE_SAP_CONVERGED_CLOUD
+              value: "{{ .Values.disableSapConvergedCloud }}"
             - name: APP_BROKER_ALLOW_UPDATE_EXPIRED_INSTANCE_WITH_CONTEXT
               value: "{{ .Values.allowUpdateExpiredInstanceWithContext }}"
           ports:

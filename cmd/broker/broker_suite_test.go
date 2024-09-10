@@ -567,6 +567,37 @@ func (s *BrokerSuiteTest) FinishDeprovisioningOperationByProvisionerForGivenOpId
 	s.finishOperationByOpIDByProvisioner(gqlschema.OperationTypeDeprovision, gqlschema.OperationStateSucceeded, op.ID)
 }
 
+func (s *BrokerSuiteTest) waitForRuntimeAndMakeItReady(id string) {
+	var op *internal.Operation
+	err := s.poller.Invoke(func() (done bool, err error) {
+		op, err = s.db.Operations().GetOperationByID(id)
+		if err != nil {
+			return false, nil
+		}
+		if op.RuntimeID != "" {
+			return true, nil
+		}
+		return false, nil
+	})
+	assert.NoError(s.t, err, "timeout waiting for the operation with runtimeID")
+
+	runtimeID := op.RuntimeID
+
+	var runtime imv1.Runtime
+	err = s.poller.Invoke(func() (done bool, err error) {
+		e := s.k8sKcp.Get(context.Background(), client.ObjectKey{Namespace: "kyma-system", Name: runtimeID}, &runtime)
+		if e == nil {
+			return true, nil
+		}
+		return false, nil
+	})
+	assert.NoError(s.t, err, "timeout waiting for the runtime to be created")
+
+	runtime.Status.State = imv1.RuntimeStateReady
+	err = s.k8sKcp.Update(context.Background(), &runtime)
+	assert.NoError(s.t, err)
+}
+
 func (s *BrokerSuiteTest) finishOperationByProvisioner(operationType gqlschema.OperationType, state gqlschema.OperationState, runtimeID string) {
 	err := s.poller.Invoke(func() (bool, error) {
 		status := s.provisionerClient.FindInProgressOperationByRuntimeIDAndType(runtimeID, operationType)
@@ -1132,6 +1163,14 @@ func (s *BrokerSuiteTest) AssertMetrics2(expected int, operation internal.Operat
 	a := s.metrics.OperationResult.Metrics().With(metricsv2.GetLabels(operation))
 	assert.NotNil(s.t, a)
 	assert.Equal(s.t, float64(expected), testutil.ToFloat64(a))
+}
+
+func (s *BrokerSuiteTest) GetRuntimeResourceByInstanceID(iid string) imv1.Runtime {
+	var runtimes imv1.RuntimeList
+	err := s.k8sKcp.List(context.Background(), &runtimes, client.MatchingLabels{"kyma-project.io/instance-id": iid})
+	require.NoError(s.t, err)
+	require.Equal(s.t, 1, len(runtimes.Items))
+	return runtimes.Items[0]
 }
 
 func assertResourcesAreRemoved(t *testing.T, gvk schema.GroupVersionKind, k8sClient client.Client) {

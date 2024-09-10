@@ -115,6 +115,14 @@ func (s *CreateRuntimeResourceStep) Run(operation internal.Operation, log logrus
 			}
 		}
 		log.Infof("Runtime resource %s/%s creation process finished successfully", operation.KymaResourceNamespace, runtimeResourceName)
+
+		newOp, backoff, _ := s.operationManager.UpdateOperation(operation, func(op *internal.Operation) {
+			op.Region = runtimeCR.Spec.Shoot.Region
+		}, log)
+		if backoff > 0 {
+			return newOp, backoff, nil
+		}
+		operation = newOp
 	}
 	return operation, 0, nil
 }
@@ -164,9 +172,9 @@ func (s *CreateRuntimeResourceStep) createLabelsForRuntime(operation internal.Op
 		"operator.kyma-project.io/kyma-name": kymaName,
 	}
 	if s.kimConfig.ViewOnly && !s.kimConfig.IsDrivenByKimOnly(broker.PlanNamesMapping[operation.ProvisioningParameters.PlanID]) {
-		labels["kyma-project.io/controlled-by-provisioner"] = "true"
+		labels[imv1.LabelControlledByProvisioner] = "true"
 	} else {
-		labels["kyma-project.io/controlled-by-provisioner"] = "false"
+		labels[imv1.LabelControlledByProvisioner] = "false"
 	}
 	return labels
 }
