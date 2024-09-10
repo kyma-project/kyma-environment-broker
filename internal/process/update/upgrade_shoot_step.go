@@ -1,8 +1,12 @@
 package update
 
 import (
+	"context"
 	"fmt"
 	"time"
+
+	imv1 "github.com/kyma-project/infrastructure-manager/api/v1"
+	"k8s.io/apimachinery/pkg/api/errors"
 
 	"github.com/kyma-project/control-plane/components/provisioner/pkg/gqlschema"
 	"github.com/kyma-project/kyma-environment-broker/internal"
@@ -10,6 +14,7 @@ import (
 	"github.com/kyma-project/kyma-environment-broker/internal/provisioner"
 	"github.com/kyma-project/kyma-environment-broker/internal/storage"
 	"github.com/sirupsen/logrus"
+	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
 const DryRunPrefix = "dry_run-"
@@ -19,17 +24,21 @@ type UpgradeShootStep struct {
 	operationManager    *process.OperationManager
 	provisionerClient   provisioner.Client
 	runtimeStateStorage storage.RuntimeStates
+	k8sClient           client.Client
 }
+
+// TODO: this step is not necessary when the Provisioner is switched to KIM
 
 func NewUpgradeShootStep(
 	os storage.Operations,
 	runtimeStorage storage.RuntimeStates,
-	cli provisioner.Client) *UpgradeShootStep {
+	cli provisioner.Client, k8sClient client.Client) *UpgradeShootStep {
 
 	return &UpgradeShootStep{
 		operationManager:    process.NewOperationManager(os),
 		provisionerClient:   cli,
 		runtimeStateStorage: runtimeStorage,
+		k8sClient:           k8sClient,
 	}
 }
 
@@ -43,6 +52,19 @@ func (s *UpgradeShootStep) Run(operation internal.Operation, log logrus.FieldLog
 		return operation, 0, nil
 	}
 	log = log.WithField("runtimeID", operation.RuntimeID)
+
+	// decide if the step should be skipped because the runtime is not controlled by the provisioner
+	var runtime imv1.Runtime
+	err := s.k8sClient.Get(context.Background(), client.ObjectKey{Name: operation.GetRuntimeResourceName(),
+		Namespace: operation.GetRuntimeResourceNamespace()}, &runtime)
+	if err != nil && !errors.IsNotFound(err) {
+		log.Warnf("Unable to read runtime: %s", err)
+		return s.operationManager.RetryOperation(operation, err.Error(), err, 5*time.Second, 1*time.Minute, log)
+	}
+	if !runtime.IsControlledByProvisioner() {
+		log.Infof("Skipping provisioning because the runtime is not controlled by the provisioner")
+		return operation, 0, nil
+	}
 
 	latestRuntimeStateWithOIDC, err := s.runtimeStateStorage.GetLatestWithOIDCConfigByRuntimeID(operation.RuntimeID)
 	if err != nil {

@@ -10,6 +10,8 @@ import (
 	"net/netip"
 	"strings"
 
+	"github.com/kyma-project/kyma-environment-broker/internal/assuredworkloads"
+
 	"github.com/kyma-project/kyma-environment-broker/internal/kubeconfig"
 	"github.com/kyma-project/kyma-environment-broker/internal/whitelist"
 
@@ -75,6 +77,10 @@ type ProvisionEndpoint struct {
 
 	log logrus.FieldLogger
 }
+
+const (
+	CONVERGED_CLOUD_BLOCKED_MSG = "This offer is currently not available."
+)
 
 func NewProvision(cfg Config,
 	gardenerConfig gardener.Config,
@@ -142,6 +148,11 @@ func (b *ProvisionEndpoint) Provision(ctx context.Context, instanceID string, de
 	if err != nil {
 		errMsg := fmt.Sprintf("[instanceID: %s] %s", instanceID, err)
 		return domain.ProvisionedServiceSpec{}, apiresponses.NewFailureResponse(err, http.StatusBadRequest, errMsg)
+	}
+
+	if b.config.DisableSapConvergedCloud && details.PlanID == SapConvergedCloudPlanID {
+		err := fmt.Errorf(CONVERGED_CLOUD_BLOCKED_MSG)
+		return domain.ProvisionedServiceSpec{}, apiresponses.NewFailureResponse(err, http.StatusBadRequest, CONVERGED_CLOUD_BLOCKED_MSG)
 	}
 
 	provisioningParameters := internal.ProvisioningParameters{
@@ -457,7 +468,7 @@ func (b *ProvisionEndpoint) determineLicenceType(planId string) *string {
 
 func (b *ProvisionEndpoint) validator(details *domain.ProvisionDetails, provider internal.CloudProvider, ctx context.Context) (JSONSchemaValidator, error) {
 	platformRegion, _ := middleware.RegionFromContext(ctx)
-	plans := Plans(b.plansConfig, provider, b.config.IncludeAdditionalParamsInSchema, euaccess.IsEURestrictedAccess(platformRegion), b.config.UseSmallerMachineTypes, b.config.EnableShootAndSeedSameRegion, b.convergedCloudRegionsProvider.GetRegions(platformRegion))
+	plans := Plans(b.plansConfig, provider, b.config.IncludeAdditionalParamsInSchema, euaccess.IsEURestrictedAccess(platformRegion), b.config.UseSmallerMachineTypes, b.config.EnableShootAndSeedSameRegion, b.convergedCloudRegionsProvider.GetRegions(platformRegion), assuredworkloads.IsKSA(platformRegion))
 	plan := plans[details.PlanID]
 	schema := string(Marshal(plan.Schemas.Instance.Create.Parameters))
 

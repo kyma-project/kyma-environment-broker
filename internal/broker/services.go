@@ -4,6 +4,8 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/kyma-project/kyma-environment-broker/internal/assuredworkloads"
+
 	"github.com/kyma-project/kyma-environment-broker/internal/euaccess"
 
 	"github.com/kyma-project/kyma-environment-broker/internal/middleware"
@@ -63,6 +65,7 @@ func (b *ServicesEndpoint) Services(ctx context.Context) ([]domain.Service, erro
 		b.cfg.UseSmallerMachineTypes,
 		b.cfg.EnableShootAndSeedSameRegion,
 		b.convergedCloudRegionsProvider.GetRegions(platformRegion),
+		assuredworkloads.IsKSA(platformRegion),
 	) {
 
 		// filter out not enabled plans

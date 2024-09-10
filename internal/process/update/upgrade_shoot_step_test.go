@@ -3,6 +3,11 @@ package update
 import (
 	"testing"
 
+	imv1 "github.com/kyma-project/infrastructure-manager/api/v1"
+	"k8s.io/client-go/kubernetes/scheme"
+
+	"sigs.k8s.io/controller-runtime/pkg/client/fake"
+
 	"github.com/kyma-project/control-plane/components/provisioner/pkg/gqlschema"
 	"github.com/kyma-project/kyma-environment-broker/internal"
 	"github.com/kyma-project/kyma-environment-broker/internal/broker"
@@ -19,11 +24,14 @@ import (
 
 func TestUpgradeShootStep_Run(t *testing.T) {
 	// given
+	err := imv1.AddToScheme(scheme.Scheme)
+	assert.NoError(t, err)
 	memoryStorage := storage.NewMemoryStorage()
 	os := memoryStorage.Operations()
 	rs := memoryStorage.RuntimeStates()
 	cli := provisioner.NewFakeClient()
-	step := NewUpgradeShootStep(os, rs, cli)
+	kcpClient := fake.NewClientBuilder().Build()
+	step := NewUpgradeShootStep(os, rs, cli, kcpClient)
 	operation := fixture.FixUpdatingOperation("op-id", "inst-id")
 	operation.RuntimeID = "runtime-id"
 	operation.ProvisionerOperationID = ""
@@ -37,7 +45,7 @@ func TestUpgradeShootStep_Run(t *testing.T) {
 		UsernamePrefix: "-",
 	}
 	operation.InputCreator = fixInputCreator(t)
-	err := os.InsertOperation(operation.Operation)
+	err = os.InsertOperation(operation.Operation)
 	require.NoError(t, err)
 	runtimeState := fixture.FixRuntimeState("runtime-id", "runtime-id", "provisioning-op-1")
 	runtimeState.ClusterConfig.OidcConfig = &gqlschema.OIDCConfigInput{
@@ -75,6 +83,53 @@ func TestUpgradeShootStep_Run(t *testing.T) {
 		Administrators: []string{"test-user-id"},
 	}, req)
 	assert.NotEmpty(t, newOperation.ProvisionerOperationID)
+}
+
+func TestUpgradeShootStep_RunRuntimeControlledByKIM(t *testing.T) {
+	// given
+	err := imv1.AddToScheme(scheme.Scheme)
+	assert.NoError(t, err)
+	memoryStorage := storage.NewMemoryStorage()
+	os := memoryStorage.Operations()
+	rs := memoryStorage.RuntimeStates()
+	cli := provisioner.NewFakeClient()
+	kcpClient := fake.NewClientBuilder().WithRuntimeObjects(fixRuntimeResource("runtime-id", false)).Build()
+	step := NewUpgradeShootStep(os, rs, cli, kcpClient)
+	operation := fixture.FixUpdatingOperation("op-id", "inst-id")
+	operation.RuntimeID = "runtime-id"
+	operation.KymaResourceNamespace = "kcp-system"
+	operation.ProvisionerOperationID = ""
+	operation.ProvisioningParameters.ErsContext.UserID = "test-user-id"
+	operation.ProvisioningParameters.Parameters.OIDC = &internal.OIDCConfigDTO{
+		ClientID:       "client-id",
+		GroupsClaim:    "groups",
+		IssuerURL:      "https://issuer.url",
+		SigningAlgs:    []string{"RSA256"},
+		UsernameClaim:  "sub",
+		UsernamePrefix: "-",
+	}
+	operation.InputCreator = fixInputCreator(t)
+	err = os.InsertOperation(operation.Operation)
+	require.NoError(t, err)
+	runtimeState := fixture.FixRuntimeState("runtime-id", "runtime-id", "provisioning-op-1")
+	runtimeState.ClusterConfig.OidcConfig = &gqlschema.OIDCConfigInput{
+		ClientID:       "clientID",
+		GroupsClaim:    "groupsClaim",
+		IssuerURL:      "https://issuer.url",
+		SigningAlgs:    []string{"PS512"},
+		UsernameClaim:  "usernameClaim",
+		UsernamePrefix: "usernamePrefix",
+	}
+	err = rs.Insert(runtimeState)
+	require.NoError(t, err)
+
+	// when
+	newOperation, d, err := step.Run(operation.Operation, logrus.New())
+
+	// then
+	require.NoError(t, err)
+	assert.Zero(t, d)
+	assert.Empty(t, newOperation.ProvisionerOperationID)
 }
 
 func fixInputCreator(t *testing.T) internal.ProvisionerInputCreator {
