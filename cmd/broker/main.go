@@ -337,7 +337,7 @@ func main() {
 	fatalOnError(err, logs)
 
 	// create kubeconfig builder
-	kcBuilder := kubeconfig.NewBuilder(provisionerClient, skrK8sClientProvider)
+	kcBuilder := kubeconfig.NewBuilder(provisionerClient, cli, skrK8sClientProvider)
 
 	// create server
 	router := mux.NewRouter()
