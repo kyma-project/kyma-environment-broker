@@ -18,7 +18,7 @@ func NewUpdateProcessingQueue(ctx context.Context, manager *process.StagedManage
 	provisionerClient provisioner.Client, publisher event.Publisher,
 	cfg Config, k8sClientProvider K8sClientProvider, cli client.Client, logs logrus.FieldLogger) *process.Queue {
 
-	manager.DefineStages([]string{"cluster", "btp-operator", "btp-operator-check", "check"})
+	manager.DefineStages([]string{"cluster", "btp-operator", "btp-operator-check", "check", "runtime_resource"})
 	updateSteps := []struct {
 		disabled  bool
 		stage     string
@@ -31,12 +31,17 @@ func NewUpdateProcessingQueue(ctx context.Context, manager *process.StagedManage
 		},
 		{
 			stage:     "cluster",
-			step:      update.NewUpgradeShootStep(db.Operations(), db.RuntimeStates(), provisionerClient),
+			step:      update.NewUpgradeShootStep(db.Operations(), db.RuntimeStates(), provisionerClient, cli),
 			condition: update.SkipForOwnClusterPlan,
 		},
 		{
 			stage:     "check",
 			step:      update.NewCheckStep(db.Operations(), provisionerClient, 40*time.Minute),
+			condition: update.SkipForOwnClusterPlan,
+		},
+		{
+			stage:     "runtime_resource",
+			step:      update.NewUpdateRuntimeStep(db.Operations(), cli),
 			condition: update.SkipForOwnClusterPlan,
 		},
 	}

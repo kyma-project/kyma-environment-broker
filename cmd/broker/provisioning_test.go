@@ -351,7 +351,7 @@ func TestProvisioning_Preview(t *testing.T) {
 		}`)
 	opID := suite.DecodeOperationID(resp)
 
-	suite.processProvisioningByOperationID(opID)
+	suite.waitForRuntimeAndMakeItReady(opID)
 
 	suite.WaitForOperationState(opID, domain.Succeeded)
 

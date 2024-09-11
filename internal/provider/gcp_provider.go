@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"math/rand"
 
+	"github.com/kyma-project/kyma-environment-broker/internal/assuredworkloads"
+
 	"github.com/kyma-project/kyma-environment-broker/internal/networking"
 
 	"github.com/kyma-project/kyma-environment-broker/internal/ptr"
@@ -15,10 +17,11 @@ import (
 )
 
 const (
-	DefaultGCPRegion           = "europe-west3"
-	DefaultGCPMachineType      = "n2-standard-2"
-	DefaultGCPTrialMachineType = "n2-standard-4"
-	DefaultGCPMultiZoneCount   = 3
+	DefaultGCPRegion                 = "europe-west3"
+	DefaultGCPAssuredWorkloadsRegion = "me-central2"
+	DefaultGCPMachineType            = "n2-standard-2"
+	DefaultGCPTrialMachineType       = "n2-standard-4"
+	DefaultGCPMultiZoneCount         = 3
 )
 
 var europeGcp = "europe-west3"
@@ -87,6 +90,13 @@ func (p *GcpInput) ApplyParameters(input *gqlschema.ClusterConfigInput, pp inter
 			zonesCount = DefaultGCPMultiZoneCount
 		}
 		updateSlice(&input.GardenerConfig.ProviderSpecificConfig.GcpConfig.Zones, ZonesForGCPRegion(*pp.Parameters.Region, zonesCount))
+	case assuredworkloads.IsKSA(pp.PlatformRegion):
+		input.GardenerConfig.Region = DefaultGCPAssuredWorkloadsRegion
+		zonesCount := 1
+		if p.MultiZone {
+			zonesCount = DefaultGCPMultiZoneCount
+		}
+		updateSlice(&input.GardenerConfig.ProviderSpecificConfig.GcpConfig.Zones, ZonesForGCPRegion(DefaultGCPAssuredWorkloadsRegion, zonesCount))
 	}
 }
 
@@ -135,6 +145,10 @@ func (p *GcpTrialInput) ApplyParameters(input *gqlschema.ClusterConfigInput, pp 
 	// if the user provides a region - use this one
 	if params.Region != nil && *params.Region != "" {
 		region = *toGCPSpecific[*params.Region]
+	}
+
+	if assuredworkloads.IsKSA(pp.PlatformRegion) {
+		region = DefaultGCPAssuredWorkloadsRegion
 	}
 
 	// region is not empty - it means override the default one

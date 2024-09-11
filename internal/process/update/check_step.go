@@ -45,15 +45,15 @@ func (s *CheckStep) Run(operation internal.Operation, log logrus.FieldLogger) (i
 }
 
 func (s *CheckStep) checkRuntimeStatus(operation internal.Operation, log logrus.FieldLogger) (internal.Operation, time.Duration, error) {
+	if operation.ProvisionerOperationID == "" {
+		// it can happen, when only KIM is involved in the process
+		log.Infof("Provisioner operation ID is empty, skipping")
+		return operation, 0, nil
+	}
+
 	if time.Since(operation.UpdatedAt) > s.provisioningTimeout {
 		log.Infof("operation has reached the time limit: updated operation time: %s", operation.UpdatedAt)
 		return s.operationManager.OperationFailed(operation, fmt.Sprintf("operation has reached the time limit: %s", s.provisioningTimeout), nil, log)
-	}
-
-	if operation.ProvisionerOperationID == "" {
-		msg := "Operation does not contain Provisioner Operation ID"
-		log.Error(msg)
-		return s.operationManager.OperationFailed(operation, msg, nil, log)
 	}
 
 	status, err := s.provisionerClient.RuntimeOperationStatus(operation.ProvisioningParameters.ErsContext.GlobalAccountID, operation.ProvisionerOperationID)

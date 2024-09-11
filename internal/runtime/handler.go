@@ -243,10 +243,14 @@ func (h *Handler) getRuntimes(w http.ResponseWriter, req *http.Request) {
 			switch {
 			case errors.IsNotFound(err):
 				h.logger.Info(fmt.Sprintf("Runtime resource %s/%s: is not found: %s", dto.InstanceID, dto.RuntimeID, err.Error()))
+				dto.RuntimeConfig = nil
 			case err != nil:
 				h.logger.Warn(fmt.Sprintf("unable to get Runtime resource %s/%s: %s", dto.InstanceID, dto.RuntimeID, err.Error()))
+				dto.RuntimeConfig = nil
+			default:
+				_ = unstructured.SetNestedField(runtimeResourceObject.Object, nil, "metadata", "managedFields")
+				dto.RuntimeConfig = &runtimeResourceObject.Object
 			}
-			dto.RuntimeConfig = &runtimeResourceObject.Object
 		}
 
 		toReturn = append(toReturn, dto)
