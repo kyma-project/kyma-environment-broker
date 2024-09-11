@@ -1128,6 +1128,7 @@ func TestRuntimeHandler_WithKimOnlyDrivenInstances(t *testing.T) {
 		assert.Equal(t, testID, out.Data[0].InstanceID)
 		require.Nil(t, out.Data[0].Status.GardenerConfig)
 		require.Nil(t, out.Data[0].RuntimeConfig)
+
 	})
 
 	t.Run("test runtime_config optional attribute", func(t *testing.T) {
@@ -1194,6 +1195,9 @@ func TestRuntimeHandler_WithKimOnlyDrivenInstances(t *testing.T) {
 		assert.True(t, ok)
 		assert.NoError(t, err)
 		assert.Equal(t, "worker-0", worker)
+
+		managedFields, ok, err := unstructured.NestedSlice(*out.Data[0].RuntimeConfig, "metadata", "managedFields")
+		assert.Nil(t, managedFields)
 	})
 
 }
@@ -1244,6 +1248,10 @@ func fixRuntimeResource(t *testing.T, name, namespace string) *RuntimeResourceTy
 	err := unstructured.SetNestedField(worker, "worker-0", "name")
 	assert.NoError(t, err)
 	err = unstructured.SetNestedField(worker, "m6i.large", "machine", "type")
+	assert.NoError(t, err)
+
+	managedField := map[string]interface{}{}
+	err = unstructured.SetNestedSlice(runtimeResource.Object, []interface{}{managedField}, "metadata", "managedFields")
 	assert.NoError(t, err)
 
 	err = unstructured.SetNestedSlice(runtimeResource.Object, []interface{}{worker}, "spec", "shoot", "provider", "workers")
