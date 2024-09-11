@@ -241,7 +241,8 @@ broker:
     enabled: false
   enableShootAndSeedSameRegion: "false"
   allowUpdateExpiredInstanceWithContext: "false"
-
+  subAccountMovementEnabled: "false"
+  
 binding:
   enabled: false
 
