@@ -5,12 +5,12 @@ on:
     branches:
       - main
     paths:
-      - ".github/workflows/build-e2e-tests-image.yaml"
+      - ".github/workflows/build-e2e-provisioning-test-image.yaml"
       - "testing/e2e/provisioning/**"
   pull_request_target:
     types: [ opened, edited, synchronize, reopened, ready_for_review ]
     paths:
-      - ".github/workflows/build-e2e-tests-image.yaml"
+      - ".github/workflows/build-e2e-provisioning-test-image.yaml"
       - "testing/e2e/provisioning/**"
 
 permissions:
