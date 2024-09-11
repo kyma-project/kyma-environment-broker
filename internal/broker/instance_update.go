@@ -367,6 +367,8 @@ func (b *UpdateEndpoint) processContext(instance *internal.Instance, details dom
 	if err != nil {
 		logger.Errorf("processing context updated failed: %s", err.Error())
 		return nil, changed, fmt.Errorf("unable to process the update")
+	} else {
+		logger.Infof("subAccount movement done for instance: %s", instance.InstanceID)
 	}
 
 	return newInstance, changed, nil
