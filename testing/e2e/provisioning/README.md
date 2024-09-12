@@ -15,7 +15,7 @@ To run this test, you must have the following Secrets inside your cluster:
 
 ## Details
 
-### End-to-end provisioning test
+### End-to-End Provisioning Test
 The provisioning end-to-end test contains a broker client implementation which mocks Registry. It is an external dependency that calls the broker in the regular scenario. The test is divided into two phases:
 
 1. Provisioning
