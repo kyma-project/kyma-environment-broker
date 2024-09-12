@@ -50,7 +50,7 @@ The cleanup logic is executed at the end of the end-to-end test or when the prov
 
 Between the end-to-end test phases, you can run your own test directly on the provisioned runtime. To do so, use a kubeconfig stored in a Secret created in the provisioning phase.
 
-### End-to-end suspension test
+### End-to-End Suspension Test
 
 The end-to-end suspension test uses the **Trial** Service Plan ID to provision Kyma Runtime. Then, the test suspends and unsuspends the Kyma Runtime and ensures that it is still accessible after the process. The suspension test works similarly to the provisioning test, but it has two additional steps in the `Provisioning` phase:
 
