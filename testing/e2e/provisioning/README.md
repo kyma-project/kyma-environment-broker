@@ -26,7 +26,7 @@ During the provisioning phase, the test performs the following steps:
 
     b. Creates a ConfigMap with **instanceId** specified.
 
-    c. Fetches the DashboardURL from KEB. To do so, the Runtime must be successfully provisioned and registered in the Director.
+    c. Fetches the DashboardURL from KEB. To do so, the runtime must be successfully provisioned and registered in the Director.
 
     d. Updates the ConfigMap with **dashboardUrl** field.
 
