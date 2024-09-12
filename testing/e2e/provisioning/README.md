@@ -22,7 +22,7 @@ The provisioning end-to-end test contains a broker-client implementation that mo
 
 During the provisioning phase, the test performs the following steps:
 
-    a. Sends a call to KEB to provision a Runtime. KEB creates an operation and sends a request to the Runtime Provisioner. The test waits until the operation is successful. It takes about 30 minutes on GCP and a few hours on Azure. You can configure the timeout using the environment variable.
+    1. Sends a call to KEB to provision a Kyma runtime. KEB creates the operation and sends a request to Runtime Provisioner. The test waits until the operation is successful. It takes about 30 minutes on Google Cloud and a few hours on Azure. You can configure the timeout using the environment variable.
 
     b. Creates a ConfigMap with **instanceId** specified.
 
