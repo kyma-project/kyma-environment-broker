@@ -22,31 +22,31 @@ The provisioning end-to-end test contains a broker-client implementation that mo
 
 During the provisioning phase, the test performs the following steps:
 
-    1. Sends a call to KEB to provision a Kyma runtime. KEB creates the operation and sends a request to Runtime Provisioner. The test waits until the operation is successful. It takes about 30 minutes on Google Cloud and a few hours on Azure. You can configure the timeout using the environment variable.
+1. Sends a call to KEB to provision a Kyma runtime. KEB creates the operation and sends a request to Runtime Provisioner. The test waits until the operation is successful. It takes about 30 minutes on Google Cloud and a few hours on Azure. You can configure the timeout using the environment variable.
 
-    b. Creates a ConfigMap with **instanceId** specified.
+2. Creates a ConfigMap with **instanceId** specified.
 
-    c. Fetches the DashboardURL from KEB. To do so, the runtime must be successfully provisioned and registered in the Director.
+3. Fetches the DashboardURL from KEB. To do so, the runtime must be successfully provisioned and registered in the Director.
 
-    d. Updates the ConfigMap with **dashboardUrl** field.
+4. Updates the ConfigMap with **dashboardUrl** field.
 
-    e. Creates a Secret with a kubeconfig of the provisioned runtime.
+5. Creates a Secret with a kubeconfig of the provisioned runtime.
 
-    f. Ensures that the DashboardURL redirects to the UUA login page, which means that Kyma runtime is accessible.
+6. Ensures that the DashboardURL redirects to the UUA login page, which means that Kyma runtime is accessible.
 
 #### Cleanup
 
 The cleanup logic is executed at the end of the end-to-end test or when the provisioning phase fails. During the cleanup, the test performs the following steps:
 
-    a. Gets **instanceId** from the ConfigMap.
+1. Gets **instanceId** from the ConfigMap.
 
-    b. Removes the test's Secret and ConfigMap.
+2. Removes the test's Secret and ConfigMap.
 
-    c. Fetches the runtime kubeconfig from Runtime Provisioner and uses it to clean up resources that block the cluster from being deprovisioned.
+3. Fetches the runtime kubeconfig from Runtime Provisioner and uses it to clean up resources that block the cluster from being deprovisioned.
 
-    d. Sends a request to deprovision the runtime to KEB. The request is passed to Runtime Provisioner, which deprovisions the runtime.
+4. Sends a request to deprovision the runtime to KEB. The request is passed to Runtime Provisioner, which deprovisions the runtime.
 
-    e. Waits until the deprovisioning is successful. It takes about 20 minutes to complete. You can configure the timeout using the environment variable.
+5. Waits until the deprovisioning is successful. It takes about 20 minutes to complete. You can configure the timeout using the environment variable.
 
 Between the end-to-end test phases, you can run your own test directly on the provisioned runtime. To do so, use a kubeconfig stored in a Secret created in the provisioning phase.
 
