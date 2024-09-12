@@ -81,7 +81,7 @@ You can configure the test execution by using the following environment variable
 | **APP_RUNTIME_UUA_INSTANCE_NAME** | Specifies the name of the UUA instance which is provisioned in the Runtime. | `uua-issuer` |
 | **APP_RUNTIME_UUA_INSTANCE_NAMESPACE** | Specifies the namespace of the UUA instance which is provisioned in the runtime. | `kyma-system` |
 | **APP_TENANT_ID** | Specifies TenantID which is used in the test. | None |
-| **APP_DUMMY_TEST** | Specifies if test should success without any action. | `false` |
+| **APP_DUMMY_TEST** | Specifies if the test should succeed without any action. | `false` |
 | **APP_CLEANUP_PHASE** | Specifies if the test executes the cleanup phase. | `false` |
 | **APP_CONFIG_NAME** | Specifies the name of the ConfigMap and Secret created in the test. | `e2e-runtime-config` |
 | **APP_DEPLOY_NAMESPACE** | Specifies the Namespace of the ConfigMap and Secret created in the test. | `kcp-system` |
