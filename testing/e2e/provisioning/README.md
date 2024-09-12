@@ -1,4 +1,4 @@
-# Kyma Runtime end-to-end provisioning test
+# Kyma Runtime End-to-End Provisioning Test
 
 ## Overview
 
