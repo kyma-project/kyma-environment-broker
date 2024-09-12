@@ -44,7 +44,7 @@ The cleanup logic is executed at the end of the end-to-end test or when the prov
 
     c. Fetches the runtime kubeconfig from Runtime Provisioner and uses it to clean up resources that block the cluster from being deprovisioned.
 
-    d. Sends a request to deprovision the Runtime to KEB. The request is passed to the Runtime Provisioner which deprovisions the Runtime.
+    d. Sends a request to deprovision the runtime to KEB. The request is passed to Runtime Provisioner, which deprovisions the runtime.
 
     e. Waits until the deprovisioning is successful. It takes about 20 minutes to complete. You can configure the timeout using the environment variable.
 
