@@ -61,7 +61,7 @@ After successfully provisioning a Kyma runtime, the test sends an update call to
 
 #### Unsuspension
 
-   After Runtime suspension succeeded, the test sends an update call to KEB to unsuspend the Runtime. Then, the test waits until the operation is successful. After that, the test ensures that the DashboardURL redirects to the UUA login page once again, which means that the Kyma Runtime is accessible.
+   After the runtime suspension succeeds, the test sends an update call to KEB to unsuspend it. Then, the test waits until the operation is successful. After that, the test ensures that the DashboardURL redirects to the UUA login page once again, which means the Kyma runtime is accessible.
 
 After successful suspension and unsuspension of the Kyma Runtime, the test proceeds to the `Cleanup` phase.
 
