@@ -79,7 +79,7 @@ You can configure the test execution by using the following environment variable
 | **APP_BROKER_AUTH_PASSWORD** | Specifies the password for the basic authentication in KEB. | None |
 | **APP_RUNTIME_PROVISIONER_URL** | Specifies the Provisioner URL. | None |
 | **APP_RUNTIME_UUA_INSTANCE_NAME** | Specifies the name of the UUA instance which is provisioned in the Runtime. | `uua-issuer` |
-| **APP_RUNTIME_UUA_INSTANCE_NAMESPACE** | Specifies the Namespace of the UUA instance which is provisioned in the Runtime. | `kyma-system` |
+| **APP_RUNTIME_UUA_INSTANCE_NAMESPACE** | Specifies the namespace of the UUA instance which is provisioned in the runtime. | `kyma-system` |
 | **APP_TENANT_ID** | Specifies TenantID which is used in the test. | None |
 | **APP_DUMMY_TEST** | Specifies if test should success without any action. | `false` |
 | **APP_CLEANUP_PHASE** | Specifies if the test executes the cleanup phase. | `false` |
