@@ -248,7 +248,8 @@ func (h *Handler) getRuntimes(w http.ResponseWriter, req *http.Request) {
 				h.logger.Warn(fmt.Sprintf("unable to get Runtime resource %s/%s: %s", dto.InstanceID, dto.RuntimeID, err.Error()))
 				dto.RuntimeConfig = nil
 			default:
-				_ = unstructured.SetNestedField(runtimeResourceObject.Object, nil, "metadata", "managedFields")
+				// remove managedFields from the object to reduce the size of the response
+				delete(runtimeResourceObject.Object["metadata"].(map[string]interface{}), "managedFields")
 				dto.RuntimeConfig = &runtimeResourceObject.Object
 			}
 		}
