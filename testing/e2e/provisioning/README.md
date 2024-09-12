@@ -34,7 +34,7 @@ During the provisioning phase, the test performs the following steps:
 
     f. Ensures that the DashboardURL redirects to the UUA login page, which means that Kyma runtime is accessible.
 
-2. Cleanup
+#### Cleanup
 
     The cleanup logic is executed at the end of the end-to-end test or when the provisioning phase fails. During this phase, the test executes the following steps:
 
