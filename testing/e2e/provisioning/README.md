@@ -11,8 +11,7 @@ The test is executed on a dev cluster. It is executed after every merge to the `
 To run this test, you must have the following Secrets inside your cluster:
 - Gardener Secret per provider
 - Service Manager Secret
-
-You must also have Kyma Environment Broker [configured](https://github.com/kyma-project/kyma-environment-broker/tree/main#configuration) to use these Secrets in order to successfully create Kyma runtime.
+- Kyma Environment Broker [configured](https://github.com/kyma-project/kyma-environment-broker/tree/main#configuration) to use these Secrets to create Kyma runtime successfully.
 
 ## Details
 
