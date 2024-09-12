@@ -2,7 +2,7 @@
 
 ## Overview
 
-Kyma Runtime end-to-end provisioning test checks if [Runtime provisioning](https://github.com/kyma-project/kyma-environment-broker/blob/main/docs/user/01-10-architecture.md) works as expected. The test is based on the Kyma Environment Broker (KEB) and Runtime Provisioner implementation. External dependencies relevant for this scenario are mocked.
+Kyma runtime end-to-end provisioning test checks if [runtime provisioning](https://github.com/kyma-project/kyma-environment-broker/blob/main/docs/user/01-10-architecture.md) works as expected. The test is based on the implementation of the Kyma Environment Broker (KEB) and Runtime Provisioner. External dependencies relevant to this scenario are mocked.
 
 The test is executed on a dev cluster. It is executed after every merge to the `kyma` repository that changes the `compass` chart.
 
