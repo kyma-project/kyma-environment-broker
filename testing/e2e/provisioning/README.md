@@ -77,7 +77,7 @@ You can configure the test execution by using the following environment variable
 | **APP_BROKER_PROVISION_GCP** | Specifies if a runtime cluster is hosted on Google Cloud. If set to `false`, it is provisioned on Azure. | `true` |
 | **APP_BROKER_AUTH_USERNAME** | Specifies the username for the basic authentication in KEB. | `broker` |
 | **APP_BROKER_AUTH_PASSWORD** | Specifies the password for the basic authentication in KEB. | None |
-| **APP_RUNTIME_PROVISIONER_URL** | Specifies the Provisioner URL. | None |
+| **APP_RUNTIME_PROVISIONER_URL** | Specifies the Runtime Provisioner URL. | None |
 | **APP_RUNTIME_UUA_INSTANCE_NAME** | Specifies the name of the UUA instance which is provisioned in the Runtime. | `uua-issuer` |
 | **APP_RUNTIME_UUA_INSTANCE_NAMESPACE** | Specifies the namespace of the UUA instance which is provisioned in the runtime. | `kyma-system` |
 | **APP_TENANT_ID** | Specifies TenantID which is used in the test. | None |
