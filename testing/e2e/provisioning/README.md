@@ -84,5 +84,5 @@ You can configure the test execution by using the following environment variable
 | **APP_DUMMY_TEST** | Specifies if the test should succeed without any action. | `false` |
 | **APP_CLEANUP_PHASE** | Specifies if the test runs the cleanup phase. | `false` |
 | **APP_CONFIG_NAME** | Specifies the name of the ConfigMap and Secret created in the test. | `e2e-runtime-config` |
-| **APP_DEPLOY_NAMESPACE** | Specifies the Namespace of the ConfigMap and Secret created in the test. | `kcp-system` |
+| **APP_DEPLOY_NAMESPACE** | Specifies the namespace of the ConfigMap and Secret created in the test. | `kcp-system` |
 | **APP_BUSOLA_URL** | Specifies the URL to the expected Kyma Dashboard used when asserting redirection to the UI Console.  | `kcp-system` |
