@@ -54,7 +54,7 @@ Between the end-to-end test phases, you can run your own test directly on the pr
 
 The end-to-end suspension test uses the **Trial** service plan ID to provision Kyma runtime. Then, the test suspends and unsuspends the Kyma runtime and ensures it is still accessible after the process. The suspension test works similarly to the provisioning test, but it has two additional steps in the provisioning phase:
 
-1. Suspension
+#### Suspension
 
     After successfully provisioning a Kyma Runtime, the test sends an update call to KEB to suspend the Runtime. Then, the test waits until the operation is successful.
 
