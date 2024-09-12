@@ -200,6 +200,22 @@ func TestService_PerformCleanup(t *testing.T) {
 						},
 					},
 				},
+				{
+					Object: map[string]interface{}{
+						"metadata": map[string]interface{}{
+							"name":              "az-1234",
+							"creationTimestamp": creationTime,
+							"annotations": map[string]interface{}{
+								shootAnnotationInfrastructureManagerRuntimeId: fixRuntimeID2,
+								shootLabelAccountId:                           fixAccountID,
+							},
+							"clusterName": "cluster-one",
+						},
+						"spec": map[string]interface{}{
+							"cloudProfileName": "az",
+						},
+					},
+				},
 			},
 		}
 		gcMock.On("List", mock.Anything, mock.AnythingOfType("v1.ListOptions")).Return(&unl, nil)
