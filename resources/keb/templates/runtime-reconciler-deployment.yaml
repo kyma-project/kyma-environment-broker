@@ -78,8 +78,6 @@ spec:
                   key: postgresql-sslMode
             - name: RUNTIME_RECONCILER_DATABASE_SSLROOTCERT
               value: /secrets/cloudsql-sslrootcert/server-ca.pem
-            - name: RUNTIME_RECONCILER_PROVISIONER_URL
-              value: {{ .Values.provisioner.URL }}
         {{- if and (eq .Values.global.database.embedded.enabled false) (eq .Values.global.database.cloudsqlproxy.enabled false)}}
           volumeMounts:
               - name: cloudsql-sslrootcert
