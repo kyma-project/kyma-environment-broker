@@ -56,7 +56,7 @@ The end-to-end suspension test uses the **Trial** service plan ID to provision K
 
 #### Suspension
 
-    After successfully provisioning a Kyma Runtime, the test sends an update call to KEB to suspend the Runtime. Then, the test waits until the operation is successful.
+After successfully provisioning a Kyma runtime, the test sends an update call to KEB to suspend the runtime. Then, the test waits until the operation is successful.
 
 
 1. Unsuspension
