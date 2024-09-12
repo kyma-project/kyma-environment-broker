@@ -30,7 +30,7 @@ During the provisioning phase, the test performs the following steps:
 
     d. Updates the ConfigMap with **dashboardUrl** field.
 
-    e. Creates a Secret with a kubeconfig of the provisioned Runtime.
+    e. Creates a Secret with a kubeconfig of the provisioned runtime.
 
     f. Ensures that the DashboardURL redirects to the UUA login page. It means that the Kyma Runtime is accessible.
 
