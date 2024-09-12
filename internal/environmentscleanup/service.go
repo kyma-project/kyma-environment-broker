@@ -6,7 +6,6 @@ import (
 	"strings"
 	"time"
 
-	error2 "github.com/kyma-project/kyma-environment-broker/internal/error"
 	"github.com/kyma-project/kyma-environment-broker/internal/storage/dberr"
 
 	"github.com/hashicorp/go-multierror"
@@ -36,19 +35,13 @@ type BrokerClient interface {
 	Deprovision(instance internal.Instance) (string, error)
 }
 
-//go:generate mockery --name=ProvisionerClient --output=automock
-type ProvisionerClient interface {
-	DeprovisionRuntime(accountID, runtimeID string) (string, error)
-}
-
 type Service struct {
-	gardenerService   GardenerClient
-	brokerService     BrokerClient
-	instanceStorage   storage.Instances
-	logger            *log.Logger
-	MaxShootAge       time.Duration
-	LabelSelector     string
-	provisionerClient ProvisionerClient
+	gardenerService GardenerClient
+	brokerService   BrokerClient
+	instanceStorage storage.Instances
+	logger          *log.Logger
+	MaxShootAge     time.Duration
+	LabelSelector   string
 }
 
 type runtime struct {
@@ -56,15 +49,14 @@ type runtime struct {
 	AccountID string
 }
 
-func NewService(gardenerClient GardenerClient, brokerClient BrokerClient, provisionerClient ProvisionerClient, instanceStorage storage.Instances, logger *log.Logger, maxShootAge time.Duration, labelSelector string) *Service {
+func NewService(gardenerClient GardenerClient, brokerClient BrokerClient, instanceStorage storage.Instances, logger *log.Logger, maxShootAge time.Duration, labelSelector string) *Service {
 	return &Service{
-		gardenerService:   gardenerClient,
-		brokerService:     brokerClient,
-		instanceStorage:   instanceStorage,
-		logger:            logger,
-		MaxShootAge:       maxShootAge,
-		LabelSelector:     labelSelector,
-		provisionerClient: provisionerClient,
+		gardenerService: gardenerClient,
+		brokerService:   brokerClient,
+		instanceStorage: instanceStorage,
+		logger:          logger,
+		MaxShootAge:     maxShootAge,
+		LabelSelector:   labelSelector,
 	}
 }
 
@@ -186,9 +178,7 @@ func (s *Service) cleanUp(runtimesToDelete []runtime) error {
 		}
 	}
 
-	kebResult := s.cleanUpKEBInstances(kebInstancesToDelete)
-	provisionerResult := s.cleanUpProvisionerInstances(runtimesToDelete, kebInstancesToDelete)
-	result := multierror.Append(kebResult, provisionerResult)
+	result := s.cleanUpKEBInstances(kebInstancesToDelete)
 
 	if result != nil {
 		result.ErrorFormat = func(i []error) string {
@@ -230,48 +220,6 @@ func (s *Service) cleanUpKEBInstances(instancesToDelete []internal.Instance) *mu
 	}
 
 	return result
-}
-
-func (s *Service) cleanUpProvisionerInstances(runtimesToDelete []runtime, kebInstancesToDelete []internal.Instance) *multierror.Error {
-	kebInstanceExists := func(runtimeID string) bool {
-		for _, instance := range kebInstancesToDelete {
-			if instance.RuntimeID == runtimeID {
-				return true
-			}
-		}
-
-		return false
-	}
-
-	var result *multierror.Error
-
-	for _, runtime := range runtimesToDelete {
-		if !kebInstanceExists(runtime.ID) {
-			s.logger.Infof("Triggering runtime deprovisioning for runtimeID ID %q", runtime.ID)
-			err := s.triggerRuntimeDeprovisioning(runtime)
-			if err != nil {
-				result = multierror.Append(result, err)
-			}
-		}
-	}
-
-	return result
-}
-
-func (s *Service) triggerRuntimeDeprovisioning(runtime runtime) error {
-	operationID, err := s.provisionerClient.DeprovisionRuntime(runtime.AccountID, runtime.ID)
-	if error2.IsNotFoundError(err) {
-		s.logger.Warnf("Runtime %s does not exists in the provisioner, skipping", runtime.ID)
-		return nil
-	}
-	if err != nil {
-		err = fmt.Errorf("while deprovisioning runtime with Provisioner: %w", err)
-		s.logger.Error(err)
-		return err
-	}
-
-	log.Infof("Successfully send deprovision request to Provisioner, got operation ID %q", operationID)
-	return nil
 }
 
 func (s *Service) triggerEnvironmentDeprovisioning(instance internal.Instance) error {
