@@ -7,7 +7,6 @@ import (
 	btpmanager "github.com/kyma-project/kyma-environment-broker/internal/btpmanager/credentials"
 	"github.com/kyma-project/kyma-environment-broker/internal/events"
 	"github.com/kyma-project/kyma-environment-broker/internal/process/input"
-	"github.com/kyma-project/kyma-environment-broker/internal/provisioner"
 	"github.com/kyma-project/kyma-environment-broker/internal/storage"
 	"github.com/sirupsen/logrus"
 	"github.com/vrischmann/envconfig"
@@ -61,9 +60,7 @@ func main() {
 	kcpK8sClient, err := client.New(kcpK8sConfig, client.Options{})
 	fatalOnError(err, logs)
 
-	provisionerClient := provisioner.NewProvisionerClient(cfg.Provisioner.URL, false, logs.WithField("service", "provisioner"))
-
-	btpOperatorManager := btpmanager.NewManager(ctx, kcpK8sClient, db.Instances(), logs, cfg.DryRun, provisionerClient)
+	btpOperatorManager := btpmanager.NewManager(ctx, kcpK8sClient, db.Instances(), logs, cfg.DryRun)
 
 	logs.Infof("job enabled? %t", cfg.JobEnabled)
 	if cfg.JobEnabled {
