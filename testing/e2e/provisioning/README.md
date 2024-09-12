@@ -36,7 +36,7 @@ During the provisioning phase, the test performs the following steps:
 
 #### Cleanup
 
-    The cleanup logic is executed at the end of the end-to-end test or when the provisioning phase fails. During this phase, the test executes the following steps:
+The cleanup logic is executed at the end of the end-to-end test or when the provisioning phase fails. During the cleanup, the test performs the following steps:
 
     a. Gets **instanceId** from the ConfigMap.
 
