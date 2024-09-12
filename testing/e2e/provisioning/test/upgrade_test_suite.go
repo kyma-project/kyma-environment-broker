@@ -5,7 +5,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/kyma-project/control-plane/tests/e2e/provisioning/pkg/client/broker"
+	"github.com/kyma-project/kyma-environment-broker/testing/e2e/provisioning/pkg/client/broker"
 
 	"github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/require"

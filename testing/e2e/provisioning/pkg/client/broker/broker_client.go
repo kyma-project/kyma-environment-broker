@@ -20,6 +20,7 @@ import (
 	"k8s.io/apimachinery/pkg/util/wait"
 )
 
+// s
 type Config struct {
 	ClientName     string
 	ClientID       string
