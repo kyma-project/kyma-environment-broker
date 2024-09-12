@@ -181,8 +181,8 @@ func fixProvisionerInput(disabled bool, euAccess bool) gqlschema.ProvisionRuntim
 			GardenerConfig: &gqlschema.GardenerConfigInput{
 				Name:                                shootName,
 				KubernetesVersion:                   k8sVersion,
-				DiskType:                            ptr.String("pd-standard"),
-				VolumeSizeGb:                        ptr.Integer(50),
+				DiskType:                            ptr.String("pd-balanced"),
+				VolumeSizeGb:                        ptr.Integer(80),
 				MachineType:                         provider.DefaultGCPMachineType,
 				Region:                              "europe-west3",
 				Provider:                            "gcp",
