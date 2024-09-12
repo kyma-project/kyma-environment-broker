@@ -40,8 +40,6 @@ func TestService_PerformCleanup(t *testing.T) {
 		gcMock.On("Update", mock.Anything, mock.Anything, mock.AnythingOfType("v1.UpdateOptions")).Return(nil, nil)
 		bcMock := &mocks.BrokerClient{}
 		bcMock.On("Deprovision", mock.AnythingOfType("internal.Instance")).Return(fixOperationID, nil)
-		pMock := &mocks.ProvisionerClient{}
-		pMock.On("DeprovisionRuntime", fixAccountID, fixRuntimeID3).Return("", nil)
 
 		memoryStorage := storage.NewMemoryStorage()
 		err := memoryStorage.Instances().Insert(internal.Instance{
@@ -56,7 +54,7 @@ func TestService_PerformCleanup(t *testing.T) {
 		assert.NoError(t, err)
 		logger := logrus.New()
 
-		svc := NewService(gcMock, bcMock, pMock, memoryStorage.Instances(), logger, maxShootAge, shootLabelSelector)
+		svc := NewService(gcMock, bcMock, memoryStorage.Instances(), logger, maxShootAge, shootLabelSelector)
 
 		// when
 		err = svc.PerformCleanup()
@@ -64,7 +62,6 @@ func TestService_PerformCleanup(t *testing.T) {
 		// then
 		bcMock.AssertExpectations(t)
 		gcMock.AssertExpectations(t)
-		pMock.AssertExpectations(t)
 		assert.NoError(t, err)
 	})
 
@@ -75,12 +72,11 @@ func TestService_PerformCleanup(t *testing.T) {
 			UnstructuredList{}, fmt.Errorf("failed to reach gardener"))
 
 		bcMock := &mocks.BrokerClient{}
-		pMock := &mocks.ProvisionerClient{}
 
 		memoryStorage := storage.NewMemoryStorage()
 		logger := logrus.New()
 
-		svc := NewService(gcMock, bcMock, pMock, memoryStorage.Instances(), logger, maxShootAge, shootLabelSelector)
+		svc := NewService(gcMock, bcMock, memoryStorage.Instances(), logger, maxShootAge, shootLabelSelector)
 
 		// when
 		err := svc.PerformCleanup()
@@ -100,8 +96,6 @@ func TestService_PerformCleanup(t *testing.T) {
 
 		bcMock := &mocks.BrokerClient{}
 		bcMock.On("Deprovision", mock.AnythingOfType("internal.Instance")).Return(fixOperationID, nil)
-		pMock := &mocks.ProvisionerClient{}
-		pMock.On("DeprovisionRuntime", fixAccountID, fixRuntimeID3).Return("", nil)
 
 		memoryStorage := storage.NewMemoryStorage()
 		err := memoryStorage.Instances().Insert(internal.Instance{
@@ -121,7 +115,7 @@ func TestService_PerformCleanup(t *testing.T) {
 		assert.NoError(t, err)
 		logger := logrus.New()
 
-		svc := NewService(gcMock, bcMock, pMock, memoryStorage.Instances(), logger, maxShootAge, shootLabelSelector)
+		svc := NewService(gcMock, bcMock, memoryStorage.Instances(), logger, maxShootAge, shootLabelSelector)
 
 		// when
 		err = svc.PerformCleanup()
@@ -129,7 +123,6 @@ func TestService_PerformCleanup(t *testing.T) {
 		// then
 		bcMock.AssertExpectations(t)
 		gcMock.AssertExpectations(t)
-		pMock.AssertExpectations(t)
 
 		assert.NoError(t, err)
 	})
@@ -141,8 +134,6 @@ func TestService_PerformCleanup(t *testing.T) {
 		bcMock := &mocks.BrokerClient{}
 		bcMock.On("Deprovision", mock.AnythingOfType("internal.Instance")).Return("",
 			fmt.Errorf("failed to deprovision instance"))
-
-		pMock := &mocks.ProvisionerClient{}
 
 		memoryStorage := storage.NewMemoryStorage()
 		err := memoryStorage.Instances().Insert(internal.Instance{
@@ -163,7 +154,7 @@ func TestService_PerformCleanup(t *testing.T) {
 
 		logger := logrus.New()
 
-		svc := NewService(gcMock, bcMock, pMock, memoryStorage.Instances(), logger, maxShootAge, shootLabelSelector)
+		svc := NewService(gcMock, bcMock, memoryStorage.Instances(), logger, maxShootAge, shootLabelSelector)
 
 		// when
 		err = svc.PerformCleanup()
@@ -171,40 +162,6 @@ func TestService_PerformCleanup(t *testing.T) {
 		// then
 		bcMock.AssertExpectations(t)
 		gcMock.AssertExpectations(t)
-		pMock.AssertExpectations(t)
-		assert.Error(t, err)
-	})
-
-	t.Run("should return error on Provisioner deprovision call failure", func(t *testing.T) {
-		// given
-		gcMock := &mocks.GardenerClient{}
-		gcMock.On("List", mock.Anything, mock.AnythingOfType("v1.ListOptions")).Return(fixShootList(), nil)
-
-		bcMock := &mocks.BrokerClient{}
-
-		pMock := &mocks.ProvisionerClient{}
-		bcMock.On("Deprovision", mock.AnythingOfType("internal.Instance")).Return("", nil)
-		pMock.On("DeprovisionRuntime", fixAccountID, fixRuntimeID2).Return("", fmt.Errorf("some error"))
-		pMock.On("DeprovisionRuntime", fixAccountID, fixRuntimeID3).Return("", fmt.Errorf("some other error"))
-
-		memoryStorage := storage.NewMemoryStorage()
-		err := memoryStorage.Instances().Insert(internal.Instance{
-			InstanceID: fixInstanceID1,
-			RuntimeID:  fixRuntimeID1,
-		})
-		assert.NoError(t, err)
-
-		logger := logrus.New()
-
-		svc := NewService(gcMock, bcMock, pMock, memoryStorage.Instances(), logger, maxShootAge, shootLabelSelector)
-
-		// when
-		err = svc.PerformCleanup()
-
-		// then
-		bcMock.AssertExpectations(t)
-		gcMock.AssertExpectations(t)
-		pMock.AssertExpectations(t)
 		assert.Error(t, err)
 	})
 
@@ -250,7 +207,6 @@ func TestService_PerformCleanup(t *testing.T) {
 		gcMock.On("Update", mock.Anything, mock.Anything, mock.AnythingOfType("v1.UpdateOptions")).Return(nil, nil)
 
 		bcMock := &mocks.BrokerClient{}
-		pMock := &mocks.ProvisionerClient{}
 
 		memoryStorage := storage.NewMemoryStorage()
 		err := memoryStorage.Instances().Insert(internal.Instance{
@@ -266,7 +222,7 @@ func TestService_PerformCleanup(t *testing.T) {
 		})
 		logger.SetOutput(&actualLog)
 
-		svc := NewService(gcMock, bcMock, pMock, memoryStorage.Instances(), logger, maxShootAge, shootLabelSelector)
+		svc := NewService(gcMock, bcMock, memoryStorage.Instances(), logger, maxShootAge, shootLabelSelector)
 
 		// when
 		err = svc.PerformCleanup()
@@ -348,8 +304,7 @@ func fixShootListItems() []unstructured.Unstructured {
 						"name":              "az-4567",
 						"creationTimestamp": creationTime,
 						"labels": map[string]interface{}{
-							"should-be-deleted-by-provisioner": "true",
-							shootLabelAccountId:                fixAccountID,
+							shootLabelAccountId: fixAccountID,
 						},
 						"annotations": map[string]interface{}{
 							shootAnnotationRuntimeId: fixRuntimeID3,

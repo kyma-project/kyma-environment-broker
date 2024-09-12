@@ -39,8 +39,6 @@ spec:
                   value: kyma-dev
                 - name: APP_GARDENER_KUBECONFIG_PATH
                   value: /gardener/kubeconfig/kubeconfig
-                - name: APP_PROVISIONER_URL
-                  value: http://kcp-provisioner.kcp-system.svc.cluster.local:3000/graphql
                 - name: APP_DATABASE_SECRET_KEY
                   valueFrom:
                     secretKeyRef:
