@@ -59,7 +59,7 @@ The end-to-end suspension test uses the **Trial** service plan ID to provision K
 After successfully provisioning a Kyma runtime, the test sends an update call to KEB to suspend the runtime. Then, the test waits until the operation is successful.
 
 
-1. Unsuspension
+#### Unsuspension
 
    After Runtime suspension succeeded, the test sends an update call to KEB to unsuspend the Runtime. Then, the test waits until the operation is successful. After that, the test ensures that the DashboardURL redirects to the UUA login page once again, which means that the Kyma Runtime is accessible.
 
