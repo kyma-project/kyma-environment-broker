@@ -48,7 +48,7 @@ The cleanup logic is executed at the end of the end-to-end test or when the prov
 
     e. Waits until the deprovisioning is successful. It takes about 20 minutes to complete. You can configure the timeout using the environment variable.
 
-Between the end-to-end test phases, you can execute your own test directly on the provisioned Runtime. To do so, use a kubeconfig stored in a Secret created in the provisioning phase.
+Between the end-to-end test phases, you can run your own test directly on the provisioned runtime. To do so, use a kubeconfig stored in a Secret created in the provisioning phase.
 
 ### End-to-end suspension test
 
