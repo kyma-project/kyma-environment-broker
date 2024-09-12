@@ -74,7 +74,7 @@ You can configure the test execution by using the following environment variable
 | **APP_BROKER_URL** | Specifies the KEB URL. | None |
 | **APP_PROVISION_TIMEOUT** | Specifies a timeout for the provisioning operation to succeed. | `3h` |
 | **APP_DEPROVISION_TIMEOUT** | Specifies a timeout for the deprovisioning operation to succeed. | `1h` |
-| **APP_BROKER_PROVISION_GCP** | Specifies if a Runtime cluster is hosted on GCP. If set to `false`, it provisions on Azure. | `true` |
+| **APP_BROKER_PROVISION_GCP** | Specifies if a runtime cluster is hosted on Google Cloud. If set to `false`, it is provisioned on Azure. | `true` |
 | **APP_BROKER_AUTH_USERNAME** | Specifies the username for the basic authentication in KEB. | `broker` |
 | **APP_BROKER_AUTH_PASSWORD** | Specifies the password for the basic authentication in KEB. | None |
 | **APP_RUNTIME_PROVISIONER_URL** | Specifies the Provisioner URL. | None |
