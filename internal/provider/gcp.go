@@ -2,6 +2,7 @@ package provider
 
 import (
 	"github.com/kyma-project/kyma-environment-broker/internal"
+	"github.com/kyma-project/kyma-environment-broker/internal/assuredworkloads"
 )
 
 type (
@@ -79,6 +80,9 @@ func (p *GCPTrialInputProvider) zones() []string {
 }
 
 func (p *GCPTrialInputProvider) region() string {
+	if assuredworkloads.IsKSA(p.ProvisioningParameters.PlatformRegion) {
+		return DefaultGCPAssuredWorkloadsRegion
+	}
 	if p.ProvisioningParameters.PlatformRegion != "" {
 		abstractRegion, found := p.PlatformRegionMapping[p.ProvisioningParameters.PlatformRegion]
 		if found {

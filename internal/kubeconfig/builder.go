@@ -2,13 +2,17 @@ package kubeconfig
 
 import (
 	"bytes"
+	"context"
 	"fmt"
 	"text/template"
 
-	"github.com/kyma-project/kyma-environment-broker/internal"
+	imv1 "github.com/kyma-project/infrastructure-manager/api/v1"
 	"github.com/kyma-project/kyma-environment-broker/internal/provisioner"
+	"sigs.k8s.io/controller-runtime/pkg/client"
 
+	"github.com/kyma-project/kyma-environment-broker/internal"
 	"gopkg.in/yaml.v2"
+	"k8s.io/apimachinery/pkg/api/errors"
 )
 
 type Config struct {
@@ -16,18 +20,20 @@ type Config struct {
 }
 
 type Builder struct {
-	provisionerClient  provisioner.Client
 	kubeconfigProvider kubeconfigProvider
+	kcpClient          client.Client
+	provisionerClient  provisioner.Client
 }
 
 type kubeconfigProvider interface {
 	KubeconfigForRuntimeID(runtimeID string) ([]byte, error)
 }
 
-func NewBuilder(provisionerClient provisioner.Client, provider kubeconfigProvider) *Builder {
+func NewBuilder(provisionerClient provisioner.Client, kcpClient client.Client, provider kubeconfigProvider) *Builder {
 	return &Builder{
-		provisionerClient:  provisionerClient,
+		kcpClient:          kcpClient,
 		kubeconfigProvider: provider,
+		provisionerClient:  provisionerClient,
 	}
 }
 
@@ -43,9 +49,12 @@ func (b *Builder) BuildFromAdminKubeconfig(instance *internal.Instance, adminKub
 	if instance.RuntimeID == "" {
 		return "", fmt.Errorf("RuntimeID must not be empty")
 	}
-	status, err := b.provisionerClient.RuntimeStatus(instance.GlobalAccountID, instance.RuntimeID)
+	issuerURL, clientID, err := b.getOidcDataFromRuntimeResource(instance.RuntimeID)
+	if errors.IsNotFound(err) {
+		issuerURL, clientID, err = b.getOidcDataFromProvisioner(instance)
+	}
 	if err != nil {
-		return "", fmt.Errorf("while fetching runtime status from provisioner: %w", err)
+		return "", fmt.Errorf("while fetching oidc data: %w", err)
 	}
 
 	var kubeCfg kubeconfig
@@ -70,8 +79,8 @@ func (b *Builder) BuildFromAdminKubeconfig(instance *internal.Instance, adminKub
 		ContextName:   kubeCfg.CurrentContext,
 		CAData:        kubeCfg.Clusters[0].Cluster.CertificateAuthorityData,
 		ServerURL:     kubeCfg.Clusters[0].Cluster.Server,
-		OIDCIssuerURL: status.RuntimeConfiguration.ClusterConfig.OidcConfig.IssuerURL,
-		OIDCClientID:  status.RuntimeConfiguration.ClusterConfig.OidcConfig.ClientID,
+		OIDCIssuerURL: issuerURL,
+		OIDCClientID:  clientID,
 	})
 }
 
@@ -125,4 +134,27 @@ func (b *Builder) validKubeconfig(kc kubeconfig) error {
 	}
 
 	return nil
+}
+
+func (b *Builder) getOidcDataFromRuntimeResource(id string) (string, string, error) {
+	var runtime imv1.Runtime
+	err := b.kcpClient.Get(context.Background(), client.ObjectKey{Name: id, Namespace: kcpNamespace}, &runtime)
+	if err != nil {
+		return "", "", err
+	}
+	if runtime.Spec.Shoot.Kubernetes.KubeAPIServer.OidcConfig.IssuerURL == nil {
+		return "", "", fmt.Errorf("Runtime Resource contains an empty OIDC issuer URL")
+	}
+	if runtime.Spec.Shoot.Kubernetes.KubeAPIServer.OidcConfig.ClientID == nil {
+		return "", "", fmt.Errorf("Runtime Resource contains an empty OIDC client ID")
+	}
+	return *runtime.Spec.Shoot.Kubernetes.KubeAPIServer.OidcConfig.IssuerURL, *runtime.Spec.Shoot.Kubernetes.KubeAPIServer.OidcConfig.ClientID, nil
+}
+
+func (b *Builder) getOidcDataFromProvisioner(instance *internal.Instance) (string, string, error) {
+	status, err := b.provisionerClient.RuntimeStatus(instance.GlobalAccountID, instance.RuntimeID)
+	if err != nil {
+		return "", "", err
+	}
+	return status.RuntimeConfiguration.ClusterConfig.OidcConfig.IssuerURL, status.RuntimeConfiguration.ClusterConfig.OidcConfig.ClientID, nil
 }

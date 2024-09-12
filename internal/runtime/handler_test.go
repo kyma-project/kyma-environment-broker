@@ -775,6 +775,57 @@ func TestRuntimeHandler(t *testing.T) {
 		assert.Equal(t, "fake-region", *out.Data[0].Status.GardenerConfig.Region)
 	})
 
+	t.Run("test runtime_config optional attribute", func(t *testing.T) {
+		// given
+		provisionerClient := provisioner.NewFakeClient()
+		db := storage.NewMemoryStorage()
+		operations := db.Operations()
+		instances := db.Instances()
+		states := db.RuntimeStates()
+		archived := db.InstancesArchived()
+		testID := "Test1"
+		testTime := time.Now()
+		testInstance := fixInstance(testID, testTime)
+		testInstance.Provider = "aws"
+		testInstance.RuntimeID = fmt.Sprintf("runtime-%s", testID)
+		err := instances.Insert(testInstance)
+		require.NoError(t, err)
+
+		operation := fixture.FixProvisioningOperation(fixRandomID(), testID)
+		err = operations.InsertOperation(operation)
+		require.NoError(t, err)
+
+		input, err := operation.InputCreator.CreateProvisionRuntimeInput()
+		require.NoError(t, err)
+
+		_, err = provisionerClient.ProvisionRuntimeWithIDs(operation.GlobalAccountID, operation.SubAccountID, operation.RuntimeID, operation.ID, input)
+		require.NoError(t, err)
+
+		runtimeHandler := runtime.NewHandler(instances, operations, states, archived, 2, "", provisionerClient, k8sClient, kimConfig, logrus.New())
+
+		rr := httptest.NewRecorder()
+		router := mux.NewRouter()
+		runtimeHandler.AttachRoutes(router)
+
+		// when
+		req, err := http.NewRequest("GET", "/runtimes?runtime_config=true", nil)
+		require.NoError(t, err)
+		router.ServeHTTP(rr, req)
+
+		// then
+		require.Equal(t, http.StatusOK, rr.Code)
+
+		var out pkg.RuntimesPage
+
+		err = json.Unmarshal(rr.Body.Bytes(), &out)
+		require.NoError(t, err)
+
+		require.Equal(t, 1, out.TotalCount)
+		require.Equal(t, 1, out.Count)
+		assert.Equal(t, testID, out.Data[0].InstanceID)
+		require.Nil(t, out.Data[0].RuntimeConfig)
+	})
+
 }
 
 func TestRuntimeHandler_WithKimOnlyDrivenInstances(t *testing.T) {
@@ -1077,6 +1128,7 @@ func TestRuntimeHandler_WithKimOnlyDrivenInstances(t *testing.T) {
 		assert.Equal(t, testID, out.Data[0].InstanceID)
 		require.Nil(t, out.Data[0].Status.GardenerConfig)
 		require.Nil(t, out.Data[0].RuntimeConfig)
+
 	})
 
 	t.Run("test runtime_config optional attribute", func(t *testing.T) {
@@ -1143,6 +1195,9 @@ func TestRuntimeHandler_WithKimOnlyDrivenInstances(t *testing.T) {
 		assert.True(t, ok)
 		assert.NoError(t, err)
 		assert.Equal(t, "worker-0", worker)
+
+		managedFields, ok, err := unstructured.NestedSlice(*out.Data[0].RuntimeConfig, "metadata", "managedFields")
+		assert.Nil(t, managedFields)
 	})
 
 }
@@ -1193,6 +1248,10 @@ func fixRuntimeResource(t *testing.T, name, namespace string) *RuntimeResourceTy
 	err := unstructured.SetNestedField(worker, "worker-0", "name")
 	assert.NoError(t, err)
 	err = unstructured.SetNestedField(worker, "m6i.large", "machine", "type")
+	assert.NoError(t, err)
+
+	managedField := map[string]interface{}{}
+	err = unstructured.SetNestedSlice(runtimeResource.Object, []interface{}{managedField}, "metadata", "managedFields")
 	assert.NoError(t, err)
 
 	err = unstructured.SetNestedSlice(runtimeResource.Object, []interface{}{worker}, "spec", "shoot", "provider", "workers")

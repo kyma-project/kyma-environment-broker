@@ -195,15 +195,29 @@ func TestSchemaGenerator(t *testing.T) {
 		{
 			name: "GCP schema is correct",
 			generator: func(machinesDisplay, regionsDisplay map[string]string, machines []string, additionalParams, update bool) *map[string]interface{} {
-				return GCPSchema(machinesDisplay, regionsDisplay, machines, additionalParams, update, additionalParams)
+				return GCPSchema(machinesDisplay, regionsDisplay, machines, additionalParams, update, additionalParams, false)
 			},
 			machineTypes:        GcpMachinesNames(),
 			machineTypesDisplay: GcpMachinesDisplay(),
-			regionDisplay:       GcpRegionsDisplay(),
+			regionDisplay:       GcpRegionsDisplay(false),
 			path:                "gcp",
 			file:                "gcp-schema.json",
 			updateFile:          "update-gcp-schema.json",
 			fileOIDC:            "gcp-schema-additional-params.json",
+			updateFileOIDC:      "update-gcp-schema-additional-params.json",
+		},
+		{
+			name: "GCP schema with assured workloads is correct",
+			generator: func(machinesDisplay, regionsDisplay map[string]string, machines []string, additionalParams, update bool) *map[string]interface{} {
+				return GCPSchema(machinesDisplay, regionsDisplay, machines, additionalParams, update, additionalParams, true)
+			},
+			machineTypes:        GcpMachinesNames(),
+			machineTypesDisplay: GcpMachinesDisplay(),
+			regionDisplay:       GcpRegionsDisplay(true),
+			path:                "gcp",
+			file:                "gcp-schema-assured-workloads.json",
+			updateFile:          "update-gcp-schema.json",
+			fileOIDC:            "gcp-schema-additional-params-assured-workloads.json",
 			updateFileOIDC:      "update-gcp-schema-additional-params.json",
 		},
 		{
@@ -269,7 +283,7 @@ func TestSapConvergedSchema(t *testing.T) {
 		regions := []string{"region1", "region2"}
 
 		// when
-		schema := Plans(nil, "", false, false, false, false, regions)
+		schema := Plans(nil, "", false, false, false, false, regions, false)
 		convergedSchema, found := schema[SapConvergedCloudPlanID]
 		schemaRegionsCreate := convergedSchema.Schemas.Instance.Create.Parameters["properties"].(map[string]interface{})["region"].(map[string]interface{})["enum"]
 
@@ -284,7 +298,7 @@ func TestSapConvergedSchema(t *testing.T) {
 		regions := []string{}
 
 		// when
-		schema := Plans(nil, "", false, false, false, false, regions)
+		schema := Plans(nil, "", false, false, false, false, regions, false)
 		_, found := schema[SapConvergedCloudPlanID]
 
 		// then
@@ -292,7 +306,7 @@ func TestSapConvergedSchema(t *testing.T) {
 		assert.False(t, found)
 
 		// when
-		schema = Plans(nil, "", false, false, false, false, nil)
+		schema = Plans(nil, "", false, false, false, false, nil, false)
 		_, found = schema[SapConvergedCloudPlanID]
 
 		// then

@@ -273,6 +273,24 @@ func (i *InstanceDetails) GetCompassRuntimeId() string {
 	return *i.CompassRuntimeId
 }
 
+func (i *InstanceDetails) GetRuntimeResourceName() string {
+	name := i.RuntimeResourceName
+	if name == "" {
+		// fallback to runtime ID
+		name = i.RuntimeID
+	}
+	return name
+}
+
+func (i *InstanceDetails) GetRuntimeResourceNamespace() string {
+	namespace := i.KymaResourceNamespace
+	if namespace == "" {
+		// fallback to default namespace
+		namespace = "kcp-system"
+	}
+	return namespace
+}
+
 // ProvisioningOperation holds all information about provisioning operation
 type ProvisioningOperation struct {
 	Operation

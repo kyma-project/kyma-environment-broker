@@ -731,14 +731,14 @@ func assertSecurityWithNetworkingFilter(t *testing.T, runtime imv1.Runtime, egre
 func assertLabelsKIMDriven(t *testing.T, preOperation internal.Operation, runtime imv1.Runtime) {
 	assertLabels(t, preOperation, runtime)
 
-	provisionerDriven, ok := runtime.Labels["kyma-project.io/controlled-by-provisioner"]
+	provisionerDriven, ok := runtime.Labels[imv1.LabelControlledByProvisioner]
 	assert.True(t, ok && provisionerDriven == "false")
 }
 
 func assertLabelsProvisionerDriven(t *testing.T, preOperation internal.Operation, runtime imv1.Runtime) {
 	assertLabels(t, preOperation, runtime)
 
-	provisionerDriven, ok := runtime.Labels["kyma-project.io/controlled-by-provisioner"]
+	provisionerDriven, ok := runtime.Labels[imv1.LabelControlledByProvisioner]
 	assert.True(t, ok && provisionerDriven == "true")
 }
 
