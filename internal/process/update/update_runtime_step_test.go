@@ -30,7 +30,7 @@ func TestUpdateRuntimeStep_NoRuntime(t *testing.T) {
 	assert.NoError(t, err)
 	kcpClient := fake.NewClientBuilder().Build()
 	log := logger.NewLogDummy()
-	step := NewUpdateRuntimeStep(nil, kcpClient)
+	step := NewUpdateRuntimeStep(nil, kcpClient, 0)
 	operation := fixture.FixUpdatingOperation("op-id", "inst-id").Operation
 	operation.RuntimeResourceName = "runtime-name"
 	operation.KymaResourceNamespace = "kyma-ns"
@@ -49,7 +49,7 @@ func TestUpdateRuntimeStep_RunUpdateMachineType(t *testing.T) {
 	assert.NoError(t, err)
 	kcpClient := fake.NewClientBuilder().WithRuntimeObjects(fixRuntimeResource("runtime-name", false)).Build()
 	log := logger.NewLogDummy()
-	step := NewUpdateRuntimeStep(nil, kcpClient)
+	step := NewUpdateRuntimeStep(nil, kcpClient, 0)
 	operation := fixture.FixUpdatingOperation("op-id", "inst-id").Operation
 	operation.RuntimeResourceName = "runtime-name"
 	operation.KymaResourceNamespace = "kcp-system"

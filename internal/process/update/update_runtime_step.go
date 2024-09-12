@@ -19,12 +19,14 @@ import (
 type UpdateRuntimeStep struct {
 	operationManager *process.OperationManager
 	k8sClient        client.Client
+	delay            time.Duration
 }
 
-func NewUpdateRuntimeStep(os storage.Operations, k8sClient client.Client) *UpdateRuntimeStep {
+func NewUpdateRuntimeStep(os storage.Operations, k8sClient client.Client, delay time.Duration) *UpdateRuntimeStep {
 	return &UpdateRuntimeStep{
 		operationManager: process.NewOperationManager(os),
 		k8sClient:        k8sClient,
+		delay:            delay,
 	}
 }
 
@@ -92,6 +94,10 @@ func (s *UpdateRuntimeStep) Run(operation internal.Operation, log logrus.FieldLo
 	if err != nil {
 		return s.operationManager.RetryOperation(operation, "unable to update runtime", err, 10*time.Second, 1*time.Minute, log)
 	}
+
+	// this sleep is needed to wait for the runtime to be updated by the infrastructure manager with state PENDING,
+	// then we can wait for the state READY in the next step
+	time.Sleep(s.delay)
 
 	return operation, 0, nil
 }
