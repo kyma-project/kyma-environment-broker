@@ -42,7 +42,7 @@ The cleanup logic is executed at the end of the end-to-end test or when the prov
 
     b. Removes the test's Secret and ConfigMap.
 
-    c. Fetches the Runtime kubeconfig from the Runtime Provisioner and uses it to clean resources which block the cluster from deprovisioning.
+    c. Fetches the runtime kubeconfig from Runtime Provisioner and uses it to clean up resources that block the cluster from being deprovisioned.
 
     d. Sends a request to deprovision the Runtime to KEB. The request is passed to the Runtime Provisioner which deprovisions the Runtime.
 
