@@ -10,7 +10,6 @@ import (
 	"github.com/kyma-project/kyma-environment-broker/internal/kubeconfig"
 
 	"github.com/kyma-project/kyma-environment-broker/internal"
-	"github.com/kyma-project/kyma-environment-broker/internal/provisioner"
 	"github.com/kyma-project/kyma-environment-broker/internal/storage"
 	"github.com/kyma-project/kyma-environment-broker/internal/storage/dbmodel"
 	"github.com/sirupsen/logrus"
@@ -58,18 +57,16 @@ type Manager struct {
 	instances         storage.Instances
 	kcpK8sClient      client.Client
 	dryRun            bool
-	provisioner       provisioner.Client
 	k8sClientProvider K8sClientProvider
 	logger            *logrus.Logger
 }
 
-func NewManager(ctx context.Context, kcpK8sClient client.Client, instanceDb storage.Instances, logs *logrus.Logger, dryRun bool, provisioner provisioner.Client) *Manager {
+func NewManager(ctx context.Context, kcpK8sClient client.Client, instanceDb storage.Instances, logs *logrus.Logger, dryRun bool) *Manager {
 	return &Manager{
 		ctx:               ctx,
 		instances:         instanceDb,
 		kcpK8sClient:      kcpK8sClient,
 		dryRun:            dryRun,
-		provisioner:       provisioner,
 		logger:            logs,
 		k8sClientProvider: kubeconfig.NewK8sClientFromSecretProvider(kcpK8sClient),
 	}

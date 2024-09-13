@@ -57,7 +57,7 @@ func (s *checkRuntimeResource) Run(operation internal.Operation, log logrus.Fiel
 			log.Infof("Runtime resource status: %v, timeout: %v", runtime.Status, s.runtimeResourceStepTimeout)
 			return s.operationManager.OperationFailed(operation, description, nil, log)
 		}
-		return operation, 500 * time.Millisecond, nil
+		return operation, 10 * time.Second, nil
 	}
 	return operation, 0, nil
 }

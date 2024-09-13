@@ -156,6 +156,8 @@ type Config struct {
 	KymaResourceDeletionTimeout time.Duration `envconfig:"default=30s"`
 
 	RuntimeConfigurationConfigMapName string `envconfig:"default=keb-runtime-config"`
+
+	UpdateRuntimeResourceDelay time.Duration `envconfig:"default=4s"`
 }
 
 type ProfilerConfig struct {

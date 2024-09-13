@@ -55,8 +55,8 @@ func (p *GcpInput) Defaults() *gqlschema.ClusterConfigInput {
 	}
 	return &gqlschema.ClusterConfigInput{
 		GardenerConfig: &gqlschema.GardenerConfigInput{
-			DiskType:       ptr.String("pd-standard"),
-			VolumeSizeGb:   ptr.Integer(50),
+			DiskType:       ptr.String("pd-balanced"),
+			VolumeSizeGb:   ptr.Integer(80),
 			MachineType:    DefaultGCPMachineType,
 			Region:         DefaultGCPRegion,
 			Provider:       "gcp",

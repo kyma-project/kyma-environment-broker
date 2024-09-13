@@ -91,8 +91,8 @@ func (s *BTPOperatorCleanupStep) Run(operation internal.Operation, log logrus.Fi
 		log.Info("skipping BTP cleanup step for real deprovisioning, not suspension")
 		return operation, 0, nil
 	}
-	if operation.ProvisioningParameters.PlanID != broker.TrialPlanID && operation.ProvisioningParameters.PlanID != broker.FreemiumPlanID {
-		log.Info("skipping BTP cleanup step, cleanup executed only for trial and free plan")
+	if operation.ProvisioningParameters.PlanID != broker.TrialPlanID {
+		log.Info("skipping BTP cleanup step, cleanup executed only for trial plan")
 		return operation, 0, nil
 	}
 	kclient, err := s.k8sClientProvider.K8sClientForRuntimeID(operation.RuntimeID)

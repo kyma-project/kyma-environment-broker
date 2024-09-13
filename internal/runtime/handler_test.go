@@ -1196,8 +1196,8 @@ func TestRuntimeHandler_WithKimOnlyDrivenInstances(t *testing.T) {
 		assert.NoError(t, err)
 		assert.Equal(t, "worker-0", worker)
 
-		managedFields, ok, err := unstructured.NestedSlice(*out.Data[0].RuntimeConfig, "metadata", "managedFields")
-		assert.Nil(t, managedFields)
+		_, ok, err = unstructured.NestedSlice(*out.Data[0].RuntimeConfig, "metadata", "managedFields")
+		assert.False(t, ok)
 	})
 
 }

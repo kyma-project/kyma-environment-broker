@@ -35,8 +35,8 @@ func TestAWSDefaults(t *testing.T) {
 		DefaultMachineType:   "m6i.large",
 		Region:               "eu-central-1",
 		Purpose:              "production",
-		VolumeSizeGb:         50,
-		DiskType:             "gp2",
+		VolumeSizeGb:         80,
+		DiskType:             "gp3",
 	}, values)
 }
 
@@ -70,8 +70,8 @@ func TestAWSSpecific(t *testing.T) {
 		DefaultMachineType:   "m6i.large",
 		Region:               "ap-southeast-1",
 		Purpose:              "production",
-		VolumeSizeGb:         50,
-		DiskType:             "gp2",
+		VolumeSizeGb:         80,
+		DiskType:             "gp3",
 	}, values)
 }
 
@@ -101,7 +101,7 @@ func TestAWSTrialDefaults(t *testing.T) {
 		Region:               "eu-central-1",
 		Purpose:              "evaluation",
 		VolumeSizeGb:         50,
-		DiskType:             "gp2",
+		DiskType:             "gp3",
 	}, values)
 }
 
@@ -135,7 +135,7 @@ func TestAWSTrialSpecific(t *testing.T) {
 		Region:               "ap-southeast-1",
 		Purpose:              "evaluation",
 		VolumeSizeGb:         50,
-		DiskType:             "gp2",
+		DiskType:             "gp3",
 	}, values)
 }
 
