@@ -32,7 +32,6 @@ type Config struct {
 	TenantID             string `default:"d9994f8f-7e46-42a8-b2c1-1bfff8d2fe05"`
 	SkipCertVerification bool   `envconfig:"default=true"`
 
-	ProvisionerURL        string        `default:"http://kcp-provisioner.kcp-system.svc.cluster.local:3000/graphql"`
 	ProvisionTimeout      time.Duration `default:"3h"`
 	DeprovisionTimeout    time.Duration `default:"1h"`
 	PreUpgradeKymaVersion string        `envconfig:"optional"`
@@ -122,7 +121,7 @@ func newTestSuite(t *testing.T) *Suite {
 
 	brokerClient := broker.NewClient(ctx, cfg.Broker, cfg.TenantID, instanceID, subAccountID, userID, oAuth2Config, log.WithField("service", "broker_client"))
 
-	runtimeClient := runtime.NewClient(cfg.ProvisionerURL, cfg.TenantID, instanceID, *httpClient, cli, log.WithField("service", "runtime_client"))
+	runtimeClient := runtime.NewClient(cfg.TenantID, instanceID, *httpClient, cli, log.WithField("service", "runtime_client"))
 
 	suite := &Suite{
 		t:   t,
