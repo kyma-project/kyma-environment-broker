@@ -6,7 +6,6 @@ import (
 
 	btpmanager "github.com/kyma-project/kyma-environment-broker/internal/btpmanager/credentials"
 	"github.com/kyma-project/kyma-environment-broker/internal/events"
-	"github.com/kyma-project/kyma-environment-broker/internal/process/input"
 	"github.com/kyma-project/kyma-environment-broker/internal/storage"
 	"github.com/sirupsen/logrus"
 	"github.com/vrischmann/envconfig"
@@ -17,7 +16,6 @@ import (
 type Config struct {
 	Database               storage.Config
 	Events                 events.Config
-	Provisioner            input.Config
 	DryRun                 bool   `envconfig:"default=true"`
 	JobEnabled             bool   `envconfig:"default=false"`
 	JobInterval            int    `envconfig:"default=24"`
