@@ -249,8 +249,15 @@ func (h *Handler) getRuntimes(w http.ResponseWriter, req *http.Request) {
 				dto.RuntimeConfig = nil
 			default:
 				// remove managedFields from the object to reduce the size of the response
-				delete(runtimeResourceObject.Object["metadata"].(map[string]interface{}), "managedFields")
-				dto.RuntimeConfig = &runtimeResourceObject.Object
+				_, ok := runtimeResourceObject.Object["metadata"].(map[string]interface{})
+				if !ok {
+					h.logger.Warn(fmt.Sprintf("unable to get Runtime resource metadata %s/%s: %s", dto.InstanceID, dto.RuntimeID, err.Error()))
+					dto.RuntimeConfig = nil
+
+				} else {
+					delete(runtimeResourceObject.Object["metadata"].(map[string]interface{}), "managedFields")
+					dto.RuntimeConfig = &runtimeResourceObject.Object
+				}
 			}
 		}
 
