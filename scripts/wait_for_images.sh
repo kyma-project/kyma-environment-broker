@@ -9,9 +9,6 @@ set -o pipefail # prevents errors in a pipeline from being masked
 PR_NUMBER=$1
 
 REPOSITORY=${REPOSITORY:-kyma-project/kyma-environment-broker}
-GITHUB_URL=https://api.github.com/repos/${REPOSITORY}
-GITHUB_AUTH_HEADER="Authorization: Bearer ${GITHUB_TOKEN}"
-
 HEAD_SHA=$(gh pr view $PR_NUMBER --repo $REPOSITORY --json headRefOid --jq '.headRefOid')
 
 if [ -z "$HEAD_SHA" ]; then
