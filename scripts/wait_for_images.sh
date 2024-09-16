@@ -16,7 +16,8 @@ if [ -z "$HEAD_SHA" ]; then
   exit 1
 fi
 
-sleep 30
+echo "Sleeping for 3 minutes to wait for the image build before checking the status"
+sleep 180
 while true; do
   WORKFLOW_RUN=$(gh run list --repo $REPOSITORY --json name,status,conclusion,createdAt,headSha --jq '[.[] | select(.name == "pull-build-and-test-images" and .headSha == "'"$HEAD_SHA"'")] | sort_by(.createdAt) | last | {name: .name, status: .status, conclusion: .conclusion, created_at: .createdAt}')
   CONCLUSION=$(echo $WORKFLOW_RUN | jq -r '.conclusion')
@@ -25,7 +26,7 @@ while true; do
 
   if [ "$STATUS" == "in_progress" ]; then
     echo "Image build in progress"
-    sleep 30
+    sleep 10
   elif [ "$STATUS" == "completed" ]; then
     if [ "$CONCLUSION" == "success" ]; then
       echo "Images built successfully"
