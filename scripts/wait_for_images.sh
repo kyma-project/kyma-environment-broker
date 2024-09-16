@@ -21,6 +21,7 @@ while true; do
   WORKFLOW_RUN=$(gh run list --repo $REPOSITORY --json name,status,conclusion,createdAt,headSha --jq '[.[] | select(.name == "pull-build-and-test-images" and .headSha == "'"$HEAD_SHA"'")] | sort_by(.createdAt) | last | {name: .name, status: .status, conclusion: .conclusion, created_at: .createdAt}')
   CONCLUSION=$(echo $WORKFLOW_RUN | jq -r '.conclusion')
   STATUS=$(echo $WORKFLOW_RUN | jq -r '.status')
+  echo "Workflow run status: $STATUS, conclusion: $CONCLUSION"
 
   if [ "$CONCLUSION" == "in_progress" ]; then
     echo "Image build in progress"
