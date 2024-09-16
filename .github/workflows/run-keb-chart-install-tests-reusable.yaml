@@ -109,7 +109,7 @@ jobs:
         if: ${{ steps.changed-files-specific.outputs.any_modified == 'true' || inputs.release == 'true' }}
         timeout-minutes: 6
         run: |
-          ./scripts/wait-for-images.sh ${{ inputs.version }}
+          ./scripts/wait_for_images.sh ${{ inputs.version }}
 
   run-keb-chart-matrix:
     runs-on: ubuntu-latest
