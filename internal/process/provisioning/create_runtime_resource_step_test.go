@@ -140,8 +140,8 @@ func TestCreateRuntimeResourceStep_AllYamls(t *testing.T) {
 		{"AWS Multi Zone", broker.AWSPlanID, true, "eu-west-2"},
 		{"Preview Single Zone", broker.PreviewPlanID, false, "eu-west-2"},
 		{"Preview Multi Zone", broker.PreviewPlanID, true, "eu-west-2"},
-		{"SAP Converged Cloud Single Zone", broker.PreviewPlanID, false, "eu-de-1"},
-		{"SAP Converged Cloud Multi Zone", broker.PreviewPlanID, true, "eu-de-1"},
+		{"SAP Converged Cloud Single Zone", broker.SapConvergedCloudPlanID, false, "eu-de-1"},
+		{"SAP Converged Cloud Multi Zone", broker.SapConvergedCloudPlanID, true, "eu-de-1"},
 	} {
 		t.Run(testCase.name, func(t *testing.T) {
 			log := logrus.New()
@@ -627,6 +627,7 @@ func TestCreateRuntimeResourceStep_SapConvergedCloud(t *testing.T) {
 			assert.Equal(t, operation.RuntimeID, runtime.Name)
 			assert.Equal(t, "runtime-58f8c703-1756-48ab-9299-a847974d1fee", runtime.Labels["operator.kyma-project.io/kyma-name"])
 			assert.Equal(t, testCase.expectedProvider, runtime.Spec.Shoot.Provider.Type)
+			assert.Nil(t, runtime.Spec.Shoot.Provider.Workers[0].Volume)
 			assertWorkers(t, runtime.Spec.Shoot.Provider.Workers, testCase.expectedMachineType, 20, 3, testCase.expectedZonesCount, 0, testCase.expectedZonesCount, testCase.possibleZones)
 
 		})
