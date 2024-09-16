@@ -11,3 +11,4 @@ jobs:
       last-k3s-versions: 3
       release: "false"
       version: ${{ github.event.pull_request.number }}
+      
