@@ -23,10 +23,10 @@ while true; do
   STATUS=$(echo $WORKFLOW_RUN | jq -r '.status')
   echo "Workflow run status: $STATUS, conclusion: $CONCLUSION"
 
-  if [ "$CONCLUSION" == "in_progress" ]; then
+  if [ "$STATUS" == "in_progress" ]; then
     echo "Image build in progress"
     sleep 30
-  elif [ "$CONCLUSION" == "success" ]; then
+  elif [ "$STATUS" == "success" ]; then
     echo "Images built successfully"
     break
   else
