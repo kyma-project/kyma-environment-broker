@@ -19,6 +19,7 @@ if [ -z "$HEAD_SHA" ]; then
   exit 1
 fi
 
+sleep 30
 while true; do
   WORKFLOW_RUN=$(gh run list --repo $REPOSITORY --json name,status,conclusion,createdAt,headSha --jq '[.[] | select(.name == "pull-build-and-test-images" and .headSha == "'"$HEAD_SHA"'")] | sort_by(.createdAt) | last | {name: .name, status: .status, conclusion: .conclusion, created_at: .createdAt}')
   CONCLUSION=$(echo $WORKFLOW_RUN | jq -r '.conclusion')
