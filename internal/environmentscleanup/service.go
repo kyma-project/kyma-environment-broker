@@ -18,8 +18,9 @@ import (
 )
 
 const (
-	shootAnnotationRuntimeId = "kcp.provisioner.kyma-project.io/runtime-id"
-	shootLabelAccountId      = "account"
+	shootAnnotationRuntimeId                      = "kcp.provisioner.kyma-project.io/runtime-id"
+	shootAnnotationInfrastructureManagerRuntimeId = "infrastructuremanager.kyma-project.io/runtime-id"
+	shootLabelAccountId                           = "account"
 )
 
 //go:generate mockery --name=GardenerClient --output=automock
@@ -154,7 +155,10 @@ func (s *Service) shootToRuntime(st unstructured.Unstructured) (*runtime, error)
 	shoot := gardener.Shoot{Unstructured: st}
 	runtimeID, ok := shoot.GetAnnotations()[shootAnnotationRuntimeId]
 	if !ok {
-		return nil, fmt.Errorf("shoot %q has no runtime-id annotation", shoot.GetName())
+		runtimeID, ok = shoot.GetAnnotations()[shootAnnotationInfrastructureManagerRuntimeId]
+		if !ok {
+			return nil, fmt.Errorf("shoot %q has no runtime-id annotation", shoot.GetName())
+		}
 	}
 
 	accountID, ok := shoot.GetLabels()[shootLabelAccountId]
