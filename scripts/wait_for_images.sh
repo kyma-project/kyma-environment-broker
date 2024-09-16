@@ -22,12 +22,16 @@ fi
 while true; do
   WORKFLOW_RUN=$(gh run list --repo $REPOSITORY --json name,status,conclusion,createdAt,headSha --jq '[.[] | select(.name == "pull-build-and-test-images" and .headSha == "'"$HEAD_SHA"'")] | sort_by(.createdAt) | last | {name: .name, status: .status, conclusion: .conclusion, created_at: .createdAt}')
   CONCLUSION=$(echo $WORKFLOW_RUN | jq -r '.conclusion')
+  STATUS=$(echo $WORKFLOW_RUN | jq -r '.status')
 
-  if [ "$CONCLUSION" == "success" ]; then
+  if [ "$CONCLUSION" == "in_progress" ]; then
+    echo "Image build in progress"
+    sleep 30
+  elif [ "$CONCLUSION" == "success" ]; then
     echo "Images built successfully"
     break
   else
-    echo "Image not ready"
-    sleep 30
+    echo "Image build failed or not ready"
+    exit 1
   fi
 done
