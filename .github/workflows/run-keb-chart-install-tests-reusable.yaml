@@ -109,7 +109,7 @@ jobs:
         if: ${{ steps.changed-files-specific.outputs.any_modified == 'true' || inputs.release == 'true' }}
         timeout-minutes: 6
         env:
-          GH_TOKEN: ${{ secrets.BOT_TOKEN }}
+          GH_TOKEN: ${{ github.token }}
         run: |
           ./scripts/wait_for_images.sh ${{ inputs.version }}
 
