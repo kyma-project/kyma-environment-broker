@@ -108,6 +108,8 @@ jobs:
       - name: Wait for images to be ready
         if: ${{ steps.changed-files-specific.outputs.any_modified == 'true' || inputs.release == 'true' }}
         timeout-minutes: 6
+        env:
+          GH_TOKEN: ${{ secrets.BOT_TOKEN }}
         run: |
           ./scripts/wait_for_images.sh ${{ inputs.version }}
 
