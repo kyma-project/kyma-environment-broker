@@ -26,9 +26,14 @@ while true; do
   if [ "$STATUS" == "in_progress" ]; then
     echo "Image build in progress"
     sleep 30
-  elif [ "$STATUS" == "success" ]; then
-    echo "Images built successfully"
-    break
+  elif [ "$STATUS" == "completed" ]; then
+    if [ "$CONCLUSION" == "success" ]; then
+      echo "Images built successfully"
+      break
+    else
+      echo "Image build failed or not ready"
+      exit 1
+    fi
   else
     echo "Image build failed or not ready"
     exit 1
