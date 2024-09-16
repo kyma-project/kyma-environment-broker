@@ -19,7 +19,7 @@ fi
 echo "Sleeping for 3 minutes to wait for the image build before checking the status"
 sleep 180
 while true; do
-  WORKFLOW_RUN=$(gh run list --repo $REPOSITORY --json name,status,conclusion,createdAt,headSha --jq '[.[] | select(.name == "pull-build-and-test-images" and .headSha == "'"$HEAD_SHA"'")] | sort_by(.createdAt) | last | {name: .name, status: .status, conclusion: .conclusion, created_at: .createdAt}')
+  WORKFLOW_RUN=$(gh run list --repo $REPOSITORY --json name,status,conclusion,createdAt,headSha --jq '[.[] | select(.name == "pull-build-images" and .headSha == "'"$HEAD_SHA"'")] | sort_by(.createdAt) | last | {name: .name, status: .status, conclusion: .conclusion, created_at: .createdAt}')
   CONCLUSION=$(echo $WORKFLOW_RUN | jq -r '.conclusion')
   STATUS=$(echo $WORKFLOW_RUN | jq -r '.status')
   echo "Workflow run status: $STATUS, conclusion: $CONCLUSION"
