@@ -162,7 +162,8 @@ func TestCreateBindingEndpoint(t *testing.T) {
 
 	//// database
 	db := storage.NewMemoryStorage()
-	db.Instances().Insert(fixture.FixInstance("1"))
+	err = db.Instances().Insert(fixture.FixInstance("1"))
+	require.NoError(t, err)
 
 	skrK8sClientProvider := kubeconfig.NewK8sClientFromSecretProvider(kcpClient)
 
@@ -220,7 +221,8 @@ func TestCreateBindingEndpoint(t *testing.T) {
 		assert.Contains(t, string(content), "credentials")
 
 		var binding domain.Binding
-		json.Unmarshal(content, &binding)
+		err = json.Unmarshal(content, &binding)
+		require.NoError(t, err)
 		t.Logf("binding: %v", binding.Credentials)
 
 		//// verify connectivity using kubeconfig from the generated binding
