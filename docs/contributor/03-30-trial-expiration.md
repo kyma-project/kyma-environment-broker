@@ -23,8 +23,8 @@ If KEB accepts the instance expiration request, then it marks the instance as ex
 ## Update Requests
 
 When an instance update request is sent for an expired instance, the HTTP response is `OK` only if:
-* only **context** parameters are changed
-* the update includes the instance's **service_id**, which is required by OSB API
+* Only **context** parameters are changed
+* The update includes the instance's **service_id**, which is required by OSB API
 
 See the example call:
 
@@ -38,4 +38,4 @@ PATCH /oauth/v2/service_instances/F9AC6341-AC2A-4D3E-B2B7-1A8AFAA6F4C3?accepts_i
 }
 ```
 
-Calls including any additional information other than **service_id** and **context** parameters return the `400` response.
+Requests including any additional information other than **service_id** and **context** parameters return the `400` response.
