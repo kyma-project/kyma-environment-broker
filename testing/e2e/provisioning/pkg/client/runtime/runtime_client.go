@@ -10,7 +10,6 @@ import (
 	v1 "k8s.io/api/core/v1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
-	schema "github.com/kyma-project/control-plane/components/provisioner/pkg/gqlschema"
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
 )
@@ -23,25 +22,19 @@ type Client struct {
 	httpClient http.Client
 	log        logrus.FieldLogger
 
-	provisionerURL string
-	instanceID     string
-	tenantID       string
-	kcpK8sClient   client.Client
+	instanceID   string
+	tenantID     string
+	kcpK8sClient client.Client
 }
 
-func NewClient(provisionerURL, tenantID, instanceID string, clientHttp http.Client, kcpK8sClient client.Client, log logrus.FieldLogger) *Client {
+func NewClient(tenantID, instanceID string, clientHttp http.Client, kcpK8sClient client.Client, log logrus.FieldLogger) *Client {
 	return &Client{
-		tenantID:       tenantID,
-		instanceID:     instanceID,
-		provisionerURL: provisionerURL,
-		httpClient:     clientHttp,
-		log:            log,
-		kcpK8sClient:   kcpK8sClient,
+		tenantID:     tenantID,
+		instanceID:   instanceID,
+		httpClient:   clientHttp,
+		log:          log,
+		kcpK8sClient: kcpK8sClient,
 	}
-}
-
-type runtimeStatusResponse struct {
-	Result schema.RuntimeStatus `json:"result"`
 }
 
 func (c *Client) kubeconfigForInstanceID() ([]byte, error) {

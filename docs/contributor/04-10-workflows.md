@@ -66,9 +66,13 @@ This [workflow](/.github/workflows/run-govulncheck.yaml) runs the Govulncheck. I
 - Any `*.go` file
 - Any `*.sh` file
 
-## Image Build and Test Workflow
+## Image Build Workflow
 
-This [workflow](/.github/workflows/run-govulncheck.yaml) builds images and calls the reusable [workflow](/.github/workflows/run-keb-chart-install-tests-reusable.yaml) to install the KEB chart with the new images in the k3s cluster. 
+This [workflow](/.github/workflows/pull-build-images.yaml) builds images.
+
+## KEB Chart Install Test
+
+This [workflow](/.github/workflows/run-keb-chart-install-tests.yaml) calls the [reusable workflow](/.github/workflows/run-keb-chart-install-tests-reusable.yaml) to install the KEB chart with the new images in the k3s cluster. 
 
 ## Reusable Workflows
 

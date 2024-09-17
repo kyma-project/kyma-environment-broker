@@ -54,6 +54,8 @@ type Config struct {
 	UseSmallerMachineTypes bool `envconfig:"default=false"`
 
 	DisableSapConvergedCloud bool `envconfig:"default=false"`
+
+	SubaccountMovementEnabled bool `envconfig:"default=false"`
 }
 
 type ServicesConfig map[string]Service

@@ -94,7 +94,6 @@ func GenerateValues(
 			return Values{}, fmt.Errorf("trial provider for %s not yet implemented", trialProvider)
 		}
 
-		// todo: implement for all plans
 	default:
 		return Values{}, fmt.Errorf("plan %s not supported", operation.ProvisioningParameters.PlanID)
 	}

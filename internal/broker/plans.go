@@ -94,6 +94,7 @@ func AzureRegions(euRestrictedAccess bool) []string {
 		"japaneast",
 		"southeastasia",
 		"australiaeast",
+		"brazilsouth",
 	}
 }
 
@@ -113,6 +114,7 @@ func AzureRegionsDisplay(euRestrictedAccess bool) map[string]string {
 		"japaneast":     "japaneast (Japan, Tokyo)",
 		"southeastasia": "southeastasia (Asia Pacific, Singapore)",
 		"australiaeast": "australiaeast (Australia, Sydney)",
+		"brazilsouth":   "brazilsouth (Brasil, São Paulo)",
 	}
 }
 
@@ -129,6 +131,8 @@ func GcpRegions(assuredWorkloads bool) []string {
 		"me-central2",
 		"asia-northeast2",
 		"me-west1",
+		"southamerica-east1",
+		"australia-southeast1",
 	}
 }
 
@@ -139,12 +143,14 @@ func GcpRegionsDisplay(assuredWorkloads bool) map[string]string {
 		}
 	}
 	return map[string]string{
-		"europe-west3":    "europe-west3 (Europe, Frankfurt)",
-		"asia-south1":     "asia-south1 (India, Mumbai)",
-		"us-central1":     "us-central1 (US Central, IA)",
-		"me-central2":     "me-central2 (KSA, Dammam)",
-		"asia-northeast2": "asia-northeast2 (Japan, Osaka)",
-		"me-west1":        "me-west1 (Israel, Tel Aviv)",
+		"europe-west3":         "europe-west3 (Europe, Frankfurt)",
+		"asia-south1":          "asia-south1 (India, Mumbai)",
+		"us-central1":          "us-central1 (US Central, IA)",
+		"me-central2":          "me-central2 (KSA, Dammam)",
+		"asia-northeast2":      "asia-northeast2 (Japan, Osaka)",
+		"me-west1":             "me-west1 (Israel, Tel Aviv)",
+		"southamerica-east1":   "southamerica-east1 (Brasil, São Paulo)",
+		"australia-southeast1": "australia-southeast1 (Australia, Sydney)",
 	}
 }
 
