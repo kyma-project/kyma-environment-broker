@@ -459,7 +459,7 @@ func createAPI(router *mux.Router, servicesConfig broker.ServicesConfig, planVal
 		LastOperationEndpoint:        broker.NewLastOperation(db.Operations(), db.InstancesArchived(), logs),
 		BindEndpoint:                 broker.NewBind(cfg.Broker.Binding, db.Instances(), logs, clientProvider, kubeconfigProvider, cfg.BindingTokenExpirationSeconds),
 		UnbindEndpoint:               broker.NewUnbind(logs),
-		GetBindingEndpoint:           broker.NewGetBinding(logs, db.Operations(), clientProvider, kubeconfigProvider, cfg.BindingTokenExpirationSeconds),
+		GetBindingEndpoint:           broker.NewGetBinding(logs),
 		LastBindingOperationEndpoint: broker.NewLastBindingOperation(logs),
 	}
 
