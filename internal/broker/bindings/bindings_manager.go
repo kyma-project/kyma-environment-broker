@@ -26,21 +26,21 @@ type KubeconfigProvider interface {
 	KubeconfigForRuntimeID(runtimeId string) ([]byte, error)
 }
 
-type BindingsManagerImpl struct {
+type TokenRequestsBindingsManager struct {
 	clientProvider    ClientProvider
 	tokenExpiration   int
 	kubeconfigBuilder *kubeconfig.Builder
 }
 
-func NewBindingsManager(clientProvider ClientProvider, kubeconfigProvider KubeconfigProvider, tokenExpiration int) *BindingsManagerImpl {
-	return &BindingsManagerImpl{
+func NewTokenRequestsBindingsManager(clientProvider ClientProvider, kubeconfigProvider KubeconfigProvider, tokenExpiration int) *TokenRequestsBindingsManager {
+	return &TokenRequestsBindingsManager{
 		clientProvider:    clientProvider,
 		tokenExpiration:   tokenExpiration,
 		kubeconfigBuilder: kubeconfig.NewBuilder(nil, nil, kubeconfigProvider),
 	}
 }
 
-func (c *BindingsManagerImpl) Create(ctx context.Context, runtimeID, bindingID string) (string, error) {
+func (c *TokenRequestsBindingsManager) Create(ctx context.Context, runtimeID, bindingID string) (string, error) {
 	clientset, err := c.clientProvider.K8sClientSetForRuntimeID(runtimeID)
 
 	if err != nil {
