@@ -35,6 +35,16 @@ func NewBind(cfg BindingConfig, instanceStorage storage.Instances, log logrus.Fi
 		bindings: broker.NewBindingsManager(clientProvider, kubeconfigProvider, tokenExpirationSeconds)}
 }
 
+type BindingData struct {
+	Username string
+	Password string
+}
+
+var dummyCredentials = BindingData{
+	Username: "admin",
+	Password: "admin1234",
+}
+
 // Bind creates a new service binding
 //
 //	PUT /v2/service_instances/{instance_id}/service_bindings/{binding_id}
