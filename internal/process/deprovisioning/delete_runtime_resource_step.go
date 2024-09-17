@@ -12,7 +12,6 @@ import (
 	"github.com/sirupsen/logrus"
 	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/api/meta"
-	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	imv1 "github.com/kyma-project/infrastructure-manager/api/v1"
@@ -55,14 +54,21 @@ func (step *DeleteRuntimeResourceStep) Run(operation internal.Operation, logger 
 		return operation, 0, nil
 	}
 
-	runtime := &imv1.Runtime{
-		ObjectMeta: v1.ObjectMeta{
-			Name:      resourceName,
-			Namespace: resourceNamespace,
-		},
+	var runtime = imv1.Runtime{}
+	err := step.kcpClient.Get(context.Background(), client.ObjectKey{Name: resourceName, Namespace: resourceNamespace}, &runtime)
+	if err != nil && !errors.IsNotFound(err) {
+		logger.Warnf("Unable to read runtime: %s", err)
+		return step.operationManager.RetryOperation(operation, err.Error(), err, 5*time.Second, 1*time.Minute, logger)
+	}
+	controlledByKimOnly := !runtime.IsControlledByProvisioner()
+	operation, backoff, _ := step.operationManager.UpdateOperation(operation, func(operation *internal.Operation) {
+		operation.KimDeprovisionsOnly = controlledByKimOnly
+	}, logger)
+	if backoff > 0 {
+		return operation, backoff, nil
 	}
 
-	err := step.kcpClient.Delete(context.Background(), runtime)
+	err = step.kcpClient.Delete(context.Background(), &runtime)
 
 	// check the error
 	if err != nil {

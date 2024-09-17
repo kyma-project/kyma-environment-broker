@@ -62,7 +62,7 @@ func (s *UpgradeShootStep) Run(operation internal.Operation, log logrus.FieldLog
 		return s.operationManager.RetryOperation(operation, err.Error(), err, 5*time.Second, 1*time.Minute, log)
 	}
 	if !runtime.IsControlledByProvisioner() {
-		log.Infof("Skipping provisioning because the runtime is not controlled by the provisioner")
+		log.Infof("Skipping because the runtime is not controlled by the provisioner")
 		return operation, 0, nil
 	}
 
