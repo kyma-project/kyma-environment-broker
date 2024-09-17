@@ -709,3 +709,82 @@ func TestUpdateEndpoint_ContextAndParamsChanged(t *testing.T) {
 	}, true)
 	require.Error(t, err)
 }
+
+func TestSubaccountMovement(t *testing.T) {
+	instance := internal.Instance{
+		InstanceID:      instanceID,
+		ServicePlanID:   TrialPlanID,
+		GlobalAccountID: "InitialGlobalAccountID",
+		Parameters: internal.ProvisioningParameters{
+			PlanID:     TrialPlanID,
+			ErsContext: internal.ERSContext{},
+		},
+	}
+
+	storage := storage.NewMemoryStorage()
+	err := storage.Instances().Insert(instance)
+	require.NoError(t, err)
+
+	err = storage.Operations().InsertProvisioningOperation(fixProvisioningOperation("01"))
+	require.NoError(t, err)
+
+	kcBuilder := &kcMock.KcBuilder{}
+
+	handler := &handler{}
+
+	queue := &automock.Queue{}
+	queue.On("Add", mock.AnythingOfType("string"))
+
+	planDefaults := func(planID string, platformProvider internal.CloudProvider, provider *internal.CloudProvider) (*gqlschema.ClusterConfigInput, error) {
+		return &gqlschema.ClusterConfigInput{}, nil
+	}
+
+	svc := NewUpdate(Config{SubaccountMovementEnabled: true}, storage.Instances(), storage.RuntimeStates(), storage.Operations(), handler, true, true, queue, PlansConfig{},
+		planDefaults, logrus.New(), dashboardConfig, kcBuilder, &OneForAllConvergedCloudRegionsProvider{})
+
+	t.Run("no move performed so subscription should be empty", func(t *testing.T) {
+		_, err = svc.Update(context.Background(), instanceID, domain.UpdateDetails{
+			ServiceID:       KymaServiceID,
+			PlanID:          TrialPlanID,
+			PreviousValues:  domain.PreviousValues{},
+			RawContext:      json.RawMessage("{\"globalaccount_id\":\"InitialGlobalAccountID\", \"active\":true}"),
+			RawParameters:   json.RawMessage("{\"name\":\"test\"}"),
+			MaintenanceInfo: nil,
+		}, true)
+		require.NoError(t, err)
+		instance, err := storage.Instances().GetByID(instanceID)
+		require.NoError(t, err)
+		assert.Equal(t, "", instance.SubscriptionGlobalAccountID)
+		assert.Equal(t, "InitialGlobalAccountID", instance.GlobalAccountID)
+	})
+
+	t.Run("move subaccount first time", func(t *testing.T) {
+		_, err = svc.Update(context.Background(), instanceID, domain.UpdateDetails{
+			ServiceID:       KymaServiceID,
+			PlanID:          TrialPlanID,
+			PreviousValues:  domain.PreviousValues{},
+			RawContext:      json.RawMessage("{\"globalaccount_id\":\"newGlobalAccountID-v1\"}"),
+			MaintenanceInfo: nil,
+		}, true)
+		require.NoError(t, err)
+		instance, err := storage.Instances().GetByID(instanceID)
+		require.NoError(t, err)
+		assert.Equal(t, "InitialGlobalAccountID", instance.SubscriptionGlobalAccountID)
+		assert.Equal(t, "newGlobalAccountID-v1", instance.GlobalAccountID)
+	})
+
+	t.Run("move subaccount second time", func(t *testing.T) {
+		_, err = svc.Update(context.Background(), instanceID, domain.UpdateDetails{
+			ServiceID:       KymaServiceID,
+			PlanID:          TrialPlanID,
+			PreviousValues:  domain.PreviousValues{},
+			RawContext:      json.RawMessage("{\"globalaccount_id\":\"newGlobalAccountID-v2\"}"),
+			MaintenanceInfo: nil,
+		}, true)
+		require.NoError(t, err)
+		instance, err := storage.Instances().GetByID(instanceID)
+		require.NoError(t, err)
+		assert.Equal(t, "InitialGlobalAccountID", instance.SubscriptionGlobalAccountID)
+		assert.Equal(t, "newGlobalAccountID-v2", instance.GlobalAccountID)
+	})
+}
