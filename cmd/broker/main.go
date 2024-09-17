@@ -170,7 +170,6 @@ type ProfilerConfig struct {
 type K8sClientProvider interface {
 	K8sClientForRuntimeID(rid string) (client.Client, error)
 	K8sClientSetForRuntimeID(runtimeID string) (*kubernetes.Clientset, error)
-	KubeconfigForRuntimeID(runtimeId string) ([]byte, error)
 }
 
 type KubeconfigProvider interface {
@@ -346,7 +345,7 @@ func main() {
 
 	// create server
 	router := mux.NewRouter()
-	createAPI(router, servicesConfig, inputFactory, &cfg, db, provisionQueue, deprovisionQueue, updateQueue, logger, logs, inputFactory.GetPlanDefaults, kcBuilder, skrK8sClientProvider)
+	createAPI(router, servicesConfig, inputFactory, &cfg, db, provisionQueue, deprovisionQueue, updateQueue, logger, logs, inputFactory.GetPlanDefaults, kcBuilder, skrK8sClientProvider, skrK8sClientProvider)
 
 	// create metrics endpoint
 	router.Handle("/metrics", promhttp.Handler())
@@ -423,7 +422,7 @@ func logConfiguration(logs *logrus.Logger, cfg Config) {
 	logs.Infof("Is SubaccountMovementEnabled: %t", cfg.Broker.SubaccountMovementEnabled)
 }
 
-func createAPI(router *mux.Router, servicesConfig broker.ServicesConfig, planValidator broker.PlanValidator, cfg *Config, db storage.BrokerStorage, provisionQueue, deprovisionQueue, updateQueue *process.Queue, logger lager.Logger, logs logrus.FieldLogger, planDefaults broker.PlanDefaults, kcBuilder kubeconfig.KcBuilder, skrK8sClientProvider K8sClientProvider) {
+func createAPI(router *mux.Router, servicesConfig broker.ServicesConfig, planValidator broker.PlanValidator, cfg *Config, db storage.BrokerStorage, provisionQueue, deprovisionQueue, updateQueue *process.Queue, logger lager.Logger, logs logrus.FieldLogger, planDefaults broker.PlanDefaults, kcBuilder kubeconfig.KcBuilder, clientProvider K8sClientProvider, kubeconfigProvider KubeconfigProvider) {
 	suspensionCtxHandler := suspension.NewContextUpdateHandler(db.Operations(), provisionQueue, deprovisionQueue, logs)
 
 	defaultPlansConfig, err := servicesConfig.DefaultPlansConfig()
@@ -458,9 +457,9 @@ func createAPI(router *mux.Router, servicesConfig broker.ServicesConfig, planVal
 			planDefaults, logs, cfg.KymaDashboardConfig, kcBuilder, convergedCloudRegionProvider),
 		GetInstanceEndpoint:          broker.NewGetInstance(cfg.Broker, db.Instances(), db.Operations(), kcBuilder, logs),
 		LastOperationEndpoint:        broker.NewLastOperation(db.Operations(), db.InstancesArchived(), logs),
-		BindEndpoint:                 broker.NewBind(cfg.Broker.Binding, db.Instances(), logs, skrK8sClientProvider, cfg.BindingTokenExpirationSeconds),
+		BindEndpoint:                 broker.NewBind(cfg.Broker.Binding, db.Instances(), logs, clientProvider, kubeconfigProvider, cfg.BindingTokenExpirationSeconds),
 		UnbindEndpoint:               broker.NewUnbind(logs),
-		GetBindingEndpoint:           broker.NewGetBinding(logs, db.Operations(), skrK8sClientProvider, cfg.BindingTokenExpirationSeconds),
+		GetBindingEndpoint:           broker.NewGetBinding(logs, db.Operations(), clientProvider, kubeconfigProvider,cfg.BindingTokenExpirationSeconds),
 		LastBindingOperationEndpoint: broker.NewLastBindingOperation(logs),
 	}
 
