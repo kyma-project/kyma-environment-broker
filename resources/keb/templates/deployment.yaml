@@ -412,7 +412,7 @@ spec:
             - name: APP_BROKER_ALLOW_UPDATE_EXPIRED_INSTANCE_WITH_CONTEXT
               value: "{{ .Values.allowUpdateExpiredInstanceWithContext }}"
             - name: APP_BROKER_SUBACCOUNT_MOVEMENT_ENABLED
-              value: "{{ .Values.subAccountMovementEnabled }}"
+              value: "{{ .Values.broker.subaccountMovementEnabled }}"
           ports:
             - name: http
               containerPort: {{ .Values.broker.port }}

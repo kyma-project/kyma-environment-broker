@@ -1,4 +1,4 @@
-name: pull-build-and-test-images
+name: pull-build-images
 
 on:
    pull_request_target:
@@ -70,14 +70,3 @@ jobs:
          dockerfile: Dockerfile.subaccountsync
          context: .
          build-args: BIN=subaccount-sync
-
-   run-install-keb-chart-tests:
-      permissions:
-         contents: read
-      needs: [kyma-environment-broker-image, archiver-image, environments-cleanup-image, deprovision-retrigger-image, expirator-image, runtime-reconciler-image, subaccount-cleanup-image, subaccount-sync-image]
-      uses: "./.github/workflows/run-keb-chart-install-tests-reusable.yaml"
-      if: ${{ !github.event.pull_request.draft }}
-      with:
-         last-k3s-versions: 3
-         release: "false"
-         version: ${{ github.event.pull_request.number }}
