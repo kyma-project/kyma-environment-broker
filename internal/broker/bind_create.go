@@ -30,7 +30,7 @@ type BindEndpoint struct {
 	log logrus.FieldLogger
 }
 
-func NewBind(cfg BindingConfig, instanceStorage storage.Instances, log logrus.FieldLogger,clientProvider broker.ClientProvider, kubeconfigProvider broker.KubeconfigProvider, tokenExpirationSeconds int) *BindEndpoint {
+func NewBind(cfg BindingConfig, instanceStorage storage.Instances, log logrus.FieldLogger, clientProvider broker.ClientProvider, kubeconfigProvider broker.KubeconfigProvider, tokenExpirationSeconds int) *BindEndpoint {
 	return &BindEndpoint{config: cfg, instancesStorage: instanceStorage, log: log.WithField("service", "BindEndpoint"),
 		bindings: broker.NewBindingsManager(clientProvider, kubeconfigProvider, tokenExpirationSeconds)}
 }

@@ -15,60 +15,60 @@ type Credentials struct {
 }
 
 type BindingsManager interface {
-    Create(ctx context.Context, runtimeID, bindingID string) (string, error)
+	Create(ctx context.Context, runtimeID, bindingID string) (string, error)
 }
 
 type ClientProvider interface {
-    K8sClientSetForRuntimeID(runtimeID string) (*kubernetes.Clientset, error)
+	K8sClientSetForRuntimeID(runtimeID string) (*kubernetes.Clientset, error)
 }
 
 type KubeconfigProvider interface {
-    KubeconfigForRuntimeID(runtimeId string) ([]byte, error)
+	KubeconfigForRuntimeID(runtimeId string) ([]byte, error)
 }
 
 type BindingsManagerImpl struct {
-    clientProvider ClientProvider   
-    tokenExpiration int
-    kubeconfigBuilder *kubeconfig.Builder
+	clientProvider    ClientProvider
+	tokenExpiration   int
+	kubeconfigBuilder *kubeconfig.Builder
 }
 
 func NewBindingsManager(clientProvider ClientProvider, kubeconfigProvider KubeconfigProvider, tokenExpiration int) *BindingsManagerImpl {
-    return &BindingsManagerImpl{
-        clientProvider: clientProvider,
-        tokenExpiration: tokenExpiration,
-        kubeconfigBuilder: kubeconfig.NewBuilder(nil, nil, kubeconfigProvider),
-    }
+	return &BindingsManagerImpl{
+		clientProvider:    clientProvider,
+		tokenExpiration:   tokenExpiration,
+		kubeconfigBuilder: kubeconfig.NewBuilder(nil, nil, kubeconfigProvider),
+	}
 }
 
 func (c *BindingsManagerImpl) Create(ctx context.Context, runtimeID, bindingID string) (string, error) {
-        clientset, err := c.clientProvider.K8sClientSetForRuntimeID(runtimeID)
+	clientset, err := c.clientProvider.K8sClientSetForRuntimeID(runtimeID)
 
-        if err != nil {
-            return "", fmt.Errorf("while creating a runtime client for binding creation: %v", err)
-        }
+	if err != nil {
+		return "", fmt.Errorf("while creating a runtime client for binding creation: %v", err)
+	}
 
-        tokenRequest := &authv1.TokenRequest{
-            ObjectMeta: mv1.ObjectMeta{
-                Name: "admin",
-                Namespace: "default",
-            },
-            Spec: authv1.TokenRequestSpec{
-                ExpirationSeconds: ptr.Integer64(int64(c.tokenExpiration)),
-            },
-        }
-        
-        // old usage with client.Client
-        tkn, err := clientset.CoreV1().ServiceAccounts("default").CreateToken(ctx, "admin", tokenRequest, mv1.CreateOptions{})
+	tokenRequest := &authv1.TokenRequest{
+		ObjectMeta: mv1.ObjectMeta{
+			Name:      "admin",
+			Namespace: "default",
+		},
+		Spec: authv1.TokenRequestSpec{
+			ExpirationSeconds: ptr.Integer64(int64(c.tokenExpiration)),
+		},
+	}
 
-        if err != nil {
-            return "", fmt.Errorf("while creating a token request: %v", err)
-        }
+	// old usage with client.Client
+	tkn, err := clientset.CoreV1().ServiceAccounts("default").CreateToken(ctx, "admin", tokenRequest, mv1.CreateOptions{})
 
-        kubeconfigContent, err := c.kubeconfigBuilder.BuildFromAdminKubeconfigForBinding(runtimeID, tkn.Status.Token)
+	if err != nil {
+		return "", fmt.Errorf("while creating a token request: %v", err)
+	}
 
-        if err != nil {
-            return "", fmt.Errorf("while creating a kubeconfig: %v", err)
-        }
+	kubeconfigContent, err := c.kubeconfigBuilder.BuildFromAdminKubeconfigForBinding(runtimeID, tkn.Status.Token)
 
-        return string(kubeconfigContent), nil
+	if err != nil {
+		return "", fmt.Errorf("while creating a kubeconfig: %v", err)
+	}
+
+	return string(kubeconfigContent), nil
 }

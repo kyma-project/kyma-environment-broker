@@ -43,10 +43,10 @@ type kubeconfigData struct {
 	ServerURL     string
 	OIDCIssuerURL string
 	OIDCClientID  string
-	Token string
+	Token         string
 }
 
-func (b*Builder) BuildFromAdminKubeconfigForBinding(runtimeID string, token string) (string, error) {
+func (b *Builder) BuildFromAdminKubeconfigForBinding(runtimeID string, token string) (string, error) {
 	adminKubeconfig, err := b.kubeconfigProvider.KubeconfigForRuntimeID(runtimeID)
 	if err != nil {
 		return "", err
@@ -55,10 +55,10 @@ func (b*Builder) BuildFromAdminKubeconfigForBinding(runtimeID string, token stri
 	kubeCfg, err := b.unmarshal(adminKubeconfig)
 
 	return b.parseTemplate(kubeconfigData{
-		ContextName:   kubeCfg.CurrentContext,
-		CAData:        kubeCfg.Clusters[0].Cluster.CertificateAuthorityData,
-		ServerURL:     kubeCfg.Clusters[0].Cluster.Server,
-		Token:         token,
+		ContextName: kubeCfg.CurrentContext,
+		CAData:      kubeCfg.Clusters[0].Cluster.CertificateAuthorityData,
+		ServerURL:   kubeCfg.Clusters[0].Cluster.Server,
+		Token:       token,
 	}, kubeconfigTemplateForKymaBindings)
 }
 
@@ -98,7 +98,7 @@ func (b *Builder) BuildFromAdminKubeconfig(instance *internal.Instance, adminKub
 	}, kubeconfigTemplate)
 }
 
-func (b*Builder) unmarshal(kubeconfigContent []byte) (*kubeconfig, error) {
+func (b *Builder) unmarshal(kubeconfigContent []byte) (*kubeconfig, error) {
 	var kubeCfg kubeconfig
 
 	err := yaml.Unmarshal(kubeconfigContent, &kubeCfg)
