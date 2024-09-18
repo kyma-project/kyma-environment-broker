@@ -53,6 +53,9 @@ func (b *Builder) BuildFromAdminKubeconfigForBinding(runtimeID string, token str
 	}
 
 	kubeCfg, err := b.unmarshal(adminKubeconfig)
+	if err != nil {
+		return "", err
+	}
 
 	return b.parseTemplate(kubeconfigData{
 		ContextName: kubeCfg.CurrentContext,
