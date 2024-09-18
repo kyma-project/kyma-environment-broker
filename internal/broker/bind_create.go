@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"strings"
 
+	broker "github.com/kyma-project/kyma-environment-broker/internal/broker/bindings"
 	"github.com/kyma-project/kyma-environment-broker/internal/storage"
 	"github.com/kyma-project/kyma-environment-broker/internal/storage/dberr"
 	"github.com/pivotal-cf/brokerapi/v8/domain/apiresponses"
@@ -24,11 +25,14 @@ type BindEndpoint struct {
 	config           BindingConfig
 	instancesStorage storage.Instances
 
+	bindings broker.BindingsManager
+
 	log logrus.FieldLogger
 }
 
-func NewBind(cfg BindingConfig, instanceStorage storage.Instances, log logrus.FieldLogger) *BindEndpoint {
-	return &BindEndpoint{config: cfg, instancesStorage: instanceStorage, log: log.WithField("service", "BindEndpoint")}
+func NewBind(cfg BindingConfig, instanceStorage storage.Instances, log logrus.FieldLogger, clientProvider broker.ClientProvider, kubeconfigProvider broker.KubeconfigProvider, tokenExpirationSeconds int) *BindEndpoint {
+	return &BindEndpoint{config: cfg, instancesStorage: instanceStorage, log: log.WithField("service", "BindEndpoint"),
+		bindings: broker.NewTokenRequestsBindingsManager(clientProvider, kubeconfigProvider, tokenExpirationSeconds)}
 }
 
 type BindingData struct {
@@ -68,9 +72,15 @@ func (b *BindEndpoint) Bind(ctx context.Context, instanceID, bindingID string, d
 		).WithErrorKey("BindingNotSupported").Build()
 	}
 
+	// get kubeconfig for the instance
+	kubeconfig, err := b.bindings.Create(ctx, instance.RuntimeID, bindingID)
+	if err != nil {
+		return domain.Binding{}, fmt.Errorf("failed to create binding: %s", err)
+	}
+
 	return domain.Binding{
 		IsAsync:     false,
-		Credentials: dummyCredentials,
+		Credentials: kubeconfig,
 	}, nil
 }
 

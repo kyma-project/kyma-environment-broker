@@ -43,6 +43,26 @@ type kubeconfigData struct {
 	ServerURL     string
 	OIDCIssuerURL string
 	OIDCClientID  string
+	Token         string
+}
+
+func (b *Builder) BuildFromAdminKubeconfigForBinding(runtimeID string, token string) (string, error) {
+	adminKubeconfig, err := b.kubeconfigProvider.KubeconfigForRuntimeID(runtimeID)
+	if err != nil {
+		return "", err
+	}
+
+	kubeCfg, err := b.unmarshal(adminKubeconfig)
+	if err != nil {
+		return "", err
+	}
+
+	return b.parseTemplate(kubeconfigData{
+		ContextName: kubeCfg.CurrentContext,
+		CAData:      kubeCfg.Clusters[0].Cluster.CertificateAuthorityData,
+		ServerURL:   kubeCfg.Clusters[0].Cluster.Server,
+		Token:       token,
+	}, kubeconfigTemplateForKymaBindings)
 }
 
 func (b *Builder) BuildFromAdminKubeconfig(instance *internal.Instance, adminKubeconfig string) (string, error) {
@@ -57,7 +77,6 @@ func (b *Builder) BuildFromAdminKubeconfig(instance *internal.Instance, adminKub
 		return "", fmt.Errorf("while fetching oidc data: %w", err)
 	}
 
-	var kubeCfg kubeconfig
 	var kubeconfigContent []byte
 	if adminKubeconfig == "" {
 		kubeconfigContent, err = b.kubeconfigProvider.KubeconfigForRuntimeID(instance.RuntimeID)
@@ -67,12 +86,10 @@ func (b *Builder) BuildFromAdminKubeconfig(instance *internal.Instance, adminKub
 	} else {
 		kubeconfigContent = []byte(adminKubeconfig)
 	}
-	err = yaml.Unmarshal(kubeconfigContent, &kubeCfg)
+
+	kubeCfg, err := b.unmarshal(kubeconfigContent)
 	if err != nil {
-		return "", fmt.Errorf("while unmarshaling kubeconfig: %w", err)
-	}
-	if err := b.validKubeconfig(kubeCfg); err != nil {
-		return "", fmt.Errorf("while validation kubeconfig fetched by provisioner: %w", err)
+		return "", fmt.Errorf("during unmarshal invocation: %w", err)
 	}
 
 	return b.parseTemplate(kubeconfigData{
@@ -81,7 +98,20 @@ func (b *Builder) BuildFromAdminKubeconfig(instance *internal.Instance, adminKub
 		ServerURL:     kubeCfg.Clusters[0].Cluster.Server,
 		OIDCIssuerURL: issuerURL,
 		OIDCClientID:  clientID,
-	})
+	}, kubeconfigTemplate)
+}
+
+func (b *Builder) unmarshal(kubeconfigContent []byte) (*kubeconfig, error) {
+	var kubeCfg kubeconfig
+
+	err := yaml.Unmarshal(kubeconfigContent, &kubeCfg)
+	if err != nil {
+		return nil, fmt.Errorf("while unmarshaling kubeconfig: %w", err)
+	}
+	if err := b.validKubeconfig(kubeCfg); err != nil {
+		return nil, fmt.Errorf("while validation kubeconfig fetched by provisioner: %w", err)
+	}
+	return &kubeCfg, nil
 }
 
 func (b *Builder) Build(instance *internal.Instance) (string, error) {
@@ -107,10 +137,10 @@ func (b *Builder) GetServerURL(runtimeID string) (string, error) {
 	return kubeCfg.Clusters[0].Cluster.Server, nil
 }
 
-func (b *Builder) parseTemplate(payload kubeconfigData) (string, error) {
+func (b *Builder) parseTemplate(payload kubeconfigData, templateName string) (string, error) {
 	var result bytes.Buffer
 	t := template.New("kubeconfigParser")
-	t, err := t.Parse(kubeconfigTemplate)
+	t, err := t.Parse(templateName)
 	if err != nil {
 		return "", fmt.Errorf("while parsing kubeconfig template: %w", err)
 	}

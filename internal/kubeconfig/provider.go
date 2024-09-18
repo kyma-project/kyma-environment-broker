@@ -7,6 +7,7 @@ import (
 	"k8s.io/apimachinery/pkg/api/errors"
 
 	v1 "k8s.io/api/core/v1"
+	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/kubernetes/scheme"
 	"k8s.io/client-go/tools/clientcmd"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -28,7 +29,7 @@ func (p *SecretProvider) KubeconfigForRuntimeID(runtimeId string) ([]byte, error
 	kubeConfigSecret := &v1.Secret{}
 	err := p.kcpK8sClient.Get(context.Background(), p.objectKey(runtimeId), kubeConfigSecret)
 	if errors.IsNotFound(err) {
-		return nil, NewNotFoundError("secret not found")
+		return nil, NewNotFoundError(fmt.Sprintf("secret not found for runtime id %s", runtimeId))
 	}
 	if err != nil {
 		return nil, fmt.Errorf("while getting secret from kcp for runtimeId=%s", runtimeId)
@@ -70,6 +71,25 @@ func (p *SecretProvider) K8sClientForRuntimeID(runtimeID string) (client.Client,
 	return k8sCli, nil
 }
 
+func (p *SecretProvider) K8sClientSetForRuntimeID(runtimeID string) (*kubernetes.Clientset, error) {
+	kubeconfig, err := p.KubeconfigForRuntimeID(runtimeID)
+	if err != nil {
+		return nil, err
+	}
+	restCfg, err := clientcmd.RESTConfigFromKubeConfig(kubeconfig)
+
+	if err != nil {
+		return nil, fmt.Errorf("while creating k8s client set - rest config from kubeconfig")
+	}
+
+	clientset, err := kubernetes.NewForConfig(restCfg)
+	if err != nil {
+		return nil, fmt.Errorf("while creating k8s client set")
+	}
+
+	return clientset, nil
+}
+
 type FakeProvider struct {
 	c client.Client
 }
@@ -85,6 +105,10 @@ func (p *FakeProvider) K8sClientForRuntimeID(_ string) (client.Client, error) {
 	return p.c, nil
 }
 
-func (p *FakeProvider) KubeconfigForRuntimeID(runtimeId string) ([]byte, error) {
+func (p *FakeProvider) KubeconfigForRuntimeID(runtimeID string) ([]byte, error) {
 	return []byte("fake kubeconfig"), nil
+}
+
+func (p *FakeProvider) K8sClientSetForRuntimeID(runtimeID string) (*kubernetes.Clientset, error) {
+	return nil, fmt.Errorf("not implemented")
 }
