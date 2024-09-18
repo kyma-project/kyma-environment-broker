@@ -84,17 +84,13 @@ func TestCreateBindingEndpoint(t *testing.T) {
 	require.NoError(t, err)
 
 	//// populate skr client with data
-	err = skrClient.Create(context.Background(), &corev1.Namespace{
-		ObjectMeta: v1.ObjectMeta{
-			Name: "default",
-		},
-	})
 	err = skrClient.Create(context.Background(), &corev1.ServiceAccount{
 		ObjectMeta: v1.ObjectMeta{
 			Name:      "admin",
 			Namespace: "default",
 		},
 	})
+	require.NoError(t, err)
 
 	//// create clusterrole
 	err = skrClient.Create(context.Background(), &rbacv1.ClusterRole{
