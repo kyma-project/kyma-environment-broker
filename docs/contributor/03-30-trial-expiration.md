@@ -6,7 +6,7 @@ You can explore and use SAP BTP, Kyma runtime for free for a limited period with
 * The trial service plan for 14 days.
 * The free plan for 30 days.
 
-After the allocated time, the [Trial Cleanup CronJob](./06-40-trial-cleanup-cronjob.md) sends a request to Kyma Environment Broker (KEB) to expire the trial or free instance. KEB suspends the instance without the possibility to unsuspend it. <!--is it ok to mention just the trial cleanup job? the other one is not documented; should I still use the "Expirator" name?-->
+After the allocated time, the [Trial Cleanup](./06-40-trial-cleanup-cronjob.md) and the [Expirator](../../cmd/expirator/main.go) CronJobs send a request to Kyma Environment Broker (KEB) to expire the trial or free instance respectively. KEB suspends the instance without the possibility to unsuspend it.
 
 ## Details
 
