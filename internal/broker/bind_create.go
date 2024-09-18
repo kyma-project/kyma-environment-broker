@@ -28,21 +28,19 @@ type BindEndpoint struct {
 	instancesStorage storage.Instances
 
 	tokenRequestsBindingManager broker.BindingsManager
-	gardenerBindingsManager broker.BindingsManager
+	gardenerBindingsManager     broker.BindingsManager
 
 	log logrus.FieldLogger
 }
 
 type BindingParams struct {
-	TokenRequests       bool          `json:"token_requests,omit"`
+	TokenRequests bool `json:"token_requests,omit"`
 }
-
-
 
 func NewBind(cfg BindingConfig, instanceStorage storage.Instances, log logrus.FieldLogger, clientProvider broker.ClientProvider, kubeconfigProvider broker.KubeconfigProvider, gardenerClient client.Client, tokenExpirationSeconds int) *BindEndpoint {
 	return &BindEndpoint{config: cfg, instancesStorage: instanceStorage, log: log.WithField("service", "BindEndpoint"),
 		tokenRequestsBindingManager: broker.NewTokenRequestsBindingsManager(clientProvider, kubeconfigProvider, tokenExpirationSeconds),
-		gardenerBindingsManager: broker.NewGardenerBindingManager(gardenerClient, tokenExpirationSeconds),
+		gardenerBindingsManager:     broker.NewGardenerBindingManager(gardenerClient, tokenExpirationSeconds),
 	}
 }
 
@@ -91,8 +89,8 @@ func (b *BindEndpoint) Bind(ctx context.Context, instanceID, bindingID string, d
 	}
 
 	var kubeconfig string
-	if parameters.TokenRequests { 
-	    // get kubeconfig for the instance
+	if parameters.TokenRequests {
+		// get kubeconfig for the instance
 		kubeconfig, err = b.tokenRequestsBindingManager.Create(ctx, instance, bindingID)
 		if err != nil {
 			return domain.Binding{}, fmt.Errorf("failed to create kyma binding using token requests: %s", err)
@@ -103,7 +101,6 @@ func (b *BindEndpoint) Bind(ctx context.Context, instanceID, bindingID string, d
 			return domain.Binding{}, fmt.Errorf("failed to create kyma binding using adminkubeconfig gardener subresource: %s", err)
 		}
 	}
-	
 
 	return domain.Binding{
 		IsAsync:     false,

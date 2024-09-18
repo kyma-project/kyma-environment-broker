@@ -13,14 +13,14 @@ import (
 )
 
 type GardenerBindingManager struct {
-	tokenExpiration   int
-	gardenerClient	client.Client
+	tokenExpiration int
+	gardenerClient  client.Client
 }
 
 func NewGardenerBindingManager(gardenerClient client.Client, tokenExpiration int) *GardenerBindingManager {
 	return &GardenerBindingManager{
-		gardenerClient:    gardenerClient,
-		tokenExpiration:   tokenExpiration,
+		gardenerClient:  gardenerClient,
+		tokenExpiration: tokenExpiration,
 	}
 }
 
@@ -32,7 +32,7 @@ func (c *GardenerBindingManager) Create(ctx context.Context, instance *internal.
 	err := c.gardenerClient.Get(context.Background(), client.ObjectKey{Name: instance.InstanceDetails.ShootName, Namespace: "garden-kyma-dev"}, shoot)
 	if err != nil {
 		return "", fmt.Errorf("while getting shoot: %v", err)
-	}	
+	}
 
 	fmt.Println(shoot)
 	expiration := 10 * time.Minute

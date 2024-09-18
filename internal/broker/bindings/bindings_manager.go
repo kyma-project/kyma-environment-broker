@@ -50,7 +50,7 @@ func (c *TokenRequestsBindingsManager) Create(ctx context.Context, instance *int
 
 	tokenRequest := &authv1.TokenRequest{
 		ObjectMeta: mv1.ObjectMeta{
-			Name:      "admin",
+			Name:      "default",
 			Namespace: "default",
 		},
 		Spec: authv1.TokenRequestSpec{
@@ -59,7 +59,7 @@ func (c *TokenRequestsBindingsManager) Create(ctx context.Context, instance *int
 	}
 
 	// old usage with client.Client
-	tkn, err := clientset.CoreV1().ServiceAccounts("default").CreateToken(ctx, "admin", tokenRequest, mv1.CreateOptions{})
+	tkn, err := clientset.CoreV1().ServiceAccounts("default").CreateToken(ctx, "default", tokenRequest, mv1.CreateOptions{})
 
 	if err != nil {
 		return "", fmt.Errorf("while creating a token request: %v", err)
