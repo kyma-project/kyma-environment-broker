@@ -19,6 +19,7 @@ import (
 
 	"code.cloudfoundry.org/lager"
 	"github.com/dlmiddlecote/sqlstats"
+	shoot "github.com/gardener/gardener/pkg/apis/core/v1beta1"
 	"github.com/gorilla/handlers"
 	"github.com/gorilla/mux"
 	"github.com/kyma-project/kyma-environment-broker/common/gardener"
@@ -64,8 +65,6 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/client/apiutil"
 	"sigs.k8s.io/controller-runtime/pkg/client/config"
-	shoot "github.com/gardener/gardener/pkg/apis/core/v1beta1"
-
 )
 
 // Config holds configuration for the whole application
