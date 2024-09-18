@@ -6,6 +6,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/kyma-project/kyma-environment-broker/internal"
 	"github.com/kyma-project/kyma-environment-broker/internal/kubeconfig"
 	"github.com/stretchr/testify/require"
 	"k8s.io/apimachinery/pkg/util/wait"
@@ -43,7 +44,7 @@ func TestCredentialsManagerImpl_Create(t *testing.T) {
 		// }
 
 		// Act
-		kubeconfig, err := manager.Create(ctx, runtimeID, bindingID)
+		kubeconfig, err := manager.Create(ctx, &internal.Instance{RuntimeID: runtimeID}, bindingID)
 
 		// Assert
 		require.NoError(t, err)
