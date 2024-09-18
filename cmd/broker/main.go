@@ -64,6 +64,8 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/client/apiutil"
 	"sigs.k8s.io/controller-runtime/pkg/client/config"
+	shoot "github.com/gardener/gardener/pkg/apis/core/v1beta1"
+
 )
 
 // Config holds configuration for the whole application
@@ -211,6 +213,8 @@ func main() {
 	err := apiextensionsv1.AddToScheme(scheme.Scheme)
 	panicOnError(err)
 	err = imv1.AddToScheme(scheme.Scheme)
+	panicOnError(err)
+	err = shoot.AddToScheme(scheme.Scheme)
 	panicOnError(err)
 
 	ctx, cancel := context.WithCancel(context.Background())
