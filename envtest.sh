@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/bash -x
 cd "$(dirname "$0")" || exit
 
 LOCAL_BIN=$(pwd)/bin
