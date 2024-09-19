@@ -53,6 +53,8 @@ func SetupEnvtest(t *testing.T) {
 	_, currentPath, _, _ := runtime.Caller(0)
 	script := fmt.Sprintf("%s/envtest.sh", path.Join(path.Dir(currentPath), "../"))
 	envtestInstallMutex.Lock()
+	fmt.Println(fmt.Sprintf("PID=%d", os.Getpid()))
+	fmt.Println(fmt.Sprintf("Mutex locked for envtest setup: %v \n", envtestInstallMutex))
 	defer envtestInstallMutex.Unlock()
 	cmd := exec.Command("/bin/sh", script)
 	var out bytes.Buffer
