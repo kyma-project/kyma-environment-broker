@@ -12,7 +12,7 @@ require (
 	github.com/dlmiddlecote/sqlstats v1.0.2
 	github.com/docker/docker v27.2.1+incompatible
 	github.com/docker/go-connections v0.5.0
-	github.com/gardener/gardener v1.103.0
+	github.com/gardener/gardener v1.104.0
 	github.com/go-co-op/gocron v1.37.0
 	github.com/gocraft/dbr v0.0.0-20190714181702-8114670a83bd
 	github.com/google/uuid v1.6.0
@@ -33,7 +33,7 @@ require (
 	github.com/sirupsen/logrus v1.9.3
 	github.com/stretchr/testify v1.9.0
 	github.com/vrischmann/envconfig v1.3.0
-	golang.org/x/exp v0.0.0-20240823005443-9b4947da3948
+	golang.org/x/exp v0.0.0-20240909161429-701f63a606c0
 	golang.org/x/oauth2 v0.23.0
 	golang.org/x/time v0.6.0
 	gopkg.in/yaml.v2 v2.4.0
@@ -103,7 +103,7 @@ require (
 	github.com/pborman/uuid v1.2.1 // indirect
 	github.com/pmezard/go-difflib v1.0.0 // indirect
 	github.com/prometheus/client_model v0.6.1 // indirect
-	github.com/prometheus/common v0.58.0 // indirect
+	github.com/prometheus/common v0.59.1 // indirect
 	github.com/prometheus/procfs v0.15.1 // indirect
 	github.com/robfig/cron/v3 v3.0.1 // indirect
 	github.com/sergi/go-diff v1.3.1 // indirect
