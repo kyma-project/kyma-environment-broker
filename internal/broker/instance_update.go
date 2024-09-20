@@ -113,7 +113,6 @@ func (b *UpdateEndpoint) Update(_ context.Context, instanceID string, details do
 	}
 	logger.Infof("Global account ID: %s active: %s", instance.GlobalAccountID, ptr.BoolAsString(ersContext.Active))
 	logger.Infof("Received context: %s", marshallRawContext(hideSensitiveDataFromRawContext(details.RawContext)))
-
 	// validation of incoming input
 	if err := b.validateWithJsonSchemaValidator(details, instance); err != nil {
 		return domain.UpdateServiceSpec{}, apiresponses.NewFailureResponse(err, http.StatusBadRequest, "validation failed")
@@ -121,13 +120,8 @@ func (b *UpdateEndpoint) Update(_ context.Context, instanceID string, details do
 
 	if instance.IsExpired() {
 		if b.config.AllowUpdateExpiredInstanceWithContext {
-			// if only ersContext is pass, we respond with success for already expired instance, serviceID is exception as it is required by OSB API
-			onlyContextSet := (details.RawContext != nil && len(details.RawContext) > 0) &&
-				((details.RawParameters == nil || len(details.RawParameters) == 0) &&
-					details.PlanID == "" &&
-					details.MaintenanceInfo == nil &&
-					details.PreviousValues == domain.PreviousValues{})
-			if onlyContextSet {
+			newGlobalAccountId := ersContext.GlobalAccountID
+			if newGlobalAccountId != "" && (newGlobalAccountId != instance.GlobalAccountID) {
 				return domain.UpdateServiceSpec{}, nil
 			}
 		}
