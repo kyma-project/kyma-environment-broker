@@ -72,7 +72,6 @@ func InitEnvironment(ctx context.Context, t *testing.T) *Environment {
 }
 
 func TestBtpManagerReconciler(t *testing.T) {
-	t.Log("btp manager credentials tests")
 	internal.SetupEnvtest(t)
 	t.Run("btp manager credentials tests", func(t *testing.T) {
 		ctx, cancel := context.WithCancel(context.Background())

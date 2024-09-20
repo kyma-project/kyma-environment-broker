@@ -90,7 +90,6 @@ func TestSecretProvider_KubernetesAndK8sClientForRuntimeID(t *testing.T) {
 	// Given
 
 	// prepare envtest to provide valid kubeconfig
-	t.Log("Starting envtest")
 	internal.SetupEnvtest(t)
 	env := envtest.Environment{
 		ControlPlaneStartTimeout: 40 * time.Second,
