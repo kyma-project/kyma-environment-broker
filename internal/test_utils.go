@@ -70,3 +70,15 @@ func SetupEnvtest(t *testing.T) {
 	err = os.Setenv(envTestAssets, assets)
 	require.NoError(t, err)
 }
+
+func CleanupEnvtestBinaries(t *testing.T) {
+	_, currentPath, _, _ := runtime.Caller(0)
+	script := fmt.Sprintf("%s/clean-envtest-binaries.sh", path.Join(path.Dir(currentPath), "../"))
+	cmd := exec.Command("/bin/sh", script)
+	var out bytes.Buffer
+	var stderr bytes.Buffer
+	cmd.Stdout = &out
+	cmd.Stderr = &stderr
+	_ = cmd.Run()
+	fmt.Println(fmt.Sprintf("envtest binaries cleanup output: %s err: %s \n", out.String(), stderr.String()))
+}

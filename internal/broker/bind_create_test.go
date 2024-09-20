@@ -59,6 +59,10 @@ func TestCreateBindingEndpoint(t *testing.T) {
 
 	// prepare envtest to provide valid kubeconfig
 	internal.SetupEnvtest(t)
+	defer func() {
+		internal.CleanupEnvtestBinaries(t)
+	}()
+
 	env := envtest.Environment{
 		ControlPlaneStartTimeout: 40 * time.Second,
 	}
