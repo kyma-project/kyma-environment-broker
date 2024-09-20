@@ -33,7 +33,7 @@ go-lint-install: ## linter config in file at root of project -> '.golangci.yaml'
 test: ## run Go tests
 	go test ./...
  	# cleanup envtest files
-	(cd bin; find . -exec chmod u+w {} \;; ls|grep -E "^\d+$"|xargs rm -rf)
+	(cd bin; find . -exec chmod u+w {} \;; ls|grep -E '^\d+'|xargs rm -rf)
 
 ##@ Go checks 
 
