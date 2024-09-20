@@ -1,7 +1,11 @@
-#!/bin/bash
+#!/bin/bash -x
+
+set -o nounset  # treat unset variables as an error and exit immediately.
+set -e # exit immediately when a command fails.
+
+DIR=$1
 
 cd "$(dirname "$0")/bin"
 
-# remove all files from bin/<only digits> directories
-
-find . -exec chmod u+w {} \;; ls|grep -E '^\d+$$'|xargs rm -rf
+find ${DIR} -exec chmod u+w {} \;
+rm -rf ${DIR}

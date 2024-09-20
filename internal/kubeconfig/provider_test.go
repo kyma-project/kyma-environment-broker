@@ -90,9 +90,9 @@ func TestSecretProvider_KubernetesAndK8sClientForRuntimeID(t *testing.T) {
 	// Given
 
 	// prepare envtest to provide valid kubeconfig
-	internal.SetupEnvtest(t)
+	pid := internal.SetupEnvtest(t)
 	defer func() {
-		internal.CleanupEnvtestBinaries(t)
+		internal.CleanupEnvtestBinaries(pid)
 	}()
 
 	env := envtest.Environment{
