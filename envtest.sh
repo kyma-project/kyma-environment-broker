@@ -3,7 +3,7 @@ cd "$(dirname "$0")" || exit
 
 LOCAL_BIN=$(pwd)/bin
 mkdir -p "$LOCAL_BIN"
-
+exit 1
 K8S_VERSION=1.29.1
 
 #check if setup-envtest is installed or check if currently installed setup-envtest contains assets for requested k8s version
