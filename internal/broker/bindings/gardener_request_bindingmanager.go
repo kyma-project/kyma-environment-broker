@@ -34,7 +34,6 @@ func (c *GardenerBindingManager) Create(ctx context.Context, instance *internal.
 		return "", fmt.Errorf("while getting shoot: %v", err)
 	}
 
-	fmt.Println(shoot)
 	expiration := 10 * time.Minute
 	expirationSeconds := int64(expiration.Seconds())
 
