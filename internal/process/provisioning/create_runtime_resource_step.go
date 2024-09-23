@@ -275,10 +275,15 @@ func (s *CreateRuntimeResourceStep) createNetworkingConfiguration(operation inte
 		networkingParams = &internal.NetworkingDTO{}
 	}
 
+	nodes := networking.DefaultNodesCIDR
+	if networkingParams.NodesCidr != "" {
+		nodes = networkingParams.NodesCidr
+	}
+
 	return imv1.Networking{
 		Pods:     DefaultIfParamNotSet(networking.DefaultPodsCIDR, networkingParams.PodsCidr),
 		Services: DefaultIfParamNotSet(networking.DefaultServicesCIDR, networkingParams.ServicesCidr),
-		Nodes:    DefaultIfParamZero(networking.DefaultNodesCIDR, networkingParams.NodesCidr),
+		Nodes:    nodes,
 		//TODO remove when KIM is ready with setting this value
 		Type: ptr.String("calico"),
 	}
