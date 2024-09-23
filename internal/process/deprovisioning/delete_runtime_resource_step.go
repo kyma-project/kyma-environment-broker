@@ -82,7 +82,7 @@ func (step *DeleteRuntimeResourceStep) Run(operation internal.Operation, logger 
 			logger.Info("Runtime resource deleted")
 			return operation, 0, nil
 		} else {
-			logger.Warnf("unable to delete the Runtime resource: %s", err)
+			logger.Warnf("unable to delete the Runtime resource %s/%s: %s", runtime.Name, runtime.Namespace, err)
 			return step.operationManager.RetryOperationWithoutFail(operation, step.Name(), "unable to delete the Runtime resource", backoffForK8SOperation, timeoutForK8sOperation, logger, err)
 		}
 	}
