@@ -8,6 +8,7 @@ import (
 	authenticationv1alpha1 "github.com/gardener/gardener/pkg/apis/authentication/v1alpha1"
 	shoot "github.com/gardener/gardener/pkg/apis/core/v1beta1"
 	"github.com/kyma-project/kyma-environment-broker/internal"
+	"github.com/kyma-project/kyma-environment-broker/internal/ptr"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
@@ -34,12 +35,9 @@ func (c *GardenerBindingManager) Create(ctx context.Context, instance *internal.
 		return "", fmt.Errorf("while getting shoot: %v", err)
 	}
 
-	expiration := 10 * time.Minute
-	expirationSeconds := int64(expiration.Seconds())
-
 	adminKubeconfigRequest := &authenticationv1alpha1.AdminKubeconfigRequest{
 		Spec: authenticationv1alpha1.AdminKubeconfigRequestSpec{
-			ExpirationSeconds: &expirationSeconds,
+			ExpirationSeconds: ptr.Integer64(int64(c.tokenExpiration)),
 		},
 	}
 
