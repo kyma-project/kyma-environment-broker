@@ -12,21 +12,22 @@ import (
 
 func NewDynamicFakeClient(objects ...runtime.Object) *dynamicFake.FakeDynamicClient {
 	// dynamic fake client requirement https://github.com/kubernetes/client-go/issues/949#issuecomment-811192420
-	scheme.Scheme.AddKnownTypeWithName(schema.GroupVersionKind{Group: "core.gardener.cloud", Version: "v1beta1", Kind: "Shoot"}, &unstructured.Unstructured{})
-	scheme.Scheme.AddKnownTypeWithName(schema.GroupVersionKind{Group: "core.gardener.cloud", Version: "v1beta1", Kind: "ShootList"}, &unstructured.UnstructuredList{})
-	scheme.Scheme.AddKnownTypeWithName(schema.GroupVersionKind{Group: "core.gardener.cloud", Version: "v1beta1", Kind: "SecretBinding"}, &unstructured.Unstructured{})
-	scheme.Scheme.AddKnownTypeWithName(schema.GroupVersionKind{Group: "core.gardener.cloud", Version: "v1beta1", Kind: "SecretBindingList"}, &unstructured.UnstructuredList{})
+	extendScheme()
 
 	return dynamicFake.NewSimpleDynamicClient(scheme.Scheme, objects...)
 }
 
 func NewFakeClient(objects ...runtime.Object) client.Client {
-	scheme.Scheme.AddKnownTypeWithName(schema.GroupVersionKind{Group: "core.gardener.cloud", Version: "v1beta1", Kind: "Shoot"}, &unstructured.Unstructured{})
-	scheme.Scheme.AddKnownTypeWithName(schema.GroupVersionKind{Group: "core.gardener.cloud", Version: "v1beta1", Kind: "ShootList"}, &unstructured.UnstructuredList{})
-	scheme.Scheme.AddKnownTypeWithName(schema.GroupVersionKind{Group: "core.gardener.cloud", Version: "v1beta1", Kind: "SecretBinding"}, &unstructured.Unstructured{})
-	scheme.Scheme.AddKnownTypeWithName(schema.GroupVersionKind{Group: "core.gardener.cloud", Version: "v1beta1", Kind: "SecretBindingList"}, &unstructured.UnstructuredList{})
+	extendScheme()	
 
 	return fake.NewClientBuilder().
 		WithRuntimeObjects(objects...).
 		Build()
+}
+
+func extendScheme(){
+	scheme.Scheme.AddKnownTypeWithName(schema.GroupVersionKind{Group: "core.gardener.cloud", Version: "v1beta1", Kind: "Shoot"}, &unstructured.Unstructured{})
+	scheme.Scheme.AddKnownTypeWithName(schema.GroupVersionKind{Group: "core.gardener.cloud", Version: "v1beta1", Kind: "ShootList"}, &unstructured.UnstructuredList{})
+	scheme.Scheme.AddKnownTypeWithName(schema.GroupVersionKind{Group: "core.gardener.cloud", Version: "v1beta1", Kind: "SecretBinding"}, &unstructured.Unstructured{})
+	scheme.Scheme.AddKnownTypeWithName(schema.GroupVersionKind{Group: "core.gardener.cloud", Version: "v1beta1", Kind: "SecretBindingList"}, &unstructured.UnstructuredList{})
 }
