@@ -56,10 +56,16 @@ func (step *DeleteRuntimeResourceStep) Run(operation internal.Operation, logger 
 
 	var runtime = imv1.Runtime{}
 	err := step.kcpClient.Get(context.Background(), client.ObjectKey{Name: resourceName, Namespace: resourceNamespace}, &runtime)
-	if err != nil && !errors.IsNotFound(err) {
-		logger.Warnf("Unable to read runtime: %s", err)
-		return step.operationManager.RetryOperation(operation, err.Error(), err, 5*time.Second, 1*time.Minute, logger)
+	if err != nil {
+		if !errors.IsNotFound(err) {
+			logger.Warnf("Unable to read runtime: %s", err)
+			return step.operationManager.RetryOperation(operation, err.Error(), err, 5*time.Second, 1*time.Minute, logger)
+		} else {
+			logger.Info("Runtime resource already deleted")
+			return operation, 0, nil
+		}
 	}
+
 	controlledByKimOnly := !runtime.IsControlledByProvisioner()
 	operation, backoff, _ := step.operationManager.UpdateOperation(operation, func(operation *internal.Operation) {
 		operation.KimDeprovisionsOnly = controlledByKimOnly
@@ -79,10 +85,10 @@ func (step *DeleteRuntimeResourceStep) Run(operation internal.Operation, logger 
 
 		// if the resource is not found, log it and return (it is not a problem)
 		if errors.IsNotFound(err) {
-			logger.Info("Runtime resource deleted")
+			logger.Info("Runtime resource already deleted")
 			return operation, 0, nil
 		} else {
-			logger.Warnf("unable to delete the Runtime resource: %s", err)
+			logger.Warnf("unable to delete the Runtime resource %s/%s: %s", runtime.Name, runtime.Namespace, err)
 			return step.operationManager.RetryOperationWithoutFail(operation, step.Name(), "unable to delete the Runtime resource", backoffForK8SOperation, timeoutForK8sOperation, logger, err)
 		}
 	}
