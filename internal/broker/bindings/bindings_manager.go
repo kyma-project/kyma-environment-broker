@@ -50,7 +50,7 @@ func (c *TokenRequestBindingsManager) Create(ctx context.Context, instance *inte
 		return "", fmt.Errorf("while creating a runtime client for binding creation: %v", err)
 	}
 
-	serviceBindingName := fmt.Sprintf("service-binding-%s", bindingID)
+	serviceBindingName := fmt.Sprintf("kyma-binding-%s", bindingID)
 
 	_, err = clientset.CoreV1().ServiceAccounts("kyma-system").Create(ctx,
 		&v1.ServiceAccount{

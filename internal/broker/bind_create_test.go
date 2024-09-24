@@ -96,7 +96,7 @@ func TestCreateBindingEndpoint(t *testing.T) {
 	err = skrClient.Create(context.Background(), &corev1.Secret{
 		ObjectMeta: v1.ObjectMeta{
 			Name:      "secret-to-check",
-			Namespace: "kyma-system",
+			Namespace: "default",
 		},
 	})
 
@@ -118,7 +118,7 @@ func TestCreateBindingEndpoint(t *testing.T) {
 		}...).
 		Build()
 
-		//// create fake kubernetes client - kcp
+	//// create fake kubernetes client - kcp
 	gardenerClient := fake.NewClientBuilder().
 		WithScheme(sch).
 		WithRuntimeObjects([]runtime.Object{}...).
@@ -192,7 +192,14 @@ func TestCreateBindingEndpoint(t *testing.T) {
 
 		//// verify connectivity using kubeconfig from the generated binding
 		newClient := kubeconfigClient(t, binding.Credentials.(string))
-		_, err = newClient.CoreV1().Secrets("kyma-system").Get(context.Background(), "secret-to-check", v1.GetOptions{})
+		_, err = newClient.CoreV1().Secrets("default").Get(context.Background(), "secret-to-check", v1.GetOptions{})
+		assert.NoError(t, err)
+
+		_, err = newClient.CoreV1().ServiceAccounts("kyma-system").Get(context.Background(), "kyma-binding-binding-id", v1.GetOptions{})
+		assert.NoError(t, err)
+		_, err = newClient.RbacV1().ClusterRoles().Get(context.Background(), "kyma-binding-binding-id", v1.GetOptions{})
+		assert.NoError(t, err)
+		_, err = newClient.RbacV1().ClusterRoleBindings().Get(context.Background(), "kyma-binding-binding-id", v1.GetOptions{})
 		assert.NoError(t, err)
 	})
 }
