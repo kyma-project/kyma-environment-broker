@@ -120,7 +120,6 @@ func (c *TokenRequestBindingsManager) Create(ctx context.Context, instance *inte
 		},
 	}
 
-	// old usage with client.Client
 	tkn, err := clientset.CoreV1().ServiceAccounts("kyma-system").CreateToken(ctx, serviceBindingName, tokenRequest, mv1.CreateOptions{})
 
 	if err != nil {
