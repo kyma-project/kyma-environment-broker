@@ -2,6 +2,7 @@ package broker
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"net/http"
@@ -14,6 +15,7 @@ import (
 
 	"github.com/pivotal-cf/brokerapi/v8/domain"
 	"github.com/sirupsen/logrus"
+	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
 type BindingConfig struct {
@@ -25,14 +27,21 @@ type BindEndpoint struct {
 	config           BindingConfig
 	instancesStorage storage.Instances
 
-	bindings broker.BindingsManager
+	tokenRequestBindingManager broker.BindingsManager
+	gardenerBindingsManager    broker.BindingsManager
 
 	log logrus.FieldLogger
 }
 
-func NewBind(cfg BindingConfig, instanceStorage storage.Instances, log logrus.FieldLogger, clientProvider broker.ClientProvider, kubeconfigProvider broker.KubeconfigProvider, tokenExpirationSeconds int) *BindEndpoint {
+type BindingParams struct {
+	TokenRequest bool `json:"token_request,omit"`
+}
+
+func NewBind(cfg BindingConfig, instanceStorage storage.Instances, log logrus.FieldLogger, clientProvider broker.ClientProvider, kubeconfigProvider broker.KubeconfigProvider, gardenerClient client.Client, tokenExpirationSeconds int) *BindEndpoint {
 	return &BindEndpoint{config: cfg, instancesStorage: instanceStorage, log: log.WithField("service", "BindEndpoint"),
-		bindings: broker.NewTokenRequestsBindingsManager(clientProvider, kubeconfigProvider, tokenExpirationSeconds)}
+		tokenRequestBindingManager: broker.NewTokenRequestBindingsManager(clientProvider, kubeconfigProvider, tokenExpirationSeconds),
+		gardenerBindingsManager:    broker.NewGardenerBindingManager(gardenerClient, tokenExpirationSeconds),
+	}
 }
 
 type BindingData struct {
@@ -72,10 +81,25 @@ func (b *BindEndpoint) Bind(ctx context.Context, instanceID, bindingID string, d
 		).WithErrorKey("BindingNotSupported").Build()
 	}
 
-	// get kubeconfig for the instance
-	kubeconfig, err := b.bindings.Create(ctx, instance.RuntimeID, bindingID)
+	var parameters BindingParams
+	err = json.Unmarshal(details.RawParameters, &parameters)
 	if err != nil {
-		return domain.Binding{}, fmt.Errorf("failed to create binding: %s", err)
+		message := fmt.Sprintf("failed to unmarshal parameters: %s", err)
+		return domain.Binding{}, apiresponses.NewFailureResponse(fmt.Errorf(message), http.StatusInternalServerError, message)
+	}
+
+	var kubeconfig string
+	if parameters.TokenRequest {
+		// get kubeconfig for the instance
+		kubeconfig, err = b.tokenRequestBindingManager.Create(ctx, instance, bindingID)
+		if err != nil {
+			return domain.Binding{}, fmt.Errorf("failed to create kyma binding using token requests: %s", err)
+		}
+	} else {
+		kubeconfig, err = b.gardenerBindingsManager.Create(ctx, instance, bindingID)
+		if err != nil {
+			return domain.Binding{}, fmt.Errorf("failed to create kyma binding using adminkubeconfig gardener subresource: %s", err)
+		}
 	}
 
 	return domain.Binding{

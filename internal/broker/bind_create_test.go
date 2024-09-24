@@ -118,6 +118,12 @@ func TestCreateBindingEndpoint(t *testing.T) {
 		}...).
 		Build()
 
+		//// create fake kubernetes client - kcp
+	gardenerClient := fake.NewClientBuilder().
+		WithScheme(sch).
+		WithRuntimeObjects([]runtime.Object{}...).
+		Build()
+
 	//// database
 	db := storage.NewMemoryStorage()
 	err = db.Instances().Insert(fixture.FixInstance("1"))
@@ -134,7 +140,7 @@ func TestCreateBindingEndpoint(t *testing.T) {
 	}
 
 	//// api handler
-	bindEndpoint := NewBind(*bindingCfg, db.Instances(), logs, skrK8sClientProvider, skrK8sClientProvider, 10000)
+	bindEndpoint := NewBind(*bindingCfg, db.Instances(), logs, skrK8sClientProvider, skrK8sClientProvider, gardenerClient, 10000)
 	apiHandler := handlers.NewApiHandler(KymaEnvironmentBroker{
 		nil,
 		nil,
@@ -162,6 +168,7 @@ func TestCreateBindingEndpoint(t *testing.T) {
   "service_id": "123",
   "plan_id": "%s",
   "parameters": {
+    "token_request": true
   }
 }`, fixture.PlanId), t)
 

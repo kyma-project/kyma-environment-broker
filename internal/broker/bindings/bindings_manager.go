@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/kyma-project/kyma-environment-broker/internal"
 	"github.com/kyma-project/kyma-environment-broker/internal/kubeconfig"
 	"github.com/kyma-project/kyma-environment-broker/internal/ptr"
 	authv1 "k8s.io/api/authentication/v1"
@@ -17,7 +18,7 @@ type Credentials struct {
 }
 
 type BindingsManager interface {
-	Create(ctx context.Context, runtimeID, bindingID string) (string, error)
+	Create(ctx context.Context, instance *internal.Instance, bindingID string) (string, error)
 }
 
 type ClientProvider interface {
@@ -28,22 +29,22 @@ type KubeconfigProvider interface {
 	KubeconfigForRuntimeID(runtimeId string) ([]byte, error)
 }
 
-type TokenRequestsBindingsManager struct {
-	clientProvider    ClientProvider
-	tokenExpiration   int
-	kubeconfigBuilder *kubeconfig.Builder
+type TokenRequestBindingsManager struct {
+	clientProvider         ClientProvider
+	tokenExpirationSeconds int
+	kubeconfigBuilder      *kubeconfig.Builder
 }
 
-func NewTokenRequestsBindingsManager(clientProvider ClientProvider, kubeconfigProvider KubeconfigProvider, tokenExpiration int) *TokenRequestsBindingsManager {
-	return &TokenRequestsBindingsManager{
-		clientProvider:    clientProvider,
-		tokenExpiration:   tokenExpiration,
-		kubeconfigBuilder: kubeconfig.NewBuilder(nil, nil, kubeconfigProvider),
+func NewTokenRequestBindingsManager(clientProvider ClientProvider, kubeconfigProvider KubeconfigProvider, tokenExpirationSeconds int) *TokenRequestBindingsManager {
+	return &TokenRequestBindingsManager{
+		clientProvider:         clientProvider,
+		tokenExpirationSeconds: tokenExpirationSeconds,
+		kubeconfigBuilder:      kubeconfig.NewBuilder(nil, nil, kubeconfigProvider),
 	}
 }
 
-func (c *TokenRequestsBindingsManager) Create(ctx context.Context, runtimeID, bindingID string) (string, error) {
-	clientset, err := c.clientProvider.K8sClientSetForRuntimeID(runtimeID)
+func (c *TokenRequestBindingsManager) Create(ctx context.Context, instance *internal.Instance, bindingID string) (string, error) {
+	clientset, err := c.clientProvider.K8sClientSetForRuntimeID(instance.RuntimeID)
 
 	if err != nil {
 		return "", fmt.Errorf("while creating a runtime client for binding creation: %v", err)
@@ -115,7 +116,7 @@ func (c *TokenRequestsBindingsManager) Create(ctx context.Context, runtimeID, bi
 			Labels:    map[string]string{"app.kubernetes.io/managed-by": "kcp-kyma-environment-broker"},
 		},
 		Spec: authv1.TokenRequestSpec{
-			ExpirationSeconds: ptr.Integer64(int64(c.tokenExpiration)),
+			ExpirationSeconds: ptr.Integer64(int64(c.tokenExpirationSeconds)),
 		},
 	}
 
@@ -126,7 +127,7 @@ func (c *TokenRequestsBindingsManager) Create(ctx context.Context, runtimeID, bi
 		return "", fmt.Errorf("while creating a token request: %v", err)
 	}
 
-	kubeconfigContent, err := c.kubeconfigBuilder.BuildFromAdminKubeconfigForBinding(runtimeID, tkn.Status.Token)
+	kubeconfigContent, err := c.kubeconfigBuilder.BuildFromAdminKubeconfigForBinding(instance.RuntimeID, tkn.Status.Token)
 
 	if err != nil {
 		return "", fmt.Errorf("while creating a kubeconfig: %v", err)
