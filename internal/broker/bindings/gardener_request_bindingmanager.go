@@ -13,14 +13,14 @@ import (
 )
 
 type GardenerBindingManager struct {
-	tokenExpiration int
+	tokenExpirationSeconds int
 	gardenerClient  client.Client
 }
 
-func NewGardenerBindingManager(gardenerClient client.Client, tokenExpiration int) *GardenerBindingManager {
+func NewGardenerBindingManager(gardenerClient client.Client, tokenExpirationSeconds int) *GardenerBindingManager {
 	return &GardenerBindingManager{
 		gardenerClient:  gardenerClient,
-		tokenExpiration: tokenExpiration,
+		tokenExpirationSeconds: tokenExpirationSeconds,
 	}
 }
 
@@ -36,7 +36,7 @@ func (c *GardenerBindingManager) Create(ctx context.Context, instance *internal.
 
 	adminKubeconfigRequest := &authenticationv1alpha1.AdminKubeconfigRequest{
 		Spec: authenticationv1alpha1.AdminKubeconfigRequestSpec{
-			ExpirationSeconds: ptr.Integer64(int64(c.tokenExpiration)),
+			ExpirationSeconds: ptr.Integer64(int64(c.tokenExpirationSeconds)),
 		},
 	}
 

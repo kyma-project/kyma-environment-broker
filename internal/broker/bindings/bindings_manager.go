@@ -29,14 +29,14 @@ type KubeconfigProvider interface {
 
 type TokenRequestBindingsManager struct {
 	clientProvider    ClientProvider
-	tokenExpiration   int
+	tokenExpirationSeconds   int
 	kubeconfigBuilder *kubeconfig.Builder
 }
 
-func NewTokenRequestBindingsManager(clientProvider ClientProvider, kubeconfigProvider KubeconfigProvider, tokenExpiration int) *TokenRequestBindingsManager {
+func NewTokenRequestBindingsManager(clientProvider ClientProvider, kubeconfigProvider KubeconfigProvider, tokenExpirationSeconds int) *TokenRequestBindingsManager {
 	return &TokenRequestBindingsManager{
 		clientProvider:    clientProvider,
-		tokenExpiration:   tokenExpiration,
+		tokenExpirationSeconds:   tokenExpirationSeconds,
 		kubeconfigBuilder: kubeconfig.NewBuilder(nil, nil, kubeconfigProvider),
 	}
 }
@@ -54,7 +54,7 @@ func (c *TokenRequestBindingsManager) Create(ctx context.Context, instance *inte
 			Namespace: "default",
 		},
 		Spec: authv1.TokenRequestSpec{
-			ExpirationSeconds: ptr.Integer64(int64(c.tokenExpiration)),
+			ExpirationSeconds: ptr.Integer64(int64(c.tokenExpirationSeconds)),
 		},
 	}
 
