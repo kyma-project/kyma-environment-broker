@@ -18,14 +18,14 @@ func NewDynamicFakeClient(objects ...runtime.Object) *dynamicFake.FakeDynamicCli
 }
 
 func NewFakeClient(objects ...runtime.Object) client.Client {
-	extendScheme()	
+	extendScheme()
 
 	return fake.NewClientBuilder().
 		WithRuntimeObjects(objects...).
 		Build()
 }
 
-func extendScheme(){
+func extendScheme() {
 	scheme.Scheme.AddKnownTypeWithName(schema.GroupVersionKind{Group: "core.gardener.cloud", Version: "v1beta1", Kind: "Shoot"}, &unstructured.Unstructured{})
 	scheme.Scheme.AddKnownTypeWithName(schema.GroupVersionKind{Group: "core.gardener.cloud", Version: "v1beta1", Kind: "ShootList"}, &unstructured.UnstructuredList{})
 	scheme.Scheme.AddKnownTypeWithName(schema.GroupVersionKind{Group: "core.gardener.cloud", Version: "v1beta1", Kind: "SecretBinding"}, &unstructured.Unstructured{})
