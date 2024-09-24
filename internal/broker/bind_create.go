@@ -28,7 +28,7 @@ type BindEndpoint struct {
 	instancesStorage storage.Instances
 
 	tokenRequestBindingManager broker.BindingsManager
-	gardenerBindingsManager     broker.BindingsManager
+	gardenerBindingsManager    broker.BindingsManager
 
 	log logrus.FieldLogger
 }
@@ -40,7 +40,7 @@ type BindingParams struct {
 func NewBind(cfg BindingConfig, instanceStorage storage.Instances, log logrus.FieldLogger, clientProvider broker.ClientProvider, kubeconfigProvider broker.KubeconfigProvider, gardenerClient client.Client, tokenExpirationSeconds int) *BindEndpoint {
 	return &BindEndpoint{config: cfg, instancesStorage: instanceStorage, log: log.WithField("service", "BindEndpoint"),
 		tokenRequestBindingManager: broker.NewTokenRequestBindingsManager(clientProvider, kubeconfigProvider, tokenExpirationSeconds),
-		gardenerBindingsManager:     broker.NewGardenerBindingManager(gardenerClient, tokenExpirationSeconds),
+		gardenerBindingsManager:    broker.NewGardenerBindingManager(gardenerClient, tokenExpirationSeconds),
 	}
 }
 

@@ -14,12 +14,12 @@ import (
 
 type GardenerBindingManager struct {
 	tokenExpirationSeconds int
-	gardenerClient  client.Client
+	gardenerClient         client.Client
 }
 
 func NewGardenerBindingManager(gardenerClient client.Client, tokenExpirationSeconds int) *GardenerBindingManager {
 	return &GardenerBindingManager{
-		gardenerClient:  gardenerClient,
+		gardenerClient:         gardenerClient,
 		tokenExpirationSeconds: tokenExpirationSeconds,
 	}
 }

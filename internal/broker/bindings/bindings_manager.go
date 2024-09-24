@@ -28,16 +28,16 @@ type KubeconfigProvider interface {
 }
 
 type TokenRequestBindingsManager struct {
-	clientProvider    ClientProvider
-	tokenExpirationSeconds   int
-	kubeconfigBuilder *kubeconfig.Builder
+	clientProvider         ClientProvider
+	tokenExpirationSeconds int
+	kubeconfigBuilder      *kubeconfig.Builder
 }
 
 func NewTokenRequestBindingsManager(clientProvider ClientProvider, kubeconfigProvider KubeconfigProvider, tokenExpirationSeconds int) *TokenRequestBindingsManager {
 	return &TokenRequestBindingsManager{
-		clientProvider:    clientProvider,
-		tokenExpirationSeconds:   tokenExpirationSeconds,
-		kubeconfigBuilder: kubeconfig.NewBuilder(nil, nil, kubeconfigProvider),
+		clientProvider:         clientProvider,
+		tokenExpirationSeconds: tokenExpirationSeconds,
+		kubeconfigBuilder:      kubeconfig.NewBuilder(nil, nil, kubeconfigProvider),
 	}
 }
 
