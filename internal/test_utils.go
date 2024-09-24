@@ -49,7 +49,7 @@ func GetKymaTemplateForTests(t *testing.T, path string) string {
 	return string(file)
 }
 
-func SetupEnvtest(t *testing.T) {
+func SetupEnvtest(t *testing.T) int {
 	_, currentPath, _, _ := runtime.Caller(0)
 	script := fmt.Sprintf("%s/envtest.sh", path.Join(path.Dir(currentPath), "../"))
 	envtestInstallMutex.Lock()
@@ -60,6 +60,7 @@ func SetupEnvtest(t *testing.T) {
 	cmd.Stdout = &out
 	cmd.Stderr = &stderr
 	err := cmd.Run()
+	fmt.Println(fmt.Sprintf("script process PID; %d", cmd.Process.Pid))
 	fmt.Println(fmt.Sprintf("envtest setup output: %s err: %s \n", out.String(), stderr.String()))
 	if err != nil {
 		require.NoError(t, err)
@@ -69,4 +70,17 @@ func SetupEnvtest(t *testing.T) {
 	assets = strings.Replace(assets, "\n", "", -1)
 	err = os.Setenv(envTestAssets, assets)
 	require.NoError(t, err)
+	return cmd.Process.Pid
+}
+
+func CleanupEnvtestBinaries(pid int) {
+	_, currentPath, _, _ := runtime.Caller(0)
+	script := fmt.Sprintf("%s/clean-envtest-binaries.sh", path.Join(path.Dir(currentPath), "../"))
+	cmd := exec.Command("/bin/sh", script, fmt.Sprintf("%d", pid))
+	var out bytes.Buffer
+	var stderr bytes.Buffer
+	cmd.Stdout = &out
+	cmd.Stderr = &stderr
+	_ = cmd.Run()
+	fmt.Println(fmt.Sprintf("envtest binaries cleanup output: %s err: %s \n", out.String(), stderr.String()))
 }

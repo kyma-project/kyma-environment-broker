@@ -275,10 +275,15 @@ func (s *CreateRuntimeResourceStep) createNetworkingConfiguration(operation inte
 		networkingParams = &internal.NetworkingDTO{}
 	}
 
+	nodes := networking.DefaultNodesCIDR
+	if networkingParams.NodesCidr != "" {
+		nodes = networkingParams.NodesCidr
+	}
+
 	return imv1.Networking{
 		Pods:     DefaultIfParamNotSet(networking.DefaultPodsCIDR, networkingParams.PodsCidr),
 		Services: DefaultIfParamNotSet(networking.DefaultServicesCIDR, networkingParams.ServicesCidr),
-		Nodes:    DefaultIfParamZero(networking.DefaultNodesCIDR, networkingParams.NodesCidr),
+		Nodes:    nodes,
 		//TODO remove when KIM is ready with setting this value
 		Type: ptr.String("calico"),
 	}
@@ -307,12 +312,24 @@ func (s *CreateRuntimeResourceStep) createKubernetesConfiguration(operation inte
 		UsernamePrefix: &s.oidcDefaultValues.UsernamePrefix,
 	}
 	if operation.ProvisioningParameters.Parameters.OIDC != nil {
-		oidc.SigningAlgs = DefaultIfParamZero(oidc.SigningAlgs, operation.ProvisioningParameters.Parameters.OIDC.SigningAlgs)
-		oidc.ClientID = DefaultIfParamZero(oidc.ClientID, &operation.ProvisioningParameters.Parameters.OIDC.ClientID)
-		oidc.GroupsClaim = DefaultIfParamZero(oidc.GroupsClaim, &operation.ProvisioningParameters.Parameters.OIDC.GroupsClaim)
-		oidc.IssuerURL = DefaultIfParamZero(oidc.IssuerURL, &operation.ProvisioningParameters.Parameters.OIDC.IssuerURL)
-		oidc.UsernameClaim = DefaultIfParamZero(oidc.UsernameClaim, &operation.ProvisioningParameters.Parameters.OIDC.UsernameClaim)
-		oidc.UsernamePrefix = DefaultIfParamZero(oidc.UsernamePrefix, &operation.ProvisioningParameters.Parameters.OIDC.UsernamePrefix)
+		if operation.ProvisioningParameters.Parameters.OIDC.ClientID != "" {
+			oidc.ClientID = &operation.ProvisioningParameters.Parameters.OIDC.ClientID
+		}
+		if operation.ProvisioningParameters.Parameters.OIDC.GroupsClaim != "" {
+			oidc.GroupsClaim = &operation.ProvisioningParameters.Parameters.OIDC.GroupsClaim
+		}
+		if operation.ProvisioningParameters.Parameters.OIDC.IssuerURL != "" {
+			oidc.IssuerURL = &operation.ProvisioningParameters.Parameters.OIDC.IssuerURL
+		}
+		if len(operation.ProvisioningParameters.Parameters.OIDC.SigningAlgs) > 0 {
+			oidc.SigningAlgs = operation.ProvisioningParameters.Parameters.OIDC.SigningAlgs
+		}
+		if operation.ProvisioningParameters.Parameters.OIDC.UsernameClaim != "" {
+			oidc.UsernameClaim = &operation.ProvisioningParameters.Parameters.OIDC.UsernameClaim
+		}
+		if operation.ProvisioningParameters.Parameters.OIDC.UsernamePrefix != "" {
+			oidc.UsernamePrefix = &operation.ProvisioningParameters.Parameters.OIDC.UsernamePrefix
+		}
 	}
 
 	return imv1.Kubernetes{
