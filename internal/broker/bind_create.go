@@ -34,7 +34,7 @@ type BindEndpoint struct {
 }
 
 type BindingParams struct {
-	TokenRequest bool `json:"token_requests,omit"`
+	TokenRequest bool `json:"token_request,omit"`
 }
 
 func NewBind(cfg BindingConfig, instanceStorage storage.Instances, log logrus.FieldLogger, clientProvider broker.ClientProvider, kubeconfigProvider broker.KubeconfigProvider, gardenerClient client.Client, tokenExpirationSeconds int) *BindEndpoint {

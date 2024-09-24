@@ -210,7 +210,7 @@ func TestCreateBindingEndpoint(t *testing.T) {
   "service_id": "123",
   "plan_id": "%s",
   "parameters": {
-    "token_requests": true
+    "token_request": true
   }
 }`, fixture.PlanId), t)
 
