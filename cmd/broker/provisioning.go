@@ -7,7 +7,6 @@ import (
 	"github.com/kyma-project/kyma-environment-broker/internal/provider"
 
 	"github.com/kyma-project/kyma-environment-broker/common/hyperscaler"
-	"github.com/kyma-project/kyma-environment-broker/internal/avs"
 	"github.com/kyma-project/kyma-environment-broker/internal/process"
 	"github.com/kyma-project/kyma-environment-broker/internal/process/input"
 	"github.com/kyma-project/kyma-environment-broker/internal/process/provisioning"
@@ -19,8 +18,7 @@ import (
 )
 
 func NewProvisioningProcessingQueue(ctx context.Context, provisionManager *process.StagedManager, workersAmount int, cfg *Config,
-	db storage.BrokerStorage, provisionerClient provisioner.Client, inputFactory input.CreatorForPlan, avsDel *avs.Delegator,
-	internalEvalAssistant *avs.InternalEvalAssistant, externalEvalCreator *provisioning.ExternalEvalCreator,
+	db storage.BrokerStorage, provisionerClient provisioner.Client, inputFactory input.CreatorForPlan,
 	edpClient provisioning.EDPClient, accountProvider hyperscaler.AccountProvider,
 	k8sClientProvider provisioning.K8sClientProvider, cli client.Client, defaultOIDC internal.OIDCConfigDTO, logs logrus.FieldLogger) *process.Queue {
 
@@ -31,7 +29,7 @@ func NewProvisioningProcessingQueue(ctx context.Context, provisionManager *proce
 
 	const postActionsStageName = "post_actions"
 	provisionManager.DefineStages([]string{startStageName, createRuntimeStageName,
-		checkKymaStageName, createKymaResourceStageName, postActionsStageName})
+		checkKymaStageName, createKymaResourceStageName})
 	/*
 			The provisioning process contains the following stages:
 			1. "start" - changes the state from pending to in progress if no deprovisioning is ongoing.
@@ -72,11 +70,6 @@ func NewProvisioningProcessingQueue(ctx context.Context, provisionManager *proce
 			stage:     createRuntimeStageName,
 			step:      provisioning.NewResolveCredentialsStep(db.Operations(), accountProvider),
 			condition: provisioning.SkipForOwnClusterPlan,
-		},
-		{
-			stage:    createRuntimeStageName,
-			step:     provisioning.NewInternalEvaluationStep(avsDel, internalEvalAssistant),
-			disabled: cfg.Avs.Disabled,
 		},
 		{
 			stage:     createRuntimeStageName,
@@ -143,17 +136,6 @@ func NewProvisioningProcessingQueue(ctx context.Context, provisionManager *proce
 			disabled: cfg.LifecycleManagerIntegrationDisabled,
 			stage:    createKymaResourceStageName,
 			step:     provisioning.NewApplyKymaStep(db.Operations(), cli),
-		},
-		// post actions
-		{
-			stage:    postActionsStageName,
-			step:     provisioning.NewExternalEvalStep(externalEvalCreator),
-			disabled: cfg.Avs.Disabled,
-		},
-		{
-			stage:    postActionsStageName,
-			step:     provisioning.NewInternalEvaluationStep(avsDel, internalEvalAssistant),
-			disabled: cfg.Avs.Disabled,
 		},
 	}
 	for _, step := range provisioningSteps {

@@ -22,7 +22,6 @@ import (
 	"github.com/google/uuid"
 	"github.com/kyma-project/control-plane/components/provisioner/pkg/gqlschema"
 	"github.com/kyma-project/kyma-environment-broker/internal"
-	"github.com/kyma-project/kyma-environment-broker/internal/avs"
 	"github.com/kyma-project/kyma-environment-broker/internal/edp"
 	"github.com/kyma-project/kyma-environment-broker/internal/event"
 	"github.com/kyma-project/kyma-environment-broker/internal/fixture"
@@ -86,22 +85,6 @@ func NewDeprovisioningSuite(t *testing.T) *DeprovisioningSuite {
 	eventBroker := event.NewPubSub(logs)
 	provisionerClient := provisioner.NewFakeClient()
 
-	server := avs.NewMockAvsServer(t)
-	mockServer := avs.FixMockAvsServer(server)
-	avsConfig := avs.Config{
-		OauthTokenEndpoint: fmt.Sprintf("%s/oauth/token", mockServer.URL),
-		ApiEndpoint:        fmt.Sprintf("%s/api/v2/evaluationmetadata", mockServer.URL),
-	}
-	client, err := avs.NewClient(context.TODO(), avsConfig, logrus.New())
-	assert.NoError(t, err)
-	_, err = client.CreateEvaluation(&avs.BasicEvaluationCreateRequest{
-		Name: "fake-evaluation",
-	})
-	assert.NoError(t, err)
-	avsDel := avs.NewDelegator(client, avsConfig, db.Operations())
-	externalEvalAssistant := avs.NewExternalEvalAssistant(cfg.Avs)
-	internalEvalAssistant := avs.NewInternalEvalAssistant(cfg.Avs)
-
 	edpClient := fixEDPClient(t)
 
 	accountProvider := fixAccountProvider()
@@ -126,7 +109,7 @@ func NewDeprovisioningSuite(t *testing.T) *DeprovisioningSuite {
 		kebConfig.NewConfigMapConverter())
 
 	deprovisioningQueue := NewDeprovisioningProcessingQueue(ctx, workersAmount, deprovisionManager, cfg, db, eventBroker,
-		provisionerClient, avsDel, internalEvalAssistant, externalEvalAssistant,
+		provisionerClient,
 		edpClient, accountProvider, kubeconfig.NewFakeK8sClientProvider(fakeK8sSKRClient), fakeK8sSKRClient, configProvider, logs,
 	)
 

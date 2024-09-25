@@ -4,8 +4,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/kyma-project/kyma-environment-broker/internal/broker"
-
 	"github.com/kyma-project/kyma-environment-broker/internal/fixture"
 	provisionerAutomock "github.com/kyma-project/kyma-environment-broker/internal/provisioner/automock"
 	"github.com/kyma-project/kyma-environment-broker/internal/storage"
@@ -14,17 +12,16 @@ import (
 )
 
 func TestRemoveRuntimeStep_Run(t *testing.T) {
-	t.Run("Should repeat process when deprovisioning call to provisioner succeeded", func(t *testing.T) {
+	t.Run("Should not repeat process when deprovisioning call to provisioner succeeded", func(t *testing.T) {
 		// given
 		log := logrus.New()
 		memoryStorage := storage.NewMemoryStorage()
 
-		kimConfig := broker.KimConfig{
-			Enabled: false,
-		}
 		operation := fixture.FixDeprovisioningOperation(fixOperationID, fixInstanceID)
 		operation.GlobalAccountID = fixGlobalAccountID
 		operation.RuntimeID = fixRuntimeID
+		operation.KymaResourceNamespace = "kcp-system"
+		operation.KimDeprovisionsOnly = false
 		err := memoryStorage.Operations().InsertDeprovisioningOperation(operation)
 		assert.NoError(t, err)
 
@@ -34,7 +31,7 @@ func TestRemoveRuntimeStep_Run(t *testing.T) {
 		provisionerClient := &provisionerAutomock.Client{}
 		provisionerClient.On("DeprovisionRuntime", fixGlobalAccountID, fixRuntimeID).Return(fixProvisionerOperationID, nil)
 
-		step := NewRemoveRuntimeStep(memoryStorage.Operations(), memoryStorage.Instances(), provisionerClient, time.Minute, kimConfig)
+		step := NewRemoveRuntimeStep(memoryStorage.Operations(), memoryStorage.Instances(), provisionerClient, time.Minute)
 
 		// when
 		entry := log.WithFields(logrus.Fields{"step": "TEST"})
@@ -48,6 +45,45 @@ func TestRemoveRuntimeStep_Run(t *testing.T) {
 		instance, err := memoryStorage.Instances().GetByID(result.InstanceID)
 		assert.NoError(t, err)
 		assert.Equal(t, instance.RuntimeID, fixRuntimeID)
+
+		provisionerClient.AssertNumberOfCalls(t, "DeprovisionRuntime", 1)
+
+	})
+
+	t.Run("Should not call provisioner", func(t *testing.T) {
+		// given
+		log := logrus.New()
+		memoryStorage := storage.NewMemoryStorage()
+
+		operation := fixture.FixDeprovisioningOperation(fixOperationID, fixInstanceID)
+		operation.GlobalAccountID = fixGlobalAccountID
+		operation.RuntimeID = fixRuntimeID
+		operation.KymaResourceNamespace = "kcp-system"
+		operation.KimDeprovisionsOnly = true
+		err := memoryStorage.Operations().InsertDeprovisioningOperation(operation)
+		assert.NoError(t, err)
+
+		err = memoryStorage.Instances().Insert(fixInstanceRuntimeStatus())
+		assert.NoError(t, err)
+
+		provisionerClient := &provisionerAutomock.Client{}
+		provisionerClient.On("DeprovisionRuntime", fixGlobalAccountID, fixRuntimeID).Return(fixProvisionerOperationID, nil)
+
+		step := NewRemoveRuntimeStep(memoryStorage.Operations(), memoryStorage.Instances(), provisionerClient, time.Minute)
+
+		// when
+		entry := log.WithFields(logrus.Fields{"step": "TEST"})
+		result, repeat, err := step.Run(operation.Operation, entry)
+
+		// then
+		assert.NoError(t, err)
+		assert.Equal(t, 0*time.Second, repeat)
+
+		instance, err := memoryStorage.Instances().GetByID(result.InstanceID)
+		assert.NoError(t, err)
+		assert.Equal(t, instance.RuntimeID, fixRuntimeID)
+
+		provisionerClient.AssertNumberOfCalls(t, "DeprovisionRuntime", 0)
 
 	})
 }

@@ -24,7 +24,6 @@ import (
 	hyperscalerautomock "github.com/kyma-project/kyma-environment-broker/common/hyperscaler/automock"
 	"github.com/kyma-project/kyma-environment-broker/common/orchestration"
 	"github.com/kyma-project/kyma-environment-broker/internal"
-	"github.com/kyma-project/kyma-environment-broker/internal/avs"
 	"github.com/kyma-project/kyma-environment-broker/internal/broker"
 	"github.com/kyma-project/kyma-environment-broker/internal/edp"
 	"github.com/kyma-project/kyma-environment-broker/internal/event"
@@ -32,7 +31,6 @@ import (
 	kebOrchestration "github.com/kyma-project/kyma-environment-broker/internal/orchestration"
 	"github.com/kyma-project/kyma-environment-broker/internal/process"
 	"github.com/kyma-project/kyma-environment-broker/internal/process/input"
-	"github.com/kyma-project/kyma-environment-broker/internal/process/provisioning"
 	"github.com/kyma-project/kyma-environment-broker/internal/process/upgrade_cluster"
 	"github.com/kyma-project/kyma-environment-broker/internal/provisioner"
 	kebRuntime "github.com/kyma-project/kyma-environment-broker/internal/runtime"
@@ -149,9 +147,6 @@ func NewOrchestrationSuite(t *testing.T, additionalKymaVersions []string) *Orche
 
 	eventBroker := event.NewPubSub(logs)
 
-	avsClient, _ := avs.NewClient(ctx, avs.Config{}, logs)
-	avsDel := avs.NewDelegator(avsClient, avs.Config{}, db.Operations())
-	upgradeEvaluationManager := avs.NewEvaluationManager(avsDel, avs.Config{})
 	runtimeLister := kebOrchestration.NewRuntimeLister(db.Instances(), db.Operations(), kebRuntime.NewConverter(defaultRegion), logs)
 	runtimeResolver := orchestration.NewGardenerRuntimeResolver(gardenerClient, gardenerNamespace, runtimeLister, logs)
 
@@ -162,7 +157,7 @@ func NewOrchestrationSuite(t *testing.T, additionalKymaVersions []string) *Orche
 		Retry:                 2 * time.Millisecond,
 		StatusCheck:           20 * time.Millisecond,
 		UpgradeClusterTimeout: 4 * time.Second,
-	}, 250*time.Millisecond, runtimeResolver, upgradeEvaluationManager, notificationBundleBuilder, logs, cli, cfg, 1000)
+	}, 250*time.Millisecond, runtimeResolver, notificationBundleBuilder, logs, cli, cfg, 1000)
 
 	clusterQueue.SpeedUp(1000)
 
@@ -519,7 +514,6 @@ type ProvisioningSuite struct {
 	storage             storage.BrokerStorage
 
 	t         *testing.T
-	avsServer *avs.MockAvsServer
 	k8sKcpCli client.Client
 }
 
@@ -577,19 +571,7 @@ func NewProvisioningSuite(t *testing.T, multiZoneCluster bool, controlPlaneFailu
 	}, map[string]string{"cf-eu10": "europe"}, cfg.FreemiumProviders, oidcDefaults, useSmallerMachineTypes)
 	require.NoError(t, err)
 
-	server := avs.NewMockAvsServer(t)
-	mockServer := avs.FixMockAvsServer(server)
-	avsConfig := avs.Config{
-		OauthTokenEndpoint: fmt.Sprintf("%s/oauth/token", mockServer.URL),
-		ApiEndpoint:        fmt.Sprintf("%s/api/v2/evaluationmetadata", mockServer.URL),
-	}
-
-	client, err := avs.NewClient(context.TODO(), avsConfig, logrus.New())
 	assert.NoError(t, err)
-	avsDel := avs.NewDelegator(client, avsConfig, db.Operations())
-	externalEvalAssistant := avs.NewExternalEvalAssistant(cfg.Avs)
-	internalEvalAssistant := avs.NewInternalEvalAssistant(cfg.Avs)
-	externalEvalCreator := provisioning.NewExternalEvalCreator(avsDel, cfg.Avs.Disabled, externalEvalAssistant)
 
 	edpClient := edp.NewFakeClient()
 
@@ -598,8 +580,7 @@ func NewProvisioningSuite(t *testing.T, multiZoneCluster bool, controlPlaneFailu
 	eventBroker := event.NewPubSub(logs)
 
 	provisionManager := process.NewStagedManager(db.Operations(), eventBroker, cfg.OperationTimeout, cfg.Provisioning, logs.WithField("provisioning", "manager"))
-	provisioningQueue := NewProvisioningProcessingQueue(ctx, provisionManager, workersAmount, cfg, db, provisionerClient, inputFactory, avsDel,
-		internalEvalAssistant, externalEvalCreator, edpClient, accountProvider,
+	provisioningQueue := NewProvisioningProcessingQueue(ctx, provisionManager, workersAmount, cfg, db, provisionerClient, inputFactory, edpClient, accountProvider,
 		kubeconfig.NewFakeK8sClientProvider(cli), cli, defaultOIDCValues(), logs)
 
 	provisioningQueue.SpeedUp(10000)
@@ -610,7 +591,6 @@ func NewProvisioningSuite(t *testing.T, multiZoneCluster bool, controlPlaneFailu
 		provisioningManager: provisionManager,
 		provisioningQueue:   provisioningQueue,
 		storage:             db,
-		avsServer:           server,
 		k8sKcpCli:           cli,
 
 		t: t,
@@ -957,7 +937,6 @@ func fixConfig() *Config {
 		},
 		TrialRegionMappingFilePath: "testdata/trial-regions.yaml",
 
-		Avs: avs.Config{},
 		Notification: notification.Config{
 			Url: "http://host:8080/",
 		},

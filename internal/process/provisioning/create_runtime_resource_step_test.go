@@ -709,6 +709,36 @@ func Test_Defaults(t *testing.T) {
 	assert.Equal(t, "initial value", nonEmpty)
 }
 
+func Test_DefaultsOnActualStructures(t *testing.T) {
+	//given
+	_, operation := fixInstanceAndOperation(broker.AzurePlanID, "westeurope", "platform-region")
+	oidc := defaultOIDSConfig
+
+	//when
+	operation.ProvisioningParameters.Parameters.OIDC = &internal.OIDCConfigDTO{
+		ClientID:       "",
+		GroupsClaim:    "gc-custom",
+		IssuerURL:      "issuer-url-custom",
+		SigningAlgs:    []string{},
+		UsernameClaim:  "",
+		UsernamePrefix: "up-custom",
+	}
+
+	oidc.ClientID = DefaultIfParamZero(defaultOIDSConfig.ClientID, operation.ProvisioningParameters.Parameters.OIDC.ClientID)
+	oidc.GroupsClaim = DefaultIfParamZero(defaultOIDSConfig.GroupsClaim, operation.ProvisioningParameters.Parameters.OIDC.GroupsClaim)
+	oidc.IssuerURL = DefaultIfParamZero(defaultOIDSConfig.IssuerURL, operation.ProvisioningParameters.Parameters.OIDC.IssuerURL)
+	oidc.UsernameClaim = DefaultIfParamZero(defaultOIDSConfig.UsernameClaim, operation.ProvisioningParameters.Parameters.OIDC.UsernameClaim)
+	oidc.UsernamePrefix = DefaultIfParamZero(defaultOIDSConfig.UsernamePrefix, operation.ProvisioningParameters.Parameters.OIDC.UsernamePrefix)
+
+	//then
+	assert.Len(t, oidc.SigningAlgs, 1)
+	assert.Equal(t, defaultOIDSConfig.ClientID, oidc.ClientID)
+	assert.Equal(t, "gc-custom", oidc.GroupsClaim)
+	assert.Equal(t, "issuer-url-custom", oidc.IssuerURL)
+	assert.Equal(t, defaultOIDSConfig.UsernameClaim, oidc.UsernameClaim)
+	assert.Equal(t, "up-custom", oidc.UsernamePrefix)
+}
+
 // assertions
 
 func assertSecurityWithDefaultAdministrator(t *testing.T, runtime imv1.Runtime) {

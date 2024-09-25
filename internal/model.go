@@ -165,6 +165,9 @@ type Operation struct {
 
 	LastError kebError.LastError `json:"last_error"`
 
+	// Used during KIM integration while deprovisioning - to be removed later on when provisioner not used anymore
+	KimDeprovisionsOnly bool `json:"kim_deprovisions_only"`
+
 	// following fields are not stored in the storage and should be added to the Merge function
 	InputCreator ProvisionerInputCreator `json:"-"`
 }

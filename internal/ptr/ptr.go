@@ -31,6 +31,10 @@ func Integer(in int) *int {
 	return &in
 }
 
+func Integer64(in int64) *int64 {
+	return &in
+}
+
 func Time(in time.Time) *time.Time {
 	return &in
 }

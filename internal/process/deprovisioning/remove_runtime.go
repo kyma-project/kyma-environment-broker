@@ -21,16 +21,14 @@ type RemoveRuntimeStep struct {
 	instanceStorage    storage.Instances
 	provisionerClient  provisioner.Client
 	provisionerTimeout time.Duration
-	kimConfig          broker.KimConfig
 }
 
-func NewRemoveRuntimeStep(os storage.Operations, is storage.Instances, cli provisioner.Client, provisionerTimeout time.Duration, kimConfig broker.KimConfig) *RemoveRuntimeStep {
+func NewRemoveRuntimeStep(os storage.Operations, is storage.Instances, cli provisioner.Client, provisionerTimeout time.Duration) *RemoveRuntimeStep {
 	return &RemoveRuntimeStep{
 		operationManager:   process.NewOperationManager(os),
 		instanceStorage:    is,
 		provisionerClient:  cli,
 		provisionerTimeout: provisionerTimeout,
-		kimConfig:          kimConfig,
 	}
 }
 
@@ -39,8 +37,9 @@ func (s *RemoveRuntimeStep) Name() string {
 }
 
 func (s *RemoveRuntimeStep) Run(operation internal.Operation, log logrus.FieldLogger) (internal.Operation, time.Duration, error) {
-	if s.kimConfig.IsDrivenByKimOnly(broker.PlanNamesMapping[operation.ProvisioningParameters.PlanID]) {
-		log.Infof("Only KIM is driving the process for plan %s, skipping", broker.PlanNamesMapping[operation.ProvisioningParameters.PlanID])
+
+	if operation.KimDeprovisionsOnly {
+		log.Infof("Skipping the step because the runtime %s/%s is not controlled by the provisioner", operation.GetRuntimeResourceName(), operation.GetRuntimeResourceName())
 		return operation, 0, nil
 	}
 
