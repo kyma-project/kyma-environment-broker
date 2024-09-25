@@ -126,6 +126,31 @@ The test executes the following steps:
     make skr-networking-test
     ```
 
+## Binding Tests
+
+### Usage
+
+The test executes the following steps:
+1. Provisions a Kyma runtime cluster.
+2. Creates a binding and saves the returned kubeconfig.
+3. Inits a k8s client with the returned kubeconfig.
+4. Tries to fetch a secret.
+5. Deprovisions the Kyma runtime instance and cleans up the resources.
+
+### Test Execution
+
+1. Before you run the test, prepare the `.env` file based on this [`.env.template`](/testing/e2e/skr/skr-test/.env.template).
+2. To set up the environment variables in your system, run:
+
+    ```bash
+    export $(xargs < .env)
+    ```
+
+3. Run the test scenario:
+    ```bash
+    make skr-binding-test
+    ```
+
 ## CI Pipelines
 
 The tests are run once per day at 01:05 by the given ProwJobs:
