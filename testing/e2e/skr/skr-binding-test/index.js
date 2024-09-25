@@ -10,6 +10,8 @@ const provisioningTimeout = 1000 * 60 * 30; // 30m
 const deprovisioningTimeout = 1000 * 60 * 95; // 95m
 let globalTimeout = 1000 * 60 * 70; // 70m
 const slowTime = 5000;
+const secretName = 'sap-btp-manager';
+const ns = 'kyma-system';
 
 describe('SKR Binding test', function() {
   globalTimeout += provisioningTimeout + deprovisioningTimeout;
