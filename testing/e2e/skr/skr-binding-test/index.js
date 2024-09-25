@@ -32,16 +32,16 @@ describe('SKR test', function() {
 
   it('Create SKR binding', async function() {
     try {
-      kubeconfigFromBinding = await keb.createBinding(options.instanceID)
+      kubeconfigFromBinding = await keb.createBinding(options.instanceID);
     } catch (err) {
       console.log(err);
     }
   });
 
   it('Initiate K8s client with kubeconfig from binding', async function() {
-      await initializeK8sClient({kubeconfig: kubeconfig});
+    await initializeK8sClient({kubeconfig: kubeconfigFromBinding});
   });
-  
+
   after('Cleanup the resources', async function() {
     this.timeout(deprovisioningTimeout);
     if (process.env['SKIP_DEPROVISIONING'] != 'true') {

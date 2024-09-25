@@ -277,8 +277,8 @@ class KEBClient {
       service_id: KYMA_SERVICE_ID,
       plan_id: this.planID,
       parameters: {
-        token_request: true
-      }
+        token_request: true,
+      },
     };
     const bindingID = Math.random().toString(36).substring(2, 18);
     const endpoint = `service_instances/${instanceID}/service_bindings/${bindingID}?accepts_incomplete=true`;
