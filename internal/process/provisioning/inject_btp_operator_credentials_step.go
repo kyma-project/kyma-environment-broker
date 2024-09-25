@@ -16,6 +16,8 @@ import (
 
 const (
 	updateSecretBackoff = 10 * time.Second
+	retryInterval       = 5 * time.Second
+	retryTimeout        = 2 * time.Minute
 )
 
 type K8sClientProvider interface {
@@ -47,8 +49,8 @@ func (s *InjectBTPOperatorCredentialsStep) Run(operation internal.Operation, log
 	k8sClient, err := s.k8sClientProvider.K8sClientForRuntimeID(operation.RuntimeID)
 
 	if err != nil {
-		log.Error("kubernetes client not set: %w", err)
-		return s.operationManager.RetryOperation(operation, "unable to get K8S client", err, 5*time.Second, 30*time.Second, log)
+		log.Errorf("kubernetes client not set: %w", err)
+		return s.operationManager.RetryOperation(operation, "unable to get K8S client", err, retryInterval, retryTimeout, log)
 	}
 
 	clusterID := operation.InstanceDetails.ServiceManagerClusterID
