@@ -88,5 +88,6 @@ async function getSKRKymaVersion(instanceID) {
 module.exports = {
   provisionSKRAndInitK8sConfig,
   getSKRKymaVersion,
+  provisionSKRInstance,
 };
 
