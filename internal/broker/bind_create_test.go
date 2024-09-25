@@ -11,6 +11,9 @@ import (
 	"testing"
 	"time"
 
+	"github.com/golang-jwt/jwt/v4"
+	"gopkg.in/yaml.v2"
+
 	"code.cloudfoundry.org/lager"
 	"github.com/gorilla/mux"
 	"github.com/kyma-project/kyma-environment-broker/internal"
@@ -35,6 +38,17 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client/fake"
 	"sigs.k8s.io/controller-runtime/pkg/envtest"
 )
+
+type Credentials struct {
+	Users []User `yaml:"users"`
+}
+
+type User struct {
+	Name string `yaml:"name"`
+	User struct {
+		Token string `yaml:"token"`
+	} `yaml:"user"`
+}
 
 func TestCreateBindingEndpoint(t *testing.T) {
 	t.Log("test create binding endpoint")
@@ -172,23 +186,11 @@ func TestCreateBindingEndpoint(t *testing.T) {
   }
 }`, fixture.PlanId), t)
 
-		// Then
-		require.Equal(
-			t, http.StatusCreated, response.StatusCode,
-		)
-		//// parse response
-		content, err := io.ReadAll(response.Body)
-		t.Logf("response content is: %v", string(content))
-		assert.NoError(t, err)
-		defer response.Body.Close()
+		binding := verifyResponse(t, response)
 
-		//// verify response content
-		assert.Contains(t, string(content), "credentials")
-
-		var binding domain.Binding
-		err = json.Unmarshal(content, &binding)
+		expiration, err := getTokenExpiration(t, binding.Credentials)
 		require.NoError(t, err)
-		t.Logf("binding: %v", binding.Credentials)
+		assert.Equal(t, 10000*time.Second, expiration)
 
 		//// verify connectivity using kubeconfig from the generated binding
 		newClient := kubeconfigClient(t, binding.Credentials.(string))
@@ -201,6 +203,25 @@ func TestCreateBindingEndpoint(t *testing.T) {
 		assert.NoError(t, err)
 		_, err = newClient.RbacV1().ClusterRoleBindings().Get(context.Background(), "kyma-binding-binding-id", v1.GetOptions{})
 		assert.NoError(t, err)
+	})
+
+	t.Run("should create a new service binding with custom token expiration time", func(t *testing.T) {
+
+		// When
+		response := CallAPI(httpServer, method, "v2/service_instances/1/service_bindings/binding-id2?accepts_incomplete=true", fmt.Sprintf(`{
+  "service_id": "123",
+  "plan_id": "%s",
+  "parameters": {
+    "token_request": true,
+	"token_expiration_seconds": 900
+  }
+}`, fixture.PlanId), t)
+
+		binding := verifyResponse(t, response)
+
+		expiration, err := getTokenExpiration(t, binding.Credentials)
+		require.NoError(t, err)
+		assert.Equal(t, 900*time.Second, expiration)
 	})
 }
 
@@ -277,4 +298,51 @@ func kubeconfigClient(t *testing.T, kubeconfig string) *kubernetes.Clientset {
 	assert.NoError(t, err)
 
 	return clientset
+}
+
+func verifyResponse(t *testing.T, response *http.Response) domain.Binding {
+	require.Equal(t, http.StatusCreated, response.StatusCode)
+
+	content, err := io.ReadAll(response.Body)
+	require.NoError(t, err)
+	defer response.Body.Close()
+
+	t.Logf("response content is: %v", string(content))
+
+	assert.Contains(t, string(content), "credentials")
+
+	var binding domain.Binding
+	err = json.Unmarshal(content, &binding)
+	require.NoError(t, err)
+
+	t.Logf("binding: %v", binding.Credentials)
+
+	return binding
+}
+
+func getTokenExpiration(t *testing.T, token interface{}) (time.Duration, error) {
+	var credentials Credentials
+
+	err := yaml.Unmarshal([]byte(token.(string)), &credentials)
+	require.NoError(t, err)
+
+	for _, user := range credentials.Users {
+		if user.Name == "context" {
+			token, _, err := new(jwt.Parser).ParseUnverified(user.User.Token, jwt.MapClaims{})
+			require.NoError(t, err)
+
+			if claims, ok := token.Claims.(jwt.MapClaims); ok {
+				iat := int64(claims["iat"].(float64))
+				exp := int64(claims["exp"].(float64))
+
+				issuedAt := time.Unix(iat, 0)
+				expiresAt := time.Unix(exp, 0)
+
+				return expiresAt.Sub(issuedAt), nil
+			} else {
+				return 0, fmt.Errorf("invalid token claims")
+			}
+		}
+	}
+	return 0, fmt.Errorf("user with name 'context' not found")
 }

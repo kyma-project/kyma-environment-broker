@@ -30,17 +30,21 @@ type BindEndpoint struct {
 	tokenRequestBindingManager broker.BindingsManager
 	gardenerBindingsManager    broker.BindingsManager
 
+	tokenExpirationSeconds int
+
 	log logrus.FieldLogger
 }
 
 type BindingParams struct {
-	TokenRequest bool `json:"token_request,omit"`
+	TokenRequest           bool `json:"token_request,omit"`
+	TokenExpirationSeconds int  `json:"token_expiration_seconds,omit"`
 }
 
 func NewBind(cfg BindingConfig, instanceStorage storage.Instances, log logrus.FieldLogger, clientProvider broker.ClientProvider, kubeconfigProvider broker.KubeconfigProvider, gardenerClient client.Client, tokenExpirationSeconds int) *BindEndpoint {
 	return &BindEndpoint{config: cfg, instancesStorage: instanceStorage, log: log.WithField("service", "BindEndpoint"),
-		tokenRequestBindingManager: broker.NewTokenRequestBindingsManager(clientProvider, kubeconfigProvider, tokenExpirationSeconds),
-		gardenerBindingsManager:    broker.NewGardenerBindingManager(gardenerClient, tokenExpirationSeconds),
+		tokenRequestBindingManager: broker.NewTokenRequestBindingsManager(clientProvider, kubeconfigProvider),
+		gardenerBindingsManager:    broker.NewGardenerBindingManager(gardenerClient),
+		tokenExpirationSeconds:     tokenExpirationSeconds,
 	}
 }
 
@@ -88,17 +92,24 @@ func (b *BindEndpoint) Bind(ctx context.Context, instanceID, bindingID string, d
 		return domain.Binding{}, apiresponses.NewFailureResponse(fmt.Errorf(message), http.StatusInternalServerError, message)
 	}
 
+	expirationSeconds := b.tokenExpirationSeconds
+	if parameters.TokenExpirationSeconds != 0 {
+		expirationSeconds = parameters.TokenExpirationSeconds
+	}
+
 	var kubeconfig string
 	if parameters.TokenRequest {
 		// get kubeconfig for the instance
-		kubeconfig, err = b.tokenRequestBindingManager.Create(ctx, instance, bindingID)
+		kubeconfig, err = b.tokenRequestBindingManager.Create(ctx, instance, bindingID, expirationSeconds)
 		if err != nil {
-			return domain.Binding{}, fmt.Errorf("failed to create kyma binding using token requests: %s", err)
+			message := fmt.Sprintf("failed to create kyma binding using token requests: %s", err)
+			return domain.Binding{}, apiresponses.NewFailureResponse(fmt.Errorf(message), http.StatusBadRequest, message)
 		}
 	} else {
-		kubeconfig, err = b.gardenerBindingsManager.Create(ctx, instance, bindingID)
+		kubeconfig, err = b.gardenerBindingsManager.Create(ctx, instance, bindingID, expirationSeconds)
 		if err != nil {
-			return domain.Binding{}, fmt.Errorf("failed to create kyma binding using adminkubeconfig gardener subresource: %s", err)
+			message := fmt.Sprintf("failed to create kyma binding using adminkubeconfig gardener subresource: %s", err)
+			return domain.Binding{}, apiresponses.NewFailureResponse(fmt.Errorf(message), http.StatusBadRequest, message)
 		}
 	}
 
