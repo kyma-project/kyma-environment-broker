@@ -10,7 +10,7 @@ The test is executed on a dev cluster. It is executed after every merge to the `
 
 - Gardener Secret per provider
 - Service Manager Secret
-- Kyma Environment Broker [configured](https://github.com/kyma-project/kyma-environment-broker/tree/main#configuration) to use these Secrets to create Kyma runtime successfully
+- Kyma Environment Broker [configured](../../../docs/contributor/01-10-authorization.md) to use these Secrets to create Kyma runtime successfully
 
 ## Details
 
