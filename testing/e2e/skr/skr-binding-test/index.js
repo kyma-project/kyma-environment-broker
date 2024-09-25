@@ -1,9 +1,6 @@
-const {
-  gatherOptions,
-} = require('../skr-test');
-const {
-  initializeK8sClient,
-} = require('../utils/index.js');
+const {gatherOptions} = require('../skr-test');
+const {initializeK8sClient} = require('../utils/index.js');
+const {getSecret} = require('../utils');
 const {provisionSKRAndInitK8sConfig} = require('../skr-test/provision/provision-skr');
 const {deprovisionAndUnregisterSKR} = require('../skr-test/provision/deprovision-skr');
 const {KEBClient, KEBConfig} = require('../kyma-environment-broker');
@@ -14,7 +11,7 @@ const deprovisioningTimeout = 1000 * 60 * 95; // 95m
 let globalTimeout = 1000 * 60 * 70; // 70m
 const slowTime = 5000;
 
-describe('SKR test', function() {
+describe('SKR Binding test', function() {
   globalTimeout += provisioningTimeout + deprovisioningTimeout;
 
   this.timeout(globalTimeout);
@@ -40,6 +37,10 @@ describe('SKR test', function() {
 
   it('Initiate K8s client with kubeconfig from binding', async function() {
     await initializeK8sClient({kubeconfig: kubeconfigFromBinding});
+  });
+
+  it('Fetch sap-btp-service-operator secret', async function() {
+    await getSecret(secretName, ns);
   });
 
   after('Cleanup the resources', async function() {
