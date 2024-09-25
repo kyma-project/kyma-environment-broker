@@ -38,7 +38,7 @@ describe('SKR Binding test', function() {
   });
 
   it('Initiate K8s client with kubeconfig from binding', async function() {
-    await initializeK8sClient({kubeconfig: kubeconfigFromBinding});
+    await initializeK8sClient({kubeconfig: kubeconfigFromBinding.credentials});
   });
 
   it('Fetch sap-btp-manager secret', async function() {
