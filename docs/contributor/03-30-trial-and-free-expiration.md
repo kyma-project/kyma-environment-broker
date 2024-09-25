@@ -22,9 +22,8 @@ If KEB accepts the instance expiration request, then it marks the instance as ex
 
 ## Update Requests
 
-When an instance update request is sent for an expired instance, the HTTP response is `OK` only if:
-* Only **context** parameters are changed
-* The update includes the instance's **service_id**, which is required by OSB API
+When an instance update request is sent for an expired instance, the HTTP response is `200` only if the update includes a new value in the **globalaccount_id** field.
+The changes to the `parameters` section are ignored.
 
 See the example call:
 
@@ -33,9 +32,9 @@ PATCH /oauth/v2/service_instances/F9AC6341-AC2A-4D3E-B2B7-1A8AFAA6F4C3?accepts_i
 {
 	“service_id”: “47c9dcbf-ff30-448e-ab36-d3bad66ba281", //Kyma ID
 	“context”: {
-		“globalaccount_id”: “some-other-ga”
+		“globalaccount_id”: “{NEW_GLOBALACCOUNT_ID}”
 	}
 }
 ```
 
-Requests including any additional information other than **service_id** and **context** parameters return the `400` response.
+Requests that don't include a new **globalaccount_id** return the HTTP response `400`.
