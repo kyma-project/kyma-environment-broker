@@ -41,7 +41,7 @@ describe('SKR Binding test', function() {
     await initializeK8sClient({kubeconfig: kubeconfigFromBinding});
   });
 
-  it('Fetch sap-btp-service-operator secret', async function() {
+  it('Fetch sap-btp-manager secret', async function() {
     await getSecret(secretName, ns);
   });
 
