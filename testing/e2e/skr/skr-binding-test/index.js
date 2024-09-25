@@ -20,7 +20,6 @@ describe('SKR Binding test', function() {
   this.slow(slowTime);
 
   const options = gatherOptions(); // with default values
-  let skr;
   let kubeconfigFromBinding;
 
   before('Ensure SKR is provisioned', async function() {
