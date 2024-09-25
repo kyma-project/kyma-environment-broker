@@ -22,7 +22,7 @@ func NewGardenerBindingManager(gardenerClient client.Client) *GardenerBindingMan
 	}
 }
 
-func (c *GardenerBindingManager) Create(ctx context.Context, instance *internal.Instance, bindingID string, tokenExpirationSeconds int) (string, error) {
+func (c *GardenerBindingManager) Create(ctx context.Context, instance *internal.Instance, bindingID string, expirationSeconds int) (string, error) {
 
 	shoot := &shoot.Shoot{
 		TypeMeta: metav1.TypeMeta{APIVersion: "core.gardener.cloud/v1beta1", Kind: "Shoot"},
@@ -34,7 +34,7 @@ func (c *GardenerBindingManager) Create(ctx context.Context, instance *internal.
 
 	adminKubeconfigRequest := &authenticationv1alpha1.AdminKubeconfigRequest{
 		Spec: authenticationv1alpha1.AdminKubeconfigRequestSpec{
-			ExpirationSeconds: ptr.Integer64(int64(tokenExpirationSeconds)),
+			ExpirationSeconds: ptr.Integer64(int64(expirationSeconds)),
 		},
 	}
 

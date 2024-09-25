@@ -18,7 +18,7 @@ type Credentials struct {
 }
 
 type BindingsManager interface {
-	Create(ctx context.Context, instance *internal.Instance, bindingID string, tokenExpirationSeconds int) (string, error)
+	Create(ctx context.Context, instance *internal.Instance, bindingID string, expirationSeconds int) (string, error)
 }
 
 type ClientProvider interface {
@@ -30,9 +30,8 @@ type KubeconfigProvider interface {
 }
 
 type TokenRequestBindingsManager struct {
-	clientProvider         ClientProvider
-	tokenExpirationSeconds int
-	kubeconfigBuilder      *kubeconfig.Builder
+	clientProvider    ClientProvider
+	kubeconfigBuilder *kubeconfig.Builder
 }
 
 func NewTokenRequestBindingsManager(clientProvider ClientProvider, kubeconfigProvider KubeconfigProvider) *TokenRequestBindingsManager {
@@ -42,7 +41,7 @@ func NewTokenRequestBindingsManager(clientProvider ClientProvider, kubeconfigPro
 	}
 }
 
-func (c *TokenRequestBindingsManager) Create(ctx context.Context, instance *internal.Instance, bindingID string, tokenExpirationSeconds int) (string, error) {
+func (c *TokenRequestBindingsManager) Create(ctx context.Context, instance *internal.Instance, bindingID string, expirationSeconds int) (string, error) {
 	clientset, err := c.clientProvider.K8sClientSetForRuntimeID(instance.RuntimeID)
 
 	if err != nil {
@@ -115,7 +114,7 @@ func (c *TokenRequestBindingsManager) Create(ctx context.Context, instance *inte
 			Labels:    map[string]string{"app.kubernetes.io/managed-by": "kcp-kyma-environment-broker"},
 		},
 		Spec: authv1.TokenRequestSpec{
-			ExpirationSeconds: ptr.Integer64(int64(tokenExpirationSeconds)),
+			ExpirationSeconds: ptr.Integer64(int64(expirationSeconds)),
 		},
 	}
 

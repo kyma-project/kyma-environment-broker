@@ -151,10 +151,11 @@ func TestCreateBindingEndpoint(t *testing.T) {
 		BindablePlans: EnablePlans{
 			fixture.PlanName,
 		},
+		ExpirationSeconds: 10000,
 	}
 
 	//// api handler
-	bindEndpoint := NewBind(*bindingCfg, db.Instances(), logs, skrK8sClientProvider, skrK8sClientProvider, gardenerClient, 10000)
+	bindEndpoint := NewBind(*bindingCfg, db.Instances(), logs, skrK8sClientProvider, skrK8sClientProvider, gardenerClient)
 	apiHandler := handlers.NewApiHandler(KymaEnvironmentBroker{
 		nil,
 		nil,
@@ -188,9 +189,9 @@ func TestCreateBindingEndpoint(t *testing.T) {
 
 		binding := verifyResponse(t, response)
 
-		expiration, err := getTokenExpiration(t, binding.Credentials)
+		duration, err := getTokenDuration(t, binding.Credentials)
 		require.NoError(t, err)
-		assert.Equal(t, 10000*time.Second, expiration)
+		assert.Equal(t, 10000*time.Second, duration)
 
 		//// verify connectivity using kubeconfig from the generated binding
 		newClient := kubeconfigClient(t, binding.Credentials.(string))
@@ -213,15 +214,15 @@ func TestCreateBindingEndpoint(t *testing.T) {
   "plan_id": "%s",
   "parameters": {
     "token_request": true,
-	"token_expiration_seconds": 900
+	"expiration_seconds": 900
   }
 }`, fixture.PlanId), t)
 
 		binding := verifyResponse(t, response)
 
-		expiration, err := getTokenExpiration(t, binding.Credentials)
+		duration, err := getTokenDuration(t, binding.Credentials)
 		require.NoError(t, err)
-		assert.Equal(t, 900*time.Second, expiration)
+		assert.Equal(t, 900*time.Second, duration)
 	})
 }
 
@@ -320,7 +321,7 @@ func verifyResponse(t *testing.T, response *http.Response) domain.Binding {
 	return binding
 }
 
-func getTokenExpiration(t *testing.T, token interface{}) (time.Duration, error) {
+func getTokenDuration(t *testing.T, token interface{}) (time.Duration, error) {
 	var credentials Credentials
 
 	err := yaml.Unmarshal([]byte(token.(string)), &credentials)

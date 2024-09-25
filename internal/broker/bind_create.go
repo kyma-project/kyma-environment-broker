@@ -19,8 +19,9 @@ import (
 )
 
 type BindingConfig struct {
-	Enabled       bool        `envconfig:"default=false"`
-	BindablePlans EnablePlans `envconfig:"default=aws"`
+	Enabled           bool        `envconfig:"default=false"`
+	BindablePlans     EnablePlans `envconfig:"default=aws"`
+	ExpirationSeconds int         `envconfig:"default=600"`
 }
 
 type BindEndpoint struct {
@@ -30,21 +31,18 @@ type BindEndpoint struct {
 	tokenRequestBindingManager broker.BindingsManager
 	gardenerBindingsManager    broker.BindingsManager
 
-	tokenExpirationSeconds int
-
 	log logrus.FieldLogger
 }
 
 type BindingParams struct {
-	TokenRequest           bool `json:"token_request,omit"`
-	TokenExpirationSeconds int  `json:"token_expiration_seconds,omit"`
+	TokenRequest      bool `json:"token_request,omit"`
+	ExpirationSeconds int  `json:"expiration_seconds,omit"`
 }
 
-func NewBind(cfg BindingConfig, instanceStorage storage.Instances, log logrus.FieldLogger, clientProvider broker.ClientProvider, kubeconfigProvider broker.KubeconfigProvider, gardenerClient client.Client, tokenExpirationSeconds int) *BindEndpoint {
+func NewBind(cfg BindingConfig, instanceStorage storage.Instances, log logrus.FieldLogger, clientProvider broker.ClientProvider, kubeconfigProvider broker.KubeconfigProvider, gardenerClient client.Client) *BindEndpoint {
 	return &BindEndpoint{config: cfg, instancesStorage: instanceStorage, log: log.WithField("service", "BindEndpoint"),
 		tokenRequestBindingManager: broker.NewTokenRequestBindingsManager(clientProvider, kubeconfigProvider),
 		gardenerBindingsManager:    broker.NewGardenerBindingManager(gardenerClient),
-		tokenExpirationSeconds:     tokenExpirationSeconds,
 	}
 }
 
@@ -92,9 +90,9 @@ func (b *BindEndpoint) Bind(ctx context.Context, instanceID, bindingID string, d
 		return domain.Binding{}, apiresponses.NewFailureResponse(fmt.Errorf(message), http.StatusInternalServerError, message)
 	}
 
-	expirationSeconds := b.tokenExpirationSeconds
-	if parameters.TokenExpirationSeconds != 0 {
-		expirationSeconds = parameters.TokenExpirationSeconds
+	expirationSeconds := b.config.ExpirationSeconds
+	if parameters.ExpirationSeconds != 0 {
+		expirationSeconds = parameters.ExpirationSeconds
 	}
 
 	var kubeconfig string
