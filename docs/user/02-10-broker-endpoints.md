@@ -12,4 +12,4 @@ Kyma Environment Broker (KEB) implements the [Open Service Broker API (OSB API)]
 
 Besides OSB API endpoints, KEB exposes the REST `/info/runtimes` endpoint that provides information about all created Runtimes, both succeeded and failed. This endpoint is secured with the OAuth2 authorization.
 
-For more details on KEB APIs, see [this file](../../files/swagger/index.html).
+For more details on KEB APIs, see [`swagger`](../../resources/keb/files/swagger.yaml).

@@ -27,7 +27,7 @@ For technical details of KEB, go to the `contributor` directory:
 * [Check Orchestration Status](./contributor/02-70-orchestration-status.md)
 * [Hyperscaler Account Pool](./contributor/03-10-hyperscaler-account-pool.md)
 * [EU Access](./contributor/03-20-eu-access.md)
-* [Trial Expiration](./contributor/03-30-trial-expiration.md)
+* [Trial and Free Instance Expiration](./contributor/03-30-trial-and-free-expiration.md)
 * [GitHub Actions Workflows](./contributor/04-10-workflows.md)
 * [Kyma Environment Broker Release Pipeline](./contributor/04-20-release.md)
 * [End-to-end Tests of Kyma Environment Broker](./contributor/05-10-e2e_tests.md)

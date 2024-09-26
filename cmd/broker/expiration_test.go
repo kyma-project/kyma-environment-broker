@@ -87,7 +87,6 @@ const unsuspensionRequestBody = `{
   "service_id": "47c9dcbf-ff30-448e-ab36-d3bad66ba281",
   "plan_id": "7d55d31d-35ae-4438-bf13-6ffdfa107d9f",
   "context": {
-    "globalaccount_id": "global-account-id",
     "subaccount_id": "subaccount-id",
     "user_id": "john.smith@email.com",
     "active": true

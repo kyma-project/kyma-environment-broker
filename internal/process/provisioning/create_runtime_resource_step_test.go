@@ -58,7 +58,7 @@ var defaultOIDSConfig = internal.OIDCConfigDTO{
 	UsernamePrefix: "up-default",
 }
 
-func TestCreateRuntimeResourceStep_OIDC(t *testing.T) {
+func TestCreateRuntimeResourceStep_OIDC_AllCustom(t *testing.T) {
 	// given
 	err := imv1.AddToScheme(scheme.Scheme)
 	assert.NoError(t, err)
@@ -99,6 +99,48 @@ func TestCreateRuntimeResourceStep_OIDC(t *testing.T) {
 		SigningAlgs:    []string{"sa-custom"},
 		UsernameClaim:  ptr.String("uc-custom"),
 		UsernamePrefix: ptr.String("up-custom"),
+	}, runtime.Spec.Shoot.Kubernetes.KubeAPIServer.OidcConfig)
+}
+
+func TestCreateRuntimeResourceStep_OIDC_MixedCustom(t *testing.T) {
+	// given
+	err := imv1.AddToScheme(scheme.Scheme)
+	assert.NoError(t, err)
+	log := logrus.New()
+	memoryStorage := storage.NewMemoryStorage()
+	instance, operation := fixInstanceAndOperation(broker.AzurePlanID, "westeurope", "platform-region")
+	operation.ProvisioningParameters.Parameters.OIDC = &internal.OIDCConfigDTO{
+		ClientID:      "client-id-custom",
+		GroupsClaim:   "gc-custom",
+		IssuerURL:     "issuer-url-custom",
+		UsernameClaim: "uc-custom",
+	}
+	assertInsertions(t, memoryStorage, instance, operation)
+	kimConfig := fixKimConfig("azure", false)
+	inputConfig := input.Config{MultiZoneCluster: true}
+	cli := getClientForTests(t)
+	step := NewCreateRuntimeResourceStep(memoryStorage.Operations(), memoryStorage.Instances(), cli, kimConfig, inputConfig, nil, false, defaultOIDSConfig)
+
+	// when
+	entry := log.WithFields(logrus.Fields{"step": "TEST"})
+	_, repeat, err := step.Run(operation, entry)
+
+	// then
+	assert.NoError(t, err)
+	assert.Zero(t, repeat)
+	runtime := imv1.Runtime{}
+	err = cli.Get(context.Background(), client.ObjectKey{
+		Namespace: "kyma-system",
+		Name:      operation.RuntimeID,
+	}, &runtime)
+	assert.NoError(t, err)
+	assert.Equal(t, gardener.OIDCConfig{
+		ClientID:       ptr.String("client-id-custom"),
+		GroupsClaim:    ptr.String("gc-custom"),
+		IssuerURL:      ptr.String("issuer-url-custom"),
+		SigningAlgs:    []string{"sa-default"},
+		UsernameClaim:  ptr.String("uc-custom"),
+		UsernamePrefix: ptr.String("up-default"),
 	}, runtime.Spec.Shoot.Kubernetes.KubeAPIServer.OidcConfig)
 }
 
@@ -697,46 +739,11 @@ func Test_Defaults(t *testing.T) {
 	nilToDefaultInt := DefaultIfParamNotSet(42, nil)
 	nonDefaultInt := DefaultIfParamNotSet(42, ptr.Integer(7))
 
-	emptyToDefault := DefaultIfParamZero("default value", "")
-	nonEmpty := DefaultIfParamZero("default value", "initial value")
-
 	//then
 	assert.Equal(t, "initial value", nonDefaultString)
 	assert.Equal(t, "default value", nilToDefaultString)
 	assert.Equal(t, 42, nilToDefaultInt)
 	assert.Equal(t, 7, nonDefaultInt)
-	assert.Equal(t, "default value", emptyToDefault)
-	assert.Equal(t, "initial value", nonEmpty)
-}
-
-func Test_DefaultsOnActualStructures(t *testing.T) {
-	//given
-	_, operation := fixInstanceAndOperation(broker.AzurePlanID, "westeurope", "platform-region")
-	oidc := defaultOIDSConfig
-
-	//when
-	operation.ProvisioningParameters.Parameters.OIDC = &internal.OIDCConfigDTO{
-		ClientID:       "",
-		GroupsClaim:    "gc-custom",
-		IssuerURL:      "issuer-url-custom",
-		SigningAlgs:    []string{},
-		UsernameClaim:  "",
-		UsernamePrefix: "up-custom",
-	}
-
-	oidc.ClientID = DefaultIfParamZero(defaultOIDSConfig.ClientID, operation.ProvisioningParameters.Parameters.OIDC.ClientID)
-	oidc.GroupsClaim = DefaultIfParamZero(defaultOIDSConfig.GroupsClaim, operation.ProvisioningParameters.Parameters.OIDC.GroupsClaim)
-	oidc.IssuerURL = DefaultIfParamZero(defaultOIDSConfig.IssuerURL, operation.ProvisioningParameters.Parameters.OIDC.IssuerURL)
-	oidc.UsernameClaim = DefaultIfParamZero(defaultOIDSConfig.UsernameClaim, operation.ProvisioningParameters.Parameters.OIDC.UsernameClaim)
-	oidc.UsernamePrefix = DefaultIfParamZero(defaultOIDSConfig.UsernamePrefix, operation.ProvisioningParameters.Parameters.OIDC.UsernamePrefix)
-
-	//then
-	assert.Len(t, oidc.SigningAlgs, 1)
-	assert.Equal(t, defaultOIDSConfig.ClientID, oidc.ClientID)
-	assert.Equal(t, "gc-custom", oidc.GroupsClaim)
-	assert.Equal(t, "issuer-url-custom", oidc.IssuerURL)
-	assert.Equal(t, defaultOIDSConfig.UsernameClaim, oidc.UsernameClaim)
-	assert.Equal(t, "up-custom", oidc.UsernamePrefix)
 }
 
 // assertions

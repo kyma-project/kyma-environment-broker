@@ -8,8 +8,8 @@ This [workflow](/.github/workflows/run-eslint.yaml) runs the ESLint. It is trigg
 - `Makefile` file
 
 The workflow:
-- Checks out code 
-- Invokes `make lint -C testing/e2e/skr`
+1. Checks out code 
+2. Invokes `make lint -C testing/e2e/skr`
 
 ## Markdown Link Check Workflow
 
@@ -88,10 +88,10 @@ by setting the **DB_IN_MEMORY_FOR_E2E_TESTS** environment variable to `true`. Ho
 instance details serialization and deserialization, providing a clearer understanding of the impacts and outcomes of these processes.
 
 The workflow:
-- Checks out code and sets up the cache
-- Sets up the Go environment
-- Invokes `make go-mod-check`
-- Invokes `make test`
+1. Checks out code and sets up the cache
+2. Sets up the Go environment
+3. Invokes `make go-mod-check`
+4. Invokes `make test`
 
 ### KEB Chart  Install Tests
 
@@ -106,10 +106,10 @@ You pass the following parameters from the calling workflow:
 
 
 The workflow:
-- Checks if the KEB chart is rendered successfully by Helm
-- Fetches the **last-k3s-versions** tag versions of k3s releases 
-- Prepares the **last-k3s-versions** k3s clusters with the Docker registries using the list of versions from the previous step
-- Creates required namespaces
-- Installs required dependencies by the KEB chart
-- Installs the KEB chart in the k3s cluster using `helm install`
-- Waits for all tests to finish
+1. Checks if the KEB chart is rendered successfully by Helm
+2. Fetches the **last-k3s-versions** tag versions of k3s releases 
+3. Prepares the **last-k3s-versions** k3s clusters with the Docker registries using the list of versions from the previous step
+4. Creates required namespaces
+5. Installs required dependencies by the KEB chart
+6. Installs the KEB chart in the k3s cluster using `helm install`
+7. Waits for all tests to finish

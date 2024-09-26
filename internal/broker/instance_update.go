@@ -40,13 +40,13 @@ type UpdateEndpoint struct {
 	config Config
 	log    logrus.FieldLogger
 
-	instanceStorage                         storage.Instances
-	runtimeStates                           storage.RuntimeStates
-	contextUpdateHandler                    ContextUpdateHandler
-	brokerURL                               string
-	processingEnabled                       bool
-	subaccountMovementEnabled               bool
-	updateCustomResouresLabelsOnAccountMove bool
+	instanceStorage                          storage.Instances
+	runtimeStates                            storage.RuntimeStates
+	contextUpdateHandler                     ContextUpdateHandler
+	brokerURL                                string
+	processingEnabled                        bool
+	subaccountMovementEnabled                bool
+	updateCustomResourcesLabelsOnAccountMove bool
 
 	operationStorage storage.Operations
 
@@ -70,7 +70,7 @@ func NewUpdate(cfg Config,
 	ctxUpdateHandler ContextUpdateHandler,
 	processingEnabled bool,
 	subaccountMovementEnabled bool,
-	updateCustomResouresLabelsOnAccountMove bool,
+	updateCustomResourcesLabelsOnAccountMove bool,
 	queue Queue,
 	plansConfig PlansConfig,
 	planDefaults PlanDefaults,
@@ -81,22 +81,22 @@ func NewUpdate(cfg Config,
 	kcpClient client.Client,
 ) *UpdateEndpoint {
 	return &UpdateEndpoint{
-		config:                                  cfg,
-		log:                                     log.WithField("service", "UpdateEndpoint"),
-		instanceStorage:                         instanceStorage,
-		runtimeStates:                           runtimeStates,
-		operationStorage:                        operationStorage,
-		contextUpdateHandler:                    ctxUpdateHandler,
-		processingEnabled:                       processingEnabled,
-		subaccountMovementEnabled:               subaccountMovementEnabled,
-		updateCustomResouresLabelsOnAccountMove: updateCustomResouresLabelsOnAccountMove,
-		updatingQueue:                           queue,
-		plansConfig:                             plansConfig,
-		planDefaults:                            planDefaults,
-		dashboardConfig:                         dashboardConfig,
-		kcBuilder:                               kcBuilder,
-		convergedCloudRegionsProvider:           convergedCloudRegionsProvider,
-		kcpClient:                               kcpClient,
+		config:                                   cfg,
+		log:                                      log.WithField("service", "UpdateEndpoint"),
+		instanceStorage:                          instanceStorage,
+		runtimeStates:                            runtimeStates,
+		operationStorage:                         operationStorage,
+		contextUpdateHandler:                     ctxUpdateHandler,
+		processingEnabled:                        processingEnabled,
+		subaccountMovementEnabled:                subaccountMovementEnabled,
+		updateCustomResourcesLabelsOnAccountMove: updateCustomResourcesLabelsOnAccountMove,
+		updatingQueue:                            queue,
+		plansConfig:                              plansConfig,
+		planDefaults:                             planDefaults,
+		dashboardConfig:                          dashboardConfig,
+		kcBuilder:                                kcBuilder,
+		convergedCloudRegionsProvider:            convergedCloudRegionsProvider,
+		kcpClient:                                kcpClient,
 	}
 }
 
@@ -131,11 +131,8 @@ func (b *UpdateEndpoint) Update(_ context.Context, instanceID string, details do
 	}
 
 	if instance.IsExpired() {
-		if b.config.AllowUpdateExpiredInstanceWithContext {
-			newGlobalAccountId := ersContext.GlobalAccountID
-			if newGlobalAccountId != "" && (newGlobalAccountId != instance.GlobalAccountID) {
-				return domain.UpdateServiceSpec{}, nil
-			}
+		if b.config.AllowUpdateExpiredInstanceWithContext && ersContext.GlobalAccountID != "" {
+			return domain.UpdateServiceSpec{}, nil
 		}
 		return domain.UpdateServiceSpec{}, apiresponses.NewFailureResponse(fmt.Errorf("cannot update an expired instance"), http.StatusBadRequest, "")
 	}
@@ -366,21 +363,23 @@ func (b *UpdateEndpoint) processContext(instance *internal.Instance, details dom
 		}
 		instance.GlobalAccountID = ersContext.GlobalAccountID
 		needUpdateCustomResources = true
+		logger.Infof("Global account ID changed to: %s. need update labels", instance.GlobalAccountID)
 	}
 
 	newInstance, err := b.instanceStorage.Update(*instance)
 	if err != nil {
 		logger.Errorf("processing context updated failed: %s", err.Error())
 		return nil, changed, fmt.Errorf("unable to process the update")
-	} else if b.updateCustomResouresLabelsOnAccountMove && needUpdateCustomResources {
+	} else if b.updateCustomResourcesLabelsOnAccountMove && needUpdateCustomResources {
+		logger.Info("updating labels on related CRs")
 		// update labels on related CRs, but only if account movement was successfully persisted and kept in database
 		err = b.updateLabels(newInstance.RuntimeID, newInstance.GlobalAccountID)
 		if err != nil {
-			// silent error by design for now
 			logger.Errorf("unable to update global account label on CRs while doing account move: %s", err.Error())
-			response := apiresponses.NewFailureResponse(fmt.Errorf("Update CR failed"), http.StatusInternalServerError, err.Error())
+			response := apiresponses.NewFailureResponse(fmt.Errorf("Update CRs label failed"), http.StatusInternalServerError, err.Error())
 			return newInstance, changed, response
 		}
+		logger.Info("labels updated")
 	}
 
 	return newInstance, changed, nil
@@ -419,6 +418,7 @@ func (b *UpdateEndpoint) updateLabels(id, newGlobalAccountId string) error {
 }
 
 func (b *UpdateEndpoint) updateCrLabel(id, crName, newGlobalAccountId string) error {
+	b.log.Infof("update labels starting for runtime %s for %s cr with new value %s", id, crName, newGlobalAccountId)
 	gvk, err := k8s.GvkByName(crName)
 	if err != nil {
 		return fmt.Errorf("while getting gvk for name: %s: %s", crName, err.Error())
@@ -426,7 +426,7 @@ func (b *UpdateEndpoint) updateCrLabel(id, crName, newGlobalAccountId string) er
 
 	var k8sObject unstructured.Unstructured
 	k8sObject.SetGroupVersionKind(gvk)
-	err = b.kcpClient.Get(context.Background(), types.NamespacedName{Namespace: KymaNamespace, Name: id}, &k8sObject)
+	err = b.kcpClient.Get(context.Background(), types.NamespacedName{Namespace: KcpNamespace, Name: id}, &k8sObject)
 	if err != nil {
 		return fmt.Errorf("while getting k8s object of type %s from kcp cluster for instance %s, due to: %s", crName, id, err.Error())
 	}

@@ -678,7 +678,7 @@ func TestUpdateExpiredInstance(t *testing.T) {
 	svc := NewUpdate(Config{AllowUpdateExpiredInstanceWithContext: true}, storage.Instances(), storage.RuntimeStates(), storage.Operations(), handler, true, false, true, queue, PlansConfig{},
 		planDefaults, logrus.New(), dashboardConfig, kcBuilder, &OneForAllConvergedCloudRegionsProvider{}, fakeKcpK8sClient)
 
-	t.Run("should reject change GA - it is same as previous", func(t *testing.T) {
+	t.Run("should accept if it is same as previous", func(t *testing.T) {
 		_, err = svc.Update(context.Background(), instanceID, domain.UpdateDetails{
 			ServiceID:       KymaServiceID,
 			PlanID:          TrialPlanID,
@@ -687,7 +687,7 @@ func TestUpdateExpiredInstance(t *testing.T) {
 			RawContext:      json.RawMessage("{\"globalaccount_id\":\"globalaccount_id_init\"}"),
 			MaintenanceInfo: nil,
 		}, true)
-		require.Error(t, err)
+		require.NoError(t, err)
 	})
 
 	t.Run("should accept change GA", func(t *testing.T) {
@@ -885,7 +885,7 @@ func TestLabelChangeWhenMovingSubaccount(t *testing.T) {
 		require.NoError(t, err)
 		cr := &unstructured.Unstructured{}
 		cr.SetGroupVersionKind(gvk)
-		err = fakeKcpK8sClient.Get(context.Background(), client.ObjectKey{Name: i.RuntimeID, Namespace: KymaNamespace}, cr)
+		err = fakeKcpK8sClient.Get(context.Background(), client.ObjectKey{Name: i.RuntimeID, Namespace: KcpNamespace}, cr)
 		require.NoError(t, err)
 		labels := cr.GetLabels()
 		assert.Len(t, labels, 1)
@@ -895,7 +895,7 @@ func TestLabelChangeWhenMovingSubaccount(t *testing.T) {
 		require.NoError(t, err)
 		cr = &unstructured.Unstructured{}
 		cr.SetGroupVersionKind(gvk)
-		err = fakeKcpK8sClient.Get(context.Background(), client.ObjectKey{Name: i.RuntimeID, Namespace: KymaNamespace}, cr)
+		err = fakeKcpK8sClient.Get(context.Background(), client.ObjectKey{Name: i.RuntimeID, Namespace: KcpNamespace}, cr)
 		require.NoError(t, err)
 		labels = cr.GetLabels()
 		assert.Len(t, labels, 1)
@@ -905,7 +905,7 @@ func TestLabelChangeWhenMovingSubaccount(t *testing.T) {
 		require.NoError(t, err)
 		cr = &unstructured.Unstructured{}
 		cr.SetGroupVersionKind(gvk)
-		err = fakeKcpK8sClient.Get(context.Background(), client.ObjectKey{Name: i.RuntimeID, Namespace: KymaNamespace}, cr)
+		err = fakeKcpK8sClient.Get(context.Background(), client.ObjectKey{Name: i.RuntimeID, Namespace: KcpNamespace}, cr)
 		require.NoError(t, err)
 		labels = cr.GetLabels()
 		assert.Len(t, labels, 1)
@@ -922,7 +922,7 @@ func createFakeCRs(t *testing.T) string {
 		us := unstructured.Unstructured{}
 		us.SetGroupVersionKind(gvk)
 		us.SetName(runtimeID)
-		us.SetNamespace(KymaNamespace)
+		us.SetNamespace(KcpNamespace)
 		err = fakeKcpK8sClient.Create(context.Background(), &us)
 		require.NoError(t, err)
 	}
@@ -942,7 +942,7 @@ func cleanFakeCRs(t *testing.T, runtimeID string) {
 		us := unstructured.Unstructured{}
 		us.SetGroupVersionKind(gvk)
 		us.SetName(runtimeID)
-		us.SetNamespace(KymaNamespace)
+		us.SetNamespace(KcpNamespace)
 		err = fakeKcpK8sClient.Delete(context.Background(), &us)
 		require.NoError(t, err)
 	}
