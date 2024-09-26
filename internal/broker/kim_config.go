@@ -1,5 +1,7 @@
 package broker
 
+import "strings"
+
 type KimConfig struct {
 	Enabled      bool     `envconfig:"default=false"` // if true, KIM will be used
 	DryRun       bool     `envconfig:"default=true"`  // if true, only yamls are generated, no resources are created
@@ -13,7 +15,7 @@ func (c *KimConfig) IsEnabledForPlan(planName string) bool {
 		return false
 	}
 	for _, plan := range c.Plans {
-		if plan == planName {
+		if strings.TrimSpace(plan) == planName {
 			return true
 		}
 	}
@@ -25,7 +27,7 @@ func (c *KimConfig) IsDrivenByKimOnly(planName string) bool {
 		return false
 	}
 	for _, plan := range c.KimOnlyPlans {
-		if plan == planName {
+		if strings.TrimSpace(plan) == planName {
 			return true
 		}
 	}

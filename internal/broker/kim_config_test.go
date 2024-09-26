@@ -21,6 +21,21 @@ func TestIsEnabled_KimDisabled(t *testing.T) {
 	assert.False(t, config.IsDrivenByKimOnly("preview"))
 }
 
+func TestIsEnabled_KimEnabled_PlansWithWhitespaces(t *testing.T) {
+	config := &KimConfig{
+		Enabled:      true,
+		Plans:        []string{"gcp ", " preview"},
+		KimOnlyPlans: []string{"gcp ", " preview"},
+	}
+
+	assert.True(t, config.IsEnabledForPlan("gcp"))
+	assert.True(t, config.IsEnabledForPlan("preview"))
+	assert.True(t, config.IsDrivenByKim("gcp"))
+	assert.True(t, config.IsDrivenByKim("preview"))
+	assert.True(t, config.IsDrivenByKimOnly("gcp"))
+	assert.True(t, config.IsDrivenByKimOnly("preview"))
+}
+
 func TestIsEnabled_KimEnabledForPreview(t *testing.T) {
 	config := &KimConfig{
 		Enabled:  true,
