@@ -3,7 +3,6 @@ package provisioning
 import (
 	"context"
 	"fmt"
-	"reflect"
 	"strconv"
 	"time"
 
@@ -346,14 +345,6 @@ func DefaultIfParamNotSet[T interface{}](d T, param *T) T {
 		return d
 	}
 	return *param
-}
-
-func DefaultIfParamZero[T interface{}](d T, param T) T {
-	field := reflect.ValueOf(param)
-	if field.IsZero() {
-		return d
-	}
-	return param
 }
 
 func RuntimeToYaml(runtime *imv1.Runtime) (string, error) {
