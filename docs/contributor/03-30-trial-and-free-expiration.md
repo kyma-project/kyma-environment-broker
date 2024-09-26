@@ -10,15 +10,20 @@ After the allocated time, the [Trial Cleanup](./06-40-trial-cleanup-cronjob.md) 
 
 ## Details
 
-The cleanup CronJobs perform the trigger the trial or free instance expiration by sending a `PUT` request to `/expire/service_instance/{instanceID}` KEB API endpoint, where **plan** must be set to `trial` or `free`. The possible KEB responses are:
+The cleaning process is performed in the following steps:
 
-| Status Code | Description                                                                                             |
-| --- |---------------------------------------------------------------------------------------------------------|
-| 202 Accepted | Returned if the Service Instance expiration has been accepted and is in progress.                       |
-| 400 Bad Request | Returned if the request is malformed, missing mandatory data, or when the instance's plan is not Trial or Free. |
-| 404 Not Found | Returned if the instance does not exist in the database.                                                    |
+1. The cleanup CronJobs trigger the trial or free instance expiration by sending a `PUT` request to `/expire/service_instance/{instanceID}` KEB API endpoint, where **plan** must be set to `trial` or `free`. The possible KEB responses are:
 
-If KEB accepts the instance expiration request, it marks the instance as expired by populating the instance's `ExpiredAt` field with a timestamp when the request is accepted. Then, it creates a suspension operation. After the suspension operation is added to the operations queue, KEB sets the **parameters.ers_context.active** field to `false`. The instance is deactivated and no longer usable. It can only be removed by deprovisioning request.
+	| Status Code | Description                                                                                             |
+	| --- |---------------------------------------------------------------------------------------------------------|
+	| 202 Accepted | Returned if the Service Instance expiration has been accepted and is in progress.                       |
+	| 400 Bad Request | Returned if the request is malformed, missing mandatory data, or when the instance's plan is not Trial or Free. |
+	| 404 Not Found | Returned if the instance does not exist in the database.                                                    |
+
+2. If KEB accepts the instance expiration request, it marks the instance as expired by populating the instance's `ExpiredAt` field with a timestamp when the request is accepted.
+3. KEB creates a suspension operation, which is added to the operations queue.
+4. KEB sets the **parameters.ers_context.active** field to `false`.
+5. The instance is deactivated and no longer usable. It can only be removed by a deprovisioning request.
 
 ## Update Requests
 
