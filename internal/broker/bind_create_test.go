@@ -50,6 +50,8 @@ type User struct {
 	} `yaml:"user"`
 }
 
+const expirationSeconds = 10000
+
 func TestCreateBindingEndpoint(t *testing.T) {
 	t.Log("test create binding endpoint")
 
@@ -151,7 +153,7 @@ func TestCreateBindingEndpoint(t *testing.T) {
 		BindablePlans: EnablePlans{
 			fixture.PlanName,
 		},
-		ExpirationSeconds: 10000,
+		ExpirationSeconds: expirationSeconds,
 	}
 
 	//// api handler
@@ -191,7 +193,7 @@ func TestCreateBindingEndpoint(t *testing.T) {
 
 		duration, err := getTokenDuration(t, binding.Credentials)
 		require.NoError(t, err)
-		assert.Equal(t, 10000*time.Second, duration)
+		assert.Equal(t, expirationSeconds*time.Second, duration)
 
 		//// verify connectivity using kubeconfig from the generated binding
 		newClient := kubeconfigClient(t, binding.Credentials.(string))
@@ -207,6 +209,7 @@ func TestCreateBindingEndpoint(t *testing.T) {
 	})
 
 	t.Run("should create a new service binding with custom token expiration time", func(t *testing.T) {
+		const customExpirationSeconds = 900
 
 		// When
 		response := CallAPI(httpServer, method, "v2/service_instances/1/service_bindings/binding-id2?accepts_incomplete=true", fmt.Sprintf(`{
@@ -214,15 +217,15 @@ func TestCreateBindingEndpoint(t *testing.T) {
   "plan_id": "%s",
   "parameters": {
     "token_request": true,
-	"expiration_seconds": 900
+	"expiration_seconds": %v
   }
-}`, fixture.PlanId), t)
+}`, fixture.PlanId, customExpirationSeconds), t)
 
 		binding := verifyResponse(t, response)
 
 		duration, err := getTokenDuration(t, binding.Credentials)
 		require.NoError(t, err)
-		assert.Equal(t, 900*time.Second, duration)
+		assert.Equal(t, customExpirationSeconds*time.Second, duration)
 	})
 }
 
