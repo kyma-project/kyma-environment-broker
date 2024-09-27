@@ -2,12 +2,7 @@
 
 name: Run unit tests (reusable)
 on:
-  workflow_call:
-    inputs:
-      release:
-        description: 'Determines if the workflow is called from release'
-        default: "true"
-        type: string
+  workflow_call
 
 jobs:
   build:
@@ -17,32 +12,10 @@ jobs:
     - name: Checkout code
       uses: actions/checkout@v4
 
-    - name: Get changed files
-      id: changed-files-specific
-      uses: tj-actions/changed-files@90a06d6ba9543371ab4df8eeca0be07ca6054959
-      with:
-        files: |
-          .github/**
-          cmd/**
-          common/**
-          files/**
-          internal/**
-          scripts/**
-          utils/edp-registrator/**
-          .golangci.yml
-          Dockerfile.*
-          go.mod
-          go.sum
-          Makefile
-          **/*.go
-          **/*.sh
-
     - name: Set up go environment
-      if: ${{ steps.changed-files-specific.outputs.any_modified == 'true' || inputs.release == 'true' }}
       uses: actions/setup-go@v4
       with:
         go-version-file: 'go.mod'
 
     - name: Run unit tests
-      if: ${{ steps.changed-files-specific.outputs.any_modified == 'true' || inputs.release == 'true' }}
       run: make test
