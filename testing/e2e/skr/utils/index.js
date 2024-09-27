@@ -17,6 +17,8 @@ function initializeK8sClient(opts) {
   k8sCoreV1Api = null;
   k8sRbacAuthorizationV1Api = null;
   watch = null;
+  k8sLog = null;
+  k8sServerUrl = null;
 
   try {
     console.log('Trying to initialize a K8S client');
