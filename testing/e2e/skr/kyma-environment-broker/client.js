@@ -272,12 +272,12 @@ class KEBClient {
     });
   }
 
-  async createBinding(instanceID) {
+  async createBinding(instanceID, tokenRequest) {
     const payload = {
       service_id: KYMA_SERVICE_ID,
       plan_id: this.planID,
       parameters: {
-        token_request: true,
+        token_request: tokenRequest,
       },
     };
     const bindingID = Math.random().toString(36).substring(2, 18);

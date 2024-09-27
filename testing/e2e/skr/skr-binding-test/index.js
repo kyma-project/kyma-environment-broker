@@ -27,9 +27,9 @@ describe('SKR Binding test', function() {
     await provisionSKRInstance(options, provisioningTimeout);
   });
 
-  it('Create SKR binding', async function() {
+  it('Create SKR binding using Kubernetes TokenRequest', async function() {
     try {
-      kubeconfigFromBinding = await keb.createBinding(options.instanceID);
+      kubeconfigFromBinding = await keb.createBinding(options.instanceID, true);
     } catch (err) {
       console.log(err);
     }
@@ -39,7 +39,23 @@ describe('SKR Binding test', function() {
     await initializeK8sClient({kubeconfig: kubeconfigFromBinding.credentials});
   });
 
-  it('Fetch sap-btp-manager secret', async function() {
+  it('Fetch sap-btp-manager secret using binding from Kubernetes TokenRequest', async function() {
+    await getSecret(secretName, ns);
+  });
+
+  it('Create SKR binding using Gardener', async function() {
+    try {
+      kubeconfigFromBinding = await keb.createBinding(options.instanceID, false);
+    } catch (err) {
+      console.log(err);
+    }
+  });
+
+  it('Initiate K8s client with kubeconfig from binding', async function() {
+    await initializeK8sClient({kubeconfig: kubeconfigFromBinding.credentials});
+  });
+
+  it('Fetch sap-btp-manager secret using binding from Gardener', async function() {
     await getSecret(secretName, ns);
   });
 
