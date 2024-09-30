@@ -2,10 +2,7 @@
 
 ## ESLint Workflow
 
-This [workflow](/.github/workflows/run-eslint.yaml) runs the ESLint. It is triggered by pull requests (PRs) on the `main` branch that change at least one of the following:
-- `/.github` directory content
-- `/testing/e2e/skr` directory content
-- `Makefile` file
+This [workflow](/.github/workflows/run-eslint.yaml) runs the ESLint.
 
 The workflow:
 1. Checks out code 
@@ -15,7 +12,7 @@ The workflow:
 
 This [workflow](/.github/workflows/markdown-link-check.yaml) checks for broken links in all Markdown files. It is triggered:
 - As a periodic check that runs daily at midnight on the main branch in the repository 
-- On every pull request that creates new Markdown files or introduces changes to the existing ones
+- On every pull request
 
 ## Release Workflow
 
@@ -32,39 +29,11 @@ This [workflow](/.github/workflows/label-validator.yml) is triggered by PRs on t
 ## Verify KEB Workflow
 
 This [workflow](/.github/workflows/run-verify.yaml) calls the reusable [workflow](/.github/workflows/run-unit-tests-reusable.yaml) with unit tests.
-Besides the tests, it also runs Go-related checks and Go linter. It is triggered by PRs on the `main` branch that change at least one of the following:
-- `/.github` directory content
-- `/cmd` directory content
-- `/common` directory content
-- `/files` directory content
-- `/internal` directory content
-- `/scripts` directory content
-- `/utils/edp-registrator` directory content
-- `.golangci.yml` file
-- Any `Dockerfile.*` file
-- `go.mod` file
-- `go.sum` file
-- `Makefile` file
-- Any `*.go` file
-- Any `*.sh` file
+Besides the tests, it also runs Go-related checks and Go linter.
 
 ## Govulncheck Workflow
 
-This [workflow](/.github/workflows/run-govulncheck.yaml) runs the Govulncheck. It is triggered by PRs on the `main` branch that change at least one of the following:
-- `/.github` directory content
-- `/cmd` directory content
-- `/common` directory content
-- `/files` directory content
-- `/internal` directory content
-- `/scripts` directory content
-- `/utils/edp-registrator` directory content
-- `.golangci.yml` file
-- Any `Dockerfile.*` file
-- `go.mod` file
-- `go.sum` file
-- `Makefile` file
-- Any `*.go` file
-- Any `*.sh` file
+This [workflow](/.github/workflows/run-govulncheck.yaml) runs the Govulncheck.
 
 ## Image Build Workflow
 
@@ -72,7 +41,15 @@ This [workflow](/.github/workflows/pull-build-images.yaml) builds images.
 
 ## KEB Chart Install Test
 
-This [workflow](/.github/workflows/run-keb-chart-install-tests.yaml) calls the [reusable workflow](/.github/workflows/run-keb-chart-install-tests-reusable.yaml) to install the KEB chart with the new images in the k3s cluster. 
+This [workflow](/.github/workflows/run-keb-chart-install-tests.yaml) calls the [reusable workflow](/.github/workflows/run-keb-chart-install-tests-reusable.yaml) to install the KEB chart with the new images in the k3s cluster.
+
+## Auto Merge Workflow
+
+This [workflow](/.github/workflows/auto-merge.yaml) enables the auto-merge functionality on a PR that is not a draft.
+
+## All Cheks Passed Workflow
+
+This [workflow](/.github/workflows/pr-checks.yaml) checks if all jobs, except those excluded in the workflow configuration, have passed.
 
 ## Reusable Workflows
 
