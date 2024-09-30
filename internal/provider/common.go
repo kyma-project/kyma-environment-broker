@@ -1,8 +1,9 @@
 package provider
 
 const (
-	PurposeEvaluation = "evaluation"
-	PurposeProduction = "production"
+	PurposeEvaluation  = "evaluation"
+	PurposeProduction  = "production"
+	PurposeDevelopment = "development"
 )
 
 func updateString(toUpdate *string, value *string) {

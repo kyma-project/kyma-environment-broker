@@ -40,7 +40,7 @@ func (p *AzureInputProvider) Provide() Values {
 		ProviderType:         "azure",
 		DefaultMachineType:   DefaultAzureMachineType,
 		Region:               region,
-		Purpose:              PurposeProduction,
+		Purpose:              PurposeDevelopment,
 		DiskType:             "StandardSSD_LRS",
 		VolumeSizeGb:         80,
 	}
@@ -79,7 +79,7 @@ func (p *AzureTrialInputProvider) Provide() Values {
 		ProviderType:         "azure",
 		DefaultMachineType:   machineType,
 		Region:               region,
-		Purpose:              PurposeEvaluation,
+		Purpose:              PurposeDevelopment,
 		DiskType:             "Standard_LRS",
 		VolumeSizeGb:         50,
 	}
@@ -123,7 +123,7 @@ func (p *AzureLiteInputProvider) Provide() Values {
 		ProviderType:         "azure",
 		DefaultMachineType:   machineType,
 		Region:               region,
-		Purpose:              PurposeEvaluation,
+		Purpose:              PurposeDevelopment,
 		DiskType:             "Standard_LRS",
 		VolumeSizeGb:         50,
 	}
@@ -158,7 +158,7 @@ func (p *AzureFreemiumInputProvider) Provide() Values {
 		ProviderType:         "azure",
 		DefaultMachineType:   machineType,
 		Region:               region,
-		Purpose:              PurposeEvaluation,
+		Purpose:              PurposeDevelopment,
 		DiskType:             "Standard_LRS",
 		VolumeSizeGb:         50,
 	}

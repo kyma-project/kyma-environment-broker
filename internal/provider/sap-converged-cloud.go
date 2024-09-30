@@ -32,7 +32,7 @@ func (p *SapConvergedCloudInputProvider) Provide() Values {
 		ProviderType:         "openstack",
 		DefaultMachineType:   DefaultSapConvergedCloudMachineType,
 		Region:               region,
-		Purpose:              PurposeProduction,
+		Purpose:              PurposeDevelopment,
 		DiskType:             "",
 	}
 }
