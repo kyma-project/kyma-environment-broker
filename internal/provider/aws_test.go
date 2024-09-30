@@ -34,7 +34,7 @@ func TestAWSDefaults(t *testing.T) {
 		ProviderType:         "aws",
 		DefaultMachineType:   "m6i.large",
 		Region:               "eu-central-1",
-		Purpose:              "production",
+		Purpose:              "development",
 		VolumeSizeGb:         80,
 		DiskType:             "gp3",
 	}, values)
@@ -69,7 +69,7 @@ func TestAWSSpecific(t *testing.T) {
 		ProviderType:         "aws",
 		DefaultMachineType:   "m6i.large",
 		Region:               "ap-southeast-1",
-		Purpose:              "production",
+		Purpose:              "development",
 		VolumeSizeGb:         80,
 		DiskType:             "gp3",
 	}, values)
@@ -99,7 +99,7 @@ func TestAWSTrialDefaults(t *testing.T) {
 		ProviderType:         "aws",
 		DefaultMachineType:   "m5.xlarge",
 		Region:               "eu-central-1",
-		Purpose:              "evaluation",
+		Purpose:              "development",
 		VolumeSizeGb:         50,
 		DiskType:             "gp3",
 	}, values)
@@ -133,7 +133,7 @@ func TestAWSTrialSpecific(t *testing.T) {
 		ProviderType:         "aws",
 		DefaultMachineType:   "m5.xlarge",
 		Region:               "ap-southeast-1",
-		Purpose:              "evaluation",
+		Purpose:              "development",
 		VolumeSizeGb:         50,
 		DiskType:             "gp3",
 	}, values)
