@@ -201,59 +201,38 @@ func (s *CreateRuntimeResourceStep) createShootProvider(operation *internal.Oper
 	maxSurge := intstr.FromInt32(int32(DefaultIfParamNotSet(values.ZonesCount, operation.ProvisioningParameters.Parameters.MaxSurge)))
 	maxUnavailable := intstr.FromInt32(int32(DefaultIfParamNotSet(0, operation.ProvisioningParameters.Parameters.MaxUnavailable)))
 
-	max := int32(DefaultIfParamNotSet(values.DefaultAutoScalerMax, operation.ProvisioningParameters.Parameters.AutoScalerMax))
-	min := int32(DefaultIfParamNotSet(values.DefaultAutoScalerMin, operation.ProvisioningParameters.Parameters.AutoScalerMin))
+	scalerMax := int32(DefaultIfParamNotSet(values.DefaultAutoScalerMax, operation.ProvisioningParameters.Parameters.AutoScalerMax))
+	scalerMin := int32(DefaultIfParamNotSet(values.DefaultAutoScalerMin, operation.ProvisioningParameters.Parameters.AutoScalerMin))
 
-	if values.ProviderType == "openstack" {
-		return imv1.Provider{
-			Type: values.ProviderType,
-			Workers: []gardener.Worker{
-				{
-					Name: "cpu-worker-0",
-					Machine: gardener.Machine{
-						Type: DefaultIfParamNotSet(values.DefaultMachineType, operation.ProvisioningParameters.Parameters.MachineType),
-						Image: &gardener.ShootMachineImage{
-							Name:    s.config.MachineImage,
-							Version: &s.config.MachineImageVersion,
-						},
-					},
-					Maximum:        max,
-					Minimum:        min,
-					MaxSurge:       &maxSurge,
-					MaxUnavailable: &maxUnavailable,
-					Zones:          values.Zones,
-				},
-			},
-		}, nil
-
-	} else {
-		volumeSize := strconv.Itoa(DefaultIfParamNotSet(values.VolumeSizeGb, operation.ProvisioningParameters.Parameters.VolumeSizeGb))
-
-		return imv1.Provider{
-			Type: values.ProviderType,
-			Workers: []gardener.Worker{
-				{
-					Name: "cpu-worker-0",
-					Machine: gardener.Machine{
-						Type: DefaultIfParamNotSet(values.DefaultMachineType, operation.ProvisioningParameters.Parameters.MachineType),
-						Image: &gardener.ShootMachineImage{
-							Name:    s.config.MachineImage,
-							Version: &s.config.MachineImageVersion,
-						},
-					},
-					Maximum:        max,
-					Minimum:        min,
-					MaxSurge:       &maxSurge,
-					MaxUnavailable: &maxUnavailable,
-					Zones:          values.Zones,
-					Volume: &gardener.Volume{
-						Type:       ptr.String(values.DiskType),
-						VolumeSize: fmt.Sprintf("%sGi", volumeSize),
+	provider := imv1.Provider{
+		Type: values.ProviderType,
+		Workers: []gardener.Worker{
+			{
+				Name: "cpu-worker-0",
+				Machine: gardener.Machine{
+					Type: DefaultIfParamNotSet(values.DefaultMachineType, operation.ProvisioningParameters.Parameters.MachineType),
+					Image: &gardener.ShootMachineImage{
+						Name:    s.config.MachineImage,
+						Version: &s.config.MachineImageVersion,
 					},
 				},
+				Maximum:        scalerMax,
+				Minimum:        scalerMin,
+				MaxSurge:       &maxSurge,
+				MaxUnavailable: &maxUnavailable,
+				Zones:          values.Zones,
 			},
-		}, nil
+		},
 	}
+
+	if values.ProviderType != "openstack" {
+		volumeSize := strconv.Itoa(DefaultIfParamNotSet(values.VolumeSizeGb, operation.ProvisioningParameters.Parameters.VolumeSizeGb))
+		provider.Workers[0].Volume = &gardener.Volume{
+			Type:       ptr.String(values.DiskType),
+			VolumeSize: fmt.Sprintf("%sGi", volumeSize),
+		}
+	}
+	return provider, nil
 }
 
 func (s *CreateRuntimeResourceStep) createHighAvailabilityConfiguration() *gardener.HighAvailability {
