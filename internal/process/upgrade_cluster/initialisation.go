@@ -7,7 +7,6 @@ import (
 	"github.com/kyma-project/control-plane/components/provisioner/pkg/gqlschema"
 	"github.com/kyma-project/kyma-environment-broker/common/orchestration"
 	"github.com/kyma-project/kyma-environment-broker/internal"
-	"github.com/kyma-project/kyma-environment-broker/internal/avs"
 	kebError "github.com/kyma-project/kyma-environment-broker/internal/error"
 	"github.com/kyma-project/kyma-environment-broker/internal/notification"
 	"github.com/kyma-project/kyma-environment-broker/internal/process"
@@ -36,12 +35,11 @@ type InitialisationStep struct {
 	orchestrationStorage storage.Orchestrations
 	provisionerClient    provisioner.Client
 	inputBuilder         input.CreatorForPlan
-	evaluationManager    *avs.EvaluationManager
 	timeSchedule         TimeSchedule
 	bundleBuilder        notification.BundleBuilder
 }
 
-func NewInitialisationStep(os storage.Operations, ors storage.Orchestrations, pc provisioner.Client, b input.CreatorForPlan, em *avs.EvaluationManager,
+func NewInitialisationStep(os storage.Operations, ors storage.Orchestrations, pc provisioner.Client, b input.CreatorForPlan,
 	timeSchedule *TimeSchedule, bundleBuilder notification.BundleBuilder) *InitialisationStep {
 	ts := timeSchedule
 	if ts == nil {
@@ -57,7 +55,6 @@ func NewInitialisationStep(os storage.Operations, ors storage.Orchestrations, pc
 		orchestrationStorage: ors,
 		provisionerClient:    pc,
 		inputBuilder:         b,
-		evaluationManager:    em,
 		timeSchedule:         *ts,
 		bundleBuilder:        bundleBuilder,
 	}
@@ -134,63 +131,6 @@ func (s *InitialisationStep) initializeUpgradeShootRequest(operation internal.Up
 	}
 }
 
-// performRuntimeTasks Ensures that required logic on init and finish is executed.
-// Uses internal and external Avs monitor statuses to verify state.
-func (s *InitialisationStep) performRuntimeTasks(step int, operation internal.UpgradeClusterOperation, log logrus.FieldLogger) (internal.UpgradeClusterOperation, time.Duration, error) {
-	hasMonitors := s.evaluationManager.HasMonitors(operation.Avs)
-	inMaintenance := s.evaluationManager.InMaintenance(operation.Avs)
-	var err error = nil
-	var delay time.Duration = 0
-	var updateAvsStatus = func(op *internal.UpgradeClusterOperation) {
-		op.Avs.AvsInternalEvaluationStatus = operation.Avs.AvsInternalEvaluationStatus
-		op.Avs.AvsExternalEvaluationStatus = operation.Avs.AvsExternalEvaluationStatus
-	}
-
-	switch step {
-	case UpgradeInitSteps:
-		if s.evaluationManager.IsMaintenanceModeDisabled() {
-			break
-		}
-		if hasMonitors &&
-			!inMaintenance &&
-			s.evaluationManager.IsMaintenanceModeApplicableForGAID(operation.ProvisioningParameters.ErsContext.GlobalAccountID) {
-			log.Infof("executing init upgrade steps")
-			err = s.evaluationManager.SetMaintenanceStatus(&operation.Avs, log)
-			operation, delay, _ = s.operationManager.UpdateOperation(operation, updateAvsStatus, log)
-		}
-	case UpgradeFinishSteps:
-		if hasMonitors && inMaintenance {
-			log.Infof("executing finish upgrade steps")
-			err = s.evaluationManager.RestoreStatus(&operation.Avs, log)
-			operation, delay, _ = s.operationManager.UpdateOperation(operation, updateAvsStatus, log)
-		}
-	}
-
-	switch {
-	case err == nil:
-		return operation, delay, nil
-	case kebError.IsTemporaryError(err):
-		return s.operationManager.RetryOperation(operation, "error while performing runtime tasks", err, 10*time.Second, 10*time.Minute, log)
-	default:
-		return s.operationManager.OperationFailed(operation, "error while performing runtime tasks", err, log)
-	}
-}
-
-func (s *InitialisationStep) restoreAvsAndFailOperation(operation internal.UpgradeClusterOperation, description string, log logrus.FieldLogger) (internal.UpgradeClusterOperation, time.Duration, error) {
-	err := s.evaluationManager.RestoreStatus(&operation.Avs, log)
-	if err != nil {
-		return s.operationManager.RetryOperation(operation, "error while restoring AvS state", err, 3*time.Second, time.Minute, log)
-	}
-	operation, retry, _ := s.operationManager.UpdateOperation(operation, func(op *internal.UpgradeClusterOperation) {
-		op.Avs.AvsInternalEvaluationStatus = operation.Avs.AvsInternalEvaluationStatus
-		op.Avs.AvsExternalEvaluationStatus = operation.Avs.AvsExternalEvaluationStatus
-	}, log)
-	if retry > 0 {
-		return operation, retry, nil
-	}
-	return s.operationManager.OperationFailed(operation, description, nil, log)
-}
-
 // checkRuntimeStatus will check operation runtime status
 // It will also trigger performRuntimeTasks upgrade steps to ensure
 // all the required dependencies have been fulfilled for upgrade operation.
@@ -205,7 +145,7 @@ func (s *InitialisationStep) checkRuntimeStatus(operation internal.UpgradeCluste
 				return operation, 5 * time.Second, nil
 			}
 		}
-		return s.restoreAvsAndFailOperation(operation, fmt.Sprintf("operation has reached the time limit: %s", CheckStatusTimeout), log)
+		return s.operationManager.OperationFailed(operation, fmt.Sprintf("operation has reached the time limit: %s", CheckStatusTimeout), nil, log)
 	}
 
 	status, err := s.provisionerClient.RuntimeOperationStatus(operation.RuntimeOperation.GlobalAccountID, operation.ProvisionerOperationID)
@@ -217,12 +157,6 @@ func (s *InitialisationStep) checkRuntimeStatus(operation internal.UpgradeCluste
 	var msg string
 	if status.Message != nil {
 		msg = *status.Message
-	}
-
-	// do required steps on init
-	operation, delay, err := s.performRuntimeTasks(UpgradeInitSteps, operation, log)
-	if delay != 0 || err != nil {
-		return operation, delay, err
 	}
 
 	// wait for operation completion
@@ -240,19 +174,13 @@ func (s *InitialisationStep) checkRuntimeStatus(operation internal.UpgradeCluste
 		}
 		// Set post-upgrade description which also reset UpdatedAt for operation retries to work properly
 		if operation.Description != postUpgradeDescription {
-			operation, delay, _ = s.operationManager.UpdateOperation(operation, func(operation *internal.UpgradeClusterOperation) {
+			operation, delay, _ := s.operationManager.UpdateOperation(operation, func(operation *internal.UpgradeClusterOperation) {
 				operation.Description = postUpgradeDescription
 			}, log)
 			if delay != 0 {
 				return operation, delay, nil
 			}
 		}
-	}
-
-	// do required steps on finish
-	operation, delay, err = s.performRuntimeTasks(UpgradeFinishSteps, operation, log)
-	if delay != 0 || err != nil {
-		return operation, delay, err
 	}
 
 	// handle operation completion

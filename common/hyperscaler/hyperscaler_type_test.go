@@ -16,7 +16,7 @@ func TestHyperscalerTypeWithoutRegion(t *testing.T) {
 		expectedRegion  string
 	}{
 		{"GCP Hyperscaler type without region",
-			GCP(), "gcp", "gcp", ""},
+			GCP(""), "gcp", "gcp", ""},
 		{"AWS Hyperscaler type without region",
 			AWS(), "aws", "aws", ""},
 		{"Azure Hyperscaler type without region",
@@ -37,4 +37,20 @@ func TestSapConvergedCloudHyperscalerTypeWithRegion(t *testing.T) {
 	assert.Equal(t, "openstack", testHypType.GetName())
 	assert.Equal(t, "openstack_eu-de-test", testHypType.GetKey())
 	assert.Equal(t, "eu-de-test", testHypType.GetRegion())
+}
+
+func TestGCPHyperscalerTypeWithPlatformRegion(t *testing.T) {
+	t.Run("KSA platform region", func(t *testing.T) {
+		testHypType := GCP("cf-sa30")
+		assert.Equal(t, "gcp", testHypType.GetName())
+		assert.Equal(t, "gcp_cf-sa30", testHypType.GetKey())
+		assert.Equal(t, "", testHypType.GetRegion())
+	})
+
+	t.Run("platform region other than KSA", func(t *testing.T) {
+		testHypType := GCP("cf-jp30")
+		assert.Equal(t, "gcp", testHypType.GetName())
+		assert.Equal(t, "gcp", testHypType.GetKey())
+		assert.Equal(t, "", testHypType.GetRegion())
+	})
 }

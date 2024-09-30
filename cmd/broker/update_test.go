@@ -95,6 +95,69 @@ func TestUpdate(t *testing.T) {
 	})
 }
 
+func TestUpdateWithKIM(t *testing.T) {
+	// given
+	suite := NewBrokerSuiteTest(t)
+	defer suite.TearDown()
+	iid := uuid.New().String()
+
+	resp := suite.CallAPI("PUT", fmt.Sprintf("oauth/cf-eu10/v2/service_instances/%s?accepts_incomplete=true&plan_id=7d55d31d-35ae-4438-bf13-6ffdfa107d9f&service_id=47c9dcbf-ff30-448e-ab36-d3bad66ba281", iid),
+		`{
+				   "service_id": "47c9dcbf-ff30-448e-ab36-d3bad66ba281",
+				   "plan_id": "5cb3d976-b85c-42ea-a636-79cadda109a9",
+				   "context": {
+					   "sm_operator_credentials": {
+						   "clientid": "cid",
+						   "clientsecret": "cs",
+						   "url": "url",
+						   "sm_url": "sm_url"
+					   },
+					   "globalaccount_id": "g-account-id",
+					   "subaccount_id": "sub-id",
+					   "user_id": "john.smith@email.com"
+				   },
+					"parameters": {
+						"name": "testing-cluster",
+						"oidc": {
+							"clientID": "id-initial",
+							"signingAlgs": ["PS512"],
+                            "issuerURL": "https://issuer.url.com"
+						},
+						"region": "eu-central-1"
+			}
+   }`)
+	opID := suite.DecodeOperationID(resp)
+	suite.waitForRuntimeAndMakeItReady(opID)
+
+	suite.WaitForOperationState(opID, domain.Succeeded)
+
+	// when
+	// OSB update:
+	resp = suite.CallAPI("PATCH", fmt.Sprintf("oauth/cf-eu10/v2/service_instances/%s?accepts_incomplete=true", iid),
+		`{
+       "service_id": "47c9dcbf-ff30-448e-ab36-d3bad66ba281",
+       "plan_id": "7d55d31d-35ae-4438-bf13-6ffdfa107d9f",
+       "context": {
+           "globalaccount_id": "g-account-id",
+           "user_id": "john.smith@email.com"
+       },
+		"parameters": {
+			"oidc": {
+				"clientID": "id-ooo",
+				"signingAlgs": ["RS256"],
+                "issuerURL": "https://issuer.url.com"
+			}
+		}
+   }`)
+	assert.Equal(t, http.StatusAccepted, resp.StatusCode)
+	upgradeOperationID := suite.DecodeOperationID(resp)
+
+	suite.WaitForOperationState(upgradeOperationID, domain.Succeeded)
+	runtime := suite.GetRuntimeResourceByInstanceID(iid)
+
+	assert.Equal(t, "id-ooo", *runtime.Spec.Shoot.Kubernetes.KubeAPIServer.OidcConfig.ClientID)
+}
+
 func TestUpdateFailedInstance(t *testing.T) {
 	// given
 	suite := NewBrokerSuiteTest(t)
@@ -861,70 +924,6 @@ func TestUpdateOidcForSuspendedInstance(t *testing.T) {
 
 	suite.AssertKymaResourceNotExists(opID)
 	suite.AssertKymaResourceExistsByInstanceID(iid)
-}
-
-func TestUpdateOidcForPreview(t *testing.T) {
-	// given
-	suite := NewBrokerSuiteTest(t)
-	defer suite.TearDown()
-	// uncomment to see graphql queries
-	//suite.EnableDumpingProvisionerRequests()
-	iid := uuid.New().String()
-
-	resp := suite.CallAPI("PUT", fmt.Sprintf("oauth/cf-eu10/v2/service_instances/%s?accepts_incomplete=true&plan_id=7d55d31d-35ae-4438-bf13-6ffdfa107d9f&service_id=47c9dcbf-ff30-448e-ab36-d3bad66ba281", iid),
-		`{
-			"service_id": "47c9dcbf-ff30-448e-ab36-d3bad66ba281",
-			"plan_id": "5cb3d976-b85c-42ea-a636-79cadda109a9",
-			"context": {
-				"sm_operator_credentials": {
-					"clientid": "cid",
-					"clientsecret": "cs",
-					"url": "url",
-					"sm_url": "sm_url"
-				},
-				"globalaccount_id": "g-account-id",
-				"subaccount_id": "sub-id",
-				"user_id": "john.smith@email.com"
-			},
-			"parameters": {
-				"name": "testing-cluster",
-				"oidc": {
-					"clientID": "id-ooo",
-					"signingAlgs": ["RS256"],
-					"issuerURL": "https://issuer.url.com"
-				},
-				"region": "eu-central-1"
-			}
-		}`)
-	opID := suite.DecodeOperationID(resp)
-	suite.processProvisioningByOperationID(opID)
-	suite.WaitForOperationState(opID, domain.Succeeded)
-
-	// WHEN
-	// OSB update
-	suite.Log("*** Update ***")
-	resp = suite.CallAPI("PATCH", fmt.Sprintf("oauth/cf-eu10/v2/service_instances/%s?accepts_incomplete=true", iid),
-		`{
-       "service_id": "47c9dcbf-ff30-448e-ab36-d3bad66ba281",
-       "plan_id": "5cb3d976-b85c-42ea-a636-79cadda109a9",
-       "context": {
-           "globalaccount_id": "g-account-id",
-           "user_id": "john.smith@email.com"
-       },
-       "parameters": {
-       		"oidc": {
-				"clientID": "id-oooxx",
-				"signingAlgs": ["RS256"],
-                "issuerURL": "https://issuer.url.com"
-			}
-       }
-   }`)
-	assert.Equal(t, http.StatusAccepted, resp.StatusCode)
-	updateOpID := suite.DecodeOperationID(resp)
-
-	suite.FinishUpdatingOperationByProvisioner(updateOpID)
-
-	suite.WaitForOperationState(updateOpID, domain.Succeeded)
 }
 
 func TestUpdateNotExistingInstance(t *testing.T) {
@@ -2363,8 +2362,8 @@ func TestMultipleUpdateNetworkFilterPersisted(t *testing.T) {
 	assert.Nil(suite.t, instance.Parameters.ErsContext.LicenseType)
 
 	// when
-	resp = suite.CallAPI("PATCH", fmt.Sprintf("oauth/cf-eu10/v2/service_instances/%s?accepts_incomplete=true", id), `
-		{
+	resp = suite.CallAPI("PATCH", fmt.Sprintf("oauth/cf-eu10/v2/service_instances/%s?accepts_incomplete=true", id),
+		`{
 			"service_id": "47c9dcbf-ff30-448e-ab36-d3bad66ba281",
 			"context": {
 				"license_type": "CUSTOMER"
@@ -2380,8 +2379,8 @@ func TestMultipleUpdateNetworkFilterPersisted(t *testing.T) {
 	assert.Equal(suite.t, "CUSTOMER", *instance2.Parameters.ErsContext.LicenseType)
 
 	// when
-	resp = suite.CallAPI("PATCH", fmt.Sprintf("oauth/cf-eu10/v2/service_instances/%s?accepts_incomplete=true", id), `
-		{
+	resp = suite.CallAPI("PATCH", fmt.Sprintf("oauth/cf-eu10/v2/service_instances/%s?accepts_incomplete=true", id),
+		`{
 			"service_id": "47c9dcbf-ff30-448e-ab36-d3bad66ba281",
 			"context":{},
 			"parameters":{
@@ -2400,4 +2399,129 @@ func TestMultipleUpdateNetworkFilterPersisted(t *testing.T) {
 	assert.Equal(suite.t, "CUSTOMER", *instance3.Parameters.ErsContext.LicenseType)
 	disabled = true
 	suite.AssertDisabledNetworkFilterRuntimeState(instance.RuntimeID, updateOperation2ID, &disabled)
+}
+
+func TestUpdateOnlyErsContextForExpiredInstance(t *testing.T) {
+	suite := NewBrokerSuiteTest(t, "2.0")
+	defer suite.TearDown()
+	iid := uuid.New().String()
+
+	response := suite.CallAPI("PUT", fmt.Sprintf("oauth/cf-eu10/v2/service_instances/%s?accepts_incomplete=true&plan_id=7d55d31d-35ae-4438-bf13-6ffdfa107d9f&service_id=47c9dcbf-ff30-448e-ab36-d3bad66ba281", iid),
+		`{
+			"service_id": "47c9dcbf-ff30-448e-ab36-d3bad66ba281",
+			"plan_id": "7d55d31d-35ae-4438-bf13-6ffdfa107d9f",
+			"context": {
+				"sm_operator_credentials": {
+					"clientid": "cid",
+					"clientsecret": "cs",
+					"url": "url",
+					"sm_url": "sm_url"
+				},
+				"globalaccount_id": "g-account-id",
+				"subaccount_id": "sub-id",
+				"user_id": "john.smith@email.com"
+			},
+			"parameters": {
+				"name": "testing-cluster"
+			}
+		}`)
+	opID := suite.DecodeOperationID(response)
+	suite.processProvisioningByOperationID(opID)
+	suite.WaitForOperationState(opID, domain.Succeeded)
+
+	response = suite.CallAPI(http.MethodPut, fmt.Sprintf("expire/service_instance/%s", iid), "")
+	assert.Equal(t, http.StatusAccepted, response.StatusCode)
+
+	response = suite.CallAPI("PATCH", fmt.Sprintf("oauth/v2/service_instances/%s?accepts_incomplete=true", iid),
+		`{
+		"service_id": "47c9dcbf-ff30-448e-ab36-d3bad66ba281",
+		"context": {
+			"globalaccount_id": "g-account-id-new"
+		}
+	}`)
+	assert.Equal(t, http.StatusOK, response.StatusCode)
+}
+
+func TestUpdateParamsForExpiredInstance(t *testing.T) {
+	suite := NewBrokerSuiteTest(t, "2.0")
+	defer suite.TearDown()
+	iid := uuid.New().String()
+
+	response := suite.CallAPI("PUT", fmt.Sprintf("oauth/cf-eu10/v2/service_instances/%s?accepts_incomplete=true&plan_id=7d55d31d-35ae-4438-bf13-6ffdfa107d9f&service_id=47c9dcbf-ff30-448e-ab36-d3bad66ba281", iid),
+		`{
+			"service_id": "47c9dcbf-ff30-448e-ab36-d3bad66ba281",
+			"plan_id": "7d55d31d-35ae-4438-bf13-6ffdfa107d9f",
+			"context": {
+				"sm_operator_credentials": {
+					"clientid": "cid",
+					"clientsecret": "cs",
+					"url": "url",
+					"sm_url": "sm_url"
+				},
+				"globalaccount_id": "g-account-id",
+				"subaccount_id": "sub-id",
+				"user_id": "john.smith@email.com"
+			},
+			"parameters": {
+				"name": "testing-cluster"
+			}
+		}`)
+	opID := suite.DecodeOperationID(response)
+	suite.processProvisioningByOperationID(opID)
+	suite.WaitForOperationState(opID, domain.Succeeded)
+
+	response = suite.CallAPI(http.MethodPut, fmt.Sprintf("expire/service_instance/%s", iid), "")
+	assert.Equal(t, http.StatusAccepted, response.StatusCode)
+
+	response = suite.CallAPI("PATCH", fmt.Sprintf("oauth/v2/service_instances/%s?accepts_incomplete=true", iid),
+		`{
+				"service_id": "47c9dcbf-ff30-448e-ab36-d3bad66ba281",
+				"parameters":{
+					"administrators":["xyz@sap.com", "xyz@gmail.com", "xyz@abc.com"]
+				}
+			}`)
+	assert.Equal(t, http.StatusInternalServerError, response.StatusCode)
+}
+
+func TestUpdateErsContextAndParamsForExpiredInstance(t *testing.T) {
+	suite := NewBrokerSuiteTest(t, "2.0")
+	defer suite.TearDown()
+	iid := uuid.New().String()
+	response := suite.CallAPI("PUT", fmt.Sprintf("oauth/cf-eu10/v2/service_instances/%s?accepts_incomplete=true&plan_id=7d55d31d-35ae-4438-bf13-6ffdfa107d9f&service_id=47c9dcbf-ff30-448e-ab36-d3bad66ba281", iid),
+		`{
+			"service_id": "47c9dcbf-ff30-448e-ab36-d3bad66ba281",
+			"plan_id": "7d55d31d-35ae-4438-bf13-6ffdfa107d9f",
+			"context": {
+				"sm_operator_credentials": {
+					"clientid": "cid",
+					"clientsecret": "cs",
+					"url": "url",
+					"sm_url": "sm_url"
+				},
+				"globalaccount_id": "g-account-id",
+				"subaccount_id": "sub-id",
+				"user_id": "john.smith@email.com"
+			},
+			"parameters": {
+				"name": "testing-cluster"
+			}
+		}`)
+	opID := suite.DecodeOperationID(response)
+	suite.processProvisioningByOperationID(opID)
+	suite.WaitForOperationState(opID, domain.Succeeded)
+
+	response = suite.CallAPI(http.MethodPut, fmt.Sprintf("expire/service_instance/%s", iid), "")
+	assert.Equal(t, http.StatusAccepted, response.StatusCode)
+
+	response = suite.CallAPI("PATCH", fmt.Sprintf("oauth/v2/service_instances/%s?accepts_incomplete=true", iid),
+		`{
+				"service_id": "47c9dcbf-ff30-448e-ab36-d3bad66ba281",	
+				"parameters": {
+					"administrators":["xyz2@sap.com", "xyz2@gmail.com", "xyz2@abc.com"]
+				},
+				"context": {
+					"license_type": "CUSTOMER"
+				}
+		}`)
+	assert.Equal(t, http.StatusBadRequest, response.StatusCode)
 }

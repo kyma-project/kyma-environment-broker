@@ -7,24 +7,21 @@ metadata:
     app: {{ include "kyma-env-broker.name" . }}
     release: {{ .Values.namePrefix }}
 rules:
-  - apiGroups: ["*"]
+  - apiGroups: [""]
     resources: ["secrets"]
-    verbs: ["*"]
-  - apiGroups: ["*"]
+    verbs: ["get", "list"]
+  - apiGroups: [""]
     resources: ["configmaps"]
     verbs: ["list", "get"]
-  - apiGroups: ["core.gardener.cloud"]
-    resources: ["shoots"]
-    verbs: ["list", "get"]
-  - apiGroups: ["core.gardener.cloud"]
-    resources: ["secretbindings"]
-    verbs: ["list", "get", "update"]
   - apiGroups: [ "operator.kyma-project.io" ]
     resources: [ "kymas" ]
-    verbs: [ "*" ]
+    verbs: [ "create", "update", "get", "list","delete" ]
   - apiGroups: [ "infrastructuremanager.kyma-project.io" ]
-    resources: [ "gardenerclusters", "runtimes" ]
-    verbs: [ "*" ]
+    resources: [ "gardenerclusters" ]
+    verbs: [ "create", "update", "get", "list", "delete" ]
+  - apiGroups: [ "infrastructuremanager.kyma-project.io" ]
+    resources: [ "runtimes" ]
+    verbs: [ "create", "update", "get", "list", "delete" ]
 
 ---
 kind: RoleBinding

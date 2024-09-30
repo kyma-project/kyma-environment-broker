@@ -8,8 +8,12 @@ import (
 	"testing"
 	"time"
 
+	"github.com/google/uuid"
 	"github.com/kyma-project/kyma-environment-broker/internal"
 	"github.com/kyma-project/kyma-environment-broker/internal/broker/automock"
+	"github.com/kyma-project/kyma-environment-broker/internal/k8s"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+	"sigs.k8s.io/controller-runtime/pkg/client/fake"
 
 	"github.com/stretchr/testify/mock"
 
@@ -25,9 +29,11 @@ import (
 	"github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
 var dashboardConfig = dashboard.Config{LandscapeURL: "https://dashboard.example.com"}
+var fakeKcpK8sClient = fake.NewClientBuilder().Build()
 
 type handler struct {
 	Instance   internal.Instance
@@ -80,13 +86,15 @@ func TestUpdateEndpoint_UpdateSuspension(t *testing.T) {
 		handler,
 		true,
 		false,
+		true,
 		q,
 		PlansConfig{},
 		planDefaults,
 		logrus.New(),
 		dashboardConfig,
 		kcBuilder,
-		&OneForAllConvergedCloudRegionsProvider{})
+		&OneForAllConvergedCloudRegionsProvider{},
+		fakeKcpK8sClient)
 
 	// when
 	response, err := svc.Update(context.Background(), instanceID, domain.UpdateDetails{
@@ -142,8 +150,8 @@ func TestUpdateEndpoint_UpdateOfExpiredTrial(t *testing.T) {
 		return &gqlschema.ClusterConfigInput{}, nil
 	}
 	kcBuilder := &kcMock.KcBuilder{}
-	svc := NewUpdate(Config{}, st.Instances(), st.RuntimeStates(), st.Operations(), handler, true, false, q, PlansConfig{},
-		planDefaults, logrus.New(), dashboardConfig, kcBuilder, &OneForAllConvergedCloudRegionsProvider{})
+	svc := NewUpdate(Config{}, st.Instances(), st.RuntimeStates(), st.Operations(), handler, true, false, true, q, PlansConfig{},
+		planDefaults, logrus.New(), dashboardConfig, kcBuilder, &OneForAllConvergedCloudRegionsProvider{}, fakeKcpK8sClient)
 
 	// when
 	response, err := svc.Update(context.Background(), instanceID, domain.UpdateDetails{
@@ -192,8 +200,8 @@ func TestUpdateEndpoint_UpdateAutoscalerParams(t *testing.T) {
 		return &gqlschema.ClusterConfigInput{}, nil
 	}
 	kcBuilder := &kcMock.KcBuilder{}
-	svc := NewUpdate(Config{}, st.Instances(), st.RuntimeStates(), st.Operations(), handler, true, false, q, PlansConfig{},
-		planDefaults, logrus.New(), dashboardConfig, kcBuilder, &OneForAllConvergedCloudRegionsProvider{})
+	svc := NewUpdate(Config{}, st.Instances(), st.RuntimeStates(), st.Operations(), handler, true, false, true, q, PlansConfig{},
+		planDefaults, logrus.New(), dashboardConfig, kcBuilder, &OneForAllConvergedCloudRegionsProvider{}, fakeKcpK8sClient)
 
 	t.Run("Should fail on invalid (too low) autoScalerMin and autoScalerMax", func(t *testing.T) {
 
@@ -286,8 +294,8 @@ func TestUpdateEndpoint_UpdateUnsuspension(t *testing.T) {
 		return &gqlschema.ClusterConfigInput{}, nil
 	}
 	kcBuilder := &kcMock.KcBuilder{}
-	svc := NewUpdate(Config{}, st.Instances(), st.RuntimeStates(), st.Operations(), handler, true, false, q, PlansConfig{},
-		planDefaults, logrus.New(), dashboardConfig, kcBuilder, &OneForAllConvergedCloudRegionsProvider{})
+	svc := NewUpdate(Config{}, st.Instances(), st.RuntimeStates(), st.Operations(), handler, true, false, true, q, PlansConfig{},
+		planDefaults, logrus.New(), dashboardConfig, kcBuilder, &OneForAllConvergedCloudRegionsProvider{}, fakeKcpK8sClient)
 
 	// when
 	_, err = svc.Update(context.Background(), instanceID, domain.UpdateDetails{
@@ -337,8 +345,8 @@ func TestUpdateEndpoint_UpdateInstanceWithWrongActiveValue(t *testing.T) {
 		return &gqlschema.ClusterConfigInput{}, nil
 	}
 	kcBuilder := &kcMock.KcBuilder{}
-	svc := NewUpdate(Config{}, st.Instances(), st.RuntimeStates(), st.Operations(), handler, true, false, q, PlansConfig{},
-		planDefaults, logrus.New(), dashboardConfig, kcBuilder, &OneForAllConvergedCloudRegionsProvider{})
+	svc := NewUpdate(Config{}, st.Instances(), st.RuntimeStates(), st.Operations(), handler, true, false, true, q, PlansConfig{},
+		planDefaults, logrus.New(), dashboardConfig, kcBuilder, &OneForAllConvergedCloudRegionsProvider{}, fakeKcpK8sClient)
 
 	// when
 	_, err = svc.Update(context.Background(), instanceID, domain.UpdateDetails{
@@ -369,8 +377,8 @@ func TestUpdateEndpoint_UpdateNonExistingInstance(t *testing.T) {
 		return &gqlschema.ClusterConfigInput{}, nil
 	}
 	kcBuilder := &kcMock.KcBuilder{}
-	svc := NewUpdate(Config{}, st.Instances(), st.RuntimeStates(), st.Operations(), handler, true, false, q, PlansConfig{},
-		planDefaults, logrus.New(), dashboardConfig, kcBuilder, &OneForAllConvergedCloudRegionsProvider{})
+	svc := NewUpdate(Config{}, st.Instances(), st.RuntimeStates(), st.Operations(), handler, true, false, true, q, PlansConfig{},
+		planDefaults, logrus.New(), dashboardConfig, kcBuilder, &OneForAllConvergedCloudRegionsProvider{}, fakeKcpK8sClient)
 
 	// when
 	_, err := svc.Update(context.Background(), instanceID, domain.UpdateDetails{
@@ -434,9 +442,10 @@ func TestUpdateEndpoint_UpdateGlobalAccountID(t *testing.T) {
 	planDefaults := func(planID string, platformProvider internal.CloudProvider, provider *internal.CloudProvider) (*gqlschema.ClusterConfigInput, error) {
 		return &gqlschema.ClusterConfigInput{}, nil
 	}
+
 	kcBuilder := &kcMock.KcBuilder{}
-	svc := NewUpdate(Config{}, st.Instances(), st.RuntimeStates(), st.Operations(), handler, true, true, q, PlansConfig{},
-		planDefaults, logrus.New(), dashboardConfig, kcBuilder, &OneForAllConvergedCloudRegionsProvider{})
+	svc := NewUpdate(Config{}, st.Instances(), st.RuntimeStates(), st.Operations(), handler, true, true, false, q, PlansConfig{},
+		planDefaults, logrus.New(), dashboardConfig, kcBuilder, &OneForAllConvergedCloudRegionsProvider{}, fakeKcpK8sClient)
 
 	// when
 	response, err := svc.Update(context.Background(), instanceID, domain.UpdateDetails{
@@ -479,8 +488,8 @@ func TestUpdateEndpoint_UpdateParameters(t *testing.T) {
 		return &gqlschema.ClusterConfigInput{}, nil
 	}
 	kcBuilder := &kcMock.KcBuilder{}
-	svc := NewUpdate(Config{}, st.Instances(), st.RuntimeStates(), st.Operations(), handler, true, true, q, PlansConfig{},
-		planDefaults, logrus.New(), dashboardConfig, kcBuilder, &OneForAllConvergedCloudRegionsProvider{})
+	svc := NewUpdate(Config{}, st.Instances(), st.RuntimeStates(), st.Operations(), handler, true, true, false, q, PlansConfig{},
+		planDefaults, logrus.New(), dashboardConfig, kcBuilder, &OneForAllConvergedCloudRegionsProvider{}, fakeKcpK8sClient)
 
 	t.Run("Should fail on invalid OIDC params", func(t *testing.T) {
 		// given
@@ -610,9 +619,9 @@ func TestUpdateEndpoint_UpdateWithEnabledDashboard(t *testing.T) {
 		return &gqlschema.ClusterConfigInput{}, nil
 	}
 	kcBuilder := &kcMock.KcBuilder{}
-	svc := NewUpdate(Config{}, st.Instances(), st.RuntimeStates(), st.Operations(), handler, true, false, q, PlansConfig{},
-		planDefaults, logrus.New(), dashboardConfig, kcBuilder, &OneForAllConvergedCloudRegionsProvider{})
-
+	svc := NewUpdate(Config{AllowUpdateExpiredInstanceWithContext: true}, st.Instances(), st.RuntimeStates(), st.Operations(), handler, true, false, true, q, PlansConfig{},
+		planDefaults, logrus.New(), dashboardConfig, kcBuilder, &OneForAllConvergedCloudRegionsProvider{}, fakeKcpK8sClient)
+	createFakeCRs(t)
 	// when
 	response, err := svc.Update(context.Background(), instanceID, domain.UpdateDetails{
 		ServiceID:       "",
@@ -632,4 +641,313 @@ func TestUpdateEndpoint_UpdateWithEnabledDashboard(t *testing.T) {
 	assert.Regexp(t, `^https:\/\/dashboard\.example\.com\/\?kubeconfigID=`, inst.DashboardURL)
 	// check if the API response is correct
 	assert.Regexp(t, `^https:\/\/dashboard\.example\.com\/\?kubeconfigID=`, response.DashboardURL)
+}
+
+func TestUpdateExpiredInstance(t *testing.T) {
+	instance := internal.Instance{
+		InstanceID:      instanceID,
+		ServicePlanID:   TrialPlanID,
+		GlobalAccountID: "globalaccount_id_init",
+		Parameters: internal.ProvisioningParameters{
+			PlanID:     TrialPlanID,
+			ErsContext: internal.ERSContext{},
+		},
+	}
+	expireTime := instance.CreatedAt.Add(time.Hour * 24 * 14)
+	instance.ExpiredAt = &expireTime
+
+	storage := storage.NewMemoryStorage()
+	createFakeCRs(t)
+	err := storage.Instances().Insert(instance)
+	require.NoError(t, err)
+
+	err = storage.Operations().InsertProvisioningOperation(fixProvisioningOperation("01"))
+	require.NoError(t, err)
+
+	kcBuilder := &kcMock.KcBuilder{}
+
+	handler := &handler{}
+
+	queue := &automock.Queue{}
+	queue.On("Add", mock.AnythingOfType("string"))
+
+	planDefaults := func(planID string, platformProvider internal.CloudProvider, provider *internal.CloudProvider) (*gqlschema.ClusterConfigInput, error) {
+		return &gqlschema.ClusterConfigInput{}, nil
+	}
+
+	svc := NewUpdate(Config{AllowUpdateExpiredInstanceWithContext: true}, storage.Instances(), storage.RuntimeStates(), storage.Operations(), handler, true, false, true, queue, PlansConfig{},
+		planDefaults, logrus.New(), dashboardConfig, kcBuilder, &OneForAllConvergedCloudRegionsProvider{}, fakeKcpK8sClient)
+
+	t.Run("should accept if it is same as previous", func(t *testing.T) {
+		_, err = svc.Update(context.Background(), instanceID, domain.UpdateDetails{
+			ServiceID:       KymaServiceID,
+			PlanID:          TrialPlanID,
+			RawParameters:   nil,
+			PreviousValues:  domain.PreviousValues{},
+			RawContext:      json.RawMessage("{\"globalaccount_id\":\"globalaccount_id_init\"}"),
+			MaintenanceInfo: nil,
+		}, true)
+		require.NoError(t, err)
+	})
+
+	t.Run("should accept change GA", func(t *testing.T) {
+		_, err = svc.Update(context.Background(), instanceID, domain.UpdateDetails{
+			ServiceID:       KymaServiceID,
+			PlanID:          TrialPlanID,
+			RawParameters:   nil,
+			PreviousValues:  domain.PreviousValues{},
+			RawContext:      json.RawMessage("{\"globalaccount_id\":\"globalaccount_id_new\"}"),
+			MaintenanceInfo: nil,
+		}, true)
+		require.NoError(t, err)
+	})
+
+	t.Run("should accept change GA, with params", func(t *testing.T) {
+		_, err = svc.Update(context.Background(), instanceID, domain.UpdateDetails{
+			ServiceID:       KymaServiceID,
+			PlanID:          TrialPlanID,
+			PreviousValues:  domain.PreviousValues{},
+			RawContext:      json.RawMessage("{\"globalaccount_id\":\"globalaccount_id_new_2\", \"active\":true}"),
+			RawParameters:   json.RawMessage(`{"autoScalerMin": 4, "autoScalerMax": 3}`),
+			MaintenanceInfo: nil,
+		}, true)
+		require.NoError(t, err)
+	})
+
+	t.Run("should fail as not global account passed", func(t *testing.T) {
+		_, err = svc.Update(context.Background(), instanceID, domain.UpdateDetails{
+			ServiceID:       KymaServiceID,
+			PlanID:          TrialPlanID,
+			PreviousValues:  domain.PreviousValues{},
+			RawContext:      json.RawMessage("{\"x\":\"y\", \"active\":true}"),
+			RawParameters:   json.RawMessage(`{"autoScalerMin": 4, "autoScalerMax": 3}`),
+			MaintenanceInfo: nil,
+		}, true)
+		require.Error(t, err)
+	})
+}
+
+func TestSubaccountMovement(t *testing.T) {
+	runtimeId := createFakeCRs(t)
+	defer cleanFakeCRs(t, runtimeId)
+
+	instance := internal.Instance{
+		InstanceID:      instanceID,
+		RuntimeID:       runtimeId,
+		ServicePlanID:   TrialPlanID,
+		GlobalAccountID: "InitialGlobalAccountID",
+		Parameters: internal.ProvisioningParameters{
+			PlanID: TrialPlanID,
+			ErsContext: internal.ERSContext{
+				GlobalAccountID: "InitialGlobalAccountID",
+			},
+		},
+	}
+
+	storage := storage.NewMemoryStorage()
+	err := storage.Instances().Insert(instance)
+	require.NoError(t, err)
+
+	err = storage.Operations().InsertProvisioningOperation(fixProvisioningOperation("01"))
+	require.NoError(t, err)
+
+	kcBuilder := &kcMock.KcBuilder{}
+
+	handler := &handler{}
+
+	queue := &automock.Queue{}
+	queue.On("Add", mock.AnythingOfType("string"))
+
+	planDefaults := func(planID string, platformProvider internal.CloudProvider, provider *internal.CloudProvider) (*gqlschema.ClusterConfigInput, error) {
+		return &gqlschema.ClusterConfigInput{}, nil
+	}
+
+	svc := NewUpdate(Config{SubaccountMovementEnabled: true}, storage.Instances(), storage.RuntimeStates(), storage.Operations(), handler, true, true, true, queue, PlansConfig{},
+		planDefaults, logrus.New(), dashboardConfig, kcBuilder, &OneForAllConvergedCloudRegionsProvider{}, fakeKcpK8sClient)
+
+	t.Run("no move performed so subscription should be empty", func(t *testing.T) {
+		_, err = svc.Update(context.Background(), instanceID, domain.UpdateDetails{
+			ServiceID:       KymaServiceID,
+			PlanID:          TrialPlanID,
+			PreviousValues:  domain.PreviousValues{},
+			RawContext:      json.RawMessage("{\"globalaccount_id\":\"ChangedlGlobalAccountID\"}"),
+			RawParameters:   json.RawMessage("{\"name\":\"test\"}"),
+			MaintenanceInfo: nil,
+		}, true)
+		require.NoError(t, err)
+		instance, err := storage.Instances().GetByID(instanceID)
+		require.NoError(t, err)
+		assert.Equal(t, "InitialGlobalAccountID", instance.SubscriptionGlobalAccountID)
+		assert.Equal(t, "ChangedlGlobalAccountID", instance.GlobalAccountID)
+	})
+
+	t.Run("move subaccount first time", func(t *testing.T) {
+		_, err = svc.Update(context.Background(), instanceID, domain.UpdateDetails{
+			ServiceID:       KymaServiceID,
+			PlanID:          TrialPlanID,
+			PreviousValues:  domain.PreviousValues{},
+			RawContext:      json.RawMessage("{\"globalaccount_id\":\"newGlobalAccountID-v1\"}"),
+			MaintenanceInfo: nil,
+		}, true)
+		require.NoError(t, err)
+		instance, err := storage.Instances().GetByID(instanceID)
+		require.NoError(t, err)
+		assert.Equal(t, "InitialGlobalAccountID", instance.SubscriptionGlobalAccountID)
+		assert.Equal(t, "newGlobalAccountID-v1", instance.GlobalAccountID)
+	})
+
+	t.Run("move subaccount second time", func(t *testing.T) {
+		_, err = svc.Update(context.Background(), instanceID, domain.UpdateDetails{
+			ServiceID:       KymaServiceID,
+			PlanID:          TrialPlanID,
+			PreviousValues:  domain.PreviousValues{},
+			RawContext:      json.RawMessage("{\"globalaccount_id\":\"newGlobalAccountID-v2\"}"),
+			MaintenanceInfo: nil,
+		}, true)
+		require.NoError(t, err)
+		instance, err := storage.Instances().GetByID(instanceID)
+		require.NoError(t, err)
+		assert.Equal(t, "InitialGlobalAccountID", instance.SubscriptionGlobalAccountID)
+		assert.Equal(t, "newGlobalAccountID-v2", instance.GlobalAccountID)
+	})
+}
+
+func TestLabelChangeWhenMovingSubaccount(t *testing.T) {
+	const (
+		oldGlobalAccountId = "first-global-account-id"
+		newGlobalAccountId = "changed-global-account-id"
+	)
+
+	runtimeId := createFakeCRs(t)
+	defer cleanFakeCRs(t, runtimeId)
+
+	instance := internal.Instance{
+		InstanceID:      instanceID,
+		ServicePlanID:   TrialPlanID,
+		GlobalAccountID: oldGlobalAccountId,
+		RuntimeID:       runtimeId,
+		Parameters: internal.ProvisioningParameters{
+			PlanID: TrialPlanID,
+			ErsContext: internal.ERSContext{
+				GlobalAccountID: newGlobalAccountId,
+			},
+		},
+	}
+
+	storage := storage.NewMemoryStorage()
+	err := storage.Instances().Insert(instance)
+	require.NoError(t, err)
+
+	err = storage.Operations().InsertProvisioningOperation(fixProvisioningOperation("01"))
+	require.NoError(t, err)
+
+	kcBuilder := &kcMock.KcBuilder{}
+
+	handler := &handler{}
+
+	queue := &automock.Queue{}
+	queue.On("Add", mock.AnythingOfType("string"))
+
+	planDefaults := func(planID string, platformProvider internal.CloudProvider, provider *internal.CloudProvider) (*gqlschema.ClusterConfigInput, error) {
+		return &gqlschema.ClusterConfigInput{}, nil
+	}
+
+	svc := NewUpdate(Config{SubaccountMovementEnabled: true}, storage.Instances(), storage.RuntimeStates(), storage.Operations(), handler, true, true, true, queue, PlansConfig{},
+		planDefaults, logrus.New(), dashboardConfig, kcBuilder, &OneForAllConvergedCloudRegionsProvider{}, fakeKcpK8sClient)
+
+	t.Run("simulate flow of moving account with labels on CRs", func(t *testing.T) {
+		// initial state of instance - moving account was never donex
+		i, e := storage.Instances().GetByID(instanceID)
+		require.NoError(t, e)
+		assert.Equal(t, oldGlobalAccountId, i.GlobalAccountID)
+		assert.Empty(t, i.SubscriptionGlobalAccountID)
+		assert.Equal(t, runtimeId, i.RuntimeID)
+
+		// simulate moving account with new global account id - it means that we should update labels in CR
+		_, err = svc.Update(context.Background(), instanceID, domain.UpdateDetails{
+			ServiceID:       KymaServiceID,
+			PlanID:          TrialPlanID,
+			PreviousValues:  domain.PreviousValues{},
+			RawContext:      json.RawMessage("{\"globalaccount_id\":\"changed-global-account-id\"}"),
+			MaintenanceInfo: nil,
+		}, true)
+		require.NoError(t, err)
+
+		// after update instance should have new global account id and old global account id as subscription global account id, subsciprion global id is set only once.
+		i, err = storage.Instances().GetByID(instanceID)
+		require.NoError(t, err)
+		assert.Equal(t, newGlobalAccountId, i.GlobalAccountID)
+		assert.Equal(t, oldGlobalAccountId, i.SubscriptionGlobalAccountID)
+		assert.Equal(t, runtimeId, i.RuntimeID)
+
+		// all CRs should have new global account id as label
+		gvk, err := k8s.GvkByName(k8s.KymaCr)
+		require.NoError(t, err)
+		cr := &unstructured.Unstructured{}
+		cr.SetGroupVersionKind(gvk)
+		err = fakeKcpK8sClient.Get(context.Background(), client.ObjectKey{Name: i.RuntimeID, Namespace: KcpNamespace}, cr)
+		require.NoError(t, err)
+		labels := cr.GetLabels()
+		assert.Len(t, labels, 1)
+		assert.Equal(t, newGlobalAccountId, labels[k8s.GlobalAccountIdLabel])
+
+		gvk, err = k8s.GvkByName(k8s.RuntimeCr)
+		require.NoError(t, err)
+		cr = &unstructured.Unstructured{}
+		cr.SetGroupVersionKind(gvk)
+		err = fakeKcpK8sClient.Get(context.Background(), client.ObjectKey{Name: i.RuntimeID, Namespace: KcpNamespace}, cr)
+		require.NoError(t, err)
+		labels = cr.GetLabels()
+		assert.Len(t, labels, 1)
+		assert.Equal(t, newGlobalAccountId, labels[k8s.GlobalAccountIdLabel])
+
+		gvk, err = k8s.GvkByName(k8s.GardenerClusterCr)
+		require.NoError(t, err)
+		cr = &unstructured.Unstructured{}
+		cr.SetGroupVersionKind(gvk)
+		err = fakeKcpK8sClient.Get(context.Background(), client.ObjectKey{Name: i.RuntimeID, Namespace: KcpNamespace}, cr)
+		require.NoError(t, err)
+		labels = cr.GetLabels()
+		assert.Len(t, labels, 1)
+		assert.Equal(t, newGlobalAccountId, labels[k8s.GlobalAccountIdLabel])
+	})
+}
+
+func createFakeCRs(t *testing.T) string {
+	runtimeID := uuid.New().String()
+	f := func(t *testing.T, runtimeID string, crName string) {
+		assert.NotNil(t, fakeKcpK8sClient)
+		gvk, err := k8s.GvkByName(crName)
+		require.NoError(t, err)
+		us := unstructured.Unstructured{}
+		us.SetGroupVersionKind(gvk)
+		us.SetName(runtimeID)
+		us.SetNamespace(KcpNamespace)
+		err = fakeKcpK8sClient.Create(context.Background(), &us)
+		require.NoError(t, err)
+	}
+
+	f(t, runtimeID, k8s.KymaCr)
+	f(t, runtimeID, k8s.GardenerClusterCr)
+	f(t, runtimeID, k8s.RuntimeCr)
+
+	return runtimeID
+}
+
+func cleanFakeCRs(t *testing.T, runtimeID string) {
+	f := func(t *testing.T, id string, crName string) {
+		assert.NotNil(t, fakeKcpK8sClient)
+		gvk, err := k8s.GvkByName(crName)
+		require.NoError(t, err)
+		us := unstructured.Unstructured{}
+		us.SetGroupVersionKind(gvk)
+		us.SetName(runtimeID)
+		us.SetNamespace(KcpNamespace)
+		err = fakeKcpK8sClient.Delete(context.Background(), &us)
+		require.NoError(t, err)
+	}
+
+	f(t, runtimeID, k8s.KymaCr)
+	f(t, runtimeID, k8s.GardenerClusterCr)
+	f(t, runtimeID, k8s.RuntimeCr)
 }

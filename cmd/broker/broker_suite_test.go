@@ -26,7 +26,6 @@ import (
 	"github.com/kyma-project/kyma-environment-broker/common/gardener"
 	"github.com/kyma-project/kyma-environment-broker/common/orchestration"
 	"github.com/kyma-project/kyma-environment-broker/internal"
-	"github.com/kyma-project/kyma-environment-broker/internal/avs"
 	"github.com/kyma-project/kyma-environment-broker/internal/broker"
 	kebConfig "github.com/kyma-project/kyma-environment-broker/internal/config"
 	"github.com/kyma-project/kyma-environment-broker/internal/edp"
@@ -39,7 +38,6 @@ import (
 	orchestrate "github.com/kyma-project/kyma-environment-broker/internal/orchestration/handlers"
 	"github.com/kyma-project/kyma-environment-broker/internal/process"
 	"github.com/kyma-project/kyma-environment-broker/internal/process/input"
-	"github.com/kyma-project/kyma-environment-broker/internal/process/provisioning"
 	"github.com/kyma-project/kyma-environment-broker/internal/process/steps"
 	"github.com/kyma-project/kyma-environment-broker/internal/process/upgrade_cluster"
 	"github.com/kyma-project/kyma-environment-broker/internal/provisioner"
@@ -197,8 +195,6 @@ func NewBrokerSuiteTestWithConfig(t *testing.T, cfg *Config, version ...string) 
 	provisionerClient := provisioner.NewFakeClientWithGardener(gardenerClient, "kcp-system")
 	eventBroker := event.NewPubSub(logs)
 
-	avsDel, externalEvalCreator, internalEvalAssistant, externalEvalAssistant := createFakeAvsDelegator(t, db, cfg)
-
 	edpClient := edp.NewFakeClient()
 	accountProvider := fixAccountProvider()
 	require.NoError(t, err)
@@ -207,7 +203,6 @@ func NewBrokerSuiteTestWithConfig(t *testing.T, cfg *Config, version ...string) 
 	k8sClientProvider := kubeconfig.NewFakeK8sClientProvider(fakeK8sSKRClient)
 	provisionManager := process.NewStagedManager(db.Operations(), eventBroker, cfg.OperationTimeout, cfg.Provisioning, logs.WithField("provisioning", "manager"))
 	provisioningQueue := NewProvisioningProcessingQueue(context.Background(), provisionManager, workersAmount, cfg, db, provisionerClient, inputFactory,
-		avsDel, internalEvalAssistant, externalEvalCreator,
 		edpClient, accountProvider, k8sClientProvider, cli, defaultOIDCValues(), logs)
 
 	provisioningQueue.SpeedUp(10000)
@@ -221,8 +216,7 @@ func NewBrokerSuiteTestWithConfig(t *testing.T, cfg *Config, version ...string) 
 
 	deprovisionManager := process.NewStagedManager(db.Operations(), eventBroker, time.Hour, cfg.Deprovisioning, logs.WithField("deprovisioning", "manager"))
 	deprovisioningQueue := NewDeprovisioningProcessingQueue(ctx, workersAmount, deprovisionManager, cfg, db, eventBroker,
-		provisionerClient, avsDel, internalEvalAssistant, externalEvalAssistant,
-		edpClient, accountProvider, k8sClientProvider, cli, configProvider, logs,
+		provisionerClient, edpClient, accountProvider, k8sClientProvider, cli, configProvider, logs,
 	)
 	deprovisionManager.SpeedUp(10000)
 
@@ -242,12 +236,11 @@ func NewBrokerSuiteTestWithConfig(t *testing.T, cfg *Config, version ...string) 
 	}
 	ts.poller = &broker.TimerPoller{PollInterval: 3 * time.Millisecond, PollTimeout: 3 * time.Second, Log: ts.t.Log}
 
-	ts.CreateAPI(inputFactory, cfg, db, provisioningQueue, deprovisioningQueue, updateQueue, logs)
+	ts.CreateAPI(inputFactory, cfg, db, provisioningQueue, deprovisioningQueue, updateQueue, logs, k8sClientProvider, gardener.NewFakeClient())
 
 	notificationFakeClient := notification.NewFakeClient()
 	notificationBundleBuilder := notification.NewBundleBuilder(notificationFakeClient, cfg.Notification)
 
-	upgradeEvaluationManager := avs.NewEvaluationManager(avsDel, avs.Config{})
 	runtimeLister := kebOrchestration.NewRuntimeLister(db.Instances(), db.Operations(), kebRuntime.NewConverter(defaultRegion), logs)
 	runtimeResolver := orchestration.NewGardenerRuntimeResolver(gardenerClient, fixedGardenerNamespace, runtimeLister, logs)
 
@@ -255,7 +248,7 @@ func NewBrokerSuiteTestWithConfig(t *testing.T, cfg *Config, version ...string) 
 		Retry:                 10 * time.Millisecond,
 		StatusCheck:           100 * time.Millisecond,
 		UpgradeClusterTimeout: 3 * time.Second,
-	}, 250*time.Millisecond, runtimeResolver, upgradeEvaluationManager, notificationBundleBuilder, logs, cli, *cfg, 1000)
+	}, 250*time.Millisecond, runtimeResolver, notificationBundleBuilder, logs, cli, *cfg, 1000)
 
 	clusterQueue.SpeedUp(1000)
 
@@ -266,7 +259,9 @@ func NewBrokerSuiteTestWithConfig(t *testing.T, cfg *Config, version ...string) 
 	expirationHandler := expiration.NewHandler(db.Instances(), db.Operations(), deprovisioningQueue, logs)
 	expirationHandler.AttachRoutes(ts.router)
 
-	runtimeHandler := kebRuntime.NewHandler(db.Instances(), db.Operations(), db.RuntimeStates(), db.InstancesArchived(), cfg.MaxPaginationPage, cfg.DefaultRequestRegion, provisionerClient, logs)
+	runtimeHandler := kebRuntime.NewHandler(db.Instances(), db.Operations(), db.RuntimeStates(), db.InstancesArchived(), cfg.MaxPaginationPage, cfg.DefaultRequestRegion, provisionerClient, cli, broker.KimConfig{
+		Enabled: false,
+	}, logs)
 	runtimeHandler.AttachRoutes(ts.router)
 
 	ts.httpServer = httptest.NewServer(ts.router)
@@ -337,7 +332,7 @@ func (s *BrokerSuiteTest) CallAPI(method string, path string, body string) *http
 	return resp
 }
 
-func (s *BrokerSuiteTest) CreateAPI(inputFactory broker.PlanValidator, cfg *Config, db storage.BrokerStorage, provisioningQueue *process.Queue, deprovisionQueue *process.Queue, updateQueue *process.Queue, logs logrus.FieldLogger) {
+func (s *BrokerSuiteTest) CreateAPI(inputFactory broker.PlanValidator, cfg *Config, db storage.BrokerStorage, provisioningQueue *process.Queue, deprovisionQueue *process.Queue, updateQueue *process.Queue, logs logrus.FieldLogger, skrK8sClientProvider *kubeconfig.FakeProvider, gardenerClient client.Client) {
 	servicesConfig := map[string]broker.Service{
 		broker.KymaServiceName: {
 			Description: "",
@@ -364,28 +359,12 @@ func (s *BrokerSuiteTest) CreateAPI(inputFactory broker.PlanValidator, cfg *Conf
 	planDefaults := func(planID string, platformProvider internal.CloudProvider, provider *internal.CloudProvider) (*gqlschema.ClusterConfigInput, error) {
 		return &gqlschema.ClusterConfigInput{}, nil
 	}
+	var fakeKcpK8sClient = fake.NewClientBuilder().Build()
 	kcBuilder := &kcMock.KcBuilder{}
 	kcBuilder.On("Build", nil).Return("--kubeconfig file", nil)
-	createAPI(s.router, servicesConfig, inputFactory, cfg, db, provisioningQueue, deprovisionQueue, updateQueue, lager.NewLogger("api"), logs, planDefaults, kcBuilder)
+	createAPI(s.router, servicesConfig, inputFactory, cfg, db, provisioningQueue, deprovisionQueue, updateQueue, lager.NewLogger("api"), logs, planDefaults, kcBuilder, skrK8sClientProvider, skrK8sClientProvider, gardenerClient, fakeKcpK8sClient)
 
 	s.httpServer = httptest.NewServer(s.router)
-}
-
-func createFakeAvsDelegator(t *testing.T, db storage.BrokerStorage, cfg *Config) (*avs.Delegator, *provisioning.ExternalEvalCreator, *avs.InternalEvalAssistant, *avs.ExternalEvalAssistant) {
-	server := avs.NewMockAvsServer(t)
-	mockServer := avs.FixMockAvsServer(server)
-	avsConfig := avs.Config{
-		OauthTokenEndpoint: fmt.Sprintf("%s/oauth/token", mockServer.URL),
-		ApiEndpoint:        fmt.Sprintf("%s/api/v2/evaluationmetadata", mockServer.URL),
-	}
-	client, err := avs.NewClient(context.TODO(), avsConfig, logrus.New())
-	assert.NoError(t, err)
-	avsDel := avs.NewDelegator(client, avsConfig, db.Operations())
-	externalEvalAssistant := avs.NewExternalEvalAssistant(cfg.Avs)
-	internalEvalAssistant := avs.NewInternalEvalAssistant(cfg.Avs)
-	externalEvalCreator := provisioning.NewExternalEvalCreator(avsDel, cfg.Avs.Disabled, externalEvalAssistant)
-
-	return avsDel, externalEvalCreator, internalEvalAssistant, externalEvalAssistant
 }
 
 func (s *BrokerSuiteTest) CreateProvisionedRuntime(options RuntimeOptions) string {
@@ -563,6 +542,37 @@ func (s *BrokerSuiteTest) FinishDeprovisioningOperationByProvisionerForGivenOpId
 	require.NoError(s.t, err)
 
 	s.finishOperationByOpIDByProvisioner(gqlschema.OperationTypeDeprovision, gqlschema.OperationStateSucceeded, op.ID)
+}
+
+func (s *BrokerSuiteTest) waitForRuntimeAndMakeItReady(id string) {
+	var op *internal.Operation
+	err := s.poller.Invoke(func() (done bool, err error) {
+		op, err = s.db.Operations().GetOperationByID(id)
+		if err != nil {
+			return false, nil
+		}
+		if op.RuntimeID != "" {
+			return true, nil
+		}
+		return false, nil
+	})
+	assert.NoError(s.t, err, "timeout waiting for the operation with runtimeID")
+
+	runtimeID := op.RuntimeID
+
+	var runtime imv1.Runtime
+	err = s.poller.Invoke(func() (done bool, err error) {
+		e := s.k8sKcp.Get(context.Background(), client.ObjectKey{Namespace: "kyma-system", Name: runtimeID}, &runtime)
+		if e == nil {
+			return true, nil
+		}
+		return false, nil
+	})
+	assert.NoError(s.t, err, "timeout waiting for the runtime to be created")
+
+	runtime.Status.State = imv1.RuntimeStateReady
+	err = s.k8sKcp.Update(context.Background(), &runtime)
+	assert.NoError(s.t, err)
 }
 
 func (s *BrokerSuiteTest) finishOperationByProvisioner(operationType gqlschema.OperationType, state gqlschema.OperationState, runtimeID string) {
@@ -1130,6 +1140,14 @@ func (s *BrokerSuiteTest) AssertMetrics2(expected int, operation internal.Operat
 	a := s.metrics.OperationResult.Metrics().With(metricsv2.GetLabels(operation))
 	assert.NotNil(s.t, a)
 	assert.Equal(s.t, float64(expected), testutil.ToFloat64(a))
+}
+
+func (s *BrokerSuiteTest) GetRuntimeResourceByInstanceID(iid string) imv1.Runtime {
+	var runtimes imv1.RuntimeList
+	err := s.k8sKcp.List(context.Background(), &runtimes, client.MatchingLabels{"kyma-project.io/instance-id": iid})
+	require.NoError(s.t, err)
+	require.Equal(s.t, 1, len(runtimes.Items))
+	return runtimes.Items[0]
 }
 
 func assertResourcesAreRemoved(t *testing.T, gvk schema.GroupVersionKind, k8sClient client.Client) {

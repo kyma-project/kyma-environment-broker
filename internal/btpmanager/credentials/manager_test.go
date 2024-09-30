@@ -12,7 +12,6 @@ import (
 
 	uuid2 "github.com/google/uuid"
 	"github.com/kyma-project/kyma-environment-broker/internal"
-	"github.com/kyma-project/kyma-environment-broker/internal/provisioner"
 	"github.com/kyma-project/kyma-environment-broker/internal/storage"
 	"github.com/kyma-project/kyma-environment-broker/internal/storage/dbmodel"
 	"github.com/sirupsen/logrus"
@@ -66,14 +65,18 @@ func InitEnvironment(ctx context.Context, t *testing.T) *Environment {
 	}
 
 	newEnvironment.createTestData()
-	newEnvironment.manager = NewManager(ctx, newEnvironment.kcp, newEnvironment.kebDb.Instances(), logs, false, provisioner.NewFakeClient())
+	newEnvironment.manager = NewManager(ctx, newEnvironment.kcp, newEnvironment.kebDb.Instances(), logs, false)
 	newEnvironment.job = NewJob(newEnvironment.manager, logs)
 	newEnvironment.assertThatCorrectNumberOfInstancesExists()
 	return newEnvironment
 }
 
 func TestBtpManagerReconciler(t *testing.T) {
-	internal.SetupEnvtest(t)
+	pid := internal.SetupEnvtest(t)
+	defer func() {
+		internal.CleanupEnvtestBinaries(pid)
+	}()
+
 	t.Run("btp manager credentials tests", func(t *testing.T) {
 		ctx, cancel := context.WithCancel(context.Background())
 		environment := InitEnvironment(ctx, t)

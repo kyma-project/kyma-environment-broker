@@ -165,6 +165,9 @@ type Operation struct {
 
 	LastError kebError.LastError `json:"last_error"`
 
+	// Used during KIM integration while deprovisioning - to be removed later on when provisioner not used anymore
+	KimDeprovisionsOnly bool `json:"kim_deprovisions_only"`
+
 	// following fields are not stored in the storage and should be added to the Merge function
 	InputCreator ProvisionerInputCreator `json:"-"`
 }
@@ -271,6 +274,24 @@ func (i *InstanceDetails) GetCompassRuntimeId() string {
 		return i.RuntimeID
 	}
 	return *i.CompassRuntimeId
+}
+
+func (i *InstanceDetails) GetRuntimeResourceName() string {
+	name := i.RuntimeResourceName
+	if name == "" {
+		// fallback to runtime ID
+		name = i.RuntimeID
+	}
+	return name
+}
+
+func (i *InstanceDetails) GetRuntimeResourceNamespace() string {
+	namespace := i.KymaResourceNamespace
+	if namespace == "" {
+		// fallback to default namespace
+		namespace = "kcp-system"
+	}
+	return namespace
 }
 
 // ProvisioningOperation holds all information about provisioning operation

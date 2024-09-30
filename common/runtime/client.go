@@ -129,6 +129,9 @@ func setQuery(url *url.URL, params ListParameters) {
 	if params.GardenerConfig {
 		query.Add(GardenerConfigParam, "true")
 	}
+	if params.RuntimeResourceConfig {
+		query.Add(RuntimeConfigParam, "true")
+	}
 	if params.Expired {
 		query.Add(ExpiredParam, "true")
 	}

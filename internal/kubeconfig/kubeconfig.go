@@ -62,3 +62,24 @@ users:
         # Chocolatey (Windows)
         choco install kubelogin
 `
+
+const kubeconfigTemplateForKymaBindings = `
+---
+apiVersion: v1
+kind: Config
+current-context: {{ .ContextName }}
+clusters:
+- name: {{ .ContextName }}
+  cluster:
+    certificate-authority-data: {{ .CAData }}
+    server: {{ .ServerURL }}
+contexts:
+- name: {{ .ContextName }}
+  context:
+    cluster: {{ .ContextName }}
+    user: {{ .ContextName }}
+users:
+- name: {{ .ContextName }}
+  user:
+    token: {{ .Token }}
+  `

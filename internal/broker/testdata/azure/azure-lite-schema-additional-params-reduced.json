@@ -214,7 +214,8 @@
         "westeurope": "westeurope (Europe, Netherlands)",
         "japaneast": "japaneast (Japan, Tokyo)",
         "southeastasia": "southeastasia (Asia Pacific, Singapore)",
-        "australiaeast": "australiaeast (Australia, Sydney)"
+        "australiaeast": "australiaeast (Australia, Sydney)",
+        "brazilsouth": "brazilsouth (Brazil, São Paulo)"
       },
       "enum": [
         "eastus",
@@ -225,7 +226,8 @@
         "westeurope",
         "japaneast",
         "southeastasia",
-        "australiaeast"
+        "australiaeast",
+        "brazilsouth"
       ],
       "minLength": 1,
       "type": "string"

@@ -65,3 +65,19 @@ metadata:
     hyperscaler-type: {HYPERSCALER_TYPE}
     euAccess: "true"
 ```
+
+## Assured Workloads
+
+SAP BTP, Kyma runtime supports the BTP cf-sa30 GCP subaccount region. This region uses the Assured Workloads Kingdom of Saudi Arabia (KSA) control package. Kyma Control Plane manages cf-sa30 Kyma runtimes in a separate 
+Google Cloud hyperscaler account pool. The Secret contains the label **hyperscaler-type** set to `gcp_cf-sa30`. The following is an example of a Secret that uses the Assured Workloads KSA control package:
+
+```yaml
+apiVersion: v1
+kind: Secret
+metadata:
+  name: {SECRET_NAME}
+  labels:
+    # tenant-name is omitted for new, not yet claimed account credentials
+    tenant-name: {TENANT_NAME}
+    hyperscaler-type: "gcp_cf-sa30"
+```

@@ -59,7 +59,8 @@ lifecycleManager:
     disabled: true
 
 infrastructureManager:
-    disabled: true
+    # when infrastructure is disabled, the GerdenerCluster syncer is disabled as well
+    disabled: false
 
 
 oidc:
@@ -117,3 +118,7 @@ serviceMonitor:
   enabled: false
 
 imagePullSecret: "k8s-ecr-login-renew-docker-secret"
+
+gardener:
+  shootDomain: "kyma-dev.shoot.canary.k8s-hana.ondemand.com"
+  machineImageVersion: "1443.10.0"

@@ -220,7 +220,9 @@
         "us-central1": "us-central1 (US Central, IA)",
         "me-central2": "me-central2 (KSA, Dammam)",
         "asia-northeast2": "asia-northeast2 (Japan, Osaka)",
-        "me-west1": "me-west1 (Israel, Tel Aviv)"
+        "me-west1": "me-west1 (Israel, Tel Aviv)",
+        "southamerica-east1": "southamerica-east1 (Brazil, São Paulo)",
+        "australia-southeast1": "australia-southeast1 (Australia, Sydney)"
       },
       "enum": [
         "europe-west3",
@@ -228,7 +230,9 @@
         "us-central1",
         "me-central2",
         "asia-northeast2",
-        "me-west1"
+        "me-west1",
+        "southamerica-east1",
+        "australia-southeast1"
       ],
       "minLength": 1,
       "type": "string"

@@ -2,6 +2,7 @@ package provider
 
 import (
 	"github.com/kyma-project/kyma-environment-broker/internal"
+	"github.com/kyma-project/kyma-environment-broker/internal/assuredworkloads"
 )
 
 type (
@@ -32,8 +33,8 @@ func (p *GCPInputProvider) Provide() Values {
 		DefaultMachineType:   DefaultGCPMachineType,
 		Region:               region,
 		Purpose:              PurposeProduction,
-		VolumeSizeGb:         50,
-		DiskType:             "pd-standard",
+		VolumeSizeGb:         80,
+		DiskType:             "pd-balanced",
 	}
 }
 
@@ -79,6 +80,9 @@ func (p *GCPTrialInputProvider) zones() []string {
 }
 
 func (p *GCPTrialInputProvider) region() string {
+	if assuredworkloads.IsKSA(p.ProvisioningParameters.PlatformRegion) {
+		return DefaultGCPAssuredWorkloadsRegion
+	}
 	if p.ProvisioningParameters.PlatformRegion != "" {
 		abstractRegion, found := p.PlatformRegionMapping[p.ProvisioningParameters.PlatformRegion]
 		if found {

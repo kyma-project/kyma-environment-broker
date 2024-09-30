@@ -5,7 +5,6 @@ import (
 	"time"
 
 	orchestrationExt "github.com/kyma-project/kyma-environment-broker/common/orchestration"
-	"github.com/kyma-project/kyma-environment-broker/internal/avs"
 	"github.com/kyma-project/kyma-environment-broker/internal/event"
 	"github.com/kyma-project/kyma-environment-broker/internal/notification"
 	"github.com/kyma-project/kyma-environment-broker/internal/orchestration/manager"
@@ -21,11 +20,11 @@ import (
 
 func NewClusterOrchestrationProcessingQueue(ctx context.Context, db storage.BrokerStorage, provisionerClient provisioner.Client,
 	pub event.Publisher, inputFactory input.CreatorForPlan, icfg *upgrade_cluster.TimeSchedule, pollingInterval time.Duration,
-	runtimeResolver orchestrationExt.RuntimeResolver, upgradeEvalManager *avs.EvaluationManager, notificationBuilder notification.BundleBuilder, logs logrus.FieldLogger,
+	runtimeResolver orchestrationExt.RuntimeResolver, notificationBuilder notification.BundleBuilder, logs logrus.FieldLogger,
 	cli client.Client, cfg Config, speedFactor int) *process.Queue {
 
 	upgradeClusterManager := upgrade_cluster.NewManager(db.Operations(), pub, logs.WithField("upgradeCluster", "manager"))
-	upgradeClusterInit := upgrade_cluster.NewInitialisationStep(db.Operations(), db.Orchestrations(), provisionerClient, inputFactory, upgradeEvalManager, icfg, notificationBuilder)
+	upgradeClusterInit := upgrade_cluster.NewInitialisationStep(db.Operations(), db.Orchestrations(), provisionerClient, inputFactory, icfg, notificationBuilder)
 	upgradeClusterManager.InitStep(upgradeClusterInit)
 
 	upgradeClusterSteps := []struct {

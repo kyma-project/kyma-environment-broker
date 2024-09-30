@@ -10,12 +10,13 @@ import (
 
 	"github.com/kyma-project/control-plane/components/provisioner/pkg/gqlschema"
 	"github.com/kyma-project/kyma-environment-broker/internal"
-	kim "github.com/kyma-project/kyma-environment-broker/internal/kim"
 )
 
 const (
 	KymaServiceID   = "47c9dcbf-ff30-448e-ab36-d3bad66ba281"
 	KymaServiceName = "kymaruntime"
+	KymaNamespace   = "kyma-system"
+	KcpNamespace    = "kcp-system"
 )
 
 type PlanDefaults func(planID string, platformProvider internal.CloudProvider, parametersProvider *internal.CloudProvider) (*gqlschema.ClusterConfigInput, error)
@@ -48,10 +49,16 @@ type Config struct {
 	SubaccountsIdsToShowTrialExpirationInfo string        `envconfig:"default="`
 	TrialDocsURL                            string        `envconfig:"default="`
 	EnableShootAndSeedSameRegion            bool          `envconfig:"default=false"`
+	AllowUpdateExpiredInstanceWithContext   bool          `envconfig:"default=false"`
 
 	Binding                BindingConfig
-	KimConfig              kim.Config
+	KimConfig              KimConfig
 	UseSmallerMachineTypes bool `envconfig:"default=false"`
+
+	DisableSapConvergedCloud bool `envconfig:"default=false"`
+
+	SubaccountMovementEnabled                bool `envconfig:"default=false"`
+	UpdateCustomResourcesLabelsOnAccountMove bool `envconfig:"default=false"`
 }
 
 type ServicesConfig map[string]Service

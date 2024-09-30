@@ -37,7 +37,7 @@ func TestSharedPool_SharedCredentialsSecretBinding(t *testing.T) {
 					newShoot("sh3", "sb1"),
 					newShoot("sh4", "sb2"),
 				},
-				hyperscaler:    GCP(),
+				hyperscaler:    GCP("cf-jp30"),
 				expectedSecret: "s1",
 			},
 			{
@@ -77,6 +77,26 @@ func TestSharedPool_SharedCredentialsSecretBinding(t *testing.T) {
 				expectedSecret: "s5",
 			},
 			{
+				description: "should get only Secret Bindings with proper hyperscaler and platform region",
+				secretBindings: []runtime.Object{
+					newSecretBinding("sb1", "s1", "gcp", true, euAccess),
+					newSecretBinding("sb2", "s2", "azure", true, euAccess),
+					newSecretBinding("sb3", "s3", "aws", true, euAccess),
+					newSecretBinding("sb4", "s4", "openstack_eu-de-1", true, euAccess),
+					newSecretBinding("sb5", "s5", "openstack_eu-de-2", true, euAccess),
+					newSecretBinding("sb6", "s6", "gcp_cf-sa30", true, euAccess),
+				},
+				shoots: []runtime.Object{
+					newShoot("sh1", "sb1"),
+					newShoot("sh2", "sb1"),
+					newShoot("sh3", "sb1"),
+					newShoot("sh4", "sb2"),
+					newShoot("sh5", "sb6"),
+				},
+				hyperscaler:    GCP("cf-sa30"),
+				expectedSecret: "s6",
+			},
+			{
 				description: "should ignore not shared Secret Bindings",
 				secretBindings: []runtime.Object{
 					newSecretBinding("sb1", "s1", "gcp", true, euAccess),
@@ -89,7 +109,7 @@ func TestSharedPool_SharedCredentialsSecretBinding(t *testing.T) {
 					newShoot("sh3", "sb1"),
 					newShoot("sh4", "sb2"),
 				},
-				hyperscaler:    GCP(),
+				hyperscaler:    GCP("cf-jp30"),
 				expectedSecret: "s1",
 			},
 			{
@@ -107,7 +127,25 @@ func TestSharedPool_SharedCredentialsSecretBinding(t *testing.T) {
 					newShoot("sh5", "sb2"),
 					newShoot("sh6", "sb3"),
 				},
-				hyperscaler:    GCP(),
+				hyperscaler:    GCP("cf-jp30"),
+				expectedSecret: "s3",
+			},
+			{
+				description: "should get least used Secret Binding for GCP KSA",
+				secretBindings: []runtime.Object{
+					newSecretBinding("sb1", "s1", "gcp_cf-sa30", true, euAccess),
+					newSecretBinding("sb2", "s2", "gcp_cf-sa30", true, euAccess),
+					newSecretBinding("sb3", "s3", "gcp_cf-sa30", true, euAccess),
+				},
+				shoots: []runtime.Object{
+					newShoot("sh1", "sb1"),
+					newShoot("sh2", "sb1"),
+					newShoot("sh3", "sb1"),
+					newShoot("sh4", "sb2"),
+					newShoot("sh5", "sb2"),
+					newShoot("sh6", "sb3"),
+				},
+				hyperscaler:    GCP("cf-sa30"),
 				expectedSecret: "s3",
 			},
 			{
@@ -185,7 +223,7 @@ func TestSharedPool_SharedCredentialsSecretBinding_Errors(t *testing.T) {
 		pool := NewSharedGardenerAccountPool(gardenerFake, testNamespace)
 
 		// when
-		_, err := pool.SharedCredentialsSecretBinding(GCP(), false)
+		_, err := pool.SharedCredentialsSecretBinding(GCP("cf-jp30"), false)
 
 		// then
 		require.Error(t, err)

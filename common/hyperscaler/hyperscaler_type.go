@@ -1,13 +1,17 @@
 package hyperscaler
 
+import "github.com/kyma-project/kyma-environment-broker/internal/assuredworkloads"
+
 type Type struct {
 	hyperscalerName   string
 	hyperscalerRegion string
+	platformRegion    string
 }
 
-func GCP() Type {
+func GCP(platformRegion string) Type {
 	return Type{
 		hyperscalerName: "gcp",
+		platformRegion:  platformRegion,
 	}
 }
 
@@ -42,6 +46,9 @@ func (t Type) GetRegion() string {
 func (t Type) GetKey() string {
 	if t.hyperscalerName == "openstack" && t.hyperscalerRegion != "" {
 		return t.hyperscalerName + "_" + t.hyperscalerRegion
+	}
+	if t.hyperscalerName == "gcp" && assuredworkloads.IsKSA(t.platformRegion) {
+		return t.hyperscalerName + "_" + assuredworkloads.BTPRegionDammamGCP
 	}
 	return t.hyperscalerName
 }

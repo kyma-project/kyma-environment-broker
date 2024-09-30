@@ -73,6 +73,20 @@ func TestGcpTrialInput_ApplyParametersWithRegion(t *testing.T) {
 		//then
 		assert.Equal(t, "europe-west3", input.GardenerConfig.Region)
 	})
+
+	// when
+	t.Run("use default region for Assured Workloads", func(t *testing.T) {
+		// given
+		input := svc.Defaults()
+
+		// when
+		svc.ApplyParameters(input, internal.ProvisioningParameters{
+			PlatformRegion: "cf-sa30",
+		})
+
+		//then
+		assert.Equal(t, DefaultGCPAssuredWorkloadsRegion, input.GardenerConfig.Region)
+	})
 }
 
 func TestGcpInput_SingleZone_ApplyParameters(t *testing.T) {
@@ -110,6 +124,26 @@ func TestGcpInput_SingleZone_ApplyParameters(t *testing.T) {
 		// then
 		assert.Len(t, input.GardenerConfig.ProviderSpecificConfig.GcpConfig.Zones, 1)
 		assert.Subset(t, []string{"us-central1-a", "us-central1-b", "us-central1-c"}, input.GardenerConfig.ProviderSpecificConfig.GcpConfig.Zones)
+	})
+
+	// when
+	t.Run("use default region and default zones count for Assured Workloads", func(t *testing.T) {
+		// given
+		input := svc.Defaults()
+
+		// when
+		svc.ApplyParameters(input, internal.ProvisioningParameters{
+			PlatformRegion: "cf-sa30",
+		})
+
+		// then
+		assert.Equal(t, DefaultGCPAssuredWorkloadsRegion, input.GardenerConfig.Region)
+		assert.Len(t, input.GardenerConfig.ProviderSpecificConfig.GcpConfig.Zones, 1)
+
+		for _, zone := range input.GardenerConfig.ProviderSpecificConfig.GcpConfig.Zones {
+			regionFromZone := zone[:len(zone)-2]
+			assert.Equal(t, DefaultGCPAssuredWorkloadsRegion, regionFromZone)
+		}
 	})
 }
 
@@ -152,6 +186,22 @@ func TestGcpInput_MultiZone_ApplyParameters(t *testing.T) {
 		// then
 		assert.Len(t, input.GardenerConfig.ProviderSpecificConfig.GcpConfig.Zones, 3)
 		assert.Subset(t, []string{"us-central1-a", "us-central1-b", "us-central1-c"}, input.GardenerConfig.ProviderSpecificConfig.GcpConfig.Zones)
+		assert.Equal(t, "zone", *input.GardenerConfig.ControlPlaneFailureTolerance)
+	})
+
+	// when
+	t.Run("use default region and default zones count for Assured Workloads", func(t *testing.T) {
+		// given
+		input := svc.Defaults()
+
+		// when
+		svc.ApplyParameters(input, internal.ProvisioningParameters{
+			PlatformRegion: "cf-sa30",
+		})
+
+		// then
+		assert.Len(t, input.GardenerConfig.ProviderSpecificConfig.GcpConfig.Zones, 3)
+		assert.Subset(t, []string{"me-central2-a", "me-central2-b", "me-central2-c"}, input.GardenerConfig.ProviderSpecificConfig.GcpConfig.Zones)
 		assert.Equal(t, "zone", *input.GardenerConfig.ControlPlaneFailureTolerance)
 	})
 }

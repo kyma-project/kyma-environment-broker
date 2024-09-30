@@ -4,11 +4,9 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/kyma-project/kyma-environment-broker/internal/broker"
-	"github.com/kyma-project/kyma-environment-broker/internal/kim"
-
 	"github.com/kyma-project/control-plane/components/provisioner/pkg/gqlschema"
 	"github.com/kyma-project/kyma-environment-broker/internal"
+	"github.com/kyma-project/kyma-environment-broker/internal/broker"
 	kebError "github.com/kyma-project/kyma-environment-broker/internal/error"
 	"github.com/kyma-project/kyma-environment-broker/internal/process"
 	"github.com/kyma-project/kyma-environment-broker/internal/provisioner"
@@ -30,10 +28,10 @@ type CreateRuntimeWithoutKymaStep struct {
 	instanceStorage     storage.Instances
 	runtimeStateStorage storage.RuntimeStates
 	provisionerClient   provisioner.Client
-	kimConfig           kim.Config
+	kimConfig           broker.KimConfig
 }
 
-func NewCreateRuntimeWithoutKymaStep(os storage.Operations, runtimeStorage storage.RuntimeStates, is storage.Instances, cli provisioner.Client, kimConfig kim.Config) *CreateRuntimeWithoutKymaStep {
+func NewCreateRuntimeWithoutKymaStep(os storage.Operations, runtimeStorage storage.RuntimeStates, is storage.Instances, cli provisioner.Client, kimConfig broker.KimConfig) *CreateRuntimeWithoutKymaStep {
 	return &CreateRuntimeWithoutKymaStep{
 		operationManager:    process.NewOperationManager(os),
 		instanceStorage:     is,

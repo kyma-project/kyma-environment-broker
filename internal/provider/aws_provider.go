@@ -61,8 +61,8 @@ func (p *AWSInput) Defaults() *gqlschema.ClusterConfigInput {
 	}
 	return &gqlschema.ClusterConfigInput{
 		GardenerConfig: &gqlschema.GardenerConfigInput{
-			DiskType:       ptr.String("gp2"),
-			VolumeSizeGb:   ptr.Integer(50),
+			DiskType:       ptr.String("gp3"),
+			VolumeSizeGb:   ptr.Integer(80),
 			MachineType:    DefaultAWSMachineType,
 			Region:         DefaultAWSRegion,
 			Provider:       "aws",
@@ -228,7 +228,7 @@ func awsLiteDefaults(region string, useSmallerMachineTypes bool) *gqlschema.Clus
 	}
 	return &gqlschema.ClusterConfigInput{
 		GardenerConfig: &gqlschema.GardenerConfigInput{
-			DiskType:       ptr.String("gp2"),
+			DiskType:       ptr.String("gp3"),
 			VolumeSizeGb:   ptr.Integer(50),
 			MachineType:    machineType,
 			Region:         region,

@@ -94,6 +94,7 @@ func AzureRegions(euRestrictedAccess bool) []string {
 		"japaneast",
 		"southeastasia",
 		"australiaeast",
+		"brazilsouth",
 	}
 }
 
@@ -113,10 +114,16 @@ func AzureRegionsDisplay(euRestrictedAccess bool) map[string]string {
 		"japaneast":     "japaneast (Japan, Tokyo)",
 		"southeastasia": "southeastasia (Asia Pacific, Singapore)",
 		"australiaeast": "australiaeast (Australia, Sydney)",
+		"brazilsouth":   "brazilsouth (Brazil, São Paulo)",
 	}
 }
 
-func GcpRegions() []string {
+func GcpRegions(assuredWorkloads bool) []string {
+	if assuredWorkloads {
+		return []string{
+			"me-central2",
+		}
+	}
 	return []string{
 		"europe-west3",
 		"asia-south1",
@@ -124,17 +131,26 @@ func GcpRegions() []string {
 		"me-central2",
 		"asia-northeast2",
 		"me-west1",
+		"southamerica-east1",
+		"australia-southeast1",
 	}
 }
 
-func GcpRegionsDisplay() map[string]string {
+func GcpRegionsDisplay(assuredWorkloads bool) map[string]string {
+	if assuredWorkloads {
+		return map[string]string{
+			"me-central2": "me-central2 (KSA, Dammam)",
+		}
+	}
 	return map[string]string{
-		"europe-west3":    "europe-west3 (Europe, Frankfurt)",
-		"asia-south1":     "asia-south1 (India, Mumbai)",
-		"us-central1":     "us-central1 (US Central, IA)",
-		"me-central2":     "me-central2 (KSA, Dammam)",
-		"asia-northeast2": "asia-northeast2 (Japan, Osaka)",
-		"me-west1":        "me-west1 (Israel, Tel Aviv)",
+		"europe-west3":         "europe-west3 (Europe, Frankfurt)",
+		"asia-south1":          "asia-south1 (India, Mumbai)",
+		"us-central1":          "us-central1 (US Central, IA)",
+		"me-central2":          "me-central2 (KSA, Dammam)",
+		"asia-northeast2":      "asia-northeast2 (Japan, Osaka)",
+		"me-west1":             "me-west1 (Israel, Tel Aviv)",
+		"southamerica-east1":   "southamerica-east1 (Brazil, São Paulo)",
+		"australia-southeast1": "australia-southeast1 (Australia, Sydney)",
 	}
 }
 
@@ -326,8 +342,8 @@ func PreviewSchema(machineTypesDisplay, regionsDisplay map[string]string, machin
 	return createSchemaWithProperties(properties, additionalParams, update, requiredSchemaProperties(), false, false)
 }
 
-func GCPSchema(machineTypesDisplay, regionsDisplay map[string]string, machineTypes []string, additionalParams, update bool, shootAndSeedFeatureFlag bool) *map[string]interface{} {
-	properties := NewProvisioningProperties(machineTypesDisplay, regionsDisplay, machineTypes, GcpRegions(), update)
+func GCPSchema(machineTypesDisplay, regionsDisplay map[string]string, machineTypes []string, additionalParams, update bool, shootAndSeedFeatureFlag bool, assuredWorkloads bool) *map[string]interface{} {
+	properties := NewProvisioningProperties(machineTypesDisplay, regionsDisplay, machineTypes, GcpRegions(assuredWorkloads), update)
 	return createSchemaWithProperties(properties, additionalParams, update, requiredSchemaProperties(), true, shootAndSeedFeatureFlag)
 }
 
@@ -464,7 +480,7 @@ func unmarshalSchema(schema *RootSchema) *map[string]interface{} {
 
 // Plans is designed to hold plan defaulting logic
 // keep internal/hyperscaler/azure/config.go in sync with any changes to available zones
-func Plans(plans PlansConfig, provider internal.CloudProvider, includeAdditionalParamsInSchema bool, euAccessRestricted bool, useSmallerMachineTypes bool, shootAndSeedFeatureFlag bool, sapConvergedCloudRegions []string) map[string]domain.ServicePlan {
+func Plans(plans PlansConfig, provider internal.CloudProvider, includeAdditionalParamsInSchema bool, euAccessRestricted bool, useSmallerMachineTypes bool, shootAndSeedFeatureFlag bool, sapConvergedCloudRegions []string, assuredWorkloads bool) map[string]domain.ServicePlan {
 	awsMachineNames := AwsMachinesNames()
 	awsMachinesDisplay := AwsMachinesDisplay()
 	awsRegionsDisplay := AWSRegionsDisplay()
@@ -475,7 +491,7 @@ func Plans(plans PlansConfig, provider internal.CloudProvider, includeAdditional
 	azureLiteMachinesDisplay := AzureLiteMachinesDisplay()
 	gcpMachinesNames := GcpMachinesNames()
 	gcpMachinesDisplay := GcpMachinesDisplay()
-	gcpRegionsDisplay := GcpRegionsDisplay()
+	gcpRegionsDisplay := GcpRegionsDisplay(assuredWorkloads)
 
 	if !useSmallerMachineTypes {
 		azureLiteMachinesNames = removeMachinesNamesFromList(azureLiteMachinesNames, "Standard_D2s_v5")
@@ -487,7 +503,7 @@ func Plans(plans PlansConfig, provider internal.CloudProvider, includeAdditional
 	azureSchema := AzureSchema(azureMachinesDisplay, azureRegionsDisplay, azureMachinesNames, includeAdditionalParamsInSchema, false, euAccessRestricted, shootAndSeedFeatureFlag)
 	azureLiteSchema := AzureLiteSchema(azureLiteMachinesDisplay, azureRegionsDisplay, azureLiteMachinesNames, includeAdditionalParamsInSchema, false, euAccessRestricted, shootAndSeedFeatureFlag)
 	freemiumSchema := FreemiumSchema(provider, azureRegionsDisplay, includeAdditionalParamsInSchema, false, euAccessRestricted)
-	gcpSchema := GCPSchema(gcpMachinesDisplay, gcpRegionsDisplay, gcpMachinesNames, includeAdditionalParamsInSchema, false, shootAndSeedFeatureFlag)
+	gcpSchema := GCPSchema(gcpMachinesDisplay, gcpRegionsDisplay, gcpMachinesNames, includeAdditionalParamsInSchema, false, shootAndSeedFeatureFlag, assuredWorkloads)
 	ownClusterSchema := OwnClusterSchema(false)
 	previewCatalogSchema := PreviewSchema(awsMachinesDisplay, awsRegionsDisplay, awsMachineNames, includeAdditionalParamsInSchema, false, euAccessRestricted)
 
@@ -495,7 +511,7 @@ func Plans(plans PlansConfig, provider internal.CloudProvider, includeAdditional
 
 	outputPlans := map[string]domain.ServicePlan{
 		AWSPlanID:        defaultServicePlan(AWSPlanID, AWSPlanName, plans, awsSchema, AWSSchema(awsMachinesDisplay, awsRegionsDisplay, awsMachineNames, includeAdditionalParamsInSchema, true, euAccessRestricted, shootAndSeedFeatureFlag)),
-		GCPPlanID:        defaultServicePlan(GCPPlanID, GCPPlanName, plans, gcpSchema, GCPSchema(gcpMachinesDisplay, gcpRegionsDisplay, gcpMachinesNames, includeAdditionalParamsInSchema, true, shootAndSeedFeatureFlag)),
+		GCPPlanID:        defaultServicePlan(GCPPlanID, GCPPlanName, plans, gcpSchema, GCPSchema(gcpMachinesDisplay, gcpRegionsDisplay, gcpMachinesNames, includeAdditionalParamsInSchema, true, shootAndSeedFeatureFlag, assuredWorkloads)),
 		AzurePlanID:      defaultServicePlan(AzurePlanID, AzurePlanName, plans, azureSchema, AzureSchema(azureMachinesDisplay, azureRegionsDisplay, azureMachinesNames, includeAdditionalParamsInSchema, true, euAccessRestricted, shootAndSeedFeatureFlag)),
 		AzureLitePlanID:  defaultServicePlan(AzureLitePlanID, AzureLitePlanName, plans, azureLiteSchema, AzureLiteSchema(azureLiteMachinesDisplay, azureRegionsDisplay, azureLiteMachinesNames, includeAdditionalParamsInSchema, true, euAccessRestricted, shootAndSeedFeatureFlag)),
 		FreemiumPlanID:   defaultServicePlan(FreemiumPlanID, FreemiumPlanName, plans, freemiumSchema, FreemiumSchema(provider, azureRegionsDisplay, includeAdditionalParamsInSchema, true, euAccessRestricted)),

@@ -37,6 +37,12 @@ func (s *RemoveRuntimeStep) Name() string {
 }
 
 func (s *RemoveRuntimeStep) Run(operation internal.Operation, log logrus.FieldLogger) (internal.Operation, time.Duration, error) {
+
+	if operation.KimDeprovisionsOnly {
+		log.Infof("Skipping the step because the runtime %s/%s is not controlled by the provisioner", operation.GetRuntimeResourceName(), operation.GetRuntimeResourceName())
+		return operation, 0, nil
+	}
+
 	if time.Since(operation.UpdatedAt) > s.provisionerTimeout {
 		log.Infof("operation has reached the time limit: updated operation time: %s", operation.UpdatedAt)
 		return s.operationManager.OperationFailed(operation, fmt.Sprintf("operation has reached the time limit: %s", s.provisionerTimeout), nil, log)

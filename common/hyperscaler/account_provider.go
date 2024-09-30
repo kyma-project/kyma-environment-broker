@@ -31,14 +31,14 @@ func NewAccountProvider(gardenerPool AccountPool, sharedGardenerPool SharedPool)
 	}
 }
 
-func HypTypeFromCloudProviderWithRegion(cloudProvider internal.CloudProvider, regionForSapConvergedCloud *string) (Type, error) {
+func HypTypeFromCloudProviderWithRegion(cloudProvider internal.CloudProvider, regionForSapConvergedCloud *string, platformRegion *string) (Type, error) {
 	switch cloudProvider {
 	case internal.Azure:
 		return Azure(), nil
 	case internal.AWS:
 		return AWS(), nil
 	case internal.GCP:
-		return GCP(), nil
+		return GCP(*platformRegion), nil
 	case internal.SapConvergedCloud:
 		return SapConvergedCloud(*regionForSapConvergedCloud), nil
 	default:

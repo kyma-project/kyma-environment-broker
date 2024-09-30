@@ -1,0 +1,26 @@
+name: Build e2e provisioning test image
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - ".github/workflows/build-e2e-provisioning-test-image.yaml"
+      - "testing/e2e/provisioning/**"
+  pull_request_target:
+    types: [ opened, edited, synchronize, reopened, ready_for_review ]
+    paths:
+      - ".github/workflows/build-e2e-provisioning-test-image.yaml"
+      - "testing/e2e/provisioning/**"
+
+permissions:
+  id-token: write
+  contents: read 
+
+jobs:
+  e2e-provisioning-test-image:
+    uses: kyma-project/test-infra/.github/workflows/image-builder.yml@main
+    with:
+      name: e2e-provisioning-test
+      dockerfile: Dockerfile
+      context: testing/e2e/provisioning

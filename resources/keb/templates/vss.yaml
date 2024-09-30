@@ -1,0 +1,94 @@
+{{- if and .Values.global.secrets.enabled ( .Capabilities.APIVersions.Has "secrets.hashicorp.com/v1beta1" ) ( eq .Values.global.secrets.mechanism "vso") }}
+{{- $root := .}}
+{{- $globalvso := get (default dict .Values.global.secrets) "vso" | default dict }}
+{{- $globalmount := get $globalvso "mount" }}
+{{- $globalsyncconf := get $globalvso "syncConfig" | default dict }}
+{{- $globalinstantupdate := hasKey $globalsyncconf "instantUpdates" | ternary (get $globalsyncconf "instantUpdates") true }}
+{{- range $sname, $secret := .Values.vsoSecrets.secrets }}
+---
+# {{ $globalmount }}
+apiVersion: secrets.hashicorp.com/v1beta1
+kind: VaultStaticSecret
+metadata:
+  name: {{ tpl $secret.secretName $ | required "Please supply secretName" | quote }}
+  namespace: {{ get $secret "namespace" | default $root.Release.Namespace}}
+spec:
+  namespace: {{ $root.Values.global.secrets.vso.namespace | required "Vault namespace not set"}}
+  refreshAfter: {{ get $secret "refreshAfter" | default $root.Values.global.secrets.vso.refreshAfter | default "1h" }}
+  mount: {{ $secret.mount | default $root.Values.vsoSecrets.mount | default $globalmount | required "Secret mount not set" | quote }}
+  path: {{ $secret.path | required "Secret path not set" | quote}}
+  hmacSecretData: true
+  type: kv-v2
+  destination:
+    create: true
+    name: {{ tpl $secret.secretName $ | required "Please supply secretName" | quote }}
+    labels:
+      kcp.kyma-project.io/vss-release: {{ $root.Release.Name }}
+      {{- if $secret.labels }}
+      {{- if kindIs "map" $secret.labels  }}
+      {{- $secret.labels | toYaml | nindent 6 }}
+      {{- else if kindIs "string" $secret.labels  }}
+      {{- tpl $secret.labels $ | nindent 6}}
+      {{- else }}
+      {{- fail (printf "Unknown kind %s for labels" (kindOf $secret.label))}}
+      {{- end }}
+      {{- end }}
+    {{- if $secret.annotations }}
+    annotations:
+      {{- if kindIs "map" $secret.annotations  }}
+      {{- $secret.annotations | toYaml | nindent 6 }}
+      {{- else if kindIs "string" $secret.annotations  }}
+      {{- tpl $secret.annotations $ | nindent 6}}
+      {{- else }}
+      {{- fail (printf "Unknown kind %s for annotations" (kindOf $secret.label))}}
+      {{- end }}
+    {{- end }}
+    overwrite: true
+    type: {{ get $secret "type" | default "Opaque" }}
+    transformation:
+      excludeRaw: true
+      {{- if and (hasKey $secret "templating") (get $secret.templating "enabled" | default false) }}
+      excludes:
+        - .*
+      templates:
+        {{- range $fname, $fvalue := $secret.templating.data }}
+        {{ $fname }}:
+          {{- if eq (kindOf $fvalue) "string" }}
+          text: |-
+            {{ printf "{{- get .Secrets \"%s\" -}}" $fvalue }}
+          {{- else if eq (kindOf $fvalue) "map" }}
+          {{- $tplContext := dict "Template" $.Template "keys" $secret.templating.keys "Values" $root.Values }}
+          {{- if hasKey $fvalue "templateFile" }}
+          text: |-
+            {{- tpl ($.Files.Get $fvalue.templateFile) $tplContext | nindent 12 }}
+          {{- else if hasKey $fvalue "template" }}
+          text: |-
+            {{- tpl $fvalue.template $tplContext | nindent 12 }}
+          {{- else }}
+          text: |-
+            {{ printf "{{- get .Secrets \"%s\" -}}" (get $secret.templating.keys $fname) }}
+          {{- end }}
+          {{- else }}
+            {{ fail (printf "Unsupported type for value %s in secret.templating.data" $fname) }}
+          {{- end }}
+        {{- end }}
+    {{- end }}
+  {{- if or (hasKey $root.Values.vsoSecrets "restartTargets") (hasKey $secret "restartTargets") }}
+  rolloutRestartTargets:
+    {{- range $root.Values.vsoSecrets.restartTargets }}
+    - kind: {{ .kind }}
+      name: {{ tpl .name $ | quote }}
+    {{- end }}
+    {{- range $secret.restartTargets }}
+    - kind: {{ .kind }}
+      name: {{ tpl .name $ | trim | quote }}
+    {{- end }}
+  {{- end }}
+  syncConfig:
+    {{- if hasKey (get $secret "syncConfig" | default dict) "instantUpdates" }}
+    instantUpdates: {{ $secret.syncConfig.instantUpdates }}
+    {{- else }}
+    instantUpdates: {{ $globalinstantupdate }}
+    {{- end }}
+{{- end }}
+{{- end }}

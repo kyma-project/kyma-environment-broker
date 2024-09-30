@@ -2,6 +2,7 @@ package deprovisioning
 
 import (
 	"context"
+	"strconv"
 	"testing"
 
 	"github.com/kyma-project/kyma-environment-broker/internal/fixture"
@@ -23,42 +24,78 @@ func TestDeleteRuntimeResourceStep_RuntimeResourceDoesNotExists(t *testing.T) {
 	err := imv1.AddToScheme(scheme.Scheme)
 	assert.NoError(t, err)
 	kcpClient := fake.NewClientBuilder().Build()
-	op := fixture.FixDeprovisioningOperationAsOperation(fixOperationID, fixInstanceID)
+	op := fixture.FixDeprovisioningOperation(fixOperationID, fixInstanceID)
 	op.RuntimeResourceName = "runtime-name"
 	op.KymaResourceNamespace = "kyma-ns"
 	memoryStorage := storage.NewMemoryStorage()
+	err = memoryStorage.Operations().InsertDeprovisioningOperation(op)
+	assert.NoError(t, err)
+
 	log := logger.NewLogDummy()
 
 	// when
 	step := NewDeleteRuntimeResourceStep(memoryStorage.Operations(), kcpClient)
-	_, backoff, err := step.Run(op, log)
+	postOperation, backoff, err := step.Run(op.Operation, log)
 
 	// then
 
 	assert.NoError(t, err)
 	assert.Zero(t, backoff)
 	assertRuntimeDoesNotExists(t, kcpClient, "kyma-ns", "runtime-name")
+
+	// till provisioner may be involved
+	assert.False(t, postOperation.KimDeprovisionsOnly)
 }
 
 func TestDeleteRuntimeResourceStep_RuntimeResourceExists(t *testing.T) {
 	// given
 	err := imv1.AddToScheme(scheme.Scheme)
 	assert.NoError(t, err)
-	op := fixture.FixDeprovisioningOperationAsOperation(fixOperationID, fixInstanceID)
+	op := fixture.FixDeprovisioningOperation(fixOperationID, fixInstanceID)
 	op.RuntimeResourceName = "runtime-name"
 	op.KymaResourceNamespace = "kyma-ns"
 	memoryStorage := storage.NewMemoryStorage()
-	kcpClient := fake.NewClientBuilder().WithRuntimeObjects(fixRuntimeResource("kyma-ns", "runtime-name")).Build()
+	err = memoryStorage.Operations().InsertDeprovisioningOperation(op)
+	kcpClient := fake.NewClientBuilder().WithRuntimeObjects(fixRuntimeResourceControlledByProvisioner("kyma-ns", "runtime-name", false)).Build()
 	log := logger.NewLogDummy()
 
 	// when
 	step := NewDeleteRuntimeResourceStep(memoryStorage.Operations(), kcpClient)
-	_, backoff, err := step.Run(op, log)
+	postOperation, backoff, err := step.Run(op.Operation, log)
 
 	// then
 	assert.NoError(t, err)
 	assert.Zero(t, backoff)
 	assertRuntimeDoesNotExists(t, kcpClient, "kyma-ns", "runtime-name")
+
+	// till provisioner may be involved
+	assert.True(t, postOperation.KimDeprovisionsOnly)
+}
+
+func TestDeleteRuntimeResourceStep_RuntimeResourceExistsControlledByProvisioner(t *testing.T) {
+	// given
+	err := imv1.AddToScheme(scheme.Scheme)
+	assert.NoError(t, err)
+	op := fixture.FixDeprovisioningOperation(fixOperationID, fixInstanceID)
+	op.RuntimeResourceName = "runtime-name"
+	op.KymaResourceNamespace = "kyma-ns"
+	memoryStorage := storage.NewMemoryStorage()
+	err = memoryStorage.Operations().InsertDeprovisioningOperation(op)
+
+	kcpClient := fake.NewClientBuilder().WithRuntimeObjects(fixRuntimeResourceControlledByProvisioner("kyma-ns", "runtime-name", true)).Build()
+	log := logger.NewLogDummy()
+
+	// when
+	step := NewDeleteRuntimeResourceStep(memoryStorage.Operations(), kcpClient)
+	postOperation, backoff, err := step.Run(op.Operation, log)
+
+	// then
+	assert.NoError(t, err)
+	assert.Zero(t, backoff)
+	assertRuntimeDoesNotExists(t, kcpClient, "kyma-ns", "runtime-name")
+
+	// till provisioner may be involved
+	assert.False(t, postOperation.KimDeprovisionsOnly)
 }
 
 func assertRuntimeDoesNotExists(t *testing.T, kcpClient client.WithWatch, namespace string, name string) {
@@ -72,6 +109,18 @@ func fixRuntimeResource(namespace string, name string) runtime.Object {
 		ObjectMeta: v1.ObjectMeta{
 			Name:      name,
 			Namespace: namespace,
+		},
+	}
+}
+
+func fixRuntimeResourceControlledByProvisioner(namespace string, name string, controlledByProvisioner bool) runtime.Object {
+	return &imv1.Runtime{
+		ObjectMeta: v1.ObjectMeta{
+			Name:      name,
+			Namespace: namespace,
+			Labels: map[string]string{
+				imv1.LabelControlledByProvisioner: strconv.FormatBool(controlledByProvisioner),
+			},
 		},
 	}
 }

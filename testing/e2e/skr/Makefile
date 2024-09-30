@@ -40,3 +40,10 @@ skr-trial-suspension:
 	chmod +x /usr/local/bin/kcp
 	npm install
 	npm run skr-trial-suspension-test
+
+.PHONY: skr-binding
+skr-binding:
+	curl -fLSs -o /usr/local/bin/kcp https://storage.googleapis.com/kyma-development-artifacts/kcp/master/kcp-linux
+	chmod +x /usr/local/bin/kcp
+	npm install
+	npm run skr-binding-test

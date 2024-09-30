@@ -13,25 +13,25 @@ global:
       version: "v20240612-83a7c0eb" # do not update along with the other images
     kyma_environment_broker:
       dir:
-      version: "1.8.33"
+      version: "1.10.12"
     kyma_environments_subaccount_cleanup_job:
       dir:
-      version: "1.8.33"
+      version: "1.10.12"
     kyma_environment_trial_cleanup_job:
       dir:
-      version: "1.8.33"
+      version: "1.10.12"
     kyma_environment_expirator_job:
       dir:
-      version: "1.8.33"
+      version: "1.10.12"
     kyma_environment_deprovision_retrigger_job:
       dir:
-      version: "1.8.33"
+      version: "1.10.12"
     kyma_environment_runtime_reconciler:
       dir:
-      version: "1.8.33"
+      version: "1.10.12"
     kyma_environment_subaccount_sync:
       dir:
-      version: "1.8.33"
+      version: "1.10.12"
   kyma_environment_broker:
     enabled: false
     serviceAccountName: "kcp-kyma-environment-broker"
@@ -78,21 +78,140 @@ global:
     managedGCP:
       # secret with a secret key used to encrypt particular data
       encryptionSecretName: "kcp-storage-client-secret"
-      serviceAccountKey: ""
       instanceConnectionName: ""
       broker:
         name: ""
-        user: ""
-        password: ""
       host: "localhost"
       hostPort: "5432"
       sslMode: ""
       sslRootCert: ""
       #TODO remove below after migration to separate user will be done
-      dbUser: ""
-      dbPassword: ""
       provisionerDBName: ""
       brokerDBName: ""
+
+  secrets:
+    enabled: true
+    mechanism: vso
+    vso:
+      namespace: kyma
+      refreshAfter: 30s
+      mount: kcp-dev
+
+# Please read the documentation at:
+# https://pages.github.tools.sap/kyma/docusaurus-docs/kyma/cicd/argocd/secrets
+vsoSecrets:
+  secrets:
+    avs-creds:
+      path: avs
+      secretName: "{{ .Values.avs.secretName }}"
+      #restartTargets:
+      #  - kind: Deployment
+      #    name: >-
+      #      {{- template "kyma-env-broker.fullname" . -}}
+      labels: >-
+        {{ template "kyma-env-broker.labels" . }}
+      templating:
+        enabled: true
+        keys:
+          apiEndpoint: api_endpoint
+          apiKey: api_key
+          clientId: client_id
+          oauthPassword: password
+          oauthTokenEndpoint: oauth_token_endpoint
+          oauthUserName: username
+          internalTesterAccessId: internal_tester_access_id
+          externalTesterAccessId: external_tester_access_id
+          groupId: group_id
+          parentId: parent_id
+        data:
+          apiEndpoint: {}
+          apiKey: {}
+          clientId: {}
+          oauthPassword: {}
+          oauthTokenEndpoint: {}
+          oauthUserName: {}
+          internalTesterAccessId: {}
+          externalTesterAccessId: {}
+          internalTesterService:
+            template: |-
+              {{- .Values.avs.internalTesterService -}}
+          externalTesterService: 
+            template: |-
+              {{- .Values.avs.externalTesterService -}}
+          groupId: {}
+          parentId: {}
+          trialApiKey:
+            template: |-
+              {{- .Values.avs.trialApiKey -}}
+          trialInternalTesterAccessId:
+            template: |-
+              {{- .Values.avs.trialInternalTesterAccessId -}}
+          trialGroupId:
+            template: |-
+              {{- .Values.avs.trialGroupId -}}
+          trialParentId:
+            template: |-
+              {{- .Values.avs.trialParentId -}}
+    edp:
+      path: edp
+      secretName: "{{ .Values.edp.secretName }}"
+      #restartTargets:
+      #  - kind: Deployment
+      #    name: >-
+      #      {{- template "kyma-env-broker.fullname" . -}}
+      labels: >-
+        {{ template "kyma-env-broker.labels" . }}
+      templating:
+        enabled: true
+        keys:
+          secret: keb_edp_secret
+        data:
+          secret: {}
+    cis-v1:
+      path: cis
+      secretName: "{{ .Values.cis.v1.secretName | required \"please specify .Values.cis.v1.secretName\"}}"
+      labels: >-
+        {{ template "kyma-env-broker.labels" . }}
+      templating:
+        enabled: true
+        keys:
+          id: v1_id
+          secret: v1_secret
+        data:
+          id: {}
+          secret: {}
+    cis-v2:
+      path: cis
+      secretName: "{{ .Values.cis.v2.secretName | required \"please specify .Values.cis.v2.secretName\"}}"
+      #restartTargets:
+      #  - kind: Deployment
+      #    name: "{{- .Values.subaccountSync.name -}}"
+      labels: >-
+        {{ template "kyma-env-broker.labels" . }}
+      templating:
+        enabled: true
+        keys:
+          id: v2_id
+          secret: v2_secret
+        data:
+          id: {}
+          secret: {}
+    cis-accounts:
+      path: cis
+      secretName: "{{ .Values.cis.accounts.secretName | required \"please specify .Values.cis.accounts.secretName\"}}"
+      #restartTargets:
+      #  - kind: Deployment
+      #    name: "{{- .Values.subaccountSync.name -}}"
+      labels: >-
+        {{ template "kyma-env-broker.labels" . }}
+      templating:
+        enabled: true
+        keys:
+          id: account_id
+          secret: account_secret
+        data:
+          id: {}
+          secret: {}
 
 deployment:
   replicaCount: 1
@@ -121,6 +240,9 @@ broker:
   events:
     enabled: false
   enableShootAndSeedSameRegion: "false"
+  allowUpdateExpiredInstanceWithContext: "false"
+  subaccountMovementEnabled: "false"
+  updateCustomResourcesLabelsOnAccountMove: "false"
 
 binding:
   enabled: false
@@ -216,7 +338,7 @@ sapConvergedCloudPlanRegionMappings: |-
   cf-eu21-staging:
     - eu-de-3
     - eu-de-4
-
+disableSapConvergedCloud: false
 disableProcessOperationsInProgress: "false"
 enablePlans: "azure,gcp,azure_lite,trial"
 onlySingleTrialPerGA: "true"
@@ -363,6 +485,8 @@ runtimeAllowedPrincipals: |-
   - cluster.local/ns/kcp-system/sa/kcp-kyma-metrics-collector
 
 subaccountCleanup:
+  nameV1: "kcp-subaccount-cleaner-v1.0"
+  nameV2: "kcp-subaccount-cleaner-v2.0"
   enabled: "false"
   schedule: "0 1 * * *"
 
@@ -388,6 +512,7 @@ deprovisionRetrigger:
   enabled: true
 
 subaccountSync:
+  name: "subaccount-sync"
   enabled: true
   updateResources: false
   alwaysSubaccountFromDatabase: false

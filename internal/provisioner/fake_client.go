@@ -20,6 +20,8 @@ type runtime struct {
 	runtimeInput schema.ProvisionRuntimeInput
 }
 
+type runtimesSet map[string]interface{}
+
 type FakeClient struct {
 	mu          sync.Mutex
 	graphqlizer Graphqlizer
@@ -32,10 +34,25 @@ type FakeClient struct {
 
 	gardenerClient    dynamic.Interface
 	gardenerNamespace string
+
+	//needed in the transition period
+	kimOnlyDrivenRuntimes runtimesSet
 }
 
 func NewFakeClient() *FakeClient {
 	return NewFakeClientWithGardener(nil, "")
+}
+
+func NewFakeClientWithKimOnlyDrivenRuntimes(kimOnlyDrivenRuntimes runtimesSet) *FakeClient {
+	return &FakeClient{
+		graphqlizer:           Graphqlizer{},
+		runtimes:              []runtime{},
+		operations:            make(map[string]schema.OperationStatus),
+		upgrades:              make(map[string]schema.UpgradeRuntimeInput),
+		shootUpgrades:         make(map[string]schema.UpgradeShootInput),
+		gardenerClient:        nil,
+		kimOnlyDrivenRuntimes: kimOnlyDrivenRuntimes,
+	}
 }
 
 func NewFakeClientWithGardener(gc dynamic.Interface, ns string) *FakeClient {
@@ -204,6 +221,11 @@ func (c *FakeClient) RuntimeOperationStatus(accountID, operationID string) (sche
 func (c *FakeClient) RuntimeStatus(accountID, runtimeID string) (schema.RuntimeStatus, error) {
 	c.mu.Lock()
 	defer c.mu.Unlock()
+
+	// simulating provider behavior when runtime is KIM only driven
+	if _, ok := c.kimOnlyDrivenRuntimes[runtimeID]; ok {
+		return schema.RuntimeStatus{}, fmt.Errorf("not found")
+	}
 
 	for _, ops := range c.operations {
 		if *ops.RuntimeID == runtimeID {

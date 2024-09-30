@@ -5,10 +5,8 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/kyma-project/kyma-environment-broker/internal/broker"
-	"github.com/kyma-project/kyma-environment-broker/internal/kim"
-
 	imv1 "github.com/kyma-project/infrastructure-manager/api/v1"
+	"github.com/kyma-project/kyma-environment-broker/internal/broker"
 
 	"github.com/kyma-project/kyma-environment-broker/internal"
 	"github.com/kyma-project/kyma-environment-broker/internal/process"
@@ -17,9 +15,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
-const RuntimeResourceStateReady = "Ready"
-
-func NewCheckRuntimeResourceStep(os storage.Operations, k8sClient client.Client, kimConfig kim.Config, runtimeResourceStepTimeout time.Duration) *checkRuntimeResource {
+func NewCheckRuntimeResourceStep(os storage.Operations, k8sClient client.Client, kimConfig broker.KimConfig, runtimeResourceStepTimeout time.Duration) *checkRuntimeResource {
 	return &checkRuntimeResource{
 		k8sClient:                  k8sClient,
 		operationManager:           process.NewOperationManager(os),
@@ -30,7 +26,7 @@ func NewCheckRuntimeResourceStep(os storage.Operations, k8sClient client.Client,
 
 type checkRuntimeResource struct {
 	k8sClient                  client.Client
-	kimConfig                  kim.Config
+	kimConfig                  broker.KimConfig
 	operationManager           *process.OperationManager
 	runtimeResourceStepTimeout time.Duration
 }
@@ -54,14 +50,14 @@ func (s *checkRuntimeResource) Run(operation internal.Operation, log logrus.Fiel
 	// check status
 	state := runtime.Status.State
 	log.Infof("Runtime resource state: %s", state)
-	if state != RuntimeResourceStateReady {
+	if state != imv1.RuntimeStateReady {
 		if time.Since(operation.UpdatedAt) > s.runtimeResourceStepTimeout {
 			description := fmt.Sprintf("Waiting for Runtime resource (%s/%s) ready state timeout.", operation.KymaResourceNamespace, operation.RuntimeID)
 			log.Error(description)
-			log.Infof("Runtime resource status: %v", runtime.Status)
+			log.Infof("Runtime resource status: %v, timeout: %v", runtime.Status, s.runtimeResourceStepTimeout)
 			return s.operationManager.OperationFailed(operation, description, nil, log)
 		}
-		return operation, 500 * time.Millisecond, nil
+		return operation, 10 * time.Second, nil
 	}
 	return operation, 0, nil
 }
