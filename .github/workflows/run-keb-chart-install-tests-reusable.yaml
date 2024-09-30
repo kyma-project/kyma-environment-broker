@@ -24,30 +24,7 @@ jobs:
     - name: Checkout code
       uses: actions/checkout@v4
 
-    - name: Get changed files
-      id: changed-files-specific
-      uses: tj-actions/changed-files@90a06d6ba9543371ab4df8eeca0be07ca6054959
-      with:
-        files: |
-          .github/**
-          resources/**
-          scripts/**
-          Makefile
-          **/*.sh
-          .github/**
-          cmd/**
-          common/**
-          files/**
-          internal/**
-          utils/edp-registrator/**
-          .golangci.yml
-          Dockerfile.*
-          go.mod
-          go.sum
-          **/*.go
-
     - name: Prepare chart for next KEB version
-      if: ${{ steps.changed-files-specific.outputs.any_modified == 'true' || inputs.release == 'true' }}
       run: |
         if [ "${{ inputs.release }}" == "true" ]; then
           scripts/bump_keb_chart.sh ${{ inputs.version }} "release"
@@ -56,7 +33,6 @@ jobs:
         fi
 
     - name: Validate KEB helm chart
-      if: ${{ steps.changed-files-specific.outputs.any_modified == 'true' || inputs.release == 'true' }}
       run: |
         cd resources/keb
         helm template .
@@ -70,30 +46,8 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Get changed files
-        id: changed-files-specific
-        uses: tj-actions/changed-files@90a06d6ba9543371ab4df8eeca0be07ca6054959
-        with:
-          files: |
-            .github/**
-            resources/**
-            scripts/**
-            Makefile
-            **/*.sh
-            .github/**
-            cmd/**
-            common/**
-            files/**
-            internal/**
-            utils/edp-registrator/**
-            .golangci.yml
-            Dockerfile.*
-            go.mod
-            go.sum
-
       - id: get-versions
         name: Get K3s versions
-        if: ${{ steps.changed-files-specific.outputs.any_modified == 'true' || inputs.release == 'true' }}
         # prepare json representing GitHub matrix:
         # {"include": [
         #    {"version":"v1.26.10+k3s1"},
@@ -106,7 +60,6 @@ jobs:
           MATRIX_AS_JSON=$(echo ${VERSIONS[*]} | awk 'END {printf "{\"include\":[";for (i = 1; i < NF; i++) printf "{\"version\":%s},",$i;printf "{\"version\":%s}]}",$i }'|jq -c)
           echo "k3s_versions=${MATRIX_AS_JSON}" >> "${GITHUB_OUTPUT}"
       - name: Wait for images to be ready
-        if: ${{ steps.changed-files-specific.outputs.any_modified == 'true' && inputs.release == 'false' }}
         timeout-minutes: 7
         env:
           GH_TOKEN: ${{ github.token }}
@@ -123,56 +76,29 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Get changed files
-        id: changed-files-specific
-        uses: tj-actions/changed-files@90a06d6ba9543371ab4df8eeca0be07ca6054959
-        with:
-          files: |
-            .github/**
-            resources/**
-            scripts/**
-            Makefile
-            **/*.sh
-            .github/**
-            cmd/**
-            common/**
-            files/**
-            internal/**
-            utils/edp-registrator/**
-            .golangci.yml
-            Dockerfile.*
-            go.mod
-            go.sum
-
       - name: Prepare K3s cluster and docker registry
-        if: ${{ steps.changed-files-specific.outputs.any_modified == 'true' || inputs.release == 'true' }}
         run: "./scripts/testing/k3s-setup.sh ${{ matrix.version }} --wait"
 
       - name: Create namespaces
-        if: ${{ steps.changed-files-specific.outputs.any_modified == 'true' || inputs.release == 'true' }}
         run: |
           kubectl create namespace kcp-system
           kubectl create namespace kyma-system
           kubectl create namespace istio-system
 
       - name: Install istio
-        if: ${{ steps.changed-files-specific.outputs.any_modified == 'true' || inputs.release == 'true' }}
         run: |
           helm repo add istio https://istio-release.storage.googleapis.com/charts
           helm install istio-base istio/base -n istio-system --set defaultRevision=default
           
       - name: Install Prometheus Operator for ServiceMonitor
-        if: ${{ steps.changed-files-specific.outputs.any_modified == 'true' || inputs.release == 'true' }}
         run: |
           kubectl create -f https://raw.githubusercontent.com/prometheus-operator/prometheus-operator/master/bundle.yaml
 
       - name: Install Postgres
-        if: ${{ steps.changed-files-specific.outputs.any_modified == 'true' || inputs.release == 'true' }}
         run: |
           kubectl create -f scripts/testing/yaml/postgres -n kcp-system
       
       - name: Prepare fake gardener credentials
-        if: ${{ steps.changed-files-specific.outputs.any_modified == 'true' || inputs.release == 'true' }}
         run: |
           KCFG=$(kubectl config view --raw)
           kubectl create secret generic gardener-credentials --from-literal=kubeconfig="$KCFG" -n kcp-system
@@ -186,7 +112,6 @@ jobs:
           fi
 
       - name: Deploy KEB helm chart
-        if: ${{ steps.changed-files-specific.outputs.any_modified == 'true' || inputs.release == 'true' }}
         run: |
           cd resources/keb
           if [ "${{ inputs.release }}" == "true" ]; then
@@ -194,52 +119,3 @@ jobs:
           else
             helm install keb ../keb --namespace kcp-system -f values.yaml --set global.database.embedded.enabled=false --set testConfig.kebDeployment.useAnnotations=true --set global.images.container_registry.path="europe-docker.pkg.dev/kyma-project/dev" --set global.secrets.mechanism=secrets --debug --wait
           fi
-
-  confirm-keb-chart-tests-result:
-    needs: run-keb-chart-matrix
-    runs-on: ubuntu-latest
-    if: success() 
-    outputs:
-      success: ${{ steps.set-output.outputs.success }}
-    steps:
-      - name: Confirm KEB chart tests result
-        id: set-output
-        run: echo "success=true" >> "${GITHUB_OUTPUT}"
-
-  finish-keb-chart-tests:
-    runs-on: ubuntu-latest
-    if: always()
-    needs: confirm-keb-chart-tests-result
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Get changed files
-        id: changed-files-specific
-        uses: tj-actions/changed-files@90a06d6ba9543371ab4df8eeca0be07ca6054959
-        with:
-          files: |
-            .github/**
-            resources/**
-            scripts/**
-            Makefile
-            **/*.sh
-            .github/**
-            cmd/**
-            common/**
-            files/**
-            internal/**
-            utils/edp-registrator/**
-            .golangci.yml
-            Dockerfile.*
-            go.mod
-            go.sum
-
-      - name: Check KEB chart tests result
-        if: ${{ steps.changed-files-specific.outputs.any_modified == 'true' || inputs.release == 'true' }}
-        run: |
-          if [ "${{ needs.confirm-keb-chart-tests-result.outputs.success }}" != "true" ]; then
-            echo "KEB chart tests failed"
-            exit 1
-          fi
-          echo "KEB chart tests passed"
