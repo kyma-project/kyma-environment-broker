@@ -104,7 +104,7 @@ func (b *BindEndpoint) Bind(ctx context.Context, instanceID, bindingID string, d
 
 	return domain.Binding{
 		IsAsync:     false,
-		Credentials: kubeconfig,
+		Credentials: map[string]interface{}{"kubeconfig": kubeconfig},
 	}, nil
 }
 
