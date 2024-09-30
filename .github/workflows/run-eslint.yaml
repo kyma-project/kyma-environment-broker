@@ -3,7 +3,11 @@ name: Run JS linter
 on:
   pull_request:
     branches: [ main ]
-
+    paths-ignore:
+      - "**.md"
+      - "sec-scanners-config.yaml"
+      - "**.go"
+    
 jobs:
   run-eslint:
     runs-on: ubuntu-latest
