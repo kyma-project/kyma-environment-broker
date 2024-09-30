@@ -3,6 +3,9 @@ name: pull-build-images
 on:
    pull_request_target:
       types: [ opened, edited, synchronize, reopened, ready_for_review ]
+      paths-ignore:
+         - "**.md"
+         - "sec-scanners-config.yaml"
 
 permissions:
    id-token: write
