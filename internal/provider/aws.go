@@ -86,10 +86,12 @@ func (p *AWSTrialInputProvider) region() string {
 	if p.ProvisioningParameters.PlatformRegion != "" {
 		abstractRegion, found := p.PlatformRegionMapping[p.ProvisioningParameters.PlatformRegion]
 		if found {
+			//TODO safe check
 			return *toAWSSpecific[abstractRegion]
 		}
 	}
 	if p.ProvisioningParameters.Parameters.Region != nil && *p.ProvisioningParameters.Parameters.Region != "" {
+		// TODO safe check
 		return *toAWSSpecific[*p.ProvisioningParameters.Parameters.Region]
 	}
 	return DefaultAWSTrialRegion

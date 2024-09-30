@@ -12,7 +12,7 @@ var AzureTrialPlatformRegionMapping = map[string]string{"cf-eu11": "europe", "cf
 func TestAzureDefaults(t *testing.T) {
 
 	// given
-	aws := AzureInputProvider{
+	azure := AzureInputProvider{
 		MultiZone: true,
 		ProvisioningParameters: internal.ProvisioningParameters{
 			Parameters:     internal.ProvisioningParametersDTO{Region: ptr.String("eastus")},
@@ -21,7 +21,7 @@ func TestAzureDefaults(t *testing.T) {
 	}
 
 	// when
-	values := aws.Provide()
+	values := azure.Provide()
 
 	// then
 
@@ -42,7 +42,7 @@ func TestAzureDefaults(t *testing.T) {
 func TestAzureTrialDefaults(t *testing.T) {
 
 	// given
-	aws := AzureTrialInputProvider{
+	azure := AzureTrialInputProvider{
 		PlatformRegionMapping: AzureTrialPlatformRegionMapping,
 		ProvisioningParameters: internal.ProvisioningParameters{
 			Parameters:     internal.ProvisioningParametersDTO{Region: ptr.String("eastus")},
@@ -51,7 +51,7 @@ func TestAzureTrialDefaults(t *testing.T) {
 	}
 
 	// when
-	values := aws.Provide()
+	values := azure.Provide()
 
 	// then
 
@@ -72,7 +72,7 @@ func TestAzureTrialDefaults(t *testing.T) {
 func TestAzureLiteDefaults(t *testing.T) {
 
 	// given
-	aws := AzureLiteInputProvider{
+	azure := AzureLiteInputProvider{
 		ProvisioningParameters: internal.ProvisioningParameters{
 			Parameters:     internal.ProvisioningParametersDTO{Region: ptr.String("eastus")},
 			PlatformRegion: "cf-eu11",
@@ -80,7 +80,7 @@ func TestAzureLiteDefaults(t *testing.T) {
 	}
 
 	// when
-	values := aws.Provide()
+	values := azure.Provide()
 
 	// then
 

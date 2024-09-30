@@ -86,12 +86,18 @@ func (p *GCPTrialInputProvider) region() string {
 	if p.ProvisioningParameters.PlatformRegion != "" {
 		abstractRegion, found := p.PlatformRegionMapping[p.ProvisioningParameters.PlatformRegion]
 		if found {
-			return *toGCPSpecific[abstractRegion]
+			gpcSpecific, ok := toGCPSpecific[abstractRegion]
+			if ok {
+				return *gpcSpecific
+			}
 		}
 	}
 
 	if p.ProvisioningParameters.Parameters.Region != nil && *p.ProvisioningParameters.Parameters.Region != "" {
-		return *toGCPSpecific[*p.ProvisioningParameters.Parameters.Region]
+		gpcSpecific, ok := toGCPSpecific[*p.ProvisioningParameters.Parameters.Region]
+		if ok {
+			return *gpcSpecific
+		}
 	}
 
 	return DefaultGCPRegion
