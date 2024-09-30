@@ -3,10 +3,9 @@ name: Run JS linter
 on:
   pull_request:
     branches: [ main ]
-    paths-ignore:
-      - "**.md"
-      - "sec-scanners-config.yaml"
-      - "**.go"
+    paths:
+      - ".github/workflows/run-eslint.yaml"
+      - "testing/e2e/skr/**"
     
 jobs:
   run-eslint:
