@@ -39,7 +39,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/envtest"
 )
 
-type Credentials struct {
+type Kubeconfig struct {
 	Users []User `yaml:"users"`
 }
 
@@ -191,14 +191,16 @@ func TestCreateBindingEndpoint(t *testing.T) {
 
 		binding := verifyResponse(t, response)
 
-		duration, err := getTokenDuration(t, binding.Credentials)
+		credentials, ok := binding.Credentials.(map[string]interface{})
+		require.True(t, ok)
+		kubeconfig := credentials["kubeconfig"].(string)
+
+		duration, err := getTokenDuration(t, kubeconfig)
 		require.NoError(t, err)
 		assert.Equal(t, expirationSeconds*time.Second, duration)
 
 		//// verify connectivity using kubeconfig from the generated binding
-		credentials, ok := binding.Credentials.(map[string]interface{})
-		require.True(t, ok)
-		newClient := kubeconfigClient(t, credentials["kubeconfig"].(string))
+		newClient := kubeconfigClient(t, kubeconfig)
 		_, err = newClient.CoreV1().Secrets("default").Get(context.Background(), "secret-to-check", v1.GetOptions{})
 		assert.NoError(t, err)
 
@@ -225,7 +227,10 @@ func TestCreateBindingEndpoint(t *testing.T) {
 
 		binding := verifyResponse(t, response)
 
-		duration, err := getTokenDuration(t, binding.Credentials)
+		credentials, ok := binding.Credentials.(map[string]interface{})
+		require.True(t, ok)
+
+		duration, err := getTokenDuration(t, credentials["kubeconfig"].(string))
 		require.NoError(t, err)
 		assert.Equal(t, customExpirationSeconds*time.Second, duration)
 	})
@@ -326,13 +331,13 @@ func verifyResponse(t *testing.T, response *http.Response) domain.Binding {
 	return binding
 }
 
-func getTokenDuration(t *testing.T, token interface{}) (time.Duration, error) {
-	var credentials Credentials
+func getTokenDuration(t *testing.T, config string) (time.Duration, error) {
+	var kubeconfig Kubeconfig
 
-	err := yaml.Unmarshal([]byte(token.(string)), &credentials)
+	err := yaml.Unmarshal([]byte(config), &kubeconfig)
 	require.NoError(t, err)
 
-	for _, user := range credentials.Users {
+	for _, user := range kubeconfig.Users {
 		if user.Name == "context" {
 			token, _, err := new(jwt.Parser).ParseUnverified(user.User.Token, jwt.MapClaims{})
 			require.NoError(t, err)
