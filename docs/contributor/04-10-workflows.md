@@ -49,7 +49,7 @@ This [workflow](/.github/workflows/auto-merge.yaml) enables the auto-merge funct
 
 ## All Cheks Passed Workflow
 
-This [workflow](/.github/workflows/pr-checks.yaml) checks if all jobs, except those excluded in the workflow configuration, have passed.
+This [workflow](/.github/workflows/pr-checks.yaml) checks if all jobs, except those excluded in the workflow configuration, have passed. If the workflow is triggered by a PR where the author is the `kyma-gopher-bot`, the workflow ends immediately with success.
 
 ## Reusable Workflows
 
