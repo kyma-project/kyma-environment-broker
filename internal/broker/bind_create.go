@@ -37,6 +37,10 @@ type BindingParams struct {
 	TokenRequest bool `json:"token_request,omit"`
 }
 
+type Credentials struct {
+	Kubeconfig string `json:"kubeconfig"`
+}
+
 func NewBind(cfg BindingConfig, instanceStorage storage.Instances, log logrus.FieldLogger, clientProvider broker.ClientProvider, kubeconfigProvider broker.KubeconfigProvider, gardenerClient client.Client, tokenExpirationSeconds int) *BindEndpoint {
 	return &BindEndpoint{config: cfg, instancesStorage: instanceStorage, log: log.WithField("service", "BindEndpoint"),
 		tokenRequestBindingManager: broker.NewTokenRequestBindingsManager(clientProvider, kubeconfigProvider, tokenExpirationSeconds),
@@ -103,8 +107,10 @@ func (b *BindEndpoint) Bind(ctx context.Context, instanceID, bindingID string, d
 	}
 
 	return domain.Binding{
-		IsAsync:     false,
-		Credentials: kubeconfig,
+		IsAsync: false,
+		Credentials: Credentials{
+			Kubeconfig: kubeconfig,
+		},
 	}, nil
 }
 
