@@ -13,7 +13,6 @@ permissions:
 jobs:
    kyma-environment-broker-image:
     uses: kyma-project/test-infra/.github/workflows/image-builder.yml@main
-    if: ${{ !github.event.pull_request.user.login == 'kyma-gopher-bot' }}
     with: 
       name:  kyma-environment-broker
       dockerfile: Dockerfile.keb
@@ -21,7 +20,6 @@ jobs:
 
    archiver-image:
       uses: kyma-project/test-infra/.github/workflows/image-builder.yml@main
-      if: ${{ !github.event.pull_request.user.login == 'kyma-gopher-bot' }}
       with: 
          name: kyma-environment-archiver-job
          dockerfile: Dockerfile.job
@@ -30,7 +28,6 @@ jobs:
 
    environments-cleanup-image:
       uses: kyma-project/test-infra/.github/workflows/image-builder.yml@main
-      if: ${{ !github.event.pull_request.user.login == 'kyma-gopher-bot' }}
       with: 
          name: kyma-environments-cleanup-job
          dockerfile: Dockerfile.job
@@ -39,7 +36,6 @@ jobs:
 
    deprovision-retrigger-image:
       uses: kyma-project/test-infra/.github/workflows/image-builder.yml@main
-      if: ${{ !github.event.pull_request.user.login == 'kyma-gopher-bot' }}
       with: 
          name: kyma-environment-deprovision-retrigger-job
          dockerfile: Dockerfile.job
@@ -48,7 +44,6 @@ jobs:
 
    expirator-image:
       uses: kyma-project/test-infra/.github/workflows/image-builder.yml@main
-      if: ${{ !github.event.pull_request.user.login == 'kyma-gopher-bot' }}
       with: 
          name: kyma-environment-expirator-job
          dockerfile: Dockerfile.job
@@ -57,7 +52,6 @@ jobs:
 
    runtime-reconciler-image:
       uses: kyma-project/test-infra/.github/workflows/image-builder.yml@main
-      if: ${{ !github.event.pull_request.user.login == 'kyma-gopher-bot' }}
       with: 
          name: kyma-environment-runtime-reconciler
          dockerfile: Dockerfile.runtimereconciler
@@ -66,7 +60,6 @@ jobs:
 
    subaccount-cleanup-image:
       uses: kyma-project/test-infra/.github/workflows/image-builder.yml@main
-      if: ${{ !github.event.pull_request.user.login == 'kyma-gopher-bot' }}
       with: 
          name: kyma-environment-subaccount-cleanup-job
          dockerfile: Dockerfile.job
@@ -75,7 +68,6 @@ jobs:
 
    subaccount-sync-image:
       uses: kyma-project/test-infra/.github/workflows/image-builder.yml@main
-      if: ${{ !github.event.pull_request.user.login == 'kyma-gopher-bot' }}
       with: 
          name: kyma-environment-subaccount-sync
          dockerfile: Dockerfile.subaccountsync

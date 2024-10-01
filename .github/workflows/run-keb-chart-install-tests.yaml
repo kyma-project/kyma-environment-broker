@@ -11,7 +11,6 @@ on:
 jobs:
   run-install-keb-chart-tests:
     uses: "./.github/workflows/run-keb-chart-install-tests-reusable.yaml"
-    if: ${{ !github.event.pull_request.user.login == 'kyma-gopher-bot' }}
     with:
       last-k3s-versions: 3
       release: "false"
