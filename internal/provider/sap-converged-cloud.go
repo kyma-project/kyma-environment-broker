@@ -12,6 +12,7 @@ const (
 
 type (
 	SapConvergedCloudInputProvider struct {
+		Purpose                string
 		MultiZone              bool
 		ProvisioningParameters internal.ProvisioningParameters
 	}
@@ -36,7 +37,7 @@ func (p *SapConvergedCloudInputProvider) Provide() Values {
 		ProviderType:         "openstack",
 		DefaultMachineType:   DefaultSapConvergedCloudMachineType,
 		Region:               region,
-		Purpose:              PurposeProduction,
+		Purpose:              p.Purpose,
 		DiskType:             "",
 	}
 }

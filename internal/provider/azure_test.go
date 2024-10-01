@@ -13,6 +13,7 @@ func TestAzureDefaults(t *testing.T) {
 
 	// given
 	azure := AzureInputProvider{
+		Purpose:   PurposeProduction,
 		MultiZone: true,
 		ProvisioningParameters: internal.ProvisioningParameters{
 			Parameters:     internal.ProvisioningParametersDTO{Region: ptr.String("eastus")},
@@ -73,6 +74,7 @@ func TestAzureLiteDefaults(t *testing.T) {
 
 	// given
 	azure := AzureLiteInputProvider{
+		Purpose: PurposeEvaluation,
 		ProvisioningParameters: internal.ProvisioningParameters{
 			Parameters:     internal.ProvisioningParametersDTO{Region: ptr.String("eastus")},
 			PlatformRegion: "cf-eu11",
@@ -102,6 +104,7 @@ func TestAzureSpecific(t *testing.T) {
 
 	// given
 	azure := AzureInputProvider{
+		Purpose:   PurposeProduction,
 		MultiZone: true,
 		ProvisioningParameters: internal.ProvisioningParameters{
 			Parameters: internal.ProvisioningParametersDTO{
@@ -173,6 +176,7 @@ func TestAzureLiteSpecific(t *testing.T) {
 
 	// given
 	azure := AzureLiteInputProvider{
+		Purpose: PurposeEvaluation,
 		ProvisioningParameters: internal.ProvisioningParameters{
 			Parameters: internal.ProvisioningParametersDTO{
 				MachineType: ptr.String("Standard_D48_v3"),

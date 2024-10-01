@@ -14,6 +14,7 @@ func TestAWSDefaults(t *testing.T) {
 
 	// given
 	provider := AWSInputProvider{
+		Purpose:   PurposeProduction,
 		MultiZone: true,
 		ProvisioningParameters: internal.ProvisioningParameters{
 			Parameters:     internal.ProvisioningParametersDTO{Region: nil},
@@ -44,6 +45,7 @@ func TestAWSSpecific(t *testing.T) {
 
 	// given
 	provider := AWSInputProvider{
+		Purpose:   PurposeProduction,
 		MultiZone: true,
 		ProvisioningParameters: internal.ProvisioningParameters{
 			Parameters: internal.ProvisioningParametersDTO{

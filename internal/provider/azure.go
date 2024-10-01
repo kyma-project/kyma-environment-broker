@@ -7,6 +7,7 @@ import (
 
 type (
 	AzureInputProvider struct {
+		Purpose                string
 		MultiZone              bool
 		ProvisioningParameters internal.ProvisioningParameters
 	}
@@ -16,6 +17,7 @@ type (
 		ProvisioningParameters internal.ProvisioningParameters
 	}
 	AzureLiteInputProvider struct {
+		Purpose                string
 		UseSmallerMachineTypes bool
 		ProvisioningParameters internal.ProvisioningParameters
 	}
@@ -40,7 +42,7 @@ func (p *AzureInputProvider) Provide() Values {
 		ProviderType:         "azure",
 		DefaultMachineType:   DefaultAzureMachineType,
 		Region:               region,
-		Purpose:              PurposeProduction,
+		Purpose:              p.Purpose,
 		DiskType:             "StandardSSD_LRS",
 		VolumeSizeGb:         80,
 	}
@@ -123,7 +125,7 @@ func (p *AzureLiteInputProvider) Provide() Values {
 		ProviderType:         "azure",
 		DefaultMachineType:   machineType,
 		Region:               region,
-		Purpose:              PurposeEvaluation,
+		Purpose:              p.Purpose,
 		DiskType:             "Standard_LRS",
 		VolumeSizeGb:         50,
 	}

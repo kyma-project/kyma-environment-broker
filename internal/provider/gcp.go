@@ -7,11 +7,13 @@ import (
 
 type (
 	GCPInputProvider struct {
+		Purpose                string
 		MultiZone              bool
 		ProvisioningParameters internal.ProvisioningParameters
 	}
 
 	GCPTrialInputProvider struct {
+		Purpose                string
 		PlatformRegionMapping  map[string]string
 		ProvisioningParameters internal.ProvisioningParameters
 	}
@@ -29,7 +31,7 @@ func (p *GCPInputProvider) Provide() Values {
 		ProviderType:         "gcp",
 		DefaultMachineType:   DefaultGCPMachineType,
 		Region:               region,
-		Purpose:              PurposeProduction,
+		Purpose:              p.Purpose,
 		VolumeSizeGb:         80,
 		DiskType:             "pd-balanced",
 	}
