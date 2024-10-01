@@ -196,7 +196,9 @@ func TestCreateBindingEndpoint(t *testing.T) {
 		assert.Equal(t, expirationSeconds*time.Second, duration)
 
 		//// verify connectivity using kubeconfig from the generated binding
-		newClient := kubeconfigClient(t, binding.Credentials.(string))
+		credentials, ok := binding.Credentials.(map[string]interface{})
+		require.True(t, ok)
+		newClient := kubeconfigClient(t, credentials["kubeconfig"].(string))
 		_, err = newClient.CoreV1().Secrets("default").Get(context.Background(), "secret-to-check", v1.GetOptions{})
 		assert.NoError(t, err)
 

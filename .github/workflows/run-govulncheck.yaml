@@ -3,6 +3,9 @@ name: Run govulncheck
 on:
   pull_request:
     branches: [ main ]
+    paths-ignore:
+      - "**.md"
+      - "sec-scanners-config.yaml"
 
 jobs:
   run-govulncheck:

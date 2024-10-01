@@ -8,6 +8,9 @@ on:
       - reopened
       - synchronize
       - ready_for_review
+    paths-ignore:
+      - "**.md"
+      - "sec-scanners-config.yaml"
   
 permissions:
   contents: read

@@ -39,6 +39,10 @@ type BindingParams struct {
 	ExpirationSeconds int  `json:"expiration_seconds,omit"`
 }
 
+type Credentials struct {
+	Kubeconfig string `json:"kubeconfig"`
+}
+
 func NewBind(cfg BindingConfig, instanceStorage storage.Instances, log logrus.FieldLogger, clientProvider broker.ClientProvider, kubeconfigProvider broker.KubeconfigProvider, gardenerClient client.Client) *BindEndpoint {
 	return &BindEndpoint{config: cfg, instancesStorage: instanceStorage, log: log.WithField("service", "BindEndpoint"),
 		tokenRequestBindingManager: broker.NewTokenRequestBindingsManager(clientProvider, kubeconfigProvider),
@@ -114,8 +118,10 @@ func (b *BindEndpoint) Bind(ctx context.Context, instanceID, bindingID string, d
 	}
 
 	return domain.Binding{
-		IsAsync:     false,
-		Credentials: kubeconfig,
+		IsAsync: false,
+		Credentials: Credentials{
+			Kubeconfig: kubeconfig,
+		},
 	}, nil
 }
 
