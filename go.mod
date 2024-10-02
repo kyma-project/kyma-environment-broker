@@ -16,6 +16,7 @@ require (
 	github.com/go-co-op/gocron v1.37.0
 	github.com/gocraft/dbr v0.0.0-20190714181702-8114670a83bd
 	github.com/golang-jwt/jwt/v4 v4.5.0
+	github.com/golang-migrate/migrate/v4 v4.15.2
 	github.com/google/uuid v1.6.0
 	github.com/gorilla/handlers v1.5.2
 	github.com/gorilla/mux v1.8.1
@@ -23,7 +24,6 @@ require (
 	github.com/kennygrant/sanitize v1.2.4
 	github.com/kyma-incubator/compass/components/director v0.0.0-20240704074401-a423d6070404
 	github.com/kyma-project/control-plane/components/provisioner v0.0.0-20240925074719-868d3d02df59
-	github.com/kyma-project/control-plane/components/schema-migrator v0.0.0-20240925074719-868d3d02df59
 	github.com/kyma-project/infrastructure-manager v0.0.0-20240924140719-22e21e6aa684
 	github.com/lib/pq v1.10.9
 	github.com/matryer/is v1.4.1
@@ -73,7 +73,6 @@ require (
 	github.com/go-openapi/jsonpointer v0.21.0 // indirect
 	github.com/go-openapi/jsonreference v0.21.0 // indirect
 	github.com/go-openapi/swag v0.23.0 // indirect
-	github.com/go-sql-driver/mysql v1.5.0 // indirect
 	github.com/gogo/protobuf v1.3.2 // indirect
 	github.com/golang/protobuf v1.5.4 // indirect
 	github.com/google/gnostic-models v0.6.9-0.20230804172637-c7be7c783f49 // indirect
@@ -130,7 +129,6 @@ require (
 	golang.org/x/text v0.18.0 // indirect
 	google.golang.org/protobuf v1.34.2 // indirect
 	gopkg.in/inf.v0 v0.9.1 // indirect
-	gotest.tools/v3 v3.1.0 // indirect
 	k8s.io/klog/v2 v2.130.1 // indirect
 	k8s.io/kube-openapi v0.0.0-20240903163716-9e1beecbcb38 // indirect
 	k8s.io/utils v0.0.0-20240921022957-49e7df575cb6 // indirect
