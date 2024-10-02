@@ -7,7 +7,7 @@ import (
 	"testing"
 
 	_ "github.com/golang-migrate/migrate/v4/source/file"
-	"github.com/kyma-project/control-plane/components/schema-migrator/mocks"
+	"github.com/kyma-project/kyma-environment-broker/internal/schemamigrator/mocks"
 	_ "github.com/lib/pq"
 	"github.com/stretchr/testify/assert"
 )

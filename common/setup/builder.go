@@ -7,11 +7,11 @@ import (
 
 	"github.com/dlmiddlecote/sqlstats"
 	"github.com/gocraft/dbr"
-	"github.com/kyma-project/control-plane/components/schema-migrator/cleaner"
 	"github.com/kyma-project/kyma-environment-broker/common/gardener"
 	"github.com/kyma-project/kyma-environment-broker/internal/broker"
 	"github.com/kyma-project/kyma-environment-broker/internal/environmentscleanup"
 	"github.com/kyma-project/kyma-environment-broker/internal/events"
+	"github.com/kyma-project/kyma-environment-broker/internal/schemamigrator/cleaner"
 	"github.com/kyma-project/kyma-environment-broker/internal/storage"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/sirupsen/logrus"
