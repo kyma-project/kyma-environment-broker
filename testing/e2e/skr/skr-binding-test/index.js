@@ -1,6 +1,7 @@
+const {expect} = require('chai');
 const {gatherOptions} = require('../skr-test');
 const {initializeK8sClient} = require('../utils/index.js');
-const {getSecret} = require('../utils');
+const {getSecret, getKubeconfigValidityInSeconds} = require('../utils');
 const {provisionSKRInstance} = require('../skr-test/provision/provision-skr');
 const {deprovisionAndUnregisterSKR} = require('../skr-test/provision/deprovision-skr');
 const {KEBClient, KEBConfig} = require('../kyma-environment-broker');
@@ -44,8 +45,10 @@ describe('SKR Binding test', function() {
   });
 
   it('Create SKR binding using Gardener', async function() {
+    const expirationSeconds = 900;
     try {
-      kubeconfigFromBinding = await keb.createBinding(options.instanceID, false);
+      kubeconfigFromBinding = await keb.createBinding(options.instanceID, false, expirationSeconds);
+      expect(getKubeconfigValidityInSeconds(kubeconfigFromBinding.credentials.kubeconfig)).to.equal(expirationSeconds);
     } catch (err) {
       console.log(err);
     }
