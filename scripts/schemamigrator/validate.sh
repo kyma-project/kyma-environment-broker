@@ -11,17 +11,19 @@ NC='\033[0m' # No Color
 
 set -e
 
-
-IMG_NAME="kcp-schema-migrator"
+IMG_NAME="keb-schema-migrator"
 NETWORK="migration-test-network"
-POSTGRES_CONTAINER="test-postgres"
-POSTGRES_VERSION="11"
+POSTGRES_CONTAINER="migration-test-postgres"
+POSTGRES_VERSION="17"
 
+DB_NAME="broker"
 DB_USER="usr"
 DB_PWD="pwd"
 DB_PORT="5432"
 DB_SSL_PARAM="disable"
-POSTGRES_MULTIPLE_DATABASES="broker, provisioner"
+POSTGRES_MULTIPLE_DATABASES="broker"
+
+CURRENT_DIR=$(pwd)
 
 function cleanup() {
     echo -e "${GREEN}Cleanup Postgres container and network${NC}"
@@ -34,7 +36,10 @@ trap cleanup EXIT
 echo -e "${GREEN}Create network${NC}"
 docker network create --driver bridge ${NETWORK}
 
-docker build -t ${IMG_NAME} ./
+cd ../../
+docker build -t ${IMG_NAME} -f Dockerfile.schemamigrator .
+
+cd "${CURRENT_DIR}"
 
 echo -e "${GREEN}Start Postgres in detached mode${NC}"
 docker run -d --name ${POSTGRES_CONTAINER} \
@@ -42,59 +47,50 @@ docker run -d --name ${POSTGRES_CONTAINER} \
             -e POSTGRES_USER=${DB_USER} \
             -e POSTGRES_PASSWORD=${DB_PWD} \
             -e POSTGRES_MULTIPLE_DATABASES="${POSTGRES_MULTIPLE_DATABASES}" \
-            -v $(pwd)/multiple-postgresql-databases.sh:/docker-entrypoint-initdb.d/multiple-postgresql-databases.sh \
+            -v "${CURRENT_DIR}"/multiple-postgresql-databases.sh:/docker-entrypoint-initdb.d/multiple-postgresql-databases.sh \
             postgres:${POSTGRES_VERSION}
 
 function migrationUP() {
     echo -e "${GREEN}Run UP migrations ${NC}"
 
-    migration_path=$1
-    db_name=$2
     docker run --rm --network=${NETWORK} \
             -e DB_USER=${DB_USER} \
             -e DB_PASSWORD=${DB_PWD} \
             -e DB_HOST=${POSTGRES_CONTAINER} \
             -e DB_PORT=${DB_PORT} \
-            -e DB_NAME=${db_name} \
+            -e DB_NAME=${DB_NAME} \
             -e DB_SSL=${DB_SSL_PARAM} \
-            -e MIGRATION_PATH=${migration_path} \
             -e DIRECTION="up" \
-            -v $(pwd)/../../resources/kcp/charts/${migration_path}/migrations:/migrate/new-migrations/${migration_path} \
+            -v "${CURRENT_DIR}"/../../resources/migrations:/migrate/new-migrations \
         ${IMG_NAME}
 
     echo -e "${GREEN}Show schema_migrations table after UP migrations${NC}"
-    docker exec ${POSTGRES_CONTAINER} psql -U usr ${db_name} -c "select * from schema_migrations"
+    docker exec ${POSTGRES_CONTAINER} psql -U usr ${DB_NAME} -c "select * from schema_migrations"
 }
 
 function migrationDOWN() {
     echo -e "${GREEN}Run DOWN migrations ${NC}"
 
-    migration_path=$1
-    db_name=$2
     docker run --rm --network=${NETWORK} \
             -e DB_USER=${DB_USER} \
             -e DB_PASSWORD=${DB_PWD} \
             -e DB_HOST=${POSTGRES_CONTAINER} \
             -e DB_PORT=${DB_PORT} \
-            -e DB_NAME=${db_name} \
+            -e DB_NAME=${DB_NAME} \
             -e DB_SSL=${DB_SSL_PARAM} \
-            -e MIGRATION_PATH=${migration_path} \
             -e DIRECTION="down" \
             -e NON_INTERACTIVE="true" \
-            -v $(pwd)/../../resources/kcp/charts/${migration_path}/migrations:/migrate/new-migrations/${migration_path} \
+            -v "${CURRENT_DIR}"/../../resources/migrations:/migrate/new-migrations \
         ${IMG_NAME}
 
     echo -e "${GREEN}Show schema_migrations table after DOWN migrations${NC}"
-    docker exec ${POSTGRES_CONTAINER} psql -U usr ${db_name} -c "select * from schema_migrations"
+    docker exec ${POSTGRES_CONTAINER} psql -U usr ${DB_NAME} -c "select * from schema_migrations"
 }
 
 function migrationProcess() {
-    path=$1
-    db=$2
-
-    echo -e "${GREEN}Migrations for \"${db}\" database and \"${path}\" path${NC}"
-    migrationUP "${path}" "${db}"
-    migrationDOWN "${path}" "${db}"
+    echo -e "${GREEN}Migrations for broker database${NC}"
+    migrationUP
+    migrationDOWN
 }
 
-migrationProcess "provisioner" "provisioner"
+migrationProcess
