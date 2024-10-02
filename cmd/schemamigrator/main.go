@@ -20,7 +20,12 @@ import (
 	_ "github.com/lib/pq"
 )
 
-const connRetries = 30
+const (
+	connRetries               = 30
+	tempMigrationsPathPattern = "tmp-migrations-*"
+	newMigrationsSrc          = "new-migrations"
+	oldMigrationsSrc          = "migrations"
+)
 
 //go:generate mockery --name=FileSystem
 type FileSystem interface {
@@ -88,7 +93,7 @@ func main() {
 func invokeMigration() error {
 	envs := []string{
 		"DB_USER", "DB_HOST", "DB_NAME", "DB_PORT",
-		"DB_PASSWORD", "MIGRATION_PATH", "DIRECTION",
+		"DB_PASSWORD", "DIRECTION",
 	}
 
 	for _, env := range envs {
@@ -147,11 +152,7 @@ func invokeMigration() error {
 	log.Println("# CONNECTION WITH DATABASE ESTABLISHED #")
 	log.Println("# STARTING TO COPY MIGRATION FILES #")
 
-	migrationEnvPath := os.Getenv("MIGRATION_PATH")
-
-	migrationTempPath := fmt.Sprintf("tmp-migrations-%s-*", migrationEnvPath)
-
-	migrationExecPath, err := os.MkdirTemp("/migrate", migrationTempPath)
+	migrationExecPath, err := os.MkdirTemp("/migrate", tempMigrationsPathPattern)
 	if err != nil {
 		return fmt.Errorf("# COULD NOT CREATE TEMPORARY DIRECTORY FOR MIGRATION: %w", err)
 	}
@@ -160,7 +161,6 @@ func invokeMigration() error {
 	ms := migrationScript{
 		fs: osFS{},
 	}
-	newMigrationsSrc := fmt.Sprintf("new-migrations/%s", migrationEnvPath)
 	log.Println("# LOADING MIGRATION FILES FROM CONFIGMAP #")
 	err = ms.copyDir(newMigrationsSrc, migrationExecPath)
 	if err != nil {
@@ -172,8 +172,6 @@ func invokeMigration() error {
 	} else {
 		log.Println("# LOADING MIGRATION FILES FROM CONFIGMAP DONE #")
 	}
-
-	oldMigrationsSrc := fmt.Sprintf("migrations/%s", migrationEnvPath)
 	log.Println("# LOADING EMBEDDED MIGRATION FILES FROM THE SCHEMA-MIGRATOR IMAGE #")
 	err = ms.copyDir(oldMigrationsSrc, migrationExecPath)
 	if err != nil {

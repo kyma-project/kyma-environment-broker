@@ -104,8 +104,6 @@ spec:
                   key: postgresql-sslMode
             - name: DB_SSLROOTCERT
               value: /secrets/cloudsql-sslrootcert/server-ca.pem
-            - name: MIGRATION_PATH
-              value: "kyma-environment-broker"
             - name: DIRECTION
               value: "up"
           volumeMounts:
