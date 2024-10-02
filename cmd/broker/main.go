@@ -155,8 +155,7 @@ type Config struct {
 
 	RuntimeConfigurationConfigMapName string `envconfig:"default=keb-runtime-config"`
 
-	UpdateRuntimeResourceDelay    time.Duration `envconfig:"default=4s"`
-	BindingTokenExpirationSeconds int           `envconfig:"default=600"`
+	UpdateRuntimeResourceDelay time.Duration `envconfig:"default=4s"`
 }
 
 type ProfilerConfig struct {
@@ -447,7 +446,7 @@ func createAPI(router *mux.Router, servicesConfig broker.ServicesConfig, planVal
 			planDefaults, logs, cfg.KymaDashboardConfig, kcBuilder, convergedCloudRegionProvider, kcpK8sClient),
 		GetInstanceEndpoint:          broker.NewGetInstance(cfg.Broker, db.Instances(), db.Operations(), kcBuilder, logs),
 		LastOperationEndpoint:        broker.NewLastOperation(db.Operations(), db.InstancesArchived(), logs),
-		BindEndpoint:                 broker.NewBind(cfg.Broker.Binding, db.Instances(), logs, clientProvider, kubeconfigProvider, gardenerClient, cfg.BindingTokenExpirationSeconds),
+		BindEndpoint:                 broker.NewBind(cfg.Broker.Binding, db.Instances(), logs, clientProvider, kubeconfigProvider, gardenerClient),
 		UnbindEndpoint:               broker.NewUnbind(logs),
 		GetBindingEndpoint:           broker.NewGetBinding(logs),
 		LastBindingOperationEndpoint: broker.NewLastBindingOperation(logs),
