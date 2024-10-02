@@ -122,8 +122,8 @@ spec:
               value: "{{ .Values.provisioner.gardenerClusterStepTimeout }}"
             - name: APP_PROVISIONER_RUNTIME_RESOURCE_STEP_TIMEOUT
               value: "{{ .Values.provisioner.runtimeResourceStepTimeout }}"
-            - name: APP_PROVISIONER_CLUSTER_STEP_TIMEOUT
-              value: "{{ .Values.provisioner.clusterStepTimeout }}"
+            - name: APP_PROVISIONER_CLUSTER_UPDATE_STEP_TIMEOUT
+              value: "{{ .Values.provisioner.clusterUpdateStepTimeout }}"
             - name: APP_PROVISIONER_DEFAULT_GARDENER_SHOOT_PURPOSE
               value: "{{ .Values.gardener.defaultShootPurpose }}"
             - name: APP_PROVISIONER_DEFAULT_TRIAL_PROVIDER

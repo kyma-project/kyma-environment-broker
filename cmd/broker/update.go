@@ -37,7 +37,7 @@ func NewUpdateProcessingQueue(ctx context.Context, manager *process.StagedManage
 		},
 		{
 			stage:     "check",
-			step:      update.NewCheckStep(db.Operations(), provisionerClient, cfg.Provisioner.ClusterStepTimeout),
+			step:      update.NewCheckStep(db.Operations(), provisionerClient, cfg.Provisioner.ClusterUpdateStepTimeout),
 			condition: update.SkipForOwnClusterPlan,
 		},
 		{
