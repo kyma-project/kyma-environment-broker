@@ -36,7 +36,7 @@ describe('SKR Binding test', function() {
   });
 
   it('Initiate K8s client with kubeconfig from binding', async function() {
-    await initializeK8sClient({kubeconfig: kubeconfigFromBinding.credentials});
+    await initializeK8sClient({kubeconfig: kubeconfigFromBinding.credentials.kubeconfig});
   });
 
   it('Fetch sap-btp-manager secret using binding from Kubernetes TokenRequest', async function() {
@@ -52,7 +52,7 @@ describe('SKR Binding test', function() {
   });
 
   it('Initiate K8s client with kubeconfig from binding', async function() {
-    await initializeK8sClient({kubeconfig: kubeconfigFromBinding.credentials});
+    await initializeK8sClient({kubeconfig: kubeconfigFromBinding.credentials.kubeconfig});
   });
 
   it('Fetch sap-btp-manager secret using binding from Gardener', async function() {
