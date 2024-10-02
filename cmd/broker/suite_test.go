@@ -913,6 +913,7 @@ func fixConfig() *Config {
 			MachineImageVersion:        "12345.6",
 			MultiZoneCluster:           true,
 			RuntimeResourceStepTimeout: time.Minute,
+			ClusterUpdateStepTimeout:   time.Minute,
 		},
 		Database: storage.Config{
 			SecretKey: dbSecretKey,
