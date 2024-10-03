@@ -3,7 +3,10 @@ name: Run JS linter
 on:
   pull_request:
     branches: [ main ]
-
+    paths:
+      - ".github/workflows/run-eslint.yaml"
+      - "testing/e2e/skr/**"
+    
 jobs:
   run-eslint:
     runs-on: ubuntu-latest
@@ -12,15 +15,5 @@ jobs:
     - name: Checkout code
       uses: actions/checkout@v4
 
-    - name: Get changed files
-      id: changed-files-specific
-      uses: tj-actions/changed-files@90a06d6ba9543371ab4df8eeca0be07ca6054959
-      with:
-        files: |
-          .github/**
-          testing/e2e/skr/**
-          Makefile
-
     - name: Run JS linter
-      if: ${{ steps.changed-files-specific.outputs.any_modified == 'true' }}
       run: make lint -C testing/e2e/skr

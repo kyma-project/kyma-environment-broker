@@ -1,5 +1,7 @@
 const k8s = require('@kubernetes/client-node');
 const {expect} = require('chai');
+const yaml = require('js-yaml');
+const forge = require('node-forge');
 
 const kc = new k8s.KubeConfig();
 let k8sDynamicApi;
@@ -11,6 +13,15 @@ let watch;
 
 function initializeK8sClient(opts) {
   opts = opts || {};
+
+  k8sDynamicApi = null;
+  k8sAppsApi = null;
+  k8sCoreV1Api = null;
+  k8sRbacAuthorizationV1Api = null;
+  watch = null;
+  k8sLog = null;
+  k8sServerUrl = null;
+
   try {
     console.log('Trying to initialize a K8S client');
     if (opts.kubeconfigPath) {
@@ -414,6 +425,26 @@ function wait(fn, checkFn, timeout, interval) {
   });
 }
 
+function getKubeconfigValidityInSeconds(kubeconfig) {
+  try {
+    const doc = yaml.load(kubeconfig);
+    const users = doc.users;
+    if (users && users.length > 0) {
+      const pem = users[0].user['client-certificate-data'];
+      const decodedPem = atob(pem);
+      const certificate = forge.pki.certificateFromPem(decodedPem);
+      const difference = certificate.validity.notAfter.getTime() - certificate.validity.notBefore.getTime();
+      return difference / 1000;
+    } else {
+      console.error('No user data found');
+      return null;
+    }
+  } catch (e) {
+    console.error('Error parsing YAML content:', e);
+    return null;
+  }
+}
+
 module.exports = {
   initializeK8sClient,
   k8sApply,
@@ -437,4 +468,5 @@ module.exports = {
   genRandom,
   getEnvOrThrow,
   wait,
+  getKubeconfigValidityInSeconds,
 };

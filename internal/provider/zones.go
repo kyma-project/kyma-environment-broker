@@ -51,6 +51,15 @@ var sapConvergedCloudZones = map[string]string{
 	"ap-ae-1": "ab",
 }
 
+func CountZonesForSapConvergedCloud(region string) int {
+	zones, found := sapConvergedCloudZones[region]
+	if !found {
+		return 0
+	}
+
+	return len(zones)
+}
+
 func ZonesForSapConvergedCloud(region string, zonesCount int) []string {
 	zones, found := sapConvergedCloudZones[region]
 	if !found {

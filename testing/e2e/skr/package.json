@@ -16,7 +16,6 @@
     "skr-networking-test": "mocha --inline-difs --check-leaks --reporter mocha-multi-reporters --reporter-options configFile=mocha-reporter-config.json ./skr-networking-test/index.js",
     "skr-trial-suspension-test": "DEBUG=true mocha --inline-diffs --check-leaks --reporter mocha-multi-reporters --reporter-options configFile=mocha-reporter-config.json --bail ./trial-suspension-test/test.js",
     "skr-binding-test": "mocha --inline-difs --check-leaks --reporter mocha-multi-reporters --reporter-options configFile=mocha-reporter-config.json ./skr-binding-test/index.js"
-
   },
   "license": "Apache-2.0",
   "devDependencies": {
@@ -29,7 +28,9 @@
   "dependencies": {
     "@kubernetes/client-node": "0.15.1",
     "axios": "^1.7.4",
+    "js-yaml": "^4.1.0",
     "mocha-junit-reporter": "^2.0.0",
+    "node-forge": "^1.3.1",
     "uuid": "^8.3.2"
   },
   "engines": {

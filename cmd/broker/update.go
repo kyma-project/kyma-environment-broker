@@ -2,7 +2,6 @@ package main
 
 import (
 	"context"
-	"time"
 
 	"github.com/kyma-project/kyma-environment-broker/internal/process/steps"
 
@@ -38,7 +37,7 @@ func NewUpdateProcessingQueue(ctx context.Context, manager *process.StagedManage
 		},
 		{
 			stage:     "check",
-			step:      update.NewCheckStep(db.Operations(), provisionerClient, 40*time.Minute),
+			step:      update.NewCheckStep(db.Operations(), provisionerClient, cfg.Provisioner.ClusterUpdateStepTimeout),
 			condition: update.SkipForOwnClusterPlan,
 		},
 		{

@@ -12,7 +12,8 @@ var AzureTrialPlatformRegionMapping = map[string]string{"cf-eu11": "europe", "cf
 func TestAzureDefaults(t *testing.T) {
 
 	// given
-	aws := AzureInputProvider{
+	azure := AzureInputProvider{
+		Purpose:   PurposeProduction,
 		MultiZone: true,
 		ProvisioningParameters: internal.ProvisioningParameters{
 			Parameters:     internal.ProvisioningParametersDTO{Region: ptr.String("eastus")},
@@ -21,7 +22,7 @@ func TestAzureDefaults(t *testing.T) {
 	}
 
 	// when
-	values := aws.Provide()
+	values := azure.Provide()
 
 	// then
 
@@ -42,7 +43,7 @@ func TestAzureDefaults(t *testing.T) {
 func TestAzureTrialDefaults(t *testing.T) {
 
 	// given
-	aws := AzureTrialInputProvider{
+	azure := AzureTrialInputProvider{
 		PlatformRegionMapping: AzureTrialPlatformRegionMapping,
 		ProvisioningParameters: internal.ProvisioningParameters{
 			Parameters:     internal.ProvisioningParametersDTO{Region: ptr.String("eastus")},
@@ -51,7 +52,7 @@ func TestAzureTrialDefaults(t *testing.T) {
 	}
 
 	// when
-	values := aws.Provide()
+	values := azure.Provide()
 
 	// then
 
@@ -72,7 +73,8 @@ func TestAzureTrialDefaults(t *testing.T) {
 func TestAzureLiteDefaults(t *testing.T) {
 
 	// given
-	aws := AzureLiteInputProvider{
+	azure := AzureLiteInputProvider{
+		Purpose: PurposeEvaluation,
 		ProvisioningParameters: internal.ProvisioningParameters{
 			Parameters:     internal.ProvisioningParametersDTO{Region: ptr.String("eastus")},
 			PlatformRegion: "cf-eu11",
@@ -80,7 +82,7 @@ func TestAzureLiteDefaults(t *testing.T) {
 	}
 
 	// when
-	values := aws.Provide()
+	values := azure.Provide()
 
 	// then
 
@@ -102,6 +104,7 @@ func TestAzureSpecific(t *testing.T) {
 
 	// given
 	azure := AzureInputProvider{
+		Purpose:   PurposeProduction,
 		MultiZone: true,
 		ProvisioningParameters: internal.ProvisioningParameters{
 			Parameters: internal.ProvisioningParametersDTO{
@@ -173,6 +176,7 @@ func TestAzureLiteSpecific(t *testing.T) {
 
 	// given
 	azure := AzureLiteInputProvider{
+		Purpose: PurposeEvaluation,
 		ProvisioningParameters: internal.ProvisioningParameters{
 			Parameters: internal.ProvisioningParametersDTO{
 				MachineType: ptr.String("Standard_D48_v3"),

@@ -13,18 +13,16 @@ import (
 )
 
 type GardenerBindingManager struct {
-	tokenExpirationSeconds int
-	gardenerClient         client.Client
+	gardenerClient client.Client
 }
 
-func NewGardenerBindingManager(gardenerClient client.Client, tokenExpirationSeconds int) *GardenerBindingManager {
+func NewGardenerBindingManager(gardenerClient client.Client) *GardenerBindingManager {
 	return &GardenerBindingManager{
-		gardenerClient:         gardenerClient,
-		tokenExpirationSeconds: tokenExpirationSeconds,
+		gardenerClient: gardenerClient,
 	}
 }
 
-func (c *GardenerBindingManager) Create(ctx context.Context, instance *internal.Instance, bindingID string) (string, error) {
+func (c *GardenerBindingManager) Create(ctx context.Context, instance *internal.Instance, bindingID string, expirationSeconds int) (string, error) {
 
 	shoot := &shoot.Shoot{
 		TypeMeta: metav1.TypeMeta{APIVersion: "core.gardener.cloud/v1beta1", Kind: "Shoot"},
@@ -36,7 +34,7 @@ func (c *GardenerBindingManager) Create(ctx context.Context, instance *internal.
 
 	adminKubeconfigRequest := &authenticationv1alpha1.AdminKubeconfigRequest{
 		Spec: authenticationv1alpha1.AdminKubeconfigRequestSpec{
-			ExpirationSeconds: ptr.Integer64(int64(c.tokenExpirationSeconds)),
+			ExpirationSeconds: ptr.Integer64(int64(expirationSeconds)),
 		},
 	}
 

@@ -17,31 +17,37 @@ func GenerateValues(
 	defaultTrialProvider internal.CloudProvider,
 	useSmallerMachineTypes bool,
 	trialPlatformRegionMapping map[string]string,
+	defaultPurpose string,
 ) (Values, error) {
 	var p Provider
 	switch operation.ProvisioningParameters.PlanID {
 	case broker.AWSPlanID:
 		p = &AWSInputProvider{
+			Purpose:                defaultPurpose,
 			MultiZone:              multiZoneCluster,
 			ProvisioningParameters: operation.ProvisioningParameters,
 		}
 	case broker.PreviewPlanID:
 		p = &AWSInputProvider{
+			Purpose:                defaultPurpose,
 			MultiZone:              multiZoneCluster,
 			ProvisioningParameters: operation.ProvisioningParameters,
 		}
 	case broker.AzurePlanID:
 		p = &AzureInputProvider{
+			Purpose:                defaultPurpose,
 			MultiZone:              multiZoneCluster,
 			ProvisioningParameters: operation.ProvisioningParameters,
 		}
 	case broker.AzureLitePlanID:
 		p = &AzureLiteInputProvider{
+			Purpose:                defaultPurpose,
 			UseSmallerMachineTypes: useSmallerMachineTypes,
 			ProvisioningParameters: operation.ProvisioningParameters,
 		}
 	case broker.GCPPlanID:
 		p = &GCPInputProvider{
+			Purpose:                defaultPurpose,
 			MultiZone:              multiZoneCluster,
 			ProvisioningParameters: operation.ProvisioningParameters,
 		}
@@ -62,6 +68,7 @@ func GenerateValues(
 		}
 	case broker.SapConvergedCloudPlanID:
 		p = &SapConvergedCloudInputProvider{
+			Purpose:                defaultPurpose,
 			MultiZone:              multiZoneCluster,
 			ProvisioningParameters: operation.ProvisioningParameters,
 		}

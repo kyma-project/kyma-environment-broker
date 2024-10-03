@@ -1,6 +1,7 @@
+const {expect} = require('chai');
 const {gatherOptions} = require('../skr-test');
 const {initializeK8sClient} = require('../utils/index.js');
-const {getSecret} = require('../utils');
+const {getSecret, getKubeconfigValidityInSeconds} = require('../utils');
 const {provisionSKRInstance} = require('../skr-test/provision/provision-skr');
 const {deprovisionAndUnregisterSKR} = require('../skr-test/provision/deprovision-skr');
 const {KEBClient, KEBConfig} = require('../kyma-environment-broker');
@@ -27,19 +28,37 @@ describe('SKR Binding test', function() {
     await provisionSKRInstance(options, provisioningTimeout);
   });
 
-  it('Create SKR binding', async function() {
+  it('Create SKR binding using Kubernetes TokenRequest', async function() {
     try {
-      kubeconfigFromBinding = await keb.createBinding(options.instanceID);
+      kubeconfigFromBinding = await keb.createBinding(options.instanceID, true);
     } catch (err) {
       console.log(err);
     }
   });
 
   it('Initiate K8s client with kubeconfig from binding', async function() {
-    await initializeK8sClient({kubeconfig: kubeconfigFromBinding.credentials});
+    await initializeK8sClient({kubeconfig: kubeconfigFromBinding.credentials.kubeconfig});
   });
 
-  it('Fetch sap-btp-manager secret', async function() {
+  it('Fetch sap-btp-manager secret using binding from Kubernetes TokenRequest', async function() {
+    await getSecret(secretName, ns);
+  });
+
+  it('Create SKR binding using Gardener', async function() {
+    const expirationSeconds = 900;
+    try {
+      kubeconfigFromBinding = await keb.createBinding(options.instanceID, false, expirationSeconds);
+      expect(getKubeconfigValidityInSeconds(kubeconfigFromBinding.credentials.kubeconfig)).to.equal(expirationSeconds);
+    } catch (err) {
+      console.log(err);
+    }
+  });
+
+  it('Initiate K8s client with kubeconfig from binding', async function() {
+    await initializeK8sClient({kubeconfig: kubeconfigFromBinding.credentials.kubeconfig});
+  });
+
+  it('Fetch sap-btp-manager secret using binding from Gardener', async function() {
     await getSecret(secretName, ns);
   });
 

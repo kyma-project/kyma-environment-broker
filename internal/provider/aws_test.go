@@ -8,21 +8,22 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-var AWSTrialPlafomRegionMapping = map[string]string{"cf-eu10": "europe", "cf-us10": "us", "cf-ap21": "asia"}
+var TestTrialPlatformRegionMapping = map[string]string{"cf-eu10": "europe", "cf-us10": "us", "cf-ap21": "asia"}
 
 func TestAWSDefaults(t *testing.T) {
 
 	// given
-	aws := AWSInputProvider{
+	provider := AWSInputProvider{
+		Purpose:   PurposeProduction,
 		MultiZone: true,
 		ProvisioningParameters: internal.ProvisioningParameters{
-			Parameters:     internal.ProvisioningParametersDTO{Region: ptr.String("eu-central-1")},
+			Parameters:     internal.ProvisioningParametersDTO{Region: nil},
 			PlatformRegion: "cf-eu11",
 		},
 	}
 
 	// when
-	values := aws.Provide()
+	values := provider.Provide()
 
 	// then
 
@@ -43,20 +44,19 @@ func TestAWSDefaults(t *testing.T) {
 func TestAWSSpecific(t *testing.T) {
 
 	// given
-	aws := AWSInputProvider{
+	provider := AWSInputProvider{
+		Purpose:   PurposeProduction,
 		MultiZone: true,
 		ProvisioningParameters: internal.ProvisioningParameters{
 			Parameters: internal.ProvisioningParametersDTO{
-				MachineType: ptr.String("m6i.xlarge"),
-				Region:      ptr.String("ap-southeast-1"),
+				Region: ptr.String("ap-southeast-1"),
 			},
-			PlatformRegion:   "cf-eu11",
-			PlatformProvider: "ap-southeast-1",
+			PlatformRegion: "cf-eu11",
 		},
 	}
 
 	// when
-	values := aws.Provide()
+	values := provider.Provide()
 
 	// then
 
@@ -78,16 +78,16 @@ func TestAWSSpecific(t *testing.T) {
 func TestAWSTrialDefaults(t *testing.T) {
 
 	// given
-	aws := AWSTrialInputProvider{
-		PlatformRegionMapping: AWSTrialPlafomRegionMapping,
+	provider := AWSTrialInputProvider{
+		PlatformRegionMapping: TestTrialPlatformRegionMapping,
 		ProvisioningParameters: internal.ProvisioningParameters{
-			Parameters:     internal.ProvisioningParametersDTO{Region: ptr.String("eu-central-1")},
+			Parameters:     internal.ProvisioningParametersDTO{Region: nil},
 			PlatformRegion: "cf-eu11",
 		},
 	}
 
 	// when
-	values := aws.Provide()
+	values := provider.Provide()
 
 	// then
 
@@ -108,19 +108,18 @@ func TestAWSTrialDefaults(t *testing.T) {
 func TestAWSTrialSpecific(t *testing.T) {
 
 	// given
-	aws := AWSTrialInputProvider{
-		PlatformRegionMapping: AWSTrialPlafomRegionMapping,
+	provider := AWSTrialInputProvider{
+		PlatformRegionMapping: TestTrialPlatformRegionMapping,
 		ProvisioningParameters: internal.ProvisioningParameters{
 			Parameters: internal.ProvisioningParametersDTO{
-				MachineType: ptr.String("m6i.xlarge"),
-				Region:      ptr.String("eu-central-1"),
+				Region: ptr.String("eu-central-1"),
 			},
 			PlatformRegion: "cf-ap21",
 		},
 	}
 
 	// when
-	values := aws.Provide()
+	values := provider.Provide()
 
 	// then
 

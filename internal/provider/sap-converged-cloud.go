@@ -12,18 +12,23 @@ const (
 
 type (
 	SapConvergedCloudInputProvider struct {
+		Purpose                string
 		MultiZone              bool
 		ProvisioningParameters internal.ProvisioningParameters
 	}
 )
 
 func (p *SapConvergedCloudInputProvider) Provide() Values {
-	zonesCount := p.zonesCount()
-	zones := p.zones()
 	region := DefaultSapConvergedCloudRegion
 	if p.ProvisioningParameters.Parameters.Region != nil {
 		region = *p.ProvisioningParameters.Parameters.Region
 	}
+	zonesCount := 1
+	if p.MultiZone {
+		zonesCount = CountZonesForSapConvergedCloud(region)
+	}
+
+	zones := ZonesForSapConvergedCloud(region, zonesCount)
 	return Values{
 		DefaultAutoScalerMax: 20,
 		DefaultAutoScalerMin: 3,
@@ -32,23 +37,7 @@ func (p *SapConvergedCloudInputProvider) Provide() Values {
 		ProviderType:         "openstack",
 		DefaultMachineType:   DefaultSapConvergedCloudMachineType,
 		Region:               region,
-		Purpose:              PurposeProduction,
+		Purpose:              p.Purpose,
 		DiskType:             "",
 	}
-}
-
-func (p *SapConvergedCloudInputProvider) zonesCount() int {
-	zonesCount := 1
-	if p.MultiZone {
-		zonesCount = DefaultSapConvergedCloudMultiZoneCount
-	}
-	return zonesCount
-}
-
-func (p *SapConvergedCloudInputProvider) zones() []string {
-	region := DefaultSapConvergedCloudRegion
-	if p.ProvisioningParameters.Parameters.Region != nil {
-		region = *p.ProvisioningParameters.Parameters.Region
-	}
-	return ZonesForSapConvergedCloud(region, p.zonesCount())
 }

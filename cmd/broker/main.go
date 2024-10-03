@@ -99,17 +99,16 @@ type Config struct {
 	Gardener    gardener.Config
 	Kubeconfig  kubeconfig.Config
 
-	ManagedRuntimeComponentsYAMLFilePath                                string
-	NewAdditionalRuntimeComponentsYAMLFilePath                          string
-	SkrOidcDefaultValuesYAMLFilePath                                    string
-	SkrDnsProvidersValuesYAMLFilePath                                   string
-	DefaultRequestRegion                                                string `envconfig:"default=cf-eu10"`
-	UpdateProcessingEnabled                                             bool   `envconfig:"default=false"`
-	LifecycleManagerIntegrationDisabled                                 bool   `envconfig:"default=true"`
-	InfrastructureManagerIntegrationDisabled                            bool   `envconfig:"default=true"`
-	AvsMaintenanceModeDuringUpgradeAlwaysDisabledGlobalAccountsFilePath string
-	Broker                                                              broker.Config
-	CatalogFilePath                                                     string
+	ManagedRuntimeComponentsYAMLFilePath       string
+	NewAdditionalRuntimeComponentsYAMLFilePath string
+	SkrOidcDefaultValuesYAMLFilePath           string
+	SkrDnsProvidersValuesYAMLFilePath          string
+	DefaultRequestRegion                       string `envconfig:"default=cf-eu10"`
+	UpdateProcessingEnabled                    bool   `envconfig:"default=false"`
+	LifecycleManagerIntegrationDisabled        bool   `envconfig:"default=true"`
+	InfrastructureManagerIntegrationDisabled   bool   `envconfig:"default=true"`
+	Broker                                     broker.Config
+	CatalogFilePath                            string
 
 	EDP edp.Config
 
@@ -155,8 +154,7 @@ type Config struct {
 
 	RuntimeConfigurationConfigMapName string `envconfig:"default=keb-runtime-config"`
 
-	UpdateRuntimeResourceDelay    time.Duration `envconfig:"default=4s"`
-	BindingTokenExpirationSeconds int           `envconfig:"default=600"`
+	UpdateRuntimeResourceDelay time.Duration `envconfig:"default=4s"`
 }
 
 type ProfilerConfig struct {
@@ -447,7 +445,7 @@ func createAPI(router *mux.Router, servicesConfig broker.ServicesConfig, planVal
 			planDefaults, logs, cfg.KymaDashboardConfig, kcBuilder, convergedCloudRegionProvider, kcpK8sClient),
 		GetInstanceEndpoint:          broker.NewGetInstance(cfg.Broker, db.Instances(), db.Operations(), kcBuilder, logs),
 		LastOperationEndpoint:        broker.NewLastOperation(db.Operations(), db.InstancesArchived(), logs),
-		BindEndpoint:                 broker.NewBind(cfg.Broker.Binding, db.Instances(), logs, clientProvider, kubeconfigProvider, gardenerClient, cfg.BindingTokenExpirationSeconds),
+		BindEndpoint:                 broker.NewBind(cfg.Broker.Binding, db.Instances(), logs, clientProvider, kubeconfigProvider, gardenerClient),
 		UnbindEndpoint:               broker.NewUnbind(logs),
 		GetBindingEndpoint:           broker.NewGetBinding(logs),
 		LastBindingOperationEndpoint: broker.NewLastBindingOperation(logs),

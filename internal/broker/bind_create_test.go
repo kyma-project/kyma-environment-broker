@@ -11,6 +11,9 @@ import (
 	"testing"
 	"time"
 
+	"github.com/golang-jwt/jwt/v4"
+	"gopkg.in/yaml.v2"
+
 	"code.cloudfoundry.org/lager"
 	"github.com/gorilla/mux"
 	"github.com/kyma-project/kyma-environment-broker/internal"
@@ -35,6 +38,19 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client/fake"
 	"sigs.k8s.io/controller-runtime/pkg/envtest"
 )
+
+type Kubeconfig struct {
+	Users []User `yaml:"users"`
+}
+
+type User struct {
+	Name string `yaml:"name"`
+	User struct {
+		Token string `yaml:"token"`
+	} `yaml:"user"`
+}
+
+const expirationSeconds = 10000
 
 func TestCreateBindingEndpoint(t *testing.T) {
 	t.Log("test create binding endpoint")
@@ -137,10 +153,11 @@ func TestCreateBindingEndpoint(t *testing.T) {
 		BindablePlans: EnablePlans{
 			fixture.PlanName,
 		},
+		ExpirationSeconds: expirationSeconds,
 	}
 
 	//// api handler
-	bindEndpoint := NewBind(*bindingCfg, db.Instances(), logs, skrK8sClientProvider, skrK8sClientProvider, gardenerClient, 10000)
+	bindEndpoint := NewBind(*bindingCfg, db.Instances(), logs, skrK8sClientProvider, skrK8sClientProvider, gardenerClient)
 	apiHandler := handlers.NewApiHandler(KymaEnvironmentBroker{
 		nil,
 		nil,
@@ -172,26 +189,18 @@ func TestCreateBindingEndpoint(t *testing.T) {
   }
 }`, fixture.PlanId), t)
 
-		// Then
-		require.Equal(
-			t, http.StatusCreated, response.StatusCode,
-		)
-		//// parse response
-		content, err := io.ReadAll(response.Body)
-		t.Logf("response content is: %v", string(content))
-		assert.NoError(t, err)
-		defer response.Body.Close()
+		binding := verifyResponse(t, response)
 
-		//// verify response content
-		assert.Contains(t, string(content), "credentials")
+		credentials, ok := binding.Credentials.(map[string]interface{})
+		require.True(t, ok)
+		kubeconfig := credentials["kubeconfig"].(string)
 
-		var binding domain.Binding
-		err = json.Unmarshal(content, &binding)
+		duration, err := getTokenDuration(t, kubeconfig)
 		require.NoError(t, err)
-		t.Logf("binding: %v", binding.Credentials)
+		assert.Equal(t, expirationSeconds*time.Second, duration)
 
 		//// verify connectivity using kubeconfig from the generated binding
-		newClient := kubeconfigClient(t, binding.Credentials.(string))
+		newClient := kubeconfigClient(t, kubeconfig)
 		_, err = newClient.CoreV1().Secrets("default").Get(context.Background(), "secret-to-check", v1.GetOptions{})
 		assert.NoError(t, err)
 
@@ -201,6 +210,29 @@ func TestCreateBindingEndpoint(t *testing.T) {
 		assert.NoError(t, err)
 		_, err = newClient.RbacV1().ClusterRoleBindings().Get(context.Background(), "kyma-binding-binding-id", v1.GetOptions{})
 		assert.NoError(t, err)
+	})
+
+	t.Run("should create a new service binding with custom token expiration time", func(t *testing.T) {
+		const customExpirationSeconds = 900
+
+		// When
+		response := CallAPI(httpServer, method, "v2/service_instances/1/service_bindings/binding-id2?accepts_incomplete=true", fmt.Sprintf(`{
+  "service_id": "123",
+  "plan_id": "%s",
+  "parameters": {
+    "token_request": true,
+	"expiration_seconds": %v
+  }
+}`, fixture.PlanId, customExpirationSeconds), t)
+
+		binding := verifyResponse(t, response)
+
+		credentials, ok := binding.Credentials.(map[string]interface{})
+		require.True(t, ok)
+
+		duration, err := getTokenDuration(t, credentials["kubeconfig"].(string))
+		require.NoError(t, err)
+		assert.Equal(t, customExpirationSeconds*time.Second, duration)
 	})
 }
 
@@ -277,4 +309,51 @@ func kubeconfigClient(t *testing.T, kubeconfig string) *kubernetes.Clientset {
 	assert.NoError(t, err)
 
 	return clientset
+}
+
+func verifyResponse(t *testing.T, response *http.Response) domain.Binding {
+	require.Equal(t, http.StatusCreated, response.StatusCode)
+
+	content, err := io.ReadAll(response.Body)
+	require.NoError(t, err)
+	defer response.Body.Close()
+
+	t.Logf("response content is: %v", string(content))
+
+	assert.Contains(t, string(content), "credentials")
+
+	var binding domain.Binding
+	err = json.Unmarshal(content, &binding)
+	require.NoError(t, err)
+
+	t.Logf("binding: %v", binding.Credentials)
+
+	return binding
+}
+
+func getTokenDuration(t *testing.T, config string) (time.Duration, error) {
+	var kubeconfig Kubeconfig
+
+	err := yaml.Unmarshal([]byte(config), &kubeconfig)
+	require.NoError(t, err)
+
+	for _, user := range kubeconfig.Users {
+		if user.Name == "context" {
+			token, _, err := new(jwt.Parser).ParseUnverified(user.User.Token, jwt.MapClaims{})
+			require.NoError(t, err)
+
+			if claims, ok := token.Claims.(jwt.MapClaims); ok {
+				iat := int64(claims["iat"].(float64))
+				exp := int64(claims["exp"].(float64))
+
+				issuedAt := time.Unix(iat, 0)
+				expiresAt := time.Unix(exp, 0)
+
+				return expiresAt.Sub(issuedAt), nil
+			} else {
+				return 0, fmt.Errorf("invalid token claims")
+			}
+		}
+	}
+	return 0, fmt.Errorf("user with name 'context' not found")
 }

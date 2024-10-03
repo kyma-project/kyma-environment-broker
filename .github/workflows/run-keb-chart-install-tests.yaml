@@ -3,11 +3,14 @@ name: Run KEB chart install tests
 on:
   pull_request:
     branches: [ main ]
+    types: [ opened, synchronize, reopened, ready_for_review ]
+    paths-ignore:
+      - "**.md"
+      - "sec-scanners-config.yaml"
 
 jobs:
   run-install-keb-chart-tests:
     uses: "./.github/workflows/run-keb-chart-install-tests-reusable.yaml"
-    if: ${{ !github.event.pull_request.draft }}
     with:
       last-k3s-versions: 3
       release: "false"

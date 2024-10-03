@@ -132,10 +132,13 @@ The test executes the following steps:
 
 The test executes the following steps:
 1. Provisions a Kyma runtime cluster.
-2. Creates a binding and saves the returned kubeconfig.
+2. Creates a binding using Kubernetes TokenRequest and saves the returned kubeconfig.
 3. Initializes a Kubernetes client with the returned kubeconfig.
-4. Tries to fetch a secret.
-5. Deprovisions the Kyma runtime instance and cleans up the resources.
+4. Tries to fetch a Secret using the binding from Kubernetes TokenRequest.
+5. Creates a binding using Gardener and saves the returned kubeconfig.
+6. Initializes a Kubernetes client with the returned kubeconfig.
+7. Tries to fetch a Secret using the binding from Gardener.
+8. Deprovisions the Kyma runtime instance and cleans up the resources.
 
 ### Test Execution
 

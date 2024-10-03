@@ -38,6 +38,7 @@ type Config struct {
 	ControlPlaneFailureTolerance  string                 `envconfig:"optional"`
 	GardenerClusterStepTimeout    time.Duration          `envconfig:"default=3m"`
 	RuntimeResourceStepTimeout    time.Duration          `envconfig:"default=8m"`
+	ClusterUpdateStepTimeout      time.Duration          `envconfig:"default=2h"`
 	EnableShootAndSeedSameRegion  bool                   `envconfig:"default=false"`
 }
 
