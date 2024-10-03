@@ -11,6 +11,7 @@ func TestGCPDefaults(t *testing.T) {
 
 	// given
 	provider := GCPInputProvider{
+		Purpose:   PurposeProduction,
 		MultiZone: true,
 		ProvisioningParameters: internal.ProvisioningParameters{
 			Parameters:     internal.ProvisioningParametersDTO{Region: nil},
@@ -41,6 +42,7 @@ func TestGCPSpecific(t *testing.T) {
 
 	// given
 	provider := GCPInputProvider{
+		Purpose:   PurposeProduction,
 		MultiZone: true,
 		ProvisioningParameters: internal.ProvisioningParameters{
 			Parameters: internal.ProvisioningParametersDTO{

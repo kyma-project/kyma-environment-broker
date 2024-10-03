@@ -11,6 +11,7 @@ func TestSapConvergedCloudDefaults(t *testing.T) {
 
 	// given
 	sapCC := SapConvergedCloudInputProvider{
+		Purpose:   PurposeProduction,
 		MultiZone: true,
 		ProvisioningParameters: internal.ProvisioningParameters{
 			Parameters:     internal.ProvisioningParametersDTO{Region: nil},
@@ -42,6 +43,7 @@ func TestSapConvergedCloudTwoZonesRegion(t *testing.T) {
 	// given
 	region := "eu-de-2"
 	sapCC := SapConvergedCloudInputProvider{
+		Purpose:   PurposeProduction,
 		MultiZone: true,
 		ProvisioningParameters: internal.ProvisioningParameters{
 			Parameters:     internal.ProvisioningParametersDTO{Region: ptr.String(region)},
@@ -73,6 +75,7 @@ func TestSapConvergedCloudSingleZoneRegion(t *testing.T) {
 	// given
 	region := "ap-jp-1"
 	sapCC := SapConvergedCloudInputProvider{
+		Purpose:   PurposeProduction,
 		MultiZone: true,
 		ProvisioningParameters: internal.ProvisioningParameters{
 			Parameters:     internal.ProvisioningParametersDTO{Region: ptr.String(region)},

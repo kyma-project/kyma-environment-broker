@@ -7,6 +7,7 @@ import (
 
 type (
 	AWSInputProvider struct {
+		Purpose                string
 		MultiZone              bool
 		ProvisioningParameters internal.ProvisioningParameters
 	}
@@ -36,7 +37,7 @@ func (p *AWSInputProvider) Provide() Values {
 		ProviderType:         "aws",
 		DefaultMachineType:   DefaultAWSMachineType,
 		Region:               region,
-		Purpose:              PurposeProduction,
+		Purpose:              p.Purpose,
 		VolumeSizeGb:         80,
 		DiskType:             "gp3",
 	}

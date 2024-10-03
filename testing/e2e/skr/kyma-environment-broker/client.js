@@ -6,6 +6,7 @@ const {OAuthCredentials, OAuthToken} = require('../lib/oauth');
 const SCOPES = ['broker:write'];
 const KYMA_SERVICE_ID = '47c9dcbf-ff30-448e-ab36-d3bad66ba281';
 const trialPlanID = '7d55d31d-35ae-4438-bf13-6ffdfa107d9f';
+const DEFAULT_EXPIRATION_SECONDS = 600;
 
 class KEBConfig {
   static fromEnv() {
@@ -272,12 +273,13 @@ class KEBClient {
     });
   }
 
-  async createBinding(instanceID, tokenRequest) {
+  async createBinding(instanceID, tokenRequest, expirationSeconds = DEFAULT_EXPIRATION_SECONDS) {
     const payload = {
       service_id: KYMA_SERVICE_ID,
       plan_id: this.planID,
       parameters: {
         token_request: tokenRequest,
+        expiration_seconds: expirationSeconds,
       },
     };
     const bindingID = Math.random().toString(36).substring(2, 18);

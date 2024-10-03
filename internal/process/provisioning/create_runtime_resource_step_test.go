@@ -8,6 +8,8 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/kyma-project/kyma-environment-broker/internal/provider"
+
 	"github.com/pivotal-cf/brokerapi/v8/domain"
 
 	"github.com/kyma-project/kyma-environment-broker/internal/networking"
@@ -222,7 +224,7 @@ func TestCreateRuntimeResourceStep_Defaults_AWS_SingleZone_EnforceSeed_ActualCre
 	assertInsertions(t, memoryStorage, instance, operation)
 
 	kimConfig := fixKimConfig("aws", false)
-	inputConfig := input.Config{MultiZoneCluster: false, ControlPlaneFailureTolerance: "zone"}
+	inputConfig := input.Config{MultiZoneCluster: false, ControlPlaneFailureTolerance: "zone", DefaultGardenerShootPurpose: provider.PurposeProduction}
 
 	cli := getClientForTests(t)
 	step := NewCreateRuntimeResourceStep(memoryStorage.Operations(), memoryStorage.Instances(), cli, kimConfig, inputConfig, nil, false, defaultOIDSConfig)
@@ -272,7 +274,7 @@ func TestCreateRuntimeResourceStep_Defaults_AWS_SingleZone_DisableEnterpriseFilt
 	assertInsertions(t, memoryStorage, instance, operation)
 
 	kimConfig := fixKimConfig("aws", false)
-	inputConfig := input.Config{MultiZoneCluster: false, ControlPlaneFailureTolerance: "zone"}
+	inputConfig := input.Config{MultiZoneCluster: false, ControlPlaneFailureTolerance: "zone", DefaultGardenerShootPurpose: provider.PurposeProduction}
 
 	cli := getClientForTests(t)
 	step := NewCreateRuntimeResourceStep(memoryStorage.Operations(), memoryStorage.Instances(), cli, kimConfig, inputConfig, nil, false, defaultOIDSConfig)
@@ -322,7 +324,7 @@ func TestCreateRuntimeResourceStep_Defaults_AWS_SingleZone_DefaultAdmin_ActualCr
 	assertInsertions(t, memoryStorage, instance, operation)
 
 	kimConfig := fixKimConfig("aws", false)
-	inputConfig := input.Config{MultiZoneCluster: false, ControlPlaneFailureTolerance: "zone"}
+	inputConfig := input.Config{MultiZoneCluster: false, ControlPlaneFailureTolerance: "zone", DefaultGardenerShootPurpose: provider.PurposeProduction}
 
 	cli := getClientForTests(t)
 	step := NewCreateRuntimeResourceStep(memoryStorage.Operations(), memoryStorage.Instances(), cli, kimConfig, inputConfig, nil, false, defaultOIDSConfig)
@@ -371,7 +373,7 @@ func TestCreateRuntimeResourceStep_Defaults_AWS_SingleZone_DryRun_ActualCreation
 
 	kimConfig := fixKimConfig("aws", false)
 	kimConfig.ViewOnly = true
-	inputConfig := input.Config{MultiZoneCluster: false, ControlPlaneFailureTolerance: "zone"}
+	inputConfig := input.Config{MultiZoneCluster: false, ControlPlaneFailureTolerance: "zone", DefaultGardenerShootPurpose: provider.PurposeProduction}
 
 	cli := getClientForTests(t)
 	step := NewCreateRuntimeResourceStep(memoryStorage.Operations(), memoryStorage.Instances(), cli, kimConfig, inputConfig, nil, false, defaultOIDSConfig)
@@ -427,7 +429,7 @@ func TestCreateRuntimeResourceStep_Defaults_AWS_MultiZoneWithNetworking_ActualCr
 	kimConfig := fixKimConfig("aws", false)
 
 	cli := getClientForTests(t)
-	inputConfig := input.Config{MultiZoneCluster: true}
+	inputConfig := input.Config{MultiZoneCluster: true, DefaultGardenerShootPurpose: provider.PurposeProduction}
 	step := NewCreateRuntimeResourceStep(memoryStorage.Operations(), memoryStorage.Instances(), cli, kimConfig, inputConfig, nil, false, defaultOIDSConfig)
 
 	// when
@@ -479,7 +481,7 @@ func TestCreateRuntimeResourceStep_Defaults_AWS_MultiZone_ActualCreation(t *test
 	kimConfig := fixKimConfig("aws", false)
 
 	cli := getClientForTests(t)
-	inputConfig := input.Config{MultiZoneCluster: true}
+	inputConfig := input.Config{MultiZoneCluster: true, DefaultGardenerShootPurpose: provider.PurposeProduction}
 	step := NewCreateRuntimeResourceStep(memoryStorage.Operations(), memoryStorage.Instances(), cli, kimConfig, inputConfig, nil, false, defaultOIDSConfig)
 
 	// when
@@ -524,7 +526,7 @@ func TestCreateRuntimeResourceStep_Defaults_Preview_SingleZone_ActualCreation(t 
 	kimConfig := fixKimConfig("preview", false)
 
 	cli := getClientForTests(t)
-	inputConfig := input.Config{MultiZoneCluster: false}
+	inputConfig := input.Config{MultiZoneCluster: false, DefaultGardenerShootPurpose: provider.PurposeProduction}
 	step := NewCreateRuntimeResourceStep(memoryStorage.Operations(), memoryStorage.Instances(), cli, kimConfig, inputConfig, nil, false, defaultOIDSConfig)
 
 	// when
@@ -570,7 +572,7 @@ func TestCreateRuntimeResourceStep_Defaults_Preview_SingleZone_ActualCreation_Wi
 	kimConfig := fixKimConfig("preview", false)
 
 	cli := getClientForTests(t)
-	inputConfig := input.Config{MultiZoneCluster: false}
+	inputConfig := input.Config{MultiZoneCluster: false, DefaultGardenerShootPurpose: provider.PurposeProduction}
 	step := NewCreateRuntimeResourceStep(memoryStorage.Operations(), memoryStorage.Instances(), cli, kimConfig, inputConfig, nil, false, defaultOIDSConfig)
 
 	// when
