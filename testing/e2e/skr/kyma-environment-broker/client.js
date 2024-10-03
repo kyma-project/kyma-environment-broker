@@ -273,7 +273,7 @@ class KEBClient {
     });
   }
 
-  async createBinding(instanceID, tokenRequest, expirationSeconds = DEFAULT_EXPIRATION_SECONDS) {
+  async createBinding(instanceID, bindingID, tokenRequest, expirationSeconds = DEFAULT_EXPIRATION_SECONDS) {
     const payload = {
       service_id: KYMA_SERVICE_ID,
       plan_id: this.planID,
@@ -282,10 +282,28 @@ class KEBClient {
         expiration_seconds: expirationSeconds,
       },
     };
-    const bindingID = Math.random().toString(36).substring(2, 18);
-    const endpoint = `service_instances/${instanceID}/service_bindings/${bindingID}?accepts_incomplete=true`;
+    const endpoint = `service_instances/${instanceID}/service_bindings/${bindingID}?accepts_incomplete=false`;
     try {
       return await this.callKEB(payload, endpoint, 'put');
+    } catch (err) {
+      throw new Error(`error while creating binding: ${err.toString()}`);
+    }
+  }
+
+  async deleteBinding(instanceID, bindingID) {
+    const endpoint = `service_instances/${instanceID}/service_bindings/${bindingID}
+    ?accepts_incomplete=false&service_id=${KYMA_SERVICE_ID}&plan_id=${this.planID}`;
+    try {
+      return await this.callKEB({}, endpoint, 'delete');
+    } catch (err) {
+      throw new Error(`error while creating binding: ${err.toString()}`);
+    }
+  }
+
+  async getBinding(instanceID, bindingID) {
+    const endpoint = `service_instances/${instanceID}/service_bindings/${bindingID}?accepts_incomplete=false`;
+    try {
+      return await this.callKEB({}, endpoint, 'get');
     } catch (err) {
       throw new Error(`error while creating binding: ${err.toString()}`);
     }
