@@ -296,7 +296,7 @@ class KEBClient {
     try {
       return await this.callKEB({}, endpoint, 'delete');
     } catch (err) {
-      throw new Error(`error while creating binding: ${err.toString()}`);
+      throw new Error(`error while deleting binding: ${err.toString()}`);
     }
   }
 
@@ -305,7 +305,7 @@ class KEBClient {
     try {
       return await this.callKEB({}, endpoint, 'get');
     } catch (err) {
-      throw new Error(`error while creating binding: ${err.toString()}`);
+      throw new Error(`error while getting binding: ${err.toString()}`);
     }
   }
 
