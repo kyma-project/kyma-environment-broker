@@ -185,7 +185,7 @@ func TestCreateBindingEndpoint(t *testing.T) {
   "service_id": "123",
   "plan_id": "%s",
   "parameters": {
-    "token_request": true
+    "service_account": true
   }
 }`, fixture.PlanId), t)
 
@@ -220,7 +220,7 @@ func TestCreateBindingEndpoint(t *testing.T) {
   "service_id": "123",
   "plan_id": "%s",
   "parameters": {
-    "token_request": true,
+    "service_account": true,
 	"expiration_seconds": %v
   }
 }`, fixture.PlanId, customExpirationSeconds), t)
