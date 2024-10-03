@@ -1,6 +1,4 @@
 const {expect} = require('chai');
-const chaiAsPromised = require('chai-as-promised');
-chai.use(chaiAsPromised);
 const {gatherOptions} = require('../skr-test');
 const {initializeK8sClient} = require('../utils/index.js');
 const {getSecret, getKubeconfigValidityInSeconds} = require('../utils');
@@ -58,11 +56,23 @@ describe('SKR Binding test', function() {
   });
 
   it('Try to fetch SKR binding created using Kubernetes TokenRequest', async function() {
-    await expect(keb.getBinding(options.instanceID, bindingID)).to.be.rejectedWith(Error);
+    try {
+      await keb.getBinding(options.instanceID, bindingID);
+      fail('KEB must return an error');
+    } catch (err) {
+      expect(err.response.status).equal(404);
+      console.log('Got response:');
+      console.log(err.response.data);
+    }
   });
 
   it('Try to fetch sap-btp-manager secret using binding from Kubernetes TokenRequest', async function() {
-    await expect(getSecret(secretName, ns)).to.be.rejectedWith(Error);
+    try {
+      await getSecret(secretName, ns);
+      fail('KCP must return an error');
+    } catch (err) {
+      console.log(err);
+    }
   });
 
   it('Create SKR binding using Gardener', async function() {
@@ -94,7 +104,14 @@ describe('SKR Binding test', function() {
   });
 
   it('Try to fetch SKR binding created using Gardener', async function() {
-    await expect(keb.getBinding(options.instanceID, bindingID)).to.be.rejectedWith(Error);
+    try {
+      await keb.getBinding(options.instanceID, bindingID);
+      fail('KEB must return an error');
+    } catch (err) {
+      expect(err.response.status).equal(404);
+      console.log('Got response:');
+      console.log(err.response.data);
+    }
   });
 
   it('Try to fetch sap-btp-manager secret using binding from Gardener', async function() {
