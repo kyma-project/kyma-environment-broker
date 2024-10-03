@@ -40,7 +40,7 @@ describe('SKR Binding test', function() {
     await initializeK8sClient({kubeconfig: kubeconfigFromBinding.credentials.kubeconfig});
   });
 
-  it('Fetch sap-btp-manager secret using binding for service account', async function() {
+  it('Fetch sap-btp-manager secret using binding for service account from Kubernetes TokenRequest', async function() {
     await getSecret(secretName, ns);
   });
 
