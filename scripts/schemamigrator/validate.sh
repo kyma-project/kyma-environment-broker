@@ -23,7 +23,8 @@ DB_PORT="5432"
 DB_SSL_PARAM="disable"
 POSTGRES_MULTIPLE_DATABASES="broker"
 
-CURRENT_DIR=$(pwd)
+# Get the directory of the running script
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
 function cleanup() {
     echo -e "${GREEN}Cleanup Postgres container and network${NC}"
@@ -36,10 +37,7 @@ trap cleanup EXIT
 echo -e "${GREEN}Create network${NC}"
 docker network create --driver bridge ${NETWORK}
 
-cd ../../
 docker build -t ${IMG_NAME} -f Dockerfile.schemamigrator .
-
-cd "${CURRENT_DIR}"
 
 echo -e "${GREEN}Start Postgres in detached mode${NC}"
 docker run -d --name ${POSTGRES_CONTAINER} \
@@ -47,7 +45,7 @@ docker run -d --name ${POSTGRES_CONTAINER} \
             -e POSTGRES_USER=${DB_USER} \
             -e POSTGRES_PASSWORD=${DB_PWD} \
             -e POSTGRES_MULTIPLE_DATABASES="${POSTGRES_MULTIPLE_DATABASES}" \
-            -v "${CURRENT_DIR}"/multiple-postgresql-databases.sh:/docker-entrypoint-initdb.d/multiple-postgresql-databases.sh \
+            -v "${SCRIPT_DIR}"/multiple-postgresql-databases.sh:/docker-entrypoint-initdb.d/multiple-postgresql-databases.sh \
             postgres:${POSTGRES_VERSION}
 
 function migrationUP() {
@@ -61,7 +59,7 @@ function migrationUP() {
             -e DB_NAME=${DB_NAME} \
             -e DB_SSL=${DB_SSL_PARAM} \
             -e DIRECTION="up" \
-            -v "${CURRENT_DIR}"/../../resources/migrations:/migrate/new-migrations \
+            -v "${SCRIPT_DIR}"/../../resources/migrations:/migrate/new-migrations \
         ${IMG_NAME}
 
     echo -e "${GREEN}Show schema_migrations table after UP migrations${NC}"
@@ -80,7 +78,7 @@ function migrationDOWN() {
             -e DB_SSL=${DB_SSL_PARAM} \
             -e DIRECTION="down" \
             -e NON_INTERACTIVE="true" \
-            -v "${CURRENT_DIR}"/../../resources/migrations:/migrate/new-migrations \
+            -v "${SCRIPT_DIR}"/../../resources/migrations:/migrate/new-migrations \
         ${IMG_NAME}
 
     echo -e "${GREEN}Show schema_migrations table after DOWN migrations${NC}"
