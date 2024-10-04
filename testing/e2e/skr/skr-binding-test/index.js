@@ -56,7 +56,7 @@ describe('SKR Binding test', function() {
 
     try {
       await keb.getBinding(options.instanceID, bindingID);
-      throw new Error('KEB must return an error');
+      expect.fail('KEB must return an error');
     } catch (err) {
       expect(err.message).to.include('404');
     }
@@ -65,7 +65,7 @@ describe('SKR Binding test', function() {
   it('Try to fetch sap-btp-manager secret using binding from Kubernetes TokenRequest', async function() {
     try {
       await getSecret(secretName, ns);
-      throw new Error('KCP must return an error');
+      expect.fail('KCP must return an error');
     } catch (err) {
       expect(err.message).to.include('You must be logged in to the server');
     }
@@ -100,7 +100,7 @@ describe('SKR Binding test', function() {
 
     try {
       await keb.getBinding(options.instanceID, bindingID);
-      throw new Error('KEB must return an error');
+      expect.fail('KEB must return an error');
     } catch (err) {
       expect(err.message).to.include('404');
     }
