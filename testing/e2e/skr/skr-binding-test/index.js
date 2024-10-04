@@ -53,25 +53,21 @@ describe('SKR Binding test', function() {
 
   it('Delete SKR binding created using Kubernetes TokenRequest', async function() {
     await keb.deleteBinding(options.instanceID, bindingID);
-  });
 
-  it('Try to fetch SKR binding created using Kubernetes TokenRequest', async function() {
     try {
       await keb.getBinding(options.instanceID, bindingID);
-      fail('KEB must return an error');
+      throw new Error('KEB must return an error');
     } catch (err) {
-      expect(err.response.status).equal(404);
-      console.log('Got response:');
-      console.log(err.response.data);
+      expect(err.message).to.include('404');
     }
   });
 
   it('Try to fetch sap-btp-manager secret using binding from Kubernetes TokenRequest', async function() {
     try {
       await getSecret(secretName, ns);
-      fail('KCP must return an error');
+      throw new Error('KCP must return an error');
     } catch (err) {
-      console.log(err);
+      expect(err.message).to.include('You must be logged in to the server');
     }
   });
 
@@ -80,10 +76,10 @@ describe('SKR Binding test', function() {
     const expirationSeconds = 900;
     try {
       kubeconfigFromBinding = await keb.createBinding(options.instanceID, bindingID, false, expirationSeconds);
-      expect(getKubeconfigValidityInSeconds(kubeconfigFromBinding.credentials.kubeconfig)).to.equal(expirationSeconds);
     } catch (err) {
       console.log(err);
     }
+    expect(getKubeconfigValidityInSeconds(kubeconfigFromBinding.credentials.kubeconfig)).to.equal(expirationSeconds);
   });
 
   it('Initiate K8s client with kubeconfig from binding', async function() {
@@ -101,16 +97,12 @@ describe('SKR Binding test', function() {
 
   it('Delete SKR binding created using Gardener', async function() {
     await keb.deleteBinding(options.instanceID, bindingID);
-  });
 
-  it('Try to fetch SKR binding created using Gardener', async function() {
     try {
       await keb.getBinding(options.instanceID, bindingID);
-      fail('KEB must return an error');
+      throw new Error('KEB must return an error');
     } catch (err) {
-      expect(err.response.status).equal(404);
-      console.log('Got response:');
-      console.log(err.response.data);
+      expect(err.message).to.include('404');
     }
   });
 
