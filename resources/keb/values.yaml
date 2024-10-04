@@ -13,28 +13,28 @@ global:
       version: "v20240612-83a7c0eb" # do not update along with the other images
     kyma_environment_broker:
       dir:
-      version: "1.10.16"
+      version: "1.10.17"
     kyma_environments_subaccount_cleanup_job:
       dir:
-      version: "1.10.16"
+      version: "1.10.17"
     kyma_environment_trial_cleanup_job:
       dir:
-      version: "1.10.16"
+      version: "1.10.17"
     kyma_environment_expirator_job:
       dir:
-      version: "1.10.16"
+      version: "1.10.17"
     kyma_environment_deprovision_retrigger_job:
       dir:
-      version: "1.10.16"
+      version: "1.10.17"
     kyma_environment_runtime_reconciler:
       dir:
-      version: "1.10.16"
+      version: "1.10.17"
     kyma_environment_subaccount_sync:
       dir:
-      version: "1.10.16"
+      version: "1.10.17"
     kyma_environment_globalaccounts:
       dir:
-      version: "1.10.16"
+      version: "1.10.17"
 
   kyma_environment_broker:
     enabled: false
@@ -250,6 +250,11 @@ broker:
 
 binding:
   enabled: false
+  bindablePlans: "aws"
+  expirationSeconds: 600
+  maxExpirationSeconds: 7200
+  # minExpirationSeconds can't be lower than 600 seconds. Forced by Gardener
+  minExpirationSeconds: 600
 
 service:
   type: ClusterIP
