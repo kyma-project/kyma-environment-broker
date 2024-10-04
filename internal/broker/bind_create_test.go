@@ -185,13 +185,14 @@ func TestCreateBindingEndpoint(t *testing.T) {
 	t.Run("should create a new service binding without error", func(t *testing.T) {
 
 		// When
-		response := CallAPI(httpServer, method, "v2/service_instances/1/service_bindings/binding-id?accepts_incomplete=true", fmt.Sprintf(`{
-  "service_id": "123",
-  "plan_id": "%s",
-  "parameters": {
-    "service_account": true
-  }
-}`, fixture.PlanId), t)
+		response := CallAPI(httpServer, method, "v2/service_instances/1/service_bindings/binding-id?accepts_incomplete=true", fmt.Sprintf(`
+		{
+			"service_id": "123",
+			"plan_id": "%s",
+			"parameters": {
+				"service_account": true
+			}
+		}`, fixture.PlanId), t)
 
 		binding := verifyResponse(t, response)
 
@@ -220,14 +221,15 @@ func TestCreateBindingEndpoint(t *testing.T) {
 		const customExpirationSeconds = 900
 
 		// When
-		response := CallAPI(httpServer, method, "v2/service_instances/1/service_bindings/binding-id2?accepts_incomplete=true", fmt.Sprintf(`{
-  "service_id": "123",
-  "plan_id": "%s",
-  "parameters": {
-    "service_account": true,
-	"expiration_seconds": %v
-  }
-}`, fixture.PlanId, customExpirationSeconds), t)
+		response := CallAPI(httpServer, method, "v2/service_instances/1/service_bindings/binding-id2?accepts_incomplete=true", fmt.Sprintf(`
+		{
+			"service_id": "123",
+			"plan_id": "%s",
+			"parameters": {
+				"service_account": true,
+				"expiration_seconds": %v
+			}
+		}`, fixture.PlanId, customExpirationSeconds), t)
 
 		binding := verifyResponse(t, response)
 
@@ -242,15 +244,16 @@ func TestCreateBindingEndpoint(t *testing.T) {
 		const customExpirationSeconds = 7201
 
 		// When
-		response := CallAPI(httpServer, method, "v2/service_instances/1/service_bindings/binding-id3?accepts_incomplete=true", fmt.Sprintf(`{
-  "service_id": "123",
-  "plan_id": "%s",
-  "parameters": {
-	"service_account": true,
-	"expiration_seconds": %v
+		response := CallAPI(httpServer, method, "v2/service_instances/1/service_bindings/binding-id3?accepts_incomplete=true", fmt.Sprintf(`
+		{
+			"service_id": "123",
+			"plan_id": "%s",
+			"parameters": {
+				"service_account": true,
+				"expiration_seconds": %v
 
- }
-}`, fixture.PlanId, customExpirationSeconds), t)
+			}
+		}`, fixture.PlanId, customExpirationSeconds), t)
 		require.Equal(t, http.StatusBadRequest, response.StatusCode)
 	})
 
@@ -258,14 +261,15 @@ func TestCreateBindingEndpoint(t *testing.T) {
 		const customExpirationSeconds = 60
 
 		// When
-		response := CallAPI(httpServer, method, "v2/service_instances/1/service_bindings/binding-id4?accepts_incomplete=true", fmt.Sprintf(`{
-  "service_id": "123",
-  "plan_id": "%s",
-  "parameters": {	
-	"service_account": true,
-	"expiration_seconds": %v
-}
-}`, fixture.PlanId, customExpirationSeconds), t)
+		response := CallAPI(httpServer, method, "v2/service_instances/1/service_bindings/binding-id4?accepts_incomplete=true", fmt.Sprintf(`
+		{
+			"service_id": "123",
+			"plan_id": "%s",
+			"parameters": {	
+				"service_account": true,
+				"expiration_seconds": %v
+			}	
+		}`, fixture.PlanId, customExpirationSeconds), t)
 		require.Equal(t, http.StatusBadRequest, response.StatusCode)
 	})
 }
