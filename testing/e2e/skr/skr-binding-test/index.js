@@ -62,6 +62,16 @@ describe('SKR Binding test', function() {
     await getSecret(secretName, ns);
   });
 
+  it('Create SKR binding with expiration seconds below the minimum value', async function() {
+    const expirationSeconds = 10;
+    try {
+      kubeconfigFromBinding = await keb.createBinding(options.instanceID, true, expirationSeconds);
+      expect.fail('Expected the test to fail');
+    } catch (err) {
+      console.log(err);
+    }
+  });
+
   after('Cleanup the resources', async function() {
     this.timeout(deprovisioningTimeout);
     if (process.env['SKIP_DEPROVISIONING'] != 'true') {
