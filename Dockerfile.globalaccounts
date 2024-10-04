@@ -1,0 +1,25 @@
+# Build image
+FROM golang:1.23.1-alpine3.20 AS build
+
+WORKDIR /go/src/github.com/kyma-project/kyma-environment-broker
+
+COPY cmd cmd
+COPY common common
+COPY internal internal
+COPY go.mod go.mod
+COPY go.sum go.sum
+
+RUN CGO_ENABLED=0 go build -o /bin/globalaccounts cmd/globalaccounts/main.go
+
+# Get latest CA certs
+FROM alpine:3.20.3 as certs
+RUN apk --update add ca-certificates
+
+# Final image
+FROM scratch
+LABEL source=git@github.com:kyma-project/kyma-environment-broker.git
+
+COPY --from=certs /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/ca-certificates.crt
+COPY --from=build /bin/globalaccounts /bin/globalaccounts
+
+CMD ["/bin/globalaccounts"]

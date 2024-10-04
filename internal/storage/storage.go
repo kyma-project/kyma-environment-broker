@@ -24,6 +24,7 @@ type BrokerStorage interface {
 	SubaccountStates() SubaccountStates
 	Events() Events
 	InstancesArchived() InstancesArchived
+	Bindings() Bindings
 }
 
 const (
@@ -54,6 +55,7 @@ func NewFromConfig(cfg Config, evcfg events.Config, cipher postgres.Cipher, log 
 		events:            events.New(evcfg, eventstorage.New(fact, log)),
 		subaccountStates:  postgres.NewSubaccountStates(fact),
 		instancesArchived: postgres.NewInstanceArchived(fact),
+		bindings:          postgres.NewBinding(fact, cipher),
 	}, connection, nil
 }
 
@@ -128,6 +130,7 @@ type storage struct {
 	events            Events
 	subaccountStates  SubaccountStates
 	instancesArchived InstancesArchived
+	bindings          Bindings
 }
 
 func (s storage) Instances() Instances {
@@ -164,4 +167,8 @@ func (s storage) SubaccountStates() SubaccountStates {
 
 func (s storage) InstancesArchived() InstancesArchived {
 	return s.instancesArchived
+}
+
+func (s storage) Bindings() Bindings {
+	return s.bindings
 }

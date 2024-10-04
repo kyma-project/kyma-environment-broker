@@ -17,6 +17,9 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
+const BINDING_TYPE_SERVICE_ACCOUNT = "service_account"
+const BINDING_TYPE_ADMIN_KUBECONFIG = "gardener_admin_kubeconfig"
+
 type ProvisionerInputCreator interface {
 	SetProvisioningParameters(params ProvisioningParameters) ProvisionerInputCreator
 	SetShootName(string) ProvisionerInputCreator
@@ -578,4 +581,17 @@ type SubaccountState struct {
 type DeletedStats struct {
 	NumberOfDeletedInstances              int
 	NumberOfOperationsForDeletedInstances int
+}
+
+type Binding struct {
+	ID         string
+	InstanceID string
+
+	CreatedAt time.Time
+	UpdatedAt time.Time
+
+	Kubeconfig        string
+	ExpirationSeconds int64
+	GenerationMethod  string
+	BindingType       string
 }

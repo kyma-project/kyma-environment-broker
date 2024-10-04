@@ -343,6 +343,27 @@ func FixRuntimeState(id, runtimeID, operationID string) internal.RuntimeState {
 	}
 }
 
+func FixBinding(id string) internal.Binding {
+	var instanceID = fmt.Sprintf("instance-%s", id)
+
+	return FixBindingWithInstanceID(id, instanceID)
+}
+
+func FixBindingWithInstanceID(bindingID string, instanceID string) internal.Binding {
+	return internal.Binding{
+		ID:         bindingID,
+		InstanceID: instanceID,
+
+		CreatedAt: time.Now(),
+		UpdatedAt: time.Now().Add(time.Minute * 5),
+
+		Kubeconfig:        "kubeconfig",
+		ExpirationSeconds: 600,
+		GenerationMethod:  "adminkubeconfig",
+		BindingType:       internal.BINDING_TYPE_SERVICE_ACCOUNT,
+	}
+}
+
 // SimpleInputCreator implements ProvisionerInputCreator interface
 func (c *SimpleInputCreator) SetProvisioningParameters(params internal.ProvisioningParameters) internal.ProvisionerInputCreator {
 	return c

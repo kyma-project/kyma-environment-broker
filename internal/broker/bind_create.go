@@ -19,23 +19,25 @@ import (
 )
 
 type BindingConfig struct {
-	Enabled           bool        `envconfig:"default=false"`
-	BindablePlans     EnablePlans `envconfig:"default=aws"`
-	ExpirationSeconds int         `envconfig:"default=600"`
+	Enabled              bool        `envconfig:"default=false"`
+	BindablePlans        EnablePlans `envconfig:"default=aws"`
+	ExpirationSeconds    int         `envconfig:"default=600"`
+	MaxExpirationSeconds int         `envconfig:"default=7200"`
+	MinExpirationSeconds int         `envconfig:"default=600"`
 }
 
 type BindEndpoint struct {
 	config           BindingConfig
 	instancesStorage storage.Instances
 
-	tokenRequestBindingManager broker.BindingsManager
-	gardenerBindingsManager    broker.BindingsManager
+	serviceAccountBindingManager broker.BindingsManager
+	gardenerBindingsManager      broker.BindingsManager
 
 	log logrus.FieldLogger
 }
 
 type BindingParams struct {
-	TokenRequest      bool `json:"token_request,omit"`
+	ServiceAccount    bool `json:"service_account,omit"`
 	ExpirationSeconds int  `json:"expiration_seconds,omit"`
 }
 
@@ -45,8 +47,8 @@ type Credentials struct {
 
 func NewBind(cfg BindingConfig, instanceStorage storage.Instances, log logrus.FieldLogger, clientProvider broker.ClientProvider, kubeconfigProvider broker.KubeconfigProvider, gardenerClient client.Client) *BindEndpoint {
 	return &BindEndpoint{config: cfg, instancesStorage: instanceStorage, log: log.WithField("service", "BindEndpoint"),
-		tokenRequestBindingManager: broker.NewTokenRequestBindingsManager(clientProvider, kubeconfigProvider),
-		gardenerBindingsManager:    broker.NewGardenerBindingManager(gardenerClient),
+		serviceAccountBindingManager: broker.NewServiceAccountBindingsManager(clientProvider, kubeconfigProvider),
+		gardenerBindingsManager:      broker.NewGardenerBindingManager(gardenerClient),
 	}
 }
 
@@ -98,15 +100,23 @@ func (b *BindEndpoint) Bind(ctx context.Context, instanceID, bindingID string, d
 
 	expirationSeconds := b.config.ExpirationSeconds
 	if parameters.ExpirationSeconds != 0 {
+		if parameters.ExpirationSeconds > b.config.MaxExpirationSeconds {
+			message := fmt.Sprintf("expiration_seconds cannot be greater than %d", b.config.MaxExpirationSeconds)
+			return domain.Binding{}, apiresponses.NewFailureResponse(fmt.Errorf(message), http.StatusBadRequest, message)
+		}
+		if parameters.ExpirationSeconds < b.config.MinExpirationSeconds {
+			message := fmt.Sprintf("expiration_seconds cannot be less than %d", b.config.MinExpirationSeconds)
+			return domain.Binding{}, apiresponses.NewFailureResponse(fmt.Errorf(message), http.StatusBadRequest, message)
+		}
 		expirationSeconds = parameters.ExpirationSeconds
 	}
 
 	var kubeconfig string
-	if parameters.TokenRequest {
+	if parameters.ServiceAccount {
 		// get kubeconfig for the instance
-		kubeconfig, err = b.tokenRequestBindingManager.Create(ctx, instance, bindingID, expirationSeconds)
+		kubeconfig, err = b.serviceAccountBindingManager.Create(ctx, instance, bindingID, expirationSeconds)
 		if err != nil {
-			message := fmt.Sprintf("failed to create kyma binding using token requests: %s", err)
+			message := fmt.Sprintf("failed to create kyma binding for service account using token request: %s", err)
 			return domain.Binding{}, apiresponses.NewFailureResponse(fmt.Errorf(message), http.StatusBadRequest, message)
 		}
 	} else {
