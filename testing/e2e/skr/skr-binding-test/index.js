@@ -62,14 +62,12 @@ describe('SKR Binding test', function() {
     await getSecret(secretName, ns);
   });
 */
-  it('Create SKR binding with expiration seconds below the minimum value', async function() {
+  it('Should fail creation of SKR binding when expiration seconds value is below the minimum value', async function() {
     const expirationSeconds = 10;
     try {
       kubeconfigFromBinding = await keb.createBinding("4D0CE8A5-714F-45E1-9B17-FE34FEEFF44B", true, expirationSeconds);
       expect.fail('Expected the test to fail');
-    } catch (err) {
-      console.log(err);
-    }
+    } catch (err) { }
   });
 
  /* after('Cleanup the resources', async function() {
