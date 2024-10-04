@@ -71,7 +71,7 @@ describe('SKR Binding test', function() {
   });
 
   it('Should not allow creation of SKR binding when expiration seconds value is over the maximum value', async function() {
-    const expirationSeconds = 100000;
+    const expirationSeconds = 700;
     try {
       kubeconfigFromBinding = await keb.createBinding("4D0CE8A5-714F-45E1-9B17-FE34FEEFF44B", true, expirationSeconds);
       expect.fail('Expected the test to fail');
