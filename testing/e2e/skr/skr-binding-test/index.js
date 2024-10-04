@@ -66,7 +66,8 @@ describe('SKR Binding test', function() {
     const expirationSeconds = 10;
     try {
       kubeconfigFromBinding = await keb.createBinding("4D0CE8A5-714F-45E1-9B17-FE34FEEFF44B", true, expirationSeconds);
-      expect.fail('Expected the test to fail');
+      console.log("The test was expected to fail but it passed");
+      expect.fail();
     } catch (err) { }
   });
 
@@ -74,7 +75,8 @@ describe('SKR Binding test', function() {
     const expirationSeconds = 700;
     try {
       kubeconfigFromBinding = await keb.createBinding("4D0CE8A5-714F-45E1-9B17-FE34FEEFF44B", true, expirationSeconds);
-      expect.fail('Expected the test to fail');
+      console.log("The test was expected to fail but it passed");
+      expect.fail();
     } catch (err) { }
   });
 
