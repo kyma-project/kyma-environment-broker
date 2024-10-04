@@ -69,7 +69,6 @@ describe('SKR Binding test', function() {
       expect.fail('Expected the test to fail');
     } catch (err) {
       console.log(err);
-      console.log(kubeconfigFromBinding);
     }
   });
 
