@@ -1,0 +1,133 @@
+{{ if .Values.globalaccounts.enabled }}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: "{{- .Values.globalaccounts.name -}}"
+  namespace: kcp-system
+  labels:
+  name: "{{- .Values.globalaccounts.name -}}"
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+  name: "{{- .Values.globalaccounts.name -}}"
+  template:
+    metadata:
+      name: "{{- .Values.globalaccounts.name -}}"
+      labels:
+        app.kubernetes.io/name: "{{- .Values.globalaccounts.name -}}"
+    spec:
+      serviceAccountName: {{ .Values.global.kyma_environment_broker.serviceAccountName }}
+      {{- with .Values.deployment.securityContext }}
+      securityContext:
+        {{ toYaml . | nindent 12 }}
+      {{- end }}
+      {{- if ne .Values.imagePullSecret "" }}
+      imagePullSecrets:
+          - name: {{ .Values.imagePullSecret }}
+      {{- end }}
+      containers:
+        - name: "{{- .Values.globalaccounts.name -}}"
+          command: ["/bin/main"]
+          image: "{{ .Values.global.images.container_registry.path }}/{{ .Values.global.images.kyma_environment_broker.dir }}{{ .Values.globalaccounts.name -}}:{{ .Values.global.images.kyma_environment_globalaccounts.version }}"
+          imagePullPolicy: Always
+          env:
+            - name: GLOBALACCOUNTS_DATABASE_SECRET_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: kcp-storage-client-secret
+                  key: secretKey
+                  optional: true
+            - name: GLOBALACCOUNTS_DATABASE_USER
+              valueFrom:
+                secretKeyRef:
+                  key: postgresql-broker-username
+                  name: kcp-postgresql
+            - name: GLOBALACCOUNTS_DATABASE_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  key: postgresql-broker-password
+                  name: kcp-postgresql
+            - name: GLOBALACCOUNTS_DATABASE_HOST
+              valueFrom:
+                secretKeyRef:
+                  key: postgresql-serviceName
+                  name: kcp-postgresql
+            - name: GLOBALACCOUNTS_DATABASE_PORT
+              valueFrom:
+                secretKeyRef:
+                  key: postgresql-servicePort
+                  name: kcp-postgresql
+            - name: GLOBALACCOUNTS_DATABASE_NAME
+              valueFrom:
+                secretKeyRef:
+                  key: postgresql-broker-db-name
+                  name: kcp-postgresql
+            - name: GLOBALACCOUNTS_CIS_ACCOUNTS_CLIENT_ID
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.globalaccounts.svc.clientId | required "please specify .Values.globalaccounts.svc.clientId" | quote }}
+                  key: id
+            - name: GLOBALACCOUNTS_CIS_ACCOUNTS_CLIENT_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.globalaccounts.svc.secretName | required "please specify .Values.globalaccounts.svc.secretName" | quote }}
+                  key: secret
+            - name: GLOBALACCOUNTS_ACCOUNTS_AUTH_URL
+              value: {{ .Values.globalaccounts.svc.authURL | required "please specify .Values.globalaccounts.svc.authURL" | quote }}
+            - name: GLOBALACCOUNTS_ACCOUNTS_SERVICE_URL
+              value: {{ .Values.globalaccounts.svc.serviceURL | required "please specify .Values.globalaccounts.svc.serviceURL" | quote }}
+            - name: GLOBALACCOUNTS_DATABASE_SSLMODE
+              valueFrom:
+                secretKeyRef:
+                  key: postgresql-sslMode
+                  name: kcp-postgresql
+            - name: GLOBALACCOUNTS_DATABASE_SSLROOTCERT
+              value: /secrets/cloudsql-sslrootcert/server-ca.pem
+        {{- if and (eq .Values.global.database.embedded.enabled false) (eq .Values.global.database.cloudsqlproxy.enabled false)}}
+          volumeMounts:
+              - name: cloudsql-sslrootcert
+                mountPath: /secrets/cloudsql-sslrootcert
+                readOnly: true
+        {{- end}}
+        {{- if and (eq .Values.global.database.embedded.enabled false) (eq .Values.global.database.cloudsqlproxy.enabled true)}}
+        - name: cloudsql-proxy
+          image: {{ .Values.global.images.cloudsql_proxy.repository }}:{{ .Values.global.images.cloudsql_proxy.tag }}
+          {{- if .Values.global.database.cloudsqlproxy.workloadIdentity.enabled }}
+          command: ["/cloud-sql-proxy",
+                    "{{ .Values.global.database.managedGCP.instanceConnectionName }}",
+                    "--exit-zero-on-sigterm",
+                    "--private-ip"]
+          {{- else }}
+          command: ["/cloud-sql-proxy",
+                    "{{ .Values.global.database.managedGCP.instanceConnectionName }}",
+                    "--exit-zero-on-sigterm",
+                    "--private-ip",
+                    "--credentials-file=/secrets/cloudsql-instance-credentials/credentials.json"]
+          volumeMounts:
+            - name: cloudsql-instance-credentials
+              mountPath: /secrets/cloudsql-instance-credentials
+              readOnly: true
+          {{- end }}
+          {{- with .Values.deployment.securityContext }}
+          securityContext:
+            {{ toYaml . | nindent 16 }}
+          {{- end }}
+        {{- end}}
+      {{- if and (eq .Values.global.database.embedded.enabled false) (eq .Values.global.database.cloudsqlproxy.enabled true) (eq .Values.global.database.cloudsqlproxy.workloadIdentity.enabled false)}}
+      volumes:
+        - name: cloudsql-instance-credentials
+          secret:
+            secretName: cloudsql-instance-credentials
+      {{- end}}
+      {{- if and (eq .Values.global.database.embedded.enabled false) (eq .Values.global.database.cloudsqlproxy.enabled false)}}
+      volumes:
+        - name: cloudsql-sslrootcert
+          secret:
+            secretName: kcp-postgresql
+            items: 
+              - key: postgresql-sslRootCert
+                path: server-ca.pem
+            optional: true
+      {{- end}}
+{{ end }}

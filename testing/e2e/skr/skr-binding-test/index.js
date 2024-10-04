@@ -29,7 +29,7 @@ describe('SKR Binding test', function() {
     await provisionSKRInstance(options, provisioningTimeout);
   });
 
-  it('Create SKR binding using Kubernetes TokenRequest', async function() {
+  it('Create SKR binding for service account using Kubernetes TokenRequest', async function() {
     bindingID = Math.random().toString(36).substring(2, 18);
     try {
       kubeconfigFromBinding = await keb.createBinding(options.instanceID, bindingID, true);
@@ -42,7 +42,7 @@ describe('SKR Binding test', function() {
     await initializeK8sClient({kubeconfig: kubeconfigFromBinding.credentials.kubeconfig});
   });
 
-  it('Fetch sap-btp-manager secret using binding from Kubernetes TokenRequest', async function() {
+  it('Fetch sap-btp-manager secret using binding for service account from Kubernetes TokenRequest', async function() {
     await getSecret(secretName, ns);
   });
 
