@@ -250,6 +250,11 @@ broker:
 
 binding:
   enabled: false
+  bindablePlans: "aws"
+  expirationSeconds: 600
+  maxExpirationSeconds: 7200
+  # minExpirationSeconds can't be lower than 600 seconds. Forced by Gardener
+  minExpirationSeconds: 600
 
 service:
   type: ClusterIP
