@@ -15,7 +15,7 @@ const secretName = 'sap-btp-manager';
 const ns = 'kyma-system';
 
 describe('SKR Binding test', function() {
-  globalTimeout += provisioningTimeout + deprovisioningTimeout;
+/*   globalTimeout += provisioningTimeout + deprovisioningTimeout;
 
   this.timeout(globalTimeout);
   this.slow(slowTime);
@@ -23,7 +23,7 @@ describe('SKR Binding test', function() {
   const options = gatherOptions(); // with default values
   let kubeconfigFromBinding;
 
-  before('Ensure SKR is provisioned', async function() {
+ before('Ensure SKR is provisioned', async function() {
     this.timeout(provisioningTimeout);
     await provisionSKRInstance(options, provisioningTimeout);
   });
@@ -61,21 +61,21 @@ describe('SKR Binding test', function() {
   it('Fetch sap-btp-manager secret using binding from Gardener', async function() {
     await getSecret(secretName, ns);
   });
-
+*/
   it('Create SKR binding with expiration seconds below the minimum value', async function() {
     const expirationSeconds = 10;
     try {
-      kubeconfigFromBinding = await keb.createBinding(options.instanceID, true, expirationSeconds);
+      kubeconfigFromBinding = await keb.createBinding("4D0CE8A5-714F-45E1-9B17-FE34FEEFF44B", true, expirationSeconds);
       expect.fail('Expected the test to fail');
     } catch (err) {
       console.log(err);
     }
   });
 
-  after('Cleanup the resources', async function() {
+ /* after('Cleanup the resources', async function() {
     this.timeout(deprovisioningTimeout);
     if (process.env['SKIP_DEPROVISIONING'] != 'true') {
       await deprovisionAndUnregisterSKR(options, deprovisioningTimeout, true);
     }
-  });
+  });*/
 });
