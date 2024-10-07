@@ -78,21 +78,26 @@ describe('SKR Binding test', function() {
         console.log(err.response.data);
       } else {
         throw err;
-      }
-    
-    }
-      
+      } 
+    }     
   });
 
   it('Should not allow creation of SKR binding when expiration seconds value is over the maximum value', async function() {
-    const expirationSeconds = 1;
+    const expirationSeconds = 999999999;
     this.timeout(10000);
     try {
-      kubeconfigFromBinding = await keb.createBinding("0EFB3BD5-EDA1-4659-AA18-597236230931", true, expirationSeconds);
-     // console.log("The test was expected to fail but it passed");
-      //expect.fail();
-    } catch (err) { }
-      console.log("The test failed as expected");
+      await keb.createBinding2("0EFB3BD5-EDA1-4659-AA18-597236230931", true, expirationSeconds);
+      expect.fail("The call was expected to fail but it passed");
+    } catch (err) {
+      if (err.response) {
+        expect(err.response.status).equal(400);
+        expect(err.response.data.description).to.include('expiration_seconds cannot be greater than');
+        console.log('Got response:');
+        console.log(err.response.data);
+      } else {
+        throw err;
+      } 
+    }
   });
 
  /* after('Cleanup the resources', async function() {
