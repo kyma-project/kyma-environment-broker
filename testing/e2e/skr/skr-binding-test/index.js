@@ -27,10 +27,10 @@ describe('SKR Binding test', function() {
     this.timeout(provisioningTimeout);
     await provisionSKRInstance(options, provisioningTimeout);
   });
-
+*/
   it('Create SKR binding for service account using Kubernetes TokenRequest', async function() {
     try {
-      kubeconfigFromBinding = await keb.createBinding(options.instanceID, true);
+      kubeconfigFromBinding = await keb.createBinding("0EFB3BD5-EDA1-4659-AA18-597236230931", true);
     } catch (err) {
       console.log(err);
     }
@@ -47,7 +47,7 @@ describe('SKR Binding test', function() {
   it('Create SKR binding using Gardener', async function() {
     const expirationSeconds = 900;
     try {
-      kubeconfigFromBinding = await keb.createBinding(options.instanceID, false, expirationSeconds);
+      kubeconfigFromBinding = await keb.createBinding("0EFB3BD5-EDA1-4659-AA18-597236230931", false, expirationSeconds);
       expect(getKubeconfigValidityInSeconds(kubeconfigFromBinding.credentials.kubeconfig)).to.equal(expirationSeconds);
     } catch (err) {
       console.log(err);
@@ -61,7 +61,7 @@ describe('SKR Binding test', function() {
   it('Fetch sap-btp-manager secret using binding from Gardener', async function() {
     await getSecret(secretName, ns);
   });
-*/
+
   it('Should not allow creation of SKR binding when expiration seconds value is below the minimum value', async function() {
     const expirationSeconds = 700;
 
