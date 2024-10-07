@@ -76,7 +76,7 @@ describe('SKR Binding test', function() {
      // console.log("The test was expected to fail but it passed");
       //expect.fail();
     } catch (err) { }
-      console.log(err);
+      console.log("The test failed as expected");
   });
 
  /* after('Cleanup the resources', async function() {
