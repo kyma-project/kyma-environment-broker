@@ -65,9 +65,7 @@ describe('SKR Binding test', function() {
   it('Should not allow creation of SKR binding when expiration seconds value is below the minimum value', async function() {
     const expirationSeconds = 10;
 
-      expect( function () {
-        keb.createBinding("0EFB3BD5-EDA1-4659-AA18-597236230931", true, expirationSeconds);
-    } ).to.throw();
+    expect(keb.createBinding("0EFB3BD5-EDA1-4659-AA18-597236230931", true, expirationSeconds)).to.throw();
       
   });
 
