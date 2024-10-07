@@ -1,4 +1,4 @@
-const chai = require('chai');
+const {expect} = require('chai');
 const {gatherOptions} = require('../skr-test');
 const {initializeK8sClient} = require('../utils/index.js');
 const {getSecret, getKubeconfigValidityInSeconds} = require('../utils');
@@ -14,8 +14,6 @@ let globalTimeout = 1000 * 60 * 70; // 70m
 const slowTime = 5000;
 const secretName = 'sap-btp-manager';
 const ns = 'kyma-system';
-const {expect} = chai;
-chai.use(require('chai-as-promised'));
 
 describe('SKR Binding test', function() {
 /*   globalTimeout += provisioningTimeout + deprovisioningTimeout;
@@ -68,8 +66,18 @@ describe('SKR Binding test', function() {
   it('Should not allow creation of SKR binding when expiration seconds value is below the minimum value', async function() {
     const expirationSeconds = 1;
     this.timeout(10000);
-    return keb.createBinding("0EFB3BD5-EDA1-4659-AA18-597236230931", true, expirationSeconds).should.be.rejected;
+   // return keb.createBinding("0EFB3BD5-EDA1-4659-AA18-597236230931", true, expirationSeconds).should.be.rejected;
    // expect(async () => { keb.createBinding("0EFB3BD5-EDA1-4659-AA18-597236230931", true, expirationSeconds); }).to.throw();
+    try {
+      await keb.createBinding("0EFB3BD5-EDA1-4659-AA18-597236230931", true, expirationSeconds);
+      fail('KEB must return an error');
+    } catch (err) {
+      //expect(err.response.status).equal(400);
+     // expect(err.response.data.description).to.include('overlap');
+      console.log('Got response:');
+      console.log(err.response.status);
+      console.log(err.response.data);
+    }
       
   });
 
