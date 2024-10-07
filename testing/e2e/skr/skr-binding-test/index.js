@@ -47,6 +47,7 @@ describe('SKR Binding test', function() {
 
   it('Create SKR binding using Gardener', async function() {
     const expirationSeconds = 900;
+    this.timeout(10000);
     try {
       kubeconfigFromBinding = await keb.createBinding("0EFB3BD5-EDA1-4659-AA18-597236230931", false, expirationSeconds);
       expect(getKubeconfigValidityInSeconds(kubeconfigFromBinding.credentials.kubeconfig)).to.equal(expirationSeconds);
@@ -81,10 +82,10 @@ describe('SKR Binding test', function() {
       await keb.createBinding2("0EFB3BD5-EDA1-4659-AA18-597236230931", true, expirationSeconds);
       fail('KEB must return an error');
     } catch (err) {
+      expect(err.response.status).equal(400);
+      expect(err.response.data.description).to.include('expiration_seconds cannot be less than');
       console.log('Got response:');
       console.log(err.response.data);
-      console.log(err.response.status);
-     // console.log(err);
     }
       
   });
