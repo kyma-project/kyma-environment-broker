@@ -16,6 +16,7 @@ const secretName = 'sap-btp-manager';
 const ns = 'kyma-system';
 
 describe('SKR Binding test', function() {
+  this.timeout(10000); 
 /*   globalTimeout += provisioningTimeout + deprovisioningTimeout;
 
   this.timeout(globalTimeout);
@@ -47,7 +48,7 @@ describe('SKR Binding test', function() {
 
   it('Create SKR binding using Gardener', async function() {
     const expirationSeconds = 900;
-    this.timeout(10000);
+   // this.timeout(10000);
     try {
       kubeconfigFromBinding = await keb.createBinding("0EFB3BD5-EDA1-4659-AA18-597236230931", false, expirationSeconds);
       expect(getKubeconfigValidityInSeconds(kubeconfigFromBinding.credentials.kubeconfig)).to.equal(expirationSeconds);
@@ -66,7 +67,7 @@ describe('SKR Binding test', function() {
 
   it('Should not allow creation of SKR binding when expiration seconds value is below the minimum value', async function() {
     const expirationSeconds = 1;
-    this.timeout(10000);
+   // this.timeout(10000);
     try {
       await keb.createBinding2("0EFB3BD5-EDA1-4659-AA18-597236230931", true, expirationSeconds);
       expect.fail("The call was expected to fail but it passed");
@@ -84,7 +85,7 @@ describe('SKR Binding test', function() {
 
   it('Should not allow creation of SKR binding when expiration seconds value is over the maximum value', async function() {
     const expirationSeconds = 999999999;
-    this.timeout(10000);
+   // this.timeout(10000);
     try {
       await keb.createBinding2("0EFB3BD5-EDA1-4659-AA18-597236230931", true, expirationSeconds);
       expect.fail("The call was expected to fail but it passed");
