@@ -66,16 +66,25 @@ describe('SKR Binding test', function() {
   it('Should not allow creation of SKR binding when expiration seconds value is below the minimum value', async function() {
     const expirationSeconds = 1;
     this.timeout(10000);
+    const bindingID = Math.random().toString(36).substring(2, 18);
+
+
+    const customParams = {'service_account': true, 'expiration_seconds': expirationSeconds};
+    const payload = keb.buildPayload('binding', "0EFB3BD5-EDA1-4659-AA18-597236230931", null, null, customParams);
+    const endpoint = `service_instances/0EFB3BD5-EDA1-4659-AA18-597236230931/service_bindings/${bindingID}?accepts_incomplete=true`;
+
+    const config = await keb.buildRequest(payload, endpoint, 'put');
+
    // return keb.createBinding("0EFB3BD5-EDA1-4659-AA18-597236230931", true, expirationSeconds).should.be.rejected;
    // expect(async () => { keb.createBinding("0EFB3BD5-EDA1-4659-AA18-597236230931", true, expirationSeconds); }).to.throw();
     try {
-      await keb.createBinding("0EFB3BD5-EDA1-4659-AA18-597236230931", true, expirationSeconds);
+      await axios.request(config);
       fail('KEB must return an error');
     } catch (err) {
-      //expect(err.response.status).equal(400);
-     // expect(err.response.data.description).to.include('overlap');
       console.log('Got response:');
-      console.log(err);
+    //  console.log(err.response.data);
+      //console.log(err.response.status);
+      console.log(err.response);
     }
       
   });
