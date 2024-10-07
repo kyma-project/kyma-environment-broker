@@ -75,8 +75,7 @@ describe('SKR Binding test', function() {
       //expect(err.response.status).equal(400);
      // expect(err.response.data.description).to.include('overlap');
       console.log('Got response:');
-      console.log(err.response.status);
-      console.log(err.response.data);
+      console.log(err);
     }
       
   });
