@@ -82,7 +82,7 @@ describe('SKR Binding test', function() {
       fail('KEB must return an error');
     } catch (err) {
       console.log('Got response:');
-      console.log(err.response.data);
+     // console.log(err.response.data);
       //console.log(err.response.status);
       console.log(err);
     }
