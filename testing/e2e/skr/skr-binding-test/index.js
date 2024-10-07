@@ -30,6 +30,10 @@ describe('SKR Binding test', function() {
     await provisionSKRInstance(options, provisioningTimeout);
   });
 */
+
+  before('Ensure SKR is provisioned', async function() {
+    await new Promise(r => setTimeout(r, 20000));
+  });
   it('Create SKR binding for service account using Kubernetes TokenRequest', async function() {
     try {
       kubeconfigFromBinding = await keb.createBinding("0EFB3BD5-EDA1-4659-AA18-597236230931", true);
