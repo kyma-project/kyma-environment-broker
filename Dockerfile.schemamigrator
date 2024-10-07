@@ -18,6 +18,6 @@ LABEL source=git@github.com:kyma-project/kyma-environment-broker.git
 WORKDIR /migrate
 
 COPY --from=build /build/schema-migrator /bin/schema-migrator
-COPY resources/migrations ./migrations
+COPY resources/keb/migrations ./migrations
 
 ENTRYPOINT ["/bin/schema-migrator"]

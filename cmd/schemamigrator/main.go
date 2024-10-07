@@ -286,6 +286,10 @@ func (m *migrationScript) copyDir(src, dst string) error {
 	for _, file := range files {
 		srcFile := path.Join(src, file.Name())
 		dstFile := path.Join(dst, file.Name())
+		if fileExists(dstFile) {
+			log.Printf("file %s already exists, skipping\n", dstFile)
+			continue
+		}
 		fileExt := filepath.Ext(srcFile)
 		if fileExt == ".sql" {
 			err = m.copyFile(srcFile, dstFile)
@@ -296,4 +300,9 @@ func (m *migrationScript) copyDir(src, dst string) error {
 	}
 
 	return nil
+}
+
+func fileExists(filePath string) bool {
+	_, err := os.Stat(filePath)
+	return !os.IsNotExist(err)
 }

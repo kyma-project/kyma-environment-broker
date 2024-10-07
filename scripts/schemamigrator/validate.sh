@@ -59,7 +59,7 @@ function migrationUP() {
             -e DB_NAME=${DB_NAME} \
             -e DB_SSL=${DB_SSL_PARAM} \
             -e DIRECTION="up" \
-            -v "${SCRIPT_DIR}"/../../resources/migrations:/migrate/new-migrations \
+            -v "${SCRIPT_DIR}"/../../resources/keb/migrations:/migrate/new-migrations \
         ${IMG_NAME}
 
     echo -e "${GREEN}Show schema_migrations table after UP migrations${NC}"
@@ -78,7 +78,7 @@ function migrationDOWN() {
             -e DB_SSL=${DB_SSL_PARAM} \
             -e DIRECTION="down" \
             -e NON_INTERACTIVE="true" \
-            -v "${SCRIPT_DIR}"/../../resources/migrations:/migrate/new-migrations \
+            -v "${SCRIPT_DIR}"/../../resources/keb/migrations:/migrate/new-migrations \
         ${IMG_NAME}
 
     echo -e "${GREEN}Show schema_migrations table after DOWN migrations${NC}"
