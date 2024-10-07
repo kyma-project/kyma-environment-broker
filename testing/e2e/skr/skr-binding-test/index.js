@@ -87,10 +87,9 @@ describe('SKR Binding test', function() {
         expect(err.response.data.description).to.include('expiration_seconds cannot be less than');
         console.log('Got response:');
         console.log(err.response.data);
-      } //else {
-      //  console.log(err);
-       // throw err;
-    //  }
+      } else {
+        throw err;
+      }
     
     }
       
