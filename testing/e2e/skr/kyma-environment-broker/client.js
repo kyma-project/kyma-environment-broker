@@ -273,7 +273,28 @@ class KEBClient {
     });
   }
 
-  async createBinding(instanceID, serviceAccount, expirationSeconds = DEFAULT_EXPIRATION_SECONDS) {
+  async createBinding2(instanceID, serviceAccount, expirationSeconds = DEFAULT_EXPIRATION_SECONDS) { //
+    const payload = {
+      service_id: KYMA_SERVICE_ID,
+      plan_id: this.planID,
+      parameters: {
+        service_account: serviceAccount,
+        expiration_seconds: expirationSeconds,
+      },
+    };
+    const bindingID = Math.random().toString(36).substring(2, 18);
+    const endpoint = `service_instances/${instanceID}/service_bindings/${bindingID}?accepts_incomplete=true`;
+    const config = await keb.buildRequest(payload, endpoint, 'put');
+
+    try {
+      await axios.request(config);
+      fail('KEB must return an error');
+    } catch (err) {
+      throw err;
+    }
+  }
+
+  async createBinding(instanceID, serviceAccount, expirationSeconds = DEFAULT_EXPIRATION_SECONDS) { //
     const payload = {
       service_id: KYMA_SERVICE_ID,
       plan_id: this.planID,
