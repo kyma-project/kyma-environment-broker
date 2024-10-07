@@ -287,7 +287,7 @@ class KEBClient {
     const config = await this.buildRequest(payload, endpoint, 'put');
 
     try {
-      await axios.request(config);
+      return await axios.request(config);
     } catch (err) {
       throw err;
     }
