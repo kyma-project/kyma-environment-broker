@@ -288,7 +288,7 @@ class KEBClient {
 
     try {
       await axios.request(config);
-      fail('KEB must return an error');
+      throw new Error('KEB must return an error');
     } catch (err) {
       throw err;
     }
