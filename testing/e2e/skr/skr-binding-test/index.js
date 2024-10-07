@@ -65,19 +65,8 @@ describe('SKR Binding test', function() {
   });
 
   it('Should not allow creation of SKR binding when expiration seconds value is below the minimum value', async function() {
-    const expirationSeconds = 999999999;
+    const expirationSeconds = 1;
     this.timeout(10000);
-   // const bindingID = Math.random().toString(36).substring(2, 18);
-
-
-  //  const customParams = {'service_account': true, 'expiration_seconds': expirationSeconds};
-   // const payload = keb.buildPayload('binding', "0EFB3BD5-EDA1-4659-AA18-597236230931", null, null, customParams);
-    //const endpoint = `service_instances/0EFB3BD5-EDA1-4659-AA18-597236230931/service_bindings/${bindingID}?accepts_incomplete=true`;
-
-    //const config = await keb.buildRequest(payload, endpoint, 'put');
-
-   //return keb.createBinding("0EFB3BD5-EDA1-4659-AA18-597236230931", true, expirationSeconds).should.be.rejected;
-   // expect(async () => { keb.createBinding("0EFB3BD5-EDA1-4659-AA18-597236230931", true, expirationSeconds); }).to.throw();
     try {
       await keb.createBinding2("0EFB3BD5-EDA1-4659-AA18-597236230931", true, expirationSeconds);
       expect.fail("The call was expected to fail but it passed");
