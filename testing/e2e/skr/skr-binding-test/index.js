@@ -81,7 +81,7 @@ describe('SKR Binding test', function() {
     try {
       await keb.createBinding2("0EFB3BD5-EDA1-4659-AA18-597236230931", true, expirationSeconds);
       console.log("The test was expected to fail but it passed");
-      done(new Error("The test was expected to fail but it passed"));
+      assert.fail("The test was expected to fail but it passed")
     } catch (err) {
       if (err.response) {
         expect(err.response.status).equal(400);
@@ -89,7 +89,7 @@ describe('SKR Binding test', function() {
         console.log('Got response:');
         console.log(err.response.data);
       } else {
-        console.log('Error response not available');
+        throw err;
       }
     
     }
