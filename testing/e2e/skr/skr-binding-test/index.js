@@ -78,7 +78,7 @@ describe('SKR Binding test', function() {
    //return keb.createBinding("0EFB3BD5-EDA1-4659-AA18-597236230931", true, expirationSeconds).should.be.rejected;
    // expect(async () => { keb.createBinding("0EFB3BD5-EDA1-4659-AA18-597236230931", true, expirationSeconds); }).to.throw();
     try {
-      await keb.createBinding("0EFB3BD5-EDA1-4659-AA18-597236230931", true, expirationSeconds);
+      await keb.createBinding2("0EFB3BD5-EDA1-4659-AA18-597236230931", true, expirationSeconds);
       fail('KEB must return an error');
     } catch (err) {
       console.log('Got response:');
