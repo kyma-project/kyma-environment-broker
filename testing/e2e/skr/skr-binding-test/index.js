@@ -66,7 +66,7 @@ describe('SKR Binding test', function() {
     const expirationSeconds = 1;
     this.timeout(10000);
 
-    await expect(function () { keb.createBinding("0EFB3BD5-EDA1-4659-AA18-597236230931", true, expirationSeconds); }).to.throw();
+    expect(async () => { keb.createBinding("0EFB3BD5-EDA1-4659-AA18-597236230931", true, expirationSeconds); }).rejects.toThrow();
       
   });
 
