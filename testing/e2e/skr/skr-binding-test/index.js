@@ -1,4 +1,4 @@
-const {expect, assert} = require('chai');
+const {expect} = require('chai');
 const {gatherOptions} = require('../skr-test');
 const {initializeK8sClient} = require('../utils/index.js');
 const {getSecret, getKubeconfigValidityInSeconds} = require('../utils');
@@ -80,8 +80,7 @@ describe('SKR Binding test', function() {
    // expect(async () => { keb.createBinding("0EFB3BD5-EDA1-4659-AA18-597236230931", true, expirationSeconds); }).to.throw();
     try {
       await keb.createBinding2("0EFB3BD5-EDA1-4659-AA18-597236230931", true, expirationSeconds);
-      console.log("The test was expected to fail but it passed");
-      assert.fail("The test was expected to fail but it passed")
+      done(new Error("The call was expected to fail but it passed"));
     } catch (err) {
       if (err.response) {
         expect(err.response.status).equal(400);
@@ -89,6 +88,7 @@ describe('SKR Binding test', function() {
         console.log('Got response:');
         console.log(err.response.data);
       } else {
+        console.log(err);
         throw err;
       }
     
