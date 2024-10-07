@@ -284,7 +284,7 @@ class KEBClient {
     };
     const bindingID = Math.random().toString(36).substring(2, 18);
     const endpoint = `service_instances/${instanceID}/service_bindings/${bindingID}?accepts_incomplete=true`;
-    const config = await keb.buildRequest(payload, endpoint, 'put');
+    const config = await this.buildRequest(payload, endpoint, 'put');
 
     try {
       await axios.request(config);
