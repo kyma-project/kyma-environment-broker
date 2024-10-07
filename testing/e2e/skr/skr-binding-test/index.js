@@ -7,7 +7,6 @@ const {deprovisionAndUnregisterSKR} = require('../skr-test/provision/deprovision
 const {KEBClient, KEBConfig} = require('../kyma-environment-broker');
 const keb = new KEBClient(KEBConfig.fromEnv());
 
-
 const provisioningTimeout = 1000 * 60 * 30; // 30m
 const deprovisioningTimeout = 1000 * 60 * 95; // 95m
 let globalTimeout = 1000 * 60 * 70; // 70m
