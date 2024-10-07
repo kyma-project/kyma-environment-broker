@@ -30,7 +30,7 @@ describe('SKR Binding test', function() {
 
   it('Create SKR binding for service account using Kubernetes TokenRequest', async function() {
     try {
-      resp = await keb.createBinding(options.instanceID, true);
+      const resp = await keb.createBinding(options.instanceID, true);
       kubeconfigFromBinding = resp.data.credentials.kubeconfig;
     } catch (err) {
       console.log(err);
@@ -48,7 +48,7 @@ describe('SKR Binding test', function() {
   it('Create SKR binding using Gardener', async function() {
     const expirationSeconds = 900;
     try {
-      resp = await keb.createBinding(options.instanceID, false, expirationSeconds);
+      const resp = await keb.createBinding(options.instanceID, false, expirationSeconds);
       kubeconfigFromBinding = resp.data.credentials.kubeconfig;
       expect(getKubeconfigValidityInSeconds(kubeconfigFromBinding)).to.equal(expirationSeconds);
     } catch (err) {
