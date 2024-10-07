@@ -16,8 +16,7 @@ const secretName = 'sap-btp-manager';
 const ns = 'kyma-system';
 
 describe('SKR Binding test', function() {
-  this.timeout(10000); 
-/*   globalTimeout += provisioningTimeout + deprovisioningTimeout;
+  globalTimeout += provisioningTimeout + deprovisioningTimeout;
 
   this.timeout(globalTimeout);
   this.slow(slowTime);
@@ -25,18 +24,14 @@ describe('SKR Binding test', function() {
   const options = gatherOptions(); // with default values
   let kubeconfigFromBinding;
 
- before('Ensure SKR is provisioned', async function() {
+  before('Ensure SKR is provisioned', async function() {
     this.timeout(provisioningTimeout);
     await provisionSKRInstance(options, provisioningTimeout);
   });
-*/
 
-  before('Ensure SKR is provisioned', async function() {
-    await new Promise(r => setTimeout(r, 20000));
-  });
   it('Create SKR binding for service account using Kubernetes TokenRequest', async function() {
     try {
-      kubeconfigFromBinding = await keb.createBinding("0EFB3BD5-EDA1-4659-AA18-597236230931", true);
+      kubeconfigFromBinding = await keb.createBinding(options.instanceID, true);
     } catch (err) {
       console.log(err);
     }
@@ -52,9 +47,8 @@ describe('SKR Binding test', function() {
 
   it('Create SKR binding using Gardener', async function() {
     const expirationSeconds = 900;
-   // this.timeout(10000);
     try {
-      kubeconfigFromBinding = await keb.createBinding("0EFB3BD5-EDA1-4659-AA18-597236230931", false, expirationSeconds);
+      kubeconfigFromBinding = await keb.createBinding(options.instanceID, false, expirationSeconds);
       expect(getKubeconfigValidityInSeconds(kubeconfigFromBinding.credentials.kubeconfig)).to.equal(expirationSeconds);
     } catch (err) {
       console.log(err);
@@ -71,9 +65,8 @@ describe('SKR Binding test', function() {
 
   it('Should not allow creation of SKR binding when expiration seconds value is below the minimum value', async function() {
     const expirationSeconds = 1;
-   // this.timeout(10000);
     try {
-      await keb.createBinding2("0EFB3BD5-EDA1-4659-AA18-597236230931", true, expirationSeconds);
+      await keb.createBinding2(options.instanceID, true, expirationSeconds);
       expect.fail("The call was expected to fail but it passed");
     } catch (err) {
       if (err.response) {
@@ -89,9 +82,8 @@ describe('SKR Binding test', function() {
 
   it('Should not allow creation of SKR binding when expiration seconds value is over the maximum value', async function() {
     const expirationSeconds = 999999999;
-   // this.timeout(10000);
     try {
-      await keb.createBinding2("0EFB3BD5-EDA1-4659-AA18-597236230931", true, expirationSeconds);
+      await keb.createBinding2(options.instanceID, true, expirationSeconds);
       expect.fail("The call was expected to fail but it passed");
     } catch (err) {
       if (err.response) {
@@ -105,10 +97,10 @@ describe('SKR Binding test', function() {
     }
   });
 
- /* after('Cleanup the resources', async function() {
+  after('Cleanup the resources', async function() {
     this.timeout(deprovisioningTimeout);
     if (process.env['SKIP_DEPROVISIONING'] != 'true') {
       await deprovisionAndUnregisterSKR(options, deprovisioningTimeout, true);
     }
-  });*/
+  });
 });
