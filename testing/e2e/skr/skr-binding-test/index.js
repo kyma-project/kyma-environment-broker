@@ -80,7 +80,8 @@ describe('SKR Binding test', function() {
    // expect(async () => { keb.createBinding("0EFB3BD5-EDA1-4659-AA18-597236230931", true, expirationSeconds); }).to.throw();
     try {
       await keb.createBinding2("0EFB3BD5-EDA1-4659-AA18-597236230931", true, expirationSeconds);
-      fail('KEB must return an error');
+      console.log("The test was expected to fail but it passed");
+      expect.fail();
     } catch (err) {
       expect(err.response.status).equal(400);
       expect(err.response.data.description).to.include('expiration_seconds cannot be less than');
