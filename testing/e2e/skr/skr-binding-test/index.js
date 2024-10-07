@@ -1,4 +1,4 @@
-const {expect} = require('chai');
+const chai = require('chai');
 const {gatherOptions} = require('../skr-test');
 const {initializeK8sClient} = require('../utils/index.js');
 const {getSecret, getKubeconfigValidityInSeconds} = require('../utils');
@@ -7,12 +7,15 @@ const {deprovisionAndUnregisterSKR} = require('../skr-test/provision/deprovision
 const {KEBClient, KEBConfig} = require('../kyma-environment-broker');
 const keb = new KEBClient(KEBConfig.fromEnv());
 
+
 const provisioningTimeout = 1000 * 60 * 30; // 30m
 const deprovisioningTimeout = 1000 * 60 * 95; // 95m
 let globalTimeout = 1000 * 60 * 70; // 70m
 const slowTime = 5000;
 const secretName = 'sap-btp-manager';
 const ns = 'kyma-system';
+const {expect} = chai;
+chai.use(require('chai-as-promised'));
 
 describe('SKR Binding test', function() {
 /*   globalTimeout += provisioningTimeout + deprovisioningTimeout;
