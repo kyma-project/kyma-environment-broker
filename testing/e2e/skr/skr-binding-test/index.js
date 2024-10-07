@@ -65,7 +65,7 @@ describe('SKR Binding test', function() {
   });
 
   it('Should not allow creation of SKR binding when expiration seconds value is below the minimum value', async function() {
-    const expirationSeconds = 1;
+    const expirationSeconds = 700;
     this.timeout(10000);
    // const bindingID = Math.random().toString(36).substring(2, 18);
 
