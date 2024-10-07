@@ -1,4 +1,4 @@
-const {expect} = require('chai');
+const {expect, assert} = require('chai');
 const {gatherOptions} = require('../skr-test');
 const {initializeK8sClient} = require('../utils/index.js');
 const {getSecret, getKubeconfigValidityInSeconds} = require('../utils');
