@@ -37,7 +37,7 @@ describe('SKR Binding test', function() {
   });
 
   it('Initiate K8s client with kubeconfig from binding', async function() {
-    await initializeK8sClient({kubeconfig: kubeconfigFromBinding.credentials.kubeconfig});
+    await initializeK8sClient({kubeconfig: kubeconfigFromBinding.data.credentials.kubeconfig});
   });
 
   it('Fetch sap-btp-manager secret using binding for service account from Kubernetes TokenRequest', async function() {
@@ -48,7 +48,7 @@ describe('SKR Binding test', function() {
     const expirationSeconds = 900;
     try {
       kubeconfigFromBinding = await keb.createBinding(options.instanceID, false, expirationSeconds);
-      expect(getKubeconfigValidityInSeconds(kubeconfigFromBinding.credentials.kubeconfig)).to.equal(expirationSeconds);
+      expect(getKubeconfigValidityInSeconds(kubeconfigFromBinding.data.credentials.kubeconfig)).to.equal(expirationSeconds);
     } catch (err) {
       console.log(err);
     }
