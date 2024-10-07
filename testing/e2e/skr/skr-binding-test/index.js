@@ -30,14 +30,15 @@ describe('SKR Binding test', function() {
 
   it('Create SKR binding for service account using Kubernetes TokenRequest', async function() {
     try {
-      kubeconfigFromBinding = await keb.createBinding(options.instanceID, true);
+      resp = await keb.createBinding(options.instanceID, true);
+      kubeconfigFromBinding = resp.data.credentials.kubeconfig;
     } catch (err) {
       console.log(err);
     }
   });
 
   it('Initiate K8s client with kubeconfig from binding', async function() {
-    await initializeK8sClient({kubeconfig: kubeconfigFromBinding.data.credentials.kubeconfig});
+    await initializeK8sClient({kubeconfig: kubeconfigFromBinding});
   });
 
   it('Fetch sap-btp-manager secret using binding for service account from Kubernetes TokenRequest', async function() {
@@ -47,22 +48,23 @@ describe('SKR Binding test', function() {
   it('Create SKR binding using Gardener', async function() {
     const expirationSeconds = 900;
     try {
-      kubeconfigFromBinding = await keb.createBinding(options.instanceID, false, expirationSeconds);
-      expect(getKubeconfigValidityInSeconds(kubeconfigFromBinding.data.credentials.kubeconfig)).to.equal(expirationSeconds);
+      resp = await keb.createBinding(options.instanceID, false, expirationSeconds);
+      kubeconfigFromBinding = resp.data.credentials.kubeconfig;
+      expect(getKubeconfigValidityInSeconds(kubeconfigFromBinding)).to.equal(expirationSeconds);
     } catch (err) {
       console.log(err);
     }
   });
 
   it('Initiate K8s client with kubeconfig from binding', async function() {
-    await initializeK8sClient({kubeconfig: kubeconfigFromBinding.credentials.kubeconfig});
+    await initializeK8sClient({kubeconfig: kubeconfigFromBinding});
   });
 
   it('Fetch sap-btp-manager secret using binding from Gardener', async function() {
     await getSecret(secretName, ns);
   });
 
-  it('Should not allow creation of SKR binding when expiration seconds value is below the minimum value', async function() {
+  it('Should not allow creation of SKR binding when expiration seconds value is below the min value', async function() {
     const expirationSeconds = 1;
     try {
       await keb.createBinding(options.instanceID, true, expirationSeconds);
@@ -79,7 +81,7 @@ describe('SKR Binding test', function() {
     }
   });
 
-  it('Should not allow creation of SKR binding when expiration seconds value is over the maximum value', async function() {
+  it('Should not allow creation of SKR binding when expiration seconds value is over the max value', async function() {
     const expirationSeconds = 999999999;
     try {
       await keb.createBinding(options.instanceID, true, expirationSeconds);
