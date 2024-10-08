@@ -295,19 +295,23 @@ class KEBClient {
   async deleteBinding(instanceID, bindingID) {
     const endpoint = `service_instances/${instanceID}/service_bindings/${bindingID}
     ?accepts_incomplete=false&service_id=${KYMA_SERVICE_ID}&plan_id=${this.planID}`;
+    const config = await this.buildRequest({}, endpoint, 'delete');
+
     try {
-      return await this.callKEB({}, endpoint, 'delete');
+      return await axios.request(config);
     } catch (err) {
-      throw new Error(`error while deleting binding: ${err.toString()}`);
+      throw err;
     }
   }
 
   async getBinding(instanceID, bindingID) {
     const endpoint = `service_instances/${instanceID}/service_bindings/${bindingID}?accepts_incomplete=false`;
+    const config = await this.buildRequest({}, endpoint, 'get');
+
     try {
-      return await this.callKEB({}, endpoint, 'get');
+      return await axios.request(config);
     } catch (err) {
-      throw new Error(`error while getting binding: ${err.toString()}`);
+      throw err;
     }
   }
 

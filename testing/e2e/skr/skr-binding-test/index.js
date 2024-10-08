@@ -48,25 +48,32 @@ describe('SKR Binding test', function() {
   });
 
   it('Fetch SKR binding created using Kubernetes TokenRequest', async function() {
-    const retrievedBinding = await keb.getBinding(options.instanceID, bindingID);
-    expect(retrievedBinding.credentials.kubeconfig).to.equal(kubeconfigFromBinding.credentials.kubeconfig);
+    const resp = await keb.getBinding(options.instanceID, bindingID);
+    expect(resp.data.credentials.kubeconfig).to.equal(kubeconfigFromBinding);
   });
 
   it('Delete SKR binding created using Kubernetes TokenRequest', async function() {
-    await keb.deleteBinding(options.instanceID, bindingID);
+    const resp = await keb.deleteBinding(options.instanceID, bindingID);
+    expect(resp.status).equal(200);
 
     try {
       await keb.getBinding(options.instanceID, bindingID);
-      expect.fail('KEB must return an error');
+      expect.fail('The call was expected to fail but it passed');
     } catch (err) {
-      expect(err.message).to.include('404');
+      if (err.response) {
+        expect(err.response.status).equal(404);
+        console.log('Got response:');
+        console.log(err.response.data);
+      } else {
+        throw err;
+      }
     }
   });
 
   it('Try to fetch sap-btp-manager secret using binding from Kubernetes TokenRequest', async function() {
     try {
       await getSecret(secretName, ns);
-      expect.fail('KCP must return an error');
+      expect.fail('The call was expected to fail but it passed');
     } catch (err) {
       expect(err.message).to.include('You must be logged in to the server');
     }
@@ -81,7 +88,7 @@ describe('SKR Binding test', function() {
     } catch (err) {
       console.log(err);
     }
-    expect(getKubeconfigValidityInSeconds(kubeconfigFromBinding.credentials.kubeconfig)).to.equal(expirationSeconds);
+    expect(getKubeconfigValidityInSeconds(kubeconfigFromBinding)).to.equal(expirationSeconds);
   });
 
   it('Initiate K8s client with kubeconfig from binding', async function() {
@@ -92,20 +99,26 @@ describe('SKR Binding test', function() {
     await getSecret(secretName, ns);
   });
 
-
   it('Fetch SKR binding created using Gardener', async function() {
-    const retrievedBinding = await keb.getBinding(options.instanceID, bindingID);
-    expect(retrievedBinding.credentials.kubeconfig).to.equal(kubeconfigFromBinding.credentials.kubeconfig);
+    const resp = await keb.getBinding(options.instanceID, bindingID);
+    expect(resp.data.credentials.kubeconfig).to.equal(kubeconfigFromBinding);
   });
 
   it('Delete SKR binding created using Gardener', async function() {
-    await keb.deleteBinding(options.instanceID, bindingID);
+    const resp = await keb.deleteBinding(options.instanceID, bindingID);
+    expect(resp.status).equal(200);
 
     try {
       await keb.getBinding(options.instanceID, bindingID);
-      expect.fail('KEB must return an error');
+      expect.fail('The call was expected to fail but it passed');
     } catch (err) {
-      expect(err.message).to.include('404');
+      if (err.response) {
+        expect(err.response.status).equal(404);
+        console.log('Got response:');
+        console.log(err.response.data);
+      } else {
+        throw err;
+      }
     }
   });
 
