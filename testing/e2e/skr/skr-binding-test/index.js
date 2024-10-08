@@ -127,9 +127,10 @@ describe('SKR Binding test', function() {
   });
 
   it('Should not allow creation of SKR binding when expiration seconds value is below the min value', async function() {
+    bindingID = Math.random().toString(36).substring(2, 18);
     const expirationSeconds = 1;
     try {
-      await keb.createBinding(options.instanceID, true, expirationSeconds);
+      await keb.createBinding(options.instanceID, bindingID, true, expirationSeconds);
       expect.fail('The call was expected to fail but it passed');
     } catch (err) {
       if (err.response) {
@@ -144,9 +145,10 @@ describe('SKR Binding test', function() {
   });
 
   it('Should not allow creation of SKR binding when expiration seconds value is over the max value', async function() {
+    bindingID = Math.random().toString(36).substring(2, 18);
     const expirationSeconds = 999999999;
     try {
-      await keb.createBinding(options.instanceID, true, expirationSeconds);
+      await keb.createBinding(options.instanceID, bindingID, true, expirationSeconds);
       expect.fail('The call was expected to fail but it passed');
     } catch (err) {
       if (err.response) {
