@@ -70,7 +70,7 @@ describe('SKR Binding test', function() {
     }
   });
 
-  it('Try to fetch sap-btp-manager secret using binding from Kubernetes TokenRequest', async function() {
+  it('Should not allow to fetch sap-btp-manager secret using binding from Kubernetes TokenRequest', async function() {
     try {
       await getSecret(secretName, ns);
       expect.fail('The call was expected to fail but it passed');
