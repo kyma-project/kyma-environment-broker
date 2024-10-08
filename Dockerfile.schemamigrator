@@ -1,0 +1,23 @@
+# Build image
+FROM golang:1.23.2-alpine3.20 AS build
+
+WORKDIR /go/src/github.com/kyma-project/kyma-environment-broker
+
+COPY cmd/schemamigrator cmd/schemamigrator
+COPY internal/schemamigrator internal/schemamigrator
+COPY go.mod go.mod
+COPY go.sum go.sum
+
+RUN go mod tidy && \
+CGO_ENABLED=0 go build -o /build/schema-migrator cmd/schemamigrator/main.go
+
+# Final image
+FROM scratch
+LABEL source=git@github.com:kyma-project/kyma-environment-broker.git
+
+WORKDIR /migrate
+
+COPY --from=build /build/schema-migrator /bin/schema-migrator
+COPY resources/keb/migrations ./migrations
+
+ENTRYPOINT ["/bin/schema-migrator"]

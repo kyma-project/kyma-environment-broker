@@ -61,6 +61,8 @@ type ReadSession interface {
 	TotalNumberOfInstancesArchivedForGlobalAccountID(globalAccountID string, planID string) (int, error)
 	GetAllOperations() ([]dbmodel.OperationDTO, error)
 	ListInstancesArchived(filter dbmodel.InstanceFilter) ([]dbmodel.InstanceArchivedDTO, int, int, error)
+	GetBindingByID(instanceID string) (dbmodel.BindingDTO, dberr.Error)
+	ListBindings(instanceID string) ([]dbmodel.BindingDTO, error)
 }
 
 //go:generate mockery --name=WriteSession
@@ -80,6 +82,8 @@ type WriteSession interface {
 	DeleteRuntimeStatesByOperationID(operationID string) error
 	DeleteOperationByID(operationID string) dberr.Error
 	InsertInstanceArchived(instance dbmodel.InstanceArchivedDTO) dberr.Error
+	InsertBinding(binding dbmodel.BindingDTO) dberr.Error
+	DeleteBinding(ID string) dberr.Error
 }
 
 type Transaction interface {

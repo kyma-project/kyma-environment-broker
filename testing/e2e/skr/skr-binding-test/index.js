@@ -32,14 +32,15 @@ describe('SKR Binding test', function() {
   it('Create SKR binding for service account using Kubernetes TokenRequest', async function() {
     bindingID = Math.random().toString(36).substring(2, 18);
     try {
-      kubeconfigFromBinding = await keb.createBinding(options.instanceID, bindingID, true);
+      const resp = await keb.createBinding(options.instanceID, bindingID, true);
+      kubeconfigFromBinding = resp.data.credentials.kubeconfig;
     } catch (err) {
       console.log(err);
     }
   });
 
   it('Initiate K8s client with kubeconfig from binding', async function() {
-    await initializeK8sClient({kubeconfig: kubeconfigFromBinding.credentials.kubeconfig});
+    await initializeK8sClient({kubeconfig: kubeconfigFromBinding});
   });
 
   it('Fetch sap-btp-manager secret using binding for service account from Kubernetes TokenRequest', async function() {
@@ -75,7 +76,8 @@ describe('SKR Binding test', function() {
     bindingID = Math.random().toString(36).substring(2, 18);
     const expirationSeconds = 900;
     try {
-      kubeconfigFromBinding = await keb.createBinding(options.instanceID, bindingID, false, expirationSeconds);
+      const resp = await keb.createBinding(options.instanceID, bindingID, false, expirationSeconds);
+      kubeconfigFromBinding = resp.data.credentials.kubeconfig;
     } catch (err) {
       console.log(err);
     }
@@ -83,12 +85,13 @@ describe('SKR Binding test', function() {
   });
 
   it('Initiate K8s client with kubeconfig from binding', async function() {
-    await initializeK8sClient({kubeconfig: kubeconfigFromBinding.credentials.kubeconfig});
+    await initializeK8sClient({kubeconfig: kubeconfigFromBinding});
   });
 
   it('Fetch sap-btp-manager secret using binding from Gardener', async function() {
     await getSecret(secretName, ns);
   });
+
 
   it('Fetch SKR binding created using Gardener', async function() {
     const retrievedBinding = await keb.getBinding(options.instanceID, bindingID);
@@ -108,6 +111,40 @@ describe('SKR Binding test', function() {
 
   it('Try to fetch sap-btp-manager secret using binding from Gardener', async function() {
     await getSecret(secretName, ns);
+  });
+
+  it('Should not allow creation of SKR binding when expiration seconds value is below the min value', async function() {
+    const expirationSeconds = 1;
+    try {
+      await keb.createBinding(options.instanceID, true, expirationSeconds);
+      expect.fail('The call was expected to fail but it passed');
+    } catch (err) {
+      if (err.response) {
+        expect(err.response.status).equal(400);
+        expect(err.response.data.description).to.include('expiration_seconds cannot be less than');
+        console.log('Got response:');
+        console.log(err.response.data);
+      } else {
+        throw err;
+      }
+    }
+  });
+
+  it('Should not allow creation of SKR binding when expiration seconds value is over the max value', async function() {
+    const expirationSeconds = 999999999;
+    try {
+      await keb.createBinding(options.instanceID, true, expirationSeconds);
+      expect.fail('The call was expected to fail but it passed');
+    } catch (err) {
+      if (err.response) {
+        expect(err.response.status).equal(400);
+        expect(err.response.data.description).to.include('expiration_seconds cannot be greater than');
+        console.log('Got response:');
+        console.log(err.response.data);
+      } else {
+        throw err;
+      }
+    }
   });
 
   after('Cleanup the resources', async function() {

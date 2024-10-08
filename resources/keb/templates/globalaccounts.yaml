@@ -5,15 +5,14 @@ metadata:
   name: "{{- .Values.globalaccounts.name -}}"
   namespace: kcp-system
   labels:
-  name: "{{- .Values.globalaccounts.name -}}"
+    app.kubernetes.io/name: "{{- .Values.globalaccounts.name -}}"
 spec:
   replicas: 1
   selector:
     matchLabels:
-  name: "{{- .Values.globalaccounts.name -}}"
+       app.kubernetes.io/name: "{{- .Values.globalaccounts.name -}}"
   template:
     metadata:
-      name: "{{- .Values.globalaccounts.name -}}"
       labels:
         app.kubernetes.io/name: "{{- .Values.globalaccounts.name -}}"
     spec:
@@ -28,7 +27,6 @@ spec:
       {{- end }}
       containers:
         - name: "{{- .Values.globalaccounts.name -}}"
-          command: ["/bin/main"]
           image: "{{ .Values.global.images.container_registry.path }}/{{ .Values.global.images.kyma_environment_broker.dir }}{{ .Values.globalaccounts.name -}}:{{ .Values.global.images.kyma_environment_globalaccounts.version }}"
           imagePullPolicy: Always
           env:
@@ -66,7 +64,7 @@ spec:
             - name: GLOBALACCOUNTS_CIS_ACCOUNTS_CLIENT_ID
               valueFrom:
                 secretKeyRef:
-                  name: {{ .Values.globalaccounts.svc.clientId | required "please specify .Values.globalaccounts.svc.clientId" | quote }}
+                  name: {{ .Values.globalaccounts.svc.secretName | required "please specify .Values.globalaccounts.svc.secretName" | quote }}
                   key: id
             - name: GLOBALACCOUNTS_CIS_ACCOUNTS_CLIENT_SECRET
               valueFrom:

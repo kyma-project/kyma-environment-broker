@@ -27,7 +27,7 @@ The cleaning process is performed in the following steps:
 
 ## Update Requests
 
-When an instance update request is sent for an expired instance, the HTTP response is `200` only if the update includes a new value in the **globalaccount_id** field of the `context` section.
+When an instance update request is sent for an expired instance, the HTTP response is `200` only if the update includes a value in the **globalaccount_id** field of the `context` section.
 The changes to other sections are ignored.
 
 See the example call:
@@ -37,9 +37,9 @@ PATCH /oauth/v2/service_instances/"{INSTANCE_ID}"?accepts_incomplete=true
 {
 	“service_id”: “47c9dcbf-ff30-448e-ab36-d3bad66ba281", //Kyma ID
 	“context”: {
-		“globalaccount_id”: “{NEW_GLOBALACCOUNT_ID}”
+		“globalaccount_id”: “{GLOBALACCOUNT_ID}”
 	}
 }
 ```
 
-Requests that don't include a new **globalaccount_id** return the HTTP response `400`.
+For requests that don't include **globalaccount_id** or are empty, KEB returns the HTTP response `400`.

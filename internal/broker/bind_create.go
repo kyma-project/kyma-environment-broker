@@ -19,9 +19,11 @@ import (
 )
 
 type BindingConfig struct {
-	Enabled           bool        `envconfig:"default=false"`
-	BindablePlans     EnablePlans `envconfig:"default=aws"`
-	ExpirationSeconds int         `envconfig:"default=600"`
+	Enabled              bool        `envconfig:"default=false"`
+	BindablePlans        EnablePlans `envconfig:"default=aws"`
+	ExpirationSeconds    int         `envconfig:"default=600"`
+	MaxExpirationSeconds int         `envconfig:"default=7200"`
+	MinExpirationSeconds int         `envconfig:"default=600"`
 }
 
 type BindEndpoint struct {
@@ -98,6 +100,14 @@ func (b *BindEndpoint) Bind(ctx context.Context, instanceID, bindingID string, d
 
 	expirationSeconds := b.config.ExpirationSeconds
 	if parameters.ExpirationSeconds != 0 {
+		if parameters.ExpirationSeconds > b.config.MaxExpirationSeconds {
+			message := fmt.Sprintf("expiration_seconds cannot be greater than %d", b.config.MaxExpirationSeconds)
+			return domain.Binding{}, apiresponses.NewFailureResponse(fmt.Errorf(message), http.StatusBadRequest, message)
+		}
+		if parameters.ExpirationSeconds < b.config.MinExpirationSeconds {
+			message := fmt.Sprintf("expiration_seconds cannot be less than %d", b.config.MinExpirationSeconds)
+			return domain.Binding{}, apiresponses.NewFailureResponse(fmt.Errorf(message), http.StatusBadRequest, message)
+		}
 		expirationSeconds = parameters.ExpirationSeconds
 	}
 

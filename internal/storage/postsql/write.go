@@ -21,6 +21,39 @@ type writeSession struct {
 	transaction *dbr.Tx
 }
 
+func (ws writeSession) DeleteBinding(ID string) dberr.Error {
+	_, err := ws.deleteFrom(BindingsTableName).
+		Where(dbr.Eq("id", ID)).
+		Exec()
+
+	if err != nil {
+		return dberr.Internal("Failed to delete record from bindings table: %s", err)
+	}
+	return nil
+}
+
+func (ws writeSession) InsertBinding(binding dbmodel.BindingDTO) dberr.Error {
+	_, err := ws.insertInto(BindingsTableName).
+		Pair("id", binding.ID).
+		Pair("instance_id", binding.InstanceID).
+		Pair("created_at", binding.CreatedAt).
+		Pair("kubeconfig", binding.Kubeconfig).
+		Pair("expiration_seconds", binding.ExpirationSeconds).
+		Pair("binding_type", binding.BindingType).
+		Exec()
+
+	if err != nil {
+		if err, ok := err.(*pq.Error); ok {
+			if err.Code == UniqueViolationErrorCode {
+				return dberr.AlreadyExists("binding with id %s already exist for runtime %s", binding.ID, binding.InstanceID)
+			}
+		}
+		return dberr.Internal("Failed to insert record to Binding table: %s", err)
+	}
+
+	return nil
+}
+
 func (ws writeSession) InsertInstanceArchived(instance dbmodel.InstanceArchivedDTO) dberr.Error {
 	_, err := ws.insertInto(InstancesArchivedTableName).
 		Pair("instance_id", instance.InstanceID).

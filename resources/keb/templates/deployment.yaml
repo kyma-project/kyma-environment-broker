@@ -86,6 +86,12 @@ spec:
               value: "{{ .Values.cleaning.dryRun }}"
             - name: APP_BROKER_BINDING_ENABLED
               value: "{{ .Values.binding.enabled}}"
+            - name: APP_BROKER_BINDING_BINDABLE_PLANS
+              value: "{{ .Values.binding.bindablePlans}}"
+            - name: APP_BROKER_BINDING_EXPIRATION_SECONDS
+              value: "{{ .Values.binding.expirationSeconds}}"
+            - name: APP_BROKER_BINDING_MAX_EXPIRATION_SECONDS
+              value: "{{ .Values.binding.maxExpirationSeconds}}"
             - name: APP_BROKER_ONLY_SINGLE_TRIAL_PER_GA
               value: "{{ .Values.onlySingleTrialPerGA }}"
             - name: APP_BROKER_URL

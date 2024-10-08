@@ -127,3 +127,10 @@ type SubaccountStates interface {
 	DeleteState(subaccountID string) error
 	ListStates() ([]internal.SubaccountState, error)
 }
+
+type Bindings interface {
+	Insert(binding *internal.Binding) error
+	GetByBindingID(bindingID string) (*internal.Binding, error)
+	ListByInstanceID(instanceID string) ([]internal.Binding, error)
+	DeleteByBindingID(bindingID string) error
+}

@@ -51,6 +51,8 @@ type User struct {
 }
 
 const expirationSeconds = 10000
+const maxExpirationSeconds = 7200
+const minExpirationSeconds = 600
 
 func TestCreateBindingEndpoint(t *testing.T) {
 	t.Log("test create binding endpoint")
@@ -153,7 +155,9 @@ func TestCreateBindingEndpoint(t *testing.T) {
 		BindablePlans: EnablePlans{
 			fixture.PlanName,
 		},
-		ExpirationSeconds: expirationSeconds,
+		ExpirationSeconds:    expirationSeconds,
+		MaxExpirationSeconds: maxExpirationSeconds,
+		MinExpirationSeconds: minExpirationSeconds,
 	}
 
 	//// api handler
@@ -181,13 +185,14 @@ func TestCreateBindingEndpoint(t *testing.T) {
 	t.Run("should create a new service binding without error", func(t *testing.T) {
 
 		// When
-		response := CallAPI(httpServer, method, "v2/service_instances/1/service_bindings/binding-id?accepts_incomplete=true", fmt.Sprintf(`{
-  "service_id": "123",
-  "plan_id": "%s",
-  "parameters": {
-    "service_account": true
-  }
-}`, fixture.PlanId), t)
+		response := CallAPI(httpServer, method, "v2/service_instances/1/service_bindings/binding-id?accepts_incomplete=true", fmt.Sprintf(`
+		{
+			"service_id": "123",
+			"plan_id": "%s",
+			"parameters": {
+				"service_account": true
+			}
+		}`, fixture.PlanId), t)
 
 		binding := verifyResponse(t, response)
 
@@ -216,14 +221,15 @@ func TestCreateBindingEndpoint(t *testing.T) {
 		const customExpirationSeconds = 900
 
 		// When
-		response := CallAPI(httpServer, method, "v2/service_instances/1/service_bindings/binding-id2?accepts_incomplete=true", fmt.Sprintf(`{
-  "service_id": "123",
-  "plan_id": "%s",
-  "parameters": {
-    "service_account": true,
-	"expiration_seconds": %v
-  }
-}`, fixture.PlanId, customExpirationSeconds), t)
+		response := CallAPI(httpServer, method, "v2/service_instances/1/service_bindings/binding-id2?accepts_incomplete=true", fmt.Sprintf(`
+		{
+			"service_id": "123",
+			"plan_id": "%s",
+			"parameters": {
+				"service_account": true,
+				"expiration_seconds": %v
+			}
+		}`, fixture.PlanId, customExpirationSeconds), t)
 
 		binding := verifyResponse(t, response)
 
@@ -233,6 +239,38 @@ func TestCreateBindingEndpoint(t *testing.T) {
 		duration, err := getTokenDuration(t, credentials["kubeconfig"].(string))
 		require.NoError(t, err)
 		assert.Equal(t, customExpirationSeconds*time.Second, duration)
+	})
+	t.Run("should return error when expiration_seconds is greater than maxExpirationSeconds", func(t *testing.T) {
+		const customExpirationSeconds = 7201
+
+		// When
+		response := CallAPI(httpServer, method, "v2/service_instances/1/service_bindings/binding-id3?accepts_incomplete=true", fmt.Sprintf(`
+		{
+			"service_id": "123",
+			"plan_id": "%s",
+			"parameters": {
+				"service_account": true,
+				"expiration_seconds": %v
+
+			}
+		}`, fixture.PlanId, customExpirationSeconds), t)
+		require.Equal(t, http.StatusBadRequest, response.StatusCode)
+	})
+
+	t.Run("should return error when expiration_seconds is less than minExpirationSeconds", func(t *testing.T) {
+		const customExpirationSeconds = 60
+
+		// When
+		response := CallAPI(httpServer, method, "v2/service_instances/1/service_bindings/binding-id4?accepts_incomplete=true", fmt.Sprintf(`
+		{
+			"service_id": "123",
+			"plan_id": "%s",
+			"parameters": {	
+				"service_account": true,
+				"expiration_seconds": %v
+			}	
+		}`, fixture.PlanId, customExpirationSeconds), t)
+		require.Equal(t, http.StatusBadRequest, response.StatusCode)
 	})
 }
 
