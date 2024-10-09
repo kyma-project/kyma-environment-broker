@@ -433,6 +433,7 @@ edp:
   environment: "dev"
   required: false
   disabled: true
+  secret: "TBD"
   secretName: "edp-creds"
 
 ems:
@@ -443,10 +444,14 @@ cis:
   v1:
     authURL: "TBD"
     eventServiceURL: "TBD"
+    id: "TBD"
+    secret: "TBD"
     secretName: "cis-creds-v1"
   v2:
     authURL: "TBD"
     eventServiceURL: "TBD"
+    id: "TBD"
+    secret: "TBD"
     secretName: "cis-creds-v2"
     requestInterval: "200ms"
     rateLimitingInterval: "2s"
@@ -455,6 +460,8 @@ cis:
   accounts:
     authURL: "TBD"
     serviceURL: "TBD"
+    id: "TBD"
+    secret: "TBD"
     secretName: "cis-creds-accounts"
 
 notification:
