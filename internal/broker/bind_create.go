@@ -29,6 +29,7 @@ type BindingConfig struct {
 type BindEndpoint struct {
 	config           BindingConfig
 	instancesStorage storage.Instances
+	bindingsStorage  storage.Bindings
 
 	serviceAccountBindingManager broker.BindingsManager
 	gardenerBindingsManager      broker.BindingsManager
@@ -45,8 +46,9 @@ type Credentials struct {
 	Kubeconfig string `json:"kubeconfig"`
 }
 
-func NewBind(cfg BindingConfig, instanceStorage storage.Instances, log logrus.FieldLogger, clientProvider broker.ClientProvider, kubeconfigProvider broker.KubeconfigProvider, gardenerClient client.Client) *BindEndpoint {
+func NewBind(cfg BindingConfig, instanceStorage storage.Instances, bindingsStorage storage.Bindings, log logrus.FieldLogger, clientProvider broker.ClientProvider, kubeconfigProvider broker.KubeconfigProvider, gardenerClient client.Client) *BindEndpoint {
 	return &BindEndpoint{config: cfg, instancesStorage: instanceStorage, log: log.WithField("service", "BindEndpoint"),
+		bindingsStorage:              bindingsStorage,
 		serviceAccountBindingManager: broker.NewServiceAccountBindingsManager(clientProvider, kubeconfigProvider),
 		gardenerBindingsManager:      broker.NewGardenerBindingManager(gardenerClient),
 	}
@@ -96,6 +98,21 @@ func (b *BindEndpoint) Bind(ctx context.Context, instanceID, bindingID string, d
 			message := fmt.Sprintf("failed to unmarshal parameters: %s", err)
 			return domain.Binding{}, apiresponses.NewFailureResponse(fmt.Errorf(message), http.StatusInternalServerError, message)
 		}
+	}
+
+	bindingList, err := b.bindingsStorage.ListByInstanceID(instanceID)
+	switch {
+	case dberr.IsNotFound(err):
+		return domain.Binding{}, apiresponses.ErrInstanceDoesNotExist
+	case err != nil:
+		return domain.Binding{}, apiresponses.NewFailureResponse(fmt.Errorf("failed to get bindings for instance %s", instanceID), http.StatusInternalServerError, fmt.Sprintf("failed to get bindings for instance %s", instanceID))
+	}
+
+	bindingCount := len(bindingList)
+	// dont forget expired bindings, talk with WW
+	if bindingCount >= 10 {
+		message := fmt.Sprintf("maximum number of bindings reached: %d", bindingCount)
+		return domain.Binding{}, apiresponses.NewFailureResponse(fmt.Errorf(message), http.StatusBadRequest, message)
 	}
 
 	expirationSeconds := b.config.ExpirationSeconds
