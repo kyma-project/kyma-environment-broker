@@ -24,7 +24,9 @@ func AddRequestLogging(logs logrus.FieldLogger) mux.MiddlewareFunc {
 					"user_agent":  req.UserAgent(),
 				}).Info("Request details")
 
-				if req.Body != nil {
+				if req.Body == nil {
+					logs.Info("Request body is nil")
+				} else {
 					bodyBytes, err := io.ReadAll(req.Body)
 					if err != nil {
 						logs.Error("Failed to read request body:", err)
