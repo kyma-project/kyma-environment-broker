@@ -140,6 +140,21 @@ func (b *BindEndpoint) Bind(ctx context.Context, instanceID, bindingID string, d
 		}
 	}
 
+	bindingList, err := b.bindingsStorage.ListByInstanceID(instanceID)
+	switch {
+	case dberr.IsNotFound(err):
+		return domain.Binding{}, apiresponses.ErrInstanceDoesNotExist
+	case err != nil:
+		return domain.Binding{}, apiresponses.NewFailureResponse(fmt.Errorf("failed to get bindings for instance %s", instanceID), http.StatusInternalServerError, fmt.Sprintf("failed to get bindings for instance %s", instanceID))
+	}
+
+	bindingCount := len(bindingList)
+	// dont forget expired bindings, talk with WW
+	if bindingCount >= 10 {
+		message := fmt.Sprintf("maximum number of bindings reached: %d", bindingCount)
+		return domain.Binding{}, apiresponses.NewFailureResponse(fmt.Errorf(message), http.StatusBadRequest, message)
+	}
+
 	expirationSeconds := b.config.ExpirationSeconds
 	if parameters.ExpirationSeconds != 0 {
 		if parameters.ExpirationSeconds > b.config.MaxExpirationSeconds {
