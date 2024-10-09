@@ -118,6 +118,7 @@ func getKcpClient() (client.Client, error) {
 	return cli, nil
 }
 
+// test
 func clusterOp(ctx context.Context, kcp client.Client, logs *logrus.Logger) (unstructured.UnstructuredList, error) {
 	gvk, err := k8s.GvkByName(k8s.KymaCr)
 	if err != nil {
