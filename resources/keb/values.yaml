@@ -8,12 +8,12 @@ global:
       tag: 2.11.3-sap
     container_registry:
       path: europe-docker.pkg.dev/kyma-project/prod
-    schema_migrator:
-      dir: "europe-docker.pkg.dev/kyma-project/prod/control-plane/"
-      version: "v20240612-83a7c0eb" # do not update along with the other images
     kyma_environment_broker:
       dir:
       version: "1.10.31"
+    kyma_environment_broker_schema_migrator:
+      dir:
+      version:
     kyma_environments_subaccount_cleanup_job:
       dir:
       version: "1.10.31"
