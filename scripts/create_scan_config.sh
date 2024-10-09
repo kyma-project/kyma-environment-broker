@@ -29,6 +29,7 @@ protecode:
   - europe-docker.pkg.dev/kyma-project/prod/kyma-environment-subaccount-cleanup-job:${TAG}
   - europe-docker.pkg.dev/kyma-project/prod/kyma-environment-subaccount-sync:${TAG}
   - europe-docker.pkg.dev/kyma-project/prod/kyma-environment-broker-globalaccounts:${TAG}
+  - europe-docker.pkg.dev/kyma-project/prod/kyma-environment-broker-schema-migrator:${TAG}
 whitesource:
   language: golang-mod
   subprojects: false
