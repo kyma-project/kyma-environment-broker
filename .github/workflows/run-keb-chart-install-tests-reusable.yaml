@@ -60,12 +60,14 @@ jobs:
           MATRIX_AS_JSON=$(echo ${VERSIONS[*]} | awk 'END {printf "{\"include\":[";for (i = 1; i < NF; i++) printf "{\"version\":%s},",$i;printf "{\"version\":%s}]}",$i }'|jq -c)
           echo "k3s_versions=${MATRIX_AS_JSON}" >> "${GITHUB_OUTPUT}"
       - name: Wait for images to be ready
+        uses: wechuli/allcheckspassed@2e5e8bbc775f5680ed5d02e3a22e2fc7219792ac
         if: ${{ inputs.release == 'false' }}
-        timeout-minutes: 7
-        env:
-          GH_TOKEN: ${{ github.token }}
-        run: |
-          ./scripts/wait_for_images.sh ${{ inputs.version }}
+        with:
+          delay: '1'
+          retries: '10'
+          polling_interval: '1'
+          checks_include: 'kyma-environment-broker-image / Build image, archiver-image / Build image, environments-cleanup-image / Build image, deprovision-retrigger-image / Build image, expirator-image / Build image, runtime-reconciler-image / Build image, subaccount-cleanup-image / Build image, subaccount-sync-image / Build image, globalaccounts-image / Build image'
+          verbose: true
 
   run-keb-chart-matrix:
     runs-on: ubuntu-latest
