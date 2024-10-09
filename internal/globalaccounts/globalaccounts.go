@@ -183,16 +183,20 @@ func logic(config Config, svc *http.Client, db storage.BrokerStorage, kymas unst
 			reqErrors++
 			continue
 		}
-
+		svcGAID, ok := svcResponse.(result)
+		if !ok {
+			continue
+		}
+		gaID := svcGAID.GlobalAccountGUID
 		switch {
-		case svcResponse.GlobalAccountGUID == "":
-			fmt.Printf(" [EMPTY] for SubAccount %s -> GA ID in KEB %s GA ID in SVC %s \n", dbOp.SubAccountID, dbOp.GlobalAccountID, svcResponse.GlobalAccountGUID)
+		case gaID == "":
+			fmt.Printf(" [EMPTY] for SubAccount %s -> GA ID in KEB %s GA ID in SVC %s \n", dbOp.SubAccountID, dbOp.GlobalAccountID, gaID)
 			resEmptyGA++
-		case svcResponse.GlobalAccountGUID != dbOp.GlobalAccountID:
-			fmt.Printf(" [WRONG] for SubAccount %s -> GA ID in KEB %s GA ID in SVC %s \n", dbOp.SubAccountID, dbOp.GlobalAccountID, svcResponse.GlobalAccountGUID)
+		case gaID != dbOp.GlobalAccountID:
+			fmt.Printf(" [WRONG] for SubAccount %s -> GA ID in KEB %s GA ID in SVC %s \n", dbOp.SubAccountID, dbOp.GlobalAccountID, gaID)
 			resWrongGa++
 		default:
-			fmt.Printf(" [OK] for SubAccount %s -> GA ID in KEB %s GA ID in SVC %s \n", dbOp.SubAccountID, dbOp.GlobalAccountID, svcResponse.GlobalAccountGUID)
+			fmt.Printf(" [OK] for SubAccount %s -> GA ID in KEB %s GA ID in SVC %s \n", dbOp.SubAccountID, dbOp.GlobalAccountID, gaID)
 			resOk++
 		}
 	}
@@ -205,7 +209,7 @@ func logic(config Config, svc *http.Client, db storage.BrokerStorage, kymas unst
 	fmt.Printf("wrongGa: %d \n", resWrongGa)
 }
 
-func svcRequest(config Config, svc *http.Client, subaccountId string, logs *logrus.Logger) (result, error) {
+func svcRequest(config Config, svc *http.Client, subaccountId string, logs *logrus.Logger) (interface{}, error) {
 	url := fmt.Sprintf("%s/%s", config.ServiceURL, subaccountId)
 	request, err := http.NewRequest(http.MethodGet, url, nil)
 	if err != nil {
@@ -226,7 +230,7 @@ func svcRequest(config Config, svc *http.Client, subaccountId string, logs *logr
 		}
 	}()
 
-	var svcResponse result
+	var svcResponse interface{}
 	err = json.NewDecoder(response.Body).Decode(&svcResponse)
 	if err != nil {
 		logs.Errorf("while decoding response: %s", err.Error())
