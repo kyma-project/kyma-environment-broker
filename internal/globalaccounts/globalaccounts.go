@@ -85,6 +85,7 @@ func initAll(ctx context.Context, cfg Config, logs *logrus.Logger) (*http.Client
 		events.Config{},
 		storage.NewEncrypter(cfg.Database.SecretKey),
 		logs.WithField("service", "storage"))
+
 	if err != nil {
 		logs.Error(err.Error())
 		return nil, nil, nil, nil, err
@@ -215,18 +216,18 @@ func logic(config Config, svc *http.Client, db storage.BrokerStorage, kymas unst
 		}
 	}
 
-	fmt.Println("######## to fix ########")
-	fmt.Println(out.String())
-	fmt.Println("########################")
-
-	fmt.Println("######## stats ########")
-	fmt.Printf("ok: %d \n", resOk)
-	fmt.Printf("dbErrors: %d \n", dbErrors)
-	fmt.Printf("db emty SA: %d \n", dbEmptySA)
-	fmt.Printf("db emty GA: %d \n", dbEmptyGA)
-	fmt.Printf("reqErrors: %d \n", reqErrors)
-	fmt.Printf("emptyGA: %d \n", resEmptyGA)
-	fmt.Printf("wrongGa: %d \n", resWrongGa)
+	logs.Info("######## stats ########")
+	logs.Infof("ok: %d \n", resOk)
+	logs.Infof("dbErrors: %d \n", dbErrors)
+	logs.Infof("db emty SA: %d \n", dbEmptySA)
+	logs.Infof("db emty GA: %d \n", dbEmptyGA)
+	logs.Infof("reqErrors: %d \n", reqErrors)
+	logs.Infof("emptyGA: %d \n", resEmptyGA)
+	logs.Infof("wrongGa: %d \n", resWrongGa)
+	logs.Info("########################")
+	logs.Info("######## to fix ########")
+	logs.Info(out.String())
+	logs.Info("########################")
 
 	return toFix
 }
@@ -266,7 +267,7 @@ func fix(db storage.Instances, kcp client.Client, cfg Config, toFix []fixMap, lo
 	_ = broker.NewLabeler(kcp)
 	errs := 0
 	processed := 0
-	fmt.Println("fix start. Is dry run?: ", cfg.DryRun)
+	logs.Infof("fix start. Is dry run?: ", cfg.DryRun)
 	for _, pair := range toFix {
 		processed++
 		if cfg.DryRun {
