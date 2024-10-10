@@ -207,7 +207,6 @@ func logic(config Config, svc *http.Client, db storage.BrokerStorage, kymas unst
 			toFix = append(toFix, fixMap{instance: dbOp, correctGlobalAccountId: dbOp.GlobalAccountID})
 			resWrongGa++
 		default:
-			//fmt.Printf(" [OK] for SubAccount %s -> GA ID in KEB %s GA ID in SVC %s \n", dbOp.SubAccountID, dbOp.GlobalAccountID, svcResponse.GlobalAccountGUID)
 			resOk++
 		}
 
@@ -216,6 +215,7 @@ func logic(config Config, svc *http.Client, db storage.BrokerStorage, kymas unst
 		}
 	}
 
+	logs.Info("\n\n")
 	logs.Info("######## stats ########")
 	logs.Infof("ok: %d \n", resOk)
 	logs.Infof("dbErrors: %d \n", dbErrors)
@@ -228,6 +228,7 @@ func logic(config Config, svc *http.Client, db storage.BrokerStorage, kymas unst
 	logs.Info("######## to fix ########")
 	logs.Info(out.String())
 	logs.Info("########################")
+	logs.Info("\n\n")
 
 	return toFix
 }
@@ -296,5 +297,10 @@ func fix(db storage.Instances, kcp client.Client, cfg Config, toFix []fixMap, lo
 			continue
 		}*/
 	}
-	logs.Infof("finished update with %d errors", errs)
+
+	if errs > 0 {
+		logs.Infof("finished update with %d errors", errs)
+	} else {
+		logs.Info("finished update with no error")
+	}
 }
