@@ -37,9 +37,8 @@ type svcConfig struct {
 	SubaccountsURL string
 }
 
-type pair struct {
+type fixMap struct {
 	instance               internal.Instance
-	runtimeId              string
 	correctGlobalAccountId string
 }
 
@@ -67,8 +66,8 @@ func Run(ctx context.Context, cfg Config) {
 	fatalOnError(err, logs)
 	logs.Println(fmt.Sprintf("No. kymas: %d", len(clusterOp.Items)))
 
-	_ = logic(cfg, svc, db, clusterOp, logs)
-	// fix(db.Instances(), kcp, cfg, toFix, logs)
+	toFix := logic(cfg, svc, db, clusterOp, logs)
+	fix(db.Instances(), kcp, cfg, toFix, logs)
 	logs.Infof("*** End at: %s ***", time.Now().Format(time.RFC3339))
 	<-ctx.Done()
 }
@@ -165,10 +164,10 @@ func dbOp(runtimeId string, db storage.BrokerStorage, logs *logrus.Logger) (inte
 	return instances[0], nil
 }
 
-func logic(config Config, svc *http.Client, db storage.BrokerStorage, kymas unstructured.UnstructuredList, logs *logrus.Logger) []pair {
+func logic(config Config, svc *http.Client, db storage.BrokerStorage, kymas unstructured.UnstructuredList, logs *logrus.Logger) []fixMap {
 	var resOk, dbErrors, reqErrors, resEmptyGA, resWrongGa, dbEmptySA, dbEmptyGA int
 	var out strings.Builder
-	toFix := make([]pair, 0)
+	toFix := make([]fixMap, 0)
 	for i, kyma := range kymas.Items {
 		runtimeId := kyma.GetName() // name of kyma is runtime id
 		fmt.Printf("proccessings %d/%d : %s \n", i, len(kymas.Items), runtimeId)
@@ -205,14 +204,14 @@ func logic(config Config, svc *http.Client, db storage.BrokerStorage, kymas unst
 		case svcResponse.GlobalAccountGUID != dbOp.GlobalAccountID:
 			info = fmt.Sprintf(" [WRONG] for SubAccount %s -> GA ID in KEB %s GA ID in SVC %s \n", dbOp.SubAccountID, dbOp.GlobalAccountID, svcResponse.GlobalAccountGUID)
 			fmt.Printf(" [EMPTY] for SubAccount %s -> GA ID in KEB %s GA ID in SVC %s \n", dbOp.SubAccountID, dbOp.GlobalAccountID, svcResponse.GlobalAccountGUID)
-			toFix = append(toFix, pair{instance: dbOp, runtimeId: runtimeId, correctGlobalAccountId: dbOp.GlobalAccountID})
+			toFix = append(toFix, fixMap{instance: dbOp, correctGlobalAccountId: dbOp.GlobalAccountID})
 			resEmptyGA++
 		case svcResponse.GlobalAccountGUID != dbOp.GlobalAccountID:
 			fmt.Printf(" [WRONG] for SubAccount %s -> GA ID in KEB %s GA ID in SVC %s \n", dbOp.SubAccountID, dbOp.GlobalAccountID, svcResponse.GlobalAccountGUID)
-			toFix = append(toFix, pair{instance: dbOp, runtimeId: runtimeId, correctGlobalAccountId: dbOp.GlobalAccountID})
+			toFix = append(toFix, fixMap{instance: dbOp, correctGlobalAccountId: dbOp.GlobalAccountID})
 			resWrongGa++
 		default:
-			// fmt.Printf(" [OK] for SubAccount %s -> GA ID in KEB %s GA ID in SVC %s \n", dbOp.SubAccountID, dbOp.GlobalAccountID, svcResponse.GlobalAccountGUID)
+			//fmt.Printf(" [OK] for SubAccount %s -> GA ID in KEB %s GA ID in SVC %s \n", dbOp.SubAccountID, dbOp.GlobalAccountID, svcResponse.GlobalAccountGUID)
 			resOk++
 		}
 		out.WriteString(info)
@@ -235,12 +234,7 @@ func logic(config Config, svc *http.Client, db storage.BrokerStorage, kymas unst
 }
 
 func svcRequest(config Config, svc *http.Client, subaccountId string, logs *logrus.Logger) (result, error) {
-<<<<<<< HEAD
 	request, err := http.NewRequest(http.MethodGet, fmt.Sprintf(subaccountServicePath, config.ServiceURL, subaccountId), nil)
-=======
-	url := fmt.Sprintf("%s/%s", config.ServiceURL, subaccountId)
-	request, err := http.NewRequest(http.MethodGet, url, nil)
->>>>>>> upstream/main
 	if err != nil {
 		logs.Errorf("while creating request %s", err)
 		return result{}, err
@@ -270,14 +264,15 @@ func svcRequest(config Config, svc *http.Client, subaccountId string, logs *logr
 	return svcResponse, nil
 }
 
-func fix(db storage.Instances, kcp client.Client, cfg Config, toFix []pair, logs *logrus.Logger) {
+func fix(db storage.Instances, kcp client.Client, cfg Config, toFix []fixMap, logs *logrus.Logger) {
 	_ = broker.NewLabeler(kcp)
 	errs := 0
 	processed := 0
+	fmt.Println("fix start. Is dry run?: ", cfg.DryRun)
 	for _, pair := range toFix {
 		processed++
 		if cfg.DryRun {
-			logs.Infof("dry run: update labels for %s with %s", pair.runtimeId, pair.correctGlobalAccountId)
+			logs.Infof("dry run: update labels for runtime %s with new %s", pair.instance.RuntimeID, pair.correctGlobalAccountId)
 			continue
 		}
 		if cfg.Probe > -1 && (processed >= cfg.Probe) {
@@ -285,11 +280,11 @@ func fix(db storage.Instances, kcp client.Client, cfg Config, toFix []pair, logs
 			break
 		}
 
-		if pair.instance.SubscriptionGlobalAccountID != "" {
+		/*if pair.instance.SubscriptionGlobalAccountID != "" {
 			pair.instance.SubscriptionGlobalAccountID = pair.instance.GlobalAccountID
 		}
 		pair.instance.GlobalAccountID = pair.correctGlobalAccountId
-		/*newInstance, err := db.Update(pair.instance)
+		newInstance, err := db.Update(pair.instance)
 		if err != nil {
 			logs.Errorf("error updating db %s", err)
 			errs++
