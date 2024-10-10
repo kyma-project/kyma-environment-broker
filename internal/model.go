@@ -40,22 +40,6 @@ type ProvisionerInputCreator interface {
 	SetOIDCLastValues(oidcConfig gqlschema.OIDCConfigInput) ProvisionerInputCreator
 }
 
-type AvsEvaluationStatus struct {
-	Current  string `json:"current_value"`
-	Original string `json:"original_value"`
-}
-
-type AvsLifecycleData struct {
-	AvsEvaluationInternalId int64 `json:"avs_evaluation_internal_id"`
-	AVSEvaluationExternalId int64 `json:"avs_evaluation_external_id"`
-
-	AvsInternalEvaluationStatus AvsEvaluationStatus `json:"avs_internal_evaluation_status"`
-	AvsExternalEvaluationStatus AvsEvaluationStatus `json:"avs_external_evaluation_status"`
-
-	AVSInternalEvaluationDeleted bool `json:"avs_internal_evaluation_deleted"`
-	AVSExternalEvaluationDeleted bool `json:"avs_external_evaluation_deleted"`
-}
-
 type EventHub struct {
 	Deleted bool `json:"event_hub_deleted"`
 }
@@ -231,8 +215,7 @@ type InstanceWithOperation struct {
 }
 
 type InstanceDetails struct {
-	Avs      AvsLifecycleData `json:"avs"`
-	EventHub EventHub         `json:"eh"`
+	EventHub EventHub `json:"eh"`
 
 	SubAccountID      string                    `json:"sub_account_id"`
 	RuntimeID         string                    `json:"runtime_id"`

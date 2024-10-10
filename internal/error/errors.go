@@ -54,7 +54,6 @@ const (
 	ErrEDP         ErrComponent = "edp"
 	ErrProvisioner ErrComponent = "provisioner"
 	ErrReconciler  ErrComponent = "reconciler"
-	ErrAVS         ErrComponent = "avs"
 )
 
 func (err LastError) Reason() ErrReason {

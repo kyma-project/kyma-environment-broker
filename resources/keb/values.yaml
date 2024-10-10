@@ -105,53 +105,6 @@ global:
 # https://pages.github.tools.sap/kyma/docusaurus-docs/kyma/cicd/argocd/secrets
 vsoSecrets:
   secrets:
-    avs-creds:
-      path: avs
-      secretName: "{{ .Values.avs.secretName }}"
-      #restartTargets:
-      #  - kind: Deployment
-      #    name: >-
-      #      {{- template "kyma-env-broker.fullname" . -}}
-      labels: >-
-        {{ template "kyma-env-broker.labels" . }}
-      templating:
-        enabled: true
-        keys:
-          apiEndpoint: api_endpoint
-          apiKey: api_key
-          clientId: client_id
-          oauthPassword: password
-          oauthTokenEndpoint: oauth_token_endpoint
-          oauthUserName: username
-          internalTesterAccessId: internal_tester_access_id
-          externalTesterAccessId: external_tester_access_id
-          groupId: group_id
-          parentId: parent_id
-          trialApiKey: trial_api_key
-          trialInternalTesterAccessId: trial_internal_tester_access_id
-          trialGroupId: trial_group_id
-          trialParentId: trial_parent_id
-        data:
-          apiEndpoint: {}
-          apiKey: {}
-          clientId: {}
-          oauthPassword: {}
-          oauthTokenEndpoint: {}
-          oauthUserName: {}
-          internalTesterAccessId: {}
-          externalTesterAccessId: {}
-          internalTesterService:
-            template: |-
-              {{- .Values.avs.internalTesterService -}}
-          externalTesterService: 
-            template: |-
-              {{- .Values.avs.externalTesterService -}}
-          groupId: {}
-          parentId: {}
-          trialApiKey: {}
-          trialInternalTesterAccessId: {}
-          trialGroupId: {}
-          trialParentId: {}
     edp:
       path: edp
       secretName: "{{ .Values.edp.secretName }}"
@@ -384,47 +337,6 @@ kubeconfig:
   issuerURL: "TBD"
   clientID: "TBD"
   allowOrigins: "*"
-
-avs:
-  disabled: false
-  secretName: "avs-creds"
-  apiEndpoint: "TBD"
-  apiKey: "TBD"
-  clientId: "TBD"
-  oauthPassword: "TBD"
-  oauthTokenEndpoint: "TBD"
-  oauthUserName: "TBD"
-  internalTesterAccessId: "40"
-  externalTesterAccessId: "40"
-  groupId: "40"
-  parentId: "40"
-  # if set - overrides default tester service name
-  internalTesterService: ""
-  externalTesterService: ""
-  # List of tags to bind to testers.
-  # Example:
-  # internalTesterTags: |-
-  #   - content: tag-A
-  #     tag_id: 1
-  #     tag_name: value-A
-  #   - content: tag-B
-  #     tag_id: 2
-  #     tag_name: value-B
-  instanceIdTagClassId: "0"
-  globalAccountIdTagClassId: "0"
-  subAccountIdTagClassId: "0"
-  landscapeTagClassId: "0"
-  providerTagClassId: "0"
-  regionTagClassId: "0"
-  shootNameTagClassId: "0"
-  externalTesterDisabled: false
-  trialApiKey: ""
-  trialInternalTesterAccessId: "0"
-  trialGroupId: "0"
-  trialParentId: "0"
-  maintenanceModeDuringUpgrade:
-    disabled: false # disable AvS maintenance mode during upgrade, false until SKR ZDM is done
-    alwaysDisabledGlobalAccountIDs: [ ] # list of GA IDs where maintenance mode is always disabled during upgrade
 
 edp:
   authURL: "TBD"

@@ -194,8 +194,6 @@ The trial plan allows you to install Kyma runtime on Azure, AWS, or GCP. The pla
 - Kyma runtime is uninstalled after 14 days and the Kyma cluster is deprovisioned after this time.
 - It's possible to provision only one Kyma runtime per global account.
 
-To reduce the costs, the trial plan skips one of the [provisioning steps](./03-20-runtime-operations.md#provisioning), that is, `AVS External Evaluation`.
-
 ### Provisioning Parameters
 
 These are the provisioning parameters for the Trial plan that you can configure:

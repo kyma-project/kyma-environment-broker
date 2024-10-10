@@ -51,16 +51,3 @@ app.kubernetes.io/version: {{ .Chart.AppVersion | quote }}
 {{- end }}
 app.kubernetes.io/managed-by: {{ .Release.Service }}
 {{- end -}}
-
-{{/*
-Utility function for joining Avs tag list into string.
-*/}}
-{{- define "avs.utils.joinTags" -}}
-{{- $local := dict "first" true -}}
-{{- $data := (printf "%s:\n%s" "tags" .) | fromYaml -}}
-{{- range $tag := $data.tags -}}
-{{- if not $local.first -}},{{- end -}}
-{{ printf "{%q,%v,%q}" $tag.content $tag.tag_id $tag.tag_name }}
-{{- $_ := set $local "first" false -}}
-{{- end -}}
-{{- end -}}

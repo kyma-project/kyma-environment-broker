@@ -104,7 +104,7 @@ func TestRemoveInstanceStep_InstanceHasExecutedButNotCompletedOperationSteps(t *
 	memoryStorage := storage.NewMemoryStorage()
 
 	operation := fixture.FixDeprovisioningOperationAsOperation(testOperationID, testInstanceID)
-	operation.ExcutedButNotCompleted = append(operation.ExcutedButNotCompleted, "De-provision_AVS_Evaluations")
+	operation.ExcutedButNotCompleted = append(operation.ExcutedButNotCompleted, "Remove_Runtime")
 	instance := fixture.FixInstance(testInstanceID)
 	instance.DeletedAt = time.Time{}
 

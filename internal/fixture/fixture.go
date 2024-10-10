@@ -123,7 +123,6 @@ func FixInstanceDetails(id string) internal.InstanceDetails {
 	}
 
 	return internal.InstanceDetails{
-		Avs:                   internal.AvsLifecycleData{},
 		EventHub:              internal.EventHub{Deleted: false},
 		SubAccountID:          subAccountId,
 		RuntimeID:             runtimeId,
