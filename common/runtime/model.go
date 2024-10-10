@@ -54,6 +54,15 @@ type RuntimeDTO struct {
 	KymaConfig                  *gqlschema.KymaConfigInput     `json:"kymaConfig,omitempty"`
 	ClusterConfig               *gqlschema.GardenerConfigInput `json:"clusterConfig,omitempty"`
 	RuntimeConfig               *map[string]interface{}        `json:"runtimeConfig,omitempty"`
+	Bindings                    []BindingDTO                   `json:"bindings,omitempty"`
+}
+
+type BindingDTO struct {
+	ID                string    `json:"id"`
+	CreatedAt         time.Time `json:"createdAt"`
+	ExpirationSeconds int64     `json:"expiresInSeconds"`
+	ExpiresAt         time.Time `json:"expiresAt"`
+	Type              string    `json:"type"`
 }
 
 type RuntimeStatus struct {
@@ -121,6 +130,8 @@ const (
 	ExpiredParam         = "expired"
 	GardenerConfigParam  = "gardener_config"
 	RuntimeConfigParam   = "runtime_config"
+	BindingsParam        = "bindings"
+	WithBindingsParam    = "with_bindings" // TODO: find better name
 )
 
 type OperationDetail string

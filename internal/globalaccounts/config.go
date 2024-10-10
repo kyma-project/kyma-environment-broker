@@ -5,10 +5,11 @@ import (
 )
 
 type Config struct {
-	Database             storage.Config
-	DryRun               bool   `envconfig:"default=true"`
-	AccountServiceID     string `envconfig:"default=account-service-id"`
-	AccountServiceSecret string `envconfig:"default=account-service-secret"`
-	AccountServiceAuth   string `envconfig:"default=url"`
-	AccountServiceURL    string `envconfig:"default=url"`
+	Database     storage.Config
+	DryRun       bool   `envconfig:"default=true"`
+	Probe        int    `envconfig:"default=-1"`
+	ClientID     string `envconfig:"default=account-service-id"`
+	ClientSecret string `envconfig:"default=account-service-secret"`
+	AuthURL      string `envconfig:"default=url"`
+	ServiceURL   string `envconfig:"default=url"`
 }

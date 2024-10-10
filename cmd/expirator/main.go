@@ -7,10 +7,10 @@ import (
 	"os"
 	"time"
 
-	"github.com/kyma-project/control-plane/components/schema-migrator/cleaner"
 	"github.com/kyma-project/kyma-environment-broker/internal"
 	"github.com/kyma-project/kyma-environment-broker/internal/broker"
 	"github.com/kyma-project/kyma-environment-broker/internal/events"
+	"github.com/kyma-project/kyma-environment-broker/internal/schemamigrator/cleaner"
 	"github.com/kyma-project/kyma-environment-broker/internal/storage"
 	"github.com/kyma-project/kyma-environment-broker/internal/storage/dbmodel"
 	log "github.com/sirupsen/logrus"

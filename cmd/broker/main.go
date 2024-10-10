@@ -375,7 +375,7 @@ func main() {
 
 	// create list runtimes endpoint
 	runtimeHandler := runtime.NewHandler(db.Instances(), db.Operations(),
-		db.RuntimeStates(), db.InstancesArchived(), cfg.MaxPaginationPage,
+		db.RuntimeStates(), db.InstancesArchived(), db.Bindings(), cfg.MaxPaginationPage,
 		cfg.DefaultRequestRegion, provisionerClient,
 		kcpK8sClient,
 		cfg.Broker.KimConfig,
@@ -451,6 +451,7 @@ func createAPI(router *mux.Router, servicesConfig broker.ServicesConfig, planVal
 		LastBindingOperationEndpoint: broker.NewLastBindingOperation(logs),
 	}
 
+	router.Use(middleware.AddRequestLogging(logs))
 	router.Use(middleware.AddRegionToContext(cfg.DefaultRequestRegion))
 	router.Use(middleware.AddProviderToContext())
 	for _, prefix := range []string{

@@ -30,6 +30,8 @@ spec:
           image: "{{ .Values.global.images.container_registry.path }}/{{ .Values.global.images.kyma_environment_broker.dir }}{{ .Values.globalaccounts.name -}}:{{ .Values.global.images.kyma_environment_globalaccounts.version }}"
           imagePullPolicy: Always
           env:
+            - name: GLOBALACCOUNTS_PROBE
+              value: {{ .Values.globalaccounts.probe | quote }}
             - name: GLOBALACCOUNTS_DATABASE_SECRET_KEY
               valueFrom:
                 secretKeyRef:
@@ -61,20 +63,20 @@ spec:
                 secretKeyRef:
                   key: postgresql-broker-db-name
                   name: kcp-postgresql
-            - name: GLOBALACCOUNTS_CIS_ACCOUNTS_CLIENT_ID
+            - name: GLOBALACCOUNTS_CLIENT_ID
               valueFrom:
                 secretKeyRef:
-                  name: {{ .Values.globalaccounts.svc.id | required "please specify .Values.globalaccounts.svc.id" | quote }}
+                  name: {{ .Values.cis.accounts.secretName | required "please specify .Values.cis.accounts.secretName" | quote }}  
                   key: id
-            - name: GLOBALACCOUNTS_CIS_ACCOUNTS_CLIENT_SECRET
+            - name: GLOBALACCOUNTS_CLIENT_SECRET
               valueFrom:
                 secretKeyRef:
-                  name: {{ .Values.globalaccounts.svc.secret | required "please specify .Values.globalaccounts.svc.secret" | quote }}
+                  name: {{ .Values.cis.accounts.secretName | required "please specify .Values.cis.accounts.secretName" | quote }}  
                   key: secret
-            - name: GLOBALACCOUNTS_ACCOUNTS_AUTH_URL
-              value: {{ .Values.globalaccounts.svc.authURL | required "please specify .Values.globalaccounts.svc.authURL" | quote }}
-            - name: GLOBALACCOUNTS_ACCOUNTS_SERVICE_URL
-              value: {{ .Values.globalaccounts.svc.serviceURL | required "please specify .Values.globalaccounts.svc.serviceURL" | quote }}
+            - name: GLOBALACCOUNTS_AUTH_URL
+              value: {{ .Values.cis.accounts.authURL | required "please specify .Values.cis.accounts.authURL" | quote }}
+            - name: GLOBALACCOUNTS_SERVICE_URL
+              value: {{ .Values.cis.accounts.serviceURL | required "please specify .Values.cis.accounts.serviceURL" | quote }}
             - name: GLOBALACCOUNTS_DATABASE_SSLMODE
               valueFrom:
                 secretKeyRef:

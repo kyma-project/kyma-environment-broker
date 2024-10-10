@@ -70,6 +70,8 @@ These are the provisioning parameters for Azure that you can configure:
   Azure
   </summary>
 
+<!-- markdown-link-check-disable -->
+
 | Parameter name                            | Type   | Description                                                                         | Required | Default value     |
 |-------------------------------------------|--------|-------------------------------------------------------------------------------------|:--------:|-------------------|
 | **machineType**                           | string | Specifies the provider-specific virtual machine type.                               |    No    | `Standard_D2s_v5` |
@@ -81,11 +83,15 @@ These are the provisioning parameters for Azure that you can configure:
 | **maxSurge[<sup>1</sup>](#update)**       | int    | Specifies the maximum number of virtual machines that are created during an update. |    No    | `4`               |
 | **maxUnavailable[<sup>1</sup>](#update)** | int    | Specifies the maximum number of VMs that can be unavailable during an update.       |    No    | `1`               |
 
+<!-- markdown-link-check-enable-->
+
   </details>
   <details>
   <summary label="azure-lite-plan">
   Azure Lite
   </summary>
+
+<!-- markdown-link-check-disable -->
 
 | Parameter name                            | Type   | Description                                                                         | Required | Default value     |
 |-------------------------------------------|--------|-------------------------------------------------------------------------------------|:--------:|-------------------|
@@ -98,6 +104,8 @@ These are the provisioning parameters for Azure that you can configure:
 | **maxSurge[<sup>1</sup>](#update)**       | int    | Specifies the maximum number of virtual machines that are created during an update. |    No    | `4`               |
 | **maxUnavailable[<sup>1</sup>](#update)** | int    | Specifies the maximum number of VMs that can be unavailable during an update.       |    No    | `1`               |
 
+<!-- markdown-link-check-enable-->
+
  </details>
  </div>
 
@@ -107,6 +115,8 @@ These are the provisioning parameters for AWS that you can configure:
   <summary label="aws-plan">
   AWS
   </summary>
+
+<!-- markdown-link-check-disable -->
 
 | Parameter name                            | Type   | Description                                                                                | Required | Default value |
 |-------------------------------------------|--------|--------------------------------------------------------------------------------------------|:--------:|---------------|
@@ -119,6 +129,8 @@ These are the provisioning parameters for AWS that you can configure:
 | **maxSurge[<sup>1</sup>](#update)**       | int    | Specifies the maximum number of virtual machines that are created during an update.        |    No    | `4`           |
 | **maxUnavailable[<sup>1</sup>](#update)** | int    | Specifies the maximum number of virtual machines that can be unavailable during an update. |    No    | `1`           |
 
+<!-- markdown-link-check-enable-->
+
   </details>
  </div>
 
@@ -129,6 +141,8 @@ These are the provisioning parameters for GCP that you can configure:
   <summary label="gcp-plan">
   GCP
   </summary>
+
+<!-- markdown-link-check-disable -->
 
 | Parameter name                            | Type   | Description                                                                         | Required | Default value   |
 |-------------------------------------------|--------|-------------------------------------------------------------------------------------|:--------:|-----------------|
@@ -141,6 +155,8 @@ These are the provisioning parameters for GCP that you can configure:
 | **maxSurge[<sup>1</sup>](#update)**       | int    | Specifies the maximum number of virtual machines that are created during an update. |    No    | `4`             |
 | **maxUnavailable[<sup>1</sup>](#update)** | int    | Specifies the maximum number of VMs that can be unavailable during an update.       |    No    | `1`             |
 
+<!-- markdown-link-check-enable -->
+
  </details>
  </div>
 
@@ -152,6 +168,8 @@ These are the provisioning parameters for SapConvergedCloud that you can configu
   SapConvergedCloud
   </summary>
 
+<!-- markdown-link-check-disable -->
+
 | Parameter name                            | Type   | Description                                                                                | Required | Default value |
 |-------------------------------------------|--------|--------------------------------------------------------------------------------------------|:--------:|---------------|
 | **machineType**                           | string | Specifies the provider-specific virtual machine type.                                      |    No    | `g_c2_m8`     |
@@ -162,6 +180,8 @@ These are the provisioning parameters for SapConvergedCloud that you can configu
 | **autoScalerMax[<sup>1</sup>](#update)**  | int    | Specifies the maximum number of virtual machines to create.                                |    No    | `20`          |
 | **maxSurge[<sup>1</sup>](#update)**       | int    | Specifies the maximum number of virtual machines that are created during an update.        |    No    | `4`           |
 | **maxUnavailable[<sup>1</sup>](#update)** | int    | Specifies the maximum number of virtual machines that can be unavailable during an update. |    No    | `1`           |
+
+<!-- markdown-link-check-enable -->
 
 The SAP Converged Cloud plan cannot be provisioned in all SKR regions. This restriction is enforced through the region mapping functionality configured by [`sapConvergedCloudPlanRegionMappings`](https://github.com/kyma-project/kyma-environment-broker/blob/48d5f55dfacfc511ead132fb77f522abc7e382e7/resources/keb/values.yaml#L215). The lists enable you to map a BTP region, which is passed to the provisioning endpoint in an HTTP path parameter (map key), to Kyma regions (list entries). Based on that configuration and the passed path parameter, the broker schema is populated only with values from the mapped list. In case of an empty mapping configuration or passing a provisioning path parameter that does not contain the configured region, the `sap-converged-cloud` plan is not rendered in the schema.
 
@@ -238,6 +258,8 @@ These are the provisioning parameters for the `preview` plan that you configure:
   Preview cluster plan
   </summary>
 
+<!-- markdown-link-check-disable -->
+
 | Parameter name                            | Type   | Description                                                                                | Required | Default value |
 |-------------------------------------------|--------|--------------------------------------------------------------------------------------------|:--------:|---------------|
 | **machineType**                           | string | Specifies the provider-specific virtual machine type.                                      |    No    | `m6i.large`   |
@@ -248,6 +270,8 @@ These are the provisioning parameters for the `preview` plan that you configure:
 | **autoScalerMax[<sup>1</sup>](#update)**  | int    | Specifies the maximum number of virtual machines to create, up to `40` allowed.            |    No    | `10`          |
 | **maxSurge[<sup>1</sup>](#update)**       | int    | Specifies the maximum number of virtual machines that are created during an update.        |    No    | `4`           |
 | **maxUnavailable[<sup>1</sup>](#update)** | int    | Specifies the maximum number of virtual machines that can be unavailable during an update. |    No    | `1`           |
+
+<!-- markdown-link-check-enable -->
 
 </details>
 </div>
