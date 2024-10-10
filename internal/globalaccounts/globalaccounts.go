@@ -267,7 +267,7 @@ func fix(db storage.Instances, kcp client.Client, cfg Config, toFix []fixMap, lo
 	_ = broker.NewLabeler(kcp)
 	errs := 0
 	processed := 0
-	logs.Infof("fix start. Is dry run?: ", cfg.DryRun)
+	logs.Infof("fix start. Is dry run?: %t", cfg.DryRun)
 	for _, pair := range toFix {
 		processed++
 		if cfg.DryRun {
