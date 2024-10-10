@@ -96,10 +96,13 @@ func (s *InitialisationStep) Run(operation internal.UpgradeClusterOperation, log
 			}
 		}
 
-		op, delay, _ := s.operationManager.UpdateOperation(operation, func(op *internal.UpgradeClusterOperation) {
+		op, delay, err := s.operationManager.UpdateOperation(operation, func(op *internal.UpgradeClusterOperation) {
 			op.ProvisioningParameters.ErsContext = internal.InheritMissingERSContext(op.ProvisioningParameters.ErsContext, lastOp.ProvisioningParameters.ErsContext)
 			op.State = domain.InProgress
 		}, log)
+		if err != nil {
+			log.Infof("error during update operation initialisation: %s", err)
+		}
 		if delay != 0 {
 			return operation, delay, nil
 		}
