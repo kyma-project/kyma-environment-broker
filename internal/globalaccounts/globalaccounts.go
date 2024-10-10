@@ -67,7 +67,7 @@ func Run(ctx context.Context, cfg Config) {
 	logs.Println(fmt.Sprintf("No. kymas: %d", len(clusterOp.Items)))
 
 	toFix := logic(cfg, svc, db, clusterOp, logs)
-	fix(db.Instances(), kcp, cfg, toFix, logs)
+	fixGlobalAccounts(db.Instances(), kcp, cfg, toFix, logs)
 	logs.Infof("*** End at: %s ***", time.Now().Format(time.RFC3339))
 	<-ctx.Done()
 }
