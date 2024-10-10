@@ -264,9 +264,9 @@ func svcRequest(config Config, svc *http.Client, subaccountId string, logs *logr
 	return svcResponse, nil
 }
 
-func fix(db storage.Instances, kcp client.Client, cfg Config, toFix []fixMap, logs *logrus.Logger) {
+func fixGlobalAccounts(db storage.Instances, kcp client.Client, cfg Config, toFix []fixMap, logs *logrus.Logger) {
 	_ = broker.NewLabeler(kcp)
-	errs := 0
+	updateErrorCounts := 0
 	processed := 0
 	logs.Infof("fix start. Is dry run?: %t", cfg.DryRun)
 	for _, pair := range toFix {
@@ -298,8 +298,8 @@ func fix(db storage.Instances, kcp client.Client, cfg Config, toFix []fixMap, lo
 		}*/
 	}
 
-	if errs > 0 {
-		logs.Infof("finished update with %d errors", errs)
+	if updateErrorCounts > 0 {
+		logs.Infof("finished update with %d errors", updateErrorCounts)
 	} else {
 		logs.Info("finished update with no error")
 	}

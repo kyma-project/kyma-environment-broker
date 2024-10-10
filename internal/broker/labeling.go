@@ -33,7 +33,7 @@ func (l *Labeler) UpdateLabels(id, newGlobalAccountId string) error {
 }
 
 func (l *Labeler) updateCrLabel(id, crName, newGlobalAccountId string) error {
-	l.log.Infof("update labels starting for runtime %s for %s cr with new value %s", id, crName, newGlobalAccountId)
+	l.log.Infof("update label starting for runtime %s for %s cr with new value %s", id, crName, newGlobalAccountId)
 	gvk, err := k8s.GvkByName(crName)
 	if err != nil {
 		return fmt.Errorf("while getting gvk for name: %s: %s", crName, err.Error())
