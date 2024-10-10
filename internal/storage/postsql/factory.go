@@ -83,7 +83,7 @@ type WriteSession interface {
 	DeleteOperationByID(operationID string) dberr.Error
 	InsertInstanceArchived(instance dbmodel.InstanceArchivedDTO) dberr.Error
 	InsertBinding(binding dbmodel.BindingDTO) dberr.Error
-	DeleteBinding(ID string) dberr.Error
+	DeleteBinding(instanceID, bindingID string) dberr.Error
 }
 
 type Transaction interface {

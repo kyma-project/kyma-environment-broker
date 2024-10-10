@@ -3,16 +3,18 @@ package broker
 import (
 	"context"
 
+	"github.com/kyma-project/kyma-environment-broker/internal/storage"
 	"github.com/pivotal-cf/brokerapi/v8/domain"
 	"github.com/sirupsen/logrus"
 )
 
 type UnbindEndpoint struct {
-	log logrus.FieldLogger
+	log             logrus.FieldLogger
+	bindingsStorage storage.Bindings
 }
 
-func NewUnbind(log logrus.FieldLogger) *UnbindEndpoint {
-	return &UnbindEndpoint{log: log.WithField("service", "UnbindEndpoint")}
+func NewUnbind(log logrus.FieldLogger, bindingsStorage storage.Bindings) *UnbindEndpoint {
+	return &UnbindEndpoint{log: log.WithField("service", "UnbindEndpoint"), bindingsStorage: bindingsStorage}
 }
 
 // Unbind deletes an existing service binding
@@ -22,6 +24,13 @@ func (b *UnbindEndpoint) Unbind(ctx context.Context, instanceID, bindingID strin
 	b.log.Infof("Unbind instanceID: %s", instanceID)
 	b.log.Infof("Unbind details: %+v", details)
 	b.log.Infof("Unbind asyncAllowed: %v", asyncAllowed)
+
+	err := b.bindingsStorage.Delete(instanceID, bindingID)
+
+	if err != nil {
+		b.log.Errorf("Unbind error: %s", err)
+		return domain.UnbindSpec{}, err
+	}
 
 	return domain.UnbindSpec{
 		IsAsync: false,

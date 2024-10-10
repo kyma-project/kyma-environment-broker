@@ -40,7 +40,7 @@ func (s *Binding) Insert(binding *internal.Binding) error {
 	return nil
 }
 
-func (s *Binding) DeleteByBindingID(bindingID string) error {
+func (s *Binding) Delete(instanceID, bindingID string) error {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 

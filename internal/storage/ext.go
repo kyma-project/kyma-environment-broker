@@ -132,5 +132,5 @@ type Bindings interface {
 	Insert(binding *internal.Binding) error
 	Get(instanceID string, bindingID string) (*internal.Binding, error)
 	ListByInstanceID(instanceID string) ([]internal.Binding, error)
-	DeleteByBindingID(bindingID string) error
+	Delete(instanceID, bindingID string) error
 }

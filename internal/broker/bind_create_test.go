@@ -164,6 +164,7 @@ func TestCreateBindingEndpoint(t *testing.T) {
 	//// api handler
 	bindEndpoint := NewBind(*bindingCfg, db.Instances(), db.Bindings(), logs, skrK8sClientProvider, skrK8sClientProvider, gardenerClient)
 	getBindingEndpoint := NewGetBinding(logs, db.Bindings())
+	unbindEndpoint := NewUnbind(logs, db.Bindings())
 	apiHandler := handlers.NewApiHandler(KymaEnvironmentBroker{
 		nil,
 		nil,
@@ -172,7 +173,7 @@ func TestCreateBindingEndpoint(t *testing.T) {
 		nil,
 		nil,
 		bindEndpoint,
-		nil,
+		unbindEndpoint,
 		getBindingEndpoint,
 		nil,
 	}, brokerLogger)
@@ -181,6 +182,7 @@ func TestCreateBindingEndpoint(t *testing.T) {
 	router := mux.NewRouter()
 	router.HandleFunc("/v2/service_instances/{instance_id}/service_bindings/{binding_id}", apiHandler.Bind).Methods(http.MethodPut)
 	router.HandleFunc("/v2/service_instances/{instance_id}/service_bindings/{binding_id}", apiHandler.GetBinding).Methods(http.MethodGet)
+	router.HandleFunc("/v2/service_instances/{instance_id}/service_bindings/{binding_id}", apiHandler.Unbind).Methods(http.MethodDelete)
 	httpServer := httptest.NewServer(router)
 	defer httpServer.Close()
 
@@ -208,8 +210,8 @@ func TestCreateBindingEndpoint(t *testing.T) {
 		assert.Equal(t, expirationSeconds*time.Second, duration)
 
 		//// verify connectivity using kubeconfig from the generated binding
-		assertClusterAccess(t, response, "secret-to-check-first", binding)
-		assertRolesExistence(t, response, "kyma-binding-binding-id", binding)
+		assertClusterAccess(t, "secret-to-check-first", binding)
+		assertRolesExistence(t, "kyma-binding-binding-id", binding)
 	})
 
 	t.Run("should create a new service binding with custom token expiration time", func(t *testing.T) {
@@ -322,7 +324,7 @@ func TestCreateBindingEndpoint(t *testing.T) {
 		assert.Equal(t, expirationSeconds*time.Second, duration)
 
 		//// verify connectivity using kubeconfig from the generated binding
-		assertClusterAccess(t, response, "secret-to-check-first", binding)
+		assertClusterAccess(t, "secret-to-check-first", binding)
 	})
 
 	t.Run("should return created bindings when multiple bindings created", func(t *testing.T) {
@@ -352,7 +354,7 @@ func TestCreateBindingEndpoint(t *testing.T) {
 		binding := unmarshal(t, response)
 		assert.Equal(t, firstInstancefirstBinding, binding)
 		assert.Equal(t, firstInstanceFirstBindingDB.Kubeconfig, binding.Credentials.(map[string]interface{})["kubeconfig"])
-		assertClusterAccess(t, response, "secret-to-check-first", binding)
+		assertClusterAccess(t, "secret-to-check-first", binding)
 
 		// when - binding to the second instance
 		path = fmt.Sprintf("v2/service_instances/%s/service_bindings/%s?accepts_incomplete=false", instanceIDSecond, secondInstanceBindingID)
@@ -364,7 +366,7 @@ func TestCreateBindingEndpoint(t *testing.T) {
 		binding = unmarshal(t, response)
 		assert.Equal(t, secondInstanceFirstBinding, binding)
 		assert.Equal(t, secondInstanceFirstBindingDB.Kubeconfig, binding.Credentials.(map[string]interface{})["kubeconfig"])
-		assertClusterAccess(t, response, "secret-to-check-second", binding)
+		assertClusterAccess(t, "secret-to-check-second", binding)
 
 		// when - second binding to the first instance
 		path = fmt.Sprintf("v2/service_instances/%s/service_bindings/%s?accepts_incomplete=false", instanceIDFirst, firstInstanceSecondBindingID)
@@ -376,11 +378,33 @@ func TestCreateBindingEndpoint(t *testing.T) {
 		binding = unmarshal(t, response)
 		assert.Equal(t, firstInstanceSecondBinding, binding)
 		assert.Equal(t, firstInstanceSecondBindingDB.Kubeconfig, binding.Credentials.(map[string]interface{})["kubeconfig"])
-		assertClusterAccess(t, response, "secret-to-check-first", binding)
+		assertClusterAccess(t, "secret-to-check-first", binding)
 	})
+
+	t.Run("should delete created binding", func(t *testing.T) {
+		// given
+		instanceID := "1"
+		createdBindingID, createdBinding := createBindingForInstance(instanceID, httpServer, t)
+		createdBindingIDDB, err := db.Bindings().Get(instanceID, createdBindingID)
+		assert.NoError(t, err)
+		assert.Equal(t, createdBinding.Credentials.(map[string]interface{})["kubeconfig"], createdBindingIDDB.Kubeconfig)
+
+		// when
+		path := fmt.Sprintf("v2/service_instances/%s/service_bindings/%s?accepts_incomplete=false&service_id=%s&plan_id=%s", instanceID, createdBindingID, "123", fixture.PlanId)
+
+		response := CallAPI(httpServer, http.MethodDelete, path, "", t)
+		defer response.Body.Close()
+
+		// then
+		assert.Equal(t, http.StatusOK, response.StatusCode)
+		createdBindingIDDB, err = db.Bindings().Get(instanceID, createdBindingID)
+		assert.Error(t, err)
+		assert.Nil(t, createdBindingIDDB)
+	})
+
 }
 
-func assertClusterAccess(t *testing.T, response *http.Response, controlSecretName string, binding domain.Binding) {
+func assertClusterAccess(t *testing.T, controlSecretName string, binding domain.Binding) {
 
 	credentials, ok := binding.Credentials.(map[string]interface{})
 	require.True(t, ok)
@@ -392,7 +416,7 @@ func assertClusterAccess(t *testing.T, response *http.Response, controlSecretNam
 	assert.NoError(t, err)
 }
 
-func assertRolesExistence(t *testing.T, response *http.Response, bindingID string, binding domain.Binding) {
+func assertRolesExistence(t *testing.T, bindingID string, binding domain.Binding) {
 
 	credentials, ok := binding.Credentials.(map[string]interface{})
 	require.True(t, ok)

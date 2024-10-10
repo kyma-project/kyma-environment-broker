@@ -57,9 +57,9 @@ func (s *Binding) Insert(binding *internal.Binding) error {
 	return nil
 }
 
-func (s *Binding) DeleteByBindingID(ID string) error {
+func (s *Binding) Delete(instanceID, bindingID string) error {
 	sess := s.NewWriteSession()
-	return sess.DeleteBinding(ID)
+	return sess.DeleteBinding(instanceID, bindingID)
 }
 
 func (s *Binding) ListByInstanceID(instanceID string) ([]internal.Binding, error) {
