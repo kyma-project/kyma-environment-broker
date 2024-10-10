@@ -88,4 +88,3 @@ jobs:
          name: kyma-environment-broker-schema-migrator
          dockerfile: Dockerfile.schemamigrator
          context: .
-         build-args: BIN=schema-migrator
