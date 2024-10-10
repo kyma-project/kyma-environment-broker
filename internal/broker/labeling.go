@@ -46,7 +46,7 @@ func (l *Labeler) updateCrLabel(id, crName, newGlobalAccountId string) error {
 		return fmt.Errorf("while getting k8s object of type %s from kcp cluster for instance %s, due to: %s", crName, id, err.Error())
 	}
 
-	err = k8s.AddOrOverrideMetadata(&k8sObject, k8s.GlobalAccountIdLabel, newGlobalAccountId)
+	err = addOrOverrideLabel(&k8sObject, k8s.GlobalAccountIdLabel, newGlobalAccountId)
 	if err != nil {
 		return fmt.Errorf("while adding or overriding label (new=%s) for k8s object %s %s, because: %s", newGlobalAccountId, id, crName, err.Error())
 	}
@@ -55,6 +55,21 @@ func (l *Labeler) updateCrLabel(id, crName, newGlobalAccountId string) error {
 	if err != nil {
 		return fmt.Errorf("while updating k8s object %s %s, because: %s", id, crName, err.Error())
 	}
+
+	return nil
+}
+
+func addOrOverrideLabel(k8sObject *unstructured.Unstructured, key, value string) error {
+	if k8sObject == nil {
+		return fmt.Errorf("object is nil")
+	}
+
+	labels := (*k8sObject).GetLabels()
+	if labels == nil {
+		labels = make(map[string]string)
+	}
+	labels[key] = value
+	(*k8sObject).SetLabels(labels)
 
 	return nil
 }
