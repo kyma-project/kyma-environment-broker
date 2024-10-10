@@ -26,6 +26,7 @@ type BindingConfig struct {
 	ExpirationSeconds    int         `envconfig:"default=600"`
 	MaxExpirationSeconds int         `envconfig:"default=7200"`
 	MinExpirationSeconds int         `envconfig:"default=600"`
+	MaxBindingsCount     int         `envconfig:"default=10"`
 }
 
 type BindEndpoint struct {
@@ -150,7 +151,7 @@ func (b *BindEndpoint) Bind(ctx context.Context, instanceID, bindingID string, d
 
 	bindingCount := len(bindingList)
 	// dont forget expired bindings, talk with WW
-	if bindingCount >= 10 {
+	if bindingCount >= b.config.MaxBindingsCount {
 		message := fmt.Sprintf("maximum number of bindings reached: %d", bindingCount)
 		return domain.Binding{}, apiresponses.NewFailureResponse(fmt.Errorf(message), http.StatusBadRequest, message)
 	}

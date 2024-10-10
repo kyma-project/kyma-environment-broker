@@ -204,6 +204,7 @@ binding:
   maxExpirationSeconds: 7200
   # minExpirationSeconds can't be lower than 600 seconds. Forced by Gardener
   minExpirationSeconds: 600
+  maxBindingsCount: 10
 
 service:
   type: ClusterIP
