@@ -162,6 +162,31 @@ describe('SKR Binding test', function() {
     }
   });
 
+  it('Should not allow creation of more than 10 SKR bindings', async function() {
+    errorOccurred = false;
+    count = 0;
+    while (!errorOccurred && count < 13) {
+      bindingID = Math.random().toString(36).substring(2, 18);
+      try {
+        await keb.createBinding(options.instanceID, bindingID, true);
+      } catch (err) {
+        if (err.response) {
+          errorOccurred = true;
+          expect(err.response.status).equal(400);
+          console.log('Got response:');
+          console.log(err.response.data);
+        } else {
+          throw err;
+        }
+      }
+      count++;
+    }
+
+    if (count >= 13) {
+      expect.fail('The call was expected to fail but it passed');
+    }
+  });
+
   after('Cleanup the resources', async function() {
     this.timeout(deprovisioningTimeout);
     if (process.env['SKIP_DEPROVISIONING'] != 'true') {
