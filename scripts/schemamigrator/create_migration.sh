@@ -10,7 +10,7 @@ if [ -z "$NAME" ] ; then
 fi
 
 DATE="$(date +%Y%m%d%H%M)"
-MIGRATIONS_DIR="../../resources/keb/migrations"
+MIGRATIONS_DIR="${DIR}/../../resources/keb/migrations"
 TRANSACTION_STR=$'BEGIN;\nCOMMIT;'
 
 echo "$TRANSACTION_STR" > "${MIGRATIONS_DIR}/${DATE}_${NAME}.up.sql"
