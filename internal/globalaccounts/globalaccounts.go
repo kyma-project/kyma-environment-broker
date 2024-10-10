@@ -202,11 +202,6 @@ func logic(config Config, svc *http.Client, db storage.BrokerStorage, kymas unst
 			info = fmt.Sprintf(" [EMPTY] for SubAccount %s -> GA ID in KEB %s GA ID in SVC %s \n", dbOp.SubAccountID, dbOp.GlobalAccountID, svcResponse.GlobalAccountGUID)
 			resEmptyGA++
 		case svcResponse.GlobalAccountGUID != dbOp.GlobalAccountID:
-			info = fmt.Sprintf(" [WRONG] for SubAccount %s -> GA ID in KEB %s GA ID in SVC %s \n", dbOp.SubAccountID, dbOp.GlobalAccountID, svcResponse.GlobalAccountGUID)
-			fmt.Printf(" [EMPTY] for SubAccount %s -> GA ID in KEB %s GA ID in SVC %s \n", dbOp.SubAccountID, dbOp.GlobalAccountID, svcResponse.GlobalAccountGUID)
-			toFix = append(toFix, fixMap{instance: dbOp, correctGlobalAccountId: dbOp.GlobalAccountID})
-			resEmptyGA++
-		case svcResponse.GlobalAccountGUID != dbOp.GlobalAccountID:
 			fmt.Printf(" [WRONG] for SubAccount %s -> GA ID in KEB %s GA ID in SVC %s \n", dbOp.SubAccountID, dbOp.GlobalAccountID, svcResponse.GlobalAccountGUID)
 			toFix = append(toFix, fixMap{instance: dbOp, correctGlobalAccountId: dbOp.GlobalAccountID})
 			resWrongGa++
