@@ -150,10 +150,17 @@ func (b *BindEndpoint) Bind(ctx context.Context, instanceID, bindingID string, d
 	}
 
 	bindingCount := len(bindingList)
-	// dont forget expired bindings, talk with WW
 	if bindingCount >= b.config.MaxBindingsCount {
-		message := fmt.Sprintf("maximum number of bindings reached: %d", bindingCount)
-		return domain.Binding{}, apiresponses.NewFailureResponse(fmt.Errorf(message), http.StatusBadRequest, message)
+		expiredCount := 0
+		for _, binding := range bindingList {
+			if binding.ExpiresAt.Before(time.Now()) {
+				expiredCount++
+			}
+		}
+		if (bindingCount - expiredCount) >= b.config.MaxBindingsCount {
+			message := fmt.Sprintf("maximum number of bindings reached: %d", b.config.MaxBindingsCount)
+			return domain.Binding{}, apiresponses.NewFailureResponse(fmt.Errorf(message), http.StatusBadRequest, message)
+		}
 	}
 
 	expirationSeconds := b.config.ExpirationSeconds
