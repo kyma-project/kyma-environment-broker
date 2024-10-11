@@ -6,8 +6,10 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"log/slog"
 	"net/http"
 	"net/http/httptest"
+	"os"
 	"testing"
 	"time"
 
@@ -15,7 +17,6 @@ import (
 	"github.com/google/uuid"
 	"gopkg.in/yaml.v2"
 
-	"code.cloudfoundry.org/lager"
 	"github.com/gorilla/mux"
 	"github.com/kyma-project/kyma-environment-broker/internal"
 	"github.com/kyma-project/kyma-environment-broker/internal/fixture"
@@ -66,8 +67,10 @@ func TestCreateBindingEndpoint(t *testing.T) {
 		TimestampFormat: time.RFC3339Nano,
 	})
 
-	brokerLogger := lager.NewLogger("test")
-	brokerLogger.RegisterSink(lager.NewWriterSink(logs.Writer(), lager.DEBUG))
+	logger := slog.New(slog.NewJSONHandler(os.Stdout, &slog.HandlerOptions{
+		Level: slog.LevelInfo,
+	}))
+	slog.SetDefault(logger)
 
 	//// schema
 	sch := runtime.NewScheme()
@@ -175,7 +178,7 @@ func TestCreateBindingEndpoint(t *testing.T) {
 		nil,
 		getBindingEndpoint,
 		nil,
-	}, brokerLogger)
+	}, logger)
 
 	//// attach bindings api
 	router := mux.NewRouter()
