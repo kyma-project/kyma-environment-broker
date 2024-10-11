@@ -128,12 +128,12 @@ func (c *ServiceAccountBindingsManager) Create(ctx context.Context, instance *in
 		return "", time.Time{}, fmt.Errorf("while creating a service account kubeconfig: %v", err)
 	}
 
-	expirationTime := tkn.Status.ExpirationTimestamp.Time
+	expiresAt := tkn.Status.ExpirationTimestamp.Time
 	kubeconfigContent, err := c.kubeconfigBuilder.BuildFromAdminKubeconfigForBinding(instance.RuntimeID, tkn.Status.Token)
 
 	if err != nil {
 		return "", time.Time{}, fmt.Errorf("while creating a kubeconfig: %v", err)
 	}
 
-	return string(kubeconfigContent), expirationTime, nil
+	return string(kubeconfigContent), expiresAt, nil
 }

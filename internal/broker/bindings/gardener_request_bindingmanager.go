@@ -43,8 +43,8 @@ func (c *GardenerBindingManager) Create(ctx context.Context, instance *internal.
 	if err != nil {
 		return "", time.Time{}, fmt.Errorf("while creating admin kubeconfig request: %v", err)
 	}
-	expirationTime := adminKubeconfigRequest.Status.ExpirationTimestamp.Time
+	expiresAt := adminKubeconfigRequest.Status.ExpirationTimestamp.Time
 	shootKubeconfig := adminKubeconfigRequest.Status.Kubeconfig
 
-	return string(shootKubeconfig), expirationTime, nil
+	return string(shootKubeconfig), expiresAt, nil
 }
