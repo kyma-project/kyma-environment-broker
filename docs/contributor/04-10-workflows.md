@@ -51,6 +51,14 @@ This [workflow](/.github/workflows/auto-merge.yaml) enables the auto-merge funct
 
 This [workflow](/.github/workflows/pr-checks.yaml) checks if all jobs, except those excluded in the workflow configuration, have passed. If the workflow is triggered by a PR where the author is the `kyma-gopher-bot`, the workflow ends immediately with success.
 
+## Validate Database Migrations Workflow
+
+This [workflow](/.github/workflows/pull-validate-schema-migrator.yaml) runs a validation of database migrations performed by Schema Migrator.
+
+The workflow:
+1. Checks out code
+2. Invokes the [validation script](/scripts/schemamigrator/validate.sh).
+
 ## Reusable Workflows
 
 There are reusable workflows created. Anyone with access to a reusable workflow can call it from another workflow.
