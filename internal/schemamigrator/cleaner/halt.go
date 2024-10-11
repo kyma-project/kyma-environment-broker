@@ -36,7 +36,10 @@ func HaltCloudSqlProxy() error {
 
 	for _, file := range matches {
 
-		target, _ := os.ReadFile(file)
+		target, err := os.ReadFile(file)
+		if err != nil {
+			return fmt.Errorf("while reading process file: %s", err)
+		}
 
 		if len(target) > 0 && strings.Contains(string(target), "cloud-sql-proxy") {
 			splitted := strings.Split(file, "/")
