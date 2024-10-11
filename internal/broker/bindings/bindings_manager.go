@@ -3,6 +3,7 @@ package broker
 import (
 	"context"
 	"fmt"
+	"time"
 
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 
@@ -20,7 +21,7 @@ type Credentials struct {
 }
 
 type BindingsManager interface {
-	Create(ctx context.Context, instance *internal.Instance, bindingID string, expirationSeconds int) (string, error)
+	Create(ctx context.Context, instance *internal.Instance, bindingID string, expirationSeconds int) (string, time.Time, error)
 }
 
 type ClientProvider interface {
@@ -43,11 +44,11 @@ func NewServiceAccountBindingsManager(clientProvider ClientProvider, kubeconfigP
 	}
 }
 
-func (c *ServiceAccountBindingsManager) Create(ctx context.Context, instance *internal.Instance, bindingID string, expirationSeconds int) (string, error) {
+func (c *ServiceAccountBindingsManager) Create(ctx context.Context, instance *internal.Instance, bindingID string, expirationSeconds int) (string, time.Time, error) {
 	clientset, err := c.clientProvider.K8sClientSetForRuntimeID(instance.RuntimeID)
 
 	if err != nil {
-		return "", fmt.Errorf("while creating a runtime client for binding creation: %v", err)
+		return "", time.Time{}, fmt.Errorf("while creating a runtime client for binding creation: %v", err)
 	}
 
 	serviceBindingName := fmt.Sprintf("kyma-binding-%s", bindingID)
@@ -62,7 +63,7 @@ func (c *ServiceAccountBindingsManager) Create(ctx context.Context, instance *in
 		}, mv1.CreateOptions{})
 
 	if err != nil && !apierrors.IsAlreadyExists(err) {
-		return "", fmt.Errorf("while creating a service account: %v", err)
+		return "", time.Time{}, fmt.Errorf("while creating a service account: %v", err)
 	}
 
 	_, err = clientset.RbacV1().ClusterRoles().Create(ctx,
@@ -83,7 +84,7 @@ func (c *ServiceAccountBindingsManager) Create(ctx context.Context, instance *in
 		}, mv1.CreateOptions{})
 
 	if err != nil && !apierrors.IsAlreadyExists(err) {
-		return "", fmt.Errorf("while creating a cluster role: %v", err)
+		return "", time.Time{}, fmt.Errorf("while creating a cluster role: %v", err)
 	}
 
 	_, err = clientset.RbacV1().ClusterRoleBindings().Create(ctx, &rbacv1.ClusterRoleBinding{
@@ -107,7 +108,7 @@ func (c *ServiceAccountBindingsManager) Create(ctx context.Context, instance *in
 	}, mv1.CreateOptions{})
 
 	if err != nil && !apierrors.IsAlreadyExists(err) {
-		return "", fmt.Errorf("while creating a cluster role binding: %v", err)
+		return "", time.Time{}, fmt.Errorf("while creating a cluster role binding: %v", err)
 	}
 
 	tokenRequest := &authv1.TokenRequest{
@@ -124,14 +125,15 @@ func (c *ServiceAccountBindingsManager) Create(ctx context.Context, instance *in
 	tkn, err := clientset.CoreV1().ServiceAccounts("kyma-system").CreateToken(ctx, serviceBindingName, tokenRequest, mv1.CreateOptions{})
 
 	if err != nil {
-		return "", fmt.Errorf("while creating a service account kubeconfig: %v", err)
+		return "", time.Time{}, fmt.Errorf("while creating a service account kubeconfig: %v", err)
 	}
 
+	expirationTime := tkn.Status.ExpirationTimestamp.Time
 	kubeconfigContent, err := c.kubeconfigBuilder.BuildFromAdminKubeconfigForBinding(instance.RuntimeID, tkn.Status.Token)
 
 	if err != nil {
-		return "", fmt.Errorf("while creating a kubeconfig: %v", err)
+		return "", time.Time{}, fmt.Errorf("while creating a kubeconfig: %v", err)
 	}
 
-	return string(kubeconfigContent), nil
+	return string(kubeconfigContent), expirationTime, nil
 }
