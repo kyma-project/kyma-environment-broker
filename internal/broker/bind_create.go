@@ -68,8 +68,7 @@ func (b *BindingContext) CreatedBy() string {
 }
 
 type BindingParams struct {
-	ServiceAccount    bool `json:"service_account,omit"`
-	ExpirationSeconds int  `json:"expiration_seconds,omit"`
+	ExpirationSeconds int `json:"expiration_seconds,omit"`
 }
 
 type Credentials struct {
@@ -186,21 +185,11 @@ func (b *BindEndpoint) Bind(ctx context.Context, instanceID, bindingID string, d
 		ExpirationSeconds: int64(expirationSeconds),
 		CreatedBy:         bindingContext.CreatedBy(),
 	}
-	if parameters.ServiceAccount {
-		// get kubeconfig for the instance
-		kubeconfig, expiresAt, err = b.serviceAccountBindingManager.Create(ctx, instance, bindingID, expirationSeconds)
-		if err != nil {
-			message := fmt.Sprintf("failed to create a Kyma binding using service account's kubeconfig: %s", err)
-			return domain.Binding{}, apiresponses.NewFailureResponse(fmt.Errorf(message), http.StatusBadRequest, message)
-		}
-		binding.BindingType = internal.BINDING_TYPE_SERVICE_ACCOUNT
-	} else {
-		kubeconfig, expiresAt, err = b.gardenerBindingsManager.Create(ctx, instance, bindingID, expirationSeconds)
-		if err != nil {
-			message := fmt.Sprintf("failed to create a Kyma binding using adminkubeconfig gardener subresource: %s", err)
-			return domain.Binding{}, apiresponses.NewFailureResponse(fmt.Errorf(message), http.StatusBadRequest, message)
-		}
-		binding.BindingType = internal.BINDING_TYPE_ADMIN_KUBECONFIG
+	// get kubeconfig for the instance
+	kubeconfig, expiresAt, err = b.serviceAccountBindingManager.Create(ctx, instance, bindingID, expirationSeconds)
+	if err != nil {
+		message := fmt.Sprintf("failed to create a Kyma binding using service account's kubeconfig: %s", err)
+		return domain.Binding{}, apiresponses.NewFailureResponse(fmt.Errorf(message), http.StatusBadRequest, message)
 	}
 
 	binding.ExpiresAt = expiresAt

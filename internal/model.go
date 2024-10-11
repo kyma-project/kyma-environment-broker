@@ -17,9 +17,6 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
-const BINDING_TYPE_SERVICE_ACCOUNT = "service_account"
-const BINDING_TYPE_ADMIN_KUBECONFIG = "gardener_admin_kubeconfig"
-
 type ProvisionerInputCreator interface {
 	SetProvisioningParameters(params ProvisioningParameters) ProvisionerInputCreator
 	SetShootName(string) ProvisionerInputCreator
@@ -576,6 +573,5 @@ type Binding struct {
 
 	Kubeconfig        string
 	ExpirationSeconds int64
-	BindingType       string
 	CreatedBy         string
 }

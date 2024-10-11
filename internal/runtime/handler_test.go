@@ -1255,10 +1255,6 @@ func TestRuntimeHandler_WithKimOnlyDrivenInstances(t *testing.T) {
 
 		assert.Equal(t, testID, out.Data[0].InstanceID)
 		assert.NotNil(t, out.Data[0].Bindings)
-
-		b := out.Data[0].Bindings[0]
-		assert.Equal(t, binding.BindingType, b.Type)
-
 	})
 
 }

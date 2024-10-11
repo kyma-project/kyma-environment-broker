@@ -524,7 +524,6 @@ func (h *Handler) addBindings(p *pkg.RuntimeDTO) error {
 			ExpirationSeconds: b.ExpirationSeconds,
 			CreatedAt:         b.CreatedAt,
 			ExpiresAt:         b.ExpiresAt,
-			Type:              b.BindingType,
 		})
 	}
 

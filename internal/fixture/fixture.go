@@ -359,7 +359,6 @@ func FixBindingWithInstanceID(bindingID string, instanceID string) internal.Bind
 
 		Kubeconfig:        "kubeconfig",
 		ExpirationSeconds: 600,
-		BindingType:       internal.BINDING_TYPE_SERVICE_ACCOUNT,
 		CreatedBy:         "john.smith@email.com",
 	}
 }
