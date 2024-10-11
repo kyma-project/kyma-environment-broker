@@ -356,7 +356,7 @@ func FixBindingWithInstanceID(bindingID string, instanceID string) internal.Bind
 
 		CreatedAt: time.Now(),
 		UpdatedAt: time.Now().Add(time.Minute * 5),
-		ExpiresAt: time.Now().Add(time.Second * 600),
+		ExpiresAt: time.Now().Add(time.Minute * 10),
 
 		Kubeconfig:        "kubeconfig",
 		ExpirationSeconds: 600,
