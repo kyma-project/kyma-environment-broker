@@ -123,6 +123,7 @@ func (b *BindEndpoint) Bind(ctx context.Context, instanceID, bindingID string, d
 		InstanceID: instanceID,
 
 		CreatedAt: time.Now(),
+		ExpiresAt: time.Now().Add(time.Duration(int64(expirationSeconds)) * time.Second),
 		UpdatedAt: time.Now(),
 
 		ExpirationSeconds: int64(expirationSeconds),
