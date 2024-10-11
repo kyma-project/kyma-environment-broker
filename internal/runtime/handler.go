@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"net/http"
-	"time"
 
 	"k8s.io/apimachinery/pkg/api/errors"
 
@@ -530,7 +529,7 @@ func (h *Handler) addBindings(p *pkg.RuntimeDTO) error {
 			ID:                b.ID,
 			ExpirationSeconds: b.ExpirationSeconds,
 			CreatedAt:         b.CreatedAt,
-			ExpiresAt:         b.CreatedAt.Add(time.Duration(b.ExpirationSeconds) * time.Second),
+			ExpiresAt:         b.ExpiresAt,
 			Type:              b.BindingType,
 		})
 	}
