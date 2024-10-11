@@ -384,6 +384,44 @@ func TestCreateBindingEndpoint(t *testing.T) {
 		assert.Equal(t, firstInstanceSecondBindingDB.Kubeconfig, binding.Credentials.(map[string]interface{})["kubeconfig"])
 		assertClusterAccess(t, response, "secret-to-check-first", binding)
 	})
+
+	t.Run("should return error when maximum number of bindings is reached", func(t *testing.T) {
+		// given - create max number of bindings
+		instanceID := "1"
+		for i := 0; i < maxBindingsCount; i++ {
+			bindingID := uuid.New().String()
+			path := fmt.Sprintf("v2/service_instances/%s/service_bindings/%s?accepts_incomplete=false", instanceID, bindingID)
+			body := fmt.Sprintf(`
+			{
+				"service_id": "123",
+				"plan_id": "%s",
+				"parameters": {
+					"service_account": true
+				}
+			}`, fixture.PlanId)
+
+			response := CallAPI(httpServer, http.MethodPut, path, body, t)
+			defer response.Body.Close()
+			require.Equal(t, http.StatusCreated, response.StatusCode)
+		}
+
+		// when - create one more binding
+		bindingID := uuid.New().String()
+		path := fmt.Sprintf("v2/service_instances/%s/service_bindings/%s?accepts_incomplete=false", instanceID, bindingID)
+		body := fmt.Sprintf(`
+		{
+			"service_id": "123",
+			"plan_id": "%s",
+			"parameters": {
+				"service_account": true
+			}
+		}`, fixture.PlanId)
+
+		response := CallAPI(httpServer, http.MethodPut, path, body, t)
+		defer response.Body.Close()
+		//then
+		require.Equal(t, http.StatusBadRequest, response.StatusCode)
+	})
 }
 
 func TestCreatedBy(t *testing.T) {
