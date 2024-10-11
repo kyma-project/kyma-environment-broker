@@ -7,7 +7,6 @@ import (
 	"github.com/kyma-project/kyma-environment-broker/internal/storage/dberr"
 	"github.com/kyma-project/kyma-environment-broker/internal/storage/dbmodel"
 	"github.com/kyma-project/kyma-environment-broker/internal/storage/postsql"
-	log "github.com/sirupsen/logrus"
 )
 
 type Binding struct {
@@ -22,17 +21,18 @@ func NewBinding(sess postsql.Factory, cipher Cipher) *Binding {
 	}
 }
 
-func (s *Binding) GetByBindingID(bindingId string) (*internal.Binding, error) {
+func (s *Binding) Get(instanceID string, bindingID string) (*internal.Binding, error) {
 	sess := s.NewReadSession()
 	bindingDTO := dbmodel.BindingDTO{}
-	bindingDTO, lastErr := sess.GetBindingByID(bindingId)
-	if lastErr != nil {
-		if dberr.IsNotFound(lastErr) {
-			return nil, dberr.NotFound("Binding with id %s not exist", bindingId)
+	bindingDTO, dbErr := sess.GetBinding(instanceID, bindingID)
+	if dbErr != nil {
+		if dberr.IsNotFound(dbErr) {
+			return nil, dberr.NotFound("Binding with id %s does not exist", bindingID)
 		}
-		log.Errorf("while getting instanceDTO by ID %s: %v", bindingId, lastErr)
-		return nil, lastErr
+
+		return nil, fmt.Errorf("while getting bindingDTO by ID %s: %w", bindingID, dbErr)
 	}
+
 	binding, err := s.toBinding(bindingDTO)
 	if err != nil {
 		return nil, err
@@ -42,11 +42,6 @@ func (s *Binding) GetByBindingID(bindingId string) (*internal.Binding, error) {
 }
 
 func (s *Binding) Insert(binding *internal.Binding) error {
-	_, err := s.GetByBindingID(binding.ID)
-	if err == nil {
-		return dberr.AlreadyExists("instance with id %s already exist", binding.ID)
-	}
-
 	dto, err := s.toBindingDTO(binding)
 	if err != nil {
 		return err
@@ -54,6 +49,7 @@ func (s *Binding) Insert(binding *internal.Binding) error {
 
 	sess := s.NewWriteSession()
 	err = sess.InsertBinding(dto)
+
 	if err != nil {
 		return fmt.Errorf("while saving binding with ID %s: %w", binding.ID, err)
 	}

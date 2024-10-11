@@ -61,7 +61,7 @@ type ReadSession interface {
 	TotalNumberOfInstancesArchivedForGlobalAccountID(globalAccountID string, planID string) (int, error)
 	GetAllOperations() ([]dbmodel.OperationDTO, error)
 	ListInstancesArchived(filter dbmodel.InstanceFilter) ([]dbmodel.InstanceArchivedDTO, int, int, error)
-	GetBindingByID(instanceID string) (dbmodel.BindingDTO, dberr.Error)
+	GetBinding(instanceID string, bindingID string) (dbmodel.BindingDTO, dberr.Error)
 	ListBindings(instanceID string) ([]dbmodel.BindingDTO, error)
 }
 

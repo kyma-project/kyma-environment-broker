@@ -589,9 +589,9 @@ type Binding struct {
 
 	CreatedAt time.Time
 	UpdatedAt time.Time
+	ExpiresAt time.Time
 
 	Kubeconfig        string
 	ExpirationSeconds int64
-	GenerationMethod  string
 	BindingType       string
 }

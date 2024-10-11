@@ -9,9 +9,9 @@ type BindingDTO struct {
 	InstanceID string
 
 	CreatedAt time.Time
+	ExpiresAt time.Time
 
 	Kubeconfig        string
 	ExpirationSeconds int64
-	GenerationMethod  string
 	BindingType       string
 }

@@ -12,6 +12,7 @@ import (
 	"time"
 
 	"github.com/golang-jwt/jwt/v4"
+	"github.com/google/uuid"
 	"gopkg.in/yaml.v2"
 
 	"code.cloudfoundry.org/lager"
@@ -74,51 +75,39 @@ func TestCreateBindingEndpoint(t *testing.T) {
 	assert.NoError(t, err)
 
 	// prepare envtest to provide valid kubeconfig
-	pid := internal.SetupEnvtest(t)
-	defer func() {
-		internal.CleanupEnvtestBinaries(pid)
-	}()
+	envFirst, configFirst, clientFirst := createEnvTest(t)
 
-	env := envtest.Environment{
-		ControlPlaneStartTimeout: 40 * time.Second,
-	}
-	var errEnvTest error
-	var config *rest.Config
-	err = wait.Poll(500*time.Millisecond, 5*time.Second, func() (done bool, err error) {
-		config, errEnvTest = env.Start()
-		if err != nil {
-			t.Logf("envtest could not start, retrying: %s", errEnvTest.Error())
-			return false, nil
-		}
-		t.Logf("envtest started")
-		return true, nil
-	})
-	require.NoError(t, err)
-	require.NoError(t, errEnvTest)
 	defer func(env *envtest.Environment) {
 		err := env.Stop()
 		assert.NoError(t, err)
-	}(&env)
-	kbcfg := createKubeconfigFileForRestConfig(*config)
-	skrClient, err := initClient(config)
-	require.NoError(t, err)
-
-	err = skrClient.Create(context.Background(), &corev1.Namespace{
-		ObjectMeta: v1.ObjectMeta{
-			Name: "kyma-system",
-		},
-	})
-	require.NoError(t, err)
+	}(&envFirst)
+	kbcfgFirst := createKubeconfigFileForRestConfig(*configFirst)
 
 	//// secret check in assertions
-	err = skrClient.Create(context.Background(), &corev1.Secret{
+	err = clientFirst.Create(context.Background(), &corev1.Secret{
 		ObjectMeta: v1.ObjectMeta{
-			Name:      "secret-to-check",
+			Name:      "secret-to-check-first",
 			Namespace: "default",
 		},
 	})
-
 	require.NoError(t, err)
+
+	// prepare envtest to provide valid kubeconfig for the second environment
+	envSecond, configSecond, clientSecond := createEnvTest(t)
+
+	defer func(env *envtest.Environment) {
+		err := env.Stop()
+		assert.NoError(t, err)
+	}(&envSecond)
+	kbcfgSecond := createKubeconfigFileForRestConfig(*configSecond)
+
+	//// secret check in assertions
+	err = clientSecond.Create(context.Background(), &corev1.Secret{
+		ObjectMeta: v1.ObjectMeta{
+			Name:      "secret-to-check-second",
+			Namespace: "default",
+		},
+	})
 
 	//// create fake kubernetes client - kcp
 	kcpClient := fake.NewClientBuilder().
@@ -130,7 +119,16 @@ func TestCreateBindingEndpoint(t *testing.T) {
 					Namespace: "kcp-system",
 				},
 				Data: map[string][]byte{
-					"config": kbcfg,
+					"config": kbcfgFirst,
+				},
+			},
+			&corev1.Secret{
+				ObjectMeta: v1.ObjectMeta{
+					Name:      "kubeconfig-runtime-2",
+					Namespace: "kcp-system",
+				},
+				Data: map[string][]byte{
+					"config": kbcfgSecond,
 				},
 			},
 		}...).
@@ -147,6 +145,9 @@ func TestCreateBindingEndpoint(t *testing.T) {
 	err = db.Instances().Insert(fixture.FixInstance("1"))
 	require.NoError(t, err)
 
+	err = db.Instances().Insert(fixture.FixInstance("2"))
+	require.NoError(t, err)
+
 	skrK8sClientProvider := kubeconfig.NewK8sClientFromSecretProvider(kcpClient)
 
 	//// binding configuration
@@ -161,7 +162,8 @@ func TestCreateBindingEndpoint(t *testing.T) {
 	}
 
 	//// api handler
-	bindEndpoint := NewBind(*bindingCfg, db.Instances(), logs, skrK8sClientProvider, skrK8sClientProvider, gardenerClient)
+	bindEndpoint := NewBind(*bindingCfg, db.Instances(), db.Bindings(), logs, skrK8sClientProvider, skrK8sClientProvider, gardenerClient)
+	getBindingEndpoint := NewGetBinding(logs, db.Bindings())
 	apiHandler := handlers.NewApiHandler(KymaEnvironmentBroker{
 		nil,
 		nil,
@@ -171,21 +173,20 @@ func TestCreateBindingEndpoint(t *testing.T) {
 		nil,
 		bindEndpoint,
 		nil,
-		nil,
+		getBindingEndpoint,
 		nil,
 	}, brokerLogger)
 
 	//// attach bindings api
-	method := "PUT"
 	router := mux.NewRouter()
-	router.HandleFunc("/v2/service_instances/{instance_id}/service_bindings/{binding_id}", apiHandler.Bind).Methods(method)
+	router.HandleFunc("/v2/service_instances/{instance_id}/service_bindings/{binding_id}", apiHandler.Bind).Methods(http.MethodPut)
+	router.HandleFunc("/v2/service_instances/{instance_id}/service_bindings/{binding_id}", apiHandler.GetBinding).Methods(http.MethodGet)
 	httpServer := httptest.NewServer(router)
 	defer httpServer.Close()
 
 	t.Run("should create a new service binding without error", func(t *testing.T) {
-
 		// When
-		response := CallAPI(httpServer, method, "v2/service_instances/1/service_bindings/binding-id?accepts_incomplete=true", fmt.Sprintf(`
+		response := CallAPI(httpServer, http.MethodPut, "v2/service_instances/1/service_bindings/binding-id?accepts_incomplete=true", fmt.Sprintf(`
 		{
 			"service_id": "123",
 			"plan_id": "%s",
@@ -193,8 +194,10 @@ func TestCreateBindingEndpoint(t *testing.T) {
 				"service_account": true
 			}
 		}`, fixture.PlanId), t)
+		defer response.Body.Close()
 
-		binding := verifyResponse(t, response)
+		binding := unmarshal(t, response)
+		require.Equal(t, http.StatusCreated, response.StatusCode)
 
 		credentials, ok := binding.Credentials.(map[string]interface{})
 		require.True(t, ok)
@@ -205,23 +208,15 @@ func TestCreateBindingEndpoint(t *testing.T) {
 		assert.Equal(t, expirationSeconds*time.Second, duration)
 
 		//// verify connectivity using kubeconfig from the generated binding
-		newClient := kubeconfigClient(t, kubeconfig)
-		_, err = newClient.CoreV1().Secrets("default").Get(context.Background(), "secret-to-check", v1.GetOptions{})
-		assert.NoError(t, err)
-
-		_, err = newClient.CoreV1().ServiceAccounts("kyma-system").Get(context.Background(), "kyma-binding-binding-id", v1.GetOptions{})
-		assert.NoError(t, err)
-		_, err = newClient.RbacV1().ClusterRoles().Get(context.Background(), "kyma-binding-binding-id", v1.GetOptions{})
-		assert.NoError(t, err)
-		_, err = newClient.RbacV1().ClusterRoleBindings().Get(context.Background(), "kyma-binding-binding-id", v1.GetOptions{})
-		assert.NoError(t, err)
+		assertClusterAccess(t, response, "secret-to-check-first", binding)
+		assertRolesExistence(t, response, "kyma-binding-binding-id", binding)
 	})
 
 	t.Run("should create a new service binding with custom token expiration time", func(t *testing.T) {
 		const customExpirationSeconds = 900
 
 		// When
-		response := CallAPI(httpServer, method, "v2/service_instances/1/service_bindings/binding-id2?accepts_incomplete=true", fmt.Sprintf(`
+		response := CallAPI(httpServer, http.MethodPut, "v2/service_instances/1/service_bindings/binding-id2?accepts_incomplete=true", fmt.Sprintf(`
 		{
 			"service_id": "123",
 			"plan_id": "%s",
@@ -230,8 +225,10 @@ func TestCreateBindingEndpoint(t *testing.T) {
 				"expiration_seconds": %v
 			}
 		}`, fixture.PlanId, customExpirationSeconds), t)
+		defer response.Body.Close()
 
-		binding := verifyResponse(t, response)
+		binding := unmarshal(t, response)
+		require.Equal(t, http.StatusCreated, response.StatusCode)
 
 		credentials, ok := binding.Credentials.(map[string]interface{})
 		require.True(t, ok)
@@ -240,11 +237,12 @@ func TestCreateBindingEndpoint(t *testing.T) {
 		require.NoError(t, err)
 		assert.Equal(t, customExpirationSeconds*time.Second, duration)
 	})
+
 	t.Run("should return error when expiration_seconds is greater than maxExpirationSeconds", func(t *testing.T) {
 		const customExpirationSeconds = 7201
 
 		// When
-		response := CallAPI(httpServer, method, "v2/service_instances/1/service_bindings/binding-id3?accepts_incomplete=true", fmt.Sprintf(`
+		response := CallAPI(httpServer, http.MethodPut, "v2/service_instances/1/service_bindings/binding-id3?accepts_incomplete=true", fmt.Sprintf(`
 		{
 			"service_id": "123",
 			"plan_id": "%s",
@@ -254,6 +252,7 @@ func TestCreateBindingEndpoint(t *testing.T) {
 
 			}
 		}`, fixture.PlanId, customExpirationSeconds), t)
+		defer response.Body.Close()
 		require.Equal(t, http.StatusBadRequest, response.StatusCode)
 	})
 
@@ -261,7 +260,7 @@ func TestCreateBindingEndpoint(t *testing.T) {
 		const customExpirationSeconds = 60
 
 		// When
-		response := CallAPI(httpServer, method, "v2/service_instances/1/service_bindings/binding-id4?accepts_incomplete=true", fmt.Sprintf(`
+		response := CallAPI(httpServer, http.MethodPut, "v2/service_instances/1/service_bindings/binding-id4?accepts_incomplete=true", fmt.Sprintf(`
 		{
 			"service_id": "123",
 			"plan_id": "%s",
@@ -270,8 +269,166 @@ func TestCreateBindingEndpoint(t *testing.T) {
 				"expiration_seconds": %v
 			}	
 		}`, fixture.PlanId, customExpirationSeconds), t)
+		defer response.Body.Close()
 		require.Equal(t, http.StatusBadRequest, response.StatusCode)
 	})
+
+	t.Run("should return 404 for not existing binding", func(t *testing.T) {
+		// given
+		instanceID := "1"
+		bindingID := uuid.New().String()
+		path := fmt.Sprintf("v2/service_instances/%s/service_bindings/%s?accepts_incomplete=false", instanceID, bindingID)
+
+		// when
+		response := CallAPI(httpServer, http.MethodGet, path, "", t)
+		defer response.Body.Close()
+
+		// then
+		require.Equal(t, http.StatusNotFound, response.StatusCode)
+	})
+
+	t.Run("should return created kubeconfig", func(t *testing.T) {
+		// given
+		instanceID := "1"
+		bindingID := uuid.New().String()
+		path := fmt.Sprintf("v2/service_instances/%s/service_bindings/%s?accepts_incomplete=false", instanceID, bindingID)
+		body := fmt.Sprintf(`
+		{
+			"service_id": "123",
+			"plan_id": "%s",
+			"parameters": {	
+				"service_account": true	
+				}	
+		}`, fixture.PlanId)
+
+		// when
+		response := CallAPI(httpServer, http.MethodPut, path, body, t)
+		defer response.Body.Close()
+		require.Equal(t, http.StatusCreated, response.StatusCode)
+
+		response = CallAPI(httpServer, http.MethodGet, path, "", t)
+
+		// then
+		require.Equal(t, http.StatusOK, response.StatusCode)
+
+		binding := unmarshal(t, response)
+
+		credentials, ok := binding.Credentials.(map[string]interface{})
+		require.True(t, ok)
+		kubeconfig := credentials["kubeconfig"].(string)
+
+		duration, err := getTokenDuration(t, kubeconfig)
+		require.NoError(t, err)
+		assert.Equal(t, expirationSeconds*time.Second, duration)
+
+		//// verify connectivity using kubeconfig from the generated binding
+		assertClusterAccess(t, response, "secret-to-check-first", binding)
+	})
+
+	t.Run("should return created bindings when multiple bindings created", func(t *testing.T) {
+		// given
+		instanceIDFirst := "1"
+		firstInstanceFirstBindingID, firstInstancefirstBinding := createBindingForInstance(instanceIDFirst, httpServer, t)
+		firstInstanceFirstBindingDB, err := db.Bindings().Get(instanceIDFirst, firstInstanceFirstBindingID)
+		assert.NoError(t, err)
+
+		instanceIDSecond := "2"
+		secondInstanceBindingID, secondInstanceFirstBinding := createBindingForInstance(instanceIDSecond, httpServer, t)
+		secondInstanceFirstBindingDB, err := db.Bindings().Get(instanceIDSecond, secondInstanceBindingID)
+		assert.NoError(t, err)
+
+		firstInstanceSecondBindingID, firstInstanceSecondBinding := createBindingForInstance(instanceIDFirst, httpServer, t)
+		firstInstanceSecondBindingDB, err := db.Bindings().Get(instanceIDFirst, firstInstanceSecondBindingID)
+		assert.NoError(t, err)
+
+		// when - first binding to the first instance
+		path := fmt.Sprintf("v2/service_instances/%s/service_bindings/%s?accepts_incomplete=false", instanceIDFirst, firstInstanceFirstBindingID)
+
+		response := CallAPI(httpServer, http.MethodGet, path, "", t)
+		defer response.Body.Close()
+
+		// then
+		assert.Equal(t, http.StatusOK, response.StatusCode)
+		binding := unmarshal(t, response)
+		assert.Equal(t, firstInstancefirstBinding, binding)
+		assert.Equal(t, firstInstanceFirstBindingDB.Kubeconfig, binding.Credentials.(map[string]interface{})["kubeconfig"])
+		assertClusterAccess(t, response, "secret-to-check-first", binding)
+
+		// when - binding to the second instance
+		path = fmt.Sprintf("v2/service_instances/%s/service_bindings/%s?accepts_incomplete=false", instanceIDSecond, secondInstanceBindingID)
+		response = CallAPI(httpServer, http.MethodGet, path, "", t)
+		defer response.Body.Close()
+
+		// then
+		assert.Equal(t, http.StatusOK, response.StatusCode)
+		binding = unmarshal(t, response)
+		assert.Equal(t, secondInstanceFirstBinding, binding)
+		assert.Equal(t, secondInstanceFirstBindingDB.Kubeconfig, binding.Credentials.(map[string]interface{})["kubeconfig"])
+		assertClusterAccess(t, response, "secret-to-check-second", binding)
+
+		// when - second binding to the first instance
+		path = fmt.Sprintf("v2/service_instances/%s/service_bindings/%s?accepts_incomplete=false", instanceIDFirst, firstInstanceSecondBindingID)
+		response = CallAPI(httpServer, http.MethodGet, path, "", t)
+		defer response.Body.Close()
+
+		// then
+		assert.Equal(t, http.StatusOK, response.StatusCode)
+		binding = unmarshal(t, response)
+		assert.Equal(t, firstInstanceSecondBinding, binding)
+		assert.Equal(t, firstInstanceSecondBindingDB.Kubeconfig, binding.Credentials.(map[string]interface{})["kubeconfig"])
+		assertClusterAccess(t, response, "secret-to-check-first", binding)
+	})
+}
+
+func assertClusterAccess(t *testing.T, response *http.Response, controlSecretName string, binding domain.Binding) {
+
+	credentials, ok := binding.Credentials.(map[string]interface{})
+	require.True(t, ok)
+	kubeconfig := credentials["kubeconfig"].(string)
+
+	newClient := kubeconfigClient(t, kubeconfig)
+
+	_, err := newClient.CoreV1().Secrets("default").Get(context.Background(), controlSecretName, v1.GetOptions{})
+	assert.NoError(t, err)
+}
+
+func assertRolesExistence(t *testing.T, response *http.Response, bindingID string, binding domain.Binding) {
+
+	credentials, ok := binding.Credentials.(map[string]interface{})
+	require.True(t, ok)
+	kubeconfig := credentials["kubeconfig"].(string)
+
+	newClient := kubeconfigClient(t, kubeconfig)
+
+	_, err := newClient.CoreV1().ServiceAccounts("kyma-system").Get(context.Background(), bindingID, v1.GetOptions{})
+	assert.NoError(t, err)
+	_, err = newClient.RbacV1().ClusterRoles().Get(context.Background(), bindingID, v1.GetOptions{})
+	assert.NoError(t, err)
+	_, err = newClient.RbacV1().ClusterRoleBindings().Get(context.Background(), bindingID, v1.GetOptions{})
+	assert.NoError(t, err)
+	_, err = newClient.RbacV1().ClusterRoleBindings().Get(context.Background(), bindingID, v1.GetOptions{})
+	assert.NoError(t, err)
+}
+
+func createBindingForInstance(instanceID string, httpServer *httptest.Server, t *testing.T) (string, domain.Binding) {
+	bindingID := uuid.New().String()
+	path := fmt.Sprintf("v2/service_instances/%s/service_bindings/%s?accepts_incomplete=false", instanceID, bindingID)
+	body := fmt.Sprintf(`
+	{
+		"service_id": "123",
+		"plan_id": "%s",
+		"parameters": {	
+			"service_account": true	
+			}	
+	}`, fixture.PlanId)
+
+	response := CallAPI(httpServer, http.MethodPut, path, body, t)
+	defer response.Body.Close()
+	require.Equal(t, http.StatusCreated, response.StatusCode)
+
+	createdBinding := unmarshal(t, response)
+
+	return bindingID, createdBinding
 }
 
 func createKubeconfigFileForRestConfig(restConfig rest.Config) []byte {
@@ -311,6 +468,8 @@ func createKubeconfigFileForRestConfig(restConfig rest.Config) []byte {
 func CallAPI(httpServer *httptest.Server, method string, path string, body string, t *testing.T) *http.Response {
 	cli := httpServer.Client()
 	req, err := http.NewRequest(method, fmt.Sprintf("%s/%s", httpServer.URL, path), bytes.NewBuffer([]byte(body)))
+	req.Header.Set("X-Broker-API-Version", "2.14")
+
 	require.NoError(t, err)
 
 	resp, err := cli.Do(req)
@@ -349,12 +508,9 @@ func kubeconfigClient(t *testing.T, kubeconfig string) *kubernetes.Clientset {
 	return clientset
 }
 
-func verifyResponse(t *testing.T, response *http.Response) domain.Binding {
-	require.Equal(t, http.StatusCreated, response.StatusCode)
-
+func unmarshal(t *testing.T, response *http.Response) domain.Binding {
 	content, err := io.ReadAll(response.Body)
 	require.NoError(t, err)
-	defer response.Body.Close()
 
 	t.Logf("response content is: %v", string(content))
 
@@ -394,4 +550,39 @@ func getTokenDuration(t *testing.T, config string) (time.Duration, error) {
 		}
 	}
 	return 0, fmt.Errorf("user with name 'context' not found")
+}
+
+func createEnvTest(t *testing.T) (envtest.Environment, *rest.Config, client.Client) {
+	pid := internal.SetupEnvtest(t)
+	defer func() {
+		internal.CleanupEnvtestBinaries(pid)
+	}()
+
+	env := envtest.Environment{
+		ControlPlaneStartTimeout: 40 * time.Second,
+	}
+	var errEnvTest error
+	var config *rest.Config
+	err := wait.Poll(500*time.Millisecond, 5*time.Second, func() (done bool, err error) {
+		config, errEnvTest = env.Start()
+		if err != nil {
+			t.Logf("envtest could not start, retrying: %s", errEnvTest.Error())
+			return false, nil
+		}
+		t.Logf("envtest started")
+		return true, nil
+	})
+	require.NoError(t, err)
+	require.NoError(t, errEnvTest)
+
+	skrClient, err := initClient(config)
+	require.NoError(t, err)
+
+	err = skrClient.Create(context.Background(), &corev1.Namespace{
+		ObjectMeta: v1.ObjectMeta{
+			Name: "kyma-system",
+		},
+	})
+	require.NoError(t, err)
+	return env, config, skrClient
 }

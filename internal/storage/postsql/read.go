@@ -21,20 +21,21 @@ type readSession struct {
 	session *dbr.Session
 }
 
-func (r readSession) GetBindingByID(bindingID string) (dbmodel.BindingDTO, dberr.Error) {
+func (r readSession) GetBinding(instanceID string, bindingID string) (dbmodel.BindingDTO, dberr.Error) {
 	var binding dbmodel.BindingDTO
 
 	err := r.session.
 		Select("*").
 		From(BindingsTableName).
 		Where(dbr.Eq("id", bindingID)).
+		Where(dbr.Eq("instance_id", instanceID)).
 		LoadOne(&binding)
 
 	if err != nil {
 		if err == dbr.ErrNotFound {
-			return dbmodel.BindingDTO{}, dberr.NotFound("Cannot find Binding for bindingId:'%s'", bindingID)
+			return dbmodel.BindingDTO{}, dberr.NotFound("Cannot find the Binding for bindingId:'%s'", bindingID)
 		}
-		return dbmodel.BindingDTO{}, dberr.Internal("Failed to get Instance: %s", err)
+		return dbmodel.BindingDTO{}, dberr.Internal("Failed to get the Binding: %s", err)
 	}
 
 	return binding, nil

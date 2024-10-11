@@ -356,10 +356,10 @@ func FixBindingWithInstanceID(bindingID string, instanceID string) internal.Bind
 
 		CreatedAt: time.Now(),
 		UpdatedAt: time.Now().Add(time.Minute * 5),
+		ExpiresAt: time.Now().Add(time.Minute * 10),
 
 		Kubeconfig:        "kubeconfig",
 		ExpirationSeconds: 600,
-		GenerationMethod:  "adminkubeconfig",
 		BindingType:       internal.BINDING_TYPE_SERVICE_ACCOUNT,
 	}
 }

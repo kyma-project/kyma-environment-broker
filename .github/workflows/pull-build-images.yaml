@@ -81,3 +81,10 @@ jobs:
          dockerfile: Dockerfile.globalaccounts
          context: .
          build-args: BIN=globalaccounts
+
+   schema-migrator-image:
+      uses: kyma-project/test-infra/.github/workflows/image-builder.yml@main
+      with:
+         name: kyma-environment-broker-schema-migrator
+         dockerfile: Dockerfile.schemamigrator
+         context: .

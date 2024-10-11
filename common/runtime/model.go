@@ -131,7 +131,7 @@ const (
 	GardenerConfigParam  = "gardener_config"
 	RuntimeConfigParam   = "runtime_config"
 	BindingsParam        = "bindings"
-	WithBindingsParam    = "with_bindings" // TODO: find better name
+	WithBindingsParam    = "with_bindings"
 )
 
 type OperationDetail string
@@ -154,6 +154,10 @@ type ListParameters struct {
 	ClusterConfig bool
 	// RuntimeResourceConfig specifies whether current Runtime Custom Resource details should be included in the response for each runtime
 	RuntimeResourceConfig bool
+	// Bindings specifies whether runtime bindings should be included in the response for each runtime
+	Bindings bool
+	// WithBindings parameter filters runtimes to show only those with bindings
+	WithBindings bool
 	// GardenerConfig specifies whether current Gardener cluster configuration details from provisioner should be included in the response for each runtime
 	GardenerConfig bool
 	// GlobalAccountIDs parameter filters runtimes by specified global account IDs

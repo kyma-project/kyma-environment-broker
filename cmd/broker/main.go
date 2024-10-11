@@ -445,9 +445,9 @@ func createAPI(router *mux.Router, servicesConfig broker.ServicesConfig, planVal
 			planDefaults, logs, cfg.KymaDashboardConfig, kcBuilder, convergedCloudRegionProvider, kcpK8sClient),
 		GetInstanceEndpoint:          broker.NewGetInstance(cfg.Broker, db.Instances(), db.Operations(), kcBuilder, logs),
 		LastOperationEndpoint:        broker.NewLastOperation(db.Operations(), db.InstancesArchived(), logs),
-		BindEndpoint:                 broker.NewBind(cfg.Broker.Binding, db.Instances(), logs, clientProvider, kubeconfigProvider, gardenerClient),
+		BindEndpoint:                 broker.NewBind(cfg.Broker.Binding, db.Instances(), db.Bindings(), logs, clientProvider, kubeconfigProvider, gardenerClient),
 		UnbindEndpoint:               broker.NewUnbind(logs),
-		GetBindingEndpoint:           broker.NewGetBinding(logs),
+		GetBindingEndpoint:           broker.NewGetBinding(logs, db.Bindings()),
 		LastBindingOperationEndpoint: broker.NewLastBindingOperation(logs),
 	}
 

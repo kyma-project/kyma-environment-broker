@@ -3,6 +3,7 @@ package broker
 import (
 	"context"
 	"fmt"
+	"time"
 
 	authenticationv1alpha1 "github.com/gardener/gardener/pkg/apis/authentication/v1alpha1"
 	shoot "github.com/gardener/gardener/pkg/apis/core/v1beta1"
@@ -22,14 +23,14 @@ func NewGardenerBindingManager(gardenerClient client.Client) *GardenerBindingMan
 	}
 }
 
-func (c *GardenerBindingManager) Create(ctx context.Context, instance *internal.Instance, bindingID string, expirationSeconds int) (string, error) {
+func (c *GardenerBindingManager) Create(ctx context.Context, instance *internal.Instance, bindingID string, expirationSeconds int) (string, time.Time, error) {
 
 	shoot := &shoot.Shoot{
 		TypeMeta: metav1.TypeMeta{APIVersion: "core.gardener.cloud/v1beta1", Kind: "Shoot"},
 	}
 	err := c.gardenerClient.Get(context.Background(), client.ObjectKey{Name: instance.InstanceDetails.ShootName, Namespace: "garden-kyma-dev"}, shoot)
 	if err != nil {
-		return "", fmt.Errorf("while getting shoot: %v", err)
+		return "", time.Time{}, fmt.Errorf("while getting shoot: %v", err)
 	}
 
 	adminKubeconfigRequest := &authenticationv1alpha1.AdminKubeconfigRequest{
@@ -40,9 +41,10 @@ func (c *GardenerBindingManager) Create(ctx context.Context, instance *internal.
 
 	err = c.gardenerClient.SubResource("adminkubeconfig").Create(context.Background(), shoot, adminKubeconfigRequest)
 	if err != nil {
-		return "", fmt.Errorf("while creating admin kubeconfig request: %v", err)
+		return "", time.Time{}, fmt.Errorf("while creating admin kubeconfig request: %v", err)
 	}
+	expiresAt := adminKubeconfigRequest.Status.ExpirationTimestamp.Time
 	shootKubeconfig := adminKubeconfigRequest.Status.Kubeconfig
 
-	return string(shootKubeconfig), nil
+	return string(shootKubeconfig), expiresAt, nil
 }
