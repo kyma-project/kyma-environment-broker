@@ -4,7 +4,7 @@ import (
 	"github.com/kyma-project/kyma-environment-broker/common/orchestration"
 	pkg "github.com/kyma-project/kyma-environment-broker/common/runtime"
 	"github.com/kyma-project/kyma-environment-broker/internal"
-	"github.com/pivotal-cf/brokerapi/v8/domain"
+	"github.com/pivotal-cf/brokerapi/v11/domain"
 )
 
 type Converter interface {

@@ -15,7 +15,7 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/kyma-project/control-plane/components/provisioner/pkg/gqlschema"
-	"github.com/pivotal-cf/brokerapi/v8/domain"
+	"github.com/pivotal-cf/brokerapi/v11/domain"
 	"github.com/stretchr/testify/assert"
 
 	"github.com/kyma-project/kyma-environment-broker/common/hyperscaler"
