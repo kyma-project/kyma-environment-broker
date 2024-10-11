@@ -54,6 +54,7 @@ type User struct {
 const expirationSeconds = 10000
 const maxExpirationSeconds = 7200
 const minExpirationSeconds = 600
+const maxBindingsCount = 10
 
 func TestCreateBindingEndpoint(t *testing.T) {
 	t.Log("test create binding endpoint")
@@ -159,6 +160,7 @@ func TestCreateBindingEndpoint(t *testing.T) {
 		ExpirationSeconds:    expirationSeconds,
 		MaxExpirationSeconds: maxExpirationSeconds,
 		MinExpirationSeconds: minExpirationSeconds,
+		MaxBindingsCount:     maxBindingsCount,
 	}
 
 	//// api handler
