@@ -39,6 +39,33 @@ type BindEndpoint struct {
 	log logrus.FieldLogger
 }
 
+type BindingContext struct {
+	Email  *string `json:"email,omitempty"`
+	Origin *string `json:"origin,omitempty"`
+}
+
+func (b *BindingContext) CreatedBy() string {
+	if b.Email == nil && b.Origin == nil {
+		return ""
+	}
+
+	email := ""
+	if b.Email != nil {
+		email = *b.Email
+	}
+
+	origin := ""
+	if b.Origin != nil {
+		origin = *b.Origin
+	}
+
+	if email != "" && origin != "" {
+		return email + " " + origin
+	}
+
+	return email + origin
+}
+
 type BindingParams struct {
 	ServiceAccount    bool `json:"service_account,omit"`
 	ExpirationSeconds int  `json:"expiration_seconds,omit"`
@@ -95,7 +122,7 @@ func (b *BindEndpoint) Bind(ctx context.Context, instanceID, bindingID string, d
 		).WithErrorKey("BindingNotSupported").Build()
 	}
 
-	var bindingContext internal.BindingContext
+	var bindingContext BindingContext
 	if len(details.RawContext) != 0 {
 		err = json.Unmarshal(details.RawContext, &bindingContext)
 		if err != nil {
@@ -136,7 +163,7 @@ func (b *BindEndpoint) Bind(ctx context.Context, instanceID, bindingID string, d
 		UpdatedAt: time.Now(),
 
 		ExpirationSeconds: int64(expirationSeconds),
-		Context:           bindingContext,
+		CreatedBy:         bindingContext.CreatedBy(),
 	}
 	if parameters.ServiceAccount {
 		// get kubeconfig for the instance

@@ -349,8 +349,6 @@ func FixBinding(id string) internal.Binding {
 }
 
 func FixBindingWithInstanceID(bindingID string, instanceID string) internal.Binding {
-	email := "john.smith@email.com"
-	origin := "origin"
 	return internal.Binding{
 		ID:         bindingID,
 		InstanceID: instanceID,
@@ -362,10 +360,7 @@ func FixBindingWithInstanceID(bindingID string, instanceID string) internal.Bind
 		Kubeconfig:        "kubeconfig",
 		ExpirationSeconds: 600,
 		BindingType:       internal.BINDING_TYPE_SERVICE_ACCOUNT,
-		Context: internal.BindingContext{
-			Email:  &email,
-			Origin: &origin,
-		},
+		CreatedBy:         "john.smith@email.com",
 	}
 }
 

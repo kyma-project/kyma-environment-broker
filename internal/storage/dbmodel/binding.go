@@ -1,7 +1,6 @@
 package dbmodel
 
 import (
-	"database/sql"
 	"time"
 )
 
@@ -15,5 +14,5 @@ type BindingDTO struct {
 	Kubeconfig        string
 	ExpirationSeconds int64
 	BindingType       string
-	Context           sql.NullString
+	CreatedBy         string
 }
