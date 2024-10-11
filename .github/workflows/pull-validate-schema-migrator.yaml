@@ -1,0 +1,25 @@
+name: Validate database migrations
+
+on:
+  pull_request:
+    branches: [ main ]
+    types: [ opened, synchronize, reopened, ready_for_review ]
+    paths:
+      - 'resources/keb/migrations/**.sql'
+      - 'cmd/schemamigrator/**.go'
+      - '!cmd/schemamigrator/**_test.go'
+      - 'internal/schemamigrator/**.go'
+      - '!internal/schemamigrator/**_test.go'
+      - '!internal/schemamigrator/mocks/**'
+      - 'scripts/schemamigrator/**.sh'
+      - '.github/workflows/pull-validate-schema-migrator.yaml'
+
+jobs:
+  validate-database-migrations:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Validate migrations
+        run: scripts/schemamigrator/validate.sh
