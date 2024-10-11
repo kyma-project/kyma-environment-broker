@@ -192,6 +192,10 @@ func TestCreateBindingEndpoint(t *testing.T) {
 			"plan_id": "%s",
 			"parameters": {
 				"service_account": true
+			},
+			"context": {
+				"email": "john.smith@email.com",
+				"origin": "origin"
 			}
 		}`, fixture.PlanId), t)
 		defer response.Body.Close()

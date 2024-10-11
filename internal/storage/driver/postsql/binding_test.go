@@ -40,6 +40,8 @@ func TestBinding(t *testing.T) {
 		assert.Equal(t, fixedBinding.ExpirationSeconds, createdBinding.ExpirationSeconds)
 		assert.NotNil(t, createdBinding.Kubeconfig)
 		assert.Equal(t, fixedBinding.Kubeconfig, createdBinding.Kubeconfig)
+		assert.Equal(t, fixedBinding.Context.Email, createdBinding.Context.Email)
+		assert.Equal(t, fixedBinding.Context.Origin, createdBinding.Context.Origin)
 
 		// when
 		err = brokerStorage.Bindings().DeleteByBindingID(testBindingId)

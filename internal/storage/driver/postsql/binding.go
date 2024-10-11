@@ -1,7 +1,10 @@
 package postsql
 
 import (
+	"encoding/json"
 	"fmt"
+
+	"github.com/kyma-project/kyma-environment-broker/common/storage"
 
 	"github.com/kyma-project/kyma-environment-broker/internal"
 	"github.com/kyma-project/kyma-environment-broker/internal/storage/dberr"
@@ -84,6 +87,10 @@ func (s *Binding) toBindingDTO(binding *internal.Binding) (dbmodel.BindingDTO, e
 	if err != nil {
 		return dbmodel.BindingDTO{}, fmt.Errorf("while encrypting kubeconfig: %w", err)
 	}
+	context, err := json.Marshal(binding.Context)
+	if err != nil {
+		return dbmodel.BindingDTO{}, fmt.Errorf("while marshal context: %w", err)
+	}
 
 	return dbmodel.BindingDTO{
 		Kubeconfig:        string(encrypted),
@@ -91,6 +98,7 @@ func (s *Binding) toBindingDTO(binding *internal.Binding) (dbmodel.BindingDTO, e
 		InstanceID:        binding.InstanceID,
 		CreatedAt:         binding.CreatedAt,
 		ExpirationSeconds: binding.ExpirationSeconds,
+		Context:           storage.StringToSQLNullString(string(context)),
 	}, nil
 }
 
@@ -99,6 +107,13 @@ func (s *Binding) toBinding(dto dbmodel.BindingDTO) (internal.Binding, error) {
 	if err != nil {
 		return internal.Binding{}, fmt.Errorf("while decrypting kubeconfig: %w", err)
 	}
+	context := internal.BindingContext{}
+	if dto.Context.Valid {
+		err := json.Unmarshal([]byte(dto.Context.String), &context)
+		if err != nil {
+			return internal.Binding{}, fmt.Errorf("while unmarshal context: %w", err)
+		}
+	}
 
 	return internal.Binding{
 		Kubeconfig:        string(decrypted),
@@ -106,5 +121,6 @@ func (s *Binding) toBinding(dto dbmodel.BindingDTO) (internal.Binding, error) {
 		InstanceID:        dto.InstanceID,
 		CreatedAt:         dto.CreatedAt,
 		ExpirationSeconds: dto.ExpirationSeconds,
+		Context:           context,
 	}, nil
 }

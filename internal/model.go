@@ -577,4 +577,10 @@ type Binding struct {
 	Kubeconfig        string
 	ExpirationSeconds int64
 	BindingType       string
+	Context           BindingContext
+}
+
+type BindingContext struct {
+	Email  *string `json:"email,omitempty"`
+	Origin *string `json:"origin,omitempty"`
 }

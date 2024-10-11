@@ -95,6 +95,15 @@ func (b *BindEndpoint) Bind(ctx context.Context, instanceID, bindingID string, d
 		).WithErrorKey("BindingNotSupported").Build()
 	}
 
+	var bindingContext internal.BindingContext
+	if len(details.RawContext) != 0 {
+		err = json.Unmarshal(details.RawContext, &bindingContext)
+		if err != nil {
+			message := fmt.Sprintf("failed to unmarshal context: %s", err)
+			return domain.Binding{}, apiresponses.NewFailureResponse(fmt.Errorf(message), http.StatusBadRequest, message)
+		}
+	}
+
 	var parameters BindingParams
 	if len(details.RawParameters) != 0 {
 		err = json.Unmarshal(details.RawParameters, &parameters)
@@ -127,6 +136,7 @@ func (b *BindEndpoint) Bind(ctx context.Context, instanceID, bindingID string, d
 		UpdatedAt: time.Now(),
 
 		ExpirationSeconds: int64(expirationSeconds),
+		Context:           bindingContext,
 	}
 	if parameters.ServiceAccount {
 		// get kubeconfig for the instance
