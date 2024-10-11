@@ -3,12 +3,12 @@ package appinfo_test
 import (
 	"encoding/json"
 	"fmt"
+	"github.com/go-chi/chi/v5"
 	"net/http"
 	"net/http/httptest"
 	"testing"
 	"time"
 
-	"github.com/gorilla/mux"
 	"github.com/kyma-project/kyma-environment-broker/internal"
 	"github.com/kyma-project/kyma-environment-broker/internal/appinfo"
 	"github.com/kyma-project/kyma-environment-broker/internal/appinfo/automock"
@@ -225,7 +225,7 @@ func TestRuntimeInfoHandlerOperationRecognition(t *testing.T) {
 		runtimesInfoHandler := appinfo.NewRuntimeInfoHandler(instances, operations, broker.PlansConfig{}, "", responseWriter)
 
 		rr := httptest.NewRecorder()
-		router := mux.NewRouter()
+		router := chi.NewRouter()
 		router.Handle("/info/runtimes", runtimesInfoHandler)
 
 		// when
@@ -334,7 +334,7 @@ func TestRuntimeInfoHandlerOperationRecognition(t *testing.T) {
 		runtimesInfoHandler := appinfo.NewRuntimeInfoHandler(instances, operations, broker.PlansConfig{}, "", responseWriter)
 
 		rr := httptest.NewRecorder()
-		router := mux.NewRouter()
+		router := chi.NewRouter()
 		router.Handle("/info/runtimes", runtimesInfoHandler)
 
 		// when
@@ -472,7 +472,7 @@ func TestRuntimeInfoHandlerOperationRecognition(t *testing.T) {
 		runtimesInfoHandler := appinfo.NewRuntimeInfoHandler(instances, operations, broker.PlansConfig{}, "", responseWriter)
 
 		rr := httptest.NewRecorder()
-		router := mux.NewRouter()
+		router := chi.NewRouter()
 		router.Handle("/info/runtimes", runtimesInfoHandler)
 
 		// when

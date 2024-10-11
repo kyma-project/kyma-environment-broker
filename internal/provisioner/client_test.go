@@ -3,12 +3,12 @@ package provisioner
 import (
 	"context"
 	"fmt"
+	"github.com/go-chi/chi/v5"
 	"net/http"
 	"net/http/httptest"
 	"testing"
 
 	"github.com/99designs/gqlgen/handler"
-	"github.com/gorilla/mux"
 	schema "github.com/kyma-project/control-plane/components/provisioner/pkg/gqlschema"
 	kebError "github.com/kyma-project/kyma-environment-broker/internal/error"
 	"github.com/kyma-project/kyma-environment-broker/internal/ptr"
@@ -481,7 +481,7 @@ func fixHTTPMockServer(t *testing.T, resp string) *httptest.Server {
 }
 
 func fixHTTPServer(tr *testResolver) *httptest.Server {
-	r := mux.NewRouter()
+	r := chi.NewRouter()
 
 	r.Use(func(h http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {

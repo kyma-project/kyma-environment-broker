@@ -2,9 +2,9 @@ package handlers
 
 import (
 	"fmt"
+	"github.com/go-chi/chi/v5"
 	"time"
 
-	"github.com/gorilla/mux"
 	"github.com/kyma-project/kyma-environment-broker/common/orchestration"
 	"github.com/kyma-project/kyma-environment-broker/internal/process"
 	"github.com/kyma-project/kyma-environment-broker/internal/storage"
@@ -13,7 +13,7 @@ import (
 )
 
 type Handler interface {
-	AttachRoutes(router *mux.Router)
+	AttachRoutes(router chi.Router)
 }
 
 type handler struct {
@@ -30,7 +30,7 @@ func NewOrchestrationHandler(db storage.BrokerStorage, clusterQueue *process.Que
 	}
 }
 
-func (h *handler) AttachRoutes(router *mux.Router) {
+func (h *handler) AttachRoutes(router chi.Router) {
 	for _, handler := range h.handlers {
 		handler.AttachRoutes(router)
 	}

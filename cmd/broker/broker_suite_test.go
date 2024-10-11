@@ -5,6 +5,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"github.com/go-chi/chi/v5"
 	"io"
 	"log/slog"
 	"net/http"
@@ -23,7 +24,6 @@ import (
 
 	"code.cloudfoundry.org/lager"
 	"github.com/google/uuid"
-	"github.com/gorilla/mux"
 	"github.com/kyma-project/control-plane/components/provisioner/pkg/gqlschema"
 	"github.com/kyma-project/kyma-environment-broker/common/gardener"
 	"github.com/kyma-project/kyma-environment-broker/common/orchestration"
@@ -94,7 +94,7 @@ type BrokerSuiteTest struct {
 	gardenerClient    dynamic.Interface
 
 	httpServer *httptest.Server
-	router     *mux.Router
+	router     chi.Router
 
 	t                   *testing.T
 	inputBuilderFactory input.CreatorForPlan
@@ -234,7 +234,7 @@ func NewBrokerSuiteTestWithConfig(t *testing.T, cfg *Config, version ...string) 
 		storageCleanup:      storageCleanup,
 		provisionerClient:   provisionerClient,
 		gardenerClient:      gardenerClient,
-		router:              mux.NewRouter(),
+		router:              chi.NewRouter(),
 		t:                   t,
 		inputBuilderFactory: inputFactory,
 		k8sKcp:              cli,

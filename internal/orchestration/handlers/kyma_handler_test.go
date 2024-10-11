@@ -3,11 +3,11 @@ package handlers
 import (
 	"bytes"
 	"encoding/json"
+	"github.com/go-chi/chi/v5"
 	"net/http"
 	"net/http/httptest"
 	"testing"
 
-	"github.com/gorilla/mux"
 	"github.com/kyma-project/kyma-environment-broker/common/orchestration"
 	"github.com/stretchr/testify/require"
 )
@@ -39,7 +39,7 @@ func TestKymaHandler_AttachRoutes(t *testing.T) {
 		require.NoError(t, err)
 
 		rr := httptest.NewRecorder()
-		router := mux.NewRouter()
+		router := chi.NewRouter()
 		kHandler.AttachRoutes(router)
 
 		// when

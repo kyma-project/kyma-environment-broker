@@ -2,13 +2,13 @@ package e2e
 
 import (
 	"fmt"
+	"github.com/go-chi/chi/v5"
 	"net/http"
 	"net/http/httptest"
 	"strconv"
 	"strings"
 	"testing"
 
-	"github.com/gorilla/mux"
 	"github.com/stretchr/testify/require"
 )
 
@@ -23,11 +23,11 @@ func newServer(t *testing.T) *server {
 }
 
 func fixHTTPServer(t *testing.T) *httptest.Server {
-	r := mux.NewRouter()
+	r := chi.NewRouter()
 	srv := newServer(t)
 
-	r.HandleFunc("/public/rest/v2/events", srv.returnCIS1Events).Methods(http.MethodGet)
-	r.HandleFunc("/events/v1/events/central", srv.returnCIS2Events).Methods(http.MethodGet)
+	r.Get("/public/rest/v2/events", srv.returnCIS1Events)
+	r.Get("/events/v1/events/central", srv.returnCIS2Events)
 
 	return httptest.NewServer(r)
 }

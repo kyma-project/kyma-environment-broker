@@ -3,6 +3,7 @@ package runtime
 import (
 	"context"
 	"fmt"
+	"github.com/go-chi/chi/v5"
 	"net/http"
 	"time"
 
@@ -22,7 +23,6 @@ import (
 	"github.com/kyma-project/kyma-environment-broker/internal/ptr"
 	"golang.org/x/exp/slices"
 
-	"github.com/gorilla/mux"
 	"github.com/kyma-project/kyma-environment-broker/common/pagination"
 	pkg "github.com/kyma-project/kyma-environment-broker/common/runtime"
 	"github.com/kyma-project/kyma-environment-broker/internal"
@@ -68,8 +68,8 @@ func NewHandler(instanceDb storage.Instances, operationDb storage.Operations, ru
 	}
 }
 
-func (h *Handler) AttachRoutes(router *mux.Router) {
-	router.HandleFunc("/runtimes", h.getRuntimes)
+func (h *Handler) AttachRoutes(router chi.Router) {
+	router.Get("/runtimes", h.getRuntimes)
 }
 
 func unionInstances(sets ...[]pkg.RuntimeDTO) (union []pkg.RuntimeDTO) {

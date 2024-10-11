@@ -2,6 +2,7 @@ package kubeconfig
 
 import (
 	"fmt"
+	"github.com/go-chi/chi/v5"
 	"net/http"
 	"strings"
 
@@ -13,7 +14,6 @@ import (
 	"github.com/kyma-project/kyma-environment-broker/internal/storage"
 	"github.com/kyma-project/kyma-environment-broker/internal/storage/dberr"
 
-	"github.com/gorilla/mux"
 	"github.com/pivotal-cf/brokerapi/v11/domain"
 	"github.com/sirupsen/logrus"
 )
@@ -48,9 +48,9 @@ func NewHandler(storage storage.BrokerStorage, b KcBuilder, origins string, ownC
 	}
 }
 
-func (h *Handler) AttachRoutes(router *mux.Router) {
-	router.HandleFunc("/kubeconfig/{instance_id}", h.GetKubeconfig).Methods(http.MethodGet)
-	router.NotFoundHandler = http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+func (h *Handler) AttachRoutes(router chi.Router) {
+	router.Get("/kubeconfig/{instance_id}", h.GetKubeconfig)
+	router.NotFound(func(w http.ResponseWriter, r *http.Request) {
 		h.handleResponse(w, http.StatusNotFound, fmt.Errorf("instanceID is required"))
 	})
 }
@@ -60,8 +60,7 @@ type ErrorResponse struct {
 }
 
 func (h *Handler) GetKubeconfig(w http.ResponseWriter, r *http.Request) {
-	vars := mux.Vars(r)
-	instanceID := vars["instance_id"]
+	instanceID := chi.URLParam(r, "instance_id")
 
 	h.specifyAllowOriginHeader(r, w)
 

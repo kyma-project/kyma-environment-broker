@@ -3,6 +3,7 @@ package handlers
 import (
 	"bytes"
 	"encoding/json"
+	"github.com/go-chi/chi/v5"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -13,7 +14,6 @@ import (
 	"github.com/kyma-project/kyma-environment-broker/internal/storage"
 	"github.com/stretchr/testify/assert"
 
-	"github.com/gorilla/mux"
 	"github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/require"
 )
@@ -42,7 +42,7 @@ func TestClusterHandler_AttachRoutes(t *testing.T) {
 		require.NoError(t, err)
 
 		rr := httptest.NewRecorder()
-		router := mux.NewRouter()
+		router := chi.NewRouter()
 		handler.AttachRoutes(router)
 
 		// when

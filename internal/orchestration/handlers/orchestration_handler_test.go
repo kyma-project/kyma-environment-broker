@@ -3,13 +3,13 @@ package handlers
 import (
 	"encoding/json"
 	"fmt"
+	"github.com/go-chi/chi/v5"
 	"net/http"
 	"net/http/httptest"
 	"strings"
 	"testing"
 	"time"
 
-	"github.com/gorilla/mux"
 	"github.com/kyma-project/control-plane/components/provisioner/pkg/gqlschema"
 	"github.com/kyma-project/kyma-environment-broker/common/orchestration"
 	"github.com/kyma-project/kyma-environment-broker/internal"
@@ -40,7 +40,7 @@ func TestStatusHandler_AttachRoutes(t *testing.T) {
 		require.NoError(t, err)
 
 		rr := httptest.NewRecorder()
-		router := mux.NewRouter()
+		router := chi.NewRouter()
 		kymaHandler.AttachRoutes(router)
 
 		// when
@@ -149,7 +149,7 @@ func TestStatusHandler_AttachRoutes(t *testing.T) {
 		require.NoError(t, err)
 
 		rr := httptest.NewRecorder()
-		router := mux.NewRouter()
+		router := chi.NewRouter()
 		kymaHandler.AttachRoutes(router)
 
 		// when
@@ -200,7 +200,7 @@ func TestStatusHandler_AttachRoutes(t *testing.T) {
 		require.NoError(t, err)
 
 		rr := httptest.NewRecorder()
-		router := mux.NewRouter()
+		router := chi.NewRouter()
 		kymaHandler.AttachRoutes(router)
 
 		// when
@@ -258,7 +258,7 @@ func TestStatusRetryHandler_AttachRoutes(t *testing.T) {
 		req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
 
 		rr := httptest.NewRecorder()
-		router := mux.NewRouter()
+		router := chi.NewRouter()
 		kymaHandler.AttachRoutes(router)
 
 		// when
@@ -338,7 +338,7 @@ func TestStatusRetryHandler_AttachRoutes(t *testing.T) {
 		req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
 
 		rr := httptest.NewRecorder()
-		router := mux.NewRouter()
+		router := chi.NewRouter()
 		kymaHandler.AttachRoutes(router)
 
 		// when
@@ -421,7 +421,7 @@ func TestStatusRetryHandler_AttachRoutes(t *testing.T) {
 		req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
 
 		rr := httptest.NewRecorder()
-		router := mux.NewRouter()
+		router := chi.NewRouter()
 		kymaHandler.AttachRoutes(router)
 
 		// when
@@ -484,7 +484,7 @@ func TestStatusRetryHandler_AttachRoutes(t *testing.T) {
 		req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
 
 		rr := httptest.NewRecorder()
-		router := mux.NewRouter()
+		router := chi.NewRouter()
 		kymaHandler.AttachRoutes(router)
 
 		// when

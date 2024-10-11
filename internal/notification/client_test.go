@@ -3,12 +3,12 @@ package notification
 import (
 	"encoding/json"
 	"fmt"
+	"github.com/go-chi/chi/v5"
 	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
 	"testing"
 
-	"github.com/gorilla/mux"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -119,12 +119,12 @@ type server struct {
 func fixHTTPServer(t *testing.T) *httptest.Server {
 	s := server{t: t}
 
-	r := mux.NewRouter()
-	r.HandleFunc("/createMaintenanceEvent", s.authorized(s.createEvent)).Methods(http.MethodPost)
-	r.HandleFunc("/updateMaintenanceEvent", s.authorized(s.updateEvent)).Methods(http.MethodPatch)
-	r.HandleFunc("/cancelMaintenanceEvent", s.authorized(s.cancelEvent)).Methods(http.MethodPatch)
+	r := chi.NewRouter()
+	r.Post("/createMaintenanceEvent", s.authorized(s.createEvent))
+	r.Patch("/updateMaintenanceEvent", s.authorized(s.updateEvent))
+	r.Patch("/cancelMaintenanceEvent", s.authorized(s.cancelEvent))
 
-	r.HandleFunc("/get", s.getConfiguration).Methods(http.MethodGet)
+	r.Get("/get", s.getConfiguration)
 
 	return httptest.NewServer(r)
 }

@@ -3,13 +3,13 @@ package cis
 import (
 	"context"
 	"fmt"
+	"github.com/go-chi/chi/v5"
 	"net/http"
 	"net/http/httptest"
 	"testing"
 
 	"github.com/kyma-project/kyma-environment-broker/internal/logger"
 
-	"github.com/gorilla/mux"
 	"github.com/stretchr/testify/require"
 )
 
@@ -124,9 +124,9 @@ func newServer(t *testing.T) *server {
 }
 
 func fixHTTPServer(srv *server) *httptest.Server {
-	r := mux.NewRouter()
+	r := chi.NewRouter()
 
-	r.HandleFunc("/events/v1/events/central", srv.returnCISEvents).Methods(http.MethodGet)
+	r.Get("/events/v1/events/central", srv.returnCISEvents)
 
 	return httptest.NewServer(r)
 }

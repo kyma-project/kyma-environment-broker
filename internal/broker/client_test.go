@@ -3,13 +3,13 @@ package broker
 import (
 	"context"
 	"fmt"
+	"github.com/go-chi/chi/v5"
 	"net/http"
 	"net/http/httptest"
 	"path"
 	"strings"
 	"testing"
 
-	"github.com/gorilla/mux"
 	"github.com/kyma-project/kyma-environment-broker/internal"
 	"github.com/stretchr/testify/assert"
 )
@@ -185,18 +185,18 @@ func TestClient_ExpirationRequest(t *testing.T) {
 
 func fixHTTPServer(t *testing.T, requestFailureFunc func(http.ResponseWriter, *http.Request)) *httptest.Server {
 	if requestFailureFunc != nil {
-		r := mux.NewRouter()
-		r.HandleFunc("/oauth/v2/service_instances/{instance_id}", requestFailureFunc).Methods(http.MethodDelete)
-		r.HandleFunc("/oauth/v2/service_instances/{instance_id}", requestFailureFunc).Methods(http.MethodPatch)
-		r.HandleFunc("/expire/service_instance/{instance_id}", requestFailureFunc).Methods(http.MethodPut)
+		r := chi.NewRouter()
+		r.Delete("/oauth/v2/service_instances/{instance_id}", requestFailureFunc)
+		r.Patch("/oauth/v2/service_instances/{instance_id}", requestFailureFunc)
+		r.Put("/expire/service_instance/{instance_id}", requestFailureFunc)
 		return httptest.NewServer(r)
 	}
 
 	clientTest := &ClientTest{t: t}
-	r := mux.NewRouter()
-	r.HandleFunc("/oauth/v2/service_instances/{instance_id}", clientTest.deprovision).Methods(http.MethodDelete)
-	r.HandleFunc("/expire/service_instance/{instance_id}", clientTest.expiration).Methods(http.MethodPut)
-	r.HandleFunc("/oauth/v2/service_instances/{instance_id}", clientTest.getInstance).Methods(http.MethodGet)
+	r := chi.NewRouter()
+	r.Delete("/oauth/v2/service_instances/{instance_id}", clientTest.deprovision)
+	r.Put("/expire/service_instance/{instance_id}", clientTest.expiration)
+	r.Get("/oauth/v2/service_instances/{instance_id}", clientTest.getInstance)
 	return httptest.NewServer(r)
 }
 

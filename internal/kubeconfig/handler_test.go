@@ -3,6 +3,7 @@ package kubeconfig
 import (
 	"encoding/json"
 	"fmt"
+	"github.com/go-chi/chi/v5"
 	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
@@ -16,7 +17,6 @@ import (
 	"github.com/kyma-project/kyma-environment-broker/internal/logger"
 	"github.com/kyma-project/kyma-environment-broker/internal/storage"
 
-	"github.com/gorilla/mux"
 	"github.com/pivotal-cf/brokerapi/v11/domain"
 	"github.com/stretchr/testify/require"
 )
@@ -119,7 +119,7 @@ func TestHandler_GetKubeconfig(t *testing.T) {
 				builder.On("Build", &instance).Return("", fmt.Errorf("builder error"))
 			}
 
-			router := mux.NewRouter()
+			router := chi.NewRouter()
 
 			handler := NewHandler(db, builder, "", ownClusterPlanID, logger.NewLogDummy())
 			handler.AttachRoutes(router)
@@ -192,7 +192,7 @@ func TestHandler_GetKubeconfigForOwnCluster(t *testing.T) {
 	builder := &automock.KcBuilder{}
 	defer builder.AssertExpectations(t)
 
-	router := mux.NewRouter()
+	router := chi.NewRouter()
 
 	handler := NewHandler(db, builder, "", ownClusterPlanID, logger.NewLogDummy())
 	handler.AttachRoutes(router)

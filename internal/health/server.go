@@ -2,9 +2,9 @@ package health
 
 import (
 	"fmt"
+	"github.com/go-chi/chi/v5"
 	"net/http"
 
-	"github.com/gorilla/mux"
 	log "github.com/sirupsen/logrus"
 )
 
@@ -21,7 +21,7 @@ func NewServer(host, port string, log *log.Logger) *Server {
 }
 
 func (srv *Server) ServeAsync() {
-	healthRouter := mux.NewRouter()
+	healthRouter := chi.NewRouter()
 	healthRouter.HandleFunc("/healthz", livenessHandler())
 	go func() {
 		err := http.ListenAndServe(srv.Address, healthRouter)

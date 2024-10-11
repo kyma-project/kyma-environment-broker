@@ -5,6 +5,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"github.com/go-chi/chi/v5"
 	"io"
 	"log/slog"
 	"net/http"
@@ -17,7 +18,6 @@ import (
 	"github.com/google/uuid"
 	"gopkg.in/yaml.v2"
 
-	"github.com/gorilla/mux"
 	"github.com/kyma-project/kyma-environment-broker/internal"
 	"github.com/kyma-project/kyma-environment-broker/internal/fixture"
 	"github.com/kyma-project/kyma-environment-broker/internal/kubeconfig"
@@ -181,9 +181,9 @@ func TestCreateBindingEndpoint(t *testing.T) {
 	}, logger)
 
 	//// attach bindings api
-	router := mux.NewRouter()
-	router.HandleFunc("/v2/service_instances/{instance_id}/service_bindings/{binding_id}", apiHandler.Bind).Methods(http.MethodPut)
-	router.HandleFunc("/v2/service_instances/{instance_id}/service_bindings/{binding_id}", apiHandler.GetBinding).Methods(http.MethodGet)
+	router := chi.NewRouter()
+	router.Put("/v2/service_instances/{instance_id}/service_bindings/{binding_id}", apiHandler.Bind)
+	router.Get("/v2/service_instances/{instance_id}/service_bindings/{binding_id}", apiHandler.GetBinding)
 	httpServer := httptest.NewServer(router)
 	defer httpServer.Close()
 

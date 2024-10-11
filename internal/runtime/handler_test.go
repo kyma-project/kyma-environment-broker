@@ -3,6 +3,7 @@ package runtime_test
 import (
 	"encoding/json"
 	"fmt"
+	"github.com/go-chi/chi/v5"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -15,7 +16,6 @@ import (
 
 	"github.com/kyma-project/kyma-environment-broker/internal/storage"
 
-	"github.com/gorilla/mux"
 	"github.com/kyma-project/control-plane/components/provisioner/pkg/gqlschema"
 	pkg "github.com/kyma-project/kyma-environment-broker/common/runtime"
 	"github.com/kyma-project/kyma-environment-broker/internal"
@@ -72,7 +72,7 @@ func TestRuntimeHandler(t *testing.T) {
 		require.NoError(t, err)
 
 		rr := httptest.NewRecorder()
-		router := mux.NewRouter()
+		router := chi.NewRouter()
 		runtimeHandler.AttachRoutes(router)
 
 		// when
@@ -127,7 +127,7 @@ func TestRuntimeHandler(t *testing.T) {
 		require.NoError(t, err)
 
 		rr := httptest.NewRecorder()
-		router := mux.NewRouter()
+		router := chi.NewRouter()
 		runtimeHandler.AttachRoutes(router)
 
 		router.ServeHTTP(rr, req)
@@ -186,7 +186,7 @@ func TestRuntimeHandler(t *testing.T) {
 		require.NoError(t, err)
 
 		rr := httptest.NewRecorder()
-		router := mux.NewRouter()
+		router := chi.NewRouter()
 		runtimeHandler.AttachRoutes(router)
 
 		// when
@@ -259,7 +259,7 @@ func TestRuntimeHandler(t *testing.T) {
 		runtimeHandler := runtime.NewHandler(instances, operations, states, archived, nil, 2, "", provisionerClient, k8sClient, kimConfig, logrus.New())
 
 		rr := httptest.NewRecorder()
-		router := mux.NewRouter()
+		router := chi.NewRouter()
 		runtimeHandler.AttachRoutes(router)
 
 		// when
@@ -371,7 +371,7 @@ func TestRuntimeHandler(t *testing.T) {
 		require.NoError(t, err)
 
 		rr := httptest.NewRecorder()
-		router := mux.NewRouter()
+		router := chi.NewRouter()
 		runtimeHandler.AttachRoutes(router)
 
 		// when
@@ -444,7 +444,7 @@ func TestRuntimeHandler(t *testing.T) {
 		require.NoError(t, err)
 
 		rr := httptest.NewRecorder()
-		router := mux.NewRouter()
+		router := chi.NewRouter()
 		runtimeHandler.AttachRoutes(router)
 
 		// when
@@ -516,7 +516,7 @@ func TestRuntimeHandler(t *testing.T) {
 		require.NoError(t, err)
 
 		rr := httptest.NewRecorder()
-		router := mux.NewRouter()
+		router := chi.NewRouter()
 		runtimeHandler.AttachRoutes(router)
 
 		// when
@@ -568,7 +568,7 @@ func TestRuntimeHandler(t *testing.T) {
 		runtimeHandler := runtime.NewHandler(instances, operations, states, archived, nil, 2, "", provisionerClient, k8sClient, kimConfig, logrus.New())
 
 		rr := httptest.NewRecorder()
-		router := mux.NewRouter()
+		router := chi.NewRouter()
 		runtimeHandler.AttachRoutes(router)
 
 		// when
@@ -699,7 +699,7 @@ func TestRuntimeHandler(t *testing.T) {
 		runtimeHandler := runtime.NewHandler(instances, operations, states, archived, nil, 2, "", provisionerClient, k8sClient, kimConfig, logrus.New())
 
 		rr := httptest.NewRecorder()
-		router := mux.NewRouter()
+		router := chi.NewRouter()
 		runtimeHandler.AttachRoutes(router)
 
 		// when
@@ -753,7 +753,7 @@ func TestRuntimeHandler(t *testing.T) {
 		runtimeHandler := runtime.NewHandler(instances, operations, states, archived, nil, 2, "", provisionerClient, k8sClient, kimConfig, logrus.New())
 
 		rr := httptest.NewRecorder()
-		router := mux.NewRouter()
+		router := chi.NewRouter()
 		runtimeHandler.AttachRoutes(router)
 
 		// when
@@ -805,7 +805,7 @@ func TestRuntimeHandler(t *testing.T) {
 		runtimeHandler := runtime.NewHandler(instances, operations, states, archived, nil, 2, "", provisionerClient, k8sClient, kimConfig, logrus.New())
 
 		rr := httptest.NewRecorder()
-		router := mux.NewRouter()
+		router := chi.NewRouter()
 		runtimeHandler.AttachRoutes(router)
 
 		// when
@@ -866,7 +866,7 @@ func TestRuntimeHandler_WithKimOnlyDrivenInstances(t *testing.T) {
 		runtimeHandler := runtime.NewHandler(instances, operations, states, archived, nil, 2, "", provisionerClient, k8sClient, kimConfig, logrus.New())
 
 		rr := httptest.NewRecorder()
-		router := mux.NewRouter()
+		router := chi.NewRouter()
 		runtimeHandler.AttachRoutes(router)
 
 		// when
@@ -996,7 +996,7 @@ func TestRuntimeHandler_WithKimOnlyDrivenInstances(t *testing.T) {
 		runtimeHandler := runtime.NewHandler(instances, operations, states, archived, nil, 2, "", provisionerClient, k8sClient, kimConfig, logrus.New())
 
 		rr := httptest.NewRecorder()
-		router := mux.NewRouter()
+		router := chi.NewRouter()
 		runtimeHandler.AttachRoutes(router)
 
 		// when
@@ -1050,7 +1050,7 @@ func TestRuntimeHandler_WithKimOnlyDrivenInstances(t *testing.T) {
 		runtimeHandler := runtime.NewHandler(instances, operations, states, archived, nil, 2, "", provisionerClient, k8sClient, kimConfig, logrus.New())
 
 		rr := httptest.NewRecorder()
-		router := mux.NewRouter()
+		router := chi.NewRouter()
 		runtimeHandler.AttachRoutes(router)
 
 		// when
@@ -1108,7 +1108,7 @@ func TestRuntimeHandler_WithKimOnlyDrivenInstances(t *testing.T) {
 		runtimeHandler := runtime.NewHandler(instances, operations, states, archived, nil, 2, "", provisionerClient, k8sClient, kimDisabledForPreview, logrus.New())
 
 		rr := httptest.NewRecorder()
-		router := mux.NewRouter()
+		router := chi.NewRouter()
 		runtimeHandler.AttachRoutes(router)
 
 		// when
@@ -1162,7 +1162,7 @@ func TestRuntimeHandler_WithKimOnlyDrivenInstances(t *testing.T) {
 		runtimeHandler := runtime.NewHandler(instances, operations, states, archived, nil, 2, "", provisionerClient, k8sClient, kimConfig, logrus.New())
 
 		rr := httptest.NewRecorder()
-		router := mux.NewRouter()
+		router := chi.NewRouter()
 		runtimeHandler.AttachRoutes(router)
 
 		// when
@@ -1237,7 +1237,7 @@ func TestRuntimeHandler_WithKimOnlyDrivenInstances(t *testing.T) {
 		runtimeHandler := runtime.NewHandler(instances, operations, states, archived, bindings, 2, "", provisionerClient, k8sClient, kimConfig, logrus.New())
 
 		rr := httptest.NewRecorder()
-		router := mux.NewRouter()
+		router := chi.NewRouter()
 		runtimeHandler.AttachRoutes(router)
 
 		// when

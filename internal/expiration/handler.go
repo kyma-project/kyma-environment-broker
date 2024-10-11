@@ -3,11 +3,11 @@ package expiration
 import (
 	"errors"
 	"fmt"
+	"github.com/go-chi/chi/v5"
 	"net/http"
 	"time"
 
 	"github.com/google/uuid"
-	"github.com/gorilla/mux"
 	"github.com/kyma-project/kyma-environment-broker/common/orchestration"
 	"github.com/kyma-project/kyma-environment-broker/internal"
 	"github.com/kyma-project/kyma-environment-broker/internal/broker"
@@ -25,7 +25,7 @@ type expirationResponse struct {
 }
 
 type Handler interface {
-	AttachRoutes(router *mux.Router)
+	AttachRoutes(router chi.Router)
 }
 
 type handler struct {
@@ -44,12 +44,12 @@ func NewHandler(instancesStorage storage.Instances, operationsStorage storage.Op
 	}
 }
 
-func (h *handler) AttachRoutes(router *mux.Router) {
-	router.HandleFunc("/expire/service_instance/{instance_id}", h.expireInstance).Methods("PUT")
+func (h *handler) AttachRoutes(router chi.Router) {
+	router.Put("/expire/service_instance/{instance_id}", h.expireInstance)
 }
 
 func (h *handler) expireInstance(w http.ResponseWriter, req *http.Request) {
-	instanceID := mux.Vars(req)["instance_id"]
+	instanceID := chi.URLParam(req, "instance_id")
 
 	h.log.Info("Expiration triggered for instanceID: ", instanceID)
 	logger := h.log.WithField("instanceID", instanceID)

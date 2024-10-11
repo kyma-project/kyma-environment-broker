@@ -2,10 +2,9 @@ package middleware
 
 import (
 	"context"
+	"github.com/go-chi/chi/v5"
 	"net/http"
 	"regexp"
-
-	"github.com/gorilla/mux"
 
 	"github.com/kyma-project/kyma-environment-broker/internal"
 )
@@ -19,13 +18,12 @@ const (
 	requestProviderKey providerKey = iota + 1
 )
 
-func AddProviderToContext() mux.MiddlewareFunc {
+func AddProviderToContext() func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
-			vars := mux.Vars(req)
-			region, found := vars["region"]
+			region := chi.URLParam(req, "region")
 			provider := internal.UnknownProvider
-			if found {
+			if region != "" {
 				provider = platformProvider(region)
 			}
 

@@ -6,11 +6,10 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/gorilla/mux"
 	"github.com/sirupsen/logrus"
 )
 
-func AddRequestLogging(logs logrus.FieldLogger) mux.MiddlewareFunc {
+func AddRequestLogging(logs logrus.FieldLogger) func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
 			if strings.Contains(req.URL.Path, "service_bindings") {

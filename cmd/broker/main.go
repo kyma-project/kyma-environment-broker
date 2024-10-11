@@ -3,6 +3,8 @@ package main
 import (
 	"context"
 	"fmt"
+	"github.com/go-chi/chi/v5"
+	"github.com/gorilla/handlers"
 	"io"
 	"log/slog"
 	"net/http"
@@ -21,8 +23,6 @@ import (
 	"code.cloudfoundry.org/lager"
 	"github.com/dlmiddlecote/sqlstats"
 	shoot "github.com/gardener/gardener/pkg/apis/core/v1beta1"
-	"github.com/gorilla/handlers"
-	"github.com/gorilla/mux"
 	"github.com/kyma-project/kyma-environment-broker/common/gardener"
 	"github.com/kyma-project/kyma-environment-broker/common/hyperscaler"
 	orchestrationExt "github.com/kyma-project/kyma-environment-broker/common/orchestration"
@@ -337,7 +337,7 @@ func main() {
 	kcBuilder := kubeconfig.NewBuilder(provisionerClient, kcpK8sClient, skrK8sClientProvider)
 
 	// create server
-	router := mux.NewRouter()
+	router := chi.NewRouter()
 	createAPI(router, servicesConfig, inputFactory, &cfg, db, provisionQueue, deprovisionQueue, updateQueue, logger, logs, inputFactory.GetPlanDefaults, kcBuilder, skrK8sClientProvider, skrK8sClientProvider, gardenerClient, kcpK8sClient, log)
 
 	// create metrics endpoint
@@ -392,7 +392,7 @@ func main() {
 	expirationHandler := expiration.NewHandler(db.Instances(), db.Operations(), deprovisionQueue, logs)
 	expirationHandler.AttachRoutes(router)
 
-	router.StrictSlash(true).PathPrefix("/").Handler(http.StripPrefix("/", http.FileServer(http.Dir("/swagger"))))
+	router.Handle("/*", http.StripPrefix("/", http.FileServer(http.Dir("/swagger"))))
 	svr := handlers.CustomLoggingHandler(os.Stdout, router, func(writer io.Writer, params handlers.LogFormatterParams) {
 		logs.Infof("Call handled: method=%s url=%s statusCode=%d size=%d", params.Request.Method, params.URL.Path, params.StatusCode, params.Size)
 	})
@@ -416,7 +416,7 @@ func logConfiguration(logs *logrus.Logger, cfg Config) {
 	logs.Infof("Is UpdateCustomResourcesLabelsOnAccountMove enabled: %t", cfg.Broker.UpdateCustomResourcesLabelsOnAccountMove)
 }
 
-func createAPI(router *mux.Router, servicesConfig broker.ServicesConfig, planValidator broker.PlanValidator, cfg *Config, db storage.BrokerStorage, provisionQueue, deprovisionQueue, updateQueue *process.Queue, logger lager.Logger, logs logrus.FieldLogger, planDefaults broker.PlanDefaults, kcBuilder kubeconfig.KcBuilder, clientProvider K8sClientProvider, kubeconfigProvider KubeconfigProvider, gardenerClient, kcpK8sClient client.Client, log *slog.Logger) {
+func createAPI(router chi.Router, servicesConfig broker.ServicesConfig, planValidator broker.PlanValidator, cfg *Config, db storage.BrokerStorage, provisionQueue, deprovisionQueue, updateQueue *process.Queue, logger lager.Logger, logs logrus.FieldLogger, planDefaults broker.PlanDefaults, kcBuilder kubeconfig.KcBuilder, clientProvider K8sClientProvider, kubeconfigProvider KubeconfigProvider, gardenerClient, kcpK8sClient client.Client, log *slog.Logger) {
 	suspensionCtxHandler := suspension.NewContextUpdateHandler(db.Operations(), provisionQueue, deprovisionQueue, logs)
 
 	defaultPlansConfig, err := servicesConfig.DefaultPlansConfig()
@@ -464,8 +464,9 @@ func createAPI(router *mux.Router, servicesConfig broker.ServicesConfig, planVal
 		"/oauth/",          // oauth2 handled by Ory
 		"/oauth/{region}/", // oauth2 handled by Ory with region
 	} {
-		route := router.PathPrefix(prefix).Subrouter()
+		route := chi.NewRouter()
 		broker.AttachRoutes(route, kymaEnvBroker, log)
+		router.Mount(prefix, route)
 	}
 
 	respWriter := httputil.NewResponseWriter(logs, cfg.DevelopmentMode)

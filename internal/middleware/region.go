@@ -2,9 +2,8 @@ package middleware
 
 import (
 	"context"
+	"github.com/go-chi/chi/v5"
 	"net/http"
-
-	"github.com/gorilla/mux"
 )
 
 // The key type is no exported to prevent collisions with context keys
@@ -16,12 +15,11 @@ const (
 	requestRegionKey key = iota + 1
 )
 
-func AddRegionToContext(defaultRegion string) mux.MiddlewareFunc {
+func AddRegionToContext(defaultRegion string) func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
-			vars := mux.Vars(req)
-			region, found := vars["region"]
-			if !found {
+			region := chi.URLParam(req, "region")
+			if region == "" {
 				region = defaultRegion
 			}
 
