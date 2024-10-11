@@ -1360,7 +1360,7 @@ func TestProvisioning_WithNetworkFilter(t *testing.T) {
 	iid := uuid.New().String()
 
 	// when
-	resp := suite.CallAPI("PUT", fmt.Sprintf("oauth/v2/service_instances/%s?accepts_incomplete=true", iid),
+	resp := suite.CallAPI("PUT", fmt.Sprintf("v2/service_instances/%s?accepts_incomplete=true", iid),
 		`{
 					"service_id": "47c9dcbf-ff30-448e-ab36-d3bad66ba281",
 					"plan_id": "7d55d31d-35ae-4438-bf13-6ffdfa107d9f",

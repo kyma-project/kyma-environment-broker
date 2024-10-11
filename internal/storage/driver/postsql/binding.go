@@ -51,7 +51,7 @@ func (s *Binding) Insert(binding *internal.Binding) error {
 	err = sess.InsertBinding(dto)
 
 	if err != nil {
-		return fmt.Errorf("while saving binding with ID %s: %w", binding.ID, err)
+		return err
 	}
 
 	return nil
