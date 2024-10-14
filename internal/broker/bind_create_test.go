@@ -132,6 +132,15 @@ func TestCreateBindingEndpoint(t *testing.T) {
 					"config": kbcfgSecond,
 				},
 			},
+			&corev1.Secret{
+				ObjectMeta: v1.ObjectMeta{
+					Name:      "kubeconfig-runtime-max-bindings",
+					Namespace: "kcp-system",
+				},
+				Data: map[string][]byte{
+					"config": kbcfgSecond,
+				},
+			},
 		}...).
 		Build()
 
@@ -147,6 +156,9 @@ func TestCreateBindingEndpoint(t *testing.T) {
 	require.NoError(t, err)
 
 	err = db.Instances().Insert(fixture.FixInstance("2"))
+	require.NoError(t, err)
+
+	err = db.Instances().Insert(fixture.FixInstance("max-bindings"))
 	require.NoError(t, err)
 
 	skrK8sClientProvider := kubeconfig.NewK8sClientFromSecretProvider(kcpClient)
@@ -387,7 +399,7 @@ func TestCreateBindingEndpoint(t *testing.T) {
 
 	t.Run("should return error when maximum number of bindings is reached", func(t *testing.T) {
 		// given - create max number of bindings
-		instanceID := "1"
+		instanceID := "max-bindings"
 		for i := 0; i < maxBindingsCount; i++ {
 			bindingID := uuid.New().String()
 			path := fmt.Sprintf("v2/service_instances/%s/service_bindings/%s?accepts_incomplete=false", instanceID, bindingID)
