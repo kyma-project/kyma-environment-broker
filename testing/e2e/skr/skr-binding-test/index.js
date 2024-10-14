@@ -166,6 +166,7 @@ describe('SKR Binding test', function() {
   it('Should not allow creation of more than 10 SKR bindings', async function() {
     errorOccurred = false;
     count = 0;
+    // We don't know how many bindings have been created in the previous test before we start this one.
     while (!errorOccurred && count < 13) {
       bindingID = uuid.v4();
       try {
