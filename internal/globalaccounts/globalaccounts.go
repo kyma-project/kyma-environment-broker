@@ -169,7 +169,7 @@ func dbOp(runtimeId string, db storage.BrokerStorage, logs *logrus.Logger) (inte
 }
 
 func logic(config Config, svc *http.Client, connection *dbr.Connection, db storage.BrokerStorage, kymas unstructured.UnstructuredList, logs *logrus.Logger) []fixMap {
-	var resOk, dbErrors, reqErrors, missmatch, dbEmptySA, dbEmptyGA int
+	var resOk, dbErrors, reqErrors, instanceMissmatch, suspendendMissmatch, dbEmptySA, dbEmptyGA int
 	var out strings.Builder
 	toFix := make([]fixMap, 0)
 	for i, kyma := range kymas.Items {
@@ -201,22 +201,22 @@ func logic(config Config, svc *http.Client, connection *dbr.Connection, db stora
 		}
 
 		if svcResponse.GlobalAccountGUID != instance.GlobalAccountID {
-			info := fmt.Sprintf("(MISSMATCH) for subaccount %s is %s but it should be: %s", instance.SubAccountID, instance.GlobalAccountID, svcResponse.GlobalAccountGUID)
+			info := fmt.Sprintf("(INSTANCE MISSMATCH) for subaccount %s is %s but it should be: %s", instance.SubAccountID, instance.GlobalAccountID, svcResponse.GlobalAccountGUID)
 			out.WriteString(info)
 			toFix = append(toFix, fixMap{instance: instance, correctGlobalAccountId: instance.GlobalAccountID, label: true})
-			out.WriteString(info)
-			missmatch++
+			instanceMissmatch++
 		} else {
 			resOk++
 		}
 	}
 
+	// if there is no runtime_id in instances table it means that instance is suspended
 	noRuntimes := make([]string, 0)
 	_ = connection.QueryRow("select instance_id from instances where runtime_id = ''").Scan(&noRuntimes) // suspended ones
 	for _, instanceID := range noRuntimes {
 		instance, err := db.Instances().GetByID(instanceID)
 		if err != nil {
-			logs.Errorf("while getting instance %s %s", instance, err.Error())
+			logs.Errorf("while getting instance %s %s", instance.RuntimeID, err.Error())
 			dbErrors++
 			continue
 		}
@@ -226,18 +226,20 @@ func logic(config Config, svc *http.Client, connection *dbr.Connection, db stora
 			continue
 		}
 		if svcResponse.GlobalAccountGUID != instance.GlobalAccountID {
-			info := fmt.Sprintf("(MISSMATCH) for subaccount %s is %s but it should be: %s", instance.SubAccountID, instance.GlobalAccountID, svcResponse.GlobalAccountGUID)
+			info := fmt.Sprintf("(SUSPENDED MISSMATCH) for subaccount %s is %s but it should be: %s", instance.SubAccountID, instance.GlobalAccountID, svcResponse.GlobalAccountGUID)
 			out.WriteString(info)
 			toFix = append(toFix, fixMap{instance: *instance, correctGlobalAccountId: instance.GlobalAccountID, label: false})
-			out.WriteString(info)
-			missmatch++
+			suspendendMissmatch++
+		} else {
+			resOk++
 		}
 	}
 
 	logs.Info("######## stats ########")
 	logs.Infof("total: %d", len(kymas.Items))
 	logs.Infof("=> ok: %d", resOk)
-	logs.Infof("=> not ok: %d", missmatch)
+	logs.Infof("=> instances not ok: %d", instanceMissmatch)
+	logs.Infof("=> suspended not ok: %d", suspendendMissmatch)
 	logs.Infof("=> db empty SA: %d", dbEmptySA)
 	logs.Infof("==> db empty GA: %d", dbEmptyGA)
 	logs.Infof("==> db error: %d", dbErrors)
@@ -308,6 +310,8 @@ func fixGlobalAccounts(db storage.Instances, kcp client.Client, cfg Config, toFi
 			updateErrorCounts++
 			continue
 		}
+
+		// we fix labels when instance is not suspended, because if it is then there is no CRs
 		if fixMap.label {
 			err = labeler.UpdateLabels(instance.RuntimeID, fixMap.correctGlobalAccountId)
 			if err != nil {
