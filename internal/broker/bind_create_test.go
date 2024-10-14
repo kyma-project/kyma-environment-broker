@@ -397,7 +397,7 @@ func TestCreateBindingEndpoint(t *testing.T) {
 		assertClusterAccess(t, response, "secret-to-check-first", binding)
 	})
 
-	t.Run("should return error when maximum number of bindings is reached", func(t *testing.T) {
+	t.Run("should return error when attempting to add a new binding when the maximum number of bindings has already been reached", func(t *testing.T) {
 		// given - create max number of bindings
 		instanceID := "max-bindings"
 		for i := 0; i < maxBindingsCount; i++ {
