@@ -432,7 +432,7 @@ func TestCreateBindingEndpoint(t *testing.T) {
 		response := CallAPI(httpServer, http.MethodPut, path, body, t)
 		defer response.Body.Close()
 		//then
-		require.Equal(t, http.StatusInternalServerError, response.StatusCode)
+		require.Equal(t, http.StatusBadRequest, response.StatusCode)
 	})
 }
 
