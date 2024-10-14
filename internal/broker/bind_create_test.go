@@ -385,6 +385,7 @@ func TestCreateBindingEndpoint(t *testing.T) {
 }
 
 func TestCreatedBy(t *testing.T) {
+	emptyStr := ""
 	email := "john.smith@email.com"
 	origin := "origin"
 	tests := []struct {
@@ -398,13 +399,28 @@ func TestCreatedBy(t *testing.T) {
 			expected: "",
 		},
 		{
-			name:     "Only Email is set",
+			name:     "Both Email and Origin are empty",
+			context:  BindingContext{Email: &emptyStr, Origin: &emptyStr},
+			expected: "",
+		},
+		{
+			name:     "Origin is nil",
 			context:  BindingContext{Email: &email, Origin: nil},
 			expected: "john.smith@email.com",
 		},
 		{
-			name:     "Only Origin is set",
+			name:     "Origin is empty",
+			context:  BindingContext{Email: &email, Origin: &emptyStr},
+			expected: "john.smith@email.com",
+		},
+		{
+			name:     "Email is nil",
 			context:  BindingContext{Email: nil, Origin: &origin},
+			expected: "origin",
+		},
+		{
+			name:     "Email is empty",
+			context:  BindingContext{Email: &emptyStr, Origin: &origin},
 			expected: "origin",
 		},
 		{
