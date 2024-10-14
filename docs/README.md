@@ -34,7 +34,7 @@ For technical details of KEB, go to the `contributor` directory:
 * [Kyma Environment Broker CronJobs](./contributor/06-10-keb-cronjobs.md)
 * [Environments Cleanup CronJob](./contributor/06-20-environments-cleanup-cronjob.md)
 * [Subaccount Cleanup CronJob](./contributor/06-30-subaccount-cleanup-cronjob.md)
-* [Trial Cleanup CronJob](./contributor/06-40-trial-cleanup-cronjob.md)
+* [Trial Cleanup CronJob and Free Cleanup CronJob](./contributor/06-40-trial-free-cleanup-cronjobs.md)
 * [Deprovision Retrigger CronJob](./contributor/06-50-deprovision-retrigger-cronjob.md)
 * [Archiver Job](./contributor/06-60-archiver-job.md)
 * [Runtime Reconciler](./contributor/07-10-runtime-reconciler.md)
