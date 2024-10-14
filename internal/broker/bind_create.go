@@ -142,11 +142,9 @@ func (b *BindEndpoint) Bind(ctx context.Context, instanceID, bindingID string, d
 	}
 
 	bindingList, err := b.bindingsStorage.ListByInstanceID(instanceID)
-	switch {
-	case dberr.IsNotFound(err):
-		return domain.Binding{}, apiresponses.ErrInstanceDoesNotExist
-	case err != nil:
-		return domain.Binding{}, apiresponses.NewFailureResponse(fmt.Errorf("failed to get bindings for instance %s", instanceID), http.StatusInternalServerError, fmt.Sprintf("failed to get bindings for instance %s", instanceID))
+	if err != nil {
+		message := fmt.Sprintf("failed to list Kyma bindings: %s", err)
+		return domain.Binding{}, apiresponses.NewFailureResponse(fmt.Errorf(message), http.StatusInternalServerError, message)
 	}
 
 	bindingCount := len(bindingList)
