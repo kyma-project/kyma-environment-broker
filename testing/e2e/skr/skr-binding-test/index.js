@@ -173,6 +173,7 @@ describe('SKR Binding test', function() {
         if (err.response) {
           errorOccurred = true;
           expect(err.response.status).equal(400);
+          expect(err.response.data.description).to.include('maximum number of bindings reached');
           console.log('Got response:');
           console.log(err.response.data);
         } else {
@@ -183,7 +184,7 @@ describe('SKR Binding test', function() {
     }
 
     if (count >= 13) {
-      expect.fail('The call was expected to fail but it passed');
+      expect.fail('The call was expected to fail but it passed. Created more than 10 bindings');
     }
   });
 
