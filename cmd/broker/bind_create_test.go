@@ -304,23 +304,21 @@ func TestCreateBindingEndpoint(t *testing.T) {
 
 	t.Run("should return created bindings when multiple bindings created", func(t *testing.T) {
 		// given
-		instanceIDFirst := "1"
-		firstInstanceFirstBindingID, firstInstancefirstBinding := createBindingForInstanceWithRandomBindingID(instanceIDFirst, httpServer, t)
-		firstInstanceFirstBindingDB, err := db.Bindings().Get(instanceIDFirst, firstInstanceFirstBindingID)
+		firstInstanceFirstBindingID, firstInstancefirstBinding := createBindingForInstanceWithRandomBindingID(instanceID1, httpServer, t)
+		firstInstanceFirstBindingDB, err := db.Bindings().Get(instanceID1, firstInstanceFirstBindingID)
 		assert.NoError(t, err)
 
-		instanceIDSecond := "2"
-		secondInstanceBindingID, secondInstanceFirstBinding := createBindingForInstanceWithRandomBindingID(instanceIDSecond, httpServer, t)
-		secondInstanceFirstBindingDB, err := db.Bindings().Get(instanceIDSecond, secondInstanceBindingID)
+		secondInstanceBindingID, secondInstanceFirstBinding := createBindingForInstanceWithRandomBindingID(instanceID2, httpServer, t)
+		secondInstanceFirstBindingDB, err := db.Bindings().Get(instanceID2, secondInstanceBindingID)
 		assert.NoError(t, err)
 
-		firstInstanceSecondBindingID, firstInstanceSecondBinding := createBindingForInstanceWithRandomBindingID(instanceIDFirst, httpServer, t)
-		firstInstanceSecondBindingDB, err := db.Bindings().Get(instanceIDFirst, firstInstanceSecondBindingID)
+		firstInstanceSecondBindingID, firstInstanceSecondBinding := createBindingForInstanceWithRandomBindingID(instanceID1, httpServer, t)
+		firstInstanceSecondBindingDB, err := db.Bindings().Get(instanceID1, firstInstanceSecondBindingID)
 		assert.NoError(t, err)
 
 		// when - first binding to the first instance
 
-		response := getBinding(instanceIDFirst, firstInstanceFirstBindingID, t)
+		response := getBinding(instanceID1, firstInstanceFirstBindingID, t)
 		defer response.Body.Close()
 
 		// then
@@ -331,7 +329,7 @@ func TestCreateBindingEndpoint(t *testing.T) {
 		assertClusterAccess(t, "secret-to-check-first", binding)
 
 		// when - binding to the second instance
-		response = getBinding(instanceIDSecond, secondInstanceBindingID, t)
+		response = getBinding(instanceID2, secondInstanceBindingID, t)
 		defer response.Body.Close()
 
 		// then
@@ -342,7 +340,7 @@ func TestCreateBindingEndpoint(t *testing.T) {
 		assertClusterAccess(t, "secret-to-check-second", binding)
 
 		// when - second binding to the first instance
-		response = getBinding(instanceIDFirst, firstInstanceSecondBindingID, t)
+		response = getBinding(instanceID1, firstInstanceSecondBindingID, t)
 		defer response.Body.Close()
 
 		// then
@@ -355,21 +353,20 @@ func TestCreateBindingEndpoint(t *testing.T) {
 
 	t.Run("should delete created binding", func(t *testing.T) {
 		// given
-		instanceID := "1"
-		createdBindingID, createdBinding := createBindingForInstanceWithRandomBindingID(instanceID, httpServer, t)
-		createdBindingIDDB, err := db.Bindings().Get(instanceID, createdBindingID)
+		createdBindingID, createdBinding := createBindingForInstanceWithRandomBindingID(instanceID1, httpServer, t)
+		createdBindingIDDB, err := db.Bindings().Get(instanceID1, createdBindingID)
 		assert.NoError(t, err)
 		assert.Equal(t, createdBinding.Credentials.(map[string]interface{})["kubeconfig"], createdBindingIDDB.Kubeconfig)
 
 		// when
-		path := fmt.Sprintf(bindingsPath+deleteParams, instanceID, createdBindingID, "123", fixture.PlanId)
+		path := fmt.Sprintf(bindingsPath+deleteParams, instanceID1, createdBindingID, "123", fixture.PlanId)
 
 		response := CallAPI(httpServer, http.MethodDelete, path, "", t)
 		defer response.Body.Close()
 
 		// then
 		assert.Equal(t, http.StatusOK, response.StatusCode)
-		createdBindingIDDB, err = db.Bindings().Get(instanceID, createdBindingID)
+		createdBindingIDDB, err = db.Bindings().Get(instanceID1, createdBindingID)
 		assert.Error(t, err)
 		assert.Nil(t, createdBindingIDDB)
 	})
