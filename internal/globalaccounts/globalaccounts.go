@@ -286,37 +286,36 @@ func svcRequest(config Config, svc *http.Client, subaccountId string, logs *logr
 func fixGlobalAccounts(db storage.Instances, kcp client.Client, cfg Config, toFix []fixMap, logs *logrus.Logger) {
 	labeler := broker.NewLabeler(kcp)
 	updateErrorCounts := 0
-	processed := 0
+	cfg.DryRun = true // temporary, will be changed
 	logs.Infof("fixGlobalAccounts func start. Is dry run?: %t", cfg.DryRun)
 	for _, fixMap := range toFix {
-		processed++
-		if processed == cfg.Probe {
-			logs.Infof("processed probe of %d instances", processed)
-			break
-		}
 		instance := fixMap.instance
-		if cfg.DryRun {
-			logs.Infof("dry run: update labels for runtime %s with new %s", instance.RuntimeID, fixMap.correctGlobalAccountId)
-			continue
-		}
-
 		if instance.SubscriptionGlobalAccountID != "" {
 			instance.SubscriptionGlobalAccountID = instance.GlobalAccountID
 		}
 		instance.GlobalAccountID = fixMap.correctGlobalAccountId
-		_, err := db.Update(instance)
-		if err != nil {
-			logs.Errorf("while updating db %s", err)
-			updateErrorCounts++
-			continue
+		if cfg.DryRun {
+			logs.Infof("dry run: update instance in db %s with new %s", instance.RuntimeID, fixMap.correctGlobalAccountId)
+		} else {
+			_, err := db.Update(instance)
+			if err != nil {
+				logs.Errorf("while updating db %s", err)
+				updateErrorCounts++
+				continue
+			}
 		}
 
-		// we fix labels when instance is not suspended, because if it is then there is no CRs
+		// we fix labels when instance is not suspended, because if it is then there is no
 		if fixMap.label {
-			err = labeler.UpdateLabels(instance.RuntimeID, fixMap.correctGlobalAccountId)
-			if err != nil {
-				logs.Errorf("while updating labels %s", err)
-				updateErrorCounts++
+			if cfg.DryRun {
+				logs.Infof("dry run: update labels for runtime %s with new %s", instance.RuntimeID, fixMap.correctGlobalAccountId)
+				continue
+			} else {
+				err := labeler.UpdateLabels(instance.RuntimeID, fixMap.correctGlobalAccountId)
+				if err != nil {
+					logs.Errorf("while updating labels %s", err)
+					updateErrorCounts++
+				}
 			}
 		}
 	}
