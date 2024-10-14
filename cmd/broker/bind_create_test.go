@@ -5,12 +5,13 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"github.com/kyma-project/kyma-environment-broker/internal/ptr"
 	"io"
 	"net/http"
 	"net/http/httptest"
 	"testing"
 	"time"
+
+	"github.com/kyma-project/kyma-environment-broker/internal/ptr"
 
 	"github.com/golang-jwt/jwt/v4"
 	"github.com/google/uuid"
