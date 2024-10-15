@@ -150,7 +150,7 @@ func svcRequest(config Config, svc *http.Client, subaccountId string, logs *logr
 }
 
 func logic(config Config, svc *http.Client, kcp client.Client, connection *dbr.Connection, db storage.BrokerStorage, logs *logrus.Logger) {
-	var okCount, getInstanceErrorCounts, requestErrorCount, mismatch, kebInstanceMissingSACount, kebInstanceMissingGACount, dbEmptyGA int
+	var okCount, getInstanceErrorCounts, requestErrorCount, mismatch, kebInstanceMissingSACount, kebInstanceMissingGACount int
 	var instanceUpdateErrorCount, labelsUpdateErrorCount int
 	var out strings.Builder
 	labeler := broker.NewLabeler(kcp)
