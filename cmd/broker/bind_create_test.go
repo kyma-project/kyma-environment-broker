@@ -156,12 +156,6 @@ func TestCreateBindingEndpoint(t *testing.T) {
 		}...).
 		Build()
 
-	//// create fake kubernetes client - kcp
-	gardenerClient := fake.NewClientBuilder().
-		WithScheme(sch).
-		WithRuntimeObjects([]runtime.Object{}...).
-		Build()
-
 	//// database
 	storageCleanup, db, err := GetStorageForE2ETests()
 	t.Cleanup(func() {
@@ -196,7 +190,7 @@ func TestCreateBindingEndpoint(t *testing.T) {
 	}
 
 	//// api handler
-	bindEndpoint := broker.NewBind(*bindingCfg, db.Instances(), db.Bindings(), logs, skrK8sClientProvider, skrK8sClientProvider, gardenerClient)
+	bindEndpoint := broker.NewBind(*bindingCfg, db.Instances(), db.Bindings(), logs, skrK8sClientProvider, skrK8sClientProvider)
 	getBindingEndpoint := broker.NewGetBinding(logs, db.Bindings())
 	unbindEndpoint := broker.NewUnbind(logs, db.Bindings())
 	apiHandler := handlers.NewApiHandler(broker.KymaEnvironmentBroker{

@@ -17,7 +17,6 @@ import (
 
 	"github.com/pivotal-cf/brokerapi/v8/domain"
 	"github.com/sirupsen/logrus"
-	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
 type BindingConfig struct {
@@ -74,7 +73,7 @@ type Credentials struct {
 	Kubeconfig string `json:"kubeconfig"`
 }
 
-func NewBind(cfg BindingConfig, instanceStorage storage.Instances, bindingsStorage storage.Bindings, log logrus.FieldLogger, clientProvider broker.ClientProvider, kubeconfigProvider broker.KubeconfigProvider, gardenerClient client.Client) *BindEndpoint {
+func NewBind(cfg BindingConfig, instanceStorage storage.Instances, bindingsStorage storage.Bindings, log logrus.FieldLogger, clientProvider broker.ClientProvider, kubeconfigProvider broker.KubeconfigProvider) *BindEndpoint {
 	return &BindEndpoint{config: cfg,
 		instancesStorage:             instanceStorage,
 		bindingsStorage:              bindingsStorage,
