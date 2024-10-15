@@ -169,7 +169,7 @@ func dbOp(runtimeId string, db storage.BrokerStorage, logs *logrus.Logger) (inte
 }
 
 func logic(config Config, svc *http.Client, connection *dbr.Connection, db storage.BrokerStorage, kymas unstructured.UnstructuredList, logs *logrus.Logger) []fixMap {
-	var resOk, dbErrors, reqErrors, instanceMissmatch, suspendendMissmatch, dbEmptySA, dbEmptyGA int
+	var resOk, dbErrors, reqErrors, instanceMismatch, suspendendMismatch, dbEmptySA, dbEmptyGA int
 	var out strings.Builder
 	toFix := make([]fixMap, 0)
 	for i, kyma := range kymas.Items {
@@ -204,7 +204,7 @@ func logic(config Config, svc *http.Client, connection *dbr.Connection, db stora
 			info := fmt.Sprintf("(INSTANCE MISSMATCH) for subaccount %s is %s but it should be: %s", instance.SubAccountID, instance.GlobalAccountID, svcResponse.GlobalAccountGUID)
 			out.WriteString(info)
 			toFix = append(toFix, fixMap{instance: instance, correctGlobalAccountId: instance.GlobalAccountID, label: true})
-			instanceMissmatch++
+			instanceMismatch++
 		} else {
 			resOk++
 		}
@@ -226,10 +226,10 @@ func logic(config Config, svc *http.Client, connection *dbr.Connection, db stora
 			continue
 		}
 		if svcResponse.GlobalAccountGUID != instance.GlobalAccountID {
-			info := fmt.Sprintf("(SUSPENDED MISSMATCH) for subaccount %s is %s but it should be: %s", instance.SubAccountID, instance.GlobalAccountID, svcResponse.GlobalAccountGUID)
+			info := fmt.Sprintf("(SUSPENDED MISMATCH) for subaccount %s is %s but it should be: %s", instance.SubAccountID, instance.GlobalAccountID, svcResponse.GlobalAccountGUID)
 			out.WriteString(info)
 			toFix = append(toFix, fixMap{instance: *instance, correctGlobalAccountId: instance.GlobalAccountID, label: false})
-			suspendendMissmatch++
+			suspendendMismatch++
 		} else {
 			resOk++
 		}
