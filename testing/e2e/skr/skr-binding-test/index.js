@@ -1,7 +1,7 @@
 const {expect} = require('chai');
 const {gatherOptions} = require('../skr-test');
 const {initializeK8sClient} = require('../utils/index.js');
-const {getSecret, getKubeconfigValidityInSeconds} = require('../utils');
+const {getSecret} = require('../utils');
 const {provisionSKRInstance} = require('../skr-test/provision/provision-skr');
 const {deprovisionAndUnregisterSKR} = require('../skr-test/provision/deprovision-skr');
 const {KEBClient, KEBConfig} = require('../kyma-environment-broker');
