@@ -157,8 +157,9 @@ func logic(config Config, svc *http.Client, kcp client.Client, connection *dbr.C
 
 	instancesIDs := make([]string, 0)
 	_ = connection.QueryRow("select instance_id from instances").Scan(&instancesIDs) // suspended ones
-	for _, instanceID := range instancesIDs {
+	for i, instanceID := range instancesIDs {
 		instance, err := db.Instances().GetByID(instanceID)
+		logs.Infof("instance %d/%d", i+1, len(instancesIDs))
 		if err != nil {
 			logs.Errorf("while getting instance %s %s", instance.RuntimeID, err.Error())
 			getInstanceErrorCounts++
@@ -180,40 +181,41 @@ func logic(config Config, svc *http.Client, kcp client.Client, connection *dbr.C
 			requestErrorCount++
 			continue
 		}
-		needFix := false
+
 		if svcResponse.GlobalAccountGUID != instance.GlobalAccountID {
-			needFix = true
 			info := fmt.Sprintf("(INSTANCE MISSMATCH) for subaccount %s is %s but it should be: %s", instance.SubAccountID, instance.GlobalAccountID, svcResponse.GlobalAccountGUID)
 			out.WriteString(info)
 			mismatch++
 		} else {
 			okCount++
+			continue
 		}
 
-		if needFix {
-			if config.DryRun {
-				logs.Infof("dry run: update instance in db %s with new %s", instance.RuntimeID, svcResponse.GlobalAccountGUID)
-			} else {
-				if instance.SubscriptionGlobalAccountID != "" {
-					instance.SubscriptionGlobalAccountID = instance.GlobalAccountID
-				}
-				instance.GlobalAccountID = svcResponse.GlobalAccountGUID
-				_, err := db.Instances().Update(*instance)
-				if err != nil {
-					logs.Errorf("while updating db %s", err)
-					instanceUpdateErrorCount++
-					continue
-				}
+		if config.DryRun {
+			logs.Infof("dry run: update instance in db %s with new %s", instance.RuntimeID, svcResponse.GlobalAccountGUID)
+			continue
+		}
 
-				if !instance.IsExpired() { // expired instances have no CRs on KCP, so there is nothing to update
-					err = labeler.UpdateLabels(instance.RuntimeID, svcResponse.GlobalAccountGUID)
-					if err != nil {
-						logs.Errorf("while updating labels %s", err)
-						labelsUpdateErrorCount++
-						continue
-					}
-				}
-			}
+		if instance.SubscriptionGlobalAccountID != "" {
+			instance.SubscriptionGlobalAccountID = instance.GlobalAccountID
+		}
+		instance.GlobalAccountID = svcResponse.GlobalAccountGUID
+		_, err = db.Instances().Update(*instance)
+		if err != nil {
+			logs.Errorf("while updating db %s", err)
+			instanceUpdateErrorCount++
+			continue
+		}
+
+		if instance.IsExpired() {
+			continue // expired instances have no CRs on KCP, so there is nothing to update
+		}
+
+		err = labeler.UpdateLabels(instance.RuntimeID, svcResponse.GlobalAccountGUID)
+		if err != nil {
+			logs.Errorf("while updating labels %s", err)
+			labelsUpdateErrorCount++
+			continue
 		}
 	}
 
