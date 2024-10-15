@@ -35,7 +35,6 @@ type BindEndpoint struct {
 	bindingsStorage  storage.Bindings
 
 	serviceAccountBindingManager broker.BindingsManager
-	gardenerBindingsManager      broker.BindingsManager
 
 	log logrus.FieldLogger
 }
@@ -81,7 +80,6 @@ func NewBind(cfg BindingConfig, instanceStorage storage.Instances, bindingsStora
 		bindingsStorage:              bindingsStorage,
 		log:                          log.WithField("service", "BindEndpoint"),
 		serviceAccountBindingManager: broker.NewServiceAccountBindingsManager(clientProvider, kubeconfigProvider),
-		gardenerBindingsManager:      broker.NewGardenerBindingManager(gardenerClient),
 	}
 }
 
