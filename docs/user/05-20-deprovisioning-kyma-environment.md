@@ -43,5 +43,5 @@ there are still instances provisioned by the SAP BTP service operator, and the u
 
 There is one exception, and that is the [Subaccount Cleanup CronJob](../contributor/06-30-subaccount-cleanup-cronjob.md). KEB [parses the `User-Agent` HTTP header](../../internal/process/deprovisioning/btp_operator_cleanup.go#L87) for
 `DELETE` call on `/service_instances/${instance_id}` endpoint and forwards it through the operation to the processing step `btp_operator_cleanup` handling
-soft delete for existing SAP BTP service operator resources. Because the `subaccount-cleanup` Job is triggered automatically and deletes only Kyma runtimes where the whole subaccount is 
+soft delete for existing SAP BTP service operator resources. Because the `subaccount-cleanup` Job is triggered automatically and deletes only Kyma runtimes where the whole subaccount is
 intended for deletion, it is necessary to execute the SAP BTP service operator cleanup procedure as well.

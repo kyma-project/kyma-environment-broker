@@ -1,10 +1,11 @@
 # Check Orchestration Status
 
 This tutorial shows how to check the orchestration status. Using this API, you can fetch data about:
-- A single orchestration
-- All orchestrations
-- Upgrade operations scheduled by a given orchestration
-- A single operation with details, such as parameters sent to Runtime Provisioner
+
+* A single orchestration
+* All orchestrations
+* Upgrade operations scheduled by a given orchestration
+* A single operation with details, such as parameters sent to Runtime Provisioner
 
 ## Fetch a Single Orchestration Status
 
@@ -21,6 +22,7 @@ This tutorial shows how to check the orchestration status. Using this API, you c
    ```
 
    A successful call returns the orchestration object:
+   
    ```json
       {
           "orchestrationID": "07089b96-8e31-49a4-96d0-f8288253c804",

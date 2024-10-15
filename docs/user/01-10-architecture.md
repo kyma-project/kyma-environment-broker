@@ -18,5 +18,5 @@ The diagram and steps describe the Kyma Environment Broker (KEB) workflow and th
 
 7. Lifecycle Manager manages Kyma modules.
 
-> [!NOTE] 
+> [!NOTE]
 > In the future, Kyma Runtime Provisioner will be deprecated.  KEB will then integrate with Infrastructure Manager. To learn about the planned KEB workflow, read [Kyma Environment Broker Target Architecture](01-20-target-architecture.md).

@@ -20,11 +20,11 @@ This tutorial shows how to check the operation status for the provisioning and d
    --header "$AUTHORIZATION_HEADER"
    ```
 
-A successful call returns the operation status and description:
+   A successful call returns the operation status and description:
 
-   ```json
-   {
-       "state": "succeeded",
-       "description": "Operation succeeded."
-   }
-   ```
+      ```json
+      {
+         "state": "succeeded",
+         "description": "Operation succeeded."
+      }
+      ```

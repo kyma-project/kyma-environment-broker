@@ -1,11 +1,11 @@
 # Kyma Environment Broker Configuration for a Given Kyma Plan
 
-Some Kyma Environment Broker (KEB) processes can be configured to deliver different results. KEB needs a ConfigMap with the configuration for a given Kyma plan to process the requests. 
+Some Kyma Environment Broker (KEB) processes can be configured to deliver different results. KEB needs a ConfigMap with the configuration for a given Kyma plan to process the requests.
 The default configuration must be defined. KEB must recognize this configuration as applicable to all supported plans. You can also set a separate configuration for each plan.
   
 While processing requests, KEB reads the configuration from the ConfigMap that holds data for a given plan.
 
-> [!NOTE] 
+> [!NOTE]
 > Currently, only the Kyma custom resource template can be configured.
 
 ## ConfigMap  
@@ -16,7 +16,7 @@ The appropriate ConfigMap is selected by filtering the resources using labels. K
 keb-config: "true"
 ```
 
-> [!NOTE] 
+> [!NOTE]
 > Each ConfigMap that defines the configuration must have this label assigned.
 
 The actual configuration is stored in ConfigMap's `data` object. Add `default` key under `data` object:
