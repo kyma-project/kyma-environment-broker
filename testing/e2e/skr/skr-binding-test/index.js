@@ -33,7 +33,7 @@ describe('SKR Binding test', function() {
   it('Create SKR binding', async function() {
     bindingID = uuid.v4();
     try {
-      const resp = await keb.createBinding(options.instanceID, bindingID, true);
+      const resp = await keb.createBinding(options.instanceID, bindingID);
       kubeconfigFromBinding = resp.data.credentials.kubeconfig;
     } catch (err) {
       console.log(err);
@@ -92,7 +92,7 @@ describe('SKR Binding test', function() {
     bindingID = uuid.v4();
     const expirationSeconds = 1;
     try {
-      await keb.createBinding(options.instanceID, bindingID, true, expirationSeconds);
+      await keb.createBinding(options.instanceID, bindingID, expirationSeconds);
       expect.fail('The call was expected to fail but it passed');
     } catch (err) {
       if (err.response) {
@@ -110,7 +110,7 @@ describe('SKR Binding test', function() {
     bindingID = uuid.v4();
     const expirationSeconds = 999999999;
     try {
-      await keb.createBinding(options.instanceID, bindingID, true, expirationSeconds);
+      await keb.createBinding(options.instanceID, bindingID, expirationSeconds);
       expect.fail('The call was expected to fail but it passed');
     } catch (err) {
       if (err.response) {
@@ -131,7 +131,7 @@ describe('SKR Binding test', function() {
     while (!errorOccurred && count < 13) {
       bindingID = uuid.v4();
       try {
-        await keb.createBinding(options.instanceID, bindingID, true);
+        await keb.createBinding(options.instanceID, bindingID);
       } catch (err) {
         if (err.response) {
           errorOccurred = true;

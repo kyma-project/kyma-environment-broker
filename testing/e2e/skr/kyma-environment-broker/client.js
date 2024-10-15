@@ -273,12 +273,11 @@ class KEBClient {
     });
   }
 
-  async createBinding(instanceID, bindingID, serviceAccount, expirationSeconds = DEFAULT_EXPIRATION_SECONDS) {
+  async createBinding(instanceID, bindingID, expirationSeconds = DEFAULT_EXPIRATION_SECONDS) {
     const payload = {
       service_id: KYMA_SERVICE_ID,
       plan_id: this.planID,
       parameters: {
-        service_account: serviceAccount,
         expiration_seconds: expirationSeconds,
       },
     };
