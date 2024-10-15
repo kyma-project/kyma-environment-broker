@@ -30,7 +30,7 @@ describe('SKR Binding test', function() {
     await provisionSKRInstance(options, provisioningTimeout);
   });
 
-  it('Create SKR binding for service account using Kubernetes TokenRequest', async function() {
+  it('Create SKR binding', async function() {
     bindingID = uuid.v4();
     try {
       const resp = await keb.createBinding(options.instanceID, bindingID, true);
@@ -44,39 +44,43 @@ describe('SKR Binding test', function() {
     await initializeK8sClient({kubeconfig: kubeconfigFromBinding});
   });
 
-  it('Fetch sap-btp-manager secret using binding for service account from Kubernetes TokenRequest', async function() {
+  it('Get sap-btp-manager secret', async function() {
     await getSecret(secretName, ns);
   });
 
-  it('Fetch SKR binding created using Kubernetes TokenRequest', async function() {
+  it('Get SKR binding', async function() {
     const resp = await keb.getBinding(options.instanceID, bindingID);
     expect(resp.data.credentials.kubeconfig).to.equal(kubeconfigFromBinding);
   });
 
-  it('Delete SKR binding created using Kubernetes TokenRequest', async function() {
+  it('Delete SKR binding', async function() {
     const resp = await keb.deleteBinding(options.instanceID, bindingID);
     expect(resp.status).equal(200);
 
     try {
       await keb.getBinding(options.instanceID, bindingID);
-      expect.fail('The call was expected to fail but it passed');
+      expect.fail('The call was expected to fail but it passed. Binding was retrieved');
     } catch (err) {
       if (err.response) {
         expect(err.response.status).equal(404);
         console.log('Got response:');
         console.log(err.response.data);
+        console.log(err.response.status);
       } else {
         throw err;
       }
     }
   });
 
-  it('Should not allow to fetch sap-btp-manager secret using binding from Kubernetes TokenRequest', async function() {
+  it('Should not allow to get sap-btp-manager secret', async function() {
     try {
       await getSecret(secretName, ns);
-      expect.fail('The call was expected to fail but it passed');
+      expect.fail('The call was expected to fail but it passed. Got the secret');
     } catch (err) {
       expect(err.message).to.include('You must be logged in to the server');
+      console.log('Got response:');
+      console.log(err.response.data);
+      console.log(err.response.status);
     }
   });
 
