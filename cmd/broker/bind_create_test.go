@@ -11,8 +11,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/kyma-project/kyma-environment-broker/internal/ptr"
-
 	"github.com/golang-jwt/jwt/v4"
 	"github.com/google/uuid"
 	brokerBindings "github.com/kyma-project/kyma-environment-broker/internal/broker/bindings"
@@ -237,7 +235,7 @@ func TestCreateBindingEndpoint(t *testing.T) {
 		const customExpirationSeconds = 900
 
 		// When
-		response := createBindingWithExpiration(instanceID1, "binding-id2", ptr.Integer(customExpirationSeconds), t)
+		response := createBindingWithCustomExpiration(instanceID1, "binding-id2", customExpirationSeconds, t)
 
 		defer response.Body.Close()
 
@@ -253,7 +251,7 @@ func TestCreateBindingEndpoint(t *testing.T) {
 		const customExpirationSeconds = 7201
 
 		// When
-		response := createBindingWithExpiration(instanceID1, "binding-id3", ptr.Integer(customExpirationSeconds), t)
+		response := createBindingWithCustomExpiration(instanceID1, "binding-id3", customExpirationSeconds, t)
 
 		defer response.Body.Close()
 		require.Equal(t, http.StatusBadRequest, response.StatusCode)
@@ -263,7 +261,7 @@ func TestCreateBindingEndpoint(t *testing.T) {
 		const customExpirationSeconds = 60
 
 		// When
-		response := createBindingWithExpiration(instanceID1, "binding-id4", ptr.Integer(customExpirationSeconds), t)
+		response := createBindingWithCustomExpiration(instanceID1, "binding-id4", customExpirationSeconds, t)
 
 		defer response.Body.Close()
 		require.Equal(t, http.StatusBadRequest, response.StatusCode)
@@ -661,25 +659,23 @@ func CallAPI(httpServer *httptest.Server, method string, path string, body strin
 	return resp
 }
 
-func createBinding(instanceID string, bindingID string, t *testing.T) *http.Response {
-	return createBindingWithExpiration(instanceID, bindingID, nil, t)
-}
-
-func createBindingWithExpiration(instanceID string, bindingID string, customExpirationSeconds *int, t *testing.T) *http.Response {
+func createBindingWithCustomExpiration(instanceID string, bindingID string, customExpirationSeconds int, t *testing.T) *http.Response {
 	path := getPath(instanceID, bindingID)
-	if customExpirationSeconds != nil {
-		return CallAPI(httpServer, http.MethodPut,
-			path, fmt.Sprintf(`
+	return CallAPI(httpServer, http.MethodPut,
+		path, fmt.Sprintf(`
 		{
 			"service_id": "123",
 			"plan_id": "%s",
 			"parameters": {
 				"expiration_seconds": %v
 			}
-		}`, fixture.PlanId, *customExpirationSeconds), t)
-	} else {
-		return CallAPI(httpServer, http.MethodPut,
-			path, fmt.Sprintf(`
+		}`, fixture.PlanId, customExpirationSeconds), t)
+}
+
+func createBinding(instanceID string, bindingID string, t *testing.T) *http.Response {
+	path := getPath(instanceID, bindingID)
+	return CallAPI(httpServer, http.MethodPut,
+		path, fmt.Sprintf(`
 		{
 			"service_id": "123",
 			"plan_id": "%s",
@@ -688,7 +684,6 @@ func createBindingWithExpiration(instanceID string, bindingID string, customExpi
 				"origin": "origin"
 			}
 		}`, fixture.PlanId), t)
-	}
 }
 
 func getBinding(instanceID string, bindingID string, t *testing.T) *http.Response {
