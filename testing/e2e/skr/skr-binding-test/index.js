@@ -65,7 +65,6 @@ describe('SKR Binding test', function() {
         expect(err.response.status).equal(404);
         console.log('Got response:');
         console.log(err.response.data);
-        console.log(err.response.status);
       } else {
         throw err;
       }
@@ -81,7 +80,6 @@ describe('SKR Binding test', function() {
         expect(err.message).to.include('You must be logged in to the server');
         console.log('Got response:');
         console.log(err.response.data);
-        console.log(err.response.status);
       } else {
         throw err;
       }
