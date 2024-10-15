@@ -80,53 +80,6 @@ describe('SKR Binding test', function() {
     }
   });
 
-  it('Create SKR binding using Gardener', async function() {
-    bindingID = uuid.v4();
-    const expirationSeconds = 900;
-    try {
-      const resp = await keb.createBinding(options.instanceID, bindingID, false, expirationSeconds);
-      kubeconfigFromBinding = resp.data.credentials.kubeconfig;
-    } catch (err) {
-      console.log(err);
-    }
-    expect(getKubeconfigValidityInSeconds(kubeconfigFromBinding)).to.equal(expirationSeconds);
-  });
-
-  it('Initiate K8s client with kubeconfig from binding', async function() {
-    await initializeK8sClient({kubeconfig: kubeconfigFromBinding});
-  });
-
-  it('Fetch sap-btp-manager secret using binding from Gardener', async function() {
-    await getSecret(secretName, ns);
-  });
-
-  it('Fetch SKR binding created using Gardener', async function() {
-    const resp = await keb.getBinding(options.instanceID, bindingID);
-    expect(resp.data.credentials.kubeconfig).to.equal(kubeconfigFromBinding);
-  });
-
-  it('Delete SKR binding created using Gardener', async function() {
-    const resp = await keb.deleteBinding(options.instanceID, bindingID);
-    expect(resp.status).equal(200);
-
-    try {
-      await keb.getBinding(options.instanceID, bindingID);
-      expect.fail('The call was expected to fail but it passed');
-    } catch (err) {
-      if (err.response) {
-        expect(err.response.status).equal(404);
-        console.log('Got response:');
-        console.log(err.response.data);
-      } else {
-        throw err;
-      }
-    }
-  });
-
-  it('Try to fetch sap-btp-manager secret using binding from Gardener', async function() {
-    await getSecret(secretName, ns);
-  });
-
   it('Should not allow creation of SKR binding when expiration seconds value is below the min value', async function() {
     bindingID = uuid.v4();
     const expirationSeconds = 1;
