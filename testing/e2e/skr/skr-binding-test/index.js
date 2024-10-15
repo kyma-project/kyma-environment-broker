@@ -59,7 +59,7 @@ describe('SKR Binding test', function() {
 
     try {
       await keb.getBinding(options.instanceID, bindingID);
-      expect.fail('The call was expected to fail but it passed. Binding was retrieved');
+      expect.fail('The call was expected to fail but it passed. Binding was retrieved after deletion');
     } catch (err) {
       if (err.response) {
         expect(err.response.status).equal(404);
