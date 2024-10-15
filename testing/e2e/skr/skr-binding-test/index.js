@@ -77,10 +77,14 @@ describe('SKR Binding test', function() {
       await getSecret(secretName, ns);
       expect.fail('The call was expected to fail but it passed. Got the secret');
     } catch (err) {
-      expect(err.message).to.include('You must be logged in to the server');
-      console.log('Got response:');
-      console.log(err.response.data);
-      console.log(err.response.status);
+      if (err.response) {
+        expect(err.message).to.include('You must be logged in to the server');
+        console.log('Got response:');
+        console.log(err.response.data);
+        console.log(err.response.status);
+      } else {
+        throw err;
+      }
     }
   });
 
