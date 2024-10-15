@@ -468,6 +468,9 @@ func (h *Handler) getFilters(req *http.Request) dbmodel.InstanceFilter {
 	filter.Regions = query[pkg.RegionParam]
 	filter.Shoots = query[pkg.ShootParam]
 	filter.Plans = query[pkg.PlanParam]
+	if v, exists := query[pkg.WithBindingsParam]; exists && v[0] == "true" {
+		filter.BindingExists = ptr.Bool(true)
+	}
 	if v, exists := query[pkg.ExpiredParam]; exists && v[0] == "true" {
 		filter.Expired = ptr.Bool(true)
 	}
