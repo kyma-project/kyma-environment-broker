@@ -13,6 +13,7 @@ import (
 	"github.com/kyma-project/kyma-environment-broker/internal/broker"
 	"github.com/kyma-project/kyma-environment-broker/internal/events"
 	"github.com/kyma-project/kyma-environment-broker/internal/storage"
+	"github.com/kyma-project/kyma-environment-broker/internal/storage/dbmodel"
 	"github.com/sirupsen/logrus"
 	"golang.org/x/oauth2/clientcredentials"
 	"k8s.io/apimachinery/pkg/util/wait"
@@ -56,7 +57,7 @@ func Run(ctx context.Context, cfg Config) {
 		}
 	}()
 
-	logic(cfg, svc, kcp, connection, db, logs)
+	logic(cfg, svc, kcp, db, logs)
 	logs.Infof("*** End at: %s ***", time.Now().Format(time.RFC3339))
 
 	<-ctx.Done()
@@ -150,17 +151,19 @@ func svcRequest(config Config, svc *http.Client, subaccountId string, logs *logr
 	return svcResponse, nil
 }
 
-func logic(config Config, svc *http.Client, kcp client.Client, connection *dbr.Connection, db storage.BrokerStorage, logs *logrus.Logger) {
+func logic(config Config, svc *http.Client, kcp client.Client, db storage.BrokerStorage, logs *logrus.Logger) {
 	var okCount, getInstanceErrorCounts, requestErrorCount, mismatch, kebInstanceMissingSACount, kebInstanceMissingGACount, svcGlobalAccountMissing int
 	var instanceUpdateErrorCount, labelsUpdateErrorCount int
 	var out strings.Builder
 	labeler := broker.NewLabeler(kcp)
 
-	instancesIDs := make([]string, 0)
-	_ = connection.QueryRow("select instance_id from instances").Scan(&instancesIDs)
-	for i, instanceID := range instancesIDs {
-		instance, err := db.Instances().GetByID(instanceID)
-		logs.Infof("instance %d/%d", i+1, len(instancesIDs))
+	instances, instancesCount, _, err := db.Instances().List(dbmodel.InstanceFilter{})
+	if err != nil {
+		logs.Errorf("while getting instances %s", err.Error())
+		return
+	}
+	for i, instance := range instances {
+		logs.Infof("instance %d/%d", i+1, instancesCount)
 		if err != nil {
 			logs.Errorf("while getting instance %s %s", instance.RuntimeID, err.Error())
 			getInstanceErrorCounts++
@@ -176,7 +179,7 @@ func logic(config Config, svc *http.Client, kcp client.Client, connection *dbr.C
 			kebInstanceMissingGACount++
 			continue
 		}
-		svcResponse, err := svcRequest(config, svc, instanceID, logs)
+		svcResponse, err := svcRequest(config, svc, instance.InstanceID, logs)
 		if err != nil {
 			logs.Error(err.Error())
 			requestErrorCount++
@@ -185,7 +188,7 @@ func logic(config Config, svc *http.Client, kcp client.Client, connection *dbr.C
 		svcGlobalAccountId := svcResponse.GlobalAccountGUID
 
 		if svcGlobalAccountId == "" {
-			logs.Errorf("svc response is empty for %s", instanceID)
+			logs.Errorf("svc response is empty for %s", instance.InstanceID)
 			svcGlobalAccountMissing++
 			continue
 		} else if svcGlobalAccountId != instance.GlobalAccountID {
@@ -202,7 +205,7 @@ func logic(config Config, svc *http.Client, kcp client.Client, connection *dbr.C
 			continue
 		}
 
-		instanceUpdateFail, labelsUpdateFail := updateData(instance, svcGlobalAccountId, logs, *labeler, db)
+		instanceUpdateFail, labelsUpdateFail := updateData(&instance, svcGlobalAccountId, logs, *labeler, db)
 		if instanceUpdateFail {
 			instanceUpdateErrorCount++
 		}
@@ -211,7 +214,7 @@ func logic(config Config, svc *http.Client, kcp client.Client, connection *dbr.C
 		}
 	}
 
-	showReport(logs, okCount, mismatch, getInstanceErrorCounts, kebInstanceMissingSACount, kebInstanceMissingGACount, requestErrorCount, instanceUpdateErrorCount, labelsUpdateErrorCount, len(instancesIDs), svcGlobalAccountMissing, out.String())
+	showReport(logs, okCount, mismatch, getInstanceErrorCounts, kebInstanceMissingSACount, kebInstanceMissingGACount, requestErrorCount, instanceUpdateErrorCount, labelsUpdateErrorCount, instancesCount, svcGlobalAccountMissing, out.String())
 }
 
 func updateData(instance *internal.Instance, svcGlobalAccountId string, logs *logrus.Logger, labeler broker.Labeler, db storage.BrokerStorage) (instanceUpdateFail bool, labelsUpdateFail bool) {
