@@ -164,11 +164,6 @@ func logic(config Config, svc *http.Client, kcp client.Client, db storage.Broker
 	}
 	for i, instance := range instances {
 		logs.Infof("instance %d/%d", i+1, instancesCount)
-		if err != nil {
-			logs.Errorf("while getting instance %s %s", instance.RuntimeID, err.Error())
-			getInstanceErrorCounts++
-			continue
-		}
 		if instance.SubAccountID == "" {
 			logs.Errorf("instance have empty SA %s", instance.SubAccountID)
 			kebInstanceMissingSACount++
