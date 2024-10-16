@@ -10,31 +10,31 @@ global:
       path: europe-docker.pkg.dev/kyma-project/prod
     kyma_environment_broker:
       dir:
-      version: "1.10.40"
+      version: "1.10.41"
     kyma_environment_broker_schema_migrator:
       dir:
-      version: 1.10.40
+      version: 1.10.41
     kyma_environments_subaccount_cleanup_job:
       dir:
-      version: "1.10.40"
+      version: "1.10.41"
     kyma_environment_trial_cleanup_job:
       dir:
-      version: "1.10.40"
+      version: "1.10.41"
     kyma_environment_expirator_job:
       dir:
-      version: "1.10.40"
+      version: "1.10.41"
     kyma_environment_deprovision_retrigger_job:
       dir:
-      version: "1.10.40"
+      version: "1.10.41"
     kyma_environment_runtime_reconciler:
       dir:
-      version: "1.10.40"
+      version: "1.10.41"
     kyma_environment_subaccount_sync:
       dir:
-      version: "1.10.40"
+      version: "1.10.41"
     kyma_environment_globalaccounts:
       dir:
-      version: "1.10.40"
+      version: "1.10.41"
       
   kyma_environment_broker:
     enabled: false
