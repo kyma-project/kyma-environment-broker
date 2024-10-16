@@ -151,7 +151,7 @@ func svcRequest(config Config, svc *http.Client, subaccountId string, logs *logr
 }
 
 func logic(config Config, svc *http.Client, kcp client.Client, connection *dbr.Connection, db storage.BrokerStorage, logs *logrus.Logger) {
-	var okCount, getInstanceErrorCounts, requestErrorCount, mismatch, kebInstanceMissingSACount, kebInstanceMissingGACount int
+	var okCount, getInstanceErrorCounts, requestErrorCount, mismatch, kebInstanceMissingSACount, kebInstanceMissingGACount, svcGlobalAccountMissing int
 	var instanceUpdateErrorCount, labelsUpdateErrorCount int
 	var out strings.Builder
 	labeler := broker.NewLabeler(kcp)
@@ -186,6 +186,7 @@ func logic(config Config, svc *http.Client, kcp client.Client, connection *dbr.C
 
 		if svcGlobalAccountId == "" {
 			logs.Errorf("svc response is empty for %s", instanceID)
+			svcGlobalAccountMissing++
 			continue
 		} else if svcGlobalAccountId != instance.GlobalAccountID {
 			info := fmt.Sprintf("(INSTANCE MISSMATCH) for subaccount %s is %s but it should be: %s", instance.SubAccountID, instance.GlobalAccountID, svcGlobalAccountId)
@@ -210,7 +211,7 @@ func logic(config Config, svc *http.Client, kcp client.Client, connection *dbr.C
 		}
 	}
 
-	showReport(logs, okCount, mismatch, getInstanceErrorCounts, kebInstanceMissingSACount, kebInstanceMissingGACount, requestErrorCount, instanceUpdateErrorCount, labelsUpdateErrorCount, len(instancesIDs), out.String())
+	showReport(logs, okCount, mismatch, getInstanceErrorCounts, kebInstanceMissingSACount, kebInstanceMissingGACount, requestErrorCount, instanceUpdateErrorCount, labelsUpdateErrorCount, len(instancesIDs), svcGlobalAccountMissing, out.String())
 }
 
 func updateData(instance *internal.Instance, svcGlobalAccountId string, logs *logrus.Logger, labeler broker.Labeler, db storage.BrokerStorage) (instanceUpdateFail bool, labelsUpdateFail bool) {
@@ -240,7 +241,7 @@ func updateData(instance *internal.Instance, svcGlobalAccountId string, logs *lo
 	return
 }
 
-func showReport(logs *logrus.Logger, okCount, mismatch, getInstanceErrorCounts, kebInstanceMissingSACount, kebInstanceMissingGACount, requestErrorCount, instanceUpdateErrorCount, labelsUpdateErrorCount, instancesIDs int, out string) {
+func showReport(logs *logrus.Logger, okCount, mismatch, getInstanceErrorCounts, kebInstanceMissingSACount, kebInstanceMissingGACount, requestErrorCount, instanceUpdateErrorCount, labelsUpdateErrorCount, instancesIDs, svcGlobalAccountMissing int, out string) {
 	logs.Info("######## STATS ########")
 	logs.Info("------------------------")
 	logs.Infof("total no. KEB instances: %d", instancesIDs)
@@ -250,6 +251,7 @@ func showReport(logs *logrus.Logger, okCount, mismatch, getInstanceErrorCounts, 
 	logs.Infof("no instances in KEB which failed to get from db: %d", getInstanceErrorCounts)
 	logs.Infof("no. instances in KEB with empty SA: %d", kebInstanceMissingSACount)
 	logs.Infof("no. instances in KEB with empty GA: %d", kebInstanceMissingGACount)
+	logs.Infof("no. GA missing in SVC: %d", svcGlobalAccountMissing)
 	logs.Infof("no. failed requests to account service : %d", requestErrorCount)
 	logs.Infof("no. instances with error while updating in : %d", instanceUpdateErrorCount)
 	logs.Infof("no. CR for which update labels failed: %d", labelsUpdateErrorCount)
