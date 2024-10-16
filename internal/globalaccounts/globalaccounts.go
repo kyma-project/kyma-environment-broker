@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/gocraft/dbr"
+	"github.com/kyma-project/kyma-environment-broker/internal"
 	"github.com/kyma-project/kyma-environment-broker/internal/broker"
 	"github.com/kyma-project/kyma-environment-broker/internal/events"
 	"github.com/kyma-project/kyma-environment-broker/internal/storage"
@@ -156,7 +157,7 @@ func logic(config Config, svc *http.Client, kcp client.Client, connection *dbr.C
 	labeler := broker.NewLabeler(kcp)
 
 	instancesIDs := make([]string, 0)
-	_ = connection.QueryRow("select instance_id from instances").Scan(&instancesIDs) // suspended ones
+	_ = connection.QueryRow("select instance_id from instances").Scan(&instancesIDs)
 	for i, instanceID := range instancesIDs {
 		instance, err := db.Instances().GetByID(instanceID)
 		logs.Infof("instance %d/%d", i+1, len(instancesIDs))
@@ -181,9 +182,13 @@ func logic(config Config, svc *http.Client, kcp client.Client, connection *dbr.C
 			requestErrorCount++
 			continue
 		}
+		svcGlobalAccountId := svcResponse.GlobalAccountGUID
 
-		if svcResponse.GlobalAccountGUID != instance.GlobalAccountID {
-			info := fmt.Sprintf("(INSTANCE MISSMATCH) for subaccount %s is %s but it should be: %s", instance.SubAccountID, instance.GlobalAccountID, svcResponse.GlobalAccountGUID)
+		if svcGlobalAccountId == "" {
+			logs.Errorf("svc response is empty for %s", instanceID)
+			continue
+		} else if svcGlobalAccountId != instance.GlobalAccountID {
+			info := fmt.Sprintf("(INSTANCE MISSMATCH) for subaccount %s is %s but it should be: %s", instance.SubAccountID, instance.GlobalAccountID, svcGlobalAccountId)
 			out.WriteString(info)
 			mismatch++
 		} else {
@@ -192,46 +197,63 @@ func logic(config Config, svc *http.Client, kcp client.Client, connection *dbr.C
 		}
 
 		if config.DryRun {
-			logs.Infof("dry run: update instance in db %s with new %s", instance.RuntimeID, svcResponse.GlobalAccountGUID)
+			logs.Infof("dry run: update instance in db %s with new %s", instance.RuntimeID, svcGlobalAccountId)
 			continue
 		}
 
-		if instance.SubscriptionGlobalAccountID != "" {
-			instance.SubscriptionGlobalAccountID = instance.GlobalAccountID
-		}
-		instance.GlobalAccountID = svcResponse.GlobalAccountGUID
-		_, err = db.Instances().Update(*instance)
-		if err != nil {
-			logs.Errorf("while updating db %s", err)
+		instanceUpdateFail, labelsUpdateFail := updateData(instance, svcGlobalAccountId, logs, *labeler, db)
+		if instanceUpdateFail {
 			instanceUpdateErrorCount++
-			continue
 		}
-
-		if instance.IsExpired() {
-			continue // expired instances have no CRs on KCP, so there is nothing to update
-		}
-
-		err = labeler.UpdateLabels(instance.RuntimeID, svcResponse.GlobalAccountGUID)
-		if err != nil {
-			logs.Errorf("while updating labels %s", err)
+		if labelsUpdateFail {
 			labelsUpdateErrorCount++
-			continue
 		}
 	}
 
+	showReport(logs, okCount, mismatch, getInstanceErrorCounts, kebInstanceMissingSACount, kebInstanceMissingGACount, requestErrorCount, instanceUpdateErrorCount, labelsUpdateErrorCount, len(instancesIDs), out.String())
+}
+
+func updateData(instance *internal.Instance, svcGlobalAccountId string, logs *logrus.Logger, labeler broker.Labeler, db storage.BrokerStorage) (instanceUpdateFail bool, labelsUpdateFail bool) {
+	if instance.SubscriptionGlobalAccountID != "" {
+		instance.SubscriptionGlobalAccountID = instance.GlobalAccountID
+	}
+	instance.GlobalAccountID = svcGlobalAccountId
+	_, err := db.Instances().Update(*instance)
+	if err != nil {
+		logs.Errorf("while updating db %s", err)
+		instanceUpdateFail = true
+		return
+	}
+
+	// isExpired checks if field expireAt is not empty, if yes, then it means it is suspended
+	if instance.IsExpired() {
+		return
+	}
+
+	err = labeler.UpdateLabels(instance.RuntimeID, svcGlobalAccountId)
+	if err != nil {
+		logs.Errorf("while updating labels %s", err)
+		labelsUpdateFail = true
+		return
+	}
+
+	return
+}
+
+func showReport(logs *logrus.Logger, okCount, mismatch, getInstanceErrorCounts, kebInstanceMissingSACount, kebInstanceMissingGACount, requestErrorCount, instanceUpdateErrorCount, labelsUpdateErrorCount, instancesIDs int, out string) {
 	logs.Info("######## STATS ########")
 	logs.Info("------------------------")
-	logs.Infof("total no. KEB instances: %d", len(instancesIDs))
+	logs.Infof("total no. KEB instances: %d", instancesIDs)
 	logs.Infof("=> OK: %d", okCount)
 	logs.Infof("=> GA from KEB and GA from SVC are different: %d", mismatch)
 	logs.Info("------------------------")
-	logs.Info("no instances in KEB which failed to get from db: %d", getInstanceErrorCounts)
+	logs.Infof("no instances in KEB which failed to get from db: %d", getInstanceErrorCounts)
 	logs.Infof("no. instances in KEB with empty SA: %d", kebInstanceMissingSACount)
 	logs.Infof("no. instances in KEB with empty GA: %d", kebInstanceMissingGACount)
 	logs.Infof("no. failed requests to account service : %d", requestErrorCount)
 	logs.Infof("no. instances with error while updating in : %d", instanceUpdateErrorCount)
 	logs.Infof("no. CR for which update labels failed: %d", labelsUpdateErrorCount)
 	logs.Info("######## MISMATCHES ########")
-	logs.Info(out.String())
+	logs.Info(out)
 	logs.Info("############################")
 }
