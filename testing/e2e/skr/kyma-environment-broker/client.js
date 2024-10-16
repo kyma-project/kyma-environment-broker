@@ -292,8 +292,7 @@ class KEBClient {
   }
 
   async deleteBinding(instanceID, bindingID) {
-    const endpoint = `service_instances/${instanceID}/service_bindings/${bindingID}
-    ?accepts_incomplete=false&service_id=${KYMA_SERVICE_ID}&plan_id=${this.planID}`;
+    const endpoint = `service_instances/${instanceID}/service_bindings/${bindingID}?accepts_incomplete=false&service_id=${KYMA_SERVICE_ID}&plan_id=${this.planID}`;
     const config = await this.buildRequest({}, endpoint, 'delete');
 
     try {
