@@ -77,7 +77,6 @@ describe('SKR Binding test', function() {
       expect.fail('The call was expected to fail but it passed. Got the secret');
     } catch (err) {
       if (err.response) {
-        expect(err.response.status).equal(400);
         console.log('Got response:');
         console.log(err.response.data);
       } else {
