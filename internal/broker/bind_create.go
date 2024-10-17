@@ -120,18 +120,23 @@ func (b *BindEndpoint) Bind(ctx context.Context, instanceID, bindingID string, d
 
 	bindingFromDB, err := b.bindingsStorage.Get(instanceID, bindingID)
 	if bindingFromDB != nil {
+		// TODO scenario when binding is expired but still in the DB
 		if bindingFromDB.ExpirationSeconds != int64(parameters.ExpirationSeconds) {
 			message := fmt.Sprintf("binding already exists but with other parameters")
 			return domain.Binding{}, apiresponses.NewFailureResponse(fmt.Errorf(message), http.StatusConflict, message)
 		}
-		return domain.Binding{
-			IsAsync:       false,
-			AlreadyExists: true,
-			Credentials: Credentials{
-				Kubeconfig: bindingFromDB.Kubeconfig,
-			},
-		}, nil
-
+		if bindingFromDB.ExpiresAt.After(time.Now()) {
+			return domain.Binding{
+				IsAsync:       false,
+				AlreadyExists: true,
+				Credentials: Credentials{
+					Kubeconfig: bindingFromDB.Kubeconfig,
+				},
+				Metadata: domain.BindingMetadata{
+					ExpiresAt: bindingFromDB.ExpiresAt.Format(expiresAtLayout),
+				},
+			}, nil
+		}
 	}
 
 	bindingList, err := b.bindingsStorage.ListByInstanceID(instanceID)
@@ -166,7 +171,7 @@ func (b *BindEndpoint) Bind(ctx context.Context, instanceID, bindingID string, d
 		}
 		expirationSeconds = parameters.ExpirationSeconds
 	}
-
+	//jak jest do delete to 400 i nie patrzyszc na input parameters
 	var kubeconfig string
 	var expiresAt time.Time
 	binding := &internal.Binding{
