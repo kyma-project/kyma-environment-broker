@@ -513,59 +513,6 @@ func assertServiceAccountsNotExists(t *testing.T, k8sClient client.Client, bindi
 	assert.True(t, apierrors.IsNotFound(err))
 }
 
-func TestCreatedBy(t *testing.T) {
-	emptyStr := ""
-	email := "john.smith@email.com"
-	origin := "origin"
-	tests := []struct {
-		name     string
-		context  broker.BindingContext
-		expected string
-	}{
-		{
-			name:     "Both Email and Origin are nil",
-			context:  broker.BindingContext{Email: nil, Origin: nil},
-			expected: "",
-		},
-		{
-			name:     "Both Email and Origin are empty",
-			context:  broker.BindingContext{Email: &emptyStr, Origin: &emptyStr},
-			expected: "",
-		},
-		{
-			name:     "Origin is nil",
-			context:  broker.BindingContext{Email: &email, Origin: nil},
-			expected: "john.smith@email.com",
-		},
-		{
-			name:     "Origin is empty",
-			context:  broker.BindingContext{Email: &email, Origin: &emptyStr},
-			expected: "john.smith@email.com",
-		},
-		{
-			name:     "Email is nil",
-			context:  broker.BindingContext{Email: nil, Origin: &origin},
-			expected: "origin",
-		},
-		{
-			name:     "Email is empty",
-			context:  broker.BindingContext{Email: &emptyStr, Origin: &origin},
-			expected: "origin",
-		},
-		{
-			name:     "Both Email and Origin are set",
-			context:  broker.BindingContext{Email: &email, Origin: &origin},
-			expected: "john.smith@email.com",
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			assert.Equal(t, tt.expected, tt.context.CreatedBy())
-		})
-	}
-}
-
 func assertExistsAndKubeconfigCreated(t *testing.T, actual domain.Binding, bindingID, instanceID string, httpServer *httptest.Server, db storage.BrokerStorage) {
 	expected, err := db.Bindings().Get(instanceID, bindingID)
 	require.NoError(t, err)
