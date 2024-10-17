@@ -47,6 +47,15 @@ type BindingContext struct {
 	Origin *string `json:"origin,omitempty"`
 }
 
+func (b *BindingContext) CreatedBy() string {
+	if b.Email != nil && *b.Email != "" {
+		return *b.Email
+	} else if b.Origin != nil && *b.Origin != "" {
+		return *b.Origin
+	}
+	return ""
+}
+
 type BindingParams struct {
 	ExpirationSeconds int `json:"expiration_seconds,omit"`
 }
