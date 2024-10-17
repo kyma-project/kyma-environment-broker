@@ -30,8 +30,8 @@ spec:
           image: "{{ .Values.global.images.container_registry.path }}/{{ .Values.global.images.kyma_environment_broker.dir }}{{ .Values.globalaccounts.name -}}:{{ .Values.global.images.kyma_environment_globalaccounts.version }}"
           imagePullPolicy: Always
           env:
-            - name: GLOBALACCOUNTS_PROBE
-              value: {{ .Values.globalaccounts.probe | quote }}
+            - name: GLOBALACCOUNTS_DRY_RUN
+              value: {{ .Values.globalaccounts.dryRun | quote }}
             - name: GLOBALACCOUNTS_DATABASE_SECRET_KEY
               valueFrom:
                 secretKeyRef:

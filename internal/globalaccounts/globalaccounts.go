@@ -239,12 +239,12 @@ func updateData(instance *internal.Instance, svcGlobalAccountId string, logs *lo
 
 func showReport(logs *logrus.Logger, okCount, mismatch, getInstanceErrorCounts, kebInstanceMissingSACount, kebInstanceMissingGACount, requestErrorCount, instanceUpdateErrorCount, labelsUpdateErrorCount, instancesIDs, svcGlobalAccountMissing int, mismatches []string) {
 	logs.Info("######## STATS ########")
-	logs.Info("------------------------")
+	logs.Info("-----------------------")
 	logs.Infof("total no. KEB instances: %d", instancesIDs)
 	logs.Infof("=> OK: %d", okCount)
 	logs.Infof("=> GA from KEB and GA from SVC are different: %d", mismatch)
-	logs.Info("------------------------")
-	logs.Infof("no instances in KEB which failed to get from db: %d", getInstanceErrorCounts)
+	logs.Info("-----------------------")
+	logs.Infof("no. instances in KEB which failed to get from db: %d", getInstanceErrorCounts)
 	logs.Infof("no. instances in KEB with empty SA: %d", kebInstanceMissingSACount)
 	logs.Infof("no. instances in KEB with empty GA: %d", kebInstanceMissingGACount)
 	logs.Infof("no. GA missing in SVC: %d", svcGlobalAccountMissing)
