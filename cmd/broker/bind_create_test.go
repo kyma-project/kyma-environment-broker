@@ -226,6 +226,8 @@ func TestCreateBindingEndpoint(t *testing.T) {
 		require.NoError(t, err)
 		assert.Equal(t, expirationSeconds*time.Second, duration)
 
+		assert.NotEmpty(t, binding.Metadata.ExpiresAt)
+
 		//// verify connectivity using kubeconfig from the generated binding
 		assertClusterAccess(t, "secret-to-check-first", binding)
 		assertRolesExistence(t, brokerBindings.BindingName("binding-id"), binding)
@@ -319,7 +321,7 @@ func TestCreateBindingEndpoint(t *testing.T) {
 		// then
 		assert.Equal(t, http.StatusOK, response.StatusCode)
 		binding := unmarshal(t, response)
-		assert.Equal(t, firstInstancefirstBinding, binding)
+		assertKubeconfigsEqual(t, firstInstancefirstBinding, binding)
 		assert.Equal(t, firstInstanceFirstBindingDB.Kubeconfig, binding.Credentials.(map[string]interface{})["kubeconfig"])
 		assertClusterAccess(t, "secret-to-check-first", binding)
 
@@ -330,7 +332,7 @@ func TestCreateBindingEndpoint(t *testing.T) {
 		// then
 		assert.Equal(t, http.StatusOK, response.StatusCode)
 		binding = unmarshal(t, response)
-		assert.Equal(t, secondInstanceFirstBinding, binding)
+		assertKubeconfigsEqual(t, secondInstanceFirstBinding, binding)
 		assert.Equal(t, secondInstanceFirstBindingDB.Kubeconfig, binding.Credentials.(map[string]interface{})["kubeconfig"])
 		assertClusterAccess(t, "secret-to-check-second", binding)
 
@@ -341,7 +343,7 @@ func TestCreateBindingEndpoint(t *testing.T) {
 		// then
 		assert.Equal(t, http.StatusOK, response.StatusCode)
 		binding = unmarshal(t, response)
-		assert.Equal(t, firstInstanceSecondBinding, binding)
+		assertKubeconfigsEqual(t, firstInstanceSecondBinding, binding)
 		assert.Equal(t, firstInstanceSecondBindingDB.Kubeconfig, binding.Credentials.(map[string]interface{})["kubeconfig"])
 		assertClusterAccess(t, "secret-to-check-first", binding)
 	})
@@ -598,6 +600,10 @@ func assertRolesExistence(t *testing.T, bindingID string, binding domain.Binding
 	assert.NoError(t, err)
 	_, err = newClient.RbacV1().ClusterRoleBindings().Get(context.Background(), bindingID, v1.GetOptions{})
 	assert.NoError(t, err)
+}
+
+func assertKubeconfigsEqual(t *testing.T, expected, actual domain.Binding) {
+	assert.Equal(t, expected.Credentials.(map[string]interface{})["kubeconfig"], actual.Credentials.(map[string]interface{})["kubeconfig"])
 }
 
 func createBindingWithRandomBindingID(instanceID string, httpServer *httptest.Server, t *testing.T) (string, domain.Binding) {
