@@ -555,7 +555,7 @@ func TestCreatedBy(t *testing.T) {
 		{
 			name:     "Both Email and Origin are set",
 			context:  broker.BindingContext{Email: &email, Origin: &origin},
-			expected: "john.smith@email.com origin",
+			expected: "john.smith@email.com",
 		},
 	}
 

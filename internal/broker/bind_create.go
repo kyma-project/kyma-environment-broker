@@ -48,25 +48,12 @@ type BindingContext struct {
 }
 
 func (b *BindingContext) CreatedBy() string {
-	if b.Email == nil && b.Origin == nil {
-		return ""
+	if b.Email != nil && *b.Email != "" {
+		return *b.Email
+	} else if b.Origin != nil && *b.Origin != "" {
+		return *b.Origin
 	}
-
-	email := ""
-	if b.Email != nil {
-		email = *b.Email
-	}
-
-	origin := ""
-	if b.Origin != nil {
-		origin = *b.Origin
-	}
-
-	if email != "" && origin != "" {
-		return email + " " + origin
-	}
-
-	return email + origin
+	return ""
 }
 
 type BindingParams struct {
