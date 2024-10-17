@@ -118,6 +118,22 @@ func (b *BindEndpoint) Bind(ctx context.Context, instanceID, bindingID string, d
 		}
 	}
 
+	bindingFromDB, err := b.bindingsStorage.Get(instanceID, bindingID)
+	if bindingFromDB != nil {
+		if bindingFromDB.ExpirationSeconds != int64(parameters.ExpirationSeconds) {
+			message := fmt.Sprintf("binding already exists but with other parameters")
+			return domain.Binding{}, apiresponses.NewFailureResponse(fmt.Errorf(message), http.StatusConflict, message)
+		}
+		return domain.Binding{
+			IsAsync:       false,
+			AlreadyExists: true,
+			Credentials: Credentials{
+				Kubeconfig: bindingFromDB.Kubeconfig,
+			},
+		}, nil
+
+	}
+
 	bindingList, err := b.bindingsStorage.ListByInstanceID(instanceID)
 	if err != nil {
 		message := fmt.Sprintf("failed to list Kyma bindings: %s", err)
