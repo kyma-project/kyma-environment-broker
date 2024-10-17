@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
-	"strings"
 	"time"
 
 	"github.com/gocraft/dbr"
@@ -153,7 +152,7 @@ func svcRequest(config Config, svc *http.Client, subaccountId string, logs *logr
 func logic(config Config, svc *http.Client, kcp client.Client, db storage.BrokerStorage, logs *logrus.Logger) {
 	var okCount, getInstanceErrorCounts, requestErrorCount, mismatch, kebInstanceMissingSACount, kebInstanceMissingGACount, svcGlobalAccountMissing int
 	var instanceUpdateErrorCount, labelsUpdateErrorCount int
-	var out strings.Builder
+	var mismatches []string
 	labeler := broker.NewLabeler(kcp)
 
 	instances, instancesCount, _, err := db.Instances().List(dbmodel.InstanceFilter{})
@@ -187,8 +186,7 @@ func logic(config Config, svc *http.Client, kcp client.Client, db storage.Broker
 			continue
 		} else if svcGlobalAccountId != instance.GlobalAccountID {
 			info := fmt.Sprintf("(INSTANCE %s MISMATCH) for subaccount %s is %s but it should be: %s", instance.InstanceID, instance.SubAccountID, instance.GlobalAccountID, svcGlobalAccountId)
-			out.WriteString(info)
-			out.WriteString("\n")
+			mismatches = append(mismatches, info)
 			mismatch++
 		} else {
 			okCount++
@@ -239,7 +237,7 @@ func updateData(instance *internal.Instance, svcGlobalAccountId string, logs *lo
 	return
 }
 
-func showReport(logs *logrus.Logger, okCount, mismatch, getInstanceErrorCounts, kebInstanceMissingSACount, kebInstanceMissingGACount, requestErrorCount, instanceUpdateErrorCount, labelsUpdateErrorCount, instancesIDs, svcGlobalAccountMissing int, out string) {
+func showReport(logs *logrus.Logger, okCount, mismatch, getInstanceErrorCounts, kebInstanceMissingSACount, kebInstanceMissingGACount, requestErrorCount, instanceUpdateErrorCount, labelsUpdateErrorCount, instancesIDs, svcGlobalAccountMissing int, mismatches []string) {
 	logs.Info("######## STATS ########")
 	logs.Info("------------------------")
 	logs.Infof("total no. KEB instances: %d", instancesIDs)
@@ -254,6 +252,8 @@ func showReport(logs *logrus.Logger, okCount, mismatch, getInstanceErrorCounts, 
 	logs.Infof("no. instances with error while updating in : %d", instanceUpdateErrorCount)
 	logs.Infof("no. CR for which update labels failed: %d", labelsUpdateErrorCount)
 	logs.Info("######## MISMATCHES ########")
-	logs.Info(out)
+	for _, mismatch := range mismatches {
+		logs.Info(mismatch)
+	}
 	logs.Info("############################")
 }
