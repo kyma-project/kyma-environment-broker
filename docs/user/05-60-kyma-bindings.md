@@ -16,7 +16,7 @@ X-Broker-API-Version: 2.14
 ```
 
 The Broker returns a kubeconfig with a JWT token used as a user authentication mechanism. The token is generated using Kubernetes TokenRequest attached to a ServiceAccount, ClusterRole, and ClusterRoleBinding, all named `kyma-binding-{{binding_id}}`. Such an approach allows for modifying the permissions granted to the kubeconfig.
-To specify the duration for which the generated kubeconfig is valid, provide the **expiration_seconds** in the `parameter` object of the request body. 
+To specify the duration for which the generated kubeconfig is valid, provide the **expiration_seconds** in the `parameter` object of the request body.
 
 | Name                   | Default | Description                                                                                                                                                                                                                                                                                                                                                          |
 |------------------------|---------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|

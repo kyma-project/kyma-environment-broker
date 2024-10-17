@@ -5,8 +5,8 @@ Expiration means that the Kyma runtime instance is suspended and the `expired` f
 
 ## Details
 
-For each instance meeting the criteria, a PATCH request is sent to Kyma Environment Broker (KEB). This instance is marked as `expired`, and if it is in the `succeeded` state, the suspension process is started. 
-If the instance is already in the `suspended` state, this instance is just marked as `expired`. 
+For each instance meeting the criteria, a PATCH request is sent to Kyma Environment Broker (KEB). This instance is marked as `expired`, and if it is in the `succeeded` state, the suspension process is started.
+If the instance is already in the `suspended` state, this instance is just marked as `expired`.
 
 ### Dry-Run Mode
 
@@ -16,23 +16,28 @@ In that mode, the Job only logs the information about the candidate instances, t
 ## Prerequisites
 
 Both Jobs require access to:
-- the KEB database to get the IDs of the instances with the `trial` or `free` plan which are not expired yet
-- KEB to initiate the Kyma runtime instance suspension
+
+* the KEB database to get the IDs of the instances with the `trial` or `free` plan which are not expired yet
+* KEB to initiate the Kyma runtime instance suspension
 
 ## Configuration
 
 Jobs are CronJobs with a schedule that can be [configured](https://kubernetes.io/docs/concepts/workloads/controllers/cron-jobs/#cron-schedule-syntax) as a parameter in the `management-plane-config` repository.
 By default, CronJobs are set according to the following schedules:
-- Trial Cleanup CronJob runs every day at 1:15 AM:
+
+* Trial Cleanup CronJob runs every day at 1:15 AM:
+
 ```yaml  
 kyma-environment-broker.trialCleanup.schedule: "15 1 * * *"
 ```
-- Free Cleanup CronJob runs every hour at 40 minutes past the hour:
-```yaml  
+
+* Free Cleanup CronJob runs every hour at 40 minutes past the hour:
+
+```yaml
 kyma-environment-broker.freeCleanup.schedule: "40 * * * *"
 ```
 
-Use the following environment variables to configure Jobs:
+Use the following environment variables to configure the Jobs:
 
 | Environment variable         | Description                                                                                                                           | Default value                            |
 |------------------------------|---------------------------------------------------------------------------------------------------------------------------------------|------------------------------------------|

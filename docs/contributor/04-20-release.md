@@ -3,14 +3,15 @@
 ## Overview
 
 The Kyma Environment Broker release pipeline creates proper artifacts:
- - `kyma-environment-broker` Docker image in the [registry](https://console.cloud.google.com/artifacts/docker/kyma-project/europe/prod/kyma-environment-broker)
- - `kyma-environment-deprovision-retrigger` Docker image in the [registry](https://console.cloud.google.com/artifacts/docker/kyma-project/europe/prod/kyma-environment-deprovision-retrigger)
- - `kyma-environments-cleanup-job` Docker image in the [registry](https://console.cloud.google.com/artifacts/docker/kyma-project/europe/prod/kyma-environments-cleanup-job )
- - `kyma-environment-runtime-reconciler` Docker image in the [registry](https://console.cloud.google.com/artifacts/docker/kyma-project/europe/prod/kyma-environment-runtime-reconciler)
- - `kyma-environment-subaccount-cleanup-job` Docker image in the [registry](https://console.cloud.google.com/artifacts/docker/kyma-project/europe/prod/kyma-environment-subaccount-cleanup-job)
- - `kyma-environment-archiver-job` Docker image in the [registry](https://console.cloud.google.com/artifacts/docker/kyma-project/europe/prod/kyma-environment-archiver-job)
- - `kyma-environment-expirator-job` Docker image in the [registry](https://console.cloud.google.com/artifacts/docker/kyma-project/europe/prod/kyma-environment-expirator-job)
- - `kyma-environment-subaccount-sync` Docker image in the [registry](https://console.cloud.google.com/artifacts/docker/kyma-project/europe/prod/kyma-environment-subaccount-sync)
+
+* `kyma-environment-broker` Docker image in the [registry](https://console.cloud.google.com/artifacts/docker/kyma-project/europe/prod/kyma-environment-broker)
+* `kyma-environment-deprovision-retrigger` Docker image in the [registry](https://console.cloud.google.com/artifacts/docker/kyma-project/europe/prod/kyma-environment-deprovision-retrigger)
+* `kyma-environments-cleanup-job` Docker image in the [registry](https://console.cloud.google.com/artifacts/docker/kyma-project/europe/prod/kyma-environments-cleanup-job)
+* `kyma-environment-runtime-reconciler` Docker image in the [registry](https://console.cloud.google.com/artifacts/docker/kyma-project/europe/prod/kyma-environment-runtime-reconciler)
+* `kyma-environment-subaccount-cleanup-job` Docker image in the [registry](https://console.cloud.google.com/artifacts/docker/kyma-project/europe/prod/kyma-environment-subaccount-cleanup-job)
+* `kyma-environment-archiver-job` Docker image in the [registry](https://console.cloud.google.com/artifacts/docker/kyma-project/europe/prod/kyma-environment-archiver-job)
+* `kyma-environment-expirator-job` Docker image in the [registry](https://console.cloud.google.com/artifacts/docker/kyma-project/europe/prod/kyma-environment-expirator-job)
+* `kyma-environment-subaccount-sync` Docker image in the [registry](https://console.cloud.google.com/artifacts/docker/kyma-project/europe/prod/kyma-environment-subaccount-sync)
 
 ## Run the Pipeline
 
@@ -20,9 +21,10 @@ The Kyma Environment Broker release pipeline creates proper artifacts:
 
 To create a release, follow these steps:
 
-1. Run GitHub action **Create release**:  
+1. Run GitHub action **Create release**:
+   
    i.  Go to the **Actions** tab  
-   ii. Click on **Create release** workflow   
+   ii. Click on **Create release** workflow  
    iii. Click  **Run workflow** on the right  
    iv. Provide a version, for example, 1.2.0  
    
@@ -33,9 +35,8 @@ To create a release, follow these steps:
 6. The GitHub action initiates the bump of the security scanner config, KEB images and KEB chart version.
 7. A code owner approves the PR.
 8. The GitHub action creates a GitHub tag and draft release with the provided name.
-9. The GitHub action commits the new KEB chart metadata to the `gh-pages` branch.
+9.  The GitHub action commits the new KEB chart metadata to the `gh-pages` branch.
 10. The GitHub action publishes the release.
-
 
 ### Replace an Existing Release
 

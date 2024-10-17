@@ -24,7 +24,8 @@ To create a Kyma runtime with a custom IP range for worker Nodes, specify the ad
        }
    }"
 ```
-> [!NOTE] 
+
+> [!NOTE]
 > The **nodes** value is a mandatory field, but the **networking** section is optional.
 
 If you do not provide the **networking** object in the provisioning request, the default configuration is used.

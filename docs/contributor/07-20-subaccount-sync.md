@@ -20,19 +20,18 @@ The table structure:
 | **used_for_production** | VARCHAR(255) | Used for production                                       |
 | **modified_at**         | BIGINT       | Last modification timestamp as Unix epoch in milliseconds |
 
-
 The application periodically:
 
-- Fetches data for selected subaccounts from CIS Account service
-- Fetches events from CIS Event service for configurable time window
-- Monitors Kyma CRs using informer and detects changes in the labels
-- Persists the desired (set in CIS) state of the attributes in the database
-- Updates the labels of the Kyma CRs if the state of the attributes has changed
+* Fetches data for selected subaccounts from CIS Account service
+* Fetches events from CIS Event service for configurable time window
+* Monitors Kyma CRs using informer and detects changes in the labels
+* Persists the desired (set in CIS) state of the attributes in the database
+* Updates the labels of the Kyma CRs if the state of the attributes has changed
 
 ## Prerequisites
 
-- The KEB Go packages so that Subaccount Sync can reuse them
-- The KEB database for storing current state of selected attributes
+* The KEB Go packages so that Subaccount Sync can reuse them
+* The KEB database for storing current state of selected attributes
 
 ## Configuration
 
@@ -62,7 +61,7 @@ Use the following environment variables to configure the application:
 | **SUBACCOUNT_SYNC_CIS_ACCOUNTS_SERVICE_URL**               | Specifies the URL for accounts endpoint.                                                                                  |               |
 | **SUBACCOUNT_SYNC_CIS_ACCOUNTS_RATE_LIMITING_INTERVAL**    | Specifies the rate limiting interval for accounts endpoint.                                                               | `2s`          |
 | **SUBACCOUNT_SYNC_CIS_ACCOUNTS_MAX_REQUESTS_PER_INTERVAL** | Specifies the number of allowed requests per interval for accounts endpoint.                                              | 5             |
-| **SUBACCOUNT_SYNC_DATABASE_SECRET_KEY**                    | Specifies the secret key for the database.                                                                                | optional      |
+| **SUBACCOUNT_SYNC_DATABASE_SECRET_KEY**                    | Specifies the Secret key for the database.                                                                                | optional      |
 | **SUBACCOUNT_SYNC_DATABASE_USER**                          | Specifies the username for the database.                                                                                  | `postgres`    |
 | **SUBACCOUNT_SYNC_DATABASE_PASSWORD**                      | Specifies the user password for the database.                                                                             | `password`    |
 | **SUBACCOUNT_SYNC_DATABASE_HOST**                          | Specifies the host of the database.                                                                                       | `localhost`   |
@@ -81,7 +80,7 @@ Since this is an augmented queue with one entry for each subaccount, the length 
 
 ### Resources
 
-- subaccount-sync deployment defined in [subaccount-sync-deployment.yaml](../../resources/keb/templates/subaccount-sync-deployment.yaml) - deployment configuration
-- subaccount-sync service defined in [service.yaml](../../resources/keb/templates/service.yaml) - service configuration, required for metrics scraping
-- subaccount-sync VMServiceScrape defined in [service-monitor.yaml](../../resources/keb/templates/service-monitor.yaml) - Prometheus scrape configuration referring to the service required for metrics scraping
-- subaccount-sync PeerAuthentication defined in [policy.yaml](../../resources/keb/templates/policy.yaml) - PeerAuthentication configuration required for metrics scraping
+* Subaccount-sync deployment defined in [subaccount-sync-deployment.yaml](../../resources/keb/templates/subaccount-sync-deployment.yaml) - deployment configuration
+* Subaccount-sync service defined in [service.yaml](../../resources/keb/templates/service.yaml) - service configuration, required for metrics scraping
+* Subaccount-sync VMServiceScrape defined in [service-monitor.yaml](../../resources/keb/templates/service-monitor.yaml) - Prometheus scrape configuration referring to the service required for metrics scraping
+* Subaccount-sync PeerAuthentication defined in [policy.yaml](../../resources/keb/templates/policy.yaml) - PeerAuthentication configuration required for metrics scraping

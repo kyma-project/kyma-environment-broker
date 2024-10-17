@@ -2,10 +2,10 @@
 
 Kyma Environment Broker (KEB) allows you to configure operations you can run on SAP BTP, Kyma runtime. Each operation is processed by several steps arranged in stages and ordered in a queue. As every step can be re-launched multiple times, you should determine a behavior for each step in case of a processing failure. It can:
 
-- Return an error, which interrupts the entire process, or skip step execution.
-- Repeat the entire operation after a specified period.
+* Return an error, which interrupts the entire process, or skip step execution.
+* Repeat the entire operation after a specified period.
 
-> [!NOTE] 
+> [!NOTE]
 > It's important to set lower timeouts for the Kyma installation in Runtime Provisioner.
 
 ## Stages
@@ -18,7 +18,7 @@ The provisioning process is executed when the instance is created, or an unsuspe
 Each provisioning step is responsible for a separate part of preparing Kyma runtime. For example, in a step you can provide tokens, credentials, or URLs to integrate SAP BTP, Kyma runtime with external systems.
 You can find all the provisioning steps in the [provisioning](../../cmd/broker/provisioning.go) file.
 
-> [!NOTE] 
+> [!NOTE]
 > The timeout for processing this operation is set to `24h`.
 
 ## Deprovision
@@ -26,11 +26,11 @@ You can find all the provisioning steps in the [provisioning](../../cmd/broker/p
 Each deprovisioning step is responsible for a separate part of cleaning Kyma runtime dependencies. To properly deprovision all the dependencies, you need the data used during the Kyma runtime provisioning. The first step finds the previous operation and copies the data.
 
 None of the deprovisioning steps should block the entire deprovisioning operation. Use the `RetryOperationWithoutFail` function from the `DeprovisionOperationManager` struct to skip a step in case of a retry timeout. Set a 5-minute, at the most, timeout for retries in a step.
-Only one step may fail the operation, namely `Check_Runtime_Removal`. It fails the operation in case of a timeout while checking for the Provisioner to remove the shoot. 
+Only one step may fail the operation, namely `Check_Runtime_Removal`. It fails the operation in case of a timeout while checking for the Provisioner to remove the shoot.
 Once the step is successfully executed, it isn't retried (every deprovisioning step is defined in a separate stage). If a step has been skipped due to a retry timeout or error, the [Cron Job](../contributor/06-50-deprovision-retrigger-cronjob.md) tries to deprovision all remaining Kyma runtime dependencies again at a scheduled time.
 You can find all the deprovisioning steps in the [deprovisioning](../../cmd/broker/deprovisioning.go) file.
 
-> [!NOTE] 
+> [!NOTE]
 > The timeout for processing this operation is set to `24h`.
 
 ## Update
@@ -64,8 +64,8 @@ You can configure SAP BTP, Kyma runtime operations by providing additional steps
     }
     ```
 
-   - `Name()` method returns the name of the step that is used in logs.
-   - `Run()` method implements the functionality of the step. The method receives operations as an argument to which it can add appropriate overrides or save other used variables. You must always return the modified operation from the method.
+   * `Name()` method returns the name of the step that is used in logs.
+   * `Run()` method implements the functionality of the step. The method receives operations as an argument to which it can add appropriate overrides or save other used variables. You must always return the modified operation from the method.
 
     ```go
     operation.InputCreator.AppendOverrides(COMPONENT_NAME, []*gqlschema.ConfigEntryInput{
@@ -82,6 +82,7 @@ You can configure SAP BTP, Kyma runtime operations by providing additional steps
     ```
 
     If your functionality requires saving data in the storage, you can do it by adding fields to the generic `internal.Operation`, a specific implementation of that structure, or the InstanceDetails, all of which are defined in [model.go](../../internal/model.go). The difference is that for a specific operation implementation, new fields are only visible for that specific type and InstanceDetails is copied during operation initialization across all operations that concert a given runtime. The example below shows how to extend operation with additional fields:
+    
     ```go
     type Operation struct {
 

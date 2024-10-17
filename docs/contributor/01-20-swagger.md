@@ -14,8 +14,5 @@ You can port-forward the Pod to expose and use the Swagger UI. To do it, use the
    kubectl port-forward -n kcp-system svc/kcp-kyma-environment-broker 8888:80
    ```
 
-Open the following website:
-
-   ```
-   http://localhost:8888/
-   ```
+<!-- markdown-link-check-disable-next-line -->
+Open the following website `http://localhost:8888/`.

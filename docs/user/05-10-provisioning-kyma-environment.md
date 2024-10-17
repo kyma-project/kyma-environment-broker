@@ -15,7 +15,7 @@ This tutorial shows how to provision SAP BTP, Kyma runtime on Azure using Kyma E
    export REGION={CLUSTER_REGION}
    ```
 
-   > [!NOTE] 
+   > [!NOTE]
    > **INSTANCE_ID** and **NAME** must be unique. It is recommended to use UUID as an **INSTANCE_ID**.
 
 2. Get the [access token](../contributor/01-10-authorization.md#get-the-access-token). Export this variable based on the token you got from the OAuth client:
@@ -64,6 +64,7 @@ This tutorial shows how to provision SAP BTP, Kyma runtime on Azure using Kyma E
 ## SAP BTP Service Operator
 
 If you need the SAP BTP service operator component installed, obtain the [SAP BTP service operator access credentials](https://github.com/SAP/sap-btp-service-operator/blob/v0.2.5/README.md#setup) and provide them in the provisioning request. See the following example:
+
  ```bash
    curl --request PUT "https://$BROKER_URL/oauth/v2/service_instances/$INSTANCE_ID?accepts_incomplete=true" \
    --header 'X-Broker-API-Version: 2.14' \
@@ -98,4 +99,4 @@ If you need the SAP BTP service operator component installed, obtain the [SAP BT
   "url": "https://test.auth.com",
   "xsappname": "testXsappname"
 }
-``` 
+```

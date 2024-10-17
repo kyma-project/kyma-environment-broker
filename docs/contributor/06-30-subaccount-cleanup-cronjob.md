@@ -24,17 +24,20 @@ The Subaccount Cleanup workflow is divided into several steps:
 3. Trigger the deprovisioning operation for each instance found in step 2.
 
    Logs inform about the status of each triggered action:
+
     ```
     deprovisioning for instance <InstanceID> (SubAccountID: <SubAccountID>) was triggered, operation: <OperationID>
     ```
+
    Subaccount Cleanup also uses logs to inform about the end of the deprovisioning operation.
 
 ## Prerequisites
 
 Subaccount Cleanup requires access to:
-- CIS service to receive all `SUBACCOUNT_DELETE` events
-- the KEB database to get the instance ID for each subaccount ID from the `SUBACCOUNT_DELETE` event
-- KEB to trigger Kyma runtime instance deprovisioning
+
+* CIS service to receive all **SUBACCOUNT_DELETE** events
+* the KEB database to get the instance ID for each subaccount ID from the **SUBACCOUNT_DELETE** event
+* KEB to trigger Kyma runtime instance deprovisioning
 
 ## Configuration
 
@@ -42,22 +45,22 @@ Use the following environment variables to configure the application:
 
 | Environment variable | Description |
 |---|---|
-| **APP_CLIENT_VERSION** | Specifies the service version from which events are fetched. The possible values are  `v1.0` or `v2.0`.
-| **APP_CIS_CLIENT_ID** | Specifies the client ID for the OAuth2 authentication in CIS.
-| **APP_CIS_CLIENT_SECRET** | Specifies the client secret for the OAuth2 authentication in CIS.
-| **APP_CIS_AUTH_URL** | Specifies the endpoint for the CIS OAuth token.
-| **APP_CIS_EVENT_SERVICE_URL** | Specifies the endpoint for CIS events.
-| **APP_DATABASE_USER** | Specifies the username for the database.
-| **APP_DATABASE_PASSWORD** | Specifies the user password for the database.
-| **APP_DATABASE_HOST** | Specifies the host of the database.
-| **APP_DATABASE_PORT** | Specifies the port for the database.
-| **APP_DATABASE_NAME** | Specifies the name of the database.
-| **APP_DATABASE_SSLMODE** | Activates the SSL mode for PostgrSQL. See [all the possible values](https://www.postgresql.org/docs/9.1/libpq-ssl.html).  
-| **APP_DATABASE_SSLROOTCERT** | Specifies the location of CA cert of PostgreSQL. (Optional)
-| **APP_BROKER_URL**  | Specifies the Kyma Environment Broker URL. |
-| **APP_BROKER_TOKEN_URL** | Specifies the endpoint for the Kyma Environment Broker OAuth token. |
-| **APP_BROKER_CLIENT_ID** | Specifies the username for the OAuth2 authentication in KEB. |
-| **APP_BROKER_CLIENT_SECRET** | Specifies the password for the OAuth2 authentication in KEB. |
-| **APP_BROKER_SCOPE** | Specifies the scope of the OAuth2 authentication in KEB. |
+| **APP_CLIENT_VERSION** | Specifies the service version from which events are fetched. The possible values are  `v1.0` or `v2.0`.|
+| **APP_CIS_CLIENT_ID** | Specifies the client ID for the OAuth2 authentication in CIS.|
+| **APP_CIS_CLIENT_SECRET** | Specifies the client secret for the OAuth2 authentication in CIS.|
+| **APP_CIS_AUTH_URL** | Specifies the endpoint for the CIS OAuth token.|
+| **APP_CIS_EVENT_SERVICE_URL** | Specifies the endpoint for CIS events.|
+| **APP_DATABASE_USER** | Specifies the username for the database.|
+| **APP_DATABASE_PASSWORD** | Specifies the user password for the database.|
+| **APP_DATABASE_HOST** | Specifies the host of the database.|
+| **APP_DATABASE_PORT** | Specifies the port for the database.|
+| **APP_DATABASE_NAME** | Specifies the name of the database.|
+| **APP_DATABASE_SSLMODE** | Activates the SSL mode for PostgrSQL. See [all the possible values](https://www.postgresql.org/docs/9.1/libpq-ssl.html).|
+| **APP_DATABASE_SSLROOTCERT** | Specifies the location of CA cert of PostgreSQL. (Optional)|
+| **APP_BROKER_URL**  | Specifies the Kyma Environment Broker URL.|
+| **APP_BROKER_TOKEN_URL** | Specifies the endpoint for the Kyma Environment Broker OAuth token.|
+| **APP_BROKER_CLIENT_ID** | Specifies the username for the OAuth2 authentication in KEB.|
+| **APP_BROKER_CLIENT_SECRET** | Specifies the password for the OAuth2 authentication in KEB.|
+| **APP_BROKER_SCOPE** | Specifies the scope of the OAuth2 authentication in KEB.|
 
 For more details, see the [resource definition](../../resources/keb/templates/subaccount-cleanup-job.yaml) file.
