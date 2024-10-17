@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"net/http"
+	"time"
 
 	"github.com/kyma-project/kyma-environment-broker/internal/storage"
 	"github.com/pivotal-cf/brokerapi/v8/domain"
@@ -31,6 +32,11 @@ func (b *GetBindingEndpoint) GetBinding(_ context.Context, instanceID, bindingID
 
 	if binding == nil {
 		message := "Binding not found"
+		return domain.GetBindingSpec{}, apiresponses.NewFailureResponse(fmt.Errorf(message), http.StatusNotFound, message)
+	}
+
+	if binding.ExpiresAt.Before(time.Now()) {
+		message := "Binding expired"
 		return domain.GetBindingSpec{}, apiresponses.NewFailureResponse(fmt.Errorf(message), http.StatusNotFound, message)
 	}
 
