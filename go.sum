@@ -205,6 +205,8 @@ github.com/kylelemons/godebug v1.1.0 h1:RPNrshWIDI6G2gRW9EHilWtl7Z6Sb1BR0xunSBf0
 github.com/kylelemons/godebug v1.1.0/go.mod h1:9/0rRGxNHcop5bhtWyNeEfOS8JIWk580+fNqagV/RAw=
 github.com/kyma-incubator/compass/components/director v0.0.0-20240704074401-a423d6070404 h1:qQwa2HQy3vvddKutHN/fTvLkpyWo68lO2D0TgDmZkmU=
 github.com/kyma-incubator/compass/components/director v0.0.0-20240704074401-a423d6070404/go.mod h1:ReQk0Ajocp4iS4tby7YMFXe5khAxRYnS1SBUr8dEMkQ=
+github.com/kyma-project/brokerapi/v8 v8.2.4-0.20241017055904-60727c4de1c4 h1:vXEYaBAez686+p/mrmHvJKxMZf3oXOiGyvnBtePKmNw=
+github.com/kyma-project/brokerapi/v8 v8.2.4-0.20241017055904-60727c4de1c4/go.mod h1:MGZMnpFeMjZ/JVEYDv92uJMf8QMohfOFaSgPwzEQ5/c=
 github.com/kyma-project/control-plane/components/provisioner v0.0.0-20240925074719-868d3d02df59 h1:PAynE3RawB3Kvg9Q430hNB9FoBMViTxfy7BzC/o335U=
 github.com/kyma-project/control-plane/components/provisioner v0.0.0-20240925074719-868d3d02df59/go.mod h1:xgWRmQjXFgIBX+TAvHr8iQIpjFhamm4HOpHPfGmnz2Q=
 github.com/kyma-project/infrastructure-manager v0.0.0-20240924140719-22e21e6aa684 h1:d2IkaqzuDgE9H532UOVWlW6o3xoJsSkWBYGHudSBmv4=
@@ -262,8 +264,6 @@ github.com/opencontainers/image-spec v1.1.0 h1:8SG7/vwALn54lVB/0yZ/MMwhFrPYtpEHQ
 github.com/opencontainers/image-spec v1.1.0/go.mod h1:W4s4sFTMaBeK1BQLXbG4AdM2szdn85PY75RI83NrTrM=
 github.com/pborman/uuid v1.2.1 h1:+ZZIw58t/ozdjRaXh/3awHfmWRbzYxJoAdNJxe/3pvw=
 github.com/pborman/uuid v1.2.1/go.mod h1:X/NO0urCmaxf9VXbdlT7C2Yzkj2IKimNn4k+gtPdI/k=
-github.com/pivotal-cf/brokerapi/v8 v8.2.3 h1:hoi6SpOk5kL8eIEa6q4Q88uVNuPqI1b6zTlpWDLsEoA=
-github.com/pivotal-cf/brokerapi/v8 v8.2.3/go.mod h1:MGZMnpFeMjZ/JVEYDv92uJMf8QMohfOFaSgPwzEQ5/c=
 github.com/pkg/diff v0.0.0-20210226163009-20ebb0f2a09e/go.mod h1:pJLUxLENpZxwdsKMEsNbx1VGcRFpLqf3715MtcvvzbA=
 github.com/pkg/errors v0.8.0/go.mod h1:bwawxfHBFNV+L2hUp1rHADufV3IMtnDRdf1r5NINEl0=
 github.com/pkg/errors v0.8.1/go.mod h1:bwawxfHBFNV+L2hUp1rHADufV3IMtnDRdf1r5NINEl0=

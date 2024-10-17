@@ -19,6 +19,10 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
+const (
+	expiresAtLayout = "2006-01-02T15:04:05.0Z"
+)
+
 type BindingConfig struct {
 	Enabled              bool        `envconfig:"default=false"`
 	BindablePlans        EnablePlans `envconfig:"default=aws"`
@@ -203,6 +207,9 @@ func (b *BindEndpoint) Bind(ctx context.Context, instanceID, bindingID string, d
 		IsAsync: false,
 		Credentials: Credentials{
 			Kubeconfig: kubeconfig,
+		},
+		Metadata: domain.BindingMetadata{
+			ExpiresAt: binding.ExpiresAt.Format(expiresAtLayout),
 		},
 	}, nil
 }
