@@ -19,6 +19,10 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
+const (
+	expiresAtLayout = "2006-01-02T15:04:05.0Z"
+)
+
 type BindingConfig struct {
 	Enabled              bool        `envconfig:"default=false"`
 	BindablePlans        EnablePlans `envconfig:"default=aws"`
@@ -44,25 +48,12 @@ type BindingContext struct {
 }
 
 func (b *BindingContext) CreatedBy() string {
-	if b.Email == nil && b.Origin == nil {
-		return ""
+	if b.Email != nil && *b.Email != "" {
+		return *b.Email
+	} else if b.Origin != nil && *b.Origin != "" {
+		return *b.Origin
 	}
-
-	email := ""
-	if b.Email != nil {
-		email = *b.Email
-	}
-
-	origin := ""
-	if b.Origin != nil {
-		origin = *b.Origin
-	}
-
-	if email != "" && origin != "" {
-		return email + " " + origin
-	}
-
-	return email + origin
+	return ""
 }
 
 type BindingParams struct {
@@ -80,16 +71,6 @@ func NewBind(cfg BindingConfig, instanceStorage storage.Instances, bindingsStora
 		log:                          log.WithField("service", "BindEndpoint"),
 		serviceAccountBindingManager: broker.NewServiceAccountBindingsManager(clientProvider, kubeconfigProvider),
 	}
-}
-
-type BindingData struct {
-	Username string
-	Password string
-}
-
-var dummyCredentials = BindingData{
-	Username: "admin",
-	Password: "admin1234",
 }
 
 // Bind creates a new service binding
@@ -133,7 +114,7 @@ func (b *BindEndpoint) Bind(ctx context.Context, instanceID, bindingID string, d
 		err = json.Unmarshal(details.RawParameters, &parameters)
 		if err != nil {
 			message := fmt.Sprintf("failed to unmarshal parameters: %s", err)
-			return domain.Binding{}, apiresponses.NewFailureResponse(fmt.Errorf(message), http.StatusInternalServerError, message)
+			return domain.Binding{}, apiresponses.NewFailureResponse(fmt.Errorf(message), http.StatusBadRequest, message)
 		}
 	}
 
@@ -203,6 +184,9 @@ func (b *BindEndpoint) Bind(ctx context.Context, instanceID, bindingID string, d
 		IsAsync: false,
 		Credentials: Credentials{
 			Kubeconfig: kubeconfig,
+		},
+		Metadata: domain.BindingMetadata{
+			ExpiresAt: binding.ExpiresAt.Format(expiresAtLayout),
 		},
 	}, nil
 }

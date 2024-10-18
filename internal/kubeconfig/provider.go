@@ -5,9 +5,11 @@ import (
 	"fmt"
 
 	"k8s.io/apimachinery/pkg/api/errors"
+	machineryv1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	v1 "k8s.io/api/core/v1"
 	"k8s.io/client-go/kubernetes"
+	"k8s.io/client-go/kubernetes/fake"
 	"k8s.io/client-go/kubernetes/scheme"
 	"k8s.io/client-go/tools/clientcmd"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -71,7 +73,7 @@ func (p *SecretProvider) K8sClientForRuntimeID(runtimeID string) (client.Client,
 	return k8sCli, nil
 }
 
-func (p *SecretProvider) K8sClientSetForRuntimeID(runtimeID string) (*kubernetes.Clientset, error) {
+func (p *SecretProvider) K8sClientSetForRuntimeID(runtimeID string) (kubernetes.Interface, error) {
 	kubeconfig, err := p.KubeconfigForRuntimeID(runtimeID)
 	if err != nil {
 		return nil, err
@@ -91,11 +93,12 @@ func (p *SecretProvider) K8sClientSetForRuntimeID(runtimeID string) (*kubernetes
 }
 
 type FakeProvider struct {
-	c client.Client
+	c         client.Client
+	clientset kubernetes.Interface
 }
 
 func NewFakeK8sClientProvider(c client.Client) *FakeProvider {
-	return &FakeProvider{c: c}
+	return &FakeProvider{c: c, clientset: createFakeClientset()}
 }
 
 func (p *FakeProvider) K8sClientForRuntimeID(_ string) (client.Client, error) {
@@ -106,9 +109,40 @@ func (p *FakeProvider) K8sClientForRuntimeID(_ string) (client.Client, error) {
 }
 
 func (p *FakeProvider) KubeconfigForRuntimeID(runtimeID string) ([]byte, error) {
-	return []byte("fake kubeconfig"), nil
+	return []byte(`
+apiVersion: v1
+clusters:
+- cluster:
+    certificate-authority-data: ca
+    server: https://my.cluster
+  name: <cluster-name>
+contexts:
+- context:
+    cluster:  cname
+    user:  cuser
+  name:  cname
+current-context:  cname
+kind: Config
+preferences: {}
+users:
+- name:  cuser
+  user:
+    token: some-token
+`), nil
 }
 
-func (p *FakeProvider) K8sClientSetForRuntimeID(runtimeID string) (*kubernetes.Clientset, error) {
-	return nil, fmt.Errorf("not implemented")
+func (p *FakeProvider) K8sClientSetForRuntimeID(runtimeID string) (kubernetes.Interface, error) {
+	return p.clientset, nil
+}
+
+func createFakeClientset() kubernetes.Interface {
+	c := fake.NewSimpleClientset()
+	_, err := c.CoreV1().Namespaces().Create(context.Background(), &v1.Namespace{
+		ObjectMeta: machineryv1.ObjectMeta{Name: "kyma-system", Namespace: ""},
+	}, machineryv1.CreateOptions{})
+	if err != nil {
+		// this method is used only for tests
+		panic(err)
+	}
+	return c
 }

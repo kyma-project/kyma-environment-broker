@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"time"
 
+	"k8s.io/client-go/kubernetes"
+
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 
 	"github.com/kyma-project/kyma-environment-broker/internal"
@@ -14,7 +16,6 @@ import (
 	v1 "k8s.io/api/core/v1"
 	rbacv1 "k8s.io/api/rbac/v1"
 	mv1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/client-go/kubernetes"
 )
 
 const (
@@ -31,7 +32,7 @@ type BindingsManager interface {
 }
 
 type ClientProvider interface {
-	K8sClientSetForRuntimeID(runtimeID string) (*kubernetes.Clientset, error)
+	K8sClientSetForRuntimeID(runtimeID string) (kubernetes.Interface, error)
 }
 
 type KubeconfigProvider interface {
@@ -77,9 +78,8 @@ func (c *ServiceAccountBindingsManager) Create(ctx context.Context, instance *in
 		&rbacv1.ClusterRole{
 			TypeMeta: mv1.TypeMeta{APIVersion: rbacv1.SchemeGroupVersion.String(), Kind: "ClusterRole"},
 			ObjectMeta: mv1.ObjectMeta{
-				Name:      serviceBindingName,
-				Labels:    map[string]string{"app.kubernetes.io/managed-by": "kcp-kyma-environment-broker"},
-				Namespace: BindingNamespace,
+				Name:   serviceBindingName,
+				Labels: map[string]string{"app.kubernetes.io/managed-by": "kcp-kyma-environment-broker"},
 			},
 			Rules: []rbacv1.PolicyRule{
 				{
@@ -89,7 +89,6 @@ func (c *ServiceAccountBindingsManager) Create(ctx context.Context, instance *in
 				},
 			},
 		}, mv1.CreateOptions{})
-
 	if err != nil && !apierrors.IsAlreadyExists(err) {
 		return "", time.Time{}, fmt.Errorf("while creating a cluster role: %v", err)
 	}

@@ -873,6 +873,7 @@ func (s *BrokerSuiteTest) LastProvisionInput(iid string) gqlschema.ProvisionRunt
 }
 
 func (s *BrokerSuiteTest) Log(msg string) {
+	s.t.Helper()
 	s.t.Log(msg)
 }
 

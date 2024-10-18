@@ -527,6 +527,8 @@ func (h *Handler) addBindings(p *pkg.RuntimeDTO) error {
 			ExpirationSeconds: b.ExpirationSeconds,
 			CreatedAt:         b.CreatedAt,
 			ExpiresAt:         b.ExpiresAt,
+			CreatedBy:         b.CreatedBy,
+			KubeconfigExists:  len(b.Kubeconfig) > 0,
 		})
 	}
 
