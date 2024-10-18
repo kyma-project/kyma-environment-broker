@@ -58,11 +58,10 @@ func AlreadyExists(format string, a ...interface{}) Error {
 }
 
 func IsAlreadyExists(err error) bool {
-	dbe, ok := err.(Error)
-	if !ok {
-		return false
-	}
-	return dbe.Code() == CodeAlreadyExists
+	nf, ok := err.(interface {
+		Code() int
+	})
+	return ok && nf.Code() == CodeAlreadyExists
 }
 
 func Conflict(format string, a ...interface{}) Error {
