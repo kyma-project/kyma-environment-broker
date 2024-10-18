@@ -3,7 +3,3 @@
 
 # Owners of all .md files in the repository
 *.md @kyma-project/technical-writers
-
-# Config files for markdownlint
-.markdownlint.yaml @kyma-project/technical-writers
-markdown_heading_capitalization.js @kyma-project/technical-writers
