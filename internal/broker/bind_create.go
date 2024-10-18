@@ -195,7 +195,7 @@ func (b *BindEndpoint) Bind(ctx context.Context, instanceID, bindingID string, d
 	err = b.bindingsStorage.Insert(binding)
 	switch {
 	case dberr.IsAlreadyExists(err):
-		message := fmt.Sprintf("failed to insert Kyma binding into storage: %s", err)
+		message := fmt.Sprintf("failedd to insert Kyma binding into storage: %s", err)
 		return domain.Binding{}, apiresponses.NewFailureResponse(fmt.Errorf(message), http.StatusBadRequest, message)
 	case err != nil:
 		message := fmt.Sprintf("failed to insert Kyma binding into storage: %s", err)
