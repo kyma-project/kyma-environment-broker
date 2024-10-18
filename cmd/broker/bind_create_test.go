@@ -512,7 +512,6 @@ func TestCreateBindingEndpoint(t *testing.T) {
 		// then
 		require.Equal(t, http.StatusConflict, response.StatusCode)
 	})
-
 }
 
 func assertResourcesExistence(t *testing.T, k8sClient client.Client, bindingID string) {
