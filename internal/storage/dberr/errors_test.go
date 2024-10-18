@@ -64,15 +64,18 @@ func TestAppError(t *testing.T) {
 		internalErr := Internal("Some Internal apperror, %s", "Some pkg err")
 		notFoundErr := NotFound("Some NotFound apperror, %s", "Some pkg err")
 		conflict := Conflict("some conflict %s", "error")
+		alreadyExistsErr := AlreadyExists("Some AlreadyExists apperror, %s", "Some pkg err")
 
 		//when
 		checkOne := IsNotFound(internalErr)
 		checkTwo := IsNotFound(notFoundErr)
 		checkConflict := IsConflict(conflict)
+		checkAlreadyExists := IsAlreadyExists(alreadyExistsErr)
 
 		//then
 		assert.False(t, checkOne)
 		assert.True(t, checkTwo)
 		assert.True(t, checkConflict)
+		assert.True(t, checkAlreadyExists)
 	})
 }

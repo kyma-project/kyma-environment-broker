@@ -50,7 +50,10 @@ func (s *Binding) Insert(binding *internal.Binding) error {
 	sess := s.NewWriteSession()
 	err = sess.InsertBinding(dto)
 
-	if err != nil {
+	switch {
+	case dberr.IsAlreadyExists(err):
+		return dberr.AlreadyExists("while saving binding with ID %s: %v", binding.ID, err)
+	case err != nil:
 		return fmt.Errorf("while saving binding with ID %s: %w", binding.ID, err)
 	}
 

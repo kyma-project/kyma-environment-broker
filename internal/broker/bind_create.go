@@ -118,6 +118,30 @@ func (b *BindEndpoint) Bind(ctx context.Context, instanceID, bindingID string, d
 		}
 	}
 
+	bindingFromDB, err := b.bindingsStorage.Get(instanceID, bindingID)
+	if err != nil && !dberr.IsNotFound(err) {
+		message := fmt.Sprintf("failed to get Kyma binding from storage: %s", err)
+		return domain.Binding{}, apiresponses.NewFailureResponse(fmt.Errorf(message), http.StatusInternalServerError, message)
+	}
+	if bindingFromDB != nil {
+		if bindingFromDB.ExpirationSeconds != int64(parameters.ExpirationSeconds) {
+			message := fmt.Sprintf("binding already exists but with different parameters")
+			return domain.Binding{}, apiresponses.NewFailureResponse(fmt.Errorf(message), http.StatusConflict, message)
+		}
+		if bindingFromDB.ExpiresAt.After(time.Now()) {
+			return domain.Binding{
+				IsAsync:       false,
+				AlreadyExists: true,
+				Credentials: Credentials{
+					Kubeconfig: bindingFromDB.Kubeconfig,
+				},
+				Metadata: domain.BindingMetadata{
+					ExpiresAt: bindingFromDB.ExpiresAt.Format(expiresAtLayout),
+				},
+			}, nil
+		}
+	}
+
 	bindingList, err := b.bindingsStorage.ListByInstanceID(instanceID)
 	if err != nil {
 		message := fmt.Sprintf("failed to list Kyma bindings: %s", err)
@@ -150,7 +174,6 @@ func (b *BindEndpoint) Bind(ctx context.Context, instanceID, bindingID string, d
 		}
 		expirationSeconds = parameters.ExpirationSeconds
 	}
-
 	var kubeconfig string
 	var expiresAt time.Time
 	binding := &internal.Binding{
@@ -174,7 +197,11 @@ func (b *BindEndpoint) Bind(ctx context.Context, instanceID, bindingID string, d
 	binding.Kubeconfig = kubeconfig
 
 	err = b.bindingsStorage.Insert(binding)
-	if err != nil {
+	switch {
+	case dberr.IsAlreadyExists(err):
+		message := fmt.Sprintf("failed to insert Kyma binding into storage: %s", err)
+		return domain.Binding{}, apiresponses.NewFailureResponse(fmt.Errorf(message), http.StatusBadRequest, message)
+	case err != nil:
 		message := fmt.Sprintf("failed to insert Kyma binding into storage: %s", err)
 		return domain.Binding{}, apiresponses.NewFailureResponse(fmt.Errorf(message), http.StatusInternalServerError, message)
 
