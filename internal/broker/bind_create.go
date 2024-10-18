@@ -119,6 +119,10 @@ func (b *BindEndpoint) Bind(ctx context.Context, instanceID, bindingID string, d
 	}
 
 	bindingFromDB, err := b.bindingsStorage.Get(instanceID, bindingID)
+	if err != nil && !dberr.IsNotFound(err) {
+		message := fmt.Sprintf("failed to get Kyma binding from storage: %s", err)
+		return domain.Binding{}, apiresponses.NewFailureResponse(fmt.Errorf(message), http.StatusInternalServerError, message)
+	}
 	if bindingFromDB != nil {
 		if bindingFromDB.ExpirationSeconds != int64(parameters.ExpirationSeconds) {
 			message := fmt.Sprintf("binding already exists but with different parameters")
