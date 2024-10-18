@@ -61,7 +61,8 @@ type BindingDTO struct {
 	CreatedAt         time.Time `json:"createdAt"`
 	ExpirationSeconds int64     `json:"expiresInSeconds"`
 	ExpiresAt         time.Time `json:"expiresAt"`
-	Type              string    `json:"type"`
+	KubeconfigExists  bool      `json:"kubeconfigExists"`
+	CreatedBy         string    `json:"createdBy"`
 }
 
 type RuntimeStatus struct {

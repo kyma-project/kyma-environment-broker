@@ -3,10 +3,12 @@ package main
 import (
 	"fmt"
 	"io"
+	"net/http"
 	"testing"
 
 	"github.com/google/uuid"
 	"github.com/pivotal-cf/brokerapi/v8/domain"
+	"github.com/stretchr/testify/assert"
 )
 
 func TestBinding(t *testing.T) {
@@ -34,6 +36,7 @@ func TestBinding(t *testing.T) {
 	suite.processProvisioningByOperationID(opID)
 	suite.WaitForOperationState(opID, domain.Succeeded)
 
+	// when
 	resp = suite.CallAPI("PUT", fmt.Sprintf("oauth/v2/service_instances/%s/service_bindings/%s", iid, bid),
 		`{
                 "service_id": "47c9dcbf-ff30-448e-ab36-d3bad66ba281",
@@ -44,8 +47,20 @@ func TestBinding(t *testing.T) {
 	suite.Log(string(b))
 	suite.Log(resp.Status)
 
-	respRuntimes := suite.CallAPI("GET", "/info/runtimes?bindings=true", "")
+	respRuntimes := suite.CallAPI("GET", "/runtimes?bindings=true", "")
 	b, _ = io.ReadAll(respRuntimes.Body)
 	suite.Log(string(b))
 	suite.Log(resp.Status)
+
+	t.Run("should return 400 when expiration seconds parameter is string instead of int", func(t *testing.T) {
+		resp = suite.CallAPI("PUT", fmt.Sprintf("oauth/v2/service_instances/%s/service_bindings/%s", iid, bid),
+			`{
+                "service_id": "47c9dcbf-ff30-448e-ab36-d3bad66ba281",
+                "plan_id": "361c511f-f939-4621-b228-d0fb79a1fe15",
+				"parameters": {
+					"expiration_seconds": "600"
+				}
+               }`)
+		assert.Equal(t, http.StatusBadRequest, resp.StatusCode)
+	})
 }

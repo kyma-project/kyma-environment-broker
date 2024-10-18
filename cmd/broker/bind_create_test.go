@@ -11,8 +11,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/kyma-project/kyma-environment-broker/internal/ptr"
-
 	"github.com/golang-jwt/jwt/v4"
 	"github.com/google/uuid"
 	brokerBindings "github.com/kyma-project/kyma-environment-broker/internal/broker/bindings"
@@ -228,6 +226,8 @@ func TestCreateBindingEndpoint(t *testing.T) {
 		require.NoError(t, err)
 		assert.Equal(t, expirationSeconds*time.Second, duration)
 
+		assert.NotEmpty(t, binding.Metadata.ExpiresAt)
+
 		//// verify connectivity using kubeconfig from the generated binding
 		assertClusterAccess(t, "secret-to-check-first", binding)
 		assertRolesExistence(t, brokerBindings.BindingName("binding-id"), binding)
@@ -237,7 +237,7 @@ func TestCreateBindingEndpoint(t *testing.T) {
 		const customExpirationSeconds = 900
 
 		// When
-		response := createBindingWithExpiration(instanceID1, "binding-id2", ptr.Integer(customExpirationSeconds), t)
+		response := createBindingWithCustomExpiration(instanceID1, "binding-id2", customExpirationSeconds, t)
 
 		defer response.Body.Close()
 
@@ -253,7 +253,7 @@ func TestCreateBindingEndpoint(t *testing.T) {
 		const customExpirationSeconds = 7201
 
 		// When
-		response := createBindingWithExpiration(instanceID1, "binding-id3", ptr.Integer(customExpirationSeconds), t)
+		response := createBindingWithCustomExpiration(instanceID1, "binding-id3", customExpirationSeconds, t)
 
 		defer response.Body.Close()
 		require.Equal(t, http.StatusBadRequest, response.StatusCode)
@@ -263,7 +263,7 @@ func TestCreateBindingEndpoint(t *testing.T) {
 		const customExpirationSeconds = 60
 
 		// When
-		response := createBindingWithExpiration(instanceID1, "binding-id4", ptr.Integer(customExpirationSeconds), t)
+		response := createBindingWithCustomExpiration(instanceID1, "binding-id4", customExpirationSeconds, t)
 
 		defer response.Body.Close()
 		require.Equal(t, http.StatusBadRequest, response.StatusCode)
@@ -301,15 +301,15 @@ func TestCreateBindingEndpoint(t *testing.T) {
 
 	t.Run("should return created bindings when multiple bindings created", func(t *testing.T) {
 		// given
-		firstInstanceFirstBindingID, firstInstancefirstBinding := createBindingForInstanceWithRandomBindingID(instanceID1, httpServer, t)
+		firstInstanceFirstBindingID, firstInstancefirstBinding := createBindingWithRandomBindingID(instanceID1, httpServer, t)
 		firstInstanceFirstBindingDB, err := db.Bindings().Get(instanceID1, firstInstanceFirstBindingID)
 		assert.NoError(t, err)
 
-		secondInstanceBindingID, secondInstanceFirstBinding := createBindingForInstanceWithRandomBindingID(instanceID2, httpServer, t)
+		secondInstanceBindingID, secondInstanceFirstBinding := createBindingWithRandomBindingID(instanceID2, httpServer, t)
 		secondInstanceFirstBindingDB, err := db.Bindings().Get(instanceID2, secondInstanceBindingID)
 		assert.NoError(t, err)
 
-		firstInstanceSecondBindingID, firstInstanceSecondBinding := createBindingForInstanceWithRandomBindingID(instanceID1, httpServer, t)
+		firstInstanceSecondBindingID, firstInstanceSecondBinding := createBindingWithRandomBindingID(instanceID1, httpServer, t)
 		firstInstanceSecondBindingDB, err := db.Bindings().Get(instanceID1, firstInstanceSecondBindingID)
 		assert.NoError(t, err)
 
@@ -321,7 +321,7 @@ func TestCreateBindingEndpoint(t *testing.T) {
 		// then
 		assert.Equal(t, http.StatusOK, response.StatusCode)
 		binding := unmarshal(t, response)
-		assert.Equal(t, firstInstancefirstBinding, binding)
+		assertKubeconfigsEqual(t, firstInstancefirstBinding, binding)
 		assert.Equal(t, firstInstanceFirstBindingDB.Kubeconfig, binding.Credentials.(map[string]interface{})["kubeconfig"])
 		assertClusterAccess(t, "secret-to-check-first", binding)
 
@@ -332,7 +332,7 @@ func TestCreateBindingEndpoint(t *testing.T) {
 		// then
 		assert.Equal(t, http.StatusOK, response.StatusCode)
 		binding = unmarshal(t, response)
-		assert.Equal(t, secondInstanceFirstBinding, binding)
+		assertKubeconfigsEqual(t, secondInstanceFirstBinding, binding)
 		assert.Equal(t, secondInstanceFirstBindingDB.Kubeconfig, binding.Credentials.(map[string]interface{})["kubeconfig"])
 		assertClusterAccess(t, "secret-to-check-second", binding)
 
@@ -343,29 +343,58 @@ func TestCreateBindingEndpoint(t *testing.T) {
 		// then
 		assert.Equal(t, http.StatusOK, response.StatusCode)
 		binding = unmarshal(t, response)
-		assert.Equal(t, firstInstanceSecondBinding, binding)
+		assertKubeconfigsEqual(t, firstInstanceSecondBinding, binding)
 		assert.Equal(t, firstInstanceSecondBindingDB.Kubeconfig, binding.Credentials.(map[string]interface{})["kubeconfig"])
 		assertClusterAccess(t, "secret-to-check-first", binding)
 	})
 
 	t.Run("should delete created binding", func(t *testing.T) {
 		// given
-		createdBindingID, createdBinding := createBindingForInstanceWithRandomBindingID(instanceID1, httpServer, t)
-		createdBindingIDDB, err := db.Bindings().Get(instanceID1, createdBindingID)
+		bindingID, binding := createBindingWithRandomBindingID(instanceID1, httpServer, t)
+		bindingFromDB, err := db.Bindings().Get(instanceID1, bindingID)
 		assert.NoError(t, err)
-		assert.Equal(t, createdBinding.Credentials.(map[string]interface{})["kubeconfig"], createdBindingIDDB.Kubeconfig)
+		assert.Equal(t, binding.Credentials.(map[string]interface{})["kubeconfig"], bindingFromDB.Kubeconfig)
 
 		// when
-		path := fmt.Sprintf(bindingsPath+deleteParams, instanceID1, createdBindingID, "123", fixture.PlanId)
-
+		path := fmt.Sprintf(bindingsPath+deleteParams, instanceID1, bindingID, "123", fixture.PlanId)
 		response := CallAPI(httpServer, http.MethodDelete, path, "", t)
 		defer response.Body.Close()
 
 		// then
 		assert.Equal(t, http.StatusOK, response.StatusCode)
-		createdBindingIDDB, err = db.Bindings().Get(instanceID1, createdBindingID)
+		bindingFromDB, err = db.Bindings().Get(instanceID1, bindingID)
 		assert.Error(t, err)
-		assert.Nil(t, createdBindingIDDB)
+		assert.Nil(t, bindingFromDB)
+	})
+
+	t.Run("should delete created binding and fail after the second call", func(t *testing.T) {
+		// given
+		bindingID, binding := createBindingWithRandomBindingID(instanceID1, httpServer, t)
+		bindingFromDB, err := db.Bindings().Get(instanceID1, bindingID)
+		assert.NoError(t, err)
+		assert.Equal(t, binding.Credentials.(map[string]interface{})["kubeconfig"], bindingFromDB.Kubeconfig)
+
+		// when
+		path := fmt.Sprintf(bindingsPath+deleteParams, instanceID1, bindingID, "123", fixture.PlanId)
+		response := CallAPI(httpServer, http.MethodDelete, path, "", t)
+		defer response.Body.Close()
+
+		// then
+		assert.Equal(t, http.StatusOK, response.StatusCode)
+		bindingFromDB, err = db.Bindings().Get(instanceID1, bindingID)
+		assert.Error(t, err)
+		assert.Nil(t, bindingFromDB)
+
+		// when
+		path = fmt.Sprintf(bindingsPath+deleteParams, instanceID1, bindingID, "123", fixture.PlanId)
+		response = CallAPI(httpServer, http.MethodDelete, path, "", t)
+		defer response.Body.Close()
+
+		// then
+		assert.Equal(t, http.StatusGone, response.StatusCode)
+		bindingFromDB, err = db.Bindings().Get(instanceID1, bindingID)
+		assert.Error(t, err)
+		assert.Nil(t, bindingFromDB)
 	})
 
 	t.Run("should selectively delete created binding and its service account resources", func(t *testing.T) {
@@ -373,14 +402,14 @@ func TestCreateBindingEndpoint(t *testing.T) {
 		instanceFirst := "1"
 
 		//// first instance first binding
-		createdBindingIDInstanceFirstFirst, createdBindingInstanceFirstFirst := createBindingForInstanceWithRandomBindingID(instanceFirst, httpServer, t)
+		createdBindingIDInstanceFirstFirst, createdBindingInstanceFirstFirst := createBindingWithRandomBindingID(instanceFirst, httpServer, t)
 
 		assertExistsAndKubeconfigCreated(t, createdBindingInstanceFirstFirst, createdBindingIDInstanceFirstFirst, instanceFirst, httpServer, db)
 
 		assertResourcesExistence(t, clientFirst, createdBindingIDInstanceFirstFirst)
 
 		//// first instance second binding
-		createdBindingIDInstanceFirstSecond, createdBindingInstanceFirstSecond := createBindingForInstanceWithRandomBindingID(instanceFirst, httpServer, t)
+		createdBindingIDInstanceFirstSecond, createdBindingInstanceFirstSecond := createBindingWithRandomBindingID(instanceFirst, httpServer, t)
 
 		assertExistsAndKubeconfigCreated(t, createdBindingInstanceFirstSecond, createdBindingIDInstanceFirstSecond, instanceFirst, httpServer, db)
 
@@ -388,14 +417,14 @@ func TestCreateBindingEndpoint(t *testing.T) {
 
 		//// second instance first binding
 		instanceSecond := "2"
-		createdBindingIDInstanceSecondFirst, createdBindingInstanceSecondFirst := createBindingForInstanceWithRandomBindingID(instanceSecond, httpServer, t)
+		createdBindingIDInstanceSecondFirst, createdBindingInstanceSecondFirst := createBindingWithRandomBindingID(instanceSecond, httpServer, t)
 
 		assertExistsAndKubeconfigCreated(t, createdBindingInstanceSecondFirst, createdBindingIDInstanceSecondFirst, instanceSecond, httpServer, db)
 
 		assertResourcesExistence(t, clientSecond, createdBindingIDInstanceSecondFirst)
 
 		//// second instance second binding
-		createdBindingIDInstanceSecondSecond, createdBindingInstanceSecondSecond := createBindingForInstanceWithRandomBindingID(instanceSecond, httpServer, t)
+		createdBindingIDInstanceSecondSecond, createdBindingInstanceSecondSecond := createBindingWithRandomBindingID(instanceSecond, httpServer, t)
 
 		assertExistsAndKubeconfigCreated(t, createdBindingInstanceSecondSecond, createdBindingIDInstanceSecondSecond, instanceSecond, httpServer, db)
 
@@ -484,59 +513,6 @@ func assertServiceAccountsNotExists(t *testing.T, k8sClient client.Client, bindi
 	assert.True(t, apierrors.IsNotFound(err))
 }
 
-func TestCreatedBy(t *testing.T) {
-	emptyStr := ""
-	email := "john.smith@email.com"
-	origin := "origin"
-	tests := []struct {
-		name     string
-		context  broker.BindingContext
-		expected string
-	}{
-		{
-			name:     "Both Email and Origin are nil",
-			context:  broker.BindingContext{Email: nil, Origin: nil},
-			expected: "",
-		},
-		{
-			name:     "Both Email and Origin are empty",
-			context:  broker.BindingContext{Email: &emptyStr, Origin: &emptyStr},
-			expected: "",
-		},
-		{
-			name:     "Origin is nil",
-			context:  broker.BindingContext{Email: &email, Origin: nil},
-			expected: "john.smith@email.com",
-		},
-		{
-			name:     "Origin is empty",
-			context:  broker.BindingContext{Email: &email, Origin: &emptyStr},
-			expected: "john.smith@email.com",
-		},
-		{
-			name:     "Email is nil",
-			context:  broker.BindingContext{Email: nil, Origin: &origin},
-			expected: "origin",
-		},
-		{
-			name:     "Email is empty",
-			context:  broker.BindingContext{Email: &emptyStr, Origin: &origin},
-			expected: "origin",
-		},
-		{
-			name:     "Both Email and Origin are set",
-			context:  broker.BindingContext{Email: &email, Origin: &origin},
-			expected: "john.smith@email.com origin",
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			assert.Equal(t, tt.expected, tt.context.CreatedBy())
-		})
-	}
-}
-
 func assertExistsAndKubeconfigCreated(t *testing.T, actual domain.Binding, bindingID, instanceID string, httpServer *httptest.Server, db storage.BrokerStorage) {
 	expected, err := db.Bindings().Get(instanceID, bindingID)
 	require.NoError(t, err)
@@ -573,7 +549,11 @@ func assertRolesExistence(t *testing.T, bindingID string, binding domain.Binding
 	assert.NoError(t, err)
 }
 
-func createBindingForInstanceWithRandomBindingID(instanceID string, httpServer *httptest.Server, t *testing.T) (string, domain.Binding) {
+func assertKubeconfigsEqual(t *testing.T, expected, actual domain.Binding) {
+	assert.Equal(t, expected.Credentials.(map[string]interface{})["kubeconfig"], actual.Credentials.(map[string]interface{})["kubeconfig"])
+}
+
+func createBindingWithRandomBindingID(instanceID string, httpServer *httptest.Server, t *testing.T) (string, domain.Binding) {
 	bindingID := uuid.New().String()
 
 	response := createBinding(instanceID, bindingID, t)
@@ -631,25 +611,23 @@ func CallAPI(httpServer *httptest.Server, method string, path string, body strin
 	return resp
 }
 
-func createBinding(instanceID string, bindingID string, t *testing.T) *http.Response {
-	return createBindingWithExpiration(instanceID, bindingID, nil, t)
-}
-
-func createBindingWithExpiration(instanceID string, bindingID string, customExpirationSeconds *int, t *testing.T) *http.Response {
+func createBindingWithCustomExpiration(instanceID string, bindingID string, customExpirationSeconds int, t *testing.T) *http.Response {
 	path := getPath(instanceID, bindingID)
-	if customExpirationSeconds != nil {
-		return CallAPI(httpServer, http.MethodPut,
-			path, fmt.Sprintf(`
+	return CallAPI(httpServer, http.MethodPut,
+		path, fmt.Sprintf(`
 		{
 			"service_id": "123",
 			"plan_id": "%s",
 			"parameters": {
 				"expiration_seconds": %v
 			}
-		}`, fixture.PlanId, *customExpirationSeconds), t)
-	} else {
-		return CallAPI(httpServer, http.MethodPut,
-			path, fmt.Sprintf(`
+		}`, fixture.PlanId, customExpirationSeconds), t)
+}
+
+func createBinding(instanceID string, bindingID string, t *testing.T) *http.Response {
+	path := getPath(instanceID, bindingID)
+	return CallAPI(httpServer, http.MethodPut,
+		path, fmt.Sprintf(`
 		{
 			"service_id": "123",
 			"plan_id": "%s",
@@ -658,7 +636,6 @@ func createBindingWithExpiration(instanceID string, bindingID string, customExpi
 				"origin": "origin"
 			}
 		}`, fixture.PlanId), t)
-	}
 }
 
 func getBinding(instanceID string, bindingID string, t *testing.T) *http.Response {

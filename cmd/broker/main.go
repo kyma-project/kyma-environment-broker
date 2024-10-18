@@ -11,6 +11,8 @@ import (
 	"sort"
 	"time"
 
+	"k8s.io/client-go/kubernetes"
+
 	imv1 "github.com/kyma-project/infrastructure-manager/api/v1"
 
 	"github.com/kyma-project/kyma-environment-broker/internal/expiration"
@@ -58,7 +60,6 @@ import (
 	apiextensionsv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
 	"k8s.io/apimachinery/pkg/util/wait"
 	"k8s.io/client-go/dynamic"
-	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/kubernetes/scheme"
 	"k8s.io/client-go/rest"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -166,7 +167,7 @@ type ProfilerConfig struct {
 
 type K8sClientProvider interface {
 	K8sClientForRuntimeID(rid string) (client.Client, error)
-	K8sClientSetForRuntimeID(runtimeID string) (*kubernetes.Clientset, error)
+	K8sClientSetForRuntimeID(runtimeID string) (kubernetes.Interface, error)
 }
 
 type KubeconfigProvider interface {

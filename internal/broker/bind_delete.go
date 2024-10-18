@@ -40,16 +40,24 @@ func (b *UnbindEndpoint) Unbind(ctx context.Context, instanceID, bindingID strin
 		return domain.UnbindSpec{}, apiresponses.NewFailureResponse(fmt.Errorf("failed to get instance %s", instanceID), http.StatusInternalServerError, fmt.Sprintf("failed to get instance %s", instanceID))
 	}
 
+	_, err = b.bindingsStorage.Get(instanceID, bindingID)
+	switch {
+	case dberr.IsNotFound(err):
+		return domain.UnbindSpec{}, apiresponses.ErrBindingDoesNotExist
+	case err != nil:
+		return domain.UnbindSpec{}, apiresponses.NewFailureResponse(fmt.Errorf("failed to get instance %s", instanceID), http.StatusInternalServerError, fmt.Sprintf("failed to get instance %s", instanceID))
+	}
+
 	err = b.bindingsManager.Delete(ctx, instance, bindingID)
 	if err != nil {
 		b.log.Errorf("Unbind error during removal of service account resources: %s", err)
-		return domain.UnbindSpec{}, err
+		return domain.UnbindSpec{}, apiresponses.NewFailureResponse(fmt.Errorf("failed to delete binding resources for binding %s and instance %s: %v", bindingID, instanceID, err), http.StatusInternalServerError, fmt.Sprintf("failed to delete resources for binding %s and instance %s: %v", bindingID, instanceID, err))
 	}
 
 	err = b.bindingsStorage.Delete(instanceID, bindingID)
 	if err != nil {
 		b.log.Errorf("Unbind error during removal of db entity: %v", err)
-		return domain.UnbindSpec{}, err
+		return domain.UnbindSpec{}, apiresponses.NewFailureResponse(fmt.Errorf("failed to delete binding resources for binding %s and instance %s: %v", bindingID, instanceID, err), http.StatusInternalServerError, fmt.Sprintf("failed to delete resources for binding %s and instance %s: %v", bindingID, instanceID, err))
 	}
 
 	return domain.UnbindSpec{
