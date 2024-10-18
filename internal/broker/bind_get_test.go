@@ -2,6 +2,7 @@ package broker
 
 import (
 	"context"
+	"github.com/kyma-project/kyma-environment-broker/internal/fixture"
 	"net/http"
 	"testing"
 	"time"
@@ -19,18 +20,23 @@ func TestGetBinding(t *testing.T) {
 	t.Run("should return 404 code for the expired binding", func(t *testing.T) {
 		// given
 		bindingsMemory := memory.NewBinding()
+		operationsMemory := memory.NewOperation()
+
+		operation := fixture.FixOperation("operation-001", "test-instance-id", internal.OperationTypeProvision)
+		err := operationsMemory.InsertOperation(operation)
 
 		expiredBinding := &internal.Binding{
 			ID:         "test-binding-id",
 			InstanceID: "test-instance-id",
 			ExpiresAt:  time.Now().Add(-1 * time.Hour),
 		}
-		err := bindingsMemory.Insert(expiredBinding)
+		err = bindingsMemory.Insert(expiredBinding)
 		require.NoError(t, err)
 
 		endpoint := &GetBindingEndpoint{
-			bindings: bindingsMemory,
-			log:      &logrus.Logger{},
+			bindings:   bindingsMemory,
+			operations: operationsMemory,
+			log:        &logrus.Logger{},
 		}
 
 		// when
@@ -44,5 +50,40 @@ func TestGetBinding(t *testing.T) {
 
 		errorResponse := apiErr.ErrorResponse().(apiresponses.ErrorResponse)
 		require.Equal(t, "Binding expired", errorResponse.Description)
+	})
+
+	t.Run("should return 404 code for the binding of deprovisioned/suspended instance", func(t *testing.T) {
+		// given
+		bindingsMemory := memory.NewBinding()
+		operationsMemory := memory.NewOperation()
+
+		operation := fixture.FixOperation("operation-001", "test-instance-id", internal.OperationTypeDeprovision)
+		err := operationsMemory.InsertOperation(operation)
+
+		expiredBinding := &internal.Binding{
+			ID:         "test-binding-id",
+			InstanceID: "test-instance-id",
+			ExpiresAt:  time.Now().Add(-1 * time.Hour),
+		}
+		err = bindingsMemory.Insert(expiredBinding)
+		require.NoError(t, err)
+
+		endpoint := &GetBindingEndpoint{
+			bindings:   bindingsMemory,
+			operations: operationsMemory,
+			log:        &logrus.Logger{},
+		}
+
+		// when
+		_, err = endpoint.GetBinding(context.Background(), "test-instance-id", "test-binding-id", domain.FetchBindingDetails{})
+
+		// then
+		require.NotNil(t, err)
+		apiErr, ok := err.(*apiresponses.FailureResponse)
+		require.True(t, ok)
+		require.Equal(t, http.StatusNotFound, apiErr.ValidatedStatusCode(nil))
+
+		errorResponse := apiErr.ErrorResponse().(apiresponses.ErrorResponse)
+		require.Equal(t, "Binding not found", errorResponse.Description)
 	})
 }

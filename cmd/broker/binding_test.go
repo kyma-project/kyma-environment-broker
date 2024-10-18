@@ -2,13 +2,16 @@ package main
 
 import (
 	"fmt"
+
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+
 	"io"
 	"net/http"
 	"testing"
 
 	"github.com/google/uuid"
 	"github.com/pivotal-cf/brokerapi/v8/domain"
-	"github.com/stretchr/testify/assert"
 )
 
 func TestBinding(t *testing.T) {
@@ -115,4 +118,132 @@ func TestBinding(t *testing.T) {
 
 	})
 
+}
+
+func TestDeprovisioningWithExistingBindings(t *testing.T) {
+	// given
+	cfg := fixConfig()
+	// Disable EDP to have all steps successfully executed
+	cfg.EDP.Disabled = true
+	suite := NewBrokerSuiteTestWithConfig(t, cfg)
+	defer suite.TearDown()
+	iid := uuid.New().String()
+	bindingID1 := uuid.New().String()
+	bindingID2 := uuid.New().String()
+
+	response := suite.CallAPI("PUT", fmt.Sprintf("oauth/v2/service_instances/%s?accepts_incomplete=true", iid),
+		`{
+					"service_id": "47c9dcbf-ff30-448e-ab36-d3bad66ba281",
+					"plan_id": "361c511f-f939-4621-b228-d0fb79a1fe15",
+					"context": {
+						"globalaccount_id": "g-account-id",
+						"subaccount_id": "sub-id",
+						"user_id": "john.smith@email.com"
+					},
+					"parameters": {
+						"name": "testing-cluster",
+						"region": "eu-central-1"
+					}
+		}`)
+	opID := suite.DecodeOperationID(response)
+	suite.processProvisioningByOperationID(opID)
+	suite.WaitForOperationState(opID, domain.Succeeded)
+
+	// when we create two bindings
+	response = suite.CallAPI("PUT", fmt.Sprintf("oauth/v2/service_instances/%s/service_bindings/%s", iid, bindingID1),
+		`{
+                "service_id": "47c9dcbf-ff30-448e-ab36-d3bad66ba281",
+                "plan_id": "361c511f-f939-4621-b228-d0fb79a1fe15"
+               }`)
+	require.Equal(t, http.StatusCreated, response.StatusCode)
+
+	response = suite.CallAPI("PUT", fmt.Sprintf("oauth/v2/service_instances/%s/service_bindings/%s", iid, bindingID2),
+		`{
+                "service_id": "47c9dcbf-ff30-448e-ab36-d3bad66ba281",
+                "plan_id": "361c511f-f939-4621-b228-d0fb79a1fe15"
+               }`)
+	require.Equal(t, http.StatusCreated, response.StatusCode)
+
+	// when we deprovision successfully
+	response = suite.CallAPI("DELETE", fmt.Sprintf("oauth/v2/service_instances/%s?accepts_incomplete=true&plan_id=361c511f-f939-4621-b228-d0fb79a1fe15&service_id=47c9dcbf-ff30-448e-ab36-d3bad66ba281", iid),
+		``)
+	deprovisioningID := suite.DecodeOperationID(response)
+	suite.FinishDeprovisioningOperationByProvisioner(deprovisioningID)
+	suite.WaitForInstanceRemoval(iid)
+
+	// when we remove bindings and the instance is already removed
+	response = suite.CallAPI("DELETE", fmt.Sprintf("oauth/v2/service_instances/%s/service_bindings/%s?plan_id=361c511f-f939-4621-b228-d0fb79a1fe15&service_id=47c9dcbf-ff30-448e-ab36-d3bad66ba281", iid, bindingID1), "")
+	assert.Equal(t, http.StatusGone, response.StatusCode)
+	response = suite.CallAPI("DELETE", fmt.Sprintf("oauth/v2/service_instances/%s/service_bindings/%s?plan_id=361c511f-f939-4621-b228-d0fb79a1fe15&service_id=47c9dcbf-ff30-448e-ab36-d3bad66ba281", iid, bindingID2), "")
+	assert.Equal(t, http.StatusGone, response.StatusCode)
+
+	// then expect bindings to be removed
+	suite.WaitForBindingRemoval(iid, bindingID1)
+	suite.WaitForBindingRemoval(iid, bindingID2)
+}
+
+func TestRemoveBindingsFromSuspended(t *testing.T) {
+	// given
+	cfg := fixConfig()
+	cfg.Broker.Binding.BindablePlans = []string{"trial"}
+	suite := NewBrokerSuiteTestWithConfig(t, cfg)
+	defer suite.TearDown()
+	iid := uuid.New().String()
+	bindingID1 := uuid.New().String()
+	bindingID2 := uuid.New().String()
+
+	response := suite.CallAPI("PUT", fmt.Sprintf("oauth/cf-eu10/v2/service_instances/%s?accepts_incomplete=true&plan_id=7d55d31d-35ae-4438-bf13-6ffdfa107d9f&service_id=47c9dcbf-ff30-448e-ab36-d3bad66ba281", iid),
+		`{
+					"service_id": "47c9dcbf-ff30-448e-ab36-d3bad66ba281",
+					"plan_id": "7d55d31d-35ae-4438-bf13-6ffdfa107d9f",
+					"context": {
+						"globalaccount_id": "g-account-id",
+						"subaccount_id": "sub-id",
+						"user_id": "john.smith@email.com"
+					},
+					"parameters": {
+						"name": "testing-cluster"
+					}
+		}`)
+	opID := suite.DecodeOperationID(response)
+	suite.processProvisioningByOperationID(opID)
+	suite.WaitForOperationState(opID, domain.Succeeded)
+
+	//then we create two bindings
+	response = suite.CallAPI("PUT", fmt.Sprintf("oauth/v2/service_instances/%s/service_bindings/%s", iid, bindingID1),
+		`{
+	           "service_id": "47c9dcbf-ff30-448e-ab36-d3bad66ba281",
+	           "plan_id": "7d55d31d-35ae-4438-bf13-6ffdfa107d9f"
+	          }`)
+	require.Equal(t, http.StatusCreated, response.StatusCode)
+
+	response = suite.CallAPI("PUT", fmt.Sprintf("oauth/v2/service_instances/%s/service_bindings/%s", iid, bindingID2),
+		`{
+	           "service_id": "47c9dcbf-ff30-448e-ab36-d3bad66ba281",
+	           "plan_id": "7d55d31d-35ae-4438-bf13-6ffdfa107d9f"
+	          }`)
+	require.Equal(t, http.StatusCreated, response.StatusCode)
+
+	//when we suspend Service instance - OSB context update
+	response = suite.CallAPI("PATCH", fmt.Sprintf("oauth/cf-eu10/v2/service_instances/%s?accepts_incomplete=true", iid),
+		`{
+	   "service_id": "47c9dcbf-ff30-448e-ab36-d3bad66ba281",
+	   "plan_id": "7d55d31d-35ae-4438-bf13-6ffdfa107d9f",
+	   "context": {
+	       "globalaccount_id": "g-account-id",
+	       "user_id": "john.smith@email.com",
+	       "active": false
+	   }
+	}`)
+	assert.Equal(t, http.StatusOK, response.StatusCode)
+	suspensionOpID := suite.WaitForLastOperation(iid, domain.InProgress)
+
+	suite.FinishDeprovisioningOperationByProvisioner(suspensionOpID)
+	suite.WaitForOperationState(suspensionOpID, domain.Succeeded)
+
+	// when we remove bindings we just return OK
+	response = suite.CallAPI("DELETE", fmt.Sprintf("oauth/v2/service_instances/%s/service_bindings/%s?plan_id=361c511f-f939-4621-b228-d0fb79a1fe15&service_id=47c9dcbf-ff30-448e-ab36-d3bad66ba281", iid, bindingID1), "")
+	assert.Equal(t, http.StatusOK, response.StatusCode)
+	response = suite.CallAPI("DELETE", fmt.Sprintf("oauth/v2/service_instances/%s/service_bindings/%s?plan_id=361c511f-f939-4621-b228-d0fb79a1fe15&service_id=47c9dcbf-ff30-448e-ab36-d3bad66ba281", iid, bindingID2), "")
+	assert.Equal(t, http.StatusOK, response.StatusCode)
 }

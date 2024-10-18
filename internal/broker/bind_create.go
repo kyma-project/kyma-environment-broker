@@ -64,10 +64,10 @@ type Credentials struct {
 	Kubeconfig string `json:"kubeconfig"`
 }
 
-func NewBind(cfg BindingConfig, instanceStorage storage.Instances, bindingsStorage storage.Bindings, log logrus.FieldLogger, clientProvider broker.ClientProvider, kubeconfigProvider broker.KubeconfigProvider) *BindEndpoint {
+func NewBind(cfg BindingConfig, db storage.BrokerStorage, log logrus.FieldLogger, clientProvider broker.ClientProvider, kubeconfigProvider broker.KubeconfigProvider) *BindEndpoint {
 	return &BindEndpoint{config: cfg,
-		instancesStorage:             instanceStorage,
-		bindingsStorage:              bindingsStorage,
+		instancesStorage:             db.Instances(),
+		bindingsStorage:              db.Bindings(),
 		log:                          log.WithField("service", "BindEndpoint"),
 		serviceAccountBindingManager: broker.NewServiceAccountBindingsManager(clientProvider, kubeconfigProvider),
 	}
