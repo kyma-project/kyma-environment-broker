@@ -3,10 +3,12 @@ package main
 import (
 	"fmt"
 	"io"
+	"net/http"
 	"testing"
 
 	"github.com/google/uuid"
 	"github.com/pivotal-cf/brokerapi/v8/domain"
+	"github.com/stretchr/testify/assert"
 )
 
 func TestBinding(t *testing.T) {
@@ -49,4 +51,16 @@ func TestBinding(t *testing.T) {
 	b, _ = io.ReadAll(respRuntimes.Body)
 	suite.Log(string(b))
 	suite.Log(resp.Status)
+
+	t.Run("should return 400 for incorrect parameters", func(t *testing.T) {
+		resp = suite.CallAPI("PUT", fmt.Sprintf("oauth/v2/service_instances/%s/service_bindings/%s", iid, bid),
+			`{
+                "service_id": "47c9dcbf-ff30-448e-ab36-d3bad66ba281",
+                "plan_id": "361c511f-f939-4621-b228-d0fb79a1fe15",
+				"parameters": {
+					"expiration_seconds": "600"
+				}
+               }`)
+		assert.Equal(t, http.StatusBadRequest, resp.StatusCode)
+	})
 }

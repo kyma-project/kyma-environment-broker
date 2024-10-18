@@ -124,7 +124,7 @@ func (b *BindEndpoint) Bind(ctx context.Context, instanceID, bindingID string, d
 		err = json.Unmarshal(details.RawParameters, &parameters)
 		if err != nil {
 			message := fmt.Sprintf("failed to unmarshal parameters: %s", err)
-			return domain.Binding{}, apiresponses.NewFailureResponse(fmt.Errorf(message), http.StatusInternalServerError, message)
+			return domain.Binding{}, apiresponses.NewFailureResponse(fmt.Errorf(message), http.StatusBadRequest, message)
 		}
 	}
 
