@@ -1,8 +1,16 @@
 package broker
 
 import (
+	"context"
+	"encoding/json"
+	"fmt"
 	"testing"
 
+	"github.com/google/uuid"
+	"github.com/kyma-project/kyma-environment-broker/internal/fixture"
+	"github.com/kyma-project/kyma-environment-broker/internal/storage"
+	"github.com/pivotal-cf/brokerapi/v8/domain"
+	"github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -57,4 +65,112 @@ func TestCreatedBy(t *testing.T) {
 			assert.Equal(t, tt.expected, tt.context.CreatedBy())
 		})
 	}
+}
+
+func TestCreateSecondBindingWithTheSameIdButDifferentParams(t *testing.T) {
+	// given
+	instanceID := uuid.New().String()
+	bindingID := uuid.New().String()
+	instance := fixture.FixInstance(instanceID)
+	bindingCfg := &BindingConfig{
+		Enabled: true,
+		BindablePlans: EnablePlans{
+			instance.ServicePlanName,
+		},
+		ExpirationSeconds:    600,
+		MaxExpirationSeconds: 7200,
+		MinExpirationSeconds: 600,
+		MaxBindingsCount:     10,
+	}
+	binding := fixture.FixBindingWithInstanceID(bindingID, instanceID)
+	st := storage.NewMemoryStorage()
+	st.Instances().Insert(instance)
+	st.Bindings().Insert(&binding)
+
+	svc := NewBind(*bindingCfg, st.Instances(), st.Bindings(), logrus.New(), nil, nil)
+	params := BindingParams{
+		ExpirationSeconds: 601,
+	}
+	rawParams, err := json.Marshal(params)
+	assert.NoError(t, err)
+	details := domain.BindDetails{
+		RawParameters: rawParams,
+	}
+
+	// when
+	_, err = svc.Bind(context.Background(), instanceID, bindingID, details, false)
+
+	// then
+	assert.Error(t, err)
+	assert.Contains(t, err.Error(), "binding already exists but with different parameters")
+}
+
+func TestCreateSecondBindingWithTheSameIdAndParams(t *testing.T) {
+	// given
+	const expiresAtLayout = "2006-01-02T15:04:05.0Z"
+	instanceID := uuid.New().String()
+	bindingID := uuid.New().String()
+	instance := fixture.FixInstance(instanceID)
+	bindingCfg := &BindingConfig{
+		Enabled: true,
+		BindablePlans: EnablePlans{
+			instance.ServicePlanName,
+		},
+		ExpirationSeconds:    600,
+		MaxExpirationSeconds: 7200,
+		MinExpirationSeconds: 600,
+		MaxBindingsCount:     10,
+	}
+	binding := fixture.FixBindingWithInstanceID(bindingID, instanceID)
+	st := storage.NewMemoryStorage()
+	st.Instances().Insert(instance)
+	st.Bindings().Insert(&binding)
+
+	svc := NewBind(*bindingCfg, st.Instances(), st.Bindings(), logrus.New(), nil, nil)
+	params := BindingParams{
+		ExpirationSeconds: 600,
+	}
+	rawParams, err := json.Marshal(params)
+	assert.NoError(t, err)
+	details := domain.BindDetails{
+		RawParameters: rawParams,
+	}
+
+	// when
+	resp, err := svc.Bind(context.Background(), instanceID, bindingID, details, false)
+	fmt.Print(resp.Metadata.ExpiresAt)
+	// then
+	assert.NoError(t, err)
+	assert.Equal(t, binding.ExpiresAt.Format(expiresAtLayout), resp.Metadata.ExpiresAt)
+}
+
+func TestCreateSecondBindingWithTheSameIdAndParams2(t *testing.T) {
+	// given
+	const expiresAtLayout = "2006-01-02T15:04:05.0Z"
+	instanceID := uuid.New().String()
+	bindingID := uuid.New().String()
+	instance := fixture.FixInstance(instanceID)
+	bindingCfg := &BindingConfig{
+		Enabled: true,
+		BindablePlans: EnablePlans{
+			instance.ServicePlanName,
+		},
+		ExpirationSeconds:    600,
+		MaxExpirationSeconds: 7200,
+		MinExpirationSeconds: 600,
+		MaxBindingsCount:     10,
+	}
+	binding := fixture.FixBindingWithInstanceID(bindingID, instanceID)
+	st := storage.NewMemoryStorage()
+	st.Instances().Insert(instance)
+	st.Bindings().Insert(&binding)
+
+	svc := NewBind(*bindingCfg, st.Instances(), st.Bindings(), logrus.New(), nil, nil)
+
+	// when
+	resp, err := svc.Bind(context.Background(), instanceID, bindingID, domain.BindDetails{}, false)
+	fmt.Print(resp.Metadata.ExpiresAt)
+	// then
+	assert.NoError(t, err)
+	assert.Equal(t, binding.ExpiresAt.Format(expiresAtLayout), resp.Metadata.ExpiresAt)
 }
