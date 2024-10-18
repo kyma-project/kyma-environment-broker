@@ -57,6 +57,14 @@ func AlreadyExists(format string, a ...interface{}) Error {
 	return errorf(CodeAlreadyExists, format, a...)
 }
 
+func IsAlreadyExists(err error) bool {
+	dbe, ok := err.(Error)
+	if !ok {
+		return false
+	}
+	return dbe.Code() == CodeAlreadyExists
+}
+
 func Conflict(format string, a ...interface{}) Error {
 	return errorf(CodeConflict, format, a...)
 }
