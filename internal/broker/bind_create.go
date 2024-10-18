@@ -125,8 +125,12 @@ func (b *BindEndpoint) Bind(ctx context.Context, instanceID, bindingID string, d
 	}
 	if bindingFromDB != nil {
 		if bindingFromDB.ExpirationSeconds != int64(parameters.ExpirationSeconds) {
-			message := fmt.Sprintf("binding already exists but with different parameters")
-			return domain.Binding{}, apiresponses.NewFailureResponse(fmt.Errorf(message), http.StatusConflict, message)
+			if int64(parameters.ExpirationSeconds) == 0 && bindingFromDB.ExpirationSeconds == int64(b.config.ExpirationSeconds) {
+
+			} else {
+				message := fmt.Sprintf("binding already exists but with different parameters")
+				return domain.Binding{}, apiresponses.NewFailureResponse(fmt.Errorf(message), http.StatusConflict, message)
+			}
 		}
 		if bindingFromDB.ExpiresAt.After(time.Now()) {
 			return domain.Binding{
