@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"github.com/stretchr/testify/require"
 	"io"
 	"net/http"
 	"testing"
@@ -64,4 +65,53 @@ func TestBinding(t *testing.T) {
 		assert.Equal(t, http.StatusBadRequest, resp.StatusCode)
 	})
 
+}
+
+func TestDeprovisioningWithExistingBindings(t *testing.T) {
+	// given
+	suite := NewBrokerSuiteTest(t)
+	defer suite.TearDown()
+	iid := uuid.New().String()
+	bindingID1 := uuid.New().String()
+	bindingID2 := uuid.New().String()
+
+	response := suite.CallAPI("PUT", fmt.Sprintf("oauth/v2/service_instances/%s?accepts_incomplete=true", iid),
+		`{
+					"service_id": "47c9dcbf-ff30-448e-ab36-d3bad66ba281",
+					"plan_id": "361c511f-f939-4621-b228-d0fb79a1fe15",
+					"context": {
+						"globalaccount_id": "g-account-id",
+						"subaccount_id": "sub-id",
+						"user_id": "john.smith@email.com"
+					},
+					"parameters": {
+						"name": "testing-cluster",
+						"region": "eu-central-1"
+					}
+		}`)
+	opID := suite.DecodeOperationID(response)
+	suite.processProvisioningByOperationID(opID)
+	suite.WaitForOperationState(opID, domain.Succeeded)
+
+	// when we create two bindings
+	response = suite.CallAPI("PUT", fmt.Sprintf("oauth/v2/service_instances/%s/service_bindings/%s", iid, bindingID1),
+		`{
+                "service_id": "47c9dcbf-ff30-448e-ab36-d3bad66ba281",
+                "plan_id": "361c511f-f939-4621-b228-d0fb79a1fe15"
+               }`)
+	require.Equal(t, http.StatusCreated, response.StatusCode)
+
+	response = suite.CallAPI("PUT", fmt.Sprintf("oauth/v2/service_instances/%s/service_bindings/%s", iid, bindingID2),
+		`{
+                "service_id": "47c9dcbf-ff30-448e-ab36-d3bad66ba281",
+                "plan_id": "361c511f-f939-4621-b228-d0fb79a1fe15"
+               }`)
+	require.Equal(t, http.StatusCreated, response.StatusCode)
+
+	// then we deprovision successfully
+	response = suite.CallAPI("DELETE", fmt.Sprintf("oauth/v2/service_instances/%s?accepts_incomplete=true&plan_id=7d55d31d-35ae-4438-bf13-6ffdfa107d9f&service_id=47c9dcbf-ff30-448e-ab36-d3bad66ba281", iid),
+		``)
+	deprovisioningID := suite.DecodeOperationID(response)
+	suite.FinishDeprovisioningOperationByProvisioner(deprovisioningID)
+	suite.WaitForOperationState(deprovisioningID, domain.Succeeded)
 }
