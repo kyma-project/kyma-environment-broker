@@ -2,6 +2,7 @@ package broker
 
 import (
 	"context"
+	"github.com/pivotal-cf/brokerapi/v8"
 	"net/http"
 
 	"code.cloudfoundry.org/lager"
@@ -10,6 +11,10 @@ import (
 	"github.com/pivotal-cf/brokerapi/v8/handlers"
 	"github.com/pivotal-cf/brokerapi/v8/middlewares"
 )
+
+func Apihandler(serviceBroker domain.ServiceBroker, logger lager.Logger) http.Handler {
+	return brokerapi.NewWithOptions(serviceBroker, logger)
+}
 
 // copied from github.com/pivotal-cf/brokerapi/api.go
 func AttachRoutes(router *mux.Router, serviceBroker domain.ServiceBroker, logger lager.Logger) *mux.Router {
