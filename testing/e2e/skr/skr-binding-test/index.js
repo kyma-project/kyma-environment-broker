@@ -35,8 +35,9 @@ describe('SKR Binding test', function() {
     try {
       const resp = await keb.createBinding(options.instanceID, bindingID);
       kubeconfigFromBinding = resp.data.credentials.kubeconfig;
+      expect(resp.status).equal(201);
     } catch (err) {
-      console.log(err);
+      throw err;
     }
   });
 
@@ -51,6 +52,7 @@ describe('SKR Binding test', function() {
   it('Get SKR binding', async function() {
     const resp = await keb.getBinding(options.instanceID, bindingID);
     expect(resp.data.credentials.kubeconfig).to.equal(kubeconfigFromBinding);
+    expect(resp.status).equal(200);
   });
 
   it('Delete SKR binding', async function() {
@@ -113,6 +115,51 @@ describe('SKR Binding test', function() {
       if (err.response) {
         expect(err.response.status).equal(400);
         expect(err.response.data.description).to.include('expiration_seconds cannot be greater than');
+        console.log('Got response:');
+        console.log(err.response.data);
+      } else {
+        throw err;
+      }
+    }
+  });
+
+  it('Should return HTTP 200 when creating a binding with the same ID and params as an existing one', async function() {
+    bindingID = uuid.v4();
+    const expirationSeconds = 600;
+    const firstResponse = await keb.createBinding(options.instanceID, bindingID, expirationSeconds);
+    expect(firstResponse.status).equal(201);
+
+    const secondResponse = await keb.createBinding(options.instanceID, bindingID, expirationSeconds);
+    expect(secondResponse.status).equal(200);
+  });
+
+  it('Should return HTTP 409 when creating a binding with the same ID as an existing one but different params', async function() {
+    const expirationSeconds = 700;
+    try {
+      await keb.createBinding(options.instanceID, bindingID, expirationSeconds);
+      expect.fail('The call was expected to return HTTP 409');
+    } catch (err) {
+      if (err.response) {
+        expect(err.response.status).equal(409);
+        expect(err.response.data.description).to.include('binding already exists but with different parameters');
+        console.log('Got response:');
+        console.log(err.response.data);
+      } else {
+        throw err;
+      }
+    }
+  });
+
+  it('Should return HTTP 410 when deleting a non existing binding', async function() {
+    try {
+      const resp = await keb.deleteBinding(options.instanceID, bindingID);
+      expect(resp.status).equal(200);
+      await keb.deleteBinding(options.instanceID, bindingID);
+      expect.fail('The call was expected to return HTTP 410');
+    } catch (err) {
+      if (err.response) {
+        expect(err.response.status).equal(410);
+        expect(err.response.data.description).to.include('Binding not found');
         console.log('Got response:');
         console.log(err.response.data);
       } else {
