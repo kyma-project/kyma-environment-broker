@@ -133,7 +133,7 @@ describe('SKR Binding test', function() {
     expect(secondResponse.status).equal(200);
   });
 
-  it('Should return 409 for duplicate binding with different params', async function() {
+  it('Should return 409 for creating duplicate binding but with different params', async function() {
     const expirationSeconds = 700;
     try {
       await keb.createBinding(options.instanceID, bindingID, expirationSeconds);
@@ -150,7 +150,7 @@ describe('SKR Binding test', function() {
     }
   });
 
-  it('Should return HTTP 410 when deleting a non existing binding', async function() {
+  it('Should return HTTP 410 when deleting a nonexisting binding', async function() {
     try {
       const resp = await keb.deleteBinding(options.instanceID, bindingID);
       expect(resp.status).equal(200);
@@ -159,6 +159,21 @@ describe('SKR Binding test', function() {
     } catch (err) {
       if (err.response) {
         expect(err.response.status).equal(410);
+        console.log('Got response:');
+        console.log(err.response.data);
+      } else {
+        throw err;
+      }
+    }
+  });
+
+  it('Should return HTTP 404 when trying to get a nonexisting binding', async function() {
+    try {
+      await keb.getBinding(options.instanceID, bindingID);
+      expect.fail('The call was expected to return HTTP 404');
+    } catch (err) {
+      if (err.response) {
+        expect(err.response.status).equal(404);
         expect(err.response.data.description).to.include('Binding not found');
         console.log('Got response:');
         console.log(err.response.data);
