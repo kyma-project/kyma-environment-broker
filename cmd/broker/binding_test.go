@@ -92,7 +92,7 @@ func TestBinding(t *testing.T) {
 		assert.Equal(t, http.StatusOK, resp.StatusCode)
 	})
 
-	t.Run("should return 409 when creating a second binding with the same id as an existing one but differend params", func(t *testing.T) {
+	t.Run("should return 409 when creating a second binding with the same id as an existing one but different params", func(t *testing.T) {
 		bid = uuid.New().String()
 		resp = suite.CallAPI("PUT", fmt.Sprintf("oauth/v2/service_instances/%s/service_bindings/%s", iid, bid),
 			`{
