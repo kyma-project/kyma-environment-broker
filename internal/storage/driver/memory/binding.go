@@ -2,6 +2,7 @@ package memory
 
 import (
 	"sync"
+	"time"
 
 	"github.com/kyma-project/kyma-environment-broker/internal"
 	"github.com/kyma-project/kyma-environment-broker/internal/storage/dberr"
@@ -86,4 +87,19 @@ func (s *Binding) Get(instanceID string, bindingID string) (*internal.Binding, e
 	} else {
 		return nil, dberr.NotFound("binding with id %s does not exist for given instance ID", bindingID)
 	}
+}
+
+func (s *Binding) ListExpired() ([]internal.Binding, error) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
+	currentTime := time.Now().UTC()
+	var bindings []internal.Binding
+	for _, binding := range s.data {
+		if binding.ExpiresAt.Before(currentTime) {
+			bindings = append(bindings, binding)
+		}
+	}
+
+	return bindings, nil
 }
