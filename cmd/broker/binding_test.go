@@ -35,6 +35,7 @@ func TestBinding(t *testing.T) {
 	opID := suite.DecodeOperationID(resp)
 	suite.processProvisioningByOperationID(opID)
 	suite.WaitForOperationState(opID, domain.Succeeded)
+
 	// when
 	resp = suite.CallAPI("PUT", fmt.Sprintf("oauth/v2/service_instances/%s/service_bindings/%s", iid, bid),
 		`{
@@ -61,6 +62,56 @@ func TestBinding(t *testing.T) {
 				}
                }`)
 		assert.Equal(t, http.StatusBadRequest, resp.StatusCode)
+	})
+
+	t.Run("should return 200 when creating a second binding with the same id and params as an existing one", func(t *testing.T) {
+		bid = uuid.New().String()
+		resp = suite.CallAPI("PUT", fmt.Sprintf("oauth/v2/service_instances/%s/service_bindings/%s", iid, bid),
+			`{
+                "service_id": "47c9dcbf-ff30-448e-ab36-d3bad66ba281",
+                "plan_id": "361c511f-f939-4621-b228-d0fb79a1fe15",
+				"parameters": {
+					"expiration_seconds": 900
+				}
+               }`)
+		resp = suite.CallAPI("PUT", fmt.Sprintf("oauth/v2/service_instances/%s/service_bindings/%s", iid, bid),
+			`{
+                "service_id": "47c9dcbf-ff30-448e-ab36-d3bad66ba281",
+                "plan_id": "361c511f-f939-4621-b228-d0fb79a1fe15",
+				"parameters": {
+					"expiration_seconds": 900
+				}
+               }`)
+		assert.Equal(t, http.StatusOK, resp.StatusCode)
+
+		resp = suite.CallAPI("PUT", fmt.Sprintf("oauth/v2/service_instances/%s/service_bindings/%s", iid, bid),
+			`{
+                "service_id": "47c9dcbf-ff30-448e-ab36-d3bad66ba281",
+                "plan_id": "361c511f-f939-4621-b228-d0fb79a1fe15"
+               }`)
+		assert.Equal(t, http.StatusOK, resp.StatusCode)
+	})
+
+	t.Run("should return 409 when creating a second binding with the same id as an existing one but differend params", func(t *testing.T) {
+		bid = uuid.New().String()
+		resp = suite.CallAPI("PUT", fmt.Sprintf("oauth/v2/service_instances/%s/service_bindings/%s", iid, bid),
+			`{
+                "service_id": "47c9dcbf-ff30-448e-ab36-d3bad66ba281",
+                "plan_id": "361c511f-f939-4621-b228-d0fb79a1fe15",
+				"parameters": {
+					"expiration_seconds": 900
+				}
+               }`)
+		resp = suite.CallAPI("PUT", fmt.Sprintf("oauth/v2/service_instances/%s/service_bindings/%s", iid, bid),
+			`{
+                "service_id": "47c9dcbf-ff30-448e-ab36-d3bad66ba281",
+                "plan_id": "361c511f-f939-4621-b228-d0fb79a1fe15",
+				"parameters": {
+					"expiration_seconds": 1200
+				}
+               }`)
+		assert.Equal(t, http.StatusConflict, resp.StatusCode)
+
 	})
 
 }
