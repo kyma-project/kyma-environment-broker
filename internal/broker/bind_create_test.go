@@ -83,8 +83,10 @@ func TestCreateSecondBindingWithTheSameIdButDifferentParams(t *testing.T) {
 	}
 	binding := fixture.FixBindingWithInstanceID(bindingID, instanceID)
 	st := storage.NewMemoryStorage()
-	st.Instances().Insert(instance)
-	st.Bindings().Insert(&binding)
+	err := st.Instances().Insert(instance)
+	assert.NoError(t, err)
+	err = st.Bindings().Insert(&binding)
+	assert.NoError(t, err)
 
 	svc := NewBind(*bindingCfg, st.Instances(), st.Bindings(), logrus.New(), nil, nil)
 	params := BindingParams{
@@ -122,8 +124,10 @@ func TestCreateSecondBindingWithTheSameIdAndParams(t *testing.T) {
 	}
 	binding := fixture.FixBindingWithInstanceID(bindingID, instanceID)
 	st := storage.NewMemoryStorage()
-	st.Instances().Insert(instance)
-	st.Bindings().Insert(&binding)
+	err := st.Instances().Insert(instance)
+	assert.NoError(t, err)
+	err = st.Bindings().Insert(&binding)
+	assert.NoError(t, err)
 
 	svc := NewBind(*bindingCfg, st.Instances(), st.Bindings(), logrus.New(), nil, nil)
 	params := BindingParams{
@@ -161,8 +165,10 @@ func TestCreateSecondBindingWithTheSameIdAndParamsNotExplicitlyDefined(t *testin
 	}
 	binding := fixture.FixBindingWithInstanceID(bindingID, instanceID)
 	st := storage.NewMemoryStorage()
-	st.Instances().Insert(instance)
-	st.Bindings().Insert(&binding)
+	err := st.Instances().Insert(instance)
+	assert.NoError(t, err)
+	err = st.Bindings().Insert(&binding)
+	assert.NoError(t, err)
 
 	svc := NewBind(*bindingCfg, st.Instances(), st.Bindings(), logrus.New(), nil, nil)
 
