@@ -284,7 +284,6 @@ class KEBClient {
     const endpoint = `service_instances/${instanceID}/service_bindings/${bindingID}?accepts_incomplete=false`;
     const config = await this.buildRequest(payload, endpoint, 'put');
     return await axios.request(config);
-
   }
 
   async deleteBinding(instanceID, bindingID) {
