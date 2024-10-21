@@ -22,7 +22,7 @@ There is also an experimental plan:
 |-----------|----------------------------------------|-------------------------------------------------------|
 | `preview` | `5cb3d976-b85c-42ea-a636-79cadda109a9` | Installs Kyma runtime on AWS using Lifecycle Manager. |
 
-> [!WARNING] 
+> [!WARNING]
 > The experimental plan may fail to work or be removed.
 
 ## Provisioning Parameters
@@ -44,7 +44,7 @@ These are the provisioning parameters that you can configure:
 | **context.subaccount_id**                        | string | Provides a subaccount ID for a Kyma runtime.                                                                     |    No    | None            |
 | **context.globalaccount_id**                     | string | Provides a global account ID for a Kyma runtime.                                                                 |    No    | None            |
 | **context.sm_operator_credentials.clientid**     | string | Provides a client ID for SAP BTP service operator.                                                               |    No    | None            |
-| **context.sm_operator_credentials.clientsecret** | string | Provides a client secret for the SAP BTP service operator.                                                       |    No    | None            |
+| **context.sm_operator_credentials.clientsecret** | string | Provides a client Secret for the SAP BTP service operator.                                                       |    No    | None            |
 | **context.sm_operator_credentials.sm_url**       | string | Provides a SAP Service Manager URL for the SAP BTP service operator.                                             |    No    | None            |
 | **context.sm_operator_credentials.url**          | string | Provides an authentication URL for the SAP BTP service operator.                                                 |    No    | None            |
 | **context.sm_operator_credentials.xsappname**    | string | Provides an XSApp name for the SAP BTP service operator.                                                         |    No    | None            |
@@ -191,8 +191,9 @@ The SAP Converged Cloud plan cannot be provisioned in all SKR regions. This rest
 ## Trial Plan
 
 The trial plan allows you to install Kyma runtime on Azure, AWS, or GCP. The plan assumptions are as follows:
-- Kyma runtime is uninstalled after 14 days and the Kyma cluster is deprovisioned after this time.
-- It's possible to provision only one Kyma runtime per global account.
+
+* Kyma runtime is uninstalled after 14 days and the Kyma cluster is deprovisioned after this time.
+* It's possible to provision only one Kyma runtime per global account.
 
 ### Provisioning Parameters
 
@@ -212,9 +213,11 @@ These are the provisioning parameters for the Trial plan that you can configure:
 | **context.active** | string | Specifies if the Kyma runtime should be suspended or unsuspended. | No       | `true`, `false`       | None                                |
 
 The **region** parameter is optional. If not specified, the region is calculated from platform region specified in this path:
+
 ```shell
 /oauth/{platform-region}/v2/service_instances/{instance_id}
 ```
+
 The mapping between the platform region and the provider region (Azure, AWS or GCP) is defined in the configuration file in the **APP_TRIAL_REGION_MAPPING_FILE_PATH** environment variable. If the platform region is not defined, the default value is `europe`.
 
  </details>
@@ -222,7 +225,7 @@ The mapping between the platform region and the provider region (Azure, AWS or G
 
 ## Own Cluster Plan
 
-> [!NOTE] 
+> [!NOTE]
 > The `own_cluster` plan has been deprecated.
 
 These are the provisioning parameters for the `own_cluster` plan that you configure:

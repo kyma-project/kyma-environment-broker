@@ -928,10 +928,10 @@ func fixConfig() *Config {
 			Binding: broker.BindingConfig{
 				Enabled:              true,
 				BindablePlans:        []string{"aws", "azure"},
-				ExpirationSeconds:    900,
-				MaxExpirationSeconds: 1000,
+				ExpirationSeconds:    600,
+				MaxExpirationSeconds: 7200,
 				MinExpirationSeconds: 600,
-				MaxBindingsCount:     2,
+				MaxBindingsCount:     10,
 			},
 			AllowUpdateExpiredInstanceWithContext: true,
 			KimConfig: broker.KimConfig{

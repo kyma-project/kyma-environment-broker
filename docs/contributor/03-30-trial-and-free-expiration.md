@@ -3,6 +3,7 @@
 ## Overview
 
 You can explore and use SAP BTP, Kyma runtime for free for a limited period with the following plans:
+
 * The trial service plan for 14 days.
 * The free plan for 30 days.
 

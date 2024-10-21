@@ -161,14 +161,14 @@ func logic(config Config, svc *http.Client, kcp client.Client, db storage.Broker
 		return
 	}
 	for i, instance := range instances {
-		logs.Infof("instance %d/%d", i+1, instancesCount)
+		logs.Infof("instance i: %s r: %s %d/%d", instance.InstanceID, instance.RuntimeID, i+1, instancesCount)
 		if instance.SubAccountID == "" {
-			logs.Errorf("instance have empty SA %s", instance.SubAccountID)
+			logs.Errorf("instance r: %s have empty SA %s", instance.RuntimeID, instance.SubAccountID)
 			kebInstanceMissingSACount++
 			continue
 		}
 		if instance.GlobalAccountID == "" {
-			logs.Errorf("instance have empty GA %s", instance.GlobalAccountID)
+			logs.Errorf("instance r: %s have empty GA %s", instance.RuntimeID, instance.GlobalAccountID)
 			kebInstanceMissingGACount++
 			continue
 		}
@@ -185,7 +185,7 @@ func logic(config Config, svc *http.Client, kcp client.Client, db storage.Broker
 			svcGlobalAccountMissing++
 			continue
 		} else if svcGlobalAccountId != instance.GlobalAccountID {
-			info := fmt.Sprintf("(INSTANCE %s MISMATCH) for subaccount %s is %s but it should be: %s", instance.InstanceID, instance.SubAccountID, instance.GlobalAccountID, svcGlobalAccountId)
+			info := fmt.Sprintf("(INSTANCE i: %s r: %s MISMATCH) for subaccount %s is %s but it should be: %s", instance.InstanceID, instance.RuntimeID, instance.SubAccountID, instance.GlobalAccountID, svcGlobalAccountId)
 			mismatches = append(mismatches, info)
 			mismatch++
 		} else {
@@ -211,7 +211,7 @@ func logic(config Config, svc *http.Client, kcp client.Client, db storage.Broker
 }
 
 func updateData(instance *internal.Instance, svcGlobalAccountId string, logs *logrus.Logger, labeler broker.Labeler, db storage.BrokerStorage) (instanceUpdateFail bool, labelsUpdateFail bool) {
-	if instance.SubscriptionGlobalAccountID != "" {
+	if instance.SubscriptionGlobalAccountID == "" {
 		instance.SubscriptionGlobalAccountID = instance.GlobalAccountID
 	}
 	instance.GlobalAccountID = svcGlobalAccountId
@@ -224,6 +224,7 @@ func updateData(instance *internal.Instance, svcGlobalAccountId string, logs *lo
 
 	// isExpired checks if field expireAt is not empty, if yes, then it means it is suspended
 	if instance.IsExpired() {
+		logs.Infof("instance r: %s is suspended, skipping labels update", instance.RuntimeID)
 		return
 	}
 

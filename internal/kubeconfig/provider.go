@@ -3,9 +3,13 @@ package kubeconfig
 import (
 	"context"
 	"fmt"
+	"time"
 
+	authv1 "k8s.io/api/authentication/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	machineryv1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/client-go/testing"
 
 	v1 "k8s.io/api/core/v1"
 	"k8s.io/client-go/kubernetes"
@@ -137,6 +141,16 @@ func (p *FakeProvider) K8sClientSetForRuntimeID(runtimeID string) (kubernetes.In
 
 func createFakeClientset() kubernetes.Interface {
 	c := fake.NewSimpleClientset()
+	c.PrependReactor("create", "serviceaccounts", func(action testing.Action) (handled bool, ret runtime.Object, err error) {
+		obj := action.(testing.CreateAction).GetObject()
+		subresource := action.GetSubresource()
+		if subresource == "token" {
+			tokenObject := obj.(*authv1.TokenRequest)
+			tokenObject.Status.ExpirationTimestamp = machineryv1.Time{Time: time.Now().Add(time.Duration(*tokenObject.Spec.ExpirationSeconds) * time.Second)}
+			return true, tokenObject, nil
+		}
+		return true, obj, nil
+	})
 	_, err := c.CoreV1().Namespaces().Create(context.Background(), &v1.Namespace{
 		ObjectMeta: machineryv1.ObjectMeta{Name: "kyma-system", Namespace: ""},
 	}, machineryv1.CreateOptions{})

@@ -1,6 +1,6 @@
 # Kyma Environment Broker CronJobs
 
-Kyma Environment Broker (KEB) comes with a set of CronJobs designed to clean up the environment that KEB runs on. They are not required for KEB to work, but their functions will not be performed if you don’t turn them on. 
+Kyma Environment Broker (KEB) comes with a set of CronJobs designed to clean up the environment that KEB runs on. They are not required for KEB to work, but their functions will not be performed if you don’t turn them on.
 
 | **Subcomponent**                                                        | **Description**                                                                                                                                                                                             |
 |:------------------------------------------------------------------------|:------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|

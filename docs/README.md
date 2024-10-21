@@ -3,6 +3,7 @@
 This folder contains Kyma Environment Broker's (KEB's) documentation.  
 
 If you want to know how to use KEB, read the documents in the [`user`](user) directory:  
+
 * [Kyma Environment Broker Architecture](./user/01-10-architecture.md)  
 * [Kyma Environment Broker Target Architecture](./user/01-20-target-architecture.md)
 * [Kyma Environment Broker Endpoints](./user/02-10-broker-endpoints.md)
@@ -19,6 +20,7 @@ If you want to know how to use KEB, read the documents in the [`user`](user) dir
 * [Kyma Environment Broker Metrics](./user/06-10-metrics.md)
 
 For technical details of KEB, go to the `contributor` directory:  
+
 * [Authorization](./contributor/01-10-authorization.md)
 * [Check API Using Swagger](./contributor/01-20-swagger.md)
 * [Kyma Environment Broker Configuration](./contributor/02-30-keb-configuration.md)
@@ -41,5 +43,6 @@ For technical details of KEB, go to the `contributor` directory:
 * [Cleaning and Archiving](./contributor/08-10-cleaning-and-archiving.md)
 
 You can also read about:  
+
 * [Event Data Platform Tools](https://github.com/kyma-project/kyma-environment-broker/blob/main/utils/edp-registrator/README.md)
 * [Install KEB in the CN Region](../resources/cn/cn.md)

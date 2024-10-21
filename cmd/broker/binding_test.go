@@ -63,4 +63,56 @@ func TestBinding(t *testing.T) {
                }`)
 		assert.Equal(t, http.StatusBadRequest, resp.StatusCode)
 	})
+
+	t.Run("should return 200 when creating a second binding with the same id and params as an existing one", func(t *testing.T) {
+		bid = uuid.New().String()
+		resp = suite.CallAPI("PUT", fmt.Sprintf("oauth/v2/service_instances/%s/service_bindings/%s", iid, bid),
+			`{
+                "service_id": "47c9dcbf-ff30-448e-ab36-d3bad66ba281",
+                "plan_id": "361c511f-f939-4621-b228-d0fb79a1fe15",
+				"parameters": {
+					"expiration_seconds": 600
+				}
+               }`)
+		resp = suite.CallAPI("PUT", fmt.Sprintf("oauth/v2/service_instances/%s/service_bindings/%s", iid, bid),
+			`{
+                "service_id": "47c9dcbf-ff30-448e-ab36-d3bad66ba281",
+                "plan_id": "361c511f-f939-4621-b228-d0fb79a1fe15",
+				"parameters": {
+					"expiration_seconds": 600
+				}
+               }`)
+		assert.Equal(t, http.StatusOK, resp.StatusCode)
+
+		// "expiration_seconds": 600 is a default value from the config in tests
+		resp = suite.CallAPI("PUT", fmt.Sprintf("oauth/v2/service_instances/%s/service_bindings/%s", iid, bid),
+			`{
+                "service_id": "47c9dcbf-ff30-448e-ab36-d3bad66ba281",
+                "plan_id": "361c511f-f939-4621-b228-d0fb79a1fe15"
+               }`)
+		assert.Equal(t, http.StatusOK, resp.StatusCode)
+	})
+
+	t.Run("should return 409 when creating a second binding with the same id as an existing one but different params", func(t *testing.T) {
+		bid = uuid.New().String()
+		resp = suite.CallAPI("PUT", fmt.Sprintf("oauth/v2/service_instances/%s/service_bindings/%s", iid, bid),
+			`{
+                "service_id": "47c9dcbf-ff30-448e-ab36-d3bad66ba281",
+                "plan_id": "361c511f-f939-4621-b228-d0fb79a1fe15",
+				"parameters": {
+					"expiration_seconds": 900
+				}
+               }`)
+		resp = suite.CallAPI("PUT", fmt.Sprintf("oauth/v2/service_instances/%s/service_bindings/%s", iid, bid),
+			`{
+                "service_id": "47c9dcbf-ff30-448e-ab36-d3bad66ba281",
+                "plan_id": "361c511f-f939-4621-b228-d0fb79a1fe15",
+				"parameters": {
+					"expiration_seconds": 930
+				}
+               }`)
+		assert.Equal(t, http.StatusConflict, resp.StatusCode)
+
+	})
+
 }

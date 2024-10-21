@@ -57,6 +57,13 @@ func AlreadyExists(format string, a ...interface{}) Error {
 	return errorf(CodeAlreadyExists, format, a...)
 }
 
+func IsAlreadyExists(err error) bool {
+	nf, ok := err.(interface {
+		Code() int
+	})
+	return ok && nf.Code() == CodeAlreadyExists
+}
+
 func Conflict(format string, a ...interface{}) Error {
 	return errorf(CodeConflict, format, a...)
 }
