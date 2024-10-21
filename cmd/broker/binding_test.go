@@ -84,6 +84,7 @@ func TestBinding(t *testing.T) {
                }`)
 		assert.Equal(t, http.StatusOK, resp.StatusCode)
 
+		// "expiration_seconds": 900 is a default value from the config in tests
 		resp = suite.CallAPI("PUT", fmt.Sprintf("oauth/v2/service_instances/%s/service_bindings/%s", iid, bid),
 			`{
                 "service_id": "47c9dcbf-ff30-448e-ab36-d3bad66ba281",
