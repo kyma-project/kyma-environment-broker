@@ -199,7 +199,7 @@ func (c *Client) Unbind(binding internal.Binding) error {
 		break
 	}
 	if err != nil {
-		return fmt.Errorf("while sending unbind request: %w", err)
+		return err
 	}
 
 	log.Infof("successfully unbound service binding with ID %q", binding.ID)
