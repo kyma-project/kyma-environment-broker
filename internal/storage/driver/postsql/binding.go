@@ -98,6 +98,23 @@ func (s *Binding) ListByInstanceID(instanceID string) ([]internal.Binding, error
 	return bindings, err
 }
 
+func (s *Binding) ListExpired() ([]internal.Binding, error) {
+	dtos, err := s.NewReadSession().ListExpiredBindings()
+	if err != nil {
+		return []internal.Binding{}, err
+	}
+	var bindings []internal.Binding
+	for _, dto := range dtos {
+		binding, err := s.toExpiredBinding(dto)
+		if err != nil {
+			return []internal.Binding{}, err
+		}
+
+		bindings = append(bindings, binding)
+	}
+	return bindings, err
+}
+
 func (s *Binding) toBindingDTO(binding *internal.Binding) (dbmodel.BindingDTO, error) {
 	encrypted, err := s.cipher.Encrypt([]byte(binding.Kubeconfig))
 	if err != nil {
@@ -123,6 +140,17 @@ func (s *Binding) toBinding(dto dbmodel.BindingDTO) (internal.Binding, error) {
 
 	return internal.Binding{
 		Kubeconfig:        string(decrypted),
+		ID:                dto.ID,
+		InstanceID:        dto.InstanceID,
+		CreatedAt:         dto.CreatedAt,
+		ExpirationSeconds: dto.ExpirationSeconds,
+		CreatedBy:         dto.CreatedBy,
+		ExpiresAt:         dto.ExpiresAt,
+	}, nil
+}
+
+func (s *Binding) toExpiredBinding(dto dbmodel.BindingDTO) (internal.Binding, error) {
+	return internal.Binding{
 		ID:                dto.ID,
 		InstanceID:        dto.InstanceID,
 		CreatedAt:         dto.CreatedAt,
