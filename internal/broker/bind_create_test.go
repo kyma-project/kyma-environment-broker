@@ -3,8 +3,119 @@ package broker
 import (
 	"testing"
 
+	"context"
+	"fmt"
+	"net/http/httptest"
+	"time"
+
 	"github.com/stretchr/testify/assert"
+
+	"code.cloudfoundry.org/lager"
+	"github.com/kyma-project/kyma-environment-broker/internal/fixture"
+	"github.com/kyma-project/kyma-environment-broker/internal/storage"
+	"github.com/kyma-project/kyma-environment-broker/internal/storage/dberr"
+	"github.com/pivotal-cf/brokerapi/v8/domain"
+	"github.com/sirupsen/logrus"
+	"github.com/stretchr/testify/require"
 )
+
+type Kubeconfig struct {
+	Users []User `yaml:"users"`
+}
+
+type User struct {
+	Name string `yaml:"name"`
+	User struct {
+		Token string `yaml:"token"`
+	} `yaml:"user"`
+}
+
+const (
+	instanceID1          = "1"
+	instanceID2          = "2"
+	instanceID3          = "max-bindings"
+	expirationSeconds    = 10000
+	maxExpirationSeconds = 7200
+	minExpirationSeconds = 600
+	bindingsPath         = "v2/service_instances/%s/service_bindings/%s"
+	deleteParams         = "?accepts_incomplete=false&service_id=%s&plan_id=%s"
+	maxBindingsCount     = 10
+)
+
+var httpServer *httptest.Server
+
+func TestCreateBindingEndpoint(t *testing.T) {
+	t.Log("test create binding endpoint")
+
+	// Given
+	//// logger
+	logs := logrus.New()
+	logs.SetLevel(logrus.DebugLevel)
+	logs.SetFormatter(&logrus.JSONFormatter{
+		TimestampFormat: time.RFC3339Nano,
+	})
+
+	brokerLogger := lager.NewLogger("test")
+	brokerLogger.RegisterSink(lager.NewWriterSink(logs.Writer(), lager.DEBUG))
+
+	//// schema
+
+	//// database
+	db := storage.NewMemoryStorage()
+
+	err := db.Instances().Insert(fixture.FixInstance(instanceID1))
+	require.NoError(t, err)
+
+	err = db.Instances().Insert(fixture.FixInstance(instanceID2))
+	require.NoError(t, err)
+
+	err = db.Instances().Insert(fixture.FixInstance(instanceID3))
+	require.NoError(t, err)
+
+	//// binding configuration
+	bindingCfg := &BindingConfig{
+		Enabled: true,
+		BindablePlans: EnablePlans{
+			fixture.PlanName,
+		},
+		ExpirationSeconds:    expirationSeconds,
+		MaxExpirationSeconds: maxExpirationSeconds,
+		MinExpirationSeconds: minExpirationSeconds,
+		MaxBindingsCount:     maxBindingsCount,
+	}
+
+	//// api handler
+	bindEndpoint := NewBind(*bindingCfg, db.Instances(), db.Bindings(), logs, nil, nil) // test relies on checking if got nil on kubeconfig provider but the instance got inserted either way
+
+	t.Run("should INSERT binding despite error on k8s api call", func(t *testing.T) {
+		defer func() {
+			r := recover()
+			
+			// then
+			var ok bool
+			err, ok = r.(error)
+			if !ok {
+				err = fmt.Errorf("pkg: %v", r)
+			}
+
+			binding, err := db.Bindings().Get(instanceID1, "binding-id")
+			require.NoError(t, err)
+			require.Equal(t, instanceID1, binding.InstanceID)
+			require.Equal(t, "binding-id", binding.ID)
+		}()
+
+		// given
+		_, err := db.Bindings().Get(instanceID1, "binding-id")
+		require.Error(t, err)
+		require.True(t, dberr.IsNotFound(err))
+
+		// when
+		bindEndpoint.Bind(context.Background(), instanceID1, "binding-id", domain.BindDetails{
+			ServiceID: "123",
+			PlanID:    fixture.PlanId,
+		}, false)
+	})
+}
 
 func TestCreatedBy(t *testing.T) {
 	emptyStr := ""

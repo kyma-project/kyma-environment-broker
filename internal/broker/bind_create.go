@@ -163,7 +163,14 @@ func (b *BindEndpoint) Bind(ctx context.Context, instanceID, bindingID string, d
 		ExpirationSeconds: int64(expirationSeconds),
 		CreatedBy:         bindingContext.CreatedBy(),
 	}
-	// get kubeconfig for the instance
+
+	err = b.bindingsStorage.Insert(binding)
+	if err != nil {
+		message := fmt.Sprintf("failed to insert Kyma binding into storage: %s", err)
+		return domain.Binding{}, apiresponses.NewFailureResponse(fmt.Errorf(message), http.StatusInternalServerError, message)
+	}
+
+	// create kubeconfig for the instance
 	kubeconfig, expiresAt, err = b.serviceAccountBindingManager.Create(ctx, instance, bindingID, expirationSeconds)
 	if err != nil {
 		message := fmt.Sprintf("failed to create a Kyma binding using service account's kubeconfig: %s", err)
@@ -172,14 +179,7 @@ func (b *BindEndpoint) Bind(ctx context.Context, instanceID, bindingID string, d
 
 	binding.ExpiresAt = expiresAt
 	binding.Kubeconfig = kubeconfig
-
-	err = b.bindingsStorage.Insert(binding)
-	if err != nil {
-		message := fmt.Sprintf("failed to insert Kyma binding into storage: %s", err)
-		return domain.Binding{}, apiresponses.NewFailureResponse(fmt.Errorf(message), http.StatusInternalServerError, message)
-
-	}
-
+	
 	return domain.Binding{
 		IsAsync: false,
 		Credentials: Credentials{
