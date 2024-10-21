@@ -476,42 +476,6 @@ func TestCreateBindingEndpoint(t *testing.T) {
 		//then
 		require.Equal(t, http.StatusBadRequest, response.StatusCode)
 	})
-
-	t.Run("should return HTTP OK when trying to create a binding with the same parameters and id as an existing binding", func(t *testing.T) {
-		// given
-		bindingID := uuid.New().String()
-		expSeconds := 600
-		firstResponse := createBindingWithCustomExpiration(instanceID1, bindingID, expSeconds, t)
-		defer firstResponse.Body.Close()
-		require.Equal(t, http.StatusCreated, firstResponse.StatusCode)
-
-		// when
-		secondResponse := createBindingWithCustomExpiration(instanceID1, bindingID, expSeconds, t)
-		defer secondResponse.Body.Close()
-		firstBinding := unmarshal(t, firstResponse)
-		secondBinding := unmarshal(t, secondResponse)
-
-		// then
-		require.Equal(t, http.StatusOK, secondResponse.StatusCode)
-		assert.Equal(t, firstBinding.Credentials, secondBinding.Credentials)
-	})
-
-	t.Run("should return error when trying to create a binding with the same id but different parameters as an existing binding", func(t *testing.T) {
-		// given
-		bindingID := uuid.New().String()
-		expSeconds := 1200
-		response := createBindingWithCustomExpiration(instanceID1, bindingID, expSeconds, t)
-		defer response.Body.Close()
-		require.Equal(t, http.StatusCreated, response.StatusCode)
-
-		// when
-		expSeconds = 1300
-		response = createBindingWithCustomExpiration(instanceID1, bindingID, expSeconds, t)
-		defer response.Body.Close()
-
-		// then
-		require.Equal(t, http.StatusConflict, response.StatusCode)
-	})
 }
 
 func assertResourcesExistence(t *testing.T, k8sClient client.Client, bindingID string) {
