@@ -3,7 +3,6 @@ package broker
 import (
 	"context"
 	"encoding/json"
-	"fmt"
 	"testing"
 
 	"github.com/google/uuid"
@@ -138,7 +137,7 @@ func TestCreateSecondBindingWithTheSameIdAndParams(t *testing.T) {
 
 	// when
 	resp, err := svc.Bind(context.Background(), instanceID, bindingID, details, false)
-	fmt.Print(resp.Metadata.ExpiresAt)
+
 	// then
 	assert.NoError(t, err)
 	assert.Equal(t, binding.ExpiresAt.Format(expiresAtLayout), resp.Metadata.ExpiresAt)
@@ -169,7 +168,7 @@ func TestCreateSecondBindingWithTheSameIdAndParamsNotExplicitlyDefined(t *testin
 
 	// when
 	resp, err := svc.Bind(context.Background(), instanceID, bindingID, domain.BindDetails{}, false)
-	fmt.Print(resp.Metadata.ExpiresAt)
+
 	// then
 	assert.NoError(t, err)
 	assert.Equal(t, binding.ExpiresAt.Format(expiresAtLayout), resp.Metadata.ExpiresAt)
