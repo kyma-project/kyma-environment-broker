@@ -39,10 +39,7 @@ func TestBinding(t *testing.T) {
 	resp = suite.CallAPI("PUT", fmt.Sprintf("oauth/v2/service_instances/%s/service_bindings/%s", iid, bid),
 		`{
                 "service_id": "47c9dcbf-ff30-448e-ab36-d3bad66ba281",
-                "plan_id": "361c511f-f939-4621-b228-d0fb79a1fe15",
-				"parameters": {
-					"expiration_seconds": 600
-				}
+                "plan_id": "361c511f-f939-4621-b228-d0fb79a1fe15"
                }`)
 
 	b, _ := io.ReadAll(resp.Body)
