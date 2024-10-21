@@ -133,7 +133,7 @@ describe('SKR Binding test', function() {
     expect(secondResponse.status).equal(200);
   });
 
-  it('Should return HTTP 409 when creating a binding with the same ID as an existing one but different params', async function() {
+  it('Should return 409 for duplicate binding with different params', async function() {
     const expirationSeconds = 700;
     try {
       await keb.createBinding(options.instanceID, bindingID, expirationSeconds);
