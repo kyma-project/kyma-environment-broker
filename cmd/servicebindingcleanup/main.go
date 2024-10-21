@@ -21,9 +21,11 @@ type BrokerClient interface {
 }
 
 type Config struct {
-	Database storage.Config
-	Broker   broker.ClientConfig
-	DryRun   bool `envconfig:"default=true"`
+	Database       storage.Config
+	Broker         broker.ClientConfig
+	DryRun         bool          `envconfig:"default=true"`
+	RequestTimeout time.Duration `envconfig:"default=2s"`
+	RequestRetries int           `envconfig:"default=2"`
 }
 
 type ServiceBindingCleanupService struct {
@@ -54,7 +56,7 @@ func main() {
 	}
 
 	ctx := context.Background()
-	brokerClient := broker.NewClient(ctx, cfg.Broker)
+	brokerClient := broker.NewClientWithRequestTimeoutAndRetries(ctx, cfg.Broker, cfg.RequestTimeout, cfg.RequestRetries)
 	brokerClient.UserAgent = broker.ServiceBindingCleanupJobName
 
 	cipher := storage.NewEncrypter(cfg.Database.SecretKey)
