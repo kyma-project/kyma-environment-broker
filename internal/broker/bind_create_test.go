@@ -34,12 +34,6 @@ const (
 	instanceID1          = "1"
 	instanceID2          = "2"
 	instanceID3          = "max-bindings"
-	expirationSeconds    = 10000
-	maxExpirationSeconds = 7200
-	minExpirationSeconds = 600
-	bindingsPath         = "v2/service_instances/%s/service_bindings/%s"
-	deleteParams         = "?accepts_incomplete=false&service_id=%s&plan_id=%s"
-	maxBindingsCount     = 10
 )
 
 var httpServer *httptest.Server
@@ -78,10 +72,6 @@ func TestCreateBindingEndpoint(t *testing.T) {
 		BindablePlans: EnablePlans{
 			fixture.PlanName,
 		},
-		ExpirationSeconds:    expirationSeconds,
-		MaxExpirationSeconds: maxExpirationSeconds,
-		MinExpirationSeconds: minExpirationSeconds,
-		MaxBindingsCount:     maxBindingsCount,
 	}
 
 	//// api handler
