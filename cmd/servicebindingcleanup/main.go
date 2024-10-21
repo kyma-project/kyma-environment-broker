@@ -78,8 +78,8 @@ func (s *ServiceBindingCleanupService) PerformCleanup() error {
 		return err
 	}
 
+	slog.Info(fmt.Sprintf("Expired Service Bindings: %d", len(bindings)))
 	if s.cfg.DryRun {
-		slog.Info(fmt.Sprintf("Expired Service Bindings: %d", len(bindings)))
 		return nil
 	} else {
 		slog.Info("Requesting Service Bindings removal...")
