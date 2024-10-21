@@ -10,14 +10,16 @@ import (
 
 	"github.com/kyma-project/kyma-environment-broker/internal"
 	"github.com/pivotal-cf/brokerapi/v8/domain/apiresponses"
+	"github.com/pkg/errors"
 	"golang.org/x/oauth2/clientcredentials"
 
 	log "github.com/sirupsen/logrus"
 )
 
 const (
-	kymaClassID       = "47c9dcbf-ff30-448e-ab36-d3bad66ba281"
-	AccountCleanupJob = "accountcleanup-job"
+	kymaClassID                  = "47c9dcbf-ff30-448e-ab36-d3bad66ba281"
+	AccountCleanupJob            = "accountcleanup-job"
+	ServiceBindingCleanupJobName = "service-binding-cleanup-job"
 
 	instancesURL       = "/oauth/v2/service_instances"
 	expireInstanceURL  = "/expire/service_instance"
@@ -64,10 +66,11 @@ type ClientConfig struct {
 }
 
 type Client struct {
-	brokerConfig ClientConfig
-	httpClient   *http.Client
-	poller       Poller
-	UserAgent    string
+	brokerConfig   ClientConfig
+	httpClient     *http.Client
+	poller         Poller
+	UserAgent      string
+	RequestRetries int
 }
 
 func NewClientConfig(URL string) *ClientConfig {
@@ -81,26 +84,39 @@ func NewClient(ctx context.Context, config ClientConfig) *Client {
 }
 
 func NewClientWithPoller(ctx context.Context, config ClientConfig, poller Poller) *Client {
+	client := newClient(ctx, config)
+	client.httpClient.Timeout = 30 * time.Second
+	client.poller = poller
+	return client
+}
+
+func NewClientWithRequestTimeoutAndRetries(ctx context.Context, config ClientConfig, requestTimeout time.Duration, requestRetries int) *Client {
+	client := newClient(ctx, config)
+	client.httpClient.Timeout = requestTimeout
+	client.RequestRetries = requestRetries
+	return client
+}
+
+func newClient(ctx context.Context, config ClientConfig) *Client {
 	if config.TokenURL == "" {
 		return &Client{
 			brokerConfig: config,
 			httpClient:   http.DefaultClient,
-			poller:       poller,
 		}
 	}
+
 	cfg := clientcredentials.Config{
 		ClientID:     config.ClientID,
 		ClientSecret: config.ClientSecret,
 		TokenURL:     config.TokenURL,
 		Scopes:       []string{config.Scope},
 	}
+
 	httpClientOAuth := cfg.Client(ctx)
-	httpClientOAuth.Timeout = 30 * time.Second
 
 	return &Client{
 		brokerConfig: config,
 		httpClient:   httpClientOAuth,
-		poller:       poller,
 	}
 }
 
@@ -114,7 +130,7 @@ func (c *Client) Deprovision(instance internal.Instance) (string, error) {
 	response := serviceInstancesResponseDTO{}
 	log.Infof("Requesting deprovisioning of the environment with instance id: %q", instance.InstanceID)
 	err = c.poller.Invoke(func() (bool, error) {
-		err := c.executeRequestWithPoll(http.MethodDelete, deprovisionURL, http.StatusAccepted, nil, &response)
+		err := c.executeRequest(http.MethodDelete, deprovisionURL, http.StatusAccepted, nil, &response)
 		if err != nil {
 			log.Warn(fmt.Sprintf("while executing request: %s", err.Error()))
 			return false, nil
@@ -169,20 +185,23 @@ func (c *Client) Unbind(binding internal.Binding) error {
 		return err
 	}
 
-	emptyResponse := &apiresponses.EmptyResponse{}
 	log.Infof("sending unbind request for service binding with ID %q and instance ID: %q", binding.ID, binding.InstanceID)
-	err = c.poller.Invoke(func() (bool, error) {
-		err := c.executeRequestWithPoll(http.MethodDelete, unbindURL, http.StatusOK, nil, emptyResponse)
-		if err != nil {
-			log.Warn(fmt.Sprintf("while executing request: %s", err.Error()))
-			return false, nil
-		}
-		return true, nil
-	})
 
-	if err != nil {
-		return fmt.Errorf("while waiting for successful unbind call: %w", err)
+	emptyResponse := &apiresponses.EmptyResponse{}
+	for requestAttemptNum := 1; requestAttemptNum <= c.RequestRetries; requestAttemptNum++ {
+		if err = c.executeRequest(http.MethodDelete, unbindURL, http.StatusOK, nil, emptyResponse); err != nil {
+			if errors.Is(err, context.DeadlineExceeded) {
+				log.Warnf("request failed - timeout (attempt %d/%d)", requestAttemptNum, c.RequestRetries)
+				continue
+			}
+			break
+		}
+		break
 	}
+	if err != nil {
+		return fmt.Errorf("while sending unbind request: %w", err)
+	}
+
 	log.Infof("successfully unbound service binding with ID %q", binding.ID)
 
 	return nil
@@ -281,10 +300,10 @@ func (c *Client) formatUnbindUrl(binding internal.Binding) (string, error) {
 	return fmt.Sprintf(unbindTmpl, c.brokerConfig.URL, instancesURL, binding.InstanceID, binding.ID), nil
 }
 
-func (c *Client) executeRequestWithPoll(method, url string, expectedStatus int, body io.Reader, responseBody interface{}) error {
-	request, err := http.NewRequest(method, url, body)
+func (c *Client) executeRequest(method, url string, expectedStatus int, requestBody io.Reader, responseBody interface{}) error {
+	request, err := http.NewRequest(method, url, requestBody)
 	if err != nil {
-		return fmt.Errorf("while creating request for provisioning: %w", err)
+		return fmt.Errorf("while creating request: %w", err)
 	}
 	request.Header.Set("X-Broker-API-Version", "2.14")
 	if len(c.UserAgent) != 0 {
@@ -293,8 +312,9 @@ func (c *Client) executeRequestWithPoll(method, url string, expectedStatus int, 
 
 	resp, err := c.httpClient.Do(request)
 	if err != nil {
-		return fmt.Errorf("while executing request URL: %s: %w", url, err)
+		return err
 	}
+
 	defer c.warnOnError(resp.Body.Close)
 	if resp.StatusCode != expectedStatus {
 		return fmt.Errorf("got unexpected status code while calling Kyma Environment Broker: want: %d, got: %d",

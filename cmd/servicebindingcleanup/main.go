@@ -55,6 +55,7 @@ func main() {
 
 	ctx := context.Background()
 	brokerClient := broker.NewClient(ctx, cfg.Broker)
+	brokerClient.UserAgent = broker.ServiceBindingCleanupJobName
 
 	cipher := storage.NewEncrypter(cfg.Database.SecretKey)
 	db, conn, err := storage.NewFromConfig(cfg.Database, events.Config{}, cipher, log.WithField("service", "storage"))
