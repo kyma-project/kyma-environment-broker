@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/kyma-project/kyma-environment-broker/internal"
+	"github.com/pivotal-cf/brokerapi/v8/domain/apiresponses"
 	"golang.org/x/oauth2/clientcredentials"
 
 	log "github.com/sirupsen/logrus"
@@ -23,6 +24,7 @@ const (
 	deprovisionTmpl    = "%s%s/%s?service_id=%s&plan_id=%s"
 	updateInstanceTmpl = "%s%s/%s"
 	getInstanceTmpl    = "%s%s/%s"
+	unbindTmpl         = "%s%s/%s/service_bindings/%s"
 )
 
 type (
@@ -160,6 +162,32 @@ func (c *Client) GetInstanceRequest(instanceID string) (response *http.Response,
 	return resp, nil
 }
 
+// Unbind requests Service Binding unbinding in KEB with given details
+func (c *Client) Unbind(binding internal.Binding) error {
+	unbindURL, err := c.formatUnbindUrl(binding)
+	if err != nil {
+		return err
+	}
+
+	emptyResponse := &apiresponses.EmptyResponse{}
+	log.Infof("sending unbind request for service binding with ID %q and instance ID: %q", binding.ID, binding.InstanceID)
+	err = c.poller.Invoke(func() (bool, error) {
+		err := c.executeRequestWithPoll(http.MethodDelete, unbindURL, http.StatusOK, nil, emptyResponse)
+		if err != nil {
+			log.Warn(fmt.Sprintf("while executing request: %s", err.Error()))
+			return false, nil
+		}
+		return true, nil
+	})
+
+	if err != nil {
+		return fmt.Errorf("while waiting for successful unbind call: %w", err)
+	}
+	log.Infof("successfully unbound service binding with ID %q", binding.ID)
+
+	return nil
+}
+
 func processResponse(instanceID string, statusCode int, resp *http.Response) (suspensionUnderWay bool, err error) {
 	switch statusCode {
 	case http.StatusAccepted, http.StatusOK:
@@ -243,6 +271,14 @@ func (c *Client) formatDeprovisionUrl(instance internal.Instance) (string, error
 	}
 
 	return fmt.Sprintf(deprovisionTmpl, c.brokerConfig.URL, instancesURL, instance.InstanceID, kymaClassID, instance.ServicePlanID), nil
+}
+
+func (c *Client) formatUnbindUrl(binding internal.Binding) (string, error) {
+	if len(binding.InstanceID) == 0 {
+		return "", fmt.Errorf("empty InstanceID")
+	}
+
+	return fmt.Sprintf(unbindTmpl, c.brokerConfig.URL, instancesURL, binding.InstanceID, binding.ID), nil
 }
 
 func (c *Client) executeRequestWithPoll(method, url string, expectedStatus int, body io.Reader, responseBody interface{}) error {
