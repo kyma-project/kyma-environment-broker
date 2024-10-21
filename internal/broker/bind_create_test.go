@@ -90,7 +90,7 @@ func TestCreateBindingEndpoint(t *testing.T) {
 	t.Run("should INSERT binding despite error on k8s api call", func(t *testing.T) {
 		defer func() {
 			r := recover()
-			
+
 			// then
 			var ok bool
 			err, ok = r.(error)
@@ -110,7 +110,7 @@ func TestCreateBindingEndpoint(t *testing.T) {
 		require.True(t, dberr.IsNotFound(err))
 
 		// when
-		bindEndpoint.Bind(context.Background(), instanceID1, "binding-id", domain.BindDetails{
+		_, _ = bindEndpoint.Bind(context.Background(), instanceID1, "binding-id", domain.BindDetails{
 			ServiceID: "123",
 			PlanID:    fixture.PlanId,
 		}, false)
