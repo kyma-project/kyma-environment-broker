@@ -118,19 +118,28 @@ func (b *BindEndpoint) Bind(ctx context.Context, instanceID, bindingID string, d
 		}
 	}
 
+	expirationSeconds := b.config.ExpirationSeconds
+	if parameters.ExpirationSeconds != 0 {
+		if parameters.ExpirationSeconds > b.config.MaxExpirationSeconds {
+			message := fmt.Sprintf("expiration_seconds cannot be greater than %d", b.config.MaxExpirationSeconds)
+			return domain.Binding{}, apiresponses.NewFailureResponse(fmt.Errorf(message), http.StatusBadRequest, message)
+		}
+		if parameters.ExpirationSeconds < b.config.MinExpirationSeconds {
+			message := fmt.Sprintf("expiration_seconds cannot be less than %d", b.config.MinExpirationSeconds)
+			return domain.Binding{}, apiresponses.NewFailureResponse(fmt.Errorf(message), http.StatusBadRequest, message)
+		}
+		expirationSeconds = parameters.ExpirationSeconds
+	}
+
 	bindingFromDB, err := b.bindingsStorage.Get(instanceID, bindingID)
 	if err != nil && !dberr.IsNotFound(err) {
 		message := fmt.Sprintf("failed to get Kyma binding from storage: %s", err)
 		return domain.Binding{}, apiresponses.NewFailureResponse(fmt.Errorf(message), http.StatusInternalServerError, message)
 	}
 	if bindingFromDB != nil {
-		if bindingFromDB.ExpirationSeconds != int64(parameters.ExpirationSeconds) {
-			if int64(parameters.ExpirationSeconds) == 0 && bindingFromDB.ExpirationSeconds == int64(b.config.ExpirationSeconds) {
-
-			} else {
-				message := fmt.Sprintf("binding already exists but with different parameters")
-				return domain.Binding{}, apiresponses.NewFailureResponse(fmt.Errorf(message), http.StatusConflict, message)
-			}
+		if bindingFromDB.ExpirationSeconds != int64(expirationSeconds) {
+			message := fmt.Sprintf("binding already exists but with different parameters")
+			return domain.Binding{}, apiresponses.NewFailureResponse(fmt.Errorf(message), http.StatusConflict, message)
 		}
 		if bindingFromDB.ExpiresAt.After(time.Now()) {
 			return domain.Binding{
@@ -166,18 +175,6 @@ func (b *BindEndpoint) Bind(ctx context.Context, instanceID, bindingID string, d
 		}
 	}
 
-	expirationSeconds := b.config.ExpirationSeconds
-	if parameters.ExpirationSeconds != 0 {
-		if parameters.ExpirationSeconds > b.config.MaxExpirationSeconds {
-			message := fmt.Sprintf("expiration_seconds cannot be greater than %d", b.config.MaxExpirationSeconds)
-			return domain.Binding{}, apiresponses.NewFailureResponse(fmt.Errorf(message), http.StatusBadRequest, message)
-		}
-		if parameters.ExpirationSeconds < b.config.MinExpirationSeconds {
-			message := fmt.Sprintf("expiration_seconds cannot be less than %d", b.config.MinExpirationSeconds)
-			return domain.Binding{}, apiresponses.NewFailureResponse(fmt.Errorf(message), http.StatusBadRequest, message)
-		}
-		expirationSeconds = parameters.ExpirationSeconds
-	}
 	var kubeconfig string
 	var expiresAt time.Time
 	binding := &internal.Binding{

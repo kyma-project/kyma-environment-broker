@@ -144,7 +144,7 @@ func TestCreateSecondBindingWithTheSameIdAndParams(t *testing.T) {
 	assert.Equal(t, binding.ExpiresAt.Format(expiresAtLayout), resp.Metadata.ExpiresAt)
 }
 
-func TestCreateSecondBindingWithTheSameIdAndParams2(t *testing.T) {
+func TestCreateSecondBindingWithTheSameIdAndParamsNotExplicitlyDefined(t *testing.T) {
 	// given
 	const expiresAtLayout = "2006-01-02T15:04:05.0Z"
 	instanceID := uuid.New().String()
