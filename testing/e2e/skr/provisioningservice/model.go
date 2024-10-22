@@ -4,7 +4,7 @@ type AccessToken struct {
 	Token string `json:"access_token"`
 }
 
-type CreateEnvironment struct {
+type CreateEnvironmentRequest struct {
 	EnvironmentType string                `json:"environmentType"`
 	ServiceName     string                `json:"serviceName"`
 	PlanName        string                `json:"planName"`
@@ -33,7 +33,25 @@ const (
 	UPDATE_FAILED   State = "UPDATE_FAILED"
 )
 
-type Environment struct {
+type EnvironmentResponse struct {
 	ID    string `json:"id"`
 	State State  `json:"state"`
+}
+
+type CreateBindingRequest struct {
+	ServiceInstanceID string `json:"serviceInstanceId"`
+	PlanID            string `json:"planId"`
+}
+
+type CreatedBindingResponse struct {
+	ID          string
+	Credentials Credentials `json:"credentials"`
+}
+
+type GetBindingResponse struct {
+	Credentials Credentials `json:"credentials"`
+}
+
+type Credentials struct {
+	Kubeconfig string `json:"kubeconfig"`
 }
