@@ -3,9 +3,10 @@ package broker
 import (
 	"context"
 	"fmt"
-	"github.com/kyma-project/kyma-environment-broker/internal"
 	"net/http"
 	"time"
+
+	"github.com/kyma-project/kyma-environment-broker/internal"
 
 	"github.com/kyma-project/kyma-environment-broker/internal/storage"
 	"github.com/pivotal-cf/brokerapi/v8/domain"

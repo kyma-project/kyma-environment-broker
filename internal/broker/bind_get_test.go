@@ -2,10 +2,11 @@ package broker
 
 import (
 	"context"
-	"github.com/kyma-project/kyma-environment-broker/internal/fixture"
 	"net/http"
 	"testing"
 	"time"
+
+	"github.com/kyma-project/kyma-environment-broker/internal/fixture"
 
 	"github.com/kyma-project/kyma-environment-broker/internal"
 	"github.com/kyma-project/kyma-environment-broker/internal/storage/driver/memory"
