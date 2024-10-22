@@ -23,6 +23,7 @@ const (
 	serviceName           = "kymaruntime"
 	accessTokenPath       = "/oauth/token"
 	environmentsPath      = "/provisioning/v1/environments"
+	bindingsPath          = "/bindings"
 )
 
 type ProvisioningConfig struct {
@@ -31,6 +32,7 @@ type ProvisioningConfig struct {
 	ClientSecret string
 	UAA_URL      string
 	PlanName     string
+	PlanID       string
 	User         string
 	InstanceName string
 	Region       string
@@ -55,7 +57,7 @@ func NewProvisioningClient(cfg ProvisioningConfig, logger *slog.Logger, ctx cont
 }
 
 func (p *ProvisioningClient) CreateEnvironment() (CreatedEnvironmentResponse, error) {
-	requestBody := CreateEnvironment{
+	requestBody := CreateEnvironmentRequest{
 		EnvironmentType: environmentType,
 		PlanName:        p.cfg.PlanName,
 		ServiceName:     serviceName,
@@ -85,34 +87,83 @@ func (p *ProvisioningClient) CreateEnvironment() (CreatedEnvironmentResponse, er
 	return environment, nil
 }
 
-func (p *ProvisioningClient) GetEnvironment(environmentID string) (Environment, error) {
+func (p *ProvisioningClient) GetEnvironment(environmentID string) (EnvironmentResponse, error) {
 	resp, err := p.sendRequest(http.MethodGet, p.cfg.URL+environmentsPath+"/"+environmentID, http.StatusOK, nil)
 	if err != nil {
-		return Environment{}, err
+		return EnvironmentResponse{}, err
 	}
 
-	var environment Environment
+	var environment EnvironmentResponse
 	err = p.unmarshallResponse(resp, &environment)
 	if err != nil {
-		return Environment{}, err
+		return EnvironmentResponse{}, err
 	}
 
 	return environment, nil
 }
 
-func (p *ProvisioningClient) DeleteEnvironment(environmentID string) (Environment, error) {
+func (p *ProvisioningClient) DeleteEnvironment(environmentID string) (EnvironmentResponse, error) {
 	resp, err := p.sendRequest(http.MethodDelete, p.cfg.URL+environmentsPath+"/"+environmentID, http.StatusAccepted, nil)
 	if err != nil {
-		return Environment{}, err
+		return EnvironmentResponse{}, err
 	}
 
-	var environment Environment
+	var environment EnvironmentResponse
 	err = p.unmarshallResponse(resp, &environment)
 	if err != nil {
-		return Environment{}, err
+		return EnvironmentResponse{}, err
 	}
 
 	return environment, nil
+}
+
+func (p *ProvisioningClient) CreateBinding(environmentID string) (CreatedBindingResponse, error) {
+	requestBody := CreateBindingRequest{
+		ServiceInstanceID: environmentID,
+		PlanID:            p.cfg.PlanID,
+	}
+
+	requestBodyBytes, err := json.Marshal(requestBody)
+	if err != nil {
+		return CreatedBindingResponse{}, fmt.Errorf("failed to marshal request body: %v", err)
+	}
+
+	resp, err := p.sendRequest(http.MethodPut, p.cfg.URL+environmentsPath+"/"+environmentID+bindingsPath, http.StatusAccepted, bytes.NewBuffer(requestBodyBytes))
+	if err != nil {
+		return CreatedBindingResponse{}, err
+	}
+
+	var binding CreatedBindingResponse
+	err = p.unmarshallResponse(resp, &binding)
+	if err != nil {
+		return CreatedBindingResponse{}, err
+	}
+	binding.ID = resp.Header.Get("location")
+
+	return binding, nil
+}
+
+func (p *ProvisioningClient) GetBinding(environmentID, bindingID string) (GetBindingResponse, error) {
+	resp, err := p.sendRequest(http.MethodGet, p.cfg.URL+environmentsPath+"/"+environmentID+bindingsPath+"/"+bindingID, http.StatusOK, nil)
+	if err != nil {
+		return GetBindingResponse{}, err
+	}
+
+	var binding GetBindingResponse
+	err = p.unmarshallResponse(resp, &binding)
+	if err != nil {
+		return GetBindingResponse{}, err
+	}
+
+	return binding, nil
+}
+
+func (p *ProvisioningClient) DeleteBinding(environmentID, bindingID string) error {
+	if _, err := p.sendRequest(http.MethodDelete, p.cfg.URL+environmentsPath+"/"+environmentID+bindingsPath+"/"+bindingID, http.StatusOK, nil); err != nil {
+		return err
+	}
+
+	return nil
 }
 
 func (p *ProvisioningClient) GetAccessToken() error {
