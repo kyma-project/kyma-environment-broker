@@ -33,9 +33,10 @@ type User struct {
 }
 
 const (
-	instanceID1          = "1"
-	instanceID2          = "2"
-	instanceID3          = "max-bindings"
+	instanceID1      = "1"
+	instanceID2      = "2"
+	instanceID3      = "max-bindings"
+	maxBindingsCount = 10
 )
 
 var httpServer *httptest.Server
@@ -74,6 +75,7 @@ func TestCreateBindingEndpoint(t *testing.T) {
 		BindablePlans: EnablePlans{
 			fixture.PlanName,
 		},
+		MaxBindingsCount: maxBindingsCount,
 	}
 
 	//// api handler
