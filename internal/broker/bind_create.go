@@ -114,6 +114,8 @@ func (b *BindEndpoint) Bind(ctx context.Context, instanceID, bindingID string, d
 		err = json.Unmarshal(details.RawParameters, &parameters)
 		if err != nil {
 			message := fmt.Sprintf("failed to unmarshal parameters: %s", err)
+			message = strings.Replace(message, "json: ", "", 1)
+			message = strings.Replace(message, "Go struct field BindingParams.", "", 1)
 			return domain.Binding{}, apiresponses.NewFailureResponse(fmt.Errorf(message), http.StatusBadRequest, message)
 		}
 	}
