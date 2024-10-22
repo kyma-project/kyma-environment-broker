@@ -459,7 +459,7 @@ func TestCreateBindingEndpoint(t *testing.T) {
 
 	})
 
-	t.Run("should return error when attempting to add a new binding when the maximum number of bindings has already been reached", func(t *testing.T) {
+	t.Run("should return error when attempting to add a new binding when the maximum number of non expired bindings has already been reached", func(t *testing.T) {
 		// given - create max number of bindings
 		var response *http.Response
 

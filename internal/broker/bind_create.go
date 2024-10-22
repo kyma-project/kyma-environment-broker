@@ -170,7 +170,7 @@ func (b *BindEndpoint) Bind(ctx context.Context, instanceID, bindingID string, d
 			}
 		}
 		if (bindingCount - expiredCount) >= b.config.MaxBindingsCount {
-			message := fmt.Sprintf("maximum number of bindings reached: %d", b.config.MaxBindingsCount)
+			message := fmt.Sprintf("maximum number of non expired bindings reached: %d", b.config.MaxBindingsCount)
 			return domain.Binding{}, apiresponses.NewFailureResponse(fmt.Errorf(message), http.StatusBadRequest, message)
 		}
 	}
