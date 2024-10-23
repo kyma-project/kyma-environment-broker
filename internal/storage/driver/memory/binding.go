@@ -40,6 +40,18 @@ func (s *Binding) Insert(binding *internal.Binding) error {
 	return nil
 }
 
+func (s *Binding) Update(binding *internal.Binding) error {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
+	if _, found := s.data[binding.ID]; !found {
+		return dberr.AlreadyExists("binding with id %s does not exist", binding.ID)
+	}
+	s.data[binding.ID] = *binding
+
+	return nil
+}
+
 func (s *Binding) Delete(instanceID, bindingID string) error {
 	s.mu.Lock()
 	defer s.mu.Unlock()

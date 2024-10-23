@@ -56,6 +56,21 @@ func (ws writeSession) InsertBinding(binding dbmodel.BindingDTO) dberr.Error {
 	return nil
 }
 
+func (ws writeSession) UpdateBinding(binding dbmodel.BindingDTO) dberr.Error {
+	_, err := ws.update(BindingsTableName).
+		Set("kubeconfig", binding.Kubeconfig).
+		Set("expires_at", binding.ExpiresAt).
+		Where(dbr.Eq("id", binding.ID)).
+		Where(dbr.Eq("instance_id", binding.InstanceID)).
+		Exec()
+
+	if err != nil {
+		return dberr.Internal("Failed to update record to Binding table: %s", err)
+	}
+
+	return nil
+}
+
 func (ws writeSession) InsertInstanceArchived(instance dbmodel.InstanceArchivedDTO) dberr.Error {
 	_, err := ws.insertInto(InstancesArchivedTableName).
 		Pair("instance_id", instance.InstanceID).

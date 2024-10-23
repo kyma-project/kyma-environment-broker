@@ -60,6 +60,22 @@ func (s *Binding) Insert(binding *internal.Binding) error {
 	return nil
 }
 
+func (s *Binding) Update(binding *internal.Binding) error {
+	dto, err := s.toBindingDTO(binding)
+	if err != nil {
+		return err
+	}
+
+	sess := s.NewWriteSession()
+	err = sess.UpdateBinding(dto)
+
+	if err != nil {
+		return fmt.Errorf("while updating binding with ID %s: %w", binding.ID, err)
+	}
+
+	return nil
+}
+
 func (s *Binding) Delete(instanceID, bindingID string) error {
 	sess := s.NewWriteSession()
 	return sess.DeleteBinding(instanceID, bindingID)

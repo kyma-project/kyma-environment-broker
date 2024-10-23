@@ -208,6 +208,12 @@ func (b *BindEndpoint) Bind(ctx context.Context, instanceID, bindingID string, d
 	binding.ExpiresAt = expiresAt
 	binding.Kubeconfig = kubeconfig
 
+	err = b.bindingsStorage.Update(binding)
+	if err != nil {
+		message := fmt.Sprintf("failed to update Kyma binding in storage: %s", err)
+		return domain.Binding{}, apiresponses.NewFailureResponse(fmt.Errorf(message), http.StatusInternalServerError, message)
+	}
+
 	return domain.Binding{
 		IsAsync: false,
 		Credentials: Credentials{
