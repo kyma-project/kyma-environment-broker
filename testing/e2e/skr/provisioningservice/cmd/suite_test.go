@@ -1,10 +1,12 @@
-package provisioningservice
+package cmd
 
 import (
 	"context"
 	"log/slog"
 	"os"
 	"testing"
+
+	"github.com/kyma-project/kyma-environment-broker/testing/e2e/skr/provisioningservice/internal"
 
 	"github.com/stretchr/testify/require"
 	"github.com/vrischmann/envconfig"
@@ -18,14 +20,14 @@ const (
 )
 
 type Config struct {
-	Provisioning ProvisioningConfig
+	Provisioning internal.ProvisioningConfig
 }
 
 type ProvisioningSuite struct {
 	t      *testing.T
 	logger *slog.Logger
 
-	provisioningClient *ProvisioningClient
+	provisioningClient *internal.ProvisioningClient
 }
 
 func NewProvisioningSuite(t *testing.T) *ProvisioningSuite {
@@ -38,7 +40,7 @@ func NewProvisioningSuite(t *testing.T) *ProvisioningSuite {
 	require.NoError(t, err)
 
 	logger.Info("Creating a new provisioning client")
-	provisioningClient := NewProvisioningClient(cfg.Provisioning, logger, ctx, 60)
+	provisioningClient := internal.NewProvisioningClient(cfg.Provisioning, logger, ctx, 60)
 	err = provisioningClient.GetAccessToken()
 	require.NoError(t, err)
 
