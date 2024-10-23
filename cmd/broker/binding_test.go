@@ -67,11 +67,14 @@ func TestBinding(t *testing.T) {
 				}
                }`)
 		assert.Equal(t, http.StatusBadRequest, resp.StatusCode)
+
 		b, err := io.ReadAll(resp.Body)
 		assert.NoError(t, err)
+
 		var apiError ErrorResponse
 		err = json.Unmarshal(b, &apiError)
 		assert.NoError(t, err)
+
 		assert.Equal(t, "failed to unmarshal parameters: cannot unmarshal string into expiration_seconds of type int", apiError.Description)
 	})
 
