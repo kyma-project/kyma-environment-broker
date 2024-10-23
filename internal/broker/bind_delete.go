@@ -56,7 +56,6 @@ func (b *UnbindEndpoint) Unbind(ctx context.Context, instanceID, bindingID strin
 		return domain.UnbindSpec{}, apiresponses.NewFailureResponse(fmt.Errorf("failed to get instance %s", instanceID), http.StatusInternalServerError, fmt.Sprintf("failed to get instance %s", instanceID))
 	}
 
-	// if instance does not exist in instances table - remove binding from bindings table and return 410 (unless other error)
 	lastOperation, err := b.operationsStorage.GetLastOperation(instance.InstanceID)
 	if err != nil {
 		return domain.UnbindSpec{}, apiresponses.NewFailureResponse(fmt.Errorf("failed to get last operation for instance %s", instanceID), http.StatusInternalServerError, fmt.Sprintf("failed to get last operation %s", instanceID))
