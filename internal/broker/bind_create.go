@@ -207,7 +207,7 @@ func (b *BindEndpoint) Bind(ctx context.Context, instanceID, bindingID string, d
 
 	binding.ExpiresAt = expiresAt
 	binding.Kubeconfig = kubeconfig
-	
+
 	return domain.Binding{
 		IsAsync: false,
 		Credentials: Credentials{
