@@ -1,6 +1,7 @@
 package main
 
 import (
+	"encoding/json"
 	"fmt"
 
 	"github.com/stretchr/testify/assert"
@@ -13,6 +14,10 @@ import (
 	"github.com/google/uuid"
 	"github.com/pivotal-cf/brokerapi/v8/domain"
 )
+
+type ErrorResponse struct {
+	Description string `json:"description"`
+}
 
 func TestBinding(t *testing.T) {
 	// given
@@ -65,6 +70,15 @@ func TestBinding(t *testing.T) {
 				}
                }`)
 		assert.Equal(t, http.StatusBadRequest, resp.StatusCode)
+
+		b, err := io.ReadAll(resp.Body)
+		assert.NoError(t, err)
+
+		var apiError ErrorResponse
+		err = json.Unmarshal(b, &apiError)
+		assert.NoError(t, err)
+
+		assert.Equal(t, "failed to unmarshal parameters: cannot unmarshal string into expiration_seconds of type int", apiError.Description)
 	})
 
 	t.Run("should return 200 when creating a second binding with the same id and params as an existing one", func(t *testing.T) {
