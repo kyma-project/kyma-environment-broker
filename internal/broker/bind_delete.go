@@ -37,7 +37,6 @@ func (b *UnbindEndpoint) Unbind(ctx context.Context, instanceID, bindingID strin
 	instance, err := b.instancesStorage.GetByID(instanceID)
 	switch {
 	case dberr.IsNotFound(err):
-		// instance does not exist in instance table, but binding could be still present - clean and return 410 Gone
 		err = b.bindingsStorage.Delete(instanceID, bindingID)
 		if err != nil {
 			b.log.Errorf("Unbind error during removal of db entity: %v", err)
@@ -62,7 +61,6 @@ func (b *UnbindEndpoint) Unbind(ctx context.Context, instanceID, bindingID strin
 	}
 
 	if lastOperation.Type != internal.OperationTypeDeprovision {
-		// if instance is neither being deprovisioned nor is suspended
 		err = b.bindingsManager.Delete(ctx, instance, bindingID)
 		if err != nil {
 			b.log.Errorf("Unbind error during removal of service account resources: %s", err)
