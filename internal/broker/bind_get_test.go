@@ -61,12 +61,12 @@ func TestGetBinding(t *testing.T) {
 		operation := fixture.FixOperation("operation-001", "test-instance-id", internal.OperationTypeDeprovision)
 		err := operationsMemory.InsertOperation(operation)
 
-		expiredBinding := &internal.Binding{
+		binding := &internal.Binding{
 			ID:         "test-binding-id",
 			InstanceID: "test-instance-id",
 			ExpiresAt:  time.Now().Add(-1 * time.Hour),
 		}
-		err = bindingsMemory.Insert(expiredBinding)
+		err = bindingsMemory.Insert(binding)
 		require.NoError(t, err)
 
 		endpoint := &GetBindingEndpoint{
