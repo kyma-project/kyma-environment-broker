@@ -1,4 +1,4 @@
-package provisioningservice
+package internal
 
 import (
 	"bytes"
@@ -31,11 +31,11 @@ type ProvisioningConfig struct {
 	ClientID     string
 	ClientSecret string
 	UAA_URL      string
-	PlanName     string
-	PlanID       string
+	PlanName     string `envconfig:"default=aws"`
+	PlanID       string `envconfig:"default=361c511f-f939-4621-b228-d0fb79a1fe15"`
 	User         string
 	InstanceName string
-	Region       string
+	Region       string `envconfig:"default=eu-west-2"`
 }
 
 type ProvisioningClient struct {
