@@ -441,12 +441,9 @@ func (s *BrokerSuiteTest) WaitForInstanceRemoval(iid string) {
 	assert.NoError(s.t, err, "timeout waiting for the instance %s to be removed", iid)
 }
 
-func (s *BrokerSuiteTest) WaitForBindingRemoval(iid string, bindingID string) {
-	err := s.poller.Invoke(func() (done bool, err error) {
-		_, err = s.db.Bindings().Get(iid, bindingID)
-		return dberr.IsNotFound(err), nil
-	})
-	assert.NoError(s.t, err, "timeout waiting for the binding %s/%s to be removed", iid, bindingID)
+func (s *BrokerSuiteTest) AssertBindingRemoval(iid string, bindingID string) {
+	_, err := s.db.Bindings().Get(iid, bindingID)
+	assert.True(s.t, dberr.IsNotFound(err), "bindings should be removed")
 }
 
 func (s *BrokerSuiteTest) LastOperation(iid string) *internal.Operation {

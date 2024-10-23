@@ -178,8 +178,8 @@ func TestDeprovisioningWithExistingBindings(t *testing.T) {
 	assert.Equal(t, http.StatusGone, response.StatusCode)
 
 	// then expect bindings to be removed
-	suite.WaitForBindingRemoval(iid, bindingID1)
-	suite.WaitForBindingRemoval(iid, bindingID2)
+	suite.AssertBindingRemoval(iid, bindingID1)
+	suite.AssertBindingRemoval(iid, bindingID2)
 }
 
 func TestRemoveBindingsFromSuspended(t *testing.T) {
