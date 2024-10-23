@@ -537,7 +537,7 @@ globalaccounts:
 
 serviceBindingCleanup:
   enabled: false
-  schedule: "0 2,14 * * *"
   dryRun: true
+  schedule: "0 2,14 * * *"
   requestTimeout: 2s
   requestRetries: 2
