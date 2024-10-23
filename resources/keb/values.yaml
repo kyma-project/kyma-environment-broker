@@ -35,6 +35,9 @@ global:
     kyma_environment_globalaccounts:
       dir:
       version: "1.10.49"
+    kyma_environment_service_binding_cleanup_job:
+      dir:
+      version:
       
   kyma_environment_broker:
     enabled: false
@@ -531,3 +534,10 @@ globalaccounts:
     serviceURL: "TBD"
     authURL: "TBD"
     secretName: "cis-creds-accounts"
+
+serviceBindingCleanup:
+  enabled: false
+  schedule: "0 2,14 * * *"
+  dryRun: true
+  requestTimeout: 2s
+  requestRetries: 2
