@@ -8,6 +8,13 @@ import (
 
 	"github.com/stretchr/testify/require"
 	"github.com/vrischmann/envconfig"
+	"k8s.io/client-go/kubernetes"
+	"k8s.io/client-go/tools/clientcmd"
+)
+
+const (
+	secretNamespace = "kyma-system"
+	secretName      = "sap-btp-manager"
 )
 
 type Config struct {
@@ -40,4 +47,18 @@ func NewProvisioningSuite(t *testing.T) *ProvisioningSuite {
 		logger:             logger,
 		provisioningClient: provisioningClient,
 	}
+}
+
+func (p *ProvisioningSuite) K8sClientSetForKubeconfig(kubeconfig string) (kubernetes.Interface, error) {
+	config, err := clientcmd.RESTConfigFromKubeConfig([]byte(kubeconfig))
+	if err != nil {
+		return nil, err
+	}
+
+	clientset, err := kubernetes.NewForConfig(config)
+	if err != nil {
+		return nil, err
+	}
+
+	return clientset, nil
 }

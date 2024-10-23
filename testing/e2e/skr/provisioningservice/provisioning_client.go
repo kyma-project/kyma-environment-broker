@@ -224,25 +224,15 @@ func (p *ProvisioningClient) AwaitEnvironmentCreated(environmentID string) error
 
 func (p *ProvisioningClient) AwaitEnvironmentDeleted(environmentID string) error {
 	err := wait.PollUntilContextTimeout(p.ctx, interval, deprovisioningTimeout, true, func(ctx context.Context) (bool, error) {
-		req, err := http.NewRequest(http.MethodGet, p.cfg.URL+environmentsPath+"/"+environmentID, nil)
+		environment, err := p.GetEnvironment(environmentID)
 		if err != nil {
-			p.logger.Warn(fmt.Sprintf("failed to create HTTP request: %v", err))
+			if err.Error() == "unexpected status code 404: Environment instance not found" {
+				return true, nil
+			}
+			p.logger.Warn(fmt.Sprintf("error getting environment: %v", err))
 			return false, nil
 		}
-
-		req.Header.Set("Authorization", "Bearer "+p.accessToken)
-
-		resp, err := p.cli.Do(req)
-		if err != nil {
-			p.logger.Warn(fmt.Sprintf("failed to send request: %v", err))
-			return false, nil
-		}
-
-		p.logger.Info("Received response with status code", "environmentID", environmentID, "status code", resp.StatusCode)
-		if resp.StatusCode == http.StatusNotFound {
-			return true, nil
-		}
-
+		p.logger.Info("Received environment state", "environmentID", environmentID, "state", environment.State)
 		return false, nil
 	})
 
@@ -270,7 +260,12 @@ func (p *ProvisioningClient) sendRequest(method string, url string, expectedStat
 	}
 
 	if resp.StatusCode != expectedStatus {
-		return nil, fmt.Errorf("unexpected status code: %d", resp.StatusCode)
+		var errorResponse ErrorResponse
+		err = p.unmarshallResponse(resp, &errorResponse)
+		if err != nil {
+			return nil, fmt.Errorf("unexpected status code %d: %v", resp.StatusCode, err)
+		}
+		return nil, fmt.Errorf("unexpected status code %d: %v", resp.StatusCode, errorResponse.Error.Message)
 	}
 
 	return resp, nil
@@ -281,6 +276,10 @@ func (p *ProvisioningClient) unmarshallResponse(resp *http.Response, output any)
 	body, err := io.ReadAll(resp.Body)
 	if err != nil {
 		return fmt.Errorf("failed to read response body: %v", err)
+	}
+
+	if len(body) == 0 {
+		return fmt.Errorf("body is empty")
 	}
 
 	if err := json.Unmarshal(body, output); err != nil {

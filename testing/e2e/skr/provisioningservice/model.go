@@ -4,6 +4,14 @@ type AccessToken struct {
 	Token string `json:"access_token"`
 }
 
+type ErrorResponse struct {
+	Error Error `json:"error"`
+}
+
+type Error struct {
+	Message string `json:"message"`
+}
+
 type CreateEnvironmentRequest struct {
 	EnvironmentType string                `json:"environmentType"`
 	ServiceName     string                `json:"serviceName"`
