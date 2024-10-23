@@ -3,13 +3,12 @@ package broker
 import (
 	"context"
 	"encoding/json"
+	"fmt"
+	"net/http/httptest"
 	"testing"
+	"time"
 
 	"github.com/google/uuid"
-	"github.com/kyma-project/kyma-environment-broker/internal/fixture"
-	"github.com/kyma-project/kyma-environment-broker/internal/storage"
-	"github.com/pivotal-cf/brokerapi/v8/domain"
-	"github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/assert"
 
 	"code.cloudfoundry.org/lager"
