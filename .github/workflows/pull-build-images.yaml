@@ -88,3 +88,11 @@ jobs:
          name: kyma-environment-broker-schema-migrator
          dockerfile: Dockerfile.schemamigrator
          context: .
+
+   service-binding-cleanup-image:
+      uses: kyma-project/test-infra/.github/workflows/image-builder.yml@main
+      with:
+         name: kyma-environment-service-binding-cleanup-job
+         dockerfile: Dockerfile.job
+         context: .
+         build-args: BIN=servicebindingcleanup

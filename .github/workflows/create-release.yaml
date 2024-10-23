@@ -158,9 +158,19 @@ jobs:
       context: .
       tags: ${{ inputs.name }}
 
+  build-service-binding-cleanup-image:
+    needs: [ validate-release ]
+    uses: kyma-project/test-infra/.github/workflows/image-builder.yml@main
+    with:
+      name: kyma-environment-service-binding-cleanup-job
+      dockerfile: Dockerfile.job
+      context: .
+      build-args: BIN=servicebindingcleanup
+      tags: ${{ inputs.name }}
+
   run-keb-chart-install-tests:
     name: Validate KEB chart 
-    needs: [build-keb-image, build-archiver-image, build-environments-cleanup-image, build-deprovision-retrigger-image, build-expirator-image, build-runtime-reconciler-image, build-subaccount-cleanup-image, build-subaccount-sync-image, build-globalaccounts-image, build-schema-migrator-image]
+    needs: [build-keb-image, build-archiver-image, build-environments-cleanup-image, build-deprovision-retrigger-image, build-expirator-image, build-runtime-reconciler-image, build-subaccount-cleanup-image, build-subaccount-sync-image, build-globalaccounts-image, build-schema-migrator-image, build-service-binding-cleanup-image]
     uses: "./.github/workflows/run-keb-chart-install-tests-reusable.yaml"
     secrets: inherit
     with:
