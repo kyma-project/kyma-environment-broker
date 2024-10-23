@@ -1,4 +1,4 @@
-module github.com/kyma-project/kyma-environment-broker/testing/e2e/skr/provisioningservice
+module github.com/kyma-project/kyma-environment-broker/testing/e2e/skr/provisioning-service-test
 
 go 1.23.1
 

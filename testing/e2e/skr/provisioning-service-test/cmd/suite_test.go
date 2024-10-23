@@ -6,7 +6,7 @@ import (
 	"os"
 	"testing"
 
-	"github.com/kyma-project/kyma-environment-broker/testing/e2e/skr/provisioningservice/internal"
+	"github.com/kyma-project/kyma-environment-broker/testing/e2e/skr/provisioning-service-test/internal"
 
 	"github.com/stretchr/testify/require"
 	"github.com/vrischmann/envconfig"
