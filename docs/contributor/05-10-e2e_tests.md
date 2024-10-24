@@ -8,6 +8,7 @@ There are three tests:
 * `skr-tests` for testing the following operations on different cloud service providers: Kyma provisioning, BTP Manager Secret reconciliation, updating OIDC, updating machine type, and Kyma runtime deprovisioning
 * `skr-aws-upgrade-integration` for checking Kyma runtime provisioning, upgrading, and deprovisioning
 * `keb-endpoints-test` for checking if `kyma-environment-broker` endpoints require authorization
+* `provisioning-service-test` for checking if Cloud Management Service Provisioning API works as expected
 
 ## E2E SKR Tests
 
@@ -163,6 +164,36 @@ The test executes the following steps:
 
     ```bash
     make skr-binding-test
+    ```
+
+## Provisioning Service Tests
+
+### Usage
+
+The test executes the following steps:
+
+1. Sends a call to Provisioning API to provision a Kyma runtime. The test waits until the environment is created.
+2. Creates a Kyma Binding.
+3. Fetches the `sap-btp-manager` secret using kubeconfig from created Kyma Binding.
+4. Fetches a created Kyma Biding.
+5. Deletes created Kyma Binding.
+6. Tries to fetch a `sap-btp-manager` secret using invalidated kubeconfig.
+7. Tries to fetch a deleted Kyma Binding.
+8. Sends a call to Provisioning API to deprovision a Kyma runtime. The test waits until the environment is deleted.
+
+### Test Execution
+
+1. Before you run the test, prepare the `.env` file based on this [`.env.template`](/testing/e2e/skr/provisioning-service-test/.env.template).
+2. To set up the environment variables in your system, run:
+
+    ```bash
+    export $(xargs < .env)
+    ```
+
+3. Run the test scenario:
+
+    ```bash
+    make provisioning-service-test
     ```
 
 ## CI Pipelines
