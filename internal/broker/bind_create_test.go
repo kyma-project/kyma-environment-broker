@@ -12,7 +12,6 @@ import (
 	"github.com/stretchr/testify/assert"
 	"k8s.io/client-go/kubernetes"
 
-
 	"code.cloudfoundry.org/lager"
 	"github.com/kyma-project/kyma-environment-broker/internal/fixture"
 	"github.com/kyma-project/kyma-environment-broker/internal/storage"
@@ -105,7 +104,7 @@ func TestCreateBindingEndpoint(t *testing.T) {
 			ServiceID: "123",
 			PlanID:    fixture.PlanId,
 		}, false)
-	
+
 		require.Error(t, err)
 
 		binding, err := db.Bindings().Get(instanceID1, "binding-id")
