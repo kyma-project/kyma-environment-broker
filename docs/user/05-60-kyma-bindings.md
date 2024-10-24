@@ -33,7 +33,7 @@ GET http://localhost:8080/oauth/v2/service_instances/{{instance_id}}/service_bin
 X-Broker-API-Version: 2.14
 ```
 
-The Broker returns a `200 OK` status code with the kubeconfig in the response body. If either the binding does not exist, the instance does not exist or the instance is suspended, the Broker returns a `404 Not Found` status code.
+The Broker returns the `200 OK` status code with the kubeconfig in the response body. If the binding does not exist, the instance does not exist, or the instance is suspended, the Broker returns a `404 Not Found` status code.
 
 ## Unbinding
 
