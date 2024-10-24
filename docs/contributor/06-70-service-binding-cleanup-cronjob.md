@@ -1,6 +1,6 @@
 # Service Binding Cleanup CronJob
 
-Service Binding Cleanup CronJob is a Job that removes expired service bindings for SAP BTP, Kyma runtime instances.
+Use Service Binding Cleanup CronJob to remove expired service bindings for SAP BTP, Kyma runtime instances.
 
 ## Details
 
@@ -8,8 +8,8 @@ For each expired service binding, a DELETE request is sent to Kyma Environment B
 
 ### Dry-Run Mode
 
-If you need to test the Job, you can run it in the `dry-run` mode.
-In that mode, the Job only logs the information about the number of expired service bindings without sending DELETE requests to KEB.
+If you need to test the Job, run it in the `dry-run` mode.
+In that mode, the Job only logs the information about the number of expired service bindings without sending the DELETE requests to KEB.
 
 ## Prerequisites
 
