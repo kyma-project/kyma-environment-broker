@@ -10,6 +10,8 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
+	"k8s.io/client-go/kubernetes"
+
 
 	"code.cloudfoundry.org/lager"
 	"github.com/kyma-project/kyma-environment-broker/internal/fixture"
@@ -39,6 +41,17 @@ const (
 )
 
 var httpServer *httptest.Server
+
+type provider struct {
+}
+
+func (p *provider) K8sClientSetForRuntimeID(runtimeID string) (kubernetes.Interface, error) {
+	return nil, fmt.Errorf("error")
+}
+
+func (p *provider) KubeconfigForRuntimeID(runtimeID string) ([]byte, error) {
+	return []byte{}, nil
+}
 
 func TestCreateBindingEndpoint(t *testing.T) {
 	t.Log("test create binding endpoint")
@@ -78,48 +91,30 @@ func TestCreateBindingEndpoint(t *testing.T) {
 	}
 
 	//// api handler
-	bindEndpoint := NewBind(*bindingCfg, db, logs, nil, nil)
+	bindEndpoint := NewBind(*bindingCfg, db, logs, &provider{}, &provider{})
 
 	// test relies on checking if got nil on kubeconfig provider but the instance got inserted either way
 	t.Run("should INSERT binding despite error on k8s api call", func(t *testing.T) {
-		defer func() {
-			r := recover()
-
-			// then
-			var ok bool
-			err, ok = r.(error)
-			if !ok {
-				err = fmt.Errorf("pkg: %v", r)
-			}
-
-			binding, err := db.Bindings().Get(instanceID1, "binding-id")
-			require.NoError(t, err)
-			require.Equal(t, instanceID1, binding.InstanceID)
-			require.Equal(t, "binding-id", binding.ID)
-
-			require.NotNil(t, binding.ExpiresAt)
-
-			// we do not know exact time of setting the expiration in tested unit so it is impossible to compare it. As a workaround, I added margin of 1 second that should b enough for the test to go from setting expiration to below assertion.
-			sinceExpirationSet := 1 * time.Second
-			expirationSeconds := time.Duration(-bindingCfg.ExpirationSeconds) * time.Second
-
-			estimatedNowUpper := binding.ExpiresAt.Add(expirationSeconds + sinceExpirationSet)
-			estimatedNowLower := binding.ExpiresAt.Add(expirationSeconds - sinceExpirationSet)
-
-			require.True(t, time.Now().Before(estimatedNowUpper))
-			require.True(t, time.Now().After(estimatedNowLower))
-		}()
-
 		// given
 		_, err := db.Bindings().Get(instanceID1, "binding-id")
 		require.Error(t, err)
 		require.True(t, dberr.IsNotFound(err))
 
 		// when
-		_, _ = bindEndpoint.Bind(context.Background(), instanceID1, "binding-id", domain.BindDetails{
+		_, err = bindEndpoint.Bind(context.Background(), instanceID1, "binding-id", domain.BindDetails{
 			ServiceID: "123",
 			PlanID:    fixture.PlanId,
 		}, false)
+	
+		require.Error(t, err)
+
+		binding, err := db.Bindings().Get(instanceID1, "binding-id")
+		require.NoError(t, err)
+		require.Equal(t, instanceID1, binding.InstanceID)
+		require.Equal(t, "binding-id", binding.ID)
+
+		require.NotNil(t, binding.ExpiresAt)
+		require.Empty(t, binding.Kubeconfig)
 	})
 }
 
