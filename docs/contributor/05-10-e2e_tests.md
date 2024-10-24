@@ -150,7 +150,7 @@ The test executes the following steps:
 3. Initializes a Kubernetes client with the returned kubeconfig.
 4. Fetches a Secret using the SKR binding.
 5. Fetches the created SKR binding.
-6. Deletes created SKR binding.
+6. Deletes the created SKR binding.
 7. Tries to fetch Secret using the deleted SKR binding.
 8. Tries to create SKR binding using invalid parameters.
 9. Tests response status codes.
