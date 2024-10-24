@@ -37,7 +37,7 @@ The Broker returns the `200 OK` status code with the kubeconfig in the response 
 
 ## Unbinding
 
-Bindings could be removed by sending a DELETE request to the Broker API:
+To remove a binding, send a DELETE request to the Broker API:
 
 ```
 DELETE http://localhost:8080/oauth/v2/service_instances/{{instance_id}}/service_bindings/{{binding_id}}?plan_id={{plan_id}}&service_id={{service_id}}
