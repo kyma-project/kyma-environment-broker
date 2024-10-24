@@ -121,7 +121,7 @@ The test executes the following steps:
 
 1. Provisions a Kyma runtime cluster.
 2. Waits until Trial Cleanup CronJob triggers suspension.
-3. Wait until suspension succeeds.
+3. Waits until suspension succeeds.
 4. Deprovisions the Kyma runtime instance and cleans up the resources.
 
 ### Test Execution
