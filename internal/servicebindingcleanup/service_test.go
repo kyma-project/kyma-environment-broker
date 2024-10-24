@@ -123,6 +123,83 @@ func TestServiceBindingCleanupJob(t *testing.T) {
 		require.NoError(t, bindingsStorage.Delete(expectedBinding.InstanceID, expectedBinding.ID))
 		handler.setHandlerFunc(handler.deleteServiceBindingFromStorage)
 	})
+
+	t.Run("should only unbind expired service binding", func(t *testing.T) {
+		// given
+		activeBinding := internal.Binding{
+			ID:         "active-binding-id",
+			InstanceID: "instance-id",
+			ExpiresAt:  time.Now().Add(time.Hour),
+		}
+		expiredBinding := internal.Binding{
+			ID:         "expired-binding-id",
+			InstanceID: "instance-id",
+			ExpiresAt:  time.Now().Add(-time.Hour),
+		}
+		require.NoError(t, bindingsStorage.Insert(&activeBinding))
+		require.NoError(t, bindingsStorage.Insert(&expiredBinding))
+
+		svc := servicebindingcleanup.NewService(false, brokerClient, bindingsStorage)
+
+		// when
+		err := svc.PerformCleanup()
+		require.NoError(t, err)
+
+		// then
+		actualBinding, err := bindingsStorage.Get(activeBinding.InstanceID, activeBinding.ID)
+		require.NoError(t, err)
+		assert.Equal(t, activeBinding.ID, actualBinding.ID)
+
+		_, err = bindingsStorage.Get(expiredBinding.InstanceID, expiredBinding.ID)
+		assert.True(t, dberr.IsNotFound(err))
+	})
+
+	t.Run("should continue cleanup when unbind endpoint returns 410 status code", func(t *testing.T) {
+		// given
+		binding := internal.Binding{
+			ID:         "binding-id-1",
+			InstanceID: "instance-id-1",
+			ExpiresAt:  time.Now().Add(-time.Hour),
+		}
+		require.NoError(t, bindingsStorage.Insert(&binding))
+
+		svc := servicebindingcleanup.NewService(false, brokerClient, bindingsStorage)
+
+		// when
+		handler.setHandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			bindingID := r.PathValue("binding_id")
+			instanceID := r.PathValue("instance_id")
+			if len(bindingID) == 0 || len(instanceID) == 0 {
+				w.WriteHeader(http.StatusBadRequest)
+				return
+			}
+			_, err := bindingsStorage.Get(instanceID, bindingID)
+			if err != nil {
+				w.WriteHeader(http.StatusNotFound)
+				return
+			}
+			if err = bindingsStorage.Delete(instanceID, bindingID); err != nil {
+				w.WriteHeader(http.StatusInternalServerError)
+				return
+			}
+			w.WriteHeader(http.StatusGone)
+			encoder := json.NewEncoder(w)
+			if err := encoder.Encode(apiresponses.EmptyResponse{}); err != nil {
+				w.WriteHeader(http.StatusInternalServerError)
+				return
+			}
+		})
+
+		err := svc.PerformCleanup()
+		require.NoError(t, err)
+
+		// then
+		_, err = bindingsStorage.Get(binding.InstanceID, binding.ID)
+		assert.True(t, dberr.IsNotFound(err))
+
+		// cleanup
+		handler.setHandlerFunc(handler.deleteServiceBindingFromStorage)
+	})
 }
 
 type server struct {
