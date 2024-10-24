@@ -26,7 +26,8 @@ To specify the duration for which the generated kubeconfig is valid, provide the
 
 ## Fetching a Service Binding 
 
-Binding could be fetched by using a GET request to the Broker API:
+To fetch a binding, use a GET request to the Broker API:
+
 ```
 GET http://localhost:8080/oauth/v2/service_instances/{{instance_id}}/service_bindings/{{binding_id}}
 X-Broker-API-Version: 2.14
