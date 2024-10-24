@@ -17,7 +17,7 @@ func TestProvisioningService(t *testing.T) {
 	require.NoError(t, err)
 
 	err = suite.provisioningClient.AwaitEnvironmentCreated(environment.ID)
-	require.NoError(t, err)
+	assert.NoError(t, err)
 	suite.logger.Info("Environment created successfully", "environmentID", environment.ID)
 
 	suite.logger.Info("Creating a new binding")
@@ -57,6 +57,6 @@ func TestProvisioningService(t *testing.T) {
 	require.NoError(t, err)
 
 	err = suite.provisioningClient.AwaitEnvironmentDeleted(environment.ID)
-	require.NoError(t, err)
+	assert.NoError(t, err)
 	suite.logger.Info("Environment deleted successfully", "environmentID", environment.ID)
 }
