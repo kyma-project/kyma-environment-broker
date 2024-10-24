@@ -184,7 +184,7 @@ func (b *BindEndpoint) Bind(ctx context.Context, instanceID, bindingID string, d
 		UpdatedAt: time.Now(),
 
 		ExpirationSeconds: int64(expirationSeconds),
-		ExpiresAt: 	   time.Now().Add(time.Duration(expirationSeconds) * time.Second),
+		ExpiresAt:         time.Now().Add(time.Duration(expirationSeconds) * time.Second),
 		CreatedBy:         bindingContext.CreatedBy(),
 	}
 
