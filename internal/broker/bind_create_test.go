@@ -78,7 +78,7 @@ func TestCreateBindingEndpoint(t *testing.T) {
 	}
 
 	//// api handler
-	bindEndpoint := NewBind(*bindingCfg, db.Instances(), db.Bindings(), logs, nil, nil)
+	bindEndpoint := NewBind(*bindingCfg, db, logs, nil, nil)
 
 	// test relies on checking if got nil on kubeconfig provider but the instance got inserted either way
 	t.Run("should INSERT binding despite error on k8s api call", func(t *testing.T) {
