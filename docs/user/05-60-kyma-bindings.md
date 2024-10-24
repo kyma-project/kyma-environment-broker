@@ -3,7 +3,7 @@
 You can manage credentials for accessing a given service through a Broker API endpoint related to bindings. The Broker API endpoints include all subpaths of `v2/service_instances/<service_id>/service_bindings`. In the case of Kyma Environment Broker (KEB), the generated credentials are a kubeconfig for a managed Kyma cluster. To generate a kubeconfig for a given Kyma instance, send the following request to the Broker API:
 
 ```
-PUT http://localhost:8080/oauth/v2/service_instances/{{instance_id}}/service_bindings/{{binding_id}}?accepts_incomplete=false&service_id={{service_id}}&plan_id={{plan_id}}
+PUT http://localhost:8080/oauth/v2/service_instances/{{instance_id}}/service_bindings/{{binding_id}}
 Content-Type: application/json
 X-Broker-API-Version: 2.14
 
@@ -17,6 +17,7 @@ X-Broker-API-Version: 2.14
 ```
 
 The Broker returns a kubeconfig with a JWT token used as a user authentication mechanism. The token is generated using Kubernetes TokenRequest attached to a ServiceAccount, ClusterRole, and ClusterRoleBinding, all named `kyma-binding-{{binding_id}}`. Such an approach allows for modifying the permissions granted to the kubeconfig.
+Besides the kubeconfig there are metadata in the response with the `expires_at` field, which specifies the expiration time of the kubeconfig. The expiration time is calculated as the current time plus the `expiration_seconds` provided in the request body.
 To specify the duration for which the generated kubeconfig is valid, provide the **expiration_seconds** in the `parameter` object of the request body.
 
 | Name                   | Default | Description                                                                                                                                                                                                                                                                                                                                                          |
