@@ -33,6 +33,18 @@ describe('SKR Binding test', function() {
   it('Create SKR binding', async function() {
     bindingID = uuid.v4();
     try {
+      const resp = await keb.createBinding(options.instanceID, bindingID);
+      kubeconfigFromBinding = resp.data.credentials.kubeconfig;
+      expect(resp.status).equal(201);
+    } catch (err) {
+      throw err;
+    }
+  });
+
+  // to test if we can deprovision instance with valid (not expired) binding
+  it('Create long living SKR binding', async function() {
+    bindingID = uuid.v4();
+    try {
       const resp = await keb.createBinding(options.instanceID, bindingID, 7200);
       kubeconfigFromBinding = resp.data.credentials.kubeconfig;
       expect(resp.status).equal(201);
