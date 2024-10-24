@@ -176,7 +176,6 @@ func (b *BindEndpoint) Bind(ctx context.Context, instanceID, bindingID string, d
 	}
 
 	var kubeconfig string
-	var expiresAt time.Time
 	binding := &internal.Binding{
 		ID:         bindingID,
 		InstanceID: instanceID,
@@ -185,6 +184,7 @@ func (b *BindEndpoint) Bind(ctx context.Context, instanceID, bindingID string, d
 		UpdatedAt: time.Now(),
 
 		ExpirationSeconds: int64(expirationSeconds),
+		ExpiresAt: 	   time.Now().Add(time.Duration(expirationSeconds) * time.Second),
 		CreatedBy:         bindingContext.CreatedBy(),
 	}
 
@@ -199,6 +199,7 @@ func (b *BindEndpoint) Bind(ctx context.Context, instanceID, bindingID string, d
 	}
 
 	// create kubeconfig for the instance
+	var expiresAt time.Time
 	kubeconfig, expiresAt, err = b.serviceAccountBindingManager.Create(ctx, instance, bindingID, expirationSeconds)
 	if err != nil {
 		message := fmt.Sprintf("failed to create a Kyma binding using service account's kubeconfig: %s", err)

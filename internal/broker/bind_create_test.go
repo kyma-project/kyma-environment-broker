@@ -96,6 +96,18 @@ func TestCreateBindingEndpoint(t *testing.T) {
 			require.NoError(t, err)
 			require.Equal(t, instanceID1, binding.InstanceID)
 			require.Equal(t, "binding-id", binding.ID)
+
+			require.NotNil(t, binding.ExpiresAt)
+			
+			// we do not know exact time of setting the expiration in tested unit so it is impossible to compare it. As a workaround, I added margin of 1 second that should b enough for the test to go from setting expiration to below assertion.
+			sinceExpirationSet := 1 * time.Second 
+			expirationSeconds := time.Duration(-bindingCfg.ExpirationSeconds) * time.Second
+
+			estimatedNowUpper := binding.ExpiresAt.Add(expirationSeconds + sinceExpirationSet)
+			estimatedNowLower := binding.ExpiresAt.Add(expirationSeconds - sinceExpirationSet)
+
+			require.True(t, time.Now().Before(estimatedNowUpper))
+			require.True(t, time.Now().After(estimatedNowLower))
 		}()
 
 		// given
@@ -172,7 +184,7 @@ func TestCreateSecondBindingWithTheSameIdButDifferentParams(t *testing.T) {
 	bindingCfg := &BindingConfig{
 		Enabled: true,
 		BindablePlans: EnablePlans{
-			instance.ServicePlanName,
+		instance.ServicePlanName,
 		},
 		ExpirationSeconds:    600,
 		MaxExpirationSeconds: 7200,
