@@ -180,7 +180,7 @@ The test executes the following steps:
 
 1. Sends a call to Provisioning API to provision a Kyma runtime. The test waits until the environment is created.
 2. Creates a Kyma Binding.
-3. Fetches the `sap-btp-manager` secret using kubeconfig from created Kyma Binding.
+3. Fetches the `sap-btp-manager` Secret using the kubeconfig from the created Kyma Binding.
 4. Fetches a created Kyma Biding.
 5. Deletes created Kyma Binding.
 6. Tries to fetch a `sap-btp-manager` secret using invalidated kubeconfig.
