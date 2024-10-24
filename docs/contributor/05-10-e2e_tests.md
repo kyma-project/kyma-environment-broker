@@ -9,7 +9,7 @@ There are six tests:
 * `keb-endpoints-test` for checking if `kyma-environment-broker` endpoints require authorization
 * `skr-aws-networking` for checking if provisioning a Kyma runtime with custom networking parameters works as expected
 * `skr-trial-suspension-dev` for testing the following operations: Kyma provisioning, Kyma suspension, and Kyma runtime deprovisioning
-* `skr-aws-binding` for testing the following operations: Kyma provisioning, fetching Kyma Binding, using Kyma Binding, deleting Kyma Binding and Kyma runtime deprovisioning
+* `skr-aws-binding` for testing the following operations: Kyma provisioning, fetching Kyma Binding, using Kyma Binding, deleting Kyma Binding, and Kyma runtime deprovisioning
 * `provisioning-service-aws-stage` for checking if Cloud Management Service Provisioning API works as expected
 
 ## E2E SKR Tests
