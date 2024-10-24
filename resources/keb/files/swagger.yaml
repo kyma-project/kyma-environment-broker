@@ -681,11 +681,11 @@ paths:
 
   /oauth/v2/service_instances/{instance_id}/service_bindings/{binding_id}:
     put:
-      summary: generation of a service binding
+      summary: create a service binding
       security:
         - oAuth2ClientCredentials: ["broker:write"]
       tags:
-        - Bindings (not implemented)
+        - Bindings
       operationId: serviceBinding.binding
       parameters:
         - $ref: '#/components/parameters/APIVersion'
@@ -707,22 +707,28 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/ServiceBindingPutRequest'
+              $ref: '#/components/schemas/ServiceBindingProvisionRequest'
       responses:
         '200':
           description: OK
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ServiceBindingPutRequestResponse'
+                $ref: '#/components/schemas/ServiceBindingProvision'
         '201':
           description: Created
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ServiceBindingPutRequestResponse'
+                $ref: '#/components/schemas/ServiceBindingProvision'
         '400':
           description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Not Found
           content:
             application/json:
               schema:
@@ -739,12 +745,18 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Error'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
     delete:
-      summary: deprovision of a service binding
+      summary: delete a service binding
       security:
         - oAuth2ClientCredentials: ["broker:write"]
       tags:
-        - Bindings (not implemented)
+        - Bindings
       operationId: serviceBinding.unbinding
       parameters:
         - $ref: '#/components/parameters/APIVersion'
@@ -779,24 +791,24 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Object'
-        '400':
-          description: Bad Request
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
         '410':
           description: Gone
           content:
             application/json:
               schema:
+                $ref: '#/components/schemas/Object'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
                 $ref: '#/components/schemas/Error'
     get:
-      summary: gets a service binding
+      summary: get a service binding
       security:
         - oAuth2ClientCredentials: ["broker:write"]
       tags:
-        - Bindings (not implemented)
+        - Bindings
       operationId: serviceBinding.get
       parameters:
         - $ref: '#/components/parameters/APIVersion'
@@ -821,6 +833,12 @@ paths:
                 $ref: '#/components/schemas/ServiceBindingResource'
         '404':
           description: Not Found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Internal server error
           content:
             application/json:
               schema:
@@ -1137,11 +1155,11 @@ paths:
 
   /oauth/{region}/v2/service_instances/{instance_id}/service_bindings/{binding_id}:
     put:
-      summary: generation of a service binding
+      summary: create a service binding
       security:
         - oAuth2ClientCredentials: ["broker:write"]
       tags:
-        - Bindings (not implemented)
+        - Bindings
       operationId: serviceBinding.region.binding
       parameters:
         - $ref: '#/components/parameters/APIVersion'
@@ -1163,33 +1181,34 @@ paths:
           required: true
           schema:
             type: string
-        - name: accepts_incomplete
-          in: query
-          description: asynchronous operations supported
-          schema:
-            type: boolean
       requestBody:
         description: parameters for the requested service binding
         required: true
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/ServiceBindingPutRequest'
+              $ref: '#/components/schemas/ServiceBindingProvisionRequest'
       responses:
         '200':
           description: OK
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ServiceBindingPutRequestResponse'
+                $ref: '#/components/schemas/ServiceBindingProvision'
         '201':
           description: Created
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ServiceBindingPutRequestResponse'
+                $ref: '#/components/schemas/ServiceBindingProvision'
         '400':
           description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Not Found
           content:
             application/json:
               schema:
@@ -1206,12 +1225,18 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Error'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
     delete:
-      summary: deprovision of a service binding
+      summary: delete a service binding
       security:
         - oAuth2ClientCredentials: ["broker:write"]
       tags:
-        - Bindings (not implemented)
+        - Bindings
       operationId: serviceBinding.region.unbinding
       parameters:
         - $ref: '#/components/parameters/APIVersion'
@@ -1252,24 +1277,24 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Object'
-        '400':
-          description: Bad Request
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
         '410':
           description: Gone
           content:
             application/json:
               schema:
+                $ref: '#/components/schemas/Object'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
                 $ref: '#/components/schemas/Error'
     get:
-      summary: gets a service binding
+      summary: get a service binding
       security:
         - oAuth2ClientCredentials: ["broker:write"]
       tags:
-        - Bindings (not implemented)
+        - Bindings
       operationId: serviceBinding.region.get
       parameters:
         - $ref: '#/components/parameters/APIVersion'
@@ -1300,6 +1325,12 @@ paths:
                 $ref: '#/components/schemas/ServiceBindingResource'
         '404':
           description: Not Found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Internal server error
           content:
             application/json:
               schema:
@@ -2074,7 +2105,7 @@ components:
         credentials:
           $ref: '#/components/schemas/ServiceBindingKubeconfig'
 
-    ServiceBindingPutRequest:
+    ServiceBindingProvisionRequest:
       type: object
       required:
         - service_id
@@ -2091,7 +2122,7 @@ components:
         parameters:
           $ref: '#/components/schemas/BindingParameters'
 
-    ServiceBindingPutRequestResponse:
+    ServiceBindingProvision:
       type: object
       properties:
         credentials:
