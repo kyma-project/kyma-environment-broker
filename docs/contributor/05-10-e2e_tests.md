@@ -3,12 +3,14 @@
 ## Overview
 
 The end-to-end (E2E) tests cover Kyma Environment Broker (KEB) and SAP BTP, Kyma runtime.
-There are three tests:
+There are six tests:
 
 * `skr-tests` for testing the following operations on different cloud service providers: Kyma provisioning, BTP Manager Secret reconciliation, updating OIDC, updating machine type, and Kyma runtime deprovisioning
-* `skr-aws-upgrade-integration` for checking Kyma runtime provisioning, upgrading, and deprovisioning
 * `keb-endpoints-test` for checking if `kyma-environment-broker` endpoints require authorization
-* `provisioning-service-test` for checking if Cloud Management Service Provisioning API works as expected
+* `skr-aws-networking` for checking if provisioning a Kyma runtime with custom networking parameters works as expected
+* `skr-trial-suspension-dev` for testing the following operations: Kyma provisioning, Kyma suspension and Kyma runtime deprovisioning
+* `skr-aws-binding` for testing the following operations: Kyma provisioning, fetching Kyma Binding, using Kyma Binding, deleting Kyma Binding and Kyma runtime deprovisioning
+* `provisioning-service-aws-stage` for checking if Cloud Management Service Provisioning API works as expected
 
 ## E2E SKR Tests
 
@@ -62,31 +64,6 @@ In this mode, the test executes the following steps:
         make skr SKIP_PROVISIONING=true
         ```
 
-## E2E SKR AWS Upgrade Integration Test
-
-### Usage
-
-The test executes the following steps:
-
-1. Provisions a Kyma runtime cluster.
-2. Runs a Kyma runtime upgrade.
-3. Deprovisions the Kyma runtime instance and cleans up the resources.
-
-### Test Execution
-
-1. Before you run the test, prepare the `.env` file based on this [`.env.template`](/testing/e2e/skr/skr-aws-upgrade-integration/.env.template).
-2. To set up the environment variables in your system, run:
-
-    ```bash
-    export $(xargs < .env)
-    ```
-
-3. Run the test scenario:
-
-    ```bash
-    make skr-aws-upgrade-integration
-    ```
-
 ## KEB Endpoints Test
 
 ### Usage
@@ -133,23 +110,19 @@ The test executes the following steps:
 3. Run the test scenario:
 
     ```bash
-    make skr-networking-test
+    make skr-networking
     ```
 
-## Binding Tests
+## E2E SKR Suspension Test
 
 ### Usage
 
 The test executes the following steps:
 
 1. Provisions a Kyma runtime cluster.
-2. Creates a binding using Kubernetes TokenRequest and saves the returned kubeconfig.
-3. Initializes a Kubernetes client with the returned kubeconfig.
-4. Tries to fetch a Secret using the binding from Kubernetes TokenRequest.
-5. Creates a binding using Gardener and saves the returned kubeconfig.
-6. Initializes a Kubernetes client with the returned kubeconfig.
-7. Tries to fetch a Secret using the binding from Gardener.
-8. Deprovisions the Kyma runtime instance and cleans up the resources.
+2. Waits until Trial Cleanup CronJob triggers suspension.
+3. Wait until suspension succeeds.
+4. Deprovisions the Kyma runtime instance and cleans up the resources.
 
 ### Test Execution
 
@@ -163,7 +136,40 @@ The test executes the following steps:
 3. Run the test scenario:
 
     ```bash
-    make skr-binding-test
+    make skr-trial-suspension
+    ```
+
+## Binding Tests
+
+### Usage
+
+The test executes the following steps:
+
+1. Provisions a Kyma runtime cluster.
+2. Creates a SKR binding and saves the returned kubeconfig.
+3. Initializes a Kubernetes client with the returned kubeconfig.
+4. Fetches a Secret using the SKR binding.
+5. Fetches created SKR binding.
+6. Deletes created SKR binding.
+7. Tries to fetch Secret using the deleted SKR binding.
+8. Tries to create SKR binding using invalid parameters.
+9. Tests responses status codes.
+10. Tries to create more than 10 SKR bindings.
+11. Deprovisions the Kyma runtime instance and cleans up the resources.
+
+### Test Execution
+
+1. Before you run the test, prepare the `.env` file based on this [`.env.template`](/testing/e2e/skr/skr-test/.env.template).
+2. To set up the environment variables in your system, run:
+
+    ```bash
+    export $(xargs < .env)
+    ```
+
+3. Run the test scenario:
+
+    ```bash
+    make skr-binding
     ```
 
 ## Provisioning Service Tests
@@ -198,14 +204,17 @@ The test executes the following steps:
 
 ## CI Pipelines
 
-The tests are run once per day at 01:05 by the given ProwJobs:
+The tests are run once per day starting at 9 at hourly intervals by the given ProwJobs:
 
+* `keb-endpoints-test` - KEB endpoints test
+* `skr-aws-integration-dev` - SKR test
+* `skr-aws-binding` - Kyma Bindings test
+* `skr-aws-networking` - networking parameters test
 * `skr-azure-integration-dev` - SKR test
 * `skr-azure-lite-integration-dev` - SKR test
-* `skr-trial-integration-dev` - SKR test
-* `skr-preview-dev` - SKR test
 * `skr-free-aws-integration-dev` - SKR test
-* `skr-aws-integration-dev` - SKR test
-* `skr-aws-upgrade-integration-dev` - SKR AWS upgrade integration test
-* `keb-endpoints-test` - KEB endpoints test
-* `skr-networking-test` - networking parameters test
+* `skr-preview-dev` - SKR test
+* `skr-sap-converged-cloud-integration-dev` - SKR test
+* `skr-trial-integration-dev` - SKR test
+* `skr-trial-suspension-dev` - SKR suspension test
+* `provisioning-service-aws-stage` - Provisioning API test
