@@ -73,7 +73,7 @@ func (p *ProvisioningClient) CreateEnvironment() (CreatedEnvironmentResponse, er
 		return CreatedEnvironmentResponse{}, fmt.Errorf("failed to marshal request body: %v", err)
 	}
 
-	resp, err := p.sendRequest(http.MethodPost, p.cfg.URL+environmentsPath, http.StatusAccepted, bytes.NewBuffer(requestBodyBytes))
+	resp, err := p.sendRequest(http.MethodPost, p.environmentsPath(), http.StatusAccepted, bytes.NewBuffer(requestBodyBytes))
 	if err != nil {
 		return CreatedEnvironmentResponse{}, err
 	}
@@ -88,7 +88,7 @@ func (p *ProvisioningClient) CreateEnvironment() (CreatedEnvironmentResponse, er
 }
 
 func (p *ProvisioningClient) GetEnvironment(environmentID string) (EnvironmentResponse, error) {
-	resp, err := p.sendRequest(http.MethodGet, p.cfg.URL+environmentsPath+"/"+environmentID, http.StatusOK, nil)
+	resp, err := p.sendRequest(http.MethodGet, p.environmentsWithIDPath(environmentID), http.StatusOK, nil)
 	if err != nil {
 		return EnvironmentResponse{}, err
 	}
@@ -103,7 +103,7 @@ func (p *ProvisioningClient) GetEnvironment(environmentID string) (EnvironmentRe
 }
 
 func (p *ProvisioningClient) DeleteEnvironment(environmentID string) (EnvironmentResponse, error) {
-	resp, err := p.sendRequest(http.MethodDelete, p.cfg.URL+environmentsPath+"/"+environmentID, http.StatusAccepted, nil)
+	resp, err := p.sendRequest(http.MethodDelete, p.environmentsWithIDPath(environmentID), http.StatusAccepted, nil)
 	if err != nil {
 		return EnvironmentResponse{}, err
 	}
@@ -128,7 +128,7 @@ func (p *ProvisioningClient) CreateBinding(environmentID string) (CreatedBinding
 		return CreatedBindingResponse{}, fmt.Errorf("failed to marshal request body: %v", err)
 	}
 
-	resp, err := p.sendRequest(http.MethodPut, p.cfg.URL+environmentsPath+"/"+environmentID+bindingsPath, http.StatusAccepted, bytes.NewBuffer(requestBodyBytes))
+	resp, err := p.sendRequest(http.MethodPut, p.bindingsPath(environmentID), http.StatusAccepted, bytes.NewBuffer(requestBodyBytes))
 	if err != nil {
 		return CreatedBindingResponse{}, err
 	}
@@ -144,7 +144,7 @@ func (p *ProvisioningClient) CreateBinding(environmentID string) (CreatedBinding
 }
 
 func (p *ProvisioningClient) GetBinding(environmentID, bindingID string) (GetBindingResponse, error) {
-	resp, err := p.sendRequest(http.MethodGet, p.cfg.URL+environmentsPath+"/"+environmentID+bindingsPath+"/"+bindingID, http.StatusOK, nil)
+	resp, err := p.sendRequest(http.MethodGet, p.bindingsWithIDPath(environmentID, bindingID), http.StatusOK, nil)
 	if err != nil {
 		return GetBindingResponse{}, err
 	}
@@ -159,7 +159,7 @@ func (p *ProvisioningClient) GetBinding(environmentID, bindingID string) (GetBin
 }
 
 func (p *ProvisioningClient) DeleteBinding(environmentID, bindingID string) error {
-	if _, err := p.sendRequest(http.MethodDelete, p.cfg.URL+environmentsPath+"/"+environmentID+bindingsPath+"/"+bindingID, http.StatusOK, nil); err != nil {
+	if _, err := p.sendRequest(http.MethodDelete, p.bindingsWithIDPath(environmentID, bindingID), http.StatusOK, nil); err != nil {
 		return err
 	}
 
@@ -173,7 +173,7 @@ func (p *ProvisioningClient) GetAccessToken() error {
 	clientCredentials := fmt.Sprintf("%s:%s", p.cfg.ClientID, p.cfg.ClientSecret)
 	encodedCredentials := base64.StdEncoding.EncodeToString([]byte(clientCredentials))
 
-	req, err := http.NewRequest(http.MethodPost, p.cfg.UAA_URL+accessTokenPath, bytes.NewBufferString(data.Encode()))
+	req, err := http.NewRequest(http.MethodPost, p.accessTokenPath(), bytes.NewBufferString(data.Encode()))
 	if err != nil {
 		return fmt.Errorf("failed to create HTTP request: %v", err)
 	}
@@ -287,4 +287,24 @@ func (p *ProvisioningClient) unmarshallResponse(resp *http.Response, output any)
 	}
 
 	return nil
+}
+
+func (p *ProvisioningClient) environmentsPath() string {
+	return fmt.Sprintf("%s%s", p.cfg.URL, environmentsPath)
+}
+
+func (p *ProvisioningClient) environmentsWithIDPath(environmentID string) string {
+	return fmt.Sprintf("%s/%s", p.environmentsPath(), environmentID)
+}
+
+func (p *ProvisioningClient) bindingsPath(environmentID string) string {
+	return fmt.Sprintf("%s%s", p.environmentsWithIDPath(environmentID), bindingsPath)
+}
+
+func (p *ProvisioningClient) bindingsWithIDPath(environmentID string, bindingID string) string {
+	return fmt.Sprintf("%s/%s", p.bindingsPath(environmentID), bindingID)
+}
+
+func (p *ProvisioningClient) accessTokenPath() string {
+	return fmt.Sprintf("%s%s", p.cfg.UAA_URL, accessTokenPath)
 }
