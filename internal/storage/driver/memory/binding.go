@@ -33,7 +33,7 @@ func (s *Binding) Insert(binding *internal.Binding) error {
 	defer s.mu.Unlock()
 
 	if foundBinding, found := s.data[binding.ID]; found && binding.InstanceID == foundBinding.InstanceID {
-		return dberr.AlreadyExists("binding with id %s already exist", binding.ID)
+		return dberr.AlreadyExists("binding with id %s already exists", binding.ID)
 	}
 	s.data[binding.ID] = *binding
 
