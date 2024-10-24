@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net/http"
 
+	"github.com/kyma-project/kyma-environment-broker/internal"
 	broker "github.com/kyma-project/kyma-environment-broker/internal/broker/bindings"
 	"github.com/kyma-project/kyma-environment-broker/internal/storage"
 	"github.com/kyma-project/kyma-environment-broker/internal/storage/dberr"
@@ -14,14 +15,15 @@ import (
 )
 
 type UnbindEndpoint struct {
-	log              logrus.FieldLogger
-	bindingsStorage  storage.Bindings
-	instancesStorage storage.Instances
-	bindingsManager  broker.BindingsManager
+	log               logrus.FieldLogger
+	bindingsStorage   storage.Bindings
+	instancesStorage  storage.Instances
+	operationsStorage storage.Operations
+	bindingsManager   broker.BindingsManager
 }
 
-func NewUnbind(log logrus.FieldLogger, bindingsStorage storage.Bindings, instancesStorage storage.Instances, bindingsManager broker.BindingsManager) *UnbindEndpoint {
-	return &UnbindEndpoint{log: log.WithField("service", "UnbindEndpoint"), bindingsStorage: bindingsStorage, instancesStorage: instancesStorage, bindingsManager: bindingsManager}
+func NewUnbind(log logrus.FieldLogger, db storage.BrokerStorage, bindingsManager broker.BindingsManager) *UnbindEndpoint {
+	return &UnbindEndpoint{log: log.WithField("service", "UnbindEndpoint"), bindingsStorage: db.Bindings(), instancesStorage: db.Instances(), bindingsManager: bindingsManager, operationsStorage: db.Operations()}
 }
 
 // Unbind deletes an existing service binding
@@ -35,6 +37,11 @@ func (b *UnbindEndpoint) Unbind(ctx context.Context, instanceID, bindingID strin
 	instance, err := b.instancesStorage.GetByID(instanceID)
 	switch {
 	case dberr.IsNotFound(err):
+		err = b.bindingsStorage.Delete(instanceID, bindingID)
+		if err != nil {
+			b.log.Errorf("Unbind error during removal of db entity: %v", err)
+			return domain.UnbindSpec{}, apiresponses.NewFailureResponse(fmt.Errorf("failed to delete binding for binding %s and not existing instance %s: %v", bindingID, instanceID, err), http.StatusInternalServerError, fmt.Sprintf("failed to delete resources for binding %s and not existing instance %s: %v", bindingID, instanceID, err))
+		}
 		return domain.UnbindSpec{}, apiresponses.ErrInstanceDoesNotExist
 	case err != nil:
 		return domain.UnbindSpec{}, apiresponses.NewFailureResponse(fmt.Errorf("failed to get instance %s", instanceID), http.StatusInternalServerError, fmt.Sprintf("failed to get instance %s", instanceID))
@@ -48,10 +55,17 @@ func (b *UnbindEndpoint) Unbind(ctx context.Context, instanceID, bindingID strin
 		return domain.UnbindSpec{}, apiresponses.NewFailureResponse(fmt.Errorf("failed to get instance %s", instanceID), http.StatusInternalServerError, fmt.Sprintf("failed to get instance %s", instanceID))
 	}
 
-	err = b.bindingsManager.Delete(ctx, instance, bindingID)
+	lastOperation, err := b.operationsStorage.GetLastOperation(instance.InstanceID)
 	if err != nil {
-		b.log.Errorf("Unbind error during removal of service account resources: %s", err)
-		return domain.UnbindSpec{}, apiresponses.NewFailureResponse(fmt.Errorf("failed to delete binding resources for binding %s and instance %s: %v", bindingID, instanceID, err), http.StatusInternalServerError, fmt.Sprintf("failed to delete resources for binding %s and instance %s: %v", bindingID, instanceID, err))
+		return domain.UnbindSpec{}, apiresponses.NewFailureResponse(fmt.Errorf("failed to get last operation for instance %s", instanceID), http.StatusInternalServerError, fmt.Sprintf("failed to get last operation %s", instanceID))
+	}
+
+	if lastOperation.Type != internal.OperationTypeDeprovision {
+		err = b.bindingsManager.Delete(ctx, instance, bindingID)
+		if err != nil {
+			b.log.Errorf("Unbind error during removal of service account resources: %s", err)
+			return domain.UnbindSpec{}, apiresponses.NewFailureResponse(fmt.Errorf("failed to delete binding resources for binding %s and instance %s: %v", bindingID, instanceID, err), http.StatusInternalServerError, fmt.Sprintf("failed to delete resources for binding %s and instance %s: %v", bindingID, instanceID, err))
+		}
 	}
 
 	err = b.bindingsStorage.Delete(instanceID, bindingID)

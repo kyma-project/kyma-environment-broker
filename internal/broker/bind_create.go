@@ -64,10 +64,10 @@ type Credentials struct {
 	Kubeconfig string `json:"kubeconfig"`
 }
 
-func NewBind(cfg BindingConfig, instanceStorage storage.Instances, bindingsStorage storage.Bindings, log logrus.FieldLogger, clientProvider broker.ClientProvider, kubeconfigProvider broker.KubeconfigProvider) *BindEndpoint {
+func NewBind(cfg BindingConfig, db storage.BrokerStorage, log logrus.FieldLogger, clientProvider broker.ClientProvider, kubeconfigProvider broker.KubeconfigProvider) *BindEndpoint {
 	return &BindEndpoint{config: cfg,
-		instancesStorage:             instanceStorage,
-		bindingsStorage:              bindingsStorage,
+		instancesStorage:             db.Instances(),
+		bindingsStorage:              db.Bindings(),
 		log:                          log.WithField("service", "BindEndpoint"),
 		serviceAccountBindingManager: broker.NewServiceAccountBindingsManager(clientProvider, kubeconfigProvider),
 	}
@@ -114,6 +114,8 @@ func (b *BindEndpoint) Bind(ctx context.Context, instanceID, bindingID string, d
 		err = json.Unmarshal(details.RawParameters, &parameters)
 		if err != nil {
 			message := fmt.Sprintf("failed to unmarshal parameters: %s", err)
+			message = strings.Replace(message, "json: ", "", 1)
+			message = strings.Replace(message, "Go struct field BindingParams.", "", 1)
 			return domain.Binding{}, apiresponses.NewFailureResponse(fmt.Errorf(message), http.StatusBadRequest, message)
 		}
 	}
@@ -170,7 +172,7 @@ func (b *BindEndpoint) Bind(ctx context.Context, instanceID, bindingID string, d
 			}
 		}
 		if (bindingCount - expiredCount) >= b.config.MaxBindingsCount {
-			message := fmt.Sprintf("maximum number of bindings reached: %d", b.config.MaxBindingsCount)
+			message := fmt.Sprintf("maximum number of non expired bindings reached: %d", b.config.MaxBindingsCount)
 			return domain.Binding{}, apiresponses.NewFailureResponse(fmt.Errorf(message), http.StatusBadRequest, message)
 		}
 	}

@@ -5,15 +5,19 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"strings"
 	"testing"
 	"time"
+
+	"sigs.k8s.io/controller-runtime/pkg/client/fake"
 
 	"github.com/google/uuid"
 	"github.com/kyma-project/kyma-environment-broker/internal"
 	"github.com/kyma-project/kyma-environment-broker/internal/broker/automock"
 	"github.com/kyma-project/kyma-environment-broker/internal/k8s"
+	apiextensionsv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
-	"sigs.k8s.io/controller-runtime/pkg/client/fake"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 
 	"github.com/stretchr/testify/mock"
 
@@ -728,6 +732,7 @@ func TestUpdateExpiredInstance(t *testing.T) {
 }
 
 func TestSubaccountMovement(t *testing.T) {
+	registerCRD()
 	runtimeId := createFakeCRs(t)
 	defer cleanFakeCRs(t, runtimeId)
 
@@ -817,7 +822,8 @@ func TestLabelChangeWhenMovingSubaccount(t *testing.T) {
 		oldGlobalAccountId = "first-global-account-id"
 		newGlobalAccountId = "changed-global-account-id"
 	)
-
+	registerCRD()
+	createCRDs(t)
 	runtimeId := createFakeCRs(t)
 	defer cleanFakeCRs(t, runtimeId)
 
@@ -911,6 +917,31 @@ func TestLabelChangeWhenMovingSubaccount(t *testing.T) {
 		assert.Len(t, labels, 1)
 		assert.Equal(t, newGlobalAccountId, labels[k8s.GlobalAccountIdLabel])
 	})
+}
+
+func registerCRD() {
+	var customResourceDefinition apiextensionsv1.CustomResourceDefinition
+	customResourceDefinition.SetGroupVersionKind(schema.GroupVersionKind{
+		Group:   "apiextensions.k8s.io",
+		Version: "v1",
+		Kind:    "CustomResourceDefinition",
+	})
+	fakeKcpK8sClient.Scheme().AddKnownTypeWithName(customResourceDefinition.GroupVersionKind(), &customResourceDefinition)
+}
+
+func createCRDs(t *testing.T) {
+	f := func(gvkName string) {
+		var customResourceDefinition apiextensionsv1.CustomResourceDefinition
+		gvk, err := k8s.GvkByName(gvkName)
+		require.NoError(t, err)
+		crdName := fmt.Sprintf("%ss.%s", strings.ToLower(gvk.Kind), gvk.Group)
+		customResourceDefinition.SetName(crdName)
+		err = fakeKcpK8sClient.Create(context.Background(), &customResourceDefinition)
+		require.NoError(t, err)
+	}
+	f(k8s.KymaCr)
+	f(k8s.GardenerClusterCr)
+	f(k8s.RuntimeCr)
 }
 
 func createFakeCRs(t *testing.T) string {

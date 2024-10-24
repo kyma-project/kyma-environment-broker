@@ -195,7 +195,7 @@ describe('SKR Binding test', function() {
         if (err.response) {
           errorOccurred = true;
           expect(err.response.status).equal(400);
-          expect(err.response.data.description).to.include('maximum number of bindings reached');
+          expect(err.response.data.description).to.include('maximum number of non expired bindings reached');
           console.log('Got response:');
           console.log(err.response.data);
         } else {

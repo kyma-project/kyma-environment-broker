@@ -679,70 +679,13 @@ paths:
               schema:
                 $ref: '#/components/schemas/Error'
 
-  /oauth/v2/service_instances/{instance_id}/service_bindings/{binding_id}/last_operation:
-    get:
-      summary: last requested operation state for service binding
-      security:
-        - oAuth2ClientCredentials: ["broker:write"]
-      tags:
-        - Bindings (not implemented)
-      operationId: serviceBinding.lastOperation.get
-      parameters:
-        - $ref: '#/components/parameters/APIVersion'
-        - name: instance_id
-          in: path
-          description: instance id of instance to find last operation applied to it
-          required: true
-          schema:
-            type: string
-        - name: binding_id
-          in: path
-          description: binding id of service binding to find last operation applied to it
-          required: true
-          schema:
-            type: string
-        - name: service_id
-          in: query
-          description: id of the service associated with the instance
-          schema:
-            type: string
-        - name: plan_id
-          in: query
-          description: id of the plan associated with the instance
-          schema:
-            type: string
-        - name: operation
-          in: query
-          description: a provided identifier for the operation
-          schema:
-            type: string
-      responses:
-        '200':
-          description: OK
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/LastOperationResource'
-        '400':
-          description: Bad Request
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-        '410':
-          description: Gone
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-
   /oauth/v2/service_instances/{instance_id}/service_bindings/{binding_id}:
     put:
-      summary: generation of a service binding
+      summary: create a service binding
       security:
         - oAuth2ClientCredentials: ["broker:write"]
       tags:
-        - Bindings (not implemented)
+        - Bindings
       operationId: serviceBinding.binding
       parameters:
         - $ref: '#/components/parameters/APIVersion'
@@ -758,39 +701,34 @@ paths:
           required: true
           schema:
             type: string
-        - name: accepts_incomplete
-          in: query
-          description: asynchronous operations supported
-          schema:
-            type: boolean
       requestBody:
         description: parameters for the requested service binding
         required: true
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/ServiceBindingRequest'
+              $ref: '#/components/schemas/ServiceBindingProvisionRequest'
       responses:
         '200':
           description: OK
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ServiceBinding'
+                $ref: '#/components/schemas/ServiceBindingProvision'
         '201':
           description: Created
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ServiceBinding'
-        '202':
-          description: Accepted
+                $ref: '#/components/schemas/ServiceBindingProvision'
+        '400':
+          description: Bad Request
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/AsyncOperation'
-        '400':
-          description: Bad Request
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Not Found
           content:
             application/json:
               schema:
@@ -807,12 +745,18 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Error'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
     delete:
-      summary: deprovision of a service binding
+      summary: delete a service binding
       security:
         - oAuth2ClientCredentials: ["broker:write"]
       tags:
-        - Bindings (not implemented)
+        - Bindings
       operationId: serviceBinding.unbinding
       parameters:
         - $ref: '#/components/parameters/APIVersion'
@@ -840,11 +784,6 @@ paths:
           required: true
           schema:
             type: string
-        - name: accepts_incomplete
-          in: query
-          description: asynchronous operations supported
-          schema:
-            type: boolean
       responses:
         '200':
           description: OK
@@ -852,30 +791,24 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Object'
-        '202':
-          description: Accepted
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/AsyncOperation'
-        '400':
-          description: Bad Request
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
         '410':
           description: Gone
           content:
             application/json:
               schema:
+                $ref: '#/components/schemas/Object'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
                 $ref: '#/components/schemas/Error'
     get:
-      summary: gets a service binding
+      summary: get a service binding
       security:
         - oAuth2ClientCredentials: ["broker:write"]
       tags:
-        - Bindings (not implemented)
+        - Bindings
       operationId: serviceBinding.get
       parameters:
         - $ref: '#/components/parameters/APIVersion'
@@ -900,6 +833,12 @@ paths:
                 $ref: '#/components/schemas/ServiceBindingResource'
         '404':
           description: Not Found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Internal server error
           content:
             application/json:
               schema:
@@ -1214,76 +1153,13 @@ paths:
               schema:
                 $ref: '#/components/schemas/Error'
 
-  /oauth/{region}/v2/service_instances/{instance_id}/service_bindings/{binding_id}/last_operation:
-    get:
-      summary: last requested operation state for service binding
-      security:
-        - oAuth2ClientCredentials: ["broker:write"]
-      tags:
-        - Bindings (not implemented)
-      operationId: serviceBinding.region.lastOperation.get
-      parameters:
-        - $ref: '#/components/parameters/APIVersion'
-        - name: region
-          in: path
-          description: the region id
-          required: true
-          schema:
-            type: string
-        - name: instance_id
-          in: path
-          description: instance id of instance to find last operation applied to it
-          required: true
-          schema:
-            type: string
-        - name: binding_id
-          in: path
-          description: binding id of service binding to find last operation applied to it
-          required: true
-          schema:
-            type: string
-        - name: service_id
-          in: query
-          description: id of the service associated with the instance
-          schema:
-            type: string
-        - name: plan_id
-          in: query
-          description: id of the plan associated with the instance
-          schema:
-            type: string
-        - name: operation
-          in: query
-          description: a provided identifier for the operation
-          schema:
-            type: string
-      responses:
-        '200':
-          description: OK
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/LastOperationResource'
-        '400':
-          description: Bad Request
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-        '410':
-          description: Gone
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-
   /oauth/{region}/v2/service_instances/{instance_id}/service_bindings/{binding_id}:
     put:
-      summary: generation of a service binding
+      summary: create a service binding
       security:
         - oAuth2ClientCredentials: ["broker:write"]
       tags:
-        - Bindings (not implemented)
+        - Bindings
       operationId: serviceBinding.region.binding
       parameters:
         - $ref: '#/components/parameters/APIVersion'
@@ -1305,39 +1181,34 @@ paths:
           required: true
           schema:
             type: string
-        - name: accepts_incomplete
-          in: query
-          description: asynchronous operations supported
-          schema:
-            type: boolean
       requestBody:
         description: parameters for the requested service binding
         required: true
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/ServiceBindingRequest'
+              $ref: '#/components/schemas/ServiceBindingProvisionRequest'
       responses:
         '200':
           description: OK
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ServiceBinding'
+                $ref: '#/components/schemas/ServiceBindingProvision'
         '201':
           description: Created
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ServiceBinding'
-        '202':
-          description: Accepted
+                $ref: '#/components/schemas/ServiceBindingProvision'
+        '400':
+          description: Bad Request
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/AsyncOperation'
-        '400':
-          description: Bad Request
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Not Found
           content:
             application/json:
               schema:
@@ -1354,12 +1225,18 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Error'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
     delete:
-      summary: deprovision of a service binding
+      summary: delete a service binding
       security:
         - oAuth2ClientCredentials: ["broker:write"]
       tags:
-        - Bindings (not implemented)
+        - Bindings
       operationId: serviceBinding.region.unbinding
       parameters:
         - $ref: '#/components/parameters/APIVersion'
@@ -1393,11 +1270,6 @@ paths:
           required: true
           schema:
             type: string
-        - name: accepts_incomplete
-          in: query
-          description: asynchronous operations supported
-          schema:
-            type: boolean
       responses:
         '200':
           description: OK
@@ -1405,30 +1277,24 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Object'
-        '202':
-          description: Accepted
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/AsyncOperation'
-        '400':
-          description: Bad Request
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
         '410':
           description: Gone
           content:
             application/json:
               schema:
+                $ref: '#/components/schemas/Object'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
                 $ref: '#/components/schemas/Error'
     get:
-      summary: gets a service binding
+      summary: get a service binding
       security:
         - oAuth2ClientCredentials: ["broker:write"]
       tags:
-        - Bindings (not implemented)
+        - Bindings
       operationId: serviceBinding.region.get
       parameters:
         - $ref: '#/components/parameters/APIVersion'
@@ -1459,6 +1325,12 @@ paths:
                 $ref: '#/components/schemas/ServiceBindingResource'
         '404':
           description: Not Found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Internal server error
           content:
             application/json:
               schema:
@@ -2231,26 +2103,14 @@ components:
       type: object
       properties:
         credentials:
-          $ref: '#/components/schemas/Object'
-        syslog_drain_url:
-          type: string
-        route_service_url:
-          type: string
-        volume_mounts:
-          type: array
-          items:
-            $ref: '#/components/schemas/ServiceBindingVolumeMount'
-        parameters:
-          $ref: '#/components/schemas/Object'
+          $ref: '#/components/schemas/ServiceBindingKubeconfig'
 
-    ServiceBindingRequest:
+    ServiceBindingProvisionRequest:
       type: object
       required:
         - service_id
         - plan_id
       properties:
-        context:
-          $ref: '#/components/schemas/Context'
         service_id:
           type: string
           format: uuid
@@ -2260,46 +2120,33 @@ components:
           format: uuid
           example: 054ac2c2-318f-45dd-855c-eee41513d40d
         parameters:
-          $ref: '#/components/schemas/Object'
+          $ref: '#/components/schemas/BindingParameters'
 
-    ServiceBinding:
+    ServiceBindingProvision:
       type: object
       properties:
         credentials:
-          $ref: '#/components/schemas/Object'
-        syslog_drain_url:
-          type: string
-        route_service_url:
-          type: string
-        volume_mounts:
-          type: array
-          items:
-            $ref: '#/components/schemas/ServiceBindingVolumeMount'
+          $ref: '#/components/schemas/ServiceBindingKubeconfig'
+        metadata:
+          $ref: '#/components/schemas/ServiceBindingMetadata'
 
-    ServiceBindingVolumeMount:
+    ServiceBindingKubeconfig:
       type: object
       required:
-        - driver
-        - container_dir
-        - mode
-        - device_type
-        - device
+        - kubeconfig
       properties:
-        driver:
+        kubeconfig:
           type: string
-        container_dir:
+
+    ServiceBindingMetadata:
+      type: object
+      required:
+        - expires_at
+      properties:
+        expires_at:
           type: string
-        mode:
-          type: string
-          enum:
-            - r
-            - rw
-        device_type:
-          type: string
-          enum:
-            - shared
-        device:
-          $ref: '#/components/schemas/ServiceBindingVolumeMountDevice'
+          format: date-time
+          example: 2022-10-18T13:52:24.598517Z
 
     ServiceBindingVolumeMountDevice:
       type: object
@@ -2387,6 +2234,14 @@ components:
 
     Object:
       type: object
+    
+    BindingParameters:
+      type: object
+      properties:
+        expiration_seconds:
+          type: integer
+          default: 600
+          description: Specifies the duration in seconds after which the binding will be expired
 
     Error:
       description: "See [Service Broker Errors](https://github.com/openservicebrokerapi/servicebroker/blob/master/spec.md#service-broker-errors) for more details."

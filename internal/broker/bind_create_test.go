@@ -82,13 +82,13 @@ func TestCreateSecondBindingWithTheSameIdButDifferentParams(t *testing.T) {
 		MaxBindingsCount:     10,
 	}
 	binding := fixture.FixBindingWithInstanceID(bindingID, instanceID)
-	st := storage.NewMemoryStorage()
-	err := st.Instances().Insert(instance)
+	brokerStorage := storage.NewMemoryStorage()
+	err := brokerStorage.Instances().Insert(instance)
 	assert.NoError(t, err)
-	err = st.Bindings().Insert(&binding)
+	err = brokerStorage.Bindings().Insert(&binding)
 	assert.NoError(t, err)
 
-	svc := NewBind(*bindingCfg, st.Instances(), st.Bindings(), logrus.New(), nil, nil)
+	svc := NewBind(*bindingCfg, brokerStorage, logrus.New(), nil, nil)
 	params := BindingParams{
 		ExpirationSeconds: 601,
 	}
@@ -123,13 +123,13 @@ func TestCreateSecondBindingWithTheSameIdAndParams(t *testing.T) {
 		MaxBindingsCount:     10,
 	}
 	binding := fixture.FixBindingWithInstanceID(bindingID, instanceID)
-	st := storage.NewMemoryStorage()
-	err := st.Instances().Insert(instance)
+	brokerStorage := storage.NewMemoryStorage()
+	err := brokerStorage.Instances().Insert(instance)
 	assert.NoError(t, err)
-	err = st.Bindings().Insert(&binding)
+	err = brokerStorage.Bindings().Insert(&binding)
 	assert.NoError(t, err)
 
-	svc := NewBind(*bindingCfg, st.Instances(), st.Bindings(), logrus.New(), nil, nil)
+	svc := NewBind(*bindingCfg, brokerStorage, logrus.New(), nil, nil)
 	params := BindingParams{
 		ExpirationSeconds: 600,
 	}
@@ -164,13 +164,13 @@ func TestCreateSecondBindingWithTheSameIdAndParamsNotExplicitlyDefined(t *testin
 		MaxBindingsCount:     10,
 	}
 	binding := fixture.FixBindingWithInstanceID(bindingID, instanceID)
-	st := storage.NewMemoryStorage()
-	err := st.Instances().Insert(instance)
+	brokerStorage := storage.NewMemoryStorage()
+	err := brokerStorage.Instances().Insert(instance)
 	assert.NoError(t, err)
-	err = st.Bindings().Insert(&binding)
+	err = brokerStorage.Bindings().Insert(&binding)
 	assert.NoError(t, err)
 
-	svc := NewBind(*bindingCfg, st.Instances(), st.Bindings(), logrus.New(), nil, nil)
+	svc := NewBind(*bindingCfg, brokerStorage, logrus.New(), nil, nil)
 
 	// when
 	resp, err := svc.Bind(context.Background(), instanceID, bindingID, domain.BindDetails{}, false)

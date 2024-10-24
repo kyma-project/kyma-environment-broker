@@ -168,11 +168,20 @@ func TestCreateBindingEndpoint(t *testing.T) {
 
 	err = db.Instances().Insert(fixture.FixInstance(instanceID1))
 	require.NoError(t, err)
+	operation := fixture.FixOperation("operation-001", instanceID1, internal.OperationTypeProvision)
+	err = db.Operations().InsertOperation(operation)
+	require.NoError(t, err)
 
 	err = db.Instances().Insert(fixture.FixInstance(instanceID2))
 	require.NoError(t, err)
+	operation = fixture.FixOperation("operation-002", instanceID2, internal.OperationTypeProvision)
+	err = db.Operations().InsertOperation(operation)
+	require.NoError(t, err)
 
 	err = db.Instances().Insert(fixture.FixInstance(instanceID3))
+	require.NoError(t, err)
+	operation = fixture.FixOperation("operation-003", instanceID3, internal.OperationTypeProvision)
+	err = db.Operations().InsertOperation(operation)
 	require.NoError(t, err)
 
 	skrK8sClientProvider := kubeconfig.NewK8sClientFromSecretProvider(kcpClient)
@@ -190,9 +199,9 @@ func TestCreateBindingEndpoint(t *testing.T) {
 	}
 
 	//// api handler
-	bindEndpoint := broker.NewBind(*bindingCfg, db.Instances(), db.Bindings(), logs, skrK8sClientProvider, skrK8sClientProvider)
-	getBindingEndpoint := broker.NewGetBinding(logs, db.Bindings())
-	unbindEndpoint := broker.NewUnbind(logs, db.Bindings(), db.Instances(), brokerBindings.NewServiceAccountBindingsManager(skrK8sClientProvider, skrK8sClientProvider))
+	bindEndpoint := broker.NewBind(*bindingCfg, db, logs, skrK8sClientProvider, skrK8sClientProvider)
+	getBindingEndpoint := broker.NewGetBinding(logs, db)
+	unbindEndpoint := broker.NewUnbind(logs, db, brokerBindings.NewServiceAccountBindingsManager(skrK8sClientProvider, skrK8sClientProvider))
 	apiHandler := handlers.NewApiHandler(broker.KymaEnvironmentBroker{
 		ServicesEndpoint:             nil,
 		ProvisionEndpoint:            nil,
@@ -459,7 +468,7 @@ func TestCreateBindingEndpoint(t *testing.T) {
 
 	})
 
-	t.Run("should return error when attempting to add a new binding when the maximum number of bindings has already been reached", func(t *testing.T) {
+	t.Run("should return error when attempting to add a new binding when the maximum number of non expired bindings has already been reached", func(t *testing.T) {
 		// given - create max number of bindings
 		var response *http.Response
 

@@ -12,6 +12,8 @@ import (
 	"testing"
 	"time"
 
+	"github.com/kyma-project/kyma-environment-broker/internal/storage/dberr"
+
 	imv1 "github.com/kyma-project/infrastructure-manager/api/v1"
 
 	"github.com/kyma-project/kyma-environment-broker/internal/kubeconfig"
@@ -407,7 +409,7 @@ func (s *BrokerSuiteTest) WaitForOperationState(operationID string, state domain
 		}
 		return op.State == state, nil
 	})
-	assert.NoError(s.t, err, "timeout waiting for the operation expected state %s != %s. The existing operation %+v", state, op.State, op)
+	assert.NoError(s.t, err, "timeout waiting for the operation expected state %s. The existing operation %+v", state, op)
 }
 
 func (s *BrokerSuiteTest) GetOperation(operationID string) *internal.Operation {
@@ -429,6 +431,19 @@ func (s *BrokerSuiteTest) WaitForLastOperation(iid string, state domain.LastOper
 	assert.NoError(s.t, err, "timeout waiting for the operation expected state %s. The existing operation %+v", state, op)
 
 	return op.ID
+}
+
+func (s *BrokerSuiteTest) WaitForInstanceRemoval(iid string) {
+	err := s.poller.Invoke(func() (done bool, err error) {
+		_, err = s.db.Instances().GetByID(iid)
+		return dberr.IsNotFound(err), nil
+	})
+	assert.NoError(s.t, err, "timeout waiting for the instance %s to be removed", iid)
+}
+
+func (s *BrokerSuiteTest) AssertBindingRemoval(iid string, bindingID string) {
+	_, err := s.db.Bindings().Get(iid, bindingID)
+	assert.True(s.t, dberr.IsNotFound(err), "bindings should be removed")
 }
 
 func (s *BrokerSuiteTest) LastOperation(iid string) *internal.Operation {

@@ -6,6 +6,8 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/kyma-project/kyma-environment-broker/internal"
+
 	"github.com/kyma-project/kyma-environment-broker/internal/storage"
 	"github.com/pivotal-cf/brokerapi/v8/domain"
 	"github.com/pivotal-cf/brokerapi/v8/domain/apiresponses"
@@ -13,12 +15,13 @@ import (
 )
 
 type GetBindingEndpoint struct {
-	log      logrus.FieldLogger
-	bindings storage.Bindings
+	log        logrus.FieldLogger
+	bindings   storage.Bindings
+	operations storage.Operations
 }
 
-func NewGetBinding(log logrus.FieldLogger, bindings storage.Bindings) *GetBindingEndpoint {
-	return &GetBindingEndpoint{log: log.WithField("service", "GetBindingEndpoint"), bindings: bindings}
+func NewGetBinding(log logrus.FieldLogger, db storage.BrokerStorage) *GetBindingEndpoint {
+	return &GetBindingEndpoint{log: log.WithField("service", "GetBindingEndpoint"), bindings: db.Bindings(), operations: db.Operations()}
 }
 
 // GetBinding fetches an existing service binding
@@ -27,6 +30,15 @@ func NewGetBinding(log logrus.FieldLogger, bindings storage.Bindings) *GetBindin
 func (b *GetBindingEndpoint) GetBinding(_ context.Context, instanceID, bindingID string, _ domain.FetchBindingDetails) (domain.GetBindingSpec, error) {
 	b.log.Infof("GetBinding instanceID: %s", instanceID)
 	b.log.Infof("GetBinding bindingID: %s", bindingID)
+
+	lastOperation, err := b.operations.GetLastOperation(instanceID)
+	if err != nil {
+		return domain.GetBindingSpec{}, apiresponses.NewFailureResponse(fmt.Errorf("failed to get last operation for instance %s", instanceID), http.StatusInternalServerError, fmt.Sprintf("failed to get last operation %s", instanceID))
+	}
+	if lastOperation.Type == internal.OperationTypeDeprovision {
+		message := "Binding not found"
+		return domain.GetBindingSpec{}, apiresponses.NewFailureResponse(fmt.Errorf(message), http.StatusNotFound, message)
+	}
 
 	binding, err := b.bindings.Get(instanceID, bindingID)
 
