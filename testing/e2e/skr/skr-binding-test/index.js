@@ -33,7 +33,7 @@ describe('SKR Binding test', function() {
   it('Create SKR binding', async function() {
     bindingID = uuid.v4();
     try {
-      const resp = await keb.createBinding(options.instanceID, bindingID);
+      const resp = await keb.createBinding(options.instanceID, bindingID, 7200);
       kubeconfigFromBinding = resp.data.credentials.kubeconfig;
       expect(resp.status).equal(201);
     } catch (err) {
