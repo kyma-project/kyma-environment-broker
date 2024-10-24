@@ -151,11 +151,8 @@ func (s *Binding) toBinding(dto dbmodel.BindingDTO) (internal.Binding, error) {
 
 func (s *Binding) toExpiredBinding(dto dbmodel.BindingDTO) (internal.Binding, error) {
 	return internal.Binding{
-		ID:                dto.ID,
-		InstanceID:        dto.InstanceID,
-		CreatedAt:         dto.CreatedAt,
-		ExpirationSeconds: dto.ExpirationSeconds,
-		CreatedBy:         dto.CreatedBy,
-		ExpiresAt:         dto.ExpiresAt,
+		ID:         dto.ID,
+		InstanceID: dto.InstanceID,
+		ExpiresAt:  dto.ExpiresAt,
 	}, nil
 }

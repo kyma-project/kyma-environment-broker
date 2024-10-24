@@ -59,10 +59,9 @@ func (r readSession) ListExpiredBindings() ([]dbmodel.BindingDTO, error) {
 	currentTime := time.Now().UTC()
 	var bindings []dbmodel.BindingDTO
 	_, err := r.session.
-		Select("*").
+		Select("id", "instance_id", "expires_at").
 		From(BindingsTableName).
 		Where(dbr.Lte("expires_at", currentTime)).
-		OrderBy("created_at").
 		Load(&bindings)
 
 	if err != nil {
