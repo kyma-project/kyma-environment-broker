@@ -193,7 +193,7 @@ The test executes the following steps:
 3. Run the test scenario:
 
     ```bash
-    make provisioning-service-test
+    make provisioning-service
     ```
 
 ## CI Pipelines
