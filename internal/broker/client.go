@@ -29,6 +29,21 @@ const (
 	unbindTmpl         = "%s%s/%s/service_bindings/%s"
 )
 
+type UnexpectedStatusCodeError struct {
+	ExpectedStatusCode, UnexpectedStatusCode int
+}
+
+func NewUnexpectedStatusCodeError(expectedStatusCode, unexpectedStatusCode int) UnexpectedStatusCodeError {
+	return UnexpectedStatusCodeError{
+		ExpectedStatusCode:   expectedStatusCode,
+		UnexpectedStatusCode: unexpectedStatusCode,
+	}
+}
+
+func (e UnexpectedStatusCodeError) Error() string {
+	return fmt.Sprintf("unexpected status code: want %d, got: %d", e.ExpectedStatusCode, e.UnexpectedStatusCode)
+}
+
 type (
 	contextDTO struct {
 		GlobalAccountID string `json:"globalaccount_id"`
@@ -317,8 +332,7 @@ func (c *Client) executeRequest(method, url string, expectedStatus int, requestB
 
 	defer c.warnOnError(resp.Body.Close)
 	if resp.StatusCode != expectedStatus {
-		return fmt.Errorf("got unexpected status code while calling Kyma Environment Broker: want: %d, got: %d",
-			expectedStatus, resp.StatusCode)
+		return NewUnexpectedStatusCodeError(expectedStatus, resp.StatusCode)
 	}
 
 	err = json.NewDecoder(resp.Body).Decode(responseBody)
