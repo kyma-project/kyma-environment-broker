@@ -152,7 +152,7 @@ The test executes the following steps:
 5. Fetches the created SKR binding.
 6. Deletes the created SKR binding.
 7. Tries to fetch Secret using the deleted SKR binding.
-8. Tries to create SKR binding using invalid parameters.
+8. Tries to create an SKR binding using invalid parameters.
 9. Tests response status codes.
 10. Tries to create more than 10 SKR bindings.
 11. Deprovisions the Kyma runtime instance and cleans up the resources.
