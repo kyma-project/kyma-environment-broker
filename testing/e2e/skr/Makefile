@@ -47,3 +47,7 @@ skr-binding:
 	chmod +x /usr/local/bin/kcp
 	npm install
 	npm run skr-binding-test
+
+.PHONY: provisioning-service
+provisioning-service:
+	cd provisioning-service-test/cmd && go test -timeout 130m
