@@ -283,35 +283,20 @@ class KEBClient {
     };
     const endpoint = `service_instances/${instanceID}/service_bindings/${bindingID}?accepts_incomplete=false`;
     const config = await this.buildRequest(payload, endpoint, 'put');
-
-    try {
-      return await axios.request(config);
-    } catch (err) {
-      throw err;
-    }
+    return await axios.request(config);
   }
 
   async deleteBinding(instanceID, bindingID) {
     const params = `service_id=${KYMA_SERVICE_ID}&plan_id=${this.planID}`;
     const endpoint = `service_instances/${instanceID}/service_bindings/${bindingID}?accepts_incomplete=false&${params}`;
     const config = await this.buildRequest({}, endpoint, 'delete');
-
-    try {
-      return await axios.request(config);
-    } catch (err) {
-      throw err;
-    }
+    return await axios.request(config);
   }
 
   async getBinding(instanceID, bindingID) {
     const endpoint = `service_instances/${instanceID}/service_bindings/${bindingID}?accepts_incomplete=false`;
     const config = await this.buildRequest({}, endpoint, 'get');
-
-    try {
-      return await axios.request(config);
-    } catch (err) {
-      throw err;
-    }
+    return await axios.request(config);
   }
 
   getPlatformRegion() {

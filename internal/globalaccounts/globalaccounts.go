@@ -248,7 +248,7 @@ func showReport(logs *logrus.Logger, okCount, mismatch, getInstanceErrorCounts, 
 	logs.Infof("no. instances in KEB which failed to get from db: %d", getInstanceErrorCounts)
 	logs.Infof("no. instances in KEB with empty SA: %d", kebInstanceMissingSACount)
 	logs.Infof("no. instances in KEB with empty GA: %d", kebInstanceMissingGACount)
-	logs.Infof("no. GA missing in SVC: %d", svcGlobalAccountMissing)
+	logs.Infof("no. GA missing in account service: %d", svcGlobalAccountMissing)
 	logs.Infof("no. failed requests to account service : %d", requestErrorCount)
 	logs.Infof("no. instances with error while updating in : %d", instanceUpdateErrorCount)
 	logs.Infof("no. CR for which update labels failed: %d", labelsUpdateErrorCount)

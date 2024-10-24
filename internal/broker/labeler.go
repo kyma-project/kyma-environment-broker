@@ -4,10 +4,15 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"strings"
 
 	"github.com/kyma-project/kyma-environment-broker/internal/k8s"
 	"github.com/sirupsen/logrus"
+	apiextensionsv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
+	k8serrors "k8s.io/apimachinery/pkg/api/errors"
+	metaerrors "k8s.io/apimachinery/pkg/api/meta"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/types"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
@@ -41,6 +46,15 @@ func (l *Labeler) updateCrLabel(id, crName, newGlobalAccountId string) error {
 
 	var k8sObject unstructured.Unstructured
 	k8sObject.SetGroupVersionKind(gvk)
+	crdExists, err := l.checkCRDExistence(gvk)
+	if err != nil {
+		return fmt.Errorf("while checking existence of CRD for %s: %s", crName, err.Error())
+	}
+	if !crdExists {
+		l.log.Infof("CRD for %s does not exist, skipping", crName)
+		return nil
+	}
+
 	err = l.kcpClient.Get(context.Background(), types.NamespacedName{Namespace: KcpNamespace, Name: id}, &k8sObject)
 	if err != nil {
 		return fmt.Errorf("while getting k8s object of type %s from kcp cluster for instance %s, due to: %s", crName, id, err.Error())
@@ -72,4 +86,19 @@ func addOrOverrideLabel(k8sObject *unstructured.Unstructured, key, value string)
 	(*k8sObject).SetLabels(labels)
 
 	return nil
+}
+
+func (l *Labeler) checkCRDExistence(gvk schema.GroupVersionKind) (bool, error) {
+	crdName := fmt.Sprintf("%ss.%s", strings.ToLower(gvk.Kind), gvk.Group)
+	crd := &apiextensionsv1.CustomResourceDefinition{}
+	if err := l.kcpClient.Get(context.Background(), client.ObjectKey{Name: crdName}, crd); err != nil {
+		if k8serrors.IsNotFound(err) || metaerrors.IsNoMatchError(err) {
+			l.log.Errorf("CustomResourceDefinition does not exist %s", err.Error())
+			return false, nil
+		} else {
+			l.log.Errorf("while getting CRD %s: %s", crdName, err.Error())
+			return false, err
+		}
+	}
+	return true, nil
 }
