@@ -44,4 +44,4 @@ DELETE http://localhost:8080/oauth/v2/service_instances/{{instance_id}}/service_
 X-Broker-API-Version: 2.14
 ```
 
-The Broker returns a `200 OK` status code if the binding is successfully removed. If either binding does not exist or Service Instance does not exist the code returned is `410 Gone`.
+If the binding is successfully removed, the Broker returns the `200 OK` status code. If the binding or service instance does not exist, the Broker returns the `410 Gone` code.
