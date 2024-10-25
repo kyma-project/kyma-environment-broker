@@ -73,6 +73,7 @@ func (b *UnbindEndpoint) Unbind(ctx context.Context, instanceID, bindingID strin
 		b.log.Errorf("Unbind error during removal of db entity: %v", err)
 		return domain.UnbindSpec{}, apiresponses.NewFailureResponse(fmt.Errorf("failed to delete binding resources for binding %s and instance %s: %v", bindingID, instanceID, err), http.StatusInternalServerError, fmt.Sprintf("failed to delete resources for binding %s and instance %s: %v", bindingID, instanceID, err))
 	}
+	b.log.Infof("Successfully removed binding %s for instance %s", bindingID, instanceID)
 
 	return domain.UnbindSpec{
 		IsAsync: false,

@@ -216,6 +216,7 @@ func (b *BindEndpoint) Bind(ctx context.Context, instanceID, bindingID string, d
 		message := fmt.Sprintf("failed to update Kyma binding in storage: %s", err)
 		return domain.Binding{}, apiresponses.NewFailureResponse(fmt.Errorf(message), http.StatusInternalServerError, message)
 	}
+	b.log.Infof("Successfully created binding %s for instance %s", bindingID, instanceID)
 
 	return domain.Binding{
 		IsAsync: false,
