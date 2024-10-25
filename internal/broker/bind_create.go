@@ -164,6 +164,10 @@ func (b *BindEndpoint) Bind(ctx context.Context, instanceID, bindingID string, d
 	}
 
 	bindingCount := len(bindingList)
+	message := fmt.Sprintf("reaching the maximum (%d) number of non expired bindings for instance %s", b.config.MaxBindingsCount, instanceID)
+	if bindingCount == b.config.MaxBindingsCount-1 {
+		b.log.Infof(message)
+	}
 	if bindingCount >= b.config.MaxBindingsCount {
 		expiredCount := 0
 		for _, binding := range bindingList {
@@ -171,8 +175,12 @@ func (b *BindEndpoint) Bind(ctx context.Context, instanceID, bindingID string, d
 				expiredCount++
 			}
 		}
+		if (bindingCount - expiredCount) == (b.config.MaxBindingsCount - 1) {
+			b.log.Infof(message)
+		}
 		if (bindingCount - expiredCount) >= b.config.MaxBindingsCount {
 			message := fmt.Sprintf("maximum number of non expired bindings reached: %d", b.config.MaxBindingsCount)
+			b.log.Infof(message+" for instance %s", instanceID)
 			return domain.Binding{}, apiresponses.NewFailureResponse(fmt.Errorf(message), http.StatusBadRequest, message)
 		}
 	}
@@ -205,6 +213,7 @@ func (b *BindEndpoint) Bind(ctx context.Context, instanceID, bindingID string, d
 	kubeconfig, expiresAt, err = b.serviceAccountBindingManager.Create(ctx, instance, bindingID, expirationSeconds)
 	if err != nil {
 		message := fmt.Sprintf("failed to create a Kyma binding using service account's kubeconfig: %s", err)
+		b.log.Errorf(message+" for instance %s", instanceID)
 		return domain.Binding{}, apiresponses.NewFailureResponse(fmt.Errorf(message), http.StatusBadRequest, message)
 	}
 
