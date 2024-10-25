@@ -185,7 +185,7 @@ The test executes the following steps:
 5. Deletes the created Kyma Binding.
 6. Tries to fetch the `sap-btp-manager` Secret using the invalidated kubeconfig.
 7. Tries to fetch the deleted Kyma Binding.
-8. Sends a call to Provisioning API to deprovision a Kyma runtime. The test waits until the environment is deleted.
+8. Sends a call to Provisioning API to deprovision the Kyma runtime. The test waits until the environment is deleted.
 
 ### Test Execution
 
