@@ -204,7 +204,7 @@ The test executes the following steps:
 
 ## CI Pipelines
 
-The tests are run once per day starting at 9 at hourly intervals.
+The tests are run daily.
 
 * `keb-endpoints-test` - KEB endpoints test
 * `skr-aws-integration-dev` - SKR test
