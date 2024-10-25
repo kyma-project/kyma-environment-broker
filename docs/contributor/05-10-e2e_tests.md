@@ -2,8 +2,7 @@
 
 ## Overview
 
-The end-to-end (E2E) tests cover Kyma Environment Broker (KEB) and SAP BTP, Kyma runtime.
-There are six tests:
+The following end-to-end (E2E) tests cover Kyma Environment Broker (KEB) and SAP BTP, Kyma runtime:
 
 * `skr-tests` for testing the following operations on different cloud service providers: Kyma provisioning, BTP Manager Secret reconciliation, updating OIDC, updating machine type, and Kyma runtime deprovisioning
 * `keb-endpoints-test` for checking if `kyma-environment-broker` endpoints require authorization
