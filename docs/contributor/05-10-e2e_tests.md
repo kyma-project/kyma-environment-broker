@@ -146,15 +146,15 @@ The test executes the following steps:
 The test executes the following steps:
 
 1. Provisions a Kyma runtime cluster.
-2. Creates a SKR binding and saves the returned kubeconfig.
+2. Creates a Kyma Binding and saves the returned kubeconfig.
 3. Initializes a Kubernetes client with the returned kubeconfig.
-4. Fetches a Secret using the SKR binding.
-5. Fetches the created SKR binding.
-6. Deletes the created SKR binding.
-7. Tries to fetch Secret using the deleted SKR binding.
-8. Tries to create an SKR binding using invalid parameters.
+4. Fetches the `sap-btp-manager` Secret using the Kyma Binding.
+5. Fetches the created Kyma Binding.
+6. Deletes the created Kyma Binding.
+7. Tries to fetch the `sap-btp-manager` Secret using the deleted Kyma Binding.
+8. Tries to create a Kyma Binding using invalid parameters.
 9. Tests response status codes.
-10. Tries to create more than 10 SKR bindings.
+10. Tries to create more than 10 Kyma Bindings.
 11. Deprovisions the Kyma runtime instance and cleans up the resources.
 
 ### Test Execution
