@@ -48,7 +48,7 @@ func (b *GetBindingEndpoint) GetBinding(_ context.Context, instanceID, bindingID
 	}
 
 	if binding.ExpiresAt.Before(time.Now()) {
-		b.log.Warnf("GET was called for expired binding %s for instance %s", bindingID, instanceID)
+		b.log.Warnf("GetBinding was called for expired binding %s for instance %s", bindingID, instanceID)
 		message := "Binding expired"
 		return domain.GetBindingSpec{}, apiresponses.NewFailureResponse(fmt.Errorf(message), http.StatusNotFound, message)
 	}
