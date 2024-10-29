@@ -5,6 +5,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"github.com/kyma-project/kyma-environment-broker/internal/customresources"
 	"io"
 	"net/http"
 	"net/http/httptest"
@@ -299,7 +300,7 @@ func defaultOIDCConfig() *gqlschema.OIDCConfigInput {
 	}
 }
 
-func (s *BrokerSuiteTest) ProcessInfrastructureManagerProvisioningByRuntimeID(runtimeID string) {
+func (s *BrokerSuiteTest) ProcessInfrastructureManagerProvisioningGardenerCluster(runtimeID string) {
 	err := s.poller.Invoke(func() (bool, error) {
 		gardenerCluster := &unstructured.Unstructured{}
 		gardenerCluster.SetGroupVersionKind(steps.GardenerClusterGVK())
@@ -314,6 +315,27 @@ func (s *BrokerSuiteTest) ProcessInfrastructureManagerProvisioningByRuntimeID(ru
 		err = unstructured.SetNestedField(gardenerCluster.Object, "Ready", "status", "state")
 		assert.NoError(s.t, err)
 		err = s.k8sKcp.Update(context.Background(), gardenerCluster)
+		return err == nil, nil
+	})
+	assert.NoError(s.t, err)
+}
+
+func (s *BrokerSuiteTest) ProcessInfrastructureManagerProvisioningRuntimeResource(runtimeID string) {
+	err := s.poller.Invoke(func() (bool, error) {
+		runtimeResource := &unstructured.Unstructured{}
+		gvk, _ := customresources.GvkByName(customresources.RuntimeCr)
+		runtimeResource.SetGroupVersionKind(gvk)
+		err := s.k8sKcp.Get(context.Background(), client.ObjectKey{
+			Namespace: "kyma-system",
+			Name:      steps.KymaRuntimeResourceNameFromID(runtimeID),
+		}, runtimeResource)
+		if err != nil {
+			return false, nil
+		}
+
+		err = unstructured.SetNestedField(runtimeResource.Object, "Ready", "status", "state")
+		assert.NoError(s.t, err)
+		err = s.k8sKcp.Update(context.Background(), runtimeResource)
 		return err == nil, nil
 	})
 	assert.NoError(s.t, err)
@@ -464,8 +486,22 @@ func (s *BrokerSuiteTest) FinishProvisioningOperationByProvisionerAndInfrastruct
 
 	s.finishOperationByProvisioner(gqlschema.OperationTypeProvision, operationState, op.RuntimeID)
 	if operationState == gqlschema.OperationStateSucceeded {
-		s.ProcessInfrastructureManagerProvisioningByRuntimeID(op.RuntimeID)
+		s.ProcessInfrastructureManagerProvisioningGardenerCluster(op.RuntimeID)
 	}
+}
+
+func (s *BrokerSuiteTest) FinishProvisioningOperationByInfrastructureManager(operationID string) {
+	var op *internal.ProvisioningOperation
+	err := s.poller.Invoke(func() (done bool, err error) {
+		op, _ = s.db.Operations().GetProvisioningOperationByID(operationID)
+		if op.RuntimeID != "" {
+			return true, nil
+		}
+		return false, nil
+	})
+	assert.NoError(s.t, err, "timeout waiting for the operation with runtimeID. The existing operation %+v", op)
+
+	s.ProcessInfrastructureManagerProvisioningRuntimeResource(op.RuntimeID)
 }
 
 func (s *BrokerSuiteTest) FailProvisioningOperationByProvisioner(operationID string) {
@@ -911,6 +947,15 @@ func (s *BrokerSuiteTest) processProvisioningByOperationID(opID string) {
 	require.NoError(s.t, err)
 
 	// provisioner finishes the operation
+	s.WaitForOperationState(opID, domain.Succeeded)
+}
+
+func (s *BrokerSuiteTest) processKimOnlyProvisioningByOperationID(opID string) {
+	s.WaitForProvisioningState(opID, domain.InProgress)
+
+	s.FinishProvisioningOperationByInfrastructureManager(opID)
+
+	// infrastructure manager finishes the operation
 	s.WaitForOperationState(opID, domain.Succeeded)
 }
 

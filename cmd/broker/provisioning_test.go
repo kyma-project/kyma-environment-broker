@@ -131,6 +131,43 @@ func TestProvisioningWithKIM(t *testing.T) {
 	suite.WaitForOperationState(opID, domain.Succeeded)
 }
 
+func TestProvisioningWithKIMOnlyForTrial(t *testing.T) {
+
+	cfg := fixConfig()
+	cfg.Broker.KimConfig.Enabled = true
+	cfg.Broker.KimConfig.Plans = []string{"trial"}
+	cfg.Broker.KimConfig.KimOnlyPlans = []string{"trial"}
+
+	//cfg.Broker.KimConfig.DryRun = true
+	cfg.Provisioner.DefaultTrialProvider = internal.AWS
+
+	suite := NewBrokerSuiteTestWithConfig(t, cfg)
+	defer suite.TearDown()
+	iid := uuid.New().String()
+	// when
+	resp := suite.CallAPI("PUT", fmt.Sprintf("oauth/cf-eu21/v2/service_instances/%s?accepts_incomplete=true", iid),
+		`{
+					"service_id": "47c9dcbf-ff30-448e-ab36-d3bad66ba281",
+					"plan_id": "7d55d31d-35ae-4438-bf13-6ffdfa107d9f",
+					"context": {
+						"globalaccount_id": "g-account-id",
+						"subaccount_id": "sub-id",
+						"user_id": "john.smith@email.com"
+					},
+					"parameters": {
+						"name": "testing-cluster",
+						"administrators":["newAdmin1@kyma.cx", "newAdmin2@kyma.cx"]
+					}
+		}`)
+
+	opID := suite.DecodeOperationID(resp)
+
+	suite.processKimOnlyProvisioningByOperationID(opID)
+
+	// then
+	suite.WaitForOperationState(opID, domain.Succeeded)
+}
+
 func TestProvisioning_HappyPathAWS(t *testing.T) {
 	// given
 	suite := NewBrokerSuiteTest(t)
