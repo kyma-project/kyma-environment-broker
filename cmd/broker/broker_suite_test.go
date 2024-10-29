@@ -950,7 +950,7 @@ func (s *BrokerSuiteTest) processProvisioningByOperationID(opID string) {
 	s.WaitForOperationState(opID, domain.Succeeded)
 }
 
-func (s *BrokerSuiteTest) processKimOnlyProvisioningByOperationID(opID string) {
+func (s *BrokerSuiteTest) processKIMOnlyProvisioningByOperationID(opID string) {
 	s.WaitForProvisioningState(opID, domain.InProgress)
 
 	s.FinishProvisioningOperationByInfrastructureManager(opID)

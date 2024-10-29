@@ -162,7 +162,7 @@ func TestProvisioningWithKIMOnlyForTrial(t *testing.T) {
 
 	opID := suite.DecodeOperationID(resp)
 
-	suite.processKimOnlyProvisioningByOperationID(opID)
+	suite.processKIMOnlyProvisioningByOperationID(opID)
 
 	// then
 	suite.WaitForOperationState(opID, domain.Succeeded)
