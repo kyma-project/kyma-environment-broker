@@ -4,8 +4,9 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"github.com/kyma-project/kyma-environment-broker/internal/customresources"
 	"strings"
+
+	"github.com/kyma-project/kyma-environment-broker/internal/customresources"
 
 	"github.com/sirupsen/logrus"
 	apiextensionsv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
