@@ -117,7 +117,7 @@ func TestSecretProvider_KubernetesAndK8sClientForRuntimeID(t *testing.T) {
 	kubeconfig := createKubeconfigFileForRestConfig(*config)
 
 	// prepare a k8s client to store a secret with kubeconfig
-	kcpClient := fake.NewClientBuilder().Build()
+	kcpClient := fake.NewClientBuilder().Build() //
 	err = kcpClient.Create(context.Background(), &v1.Secret{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      "kubeconfig-runtime00",
