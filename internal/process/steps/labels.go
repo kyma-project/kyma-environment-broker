@@ -1,4 +1,4 @@
-package customresources
+package steps
 
 import (
 	"github.com/kyma-project/kyma-environment-broker/internal"
@@ -29,24 +29,28 @@ func setCommonLabels(labels map[string]string, operation internal.Operation) map
 	labels[GlobalAccountIdLabel] = operation.GlobalAccountID
 	labels[SubaccountIdLabel] = operation.SubAccountID
 	labels[ShootNameLabel] = operation.ShootName
-	labels[PlatformRegionLabel] = operation.ProvisioningParameters.PlatformRegion
-	labels[KymaNameLabel] = operation.KymaResourceName
-	labels[ProviderLabel] = string(operation.InputCreator.Provider()) //TODO change
-	return labels
-}
-
-func setLabelsForLM(labels map[string]string, operation internal.Operation) map[string]string {
-	labels = setCommonLabels(labels, operation)
-	labels[RegionLabel] = operation.Region
-	labels[ManagedByLabel] = "lifecycle-manager"
-	if isKymaResourceInternal(operation) {
-		labels[InternalLabel] = "true"
+	if operation.ProvisioningParameters.PlatformRegion != "" {
+		labels[PlatformRegionLabel] = operation.ProvisioningParameters.PlatformRegion
 	}
+	labels[KymaNameLabel] = operation.KymaResourceName
+	labels[ProviderLabel] = string(operation.InputCreator.Provider()) //TODO change internal.CloudProvider
 	return labels
 }
 
-func setLabelsForRuntime(labels map[string]string, operation internal.Operation, region string) map[string]string {
-	labels = setCommonLabels(labels, operation)
-	labels[RegionLabel] = region
-	return labels
-}
+// TODO move it to lifecycle_manager.go
+//func setLabelsForLM(labels map[string]string, operation internal.Operation) map[string]string {
+//	labels = setCommonLabels(labels, operation)
+//	labels[RegionLabel] = operation.Region
+//	labels[ManagedByLabel] = "lifecycle-manager"
+//	if steps.isKymaResourceInternal(operation) {
+//		labels[InternalLabel] = "true"
+//	}
+//	return labels
+//}
+//
+//// TODO move it to create_runtime_resource_step.go
+//func setLabelsForRuntime(labels map[string]string, operation internal.Operation, region string) map[string]string {
+//	labels = setCommonLabels(labels, operation)
+//	labels[RegionLabel] = region
+//	return labels
+//}
