@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"github.com/kyma-project/kyma-environment-broker/internal/customresources"
 	"net/http"
 	"strings"
 	"testing"
