@@ -77,6 +77,20 @@ func setupSuite(t testing.TB) func(t testing.TB) {
 	}
 }
 
+func setupTestNilStorage(t testing.TB) (func(t testing.TB), storage.BrokerStorage) {
+	//logger.Info("setup test - no storage needed")
+
+	return func(t testing.TB) {
+		if r := recover(); r != nil {
+			if tearDownFunc != nil {
+				tearDownFunc()
+			}
+			panic(r)
+		}
+		//logger.Info("teardown test")
+	}, nil
+}
+
 func TestCreateBindingEndpointEnvtest(t *testing.T) {
 	t.Log("test create binding endpoint")
 
@@ -166,7 +180,7 @@ func TestCreateBindingEndpointEnvtest(t *testing.T) {
 		Build()
 
 	//// database
-	setupSuite(t)
+	teardownSuite := setupSuite(t)
 	storageCleanup, db, err := GetStorageForE2ETests()
 	t.Cleanup(func() {
 		if storageCleanup != nil {
@@ -175,7 +189,9 @@ func TestCreateBindingEndpointEnvtest(t *testing.T) {
 		}
 	})
 	assert.NoError(t, err)
-	//	defer teardownSuite(t)
+	defer teardownSuite(t)
+	teardownTest, _ := setupTestNilStorage(t)
+	defer teardownTest(t)
 
 	err = db.Instances().Insert(fixture.FixInstance(instanceID1))
 	require.NoError(t, err)
