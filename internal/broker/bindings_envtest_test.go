@@ -167,7 +167,6 @@ func TestCreateBindingEndpointEnvtest(t *testing.T) {
 
 	//// database
 	teardownSuite := setupSuite(t)
-	defer teardownSuite(t)
 	storageCleanup, db, err := GetStorageForE2ETests()
 	t.Cleanup(func() {
 		if storageCleanup != nil {
@@ -176,6 +175,7 @@ func TestCreateBindingEndpointEnvtest(t *testing.T) {
 		}
 	})
 	assert.NoError(t, err)
+	defer teardownSuite(t)
 
 	err = db.Instances().Insert(fixture.FixInstance(instanceID1))
 	require.NoError(t, err)
