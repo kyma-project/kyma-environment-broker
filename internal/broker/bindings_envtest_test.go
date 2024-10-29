@@ -849,7 +849,7 @@ func setupStorageContainer() func() {
 		Password:      config.Password,
 		Name:          config.Name,
 		Host:          config.Host,
-		ContainerName: "subaccount-sync-tests",
+		ContainerName: "test2",
 		Image:         internal.PostgresImage,
 	})
 	return func() {
