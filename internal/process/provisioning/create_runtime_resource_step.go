@@ -83,7 +83,7 @@ func (s *CreateRuntimeResourceStep) Run(operation internal.Operation, log logrus
 
 	if s.kimConfig.DryRun {
 		runtimeCR := &imv1.Runtime{}
-		err := s.updateRuntimeResourceObject(runtimeCR, operation, runtimeResourceName, kymaResourceName, kymaResourceNamespace)
+		err := s.updateRuntimeResourceObject(runtimeCR, operation, runtimeResourceName)
 		if err != nil {
 			return s.operationManager.OperationFailed(operation, fmt.Sprintf("while updating Runtime resource object: %s", err), err, log)
 		}
@@ -103,7 +103,7 @@ func (s *CreateRuntimeResourceStep) Run(operation internal.Operation, log logrus
 			log.Infof("Runtime resource already created %s/%s: ", operation.KymaResourceNamespace, runtimeResourceName)
 			return operation, 0, nil
 		} else {
-			err := s.updateRuntimeResourceObject(runtimeCR, operation, runtimeResourceName, kymaResourceName, kymaResourceNamespace)
+			err := s.updateRuntimeResourceObject(runtimeCR, operation, runtimeResourceName)
 			if err != nil {
 				return s.operationManager.OperationFailed(operation, fmt.Sprintf("while creating Runtime CR object: %s", err), err, log)
 			}
@@ -126,7 +126,7 @@ func (s *CreateRuntimeResourceStep) Run(operation internal.Operation, log logrus
 	return operation, 0, nil
 }
 
-func (s *CreateRuntimeResourceStep) updateRuntimeResourceObject(runtime *imv1.Runtime, operation internal.Operation, runtimeName, kymaName, kymaNamespace string) error {
+func (s *CreateRuntimeResourceStep) updateRuntimeResourceObject(runtime *imv1.Runtime, operation internal.Operation, runtimeName string) error {
 
 	// get plan specific values (like zones, default machine type etc.
 	values, err := provider.GenerateValues(&operation, s.config.MultiZoneCluster, s.config.DefaultTrialProvider, s.useSmallerMachineTypes, s.trialPlatformRegionMapping, s.config.DefaultGardenerShootPurpose)
@@ -134,8 +134,8 @@ func (s *CreateRuntimeResourceStep) updateRuntimeResourceObject(runtime *imv1.Ru
 		return err
 	}
 	runtime.ObjectMeta.Name = runtimeName
-	runtime.ObjectMeta.Namespace = kymaNamespace
-	runtime.ObjectMeta.Labels = s.createLabelsForRuntime(operation, kymaName, values.Region)
+	runtime.ObjectMeta.Namespace = operation.KymaResourceNamespace
+	runtime.ObjectMeta.Labels = s.createLabelsForRuntime(operation, values.Region)
 
 	providerObj, err := s.createShootProvider(&operation, values)
 	if err != nil {
@@ -161,7 +161,7 @@ func (s *CreateRuntimeResourceStep) updateRuntimeResourceObject(runtime *imv1.Ru
 	return nil
 }
 
-func (s *CreateRuntimeResourceStep) createLabelsForRuntime(operation internal.Operation, kymaName string, region string) map[string]string {
+func (s *CreateRuntimeResourceStep) createLabelsForRuntime(operation internal.Operation, region string) map[string]string {
 	labels := map[string]string{
 		"kyma-project.io/instance-id":        operation.InstanceID,
 		"kyma-project.io/runtime-id":         operation.RuntimeID,
@@ -171,7 +171,7 @@ func (s *CreateRuntimeResourceStep) createLabelsForRuntime(operation internal.Op
 		"kyma-project.io/subaccount-id":      operation.ProvisioningParameters.ErsContext.SubAccountID,
 		"kyma-project.io/shoot-name":         operation.ShootName,
 		"kyma-project.io/region":             region,
-		"operator.kyma-project.io/kyma-name": kymaName,
+		"operator.kyma-project.io/kyma-name": operation.KymaResourceName,
 	}
 	controlledByProvisioner := s.kimConfig.ViewOnly && !s.kimConfig.IsDrivenByKimOnly(broker.PlanNamesMapping[operation.ProvisioningParameters.PlanID])
 	labels[imv1.LabelControlledByProvisioner] = strconv.FormatBool(controlledByProvisioner)
