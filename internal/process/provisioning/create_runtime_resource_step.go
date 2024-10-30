@@ -3,6 +3,7 @@ package provisioning
 import (
 	"context"
 	"fmt"
+	"github.com/kyma-project/kyma-environment-broker/internal/customresources"
 	"strconv"
 	"time"
 
@@ -172,13 +173,15 @@ func (s *CreateRuntimeResourceStep) createLabelsForRuntime(operation internal.Op
 		"kyma-project.io/global-account-id":  operation.ProvisioningParameters.ErsContext.GlobalAccountID,
 		"kyma-project.io/subaccount-id":      operation.ProvisioningParameters.ErsContext.SubAccountID,
 		"kyma-project.io/shoot-name":         operation.ShootName,
-		"kyma-project.io/region":             region,
 		"operator.kyma-project.io/kyma-name": operation.KymaResourceName,
 		"kyma-project.io/provider":           cloudProvider,
 	}
 	if operation.ProvisioningParameters.PlatformRegion != "" {
 		labels["kyma-project.io/platform-region"] = operation.ProvisioningParameters.PlatformRegion
 	}
+
+	labels[customresources.RegionLabel] = region
+	labels[customresources.CloudProviderLabel] = cloudProvider
 
 	controlledByProvisioner := s.kimConfig.ViewOnly && !s.kimConfig.IsDrivenByKimOnly(broker.PlanNamesMapping[operation.ProvisioningParameters.PlanID])
 	labels[imv1.LabelControlledByProvisioner] = strconv.FormatBool(controlledByProvisioner)

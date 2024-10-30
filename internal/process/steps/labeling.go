@@ -31,10 +31,3 @@ func setLabelsForLM(labels map[string]string, operation internal.Operation) map[
 	}
 	return labels
 }
-
-func setLabelsForRuntime(labels map[string]string, operation internal.Operation, region string, cloudProvider string) map[string]string {
-	labels = setCommonLabels(labels, operation)
-	labels[customresources.RegionLabel] = region
-	labels[customresources.CloudProviderLabel] = cloudProvider
-	return labels
-}
