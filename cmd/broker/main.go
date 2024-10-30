@@ -453,7 +453,6 @@ func createAPI(router *mux.Router, servicesConfig broker.ServicesConfig, planVal
 		LastBindingOperationEndpoint: broker.NewLastBindingOperation(logs),
 	}
 
-	router.Use(middleware.AddRequestLogging(logs))
 	router.Use(middleware.AddRegionToContext(cfg.DefaultRequestRegion))
 	router.Use(middleware.AddProviderToContext())
 	for _, prefix := range []string{
