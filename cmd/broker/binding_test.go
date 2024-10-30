@@ -191,9 +191,9 @@ func TestDeprovisioningWithExistingBindings(t *testing.T) {
 	response = suite.CallAPI(http.MethodDelete, fmt.Sprintf("oauth/v2/service_instances/%s/service_bindings/%s?plan_id=361c511f-f939-4621-b228-d0fb79a1fe15&service_id=47c9dcbf-ff30-448e-ab36-d3bad66ba281", iid, bindingID2), "")
 	assert.Equal(t, http.StatusGone, response.StatusCode)
 
-	// then expect bindings to be removed
-	suite.AssertBindingRemoval(iid, bindingID1)
-	suite.AssertBindingRemoval(iid, bindingID2)
+	// then expect bindings to exist in database
+	suite.AssertBindingExists(iid, bindingID1)
+	suite.AssertBindingExists(iid, bindingID2)
 }
 
 func TestRemoveBindingsFromSuspended(t *testing.T) {

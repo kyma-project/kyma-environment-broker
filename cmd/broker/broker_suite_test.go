@@ -446,6 +446,12 @@ func (s *BrokerSuiteTest) AssertBindingRemoval(iid string, bindingID string) {
 	assert.True(s.t, dberr.IsNotFound(err), "bindings should be removed")
 }
 
+func (s *BrokerSuiteTest) AssertBindingExists(iid string, bindingID string) {
+	binding, err := s.db.Bindings().Get(iid, bindingID)
+	assert.NoError(s.t, err)
+	assert.NotNil(s.t, binding)
+}
+
 func (s *BrokerSuiteTest) LastOperation(iid string) *internal.Operation {
 	op, _ := s.db.Operations().GetLastOperation(iid)
 	return op

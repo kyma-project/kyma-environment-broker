@@ -37,10 +37,6 @@ func (b *UnbindEndpoint) Unbind(ctx context.Context, instanceID, bindingID strin
 	instance, err := b.instancesStorage.GetByID(instanceID)
 	switch {
 	case dberr.IsNotFound(err):
-		if err != nil {
-			b.log.Errorf("Unbind error during removal of db entity: %v", err)
-			return domain.UnbindSpec{}, apiresponses.NewFailureResponse(fmt.Errorf("failed to delete binding for binding %s and not existing instance %s: %v", bindingID, instanceID, err), http.StatusInternalServerError, fmt.Sprintf("failed to delete resources for binding %s and not existing instance %s: %v", bindingID, instanceID, err))
-		}
 		return domain.UnbindSpec{}, apiresponses.ErrInstanceDoesNotExist
 	case err != nil:
 		return domain.UnbindSpec{}, apiresponses.NewFailureResponse(fmt.Errorf("failed to get instance %s", instanceID), http.StatusInternalServerError, fmt.Sprintf("failed to get instance %s", instanceID))
