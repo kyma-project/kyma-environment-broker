@@ -3,11 +3,12 @@ package provisioning
 import (
 	"context"
 	"fmt"
-	"github.com/kyma-project/kyma-environment-broker/internal/customresources"
 	"os"
 	"reflect"
 	"strings"
 	"testing"
+
+	"github.com/kyma-project/kyma-environment-broker/internal/customresources"
 
 	"github.com/kyma-project/kyma-environment-broker/internal/provider"
 

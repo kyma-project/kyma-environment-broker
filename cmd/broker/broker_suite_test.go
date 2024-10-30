@@ -5,13 +5,14 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"github.com/kyma-project/kyma-environment-broker/internal/customresources"
 	"io"
 	"net/http"
 	"net/http/httptest"
 	"reflect"
 	"testing"
 	"time"
+
+	"github.com/kyma-project/kyma-environment-broker/internal/customresources"
 
 	"github.com/kyma-project/kyma-environment-broker/internal/storage/dberr"
 
