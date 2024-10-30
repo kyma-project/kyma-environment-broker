@@ -4,11 +4,12 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"github.com/kyma-project/kyma-environment-broker/internal/customresources"
 	"net/http"
 	"strings"
 	"testing"
 	"time"
+
+	"github.com/kyma-project/kyma-environment-broker/internal/customresources"
 
 	"sigs.k8s.io/controller-runtime/pkg/client/fake"
 
