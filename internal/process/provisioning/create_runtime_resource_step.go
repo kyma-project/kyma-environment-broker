@@ -176,6 +176,10 @@ func (s *CreateRuntimeResourceStep) createLabelsForRuntime(operation internal.Op
 		"operator.kyma-project.io/kyma-name": operation.KymaResourceName,
 		"kyma-project.io/provider":           cloudProvider,
 	}
+	if operation.ProvisioningParameters.PlatformRegion != "" {
+		labels["kyma-project.io/platform-region"] = operation.ProvisioningParameters.PlatformRegion
+	}
+
 	controlledByProvisioner := s.kimConfig.ViewOnly && !s.kimConfig.IsDrivenByKimOnly(broker.PlanNamesMapping[operation.ProvisioningParameters.PlanID])
 	labels[imv1.LabelControlledByProvisioner] = strconv.FormatBool(controlledByProvisioner)
 	return labels
