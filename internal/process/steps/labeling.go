@@ -11,8 +11,8 @@ func SetCommonLabels(labels map[string]string, operation internal.Operation) map
 	labels[customresources.RuntimeIdLabel] = operation.RuntimeID
 	labels[customresources.PlanIdLabel] = operation.ProvisioningParameters.PlanID
 	labels[customresources.PlanNameLabel] = broker.PlanNamesMapping[operation.ProvisioningParameters.PlanID]
-	labels[customresources.GlobalAccountIdLabel] = operation.GlobalAccountID
-	labels[customresources.SubaccountIdLabel] = operation.SubAccountID
+	labels[customresources.GlobalAccountIdLabel] = operation.ProvisioningParameters.ErsContext.GlobalAccountID
+	labels[customresources.SubaccountIdLabel] = operation.ProvisioningParameters.ErsContext.SubAccountID
 	labels[customresources.ShootNameLabel] = operation.ShootName
 	if operation.ProvisioningParameters.PlatformRegion != "" {
 		labels[customresources.PlatformRegionLabel] = operation.ProvisioningParameters.PlatformRegion

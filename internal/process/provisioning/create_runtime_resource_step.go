@@ -165,21 +165,7 @@ func (s *CreateRuntimeResourceStep) updateRuntimeResourceObject(runtime *imv1.Ru
 }
 
 func (s *CreateRuntimeResourceStep) createLabelsForRuntime(operation internal.Operation, region string, cloudProvider string) map[string]string {
-	labels := map[string]string{
-		"kyma-project.io/instance-id":        operation.InstanceID,
-		"kyma-project.io/runtime-id":         operation.RuntimeID,
-		"kyma-project.io/broker-plan-id":     operation.ProvisioningParameters.PlanID,
-		"kyma-project.io/broker-plan-name":   broker.PlanNamesMapping[operation.ProvisioningParameters.PlanID],
-		"kyma-project.io/global-account-id":  operation.ProvisioningParameters.ErsContext.GlobalAccountID,
-		"kyma-project.io/subaccount-id":      operation.ProvisioningParameters.ErsContext.SubAccountID,
-		"kyma-project.io/shoot-name":         operation.ShootName,
-		"operator.kyma-project.io/kyma-name": operation.KymaResourceName,
-	}
-
-	if operation.ProvisioningParameters.PlatformRegion != "" {
-		labels["kyma-project.io/platform-region"] = operation.ProvisioningParameters.PlatformRegion
-	}
-
+	labels := steps.SetCommonLabels(map[string]string{}, operation)
 	labels[customresources.RegionLabel] = region
 	labels[customresources.CloudProviderLabel] = cloudProvider
 
