@@ -117,8 +117,10 @@ func (s *CreateRuntimeResourceStep) Run(operation internal.Operation, log logrus
 		}
 		log.Infof("Runtime resource %s/%s creation process finished successfully", operation.KymaResourceNamespace, runtimeResourceName)
 
+		operation.CloudProvider = "jarek"
 		newOp, backoff, _ := s.operationManager.UpdateOperation(operation, func(op *internal.Operation) {
 			op.Region = runtimeCR.Spec.Shoot.Region
+			op.CloudProvider = operation.CloudProvider
 		}, log)
 		if backoff > 0 {
 			return newOp, backoff, nil

@@ -235,6 +235,8 @@ type InstanceDetails struct {
 
 	EuAccess bool `json:"eu_access"`
 
+	CloudProvider string `json:"cloud_provider"`
+
 	// CompassRuntimeId - a runtime ID created by the Compass. Existing instances has a nil value (because the field was not existing) - it means the compass runtime Id is equal to runtime ID.
 	// If the value is an empty string - it means the runtime was not registered by Provisioner in the Compass.
 	// Should be removed after the migration of compass registration is completed
