@@ -20,14 +20,3 @@ func SetCommonLabels(labels map[string]string, operation internal.Operation) map
 	labels[customresources.KymaNameLabel] = operation.KymaResourceName
 	return labels
 }
-
-func setLabelsForLM(labels map[string]string, operation internal.Operation) map[string]string {
-	labels = SetCommonLabels(labels, operation)
-	labels[customresources.RegionLabel] = operation.Region
-	labels[customresources.ManagedByLabel] = "lifecycle-manager"
-	labels[customresources.CloudProviderLabel] = string(operation.InputCreator.Provider()) //TODO change internal.CloudProvider
-	if isKymaResourceInternal(operation) {
-		labels[customresources.InternalLabel] = "true"
-	}
-	return labels
-}
