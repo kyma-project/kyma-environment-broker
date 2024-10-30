@@ -92,6 +92,8 @@ spec:
               value: "{{ .Values.binding.expirationSeconds}}"
             - name: APP_BROKER_BINDING_MAX_EXPIRATION_SECONDS
               value: "{{ .Values.binding.maxExpirationSeconds}}"
+            - name: APP_BROKER_BINDING_MIN_EXPIRATION_SECONDS
+              value: "{{ .Values.binding.minExpirationSeconds}}"
             - name: APP_BROKER_BINDING_MAX_BINDINGS_COUNT
               value: "{{ .Values.binding.maxBindingsCount}}"
             - name: APP_BROKER_ONLY_SINGLE_TRIAL_PER_GA
