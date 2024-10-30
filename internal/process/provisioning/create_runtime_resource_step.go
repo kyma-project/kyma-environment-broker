@@ -174,8 +174,8 @@ func (s *CreateRuntimeResourceStep) createLabelsForRuntime(operation internal.Op
 		"kyma-project.io/subaccount-id":      operation.ProvisioningParameters.ErsContext.SubAccountID,
 		"kyma-project.io/shoot-name":         operation.ShootName,
 		"operator.kyma-project.io/kyma-name": operation.KymaResourceName,
-		"kyma-project.io/provider":           cloudProvider,
 	}
+
 	if operation.ProvisioningParameters.PlatformRegion != "" {
 		labels["kyma-project.io/platform-region"] = operation.ProvisioningParameters.PlatformRegion
 	}

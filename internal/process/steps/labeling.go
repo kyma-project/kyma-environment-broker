@@ -6,7 +6,7 @@ import (
 	"github.com/kyma-project/kyma-environment-broker/internal/customresources"
 )
 
-func setCommonLabels(labels map[string]string, operation internal.Operation) map[string]string {
+func SetCommonLabels(labels map[string]string, operation internal.Operation) map[string]string {
 	labels[customresources.InstanceIdLabel] = operation.InstanceID
 	labels[customresources.RuntimeIdLabel] = operation.RuntimeID
 	labels[customresources.PlanIdLabel] = operation.ProvisioningParameters.PlanID
@@ -22,7 +22,7 @@ func setCommonLabels(labels map[string]string, operation internal.Operation) map
 }
 
 func setLabelsForLM(labels map[string]string, operation internal.Operation) map[string]string {
-	labels = setCommonLabels(labels, operation)
+	labels = SetCommonLabels(labels, operation)
 	labels[customresources.RegionLabel] = operation.Region
 	labels[customresources.ManagedByLabel] = "lifecycle-manager"
 	labels[customresources.CloudProviderLabel] = string(operation.InputCreator.Provider()) //TODO change internal.CloudProvider
