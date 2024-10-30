@@ -138,7 +138,6 @@ func TestProvisioningWithKIMOnlyForTrial(t *testing.T) {
 	cfg.Broker.KimConfig.Plans = []string{"trial"}
 	cfg.Broker.KimConfig.KimOnlyPlans = []string{"trial"}
 
-	//cfg.Broker.KimConfig.DryRun = true
 	cfg.Provisioner.DefaultTrialProvider = internal.AWS
 
 	suite := NewBrokerSuiteTestWithConfig(t, cfg)

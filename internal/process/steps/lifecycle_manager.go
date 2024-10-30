@@ -20,8 +20,8 @@ func ApplyLabelsAndAnnotationsForLM(object client.Object, operation internal.Ope
 	l["kyma-project.io/runtime-id"] = operation.RuntimeID
 	l["kyma-project.io/broker-plan-id"] = operation.ProvisioningParameters.PlanID
 	l["kyma-project.io/broker-plan-name"] = broker.PlanNamesMapping[operation.ProvisioningParameters.PlanID]
-	l["kyma-project.io/global-account-id"] = operation.GlobalAccountID
-	l["kyma-project.io/subaccount-id"] = operation.SubAccountID
+	l["kyma-project.io/global-account-id"] = operation.ProvisioningParameters.ErsContext.GlobalAccountID
+	l["kyma-project.io/subaccount-id"] = operation.ProvisioningParameters.ErsContext.SubAccountID
 	l["kyma-project.io/shoot-name"] = operation.ShootName
 	l["kyma-project.io/region"] = operation.Region
 	if operation.ProvisioningParameters.PlatformRegion != "" {
