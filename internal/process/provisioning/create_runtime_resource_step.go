@@ -135,7 +135,9 @@ func (s *CreateRuntimeResourceStep) updateRuntimeResourceObject(runtime *imv1.Ru
 	}
 	runtime.ObjectMeta.Name = runtimeName
 	runtime.ObjectMeta.Namespace = operation.KymaResourceNamespace
-	runtime.ObjectMeta.Labels = s.createLabelsForRuntime(operation, values.Region)
+
+	cloudProvider := string(provider.ProviderToCloudProvider(values.ProviderType))
+	runtime.ObjectMeta.Labels = s.createLabelsForRuntime(operation, values.Region, cloudProvider)
 
 	providerObj, err := s.createShootProvider(&operation, values)
 	if err != nil {
@@ -161,7 +163,7 @@ func (s *CreateRuntimeResourceStep) updateRuntimeResourceObject(runtime *imv1.Ru
 	return nil
 }
 
-func (s *CreateRuntimeResourceStep) createLabelsForRuntime(operation internal.Operation, region string) map[string]string {
+func (s *CreateRuntimeResourceStep) createLabelsForRuntime(operation internal.Operation, region string, cloudProvider string) map[string]string {
 	labels := map[string]string{
 		"kyma-project.io/instance-id":        operation.InstanceID,
 		"kyma-project.io/runtime-id":         operation.RuntimeID,
@@ -172,6 +174,7 @@ func (s *CreateRuntimeResourceStep) createLabelsForRuntime(operation internal.Op
 		"kyma-project.io/shoot-name":         operation.ShootName,
 		"kyma-project.io/region":             region,
 		"operator.kyma-project.io/kyma-name": operation.KymaResourceName,
+		"kyma-project.io/provider":           cloudProvider,
 	}
 	controlledByProvisioner := s.kimConfig.ViewOnly && !s.kimConfig.IsDrivenByKimOnly(broker.PlanNamesMapping[operation.ProvisioningParameters.PlanID])
 	labels[imv1.LabelControlledByProvisioner] = strconv.FormatBool(controlledByProvisioner)

@@ -15,7 +15,7 @@ const (
 	ShootNameLabel       = "kyma-project.io/shoot-name"
 	RegionLabel          = "kyma-project.io/region"
 	PlatformRegionLabel  = "kyma-project.io/platform-region"
-	ProviderLabel        = "kyma-project.io/provider"
+	CloudProviderLabel   = "kyma-project.io/provider"
 	KymaNameLabel        = "operator.kyma-project.io/kyma-name"
 	ManagedByLabel       = "operator.kyma-project.io/managed-by"
 	InternalLabel        = "operator.kyma-project.io/internal"
@@ -33,24 +33,23 @@ func setCommonLabels(labels map[string]string, operation internal.Operation) map
 		labels[PlatformRegionLabel] = operation.ProvisioningParameters.PlatformRegion
 	}
 	labels[KymaNameLabel] = operation.KymaResourceName
-	labels[ProviderLabel] = string(operation.InputCreator.Provider()) //TODO change internal.CloudProvider
 	return labels
 }
 
-// TODO move it to lifecycle_manager.go
-//func setLabelsForLM(labels map[string]string, operation internal.Operation) map[string]string {
-//	labels = setCommonLabels(labels, operation)
-//	labels[RegionLabel] = operation.Region
-//	labels[ManagedByLabel] = "lifecycle-manager"
-//	if steps.isKymaResourceInternal(operation) {
-//		labels[InternalLabel] = "true"
-//	}
-//	return labels
-//}
-//
-//// TODO move it to create_runtime_resource_step.go
-//func setLabelsForRuntime(labels map[string]string, operation internal.Operation, region string) map[string]string {
-//	labels = setCommonLabels(labels, operation)
-//	labels[RegionLabel] = region
-//	return labels
-//}
+func setLabelsForLM(labels map[string]string, operation internal.Operation) map[string]string {
+	labels = setCommonLabels(labels, operation)
+	labels[RegionLabel] = operation.Region
+	labels[ManagedByLabel] = "lifecycle-manager"
+	labels[CloudProviderLabel] = string(operation.InputCreator.Provider()) //TODO change internal.CloudProvider
+	if isKymaResourceInternal(operation) {
+		labels[InternalLabel] = "true"
+	}
+	return labels
+}
+
+func setLabelsForRuntime(labels map[string]string, operation internal.Operation, region string, cloudProvider string) map[string]string {
+	labels = setCommonLabels(labels, operation)
+	labels[RegionLabel] = region
+	labels[CloudProviderLabel] = cloudProvider
+	return labels
+}

@@ -106,3 +106,18 @@ func GenerateValues(
 	}
 	return p.Provide(), nil
 }
+
+func ProviderToCloudProvider(providerType string) internal.CloudProvider {
+	switch providerType {
+	case "azure":
+		return internal.Azure
+	case "aws":
+		return internal.AWS
+	case "gcp":
+		return internal.GCP
+	case "openstack":
+		return internal.SapConvergedCloud
+	default:
+		return internal.UnknownProvider
+	}
+}
