@@ -17,7 +17,7 @@ func ApplyLabelsAndAnnotationsForLM(object client.Object, operation internal.Ope
 
 	l[customresources.RegionLabel] = operation.Region
 	l[customresources.ManagedByLabel] = "lifecycle-manager"
-	l[customresources.CloudProviderLabel] = string(operation.InputCreator.Provider()) //TODO the method is to be obsolete when we use KIM
+	l[customresources.CloudProviderLabel] = operation.CloudProvider
 
 	if isKymaResourceInternal(operation) {
 		l[customresources.InternalLabel] = "true"

@@ -83,9 +83,17 @@ func (s *CreateRuntimeResourceStep) Run(operation internal.Operation, log logrus
 	runtimeResourceName := steps.KymaRuntimeResourceName(operation)
 	log.Infof("KymaResourceName: %s, KymaResourceNamespace: %s, RuntimeResourceName: %s", kymaResourceName, kymaResourceNamespace, runtimeResourceName)
 
+	// get plan specific values (like zones, default machine type etc.
+	values, err := provider.GenerateValues(&operation, s.config.MultiZoneCluster, s.config.DefaultTrialProvider, s.useSmallerMachineTypes, s.trialPlatformRegionMapping, s.config.DefaultGardenerShootPurpose)
+	if err != nil {
+		return s.operationManager.OperationFailed(operation, fmt.Sprintf("while updating calculating plan specific values : %s", err), err, log)
+	}
+	operation.CloudProvider = string(provider.ProviderToCloudProvider(values.ProviderType))
+
 	if s.kimConfig.DryRun {
 		runtimeCR := &imv1.Runtime{}
-		err := s.updateRuntimeResourceObject(runtimeCR, operation, runtimeResourceName)
+		err := s.updateRuntimeResourceObject(values, runtimeCR, operation, runtimeResourceName, operation.CloudProvider)
+
 		if err != nil {
 			return s.operationManager.OperationFailed(operation, fmt.Sprintf("while updating Runtime resource object: %s", err), err, log)
 		}
@@ -105,7 +113,7 @@ func (s *CreateRuntimeResourceStep) Run(operation internal.Operation, log logrus
 			log.Infof("Runtime resource already created %s/%s: ", operation.KymaResourceNamespace, runtimeResourceName)
 			return operation, 0, nil
 		} else {
-			err := s.updateRuntimeResourceObject(runtimeCR, operation, runtimeResourceName)
+			err := s.updateRuntimeResourceObject(values, runtimeCR, operation, runtimeResourceName, operation.CloudProvider)
 			if err != nil {
 				return s.operationManager.OperationFailed(operation, fmt.Sprintf("while creating Runtime CR object: %s", err), err, log)
 			}
@@ -117,7 +125,6 @@ func (s *CreateRuntimeResourceStep) Run(operation internal.Operation, log logrus
 		}
 		log.Infof("Runtime resource %s/%s creation process finished successfully", operation.KymaResourceNamespace, runtimeResourceName)
 
-		operation.CloudProvider = "jarek"
 		newOp, backoff, _ := s.operationManager.UpdateOperation(operation, func(op *internal.Operation) {
 			op.Region = runtimeCR.Spec.Shoot.Region
 			op.CloudProvider = operation.CloudProvider
@@ -130,17 +137,11 @@ func (s *CreateRuntimeResourceStep) Run(operation internal.Operation, log logrus
 	return operation, 0, nil
 }
 
-func (s *CreateRuntimeResourceStep) updateRuntimeResourceObject(runtime *imv1.Runtime, operation internal.Operation, runtimeName string) error {
+func (s *CreateRuntimeResourceStep) updateRuntimeResourceObject(values provider.Values, runtime *imv1.Runtime, operation internal.Operation, runtimeName, cloudProvider string) error {
 
-	// get plan specific values (like zones, default machine type etc.
-	values, err := provider.GenerateValues(&operation, s.config.MultiZoneCluster, s.config.DefaultTrialProvider, s.useSmallerMachineTypes, s.trialPlatformRegionMapping, s.config.DefaultGardenerShootPurpose)
-	if err != nil {
-		return err
-	}
 	runtime.ObjectMeta.Name = runtimeName
 	runtime.ObjectMeta.Namespace = operation.KymaResourceNamespace
 
-	cloudProvider := string(provider.ProviderToCloudProvider(values.ProviderType))
 	runtime.ObjectMeta.Labels = s.createLabelsForRuntime(operation, values.Region, cloudProvider)
 
 	providerObj, err := s.createShootProvider(&operation, values)
