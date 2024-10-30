@@ -7,6 +7,9 @@ import (
 )
 
 func SetCommonLabels(labels map[string]string, operation internal.Operation) map[string]string {
+	if labels == nil {
+		labels = make(map[string]string)
+	}
 	labels[customresources.InstanceIdLabel] = operation.InstanceID
 	labels[customresources.RuntimeIdLabel] = operation.RuntimeID
 	labels[customresources.PlanIdLabel] = operation.ProvisioningParameters.PlanID
