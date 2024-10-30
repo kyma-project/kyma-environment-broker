@@ -792,6 +792,7 @@ func assertLabels(t *testing.T, operation internal.Operation, runtime imv1.Runti
 	assert.Equal(t, operation.ProvisioningParameters.ErsContext.SubAccountID, runtime.Labels[customresources.SubaccountIdLabel])
 	assert.Equal(t, operation.ShootName, runtime.Labels[customresources.ShootNameLabel])
 	assert.Equal(t, *operation.ProvisioningParameters.Parameters.Region, runtime.Labels[customresources.RegionLabel])
+	assert.Equal(t, operation.KymaResourceName, runtime.Labels[customresources.KymaNameLabel])
 }
 
 func assertWorkers(t *testing.T, workers []gardener.Worker, machine string, maximum, minimum, maxSurge, maxUnavailable int, zoneCount int, zones []string) {
