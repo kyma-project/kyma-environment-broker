@@ -75,6 +75,7 @@ global:
     vso:
       namespace: kyma
       refreshAfter: 30s
+      mount: kcp-dev
 
 # Please read the documentation at:
 # https://pages.github.tools.sap/kyma/docusaurus-docs/kyma/cicd/argocd/secrets
