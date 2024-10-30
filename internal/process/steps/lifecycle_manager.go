@@ -2,8 +2,9 @@ package steps
 
 import (
 	"fmt"
-	"github.com/kyma-project/kyma-environment-broker/internal/customresources"
 	"strings"
+
+	"github.com/kyma-project/kyma-environment-broker/internal/customresources"
 
 	"github.com/kyma-project/kyma-environment-broker/internal"
 	"sigs.k8s.io/controller-runtime/pkg/client"
