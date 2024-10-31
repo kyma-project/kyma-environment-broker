@@ -932,6 +932,7 @@ func fixConfig() *Config {
 				MaxExpirationSeconds: 7200,
 				MinExpirationSeconds: 600,
 				MaxBindingsCount:     10,
+				CreateBindingTimeout: 15 * time.Second,
 			},
 			AllowUpdateExpiredInstanceWithContext: true,
 			KimConfig: broker.KimConfig{

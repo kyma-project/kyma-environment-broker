@@ -145,6 +145,7 @@ nameOverride: "kyma-environment-broker"
 fullnameOverride: "kcp-kyma-environment-broker"
 host: "kyma-env-broker"
 manageSecrets: true
+allowUpdateExpiredInstanceWithContext: "false"
 
 broker:
   port: "8080"
@@ -157,7 +158,6 @@ broker:
   events:
     enabled: false
   enableShootAndSeedSameRegion: "false"
-  allowUpdateExpiredInstanceWithContext: "false"
   subaccountMovementEnabled: "false"
   updateCustomResourcesLabelsOnAccountMove: "false"
 
@@ -169,6 +169,7 @@ binding:
   # minExpirationSeconds can't be lower than 600 seconds. Forced by Gardener
   minExpirationSeconds: 600
   maxBindingsCount: 10
+  createBindingTimeout: 15s
 
 service:
   type: ClusterIP
@@ -286,6 +287,7 @@ gardener:
   autoUpdateKubernetesVersion: "true"
   autoUpdateMachineImageVersion: "false"
   multiZoneCluster: "false"
+  controlPlaneFailureTolerance: ""
 
 kubeconfig:
   allowOrigins: "*"

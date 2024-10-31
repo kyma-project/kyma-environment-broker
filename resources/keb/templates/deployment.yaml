@@ -86,6 +86,8 @@ spec:
               value: "{{ .Values.binding.minExpirationSeconds}}"
             - name: APP_BROKER_BINDING_MAX_BINDINGS_COUNT
               value: "{{ .Values.binding.maxBindingsCount}}"
+            - name: APP_BROKER_BINDING_CREATE_BINDING_TIMEOUT
+              value: "{{ .Values.binding.createBindingTimeout}}"
             - name: APP_BROKER_ONLY_SINGLE_TRIAL_PER_GA
               value: "{{ .Values.onlySingleTrialPerGA }}"
             - name: APP_BROKER_URL
@@ -198,7 +200,7 @@ spec:
             - name: APP_BROKER_ONLY_ONE_FREE_PER_GA
               value: "{{ .Values.onlyOneFreePerGA }}"
             - name: APP_BROKER_ENABLE_SHOOT_AND_SEED_SAME_REGION
-              value: "{{ .Values.broker.EnableShootAndSeedSameRegion }}"
+              value: "{{ .Values.broker.enableShootAndSeedSameRegion }}"
             - name: APP_CATALOG_FILE_PATH
               value: /config/catalog.yaml
             - name: APP_GARDENER_PROJECT
@@ -226,7 +228,7 @@ spec:
             - name: APP_PROVISIONER_CONTROL_PLANE_FAILURE_TOLERANCE
               value: "{{ .Values.gardener.controlPlaneFailureTolerance }}"
             - name: APP_PROVISIONER_ENABLE_SHOOT_AND_SEED_SAME_REGION
-              value: "{{ .Values.provisioner.gardener.EnableShootAndSeedSameRegion }}"
+              value: "{{ .Values.provisioner.gardener.enableShootAndSeedSameRegion }}"
             - name: APP_DEFAULT_REQUEST_REGION
               value: "{{ .Values.broker.defaultRequestRegion }}"
             - name: APP_UPDATE_PROCESSING_ENABLED
