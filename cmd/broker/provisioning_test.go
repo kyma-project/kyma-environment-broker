@@ -190,7 +190,7 @@ func TestProvisioningWithKIMOnlyForAWS(t *testing.T) {
 					},
 					"parameters": {
 						"name": "testing-cluster",
-						"region": "eu-central-1"
+						"region": "eu-central-1",
 						"administrators":["newAdmin1@kyma.cx", "newAdmin2@kyma.cx"]
 					}
 		}`)
