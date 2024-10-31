@@ -13,7 +13,7 @@ const (
 	RuntimeCr         = "runtime"
 )
 
-var GvkMap = map[string]schema.GroupVersionKind{
+var gvkMap = map[string]schema.GroupVersionKind{
 	KymaCr: {
 		Group:   "operator.kyma-project.io",
 		Version: "v1beta2",
@@ -32,7 +32,7 @@ var GvkMap = map[string]schema.GroupVersionKind{
 }
 
 func GvkByName(name string) (schema.GroupVersionKind, error) {
-	gvk, ok := GvkMap[strings.ToLower(name)]
+	gvk, ok := gvkMap[strings.ToLower(name)]
 	if !ok {
 		return schema.GroupVersionKind{}, fmt.Errorf("unknown name: %s", name)
 	}
