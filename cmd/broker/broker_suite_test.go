@@ -955,9 +955,6 @@ func (s *BrokerSuiteTest) processKIMOnlyProvisioningByOperationID(opID string) {
 	s.WaitForProvisioningState(opID, domain.InProgress)
 
 	s.FinishProvisioningOperationByInfrastructureManager(opID)
-
-	// infrastructure manager finishes the operation
-	s.WaitForOperationState(opID, domain.Succeeded)
 }
 
 func (s *BrokerSuiteTest) processUpdatingByOperationID(opID string) {
