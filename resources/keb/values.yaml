@@ -40,61 +40,34 @@ global:
       version:
       
   kyma_environment_broker:
-    enabled: false
     serviceAccountName: "kcp-kyma-environment-broker"
     secrets:
       integrationSystemCredentials:
         name: kcp-kyma-environment-broker-credentials
-    environmentsCleanup:
-      enabled: false
   isLocalEnv: false
   oauth2:
     host: oauth2
   compass:
-    registration:
-      enabled: true
     tls:
-      host: compass-gateway
       secure:
         oauth:
           host: compass-gateway-auth-oauth
-    mtls:
-      host: compass-gateway-mtls
   istio:
     gateway: "kyma-system/kyma-gateway"
     proxy:
       port: 15020
   database:
-    manageSecrets: true
     cloudsqlproxy:
       enabled: false
       workloadIdentity:
         enabled: false
     embedded:
       enabled: true
-      provisioner:
-        name: "provisioner"
-      broker:
-        name: "broker"
-      reconciler:
-        name: "reconciler"
-      #TODO remove below after migration to separate user will be done
-      provisionerDBName: "provisioner"
-      brokerDBName: "broker"
     # Values for GCP managed PostgreSQL database
     managedGCP:
       # secret with a secret key used to encrypt particular data
       encryptionSecretName: "kcp-storage-client-secret"
       instanceConnectionName: ""
-      broker:
-        name: ""
-      host: "localhost"
-      hostPort: "5432"
-      sslMode: ""
-      sslRootCert: ""
-      #TODO remove below after migration to separate user will be done
-      provisionerDBName: ""
-      brokerDBName: ""
 
   secrets:
     enabled: true
@@ -241,10 +214,6 @@ lifecycleManager:
 
 provisioner:
   URL: "http://kcp-provisioner.kcp-system.svc.cluster.local:3000/graphql"
-
-  # Defines how long should the Kyma Environment Broker checks the status of the provisioning in the Provisioner.
-  # The Provisioner timeout is defined in resources/kcp/charts/provisioner/values.yaml
-  timeout: "12h"
   provisioningTimeout: "6h"
   deprovisioningTimeout: "5h"
   gardenerClusterStepTimeout: "3m"
@@ -252,10 +221,6 @@ provisioner:
   clusterUpdateStepTimeout: "2h"
 
   gardener:
-    # name of the secret with kubeconfig to the gardener cluster
-    secretName: "gardener"
-    # name of the gardener project
-    projectName: "gopher"
     enableShootAndSeedSameRegion: "false"
 
 director:
@@ -352,10 +317,6 @@ edp:
   secret: "TBD"
   secretName: "edp-creds"
 
-ems:
-  disabled: true
-  skipDeprovisionAzureEventingAtUpgrade: false
-
 cis:
   v1:
     authURL: "TBD"
@@ -379,7 +340,6 @@ cis:
     id: "TBD"
     secret: "TBD"
     secretName: "cis-creds-accounts"
-    probe: -1
 
 notification:
   url: "TBD"
@@ -530,10 +490,6 @@ globalaccounts:
   enabled: false
   dryRun: true
   name: "kyma-environment-globalaccounts"
-  svc:
-    serviceURL: "TBD"
-    authURL: "TBD"
-    secretName: "cis-creds-accounts"
 
 serviceBindingCleanup:
   enabled: false
