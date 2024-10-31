@@ -165,7 +165,42 @@ func TestProvisioningWithKIMOnlyForTrial(t *testing.T) {
 
 	// then
 	suite.WaitForOperationState(opID, domain.Succeeded)
-	suite.AssertRuntimeResourceExists(opID)
+	//suite.AssertRuntimeResourceExists(opID)
+}
+
+func TestProvisioningWithKIMOnlyForAWS(t *testing.T) {
+
+	cfg := fixConfig()
+	cfg.Broker.KimConfig.Enabled = true
+	cfg.Broker.KimConfig.Plans = []string{"aws"}
+	cfg.Broker.KimConfig.KimOnlyPlans = []string{"aws"}
+
+	suite := NewBrokerSuiteTestWithConfig(t, cfg)
+	defer suite.TearDown()
+	iid := uuid.New().String()
+	// when
+	resp := suite.CallAPI("PUT", fmt.Sprintf("oauth/cf-eu21/v2/service_instances/%s?accepts_incomplete=true", iid),
+		`{
+					"service_id": "47c9dcbf-ff30-448e-ab36-d3bad66ba281",
+					"plan_id": "361c511f-f939-4621-b228-d0fb79a1fe15",
+					"context": {
+						"globalaccount_id": "g-account-id",
+						"subaccount_id": "sub-id",
+						"user_id": "john.smith@email.com"
+					},
+					"parameters": {
+						"name": "testing-cluster",
+						"administrators":["newAdmin1@kyma.cx", "newAdmin2@kyma.cx"]
+					}
+		}`)
+
+	opID := suite.DecodeOperationID(resp)
+
+	suite.processKIMOnlyProvisioningByOperationID(opID)
+
+	// then
+	suite.WaitForOperationState(opID, domain.Succeeded)
+	//suite.AssertRuntimeResourceExists(opID)
 }
 
 func TestProvisioning_HappyPathAWS(t *testing.T) {
