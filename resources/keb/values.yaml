@@ -157,6 +157,7 @@ nameOverride: "kyma-environment-broker"
 fullnameOverride: "kcp-kyma-environment-broker"
 host: "kyma-env-broker"
 manageSecrets: true
+allowUpdateExpiredInstanceWithContext: "false"
 
 broker:
   port: "8080"
@@ -169,7 +170,6 @@ broker:
   events:
     enabled: false
   enableShootAndSeedSameRegion: "false"
-  allowUpdateExpiredInstanceWithContext: "false"
   subaccountMovementEnabled: "false"
   updateCustomResourcesLabelsOnAccountMove: "false"
 
@@ -301,6 +301,7 @@ gardener:
   autoUpdateKubernetesVersion: "true"
   autoUpdateMachineImageVersion: "false"
   multiZoneCluster: "false"
+  controlPlaneFailureTolerance: ""
 
 kubeconfig:
   issuerURL: "TBD"

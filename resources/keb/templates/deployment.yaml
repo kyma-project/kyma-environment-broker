@@ -232,7 +232,7 @@ spec:
             - name: APP_BROKER_ONLY_ONE_FREE_PER_GA
               value: "{{ .Values.onlyOneFreePerGA }}"
             - name: APP_BROKER_ENABLE_SHOOT_AND_SEED_SAME_REGION
-              value: "{{ .Values.broker.EnableShootAndSeedSameRegion }}"
+              value: "{{ .Values.broker.enableShootAndSeedSameRegion }}"
             - name: APP_CATALOG_FILE_PATH
               value: /config/catalog.yaml
             - name: APP_GARDENER_PROJECT
@@ -264,7 +264,7 @@ spec:
             - name: APP_PROVISIONER_CONTROL_PLANE_FAILURE_TOLERANCE
               value: "{{ .Values.gardener.controlPlaneFailureTolerance }}"
             - name: APP_PROVISIONER_ENABLE_SHOOT_AND_SEED_SAME_REGION
-              value: "{{ .Values.provisioner.gardener.EnableShootAndSeedSameRegion }}"
+              value: "{{ .Values.provisioner.gardener.enableShootAndSeedSameRegion }}"
             - name: APP_DEFAULT_REQUEST_REGION
               value: "{{ .Values.broker.defaultRequestRegion }}"
             - name: APP_UPDATE_PROCESSING_ENABLED
