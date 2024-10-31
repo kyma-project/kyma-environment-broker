@@ -460,7 +460,7 @@ func createAPI(router *mux.Router, servicesConfig broker.ServicesConfig, planVal
 		"/oauth/{region}/", // oauth2 handled by Ory with region
 	} {
 		route := router.PathPrefix(prefix).Subrouter()
-		broker.AttachRoutes(route, kymaEnvBroker, logger)
+		broker.AttachRoutes(route, kymaEnvBroker, logger, cfg.Broker.Binding.CreateBindingTimeout)
 	}
 
 	respWriter := httputil.NewResponseWriter(logs, cfg.DevelopmentMode)
