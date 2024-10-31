@@ -165,6 +165,7 @@ func TestProvisioningWithKIMOnlyForTrial(t *testing.T) {
 
 	// then
 	suite.WaitForOperationState(opID, domain.Succeeded)
+	suite.AssertRuntimeResourceExists(opID)
 }
 
 func TestProvisioning_HappyPathAWS(t *testing.T) {

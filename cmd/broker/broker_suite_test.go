@@ -1063,6 +1063,24 @@ func (s *BrokerSuiteTest) AssertKymaResourceExistsByInstanceID(instanceID string
 	assert.NoError(s.t, err)
 }
 
+func (s *BrokerSuiteTest) AssertRuntimeResourceExists(opId string) {
+	operation, err := s.db.Operations().GetOperationByID(opId)
+	assert.NoError(s.t, err)
+
+	obj := &unstructured.Unstructured{}
+	obj.SetName(operation.RuntimeID)
+	obj.SetNamespace("kyma-system")
+	obj.SetGroupVersionKind(schema.GroupVersionKind{
+		Group:   "infrastructuremanager.kyma-project.io",
+		Version: "v1",
+		Kind:    "Runtime",
+	})
+
+	err = s.k8sKcp.Get(context.Background(), client.ObjectKeyFromObject(obj), obj)
+
+	assert.NoError(s.t, err)
+}
+
 func (s *BrokerSuiteTest) AssertKymaResourceNotExists(opId string) {
 	operation, err := s.db.Operations().GetOperationByID(opId)
 	assert.NoError(s.t, err)
