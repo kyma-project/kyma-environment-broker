@@ -288,8 +288,6 @@ gardener:
   multiZoneCluster: "false"
 
 kubeconfig:
-  issuerURL: "TBD"
-  clientID: "TBD"
   allowOrigins: "*"
 
 edp:
@@ -328,7 +326,6 @@ cis:
 
 notification:
   url: "TBD"
-  disabled: true
 
 kim:
   enabled: false

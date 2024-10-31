@@ -207,10 +207,6 @@ spec:
               value: "{{ .Values.gardener.shootDomain }}"
             - name: APP_GARDENER_KUBECONFIG_PATH
               value: {{ .Values.gardener.kubeconfigPath }}
-            - name: APP_KUBECONFIG_ISSUER_URL
-              value: {{ .Values.kubeconfig.issuerURL }}
-            - name: APP_KUBECONFIG_CLIENT_ID
-              value: {{ .Values.kubeconfig.clientID }}
             - name: APP_KUBECONFIG_ALLOW_ORIGINS
               value: "{{ .Values.kubeconfig.allowOrigins }}"
             - name: APP_PROVISIONER_KUBERNETES_VERSION
@@ -237,8 +233,6 @@ spec:
               value: "{{ .Values.osbUpdateProcessingEnabled }}"
             - name: APP_NOTIFICATION_URL
               value: "{{ .Values.notification.url }}"
-            - name: APP_NOTIFICATION_DISABLED
-              value: "{{ .Values.notification.disabled }}"
             - name: APP_DOMAIN_NAME
               value: "{{ .Values.global.ingress.domainName }}"
             - name: APP_SKR_OIDC_DEFAULT_VALUES_YAML_FILE_PATH
