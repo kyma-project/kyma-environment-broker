@@ -1072,7 +1072,6 @@ func (s *BrokerSuiteTest) AssertRuntimeResourceExists(opId string) {
 	obj.SetGroupVersionKind(gvk)
 
 	err = s.k8sKcp.Get(context.Background(), client.ObjectKeyFromObject(obj), obj)
-
 	assert.NoError(s.t, err)
 }
 
@@ -1087,6 +1086,7 @@ func (s *BrokerSuiteTest) AssertRuntimeResourceLabels(opId string) {
 	obj.SetGroupVersionKind(gvk)
 
 	err = s.k8sKcp.Get(context.Background(), client.ObjectKeyFromObject(obj), obj)
+	assert.NoError(s.t, err)
 
 	assert.Subset(s.t, obj.GetLabels(), map[string]string{customresources.InstanceIdLabel: operation.InstanceID,
 		customresources.GlobalAccountIdLabel: operation.ProvisioningParameters.ErsContext.GlobalAccountID,
