@@ -1067,15 +1067,38 @@ func (s *BrokerSuiteTest) AssertRuntimeResourceExists(opId string) {
 	obj := &unstructured.Unstructured{}
 	obj.SetName(operation.RuntimeID)
 	obj.SetNamespace("kyma-system")
-	obj.SetGroupVersionKind(schema.GroupVersionKind{
-		Group:   "infrastructuremanager.kyma-project.io",
-		Version: "v1",
-		Kind:    "Runtime",
-	})
+	gvk, err := customresources.GvkByName(customresources.RuntimeCr)
+	assert.NoError(s.t, err)
+	obj.SetGroupVersionKind(gvk)
 
 	err = s.k8sKcp.Get(context.Background(), client.ObjectKeyFromObject(obj), obj)
 
 	assert.NoError(s.t, err)
+}
+
+func (s *BrokerSuiteTest) AssertRuntimeResourceLabels(opId string) {
+	operation, err := s.db.Operations().GetOperationByID(opId)
+	assert.NoError(s.t, err)
+	obj := &unstructured.Unstructured{}
+	obj.SetName(operation.RuntimeID)
+	obj.SetNamespace("kyma-system")
+	gvk, err := customresources.GvkByName(customresources.RuntimeCr)
+	assert.NoError(s.t, err)
+	obj.SetGroupVersionKind(gvk)
+
+	err = s.k8sKcp.Get(context.Background(), client.ObjectKeyFromObject(obj), obj)
+
+	assert.Subset(s.t, obj.GetLabels(), map[string]string{customresources.InstanceIdLabel: operation.InstanceID,
+		customresources.GlobalAccountIdLabel: operation.ProvisioningParameters.ErsContext.GlobalAccountID,
+		customresources.SubaccountIdLabel:    operation.ProvisioningParameters.ErsContext.SubAccountID,
+		customresources.ShootNameLabel:       operation.ShootName,
+		customresources.PlanIdLabel:          operation.ProvisioningParameters.PlanID,
+		customresources.RuntimeIdLabel:       operation.RuntimeID,
+		customresources.PlatformRegionLabel:  operation.ProvisioningParameters.PlatformRegion,
+		customresources.RegionLabel:          operation.Region,
+		customresources.CloudProviderLabel:   operation.CloudProvider,
+		customresources.PlanNameLabel:        broker.PlanNamesMapping[operation.ProvisioningParameters.PlanID],
+	})
 }
 
 func (s *BrokerSuiteTest) AssertKymaResourceNotExists(opId string) {
