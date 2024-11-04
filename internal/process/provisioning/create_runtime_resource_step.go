@@ -83,8 +83,7 @@ func (s *CreateRuntimeResourceStep) Run(operation internal.Operation, log logrus
 	runtimeResourceName := steps.KymaRuntimeResourceName(operation)
 	log.Infof("KymaResourceName: %s, KymaResourceNamespace: %s, RuntimeResourceName: %s", kymaResourceName, kymaResourceNamespace, runtimeResourceName)
 
-	// get plan specific values (like zones, default machine type etc.
-	values, err := provider.GenerateValues(&operation, s.config.MultiZoneCluster, s.config.DefaultTrialProvider, s.useSmallerMachineTypes, s.trialPlatformRegionMapping, s.config.DefaultGardenerShootPurpose)
+	values, err := provider.GetPlanSpecificValues(&operation, s.config.MultiZoneCluster, s.config.DefaultTrialProvider, s.useSmallerMachineTypes, s.trialPlatformRegionMapping, s.config.DefaultGardenerShootPurpose)
 	if err != nil {
 		return s.operationManager.OperationFailed(operation, fmt.Sprintf("while updating calculating plan specific values : %s", err), err, log)
 	}

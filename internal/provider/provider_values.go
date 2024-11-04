@@ -11,7 +11,7 @@ type Provider interface {
 	Provide() Values
 }
 
-func GenerateValues(
+func GetPlanSpecificValues(
 	operation *internal.Operation,
 	multiZoneCluster bool,
 	defaultTrialProvider internal.CloudProvider,
