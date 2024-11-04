@@ -931,7 +931,7 @@ func registerCRD() {
 }
 
 func createCRDs(t *testing.T) {
-	f := func(gvkName string) {
+	createCustomResource := func(gvkName string) {
 		var customResourceDefinition apiextensionsv1.CustomResourceDefinition
 		gvk, err := customresources.GvkByName(gvkName)
 		require.NoError(t, err)
@@ -940,14 +940,14 @@ func createCRDs(t *testing.T) {
 		err = fakeKcpK8sClient.Create(context.Background(), &customResourceDefinition)
 		require.NoError(t, err)
 	}
-	f(customresources.KymaCr)
-	f(customresources.GardenerClusterCr)
-	f(customresources.RuntimeCr)
+	createCustomResource(customresources.KymaCr)
+	createCustomResource(customresources.GardenerClusterCr)
+	createCustomResource(customresources.RuntimeCr)
 }
 
 func createFakeCRs(t *testing.T) string {
 	runtimeID := uuid.New().String()
-	f := func(t *testing.T, runtimeID string, crName string) {
+	createCustomResource := func(t *testing.T, runtimeID string, crName string) {
 		assert.NotNil(t, fakeKcpK8sClient)
 		gvk, err := customresources.GvkByName(crName)
 		require.NoError(t, err)
@@ -959,15 +959,15 @@ func createFakeCRs(t *testing.T) string {
 		require.NoError(t, err)
 	}
 
-	f(t, runtimeID, customresources.KymaCr)
-	f(t, runtimeID, customresources.GardenerClusterCr)
-	f(t, runtimeID, customresources.RuntimeCr)
+	createCustomResource(t, runtimeID, customresources.KymaCr)
+	createCustomResource(t, runtimeID, customresources.GardenerClusterCr)
+	createCustomResource(t, runtimeID, customresources.RuntimeCr)
 
 	return runtimeID
 }
 
 func cleanFakeCRs(t *testing.T, runtimeID string) {
-	f := func(t *testing.T, id string, crName string) {
+	createCustomResource := func(t *testing.T, id string, crName string) {
 		assert.NotNil(t, fakeKcpK8sClient)
 		gvk, err := customresources.GvkByName(crName)
 		require.NoError(t, err)
@@ -979,7 +979,7 @@ func cleanFakeCRs(t *testing.T, runtimeID string) {
 		require.NoError(t, err)
 	}
 
-	f(t, runtimeID, customresources.KymaCr)
-	f(t, runtimeID, customresources.GardenerClusterCr)
-	f(t, runtimeID, customresources.RuntimeCr)
+	createCustomResource(t, runtimeID, customresources.KymaCr)
+	createCustomResource(t, runtimeID, customresources.GardenerClusterCr)
+	createCustomResource(t, runtimeID, customresources.RuntimeCr)
 }
