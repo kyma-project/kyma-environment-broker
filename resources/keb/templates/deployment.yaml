@@ -189,8 +189,6 @@ spec:
                   key: postgresql-sslMode
             - name: APP_DATABASE_SSLROOTCERT
               value: /secrets/cloudsql-sslrootcert/server-ca.pem
-            - name: APP_MANAGED_RUNTIME_COMPONENTS_YAML_FILE_PATH
-              value: /config/additionalRuntimeComponents.yaml
             - name: APP_TRIAL_REGION_MAPPING_FILE_PATH
               value: /config/trialRegionMapping.yaml
             - name: APP_SAP_CONVERGED_CLOUD_REGION_MAPPINGS_FILE_PATH
@@ -245,8 +243,6 @@ spec:
               value: "{{ .Release.Namespace }}"
             - name: APP_ORCHESTRATION_CONFIG_NAME
               value: "orchestration-config"
-            - name: APP_NEW_ADDITIONAL_RUNTIME_COMPONENTS_YAML_FILE_PATH
-              value: /config/newAdditionalRuntimeComponents.yaml
             - name: APP_PROFILER_MEMORY
               value: "{{ .Values.broker.profiler.memory }}"
             - name: APP_KYMA_DASHBOARD_CONFIG_LANDSCAPE_URL

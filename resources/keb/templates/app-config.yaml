@@ -5,16 +5,6 @@ metadata:
   labels:
 {{ include "kyma-env-broker.labels" . | indent 4 }}
 data:
-  additionalRuntimeComponents.yaml: |-
-    components:
-{{- with .Values.additionalRuntimeComponents }}
-{{ tpl . $ | indent 6 }}
-{{- end }}
-  newAdditionalRuntimeComponents.yaml: |-
-    components:
-{{- with .Values.newAdditionalRuntimeComponents }}
-{{ tpl . $ | indent 6 }}
-{{- end }}
   trialRegionMapping.yaml: |-
 {{- with .Values.trialRegionsMapping }}
 {{ tpl . $ | indent 4 }}

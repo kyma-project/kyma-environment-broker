@@ -101,16 +101,14 @@ type Config struct {
 	Gardener    gardener.Config
 	Kubeconfig  kubeconfig.Config
 
-	ManagedRuntimeComponentsYAMLFilePath       string
-	NewAdditionalRuntimeComponentsYAMLFilePath string
-	SkrOidcDefaultValuesYAMLFilePath           string
-	SkrDnsProvidersValuesYAMLFilePath          string
-	DefaultRequestRegion                       string `envconfig:"default=cf-eu10"`
-	UpdateProcessingEnabled                    bool   `envconfig:"default=false"`
-	LifecycleManagerIntegrationDisabled        bool   `envconfig:"default=true"`
-	InfrastructureManagerIntegrationDisabled   bool   `envconfig:"default=true"`
-	Broker                                     broker.Config
-	CatalogFilePath                            string
+	SkrOidcDefaultValuesYAMLFilePath         string
+	SkrDnsProvidersValuesYAMLFilePath        string
+	DefaultRequestRegion                     string `envconfig:"default=cf-eu10"`
+	UpdateProcessingEnabled                  bool   `envconfig:"default=false"`
+	LifecycleManagerIntegrationDisabled      bool   `envconfig:"default=true"`
+	InfrastructureManagerIntegrationDisabled bool   `envconfig:"default=true"`
+	Broker                                   broker.Config
+	CatalogFilePath                          string
 
 	EDP edp.Config
 

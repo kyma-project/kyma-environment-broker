@@ -9,34 +9,34 @@ global:
       path: europe-docker.pkg.dev/kyma-project/prod
     kyma_environment_broker:
       dir:
-      version: "1.10.49"
+      version: "1.10.50"
     kyma_environment_broker_schema_migrator:
       dir:
-      version: 1.10.49
+      version: 1.10.50
     kyma_environments_subaccount_cleanup_job:
       dir:
-      version: "1.10.49"
+      version: "1.10.50"
     kyma_environment_trial_cleanup_job:
       dir:
-      version: "1.10.49"
+      version: "1.10.50"
     kyma_environment_expirator_job:
       dir:
-      version: "1.10.49"
+      version: "1.10.50"
     kyma_environment_deprovision_retrigger_job:
       dir:
-      version: "1.10.49"
+      version: "1.10.50"
     kyma_environment_runtime_reconciler:
       dir:
-      version: "1.10.49"
+      version: "1.10.50"
     kyma_environment_subaccount_sync:
       dir:
-      version: "1.10.49"
+      version: "1.10.50"
     kyma_environment_globalaccounts:
       dir:
-      version: "1.10.49"
+      version: "1.10.50"
     kyma_environment_service_binding_cleanup_job:
       dir:
-      version:
+      version: 1.10.50
       
   kyma_environment_broker:
     serviceAccountName: "kcp-kyma-environment-broker"
@@ -211,22 +211,6 @@ provisioner:
 
   gardener:
     enableShootAndSeedSameRegion: "false"
-
-additionalRuntimeComponents: |-
-  - name: "service-manager-proxy"
-    namespace: "kyma-system"
-  - name: "uaa-activator"
-    namespace: "kyma-system"
-  - name: "compass-runtime-agent"
-    namespace: "kyma-system"
-  - name: "knative-eventing-kafka"
-    namespace: "knative-eventing"
-
-newAdditionalRuntimeComponents: |-
-  - name: "service-manager-proxy"
-    namespace: "kyma-system"
-  - name: "compass-runtime-agent"
-    namespace: "kyma-system"
 
 trialRegionsMapping: |-
   cf-eu10: europe
