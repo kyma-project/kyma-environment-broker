@@ -29,16 +29,6 @@ spec:
       imagePullSecrets:
         - name: {{ .Values.imagePullSecret }}
       {{- end }}
-      {{ if .Values.global.isLocalEnv }}
-      # HostAliases are used by Pod to resolve kyma.local domain
-      hostAliases:
-        - ip: {{ .Values.global.minikubeIP }}
-          hostnames:
-            # Used for calls to Director
-            - "{{ .Values.global.compass.tls.secure.oauth.host }}.{{ .Values.global.compass.domain | default .Values.global.ingress.domainName }}"
-            # Used for calls for oauth token
-            - "{{ .Values.global.oauth2.host }}.{{ .Values.global.compass.domain | default .Values.global.ingress.domainName }}"
-      {{ end }}
       serviceAccountName: {{ .Values.global.kyma_environment_broker.serviceAccountName }}
     {{- with .Values.deployment.securityContext }}
       securityContext:
@@ -144,30 +134,6 @@ spec:
               value: "{{ .Values.broker.port }}"
             - name: APP_STATUS_PORT
               value: "{{ .Values.broker.statusPort }}"
-            - name: APP_DIRECTOR_DEFAULT_TENANT
-              value: "{{ .Values.global.defaultTenant }}"
-            - name: APP_DIRECTOR_URL
-              value: "https://{{ .Values.global.compass.tls.secure.oauth.host }}.{{ .Values.global.compass.domain | default .Values.global.ingress.domainName }}/director/graphql"
-            - name: APP_DIRECTOR_OAUTH_TOKEN_URL
-              valueFrom:
-                secretKeyRef:
-                  name: "{{ .Values.global.kyma_environment_broker.secrets.integrationSystemCredentials.name }}"
-                  key: tokens_endpoint
-                  optional: true
-            - name: APP_DIRECTOR_OAUTH_CLIENT_ID
-              valueFrom:
-                secretKeyRef:
-                  name: "{{ .Values.global.kyma_environment_broker.secrets.integrationSystemCredentials.name }}"
-                  key: client_id
-                  optional: true
-            - name: APP_DIRECTOR_OAUTH_CLIENT_SECRET
-              valueFrom:
-                secretKeyRef:
-                  name: "{{ .Values.global.kyma_environment_broker.secrets.integrationSystemCredentials.name }}"
-                  key: client_secret
-                  optional: true
-            - name: APP_DIRECTOR_OAUTH_SCOPE
-              value: "{{ .Values.director.scope }}"
             - name: APP_EDP_AUTH_URL
               value: "{{ .Values.edp.authURL }}"
             - name: APP_EDP_ADMIN_URL
@@ -243,10 +209,6 @@ spec:
               value: "{{ .Values.gardener.shootDomain }}"
             - name: APP_GARDENER_KUBECONFIG_PATH
               value: {{ .Values.gardener.kubeconfigPath }}
-            - name: APP_KUBECONFIG_ISSUER_URL
-              value: {{ .Values.kubeconfig.issuerURL }}
-            - name: APP_KUBECONFIG_CLIENT_ID
-              value: {{ .Values.kubeconfig.clientID }}
             - name: APP_KUBECONFIG_ALLOW_ORIGINS
               value: "{{ .Values.kubeconfig.allowOrigins }}"
             - name: APP_PROVISIONER_KUBERNETES_VERSION
@@ -273,8 +235,6 @@ spec:
               value: "{{ .Values.osbUpdateProcessingEnabled }}"
             - name: APP_NOTIFICATION_URL
               value: "{{ .Values.notification.url }}"
-            - name: APP_NOTIFICATION_DISABLED
-              value: "{{ .Values.notification.disabled }}"
             - name: APP_DOMAIN_NAME
               value: "{{ .Values.global.ingress.domainName }}"
             - name: APP_SKR_OIDC_DEFAULT_VALUES_YAML_FILE_PATH
