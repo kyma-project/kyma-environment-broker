@@ -22,7 +22,7 @@ Both Jobs require access to:
 
 ## Configuration
 
-Jobs are CronJobs with a schedule that can be [configured](https://kubernetes.io/docs/concepts/workloads/controllers/cron-jobs/#cron-schedule-syntax) as a parameter in the `management-plane-config` repository.
+Jobs are CronJobs with a schedule that can be [configured](https://kubernetes.io/docs/concepts/workloads/controllers/cron-jobs/#cron-schedule-syntax) as a value in the [values.yaml](../../resources/keb/values.yaml) file for the chart.
 By default, CronJobs are set according to the following schedules:
 
 * Trial Cleanup CronJob runs every day at 1:15 AM:
