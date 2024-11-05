@@ -73,7 +73,7 @@ The SAP Cloud Management service (technical name: `cis`) provides the Provisioni
    ```bash
    [ -z "$EXPIRATION_SECONDS" ] && \
    curl -s -X PUT "$PROVISIONING_SERVICE_URL/provisioning/v1/environments/$INSTANCE_ID/bindings" -H "accept: application/json" -H "Authorization: bearer $TOKEN" | jq -r '.credentials.kubeconfig' > kubeconfig.yaml || \
-   curl -s -X PUT "$PROVISIONING_SERVICE_URL/provisioning/v1/environments/$INSTANCE_ID/bindings" -H "accept: application/json" -H "Authorization: bearer $TOKEN" -H "Content-Type: application/json" -d "{\"parameters\":{\"expiration_seconds\":\"$EXPIRATION_SECONDS\"}}" | jq -r '.credentials.kubeconfig' > kubeconfig.yaml
+   curl -s -X PUT "$PROVISIONING_SERVICE_URL/provisioning/v1/environments/$INSTANCE_ID/bindings" -H "accept: application/json" -H "Authorization: bearer $TOKEN" -H "Content-Type: application/json" -d "{\"parameters\":{\"expiration_seconds\":$EXPIRATION_SECONDS}}" | jq -r '.credentials.kubeconfig' > kubeconfig.yaml
    ```
 
 9. To access the cluster through kubectl, set the **KUBECONFIG** environment variable to the path of the kubeconfig file:
