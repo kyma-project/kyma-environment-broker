@@ -33,10 +33,10 @@ The SAP Cloud Management service (technical name: `cis`) provides the Provisioni
 
 2. Set **CLIENT_ID**, **CLIENT_SECRET**, **UAA_URL**, **PROVISIONING_SERVICE_URL** environment variables using the credentials from the binding stored in **clientid**, **clientsecret**, **url**, **provisioning_service_url** fields. Use the btp CLI to get the credentials:
    ```bash
-   export CLIENT_ID=$(btp --format json get services/binding --name cis-local-binding | jq -r '.credentials.uaa.clientid')
-   export CLIENT_SECRET=$(btp --format json get services/binding --name cis-local-binding | jq -r '.credentials.uaa.clientsecret')
-   export UAA_URL=$(btp --format json get services/binding --name cis-local-binding | jq -r '.credentials.uaa.url')
-   export PROVISIONING_SERVICE_URL=$(btp --format json get services/binding --name cis-local-binding | jq -r '.credentials.endpoints.provisioning_service_url')
+   export CLIENT_ID=$(btp --format json get services/binding --name ${CIS_INSTANCE_NAME}-binding | jq -r '.credentials.uaa.clientid')
+   export CLIENT_SECRET=$(btp --format json get services/binding --name ${CIS_INSTANCE_NAME}-binding | jq -r '.credentials.uaa.clientsecret')
+   export UAA_URL=$(btp --format json get services/binding --name ${CIS_INSTANCE_NAME}-binding | jq -r '.credentials.uaa.url')
+   export PROVISIONING_SERVICE_URL=$(btp --format json get services/binding --name ${CIS_INSTANCE_NAME}-binding | jq -r '.credentials.endpoints.provisioning_service_url')
    ```
 
 3. Get the access token for the Provisioning Service API using the client credentials:
