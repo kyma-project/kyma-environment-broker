@@ -211,6 +211,17 @@ jobs:
             echo "PR_NUMBER=$(echo "$PR_STATUS" | tail -n 1)" >> $GITHUB_ENV
           fi
 
+      - name: Merge PR
+        env:
+          GH_TOKEN: ${{ secrets.BOT_TOKEN }}
+          REPOSITORY: ${{ env.KYMA_ENVIRONMENT_BROKER_REPO }}
+        run: |
+          if [ "$PR_NUMBER" -gt 0 ]; then
+            scripts/merge_pr.sh
+          else
+            echo "Step skipped"
+          fi
+
       - name: Await PR merge
         timeout-minutes: 45
         env:
