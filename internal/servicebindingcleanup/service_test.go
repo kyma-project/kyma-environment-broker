@@ -200,6 +200,41 @@ func TestServiceBindingCleanupJob(t *testing.T) {
 		// cleanup
 		handler.setHandlerFunc(handler.deleteServiceBindingFromStorage)
 	})
+
+	t.Run("should process request only when the request contains required query params", func(t *testing.T) {
+		// given
+		binding := internal.Binding{
+			ID:         "binding-id-1",
+			InstanceID: "instance-id-1",
+			ExpiresAt:  time.Now().Add(-time.Hour),
+		}
+		require.NoError(t, bindingsStorage.Insert(&binding))
+
+		svc := servicebindingcleanup.NewService(false, brokerClient, bindingsStorage)
+
+		// when
+		handler.setHandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			require.NoError(t, r.ParseForm())
+			if len(r.Form.Get("service_id")) == 0 || len(r.Form.Get("plan_id")) == 0 {
+				w.WriteHeader(http.StatusBadRequest)
+				return
+			}
+			encoder := json.NewEncoder(w)
+			if err := encoder.Encode(apiresponses.EmptyResponse{}); err != nil {
+				w.WriteHeader(http.StatusInternalServerError)
+				return
+			}
+		})
+
+		err := svc.PerformCleanup()
+
+		// then
+		require.NoError(t, err)
+
+		// cleanup
+		require.NoError(t, bindingsStorage.Delete(binding.InstanceID, binding.ID))
+		handler.setHandlerFunc(handler.deleteServiceBindingFromStorage)
+	})
 }
 
 type server struct {

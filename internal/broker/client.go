@@ -337,7 +337,7 @@ func (c *Client) executeRequest(method, url string, expectedStatus int, requestB
 
 	err = json.NewDecoder(resp.Body).Decode(responseBody)
 	if err != nil {
-		return fmt.Errorf("while decoding body: %w", err)
+		return fmt.Errorf("while decoding response body: %w", err)
 	}
 
 	return nil
