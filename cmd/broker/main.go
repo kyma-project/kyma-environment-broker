@@ -467,6 +467,7 @@ func createAPI(router *mux.Router, servicesConfig broker.ServicesConfig, planVal
 	runtimesInfoHandler := appinfo.NewRuntimeInfoHandler(db.Instances(), db.Operations(), defaultPlansConfig, cfg.DefaultRequestRegion, respWriter)
 	router.Handle("/info/runtimes", runtimesInfoHandler)
 	router.Handle("/events", eventshandler.NewHandler(db.Events(), db.Instances()))
+	//test
 }
 
 // queues all in progress operations by type
