@@ -462,7 +462,6 @@ func createAPI(router *mux.Router, servicesConfig broker.ServicesConfig, planVal
 		route := router.PathPrefix(prefix).Subrouter()
 		broker.AttachRoutes(route, kymaEnvBroker, logger, cfg.Broker.Binding.CreateBindingTimeout)
 	}
-	//test
 
 	respWriter := httputil.NewResponseWriter(logs, cfg.DevelopmentMode)
 	runtimesInfoHandler := appinfo.NewRuntimeInfoHandler(db.Instances(), db.Operations(), defaultPlansConfig, cfg.DefaultRequestRegion, respWriter)
