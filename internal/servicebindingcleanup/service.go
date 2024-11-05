@@ -54,7 +54,7 @@ func (s *Service) PerformCleanup() error {
 				continue
 			}
 			slog.Error(fmt.Sprintf("while sending unbind request for service binding ID %q: %s", binding.ID, err))
-			break
+			return err
 		}
 	}
 	return nil
