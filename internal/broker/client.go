@@ -26,7 +26,7 @@ const (
 	deprovisionTmpl    = "%s%s/%s?service_id=%s&plan_id=%s"
 	updateInstanceTmpl = "%s%s/%s"
 	getInstanceTmpl    = "%s%s/%s"
-	unbindTmpl         = "%s%s/%s/service_bindings/%s"
+	unbindTmpl         = "%s%s/%s/service_bindings/%s?service_id=%s&plan_id=%s"
 )
 
 type UnexpectedStatusCodeError struct {
@@ -312,7 +312,7 @@ func (c *Client) formatUnbindUrl(binding internal.Binding) (string, error) {
 		return "", fmt.Errorf("empty InstanceID")
 	}
 
-	return fmt.Sprintf(unbindTmpl, c.brokerConfig.URL, instancesURL, binding.InstanceID, binding.ID), nil
+	return fmt.Sprintf(unbindTmpl, c.brokerConfig.URL, instancesURL, binding.InstanceID, binding.ID, kymaClassID, AWSPlanID), nil
 }
 
 func (c *Client) executeRequest(method, url string, expectedStatus int, requestBody io.Reader, responseBody interface{}) error {
