@@ -383,12 +383,12 @@ subaccountSync:
       maxRequestsPerInterval: 5
 
 serviceMonitor:
-  enabled: true
+  enabled: false
   scrapeTimeout: &scrapeTimeout 10s
   interval: &scrapeInterval 30s
 
 vmscrapes:
-  enabled: false
+  enabled: true
   scrapeTimeout: *scrapeTimeout
   interval: *scrapeInterval
 
