@@ -96,7 +96,7 @@ The SAP Cloud Management service (technical name: `cis`) provides the Provisioni
    export KUBECONFIG=kubeconfig.yaml
    ```
 
-10. Verify the connection to the cluster by running a kubectl command to get pods:
+10. Verify the connection to the cluster by running a kubectl command to get Pods:
 
     ```bash
     kubectl get pods
@@ -105,7 +105,7 @@ The SAP Cloud Management service (technical name: `cis`) provides the Provisioni
     kubectl should return the list of Pods in the `default` namespace running in the cluster, ehich means that the cluster is accessible.
 
 > [!NOTE]
-> Following steps are optional and show how to revoke the credentials by deleting the binding.
+> The following steps are optional and show how to revoke the credentials by deleting the binding.
 
 11. Get the ID of the binding from the instance's bindings list and save it in the **BINDING_ID** environment variable:
 
