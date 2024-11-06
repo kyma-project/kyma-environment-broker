@@ -76,10 +76,8 @@ func TestCreateBindingEndpoint(t *testing.T) {
 	err := db.Instances().Insert(fixture.FixInstance(instanceID1))
 	require.NoError(t, err)
 
-	err = db.Instances().Insert(fixture.FixInstance(instanceID2))
-	require.NoError(t, err)
-
-	err = db.Instances().Insert(fixture.FixInstance(instanceID3))
+	operation := fixture.FixOperation("operation-id", instanceID1, "provision")
+	err = db.Operations().InsertOperation(operation)
 	require.NoError(t, err)
 
 	//// binding configuration
@@ -180,6 +178,7 @@ func TestCreateSecondBindingWithTheSameIdButDifferentParams(t *testing.T) {
 	instanceID := uuid.New().String()
 	bindingID := uuid.New().String()
 	instance := fixture.FixInstance(instanceID)
+	operation := fixture.FixOperation("operation-id", instanceID, "provision")
 	bindingCfg := &BindingConfig{
 		Enabled: true,
 		BindablePlans: EnablePlans{
@@ -195,6 +194,8 @@ func TestCreateSecondBindingWithTheSameIdButDifferentParams(t *testing.T) {
 	err := brokerStorage.Instances().Insert(instance)
 	assert.NoError(t, err)
 	err = brokerStorage.Bindings().Insert(&binding)
+	assert.NoError(t, err)
+	err = brokerStorage.Operations().InsertOperation(operation)
 	assert.NoError(t, err)
 
 	publisher := event.NewPubSub(logrus.New())
@@ -223,6 +224,8 @@ func TestCreateSecondBindingWithTheSameIdAndParams(t *testing.T) {
 	instanceID := uuid.New().String()
 	bindingID := uuid.New().String()
 	instance := fixture.FixInstance(instanceID)
+	operation := fixture.FixOperation("operation-id", instanceID, "provision")
+
 	bindingCfg := &BindingConfig{
 		Enabled: true,
 		BindablePlans: EnablePlans{
@@ -238,6 +241,8 @@ func TestCreateSecondBindingWithTheSameIdAndParams(t *testing.T) {
 	err := brokerStorage.Instances().Insert(instance)
 	assert.NoError(t, err)
 	err = brokerStorage.Bindings().Insert(&binding)
+	assert.NoError(t, err)
+	err = brokerStorage.Operations().InsertOperation(operation)
 	assert.NoError(t, err)
 
 	publisher := event.NewPubSub(logrus.New())
@@ -260,12 +265,106 @@ func TestCreateSecondBindingWithTheSameIdAndParams(t *testing.T) {
 	assert.Equal(t, binding.ExpiresAt.Format(expiresAtLayout), resp.Metadata.ExpiresAt)
 }
 
+func TestCreateSecondBindingWithTheSameIdAndParamsForExpired(t *testing.T) {
+	// given
+	const expiresAtLayout = "2006-01-02T15:04:05.0Z"
+	instanceID := uuid.New().String()
+	bindingID := uuid.New().String()
+	instance := fixture.FixInstance(instanceID)
+	operation := fixture.FixOperation("operation-id", instanceID, "provision")
+
+	bindingCfg := &BindingConfig{
+		Enabled: true,
+		BindablePlans: EnablePlans{
+			instance.ServicePlanName,
+		},
+		ExpirationSeconds:    600,
+		MaxExpirationSeconds: 7200,
+		MinExpirationSeconds: 600,
+		MaxBindingsCount:     10,
+	}
+	binding := fixture.FixExpiredBindingWithInstanceID(bindingID, instanceID, time.Minute*15)
+	brokerStorage := storage.NewMemoryStorage()
+	err := brokerStorage.Instances().Insert(instance)
+	assert.NoError(t, err)
+	err = brokerStorage.Bindings().Insert(&binding)
+	assert.NoError(t, err)
+	err = brokerStorage.Operations().InsertOperation(operation)
+	assert.NoError(t, err)
+
+	svc := NewBind(*bindingCfg, brokerStorage, logrus.New(), nil, nil)
+	params := BindingParams{
+		ExpirationSeconds: 600,
+	}
+	rawParams, err := json.Marshal(params)
+	assert.NoError(t, err)
+	details := domain.BindDetails{
+		RawParameters: rawParams,
+	}
+
+	// when
+	_, err = svc.Bind(context.Background(), instanceID, bindingID, details, false)
+
+	// then
+	require.Error(t, err)
+	assert.Contains(t, err.Error(), "failed to insert Kyma binding into storage")
+}
+
+func TestCreateSecondBindingWithTheSameIdAndParamsForBindingInProgress(t *testing.T) {
+	// given
+	const expiresAtLayout = "2006-01-02T15:04:05.0Z"
+	instanceID := uuid.New().String()
+	bindingID := uuid.New().String()
+	instance := fixture.FixInstance(instanceID)
+	operation := fixture.FixOperation("operation-id", instanceID, "provision")
+
+	bindingCfg := &BindingConfig{
+		Enabled: true,
+		BindablePlans: EnablePlans{
+			instance.ServicePlanName,
+		},
+		ExpirationSeconds:    600,
+		MaxExpirationSeconds: 7200,
+		MinExpirationSeconds: 600,
+		MaxBindingsCount:     10,
+	}
+
+	binding := fixture.FixBindingWithInstanceID(bindingID, instanceID)
+	binding.Kubeconfig = ""
+	brokerStorage := storage.NewMemoryStorage()
+	err := brokerStorage.Instances().Insert(instance)
+	assert.NoError(t, err)
+	err = brokerStorage.Bindings().Insert(&binding)
+	assert.NoError(t, err)
+	err = brokerStorage.Operations().InsertOperation(operation)
+	assert.NoError(t, err)
+
+	svc := NewBind(*bindingCfg, brokerStorage, logrus.New(), nil, nil)
+	params := BindingParams{
+		ExpirationSeconds: 600,
+	}
+	rawParams, err := json.Marshal(params)
+	assert.NoError(t, err)
+	details := domain.BindDetails{
+		RawParameters: rawParams,
+	}
+
+	// when
+	_, err = svc.Bind(context.Background(), instanceID, bindingID, details, false)
+
+	// then
+	require.Error(t, err)
+	assert.Contains(t, err.Error(), "binding creation already in progress")
+}
+
 func TestCreateSecondBindingWithTheSameIdAndParamsNotExplicitlyDefined(t *testing.T) {
 	// given
 	const expiresAtLayout = "2006-01-02T15:04:05.0Z"
 	instanceID := uuid.New().String()
 	bindingID := uuid.New().String()
 	instance := fixture.FixInstance(instanceID)
+	operation := fixture.FixOperation("operation-id", instanceID, "provision")
+
 	bindingCfg := &BindingConfig{
 		Enabled: true,
 		BindablePlans: EnablePlans{
@@ -281,6 +380,8 @@ func TestCreateSecondBindingWithTheSameIdAndParamsNotExplicitlyDefined(t *testin
 	err := brokerStorage.Instances().Insert(instance)
 	assert.NoError(t, err)
 	err = brokerStorage.Bindings().Insert(&binding)
+	assert.NoError(t, err)
+	err = brokerStorage.Operations().InsertOperation(operation)
 	assert.NoError(t, err)
 
 	publisher := event.NewPubSub(logrus.New())

@@ -363,6 +363,36 @@ func FixBindingWithInstanceID(bindingID string, instanceID string) internal.Bind
 	}
 }
 
+func FixExpiredBindingWithInstanceID(bindingID string, instanceID string, offset time.Duration) internal.Binding {
+	return internal.Binding{
+		ID:         bindingID,
+		InstanceID: instanceID,
+
+		CreatedAt: time.Now().Add(-offset),
+		UpdatedAt: time.Now().Add(time.Minute*5 - offset),
+		ExpiresAt: time.Now().Add(time.Minute*10 - offset),
+
+		Kubeconfig:        "kubeconfig",
+		ExpirationSeconds: 600,
+		CreatedBy:         "john.smith@email.com",
+	}
+}
+
+func FixBindingInProgressWithInstanceID(bindingID string, instanceID string) internal.Binding {
+	return internal.Binding{
+		ID:         bindingID,
+		InstanceID: instanceID,
+
+		CreatedAt: time.Now(),
+		UpdatedAt: time.Now().Add(time.Minute * 5),
+		ExpiresAt: time.Now().Add(time.Minute * 10),
+
+		Kubeconfig:        "",
+		ExpirationSeconds: 600,
+		CreatedBy:         "john.smith@email.com",
+	}
+}
+
 // SimpleInputCreator implements ProvisionerInputCreator interface
 func (c *SimpleInputCreator) SetProvisioningParameters(params internal.ProvisioningParameters) internal.ProvisionerInputCreator {
 	return c
