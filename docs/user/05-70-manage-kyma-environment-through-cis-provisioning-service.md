@@ -3,6 +3,7 @@
 The SAP Cloud Management service (technical name: `cis`) provides the Provisioning Service API to create and manage available environments. Use the Provisioning Service API to manage and access SAP BTP, Kyma runtime on AWS.
 
 ## Prerequisites
+
 * Your subaccount must have entitlements for SAP BTP, Kyma runtime and SAP Cloud Management Service for SAP BTP. See [Managing Entitlements and Quotas Using the Cockpit](https://help.sap.com/docs/btp/sap-business-technology-platform/managing-entitlements-and-quotas-using-cockpit?&version=Cloud).
 
 * CLI tools
@@ -38,6 +39,7 @@ The SAP Cloud Management service (technical name: `cis`) provides the Provisioni
    > For alternative methods, see [Getting an Access Token for SAP Cloud Management Service APIs](https://help.sap.com/docs/btp/sap-business-technology-platform/getting-access-token-for-sap-cloud-management-service-apis?&version=Cloud).
 
 2. Set the **CLIENT_ID**, **CLIENT_SECRET**, **UAA_URL**, and **PROVISIONING_SERVICE_URL** environment variables using the credentials from the binding stored in the **clientid**, **clientsecret**, **url**, and **provisioning_service_url** fields. Use the btp CLI to get the credentials:
+
    ```bash
    export CLIENT_ID=$(btp --format json get services/binding --name ${CIS_INSTANCE_NAME}-binding | jq -r '.credentials.uaa.clientid')
    export CLIENT_SECRET=$(btp --format json get services/binding --name ${CIS_INSTANCE_NAME}-binding | jq -r '.credentials.uaa.clientsecret')
@@ -96,44 +98,44 @@ The SAP Cloud Management service (technical name: `cis`) provides the Provisioni
 
 10. Verify the connection to the cluster by running a kubectl command to get pods:
 
-   ```bash
-   kubectl get pods
-   ```
+    ```bash
+    kubectl get pods
+    ```
 
-   kubectl should return the list of Pods in the `default` namespace running in the cluster, ehich means that the cluster is accessible.
+    kubectl should return the list of Pods in the `default` namespace running in the cluster, ehich means that the cluster is accessible.
 
 > [!NOTE]
 > Following steps are optional and show how to revoke the credentials by deleting the binding.
 
 11. Get the ID of the binding from the instance's bindings list and save it in the **BINDING_ID** environment variable:
 
-   ```bash
-   curl -s "$PROVISIONING_SERVICE_URL/provisioning/v1/environments/$INSTANCE_ID/bindings" -H "accept: application/json" -H "Authorization: bearer $TOKEN"
-   ```
+    ```bash
+    curl -s "$PROVISIONING_SERVICE_URL/provisioning/v1/environments/$INSTANCE_ID/bindings" -H "accept: application/json" -H "Authorization: bearer $TOKEN"
+    ```
    
-   ```bash
-   export BINDING_ID={BINDING_ID}
-   ```
+    ```bash
+    export BINDING_ID={BINDING_ID}
+    ```
 
 12. Delete the binding to revoke the credentials:
 
-   ```bash
-   curl -s -X DELETE "$PROVISIONING_SERVICE_URL/provisioning/v1/environments/$INSTANCE_ID/bindings/$BINDING_ID" -H "accept: application/json" -H "Authorization: bearer $TOKEN"
-   ```
+    ```bash
+    curl -s -X DELETE "$PROVISIONING_SERVICE_URL/provisioning/v1/environments/$INSTANCE_ID/bindings/$BINDING_ID" -H "accept: application/json" -H "Authorization: bearer $TOKEN"
+    ```
 
-   Try to access the cluster using kubectl. The connection should be refused, which means that the binding was successfully deleted and credentials revoked:
+    Try to access the cluster using kubectl. The connection should be refused, which means that the binding was successfully deleted and credentials revoked:
 
-   ```bash
-   kubectl get pods
-   ```
+    ```bash
+    kubectl get pods
+    ```
 
 ## Next Steps
 
 Delete the instance bindings for the instance as shown in steps 11 and 12. To deprovision the Kyma runtime, run:
 
-   ```bash
-   curl -s -X DELETE "$PROVISIONING_SERVICE_URL/provisioning/v1/environments/$INSTANCE_ID" -H "accept: application/json" -H "Authorization: bearer $TOKEN"
-   ```
+  ```bash
+  curl -s -X DELETE "$PROVISIONING_SERVICE_URL/provisioning/v1/environments/$INSTANCE_ID" -H "accept: application/json" -H "Authorization: bearer $TOKEN"
+  ```
 
 > [!NOTE]
 > The runtime can be deleted independently of the bindings. Existing bindings do not block the runtime deprovisioning.
