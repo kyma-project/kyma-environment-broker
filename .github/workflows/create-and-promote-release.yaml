@@ -15,7 +15,7 @@ jobs:
     uses: "./.github/workflows/create-release.yaml"
     with:
       name: ${{ inputs.name }}
-      sec-file-and-chart: false
+      skip-sec-file-and-chart-bump: false
       dry-run: false
     secrets: inherit
 
