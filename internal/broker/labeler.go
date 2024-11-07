@@ -6,7 +6,8 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/kyma-project/kyma-environment-broker/internal/k8s"
+	"github.com/kyma-project/kyma-environment-broker/internal/customresources"
+
 	"github.com/sirupsen/logrus"
 	apiextensionsv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
 	k8serrors "k8s.io/apimachinery/pkg/api/errors"
@@ -30,16 +31,16 @@ func NewLabeler(kcpClient client.Client) *Labeler {
 }
 
 func (l *Labeler) UpdateLabels(id, newGlobalAccountId string) error {
-	kymaErr := l.updateCrLabel(id, k8s.KymaCr, newGlobalAccountId)
-	gardenerClusterErr := l.updateCrLabel(id, k8s.GardenerClusterCr, newGlobalAccountId)
-	runtimeErr := l.updateCrLabel(id, k8s.RuntimeCr, newGlobalAccountId)
+	kymaErr := l.updateCrLabel(id, customresources.KymaCr, newGlobalAccountId)
+	gardenerClusterErr := l.updateCrLabel(id, customresources.GardenerClusterCr, newGlobalAccountId)
+	runtimeErr := l.updateCrLabel(id, customresources.RuntimeCr, newGlobalAccountId)
 	err := errors.Join(kymaErr, gardenerClusterErr, runtimeErr)
 	return err
 }
 
 func (l *Labeler) updateCrLabel(id, crName, newGlobalAccountId string) error {
 	l.log.Infof("update label starting for runtime %s for %s cr with new value %s", id, crName, newGlobalAccountId)
-	gvk, err := k8s.GvkByName(crName)
+	gvk, err := customresources.GvkByName(crName)
 	if err != nil {
 		return fmt.Errorf("while getting gvk for name: %s: %s", crName, err.Error())
 	}
@@ -60,7 +61,7 @@ func (l *Labeler) updateCrLabel(id, crName, newGlobalAccountId string) error {
 		return fmt.Errorf("while getting k8s object of type %s from kcp cluster for instance %s, due to: %s", crName, id, err.Error())
 	}
 
-	err = addOrOverrideLabel(&k8sObject, k8s.GlobalAccountIdLabel, newGlobalAccountId)
+	err = addOrOverrideLabel(&k8sObject, customresources.GlobalAccountIdLabel, newGlobalAccountId)
 	if err != nil {
 		return fmt.Errorf("while adding or overriding label (new=%s) for k8s object %s %s, because: %s", newGlobalAccountId, id, crName, err.Error())
 	}

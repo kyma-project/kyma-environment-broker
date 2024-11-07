@@ -252,9 +252,23 @@ func TestUpdatinInternalKymaResourceIfExists(t *testing.T) {
 }
 
 func assertLabelsExists(t *testing.T, obj unstructured.Unstructured) {
-	assert.Contains(t, obj.GetLabels(), "kyma-project.io/instance-id")
-	assert.Contains(t, obj.GetLabels(), "kyma-project.io/runtime-id")
-	assert.Contains(t, obj.GetLabels(), "kyma-project.io/global-account-id")
+	keys := make([]string, 0, len(obj.GetLabels()))
+	for k := range obj.GetLabels() {
+		keys = append(keys, k)
+	}
+
+	assert.Subset(t, keys, []string{
+		"kyma-project.io/instance-id",
+		"kyma-project.io/runtime-id",
+		"kyma-project.io/global-account-id",
+		"kyma-project.io/subaccount-id",
+		"kyma-project.io/shoot-name",
+		"kyma-project.io/platform-region",
+		"operator.kyma-project.io/kyma-name",
+		"kyma-project.io/broker-plan-id",
+		"kyma-project.io/broker-plan-name",
+		"operator.kyma-project.io/managed-by",
+		"kyma-project.io/provider"})
 }
 
 func assertLabelsExistsForInternalKymaResource(t *testing.T, obj unstructured.Unstructured) {

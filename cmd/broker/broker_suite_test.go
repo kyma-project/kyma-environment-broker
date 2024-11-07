@@ -12,6 +12,8 @@ import (
 	"testing"
 	"time"
 
+	"github.com/kyma-project/kyma-environment-broker/internal/customresources"
+
 	"github.com/kyma-project/kyma-environment-broker/internal/storage/dberr"
 
 	imv1 "github.com/kyma-project/infrastructure-manager/api/v1"
@@ -299,7 +301,7 @@ func defaultOIDCConfig() *gqlschema.OIDCConfigInput {
 	}
 }
 
-func (s *BrokerSuiteTest) ProcessInfrastructureManagerProvisioningByRuntimeID(runtimeID string) {
+func (s *BrokerSuiteTest) ProcessInfrastructureManagerProvisioningGardenerCluster(runtimeID string) {
 	err := s.poller.Invoke(func() (bool, error) {
 		gardenerCluster := &unstructured.Unstructured{}
 		gardenerCluster.SetGroupVersionKind(steps.GardenerClusterGVK())
@@ -314,6 +316,27 @@ func (s *BrokerSuiteTest) ProcessInfrastructureManagerProvisioningByRuntimeID(ru
 		err = unstructured.SetNestedField(gardenerCluster.Object, "Ready", "status", "state")
 		assert.NoError(s.t, err)
 		err = s.k8sKcp.Update(context.Background(), gardenerCluster)
+		return err == nil, nil
+	})
+	assert.NoError(s.t, err)
+}
+
+func (s *BrokerSuiteTest) ProcessInfrastructureManagerProvisioningRuntimeResource(runtimeID string) {
+	err := s.poller.Invoke(func() (bool, error) {
+		runtimeResource := &unstructured.Unstructured{}
+		gvk, _ := customresources.GvkByName(customresources.RuntimeCr)
+		runtimeResource.SetGroupVersionKind(gvk)
+		err := s.k8sKcp.Get(context.Background(), client.ObjectKey{
+			Namespace: "kyma-system",
+			Name:      steps.KymaRuntimeResourceNameFromID(runtimeID),
+		}, runtimeResource)
+		if err != nil {
+			return false, nil
+		}
+
+		err = unstructured.SetNestedField(runtimeResource.Object, "Ready", "status", "state")
+		assert.NoError(s.t, err)
+		err = s.k8sKcp.Update(context.Background(), runtimeResource)
 		return err == nil, nil
 	})
 	assert.NoError(s.t, err)
@@ -464,8 +487,22 @@ func (s *BrokerSuiteTest) FinishProvisioningOperationByProvisionerAndInfrastruct
 
 	s.finishOperationByProvisioner(gqlschema.OperationTypeProvision, operationState, op.RuntimeID)
 	if operationState == gqlschema.OperationStateSucceeded {
-		s.ProcessInfrastructureManagerProvisioningByRuntimeID(op.RuntimeID)
+		s.ProcessInfrastructureManagerProvisioningGardenerCluster(op.RuntimeID)
 	}
+}
+
+func (s *BrokerSuiteTest) FinishProvisioningOperationByInfrastructureManager(operationID string) {
+	var op *internal.ProvisioningOperation
+	err := s.poller.Invoke(func() (done bool, err error) {
+		op, _ = s.db.Operations().GetProvisioningOperationByID(operationID)
+		if op.RuntimeID != "" {
+			return true, nil
+		}
+		return false, nil
+	})
+	assert.NoError(s.t, err, "timeout waiting for the operation with runtimeID. The existing operation %+v", op)
+
+	s.ProcessInfrastructureManagerProvisioningRuntimeResource(op.RuntimeID)
 }
 
 func (s *BrokerSuiteTest) FailProvisioningOperationByProvisioner(operationID string) {
@@ -914,6 +951,12 @@ func (s *BrokerSuiteTest) processProvisioningByOperationID(opID string) {
 	s.WaitForOperationState(opID, domain.Succeeded)
 }
 
+func (s *BrokerSuiteTest) processKIMOnlyProvisioningByOperationID(opID string) {
+	s.WaitForProvisioningState(opID, domain.InProgress)
+
+	s.FinishProvisioningOperationByInfrastructureManager(opID)
+}
+
 func (s *BrokerSuiteTest) processUpdatingByOperationID(opID string) {
 	s.WaitForProvisioningState(opID, domain.InProgress)
 
@@ -1015,6 +1058,47 @@ func (s *BrokerSuiteTest) AssertKymaResourceExistsByInstanceID(instanceID string
 	err := s.k8sKcp.Get(context.Background(), client.ObjectKeyFromObject(obj), obj)
 
 	assert.NoError(s.t, err)
+}
+
+func (s *BrokerSuiteTest) AssertRuntimeResourceExists(opId string) {
+	operation, err := s.db.Operations().GetOperationByID(opId)
+	assert.NoError(s.t, err)
+
+	obj := &unstructured.Unstructured{}
+	obj.SetName(operation.RuntimeID)
+	obj.SetNamespace("kyma-system")
+	gvk, err := customresources.GvkByName(customresources.RuntimeCr)
+	assert.NoError(s.t, err)
+	obj.SetGroupVersionKind(gvk)
+
+	err = s.k8sKcp.Get(context.Background(), client.ObjectKeyFromObject(obj), obj)
+	assert.NoError(s.t, err)
+}
+
+func (s *BrokerSuiteTest) AssertRuntimeResourceLabels(opId string) {
+	operation, err := s.db.Operations().GetOperationByID(opId)
+	assert.NoError(s.t, err)
+	obj := &unstructured.Unstructured{}
+	obj.SetName(operation.RuntimeID)
+	obj.SetNamespace("kyma-system")
+	gvk, err := customresources.GvkByName(customresources.RuntimeCr)
+	assert.NoError(s.t, err)
+	obj.SetGroupVersionKind(gvk)
+
+	err = s.k8sKcp.Get(context.Background(), client.ObjectKeyFromObject(obj), obj)
+	assert.NoError(s.t, err)
+
+	assert.Subset(s.t, obj.GetLabels(), map[string]string{customresources.InstanceIdLabel: operation.InstanceID,
+		customresources.GlobalAccountIdLabel: operation.ProvisioningParameters.ErsContext.GlobalAccountID,
+		customresources.SubaccountIdLabel:    operation.ProvisioningParameters.ErsContext.SubAccountID,
+		customresources.ShootNameLabel:       operation.ShootName,
+		customresources.PlanIdLabel:          operation.ProvisioningParameters.PlanID,
+		customresources.RuntimeIdLabel:       operation.RuntimeID,
+		customresources.PlatformRegionLabel:  operation.ProvisioningParameters.PlatformRegion,
+		customresources.RegionLabel:          operation.Region,
+		customresources.CloudProviderLabel:   operation.CloudProvider,
+		customresources.PlanNameLabel:        broker.PlanNamesMapping[operation.ProvisioningParameters.PlanID],
+	})
 }
 
 func (s *BrokerSuiteTest) AssertKymaResourceNotExists(opId string) {

@@ -9,12 +9,13 @@ import (
 	"testing"
 	"time"
 
+	"github.com/kyma-project/kyma-environment-broker/internal/customresources"
+
 	"sigs.k8s.io/controller-runtime/pkg/client/fake"
 
 	"github.com/google/uuid"
 	"github.com/kyma-project/kyma-environment-broker/internal"
 	"github.com/kyma-project/kyma-environment-broker/internal/broker/automock"
-	"github.com/kyma-project/kyma-environment-broker/internal/k8s"
 	apiextensionsv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -887,7 +888,7 @@ func TestLabelChangeWhenMovingSubaccount(t *testing.T) {
 		assert.Equal(t, runtimeId, i.RuntimeID)
 
 		// all CRs should have new global account id as label
-		gvk, err := k8s.GvkByName(k8s.KymaCr)
+		gvk, err := customresources.GvkByName(customresources.KymaCr)
 		require.NoError(t, err)
 		cr := &unstructured.Unstructured{}
 		cr.SetGroupVersionKind(gvk)
@@ -895,9 +896,9 @@ func TestLabelChangeWhenMovingSubaccount(t *testing.T) {
 		require.NoError(t, err)
 		labels := cr.GetLabels()
 		assert.Len(t, labels, 1)
-		assert.Equal(t, newGlobalAccountId, labels[k8s.GlobalAccountIdLabel])
+		assert.Equal(t, newGlobalAccountId, labels[customresources.GlobalAccountIdLabel])
 
-		gvk, err = k8s.GvkByName(k8s.RuntimeCr)
+		gvk, err = customresources.GvkByName(customresources.RuntimeCr)
 		require.NoError(t, err)
 		cr = &unstructured.Unstructured{}
 		cr.SetGroupVersionKind(gvk)
@@ -905,9 +906,9 @@ func TestLabelChangeWhenMovingSubaccount(t *testing.T) {
 		require.NoError(t, err)
 		labels = cr.GetLabels()
 		assert.Len(t, labels, 1)
-		assert.Equal(t, newGlobalAccountId, labels[k8s.GlobalAccountIdLabel])
+		assert.Equal(t, newGlobalAccountId, labels[customresources.GlobalAccountIdLabel])
 
-		gvk, err = k8s.GvkByName(k8s.GardenerClusterCr)
+		gvk, err = customresources.GvkByName(customresources.GardenerClusterCr)
 		require.NoError(t, err)
 		cr = &unstructured.Unstructured{}
 		cr.SetGroupVersionKind(gvk)
@@ -915,7 +916,7 @@ func TestLabelChangeWhenMovingSubaccount(t *testing.T) {
 		require.NoError(t, err)
 		labels = cr.GetLabels()
 		assert.Len(t, labels, 1)
-		assert.Equal(t, newGlobalAccountId, labels[k8s.GlobalAccountIdLabel])
+		assert.Equal(t, newGlobalAccountId, labels[customresources.GlobalAccountIdLabel])
 	})
 }
 
@@ -930,25 +931,25 @@ func registerCRD() {
 }
 
 func createCRDs(t *testing.T) {
-	f := func(gvkName string) {
+	createCustomResource := func(gvkName string) {
 		var customResourceDefinition apiextensionsv1.CustomResourceDefinition
-		gvk, err := k8s.GvkByName(gvkName)
+		gvk, err := customresources.GvkByName(gvkName)
 		require.NoError(t, err)
 		crdName := fmt.Sprintf("%ss.%s", strings.ToLower(gvk.Kind), gvk.Group)
 		customResourceDefinition.SetName(crdName)
 		err = fakeKcpK8sClient.Create(context.Background(), &customResourceDefinition)
 		require.NoError(t, err)
 	}
-	f(k8s.KymaCr)
-	f(k8s.GardenerClusterCr)
-	f(k8s.RuntimeCr)
+	createCustomResource(customresources.KymaCr)
+	createCustomResource(customresources.GardenerClusterCr)
+	createCustomResource(customresources.RuntimeCr)
 }
 
 func createFakeCRs(t *testing.T) string {
 	runtimeID := uuid.New().String()
-	f := func(t *testing.T, runtimeID string, crName string) {
+	createCustomResource := func(t *testing.T, runtimeID string, crName string) {
 		assert.NotNil(t, fakeKcpK8sClient)
-		gvk, err := k8s.GvkByName(crName)
+		gvk, err := customresources.GvkByName(crName)
 		require.NoError(t, err)
 		us := unstructured.Unstructured{}
 		us.SetGroupVersionKind(gvk)
@@ -958,17 +959,17 @@ func createFakeCRs(t *testing.T) string {
 		require.NoError(t, err)
 	}
 
-	f(t, runtimeID, k8s.KymaCr)
-	f(t, runtimeID, k8s.GardenerClusterCr)
-	f(t, runtimeID, k8s.RuntimeCr)
+	createCustomResource(t, runtimeID, customresources.KymaCr)
+	createCustomResource(t, runtimeID, customresources.GardenerClusterCr)
+	createCustomResource(t, runtimeID, customresources.RuntimeCr)
 
 	return runtimeID
 }
 
 func cleanFakeCRs(t *testing.T, runtimeID string) {
-	f := func(t *testing.T, id string, crName string) {
+	createCustomResource := func(t *testing.T, id string, crName string) {
 		assert.NotNil(t, fakeKcpK8sClient)
-		gvk, err := k8s.GvkByName(crName)
+		gvk, err := customresources.GvkByName(crName)
 		require.NoError(t, err)
 		us := unstructured.Unstructured{}
 		us.SetGroupVersionKind(gvk)
@@ -978,7 +979,7 @@ func cleanFakeCRs(t *testing.T, runtimeID string) {
 		require.NoError(t, err)
 	}
 
-	f(t, runtimeID, k8s.KymaCr)
-	f(t, runtimeID, k8s.GardenerClusterCr)
-	f(t, runtimeID, k8s.RuntimeCr)
+	createCustomResource(t, runtimeID, customresources.KymaCr)
+	createCustomResource(t, runtimeID, customresources.GardenerClusterCr)
+	createCustomResource(t, runtimeID, customresources.RuntimeCr)
 }
