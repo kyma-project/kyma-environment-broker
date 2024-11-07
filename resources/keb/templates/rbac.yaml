@@ -15,7 +15,7 @@ rules:
     verbs: ["list", "get"]
   - apiGroups: [ "operator.kyma-project.io" ]
     resources: [ "kymas" ]
-    verbs: [ "create", "update", "get", "list","delete" ]
+    verbs: [ "create", "update", "get", "list", "delete", "watch" ]
   - apiGroups: [ "infrastructuremanager.kyma-project.io" ]
     resources: [ "gardenerclusters" ]
     verbs: [ "create", "update", "get", "list", "delete" ]
