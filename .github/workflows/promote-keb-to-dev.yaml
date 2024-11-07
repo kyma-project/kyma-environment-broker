@@ -39,7 +39,11 @@ jobs:
       - name: Use default (latest) Release Tag
         if: inputs.releaseTag == 'use latest release'
         run: |
-          latest=$(curl -s -H "Accept: application/vnd.github+json" ${KEB_API_URL}/releases/latest | jq -r '.tag_name') 
+          latest=$(curl -s -H "Accept: application/vnd.github+json" ${KEB_API_URL}/releases/latest | jq -r '.tag_name')
+          if [ -z "$latest" ]; then
+              echo "Failed to fetch the latest release tag"
+              exit 1
+          fi
           echo "TAG=${latest}" >> $GITHUB_ENV
 
       - name: Validate given release tag
@@ -84,6 +88,16 @@ jobs:
           make bump-patch
           yq -i '.dependencies |= map(select(.name == "keb").version="'${TAG}'")' keb-sap/Chart.yaml
           yq e ".appVersion = \"${TAG}\"" -i keb-sap/Chart.yaml
+        
+      - name: Check changes
+        working-directory: management-plane-charts
+        run: |
+          changes=$(git diff --shortstat)
+          echo "$changes"
+          if [[ "$changes" != *"3 insertions(+), 3 deletions(-)"* ]]; then
+            echo "Expected 3 insertions and 3 deletions, but found different changes."
+            exit 1
+          fi
 
       - name: Commit and push changes
         working-directory: management-plane-charts
