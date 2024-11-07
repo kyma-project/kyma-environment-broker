@@ -101,16 +101,14 @@ type Config struct {
 	Gardener    gardener.Config
 	Kubeconfig  kubeconfig.Config
 
-	ManagedRuntimeComponentsYAMLFilePath       string
-	NewAdditionalRuntimeComponentsYAMLFilePath string
-	SkrOidcDefaultValuesYAMLFilePath           string
-	SkrDnsProvidersValuesYAMLFilePath          string
-	DefaultRequestRegion                       string `envconfig:"default=cf-eu10"`
-	UpdateProcessingEnabled                    bool   `envconfig:"default=false"`
-	LifecycleManagerIntegrationDisabled        bool   `envconfig:"default=true"`
-	InfrastructureManagerIntegrationDisabled   bool   `envconfig:"default=true"`
-	Broker                                     broker.Config
-	CatalogFilePath                            string
+	SkrOidcDefaultValuesYAMLFilePath         string
+	SkrDnsProvidersValuesYAMLFilePath        string
+	DefaultRequestRegion                     string `envconfig:"default=cf-eu10"`
+	UpdateProcessingEnabled                  bool   `envconfig:"default=false"`
+	LifecycleManagerIntegrationDisabled      bool   `envconfig:"default=true"`
+	InfrastructureManagerIntegrationDisabled bool   `envconfig:"default=true"`
+	Broker                                   broker.Config
+	CatalogFilePath                          string
 
 	EDP edp.Config
 
@@ -453,7 +451,6 @@ func createAPI(router *mux.Router, servicesConfig broker.ServicesConfig, planVal
 		LastBindingOperationEndpoint: broker.NewLastBindingOperation(logs),
 	}
 
-	router.Use(middleware.AddRequestLogging(logs))
 	router.Use(middleware.AddRegionToContext(cfg.DefaultRequestRegion))
 	router.Use(middleware.AddProviderToContext())
 	for _, prefix := range []string{
@@ -461,7 +458,7 @@ func createAPI(router *mux.Router, servicesConfig broker.ServicesConfig, planVal
 		"/oauth/{region}/", // oauth2 handled by Ory with region
 	} {
 		route := router.PathPrefix(prefix).Subrouter()
-		broker.AttachRoutes(route, kymaEnvBroker, logger)
+		broker.AttachRoutes(route, kymaEnvBroker, logger, cfg.Broker.Binding.CreateBindingTimeout)
 	}
 
 	respWriter := httputil.NewResponseWriter(logs, cfg.DevelopmentMode)

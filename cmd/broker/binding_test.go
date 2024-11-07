@@ -3,6 +3,7 @@ package main
 import (
 	"encoding/json"
 	"fmt"
+	"time"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -260,4 +261,22 @@ func TestRemoveBindingsFromSuspended(t *testing.T) {
 	assert.Equal(t, http.StatusOK, response.StatusCode)
 	response = suite.CallAPI(http.MethodDelete, fmt.Sprintf("oauth/v2/service_instances/%s/service_bindings/%s?plan_id=361c511f-f939-4621-b228-d0fb79a1fe15&service_id=47c9dcbf-ff30-448e-ab36-d3bad66ba281", iid, bindingID2), "")
 	assert.Equal(t, http.StatusOK, response.StatusCode)
+}
+
+func TestBindingCreationTimeout(t *testing.T) {
+	// given
+	cfg := fixConfig()
+	cfg.Broker.Binding.CreateBindingTimeout = 1 * time.Nanosecond
+	suite := NewBrokerSuiteTestWithConfig(t, cfg)
+	defer suite.TearDown()
+	iid := uuid.New().String()
+	bid := uuid.New().String()
+
+	resp := suite.CallAPI(http.MethodPut, fmt.Sprintf("oauth/v2/service_instances/%s/service_bindings/%s", iid, bid),
+		`{
+					"service_id": "47c9dcbf-ff30-448e-ab36-d3bad66ba281",
+					"plan_id": "361c511f-f939-4621-b228-d0fb79a1fe15",
+					"parameters": {}
+               }`)
+	assert.Equal(t, http.StatusServiceUnavailable, resp.StatusCode)
 }

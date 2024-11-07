@@ -29,16 +29,6 @@ spec:
       imagePullSecrets:
         - name: {{ .Values.imagePullSecret }}
       {{- end }}
-      {{ if .Values.global.isLocalEnv }}
-      # HostAliases are used by Pod to resolve kyma.local domain
-      hostAliases:
-        - ip: {{ .Values.global.minikubeIP }}
-          hostnames:
-            # Used for calls to Director
-            - "{{ .Values.global.compass.tls.secure.oauth.host }}.{{ .Values.global.compass.domain | default .Values.global.ingress.domainName }}"
-            # Used for calls for oauth token
-            - "{{ .Values.global.oauth2.host }}.{{ .Values.global.compass.domain | default .Values.global.ingress.domainName }}"
-      {{ end }}
       serviceAccountName: {{ .Values.global.kyma_environment_broker.serviceAccountName }}
     {{- with .Values.deployment.securityContext }}
       securityContext:
@@ -92,8 +82,12 @@ spec:
               value: "{{ .Values.binding.expirationSeconds}}"
             - name: APP_BROKER_BINDING_MAX_EXPIRATION_SECONDS
               value: "{{ .Values.binding.maxExpirationSeconds}}"
+            - name: APP_BROKER_BINDING_MIN_EXPIRATION_SECONDS
+              value: "{{ .Values.binding.minExpirationSeconds}}"
             - name: APP_BROKER_BINDING_MAX_BINDINGS_COUNT
               value: "{{ .Values.binding.maxBindingsCount}}"
+            - name: APP_BROKER_BINDING_CREATE_BINDING_TIMEOUT
+              value: "{{ .Values.binding.createBindingTimeout}}"
             - name: APP_BROKER_ONLY_SINGLE_TRIAL_PER_GA
               value: "{{ .Values.onlySingleTrialPerGA }}"
             - name: APP_BROKER_URL
@@ -140,30 +134,6 @@ spec:
               value: "{{ .Values.broker.port }}"
             - name: APP_STATUS_PORT
               value: "{{ .Values.broker.statusPort }}"
-            - name: APP_DIRECTOR_DEFAULT_TENANT
-              value: "{{ .Values.global.defaultTenant }}"
-            - name: APP_DIRECTOR_URL
-              value: "https://{{ .Values.global.compass.tls.secure.oauth.host }}.{{ .Values.global.compass.domain | default .Values.global.ingress.domainName }}/director/graphql"
-            - name: APP_DIRECTOR_OAUTH_TOKEN_URL
-              valueFrom:
-                secretKeyRef:
-                  name: "{{ .Values.global.kyma_environment_broker.secrets.integrationSystemCredentials.name }}"
-                  key: tokens_endpoint
-                  optional: true
-            - name: APP_DIRECTOR_OAUTH_CLIENT_ID
-              valueFrom:
-                secretKeyRef:
-                  name: "{{ .Values.global.kyma_environment_broker.secrets.integrationSystemCredentials.name }}"
-                  key: client_id
-                  optional: true
-            - name: APP_DIRECTOR_OAUTH_CLIENT_SECRET
-              valueFrom:
-                secretKeyRef:
-                  name: "{{ .Values.global.kyma_environment_broker.secrets.integrationSystemCredentials.name }}"
-                  key: client_secret
-                  optional: true
-            - name: APP_DIRECTOR_OAUTH_SCOPE
-              value: "{{ .Values.director.scope }}"
             - name: APP_EDP_AUTH_URL
               value: "{{ .Values.edp.authURL }}"
             - name: APP_EDP_ADMIN_URL
@@ -219,8 +189,6 @@ spec:
                   key: postgresql-sslMode
             - name: APP_DATABASE_SSLROOTCERT
               value: /secrets/cloudsql-sslrootcert/server-ca.pem
-            - name: APP_MANAGED_RUNTIME_COMPONENTS_YAML_FILE_PATH
-              value: /config/additionalRuntimeComponents.yaml
             - name: APP_TRIAL_REGION_MAPPING_FILE_PATH
               value: /config/trialRegionMapping.yaml
             - name: APP_SAP_CONVERGED_CLOUD_REGION_MAPPINGS_FILE_PATH
@@ -230,7 +198,7 @@ spec:
             - name: APP_BROKER_ONLY_ONE_FREE_PER_GA
               value: "{{ .Values.onlyOneFreePerGA }}"
             - name: APP_BROKER_ENABLE_SHOOT_AND_SEED_SAME_REGION
-              value: "{{ .Values.broker.EnableShootAndSeedSameRegion }}"
+              value: "{{ .Values.broker.enableShootAndSeedSameRegion }}"
             - name: APP_CATALOG_FILE_PATH
               value: /config/catalog.yaml
             - name: APP_GARDENER_PROJECT
@@ -239,10 +207,6 @@ spec:
               value: "{{ .Values.gardener.shootDomain }}"
             - name: APP_GARDENER_KUBECONFIG_PATH
               value: {{ .Values.gardener.kubeconfigPath }}
-            - name: APP_KUBECONFIG_ISSUER_URL
-              value: {{ .Values.kubeconfig.issuerURL }}
-            - name: APP_KUBECONFIG_CLIENT_ID
-              value: {{ .Values.kubeconfig.clientID }}
             - name: APP_KUBECONFIG_ALLOW_ORIGINS
               value: "{{ .Values.kubeconfig.allowOrigins }}"
             - name: APP_PROVISIONER_KUBERNETES_VERSION
@@ -262,15 +226,13 @@ spec:
             - name: APP_PROVISIONER_CONTROL_PLANE_FAILURE_TOLERANCE
               value: "{{ .Values.gardener.controlPlaneFailureTolerance }}"
             - name: APP_PROVISIONER_ENABLE_SHOOT_AND_SEED_SAME_REGION
-              value: "{{ .Values.provisioner.gardener.EnableShootAndSeedSameRegion }}"
+              value: "{{ .Values.provisioner.gardener.enableShootAndSeedSameRegion }}"
             - name: APP_DEFAULT_REQUEST_REGION
               value: "{{ .Values.broker.defaultRequestRegion }}"
             - name: APP_UPDATE_PROCESSING_ENABLED
               value: "{{ .Values.osbUpdateProcessingEnabled }}"
             - name: APP_NOTIFICATION_URL
               value: "{{ .Values.notification.url }}"
-            - name: APP_NOTIFICATION_DISABLED
-              value: "{{ .Values.notification.disabled }}"
             - name: APP_DOMAIN_NAME
               value: "{{ .Values.global.ingress.domainName }}"
             - name: APP_SKR_OIDC_DEFAULT_VALUES_YAML_FILE_PATH
@@ -281,8 +243,6 @@ spec:
               value: "{{ .Release.Namespace }}"
             - name: APP_ORCHESTRATION_CONFIG_NAME
               value: "orchestration-config"
-            - name: APP_NEW_ADDITIONAL_RUNTIME_COMPONENTS_YAML_FILE_PATH
-              value: /config/newAdditionalRuntimeComponents.yaml
             - name: APP_PROFILER_MEMORY
               value: "{{ .Values.broker.profiler.memory }}"
             - name: APP_KYMA_DASHBOARD_CONFIG_LANDSCAPE_URL

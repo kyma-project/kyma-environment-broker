@@ -8,6 +8,8 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/kyma-project/kyma-environment-broker/internal/customresources"
+
 	"github.com/kyma-project/kyma-environment-broker/internal/provider"
 
 	"github.com/pivotal-cf/brokerapi/v8/domain"
@@ -783,14 +785,18 @@ func assertLabelsProvisionerDriven(t *testing.T, preOperation internal.Operation
 }
 
 func assertLabels(t *testing.T, operation internal.Operation, runtime imv1.Runtime) {
-	assert.Equal(t, operation.InstanceID, runtime.Labels["kyma-project.io/instance-id"])
-	assert.Equal(t, operation.RuntimeID, runtime.Labels["kyma-project.io/runtime-id"])
-	assert.Equal(t, operation.ProvisioningParameters.PlanID, runtime.Labels["kyma-project.io/broker-plan-id"])
-	assert.Equal(t, broker.PlanNamesMapping[operation.ProvisioningParameters.PlanID], runtime.Labels["kyma-project.io/broker-plan-name"])
-	assert.Equal(t, operation.ProvisioningParameters.ErsContext.GlobalAccountID, runtime.Labels["kyma-project.io/global-account-id"])
-	assert.Equal(t, operation.ProvisioningParameters.ErsContext.SubAccountID, runtime.Labels["kyma-project.io/subaccount-id"])
-	assert.Equal(t, operation.ShootName, runtime.Labels["kyma-project.io/shoot-name"])
-	assert.Equal(t, *operation.ProvisioningParameters.Parameters.Region, runtime.Labels["kyma-project.io/region"])
+	assert.Equal(t, operation.InstanceID, runtime.Labels[customresources.InstanceIdLabel])
+	assert.Equal(t, operation.RuntimeID, runtime.Labels[customresources.RuntimeIdLabel])
+	assert.Equal(t, operation.ProvisioningParameters.PlanID, runtime.Labels[customresources.PlanIdLabel])
+	assert.Equal(t, broker.PlanNamesMapping[operation.ProvisioningParameters.PlanID], runtime.Labels[customresources.PlanNameLabel])
+	assert.Equal(t, operation.ProvisioningParameters.ErsContext.GlobalAccountID, runtime.Labels[customresources.GlobalAccountIdLabel])
+	assert.Equal(t, operation.ProvisioningParameters.ErsContext.SubAccountID, runtime.Labels[customresources.SubaccountIdLabel])
+	assert.Equal(t, operation.ShootName, runtime.Labels[customresources.ShootNameLabel])
+	assert.Equal(t, *operation.ProvisioningParameters.Parameters.Region, runtime.Labels[customresources.RegionLabel])
+	assert.Equal(t, operation.KymaResourceName, runtime.Labels[customresources.KymaNameLabel])
+	if operation.ProvisioningParameters.PlatformRegion != "" {
+		assert.Equal(t, operation.ProvisioningParameters.PlatformRegion, runtime.Labels[customresources.PlatformRegionLabel])
+	}
 }
 
 func assertWorkers(t *testing.T, workers []gardener.Worker, machine string, maximum, minimum, maxSurge, maxUnavailable int, zoneCount int, zones []string) {

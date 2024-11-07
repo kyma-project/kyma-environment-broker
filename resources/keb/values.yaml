@@ -1,5 +1,4 @@
 global:
-  defaultTenant: 3e64ebae-38b5-46a0-b1ed-9ccee153a0ae
   ingress:
     domainName: localhost
   images:
@@ -10,91 +9,53 @@ global:
       path: europe-docker.pkg.dev/kyma-project/prod
     kyma_environment_broker:
       dir:
-      version: "1.10.49"
+      version: "1.10.53"
     kyma_environment_broker_schema_migrator:
       dir:
-      version: 1.10.49
+      version: 1.10.53
     kyma_environments_subaccount_cleanup_job:
       dir:
-      version: "1.10.49"
+      version: "1.10.53"
     kyma_environment_trial_cleanup_job:
       dir:
-      version: "1.10.49"
+      version: "1.10.53"
     kyma_environment_expirator_job:
       dir:
-      version: "1.10.49"
+      version: "1.10.53"
     kyma_environment_deprovision_retrigger_job:
       dir:
-      version: "1.10.49"
+      version: "1.10.53"
     kyma_environment_runtime_reconciler:
       dir:
-      version: "1.10.49"
+      version: "1.10.53"
     kyma_environment_subaccount_sync:
       dir:
-      version: "1.10.49"
+      version: "1.10.53"
     kyma_environment_globalaccounts:
       dir:
-      version: "1.10.49"
+      version: "1.10.53"
     kyma_environment_service_binding_cleanup_job:
       dir:
-      version:
+      version: 1.10.53
       
   kyma_environment_broker:
-    enabled: false
     serviceAccountName: "kcp-kyma-environment-broker"
-    secrets:
-      integrationSystemCredentials:
-        name: kcp-kyma-environment-broker-credentials
-    environmentsCleanup:
-      enabled: false
-  isLocalEnv: false
-  oauth2:
-    host: oauth2
-  compass:
-    registration:
-      enabled: true
-    tls:
-      host: compass-gateway
-      secure:
-        oauth:
-          host: compass-gateway-auth-oauth
-    mtls:
-      host: compass-gateway-mtls
   istio:
     gateway: "kyma-system/kyma-gateway"
     proxy:
       port: 15020
   database:
-    manageSecrets: true
     cloudsqlproxy:
       enabled: false
       workloadIdentity:
         enabled: false
     embedded:
       enabled: true
-      provisioner:
-        name: "provisioner"
-      broker:
-        name: "broker"
-      reconciler:
-        name: "reconciler"
-      #TODO remove below after migration to separate user will be done
-      provisionerDBName: "provisioner"
-      brokerDBName: "broker"
     # Values for GCP managed PostgreSQL database
     managedGCP:
       # secret with a secret key used to encrypt particular data
       encryptionSecretName: "kcp-storage-client-secret"
       instanceConnectionName: ""
-      broker:
-        name: ""
-      host: "localhost"
-      hostPort: "5432"
-      sslMode: ""
-      sslRootCert: ""
-      #TODO remove below after migration to separate user will be done
-      provisionerDBName: ""
-      brokerDBName: ""
 
   secrets:
     enabled: true
@@ -184,19 +145,19 @@ nameOverride: "kyma-environment-broker"
 fullnameOverride: "kcp-kyma-environment-broker"
 host: "kyma-env-broker"
 manageSecrets: true
+allowUpdateExpiredInstanceWithContext: "false"
 
 broker:
   port: "8080"
   # serving health probes routes on statusPort
   statusPort: "8071"
   defaultRequestRegion: "cf-eu10"
-  operationTimeout: "24h"
+  operationTimeout: "7h"
   profiler:
     memory: false
   events:
     enabled: false
   enableShootAndSeedSameRegion: "false"
-  allowUpdateExpiredInstanceWithContext: "false"
   subaccountMovementEnabled: "false"
   updateCustomResourcesLabelsOnAccountMove: "false"
 
@@ -208,6 +169,7 @@ binding:
   # minExpirationSeconds can't be lower than 600 seconds. Forced by Gardener
   minExpirationSeconds: 600
   maxBindingsCount: 10
+  createBindingTimeout: 15s
 
 service:
   type: ClusterIP
@@ -241,10 +203,6 @@ lifecycleManager:
 
 provisioner:
   URL: "http://kcp-provisioner.kcp-system.svc.cluster.local:3000/graphql"
-
-  # Defines how long should the Kyma Environment Broker checks the status of the provisioning in the Provisioner.
-  # The Provisioner timeout is defined in resources/kcp/charts/provisioner/values.yaml
-  timeout: "12h"
   provisioningTimeout: "6h"
   deprovisioningTimeout: "5h"
   gardenerClusterStepTimeout: "3m"
@@ -252,30 +210,7 @@ provisioner:
   clusterUpdateStepTimeout: "2h"
 
   gardener:
-    # name of the secret with kubeconfig to the gardener cluster
-    secretName: "gardener"
-    # name of the gardener project
-    projectName: "gopher"
     enableShootAndSeedSameRegion: "false"
-
-director:
-  scope: "runtime:read runtime:write"
-
-additionalRuntimeComponents: |-
-  - name: "service-manager-proxy"
-    namespace: "kyma-system"
-  - name: "uaa-activator"
-    namespace: "kyma-system"
-  - name: "compass-runtime-agent"
-    namespace: "kyma-system"
-  - name: "knative-eventing-kafka"
-    namespace: "knative-eventing"
-
-newAdditionalRuntimeComponents: |-
-  - name: "service-manager-proxy"
-    namespace: "kyma-system"
-  - name: "compass-runtime-agent"
-    namespace: "kyma-system"
 
 trialRegionsMapping: |-
   cf-eu10: europe
@@ -336,10 +271,9 @@ gardener:
   autoUpdateKubernetesVersion: "true"
   autoUpdateMachineImageVersion: "false"
   multiZoneCluster: "false"
+  controlPlaneFailureTolerance: ""
 
 kubeconfig:
-  issuerURL: "TBD"
-  clientID: "TBD"
   allowOrigins: "*"
 
 edp:
@@ -351,10 +285,6 @@ edp:
   disabled: true
   secret: "TBD"
   secretName: "edp-creds"
-
-ems:
-  disabled: true
-  skipDeprovisionAzureEventingAtUpgrade: false
 
 cis:
   v1:
@@ -379,11 +309,9 @@ cis:
     id: "TBD"
     secret: "TBD"
     secretName: "cis-creds-accounts"
-    probe: -1
 
 notification:
   url: "TBD"
-  disabled: true
 
 kim:
   enabled: false
@@ -415,7 +343,7 @@ subaccountCleanup:
 
 trialCleanup:
   enabled: true
-  schedule: "0,15,30,45 * * * *"
+  schedule: "15 1 * * *"
   dryRun: true
   expirationPeriod: 336h
   testRun: false
@@ -455,12 +383,12 @@ subaccountSync:
       maxRequestsPerInterval: 5
 
 serviceMonitor:
-  enabled: true
+  enabled: false
   scrapeTimeout: &scrapeTimeout 10s
   interval: &scrapeInterval 30s
 
 vmscrapes:
-  enabled: false
+  enabled: true
   scrapeTimeout: *scrapeTimeout
   interval: *scrapeInterval
 
@@ -530,10 +458,6 @@ globalaccounts:
   enabled: false
   dryRun: true
   name: "kyma-environment-globalaccounts"
-  svc:
-    serviceURL: "TBD"
-    authURL: "TBD"
-    secretName: "cis-creds-accounts"
 
 serviceBindingCleanup:
   enabled: false

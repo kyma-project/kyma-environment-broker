@@ -15,6 +15,10 @@ on:
         description: 'Create release'
         default: ""
         required: true
+      sec-file-and-chart:
+        type: boolean
+        description: 'Do not bump sec file and chart'
+        default: false
       dry-run:
         type: boolean
         description: 'Do not publish'
@@ -190,12 +194,15 @@ jobs:
       - run: git pull
 
       - name: Update sec-scanners-config.yaml
+        if: ${{ !inputs.sec-file-and-chart }}
         run: scripts/create_scan_config.sh "sec-scanners-config.yaml" ${{ inputs.name }}
 
       - name: Bump KEB chart
+        if: ${{ !inputs.sec-file-and-chart }}
         run: scripts/bump_keb_chart.sh ${{ inputs.name }} "release"
 
       - name: Create PR if anything changed
+        if: ${{ !inputs.sec-file-and-chart }}
         env:
           GH_TOKEN: ${{ secrets.BOT_TOKEN }}
         run: |
@@ -211,7 +218,20 @@ jobs:
             echo "PR_NUMBER=$(echo "$PR_STATUS" | tail -n 1)" >> $GITHUB_ENV
           fi
 
+      - name: Merge PR
+        if: ${{ !inputs.sec-file-and-chart }}
+        env:
+          GH_TOKEN: ${{ secrets.BOT_TOKEN }}
+          REPOSITORY: ${{ env.KYMA_ENVIRONMENT_BROKER_REPO }}
+        run: |
+          if [ "$PR_NUMBER" -gt 0 ]; then
+            scripts/merge_pr.sh
+          else
+            echo "Step skipped"
+          fi
+
       - name: Await PR merge
+        if: ${{ !inputs.sec-file-and-chart }}
         timeout-minutes: 45
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
