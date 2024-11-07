@@ -32,11 +32,10 @@ To create a release, follow these steps:
 3. The GitHub action initiates the image builders.
 4. The Image builders upload the binary images.
 5. The GitHub action initiates KEB chart install test.
-6. The GitHub action initiates the bump of the security scanner config, KEB images and KEB chart version.
-7. A code owner approves the PR.
-8. The GitHub action creates a GitHub tag and draft release with the provided name.
-9.  The GitHub action commits the new KEB chart metadata to the `gh-pages` branch.
-10. The GitHub action publishes the release.
+6. The GitHub action bumps the security scanner config, KEB images and KEB chart version.
+7. The GitHub action creates a GitHub tag and draft release with the provided name.
+8. The GitHub action commits the new KEB chart metadata to the `gh-pages` branch.
+9. The GitHub action publishes the release.
 
 ### Replace an Existing Release
 
