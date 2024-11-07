@@ -23,6 +23,21 @@ on:
         type: boolean
         description: 'Do not publish'
         default: false
+  workflow_call:
+    inputs:
+      name:
+        type: string
+        description: 'Create release'
+        default: ""
+        required: true
+      sec-file-and-chart:
+        type: boolean
+        description: 'Do not bump sec file and chart'
+        default: false
+      dry-run:
+        type: boolean
+        description: 'Do not publish'
+        default: false
 
 jobs:
   validate-release:
