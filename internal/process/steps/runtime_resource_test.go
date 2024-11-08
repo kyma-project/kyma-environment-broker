@@ -62,7 +62,7 @@ func TestCheckRuntimeResource_RunWhenNotReady_OperationFail(t *testing.T) {
 	operation.KymaResourceNamespace = "kcp-system"
 	operation.RuntimeID = "runtime-id-000"
 	operation.ShootName = "c-12345"
-	operation.UpdatedAt = time.Now().Add(-1 * time.Hour)
+	operation.CreatedAt = time.Now().Add(-1 * time.Hour)
 	err = os.InsertOperation(operation)
 	assert.NoError(t, err)
 
@@ -92,7 +92,7 @@ func TestCheckRuntimeResource_RunWhenNotReady_Retry(t *testing.T) {
 	operation.KymaResourceNamespace = "kcp-system"
 	operation.RuntimeID = "runtime-id-000"
 	operation.ShootName = "c-12345"
-	operation.UpdatedAt = time.Now()
+	operation.CreatedAt = time.Now()
 	err = os.InsertOperation(operation)
 	assert.NoError(t, err)
 
