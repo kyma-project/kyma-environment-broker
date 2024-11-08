@@ -178,7 +178,7 @@ func (m *StagedManager) Execute(operationID string) (time.Duration, error) {
 
 		processedOperation, err = m.saveFinishedStage(processedOperation, stage, logOperation)
 
-		// it is ok, when operation deos not exists in the DB - it can happen at the end of a deprovisioning process
+		// it is ok, when operation does not exist in the DB - it can happen at the end of a deprovisioning process
 		if err != nil && !dberr.IsNotFound(err) {
 			return time.Second, nil
 		}
