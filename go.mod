@@ -3,7 +3,6 @@ module github.com/kyma-project/kyma-environment-broker
 go 1.23.1
 
 require (
-	code.cloudfoundry.org/lager v2.0.0+incompatible
 	github.com/99designs/gqlgen v0.17.56
 	github.com/Azure/azure-sdk-for-go v68.0.0+incompatible
 	github.com/Azure/go-autorest/autorest v0.11.29
@@ -27,7 +26,7 @@ require (
 	github.com/kyma-project/infrastructure-manager v0.0.0-20240924140719-22e21e6aa684
 	github.com/lib/pq v1.10.9
 	github.com/matryer/is v1.4.1
-	github.com/pivotal-cf/brokerapi/v8 v8.2.3
+	github.com/pivotal-cf/brokerapi/v11 v11.0.12-0.20241017212156-eb82c66fc625
 	github.com/pkg/errors v0.9.1
 	github.com/prometheus/client_golang v1.20.5
 	github.com/sebdah/goldie/v2 v2.5.5
@@ -97,7 +96,6 @@ require (
 	github.com/onrik/logrus v0.11.0 // indirect
 	github.com/opencontainers/go-digest v1.0.0 // indirect
 	github.com/opencontainers/image-spec v1.1.0 // indirect
-	github.com/pborman/uuid v1.2.1 // indirect
 	github.com/pmezard/go-difflib v1.0.0 // indirect
 	github.com/prometheus/client_model v0.6.1 // indirect
 	github.com/prometheus/common v0.60.1 // indirect
@@ -139,8 +137,6 @@ replace (
 	github.com/antlr/antlr4/runtime/Go/antlr => github.com/antlr/antlr4/runtime/Go/antlr v0.0.0-20210826220005-b48c857c3a0e
 
 	github.com/imdario/mergo => github.com/imdario/mergo v0.3.16
-
-	github.com/pivotal-cf/brokerapi/v8 => github.com/kyma-project/brokerapi/v8 v8.2.4-0.20241017055904-60727c4de1c4
 
 	// include fix https://github.com/satori/go.uuid/pull/75 https://nvd.nist.gov/vuln/detail/CVE-2021-3538
 	github.com/satori/go.uuid => github.com/satori/go.uuid v0.0.0-20181028125025-b2ce2384e17b

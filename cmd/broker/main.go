@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"io"
+	"log/slog"
 	"net/http"
 	"os"
 	gruntime "runtime"
@@ -11,7 +12,6 @@ import (
 	"sort"
 	"time"
 
-	"code.cloudfoundry.org/lager"
 	"github.com/dlmiddlecote/sqlstats"
 	shoot "github.com/gardener/gardener/pkg/apis/core/v1beta1"
 	"github.com/gorilla/handlers"
@@ -63,6 +63,8 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client/apiutil"
 	"sigs.k8s.io/controller-runtime/pkg/client/config"
 )
+
+var LogLevel = new(slog.LevelVar)
 
 // Config holds configuration for the whole application
 type Config struct {
@@ -176,7 +178,7 @@ const (
 	startStageName              = "start"
 )
 
-func periodicProfile(logger lager.Logger, profiler ProfilerConfig) {
+func periodicProfile(logger *slog.Logger, profiler ProfilerConfig) {
 	if profiler.Memory == false {
 		return
 	}
@@ -228,12 +230,14 @@ func main() {
 	if cfg.LogLevel != "" {
 		l, _ := logrus.ParseLevel(cfg.LogLevel)
 		logs.SetLevel(l)
+		if cfg.LogLevel == "debug" {
+			LogLevel.Set(slog.LevelDebug)
+		}
 	}
 
 	cfg.OrchestrationConfig.KubernetesVersion = cfg.Provisioner.KubernetesVersion
 	// create logger
-	logger := lager.NewLogger("kyma-env-broker")
-
+	logger := slog.New(slog.NewJSONHandler(os.Stdout, &slog.HandlerOptions{Level: LogLevel})).With("source", "kyma-env-broker")
 	logger.Info("Starting Kyma Environment Broker")
 
 	logger.Info("Registering healthz endpoint for health probes")
@@ -283,7 +287,6 @@ func main() {
 	fatalOnError(err, logs)
 	dynamicGardener, err := dynamic.NewForConfig(gardenerClusterConfig)
 	fatalOnError(err, logs)
-	gardenerClient, err := initClient(gardenerClusterConfig)
 	fatalOnError(err, logs)
 
 	gardenerNamespace := fmt.Sprintf("garden-%v", cfg.Gardener.Project)
@@ -330,7 +333,7 @@ func main() {
 	// create server
 	router := mux.NewRouter()
 	createAPI(router, servicesConfig, inputFactory, &cfg, db, provisionQueue, deprovisionQueue, updateQueue, logger, logs,
-		inputFactory.GetPlanDefaults, kcBuilder, skrK8sClientProvider, skrK8sClientProvider, gardenerClient, kcpK8sClient, eventBroker)
+		inputFactory.GetPlanDefaults, kcBuilder, skrK8sClientProvider, skrK8sClientProvider, kcpK8sClient, eventBroker)
 
 	// create metrics endpoint
 	router.Handle("/metrics", promhttp.Handler())
@@ -409,19 +412,11 @@ func logConfiguration(logs *logrus.Logger, cfg Config) {
 }
 
 func createAPI(router *mux.Router, servicesConfig broker.ServicesConfig, planValidator broker.PlanValidator, cfg *Config, db storage.BrokerStorage,
-	provisionQueue, deprovisionQueue, updateQueue *process.Queue, logger lager.Logger, logs logrus.FieldLogger, planDefaults broker.PlanDefaults, kcBuilder kubeconfig.KcBuilder, clientProvider K8sClientProvider, kubeconfigProvider KubeconfigProvider, gardenerClient, kcpK8sClient client.Client, publisher event.Publisher) {
-
+	provisionQueue, deprovisionQueue, updateQueue *process.Queue, logger *slog.Logger, logs logrus.FieldLogger, planDefaults broker.PlanDefaults, kcBuilder kubeconfig.KcBuilder, clientProvider K8sClientProvider, kubeconfigProvider KubeconfigProvider, kcpK8sClient client.Client, publisher event.Publisher) {
 	suspensionCtxHandler := suspension.NewContextUpdateHandler(db.Operations(), provisionQueue, deprovisionQueue, logs)
 
 	defaultPlansConfig, err := servicesConfig.DefaultPlansConfig()
 	fatalOnError(err, logs)
-
-	debugSink, err := lager.NewRedactingSink(lager.NewWriterSink(os.Stdout, lager.DEBUG), []string{"instance-details"}, []string{})
-	fatalOnError(err, logs)
-	logger.RegisterSink(debugSink)
-	errorSink, err := lager.NewRedactingSink(lager.NewWriterSink(os.Stderr, lager.ERROR), []string{"instance-details"}, []string{})
-	fatalOnError(err, logs)
-	logger.RegisterSink(errorSink)
 
 	freemiumGlobalAccountIds, err := whitelist.ReadWhitelistedGlobalAccountIdsFromFile(cfg.FreemiumWhitelistedGlobalAccountsFilePath)
 	fatalOnError(err, logs)
