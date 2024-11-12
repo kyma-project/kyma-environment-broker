@@ -26,7 +26,7 @@ This [workflow](/.github/workflows/promote-keb-to-dev.yaml) creates a PR to the 
 
 ## Create and promote release Workflow
 
-This [workflow](/.github/workflows/create-and-promote-release.yaml) creates a new KEB release and then promotes it to the development environment. It first runs the [release workflow](04-20-release.md), followed by creating a PR to the `management-plane-charts` repository with the given KEB release version.
+This [workflow](/.github/workflows/create-and-promote-release.yaml) creates a new KEB release and then promotes it to the development environment. It first runs the [release workflow](04-20-release.md), and then creates a PR to the `management-plane-charts` repository with the given KEB release version.
 
 ## Label Validator Workflow
 
