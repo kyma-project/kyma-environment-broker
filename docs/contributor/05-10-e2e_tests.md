@@ -177,6 +177,7 @@ The test executes the following steps:
 
 The test executes the following steps:
 
+0. Sends a call to Provisioning API to deprovision the remaining Kyma runtime and waits until the environment is deleted, if previous test run was not able to deprovision Kyma runtime.
 1. Sends a call to Provisioning API to provision a Kyma runtime. The test waits until the environment is created.
 2. Creates a Kyma Binding.
 3. Fetches the `sap-btp-manager` Secret using the kubeconfig from the created Kyma Binding.

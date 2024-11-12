@@ -31,6 +31,10 @@ type ProvisioningConfig struct {
 	ClientID     string
 	ClientSecret string
 	UAA_URL      string
+	Kyma         KymaConfig
+}
+
+type KymaConfig struct {
 	PlanName     string
 	PlanID       string
 	User         string
@@ -59,12 +63,12 @@ func NewProvisioningClient(cfg ProvisioningConfig, logger *slog.Logger, ctx cont
 func (p *ProvisioningClient) CreateEnvironment() (CreatedEnvironmentResponse, error) {
 	requestBody := CreateEnvironmentRequest{
 		EnvironmentType: environmentType,
-		PlanName:        p.cfg.PlanName,
+		PlanName:        p.cfg.Kyma.PlanName,
 		ServiceName:     serviceName,
-		User:            p.cfg.User,
+		User:            p.cfg.Kyma.User,
 		Parameters: EnvironmentParameters{
-			Name:   p.cfg.InstanceName,
-			Region: p.cfg.Region,
+			Name:   p.cfg.Kyma.InstanceName,
+			Region: p.cfg.Kyma.Region,
 		},
 	}
 
@@ -102,6 +106,21 @@ func (p *ProvisioningClient) GetEnvironment(environmentID string) (EnvironmentRe
 	return environment, nil
 }
 
+func (p *ProvisioningClient) GetEnvironments() (EnvironmentsResponse, error) {
+	resp, err := p.sendRequest(http.MethodGet, p.environmentsPath(), http.StatusOK, nil)
+	if err != nil {
+		return EnvironmentsResponse{}, err
+	}
+
+	var environments EnvironmentsResponse
+	err = p.unmarshallResponse(resp, &environments)
+	if err != nil {
+		return EnvironmentsResponse{}, err
+	}
+
+	return environments, nil
+}
+
 func (p *ProvisioningClient) DeleteEnvironment(environmentID string) (EnvironmentResponse, error) {
 	resp, err := p.sendRequest(http.MethodDelete, p.environmentsWithIDPath(environmentID), http.StatusAccepted, nil)
 	if err != nil {
@@ -120,7 +139,7 @@ func (p *ProvisioningClient) DeleteEnvironment(environmentID string) (Environmen
 func (p *ProvisioningClient) CreateBinding(environmentID string) (CreatedBindingResponse, error) {
 	requestBody := CreateBindingRequest{
 		ServiceInstanceID: environmentID,
-		PlanID:            p.cfg.PlanID,
+		PlanID:            p.cfg.Kyma.PlanID,
 	}
 
 	requestBodyBytes, err := json.Marshal(requestBody)

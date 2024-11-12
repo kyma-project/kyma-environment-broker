@@ -4,6 +4,8 @@ import (
 	"context"
 	"testing"
 
+	"github.com/kyma-project/kyma-environment-broker/testing/e2e/skr/provisioning-service-test/internal"
+
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -11,6 +13,23 @@ import (
 
 func TestProvisioningService(t *testing.T) {
 	suite := NewProvisioningSuite(t)
+
+	suite.logger.Info("Fetching remaining environments")
+	environments, err := suite.provisioningClient.GetEnvironments()
+	require.NoError(t, err)
+	suite.logger.Info("Environments fetched successfully", "Number of environments", len(environments.Environments))
+
+	for _, environment := range environments.Environments {
+		if environment.EnvironmentType == internal.KYMA {
+			suite.logger.Info("Deleting remaining Kyma environment", "environmentID", environment.ID)
+			_, err = suite.provisioningClient.DeleteEnvironment(environment.ID)
+			require.NoError(t, err)
+
+			err = suite.provisioningClient.AwaitEnvironmentDeleted(environment.ID)
+			require.NoError(t, err)
+			suite.logger.Info("Remaining Kyma environment deleted successfully", "environmentID", environment.ID)
+		}
+	}
 
 	suite.logger.Info("Creating a new environment")
 	environment, err := suite.provisioningClient.CreateEnvironment()

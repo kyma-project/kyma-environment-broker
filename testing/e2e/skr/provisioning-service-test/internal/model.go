@@ -41,9 +41,20 @@ const (
 	UPDATE_FAILED   State = "UPDATE_FAILED"
 )
 
+type EnvironmentType string
+
+const (
+	KYMA EnvironmentType = "kyma"
+)
+
+type EnvironmentsResponse struct {
+	Environments []EnvironmentResponse `json:"environmentInstances"`
+}
+
 type EnvironmentResponse struct {
-	ID    string `json:"id"`
-	State State  `json:"state"`
+	ID              string          `json:"id"`
+	State           State           `json:"state"`
+	EnvironmentType EnvironmentType `json:"environmentType"`
 }
 
 type CreateBindingRequest struct {
