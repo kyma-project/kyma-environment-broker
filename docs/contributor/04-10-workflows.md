@@ -24,6 +24,10 @@ See [Kyma Environment Broker Release Pipeline](04-20-release.md) to learn more a
 
 This [workflow](/.github/workflows/promote-keb-to-dev.yaml) creates a PR to the `management-plane-charts` repository with the given KEB release version. The default version is the latest KEB release.
 
+## Create and promote release Workflow
+
+This [workflow](/.github/workflows/create-and-promote-release.yaml) creates a new KEB release and then promotes it to the development environment. It first runs the [release workflow](04-20-release.md), followed by creating a PR to the `management-plane-charts` repository with the given KEB release version.
+
 ## Label Validator Workflow
 
 This [workflow](/.github/workflows/label-validator.yml) is triggered by PRs on the `main` branch. It checks the labels on the PR and requires that the PR has exactly one of the labels listed in this [file](/.github/release.yml).
