@@ -56,8 +56,8 @@
         <mxCell id="uTxP797zPTyYRlyg6JWm-14" value="Binding found?" style="rhombus;whiteSpace=wrap;html=1;fillColor=#ffffff;fontColor=#000000;strokeColor=#666666;" parent="1" vertex="1">
           <mxGeometry x="459" y="40" width="120" height="120" as="geometry" />
         </mxCell>
-        <mxCell id="uTxP797zPTyYRlyg6JWm-16" value="Return error" style="ellipse;whiteSpace=wrap;html=1;fillColor=#ffffff;fontColor=#000000;strokeColor=#666666;" parent="1" vertex="1">
-          <mxGeometry x="489" y="221" width="60" height="36" as="geometry" />
+        <mxCell id="uTxP797zPTyYRlyg6JWm-16" value="Error returned" style="ellipse;whiteSpace=wrap;html=1;fillColor=#ffffff;fontColor=#000000;strokeColor=#666666;" parent="1" vertex="1">
+          <mxGeometry x="485" y="217" width="68" height="44" as="geometry" />
         </mxCell>
         <mxCell id="uTxP797zPTyYRlyg6JWm-23" value="Yes" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;curved=0;strokeColor=#666666;fontColor=#000000;labelBackgroundColor=none;exitX=1;exitY=0.5;exitDx=0;exitDy=0;" parent="1" source="uTxP797zPTyYRlyg6JWm-21" target="uTxP797zPTyYRlyg6JWm-24" edge="1">
           <mxGeometry x="-0.12" y="10" relative="1" as="geometry">
@@ -92,8 +92,8 @@
         <mxCell id="uTxP797zPTyYRlyg6JWm-25" value="Delete Binding&#39;s ServiceAccount, ClusterRole and ClusteRoleBinding&amp;nbsp;" style="whiteSpace=wrap;html=1;fillColor=#ffffff;fontColor=#000000;strokeColor=#666666;rounded=1;" parent="1" vertex="1">
           <mxGeometry x="353" y="496" width="140" height="80" as="geometry" />
         </mxCell>
-        <mxCell id="uTxP797zPTyYRlyg6JWm-29" value="Return&amp;nbsp;&lt;br&gt;GONE" style="ellipse;whiteSpace=wrap;html=1;fillColor=#ffffff;fontColor=#000000;strokeColor=#666666;" parent="1" vertex="1">
-          <mxGeometry x="544" y="382.5" width="65" height="45" as="geometry" />
+        <mxCell id="uTxP797zPTyYRlyg6JWm-29" value="GONE error returned" style="ellipse;whiteSpace=wrap;html=1;fillColor=#ffffff;fontColor=#000000;strokeColor=#666666;" parent="1" vertex="1">
+          <mxGeometry x="546" y="372.75" width="85" height="64.5" as="geometry" />
         </mxCell>
       </root>
     </mxGraphModel>
