@@ -222,7 +222,7 @@ jobs:
           echo "Latest commit sha: $COMMIT_SHA"
           echo "Workflow sha: ${{ github.sha }}"
           if [ "$COMMIT_SHA" != "${{ github.sha }}" ]; then
-            echo "::error ::a PR was merged during the release"
+            echo "::error ::a PR was merged during the release. Don't rerun this workflow, create a new release with the same version"
             exit 1
           fi
 
@@ -300,7 +300,7 @@ jobs:
           echo "Latest commit sha: $COMMIT_SHA"
           echo "Bump sha: ${{ needs.bumps.outputs.latest_commit}}"
           if [ "$COMMIT_SHA" != "${{ needs.bumps.outputs.latest_commit}}" ]; then
-            echo "::error ::a PR was merged after the bumps"
+            echo "::error ::a PR was merged after the bumps. Don't rerun this workflow, create a new release with the same version"
             exit 1 
           fi
         
