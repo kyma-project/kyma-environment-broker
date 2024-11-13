@@ -217,6 +217,8 @@ jobs:
         run: scripts/bump_keb_chart.sh ${{ inputs.name }} "release"
 
       - name: Check if any PR was merged during release
+        env:
+            GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           COMMIT_SHA=$(gh api repos/${{ env.KYMA_ENVIRONMENT_BROKER_REPO }}/commits -q '.[0].sha')
           echo "Latest commit sha: $COMMIT_SHA"
@@ -269,6 +271,8 @@ jobs:
           fi
 
       - name: Check if any PR have been merged before merging the bump PR
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           COMMIT_SHA=$(gh api repos/${{ env.KYMA_ENVIRONMENT_BROKER_REPO }}/commits -q '.[1].sha')
           echo "Latest commit sha: $COMMIT_SHA"
@@ -305,6 +309,8 @@ jobs:
           ref: ${{ needs.bumps.outputs.latest_commit}}
 
       - name: Check if any PR was merged after bumps
+        env:
+            GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           COMMIT_SHA=$(gh api repos/${{ env.KYMA_ENVIRONMENT_BROKER_REPO }}/commits -q '.[0].sha')
           echo "Latest commit sha: $COMMIT_SHA"
@@ -329,6 +335,8 @@ jobs:
           git push origin ${{ github.event.inputs.name }}
 
       - name: Check if any PR may have been merged before creating the tag and draft release
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           COMMIT_SHA=$(gh api repos/${{ env.KYMA_ENVIRONMENT_BROKER_REPO }}/commits -q '.[0].sha')
           echo "Latest commit sha: $COMMIT_SHA"
