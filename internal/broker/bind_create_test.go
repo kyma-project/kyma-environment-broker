@@ -4,7 +4,6 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"net/http/httptest"
 	"testing"
 	"time"
 
@@ -23,25 +22,10 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-type Kubeconfig struct {
-	Users []User `yaml:"users"`
-}
-
-type User struct {
-	Name string `yaml:"name"`
-	User struct {
-		Token string `yaml:"token"`
-	} `yaml:"user"`
-}
-
 const (
 	instanceID1      = "1"
-	instanceID2      = "2"
-	instanceID3      = "max-bindings"
 	maxBindingsCount = 10
 )
-
-var httpServer *httptest.Server
 
 type provider struct {
 }
@@ -292,7 +276,10 @@ func TestCreateSecondBindingWithTheSameIdAndParamsForExpired(t *testing.T) {
 	err = brokerStorage.Operations().InsertOperation(operation)
 	assert.NoError(t, err)
 
-	svc := NewBind(*bindingCfg, brokerStorage, logrus.New(), nil, nil)
+	// event publisher
+	publisher := event.NewPubSub(logrus.New())
+
+	svc := NewBind(*bindingCfg, brokerStorage, logrus.New(), nil, nil, publisher)
 	params := BindingParams{
 		ExpirationSeconds: 600,
 	}
@@ -339,7 +326,10 @@ func TestCreateSecondBindingWithTheSameIdAndParamsForBindingInProgress(t *testin
 	err = brokerStorage.Operations().InsertOperation(operation)
 	assert.NoError(t, err)
 
-	svc := NewBind(*bindingCfg, brokerStorage, logrus.New(), nil, nil)
+	// event publisher
+	publisher := event.NewPubSub(logrus.New())
+
+	svc := NewBind(*bindingCfg, brokerStorage, logrus.New(), nil, nil, publisher)
 	params := BindingParams{
 		ExpirationSeconds: 600,
 	}
