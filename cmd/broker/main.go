@@ -184,18 +184,18 @@ func periodicProfile(logger *slog.Logger, profiler ProfilerConfig) {
 	}
 	logger.Info(fmt.Sprintf("Starting periodic profiler %v", profiler))
 	if err := os.MkdirAll(profiler.Path, os.ModePerm); err != nil {
-		logger.Error(fmt.Sprintf("Failed to create dir %v for profile storage", profiler.Path), err)
+		logger.Error(fmt.Sprintf("Failed to create dir %v for profile storage", profiler.Path), "error", err)
 	}
 	for {
 		profName := fmt.Sprintf("%v/mem-%v.pprof", profiler.Path, time.Now().Unix())
 		logger.Info(fmt.Sprintf("Creating periodic memory profile %v", profName))
 		profFile, err := os.Create(profName)
 		if err != nil {
-			logger.Error(fmt.Sprintf("Creating periodic memory profile %v failed", profName), err)
+			logger.Error(fmt.Sprintf("Creating periodic memory profile %v failed", profName), "error", err)
 		}
 		err = pprof.Lookup("allocs").WriteTo(profFile, 0)
 		if err != nil {
-			logger.Error(fmt.Sprintf("Failed to write periodic memory profile to %v file", profName), err)
+			logger.Error(fmt.Sprintf("Failed to write periodic memory profile to %v file", profName), "error", err)
 		}
 		gruntime.GC()
 		time.Sleep(profiler.Sampling)

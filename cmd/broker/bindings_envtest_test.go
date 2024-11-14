@@ -6,8 +6,10 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"log/slog"
 	"net/http"
 	"net/http/httptest"
+	"os"
 	"testing"
 	"time"
 
@@ -80,8 +82,7 @@ func TestCreateBindingEndpoint(t *testing.T) {
 		TimestampFormat: time.RFC3339Nano,
 	})
 
-	brokerLogger := lager.NewLogger("test")
-	brokerLogger.RegisterSink(lager.NewWriterSink(logs.Writer(), lager.DEBUG))
+	brokerLogger := slog.New(slog.NewJSONHandler(os.Stdout, &slog.HandlerOptions{Level: slog.LevelDebug}))
 
 	//// schema
 	sch := runtime.NewScheme()
@@ -220,9 +221,9 @@ func TestCreateBindingEndpoint(t *testing.T) {
 
 	//// attach bindings api
 	router := mux.NewRouter()
-	router.HandleFunc("/v2/service_instances/{instance_id}/service_bindings/{binding_id}", apiHandler.Bind).Methods(http.MethodPut)
-	router.HandleFunc("/v2/service_instances/{instance_id}/service_bindings/{binding_id}", apiHandler.GetBinding).Methods(http.MethodGet)
-	router.HandleFunc("/v2/service_instances/{instance_id}/service_bindings/{binding_id}", apiHandler.Unbind).Methods(http.MethodDelete)
+	router.HandleFunc("/v2/service_instances/{instance_id}/service_bindings/{binding_id}", broker.ServeMuxCompMiddleware(apiHandler.Bind)).Methods(http.MethodPut)
+	router.HandleFunc("/v2/service_instances/{instance_id}/service_bindings/{binding_id}", broker.ServeMuxCompMiddleware(apiHandler.GetBinding)).Methods(http.MethodGet)
+	router.HandleFunc("/v2/service_instances/{instance_id}/service_bindings/{binding_id}", broker.ServeMuxCompMiddleware(apiHandler.Unbind)).Methods(http.MethodDelete)
 	httpServer = httptest.NewServer(router)
 	defer httpServer.Close()
 
