@@ -1,17 +1,17 @@
 module-name: kyma-environment-broker
-rc-tag: 1.10.58
+rc-tag: 1.10.59
 protecode:
-  - europe-docker.pkg.dev/kyma-project/prod/kyma-environment-broker:1.10.58
-  - europe-docker.pkg.dev/kyma-project/prod/kyma-environment-deprovision-retrigger-job:1.10.58
-  - europe-docker.pkg.dev/kyma-project/prod/kyma-environments-cleanup-job:1.10.58
-  - europe-docker.pkg.dev/kyma-project/prod/kyma-environment-runtime-reconciler:1.10.58
-  - europe-docker.pkg.dev/kyma-project/prod/kyma-environment-archiver-job:1.10.58
-  - europe-docker.pkg.dev/kyma-project/prod/kyma-environment-expirator-job:1.10.58
-  - europe-docker.pkg.dev/kyma-project/prod/kyma-environment-subaccount-cleanup-job:1.10.58
-  - europe-docker.pkg.dev/kyma-project/prod/kyma-environment-subaccount-sync:1.10.58
-  - europe-docker.pkg.dev/kyma-project/prod/kyma-environment-broker-globalaccounts:1.10.58
-  - europe-docker.pkg.dev/kyma-project/prod/kyma-environment-broker-schema-migrator:1.10.58
-  - europe-docker.pkg.dev/kyma-project/prod/kyma-environment-service-binding-cleanup-job:1.10.58
+  - europe-docker.pkg.dev/kyma-project/prod/kyma-environment-broker:1.10.59
+  - europe-docker.pkg.dev/kyma-project/prod/kyma-environment-deprovision-retrigger-job:1.10.59
+  - europe-docker.pkg.dev/kyma-project/prod/kyma-environments-cleanup-job:1.10.59
+  - europe-docker.pkg.dev/kyma-project/prod/kyma-environment-runtime-reconciler:1.10.59
+  - europe-docker.pkg.dev/kyma-project/prod/kyma-environment-archiver-job:1.10.59
+  - europe-docker.pkg.dev/kyma-project/prod/kyma-environment-expirator-job:1.10.59
+  - europe-docker.pkg.dev/kyma-project/prod/kyma-environment-subaccount-cleanup-job:1.10.59
+  - europe-docker.pkg.dev/kyma-project/prod/kyma-environment-subaccount-sync:1.10.59
+  - europe-docker.pkg.dev/kyma-project/prod/kyma-environment-broker-globalaccounts:1.10.59
+  - europe-docker.pkg.dev/kyma-project/prod/kyma-environment-broker-schema-migrator:1.10.59
+  - europe-docker.pkg.dev/kyma-project/prod/kyma-environment-service-binding-cleanup-job:1.10.59
 whitesource:
   language: golang-mod
   subprojects: false
