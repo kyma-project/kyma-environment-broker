@@ -375,8 +375,7 @@ func main() {
 	orchestrationHandler.AttachRoutes(router)
 
 	// create list runtimes endpoint
-	runtimeHandler := runtime.NewHandler(db.Instances(), db.Operations(),
-		db.RuntimeStates(), db.InstancesArchived(), db.Bindings(), cfg.MaxPaginationPage,
+	runtimeHandler := runtime.NewHandler(db, cfg.MaxPaginationPage,
 		cfg.DefaultRequestRegion, provisionerClient,
 		kcpK8sClient,
 		cfg.Broker.KimConfig,

@@ -39,6 +39,7 @@ type Handler struct {
 	runtimeStatesDb     storage.RuntimeStates
 	bindingsDb          storage.Bindings
 	instancesArchivedDb storage.InstancesArchived
+	subaccountStatesDb  storage.SubaccountStates
 	converter           Converter
 	defaultMaxPage      int
 	provisionerClient   provisioner.Client
@@ -47,20 +48,20 @@ type Handler struct {
 	logger              logrus.FieldLogger
 }
 
-func NewHandler(instanceDb storage.Instances, operationDb storage.Operations, runtimeStatesDb storage.RuntimeStates,
-	instancesArchived storage.InstancesArchived, bindingsDb storage.Bindings, defaultMaxPage int, defaultRequestRegion string,
+func NewHandler(storage storage.BrokerStorage, defaultMaxPage int, defaultRequestRegion string,
 	provisionerClient provisioner.Client,
 	k8sClient client.Client, kimConfig broker.KimConfig,
 	logger logrus.FieldLogger) *Handler {
 	return &Handler{
-		instancesDb:         instanceDb,
-		operationsDb:        operationDb,
-		runtimeStatesDb:     runtimeStatesDb,
-		bindingsDb:          bindingsDb,
+		instancesDb:         storage.Instances(),
+		operationsDb:        storage.Operations(),
+		runtimeStatesDb:     storage.RuntimeStates(),
+		bindingsDb:          storage.Bindings(),
+		instancesArchivedDb: storage.InstancesArchived(),
+		subaccountStatesDb:  storage.SubaccountStates(),
 		converter:           NewConverter(defaultRequestRegion),
 		defaultMaxPage:      defaultMaxPage,
 		provisionerClient:   provisionerClient,
-		instancesArchivedDb: instancesArchived,
 		kimConfig:           kimConfig,
 		k8sClient:           k8sClient,
 		logger:              logger.WithField("service", "RuntimeHandler"),
@@ -225,6 +226,13 @@ func (h *Handler) getRuntimes(w http.ResponseWriter, req *http.Request) {
 			return
 		}
 
+		err = h.setSubaccountState(&dto)
+		if err != nil {
+			h.logger.Warn(fmt.Sprintf("unable to determine subaccount state: %s", err.Error()))
+			httputil.WriteErrorResponse(w, http.StatusInternalServerError, err)
+			return
+		}
+
 		instanceDrivenByKimOnly := h.kimConfig.IsDrivenByKimOnly(dto.ServicePlanName)
 
 		err = h.setRuntimeOptionalAttributes(&dto, kymaConfig, clusterConfig, gardenerConfig, instanceDrivenByKimOnly)
@@ -322,6 +330,18 @@ func (h *Handler) determineStatusModifiedAt(dto *pkg.RuntimeDTO) error {
 	if last != nil {
 		dto.Status.ModifiedAt = last.UpdatedAt
 	}
+	return nil
+}
+
+func (h *Handler) setSubaccountState(p *pkg.RuntimeDTO) error {
+	if p.SubAccountID == "" {
+		return nil
+	}
+	//subAccount, err := h.subaccountStatesDb.GetBySubaccountID(p.SubAccountID)
+	//if err != nil {
+	//	return fmt.Errorf("while fetching subaccount %s for instance %s: %w", p.SubAccountID, p.InstanceID, err)
+	//}
+	//p.SubAccountState = subAccount.State
 	return nil
 }
 
