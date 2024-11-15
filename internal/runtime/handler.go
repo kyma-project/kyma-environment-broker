@@ -205,6 +205,8 @@ func (h *Handler) getRuntimes(w http.ResponseWriter, req *http.Request) {
 		return
 	}
 
+	subaccountStates := fetchSubaccountStates(err, h)
+
 	for _, dto := range instances {
 
 		switch opDetail {
@@ -226,11 +228,8 @@ func (h *Handler) getRuntimes(w http.ResponseWriter, req *http.Request) {
 			return
 		}
 
-		err = h.setSubaccountState(&dto)
-		if err != nil {
-			h.logger.Warn(fmt.Sprintf("unable to determine subaccount state: %s", err.Error()))
-			httputil.WriteErrorResponse(w, http.StatusInternalServerError, err)
-			return
+		if subaccountStates != nil {
+			h.setSubaccountState(&dto, subaccountStates)
 		}
 
 		instanceDrivenByKimOnly := h.kimConfig.IsDrivenByKimOnly(dto.ServicePlanName)
@@ -292,6 +291,19 @@ func (h *Handler) getRuntimes(w http.ResponseWriter, req *http.Request) {
 	httputil.WriteResponse(w, http.StatusOK, runtimePage)
 }
 
+func fetchSubaccountStates(err error, h *Handler) map[string]internal.SubaccountState {
+	statesFromDb, err := h.subaccountStatesDb.ListStates()
+	if err != nil {
+		h.logger.Warn(fmt.Sprintf("unable to fetch subaccount states: %s", err.Error()))
+		return nil
+	}
+	statesMap := make(map[string]internal.SubaccountState)
+	for _, state := range statesFromDb { // ID is a primary key, so no collision is possible
+		statesMap[state.ID] = state
+	}
+	return statesMap
+}
+
 func (h *Handler) getRuntimeNamesFromLastOperation(dto pkg.RuntimeDTO) (string, string) {
 	// TODO get rid of additional DB query - we have this info fetched from DB but it is tedious to pass it through
 	op, err := h.operationsDb.GetLastOperation(dto.InstanceID)
@@ -333,16 +345,17 @@ func (h *Handler) determineStatusModifiedAt(dto *pkg.RuntimeDTO) error {
 	return nil
 }
 
-func (h *Handler) setSubaccountState(p *pkg.RuntimeDTO) error {
+func (h *Handler) setSubaccountState(p *pkg.RuntimeDTO, states map[string]internal.SubaccountState) {
 	if p.SubAccountID == "" {
-		return nil
+		return
 	}
-	//subAccount, err := h.subaccountStatesDb.GetBySubaccountID(p.SubAccountID)
-	//if err != nil {
-	//	return fmt.Errorf("while fetching subaccount %s for instance %s: %w", p.SubAccountID, p.InstanceID, err)
-	//}
-	//p.SubAccountState = subAccount.State
-	return nil
+	state, exists := states[p.SubAccountID]
+	if !exists {
+		return
+	}
+	p.BetaEnabled = state.BetaEnabled
+	p.UsedForProduction = state.UsedForProduction
+	return
 }
 
 func (h *Handler) setRuntimeAllOperations(dto *pkg.RuntimeDTO) error {
