@@ -41,11 +41,7 @@ func TestRuntimeHandler(t *testing.T) {
 		provisionerClient := provisioner.NewFakeClient()
 
 		db := storage.NewMemoryStorage()
-		operations := db.Operations()
 		instances := db.Instances()
-		states := db.RuntimeStates()
-		archived := db.InstancesArchived()
-		bindings := db.Bindings()
 		testID1 := "Test1"
 		testID2 := "Test2"
 		testTime1 := time.Now()
@@ -66,7 +62,7 @@ func TestRuntimeHandler(t *testing.T) {
 		err = instances.Insert(testInstance2)
 		require.NoError(t, err)
 
-		runtimeHandler := runtime.NewHandler(instances, operations, states, archived, bindings, 2, "", provisionerClient, k8sClient, kimConfig, logrus.New())
+		runtimeHandler := runtime.NewHandler(db, 2, "", provisionerClient, k8sClient, kimConfig, logrus.New())
 
 		req, err := http.NewRequest("GET", "/runtimes?page_size=1", nil)
 		require.NoError(t, err)
@@ -116,12 +112,8 @@ func TestRuntimeHandler(t *testing.T) {
 		provisionerClient := provisioner.NewFakeClient()
 
 		db := storage.NewMemoryStorage()
-		operations := db.Operations()
-		instances := db.Instances()
-		states := db.RuntimeStates()
-		archived := db.InstancesArchived()
 
-		runtimeHandler := runtime.NewHandler(instances, operations, states, archived, nil, 2, "region", provisionerClient, k8sClient, kimConfig, logrus.New())
+		runtimeHandler := runtime.NewHandler(db, 2, "region", provisionerClient, k8sClient, kimConfig, logrus.New())
 
 		req, err := http.NewRequest("GET", "/runtimes?page_size=a", nil)
 		require.NoError(t, err)
@@ -158,8 +150,6 @@ func TestRuntimeHandler(t *testing.T) {
 		db := storage.NewMemoryStorage()
 		operations := db.Operations()
 		instances := db.Instances()
-		states := db.RuntimeStates()
-		archived := db.InstancesArchived()
 		testID1 := "Test1"
 		testID2 := "Test2"
 		testTime1 := time.Now()
@@ -180,7 +170,7 @@ func TestRuntimeHandler(t *testing.T) {
 		err = operations.InsertOperation(testOp2)
 		require.NoError(t, err)
 
-		runtimeHandler := runtime.NewHandler(instances, operations, states, archived, nil, 2, "", provisionerClient, k8sClient, kimConfig, logrus.New())
+		runtimeHandler := runtime.NewHandler(db, 2, "", provisionerClient, k8sClient, kimConfig, logrus.New())
 
 		req, err := http.NewRequest("GET", fmt.Sprintf("/runtimes?account=%s&subaccount=%s&instance_id=%s&runtime_id=%s&region=%s&shoot=%s", testID1, testID1, testID1, testID1, testID1, fmt.Sprintf("Shoot-%s", testID1)), nil)
 		require.NoError(t, err)
@@ -211,8 +201,6 @@ func TestRuntimeHandler(t *testing.T) {
 		db := storage.NewMemoryStorage()
 		operations := db.Operations()
 		instances := db.Instances()
-		states := db.RuntimeStates()
-		archived := db.InstancesArchived()
 		testID1 := "Test1"
 		testID2 := "Test2"
 		testID3 := "Test3"
@@ -256,7 +244,7 @@ func TestRuntimeHandler(t *testing.T) {
 		err = operations.InsertDeprovisioningOperation(deprovOp3)
 		require.NoError(t, err)
 
-		runtimeHandler := runtime.NewHandler(instances, operations, states, archived, nil, 2, "", provisionerClient, k8sClient, kimConfig, logrus.New())
+		runtimeHandler := runtime.NewHandler(db, 2, "", provisionerClient, k8sClient, kimConfig, logrus.New())
 
 		rr := httptest.NewRecorder()
 		router := mux.NewRouter()
@@ -317,8 +305,6 @@ func TestRuntimeHandler(t *testing.T) {
 		db := storage.NewMemoryStorage()
 		operations := db.Operations()
 		instances := db.Instances()
-		states := db.RuntimeStates()
-		archived := db.InstancesArchived()
 		testID1 := "Test1"
 		testTime1 := time.Now()
 		testInstance1 := fixInstance(testID1, testTime1)
@@ -365,7 +351,7 @@ func TestRuntimeHandler(t *testing.T) {
 		})
 		require.NoError(t, err)
 
-		runtimeHandler := runtime.NewHandler(instances, operations, states, archived, nil, 2, "", provisionerClient, k8sClient, kimConfig, logrus.New())
+		runtimeHandler := runtime.NewHandler(db, 2, "", provisionerClient, k8sClient, kimConfig, logrus.New())
 
 		req, err := http.NewRequest("GET", "/runtimes", nil)
 		require.NoError(t, err)
@@ -404,8 +390,6 @@ func TestRuntimeHandler(t *testing.T) {
 		db := storage.NewMemoryStorage()
 		operations := db.Operations()
 		instances := db.Instances()
-		states := db.RuntimeStates()
-		archived := db.InstancesArchived()
 		testInstance1 := fixture.FixInstance("instance-1")
 
 		provisioningOpId := "provisioning-op-id"
@@ -438,7 +422,7 @@ func TestRuntimeHandler(t *testing.T) {
 		})
 		require.NoError(t, err)
 
-		runtimeHandler := runtime.NewHandler(instances, operations, states, archived, nil, 2, "", provisionerClient, k8sClient, kimConfig, logrus.New())
+		runtimeHandler := runtime.NewHandler(db, 2, "", provisionerClient, k8sClient, kimConfig, logrus.New())
 
 		req, err := http.NewRequest("GET", "/runtimes", nil)
 		require.NoError(t, err)
@@ -474,8 +458,6 @@ func TestRuntimeHandler(t *testing.T) {
 		db := storage.NewMemoryStorage()
 		operations := db.Operations()
 		instances := db.Instances()
-		states := db.RuntimeStates()
-		archived := db.InstancesArchived()
 		testInstance1 := fixture.FixInstance("instance-1")
 
 		suspensionOpId := "suspension-op-id"
@@ -510,7 +492,7 @@ func TestRuntimeHandler(t *testing.T) {
 		})
 		require.NoError(t, err)
 
-		runtimeHandler := runtime.NewHandler(instances, operations, states, archived, nil, 2, "", provisionerClient, k8sClient, kimConfig, logrus.New())
+		runtimeHandler := runtime.NewHandler(db, 2, "", provisionerClient, k8sClient, kimConfig, logrus.New())
 
 		req, err := http.NewRequest("GET", "/runtimes", nil)
 		require.NoError(t, err)
@@ -547,8 +529,6 @@ func TestRuntimeHandler(t *testing.T) {
 		db := storage.NewMemoryStorage()
 		operations := db.Operations()
 		instances := db.Instances()
-		states := db.RuntimeStates()
-		archived := db.InstancesArchived()
 		testID := "Test1"
 		testTime := time.Now()
 		testInstance := fixInstance(testID, testTime)
@@ -565,7 +545,7 @@ func TestRuntimeHandler(t *testing.T) {
 		err = operations.InsertUpdatingOperation(updOp)
 		require.NoError(t, err)
 
-		runtimeHandler := runtime.NewHandler(instances, operations, states, archived, nil, 2, "", provisionerClient, k8sClient, kimConfig, logrus.New())
+		runtimeHandler := runtime.NewHandler(db, 2, "", provisionerClient, k8sClient, kimConfig, logrus.New())
 
 		rr := httptest.NewRecorder()
 		router := mux.NewRouter()
@@ -619,7 +599,6 @@ func TestRuntimeHandler(t *testing.T) {
 		operations := db.Operations()
 		instances := db.Instances()
 		states := db.RuntimeStates()
-		archived := db.InstancesArchived()
 		testID := "Test1"
 		testTime := time.Now()
 		testInstance := fixInstance(testID, testTime)
@@ -696,7 +675,7 @@ func TestRuntimeHandler(t *testing.T) {
 		err = states.Insert(fixOpgClusterState)
 		require.NoError(t, err)
 
-		runtimeHandler := runtime.NewHandler(instances, operations, states, archived, nil, 2, "", provisionerClient, k8sClient, kimConfig, logrus.New())
+		runtimeHandler := runtime.NewHandler(db, 2, "", provisionerClient, k8sClient, kimConfig, logrus.New())
 
 		rr := httptest.NewRecorder()
 		router := mux.NewRouter()
@@ -730,8 +709,6 @@ func TestRuntimeHandler(t *testing.T) {
 		db := storage.NewMemoryStorage()
 		operations := db.Operations()
 		instances := db.Instances()
-		states := db.RuntimeStates()
-		archived := db.InstancesArchived()
 		testID := "Test1"
 		testTime := time.Now()
 		testInstance := fixInstance(testID, testTime)
@@ -750,7 +727,7 @@ func TestRuntimeHandler(t *testing.T) {
 		_, err = provisionerClient.ProvisionRuntimeWithIDs(operation.GlobalAccountID, operation.SubAccountID, operation.RuntimeID, operation.ID, input)
 		require.NoError(t, err)
 
-		runtimeHandler := runtime.NewHandler(instances, operations, states, archived, nil, 2, "", provisionerClient, k8sClient, kimConfig, logrus.New())
+		runtimeHandler := runtime.NewHandler(db, 2, "", provisionerClient, k8sClient, kimConfig, logrus.New())
 
 		rr := httptest.NewRecorder()
 		router := mux.NewRouter()
@@ -782,8 +759,6 @@ func TestRuntimeHandler(t *testing.T) {
 		db := storage.NewMemoryStorage()
 		operations := db.Operations()
 		instances := db.Instances()
-		states := db.RuntimeStates()
-		archived := db.InstancesArchived()
 		testID := "Test1"
 		testTime := time.Now()
 		testInstance := fixInstance(testID, testTime)
@@ -802,7 +777,7 @@ func TestRuntimeHandler(t *testing.T) {
 		_, err = provisionerClient.ProvisionRuntimeWithIDs(operation.GlobalAccountID, operation.SubAccountID, operation.RuntimeID, operation.ID, input)
 		require.NoError(t, err)
 
-		runtimeHandler := runtime.NewHandler(instances, operations, states, archived, nil, 2, "", provisionerClient, k8sClient, kimConfig, logrus.New())
+		runtimeHandler := runtime.NewHandler(db, 2, "", provisionerClient, k8sClient, kimConfig, logrus.New())
 
 		rr := httptest.NewRecorder()
 		router := mux.NewRouter()
@@ -845,8 +820,6 @@ func TestRuntimeHandler_WithKimOnlyDrivenInstances(t *testing.T) {
 		db := storage.NewMemoryStorage()
 		operations := db.Operations()
 		instances := db.Instances()
-		states := db.RuntimeStates()
-		archived := db.InstancesArchived()
 		testID := "Test1"
 		testTime := time.Now()
 		testInstance := fixInstanceForPreview(testID, testTime)
@@ -863,7 +836,7 @@ func TestRuntimeHandler_WithKimOnlyDrivenInstances(t *testing.T) {
 		err = operations.InsertUpdatingOperation(updOp)
 		require.NoError(t, err)
 
-		runtimeHandler := runtime.NewHandler(instances, operations, states, archived, nil, 2, "", provisionerClient, k8sClient, kimConfig, logrus.New())
+		runtimeHandler := runtime.NewHandler(db, 2, "", provisionerClient, k8sClient, kimConfig, logrus.New())
 
 		rr := httptest.NewRecorder()
 		router := mux.NewRouter()
@@ -916,7 +889,6 @@ func TestRuntimeHandler_WithKimOnlyDrivenInstances(t *testing.T) {
 		operations := db.Operations()
 		instances := db.Instances()
 		states := db.RuntimeStates()
-		archived := db.InstancesArchived()
 		testID := "Test1"
 		testTime := time.Now()
 		testInstance := fixInstanceForPreview(testID, testTime)
@@ -993,7 +965,7 @@ func TestRuntimeHandler_WithKimOnlyDrivenInstances(t *testing.T) {
 		err = states.Insert(fixOpgClusterState)
 		require.NoError(t, err)
 
-		runtimeHandler := runtime.NewHandler(instances, operations, states, archived, nil, 2, "", provisionerClient, k8sClient, kimConfig, logrus.New())
+		runtimeHandler := runtime.NewHandler(db, 2, "", provisionerClient, k8sClient, kimConfig, logrus.New())
 
 		rr := httptest.NewRecorder()
 		router := mux.NewRouter()
@@ -1026,8 +998,6 @@ func TestRuntimeHandler_WithKimOnlyDrivenInstances(t *testing.T) {
 		db := storage.NewMemoryStorage()
 		operations := db.Operations()
 		instances := db.Instances()
-		states := db.RuntimeStates()
-		archived := db.InstancesArchived()
 		testID := "Test1"
 		testTime := time.Now()
 		testInstance := fixInstanceForPreview(testID, testTime)
@@ -1047,7 +1017,7 @@ func TestRuntimeHandler_WithKimOnlyDrivenInstances(t *testing.T) {
 		_, err = provisionerClient.ProvisionRuntimeWithIDs(operation.GlobalAccountID, operation.SubAccountID, operation.RuntimeID, operation.ID, input)
 		require.NoError(t, err)
 
-		runtimeHandler := runtime.NewHandler(instances, operations, states, archived, nil, 2, "", provisionerClient, k8sClient, kimConfig, logrus.New())
+		runtimeHandler := runtime.NewHandler(db, 2, "", provisionerClient, k8sClient, kimConfig, logrus.New())
 
 		rr := httptest.NewRecorder()
 		router := mux.NewRouter()
@@ -1078,8 +1048,6 @@ func TestRuntimeHandler_WithKimOnlyDrivenInstances(t *testing.T) {
 		db := storage.NewMemoryStorage()
 		operations := db.Operations()
 		instances := db.Instances()
-		states := db.RuntimeStates()
-		archived := db.InstancesArchived()
 		testID := "test1"
 		testTime := time.Now()
 		testInstance := fixInstanceForPreview(testID, testTime)
@@ -1105,7 +1073,7 @@ func TestRuntimeHandler_WithKimOnlyDrivenInstances(t *testing.T) {
 			KimOnlyPlans: []string{"no-plan"},
 		}
 
-		runtimeHandler := runtime.NewHandler(instances, operations, states, archived, nil, 2, "", provisionerClient, k8sClient, kimDisabledForPreview, logrus.New())
+		runtimeHandler := runtime.NewHandler(db, 2, "", provisionerClient, k8sClient, kimDisabledForPreview, logrus.New())
 
 		rr := httptest.NewRecorder()
 		router := mux.NewRouter()
@@ -1137,8 +1105,6 @@ func TestRuntimeHandler_WithKimOnlyDrivenInstances(t *testing.T) {
 		db := storage.NewMemoryStorage()
 		operations := db.Operations()
 		instances := db.Instances()
-		states := db.RuntimeStates()
-		archived := db.InstancesArchived()
 		testID := "Test1"
 		testTime := time.Now()
 		testInstance := fixInstanceForPreview(testID, testTime)
@@ -1159,7 +1125,7 @@ func TestRuntimeHandler_WithKimOnlyDrivenInstances(t *testing.T) {
 		_, err = provisionerClient.ProvisionRuntimeWithIDs(operation.GlobalAccountID, operation.SubAccountID, operation.RuntimeID, operation.ID, input)
 		require.NoError(t, err)
 
-		runtimeHandler := runtime.NewHandler(instances, operations, states, archived, nil, 2, "", provisionerClient, k8sClient, kimConfig, logrus.New())
+		runtimeHandler := runtime.NewHandler(db, 2, "", provisionerClient, k8sClient, kimConfig, logrus.New())
 
 		rr := httptest.NewRecorder()
 		router := mux.NewRouter()
@@ -1206,8 +1172,6 @@ func TestRuntimeHandler_WithKimOnlyDrivenInstances(t *testing.T) {
 		db := storage.NewMemoryStorage()
 		operations := db.Operations()
 		instances := db.Instances()
-		states := db.RuntimeStates()
-		archived := db.InstancesArchived()
 		bindings := db.Bindings()
 		testID := "Test1"
 		testTime := time.Now()
@@ -1234,7 +1198,7 @@ func TestRuntimeHandler_WithKimOnlyDrivenInstances(t *testing.T) {
 		_, err = provisionerClient.ProvisionRuntimeWithIDs(operation.GlobalAccountID, operation.SubAccountID, operation.RuntimeID, operation.ID, input)
 		require.NoError(t, err)
 
-		runtimeHandler := runtime.NewHandler(instances, operations, states, archived, bindings, 2, "", provisionerClient, k8sClient, kimConfig, logrus.New())
+		runtimeHandler := runtime.NewHandler(db, 2, "", provisionerClient, k8sClient, kimConfig, logrus.New())
 
 		rr := httptest.NewRecorder()
 		router := mux.NewRouter()
