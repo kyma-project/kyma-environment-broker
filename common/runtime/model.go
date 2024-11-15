@@ -54,6 +54,48 @@ type RuntimeDTO struct {
 	ClusterConfig               *gqlschema.GardenerConfigInput `json:"clusterConfig,omitempty"`
 	RuntimeConfig               *map[string]interface{}        `json:"runtimeConfig,omitempty"`
 	Bindings                    []BindingDTO                   `json:"bindings,omitempty"`
+	Parameters                  []ParameterDTO                 `json:"parameters,omitempty"`
+}
+
+type ParameterDTO struct {
+	AutoScalerParameters  *AutoScalerParametersDTO `json:"autoScalerParameters,omitempty"`
+	Name                  string                   `json:"name"`
+	TargetSecret          *string                  `json:"targetSecret,omitempty"`
+	VolumeSizeGb          *int                     `json:"volumeSizeGb,omitempty"`
+	MachineType           *string                  `json:"machineType,omitempty"`
+	Region                *string                  `json:"region,omitempty"`
+	Purpose               *string                  `json:"purpose,omitempty"`
+	LicenceType           *string                  `json:"licence_type,omitempty"`
+	Zones                 []string                 `json:"zones,omitempty"`
+	RuntimeAdministrators []string                 `json:"administrators,omitempty"`
+	ShootName             string                   `json:"shootName,omitempty"`
+	ShootDomain           string                   `json:"shootDomain,omitempty"`
+
+	OIDC                   *OIDCConfigDTO `json:"oidc,omitempty"`
+	Networking             *NetworkingDTO `json:"networking,omitempty"`
+	ShootAndSeedSameRegion *bool          `json:"shootAndSeedSameRegion,omitempty"`
+}
+
+type AutoScalerParametersDTO struct {
+	AutoScalerMin  *int `json:"autoScalerMin,omitempty"`
+	AutoScalerMax  *int `json:"autoScalerMax,omitempty"`
+	MaxSurge       *int `json:"maxSurge,omitempty"`
+	MaxUnavailable *int `json:"maxUnavailable,omitempty"`
+}
+
+type OIDCConfigDTO struct {
+	ClientID       string   `json:"clientID" yaml:"clientID"`
+	GroupsClaim    string   `json:"groupsClaim" yaml:"groupsClaim"`
+	IssuerURL      string   `json:"issuerURL" yaml:"issuerURL"`
+	SigningAlgs    []string `json:"signingAlgs" yaml:"signingAlgs"`
+	UsernameClaim  string   `json:"usernameClaim" yaml:"usernameClaim"`
+	UsernamePrefix string   `json:"usernamePrefix" yaml:"usernamePrefix"`
+}
+
+type NetworkingDTO struct {
+	NodesCidr    string  `json:"nodes,omitempty"`
+	PodsCidr     *string `json:"pods,omitempty"`
+	ServicesCidr *string `json:"services,omitempty"`
 }
 
 type BindingDTO struct {
@@ -107,6 +149,8 @@ type Operation struct {
 	OrchestrationID              string        `json:"orchestrationID,omitempty"`
 	FinishedStages               []string      `json:"finishedStages"`
 	ExecutedButNotCompletedSteps []string      `json:"executedButNotCompletedSteps,omitempty"`
+	//ProvisioningParameters       ProvisioningParameters
+	//parameters
 }
 
 type RuntimesPage struct {
