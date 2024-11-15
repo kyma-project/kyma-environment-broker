@@ -54,10 +54,13 @@ type RuntimeDTO struct {
 	ClusterConfig               *gqlschema.GardenerConfigInput `json:"clusterConfig,omitempty"`
 	RuntimeConfig               *map[string]interface{}        `json:"runtimeConfig,omitempty"`
 	Bindings                    []BindingDTO                   `json:"bindings,omitempty"`
-	ProvisioningParameters      []ProvisioningParameterDTO     `json:"provisioningParameters,omitempty"`
+	ProvisioningParameters      ProvisioningParameters         `json:"provisioningParameters,omitempty"`
 }
 
-type ProvisioningParameterDTO struct {
+type ProvisioningParameters struct {
+	Parameters ProvisioningParametersDTO `json:"parameters"`
+}
+type ProvisioningParametersDTO struct {
 	AutoScalerParameters  *AutoScalerParametersDTO `json:"autoScalerParameters,omitempty"`
 	Name                  string                   `json:"name"`
 	TargetSecret          *string                  `json:"targetSecret,omitempty"`
