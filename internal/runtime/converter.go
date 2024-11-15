@@ -90,6 +90,7 @@ func (c *converter) NewDTO(instance internal.Instance) (pkg.RuntimeDTO, error) {
 		ProvisioningParameters: pkg.ProvisioningParameters{
 			Parameters: pkg.ProvisioningParametersDTO{
 				MachineType: instance.Parameters.Parameters.MachineType,
+				Name:        instance.Parameters.Parameters.Name,
 			},
 		},
 	}
