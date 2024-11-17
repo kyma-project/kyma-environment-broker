@@ -13,7 +13,7 @@ import (
 
 	"github.com/kyma-project/kyma-environment-broker/internal/broker"
 	"github.com/kyma-project/kyma-environment-broker/internal/fixture"
-	"github.com/pivotal-cf/brokerapi/v8/domain"
+	"github.com/pivotal-cf/brokerapi/v11/domain"
 	"k8s.io/apimachinery/pkg/util/wait"
 
 	pkg "github.com/kyma-project/kyma-environment-broker/common/runtime"
