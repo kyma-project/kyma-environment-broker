@@ -57,24 +57,27 @@ X-Broker-API-Version: 2.14
 
 If the binding is successfully removed, KEB returns the `200 OK` status code. If the binding or service instance does not exist, KEB returns the `410 Gone` code.
 
-All the codes are based on the [Open Service Broker API specification](https://github.com/openservicebrokerapi/servicebroker/blob/master/spec.md#unbinding) 
+All the codes are based on the [OSB API specification](https://github.com/openservicebrokerapi/servicebroker/blob/master/spec.md#unbinding) 
 
 ## Bindings Management
 
-### Create Kyma Binding Process
+### The Process of Creating a Kyma Binding
 
 The binding creation process, that starts with a PUT HTTP request sent to `/oauth/v2/service_instances/{{instance_id}}/service_bindings/{{binding_id}}` endpoint, produces a binding with a kubeconfig that encapsulates JWT token used for user authentication. The token is generated using Kubernetes TokenRequest attached to a ServiceAccount, ClusterRole, and ClusterRoleBinding, all named `kyma-binding-{{binding_id}}`. Such approach allows for modifying permissions granted with the kubeconfig.
 Besides the kubeconfig, the response contains metadata with the **expires_at** field, which specifies the expiration time of the kubeconfig. 
 To specify the duration for which the generated kubeconfig is valid explicitly, provide the **expiration_seconds** in the `parameter` object of the request body.
 
 
-The diagram below shows the flow of creating a Service Binding in Kyma Environment Broker. The process starts with a PUT request sent to KEB API. 
+The following diagram shows the flow of creating a service binding in Kyma Environment Broker. The process starts with a PUT request sent to KEB API. 
+
+> [!NOTE] 
+> On the diagram, "error" refers to a foreseen error in the process, not a server error.
 
 ![Bindings Create Flow](../assets/bindings-create-flow.drawio.svg)
 
 > **NOTE**: On the diagram error means forseen error in the process, not a server error.
 
-The creation process is devided into three parts: configuration check, request validation and binding creation.
+The creation process is divided into three parts: configuration check, request validation, and binding creation.
 
 <!-- Configuration Check -->
 If a feature flag for Kyma bindings is enabled, KEB first checks if the Kyma instance exists. If the instance is found and the plan it has been provisioned with is bindable, KEB proceeds to the validation phase.
