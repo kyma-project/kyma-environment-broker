@@ -104,7 +104,9 @@ The created resources are then used to generate a [TokenRequest](https://kuberne
 
 ![Get Binding Flow](../assets/bindings-get-flow.drawio.svg)
 
-The above diagram shows a flow of fetching a Kyma Binding in KEB. The process starts with a GET request sent to the KEB API. Bindings are located by instance and binding IDs. The first instructions in the process is to check if Kyma instance exists, and if it exists, then it must not be deprovisioned or suspended. The endpoint will not return bindings for such instances. Existing Bindings are loaded by instance ID and binding ID. If any bindings exists they are filter by expiration date. KEB returns only non expired bindings.
+The diagram shows a flow of fetching a Kyma binding in KEB. The process starts with a GET request sent to the KEB API. Bindings are located by instance and binding IDs. 
+The first instruction in the process is to check if a Kyma instance exists. If a Kyma instance exists, it must not be deprovisioned or suspended. 
+The endpoint doesn't return bindings for such instances. Existing bindings are loaded by instance ID and binding ID. If any bindings exist, they are filtered by expiration date. KEB returns only non-expired bindings.
 
 ### The  Process of Deleting a Kyma Binding
 
