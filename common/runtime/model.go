@@ -48,7 +48,7 @@ type RuntimeDTO struct {
 	ServicePlanID               string                         `json:"servicePlanID"`
 	ServicePlanName             string                         `json:"servicePlanName"`
 	Provider                    string                         `json:"provider"`
-	Parameters                  ProvisioningParameters         `json:"provisioningParameters,omitempty"`
+	Parameters                  ProvisioningParameters         `json:"parameters,omitempty"`
 	Status                      RuntimeStatus                  `json:"status"`
 	UserID                      string                         `json:"userID"`
 	KymaConfig                  *gqlschema.KymaConfigInput     `json:"kymaConfig,omitempty"`
