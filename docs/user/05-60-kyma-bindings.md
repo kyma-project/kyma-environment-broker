@@ -13,7 +13,7 @@ You can manage credentials for accessing a given service through the bindings' H
 > [!NOTE]
 > You can find all endpoints in the KEB [Swagger Documentation](https://kyma-env-broker.cp.stage.kyma.cloud.sap/#/Bindings).
 
-### Creating a Service Binding
+### Create a Service Binding
 
 To create a binding, use a PUT request to KEB API:
 
