@@ -77,10 +77,10 @@ The diagram below shows the flow of creating a Service Binding in Kyma Environme
 The creation process is devided into three parts: configuration check, request validation and binding creation.
 
 <!-- Configuration Check -->
-Given that a feature flag for Kyma Bindings is enabled, in the first instructions of the process KEB checks if the Kyma instance exists. If the instance is found and plan, that it has been provisioned with, is bindable, then KEB proceeds to validation phase.
+If a feature flag for Kyma bindings is enabled, KEB first checks if the Kyma instance exists. If the instance is found and the plan it has been provisioned with is bindable, KEB proceeds to the validation phase.
 
 <!-- Request Validation -->
-It is now that the unmarshalled request is validated to check correctness of its structure. Allowed data that can be passed to the request includes:
+Now, the unmarshalled request is validated, and the correctness of its structure is checked. See the table for the data that you can pass to the request:
 
 | Name                   | Default | Description                                                                                                                                                                                                                                                                                                                                                          |
 |------------------------|---------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
@@ -91,13 +91,15 @@ After unmarshaling the data is validated against allowed parameter values, which
 
 <!-- Binding Creation -->
 In the binding creation phase, KEB creates a Service Binding object and generates a kubeconfig file with a JWT token. The kubeconfig file is valid for a specified time period, which is defaulted of set in the request body. The first step in this part is to check again if an expired binding exists in the database. This check is done implicitly in a database insert statement. The query will fail for expired but existing bindings because of primary key being defined on the instance and binding IDs and not expiration date. This will be the case until the expired binding is removed from the database by the cleanup job. 
-> **Note:** Expired bindings do not count towards the bindings limit, however they will prevent from creating new bindings until they exist in the database. Only after they are removed by the cleanup job or manually, the binding can be recreated again.
+> [!NOTE]
+>  Expired bindings do not count towards the bindings limit. However, they prevent creating new bindings until they exist in the database. Only after they are removed by the cleanup job or manually can the binding be recreated again.
 
 After the insert has been done, KEB creates a ServiceAccount, ClusterRole (admin privileges), and ClusterRoleBinding, all named `kyma-binding-{{binding_id}}`. The ClusterRole can be used to modify permissions granted to the kubeconfig.
 
-The created resources are then used to generate a [TokenRequest](https://kubernetes.io/docs/reference/kubernetes-api/authentication-resources/token-request-v1/). The token is then wrapped in a kubeconfig template and returned to the user. The encrypted credentials are then stored as an attribute in the previously created database binding.
+The created resources are then used to generate a [`TokenRequest`](https://kubernetes.io/docs/reference/kubernetes-api/authentication-resources/token-request-v1/). The token is then wrapped in a kubeconfig template and returned to the user. The encrypted credentials are then stored as an attribute in the previously created database binding.
 
-> **NOTE**: Creation of multiple and unused TokenRequests is not recommended
+> [!NOTE]
+>  Creation of multiple and unused `TokenRequest` resources is not recommended
 
 
 ### Fetching Kyma Binding Process
