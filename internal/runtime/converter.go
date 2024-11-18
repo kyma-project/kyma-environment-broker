@@ -88,10 +88,8 @@ func (c *converter) NewDTO(instance internal.Instance) (pkg.RuntimeDTO, error) {
 			ExpiredAt:  instance.ExpiredAt,
 		},
 		Parameters: pkg.ProvisioningParameters{
-			Parameters: pkg.ProvisioningParametersDTO{
-				MachineType: instance.Parameters.Parameters.MachineType,
-				Name:        instance.Parameters.Parameters.Name,
-			},
+			MachineType: instance.Parameters.Parameters.MachineType,
+			Name:        instance.Parameters.Parameters.Name,
 		},
 	}
 	if !instance.DeletedAt.IsZero() {

@@ -58,9 +58,6 @@ type RuntimeDTO struct {
 }
 
 type ProvisioningParameters struct {
-	Parameters ProvisioningParametersDTO `json:"parameters"`
-}
-type ProvisioningParametersDTO struct {
 	AutoScalerParameters  *AutoScalerParametersDTO `json:"autoScalerParameters,omitempty"`
 	Name                  string                   `json:"name"`
 	TargetSecret          *string                  `json:"targetSecret,omitempty"`
