@@ -110,7 +110,13 @@ The above diagram shows a flow of fetching a Kyma Binding in KEB. The process st
 
 ![Delete Binding Flow](../assets/bindings-delete-flow.drawio.svg)
 
-The above diagram shows the flow of Kyma binding removal. The process starts with a DELETE request sent to the KEB API. The first instruction in the process is to check if Kyma instance, that the request refers to, exists. Any bindings of non-existing instances are treated as orphaned and are destined to be removed. The next step is to conditionally delete the binding's ClusterRole, ClusterRoleBinding and ServiceAccount given that the cluster has been provisioned and not marked for removal. In case of deprovisioning or suspension of Kyma cluster this is not neccessary because either way cluster will be removed. In case of errors during the resources removal process, the binding DB record should not be removed, which is why the resources removal happens before the binding DB record removal. Finally, the last step is to remove the binding record from the database. It is important to mention that removal of the ServiceAccount invalidates all tokens generated for that account, therefore, revoking access to the cluster for all clients using the kubeconfig from the binding.
+The diagram shows the flow of removing a Kyma binding. The process starts with a DELETE request sent to the KEB API. The first instruction is to check if the Kyma instance that the request refers to exists. 
+Any bindings of non-existing instances are treated as orphaned and are destined to be removed. The next step is to conditionally delete the binding's `ClusterRole`, `ClusterRoleBinding`, and `ServiceAccount`, given that the cluster has been provisioned and not marked for removal. In case of deprovisioning or suspension of the Kyma cluster, this is unnecessary because the cluster is removed either way. 
+In case of errors during the resource removal process, the binding database record should not be removed, which is why the resource removal happens before the binding database record removal. 
+Finally, the last step is to remove the binding record from the database. 
+
+> [!WARNING]
+> Removing the `ServiceAccount` invalidates all tokens generated for that account, revoking access to the cluster for all clients using the kubeconfig from the binding.
 
 ## Cleanup Job
 
