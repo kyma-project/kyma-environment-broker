@@ -65,8 +65,9 @@ func (c *converter) applyOperation(source *internal.Operation, target *pkg.Opera
 		target.FinishedStages = source.FinishedStages
 		target.ExecutedButNotCompletedSteps = source.ExcutedButNotCompleted
 		target.ProvisioningParameters = pkg.ProvisioningParameters{
-			Name:        source.ProvisioningParameters.Parameters.Name,
-			MachineType: source.ProvisioningParameters.Parameters.MachineType,
+			Name:                  source.ProvisioningParameters.Parameters.Name,
+			MachineType:           source.ProvisioningParameters.Parameters.MachineType,
+			RuntimeAdministrators: source.ProvisioningParameters.Parameters.RuntimeAdministrators,
 		}
 	}
 }
@@ -114,6 +115,7 @@ func (c *converter) NewDTO(instance internal.Instance) (pkg.RuntimeDTO, error) {
 				UsernamePrefix: instance.Parameters.Parameters.OIDC.UsernamePrefix,
 			},
 			RuntimeAdministrators: instance.Parameters.Parameters.RuntimeAdministrators,
+			LicenceType:           instance.Parameters.Parameters.LicenceType,
 		},
 	}
 	if !instance.DeletedAt.IsZero() {
