@@ -2,11 +2,11 @@
 
 Kyma Binding is an abstraction of Kyma Environment Broker (KEB) that allows to generate credentials for accessing a SAP Kyma Runtime (SKR) created by KEB. The credentials are generated in the form of an admin kubeconfig file, that you can use to access the SKR, and are wrapped in a service binding object as it is known in the Open Service Broker API specification. The generated kubeconfig contains a TokenRequest that is tied to its custom ServiceAccount, which allows for revoking permissions, restricting privilleges using Kubernetes RBAC and short lived tokens generation.
 
-![Bindings Overview](../assets/bindings-general.drawio.svg)
+![Kyma bindings components](../assets/bindings-general.drawio.svg)
 
 The Bindings are managed by the KEB and kept in a database together with generated kubeconfigs (stored in encrypted format). Management of bindings is allowed through the KEB bindings API, which consists out of three endpoints: PUT, GET and DELETE. As shown in the diagram, there is an additional cleanup job that periodically removes expired binding records from the database.
 
-## API
+## Request Examples
 
 Manage credentials for accessing a given service through the bindings HTTP endpoints. The API includes all subpaths of `v2/service_instances/<service_id>/service_bindings` and follows the Open Service Broker API specification. However, the requests are limited to PUT, GET and DELETE methods. Bindings can be rotated by subsequent calls of a DELETE method, for an old binding, and a PUT method, for a new one. Implementation supports synchronous operations only. All requests are idempotent. The create binding requests are configured to timeout after 15 minutes.
 
