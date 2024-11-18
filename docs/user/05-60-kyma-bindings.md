@@ -31,7 +31,7 @@ X-Broker-API-Version: 2.14
 }
 ```
 
-If a binding is successfully created, the endpoint returns `201 Created` or `200 OK` status code depending on if the curret request created the binding or it already existed before.
+If a binding is successfully created, the endpoint returns the `201 Created` if the current request created it or the `200 OK` status code if it already existed.
 
 ### Fetch a Service Binding 
 
@@ -46,7 +46,7 @@ KEB returns the `200 OK` status code with the kubeconfig in the response body. I
 
 All the codes are based on the [OSB API specification](https://github.com/openservicebrokerapi/servicebroker/blob/master/spec.md#fetching-a-service-binding).
 
-### Unbinding
+### Remove a Service Binding
 
 To remove a binding, send a DELETE request to KEB API:
 
