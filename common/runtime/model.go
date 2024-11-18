@@ -48,7 +48,7 @@ type RuntimeDTO struct {
 	ServicePlanID               string                         `json:"servicePlanID"`
 	ServicePlanName             string                         `json:"servicePlanName"`
 	Provider                    string                         `json:"provider"`
-	Parameters                  ProvisioningParameters         `json:"parameters,omitempty"`
+	Parameters                  Parameters                     `json:"parameters,omitempty"`
 	Status                      RuntimeStatus                  `json:"status"`
 	UserID                      string                         `json:"userID"`
 	KymaConfig                  *gqlschema.KymaConfigInput     `json:"kymaConfig,omitempty"`
@@ -57,7 +57,7 @@ type RuntimeDTO struct {
 	Bindings                    []BindingDTO                   `json:"bindings,omitempty"`
 }
 
-type ProvisioningParameters struct {
+type Parameters struct {
 	AutoScalerParameters  *AutoScalerParametersDTO `json:"autoScalerParameters,omitempty"`
 	Name                  string                   `json:"name"`
 	TargetSecret          *string                  `json:"targetSecret,omitempty"`
@@ -140,16 +140,16 @@ type OperationsData struct {
 }
 
 type Operation struct {
-	State                        string                 `json:"state"`
-	Type                         OperationType          `json:"type,omitempty"`
-	Description                  string                 `json:"description"`
-	CreatedAt                    time.Time              `json:"createdAt"`
-	UpdatedAt                    time.Time              `json:"updatedAt"`
-	OperationID                  string                 `json:"operationID"`
-	OrchestrationID              string                 `json:"orchestrationID,omitempty"`
-	FinishedStages               []string               `json:"finishedStages"`
-	ExecutedButNotCompletedSteps []string               `json:"executedButNotCompletedSteps,omitempty"`
-	ProvisioningParameters       ProvisioningParameters `json:"provisioningParameters,omitempty"`
+	State                        string        `json:"state"`
+	Type                         OperationType `json:"type,omitempty"`
+	Description                  string        `json:"description"`
+	CreatedAt                    time.Time     `json:"createdAt"`
+	UpdatedAt                    time.Time     `json:"updatedAt"`
+	OperationID                  string        `json:"operationID"`
+	OrchestrationID              string        `json:"orchestrationID,omitempty"`
+	FinishedStages               []string      `json:"finishedStages"`
+	ExecutedButNotCompletedSteps []string      `json:"executedButNotCompletedSteps,omitempty"`
+	Parameters                   Parameters    `json:"parameters,omitempty"`
 	//parameters
 }
 
