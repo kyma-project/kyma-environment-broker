@@ -8,7 +8,7 @@ KEB manages the bindings and keeps them in a database together with generated ku
 
 ## Request Examples
 
-Manage credentials for accessing a given service through the bindings' HTTP endpoints. The API includes all subpaths of `v2/service_instances/<service_id>/service_bindings` and follows the OSB API specification. However, the requests are limited to PUT, GET, and DELETE methods. Bindings can be rotated by subsequent calls of a DELETE method for an old binding, and a PUT method for a new one. The implementation supports synchronous operations only. All requests are idempotent. The `create binding` requests are configured to time out after 15 minutes.
+You can manage credentials for accessing a given service through the bindings' HTTP endpoints. The API includes all subpaths of `v2/service_instances/<service_id>/service_bindings` and follows the OSB API specification. However, the requests are limited to PUT, GET, and DELETE methods. Bindings can be rotated by subsequent calls of a DELETE method for an old binding, and a PUT method for a new one. The implementation supports synchronous operations only. All requests are idempotent. The `create binding` requests are configured to time out after 15 minutes.
 
 > **NOTE**: All endpoints can be found in the KEB [Swagger Documentation](
 https://kyma-env-broker.cp.stage.kyma.cloud.sap/#/Bindings)
@@ -90,7 +90,7 @@ After unmarshaling the data is validated against allowed parameter values, which
 
 
 <!-- Binding Creation -->
-In the binding creation phase, KEB creates a Service Binding object and generates a kubeconfig file with a JWT token. The kubeconfig file is valid for a specified time period, which is defaulted of set in the request body. The first step in this part is to check again if an expired binding exists in the database. This check is done in an implicit DB insert statement. The query will fail for expired but existing bindings because of primary key being defined on the instance and binding IDs and not expiration date. This will be the case until the expired binding is removed from the database by the cleanup job. 
+In the binding creation phase, KEB creates a Service Binding object and generates a kubeconfig file with a JWT token. The kubeconfig file is valid for a specified time period, which is defaulted of set in the request body. The first step in this part is to check again if an expired binding exists in the database. This check is done in an implicit database insert statement. The query will fail for expired but existing bindings because of primary key being defined on the instance and binding IDs and not expiration date. This will be the case until the expired binding is removed from the database by the cleanup job. 
 > **Note:** Expired bindings do not count towards the bindings limit, however they will prevent from creating new bindings until they exist in the database. Only after they are removed by the cleanup job or manually, the binding can be recreated again.
 
 After the insert has been done, KEB creates a ServiceAccount, ClusterRole (admin privileges), and ClusterRoleBinding, all named `kyma-binding-{{binding_id}}`. The ClusterRole can be used to modify permissions granted to the kubeconfig.
