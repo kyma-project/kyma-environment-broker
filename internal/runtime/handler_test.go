@@ -820,6 +820,7 @@ func TestRuntimeHandler_WithKimOnlyDrivenInstances(t *testing.T) {
 		db := storage.NewMemoryStorage()
 		operations := db.Operations()
 		instances := db.Instances()
+
 		testID := "Test1"
 		testTime := time.Now()
 		testInstance := fixInstanceForPreview(testID, testTime)
@@ -880,6 +881,124 @@ func TestRuntimeHandler_WithKimOnlyDrivenInstances(t *testing.T) {
 		assert.Equal(t, testID, out.Data[0].InstanceID)
 		assert.Nil(t, out.Data[0].Status.Provisioning)
 		assert.Nil(t, out.Data[0].Status.Deprovisioning)
+		assert.Equal(t, pkg.StateSucceeded, out.Data[0].Status.State)
+	})
+
+	t.Run("test betaEnabled and usedForProduction", func(t *testing.T) {
+		// given
+		db := storage.NewMemoryStorage()
+		operations := db.Operations()
+		instances := db.Instances()
+		subaccountStates := db.SubaccountStates()
+
+		testID := "Test1"
+		testTime := time.Now()
+		testInstance1 := fixInstanceForPreview(testID, testTime)
+		testInstance1.SubAccountID = "subaccount-1"
+
+		testID2 := "Test2"
+		testTime = time.Now()
+		testInstance2 := fixInstanceForPreview(testID2, testTime)
+		testInstance2.SubAccountID = "subaccount-1"
+
+		testID3 := "Test3"
+		testTime = time.Now()
+		testInstance3 := fixInstanceForPreview(testID3, testTime)
+		testInstance3.SubAccountID = "subaccount-3"
+
+		testID4 := "Test4"
+		testTime = time.Now()
+		testInstance4 := fixInstanceForPreview(testID4, testTime)
+		testInstance4.SubAccountID = "subaccount-4"
+
+		err := instances.Insert(testInstance1)
+		require.NoError(t, err)
+
+		err = instances.Insert(testInstance2)
+		require.NoError(t, err)
+
+		err = instances.Insert(testInstance3)
+		require.NoError(t, err)
+
+		err = instances.Insert(testInstance4)
+		require.NoError(t, err)
+
+		err = subaccountStates.UpsertState(internal.SubaccountState{ID: testInstance1.SubAccountID, UsedForProduction: "USED_FOR_PRODUCTION", BetaEnabled: "true", ModifiedAt: 1})
+		require.NoError(t, err)
+
+		err = subaccountStates.UpsertState(internal.SubaccountState{ID: testInstance3.SubAccountID, UsedForProduction: "", BetaEnabled: "false", ModifiedAt: 1})
+		require.NoError(t, err)
+
+		provOp := fixture.FixProvisioningOperation(fixRandomID(), testID)
+		err = operations.InsertOperation(provOp)
+		require.NoError(t, err)
+		provOp2 := fixture.FixProvisioningOperation(fixRandomID(), testID2)
+		err = operations.InsertOperation(provOp2)
+		require.NoError(t, err)
+		provOp3 := fixture.FixProvisioningOperation(fixRandomID(), testID3)
+		err = operations.InsertOperation(provOp3)
+		require.NoError(t, err)
+		provOp4 := fixture.FixProvisioningOperation(fixRandomID(), testID3)
+		err = operations.InsertOperation(provOp4)
+		require.NoError(t, err)
+		updOp := fixture.FixUpdatingOperation(fixRandomID(), testID)
+		updOp.State = domain.Succeeded
+		updOp.CreatedAt = updOp.CreatedAt.Add(time.Minute)
+		err = operations.InsertUpdatingOperation(updOp)
+		require.NoError(t, err)
+
+		runtimeHandler := runtime.NewHandler(db, 4, "", provisionerClient, k8sClient, kimConfig, logrus.New())
+
+		rr := httptest.NewRecorder()
+		router := mux.NewRouter()
+		runtimeHandler.AttachRoutes(router)
+
+		// when
+		req, err := http.NewRequest("GET", fmt.Sprintf("/runtimes?op_detail=%s", pkg.AllOperation), nil)
+		require.NoError(t, err)
+		router.ServeHTTP(rr, req)
+
+		// then
+		require.Equal(t, http.StatusOK, rr.Code)
+
+		var out pkg.RuntimesPage
+
+		err = json.Unmarshal(rr.Body.Bytes(), &out)
+		require.NoError(t, err)
+
+		require.Equal(t, 4, out.TotalCount)
+		require.Equal(t, 4, out.Count)
+		assert.Equal(t, testID, out.Data[0].InstanceID)
+		assert.NotNil(t, out.Data[0].Status.Provisioning)
+		assert.Nil(t, out.Data[0].Status.Deprovisioning)
+		assert.Equal(t, pkg.StateSucceeded, out.Data[0].Status.State)
+
+		// when
+		rr = httptest.NewRecorder()
+		req, err = http.NewRequest("GET", fmt.Sprintf("/runtimes?op_detail=%s", pkg.LastOperation), nil)
+		require.NoError(t, err)
+		router.ServeHTTP(rr, req)
+
+		// then
+		require.Equal(t, http.StatusOK, rr.Code)
+
+		out = pkg.RuntimesPage{}
+		err = json.Unmarshal(rr.Body.Bytes(), &out)
+		require.NoError(t, err)
+
+		require.Equal(t, 4, out.TotalCount)
+		require.Equal(t, 4, out.Count)
+		assert.Equal(t, testID, out.Data[0].InstanceID)
+		assert.Nil(t, out.Data[0].Status.Provisioning)
+		assert.Nil(t, out.Data[0].Status.Deprovisioning)
+		assert.Equal(t, "true", out.Data[0].BetaEnabled)
+		assert.Equal(t, "USED_FOR_PRODUCTION", out.Data[0].UsedForProduction)
+		assert.Equal(t, "true", out.Data[1].BetaEnabled)
+		assert.Equal(t, "USED_FOR_PRODUCTION", out.Data[1].UsedForProduction)
+		assert.Equal(t, "false", out.Data[2].BetaEnabled)
+		assert.Equal(t, 0, len(out.Data[2].UsedForProduction))
+		assert.Equal(t, 0, len(out.Data[3].BetaEnabled))
+		assert.Equal(t, 0, len(out.Data[3].UsedForProduction))
 		assert.Equal(t, pkg.StateSucceeded, out.Data[0].Status.State)
 	})
 
