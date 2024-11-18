@@ -4,7 +4,7 @@ Kyma Binding is an abstraction of Kyma Environment Broker (KEB) that allows to g
 
 ![Kyma bindings components](../assets/bindings-general.drawio.svg)
 
-The Bindings are managed by the KEB and kept in a database together with generated kubeconfigs (stored in encrypted format). Management of bindings is allowed through the KEB bindings API, which consists out of three endpoints: PUT, GET and DELETE. As shown in the diagram, there is an additional cleanup job that periodically removes expired binding records from the database.
+KEB manages the bindings and keeps them in a database together with generated kubeconfigs stored in an encrypted format. Management of bindings is allowed through the KEB bindings API, which consists of three endpoints: PUT, GET, and DELETE. An additional cleanup job periodically removes expired binding records from the database.
 
 ## Request Examples
 
