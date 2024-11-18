@@ -33,7 +33,7 @@ X-Broker-API-Version: 2.14
 
 If a binding is successfully created, the endpoint returns `201 Created` or `200 OK` status code depending on if the curret request created the binding or it already existed before.
 
-### Fetching a Service Binding 
+### Fetch a Service Binding 
 
 To fetch a binding, use a GET request to KEB API:
 
