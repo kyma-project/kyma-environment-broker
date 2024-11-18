@@ -64,7 +64,7 @@ func (c *converter) applyOperation(source *internal.Operation, target *pkg.Opera
 		target.OrchestrationID = source.OrchestrationID
 		target.FinishedStages = source.FinishedStages
 		target.ExecutedButNotCompletedSteps = source.ExcutedButNotCompleted
-		target.ProvisioningParameters = pkg.ProvisioningParameters{
+		target.Parameters = pkg.Parameters{
 			Name:                  source.ProvisioningParameters.Parameters.Name,
 			MachineType:           source.ProvisioningParameters.Parameters.MachineType,
 			RuntimeAdministrators: source.ProvisioningParameters.Parameters.RuntimeAdministrators,
@@ -92,7 +92,7 @@ func (c *converter) NewDTO(instance internal.Instance) (pkg.RuntimeDTO, error) {
 			ModifiedAt: instance.UpdatedAt,
 			ExpiredAt:  instance.ExpiredAt,
 		},
-		Parameters: pkg.ProvisioningParameters{
+		Parameters: pkg.Parameters{
 			Name:        instance.Parameters.Parameters.Name,
 			Region:      instance.Parameters.Parameters.Region,
 			MachineType: instance.Parameters.Parameters.MachineType,
