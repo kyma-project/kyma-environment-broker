@@ -9,18 +9,21 @@ import (
 	"github.com/kyma-project/kyma-environment-broker/internal/storage/dberr"
 
 	"github.com/hashicorp/go-multierror"
+	imv1 "github.com/kyma-project/infrastructure-manager/api/v1"
 	"github.com/kyma-project/kyma-environment-broker/common/gardener"
 	"github.com/kyma-project/kyma-environment-broker/internal"
 	"github.com/kyma-project/kyma-environment-broker/internal/storage"
 	log "github.com/sirupsen/logrus"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
 const (
 	shootAnnotationRuntimeId                      = "kcp.provisioner.kyma-project.io/runtime-id"
 	shootAnnotationInfrastructureManagerRuntimeId = "infrastructuremanager.kyma-project.io/runtime-id"
 	shootLabelAccountId                           = "account"
+	kcpNamespace                                  = "kcp-system"
 )
 
 //go:generate mockery --name=GardenerClient --output=automock
@@ -39,6 +42,7 @@ type BrokerClient interface {
 type Service struct {
 	gardenerService GardenerClient
 	brokerService   BrokerClient
+	k8sClient       client.Client
 	instanceStorage storage.Instances
 	logger          *log.Logger
 	MaxShootAge     time.Duration
@@ -50,10 +54,11 @@ type runtime struct {
 	AccountID string
 }
 
-func NewService(gardenerClient GardenerClient, brokerClient BrokerClient, instanceStorage storage.Instances, logger *log.Logger, maxShootAge time.Duration, labelSelector string) *Service {
+func NewService(gardenerClient GardenerClient, brokerClient BrokerClient, k8sClient client.Client, instanceStorage storage.Instances, logger *log.Logger, maxShootAge time.Duration, labelSelector string) *Service {
 	return &Service{
 		gardenerService: gardenerClient,
 		brokerService:   brokerClient,
+		k8sClient:       k8sClient,
 		instanceStorage: instanceStorage,
 		logger:          logger,
 		MaxShootAge:     maxShootAge,
@@ -182,7 +187,9 @@ func (s *Service) cleanUp(runtimesToDelete []runtime) error {
 		}
 	}
 
-	result := s.cleanUpKEBInstances(kebInstancesToDelete)
+	kebResult := s.cleanUpKEBInstances(kebInstancesToDelete)
+	runtimeCRsResult := s.cleanUpRuntimeCRs(runtimesToDelete, kebInstancesToDelete)
+	result := multierror.Append(kebResult, runtimeCRsResult)
 
 	if result != nil {
 		result.ErrorFormat = func(i []error) string {
@@ -235,5 +242,49 @@ func (s *Service) triggerEnvironmentDeprovisioning(instance internal.Instance) e
 	}
 
 	log.Infof("Successfully send deprovision request to Kyma Environment Broker, got operation ID %q", opID)
+	return nil
+}
+
+func (s *Service) cleanUpRuntimeCRs(runtimesToDelete []runtime, kebInstancesToDelete []internal.Instance) *multierror.Error {
+	kebInstanceExists := func(runtimeID string) bool {
+		for _, instance := range kebInstancesToDelete {
+			if instance.RuntimeID == runtimeID {
+				return true
+			}
+		}
+
+		return false
+	}
+
+	var result *multierror.Error
+
+	for _, runtime := range runtimesToDelete {
+		if !kebInstanceExists(runtime.ID) {
+			s.logger.Infof("Deleting runtime CR for runtimeID ID %q", runtime.ID)
+			err := s.deleteRuntimeCR(runtime.ID)
+			if err != nil {
+				result = multierror.Append(result, err)
+			}
+		}
+	}
+
+	return result
+}
+
+func (s *Service) deleteRuntimeCR(runtimeID string) error {
+	var runtime = imv1.Runtime{}
+	err := s.k8sClient.Get(context.Background(), client.ObjectKey{Name: runtimeID, Namespace: kcpNamespace}, &runtime)
+	if err != nil {
+		s.logger.Error(fmt.Errorf("while getting runtime CR for runtime ID %q: %w", runtimeID, err))
+		return nil
+	}
+
+	err = s.k8sClient.Delete(context.Background(), &runtime)
+	if err != nil {
+		s.logger.Error(fmt.Errorf("while deleting runtime CR for runtime ID %q: %w", runtimeID, err))
+		return err
+	}
+
+	s.logger.Infof("Successfully deleted runtime CR for runtimeID ID %q", runtimeID)
 	return nil
 }
