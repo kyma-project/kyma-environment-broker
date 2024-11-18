@@ -44,7 +44,7 @@ X-Broker-API-Version: 2.14
 
 KEB returns the `200 OK` status code with the kubeconfig in the response body. If the binding or the instance does not exist, or if the instance is suspended, KEB returns a `404 Not Found` status code.
 
-All the codes are based on the [Open Service Broker API specification](https://github.com/openservicebrokerapi/servicebroker/blob/master/spec.md#fetching-a-service-binding) 
+All the codes are based on the [OSB API specification](https://github.com/openservicebrokerapi/servicebroker/blob/master/spec.md#fetching-a-service-binding).
 
 ### Unbinding
 
