@@ -93,7 +93,7 @@ After unmarshaling the data is validated against allowed parameter values, which
 
 
 <!-- Binding Creation -->
-In the binding creation phase, KEB creates a Service Binding object and generates a kubeconfig file with a JWT token. The kubeconfig file is valid for a specified time period, which is defaulted of set in the request body. The first step in this part is to check again if an expired binding exists in the database. This check is done implicitly in a database insert statement. The query will fail for expired but existing bindings because of primary key being defined on the instance and binding IDs and not expiration date. This will be the case until the expired binding is removed from the database by the cleanup job. 
+In the binding creation phase, KEB creates a service binding object and generates a kubeconfig file with a JWT token. The kubeconfig file is valid for a specified time period, which is defaulted or set in the request body. The first step in this part is to check again if an expired binding exists in the database. This check is done implicitly in a database insert statement. The query will fail for expired but existing bindings because of primary key being defined on the instance and binding IDs and not expiration date. This will be the case until the expired binding is removed from the database by the cleanup job. 
 > [!NOTE]
 >  Expired bindings do not count towards the bindings limit. However, they prevent creating new bindings until they exist in the database. Only after they are removed by the cleanup job or manually can the binding be recreated again.
 
