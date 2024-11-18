@@ -10,8 +10,8 @@ KEB manages the bindings and keeps them in a database together with generated ku
 
 You can manage credentials for accessing a given service through the bindings' HTTP endpoints. The API includes all subpaths of `v2/service_instances/<service_id>/service_bindings` and follows the OSB API specification. However, the requests are limited to PUT, GET, and DELETE methods. Bindings can be rotated by subsequent calls of a DELETE method for an old binding, and a PUT method for a new one. The implementation supports synchronous operations only. All requests are idempotent. The `create binding` requests are configured to time out after 15 minutes.
 
-> **NOTE**: All endpoints can be found in the KEB [Swagger Documentation](
-https://kyma-env-broker.cp.stage.kyma.cloud.sap/#/Bindings)
+> [!NOTE]
+> You can find all endpoints in the KEB [Swagger Documentation](https://kyma-env-broker.cp.stage.kyma.cloud.sap/#/Bindings).
 
 ### Creating a Service Binding
 
