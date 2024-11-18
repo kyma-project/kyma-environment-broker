@@ -48,13 +48,13 @@ type RuntimeDTO struct {
 	ServicePlanID               string                         `json:"servicePlanID"`
 	ServicePlanName             string                         `json:"servicePlanName"`
 	Provider                    string                         `json:"provider"`
+	Parameters                  ProvisioningParameters         `json:"provisioningParameters,omitempty"`
 	Status                      RuntimeStatus                  `json:"status"`
 	UserID                      string                         `json:"userID"`
 	KymaConfig                  *gqlschema.KymaConfigInput     `json:"kymaConfig,omitempty"`
 	ClusterConfig               *gqlschema.GardenerConfigInput `json:"clusterConfig,omitempty"`
 	RuntimeConfig               *map[string]interface{}        `json:"runtimeConfig,omitempty"`
 	Bindings                    []BindingDTO                   `json:"bindings,omitempty"`
-	ProvisioningParameters      ProvisioningParameters         `json:"provisioningParameters,omitempty"`
 }
 
 type ProvisioningParameters struct {
