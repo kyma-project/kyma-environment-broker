@@ -39,6 +39,8 @@ spec:
                   value: kyma-dev
                 - name: APP_GARDENER_KUBECONFIG_PATH
                   value: /gardener/kubeconfig/kubeconfig
+                - name: APP_DOMAIN_NAME
+                  value: "{{ .Values.global.ingress.domainName }}"
                 - name: APP_DATABASE_SECRET_KEY
                   valueFrom:
                     secretKeyRef:
