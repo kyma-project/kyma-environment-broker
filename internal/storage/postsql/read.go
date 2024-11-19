@@ -1,6 +1,7 @@
 package postsql
 
 import (
+	"errors"
 	"fmt"
 	"strings"
 	"time"
@@ -32,7 +33,7 @@ func (r readSession) GetBinding(instanceID string, bindingID string) (dbmodel.Bi
 		LoadOne(&binding)
 
 	if err != nil {
-		if err == dbr.ErrNotFound {
+		if errors.Is(err, dbr.ErrNotFound) {
 			return dbmodel.BindingDTO{}, dberr.NotFound("Cannot find the Binding for bindingId:'%s'", bindingID)
 		}
 		return dbmodel.BindingDTO{}, dberr.Internal("Failed to get the Binding: %s", err)
@@ -94,7 +95,7 @@ func (r readSession) GetDistinctSubAccounts() ([]string, dberr.Error) {
 		LoadOne(&subAccounts)
 
 	if err != nil {
-		if err == dbr.ErrNotFound {
+		if errors.Is(err, dbr.ErrNotFound) {
 			return []string{}, nil
 		}
 		return []string{}, dberr.Internal("Failed to get distinct subaccounts: %s", err)
@@ -140,7 +141,7 @@ func (r readSession) GetInstanceByID(instanceID string) (dbmodel.InstanceDTO, db
 		LoadOne(&instance)
 
 	if err != nil {
-		if err == dbr.ErrNotFound {
+		if errors.Is(err, dbr.ErrNotFound) {
 			return dbmodel.InstanceDTO{}, dberr.NotFound("Cannot find Instance for instanceID:'%s'", instanceID)
 		}
 		return dbmodel.InstanceDTO{}, dberr.Internal("Failed to get Instance: %s", err)
