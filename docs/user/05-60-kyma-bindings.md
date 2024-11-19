@@ -20,12 +20,10 @@ To specify the duration for which the generated kubeconfig is valid explicitly, 
 
 The following diagram shows the flow of creating a service binding in Kyma Environment Broker. The process starts with a PUT request sent to KEB API. 
 
-> [!NOTE] 
-> On the diagram, "error" refers to a foreseen error in the process, not a server error.
-
 ![Bindings Create Flow](../assets/bindings-create-flow.drawio.svg)
 
-> **NOTE**: On the diagram error means forseen error in the process, not a server error.
+> [!NOTE] 
+> On the diagram error means forseen error in the process, not a server error.
 
 The creation process is divided into three parts: configuration check, request validation, and binding creation.
 
@@ -42,7 +40,7 @@ Now, the unmarshalled request is validated, and the correctness of its structure
 After unmarshaling, the data is validated against the allowed parameter values, which includes checks of the expiration value range, database record existence, parameter mutations verification, expiration of existing bindings, and binding number limits. 
 The first check verifies the expiration value. The minimum and maximum limits are configurable and, by default, set to 600 and 7200 seconds, respectively. 
 Next, KEB checks if the binding already exists. The binding in the database is identified by the Kyma instance ID and the binding ID, which are passed as a path query parameter. If the binding exists, KEB checks the mutation of the parameters of the existing binding. 
-The OSB API requires a create binding request to fail if an object has already been created and the request contains different parameters. 
+The OSB API requires a request to create a binding to fail if an object has already been created and the request contains different parameters. 
 Next, if the found binding is not expired, KEB returns it in the response. At this point, the flow returns to the process's execution path, where no bindings exist in the database. 
 Whether the binding exists or not, the last step in the request validation is to verify the number of bindings. 
 Every instance is allowed to create a limited number of bindings. The limit is configurable and by default set to 10. 
