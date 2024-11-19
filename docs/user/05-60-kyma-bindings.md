@@ -18,6 +18,7 @@ Besides the kubeconfig, the response contains metadata with the **expires_at** f
 To specify the duration for which the generated kubeconfig is valid explicitly, provide the **expiration_seconds** in the `parameter` object of the request body.
 
 The following diagram shows the flow of creating a service binding in Kyma Environment Broker. The process starts with a PUT request sent to KEB API. 
+
 > [!NOTE] 
 > On the diagram, "error" refers to a foreseen error in the process, not a server error.
 
@@ -26,9 +27,11 @@ The following diagram shows the flow of creating a service binding in Kyma Envir
 The creation process is divided into three parts: configuration check, request validation, and binding creation.
 
 ### Configuration Check
+
 If a feature flag for Kyma bindings is enabled, KEB first checks if the Kyma instance exists. If the instance is found and the plan it has been provisioned with is bindable, KEB proceeds to the validation phase.
 
 ### Request Validation
+
 Now, the unmarshalled request is validated, and the correctness of its structure is checked. See the table for the data that you can pass to the request:
 
 | Name                   | Default | Description                                                                                                                                                                                                                                                                                                                                                          |
@@ -49,6 +52,7 @@ If the limit is not exceeded, KEB proceeds to the next phase of the process - bi
 
 In the binding creation phase, KEB creates a service binding object and generates a kubeconfig file with a JWT token. The kubeconfig file is valid for a specified period, defaulted or set in the request body. The first step in this part is to check again if an expired binding exists in the database. 
 This check is done in an implicit database insert statement. The query fails for expired but existing bindings because the primary key is defined on the instance and binding IDs, not the expiration date. This is the case until the expired binding is removed from the database by the cleanup job.  
+
 > [!NOTE]
 >  Expired bindings do not count towards the bindings limit. However, they prevent creating new bindings until they exist in the database. Only after they are removed by the cleanup job or manually can the binding be recreated again.
 
