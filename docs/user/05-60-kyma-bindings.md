@@ -86,4 +86,4 @@ Finally, the last step is to remove the binding record from the database.
 
 ## Cleanup Job
 
-The Cleanup Job is a separate process decoupled from KEB. It is a CronJob that cleans up expired or orphaned Kyma bindings from the database. The **expires_at** field in the binding database record determines whether a binding is expired. If the field is older than the current time, the binding is considered expired and removed from the database. 
+The Cleanup Job is a separate process decoupled from KEB. It is a CronJob that cleans up expired or orphaned Kyma bindings from the database. The value of **expires_at** field in the binding database record determines whether a binding is expired. If the value is in the past, the binding is considered expired and is removed from the database. 
