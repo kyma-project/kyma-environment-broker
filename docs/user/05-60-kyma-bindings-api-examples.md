@@ -1,4 +1,4 @@
-# Kyma Bindings Request Examples
+# Kyma Bindings: Request Examples
 
 ## Create a Service Binding
 
@@ -29,7 +29,7 @@ GET http://localhost:8080/oauth/v2/service_instances/{{instance_id}}/service_bin
 X-Broker-API-Version: 2.14
 ```
 
-KEB returns the `200 OK` status code with the kubeconfig in the response body. If the binding or the instance does not exist, or if the instance is suspended, KEB returns a `404 Not Found` status code.
+KEB returns the `200 OK` status code with the kubeconfig in the response body. If the binding or the instance does not exist, or if the instance is suspended, KEB returns the `404 Not Found` status code.
 
 All HTTP codes are based on the [OSB API specification](https://github.com/openservicebrokerapi/servicebroker/blob/master/spec.md#fetching-a-service-binding).
 
@@ -44,4 +44,4 @@ X-Broker-API-Version: 2.14
 
 If the binding is successfully removed, KEB returns the `200 OK` status code. If the binding or service instance does not exist, KEB returns the `410 Gone` code.
 
-All HTTP codes are based on the [OSB API specification](https://github.com/openservicebrokerapi/servicebroker/blob/master/spec.md#unbinding) 
+All HTTP codes are based on the [OSB API specification](https://github.com/openservicebrokerapi/servicebroker/blob/master/spec.md#unbinding).

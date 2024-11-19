@@ -1,12 +1,12 @@
 # Kyma Bindings
 
-The Kyma binding is an abstraction of Kyma Environment Broker (KEB) that allows generating credentials for accessing a SAP BTP, Kyma runtime instance created by KEB. The credentials are generated as an admin kubeconfig file that you can use to access the Kyma runtime. They are wrapped in a service binding object, as is known in the Open Service Broker API (OSB API) specification. The generated kubeconfig contains a TokenRequest tied to its custom ServiceAccount, which allows for revoking permissions, restricting privileges using Kubernetes RBAC, and generating short-lived tokens.
+The Kyma binding is an abstraction of Kyma Environment Broker (KEB) that allows generating credentials for accessing an SAP BTP, Kyma runtime instance created by KEB. The credentials are generated as an administrator kubeconfig file that you can use to access the Kyma runtime. They are wrapped in a service binding object, as is known in the Open Service Broker API (OSB API) specification. The generated kubeconfig contains a TokenRequest tied to its custom ServiceAccount, which allows for revoking permissions, restricting privileges using Kubernetes RBAC, and generating short-lived tokens.
 
 ![Kyma bindings components](../assets/bindings-general.drawio.svg)
 
 KEB manages the bindings and keeps them in a database together with generated kubeconfigs stored in an encrypted format. Management of bindings is allowed through the KEB bindings API, which consists of three endpoints: PUT, GET, and DELETE. An additional cleanup job periodically removes expired binding records from the database.
 
-You can manage credentials for accessing a given service through the bindings' HTTP endpoints. The API includes all subpaths of `v2/service_instances/<service_id>/service_bindings` and follows the OSB API specification. However, the requests are limited to PUT, GET, and DELETE methods. Bindings can be rotated by subsequent calls of a DELETE method for an old binding, and a PUT method for a new one. The implementation supports synchronous operations only. All requests are idempotent. The `create binding` requests are configured to time out after 15 minutes.
+You can manage credentials for accessing a given service through the bindings' HTTP endpoints. The API includes all subpaths of `v2/service_instances/<service_id>/service_bindings` and follows the OSB API specification. However, the requests are limited to PUT, GET, and DELETE methods. Bindings can be rotated by subsequent calls of a DELETE method for an old binding, and a PUT method for a new one. The implementation supports synchronous operations only. All requests are idempotent. Requests to create a binding are configured to time out after 15 minutes.
 
 > [!NOTE]
 > You can find all endpoints in the KEB [Swagger Documentation](https://kyma-env-broker.cp.stage.kyma.cloud.sap/#/Bindings).
@@ -17,8 +17,7 @@ The binding creation process, which starts with a PUT HTTP request sent to the `
 Besides the kubeconfig, the response contains metadata with the **expires_at** field, which specifies the expiration time of the kubeconfig. 
 To specify the duration for which the generated kubeconfig is valid explicitly, provide the **expiration_seconds** in the `parameter` object of the request body.
 
-
-The following diagram shows the flow of creating a service binding in Kyma Environment Broker. The process starts with a PUT request sent to KEB API. 
+The following diagram shows the flow of creating a service binding in Kyma Environment Broker. The process starts with a PUT request sent to the KEB API. 
 
 ![Bindings Create Flow](../assets/bindings-create-flow.drawio.svg)
 
@@ -43,7 +42,7 @@ Next, KEB checks if the binding already exists. The binding in the database is i
 The OSB API requires a request to create a binding to fail if an object has already been created and the request contains different parameters. 
 Next, if the found binding is not expired, KEB returns it in the response. At this point, the flow returns to the process's execution path, where no bindings exist in the database. 
 Whether the binding exists or not, the last step in the request validation is to verify the number of bindings. 
-Every instance is allowed to create a limited number of bindings. The limit is configurable and by default set to 10. 
+Every instance is allowed to create a limited number of bindings. The limit is configurable and, by default, set to 10. 
 If the limit is not exceeded, KEB proceeds to the next phase of the process - binding creation.   
 
 
@@ -53,15 +52,15 @@ In the binding creation phase, KEB creates a service binding object and generate
 > [!NOTE]
 >  Expired bindings do not count towards the bindings limit. However, they prevent creating new bindings until they exist in the database. Only after they are removed by the cleanup job or manually can the binding be recreated again.
 
-After the insert has been done, KEB creates a ServiceAccount, ClusterRole (admin privileges), and ClusterRoleBinding, all named `kyma-binding-{{binding_id}}`. The ClusterRole can be used to modify permissions granted to the kubeconfig.
+After the insert has been done, KEB creates ServiceAccount, ClusterRole (administrator privileges), and ClusterRoleBinding, all named `kyma-binding-{{binding_id}}`. You can use the ClusterRole to modify permissions granted to the kubeconfig.
 
-The created resources are then used to generate a [`TokenRequest`](https://kubernetes.io/docs/reference/kubernetes-api/authentication-resources/token-request-v1/). The token is then wrapped in a kubeconfig template and returned to the user. The encrypted credentials are then stored as an attribute in the previously created database binding.
+The created resources are then used to generate a [TokenRequest](https://kubernetes.io/docs/reference/kubernetes-api/authentication-resources/token-request-v1/). The token is then wrapped in a kubeconfig template and returned to the user. The encrypted credentials are then stored as an attribute in the previously created database binding.
 
 > [!NOTE]
->  Creation of multiple and unused `TokenRequest` resources is not recommended
+>  Creation of multiple and unused TokenRequest resources is not recommended.
 
 
-## The Process of Fetching Kyma Binding Process
+## The Process of Fetching a Kyma Binding
 
 ![Get Binding Flow](../assets/bindings-get-flow.drawio.svg)
 
@@ -74,12 +73,12 @@ The endpoint doesn't return bindings for such instances. Existing bindings are r
 ![Delete Binding Flow](../assets/bindings-delete-flow.drawio.svg)
 
 The diagram shows the flow of removing a Kyma binding. The process starts with a DELETE request sent to the KEB API. The first instruction is to check if the Kyma instance that the request refers to exists. 
-Any bindings of non-existing instances are treated as orphaned and are destined to be removed. The next step is to conditionally delete the binding's `ClusterRole`, `ClusterRoleBinding`, and `ServiceAccount`, given that the cluster has been provisioned and not marked for removal. In case of deprovisioning or suspension of the Kyma cluster, this is unnecessary because the cluster is removed either way. 
+Any bindings of non-existing instances are treated as orphaned and are removed. The next step is to conditionally delete the binding's ClusterRole, ClusterRoleBinding, and ServiceAccount, given that the cluster has been provisioned and not marked for removal. In case of deprovisioning or suspension of the Kyma cluster, this is unnecessary because the cluster is removed either way. 
 In case of errors during the resource removal process, the binding database record should not be removed, which is why the resource removal happens before the binding database record removal. 
 Finally, the last step is to remove the binding record from the database. 
 
 > [!WARNING]
-> Removing the `ServiceAccount` invalidates all tokens generated for that account, revoking access to the cluster for all clients using the kubeconfig from the binding.
+> Removing the ServiceAccount invalidates all tokens generated for that account, revoking access to the cluster for all clients using the kubeconfig from the binding.
 
 ## Cleanup Job
 
