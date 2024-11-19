@@ -1,6 +1,6 @@
 # Kyma Bindings
 
-Kyma Binding is an abstraction of Kyma Environment Broker (KEB) that allows to generate credentials for accessing a SAP Kyma Runtime (SKR) created by KEB. The credentials are generated in the form of an admin kubeconfig file, that you can use to access the SKR, and are wrapped in a service binding object as it is known in the Open Service Broker API specification. The generated kubeconfig contains a TokenRequest that is tied to its custom ServiceAccount, which allows for revoking permissions, restricting privilleges using Kubernetes RBAC and short lived tokens generation.
+The Kyma binding is an abstraction of Kyma Environment Broker (KEB) that allows generating credentials for accessing a SAP BTP, Kyma runtime instance created by KEB. The credentials are generated as an admin kubeconfig file that you can use to access the Kyma runtime. They are wrapped in a service binding object, as is known in the Open Service Broker API (OSB API) specification. The generated kubeconfig contains a TokenRequest tied to its custom ServiceAccount, which allows for revoking permissions, restricting privileges using Kubernetes RBAC, and generating short-lived tokens.
 
 ![Kyma bindings components](../assets/bindings-general.drawio.svg)
 
