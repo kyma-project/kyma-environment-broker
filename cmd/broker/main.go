@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"io"
+	"log/slog"
 	"net/http"
 	"os"
 	gruntime "runtime"
@@ -11,19 +12,11 @@ import (
 	"sort"
 	"time"
 
-	"k8s.io/client-go/kubernetes"
-
-	imv1 "github.com/kyma-project/infrastructure-manager/api/v1"
-
-	"github.com/kyma-project/kyma-environment-broker/internal/expiration"
-	"github.com/kyma-project/kyma-environment-broker/internal/metricsv2"
-	"github.com/kyma-project/kyma-environment-broker/internal/whitelist"
-
-	"code.cloudfoundry.org/lager"
 	"github.com/dlmiddlecote/sqlstats"
 	shoot "github.com/gardener/gardener/pkg/apis/core/v1beta1"
 	"github.com/gorilla/handlers"
 	"github.com/gorilla/mux"
+	imv1 "github.com/kyma-project/infrastructure-manager/api/v1"
 	"github.com/kyma-project/kyma-environment-broker/common/gardener"
 	"github.com/kyma-project/kyma-environment-broker/common/hyperscaler"
 	orchestrationExt "github.com/kyma-project/kyma-environment-broker/common/orchestration"
@@ -37,9 +30,11 @@ import (
 	"github.com/kyma-project/kyma-environment-broker/internal/event"
 	"github.com/kyma-project/kyma-environment-broker/internal/events"
 	eventshandler "github.com/kyma-project/kyma-environment-broker/internal/events/handler"
+	"github.com/kyma-project/kyma-environment-broker/internal/expiration"
 	"github.com/kyma-project/kyma-environment-broker/internal/health"
 	"github.com/kyma-project/kyma-environment-broker/internal/httputil"
 	"github.com/kyma-project/kyma-environment-broker/internal/kubeconfig"
+	"github.com/kyma-project/kyma-environment-broker/internal/metricsv2"
 	"github.com/kyma-project/kyma-environment-broker/internal/middleware"
 	"github.com/kyma-project/kyma-environment-broker/internal/notification"
 	"github.com/kyma-project/kyma-environment-broker/internal/orchestration"
@@ -53,6 +48,7 @@ import (
 	"github.com/kyma-project/kyma-environment-broker/internal/storage/dbmodel"
 	"github.com/kyma-project/kyma-environment-broker/internal/suspension"
 	"github.com/kyma-project/kyma-environment-broker/internal/swagger"
+	"github.com/kyma-project/kyma-environment-broker/internal/whitelist"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/sirupsen/logrus"
@@ -60,12 +56,15 @@ import (
 	apiextensionsv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
 	"k8s.io/apimachinery/pkg/util/wait"
 	"k8s.io/client-go/dynamic"
+	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/kubernetes/scheme"
 	"k8s.io/client-go/rest"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/client/apiutil"
 	"sigs.k8s.io/controller-runtime/pkg/client/config"
 )
+
+var LogLevel = new(slog.LevelVar)
 
 // Config holds configuration for the whole application
 type Config struct {
@@ -180,24 +179,24 @@ const (
 	startStageName              = "start"
 )
 
-func periodicProfile(logger lager.Logger, profiler ProfilerConfig) {
+func periodicProfile(logger *slog.Logger, profiler ProfilerConfig) {
 	if profiler.Memory == false {
 		return
 	}
 	logger.Info(fmt.Sprintf("Starting periodic profiler %v", profiler))
 	if err := os.MkdirAll(profiler.Path, os.ModePerm); err != nil {
-		logger.Error(fmt.Sprintf("Failed to create dir %v for profile storage", profiler.Path), err)
+		logger.Error(fmt.Sprintf("Failed to create dir %v for profile storage", profiler.Path), "error", err)
 	}
 	for {
 		profName := fmt.Sprintf("%v/mem-%v.pprof", profiler.Path, time.Now().Unix())
 		logger.Info(fmt.Sprintf("Creating periodic memory profile %v", profName))
 		profFile, err := os.Create(profName)
 		if err != nil {
-			logger.Error(fmt.Sprintf("Creating periodic memory profile %v failed", profName), err)
+			logger.Error(fmt.Sprintf("Creating periodic memory profile %v failed", profName), "error", err)
 		}
 		err = pprof.Lookup("allocs").WriteTo(profFile, 0)
 		if err != nil {
-			logger.Error(fmt.Sprintf("Failed to write periodic memory profile to %v file", profName), err)
+			logger.Error(fmt.Sprintf("Failed to write periodic memory profile to %v file", profName), "error", err)
 		}
 		gruntime.GC()
 		time.Sleep(profiler.Sampling)
@@ -232,11 +231,15 @@ func main() {
 	if cfg.LogLevel != "" {
 		l, _ := logrus.ParseLevel(cfg.LogLevel)
 		logs.SetLevel(l)
+		if cfg.LogLevel == "debug" {
+			LogLevel.Set(slog.LevelDebug)
+		}
 	}
 
 	cfg.OrchestrationConfig.KubernetesVersion = cfg.Provisioner.KubernetesVersion
+
 	// create logger
-	logger := lager.NewLogger("kyma-env-broker")
+	logger := slog.New(slog.NewJSONHandler(os.Stdout, &slog.HandlerOptions{Level: LogLevel})).With("source", "kyma-env-broker")
 
 	logger.Info("Starting Kyma Environment Broker")
 
@@ -412,19 +415,12 @@ func logConfiguration(logs *logrus.Logger, cfg Config) {
 }
 
 func createAPI(router *mux.Router, servicesConfig broker.ServicesConfig, planValidator broker.PlanValidator, cfg *Config, db storage.BrokerStorage,
-	provisionQueue, deprovisionQueue, updateQueue *process.Queue, logger lager.Logger, logs logrus.FieldLogger, planDefaults broker.PlanDefaults, kcBuilder kubeconfig.KcBuilder, clientProvider K8sClientProvider, kubeconfigProvider KubeconfigProvider, gardenerClient, kcpK8sClient client.Client, publisher event.Publisher) {
+	provisionQueue, deprovisionQueue, updateQueue *process.Queue, logger *slog.Logger, logs logrus.FieldLogger, planDefaults broker.PlanDefaults, kcBuilder kubeconfig.KcBuilder, clientProvider K8sClientProvider, kubeconfigProvider KubeconfigProvider, gardenerClient, kcpK8sClient client.Client, publisher event.Publisher) {
 
 	suspensionCtxHandler := suspension.NewContextUpdateHandler(db.Operations(), provisionQueue, deprovisionQueue, logs)
 
 	defaultPlansConfig, err := servicesConfig.DefaultPlansConfig()
 	fatalOnError(err, logs)
-
-	debugSink, err := lager.NewRedactingSink(lager.NewWriterSink(os.Stdout, lager.DEBUG), []string{"instance-details"}, []string{})
-	fatalOnError(err, logs)
-	logger.RegisterSink(debugSink)
-	errorSink, err := lager.NewRedactingSink(lager.NewWriterSink(os.Stderr, lager.ERROR), []string{"instance-details"}, []string{})
-	fatalOnError(err, logs)
-	logger.RegisterSink(errorSink)
 
 	freemiumGlobalAccountIds, err := whitelist.ReadWhitelistedGlobalAccountIdsFromFile(cfg.FreemiumWhitelistedGlobalAccountsFilePath)
 	fatalOnError(err, logs)
