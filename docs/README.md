@@ -17,6 +17,8 @@ If you want to know how to use KEB, read the documents in the [`user`](user) dir
 * [Check Operation Status](./user/05-30-operation-status.md)
 * [Check SAP BTP, Kyma Runtime Instance Details](./user/05-40-instance-details.md)
 * [Configure List of Modules](./user/05-50-configure-list-of-modules.md)
+* [Kyma Bindings](./user/05-60-kyma-bindings.md)
+* [Kyma Bindings: API Examples](./user/05-60-kyma-bindings-api-examples.md)
 * [Kyma Environment Broker Metrics](./user/06-10-metrics.md)
 
 For technical details of KEB, go to the `contributor` directory:  
