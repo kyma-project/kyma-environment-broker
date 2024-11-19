@@ -7,6 +7,7 @@ import (
 
 	"github.com/dlmiddlecote/sqlstats"
 	"github.com/gocraft/dbr"
+	imv1 "github.com/kyma-project/infrastructure-manager/api/v1"
 	"github.com/kyma-project/kyma-environment-broker/common/gardener"
 	"github.com/kyma-project/kyma-environment-broker/internal/broker"
 	"github.com/kyma-project/kyma-environment-broker/internal/environmentscleanup"
@@ -20,6 +21,7 @@ import (
 	"golang.org/x/oauth2/clientcredentials"
 	"k8s.io/apimachinery/pkg/util/wait"
 	"k8s.io/client-go/dynamic"
+	"k8s.io/client-go/kubernetes/scheme"
 	"k8s.io/client-go/rest"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/client/apiutil"
@@ -103,6 +105,8 @@ func (b *AppBuilder) WithStorage() {
 }
 
 func (b *AppBuilder) WithK8sClient() {
+	err := imv1.AddToScheme(scheme.Scheme)
+	FatalOnError(err)
 	k8sCfg, err := k8scfg.GetConfig()
 	FatalOnError(err)
 	cli, err := createK8sClient(k8sCfg)
