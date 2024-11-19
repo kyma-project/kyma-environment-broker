@@ -17,12 +17,11 @@ The binding creation process, which starts with a PUT HTTP request sent to the `
 Besides the kubeconfig, the response contains metadata with the **expires_at** field, which specifies the expiration time of the kubeconfig. 
 To specify the duration for which the generated kubeconfig is valid explicitly, provide the **expiration_seconds** in the `parameter` object of the request body.
 
-The following diagram shows the flow of creating a service binding in Kyma Environment Broker. The process starts with a PUT request sent to the KEB API. 
+The following diagram shows the flow of creating a service binding in Kyma Environment Broker. The process starts with a PUT request sent to KEB API. 
+> [!NOTE] 
+> On the diagram, "error" refers to a foreseen error in the process, not a server error.
 
 ![Bindings Create Flow](../assets/bindings-create-flow.drawio.svg)
-
-> [!NOTE] 
-> On the diagram error means forseen error in the process, not a server error.
 
 The creation process is divided into three parts: configuration check, request validation, and binding creation.
 
