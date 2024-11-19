@@ -34,7 +34,6 @@ type config struct {
 	Gardener      gardener.Config
 	Database      storage.Config
 	Broker        broker.ClientConfig
-	DomainName    string
 }
 
 type AppBuilder struct {
@@ -62,9 +61,6 @@ func (b *AppBuilder) WithConfig() {
 	err := envconfig.InitWithPrefix(&b.cfg, "APP")
 	if err != nil {
 		FatalOnError(fmt.Errorf("while loading cleanup config: %w", err))
-	}
-	if b.cfg.DomainName != "cp.dev.kyma.cloud.sap" {
-		FatalOnError(fmt.Errorf("while verifying the environment, detected invalid DomainName: %s; this application is designed to run only in the development environment", b.cfg.DomainName))
 	}
 }
 

@@ -52,6 +52,7 @@ type Service struct {
 type runtime struct {
 	ID        string
 	AccountID string
+	ShootName string
 }
 
 func NewService(gardenerClient GardenerClient, brokerClient BrokerClient, k8sClient client.Client, instanceStorage storage.Instances, logger *log.Logger, maxShootAge time.Duration, labelSelector string) *Service {
@@ -174,6 +175,7 @@ func (s *Service) shootToRuntime(st unstructured.Unstructured) (*runtime, error)
 	return &runtime{
 		ID:        runtimeID,
 		AccountID: accountID,
+		ShootName: shoot.GetName(),
 	}, nil
 }
 
@@ -261,7 +263,7 @@ func (s *Service) cleanUpRuntimeCRs(runtimesToDelete []runtime, kebInstancesToDe
 	for _, runtime := range runtimesToDelete {
 		if !kebInstanceExists(runtime.ID) {
 			s.logger.Infof("Deleting runtime CR for runtimeID ID %q", runtime.ID)
-			err := s.deleteRuntimeCR(runtime.ID)
+			err := s.deleteRuntimeCR(runtime)
 			if err != nil {
 				result = multierror.Append(result, err)
 			}
@@ -271,20 +273,25 @@ func (s *Service) cleanUpRuntimeCRs(runtimesToDelete []runtime, kebInstancesToDe
 	return result
 }
 
-func (s *Service) deleteRuntimeCR(runtimeID string) error {
-	var runtime = imv1.Runtime{}
-	err := s.k8sClient.Get(context.Background(), client.ObjectKey{Name: runtimeID, Namespace: kcpNamespace}, &runtime)
+func (s *Service) deleteRuntimeCR(runtime runtime) error {
+	var runtimeCR = imv1.Runtime{}
+	err := s.k8sClient.Get(context.Background(), client.ObjectKey{Name: runtime.ID, Namespace: kcpNamespace}, &runtimeCR)
 	if err != nil {
-		s.logger.Error(fmt.Errorf("while getting runtime CR for runtime ID %q: %w", runtimeID, err))
+		s.logger.Error(fmt.Errorf("while getting runtime CR for runtime ID %q: %w", runtime.ID, err))
 		return nil
 	}
 
-	err = s.k8sClient.Delete(context.Background(), &runtime)
+	if runtime.ShootName != runtimeCR.Spec.Shoot.Name {
+		s.logger.Error(fmt.Errorf("gardener shoot name %q does not match runtime CR shoot name %q", runtime.ShootName, runtimeCR.Spec.Shoot.Name))
+		return nil
+	}
+
+	err = s.k8sClient.Delete(context.Background(), &runtimeCR)
 	if err != nil {
-		s.logger.Error(fmt.Errorf("while deleting runtime CR for runtime ID %q: %w", runtimeID, err))
+		s.logger.Error(fmt.Errorf("while deleting runtime CR for runtime ID %q: %w", runtime.ID, err))
 		return err
 	}
 
-	s.logger.Infof("Successfully deleted runtime CR for runtimeID ID %q", runtimeID)
+	s.logger.Infof("Successfully deleted runtime CR for runtimeID ID %q", runtime.ID)
 	return nil
 }
