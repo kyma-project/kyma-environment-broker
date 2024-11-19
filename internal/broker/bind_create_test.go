@@ -7,19 +7,16 @@ import (
 	"testing"
 	"time"
 
-	"github.com/kyma-project/kyma-environment-broker/internal/event"
-
 	"github.com/google/uuid"
-	"github.com/stretchr/testify/assert"
-	"k8s.io/client-go/kubernetes"
-
-	"code.cloudfoundry.org/lager"
+	"github.com/kyma-project/kyma-environment-broker/internal/event"
 	"github.com/kyma-project/kyma-environment-broker/internal/fixture"
 	"github.com/kyma-project/kyma-environment-broker/internal/storage"
 	"github.com/kyma-project/kyma-environment-broker/internal/storage/dberr"
 	"github.com/pivotal-cf/brokerapi/v11/domain"
 	"github.com/sirupsen/logrus"
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"k8s.io/client-go/kubernetes"
 )
 
 const (
@@ -48,9 +45,6 @@ func TestCreateBindingEndpoint(t *testing.T) {
 	logs.SetFormatter(&logrus.JSONFormatter{
 		TimestampFormat: time.RFC3339Nano,
 	})
-
-	brokerLogger := lager.NewLogger("test")
-	brokerLogger.RegisterSink(lager.NewWriterSink(logs.Writer(), lager.DEBUG))
 
 	//// schema
 
