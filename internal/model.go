@@ -66,7 +66,10 @@ type Instance struct {
 	Version      int
 	Provider     CloudProvider
 	Reconcilable bool
+}
 
+type InstanceWithSubaccountState struct {
+	Instance
 	BetaEnabled       string
 	UsedForProduction string
 }

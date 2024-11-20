@@ -238,23 +238,28 @@ func (s *instances) List(filter dbmodel.InstanceFilter) ([]internal.Instance, in
 		nil
 }
 
-func (s *instances) ListWithSubaccountState(filter dbmodel.InstanceFilter) ([]internal.Instance, int, int, error) {
+func (s *instances) ListWithSubaccountState(filter dbmodel.InstanceFilter) ([]internal.InstanceWithSubaccountState, int, int, error) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
-	var toReturn []internal.Instance
+	var toReturn []internal.InstanceWithSubaccountState
 
 	offset := pagination.ConvertPageAndPageSizeToOffset(filter.PageSize, filter.Page)
 
 	instances := s.filterInstances(filter)
-	sortInstancesByCreatedAt(instances)
+	sort.Slice(instances, func(i, j int) bool {
+		return instances[i].CreatedAt.Before(instances[j].CreatedAt)
+	})
 
 	for i := offset; (filter.PageSize < 1 || i < offset+filter.PageSize) && i < len(instances); i++ {
 		instanceToReturn := s.instances[instances[i].InstanceID]
-		if _, exists := s.subaccountStatesStorage.subaccountStates[instanceToReturn.SubAccountID]; exists {
-			instanceToReturn.BetaEnabled = s.subaccountStatesStorage.subaccountStates[instanceToReturn.SubAccountID].BetaEnabled
-			instanceToReturn.UsedForProduction = s.subaccountStatesStorage.subaccountStates[instanceToReturn.SubAccountID].UsedForProduction
+		instanceWithSubaccountState := internal.InstanceWithSubaccountState{
+			Instance: instanceToReturn,
 		}
-		toReturn = append(toReturn, s.instances[instances[i].InstanceID])
+		if _, exists := s.subaccountStatesStorage.subaccountStates[instanceToReturn.SubAccountID]; exists {
+			instanceWithSubaccountState.BetaEnabled = s.subaccountStatesStorage.subaccountStates[instanceToReturn.SubAccountID].BetaEnabled
+			instanceWithSubaccountState.UsedForProduction = s.subaccountStatesStorage.subaccountStates[instanceToReturn.SubAccountID].UsedForProduction
+		}
+		toReturn = append(toReturn, instanceWithSubaccountState)
 	}
 
 	return toReturn,
