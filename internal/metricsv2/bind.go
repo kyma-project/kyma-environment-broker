@@ -74,7 +74,7 @@ func NewBindingCreationCollector() *BindingCreationCollector {
 		bindingCreated: prometheus.NewCounterVec(prometheus.CounterOpts{
 			Namespace: prometheusNamespacev2,
 			Subsystem: prometheusSubsystemv2,
-			Name:      "kcp_keb_v2_binding_created_total",
+			Name:      "binding_created_total",
 			Help:      "The total number of created bindings",
 		}, []string{"plan_id"}),
 	}

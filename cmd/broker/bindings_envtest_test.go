@@ -312,6 +312,36 @@ func TestCreateBindingEndpoint(t *testing.T) {
 		assertClusterAccess(t, "secret-to-check-first", binding)
 	})
 
+	t.Run("should invalidate binding when cluster role binding is removed", func(t *testing.T) {
+		// given
+		bindingID := uuid.New().String()
+
+		response := createBinding(instanceID1, bindingID, t)
+		defer response.Body.Close()
+
+		require.Equal(t, http.StatusCreated, response.StatusCode)
+
+		binding := getBindingUnmarshalled(instanceID1, bindingID, t)
+
+		duration, err := getTokenDurationFromBinding(t, binding)
+		require.NoError(t, err)
+		assert.Equal(t, expirationSeconds*time.Second, duration)
+
+		assertClusterAccess(t, "secret-to-check-first", binding)
+
+		// when
+		err = clientFirst.Delete(context.Background(), &rbacv1.ClusterRoleBinding{
+			ObjectMeta: v1.ObjectMeta{
+				Name:      brokerBindings.BindingName(bindingID),
+				Namespace: brokerBindings.BindingNamespace,
+			},
+		})
+		assert.NoError(t, err)
+
+		// then
+		assertClusterNoAccess(t, "secret-to-check-first", binding)
+	})
+
 	t.Run("should return created bindings when multiple bindings created", func(t *testing.T) {
 		// given
 		firstInstanceFirstBindingID, firstInstancefirstBinding := createBindingWithRandomBindingID(instanceID1, httpServer, t)
@@ -542,6 +572,18 @@ func assertClusterAccess(t *testing.T, controlSecretName string, binding domain.
 
 	_, err := newClient.CoreV1().Secrets("default").Get(context.Background(), controlSecretName, v1.GetOptions{})
 	assert.NoError(t, err)
+}
+
+func assertClusterNoAccess(t *testing.T, controlSecretName string, binding domain.Binding) {
+
+	credentials, ok := binding.Credentials.(map[string]interface{})
+	require.True(t, ok)
+	kubeconfig := credentials["kubeconfig"].(string)
+
+	newClient := kubeconfigClient(t, kubeconfig)
+
+	_, err := newClient.CoreV1().Secrets("default").Get(context.Background(), controlSecretName, v1.GetOptions{})
+	assert.True(t, apierrors.IsForbidden(err))
 }
 
 func assertRolesExistence(t *testing.T, bindingID string, binding domain.Binding) {
