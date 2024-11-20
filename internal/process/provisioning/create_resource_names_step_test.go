@@ -19,6 +19,7 @@ import (
 	k8sruntime "k8s.io/apimachinery/pkg/runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client/fake"
 
+	pkg "github.com/kyma-project/kyma-environment-broker/common/runtime"
 	"github.com/kyma-project/kyma-environment-broker/internal/fixture"
 	"github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/assert"
@@ -148,7 +149,7 @@ func fixProvisioningParametersWithPlanID(planID, region string, platformRegion s
 			SubAccountID:    subAccountID,
 		},
 		PlatformRegion: platformRegion,
-		Parameters: internal.ProvisioningParametersDTO{
+		Parameters: pkg.ProvisioningParametersDTO{
 			Region: ptr.String(region),
 			Name:   "dummy",
 			Zones:  []string{"europe-west3-b", "europe-west3-c"},
@@ -174,7 +175,7 @@ func fixInputCreator(t *testing.T) internal.ProvisionerInputCreator {
 
 	pp := internal.ProvisioningParameters{
 		PlanID:     broker.GCPPlanID,
-		Parameters: internal.ProvisioningParametersDTO{},
+		Parameters: pkg.ProvisioningParametersDTO{},
 	}
 	creator, err := ibf.CreateProvisionInput(pp)
 	if err != nil {

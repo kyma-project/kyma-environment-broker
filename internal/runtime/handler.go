@@ -161,7 +161,7 @@ func (h *Handler) InstanceFromInstanceArchived(archived internal.InstanceArchive
 		ServicePlanName:             archived.PlanName,
 		ProviderRegion:              archived.Region,
 		CreatedAt:                   archived.ProvisioningStartedAt,
-		Provider:                    internal.CloudProvider(archived.Provider),
+		Provider:                    pkg.CloudProvider(archived.Provider),
 		Reconcilable:                false,
 
 		InstanceDetails: internal.InstanceDetails{
@@ -172,13 +172,13 @@ func (h *Handler) InstanceFromInstanceArchived(archived internal.InstanceArchive
 			ErsContext: internal.ERSContext{
 				UserID: archived.UserID(),
 			},
-			Parameters:     internal.ProvisioningParametersDTO{},
+			Parameters:     pkg.ProvisioningParametersDTO{},
 			PlatformRegion: archived.SubaccountRegion,
 		},
 	}
 }
 
-func (h *Handler) getRuntimes(w http.ResponseWriter, req *http.Request) {
+func (h *Handler) getRuntimes(w http.ResponseWriter, req *http.Request) { //runtime tu wchodzi
 	toReturn := make([]pkg.RuntimeDTO, 0)
 
 	pageSize, page, err := pagination.ExtractPaginationConfigFromRequest(req, h.defaultMaxPage)

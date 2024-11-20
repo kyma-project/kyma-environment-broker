@@ -9,6 +9,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client/fake"
 
 	"github.com/kyma-project/control-plane/components/provisioner/pkg/gqlschema"
+	pkg "github.com/kyma-project/kyma-environment-broker/common/runtime"
 	"github.com/kyma-project/kyma-environment-broker/internal"
 	"github.com/kyma-project/kyma-environment-broker/internal/broker"
 	"github.com/kyma-project/kyma-environment-broker/internal/fixture"
@@ -36,7 +37,7 @@ func TestUpgradeShootStep_Run(t *testing.T) {
 	operation.RuntimeID = "runtime-id"
 	operation.ProvisionerOperationID = ""
 	operation.ProvisioningParameters.ErsContext.UserID = "test-user-id"
-	operation.ProvisioningParameters.Parameters.OIDC = &internal.OIDCConfigDTO{
+	operation.ProvisioningParameters.Parameters.OIDC = &pkg.OIDCConfigDTO{
 		ClientID:       "client-id",
 		GroupsClaim:    "groups",
 		IssuerURL:      "https://issuer.url",
@@ -100,7 +101,7 @@ func TestUpgradeShootStep_RunRuntimeControlledByKIM(t *testing.T) {
 	operation.KymaResourceNamespace = "kcp-system"
 	operation.ProvisionerOperationID = ""
 	operation.ProvisioningParameters.ErsContext.UserID = "test-user-id"
-	operation.ProvisioningParameters.Parameters.OIDC = &internal.OIDCConfigDTO{
+	operation.ProvisioningParameters.Parameters.OIDC = &pkg.OIDCConfigDTO{
 		ClientID:       "client-id",
 		GroupsClaim:    "groups",
 		IssuerURL:      "https://issuer.url",
@@ -148,7 +149,7 @@ func fixInputCreator(t *testing.T) internal.ProvisionerInputCreator {
 
 	pp := internal.ProvisioningParameters{
 		PlanID:     broker.GCPPlanID,
-		Parameters: internal.ProvisioningParametersDTO{},
+		Parameters: pkg.ProvisioningParametersDTO{},
 	}
 	creator, err := ibf.CreateUpgradeShootInput(pp)
 	if err != nil {

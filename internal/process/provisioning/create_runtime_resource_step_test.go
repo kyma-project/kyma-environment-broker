@@ -35,6 +35,7 @@ import (
 	"github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/assert"
 
+	pkg "github.com/kyma-project/kyma-environment-broker/common/runtime"
 	"k8s.io/client-go/kubernetes/scheme"
 )
 
@@ -53,7 +54,7 @@ var defaultNetworking = imv1.Networking{
 	Type: ptr.String("calico"),
 }
 
-var defaultOIDSConfig = internal.OIDCConfigDTO{
+var defaultOIDSConfig = pkg.OIDCConfigDTO{
 	ClientID:       "client-id-default",
 	GroupsClaim:    "gc-default",
 	IssuerURL:      "issuer-url-default",
@@ -69,7 +70,7 @@ func TestCreateRuntimeResourceStep_OIDC_AllCustom(t *testing.T) {
 	log := logrus.New()
 	memoryStorage := storage.NewMemoryStorage()
 	instance, operation := fixInstanceAndOperation(broker.AzurePlanID, "westeurope", "platform-region")
-	operation.ProvisioningParameters.Parameters.OIDC = &internal.OIDCConfigDTO{
+	operation.ProvisioningParameters.Parameters.OIDC = &pkg.OIDCConfigDTO{
 		ClientID:       "client-id-custom",
 		GroupsClaim:    "gc-custom",
 		IssuerURL:      "issuer-url-custom",
@@ -113,7 +114,7 @@ func TestCreateRuntimeResourceStep_OIDC_MixedCustom(t *testing.T) {
 	log := logrus.New()
 	memoryStorage := storage.NewMemoryStorage()
 	instance, operation := fixInstanceAndOperation(broker.AzurePlanID, "westeurope", "platform-region")
-	operation.ProvisioningParameters.Parameters.OIDC = &internal.OIDCConfigDTO{
+	operation.ProvisioningParameters.Parameters.OIDC = &pkg.OIDCConfigDTO{
 		ClientID:      "client-id-custom",
 		GroupsClaim:   "gc-custom",
 		IssuerURL:     "issuer-url-custom",
@@ -420,7 +421,7 @@ func TestCreateRuntimeResourceStep_Defaults_AWS_MultiZoneWithNetworking_ActualCr
 	err := imv1.AddToScheme(scheme.Scheme)
 
 	instance, operation := fixInstanceAndOperation(broker.AWSPlanID, "eu-west-2", "platform-region")
-	operation.ProvisioningParameters.Parameters.Networking = &internal.NetworkingDTO{
+	operation.ProvisioningParameters.Parameters.Networking = &pkg.NetworkingDTO{
 		NodesCidr:    "192.168.48.0/20",
 		PodsCidr:     ptr.String("10.104.0.0/24"),
 		ServicesCidr: ptr.String("10.105.0.0/24"),
@@ -631,15 +632,15 @@ func TestCreateRuntimeResourceStep_SapConvergedCloud(t *testing.T) {
 
 	for _, testCase := range []struct {
 		name                string
-		gotProvider         internal.CloudProvider
+		gotProvider         pkg.CloudProvider
 		expectedZonesCount  int
 		expectedProvider    string
 		expectedMachineType string
 		expectedRegion      string
 		possibleZones       []string
 	}{
-		{"Single zone", internal.SapConvergedCloud, 1, "openstack", "g_c2_m8", "eu-de-1", []string{"eu-de-1a", "eu-de-1b", "eu-de-1d"}},
-		{"Multi zone", internal.SapConvergedCloud, 3, "openstack", "g_c2_m8", "eu-de-1", []string{"eu-de-1a", "eu-de-1b", "eu-de-1d"}},
+		{"Single zone", pkg.SapConvergedCloud, 1, "openstack", "g_c2_m8", "eu-de-1", []string{"eu-de-1a", "eu-de-1b", "eu-de-1d"}},
+		{"Multi zone", pkg.SapConvergedCloud, 3, "openstack", "g_c2_m8", "eu-de-1", []string{"eu-de-1a", "eu-de-1b", "eu-de-1d"}},
 	} {
 		t.Run(testCase.name, func(t *testing.T) {
 			log := logrus.New()
@@ -684,14 +685,14 @@ func TestCreateRuntimeResourceStep_Defaults_Freemium(t *testing.T) {
 
 	for _, testCase := range []struct {
 		name                string
-		gotProvider         internal.CloudProvider
+		gotProvider         pkg.CloudProvider
 		expectedProvider    string
 		expectedMachineType string
 		expectedRegion      string
 		possibleZones       []string
 	}{
-		{"azure", internal.Azure, "azure", "Standard_D4s_v5", "westeurope", []string{"1", "2", "3"}},
-		{"aws", internal.AWS, "aws", "m5.xlarge", "westeurope", []string{"eu-central-1a", "eu-central-1b", "eu-central-1c"}},
+		{"azure", pkg.Azure, "azure", "Standard_D4s_v5", "westeurope", []string{"1", "2", "3"}},
+		{"aws", pkg.AWS, "aws", "m5.xlarge", "westeurope", []string{"eu-central-1a", "eu-central-1b", "eu-central-1c"}},
 	} {
 		t.Run(testCase.name, func(t *testing.T) {
 			log := logrus.New()
@@ -894,7 +895,7 @@ func fixOperationForCreateRuntimeResourceStep(operationID, instanceID, planID, r
 		PlanID:     planID,
 		ServiceID:  fixture.ServiceId,
 		ErsContext: fixture.FixERSContext(operationID),
-		Parameters: internal.ProvisioningParametersDTO{
+		Parameters: pkg.ProvisioningParametersDTO{
 			Name:                  "cluster-test",
 			Region:                regionToSet,
 			RuntimeAdministrators: runtimeAdministrators,

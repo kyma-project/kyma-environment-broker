@@ -3,6 +3,7 @@ package provider
 import (
 	"fmt"
 
+	pkg "github.com/kyma-project/kyma-environment-broker/common/runtime"
 	"github.com/kyma-project/kyma-environment-broker/internal"
 	"github.com/kyma-project/kyma-environment-broker/internal/broker"
 )
@@ -14,7 +15,7 @@ type Provider interface {
 func GetPlanSpecificValues(
 	operation *internal.Operation,
 	multiZoneCluster bool,
-	defaultTrialProvider internal.CloudProvider,
+	defaultTrialProvider pkg.CloudProvider,
 	useSmallerMachineTypes bool,
 	trialPlatformRegionMapping map[string]string,
 	defaultPurpose string,
@@ -53,12 +54,12 @@ func GetPlanSpecificValues(
 		}
 	case broker.FreemiumPlanID:
 		switch operation.ProvisioningParameters.PlatformProvider {
-		case internal.AWS:
+		case pkg.AWS:
 			p = &AWSFreemiumInputProvider{
 				UseSmallerMachineTypes: useSmallerMachineTypes,
 				ProvisioningParameters: operation.ProvisioningParameters,
 			}
-		case internal.Azure:
+		case pkg.Azure:
 			p = &AzureFreemiumInputProvider{
 				UseSmallerMachineTypes: useSmallerMachineTypes,
 				ProvisioningParameters: operation.ProvisioningParameters,
@@ -73,25 +74,25 @@ func GetPlanSpecificValues(
 			ProvisioningParameters: operation.ProvisioningParameters,
 		}
 	case broker.TrialPlanID:
-		var trialProvider internal.CloudProvider
+		var trialProvider pkg.CloudProvider
 		if operation.ProvisioningParameters.Parameters.Provider == nil {
 			trialProvider = defaultTrialProvider
 		} else {
 			trialProvider = *operation.ProvisioningParameters.Parameters.Provider
 		}
 		switch trialProvider {
-		case internal.AWS:
+		case pkg.AWS:
 			p = &AWSTrialInputProvider{
 				PlatformRegionMapping:  trialPlatformRegionMapping,
 				UseSmallerMachineTypes: useSmallerMachineTypes,
 				ProvisioningParameters: operation.ProvisioningParameters,
 			}
-		case internal.GCP:
+		case pkg.GCP:
 			p = &GCPTrialInputProvider{
 				PlatformRegionMapping:  trialPlatformRegionMapping,
 				ProvisioningParameters: operation.ProvisioningParameters,
 			}
-		case internal.Azure:
+		case pkg.Azure:
 			p = &AzureTrialInputProvider{
 				PlatformRegionMapping:  trialPlatformRegionMapping,
 				UseSmallerMachineTypes: useSmallerMachineTypes,
@@ -107,17 +108,17 @@ func GetPlanSpecificValues(
 	return p.Provide(), nil
 }
 
-func ProviderToCloudProvider(providerType string) internal.CloudProvider {
+func ProviderToCloudProvider(providerType string) pkg.CloudProvider {
 	switch providerType {
 	case "azure":
-		return internal.Azure
+		return pkg.Azure
 	case "aws":
-		return internal.AWS
+		return pkg.AWS
 	case "gcp":
-		return internal.GCP
+		return pkg.GCP
 	case "openstack":
-		return internal.SapConvergedCloud
+		return pkg.SapConvergedCloud
 	default:
-		return internal.UnknownProvider
+		return pkg.UnknownProvider
 	}
 }

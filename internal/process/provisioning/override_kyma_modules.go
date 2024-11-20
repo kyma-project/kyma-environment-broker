@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"time"
 
+	pkg "github.com/kyma-project/kyma-environment-broker/common/runtime"
 	"github.com/kyma-project/kyma-environment-broker/internal"
 	"github.com/kyma-project/kyma-environment-broker/internal/process"
 	"github.com/kyma-project/kyma-environment-broker/internal/process/steps"
@@ -57,7 +58,7 @@ func (k *OverrideKymaModules) Run(operation internal.Operation, logger logrus.Fi
 	return operation, 0, nil
 }
 
-func (k *OverrideKymaModules) handleModulesOverride(operation internal.Operation, modulesParams internal.ModulesDTO) (internal.Operation, time.Duration, error) {
+func (k *OverrideKymaModules) handleModulesOverride(operation internal.Operation, modulesParams pkg.ModulesDTO) (internal.Operation, time.Duration, error) {
 	decodeKymaTemplate, err := steps.DecodeKymaTemplate(operation.KymaTemplate)
 	if err != nil {
 		k.logger.Errorf("while decoding Kyma template from previous step: %s", err.Error())
@@ -85,7 +86,7 @@ func (k *OverrideKymaModules) handleModulesOverride(operation internal.Operation
 	}, k.logger)
 }
 
-func (k *OverrideKymaModules) replaceModulesSpec(kymaTemplate *unstructured.Unstructured, customModuleList []internal.ModuleDTO) error {
+func (k *OverrideKymaModules) replaceModulesSpec(kymaTemplate *unstructured.Unstructured, customModuleList []pkg.ModuleDTO) error {
 	toInsert := k.prepareModulesSection(customModuleList)
 	toInsertMarshaled, err := json.Marshal(toInsert)
 	if err != nil {
@@ -103,7 +104,7 @@ func (k *OverrideKymaModules) replaceModulesSpec(kymaTemplate *unstructured.Unst
 	k.logger.Info("custom modules replaced in Kyma template successfully.")
 	return nil
 }
-func (k *OverrideKymaModules) prepareModulesSection(customModuleList []internal.ModuleDTO) []internal.ModuleDTO {
+func (k *OverrideKymaModules) prepareModulesSection(customModuleList []pkg.ModuleDTO) []pkg.ModuleDTO {
 	// if field is "" convert it to nil to field will be not present in yaml
 	mapIfNeeded := func(field *string) *string {
 		if field != nil && *field == "" {
@@ -112,14 +113,14 @@ func (k *OverrideKymaModules) prepareModulesSection(customModuleList []internal.
 		return field
 	}
 
-	overridedModules := make([]internal.ModuleDTO, 0)
+	overridedModules := make([]pkg.ModuleDTO, 0)
 	if customModuleList == nil || len(customModuleList) == 0 {
 		k.logger.Info("empty (0 items) list with custom modules passed to KEB, 0 modules will be installed - default config will be ignored")
 		return overridedModules
 	}
 
 	for _, customModule := range customModuleList {
-		module := internal.ModuleDTO{Name: customModule.Name}
+		module := pkg.ModuleDTO{Name: customModule.Name}
 		module.CustomResourcePolicy = mapIfNeeded(customModule.CustomResourcePolicy)
 		module.Channel = mapIfNeeded(customModule.Channel)
 		overridedModules = append(overridedModules, module)

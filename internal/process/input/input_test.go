@@ -6,6 +6,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/kyma-project/control-plane/components/provisioner/pkg/gqlschema"
 	"github.com/kyma-project/kyma-environment-broker/common/gardener"
+	pkg "github.com/kyma-project/kyma-environment-broker/common/runtime"
 	"github.com/kyma-project/kyma-environment-broker/internal"
 	"github.com/kyma-project/kyma-environment-broker/internal/broker"
 	"github.com/kyma-project/kyma-environment-broker/internal/fixture"
@@ -43,7 +44,7 @@ func TestInputBuilderFactoryForAzurePlan(t *testing.T) {
 	shootName := "c-51bcc12"
 	builder.
 		SetProvisioningParameters(internal.ProvisioningParameters{
-			Parameters: internal.ProvisioningParametersDTO{
+			Parameters: pkg.ProvisioningParametersDTO{
 				Name:         "azure-cluster",
 				TargetSecret: ptr.String("azure-secret"),
 				Purpose:      ptr.String("development"),
@@ -335,7 +336,7 @@ func TestCreateProvisionRuntimeInput_ConfigureOIDC(t *testing.T) {
 		assert.NoError(t, err)
 
 		provisioningParams := fixture.FixProvisioningParameters(id)
-		provisioningParams.Parameters.OIDC = &internal.OIDCConfigDTO{}
+		provisioningParams.Parameters.OIDC = &pkg.OIDCConfigDTO{}
 
 		creator, err := inputBuilder.CreateProvisionInput(provisioningParams)
 		require.NoError(t, err)
@@ -371,7 +372,7 @@ func TestCreateProvisionRuntimeInput_ConfigureOIDC(t *testing.T) {
 		assert.NoError(t, err)
 
 		provisioningParams := fixture.FixProvisioningParameters(id)
-		provisioningParams.Parameters.OIDC = &internal.OIDCConfigDTO{
+		provisioningParams.Parameters.OIDC = &pkg.OIDCConfigDTO{
 			ClientID:       "provided-id",
 			GroupsClaim:    "fake-groups-claim",
 			IssuerURL:      "https://test.domain.local",

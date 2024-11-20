@@ -7,7 +7,7 @@ import (
 
 	"github.com/gorilla/mux"
 
-	"github.com/kyma-project/kyma-environment-broker/internal"
+	pkg "github.com/kyma-project/kyma-environment-broker/common/runtime"
 )
 
 // The providerKey type is no exported to prevent collisions with context keys
@@ -24,7 +24,7 @@ func AddProviderToContext() mux.MiddlewareFunc {
 		return http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
 			vars := mux.Vars(req)
 			region, found := vars["region"]
-			provider := internal.UnknownProvider
+			provider := pkg.UnknownProvider
 			if found {
 				provider = platformProvider(region)
 			}
@@ -36,24 +36,24 @@ func AddProviderToContext() mux.MiddlewareFunc {
 }
 
 // ProviderFromContext returns request provider associated with the context if possible.
-func ProviderFromContext(ctx context.Context) (internal.CloudProvider, bool) {
-	provider, ok := ctx.Value(requestProviderKey).(internal.CloudProvider)
+func ProviderFromContext(ctx context.Context) (pkg.CloudProvider, bool) {
+	provider, ok := ctx.Value(requestProviderKey).(pkg.CloudProvider)
 	return provider, ok
 }
 
 var platformRegionProviderRE = regexp.MustCompile("[0-9]")
 
-func platformProvider(region string) internal.CloudProvider {
+func platformProvider(region string) pkg.CloudProvider {
 	if region == "" {
-		return internal.UnknownProvider
+		return pkg.UnknownProvider
 	}
 	digit := platformRegionProviderRE.FindString(region)
 	switch digit {
 	case "1":
-		return internal.AWS
+		return pkg.AWS
 	case "2":
-		return internal.Azure
+		return pkg.Azure
 	default:
-		return internal.UnknownProvider
+		return pkg.UnknownProvider
 	}
 }

@@ -3,6 +3,7 @@ package provider
 import (
 	"testing"
 
+	pkg "github.com/kyma-project/kyma-environment-broker/common/runtime"
 	"github.com/kyma-project/kyma-environment-broker/internal"
 	"github.com/kyma-project/kyma-environment-broker/internal/ptr"
 )
@@ -14,7 +15,7 @@ func TestGCPDefaults(t *testing.T) {
 		Purpose:   PurposeProduction,
 		MultiZone: true,
 		ProvisioningParameters: internal.ProvisioningParameters{
-			Parameters:     internal.ProvisioningParametersDTO{Region: nil},
+			Parameters:     pkg.ProvisioningParametersDTO{Region: nil},
 			PlatformRegion: "cf-eu11",
 		},
 	}
@@ -45,7 +46,7 @@ func TestGCPSpecific(t *testing.T) {
 		Purpose:   PurposeProduction,
 		MultiZone: true,
 		ProvisioningParameters: internal.ProvisioningParameters{
-			Parameters: internal.ProvisioningParametersDTO{
+			Parameters: pkg.ProvisioningParametersDTO{
 				Region: ptr.String("us-central1"),
 			},
 			PlatformRegion: "cf-eu11",
@@ -78,7 +79,7 @@ func TestGCPTrial_Defaults(t *testing.T) {
 	provider := GCPTrialInputProvider{
 		PlatformRegionMapping: TestTrialPlatformRegionMapping,
 		ProvisioningParameters: internal.ProvisioningParameters{
-			Parameters: internal.ProvisioningParametersDTO{Region: nil},
+			Parameters: pkg.ProvisioningParametersDTO{Region: nil},
 		},
 	}
 
@@ -107,7 +108,7 @@ func TestGCPTrial_AbstractRegion(t *testing.T) {
 	provider := GCPTrialInputProvider{
 		PlatformRegionMapping: TestTrialPlatformRegionMapping,
 		ProvisioningParameters: internal.ProvisioningParameters{
-			Parameters: internal.ProvisioningParametersDTO{Region: ptr.String("us")},
+			Parameters: pkg.ProvisioningParametersDTO{Region: ptr.String("us")},
 		},
 	}
 
@@ -136,7 +137,7 @@ func TestGCPTrial_PlatformRegion(t *testing.T) {
 	provider := GCPTrialInputProvider{
 		PlatformRegionMapping: TestTrialPlatformRegionMapping,
 		ProvisioningParameters: internal.ProvisioningParameters{
-			Parameters:     internal.ProvisioningParametersDTO{Region: nil},
+			Parameters:     pkg.ProvisioningParametersDTO{Region: nil},
 			PlatformRegion: "cf-us10",
 		},
 	}
@@ -166,7 +167,7 @@ func TestGCPTrial_PlatformRegionNotInMapping(t *testing.T) {
 	provider := GCPTrialInputProvider{
 		PlatformRegionMapping: TestTrialPlatformRegionMapping,
 		ProvisioningParameters: internal.ProvisioningParameters{
-			Parameters:     internal.ProvisioningParametersDTO{Region: nil},
+			Parameters:     pkg.ProvisioningParametersDTO{Region: nil},
 			PlatformRegion: "cf-us11",
 		},
 	}
@@ -196,7 +197,7 @@ func TestGCPTrial_PlatformRegionNotInMapping_AbstractRegion(t *testing.T) {
 	provider := GCPTrialInputProvider{
 		PlatformRegionMapping: TestTrialPlatformRegionMapping,
 		ProvisioningParameters: internal.ProvisioningParameters{
-			Parameters:     internal.ProvisioningParametersDTO{Region: ptr.String("us")},
+			Parameters:     pkg.ProvisioningParametersDTO{Region: ptr.String("us")},
 			PlatformRegion: "cf-us11",
 		},
 	}
@@ -226,7 +227,7 @@ func TestGCPTrial_InvalidAbstractRegion(t *testing.T) {
 	provider := GCPTrialInputProvider{
 		PlatformRegionMapping: TestTrialPlatformRegionMapping,
 		ProvisioningParameters: internal.ProvisioningParameters{
-			Parameters: internal.ProvisioningParametersDTO{Region: ptr.String("usa")},
+			Parameters: pkg.ProvisioningParametersDTO{Region: ptr.String("usa")},
 		},
 	}
 
@@ -255,7 +256,7 @@ func TestGCPTrial_RegionNotConsistentWithPlatformRegion(t *testing.T) {
 	provider := GCPTrialInputProvider{
 		PlatformRegionMapping: TestTrialPlatformRegionMapping,
 		ProvisioningParameters: internal.ProvisioningParameters{
-			Parameters: internal.ProvisioningParametersDTO{
+			Parameters: pkg.ProvisioningParametersDTO{
 				Region: ptr.String("eu-central-1"),
 			},
 			PlatformRegion: "cf-ap21",
@@ -288,7 +289,7 @@ func TestGCPTrial_KSA(t *testing.T) {
 	provider := GCPTrialInputProvider{
 		PlatformRegionMapping: TestTrialPlatformRegionMapping,
 		ProvisioningParameters: internal.ProvisioningParameters{
-			Parameters: internal.ProvisioningParametersDTO{
+			Parameters: pkg.ProvisioningParametersDTO{
 				Region: ptr.String("eu-central-1"),
 			},
 			PlatformRegion: "cf-sa30",

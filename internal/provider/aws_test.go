@@ -3,6 +3,7 @@ package provider
 import (
 	"testing"
 
+	pkg "github.com/kyma-project/kyma-environment-broker/common/runtime"
 	"github.com/kyma-project/kyma-environment-broker/internal"
 	"github.com/kyma-project/kyma-environment-broker/internal/ptr"
 	"github.com/stretchr/testify/assert"
@@ -17,7 +18,7 @@ func TestAWSDefaults(t *testing.T) {
 		Purpose:   PurposeProduction,
 		MultiZone: true,
 		ProvisioningParameters: internal.ProvisioningParameters{
-			Parameters:     internal.ProvisioningParametersDTO{Region: nil},
+			Parameters:     pkg.ProvisioningParametersDTO{Region: nil},
 			PlatformRegion: "cf-eu11",
 		},
 	}
@@ -48,7 +49,7 @@ func TestAWSSpecific(t *testing.T) {
 		Purpose:   PurposeProduction,
 		MultiZone: true,
 		ProvisioningParameters: internal.ProvisioningParameters{
-			Parameters: internal.ProvisioningParametersDTO{
+			Parameters: pkg.ProvisioningParametersDTO{
 				Region: ptr.String("ap-southeast-1"),
 			},
 			PlatformRegion: "cf-eu11",
@@ -81,7 +82,7 @@ func TestAWSTrialDefaults(t *testing.T) {
 	provider := AWSTrialInputProvider{
 		PlatformRegionMapping: TestTrialPlatformRegionMapping,
 		ProvisioningParameters: internal.ProvisioningParameters{
-			Parameters:     internal.ProvisioningParametersDTO{Region: nil},
+			Parameters:     pkg.ProvisioningParametersDTO{Region: nil},
 			PlatformRegion: "cf-eu11",
 		},
 	}
@@ -111,7 +112,7 @@ func TestAWSTrialSpecific(t *testing.T) {
 	provider := AWSTrialInputProvider{
 		PlatformRegionMapping: TestTrialPlatformRegionMapping,
 		ProvisioningParameters: internal.ProvisioningParameters{
-			Parameters: internal.ProvisioningParametersDTO{
+			Parameters: pkg.ProvisioningParametersDTO{
 				Region: ptr.String("eu-central-1"),
 			},
 			PlatformRegion: "cf-ap21",

@@ -651,7 +651,7 @@ func TestRuntimeHandler(t *testing.T) {
 			ClusterConfig: gqlschema.GardenerConfigInput{
 				Name:              testID,
 				KubernetesVersion: "1.18.18",
-				Provider:          string(internal.AWS),
+				Provider:          string(pkg.AWS),
 			},
 		}
 		err = states.Insert(fixProvState)
@@ -688,7 +688,7 @@ func TestRuntimeHandler(t *testing.T) {
 			ClusterConfig: gqlschema.GardenerConfigInput{
 				Name:                testID,
 				KubernetesVersion:   "1.19.19",
-				Provider:            string(internal.AWS),
+				Provider:            string(pkg.AWS),
 				MachineImage:        ptr.String("gardenlinux"),
 				MachineImageVersion: ptr.String("1.0.0"),
 			},
@@ -948,7 +948,7 @@ func TestRuntimeHandler_WithKimOnlyDrivenInstances(t *testing.T) {
 			ClusterConfig: gqlschema.GardenerConfigInput{
 				Name:              testID,
 				KubernetesVersion: "1.18.18",
-				Provider:          string(internal.AWS),
+				Provider:          string(pkg.AWS),
 			},
 		}
 		err = states.Insert(fixProvState)
@@ -985,7 +985,7 @@ func TestRuntimeHandler_WithKimOnlyDrivenInstances(t *testing.T) {
 			ClusterConfig: gqlschema.GardenerConfigInput{
 				Name:                testID,
 				KubernetesVersion:   "1.19.19",
-				Provider:            string(internal.AWS),
+				Provider:            string(pkg.AWS),
 				MachineImage:        ptr.String("gardenlinux"),
 				MachineImageVersion: ptr.String("1.0.0"),
 			},

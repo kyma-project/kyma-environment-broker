@@ -7,6 +7,7 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/kyma-project/control-plane/components/provisioner/pkg/gqlschema"
+	pkg "github.com/kyma-project/kyma-environment-broker/common/runtime"
 	"github.com/kyma-project/kyma-environment-broker/internal"
 	"github.com/pivotal-cf/brokerapi/v8/domain"
 	"github.com/stretchr/testify/assert"
@@ -737,7 +738,7 @@ func TestUnsuspensionTrialWithDefaultProviderChangedForNonDefaultRegion(t *testi
 	suite.WaitForOperationState(suspensionOpID, domain.Succeeded)
 
 	// WHEN
-	suite.ChangeDefaultTrialProvider(internal.AWS)
+	suite.ChangeDefaultTrialProvider(pkg.AWS)
 	// OSB update
 	suite.Log("*** Unsuspension ***")
 	resp = suite.CallAPI("PATCH", fmt.Sprintf("oauth/cf-us10/v2/service_instances/%s?accepts_incomplete=true", iid),
