@@ -61,13 +61,14 @@ func NewFromConfig(cfg Config, evcfg events.Config, cipher postgres.Cipher, log 
 
 func NewMemoryStorage() BrokerStorage {
 	op := memory.NewOperation()
+	ss := memory.NewSubaccountStates()
 	return storage{
 		operation:         op,
-		instance:          memory.NewInstance(op),
+		subaccountStates:  ss,
+		instance:          memory.NewInstance(op, ss),
 		orchestrations:    memory.NewOrchestrations(),
 		runtimeStates:     memory.NewRuntimeStates(),
 		events:            events.New(events.Config{}, NewInMemoryEvents()),
-		subaccountStates:  memory.NewSubaccountStates(),
 		instancesArchived: memory.NewInstanceArchivedInMemoryStorage(),
 		bindings:          memory.NewBinding(),
 	}

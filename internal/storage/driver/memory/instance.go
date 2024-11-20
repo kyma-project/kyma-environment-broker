@@ -17,12 +17,13 @@ import (
 )
 
 type instances struct {
-	mu                sync.Mutex
-	instances         map[string]internal.Instance
-	operationsStorage *operations
+	mu                      sync.Mutex
+	instances               map[string]internal.Instance
+	operationsStorage       *operations
+	subaccountStatesStorage *SubaccountStates
 }
 
-func NewInstance(operations *operations) *instances {
+func NewInstance(operations *operations, subaccountStates *SubaccountStates) *instances {
 	return &instances{
 		instances:         make(map[string]internal.Instance, 0),
 		operationsStorage: operations,
@@ -237,7 +238,6 @@ func (s *instances) List(filter dbmodel.InstanceFilter) ([]internal.Instance, in
 		nil
 }
 
-// TODO add join with subaccount_states
 func (s *instances) ListWithSubaccountState(filter dbmodel.InstanceFilter) ([]internal.Instance, int, int, error) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
@@ -249,6 +249,11 @@ func (s *instances) ListWithSubaccountState(filter dbmodel.InstanceFilter) ([]in
 	sortInstancesByCreatedAt(instances)
 
 	for i := offset; (filter.PageSize < 1 || i < offset+filter.PageSize) && i < len(instances); i++ {
+		instanceToReturn := s.instances[instances[i].InstanceID]
+		if _, exists := s.subaccountStatesStorage.subaccountStates[instanceToReturn.SubAccountID]; exists {
+			instanceToReturn.BetaEnabled = s.subaccountStatesStorage.subaccountStates[instanceToReturn.SubAccountID].BetaEnabled
+			instanceToReturn.UsedForProduction = s.subaccountStatesStorage.subaccountStates[instanceToReturn.SubAccountID].UsedForProduction
+		}
 		toReturn = append(toReturn, s.instances[instances[i].InstanceID])
 	}
 
