@@ -143,7 +143,8 @@ func TestRuntimeInfoHandlerOperationRecognition(t *testing.T) {
 	t.Run("should distinguish between provisioning & unsuspension operations", func(t *testing.T) {
 		// given
 		operations := memory.NewOperation()
-		instances := memory.NewInstance(operations)
+		subaccountStates := memory.NewSubaccountStates()
+		instances := memory.NewInstance(operations, subaccountStates)
 
 		testInstance1 := fixture.FixInstance("instance-1")
 		testInstance2 := fixture.FixInstance("instance-2")
@@ -250,7 +251,8 @@ func TestRuntimeInfoHandlerOperationRecognition(t *testing.T) {
 	t.Run("should distinguish between deprovisioning & suspension operations", func(t *testing.T) {
 		// given
 		operations := memory.NewOperation()
-		instances := memory.NewInstance(operations)
+		subaccountStates := memory.NewSubaccountStates()
+		instances := memory.NewInstance(operations, subaccountStates)
 
 		testInstance1 := fixture.FixInstance("instance-1")
 		testInstance2 := fixture.FixInstance("instance-2")
@@ -359,7 +361,8 @@ func TestRuntimeInfoHandlerOperationRecognition(t *testing.T) {
 	t.Run("should recognize prov & deprov ops among suspend/unsuspend operations", func(t *testing.T) {
 		// given
 		operations := memory.NewOperation()
-		instances := memory.NewInstance(operations)
+		subaccountStates := memory.NewSubaccountStates()
+		instances := memory.NewInstance(operations, subaccountStates)
 
 		testInstance1 := fixture.FixInstance("instance-1")
 

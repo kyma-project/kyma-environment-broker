@@ -25,8 +25,9 @@ type instances struct {
 
 func NewInstance(operations *operations, subaccountStates *SubaccountStates) *instances {
 	return &instances{
-		instances:         make(map[string]internal.Instance, 0),
-		operationsStorage: operations,
+		instances:               make(map[string]internal.Instance, 0),
+		operationsStorage:       operations,
+		subaccountStatesStorage: subaccountStates,
 	}
 }
 

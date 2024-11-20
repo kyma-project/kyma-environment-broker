@@ -22,7 +22,7 @@ type Instances interface {
 	GetDistinctSubAccounts() ([]string, error)
 	GetNumberOfInstancesForGlobalAccountID(globalAccountID string) (int, error)
 	List(dbmodel.InstanceFilter) ([]internal.Instance, int, int, error)
-	ListWithSubaccountState(dbmodel.InstanceFilter) ([]internal.Instance, int, int, error)
+	ListWithSubaccountState(dbmodel.InstanceFilter) ([]internal.InstanceWithSubaccountState, int, int, error)
 
 	// todo: remove after instances parameters migration is done
 	InsertWithoutEncryption(instance internal.Instance) error
