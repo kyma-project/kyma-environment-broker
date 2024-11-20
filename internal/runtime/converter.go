@@ -92,7 +92,7 @@ func (c *converter) NewDTO(instance internal.Instance) (pkg.RuntimeDTO, error) {
 			ModifiedAt: instance.UpdatedAt,
 			ExpiredAt:  instance.ExpiredAt,
 		},
-		Parameters: pkg.Parameters{
+		/*	Parameters: pkg.Parameters{
 			Name:        instance.Parameters.Parameters.Name,
 			Region:      instance.Parameters.Parameters.Region,
 			MachineType: instance.Parameters.Parameters.MachineType,
@@ -116,7 +116,7 @@ func (c *converter) NewDTO(instance internal.Instance) (pkg.RuntimeDTO, error) {
 			},
 			RuntimeAdministrators: instance.Parameters.Parameters.RuntimeAdministrators,
 			LicenceType:           instance.Parameters.Parameters.LicenceType,
-		},
+		},*/
 	}
 	if !instance.DeletedAt.IsZero() {
 		toReturn.Status.DeletedAt = &instance.DeletedAt
