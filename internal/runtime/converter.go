@@ -92,31 +92,7 @@ func (c *converter) NewDTO(instance internal.Instance) (pkg.RuntimeDTO, error) {
 			ModifiedAt: instance.UpdatedAt,
 			ExpiredAt:  instance.ExpiredAt,
 		},
-		/*	Parameters: pkg.Parameters{
-			Name:        instance.Parameters.Parameters.Name,
-			Region:      instance.Parameters.Parameters.Region,
-			MachineType: instance.Parameters.Parameters.MachineType,
-			AutoScalerParameters: &pkg.AutoScalerParametersDTO{
-				AutoScalerMin: instance.Parameters.Parameters.AutoScalerMin,
-				AutoScalerMax: instance.Parameters.Parameters.AutoScalerMax,
-			},
-			//modules
-			Networking: &pkg.NetworkingDTO{
-				NodesCidr:    instance.Parameters.Parameters.Networking.NodesCidr,
-				ServicesCidr: instance.Parameters.Parameters.Networking.ServicesCidr,
-				PodsCidr:     instance.Parameters.Parameters.Networking.PodsCidr,
-			},
-			OIDC: &pkg.OIDCConfigDTO{
-				ClientID:       instance.Parameters.Parameters.OIDC.ClientID,
-				GroupsClaim:    instance.Parameters.Parameters.OIDC.GroupsClaim,
-				IssuerURL:      instance.Parameters.Parameters.OIDC.IssuerURL,
-				SigningAlgs:    instance.Parameters.Parameters.OIDC.SigningAlgs,
-				UsernameClaim:  instance.Parameters.Parameters.OIDC.UsernameClaim,
-				UsernamePrefix: instance.Parameters.Parameters.OIDC.UsernamePrefix,
-			},
-			RuntimeAdministrators: instance.Parameters.Parameters.RuntimeAdministrators,
-			LicenceType:           instance.Parameters.Parameters.LicenceType,
-		},*/
+		Parameters: instance.Parameters.Parameters,
 	}
 	if !instance.DeletedAt.IsZero() {
 		toReturn.Status.DeletedAt = &instance.DeletedAt
