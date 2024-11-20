@@ -86,8 +86,8 @@ The SAP Cloud Management service (technical name: `cis`) provides the Provisioni
 
    ```bash
    [ -z "$EXPIRATION_SECONDS" ] && \
-   BINDING_ID=$(curl -sS -D - -X PUT "$PROVISIONING_SERVICE_URL/provisioning/v1/environments/$INSTANCE_ID/bindings" -H "accept: application/json" -H "Authorization: bearer $TOKEN" -H "Content-Type: application/json" -d "{\"parameters\":{\"expiration_seconds\":600}}" -o /dev/null | sed -n 's/^.*location: //p') || \
-   BINDING_ID=$(curl -sS -D - -X PUT "$PROVISIONING_SERVICE_URL/provisioning/v1/environments/$INSTANCE_ID/bindings" -H "accept: application/json" -H "Authorization: bearer $TOKEN" -H "Content-Type: application/json" -d "{\"parameters\":{\"expiration_seconds\":$EXPIRATION_SECONDS}}" -o /dev/null | sed -n 's/^.*location: //p')
+   BINDING_ID=$(curl -sS -D - -X PUT "$PROVISIONING_SERVICE_URL/provisioning/v1/environments/$INSTANCE_ID/bindings" -H "accept: application/json" -H "Authorization: bearer $TOKEN" -H "Content-Type: application/json" -d "{\"parameters\":{\"expiration_seconds\":600}}" -o /dev/null | sed -n 's/^.*location: //p' | sed 's/\r$//g') || \
+   BINDING_ID=$(curl -sS -D - -X PUT "$PROVISIONING_SERVICE_URL/provisioning/v1/environments/$INSTANCE_ID/bindings" -H "accept: application/json" -H "Authorization: bearer $TOKEN" -H "Content-Type: application/json" -d "{\"parameters\":{\"expiration_seconds\":$EXPIRATION_SECONDS}}" -o /dev/null | sed -n 's/^.*location: //p' | sed 's/\r$//g')
    ```
 
 9. Get the binding credentials and save them in a kubeconfig file:
