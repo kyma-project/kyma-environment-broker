@@ -64,11 +64,7 @@ func (c *converter) applyOperation(source *internal.Operation, target *pkg.Opera
 		target.OrchestrationID = source.OrchestrationID
 		target.FinishedStages = source.FinishedStages
 		target.ExecutedButNotCompletedSteps = source.ExcutedButNotCompleted
-		target.Parameters = pkg.Parameters{
-			Name:                  source.ProvisioningParameters.Parameters.Name,
-			MachineType:           source.ProvisioningParameters.Parameters.MachineType,
-			RuntimeAdministrators: source.ProvisioningParameters.Parameters.RuntimeAdministrators,
-		}
+		target.Parameters = source.ProvisioningParameters.Parameters
 	}
 }
 

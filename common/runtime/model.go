@@ -285,16 +285,16 @@ type OperationsData struct {
 }
 
 type Operation struct {
-	State                        string        `json:"state"`
-	Type                         OperationType `json:"type,omitempty"`
-	Description                  string        `json:"description"`
-	CreatedAt                    time.Time     `json:"createdAt"`
-	UpdatedAt                    time.Time     `json:"updatedAt"`
-	OperationID                  string        `json:"operationID"`
-	OrchestrationID              string        `json:"orchestrationID,omitempty"`
-	FinishedStages               []string      `json:"finishedStages"`
-	ExecutedButNotCompletedSteps []string      `json:"executedButNotCompletedSteps,omitempty"`
-	Parameters                   Parameters    `json:"parameters,omitempty"`
+	State                        string                    `json:"state"`
+	Type                         OperationType             `json:"type,omitempty"`
+	Description                  string                    `json:"description"`
+	CreatedAt                    time.Time                 `json:"createdAt"`
+	UpdatedAt                    time.Time                 `json:"updatedAt"`
+	OperationID                  string                    `json:"operationID"`
+	OrchestrationID              string                    `json:"orchestrationID,omitempty"`
+	FinishedStages               []string                  `json:"finishedStages"`
+	ExecutedButNotCompletedSteps []string                  `json:"executedButNotCompletedSteps,omitempty"`
+	Parameters                   ProvisioningParametersDTO `json:"parameters,omitempty"`
 	//parameters
 }
 
