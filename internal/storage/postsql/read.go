@@ -759,6 +759,56 @@ func (r readSession) ListInstances(filter dbmodel.InstanceFilter) ([]dbmodel.Ins
 		nil
 }
 
+func (r readSession) ListInstancesWithSubaccountStates(filter dbmodel.InstanceFilter) ([]dbmodel.InstanceWithSubaccountStateDTO, int, int, error) {
+	var instances []dbmodel.InstanceWithSubaccountStateDTO
+
+	// TODO use alias for instances table (when test are done)
+	// Base select and order by created at
+	var stmt *dbr.SelectStmt
+	// Find and join the last operation for each instance matching the state filter(s).
+	// Last operation is found with the greatest-n-per-group problem solved with OUTER JOIN, followed by a (INNER) JOIN to get instance columns.
+	stmt = r.session.
+		// Order in select is important - dbr iterates over result and checks for matching fields in go structures.
+		// Because of that and Operation having common fields with Instance with current order operation attributes will
+		// be loaded into structures (e.g. created_at, provisioning_parameters, etc.) and will be overwritten by instance attributes.
+		Select("o1.data", "o1.state", "o1.type", fmt.Sprintf("%s.*", InstancesTableName), "ss.*").
+		From(InstancesTableName).
+		Join(dbr.I(OperationTableName).As("o1"), fmt.Sprintf("%s.instance_id = o1.instance_id", InstancesTableName)).
+		LeftJoin(dbr.I(OperationTableName).As("o2"), fmt.Sprintf("%s.instance_id = o2.instance_id AND o1.created_at < o2.created_at AND o2.state NOT IN ('%s', '%s')", InstancesTableName, orchestration.Pending, orchestration.Canceled)).
+		LeftJoin(dbr.I(SubaccountStatesTableName).As("ss"), fmt.Sprintf("%s.sub_account_id = ss.id", InstancesTableName)).
+		Where("o2.created_at IS NULL").
+		Where(fmt.Sprintf("o1.state NOT IN ('%s', '%s')", orchestration.Pending, orchestration.Canceled)).
+		OrderBy(fmt.Sprintf("%s.%s", InstancesTableName, CreatedAtField))
+
+	if len(filter.States) > 0 {
+		stateFilters := buildInstanceStateFilters("o1", filter)
+		stmt.Where(stateFilters)
+	}
+
+	// Add pagination
+	if filter.Page > 0 && filter.PageSize > 0 {
+		stmt = stmt.Paginate(uint64(filter.Page), uint64(filter.PageSize))
+	}
+
+	addInstanceFilters(stmt, filter)
+
+	_, err := stmt.Load(&instances)
+	if err != nil {
+		return nil, -1, -1, fmt.Errorf("while fetching instances: %w", err)
+	}
+
+	// getInstanceCount is appropriate for this query because we added only left join without any additional selection/filtering
+	totalCount, err := r.getInstanceCount(filter)
+	if err != nil {
+		return nil, -1, -1, err
+	}
+
+	return instances,
+		len(instances),
+		totalCount,
+		nil
+}
+
 func (r readSession) ListEvents(filter events.EventFilter) ([]events.EventDTO, error) {
 	var events []events.EventDTO
 	stmt := r.session.Select("*").From("events")

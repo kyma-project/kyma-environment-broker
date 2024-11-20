@@ -76,3 +76,9 @@ type InstanceWithExtendedOperationDTO struct {
 	InstanceDTO
 	OperationDTO
 }
+
+type InstanceWithSubaccountStateDTO struct {
+	InstanceDTO
+	OperationDTO
+	SubaccountStateDTO
+}

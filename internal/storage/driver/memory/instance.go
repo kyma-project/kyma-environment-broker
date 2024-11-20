@@ -237,6 +237,27 @@ func (s *instances) List(filter dbmodel.InstanceFilter) ([]internal.Instance, in
 		nil
 }
 
+// TODO add join with subaccount_states
+func (s *instances) ListWithSubaccountState(filter dbmodel.InstanceFilter) ([]internal.Instance, int, int, error) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	var toReturn []internal.Instance
+
+	offset := pagination.ConvertPageAndPageSizeToOffset(filter.PageSize, filter.Page)
+
+	instances := s.filterInstances(filter)
+	sortInstancesByCreatedAt(instances)
+
+	for i := offset; (filter.PageSize < 1 || i < offset+filter.PageSize) && i < len(instances); i++ {
+		toReturn = append(toReturn, s.instances[instances[i].InstanceID])
+	}
+
+	return toReturn,
+		len(toReturn),
+		len(instances),
+		nil
+}
+
 func sortInstancesByCreatedAt(instances []internal.Instance) {
 	sort.Slice(instances, func(i, j int) bool {
 		return instances[i].CreatedAt.Before(instances[j].CreatedAt)

@@ -396,6 +396,46 @@ func (s *Instance) toInstance(dto dbmodel.InstanceDTO) (internal.Instance, error
 	}, nil
 }
 
+func (s *Instance) toInstanceWithSubaccountState(instanceDTO dbmodel.InstanceDTO, subaccountStateDTO dbmodel.SubaccountStateDTO) (internal.Instance, error) {
+	var params internal.ProvisioningParameters
+	err := json.Unmarshal([]byte(instanceDTO.ProvisioningParameters), &params)
+	if err != nil {
+		return internal.Instance{}, fmt.Errorf("while unmarshal parameters: %w", err)
+	}
+	err = s.cipher.DecryptSMCreds(&params)
+	if err != nil {
+		return internal.Instance{}, fmt.Errorf("while decrypting parameters: %w", err)
+	}
+
+	err = s.cipher.DecryptKubeconfig(&params)
+	if err != nil {
+		log.Warn("decrypting skipped because kubeconfig is in a plain text")
+	}
+
+	return internal.Instance{
+		InstanceID:                  instanceDTO.InstanceID,
+		RuntimeID:                   instanceDTO.RuntimeID,
+		GlobalAccountID:             instanceDTO.GlobalAccountID,
+		SubscriptionGlobalAccountID: instanceDTO.SubscriptionGlobalAccountID,
+		SubAccountID:                instanceDTO.SubAccountID,
+		ServiceID:                   instanceDTO.ServiceID,
+		ServiceName:                 instanceDTO.ServiceName,
+		ServicePlanID:               instanceDTO.ServicePlanID,
+		ServicePlanName:             instanceDTO.ServicePlanName,
+		DashboardURL:                instanceDTO.DashboardURL,
+		Parameters:                  params,
+		ProviderRegion:              instanceDTO.ProviderRegion,
+		CreatedAt:                   instanceDTO.CreatedAt,
+		UpdatedAt:                   instanceDTO.UpdatedAt,
+		DeletedAt:                   instanceDTO.DeletedAt,
+		ExpiredAt:                   instanceDTO.ExpiredAt,
+		Version:                     instanceDTO.Version,
+		Provider:                    internal.CloudProvider(instanceDTO.Provider),
+		BetaEnabled:                 subaccountStateDTO.BetaEnabled,
+		UsedForProduction:           subaccountStateDTO.UsedForProduction,
+	}, nil
+}
+
 func (s *Instance) Insert(instance internal.Instance) error {
 	_, err := s.GetByID(instance.InstanceID)
 	if err == nil {
@@ -533,6 +573,35 @@ func (s *Instance) List(filter dbmodel.InstanceFilter) ([]internal.Instance, int
 	var instances []internal.Instance
 	for _, dto := range dtos {
 		instance, err := s.toInstance(dto.InstanceDTO)
+		if err != nil {
+			return []internal.Instance{}, 0, 0, err
+		}
+
+		lastOp := internal.Operation{}
+		err = json.Unmarshal([]byte(dto.OperationDTO.Data), &lastOp)
+		if err != nil {
+			return nil, 0, 0, fmt.Errorf("while unmarshalling operation data: %w", err)
+		}
+		lastOp, err = s.operations.toOperation(&dto.OperationDTO, lastOp)
+		if err != nil {
+			return []internal.Instance{}, 0, 0, err
+		}
+
+		instance.InstanceDetails = lastOp.InstanceDetails
+		instance.Reconcilable = instance.RuntimeID != "" && lastOp.Type != internal.OperationTypeDeprovision && lastOp.State != domain.InProgress
+		instances = append(instances, instance)
+	}
+	return instances, count, totalCount, err
+}
+
+func (s *Instance) ListWithSubaccountState(filter dbmodel.InstanceFilter) ([]internal.Instance, int, int, error) {
+	dtos, count, totalCount, err := s.NewReadSession().ListInstancesWithSubaccountStates(filter)
+	if err != nil {
+		return []internal.Instance{}, 0, 0, err
+	}
+	var instances []internal.Instance
+	for _, dto := range dtos {
+		instance, err := s.toInstanceWithSubaccountState(dto.InstanceDTO, dto.SubaccountStateDTO)
 		if err != nil {
 			return []internal.Instance{}, 0, 0, err
 		}

@@ -66,6 +66,9 @@ type Instance struct {
 	Version      int
 	Provider     CloudProvider
 	Reconcilable bool
+
+	BetaEnabled       string
+	UsedForProduction string
 }
 
 func (i *Instance) IsExpired() bool {
