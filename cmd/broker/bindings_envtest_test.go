@@ -332,7 +332,7 @@ func TestCreateBindingEndpoint(t *testing.T) {
 		// when
 		err = clientFirst.Delete(context.Background(), &rbacv1.ClusterRoleBinding{
 			ObjectMeta: v1.ObjectMeta{
-				Name: brokerBindings.BindingName(bindingID),
+				Name:      brokerBindings.BindingName(bindingID),
 				Namespace: brokerBindings.BindingNamespace,
 			},
 		})
