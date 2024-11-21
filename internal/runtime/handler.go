@@ -135,12 +135,14 @@ func (h *Handler) listInstances(filter dbmodel.InstanceFilter) ([]pkg.RuntimeDTO
 	}
 
 	var result []pkg.RuntimeDTO
-	instances, count, total, err := h.instancesDb.List(filter)
+	instances, count, total, err := h.instancesDb.ListWithSubaccountState(filter)
 	if err != nil {
 		return []pkg.RuntimeDTO{}, 0, 0, err
 	}
 	for _, instance := range instances {
-		dto, err := h.converter.NewDTO(instance)
+		dto, err := h.converter.NewDTO(instance.Instance)
+		dto.BetaEnabled = instance.BetaEnabled
+		dto.UsedForProduction = instance.UsedForProduction
 		if err != nil {
 			return []pkg.RuntimeDTO{}, 0, 0, err
 		}
@@ -205,8 +207,6 @@ func (h *Handler) getRuntimes(w http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	subaccountStates := fetchSubaccountStates(err, h)
-
 	for _, dto := range instances {
 
 		switch opDetail {
@@ -226,10 +226,6 @@ func (h *Handler) getRuntimes(w http.ResponseWriter, req *http.Request) {
 			h.logger.Warn(fmt.Sprintf("unable to determine status: %s", err.Error()))
 			httputil.WriteErrorResponse(w, http.StatusInternalServerError, err)
 			return
-		}
-
-		if subaccountStates != nil {
-			h.setSubaccountState(&dto, subaccountStates)
 		}
 
 		instanceDrivenByKimOnly := h.kimConfig.IsDrivenByKimOnly(dto.ServicePlanName)
@@ -289,19 +285,6 @@ func (h *Handler) getRuntimes(w http.ResponseWriter, req *http.Request) {
 		TotalCount: totalCount,
 	}
 	httputil.WriteResponse(w, http.StatusOK, runtimePage)
-}
-
-func fetchSubaccountStates(err error, h *Handler) map[string]internal.SubaccountState {
-	statesFromDb, err := h.subaccountStatesDb.ListStates()
-	if err != nil {
-		h.logger.Warn(fmt.Sprintf("unable to fetch subaccount states: %s", err.Error()))
-		return nil
-	}
-	statesMap := make(map[string]internal.SubaccountState)
-	for _, state := range statesFromDb { // ID is a primary key, so no collision is possible
-		statesMap[state.ID] = state
-	}
-	return statesMap
 }
 
 func (h *Handler) getRuntimeNamesFromLastOperation(dto pkg.RuntimeDTO) (string, string) {
