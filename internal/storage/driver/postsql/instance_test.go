@@ -503,22 +503,22 @@ func TestInstance(t *testing.T) {
 			fixture.FixProvisioningOperation("op3", "inst3"),
 			fixture.FixProvisioningOperation("op4", "expiredinstance"),
 		}
-		// there is no record for subaccount used by inst3
+		// there is no record for subaccount used by inst3 by purpose
 		fixSubaccountStates := []internal.SubaccountState{
 			internal.SubaccountState{
-				ID:                "inst1",
+				ID:                fixInstances[0].SubAccountID,
 				BetaEnabled:       "true",
 				UsedForProduction: "NOT_SET",
 				ModifiedAt:        10,
 			},
 			internal.SubaccountState{
-				ID:                "inst2",
+				ID:                fixInstances[1].SubAccountID,
 				BetaEnabled:       "true",
 				UsedForProduction: "USED_FOR_PRODUCTION",
 				ModifiedAt:        20,
 			},
 			internal.SubaccountState{
-				ID:                "expiredinstance",
+				ID:                fixInstances[3].SubAccountID,
 				BetaEnabled:       "true",
 				UsedForProduction: "",
 				ModifiedAt:        30,
