@@ -762,7 +762,6 @@ func (r readSession) ListInstances(filter dbmodel.InstanceFilter) ([]dbmodel.Ins
 func (r readSession) ListInstancesWithSubaccountStates(filter dbmodel.InstanceFilter) ([]dbmodel.InstanceWithSubaccountStateDTO, int, int, error) {
 	var instances []dbmodel.InstanceWithSubaccountStateDTO
 
-	// TODO use alias for instances table (when test are done)
 	// Base select and order by created at
 	var stmt *dbr.SelectStmt
 	// Find and join the last operation for each instance matching the state filter(s).
