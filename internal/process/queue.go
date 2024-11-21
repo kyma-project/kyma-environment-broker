@@ -16,11 +16,11 @@ type Executor interface {
 }
 
 type Queue struct {
-	queue     workqueue.RateLimitingInterface
-	executor  Executor
-	waitGroup sync.WaitGroup
-	log       logrus.FieldLogger
-	name string
+	queue                workqueue.RateLimitingInterface
+	executor             Executor
+	waitGroup            sync.WaitGroup
+	log                  logrus.FieldLogger
+	name                 string
 	workerExecutionTimes map[string]time.Time
 
 	speedFactor int64
@@ -29,12 +29,12 @@ type Queue struct {
 func NewQueue(executor Executor, log logrus.FieldLogger, name string) *Queue {
 	// add queue name field that could be logged later on
 	return &Queue{
-		queue:       workqueue.NewNamedRateLimitingQueue(workqueue.DefaultControllerRateLimiter(), "operations"),
-		executor:    executor,
-		waitGroup:   sync.WaitGroup{},
-		log:         log.WithField("queueName", name),
-		speedFactor: 1,
-		name: name,
+		queue:                workqueue.NewNamedRateLimitingQueue(workqueue.DefaultControllerRateLimiter(), "operations"),
+		executor:             executor,
+		waitGroup:            sync.WaitGroup{},
+		log:                  log.WithField("queueName", name),
+		speedFactor:          1,
+		name:                 name,
 		workerExecutionTimes: make(map[string]time.Time),
 	}
 }
@@ -65,12 +65,12 @@ func (q *Queue) Run(stop <-chan struct{}, workersAmount int) {
 		q.createWorker(q.queue, q.executor.Execute, stop, &q.waitGroup, workerLogger, fmt.Sprintf("%s-%d", q.name, i))
 	}
 
-	wait.Until(func ()  {
+	wait.Until(func() {
 		healthCheckLog := q.log.WithField("healthCheck", q.name)
 		for name, lastTime := range q.workerExecutionTimes {
-			healthCheckLog.Infof("worker %s last execution time %s", name, lastTime)	
+			healthCheckLog.Infof("worker %s last execution time %s", name, lastTime)
 			timeSinceLastExecution := time.Since(lastTime)
-			if timeSinceLastExecution > 5 * time.Minute {
+			if timeSinceLastExecution > 5*time.Minute {
 				healthCheckLog.Warnf("no execution for %s", timeSinceLastExecution)
 			}
 		}
