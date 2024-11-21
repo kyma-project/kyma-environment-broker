@@ -70,7 +70,7 @@ The SAP Cloud Management service (technical name: `cis`) provides the Provisioni
    export USER_ID={USER_ID}
    ```
 
-6. Provision the Kyma runtime and save the instance ID in **INSTANCE_ID** environment variable:
+6. Provision the Kyma runtime and save the instance ID in the **INSTANCE_ID** environment variable:
 
    ```bash
    INSTANCE_ID=$(curl -s -X POST "$PROVISIONING_SERVICE_URL/provisioning/v1/environments" -H "accept: application/json" -H "Authorization: bearer $TOKEN" -H "Content-Type: application/json" -d "{\"environmentType\":\"$ENVIRONMENT_TYPE\",\"parameters\":{\"name\":\"$NAME\",\"region\":\"$REGION\"},\"planName\":\"$PLAN\",\"serviceName\":\"$SERVICE_NAME\",\"user\":\"$USER_ID\"}" | jq -r '.id')
@@ -82,42 +82,44 @@ The SAP Cloud Management service (technical name: `cis`) provides the Provisioni
    export EXPIRATION_SECONDS={EXPIRATION_SECONDS}
    ```
 
-8. After the provisioning is completed, create the binding to get the kubeconfig:
+8. After the provisioning is completed, create the binding and save the binding ID in the **BINDING_ID** environment variable:
 
    ```bash
    [ -z "$EXPIRATION_SECONDS" ] && \
-   curl -s -X PUT "$PROVISIONING_SERVICE_URL/provisioning/v1/environments/$INSTANCE_ID/bindings" -H "accept: application/json" -H "Authorization: bearer $TOKEN" | jq -r '.credentials.kubeconfig' > kubeconfig.yaml || \
-   curl -s -X PUT "$PROVISIONING_SERVICE_URL/provisioning/v1/environments/$INSTANCE_ID/bindings" -H "accept: application/json" -H "Authorization: bearer $TOKEN" -H "Content-Type: application/json" -d "{\"parameters\":{\"expiration_seconds\":$EXPIRATION_SECONDS}}" | jq -r '.credentials.kubeconfig' > kubeconfig.yaml
+   BINDING_ID=$(curl -sS -D - -X PUT "$PROVISIONING_SERVICE_URL/provisioning/v1/environments/$INSTANCE_ID/bindings" -H "accept: application/json" -H "Authorization: bearer $TOKEN" -H "Content-Type: application/json" -d "{\"parameters\":{\"expiration_seconds\":600}}" -o /dev/null | sed -n 's/^.*location: //p' | sed 's/\r$//g') || \
+   BINDING_ID=$(curl -sS -D - -X PUT "$PROVISIONING_SERVICE_URL/provisioning/v1/environments/$INSTANCE_ID/bindings" -H "accept: application/json" -H "Authorization: bearer $TOKEN" -H "Content-Type: application/json" -d "{\"parameters\":{\"expiration_seconds\":$EXPIRATION_SECONDS}}" -o /dev/null | sed -n 's/^.*location: //p' | sed 's/\r$//g')
    ```
 
-9. To access the cluster through kubectl, set the **KUBECONFIG** environment variable to the path of the kubeconfig file:
+9. Get the binding credentials and save them in a kubeconfig file:
 
    ```bash
-   export KUBECONFIG=kubeconfig.yaml
+   curl -s -X GET "$PROVISIONING_SERVICE_URL/provisioning/v1/environments/$INSTANCE_ID/bindings/$BINDING_ID" -H "accept: application/json" -H "Authorization: bearer $TOKEN" | jq -r '.credentials.kubeconfig' > kubeconfig.yaml
    ```
 
-10. Verify the connection to the cluster by running a kubectl command to get Pods:
+10. To access the cluster through kubectl, set the **KUBECONFIG** environment variable to the path of the kubeconfig file:
+
+    ```bash
+    export KUBECONFIG=kubeconfig.yaml
+    ```
+
+11. Verify the connection to the cluster by running a kubectl command to get Pods:
 
     ```bash
     kubectl get pods
     ```
 
-    kubectl should return the list of Pods in the `default` namespace running in the cluster, ehich means that the cluster is accessible.
+    kubectl should return the list of Pods in the `default` namespace running in the cluster, which means that the cluster is accessible.
 
 > [!NOTE]
 > The following steps are optional and show how to revoke the credentials by deleting the binding.
 
-11. Get the ID of the binding from the instance's bindings list and save it in the **BINDING_ID** environment variable:
+12. List all bindings for the instance:
 
     ```bash
     curl -s "$PROVISIONING_SERVICE_URL/provisioning/v1/environments/$INSTANCE_ID/bindings" -H "accept: application/json" -H "Authorization: bearer $TOKEN"
     ```
-   
-    ```bash
-    export BINDING_ID={BINDING_ID}
-    ```
 
-12. Delete the binding to revoke the credentials:
+13. Delete the binding to revoke the credentials:
 
     ```bash
     curl -s -X DELETE "$PROVISIONING_SERVICE_URL/provisioning/v1/environments/$INSTANCE_ID/bindings/$BINDING_ID" -H "accept: application/json" -H "Authorization: bearer $TOKEN"
