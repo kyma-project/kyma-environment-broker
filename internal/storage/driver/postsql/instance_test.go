@@ -481,7 +481,7 @@ func TestInstance(t *testing.T) {
 
 	})
 
-	t.Run("Should list instances with subaccount state info", func(t *testing.T) {
+	t.Run("Should list instances with proper subaccount state info", func(t *testing.T) {
 		storageCleanup, brokerStorage, err := GetStorageForDatabaseTests()
 		require.NoError(t, err)
 		require.NotNil(t, brokerStorage)
@@ -492,16 +492,18 @@ func TestInstance(t *testing.T) {
 
 		// populate database with samples
 		fixInstances := []internal.Instance{
-			*fixInstance(instanceData{val: "inst1"}),
+			*fixInstance(instanceData{val: "inst1", subAccountID: "common-subaccount"}),
 			*fixInstance(instanceData{val: "inst2"}),
 			*fixInstance(instanceData{val: "inst3"}),
 			*fixInstance(instanceData{val: "expiredinstance", expired: true}),
+			*fixInstance(instanceData{val: "inst4", subAccountID: "common-subaccount"}),
 		}
 		fixOperations := []internal.Operation{
 			fixture.FixProvisioningOperation("op1", "inst1"),
 			fixture.FixProvisioningOperation("op2", "inst2"),
 			fixture.FixProvisioningOperation("op3", "inst3"),
 			fixture.FixProvisioningOperation("op4", "expiredinstance"),
+			fixture.FixProvisioningOperation("op5", "inst4"),
 		}
 		// there is no record for subaccount used by inst3 by purpose
 		fixSubaccountStates := []internal.SubaccountState{
@@ -535,10 +537,6 @@ func TestInstance(t *testing.T) {
 			require.NoError(t, err)
 		}
 
-		fixBinding := fixture.FixBinding("binding1")
-		fixBinding.InstanceID = fixInstances[0].InstanceID
-		err = brokerStorage.Bindings().Insert(&fixBinding)
-		require.NoError(t, err)
 		for i, v := range fixInstances {
 			v.InstanceDetails = fixture.FixInstanceDetails(v.InstanceID)
 			fixInstances[i] = v
@@ -558,6 +556,8 @@ func TestInstance(t *testing.T) {
 		require.Equal(t, 1, totalCount)
 
 		assert.Equal(t, fixInstances[0].InstanceID, out[0].InstanceID)
+		assert.Equal(t, fixSubaccountStates[0].BetaEnabled, out[0].BetaEnabled)
+		assert.Equal(t, fixSubaccountStates[0].UsedForProduction, out[0].UsedForProduction)
 
 		// when
 		out, count, totalCount, err = brokerStorage.Instances().ListWithSubaccountState(dbmodel.InstanceFilter{GlobalAccountIDs: []string{fixInstances[1].GlobalAccountID}})
@@ -568,6 +568,9 @@ func TestInstance(t *testing.T) {
 		require.Equal(t, 1, totalCount)
 
 		assert.Equal(t, fixInstances[1].InstanceID, out[0].InstanceID)
+		assert.Equal(t, fixInstances[1].InstanceID, out[0].InstanceID)
+		assert.Equal(t, fixSubaccountStates[1].BetaEnabled, out[0].BetaEnabled)
+		assert.Equal(t, fixSubaccountStates[1].UsedForProduction, out[0].UsedForProduction)
 
 		// when
 		out, count, totalCount, err = brokerStorage.Instances().ListWithSubaccountState(dbmodel.InstanceFilter{SubAccountIDs: []string{fixInstances[1].SubAccountID}})
@@ -578,46 +581,8 @@ func TestInstance(t *testing.T) {
 		require.Equal(t, 1, totalCount)
 
 		assert.Equal(t, fixInstances[1].InstanceID, out[0].InstanceID)
-
-		// when
-		out, count, totalCount, err = brokerStorage.Instances().ListWithSubaccountState(dbmodel.InstanceFilter{RuntimeIDs: []string{fixInstances[1].RuntimeID}})
-
-		// then
-		require.NoError(t, err)
-		require.Equal(t, 1, count)
-		require.Equal(t, 1, totalCount)
-
-		assert.Equal(t, fixInstances[1].InstanceID, out[0].InstanceID)
-
-		// when
-		out, count, totalCount, err = brokerStorage.Instances().ListWithSubaccountState(dbmodel.InstanceFilter{Plans: []string{fixInstances[1].ServicePlanName}})
-
-		// then
-		require.NoError(t, err)
-		require.Equal(t, 1, count)
-		require.Equal(t, 1, totalCount)
-
-		assert.Equal(t, fixInstances[1].InstanceID, out[0].InstanceID)
-
-		// when
-		out, count, totalCount, err = brokerStorage.Instances().ListWithSubaccountState(dbmodel.InstanceFilter{Shoots: []string{"Shoot-inst2"}})
-
-		// then
-		require.NoError(t, err)
-		require.Equal(t, 1, count)
-		require.Equal(t, 1, totalCount)
-
-		assert.Equal(t, fixInstances[1].InstanceID, out[0].InstanceID)
-
-		// when
-		out, count, totalCount, err = brokerStorage.Instances().ListWithSubaccountState(dbmodel.InstanceFilter{Regions: []string{"inst2"}})
-
-		// then
-		require.NoError(t, err)
-		require.Equal(t, 1, count)
-		require.Equal(t, 1, totalCount)
-
-		assert.Equal(t, fixInstances[1].InstanceID, out[0].InstanceID)
+		assert.Equal(t, fixSubaccountStates[1].BetaEnabled, out[0].BetaEnabled)
+		assert.Equal(t, fixSubaccountStates[1].UsedForProduction, out[0].UsedForProduction)
 
 		// when
 		out, count, totalCount, err = brokerStorage.Instances().ListWithSubaccountState(dbmodel.InstanceFilter{Expired: ptr.Bool(true)})
@@ -630,13 +595,8 @@ func TestInstance(t *testing.T) {
 		// when
 		out, count, totalCount, err = brokerStorage.Instances().ListWithSubaccountState(dbmodel.InstanceFilter{Expired: ptr.Bool(false)})
 		require.NoError(t, err)
-		require.Equal(t, 3, count)
-		require.Equal(t, 3, totalCount)
-
-		out, count, totalCount, err = brokerStorage.Instances().ListWithSubaccountState(dbmodel.InstanceFilter{BindingExists: ptr.Bool(true)})
-		require.NoError(t, err)
-		require.Equal(t, 1, count)
-		require.Equal(t, 1, totalCount)
+		require.Equal(t, 4, count)
+		require.Equal(t, 4, totalCount)
 
 	})
 

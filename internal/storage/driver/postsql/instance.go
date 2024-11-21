@@ -414,9 +414,13 @@ func (s *Instance) toInstanceWithSubaccountState(dto dbmodel.InstanceWithSubacco
 	var betaEnabled, usedForProduction string
 	if dto.BetaEnabled == nil {
 		betaEnabled = ""
+	} else {
+		betaEnabled = *dto.BetaEnabled
 	}
 	if dto.UsedForProduction == nil {
 		usedForProduction = ""
+	} else {
+		usedForProduction = *dto.UsedForProduction
 	}
 	return internal.InstanceWithSubaccountState{
 		Instance: internal.Instance{InstanceID: dto.InstanceDTO.InstanceID,
