@@ -106,9 +106,9 @@ func (b *AppBuilder) WithStorage() {
 }
 
 func (b *AppBuilder) WithK8sClient() {
-  err := imv1.AddToScheme(scheme.Scheme)
+	err := imv1.AddToScheme(scheme.Scheme)
 	FatalOnError(err)
-  err = corev1.AddToScheme(scheme.Scheme)
+	err = corev1.AddToScheme(scheme.Scheme)
 	FatalOnError(err)
 	k8sCfg, err := k8scfg.GetConfig()
 	FatalOnError(err)

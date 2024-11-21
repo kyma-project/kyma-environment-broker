@@ -15,9 +15,8 @@ import (
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 
-
-	corev1 "k8s.io/api/core/v1"
 	imv1 "github.com/kyma-project/infrastructure-manager/api/v1"
+	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	k8sruntime "k8s.io/apimachinery/pkg/runtime"
@@ -41,10 +40,10 @@ const (
 
 func TestService_PerformCleanup(t *testing.T) {
 	sch := k8sruntime.NewScheme()
-  err := imv1.AddToScheme(sch)
+	err := imv1.AddToScheme(sch)
 	assert.NoError(t, err)
 	err = corev1.AddToScheme(sch)
-  assert.NoError(t, err)
+	assert.NoError(t, err)
 	k8sClient := fake.NewClientBuilder().WithScheme(sch).Build()
 
 	t.Run("happy path", func(t *testing.T) {
@@ -369,8 +368,8 @@ func TestService_PerformCleanup(t *testing.T) {
 		err = k8sClient.Get(context.Background(), client.ObjectKey{Name: fixRuntimeID3, Namespace: kcpNamespace}, &imv1.Runtime{})
 		assert.NoError(t, err)
 	})
-  
-  t.Run("should work on dev environment", func(t *testing.T) {
+
+	t.Run("should work on dev environment", func(t *testing.T) {
 		// given
 		gcMock := &mocks.GardenerClient{}
 		gcMock.On("List", mock.Anything, mock.AnythingOfType("v1.ListOptions")).Return(fixShootList(), nil)
