@@ -1,6 +1,7 @@
 package process
 
 import (
+	"fmt"
 	"runtime/debug"
 	"sync"
 	"time"
@@ -19,6 +20,8 @@ type Queue struct {
 	executor  Executor
 	waitGroup sync.WaitGroup
 	log       logrus.FieldLogger
+	name string
+	workerExecutionTimes map[string]time.Time
 
 	speedFactor int64
 }
@@ -31,6 +34,8 @@ func NewQueue(executor Executor, log logrus.FieldLogger, name string) *Queue {
 		waitGroup:   sync.WaitGroup{},
 		log:         log.WithField("queueName", name),
 		speedFactor: 1,
+		name: name,
+		workerExecutionTimes: make(map[string]time.Time),
 	}
 }
 
@@ -57,8 +62,19 @@ func (q *Queue) Run(stop <-chan struct{}, workersAmount int) {
 		workerLogger := q.log.WithField("workerId", i)
 		workerLogger.Infof("starting worker with id %d", i)
 
-		q.createWorker(q.queue, q.executor.Execute, stop, &q.waitGroup, workerLogger)
+		q.createWorker(q.queue, q.executor.Execute, stop, &q.waitGroup, workerLogger, fmt.Sprintf("%s-%d", q.name, i))
 	}
+
+	wait.Until(func ()  {
+		healthCheckLog := q.log.WithField("healthCheck", q.name)
+		for name, lastTime := range q.workerExecutionTimes {
+			healthCheckLog.Infof("worker %s last execution time %s", name, lastTime)	
+			timeSinceLastExecution := time.Since(lastTime)
+			if timeSinceLastExecution > 5 * time.Minute {
+				healthCheckLog.Warnf("no execution for %s", timeSinceLastExecution)
+			}
+		}
+	}, time.Minute, stop)
 }
 
 // SpeedUp changes speedFactor parameter to reduce time between processing operations.
@@ -68,16 +84,16 @@ func (q *Queue) SpeedUp(speedFactor int64) {
 	q.log.Infof("queue speed factor set to %s", speedFactor)
 }
 
-func (q *Queue) createWorker(queue workqueue.RateLimitingInterface, process func(id string) (time.Duration, error), stopCh <-chan struct{}, waitGroup *sync.WaitGroup, log logrus.FieldLogger) {
+func (q *Queue) createWorker(queue workqueue.RateLimitingInterface, process func(id string) (time.Duration, error), stopCh <-chan struct{}, waitGroup *sync.WaitGroup, log logrus.FieldLogger, nameId string) {
 	go func() {
 		log.Info("worker routine - starting")
-		wait.Until(q.worker(queue, process, log), time.Second, stopCh)
+		wait.Until(q.worker(queue, process, log, nameId), time.Second, stopCh)
 		waitGroup.Done()
 		log.Info("worker done")
 	}()
 }
 
-func (q *Queue) worker(queue workqueue.RateLimitingInterface, process func(key string) (time.Duration, error), log logrus.FieldLogger) func() {
+func (q *Queue) worker(queue workqueue.RateLimitingInterface, process func(key string) (time.Duration, error), log logrus.FieldLogger, nameId string) func() {
 	return func() {
 		exit := false
 		for !exit {
@@ -88,7 +104,7 @@ func (q *Queue) worker(queue workqueue.RateLimitingInterface, process func(key s
 					return true
 				}
 
-				log.Infof("processing item %s, queue len is %d", key, queue.Len())
+				q.logWorkerTimes(key.(string), nameId, log)
 
 				id := key.(string)
 				log = log.WithField("operationID", id)
@@ -118,4 +134,16 @@ func (q *Queue) worker(queue workqueue.RateLimitingInterface, process func(key s
 			}()
 		}
 	}
+}
+
+func (q *Queue) logWorkerTimes(key string, name string, log logrus.FieldLogger) {
+	// log time
+	now := time.Now()
+	lastTime, ok := q.workerExecutionTimes[name]
+	if ok {
+		log.Infof("worker %s last execution time %s, executed after %s seconds", name, lastTime, now.Sub(lastTime).Seconds())
+	}
+	q.workerExecutionTimes[name] = now
+
+	log.Infof("processing item %s, queue len is %d", key, q.queue.Len())
 }
