@@ -53,6 +53,11 @@ func (b *GetBindingEndpoint) GetBinding(_ context.Context, instanceID, bindingID
 		return domain.GetBindingSpec{}, apiresponses.NewFailureResponse(fmt.Errorf(message), http.StatusNotFound, message)
 	}
 
+	if len(binding.Kubeconfig) == 0 {
+		message := "Binding creation in progress"
+		return domain.GetBindingSpec{}, apiresponses.NewFailureResponse(fmt.Errorf(message), http.StatusNotFound, message)
+	}
+
 	if err != nil {
 		b.log.Errorf("GetBinding error: %s", err)
 		message := fmt.Sprintf("Unexpected error: %s", err)

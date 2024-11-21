@@ -2,6 +2,7 @@ package postsql_test
 
 import (
 	"testing"
+	"time"
 
 	"github.com/google/uuid"
 	"github.com/kyma-project/kyma-environment-broker/internal/fixture"
@@ -224,4 +225,52 @@ func TestBinding(t *testing.T) {
 			assert.Equal(t, sameInstanceID, binding.InstanceID)
 		}
 	})
+}
+
+func TestBindingMetrics(t *testing.T) {
+	storageCleanup, brokerStorage, err := GetStorageForDatabaseTests()
+	require.NoError(t, err)
+	require.NotNil(t, brokerStorage)
+	defer func() {
+		err := storageCleanup()
+		assert.NoError(t, err)
+	}()
+
+	// given
+
+	binding1 := fixture.FixBinding("binding1")
+	binding1.ExpiresAt = time.Now().Add(1 * time.Hour)
+	binding2 := fixture.FixBinding("binding2")
+	binding2.ExpiresAt = time.Now().Add(-2 * time.Hour)
+
+	require.NoError(t, brokerStorage.Bindings().Insert(&binding1))
+	require.NoError(t, brokerStorage.Bindings().Insert(&binding2))
+
+	// when
+	got, err := brokerStorage.Bindings().GetStatistics()
+
+	// then
+	require.NoError(t, err)
+	// assert if the expiration time is close to 120 minutes
+	assert.GreaterOrEqual(t, got.MinutesSinceEarliestExpiration, 120.0)
+	assert.Less(t, got.MinutesSinceEarliestExpiration-120.0, 0.01)
+}
+
+func TestBindingMetrics_NoBindings(t *testing.T) {
+	storageCleanup, brokerStorage, err := GetStorageForDatabaseTests()
+	require.NoError(t, err)
+	require.NotNil(t, brokerStorage)
+	defer func() {
+		err := storageCleanup()
+		assert.NoError(t, err)
+	}()
+
+	// when
+	got, err := brokerStorage.Bindings().GetStatistics()
+
+	// then
+	require.NoError(t, err)
+
+	// in case of no bindings, the metric should be 0
+	assert.Equal(t, got.MinutesSinceEarliestExpiration, 0.0)
 }

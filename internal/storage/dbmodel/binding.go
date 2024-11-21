@@ -15,3 +15,7 @@ type BindingDTO struct {
 	ExpirationSeconds int64
 	CreatedBy         string
 }
+
+type BindingStatsDTO struct {
+	SecondsSinceEarliestExpiration *float64 `db:"seconds_since_earliest_expiration"`
+}

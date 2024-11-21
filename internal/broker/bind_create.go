@@ -9,6 +9,8 @@ import (
 	"strings"
 	"time"
 
+	"github.com/kyma-project/kyma-environment-broker/internal/event"
+
 	"github.com/kyma-project/kyma-environment-broker/internal"
 	broker "github.com/kyma-project/kyma-environment-broker/internal/broker/bindings"
 	"github.com/kyma-project/kyma-environment-broker/internal/storage"
@@ -34,11 +36,13 @@ type BindingConfig struct {
 }
 
 type BindEndpoint struct {
-	config           BindingConfig
-	instancesStorage storage.Instances
-	bindingsStorage  storage.Bindings
+	config            BindingConfig
+	instancesStorage  storage.Instances
+	bindingsStorage   storage.Bindings
+	operationsStorage storage.Operations
 
 	serviceAccountBindingManager broker.BindingsManager
+	publisher                    event.Publisher
 
 	log logrus.FieldLogger
 }
@@ -65,10 +69,13 @@ type Credentials struct {
 	Kubeconfig string `json:"kubeconfig"`
 }
 
-func NewBind(cfg BindingConfig, db storage.BrokerStorage, log logrus.FieldLogger, clientProvider broker.ClientProvider, kubeconfigProvider broker.KubeconfigProvider) *BindEndpoint {
+func NewBind(cfg BindingConfig, db storage.BrokerStorage, log logrus.FieldLogger, clientProvider broker.ClientProvider, kubeconfigProvider broker.KubeconfigProvider,
+	publisher event.Publisher) *BindEndpoint {
 	return &BindEndpoint{config: cfg,
 		instancesStorage:             db.Instances(),
 		bindingsStorage:              db.Bindings(),
+		publisher:                    publisher,
+		operationsStorage:            db.Operations(),
 		log:                          log.WithField("service", "BindEndpoint"),
 		serviceAccountBindingManager: broker.NewServiceAccountBindingsManager(clientProvider, kubeconfigProvider),
 	}
@@ -78,6 +85,16 @@ func NewBind(cfg BindingConfig, db storage.BrokerStorage, log logrus.FieldLogger
 //
 //	PUT /v2/service_instances/{instance_id}/service_bindings/{binding_id}
 func (b *BindEndpoint) Bind(ctx context.Context, instanceID, bindingID string, details domain.BindDetails, asyncAllowed bool) (domain.Binding, error) {
+	start := time.Now()
+	response, err := b.bind(ctx, instanceID, bindingID, details, asyncAllowed)
+	processingDuration := time.Since(start)
+
+	b.publisher.Publish(ctx, BindRequestProcessed{ProcessingDuration: processingDuration, Error: err})
+
+	return response, err
+}
+
+func (b *BindEndpoint) bind(ctx context.Context, instanceID, bindingID string, details domain.BindDetails, asyncAllowed bool) (domain.Binding, error) {
 	b.log.Infof("Bind instanceID: %s", instanceID)
 	b.log.Infof("Bind parameters: %s", string(details.RawParameters))
 	b.log.Infof("Bind context: %s", string(details.RawContext))
@@ -134,6 +151,20 @@ func (b *BindEndpoint) Bind(ctx context.Context, instanceID, bindingID string, d
 		expirationSeconds = parameters.ExpirationSeconds
 	}
 
+	lastOperation, err := b.operationsStorage.GetLastOperation(instance.InstanceID)
+	if err != nil {
+		return domain.Binding{}, apiresponses.NewFailureResponse(fmt.Errorf("failed to get last operation for instance %s", instanceID), http.StatusInternalServerError, fmt.Sprintf("failed to get last operation %s", instanceID))
+	}
+	if lastOperation.Type == internal.OperationTypeProvision && (lastOperation.State == domain.InProgress || lastOperation.State == domain.Failed) {
+		var message string
+		if lastOperation.State == domain.InProgress {
+			message = fmt.Sprintf("instance %s creation is in progress", instanceID)
+		} else {
+			message = fmt.Sprintf("instance %s creation failed", instanceID)
+		}
+		return domain.Binding{}, apiresponses.NewFailureResponse(fmt.Errorf(message), http.StatusBadRequest, message) // Agreed with Provisioning API team to return 400
+	}
+
 	bindingFromDB, err := b.bindingsStorage.Get(instanceID, bindingID)
 	if err != nil && !dberr.IsNotFound(err) {
 		message := fmt.Sprintf("failed to get Kyma binding from storage: %s", err)
@@ -145,6 +176,10 @@ func (b *BindEndpoint) Bind(ctx context.Context, instanceID, bindingID string, d
 			return domain.Binding{}, apiresponses.NewFailureResponse(fmt.Errorf(message), http.StatusConflict, message)
 		}
 		if bindingFromDB.ExpiresAt.After(time.Now()) {
+			if len(bindingFromDB.Kubeconfig) == 0 {
+				message := fmt.Sprintf("binding creation already in progress")
+				return domain.Binding{}, apiresponses.NewFailureResponse(fmt.Errorf(message), http.StatusUnprocessableEntity, message)
+			}
 			return domain.Binding{
 				IsAsync:       false,
 				AlreadyExists: true,
@@ -158,6 +193,7 @@ func (b *BindEndpoint) Bind(ctx context.Context, instanceID, bindingID string, d
 		}
 	}
 
+	//TODO we get here if binding is not found in storage or it is expired
 	bindingList, err := b.bindingsStorage.ListByInstanceID(instanceID)
 	if err != nil {
 		message := fmt.Sprintf("failed to list Kyma bindings: %s", err)
@@ -227,6 +263,7 @@ func (b *BindEndpoint) Bind(ctx context.Context, instanceID, bindingID string, d
 		return domain.Binding{}, apiresponses.NewFailureResponse(fmt.Errorf(message), http.StatusInternalServerError, message)
 	}
 	b.log.Infof("Successfully created binding %s for instance %s", bindingID, instanceID)
+	b.publisher.Publish(context.Background(), BindingCreated{PlanID: instance.ServicePlanID})
 
 	return domain.Binding{
 		IsAsync: false,
@@ -247,4 +284,18 @@ func (b *BindEndpoint) IsPlanBindable(planName string) bool {
 		}
 	}
 	return false
+}
+
+type BindRequestProcessed struct {
+	ProcessingDuration time.Duration
+	Error              error
+}
+
+type UnbindRequestProcessed struct {
+	ProcessingDuration time.Duration
+	Error              error
+}
+
+type BindingCreated struct {
+	PlanID string
 }

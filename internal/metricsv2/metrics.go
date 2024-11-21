@@ -6,6 +6,8 @@ import (
 	"math/rand"
 	"time"
 
+	"github.com/kyma-project/kyma-environment-broker/internal/broker"
+
 	"github.com/google/uuid"
 	"github.com/kyma-project/kyma-environment-broker/internal"
 	"github.com/kyma-project/kyma-environment-broker/internal/event"
@@ -34,9 +36,10 @@ type Exposer interface {
 type Config struct {
 	Enabled                                         bool          `envconfig:"default=false"`
 	OperationResultRetentionPeriod                  time.Duration `envconfig:"default=1h"`
-	OperationResultPoolingInterval                  time.Duration `envconfig:"default=1m"`
-	OperationStatsPoolingInterval                   time.Duration `envconfig:"default=1m"`
+	OperationResultPollingInterval                  time.Duration `envconfig:"default=1m"`
+	OperationStatsPollingInterval                   time.Duration `envconfig:"default=1m"`
 	OperationResultFinishedOperationRetentionPeriod time.Duration `envconfig:"default=3h"`
+	BindingsStatsPollingInterval                    time.Duration `envconfig:"default=1m"`
 }
 
 type RegisterContainer struct {
@@ -46,19 +49,28 @@ type RegisterContainer struct {
 	InstancesCollector         *InstancesCollector
 }
 
-func Register(ctx context.Context, sub event.Subscriber, operations storage.Operations, instances storage.Instances, cfg Config, logger logrus.FieldLogger) *RegisterContainer {
+func Register(ctx context.Context, sub event.Subscriber, db storage.BrokerStorage, cfg Config, logger logrus.FieldLogger) *RegisterContainer {
 	logger = logger.WithField("from:", logPrefix)
 	logrus.Infof("Registering metricsv2")
 	opDurationCollector := NewOperationDurationCollector(logger)
 	prometheus.MustRegister(opDurationCollector)
 
-	opInstanceCollector := NewInstancesCollector(instances, logger)
+	opInstanceCollector := NewInstancesCollector(db.Instances(), logger)
 	prometheus.MustRegister(opInstanceCollector)
 
-	opResult := NewOperationResult(ctx, operations, cfg, logger)
+	opResult := NewOperationResult(ctx, db.Operations(), cfg, logger)
 
-	opStats := NewOperationsStats(operations, cfg, logger)
+	opStats := NewOperationsStats(db.Operations(), cfg, logger)
 	opStats.MustRegister(ctx)
+
+	bindingStats := NewBindingStatsCollector(db.Bindings(), cfg.BindingsStatsPollingInterval, logger)
+	bindingStats.MustRegister(ctx)
+
+	bindDurationCollector := NewBindDurationCollector(logger)
+	prometheus.MustRegister(bindDurationCollector)
+
+	bindCrestedCollector := NewBindingCreationCollector()
+	prometheus.MustRegister(bindCrestedCollector)
 
 	sub.Subscribe(process.ProvisioningSucceeded{}, opDurationCollector.OnProvisioningSucceeded)
 	sub.Subscribe(process.DeprovisioningStepProcessed{}, opDurationCollector.OnDeprovisioningStepProcessed)
@@ -66,6 +78,10 @@ func Register(ctx context.Context, sub event.Subscriber, operations storage.Oper
 	sub.Subscribe(process.OperationStepProcessed{}, opDurationCollector.OnOperationStepProcessed)
 	sub.Subscribe(process.OperationFinished{}, opStats.Handler)
 	sub.Subscribe(process.OperationFinished{}, opResult.Handler)
+
+	sub.Subscribe(broker.BindRequestProcessed{}, bindDurationCollector.OnBindingExecuted)
+	sub.Subscribe(broker.UnbindRequestProcessed{}, bindDurationCollector.OnUnbindingExecuted)
+	sub.Subscribe(broker.BindingCreated{}, bindCrestedCollector.OnBindingCreated)
 
 	logger.Infof(fmt.Sprintf("%s -> enabled", logPrefix))
 

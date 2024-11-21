@@ -41,8 +41,8 @@ func TestOperationsResult(t *testing.T) {
 
 		operationResult := NewOperationResult(
 			context.Background(), operations, Config{
-				Enabled: true, OperationResultPoolingInterval: 10 * time.Millisecond,
-				OperationStatsPoolingInterval: 10 * time.Millisecond, OperationResultRetentionPeriod: 24 * time.Hour,
+				Enabled: true, OperationResultPollingInterval: 10 * time.Millisecond,
+				OperationStatsPollingInterval: 10 * time.Millisecond, OperationResultRetentionPeriod: 24 * time.Hour,
 			}, logrus.New(),
 		)
 

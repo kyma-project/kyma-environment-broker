@@ -115,6 +115,15 @@ func (s *Binding) ListExpired() ([]internal.Binding, error) {
 	return bindings, err
 }
 
+func (s *Binding) GetStatistics() (internal.BindingStats, error) {
+	sess := s.NewReadSession()
+	dto, err := sess.GetBindingsStatistics()
+	if err != nil {
+		return internal.BindingStats{}, err
+	}
+	return internal.BindingStats{MinutesSinceEarliestExpiration: *dto.SecondsSinceEarliestExpiration / 60}, nil
+}
+
 func (s *Binding) toBindingDTO(binding *internal.Binding) (dbmodel.BindingDTO, error) {
 	encrypted, err := s.cipher.Encrypt([]byte(binding.Kubeconfig))
 	if err != nil {

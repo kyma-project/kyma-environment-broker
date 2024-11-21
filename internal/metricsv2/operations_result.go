@@ -22,7 +22,7 @@ type operationsResult struct {
 	lastUpdate                       time.Time
 	operations                       storage.Operations
 	cache                            map[string]internal.Operation
-	poolingInterval                  time.Duration
+	pollingInterval                  time.Duration
 	sync                             sync.Mutex
 	finishedOperationRetentionPeriod time.Duration // zero means metrics are stored forever, otherwise they are deleted after this period (starting from the time of operation finish)
 }
@@ -41,7 +41,7 @@ func NewOperationResult(ctx context.Context, db storage.Operations, cfg Config, 
 			Name:      "operation_result",
 			Help:      "Results of metrics",
 		}, []string{"operation_id", "instance_id", "global_account_id", "plan_id", "type", "state", "error_category", "error_reason", "error"}),
-		poolingInterval:                  cfg.OperationResultPoolingInterval,
+		pollingInterval:                  cfg.OperationResultPollingInterval,
 		finishedOperationRetentionPeriod: cfg.OperationResultFinishedOperationRetentionPeriod,
 	}
 	go opInfo.Job(ctx)
@@ -139,7 +139,7 @@ func (s *operationsResult) Job(ctx context.Context) {
 		s.logger.Error("failed to update metrics metrics", err)
 	}
 
-	ticker := time.NewTicker(s.poolingInterval)
+	ticker := time.NewTicker(s.pollingInterval)
 	for {
 		select {
 		case <-ticker.C:

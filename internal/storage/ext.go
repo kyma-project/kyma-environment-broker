@@ -135,4 +135,5 @@ type Bindings interface {
 	Delete(instanceID, bindingID string) error
 	ListByInstanceID(instanceID string) ([]internal.Binding, error)
 	ListExpired() ([]internal.Binding, error)
+	GetStatistics() (internal.BindingStats, error)
 }

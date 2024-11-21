@@ -69,6 +69,20 @@ func TestMetrics(t *testing.T) {
 		return suite.DecodeOperationID(resp)
 	}
 
+	bindReq := func(iid, bid string) {
+		resp := suite.CallAPI(
+			"PUT", fmt.Sprintf("oauth/v2/service_instances/%s/service_bindings/%s", iid, bid), `
+{
+                "service_id": "47c9dcbf-ff30-448e-ab36-d3bad66ba281",
+                "plan_id": "361c511f-f939-4621-b228-d0fb79a1fe15",
+				"parameters": {
+					"expiration_seconds": 600
+				}
+               }
+`)
+		assert.Equal(t, http.StatusCreated, resp.StatusCode)
+	}
+
 	t.Run("AssertCorrectMetricValue", func(t *testing.T) {
 
 		// Provisioning
@@ -121,6 +135,10 @@ func TestMetrics(t *testing.T) {
 		suite.WaitForOperationState(opID, domain.Succeeded)
 		op7 := suite.GetOperation(opID)
 		assert.NotNil(t, op7)
+
+		// Bindings
+		bindReq(instance3, "binding1")
+		bindReq(instance3, "binding2")
 
 		// Updates
 
@@ -193,5 +211,10 @@ func TestMetrics(t *testing.T) {
 		suite.AssertMetrics2(1, *op7)
 		suite.AssertMetrics2(1, *op8)
 		suite.AssertMetrics2(1, *op11)
+
+		// uncomment to see the output of the metric endpoint
+		//resp := suite.CallAPI("GET", "/metrics", "")
+		//r, _ := io.ReadAll(resp.Body)
+		//fmt.Printf("%s", r)
 	})
 }

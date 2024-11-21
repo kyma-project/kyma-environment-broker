@@ -111,6 +111,32 @@ func TestBinding(t *testing.T) {
 		assert.Equal(t, http.StatusOK, resp.StatusCode)
 	})
 
+	t.Run("should return 200 when creating a second binding with the same id and params as an existing one", func(t *testing.T) {
+		bid = uuid.New().String()
+		resp = suite.CallAPI(http.MethodPut, fmt.Sprintf("oauth/v2/service_instances/%s/service_bindings/%s", iid, bid),
+			`{
+                "service_id": "47c9dcbf-ff30-448e-ab36-d3bad66ba281",
+                "plan_id": "361c511f-f939-4621-b228-d0fb79a1fe15",
+				"parameters": {
+					"expiration_seconds": 600
+				}
+               }`)
+
+		time.Sleep(2 * time.Second)
+
+		resp = suite.CallAPI(http.MethodPut, fmt.Sprintf("oauth/v2/service_instances/%s/service_bindings/%s", iid, bid),
+			`{
+                "service_id": "47c9dcbf-ff30-448e-ab36-d3bad66ba281",
+                "plan_id": "361c511f-f939-4621-b228-d0fb79a1fe15",
+				"parameters": {
+					"expiration_seconds": 600
+				}
+               }`)
+		assert.Equal(t, http.StatusOK, resp.StatusCode)
+		r, _ := io.ReadAll(resp.Body)
+		fmt.Printf("%s", r)
+	})
+
 	t.Run("should return 409 when creating a second binding with the same id as an existing one but different params", func(t *testing.T) {
 		bid = uuid.New().String()
 		resp = suite.CallAPI(http.MethodPut, fmt.Sprintf("oauth/v2/service_instances/%s/service_bindings/%s", iid, bid),
@@ -195,6 +221,81 @@ func TestDeprovisioningWithExistingBindings(t *testing.T) {
 	// then expect bindings to be removed
 	suite.AssertBindingRemoval(iid, bindingID1)
 	suite.AssertBindingRemoval(iid, bindingID2)
+}
+
+func TestFailedProvisioning(t *testing.T) {
+	// given
+	cfg := fixConfig()
+	// Disable EDP to have all steps successfully executed
+	cfg.EDP.Disabled = true
+	suite := NewBrokerSuiteTestWithConfig(t, cfg)
+	defer suite.TearDown()
+	iid := uuid.New().String()
+	bindingID1 := uuid.New().String()
+
+	response := suite.CallAPI(http.MethodPut, fmt.Sprintf("oauth/v2/service_instances/%s?accepts_incomplete=true", iid),
+		`{
+					"service_id": "47c9dcbf-ff30-448e-ab36-d3bad66ba281",
+					"plan_id": "361c511f-f939-4621-b228-d0fb79a1fe15",
+					"context": {
+						"globalaccount_id": "g-account-id",
+						"subaccount_id": "sub-id",
+						"user_id": "john.smith@email.com"
+					},
+					"parameters": {
+						"name": "testing-cluster",
+						"region": "eu-central-1"
+					}
+		}`)
+	opID := suite.DecodeOperationID(response)
+	suite.failProvisioningByOperationID(opID)
+
+	// when we create binding
+	response = suite.CallAPI(http.MethodPut, fmt.Sprintf("oauth/v2/service_instances/%s/service_bindings/%s", iid, bindingID1),
+		`{
+                "service_id": "47c9dcbf-ff30-448e-ab36-d3bad66ba281",
+                "plan_id": "361c511f-f939-4621-b228-d0fb79a1fe15"
+               }`)
+
+	// then expect 400 as agreed in the contract
+	require.Equal(t, http.StatusBadRequest, response.StatusCode)
+}
+
+func TestProvisioningInProgress(t *testing.T) {
+	// given
+	cfg := fixConfig()
+	// Disable EDP to have all steps successfully executed
+	cfg.EDP.Disabled = true
+	suite := NewBrokerSuiteTestWithConfig(t, cfg)
+	defer suite.TearDown()
+	iid := uuid.New().String()
+	bindingID1 := uuid.New().String()
+
+	response := suite.CallAPI(http.MethodPut, fmt.Sprintf("oauth/v2/service_instances/%s?accepts_incomplete=true", iid),
+		`{
+					"service_id": "47c9dcbf-ff30-448e-ab36-d3bad66ba281",
+					"plan_id": "361c511f-f939-4621-b228-d0fb79a1fe15",
+					"context": {
+						"globalaccount_id": "g-account-id",
+						"subaccount_id": "sub-id",
+						"user_id": "john.smith@email.com"
+					},
+					"parameters": {
+						"name": "testing-cluster",
+						"region": "eu-central-1"
+					}
+		}`)
+	opID := suite.DecodeOperationID(response)
+	suite.WaitForProvisioningState(opID, domain.InProgress)
+	// when we create binding
+	response = suite.CallAPI(http.MethodPut, fmt.Sprintf("oauth/v2/service_instances/%s/service_bindings/%s", iid, bindingID1),
+		`{
+                "service_id": "47c9dcbf-ff30-448e-ab36-d3bad66ba281",
+                "plan_id": "361c511f-f939-4621-b228-d0fb79a1fe15"
+               }`)
+
+	// then expect 400 as agreed in the contract
+	require.Equal(t, http.StatusBadRequest, response.StatusCode)
 }
 
 func TestRemoveBindingsFromSuspended(t *testing.T) {

@@ -4,9 +4,10 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"net/http/httptest"
 	"testing"
 	"time"
+
+	"github.com/kyma-project/kyma-environment-broker/internal/event"
 
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
@@ -21,25 +22,10 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-type Kubeconfig struct {
-	Users []User `yaml:"users"`
-}
-
-type User struct {
-	Name string `yaml:"name"`
-	User struct {
-		Token string `yaml:"token"`
-	} `yaml:"user"`
-}
-
 const (
 	instanceID1      = "1"
-	instanceID2      = "2"
-	instanceID3      = "max-bindings"
 	maxBindingsCount = 10
 )
-
-var httpServer *httptest.Server
 
 type provider struct {
 }
@@ -74,10 +60,8 @@ func TestCreateBindingEndpoint(t *testing.T) {
 	err := db.Instances().Insert(fixture.FixInstance(instanceID1))
 	require.NoError(t, err)
 
-	err = db.Instances().Insert(fixture.FixInstance(instanceID2))
-	require.NoError(t, err)
-
-	err = db.Instances().Insert(fixture.FixInstance(instanceID3))
+	operation := fixture.FixOperation("operation-id", instanceID1, "provision")
+	err = db.Operations().InsertOperation(operation)
 	require.NoError(t, err)
 
 	//// binding configuration
@@ -89,8 +73,11 @@ func TestCreateBindingEndpoint(t *testing.T) {
 		MaxBindingsCount: maxBindingsCount,
 	}
 
+	// event publisher
+	publisher := event.NewPubSub(logrus.New())
+
 	//// api handler
-	bindEndpoint := NewBind(*bindingCfg, db, logs, &provider{}, &provider{})
+	bindEndpoint := NewBind(*bindingCfg, db, logs, &provider{}, &provider{}, publisher)
 
 	// test relies on checking if got nil on kubeconfig provider but the instance got inserted either way
 	t.Run("should INSERT binding despite error on k8s api call", func(t *testing.T) {
@@ -175,6 +162,7 @@ func TestCreateSecondBindingWithTheSameIdButDifferentParams(t *testing.T) {
 	instanceID := uuid.New().String()
 	bindingID := uuid.New().String()
 	instance := fixture.FixInstance(instanceID)
+	operation := fixture.FixOperation("operation-id", instanceID, "provision")
 	bindingCfg := &BindingConfig{
 		Enabled: true,
 		BindablePlans: EnablePlans{
@@ -191,8 +179,12 @@ func TestCreateSecondBindingWithTheSameIdButDifferentParams(t *testing.T) {
 	assert.NoError(t, err)
 	err = brokerStorage.Bindings().Insert(&binding)
 	assert.NoError(t, err)
+	err = brokerStorage.Operations().InsertOperation(operation)
+	assert.NoError(t, err)
 
-	svc := NewBind(*bindingCfg, brokerStorage, logrus.New(), nil, nil)
+	publisher := event.NewPubSub(logrus.New())
+
+	svc := NewBind(*bindingCfg, brokerStorage, logrus.New(), nil, nil, publisher)
 	params := BindingParams{
 		ExpirationSeconds: 601,
 	}
@@ -216,6 +208,8 @@ func TestCreateSecondBindingWithTheSameIdAndParams(t *testing.T) {
 	instanceID := uuid.New().String()
 	bindingID := uuid.New().String()
 	instance := fixture.FixInstance(instanceID)
+	operation := fixture.FixOperation("operation-id", instanceID, "provision")
+
 	bindingCfg := &BindingConfig{
 		Enabled: true,
 		BindablePlans: EnablePlans{
@@ -232,8 +226,12 @@ func TestCreateSecondBindingWithTheSameIdAndParams(t *testing.T) {
 	assert.NoError(t, err)
 	err = brokerStorage.Bindings().Insert(&binding)
 	assert.NoError(t, err)
+	err = brokerStorage.Operations().InsertOperation(operation)
+	assert.NoError(t, err)
 
-	svc := NewBind(*bindingCfg, brokerStorage, logrus.New(), nil, nil)
+	publisher := event.NewPubSub(logrus.New())
+
+	svc := NewBind(*bindingCfg, brokerStorage, logrus.New(), nil, nil, publisher)
 	params := BindingParams{
 		ExpirationSeconds: 600,
 	}
@@ -251,12 +249,112 @@ func TestCreateSecondBindingWithTheSameIdAndParams(t *testing.T) {
 	assert.Equal(t, binding.ExpiresAt.Format(expiresAtLayout), resp.Metadata.ExpiresAt)
 }
 
+func TestCreateSecondBindingWithTheSameIdAndParamsForExpired(t *testing.T) {
+	// given
+	const expiresAtLayout = "2006-01-02T15:04:05.0Z"
+	instanceID := uuid.New().String()
+	bindingID := uuid.New().String()
+	instance := fixture.FixInstance(instanceID)
+	operation := fixture.FixOperation("operation-id", instanceID, "provision")
+
+	bindingCfg := &BindingConfig{
+		Enabled: true,
+		BindablePlans: EnablePlans{
+			instance.ServicePlanName,
+		},
+		ExpirationSeconds:    600,
+		MaxExpirationSeconds: 7200,
+		MinExpirationSeconds: 600,
+		MaxBindingsCount:     10,
+	}
+	binding := fixture.FixExpiredBindingWithInstanceID(bindingID, instanceID, time.Minute*15)
+	brokerStorage := storage.NewMemoryStorage()
+	err := brokerStorage.Instances().Insert(instance)
+	assert.NoError(t, err)
+	err = brokerStorage.Bindings().Insert(&binding)
+	assert.NoError(t, err)
+	err = brokerStorage.Operations().InsertOperation(operation)
+	assert.NoError(t, err)
+
+	// event publisher
+	publisher := event.NewPubSub(logrus.New())
+
+	svc := NewBind(*bindingCfg, brokerStorage, logrus.New(), nil, nil, publisher)
+	params := BindingParams{
+		ExpirationSeconds: 600,
+	}
+	rawParams, err := json.Marshal(params)
+	assert.NoError(t, err)
+	details := domain.BindDetails{
+		RawParameters: rawParams,
+	}
+
+	// when
+	_, err = svc.Bind(context.Background(), instanceID, bindingID, details, false)
+
+	// then
+	require.Error(t, err)
+	assert.Contains(t, err.Error(), "failed to insert Kyma binding into storage")
+}
+
+func TestCreateSecondBindingWithTheSameIdAndParamsForBindingInProgress(t *testing.T) {
+	// given
+	const expiresAtLayout = "2006-01-02T15:04:05.0Z"
+	instanceID := uuid.New().String()
+	bindingID := uuid.New().String()
+	instance := fixture.FixInstance(instanceID)
+	operation := fixture.FixOperation("operation-id", instanceID, "provision")
+
+	bindingCfg := &BindingConfig{
+		Enabled: true,
+		BindablePlans: EnablePlans{
+			instance.ServicePlanName,
+		},
+		ExpirationSeconds:    600,
+		MaxExpirationSeconds: 7200,
+		MinExpirationSeconds: 600,
+		MaxBindingsCount:     10,
+	}
+
+	binding := fixture.FixBindingWithInstanceID(bindingID, instanceID)
+	binding.Kubeconfig = ""
+	brokerStorage := storage.NewMemoryStorage()
+	err := brokerStorage.Instances().Insert(instance)
+	assert.NoError(t, err)
+	err = brokerStorage.Bindings().Insert(&binding)
+	assert.NoError(t, err)
+	err = brokerStorage.Operations().InsertOperation(operation)
+	assert.NoError(t, err)
+
+	// event publisher
+	publisher := event.NewPubSub(logrus.New())
+
+	svc := NewBind(*bindingCfg, brokerStorage, logrus.New(), nil, nil, publisher)
+	params := BindingParams{
+		ExpirationSeconds: 600,
+	}
+	rawParams, err := json.Marshal(params)
+	assert.NoError(t, err)
+	details := domain.BindDetails{
+		RawParameters: rawParams,
+	}
+
+	// when
+	_, err = svc.Bind(context.Background(), instanceID, bindingID, details, false)
+
+	// then
+	require.Error(t, err)
+	assert.Contains(t, err.Error(), "binding creation already in progress")
+}
+
 func TestCreateSecondBindingWithTheSameIdAndParamsNotExplicitlyDefined(t *testing.T) {
 	// given
 	const expiresAtLayout = "2006-01-02T15:04:05.0Z"
 	instanceID := uuid.New().String()
 	bindingID := uuid.New().String()
 	instance := fixture.FixInstance(instanceID)
+	operation := fixture.FixOperation("operation-id", instanceID, "provision")
+
 	bindingCfg := &BindingConfig{
 		Enabled: true,
 		BindablePlans: EnablePlans{
@@ -273,8 +371,12 @@ func TestCreateSecondBindingWithTheSameIdAndParamsNotExplicitlyDefined(t *testin
 	assert.NoError(t, err)
 	err = brokerStorage.Bindings().Insert(&binding)
 	assert.NoError(t, err)
+	err = brokerStorage.Operations().InsertOperation(operation)
+	assert.NoError(t, err)
 
-	svc := NewBind(*bindingCfg, brokerStorage, logrus.New(), nil, nil)
+	publisher := event.NewPubSub(logrus.New())
+
+	svc := NewBind(*bindingCfg, brokerStorage, logrus.New(), nil, nil, publisher)
 
 	// when
 	resp, err := svc.Bind(context.Background(), instanceID, bindingID, domain.BindDetails{}, false)

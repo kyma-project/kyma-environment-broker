@@ -4,6 +4,9 @@ import (
 	"context"
 	"fmt"
 	"net/http"
+	"time"
+
+	"github.com/kyma-project/kyma-environment-broker/internal/event"
 
 	"github.com/kyma-project/kyma-environment-broker/internal"
 	broker "github.com/kyma-project/kyma-environment-broker/internal/broker/bindings"
@@ -20,16 +23,33 @@ type UnbindEndpoint struct {
 	instancesStorage  storage.Instances
 	operationsStorage storage.Operations
 	bindingsManager   broker.BindingsManager
+	publisher         event.Publisher
 }
 
-func NewUnbind(log logrus.FieldLogger, db storage.BrokerStorage, bindingsManager broker.BindingsManager) *UnbindEndpoint {
-	return &UnbindEndpoint{log: log.WithField("service", "UnbindEndpoint"), bindingsStorage: db.Bindings(), instancesStorage: db.Instances(), bindingsManager: bindingsManager, operationsStorage: db.Operations()}
+func NewUnbind(log logrus.FieldLogger, db storage.BrokerStorage, bindingsManager broker.BindingsManager, publisher event.Publisher) *UnbindEndpoint {
+	return &UnbindEndpoint{log: log.WithField("service", "UnbindEndpoint"),
+		bindingsStorage:   db.Bindings(),
+		instancesStorage:  db.Instances(),
+		bindingsManager:   bindingsManager,
+		operationsStorage: db.Operations(),
+		publisher:         publisher,
+	}
 }
 
 // Unbind deletes an existing service binding
 //
 //	DELETE /v2/service_instances/{instance_id}/service_bindings/{binding_id}
 func (b *UnbindEndpoint) Unbind(ctx context.Context, instanceID, bindingID string, details domain.UnbindDetails, asyncAllowed bool) (domain.UnbindSpec, error) {
+	start := time.Now()
+	response, err := b.unbind(ctx, instanceID, bindingID, details, asyncAllowed)
+	processingDuration := time.Since(start)
+
+	b.publisher.Publish(ctx, UnbindRequestProcessed{ProcessingDuration: processingDuration, Error: err})
+	return response, err
+}
+
+func (b *UnbindEndpoint) unbind(ctx context.Context, instanceID, bindingID string, details domain.UnbindDetails, asyncAllowed bool) (domain.UnbindSpec, error) {
+
 	b.log.Infof("Unbind instanceID: %s", instanceID)
 	b.log.Infof("Unbind details: %+v", details)
 	b.log.Infof("Unbind asyncAllowed: %v", asyncAllowed)

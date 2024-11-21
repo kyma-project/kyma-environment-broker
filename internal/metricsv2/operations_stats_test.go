@@ -71,8 +71,8 @@ func TestOperationsStats(t *testing.T) {
 	assert.NoError(t, err)
 
 	cfg := Config{
-		OperationStatsPoolingInterval:  1 * time.Millisecond,
-		OperationResultPoolingInterval: 1 * time.Millisecond,
+		OperationStatsPollingInterval:  1 * time.Millisecond,
+		OperationResultPollingInterval: 1 * time.Millisecond,
 		OperationResultRetentionPeriod: 1 * time.Minute,
 	}
 

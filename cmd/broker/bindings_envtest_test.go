@@ -11,6 +11,8 @@ import (
 	"testing"
 	"time"
 
+	"github.com/kyma-project/kyma-environment-broker/internal/event"
+
 	"github.com/golang-jwt/jwt/v4"
 	"github.com/google/uuid"
 	brokerBindings "github.com/kyma-project/kyma-environment-broker/internal/broker/bindings"
@@ -198,10 +200,12 @@ func TestCreateBindingEndpoint(t *testing.T) {
 		MaxBindingsCount:     maxBindingsCount,
 	}
 
+	publisher := event.NewPubSub(logs)
+
 	//// api handler
-	bindEndpoint := broker.NewBind(*bindingCfg, db, logs, skrK8sClientProvider, skrK8sClientProvider)
+	bindEndpoint := broker.NewBind(*bindingCfg, db, logs, skrK8sClientProvider, skrK8sClientProvider, publisher)
 	getBindingEndpoint := broker.NewGetBinding(logs, db)
-	unbindEndpoint := broker.NewUnbind(logs, db, brokerBindings.NewServiceAccountBindingsManager(skrK8sClientProvider, skrK8sClientProvider))
+	unbindEndpoint := broker.NewUnbind(logs, db, brokerBindings.NewServiceAccountBindingsManager(skrK8sClientProvider, skrK8sClientProvider), publisher)
 	apiHandler := handlers.NewApiHandler(broker.KymaEnvironmentBroker{
 		ServicesEndpoint:             nil,
 		ProvisionEndpoint:            nil,
@@ -306,6 +310,36 @@ func TestCreateBindingEndpoint(t *testing.T) {
 
 		//// verify connectivity using kubeconfig from the generated binding
 		assertClusterAccess(t, "secret-to-check-first", binding)
+	})
+
+	t.Run("should invalidate binding when cluster role binding is removed", func(t *testing.T) {
+		// given
+		bindingID := uuid.New().String()
+
+		response := createBinding(instanceID1, bindingID, t)
+		defer response.Body.Close()
+
+		require.Equal(t, http.StatusCreated, response.StatusCode)
+
+		binding := getBindingUnmarshalled(instanceID1, bindingID, t)
+
+		duration, err := getTokenDurationFromBinding(t, binding)
+		require.NoError(t, err)
+		assert.Equal(t, expirationSeconds*time.Second, duration)
+
+		assertClusterAccess(t, "secret-to-check-first", binding)
+
+		// when
+		err = clientFirst.Delete(context.Background(), &rbacv1.ClusterRoleBinding{
+			ObjectMeta: v1.ObjectMeta{
+				Name:      brokerBindings.BindingName(bindingID),
+				Namespace: brokerBindings.BindingNamespace,
+			},
+		})
+		assert.NoError(t, err)
+
+		// then
+		assertClusterNoAccess(t, "secret-to-check-first", binding)
 	})
 
 	t.Run("should return created bindings when multiple bindings created", func(t *testing.T) {
@@ -538,6 +572,18 @@ func assertClusterAccess(t *testing.T, controlSecretName string, binding domain.
 
 	_, err := newClient.CoreV1().Secrets("default").Get(context.Background(), controlSecretName, v1.GetOptions{})
 	assert.NoError(t, err)
+}
+
+func assertClusterNoAccess(t *testing.T, controlSecretName string, binding domain.Binding) {
+
+	credentials, ok := binding.Credentials.(map[string]interface{})
+	require.True(t, ok)
+	kubeconfig := credentials["kubeconfig"].(string)
+
+	newClient := kubeconfigClient(t, kubeconfig)
+
+	_, err := newClient.CoreV1().Secrets("default").Get(context.Background(), controlSecretName, v1.GetOptions{})
+	assert.True(t, apierrors.IsForbidden(err))
 }
 
 func assertRolesExistence(t *testing.T, bindingID string, binding domain.Binding) {

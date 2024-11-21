@@ -216,6 +216,18 @@ jobs:
         if: ${{ !inputs.skip-sec-file-and-chart-bump }}
         run: scripts/bump_keb_chart.sh ${{ inputs.name }} "release"
 
+      - name: Check if any PR was merged during release
+        env:
+            GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          COMMIT_SHA=$(gh api repos/${{ env.KYMA_ENVIRONMENT_BROKER_REPO }}/commits -q '.[0].sha')
+          echo "Latest commit sha: $COMMIT_SHA"
+          echo "Workflow sha: ${{ github.sha }}"
+          if [ "$COMMIT_SHA" != "${{ github.sha }}" ]; then
+            echo "::error ::a PR was merged during the release. Don't rerun this workflow, create a new release with the same version"
+            exit 1
+          fi
+
       - name: Create PR if anything changed
         if: ${{ !inputs.skip-sec-file-and-chart-bump }}
         env:
@@ -258,6 +270,18 @@ jobs:
             echo "Step skipped"
           fi
 
+      - name: Check if any PR have been merged before merging the bump PR
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          COMMIT_SHA=$(gh api repos/${{ env.KYMA_ENVIRONMENT_BROKER_REPO }}/commits -q '.[1].sha')
+          echo "Latest commit sha: $COMMIT_SHA"
+          echo "Bump sha: ${{ github.sha }}"
+          if [ "$COMMIT_SHA" != "${{ github.sha }}" ]; then
+            echo "::error ::a PR have been merged before merging the bump PR. Don't rerun this workflow. Create a new release with the same version"
+            exit 1 
+          fi
+
       - name: Save latest commit ref
         id: pull-ref
         env:
@@ -284,6 +308,18 @@ jobs:
           fetch-depth: 0
           ref: ${{ needs.bumps.outputs.latest_commit}}
 
+      - name: Check if any PR was merged after bumps
+        env:
+            GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          COMMIT_SHA=$(gh api repos/${{ env.KYMA_ENVIRONMENT_BROKER_REPO }}/commits -q '.[0].sha')
+          echo "Latest commit sha: $COMMIT_SHA"
+          echo "Bump sha: ${{ needs.bumps.outputs.latest_commit}}"
+          if [ "$COMMIT_SHA" != "${{ needs.bumps.outputs.latest_commit}}" ]; then
+            echo "::error ::a PR was merged after the bumps. Don't rerun this workflow, create a new release with the same version"
+            exit 1 
+          fi
+        
       - name: Create draft release
         id: create-draft
         env:
@@ -297,6 +333,18 @@ jobs:
         run: |
           git tag ${{ github.event.inputs.name }}
           git push origin ${{ github.event.inputs.name }}
+
+      - name: Check if any PR may have been merged before creating the tag and draft release
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          COMMIT_SHA=$(gh api repos/${{ env.KYMA_ENVIRONMENT_BROKER_REPO }}/commits -q '.[0].sha')
+          echo "Latest commit sha: $COMMIT_SHA"
+          echo "Bump sha: ${{ needs.bumps.outputs.latest_commit}}"
+          if [ "$COMMIT_SHA" != "${{ needs.bumps.outputs.latest_commit}}" ]; then
+            echo "::error ::a PR may have been merged before the tag and draft release were created. Delete the tag and the draft release. Don't rerun this workflow. Create a new release with the same version"
+            exit 1 
+          fi
 
     outputs:
       release_id: ${{ steps.create-draft.outputs.release_id }}

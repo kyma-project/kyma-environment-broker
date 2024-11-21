@@ -1,6 +1,7 @@
 package memory
 
 import (
+	"fmt"
 	"sync"
 	"time"
 
@@ -102,4 +103,8 @@ func (s *Binding) ListExpired() ([]internal.Binding, error) {
 	}
 
 	return bindings, nil
+}
+
+func (s *Binding) GetStatistics() (internal.BindingStats, error) {
+	return internal.BindingStats{}, fmt.Errorf("not implemented")
 }

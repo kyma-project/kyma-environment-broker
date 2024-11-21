@@ -74,7 +74,7 @@ func NewOperationsStats(operations storage.Operations, cfg Config, logger logrus
 		gauges:          make(map[metricKey]prometheus.Gauge, len(plans)*len(opTypes)*1),
 		counters:        make(map[metricKey]prometheus.Counter, len(plans)*len(opTypes)*2),
 		operations:      operations,
-		poolingInterval: cfg.OperationStatsPoolingInterval,
+		poolingInterval: cfg.OperationStatsPollingInterval,
 	}
 }
 

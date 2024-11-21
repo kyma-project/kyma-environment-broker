@@ -64,6 +64,7 @@ type ReadSession interface {
 	GetBinding(instanceID string, bindingID string) (dbmodel.BindingDTO, dberr.Error)
 	ListBindings(instanceID string) ([]dbmodel.BindingDTO, error)
 	ListExpiredBindings() ([]dbmodel.BindingDTO, error)
+	GetBindingsStatistics() (dbmodel.BindingStatsDTO, error)
 }
 
 //go:generate mockery --name=WriteSession
