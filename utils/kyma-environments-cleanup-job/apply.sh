@@ -12,6 +12,12 @@ kebContainerName=kyma-environment-broker
 cloudsqlProxyContainerName=cloudsql-proxy
 host=kyma-env-broker
 
+currentContext=$(kubectl config current-context)
+if [[ "$currentContext" != *dev* ]]; then
+    echo "This script is intended to run only in the dev environment. Current context: $currentContext"
+    exit 1
+fi
+
 SCRIPT_CLOUDSQL_PROXY_COMMAND=$(kubectl get deployment $deploymentName -n $namespace -o jsonpath=\
 "{.spec.template.spec.containers[?(@.name==\"$cloudsqlProxyContainerName\")].command}")
 SCRIPT_CLOUDSQL_PROXY_IMAGE=$(kubectl get deployment $deploymentName -n $namespace -o jsonpath=\

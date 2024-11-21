@@ -9,6 +9,7 @@ import (
 	"github.com/kyma-project/kyma-environment-broker/internal/storage/dberr"
 
 	"github.com/hashicorp/go-multierror"
+	imv1 "github.com/kyma-project/infrastructure-manager/api/v1"
 	"github.com/kyma-project/kyma-environment-broker/common/gardener"
 	"github.com/kyma-project/kyma-environment-broker/internal"
 	"github.com/kyma-project/kyma-environment-broker/internal/storage"
@@ -54,6 +55,7 @@ type Service struct {
 type runtime struct {
 	ID        string
 	AccountID string
+	ShootName string
 }
 
 type providers struct {
@@ -218,6 +220,7 @@ func (s *Service) shootToRuntime(st unstructured.Unstructured) (*runtime, error)
 	return &runtime{
 		ID:        runtimeID,
 		AccountID: accountID,
+		ShootName: shoot.GetName(),
 	}, nil
 }
 
@@ -231,7 +234,9 @@ func (s *Service) cleanUp(runtimesToDelete []runtime) error {
 		}
 	}
 
-	result := s.cleanUpKEBInstances(kebInstancesToDelete)
+	kebResult := s.cleanUpKEBInstances(kebInstancesToDelete)
+	runtimeCRsResult := s.cleanUpRuntimeCRs(runtimesToDelete, kebInstancesToDelete)
+	result := multierror.Append(kebResult, runtimeCRsResult)
 
 	if result != nil {
 		result.ErrorFormat = func(i []error) string {
@@ -284,5 +289,54 @@ func (s *Service) triggerEnvironmentDeprovisioning(instance internal.Instance) e
 	}
 
 	log.Infof("Successfully send deprovision request to Kyma Environment Broker, got operation ID %q", opID)
+	return nil
+}
+
+func (s *Service) cleanUpRuntimeCRs(runtimesToDelete []runtime, kebInstancesToDelete []internal.Instance) *multierror.Error {
+	kebInstanceExists := func(runtimeID string) bool {
+		for _, instance := range kebInstancesToDelete {
+			if instance.RuntimeID == runtimeID {
+				return true
+			}
+		}
+
+		return false
+	}
+
+	var result *multierror.Error
+
+	for _, runtime := range runtimesToDelete {
+		if !kebInstanceExists(runtime.ID) {
+			s.logger.Infof("Deleting runtime CR for runtimeID ID %q", runtime.ID)
+			err := s.deleteRuntimeCR(runtime)
+			if err != nil {
+				result = multierror.Append(result, err)
+			}
+		}
+	}
+
+	return result
+}
+
+func (s *Service) deleteRuntimeCR(runtime runtime) error {
+	var runtimeCR = imv1.Runtime{}
+	err := s.k8sClient.Get(context.Background(), client.ObjectKey{Name: runtime.ID, Namespace: kcpNamespace}, &runtimeCR)
+	if err != nil {
+		s.logger.Error(fmt.Errorf("while getting runtime CR for runtime ID %q: %w", runtime.ID, err))
+		return nil
+	}
+
+	if runtime.ShootName != runtimeCR.Spec.Shoot.Name {
+		s.logger.Error(fmt.Errorf("gardener shoot name %q does not match runtime CR shoot name %q", runtime.ShootName, runtimeCR.Spec.Shoot.Name))
+		return nil
+	}
+
+	err = s.k8sClient.Delete(context.Background(), &runtimeCR)
+	if err != nil {
+		s.logger.Error(fmt.Errorf("while deleting runtime CR for runtime ID %q: %w", runtime.ID, err))
+		return err
+	}
+
+	s.logger.Infof("Successfully deleted runtime CR for runtimeID ID %q", runtime.ID)
 	return nil
 }

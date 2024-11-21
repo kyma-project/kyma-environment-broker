@@ -7,6 +7,7 @@ import (
 
 	"github.com/dlmiddlecote/sqlstats"
 	"github.com/gocraft/dbr"
+	imv1 "github.com/kyma-project/infrastructure-manager/api/v1"
 	"github.com/kyma-project/kyma-environment-broker/common/gardener"
 	"github.com/kyma-project/kyma-environment-broker/internal/broker"
 	"github.com/kyma-project/kyma-environment-broker/internal/environmentscleanup"
@@ -105,7 +106,9 @@ func (b *AppBuilder) WithStorage() {
 }
 
 func (b *AppBuilder) WithK8sClient() {
-	err := corev1.AddToScheme(scheme.Scheme)
+  err := imv1.AddToScheme(scheme.Scheme)
+	FatalOnError(err)
+  err = corev1.AddToScheme(scheme.Scheme)
 	FatalOnError(err)
 	k8sCfg, err := k8scfg.GetConfig()
 	FatalOnError(err)

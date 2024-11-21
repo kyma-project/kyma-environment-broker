@@ -15,10 +15,13 @@ import (
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 
+
 	corev1 "k8s.io/api/core/v1"
+	imv1 "github.com/kyma-project/infrastructure-manager/api/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	k8sruntime "k8s.io/apimachinery/pkg/runtime"
+	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/client/fake"
 )
 
@@ -38,8 +41,10 @@ const (
 
 func TestService_PerformCleanup(t *testing.T) {
 	sch := k8sruntime.NewScheme()
-	err := corev1.AddToScheme(sch)
+  err := imv1.AddToScheme(sch)
 	assert.NoError(t, err)
+	err = corev1.AddToScheme(sch)
+  assert.NoError(t, err)
 	k8sClient := fake.NewClientBuilder().WithScheme(sch).Build()
 
 	t.Run("happy path", func(t *testing.T) {
@@ -259,7 +264,113 @@ func TestService_PerformCleanup(t *testing.T) {
 		assert.NoError(t, err)
 	})
 
-	t.Run("should work on dev environment", func(t *testing.T) {
+	t.Run("should delete runtime CR when unable to find instance in db", func(t *testing.T) {
+		// given
+		gcMock := &mocks.GardenerClient{}
+		gcMock.On("List", mock.Anything, mock.AnythingOfType("v1.ListOptions")).Return(fixShootList(), nil)
+		gcMock.On("Delete", mock.Anything, mock.AnythingOfType("string"), mock.AnythingOfType("v1.DeleteOptions")).Return(nil)
+		gcMock.On("Update", mock.Anything, mock.Anything, mock.AnythingOfType("v1.UpdateOptions")).Return(nil, nil)
+		bcMock := &mocks.BrokerClient{}
+		bcMock.On("Deprovision", mock.AnythingOfType("internal.Instance")).Return(fixOperationID, nil)
+
+		memoryStorage := storage.NewMemoryStorage()
+		err := memoryStorage.Instances().Insert(internal.Instance{
+			InstanceID: fixInstanceID1,
+			RuntimeID:  fixRuntimeID1,
+		})
+		assert.NoError(t, err)
+		err = memoryStorage.Instances().Insert(internal.Instance{
+			InstanceID: fixInstanceID2,
+			RuntimeID:  fixRuntimeID2,
+		})
+		assert.NoError(t, err)
+
+		runtimeCR := &imv1.Runtime{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      fixRuntimeID3,
+				Namespace: kcpNamespace,
+			},
+			Spec: imv1.RuntimeSpec{
+				Shoot: imv1.RuntimeShoot{
+					Name: "az-4567",
+				},
+			},
+		}
+		err = k8sClient.Create(context.Background(), runtimeCR)
+		assert.NoError(t, err)
+		err = k8sClient.Get(context.Background(), client.ObjectKey{Name: fixRuntimeID3, Namespace: kcpNamespace}, &imv1.Runtime{})
+		assert.NoError(t, err)
+
+		logger := logrus.New()
+
+		svc := NewService(gcMock, bcMock, k8sClient, memoryStorage.Instances(), logger, maxShootAge, shootLabelSelector)
+
+		// when
+		err = svc.PerformCleanup()
+
+		// then
+		bcMock.AssertExpectations(t)
+		gcMock.AssertExpectations(t)
+		assert.NoError(t, err)
+
+		err = k8sClient.Get(context.Background(), client.ObjectKey{Name: fixRuntimeID3, Namespace: kcpNamespace}, &imv1.Runtime{})
+		assert.EqualError(t, err, "runtimes.infrastructuremanager.kyma-project.io \"rntime-3\" not found")
+	})
+
+	t.Run("should not delete runtime CR with invalid shoot name", func(t *testing.T) {
+		// given
+		gcMock := &mocks.GardenerClient{}
+		gcMock.On("List", mock.Anything, mock.AnythingOfType("v1.ListOptions")).Return(fixShootList(), nil)
+		gcMock.On("Delete", mock.Anything, mock.AnythingOfType("string"), mock.AnythingOfType("v1.DeleteOptions")).Return(nil)
+		gcMock.On("Update", mock.Anything, mock.Anything, mock.AnythingOfType("v1.UpdateOptions")).Return(nil, nil)
+		bcMock := &mocks.BrokerClient{}
+		bcMock.On("Deprovision", mock.AnythingOfType("internal.Instance")).Return(fixOperationID, nil)
+
+		memoryStorage := storage.NewMemoryStorage()
+		err := memoryStorage.Instances().Insert(internal.Instance{
+			InstanceID: fixInstanceID1,
+			RuntimeID:  fixRuntimeID1,
+		})
+		assert.NoError(t, err)
+		err = memoryStorage.Instances().Insert(internal.Instance{
+			InstanceID: fixInstanceID2,
+			RuntimeID:  fixRuntimeID2,
+		})
+		assert.NoError(t, err)
+
+		runtimeCR := &imv1.Runtime{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      fixRuntimeID3,
+				Namespace: kcpNamespace,
+			},
+			Spec: imv1.RuntimeSpec{
+				Shoot: imv1.RuntimeShoot{
+					Name: "invalid-name",
+				},
+			},
+		}
+		err = k8sClient.Create(context.Background(), runtimeCR)
+		assert.NoError(t, err)
+		err = k8sClient.Get(context.Background(), client.ObjectKey{Name: fixRuntimeID3, Namespace: kcpNamespace}, &imv1.Runtime{})
+		assert.NoError(t, err)
+
+		logger := logrus.New()
+
+		svc := NewService(gcMock, bcMock, k8sClient, memoryStorage.Instances(), logger, maxShootAge, shootLabelSelector)
+
+		// when
+		err = svc.PerformCleanup()
+
+		// then
+		bcMock.AssertExpectations(t)
+		gcMock.AssertExpectations(t)
+		assert.NoError(t, err)
+
+		err = k8sClient.Get(context.Background(), client.ObjectKey{Name: fixRuntimeID3, Namespace: kcpNamespace}, &imv1.Runtime{})
+		assert.NoError(t, err)
+	})
+  
+  t.Run("should work on dev environment", func(t *testing.T) {
 		// given
 		gcMock := &mocks.GardenerClient{}
 		gcMock.On("List", mock.Anything, mock.AnythingOfType("v1.ListOptions")).Return(fixShootList(), nil)
@@ -326,7 +437,6 @@ func TestService_PerformCleanup(t *testing.T) {
 		// then
 		assert.EqualError(t, err, "job must run only in the dev environment, current environment: stage.kyma.ondemand.com")
 	})
-
 }
 
 func fixShootList() *unstructured.UnstructuredList {
