@@ -503,6 +503,38 @@ func TestInstance(t *testing.T) {
 			fixture.FixProvisioningOperation("op3", "inst3"),
 			fixture.FixProvisioningOperation("op4", "expiredinstance"),
 		}
+		// there is no record for subaccount used by inst3
+		fixSubaccountStates := []internal.SubaccountState{
+			internal.SubaccountState{
+				ID:                "inst1",
+				BetaEnabled:       "true",
+				UsedForProduction: "NOT_SET",
+				ModifiedAt:        10,
+			},
+			internal.SubaccountState{
+				ID:                "inst2",
+				BetaEnabled:       "true",
+				UsedForProduction: "USED_FOR_PRODUCTION",
+				ModifiedAt:        20,
+			},
+			internal.SubaccountState{
+				ID:                "expiredinstance",
+				BetaEnabled:       "true",
+				UsedForProduction: "",
+				ModifiedAt:        30,
+			},
+			internal.SubaccountState{
+				ID:                "not-existing-subaccount",
+				BetaEnabled:       "true",
+				UsedForProduction: "USED_FOR_PRODUCTION",
+				ModifiedAt:        40,
+			},
+		}
+		for _, s := range fixSubaccountStates {
+			err = brokerStorage.SubaccountStates().UpsertState(s)
+			require.NoError(t, err)
+		}
+
 		fixBinding := fixture.FixBinding("binding1")
 		fixBinding.InstanceID = fixInstances[0].InstanceID
 		err = brokerStorage.Bindings().Insert(&fixBinding)
