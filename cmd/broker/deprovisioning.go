@@ -95,7 +95,7 @@ func NewDeprovisioningProcessingQueue(ctx context.Context, workersAmount int, de
 		}
 	}
 
-	queue := process.NewQueue(deprovisionManager, logs)
+	queue := process.NewQueue(deprovisionManager, logs, "deprovisioning-queue")
 	queue.Run(ctx.Done(), workersAmount)
 
 	return queue

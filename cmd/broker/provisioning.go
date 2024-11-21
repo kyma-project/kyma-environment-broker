@@ -147,7 +147,7 @@ func NewProvisioningProcessingQueue(ctx context.Context, provisionManager *proce
 		}
 	}
 
-	queue := process.NewQueue(provisionManager, logs)
+	queue := process.NewQueue(provisionManager, logs, "provisioning-queue")
 	queue.Run(ctx.Done(), workersAmount)
 
 	return queue
