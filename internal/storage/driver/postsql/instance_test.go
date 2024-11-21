@@ -560,6 +560,42 @@ func TestInstance(t *testing.T) {
 		assert.Equal(t, fixSubaccountStates[0].UsedForProduction, out[0].UsedForProduction)
 
 		// when
+		out, count, totalCount, err = brokerStorage.Instances().ListWithSubaccountState(dbmodel.InstanceFilter{InstanceIDs: []string{fixInstances[1].InstanceID}})
+
+		// then
+		require.NoError(t, err)
+		require.Equal(t, 1, count)
+		require.Equal(t, 1, totalCount)
+
+		assert.Equal(t, fixInstances[1].InstanceID, out[0].InstanceID)
+		assert.Equal(t, fixSubaccountStates[1].BetaEnabled, out[0].BetaEnabled)
+		assert.Equal(t, fixSubaccountStates[1].UsedForProduction, out[0].UsedForProduction)
+
+		// when
+		out, count, totalCount, err = brokerStorage.Instances().ListWithSubaccountState(dbmodel.InstanceFilter{InstanceIDs: []string{fixInstances[2].InstanceID}})
+
+		// then
+		require.NoError(t, err)
+		require.Equal(t, 1, count)
+		require.Equal(t, 1, totalCount)
+
+		assert.Equal(t, fixInstances[2].InstanceID, out[0].InstanceID)
+		assert.Empty(t, out[0].BetaEnabled)
+		assert.Empty(t, out[0].UsedForProduction)
+
+		// when
+		out, count, totalCount, err = brokerStorage.Instances().ListWithSubaccountState(dbmodel.InstanceFilter{InstanceIDs: []string{fixInstances[3].InstanceID}})
+
+		// then
+		require.NoError(t, err)
+		require.Equal(t, 1, count)
+		require.Equal(t, 1, totalCount)
+
+		assert.Equal(t, fixInstances[3].InstanceID, out[0].InstanceID)
+		assert.Equal(t, fixSubaccountStates[3].BetaEnabled, out[0].BetaEnabled)
+		assert.Empty(t, out[0].UsedForProduction)
+
+		// when
 		out, count, totalCount, err = brokerStorage.Instances().ListWithSubaccountState(dbmodel.InstanceFilter{SubAccountIDs: []string{fixInstances[0].SubAccountID}})
 
 		// then
