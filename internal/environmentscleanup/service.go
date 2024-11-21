@@ -13,14 +13,19 @@ import (
 	"github.com/kyma-project/kyma-environment-broker/internal"
 	"github.com/kyma-project/kyma-environment-broker/internal/storage"
 	log "github.com/sirupsen/logrus"
+	"gopkg.in/yaml.v2"
+	coreV1 "k8s.io/api/core/v1"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
 const (
 	shootAnnotationRuntimeId                      = "kcp.provisioner.kyma-project.io/runtime-id"
 	shootAnnotationInfrastructureManagerRuntimeId = "infrastructuremanager.kyma-project.io/runtime-id"
 	shootLabelAccountId                           = "account"
+	kcpNamespace                                  = "kcp-system"
+	kebConfigMap                                  = "kcp-kyma-environment-broker"
 )
 
 //go:generate mockery --name=GardenerClient --output=automock
@@ -39,6 +44,7 @@ type BrokerClient interface {
 type Service struct {
 	gardenerService GardenerClient
 	brokerService   BrokerClient
+	k8sClient       client.Client
 	instanceStorage storage.Instances
 	logger          *log.Logger
 	MaxShootAge     time.Duration
@@ -50,10 +56,17 @@ type runtime struct {
 	AccountID string
 }
 
-func NewService(gardenerClient GardenerClient, brokerClient BrokerClient, instanceStorage storage.Instances, logger *log.Logger, maxShootAge time.Duration, labelSelector string) *Service {
+type providers struct {
+	Providers []struct {
+		DomainsInclude []string `yaml:"domainsInclude"`
+	} `yaml:"providers"`
+}
+
+func NewService(gardenerClient GardenerClient, brokerClient BrokerClient, k8sClient client.Client, instanceStorage storage.Instances, logger *log.Logger, maxShootAge time.Duration, labelSelector string) *Service {
 	return &Service{
 		gardenerService: gardenerClient,
 		brokerService:   brokerClient,
+		k8sClient:       k8sClient,
 		instanceStorage: instanceStorage,
 		logger:          logger,
 		MaxShootAge:     maxShootAge,
@@ -62,7 +75,43 @@ func NewService(gardenerClient GardenerClient, brokerClient BrokerClient, instan
 }
 
 func (s *Service) Run() error {
+	environment, err := s.getEnvironment()
+	if err != nil {
+		return err
+	}
+	log.Infof("Current environment: %s", environment)
+	if environment != "dev.kyma.ondemand.com" {
+		return fmt.Errorf("job must run only in the dev environment, current environment: %s", environment)
+	}
 	return s.PerformCleanup()
+}
+
+func (s *Service) getEnvironment() (string, error) {
+	configMap := &coreV1.ConfigMap{}
+	err := s.k8sClient.Get(context.Background(), client.ObjectKey{
+		Namespace: kcpNamespace,
+		Name:      kebConfigMap,
+	}, configMap)
+	if err != nil {
+		return "", fmt.Errorf("while getting ConfigMap %s from namespace %s: %w", kebConfigMap, kcpNamespace, err)
+	}
+
+	data, exists := configMap.Data["skrDNSProvidersValues.yaml"]
+	if !exists {
+		return "", fmt.Errorf("while checking skrDNSProvidersValues.yaml key in ConfigMap %s: key is missing", kebConfigMap)
+	}
+
+	var providers providers
+	err = yaml.Unmarshal([]byte(data), &providers)
+	if err != nil {
+		return "", fmt.Errorf("while unmarshalling YAML data from skrDNSProvidersValues.yaml: %w", err)
+	}
+
+	if len(providers.Providers) != 1 && len(providers.Providers[0].DomainsInclude) != 1 {
+		return "", fmt.Errorf("while validating structure of skrDNSProvidersValues.yaml: expected 1 provider with 1 domain, found %d providers", len(providers.Providers))
+	}
+
+	return providers.Providers[0].DomainsInclude[0], nil
 }
 
 func (s *Service) PerformCleanup() error {
