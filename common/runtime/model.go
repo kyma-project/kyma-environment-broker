@@ -36,10 +36,6 @@ const (
 	// AllState is a virtual state only used as query parameter in ListParameters to indicate "include all runtimes, which are excluded by default without state filters".
 	AllState State = "all"
 )
-const (
-	LicenceTypeLite      = "TestDevelopmentAndDemo"
-	oidcValidSigningAlgs = "RS256,RS384,RS512,ES256,ES384,ES512,PS256,PS384,PS512"
-)
 
 type RuntimeDTO struct {
 	InstanceID                  string                         `json:"instanceID"`
@@ -64,24 +60,7 @@ type RuntimeDTO struct {
 	Bindings                    []BindingDTO                   `json:"bindings,omitempty"`
 }
 
-type Parameters struct {
-	AutoScalerParameters  *AutoScalerParametersDTO `json:"autoScalerParameters,omitempty"`
-	Name                  string                   `json:"name"`
-	TargetSecret          *string                  `json:"targetSecret,omitempty"`
-	VolumeSizeGb          *int                     `json:"volumeSizeGb,omitempty"`
-	MachineType           *string                  `json:"machineType,omitempty"`
-	Region                *string                  `json:"region,omitempty"`
-	Purpose               *string                  `json:"purpose,omitempty"`
-	LicenceType           *string                  `json:"licence_type,omitempty"`
-	Zones                 []string                 `json:"zones,omitempty"`
-	RuntimeAdministrators []string                 `json:"administrators,omitempty"`
-	ShootName             string                   `json:"shootName,omitempty"`
-	ShootDomain           string                   `json:"shootDomain,omitempty"`
-
-	OIDC                   *OIDCConfigDTO `json:"oidc,omitempty"`
-	Networking             *NetworkingDTO `json:"networking,omitempty"`
-	ShootAndSeedSameRegion *bool          `json:"shootAndSeedSameRegion,omitempty"`
-}
+type CloudProvider string
 
 const (
 	Azure             CloudProvider = "Azure"
@@ -150,22 +129,16 @@ func (p AutoScalerParameters) Validate(planMin, planMax int) error {
 	return nil
 }
 
-type ModulesDTO struct {
-	Default *bool       `json:"default,omitempty" yaml:"default,omitempty"`
-	List    []ModuleDTO `json:"list" yaml:"list"`
+type OIDCConfigDTO struct {
+	ClientID       string   `json:"clientID" yaml:"clientID"`
+	GroupsClaim    string   `json:"groupsClaim" yaml:"groupsClaim"`
+	IssuerURL      string   `json:"issuerURL" yaml:"issuerURL"`
+	SigningAlgs    []string `json:"signingAlgs" yaml:"signingAlgs"`
+	UsernameClaim  string   `json:"usernameClaim" yaml:"usernameClaim"`
+	UsernamePrefix string   `json:"usernamePrefix" yaml:"usernamePrefix"`
 }
 
-type ModuleDTO struct {
-	Name                 string               `json:"name,omitempty" yaml:"name,omitempty"`
-	Channel              Channel              `json:"channel,omitempty" yaml:"channel,omitempty"`
-	CustomResourcePolicy CustomResourcePolicy `json:"customResourcePolicy,omitempty" yaml:"customResourcePolicy,omitempty"`
-}
-
-type Channel *string
-
-type CustomResourcePolicy *string
-
-type CloudProvider string
+const oidcValidSigningAlgs = "RS256,RS384,RS512,ES256,ES384,ES512,PS256,PS384,PS512"
 
 func (o *OIDCConfigDTO) IsProvided() bool {
 	if o == nil {
@@ -219,22 +192,6 @@ func (o *OIDCConfigDTO) validSigningAlgsSet() map[string]bool {
 	}
 
 	return signingAlgsSet
-}
-
-type AutoScalerParametersDTO struct {
-	AutoScalerMin  *int `json:"autoScalerMin,omitempty"`
-	AutoScalerMax  *int `json:"autoScalerMax,omitempty"`
-	MaxSurge       *int `json:"maxSurge,omitempty"`
-	MaxUnavailable *int `json:"maxUnavailable,omitempty"`
-}
-
-type OIDCConfigDTO struct {
-	ClientID       string   `json:"clientID" yaml:"clientID"`
-	GroupsClaim    string   `json:"groupsClaim" yaml:"groupsClaim"`
-	IssuerURL      string   `json:"issuerURL" yaml:"issuerURL"`
-	SigningAlgs    []string `json:"signingAlgs" yaml:"signingAlgs"`
-	UsernameClaim  string   `json:"usernameClaim" yaml:"usernameClaim"`
-	UsernamePrefix string   `json:"usernamePrefix" yaml:"usernamePrefix"`
 }
 
 type NetworkingDTO struct {
@@ -295,7 +252,6 @@ type Operation struct {
 	FinishedStages               []string                  `json:"finishedStages"`
 	ExecutedButNotCompletedSteps []string                  `json:"executedButNotCompletedSteps,omitempty"`
 	Parameters                   ProvisioningParametersDTO `json:"parameters,omitempty"`
-	//parameters
 }
 
 type RuntimesPage struct {
@@ -408,4 +364,19 @@ func (rt RuntimeDTO) LastOperation() Operation {
 	}
 
 	return op
+}
+
+type ModulesDTO struct {
+	Default *bool       `json:"default,omitempty" yaml:"default,omitempty"`
+	List    []ModuleDTO `json:"list" yaml:"list"`
+}
+
+type Channel *string
+
+type CustomResourcePolicy *string
+
+type ModuleDTO struct {
+	Name                 string               `json:"name,omitempty" yaml:"name,omitempty"`
+	Channel              Channel              `json:"channel,omitempty" yaml:"channel,omitempty"`
+	CustomResourcePolicy CustomResourcePolicy `json:"customResourcePolicy,omitempty" yaml:"customResourcePolicy,omitempty"`
 }

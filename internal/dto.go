@@ -7,10 +7,7 @@ import (
 	"github.com/kyma-project/kyma-environment-broker/internal/ptr"
 )
 
-const (
-	LicenceTypeLite      = "TestDevelopmentAndDemo"
-	oidcValidSigningAlgs = "RS256,RS384,RS512,ES256,ES384,ES512,PS256,PS384,PS512"
-)
+const LicenceTypeLite = "TestDevelopmentAndDemo"
 
 type ProvisioningParameters struct {
 	PlanID     string                        `json:"plan_id"`
@@ -208,8 +205,3 @@ var (
 	Ignore          pkg.CustomResourcePolicy = ptr.String("Ignore")
 	CreateAndDelete pkg.CustomResourcePolicy = ptr.String("CreateAndDelete")
 )
-
-type ModulesDTO struct {
-	Default *bool           `json:"default,omitempty" yaml:"default,omitempty"`
-	List    []pkg.ModuleDTO `json:"list" yaml:"list"`
-}
