@@ -771,7 +771,7 @@ func (r readSession) ListInstancesWithSubaccountStates(filter dbmodel.InstanceFi
 		// Order in select is important - dbr iterates over result and checks for matching fields in go structures.
 		// Because of that and Operation having common fields with Instance with current order operation attributes will
 		// be loaded into structures (e.g. created_at, provisioning_parameters, etc.) and will be overwritten by instance attributes.
-		Select("o1.data", "o1.state", "o1.type", fmt.Sprintf("%s.*", InstancesTableName), "ss.*").
+		Select("o1.data", "o1.state", "o1.type", fmt.Sprintf("%s.*", InstancesTableName), "ss.beta_enabled", "ss.used_for_production").
 		From(InstancesTableName).
 		Join(dbr.I(OperationTableName).As("o1"), fmt.Sprintf("%s.instance_id = o1.instance_id", InstancesTableName)).
 		LeftJoin(dbr.I(OperationTableName).As("o2"), fmt.Sprintf("%s.instance_id = o2.instance_id AND o1.created_at < o2.created_at AND o2.state NOT IN ('%s', '%s')", InstancesTableName, orchestration.Pending, orchestration.Canceled)).

@@ -396,9 +396,9 @@ func (s *Instance) toInstance(dto dbmodel.InstanceDTO) (internal.Instance, error
 	}, nil
 }
 
-func (s *Instance) toInstanceWithSubaccountState(instanceDTO dbmodel.InstanceDTO, subaccountStateDTO dbmodel.SubaccountStateDTO) (internal.InstanceWithSubaccountState, error) {
+func (s *Instance) toInstanceWithSubaccountState(dto dbmodel.InstanceWithSubaccountStateDTO) (internal.InstanceWithSubaccountState, error) {
 	var params internal.ProvisioningParameters
-	err := json.Unmarshal([]byte(instanceDTO.ProvisioningParameters), &params)
+	err := json.Unmarshal([]byte(dto.InstanceDTO.ProvisioningParameters), &params)
 	if err != nil {
 		return internal.InstanceWithSubaccountState{}, fmt.Errorf("while unmarshal parameters: %w", err)
 	}
@@ -411,28 +411,34 @@ func (s *Instance) toInstanceWithSubaccountState(instanceDTO dbmodel.InstanceDTO
 	if err != nil {
 		log.Warn("decrypting skipped because kubeconfig is in a plain text")
 	}
-
+	var betaEnabled, usedForProduction string
+	if dto.BetaEnabled == nil {
+		betaEnabled = ""
+	}
+	if dto.UsedForProduction == nil {
+		usedForProduction = ""
+	}
 	return internal.InstanceWithSubaccountState{
-		Instance: internal.Instance{InstanceID: instanceDTO.InstanceID,
-			RuntimeID:                   instanceDTO.RuntimeID,
-			GlobalAccountID:             instanceDTO.GlobalAccountID,
-			SubscriptionGlobalAccountID: instanceDTO.SubscriptionGlobalAccountID,
-			SubAccountID:                instanceDTO.SubAccountID,
-			ServiceID:                   instanceDTO.ServiceID,
-			ServiceName:                 instanceDTO.ServiceName,
-			ServicePlanID:               instanceDTO.ServicePlanID,
-			ServicePlanName:             instanceDTO.ServicePlanName,
-			DashboardURL:                instanceDTO.DashboardURL,
+		Instance: internal.Instance{InstanceID: dto.InstanceDTO.InstanceID,
+			RuntimeID:                   dto.RuntimeID,
+			GlobalAccountID:             dto.GlobalAccountID,
+			SubscriptionGlobalAccountID: dto.SubscriptionGlobalAccountID,
+			SubAccountID:                dto.SubAccountID,
+			ServiceID:                   dto.ServiceID,
+			ServiceName:                 dto.ServiceName,
+			ServicePlanID:               dto.ServicePlanID,
+			ServicePlanName:             dto.ServicePlanName,
+			DashboardURL:                dto.DashboardURL,
 			Parameters:                  params,
-			ProviderRegion:              instanceDTO.ProviderRegion,
-			CreatedAt:                   instanceDTO.CreatedAt,
-			UpdatedAt:                   instanceDTO.UpdatedAt,
-			DeletedAt:                   instanceDTO.DeletedAt,
-			ExpiredAt:                   instanceDTO.ExpiredAt,
-			Version:                     instanceDTO.Version,
-			Provider:                    internal.CloudProvider(instanceDTO.Provider)},
-		BetaEnabled:       subaccountStateDTO.BetaEnabled,
-		UsedForProduction: subaccountStateDTO.UsedForProduction,
+			ProviderRegion:              dto.ProviderRegion,
+			CreatedAt:                   dto.InstanceDTO.CreatedAt,
+			UpdatedAt:                   dto.InstanceDTO.UpdatedAt,
+			DeletedAt:                   dto.DeletedAt,
+			ExpiredAt:                   dto.ExpiredAt,
+			Version:                     dto.InstanceDTO.Version,
+			Provider:                    internal.CloudProvider(dto.Provider)},
+		BetaEnabled:       betaEnabled,
+		UsedForProduction: usedForProduction,
 	}, nil
 }
 
@@ -601,7 +607,7 @@ func (s *Instance) ListWithSubaccountState(filter dbmodel.InstanceFilter) ([]int
 	}
 	var instances []internal.InstanceWithSubaccountState
 	for _, dto := range dtos {
-		instance, err := s.toInstanceWithSubaccountState(dto.InstanceDTO, dto.SubaccountStateDTO)
+		instance, err := s.toInstanceWithSubaccountState(dto)
 		if err != nil {
 			return []internal.InstanceWithSubaccountState{}, 0, 0, err
 		}

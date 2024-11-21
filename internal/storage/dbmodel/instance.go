@@ -80,5 +80,6 @@ type InstanceWithExtendedOperationDTO struct {
 type InstanceWithSubaccountStateDTO struct {
 	InstanceDTO
 	OperationDTO
-	SubaccountStateDTO
+	BetaEnabled       *string
+	UsedForProduction *string
 }
