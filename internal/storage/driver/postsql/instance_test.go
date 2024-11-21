@@ -507,25 +507,25 @@ func TestInstance(t *testing.T) {
 		}
 		// there is no record for subaccount used by inst3 by purpose
 		fixSubaccountStates := []internal.SubaccountState{
-			internal.SubaccountState{
+			{
 				ID:                fixInstances[0].SubAccountID,
 				BetaEnabled:       "true",
 				UsedForProduction: "NOT_SET",
 				ModifiedAt:        10,
 			},
-			internal.SubaccountState{
+			{
 				ID:                fixInstances[1].SubAccountID,
 				BetaEnabled:       "true",
 				UsedForProduction: "USED_FOR_PRODUCTION",
 				ModifiedAt:        20,
 			},
-			internal.SubaccountState{
+			{
 				ID:                fixInstances[3].SubAccountID,
 				BetaEnabled:       "true",
 				UsedForProduction: "",
 				ModifiedAt:        30,
 			},
-			internal.SubaccountState{
+			{
 				ID:                "not-existing-subaccount",
 				BetaEnabled:       "true",
 				UsedForProduction: "USED_FOR_PRODUCTION",
@@ -558,6 +558,20 @@ func TestInstance(t *testing.T) {
 		assert.Equal(t, fixInstances[0].InstanceID, out[0].InstanceID)
 		assert.Equal(t, fixSubaccountStates[0].BetaEnabled, out[0].BetaEnabled)
 		assert.Equal(t, fixSubaccountStates[0].UsedForProduction, out[0].UsedForProduction)
+
+		// when
+		out, count, totalCount, err = brokerStorage.Instances().ListWithSubaccountState(dbmodel.InstanceFilter{SubAccountIDs: []string{fixInstances[0].SubAccountID}})
+
+		// then
+		require.NoError(t, err)
+		require.Equal(t, 2, count)
+		require.Equal(t, 2, totalCount)
+
+		assert.Equal(t, fixInstances[0].InstanceID, out[0].InstanceID)
+		assert.Equal(t, fixSubaccountStates[0].BetaEnabled, out[0].BetaEnabled)
+		assert.Equal(t, fixSubaccountStates[0].UsedForProduction, out[0].UsedForProduction)
+		assert.Equal(t, fixSubaccountStates[0].BetaEnabled, out[1].BetaEnabled)
+		assert.Equal(t, fixSubaccountStates[0].UsedForProduction, out[1].UsedForProduction)
 
 		// when
 		out, count, totalCount, err = brokerStorage.Instances().ListWithSubaccountState(dbmodel.InstanceFilter{GlobalAccountIDs: []string{fixInstances[1].GlobalAccountID}})
