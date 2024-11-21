@@ -328,19 +328,6 @@ func (h *Handler) determineStatusModifiedAt(dto *pkg.RuntimeDTO) error {
 	return nil
 }
 
-func (h *Handler) setSubaccountState(p *pkg.RuntimeDTO, states map[string]internal.SubaccountState) {
-	if p.SubAccountID == "" {
-		return
-	}
-	state, exists := states[p.SubAccountID]
-	if !exists {
-		return
-	}
-	p.BetaEnabled = state.BetaEnabled
-	p.UsedForProduction = state.UsedForProduction
-	return
-}
-
 func (h *Handler) setRuntimeAllOperations(dto *pkg.RuntimeDTO) error {
 	operationsGroup, err := h.operationsDb.ListOperationsByInstanceIDGroupByType(dto.InstanceID)
 	if err != nil && !dberr.IsNotFound(err) {
