@@ -6,7 +6,7 @@ import (
 	"testing"
 
 	"github.com/kyma-project/kyma-environment-broker/internal/broker"
-	"github.com/pivotal-cf/brokerapi/v8/domain"
+	"github.com/pivotal-cf/brokerapi/v11/domain"
 	"github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"

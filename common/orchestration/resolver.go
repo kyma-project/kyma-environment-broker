@@ -11,7 +11,7 @@ import (
 	"github.com/kyma-project/kyma-environment-broker/common/runtime"
 	"github.com/sirupsen/logrus"
 
-	brokerapi "github.com/pivotal-cf/brokerapi/v8/domain"
+	brokerapi "github.com/pivotal-cf/brokerapi/v11/domain"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/client-go/dynamic"

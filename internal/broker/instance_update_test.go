@@ -29,8 +29,8 @@ import (
 	kcMock "github.com/kyma-project/kyma-environment-broker/internal/kubeconfig/automock"
 	"github.com/kyma-project/kyma-environment-broker/internal/ptr"
 	"github.com/kyma-project/kyma-environment-broker/internal/storage"
-	"github.com/pivotal-cf/brokerapi/v8/domain"
-	"github.com/pivotal-cf/brokerapi/v8/domain/apiresponses"
+	"github.com/pivotal-cf/brokerapi/v11/domain"
+	"github.com/pivotal-cf/brokerapi/v11/domain/apiresponses"
 	"github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -500,7 +500,7 @@ func TestUpdateEndpoint_UpdateParameters(t *testing.T) {
 		// given
 		oidcParams := `"clientID":"{clientID}","groupsClaim":"groups","issuerURL":"{issuerURL}","signingAlgs":["RS256"],"usernameClaim":"email","usernamePrefix":"-"`
 		errMsg := fmt.Errorf("issuerURL must be a valid URL, issuerURL must have https scheme")
-		expectedErr := apiresponses.NewFailureResponse(errMsg, http.StatusUnprocessableEntity, errMsg.Error())
+		expectedErr := apiresponses.NewFailureResponse(errMsg, http.StatusUnprocessableEntity, errMsg.Error()).(*apiresponses.FailureResponse)
 
 		// when
 		_, err := svc.Update(context.Background(), instanceID, domain.UpdateDetails{
@@ -524,7 +524,7 @@ func TestUpdateEndpoint_UpdateParameters(t *testing.T) {
 		// given
 		oidcParams := `"clientID":"client-id"`
 		errMsg := fmt.Errorf("issuerURL must not be empty")
-		expectedErr := apiresponses.NewFailureResponse(errMsg, http.StatusUnprocessableEntity, errMsg.Error())
+		expectedErr := apiresponses.NewFailureResponse(errMsg, http.StatusUnprocessableEntity, errMsg.Error()).(*apiresponses.FailureResponse)
 
 		// when
 		_, err := svc.Update(context.Background(), instanceID, domain.UpdateDetails{
@@ -548,7 +548,7 @@ func TestUpdateEndpoint_UpdateParameters(t *testing.T) {
 		// given
 		oidcParams := `"issuerURL":"https://test.local"`
 		errMsg := fmt.Errorf("clientID must not be empty")
-		expectedErr := apiresponses.NewFailureResponse(errMsg, http.StatusUnprocessableEntity, errMsg.Error())
+		expectedErr := apiresponses.NewFailureResponse(errMsg, http.StatusUnprocessableEntity, errMsg.Error()).(*apiresponses.FailureResponse)
 
 		// when
 		_, err := svc.Update(context.Background(), instanceID, domain.UpdateDetails{
@@ -572,7 +572,7 @@ func TestUpdateEndpoint_UpdateParameters(t *testing.T) {
 		// given
 		oidcParams := `"clientID":"client-id","issuerURL":"https://test.local","signingAlgs":["RS256","notValid"]`
 		errMsg := fmt.Errorf("signingAlgs must contain valid signing algorithm(s)")
-		expectedErr := apiresponses.NewFailureResponse(errMsg, http.StatusUnprocessableEntity, errMsg.Error())
+		expectedErr := apiresponses.NewFailureResponse(errMsg, http.StatusUnprocessableEntity, errMsg.Error()).(*apiresponses.FailureResponse)
 
 		// when
 		_, err := svc.Update(context.Background(), instanceID, domain.UpdateDetails{

@@ -9,7 +9,7 @@ import (
 	"time"
 
 	"github.com/kyma-project/kyma-environment-broker/internal"
-	"github.com/pivotal-cf/brokerapi/v8/domain/apiresponses"
+	"github.com/pivotal-cf/brokerapi/v11/domain/apiresponses"
 	"github.com/pkg/errors"
 	"golang.org/x/oauth2/clientcredentials"
 
