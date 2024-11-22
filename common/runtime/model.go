@@ -1,6 +1,9 @@
 package runtime
 
 import (
+	"fmt"
+	"net/url"
+	"strings"
 	"time"
 
 	"github.com/kyma-project/control-plane/components/provisioner/pkg/gqlschema"
@@ -48,12 +51,153 @@ type RuntimeDTO struct {
 	ServicePlanID               string                         `json:"servicePlanID"`
 	ServicePlanName             string                         `json:"servicePlanName"`
 	Provider                    string                         `json:"provider"`
+	Parameters                  ProvisioningParametersDTO      `json:"parameters,omitempty"`
 	Status                      RuntimeStatus                  `json:"status"`
 	UserID                      string                         `json:"userID"`
 	KymaConfig                  *gqlschema.KymaConfigInput     `json:"kymaConfig,omitempty"`
 	ClusterConfig               *gqlschema.GardenerConfigInput `json:"clusterConfig,omitempty"`
 	RuntimeConfig               *map[string]interface{}        `json:"runtimeConfig,omitempty"`
 	Bindings                    []BindingDTO                   `json:"bindings,omitempty"`
+}
+
+type CloudProvider string
+
+const (
+	Azure             CloudProvider = "Azure"
+	AWS               CloudProvider = "AWS"
+	GCP               CloudProvider = "GCP"
+	UnknownProvider   CloudProvider = "unknown"
+	SapConvergedCloud CloudProvider = "SapConvergedCloud"
+)
+
+type ProvisioningParametersDTO struct {
+	AutoScalerParameters `json:",inline"`
+
+	Name         string  `json:"name"`
+	TargetSecret *string `json:"targetSecret,omitempty"`
+	VolumeSizeGb *int    `json:"volumeSizeGb,omitempty"`
+	MachineType  *string `json:"machineType,omitempty"`
+	Region       *string `json:"region,omitempty"`
+	Purpose      *string `json:"purpose,omitempty"`
+	// LicenceType - based on this parameter, some options can be enabled/disabled when preparing the input
+	// for the provisioner e.g. use default overrides for SKR instead overrides from resource
+	// with "provisioning-runtime-override" label when LicenceType is "TestDevelopmentAndDemo"
+	LicenceType           *string  `json:"licence_type,omitempty"`
+	Zones                 []string `json:"zones,omitempty"`
+	RuntimeAdministrators []string `json:"administrators,omitempty"`
+	// Provider - used in Trial plan to determine which cloud provider to use during provisioning
+	Provider *CloudProvider `json:"provider,omitempty"`
+
+	Kubeconfig  string `json:"kubeconfig,omitempty"`
+	ShootName   string `json:"shootName,omitempty"`
+	ShootDomain string `json:"shootDomain,omitempty"`
+
+	OIDC                   *OIDCConfigDTO `json:"oidc,omitempty"`
+	Networking             *NetworkingDTO `json:"networking,omitempty"`
+	Modules                *ModulesDTO    `json:"modules,omitempty"`
+	ShootAndSeedSameRegion *bool          `json:"shootAndSeedSameRegion,omitempty"`
+}
+
+type AutoScalerParameters struct {
+	AutoScalerMin  *int `json:"autoScalerMin,omitempty"`
+	AutoScalerMax  *int `json:"autoScalerMax,omitempty"`
+	MaxSurge       *int `json:"maxSurge,omitempty"`
+	MaxUnavailable *int `json:"maxUnavailable,omitempty"`
+}
+
+// FIXME: this is a makeshift check until the provisioner is capable of returning error messages
+// https://github.com/kyma-project/control-plane/issues/946
+func (p AutoScalerParameters) Validate(planMin, planMax int) error {
+	min, max := planMin, planMax
+	if p.AutoScalerMin != nil {
+		min = *p.AutoScalerMin
+	}
+	if p.AutoScalerMax != nil {
+		max = *p.AutoScalerMax
+	}
+	if min > max {
+		userMin := fmt.Sprintf("%v", p.AutoScalerMin)
+		if p.AutoScalerMin != nil {
+			userMin = fmt.Sprintf("%v", *p.AutoScalerMin)
+		}
+		userMax := fmt.Sprintf("%v", p.AutoScalerMax)
+		if p.AutoScalerMax != nil {
+			userMax = fmt.Sprintf("%v", *p.AutoScalerMax)
+		}
+		return fmt.Errorf("AutoScalerMax %v should be larger than AutoScalerMin %v. User provided values min:%v, max:%v; plan defaults min:%v, max:%v", max, min, userMin, userMax, planMin, planMax)
+	}
+	return nil
+}
+
+type OIDCConfigDTO struct {
+	ClientID       string   `json:"clientID" yaml:"clientID"`
+	GroupsClaim    string   `json:"groupsClaim" yaml:"groupsClaim"`
+	IssuerURL      string   `json:"issuerURL" yaml:"issuerURL"`
+	SigningAlgs    []string `json:"signingAlgs" yaml:"signingAlgs"`
+	UsernameClaim  string   `json:"usernameClaim" yaml:"usernameClaim"`
+	UsernamePrefix string   `json:"usernamePrefix" yaml:"usernamePrefix"`
+}
+
+const oidcValidSigningAlgs = "RS256,RS384,RS512,ES256,ES384,ES512,PS256,PS384,PS512"
+
+func (o *OIDCConfigDTO) IsProvided() bool {
+	if o == nil {
+		return false
+	}
+	if o.ClientID == "" && o.IssuerURL == "" && o.GroupsClaim == "" && o.UsernamePrefix == "" && o.UsernameClaim == "" && len(o.SigningAlgs) == 0 {
+		return false
+	}
+	return true
+}
+
+func (o *OIDCConfigDTO) Validate() error {
+	errs := make([]string, 0)
+	if len(o.ClientID) == 0 {
+		errs = append(errs, "clientID must not be empty")
+	}
+	if len(o.IssuerURL) == 0 {
+		errs = append(errs, "issuerURL must not be empty")
+	} else {
+		issuer, err := url.Parse(o.IssuerURL)
+		if err != nil || (issuer != nil && len(issuer.Host) == 0) {
+			errs = append(errs, "issuerURL must be a valid URL")
+		}
+		if issuer != nil && issuer.Scheme != "https" {
+			errs = append(errs, "issuerURL must have https scheme")
+		}
+	}
+	if len(o.SigningAlgs) != 0 {
+		validSigningAlgs := o.validSigningAlgsSet()
+		for _, providedAlg := range o.SigningAlgs {
+			if !validSigningAlgs[providedAlg] {
+				errs = append(errs, "signingAlgs must contain valid signing algorithm(s)")
+				break
+			}
+		}
+	}
+
+	if len(errs) > 0 {
+		err := fmt.Errorf(strings.Join(errs, ", "))
+		return err
+	}
+	return nil
+}
+
+func (o *OIDCConfigDTO) validSigningAlgsSet() map[string]bool {
+	algs := strings.Split(oidcValidSigningAlgs, ",")
+	signingAlgsSet := make(map[string]bool, len(algs))
+
+	for _, v := range algs {
+		signingAlgsSet[v] = true
+	}
+
+	return signingAlgsSet
+}
+
+type NetworkingDTO struct {
+	NodesCidr    string  `json:"nodes,omitempty"`
+	PodsCidr     *string `json:"pods,omitempty"`
+	ServicesCidr *string `json:"services,omitempty"`
 }
 
 type BindingDTO struct {
@@ -98,15 +242,16 @@ type OperationsData struct {
 }
 
 type Operation struct {
-	State                        string        `json:"state"`
-	Type                         OperationType `json:"type,omitempty"`
-	Description                  string        `json:"description"`
-	CreatedAt                    time.Time     `json:"createdAt"`
-	UpdatedAt                    time.Time     `json:"updatedAt"`
-	OperationID                  string        `json:"operationID"`
-	OrchestrationID              string        `json:"orchestrationID,omitempty"`
-	FinishedStages               []string      `json:"finishedStages"`
-	ExecutedButNotCompletedSteps []string      `json:"executedButNotCompletedSteps,omitempty"`
+	State                        string                    `json:"state"`
+	Type                         OperationType             `json:"type,omitempty"`
+	Description                  string                    `json:"description"`
+	CreatedAt                    time.Time                 `json:"createdAt"`
+	UpdatedAt                    time.Time                 `json:"updatedAt"`
+	OperationID                  string                    `json:"operationID"`
+	OrchestrationID              string                    `json:"orchestrationID,omitempty"`
+	FinishedStages               []string                  `json:"finishedStages"`
+	ExecutedButNotCompletedSteps []string                  `json:"executedButNotCompletedSteps,omitempty"`
+	Parameters                   ProvisioningParametersDTO `json:"parameters,omitempty"`
 }
 
 type RuntimesPage struct {
@@ -219,4 +364,19 @@ func (rt RuntimeDTO) LastOperation() Operation {
 	}
 
 	return op
+}
+
+type ModulesDTO struct {
+	Default *bool       `json:"default,omitempty" yaml:"default,omitempty"`
+	List    []ModuleDTO `json:"list" yaml:"list"`
+}
+
+type Channel *string
+
+type CustomResourcePolicy *string
+
+type ModuleDTO struct {
+	Name                 string               `json:"name,omitempty" yaml:"name,omitempty"`
+	Channel              Channel              `json:"channel,omitempty" yaml:"channel,omitempty"`
+	CustomResourcePolicy CustomResourcePolicy `json:"customResourcePolicy,omitempty" yaml:"customResourcePolicy,omitempty"`
 }

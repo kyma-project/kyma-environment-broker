@@ -7,6 +7,7 @@ import (
 
 	"github.com/pivotal-cf/brokerapi/v8/domain"
 
+	pkg "github.com/kyma-project/kyma-environment-broker/common/runtime"
 	"github.com/kyma-project/kyma-environment-broker/internal"
 	"github.com/kyma-project/kyma-environment-broker/internal/storage/dberr"
 	"github.com/kyma-project/kyma-environment-broker/internal/storage/dbmodel"
@@ -118,7 +119,7 @@ func (s *Instance) ListWithoutDecryption(filter dbmodel.InstanceFilter) ([]inter
 			UpdatedAt:       dto.InstanceDTO.UpdatedAt,
 			DeletedAt:       dto.DeletedAt,
 			Version:         dto.InstanceDTO.Version,
-			Provider:        internal.CloudProvider(dto.Provider),
+			Provider:        pkg.CloudProvider(dto.Provider),
 		}
 		instances = append(instances, instance)
 	}
@@ -392,7 +393,7 @@ func (s *Instance) toInstance(dto dbmodel.InstanceDTO) (internal.Instance, error
 		DeletedAt:                   dto.DeletedAt,
 		ExpiredAt:                   dto.ExpiredAt,
 		Version:                     dto.Version,
-		Provider:                    internal.CloudProvider(dto.Provider),
+		Provider:                    pkg.CloudProvider(dto.Provider),
 	}, nil
 }
 

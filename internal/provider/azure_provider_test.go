@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"github.com/kyma-project/control-plane/components/provisioner/pkg/gqlschema"
+	pkg "github.com/kyma-project/kyma-environment-broker/common/runtime"
 	"github.com/kyma-project/kyma-environment-broker/internal"
 	"github.com/stretchr/testify/assert"
 )
@@ -40,7 +41,7 @@ func TestAzureTrialInput_ApplyParametersWithRegion(t *testing.T) { //TODO apply 
 		// when
 		svc.ApplyParameters(input, internal.ProvisioningParameters{
 			PlatformRegion: "cf-asia",
-			Parameters: internal.ProvisioningParametersDTO{
+			Parameters: pkg.ProvisioningParametersDTO{
 				Region: &us,
 			},
 		})
@@ -57,7 +58,7 @@ func TestAzureTrialInput_ApplyParametersWithRegion(t *testing.T) { //TODO apply 
 
 		// when
 		svc.ApplyParameters(input, internal.ProvisioningParameters{
-			Parameters: internal.ProvisioningParametersDTO{
+			Parameters: pkg.ProvisioningParametersDTO{
 				Region: &r,
 			},
 		})
@@ -75,7 +76,7 @@ func TestAzureTrialInput_ApplyParametersWithRegion(t *testing.T) { //TODO apply 
 		// when
 		svc.ApplyParameters(input, internal.ProvisioningParameters{
 			PlatformRegion: "cf-ch20",
-			Parameters: internal.ProvisioningParametersDTO{
+			Parameters: pkg.ProvisioningParametersDTO{
 				Region: &r,
 			},
 		})
@@ -160,7 +161,7 @@ func TestAzureInput_SingleZone_ApplyParameters(t *testing.T) {
 
 		// when
 		svc.ApplyParameters(input, internal.ProvisioningParameters{
-			Parameters: internal.ProvisioningParametersDTO{},
+			Parameters: pkg.ProvisioningParametersDTO{},
 		})
 
 		//then
@@ -178,7 +179,7 @@ func TestAzureInput_SingleZone_ApplyParameters(t *testing.T) {
 
 		// when
 		svc.ApplyParameters(input, internal.ProvisioningParameters{
-			Parameters: internal.ProvisioningParametersDTO{
+			Parameters: pkg.ProvisioningParametersDTO{
 				Zones: []string{"2", "3"},
 			},
 		})
@@ -205,7 +206,7 @@ func TestAzureInput_MultiZone_ApplyParameters(t *testing.T) {
 
 		// when
 		svc.ApplyParameters(input, internal.ProvisioningParameters{
-			Parameters: internal.ProvisioningParametersDTO{},
+			Parameters: pkg.ProvisioningParametersDTO{},
 		})
 
 		//then
@@ -223,8 +224,8 @@ func TestAzureInput_MultiZone_ApplyParameters(t *testing.T) {
 
 		// when
 		svc.ApplyParameters(input, internal.ProvisioningParameters{
-			Parameters: internal.ProvisioningParametersDTO{
-				Networking: &internal.NetworkingDTO{
+			Parameters: pkg.ProvisioningParametersDTO{
+				Networking: &pkg.NetworkingDTO{
 					NodesCidr: "10.180.0.0/17",
 				},
 			},
@@ -245,7 +246,7 @@ func TestAzureInput_MultiZone_ApplyParameters(t *testing.T) {
 
 		// when
 		svc.ApplyParameters(input, internal.ProvisioningParameters{
-			Parameters: internal.ProvisioningParametersDTO{
+			Parameters: pkg.ProvisioningParametersDTO{
 				Zones: []string{"2", "3"},
 			},
 		})

@@ -3,10 +3,10 @@ package main
 import (
 	"context"
 
-	"github.com/kyma-project/kyma-environment-broker/internal"
 	"github.com/kyma-project/kyma-environment-broker/internal/provider"
 
 	"github.com/kyma-project/kyma-environment-broker/common/hyperscaler"
+	pkg "github.com/kyma-project/kyma-environment-broker/common/runtime"
 	"github.com/kyma-project/kyma-environment-broker/internal/process"
 	"github.com/kyma-project/kyma-environment-broker/internal/process/input"
 	"github.com/kyma-project/kyma-environment-broker/internal/process/provisioning"
@@ -20,7 +20,7 @@ import (
 func NewProvisioningProcessingQueue(ctx context.Context, provisionManager *process.StagedManager, workersAmount int, cfg *Config,
 	db storage.BrokerStorage, provisionerClient provisioner.Client, inputFactory input.CreatorForPlan,
 	edpClient provisioning.EDPClient, accountProvider hyperscaler.AccountProvider,
-	k8sClientProvider provisioning.K8sClientProvider, cli client.Client, defaultOIDC internal.OIDCConfigDTO, logs logrus.FieldLogger) *process.Queue {
+	k8sClientProvider provisioning.K8sClientProvider, cli client.Client, defaultOIDC pkg.OIDCConfigDTO, logs logrus.FieldLogger) *process.Queue {
 
 	trialRegionsMapping, err := provider.ReadPlatformRegionMappingFromFile(cfg.TrialRegionMappingFilePath)
 	if err != nil {

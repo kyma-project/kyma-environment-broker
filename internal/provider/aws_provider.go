@@ -13,6 +13,7 @@ import (
 	"github.com/kyma-project/kyma-environment-broker/internal/ptr"
 
 	"github.com/kyma-project/control-plane/components/provisioner/pkg/gqlschema"
+	pkg "github.com/kyma-project/kyma-environment-broker/common/runtime"
 	"github.com/kyma-project/kyma-environment-broker/internal"
 	"github.com/kyma-project/kyma-environment-broker/internal/broker"
 )
@@ -213,8 +214,8 @@ func (p *AWSInput) Profile() gqlschema.KymaProfile {
 	return gqlschema.KymaProfileProduction
 }
 
-func (p *AWSInput) Provider() internal.CloudProvider {
-	return internal.AWS
+func (p *AWSInput) Provider() pkg.CloudProvider {
+	return pkg.AWS
 }
 
 func (p *AWSTrialInput) Defaults() *gqlschema.ClusterConfigInput {
@@ -281,8 +282,8 @@ func (p *AWSTrialInput) Profile() gqlschema.KymaProfile {
 	return gqlschema.KymaProfileEvaluation
 }
 
-func (p *AWSTrialInput) Provider() internal.CloudProvider {
-	return internal.AWS
+func (p *AWSTrialInput) Provider() pkg.CloudProvider {
+	return pkg.AWS
 }
 
 func (p *AWSFreemiumInput) Defaults() *gqlschema.ClusterConfigInput {
@@ -302,6 +303,6 @@ func (p *AWSFreemiumInput) Profile() gqlschema.KymaProfile {
 	return gqlschema.KymaProfileEvaluation
 }
 
-func (p *AWSFreemiumInput) Provider() internal.CloudProvider {
-	return internal.AWS
+func (p *AWSFreemiumInput) Provider() pkg.CloudProvider {
+	return pkg.AWS
 }

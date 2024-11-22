@@ -11,7 +11,7 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/kyma-project/kyma-environment-broker/common/runtime"
-	"github.com/kyma-project/kyma-environment-broker/internal"
+	pkg "github.com/kyma-project/kyma-environment-broker/common/runtime"
 	"github.com/pivotal-cf/brokerapi/v8/domain"
 	"github.com/stretchr/testify/assert"
 )
@@ -23,7 +23,7 @@ func TestKymaReDeprovisionFailed(t *testing.T) {
 	runtimeOptions := RuntimeOptions{
 		GlobalAccountID: globalAccountID,
 		SubAccountID:    badSubAccountID,
-		Provider:        internal.AWS,
+		Provider:        pkg.AWS,
 	}
 
 	suite := NewDeprovisioningSuite(t)

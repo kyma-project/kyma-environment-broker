@@ -4,6 +4,7 @@ import (
 	"testing"
 
 	"github.com/kyma-project/control-plane/components/provisioner/pkg/gqlschema"
+	pkg "github.com/kyma-project/kyma-environment-broker/common/runtime"
 	"github.com/kyma-project/kyma-environment-broker/internal"
 	"github.com/kyma-project/kyma-environment-broker/internal/broker"
 	"github.com/kyma-project/kyma-environment-broker/internal/fixture"
@@ -140,7 +141,7 @@ func TestInputBuilderFactory_ForPlan(t *testing.T) {
 
 		// given
 		pp = fixProvisioningParameters(broker.TrialPlanID)
-		provider := internal.GCP
+		provider := pkg.GCP
 		pp.Parameters.Provider = &provider
 		// when
 		input, err = ibf.CreateUpgradeInput(pp)

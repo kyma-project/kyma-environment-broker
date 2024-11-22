@@ -13,6 +13,7 @@ import (
 	"github.com/kyma-project/kyma-environment-broker/internal/broker"
 
 	"github.com/kyma-project/control-plane/components/provisioner/pkg/gqlschema"
+	pkg "github.com/kyma-project/kyma-environment-broker/common/runtime"
 	"github.com/kyma-project/kyma-environment-broker/internal"
 )
 
@@ -104,8 +105,8 @@ func (p *GcpInput) Profile() gqlschema.KymaProfile {
 	return gqlschema.KymaProfileProduction
 }
 
-func (p *GcpInput) Provider() internal.CloudProvider {
-	return internal.GCP
+func (p *GcpInput) Provider() pkg.CloudProvider {
+	return pkg.GCP
 }
 
 func (p *GcpTrialInput) Defaults() *gqlschema.ClusterConfigInput {
@@ -162,8 +163,8 @@ func (p *GcpTrialInput) Profile() gqlschema.KymaProfile {
 	return gqlschema.KymaProfileEvaluation
 }
 
-func (p *GcpTrialInput) Provider() internal.CloudProvider {
-	return internal.GCP
+func (p *GcpTrialInput) Provider() pkg.CloudProvider {
+	return pkg.GCP
 }
 
 func ZonesForGCPRegion(region string, zonesCount int) []string {

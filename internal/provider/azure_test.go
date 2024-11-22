@@ -3,6 +3,7 @@ package provider
 import (
 	"testing"
 
+	pkg "github.com/kyma-project/kyma-environment-broker/common/runtime"
 	"github.com/kyma-project/kyma-environment-broker/internal"
 	"github.com/kyma-project/kyma-environment-broker/internal/ptr"
 )
@@ -16,7 +17,7 @@ func TestAzureDefaults(t *testing.T) {
 		Purpose:   PurposeProduction,
 		MultiZone: true,
 		ProvisioningParameters: internal.ProvisioningParameters{
-			Parameters:     internal.ProvisioningParametersDTO{Region: ptr.String("eastus")},
+			Parameters:     pkg.ProvisioningParametersDTO{Region: ptr.String("eastus")},
 			PlatformRegion: "cf-eu11",
 		},
 	}
@@ -46,7 +47,7 @@ func TestAzureTrialDefaults(t *testing.T) {
 	azure := AzureTrialInputProvider{
 		PlatformRegionMapping: AzureTrialPlatformRegionMapping,
 		ProvisioningParameters: internal.ProvisioningParameters{
-			Parameters:     internal.ProvisioningParametersDTO{Region: ptr.String("eastus")},
+			Parameters:     pkg.ProvisioningParametersDTO{Region: ptr.String("eastus")},
 			PlatformRegion: "cf-eu11",
 		},
 	}
@@ -76,7 +77,7 @@ func TestAzureLiteDefaults(t *testing.T) {
 	azure := AzureLiteInputProvider{
 		Purpose: PurposeEvaluation,
 		ProvisioningParameters: internal.ProvisioningParameters{
-			Parameters:     internal.ProvisioningParametersDTO{Region: ptr.String("eastus")},
+			Parameters:     pkg.ProvisioningParametersDTO{Region: ptr.String("eastus")},
 			PlatformRegion: "cf-eu11",
 		},
 	}
@@ -107,7 +108,7 @@ func TestAzureSpecific(t *testing.T) {
 		Purpose:   PurposeProduction,
 		MultiZone: true,
 		ProvisioningParameters: internal.ProvisioningParameters{
-			Parameters: internal.ProvisioningParametersDTO{
+			Parameters: pkg.ProvisioningParametersDTO{
 				MachineType: ptr.String("Standard_D48_v3"),
 				Region:      ptr.String("uksouth"),
 			},
@@ -143,7 +144,7 @@ func TestAzureTrialSpecific(t *testing.T) {
 		PlatformRegionMapping: AzureTrialPlatformRegionMapping,
 
 		ProvisioningParameters: internal.ProvisioningParameters{
-			Parameters: internal.ProvisioningParametersDTO{
+			Parameters: pkg.ProvisioningParametersDTO{
 				MachineType: ptr.String("Standard_D48_v3"),
 				Region:      ptr.String("uksouth"),
 			},
@@ -178,7 +179,7 @@ func TestAzureLiteSpecific(t *testing.T) {
 	azure := AzureLiteInputProvider{
 		Purpose: PurposeEvaluation,
 		ProvisioningParameters: internal.ProvisioningParameters{
-			Parameters: internal.ProvisioningParametersDTO{
+			Parameters: pkg.ProvisioningParametersDTO{
 				MachineType: ptr.String("Standard_D48_v3"),
 				Region:      ptr.String("uksouth"),
 			},

@@ -57,10 +57,12 @@ func NewDeprovisioningProcessingQueue(ctx context.Context, workersAmount int, de
 			step: deprovisioning.NewCheckGardenerClusterDeletedStep(db.Operations(), cli),
 		},
 		{
-			step: deprovisioning.NewRemoveRuntimeStep(db.Operations(), db.Instances(), provisionerClient, cfg.Provisioner.DeprovisioningTimeout),
+			disabled: cfg.ProvisionerDeprovisioningDisabled,
+			step:     deprovisioning.NewRemoveRuntimeStep(db.Operations(), db.Instances(), provisionerClient, cfg.Provisioner.DeprovisioningTimeout),
 		},
 		{
-			step: deprovisioning.NewCheckRuntimeRemovalStep(db.Operations(), db.Instances(), provisionerClient, cfg.Provisioner.DeprovisioningTimeout),
+			disabled: cfg.ProvisionerDeprovisioningDisabled,
+			step:     deprovisioning.NewCheckRuntimeRemovalStep(db.Operations(), db.Instances(), provisionerClient, cfg.Provisioner.DeprovisioningTimeout),
 		},
 		{
 			step: deprovisioning.NewReleaseSubscriptionStep(db.Operations(), db.Instances(), accountProvider),

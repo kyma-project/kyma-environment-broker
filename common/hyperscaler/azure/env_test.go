@@ -6,6 +6,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/kyma-project/kyma-environment-broker/common/hyperscaler"
+	pkg "github.com/kyma-project/kyma-environment-broker/common/runtime"
 	"github.com/kyma-project/kyma-environment-broker/internal"
 	"github.com/kyma-project/kyma-environment-broker/internal/broker"
 	"github.com/kyma-project/kyma-environment-broker/internal/provider"
@@ -101,7 +102,7 @@ func Test_mapRegion(t *testing.T) {
 			}
 			parameters := internal.ProvisioningParameters{
 				PlanID: tt.args.planID,
-				Parameters: internal.ProvisioningParametersDTO{
+				Parameters: pkg.ProvisioningParametersDTO{
 					Region: &tt.args.region,
 				},
 			}

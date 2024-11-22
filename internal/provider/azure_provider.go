@@ -11,6 +11,7 @@ import (
 	"github.com/kyma-project/kyma-environment-broker/internal/networking"
 
 	"github.com/kyma-project/control-plane/components/provisioner/pkg/gqlschema"
+	pkg "github.com/kyma-project/kyma-environment-broker/common/runtime"
 	"github.com/kyma-project/kyma-environment-broker/internal"
 	"github.com/kyma-project/kyma-environment-broker/internal/broker"
 	"github.com/kyma-project/kyma-environment-broker/internal/ptr"
@@ -122,8 +123,8 @@ func (p *AzureInput) Profile() gqlschema.KymaProfile {
 	return gqlschema.KymaProfileProduction
 }
 
-func (p *AzureInput) Provider() internal.CloudProvider {
-	return internal.Azure
+func (p *AzureInput) Provider() pkg.CloudProvider {
+	return pkg.Azure
 }
 
 func (p *AzureLiteInput) Defaults() *gqlschema.ClusterConfigInput {
@@ -181,8 +182,8 @@ func (p *AzureLiteInput) Profile() gqlschema.KymaProfile {
 	return gqlschema.KymaProfileEvaluation
 }
 
-func (p *AzureLiteInput) Provider() internal.CloudProvider {
-	return internal.Azure
+func (p *AzureLiteInput) Provider() pkg.CloudProvider {
+	return pkg.Azure
 }
 
 func (p *AzureTrialInput) Defaults() *gqlschema.ClusterConfigInput {
@@ -247,8 +248,8 @@ func (p *AzureTrialInput) ApplyParameters(input *gqlschema.ClusterConfigInput, p
 	updateAzureSingleNodeWorkerCidr(input, pp)
 }
 
-func (p *AzureTrialInput) Provider() internal.CloudProvider {
-	return internal.Azure
+func (p *AzureTrialInput) Provider() pkg.CloudProvider {
+	return pkg.Azure
 }
 
 func (p *AzureTrialInput) Profile() gqlschema.KymaProfile {
@@ -267,8 +268,8 @@ func (p *AzureFreemiumInput) Profile() gqlschema.KymaProfile {
 	return gqlschema.KymaProfileEvaluation
 }
 
-func (p *AzureFreemiumInput) Provider() internal.CloudProvider {
-	return internal.Azure
+func (p *AzureFreemiumInput) Provider() pkg.CloudProvider {
+	return pkg.Azure
 }
 
 func generateRandomAzureZone() int {

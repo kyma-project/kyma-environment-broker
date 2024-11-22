@@ -27,6 +27,7 @@ import (
 	imv1 "github.com/kyma-project/infrastructure-manager/api/v1"
 	"github.com/kyma-project/kyma-environment-broker/internal/broker"
 
+	pkg "github.com/kyma-project/kyma-environment-broker/common/runtime"
 	"github.com/kyma-project/kyma-environment-broker/internal"
 	"github.com/kyma-project/kyma-environment-broker/internal/process"
 	"github.com/kyma-project/kyma-environment-broker/internal/storage"
@@ -42,11 +43,11 @@ type CreateRuntimeResourceStep struct {
 	config                     input.Config
 	trialPlatformRegionMapping map[string]string
 	useSmallerMachineTypes     bool
-	oidcDefaultValues          internal.OIDCConfigDTO
+	oidcDefaultValues          pkg.OIDCConfigDTO
 }
 
 func NewCreateRuntimeResourceStep(os storage.Operations, is storage.Instances, k8sClient client.Client, kimConfig broker.KimConfig, cfg input.Config,
-	trialPlatformRegionMapping map[string]string, useSmallerMachines bool, oidcDefaultValues internal.OIDCConfigDTO) *CreateRuntimeResourceStep {
+	trialPlatformRegionMapping map[string]string, useSmallerMachines bool, oidcDefaultValues pkg.OIDCConfigDTO) *CreateRuntimeResourceStep {
 	return &CreateRuntimeResourceStep{
 		operationManager:           process.NewOperationManager(os),
 		instanceStorage:            is,
@@ -252,7 +253,7 @@ func (s *CreateRuntimeResourceStep) createNetworkingConfiguration(operation inte
 
 	networkingParams := operation.ProvisioningParameters.Parameters.Networking
 	if networkingParams == nil {
-		networkingParams = &internal.NetworkingDTO{}
+		networkingParams = &pkg.NetworkingDTO{}
 	}
 
 	nodes := networking.DefaultNodesCIDR

@@ -247,6 +247,18 @@ func TestConverting_ProvisioningOperationConverter(t *testing.T) {
 	})
 }
 
+func TestConverting_ProvisioningParams(t *testing.T) {
+	// given
+	instance := fixInstance()
+	svc := NewConverter("eu")
+
+	// when
+	dto, _ := svc.NewDTO(instance)
+
+	// then
+	assert.Equal(t, instance.Parameters.Parameters, dto.Parameters)
+}
+
 func fixSuspensionOperation(state domain.LastOperationState, createdAt time.Time) []internal.DeprovisioningOperation {
 	return []internal.DeprovisioningOperation{{
 		Operation: internal.Operation{
@@ -275,6 +287,11 @@ func fixInstance() internal.Instance {
 		GlobalAccountID:             "global-account-id",
 		SubscriptionGlobalAccountID: "subgid",
 		SubAccountID:                "sub-account-id",
+		Parameters: internal.ProvisioningParameters{
+			Parameters: runtime.ProvisioningParametersDTO{
+				Name: "instance-name",
+			},
+		},
 	}
 }
 

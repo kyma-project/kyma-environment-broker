@@ -13,6 +13,7 @@ import (
 
 	"github.com/kyma-project/control-plane/components/provisioner/pkg/gqlschema"
 	"github.com/kyma-project/kyma-environment-broker/common/gardener"
+	pkg "github.com/kyma-project/kyma-environment-broker/common/runtime"
 	"github.com/kyma-project/kyma-environment-broker/internal"
 	"github.com/kyma-project/kyma-environment-broker/internal/broker"
 	"github.com/kyma-project/kyma-environment-broker/internal/broker/automock"
@@ -63,7 +64,7 @@ func TestProvision_Provision(t *testing.T) {
 		factoryBuilder := &automock.PlanValidator{}
 		factoryBuilder.On("IsPlanSupport", planID).Return(true)
 
-		planDefaults := func(planID string, platformProvider internal.CloudProvider, provider *internal.CloudProvider) (*gqlschema.ClusterConfigInput, error) {
+		planDefaults := func(planID string, platformProvider pkg.CloudProvider, provider *pkg.CloudProvider) (*gqlschema.ClusterConfigInput, error) {
 			return &gqlschema.ClusterConfigInput{}, nil
 		}
 		kcBuilder := &kcMock.KcBuilder{}
@@ -140,7 +141,7 @@ func TestProvision_Provision(t *testing.T) {
 		factoryBuilder := &automock.PlanValidator{}
 		factoryBuilder.On("IsPlanSupport", broker.OwnClusterPlanID).Return(true)
 
-		planDefaults := func(planID string, platformProvider internal.CloudProvider, provider *internal.CloudProvider) (*gqlschema.ClusterConfigInput, error) {
+		planDefaults := func(planID string, platformProvider pkg.CloudProvider, provider *pkg.CloudProvider) (*gqlschema.ClusterConfigInput, error) {
 			return &gqlschema.ClusterConfigInput{}, nil
 		}
 		kcBuilder := &kcMock.KcBuilder{}
@@ -220,7 +221,7 @@ func TestProvision_Provision(t *testing.T) {
 		factoryBuilder := &automock.PlanValidator{}
 		factoryBuilder.On("IsPlanSupport", broker.OwnClusterPlanID).Return(true)
 
-		planDefaults := func(planID string, platformProvider internal.CloudProvider, provider *internal.CloudProvider) (*gqlschema.ClusterConfigInput, error) {
+		planDefaults := func(planID string, platformProvider pkg.CloudProvider, provider *pkg.CloudProvider) (*gqlschema.ClusterConfigInput, error) {
 			return &gqlschema.ClusterConfigInput{}, nil
 		}
 		kcBuilder := &kcMock.KcBuilder{}
@@ -271,7 +272,7 @@ func TestProvision_Provision(t *testing.T) {
 		factoryBuilder := &automock.PlanValidator{}
 		factoryBuilder.On("IsPlanSupport", broker.OwnClusterPlanID).Return(true)
 
-		planDefaults := func(planID string, platformProvider internal.CloudProvider, provider *internal.CloudProvider) (*gqlschema.ClusterConfigInput, error) {
+		planDefaults := func(planID string, platformProvider pkg.CloudProvider, provider *pkg.CloudProvider) (*gqlschema.ClusterConfigInput, error) {
 			return &gqlschema.ClusterConfigInput{}, nil
 		}
 		kcBuilder := &kcMock.KcBuilder{}
@@ -346,7 +347,7 @@ func TestProvision_Provision(t *testing.T) {
 		factoryBuilder := &automock.PlanValidator{}
 		factoryBuilder.On("IsPlanSupport", planID).Return(true)
 
-		planDefaults := func(planID string, platformProvider internal.CloudProvider, provider *internal.CloudProvider) (*gqlschema.ClusterConfigInput, error) {
+		planDefaults := func(planID string, platformProvider pkg.CloudProvider, provider *pkg.CloudProvider) (*gqlschema.ClusterConfigInput, error) {
 			return &gqlschema.ClusterConfigInput{}, nil
 		}
 		kcBuilder := &kcMock.KcBuilder{}
@@ -426,7 +427,7 @@ func TestProvision_Provision(t *testing.T) {
 		factoryBuilder := &automock.PlanValidator{}
 		factoryBuilder.On("IsPlanSupport", planID).Return(true)
 
-		planDefaults := func(planID string, platformProvider internal.CloudProvider, provider *internal.CloudProvider) (*gqlschema.ClusterConfigInput, error) {
+		planDefaults := func(planID string, platformProvider pkg.CloudProvider, provider *pkg.CloudProvider) (*gqlschema.ClusterConfigInput, error) {
 			return &gqlschema.ClusterConfigInput{}, nil
 		}
 		kcBuilder := &kcMock.KcBuilder{}
@@ -483,7 +484,7 @@ func TestProvision_Provision(t *testing.T) {
 		factoryBuilder := &automock.PlanValidator{}
 		factoryBuilder.On("IsPlanSupport", broker.TrialPlanID).Return(true)
 
-		planDefaults := func(planID string, platformProvider internal.CloudProvider, provider *internal.CloudProvider) (*gqlschema.ClusterConfigInput, error) {
+		planDefaults := func(planID string, platformProvider pkg.CloudProvider, provider *pkg.CloudProvider) (*gqlschema.ClusterConfigInput, error) {
 			return &gqlschema.ClusterConfigInput{}, nil
 		}
 		kcBuilder := &kcMock.KcBuilder{}
@@ -535,7 +536,7 @@ func TestProvision_Provision(t *testing.T) {
 		factoryBuilder := &automock.PlanValidator{}
 		factoryBuilder.On("IsPlanSupport", broker.TrialPlanID).Return(true)
 
-		planDefaults := func(planID string, platformProvider internal.CloudProvider, provider *internal.CloudProvider) (*gqlschema.ClusterConfigInput, error) {
+		planDefaults := func(planID string, platformProvider pkg.CloudProvider, provider *pkg.CloudProvider) (*gqlschema.ClusterConfigInput, error) {
 			return &gqlschema.ClusterConfigInput{}, nil
 		}
 		kcBuilder := &kcMock.KcBuilder{}
@@ -601,7 +602,7 @@ func TestProvision_Provision(t *testing.T) {
 		factoryBuilder := &automock.PlanValidator{}
 		factoryBuilder.On("IsPlanSupport", broker.TrialPlanID).Return(true)
 
-		planDefaults := func(planID string, platformProvider internal.CloudProvider, provider *internal.CloudProvider) (*gqlschema.ClusterConfigInput, error) {
+		planDefaults := func(planID string, platformProvider pkg.CloudProvider, provider *pkg.CloudProvider) (*gqlschema.ClusterConfigInput, error) {
 			return &gqlschema.ClusterConfigInput{}, nil
 		}
 		kcBuilder := &kcMock.KcBuilder{}
@@ -667,7 +668,7 @@ func TestProvision_Provision(t *testing.T) {
 		factoryBuilder := &automock.PlanValidator{}
 		factoryBuilder.On("IsPlanSupport", broker.TrialPlanID).Return(true)
 
-		planDefaults := func(planID string, platformProvider internal.CloudProvider, provider *internal.CloudProvider) (*gqlschema.ClusterConfigInput, error) {
+		planDefaults := func(planID string, platformProvider pkg.CloudProvider, provider *pkg.CloudProvider) (*gqlschema.ClusterConfigInput, error) {
 			return &gqlschema.ClusterConfigInput{}, nil
 		}
 		kcBuilder := &kcMock.KcBuilder{}
@@ -712,7 +713,7 @@ func TestProvision_Provision(t *testing.T) {
 		factoryBuilder := &automock.PlanValidator{}
 		factoryBuilder.On("IsPlanSupport", planID).Return(true)
 
-		planDefaults := func(planID string, platformProvider internal.CloudProvider, provider *internal.CloudProvider) (*gqlschema.ClusterConfigInput, error) {
+		planDefaults := func(planID string, platformProvider pkg.CloudProvider, provider *pkg.CloudProvider) (*gqlschema.ClusterConfigInput, error) {
 			return &gqlschema.ClusterConfigInput{}, nil
 		}
 		kcBuilder := &kcMock.KcBuilder{}
@@ -752,7 +753,7 @@ func TestProvision_Provision(t *testing.T) {
 		factoryBuilder := &automock.PlanValidator{}
 		factoryBuilder.On("IsPlanSupport", planID).Return(true)
 
-		planDefaults := func(planID string, platformProvider internal.CloudProvider, provider *internal.CloudProvider) (*gqlschema.ClusterConfigInput, error) {
+		planDefaults := func(planID string, platformProvider pkg.CloudProvider, provider *pkg.CloudProvider) (*gqlschema.ClusterConfigInput, error) {
 			return &gqlschema.ClusterConfigInput{}, nil
 		}
 		kcBuilder := &kcMock.KcBuilder{}
@@ -795,7 +796,7 @@ func TestProvision_Provision(t *testing.T) {
 		queue := &automock.Queue{}
 		queue.On("Add", mock.AnythingOfType("string"))
 
-		planDefaults := func(planID string, platformProvider internal.CloudProvider, provider *internal.CloudProvider) (*gqlschema.ClusterConfigInput, error) {
+		planDefaults := func(planID string, platformProvider pkg.CloudProvider, provider *pkg.CloudProvider) (*gqlschema.ClusterConfigInput, error) {
 			return &gqlschema.ClusterConfigInput{}, nil
 		}
 		kcBuilder := &kcMock.KcBuilder{}
@@ -842,7 +843,7 @@ func TestProvision_Provision(t *testing.T) {
 		queue := &automock.Queue{}
 		queue.On("Add", mock.AnythingOfType("string"))
 
-		planDefaults := func(planID string, platformProvider internal.CloudProvider, provider *internal.CloudProvider) (*gqlschema.ClusterConfigInput, error) {
+		planDefaults := func(planID string, platformProvider pkg.CloudProvider, provider *pkg.CloudProvider) (*gqlschema.ClusterConfigInput, error) {
 			return &gqlschema.ClusterConfigInput{}, nil
 		}
 		kcBuilder := &kcMock.KcBuilder{}
@@ -889,7 +890,7 @@ func TestProvision_Provision(t *testing.T) {
 		factoryBuilder := &automock.PlanValidator{}
 		factoryBuilder.On("IsPlanSupport", planID).Return(true)
 
-		planDefaults := func(planID string, platformProvider internal.CloudProvider, provider *internal.CloudProvider) (*gqlschema.ClusterConfigInput, error) {
+		planDefaults := func(planID string, platformProvider pkg.CloudProvider, provider *pkg.CloudProvider) (*gqlschema.ClusterConfigInput, error) {
 			return &gqlschema.ClusterConfigInput{}, nil
 		}
 		kcBuilder := &kcMock.KcBuilder{}
@@ -948,7 +949,7 @@ func TestProvision_Provision(t *testing.T) {
 		factoryBuilder := &automock.PlanValidator{}
 		factoryBuilder.On("IsPlanSupport", planID).Return(true)
 
-		planDefaults := func(planID string, platformProvider internal.CloudProvider, provider *internal.CloudProvider) (*gqlschema.ClusterConfigInput, error) {
+		planDefaults := func(planID string, platformProvider pkg.CloudProvider, provider *pkg.CloudProvider) (*gqlschema.ClusterConfigInput, error) {
 			return &gqlschema.ClusterConfigInput{}, nil
 		}
 		kcBuilder := &kcMock.KcBuilder{}
@@ -1007,7 +1008,7 @@ func TestProvision_Provision(t *testing.T) {
 		factoryBuilder := &automock.PlanValidator{}
 		factoryBuilder.On("IsPlanSupport", planID).Return(true)
 
-		planDefaults := func(planID string, platformProvider internal.CloudProvider, provider *internal.CloudProvider) (*gqlschema.ClusterConfigInput, error) {
+		planDefaults := func(planID string, platformProvider pkg.CloudProvider, provider *pkg.CloudProvider) (*gqlschema.ClusterConfigInput, error) {
 			return &gqlschema.ClusterConfigInput{}, nil
 		}
 		kcBuilder := &kcMock.KcBuilder{}
@@ -1066,7 +1067,7 @@ func TestProvision_Provision(t *testing.T) {
 		factoryBuilder := &automock.PlanValidator{}
 		factoryBuilder.On("IsPlanSupport", planID).Return(true)
 
-		planDefaults := func(planID string, platformProvider internal.CloudProvider, provider *internal.CloudProvider) (*gqlschema.ClusterConfigInput, error) {
+		planDefaults := func(planID string, platformProvider pkg.CloudProvider, provider *pkg.CloudProvider) (*gqlschema.ClusterConfigInput, error) {
 			return &gqlschema.ClusterConfigInput{}, nil
 		}
 		kcBuilder := &kcMock.KcBuilder{}
@@ -1119,7 +1120,7 @@ func TestProvision_Provision(t *testing.T) {
 		factoryBuilder := &automock.PlanValidator{}
 		factoryBuilder.On("IsPlanSupport", broker.FreemiumPlanID).Return(true)
 
-		planDefaults := func(planID string, platformProvider internal.CloudProvider, provider *internal.CloudProvider) (*gqlschema.ClusterConfigInput, error) {
+		planDefaults := func(planID string, platformProvider pkg.CloudProvider, provider *pkg.CloudProvider) (*gqlschema.ClusterConfigInput, error) {
 			return &gqlschema.ClusterConfigInput{}, nil
 		}
 		kcBuilder := &kcMock.KcBuilder{}
@@ -1187,7 +1188,7 @@ func TestProvision_Provision(t *testing.T) {
 		factoryBuilder := &automock.PlanValidator{}
 		factoryBuilder.On("IsPlanSupport", broker.FreemiumPlanID).Return(true)
 
-		planDefaults := func(planID string, platformProvider internal.CloudProvider, provider *internal.CloudProvider) (*gqlschema.ClusterConfigInput, error) {
+		planDefaults := func(planID string, platformProvider pkg.CloudProvider, provider *pkg.CloudProvider) (*gqlschema.ClusterConfigInput, error) {
 			return &gqlschema.ClusterConfigInput{}, nil
 		}
 		kcBuilder := &kcMock.KcBuilder{}
@@ -1245,7 +1246,7 @@ func TestProvision_Provision(t *testing.T) {
 		factoryBuilder := &automock.PlanValidator{}
 		factoryBuilder.On("IsPlanSupport", broker.FreemiumPlanID).Return(true)
 
-		planDefaults := func(planID string, platformProvider internal.CloudProvider, provider *internal.CloudProvider) (*gqlschema.ClusterConfigInput, error) {
+		planDefaults := func(planID string, platformProvider pkg.CloudProvider, provider *pkg.CloudProvider) (*gqlschema.ClusterConfigInput, error) {
 			return &gqlschema.ClusterConfigInput{}, nil
 		}
 		kcBuilder := &kcMock.KcBuilder{}
@@ -1301,7 +1302,7 @@ func TestProvision_Provision(t *testing.T) {
 		factoryBuilder := &automock.PlanValidator{}
 		factoryBuilder.On("IsPlanSupport", broker.FreemiumPlanID).Return(true)
 
-		planDefaults := func(planID string, platformProvider internal.CloudProvider, provider *internal.CloudProvider) (*gqlschema.ClusterConfigInput, error) {
+		planDefaults := func(planID string, platformProvider pkg.CloudProvider, provider *pkg.CloudProvider) (*gqlschema.ClusterConfigInput, error) {
 			return &gqlschema.ClusterConfigInput{}, nil
 		}
 		kcBuilder := &kcMock.KcBuilder{}
@@ -1348,7 +1349,7 @@ func TestProvision_Provision(t *testing.T) {
 		factoryBuilder := &automock.PlanValidator{}
 		factoryBuilder.On("IsPlanSupport", broker.FreemiumPlanID).Return(true)
 
-		planDefaults := func(planID string, platformProvider internal.CloudProvider, provider *internal.CloudProvider) (*gqlschema.ClusterConfigInput, error) {
+		planDefaults := func(planID string, platformProvider pkg.CloudProvider, provider *pkg.CloudProvider) (*gqlschema.ClusterConfigInput, error) {
 			return &gqlschema.ClusterConfigInput{}, nil
 		}
 		kcBuilder := &kcMock.KcBuilder{}
@@ -1391,7 +1392,7 @@ func TestProvision_Provision(t *testing.T) {
 		factoryBuilder := &automock.PlanValidator{}
 		factoryBuilder.On("IsPlanSupport", broker.GCPPlanID).Return(true)
 
-		planDefaults := func(planID string, platformProvider internal.CloudProvider, provider *internal.CloudProvider) (*gqlschema.ClusterConfigInput, error) {
+		planDefaults := func(planID string, platformProvider pkg.CloudProvider, provider *pkg.CloudProvider) (*gqlschema.ClusterConfigInput, error) {
 			return &gqlschema.ClusterConfigInput{}, nil
 		}
 		kcBuilder := &kcMock.KcBuilder{}
@@ -1444,7 +1445,7 @@ func TestProvision_Provision(t *testing.T) {
 		factoryBuilder := &automock.PlanValidator{}
 		factoryBuilder.On("IsPlanSupport", broker.GCPPlanID).Return(true)
 
-		planDefaults := func(planID string, platformProvider internal.CloudProvider, provider *internal.CloudProvider) (*gqlschema.ClusterConfigInput, error) {
+		planDefaults := func(planID string, platformProvider pkg.CloudProvider, provider *pkg.CloudProvider) (*gqlschema.ClusterConfigInput, error) {
 			return &gqlschema.ClusterConfigInput{}, nil
 		}
 		kcBuilder := &kcMock.KcBuilder{}
@@ -1554,7 +1555,7 @@ func TestNetworkingValidation(t *testing.T) {
 			factoryBuilder := &automock.PlanValidator{}
 			factoryBuilder.On("IsPlanSupport", mock.AnythingOfType("string")).Return(true)
 
-			planDefaults := func(planID string, platformProvider internal.CloudProvider, provider *internal.CloudProvider) (*gqlschema.ClusterConfigInput, error) {
+			planDefaults := func(planID string, platformProvider pkg.CloudProvider, provider *pkg.CloudProvider) (*gqlschema.ClusterConfigInput, error) {
 				return &gqlschema.ClusterConfigInput{}, nil
 			}
 			kcBuilder := &kcMock.KcBuilder{}
@@ -1597,14 +1598,14 @@ func TestRegionValidation(t *testing.T) {
 	for tn, tc := range map[string]struct {
 		planID           string
 		parameters       string
-		platformProvider internal.CloudProvider
+		platformProvider pkg.CloudProvider
 
 		expectedErrorStatusCode int
 		expectedError           bool
 	}{
 		"invalid region": {
 			planID:           broker.AzurePlanID,
-			platformProvider: internal.Azure,
+			platformProvider: pkg.Azure,
 			parameters:       `{"name": "cluster-name", "region":"not-valid"}`,
 
 			expectedErrorStatusCode: http.StatusBadRequest,
@@ -1612,7 +1613,7 @@ func TestRegionValidation(t *testing.T) {
 		},
 		"Azure region for AWS freemium": {
 			planID:           broker.FreemiumPlanID,
-			platformProvider: internal.AWS,
+			platformProvider: pkg.AWS,
 			parameters:       `{"name": "cluster-name", "region": "eastus"}`,
 
 			expectedErrorStatusCode: http.StatusBadRequest,
@@ -1620,21 +1621,21 @@ func TestRegionValidation(t *testing.T) {
 		},
 		"Azure region for Azure freemium": {
 			planID:           broker.FreemiumPlanID,
-			platformProvider: internal.Azure,
+			platformProvider: pkg.Azure,
 			parameters:       `{"name": "cluster-name", "region": "eastus"}`,
 
 			expectedError: false,
 		},
 		"AWS region for AWS freemium": {
 			planID:           broker.FreemiumPlanID,
-			platformProvider: internal.AWS,
+			platformProvider: pkg.AWS,
 			parameters:       `{"name": "cluster-name", "region": "eu-central-1"}`,
 
 			expectedError: false,
 		},
 		"AWS region for Azure freemium": {
 			planID:           broker.FreemiumPlanID,
-			platformProvider: internal.Azure,
+			platformProvider: pkg.Azure,
 			parameters:       `{"name": "cluster-name", "region": "eu-central-1"}`,
 
 			expectedErrorStatusCode: http.StatusBadRequest,
@@ -1652,7 +1653,7 @@ func TestRegionValidation(t *testing.T) {
 			factoryBuilder := &automock.PlanValidator{}
 			factoryBuilder.On("IsPlanSupport", tc.planID).Return(true)
 
-			planDefaults := func(planID string, platformProvider internal.CloudProvider, provider *internal.CloudProvider) (*gqlschema.ClusterConfigInput, error) {
+			planDefaults := func(planID string, platformProvider pkg.CloudProvider, provider *pkg.CloudProvider) (*gqlschema.ClusterConfigInput, error) {
 				return &gqlschema.ClusterConfigInput{}, nil
 			}
 			kcBuilder := &kcMock.KcBuilder{}
@@ -1707,7 +1708,7 @@ func TestSapConvergedCloudBlocking(t *testing.T) {
 		factoryBuilder := &automock.PlanValidator{}
 		factoryBuilder.On("IsPlanSupport", broker.SapConvergedCloudPlanID).Return(true)
 
-		planDefaults := func(planID string, platformProvider internal.CloudProvider, provider *internal.CloudProvider) (*gqlschema.ClusterConfigInput, error) {
+		planDefaults := func(planID string, platformProvider pkg.CloudProvider, provider *pkg.CloudProvider) (*gqlschema.ClusterConfigInput, error) {
 			return &gqlschema.ClusterConfigInput{}, nil
 		}
 		kcBuilder := &kcMock.KcBuilder{}
@@ -1759,7 +1760,7 @@ func TestSapConvergedCloudBlocking(t *testing.T) {
 		factoryBuilder := &automock.PlanValidator{}
 		factoryBuilder.On("IsPlanSupport", planID).Return(true)
 
-		planDefaults := func(planID string, platformProvider internal.CloudProvider, provider *internal.CloudProvider) (*gqlschema.ClusterConfigInput, error) {
+		planDefaults := func(planID string, platformProvider pkg.CloudProvider, provider *pkg.CloudProvider) (*gqlschema.ClusterConfigInput, error) {
 			return &gqlschema.ClusterConfigInput{}, nil
 		}
 		kcBuilder := &kcMock.KcBuilder{}
@@ -1810,7 +1811,7 @@ func TestSapConvergedCloudBlocking(t *testing.T) {
 		factoryBuilder := &automock.PlanValidator{}
 		factoryBuilder.On("IsPlanSupport", broker.SapConvergedCloudPlanID).Return(true)
 
-		planDefaults := func(planID string, platformProvider internal.CloudProvider, provider *internal.CloudProvider) (*gqlschema.ClusterConfigInput, error) {
+		planDefaults := func(planID string, platformProvider pkg.CloudProvider, provider *pkg.CloudProvider) (*gqlschema.ClusterConfigInput, error) {
 			return &gqlschema.ClusterConfigInput{}, nil
 		}
 		kcBuilder := &kcMock.KcBuilder{}
@@ -1869,7 +1870,7 @@ func fixExistOperation() internal.Operation {
 			GlobalAccountID: globalAccountID,
 			UserID:          userID,
 		},
-		Parameters: internal.ProvisioningParametersDTO{
+		Parameters: pkg.ProvisioningParametersDTO{
 			Name:   clusterName,
 			Region: &ptrClusterRegion,
 		},
@@ -1885,10 +1886,10 @@ func fixInstance() internal.Instance {
 
 func fixRequestContext(t *testing.T, region string) context.Context {
 	t.Helper()
-	return fixRequestContextWithProvider(t, region, internal.Azure)
+	return fixRequestContextWithProvider(t, region, pkg.Azure)
 }
 
-func fixRequestContextWithProvider(t *testing.T, region string, provider internal.CloudProvider) context.Context {
+func fixRequestContextWithProvider(t *testing.T, region string, provider pkg.CloudProvider) context.Context {
 	t.Helper()
 
 	ctx := context.TODO()

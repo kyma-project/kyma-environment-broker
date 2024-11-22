@@ -12,6 +12,7 @@ import (
 	"github.com/kyma-project/kyma-environment-broker/internal/ptr"
 
 	"github.com/kyma-project/kyma-environment-broker/common/orchestration"
+	pkg "github.com/kyma-project/kyma-environment-broker/common/runtime"
 	"github.com/kyma-project/kyma-environment-broker/internal"
 	"github.com/kyma-project/kyma-environment-broker/internal/events"
 	"github.com/kyma-project/kyma-environment-broker/internal/fixture"
@@ -47,7 +48,7 @@ func TestInstance(t *testing.T) {
 		require.NoError(t, err)
 
 		fixInstance.DashboardURL = "diff"
-		fixInstance.Provider = internal.SapConvergedCloud
+		fixInstance.Provider = pkg.SapConvergedCloud
 		_, err = brokerStorage.Instances().Update(fixInstance)
 		require.NoError(t, err)
 

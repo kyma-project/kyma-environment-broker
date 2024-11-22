@@ -64,6 +64,8 @@ spec:
               value: "{{ include "kyma-env-broker.fullname" . }}-runtime-configuration"
             - name: APP_DISABLE_PROCESS_OPERATIONS_IN_PROGRESS
               value: "{{ .Values.disableProcessOperationsInProgress }}"
+            - name: APP_PROVISIONER_DEPROVISIONING_DISABLED
+              value: "{{ .Values.provisioner.deprovisioningDisabled }}"
             - name: APP_BROKER_ENABLE_PLANS
               value: "{{ .Values.enablePlans }}"
             - name: APP_ARCHIVE_ENABLED
