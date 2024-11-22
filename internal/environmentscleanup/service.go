@@ -9,18 +9,24 @@ import (
 	"github.com/kyma-project/kyma-environment-broker/internal/storage/dberr"
 
 	"github.com/hashicorp/go-multierror"
+	imv1 "github.com/kyma-project/infrastructure-manager/api/v1"
 	"github.com/kyma-project/kyma-environment-broker/common/gardener"
 	"github.com/kyma-project/kyma-environment-broker/internal"
 	"github.com/kyma-project/kyma-environment-broker/internal/storage"
 	log "github.com/sirupsen/logrus"
+	"gopkg.in/yaml.v2"
+	coreV1 "k8s.io/api/core/v1"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
 const (
 	shootAnnotationRuntimeId                      = "kcp.provisioner.kyma-project.io/runtime-id"
 	shootAnnotationInfrastructureManagerRuntimeId = "infrastructuremanager.kyma-project.io/runtime-id"
 	shootLabelAccountId                           = "account"
+	kcpNamespace                                  = "kcp-system"
+	kebConfigMap                                  = "kcp-kyma-environment-broker"
 )
 
 //go:generate mockery --name=GardenerClient --output=automock
@@ -39,6 +45,7 @@ type BrokerClient interface {
 type Service struct {
 	gardenerService GardenerClient
 	brokerService   BrokerClient
+	k8sClient       client.Client
 	instanceStorage storage.Instances
 	logger          *log.Logger
 	MaxShootAge     time.Duration
@@ -48,12 +55,20 @@ type Service struct {
 type runtime struct {
 	ID        string
 	AccountID string
+	ShootName string
 }
 
-func NewService(gardenerClient GardenerClient, brokerClient BrokerClient, instanceStorage storage.Instances, logger *log.Logger, maxShootAge time.Duration, labelSelector string) *Service {
+type providers struct {
+	Providers []struct {
+		DomainsInclude []string `yaml:"domainsInclude"`
+	} `yaml:"providers"`
+}
+
+func NewService(gardenerClient GardenerClient, brokerClient BrokerClient, k8sClient client.Client, instanceStorage storage.Instances, logger *log.Logger, maxShootAge time.Duration, labelSelector string) *Service {
 	return &Service{
 		gardenerService: gardenerClient,
 		brokerService:   brokerClient,
+		k8sClient:       k8sClient,
 		instanceStorage: instanceStorage,
 		logger:          logger,
 		MaxShootAge:     maxShootAge,
@@ -62,7 +77,43 @@ func NewService(gardenerClient GardenerClient, brokerClient BrokerClient, instan
 }
 
 func (s *Service) Run() error {
+	environment, err := s.getEnvironment()
+	if err != nil {
+		return err
+	}
+	log.Infof("Current environment: %s", environment)
+	if environment != "dev.kyma.ondemand.com" {
+		return fmt.Errorf("job must run only in the dev environment, current environment: %s", environment)
+	}
 	return s.PerformCleanup()
+}
+
+func (s *Service) getEnvironment() (string, error) {
+	configMap := &coreV1.ConfigMap{}
+	err := s.k8sClient.Get(context.Background(), client.ObjectKey{
+		Namespace: kcpNamespace,
+		Name:      kebConfigMap,
+	}, configMap)
+	if err != nil {
+		return "", fmt.Errorf("while getting ConfigMap %s from namespace %s: %w", kebConfigMap, kcpNamespace, err)
+	}
+
+	data, exists := configMap.Data["skrDNSProvidersValues.yaml"]
+	if !exists {
+		return "", fmt.Errorf("while checking skrDNSProvidersValues.yaml key in ConfigMap %s: key is missing", kebConfigMap)
+	}
+
+	var providers providers
+	err = yaml.Unmarshal([]byte(data), &providers)
+	if err != nil {
+		return "", fmt.Errorf("while unmarshalling YAML data from skrDNSProvidersValues.yaml: %w", err)
+	}
+
+	if len(providers.Providers) != 1 && len(providers.Providers[0].DomainsInclude) != 1 {
+		return "", fmt.Errorf("while validating structure of skrDNSProvidersValues.yaml: expected 1 provider with 1 domain, found %d providers", len(providers.Providers))
+	}
+
+	return providers.Providers[0].DomainsInclude[0], nil
 }
 
 func (s *Service) PerformCleanup() error {
@@ -169,6 +220,7 @@ func (s *Service) shootToRuntime(st unstructured.Unstructured) (*runtime, error)
 	return &runtime{
 		ID:        runtimeID,
 		AccountID: accountID,
+		ShootName: shoot.GetName(),
 	}, nil
 }
 
@@ -182,7 +234,9 @@ func (s *Service) cleanUp(runtimesToDelete []runtime) error {
 		}
 	}
 
-	result := s.cleanUpKEBInstances(kebInstancesToDelete)
+	kebResult := s.cleanUpKEBInstances(kebInstancesToDelete)
+	runtimeCRsResult := s.cleanUpRuntimeCRs(runtimesToDelete, kebInstancesToDelete)
+	result := multierror.Append(kebResult, runtimeCRsResult)
 
 	if result != nil {
 		result.ErrorFormat = func(i []error) string {
@@ -235,5 +289,54 @@ func (s *Service) triggerEnvironmentDeprovisioning(instance internal.Instance) e
 	}
 
 	log.Infof("Successfully send deprovision request to Kyma Environment Broker, got operation ID %q", opID)
+	return nil
+}
+
+func (s *Service) cleanUpRuntimeCRs(runtimesToDelete []runtime, kebInstancesToDelete []internal.Instance) *multierror.Error {
+	kebInstanceExists := func(runtimeID string) bool {
+		for _, instance := range kebInstancesToDelete {
+			if instance.RuntimeID == runtimeID {
+				return true
+			}
+		}
+
+		return false
+	}
+
+	var result *multierror.Error
+
+	for _, runtime := range runtimesToDelete {
+		if !kebInstanceExists(runtime.ID) {
+			s.logger.Infof("Deleting runtime CR for runtimeID ID %q", runtime.ID)
+			err := s.deleteRuntimeCR(runtime)
+			if err != nil {
+				result = multierror.Append(result, err)
+			}
+		}
+	}
+
+	return result
+}
+
+func (s *Service) deleteRuntimeCR(runtime runtime) error {
+	var runtimeCR = imv1.Runtime{}
+	err := s.k8sClient.Get(context.Background(), client.ObjectKey{Name: runtime.ID, Namespace: kcpNamespace}, &runtimeCR)
+	if err != nil {
+		s.logger.Error(fmt.Errorf("while getting runtime CR for runtime ID %q: %w", runtime.ID, err))
+		return nil
+	}
+
+	if runtime.ShootName != runtimeCR.Spec.Shoot.Name {
+		s.logger.Error(fmt.Errorf("gardener shoot name %q does not match runtime CR shoot name %q", runtime.ShootName, runtimeCR.Spec.Shoot.Name))
+		return nil
+	}
+
+	err = s.k8sClient.Delete(context.Background(), &runtimeCR)
+	if err != nil {
+		s.logger.Error(fmt.Errorf("while deleting runtime CR for runtime ID %q: %w", runtime.ID, err))
+		return err
+	}
+
+	s.logger.Infof("Successfully deleted runtime CR for runtimeID ID %q", runtime.ID)
 	return nil
 }

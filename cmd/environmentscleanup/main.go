@@ -11,6 +11,7 @@ func main() {
 	builder.WithGardenerClient()
 	builder.WithBrokerClient()
 	builder.WithStorage()
+	builder.WithK8sClient()
 
 	defer builder.Cleanup()
 

@@ -7,6 +7,7 @@ import (
 
 	"github.com/dlmiddlecote/sqlstats"
 	"github.com/gocraft/dbr"
+	imv1 "github.com/kyma-project/infrastructure-manager/api/v1"
 	"github.com/kyma-project/kyma-environment-broker/common/gardener"
 	"github.com/kyma-project/kyma-environment-broker/internal/broker"
 	"github.com/kyma-project/kyma-environment-broker/internal/environmentscleanup"
@@ -18,7 +19,14 @@ import (
 	log "github.com/sirupsen/logrus"
 	"github.com/vrischmann/envconfig"
 	"golang.org/x/oauth2/clientcredentials"
+	corev1 "k8s.io/api/core/v1"
+	"k8s.io/apimachinery/pkg/util/wait"
 	"k8s.io/client-go/dynamic"
+	"k8s.io/client-go/kubernetes/scheme"
+	"k8s.io/client-go/rest"
+	"sigs.k8s.io/controller-runtime/pkg/client"
+	"sigs.k8s.io/controller-runtime/pkg/client/apiutil"
+	k8scfg "sigs.k8s.io/controller-runtime/pkg/client/config"
 )
 
 type config struct {
@@ -36,6 +44,7 @@ type AppBuilder struct {
 	conn           *dbr.Connection
 	logger         *logrus.Logger
 	brokerClient   *broker.Client
+	k8sClient      client.Client
 }
 
 type App interface {
@@ -96,6 +105,39 @@ func (b *AppBuilder) WithStorage() {
 
 }
 
+func (b *AppBuilder) WithK8sClient() {
+	err := imv1.AddToScheme(scheme.Scheme)
+	FatalOnError(err)
+	err = corev1.AddToScheme(scheme.Scheme)
+	FatalOnError(err)
+	k8sCfg, err := k8scfg.GetConfig()
+	FatalOnError(err)
+	cli, err := createK8sClient(k8sCfg)
+	FatalOnError(err)
+	b.k8sClient = cli
+}
+
+func createK8sClient(cfg *rest.Config) (client.Client, error) {
+	mapper, err := apiutil.NewDiscoveryRESTMapper(cfg)
+	if err != nil {
+		err = wait.Poll(time.Second, time.Minute, func() (bool, error) {
+			mapper, err = apiutil.NewDiscoveryRESTMapper(cfg)
+			if err != nil {
+				return false, nil
+			}
+			return true, nil
+		})
+		if err != nil {
+			return nil, fmt.Errorf("while waiting for client mapper: %w", err)
+		}
+	}
+	cli, err := client.New(cfg, client.Options{Mapper: mapper})
+	if err != nil {
+		return nil, fmt.Errorf("while creating a client: %w", err)
+	}
+	return cli, nil
+}
+
 func (b *AppBuilder) Cleanup() {
 	err := b.conn.Close()
 	if err != nil {
@@ -116,6 +158,7 @@ func (b *AppBuilder) Create() App {
 	return environmentscleanup.NewService(
 		b.gardenerClient,
 		b.brokerClient,
+		b.k8sClient,
 		b.db.Instances(),
 		b.logger,
 		b.cfg.MaxAgeHours,
