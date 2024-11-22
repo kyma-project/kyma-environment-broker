@@ -14,8 +14,6 @@ import (
 
 	"github.com/dlmiddlecote/sqlstats"
 	shoot "github.com/gardener/gardener/pkg/apis/core/v1beta1"
-	"github.com/gorilla/handlers"
-	"github.com/gorilla/mux"
 	imv1 "github.com/kyma-project/infrastructure-manager/api/v1"
 	"github.com/kyma-project/kyma-environment-broker/common/gardener"
 	"github.com/kyma-project/kyma-environment-broker/common/hyperscaler"
@@ -80,7 +78,7 @@ type Config struct {
 	// DevelopmentMode if set to true then errors are returned in http
 	// responses, otherwise errors are only logged and generic message
 	// is returned to client.
-	// Currently works only with /info endpoints.
+	// Currently, works only with /info endpoints.
 	DevelopmentMode bool `envconfig:"default=false"`
 
 	// DumpProvisionerRequests enables dumping Provisioner requests. Must be disabled on Production environments
@@ -334,7 +332,7 @@ func main() {
 	kcBuilder := kubeconfig.NewBuilder(provisionerClient, kcpK8sClient, skrK8sClientProvider)
 
 	// create server
-	router := mux.NewRouter()
+	router := broker.NewRouter()
 	createAPI(router, servicesConfig, inputFactory, &cfg, db, provisionQueue, deprovisionQueue, updateQueue, logger, logs,
 		inputFactory.GetPlanDefaults, kcBuilder, skrK8sClientProvider, skrK8sClientProvider, gardenerClient, kcpK8sClient, eventBroker)
 
@@ -391,10 +389,12 @@ func main() {
 	expirationHandler.AttachRoutes(router)
 
 	router.StrictSlash(true).PathPrefix("/").Handler(http.StripPrefix("/", http.FileServer(http.Dir("/swagger"))))
-	svr := handlers.CustomLoggingHandler(os.Stdout, router, func(writer io.Writer, params handlers.LogFormatterParams) {
-		logs.Infof("Call handled: method=%s url=%s statusCode=%d size=%d", params.Request.Method, params.URL.Path, params.StatusCode, params.Size)
-	})
-
+	/*
+		** to replace with own solution
+		svr := handlers.CustomLoggingHandler(os.Stdout, router, func(writer io.Writer, params handlers.LogFormatterParams) {
+			logs.Infof("Call handled: method=%s url=%s statusCode=%d size=%d", params.Request.Method, params.URL.Path, params.StatusCode, params.Size)
+		})
+	*/
 	fatalOnError(http.ListenAndServe(cfg.Host+":"+cfg.Port, svr), logs)
 }
 
@@ -414,7 +414,7 @@ func logConfiguration(logs *logrus.Logger, cfg Config) {
 	logs.Infof("Is UpdateCustomResourcesLabelsOnAccountMove enabled: %t", cfg.Broker.UpdateCustomResourcesLabelsOnAccountMove)
 }
 
-func createAPI(router *mux.Router, servicesConfig broker.ServicesConfig, planValidator broker.PlanValidator, cfg *Config, db storage.BrokerStorage,
+func createAPI(router *broker.Router, servicesConfig broker.ServicesConfig, planValidator broker.PlanValidator, cfg *Config, db storage.BrokerStorage,
 	provisionQueue, deprovisionQueue, updateQueue *process.Queue, logger *slog.Logger, logs logrus.FieldLogger, planDefaults broker.PlanDefaults, kcBuilder kubeconfig.KcBuilder, clientProvider K8sClientProvider, kubeconfigProvider KubeconfigProvider, gardenerClient, kcpK8sClient client.Client, publisher event.Publisher) {
 
 	suspensionCtxHandler := suspension.NewContextUpdateHandler(db.Operations(), provisionQueue, deprovisionQueue, logs)
@@ -456,8 +456,8 @@ func createAPI(router *mux.Router, servicesConfig broker.ServicesConfig, planVal
 		"/oauth/",          // oauth2 handled by Ory
 		"/oauth/{region}/", // oauth2 handled by Ory with region
 	} {
-		route := router.PathPrefix(prefix).Subrouter()
-		broker.AttachRoutes(route, kymaEnvBroker, logger, cfg.Broker.Binding.CreateBindingTimeout)
+		router.PathPrefix(prefix)
+		broker.AttachRoutes(router, kymaEnvBroker, logger, cfg.Broker.Binding.CreateBindingTimeout)
 	}
 
 	respWriter := httputil.NewResponseWriter(logs, cfg.DevelopmentMode)
