@@ -110,7 +110,6 @@ func (q *Queue) worker(queue workqueue.RateLimitingInterface, process func(key s
 					return true
 				}
 
-
 				id := key.(string)
 				log = log.WithField("operationID", id)
 				log.Infof("about to process item %s, queue length is %d", id, q.queue.Len())
