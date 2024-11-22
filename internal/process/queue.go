@@ -64,7 +64,7 @@ func (q *Queue) ShutDown() {
 }
 
 func (q *Queue) Run(stop <-chan struct{}, workersAmount int) {
-	q.log.Infof("starting workers, queue len is %d", q.queue.Len())
+	q.log.Infof("starting workers, queue length is %d", q.queue.Len())
 	for i := 0; i < workersAmount; i++ {
 		q.waitGroup.Add(1)
 
@@ -152,7 +152,7 @@ func (q *Queue) logWorkerTimes(key string, name string, log logrus.FieldLogger) 
 	}
 	q.workerExecutionTimes[name] = now
 
-	log.Infof("processing item %s, queue len is %d", key, q.queue.Len())
+	log.Infof("processing item %s, queue length is %d", key, q.queue.Len())
 }
 
 func (q *Queue) HealthCheck() {
