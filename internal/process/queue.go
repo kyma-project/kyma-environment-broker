@@ -12,8 +12,8 @@ import (
 )
 
 const (
-	warnIfExceededTime = 5 * time.Minute
-	healthCheckFrequency = 1*time.Minute
+	warnIfExceededTime   = 5 * time.Minute
+	healthCheckFrequency = 1 * time.Minute
 )
 
 type Executor interface {
@@ -75,7 +75,7 @@ func (q *Queue) Run(stop <-chan struct{}, workersAmount int) {
 			q.HealthCheck()
 		}, time.Minute, stop)
 	}()
-	
+
 }
 
 // SpeedUp changes speedFactor parameter to reduce time between processing operations.
@@ -151,13 +151,13 @@ func (q *Queue) logWorkerTimes(key string, name string, log logrus.FieldLogger) 
 	log.Infof("processing item %s, queue len is %d", key, q.queue.Len())
 }
 
-func (q *Queue) HealthCheck()  {
-		healthCheckLog := q.log.WithField("healthCheck", q.name)
-		for name, lastTime := range q.workerExecutionTimes {
-			healthCheckLog.Infof("worker %s last execution time %s, queue length %d", name, lastTime, q.queue.Len())
-			timeSinceLastExecution := time.Since(lastTime)
-			if timeSinceLastExecution >  warnIfExceededTime{
-				healthCheckLog.Warnf("no execution for %s", timeSinceLastExecution)
-			}
+func (q *Queue) HealthCheck() {
+	healthCheckLog := q.log.WithField("healthCheck", q.name)
+	for name, lastTime := range q.workerExecutionTimes {
+		healthCheckLog.Infof("worker %s last execution time %s, queue length %d", name, lastTime, q.queue.Len())
+		timeSinceLastExecution := time.Since(lastTime)
+		if timeSinceLastExecution > warnIfExceededTime {
+			healthCheckLog.Warnf("no execution for %s", timeSinceLastExecution)
 		}
+	}
 }
