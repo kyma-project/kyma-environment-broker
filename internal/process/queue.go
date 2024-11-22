@@ -11,11 +11,6 @@ import (
 	"k8s.io/client-go/util/workqueue"
 )
 
-const (
-	warnIfExceededTime   = 5 * time.Minute
-	healthCheckFrequency = 1 * time.Minute
-)
-
 type Executor interface {
 	Execute(operationID string) (time.Duration, error)
 }
@@ -162,7 +157,7 @@ func (q *Queue) HealthCheck() {
 
 		healthCheckLog.Infof("health - worker %s last execution time %s, queue length %d, which is %s since last execution", name, lastTime, q.queue.Len(), timeSinceLastExecution)
 
-		if timeSinceLastExecution > warnIfExceededTime {
+		if timeSinceLastExecution > q.warnAfterTime {
 			healthCheckLog.Warnf("no execution for %s", timeSinceLastExecution)
 		}
 	}

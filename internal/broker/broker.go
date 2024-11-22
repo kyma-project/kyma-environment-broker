@@ -60,7 +60,7 @@ type Config struct {
 	SubaccountMovementEnabled                bool `envconfig:"default=false"`
 	UpdateCustomResourcesLabelsOnAccountMove bool `envconfig:"default=false"`
 
-	WorkerHealthCheckInterval     time.Duration `envconfig:"default=1m"`
+	WorkerHealthCheckInterval     time.Duration `envconfig:"default=10m"`
 	WorkerHealthCheckWarnInterval time.Duration `envconfig:"default=10m"`
 }
 
