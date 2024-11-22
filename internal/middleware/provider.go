@@ -5,7 +5,7 @@ import (
 	"net/http"
 	"regexp"
 
-	"github.com/gorilla/mux"
+	"github.com/kyma-project/kyma-environment-broker/internal"
 
 	pkg "github.com/kyma-project/kyma-environment-broker/common/runtime"
 )
@@ -19,13 +19,12 @@ const (
 	requestProviderKey providerKey = iota + 1
 )
 
-func AddProviderToContext() mux.MiddlewareFunc {
+func AddProviderToContext() MiddlewareFunc {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
-			vars := mux.Vars(req)
-			region, found := vars["region"]
+			region := req.PathValue("region")
 			provider := pkg.UnknownProvider
-			if found {
+			if len(region) > 0 {
 				provider = platformProvider(region)
 			}
 
