@@ -113,7 +113,7 @@ func (q *Queue) worker(queue workqueue.RateLimitingInterface, process func(key s
 				id := key.(string)
 				log = log.WithField("operationID", id)
 				log.Infof("about to process item %s, queue length is %d", id, q.queue.Len())
-				q.logWorkerTimes(key.(string), nameId, log)
+				q.logAndUpdateWorkerTimes(key.(string), nameId, log)
 
 				defer func() {
 					if err := recover(); err != nil {
@@ -143,7 +143,7 @@ func (q *Queue) worker(queue workqueue.RateLimitingInterface, process func(key s
 	}
 }
 
-func (q *Queue) logWorkerTimes(key string, name string, log logrus.FieldLogger) {
+func (q *Queue) logAndUpdateWorkerTimes(key string, name string, log logrus.FieldLogger) {
 	// log time
 	now := time.Now()
 	lastTime, ok := q.workerExecutionTimes[name]
