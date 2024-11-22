@@ -1,0 +1,102 @@
+package process
+
+import (
+	"bytes"
+	"context"
+	"fmt"
+	"strings"
+	"testing"
+	"time"
+
+	"github.com/sirupsen/logrus"
+	"github.com/stretchr/testify/require"
+)
+
+type StdExecutor struct {
+    logger func(string)
+}
+
+func (e *StdExecutor) Execute(operationID string) (time.Duration, error) {
+    e.logger(fmt.Sprintf("executing operation %s", operationID))
+	return 0, nil
+}
+
+func TestWorkerLogging(t *testing.T) {
+
+	t.Run("should log basic worker information", func(t *testing.T) {
+		// given
+        logger := logrus.New()
+
+        var logs bytes.Buffer
+        logger.SetOutput(&logs)
+
+        cancelContext, cancel := context.WithCancel(context.Background())
+		queue := NewQueue(&StdExecutor{logger: func(msg string) {t.Log(msg)}}, logger, "test", 10*time.Second, 10*time.Second)
+        queue.Run(cancelContext.Done(), 1)
+ 
+        queue.AddAfter("processId2", 0)
+        queue.Add("processId")
+        queue.SpeedUp(1)
+
+
+        for (queue.queue.Len() > 0) {
+            // wait for the queue to be drained:
+            time.Sleep(500 * time.Millisecond)
+        }
+ 
+        queue.ShutDown()
+        cancel()
+        queue.waitGroup.Wait()
+
+        // then
+        stringLogs := logs.String()
+        t.Log(stringLogs)
+        require.True(t, strings.Contains(stringLogs, "msg=\"starting workers, queue len is 0\" queueName=test"))
+        require.True(t, strings.Contains(stringLogs, "msg=\"starting worker with id 0\" queueName=test workerId=0"))
+        require.True(t, strings.Contains(stringLogs, "msg=\"item processId2 will be added to the queue test after duration of 0, queue length is 1\" queueName=test"))
+        require.True(t, strings.Contains(stringLogs, "msg=\"added item processId to the queue test, queue length is 2\" queueName=test"))
+        require.True(t, strings.Contains(stringLogs, "msg=\"processing item processId2, queue len is 1\" operationID=processId2 queueName=test"))
+        require.True(t, strings.Contains(stringLogs, "msg=\"processing item processId, queue len is 0\" operationID=processId queueName=test"))
+        require.True(t, strings.Contains(stringLogs, "msg=\"shutting down the queue, queue length is 0\" queueName=test"))
+        require.True(t, strings.Contains(stringLogs, "msg=\"queue speed factor set to 1\" queueName=test"))
+        require.True(t, strings.Contains(stringLogs, "msg=\"worker routine - starting\" queueName=test workerId=0"))
+        require.True(t, strings.Contains(stringLogs, "msg=\"worker done\" queueName=test workerId=0"))
+        require.True(t, strings.Contains(stringLogs, "msg=\"shutting down\" operationID=processId queueName=test workerId=0"))
+        require.True(t, strings.Contains(stringLogs, "msg=\"item for processId has been processed, no retry, element forgotten\" operationID=processId queueName=test workerId=0"))
+        require.True(t, strings.Contains(stringLogs, "msg=\"about to process item processId, queue length is 0\" operationID=processId queueName=test workerId=0"))
+        require.True(t, strings.Contains(stringLogs, "msg=\"execution - worker test-0 last execution time"))
+        require.True(t, strings.Contains(stringLogs, "executed after"))
+	})
+
+    t.Run("should log health information", func(t *testing.T) {
+		// given
+        logger := logrus.New()
+
+        var logs bytes.Buffer
+        logger.SetOutput(&logs)
+
+        cancelContext, cancel := context.WithCancel(context.Background())
+		queue := NewQueue(&StdExecutor{logger: func(msg string) {t.Log(msg)}}, logger, "test", 10 * time.Millisecond, 10 * time.Millisecond)
+        queue.Run(cancelContext.Done(), 1)
+ 
+        queue.Add("processId")
+        queue.AddAfter("processId", 0)
+        queue.SpeedUp(1)
+
+
+        for (queue.queue.Len() > 0) {
+            // wait for the queue to be drained:
+            time.Sleep(500 * time.Millisecond)
+        }
+ 
+        queue.ShutDown()
+        cancel()
+        queue.waitGroup.Wait()
+
+        // then
+        stringLogs := logs.String()
+        t.Log(stringLogs)
+        require.True(t, strings.Contains(stringLogs, "msg=\"health - "))
+        require.True(t, strings.Contains(stringLogs, "since last execution"))
+	})
+}

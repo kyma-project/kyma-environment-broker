@@ -95,7 +95,7 @@ func NewDeprovisioningProcessingQueue(ctx context.Context, workersAmount int, de
 		}
 	}
 
-	queue := process.NewQueue(deprovisionManager, logs, "deprovisioning-queue")
+	queue := process.NewQueue(deprovisionManager, logs, "deprovisioning-queue",cfg.Broker.WorkerHealthCheckWarnInterval, cfg.Broker.WorkerHealthCheckInterval)
 	queue.Run(ctx.Done(), workersAmount)
 
 	return queue
