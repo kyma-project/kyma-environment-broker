@@ -1,6 +1,7 @@
 package process
 
 import (
+	"bytes"
 	"fmt"
 	"runtime/debug"
 	"sync"
@@ -152,13 +153,21 @@ func (q *Queue) logAndUpdateWorkerTimes(key string, name string, log logrus.Fiel
 
 func (q *Queue) HealthCheck() {
 	healthCheckLog := q.log.WithField("healthCheck", q.name)
+	var buffer bytes.Buffer
+	buffer.WriteString(fmt.Sprintf("health - queue length %d", q.queue.Len()))
+
 	for name, lastTime := range q.workerExecutionTimes {
 		timeSinceLastExecution := time.Since(lastTime)
 
-		healthCheckLog.Infof("health - worker %s last execution time %s, queue length %d, which is %s since last execution", name, lastTime, q.queue.Len(), timeSinceLastExecution)
+		buffer.WriteString(fmt.Sprintf(", [worker %s, last execution time: %s, since last execution: %s]", name, lastTime, timeSinceLastExecution))
+	}
 
+	healthCheckLog.Info(buffer.String())
+
+	for name, lastTime := range q.workerExecutionTimes {
+		timeSinceLastExecution := time.Since(lastTime)
 		if timeSinceLastExecution > q.warnAfterTime {
-			healthCheckLog.Warnf("no execution for %s", timeSinceLastExecution)
+			healthCheckLog.Warnf("worker %s exceeded allowed limit of %s since last execution, its last execution is %s, time since last execution %s", name, q.warnAfterTime, lastTime, timeSinceLastExecution)
 		}
 	}
 }
