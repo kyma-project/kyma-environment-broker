@@ -17,7 +17,7 @@ The SAP Cloud Management service (technical name: `cis`) provides the Provisioni
 
 1. Provision the SAP Cloud Management service instance with the `local` plan and create a binding to get the credentials for the Provisioning Service API. To do that, you can use:
    
-   * SAP BTP cockpit as described in [Getting an Access Token for SAP Cloud Management Service APIs](https://help.sap.com/docs/btp/sap-business-technology-platform/getting-access-token-for-sap-cloud-management-service-apis?version=Cloud).
+   * SAP BTP cockpit, as described in [Getting an Access Token for SAP Cloud Management Service APIs](https://help.sap.com/docs/btp/sap-business-technology-platform/getting-access-token-for-sap-cloud-management-service-apis?version=Cloud).
    * btp CLI and follow these steps:
 
      1. Set the **CIS_INSTANCE_NAME** environment variable with the name of the SAP Cloud Management service instance.
@@ -90,7 +90,7 @@ The SAP Cloud Management service (technical name: `cis`) provides the Provisioni
    BINDING_ID=$(curl -sS -D - -X PUT "$PROVISIONING_SERVICE_URL/provisioning/v1/environments/$INSTANCE_ID/bindings" -H "accept: application/json" -H "Authorization: bearer $TOKEN" -H "Content-Type: application/json" -d "{\"parameters\":{\"expiration_seconds\":$EXPIRATION_SECONDS}}" -o /dev/null | sed -n 's/^.*location: //p' | sed 's/\r$//g')
    ```
 
-9.  Get the binding credentials and save them in a kubeconfig file.
+9. Get the binding credentials and save them in a kubeconfig file.
 
    ```bash
    curl -s -X GET "$PROVISIONING_SERVICE_URL/provisioning/v1/environments/$INSTANCE_ID/bindings/$BINDING_ID" -H "accept: application/json" -H "Authorization: bearer $TOKEN" | jq -r '.credentials.kubeconfig' > kubeconfig.yaml
