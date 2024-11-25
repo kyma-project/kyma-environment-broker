@@ -673,7 +673,7 @@ func (r readSession) GetOperationStatsForOrchestration(orchestrationID string) (
 	return rows, err
 }
 
-func (r readSession) GetInstanceStats() ([]dbmodel.InstanceByGlobalAccountIDStatEntry, error) {
+func (r readSession) GetActiveInstanceStats() ([]dbmodel.InstanceByGlobalAccountIDStatEntry, error) {
 	var rows []dbmodel.InstanceByGlobalAccountIDStatEntry
 	var stmt *dbr.SelectStmt
 	filter := dbmodel.InstanceFilter{

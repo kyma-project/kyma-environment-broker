@@ -209,7 +209,7 @@ func (s *instances) Update(instance internal.Instance) (*internal.Instance, erro
 	return &instance, nil
 }
 
-func (s *instances) GetInstanceStats() (internal.InstanceStats, error) {
+func (s *instances) GetActiveInstanceStats() (internal.InstanceStats, error) {
 	return internal.InstanceStats{}, fmt.Errorf("not implemented")
 }
 
