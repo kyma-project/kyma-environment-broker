@@ -1,4 +1,4 @@
-# Manage SAP BTP, Kyma Runtime Using the Provisioning API of the SAP Cloud Management Service
+# Manage SAP BTP, Kyma Runtime Using the Provisioning API
 
 The SAP Cloud Management service (technical name: `cis`) provides the Provisioning Service API to create and manage available environments. Use the Provisioning Service API to manage and access SAP BTP, Kyma runtime.
 
