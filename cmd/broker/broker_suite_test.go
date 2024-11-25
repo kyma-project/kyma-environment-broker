@@ -29,6 +29,7 @@ import (
 	"github.com/kyma-project/control-plane/components/provisioner/pkg/gqlschema"
 	"github.com/kyma-project/kyma-environment-broker/common/gardener"
 	"github.com/kyma-project/kyma-environment-broker/common/orchestration"
+	pkg "github.com/kyma-project/kyma-environment-broker/common/runtime"
 	"github.com/kyma-project/kyma-environment-broker/internal"
 	"github.com/kyma-project/kyma-environment-broker/internal/broker"
 	kebConfig "github.com/kyma-project/kyma-environment-broker/internal/config"
@@ -182,7 +183,7 @@ func NewBrokerSuiteTestWithConfig(t *testing.T, cfg *Config, version ...string) 
 		MachineImage:                 "coreos",
 		URL:                          "http://localhost",
 		DefaultGardenerShootPurpose:  "testing",
-		DefaultTrialProvider:         internal.AWS,
+		DefaultTrialProvider:         pkg.AWS,
 		EnableShootAndSeedSameRegion: cfg.Provisioner.EnableShootAndSeedSameRegion,
 	}, map[string]string{"cf-eu10": "europe", "cf-us10": "us"}, cfg.FreemiumProviders, defaultOIDCValues(), cfg.Broker.UseSmallerMachineTypes)
 
@@ -279,8 +280,8 @@ func fakeK8sClientProvider(k8sCli client.Client) func(s string) (client.Client, 
 	}
 }
 
-func defaultOIDCValues() internal.OIDCConfigDTO {
-	return internal.OIDCConfigDTO{
+func defaultOIDCValues() pkg.OIDCConfigDTO {
+	return pkg.OIDCConfigDTO{
 		ClientID:       "client-id-oidc",
 		GroupsClaim:    "groups",
 		IssuerURL:      "https://issuer.url",
@@ -342,7 +343,7 @@ func (s *BrokerSuiteTest) ProcessInfrastructureManagerProvisioningRuntimeResourc
 	assert.NoError(s.t, err)
 }
 
-func (s *BrokerSuiteTest) ChangeDefaultTrialProvider(provider internal.CloudProvider) {
+func (s *BrokerSuiteTest) ChangeDefaultTrialProvider(provider pkg.CloudProvider) {
 	s.inputBuilderFactory.(*input.InputBuilderFactory).SetDefaultTrialProvider(provider)
 }
 
@@ -381,7 +382,7 @@ func (s *BrokerSuiteTest) CreateAPI(inputFactory broker.PlanValidator, cfg *Conf
 			},
 		},
 	}
-	planDefaults := func(planID string, platformProvider internal.CloudProvider, provider *internal.CloudProvider) (*gqlschema.ClusterConfigInput, error) {
+	planDefaults := func(planID string, platformProvider pkg.CloudProvider, provider *pkg.CloudProvider) (*gqlschema.ClusterConfigInput, error) {
 		return &gqlschema.ClusterConfigInput{}, nil
 	}
 	var fakeKcpK8sClient = fake.NewClientBuilder().Build()

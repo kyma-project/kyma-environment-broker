@@ -3,6 +3,7 @@ package provider
 import (
 	"testing"
 
+	pkg "github.com/kyma-project/kyma-environment-broker/common/runtime"
 	"github.com/kyma-project/kyma-environment-broker/internal"
 	"github.com/kyma-project/kyma-environment-broker/internal/ptr"
 )
@@ -14,7 +15,7 @@ func TestSapConvergedCloudDefaults(t *testing.T) {
 		Purpose:   PurposeProduction,
 		MultiZone: true,
 		ProvisioningParameters: internal.ProvisioningParameters{
-			Parameters:     internal.ProvisioningParametersDTO{Region: nil},
+			Parameters:     pkg.ProvisioningParametersDTO{Region: nil},
 			PlatformRegion: "cf-eu20",
 		},
 	}
@@ -46,7 +47,7 @@ func TestSapConvergedCloudTwoZonesRegion(t *testing.T) {
 		Purpose:   PurposeProduction,
 		MultiZone: true,
 		ProvisioningParameters: internal.ProvisioningParameters{
-			Parameters:     internal.ProvisioningParametersDTO{Region: ptr.String(region)},
+			Parameters:     pkg.ProvisioningParametersDTO{Region: ptr.String(region)},
 			PlatformRegion: "cf-eu20",
 		},
 	}
@@ -78,7 +79,7 @@ func TestSapConvergedCloudSingleZoneRegion(t *testing.T) {
 		Purpose:   PurposeProduction,
 		MultiZone: true,
 		ProvisioningParameters: internal.ProvisioningParameters{
-			Parameters:     internal.ProvisioningParametersDTO{Region: ptr.String(region)},
+			Parameters:     pkg.ProvisioningParametersDTO{Region: ptr.String(region)},
 			PlatformRegion: "cf-eu20",
 		},
 	}

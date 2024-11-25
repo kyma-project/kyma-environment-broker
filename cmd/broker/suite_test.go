@@ -25,6 +25,7 @@ import (
 	"github.com/kyma-project/kyma-environment-broker/common/hyperscaler"
 	hyperscalerautomock "github.com/kyma-project/kyma-environment-broker/common/hyperscaler/automock"
 	"github.com/kyma-project/kyma-environment-broker/common/orchestration"
+	pkg "github.com/kyma-project/kyma-environment-broker/common/runtime"
 	"github.com/kyma-project/kyma-environment-broker/internal"
 	"github.com/kyma-project/kyma-environment-broker/internal/broker"
 	"github.com/kyma-project/kyma-environment-broker/internal/edp"
@@ -177,12 +178,12 @@ func NewOrchestrationSuite(t *testing.T, additionalKymaVersions []string) *Orche
 type RuntimeOptions struct {
 	GlobalAccountID  string
 	SubAccountID     string
-	PlatformProvider internal.CloudProvider
+	PlatformProvider pkg.CloudProvider
 	PlatformRegion   string
 	Region           string
 	PlanID           string
-	Provider         internal.CloudProvider
-	OIDC             *internal.OIDCConfigDTO
+	Provider         pkg.CloudProvider
+	OIDC             *pkg.OIDCConfigDTO
 	UserID           string
 	RuntimeAdmins    []string
 }
@@ -228,7 +229,7 @@ func (o *RuntimeOptions) ProvidePlanID() string {
 	}
 }
 
-func (o *RuntimeOptions) ProvideOIDC() *internal.OIDCConfigDTO {
+func (o *RuntimeOptions) ProvideOIDC() *pkg.OIDCConfigDTO {
 	if o.OIDC != nil {
 		return o.OIDC
 	} else {
@@ -265,7 +266,7 @@ func (s *OrchestrationSuite) CreateProvisionedRuntime(options RuntimeOptions) st
 			GlobalAccountID: globalAccountID,
 		},
 		PlatformRegion: options.ProvidePlatformRegion(),
-		Parameters: internal.ProvisioningParametersDTO{
+		Parameters: pkg.ProvisioningParametersDTO{
 			Region: options.ProvideRegion(),
 			OIDC:   &oidcConfig,
 		},
@@ -340,7 +341,7 @@ func (s *OrchestrationSuite) CreateProvisionedRuntime(options RuntimeOptions) st
 	_, err := s.gardenerClient.Resource(gardener.ShootResource).Namespace(s.gardenerNamespace).Create(context.Background(), shoot, v1.CreateOptions{})
 	require.NoError(s.t, err)
 
-	provisioningOperation.InputCreator = fixture.FixInputCreator(internal.Azure)
+	provisioningOperation.InputCreator = fixture.FixInputCreator(pkg.Azure)
 	_, err = s.provisionerClient.Provision(provisioningOperation)
 	require.NoError(s.t, err)
 
@@ -608,7 +609,7 @@ func (s *ProvisioningSuite) CreateProvisioning(options RuntimeOptions) string {
 			UserID:          options.ProvideUserID(),
 		},
 		PlatformProvider: options.PlatformProvider,
-		Parameters: internal.ProvisioningParametersDTO{
+		Parameters: pkg.ProvisioningParametersDTO{
 			Region:                options.ProvideRegion(),
 			OIDC:                  options.ProvideOIDC(),
 			RuntimeAdministrators: options.ProvideRuntimeAdmins(),
@@ -653,7 +654,7 @@ func (s *ProvisioningSuite) CreateUnsuspension(options RuntimeOptions) string {
 			SubAccountID:    options.ProvideSubAccountID(),
 		},
 		PlatformRegion: options.ProvidePlatformRegion(),
-		Parameters: internal.ProvisioningParametersDTO{
+		Parameters: pkg.ProvisioningParametersDTO{
 			Region: options.ProvideRegion(),
 		},
 	}

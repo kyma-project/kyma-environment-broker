@@ -3,6 +3,7 @@ package provider
 import (
 	"github.com/kyma-project/control-plane/components/provisioner/pkg/gqlschema"
 
+	pkg "github.com/kyma-project/kyma-environment-broker/common/runtime"
 	"github.com/kyma-project/kyma-environment-broker/internal"
 	"github.com/kyma-project/kyma-environment-broker/internal/networking"
 )
@@ -58,6 +59,6 @@ func (p *SapConvergedCloudInput) Profile() gqlschema.KymaProfile {
 	return gqlschema.KymaProfileProduction
 }
 
-func (p *SapConvergedCloudInput) Provider() internal.CloudProvider {
-	return internal.SapConvergedCloud
+func (p *SapConvergedCloudInput) Provider() pkg.CloudProvider {
+	return pkg.SapConvergedCloud
 }

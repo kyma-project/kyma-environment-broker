@@ -5,6 +5,7 @@ import (
 
 	"github.com/kyma-project/control-plane/components/provisioner/pkg/gqlschema"
 	"github.com/kyma-project/kyma-environment-broker/common/gardener"
+	pkg "github.com/kyma-project/kyma-environment-broker/common/runtime"
 	"github.com/kyma-project/kyma-environment-broker/internal"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -19,7 +20,7 @@ func newInputCreator() *simpleInputCreator {
 type simpleInputCreator struct {
 	labels            map[string]string
 	shootName         *string
-	provider          internal.CloudProvider
+	provider          pkg.CloudProvider
 	shootDomain       string
 	shootDnsProviders gardener.DNSProvidersData
 	config            *internal.ConfigForPlan
@@ -29,11 +30,11 @@ func (c *simpleInputCreator) Configuration() *internal.ConfigForPlan {
 	return c.config
 }
 
-func (c *simpleInputCreator) Provider() internal.CloudProvider {
+func (c *simpleInputCreator) Provider() pkg.CloudProvider {
 	if c.provider != "" {
 		return c.provider
 	}
-	return internal.Azure
+	return pkg.Azure
 }
 
 func (c *simpleInputCreator) SetLabel(key, val string) internal.ProvisionerInputCreator {

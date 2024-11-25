@@ -7,6 +7,7 @@ import (
 	"github.com/kyma-project/control-plane/components/provisioner/pkg/gqlschema"
 	"github.com/kyma-project/kyma-environment-broker/common/gardener"
 	"github.com/kyma-project/kyma-environment-broker/common/orchestration"
+	pkg "github.com/kyma-project/kyma-environment-broker/common/runtime"
 	"github.com/kyma-project/kyma-environment-broker/internal"
 	"github.com/kyma-project/kyma-environment-broker/internal/ptr"
 	"github.com/pivotal-cf/brokerapi/v8/domain"
@@ -35,7 +36,7 @@ type SimpleInputCreator struct {
 	ShootName         *string
 	ShootDomain       string
 	shootDnsProviders gardener.DNSProvidersData
-	CloudProvider     internal.CloudProvider
+	CloudProvider     pkg.CloudProvider
 	RuntimeID         string
 	Config            *internal.ConfigForPlan
 }
@@ -70,7 +71,7 @@ func FixERSContext(id string) internal.ERSContext {
 	}
 }
 
-func FixProvisioningParametersWithDTO(id string, planID string, params internal.ProvisioningParametersDTO) internal.ProvisioningParameters {
+func FixProvisioningParametersWithDTO(id string, planID string, params pkg.ProvisioningParametersDTO) internal.ProvisioningParameters {
 	return internal.ProvisioningParameters{
 		PlanID:         planID,
 		ServiceID:      ServiceId,
@@ -81,9 +82,9 @@ func FixProvisioningParametersWithDTO(id string, planID string, params internal.
 }
 
 func FixProvisioningParameters(id string) internal.ProvisioningParameters {
-	trialCloudProvider := internal.Azure
+	trialCloudProvider := pkg.Azure
 
-	provisioningParametersDTO := internal.ProvisioningParametersDTO{
+	provisioningParametersDTO := pkg.ProvisioningParametersDTO{
 		Name:         "cluster-test",
 		VolumeSizeGb: ptr.Integer(50),
 		MachineType:  ptr.String("Standard_D8_v3"),
@@ -91,7 +92,7 @@ func FixProvisioningParameters(id string) internal.ProvisioningParameters {
 		Purpose:      ptr.String("Purpose"),
 		LicenceType:  ptr.String("LicenceType"),
 		Zones:        []string{"1"},
-		AutoScalerParameters: internal.AutoScalerParameters{
+		AutoScalerParameters: pkg.AutoScalerParameters{
 			AutoScalerMin:  ptr.Integer(3),
 			AutoScalerMax:  ptr.Integer(10),
 			MaxSurge:       ptr.Integer(4),
@@ -154,7 +155,7 @@ func FixInstanceWithProvisioningParameters(id string, params internal.Provisioni
 		DashboardURL:                InstanceDashboardURL,
 		Parameters:                  params,
 		ProviderRegion:              Region,
-		Provider:                    internal.Azure,
+		Provider:                    pkg.Azure,
 		InstanceDetails:             FixInstanceDetails(id),
 		CreatedAt:                   time.Now(),
 		UpdatedAt:                   time.Now().Add(time.Minute * 5),
@@ -193,7 +194,7 @@ func FixOperation(id, instanceId string, opType internal.OperationType) internal
 	return FixOperationWithProvisioningParameters(id, instanceId, opType, FixProvisioningParameters(id))
 }
 
-func FixInputCreator(provider internal.CloudProvider) *SimpleInputCreator {
+func FixInputCreator(provider pkg.CloudProvider) *SimpleInputCreator {
 	return &SimpleInputCreator{
 		Labels:        make(map[string]string),
 		ShootName:     ptr.String("ShootName"),
@@ -203,23 +204,23 @@ func FixInputCreator(provider internal.CloudProvider) *SimpleInputCreator {
 
 func FixProvisioningOperation(operationId, instanceId string) internal.Operation {
 	o := FixOperation(operationId, instanceId, internal.OperationTypeProvision)
-	o.InputCreator = FixInputCreator(internal.Azure)
+	o.InputCreator = FixInputCreator(pkg.Azure)
 	o.DashboardURL = "https://console.kyma.org"
 	return o
 }
 
 func FixProvisioningOperationWithProvisioningParameters(operationId, instanceId string, provisioningParameters internal.ProvisioningParameters) internal.Operation {
 	o := FixOperationWithProvisioningParameters(operationId, instanceId, internal.OperationTypeProvision, provisioningParameters)
-	o.InputCreator = FixInputCreator(internal.Azure)
+	o.InputCreator = FixInputCreator(pkg.Azure)
 	o.DashboardURL = "https://console.kyma.org"
 	return o
 }
 
 func FixUpdatingOperation(operationId, instanceId string) internal.UpdatingOperation {
 	o := FixOperation(operationId, instanceId, internal.OperationTypeUpdate)
-	o.InputCreator = FixInputCreator(internal.Azure)
+	o.InputCreator = FixInputCreator(pkg.Azure)
 	o.UpdatingParameters = internal.UpdatingParametersDTO{
-		OIDC: &internal.OIDCConfigDTO{
+		OIDC: &pkg.OIDCConfigDTO{
 			ClientID:       "clinet-id-oidc",
 			GroupsClaim:    "groups",
 			IssuerURL:      "issuer-url",
@@ -233,7 +234,7 @@ func FixUpdatingOperation(operationId, instanceId string) internal.UpdatingOpera
 	}
 }
 
-func FixProvisioningOperationWithProvider(operationId, instanceId string, provider internal.CloudProvider) internal.Operation {
+func FixProvisioningOperationWithProvider(operationId, instanceId string, provider pkg.CloudProvider) internal.Operation {
 	o := FixOperation(operationId, instanceId, internal.OperationTypeProvision)
 	o.InputCreator = FixInputCreator(provider)
 	o.DashboardURL = "https://console.kyma.org"
@@ -287,7 +288,7 @@ func FixRuntimeOperation(operationId string) orchestration.RuntimeOperation {
 func FixUpgradeClusterOperation(operationId, instanceId string) internal.UpgradeClusterOperation {
 	o := FixOperation(operationId, instanceId, internal.OperationTypeUpgradeCluster)
 	o.RuntimeOperation = FixRuntimeOperation(operationId)
-	o.InputCreator = FixInputCreator(internal.Azure)
+	o.InputCreator = FixInputCreator(pkg.Azure)
 	return internal.UpgradeClusterOperation{
 		Operation: o,
 	}
@@ -304,8 +305,8 @@ func FixOrchestration(id string) internal.Orchestration {
 	}
 }
 
-func FixOIDCConfigDTO() internal.OIDCConfigDTO {
-	return internal.OIDCConfigDTO{
+func FixOIDCConfigDTO() pkg.OIDCConfigDTO {
+	return pkg.OIDCConfigDTO{
 		ClientID:       "9bd05ed7-a930-44e6-8c79-e6defeb7dec9",
 		GroupsClaim:    "groups",
 		IssuerURL:      "https://kymatest.accounts400.ondemand.com",
@@ -455,7 +456,7 @@ func (c *SimpleInputCreator) CreateUpgradeShootInput() (gqlschema.UpgradeShootIn
 	return gqlschema.UpgradeShootInput{}, nil
 }
 
-func (c *SimpleInputCreator) Provider() internal.CloudProvider {
+func (c *SimpleInputCreator) Provider() pkg.CloudProvider {
 	return c.CloudProvider
 }
 

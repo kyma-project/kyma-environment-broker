@@ -5,6 +5,7 @@ import (
 
 	"github.com/kyma-project/control-plane/components/provisioner/pkg/gqlschema"
 
+	pkg "github.com/kyma-project/kyma-environment-broker/common/runtime"
 	"github.com/kyma-project/kyma-environment-broker/internal"
 	"github.com/kyma-project/kyma-environment-broker/internal/broker"
 	"github.com/kyma-project/kyma-environment-broker/internal/ptr"
@@ -28,8 +29,8 @@ func TestAWSZonesWithCustomNodeIPRange(t *testing.T) {
 
 	clusterConfigInput := svc.Defaults()
 	svc.ApplyParameters(clusterConfigInput, internal.ProvisioningParameters{
-		Parameters: internal.ProvisioningParametersDTO{
-			Networking: &internal.NetworkingDTO{
+		Parameters: pkg.ProvisioningParametersDTO{
+			Networking: &pkg.NetworkingDTO{
 				NodesCidr: "10.180.0.0/16",
 			},
 		},
@@ -92,8 +93,8 @@ func TestAWSZonesWithCustomNodeIPRange(t *testing.T) {
 			// when
 			clusterConfigInput := svc.Defaults()
 			svc.ApplyParameters(clusterConfigInput, internal.ProvisioningParameters{
-				Parameters: internal.ProvisioningParametersDTO{
-					Networking: &internal.NetworkingDTO{
+				Parameters: pkg.ProvisioningParametersDTO{
+					Networking: &pkg.NetworkingDTO{
 						NodesCidr: tcase.givenNodesCidr,
 					},
 				},
@@ -224,7 +225,7 @@ func TestAWSInput_SingleZone_ApplyParameters(t *testing.T) {
 
 		// when
 		svc.ApplyParameters(input, internal.ProvisioningParameters{
-			Parameters: internal.ProvisioningParametersDTO{
+			Parameters: pkg.ProvisioningParametersDTO{
 				Region: ptr.String(inputRegion),
 			},
 		})
@@ -246,7 +247,7 @@ func TestAWSInput_SingleZone_ApplyParameters(t *testing.T) {
 
 		// when
 		svc.ApplyParameters(input, internal.ProvisioningParameters{
-			Parameters: internal.ProvisioningParametersDTO{
+			Parameters: pkg.ProvisioningParametersDTO{
 				Zones: zones,
 			},
 		})
@@ -292,7 +293,7 @@ func TestAWSInput_MultiZone_ApplyParameters(t *testing.T) {
 
 		// when
 		svc.ApplyParameters(input, internal.ProvisioningParameters{
-			Parameters: internal.ProvisioningParametersDTO{
+			Parameters: pkg.ProvisioningParametersDTO{
 				Region: ptr.String(inputRegion),
 			},
 		})
@@ -315,7 +316,7 @@ func TestAWSInput_MultiZone_ApplyParameters(t *testing.T) {
 
 		// when
 		svc.ApplyParameters(input, internal.ProvisioningParameters{
-			Parameters: internal.ProvisioningParametersDTO{
+			Parameters: pkg.ProvisioningParametersDTO{
 				Zones: zones,
 			},
 		})

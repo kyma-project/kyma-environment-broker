@@ -11,6 +11,7 @@ import (
 	"k8s.io/apimachinery/pkg/api/errors"
 
 	uuid2 "github.com/google/uuid"
+	pkg "github.com/kyma-project/kyma-environment-broker/common/runtime"
 	"github.com/kyma-project/kyma-environment-broker/internal"
 	"github.com/kyma-project/kyma-environment-broker/internal/storage"
 	"github.com/kyma-project/kyma-environment-broker/internal/storage/dbmodel"
@@ -372,7 +373,7 @@ func (e *Environment) createInstance(kubeConfig string, credentials *internal.Se
 			ErsContext: internal.ERSContext{
 				SMOperatorCredentials: credentials,
 			},
-			Parameters: internal.ProvisioningParametersDTO{
+			Parameters: pkg.ProvisioningParametersDTO{
 				Kubeconfig: kubeConfig,
 			},
 		},

@@ -16,6 +16,7 @@ import (
 	"github.com/pivotal-cf/brokerapi/v8/domain"
 	"k8s.io/apimachinery/pkg/util/wait"
 
+	pkg "github.com/kyma-project/kyma-environment-broker/common/runtime"
 	"github.com/kyma-project/kyma-environment-broker/internal"
 	"github.com/kyma-project/kyma-environment-broker/internal/event"
 	"github.com/kyma-project/kyma-environment-broker/internal/storage"
@@ -234,7 +235,7 @@ func fixProvisioningParametersWithPlanID(planID, region string) internal.Provisi
 			GlobalAccountID: globalAccountID,
 			SubAccountID:    subAccountID,
 		},
-		Parameters: internal.ProvisioningParametersDTO{
+		Parameters: pkg.ProvisioningParametersDTO{
 			Region: ptr.String(region),
 			Name:   "dummy",
 			Zones:  []string{"europe-west3-b", "europe-west3-c"},

@@ -10,7 +10,7 @@ The metrics are counted in KEB's memory in two ways:
 
 Then, the Prometheus server pulls the metrics stored in KEB's memory and persist them in monitoring database for further processing by monitoring and alert systems.
 
-![KEB metrics](../assets/metrics.svg)
+![KEB metrics](../assets/metrics.drawio.svg)
 
 | Metric Name                                            | Type      | Labels                                                                                                  | Source            |
 |--------------------------------------------------------|-----------|---------------------------------------------------------------------------------------------------------|-------------------|

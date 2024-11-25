@@ -3,7 +3,7 @@ package hyperscaler
 import (
 	"fmt"
 
-	"github.com/kyma-project/kyma-environment-broker/internal"
+	pkg "github.com/kyma-project/kyma-environment-broker/common/runtime"
 )
 
 //go:generate mockery --name=AccountProvider --output=automock --outpkg=automock --case=underscore
@@ -31,15 +31,15 @@ func NewAccountProvider(gardenerPool AccountPool, sharedGardenerPool SharedPool)
 	}
 }
 
-func HypTypeFromCloudProviderWithRegion(cloudProvider internal.CloudProvider, regionForSapConvergedCloud *string, platformRegion *string) (Type, error) {
+func HypTypeFromCloudProviderWithRegion(cloudProvider pkg.CloudProvider, regionForSapConvergedCloud *string, platformRegion *string) (Type, error) {
 	switch cloudProvider {
-	case internal.Azure:
+	case pkg.Azure:
 		return Azure(), nil
-	case internal.AWS:
+	case pkg.AWS:
 		return AWS(), nil
-	case internal.GCP:
+	case pkg.GCP:
 		return GCP(*platformRegion), nil
-	case internal.SapConvergedCloud:
+	case pkg.SapConvergedCloud:
 		return SapConvergedCloud(*regionForSapConvergedCloud), nil
 	default:
 		return Type{}, fmt.Errorf("cannot determine the type of Hyperscaler to use for cloud provider %s", cloudProvider)

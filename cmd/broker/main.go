@@ -154,7 +154,8 @@ type Config struct {
 
 	RuntimeConfigurationConfigMapName string `envconfig:"default=keb-runtime-config"`
 
-	UpdateRuntimeResourceDelay time.Duration `envconfig:"default=4s"`
+	UpdateRuntimeResourceDelay        time.Duration `envconfig:"default=4s"`
+	ProvisionerDeprovisioningDisabled bool          `envconfig:"default=false"`
 }
 
 type ProfilerConfig struct {

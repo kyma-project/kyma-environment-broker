@@ -17,6 +17,7 @@ import (
 	"github.com/kyma-project/kyma-environment-broker/internal/storage"
 
 	"github.com/gorilla/mux"
+	pkg "github.com/kyma-project/kyma-environment-broker/common/runtime"
 	"github.com/pivotal-cf/brokerapi/v8/domain"
 	"github.com/stretchr/testify/require"
 )
@@ -158,7 +159,7 @@ func TestHandler_GetKubeconfigForOwnCluster(t *testing.T) {
 	// given
 	instance := internal.Instance{
 		Parameters: internal.ProvisioningParameters{
-			Parameters: internal.ProvisioningParametersDTO{
+			Parameters: pkg.ProvisioningParametersDTO{
 				Kubeconfig: "custom-kubeconfig",
 			},
 		},

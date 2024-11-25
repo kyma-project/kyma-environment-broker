@@ -7,7 +7,7 @@ import (
 	"path"
 	"testing"
 
-	"github.com/kyma-project/kyma-environment-broker/internal"
+	pkg "github.com/kyma-project/kyma-environment-broker/common/runtime"
 	"github.com/stretchr/testify/assert"
 
 	"github.com/stretchr/testify/require"
@@ -145,7 +145,7 @@ func TestSchemaGenerator(t *testing.T) {
 		{
 			name: "Freemium schema is correct",
 			generator: func(machinesDisplay, regionsDisplay map[string]string, machines []string, additionalParams, update bool) *map[string]interface{} {
-				return FreemiumSchema(internal.Azure, regionsDisplay, additionalParams, update, false)
+				return FreemiumSchema(pkg.Azure, regionsDisplay, additionalParams, update, false)
 			},
 			machineTypes:   []string{},
 			regionDisplay:  AzureRegionsDisplay(false),
@@ -158,7 +158,7 @@ func TestSchemaGenerator(t *testing.T) {
 		{
 			name: "Freemium schema is correct",
 			generator: func(machinesDisplay, regionsDisplay map[string]string, machines []string, additionalParams, update bool) *map[string]interface{} {
-				return FreemiumSchema(internal.AWS, regionsDisplay, additionalParams, update, false)
+				return FreemiumSchema(pkg.AWS, regionsDisplay, additionalParams, update, false)
 			},
 			machineTypes:   []string{},
 			path:           "aws",
@@ -170,7 +170,7 @@ func TestSchemaGenerator(t *testing.T) {
 		{
 			name: "Freemium schema with EU access restriction is correct",
 			generator: func(machinesDisplay, regionsDisplay map[string]string, machines []string, additionalParams, update bool) *map[string]interface{} {
-				return FreemiumSchema(internal.Azure, regionsDisplay, additionalParams, update, true)
+				return FreemiumSchema(pkg.Azure, regionsDisplay, additionalParams, update, true)
 			},
 			machineTypes:   []string{},
 			regionDisplay:  AzureRegionsDisplay(true),
@@ -183,7 +183,7 @@ func TestSchemaGenerator(t *testing.T) {
 		{
 			name: "Freemium schema with EU access restriction is correct",
 			generator: func(machinesDisplay, regionsDisplay map[string]string, machines []string, additionalParams, update bool) *map[string]interface{} {
-				return FreemiumSchema(internal.AWS, regionsDisplay, additionalParams, update, true)
+				return FreemiumSchema(pkg.AWS, regionsDisplay, additionalParams, update, true)
 			},
 			machineTypes:   []string{},
 			path:           "aws",

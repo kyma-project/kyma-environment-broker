@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/kyma-project/kyma-environment-broker/common/gardener"
+	pkg "github.com/kyma-project/kyma-environment-broker/common/runtime"
 	"github.com/kyma-project/kyma-environment-broker/internal/fixture"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -35,7 +36,7 @@ func TestResolveCredentialsStepHappyPath_Run(t *testing.T) {
 	log := logrus.New()
 	memoryStorage := storage.NewMemoryStorage()
 
-	operation := fixOperationRuntimeStatus(broker.GCPPlanID, internal.GCP)
+	operation := fixOperationRuntimeStatus(broker.GCPPlanID, pkg.GCP)
 	err := memoryStorage.Operations().InsertOperation(operation)
 	assert.NoError(t, err)
 
@@ -62,7 +63,7 @@ func TestResolveCredentialsEUStepHappyPath_Run(t *testing.T) {
 	log := logrus.New()
 	memoryStorage := storage.NewMemoryStorage()
 
-	operation := fixOperationRuntimeStatus(broker.AWSPlanID, internal.AWS)
+	operation := fixOperationRuntimeStatus(broker.AWSPlanID, pkg.AWS)
 	operation.ProvisioningParameters.PlatformRegion = "cf-eu11"
 	err := memoryStorage.Operations().InsertOperation(operation)
 	assert.NoError(t, err)
@@ -90,7 +91,7 @@ func TestResolveCredentialsCHStepHappyPath_Run(t *testing.T) {
 	log := logrus.New()
 	memoryStorage := storage.NewMemoryStorage()
 
-	operation := fixOperationRuntimeStatus(broker.AWSPlanID, internal.Azure)
+	operation := fixOperationRuntimeStatus(broker.AWSPlanID, pkg.Azure)
 	operation.ProvisioningParameters.PlatformRegion = "cf-ch20"
 	err := memoryStorage.Operations().InsertOperation(operation)
 	assert.NoError(t, err)
@@ -118,7 +119,7 @@ func TestResolveCredentialsStepHappyPathTrialDefaultProvider_Run(t *testing.T) {
 	log := logrus.New()
 	memoryStorage := storage.NewMemoryStorage()
 
-	operation := fixOperationRuntimeStatus(broker.TrialPlanID, internal.Azure)
+	operation := fixOperationRuntimeStatus(broker.TrialPlanID, pkg.Azure)
 	err := memoryStorage.Operations().InsertOperation(operation)
 	assert.NoError(t, err)
 
@@ -145,7 +146,7 @@ func TestResolveCredentialsStepHappyPathTrialGivenProvider_Run(t *testing.T) {
 	log := logrus.New()
 	memoryStorage := storage.NewMemoryStorage()
 
-	operation := fixOperationRuntimeStatusWithProvider(broker.TrialPlanID, internal.GCP)
+	operation := fixOperationRuntimeStatusWithProvider(broker.TrialPlanID, pkg.GCP)
 
 	err := memoryStorage.Operations().InsertOperation(operation)
 	assert.NoError(t, err)
@@ -173,7 +174,7 @@ func TestResolveCredentialsStepRetry_Run(t *testing.T) {
 	log := logrus.New()
 	memoryStorage := storage.NewMemoryStorage()
 
-	operation := fixOperationRuntimeStatus(broker.GCPPlanID, internal.GCP)
+	operation := fixOperationRuntimeStatus(broker.GCPPlanID, pkg.GCP)
 	err := memoryStorage.Operations().InsertOperation(operation)
 	assert.NoError(t, err)
 
@@ -212,7 +213,7 @@ func TestResolveCredentials_IntegrationAWS(t *testing.T) {
 		fixSecretBinding("s1azure", "azure"))
 	accountProvider := hyperscaler.NewAccountProvider(hyperscaler.NewAccountPool(gc, namespace), hyperscaler.NewSharedGardenerAccountPool(gc, namespace))
 
-	op := fixOperationWithPlatformRegion("cf-us10", internal.AWS)
+	op := fixOperationWithPlatformRegion("cf-us10", pkg.AWS)
 	err := memoryStorage.Operations().InsertOperation(op)
 	assert.NoError(t, err)
 	step := NewResolveCredentialsStep(memoryStorage.Operations(), accountProvider)
@@ -237,7 +238,7 @@ func TestResolveCredentials_IntegrationAWSEuAccess(t *testing.T) {
 		fixEuAccessSecretBinding("azureeu", "azure"))
 	accountProvider := hyperscaler.NewAccountProvider(hyperscaler.NewAccountPool(gc, namespace), hyperscaler.NewSharedGardenerAccountPool(gc, namespace))
 
-	op := fixOperationWithPlatformRegion("cf-eu11", internal.AWS)
+	op := fixOperationWithPlatformRegion("cf-eu11", pkg.AWS)
 	err := memoryStorage.Operations().InsertOperation(op)
 	assert.NoError(t, err)
 	step := NewResolveCredentialsStep(memoryStorage.Operations(), accountProvider)
@@ -260,7 +261,7 @@ func TestResolveCredentials_IntegrationAzure(t *testing.T) {
 		fixSecretBinding("s1azure", "azure"))
 	accountProvider := hyperscaler.NewAccountProvider(hyperscaler.NewAccountPool(gc, namespace), hyperscaler.NewSharedGardenerAccountPool(gc, namespace))
 
-	op := fixOperationWithPlatformRegion("cf-eu21", internal.Azure)
+	op := fixOperationWithPlatformRegion("cf-eu21", pkg.Azure)
 	err := memoryStorage.Operations().InsertOperation(op)
 	assert.NoError(t, err)
 	step := NewResolveCredentialsStep(memoryStorage.Operations(), accountProvider)
@@ -285,7 +286,7 @@ func TestResolveCredentials_IntegrationAzureEuAccess(t *testing.T) {
 		fixEuAccessSecretBinding("azureeu", "azure"))
 	accountProvider := hyperscaler.NewAccountProvider(hyperscaler.NewAccountPool(gc, namespace), hyperscaler.NewSharedGardenerAccountPool(gc, namespace))
 
-	op := fixOperationWithPlatformRegion("cf-ch20", internal.Azure)
+	op := fixOperationWithPlatformRegion("cf-ch20", pkg.Azure)
 	err := memoryStorage.Operations().InsertOperation(op)
 	assert.NoError(t, err)
 	step := NewResolveCredentialsStep(memoryStorage.Operations(), accountProvider)
@@ -299,7 +300,7 @@ func TestResolveCredentials_IntegrationAzureEuAccess(t *testing.T) {
 	assert.Equal(t, "azureeu", *operation.ProvisioningParameters.Parameters.TargetSecret)
 }
 
-func fixOperationWithPlatformRegion(platformRegion string, provider internal.CloudProvider) internal.Operation {
+func fixOperationWithPlatformRegion(platformRegion string, provider pkg.CloudProvider) internal.Operation {
 	o := fixture.FixProvisioningOperationWithProvider(statusOperationID, statusInstanceID, provider)
 	o.ProvisioningParameters.PlatformRegion = platformRegion
 

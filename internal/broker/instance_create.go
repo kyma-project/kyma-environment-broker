@@ -32,6 +32,7 @@ import (
 	"github.com/sirupsen/logrus"
 
 	"github.com/kyma-project/kyma-environment-broker/common/gardener"
+	pkg "github.com/kyma-project/kyma-environment-broker/common/runtime"
 	"github.com/kyma-project/kyma-environment-broker/internal"
 	"github.com/kyma-project/kyma-environment-broker/internal/dashboard"
 	"github.com/kyma-project/kyma-environment-broker/internal/middleware"
@@ -238,7 +239,7 @@ func (b *ProvisionEndpoint) Provision(ctx context.Context, instanceID string, de
 	}, nil
 }
 
-func logParametersWithMaskedKubeconfig(parameters internal.ProvisioningParametersDTO, logger *logrus.Entry) {
+func logParametersWithMaskedKubeconfig(parameters pkg.ProvisioningParametersDTO, logger *logrus.Entry) {
 	parameters.Kubeconfig = "*****"
 	logger.Infof("Runtime parameters: %+v", parameters)
 }
@@ -257,9 +258,9 @@ func valueOfBoolPtr(ptr *bool) bool {
 	return *ptr
 }
 
-func (b *ProvisionEndpoint) validateAndExtract(details domain.ProvisionDetails, provider internal.CloudProvider, ctx context.Context, l logrus.FieldLogger) (internal.ERSContext, internal.ProvisioningParametersDTO, error) {
+func (b *ProvisionEndpoint) validateAndExtract(details domain.ProvisionDetails, provider pkg.CloudProvider, ctx context.Context, l logrus.FieldLogger) (internal.ERSContext, pkg.ProvisioningParametersDTO, error) {
 	var ersContext internal.ERSContext
-	var parameters internal.ProvisioningParametersDTO
+	var parameters pkg.ProvisioningParametersDTO
 
 	if details.ServiceID != KymaServiceID {
 		return ersContext, parameters, fmt.Errorf("service_id not recognized")
@@ -423,8 +424,8 @@ func (b *ProvisionEndpoint) extractERSContext(details domain.ProvisionDetails) (
 	return ersContext, nil
 }
 
-func (b *ProvisionEndpoint) extractInputParameters(details domain.ProvisionDetails) (internal.ProvisioningParametersDTO, error) {
-	var parameters internal.ProvisioningParametersDTO
+func (b *ProvisionEndpoint) extractInputParameters(details domain.ProvisionDetails) (pkg.ProvisioningParametersDTO, error) {
+	var parameters pkg.ProvisioningParametersDTO
 	err := json.Unmarshal(details.RawParameters, &parameters)
 	if err != nil {
 		return parameters, fmt.Errorf("while unmarshaling raw parameters: %w", err)
@@ -466,7 +467,7 @@ func (b *ProvisionEndpoint) determineLicenceType(planId string) *string {
 	return nil
 }
 
-func (b *ProvisionEndpoint) validator(details *domain.ProvisionDetails, provider internal.CloudProvider, ctx context.Context) (JSONSchemaValidator, error) {
+func (b *ProvisionEndpoint) validator(details *domain.ProvisionDetails, provider pkg.CloudProvider, ctx context.Context) (JSONSchemaValidator, error) {
 	platformRegion, _ := middleware.RegionFromContext(ctx)
 	plans := Plans(b.plansConfig, provider, b.config.IncludeAdditionalParamsInSchema, euaccess.IsEURestrictedAccess(platformRegion), b.config.UseSmallerMachineTypes, b.config.EnableShootAndSeedSameRegion, b.convergedCloudRegionsProvider.GetRegions(platformRegion), assuredworkloads.IsKSA(platformRegion))
 	plan := plans[details.PlanID]
@@ -497,7 +498,7 @@ func validateCidr(cidr string) (*net.IPNet, error) {
 	return ipNet, nil
 }
 
-func (b *ProvisionEndpoint) validateNetworking(parameters internal.ProvisioningParametersDTO) error {
+func (b *ProvisionEndpoint) validateNetworking(parameters pkg.ProvisioningParametersDTO) error {
 	var err, e error
 	if len(parameters.Zones) > 4 {
 		// the algorithm of creating AWS zone CIDRs does not work for more than 4 zones
