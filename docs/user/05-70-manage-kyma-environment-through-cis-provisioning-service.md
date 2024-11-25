@@ -114,20 +114,16 @@ The SAP Cloud Management service (technical name: `cis`) provides the Provisioni
 
     kubectl should return the list of Pods in the `default` namespace running in the cluster, which means that the cluster is accessible.
 
-## Next Steps
-
-> [!NOTE]
-> For extra security, you can perform the optional steps to delete the binding sooner than it is set to expire in the **EXPIRATION_SECONDS** environment variable.
-> Otherwise, the binding is automatically deleted after the maximum allowed expiration time (7200 seconds) passes.
-
-1.   (Optional) List all bindings for the instance.
+12.  (Optional) To view the details of the binding you have created, list all bindings for the instance.
 
       ```bash
       curl -s "$PROVISIONING_SERVICE_URL/provisioning/v1/environments/$INSTANCE_ID/bindings" -H "accept: application/json" -H "Authorization: bearer $TOKEN"
       ```
 
-2.   (Optional) Delete the binding to revoke the credentials.
+## Next Steps
 
+1.   (Optional) For extra security, revoke the credentials by deleting the binding sooner than it is set to expire in the **EXPIRATION_SECONDS** environment variable.
+      
       ```bash
       curl -s -X DELETE "$PROVISIONING_SERVICE_URL/provisioning/v1/environments/$INSTANCE_ID/bindings/$BINDING_ID" -H "accept: application/json" -H "Authorization: bearer $TOKEN"
       ```
@@ -137,12 +133,15 @@ The SAP Cloud Management service (technical name: `cis`) provides the Provisioni
       ```bash
       kubectl get pods
       ```
+      
+      > [!NOTE]
+      > If you skip this step, the binding is automatically deleted after the maximum allowed expiration time (7200 seconds) passes.
 
-3.  To delete the instance bindings for the instance, perform steps 12 and 13. To deprovision the Kyma runtime, run:
+2.  To deprovision the Kyma runtime, run:
 
       ```bash
       curl -s -X DELETE "$PROVISIONING_SERVICE_URL/provisioning/v1/environments/$INSTANCE_ID" -H "accept: application/json" -H "Authorization: bearer $TOKEN"
       ```
 
-> [!NOTE]
-> You can delete the runtime independently of the bindings. Existing bindings do not block the runtime deprovisioning.
+      > [!NOTE]
+      > You can delete the runtime independently of the bindings. Existing bindings do not block the runtime deprovisioning.
