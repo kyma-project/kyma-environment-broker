@@ -1,6 +1,6 @@
 # Manage SAP BTP, Kyma Runtime Using the Provisioning API
 
-The SAP Cloud Management service (technical name: `cis`) provides the Provisioning Service API to create and manage available environments. Use the Provisioning Service API to manage and access SAP BTP, Kyma runtime.
+The SAP Cloud Management service (technical name: `cis`) provides the Provisioning Service API to create and manage available environments. Use the Provisioning Service API to automatically manage and access SAP BTP, Kyma runtime.
 
 ## Prerequisites
 
@@ -120,9 +120,7 @@ The SAP Cloud Management service (technical name: `cis`) provides the Provisioni
       curl -s "$PROVISIONING_SERVICE_URL/provisioning/v1/environments/$INSTANCE_ID/bindings" -H "accept: application/json" -H "Authorization: bearer $TOKEN"
       ```
 
-## Next Steps
-
-1.   (Optional) For extra security, revoke the credentials by deleting the binding sooner than it is set to expire in the **EXPIRATION_SECONDS** environment variable.
+13. (Optional) For extra security, revoke the credentials by deleting the binding sooner than it is set to expire in the **EXPIRATION_SECONDS** environment variable.
       
       ```bash
       curl -s -X DELETE "$PROVISIONING_SERVICE_URL/provisioning/v1/environments/$INSTANCE_ID/bindings/$BINDING_ID" -H "accept: application/json" -H "Authorization: bearer $TOKEN"
@@ -137,11 +135,13 @@ The SAP Cloud Management service (technical name: `cis`) provides the Provisioni
       > [!NOTE]
       > If you skip this step, the binding is automatically deleted after the maximum allowed expiration time (7200 seconds) passes.
 
-2.  To deprovision the Kyma runtime, run:
+## Next Steps
 
-      ```bash
-      curl -s -X DELETE "$PROVISIONING_SERVICE_URL/provisioning/v1/environments/$INSTANCE_ID" -H "accept: application/json" -H "Authorization: bearer $TOKEN"
-      ```
+To deprovision the Kyma runtime, run:
 
-      > [!NOTE]
-      > You can delete the runtime independently of the bindings. Existing bindings do not block the runtime deprovisioning.
+   ```bash
+   curl -s -X DELETE "$PROVISIONING_SERVICE_URL/provisioning/v1/environments/$INSTANCE_ID" -H "accept: application/json" -H "Authorization: bearer $TOKEN"
+   ```
+
+   > [!NOTE]
+   > You can delete the runtime independently of the bindings. Existing bindings do not block the runtime deprovisioning.
