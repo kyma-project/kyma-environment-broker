@@ -167,7 +167,7 @@ func (q *Queue) HealthCheck() {
 	for name, lastTime := range q.workerExecutionTimes {
 		timeSinceLastExecution := time.Since(lastTime)
 		if timeSinceLastExecution > q.warnAfterTime {
-			healthCheckLog.Warnf("worker %s exceeded allowed limit of %s since last execution, its last execution is %s, time since last execution %s", name, q.warnAfterTime, lastTime, timeSinceLastExecution)
+			healthCheckLog.Infof("worker %s exceeded allowed limit of %s since last execution, its last execution is %s, time since last execution %s", name, q.warnAfterTime, lastTime, timeSinceLastExecution)
 		}
 	}
 }
