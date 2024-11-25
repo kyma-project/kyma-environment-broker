@@ -21,7 +21,7 @@ You can find all the provisioning steps in the [provisioning](../../cmd/broker/p
 > [!NOTE]
 > The timeout for processing this operation is set to `24h`.
 
-## Deprovision
+## Deprovisioning
 
 Each deprovisioning step is responsible for a separate part of cleaning Kyma runtime dependencies. To properly deprovision all the dependencies, you need the data used during the Kyma runtime provisioning. The first step finds the previous operation and copies the data.
 
