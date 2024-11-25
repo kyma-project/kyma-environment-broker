@@ -34,8 +34,8 @@ func TestWorkerLogging(t *testing.T) {
 		cancelContext, cancel := context.WithCancel(context.Background())
 		var waitGroup sync.WaitGroup
 
-		queue := NewQueue(&StdExecutor{logger: func(msg string) { 
-			t.Log(msg) 
+		queue := NewQueue(&StdExecutor{logger: func(msg string) {
+			t.Log(msg)
 			waitGroup.Done()
 		}}, logger, "test", 10*time.Millisecond, 10*time.Millisecond)
 		queue.Run(cancelContext.Done(), 1)
@@ -81,8 +81,8 @@ func TestWorkerLogging(t *testing.T) {
 		cancelContext, cancel := context.WithCancel(context.Background())
 		var waitGroup sync.WaitGroup
 
-		queue := NewQueue(&StdExecutor{logger: func(msg string) { 
-			t.Log(msg) 
+		queue := NewQueue(&StdExecutor{logger: func(msg string) {
+			t.Log(msg)
 			waitGroup.Done()
 		}}, logger, "test", 0, 0)
 		queue.Run(cancelContext.Done(), 1)

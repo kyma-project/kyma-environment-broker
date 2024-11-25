@@ -17,13 +17,13 @@ type Executor interface {
 }
 
 type Queue struct {
-	queue                    workqueue.RateLimitingInterface
-	executor                 Executor
-	waitGroup                sync.WaitGroup
-	log                      logrus.FieldLogger
-	name                     string
-	workerExecutionTimes     map[string]time.Time
-	warnAfterTime            time.Duration
+	queue                   workqueue.RateLimitingInterface
+	executor                Executor
+	waitGroup               sync.WaitGroup
+	log                     logrus.FieldLogger
+	name                    string
+	workerExecutionTimes    map[string]time.Time
+	warnAfterTime           time.Duration
 	healthCheckIntervalTime time.Duration
 
 	speedFactor int64
@@ -32,14 +32,14 @@ type Queue struct {
 func NewQueue(executor Executor, log logrus.FieldLogger, name string, warnAfterTime, healthCheckIntervalTime time.Duration) *Queue {
 	// add queue name field that could be logged later on
 	return &Queue{
-		queue:                    workqueue.NewNamedRateLimitingQueue(workqueue.DefaultControllerRateLimiter(), "operations"),
-		executor:                 executor,
-		waitGroup:                sync.WaitGroup{},
-		log:                      log.WithField("queueName", name),
-		speedFactor:              1,
-		name:                     name,
-		workerExecutionTimes:     make(map[string]time.Time),
-		warnAfterTime:            warnAfterTime,
+		queue:                   workqueue.NewNamedRateLimitingQueue(workqueue.DefaultControllerRateLimiter(), "operations"),
+		executor:                executor,
+		waitGroup:               sync.WaitGroup{},
+		log:                     log.WithField("queueName", name),
+		speedFactor:             1,
+		name:                    name,
+		workerExecutionTimes:    make(map[string]time.Time),
+		warnAfterTime:           warnAfterTime,
 		healthCheckIntervalTime: healthCheckIntervalTime,
 	}
 }
@@ -73,7 +73,7 @@ func (q *Queue) Run(stop <-chan struct{}, workersAmount int) {
 	// go routine for checking worker execution times and warning if worker has not run for specified amount of time
 	go func() {
 		wait.Until(func() {
-			q.HealthCheck()
+			q.logWorkersSummary()
 		}, q.healthCheckIntervalTime, stop)
 	}()
 
@@ -151,8 +151,8 @@ func (q *Queue) logAndUpdateWorkerTimes(key string, name string, log logrus.Fiel
 	log.Infof("processing item %s, queue length is %d", key, q.queue.Len())
 }
 
-func (q *Queue) HealthCheck() {
-	healthCheckLog := q.log.WithField("healthCheck", q.name)
+func (q *Queue) logWorkersSummary() {
+	healthCheckLog := q.log.WithField("summary", q.name)
 	var buffer bytes.Buffer
 	buffer.WriteString(fmt.Sprintf("health - queue length %d", q.queue.Len()))
 
