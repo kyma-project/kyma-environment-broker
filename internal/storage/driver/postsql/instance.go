@@ -441,7 +441,7 @@ func (s *Instance) toInstanceWithSubaccountState(dto dbmodel.InstanceWithSubacco
 			DeletedAt:                   dto.DeletedAt,
 			ExpiredAt:                   dto.ExpiredAt,
 			Version:                     dto.InstanceDTO.Version,
-			Provider:                    internal.CloudProvider(dto.Provider)},
+			Provider:                    pkg.CloudProvider(dto.Provider)},
 		BetaEnabled:       betaEnabled,
 		UsedForProduction: usedForProduction,
 	}, nil

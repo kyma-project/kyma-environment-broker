@@ -1345,8 +1345,6 @@ func TestRuntimeHandler_WithKimOnlyDrivenInstances(t *testing.T) {
 		db := storage.NewMemoryStorage()
 		operations := db.Operations()
 		instances := db.Instances()
-		states := db.RuntimeStates()
-		archived := db.InstancesArchived()
 		testID := "Test1"
 		testTime := time.Now()
 		testInstance := fixInstanceForPreview(testID, testTime)
@@ -1358,7 +1356,7 @@ func TestRuntimeHandler_WithKimOnlyDrivenInstances(t *testing.T) {
 		err = operations.InsertOperation(provOp)
 		require.NoError(t, err)
 
-		runtimeHandler := runtime.NewHandler(instances, operations, states, archived, nil, 2, "", provisionerClient, k8sClient, kimConfig, logrus.New())
+		runtimeHandler := runtime.NewHandler(db, 2, "", provisionerClient, k8sClient, kimConfig, logrus.New())
 
 		rr := httptest.NewRecorder()
 		router := mux.NewRouter()
