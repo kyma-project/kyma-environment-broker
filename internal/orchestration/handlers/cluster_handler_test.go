@@ -62,7 +62,7 @@ func TestClusterHandler_AttachRoutes(t *testing.T) {
 func fixClusterHandler(t *testing.T) *clusterHandler {
 	db := storage.NewMemoryStorage()
 	logs := logrus.New()
-	q := process.NewQueue(&testExecutor{}, logs)
+	q := process.NewQueue(&testExecutor{}, logs, "test-handler", 10*time.Second, 10*time.Second)
 	handler := NewClusterHandler(db.Orchestrations(), q, logs)
 
 	return handler

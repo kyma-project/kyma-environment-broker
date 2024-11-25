@@ -59,7 +59,7 @@ func NewClusterOrchestrationProcessingQueue(ctx context.Context, db storage.Brok
 	orchestrateClusterManager := manager.NewUpgradeClusterManager(db.Orchestrations(), db.Operations(), db.Instances(),
 		upgradeClusterManager, runtimeResolver, pollingInterval, logs.WithField("upgradeCluster", "orchestration"),
 		cli, cfg.OrchestrationConfig, notificationBuilder, speedFactor)
-	queue := process.NewQueue(orchestrateClusterManager, logs)
+	queue := process.NewQueue(orchestrateClusterManager, logs, "cluster-orchestration-processing", cfg.Broker.WorkerHealthCheckWarnInterval, cfg.Broker.WorkerHealthCheckInterval)
 
 	queue.Run(ctx.Done(), 3)
 

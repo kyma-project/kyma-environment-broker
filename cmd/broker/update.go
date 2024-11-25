@@ -60,7 +60,7 @@ func NewUpdateProcessingQueue(ctx context.Context, manager *process.StagedManage
 			}
 		}
 	}
-	queue := process.NewQueue(manager, logs)
+	queue := process.NewQueue(manager, logs, "update-processing", cfg.Broker.WorkerHealthCheckWarnInterval, cfg.Broker.WorkerHealthCheckInterval)
 	queue.Run(ctx.Done(), workersAmount)
 
 	return queue
