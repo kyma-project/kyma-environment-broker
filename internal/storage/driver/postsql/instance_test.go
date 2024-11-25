@@ -124,6 +124,19 @@ func TestInstance(t *testing.T) {
 			require.NoError(t, err)
 		}
 
+		fixOperation := []internal.Operation{
+			fixture.FixProvisioningOperation("op1", "A1"),
+			fixture.FixProvisioningOperation("op2", "A2"),
+			fixture.FixProvisioningOperation("op3", "C1"),
+			fixture.FixProvisioningOperation("op4", "C2"),
+			fixture.FixProvisioningOperation("op5", "B1"),
+		}
+
+		for _, i := range fixOperation {
+			err = brokerStorage.Operations().InsertOperation(i)
+			require.NoError(t, err)
+		}
+
 		// when
 		stats, err := brokerStorage.Instances().GetInstanceStats()
 		require.NoError(t, err)
