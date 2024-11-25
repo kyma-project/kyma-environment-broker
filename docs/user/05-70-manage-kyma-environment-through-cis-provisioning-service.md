@@ -110,34 +110,35 @@ The SAP Cloud Management service (technical name: `cis`) provides the Provisioni
 
     kubectl should return the list of Pods in the `default` namespace running in the cluster, which means that the cluster is accessible.
 
-> [!NOTE]
-> The following steps are optional and show how to revoke the credentials by deleting the binding.
-
-12. List all bindings for the instance.
-
-    ```bash
-    curl -s "$PROVISIONING_SERVICE_URL/provisioning/v1/environments/$INSTANCE_ID/bindings" -H "accept: application/json" -H "Authorization: bearer $TOKEN"
-    ```
-
-13. Delete the binding to revoke the credentials.
-
-    ```bash
-    curl -s -X DELETE "$PROVISIONING_SERVICE_URL/provisioning/v1/environments/$INSTANCE_ID/bindings/$BINDING_ID" -H "accept: application/json" -H "Authorization: bearer $TOKEN"
-    ```
-
-    Try to access the cluster using kubectl. The connection should be refused, which means that the binding was successfully deleted and credentials revoked.
-
-    ```bash
-    kubectl get pods
-    ```
-
 ## Next Steps
 
-To delete the instance bindings for the instance, perform steps 12 and 13. To deprovision the Kyma runtime, run:
+> [!NOTE]
+> For extra security, you can perform the optional steps to delete the binding sooner than it is set to expire in the **EXPIRATION_SECONDS** environment variable.
+> Otherwise, the binding is automatically deleted after the maximum allowed expiration time (7200 seconds) passes.
 
-  ```bash
-  curl -s -X DELETE "$PROVISIONING_SERVICE_URL/provisioning/v1/environments/$INSTANCE_ID" -H "accept: application/json" -H "Authorization: bearer $TOKEN"
-  ```
+1.   (Optional) List all bindings for the instance.
+
+      ```bash
+      curl -s "$PROVISIONING_SERVICE_URL/provisioning/v1/environments/$INSTANCE_ID/bindings" -H "accept: application/json" -H "Authorization: bearer $TOKEN"
+      ```
+
+2.   (Optional) Delete the binding to revoke the credentials.
+
+      ```bash
+      curl -s -X DELETE "$PROVISIONING_SERVICE_URL/provisioning/v1/environments/$INSTANCE_ID/bindings/$BINDING_ID" -H "accept: application/json" -H "Authorization: bearer $TOKEN"
+      ```
+
+      Try to access the cluster using kubectl. The connection should be refused, which means that the binding was successfully deleted and credentials revoked.
+
+      ```bash
+      kubectl get pods
+      ```
+
+3.  To delete the instance bindings for the instance, perform steps 12 and 13. To deprovision the Kyma runtime, run:
+
+      ```bash
+      curl -s -X DELETE "$PROVISIONING_SERVICE_URL/provisioning/v1/environments/$INSTANCE_ID" -H "accept: application/json" -H "Authorization: bearer $TOKEN"
+      ```
 
 > [!NOTE]
-> The runtime can be deleted independently of the bindings. Existing bindings do not block the runtime deprovisioning.
+> You can delete the runtime independently of the bindings. Existing bindings do not block the runtime deprovisioning.
