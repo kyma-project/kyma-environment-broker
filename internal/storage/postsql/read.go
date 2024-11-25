@@ -675,8 +675,34 @@ func (r readSession) GetOperationStatsForOrchestration(orchestrationID string) (
 
 func (r readSession) GetInstanceStats() ([]dbmodel.InstanceByGlobalAccountIDStatEntry, error) {
 	var rows []dbmodel.InstanceByGlobalAccountIDStatEntry
-	_, err := r.session.SelectBySql(fmt.Sprintf("select global_account_id, count(*) as total from %s where deleted_at = '0001-01-01T00:00:00.000Z' group by global_account_id",
-		InstancesTableName)).Load(&rows)
+
+	// Base select and order by created at
+	var stmt *dbr.SelectStmt
+	filter := dbmodel.InstanceFilter{
+		States: []dbmodel.InstanceState{dbmodel.InstanceNotDeprovisioned},
+	}
+	// Find and join the last operation for each instance matching the state filter(s).
+	// Last operation is found with the greatest-n-per-group problem solved with OUTER JOIN, followed by a (INNER) JOIN to get instance columns.
+	stmt = r.session.
+		// Order in select is important - dbr iterates over result and checks for matching fields in go structures.
+		// Because of that and Operation having common fields with Instance with current order operation attributes will
+		// be loaded into structures (e.g. created_at, provisioning_parameters, etc.) and will be overwritten by instance attributes.
+		Select(fmt.Sprintf("%s.global_account_id", InstancesTableName), "count(*) as total").
+		From(InstancesTableName).
+		Join(dbr.I(OperationTableName).As("o1"), fmt.Sprintf("%s.instance_id = o1.instance_id", InstancesTableName)).
+		LeftJoin(dbr.I(OperationTableName).As("o2"), fmt.Sprintf("%s.instance_id = o2.instance_id AND o1.created_at < o2.created_at AND o2.state NOT IN ('%s', '%s')", InstancesTableName, orchestration.Pending, orchestration.Canceled)).
+		Where("o2.created_at IS NULL").
+		Where("deleted_at = '0001-01-01T00:00:00.000Z'").
+		Where(fmt.Sprintf("o1.state NOT IN ('%s', '%s')", orchestration.Pending, orchestration.Canceled)).
+		Where(buildInstanceStateFilters("o1", filter)).
+		GroupBy(fmt.Sprintf("%s.global_account_id", InstancesTableName))
+
+	_, err := stmt.Load(&rows)
+	return rows, err
+	//////////////////
+	//var rows []dbmodel.InstanceByGlobalAccountIDStatEntry
+	//_, err := r.session.SelectBySql(fmt.Sprintf("select global_account_id, count(*) as total from %s where deleted_at = '0001-01-01T00:00:00.000Z' group by global_account_id",
+	//	InstancesTableName)).Load(&rows)
 	return rows, err
 }
 
