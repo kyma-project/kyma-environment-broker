@@ -26,11 +26,11 @@ const (
 		"  To continue using Kyma, you must use a paid service plan. To learn more about the available plans, follow the link to the documentation."
 )
 
-func ResponseLabels(op internal.ProvisioningOperation, instance internal.Instance, brokerURL string, enableKubeconfigLabel bool, kubeconfigBuilder kubeconfig.KcBuilder) map[string]string {
+func ResponseLabels(op internal.ProvisioningOperation, instance internal.Instance, brokerURL string, enableKubeconfigLabel bool, kubeconfigBuilder kubeconfig.KcBuilder) map[string]any {
 	brokerURL = strings.TrimLeft(brokerURL, "https://")
 	brokerURL = strings.TrimLeft(brokerURL, "http://")
 
-	responseLabels := make(map[string]string, 0)
+	responseLabels := make(map[string]any)
 	responseLabels["Name"] = op.ProvisioningParameters.Parameters.Name
 	if enableKubeconfigLabel && !IsOwnClusterPlan(instance.ServicePlanID) {
 		responseLabels[kubeconfigURLKey] = fmt.Sprintf("https://%s/kubeconfig/%s", brokerURL, instance.InstanceID)
@@ -46,18 +46,9 @@ func ResponseLabels(op internal.ProvisioningOperation, instance internal.Instanc
 	return responseLabels
 }
 
-func ResponseLabelsWithExpirationInfo(
-	op internal.ProvisioningOperation,
-	instance internal.Instance,
-	brokerURL string,
-	docsURL string,
-	enableKubeconfigLabel bool,
-	docsKey string,
-	expireDuration time.Duration,
-	expiryDetailsKey string,
-	expiredInfoFormat string,
-	kubeconfigBuilder kubeconfig.KcBuilder,
-) map[string]string {
+func ResponseLabelsWithExpirationInfo(op internal.ProvisioningOperation, instance internal.Instance, brokerURL string,
+	docsURL string, enableKubeconfigLabel bool, docsKey string, expireDuration time.Duration, expiryDetailsKey string,
+	expiredInfoFormat string, kubeconfigBuilder kubeconfig.KcBuilder) map[string]any {
 	labels := ResponseLabels(op, instance, brokerURL, enableKubeconfigLabel, kubeconfigBuilder)
 
 	expireTime := instance.CreatedAt.Add(expireDuration)
