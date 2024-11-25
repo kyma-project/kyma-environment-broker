@@ -7,7 +7,7 @@ import (
 
 	"github.com/pivotal-cf/brokerapi/v8/domain"
 
-	"github.com/kyma-project/kyma-environment-broker/internal"
+	pkg "github.com/kyma-project/kyma-environment-broker/common/runtime"
 )
 
 type PlanID string
@@ -372,16 +372,16 @@ func AzureLiteSchema(machineTypesDisplay, regionsDisplay map[string]string, mach
 	return createSchemaWithProperties(properties, additionalParams, update, requiredSchemaProperties(), true, shootAndSeedFeatureFlag)
 }
 
-func FreemiumSchema(provider internal.CloudProvider, regionsDisplay map[string]string, additionalParams, update bool, euAccessRestricted bool) *map[string]interface{} {
+func FreemiumSchema(provider pkg.CloudProvider, regionsDisplay map[string]string, additionalParams, update bool, euAccessRestricted bool) *map[string]interface{} {
 	if update && !additionalParams {
 		return empty()
 	}
 
 	var regions []string
 	switch provider {
-	case internal.AWS:
+	case pkg.AWS:
 		regions = AWSRegions(euAccessRestricted)
-	case internal.Azure:
+	case pkg.Azure:
 		regions = AzureRegions(euAccessRestricted)
 	default:
 		regions = AWSRegions(euAccessRestricted)
@@ -480,7 +480,7 @@ func unmarshalSchema(schema *RootSchema) *map[string]interface{} {
 
 // Plans is designed to hold plan defaulting logic
 // keep internal/hyperscaler/azure/config.go in sync with any changes to available zones
-func Plans(plans PlansConfig, provider internal.CloudProvider, includeAdditionalParamsInSchema bool, euAccessRestricted bool, useSmallerMachineTypes bool, shootAndSeedFeatureFlag bool, sapConvergedCloudRegions []string, assuredWorkloads bool) map[string]domain.ServicePlan {
+func Plans(plans PlansConfig, provider pkg.CloudProvider, includeAdditionalParamsInSchema bool, euAccessRestricted bool, useSmallerMachineTypes bool, shootAndSeedFeatureFlag bool, sapConvergedCloudRegions []string, assuredWorkloads bool) map[string]domain.ServicePlan {
 	awsMachineNames := AwsMachinesNames()
 	awsMachinesDisplay := AwsMachinesDisplay()
 	awsRegionsDisplay := AWSRegionsDisplay()

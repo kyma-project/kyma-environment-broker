@@ -4,6 +4,7 @@ import (
 	"testing"
 
 	"github.com/google/uuid"
+	pkg "github.com/kyma-project/kyma-environment-broker/common/runtime"
 	"github.com/kyma-project/kyma-environment-broker/internal"
 	"github.com/kyma-project/kyma-environment-broker/internal/fixture"
 	"github.com/kyma-project/kyma-environment-broker/internal/ptr"
@@ -22,7 +23,7 @@ const (
 	kymaExpectedNamespace           = "kyma-system"
 )
 
-func execTest(t *testing.T, parameters *internal.ModulesDTO, in, out string) {
+func execTest(t *testing.T, parameters *pkg.ModulesDTO, in, out string) {
 	db := storage.NewMemoryStorage()
 	operation := fixture.FixOperation(uuid.NewString(), uuid.NewString(), internal.OperationTypeProvision)
 	operation.KymaTemplate = internal.GetKymaTemplateForTests(t, in)
@@ -42,28 +43,28 @@ func execTest(t *testing.T, parameters *internal.ModulesDTO, in, out string) {
 
 func TestOverrideKymaModules(t *testing.T) {
 	t.Run("default modules are installed when default is true", func(t *testing.T) {
-		modules := &internal.ModulesDTO{}
+		modules := &pkg.ModulesDTO{}
 		modules.Default = ptr.Bool(true)
 		execTest(t, modules, givenKymaTemplateWithModules, defaultModules)
 		execTest(t, modules, givenKymaTemplateWithoutModules, "kyma-no-modules.yaml")
 	})
 
 	t.Run("no modules are installed when default is false", func(t *testing.T) {
-		modules := &internal.ModulesDTO{}
+		modules := &pkg.ModulesDTO{}
 		modules.Default = ptr.Bool(false)
 		execTest(t, modules, givenKymaTemplateWithModules, "kyma-no-modules.yaml")
 		execTest(t, modules, givenKymaTemplateWithoutModules, "kyma-no-modules.yaml")
 	})
 
 	t.Run("custom list of modules are installed when given custom list is not empty", func(t *testing.T) {
-		modules := &internal.ModulesDTO{}
-		modules.List = make([]internal.ModuleDTO, 0)
-		m1 := internal.ModuleDTO{
+		modules := &pkg.ModulesDTO{}
+		modules.List = make([]pkg.ModuleDTO, 0)
+		m1 := pkg.ModuleDTO{
 			Name:                 technicalNameBtpManager,
 			CustomResourcePolicy: internal.Ignore,
 			Channel:              internal.Fast,
 		}
-		m2 := internal.ModuleDTO{
+		m2 := pkg.ModuleDTO{
 			Name:                 technicalNameKeda,
 			CustomResourcePolicy: internal.CreateAndDelete,
 			Channel:              internal.Regular,
@@ -74,13 +75,13 @@ func TestOverrideKymaModules(t *testing.T) {
 	})
 
 	t.Run("custom list of modules are installed when given custom list is not empty", func(t *testing.T) {
-		modules := &internal.ModulesDTO{}
-		modules.List = make([]internal.ModuleDTO, 0)
-		m1 := internal.ModuleDTO{
+		modules := &pkg.ModulesDTO{}
+		modules.List = make([]pkg.ModuleDTO, 0)
+		m1 := pkg.ModuleDTO{
 			Name:                 technicalNameBtpManager,
 			CustomResourcePolicy: internal.CreateAndDelete,
 		}
-		m2 := internal.ModuleDTO{
+		m2 := pkg.ModuleDTO{
 			Name:    technicalNameKeda,
 			Channel: internal.Fast,
 		}
@@ -90,12 +91,12 @@ func TestOverrideKymaModules(t *testing.T) {
 	})
 
 	t.Run("custom list of modules are installed when given custom list is not empty and not given channel and crPolicy", func(t *testing.T) {
-		modules := &internal.ModulesDTO{}
-		modules.List = make([]internal.ModuleDTO, 0)
-		m1 := internal.ModuleDTO{
+		modules := &pkg.ModulesDTO{}
+		modules.List = make([]pkg.ModuleDTO, 0)
+		m1 := pkg.ModuleDTO{
 			Name: technicalNameBtpManager,
 		}
-		m2 := internal.ModuleDTO{
+		m2 := pkg.ModuleDTO{
 			Name:    technicalNameKeda,
 			Channel: ptr.String(""),
 		}
@@ -105,9 +106,9 @@ func TestOverrideKymaModules(t *testing.T) {
 	})
 
 	t.Run("custom list of modules are installed when given custom list not empty", func(t *testing.T) {
-		modules := &internal.ModulesDTO{}
-		modules.List = make([]internal.ModuleDTO, 0)
-		m1 := internal.ModuleDTO{
+		modules := &pkg.ModulesDTO{}
+		modules.List = make([]pkg.ModuleDTO, 0)
+		m1 := pkg.ModuleDTO{
 			Name:                 technicalNameBtpManager,
 			Channel:              internal.Fast,
 			CustomResourcePolicy: internal.CreateAndDelete,
@@ -118,15 +119,15 @@ func TestOverrideKymaModules(t *testing.T) {
 	})
 
 	t.Run("no modules are installed when given custom list is empty", func(t *testing.T) {
-		modules := &internal.ModulesDTO{}
-		modules.List = make([]internal.ModuleDTO, 0)
+		modules := &pkg.ModulesDTO{}
+		modules.List = make([]pkg.ModuleDTO, 0)
 		execTest(t, modules, givenKymaTemplateWithModules, "kyma-no-modules.yaml")
 		execTest(t, modules, givenKymaTemplateWithoutModules, "kyma-no-modules.yaml")
 	})
 
 	t.Run("default modules are installed when modules are empty", func(t *testing.T) {
-		execTest(t, &internal.ModulesDTO{}, givenKymaTemplateWithModules, defaultModules)
-		execTest(t, &internal.ModulesDTO{}, givenKymaTemplateWithoutModules, "kyma-no-modules.yaml")
+		execTest(t, &pkg.ModulesDTO{}, givenKymaTemplateWithModules, defaultModules)
+		execTest(t, &pkg.ModulesDTO{}, givenKymaTemplateWithoutModules, "kyma-no-modules.yaml")
 	})
 
 	t.Run("default modules are installed when modules are not set", func(t *testing.T) {

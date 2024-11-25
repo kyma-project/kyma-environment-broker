@@ -5,19 +5,21 @@ import (
 	"strings"
 
 	"github.com/kyma-project/control-plane/components/provisioner/pkg/gqlschema"
+	pkg "github.com/kyma-project/kyma-environment-broker/common/runtime"
 	"github.com/kyma-project/kyma-environment-broker/internal"
 	"github.com/kyma-project/kyma-environment-broker/internal/broker"
 	cloudProvider "github.com/kyma-project/kyma-environment-broker/internal/provider"
 )
 
 //go:generate mockery --name=CreatorForPlan --output=automock --outpkg=automock --case=underscore
+//go:generate mockery --name=HyperscalerInputProvider --output=automock --outpkg=automock --case=underscore
 
 type (
 	HyperscalerInputProvider interface {
 		Defaults() *gqlschema.ClusterConfigInput
 		ApplyParameters(input *gqlschema.ClusterConfigInput, params internal.ProvisioningParameters)
 		Profile() gqlschema.KymaProfile
-		Provider() internal.CloudProvider
+		Provider() pkg.CloudProvider
 	}
 
 	CreatorForPlan interface {
@@ -25,7 +27,7 @@ type (
 		CreateProvisionInput(parameters internal.ProvisioningParameters) (internal.ProvisionerInputCreator, error)
 		CreateUpgradeInput(parameters internal.ProvisioningParameters) (internal.ProvisionerInputCreator, error)
 		CreateUpgradeShootInput(parameters internal.ProvisioningParameters) (internal.ProvisionerInputCreator, error)
-		GetPlanDefaults(planID string, platformProvider internal.CloudProvider, parametersProvider *internal.CloudProvider) (*gqlschema.ClusterConfigInput, error)
+		GetPlanDefaults(planID string, platformProvider pkg.CloudProvider, parametersProvider *pkg.CloudProvider) (*gqlschema.ClusterConfigInput, error)
 	}
 
 	ConfigurationProvider interface {
@@ -38,13 +40,13 @@ type InputBuilderFactory struct {
 	configProvider             ConfigurationProvider
 	trialPlatformRegionMapping map[string]string
 	enabledFreemiumProviders   map[string]struct{}
-	oidcDefaultValues          internal.OIDCConfigDTO
+	oidcDefaultValues          pkg.OIDCConfigDTO
 	useSmallerMachineTypes     bool
 }
 
 func NewInputBuilderFactory(configProvider ConfigurationProvider,
 	config Config, trialPlatformRegionMapping map[string]string,
-	enabledFreemiumProviders []string, oidcValues internal.OIDCConfigDTO, useSmallerMachineTypes bool) (CreatorForPlan, error) {
+	enabledFreemiumProviders []string, oidcValues pkg.OIDCConfigDTO, useSmallerMachineTypes bool) (CreatorForPlan, error) {
 
 	freemiumProviders := map[string]struct{}{}
 	for _, p := range enabledFreemiumProviders {
@@ -62,7 +64,7 @@ func NewInputBuilderFactory(configProvider ConfigurationProvider,
 }
 
 // SetDefaultTrialProvider is used for testing scenario, when the default trial provider is being changed
-func (f *InputBuilderFactory) SetDefaultTrialProvider(p internal.CloudProvider) {
+func (f *InputBuilderFactory) SetDefaultTrialProvider(p pkg.CloudProvider) {
 	f.config.DefaultTrialProvider = p
 }
 
@@ -76,7 +78,7 @@ func (f *InputBuilderFactory) IsPlanSupport(planID string) bool {
 	}
 }
 
-func (f *InputBuilderFactory) GetPlanDefaults(planID string, platformProvider internal.CloudProvider, parametersProvider *internal.CloudProvider) (*gqlschema.ClusterConfigInput, error) {
+func (f *InputBuilderFactory) GetPlanDefaults(planID string, platformProvider pkg.CloudProvider, parametersProvider *pkg.CloudProvider) (*gqlschema.ClusterConfigInput, error) {
 	h, err := f.getHyperscalerProviderForPlanID(planID, platformProvider, parametersProvider)
 	if err != nil {
 		return nil, err
@@ -84,7 +86,7 @@ func (f *InputBuilderFactory) GetPlanDefaults(planID string, platformProvider in
 	return h.Defaults(), nil
 }
 
-func (f *InputBuilderFactory) getHyperscalerProviderForPlanID(planID string, platformProvider internal.CloudProvider, parametersProvider *internal.CloudProvider) (HyperscalerInputProvider, error) {
+func (f *InputBuilderFactory) getHyperscalerProviderForPlanID(planID string, platformProvider pkg.CloudProvider, parametersProvider *pkg.CloudProvider) (HyperscalerInputProvider, error) {
 	var provider HyperscalerInputProvider
 	switch planID {
 	case broker.GCPPlanID:
@@ -163,8 +165,8 @@ func (f *InputBuilderFactory) CreateProvisionInput(provisioningParameters intern
 	}, nil
 }
 
-func (f *InputBuilderFactory) forTrialPlan(provider *internal.CloudProvider) HyperscalerInputProvider {
-	var trialProvider internal.CloudProvider
+func (f *InputBuilderFactory) forTrialPlan(provider *pkg.CloudProvider) HyperscalerInputProvider {
+	var trialProvider pkg.CloudProvider
 	if provider == nil {
 		trialProvider = f.config.DefaultTrialProvider
 	} else {
@@ -172,11 +174,11 @@ func (f *InputBuilderFactory) forTrialPlan(provider *internal.CloudProvider) Hyp
 	}
 
 	switch trialProvider {
-	case internal.GCP:
+	case pkg.GCP:
 		return &cloudProvider.GcpTrialInput{
 			PlatformRegionMapping: f.trialPlatformRegionMapping,
 		}
-	case internal.AWS:
+	case pkg.AWS:
 		return &cloudProvider.AWSTrialInput{
 			PlatformRegionMapping:  f.trialPlatformRegionMapping,
 			UseSmallerMachineTypes: f.useSmallerMachineTypes,
@@ -318,16 +320,16 @@ func (f *InputBuilderFactory) initUpgradeShootInput(provider HyperscalerInputPro
 	return input
 }
 
-func (f *InputBuilderFactory) forFreemiumPlan(provider internal.CloudProvider) (HyperscalerInputProvider, error) {
+func (f *InputBuilderFactory) forFreemiumPlan(provider pkg.CloudProvider) (HyperscalerInputProvider, error) {
 	if !f.IsFreemiumProviderEnabled(provider) {
 		return nil, fmt.Errorf("freemium provider %s is not enabled", provider)
 	}
 	switch provider {
-	case internal.AWS:
+	case pkg.AWS:
 		return &cloudProvider.AWSFreemiumInput{
 			UseSmallerMachineTypes: f.useSmallerMachineTypes,
 		}, nil
-	case internal.Azure:
+	case pkg.Azure:
 		return &cloudProvider.AzureFreemiumInput{
 			UseSmallerMachineTypes: f.useSmallerMachineTypes,
 		}, nil
@@ -336,7 +338,7 @@ func (f *InputBuilderFactory) forFreemiumPlan(provider internal.CloudProvider) (
 	}
 }
 
-func (f *InputBuilderFactory) IsFreemiumProviderEnabled(provider internal.CloudProvider) bool {
+func (f *InputBuilderFactory) IsFreemiumProviderEnabled(provider pkg.CloudProvider) bool {
 	_, found := f.enabledFreemiumProviders[strings.ToLower(string(provider))]
 	return found
 }

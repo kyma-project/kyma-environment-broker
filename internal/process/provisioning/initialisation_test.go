@@ -3,6 +3,7 @@ package provisioning
 import (
 	"testing"
 
+	pkg "github.com/kyma-project/kyma-environment-broker/common/runtime"
 	"github.com/kyma-project/kyma-environment-broker/internal"
 	"github.com/kyma-project/kyma-environment-broker/internal/broker"
 	"github.com/kyma-project/kyma-environment-broker/internal/fixture"
@@ -26,13 +27,13 @@ const (
 func TestInitialisationStep_Run(t *testing.T) {
 	// given
 	st := storage.NewMemoryStorage()
-	operation := fixOperationRuntimeStatus(broker.GCPPlanID, internal.GCP)
+	operation := fixOperationRuntimeStatus(broker.GCPPlanID, pkg.GCP)
 	err := st.Operations().InsertOperation(operation)
 	assert.NoError(t, err)
 	err = st.Instances().Insert(fixture.FixInstance(operation.InstanceID))
 	assert.NoError(t, err)
 	ri := &simpleInputCreator{
-		provider: internal.GCP,
+		provider: pkg.GCP,
 		config: &internal.ConfigForPlan{
 			KymaTemplate: "kyma-template",
 		},
@@ -52,10 +53,10 @@ func TestInitialisationStep_Run(t *testing.T) {
 
 	inst, _ := st.Instances().GetByID(operation.InstanceID)
 	// make sure the provider is saved into the instance
-	assert.Equal(t, internal.GCP, inst.Provider)
+	assert.Equal(t, pkg.GCP, inst.Provider)
 }
 
-func fixOperationRuntimeStatus(planId string, provider internal.CloudProvider) internal.Operation {
+func fixOperationRuntimeStatus(planId string, provider pkg.CloudProvider) internal.Operation {
 	provisioningOperation := fixture.FixProvisioningOperationWithProvider(statusOperationID, statusInstanceID, provider)
 	provisioningOperation.State = domain.InProgress
 	provisioningOperation.ProvisionerOperationID = statusProvisionerOperationID
@@ -66,7 +67,7 @@ func fixOperationRuntimeStatus(planId string, provider internal.CloudProvider) i
 	return provisioningOperation
 }
 
-func fixOperationRuntimeStatusWithProvider(planId string, provider internal.CloudProvider) internal.Operation {
+func fixOperationRuntimeStatusWithProvider(planId string, provider pkg.CloudProvider) internal.Operation {
 	provisioningOperation := fixture.FixProvisioningOperationWithProvider(statusOperationID, statusInstanceID, provider)
 	provisioningOperation.State = ""
 	provisioningOperation.ProvisionerOperationID = statusProvisionerOperationID

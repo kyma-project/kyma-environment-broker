@@ -2,6 +2,7 @@ package provider
 
 import (
 	"github.com/kyma-project/control-plane/components/provisioner/pkg/gqlschema"
+	pkg "github.com/kyma-project/kyma-environment-broker/common/runtime"
 	"github.com/kyma-project/kyma-environment-broker/internal"
 )
 
@@ -22,6 +23,6 @@ func (p *NoHyperscalerInput) Profile() gqlschema.KymaProfile {
 	return gqlschema.KymaProfileEvaluation
 }
 
-func (p *NoHyperscalerInput) Provider() internal.CloudProvider {
-	return internal.UnknownProvider
+func (p *NoHyperscalerInput) Provider() pkg.CloudProvider {
+	return pkg.UnknownProvider
 }

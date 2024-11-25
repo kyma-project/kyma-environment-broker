@@ -3,6 +3,7 @@ package provider
 import (
 	"testing"
 
+	pkg "github.com/kyma-project/kyma-environment-broker/common/runtime"
 	"github.com/kyma-project/kyma-environment-broker/internal"
 	"github.com/kyma-project/kyma-environment-broker/internal/ptr"
 	"github.com/stretchr/testify/assert"
@@ -39,7 +40,7 @@ func TestGcpTrialInput_ApplyParametersWithRegion(t *testing.T) {
 		// when
 		svc.ApplyParameters(input, internal.ProvisioningParameters{
 			PlatformRegion: "cf-eu",
-			Parameters: internal.ProvisioningParametersDTO{
+			Parameters: pkg.ProvisioningParametersDTO{
 				Region: &us,
 			},
 		})
@@ -100,7 +101,7 @@ func TestGcpInput_SingleZone_ApplyParameters(t *testing.T) {
 
 		// when
 		svc.ApplyParameters(input, internal.ProvisioningParameters{
-			Parameters: internal.ProvisioningParametersDTO{},
+			Parameters: pkg.ProvisioningParametersDTO{},
 		})
 
 		// then
@@ -116,7 +117,7 @@ func TestGcpInput_SingleZone_ApplyParameters(t *testing.T) {
 
 		// when
 		svc.ApplyParameters(input, internal.ProvisioningParameters{
-			Parameters: internal.ProvisioningParametersDTO{
+			Parameters: pkg.ProvisioningParametersDTO{
 				Region: ptr.String("us-central1"),
 			},
 		})
@@ -161,7 +162,7 @@ func TestGcpInput_MultiZone_ApplyParameters(t *testing.T) {
 
 		// when
 		svc.ApplyParameters(input, internal.ProvisioningParameters{
-			Parameters: internal.ProvisioningParametersDTO{},
+			Parameters: pkg.ProvisioningParametersDTO{},
 		})
 
 		// then
@@ -178,7 +179,7 @@ func TestGcpInput_MultiZone_ApplyParameters(t *testing.T) {
 
 		// when
 		svc.ApplyParameters(input, internal.ProvisioningParameters{
-			Parameters: internal.ProvisioningParametersDTO{
+			Parameters: pkg.ProvisioningParametersDTO{
 				Region: ptr.String("us-central1"),
 			},
 		})

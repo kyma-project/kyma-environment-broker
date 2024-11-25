@@ -8,6 +8,7 @@ import (
 
 	"github.com/kyma-project/kyma-environment-broker/common/hyperscaler"
 	hyperscalerMocks "github.com/kyma-project/kyma-environment-broker/common/hyperscaler/automock"
+	pkg "github.com/kyma-project/kyma-environment-broker/common/runtime"
 	"github.com/kyma-project/kyma-environment-broker/internal"
 	"github.com/kyma-project/kyma-environment-broker/internal/broker"
 	"github.com/kyma-project/kyma-environment-broker/internal/fixture"
@@ -188,7 +189,7 @@ func TestReleaseSubscriptionStepGardener_CallFails(t *testing.T) {
 
 func fixGCPInstance(instanceID string) internal.Instance {
 	instance := fixture.FixInstance(instanceID)
-	instance.Provider = internal.GCP
+	instance.Provider = pkg.GCP
 	return instance
 }
 func fixDeprovisioningOperationWithPlanID(planID string) internal.Operation {

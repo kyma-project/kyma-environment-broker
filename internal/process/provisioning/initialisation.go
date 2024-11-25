@@ -10,6 +10,7 @@ import (
 	"github.com/kyma-project/kyma-environment-broker/internal/process/input"
 	"github.com/kyma-project/kyma-environment-broker/internal/storage"
 
+	pkg "github.com/kyma-project/kyma-environment-broker/common/runtime"
 	"github.com/sirupsen/logrus"
 )
 
@@ -69,7 +70,7 @@ func (s *InitialisationStep) Run(operation internal.Operation, log logrus.FieldL
 	}
 }
 
-func (s *InitialisationStep) updateInstance(id string, provider internal.CloudProvider) error {
+func (s *InitialisationStep) updateInstance(id string, provider pkg.CloudProvider) error {
 	instance, err := s.instanceStorage.GetByID(id)
 	if err != nil {
 		return fmt.Errorf("while getting instance: %w", err)

@@ -19,6 +19,7 @@ import (
 	"github.com/stretchr/testify/assert"
 
 	"github.com/kyma-project/kyma-environment-broker/common/hyperscaler"
+	pkg "github.com/kyma-project/kyma-environment-broker/common/runtime"
 	"github.com/kyma-project/kyma-environment-broker/internal"
 	"github.com/kyma-project/kyma-environment-broker/internal/broker"
 	"github.com/kyma-project/kyma-environment-broker/internal/fixture"
@@ -138,7 +139,7 @@ func TestProvisioningWithKIMOnlyForTrial(t *testing.T) {
 	cfg.Broker.KimConfig.Plans = []string{"trial"}
 	cfg.Broker.KimConfig.KimOnlyPlans = []string{"trial"}
 
-	cfg.Provisioner.DefaultTrialProvider = internal.AWS
+	cfg.Provisioner.DefaultTrialProvider = pkg.AWS
 
 	suite := NewBrokerSuiteTestWithConfig(t, cfg)
 	defer suite.TearDown()
@@ -954,7 +955,7 @@ func TestProvisioning_ClusterParameters(t *testing.T) {
 	for tn, tc := range map[string]struct {
 		planID                       string
 		platformRegion               string
-		platformProvider             internal.CloudProvider
+		platformProvider             pkg.CloudProvider
 		region                       string
 		multiZone                    bool
 		controlPlaneFailureTolerance string
@@ -991,7 +992,7 @@ func TestProvisioning_ClusterParameters(t *testing.T) {
 		},
 		"Freemium aws": {
 			planID:           broker.FreemiumPlanID,
-			platformProvider: internal.AWS,
+			platformProvider: pkg.AWS,
 
 			expectedMinimalNumberOfNodes:        1,
 			expectedMaximumNumberOfNodes:        1,
@@ -1002,7 +1003,7 @@ func TestProvisioning_ClusterParameters(t *testing.T) {
 		},
 		"Freemium aws with smaller machines": {
 			planID:                 broker.FreemiumPlanID,
-			platformProvider:       internal.AWS,
+			platformProvider:       pkg.AWS,
 			useSmallerMachineTypes: true,
 
 			expectedMinimalNumberOfNodes:        1,
@@ -1014,7 +1015,7 @@ func TestProvisioning_ClusterParameters(t *testing.T) {
 		},
 		"Freemium azure": {
 			planID:           broker.FreemiumPlanID,
-			platformProvider: internal.Azure,
+			platformProvider: pkg.Azure,
 
 			expectedMinimalNumberOfNodes:        1,
 			expectedMaximumNumberOfNodes:        1,
@@ -1025,7 +1026,7 @@ func TestProvisioning_ClusterParameters(t *testing.T) {
 		},
 		"Freemium azure with smaller machines": {
 			planID:                 broker.FreemiumPlanID,
-			platformProvider:       internal.Azure,
+			platformProvider:       pkg.Azure,
 			useSmallerMachineTypes: true,
 
 			expectedMinimalNumberOfNodes:        1,
@@ -1214,7 +1215,7 @@ func TestProvisioning_OIDCValues(t *testing.T) {
 			UsernamePrefix: defaultOIDC.UsernamePrefix,
 		}
 		options := RuntimeOptions{
-			OIDC: &internal.OIDCConfigDTO{},
+			OIDC: &pkg.OIDCConfigDTO{},
 		}
 
 		// when
@@ -1238,7 +1239,7 @@ func TestProvisioning_OIDCValues(t *testing.T) {
 		// given
 		suite := NewProvisioningSuite(t, false, "", false)
 		defer suite.TearDown()
-		providedOIDC := internal.OIDCConfigDTO{
+		providedOIDC := pkg.OIDCConfigDTO{
 			ClientID:       "fake-client-id-1",
 			GroupsClaim:    "fakeGroups",
 			IssuerURL:      "https://testurl.local",
@@ -1277,7 +1278,7 @@ func TestProvisioning_OIDCValues(t *testing.T) {
 		// given
 		suite := NewProvisioningSuite(t, false, "", false)
 		defer suite.TearDown()
-		providedOIDC := internal.OIDCConfigDTO{
+		providedOIDC := pkg.OIDCConfigDTO{
 			ClientID:  "fake-client-id-1",
 			IssuerURL: "https://testurl.local",
 		}

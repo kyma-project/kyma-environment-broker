@@ -651,7 +651,7 @@ func TestRuntimeHandler(t *testing.T) {
 			ClusterConfig: gqlschema.GardenerConfigInput{
 				Name:              testID,
 				KubernetesVersion: "1.18.18",
-				Provider:          string(internal.AWS),
+				Provider:          string(pkg.AWS),
 			},
 		}
 		err = states.Insert(fixProvState)
@@ -688,7 +688,7 @@ func TestRuntimeHandler(t *testing.T) {
 			ClusterConfig: gqlschema.GardenerConfigInput{
 				Name:                testID,
 				KubernetesVersion:   "1.19.19",
-				Provider:            string(internal.AWS),
+				Provider:            string(pkg.AWS),
 				MachineImage:        ptr.String("gardenlinux"),
 				MachineImageVersion: ptr.String("1.0.0"),
 			},
@@ -948,7 +948,7 @@ func TestRuntimeHandler_WithKimOnlyDrivenInstances(t *testing.T) {
 			ClusterConfig: gqlschema.GardenerConfigInput{
 				Name:              testID,
 				KubernetesVersion: "1.18.18",
-				Provider:          string(internal.AWS),
+				Provider:          string(pkg.AWS),
 			},
 		}
 		err = states.Insert(fixProvState)
@@ -985,7 +985,7 @@ func TestRuntimeHandler_WithKimOnlyDrivenInstances(t *testing.T) {
 			ClusterConfig: gqlschema.GardenerConfigInput{
 				Name:                testID,
 				KubernetesVersion:   "1.19.19",
-				Provider:            string(internal.AWS),
+				Provider:            string(pkg.AWS),
 				MachineImage:        ptr.String("gardenlinux"),
 				MachineImageVersion: ptr.String("1.0.0"),
 			},
@@ -1257,6 +1257,45 @@ func TestRuntimeHandler_WithKimOnlyDrivenInstances(t *testing.T) {
 		assert.NotNil(t, out.Data[0].Bindings)
 	})
 
+	t.Run("test params sent by the platform are set", func(t *testing.T) {
+		// given
+		db := storage.NewMemoryStorage()
+		operations := db.Operations()
+		instances := db.Instances()
+		states := db.RuntimeStates()
+		archived := db.InstancesArchived()
+		testID := "Test1"
+		testTime := time.Now()
+		testInstance := fixInstanceForPreview(testID, testTime)
+
+		err := instances.Insert(testInstance)
+		require.NoError(t, err)
+
+		provOp := fixture.FixProvisioningOperation(fixRandomID(), testID)
+		err = operations.InsertOperation(provOp)
+		require.NoError(t, err)
+
+		runtimeHandler := runtime.NewHandler(instances, operations, states, archived, nil, 2, "", provisionerClient, k8sClient, kimConfig, logrus.New())
+
+		rr := httptest.NewRecorder()
+		router := mux.NewRouter()
+		runtimeHandler.AttachRoutes(router)
+
+		// when
+		req, err := http.NewRequest("GET", "/runtimes", nil)
+		require.NoError(t, err)
+		router.ServeHTTP(rr, req)
+
+		// then
+		require.Equal(t, http.StatusOK, rr.Code)
+
+		var out pkg.RuntimesPage
+
+		err = json.Unmarshal(rr.Body.Bytes(), &out)
+		require.NoError(t, err)
+		assert.NotNil(t, out.Data[0].Status.Provisioning.Parameters.MachineType)
+		assert.NotNil(t, out.Data[0].Parameters.MachineType)
+	})
 }
 
 func fixInstance(id string, t time.Time) internal.Instance {
@@ -1280,6 +1319,10 @@ func fixInstanceForPreview(id string, t time.Time) internal.Instance {
 	instance := fixInstance(id, t)
 	instance.ServicePlanName = broker.PreviewPlanName
 	instance.ServicePlanID = broker.PreviewPlanID
+	instance.Parameters.Parameters = pkg.ProvisioningParametersDTO{
+		Region:      ptr.String("fake-reśgion"),
+		MachineType: ptr.String("fake-machine-type"),
+	}
 	return instance
 }
 

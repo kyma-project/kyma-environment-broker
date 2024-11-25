@@ -5,7 +5,7 @@ import (
 	"time"
 
 	"github.com/kyma-project/control-plane/components/provisioner/pkg/gqlschema"
-	"github.com/kyma-project/kyma-environment-broker/internal"
+	pkg "github.com/kyma-project/kyma-environment-broker/common/runtime"
 	"github.com/kyma-project/kyma-environment-broker/internal/broker"
 	"github.com/kyma-project/kyma-environment-broker/internal/provisioner"
 	"github.com/kyma-project/kyma-environment-broker/internal/ptr"
@@ -48,7 +48,7 @@ func TestCheckRuntimeStep_RunProvisioningSucceeded(t *testing.T) {
 			}
 
 			st := storage.NewMemoryStorage()
-			operation := fixOperationRuntimeStatus(broker.GCPPlanID, internal.GCP)
+			operation := fixOperationRuntimeStatus(broker.GCPPlanID, pkg.GCP)
 			operation.RuntimeID = statusRuntimeID
 			operation.DashboardURL = dashboardURL
 			err := st.Operations().InsertOperation(operation)
@@ -97,7 +97,7 @@ func TestCheckRuntimeStep_RunProvisioningSucceeded_WithKimOnly(t *testing.T) {
 			}
 
 			st := storage.NewMemoryStorage()
-			operation := fixOperationRuntimeStatus(broker.GCPPlanID, internal.GCP)
+			operation := fixOperationRuntimeStatus(broker.GCPPlanID, pkg.GCP)
 			operation.RuntimeID = statusRuntimeID
 			operation.DashboardURL = dashboardURL
 			err := st.Operations().InsertOperation(operation)

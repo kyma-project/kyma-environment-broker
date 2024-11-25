@@ -3,7 +3,7 @@ package runtime
 import (
 	"testing"
 
-	"github.com/kyma-project/kyma-environment-broker/internal"
+	pkg "github.com/kyma-project/kyma-environment-broker/common/runtime"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -14,7 +14,7 @@ func TestReadOIDCDefaultValuesFromYAML(t *testing.T) {
 
 	t.Run("should read default OIDC values", func(t *testing.T) {
 		// given
-		expectedOidcValues := internal.OIDCConfigDTO{
+		expectedOidcValues := pkg.OIDCConfigDTO{
 			ClientID:       "9bd05ed7-a930-44e6-8c79-e6defeb7dec9",
 			GroupsClaim:    "groups",
 			IssuerURL:      "https://kymatest.accounts400.ondemand.com",
@@ -40,6 +40,6 @@ func TestReadOIDCDefaultValuesFromYAML(t *testing.T) {
 
 		// then
 		require.Error(t, err)
-		assert.Equal(t, internal.OIDCConfigDTO{}, oidcValues)
+		assert.Equal(t, pkg.OIDCConfigDTO{}, oidcValues)
 	})
 }
