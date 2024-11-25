@@ -24,12 +24,12 @@ type Queue struct {
 	name                     string
 	workerExecutionTimes     map[string]time.Time
 	warnAfterTime            time.Duration
-	healthCheckFrequencyTime time.Duration
+	healthCheckIntervalTime time.Duration
 
 	speedFactor int64
 }
 
-func NewQueue(executor Executor, log logrus.FieldLogger, name string, warnAfterTime, healthCheckFrequencyTime time.Duration) *Queue {
+func NewQueue(executor Executor, log logrus.FieldLogger, name string, warnAfterTime, healthCheckIntervalTime time.Duration) *Queue {
 	// add queue name field that could be logged later on
 	return &Queue{
 		queue:                    workqueue.NewNamedRateLimitingQueue(workqueue.DefaultControllerRateLimiter(), "operations"),
@@ -40,7 +40,7 @@ func NewQueue(executor Executor, log logrus.FieldLogger, name string, warnAfterT
 		name:                     name,
 		workerExecutionTimes:     make(map[string]time.Time),
 		warnAfterTime:            warnAfterTime,
-		healthCheckFrequencyTime: healthCheckFrequencyTime,
+		healthCheckIntervalTime: healthCheckIntervalTime,
 	}
 }
 
@@ -74,7 +74,7 @@ func (q *Queue) Run(stop <-chan struct{}, workersAmount int) {
 	go func() {
 		wait.Until(func() {
 			q.HealthCheck()
-		}, q.healthCheckFrequencyTime, stop)
+		}, q.healthCheckIntervalTime, stop)
 	}()
 
 }
