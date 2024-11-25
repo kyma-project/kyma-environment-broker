@@ -40,6 +40,21 @@ func (r *Router) PathPrefix(prefix string) {
 	r.subrouters = append(r.subrouters, subrouter)
 }
 
+func (r *Router) Handle(pattern string, handler http.Handler) {
+	for i := len(r.middlewares) - 1; i >= 0; i-- {
+		handler = r.middlewares[i](handler)
+	}
+	r.ServeMux.Handle(pattern, handler)
+}
+
+func (r *Router) HandleFunc(pattern string, handleFunc func(http.ResponseWriter, *http.Request)) {
+	var handler http.Handler
+	for i := len(r.middlewares) - 1; i >= 0; i-- {
+		handler = r.middlewares[i](http.HandlerFunc(handleFunc))
+	}
+	r.ServeMux.Handle(pattern, handler)
+}
+
 type CreateBindingHandler struct {
 	handler func(w http.ResponseWriter, req *http.Request)
 }
