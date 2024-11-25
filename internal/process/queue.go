@@ -60,7 +60,7 @@ func (q *Queue) ShutDown() {
 }
 
 func (q *Queue) Run(stop <-chan struct{}, workersAmount int) {
-	q.log.Infof("starting workers %d, queue length is %d", workersAmount, q.queue.Len())
+	q.log.Infof("starting %d worker(s), queue length is %d", workersAmount, q.queue.Len())
 	for i := 0; i < workersAmount; i++ {
 		q.waitGroup.Add(1)
 
