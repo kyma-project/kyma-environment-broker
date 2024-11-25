@@ -133,7 +133,7 @@ The SAP Cloud Management service (technical name: `cis`) provides the Provisioni
 
 ## Next Steps
 
-To delete the instance bindings for the instance, perform steps 11 and 12. To deprovision the Kyma runtime, run:
+To delete the instance bindings for the instance, perform steps 12 and 13. To deprovision the Kyma runtime, run:
 
   ```bash
   curl -s -X DELETE "$PROVISIONING_SERVICE_URL/provisioning/v1/environments/$INSTANCE_ID" -H "accept: application/json" -H "Authorization: bearer $TOKEN"
