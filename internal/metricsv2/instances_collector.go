@@ -36,12 +36,12 @@ func NewInstancesCollector(statsGetter InstancesStatsGetter, logger logrus.Field
 		statsGetter: statsGetter,
 		logger:      logger,
 		instancesDesc: prometheus.NewDesc(
-			prometheus.BuildFQName(prometheusNamespacev2, prometheusSubsystemv2, "v3_instances_total"),
+			prometheus.BuildFQName(prometheusNamespacev2, prometheusSubsystemv2, "instances_total"),
 			"The total number of instances",
 			[]string{},
 			nil),
 		instancesPerGAIDDesc: prometheus.NewDesc(
-			prometheus.BuildFQName(prometheusNamespacev2, prometheusSubsystemv2, "v3_global_account_id_instances_total"),
+			prometheus.BuildFQName(prometheusNamespacev2, prometheusSubsystemv2, "global_account_id_instances_total"),
 			"The total number of instances by Global Account ID",
 			[]string{"global_account_id"},
 			nil),
