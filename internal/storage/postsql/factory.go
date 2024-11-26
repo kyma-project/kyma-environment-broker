@@ -36,7 +36,7 @@ type ReadSession interface {
 	ListOperations(filter dbmodel.OperationFilter) ([]dbmodel.OperationDTO, int, int, error)
 	ListOperationsByType(operationType internal.OperationType) ([]dbmodel.OperationDTO, dberr.Error)
 	GetOperationStats() ([]dbmodel.OperationStatEntry, error)
-	GetInstanceStats() ([]dbmodel.InstanceByGlobalAccountIDStatEntry, error)
+	GetActiveInstanceStats() ([]dbmodel.InstanceByGlobalAccountIDStatEntry, error)
 	GetERSContextStats() ([]dbmodel.InstanceERSContextStatsEntry, error)
 	GetNumberOfInstancesForGlobalAccountID(globalAccountID string) (int, error)
 	GetRuntimeStateByOperationID(operationID string) (dbmodel.RuntimeStateDTO, dberr.Error)

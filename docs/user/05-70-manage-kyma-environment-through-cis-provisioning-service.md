@@ -1,6 +1,6 @@
-# Manage SAP BTP, Kyma Runtime Using the Provisioning API of the SAP Cloud Management Service
+# Manage SAP BTP, Kyma Runtime Using the Provisioning API
 
-The SAP Cloud Management service (technical name: `cis`) provides the Provisioning Service API to create and manage available environments. Use the Provisioning Service API to manage and access SAP BTP, Kyma runtime.
+The SAP Cloud Management service (technical name: `cis`) provides the Provisioning Service API to create and manage available environments. Use the Provisioning Service API to automatically manage and access SAP BTP, Kyma runtime.
 
 ## Prerequisites
 
@@ -89,6 +89,10 @@ The SAP Cloud Management service (technical name: `cis`) provides the Provisioni
    BINDING_ID=$(curl -sS -D - -X PUT "$PROVISIONING_SERVICE_URL/provisioning/v1/environments/$INSTANCE_ID/bindings" -H "accept: application/json" -H "Authorization: bearer $TOKEN" -H "Content-Type: application/json" -d "{\"parameters\":{\"expiration_seconds\":600}}" -o /dev/null | sed -n 's/^.*location: //p' | sed 's/\r$//g') || \
    BINDING_ID=$(curl -sS -D - -X PUT "$PROVISIONING_SERVICE_URL/provisioning/v1/environments/$INSTANCE_ID/bindings" -H "accept: application/json" -H "Authorization: bearer $TOKEN" -H "Content-Type: application/json" -d "{\"parameters\":{\"expiration_seconds\":$EXPIRATION_SECONDS}}" -o /dev/null | sed -n 's/^.*location: //p' | sed 's/\r$//g')
    ```
+   
+   > [!NOTE]
+   > You can create a maximum of 10 non-expired bindings. 
+   > If you try to create more, you get the message stating that you've reached the maximum number of non-expired bindings.
 
 9. Get the binding credentials and save them in a kubeconfig file.
 
@@ -110,34 +114,34 @@ The SAP Cloud Management service (technical name: `cis`) provides the Provisioni
 
     kubectl should return the list of Pods in the `default` namespace running in the cluster, which means that the cluster is accessible.
 
-> [!NOTE]
-> The following steps are optional and show how to revoke the credentials by deleting the binding.
+12.  (Optional) To view the details of the binding you have created, list all bindings for the instance.
 
-12. List all bindings for the instance.
+      ```bash
+      curl -s "$PROVISIONING_SERVICE_URL/provisioning/v1/environments/$INSTANCE_ID/bindings" -H "accept: application/json" -H "Authorization: bearer $TOKEN"
+      ```
 
-    ```bash
-    curl -s "$PROVISIONING_SERVICE_URL/provisioning/v1/environments/$INSTANCE_ID/bindings" -H "accept: application/json" -H "Authorization: bearer $TOKEN"
-    ```
+13. (Optional) For extra security, revoke the credentials by deleting the binding sooner than it is set to expire in the **EXPIRATION_SECONDS** environment variable.
+      
+      ```bash
+      curl -s -X DELETE "$PROVISIONING_SERVICE_URL/provisioning/v1/environments/$INSTANCE_ID/bindings/$BINDING_ID" -H "accept: application/json" -H "Authorization: bearer $TOKEN"
+      ```
 
-13. Delete the binding to revoke the credentials.
+      Try to access the cluster using kubectl. The connection should be refused, which means that the binding was successfully deleted and credentials revoked.
 
-    ```bash
-    curl -s -X DELETE "$PROVISIONING_SERVICE_URL/provisioning/v1/environments/$INSTANCE_ID/bindings/$BINDING_ID" -H "accept: application/json" -H "Authorization: bearer $TOKEN"
-    ```
-
-    Try to access the cluster using kubectl. The connection should be refused, which means that the binding was successfully deleted and credentials revoked.
-
-    ```bash
-    kubectl get pods
-    ```
+      ```bash
+      kubectl get pods
+      ```
+      
+      > [!NOTE]
+      > If you skip this step, the binding is automatically deleted after the maximum allowed expiration time (7200 seconds) passes.
 
 ## Next Steps
 
-To delete the instance bindings for the instance, perform steps 11 and 12. To deprovision the Kyma runtime, run:
+To deprovision the Kyma runtime, run:
 
-  ```bash
-  curl -s -X DELETE "$PROVISIONING_SERVICE_URL/provisioning/v1/environments/$INSTANCE_ID" -H "accept: application/json" -H "Authorization: bearer $TOKEN"
-  ```
+   ```bash
+   curl -s -X DELETE "$PROVISIONING_SERVICE_URL/provisioning/v1/environments/$INSTANCE_ID" -H "accept: application/json" -H "Authorization: bearer $TOKEN"
+   ```
 
-> [!NOTE]
-> The runtime can be deleted independently of the bindings. Existing bindings do not block the runtime deprovisioning.
+   > [!NOTE]
+   > You can delete the runtime independently of the bindings. Existing bindings do not block the runtime deprovisioning.

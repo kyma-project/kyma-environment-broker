@@ -114,6 +114,7 @@ func TestInstance(t *testing.T) {
 		fixInstances := []internal.Instance{
 			*fixInstance(instanceData{val: "A1", globalAccountID: "A"}),
 			*fixInstance(instanceData{val: "A2", globalAccountID: "A", deletedAt: time.Time{}}),
+			*fixInstance(instanceData{val: "A3", globalAccountID: "A"}),
 			*fixInstance(instanceData{val: "C1", globalAccountID: "C"}),
 			*fixInstance(instanceData{val: "C2", globalAccountID: "C", deletedAt: time.Now()}),
 			*fixInstance(instanceData{val: "B1", globalAccountID: "B", deletedAt: time.Now()}),
@@ -124,8 +125,22 @@ func TestInstance(t *testing.T) {
 			require.NoError(t, err)
 		}
 
+		fixOperations := []internal.Operation{
+			fixture.FixProvisioningOperation("op1", "A1"),
+			fixture.FixProvisioningOperation("op2", "A2"),
+			fixture.FixSuspensionOperationAsOperation("op3", "A3"),
+			fixture.FixProvisioningOperation("op4", "C1"),
+			fixture.FixProvisioningOperation("op5", "C2"),
+			fixture.FixProvisioningOperation("op6", "B1"),
+		}
+
+		for _, i := range fixOperations {
+			err = brokerStorage.Operations().InsertOperation(i)
+			require.NoError(t, err)
+		}
+
 		// when
-		stats, err := brokerStorage.Instances().GetInstanceStats()
+		stats, err := brokerStorage.Instances().GetActiveInstanceStats()
 		require.NoError(t, err)
 		numberOfInstancesA, err := brokerStorage.Instances().GetNumberOfInstancesForGlobalAccountID("A")
 		require.NoError(t, err)
@@ -141,7 +156,7 @@ func TestInstance(t *testing.T) {
 			TotalNumberOfInstances: 3,
 			PerGlobalAccountID:     map[string]int{"A": 2, "C": 1},
 		}, stats)
-		assert.Equal(t, 2, numberOfInstancesA)
+		assert.Equal(t, 3, numberOfInstancesA)
 		assert.Equal(t, 1, numberOfInstancesC)
 		assert.Equal(t, 0, numberOfInstancesB)
 	})

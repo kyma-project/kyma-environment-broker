@@ -62,7 +62,7 @@ func (step *CheckRuntimeResourceDeletionStep) Run(operation internal.Operation, 
 	if err == nil {
 		logger.Infof("Runtime resource still exists")
 		//TODO: extract the timeout as a configuration setting
-		return step.operationManager.RetryOperationWithoutFail(operation, step.Name(), "Runtime resource still exists", 20*time.Second, 15*time.Minute, logger, nil)
+		return step.operationManager.RetryOperation(operation, "Runtime resource still exists", nil, 20*time.Second, 15*time.Minute, logger)
 	}
 
 	if !errors.IsNotFound(err) {
@@ -72,7 +72,7 @@ func (step *CheckRuntimeResourceDeletionStep) Run(operation internal.Operation, 
 		}
 
 		logger.Warnf("unable to check Runtime resource existence: %s", err)
-		return step.operationManager.RetryOperationWithoutFail(operation, step.Name(), "unable to check Runtime resource existence", backoffForK8SOperation, timeoutForK8sOperation, logger, err)
+		return step.operationManager.RetryOperation(operation, "unable to check Runtime resource existence", err, backoffForK8SOperation, timeoutForK8sOperation, logger)
 	}
 
 	return step.operationManager.UpdateOperation(operation, func(op *internal.Operation) {
