@@ -20,12 +20,16 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
+type router interface {
+	HandleFunc(pattern string, handler func(http.ResponseWriter, *http.Request))
+}
+
 type expirationResponse struct {
 	SuspensionOpID string `json:"operation"`
 }
 
 type Handler interface {
-	AttachRoutes(router *mux.Router)
+	AttachRoutes(r router)
 }
 
 type handler struct {
@@ -44,8 +48,8 @@ func NewHandler(instancesStorage storage.Instances, operationsStorage storage.Op
 	}
 }
 
-func (h *handler) AttachRoutes(router *mux.Router) {
-	router.HandleFunc("/expire/service_instance/{instance_id}", h.expireInstance).Methods("PUT")
+func (h *handler) AttachRoutes(r router) {
+	r.HandleFunc("PUT /expire/service_instance/{instance_id}", h.expireInstance)
 }
 
 func (h *handler) expireInstance(w http.ResponseWriter, req *http.Request) {

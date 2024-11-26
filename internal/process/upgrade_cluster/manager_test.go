@@ -1,17 +1,16 @@
 package upgrade_cluster
 
 import (
+	"context"
 	"fmt"
 	"strings"
+	"sync"
 	"testing"
 	"time"
 
 	"github.com/kyma-project/kyma-environment-broker/common/orchestration"
 	"github.com/kyma-project/kyma-environment-broker/internal"
 	"github.com/kyma-project/kyma-environment-broker/internal/storage"
-
-	"context"
-	"sync"
 
 	"github.com/kyma-project/kyma-environment-broker/internal/event"
 	"github.com/kyma-project/kyma-environment-broker/internal/process"

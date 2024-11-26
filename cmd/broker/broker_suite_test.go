@@ -15,7 +15,6 @@ import (
 	"time"
 
 	"github.com/google/uuid"
-	"github.com/gorilla/mux"
 	"github.com/kyma-project/control-plane/components/provisioner/pkg/gqlschema"
 	imv1 "github.com/kyma-project/infrastructure-manager/api/v1"
 	"github.com/kyma-project/kyma-environment-broker/common/gardener"
@@ -29,6 +28,7 @@ import (
 	"github.com/kyma-project/kyma-environment-broker/internal/event"
 	"github.com/kyma-project/kyma-environment-broker/internal/expiration"
 	"github.com/kyma-project/kyma-environment-broker/internal/fixture"
+	"github.com/kyma-project/kyma-environment-broker/internal/httputil"
 	"github.com/kyma-project/kyma-environment-broker/internal/kubeconfig"
 	kcMock "github.com/kyma-project/kyma-environment-broker/internal/kubeconfig/automock"
 	"github.com/kyma-project/kyma-environment-broker/internal/metricsv2"
@@ -94,7 +94,7 @@ type BrokerSuiteTest struct {
 	gardenerClient    dynamic.Interface
 
 	httpServer *httptest.Server
-	router     *mux.Router
+	router     *httputil.Router
 
 	t                   *testing.T
 	inputBuilderFactory input.CreatorForPlan
@@ -229,7 +229,7 @@ func NewBrokerSuiteTestWithConfig(t *testing.T, cfg *Config, version ...string) 
 		storageCleanup:      storageCleanup,
 		provisionerClient:   provisionerClient,
 		gardenerClient:      gardenerClient,
-		router:              mux.NewRouter(),
+		router:              httputil.NewRouter(),
 		t:                   t,
 		inputBuilderFactory: inputFactory,
 		k8sKcp:              cli,

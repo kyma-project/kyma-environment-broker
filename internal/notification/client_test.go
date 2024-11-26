@@ -8,7 +8,7 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"github.com/gorilla/mux"
+	"github.com/kyma-project/kyma-environment-broker/internal/httputil"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -119,12 +119,12 @@ type server struct {
 func fixHTTPServer(t *testing.T) *httptest.Server {
 	s := server{t: t}
 
-	r := mux.NewRouter()
-	r.HandleFunc("/createMaintenanceEvent", s.authorized(s.createEvent)).Methods(http.MethodPost)
-	r.HandleFunc("/updateMaintenanceEvent", s.authorized(s.updateEvent)).Methods(http.MethodPatch)
-	r.HandleFunc("/cancelMaintenanceEvent", s.authorized(s.cancelEvent)).Methods(http.MethodPatch)
+	r := httputil.NewRouter()
+	r.HandleFunc("POST /createMaintenanceEvent", s.authorized(s.createEvent))
+	r.HandleFunc("PATCH /updateMaintenanceEvent", s.authorized(s.updateEvent))
+	r.HandleFunc("PATCH /cancelMaintenanceEvent", s.authorized(s.cancelEvent))
 
-	r.HandleFunc("/get", s.getConfiguration).Methods(http.MethodGet)
+	r.HandleFunc("GET /get", s.getConfiguration)
 
 	return httptest.NewServer(r)
 }

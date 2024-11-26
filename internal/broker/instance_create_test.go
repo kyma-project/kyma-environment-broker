@@ -920,7 +920,7 @@ func TestProvision_Provision(t *testing.T) {
 		oidcParams := `"clientID":"client-id"`
 		err := fmt.Errorf("issuerURL must not be empty")
 		errMsg := fmt.Sprintf("[instanceID: %s] %s", instanceID, err)
-		expectedErr := apiresponses.NewFailureResponse(err, http.StatusBadRequest, errMsg)
+		expectedErr := apiresponses.NewFailureResponse(err, http.StatusBadRequest, errMsg).(*apiresponses.FailureResponse)
 
 		// when
 		_, err = provisionEndpoint.Provision(fixRequestContext(t, "req-region"), instanceID, domain.ProvisionDetails{
@@ -979,7 +979,7 @@ func TestProvision_Provision(t *testing.T) {
 		oidcParams := `"issuerURL":"https://test.local"`
 		err := fmt.Errorf("clientID must not be empty")
 		errMsg := fmt.Sprintf("[instanceID: %s] %s", instanceID, err)
-		expectedErr := apiresponses.NewFailureResponse(err, http.StatusBadRequest, errMsg)
+		expectedErr := apiresponses.NewFailureResponse(err, http.StatusBadRequest, errMsg).(*apiresponses.FailureResponse)
 
 		// when
 		_, err = provisionEndpoint.Provision(fixRequestContext(t, "req-region"), instanceID, domain.ProvisionDetails{
@@ -1038,7 +1038,7 @@ func TestProvision_Provision(t *testing.T) {
 		oidcParams := `"clientID":"client-id","issuerURL":"https://test.local","signingAlgs":["RS256","notValid"]`
 		err := fmt.Errorf("signingAlgs must contain valid signing algorithm(s)")
 		errMsg := fmt.Sprintf("[instanceID: %s] %s", instanceID, err)
-		expectedErr := apiresponses.NewFailureResponse(err, http.StatusBadRequest, errMsg)
+		expectedErr := apiresponses.NewFailureResponse(err, http.StatusBadRequest, errMsg).(*apiresponses.FailureResponse)
 
 		// when
 		_, err = provisionEndpoint.Provision(fixRequestContext(t, "req-region"), instanceID, domain.ProvisionDetails{
@@ -1839,7 +1839,7 @@ func TestSapConvergedCloudBlocking(t *testing.T) {
 		oidcParams := `"clientID":"client-id","issuerURL":"https://test.local","signingAlgs":["RS256"]`
 		err := fmt.Errorf(broker.CONVERGED_CLOUD_BLOCKED_MSG)
 		errMsg := broker.CONVERGED_CLOUD_BLOCKED_MSG
-		expectedErr := apiresponses.NewFailureResponse(err, http.StatusBadRequest, errMsg)
+		expectedErr := apiresponses.NewFailureResponse(err, http.StatusBadRequest, errMsg).(*apiresponses.FailureResponse)
 
 		// when
 		_, err = provisionEndpoint.Provision(fixRequestContext(t, "eu-de-1"), instanceID, domain.ProvisionDetails{

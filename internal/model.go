@@ -4,14 +4,13 @@ import (
 	"database/sql"
 	"time"
 
-	"github.com/kyma-project/kyma-environment-broker/internal/euaccess"
-
 	"github.com/google/uuid"
 	"github.com/kyma-project/control-plane/components/provisioner/pkg/gqlschema"
 	"github.com/kyma-project/kyma-environment-broker/common/gardener"
 	"github.com/kyma-project/kyma-environment-broker/common/orchestration"
 	pkg "github.com/kyma-project/kyma-environment-broker/common/runtime"
 	kebError "github.com/kyma-project/kyma-environment-broker/internal/error"
+	"github.com/kyma-project/kyma-environment-broker/internal/euaccess"
 	"github.com/kyma-project/kyma-environment-broker/internal/events"
 	"github.com/kyma-project/kyma-environment-broker/internal/ptr"
 	"github.com/pivotal-cf/brokerapi/v11/domain"
