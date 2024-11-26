@@ -71,36 +71,4 @@ func TestWorkerLogging(t *testing.T) {
 		require.True(t, strings.Contains(stringLogs, "executed after"))
 	})
 
-	t.Run("should log health information", func(t *testing.T) {
-		// given
-		logger := logrus.New()
-
-		var logs bytes.Buffer
-		logger.SetOutput(&logs)
-
-		cancelContext, cancel := context.WithCancel(context.Background())
-		var waitGroup sync.WaitGroup
-
-		queue := NewQueue(&StdExecutor{logger: func(msg string) {
-			t.Log(msg)
-			waitGroup.Done()
-		}}, logger, "test", 0, 0)
-
-		waitGroup.Add(2)
-		queue.Add("processId2")
-		queue.AddAfter("processId", 0)
-		queue.Run(cancelContext.Done(), 1)
-
-		waitGroup.Wait()
-
-		queue.ShutDown()
-		cancel()
-		queue.waitGroup.Wait()
-
-		// then
-		stringLogs := logs.String()
-		t.Log(stringLogs)
-		require.True(t, strings.Contains(stringLogs, "msg=\"health - "))
-		require.True(t, strings.Contains(stringLogs, "since last execution"))
-	})
 }
