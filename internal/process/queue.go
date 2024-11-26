@@ -121,7 +121,7 @@ func (q *Queue) worker(queue workqueue.RateLimitingInterface, process func(key s
 
 				when, err := process(id)
 				if err == nil && when != 0 {
-					log.Infof("Adding %q item after %s, queue length %s", id, when, q.queue.Len())
+					log.Infof("Adding %q item after %s, queue length %d", id, when, q.queue.Len())
 					afterDuration := time.Duration(int64(when) / q.speedFactor)
 					queue.AddAfter(key, afterDuration)
 					return false
