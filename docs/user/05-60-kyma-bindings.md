@@ -44,7 +44,7 @@ Next, KEB checks if the binding already exists. The binding in the database is i
 The OSB API requires a request to create a binding to fail if an object has already been created and the request contains different parameters. 
 Next, if the found binding is not expired, KEB returns it in the response. At this point, the flow returns to the process's execution path, where no bindings exist in the database. 
 Whether the binding exists or not, the last step in the request validation is to verify the number of bindings. 
-Every instance is allowed to create a limited number of bindings. The limit is configurable and, by default, set to 10. 
+Every instance is allowed to create a limited number of bindings. The limit is configurable and, by default, set to 10 non-expired bindings. 
 If the limit is not exceeded, KEB proceeds to the next phase of the process - binding creation.   
 
 

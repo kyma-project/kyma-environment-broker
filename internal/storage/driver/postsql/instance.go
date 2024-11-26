@@ -496,8 +496,8 @@ func (s *Instance) Delete(instanceID string) error {
 	return sess.DeleteInstance(instanceID)
 }
 
-func (s *Instance) GetInstanceStats() (internal.InstanceStats, error) {
-	entries, err := s.NewReadSession().GetInstanceStats()
+func (s *Instance) GetActiveInstanceStats() (internal.InstanceStats, error) {
+	entries, err := s.NewReadSession().GetActiveInstanceStats()
 	if err != nil {
 		return internal.InstanceStats{}, err
 	}

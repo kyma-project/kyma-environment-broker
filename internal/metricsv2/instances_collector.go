@@ -18,7 +18,7 @@ import (
 // - kcp_keb_global_account_id_instances_total - total number of all instances per global account
 // - kcp_keb_ers_context_license_type_total - count of instances grouped by license types
 type InstancesStatsGetter interface {
-	GetInstanceStats() (internal.InstanceStats, error)
+	GetActiveInstanceStats() (internal.InstanceStats, error)
 	GetERSContextStats() (internal.ERSContextStats, error)
 }
 
@@ -61,7 +61,7 @@ func (c *InstancesCollector) Describe(ch chan<- *prometheus.Desc) {
 
 // Collect implements the prometheus.Collector interface.
 func (c *InstancesCollector) Collect(ch chan<- prometheus.Metric) {
-	stats, err := c.statsGetter.GetInstanceStats()
+	stats, err := c.statsGetter.GetActiveInstanceStats()
 	if err != nil {
 		c.logger.Error(err)
 	} else {

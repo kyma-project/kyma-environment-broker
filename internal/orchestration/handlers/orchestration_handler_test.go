@@ -247,7 +247,7 @@ func TestStatusRetryHandler_AttachRoutes(t *testing.T) {
 		require.NoError(t, err)
 
 		logs := logrus.New()
-		clusterQueue := process.NewQueue(&testExecutor{}, logs)
+		clusterQueue := process.NewQueue(&testExecutor{}, logs, "orchestration-test", 10*time.Second, 10*time.Second)
 		kymaHandler := NewOrchestrationStatusHandler(db.Operations(), db.Orchestrations(), db.RuntimeStates(), clusterQueue, 100, logs)
 
 		for i, id := range operationIDs {
@@ -330,7 +330,7 @@ func TestStatusRetryHandler_AttachRoutes(t *testing.T) {
 		require.NoError(t, err)
 
 		logs := logrus.New()
-		clusterQueue := process.NewQueue(&testExecutor{}, logs)
+		clusterQueue := process.NewQueue(&testExecutor{}, logs, "status-retry", 10*time.Second, 10*time.Second)
 		kymaHandler := NewOrchestrationStatusHandler(db.Operations(), db.Orchestrations(), db.RuntimeStates(), clusterQueue, 100, logs)
 
 		req, err := http.NewRequest("POST", fmt.Sprintf("/orchestrations/%s/retry", orchestrationID), nil)
@@ -413,7 +413,7 @@ func TestStatusRetryHandler_AttachRoutes(t *testing.T) {
 		require.NoError(t, err)
 
 		logs := logrus.New()
-		clusterQueue := process.NewQueue(&testExecutor{}, logs)
+		clusterQueue := process.NewQueue(&testExecutor{}, logs, "status-retry", 10*time.Second, 10*time.Second)
 		kymaHandler := NewOrchestrationStatusHandler(db.Operations(), db.Orchestrations(), db.RuntimeStates(), clusterQueue, 100, logs)
 
 		req, err := http.NewRequest("POST", fmt.Sprintf("/orchestrations/%s/retry", orchestrationID), nil)
@@ -476,7 +476,7 @@ func TestStatusRetryHandler_AttachRoutes(t *testing.T) {
 		require.NoError(t, err)
 
 		logs := logrus.New()
-		clusterQueue := process.NewQueue(&testExecutor{}, logs)
+		clusterQueue := process.NewQueue(&testExecutor{}, logs, "status-retry", 10*time.Second, 10*time.Second)
 		kymaHandler := NewOrchestrationStatusHandler(db.Operations(), db.Orchestrations(), db.RuntimeStates(), clusterQueue, 100, logs)
 
 		req, err := http.NewRequest("POST", fmt.Sprintf("/orchestrations/%s/retry", orchestrationID), nil)

@@ -147,7 +147,7 @@ func NewProvisioningProcessingQueue(ctx context.Context, provisionManager *proce
 		}
 	}
 
-	queue := process.NewQueue(provisionManager, logs)
+	queue := process.NewQueue(provisionManager, logs, "provisioning", cfg.Broker.WorkerHealthCheckWarnInterval, cfg.Broker.WorkerHealthCheckInterval)
 	queue.Run(ctx.Done(), workersAmount)
 
 	return queue
