@@ -2,10 +2,9 @@ package provisioning
 
 import (
 	"fmt"
+	"time"
 
 	"github.com/google/uuid"
-
-	"time"
 
 	"github.com/kyma-project/kyma-environment-broker/internal"
 	"github.com/kyma-project/kyma-environment-broker/internal/process"

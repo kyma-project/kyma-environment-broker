@@ -3,7 +3,6 @@ package main
 import (
 	"context"
 	"fmt"
-	"io"
 	"log/slog"
 	"net/http"
 	"os"
@@ -332,7 +331,7 @@ func main() {
 	kcBuilder := kubeconfig.NewBuilder(provisionerClient, kcpK8sClient, skrK8sClientProvider)
 
 	// create server
-	router := broker.NewRouter()
+	router := httputil.NewRouter()
 	createAPI(router, servicesConfig, inputFactory, &cfg, db, provisionQueue, deprovisionQueue, updateQueue, logger, logs,
 		inputFactory.GetPlanDefaults, kcBuilder, skrK8sClientProvider, skrK8sClientProvider, gardenerClient, kcpK8sClient, eventBroker)
 
@@ -388,14 +387,19 @@ func main() {
 	expirationHandler := expiration.NewHandler(db.Instances(), db.Operations(), deprovisionQueue, logs)
 	expirationHandler.AttachRoutes(router)
 
-	router.StrictSlash(true).PathPrefix("/").Handler(http.StripPrefix("/", http.FileServer(http.Dir("/swagger"))))
+	/*
+		** to replace with own solution
+		router.StrictSlash(true).PathPrefix("/").Handler(http.StripPrefix("/", http.FileServer(http.Dir("/swagger"))))
+	*/
+
 	/*
 		** to replace with own solution
 		svr := handlers.CustomLoggingHandler(os.Stdout, router, func(writer io.Writer, params handlers.LogFormatterParams) {
 			logs.Infof("Call handled: method=%s url=%s statusCode=%d size=%d", params.Request.Method, params.URL.Path, params.StatusCode, params.Size)
 		})
 	*/
-	fatalOnError(http.ListenAndServe(cfg.Host+":"+cfg.Port, svr), logs)
+
+	fatalOnError(http.ListenAndServe(cfg.Host+":"+cfg.Port, router), logs)
 }
 
 func logConfiguration(logs *logrus.Logger, cfg Config) {
@@ -414,7 +418,7 @@ func logConfiguration(logs *logrus.Logger, cfg Config) {
 	logs.Infof("Is UpdateCustomResourcesLabelsOnAccountMove enabled: %t", cfg.Broker.UpdateCustomResourcesLabelsOnAccountMove)
 }
 
-func createAPI(router *broker.Router, servicesConfig broker.ServicesConfig, planValidator broker.PlanValidator, cfg *Config, db storage.BrokerStorage,
+func createAPI(router *httputil.Router, servicesConfig broker.ServicesConfig, planValidator broker.PlanValidator, cfg *Config, db storage.BrokerStorage,
 	provisionQueue, deprovisionQueue, updateQueue *process.Queue, logger *slog.Logger, logs logrus.FieldLogger, planDefaults broker.PlanDefaults, kcBuilder kubeconfig.KcBuilder, clientProvider K8sClientProvider, kubeconfigProvider KubeconfigProvider, gardenerClient, kcpK8sClient client.Client, publisher event.Publisher) {
 
 	suspensionCtxHandler := suspension.NewContextUpdateHandler(db.Operations(), provisionQueue, deprovisionQueue, logs)

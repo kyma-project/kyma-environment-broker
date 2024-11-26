@@ -1,10 +1,9 @@
 package deprovisioning
 
 import (
+	"fmt"
 	"testing"
 	"time"
-
-	"fmt"
 
 	"github.com/kyma-project/kyma-environment-broker/common/hyperscaler"
 	hyperscalerMocks "github.com/kyma-project/kyma-environment-broker/common/hyperscaler/automock"

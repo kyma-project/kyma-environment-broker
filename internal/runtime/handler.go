@@ -5,30 +5,23 @@ import (
 	"fmt"
 	"net/http"
 
-	"k8s.io/apimachinery/pkg/api/errors"
-
-	"github.com/kyma-project/kyma-environment-broker/internal/process/steps"
-	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
-	"k8s.io/apimachinery/pkg/runtime/schema"
-
-	"sigs.k8s.io/controller-runtime/pkg/client"
-
-	"github.com/sirupsen/logrus"
-
-	"github.com/kyma-project/kyma-environment-broker/internal/broker"
-
-	"github.com/kyma-project/kyma-environment-broker/internal/provisioner"
-	"github.com/kyma-project/kyma-environment-broker/internal/ptr"
-	"golang.org/x/exp/slices"
-
-	"github.com/gorilla/mux"
 	"github.com/kyma-project/kyma-environment-broker/common/pagination"
 	pkg "github.com/kyma-project/kyma-environment-broker/common/runtime"
 	"github.com/kyma-project/kyma-environment-broker/internal"
+	"github.com/kyma-project/kyma-environment-broker/internal/broker"
 	"github.com/kyma-project/kyma-environment-broker/internal/httputil"
+	"github.com/kyma-project/kyma-environment-broker/internal/process/steps"
+	"github.com/kyma-project/kyma-environment-broker/internal/provisioner"
+	"github.com/kyma-project/kyma-environment-broker/internal/ptr"
 	"github.com/kyma-project/kyma-environment-broker/internal/storage"
 	"github.com/kyma-project/kyma-environment-broker/internal/storage/dberr"
 	"github.com/kyma-project/kyma-environment-broker/internal/storage/dbmodel"
+	"github.com/sirupsen/logrus"
+	"golang.org/x/exp/slices"
+	"k8s.io/apimachinery/pkg/api/errors"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+	"k8s.io/apimachinery/pkg/runtime/schema"
+	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
 const numberOfUpgradeOperationsToReturn = 2
@@ -67,7 +60,7 @@ func NewHandler(instanceDb storage.Instances, operationDb storage.Operations, ru
 	}
 }
 
-func (h *Handler) AttachRoutes(router *mux.Router) {
+func (h *Handler) AttachRoutes(router *httputil.Router) {
 	router.HandleFunc("/runtimes", h.getRuntimes)
 }
 

@@ -8,7 +8,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/gorilla/mux"
 	"github.com/kyma-project/kyma-environment-broker/internal"
 	"github.com/kyma-project/kyma-environment-broker/internal/appinfo"
 	"github.com/kyma-project/kyma-environment-broker/internal/appinfo/automock"
@@ -225,7 +224,7 @@ func TestRuntimeInfoHandlerOperationRecognition(t *testing.T) {
 		runtimesInfoHandler := appinfo.NewRuntimeInfoHandler(instances, operations, broker.PlansConfig{}, "", responseWriter)
 
 		rr := httptest.NewRecorder()
-		router := mux.NewRouter()
+		router := httputil.NewRouter()
 		router.Handle("/info/runtimes", runtimesInfoHandler)
 
 		// when
@@ -334,7 +333,7 @@ func TestRuntimeInfoHandlerOperationRecognition(t *testing.T) {
 		runtimesInfoHandler := appinfo.NewRuntimeInfoHandler(instances, operations, broker.PlansConfig{}, "", responseWriter)
 
 		rr := httptest.NewRecorder()
-		router := mux.NewRouter()
+		router := httputil.NewRouter()
 		router.Handle("/info/runtimes", runtimesInfoHandler)
 
 		// when
@@ -472,7 +471,7 @@ func TestRuntimeInfoHandlerOperationRecognition(t *testing.T) {
 		runtimesInfoHandler := appinfo.NewRuntimeInfoHandler(instances, operations, broker.PlansConfig{}, "", responseWriter)
 
 		rr := httptest.NewRecorder()
-		router := mux.NewRouter()
+		router := httputil.NewRouter()
 		router.Handle("/info/runtimes", runtimesInfoHandler)
 
 		// when

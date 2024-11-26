@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"net/http"
 
-	"github.com/gorilla/mux"
 	"github.com/kyma-project/kyma-environment-broker/internal/httputil"
 )
 
@@ -14,8 +13,8 @@ func NewKymaHandler() *kymaHandler {
 	return &kymaHandler{}
 }
 
-func (h *kymaHandler) AttachRoutes(router *mux.Router) {
-	router.HandleFunc("/upgrade/kyma", h.createOrchestration).Methods(http.MethodPost)
+func (h *kymaHandler) AttachRoutes(r router) {
+	r.HandleFunc("POST /upgrade/kyma", h.createOrchestration)
 }
 
 func (h *kymaHandler) createOrchestration(w http.ResponseWriter, r *http.Request) {
