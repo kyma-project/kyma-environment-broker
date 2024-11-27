@@ -868,8 +868,7 @@ func buildInstanceStateFilters(table string, filter dbmodel.InstanceFilter) dbr.
 		}
 	}
 	if filter.Suspended != nil && *filter.Suspended {
-		exprs = append(exprs, dbr.And(
-			dbr.Expr("((provisioning_parameters::JSONB->>'ers_context')::JSONB->>'active')::BOOLEAN IS false")))
+		exprs = append(exprs, dbr.Expr("((instances.provisioning_parameters::JSONB->>'ers_context')::JSONB->>'active')::BOOLEAN IS false"))
 	}
 
 	return dbr.Or(exprs...)
