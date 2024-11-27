@@ -921,7 +921,7 @@ func addInstanceFilters(stmt *dbr.SelectStmt, filter dbmodel.InstanceFilter) {
 	}
 
 	if filter.Suspended != nil && *filter.Suspended {
-		stmt.Where("((provisioning_parameters::JSONB->>'ers_context')::JSONB->>'active')::BOOLEAN IS false")
+		stmt.Where("(provisioning_parameters->'ers_context'->'active')::BOOLEAN IS false")
 	}
 }
 
