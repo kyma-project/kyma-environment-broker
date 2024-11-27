@@ -867,6 +867,10 @@ func buildInstanceStateFilters(table string, filter dbmodel.InstanceFilter) dbr.
 			))
 		}
 	}
+	if filter.Suspended != nil && *filter.Suspended {
+		exprs = append(exprs, dbr.And(
+			dbr.Expr("((provisioning_parameters::JSONB->>'ers_context')::JSONB->>'active')::BOOLEAN IS false")))
+	}
 
 	return dbr.Or(exprs...)
 }
@@ -918,10 +922,6 @@ func addInstanceFilters(stmt *dbr.SelectStmt, filter dbmodel.InstanceFilter) {
 
 	if filter.BindingExists != nil && *filter.BindingExists {
 		stmt.Where("exists (select instance_id from bindings where bindings.instance_id=instances.instance_id)")
-	}
-
-	if filter.Suspended != nil && *filter.Suspended {
-		stmt.Where("((instances.provisioning_parameters::JSONB->>'ers_context')::JSONB->>'active')::BOOLEAN IS false")
 	}
 }
 
