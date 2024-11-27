@@ -36,6 +36,7 @@ type InstanceFilter struct {
 	Expired                      *bool
 	DeletionAttempted            *bool
 	BindingExists                *bool
+	Suspended                    *bool
 }
 
 type InstanceDTO struct {

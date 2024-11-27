@@ -134,6 +134,11 @@ func (h *Handler) listInstances(filter dbmodel.InstanceFilter) ([]pkg.RuntimeDTO
 	}
 
 	var result []pkg.RuntimeDTO
+	if filter.Suspended != nil {
+		if *filter.Suspended {
+			filter.States = append(filter.States, dbmodel.InstanceDeprovisioned)
+		}
+	}
 	instances, count, total, err := h.instancesDb.List(filter)
 	if err != nil {
 		return []pkg.RuntimeDTO{}, 0, 0, err
@@ -497,7 +502,8 @@ func (h *Handler) getFilters(req *http.Request) dbmodel.InstanceFilter {
 			case pkg.StateUpdating:
 				filter.States = append(filter.States, dbmodel.InstanceUpdating)
 			case pkg.StateSuspended:
-				filter.States = append(filter.States, dbmodel.InstanceDeprovisioned)
+				suspended := true
+				filter.Suspended = &suspended
 			case pkg.StateDeprovisioned:
 				filter.States = append(filter.States, dbmodel.InstanceDeprovisioned)
 			case pkg.StateDeprovisionIncomplete:
