@@ -919,6 +919,10 @@ func addInstanceFilters(stmt *dbr.SelectStmt, filter dbmodel.InstanceFilter) {
 	if filter.BindingExists != nil && *filter.BindingExists {
 		stmt.Where("exists (select instance_id from bindings where bindings.instance_id=instances.instance_id)")
 	}
+
+	if filter.Suspended != nil && *filter.Suspended {
+		stmt.Where("((provisioning_parameters::JSONB->>'ers_context')::JSONB->>'active')::BOOLEAN IS false")
+	}
 }
 
 func addOrchestrationFilters(stmt *dbr.SelectStmt, filter dbmodel.OrchestrationFilter) {

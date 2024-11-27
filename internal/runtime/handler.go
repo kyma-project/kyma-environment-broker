@@ -134,11 +134,6 @@ func (h *Handler) listInstances(filter dbmodel.InstanceFilter) ([]pkg.RuntimeDTO
 	}
 
 	var result []pkg.RuntimeDTO
-	if filter.Suspended != nil {
-		if *filter.Suspended {
-			filter.States = append(filter.States, dbmodel.InstanceDeprovisioned)
-		}
-	}
 	instances, count, total, err := h.instancesDb.List(filter)
 	if err != nil {
 		return []pkg.RuntimeDTO{}, 0, 0, err
