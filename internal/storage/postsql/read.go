@@ -757,7 +757,9 @@ func (r readSession) ListInstances(filter dbmodel.InstanceFilter) ([]dbmodel.Ins
 	}
 
 	addInstanceFilters(stmt, filter)
-	fmt.Println(stmt)
+	buf := dbr.NewBuffer()
+	_ = stmt.Build(stmt.Dialect, buf)
+	fmt.Println(buf.String())
 
 	_, err := stmt.Load(&instances)
 	if err != nil {
