@@ -311,9 +311,7 @@ func (s *instances) filterInstances(filter dbmodel.InstanceFilter) []internal.In
 			continue
 		}
 		if len(filter.Shoots) > 0 {
-			// required for shootName
-			lastOp, _ := s.operationsStorage.GetLastOperation(v.InstanceID)
-			if ok = matchFilter(lastOp.ShootName, filter.Shoots, shootMatch); !ok {
+			if ok = matchFilter(v.InstanceDetails.ShootName, filter.Shoots, shootMatch); !ok {
 				continue
 			}
 		}

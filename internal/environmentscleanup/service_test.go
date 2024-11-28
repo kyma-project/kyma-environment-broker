@@ -33,9 +33,11 @@ const (
 	fixRuntimeID3  = "rntime-3"
 	fixOperationID = "operation-id"
 
-	fixAccountID       = "account-id"
-	maxShootAge        = 24 * time.Hour
-	shootLabelSelector = "owner.do-not-delete!=true"
+	fixAccountID             = "account-id"
+	maxShootAge              = 24 * time.Hour
+	shootLabelSelector       = "owner.do-not-delete!=true"
+	shootAnnotationRuntimeId = "infrastructuremanager.kyma-project.io/runtime-id"
+	shootLabelAccountId      = "account"
 )
 
 func TestService_PerformCleanup(t *testing.T) {
@@ -59,11 +61,17 @@ func TestService_PerformCleanup(t *testing.T) {
 		err := memoryStorage.Instances().Insert(internal.Instance{
 			InstanceID: fixInstanceID1,
 			RuntimeID:  fixRuntimeID1,
+			InstanceDetails: internal.InstanceDetails{
+				ShootName: "az-1234",
+			},
 		})
 		assert.NoError(t, err)
 		err = memoryStorage.Instances().Insert(internal.Instance{
 			InstanceID: fixInstanceID2,
 			RuntimeID:  fixRuntimeID2,
+			InstanceDetails: internal.InstanceDetails{
+				ShootName: "gcp-1234",
+			},
 		})
 		assert.NoError(t, err)
 		logger := logrus.New()
@@ -115,16 +123,25 @@ func TestService_PerformCleanup(t *testing.T) {
 		err := memoryStorage.Instances().Insert(internal.Instance{
 			InstanceID: "some-instance-id",
 			RuntimeID:  "not-matching-id",
+			InstanceDetails: internal.InstanceDetails{
+				ShootName: "some-shoot-id",
+			},
 		})
 		assert.NoError(t, err)
 		err = memoryStorage.Instances().Insert(internal.Instance{
 			InstanceID: fixInstanceID1,
 			RuntimeID:  fixRuntimeID1,
+			InstanceDetails: internal.InstanceDetails{
+				ShootName: "az-1234",
+			},
 		})
 		assert.NoError(t, err)
 		err = memoryStorage.Instances().Insert(internal.Instance{
 			InstanceID: fixInstanceID2,
 			RuntimeID:  fixRuntimeID2,
+			InstanceDetails: internal.InstanceDetails{
+				ShootName: "gcp-1234",
+			},
 		})
 		assert.NoError(t, err)
 		logger := logrus.New()
@@ -153,16 +170,25 @@ func TestService_PerformCleanup(t *testing.T) {
 		err := memoryStorage.Instances().Insert(internal.Instance{
 			InstanceID: fixInstanceID1,
 			RuntimeID:  fixRuntimeID1,
+			InstanceDetails: internal.InstanceDetails{
+				ShootName: "az-1234",
+			},
 		})
 		assert.NoError(t, err)
 		err = memoryStorage.Instances().Insert(internal.Instance{
 			InstanceID: fixInstanceID2,
 			RuntimeID:  fixRuntimeID2,
+			InstanceDetails: internal.InstanceDetails{
+				ShootName: "gcp-1234",
+			},
 		})
 		assert.NoError(t, err)
 		err = memoryStorage.Instances().Insert(internal.Instance{
 			InstanceID: fixInstanceID3,
 			RuntimeID:  fixRuntimeID3,
+			InstanceDetails: internal.InstanceDetails{
+				ShootName: "az-4567",
+			},
 		})
 		assert.NoError(t, err)
 
@@ -220,8 +246,8 @@ func TestService_PerformCleanup(t *testing.T) {
 							"name":              "az-1234",
 							"creationTimestamp": creationTime,
 							"annotations": map[string]interface{}{
-								shootAnnotationInfrastructureManagerRuntimeId: fixRuntimeID2,
-								shootLabelAccountId:                           fixAccountID,
+								shootAnnotationRuntimeId: fixRuntimeID2,
+								shootLabelAccountId:      fixAccountID,
 							},
 							"clusterName": "cluster-one",
 						},
@@ -239,11 +265,6 @@ func TestService_PerformCleanup(t *testing.T) {
 		bcMock := &mocks.BrokerClient{}
 
 		memoryStorage := storage.NewMemoryStorage()
-		err := memoryStorage.Instances().Insert(internal.Instance{
-			InstanceID: fixInstanceID1,
-			RuntimeID:  fixRuntimeID1,
-		})
-		assert.NoError(t, err)
 
 		var actualLog bytes.Buffer
 		logger := logrus.New()
@@ -276,11 +297,17 @@ func TestService_PerformCleanup(t *testing.T) {
 		err := memoryStorage.Instances().Insert(internal.Instance{
 			InstanceID: fixInstanceID1,
 			RuntimeID:  fixRuntimeID1,
+			InstanceDetails: internal.InstanceDetails{
+				ShootName: "az-1234",
+			},
 		})
 		assert.NoError(t, err)
 		err = memoryStorage.Instances().Insert(internal.Instance{
 			InstanceID: fixInstanceID2,
 			RuntimeID:  fixRuntimeID2,
+			InstanceDetails: internal.InstanceDetails{
+				ShootName: "gcp-1234",
+			},
 		})
 		assert.NoError(t, err)
 
@@ -329,11 +356,17 @@ func TestService_PerformCleanup(t *testing.T) {
 		err := memoryStorage.Instances().Insert(internal.Instance{
 			InstanceID: fixInstanceID1,
 			RuntimeID:  fixRuntimeID1,
+			InstanceDetails: internal.InstanceDetails{
+				ShootName: "az-1234",
+			},
 		})
 		assert.NoError(t, err)
 		err = memoryStorage.Instances().Insert(internal.Instance{
 			InstanceID: fixInstanceID2,
 			RuntimeID:  fixRuntimeID2,
+			InstanceDetails: internal.InstanceDetails{
+				ShootName: "gcp-1234",
+			},
 		})
 		assert.NoError(t, err)
 
