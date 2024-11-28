@@ -287,10 +287,6 @@ func (s *Service) triggerEnvironmentDeprovisioning(instance internal.Instance) e
 func (s *Service) cleanUpRuntimeCRs(runtimeCRs []runtime) error {
 	s.logger.Infof("RuntimeCRs to process: %+v", runtimeCRs)
 
-	if len(runtimeCRs) == 0 {
-		return nil
-	}
-
 	var result *multierror.Error
 
 	for _, runtime := range runtimeCRs {
