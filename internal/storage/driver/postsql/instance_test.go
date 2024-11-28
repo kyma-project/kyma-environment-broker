@@ -815,6 +815,74 @@ func TestInstance(t *testing.T) {
 		require.NoError(t, err)
 		require.Equal(t, 3, notCompletelyDeleted)
 	})
+
+	t.Run("Should list suspended instances", func(t *testing.T) {
+		storageCleanup, brokerStorage, err := GetStorageForDatabaseTests()
+		require.NoError(t, err)
+		require.NotNil(t, brokerStorage)
+		defer func() {
+			err := storageCleanup()
+			assert.NoError(t, err)
+		}()
+
+		// populate database with samples
+		inst1 := fixInstance(instanceData{val: "inst1"})
+		inst2 := fixInstance(instanceData{val: "inst2"})
+		inst3 := fixInstance(instanceData{val: "inst3"})
+		inst3.Parameters.ErsContext.Active = ptr.Bool(false)
+		inst4 := fixInstance(instanceData{val: "inst4"})
+		fixInstances := []internal.Instance{*inst1, *inst2, *inst3, *inst4}
+
+		for _, i := range fixInstances {
+			err = brokerStorage.Instances().Insert(i)
+			require.NoError(t, err)
+		}
+
+		// inst1 is in succeeded state
+		provOp1 := fixProvisionOperation("inst1")
+		provOp1.State = domain.Succeeded
+		err = brokerStorage.Operations().InsertOperation(provOp1)
+		require.NoError(t, err)
+
+		// inst2 is in succeeded state
+		provOp2 := fixProvisionOperation("inst2")
+		provOp2.State = domain.Succeeded
+		err = brokerStorage.Operations().InsertOperation(provOp2)
+		require.NoError(t, err)
+		deprovOp2 := fixDeprovisionOperation("inst2")
+		deprovOp2.Temporary = true
+		deprovOp2.State = domain.Succeeded
+		deprovOp2.CreatedAt = deprovOp2.CreatedAt.Add(2 * time.Minute)
+		err = brokerStorage.Operations().InsertDeprovisioningOperation(deprovOp2)
+		require.NoError(t, err)
+
+		// inst3 is in succeeded state
+		provOp3 := fixProvisionOperation("inst3")
+		provOp3.State = domain.Succeeded
+		err = brokerStorage.Operations().InsertOperation(provOp3)
+		require.NoError(t, err)
+		deprovOp3 := fixDeprovisionOperation("inst3")
+		deprovOp3.Temporary = true
+		deprovOp3.State = domain.Succeeded
+		deprovOp3.CreatedAt = deprovOp3.CreatedAt.Add(2 * time.Minute)
+		err = brokerStorage.Operations().InsertDeprovisioningOperation(deprovOp3)
+		require.NoError(t, err)
+
+		// inst4 is in failed state
+		provOp4 := fixProvisionOperation("inst4")
+		provOp4.State = domain.Failed
+		err = brokerStorage.Operations().InsertOperation(provOp4)
+		require.NoError(t, err)
+
+		// when
+		suspendedFilter := dbmodel.InstanceFilter{Suspended: ptr.Bool(true)}
+
+		_, suspended, _, err := brokerStorage.Instances().List(suspendedFilter)
+
+		// then
+		require.NoError(t, err)
+		require.Equal(t, 1, suspended)
+	})
 }
 
 func assertInstanceByIgnoreTime(t *testing.T, want, got internal.Instance) {
