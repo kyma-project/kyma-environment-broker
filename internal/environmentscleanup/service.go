@@ -47,6 +47,8 @@ type Service struct {
 	logger          *log.Logger
 	MaxShootAge     time.Duration
 	LabelSelector   string
+	instances       map[string]internal.Instance
+	runtimeCRs      map[string]imv1.Runtime
 }
 
 type runtime struct {
@@ -179,6 +181,25 @@ func (s *Service) getStaleRuntimesByShoots(labelSelector string) ([]runtime, []r
 		return []runtime{}, []runtime{}, []unstructured.Unstructured{}, fmt.Errorf("while listing Gardener shoots: %w", err)
 	}
 
+	s.instances = make(map[string]internal.Instance)
+	instanceList, _, _, err := s.instanceStorage.List(dbmodel.InstanceFilter{})
+	if err != nil {
+		return []runtime{}, []runtime{}, []unstructured.Unstructured{}, fmt.Errorf("while listing instances: %w", err)
+	}
+	for _, instance := range instanceList {
+		s.instances[instance.InstanceDetails.ShootName] = instance
+	}
+
+	s.runtimeCRs = make(map[string]imv1.Runtime)
+	var runtimeCRList imv1.RuntimeList
+	err = s.k8sClient.List(context.Background(), &runtimeCRList, &client.ListOptions{Namespace: kcpNamespace})
+	if err != nil {
+		return []runtime{}, []runtime{}, []unstructured.Unstructured{}, fmt.Errorf("while listing runtime CRs: %w", err)
+	}
+	for _, runtimeCR := range runtimeCRList.Items {
+		s.runtimeCRs[runtimeCR.Spec.Shoot.Name] = runtimeCR
+	}
+
 	var runtimes []runtime
 	var runtimeCRs []runtime
 	var shoots []unstructured.Unstructured
@@ -193,25 +214,29 @@ func (s *Service) getStaleRuntimesByShoots(labelSelector string) ([]runtime, []r
 
 		log.Infof("Shoot %q is older than %f hours with age: %f hours", shoot.GetName(), s.MaxShootAge.Hours(), shootAge.Hours())
 
-		instances, _, _, _ := s.instanceStorage.List(dbmodel.InstanceFilter{Shoots: []string{shoot.GetName()}})
-		if len(instances) == 1 {
-			s.logger.Infof("Found an instance %q for shoot %q", instances[0].InstanceID, shoot.GetName())
+		instance, ok := s.instances[shoot.GetName()]
+		if ok {
+			s.logger.Infof("Found an instance %q for shoot %q", instance.InstanceID, shoot.GetName())
 			staleRuntime := runtime{
-				ID:        instances[0].RuntimeID,
+				ID:        instance.RuntimeID,
 				ShootName: shoot.GetName(),
 			}
 			runtimes = append(runtimes, staleRuntime)
 			continue
 		}
 
-		runtimeCR, err := s.getRuntimeCR(shoot.GetName())
-		if err == nil {
-			s.logger.Infof("Found a runtimeCR %q for shoot %q", runtimeCR.ID, shoot.GetName())
-			runtimeCRs = append(runtimeCRs, runtimeCR)
+		runtimeCR, ok := s.runtimeCRs[shoot.GetName()]
+		if ok {
+			s.logger.Infof("Found a runtime CR %q for shoot %q", runtimeCR.Name, shoot.GetName())
+			staleRuntimeCR := runtime{
+				ID:        runtimeCR.Name,
+				ShootName: shoot.GetName(),
+			}
+			runtimeCRs = append(runtimeCRs, staleRuntimeCR)
 			continue
 		}
 
-		s.logger.Infof("Instance and runtimeCR not found for shoot %q", shoot.GetName())
+		s.logger.Infof("Instance and runtime CR not found for shoot %q", shoot.GetName())
 		shoots = append(shoots, shoot)
 	}
 
@@ -308,25 +333,6 @@ func (s *Service) cleanUpRuntimeCRs(runtimeCRs []runtime) error {
 	}
 
 	return result.ErrorOrNil()
-}
-
-func (s *Service) getRuntimeCR(shootName string) (runtime, error) {
-	var runtimeCRs imv1.RuntimeList
-	err := s.k8sClient.List(context.Background(), &runtimeCRs, &client.ListOptions{Namespace: kcpNamespace})
-	if err != nil {
-		return runtime{}, fmt.Errorf("while listing runtime CRs for shoot %q", shootName)
-	}
-
-	for _, runtimeCR := range runtimeCRs.Items {
-		if runtimeCR.Spec.Shoot.Name == shootName {
-			return runtime{
-				ID:        runtimeCR.Name,
-				ShootName: shootName,
-			}, nil
-		}
-	}
-
-	return runtime{}, fmt.Errorf("runtime CR for shoot %q not found", shootName)
 }
 
 func (s *Service) deleteRuntimeCR(runtime runtime) error {
