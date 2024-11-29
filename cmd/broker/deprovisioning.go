@@ -48,7 +48,7 @@ func NewDeprovisioningProcessingQueue(ctx context.Context, workersAmount int, de
 			step: deprovisioning.NewDeleteRuntimeResourceStep(db.Operations(), cli),
 		},
 		{
-			step: deprovisioning.NewCheckRuntimeResourceDeletionStep(db.Operations(), cli),
+			step: deprovisioning.NewCheckRuntimeResourceDeletionStep(db.Operations(), cli, cfg.Provisioner.CheckRuntimeResourceDeletionStepTimeout),
 		},
 		{
 			step: deprovisioning.NewDeleteGardenerClusterStep(db.Operations(), cli, db.Instances()),

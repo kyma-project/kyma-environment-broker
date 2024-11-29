@@ -16,14 +16,16 @@ import (
 )
 
 type CheckRuntimeResourceDeletionStep struct {
-	operationManager *process.OperationManager
-	kcpClient        client.Client
+	operationManager                        *process.OperationManager
+	kcpClient                               client.Client
+	checkRuntimeResourceDeletionStepTimeout time.Duration
 }
 
-func NewCheckRuntimeResourceDeletionStep(operations storage.Operations, kcpClient client.Client) *CheckRuntimeResourceDeletionStep {
+func NewCheckRuntimeResourceDeletionStep(operations storage.Operations, kcpClient client.Client, checkRuntimeResourceDeletionStepTimeout time.Duration) *CheckRuntimeResourceDeletionStep {
 	return &CheckRuntimeResourceDeletionStep{
-		operationManager: process.NewOperationManager(operations),
-		kcpClient:        kcpClient,
+		operationManager:                        process.NewOperationManager(operations),
+		kcpClient:                               kcpClient,
+		checkRuntimeResourceDeletionStepTimeout: checkRuntimeResourceDeletionStepTimeout,
 	}
 }
 
@@ -61,8 +63,7 @@ func (step *CheckRuntimeResourceDeletionStep) Run(operation internal.Operation, 
 
 	if err == nil {
 		logger.Infof("Runtime resource still exists")
-		//TODO: extract the timeout as a configuration setting
-		return step.operationManager.RetryOperation(operation, "Runtime resource still exists", nil, 20*time.Second, 15*time.Minute, logger)
+		return step.operationManager.RetryOperation(operation, "Runtime resource still exists", nil, 20*time.Second, step.checkRuntimeResourceDeletionStepTimeout, logger)
 	}
 
 	if !errors.IsNotFound(err) {

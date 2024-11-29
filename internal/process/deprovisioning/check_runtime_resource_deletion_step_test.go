@@ -2,6 +2,7 @@ package deprovisioning
 
 import (
 	"testing"
+	"time"
 
 	imv1 "github.com/kyma-project/infrastructure-manager/api/v1"
 	"github.com/kyma-project/kyma-environment-broker/internal/fixture"
@@ -25,7 +26,7 @@ func TestCheckRuntimeResourceDeletionStep_ResourceNotExists(t *testing.T) {
 	log := logger.NewLogDummy()
 
 	// when
-	step := NewCheckRuntimeResourceDeletionStep(memoryStorage.Operations(), kcpClient)
+	step := NewCheckRuntimeResourceDeletionStep(memoryStorage.Operations(), kcpClient, time.Minute)
 	_, backoff, err := step.Run(op, log)
 
 	// then
@@ -46,7 +47,7 @@ func TestCheckRuntimeResourceDeletionStep_Run(t *testing.T) {
 	log := logger.NewLogDummy()
 
 	// when
-	step := NewCheckRuntimeResourceDeletionStep(memoryStorage.Operations(), kcpClient)
+	step := NewCheckRuntimeResourceDeletionStep(memoryStorage.Operations(), kcpClient, time.Minute)
 	_, backoff, err := step.Run(op, log)
 
 	// then
