@@ -6,7 +6,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/kyma-project/kyma-environment-broker/internal/storage/dberr"
 	"github.com/kyma-project/kyma-environment-broker/internal/storage/dbmodel"
 
 	"github.com/hashicorp/go-multierror"
@@ -113,15 +112,15 @@ func (s *Service) getEnvironment() (string, error) {
 }
 
 func (s *Service) PerformCleanup() error {
-	runtimesToDelete, runtimeCRsToDelete, shootsToDelete, err := s.getStaleRuntimesByShoots(s.LabelSelector)
+	instancesToDelete, runtimeCRsToDelete, shootsToDelete, err := s.getStaleRuntimesByShoots(s.LabelSelector)
 	if err != nil {
 		s.logger.Error(fmt.Errorf("while getting stale shoots to delete: %w", err))
 		return err
 	}
 
-	err = s.cleanupRuntimes(runtimesToDelete)
+	err = s.cleanupInstances(instancesToDelete)
 	if err != nil {
-		s.logger.Error(fmt.Errorf("while cleaning runtimes: %w", err))
+		s.logger.Error(fmt.Errorf("while cleaning instances: %w", err))
 		return err
 	}
 
@@ -134,14 +133,29 @@ func (s *Service) PerformCleanup() error {
 	return s.cleanupShoots(shootsToDelete)
 }
 
-func (s *Service) cleanupRuntimes(runtimes []runtime) error {
-	s.logger.Infof("Runtimes to process: %+v", runtimes)
+func (s *Service) cleanupInstances(instances []internal.Instance) error {
+	s.logger.Infof("Number of instances to process: %+v", len(instances))
+	var result *multierror.Error
 
-	if len(runtimes) == 0 {
-		return nil
+	for _, instance := range instances {
+		s.logger.Infof("Triggering environment deprovisioning for instance ID %q, runtime ID %q and shoot name %q", instance.InstanceID, instance.RuntimeID, instance.InstanceDetails.ShootName)
+		currentErr := s.triggerEnvironmentDeprovisioning(instance)
+		if currentErr != nil {
+			result = multierror.Append(result, currentErr)
+		}
 	}
 
-	return s.cleanUp(runtimes)
+	if result != nil {
+		result.ErrorFormat = func(i []error) string {
+			var s []string
+			for _, v := range i {
+				s = append(s, v.Error())
+			}
+			return strings.Join(s, ", ")
+		}
+	}
+
+	return result.ErrorOrNil()
 }
 
 func (s *Service) cleanupShoots(shoots []unstructured.Unstructured) error {
@@ -170,19 +184,19 @@ func (s *Service) cleanupShoots(shoots []unstructured.Unstructured) error {
 	return nil
 }
 
-func (s *Service) getStaleRuntimesByShoots(labelSelector string) ([]runtime, []runtime, []unstructured.Unstructured, error) {
+func (s *Service) getStaleRuntimesByShoots(labelSelector string) ([]internal.Instance, []runtime, []unstructured.Unstructured, error) {
 	opts := v1.ListOptions{
 		LabelSelector: labelSelector,
 	}
 	shootList, err := s.gardenerService.List(context.Background(), opts)
 	if err != nil {
-		return []runtime{}, []runtime{}, []unstructured.Unstructured{}, fmt.Errorf("while listing Gardener shoots: %w", err)
+		return []internal.Instance{}, []runtime{}, []unstructured.Unstructured{}, fmt.Errorf("while listing Gardener shoots: %w", err)
 	}
 
 	instancesMap := make(map[string]internal.Instance)
 	instancesList, _, _, err := s.instanceStorage.List(dbmodel.InstanceFilter{})
 	if err != nil {
-		return []runtime{}, []runtime{}, []unstructured.Unstructured{}, fmt.Errorf("while listing instances: %w", err)
+		return []internal.Instance{}, []runtime{}, []unstructured.Unstructured{}, fmt.Errorf("while listing instances: %w", err)
 	}
 	for _, instance := range instancesList {
 		instancesMap[instance.InstanceDetails.ShootName] = instance
@@ -192,13 +206,13 @@ func (s *Service) getStaleRuntimesByShoots(labelSelector string) ([]runtime, []r
 	var runtimeCRsList imv1.RuntimeList
 	err = s.k8sClient.List(context.Background(), &runtimeCRsList, &client.ListOptions{Namespace: kcpNamespace})
 	if err != nil {
-		return []runtime{}, []runtime{}, []unstructured.Unstructured{}, fmt.Errorf("while listing runtime CRs: %w", err)
+		return []internal.Instance{}, []runtime{}, []unstructured.Unstructured{}, fmt.Errorf("while listing runtime CRs: %w", err)
 	}
 	for _, runtimeCR := range runtimeCRsList.Items {
 		runtimeCRsMap[runtimeCR.Spec.Shoot.Name] = runtimeCR
 	}
 
-	var runtimes []runtime
+	var instances []internal.Instance
 	var runtimeCRs []runtime
 	var shoots []unstructured.Unstructured
 	for _, shoot := range shootList.Items {
@@ -215,11 +229,7 @@ func (s *Service) getStaleRuntimesByShoots(labelSelector string) ([]runtime, []r
 		instance, ok := instancesMap[shoot.GetName()]
 		if ok {
 			s.logger.Infof("Found an instance %q for shoot %q", instance.InstanceID, shoot.GetName())
-			staleRuntime := runtime{
-				ID:        instance.RuntimeID,
-				ShootName: shoot.GetName(),
-			}
-			runtimes = append(runtimes, staleRuntime)
+			instances = append(instances, instance)
 			continue
 		}
 
@@ -238,61 +248,7 @@ func (s *Service) getStaleRuntimesByShoots(labelSelector string) ([]runtime, []r
 		shoots = append(shoots, shoot)
 	}
 
-	return runtimes, runtimeCRs, shoots, nil
-}
-
-func (s *Service) cleanUp(runtimesToDelete []runtime) error {
-	kebInstancesToDelete, err := s.getInstancesForRuntimes(runtimesToDelete)
-	if err != nil {
-		errMsg := fmt.Errorf("while getting instance IDs for Runtimes: %w", err)
-		s.logger.Error(errMsg)
-		if !dberr.IsNotFound(err) {
-			return errMsg
-		}
-	}
-
-	result := s.cleanUpKEBInstances(kebInstancesToDelete)
-
-	if result != nil {
-		result.ErrorFormat = func(i []error) string {
-			var s []string
-			for _, v := range i {
-				s = append(s, v.Error())
-			}
-			return strings.Join(s, ", ")
-		}
-	}
-
-	return result.ErrorOrNil()
-}
-
-func (s *Service) getInstancesForRuntimes(runtimesToDelete []runtime) ([]internal.Instance, error) {
-
-	var runtimeIDsToDelete []string
-	for _, runtime := range runtimesToDelete {
-		runtimeIDsToDelete = append(runtimeIDsToDelete, runtime.ID)
-	}
-
-	instances, err := s.instanceStorage.FindAllInstancesForRuntimes(runtimeIDsToDelete)
-	if err != nil {
-		return []internal.Instance{}, err
-	}
-
-	return instances, nil
-}
-
-func (s *Service) cleanUpKEBInstances(instancesToDelete []internal.Instance) *multierror.Error {
-	var result *multierror.Error
-
-	for _, instance := range instancesToDelete {
-		s.logger.Infof("Triggering environment deprovisioning for instance ID %q, runtime ID %q and shoot name %q", instance.InstanceID, instance.RuntimeID, instance.InstanceDetails.ShootName)
-		currentErr := s.triggerEnvironmentDeprovisioning(instance)
-		if currentErr != nil {
-			result = multierror.Append(result, currentErr)
-		}
-	}
-
-	return result
+	return instances, runtimeCRs, shoots, nil
 }
 
 func (s *Service) triggerEnvironmentDeprovisioning(instance internal.Instance) error {
