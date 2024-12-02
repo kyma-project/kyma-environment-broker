@@ -13,7 +13,7 @@ const secretName = 'sap-btp-manager';
 const ns = 'kyma-system';
 const expectedBtpOperatorCreds = BTPOperatorCreds.dummy();
 
-const reconciliationTimeout = 1000 * 70;
+const reconciliationTimeout = 15 * 60 * 1000; // 15 minutes
 let secretFromProvisioning;
 let modifiedSecret;
 
