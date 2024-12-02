@@ -32,14 +32,14 @@ func NewOperationDurationCollector(logger logrus.FieldLogger) *OperationDuration
 			Subsystem: prometheusSubsystemv2,
 			Name:      "provisioning_duration_minutes",
 			Help:      "The time of the provisioning process",
-			Buckets:   prometheus.LinearBuckets(10, 2, 56),
+			Buckets:   prometheus.LinearBuckets(6, 2, 58),
 		}, []string{"plan_id"}),
 		deprovisioningHistogram: prometheus.NewHistogramVec(prometheus.HistogramOpts{
 			Namespace: prometheusNamespacev2,
 			Subsystem: prometheusSubsystemv2,
 			Name:      "deprovisioning_duration_minutes",
 			Help:      "The time of the deprovisioning process",
-			Buckets:   prometheus.LinearBuckets(10, 2, 56),
+			Buckets:   prometheus.LinearBuckets(6, 2, 58),
 		}, []string{"plan_id"}),
 		logger: logger,
 	}
