@@ -60,7 +60,61 @@ func TestCreatingKymaResource(t *testing.T) {
 	err = cli.List(context.Background(), &aList)
 	require.NoError(t, err)
 	assert.Equal(t, 1, len(aList.Items))
-	assertLabelsExistsForExternalKymaResource(t, aList.Items[0])
+	expectedLabels := map[string]string{
+		"kyma-project.io/instance-id":         "inst-id",
+		"kyma-project.io/runtime-id":          "runtime-inst-id",
+		"kyma-project.io/global-account-id":   "e8f7ec0a-0cd6-41f0-905d-5d1efa9fb6c4",
+		"kyma-project.io/subaccount-id":       "SA-op-id",
+		"kyma-project.io/shoot-name":          "Shoot-inst-id",
+		"kyma-project.io/platform-region":     "westeurope",
+		"operator.kyma-project.io/kyma-name":  "runtime-inst-id",
+		"kyma-project.io/broker-plan-id":      "4deee563-e5ec-4731-b9b1-53b42d855f0c",
+		"kyma-project.io/broker-plan-name":    "azure",
+		"operator.kyma-project.io/managed-by": "lifecycle-manager",
+		"kyma-project.io/provider":            "Test"}
+
+	assertLabelsExistsForExternalKymaResource(t, expectedLabels, aList.Items[0])
+
+	_, _, err = svc.Run(operation, logrus.New())
+	require.NoError(t, err)
+}
+
+func TestCreatingKymaResourceWithCloudProviderInOperation(t *testing.T) {
+	// given
+	operation, cli := fixOperationForApplyKymaResource(t)
+	operation.CloudProvider = "Azure"
+	*operation.ProvisioningParameters.ErsContext.LicenseType = "CUSTOMER"
+	storage := storage.NewMemoryStorage()
+	err := storage.Operations().InsertOperation(operation)
+	require.NoError(t, err)
+	svc := NewApplyKymaStep(storage.Operations(), cli)
+
+	// when
+	_, backoff, err := svc.Run(operation, logrus.New())
+
+	// then
+	require.NoError(t, err)
+	require.Zero(t, backoff)
+	aList := unstructured.UnstructuredList{}
+	aList.SetGroupVersionKind(schema.GroupVersionKind{Group: "operator.kyma-project.io", Version: "v1beta2", Kind: "KymaList"})
+
+	err = cli.List(context.Background(), &aList)
+	require.NoError(t, err)
+	assert.Equal(t, 1, len(aList.Items))
+	expectedLabels := map[string]string{
+		"kyma-project.io/instance-id":         "inst-id",
+		"kyma-project.io/runtime-id":          "runtime-inst-id",
+		"kyma-project.io/global-account-id":   "e8f7ec0a-0cd6-41f0-905d-5d1efa9fb6c4",
+		"kyma-project.io/subaccount-id":       "SA-op-id",
+		"kyma-project.io/shoot-name":          "Shoot-inst-id",
+		"kyma-project.io/platform-region":     "westeurope",
+		"operator.kyma-project.io/kyma-name":  "runtime-inst-id",
+		"kyma-project.io/broker-plan-id":      "4deee563-e5ec-4731-b9b1-53b42d855f0c",
+		"kyma-project.io/broker-plan-name":    "azure",
+		"operator.kyma-project.io/managed-by": "lifecycle-manager",
+		"kyma-project.io/provider":            "Azure"}
+
+	assertLabelsExistsForExternalKymaResource(t, expectedLabels, aList.Items[0])
 
 	_, _, err = svc.Run(operation, logrus.New())
 	require.NoError(t, err)
@@ -87,7 +141,19 @@ func TestCreatingInternalKymaResource(t *testing.T) {
 		err = cli.List(context.Background(), &aList)
 		require.NoError(t, err)
 		assert.Equal(t, 1, len(aList.Items))
-		assertLabelsExistsForInternalKymaResource(t, aList.Items[0])
+		expectedLabels := map[string]string{
+			"kyma-project.io/instance-id":         "inst-id",
+			"kyma-project.io/runtime-id":          "runtime-inst-id",
+			"kyma-project.io/global-account-id":   "e8f7ec0a-0cd6-41f0-905d-5d1efa9fb6c4",
+			"kyma-project.io/subaccount-id":       "SA-op-id",
+			"kyma-project.io/shoot-name":          "Shoot-inst-id",
+			"kyma-project.io/platform-region":     "westeurope",
+			"operator.kyma-project.io/kyma-name":  "runtime-inst-id",
+			"kyma-project.io/broker-plan-id":      "4deee563-e5ec-4731-b9b1-53b42d855f0c",
+			"kyma-project.io/broker-plan-name":    "azure",
+			"operator.kyma-project.io/managed-by": "lifecycle-manager",
+			"kyma-project.io/provider":            "Test"}
+		assertLabelsExistsForInternalKymaResource(t, expectedLabels, aList.Items[0])
 
 		assertCompassRuntimeIdAnnotationExists(t, aList.Items[0])
 		_, _, err = svc.Run(operation, logrus.New())
@@ -115,7 +181,19 @@ func TestCreatingInternalKymaResource(t *testing.T) {
 		err = cli.List(context.Background(), &aList)
 		require.NoError(t, err)
 		assert.Equal(t, 1, len(aList.Items))
-		assertLabelsExistsForInternalKymaResource(t, aList.Items[0])
+		expectedLabels := map[string]string{
+			"kyma-project.io/instance-id":         "inst-id",
+			"kyma-project.io/runtime-id":          "runtime-inst-id",
+			"kyma-project.io/global-account-id":   "e8f7ec0a-0cd6-41f0-905d-5d1efa9fb6c4",
+			"kyma-project.io/subaccount-id":       "SA-op-id",
+			"kyma-project.io/shoot-name":          "Shoot-inst-id",
+			"kyma-project.io/platform-region":     "westeurope",
+			"operator.kyma-project.io/kyma-name":  "runtime-inst-id",
+			"kyma-project.io/broker-plan-id":      "4deee563-e5ec-4731-b9b1-53b42d855f0c",
+			"kyma-project.io/broker-plan-name":    "azure",
+			"operator.kyma-project.io/managed-by": "lifecycle-manager",
+			"kyma-project.io/provider":            "Test"}
+		assertLabelsExistsForInternalKymaResource(t, expectedLabels, aList.Items[0])
 
 		assertCompassRuntimeIdAnnotationNotExists(t, aList.Items[0])
 		_, _, err = svc.Run(operation, logrus.New())
@@ -145,7 +223,19 @@ func TestCreatingKymaResource_UseNamespaceFromTimeOfCreationNotTemplate(t *testi
 	err = cli.List(context.Background(), &aList)
 	require.NoError(t, err)
 	assert.Equal(t, 1, len(aList.Items))
-	assertLabelsExistsForExternalKymaResource(t, aList.Items[0])
+	expectedLabels := map[string]string{
+		"kyma-project.io/instance-id":         "inst-id",
+		"kyma-project.io/runtime-id":          "runtime-inst-id",
+		"kyma-project.io/global-account-id":   "e8f7ec0a-0cd6-41f0-905d-5d1efa9fb6c4",
+		"kyma-project.io/subaccount-id":       "SA-op-id",
+		"kyma-project.io/shoot-name":          "Shoot-inst-id",
+		"kyma-project.io/platform-region":     "westeurope",
+		"operator.kyma-project.io/kyma-name":  "runtime-inst-id",
+		"kyma-project.io/broker-plan-id":      "4deee563-e5ec-4731-b9b1-53b42d855f0c",
+		"kyma-project.io/broker-plan-name":    "azure",
+		"operator.kyma-project.io/managed-by": "lifecycle-manager",
+		"kyma-project.io/provider":            "Test"}
+	assertLabelsExistsForExternalKymaResource(t, expectedLabels, aList.Items[0])
 
 	_, _, err = svc.Run(operation, logrus.New())
 	require.NoError(t, err)
@@ -173,7 +263,19 @@ func TestCreatingInternalKymaResource_UseNamespaceFromTimeOfCreationNotTemplate(
 	err = cli.List(context.Background(), &aList)
 	require.NoError(t, err)
 	assert.Equal(t, 1, len(aList.Items))
-	assertLabelsExistsForInternalKymaResource(t, aList.Items[0])
+	expectedLabels := map[string]string{
+		"kyma-project.io/instance-id":         "inst-id",
+		"kyma-project.io/runtime-id":          "runtime-inst-id",
+		"kyma-project.io/global-account-id":   "e8f7ec0a-0cd6-41f0-905d-5d1efa9fb6c4",
+		"kyma-project.io/subaccount-id":       "SA-op-id",
+		"kyma-project.io/shoot-name":          "Shoot-inst-id",
+		"kyma-project.io/platform-region":     "westeurope",
+		"operator.kyma-project.io/kyma-name":  "runtime-inst-id",
+		"kyma-project.io/broker-plan-id":      "4deee563-e5ec-4731-b9b1-53b42d855f0c",
+		"kyma-project.io/broker-plan-name":    "azure",
+		"operator.kyma-project.io/managed-by": "lifecycle-manager",
+		"kyma-project.io/provider":            "Test"}
+	assertLabelsExistsForInternalKymaResource(t, expectedLabels, aList.Items[0])
 
 	_, _, err = svc.Run(operation, logrus.New())
 	require.NoError(t, err)
@@ -213,7 +315,20 @@ func TestUpdatinglKymaResourceIfExists(t *testing.T) {
 	err = cli.List(context.Background(), &aList)
 	require.NoError(t, err)
 	assert.Equal(t, 1, len(aList.Items))
-	assertLabelsExistsForExternalKymaResource(t, aList.Items[0])
+	expectedLabels := map[string]string{
+		"kyma-project.io/instance-id":         "inst-id",
+		"kyma-project.io/runtime-id":          "runtime-inst-id",
+		"kyma-project.io/global-account-id":   "e8f7ec0a-0cd6-41f0-905d-5d1efa9fb6c4",
+		"kyma-project.io/subaccount-id":       "SA-op-id",
+		"kyma-project.io/shoot-name":          "Shoot-inst-id",
+		"kyma-project.io/platform-region":     "westeurope",
+		"operator.kyma-project.io/kyma-name":  "runtime-inst-id",
+		"kyma-project.io/broker-plan-id":      "4deee563-e5ec-4731-b9b1-53b42d855f0c",
+		"kyma-project.io/broker-plan-name":    "azure",
+		"operator.kyma-project.io/managed-by": "lifecycle-manager",
+		"kyma-project.io/provider":            "Test"}
+
+	assertLabelsExistsForExternalKymaResource(t, expectedLabels, aList.Items[0])
 }
 
 func TestUpdatinInternalKymaResourceIfExists(t *testing.T) {
@@ -248,32 +363,34 @@ func TestUpdatinInternalKymaResourceIfExists(t *testing.T) {
 	err = cli.List(context.Background(), &aList)
 	require.NoError(t, err)
 	assert.Equal(t, 1, len(aList.Items))
-	assertLabelsExistsForInternalKymaResource(t, aList.Items[0])
+	expectedLabels := map[string]string{
+		"kyma-project.io/instance-id":         "inst-id",
+		"kyma-project.io/runtime-id":          "runtime-inst-id",
+		"kyma-project.io/global-account-id":   "e8f7ec0a-0cd6-41f0-905d-5d1efa9fb6c4",
+		"kyma-project.io/subaccount-id":       "SA-op-id",
+		"kyma-project.io/shoot-name":          "Shoot-inst-id",
+		"kyma-project.io/platform-region":     "westeurope",
+		"operator.kyma-project.io/kyma-name":  "runtime-inst-id",
+		"kyma-project.io/broker-plan-id":      "4deee563-e5ec-4731-b9b1-53b42d855f0c",
+		"kyma-project.io/broker-plan-name":    "azure",
+		"operator.kyma-project.io/managed-by": "lifecycle-manager",
+		"kyma-project.io/provider":            "Test"}
+
+	assertLabelsExistsForInternalKymaResource(t, expectedLabels, aList.Items[0])
 }
 
-func assertLabelsExists(t *testing.T, obj unstructured.Unstructured) {
+func assertLabelsExists(t *testing.T, expectedLabels map[string]string, obj unstructured.Unstructured) {
 	keys := make([]string, 0, len(obj.GetLabels()))
 	for k := range obj.GetLabels() {
 		keys = append(keys, k)
 	}
 
-	assert.Subset(t, keys, []string{
-		"kyma-project.io/instance-id",
-		"kyma-project.io/runtime-id",
-		"kyma-project.io/global-account-id",
-		"kyma-project.io/subaccount-id",
-		"kyma-project.io/shoot-name",
-		"kyma-project.io/platform-region",
-		"operator.kyma-project.io/kyma-name",
-		"kyma-project.io/broker-plan-id",
-		"kyma-project.io/broker-plan-name",
-		"operator.kyma-project.io/managed-by",
-		"kyma-project.io/provider"})
+	assert.Subset(t, obj.GetLabels(), expectedLabels)
 }
 
-func assertLabelsExistsForInternalKymaResource(t *testing.T, obj unstructured.Unstructured) {
+func assertLabelsExistsForInternalKymaResource(t *testing.T, expectedLabels map[string]string, obj unstructured.Unstructured) {
 	assert.Contains(t, obj.GetLabels(), "operator.kyma-project.io/internal")
-	assertLabelsExists(t, obj)
+	assertLabelsExists(t, expectedLabels, obj)
 }
 
 func assertCompassRuntimeIdAnnotationExists(t *testing.T, obj unstructured.Unstructured) {
@@ -286,9 +403,9 @@ func assertCompassRuntimeIdAnnotationNotExists(t *testing.T, obj unstructured.Un
 	assert.NotContains(t, obj.GetAnnotations(), "compass-runtime-id-for-migration")
 }
 
-func assertLabelsExistsForExternalKymaResource(t *testing.T, obj unstructured.Unstructured) {
+func assertLabelsExistsForExternalKymaResource(t *testing.T, expectedLabels map[string]string, obj unstructured.Unstructured) {
 	assert.NotContains(t, obj.GetLabels(), "operator.kyma-project.io/internal")
-	assertLabelsExists(t, obj)
+	assertLabelsExists(t, expectedLabels, obj)
 }
 
 func fixOperationForApplyKymaResource(t *testing.T) (internal.Operation, client.Client) {
