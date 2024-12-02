@@ -18,7 +18,11 @@ func ApplyLabelsAndAnnotationsForLM(object client.Object, operation internal.Ope
 
 	l[customresources.RegionLabel] = operation.Region
 	l[customresources.ManagedByLabel] = "lifecycle-manager"
-	l[customresources.CloudProviderLabel] = operation.CloudProvider
+	if operation.CloudProvider != "" {
+		l[customresources.CloudProviderLabel] = operation.CloudProvider
+	} else { // fallback to inputCreator that will be removed when provisioner is decommissioned
+		l[customresources.CloudProviderLabel] = string(operation.InputCreator.Provider())
+	}
 
 	if isKymaResourceInternal(operation) {
 		l[customresources.InternalLabel] = "true"
