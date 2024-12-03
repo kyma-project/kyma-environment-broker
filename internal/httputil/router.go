@@ -42,9 +42,9 @@ func (r *Router) Handle(pattern string, handler http.Handler) {
 }
 
 func (r *Router) HandleFunc(pattern string, handleFunc func(http.ResponseWriter, *http.Request)) {
-	var handler http.Handler
+	var handler http.Handler = http.HandlerFunc(handleFunc)
 	for i := len(r.middlewares) - 1; i >= 0; i-- {
-		handler = r.middlewares[i](http.HandlerFunc(handleFunc))
+		handler = r.middlewares[i](handler)
 	}
 	r.ServeMux.Handle(pattern, handler)
 }
