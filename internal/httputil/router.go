@@ -1,7 +1,6 @@
 package httputil
 
 import (
-	"fmt"
 	"net/http"
 
 	"github.com/kyma-project/kyma-environment-broker/internal/middleware"
@@ -25,13 +24,6 @@ func (r *Router) Use(middlewares ...middleware.MiddlewareFunc) {
 	for _, m := range middlewares {
 		r.middlewares = append(r.middlewares, m)
 	}
-}
-
-func (r *Router) PathPrefix(prefix string) {
-	subrouter := http.NewServeMux()
-	pattern := fmt.Sprintf("/%s/", prefix)
-	subrouter.Handle(pattern, r)
-	r.subrouters = append(r.subrouters, subrouter)
 }
 
 func (r *Router) Handle(pattern string, handler http.Handler) {
