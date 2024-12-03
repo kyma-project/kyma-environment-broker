@@ -456,13 +456,10 @@ func createAPI(router *httputil.Router, servicesConfig broker.ServicesConfig, pl
 
 	router.Use(middleware.AddRegionToContext(cfg.DefaultRequestRegion))
 	router.Use(middleware.AddProviderToContext())
-	for _, prefix := range []string{
-		"/oauth/",          // oauth2 handled by Ory
-		"/oauth/{region}/", // oauth2 handled by Ory with region
-	} {
-		router.PathPrefix(prefix)
-		broker.AttachRoutes(router, kymaEnvBroker, logger, cfg.Broker.Binding.CreateBindingTimeout)
-	}
+
+	// oauth2 handled by Ory
+	prefixes := []string{"/oauth", "/oauth/{region}"}
+	broker.AttachRoutes(router, kymaEnvBroker, logger, cfg.Broker.Binding.CreateBindingTimeout, prefixes)
 
 	respWriter := httputil.NewResponseWriter(logs, cfg.DevelopmentMode)
 	runtimesInfoHandler := appinfo.NewRuntimeInfoHandler(db.Instances(), db.Operations(), defaultPlansConfig, cfg.DefaultRequestRegion, respWriter)
