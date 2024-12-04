@@ -9,7 +9,6 @@ import (
 	"github.com/kyma-project/kyma-environment-broker/internal/storage/dberr"
 	"github.com/kyma-project/kyma-environment-broker/internal/storage/dbmodel"
 	"github.com/kyma-project/kyma-environment-broker/internal/storage/postsql"
-	log "github.com/sirupsen/logrus"
 	"k8s.io/apimachinery/pkg/util/wait"
 )
 
@@ -39,7 +38,6 @@ func (s *runtimeState) Insert(runtimeState internal.RuntimeState) error {
 	return wait.PollImmediate(defaultRetryInterval, defaultRetryTimeout, func() (bool, error) {
 		err := sess.InsertRuntimeState(state)
 		if err != nil {
-			log.Errorf("while saving runtime state ID %s: %v", runtimeState.ID, err)
 			return false, nil
 		}
 		return true, nil
@@ -56,7 +54,6 @@ func (s *runtimeState) ListByRuntimeID(runtimeID string) ([]internal.RuntimeStat
 			if dberr.IsNotFound(lastErr) {
 				return false, dberr.NotFound("RuntimeStates not found")
 			}
-			log.Errorf("while getting RuntimeState: %v", lastErr)
 			return false, nil
 		}
 		return true, nil
@@ -81,7 +78,6 @@ func (s *runtimeState) GetByOperationID(operationID string) (internal.RuntimeSta
 			if dberr.IsNotFound(lastErr) {
 				return false, dberr.NotFound("RuntimeState for operation %s not found", operationID)
 			}
-			log.Errorf("while getting RuntimeState: %v", lastErr)
 			return false, nil
 		}
 		return true, nil
@@ -107,7 +103,6 @@ func (s *runtimeState) GetLatestByRuntimeID(runtimeID string) (internal.RuntimeS
 			if dberr.IsNotFound(lastErr) {
 				return false, dberr.NotFound("RuntimeState for runtime %s not found", runtimeID)
 			}
-			log.Errorf("while getting RuntimeState: %v", lastErr)
 			return false, nil
 		}
 		return true, nil
@@ -133,7 +128,6 @@ func (s *runtimeState) GetLatestWithOIDCConfigByRuntimeID(runtimeID string) (int
 			if dberr.IsNotFound(lastErr) {
 				return false, dberr.NotFound("RuntimeState for runtime %s not found", runtimeID)
 			}
-			log.Errorf("while getting RuntimeState: %v", lastErr)
 			return false, nil
 		}
 		return true, nil

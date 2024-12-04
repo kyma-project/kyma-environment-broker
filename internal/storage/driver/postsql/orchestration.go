@@ -7,7 +7,6 @@ import (
 	"github.com/kyma-project/kyma-environment-broker/internal/storage/dberr"
 	"github.com/kyma-project/kyma-environment-broker/internal/storage/dbmodel"
 	"github.com/kyma-project/kyma-environment-broker/internal/storage/postsql"
-	log "github.com/sirupsen/logrus"
 	"k8s.io/apimachinery/pkg/util/wait"
 )
 
@@ -36,7 +35,6 @@ func (s *orchestrations) Insert(orchestration internal.Orchestration) error {
 	return wait.PollImmediate(defaultRetryInterval, defaultRetryTimeout, func() (bool, error) {
 		err := sess.InsertOrchestration(dto)
 		if err != nil {
-			log.Errorf("while saving orchestration ID %s: %v", orchestration.OrchestrationID, err)
 			return false, nil
 		}
 		return true, nil
@@ -54,7 +52,6 @@ func (s *orchestrations) GetByID(orchestrationID string) (*internal.Orchestratio
 			if dberr.IsNotFound(lastErr) {
 				return false, dberr.NotFound("Orchestration with id %s not exist", orchestrationID)
 			}
-			log.Errorf("while getting orchestration by ID %s: %v", orchestrationID, lastErr)
 			return false, nil
 		}
 		orchestration, lastErr = dto.ToOrchestration()
@@ -80,7 +77,6 @@ func (s *orchestrations) List(filter dbmodel.OrchestrationFilter) ([]internal.Or
 			if dberr.IsNotFound(lastErr) {
 				return false, dberr.NotFound("Orchestrations not exist")
 			}
-			log.Errorf("while getting orchestration: %v", lastErr)
 			return false, nil
 		}
 		for _, dto := range dtos {
@@ -113,7 +109,6 @@ func (s *orchestrations) Update(orchestration internal.Orchestration) error {
 			if dberr.IsNotFound(lastErr) {
 				return false, dberr.NotFound("Orchestration with id %s not exist", orchestration.OrchestrationID)
 			}
-			log.Errorf("while updating orchestration ID %s: %v", orchestration.OrchestrationID, lastErr)
 			return false, nil
 		}
 		return true, nil

@@ -7,7 +7,6 @@ import (
 	"github.com/kyma-project/kyma-environment-broker/internal/storage/dberr"
 	"github.com/kyma-project/kyma-environment-broker/internal/storage/dbmodel"
 	"github.com/kyma-project/kyma-environment-broker/internal/storage/postsql"
-	log "github.com/sirupsen/logrus"
 	"k8s.io/apimachinery/pkg/util/wait"
 )
 
@@ -30,7 +29,6 @@ func (s *SubaccountState) UpsertState(subaccountState internal.SubaccountState) 
 	return wait.PollImmediate(defaultRetryInterval, defaultRetryTimeout, func() (bool, error) {
 		err := sess.UpsertSubaccountState(state)
 		if err != nil {
-			log.Errorf("while upserting subaccount state ID %s: %v", subaccountState.ID, err)
 			return false, nil
 		}
 		return true, nil
@@ -52,7 +50,6 @@ func (s *SubaccountState) ListStates() ([]internal.SubaccountState, error) {
 			if dberr.IsNotFound(lastErr) {
 				return false, dberr.NotFound("subaccount_states not found")
 			}
-			log.Errorf("while getting subaccount states: %v", lastErr)
 			return false, nil
 		}
 		return true, nil
