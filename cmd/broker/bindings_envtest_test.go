@@ -6,33 +6,32 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"log/slog"
 	"net/http"
 	"net/http/httptest"
+	"os"
 	"testing"
 	"time"
 
-	"github.com/kyma-project/kyma-environment-broker/internal/event"
-
 	"github.com/golang-jwt/jwt/v4"
 	"github.com/google/uuid"
-	brokerBindings "github.com/kyma-project/kyma-environment-broker/internal/broker/bindings"
-	"gopkg.in/yaml.v2"
-	rbacv1 "k8s.io/api/rbac/v1"
-	apierrors "k8s.io/apimachinery/pkg/api/errors"
-
-	"code.cloudfoundry.org/lager"
-	"github.com/gorilla/mux"
 	"github.com/kyma-project/kyma-environment-broker/internal"
 	"github.com/kyma-project/kyma-environment-broker/internal/broker"
+	brokerBindings "github.com/kyma-project/kyma-environment-broker/internal/broker/bindings"
+	"github.com/kyma-project/kyma-environment-broker/internal/event"
 	"github.com/kyma-project/kyma-environment-broker/internal/fixture"
+	"github.com/kyma-project/kyma-environment-broker/internal/httputil"
 	"github.com/kyma-project/kyma-environment-broker/internal/kubeconfig"
 	"github.com/kyma-project/kyma-environment-broker/internal/storage"
-	"github.com/pivotal-cf/brokerapi/v8/domain"
-	"github.com/pivotal-cf/brokerapi/v8/handlers"
+	"github.com/pivotal-cf/brokerapi/v11/domain"
+	"github.com/pivotal-cf/brokerapi/v11/handlers"
 	"github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"gopkg.in/yaml.v2"
 	corev1 "k8s.io/api/core/v1"
+	rbacv1 "k8s.io/api/rbac/v1"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/util/wait"
@@ -81,8 +80,7 @@ func TestCreateBindingEndpoint(t *testing.T) {
 		TimestampFormat: time.RFC3339Nano,
 	})
 
-	brokerLogger := lager.NewLogger("test")
-	brokerLogger.RegisterSink(lager.NewWriterSink(logs.Writer(), lager.DEBUG))
+	brokerLogger := slog.New(slog.NewJSONHandler(os.Stdout, &slog.HandlerOptions{Level: slog.LevelDebug})).With("source", "test")
 
 	//// schema
 	sch := runtime.NewScheme()
@@ -220,10 +218,10 @@ func TestCreateBindingEndpoint(t *testing.T) {
 	}, brokerLogger)
 
 	//// attach bindings api
-	router := mux.NewRouter()
-	router.HandleFunc("/v2/service_instances/{instance_id}/service_bindings/{binding_id}", apiHandler.Bind).Methods(http.MethodPut)
-	router.HandleFunc("/v2/service_instances/{instance_id}/service_bindings/{binding_id}", apiHandler.GetBinding).Methods(http.MethodGet)
-	router.HandleFunc("/v2/service_instances/{instance_id}/service_bindings/{binding_id}", apiHandler.Unbind).Methods(http.MethodDelete)
+	router := httputil.NewRouter()
+	router.HandleFunc("PUT /v2/service_instances/{instance_id}/service_bindings/{binding_id}", apiHandler.Bind)
+	router.HandleFunc("GET /v2/service_instances/{instance_id}/service_bindings/{binding_id}", apiHandler.GetBinding)
+	router.HandleFunc("DELETE /v2/service_instances/{instance_id}/service_bindings/{binding_id}", apiHandler.Unbind)
 	httpServer = httptest.NewServer(router)
 	defer httpServer.Close()
 

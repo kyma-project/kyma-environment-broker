@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"net/http"
 
-	"github.com/gorilla/mux"
+	"github.com/kyma-project/kyma-environment-broker/internal/httputil"
 	log "github.com/sirupsen/logrus"
 )
 
@@ -21,7 +21,7 @@ func NewServer(host, port string, log *log.Logger) *Server {
 }
 
 func (srv *Server) ServeAsync() {
-	healthRouter := mux.NewRouter()
+	healthRouter := httputil.NewRouter()
 	healthRouter.HandleFunc("/healthz", livenessHandler())
 	go func() {
 		err := http.ListenAndServe(srv.Address, healthRouter)

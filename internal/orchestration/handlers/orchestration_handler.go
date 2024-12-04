@@ -4,22 +4,16 @@ import (
 	"fmt"
 	"net/http"
 
-	apiErrors "k8s.io/apimachinery/pkg/api/errors"
-
+	commonOrchestration "github.com/kyma-project/kyma-environment-broker/common/orchestration"
 	"github.com/kyma-project/kyma-environment-broker/common/pagination"
-
+	internalError "github.com/kyma-project/kyma-environment-broker/internal/error"
 	"github.com/kyma-project/kyma-environment-broker/internal/httputil"
 	"github.com/kyma-project/kyma-environment-broker/internal/process"
-
-	internalError "github.com/kyma-project/kyma-environment-broker/internal/error"
 	"github.com/kyma-project/kyma-environment-broker/internal/storage"
 	"github.com/kyma-project/kyma-environment-broker/internal/storage/dberr"
 	"github.com/kyma-project/kyma-environment-broker/internal/storage/dbmodel"
-
-	"github.com/gorilla/mux"
-	commonOrchestration "github.com/kyma-project/kyma-environment-broker/common/orchestration"
-
 	"github.com/sirupsen/logrus"
+	apiErrors "k8s.io/apimachinery/pkg/api/errors"
 )
 
 type orchestrationHandler struct {
@@ -55,17 +49,17 @@ func NewOrchestrationStatusHandler(operations storage.Operations,
 	}
 }
 
-func (h *orchestrationHandler) AttachRoutes(router *mux.Router) {
-	router.HandleFunc("/orchestrations", h.listOrchestration).Methods(http.MethodGet)
-	router.HandleFunc("/orchestrations/{orchestration_id}", h.getOrchestration).Methods(http.MethodGet)
-	router.HandleFunc("/orchestrations/{orchestration_id}/cancel", h.cancelOrchestrationByID).Methods(http.MethodPut)
-	router.HandleFunc("/orchestrations/{orchestration_id}/operations", h.listOperations).Methods(http.MethodGet)
-	router.HandleFunc("/orchestrations/{orchestration_id}/operations/{operation_id}", h.getOperation).Methods(http.MethodGet)
-	router.HandleFunc("/orchestrations/{orchestration_id}/retry", h.retryOrchestrationByID).Methods(http.MethodPost)
+func (h *orchestrationHandler) AttachRoutes(r router) {
+	r.HandleFunc("GET /orchestrations", h.listOrchestration)
+	r.HandleFunc("GET /orchestrations/{orchestration_id}", h.getOrchestration)
+	r.HandleFunc("PUT /orchestrations/{orchestration_id}/cancel", h.cancelOrchestrationByID)
+	r.HandleFunc("GET /orchestrations/{orchestration_id}/operations", h.listOperations)
+	r.HandleFunc("GET /orchestrations/{orchestration_id}/operations/{operation_id}", h.getOperation)
+	r.HandleFunc("POST /orchestrations/{orchestration_id}/retry", h.retryOrchestrationByID)
 }
 
 func (h *orchestrationHandler) getOrchestration(w http.ResponseWriter, r *http.Request) {
-	orchestrationID := mux.Vars(r)["orchestration_id"]
+	orchestrationID := r.PathValue("orchestration_id")
 
 	o, err := h.orchestrations.GetByID(orchestrationID)
 	if err != nil {
@@ -92,7 +86,7 @@ func (h *orchestrationHandler) getOrchestration(w http.ResponseWriter, r *http.R
 }
 
 func (h *orchestrationHandler) cancelOrchestrationByID(w http.ResponseWriter, r *http.Request) {
-	orchestrationID := mux.Vars(r)["orchestration_id"]
+	orchestrationID := r.PathValue("orchestration_id")
 
 	err := h.canceler.CancelForID(orchestrationID)
 	if err != nil {
@@ -114,7 +108,7 @@ func (h *orchestrationHandler) retryOrchestrationByID(w http.ResponseWriter, r *
 		return
 	}
 
-	orchestrationID := mux.Vars(r)["orchestration_id"]
+	orchestrationID := r.PathValue("orchestration_id")
 	operationIDs := []string{}
 
 	if r.Body != nil {
@@ -195,7 +189,7 @@ func (h *orchestrationHandler) listOrchestration(w http.ResponseWriter, r *http.
 }
 
 func (h *orchestrationHandler) listOperations(w http.ResponseWriter, r *http.Request) {
-	orchestrationID := mux.Vars(r)["orchestration_id"]
+	orchestrationID := r.PathValue("orchestration_id")
 	pageSize, page, err := pagination.ExtractPaginationConfigFromRequest(r, h.defaultMaxPage)
 	if err != nil {
 		httputil.WriteErrorResponse(w, http.StatusBadRequest, fmt.Errorf("while getting query parameters: %w", err))
@@ -242,8 +236,8 @@ func (h *orchestrationHandler) listOperations(w http.ResponseWriter, r *http.Req
 }
 
 func (h *orchestrationHandler) getOperation(w http.ResponseWriter, r *http.Request) {
-	orchestrationID := mux.Vars(r)["orchestration_id"]
-	operationID := mux.Vars(r)["operation_id"]
+	orchestrationID := r.PathValue("orchestration_id")
+	operationID := r.PathValue("operation_id")
 
 	o, err := h.orchestrations.GetByID(orchestrationID)
 	if err != nil {

@@ -6,9 +6,8 @@ import (
 	"net/http/httptest"
 	"testing"
 
+	"github.com/kyma-project/kyma-environment-broker/internal/httputil"
 	"github.com/kyma-project/kyma-environment-broker/internal/middleware"
-
-	"github.com/gorilla/mux"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -32,10 +31,10 @@ func TestRequestRegionKey(t *testing.T) {
 		gotCtx = req.Context()
 	})
 
-	router := mux.NewRouter()
+	router := httputil.NewRouter()
 	regionMiddleware := middleware.AddRegionToContext("default-region")
 	router.Use(regionMiddleware)
-	router.Path("/endpoint/{region}").Handler(spyHandler)
+	router.HandleFunc("/endpoint/{region}", spyHandler)
 
 	// when
 	router.ServeHTTP(httptest.NewRecorder(), req)
@@ -68,9 +67,9 @@ func TestRequestRegionKeyDefault(t *testing.T) {
 	})
 
 	regionMiddleware := middleware.AddRegionToContext(fixDefaultRegion)
-	router := mux.NewRouter()
+	router := httputil.NewRouter()
 	router.Use(regionMiddleware)
-	router.Path("/endpoint-without-region").Handler(spyHandler)
+	router.HandleFunc("/endpoint-without-region", spyHandler)
 
 	// when
 	router.ServeHTTP(httptest.NewRecorder(), clientReq)

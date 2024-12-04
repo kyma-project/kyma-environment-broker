@@ -3,14 +3,12 @@ package provisioner
 import (
 	"bytes"
 	"encoding/json"
+	"fmt"
 	"reflect"
+	"strconv"
 	"text/template"
 
 	"github.com/sirupsen/logrus"
-
-	"fmt"
-
-	"strconv"
 
 	"github.com/Masterminds/sprig"
 	"github.com/kyma-project/control-plane/components/provisioner/pkg/gqlschema"
