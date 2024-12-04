@@ -5,8 +5,6 @@ import (
 	"net/http"
 	"regexp"
 
-	"github.com/kyma-project/kyma-environment-broker/internal"
-
 	pkg "github.com/kyma-project/kyma-environment-broker/common/runtime"
 )
 

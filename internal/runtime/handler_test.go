@@ -948,7 +948,7 @@ func TestRuntimeHandler_WithKimOnlyDrivenInstances(t *testing.T) {
 		runtimeHandler := runtime.NewHandler(db, 4, "", provisionerClient, k8sClient, kimConfig, logrus.New())
 
 		rr := httptest.NewRecorder()
-		router := mux.NewRouter()
+		router := httputil.NewRouter()
 		runtimeHandler.AttachRoutes(router)
 
 		// when
@@ -1357,7 +1357,7 @@ func TestRuntimeHandler_WithKimOnlyDrivenInstances(t *testing.T) {
 		runtimeHandler := runtime.NewHandler(db, 2, "", provisionerClient, k8sClient, kimConfig, logrus.New())
 
 		rr := httptest.NewRecorder()
-		router := mux.NewRouter()
+		router := httputil.NewRouter()
 		runtimeHandler.AttachRoutes(router)
 
 		// when

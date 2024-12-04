@@ -51,6 +51,7 @@ func NewHandler(storage storage.BrokerStorage, b KcBuilder, origins string, ownC
 
 func (h *Handler) AttachRoutes(r router) {
 	r.HandleFunc("GET /kubeconfig/{instance_id}", h.GetKubeconfig)
+	r.HandleFunc("GET /kubeconfig/", h.GetKubeconfig)
 }
 
 type ErrorResponse struct {
@@ -60,7 +61,8 @@ type ErrorResponse struct {
 func (h *Handler) GetKubeconfig(w http.ResponseWriter, r *http.Request) {
 	instanceID := r.PathValue("instance_id")
 	if instanceID == "" {
-		h.handleResponse(w, http.StatusNotFound, fmt.Errorf("instance ID not found"))
+		h.handleResponse(w, http.StatusNotFound, fmt.Errorf("instanceID is required"))
+		return
 	}
 
 	h.specifyAllowOriginHeader(r, w)

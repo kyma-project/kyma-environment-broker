@@ -3,14 +3,13 @@ package main
 import (
 	"encoding/json"
 	"fmt"
+	"io"
+	"net/http"
+	"testing"
 	"time"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-
-	"io"
-	"net/http"
-	"testing"
 
 	"github.com/google/uuid"
 	"github.com/pivotal-cf/brokerapi/v11/domain"
