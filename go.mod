@@ -24,7 +24,7 @@ require (
 	github.com/kyma-project/infrastructure-manager v0.0.0-20240924140719-22e21e6aa684
 	github.com/lib/pq v1.10.9
 	github.com/matryer/is v1.4.1
-	github.com/pivotal-cf/brokerapi/v11 v11.0.13
+	github.com/pivotal-cf/brokerapi/v11 v11.0.12-0.20241017212156-eb82c66fc625
 	github.com/pkg/errors v0.9.1
 	github.com/prometheus/client_golang v1.20.5
 	github.com/sebdah/goldie/v2 v2.5.5
@@ -64,7 +64,6 @@ require (
 	github.com/evanphx/json-patch v5.9.0+incompatible // indirect
 	github.com/evanphx/json-patch/v5 v5.9.0 // indirect
 	github.com/felixge/httpsnoop v1.0.4 // indirect
-	github.com/go-chi/chi/v5 v5.1.0 // indirect
 	github.com/go-logr/logr v1.4.2 // indirect
 	github.com/go-logr/stdr v1.2.2 // indirect
 	github.com/go-openapi/jsonpointer v0.21.0 // indirect

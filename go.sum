@@ -113,8 +113,6 @@ github.com/gardener/hvpa-controller/api v0.17.0 h1:1mNeP+xsnjPH6GhewugU5srslXiTC
 github.com/gardener/hvpa-controller/api v0.17.0/go.mod h1:eKrL7j6/YX8PaoP80xxi3+UFmQgHVf/QCPsGwNnmDeE=
 github.com/gardener/machine-controller-manager v0.54.0 h1:V7EOODiaBO9VesskdCgxMvo5vgMAmtmUTdb9Y9Nwp50=
 github.com/gardener/machine-controller-manager v0.54.0/go.mod h1:RPpnU8gmTrhDAd79+iKqKlbANiXCRkXoJW+z+5zSTME=
-github.com/go-chi/chi/v5 v5.1.0 h1:acVI1TYaD+hhedDJ3r54HyA6sExp3HfXq7QWEEY/xMw=
-github.com/go-chi/chi/v5 v5.1.0/go.mod h1:DslCQbL2OYiznFReuXYUmQ2hGd1aDpCnlMNITLSKoi8=
 github.com/go-co-op/gocron v1.37.0 h1:ZYDJGtQ4OMhTLKOKMIch+/CY70Brbb1dGdooLEhh7b0=
 github.com/go-co-op/gocron v1.37.0/go.mod h1:3L/n6BkO7ABj+TrfSVXLRzsP26zmikL4ISkLQ0O8iNY=
 github.com/go-kit/kit v0.8.0/go.mod h1:xBxKIO96dXMWWy0MnWVtmwkA9/13aqxPnvrjFYMA2as=
@@ -277,14 +275,14 @@ github.com/onrik/logrus v0.11.0/go.mod h1:fO2vlZwIdti6PidD3gV5YKt9Lq5ptpnP293RAe
 github.com/onsi/ginkgo v1.16.4 h1:29JGrr5oVBm5ulCWet69zQkzWipVXIol6ygQUe/EzNc=
 github.com/onsi/ginkgo/v2 v2.21.0 h1:7rg/4f3rB88pb5obDgNZrNHrQ4e6WpjonchcpuBRnZM=
 github.com/onsi/ginkgo/v2 v2.21.0/go.mod h1:7Du3c42kxCUegi0IImZ1wUQzMBVecgIHjR1C+NkhLQo=
-github.com/onsi/gomega v1.35.1 h1:Cwbd75ZBPxFSuZ6T+rN/WCb/gOc6YgFBXLlZLhC7Ds4=
-github.com/onsi/gomega v1.35.1/go.mod h1:PvZbdDc8J6XJEpDK4HCuRBm8a6Fzp9/DmhC9C7yFlog=
+github.com/onsi/gomega v1.35.0 h1:xuM1M/UvMp9BCdS4hojhS9/4jEuVqS9Er3bqupeaoPM=
+github.com/onsi/gomega v1.35.0/go.mod h1:PvZbdDc8J6XJEpDK4HCuRBm8a6Fzp9/DmhC9C7yFlog=
 github.com/opencontainers/go-digest v1.0.0 h1:apOUWs51W5PlhuyGyz9FCeeBIOUDA/6nW8Oi/yOhh5U=
 github.com/opencontainers/go-digest v1.0.0/go.mod h1:0JzlMkj0TRzQZfJkVvzbP0HBR3IKzErnv2BNG4W4MAM=
 github.com/opencontainers/image-spec v1.1.0 h1:8SG7/vwALn54lVB/0yZ/MMwhFrPYtpEHQb2IpWsCzug=
 github.com/opencontainers/image-spec v1.1.0/go.mod h1:W4s4sFTMaBeK1BQLXbG4AdM2szdn85PY75RI83NrTrM=
-github.com/pivotal-cf/brokerapi/v11 v11.0.13 h1:RUwpROv1yelTahF1BAxmF3QL9IwxFAJgmLFnsmNvnaE=
-github.com/pivotal-cf/brokerapi/v11 v11.0.13/go.mod h1:/yp8b09+b4iqSqiLlt6vXeylDZGA1JiPEOGB0U7KNlg=
+github.com/pivotal-cf/brokerapi/v11 v11.0.12-0.20241017212156-eb82c66fc625 h1:pYMwgrPJcXR21132Y0aBYcmxlE4rYjUVJaviy+y8SfI=
+github.com/pivotal-cf/brokerapi/v11 v11.0.12-0.20241017212156-eb82c66fc625/go.mod h1:jmLwKyGB088yXAlo0lFHQptgdEUlIRR5TRd1oVFWero=
 github.com/pkg/diff v0.0.0-20210226163009-20ebb0f2a09e/go.mod h1:pJLUxLENpZxwdsKMEsNbx1VGcRFpLqf3715MtcvvzbA=
 github.com/pkg/errors v0.8.0/go.mod h1:bwawxfHBFNV+L2hUp1rHADufV3IMtnDRdf1r5NINEl0=
 github.com/pkg/errors v0.8.1/go.mod h1:bwawxfHBFNV+L2hUp1rHADufV3IMtnDRdf1r5NINEl0=
