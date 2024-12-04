@@ -14,7 +14,20 @@ const {getSecret} = require('../../utils');
 
 async function provisionSKRAndInitK8sConfig(options, provisioningTimeout) {
   console.log('Provisioning new SKR instance...');
-  const shoot = await provisionSKRInstance(options, provisioningTimeout);
+  await provisionSKRInstance(options, provisioningTimeout);
+  
+  const runtimeStatus = await kcp.getRuntimeStatusOperations(options.instanceID);
+  const objRuntimeStatus = JSON.parse(runtimeStatus);
+  expect(objRuntimeStatus).to.have.nested.property('data[0].shootName').not.empty;
+  let shoot;
+  if (process.env['GARDENER_KUBECONFIG']) {
+    debug('Fetching shoot info from gardener...');
+    shoot = await gardener.getShoot(objRuntimeStatus.data[0].shootName);
+    debug(`Compass ID ${shoot.compassID}`);
+  } else {
+    debug('Fetching shoot info using kcp cli...');
+    shoot = await getShoot(kcp, objRuntimeStatus.data[0].shootName);
+  }
 
   if (process.env['GARDENER_KUBECONFIG']) {
     console.log('Initiating K8s config...');
@@ -56,8 +69,8 @@ async function provisionSKRInstance(options, timeout) {
     console.log(`\nInstanceID ${options.instanceID}`,
         `Runtime ${options.runtimeName}`, `Application ${options.appName}`, `Suffix ${options.suffix}`);
 
-    const skr = await provisionSKR(keb,
-        kcp, gardener,
+    await provisionSKR(keb,
+        kcp,
         options.instanceID,
         options.runtimeName,
         null,
@@ -66,7 +79,6 @@ async function provisionSKRInstance(options, timeout) {
         timeout);
 
     debug('SKR is provisioned!');
-    return skr.shoot;
   } catch (e) {
     throw new Error(`Provisioning failed: ${e.toString(), e.stack}`);
   } finally {

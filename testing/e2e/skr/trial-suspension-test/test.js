@@ -1,7 +1,7 @@
 const {KCPWrapper, KCPConfig} = require('../kcp/client');
 const {KEBClient, KEBConfig} = require('../kyma-environment-broker');
 const {gatherOptions} = require('../skr-test/helpers');
-const {provisionSKRAndInitK8sConfig} = require('../skr-test/provision/provision-skr');
+const {provisionSKRInstance} = require('../skr-test/provision/provision-skr');
 const {deprovisionAndUnregisterSKR} = require('../skr-test/provision/deprovision-skr');
 const {debug} = require('../utils');
 const {assert} = require('chai');
@@ -31,7 +31,7 @@ describe('SKR Trial suspension test', function() {
 
   before('Ensure SKR Trial is provisioned', async function() {
     try {
-      await callFuncAndPrintExecutionTime(provisionSKRAndInitK8sConfig, [options, provisioningTimeout]);
+      await callFuncAndPrintExecutionTime(provisionSKRInstance, [options, provisioningTimeout]);
     } catch (e) {
       throw new Error(`${e.toString()}\n`);
     }
