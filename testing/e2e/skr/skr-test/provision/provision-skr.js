@@ -16,6 +16,7 @@ async function provisionSKRAndInitK8sConfig(options, provisioningTimeout) {
   console.log('Provisioning new SKR instance...');
   await provisionSKRInstance(options, provisioningTimeout);
 
+  debug('Fetching runtime operation status...');
   const runtimeStatus = await kcp.getRuntimeStatusOperations(options.instanceID);
   const objRuntimeStatus = JSON.parse(runtimeStatus);
   expect(objRuntimeStatus).to.have.nested.property('data[0].shootName').not.empty;
