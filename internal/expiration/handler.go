@@ -7,7 +7,6 @@ import (
 	"time"
 
 	"github.com/google/uuid"
-	"github.com/gorilla/mux"
 	"github.com/kyma-project/kyma-environment-broker/common/orchestration"
 	"github.com/kyma-project/kyma-environment-broker/internal"
 	"github.com/kyma-project/kyma-environment-broker/internal/broker"
@@ -53,7 +52,7 @@ func (h *handler) AttachRoutes(r router) {
 }
 
 func (h *handler) expireInstance(w http.ResponseWriter, req *http.Request) {
-	instanceID := mux.Vars(req)["instance_id"]
+	instanceID := req.PathValue("instance_id")
 
 	h.log.Info("Expiration triggered for instanceID: ", instanceID)
 	logger := h.log.WithField("instanceID", instanceID)

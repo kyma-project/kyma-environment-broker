@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"net/http"
 
-	"github.com/gorilla/mux"
 	commonOrchestration "github.com/kyma-project/kyma-environment-broker/common/orchestration"
 	"github.com/kyma-project/kyma-environment-broker/common/pagination"
 	internalError "github.com/kyma-project/kyma-environment-broker/internal/error"
@@ -60,7 +59,7 @@ func (h *orchestrationHandler) AttachRoutes(r router) {
 }
 
 func (h *orchestrationHandler) getOrchestration(w http.ResponseWriter, r *http.Request) {
-	orchestrationID := mux.Vars(r)["orchestration_id"]
+	orchestrationID := r.PathValue("orchestration_id")
 
 	o, err := h.orchestrations.GetByID(orchestrationID)
 	if err != nil {
@@ -87,7 +86,7 @@ func (h *orchestrationHandler) getOrchestration(w http.ResponseWriter, r *http.R
 }
 
 func (h *orchestrationHandler) cancelOrchestrationByID(w http.ResponseWriter, r *http.Request) {
-	orchestrationID := mux.Vars(r)["orchestration_id"]
+	orchestrationID := r.PathValue("orchestration_id")
 
 	err := h.canceler.CancelForID(orchestrationID)
 	if err != nil {
@@ -109,7 +108,7 @@ func (h *orchestrationHandler) retryOrchestrationByID(w http.ResponseWriter, r *
 		return
 	}
 
-	orchestrationID := mux.Vars(r)["orchestration_id"]
+	orchestrationID := r.PathValue("orchestration_id")
 	operationIDs := []string{}
 
 	if r.Body != nil {
@@ -190,7 +189,7 @@ func (h *orchestrationHandler) listOrchestration(w http.ResponseWriter, r *http.
 }
 
 func (h *orchestrationHandler) listOperations(w http.ResponseWriter, r *http.Request) {
-	orchestrationID := mux.Vars(r)["orchestration_id"]
+	orchestrationID := r.PathValue("orchestration_id")
 	pageSize, page, err := pagination.ExtractPaginationConfigFromRequest(r, h.defaultMaxPage)
 	if err != nil {
 		httputil.WriteErrorResponse(w, http.StatusBadRequest, fmt.Errorf("while getting query parameters: %w", err))
@@ -237,8 +236,8 @@ func (h *orchestrationHandler) listOperations(w http.ResponseWriter, r *http.Req
 }
 
 func (h *orchestrationHandler) getOperation(w http.ResponseWriter, r *http.Request) {
-	orchestrationID := mux.Vars(r)["orchestration_id"]
-	operationID := mux.Vars(r)["operation_id"]
+	orchestrationID := r.PathValue("orchestration_id")
+	operationID := r.PathValue("operation_id")
 
 	o, err := h.orchestrations.GetByID(orchestrationID)
 	if err != nil {
