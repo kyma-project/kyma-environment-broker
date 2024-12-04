@@ -7,7 +7,7 @@ const {
   getSKRRuntimeStatus,
   initializeK8sClient,
 } = require('../helpers');
-
+const {expect} = require('chai');
 const {provisionSKR}= require('../../kyma-environment-broker');
 const {BTPOperatorCreds} = require('../../smctl/helpers');
 const {getSecret} = require('../../utils');

@@ -26,11 +26,6 @@ async function provisionSKR(
   debug(`Operation ID ${operationID}`);
 
   await ensureOperationSucceeded(keb, kcp, instanceID, operationID, timeout);
-
-  debug('Fetching runtime operation status...');
-  const runtimeStatus = await kcp.getRuntimeStatusOperations(instanceID);
-  const objRuntimeStatus = JSON.parse(runtimeStatus);
-  expect(objRuntimeStatus).to.have.nested.property('data[0].shootName').not.empty;
 }
 
 async function getShoot(kcp, shootName) {
