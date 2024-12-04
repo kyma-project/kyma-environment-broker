@@ -2,21 +2,19 @@ package events
 
 import (
 	"fmt"
+	"log/slog"
 	"time"
 
 	eventsapi "github.com/kyma-project/kyma-environment-broker/common/events"
 	"github.com/kyma-project/kyma-environment-broker/internal/storage/postsql"
-	"github.com/sirupsen/logrus"
 )
 
 type events struct {
 	postsql.Factory
-
-	log logrus.FieldLogger
 }
 
-func New(fac postsql.Factory, log logrus.FieldLogger) *events {
-	return &events{Factory: fac, log: log}
+func New(fac postsql.Factory) *events {
+	return &events{Factory: fac}
 }
 
 func (e *events) ListEvents(filter eventsapi.EventFilter) ([]eventsapi.EventDTO, error) {
@@ -33,7 +31,7 @@ func (e *events) InsertEvent(eventLevel eventsapi.EventLevel, message, instanceI
 	}
 	sess := e.NewWriteSession()
 	if err := sess.InsertEvent(eventLevel, message, instanceID, operationID); err != nil {
-		e.log.Errorf("failed to insert event [%v] %v/%v %q: %v", eventLevel, instanceID, operationID, message, err)
+		slog.Error(fmt.Sprintf("failed to insert event [%v] %v/%v %q", eventLevel, instanceID, operationID, message))
 	}
 }
 
@@ -50,7 +48,7 @@ func (e *events) RunGarbageCollection(pollingPeriod, retention time.Duration) {
 		case <-ticker.C:
 			sess := e.NewWriteSession()
 			if err := sess.DeleteEvents(time.Now().Add(-retention)); err != nil {
-				e.log.Errorf("failed to delete old events: %v", err)
+				slog.Error(fmt.Sprintf("failed to delete old events: %v", err))
 			}
 		}
 	}

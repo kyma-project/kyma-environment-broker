@@ -11,7 +11,6 @@ import (
 	"github.com/kyma-project/kyma-environment-broker/internal/storage/postsql"
 
 	"github.com/google/uuid"
-	"github.com/sirupsen/logrus"
 )
 
 const (
@@ -19,7 +18,7 @@ const (
 )
 
 func initTestDBInstancesTables(t *testing.T, connectionURL string) error {
-	connection, err := postsql.WaitForDatabaseAccess(connectionURL, 10, 100*time.Millisecond, logrus.New())
+	connection, err := postsql.WaitForDatabaseAccess(connectionURL, 10, 100*time.Millisecond)
 	if err != nil {
 		t.Logf("Cannot connect to database with URL %s", connectionURL)
 		return err

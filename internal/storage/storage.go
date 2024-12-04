@@ -1,6 +1,8 @@
 package storage
 
 import (
+	"fmt"
+	"log/slog"
 	"time"
 
 	"github.com/gocraft/dbr"
@@ -32,10 +34,10 @@ const (
 )
 
 func NewFromConfig(cfg Config, evcfg events.Config, cipher postgres.Cipher, log logrus.FieldLogger) (BrokerStorage, *dbr.Connection, error) {
-	log.Infof("Setting DB connection pool params: connectionMaxLifetime=%s "+
-		"maxIdleConnections=%d maxOpenConnections=%d", cfg.ConnMaxLifetime, cfg.MaxIdleConns, cfg.MaxOpenConns)
+	slog.Info(fmt.Sprintf("Setting DB connection pool params: connectionMaxLifetime=%s maxIdleConnections=%d maxOpenConnections=%d",
+		cfg.ConnMaxLifetime, cfg.MaxIdleConns, cfg.MaxOpenConns))
 
-	connection, err := postsql.InitializeDatabase(cfg.ConnectionURL(), connectionRetries, log)
+	connection, err := postsql.InitializeDatabase(cfg.ConnectionURL(), connectionRetries)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -52,7 +54,7 @@ func NewFromConfig(cfg Config, evcfg events.Config, cipher postgres.Cipher, log 
 		operation:         operation,
 		orchestrations:    postgres.NewOrchestrations(fact),
 		runtimeStates:     postgres.NewRuntimeStates(fact, cipher),
-		events:            events.New(evcfg, eventstorage.New(fact, log)),
+		events:            events.New(evcfg, eventstorage.New(fact)),
 		subaccountStates:  postgres.NewSubaccountStates(fact),
 		instancesArchived: postgres.NewInstanceArchived(fact),
 		bindings:          postgres.NewBinding(fact, cipher),
@@ -76,13 +78,11 @@ func NewMemoryStorage() BrokerStorage {
 
 type inMemoryEvents struct {
 	events []eventsapi.EventDTO
-	log    *logrus.Logger
 }
 
 func NewInMemoryEvents() *inMemoryEvents {
 	return &inMemoryEvents{
 		events: make([]eventsapi.EventDTO, 0),
-		log:    logrus.New(),
 	}
 }
 
@@ -92,7 +92,7 @@ func (_ inMemoryEvents) RunGarbageCollection(pollingPeriod, retention time.Durat
 
 func (e *inMemoryEvents) InsertEvent(eventLevel eventsapi.EventLevel, message, instanceID, operationID string) {
 	e.events = append(e.events, eventsapi.EventDTO{Level: eventLevel, InstanceID: &instanceID, OperationID: &operationID, Message: message})
-	e.log.Printf("EVENT [%v/%v] %v: %v\n", instanceID, operationID, eventLevel, message)
+	slog.Info(fmt.Sprintf("EVENT [%v/%v] %v: %v", instanceID, operationID, eventLevel, message))
 }
 
 func (e *inMemoryEvents) ListEvents(filter eventsapi.EventFilter) ([]eventsapi.EventDTO, error) {

@@ -2,13 +2,13 @@ package postsql
 
 import (
 	"fmt"
+	"log/slog"
 	"regexp"
 	"time"
 
 	"github.com/gocraft/dbr"
 
 	"github.com/lib/pq"
-	"github.com/sirupsen/logrus"
 )
 
 const (
@@ -24,29 +24,29 @@ const (
 )
 
 // InitializeDatabase opens database connection and initializes schema if it does not exist
-func InitializeDatabase(connectionURL string, retries int, log logrus.FieldLogger) (*dbr.Connection, error) {
-	connection, err := WaitForDatabaseAccess(connectionURL, retries, 300*time.Millisecond, log)
+func InitializeDatabase(connectionURL string, retries int) (*dbr.Connection, error) {
+	connection, err := WaitForDatabaseAccess(connectionURL, retries, 300*time.Millisecond)
 	if err != nil {
 		return nil, err
 	}
 
 	initialized, err := CheckIfDatabaseInitialized(connection)
 	if err != nil {
-		closeDBConnection(connection, log)
+		closeDBConnection(connection)
 		return nil, fmt.Errorf("failed to check if database is initialized: %w", err)
 	}
 	if initialized {
-		log.Info("Database already initialized")
+		slog.Info("Database already initialized")
 		return connection, nil
 	}
 
 	return connection, nil
 }
 
-func closeDBConnection(db *dbr.Connection, log logrus.FieldLogger) {
+func closeDBConnection(db *dbr.Connection) {
 	err := db.Close()
 	if err != nil {
-		log.Warnf("Failed to close database connection: %s", err.Error())
+		slog.Warn(fmt.Sprintf("Failed to close database connection: %s", err.Error()))
 	}
 }
 
@@ -73,12 +73,12 @@ func CheckIfDatabaseInitialized(db *dbr.Connection) (bool, error) {
 	return tableName == InstancesTableName, nil
 }
 
-func WaitForDatabaseAccess(connString string, retryCount int, sleepTime time.Duration, log logrus.FieldLogger) (*dbr.Connection, error) {
+func WaitForDatabaseAccess(connString string, retryCount int, sleepTime time.Duration) (*dbr.Connection, error) {
 	var connection *dbr.Connection
 	var err error
 
 	re := regexp.MustCompile(`password=.*?\s`)
-	log.Info(re.ReplaceAllString(connString, ""))
+	slog.Info(re.ReplaceAllString(connString, ""))
 
 	for ; retryCount > 0; retryCount-- {
 		connection, err = dbr.Open("postgres", connString, nil)
@@ -90,14 +90,14 @@ func WaitForDatabaseAccess(connString string, retryCount int, sleepTime time.Dur
 		if err == nil {
 			return connection, nil
 		}
-		log.Warnf("Database Connection failed: %s", err.Error())
+		slog.Warn(fmt.Sprintf("Database Connection failed: %s", err.Error()))
 
 		err = connection.Close()
 		if err != nil {
-			log.Info("Failed to close database ...")
+			slog.Info("Failed to close database ...")
 		}
 
-		log.Infof("Failed to access database, waiting %v to retry...", sleepTime)
+		slog.Info(fmt.Sprintf("Failed to access database, waiting %v to retry...", sleepTime))
 		time.Sleep(sleepTime)
 	}
 

@@ -1,7 +1,7 @@
 package postsql_test
 
 import (
-	"log"
+	"log/slog"
 	"os"
 	"testing"
 	"time"
@@ -34,14 +34,10 @@ func TestMain(m *testing.M) {
 	config := brokerStorageDatabaseTestConfig()
 
 	docker, err := internal.NewDockerHandler()
-	if err != nil {
-		log.Fatal(err)
-	}
+	fatalOnError(err)
 	defer func(docker *internal.DockerHelper) {
 		err := docker.CloseDockerClient()
-		if err != nil {
-			log.Fatal(err)
-		}
+		fatalOnError(err)
 	}(docker)
 
 	cleanupContainer, err := docker.CreateDBContainer(internal.ContainerCreateRequest{
@@ -56,18 +52,21 @@ func TestMain(m *testing.M) {
 	defer func() {
 		if cleanupContainer != nil {
 			err := cleanupContainer()
-			if err != nil {
-				log.Fatal(err)
-			}
+			fatalOnError(err)
 		}
 	}()
-	if err != nil {
-		log.Fatal(err)
-	}
+	fatalOnError(err)
 
 	exitVal = m.Run()
 }
 
 func GetStorageForDatabaseTests() (func() error, storage.BrokerStorage, error) {
 	return storage.GetStorageForTest(brokerStorageDatabaseTestConfig())
+}
+
+func fatalOnError(err error) {
+	if err != nil {
+		slog.Error(err.Error())
+		os.Exit(1)
+	}
 }

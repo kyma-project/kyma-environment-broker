@@ -3,6 +3,7 @@ package postsql
 import (
 	"encoding/json"
 	"fmt"
+	"log/slog"
 	"strings"
 
 	"github.com/pivotal-cf/brokerapi/v8/domain"
@@ -206,7 +207,10 @@ func (s *Instance) FindAllJoinedWithOperations(prct ...predicate.Predicate) ([]i
 		case internal.OperationTypeProvision:
 			isSuspensionOp = false
 		case internal.OperationTypeDeprovision:
-			deprovOp, _ := s.toDeprovisioningOp(&dto)
+			deprovOp, err := s.toDeprovisioningOp(&dto)
+			if err != nil {
+				slog.Error(fmt.Sprintf("while unmarshalling DTO deprovisioning operation data: %v", err))
+			}
 			isSuspensionOp = deprovOp.Temporary
 		}
 
@@ -358,7 +362,10 @@ func (s *Instance) toInstance(dto dbmodel.InstanceDTO) (internal.Instance, error
 		return internal.Instance{}, fmt.Errorf("while decrypting parameters: %w", err)
 	}
 
-	_ = s.cipher.DecryptKubeconfig(&params)
+	err = s.cipher.DecryptKubeconfig(&params)
+	if err != nil {
+		slog.Warn("decrypting skipped because kubeconfig is in a plain text")
+	}
 
 	return internal.Instance{
 		InstanceID:                  dto.InstanceID,
@@ -393,7 +400,10 @@ func (s *Instance) toInstanceWithSubaccountState(dto dbmodel.InstanceWithSubacco
 		return internal.InstanceWithSubaccountState{}, fmt.Errorf("while decrypting parameters: %w", err)
 	}
 
-	_ = s.cipher.DecryptKubeconfig(&params)
+	err = s.cipher.DecryptKubeconfig(&params)
+	if err != nil {
+		slog.Warn("decrypting skipped because kubeconfig is in a plain text")
+	}
 
 	var betaEnabled, usedForProduction string
 	if dto.BetaEnabled == nil {

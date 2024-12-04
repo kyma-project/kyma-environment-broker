@@ -4,7 +4,6 @@ import (
 	"testing"
 
 	"github.com/kyma-project/kyma-environment-broker/internal/storage/postsql"
-	"github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -30,7 +29,7 @@ func TestInitialization(t *testing.T) {
 		connString := "bad connection string"
 
 		// when
-		connection, err := postsql.InitializeDatabase(connString, 3, logrus.New())
+		connection, err := postsql.InitializeDatabase(connString, 3)
 
 		// then
 		assert.Error(t, err)

@@ -3,6 +3,7 @@ package postsql
 import (
 	"encoding/json"
 	"fmt"
+	"log/slog"
 	"strings"
 	"time"
 
@@ -823,7 +824,10 @@ func (s *operations) toOperation(dto *dbmodel.OperationDTO, existingOp internal.
 		return internal.Operation{}, fmt.Errorf("while decrypting basic auth: %w", err)
 	}
 
-	_ = s.cipher.DecryptKubeconfig(&provisioningParameters)
+	err = s.cipher.DecryptKubeconfig(&provisioningParameters)
+	if err != nil {
+		slog.Warn("decrypting skipped because kubeconfig is in a plain text")
+	}
 
 	stages := make([]string, 0)
 	finishedSteps := storage.SQLNullStringToString(dto.FinishedStages)
