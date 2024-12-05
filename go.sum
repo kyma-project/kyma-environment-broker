@@ -238,8 +238,8 @@ github.com/kyma-project/brokerapi/v8 v8.2.4-0.20241017055904-60727c4de1c4 h1:vXE
 github.com/kyma-project/brokerapi/v8 v8.2.4-0.20241017055904-60727c4de1c4/go.mod h1:MGZMnpFeMjZ/JVEYDv92uJMf8QMohfOFaSgPwzEQ5/c=
 github.com/kyma-project/control-plane/components/provisioner v0.0.0-20240925074719-868d3d02df59 h1:PAynE3RawB3Kvg9Q430hNB9FoBMViTxfy7BzC/o335U=
 github.com/kyma-project/control-plane/components/provisioner v0.0.0-20240925074719-868d3d02df59/go.mod h1:xgWRmQjXFgIBX+TAvHr8iQIpjFhamm4HOpHPfGmnz2Q=
-github.com/kyma-project/infrastructure-manager v0.0.0-20240924140719-22e21e6aa684 h1:d2IkaqzuDgE9H532UOVWlW6o3xoJsSkWBYGHudSBmv4=
-github.com/kyma-project/infrastructure-manager v0.0.0-20240924140719-22e21e6aa684/go.mod h1:zXB6/LSW8Y50NmZlg3SvQQfpKmepC+Je3WGADjXutKg=
+github.com/kyma-project/infrastructure-manager v1.20.0 h1:GYwqA7oEvOL7kb4/wfbW0n463/eh6Qr0xe9iteSpDcc=
+github.com/kyma-project/infrastructure-manager v1.20.0/go.mod h1:PqYZ2GsFQz4SUvRYuQesItBPCHMg5BLi3SkKEkceWyw=
 github.com/lib/pq v1.0.0/go.mod h1:5WUZQaWbwv1U+lTReE5YruASi9Al49XbQIvNi/34Woo=
 github.com/lib/pq v1.1.1/go.mod h1:5WUZQaWbwv1U+lTReE5YruASi9Al49XbQIvNi/34Woo=
 github.com/lib/pq v1.10.9 h1:YXG7RB+JIjhP29X+OtkiDnYaXQwpS4JEWq7dtCCRUEw=
@@ -300,8 +300,9 @@ github.com/pkg/errors v0.8.0/go.mod h1:bwawxfHBFNV+L2hUp1rHADufV3IMtnDRdf1r5NINE
 github.com/pkg/errors v0.8.1/go.mod h1:bwawxfHBFNV+L2hUp1rHADufV3IMtnDRdf1r5NINEl0=
 github.com/pkg/errors v0.9.1 h1:FEBLx1zS214owpjy7qsBeixbURkuhQAwrK5UwLGTwt4=
 github.com/pkg/errors v0.9.1/go.mod h1:bwawxfHBFNV+L2hUp1rHADufV3IMtnDRdf1r5NINEl0=
-github.com/pmezard/go-difflib v1.0.0 h1:4DBwDE0NGyQoBHbLQYPwSUPoCMWR5BEzIk/f1lZbAQM=
 github.com/pmezard/go-difflib v1.0.0/go.mod h1:iKH77koFhYxTK1pcRnkKkqfTogsbg7gZNVY4sRDYZ/4=
+github.com/pmezard/go-difflib v1.0.1-0.20181226105442-5d4384ee4fb2 h1:Jamvg5psRIccs7FGNTlIRMkT8wgtp5eCXdBlqhYGL6U=
+github.com/pmezard/go-difflib v1.0.1-0.20181226105442-5d4384ee4fb2/go.mod h1:iKH77koFhYxTK1pcRnkKkqfTogsbg7gZNVY4sRDYZ/4=
 github.com/prometheus-operator/prometheus-operator/pkg/apis/monitoring v0.78.2 h1:SyoVBXD/r0PntR1rprb90ClI32FSUNOCWqqTatnipHM=
 github.com/prometheus-operator/prometheus-operator/pkg/apis/monitoring v0.78.2/go.mod h1:SvsRXw4m1F2vk7HquU5h475bFpke27mIUswfyw9u3ug=
 github.com/prometheus/client_golang v0.9.1/go.mod h1:7SWBe2y4D6OKWSNQJUaRYU/AaXPKyh/dDVn+NZz0KFw=
