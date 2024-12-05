@@ -34,9 +34,10 @@ type Config struct {
 type Client struct {
 	httpClient *http.Client
 	config     Config
+	log        *slog.Logger
 }
 
-func NewClient(ctx context.Context, config Config) *Client {
+func NewClient(ctx context.Context, config Config, log *slog.Logger) *Client {
 	cfg := clientcredentials.Config{
 		ClientID:     config.ClientID,
 		ClientSecret: config.ClientSecret,
@@ -51,6 +52,7 @@ func NewClient(ctx context.Context, config Config) *Client {
 	return &Client{
 		httpClient: httpClientOAuth,
 		config:     config,
+		log:        log,
 	}
 }
 
@@ -74,7 +76,7 @@ func (c *Client) FetchSubaccountsToDelete() ([]string, error) {
 		return []string{}, fmt.Errorf("while fetching subaccounts from delete events: %w", err)
 	}
 
-	slog.Info(fmt.Sprintf("CIS returned total amount of delete events: %d, client fetched %d subaccounts to delete. "+
+	c.log.Info(fmt.Sprintf("CIS returned total amount of delete events: %d, client fetched %d subaccounts to delete. "+
 		"The events include a range of time from %s to %s", subaccounts.total, len(subaccounts.ids), subaccounts.from, subaccounts.to))
 
 	return subaccounts.ids, nil
@@ -161,7 +163,7 @@ func (c *Client) handleWrongStatusCode(response *http.Response) string {
 func (c *Client) appendSubaccountsFromDeleteEvents(cisResp *CisResponse, subaccs *subaccounts) {
 	for _, event := range cisResp.Events {
 		if event.Type != eventType {
-			slog.Warn(fmt.Sprintf("event type %s is not equal to %s, skip event", event.Type, eventType))
+			c.log.Warn(fmt.Sprintf("event type %s is not equal to %s, skip event", event.Type, eventType))
 			continue
 		}
 		subaccs.ids = append(subaccs.ids, event.SubAccount)

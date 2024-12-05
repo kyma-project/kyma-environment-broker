@@ -44,9 +44,15 @@ func main() {
 	var client cis.CisClient
 	switch cfg.ClientVersion {
 	case "v1.0":
-		client = cis.NewClientVer1(ctx, cfg.CIS)
+		log := slog.New(slog.NewJSONHandler(os.Stdout, &slog.HandlerOptions{
+			Level: slog.LevelInfo,
+		})).With("client", "CIS-1.0")
+		client = cis.NewClientVer1(ctx, cfg.CIS, log)
 	case "v2.0":
-		client = cis.NewClient(ctx, cfg.CIS)
+		log := slog.New(slog.NewJSONHandler(os.Stdout, &slog.HandlerOptions{
+			Level: slog.LevelInfo,
+		})).With("client", "CIS-2.0")
+		client = cis.NewClient(ctx, cfg.CIS, log)
 	default:
 		fatalOnError(fmt.Errorf("client version %s is not supported", cfg.ClientVersion))
 	}

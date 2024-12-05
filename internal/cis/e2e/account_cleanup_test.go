@@ -5,10 +5,10 @@ package e2e
 
 import (
 	"context"
+	"log/slog"
 	"testing"
 
 	"github.com/kyma-project/kyma-environment-broker/internal/cis"
-	"github.com/kyma-project/kyma-environment-broker/internal/logger"
 	"github.com/kyma-project/kyma-environment-broker/internal/storage"
 	"github.com/kyma-project/kyma-environment-broker/internal/storage/driver/postsql/events"
 
@@ -52,11 +52,16 @@ func TestSubAccountCleanup(t *testing.T) {
 		testServer := fixHTTPServer(t)
 		defer testServer.Close()
 
+		t.Log("create logger")
+		logger := slog.New(slog.NewJSONHandler(os.Stdout, &slog.HandlerOptions{
+			Level: slog.LevelInfo,
+		}))
+
 		t.Log("create CIS client")
 		client := cis.NewClientVer1(context.TODO(), cis.Config{
 			EventServiceURL: testServer.URL,
 			PageSize:        "10",
-		})
+		}, logger)
 		client.SetHttpClient(testServer.Client())
 
 		t.Log("create broker client mock and assert execution deprovisioning for first 30 instances")
@@ -104,11 +109,16 @@ func TestSubAccountCleanup(t *testing.T) {
 		testServer := fixHTTPServer(t)
 		defer testServer.Close()
 
+		t.Log("create logger")
+		logger := slog.New(slog.NewJSONHandler(os.Stdout, &slog.HandlerOptions{
+			Level: slog.LevelInfo,
+		}))
+
 		t.Log("create CIS client")
 		client := cis.NewClient(context.TODO(), cis.Config{
 			EventServiceURL: testServer.URL,
 			PageSize:        "10",
-		})
+		}, logger)
 		client.SetHttpClient(testServer.Client())
 
 		t.Log("create broker client mock and assert execution deprovisioning for first 30 instances")
