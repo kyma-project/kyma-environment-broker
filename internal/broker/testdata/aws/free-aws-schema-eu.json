@@ -130,7 +130,10 @@
       ],
       "type": "object"
     },
-    "region": {
+   "region": {
+      "_enumDisplayName": {
+        "eu-central-1": "eu-central-1 (Europe, Frankfurt)"
+      },
       "enum": [
         "eu-central-1"
       ],
