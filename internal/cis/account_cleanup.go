@@ -2,11 +2,10 @@ package cis
 
 import (
 	"fmt"
+	"log/slog"
 
 	"github.com/kyma-project/kyma-environment-broker/internal"
 	"github.com/kyma-project/kyma-environment-broker/internal/storage"
-
-	"github.com/sirupsen/logrus"
 )
 
 //go:generate mockery --name=CisClient --output=automock
@@ -23,16 +22,14 @@ type SubAccountCleanupService struct {
 	client       CisClient
 	brokerClient BrokerClient
 	storage      storage.Instances
-	log          logrus.FieldLogger
 	chunksAmount int
 }
 
-func NewSubAccountCleanupService(client CisClient, brokerClient BrokerClient, storage storage.Instances, log logrus.FieldLogger) *SubAccountCleanupService {
+func NewSubAccountCleanupService(client CisClient, brokerClient BrokerClient, storage storage.Instances) *SubAccountCleanupService {
 	return &SubAccountCleanupService{
 		client:       client,
 		brokerClient: brokerClient,
 		storage:      storage,
-		log:          log,
 		chunksAmount: 50,
 	}
 }
@@ -56,7 +53,7 @@ func (ac *SubAccountCleanupService) Run() error {
 	for !isDone {
 		select {
 		case err := <-errCh:
-			ac.log.Warnf("part of deprovisioning process failed with error: %s", err)
+			slog.Warn(fmt.Sprintf("part of deprovisioning process failed with error: %s", err))
 		case <-done:
 			chunks--
 			if chunks == 0 {
@@ -65,7 +62,7 @@ func (ac *SubAccountCleanupService) Run() error {
 		}
 	}
 
-	ac.log.Info("SubAccount cleanup process finished")
+	slog.Info("SubAccount cleanup process finished")
 	return nil
 }
 
@@ -82,7 +79,7 @@ func (ac *SubAccountCleanupService) executeDeprovisioning(subaccounts []string, 
 			errCh <- fmt.Errorf("error occurred during deprovisioning instance with ID %s: %w", instance.InstanceID, err)
 			continue
 		}
-		ac.log.Infof("deprovisioning for instance %s (SubAccountID: %s) was triggered, operation: %s", instance.InstanceID, instance.SubAccountID, operation)
+		slog.Info(fmt.Sprintf("deprovisioning for instance %s (SubAccountID: %s) was triggered, operation: %s", instance.InstanceID, instance.SubAccountID, operation))
 	}
 
 	done <- struct{}{}

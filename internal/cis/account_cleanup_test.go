@@ -1,15 +1,16 @@
 package cis
 
 import (
+	"bytes"
 	"fmt"
+	"log/slog"
+	"os"
 	"testing"
 
 	"github.com/kyma-project/kyma-environment-broker/internal"
 	mocks "github.com/kyma-project/kyma-environment-broker/internal/cis/automock"
-	"github.com/kyma-project/kyma-environment-broker/internal/logger"
 	"github.com/kyma-project/kyma-environment-broker/internal/storage"
 
-	"github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -46,7 +47,7 @@ func TestSubAccountCleanupService_Run(t *testing.T) {
 			assert.NoError(t, err)
 		}
 
-		service := NewSubAccountCleanupService(cisClient, brokerClient, memoryStorage.Instances(), logrus.New())
+		service := NewSubAccountCleanupService(cisClient, brokerClient, memoryStorage.Instances())
 		service.chunksAmount = 2
 
 		// When
@@ -81,8 +82,17 @@ func TestSubAccountCleanupService_Run(t *testing.T) {
 			assert.NoError(t, err)
 		}
 
-		log := logger.NewLogSpy()
-		service := NewSubAccountCleanupService(cisClient, brokerClient, memoryStorage.Instances(), log.Logger)
+		cw := &captureWriter{buf: &bytes.Buffer{}}
+		handler := slog.NewTextHandler(cw, nil)
+		logger := slog.New(handler)
+		slog.SetDefault(logger)
+
+		defer func() {
+			l := slog.New(slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{Level: slog.LevelInfo}))
+			slog.SetDefault(l)
+		}()
+
+		service := NewSubAccountCleanupService(cisClient, brokerClient, memoryStorage.Instances())
 		service.chunksAmount = 5
 
 		// When
@@ -90,8 +100,10 @@ func TestSubAccountCleanupService_Run(t *testing.T) {
 
 		// Then
 		assert.NoError(t, err)
-		log.AssertLogged(t, logrus.WarnLevel, "part of deprovisioning process failed with error: error occurred during deprovisioning instance with ID ad6af000-e647-44ea-a3bb-db8672d5bc7e: cannot deprovision")
-		log.AssertLogged(t, logrus.WarnLevel, "part of deprovisioning process failed with error: error occurred during deprovisioning instance with ID 07d368f2-c294-47e7-8d66-20b73ef46342: cannot deprovision")
+
+		logContents := cw.buf.String()
+		assert.Contains(t, logContents, "part of deprovisioning process failed with error: error occurred during deprovisioning instance with ID ad6af000-e647-44ea-a3bb-db8672d5bc7e: cannot deprovision")
+		assert.Contains(t, logContents, "part of deprovisioning process failed with error: error occurred during deprovisioning instance with ID 07d368f2-c294-47e7-8d66-20b73ef46342: cannot deprovision")
 	})
 
 	t.Run("process should return with error", func(t *testing.T) {
@@ -103,7 +115,7 @@ func TestSubAccountCleanupService_Run(t *testing.T) {
 		brokerClient := &mocks.BrokerClient{}
 		memoryStorage := storage.NewMemoryStorage()
 
-		service := NewSubAccountCleanupService(cisClient, brokerClient, memoryStorage.Instances(), logrus.New())
+		service := NewSubAccountCleanupService(cisClient, brokerClient, memoryStorage.Instances())
 		service.chunksAmount = 7
 
 		// When
@@ -135,4 +147,12 @@ func fixInstances() []internal.Instance {
 	}
 
 	return instances
+}
+
+type captureWriter struct {
+	buf *bytes.Buffer
+}
+
+func (c *captureWriter) Write(p []byte) (n int, err error) {
+	return c.buf.Write(p)
 }

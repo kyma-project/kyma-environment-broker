@@ -56,7 +56,7 @@ func TestSubAccountCleanup(t *testing.T) {
 		client := cis.NewClientVer1(context.TODO(), cis.Config{
 			EventServiceURL: testServer.URL,
 			PageSize:        "10",
-		}, logger.NewLogDummy())
+		})
 		client.SetHttpClient(testServer.Client())
 
 		t.Log("create broker client mock and assert execution deprovisioning for first 30 instances")
@@ -108,7 +108,7 @@ func TestSubAccountCleanup(t *testing.T) {
 		client := cis.NewClient(context.TODO(), cis.Config{
 			EventServiceURL: testServer.URL,
 			PageSize:        "10",
-		}, logger.NewLogDummy())
+		})
 		client.SetHttpClient(testServer.Client())
 
 		t.Log("create broker client mock and assert execution deprovisioning for first 30 instances")

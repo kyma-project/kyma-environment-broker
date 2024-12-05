@@ -2,6 +2,9 @@ package main
 
 import (
 	"context"
+	"fmt"
+	"log/slog"
+	"os"
 	"time"
 
 	"github.com/kyma-project/kyma-environment-broker/internal/broker"
@@ -9,7 +12,6 @@ import (
 	"github.com/kyma-project/kyma-environment-broker/internal/events"
 	"github.com/kyma-project/kyma-environment-broker/internal/schemamigrator/cleaner"
 	"github.com/kyma-project/kyma-environment-broker/internal/storage"
-	"github.com/sirupsen/logrus"
 	"github.com/vrischmann/envconfig"
 )
 
@@ -27,24 +29,26 @@ func main() {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
+	// create logs
+	logger := slog.New(slog.NewJSONHandler(os.Stdout, &slog.HandlerOptions{
+		Level: slog.LevelInfo,
+	}))
+	slog.SetDefault(logger)
+
 	// create and fill config
 	var cfg Config
 	err := envconfig.InitWithPrefix(&cfg, "APP")
 	fatalOnError(err)
 
-	// create logs
-	logs := logrus.New()
-	logs.SetFormatter(&logrus.JSONFormatter{})
-
 	// create CIS client
 	var client cis.CisClient
 	switch cfg.ClientVersion {
 	case "v1.0":
-		client = cis.NewClientVer1(ctx, cfg.CIS, logs)
+		client = cis.NewClientVer1(ctx, cfg.CIS)
 	case "v2.0":
-		client = cis.NewClient(ctx, cfg.CIS, logs)
+		client = cis.NewClient(ctx, cfg.CIS)
 	default:
-		logs.Fatalf("Client version %s is not supported", cfg.ClientVersion)
+		fatalOnError(fmt.Errorf("client version %s is not supported", cfg.ClientVersion))
 	}
 
 	// create storage connection
@@ -57,7 +61,7 @@ func main() {
 	brokerClient.UserAgent = broker.AccountCleanupJob
 
 	// create SubAccountCleanerService and execute process
-	sacs := cis.NewSubAccountCleanupService(client, brokerClient, db.Instances(), logs)
+	sacs := cis.NewSubAccountCleanupService(client, brokerClient, db.Instances())
 	fatalOnError(sacs.Run())
 
 	// do not use defer, close must be done before halting
@@ -76,12 +80,13 @@ func main() {
 
 func fatalOnError(err error) {
 	if err != nil {
-		logrus.Fatal(err)
+		slog.Error(err.Error())
+		os.Exit(1)
 	}
 }
 
 func logOnError(err error) {
 	if err != nil {
-		logrus.Error(err)
+		slog.Error(err.Error())
 	}
 }

@@ -7,8 +7,6 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"github.com/kyma-project/kyma-environment-broker/internal/logger"
-
 	"github.com/gorilla/mux"
 	"github.com/stretchr/testify/require"
 )
@@ -28,7 +26,7 @@ func TestClientVer1_FetchSubaccountsToDelete(t *testing.T) {
 		client := NewClientVer1(context.TODO(), Config{
 			EventServiceURL: testServer.URL,
 			PageSize:        "3",
-		}, logger.NewLogDummy())
+		})
 		client.SetHttpClient(testServer.Client())
 
 		// When
@@ -50,7 +48,7 @@ func TestClientVer1_FetchSubaccountsToDelete(t *testing.T) {
 		client := NewClientVer1(context.TODO(), Config{
 			EventServiceURL: testServer.URL,
 			PageSize:        "3",
-		}, logger.NewLogDummy())
+		})
 		client.SetHttpClient(testServer.Client())
 
 		// When

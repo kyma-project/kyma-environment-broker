@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"log"
+	"log/slog"
 	"math"
 	"net/http"
 	"net/http/httptest"
@@ -118,7 +118,7 @@ func (e *subaccountsEndpoint) getSubaccount(w http.ResponseWriter, r *http.Reque
 
 	data, err := json.Marshal(e.subaccounts[subaccountID])
 	if err != nil {
-		log.Println("error while marshalling subaccount data: %w", err)
+		slog.Error(fmt.Sprintf("error while marshalling subaccount data: %v", err))
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
@@ -126,7 +126,7 @@ func (e *subaccountsEndpoint) getSubaccount(w http.ResponseWriter, r *http.Reque
 	w.WriteHeader(http.StatusOK)
 	if _, err = w.Write(data); err != nil {
 		w.WriteHeader(http.StatusBadRequest)
-		log.Println("error while writing subaccount data: %w", err)
+		slog.Error(fmt.Sprintf("error while writing subaccount data: %v", err))
 		return
 	}
 }
@@ -222,14 +222,14 @@ func (e *eventsEndpoint) getEvents(w http.ResponseWriter, r *http.Request) {
 
 	data, err := json.Marshal(resp)
 	if err != nil {
-		log.Println("error while marshalling events data: %w", err)
+		slog.Error(fmt.Sprintf("error while marshalling events data: %v", err))
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
 
 	w.WriteHeader(http.StatusOK)
 	if _, err = w.Write(data); err != nil {
-		log.Println("error while writing events data: %w", err)
+		slog.Error(fmt.Sprintf("error while writing events data: %v", err))
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
