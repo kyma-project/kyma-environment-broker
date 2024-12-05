@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"fmt"
+	"log/slog"
 	"net/http"
 	"os"
 
@@ -12,7 +13,6 @@ import (
 	"github.com/kyma-project/kyma-environment-broker/internal/schemamigrator/cleaner"
 	"github.com/kyma-project/kyma-environment-broker/internal/storage"
 	"github.com/kyma-project/kyma-environment-broker/internal/storage/dbmodel"
-	log "github.com/sirupsen/logrus"
 	"github.com/vrischmann/envconfig"
 )
 
@@ -35,8 +35,12 @@ type DeprovisionRetriggerService struct {
 }
 
 func main() {
-	log.SetFormatter(&log.JSONFormatter{})
-	log.Info("Starting deprovision retrigger job!")
+	logger := slog.New(slog.NewJSONHandler(os.Stdout, &slog.HandlerOptions{
+		Level: slog.LevelInfo,
+	}))
+	slog.SetDefault(logger)
+
+	slog.Info("Starting deprovision retrigger job!")
 
 	// create and fill config
 	var cfg Config
@@ -44,7 +48,7 @@ func main() {
 	fatalOnError(err)
 
 	if cfg.DryRun {
-		log.Info("Dry run only - no changes")
+		slog.Info("Dry run only - no changes")
 	}
 
 	ctx := context.Background()
@@ -60,7 +64,7 @@ func main() {
 
 	fatalOnError(err)
 
-	log.Info("Deprovision retrigger job finished successfully!")
+	slog.Info("Deprovision retrigger job finished successfully!")
 	err = conn.Close()
 	if err != nil {
 		fatalOnError(err)
@@ -86,18 +90,18 @@ func (s *DeprovisionRetriggerService) PerformCleanup() error {
 	instancesToDeprovisionAgain, _, _, err := s.instanceStorage.List(notCompletelyDeletedFilter)
 
 	if err != nil {
-		log.Error(fmt.Sprintf("while getting not completely deprovisioned instances: %s", err))
+		slog.Error(fmt.Sprintf("while getting not completely deprovisioned instances: %s", err))
 		return err
 	}
 
 	if s.cfg.DryRun {
 		s.logInstances(instancesToDeprovisionAgain)
-		log.Infof("Instances to retrigger deprovisioning: %d", len(instancesToDeprovisionAgain))
+		slog.Info(fmt.Sprintf("Instances to retrigger deprovisioning: %d", len(instancesToDeprovisionAgain)))
 	} else {
 		failuresCount, sanityFailedCount := s.retriggerDeprovisioningForInstances(instancesToDeprovisionAgain)
 		deprovisioningAccepted := len(instancesToDeprovisionAgain) - failuresCount - sanityFailedCount
-		log.Infof("Out of %d instances to retrigger deprovisioning: accepted requests = %d, skipped due to sanity failed = %d, failed requests = %d",
-			len(instancesToDeprovisionAgain), deprovisioningAccepted, sanityFailedCount, failuresCount)
+		slog.Info(fmt.Sprintf("Out of %d instances to retrigger deprovisioning: accepted requests = %d, skipped due to sanity failed = %d, failed requests = %d",
+			len(instancesToDeprovisionAgain), deprovisioningAccepted, sanityFailedCount, failuresCount))
 	}
 
 	return nil
@@ -123,13 +127,13 @@ func (s *DeprovisionRetriggerService) retriggerDeprovisioningForInstances(instan
 }
 
 func (s *DeprovisionRetriggerService) deprovisionInstance(instance internal.Instance) (err error) {
-	log.Infof("About to deprovision instance for instanceId: %+v", instance.InstanceID)
+	slog.Info(fmt.Sprintf("About to deprovision instance for instanceId: %+v", instance.InstanceID))
 	operationId, err := s.brokerClient.Deprovision(instance)
 	if err != nil {
-		log.Error(fmt.Sprintf("while sending deprovision request for instance ID %s: %s", instance.InstanceID, err))
+		slog.Error(fmt.Sprintf("while sending deprovision request for instance ID %s: %s", instance.InstanceID, err))
 		return err
 	}
-	log.Infof("Deprovision instance for instanceId: %s accepted, operationId: %s", instance.InstanceID, operationId)
+	slog.Info(fmt.Sprintf("Deprovision instance for instanceId: %s accepted, operationId: %s", instance.InstanceID, operationId))
 	return nil
 }
 
@@ -137,11 +141,11 @@ func (s *DeprovisionRetriggerService) deprovisionInstance(instance internal.Inst
 func (s *DeprovisionRetriggerService) getInstanceReturned404(instanceID string) bool {
 	response, err := s.brokerClient.GetInstanceRequest(instanceID)
 	if err != nil || response == nil {
-		log.Error(fmt.Sprintf("while trying to GET instance resource for %s: %s", instanceID, err))
+		slog.Error(fmt.Sprintf("while trying to GET instance resource for %s: %s", instanceID, err))
 		return false
 	}
 	if response.StatusCode != http.StatusNotFound {
-		log.Error(fmt.Sprintf("unexpextedly GET instance resource for  %s: returned %s", instanceID, http.StatusText(response.StatusCode)))
+		slog.Error(fmt.Sprintf("unexpectedly GET instance resource for %s: returned %s", instanceID, http.StatusText(response.StatusCode)))
 		return false
 	}
 	return true
@@ -151,9 +155,9 @@ func (s *DeprovisionRetriggerService) logInstances(instances []internal.Instance
 	for _, instance := range instances {
 		notFound := s.getInstanceReturned404(instance.InstanceID)
 		if notFound {
-			log.Infof("instanceId: %s, createdAt: %+v, deletedAt %+v, GET retured: NotFound", instance.InstanceID, instance.CreatedAt, instance.DeletedAt)
+			slog.Info(fmt.Sprintf("instanceId: %s, createdAt: %+v, deletedAt: %+v, GET returned: NotFound", instance.InstanceID, instance.CreatedAt, instance.DeletedAt))
 		} else {
-			log.Infof("instanceId: %s, createdAt: %+v, deletedAt %+v, GET retured: unexpected result", instance.InstanceID, instance.CreatedAt, instance.DeletedAt)
+			slog.Info(fmt.Sprintf("instanceId: %s, createdAt: %+v, deletedAt: %+v, GET returned: unexpected result", instance.InstanceID, instance.CreatedAt, instance.DeletedAt))
 		}
 	}
 }
@@ -161,13 +165,13 @@ func (s *DeprovisionRetriggerService) logInstances(instances []internal.Instance
 func fatalOnError(err error) {
 	if err != nil {
 		// exit with 0 to avoid any side effects - we ignore all errors only logging those
-		log.Error(err)
+		slog.Error(err.Error())
 		os.Exit(0)
 	}
 }
 
 func logOnError(err error) {
 	if err != nil {
-		log.Error(err)
+		slog.Error(err.Error())
 	}
 }
