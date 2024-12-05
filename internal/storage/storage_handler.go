@@ -10,7 +10,6 @@ import (
 	"github.com/gocraft/dbr"
 	"github.com/kyma-project/kyma-environment-broker/internal/events"
 	"github.com/kyma-project/kyma-environment-broker/internal/storage/postsql"
-	"github.com/sirupsen/logrus"
 	"golang.org/x/exp/slices"
 )
 
@@ -22,7 +21,7 @@ const (
 )
 
 func GetStorageForTest(config Config) (func() error, BrokerStorage, error) {
-	storage, connection, err := NewFromConfig(config, events.Config{}, NewEncrypter(config.SecretKey), logrus.StandardLogger())
+	storage, connection, err := NewFromConfig(config, events.Config{}, NewEncrypter(config.SecretKey))
 	if err != nil {
 		return nil, nil, fmt.Errorf("while creating storage: %w", err)
 	}

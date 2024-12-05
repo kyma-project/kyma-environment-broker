@@ -1,15 +1,19 @@
 package setup
 
-import log "github.com/sirupsen/logrus"
+import (
+	"log/slog"
+	"os"
+)
 
 func FatalOnError(err error) {
 	if err != nil {
-		log.Fatal(err)
+		slog.Error(err.Error())
+		os.Exit(1)
 	}
 }
 
 func LogOnError(err error) {
 	if err != nil {
-		log.Error(err)
+		slog.Error(err.Error())
 	}
 }

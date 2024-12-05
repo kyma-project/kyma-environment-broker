@@ -74,7 +74,7 @@ func main() {
 
 	// create DB connection
 	cipher := storage.NewEncrypter(cfg.Database.SecretKey)
-	db, dbConn, err := storage.NewFromConfig(cfg.Database, events.Config{}, cipher, logrus.WithField("service", "storage"))
+	db, dbConn, err := storage.NewFromConfig(cfg.Database, events.Config{}, cipher)
 
 	// create and register metrics
 	metricsRegistry := prometheus.NewRegistry()

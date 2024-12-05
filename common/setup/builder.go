@@ -3,6 +3,8 @@ package setup
 import (
 	"context"
 	"fmt"
+	"log/slog"
+	"os"
 	"time"
 
 	"github.com/dlmiddlecote/sqlstats"
@@ -15,8 +17,6 @@ import (
 	"github.com/kyma-project/kyma-environment-broker/internal/schemamigrator/cleaner"
 	"github.com/kyma-project/kyma-environment-broker/internal/storage"
 	"github.com/prometheus/client_golang/prometheus"
-	"github.com/sirupsen/logrus"
-	log "github.com/sirupsen/logrus"
 	"github.com/vrischmann/envconfig"
 	"golang.org/x/oauth2/clientcredentials"
 	corev1 "k8s.io/api/core/v1"
@@ -42,7 +42,6 @@ type AppBuilder struct {
 	gardenerClient dynamic.ResourceInterface
 	db             storage.BrokerStorage
 	conn           *dbr.Connection
-	logger         *logrus.Logger
 	brokerClient   *broker.Client
 	k8sClient      client.Client
 }
@@ -52,9 +51,12 @@ type App interface {
 }
 
 func NewAppBuilder() AppBuilder {
-	return AppBuilder{
-		logger: log.New(),
-	}
+	logger := slog.New(slog.NewJSONHandler(os.Stdout, &slog.HandlerOptions{
+		Level: slog.LevelInfo,
+	}))
+	slog.SetDefault(logger)
+
+	return AppBuilder{}
 }
 
 func (b *AppBuilder) WithConfig() {
@@ -96,7 +98,7 @@ func (b *AppBuilder) WithStorage() {
 	// Init Storage
 	cipher := storage.NewEncrypter(b.cfg.Database.SecretKey)
 	var err error
-	b.db, b.conn, err = storage.NewFromConfig(b.cfg.Database, events.Config{}, cipher, log.WithField("service", "storage"))
+	b.db, b.conn, err = storage.NewFromConfig(b.cfg.Database, events.Config{}, cipher)
 	if err != nil {
 		FatalOnError(err)
 	}
@@ -160,7 +162,6 @@ func (b *AppBuilder) Create() App {
 		b.brokerClient,
 		b.k8sClient,
 		b.db.Instances(),
-		b.logger,
 		b.cfg.MaxAgeHours,
 		b.cfg.LabelSelector,
 	)

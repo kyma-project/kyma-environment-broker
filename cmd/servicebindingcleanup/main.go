@@ -11,7 +11,6 @@ import (
 	"github.com/kyma-project/kyma-environment-broker/internal/schemamigrator/cleaner"
 	"github.com/kyma-project/kyma-environment-broker/internal/servicebindingcleanup"
 	"github.com/kyma-project/kyma-environment-broker/internal/storage"
-	log "github.com/sirupsen/logrus"
 	"github.com/vrischmann/envconfig"
 )
 
@@ -45,7 +44,7 @@ func main() {
 	brokerClient.UserAgent = broker.ServiceBindingCleanupJobName
 
 	cipher := storage.NewEncrypter(cfg.Database.SecretKey)
-	db, conn, err := storage.NewFromConfig(cfg.Database, events.Config{}, cipher, log.WithField("service", "storage"))
+	db, conn, err := storage.NewFromConfig(cfg.Database, events.Config{}, cipher)
 	fatalOnError(err)
 
 	svc := servicebindingcleanup.NewService(cfg.Job.DryRun, brokerClient, db.Bindings())

@@ -3,6 +3,7 @@ package environmentscleanup
 import (
 	"context"
 	"fmt"
+	"log/slog"
 	"strings"
 	"time"
 
@@ -12,7 +13,6 @@ import (
 	imv1 "github.com/kyma-project/infrastructure-manager/api/v1"
 	"github.com/kyma-project/kyma-environment-broker/internal"
 	"github.com/kyma-project/kyma-environment-broker/internal/storage"
-	log "github.com/sirupsen/logrus"
 	"gopkg.in/yaml.v2"
 	coreV1 "k8s.io/api/core/v1"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -43,7 +43,6 @@ type Service struct {
 	brokerService   BrokerClient
 	k8sClient       client.Client
 	instanceStorage storage.Instances
-	logger          *log.Logger
 	MaxShootAge     time.Duration
 	LabelSelector   string
 }
@@ -59,13 +58,12 @@ type providers struct {
 	} `yaml:"providers"`
 }
 
-func NewService(gardenerClient GardenerClient, brokerClient BrokerClient, k8sClient client.Client, instanceStorage storage.Instances, logger *log.Logger, maxShootAge time.Duration, labelSelector string) *Service {
+func NewService(gardenerClient GardenerClient, brokerClient BrokerClient, k8sClient client.Client, instanceStorage storage.Instances, maxShootAge time.Duration, labelSelector string) *Service {
 	return &Service{
 		gardenerService: gardenerClient,
 		brokerService:   brokerClient,
 		k8sClient:       k8sClient,
 		instanceStorage: instanceStorage,
-		logger:          logger,
 		MaxShootAge:     maxShootAge,
 		LabelSelector:   labelSelector,
 	}
@@ -76,7 +74,7 @@ func (s *Service) Run() error {
 	if err != nil {
 		return err
 	}
-	log.Infof("Current environment: %s", environment)
+	slog.Info(fmt.Sprintf("Current environment: %s", environment))
 	if environment != "dev.kyma.ondemand.com" {
 		return fmt.Errorf("job must run only in the dev environment, current environment: %s", environment)
 	}
@@ -114,19 +112,19 @@ func (s *Service) getEnvironment() (string, error) {
 func (s *Service) PerformCleanup() error {
 	instancesToDelete, runtimeCRsToDelete, shootsToDelete, err := s.getStaleRuntimesByShoots(s.LabelSelector)
 	if err != nil {
-		s.logger.Error(fmt.Errorf("while getting stale shoots to delete: %w", err))
+		slog.Error(fmt.Sprintf("while getting stale shoots to delete: %v", err))
 		return err
 	}
 
 	err = s.cleanupInstances(instancesToDelete)
 	if err != nil {
-		s.logger.Error(fmt.Errorf("while cleaning instances: %w", err))
+		slog.Error(fmt.Sprintf("while cleaning instances: %v", err))
 		return err
 	}
 
 	err = s.cleanUpRuntimeCRs(runtimeCRsToDelete)
 	if err != nil {
-		s.logger.Error(fmt.Errorf("while cleaning runtime CRs: %w", err))
+		slog.Error(fmt.Sprintf("while cleaning runtime CRs: %v", err))
 		return err
 	}
 
@@ -134,11 +132,11 @@ func (s *Service) PerformCleanup() error {
 }
 
 func (s *Service) cleanupInstances(instances []internal.Instance) error {
-	s.logger.Infof("Number of instances to process: %+v", len(instances))
+	slog.Info(fmt.Sprintf("Number of instances to process: %+v", len(instances)))
 	var result *multierror.Error
 
 	for _, instance := range instances {
-		s.logger.Infof("Triggering environment deprovisioning for instance ID %q, runtime ID %q and shoot name %q", instance.InstanceID, instance.RuntimeID, instance.InstanceDetails.ShootName)
+		slog.Info(fmt.Sprintf("Triggering environment deprovisioning for instance ID %q, runtime ID %q and shoot name %q", instance.InstanceID, instance.RuntimeID, instance.InstanceDetails.ShootName))
 		currentErr := s.triggerEnvironmentDeprovisioning(instance)
 		if currentErr != nil {
 			result = multierror.Append(result, currentErr)
@@ -160,7 +158,7 @@ func (s *Service) cleanupInstances(instances []internal.Instance) error {
 
 func (s *Service) cleanupShoots(shoots []unstructured.Unstructured) error {
 	// do not log all shoots as previously - too much info
-	s.logger.Infof("Number of shoots to process: %+v", len(shoots))
+	slog.Info(fmt.Sprintf("Number of shoots to process: %+v", len(shoots)))
 
 	if len(shoots) == 0 {
 		return nil
@@ -172,12 +170,12 @@ func (s *Service) cleanupShoots(shoots []unstructured.Unstructured) error {
 		shoot.SetAnnotations(annotations)
 		_, err := s.gardenerService.Update(context.Background(), &shoot, v1.UpdateOptions{})
 		if err != nil {
-			s.logger.Error(fmt.Errorf("while annotating shoot with removal confirmation: %w", err))
+			slog.Error(fmt.Sprintf("while annotating shoot with removal confirmation: %v", err))
 		}
 
 		err = s.gardenerService.Delete(context.Background(), shoot.GetName(), v1.DeleteOptions{})
 		if err != nil {
-			s.logger.Error(fmt.Errorf("while cleaning runtimes: %w", err))
+			slog.Error(fmt.Sprintf("while cleaning runtimes: %v", err))
 		}
 	}
 
@@ -220,22 +218,22 @@ func (s *Service) getStaleRuntimesByShoots(labelSelector string) ([]internal.Ins
 		shootAge := time.Since(shootCreationTimestamp.Time)
 
 		if shootAge.Hours() < s.MaxShootAge.Hours() {
-			log.Infof("Shoot %q is not older than %f hours with age: %f hours", shoot.GetName(), s.MaxShootAge.Hours(), shootAge.Hours())
+			slog.Info(fmt.Sprintf("Shoot %q is not older than %f hours with age: %f hours", shoot.GetName(), s.MaxShootAge.Hours(), shootAge.Hours()))
 			continue
 		}
 
-		log.Infof("Shoot %q is older than %f hours with age: %f hours", shoot.GetName(), s.MaxShootAge.Hours(), shootAge.Hours())
+		slog.Info(fmt.Sprintf("Shoot %q is older than %f hours with age: %f hours", shoot.GetName(), s.MaxShootAge.Hours(), shootAge.Hours()))
 
 		instance, ok := instancesMap[shoot.GetName()]
 		if ok {
-			s.logger.Infof("Found an instance %q for shoot %q", instance.InstanceID, shoot.GetName())
+			slog.Info(fmt.Sprintf("Found an instance %q for shoot %q", instance.InstanceID, shoot.GetName()))
 			instances = append(instances, instance)
 			continue
 		}
 
 		runtimeCR, ok := runtimeCRsMap[shoot.GetName()]
 		if ok {
-			s.logger.Infof("Found a runtime CR %q for shoot %q", runtimeCR.Name, shoot.GetName())
+			slog.Info(fmt.Sprintf("Found a runtime CR %q for shoot %q", runtimeCR.Name, shoot.GetName()))
 			staleRuntimeCR := runtime{
 				ID:        runtimeCR.Name,
 				ShootName: shoot.GetName(),
@@ -244,7 +242,7 @@ func (s *Service) getStaleRuntimesByShoots(labelSelector string) ([]internal.Ins
 			continue
 		}
 
-		s.logger.Infof("Instance and runtime CR not found for shoot %q", shoot.GetName())
+		slog.Info(fmt.Sprintf("Instance and runtime CR not found for shoot %q", shoot.GetName()))
 		shoots = append(shoots, shoot)
 	}
 
@@ -254,22 +252,21 @@ func (s *Service) getStaleRuntimesByShoots(labelSelector string) ([]internal.Ins
 func (s *Service) triggerEnvironmentDeprovisioning(instance internal.Instance) error {
 	opID, err := s.brokerService.Deprovision(instance)
 	if err != nil {
-		err = fmt.Errorf("while triggering deprovisioning for instance ID %q: %w", instance.InstanceID, err)
-		s.logger.Error(err)
+		slog.Error(fmt.Sprintf("while triggering deprovisioning for instance ID %q: %v", instance.InstanceID, err))
 		return err
 	}
 
-	log.Infof("Successfully send deprovision request to Kyma Environment Broker, got operation ID %q", opID)
+	slog.Info(fmt.Sprintf("Successfully send deprovision request to Kyma Environment Broker, got operation ID %q", opID))
 	return nil
 }
 
 func (s *Service) cleanUpRuntimeCRs(runtimeCRs []runtime) error {
-	s.logger.Infof("RuntimeCRs to process: %+v", runtimeCRs)
+	slog.Info(fmt.Sprintf("RuntimeCRs to process: %+v", runtimeCRs))
 
 	var result *multierror.Error
 
 	for _, runtime := range runtimeCRs {
-		s.logger.Infof("Deleting runtime CR for runtimeID ID %q and shoot name %q", runtime.ID, runtime.ShootName)
+		slog.Info(fmt.Sprintf("Deleting runtime CR for runtimeID ID %q and shoot name %q", runtime.ID, runtime.ShootName))
 		err := s.deleteRuntimeCR(runtime)
 		if err != nil {
 			result = multierror.Append(result, err)
@@ -293,21 +290,21 @@ func (s *Service) deleteRuntimeCR(runtime runtime) error {
 	var runtimeCR = imv1.Runtime{}
 	err := s.k8sClient.Get(context.Background(), client.ObjectKey{Name: runtime.ID, Namespace: kcpNamespace}, &runtimeCR)
 	if err != nil {
-		s.logger.Error(fmt.Errorf("while getting runtime CR for runtime ID %q: %w", runtime.ID, err))
+		slog.Error(fmt.Sprintf("while getting runtime CR for runtime ID %q: %v", runtime.ID, err))
 		return nil
 	}
 
 	if runtime.ShootName != runtimeCR.Spec.Shoot.Name {
-		s.logger.Error(fmt.Errorf("gardener shoot name %q does not match runtime CR shoot name %q", runtime.ShootName, runtimeCR.Spec.Shoot.Name))
+		slog.Error(fmt.Sprintf("gardener shoot name %q does not match runtime CR shoot name %q", runtime.ShootName, runtimeCR.Spec.Shoot.Name))
 		return nil
 	}
 
 	err = s.k8sClient.Delete(context.Background(), &runtimeCR)
 	if err != nil {
-		s.logger.Error(fmt.Errorf("while deleting runtime CR for runtime ID %q: %w", runtime.ID, err))
+		slog.Error(fmt.Sprintf("while deleting runtime CR for runtime ID %q: %v", runtime.ID, err))
 		return err
 	}
 
-	s.logger.Infof("Successfully deleted runtime CR for runtimeID ID %q", runtime.ID)
+	slog.Info(fmt.Sprintf("Successfully deleted runtime CR for runtimeID ID %q", runtime.ID))
 	return nil
 }

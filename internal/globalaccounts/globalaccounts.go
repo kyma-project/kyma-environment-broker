@@ -73,7 +73,7 @@ func initAll(ctx context.Context, cfg Config, logs *logrus.Logger) (*http.Client
 		cfg.Database,
 		events.Config{},
 		storage.NewEncrypter(cfg.Database.SecretKey),
-		logs.WithField("service", "storage"))
+	)
 
 	if err != nil {
 		logs.Error(err.Error())

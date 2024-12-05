@@ -49,7 +49,7 @@ func main() {
 
 	cipher := storage.NewEncrypter(cfg.Database.SecretKey)
 
-	db, _, err := storage.NewFromConfig(cfg.Database, cfg.Events, cipher, logs.WithField("service", "storage"))
+	db, _, err := storage.NewFromConfig(cfg.Database, cfg.Events, cipher)
 	fatalOnError(err, logs)
 	logs.Info("runtime-reconciler connected to database")
 

@@ -10,7 +10,6 @@ import (
 	"github.com/kyma-project/kyma-environment-broker/internal/archive"
 	"github.com/kyma-project/kyma-environment-broker/internal/events"
 	"github.com/kyma-project/kyma-environment-broker/internal/storage"
-	"github.com/sirupsen/logrus"
 	"github.com/vrischmann/envconfig"
 )
 
@@ -67,7 +66,7 @@ func main() {
 	slog.Info(fmt.Sprintf("PerformDeletion: %v", cfg.PerformDeletion))
 	slog.Info(fmt.Sprintf("Batch size: %v", cfg.BatchSize))
 
-	db, conn, err := storage.NewFromConfig(cfg.Database, events.Config{}, storage.NewEncrypter(cfg.Database.SecretKey), logrus.WithField("service", "storage"))
+	db, conn, err := storage.NewFromConfig(cfg.Database, events.Config{}, storage.NewEncrypter(cfg.Database.SecretKey))
 	fatalOnError(err)
 	defer func() {
 		err := conn.Close()

@@ -1,7 +1,6 @@
 package environmentscleanup
 
 import (
-	"bytes"
 	"context"
 	"fmt"
 	"testing"
@@ -10,7 +9,6 @@ import (
 	"github.com/kyma-project/kyma-environment-broker/internal"
 	mocks "github.com/kyma-project/kyma-environment-broker/internal/environmentscleanup/automock"
 	"github.com/kyma-project/kyma-environment-broker/internal/storage"
-	"github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
@@ -74,9 +72,8 @@ func TestService_PerformCleanup(t *testing.T) {
 			},
 		})
 		assert.NoError(t, err)
-		logger := logrus.New()
 
-		svc := NewService(gcMock, bcMock, k8sClient, memoryStorage.Instances(), logger, maxShootAge, shootLabelSelector)
+		svc := NewService(gcMock, bcMock, k8sClient, memoryStorage.Instances(), maxShootAge, shootLabelSelector)
 
 		// when
 		err = svc.PerformCleanup()
@@ -96,9 +93,8 @@ func TestService_PerformCleanup(t *testing.T) {
 		bcMock := &mocks.BrokerClient{}
 
 		memoryStorage := storage.NewMemoryStorage()
-		logger := logrus.New()
 
-		svc := NewService(gcMock, bcMock, k8sClient, memoryStorage.Instances(), logger, maxShootAge, shootLabelSelector)
+		svc := NewService(gcMock, bcMock, k8sClient, memoryStorage.Instances(), maxShootAge, shootLabelSelector)
 
 		// when
 		err := svc.PerformCleanup()
@@ -144,9 +140,8 @@ func TestService_PerformCleanup(t *testing.T) {
 			},
 		})
 		assert.NoError(t, err)
-		logger := logrus.New()
 
-		svc := NewService(gcMock, bcMock, k8sClient, memoryStorage.Instances(), logger, maxShootAge, shootLabelSelector)
+		svc := NewService(gcMock, bcMock, k8sClient, memoryStorage.Instances(), maxShootAge, shootLabelSelector)
 
 		// when
 		err = svc.PerformCleanup()
@@ -192,9 +187,7 @@ func TestService_PerformCleanup(t *testing.T) {
 		})
 		assert.NoError(t, err)
 
-		logger := logrus.New()
-
-		svc := NewService(gcMock, bcMock, k8sClient, memoryStorage.Instances(), logger, maxShootAge, shootLabelSelector)
+		svc := NewService(gcMock, bcMock, k8sClient, memoryStorage.Instances(), maxShootAge, shootLabelSelector)
 
 		// when
 		err = svc.PerformCleanup()
@@ -266,14 +259,7 @@ func TestService_PerformCleanup(t *testing.T) {
 
 		memoryStorage := storage.NewMemoryStorage()
 
-		var actualLog bytes.Buffer
-		logger := logrus.New()
-		logger.SetFormatter(&logrus.TextFormatter{
-			DisableTimestamp: true,
-		})
-		logger.SetOutput(&actualLog)
-
-		svc := NewService(gcMock, bcMock, k8sClient, memoryStorage.Instances(), logger, maxShootAge, shootLabelSelector)
+		svc := NewService(gcMock, bcMock, k8sClient, memoryStorage.Instances(), maxShootAge, shootLabelSelector)
 
 		// when
 		err = svc.PerformCleanup()
@@ -327,9 +313,7 @@ func TestService_PerformCleanup(t *testing.T) {
 		err = k8sClient.Get(context.Background(), client.ObjectKey{Name: fixRuntimeID3, Namespace: kcpNamespace}, &imv1.Runtime{})
 		assert.NoError(t, err)
 
-		logger := logrus.New()
-
-		svc := NewService(gcMock, bcMock, k8sClient, memoryStorage.Instances(), logger, maxShootAge, shootLabelSelector)
+		svc := NewService(gcMock, bcMock, k8sClient, memoryStorage.Instances(), maxShootAge, shootLabelSelector)
 
 		// when
 		err = svc.PerformCleanup()
@@ -386,9 +370,7 @@ func TestService_PerformCleanup(t *testing.T) {
 		err = k8sClient.Get(context.Background(), client.ObjectKey{Name: fixRuntimeID3, Namespace: kcpNamespace}, &imv1.Runtime{})
 		assert.NoError(t, err)
 
-		logger := logrus.New()
-
-		svc := NewService(gcMock, bcMock, k8sClient, memoryStorage.Instances(), logger, maxShootAge, shootLabelSelector)
+		svc := NewService(gcMock, bcMock, k8sClient, memoryStorage.Instances(), maxShootAge, shootLabelSelector)
 
 		// when
 		err = svc.PerformCleanup()
@@ -411,7 +393,6 @@ func TestService_PerformCleanup(t *testing.T) {
 		bcMock := &mocks.BrokerClient{}
 		bcMock.On("Deprovision", mock.AnythingOfType("internal.Instance")).Return(fixOperationID, nil)
 		memoryStorage := storage.NewMemoryStorage()
-		logger := logrus.New()
 		k8sClient = fake.NewClientBuilder().WithScheme(sch).Build()
 
 		configMap := &corev1.ConfigMap{
@@ -427,7 +408,7 @@ func TestService_PerformCleanup(t *testing.T) {
 		err = k8sClient.Create(context.Background(), configMap)
 		assert.NoError(t, err)
 
-		svc := NewService(gcMock, bcMock, k8sClient, memoryStorage.Instances(), logger, maxShootAge, shootLabelSelector)
+		svc := NewService(gcMock, bcMock, k8sClient, memoryStorage.Instances(), maxShootAge, shootLabelSelector)
 
 		// when
 		err = svc.Run()
@@ -445,7 +426,6 @@ func TestService_PerformCleanup(t *testing.T) {
 		bcMock := &mocks.BrokerClient{}
 		bcMock.On("Deprovision", mock.AnythingOfType("internal.Instance")).Return(fixOperationID, nil)
 		memoryStorage := storage.NewMemoryStorage()
-		logger := logrus.New()
 		k8sClient = fake.NewClientBuilder().WithScheme(sch).Build()
 
 		configMap := &corev1.ConfigMap{
@@ -461,7 +441,7 @@ func TestService_PerformCleanup(t *testing.T) {
 		err = k8sClient.Create(context.Background(), configMap)
 		assert.NoError(t, err)
 
-		svc := NewService(gcMock, bcMock, k8sClient, memoryStorage.Instances(), logger, maxShootAge, shootLabelSelector)
+		svc := NewService(gcMock, bcMock, k8sClient, memoryStorage.Instances(), maxShootAge, shootLabelSelector)
 
 		// when
 		err = svc.Run()

@@ -12,7 +12,6 @@ import (
 	"github.com/kyma-project/kyma-environment-broker/internal/storage"
 	"github.com/kyma-project/kyma-environment-broker/internal/storage/driver/postsql/events"
 
-	"github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/require"
 )
 
@@ -40,7 +39,7 @@ func TestSubAccountCleanup(t *testing.T) {
 
 		t.Log("create storage manager")
 		cipher := storage.NewEncrypter(cfg.SecretKey)
-		storageManager, _, err := storage.NewFromConfig(cfg, events.Config{}, cipher, logrus.StandardLogger())
+		storageManager, _, err := storage.NewFromConfig(cfg, events.Config{}, cipher)
 		require.NoError(t, err)
 
 		t.Log("fill instances table")
@@ -92,7 +91,7 @@ func TestSubAccountCleanup(t *testing.T) {
 
 		t.Log("create storage manager")
 		cipher := storage.NewEncrypter(cfg.SecretKey)
-		storageManager, _, err := storage.NewFromConfig(cfg, events.Config{}, cipher, logrus.StandardLogger())
+		storageManager, _, err := storage.NewFromConfig(cfg, events.Config{}, cipher)
 		require.NoError(t, err)
 
 		t.Log("fill instances table")

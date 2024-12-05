@@ -6,8 +6,6 @@ import (
 	"time"
 
 	"github.com/gocraft/dbr"
-	"github.com/sirupsen/logrus"
-
 	eventsapi "github.com/kyma-project/kyma-environment-broker/common/events"
 	"github.com/kyma-project/kyma-environment-broker/internal/events"
 	"github.com/kyma-project/kyma-environment-broker/internal/storage/driver/memory"
@@ -33,7 +31,7 @@ const (
 	connectionRetries = 10
 )
 
-func NewFromConfig(cfg Config, evcfg events.Config, cipher postgres.Cipher, log logrus.FieldLogger) (BrokerStorage, *dbr.Connection, error) {
+func NewFromConfig(cfg Config, evcfg events.Config, cipher postgres.Cipher) (BrokerStorage, *dbr.Connection, error) {
 	slog.Info(fmt.Sprintf("Setting DB connection pool params: connectionMaxLifetime=%s maxIdleConnections=%d maxOpenConnections=%d",
 		cfg.ConnMaxLifetime, cfg.MaxIdleConns, cfg.MaxOpenConns))
 
