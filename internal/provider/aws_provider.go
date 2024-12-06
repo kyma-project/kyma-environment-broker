@@ -92,6 +92,7 @@ var awsZones = map[string]string{
 	"sa-east-1":      "abc",
 	"us-east-1":      "abcdf",
 	"us-west-1":      "ab",
+	"us-west-2":      "abcd",
 	"ap-northeast-1": "acd",
 	"ap-northeast-2": "abc",
 	"ap-south-1":     "abc",
