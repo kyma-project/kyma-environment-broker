@@ -226,8 +226,10 @@ func main() {
 		TimestampFormat: time.RFC3339Nano,
 	})
 
+	logLevel := new(slog.LevelVar)
+	logLevel.Set(slog.LevelInfo)
 	log := slog.New(slog.NewJSONHandler(os.Stdout, &slog.HandlerOptions{
-		Level: slog.LevelInfo,
+		Level: logLevel,
 	}))
 	slog.SetDefault(log)
 
@@ -240,12 +242,7 @@ func main() {
 		l, _ := logrus.ParseLevel(cfg.LogLevel)
 		logs.SetLevel(l)
 
-		logLevel := new(slog.LevelVar)
 		logLevel.Set(cfg.getLogLevel())
-		log = slog.New(slog.NewJSONHandler(os.Stdout, &slog.HandlerOptions{
-			Level: logLevel,
-		}))
-		slog.SetDefault(log)
 	}
 
 	cfg.OrchestrationConfig.KubernetesVersion = cfg.Provisioner.KubernetesVersion
