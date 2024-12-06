@@ -309,7 +309,7 @@ func (e *Environment) createClusters(skrCount int) {
 		}
 		cfg, err := testEnv.Start()
 		if err != nil {
-			e.logs.Error(fmt.Sprintf("%e", err))
+			e.logs.Error(fmt.Sprintf("%v", err))
 			return
 		}
 		k8sClient, err := client.New(cfg, client.Options{})
