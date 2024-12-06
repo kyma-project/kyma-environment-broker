@@ -3,11 +3,10 @@ package metricsv2
 import (
 	"context"
 	"fmt"
+	"log/slog"
 
 	"github.com/kyma-project/kyma-environment-broker/internal"
 	"github.com/kyma-project/kyma-environment-broker/internal/process"
-	"github.com/sirupsen/logrus"
-
 	"github.com/pivotal-cf/brokerapi/v8/domain"
 	"github.com/prometheus/client_golang/prometheus"
 )
@@ -22,10 +21,10 @@ import (
 type OperationDurationCollector struct {
 	provisioningHistogram   *prometheus.HistogramVec
 	deprovisioningHistogram *prometheus.HistogramVec
-	logger                  logrus.FieldLogger
+	logger                  *slog.Logger
 }
 
-func NewOperationDurationCollector(logger logrus.FieldLogger) *OperationDurationCollector {
+func NewOperationDurationCollector(logger *slog.Logger) *OperationDurationCollector {
 	return &OperationDurationCollector{
 		provisioningHistogram: prometheus.NewHistogramVec(prometheus.HistogramOpts{
 			Namespace: prometheusNamespacev2,

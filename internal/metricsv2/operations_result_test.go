@@ -14,7 +14,6 @@ import (
 	"github.com/kyma-project/kyma-environment-broker/internal/storage"
 	"github.com/pivotal-cf/brokerapi/v8/domain"
 	"github.com/prometheus/client_golang/prometheus/testutil"
-	"github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -41,16 +40,16 @@ func TestOperationsResult(t *testing.T) {
 			assert.NoError(t, err)
 		}
 
+		log := slog.New(slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{
+			Level: slog.LevelInfo,
+		}))
+
 		operationResult := NewOperationResult(
 			context.Background(), operations, Config{
 				Enabled: true, OperationResultPollingInterval: 10 * time.Millisecond,
 				OperationStatsPollingInterval: 10 * time.Millisecond, OperationResultRetentionPeriod: 24 * time.Hour,
-			}, logrus.New(),
+			}, log,
 		)
-
-		log := slog.New(slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{
-			Level: slog.LevelInfo,
-		}))
 
 		eventBroker := event.NewPubSub(log)
 		eventBroker.Subscribe(process.OperationFinished{}, operationResult.Handler)

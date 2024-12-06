@@ -2,6 +2,8 @@ package metricsv2
 
 import (
 	"context"
+	"log/slog"
+	"os"
 	"sync"
 	"testing"
 	"time"
@@ -12,7 +14,6 @@ import (
 	"github.com/kyma-project/kyma-environment-broker/internal/storage"
 	"github.com/pivotal-cf/brokerapi/v8/domain"
 	"github.com/prometheus/client_golang/prometheus/testutil"
-	log "github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -77,7 +78,10 @@ func TestOperationsStats(t *testing.T) {
 	}
 
 	t.Run("create counter key", func(t *testing.T) {
-		ctr = NewOperationsStats(operations, cfg, log.WithField("metrics", "test"))
+		log := slog.New(slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{
+			Level: slog.LevelInfo,
+		})).With("metrics", "test")
+		ctr = NewOperationsStats(operations, cfg, log)
 		ctr.MustRegister(context.Background())
 	})
 

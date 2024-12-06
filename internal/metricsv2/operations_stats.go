@@ -3,6 +3,7 @@ package metricsv2
 import (
 	"context"
 	"fmt"
+	"log/slog"
 	"strings"
 	"sync"
 	"time"
@@ -14,7 +15,6 @@ import (
 	"github.com/kyma-project/kyma-environment-broker/internal/storage"
 	"github.com/pivotal-cf/brokerapi/v8/domain"
 	"github.com/prometheus/client_golang/prometheus"
-	"github.com/sirupsen/logrus"
 )
 
 // exposed metrics:
@@ -58,7 +58,7 @@ var (
 type metricKey string
 
 type OperationStats struct {
-	logger          logrus.FieldLogger
+	logger          *slog.Logger
 	operations      storage.Operations
 	gauges          map[metricKey]prometheus.Gauge
 	counters        map[metricKey]prometheus.Counter
@@ -68,7 +68,7 @@ type OperationStats struct {
 
 var _ Exposer = (*OperationStats)(nil)
 
-func NewOperationsStats(operations storage.Operations, cfg Config, logger logrus.FieldLogger) *OperationStats {
+func NewOperationsStats(operations storage.Operations, cfg Config, logger *slog.Logger) *OperationStats {
 	return &OperationStats{
 		logger:          logger,
 		gauges:          make(map[metricKey]prometheus.Gauge, len(plans)*len(opTypes)*1),
@@ -81,7 +81,7 @@ func NewOperationsStats(operations storage.Operations, cfg Config, logger logrus
 func (s *OperationStats) MustRegister(ctx context.Context) {
 	defer func() {
 		if recovery := recover(); recovery != nil {
-			s.logger.Errorf("panic recovered while creating and registering operations metrics: %v", recovery)
+			s.logger.Error(fmt.Sprintf("panic recovered while creating and registering operations metrics: %v", recovery))
 		}
 	}()
 
@@ -124,7 +124,7 @@ func (s *OperationStats) Handler(_ context.Context, event interface{}) error {
 
 	defer func() {
 		if recovery := recover(); recovery != nil {
-			s.logger.Error("panic recovered while handling operation counting event: %v", recovery)
+			s.logger.Error(fmt.Sprintf("panic recovered while handling operation counting event: %v", recovery))
 		}
 	}()
 
@@ -141,7 +141,7 @@ func (s *OperationStats) Handler(_ context.Context, event interface{}) error {
 
 	key, err := s.makeKey(payload.Operation.Type, opState, payload.PlanID)
 	if err != nil {
-		s.logger.Error(err)
+		s.logger.Error(err.Error())
 		return err
 	}
 
@@ -157,12 +157,12 @@ func (s *OperationStats) Handler(_ context.Context, event interface{}) error {
 func (s *OperationStats) Job(ctx context.Context) {
 	defer func() {
 		if recovery := recover(); recovery != nil {
-			s.logger.Errorf("panic recovered while handling in progress operation counter: %v", recovery)
+			s.logger.Error(fmt.Sprintf("panic recovered while handling in progress operation counter: %v", recovery))
 		}
 	}()
 
 	if err := s.updateMetrics(); err != nil {
-		s.logger.Error("failed to update metrics metrics", err)
+		s.logger.Error(fmt.Sprintf("failed to update metrics metrics: %v", err))
 	}
 
 	ticker := time.NewTicker(s.poolingInterval)
@@ -170,7 +170,7 @@ func (s *OperationStats) Job(ctx context.Context) {
 		select {
 		case <-ticker.C:
 			if err := s.updateMetrics(); err != nil {
-				s.logger.Error("failed to update operation stats metrics: ", err)
+				s.logger.Error(fmt.Sprintf("failed to update operation stats metrics: %v", err))
 			}
 		case <-ctx.Done():
 			return
@@ -228,7 +228,7 @@ func (s *OperationStats) buildName(opType internal.OperationType, opState domain
 func (s *OperationStats) Metric(opType internal.OperationType, opState domain.LastOperationState, plan broker.PlanID) (prometheus.Counter, error) {
 	key, err := s.makeKey(opType, opState, plan)
 	if err != nil {
-		s.logger.Error(err)
+		s.logger.Error(err.Error())
 		return prometheus.NewGauge(prometheus.GaugeOpts{}), err
 	}
 	s.sync.Lock()
