@@ -64,7 +64,7 @@ func main() {
 
 	// create config provider
 	configProvider := kebConfig.NewConfigProvider(
-		kebConfig.NewConfigMapReader(ctx, cli, logger.With("service", "storage"), cfg.RuntimeConfigurationConfigMapName),
+		kebConfig.NewConfigMapReader(ctx, cli, logger.With("component", "config-map-reader"), cfg.RuntimeConfigurationConfigMapName),
 		kebConfig.NewConfigMapKeysValidator(),
 		kebConfig.NewConfigMapConverter())
 
