@@ -151,3 +151,6 @@ replace (
 	k8s.io/kubectl => k8s.io/kubectl v0.26.1
 	sigs.k8s.io/controller-runtime => sigs.k8s.io/controller-runtime v0.14.6
 )
+
+// This version with the 'v' was pushed by mistake, as we use SemVer without the 'v' prefix. Running 'go get github.com/kyma-project/kyma-environment-broker' will resolve v0.0.1 to the latest version and override the real latest version without the 'v' prefix.
+retract v0.0.1
