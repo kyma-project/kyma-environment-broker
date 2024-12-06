@@ -3,6 +3,8 @@ package main
 import (
 	"context"
 	"fmt"
+	"log/slog"
+	"os"
 	"sort"
 	"strings"
 	"testing"
@@ -101,6 +103,10 @@ func NewOrchestrationSuite(t *testing.T, additionalKymaVersions []string) *Orche
 			panic(r)
 		}
 	}()
+	log := slog.New(slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{
+		Level: slog.LevelInfo,
+	}))
+
 	logs := logrus.New()
 	logs.Formatter.(*logrus.TextFormatter).TimestampFormat = "15:04:05.000"
 
@@ -130,7 +136,7 @@ func NewOrchestrationSuite(t *testing.T, additionalKymaVersions []string) *Orche
 	kymaVer := "2.4.0"
 	cli := fake.NewClientBuilder().WithScheme(sch).WithRuntimeObjects(fixK8sResources(kymaVer, additionalKymaVersions)...).Build()
 	configProvider := kebConfig.NewConfigProvider(
-		kebConfig.NewConfigMapReader(ctx, cli, logrus.New(), "keb-runtime-config"),
+		kebConfig.NewConfigMapReader(ctx, cli, log, "keb-runtime-config"),
 		kebConfig.NewConfigMapKeysValidator(),
 		kebConfig.NewConfigMapConverter())
 	inputFactory, err := input.NewInputBuilderFactory(configProvider, input.Config{
@@ -537,6 +543,9 @@ func NewProvisioningSuite(t *testing.T, multiZoneCluster bool, controlPlaneFailu
 		}
 	}()
 	ctx, cancel := context.WithTimeout(context.Background(), 20*time.Minute)
+	log := slog.New(slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{
+		Level: slog.LevelInfo,
+	}))
 	logs := logrus.New()
 	storageCleanup, db, err := GetStorageForE2ETests()
 	assert.NoError(t, err)
@@ -559,7 +568,7 @@ func NewProvisioningSuite(t *testing.T, multiZoneCluster bool, controlPlaneFailu
 	additionalKymaVersions := []string{"1.19", "1.20", "main"}
 	cli := fake.NewFakeClientWithScheme(sch, fixK8sResources(defaultKymaVer, additionalKymaVersions)...)
 	configProvider := kebConfig.NewConfigProvider(
-		kebConfig.NewConfigMapReader(ctx, cli, logrus.New(), "keb-runtime-config"),
+		kebConfig.NewConfigMapReader(ctx, cli, log, "keb-runtime-config"),
 		kebConfig.NewConfigMapKeysValidator(),
 		kebConfig.NewConfigMapConverter())
 	inputFactory, err := input.NewInputBuilderFactory(configProvider, input.Config{
