@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"io"
 	"io/fs"
-	"log"
+	"log/slog"
 	"net"
 	"os"
 	"path"
@@ -73,19 +73,22 @@ func (osFS) ReadDir(name string) ([]fs.DirEntry, error) {
 }
 
 func main() {
-	log.SetFlags(log.LstdFlags | log.Lshortfile)
+	logger := slog.New(slog.NewJSONHandler(os.Stdout, &slog.HandlerOptions{
+		Level: slog.LevelInfo,
+	}))
+	slog.SetDefault(logger)
 
 	migrateErr := invokeMigration()
 	if migrateErr != nil {
-		log.Printf("while invoking migration: %s", migrateErr)
+		slog.Info(fmt.Sprintf("while invoking migration: %s", migrateErr))
 	}
 
 	// continue with cleanup
 	err := cleaner.Halt()
 
 	if err != nil || migrateErr != nil {
-		log.Printf("error during migration: %s\n", migrateErr)
-		log.Printf("error during cleanup: %s\n", err)
+		slog.Error(fmt.Sprintf("error during migration: %s", migrateErr))
+		slog.Error(fmt.Sprintf("error during cleanup: %s", err))
 		os.Exit(-1)
 	}
 }
@@ -106,9 +109,9 @@ func invokeMigration() error {
 	direction := os.Getenv("DIRECTION")
 	switch direction {
 	case "up":
-		log.Println("# MIGRATION UP #")
+		slog.Info("# MIGRATION UP #")
 	case "down":
-		log.Println("# MIGRATION DOWN #")
+		slog.Info("# MIGRATION DOWN #")
 	default:
 		return errors.New("ERROR: DIRECTION variable accepts only two values: up or down")
 	}
@@ -137,11 +140,11 @@ func invokeMigration() error {
 		dbName,
 	)
 
-	log.Println("# WAITING FOR CONNECTION WITH DATABASE #")
+	slog.Info("# WAITING FOR CONNECTION WITH DATABASE #")
 	db, err := sql.Open("postgres", connectionString)
 
 	for i := 0; i < connRetries && err != nil; i++ {
-		fmt.Printf("Error while connecting to the database, %s. Retrying step\n", err)
+		slog.Error(fmt.Sprintf("Error while connecting to the database, %s. Retrying step", err))
 		db, err = sql.Open("postgres", connectionString)
 		time.Sleep(100 * time.Millisecond)
 	}
@@ -149,8 +152,8 @@ func invokeMigration() error {
 	if err != nil {
 		return fmt.Errorf("# COULD NOT ESTABLISH CONNECTION TO DATABASE WITH CONNECTION STRING: %w", err)
 	}
-	log.Println("# CONNECTION WITH DATABASE ESTABLISHED #")
-	log.Println("# STARTING TO COPY MIGRATION FILES #")
+	slog.Info("# CONNECTION WITH DATABASE ESTABLISHED #")
+	slog.Info("# STARTING TO COPY MIGRATION FILES #")
 
 	migrationExecPath, err := os.MkdirTemp("/migrate", tempMigrationsPathPattern)
 	if err != nil {
@@ -161,34 +164,34 @@ func invokeMigration() error {
 	ms := migrationScript{
 		fs: osFS{},
 	}
-	log.Println("# LOADING MIGRATION FILES FROM CONFIGMAP #")
+	slog.Info("# LOADING MIGRATION FILES FROM CONFIGMAP #")
 	err = ms.copyDir(newMigrationsSrc, migrationExecPath)
 	if err != nil {
 		if os.IsNotExist(err) {
-			log.Println("# NO MIGRATION FILES PROVIDED BY THE CONFIGMAP, SKIPPING STEP #")
+			slog.Info("# NO MIGRATION FILES PROVIDED BY THE CONFIGMAP, SKIPPING STEP #")
 		} else {
 			return fmt.Errorf("# COULD NOT COPY MIGRATION FILES PROVIDED BY THE CONFIGMAP: %w", err)
 		}
 	} else {
-		log.Println("# LOADING MIGRATION FILES FROM CONFIGMAP DONE #")
+		slog.Info("# LOADING MIGRATION FILES FROM CONFIGMAP DONE #")
 	}
-	log.Println("# LOADING EMBEDDED MIGRATION FILES FROM THE SCHEMA-MIGRATOR IMAGE #")
+	slog.Info("# LOADING EMBEDDED MIGRATION FILES FROM THE SCHEMA-MIGRATOR IMAGE #")
 	err = ms.copyDir(oldMigrationsSrc, migrationExecPath)
 	if err != nil {
 		if os.IsNotExist(err) {
-			log.Println("# NO MIGRATION FILES EMBEDDED TO THE SCHEMA-MIGRATOR IMAGE, SKIPPING STEP #")
+			slog.Info("# NO MIGRATION FILES EMBEDDED TO THE SCHEMA-MIGRATOR IMAGE, SKIPPING STEP #")
 		} else {
 			return fmt.Errorf("# COULD NOT COPY EMBEDDED MIGRATION FILES FROM THE SCHEMA-MIGRATOR IMAGE: %w", err)
 		}
 	} else {
-		log.Println("# LOADING EMBEDDED MIGRATION FILES FROM THE SCHEMA-MIGRATOR IMAGE DONE #")
+		slog.Info("# LOADING EMBEDDED MIGRATION FILES FROM THE SCHEMA-MIGRATOR IMAGE DONE #")
 	}
 
-	log.Println("# INITIALIZING DRIVER #")
+	slog.Info("# INITIALIZING DRIVER #")
 	driver, err := postgres.WithInstance(db, &postgres.Config{})
 
 	for i := 0; i < connRetries && err != nil; i++ {
-		fmt.Printf("Error during driver initialization, %s. Retrying step\n", err)
+		slog.Error(fmt.Sprintf("Error during driver initialization, %s. Retrying step", err))
 		driver, err = postgres.WithInstance(db, &postgres.Config{})
 		time.Sleep(100 * time.Millisecond)
 	}
@@ -196,8 +199,8 @@ func invokeMigration() error {
 	if err != nil {
 		return fmt.Errorf("# COULD NOT CREATE DATABASE CONNECTION: %w", err)
 	}
-	log.Println("# DRIVER INITIALIZED #")
-	log.Println("# STARTING MIGRATION #")
+	slog.Info("# DRIVER INITIALIZED #")
+	slog.Info("# STARTING MIGRATION #")
 
 	migrationPath := fmt.Sprintf("file:///%s", migrationExecPath)
 
@@ -211,7 +214,7 @@ func invokeMigration() error {
 	defer func(migrateInstance *migrate.Migrate) {
 		err, _ := migrateInstance.Close()
 		if err != nil {
-			log.Printf("error during migrate instance close: %s\n", err)
+			slog.Error(fmt.Sprintf("error during migrate instance close: %s", err))
 		}
 	}(migrateInstance)
 	migrateInstance.Log = &Logger{}
@@ -225,19 +228,19 @@ func invokeMigration() error {
 	if err != nil && !errors.Is(migrate.ErrNoChange, err) {
 		return fmt.Errorf("during migration: %w", err)
 	} else if errors.Is(migrate.ErrNoChange, err) {
-		log.Println("# NO CHANGES DETECTED #")
+		slog.Info("# NO CHANGES DETECTED #")
 	}
 
-	log.Println("# MIGRATION DONE #")
+	slog.Info("# MIGRATION DONE #")
 
 	currentMigrationVer, _, err := migrateInstance.Version()
 	if err == migrate.ErrNilVersion {
-		log.Println("# NO ACTIVE MIGRATION VERSION #")
+		slog.Info("# NO ACTIVE MIGRATION VERSION #")
 	} else if err != nil {
 		return fmt.Errorf("during acquiring active migration version: %w", err)
 	}
 
-	log.Printf("# CURRENT ACTIVE MIGRATION VERSION: %d #", currentMigrationVer)
+	slog.Info(fmt.Sprintf("# CURRENT ACTIVE MIGRATION VERSION: %d #", currentMigrationVer))
 	return nil
 }
 
@@ -287,7 +290,7 @@ func (m *migrationScript) copyDir(src, dst string) error {
 		srcFile := path.Join(src, file.Name())
 		dstFile := path.Join(dst, file.Name())
 		if fileExists(dstFile) {
-			log.Printf("file %s already exists, skipping\n", dstFile)
+			slog.Info(fmt.Sprintf("file %s already exists, skipping", dstFile))
 			continue
 		}
 		fileExt := filepath.Ext(srcFile)
