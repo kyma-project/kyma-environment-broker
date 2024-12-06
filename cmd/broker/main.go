@@ -321,7 +321,7 @@ func main() {
 	eventBroker := event.NewPubSub(log)
 
 	// metrics collectors
-	_ = metricsv2.Register(ctx, eventBroker, db, cfg.MetricsV2, logs)
+	_ = metricsv2.Register(ctx, eventBroker, db, cfg.MetricsV2, log)
 
 	// run queues
 	provisionManager := process.NewStagedManager(db.Operations(), eventBroker, cfg.OperationTimeout, cfg.Provisioning, logs.WithField("provisioning", "manager"))

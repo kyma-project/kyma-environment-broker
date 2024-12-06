@@ -145,8 +145,11 @@ func NewBrokerSuitTestWithMetrics(t *testing.T, cfg *Config, version ...string) 
 			panic(r)
 		}
 	}()
+	log := slog.New(slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{
+		Level: slog.LevelInfo,
+	}))
 	broker := NewBrokerSuiteTestWithConfig(t, cfg, version...)
-	broker.metrics = metricsv2.Register(context.Background(), broker.eventBroker, broker.db, cfg.MetricsV2, logrus.New())
+	broker.metrics = metricsv2.Register(context.Background(), broker.eventBroker, broker.db, cfg.MetricsV2, log)
 	broker.router.Handle("/metrics", promhttp.Handler())
 	return broker
 }

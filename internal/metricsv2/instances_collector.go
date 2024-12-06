@@ -1,9 +1,11 @@
 package metricsv2
 
 import (
+	"fmt"
+	"log/slog"
+
 	"github.com/kyma-project/kyma-environment-broker/internal"
 	"github.com/prometheus/client_golang/prometheus"
-	"github.com/sirupsen/logrus"
 )
 
 //
@@ -28,10 +30,10 @@ type InstancesCollector struct {
 	instancesDesc        *prometheus.Desc
 	instancesPerGAIDDesc *prometheus.Desc
 	licenseTypeDesc      *prometheus.Desc
-	logger               logrus.FieldLogger
+	logger               *slog.Logger
 }
 
-func NewInstancesCollector(statsGetter InstancesStatsGetter, logger logrus.FieldLogger) *InstancesCollector {
+func NewInstancesCollector(statsGetter InstancesStatsGetter, logger *slog.Logger) *InstancesCollector {
 	return &InstancesCollector{
 		statsGetter: statsGetter,
 		logger:      logger,
@@ -63,7 +65,7 @@ func (c *InstancesCollector) Describe(ch chan<- *prometheus.Desc) {
 func (c *InstancesCollector) Collect(ch chan<- prometheus.Metric) {
 	stats, err := c.statsGetter.GetActiveInstanceStats()
 	if err != nil {
-		c.logger.Error(err)
+		c.logger.Error(err.Error())
 	} else {
 		collect(ch, c.instancesDesc, stats.TotalNumberOfInstances)
 
@@ -74,7 +76,7 @@ func (c *InstancesCollector) Collect(ch chan<- prometheus.Metric) {
 
 	stats2, err := c.statsGetter.GetERSContextStats()
 	if err != nil {
-		c.logger.Error(err)
+		c.logger.Error(err.Error())
 		return
 	}
 	for t, num := range stats2.LicenseType {
@@ -90,7 +92,7 @@ func collect(ch chan<- prometheus.Metric, desc *prometheus.Desc, value int, labe
 		labelValues...)
 
 	if err != nil {
-		logrus.Errorf("unable to register metric %s", err.Error())
+		slog.Error(fmt.Sprintf("unable to register metric %s", err.Error()))
 		return
 	}
 	ch <- m
