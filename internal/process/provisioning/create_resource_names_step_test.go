@@ -3,6 +3,8 @@ package provisioning
 import (
 	"context"
 	"fmt"
+	"log/slog"
+	"os"
 	"testing"
 
 	"github.com/kyma-project/kyma-environment-broker/common/gardener"
@@ -159,8 +161,11 @@ func fixProvisioningParametersWithPlanID(planID, region string, platformRegion s
 
 func fixInputCreator(t *testing.T) internal.ProvisionerInputCreator {
 	cli := fake.NewClientBuilder().WithRuntimeObjects(fixConfigMap(kymaVersion)).Build()
+	log := slog.New(slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{
+		Level: slog.LevelInfo,
+	}))
 	configProvider := kebConfig.NewConfigProvider(
-		kebConfig.NewConfigMapReader(context.TODO(), cli, logrus.New(), "keb-config"),
+		kebConfig.NewConfigMapReader(context.TODO(), cli, log, "keb-config"),
 		kebConfig.NewConfigMapKeysValidator(),
 		kebConfig.NewConfigMapConverter())
 	ibf, err := input.NewInputBuilderFactory(configProvider, input.Config{

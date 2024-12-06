@@ -4,6 +4,8 @@ import (
 	"context"
 	"encoding/base64"
 	"fmt"
+	"log/slog"
+	"os"
 	"testing"
 	"time"
 
@@ -67,6 +69,10 @@ func NewDeprovisioningSuite(t *testing.T) *DeprovisioningSuite {
 	}()
 	ctx, cancel := context.WithTimeout(context.Background(), 20*time.Minute)
 
+	log := slog.New(slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{
+		Level: slog.LevelInfo,
+	}))
+
 	logs := logrus.New()
 	logs.Formatter.(*logrus.TextFormatter).TimestampFormat = "15:04:05.000"
 
@@ -104,7 +110,7 @@ func NewDeprovisioningSuite(t *testing.T) *DeprovisioningSuite {
 	cli := fake.NewClientBuilder().WithScheme(sch).WithRuntimeObjects(fixK8sResources(defaultKymaVer, []string{})...).Build()
 
 	configProvider := kebConfig.NewConfigProvider(
-		kebConfig.NewConfigMapReader(ctx, cli, logrus.New(), "keb-runtime-config"),
+		kebConfig.NewConfigMapReader(ctx, cli, log, "keb-runtime-config"),
 		kebConfig.NewConfigMapKeysValidator(),
 		kebConfig.NewConfigMapConverter())
 

@@ -4,11 +4,13 @@ import (
 	"context"
 	"fmt"
 	"io"
+	"log/slog"
 	"net/http"
 	"os"
 	gruntime "runtime"
 	"runtime/pprof"
 	"sort"
+	"strings"
 	"time"
 
 	"k8s.io/client-go/kubernetes"
@@ -224,6 +226,13 @@ func main() {
 		TimestampFormat: time.RFC3339Nano,
 	})
 
+	logLevel := new(slog.LevelVar)
+	logLevel.Set(slog.LevelInfo)
+	log := slog.New(slog.NewJSONHandler(os.Stdout, &slog.HandlerOptions{
+		Level: logLevel,
+	}))
+	slog.SetDefault(log)
+
 	// create and fill config
 	var cfg Config
 	err = envconfig.InitWithPrefix(&cfg, "APP")
@@ -232,6 +241,8 @@ func main() {
 	if cfg.LogLevel != "" {
 		l, _ := logrus.ParseLevel(cfg.LogLevel)
 		logs.SetLevel(l)
+
+		logLevel.Set(cfg.getLogLevel())
 	}
 
 	cfg.OrchestrationConfig.KubernetesVersion = cfg.Provisioner.KubernetesVersion
@@ -278,7 +289,7 @@ func main() {
 
 	// provides configuration for specified Kyma version and plan
 	configProvider := kebConfig.NewConfigProvider(
-		kebConfig.NewConfigMapReader(ctx, kcpK8sClient, logs, cfg.RuntimeConfigurationConfigMapName),
+		kebConfig.NewConfigMapReader(ctx, kcpK8sClient, log, cfg.RuntimeConfigurationConfigMapName),
 		kebConfig.NewConfigMapKeysValidator(),
 		kebConfig.NewConfigMapConverter())
 	gardenerClusterConfig, err := gardener.NewGardenerClusterConfig(cfg.Gardener.KubeconfigPath)
@@ -583,5 +594,20 @@ func fatalOnError(err error, log logrus.FieldLogger) {
 func panicOnError(err error) {
 	if err != nil {
 		panic(err)
+	}
+}
+
+func (c Config) getLogLevel() slog.Level {
+	switch strings.ToUpper(c.LogLevel) {
+	case "DEBUG":
+		return slog.LevelDebug
+	case "INFO":
+		return slog.LevelInfo
+	case "WARN":
+		return slog.LevelWarn
+	case "ERROR":
+		return slog.LevelError
+	default:
+		return slog.LevelInfo
 	}
 }

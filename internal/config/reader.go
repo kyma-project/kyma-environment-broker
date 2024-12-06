@@ -3,9 +3,9 @@ package config
 import (
 	"context"
 	"fmt"
+	"log/slog"
 	"strings"
 
-	"github.com/sirupsen/logrus"
 	coreV1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -21,11 +21,11 @@ const (
 type ConfigMapReader struct {
 	ctx           context.Context
 	k8sClient     client.Client
-	logger        logrus.FieldLogger
+	logger        *slog.Logger
 	configMapName string
 }
 
-func NewConfigMapReader(ctx context.Context, k8sClient client.Client, logger logrus.FieldLogger, cmName string) ConfigReader {
+func NewConfigMapReader(ctx context.Context, k8sClient client.Client, logger *slog.Logger, cmName string) ConfigReader {
 	return &argoReader{target: &ConfigMapReader{
 		ctx:           ctx,
 		k8sClient:     k8sClient,
@@ -35,7 +35,7 @@ func NewConfigMapReader(ctx context.Context, k8sClient client.Client, logger log
 }
 
 func (r *ConfigMapReader) Read(planName string) (string, error) {
-	r.logger.Infof("getting configuration for %v plan", planName)
+	r.logger.Info(fmt.Sprintf("getting configuration for %v plan", planName))
 
 	cfgMap, err := r.getConfigMap()
 	if err != nil {
@@ -61,7 +61,7 @@ func (r *ConfigMapReader) getConfigMap() (*coreV1.ConfigMap, error) {
 func (r *ConfigMapReader) getConfigStringForPlanOrDefaults(cfgMap *coreV1.ConfigMap, planName string) (string, error) {
 	cfgString, exists := cfgMap.Data[planName]
 	if !exists {
-		r.logger.Infof("configuration for plan %v does not exist. Using default values", planName)
+		r.logger.Info(fmt.Sprintf("configuration for plan %v does not exist. Using default values", planName))
 		cfgString, exists = cfgMap.Data[defaultConfigKey]
 		if !exists {
 			return "", fmt.Errorf("default configuration does not exist")

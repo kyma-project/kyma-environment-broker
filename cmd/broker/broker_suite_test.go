@@ -6,8 +6,10 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"log/slog"
 	"net/http"
 	"net/http/httptest"
+	"os"
 	"reflect"
 	"testing"
 	"time"
@@ -171,9 +173,12 @@ func NewBrokerSuiteTestWithConfig(t *testing.T, cfg *Config, version ...string) 
 	additionalKymaVersions := []string{"1.19", "1.20", "main", "2.0"}
 	additionalKymaVersions = append(additionalKymaVersions, version...)
 	cli := fake.NewClientBuilder().WithScheme(sch).WithRuntimeObjects(fixK8sResources(defaultKymaVer, additionalKymaVersions)...).Build()
+	log := slog.New(slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{
+		Level: slog.LevelInfo,
+	}))
 
 	configProvider := kebConfig.NewConfigProvider(
-		kebConfig.NewConfigMapReader(ctx, cli, logrus.New(), "keb-runtime-config"),
+		kebConfig.NewConfigMapReader(ctx, cli, log, "keb-runtime-config"),
 		kebConfig.NewConfigMapKeysValidator(),
 		kebConfig.NewConfigMapConverter())
 
