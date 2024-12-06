@@ -88,7 +88,7 @@ func NewDeprovisioningSuite(t *testing.T) *DeprovisioningSuite {
 			assert.NoError(t, err)
 		}
 	})
-	eventBroker := event.NewPubSub(logs)
+	eventBroker := event.NewPubSub(log)
 	provisionerClient := provisioner.NewFakeClient()
 
 	edpClient := fixEDPClient(t)

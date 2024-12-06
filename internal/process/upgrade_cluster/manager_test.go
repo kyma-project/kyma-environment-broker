@@ -2,6 +2,8 @@ package upgrade_cluster
 
 import (
 	"fmt"
+	"log/slog"
+	"os"
 	"strings"
 	"testing"
 	"time"
@@ -63,6 +65,9 @@ func TestManager_Execute(t *testing.T) {
 	} {
 		t.Run(name, func(t *testing.T) {
 			// given
+			logger := slog.New(slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{
+				Level: slog.LevelInfo,
+			}))
 			log := logrus.New()
 			memoryStorage := storage.NewMemoryStorage()
 			operations := memoryStorage.Operations()
@@ -75,7 +80,7 @@ func TestManager_Execute(t *testing.T) {
 			s3 := testStep{t: t, name: "to be skipped", storage: operations}
 			sFinal := testStep{t: t, name: "final", storage: operations}
 
-			eventBroker := event.NewPubSub(logrus.New())
+			eventBroker := event.NewPubSub(logger)
 			eventCollector := &collectingEventHandler{}
 			eventBroker.Subscribe(process.UpgradeClusterStepProcessed{}, eventCollector.OnEvent)
 

@@ -2,6 +2,7 @@ package kubeconfig
 
 import (
 	"fmt"
+	"log/slog"
 	"net/http"
 	"strings"
 
@@ -15,7 +16,6 @@ import (
 
 	"github.com/gorilla/mux"
 	"github.com/pivotal-cf/brokerapi/v8/domain"
-	"github.com/sirupsen/logrus"
 )
 
 const attachmentName = "kubeconfig.yaml"
@@ -34,10 +34,10 @@ type Handler struct {
 	instanceStorage   storage.Instances
 	operationStorage  storage.Operations
 	ownClusterPlanID  string
-	log               logrus.FieldLogger
+	log               *slog.Logger
 }
 
-func NewHandler(storage storage.BrokerStorage, b KcBuilder, origins string, ownClusterPlanID string, log logrus.FieldLogger) *Handler {
+func NewHandler(storage storage.BrokerStorage, b KcBuilder, origins string, ownClusterPlanID string, log *slog.Logger) *Handler {
 	return &Handler{
 		instanceStorage:   storage.Instances(),
 		operationStorage:  storage.Operations(),
@@ -72,7 +72,7 @@ func (h *Handler) GetKubeconfig(w http.ResponseWriter, r *http.Request) {
 		h.handleResponse(w, http.StatusNotFound, fmt.Errorf("instance with ID %s does not exist", instanceID))
 		return
 	default:
-		h.log.Errorf("while getting instance for a kubeconfig, error: %s", err)
+		h.log.Error(fmt.Sprintf("while getting instance for a kubeconfig, error: %s", err))
 		h.handleResponse(w, http.StatusInternalServerError, err)
 		return
 	}
@@ -94,7 +94,7 @@ func (h *Handler) GetKubeconfig(w http.ResponseWriter, r *http.Request) {
 		h.handleResponse(w, http.StatusNotFound, fmt.Errorf("provisioning operation for instance with ID %s does not exist", instanceID))
 		return
 	default:
-		h.log.Errorf("while getting provision operation for kubeconfig, error: %s", err)
+		h.log.Error(fmt.Sprintf("while getting provision operation for kubeconfig, error: %s", err))
 		h.handleResponse(w, http.StatusInternalServerError, err)
 		return
 	}
@@ -120,7 +120,7 @@ func (h *Handler) GetKubeconfig(w http.ResponseWriter, r *http.Request) {
 		newKubeconfig, err = h.kubeconfigBuilder.Build(instance)
 	}
 	if err != nil {
-		h.log.Errorf("while building kubeconfig, error: %s", err)
+		h.log.Error(fmt.Sprintf("while building kubeconfig, error: %s", err))
 		h.handleResponse(w, http.StatusInternalServerError, fmt.Errorf("cannot fetch SKR kubeconfig: %s", err))
 		return
 	}
@@ -131,7 +131,7 @@ func (h *Handler) GetKubeconfig(w http.ResponseWriter, r *http.Request) {
 func (h *Handler) handleResponse(w http.ResponseWriter, code int, err error) {
 	errEncode := httputil.JSONEncodeWithCode(w, &ErrorResponse{Error: err.Error()}, code)
 	if errEncode != nil {
-		h.log.Errorf("cannot encode error response: %s", errEncode)
+		h.log.Error(fmt.Sprintf("cannot encode error response: %s", errEncode))
 	}
 }
 
@@ -156,11 +156,11 @@ func (h *Handler) specifyAllowOriginHeader(r *http.Request, w http.ResponseWrite
 	}
 }
 
-func writeToResponse(w http.ResponseWriter, data string, l logrus.FieldLogger) {
+func writeToResponse(w http.ResponseWriter, data string, l *slog.Logger) {
 	w.Header().Set("Content-Disposition", fmt.Sprintf("attachment; filename=%s", attachmentName))
 	w.Header().Add("Content-Type", "application/x-yaml")
 	_, err := w.Write([]byte(data))
 	if err != nil {
-		l.Errorf("cannot write response with new kubeconfig: %s", err)
+		l.Error(fmt.Sprintf("cannot write response with new kubeconfig: %s", err))
 	}
 }

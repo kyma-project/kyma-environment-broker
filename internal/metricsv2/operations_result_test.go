@@ -2,6 +2,8 @@ package metricsv2
 
 import (
 	"context"
+	"log/slog"
+	"os"
 	"testing"
 	"time"
 
@@ -46,7 +48,11 @@ func TestOperationsResult(t *testing.T) {
 			}, logrus.New(),
 		)
 
-		eventBroker := event.NewPubSub(logrus.New())
+		log := slog.New(slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{
+			Level: slog.LevelInfo,
+		}))
+
+		eventBroker := event.NewPubSub(log)
 		eventBroker.Subscribe(process.OperationFinished{}, operationResult.Handler)
 
 		time.Sleep(20 * time.Millisecond)

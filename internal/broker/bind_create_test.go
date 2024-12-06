@@ -4,6 +4,8 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"log/slog"
+	"os"
 	"testing"
 	"time"
 
@@ -43,6 +45,10 @@ func TestCreateBindingEndpoint(t *testing.T) {
 
 	// Given
 	//// logger
+	log := slog.New(slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{
+		Level: slog.LevelDebug,
+	}))
+
 	logs := logrus.New()
 	logs.SetLevel(logrus.DebugLevel)
 	logs.SetFormatter(&logrus.JSONFormatter{
@@ -74,7 +80,7 @@ func TestCreateBindingEndpoint(t *testing.T) {
 	}
 
 	// event publisher
-	publisher := event.NewPubSub(logrus.New())
+	publisher := event.NewPubSub(log)
 
 	//// api handler
 	bindEndpoint := NewBind(*bindingCfg, db, logs, &provider{}, &provider{}, publisher)
@@ -182,7 +188,11 @@ func TestCreateSecondBindingWithTheSameIdButDifferentParams(t *testing.T) {
 	err = brokerStorage.Operations().InsertOperation(operation)
 	assert.NoError(t, err)
 
-	publisher := event.NewPubSub(logrus.New())
+	log := slog.New(slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{
+		Level: slog.LevelInfo,
+	}))
+
+	publisher := event.NewPubSub(log)
 
 	svc := NewBind(*bindingCfg, brokerStorage, logrus.New(), nil, nil, publisher)
 	params := BindingParams{
@@ -229,7 +239,11 @@ func TestCreateSecondBindingWithTheSameIdAndParams(t *testing.T) {
 	err = brokerStorage.Operations().InsertOperation(operation)
 	assert.NoError(t, err)
 
-	publisher := event.NewPubSub(logrus.New())
+	log := slog.New(slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{
+		Level: slog.LevelInfo,
+	}))
+
+	publisher := event.NewPubSub(log)
 
 	svc := NewBind(*bindingCfg, brokerStorage, logrus.New(), nil, nil, publisher)
 	params := BindingParams{
@@ -276,8 +290,12 @@ func TestCreateSecondBindingWithTheSameIdAndParamsForExpired(t *testing.T) {
 	err = brokerStorage.Operations().InsertOperation(operation)
 	assert.NoError(t, err)
 
+	log := slog.New(slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{
+		Level: slog.LevelInfo,
+	}))
+
 	// event publisher
-	publisher := event.NewPubSub(logrus.New())
+	publisher := event.NewPubSub(log)
 
 	svc := NewBind(*bindingCfg, brokerStorage, logrus.New(), nil, nil, publisher)
 	params := BindingParams{
@@ -326,8 +344,12 @@ func TestCreateSecondBindingWithTheSameIdAndParamsForBindingInProgress(t *testin
 	err = brokerStorage.Operations().InsertOperation(operation)
 	assert.NoError(t, err)
 
+	log := slog.New(slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{
+		Level: slog.LevelInfo,
+	}))
+
 	// event publisher
-	publisher := event.NewPubSub(logrus.New())
+	publisher := event.NewPubSub(log)
 
 	svc := NewBind(*bindingCfg, brokerStorage, logrus.New(), nil, nil, publisher)
 	params := BindingParams{
@@ -374,7 +396,11 @@ func TestCreateSecondBindingWithTheSameIdAndParamsNotExplicitlyDefined(t *testin
 	err = brokerStorage.Operations().InsertOperation(operation)
 	assert.NoError(t, err)
 
-	publisher := event.NewPubSub(logrus.New())
+	log := slog.New(slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{
+		Level: slog.LevelInfo,
+	}))
+
+	publisher := event.NewPubSub(log)
 
 	svc := NewBind(*bindingCfg, brokerStorage, logrus.New(), nil, nil, publisher)
 

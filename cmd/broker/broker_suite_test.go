@@ -174,7 +174,7 @@ func NewBrokerSuiteTestWithConfig(t *testing.T, cfg *Config, version ...string) 
 	additionalKymaVersions = append(additionalKymaVersions, version...)
 	cli := fake.NewClientBuilder().WithScheme(sch).WithRuntimeObjects(fixK8sResources(defaultKymaVer, additionalKymaVersions)...).Build()
 	log := slog.New(slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{
-		Level: slog.LevelInfo,
+		Level: slog.LevelDebug,
 	}))
 
 	configProvider := kebConfig.NewConfigProvider(
@@ -203,7 +203,7 @@ func NewBrokerSuiteTestWithConfig(t *testing.T, cfg *Config, version ...string) 
 	gardenerClient := gardener.NewDynamicFakeClient()
 
 	provisionerClient := provisioner.NewFakeClientWithGardener(gardenerClient, "kcp-system")
-	eventBroker := event.NewPubSub(logs)
+	eventBroker := event.NewPubSub(log)
 
 	edpClient := edp.NewFakeClient()
 	accountProvider := fixAccountProvider()

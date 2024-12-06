@@ -182,24 +182,24 @@ const (
 	startStageName              = "start"
 )
 
-func periodicProfile(logger lager.Logger, profiler ProfilerConfig) {
+func periodicProfile(logger *slog.Logger, profiler ProfilerConfig) {
 	if profiler.Memory == false {
 		return
 	}
 	logger.Info(fmt.Sprintf("Starting periodic profiler %v", profiler))
 	if err := os.MkdirAll(profiler.Path, os.ModePerm); err != nil {
-		logger.Error(fmt.Sprintf("Failed to create dir %v for profile storage", profiler.Path), err)
+		logger.Error(fmt.Sprintf("Failed to create dir %v for profile storage: %v", profiler.Path, err))
 	}
 	for {
 		profName := fmt.Sprintf("%v/mem-%v.pprof", profiler.Path, time.Now().Unix())
 		logger.Info(fmt.Sprintf("Creating periodic memory profile %v", profName))
 		profFile, err := os.Create(profName)
 		if err != nil {
-			logger.Error(fmt.Sprintf("Creating periodic memory profile %v failed", profName), err)
+			logger.Error(fmt.Sprintf("Creating periodic memory profile %v failed: %v", profName, err))
 		}
 		err = pprof.Lookup("allocs").WriteTo(profFile, 0)
 		if err != nil {
-			logger.Error(fmt.Sprintf("Failed to write periodic memory profile to %v file", profName), err)
+			logger.Error(fmt.Sprintf("Failed to write periodic memory profile to %v file: %v", profName, err))
 		}
 		gruntime.GC()
 		time.Sleep(profiler.Sampling)
@@ -249,16 +249,16 @@ func main() {
 	// create logger
 	logger := lager.NewLogger("kyma-env-broker")
 
-	logger.Info("Starting Kyma Environment Broker")
+	log.Info("Starting Kyma Environment Broker")
 
-	logger.Info("Registering healthz endpoint for health probes")
-	health.NewServer(cfg.Host, cfg.StatusPort, logs).ServeAsync()
-	go periodicProfile(logger, cfg.Profiler)
+	log.Info("Registering healthz endpoint for health probes")
+	health.NewServer(cfg.Host, cfg.StatusPort, log).ServeAsync()
+	go periodicProfile(log, cfg.Profiler)
 
-	logConfiguration(logs, cfg)
+	logConfiguration(log, cfg)
 
 	// create provisioner client
-	provisionerClient := provisioner.NewProvisionerClient(cfg.Provisioner.URL, cfg.DumpProvisionerRequests, logs.WithField("service", "provisioner"))
+	provisionerClient := provisioner.NewProvisionerClient(cfg.Provisioner.URL, cfg.DumpProvisionerRequests, log.With("service", "provisioner"))
 
 	// create kubernetes client
 	kcpK8sConfig, err := config.GetConfig()
@@ -308,7 +308,7 @@ func main() {
 
 	regions, err := provider.ReadPlatformRegionMappingFromFile(cfg.TrialRegionMappingFilePath)
 	fatalOnError(err, logs)
-	logs.Infof("Platform region mapping for trial: %v", regions)
+	log.Info(fmt.Sprintf("Platform region mapping for trial: %v", regions))
 
 	oidcDefaultValues, err := runtime.ReadOIDCDefaultValuesFromYAML(cfg.SkrOidcDefaultValuesYAMLFilePath)
 	fatalOnError(err, logs)
@@ -318,7 +318,7 @@ func main() {
 	edpClient := edp.NewClient(cfg.EDP)
 
 	// application event broker
-	eventBroker := event.NewPubSub(logs)
+	eventBroker := event.NewPubSub(log)
 
 	// metrics collectors
 	_ = metricsv2.Register(ctx, eventBroker, db, cfg.MetricsV2, logs)
@@ -351,7 +351,7 @@ func main() {
 	router.Handle("/metrics", promhttp.Handler())
 
 	// create SKR kubeconfig endpoint
-	kcHandler := kubeconfig.NewHandler(db, kcBuilder, cfg.Kubeconfig.AllowOrigins, broker.OwnClusterPlanID, logs.WithField("service", "kubeconfigHandle"))
+	kcHandler := kubeconfig.NewHandler(db, kcBuilder, cfg.Kubeconfig.AllowOrigins, broker.OwnClusterPlanID, log.With("service", "kubeconfigHandle"))
 	kcHandler.AttachRoutes(router)
 
 	runtimeLister := orchestration.NewRuntimeLister(db.Instances(), db.Operations(), runtime.NewConverter(cfg.DefaultRequestRegion), logs)
@@ -373,7 +373,7 @@ func main() {
 		err = reprocessOrchestrations(orchestrationExt.UpgradeClusterOrchestration, db.Orchestrations(), db.Operations(), clusterQueue, logs)
 		fatalOnError(err, logs)
 	} else {
-		logger.Info("Skipping processing operation in progress on start")
+		log.Info("Skipping processing operation in progress on start")
 	}
 
 	// configure templates e.g. {{.domain}} to replace it with the domain name
@@ -400,26 +400,26 @@ func main() {
 
 	router.StrictSlash(true).PathPrefix("/").Handler(http.StripPrefix("/", http.FileServer(http.Dir("/swagger"))))
 	svr := handlers.CustomLoggingHandler(os.Stdout, router, func(writer io.Writer, params handlers.LogFormatterParams) {
-		logs.Infof("Call handled: method=%s url=%s statusCode=%d size=%d", params.Request.Method, params.URL.Path, params.StatusCode, params.Size)
+		log.Info(fmt.Sprintf("Call handled: method=%s url=%s statusCode=%d size=%d", params.Request.Method, params.URL.Path, params.StatusCode, params.Size))
 	})
 
 	fatalOnError(http.ListenAndServe(cfg.Host+":"+cfg.Port, svr), logs)
 }
 
-func logConfiguration(logs *logrus.Logger, cfg Config) {
-	logs.Infof("Setting provisioner timeouts: provisioning=%s, deprovisioning=%s", cfg.Provisioner.ProvisioningTimeout, cfg.Provisioner.DeprovisioningTimeout)
-	logs.Infof("Setting staged manager configuration: provisioning=%s, deprovisioning=%s, update=%s", cfg.Provisioning, cfg.Deprovisioning, cfg.Update)
-	logs.Infof("InfrastructureManagerIntegrationDisabled: %v", cfg.InfrastructureManagerIntegrationDisabled)
-	logs.Infof("Archiving enabled: %v, dry run: %v", cfg.ArchiveEnabled, cfg.ArchiveDryRun)
-	logs.Infof("Cleaning enabled: %v, dry run: %v", cfg.CleaningEnabled, cfg.CleaningDryRun)
-	logs.Infof("KIM enabled: %t, dry run: %t, view only CR: %t, plans: %s, KIM only plans: %s",
+func logConfiguration(logs *slog.Logger, cfg Config) {
+	logs.Info(fmt.Sprintf("Setting provisioner timeouts: provisioning=%s, deprovisioning=%s", cfg.Provisioner.ProvisioningTimeout, cfg.Provisioner.DeprovisioningTimeout))
+	logs.Info(fmt.Sprintf("Setting staged manager configuration: provisioning=%s, deprovisioning=%s, update=%s", cfg.Provisioning, cfg.Deprovisioning, cfg.Update))
+	logs.Info(fmt.Sprintf("InfrastructureManagerIntegrationDisabled: %v", cfg.InfrastructureManagerIntegrationDisabled))
+	logs.Info(fmt.Sprintf("Archiving enabled: %v, dry run: %v", cfg.ArchiveEnabled, cfg.ArchiveDryRun))
+	logs.Info(fmt.Sprintf("Cleaning enabled: %v, dry run: %v", cfg.CleaningEnabled, cfg.CleaningDryRun))
+	logs.Info(fmt.Sprintf("KIM enabled: %t, dry run: %t, view only CR: %t, plans: %s, KIM only plans: %s",
 		cfg.Broker.KimConfig.Enabled,
 		cfg.Broker.KimConfig.DryRun,
 		cfg.Broker.KimConfig.ViewOnly,
 		cfg.Broker.KimConfig.Plans,
-		cfg.Broker.KimConfig.KimOnlyPlans)
-	logs.Infof("Is SubaccountMovementEnabled: %t", cfg.Broker.SubaccountMovementEnabled)
-	logs.Infof("Is UpdateCustomResourcesLabelsOnAccountMove enabled: %t", cfg.Broker.UpdateCustomResourcesLabelsOnAccountMove)
+		cfg.Broker.KimConfig.KimOnlyPlans))
+	logs.Info(fmt.Sprintf("Is SubaccountMovementEnabled: %t", cfg.Broker.SubaccountMovementEnabled))
+	logs.Info(fmt.Sprintf("Is UpdateCustomResourcesLabelsOnAccountMove enabled: %t", cfg.Broker.UpdateCustomResourcesLabelsOnAccountMove))
 }
 
 func createAPI(router *mux.Router, servicesConfig broker.ServicesConfig, planValidator broker.PlanValidator, cfg *Config, db storage.BrokerStorage,

@@ -3,13 +3,12 @@ package provisioner
 import (
 	"context"
 	"fmt"
+	"log/slog"
 	"reflect"
 
+	schema "github.com/kyma-project/control-plane/components/provisioner/pkg/gqlschema"
 	kebError "github.com/kyma-project/kyma-environment-broker/internal/error"
 	"github.com/kyma-project/kyma-environment-broker/internal/httputil"
-	"github.com/sirupsen/logrus"
-
-	schema "github.com/kyma-project/control-plane/components/provisioner/pkg/gqlschema"
 	gcli "github.com/kyma-project/kyma-environment-broker/internal/third_party/machinebox/graphql"
 )
 
@@ -37,11 +36,11 @@ type client struct {
 	graphqlizer   Graphqlizer
 }
 
-func NewProvisionerClient(endpoint string, queryDumping bool, log logrus.FieldLogger) Client {
+func NewProvisionerClient(endpoint string, queryDumping bool, log *slog.Logger) Client {
 	graphQlClient := gcli.NewClient(endpoint, gcli.WithHTTPClient(httputil.NewClient(120, false)))
 	if queryDumping {
 		graphQlClient.Log = func(s string) {
-			log.Infof("graphql message: %s", s)
+			log.Info(fmt.Sprintf("graphql message: %s", s))
 		}
 	}
 

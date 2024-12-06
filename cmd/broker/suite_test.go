@@ -154,7 +154,7 @@ func NewOrchestrationSuite(t *testing.T, additionalKymaVersions []string) *Orche
 	const gardenerProject = "testing"
 	gardenerNamespace := fmt.Sprintf("garden-%s", gardenerProject)
 
-	eventBroker := event.NewPubSub(logs)
+	eventBroker := event.NewPubSub(log)
 
 	runtimeLister := kebOrchestration.NewRuntimeLister(db.Instances(), db.Operations(), kebRuntime.NewConverter(defaultRegion), logs)
 	runtimeResolver := orchestration.NewGardenerRuntimeResolver(gardenerClient, gardenerNamespace, runtimeLister, logs)
@@ -589,7 +589,7 @@ func NewProvisioningSuite(t *testing.T, multiZoneCluster bool, controlPlaneFailu
 
 	accountProvider := fixAccountProvider()
 
-	eventBroker := event.NewPubSub(logs)
+	eventBroker := event.NewPubSub(log)
 
 	provisionManager := process.NewStagedManager(db.Operations(), eventBroker, cfg.OperationTimeout, cfg.Provisioning, logs.WithField("provisioning", "manager"))
 	provisioningQueue := NewProvisioningProcessingQueue(ctx, provisionManager, workersAmount, cfg, db, provisionerClient, inputFactory, edpClient, accountProvider,
