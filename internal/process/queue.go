@@ -32,7 +32,7 @@ type Queue struct {
 func NewQueue(executor Executor, log logrus.FieldLogger, name string, warnAfterTime, healthCheckIntervalTime time.Duration) *Queue {
 	// add queue name field that could be logged later on
 	return &Queue{
-		queue:                   workqueue.NewNamedRateLimitingQueue(workqueue.DefaultControllerRateLimiter(), "operations"),
+		queue:                   workqueue.NewRateLimitingQueueWithConfig(workqueue.DefaultControllerRateLimiter(), workqueue.RateLimitingQueueConfig{Name: "operations"}),
 		executor:                executor,
 		waitGroup:               sync.WaitGroup{},
 		log:                     log.WithField("queueName", name),
