@@ -3,6 +3,7 @@ package btpmgrcreds
 import (
 	"context"
 	"fmt"
+	"log/slog"
 	"reflect"
 	"strings"
 	"time"
@@ -58,10 +59,10 @@ type Manager struct {
 	kcpK8sClient      client.Client
 	dryRun            bool
 	k8sClientProvider K8sClientProvider
-	logger            *logrus.Logger
+	logger            *slog.Logger
 }
 
-func NewManager(ctx context.Context, kcpK8sClient client.Client, instanceDb storage.Instances, logs *logrus.Logger, dryRun bool) *Manager {
+func NewManager(ctx context.Context, kcpK8sClient client.Client, instanceDb storage.Instances, logs *slog.Logger, dryRun bool) *Manager {
 	return &Manager{
 		ctx:               ctx,
 		instances:         instanceDb,
@@ -80,26 +81,26 @@ func (s *Manager) MatchInstance(kymaName string) (*internal.Instance, error) {
 		Name:      kymaName,
 	}, kyma)
 	if err != nil && errors.IsNotFound(err) {
-		s.logger.Errorf("not found secret with name %s on cluster : %s", kymaName, err)
+		s.logger.Error(fmt.Sprintf("not found secret with name %s on cluster : %s", kymaName, err))
 		return nil, err
 	} else if err != nil {
-		s.logger.Errorf("unexpected error while getting secret %s from cluster : %s", kymaName, err)
+		s.logger.Error(fmt.Sprintf("unexpected error while getting secret %s from cluster : %s", kymaName, err))
 		return nil, err
 	}
-	s.logger.Infof("found kyma CR on kcp for kyma name: %s", kymaName)
+	s.logger.Info(fmt.Sprintf("found kyma CR on kcp for kyma name: %s", kymaName))
 	labels := kyma.GetLabels()
 	instanceId, ok := labels[instanceIdLabel]
 	if !ok {
-		s.logger.Errorf("not found instance for kyma name %s : %s", kymaName, err)
+		s.logger.Error(fmt.Sprintf("not found instance for kyma name %s : %s", kymaName, err))
 		return nil, err
 	}
-	s.logger.Infof("found instance id %s for kyma name %s", instanceId, kymaName)
+	s.logger.Info(fmt.Sprintf("found instance id %s for kyma name %s", instanceId, kymaName))
 	instance, err := s.instances.GetByID(instanceId)
 	if err != nil {
-		s.logger.Errorf("while getting instance %s from db %s", instanceId, err)
+		s.logger.Error(fmt.Sprintf("while getting instance %s from db %s", instanceId, err))
 		return nil, err
 	}
-	s.logger.Infof("instance %s found in db", instance.InstanceID)
+	s.logger.Info(fmt.Sprintf("instance %s found in db", instance.InstanceID))
 	return instance, err
 }
 
@@ -108,27 +109,27 @@ func (s *Manager) ReconcileAll(jobReconciliationDelay time.Duration) (int, int, 
 	if err != nil {
 		return 0, 0, 0, 0, err
 	}
-	s.logger.Infof("processing %d instances as candidates", len(instances))
+	s.logger.Info(fmt.Sprintf("processing %d instances as candidates", len(instances)))
 
 	updateDone, updateNotDoneDueError, updateNotDoneDueOkState := 0, 0, 0
 	for _, instance := range instances {
 		time.Sleep(jobReconciliationDelay)
 		updated, err := s.ReconcileSecretForInstance(&instance)
 		if err != nil {
-			s.logger.Errorf("while doing update, for instance: %s, %s", instance.InstanceID, err)
+			s.logger.Error(fmt.Sprintf("while doing update, for instance: %s, %s", instance.InstanceID, err))
 			updateNotDoneDueError++
 			continue
 		}
 		if updated {
-			s.logger.Infof("update done for instance %s", instance.InstanceID)
+			s.logger.Info(fmt.Sprintf("update done for instance %s", instance.InstanceID))
 			updateDone++
 		} else {
-			s.logger.Infof("no need to update instance %s", instance.InstanceID)
+			s.logger.Info(fmt.Sprintf("no need to update instance %s", instance.InstanceID))
 			updateNotDoneDueOkState++
 		}
 	}
-	s.logger.Infof("(runtime-reconciler summary) from total %d instances: %d are OK, update was needed (and done with success) for %d instances, errors occur for %d instances",
-		len(instances), updateNotDoneDueOkState, updateDone, updateNotDoneDueError)
+	s.logger.Info(fmt.Sprintf("(runtime-reconciler summary) from total %d instances: %d are OK, update was needed (and done with success) for %d instances, errors occur for %d instances",
+		len(instances), updateNotDoneDueOkState, updateDone, updateNotDoneDueError))
 	return len(instances), updateDone, updateNotDoneDueError, updateNotDoneDueOkState, nil
 }
 
@@ -137,30 +138,30 @@ func (s *Manager) GetReconcileCandidates() ([]internal.Instance, error) {
 	if err != nil {
 		return nil, fmt.Errorf("while getting all instances %s", err)
 	}
-	s.logger.Infof("total number of instances in db: %d", len(allInstances))
+	s.logger.Info(fmt.Sprintf("total number of instances in db: %d", len(allInstances)))
 
 	var instancesWithinRuntime []internal.Instance
 	for _, instance := range allInstances {
 		if !instance.Reconcilable {
-			s.logger.Infof("skipping instance %s because it is not reconilable (no runtimeId,last op was deprovisoning or op is in progress)", instance.InstanceID)
+			s.logger.Info(fmt.Sprintf("skipping instance %s because it is not reconcilable (no runtimeId, last op was deprovisioning or op is in progress)", instance.InstanceID))
 			continue
 		}
 
 		if instance.Parameters.ErsContext.SMOperatorCredentials == nil || instance.InstanceDetails.ServiceManagerClusterID == "" {
-			s.logger.Warnf("skipping instance %s because there are no needed data attached to instance", instance.InstanceID)
+			s.logger.Warn(fmt.Sprintf("skipping instance %s because there are no needed data attached to instance", instance.InstanceID))
 			continue
 		}
 
 		instancesWithinRuntime = append(instancesWithinRuntime, instance)
-		s.logger.Infof("adding instance %s as candidate for reconcilation", instance.InstanceID)
+		s.logger.Info(fmt.Sprintf("adding instance %s as candidate for reconciliation", instance.InstanceID))
 	}
 
-	s.logger.Infof("from total number of instances (%d) took %d as candidates", len(allInstances), len(instancesWithinRuntime))
+	s.logger.Info(fmt.Sprintf("from total number of instances (%d) took %d as candidates", len(allInstances), len(instancesWithinRuntime)))
 	return instancesWithinRuntime, nil
 }
 
 func (s *Manager) ReconcileSecretForInstance(instance *internal.Instance) (bool, error) {
-	s.logger.Infof("reconcilation of btp-manager secret started for %s", instance.InstanceID)
+	s.logger.Info(fmt.Sprintf("reconciliation of btp-manager secret started for %s", instance.InstanceID))
 
 	futureSecret, err := PrepareSecret(instance.Parameters.ErsContext.SMOperatorCredentials, instance.InstanceDetails.ServiceManagerClusterID)
 	if err != nil {
@@ -171,20 +172,23 @@ func (s *Manager) ReconcileSecretForInstance(instance *internal.Instance) (bool,
 	if err != nil {
 		return false, fmt.Errorf("while getting k8sClient for %s : %w", instance.InstanceID, err)
 	}
-	s.logger.Infof("connected to skr with success for instance %s", instance.InstanceID)
+	s.logger.Info(fmt.Sprintf("connected to skr with success for instance %s", instance.InstanceID))
+
+	logs := logrus.New()
+	logs.SetFormatter(&logrus.JSONFormatter{})
 
 	currentSecret := &v1.Secret{}
 	err = k8sClient.Get(context.Background(), client.ObjectKey{Name: BtpManagerSecretName, Namespace: BtpManagerSecretNamespace}, currentSecret)
 	if err != nil && errors.IsNotFound(err) {
-		s.logger.Infof("not found btp-manager secret on cluster for instance: %s", instance.InstanceID)
+		s.logger.Info(fmt.Sprintf("not found btp-manager secret on cluster for instance: %s", instance.InstanceID))
 		if s.dryRun {
-			s.logger.Infof("[dry-run] secret for instance %s would be created", instance.InstanceID)
+			s.logger.Info(fmt.Sprintf("[dry-run] secret for instance %s would be created", instance.InstanceID))
 		} else {
-			if err := CreateOrUpdateSecret(k8sClient, futureSecret, s.logger); err != nil {
-				s.logger.Errorf("while creating secret in cluster for %s", instance.InstanceID)
+			if err := CreateOrUpdateSecret(k8sClient, futureSecret, logs); err != nil {
+				s.logger.Error(fmt.Sprintf("while creating secret in cluster for %s", instance.InstanceID))
 				return false, err
 			}
-			s.logger.Infof("created btp-manager secret on cluster for instance %s successfully", instance.InstanceID)
+			s.logger.Info(fmt.Sprintf("created btp-manager secret on cluster for instance %s successfully", instance.InstanceID))
 		}
 		return true, nil
 	} else if err != nil {
@@ -195,19 +199,19 @@ func (s *Manager) ReconcileSecretForInstance(instance *internal.Instance) (bool,
 	if err != nil {
 		return false, fmt.Errorf("validation of secrets failed with unexpected reason for instance: %s : %s", instance.InstanceID, err)
 	} else if len(notMatchingKeys) > 0 {
-		s.logger.Infof("btp-manager secret on cluster does not match for instance credentials in db : %s, incorrect values for keys: %s ", instance.InstanceID, strings.Join(notMatchingKeys, ","))
+		s.logger.Info(fmt.Sprintf("btp-manager secret on cluster does not match for instance credentials in db : %s, incorrect values for keys: %s", instance.InstanceID, strings.Join(notMatchingKeys, ",")))
 		if s.dryRun {
-			s.logger.Infof("[dry-run] secret for instance %s would be updated", instance.InstanceID)
+			s.logger.Info(fmt.Sprintf("[dry-run] secret for instance %s would be updated", instance.InstanceID))
 		} else {
-			if err := CreateOrUpdateSecret(k8sClient, futureSecret, s.logger); err != nil {
-				s.logger.Errorf("while updating secret in cluster for %s %s", instance.InstanceID, err)
+			if err := CreateOrUpdateSecret(k8sClient, futureSecret, logs); err != nil {
+				s.logger.Error(fmt.Sprintf("while updating secret in cluster for %s %s", instance.InstanceID, err))
 				return false, err
 			}
-			s.logger.Infof("btp-manager secret on cluster updated for %s to match state from instances db", instance.InstanceID)
+			s.logger.Info(fmt.Sprintf("btp-manager secret on cluster updated for %s to match state from instances db", instance.InstanceID))
 		}
 		return true, nil
 	} else {
-		s.logger.Infof("instance %s OK: btp-manager secret on cluster match within expected data", instance.InstanceID)
+		s.logger.Info(fmt.Sprintf("instance %s OK: btp-manager secret on cluster match within expected data", instance.InstanceID))
 	}
 
 	return false, nil
@@ -230,7 +234,7 @@ func (s *Manager) compareSecrets(s1, s2 *v1.Secret) ([]string, error) {
 	for _, key := range []string{secretClientSecret, secretClientId, secretSmUrl, secretTokenUrl, secretClusterId} {
 		equal, err := areSecretEqualByKey(key)
 		if err != nil {
-			s.logger.Errorf("getting value for key %s", key)
+			s.logger.Error(fmt.Sprintf("getting value for key %s", key))
 			return nil, err
 		}
 		if !equal {

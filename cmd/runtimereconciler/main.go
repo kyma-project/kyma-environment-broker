@@ -2,12 +2,14 @@ package main
 
 import (
 	"context"
+	"fmt"
+	"log/slog"
+	"os"
 	"time"
 
 	btpmanager "github.com/kyma-project/kyma-environment-broker/internal/btpmanager/credentials"
 	"github.com/kyma-project/kyma-environment-broker/internal/events"
 	"github.com/kyma-project/kyma-environment-broker/internal/storage"
-	"github.com/sirupsen/logrus"
 	"github.com/vrischmann/envconfig"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/client/config"
@@ -26,8 +28,9 @@ func main() {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
-	logs := logrus.New()
-	logs.SetFormatter(&logrus.JSONFormatter{})
+	logs := slog.New(slog.NewJSONHandler(os.Stdout, &slog.HandlerOptions{
+		Level: slog.LevelInfo,
+	}))
 
 	logs.Info("runtime-reconciler started")
 	logs.Info("runtime-reconciler debug version: 1")
@@ -45,7 +48,7 @@ func main() {
 		fatalOnError(err, logs)
 	}
 
-	logs.Infof("runtime-listener runing as dry run? %t", cfg.DryRun)
+	logs.Info(fmt.Sprintf("runtime-listener running as dry run? %t", cfg.DryRun))
 
 	cipher := storage.NewEncrypter(cfg.Database.SecretKey)
 
@@ -60,18 +63,19 @@ func main() {
 
 	btpOperatorManager := btpmanager.NewManager(ctx, kcpK8sClient, db.Instances(), logs, cfg.DryRun)
 
-	logs.Infof("job enabled? %t", cfg.JobEnabled)
+	logs.Info(fmt.Sprintf("job enabled? %t", cfg.JobEnabled))
 	if cfg.JobEnabled {
 		btpManagerCredentialsJob := btpmanager.NewJob(btpOperatorManager, logs)
-		logs.Infof("runtime-reconciler created job every %d m", cfg.JobInterval)
+		logs.Info(fmt.Sprintf("runtime-reconciler created job every %d m", cfg.JobInterval))
 		btpManagerCredentialsJob.Start(cfg.JobInterval, jobReconciliationDelay)
 	}
 
 	<-ctx.Done()
 }
 
-func fatalOnError(err error, log *logrus.Logger) {
+func fatalOnError(err error, log *slog.Logger) {
 	if err != nil {
-		log.Fatal(err)
+		log.Error(err.Error())
+		os.Exit(1)
 	}
 }
