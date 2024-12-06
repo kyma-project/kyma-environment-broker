@@ -1,7 +1,6 @@
 package process
 
 import (
-	"bytes"
 	"fmt"
 	"runtime/debug"
 	"sync"
@@ -116,6 +115,7 @@ func (q *Queue) worker(queue workqueue.RateLimitingInterface, process func(key s
 						log.Errorf("panic error from process: %v. Stacktrace: %s", err, debug.Stack())
 					}
 					queue.Done(key)
+					q.clearWorkerTime(nameId)
 					log.Info("queue done processing")
 				}()
 
@@ -151,23 +151,22 @@ func (q *Queue) logAndUpdateWorkerTimes(key string, name string, log logrus.Fiel
 	log.Infof("processing item %s, queue length is %d", key, q.queue.Len())
 }
 
+func (q *Queue) clearWorkerTime(name string) {
+	var zero time.Time
+	q.workerExecutionTimes[name] = zero
+}
+
 func (q *Queue) logWorkersSummary() {
 	healthCheckLog := q.log.WithField("summary", q.name)
-	var buffer bytes.Buffer
-	buffer.WriteString(fmt.Sprintf("health - queue length %d", q.queue.Len()))
-
+	healthCheckLog.Infof("health - queue length %d", q.queue.Len())
 	for name, lastTime := range q.workerExecutionTimes {
-		timeSinceLastExecution := time.Since(lastTime)
-
-		buffer.WriteString(fmt.Sprintf(", [worker %s, last execution time: %s, since last execution: %s]", name, lastTime, timeSinceLastExecution))
-	}
-
-	healthCheckLog.Info(buffer.String())
-
-	for name, lastTime := range q.workerExecutionTimes {
-		timeSinceLastExecution := time.Since(lastTime)
-		if timeSinceLastExecution > q.warnAfterTime {
-			healthCheckLog.Infof("worker %s exceeded allowed limit of %s since last execution, its last execution is %s, time since last execution %s", name, q.warnAfterTime, lastTime, timeSinceLastExecution)
+		if lastTime.IsZero() {
+			healthCheckLog.Infof("worker %s is idle (waiting for something to do)", name)
+		} else {
+			timeSinceLastExecution := time.Since(lastTime)
+			if timeSinceLastExecution > q.warnAfterTime {
+				healthCheckLog.Infof("worker %s exceeded allowed limit of %s since last execution, its last execution is %s, time since last execution %s", name, q.warnAfterTime, lastTime, timeSinceLastExecution)
+			}
 		}
 	}
 }
