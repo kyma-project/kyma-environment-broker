@@ -3,6 +3,7 @@ package btpmgrcreds
 import (
 	"context"
 	"fmt"
+	"github.com/prometheus/client_golang/prometheus"
 	"log/slog"
 	"reflect"
 	"strings"
@@ -106,7 +107,7 @@ func (s *Manager) MatchInstance(kymaName string) (*internal.Instance, error) {
 }
 
 // TODO define return object
-func (s *Manager) ReconcileAll(jobReconciliationDelay time.Duration) (int, int, int, int, int, error) {
+func (s *Manager) ReconcileAll(jobReconciliationDelay time.Duration, metrics *Metrics) (int, int, int, int, int, error) {
 	instances, err := s.GetReconcileCandidates()
 	if err != nil {
 		return 0, 0, 0, 0, 0, err
@@ -123,9 +124,12 @@ func (s *Manager) ReconcileAll(jobReconciliationDelay time.Duration) (int, int, 
 			continue
 		}
 		if skipped {
-			s.logger.Infof("skipping instance %s", instance.InstanceID)
+			s.logger.Info(fmt.Sprintf("skipping instance %s", instance.InstanceID))
 			skippedCount++
+			s.updateMetrics(metrics, instance, "skipped")
 			continue
+		} else {
+			s.updateMetrics(metrics, instance, "reconciled")
 		}
 		if updated {
 			s.logger.Info(fmt.Sprintf("update done for instance %s", instance.InstanceID))
@@ -137,10 +141,13 @@ func (s *Manager) ReconcileAll(jobReconciliationDelay time.Duration) (int, int, 
 	}
 	s.logger.Info(fmt.Sprintf("(runtime-reconciler summary) from total %d instances: %d are OK, update was needed (and done with success) for %d instances, errors occur for %d instances",
 		len(instances), updateNotDoneDueOkState, updateDone, updateNotDoneDueError))
-	return len(instances), updateDone, updateNotDoneDueError, updateNotDoneDueOkState, nil
-	s.logger.Infof("runtime-reconciler summary: total %d instances: %d skipped, %d are OK, update was needed (and done with success) for %d instances, errors occured for %d instances",
-		len(instances), skippedCount, updateNotDoneDueOkState, updateDone, updateNotDoneDueError)
 	return len(instances), updateDone, updateNotDoneDueError, updateNotDoneDueOkState, skippedCount, nil
+}
+
+func (s *Manager) updateMetrics(metrics *Metrics, instance internal.Instance, state string) {
+	if metrics != nil {
+		metrics.skippedSecrets.With(prometheus.Labels{"runtime": instance.RuntimeID, "state": state}).Set(float64(1))
+	}
 }
 
 func (s *Manager) GetReconcileCandidates() ([]internal.Instance, error) {
@@ -206,7 +213,7 @@ func (s *Manager) ReconcileSecretForInstance(instance *internal.Instance) (bool,
 	}
 
 	if value, ok := currentSecret.Labels[skipReconciliationLabel]; ok && value == "true" {
-		s.logger.Infof("skip reconciliation of sap-btp-manager secret for instance %s", instance.InstanceID)
+		s.logger.Info(fmt.Sprintf("skip reconciliation of sap-btp-manager secret for instance %s", instance.InstanceID))
 		return false, true, nil
 	}
 

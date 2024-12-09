@@ -3,6 +3,7 @@ package btpmgrcreds
 import (
 	"context"
 	"fmt"
+	"github.com/prometheus/client_golang/prometheus"
 	"log/slog"
 	"math"
 	"math/rand"
@@ -70,7 +71,7 @@ func InitEnvironment(ctx context.Context, t *testing.T) *Environment {
 
 	newEnvironment.createTestData()
 	newEnvironment.manager = NewManager(ctx, newEnvironment.kcp, newEnvironment.brokerStorage.Instances(), logs, false)
-	newEnvironment.job = NewJob(newEnvironment.manager, logs)
+	newEnvironment.job = NewJob(newEnvironment.manager, logs, prometheus.NewRegistry(), "runtime-reconciler-test")
 	newEnvironment.assertNumberOfInstancesInDb(expectedAllInstancesCount)
 	return newEnvironment
 }
@@ -87,7 +88,7 @@ func TestBtpManagerReconciler(t *testing.T) {
 
 		t.Run("reconcile when all secrets are not set", func(t *testing.T) {
 			environment.assertAllSecretsNotExists()
-			takenInstancesCount, updateDone, updateNotDoneDueError, updateNotDoneDueOkState, skippedCount, err := environment.manager.ReconcileAll(jobReconciliationDelay)
+			takenInstancesCount, updateDone, updateNotDoneDueError, updateNotDoneDueOkState, skippedCount, err := environment.manager.ReconcileAll(jobReconciliationDelay, nil)
 			assert.NoError(t, err)
 			assert.Equal(t, expectedInstancesCount, takenInstancesCount)
 			assert.Equal(t, expectedInstancesCount, updateDone)
@@ -100,7 +101,7 @@ func TestBtpManagerReconciler(t *testing.T) {
 		// TODO all following test cases depend on the previous one - remove this dependency
 		t.Run("reconcile when all secrets are correct", func(t *testing.T) {
 			environment.assertAllSecretDataAreSet()
-			takenInstancesCount, updateDone, updateNotDoneDueError, updateNotDoneDueOkState, skippedCount, err := environment.manager.ReconcileAll(jobReconciliationDelay)
+			takenInstancesCount, updateDone, updateNotDoneDueError, updateNotDoneDueOkState, skippedCount, err := environment.manager.ReconcileAll(jobReconciliationDelay, nil)
 			assert.NoError(t, err)
 			environment.assertNumberOfInstancesInDb(expectedAllInstancesCount)
 			assert.Equal(t, expectedInstancesCount, takenInstancesCount)
@@ -115,7 +116,7 @@ func TestBtpManagerReconciler(t *testing.T) {
 			skrs := environment.getSkrsForSimulateChange([]int{})
 			environment.simulateSecretChangeOnSkr(skrs)
 			environment.assertAllSecretDataAreSet()
-			takenInstancesCount, updateDone, updateNotDoneDueError, updateNotDoneDueOkState, skippedCount, err := environment.manager.ReconcileAll(jobReconciliationDelay)
+			takenInstancesCount, updateDone, updateNotDoneDueError, updateNotDoneDueOkState, skippedCount, err := environment.manager.ReconcileAll(jobReconciliationDelay, nil)
 			assert.NoError(t, err)
 			environment.assertNumberOfInstancesInDb(expectedAllInstancesCount)
 			assert.Equal(t, expectedInstancesCount, takenInstancesCount)
@@ -133,7 +134,7 @@ func TestBtpManagerReconciler(t *testing.T) {
 			skrs := environment.getSkrsForSimulateChange(testDataIndexes)
 			environment.simulateSecretChangeOnSkr(skrs)
 			environment.assertAllSecretDataAreSet()
-			takenInstancesCount, updateDone, updateNotDoneDueError, updateNotDoneDueOkState, skippedCount, err := environment.manager.ReconcileAll(jobReconciliationDelay)
+			takenInstancesCount, updateDone, updateNotDoneDueError, updateNotDoneDueOkState, skippedCount, err := environment.manager.ReconcileAll(jobReconciliationDelay, nil)
 			assert.NoError(t, err)
 			environment.assertNumberOfInstancesInDb(expectedAllInstancesCount)
 			assert.Equal(t, expectedInstancesCount, takenInstancesCount)
@@ -160,7 +161,7 @@ func TestBtpManagerReconciler(t *testing.T) {
 			environment.assertAllSecretDataAreSet()
 
 			// when we reconcile
-			instancesCount, updatedCount, notUpdatedDueError, nothingToUpdate, skippedCount, err := environment.manager.ReconcileAll(jobReconciliationDelay)
+			instancesCount, updatedCount, notUpdatedDueError, nothingToUpdate, skippedCount, err := environment.manager.ReconcileAll(jobReconciliationDelay, nil)
 			assert.NoError(t, err)
 
 			// then
@@ -178,7 +179,7 @@ func TestBtpManagerReconciler(t *testing.T) {
 			environment.setClusterID(skrToBeSkipped[0].Config, "custom-cluster-id")
 
 			// when we reconcile again
-			instancesCount, updatedCount, notUpdatedDueError, nothingToUpdate, skippedCount, err = environment.manager.ReconcileAll(jobReconciliationDelay)
+			instancesCount, updatedCount, notUpdatedDueError, nothingToUpdate, skippedCount, err = environment.manager.ReconcileAll(jobReconciliationDelay, nil)
 			assert.NoError(t, err)
 
 			environment.assertNumberOfInstancesInDb(expectedAllInstancesCount)
@@ -192,7 +193,7 @@ func TestBtpManagerReconciler(t *testing.T) {
 			environment.removeSecretFromSkr(skrToBeSkipped[0].Config)
 
 			// when we reconcile
-			instancesCount, updatedCount, notUpdatedDueError, nothingToUpdate, skippedCount, err = environment.manager.ReconcileAll(jobReconciliationDelay)
+			instancesCount, updatedCount, notUpdatedDueError, nothingToUpdate, skippedCount, err = environment.manager.ReconcileAll(jobReconciliationDelay, nil)
 			assert.NoError(t, err)
 
 			// then
@@ -223,7 +224,7 @@ func TestBtpManagerReconciler(t *testing.T) {
 			environment.assertAllSecretDataAreSet()
 
 			// when we reconcile
-			instancesCount, updatedCount, notUpdatedDueError, nothingToUpdate, skippedCount, err := environment.manager.ReconcileAll(jobReconciliationDelay)
+			instancesCount, updatedCount, notUpdatedDueError, nothingToUpdate, skippedCount, err := environment.manager.ReconcileAll(jobReconciliationDelay, nil)
 			assert.NoError(t, err)
 
 			// then
@@ -241,7 +242,7 @@ func TestBtpManagerReconciler(t *testing.T) {
 			environment.setClusterID(skrToBeSkipped[0].Config, "custom-cluster-id")
 
 			// when we reconcile again
-			instancesCount, updatedCount, notUpdatedDueError, nothingToUpdate, skippedCount, err = environment.manager.ReconcileAll(jobReconciliationDelay)
+			instancesCount, updatedCount, notUpdatedDueError, nothingToUpdate, skippedCount, err = environment.manager.ReconcileAll(jobReconciliationDelay, nil)
 			assert.NoError(t, err)
 
 			environment.assertNumberOfInstancesInDb(expectedAllInstancesCount)
@@ -255,7 +256,7 @@ func TestBtpManagerReconciler(t *testing.T) {
 			environment.labelSecret(skrToBeSkipped[0].Config, skipReconciliationLabel, "false")
 			// when we reconcile
 
-			instancesCount, updatedCount, notUpdatedDueError, nothingToUpdate, skippedCount, err = environment.manager.ReconcileAll(jobReconciliationDelay)
+			instancesCount, updatedCount, notUpdatedDueError, nothingToUpdate, skippedCount, err = environment.manager.ReconcileAll(jobReconciliationDelay, nil)
 			assert.NoError(t, err)
 
 			// then
@@ -281,7 +282,7 @@ func TestBtpManagerReconciler(t *testing.T) {
 			environment.simulateSecretChangeOnSkr(skrs)
 			environment.assertAllSecretDataAreSet()
 
-			instancesCount, updatedCount, updateNotDoneDueError, updateNotDoneDueOkState, skippedCount, err := environment.manager.ReconcileAll(jobReconciliationDelay)
+			instancesCount, updatedCount, updateNotDoneDueError, updateNotDoneDueOkState, skippedCount, err := environment.manager.ReconcileAll(jobReconciliationDelay, nil)
 			assert.NoError(t, err)
 
 			environment.assertNumberOfInstancesInDb(expectedAllInstancesCount)
