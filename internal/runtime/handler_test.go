@@ -36,6 +36,9 @@ func TestRuntimeHandler(t *testing.T) {
 	kimConfig := broker.KimConfig{
 		Enabled: false,
 	}
+	log := slog.New(slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{
+		Level: slog.LevelInfo,
+	}))
 
 	t.Run("test pagination should work", func(t *testing.T) {
 		// given
@@ -62,10 +65,6 @@ func TestRuntimeHandler(t *testing.T) {
 		require.NoError(t, err)
 		err = instances.Insert(testInstance2)
 		require.NoError(t, err)
-
-		log := slog.New(slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{
-			Level: slog.LevelInfo,
-		}))
 
 		runtimeHandler := runtime.NewHandler(db, 2, "", provisionerClient, k8sClient, kimConfig, log)
 
@@ -116,10 +115,6 @@ func TestRuntimeHandler(t *testing.T) {
 		provisionerClient := provisioner.NewFakeClient()
 
 		db := storage.NewMemoryStorage()
-
-		log := slog.New(slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{
-			Level: slog.LevelInfo,
-		}))
 
 		runtimeHandler := runtime.NewHandler(db, 2, "region", provisionerClient, k8sClient, kimConfig, log)
 
@@ -177,10 +172,6 @@ func TestRuntimeHandler(t *testing.T) {
 		require.NoError(t, err)
 		err = operations.InsertOperation(testOp2)
 		require.NoError(t, err)
-
-		log := slog.New(slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{
-			Level: slog.LevelInfo,
-		}))
 
 		runtimeHandler := runtime.NewHandler(db, 2, "", provisionerClient, k8sClient, kimConfig, log)
 
@@ -255,10 +246,6 @@ func TestRuntimeHandler(t *testing.T) {
 		deprovOp3.CreatedAt = deprovOp3.CreatedAt.Add(2 * time.Minute)
 		err = operations.InsertDeprovisioningOperation(deprovOp3)
 		require.NoError(t, err)
-
-		log := slog.New(slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{
-			Level: slog.LevelInfo,
-		}))
 
 		runtimeHandler := runtime.NewHandler(db, 2, "", provisionerClient, k8sClient, kimConfig, log)
 
@@ -367,10 +354,6 @@ func TestRuntimeHandler(t *testing.T) {
 		})
 		require.NoError(t, err)
 
-		log := slog.New(slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{
-			Level: slog.LevelInfo,
-		}))
-
 		runtimeHandler := runtime.NewHandler(db, 2, "", provisionerClient, k8sClient, kimConfig, log)
 
 		req, err := http.NewRequest("GET", "/runtimes", nil)
@@ -442,10 +425,6 @@ func TestRuntimeHandler(t *testing.T) {
 		})
 		require.NoError(t, err)
 
-		log := slog.New(slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{
-			Level: slog.LevelInfo,
-		}))
-
 		runtimeHandler := runtime.NewHandler(db, 2, "", provisionerClient, k8sClient, kimConfig, log)
 
 		req, err := http.NewRequest("GET", "/runtimes", nil)
@@ -516,10 +495,6 @@ func TestRuntimeHandler(t *testing.T) {
 		})
 		require.NoError(t, err)
 
-		log := slog.New(slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{
-			Level: slog.LevelInfo,
-		}))
-
 		runtimeHandler := runtime.NewHandler(db, 2, "", provisionerClient, k8sClient, kimConfig, log)
 
 		req, err := http.NewRequest("GET", "/runtimes", nil)
@@ -572,10 +547,6 @@ func TestRuntimeHandler(t *testing.T) {
 		updOp.CreatedAt = updOp.CreatedAt.Add(time.Minute)
 		err = operations.InsertUpdatingOperation(updOp)
 		require.NoError(t, err)
-
-		log := slog.New(slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{
-			Level: slog.LevelInfo,
-		}))
 
 		runtimeHandler := runtime.NewHandler(db, 2, "", provisionerClient, k8sClient, kimConfig, log)
 
@@ -707,10 +678,6 @@ func TestRuntimeHandler(t *testing.T) {
 		err = states.Insert(fixOpgClusterState)
 		require.NoError(t, err)
 
-		log := slog.New(slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{
-			Level: slog.LevelInfo,
-		}))
-
 		runtimeHandler := runtime.NewHandler(db, 2, "", provisionerClient, k8sClient, kimConfig, log)
 
 		rr := httptest.NewRecorder()
@@ -763,10 +730,6 @@ func TestRuntimeHandler(t *testing.T) {
 		_, err = provisionerClient.ProvisionRuntimeWithIDs(operation.GlobalAccountID, operation.SubAccountID, operation.RuntimeID, operation.ID, input)
 		require.NoError(t, err)
 
-		log := slog.New(slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{
-			Level: slog.LevelInfo,
-		}))
-
 		runtimeHandler := runtime.NewHandler(db, 2, "", provisionerClient, k8sClient, kimConfig, log)
 
 		rr := httptest.NewRecorder()
@@ -817,10 +780,6 @@ func TestRuntimeHandler(t *testing.T) {
 		_, err = provisionerClient.ProvisionRuntimeWithIDs(operation.GlobalAccountID, operation.SubAccountID, operation.RuntimeID, operation.ID, input)
 		require.NoError(t, err)
 
-		log := slog.New(slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{
-			Level: slog.LevelInfo,
-		}))
-
 		runtimeHandler := runtime.NewHandler(db, 2, "", provisionerClient, k8sClient, kimConfig, log)
 
 		rr := httptest.NewRecorder()
@@ -858,6 +817,9 @@ func TestRuntimeHandler_WithKimOnlyDrivenInstances(t *testing.T) {
 	}
 	runtimesNotKnownToProvisioner := map[string]interface{}{"runtime-test1": nil}
 	provisionerClient := provisioner.NewFakeClientWithKimOnlyDrivenRuntimes(runtimesNotKnownToProvisioner)
+	log := slog.New(slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{
+		Level: slog.LevelInfo,
+	}))
 
 	t.Run("test operation detail parameter and runtime state", func(t *testing.T) {
 		// given
@@ -880,10 +842,6 @@ func TestRuntimeHandler_WithKimOnlyDrivenInstances(t *testing.T) {
 		updOp.CreatedAt = updOp.CreatedAt.Add(time.Minute)
 		err = operations.InsertUpdatingOperation(updOp)
 		require.NoError(t, err)
-
-		log := slog.New(slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{
-			Level: slog.LevelInfo,
-		}))
 
 		runtimeHandler := runtime.NewHandler(db, 2, "", provisionerClient, k8sClient, kimConfig, log)
 
@@ -994,10 +952,6 @@ func TestRuntimeHandler_WithKimOnlyDrivenInstances(t *testing.T) {
 		updOp.CreatedAt = updOp.CreatedAt.Add(time.Minute)
 		err = operations.InsertUpdatingOperation(updOp)
 		require.NoError(t, err)
-
-		log := slog.New(slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{
-			Level: slog.LevelInfo,
-		}))
 
 		runtimeHandler := runtime.NewHandler(db, 4, "", provisionerClient, k8sClient, kimConfig, log)
 
@@ -1136,10 +1090,6 @@ func TestRuntimeHandler_WithKimOnlyDrivenInstances(t *testing.T) {
 		err = states.Insert(fixOpgClusterState)
 		require.NoError(t, err)
 
-		log := slog.New(slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{
-			Level: slog.LevelInfo,
-		}))
-
 		runtimeHandler := runtime.NewHandler(db, 2, "", provisionerClient, k8sClient, kimConfig, log)
 
 		rr := httptest.NewRecorder()
@@ -1191,10 +1141,6 @@ func TestRuntimeHandler_WithKimOnlyDrivenInstances(t *testing.T) {
 
 		_, err = provisionerClient.ProvisionRuntimeWithIDs(operation.GlobalAccountID, operation.SubAccountID, operation.RuntimeID, operation.ID, input)
 		require.NoError(t, err)
-
-		log := slog.New(slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{
-			Level: slog.LevelInfo,
-		}))
 
 		runtimeHandler := runtime.NewHandler(db, 2, "", provisionerClient, k8sClient, kimConfig, log)
 
@@ -1252,10 +1198,6 @@ func TestRuntimeHandler_WithKimOnlyDrivenInstances(t *testing.T) {
 			KimOnlyPlans: []string{"no-plan"},
 		}
 
-		log := slog.New(slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{
-			Level: slog.LevelInfo,
-		}))
-
 		runtimeHandler := runtime.NewHandler(db, 2, "", provisionerClient, k8sClient, kimDisabledForPreview, log)
 
 		rr := httptest.NewRecorder()
@@ -1307,10 +1249,6 @@ func TestRuntimeHandler_WithKimOnlyDrivenInstances(t *testing.T) {
 
 		_, err = provisionerClient.ProvisionRuntimeWithIDs(operation.GlobalAccountID, operation.SubAccountID, operation.RuntimeID, operation.ID, input)
 		require.NoError(t, err)
-
-		log := slog.New(slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{
-			Level: slog.LevelInfo,
-		}))
 
 		runtimeHandler := runtime.NewHandler(db, 2, "", provisionerClient, k8sClient, kimConfig, log)
 
@@ -1385,10 +1323,6 @@ func TestRuntimeHandler_WithKimOnlyDrivenInstances(t *testing.T) {
 		_, err = provisionerClient.ProvisionRuntimeWithIDs(operation.GlobalAccountID, operation.SubAccountID, operation.RuntimeID, operation.ID, input)
 		require.NoError(t, err)
 
-		log := slog.New(slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{
-			Level: slog.LevelInfo,
-		}))
-
 		runtimeHandler := runtime.NewHandler(db, 2, "", provisionerClient, k8sClient, kimConfig, log)
 
 		rr := httptest.NewRecorder()
@@ -1427,10 +1361,6 @@ func TestRuntimeHandler_WithKimOnlyDrivenInstances(t *testing.T) {
 		provOp := fixture.FixProvisioningOperation(fixRandomID(), testID)
 		err = operations.InsertOperation(provOp)
 		require.NoError(t, err)
-
-		log := slog.New(slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{
-			Level: slog.LevelInfo,
-		}))
 
 		runtimeHandler := runtime.NewHandler(db, 2, "", provisionerClient, k8sClient, kimConfig, log)
 
