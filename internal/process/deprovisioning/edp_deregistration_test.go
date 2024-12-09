@@ -12,7 +12,6 @@ import (
 	"github.com/kyma-project/kyma-environment-broker/internal"
 	"github.com/kyma-project/kyma-environment-broker/internal/edp"
 	"github.com/kyma-project/kyma-environment-broker/internal/storage"
-	"github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -41,7 +40,7 @@ func TestEDPDeregistration_Run(t *testing.T) {
 	})
 
 	// when
-	_, repeat, err := step.Run(operation, logrus.New())
+	_, repeat, err := step.Run(operation, fixLogger())
 
 	// then
 	assert.Equal(t, 0*time.Second, repeat)
@@ -72,7 +71,7 @@ func TestEDPDeregistration_RunWithOtherInstances(t *testing.T) {
 	})
 
 	// when
-	_, repeat, err := step.Run(operation, logrus.New())
+	_, repeat, err := step.Run(operation, fixLogger())
 
 	// then
 	assert.Equal(t, 0*time.Second, repeat)
@@ -101,7 +100,7 @@ func TestEDPDeregistration_RunWithOtherInstancesButDifferentSubaccount(t *testin
 	})
 
 	// when
-	_, repeat, err := step.Run(operation, logrus.New())
+	_, repeat, err := step.Run(operation, fixLogger())
 
 	// then
 	assert.Equal(t, 0*time.Second, repeat)
@@ -130,7 +129,7 @@ func TestEDPDeregistration_RunWithOtherInstancesInDeprovisioningState(t *testing
 	})
 
 	// when
-	_, repeat, err := step.Run(operation, logrus.New())
+	_, repeat, err := step.Run(operation, fixLogger())
 
 	// then
 	assert.Equal(t, 0*time.Second, repeat)
@@ -150,14 +149,14 @@ func prepareEDP(t *testing.T, subaccountId string, client *edp.FakeClient) {
 		Name:        subaccountId,
 		Environment: edpEnvironment,
 		Secret:      base64.StdEncoding.EncodeToString([]byte(fmt.Sprintf("%s%s", edpName, edpEnvironment))),
-	}, logrus.New())
+	}, fixLogger())
 	assert.NoError(t, err)
 
 	for _, key := range metadataTenantKeys {
 		err = client.CreateMetadataTenant(subaccountId, edpEnvironment, edp.MetadataTenantPayload{
 			Key:   key,
 			Value: "-",
-		}, logrus.New())
+		}, fixLogger())
 		assert.NoError(t, err)
 	}
 }

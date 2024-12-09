@@ -3,6 +3,7 @@ package provisioning
 import (
 	"encoding/base64"
 	"fmt"
+	"log/slog"
 	"strings"
 	"time"
 
@@ -12,17 +13,15 @@ import (
 	kebError "github.com/kyma-project/kyma-environment-broker/internal/error"
 	"github.com/kyma-project/kyma-environment-broker/internal/process"
 	"github.com/kyma-project/kyma-environment-broker/internal/storage"
-
-	"github.com/sirupsen/logrus"
 )
 
 //go:generate mockery --name=EDPClient --output=automock --outpkg=automock --case=underscore
 type EDPClient interface {
-	CreateDataTenant(data edp.DataTenantPayload, log logrus.FieldLogger) error
-	CreateMetadataTenant(name, env string, data edp.MetadataTenantPayload, log logrus.FieldLogger) error
+	CreateDataTenant(data edp.DataTenantPayload, log *slog.Logger) error
+	CreateMetadataTenant(name, env string, data edp.MetadataTenantPayload, log *slog.Logger) error
 
-	DeleteDataTenant(name, env string, log logrus.FieldLogger) error
-	DeleteMetadataTenant(name, env, key string, log logrus.FieldLogger) error
+	DeleteDataTenant(name, env string, log *slog.Logger) error
+	DeleteMetadataTenant(name, env, key string, log *slog.Logger) error
 }
 
 type EDPRegistrationStep struct {
@@ -44,27 +43,27 @@ func (s *EDPRegistrationStep) Name() string {
 	return "EDP_Registration"
 }
 
-func (s *EDPRegistrationStep) Run(operation internal.Operation, log logrus.FieldLogger) (internal.Operation, time.Duration, error) {
+func (s *EDPRegistrationStep) Run(operation internal.Operation, log *slog.Logger) (internal.Operation, time.Duration, error) {
 	if operation.EDPCreated {
 		return operation, 0, nil
 	}
 	subAccountID := strings.ToLower(operation.ProvisioningParameters.ErsContext.SubAccountID)
 
-	log.Infof("Create DataTenant for %s subaccount (env=%s)", subAccountID, s.config.Environment)
+	log.Info(fmt.Sprintf("Create DataTenant for %s subaccount (env=%s)", subAccountID, s.config.Environment))
 	err := s.client.CreateDataTenant(edp.DataTenantPayload{
 		Name:        subAccountID,
 		Environment: s.config.Environment,
 		Secret:      s.generateSecret(subAccountID, s.config.Environment),
-	}, log.WithField("service", "edpClient"))
+	}, log.With("service", "edpClient"))
 	if err != nil {
 		if edp.IsConflictError(err) {
-			log.Warnf("Data Tenant already exists, deleting")
+			log.Warn("Data Tenant already exists, deleting")
 			return s.handleConflict(operation, log)
 		}
 		return s.handleError(operation, err, log, "cannot create DataTenant")
 	}
 
-	log.Infof("Create DataTenant metadata for %s subaccount", subAccountID)
+	log.Info(fmt.Sprintf("Create DataTenant metadata for %s subaccount", subAccountID))
 	for key, value := range map[string]string{
 		edp.MaasConsumerEnvironmentKey: s.selectEnvironmentKey(operation.ProvisioningParameters.PlatformRegion, log),
 		edp.MaasConsumerRegionKey:      operation.ProvisioningParameters.PlatformRegion,
@@ -75,11 +74,11 @@ func (s *EDPRegistrationStep) Run(operation internal.Operation, log logrus.Field
 			Key:   key,
 			Value: value,
 		}
-		log.Infof("Sending metadata %s: %s", payload.Key, payload.Value)
-		err = s.client.CreateMetadataTenant(subAccountID, s.config.Environment, payload, log.WithField("service", "edpClient"))
+		log.Info(fmt.Sprintf("Sending metadata %s: %s", payload.Key, payload.Value))
+		err = s.client.CreateMetadataTenant(subAccountID, s.config.Environment, payload, log.With("service", "edpClient"))
 		if err != nil {
 			if edp.IsConflictError(err) {
-				log.Warnf("Metadata already exists, deleting")
+				log.Warn("Metadata already exists, deleting")
 				return s.handleConflict(operation, log)
 			}
 			return s.handleError(operation, err, log, fmt.Sprintf("cannot create DataTenant metadata %s", key))
@@ -90,33 +89,33 @@ func (s *EDPRegistrationStep) Run(operation internal.Operation, log logrus.Field
 		op.EDPCreated = true
 	}, log)
 	if repeat != 0 {
-		log.Errorf("cannot save operation")
+		log.Error("cannot save operation")
 		return newOp, 5 * time.Second, nil
 	}
 
 	return newOp, 0, nil
 }
 
-func (s *EDPRegistrationStep) handleError(operation internal.Operation, err error, log logrus.FieldLogger, msg string) (internal.Operation, time.Duration, error) {
-	log.Warnf("%s: %s", msg, err)
+func (s *EDPRegistrationStep) handleError(operation internal.Operation, err error, log *slog.Logger, msg string) (internal.Operation, time.Duration, error) {
+	log.Warn(fmt.Sprintf("%s: %s", msg, err))
 
 	if kebError.IsTemporaryError(err) {
 		since := time.Since(operation.UpdatedAt)
 		if since < time.Minute*30 {
-			log.Warnf("request to EDP failed: %s. Retry...", err)
+			log.Warn(fmt.Sprintf("request to EDP failed: %s. Retry...", err))
 			return operation, 10 * time.Second, nil
 		}
 	}
 
 	if !s.config.Required {
-		log.Warnf("Step %s failed. Step is not required. Skip step.", s.Name())
+		log.Warn(fmt.Sprintf("Step %s failed. Step is not required. Skip step.", s.Name()))
 		return operation, 0, nil
 	}
 
 	return s.operationManager.OperationFailed(operation, msg, err, log)
 }
 
-func (s *EDPRegistrationStep) selectEnvironmentKey(region string, log logrus.FieldLogger) string {
+func (s *EDPRegistrationStep) selectEnvironmentKey(region string, log *slog.Logger) string {
 	parts := strings.Split(region, "-")
 	switch parts[0] {
 	case "cf":
@@ -126,7 +125,7 @@ func (s *EDPRegistrationStep) selectEnvironmentKey(region string, log logrus.Fie
 	case "neo":
 		return "NEO"
 	default:
-		log.Warnf("region %s does not fit any of the options, default CF is used", region)
+		log.Warn(fmt.Sprintf("region %s does not fit any of the options, default CF is used", region))
 		return "CF"
 	}
 }
@@ -148,26 +147,26 @@ func (s *EDPRegistrationStep) generateSecret(name, env string) string {
 	return base64.StdEncoding.EncodeToString([]byte(fmt.Sprintf("%s%s", name, env)))
 }
 
-func (s *EDPRegistrationStep) handleConflict(operation internal.Operation, log logrus.FieldLogger) (internal.Operation, time.Duration, error) {
+func (s *EDPRegistrationStep) handleConflict(operation internal.Operation, log *slog.Logger) (internal.Operation, time.Duration, error) {
 	for _, key := range []string{
 		edp.MaasConsumerEnvironmentKey,
 		edp.MaasConsumerRegionKey,
 		edp.MaasConsumerSubAccountKey,
 		edp.MaasConsumerServicePlan,
 	} {
-		log.Infof("Deleting DataTenant metadata %s (%s): %s", operation.SubAccountID, s.config.Environment, key)
-		err := s.client.DeleteMetadataTenant(operation.SubAccountID, s.config.Environment, key, log.WithField("service", "edpClient"))
+		log.Info(fmt.Sprintf("Deleting DataTenant metadata %s (%s): %s", operation.SubAccountID, s.config.Environment, key))
+		err := s.client.DeleteMetadataTenant(operation.SubAccountID, s.config.Environment, key, log.With("service", "edpClient"))
 		if err != nil {
 			return s.handleError(operation, err, log, fmt.Sprintf("cannot remove DataTenant metadata with key: %s", key))
 		}
 	}
 
-	log.Infof("Deleting DataTenant %s (%s)", operation.SubAccountID, s.config.Environment)
-	err := s.client.DeleteDataTenant(operation.SubAccountID, s.config.Environment, log.WithField("service", "edpClient"))
+	log.Info(fmt.Sprintf("Deleting DataTenant %s (%s)", operation.SubAccountID, s.config.Environment))
+	err := s.client.DeleteDataTenant(operation.SubAccountID, s.config.Environment, log.With("service", "edpClient"))
 	if err != nil {
 		return s.handleError(operation, err, log, "cannot remove DataTenant")
 	}
 
-	log.Infof("Retrying...")
+	log.Info("Retrying...")
 	return operation, time.Second, nil
 }

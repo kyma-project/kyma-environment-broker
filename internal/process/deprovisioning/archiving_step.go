@@ -1,13 +1,14 @@
 package deprovisioning
 
 import (
+	"fmt"
+	"log/slog"
 	"time"
 
 	"github.com/kyma-project/kyma-environment-broker/internal"
 	"github.com/kyma-project/kyma-environment-broker/internal/archive"
 	"github.com/kyma-project/kyma-environment-broker/internal/storage"
 	"github.com/kyma-project/kyma-environment-broker/internal/storage/dberr"
-	"github.com/sirupsen/logrus"
 )
 
 const (
@@ -34,13 +35,13 @@ func (s *ArchivingStep) Name() string {
 	return "Archiving"
 }
 
-func (s *ArchivingStep) Run(operation internal.Operation, logger logrus.FieldLogger) (internal.Operation, time.Duration, error) {
+func (s *ArchivingStep) Run(operation internal.Operation, logger *slog.Logger) (internal.Operation, time.Duration, error) {
 	if operation.Temporary {
-		logger.Infof("suspension operation, skipping")
+		logger.Info("suspension operation, skipping")
 		return operation, 0, nil
 	}
 	if operation.ExcutedButNotCompleted != nil && len(operation.ExcutedButNotCompleted) > 0 {
-		logger.Infof("operation needs a retrigger, skipping")
+		logger.Info("operation needs a retrigger, skipping")
 		return operation, 0, nil
 	}
 
@@ -71,30 +72,30 @@ func (s *ArchivingStep) Run(operation internal.Operation, logger logrus.FieldLog
 
 	var archived internal.InstanceArchived
 	if instance != nil {
-		logger.Infof("Creating instance archived from the instance and %d operations", len(operations))
+		logger.Info(fmt.Sprintf("Creating instance archived from the instance and %d operations", len(operations)))
 		archived, err = archive.NewInstanceArchivedFromOperationsAndInstance(*instance, operations)
 		if err != nil {
-			logger.Errorf("Unable to create instance archived: %s", err.Error())
+			logger.Error(fmt.Sprintf("Unable to create instance archived: %s", err.Error()))
 			return operation, 0, nil
 		}
 	} else {
-		logger.Infof("Creating instance archived from %d operations", len(operations))
+		logger.Info(fmt.Sprintf("Creating instance archived from %d operations", len(operations)))
 		archived, err = archive.NewInstanceArchivedFromOperations(operations)
 		if err != nil {
-			logger.Errorf("Unable to create instance archived: %s", err.Error())
+			logger.Error(fmt.Sprintf("Unable to create instance archived: %s", err.Error()))
 			return operation, 0, nil
 		}
 	}
 
 	if s.dryRun {
-		logger.Infof("DryRun enabled, skipping insert of archived instance")
-		logger.Infof("Archived instance: %+v", archived)
+		logger.Info("DryRun enabled, skipping insert of archived instance")
+		logger.Info(fmt.Sprintf("Archived instance: %+v", archived))
 		return operation, 0, nil
 	}
 
 	err = s.instancesArchived.Insert(archived)
 	if err != nil {
-		logger.Errorf("unable to insert archived instance: %s", err.Error())
+		logger.Error(fmt.Sprintf("unable to insert archived instance: %s", err.Error()))
 		return operation, dbRetryBackoff, nil
 	}
 

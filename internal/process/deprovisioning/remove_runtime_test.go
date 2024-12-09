@@ -9,14 +9,12 @@ import (
 	"github.com/kyma-project/kyma-environment-broker/internal/fixture"
 	provisionerAutomock "github.com/kyma-project/kyma-environment-broker/internal/provisioner/automock"
 	"github.com/kyma-project/kyma-environment-broker/internal/storage"
-	"github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/assert"
 )
 
 func TestRemoveRuntimeStep_Run(t *testing.T) {
 	t.Run("Should not repeat process when deprovisioning call to provisioner succeeded", func(t *testing.T) {
 		// given
-		log := logrus.New()
 		memoryStorage := storage.NewMemoryStorage()
 
 		operation := fixture.FixDeprovisioningOperation(fixOperationID, fixInstanceID)
@@ -36,8 +34,7 @@ func TestRemoveRuntimeStep_Run(t *testing.T) {
 		step := NewRemoveRuntimeStep(memoryStorage.Operations(), memoryStorage.Instances(), provisionerClient, time.Minute)
 
 		// when
-		entry := log.WithFields(logrus.Fields{"step": "TEST"})
-		result, repeat, err := step.Run(operation.Operation, entry)
+		result, repeat, err := step.Run(operation.Operation, fixLogger())
 
 		// then
 		assert.NoError(t, err)
@@ -54,7 +51,6 @@ func TestRemoveRuntimeStep_Run(t *testing.T) {
 
 	t.Run("Should not call provisioner", func(t *testing.T) {
 		// given
-		log := logrus.New()
 		memoryStorage := storage.NewMemoryStorage()
 
 		operation := fixture.FixDeprovisioningOperation(fixOperationID, fixInstanceID)
@@ -74,8 +70,7 @@ func TestRemoveRuntimeStep_Run(t *testing.T) {
 		step := NewRemoveRuntimeStep(memoryStorage.Operations(), memoryStorage.Instances(), provisionerClient, time.Minute)
 
 		// when
-		entry := log.WithFields(logrus.Fields{"step": "TEST"})
-		result, repeat, err := step.Run(operation.Operation, entry)
+		result, repeat, err := step.Run(operation.Operation, fixLogger())
 
 		// then
 		assert.NoError(t, err)

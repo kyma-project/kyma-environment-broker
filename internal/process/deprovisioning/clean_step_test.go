@@ -6,7 +6,6 @@ import (
 	"github.com/kyma-project/kyma-environment-broker/internal/fixture"
 	"github.com/kyma-project/kyma-environment-broker/internal/storage"
 	"github.com/kyma-project/kyma-environment-broker/internal/storage/dberr"
-	"github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -26,7 +25,7 @@ func TestCleanStep_Run(t *testing.T) {
 	step := NewCleanStep(db.Operations(), db.RuntimeStates(), false)
 
 	// when
-	_, backoff, err := step.Run(deprovisioning, logrus.New())
+	_, backoff, err := step.Run(deprovisioning, fixLogger())
 
 	// then
 	assert.Zero(t, backoff)
@@ -56,7 +55,7 @@ func TestCleanStep_Run_TemporaryOperation(t *testing.T) {
 	step := NewCleanStep(db.Operations(), db.RuntimeStates(), false)
 
 	// when
-	_, backoff, err := step.Run(deprovisioning, logrus.New())
+	_, backoff, err := step.Run(deprovisioning, fixLogger())
 
 	// then
 	assert.Zero(t, backoff)
@@ -86,7 +85,7 @@ func TestCleanStep_Run_ExcutedButNotCompleted(t *testing.T) {
 	step := NewCleanStep(db.Operations(), db.RuntimeStates(), false)
 
 	// when
-	_, backoff, err := step.Run(deprovisioning, logrus.New())
+	_, backoff, err := step.Run(deprovisioning, fixLogger())
 
 	// then
 	assert.Zero(t, backoff)

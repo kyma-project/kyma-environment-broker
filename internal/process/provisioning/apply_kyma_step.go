@@ -3,6 +3,8 @@ package provisioning
 import (
 	"bytes"
 	"context"
+	"fmt"
+	"log/slog"
 	"reflect"
 	"time"
 
@@ -13,7 +15,6 @@ import (
 	"github.com/kyma-project/kyma-environment-broker/internal"
 	"github.com/kyma-project/kyma-environment-broker/internal/process"
 	"github.com/kyma-project/kyma-environment-broker/internal/storage"
-	"github.com/sirupsen/logrus"
 	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -39,7 +40,7 @@ func (a *ApplyKymaStep) Name() string {
 	return "Apply_Kyma"
 }
 
-func (a *ApplyKymaStep) Run(operation internal.Operation, logger logrus.FieldLogger) (internal.Operation, time.Duration, error) {
+func (a *ApplyKymaStep) Run(operation internal.Operation, logger *slog.Logger) (internal.Operation, time.Duration, error) {
 	template, err := steps.DecodeKymaTemplate(operation.KymaTemplate)
 	if err != nil {
 		return a.operationManager.OperationFailed(operation, "unable to create a kyma template", err, logger)
@@ -49,7 +50,7 @@ func (a *ApplyKymaStep) Run(operation internal.Operation, logger logrus.FieldLog
 		op.KymaResourceName = template.GetName()
 	}, logger)
 	if backoff != 0 {
-		logger.Errorf("cannot save the operation")
+		logger.Error("cannot save the operation")
 		return operation, 5 * time.Second, nil
 	}
 
@@ -62,25 +63,25 @@ func (a *ApplyKymaStep) Run(operation internal.Operation, logger logrus.FieldLog
 
 	switch {
 	case err == nil:
-		logger.Infof("Kyma resource already exists, updating Kyma resource: %s in namespace %s", existingKyma.GetName(), existingKyma.GetNamespace())
+		logger.Info(fmt.Sprintf("Kyma resource already exists, updating Kyma resource: %s in namespace %s", existingKyma.GetName(), existingKyma.GetNamespace()))
 		changed := a.addLabelsAndName(operation, &existingKyma)
 		if !changed {
-			logger.Infof("Kyma resource does not need any change")
+			logger.Info("Kyma resource does not need any change")
 		}
 		err = a.k8sClient.Update(context.Background(), &existingKyma)
 		if err != nil {
-			logger.Errorf("unable to update a Kyma resource: %s", err.Error())
+			logger.Error(fmt.Sprintf("unable to update a Kyma resource: %s", err.Error()))
 			return a.operationManager.RetryOperation(operation, "unable to update the Kyma resource", err, time.Second, 10*time.Second, logger)
 		}
 	case errors.IsNotFound(err):
-		logger.Infof("creating Kyma resource: %s in namespace: %s", template.GetName(), template.GetNamespace())
+		logger.Info(fmt.Sprintf("creating Kyma resource: %s in namespace: %s", template.GetName(), template.GetNamespace()))
 		err := a.k8sClient.Create(context.Background(), template)
 		if err != nil {
-			logger.Errorf("unable to create a Kyma resource: %s", err.Error())
+			logger.Error(fmt.Sprintf("unable to create a Kyma resource: %s", err.Error()))
 			return a.operationManager.RetryOperation(operation, "unable to create the Kyma resource", err, time.Second, 10*time.Second, logger)
 		}
 	default:
-		logger.Errorf("Unable to get Kyma: %s", err.Error())
+		logger.Error(fmt.Sprintf("Unable to get Kyma: %s", err.Error()))
 		return a.operationManager.RetryOperation(operation, "unable to get the Kyma resource", err, time.Second, 10*time.Second, logger)
 	}
 

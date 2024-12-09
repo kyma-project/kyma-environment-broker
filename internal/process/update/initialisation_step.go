@@ -2,6 +2,7 @@ package update
 
 import (
 	"fmt"
+	"log/slog"
 	"time"
 
 	"github.com/kyma-project/kyma-environment-broker/internal/storage/dberr"
@@ -13,7 +14,6 @@ import (
 	"github.com/kyma-project/kyma-environment-broker/internal/process/input"
 	"github.com/kyma-project/kyma-environment-broker/internal/storage"
 	"github.com/pivotal-cf/brokerapi/v8/domain"
-	"github.com/sirupsen/logrus"
 )
 
 type InitialisationStep struct {
@@ -37,7 +37,7 @@ func (s *InitialisationStep) Name() string {
 	return "Update_Kyma_Initialisation"
 }
 
-func (s *InitialisationStep) Run(operation internal.Operation, log logrus.FieldLogger) (internal.Operation, time.Duration, error) {
+func (s *InitialisationStep) Run(operation internal.Operation, log *slog.Logger) (internal.Operation, time.Duration, error) {
 	// Check concurrent deprovisioning (or suspension) operation (launched after target resolution)
 	// Terminate (preempt) upgrade immediately with succeeded
 	lastOp, err := s.operationStorage.GetLastOperation(operation.InstanceID)
@@ -47,7 +47,7 @@ func (s *InitialisationStep) Run(operation internal.Operation, log logrus.FieldL
 
 	if operation.State == orchestration.Pending {
 		if !lastOp.IsFinished() {
-			log.Infof("waiting for %s operation (%s) to be finished", lastOp.Type, lastOp.ID)
+			log.Info(fmt.Sprintf("waiting for %s operation (%s) to be finished", lastOp.Type, lastOp.ID))
 			return operation, time.Minute, nil
 		}
 
@@ -55,14 +55,14 @@ func (s *InitialisationStep) Run(operation internal.Operation, log logrus.FieldL
 		instance, err := s.instanceStorage.GetByID(operation.InstanceID)
 		if err != nil {
 			if dberr.IsNotFound(err) {
-				log.Warnf("the instance already deprovisioned")
+				log.Warn("the instance already deprovisioned")
 				return s.operationManager.OperationFailed(operation, "the instance was already deprovisioned", err, log)
 			}
 			return operation, time.Second, nil
 		}
 		instance.Parameters.ErsContext = internal.InheritMissingERSContext(instance.Parameters.ErsContext, operation.ProvisioningParameters.ErsContext)
 		if _, err := s.instanceStorage.Update(*instance); err != nil {
-			log.Errorf("unable to update the instance, retrying")
+			log.Error("unable to update the instance, retrying")
 			return operation, time.Second, err
 		}
 
@@ -73,7 +73,7 @@ func (s *InitialisationStep) Run(operation internal.Operation, log logrus.FieldL
 				return s.operationManager.RetryOperation(operation, "error while getting runtime ID", err, 5*time.Second, 1*time.Minute, log)
 			}
 		}
-		log.Infof("Got runtime ID %s", operation.RuntimeID)
+		log.Info(fmt.Sprintf("Got runtime ID %s", operation.RuntimeID))
 
 		op, delay, _ := s.operationManager.UpdateOperation(operation, func(op *internal.Operation) {
 			op.State = domain.InProgress
@@ -84,7 +84,7 @@ func (s *InitialisationStep) Run(operation internal.Operation, log logrus.FieldL
 			op.ProvisioningParameters.ErsContext = internal.InheritMissingERSContext(op.ProvisioningParameters.ErsContext, lastOp.ProvisioningParameters.ErsContext)
 		}, log)
 		if delay != 0 {
-			log.Errorf("unable to update the operation (move to 'in progress'), retrying")
+			log.Error("unable to update the operation (move to 'in progress'), retrying")
 			return operation, delay, nil
 		}
 		operation = op
@@ -106,18 +106,18 @@ func (s *InitialisationStep) getRuntimeIdFromProvisioningOp(operation *internal.
 	return nil
 }
 
-func (s *InitialisationStep) initializeUpgradeShootRequest(operation internal.Operation, log logrus.FieldLogger) (internal.Operation, time.Duration, error) {
-	log.Infof("create provisioner input creator for plan ID %q", operation.ProvisioningParameters)
+func (s *InitialisationStep) initializeUpgradeShootRequest(operation internal.Operation, log *slog.Logger) (internal.Operation, time.Duration, error) {
+	log.Info(fmt.Sprintf("create provisioner input creator for plan ID %+v", operation.ProvisioningParameters))
 	creator, err := s.inputBuilder.CreateUpgradeShootInput(operation.ProvisioningParameters)
 	switch {
 	case err == nil:
 		operation.InputCreator = creator
 		return operation, 0, nil // go to next step
 	case kebError.IsTemporaryError(err):
-		log.Errorf("cannot create upgrade shoot input creator at the moment for plan %s: %s", operation.ProvisioningParameters.PlanID, err)
+		log.Error(fmt.Sprintf("cannot create upgrade shoot input creator at the moment for plan %s: %s", operation.ProvisioningParameters.PlanID, err))
 		return s.operationManager.RetryOperation(operation, "error while creating upgrade shoot input creator", err, 5*time.Second, 1*time.Minute, log)
 	default:
-		log.Errorf("cannot create input creator for plan %s: %s", operation.ProvisioningParameters.PlanID, err)
+		log.Error(fmt.Sprintf("cannot create input creator for plan %s: %s", operation.ProvisioningParameters.PlanID, err))
 		return s.operationManager.OperationFailed(operation, "cannot create provisioning input creator", err, log)
 	}
 }

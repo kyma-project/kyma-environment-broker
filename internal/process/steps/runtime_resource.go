@@ -3,6 +3,7 @@ package steps
 import (
 	"context"
 	"fmt"
+	"log/slog"
 	"time"
 
 	kebError "github.com/kyma-project/kyma-environment-broker/internal/error"
@@ -13,7 +14,6 @@ import (
 	"github.com/kyma-project/kyma-environment-broker/internal"
 	"github.com/kyma-project/kyma-environment-broker/internal/process"
 	"github.com/kyma-project/kyma-environment-broker/internal/storage"
-	"github.com/sirupsen/logrus"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
@@ -38,29 +38,29 @@ func (_ *checkRuntimeResource) Name() string {
 	return "Check_RuntimeResource"
 }
 
-func (s *checkRuntimeResource) Run(operation internal.Operation, log logrus.FieldLogger) (internal.Operation, time.Duration, error) {
+func (s *checkRuntimeResource) Run(operation internal.Operation, log *slog.Logger) (internal.Operation, time.Duration, error) {
 	if !s.kimConfig.IsDrivenByKim(broker.PlanNamesMapping[operation.ProvisioningParameters.PlanID]) {
-		log.Infof("Only provisioner is controlling provisioning process, skipping")
+		log.Info("Only provisioner is controlling provisioning process, skipping")
 		return operation, 0, nil
 	}
 
 	runtime, err := s.GetRuntimeResource(operation.RuntimeID, operation.KymaResourceNamespace)
 	if err != nil {
-		log.Errorf("unable to get Runtime resource %s/%s", operation.KymaResourceNamespace, operation.RuntimeID)
+		log.Error(fmt.Sprintf("unable to get Runtime resource %s/%s", operation.KymaResourceNamespace, operation.RuntimeID))
 		return s.operationManager.RetryOperation(operation, "unable to get Runtime resource", err, time.Second, 10*time.Second, log)
 	}
 
 	// check status
 	state := runtime.Status.State
-	log.Infof("Runtime resource state: %s", state)
+	log.Info(fmt.Sprintf("Runtime resource state: %s", state))
 	if state != imv1.RuntimeStateReady {
 		if time.Since(operation.CreatedAt) > s.runtimeResourceStepTimeout {
 			description := fmt.Sprintf("Waiting for Runtime resource (%s/%s) ready state timeout.", operation.KymaResourceNamespace, operation.RuntimeID)
 			log.Error(description)
-			log.Infof("Runtime resource status: %v, timeout: %v", runtime.Status, s.runtimeResourceStepTimeout)
+			log.Info(fmt.Sprintf("Runtime resource status: %v, timeout: %v", runtime.Status, s.runtimeResourceStepTimeout))
 			return s.operationManager.OperationFailed(operation, description, nil, log)
 		} else {
-			log.Infof("Runtime resource status: %v, time since last update: %v, timeout set: %v", runtime.Status, time.Since(operation.UpdatedAt), s.runtimeResourceStepTimeout)
+			log.Info(fmt.Sprintf("Runtime resource status: %v, time since last update: %v, timeout set: %v", runtime.Status, time.Since(operation.UpdatedAt), s.runtimeResourceStepTimeout))
 		}
 		return operation, 10 * time.Second, nil
 	}

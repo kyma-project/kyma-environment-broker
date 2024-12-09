@@ -4,7 +4,7 @@ package automock
 
 import (
 	edp "github.com/kyma-project/kyma-environment-broker/internal/edp"
-	logrus "github.com/sirupsen/logrus"
+	"log/slog"
 
 	mock "github.com/stretchr/testify/mock"
 )
@@ -15,7 +15,7 @@ type EDPClient struct {
 }
 
 // CreateDataTenant provides a mock function with given fields: data, log
-func (_m *EDPClient) CreateDataTenant(data edp.DataTenantPayload, log logrus.FieldLogger) error {
+func (_m *EDPClient) CreateDataTenant(data edp.DataTenantPayload, log *slog.Logger) error {
 	ret := _m.Called(data, log)
 
 	if len(ret) == 0 {
@@ -23,7 +23,7 @@ func (_m *EDPClient) CreateDataTenant(data edp.DataTenantPayload, log logrus.Fie
 	}
 
 	var r0 error
-	if rf, ok := ret.Get(0).(func(edp.DataTenantPayload, logrus.FieldLogger) error); ok {
+	if rf, ok := ret.Get(0).(func(edp.DataTenantPayload, *slog.Logger) error); ok {
 		r0 = rf(data, log)
 	} else {
 		r0 = ret.Error(0)
@@ -33,7 +33,7 @@ func (_m *EDPClient) CreateDataTenant(data edp.DataTenantPayload, log logrus.Fie
 }
 
 // CreateMetadataTenant provides a mock function with given fields: name, env, data, log
-func (_m *EDPClient) CreateMetadataTenant(name string, env string, data edp.MetadataTenantPayload, log logrus.FieldLogger) error {
+func (_m *EDPClient) CreateMetadataTenant(name, env string, data edp.MetadataTenantPayload, log *slog.Logger) error {
 	ret := _m.Called(name, env, data, log)
 
 	if len(ret) == 0 {
@@ -41,7 +41,7 @@ func (_m *EDPClient) CreateMetadataTenant(name string, env string, data edp.Meta
 	}
 
 	var r0 error
-	if rf, ok := ret.Get(0).(func(string, string, edp.MetadataTenantPayload, logrus.FieldLogger) error); ok {
+	if rf, ok := ret.Get(0).(func(string, string, edp.MetadataTenantPayload, *slog.Logger) error); ok {
 		r0 = rf(name, env, data, log)
 	} else {
 		r0 = ret.Error(0)
@@ -51,7 +51,7 @@ func (_m *EDPClient) CreateMetadataTenant(name string, env string, data edp.Meta
 }
 
 // DeleteDataTenant provides a mock function with given fields: name, env, log
-func (_m *EDPClient) DeleteDataTenant(name string, env string, log logrus.FieldLogger) error {
+func (_m *EDPClient) DeleteDataTenant(name, env string, log *slog.Logger) error {
 	ret := _m.Called(name, env, log)
 
 	if len(ret) == 0 {
@@ -59,7 +59,7 @@ func (_m *EDPClient) DeleteDataTenant(name string, env string, log logrus.FieldL
 	}
 
 	var r0 error
-	if rf, ok := ret.Get(0).(func(string, string, logrus.FieldLogger) error); ok {
+	if rf, ok := ret.Get(0).(func(string, string, *slog.Logger) error); ok {
 		r0 = rf(name, env, log)
 	} else {
 		r0 = ret.Error(0)
@@ -69,7 +69,7 @@ func (_m *EDPClient) DeleteDataTenant(name string, env string, log logrus.FieldL
 }
 
 // DeleteMetadataTenant provides a mock function with given fields: name, env, key, log
-func (_m *EDPClient) DeleteMetadataTenant(name string, env string, key string, log logrus.FieldLogger) error {
+func (_m *EDPClient) DeleteMetadataTenant(name, env, key string, log *slog.Logger) error {
 	ret := _m.Called(name, env, key, log)
 
 	if len(ret) == 0 {
@@ -77,7 +77,7 @@ func (_m *EDPClient) DeleteMetadataTenant(name string, env string, key string, l
 	}
 
 	var r0 error
-	if rf, ok := ret.Get(0).(func(string, string, string, logrus.FieldLogger) error); ok {
+	if rf, ok := ret.Get(0).(func(string, string, string, *slog.Logger) error); ok {
 		r0 = rf(name, env, key, log)
 	} else {
 		r0 = ret.Error(0)

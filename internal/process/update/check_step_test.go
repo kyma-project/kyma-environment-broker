@@ -1,6 +1,8 @@
 package update
 
 import (
+	"log/slog"
+	"os"
 	"testing"
 	"time"
 
@@ -11,7 +13,6 @@ import (
 	"github.com/kyma-project/kyma-environment-broker/internal/ptr"
 	"github.com/kyma-project/kyma-environment-broker/internal/storage"
 	"github.com/pivotal-cf/brokerapi/v8/domain"
-	"github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -52,11 +53,14 @@ func TestCheckRuntimeStep_RunProvisioningSucceeded(t *testing.T) {
 			operation.RuntimeID = statusRuntimeID
 			err := st.Operations().InsertOperation(operation)
 			assert.NoError(t, err)
+			log := slog.New(slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{
+				Level: slog.LevelInfo,
+			}))
 
 			step := NewCheckStep(st.Operations(), provisionerClient, 1*time.Second)
 
 			// when
-			operation, repeat, err := step.Run(operation, logrus.New())
+			operation, repeat, err := step.Run(operation, log)
 
 			// then
 			assert.NoError(t, err)

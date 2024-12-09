@@ -10,7 +10,6 @@ import (
 	"github.com/kyma-project/kyma-environment-broker/internal/provisioner"
 	"github.com/kyma-project/kyma-environment-broker/internal/storage"
 	"github.com/pivotal-cf/brokerapi/v8/domain"
-	"github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -26,7 +25,6 @@ func TestCheckRuntimeRemovalStep(t *testing.T) {
 	} {
 		t.Run(string(tc.givenState), func(t *testing.T) {
 			// given
-			log := logrus.New()
 			memoryStorage := storage.NewMemoryStorage()
 			provisionerClient := provisioner.NewFakeClient()
 			svc := NewCheckRuntimeRemovalStep(memoryStorage.Operations(), memoryStorage.Instances(), provisionerClient, time.Minute)
@@ -41,7 +39,7 @@ func TestCheckRuntimeRemovalStep(t *testing.T) {
 			dOp.ProvisionerOperationID = provisionerOp
 
 			// when
-			_, d, err := svc.Run(dOp, log)
+			_, d, err := svc.Run(dOp, fixLogger())
 
 			// then
 			require.NoError(t, err)
@@ -52,7 +50,6 @@ func TestCheckRuntimeRemovalStep(t *testing.T) {
 
 func TestCheckRuntimeRemovalStep_ProvisionerFailed(t *testing.T) {
 	// given
-	log := logrus.New()
 	memoryStorage := storage.NewMemoryStorage()
 	provisionerClient := provisioner.NewFakeClient()
 	svc := NewCheckRuntimeRemovalStep(memoryStorage.Operations(), memoryStorage.Instances(), provisionerClient, time.Minute)
@@ -69,7 +66,7 @@ func TestCheckRuntimeRemovalStep_ProvisionerFailed(t *testing.T) {
 	dOp.ProvisionerOperationID = provisionerOp
 
 	// when
-	op, _, err := svc.Run(dOp, log)
+	op, _, err := svc.Run(dOp, fixLogger())
 
 	// then
 	require.Error(t, err)
@@ -78,7 +75,6 @@ func TestCheckRuntimeRemovalStep_ProvisionerFailed(t *testing.T) {
 
 func TestCheckRuntimeRemovalStep_InstanceDeleted(t *testing.T) {
 	// given
-	log := logrus.New()
 	memoryStorage := storage.NewMemoryStorage()
 	provisionerClient := provisioner.NewFakeClient()
 	svc := NewCheckRuntimeRemovalStep(memoryStorage.Operations(), memoryStorage.Instances(), provisionerClient, time.Minute)
@@ -87,7 +83,7 @@ func TestCheckRuntimeRemovalStep_InstanceDeleted(t *testing.T) {
 	require.NoError(t, err)
 
 	// when
-	_, backoff, err := svc.Run(dOp, log)
+	_, backoff, err := svc.Run(dOp, fixLogger())
 
 	// then
 	require.NoError(t, err)
@@ -96,7 +92,6 @@ func TestCheckRuntimeRemovalStep_InstanceDeleted(t *testing.T) {
 
 func TestCheckRuntimeRemovalStep_NoProvisionerOperationID(t *testing.T) {
 	// given
-	log := logrus.New()
 	memoryStorage := storage.NewMemoryStorage()
 	svc := NewCheckRuntimeRemovalStep(memoryStorage.Operations(), memoryStorage.Instances(), nil, time.Minute)
 	dOp := fixDeprovisioningOperation().Operation
@@ -108,7 +103,7 @@ func TestCheckRuntimeRemovalStep_NoProvisionerOperationID(t *testing.T) {
 	dOp.ProvisionerOperationID = ""
 
 	// when
-	_, d, err := svc.Run(dOp, log)
+	_, d, err := svc.Run(dOp, fixLogger())
 
 	// then
 	require.NoError(t, err)

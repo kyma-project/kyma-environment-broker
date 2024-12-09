@@ -3,6 +3,7 @@ package steps
 import (
 	"context"
 	"fmt"
+	"log/slog"
 	"time"
 
 	kebError "github.com/kyma-project/kyma-environment-broker/internal/error"
@@ -10,7 +11,6 @@ import (
 	"github.com/kyma-project/kyma-environment-broker/internal"
 	"github.com/kyma-project/kyma-environment-broker/internal/process"
 	"github.com/kyma-project/kyma-environment-broker/internal/storage"
-	"github.com/sirupsen/logrus"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -49,10 +49,10 @@ func (_ deleteKubeconfig) Name() string {
 	return "Delete_Kubeconfig"
 }
 
-func (s syncKubeconfig) Run(o internal.Operation, log logrus.FieldLogger) (internal.Operation, time.Duration, error) {
+func (s syncKubeconfig) Run(o internal.Operation, log *slog.Logger) (internal.Operation, time.Duration, error) {
 	secret := initSecret(o)
 	if err := s.k8sClient.Create(context.Background(), secret); errors.IsAlreadyExists(err) {
-		log.Infof("Kubeconfig already exists in the secret %s, skipping", secret.Name)
+		log.Info(fmt.Sprintf("Kubeconfig already exists in the secret %s, skipping", secret.Name))
 	} else if err != nil {
 		msg := fmt.Sprintf("failed to create kubeconfig secret %v/%v for lifecycle manager: %v", secret.Namespace, secret.Name, err)
 		log.Error(msg)
@@ -61,7 +61,7 @@ func (s syncKubeconfig) Run(o internal.Operation, log logrus.FieldLogger) (inter
 	return o, 0, nil
 }
 
-func (s deleteKubeconfig) Run(o internal.Operation, log logrus.FieldLogger) (internal.Operation, time.Duration, error) {
+func (s deleteKubeconfig) Run(o internal.Operation, log *slog.Logger) (internal.Operation, time.Duration, error) {
 	if o.KymaResourceNamespace == "" || o.KymaResourceName == "" {
 		log.Info("kubeconfig Secret should not exist, skipping")
 		return o, 0, nil
@@ -69,7 +69,7 @@ func (s deleteKubeconfig) Run(o internal.Operation, log logrus.FieldLogger) (int
 	secret := initSecret(o)
 	if err := s.k8sClient.Delete(context.Background(), secret); err != nil && !errors.IsNotFound(err) {
 		msg := fmt.Sprintf("failed to delete kubeconfig Secret %v/%v for lifecycle manager: %v", secret.Namespace, secret.Name, err)
-		log.Warnf(msg)
+		log.Warn(msg)
 		return s.operationManager.RetryOperationWithoutFail(o, s.Name(), msg, time.Minute, time.Minute*5, log, fmt.Errorf(msg))
 	}
 	return o, 0, nil

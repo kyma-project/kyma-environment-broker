@@ -6,12 +6,12 @@ import (
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
+	"log/slog"
 	"net/http"
 	"time"
 
 	kebError "github.com/kyma-project/kyma-environment-broker/internal/error"
 
-	"github.com/sirupsen/logrus"
 	"golang.org/x/oauth2/clientcredentials"
 )
 
@@ -66,7 +66,7 @@ func (c *Client) metadataTenantURL(name, env string) string {
 	return fmt.Sprintf(metadataTenantTmpl, c.config.AdminURL, c.config.Namespace, name, env)
 }
 
-func (c *Client) CreateDataTenant(data DataTenantPayload, log logrus.FieldLogger) error {
+func (c *Client) CreateDataTenant(data DataTenantPayload, log *slog.Logger) error {
 	rawData, err := json.Marshal(data)
 	if err != nil {
 		return fmt.Errorf("while marshaling dataTenant payload: %w", err)
@@ -75,7 +75,7 @@ func (c *Client) CreateDataTenant(data DataTenantPayload, log logrus.FieldLogger
 	return c.post(c.dataTenantURL(), rawData, data.Name, log)
 }
 
-func (c *Client) DeleteDataTenant(name, env string, log logrus.FieldLogger) (err error) {
+func (c *Client) DeleteDataTenant(name, env string, log *slog.Logger) (err error) {
 	URL := fmt.Sprintf("%s/%s/%s", c.dataTenantURL(), name, env)
 	request, err := http.NewRequest(http.MethodDelete, URL, nil)
 	if err != nil {
@@ -95,7 +95,7 @@ func (c *Client) DeleteDataTenant(name, env string, log logrus.FieldLogger) (err
 	return c.processResponse(response, true, name, log)
 }
 
-func (c *Client) CreateMetadataTenant(name, env string, data MetadataTenantPayload, log logrus.FieldLogger) error {
+func (c *Client) CreateMetadataTenant(name, env string, data MetadataTenantPayload, log *slog.Logger) error {
 	rawData, err := json.Marshal(data)
 	if err != nil {
 		return fmt.Errorf("while marshaling tenant metadata payload: %w", err)
@@ -104,7 +104,7 @@ func (c *Client) CreateMetadataTenant(name, env string, data MetadataTenantPaylo
 	return c.post(c.metadataTenantURL(name, env), rawData, name, log)
 }
 
-func (c *Client) DeleteMetadataTenant(name, env, key string, log logrus.FieldLogger) (err error) {
+func (c *Client) DeleteMetadataTenant(name, env, key string, log *slog.Logger) (err error) {
 	URL := fmt.Sprintf("%s/%s", c.metadataTenantURL(name, env), key)
 	request, err := http.NewRequest(http.MethodDelete, URL, nil)
 	if err != nil {
@@ -152,7 +152,7 @@ func (c *Client) GetMetadataTenant(name, env string) (_ []MetadataItem, err erro
 	return metadata, nil
 }
 
-func (c *Client) post(URL string, data []byte, id string, log logrus.FieldLogger) (err error) {
+func (c *Client) post(URL string, data []byte, id string, log *slog.Logger) (err error) {
 	request, err := http.NewRequest(http.MethodPost, URL, bytes.NewBuffer(data))
 	if err != nil {
 		return fmt.Errorf("while creating POST request for %s: %w", URL, err)
@@ -172,7 +172,7 @@ func (c *Client) post(URL string, data []byte, id string, log logrus.FieldLogger
 	return c.processResponse(response, false, id, log)
 }
 
-func (c *Client) processResponse(response *http.Response, allowNotFound bool, id string, log logrus.FieldLogger) error {
+func (c *Client) processResponse(response *http.Response, allowNotFound bool, id string, log *slog.Logger) error {
 	byteBody, err := ioutil.ReadAll(response.Body)
 	if err != nil {
 		return fmt.Errorf("while reading response body (status code %d): %w", response.StatusCode, err)
@@ -181,35 +181,35 @@ func (c *Client) processResponse(response *http.Response, allowNotFound bool, id
 
 	switch response.StatusCode {
 	case http.StatusCreated:
-		log.Infof("Resource created: %s", responseLog(response))
+		log.Info(fmt.Sprintf("Resource created: %s", responseLog(response)))
 		return nil
 	case http.StatusConflict:
-		log.Warnf("Resource already exist: %s", responseLog(response))
+		log.Warn(fmt.Sprintf("Resource already exists: %s", responseLog(response)))
 		return NewEDPConflictError(id, "Resource %s already exists", id)
 	case http.StatusNoContent:
-		log.Infof("Action executed correctly: %s", responseLog(response))
+		log.Info(fmt.Sprintf("Action executed correctly: %s", responseLog(response)))
 		return nil
 	case http.StatusNotFound:
-		log.Warnf("Resource not found: %s", responseLog(response))
+		log.Warn(fmt.Sprintf("Resource not found: %s", responseLog(response)))
 		if allowNotFound {
 			return nil
 		}
-		log.Warnf("Body content: %s", body)
+		log.Warn(fmt.Sprintf("Body content: %s", body))
 		return NewEDPNotFoundError(id, "Not Found: %s", responseLog(response))
 	case http.StatusRequestTimeout:
-		log.Warnf("Request timeout %s: %s", responseLog(response), body)
+		log.Warn(fmt.Sprintf("Request timeout %s: %s", responseLog(response), body))
 		return kebError.WrapNewTemporaryError(NewEDPOtherError(id, http.StatusRequestTimeout, "Request timeout: %s", responseLog(response)))
 	case http.StatusBadRequest:
-		log.Warnf("Bad request %s: %s", responseLog(response), body)
+		log.Warn(fmt.Sprintf("Bad request %s: %s", responseLog(response), body))
 		return NewEDPBadRequestError(id, "Bad request: %s", responseLog(response))
 	}
 
 	if response.StatusCode >= 500 {
-		log.Infof("EDP server returns failed status %s: %s", responseLog(response), body)
+		log.Info(fmt.Sprintf("EDP server returns failed status %s: %s", responseLog(response), body))
 		return kebError.WrapNewTemporaryError(NewEDPOtherError(id, response.StatusCode, "EDP server returns failed status %s", responseLog(response)))
 	}
 
-	log.Warnf("EDP server not supported response %s: %s", responseLog(response), body)
+	log.Warn(fmt.Sprintf("EDP server not supported response %s: %s", responseLog(response), body))
 	return NewEDPOtherError(id, response.StatusCode, "Undefined/empty/notsupported status code response %s", responseLog(response))
 }
 

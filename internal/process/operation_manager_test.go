@@ -2,10 +2,11 @@ package process
 
 import (
 	"fmt"
+	"log/slog"
+	"os"
 	"testing"
 	"time"
 
-	"github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
@@ -152,6 +153,8 @@ func Test_OperationManager_LastError(t *testing.T) {
 	})
 }
 
-func fixLogger() logrus.FieldLogger {
-	return logrus.StandardLogger()
+func fixLogger() *slog.Logger {
+	return slog.New(slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{
+		Level: slog.LevelInfo,
+	}))
 }

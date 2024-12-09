@@ -13,7 +13,6 @@ import (
 	"github.com/kyma-project/kyma-environment-broker/internal/fixture"
 	"github.com/kyma-project/kyma-environment-broker/internal/storage"
 	"github.com/pivotal-cf/brokerapi/v8/domain"
-	"github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	apicorev1 "k8s.io/api/core/v1"
@@ -26,7 +25,6 @@ import (
 func TestInjectBTPOperatorCredentialsStep(t *testing.T) {
 	t.Run("should execute step flawlessly", func(t *testing.T) {
 		// given
-		log := logrus.New()
 		memoryStorage := storage.NewMemoryStorage()
 
 		scheme := internal.NewSchemeForTests(t)
@@ -40,8 +38,7 @@ func TestInjectBTPOperatorCredentialsStep(t *testing.T) {
 		step := NewInjectBTPOperatorCredentialsStep(memoryStorage.Operations(), kubeconfig.NewFakeK8sClientProvider(k8sClient))
 
 		// when
-		entry := log.WithFields(logrus.Fields{"step": "TEST"})
-		_, _, err = step.Run(operation, entry)
+		_, _, err = step.Run(operation, fixLogger())
 
 		// then
 		assert.NoError(t, err)
@@ -51,7 +48,7 @@ func TestInjectBTPOperatorCredentialsStep(t *testing.T) {
 		// when
 		operation.ProvisioningParameters.ErsContext.SMOperatorCredentials.ClientSecret = "rotated-sample-client-secret"
 		expectedRotatedSecretData := createExpectedSecretData(operation.ProvisioningParameters.ErsContext.SMOperatorCredentials, operation.ServiceManagerClusterID)
-		_, _, err = step.Run(operation, entry)
+		_, _, err = step.Run(operation, fixLogger())
 
 		// then
 		assert.NoError(t, err)
@@ -59,7 +56,6 @@ func TestInjectBTPOperatorCredentialsStep(t *testing.T) {
 	})
 	t.Run("should fail when RuntimeID is empty", func(t *testing.T) {
 		// given
-		log := logrus.New()
 		memoryStorage := storage.NewMemoryStorage()
 
 		scheme := internal.NewSchemeForTests(t)
@@ -74,8 +70,7 @@ func TestInjectBTPOperatorCredentialsStep(t *testing.T) {
 		step := NewInjectBTPOperatorCredentialsStep(memoryStorage.Operations(), kubeconfig.NewFakeK8sClientProvider(k8sClient))
 
 		// when
-		entry := log.WithFields(logrus.Fields{"step": "TEST"})
-		processedOperation, _, _ := step.Run(operation, entry)
+		processedOperation, _, _ := step.Run(operation, fixLogger())
 
 		// then
 		assert.Equal(t, domain.Failed, processedOperation.State)
@@ -85,7 +80,6 @@ func TestInjectBTPOperatorCredentialsStep(t *testing.T) {
 func TestInjectBTPOperatorCredentialsWhenSecretAlreadyExistsStep(t *testing.T) {
 	t.Run("should overwrite secret created by user", func(t *testing.T) {
 		// given
-		log := logrus.New()
 		memoryStorage := storage.NewMemoryStorage()
 
 		userSecret := &unstructured.Unstructured{Object: map[string]interface{}{
@@ -112,8 +106,7 @@ func TestInjectBTPOperatorCredentialsWhenSecretAlreadyExistsStep(t *testing.T) {
 		step := NewInjectBTPOperatorCredentialsStep(memoryStorage.Operations(), kubeconfig.NewFakeK8sClientProvider(k8sClient))
 
 		// when
-		entry := log.WithFields(logrus.Fields{"step": "TEST"})
-		_, _, err = step.Run(operation, entry)
+		_, _, err = step.Run(operation, fixLogger())
 
 		// then
 		assert.NoError(t, err)

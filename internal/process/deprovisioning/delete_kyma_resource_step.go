@@ -3,6 +3,7 @@ package deprovisioning
 import (
 	"context"
 	"fmt"
+	"log/slog"
 	"time"
 
 	kebError "github.com/kyma-project/kyma-environment-broker/internal/error"
@@ -15,8 +16,6 @@ import (
 	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"sigs.k8s.io/controller-runtime/pkg/client"
-
-	"github.com/sirupsen/logrus"
 
 	"github.com/kyma-project/kyma-environment-broker/internal"
 	"github.com/kyma-project/kyma-environment-broker/internal/process"
@@ -49,7 +48,7 @@ func (step *DeleteKymaResourceStep) Name() string {
 	return "Delete_Kyma_Resource"
 }
 
-func (step *DeleteKymaResourceStep) Run(operation internal.Operation, logger logrus.FieldLogger) (internal.Operation, time.Duration, error) {
+func (step *DeleteKymaResourceStep) Run(operation internal.Operation, logger *slog.Logger) (internal.Operation, time.Duration, error) {
 	// read the KymaTemplate from the config if needed
 	if operation.KymaTemplate == "" {
 		cfg, err := step.configProvider.ProvideForGivenPlan(broker.PlanNamesMapping[operation.Plan])
@@ -72,16 +71,16 @@ func (step *DeleteKymaResourceStep) Run(operation internal.Operation, logger log
 	}
 
 	if operation.KymaResourceNamespace == "" {
-		logger.Warnf("namespace for Kyma resource not specified")
+		logger.Warn("namespace for Kyma resource not specified")
 		return operation, 0, nil
 	}
 	kymaResourceName := steps.KymaName(operation)
 	if kymaResourceName == "" {
-		logger.Infof("Kyma resource name is empty, using instance.RuntimeID")
+		logger.Info("Kyma resource name is empty, using instance.RuntimeID")
 
 		instance, err := step.instances.GetByID(operation.InstanceID)
 		if err != nil {
-			logger.Warnf("Unable to get instance: %s", err.Error())
+			logger.Warn(fmt.Sprintf("Unable to get instance: %s", err.Error()))
 			return step.operationManager.RetryOperationWithoutFail(operation, err.Error(), "unable to get instance", 15*time.Second, 2*time.Minute, logger, err)
 		}
 		kymaResourceName = steps.KymaNameFromInstance(instance)
@@ -99,7 +98,7 @@ func (step *DeleteKymaResourceStep) Run(operation internal.Operation, logger log
 		return operation, 0, nil
 	}
 
-	logger.Infof("Deleting Kyma resource: %s in namespace:%s", kymaResourceName, operation.KymaResourceNamespace)
+	logger.Info(fmt.Sprintf("Deleting Kyma resource: %s in namespace:%s", kymaResourceName, operation.KymaResourceNamespace))
 
 	kymaUnstructured := &unstructured.Unstructured{}
 	kymaUnstructured.SetName(kymaResourceName)
@@ -111,7 +110,7 @@ func (step *DeleteKymaResourceStep) Run(operation internal.Operation, logger log
 		if errors.IsNotFound(err) {
 			logger.Info("no Kyma resource to delete - ignoring")
 		} else {
-			logger.Warnf("unable to delete the Kyma resource: %s", err)
+			logger.Warn(fmt.Sprintf("unable to delete the Kyma resource: %s", err))
 			return step.operationManager.RetryOperationWithoutFail(operation, step.Name(), "unable to delete the Kyma resource", backoffForK8SOperation, timeoutForK8sOperation, logger, err)
 		}
 	}

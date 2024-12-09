@@ -2,6 +2,7 @@ package provisioning
 
 import (
 	"fmt"
+	"log/slog"
 	"time"
 
 	"github.com/kyma-project/control-plane/components/provisioner/pkg/gqlschema"
@@ -12,7 +13,6 @@ import (
 	"github.com/kyma-project/kyma-environment-broker/internal/provisioner"
 	"github.com/kyma-project/kyma-environment-broker/internal/storage"
 	"github.com/kyma-project/kyma-environment-broker/internal/storage/dberr"
-	"github.com/sirupsen/logrus"
 )
 
 const (
@@ -46,46 +46,46 @@ func (s *CreateRuntimeWithoutKymaStep) Name() string {
 	return "Create_Runtime_Without_Kyma"
 }
 
-func (s *CreateRuntimeWithoutKymaStep) Run(operation internal.Operation, log logrus.FieldLogger) (internal.Operation, time.Duration, error) {
+func (s *CreateRuntimeWithoutKymaStep) Run(operation internal.Operation, log *slog.Logger) (internal.Operation, time.Duration, error) {
 	if s.kimConfig.IsDrivenByKimOnly(broker.PlanNamesMapping[operation.ProvisioningParameters.PlanID]) {
-		log.Infof("KIM is driving the process for plan %s, skipping", broker.PlanNamesMapping[operation.ProvisioningParameters.PlanID])
+		log.Info(fmt.Sprintf("KIM is driving the process for plan %s, skipping", broker.PlanNamesMapping[operation.ProvisioningParameters.PlanID]))
 		return operation, 0, nil
 	}
 
 	if operation.RuntimeID != "" {
-		log.Infof("RuntimeID already set %s, skipping", operation.RuntimeID)
+		log.Info(fmt.Sprintf("RuntimeID already set %s, skipping", operation.RuntimeID))
 		return operation, 0, nil
 	}
 	if time.Since(operation.UpdatedAt) > CreateRuntimeTimeout {
-		log.Infof("operation has reached the time limit: updated operation time: %s", operation.UpdatedAt)
+		log.Info(fmt.Sprintf("operation has reached the time limit: updated operation time: %s", operation.UpdatedAt))
 		return s.operationManager.OperationFailed(operation, fmt.Sprintf("operation has reached the time limit: %s", CreateRuntimeTimeout), nil, log)
 	}
 
 	requestInput, err := s.createProvisionInput(operation)
 	if err != nil {
-		log.Errorf("Unable to create provisioning input: %s", err.Error())
+		log.Error(fmt.Sprintf("Unable to create provisioning input: %s", err.Error()))
 		return s.operationManager.OperationFailed(operation, "invalid operation data - cannot create provisioning input", err, log)
 	}
 
-	log.Infof("call ProvisionRuntime: kubernetesVersion=%s, region=%s, provider=%s, name=%s, workers=%s, pods=%s, services=%s",
+	log.Info(fmt.Sprintf("call ProvisionRuntime: kubernetesVersion=%s, region=%s, provider=%s, name=%s, workers=%s, pods=%s, services=%s",
 		requestInput.ClusterConfig.GardenerConfig.KubernetesVersion,
 		requestInput.ClusterConfig.GardenerConfig.Region,
 		requestInput.ClusterConfig.GardenerConfig.Provider,
 		requestInput.ClusterConfig.GardenerConfig.Name,
 		requestInput.ClusterConfig.GardenerConfig.WorkerCidr,
 		valueOfString(requestInput.ClusterConfig.GardenerConfig.PodsCidr),
-		valueOfString(requestInput.ClusterConfig.GardenerConfig.ServicesCidr))
+		valueOfString(requestInput.ClusterConfig.GardenerConfig.ServicesCidr)))
 
 	provisionerResponse, err := s.provisionerClient.ProvisionRuntime(operation.ProvisioningParameters.ErsContext.GlobalAccountID, operation.ProvisioningParameters.ErsContext.SubAccountID, requestInput)
 	switch {
 	case kebError.IsTemporaryError(err):
-		log.Errorf("call to provisioner failed (temporary error): %s", err)
+		log.Error(fmt.Sprintf("call to provisioner failed (temporary error): %s", err))
 		return operation, 5 * time.Second, nil
 	case err != nil:
-		log.Errorf("call to Provisioner failed: %s", err)
+		log.Error(fmt.Sprintf("call to Provisioner failed: %s", err))
 		return s.operationManager.OperationFailed(operation, "call to the provisioner service failed", err, log)
 	}
-	log.Infof("Provisioning runtime in the Provisioner started, RuntimeID=%s, provisioner operation=%s", *provisionerResponse.RuntimeID, *provisionerResponse.ID)
+	log.Info(fmt.Sprintf("Provisioning runtime in the Provisioner started, RuntimeID=%s, provisioner operation=%s", *provisionerResponse.RuntimeID, *provisionerResponse.ID))
 
 	repeat := time.Duration(0)
 	operation, repeat, _ = s.operationManager.UpdateOperation(operation, func(operation *internal.Operation) {
@@ -96,7 +96,7 @@ func (s *CreateRuntimeWithoutKymaStep) Run(operation internal.Operation, log log
 		}
 	}, log)
 	if repeat != 0 {
-		log.Errorf("cannot save neither runtime ID nor region from provisioner")
+		log.Error("cannot save neither runtime ID nor region from provisioner")
 		return operation, 5 * time.Second, nil
 	}
 
@@ -104,7 +104,7 @@ func (s *CreateRuntimeWithoutKymaStep) Run(operation internal.Operation, log log
 	err = s.runtimeStateStorage.Insert(rs)
 
 	if err != nil {
-		log.Errorf("cannot insert runtimeState: %s", err)
+		log.Error(fmt.Sprintf("cannot insert runtimeState: %s", err))
 		return operation, 10 * time.Second, nil
 	}
 
@@ -117,7 +117,7 @@ func (s *CreateRuntimeWithoutKymaStep) Run(operation internal.Operation, log log
 	case dberr.IsConflict(err):
 		err := s.updateInstance(operation.InstanceID, *provisionerResponse.RuntimeID, requestInput.ClusterConfig.GardenerConfig.Region)
 		if err != nil {
-			log.Errorf("cannot update instance: %s", err)
+			log.Error(fmt.Sprintf("cannot update instance: %s", err))
 			return operation, 1 * time.Minute, nil
 		}
 	}

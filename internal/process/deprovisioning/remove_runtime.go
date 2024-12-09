@@ -2,6 +2,7 @@ package deprovisioning
 
 import (
 	"fmt"
+	"log/slog"
 	"time"
 
 	kebError "github.com/kyma-project/kyma-environment-broker/internal/error"
@@ -9,8 +10,6 @@ import (
 	"github.com/kyma-project/kyma-environment-broker/internal/storage/dberr"
 
 	"github.com/kyma-project/kyma-environment-broker/internal/broker"
-
-	"github.com/sirupsen/logrus"
 
 	"github.com/kyma-project/kyma-environment-broker/internal"
 	"github.com/kyma-project/kyma-environment-broker/internal/process"
@@ -39,15 +38,15 @@ func (s *RemoveRuntimeStep) Name() string {
 	return "Remove_Runtime"
 }
 
-func (s *RemoveRuntimeStep) Run(operation internal.Operation, log logrus.FieldLogger) (internal.Operation, time.Duration, error) {
+func (s *RemoveRuntimeStep) Run(operation internal.Operation, log *slog.Logger) (internal.Operation, time.Duration, error) {
 
 	if operation.KimDeprovisionsOnly != nil && *operation.KimDeprovisionsOnly {
-		log.Infof("Skipping the step because the runtime %s/%s is not controlled by the provisioner", operation.GetRuntimeResourceName(), operation.GetRuntimeResourceName())
+		log.Info(fmt.Sprintf("Skipping the step because the runtime %s/%s is not controlled by the provisioner", operation.GetRuntimeResourceName(), operation.GetRuntimeResourceName()))
 		return operation, 0, nil
 	}
 
 	if time.Since(operation.UpdatedAt) > s.provisionerTimeout {
-		log.Infof("operation has reached the time limit: updated operation time: %s", operation.UpdatedAt)
+		log.Info(fmt.Sprintf("operation has reached the time limit: updated operation time: %s", operation.UpdatedAt))
 		return s.operationManager.OperationFailed(operation, fmt.Sprintf("operation has reached the time limit: %s", s.provisionerTimeout), nil, log)
 	}
 
@@ -55,26 +54,26 @@ func (s *RemoveRuntimeStep) Run(operation internal.Operation, log logrus.FieldLo
 	switch {
 	case err == nil:
 	case dberr.IsNotFound(err):
-		log.Errorf("instance already deleted", err)
+		log.Error(fmt.Sprintf("instance already deleted: %s", err))
 		return operation, 0 * time.Second, nil
 	default:
-		log.Errorf("unable to get instance from storage: %s", err)
+		log.Error(fmt.Sprintf("unable to get instance from storage: %s", err))
 		return operation, 1 * time.Second, nil
 	}
 	if instance.RuntimeID == "" || operation.ProvisioningParameters.PlanID == broker.OwnClusterPlanID {
 		// happens when provisioning process failed and Create_Runtime step was never reached
 		// It can also happen when the SKR is suspended (technically deprovisioned)
-		log.Infof("Runtime does not exist for instance id %q", operation.InstanceID)
+		log.Info(fmt.Sprintf("Runtime does not exist for instance id %q", operation.InstanceID))
 		return operation, 0 * time.Second, nil
 	}
 
 	if operation.ProvisionerOperationID == "" {
 		provisionerResponse, err := s.provisionerClient.DeprovisionRuntime(instance.GlobalAccountID, instance.RuntimeID)
 		if err != nil {
-			log.Warnf("unable to deprovision runtime: %s", err)
+			log.Warn(fmt.Sprintf("unable to deprovision runtime: %s", err))
 			return s.operationManager.RetryOperationWithoutFail(operation, s.Name(), "unable to deprovision Runtime in Provisioner", 15*time.Second, 20*time.Minute, log, err)
 		}
-		log.Infof("fetched ProvisionerOperationID=%s", provisionerResponse)
+		log.Info(fmt.Sprintf("fetched ProvisionerOperationID=%s", provisionerResponse))
 		repeat := time.Duration(0)
 		operation, repeat, _ = s.operationManager.UpdateOperation(operation, func(o *internal.Operation) {
 			o.ProvisionerOperationID = provisionerResponse
@@ -84,6 +83,6 @@ func (s *RemoveRuntimeStep) Run(operation internal.Operation, log logrus.FieldLo
 		}
 	}
 
-	log.Infof("runtime deletion process initiated successfully")
+	log.Info("runtime deletion process initiated successfully")
 	return operation, 0, nil
 }

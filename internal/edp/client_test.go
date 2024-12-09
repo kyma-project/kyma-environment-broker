@@ -3,11 +3,11 @@ package edp
 import (
 	"encoding/json"
 	"fmt"
+	"log/slog"
 	"net/http"
 	"net/http/httptest"
+	"os"
 	"testing"
-
-	"github.com/sirupsen/logrus"
 
 	"github.com/gorilla/mux"
 	"github.com/stretchr/testify/assert"
@@ -35,7 +35,7 @@ func TestClient_CreateDataTenant(t *testing.T) {
 	err := client.CreateDataTenant(DataTenantPayload{
 		Name:        subAccountID,
 		Environment: environment,
-	}, logrus.New())
+	}, fixLogger())
 
 	// then
 	assert.NoError(t, err)
@@ -66,11 +66,11 @@ func TestClient_DeleteDataTenant(t *testing.T) {
 	err := client.CreateDataTenant(DataTenantPayload{
 		Name:        subAccountID,
 		Environment: environment,
-	}, logrus.New())
+	}, fixLogger())
 	assert.NoError(t, err)
 
 	// when
-	err = client.DeleteDataTenant(subAccountID, environment, logrus.New())
+	err = client.DeleteDataTenant(subAccountID, environment, fixLogger())
 
 	// then
 	assert.NoError(t, err)
@@ -93,10 +93,10 @@ func TestClient_CreateMetadataTenant(t *testing.T) {
 	client.setHttpClient(testServer.Client())
 
 	// when
-	err := client.CreateMetadataTenant(subAccountID, environment, MetadataTenantPayload{Key: "tK", Value: "tV"}, logrus.New())
+	err := client.CreateMetadataTenant(subAccountID, environment, MetadataTenantPayload{Key: "tK", Value: "tV"}, fixLogger())
 	assert.NoError(t, err)
 
-	err = client.CreateMetadataTenant(subAccountID, environment, MetadataTenantPayload{Key: "tK2", Value: "tV2"}, logrus.New())
+	err = client.CreateMetadataTenant(subAccountID, environment, MetadataTenantPayload{Key: "tK2", Value: "tV2"}, fixLogger())
 	assert.NoError(t, err)
 
 	// then
@@ -120,11 +120,11 @@ func TestClient_DeleteMetadataTenant(t *testing.T) {
 	client := NewClient(config)
 	client.setHttpClient(testServer.Client())
 
-	err := client.CreateMetadataTenant(subAccountID, environment, MetadataTenantPayload{Key: key, Value: "tV"}, logrus.New())
+	err := client.CreateMetadataTenant(subAccountID, environment, MetadataTenantPayload{Key: key, Value: "tV"}, fixLogger())
 	assert.NoError(t, err)
 
 	// when
-	err = client.DeleteMetadataTenant(subAccountID, environment, key, logrus.New())
+	err = client.DeleteMetadataTenant(subAccountID, environment, key, fixLogger())
 
 	// then
 	assert.NoError(t, err)
@@ -342,4 +342,10 @@ func (s *server) getDataTenants(w http.ResponseWriter, r *http.Request) {
 // setHttpClient auxiliary method of testing to get rid of oAuth client wrapper
 func (c *Client) setHttpClient(httpClient *http.Client) {
 	c.httpClient = httpClient
+}
+
+func fixLogger() *slog.Logger {
+	return slog.New(slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{
+		Level: slog.LevelInfo,
+	}))
 }

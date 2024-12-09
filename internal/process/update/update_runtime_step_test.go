@@ -2,6 +2,8 @@ package update
 
 import (
 	"context"
+	"log/slog"
+	"os"
 	"strconv"
 	"testing"
 
@@ -13,7 +15,6 @@ import (
 	imv1 "github.com/kyma-project/infrastructure-manager/api/v1"
 	"github.com/kyma-project/kyma-environment-broker/internal"
 	"github.com/kyma-project/kyma-environment-broker/internal/fixture"
-	"github.com/kyma-project/kyma-environment-broker/internal/logger"
 	"github.com/kyma-project/kyma-environment-broker/internal/ptr"
 	"github.com/stretchr/testify/assert"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -29,14 +30,13 @@ func TestUpdateRuntimeStep_NoRuntime(t *testing.T) {
 	err := imv1.AddToScheme(scheme.Scheme)
 	assert.NoError(t, err)
 	kcpClient := fake.NewClientBuilder().Build()
-	log := logger.NewLogDummy()
 	step := NewUpdateRuntimeStep(nil, kcpClient, 0)
 	operation := fixture.FixUpdatingOperation("op-id", "inst-id").Operation
 	operation.RuntimeResourceName = "runtime-name"
 	operation.KymaResourceNamespace = "kyma-ns"
 
 	// when
-	_, backoff, err := step.Run(operation, log)
+	_, backoff, err := step.Run(operation, fixLogger())
 
 	// then
 	assert.NoError(t, err)
@@ -48,7 +48,6 @@ func TestUpdateRuntimeStep_RunUpdateMachineType(t *testing.T) {
 	err := imv1.AddToScheme(scheme.Scheme)
 	assert.NoError(t, err)
 	kcpClient := fake.NewClientBuilder().WithRuntimeObjects(fixRuntimeResource("runtime-name", false)).Build()
-	log := logger.NewLogDummy()
 	step := NewUpdateRuntimeStep(nil, kcpClient, 0)
 	operation := fixture.FixUpdatingOperation("op-id", "inst-id").Operation
 	operation.RuntimeResourceName = "runtime-name"
@@ -58,7 +57,7 @@ func TestUpdateRuntimeStep_RunUpdateMachineType(t *testing.T) {
 	}
 
 	// when
-	_, backoff, err := step.Run(operation, log)
+	_, backoff, err := step.Run(operation, fixLogger())
 
 	// then
 	assert.NoError(t, err)
@@ -98,4 +97,10 @@ func fixRuntimeResource(name string, controlledByProvisioner bool) runtime.Objec
 			},
 		},
 	}
+}
+
+func fixLogger() *slog.Logger {
+	return slog.New(slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{
+		Level: slog.LevelInfo,
+	})).With("testing", true)
 }

@@ -6,13 +6,11 @@ import (
 
 	"github.com/kyma-project/kyma-environment-broker/internal/fixture"
 	"github.com/kyma-project/kyma-environment-broker/internal/storage"
-	"github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/assert"
 )
 
 func TestRemoveInstanceStep_HappyPathForPermanentRemoval(t *testing.T) {
 	// given
-	log := logrus.New()
 	memoryStorage := storage.NewMemoryStorage()
 
 	operation := fixture.FixDeprovisioningOperationAsOperation(testOperationID, testInstanceID)
@@ -27,7 +25,7 @@ func TestRemoveInstanceStep_HappyPathForPermanentRemoval(t *testing.T) {
 	step := NewRemoveInstanceStep(memoryStorage.Instances(), memoryStorage.Operations())
 
 	// when
-	operation, backoff, err := step.Run(operation, log)
+	operation, backoff, err := step.Run(operation, fixLogger())
 
 	assert.NoError(t, err)
 
@@ -44,7 +42,6 @@ func TestRemoveInstanceStep_HappyPathForPermanentRemoval(t *testing.T) {
 
 func TestRemoveInstanceStep_UpdateOperationFailsForPermanentRemoval(t *testing.T) {
 	// given
-	log := logrus.New()
 	memoryStorage := storage.NewMemoryStorage()
 
 	operation := fixture.FixDeprovisioningOperationAsOperation(testOperationID, testInstanceID)
@@ -56,7 +53,7 @@ func TestRemoveInstanceStep_UpdateOperationFailsForPermanentRemoval(t *testing.T
 	step := NewRemoveInstanceStep(memoryStorage.Instances(), memoryStorage.Operations())
 
 	// when
-	operation, backoff, err := step.Run(operation, log)
+	operation, backoff, err := step.Run(operation, fixLogger())
 
 	assert.NoError(t, err)
 
@@ -66,7 +63,6 @@ func TestRemoveInstanceStep_UpdateOperationFailsForPermanentRemoval(t *testing.T
 
 func TestRemoveInstanceStep_HappyPathForSuspension(t *testing.T) {
 	// given
-	log := logrus.New()
 	memoryStorage := storage.NewMemoryStorage()
 
 	operation := fixture.FixSuspensionOperationAsOperation(testOperationID, testInstanceID)
@@ -82,7 +78,7 @@ func TestRemoveInstanceStep_HappyPathForSuspension(t *testing.T) {
 	step := NewRemoveInstanceStep(memoryStorage.Instances(), memoryStorage.Operations())
 
 	// when
-	operation, backoff, err := step.Run(operation, log)
+	operation, backoff, err := step.Run(operation, fixLogger())
 
 	assert.NoError(t, err)
 
@@ -100,7 +96,6 @@ func TestRemoveInstanceStep_HappyPathForSuspension(t *testing.T) {
 
 func TestRemoveInstanceStep_InstanceHasExecutedButNotCompletedOperationSteps(t *testing.T) {
 	// given
-	log := logrus.New()
 	memoryStorage := storage.NewMemoryStorage()
 
 	operation := fixture.FixDeprovisioningOperationAsOperation(testOperationID, testInstanceID)
@@ -117,7 +112,7 @@ func TestRemoveInstanceStep_InstanceHasExecutedButNotCompletedOperationSteps(t *
 	step := NewRemoveInstanceStep(memoryStorage.Instances(), memoryStorage.Operations())
 
 	// when
-	_, backoff, err := step.Run(operation, log)
+	_, backoff, err := step.Run(operation, fixLogger())
 
 	assert.NoError(t, err)
 
@@ -135,7 +130,6 @@ func TestRemoveInstanceStep_InstanceHasExecutedButNotCompletedOperationSteps(t *
 
 func TestRemoveInstanceStep_InstanceDeleted(t *testing.T) {
 	// given
-	log := logrus.New()
 	memoryStorage := storage.NewMemoryStorage()
 
 	operation := fixture.FixDeprovisioningOperationAsOperation(testOperationID, testInstanceID)
@@ -146,7 +140,7 @@ func TestRemoveInstanceStep_InstanceDeleted(t *testing.T) {
 	step := NewRemoveInstanceStep(memoryStorage.Instances(), memoryStorage.Operations())
 
 	// when
-	_, backoff, err := step.Run(operation, log)
+	_, backoff, err := step.Run(operation, fixLogger())
 
 	assert.NoError(t, err)
 

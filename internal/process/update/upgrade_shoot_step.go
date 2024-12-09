@@ -3,6 +3,7 @@ package update
 import (
 	"context"
 	"fmt"
+	"log/slog"
 	"time"
 
 	kebError "github.com/kyma-project/kyma-environment-broker/internal/error"
@@ -15,7 +16,6 @@ import (
 	"github.com/kyma-project/kyma-environment-broker/internal/process"
 	"github.com/kyma-project/kyma-environment-broker/internal/provisioner"
 	"github.com/kyma-project/kyma-environment-broker/internal/storage"
-	"github.com/sirupsen/logrus"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
@@ -49,23 +49,23 @@ func (s *UpgradeShootStep) Name() string {
 	return "Upgrade_Shoot"
 }
 
-func (s *UpgradeShootStep) Run(operation internal.Operation, log logrus.FieldLogger) (internal.Operation, time.Duration, error) {
+func (s *UpgradeShootStep) Run(operation internal.Operation, log *slog.Logger) (internal.Operation, time.Duration, error) {
 	if operation.RuntimeID == "" {
-		log.Infof("Runtime does not exists, skipping a call to Provisioner")
+		log.Info("Runtime does not exists, skipping a call to Provisioner")
 		return operation, 0, nil
 	}
-	log = log.WithField("runtimeID", operation.RuntimeID)
+	log = log.With("runtimeID", operation.RuntimeID)
 
 	// decide if the step should be skipped because the runtime is not controlled by the provisioner
 	var runtime imv1.Runtime
 	err := s.k8sClient.Get(context.Background(), client.ObjectKey{Name: operation.GetRuntimeResourceName(),
 		Namespace: operation.GetRuntimeResourceNamespace()}, &runtime)
 	if err != nil && !errors.IsNotFound(err) {
-		log.Warnf("Unable to read runtime: %s", err)
+		log.Warn(fmt.Sprintf("Unable to read runtime: %s", err))
 		return s.operationManager.RetryOperation(operation, err.Error(), err, 5*time.Second, 1*time.Minute, log)
 	}
 	if !runtime.IsControlledByProvisioner() {
-		log.Infof("Skipping because the runtime is not controlled by the provisioner")
+		log.Info("Skipping because the runtime is not controlled by the provisioner")
 		return operation, 0, nil
 	}
 
@@ -84,7 +84,7 @@ func (s *UpgradeShootStep) Run(operation internal.Operation, log logrus.FieldLog
 		// trigger upgradeRuntime mutation
 		provisionerResponse, err = s.provisionerClient.UpgradeShoot(operation.ProvisioningParameters.ErsContext.GlobalAccountID, operation.RuntimeID, input)
 		if err != nil {
-			log.Errorf("call to provisioner failed: %s", err)
+			log.Error(fmt.Sprintf("call to provisioner failed: %s", err))
 			return s.operationManager.RetryOperation(operation, "call to provisioner failed", err, retryDuration, time.Minute, log)
 		}
 
@@ -94,20 +94,20 @@ func (s *UpgradeShootStep) Run(operation internal.Operation, log logrus.FieldLog
 			op.Description = "update in progress"
 		}, log)
 		if repeat != 0 {
-			log.Errorf("cannot save operation ID from provisioner")
+			log.Error("cannot save operation ID from provisioner")
 			return operation, retryDuration, nil
 		}
 	}
 
-	log.Infof("call to provisioner succeeded for update, got operation ID %q", *provisionerResponse.ID)
+	log.Info(fmt.Sprintf("call to provisioner succeeded for update, got operation ID %q", *provisionerResponse.ID))
 
 	rs := internal.NewRuntimeState(*provisionerResponse.RuntimeID, operation.ID, nil, gardenerUpgradeInputToConfigInput(input))
 	err = s.runtimeStateStorage.Insert(rs)
 	if err != nil {
-		log.Errorf("cannot insert runtimeState: %s", err)
+		log.Error(fmt.Sprintf("cannot insert runtimeState: %s", err))
 		return operation, 10 * time.Second, nil
 	}
-	log.Infof("cluster upgrade process initiated successfully")
+	log.Info("cluster upgrade process initiated successfully")
 
 	// return repeat mode to start the initialization step which will now check the runtime status
 	return operation, 0, nil

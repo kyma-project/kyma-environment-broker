@@ -95,7 +95,7 @@ func NewDeprovisioningSuite(t *testing.T) *DeprovisioningSuite {
 
 	accountProvider := fixAccountProvider()
 
-	deprovisionManager := process.NewStagedManager(db.Operations(), eventBroker, time.Minute, cfg.Deprovisioning, logs.WithField("deprovisioning", "manager"))
+	deprovisionManager := process.NewStagedManager(db.Operations(), eventBroker, time.Minute, cfg.Deprovisioning, log.With("deprovisioning", "manager"))
 	deprovisionManager.SpeedUp(1000)
 	scheme := runtime.NewScheme()
 	err = apiextensionsv1.AddToScheme(scheme)
@@ -270,11 +270,14 @@ func (s *DeprovisioningSuite) AssertInstanceNotRemoved(instanceId string) {
 
 func fixEDPClient(t *testing.T) *edp.FakeClient {
 	client := edp.NewFakeClient()
+	log := slog.New(slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{
+		Level: slog.LevelInfo,
+	}))
 	err := client.CreateDataTenant(edp.DataTenantPayload{
 		Name:        subAccountID,
 		Environment: edpEnvironment,
 		Secret:      base64.StdEncoding.EncodeToString([]byte(fmt.Sprintf("%s%s", subAccountID, edpEnvironment))),
-	}, logrus.New())
+	}, log)
 	assert.NoError(t, err)
 
 	metadataTenantKeys := []string{
@@ -288,7 +291,7 @@ func fixEDPClient(t *testing.T) *edp.FakeClient {
 		err = client.CreateMetadataTenant(subAccountID, edpEnvironment, edp.MetadataTenantPayload{
 			Key:   key,
 			Value: "-",
-		}, logrus.New())
+		}, log)
 		assert.NoError(t, err)
 	}
 

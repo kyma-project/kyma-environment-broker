@@ -11,7 +11,6 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	"github.com/kyma-project/kyma-environment-broker/internal/fixture"
-	"github.com/kyma-project/kyma-environment-broker/internal/logger"
 	"github.com/kyma-project/kyma-environment-broker/internal/storage"
 	"github.com/stretchr/testify/assert"
 	"sigs.k8s.io/controller-runtime/pkg/client/fake"
@@ -33,7 +32,7 @@ func TestDeleteGardenerClusterResource_HappyFlowNoObject(t *testing.T) {
 	assert.Contains(t, err.Error(), fmt.Sprintf("instance operation with id %s already exist", fixOperationID))
 
 	// When
-	_, backoff, err := step.Run(operation, logger.NewLogSpy().Logger)
+	_, backoff, err := step.Run(operation, fixLogger())
 
 	// Then
 	assert.Zero(t, backoff)
@@ -64,7 +63,7 @@ func TestDeleteGardenerClusterResource_HappyFlow(t *testing.T) {
 	assert.Contains(t, err.Error(), fmt.Sprintf("instance operation with id %s already exist", fixOperationID))
 
 	// When
-	_, backoff, err := step.Run(operation, logger.NewLogSpy().Logger)
+	_, backoff, err := step.Run(operation, fixLogger())
 
 	// Then
 	assert.Zero(t, backoff)

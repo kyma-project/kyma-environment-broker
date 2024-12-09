@@ -3,6 +3,7 @@ package provisioning
 import (
 	"context"
 	"fmt"
+	"log/slog"
 	"strconv"
 	"time"
 
@@ -35,7 +36,6 @@ import (
 	"github.com/kyma-project/kyma-environment-broker/internal"
 	"github.com/kyma-project/kyma-environment-broker/internal/process"
 	"github.com/kyma-project/kyma-environment-broker/internal/storage"
-	"github.com/sirupsen/logrus"
 )
 
 type CreateRuntimeResourceStep struct {
@@ -69,25 +69,25 @@ func (s *CreateRuntimeResourceStep) Name() string {
 	return "Create_Runtime_Resource"
 }
 
-func (s *CreateRuntimeResourceStep) Run(operation internal.Operation, log logrus.FieldLogger) (internal.Operation, time.Duration, error) {
+func (s *CreateRuntimeResourceStep) Run(operation internal.Operation, log *slog.Logger) (internal.Operation, time.Duration, error) {
 	if time.Since(operation.UpdatedAt) > CreateRuntimeTimeout {
-		log.Infof("operation has reached the time limit: updated operation time: %s", operation.UpdatedAt)
+		log.Info(fmt.Sprintf("operation has reached the time limit: updated operation time: %s", operation.UpdatedAt))
 		return s.operationManager.OperationFailed(operation, fmt.Sprintf("operation has reached the time limit: %s", CreateRuntimeTimeout), nil, log)
 	}
 
 	if !s.kimConfig.IsEnabledForPlan(broker.PlanNamesMapping[operation.ProvisioningParameters.PlanID]) {
 		if !s.kimConfig.Enabled {
-			log.Infof("KIM is not enabled, skipping")
+			log.Info("KIM is not enabled, skipping")
 			return operation, 0, nil
 		}
-		log.Infof("KIM is not enabled for plan %s, skipping", broker.PlanNamesMapping[operation.ProvisioningParameters.PlanID])
+		log.Info(fmt.Sprintf("KIM is not enabled for plan %s, skipping", broker.PlanNamesMapping[operation.ProvisioningParameters.PlanID]))
 		return operation, 0, nil
 	}
 
 	kymaResourceName := operation.KymaResourceName
 	kymaResourceNamespace := operation.KymaResourceNamespace
 	runtimeResourceName := steps.KymaRuntimeResourceName(operation)
-	log.Infof("KymaResourceName: %s, KymaResourceNamespace: %s, RuntimeResourceName: %s", kymaResourceName, kymaResourceNamespace, runtimeResourceName)
+	log.Info(fmt.Sprintf("KymaResourceName: %s, KymaResourceNamespace: %s, RuntimeResourceName: %s", kymaResourceName, kymaResourceNamespace, runtimeResourceName))
 
 	values, err := provider.GetPlanSpecificValues(&operation, s.config.MultiZoneCluster, s.config.DefaultTrialProvider, s.useSmallerMachineTypes, s.trialPlatformRegionMapping, s.config.DefaultGardenerShootPurpose)
 	if err != nil {
@@ -104,18 +104,18 @@ func (s *CreateRuntimeResourceStep) Run(operation internal.Operation, log logrus
 		}
 		yaml, err := RuntimeToYaml(runtimeCR)
 		if err != nil {
-			log.Errorf("failed to encode Runtime resource as yaml: %s", err)
+			log.Error(fmt.Sprintf("failed to encode Runtime resource as yaml: %s", err))
 		} else {
 			fmt.Println(yaml)
 		}
 	} else {
 		runtimeCR, err := s.getEmptyOrExistingRuntimeResource(runtimeResourceName, kymaResourceNamespace)
 		if err != nil {
-			log.Errorf("unable to get Runtime resource %s/%s", operation.KymaResourceNamespace, runtimeResourceName)
+			log.Error(fmt.Sprintf("unable to get Runtime resource %s/%s", operation.KymaResourceNamespace, runtimeResourceName))
 			return s.operationManager.RetryOperation(operation, "unable to get Runtime resource", err, 3*time.Second, 20*time.Second, log)
 		}
 		if runtimeCR.GetResourceVersion() != "" {
-			log.Infof("Runtime resource already created %s/%s: ", operation.KymaResourceNamespace, runtimeResourceName)
+			log.Info(fmt.Sprintf("Runtime resource already created %s/%s: ", operation.KymaResourceNamespace, runtimeResourceName))
 			return operation, 0, nil
 		} else {
 			err := s.updateRuntimeResourceObject(values, runtimeCR, operation, runtimeResourceName, operation.CloudProvider)
@@ -124,11 +124,11 @@ func (s *CreateRuntimeResourceStep) Run(operation internal.Operation, log logrus
 			}
 			err = s.k8sClient.Create(context.Background(), runtimeCR)
 			if err != nil {
-				log.Errorf("unable to create Runtime resource: %s/%s: %s", operation.KymaResourceNamespace, runtimeResourceName, err.Error())
+				log.Error(fmt.Sprintf("unable to create Runtime resource: %s/%s: %s", operation.KymaResourceNamespace, runtimeResourceName, err.Error()))
 				return s.operationManager.RetryOperation(operation, "unable to create Runtime resource", err, 3*time.Second, 20*time.Second, log)
 			}
 		}
-		log.Infof("Runtime resource %s/%s creation process finished successfully", operation.KymaResourceNamespace, runtimeResourceName)
+		log.Info(fmt.Sprintf("Runtime resource %s/%s creation process finished successfully", operation.KymaResourceNamespace, runtimeResourceName))
 
 		newOp, backoff, _ := s.operationManager.UpdateOperation(operation, func(op *internal.Operation) {
 			op.Region = runtimeCR.Spec.Shoot.Region
@@ -146,7 +146,7 @@ func (s *CreateRuntimeResourceStep) Run(operation internal.Operation, log logrus
 		case dberr.IsConflict(err):
 			err := s.updateInstance(operation.InstanceID, runtimeCR.Spec.Shoot.Region)
 			if err != nil {
-				log.Errorf("cannot update instance: %s", err)
+				log.Error(fmt.Sprintf("cannot update instance: %s", err))
 				return operation, 1 * time.Minute, nil
 			}
 		}

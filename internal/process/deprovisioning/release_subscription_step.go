@@ -2,6 +2,7 @@ package deprovisioning
 
 import (
 	"fmt"
+	"log/slog"
 	"time"
 
 	kebError "github.com/kyma-project/kyma-environment-broker/internal/error"
@@ -12,8 +13,6 @@ import (
 	"github.com/kyma-project/kyma-environment-broker/internal/broker"
 	"github.com/kyma-project/kyma-environment-broker/internal/process"
 	"github.com/kyma-project/kyma-environment-broker/internal/storage"
-
-	"github.com/sirupsen/logrus"
 
 	"github.com/kyma-project/kyma-environment-broker/internal"
 )
@@ -39,7 +38,7 @@ func (s ReleaseSubscriptionStep) Name() string {
 	return "Release_Subscription"
 }
 
-func (s ReleaseSubscriptionStep) Run(operation internal.Operation, log logrus.FieldLogger) (internal.Operation, time.Duration, error) {
+func (s ReleaseSubscriptionStep) Run(operation internal.Operation, log *slog.Logger) (internal.Operation, time.Duration, error) {
 
 	planID := operation.ProvisioningParameters.PlanID
 	if needsRelease(planID) {
@@ -71,7 +70,7 @@ func (s ReleaseSubscriptionStep) Run(operation internal.Operation, log logrus.Fi
 		euAccess := euaccess.IsEURestrictedAccess(operation.ProvisioningParameters.PlatformRegion)
 		err = s.accountProvider.MarkUnusedGardenerSecretBindingAsDirty(hypType, instance.GetSubscriptionGlobalAccoundID(), euAccess)
 		if err != nil {
-			log.Errorf("after successful deprovisioning failed to release hyperscaler subscription: %s", err)
+			log.Error(fmt.Sprintf("after successful deprovisioning failed to release hyperscaler subscription: %v", err))
 			return operation, 10 * time.Second, nil
 		}
 	}

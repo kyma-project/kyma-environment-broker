@@ -3,6 +3,7 @@ package provisioning
 import (
 	"context"
 	"fmt"
+	"log/slog"
 	"os"
 	"strings"
 	"testing"
@@ -10,7 +11,6 @@ import (
 	"github.com/kyma-project/kyma-environment-broker/internal"
 	"github.com/kyma-project/kyma-environment-broker/internal/fixture"
 	"github.com/kyma-project/kyma-environment-broker/internal/storage"
-	"github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
@@ -49,7 +49,7 @@ func TestCreatingKymaResource(t *testing.T) {
 	svc := NewApplyKymaStep(storage.Operations(), cli)
 
 	// when
-	_, backoff, err := svc.Run(operation, logrus.New())
+	_, backoff, err := svc.Run(operation, fixLogger())
 
 	// then
 	require.NoError(t, err)
@@ -75,7 +75,7 @@ func TestCreatingKymaResource(t *testing.T) {
 
 	assertLabelsExistsForExternalKymaResource(t, expectedLabels, aList.Items[0])
 
-	_, _, err = svc.Run(operation, logrus.New())
+	_, _, err = svc.Run(operation, fixLogger())
 	require.NoError(t, err)
 }
 
@@ -90,7 +90,7 @@ func TestCreatingKymaResourceWithCloudProviderInOperation(t *testing.T) {
 	svc := NewApplyKymaStep(storage.Operations(), cli)
 
 	// when
-	_, backoff, err := svc.Run(operation, logrus.New())
+	_, backoff, err := svc.Run(operation, fixLogger())
 
 	// then
 	require.NoError(t, err)
@@ -116,7 +116,7 @@ func TestCreatingKymaResourceWithCloudProviderInOperation(t *testing.T) {
 
 	assertLabelsExistsForExternalKymaResource(t, expectedLabels, aList.Items[0])
 
-	_, _, err = svc.Run(operation, logrus.New())
+	_, _, err = svc.Run(operation, fixLogger())
 	require.NoError(t, err)
 }
 
@@ -130,7 +130,7 @@ func TestCreatingInternalKymaResource(t *testing.T) {
 		svc := NewApplyKymaStep(storage.Operations(), cli)
 
 		// when
-		_, backoff, err := svc.Run(operation, logrus.New())
+		_, backoff, err := svc.Run(operation, fixLogger())
 
 		// then
 		require.NoError(t, err)
@@ -154,7 +154,7 @@ func TestCreatingInternalKymaResource(t *testing.T) {
 			"operator.kyma-project.io/managed-by": "lifecycle-manager",
 			"kyma-project.io/provider":            "Test"}
 		assertLabelsExistsForInternalKymaResource(t, expectedLabels, aList.Items[0])
-		_, _, err = svc.Run(operation, logrus.New())
+		_, _, err = svc.Run(operation, fixLogger())
 		require.NoError(t, err)
 	})
 }
@@ -170,7 +170,7 @@ func TestCreatingKymaResource_UseNamespaceFromTimeOfCreationNotTemplate(t *testi
 	svc := NewApplyKymaStep(storage.Operations(), cli)
 
 	// when
-	_, backoff, err := svc.Run(operation, logrus.New())
+	_, backoff, err := svc.Run(operation, fixLogger())
 
 	// then
 	require.NoError(t, err)
@@ -195,7 +195,7 @@ func TestCreatingKymaResource_UseNamespaceFromTimeOfCreationNotTemplate(t *testi
 		"kyma-project.io/provider":            "Test"}
 	assertLabelsExistsForExternalKymaResource(t, expectedLabels, aList.Items[0])
 
-	_, _, err = svc.Run(operation, logrus.New())
+	_, _, err = svc.Run(operation, fixLogger())
 	require.NoError(t, err)
 	assert.Equal(t, "namespace-in-time-of-creation", operation.KymaResourceNamespace)
 }
@@ -210,7 +210,7 @@ func TestCreatingInternalKymaResource_UseNamespaceFromTimeOfCreationNotTemplate(
 	svc := NewApplyKymaStep(storage.Operations(), cli)
 
 	// when
-	_, backoff, err := svc.Run(operation, logrus.New())
+	_, backoff, err := svc.Run(operation, fixLogger())
 
 	// then
 	require.NoError(t, err)
@@ -235,7 +235,7 @@ func TestCreatingInternalKymaResource_UseNamespaceFromTimeOfCreationNotTemplate(
 		"kyma-project.io/provider":            "Test"}
 	assertLabelsExistsForInternalKymaResource(t, expectedLabels, aList.Items[0])
 
-	_, _, err = svc.Run(operation, logrus.New())
+	_, _, err = svc.Run(operation, fixLogger())
 	require.NoError(t, err)
 	assert.Equal(t, "namespace-in-time-of-creation", operation.KymaResourceNamespace)
 }
@@ -262,7 +262,7 @@ func TestUpdatinglKymaResourceIfExists(t *testing.T) {
 	require.NoError(t, err)
 
 	// when
-	_, backoff, err := svc.Run(operation, logrus.New())
+	_, backoff, err := svc.Run(operation, fixLogger())
 
 	// then
 	require.NoError(t, err)
@@ -310,7 +310,7 @@ func TestUpdatinInternalKymaResourceIfExists(t *testing.T) {
 	require.NoError(t, err)
 
 	// when
-	_, backoff, err := svc.Run(operation, logrus.New())
+	_, backoff, err := svc.Run(operation, fixLogger())
 
 	// then
 	require.NoError(t, err)
@@ -395,4 +395,10 @@ spec:
 	}
 
 	return operation, cli
+}
+
+func fixLogger() *slog.Logger {
+	return slog.New(slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{
+		Level: slog.LevelInfo,
+	}))
 }

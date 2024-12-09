@@ -1,6 +1,8 @@
 package update
 
 import (
+	"log/slog"
+	"os"
 	"testing"
 
 	imv1 "github.com/kyma-project/infrastructure-manager/api/v1"
@@ -17,7 +19,6 @@ import (
 	inputAutomock "github.com/kyma-project/kyma-environment-broker/internal/process/input/automock"
 	"github.com/kyma-project/kyma-environment-broker/internal/provisioner"
 	"github.com/kyma-project/kyma-environment-broker/internal/storage"
-	"github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
@@ -28,11 +29,11 @@ func TestUpgradeShootStep_Run(t *testing.T) {
 	err := imv1.AddToScheme(scheme.Scheme)
 	assert.NoError(t, err)
 	memoryStorage := storage.NewMemoryStorage()
-	os := memoryStorage.Operations()
+	ops := memoryStorage.Operations()
 	rs := memoryStorage.RuntimeStates()
 	cli := provisioner.NewFakeClient()
 	kcpClient := fake.NewClientBuilder().Build()
-	step := NewUpgradeShootStep(os, rs, cli, kcpClient)
+	step := NewUpgradeShootStep(ops, rs, cli, kcpClient)
 	operation := fixture.FixUpdatingOperation("op-id", "inst-id")
 	operation.RuntimeID = "runtime-id"
 	operation.ProvisionerOperationID = ""
@@ -46,7 +47,7 @@ func TestUpgradeShootStep_Run(t *testing.T) {
 		UsernamePrefix: "-",
 	}
 	operation.InputCreator = fixInputCreator(t)
-	err = os.InsertOperation(operation.Operation)
+	err = ops.InsertOperation(operation.Operation)
 	require.NoError(t, err)
 	runtimeState := fixture.FixRuntimeState("runtime-id", "runtime-id", "provisioning-op-1")
 	runtimeState.ClusterConfig.OidcConfig = &gqlschema.OIDCConfigInput{
@@ -59,9 +60,12 @@ func TestUpgradeShootStep_Run(t *testing.T) {
 	}
 	err = rs.Insert(runtimeState)
 	require.NoError(t, err)
+	log := slog.New(slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{
+		Level: slog.LevelInfo,
+	}))
 
 	// when
-	newOperation, d, err := step.Run(operation.Operation, logrus.New())
+	newOperation, d, err := step.Run(operation.Operation, log)
 
 	// then
 	require.NoError(t, err)
@@ -91,11 +95,11 @@ func TestUpgradeShootStep_RunRuntimeControlledByKIM(t *testing.T) {
 	err := imv1.AddToScheme(scheme.Scheme)
 	assert.NoError(t, err)
 	memoryStorage := storage.NewMemoryStorage()
-	os := memoryStorage.Operations()
+	ops := memoryStorage.Operations()
 	rs := memoryStorage.RuntimeStates()
 	cli := provisioner.NewFakeClient()
 	kcpClient := fake.NewClientBuilder().WithRuntimeObjects(fixRuntimeResource("runtime-id", false)).Build()
-	step := NewUpgradeShootStep(os, rs, cli, kcpClient)
+	step := NewUpgradeShootStep(ops, rs, cli, kcpClient)
 	operation := fixture.FixUpdatingOperation("op-id", "inst-id")
 	operation.RuntimeID = "runtime-id"
 	operation.KymaResourceNamespace = "kcp-system"
@@ -110,7 +114,7 @@ func TestUpgradeShootStep_RunRuntimeControlledByKIM(t *testing.T) {
 		UsernamePrefix: "-",
 	}
 	operation.InputCreator = fixInputCreator(t)
-	err = os.InsertOperation(operation.Operation)
+	err = ops.InsertOperation(operation.Operation)
 	require.NoError(t, err)
 	runtimeState := fixture.FixRuntimeState("runtime-id", "runtime-id", "provisioning-op-1")
 	runtimeState.ClusterConfig.OidcConfig = &gqlschema.OIDCConfigInput{
@@ -123,9 +127,12 @@ func TestUpgradeShootStep_RunRuntimeControlledByKIM(t *testing.T) {
 	}
 	err = rs.Insert(runtimeState)
 	require.NoError(t, err)
+	log := slog.New(slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{
+		Level: slog.LevelInfo,
+	}))
 
 	// when
-	newOperation, d, err := step.Run(operation.Operation, logrus.New())
+	newOperation, d, err := step.Run(operation.Operation, log)
 
 	// then
 	require.NoError(t, err)

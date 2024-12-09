@@ -9,7 +9,6 @@ import (
 	"github.com/kyma-project/kyma-environment-broker/internal/fixture"
 	"github.com/kyma-project/kyma-environment-broker/internal/ptr"
 	"github.com/kyma-project/kyma-environment-broker/internal/storage"
-	"github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -34,7 +33,7 @@ func execTest(t *testing.T, parameters *pkg.ModulesDTO, in, out string) {
 	svc := NewOverrideKymaModules(db.Operations())
 
 	// when
-	op, backoff, err := svc.Run(operation, logrus.New())
+	op, backoff, err := svc.Run(operation, fixLogger())
 	assert.Zero(t, backoff)
 	assert.Equal(t, kymaExpectedNamespace, op.KymaResourceNamespace)
 	assert.YAMLEq(t, expectedKymaTemplate, op.KymaTemplate)

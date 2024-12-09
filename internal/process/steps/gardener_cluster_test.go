@@ -12,7 +12,6 @@ import (
 	"github.com/kyma-project/kyma-environment-broker/internal"
 	"github.com/kyma-project/kyma-environment-broker/internal/fixture"
 	"github.com/kyma-project/kyma-environment-broker/internal/storage"
-	"github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/assert"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime/serializer"
@@ -75,7 +74,7 @@ func TestSyncGardenerCluster_RunWithExistingResource(t *testing.T) {
 	svc := NewSyncGardenerCluster(os, k8sClient, kimConfig)
 
 	// when
-	_, backoff, err := svc.Run(operation, logrus.New())
+	_, backoff, err := svc.Run(operation, fixLogger())
 	assert.Zero(t, backoff)
 	assert.NoError(t, err)
 	assertGardenerClusterSpec(t, `
@@ -124,7 +123,7 @@ func TestSyncGardenerCluster_Run(t *testing.T) {
 	assert.NoError(t, err)
 
 	// when
-	_, backoff, err := svc.Run(operation, logrus.New())
+	_, backoff, err := svc.Run(operation, fixLogger())
 
 	// then
 	assert.Zero(t, backoff)
@@ -168,7 +167,7 @@ func TestCheckGardenerCluster_RunWhenReady(t *testing.T) {
 	assert.NoError(t, err)
 
 	// when
-	_, backoff, err := step.Run(operation, logrus.New())
+	_, backoff, err := step.Run(operation, fixLogger())
 
 	// then
 	assert.NoError(t, err)
@@ -200,7 +199,7 @@ func TestCheckGardenerCluster_RunWhenNotReady_OperationFail(t *testing.T) {
 	assert.NoError(t, err)
 
 	// when
-	op, backoff, err := step.Run(operation, logrus.New())
+	op, backoff, err := step.Run(operation, fixLogger())
 
 	// then
 	assert.Error(t, err)
@@ -233,7 +232,7 @@ func TestCheckGardenerCluster_IgnoreWhenNotReadyButKimDrives(t *testing.T) {
 	assert.NoError(t, err)
 
 	// when
-	_, backoff, err := step.Run(operation, logrus.New())
+	_, backoff, err := step.Run(operation, fixLogger())
 
 	// then
 	assert.NoError(t, err)
@@ -266,7 +265,7 @@ func TestCheckGardenerCluster_IgnoreWhenNotReadyButKimOnlyPlanUsed(t *testing.T)
 	assert.NoError(t, err)
 
 	// when
-	_, backoff, err := step.Run(operation, logrus.New())
+	_, backoff, err := step.Run(operation, fixLogger())
 
 	// then
 	assert.NoError(t, err)
@@ -298,7 +297,7 @@ func TestCheckGardenerCluster_RunWhenNotReady_Retry(t *testing.T) {
 	assert.NoError(t, err)
 
 	// when
-	_, backoff, err := step.Run(operation, logrus.New())
+	_, backoff, err := step.Run(operation, fixLogger())
 
 	// then
 	assert.NoError(t, err)

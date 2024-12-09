@@ -11,7 +11,6 @@ import (
 	"github.com/kyma-project/kyma-environment-broker/internal/ptr"
 	"github.com/kyma-project/kyma-environment-broker/internal/storage"
 	"github.com/pivotal-cf/brokerapi/v8/domain"
-	"github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -57,7 +56,7 @@ func TestCheckRuntimeStep_RunProvisioningSucceeded(t *testing.T) {
 			step := NewCheckRuntimeStep(st.Operations(), provisionerClient, time.Second, kimConfig)
 
 			// when
-			operation, repeat, err := step.Run(operation, logrus.New())
+			operation, repeat, err := step.Run(operation, fixLogger())
 
 			// then
 			assert.NoError(t, err)
@@ -106,7 +105,7 @@ func TestCheckRuntimeStep_RunProvisioningSucceeded_WithKimOnly(t *testing.T) {
 			step := NewCheckRuntimeStep(st.Operations(), provisionerClient, time.Second, kimConfig)
 
 			// when
-			operation, repeat, err := step.Run(operation, logrus.New())
+			operation, repeat, err := step.Run(operation, fixLogger())
 
 			// then
 			assert.NoError(t, err)

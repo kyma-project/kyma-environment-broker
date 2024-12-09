@@ -2,6 +2,7 @@ package process
 
 import (
 	"fmt"
+	"log/slog"
 	"time"
 
 	"github.com/kyma-project/kyma-environment-broker/common/orchestration"
@@ -10,7 +11,6 @@ import (
 	"github.com/kyma-project/kyma-environment-broker/internal/storage"
 	"github.com/kyma-project/kyma-environment-broker/internal/storage/dberr"
 	"github.com/pivotal-cf/brokerapi/v8/domain"
-	"github.com/sirupsen/logrus"
 )
 
 type OperationManager struct {
@@ -24,12 +24,12 @@ func NewOperationManager(storage storage.Operations, step string, component kebE
 }
 
 // OperationSucceeded marks the operation as succeeded and returns status of the operation's update
-func (om *OperationManager) OperationSucceeded(operation internal.Operation, description string, log logrus.FieldLogger) (internal.Operation, time.Duration, error) {
+func (om *OperationManager) OperationSucceeded(operation internal.Operation, description string, log *slog.Logger) (internal.Operation, time.Duration, error) {
 	return om.update(operation, domain.Succeeded, description, log)
 }
 
 // OperationFailed marks the operation as failed and returns status of the operation's update
-func (om *OperationManager) OperationFailed(operation internal.Operation, description string, err error, log logrus.FieldLogger) (internal.Operation, time.Duration, error) {
+func (om *OperationManager) OperationFailed(operation internal.Operation, description string, err error, log *slog.Logger) (internal.Operation, time.Duration, error) {
 	if err != nil {
 		operation.LastError = kebErr.LastError{
 			Message:   err.Error(),
@@ -54,25 +54,25 @@ func (om *OperationManager) OperationFailed(operation internal.Operation, descri
 		retErr = fmt.Errorf("%s: %w", description, err)
 	}
 
-	log.Errorf("Step execution failed: %v", retErr)
+	log.Error(fmt.Sprintf("Step execution failed: %v", retErr))
 	operation.EventErrorf(err, "operation failed")
 
 	return op, 0, retErr
 }
 
 // OperationCanceled marks the operation as canceled and returns status of the operation's update
-func (om *OperationManager) OperationCanceled(operation internal.Operation, description string, log logrus.FieldLogger) (internal.Operation, time.Duration, error) {
+func (om *OperationManager) OperationCanceled(operation internal.Operation, description string, log *slog.Logger) (internal.Operation, time.Duration, error) {
 	return om.update(operation, orchestration.Canceled, description, log)
 }
 
 // RetryOperation checks if operation should be retried or if it's the status should be marked as failed
-func (om *OperationManager) RetryOperation(operation internal.Operation, errorMessage string, err error, retryInterval time.Duration, maxTime time.Duration, log logrus.FieldLogger) (internal.Operation, time.Duration, error) {
-	log.Infof("Retry Operation was triggered with message: %s", errorMessage)
-	log.Infof("Retrying for %s in %s steps", maxTime.String(), retryInterval.String())
+func (om *OperationManager) RetryOperation(operation internal.Operation, errorMessage string, err error, retryInterval time.Duration, maxTime time.Duration, log *slog.Logger) (internal.Operation, time.Duration, error) {
+	log.Info(fmt.Sprintf("Retry Operation was triggered with message: %s", errorMessage))
+	log.Info(fmt.Sprintf("Retrying for %s in %s steps", maxTime.String(), retryInterval.String()))
 	if time.Since(operation.UpdatedAt) < maxTime {
 		return operation, retryInterval, nil
 	}
-	log.Errorf("Aborting after %s of failing retries", maxTime.String())
+	log.Error(fmt.Sprintf("Aborting after %s of failing retries", maxTime.String()))
 	op, retry, err := om.OperationFailed(operation, errorMessage, err, log)
 	if err == nil {
 		err = fmt.Errorf("Too many retries")
@@ -83,13 +83,13 @@ func (om *OperationManager) RetryOperation(operation internal.Operation, errorMe
 }
 
 // RetryOperationWithoutFail checks if operation should be retried or updates the status to InProgress, but omits setting the operation to failed if maxTime is reached
-func (om *OperationManager) RetryOperationWithoutFail(operation internal.Operation, stepName string, description string, retryInterval, maxTime time.Duration, log logrus.FieldLogger, opErr error) (internal.Operation, time.Duration, error) {
+func (om *OperationManager) RetryOperationWithoutFail(operation internal.Operation, stepName string, description string, retryInterval, maxTime time.Duration, log *slog.Logger, opErr error) (internal.Operation, time.Duration, error) {
 
 	if opErr != nil {
-		log.Warnf("error while invoking the step: %s", opErr.Error())
+		log.Warn(fmt.Sprintf("error while invoking the step: %s", opErr.Error()))
 	}
 
-	log.Infof("retrying for %s in %s steps", maxTime.String(), retryInterval.String())
+	log.Info(fmt.Sprintf("retrying for %s in %s steps", maxTime.String(), retryInterval.String()))
 	if time.Since(operation.UpdatedAt) < maxTime {
 		return operation, retryInterval, nil
 	}
@@ -105,20 +105,20 @@ func (om *OperationManager) RetryOperationWithoutFail(operation internal.Operati
 
 	op.EventErrorf(fmt.Errorf(description), "step %s failed retries: operation continues", stepName)
 	if opErr != nil {
-		log.Errorf("omitting after %s of failing retries, last error: %s", maxTime.String(), opErr.Error())
+		log.Error(fmt.Sprintf("omitting after %s of failing retries, last error: %s", maxTime.String(), opErr.Error()))
 	} else {
-		log.Errorf("omitting after %s of failing retries", maxTime.String())
+		log.Error(fmt.Sprintf("omitting after %s of failing retries", maxTime.String()))
 	}
 	return op, 0, nil
 }
 
 // RetryOperationOnce retries the operation once and fails the operation when call second time
-func (om *OperationManager) RetryOperationOnce(operation internal.Operation, errorMessage string, err error, wait time.Duration, log logrus.FieldLogger) (internal.Operation, time.Duration, error) {
+func (om *OperationManager) RetryOperationOnce(operation internal.Operation, errorMessage string, err error, wait time.Duration, log *slog.Logger) (internal.Operation, time.Duration, error) {
 	return om.RetryOperation(operation, errorMessage, err, wait, wait+1, log)
 }
 
 // UpdateOperation updates a given operation and handles conflict situation
-func (om *OperationManager) UpdateOperation(operation internal.Operation, update func(operation *internal.Operation), log logrus.FieldLogger) (internal.Operation, time.Duration, error) {
+func (om *OperationManager) UpdateOperation(operation internal.Operation, update func(operation *internal.Operation), log *slog.Logger) (internal.Operation, time.Duration, error) {
 	update(&operation)
 	op, err := om.storage.UpdateOperation(operation)
 	switch {
@@ -126,26 +126,26 @@ func (om *OperationManager) UpdateOperation(operation internal.Operation, update
 		{
 			op, err = om.storage.GetOperationByID(operation.ID)
 			if err != nil {
-				log.Errorf("while getting operation: %v", err)
+				log.Error(fmt.Sprintf("while getting operation: %v", err))
 				return operation, 1 * time.Minute, err
 			}
 			op.Merge(&operation)
 			update(op)
 			op, err = om.storage.UpdateOperation(*op)
 			if err != nil {
-				log.Errorf("while updating operation after conflict: %v", err)
+				log.Error(fmt.Sprintf("while updating operation after conflict: %v", err))
 				return operation, 1 * time.Minute, err
 			}
 		}
 	case err != nil:
-		log.Errorf("while updating operation: %v", err)
+		log.Error(fmt.Sprintf("while updating operation: %v", err))
 		return operation, 1 * time.Minute, err
 	}
 
 	return *op, 0, nil
 }
 
-func (om *OperationManager) MarkStepAsExcutedButNotCompleted(operation internal.Operation, stepName string, msg string, log logrus.FieldLogger) (internal.Operation, time.Duration, error) {
+func (om *OperationManager) MarkStepAsExcutedButNotCompleted(operation internal.Operation, stepName string, msg string, log *slog.Logger) (internal.Operation, time.Duration, error) {
 	op, repeat, err := om.UpdateOperation(operation, func(operation *internal.Operation) {
 		operation.ExcutedButNotCompleted = append(operation.ExcutedButNotCompleted, stepName)
 	}, log)
@@ -154,11 +154,11 @@ func (om *OperationManager) MarkStepAsExcutedButNotCompleted(operation internal.
 	}
 
 	op.EventErrorf(fmt.Errorf(msg), "step %s failed: operation continues", stepName)
-	log.Errorf(msg)
+	log.Error(msg)
 	return op, 0, nil
 }
 
-func (om *OperationManager) update(operation internal.Operation, state domain.LastOperationState, description string, log logrus.FieldLogger) (internal.Operation, time.Duration, error) {
+func (om *OperationManager) update(operation internal.Operation, state domain.LastOperationState, description string, log *slog.Logger) (internal.Operation, time.Duration, error) {
 	return om.UpdateOperation(operation, func(operation *internal.Operation) {
 		operation.State = state
 		operation.Description = description

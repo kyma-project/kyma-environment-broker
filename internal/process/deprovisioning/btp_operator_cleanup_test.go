@@ -3,6 +3,8 @@ package deprovisioning
 import (
 	"context"
 	"fmt"
+	"log/slog"
+	"os"
 	"testing"
 
 	"github.com/kyma-project/kyma-environment-broker/internal/kubeconfig"
@@ -12,7 +14,6 @@ import (
 	"github.com/kyma-project/kyma-environment-broker/internal/broker"
 	"github.com/kyma-project/kyma-environment-broker/internal/fixture"
 	"github.com/kyma-project/kyma-environment-broker/internal/storage"
-	"github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	corev1 "k8s.io/api/core/v1"
@@ -58,9 +59,11 @@ spec:
 `)
 
 func TestRemoveServiceInstanceStep(t *testing.T) {
+	log := slog.New(slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{
+		Level: slog.LevelInfo,
+	})).With("step", "TEST")
 	t.Run("should remove all service instances and bindings from btp operator as part of trial suspension", func(t *testing.T) {
 		// given
-		log := logrus.New()
 		ms := storage.NewMemoryStorage()
 		si := &unstructured.Unstructured{Object: map[string]interface{}{
 			"apiVersion": "apiextensions.k8s.io/v1",
@@ -89,8 +92,7 @@ func TestRemoveServiceInstanceStep(t *testing.T) {
 		step := NewBTPOperatorCleanupStep(ms.Operations(), clientProvider)
 
 		// when
-		entry := log.WithFields(logrus.Fields{"step": "TEST"})
-		_, _, err = step.Run(op, entry)
+		_, _, err = step.Run(op, log)
 
 		// then
 		assert.NoError(t, err)
@@ -109,7 +111,6 @@ func TestRemoveServiceInstanceStep(t *testing.T) {
 	})
 
 	t.Run("should skip btp-cleanup if not trial", func(t *testing.T) {
-		log := logrus.New()
 		ms := storage.NewMemoryStorage()
 		si := &unstructured.Unstructured{Object: map[string]interface{}{
 			"apiVersion": "apiextensions.k8s.io/v1",
@@ -138,8 +139,7 @@ func TestRemoveServiceInstanceStep(t *testing.T) {
 		step := NewBTPOperatorCleanupStep(ms.Operations(), kubeconfig.NewFakeK8sClientProvider(k8sCli))
 
 		// when
-		entry := log.WithFields(logrus.Fields{"step": "TEST"})
-		_, _, err = step.Run(op, entry)
+		_, _, err = step.Run(op, log)
 
 		// then
 		assert.NoError(t, err)
@@ -158,7 +158,6 @@ func TestRemoveServiceInstanceStep(t *testing.T) {
 	})
 
 	t.Run("should skip btp-cleanup if not suspension", func(t *testing.T) {
-		log := logrus.New()
 		ms := storage.NewMemoryStorage()
 		si := &unstructured.Unstructured{Object: map[string]interface{}{
 			"apiVersion": "apiextensions.k8s.io/v1",
@@ -187,8 +186,7 @@ func TestRemoveServiceInstanceStep(t *testing.T) {
 		step := NewBTPOperatorCleanupStep(ms.Operations(), kubeconfig.NewFakeK8sClientProvider(k8sCli))
 
 		// when
-		entry := log.WithFields(logrus.Fields{"step": "TEST"})
-		_, _, err = step.Run(op, entry)
+		_, _, err = step.Run(op, log)
 
 		// then
 		assert.NoError(t, err)
@@ -208,9 +206,11 @@ func TestRemoveServiceInstanceStep(t *testing.T) {
 }
 
 func TestBTPOperatorCleanupStep_SoftDelete(t *testing.T) {
+	log := slog.New(slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{
+		Level: slog.LevelInfo,
+	})).With("step", "TEST")
 	t.Run("should skip resources deletion when CRDs are missing", func(t *testing.T) {
 		// given
-		log := logrus.New()
 		ms := storage.NewMemoryStorage()
 		ns := &corev1.Namespace{ObjectMeta: metav1.ObjectMeta{Name: "kyma-system"}}
 
@@ -226,8 +226,7 @@ func TestBTPOperatorCleanupStep_SoftDelete(t *testing.T) {
 		step := NewBTPOperatorCleanupStep(ms.Operations(), kubeconfig.NewFakeK8sClientProvider(k8sCli))
 
 		// when
-		entry := log.WithFields(logrus.Fields{"step": "TEST"})
-		_, _, err = step.Run(op.Operation, entry)
+		_, _, err = step.Run(op.Operation, log)
 
 		// then
 		assert.NoError(t, err)
@@ -236,7 +235,6 @@ func TestBTPOperatorCleanupStep_SoftDelete(t *testing.T) {
 	})
 
 	t.Run("should delete SI and skip SB deletion ", func(t *testing.T) {
-		log := logrus.New()
 		ms := storage.NewMemoryStorage()
 		si := &unstructured.Unstructured{Object: map[string]interface{}{
 			"apiVersion": "apiextensions.k8s.io/v1",
@@ -267,8 +265,7 @@ func TestBTPOperatorCleanupStep_SoftDelete(t *testing.T) {
 		step := NewBTPOperatorCleanupStep(ms.Operations(), kubeconfig.NewFakeK8sClientProvider(k8sCli))
 
 		// when
-		entry := log.WithFields(logrus.Fields{"step": "TEST"})
-		_, _, err = step.Run(op.Operation, entry)
+		_, _, err = step.Run(op.Operation, log)
 
 		// then
 		assert.NoError(t, err)
@@ -277,7 +274,6 @@ func TestBTPOperatorCleanupStep_SoftDelete(t *testing.T) {
 	})
 
 	t.Run("should delete SB and skip SI deletion ", func(t *testing.T) {
-		log := logrus.New()
 		ms := storage.NewMemoryStorage()
 		sb := &unstructured.Unstructured{Object: map[string]interface{}{
 			"apiVersion": "apiextensions.k8s.io/v1",
@@ -308,8 +304,7 @@ func TestBTPOperatorCleanupStep_SoftDelete(t *testing.T) {
 		step := NewBTPOperatorCleanupStep(ms.Operations(), kubeconfig.NewFakeK8sClientProvider(k8sCli))
 
 		// when
-		entry := log.WithFields(logrus.Fields{"step": "TEST"})
-		_, _, err = step.Run(op.Operation, entry)
+		_, _, err = step.Run(op.Operation, log)
 
 		// then
 		assert.NoError(t, err)
@@ -329,7 +324,9 @@ func TestBTPOperatorCleanupStep_NoKubeconfig(t *testing.T) {
 	op.State = "in progress"
 
 	// when
-	log := logrus.New()
+	log := slog.New(slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{
+		Level: slog.LevelInfo,
+	}))
 	_, backoff, err := step.Run(op.Operation, log)
 
 	// then
@@ -349,7 +346,9 @@ func TestBTPOperatorCleanupStep_NoRuntimeID(t *testing.T) {
 	op.RuntimeID = ""
 
 	// when
-	log := logrus.New()
+	log := slog.New(slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{
+		Level: slog.LevelInfo,
+	}))
 	_, backoff, err := step.Run(op.Operation, log)
 
 	// then

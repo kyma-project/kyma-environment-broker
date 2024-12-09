@@ -1,14 +1,14 @@
 package provisioning
 
 import (
+	"fmt"
+	"log/slog"
 	"time"
 
 	kebError "github.com/kyma-project/kyma-environment-broker/internal/error"
 
-	"github.com/kyma-project/kyma-environment-broker/internal/broker"
-	"github.com/sirupsen/logrus"
-
 	"github.com/kyma-project/kyma-environment-broker/internal"
+	"github.com/kyma-project/kyma-environment-broker/internal/broker"
 	"github.com/kyma-project/kyma-environment-broker/internal/process"
 	"github.com/kyma-project/kyma-environment-broker/internal/provisioner"
 	"github.com/kyma-project/kyma-environment-broker/internal/storage"
@@ -38,10 +38,10 @@ func (s *GetKubeconfigStep) Name() string {
 	return "Get_Kubeconfig"
 }
 
-func (s *GetKubeconfigStep) Run(operation internal.Operation, log logrus.FieldLogger) (internal.Operation, time.Duration, error) {
+func (s *GetKubeconfigStep) Run(operation internal.Operation, log *slog.Logger) (internal.Operation, time.Duration, error) {
 
 	if s.kimConfig.IsDrivenByKimOnly(broker.PlanNamesMapping[operation.ProvisioningParameters.PlanID]) {
-		log.Infof("KIM is driving the process for plan %s, skipping", broker.PlanNamesMapping[operation.ProvisioningParameters.PlanID])
+		log.Info(fmt.Sprintf("KIM is driving the process for plan %s, skipping", broker.PlanNamesMapping[operation.ProvisioningParameters.PlanID]))
 		return operation, 0, nil
 	}
 
@@ -50,7 +50,7 @@ func (s *GetKubeconfigStep) Run(operation internal.Operation, log logrus.FieldLo
 			operation.Kubeconfig = operation.ProvisioningParameters.Parameters.Kubeconfig
 		} else {
 			if operation.RuntimeID == "" {
-				log.Errorf("Runtime ID is empty")
+				log.Error("Runtime ID is empty")
 				return s.operationManager.OperationFailed(operation, "Runtime ID is empty", nil, log)
 			}
 			kubeconfigFromRuntimeStatus, backoff, err := s.getKubeconfigFromRuntimeStatus(operation, log)
@@ -64,24 +64,24 @@ func (s *GetKubeconfigStep) Run(operation internal.Operation, log logrus.FieldLo
 	return operation, 0, nil
 }
 
-func (s *GetKubeconfigStep) getKubeconfigFromRuntimeStatus(operation internal.Operation, log logrus.FieldLogger) (string, time.Duration, error) {
+func (s *GetKubeconfigStep) getKubeconfigFromRuntimeStatus(operation internal.Operation, log *slog.Logger) (string, time.Duration, error) {
 
 	status, err := s.provisionerClient.RuntimeStatus(operation.ProvisioningParameters.ErsContext.GlobalAccountID, operation.RuntimeID)
 	if err != nil {
-		log.Errorf("call to provisioner RuntimeStatus failed: %s", err.Error())
+		log.Error(fmt.Sprintf("call to provisioner RuntimeStatus failed: %s", err.Error()))
 		return "", 1 * time.Minute, nil
 	}
 
 	if status.RuntimeConfiguration.Kubeconfig == nil {
-		log.Errorf("kubeconfig is not provided")
+		log.Error("kubeconfig is not provided")
 		return "", 1 * time.Minute, nil
 	}
 
 	kubeconfig := *status.RuntimeConfiguration.Kubeconfig
 
-	log.Infof("kubeconfig details length: %v", len(kubeconfig))
+	log.Info(fmt.Sprintf("kubeconfig details length: %v", len(kubeconfig)))
 	if len(kubeconfig) < 10 {
-		log.Errorf("kubeconfig suspiciously small, requeueing after 30s")
+		log.Info(fmt.Sprintf("kubeconfig details length: %v", len(kubeconfig)))
 		return "", 30 * time.Second, nil
 	}
 
