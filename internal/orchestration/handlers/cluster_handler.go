@@ -3,6 +3,7 @@ package handlers
 import (
 	"encoding/json"
 	"fmt"
+	"log/slog"
 	"net/http"
 	"time"
 
@@ -14,17 +15,16 @@ import (
 	"github.com/kyma-project/kyma-environment-broker/internal/process"
 	"github.com/kyma-project/kyma-environment-broker/internal/storage"
 	"github.com/pkg/errors"
-	"github.com/sirupsen/logrus"
 )
 
 type clusterHandler struct {
 	orchestrations storage.Orchestrations
 	queue          *process.Queue
 	converter      Converter
-	log            logrus.FieldLogger
+	log            *slog.Logger
 }
 
-func NewClusterHandler(orchestrations storage.Orchestrations, q *process.Queue, log logrus.FieldLogger) *clusterHandler {
+func NewClusterHandler(orchestrations storage.Orchestrations, q *process.Queue, log *slog.Logger) *clusterHandler {
 	return &clusterHandler{
 		orchestrations: orchestrations,
 		queue:          q,
@@ -43,7 +43,7 @@ func (h *clusterHandler) createOrchestration(w http.ResponseWriter, r *http.Requ
 	if r.Body != nil {
 		err := json.NewDecoder(r.Body).Decode(&params)
 		if err != nil {
-			h.log.Errorf("while decoding request body: %v", err)
+			h.log.Error(fmt.Sprintf("while decoding request body: %v", err))
 			httputil.WriteErrorResponse(w, http.StatusBadRequest, fmt.Errorf("while decoding request body: %w", err))
 			return
 		}
@@ -52,7 +52,7 @@ func (h *clusterHandler) createOrchestration(w http.ResponseWriter, r *http.Requ
 	// validate target
 	err := validateTarget(params.Targets)
 	if err != nil {
-		h.log.Errorf("while validating target: %v", err)
+		h.log.Error(fmt.Sprintf("while validating target: %v", err))
 		httputil.WriteErrorResponse(w, http.StatusBadRequest, fmt.Errorf("while validating target: %w", err))
 		return
 	}
@@ -60,7 +60,7 @@ func (h *clusterHandler) createOrchestration(w http.ResponseWriter, r *http.Requ
 	// validate deprecated parameteter `maintenanceWindow`
 	err = ValidateDeprecatedParameters(params)
 	if err != nil {
-		h.log.Errorf("found deprecated value: %v", err)
+		h.log.Error(fmt.Sprintf("found deprecated value: %v", err))
 		httputil.WriteErrorResponse(w, http.StatusBadRequest, errors.Wrapf(err, "found deprecated value"))
 		return
 	}
@@ -68,7 +68,7 @@ func (h *clusterHandler) createOrchestration(w http.ResponseWriter, r *http.Requ
 	// validate `schedule` field
 	err = ValidateScheduleParameter(&params)
 	if err != nil {
-		h.log.Errorf("found deprecated value: %v", err)
+		h.log.Error(fmt.Sprintf("found deprecated value: %v", err))
 		httputil.WriteErrorResponse(w, http.StatusBadRequest, errors.Wrapf(err, "found deprecated value"))
 		return
 	}
@@ -86,7 +86,7 @@ func (h *clusterHandler) createOrchestration(w http.ResponseWriter, r *http.Requ
 
 	err = h.orchestrations.Insert(o)
 	if err != nil {
-		h.log.Errorf("while inserting orchestration to storage: %v", err)
+		h.log.Error(fmt.Sprintf("while inserting orchestration to storage: %v", err))
 		httputil.WriteErrorResponse(w, http.StatusInternalServerError, fmt.Errorf("while inserting orchestration to storage: %w", err))
 		return
 	}

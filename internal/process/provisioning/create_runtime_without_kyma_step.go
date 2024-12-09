@@ -94,11 +94,6 @@ func (s *CreateRuntimeWithoutKymaStep) Run(operation internal.Operation, log log
 			operation.RuntimeID = *provisionerResponse.RuntimeID
 			operation.Region = requestInput.ClusterConfig.GardenerConfig.Region
 		}
-		if provisionerResponse.CompassRuntimeID != nil && len(*provisionerResponse.CompassRuntimeID) > 0 {
-			operation.CompassRuntimeId = provisionerResponse.CompassRuntimeID
-		} else {
-			operation.SetCompassRuntimeIdNotRegisteredByProvisioner()
-		}
 	}, log)
 	if repeat != 0 {
 		log.Errorf("cannot save neither runtime ID nor region from provisioner")

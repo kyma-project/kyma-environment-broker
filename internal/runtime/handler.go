@@ -3,6 +3,7 @@ package runtime
 import (
 	"context"
 	"fmt"
+	"log/slog"
 	"net/http"
 
 	"k8s.io/apimachinery/pkg/api/errors"
@@ -12,8 +13,6 @@ import (
 	"k8s.io/apimachinery/pkg/runtime/schema"
 
 	"sigs.k8s.io/controller-runtime/pkg/client"
-
-	"github.com/sirupsen/logrus"
 
 	"github.com/kyma-project/kyma-environment-broker/internal/broker"
 
@@ -45,13 +44,13 @@ type Handler struct {
 	provisionerClient   provisioner.Client
 	k8sClient           client.Client
 	kimConfig           broker.KimConfig
-	logger              logrus.FieldLogger
+	logger              *slog.Logger
 }
 
 func NewHandler(storage storage.BrokerStorage, defaultMaxPage int, defaultRequestRegion string,
 	provisionerClient provisioner.Client,
 	k8sClient client.Client, kimConfig broker.KimConfig,
-	logger logrus.FieldLogger) *Handler {
+	logger *slog.Logger) *Handler {
 	return &Handler{
 		instancesDb:         storage.Instances(),
 		operationsDb:        storage.Operations(),
@@ -64,7 +63,7 @@ func NewHandler(storage storage.BrokerStorage, defaultMaxPage int, defaultReques
 		provisionerClient:   provisionerClient,
 		kimConfig:           kimConfig,
 		k8sClient:           k8sClient,
-		logger:              logger.WithField("service", "RuntimeHandler"),
+		logger:              logger.With("service", "RuntimeHandler"),
 	}
 }
 
@@ -374,7 +373,7 @@ func (h *Handler) setRuntimeLastOperation(dto *pkg.RuntimeDTO) error {
 	lastOp, err := h.operationsDb.GetLastOperation(dto.InstanceID)
 	if err != nil {
 		if dberr.IsNotFound(err) {
-			h.logger.Infof("No operations found for instance %s", dto.InstanceID)
+			h.logger.Info(fmt.Sprintf("No operations found for instance %s", dto.InstanceID))
 			return nil
 		}
 		return fmt.Errorf("while fetching last operation instance %s: %w", dto.InstanceID, err)
@@ -451,7 +450,7 @@ func (h *Handler) setRuntimeOptionalAttributes(dto *pkg.RuntimeDTO, kymaConfig, 
 		runtimeStatus, err := h.provisionerClient.RuntimeStatus(dto.GlobalAccountID, dto.RuntimeID)
 		if err != nil {
 			dto.Status.GardenerConfig = nil
-			h.logger.Warnf("unable to fetch runtime status for instance %s: %s", dto.InstanceID, err.Error())
+			h.logger.Warn(fmt.Sprintf("unable to fetch runtime status for instance %s: %s", dto.InstanceID, err.Error()))
 		} else {
 			dto.Status.GardenerConfig = runtimeStatus.RuntimeConfiguration.ClusterConfig
 		}

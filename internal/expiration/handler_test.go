@@ -4,8 +4,10 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"log/slog"
 	"net/http"
 	"net/http/httptest"
+	"os"
 	"testing"
 	"time"
 
@@ -16,7 +18,6 @@ import (
 	"github.com/kyma-project/kyma-environment-broker/internal/process"
 	"github.com/kyma-project/kyma-environment-broker/internal/storage"
 	"github.com/pivotal-cf/brokerapi/v8/domain"
-	"github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -27,7 +28,9 @@ func TestExpiration(t *testing.T) {
 	router := mux.NewRouter()
 	deprovisioningQueue := process.NewFakeQueue()
 	storage := storage.NewMemoryStorage()
-	logger := logrus.New()
+	logger := slog.New(slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{
+		Level: slog.LevelInfo,
+	}))
 	handler := expiration.NewHandler(storage.Instances(), storage.Operations(), deprovisioningQueue, logger)
 	handler.AttachRoutes(router)
 

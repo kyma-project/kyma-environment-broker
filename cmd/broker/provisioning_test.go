@@ -234,7 +234,6 @@ func TestProvisioning_HappyPathAWS(t *testing.T) {
 	suite.WaitForOperationState(opID, domain.Succeeded)
 
 	suite.AssertKymaResourceExists(opID)
-	suite.AssertKymaAnnotationExists(opID, "compass-runtime-id-for-migration")
 	suite.AssertKymaLabelsExist(opID, map[string]string{"kyma-project.io/region": "eu-central-1", "kyma-project.io/provider": "AWS"})
 	suite.AssertKymaLabelNotExists(opID, "kyma-project.io/platform-region")
 }
@@ -334,7 +333,6 @@ func TestProvisioning_HappyPathSapConvergedCloud(t *testing.T) {
 		suite.WaitForOperationState(opID, domain.Succeeded)
 
 		suite.AssertKymaResourceExists(opID)
-		suite.AssertKymaAnnotationExists(opID, "compass-runtime-id-for-migration")
 		suite.AssertKymaLabelsExist(opID, map[string]string{"kyma-project.io/region": "eu-de-1", "kyma-project.io/provider": "SapConvergedCloud"})
 	})
 

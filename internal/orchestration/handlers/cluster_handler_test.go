@@ -3,8 +3,10 @@ package handlers
 import (
 	"bytes"
 	"encoding/json"
+	"log/slog"
 	"net/http"
 	"net/http/httptest"
+	"os"
 	"testing"
 	"time"
 
@@ -61,9 +63,12 @@ func TestClusterHandler_AttachRoutes(t *testing.T) {
 
 func fixClusterHandler(t *testing.T) *clusterHandler {
 	db := storage.NewMemoryStorage()
+	log := slog.New(slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{
+		Level: slog.LevelInfo,
+	}))
 	logs := logrus.New()
 	q := process.NewQueue(&testExecutor{}, logs, "test-handler", 10*time.Second, 10*time.Second)
-	handler := NewClusterHandler(db.Orchestrations(), q, logs)
+	handler := NewClusterHandler(db.Orchestrations(), q, log)
 
 	return handler
 }

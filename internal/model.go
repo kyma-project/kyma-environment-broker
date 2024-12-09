@@ -13,7 +13,6 @@ import (
 	pkg "github.com/kyma-project/kyma-environment-broker/common/runtime"
 	kebError "github.com/kyma-project/kyma-environment-broker/internal/error"
 	"github.com/kyma-project/kyma-environment-broker/internal/events"
-	"github.com/kyma-project/kyma-environment-broker/internal/ptr"
 	"github.com/pivotal-cf/brokerapi/v8/domain"
 	log "github.com/sirupsen/logrus"
 )
@@ -241,31 +240,8 @@ type InstanceDetails struct {
 
 	CloudProvider string `json:"cloud_provider"`
 
-	// CompassRuntimeId - a runtime ID created by the Compass. Existing instances has a nil value (because the field was not existing) - it means the compass runtime Id is equal to runtime ID.
-	// If the value is an empty string - it means the runtime was not registered by Provisioner in the Compass.
-	// Should be removed after the migration of compass registration is completed
-	CompassRuntimeId *string
-
 	// Used during KIM integration while deprovisioning - to be removed later on when provisioner not used anymore
 	KimDeprovisionsOnly *bool `json:"kim_deprovisions_only"`
-}
-
-// IsRegisteredInCompassByProvisioner returns true, if the runtime was registered in Compass by Provisioner
-func (i *InstanceDetails) IsRegisteredInCompassByProvisioner() bool {
-	return i.CompassRuntimeId == nil || *i.CompassRuntimeId != ""
-}
-
-func (i *InstanceDetails) SetCompassRuntimeIdNotRegisteredByProvisioner() {
-	i.CompassRuntimeId = ptr.String("")
-}
-
-// GetCompassRuntimeId provides a compass runtime Id registered by Provisioner or empty string if it was not provisioned by Provisioner.
-func (i *InstanceDetails) GetCompassRuntimeId() string {
-	// for backward compatibility, if CompassRuntimeID field was not set, use RuntimeId
-	if i.CompassRuntimeId == nil {
-		return i.RuntimeID
-	}
-	return *i.CompassRuntimeId
 }
 
 func (i *InstanceDetails) GetRuntimeResourceName() string {

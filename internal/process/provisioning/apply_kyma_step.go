@@ -91,16 +91,6 @@ func (a *ApplyKymaStep) addLabelsAndName(operation internal.Operation, obj *unst
 	oldLabels := obj.GetLabels()
 	steps.ApplyLabelsAndAnnotationsForLM(obj, operation)
 
-	// this if-block is a temporary solution, should be removed after the migration of compass registration is completed
-	if operation.IsRegisteredInCompassByProvisioner() {
-		annotations := obj.GetAnnotations()
-		if annotations == nil {
-			annotations = map[string]string{}
-		}
-		annotations["compass-runtime-id-for-migration"] = operation.GetCompassRuntimeId()
-		obj.SetAnnotations(annotations)
-	}
-
 	// Kyma resource name must be created once again
 	obj.SetName(steps.CreateKymaNameFromOperation(operation))
 	return !reflect.DeepEqual(obj.GetLabels(), oldLabels)

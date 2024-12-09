@@ -3,14 +3,13 @@ package orchestration
 import (
 	"context"
 	"fmt"
+	"log/slog"
 	"regexp"
 	"sync"
 	"time"
 
 	"github.com/kyma-project/kyma-environment-broker/common/gardener"
 	"github.com/kyma-project/kyma-environment-broker/common/runtime"
-	"github.com/sirupsen/logrus"
-
 	brokerapi "github.com/pivotal-cf/brokerapi/v8/domain"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
@@ -36,7 +35,7 @@ type GardenerRuntimeResolver struct {
 	runtimeLister     RuntimeLister
 	runtimes          map[string]runtime.RuntimeDTO
 	mutex             sync.RWMutex
-	logger            logrus.FieldLogger
+	logger            *slog.Logger
 }
 
 const (
@@ -47,13 +46,13 @@ const (
 )
 
 // NewGardenerRuntimeResolver constructs a GardenerRuntimeResolver with the mandatory input parameters.
-func NewGardenerRuntimeResolver(gardenerClient dynamic.Interface, gardenerNamespace string, lister RuntimeLister, logger logrus.FieldLogger) *GardenerRuntimeResolver {
+func NewGardenerRuntimeResolver(gardenerClient dynamic.Interface, gardenerNamespace string, lister RuntimeLister, logger *slog.Logger) *GardenerRuntimeResolver {
 	return &GardenerRuntimeResolver{
 		gardenerClient:    gardenerClient,
 		gardenerNamespace: gardenerNamespace,
 		runtimeLister:     lister,
 		runtimes:          map[string]runtime.RuntimeDTO{},
-		logger:            logger.WithField("orchestration", "resolver"),
+		logger:            logger.With("orchestration", "resolver"),
 	}
 }
 
@@ -139,12 +138,12 @@ func (resolver *GardenerRuntimeResolver) resolveRuntimeTarget(rt RuntimeTarget, 
 		shoot := &gardener.Shoot{Unstructured: s}
 		runtimeID := shoot.GetAnnotations()[runtimeIDAnnotation]
 		if runtimeID == "" {
-			resolver.logger.Errorf("Failed to get runtimeID from %s annotation for Shoot %s", runtimeIDAnnotation, shoot.GetName())
+			resolver.logger.Error(fmt.Sprintf("Failed to get runtimeID from %s annotation for Shoot %s", runtimeIDAnnotation, shoot.GetName()))
 			continue
 		}
 		r, ok := resolver.getRuntime(runtimeID)
 		if !ok {
-			resolver.logger.Errorf("Couldn't find runtime for runtimeID %s", runtimeID)
+			resolver.logger.Error(fmt.Sprintf("Couldn't find runtime for runtimeID %s", runtimeID))
 			continue
 		}
 
@@ -154,17 +153,17 @@ func (resolver *GardenerRuntimeResolver) resolveRuntimeTarget(rt RuntimeTarget, 
 		//  - suspension
 		//  - deprovision
 		if lastOp.Type == runtime.Deprovision || lastOp.Type == runtime.Suspension || (lastOp.Type == runtime.Provision || lastOp.Type == runtime.Unsuspension) && lastOp.State != string(brokerapi.Succeeded) {
-			resolver.logger.Infof("Skipping Shoot %s (runtimeID: %s, instanceID %s) due to %s state: %s", shoot.GetName(), runtimeID, r.InstanceID, lastOp.Type, lastOp.State)
+			resolver.logger.Info(fmt.Sprintf("Skipping Shoot %s (runtimeID: %s, instanceID %s) due to %s state: %s", shoot.GetName(), runtimeID, r.InstanceID, lastOp.Type, lastOp.State))
 			continue
 		}
 		maintenanceWindowBegin, err := time.Parse(maintenanceWindowFormat, shoot.GetSpecMaintenanceTimeWindowBegin())
 		if err != nil {
-			resolver.logger.Errorf("Failed to parse maintenanceWindowBegin value %s of shoot %s ", shoot.GetSpecMaintenanceTimeWindowBegin(), shoot.GetName())
+			resolver.logger.Error(fmt.Sprintf("Failed to parse maintenanceWindowBegin value %s of shoot %s ", shoot.GetSpecMaintenanceTimeWindowBegin(), shoot.GetName()))
 			continue
 		}
 		maintenanceWindowEnd, err := time.Parse(maintenanceWindowFormat, shoot.GetSpecMaintenanceTimeWindowEnd())
 		if err != nil {
-			resolver.logger.Errorf("Failed to parse maintenanceWindowEnd value %s of shoot %s ", shoot.GetSpecMaintenanceTimeWindowEnd(), shoot.GetName())
+			resolver.logger.Error(fmt.Sprintf("Failed to parse maintenanceWindowEnd value %s of shoot %s ", shoot.GetSpecMaintenanceTimeWindowEnd(), shoot.GetName()))
 			continue
 		}
 

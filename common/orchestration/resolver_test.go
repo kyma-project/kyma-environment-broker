@@ -2,11 +2,11 @@ package orchestration
 
 import (
 	"fmt"
-	"io/ioutil"
+	"log/slog"
+	"os"
 	"testing"
 	"time"
 
-	"github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/require"
 
 	"github.com/stretchr/testify/assert"
@@ -409,12 +409,10 @@ func newRuntimeListerMock() *RuntimeListerMock {
 	return lister
 }
 
-func newLogDummy() *logrus.Entry {
-	rawLgr := logrus.New()
-	rawLgr.Out = ioutil.Discard
-	lgr := rawLgr.WithField("testing", true)
-
-	return lgr
+func newLogDummy() *slog.Logger {
+	return slog.New(slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{
+		Level: slog.LevelInfo,
+	})).With("testing", true)
 }
 
 func lookupRuntime(runtimeID string, runtimes []Runtime) *Runtime {
