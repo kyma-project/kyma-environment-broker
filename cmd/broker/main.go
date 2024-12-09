@@ -391,11 +391,11 @@ func main() {
 		cfg.DefaultRequestRegion, provisionerClient,
 		kcpK8sClient,
 		cfg.Broker.KimConfig,
-		logs)
+		log)
 	runtimeHandler.AttachRoutes(router)
 
 	// create expiration endpoint
-	expirationHandler := expiration.NewHandler(db.Instances(), db.Operations(), deprovisionQueue, logs)
+	expirationHandler := expiration.NewHandler(db.Instances(), db.Operations(), deprovisionQueue, log)
 	expirationHandler.AttachRoutes(router)
 
 	router.StrictSlash(true).PathPrefix("/").Handler(http.StripPrefix("/", http.FileServer(http.Dir("/swagger"))))

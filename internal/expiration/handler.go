@@ -3,6 +3,7 @@ package expiration
 import (
 	"errors"
 	"fmt"
+	"log/slog"
 	"net/http"
 	"time"
 
@@ -17,7 +18,6 @@ import (
 	"github.com/kyma-project/kyma-environment-broker/internal/storage/dberr"
 	"github.com/kyma-project/kyma-environment-broker/internal/suspension"
 	"github.com/pivotal-cf/brokerapi/v8/domain"
-	"github.com/sirupsen/logrus"
 )
 
 type expirationResponse struct {
@@ -32,15 +32,15 @@ type handler struct {
 	instances           storage.Instances
 	operations          storage.Operations
 	deprovisioningQueue suspension.Adder
-	log                 logrus.FieldLogger
+	log                 *slog.Logger
 }
 
-func NewHandler(instancesStorage storage.Instances, operationsStorage storage.Operations, deprovisioningQueue suspension.Adder, log logrus.FieldLogger) Handler {
+func NewHandler(instancesStorage storage.Instances, operationsStorage storage.Operations, deprovisioningQueue suspension.Adder, log *slog.Logger) Handler {
 	return &handler{
 		instances:           instancesStorage,
 		operations:          operationsStorage,
 		deprovisioningQueue: deprovisioningQueue,
-		log:                 log.WithField("service", "ExpirationEndpoint"),
+		log:                 log.With("service", "ExpirationEndpoint"),
 	}
 }
 
@@ -51,12 +51,12 @@ func (h *handler) AttachRoutes(router *mux.Router) {
 func (h *handler) expireInstance(w http.ResponseWriter, req *http.Request) {
 	instanceID := mux.Vars(req)["instance_id"]
 
-	h.log.Info("Expiration triggered for instanceID: ", instanceID)
-	logger := h.log.WithField("instanceID", instanceID)
+	h.log.Info(fmt.Sprintf("Expiration triggered for instanceID: %s", instanceID))
+	logger := h.log.With("instanceID", instanceID)
 
 	instance, err := h.instances.GetByID(instanceID)
 	if err != nil {
-		logger.Errorf("unable to get instance: %s", err.Error())
+		logger.Error(fmt.Sprintf("unable to get instance: %s", err.Error()))
 		switch {
 		case dberr.IsNotFound(err):
 			httputil.WriteErrorResponse(w, http.StatusNotFound, err)
@@ -65,7 +65,7 @@ func (h *handler) expireInstance(w http.ResponseWriter, req *http.Request) {
 		}
 		return
 	}
-	logger = logger.WithField("planName", instance.ServicePlanName)
+	logger = logger.With("planName", instance.ServicePlanName)
 
 	if instance.ServicePlanID != broker.TrialPlanID && instance.ServicePlanID != broker.FreemiumPlanID {
 		msg := fmt.Sprintf("unsupported plan: %s", broker.PlanNamesMapping[instance.ServicePlanID])
@@ -76,21 +76,21 @@ func (h *handler) expireInstance(w http.ResponseWriter, req *http.Request) {
 
 	instance, err = h.setInstanceExpirationTime(instance, logger)
 	if err != nil {
-		logger.Errorf("unable to update the instance in the database after setting expiration time: %s", err.Error())
+		logger.Error(fmt.Sprintf("unable to update the instance in the database after setting expiration time: %s", err.Error()))
 		httputil.WriteErrorResponse(w, http.StatusInternalServerError, err)
 		return
 	}
 
 	instance, suspensionOpID, err := h.suspendInstance(instance, logger)
 	if err != nil {
-		logger.Errorf("unable to create suspension operation: %s", err.Error())
+		logger.Error(fmt.Sprintf("unable to create suspension operation: %s", err.Error()))
 		httputil.WriteErrorResponse(w, http.StatusInternalServerError, err)
 		return
 	}
 
 	instance, err = h.deactivateInstance(instance, logger)
 	if err != nil {
-		logger.Errorf("unable to update the instance in the database after deactivating: %s", err.Error())
+		logger.Error(fmt.Sprintf("unable to update the instance in the database after deactivating: %s", err.Error()))
 		httputil.WriteErrorResponse(w, http.StatusInternalServerError, err)
 		return
 	}
@@ -101,18 +101,18 @@ func (h *handler) expireInstance(w http.ResponseWriter, req *http.Request) {
 	return
 }
 
-func (h *handler) setInstanceExpirationTime(instance *internal.Instance, log logrus.FieldLogger) (*internal.Instance, error) {
+func (h *handler) setInstanceExpirationTime(instance *internal.Instance, log *slog.Logger) (*internal.Instance, error) {
 	if instance.IsExpired() {
-		log.Infof("instance expiration time has been already set at %s", instance.ExpiredAt.String())
+		log.Info(fmt.Sprintf("instance expiration time has been already set at %s", instance.ExpiredAt.String()))
 		return instance, nil
 	}
-	log.Infof("setting expiration time for the instance created at %s", instance.CreatedAt)
+	log.Info(fmt.Sprintf("setting expiration time for the instance created at %s", instance.CreatedAt))
 	instance.ExpiredAt = ptr.Time(time.Now().UTC())
 	instance, err := h.instances.Update(*instance)
 	return instance, err
 }
 
-func (h *handler) suspendInstance(instance *internal.Instance, log *logrus.Entry) (*internal.Instance, string, error) {
+func (h *handler) suspendInstance(instance *internal.Instance, log *slog.Logger) (*internal.Instance, string, error) {
 	lastDeprovisioningOp, err := h.operations.GetDeprovisioningOperationByInstanceID(instance.InstanceID)
 	if err != nil && !dberr.IsNotFound(err) {
 		return instance, "", err
@@ -125,19 +125,19 @@ func (h *handler) suspendInstance(instance *internal.Instance, log *logrus.Entry
 		}
 		switch lastDeprovisioningOp.State {
 		case orchestration.Pending:
-			log.Infof("%s pending", opType)
+			log.Info(fmt.Sprintf("%s pending", opType))
 			return instance, lastDeprovisioningOp.ID, nil
 		case domain.InProgress:
-			log.Infof("%s in progress", opType)
+			log.Info(fmt.Sprintf("%s in progress", opType))
 			return instance, lastDeprovisioningOp.ID, nil
 		case domain.Failed:
-			log.Infof("triggering suspension after previous failed %s", opType)
+			log.Info(fmt.Sprintf("triggering suspension after previous failed %s", opType))
 		case domain.Succeeded:
 			if len(lastDeprovisioningOp.ExcutedButNotCompleted) == 0 {
 				log.Info("no steps to retry - not creating a new operation")
 				return instance, lastDeprovisioningOp.ID, nil
 			} else {
-				log.Infof("triggering suspension after previous %s with steps to retry", opType)
+				log.Info(fmt.Sprintf("triggering suspension after previous %s with steps to retry", opType))
 			}
 		}
 	}
@@ -148,12 +148,12 @@ func (h *handler) suspendInstance(instance *internal.Instance, log *logrus.Entry
 		return instance, "", err
 	}
 	h.deprovisioningQueue.Add(suspensionOp.ID)
-	log.Infof("suspension operation %s added to queue", suspensionOp.ID)
+	log.Info(fmt.Sprintf("suspension operation %s added to queue", suspensionOp.ID))
 
 	return instance, suspensionOp.ID, nil
 }
 
-func (h *handler) deactivateInstance(instance *internal.Instance, log logrus.FieldLogger) (*internal.Instance, error) {
+func (h *handler) deactivateInstance(instance *internal.Instance, log *slog.Logger) (*internal.Instance, error) {
 	active := instance.Parameters.ErsContext.Active
 	if active != nil && !(*active) {
 		log.Info("instance is already deactivated")
