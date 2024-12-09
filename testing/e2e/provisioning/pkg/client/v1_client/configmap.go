@@ -34,7 +34,7 @@ func NewConfigMapClient(client client.Client, log logrus.FieldLogger) *ConfigMap
 
 func (c *ConfigMapClient) Get(name, namespace string) (*v1.ConfigMap, error) {
 	configMap := v1.ConfigMap{}
-	err := wait.PollImmediate(time.Second, timeout, func() (bool, error) {
+	err := wait.PollUntilContextTimeout(context.Background(), time.Second, timeout, true, func(ctx context.Context) (bool, error) {
 		err := c.client.Get(context.Background(), client.ObjectKey{Name: name, Namespace: namespace}, &configMap)
 		if err != nil {
 			if apiErrors.IsNotFound(err) {
@@ -52,7 +52,7 @@ func (c *ConfigMapClient) Get(name, namespace string) (*v1.ConfigMap, error) {
 }
 
 func (c *ConfigMapClient) Create(configMap v1.ConfigMap) error {
-	err := wait.PollImmediate(time.Second, timeout, func() (bool, error) {
+	err := wait.PollUntilContextTimeout(context.Background(), time.Second, timeout, true, func(ctx context.Context) (bool, error) {
 		err := c.client.Create(context.Background(), &configMap)
 		if err != nil {
 			if apiErrors.IsAlreadyExists(err) {
@@ -74,7 +74,7 @@ func (c *ConfigMapClient) Create(configMap v1.ConfigMap) error {
 }
 
 func (c *ConfigMapClient) Update(configMap v1.ConfigMap) error {
-	err := wait.PollImmediate(time.Second, timeout, func() (bool, error) {
+	err := wait.PollUntilContextTimeout(context.Background(), time.Second, timeout, true, func(ctx context.Context) (bool, error) {
 		err := c.client.Update(context.Background(), &configMap)
 		if err != nil {
 			c.log.Errorf("while updating config map: %v", err)
@@ -89,7 +89,7 @@ func (c *ConfigMapClient) Update(configMap v1.ConfigMap) error {
 }
 
 func (c *ConfigMapClient) Delete(configMap v1.ConfigMap) error {
-	err := wait.PollImmediate(time.Second, timeout, func() (bool, error) {
+	err := wait.PollUntilContextTimeout(context.Background(), time.Second, timeout, true, func(ctx context.Context) (bool, error) {
 		err := c.client.Delete(context.Background(), &configMap)
 		if err != nil {
 			if apiErrors.IsNotFound(err) {
