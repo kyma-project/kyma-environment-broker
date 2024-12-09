@@ -567,7 +567,7 @@ func processCancelingOrchestrations(orchestrationType orchestrationExt.Type, orc
 func initClient(cfg *rest.Config) (client.Client, error) {
 	mapper, err := apiutil.NewDiscoveryRESTMapper(cfg)
 	if err != nil {
-		err = wait.Poll(time.Second, time.Minute, func() (bool, error) {
+		err = wait.PollUntilContextTimeout(context.Background(), time.Second, time.Minute, false, func(ctx context.Context) (bool, error) {
 			mapper, err = apiutil.NewDiscoveryRESTMapper(cfg)
 			if err != nil {
 				return false, nil

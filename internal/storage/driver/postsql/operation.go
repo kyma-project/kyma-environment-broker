@@ -1,6 +1,7 @@
 package postsql
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"log/slog"
@@ -313,7 +314,7 @@ func (s *operations) GetLastOperation(instanceID string) (*internal.Operation, e
 	operation := dbmodel.OperationDTO{}
 	op := internal.Operation{}
 	var lastErr dberr.Error
-	err := wait.PollImmediate(defaultRetryInterval, defaultRetryTimeout, func() (bool, error) {
+	err := wait.PollUntilContextTimeout(context.Background(), defaultRetryInterval, defaultRetryTimeout, true, func(ctx context.Context) (bool, error) {
 		operation, lastErr = session.GetLastOperation(instanceID, []internal.OperationType{})
 		if lastErr != nil {
 			if dberr.IsNotFound(lastErr) {
@@ -381,7 +382,7 @@ func (s *operations) GetOperationByID(operationID string) (*internal.Operation, 
 func (s *operations) GetNotFinishedOperationsByType(operationType internal.OperationType) ([]internal.Operation, error) {
 	session := s.NewReadSession()
 	operations := make([]dbmodel.OperationDTO, 0)
-	err := wait.PollImmediate(defaultRetryInterval, defaultRetryTimeout, func() (bool, error) {
+	err := wait.PollUntilContextTimeout(context.Background(), defaultRetryInterval, defaultRetryTimeout, true, func(ctx context.Context) (bool, error) {
 		dto, err := session.GetNotFinishedOperationsByType(operationType)
 		if err != nil {
 			return false, nil
@@ -496,7 +497,7 @@ func (s *operations) GetOperationStatsForOrchestration(orchestrationID string) (
 func (s *operations) GetOperationsForIDs(operationIDList []string) ([]internal.Operation, error) {
 	session := s.NewReadSession()
 	operations := make([]dbmodel.OperationDTO, 0)
-	err := wait.PollImmediate(defaultRetryInterval, defaultRetryTimeout, func() (bool, error) {
+	err := wait.PollUntilContextTimeout(context.Background(), defaultRetryInterval, defaultRetryTimeout, true, func(ctx context.Context) (bool, error) {
 		dto, err := session.GetOperationsForIDs(operationIDList)
 		if err != nil {
 			return false, nil
@@ -519,7 +520,7 @@ func (s *operations) ListOperations(filter dbmodel.OperationFilter) ([]internal.
 		operations  = make([]dbmodel.OperationDTO, 0)
 	)
 
-	err := wait.PollImmediate(defaultRetryInterval, defaultRetryTimeout, func() (bool, error) {
+	err := wait.PollUntilContextTimeout(context.Background(), defaultRetryInterval, defaultRetryTimeout, true, func(ctx context.Context) (bool, error) {
 		operations, size, total, lastErr = session.ListOperations(filter)
 		if lastErr != nil {
 			return false, nil
@@ -552,7 +553,7 @@ func (s *operations) ListOperationsByOrchestrationID(orchestrationID string, fil
 		lastErr           error
 		count, totalCount int
 	)
-	err := wait.PollImmediate(defaultRetryInterval, defaultRetryTimeout, func() (bool, error) {
+	err := wait.PollUntilContextTimeout(context.Background(), defaultRetryInterval, defaultRetryTimeout, true, func(ctx context.Context) (bool, error) {
 		operations, count, totalCount, lastErr = session.ListOperationsByOrchestrationID(orchestrationID, filter)
 		if lastErr != nil {
 			if dberr.IsNotFound(lastErr) {
@@ -577,7 +578,7 @@ func (s *operations) ListOperationsByOrchestrationID(orchestrationID string, fil
 func (s *operations) ListOperationsInTimeRange(from, to time.Time) ([]internal.Operation, error) {
 	session := s.NewReadSession()
 	operations := make([]dbmodel.OperationDTO, 0)
-	err := wait.PollImmediate(defaultRetryInterval, defaultRetryTimeout, func() (bool, error) {
+	err := wait.PollUntilContextTimeout(context.Background(), defaultRetryInterval, defaultRetryTimeout, true, func(ctx context.Context) (bool, error) {
 		var err error
 		operations, err = session.ListOperationsInTimeRange(from, to)
 		if err != nil {
@@ -631,7 +632,7 @@ func (s *operations) UpdateUpdatingOperation(operation internal.UpdatingOperatio
 	}
 
 	var lastErr error
-	_ = wait.PollImmediate(defaultRetryInterval, defaultRetryTimeout, func() (bool, error) {
+	_ = wait.PollUntilContextTimeout(context.Background(), defaultRetryInterval, defaultRetryTimeout, true, func(ctx context.Context) (bool, error) {
 		lastErr = session.UpdateOperation(dto)
 		if lastErr != nil && dberr.IsNotFound(lastErr) {
 			_, lastErr = s.NewReadSession().GetOperationByID(operation.Operation.ID)
@@ -654,7 +655,7 @@ func (s *operations) ListUpdatingOperationsByInstanceID(instanceID string) ([]in
 	session := s.NewReadSession()
 	operations := []dbmodel.OperationDTO{}
 	var lastErr dberr.Error
-	err := wait.PollImmediate(defaultRetryInterval, defaultRetryTimeout, func() (bool, error) {
+	err := wait.PollUntilContextTimeout(context.Background(), defaultRetryInterval, defaultRetryTimeout, true, func(ctx context.Context) (bool, error) {
 		operations, lastErr = session.GetOperationsByTypeAndInstanceID(instanceID, internal.OperationTypeUpdate)
 		if lastErr != nil {
 			return false, nil
@@ -692,7 +693,7 @@ func (s *operations) UpdateUpgradeClusterOperation(operation internal.UpgradeClu
 	}
 
 	var lastErr error
-	_ = wait.PollImmediate(defaultRetryInterval, defaultRetryTimeout, func() (bool, error) {
+	_ = wait.PollUntilContextTimeout(context.Background(), defaultRetryInterval, defaultRetryTimeout, true, func(ctx context.Context) (bool, error) {
 		lastErr = session.UpdateOperation(dto)
 		if lastErr != nil && dberr.IsNotFound(lastErr) {
 			_, lastErr = s.NewReadSession().GetOperationByID(operation.Operation.ID)
@@ -729,7 +730,7 @@ func (s *operations) ListUpgradeClusterOperationsByInstanceID(instanceID string)
 	session := s.NewReadSession()
 	operations := []dbmodel.OperationDTO{}
 	var lastErr dberr.Error
-	err := wait.PollImmediate(defaultRetryInterval, defaultRetryTimeout, func() (bool, error) {
+	err := wait.PollUntilContextTimeout(context.Background(), defaultRetryInterval, defaultRetryTimeout, true, func(ctx context.Context) (bool, error) {
 		operations, lastErr = session.GetOperationsByTypeAndInstanceID(instanceID, internal.OperationTypeUpgradeCluster)
 		if lastErr != nil {
 			return false, nil
@@ -755,7 +756,7 @@ func (s *operations) ListUpgradeClusterOperationsByOrchestrationID(orchestration
 		lastErr           error
 		count, totalCount int
 	)
-	err := wait.PollImmediate(defaultRetryInterval, defaultRetryTimeout, func() (bool, error) {
+	err := wait.PollUntilContextTimeout(context.Background(), defaultRetryInterval, defaultRetryTimeout, true, func(ctx context.Context) (bool, error) {
 		operations, count, totalCount, lastErr = session.ListOperationsByOrchestrationID(orchestrationID, filter)
 		if lastErr != nil {
 			if dberr.IsNotFound(lastErr) {
@@ -1105,7 +1106,7 @@ func (s *operations) getByID(id string) (*dbmodel.OperationDTO, error) {
 	session := s.NewReadSession()
 	operation := dbmodel.OperationDTO{}
 
-	err := wait.PollImmediate(defaultRetryInterval, defaultRetryTimeout, func() (bool, error) {
+	err := wait.PollUntilContextTimeout(context.Background(), defaultRetryInterval, defaultRetryTimeout, true, func(ctx context.Context) (bool, error) {
 		operation, lastErr = session.GetOperationByID(id)
 		if lastErr != nil {
 			if dberr.IsNotFound(lastErr) {
@@ -1127,7 +1128,7 @@ func (s *operations) getByID(id string) (*dbmodel.OperationDTO, error) {
 func (s *operations) insert(dto dbmodel.OperationDTO) error {
 	session := s.NewWriteSession()
 	var lastErr error
-	_ = wait.PollImmediate(defaultRetryInterval, defaultRetryTimeout, func() (bool, error) {
+	_ = wait.PollUntilContextTimeout(context.Background(), defaultRetryInterval, defaultRetryTimeout, true, func(ctx context.Context) (bool, error) {
 		lastErr = session.InsertOperation(dto)
 		if lastErr != nil {
 			return false, nil
@@ -1142,7 +1143,7 @@ func (s *operations) getByInstanceID(id string) (*dbmodel.OperationDTO, error) {
 	session := s.NewReadSession()
 	operation := dbmodel.OperationDTO{}
 	var lastErr dberr.Error
-	err := wait.PollImmediate(defaultRetryInterval, defaultRetryTimeout, func() (bool, error) {
+	err := wait.PollUntilContextTimeout(context.Background(), defaultRetryInterval, defaultRetryTimeout, true, func(ctx context.Context) (bool, error) {
 		operation, lastErr = session.GetOperationByInstanceID(id)
 		if lastErr != nil {
 			if dberr.IsNotFound(lastErr) {
@@ -1161,7 +1162,7 @@ func (s *operations) getByTypeAndInstanceID(id string, opType internal.Operation
 	session := s.NewReadSession()
 	operation := dbmodel.OperationDTO{}
 	var lastErr dberr.Error
-	err := wait.PollImmediate(defaultRetryInterval, defaultRetryTimeout, func() (bool, error) {
+	err := wait.PollUntilContextTimeout(context.Background(), defaultRetryInterval, defaultRetryTimeout, true, func(ctx context.Context) (bool, error) {
 		operation, lastErr = session.GetOperationByTypeAndInstanceID(id, opType)
 		if lastErr != nil {
 			if dberr.IsNotFound(lastErr) {
@@ -1180,7 +1181,7 @@ func (s *operations) update(operation dbmodel.OperationDTO) error {
 	session := s.NewWriteSession()
 
 	var lastErr error
-	_ = wait.PollImmediate(defaultRetryInterval, defaultRetryTimeout, func() (bool, error) {
+	_ = wait.PollUntilContextTimeout(context.Background(), defaultRetryInterval, defaultRetryTimeout, true, func(ctx context.Context) (bool, error) {
 		lastErr = session.UpdateOperation(operation)
 		if lastErr != nil && dberr.IsNotFound(lastErr) {
 			_, lastErr = s.NewReadSession().GetOperationByID(operation.ID)
@@ -1205,7 +1206,7 @@ func (s *operations) listOperationsByInstanceIdAndType(instanceId string, operat
 	operations := []dbmodel.OperationDTO{}
 	var lastErr dberr.Error
 
-	err := wait.PollImmediate(defaultRetryInterval, defaultRetryTimeout, func() (bool, error) {
+	err := wait.PollUntilContextTimeout(context.Background(), defaultRetryInterval, defaultRetryTimeout, true, func(ctx context.Context) (bool, error) {
 		operations, lastErr = session.GetOperationsByTypeAndInstanceID(instanceId, operationType)
 		if lastErr != nil {
 			return false, nil
@@ -1223,7 +1224,7 @@ func (s *operations) listOperationsByType(operationType internal.OperationType) 
 	operations := []dbmodel.OperationDTO{}
 	var lastErr dberr.Error
 
-	err := wait.PollImmediate(defaultRetryInterval, defaultRetryTimeout, func() (bool, error) {
+	err := wait.PollUntilContextTimeout(context.Background(), defaultRetryInterval, defaultRetryTimeout, true, func(ctx context.Context) (bool, error) {
 		operations, lastErr = session.ListOperationsByType(operationType)
 		if lastErr != nil {
 			return false, nil
@@ -1241,7 +1242,7 @@ func (s *operations) listOperationsByInstanceId(instanceId string) ([]dbmodel.Op
 	operations := []dbmodel.OperationDTO{}
 	var lastErr dberr.Error
 
-	err := wait.PollImmediate(defaultRetryInterval, defaultRetryTimeout, func() (bool, error) {
+	err := wait.PollUntilContextTimeout(context.Background(), defaultRetryInterval, defaultRetryTimeout, true, func(ctx context.Context) (bool, error) {
 		operations, lastErr = session.GetOperationsByInstanceID(instanceId)
 		if lastErr != nil {
 			return false, nil

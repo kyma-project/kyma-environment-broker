@@ -376,7 +376,7 @@ func (s *OrchestrationSuite) CreateUpgradeClusterOrchestration(params orchestrat
 }
 
 func (s *OrchestrationSuite) finishOperationByProvisioner(operationType gqlschema.OperationType, runtimeID string) {
-	err := wait.Poll(time.Millisecond*100, 2*time.Second, func() (bool, error) {
+	err := wait.PollUntilContextTimeout(context.Background(), time.Millisecond*100, 2*time.Second, false, func(ctx context.Context) (bool, error) {
 		status := s.provisionerClient.FindInProgressOperationByRuntimeIDAndType(runtimeID, operationType)
 		if status.ID != nil {
 			s.provisionerClient.FinishProvisionerOperation(*status.ID, gqlschema.OperationStateSucceeded)
@@ -393,7 +393,7 @@ func (s *OrchestrationSuite) FinishUpgradeShootOperationByProvisioner(runtimeID 
 
 func (s *OrchestrationSuite) WaitForOrchestrationState(orchestrationID string, state string) {
 	var orchestration *internal.Orchestration
-	err := wait.PollImmediate(100*time.Millisecond, 2*time.Second, func() (done bool, err error) {
+	err := wait.PollUntilContextTimeout(context.Background(), 100*time.Millisecond, 2*time.Second, true, func(ctx context.Context) (done bool, err error) {
 		orchestration, _ = s.storage.Orchestrations().GetByID(orchestrationID)
 		return orchestration.State == state, nil
 	})
@@ -702,7 +702,7 @@ func (s *ProvisioningSuite) CreateUnsuspension(options RuntimeOptions) string {
 
 func (s *ProvisioningSuite) WaitForProvisioningState(operationID string, state domain.LastOperationState) {
 	var op *internal.Operation
-	err := wait.PollImmediate(pollingInterval, 2*time.Second, func() (done bool, err error) {
+	err := wait.PollUntilContextTimeout(context.Background(), pollingInterval, 2*time.Second, true, func(ctx context.Context) (done bool, err error) {
 		op, _ = s.storage.Operations().GetOperationByID(operationID)
 		return op.State == state, nil
 	})
@@ -710,7 +710,7 @@ func (s *ProvisioningSuite) WaitForProvisioningState(operationID string, state d
 }
 
 func (s *ProvisioningSuite) ProcessInfrastructureManagerProvisioningByRuntimeID(runtimeID string) {
-	err := wait.PollImmediate(pollingInterval, 2*time.Second, func() (bool, error) {
+	err := wait.PollUntilContextTimeout(context.Background(), pollingInterval, 2*time.Second, true, func(ctx context.Context) (bool, error) {
 		gardenerCluster := &unstructured.Unstructured{}
 		gardenerCluster.SetGroupVersionKind(steps.GardenerClusterGVK())
 		err := s.k8sKcpCli.Get(context.Background(), client.ObjectKey{
@@ -731,7 +731,7 @@ func (s *ProvisioningSuite) ProcessInfrastructureManagerProvisioningByRuntimeID(
 
 func (s *ProvisioningSuite) FinishProvisioningOperationByProvisioner(operationID string) {
 	var op *internal.Operation
-	err := wait.PollImmediate(pollingInterval, 2*time.Second, func() (done bool, err error) {
+	err := wait.PollUntilContextTimeout(context.Background(), pollingInterval, 2*time.Second, true, func(ctx context.Context) (done bool, err error) {
 		op, _ = s.storage.Operations().GetOperationByID(operationID)
 		if op.RuntimeID != "" {
 			return true, nil
@@ -748,7 +748,7 @@ func (s *ProvisioningSuite) FinishProvisioningOperationByProvisioner(operationID
 func (s *ProvisioningSuite) AssertProvisionerStartedProvisioning(operationID string) {
 	// wait until ProvisioningOperation reaches CreateRuntime step
 	var provisioningOp *internal.Operation
-	err := wait.Poll(pollingInterval, 2*time.Second, func() (bool, error) {
+	err := wait.PollUntilContextTimeout(context.Background(), pollingInterval, 2*time.Second, false, func(ctx context.Context) (bool, error) {
 		op, err := s.storage.Operations().GetOperationByID(operationID)
 		assert.NoError(s.t, err)
 		if op.ProvisionerOperationID != "" {
@@ -760,7 +760,7 @@ func (s *ProvisioningSuite) AssertProvisionerStartedProvisioning(operationID str
 	assert.NoError(s.t, err)
 
 	var status gqlschema.OperationStatus
-	err = wait.Poll(pollingInterval, 2*time.Second, func() (bool, error) {
+	err = wait.PollUntilContextTimeout(context.Background(), pollingInterval, 2*time.Second, false, func(ctx context.Context) (bool, error) {
 		status = s.provisionerClient.FindInProgressOperationByRuntimeIDAndType(provisioningOp.RuntimeID, gqlschema.OperationTypeProvision)
 		if status.ID != nil {
 			return true, nil
@@ -780,7 +780,7 @@ func (s *ProvisioningSuite) AssertAllStagesFinished(operationID string) {
 }
 
 func (s *ProvisioningSuite) finishOperationByProvisioner(operationType gqlschema.OperationType, runtimeID string) {
-	err := wait.Poll(pollingInterval, 2*time.Second, func() (bool, error) {
+	err := wait.PollUntilContextTimeout(context.Background(), pollingInterval, 2*time.Second, false, func(ctx context.Context) (bool, error) {
 		status := s.provisionerClient.FindInProgressOperationByRuntimeIDAndType(runtimeID, operationType)
 		if status.ID != nil {
 			s.provisionerClient.FinishProvisionerOperation(*status.ID, gqlschema.OperationStateSucceeded)

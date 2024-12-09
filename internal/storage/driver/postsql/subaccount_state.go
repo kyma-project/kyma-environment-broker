@@ -1,6 +1,7 @@
 package postsql
 
 import (
+	"context"
 	"fmt"
 
 	"github.com/kyma-project/kyma-environment-broker/internal"
@@ -26,7 +27,7 @@ func (s *SubaccountState) UpsertState(subaccountState internal.SubaccountState) 
 		return err
 	}
 	sess := s.NewWriteSession()
-	return wait.PollImmediate(defaultRetryInterval, defaultRetryTimeout, func() (bool, error) {
+	return wait.PollUntilContextTimeout(context.Background(), defaultRetryInterval, defaultRetryTimeout, true, func(ctx context.Context) (bool, error) {
 		err := sess.UpsertSubaccountState(state)
 		if err != nil {
 			return false, nil
@@ -44,7 +45,7 @@ func (s *SubaccountState) ListStates() ([]internal.SubaccountState, error) {
 	sess := s.NewReadSession()
 	states := make([]dbmodel.SubaccountStateDTO, 0)
 	var lastErr dberr.Error
-	err := wait.PollImmediate(defaultRetryInterval, defaultRetryTimeout, func() (bool, error) {
+	err := wait.PollUntilContextTimeout(context.Background(), defaultRetryInterval, defaultRetryTimeout, true, func(ctx context.Context) (bool, error) {
 		states, lastErr = sess.ListSubaccountStates()
 		if lastErr != nil {
 			if dberr.IsNotFound(lastErr) {

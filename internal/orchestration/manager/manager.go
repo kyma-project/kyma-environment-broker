@@ -331,7 +331,7 @@ func (m *orchestrationManager) waitForCompletion(o *internal.Orchestration, stra
 	var stats map[string]int
 	execIDs := []string{execID}
 
-	err = wait.PollImmediateInfinite(m.pollingInterval, func() (bool, error) {
+	err = wait.PollUntilContextCancel(context.Background(), m.pollingInterval, true, func(ctx context.Context) (bool, error) {
 		// check if orchestration wasn't canceled
 		o, err = m.orchestrationStorage.GetByID(orchestrationID)
 		switch {
@@ -372,12 +372,12 @@ func (m *orchestrationManager) waitForCompletion(o *internal.Orchestration, stra
 			ops, err := m.factory.RetryOperations(o.Parameters.RetryOperation.RetryOperations)
 			if err != nil {
 				// don't block the polling and cancel signal
-				log.Errorf("PollImmediateInfinite() while handling retrying operations: %v", err)
+				log.Errorf("PollUntilContextCancel() while handling retrying operations: %v", err)
 			}
 
 			result, o, _, err := m.NewOperationForPendingRetrying(o, orchestration.MaintenancePolicy{}, ops, false)
 			if err != nil {
-				log.Errorf("PollImmediateInfinite() while new operation for retrying instanceid : %v", err)
+				log.Errorf("PollUntilContextCancel() while new operation for retrying instanceid : %v", err)
 			}
 
 			err = strategy.Insert(execID, result, o.Parameters.Strategy)
@@ -395,10 +395,10 @@ func (m *orchestrationManager) waitForCompletion(o *internal.Orchestration, stra
 
 			err = m.orchestrationStorage.Update(*o)
 			if err != nil {
-				log.Errorf("PollImmediateInfinite() while updating orchestration: %v", err)
+				log.Errorf("PollUntilContextCancel() while updating orchestration: %v", err)
 				return false, nil
 			}
-			m.log.Infof("PollImmediateInfinite() while resuming %d operations for orchestration %s", len(result), o.OrchestrationID)
+			m.log.Infof("PollUntilContextCancel() while resuming %d operations for orchestration %s", len(result), o.OrchestrationID)
 		}
 
 		// don't wait for pending operations if orchestration was canceled
@@ -665,7 +665,7 @@ func (m *orchestrationManager) waitForStart(o *internal.Orchestration) ([]orches
 	pollingInterval := 5 * time.Minute
 	var operations, unnotified_operations []orchestration.RuntimeOperation
 	var filterRuntimes []orchestration.Runtime
-	err = wait.PollImmediateInfinite(pollingInterval, func() (bool, error) {
+	err = wait.PollUntilContextCancel(context.Background(), pollingInterval, true, func(ctx context.Context) (bool, error) {
 		//resolve operations, cancel non existent ones
 		operations, filterRuntimes, err = m.resolveOperations(o, maintenancePolicy)
 		if err != nil {

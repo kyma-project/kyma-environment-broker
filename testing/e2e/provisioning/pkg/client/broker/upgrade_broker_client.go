@@ -75,7 +75,7 @@ func (c *UpgradeClient) UpgradeRuntime(runtimeID string) (string, error) {
 
 func (c *UpgradeClient) FetchRuntimeID(instanceID string) (string, error) {
 	var runtimeID string
-	err := wait.Poll(3*time.Second, 1*time.Minute, func() (bool, error) {
+	err := wait.PollUntilContextTimeout(context.Background(), 3*time.Second, 1*time.Minute, false, func(ctx context.Context) (bool, error) {
 		id, permanentError, err := c.fetchRuntimeID(instanceID)
 		if err != nil && permanentError {
 			return true, errors.Wrap(err, "cannot fetch runtimeID")
@@ -123,7 +123,7 @@ func (c *UpgradeClient) fetchRuntimeID(instanceID string) (string, bool, error) 
 }
 
 func (c *UpgradeClient) AwaitOperationFinished(orchestrationID string, timeout time.Duration) error {
-	err := wait.Poll(10*time.Second, timeout, func() (bool, error) {
+	err := wait.PollUntilContextTimeout(context.Background(), 10*time.Second, timeout, false, func(ctx context.Context) (bool, error) {
 		permanentError, err := c.awaitOperationFinished(orchestrationID)
 		if err != nil && permanentError {
 			return true, errors.Wrap(err, "cannot fetch operation status")

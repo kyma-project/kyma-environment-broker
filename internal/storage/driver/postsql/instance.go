@@ -1,6 +1,7 @@
 package postsql
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"log/slog"
@@ -29,7 +30,7 @@ func (s *Instance) GetDistinctSubAccounts() ([]string, error) {
 		subAccounts []string
 		lastErr     dberr.Error
 	)
-	err := wait.PollImmediate(defaultRetryInterval, defaultRetryTimeout, func() (bool, error) {
+	err := wait.PollUntilContextTimeout(context.Background(), defaultRetryInterval, defaultRetryTimeout, true, func(ctx context.Context) (bool, error) {
 		subAccounts, lastErr = sess.GetDistinctSubAccounts()
 		if lastErr != nil {
 			return false, nil
@@ -80,7 +81,7 @@ func (s *Instance) InsertWithoutEncryption(instance internal.Instance) error {
 	}
 
 	sess := s.NewWriteSession()
-	return wait.PollImmediate(defaultRetryInterval, defaultRetryTimeout, func() (bool, error) {
+	return wait.PollUntilContextTimeout(context.Background(), defaultRetryInterval, defaultRetryTimeout, true, func(ctx context.Context) (bool, error) {
 		err := sess.InsertInstance(dto)
 		if err != nil {
 			return false, nil
@@ -149,7 +150,7 @@ func (s *Instance) UpdateWithoutEncryption(instance internal.Instance) (*interna
 		Provider:               string(instance.Provider),
 	}
 	var lastErr dberr.Error
-	err = wait.PollImmediate(defaultRetryInterval, defaultRetryTimeout, func() (bool, error) {
+	err = wait.PollUntilContextTimeout(context.Background(), defaultRetryInterval, defaultRetryTimeout, true, func(ctx context.Context) (bool, error) {
 		lastErr = sess.UpdateInstance(dto)
 
 		switch {
@@ -183,7 +184,7 @@ func (s *Instance) FindAllJoinedWithOperations(prct ...predicate.Predicate) ([]i
 		instances []dbmodel.InstanceWithOperationDTO
 		lastErr   dberr.Error
 	)
-	err := wait.PollImmediate(defaultRetryInterval, defaultRetryTimeout, func() (bool, error) {
+	err := wait.PollUntilContextTimeout(context.Background(), defaultRetryInterval, defaultRetryTimeout, true, func(ctx context.Context) (bool, error) {
 		instances, lastErr = sess.FindAllInstancesJoinedWithOperation(prct...)
 		if lastErr != nil {
 			return false, nil
@@ -251,7 +252,7 @@ func (s *Instance) FindAllInstancesForRuntimes(runtimeIdList []string) ([]intern
 	sess := s.NewReadSession()
 	var instances []dbmodel.InstanceDTO
 	var lastErr dberr.Error
-	err := wait.PollImmediate(defaultRetryInterval, defaultRetryTimeout, func() (bool, error) {
+	err := wait.PollUntilContextTimeout(context.Background(), defaultRetryInterval, defaultRetryTimeout, true, func(ctx context.Context) (bool, error) {
 		instances, lastErr = sess.FindAllInstancesForRuntimes(runtimeIdList)
 		if lastErr != nil {
 			if dberr.IsNotFound(lastErr) {
@@ -283,7 +284,7 @@ func (s *Instance) FindAllInstancesForSubAccounts(subAccountslist []string) ([]i
 		instances []dbmodel.InstanceDTO
 		lastErr   dberr.Error
 	)
-	err := wait.PollImmediate(defaultRetryInterval, defaultRetryTimeout, func() (bool, error) {
+	err := wait.PollUntilContextTimeout(context.Background(), defaultRetryInterval, defaultRetryTimeout, true, func(ctx context.Context) (bool, error) {
 		instances, lastErr = sess.FindAllInstancesForSubAccounts(subAccountslist)
 		if lastErr != nil {
 			return false, nil
@@ -309,7 +310,7 @@ func (s *Instance) FindAllInstancesForSubAccounts(subAccountslist []string) ([]i
 func (s *Instance) GetNumberOfInstancesForGlobalAccountID(globalAccountID string) (int, error) {
 	sess := s.NewReadSession()
 	var result int
-	err := wait.PollImmediate(defaultRetryInterval, defaultRetryTimeout, func() (bool, error) {
+	err := wait.PollUntilContextTimeout(context.Background(), defaultRetryInterval, defaultRetryTimeout, true, func(ctx context.Context) (bool, error) {
 		count, err := sess.GetNumberOfInstancesForGlobalAccountID(globalAccountID)
 		result = count
 		return err == nil, nil
@@ -322,7 +323,7 @@ func (s *Instance) GetByID(instanceID string) (*internal.Instance, error) {
 	sess := s.NewReadSession()
 	instanceDTO := dbmodel.InstanceDTO{}
 	var lastErr dberr.Error
-	err := wait.PollImmediate(defaultRetryInterval, defaultRetryTimeout, func() (bool, error) {
+	err := wait.PollUntilContextTimeout(context.Background(), defaultRetryInterval, defaultRetryTimeout, true, func(ctx context.Context) (bool, error) {
 		instanceDTO, lastErr = sess.GetInstanceByID(instanceID)
 		if lastErr != nil {
 			if dberr.IsNotFound(lastErr) {
@@ -452,7 +453,7 @@ func (s *Instance) Insert(instance internal.Instance) error {
 	}
 
 	sess := s.NewWriteSession()
-	return wait.PollImmediate(defaultRetryInterval, defaultRetryTimeout, func() (bool, error) {
+	return wait.PollUntilContextTimeout(context.Background(), defaultRetryInterval, defaultRetryTimeout, true, func(ctx context.Context) (bool, error) {
 		err := sess.InsertInstance(dto)
 		if err != nil {
 			return false, nil
@@ -468,7 +469,7 @@ func (s *Instance) Update(instance internal.Instance) (*internal.Instance, error
 		return nil, err
 	}
 	var lastErr dberr.Error
-	err = wait.PollImmediate(defaultRetryInterval, defaultRetryTimeout, func() (bool, error) {
+	err = wait.PollUntilContextTimeout(context.Background(), defaultRetryInterval, defaultRetryTimeout, true, func(ctx context.Context) (bool, error) {
 		lastErr = sess.UpdateInstance(dto)
 
 		switch {

@@ -105,7 +105,7 @@ func TestUpdater(t *testing.T) {
 		}(t)
 
 		// then
-		err = wait.PollImmediate(interval, timeout, func() (bool, error) {
+		err = wait.PollUntilContextTimeout(context.Background(), interval, timeout, true, func(ctx context.Context) (bool, error) {
 			actual, err := fakeK8sClient.Resource(gvr).Namespace(namespace).Get(context.TODO(), kymaCRName, metav1.GetOptions{})
 			require.NoError(t, err)
 			if actual.GetLabels()[betaEnabledLabelKey] == "true" {
@@ -149,7 +149,7 @@ func TestUpdater(t *testing.T) {
 		}(t)
 
 		// then
-		err = wait.PollImmediate(interval, timeout, func() (bool, error) {
+		err = wait.PollUntilContextTimeout(context.Background(), interval, timeout, true, func(ctx context.Context) (bool, error) {
 			actual, err := fakeK8sClient.Resource(gvr).Namespace(namespace).List(context.TODO(), metav1.ListOptions{LabelSelector: fmt.Sprintf(subaccountIdLabelFormat, subaccountID)})
 			assert.Len(t, actual.Items, 2)
 			require.NoError(t, err)
@@ -199,7 +199,7 @@ func TestUpdater(t *testing.T) {
 		}(t)
 
 		// then
-		err = wait.PollImmediate(interval, timeout, func() (bool, error) {
+		err = wait.PollUntilContextTimeout(context.Background(), interval, timeout, true, func(ctx context.Context) (bool, error) {
 			actual, err := fakeK8sClient.Resource(gvr).Namespace(namespace).List(context.TODO(), metav1.ListOptions{LabelSelector: fmt.Sprintf(subaccountIdLabelFormat, subaccountID)})
 			require.NoError(t, err)
 			assert.Len(t, actual.Items, 1)

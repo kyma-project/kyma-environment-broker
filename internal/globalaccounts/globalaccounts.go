@@ -106,7 +106,7 @@ func getKcpClient() (client.Client, error) {
 	kcpK8sConfig, err := k8scfg.GetConfig()
 	mapper, err := apiutil.NewDiscoveryRESTMapper(kcpK8sConfig)
 	if err != nil {
-		err = wait.Poll(time.Second, time.Minute, func() (bool, error) {
+		err = wait.PollUntilContextTimeout(context.Background(), time.Second, time.Minute, false, func(ctx context.Context) (bool, error) {
 			mapper, err = apiutil.NewDiscoveryRESTMapper(kcpK8sConfig)
 			if err != nil {
 				return false, nil

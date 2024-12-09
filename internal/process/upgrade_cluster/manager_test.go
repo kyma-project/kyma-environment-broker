@@ -106,7 +106,7 @@ func TestManager_Execute(t *testing.T) {
 				assert.NoError(t, err)
 				assert.Equal(t, tc.expectedDesc, strings.Trim(operation.Description, " "))
 			}
-			assert.NoError(t, wait.PollImmediate(20*time.Millisecond, 2*time.Second, func() (bool, error) {
+			assert.NoError(t, wait.PollUntilContextTimeout(context.Background(), 20*time.Millisecond, 2*time.Second, true, func(ctx context.Context) (bool, error) {
 				return len(eventCollector.Events) == tc.expectedNumberOfEvents, nil
 			}))
 		})

@@ -282,7 +282,7 @@ func (h *CollectingEventHandler) Publish(ctx context.Context, ev interface{}) {
 }
 
 func (h *CollectingEventHandler) WaitForEvents(t *testing.T, count int) {
-	assert.NoError(t, wait.PollImmediate(time.Millisecond, time.Second, func() (bool, error) {
+	assert.NoError(t, wait.PollUntilContextTimeout(context.Background(), time.Millisecond, time.Second, true, func(ctx context.Context) (bool, error) {
 		return len(h.StepsProcessed) == count, nil
 	}))
 }
@@ -319,7 +319,7 @@ func (rc *resultCollector) OnOperationSucceed(ctx context.Context, ev interface{
 }
 
 func (rc *resultCollector) WaitForState(t *testing.T, state domain.LastOperationState) {
-	assert.NoError(t, wait.PollImmediate(time.Millisecond, 5*time.Second, func() (bool, error) {
+	assert.NoError(t, wait.PollUntilContextTimeout(context.Background(), time.Millisecond, 5*time.Second, true, func(ctx context.Context) (bool, error) {
 		return rc.state == state, nil
 	}))
 }

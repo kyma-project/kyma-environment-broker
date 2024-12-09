@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"fmt"
 	"net/http"
 	"testing"
@@ -233,7 +234,7 @@ func TestClusterUpgradeUsesUpdatedAutoscalerParams(t *testing.T) {
 	oID := suite.DecodeOrchestrationID(orchestrationResp)
 
 	var upgradeKymaOperationID string
-	err := wait.PollImmediate(5*time.Millisecond, 400*time.Millisecond, func() (bool, error) {
+	err := wait.PollUntilContextTimeout(context.Background(), 5*time.Millisecond, 400*time.Millisecond, true, func(ctx context.Context) (bool, error) {
 		var err error
 		opResponse := suite.CallAPI("GET", fmt.Sprintf("orchestrations/%s/operations", oID), "")
 		upgradeKymaOperationID, err = suite.DecodeLastUpgradeKymaOperationIDFromOrchestration(opResponse)

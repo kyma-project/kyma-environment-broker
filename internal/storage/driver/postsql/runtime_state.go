@@ -1,6 +1,7 @@
 package postsql
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 
@@ -35,7 +36,7 @@ func (s *runtimeState) Insert(runtimeState internal.RuntimeState) error {
 		return err
 	}
 	sess := s.NewWriteSession()
-	return wait.PollImmediate(defaultRetryInterval, defaultRetryTimeout, func() (bool, error) {
+	return wait.PollUntilContextTimeout(context.Background(), defaultRetryInterval, defaultRetryTimeout, true, func(ctx context.Context) (bool, error) {
 		err := sess.InsertRuntimeState(state)
 		if err != nil {
 			return false, nil
@@ -48,7 +49,7 @@ func (s *runtimeState) ListByRuntimeID(runtimeID string) ([]internal.RuntimeStat
 	sess := s.NewReadSession()
 	states := make([]dbmodel.RuntimeStateDTO, 0)
 	var lastErr dberr.Error
-	err := wait.PollImmediate(defaultRetryInterval, defaultRetryTimeout, func() (bool, error) {
+	err := wait.PollUntilContextTimeout(context.Background(), defaultRetryInterval, defaultRetryTimeout, true, func(ctx context.Context) (bool, error) {
 		states, lastErr = sess.ListRuntimeStateByRuntimeID(runtimeID)
 		if lastErr != nil {
 			if dberr.IsNotFound(lastErr) {
@@ -72,7 +73,7 @@ func (s *runtimeState) GetByOperationID(operationID string) (internal.RuntimeSta
 	sess := s.NewReadSession()
 	state := dbmodel.RuntimeStateDTO{}
 	var lastErr dberr.Error
-	err := wait.PollImmediate(defaultRetryInterval, defaultRetryTimeout, func() (bool, error) {
+	err := wait.PollUntilContextTimeout(context.Background(), defaultRetryInterval, defaultRetryTimeout, true, func(ctx context.Context) (bool, error) {
 		state, lastErr = sess.GetRuntimeStateByOperationID(operationID)
 		if lastErr != nil {
 			if dberr.IsNotFound(lastErr) {
@@ -97,7 +98,7 @@ func (s *runtimeState) GetLatestByRuntimeID(runtimeID string) (internal.RuntimeS
 	sess := s.NewReadSession()
 	var state dbmodel.RuntimeStateDTO
 	var lastErr dberr.Error
-	err := wait.PollImmediate(defaultRetryInterval, defaultRetryTimeout, func() (bool, error) {
+	err := wait.PollUntilContextTimeout(context.Background(), defaultRetryInterval, defaultRetryTimeout, true, func(ctx context.Context) (bool, error) {
 		state, lastErr = sess.GetLatestRuntimeStateByRuntimeID(runtimeID)
 		if lastErr != nil {
 			if dberr.IsNotFound(lastErr) {
@@ -122,7 +123,7 @@ func (s *runtimeState) GetLatestWithOIDCConfigByRuntimeID(runtimeID string) (int
 	sess := s.NewReadSession()
 	var state dbmodel.RuntimeStateDTO
 	var lastErr dberr.Error
-	err := wait.PollImmediate(defaultRetryInterval, defaultRetryTimeout, func() (bool, error) {
+	err := wait.PollUntilContextTimeout(context.Background(), defaultRetryInterval, defaultRetryTimeout, true, func(ctx context.Context) (bool, error) {
 		state, lastErr = sess.GetLatestRuntimeStateWithOIDCConfigByRuntimeID(runtimeID)
 		if lastErr != nil {
 			if dberr.IsNotFound(lastErr) {
