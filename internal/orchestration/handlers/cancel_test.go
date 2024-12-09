@@ -1,13 +1,14 @@
 package handlers
 
 import (
+	"log/slog"
+	"os"
 	"testing"
 
 	"github.com/kyma-project/kyma-environment-broker/common/orchestration"
 	"github.com/kyma-project/kyma-environment-broker/internal"
 	"github.com/kyma-project/kyma-environment-broker/internal/fixture"
 	"github.com/kyma-project/kyma-environment-broker/internal/storage"
-	"github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -17,12 +18,15 @@ const (
 )
 
 func TestCanceler_CancelForID(t *testing.T) {
+	log := slog.New(slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{
+		Level: slog.LevelInfo,
+	}))
 	t.Run("should cancel orchestration", func(t *testing.T) {
 		s := storage.NewMemoryStorage()
 		err := s.Orchestrations().Insert(fixOrchestration())
 		require.NoError(t, err)
 
-		c := NewCanceler(s.Orchestrations(), logrus.New())
+		c := NewCanceler(s.Orchestrations(), log)
 
 		err = c.CancelForID(fixOrchestrationID)
 		require.NoError(t, err)
@@ -39,7 +43,7 @@ func TestCanceler_CancelForID(t *testing.T) {
 		err := s.Orchestrations().Insert(o)
 		require.NoError(t, err)
 
-		c := NewCanceler(s.Orchestrations(), logrus.New())
+		c := NewCanceler(s.Orchestrations(), log)
 
 		err = c.CancelForID(fixOrchestrationID)
 		require.NoError(t, err)
@@ -56,7 +60,7 @@ func TestCanceler_CancelForID(t *testing.T) {
 		err := s.Orchestrations().Insert(o)
 		require.NoError(t, err)
 
-		c := NewCanceler(s.Orchestrations(), logrus.New())
+		c := NewCanceler(s.Orchestrations(), log)
 
 		err = c.CancelForID(fixOrchestrationID)
 		require.NoError(t, err)
@@ -68,7 +72,7 @@ func TestCanceler_CancelForID(t *testing.T) {
 	})
 	t.Run("should return error when orchestration not found", func(t *testing.T) {
 		s := storage.NewMemoryStorage()
-		c := NewCanceler(s.Orchestrations(), logrus.New())
+		c := NewCanceler(s.Orchestrations(), log)
 
 		err := c.CancelForID(fixOrchestrationID)
 		assert.Error(t, err)
