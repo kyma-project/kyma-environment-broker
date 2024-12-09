@@ -28,6 +28,10 @@ func (s *CreateResourceNamesStep) Name() string {
 	return "Create_Resource_Names"
 }
 
+func (s *CreateResourceNamesStep) Dependency() kebError.Component {
+	return s.operationManager.Component()
+}
+
 // The runtimeID could be generated and set in two different steps so we separated the logic to generate the Kyma name in this step
 func (s *CreateResourceNamesStep) Run(operation internal.Operation, log *slog.Logger) (internal.Operation, time.Duration, error) {
 	if operation.RuntimeID == "" {

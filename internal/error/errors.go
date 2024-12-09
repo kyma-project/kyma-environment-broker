@@ -91,17 +91,16 @@ func (err LastError) SetStep(step string) LastError {
 	return err
 }
 
-func TimeoutError(msg, step string) LastError {
+func TimeoutError(msg, step string, component Component) LastError {
 	return LastError{
 		Message:   msg,
 		Reason:    KEBTimeOutCode,
-		Component: KEBDependency,
+		Component: component,
 		Step:      step,
 	}
 }
 
-// resolve error component and reason
-func ReasonForError(err error, step string) LastError {
+func ReasonForError(err error, step string, component Component) LastError {
 	if err == nil {
 		return LastError{}
 	}
@@ -156,13 +155,13 @@ func ReasonForError(err error, step string) LastError {
 	}
 
 	if strings.Contains(err.Error(), OperationTimeOutMsg) {
-		return TimeoutError(err.Error(), step)
+		return TimeoutError(err.Error(), step, component)
 	}
 
 	return LastError{
 		Message:   err.Error(),
 		Reason:    KEBInternalCode,
-		Component: KEBDependency,
+		Component: component,
 		Step:      step,
 	}
 }

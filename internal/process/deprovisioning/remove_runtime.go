@@ -38,6 +38,10 @@ func (s *RemoveRuntimeStep) Name() string {
 	return "Remove_Runtime"
 }
 
+func (s *RemoveRuntimeStep) Dependency() kebError.Component {
+	return s.operationManager.Component()
+}
+
 func (s *RemoveRuntimeStep) Run(operation internal.Operation, log *slog.Logger) (internal.Operation, time.Duration, error) {
 
 	if operation.KimDeprovisionsOnly != nil && *operation.KimDeprovisionsOnly {

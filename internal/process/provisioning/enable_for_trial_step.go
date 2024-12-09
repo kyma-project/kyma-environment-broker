@@ -5,6 +5,8 @@ import (
 	"log/slog"
 	"time"
 
+	kebError "github.com/kyma-project/kyma-environment-broker/internal/error"
+
 	"github.com/kyma-project/kyma-environment-broker/internal/process"
 
 	"github.com/kyma-project/kyma-environment-broker/internal"
@@ -25,6 +27,10 @@ func NewEnableForTrialPlanStep(step process.Step) EnableForTrialPlanStep {
 
 func (s EnableForTrialPlanStep) Name() string {
 	return s.step.Name()
+}
+
+func (s *EnableForTrialPlanStep) Dependency() kebError.Component {
+	return kebError.NotSet
 }
 
 func (s EnableForTrialPlanStep) Run(operation internal.Operation, log *slog.Logger) (internal.Operation, time.Duration, error) {

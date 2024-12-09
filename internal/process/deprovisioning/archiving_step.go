@@ -5,6 +5,8 @@ import (
 	"log/slog"
 	"time"
 
+	kebError "github.com/kyma-project/kyma-environment-broker/internal/error"
+
 	"github.com/kyma-project/kyma-environment-broker/internal"
 	"github.com/kyma-project/kyma-environment-broker/internal/archive"
 	"github.com/kyma-project/kyma-environment-broker/internal/storage"
@@ -33,6 +35,10 @@ func NewArchivingStep(operations storage.Operations, instances storage.Instances
 
 func (s *ArchivingStep) Name() string {
 	return "Archiving"
+}
+
+func (s *ArchivingStep) Dependency() kebError.Component {
+	return kebError.NotSet
 }
 
 func (s *ArchivingStep) Run(operation internal.Operation, logger *slog.Logger) (internal.Operation, time.Duration, error) {

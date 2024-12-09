@@ -42,6 +42,10 @@ func (s *InjectBTPOperatorCredentialsStep) Name() string {
 	return "Inject_BTP_Operator_Credentials"
 }
 
+func (s *InjectBTPOperatorCredentialsStep) Dependency() kebError.Component {
+	return s.operationManager.Component()
+}
+
 func (s *InjectBTPOperatorCredentialsStep) Run(operation internal.Operation, log *slog.Logger) (internal.Operation, time.Duration, error) {
 
 	if operation.RuntimeID == "" {

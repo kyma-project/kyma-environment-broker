@@ -46,6 +46,10 @@ func (s *CreateRuntimeWithoutKymaStep) Name() string {
 	return "Create_Runtime_Without_Kyma"
 }
 
+func (s *CreateRuntimeWithoutKymaStep) Dependency() kebError.Component {
+	return s.operationManager.Component()
+}
+
 func (s *CreateRuntimeWithoutKymaStep) Run(operation internal.Operation, log *slog.Logger) (internal.Operation, time.Duration, error) {
 	if s.kimConfig.IsDrivenByKimOnly(broker.PlanNamesMapping[operation.ProvisioningParameters.PlanID]) {
 		log.Info(fmt.Sprintf("KIM is driving the process for plan %s, skipping", broker.PlanNamesMapping[operation.ProvisioningParameters.PlanID]))

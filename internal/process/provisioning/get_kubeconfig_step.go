@@ -38,6 +38,10 @@ func (s *GetKubeconfigStep) Name() string {
 	return "Get_Kubeconfig"
 }
 
+func (s *GetKubeconfigStep) Dependency() kebError.Component {
+	return s.operationManager.Component()
+}
+
 func (s *GetKubeconfigStep) Run(operation internal.Operation, log *slog.Logger) (internal.Operation, time.Duration, error) {
 
 	if s.kimConfig.IsDrivenByKimOnly(broker.PlanNamesMapping[operation.ProvisioningParameters.PlanID]) {

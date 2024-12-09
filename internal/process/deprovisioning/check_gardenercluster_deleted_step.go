@@ -38,6 +38,10 @@ func (step *CheckGardenerClusterDeletedStep) Name() string {
 	return "Check_GardenerCluster_Deleted"
 }
 
+func (s *CheckGardenerClusterDeletedStep) Dependency() kebError.Component {
+	return s.operationManager.Component()
+}
+
 func (step *CheckGardenerClusterDeletedStep) Run(operation internal.Operation, logger *slog.Logger) (internal.Operation, time.Duration, error) {
 	namespace := operation.KymaResourceNamespace
 	if namespace == "" {

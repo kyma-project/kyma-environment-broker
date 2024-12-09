@@ -38,6 +38,10 @@ func (s *CheckStep) Name() string {
 	return "Check_Runtime"
 }
 
+func (s *CheckStep) Dependency() kebError.Component {
+	return s.operationManager.Component()
+}
+
 func (s *CheckStep) Run(operation internal.Operation, log *slog.Logger) (internal.Operation, time.Duration, error) {
 	if operation.RuntimeID == "" {
 		log.Error("Runtime ID is empty")

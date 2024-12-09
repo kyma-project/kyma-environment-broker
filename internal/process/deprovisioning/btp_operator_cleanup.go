@@ -52,6 +52,10 @@ func (s *BTPOperatorCleanupStep) Name() string {
 	return "BTPOperator_Cleanup"
 }
 
+func (s *BTPOperatorCleanupStep) Dependency() kebError.Component {
+	return s.operationManager.Component()
+}
+
 func (s *BTPOperatorCleanupStep) softDelete(operation internal.Operation, k8sClient client.Client, log *slog.Logger) (internal.Operation, time.Duration, error) {
 	namespaces := corev1.NamespaceList{}
 	if err := k8sClient.List(context.Background(), &namespaces); err != nil {

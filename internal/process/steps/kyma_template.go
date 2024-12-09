@@ -28,6 +28,10 @@ func (s *InitKymaTemplate) Name() string {
 	return "Init_Kyma_Template"
 }
 
+func (s *InitKymaTemplate) Dependency() kebError.Component {
+	return s.operationManager.Component()
+}
+
 func (s *InitKymaTemplate) Run(operation internal.Operation, logger *slog.Logger) (internal.Operation, time.Duration, error) {
 	tmpl := operation.InputCreator.Configuration().KymaTemplate
 	obj, err := DecodeKymaTemplate(tmpl)

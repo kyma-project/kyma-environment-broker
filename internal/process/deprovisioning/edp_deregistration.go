@@ -47,6 +47,10 @@ func (s *EDPDeregistrationStep) Name() string {
 	return "EDP_Deregistration"
 }
 
+func (s *EDPDeregistrationStep) Dependency() kebError.Component {
+	return s.operationManager.Component()
+}
+
 func (s *EDPDeregistrationStep) Run(operation internal.Operation, log *slog.Logger) (internal.Operation, time.Duration, error) {
 	instances, err := s.dbInstances.FindAllInstancesForSubAccounts([]string{operation.SubAccountID})
 	if err != nil {

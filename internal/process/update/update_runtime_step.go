@@ -37,6 +37,10 @@ func (s *UpdateRuntimeStep) Name() string {
 	return "Update_Runtime_Resource"
 }
 
+func (s *UpdateRuntimeStep) Dependency() kebError.Component {
+	return s.operationManager.Component()
+}
+
 func (s *UpdateRuntimeStep) Run(operation internal.Operation, log *slog.Logger) (internal.Operation, time.Duration, error) {
 	// Check if the runtime exists
 
