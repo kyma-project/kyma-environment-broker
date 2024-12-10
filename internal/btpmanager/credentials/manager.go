@@ -122,13 +122,11 @@ func (s *Manager) ReconcileAll(jobReconciliationDelay time.Duration, metrics *Me
 			updateNotDoneDueError++
 			continue
 		}
+		s.updateMetrics(metrics, instance, skipped)
 		if skipped {
 			s.logger.Info(fmt.Sprintf("skipping instance %s", instance.InstanceID))
 			skippedCount++
-			s.updateMetrics(metrics, instance, "skipped")
 			continue
-		} else {
-			s.updateMetrics(metrics, instance, "reconciled")
 		}
 		if updated {
 			s.logger.Info(fmt.Sprintf("update done for instance %s", instance.InstanceID))
@@ -149,9 +147,15 @@ func (s *Manager) ReconcileAll(jobReconciliationDelay time.Duration, metrics *Me
 	}, nil
 }
 
-func (s *Manager) updateMetrics(metrics *Metrics, instance internal.Instance, state string) {
+func (s *Manager) updateMetrics(metrics *Metrics, instance internal.Instance, runtimeSkipped bool) {
 	if metrics != nil {
-		metrics.skippedSecrets.With(prometheus.Labels{"runtime": instance.RuntimeID, "state": state}).Set(float64(1))
+		if runtimeSkipped {
+			metrics.skippedSecrets.With(prometheus.Labels{"runtime": instance.RuntimeID, "state": "skipped"}).Set(float64(1))
+			metrics.skippedSecrets.With(prometheus.Labels{"runtime": instance.RuntimeID, "state": "reconciled"}).Set(float64(0))
+		} else {
+			metrics.skippedSecrets.With(prometheus.Labels{"runtime": instance.RuntimeID, "state": "reconciled"}).Set(float64(1))
+			metrics.skippedSecrets.With(prometheus.Labels{"runtime": instance.RuntimeID, "state": "skipped"}).Set(float64(0))
+		}
 	}
 }
 
