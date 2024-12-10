@@ -40,18 +40,20 @@ Now, the unmarshalled request is validated, and the correctness of its structure
 
 After unmarshaling, the data is validated against the allowed parameter values, which includes checks of the expiration value range, database record existence, parameter mutations verification, expiration of existing bindings, and binding number limits. 
 The first check verifies the expiration value. The minimum and maximum limits are configurable and, by default, set to 600 and 7200 seconds, respectively. 
-Next, KEB checks if the binding already exists. The binding in the database is identified by the Kyma instance ID and the binding ID, which are passed as a path query parameter. If the binding exists, KEB checks the mutation of the parameters of the existing binding. 
+Next, KEB checks the status of the instance. The instance must be provisioned for the binding creation. 
+After checking the instance, KEB checks if the binding already exists. The binding in the database is identified by the Kyma instance ID and the binding ID, which are passed as a path query parameter. If the binding exists, KEB checks the mutation of the parameters of the existing binding. 
 The OSB API requires a request to create a binding to fail if an object has already been created and the request contains different parameters. 
-Next, if the found binding is not expired, KEB returns it in the response. At this point, the flow returns to the process's execution path, where no bindings exist in the database. 
+If the found binding is not expired, KEB returns it in the response. If the found binding is expired and exists in the database, KEB responds with an error and Bad Request status.
+This check is done in an implicit database insert statement. The query fails for expired but existing bindings because the primary key is defined on the instance and binding IDs, not the expiration date. This is the case until the cleanup job removes the expired binding from the database. 
+If the binding does not exist, the flow returns to the process's execution path, where no bindings exist in the database. 
 Whether the binding exists or not, the last step in the request validation is to verify the number of bindings. 
-Every instance is allowed to create a limited number of bindings. The limit is configurable and, by default, set to 10 non-expired bindings. 
-If the limit is not exceeded, KEB proceeds to the next phase of the process - binding creation.   
+Every instance is allowed to create a limited number of active bindings. The limit is configurable and, by default, set to 10 non-expired bindings. 
+If the limit is not exceeded and the binding does not exist in the database, KEB proceeds to the next phase of the process - binding creation.   
 
 
 ### Binding Creation
 
-In the binding creation phase, KEB creates a service binding object and generates a kubeconfig file with a JWT token. The kubeconfig file is valid for a specified period, defaulted or set in the request body. The first step in this part is to check again if an expired binding exists in the database. 
-This check is done in an implicit database insert statement. The query fails for expired but existing bindings because the primary key is defined on the instance and binding IDs, not the expiration date. This is the case until the expired binding is removed from the database by the cleanup job.  
+In the binding creation phase, KEB creates a service binding object and generates a kubeconfig file with a JWT token. The kubeconfig file is valid for a specified period, defaulted or set in the request body. 
 
 > [!NOTE]
 >  Expired bindings do not count towards the bindings limit. However, they prevent creating new bindings until they exist in the database. Only after they are removed by the cleanup job or manually can the binding be recreated again.
