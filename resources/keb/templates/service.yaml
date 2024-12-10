@@ -51,7 +51,7 @@ spec:
   type: {{ .Values.service.type }}
   ports:
     - name: http
-      port: {{ .Values.subaccountSync.metricsPort }}
+      port: {{ .Values.runtimeReconciler.metricsPort }}
       protocol: TCP
       targetPort: http
     - name: proxy-status
