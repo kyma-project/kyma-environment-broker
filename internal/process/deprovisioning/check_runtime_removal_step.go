@@ -40,6 +40,10 @@ func (s *CheckRuntimeRemovalStep) Name() string {
 	return "Check_Runtime_Removal"
 }
 
+func (s *CheckRuntimeRemovalStep) Dependency() kebError.Component {
+	return s.operationManager.Component()
+}
+
 func (s *CheckRuntimeRemovalStep) Run(operation internal.Operation, log *slog.Logger) (internal.Operation, time.Duration, error) {
 	if time.Since(operation.UpdatedAt) > s.timeout {
 		log.Info(fmt.Sprintf("operation has reached the time limit: %s updated operation time: %s", s.timeout, operation.UpdatedAt))

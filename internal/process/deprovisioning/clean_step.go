@@ -5,6 +5,8 @@ import (
 	"log/slog"
 	"time"
 
+	kebError "github.com/kyma-project/kyma-environment-broker/internal/error"
+
 	"github.com/kyma-project/kyma-environment-broker/internal"
 	"github.com/kyma-project/kyma-environment-broker/internal/storage"
 )
@@ -25,6 +27,10 @@ func NewCleanStep(operations storage.Operations, runtimeStates storage.RuntimeSt
 
 func (s *CleanStep) Name() string {
 	return "Clean"
+}
+
+func (s *CleanStep) Dependency() kebError.Component {
+	return kebError.NotSet
 }
 
 func (s *CleanStep) Run(operation internal.Operation, log *slog.Logger) (internal.Operation, time.Duration, error) {

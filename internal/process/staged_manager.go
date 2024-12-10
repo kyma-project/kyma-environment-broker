@@ -48,6 +48,7 @@ func (c StagedManagerConfiguration) String() string {
 type Step interface {
 	Name() string
 	Run(operation internal.Operation, logger *slog.Logger) (internal.Operation, time.Duration, error)
+	Dependency() kebError.Component
 }
 
 type StepCondition func(operation internal.Operation) bool
@@ -122,7 +123,7 @@ func (m *StagedManager) Execute(operationID string) (time.Duration, error) {
 	logOperation := m.log.With("operation", operationID, "instanceID", operation.InstanceID, "planID", operation.ProvisioningParameters.PlanID)
 	logOperation.Info(fmt.Sprintf("Start process operation steps for GlobalAccount=%s, ", operation.ProvisioningParameters.ErsContext.GlobalAccountID))
 	if time.Since(operation.CreatedAt) > m.operationTimeout {
-		timeoutErr := kebError.TimeoutError("operation has reached the time limit", string(kebError.KEBDependency))
+		timeoutErr := kebError.TimeoutError("operation has reached the time limit", string(kebError.KEBDependency), kebError.NotSet)
 		operation.LastError = timeoutErr
 		defer m.publishEventOnFail(operation, err)
 		logOperation.Info(fmt.Sprintf("operation has reached the time limit: operation was created at: %s", operation.CreatedAt))
@@ -232,7 +233,7 @@ func (m *StagedManager) runStep(step Step, operation internal.Operation, logger 
 		stepLogger := logger.With("step", step.Name(), "operation", processedOperation.ID)
 		processedOperation, backoff, err = step.Run(processedOperation, stepLogger)
 		if err != nil {
-			processedOperation.LastError = kebError.ReasonForError(err, step.Name())
+			processedOperation.LastError = kebError.ReasonForError(err, step.Name(), step.Dependency())
 			logOperation := stepLogger.With("error_component", processedOperation.LastError.GetComponent(), "error_reason", processedOperation.LastError.GetReason())
 			logOperation.Warn(fmt.Sprintf("Last error from step: %s", processedOperation.LastError.Error()))
 			// only save to storage, skip for alerting if error

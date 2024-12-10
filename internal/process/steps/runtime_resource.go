@@ -38,6 +38,10 @@ func (_ *checkRuntimeResource) Name() string {
 	return "Check_RuntimeResource"
 }
 
+func (s *checkRuntimeResource) Dependency() kebError.Component {
+	return s.operationManager.Component()
+}
+
 func (s *checkRuntimeResource) Run(operation internal.Operation, log *slog.Logger) (internal.Operation, time.Duration, error) {
 	if !s.kimConfig.IsDrivenByKim(broker.PlanNamesMapping[operation.ProvisioningParameters.PlanID]) {
 		log.Info("Only provisioner is controlling provisioning process, skipping")

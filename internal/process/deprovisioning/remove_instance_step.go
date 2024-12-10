@@ -37,6 +37,10 @@ func (s *RemoveInstanceStep) Name() string {
 	return "Remove_Instance"
 }
 
+func (s *RemoveInstanceStep) Dependency() kebError.Component {
+	return s.operationManager.Component()
+}
+
 func (s *RemoveInstanceStep) Run(operation internal.Operation, log *slog.Logger) (internal.Operation, time.Duration, error) {
 	var backoff time.Duration
 

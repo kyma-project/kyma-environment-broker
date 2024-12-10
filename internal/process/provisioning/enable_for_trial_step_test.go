@@ -4,6 +4,8 @@ import (
 	"testing"
 	"time"
 
+	kebError "github.com/kyma-project/kyma-environment-broker/internal/error"
+
 	"github.com/kyma-project/kyma-environment-broker/internal/fixture"
 
 	"github.com/kyma-project/kyma-environment-broker/internal"
@@ -19,6 +21,7 @@ func TestEnableForTrialPlanStepShouldSkip(t *testing.T) {
 
 	mockStep := new(automock.Step)
 	mockStep.On("Name").Return("Test")
+	mockStep.On("Dependency").Return(kebError.NotSet)
 	enableStep := NewEnableForTrialPlanStep(mockStep)
 
 	// When

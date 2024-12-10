@@ -53,6 +53,10 @@ func (_ *checkGardenerCluster) Name() string {
 	return "Check_GardenerCluster"
 }
 
+func (s *checkGardenerCluster) Dependency() kebError.Component {
+	return s.operationManager.Component()
+}
+
 func (s *checkGardenerCluster) Run(operation internal.Operation, log *slog.Logger) (internal.Operation, time.Duration, error) {
 	if s.kimConfig.IsDrivenByKim(broker.PlanNamesMapping[operation.ProvisioningParameters.PlanID]) {
 		log.Info(fmt.Sprintf("KIM is driving the process for plan %s, skipping", broker.PlanNamesMapping[operation.ProvisioningParameters.PlanID]))
@@ -104,6 +108,10 @@ type syncGardenerCluster struct {
 
 func (_ *syncGardenerCluster) Name() string {
 	return "Sync_GardenerCluster"
+}
+
+func (s *syncGardenerCluster) Dependency() kebError.Component {
+	return s.operationManager.Component()
 }
 
 func (s *syncGardenerCluster) Run(operation internal.Operation, log *slog.Logger) (internal.Operation, time.Duration, error) {

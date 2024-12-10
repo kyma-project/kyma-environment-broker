@@ -37,6 +37,10 @@ func (step *CheckRuntimeResourceDeletionStep) Name() string {
 	return "Check_RuntimeResource_Deletion"
 }
 
+func (s *CheckRuntimeResourceDeletionStep) Dependency() kebError.Component {
+	return s.operationManager.Component()
+}
+
 func (step *CheckRuntimeResourceDeletionStep) Run(operation internal.Operation, logger *slog.Logger) (internal.Operation, time.Duration, error) {
 	namespace := operation.KymaResourceNamespace
 	if namespace == "" {

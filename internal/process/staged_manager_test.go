@@ -9,6 +9,8 @@ import (
 	"testing"
 	"time"
 
+	kebError "github.com/kyma-project/kyma-environment-broker/internal/error"
+
 	"github.com/kyma-project/kyma-environment-broker/internal/process"
 
 	"github.com/kyma-project/kyma-environment-broker/internal/ptr"
@@ -188,6 +190,11 @@ type testingStep struct {
 func (s *testingStep) Name() string {
 	return s.name
 }
+
+func (s *testingStep) Dependency() kebError.Component {
+	return kebError.NotSet
+}
+
 func (s *testingStep) Run(operation internal.Operation, logger *slog.Logger) (internal.Operation, time.Duration, error) {
 	logger.Info("Running")
 	s.eventPublisher.Publish(context.Background(), s.name)
@@ -203,6 +210,11 @@ type onceRetryingStep struct {
 func (s *onceRetryingStep) Name() string {
 	return s.name
 }
+
+func (s *onceRetryingStep) Dependency() kebError.Component {
+	return kebError.NotSet
+}
+
 func (s *onceRetryingStep) Run(operation internal.Operation, logger *slog.Logger) (internal.Operation, time.Duration, error) {
 	s.eventPublisher.Publish(context.Background(), s.name)
 	if !s.processed {
@@ -221,6 +233,10 @@ type panicStep struct {
 
 func (s *panicStep) Name() string {
 	return s.name
+}
+
+func (s *panicStep) Dependency() kebError.Component {
+	return kebError.NotSet
 }
 
 func (s *panicStep) Run(operation internal.Operation, logger *slog.Logger) (internal.Operation, time.Duration, error) {

@@ -38,6 +38,10 @@ func (step *CheckKymaResourceDeletedStep) Name() string {
 	return "Check_Kyma_Resource_Deleted"
 }
 
+func (s *CheckKymaResourceDeletedStep) Dependency() kebError.Component {
+	return s.operationManager.Component()
+}
+
 func (step *CheckKymaResourceDeletedStep) Run(operation internal.Operation, logger *slog.Logger) (internal.Operation, time.Duration, error) {
 	if operation.KymaResourceNamespace == "" {
 		logger.Warn("namespace for Kyma resource not specified")

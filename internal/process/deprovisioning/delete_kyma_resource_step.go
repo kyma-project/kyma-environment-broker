@@ -48,6 +48,10 @@ func (step *DeleteKymaResourceStep) Name() string {
 	return "Delete_Kyma_Resource"
 }
 
+func (s *DeleteKymaResourceStep) Dependency() kebError.Component {
+	return s.operationManager.Component()
+}
+
 func (step *DeleteKymaResourceStep) Run(operation internal.Operation, logger *slog.Logger) (internal.Operation, time.Duration, error) {
 	// read the KymaTemplate from the config if needed
 	if operation.KymaTemplate == "" {

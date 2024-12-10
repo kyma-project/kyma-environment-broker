@@ -43,6 +43,10 @@ func (s *EDPRegistrationStep) Name() string {
 	return "EDP_Registration"
 }
 
+func (s *EDPRegistrationStep) Dependency() kebError.Component {
+	return s.operationManager.Component()
+}
+
 func (s *EDPRegistrationStep) Run(operation internal.Operation, log *slog.Logger) (internal.Operation, time.Duration, error) {
 	if operation.EDPCreated {
 		return operation, 0, nil

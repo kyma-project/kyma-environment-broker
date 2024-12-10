@@ -36,6 +36,10 @@ func (s *InitStep) Name() string {
 	return "Initialisation"
 }
 
+func (s *InitStep) Dependency() kebError.Component {
+	return s.operationManager.Component()
+}
+
 func (s *InitStep) Run(operation internal.Operation, log *slog.Logger) (internal.Operation, time.Duration, error) {
 	if time.Since(operation.CreatedAt) > s.operationTimeout {
 		log.Info(fmt.Sprintf("operation has reached the time limit: operation was created at: %s", operation.CreatedAt))

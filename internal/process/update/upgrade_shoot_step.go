@@ -49,6 +49,10 @@ func (s *UpgradeShootStep) Name() string {
 	return "Upgrade_Shoot"
 }
 
+func (s *UpgradeShootStep) Dependency() kebError.Component {
+	return s.operationManager.Component()
+}
+
 func (s *UpgradeShootStep) Run(operation internal.Operation, log *slog.Logger) (internal.Operation, time.Duration, error) {
 	if operation.RuntimeID == "" {
 		log.Info("Runtime does not exists, skipping a call to Provisioner")

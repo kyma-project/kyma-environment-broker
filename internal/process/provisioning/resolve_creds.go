@@ -38,6 +38,10 @@ func (s *ResolveCredentialsStep) Name() string {
 	return "Resolve_Target_Secret"
 }
 
+func (s *ResolveCredentialsStep) Dependency() kebError.Component {
+	return s.operationManager.Component()
+}
+
 func (s *ResolveCredentialsStep) Run(operation internal.Operation, log *slog.Logger) (internal.Operation, time.Duration, error) {
 	cloudProvider := operation.InputCreator.Provider()
 	effectiveRegion := getEffectiveRegionForSapConvergedCloud(operation.ProvisioningParameters.Parameters.Region)

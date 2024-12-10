@@ -38,6 +38,10 @@ func (s ReleaseSubscriptionStep) Name() string {
 	return "Release_Subscription"
 }
 
+func (s ReleaseSubscriptionStep) Dependency() kebError.Component {
+	return s.operationManager.Component()
+}
+
 func (s ReleaseSubscriptionStep) Run(operation internal.Operation, log *slog.Logger) (internal.Operation, time.Duration, error) {
 
 	planID := operation.ProvisioningParameters.PlanID

@@ -45,8 +45,16 @@ func (_ syncKubeconfig) Name() string {
 	return "Sync_Kubeconfig"
 }
 
+func (s syncKubeconfig) Dependency() kebError.Component {
+	return s.operationManager.Component()
+}
+
 func (_ deleteKubeconfig) Name() string {
 	return "Delete_Kubeconfig"
+}
+
+func (s deleteKubeconfig) Dependency() kebError.Component {
+	return s.operationManager.Component()
 }
 
 func (s syncKubeconfig) Run(o internal.Operation, log *slog.Logger) (internal.Operation, time.Duration, error) {

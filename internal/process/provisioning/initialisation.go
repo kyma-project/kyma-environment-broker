@@ -48,6 +48,10 @@ func (s *InitialisationStep) Name() string {
 	return "Provision_Initialization"
 }
 
+func (s *InitialisationStep) Dependency() kebError.Component {
+	return s.operationManager.Component()
+}
+
 func (s *InitialisationStep) Run(operation internal.Operation, log *slog.Logger) (internal.Operation, time.Duration, error) {
 	// create Provisioner InputCreator
 	log.Info(fmt.Sprintf("create provisioner input creator for %q plan ID", operation.ProvisioningParameters.PlanID))

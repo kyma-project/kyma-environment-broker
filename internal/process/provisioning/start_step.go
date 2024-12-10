@@ -35,6 +35,10 @@ func (s *StartStep) Name() string {
 	return "Starting"
 }
 
+func (s *StartStep) Dependency() kebError.Component {
+	return s.operationManager.Component()
+}
+
 func (s *StartStep) Run(operation internal.Operation, log *slog.Logger) (internal.Operation, time.Duration, error) {
 	if operation.State != orchestration.Pending {
 		return operation, 0, nil

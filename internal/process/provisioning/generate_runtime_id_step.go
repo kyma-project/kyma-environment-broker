@@ -33,6 +33,10 @@ func (s *GenerateRuntimeIDStep) Name() string {
 	return "Generate_Runtime_ID"
 }
 
+func (s *GenerateRuntimeIDStep) Dependency() kebError.Component {
+	return s.operationManager.Component()
+}
+
 func (s *GenerateRuntimeIDStep) Run(operation internal.Operation, log *slog.Logger) (internal.Operation, time.Duration, error) {
 	if operation.RuntimeID != "" {
 		log.Info(fmt.Sprintf("RuntimeID already set %s, skipping", operation.RuntimeID))

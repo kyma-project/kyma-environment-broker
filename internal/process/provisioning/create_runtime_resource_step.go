@@ -69,6 +69,10 @@ func (s *CreateRuntimeResourceStep) Name() string {
 	return "Create_Runtime_Resource"
 }
 
+func (s *CreateRuntimeResourceStep) Dependency() kebError.Component {
+	return s.operationManager.Component()
+}
+
 func (s *CreateRuntimeResourceStep) Run(operation internal.Operation, log *slog.Logger) (internal.Operation, time.Duration, error) {
 	if time.Since(operation.UpdatedAt) > CreateRuntimeTimeout {
 		log.Info(fmt.Sprintf("operation has reached the time limit: updated operation time: %s", operation.UpdatedAt))

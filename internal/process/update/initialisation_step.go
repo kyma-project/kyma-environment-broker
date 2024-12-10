@@ -37,6 +37,10 @@ func (s *InitialisationStep) Name() string {
 	return "Update_Kyma_Initialisation"
 }
 
+func (s *InitialisationStep) Dependency() kebError.Component {
+	return s.operationManager.Component()
+}
+
 func (s *InitialisationStep) Run(operation internal.Operation, log *slog.Logger) (internal.Operation, time.Duration, error) {
 	// Check concurrent deprovisioning (or suspension) operation (launched after target resolution)
 	// Terminate (preempt) upgrade immediately with succeeded
