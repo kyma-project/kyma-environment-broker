@@ -8,6 +8,8 @@ import (
 	"strings"
 	"time"
 
+	"github.com/prometheus/client_golang/prometheus"
+
 	"github.com/kyma-project/kyma-environment-broker/internal/kubeconfig"
 
 	"github.com/kyma-project/kyma-environment-broker/internal"
@@ -35,9 +37,10 @@ var (
 )
 
 const (
-	keb             = "kcp-kyma-environment-broker"
-	kcpNamespace    = "kcp-system"
-	instanceIdLabel = "kyma-project.io/instance-id"
+	keb                     = "kcp-kyma-environment-broker"
+	kcpNamespace            = "kcp-system"
+	instanceIdLabel         = "kyma-project.io/instance-id"
+	skipReconciliationLabel = "kyma-project.io/skip-reconciliation"
 )
 
 const (
@@ -103,20 +106,26 @@ func (s *Manager) MatchInstance(kymaName string) (*internal.Instance, error) {
 	return instance, err
 }
 
-func (s *Manager) ReconcileAll(jobReconciliationDelay time.Duration) (int, int, int, int, error) {
+func (s *Manager) ReconcileAll(jobReconciliationDelay time.Duration, metrics *Metrics) (ReconcileStats, error) {
 	instances, err := s.GetReconcileCandidates()
 	if err != nil {
-		return 0, 0, 0, 0, err
+		return ReconcileStats{}, err
 	}
 	s.logger.Info(fmt.Sprintf("processing %d instances as candidates", len(instances)))
 
-	updateDone, updateNotDoneDueError, updateNotDoneDueOkState := 0, 0, 0
+	updateDone, updateNotDoneDueError, updateNotDoneDueOkState, skippedCount := 0, 0, 0, 0
 	for _, instance := range instances {
 		time.Sleep(jobReconciliationDelay)
-		updated, err := s.ReconcileSecretForInstance(&instance)
+		updated, skipped, err := s.ReconcileSecretForInstance(&instance)
 		if err != nil {
 			s.logger.Error(fmt.Sprintf("while doing update, for instance: %s, %s", instance.InstanceID, err))
 			updateNotDoneDueError++
+			continue
+		}
+		s.updateMetrics(metrics, instance, skipped)
+		if skipped {
+			s.logger.Info(fmt.Sprintf("skipping instance %s", instance.InstanceID))
+			skippedCount++
 			continue
 		}
 		if updated {
@@ -127,9 +136,27 @@ func (s *Manager) ReconcileAll(jobReconciliationDelay time.Duration) (int, int, 
 			updateNotDoneDueOkState++
 		}
 	}
-	s.logger.Info(fmt.Sprintf("(runtime-reconciler summary) from total %d instances: %d are OK, update was needed (and done with success) for %d instances, errors occur for %d instances",
-		len(instances), updateNotDoneDueOkState, updateDone, updateNotDoneDueError))
-	return len(instances), updateDone, updateNotDoneDueError, updateNotDoneDueOkState, nil
+	s.logger.Info(fmt.Sprintf("runtime-reconciler summary: total %d instances: %d skipped, %d are OK, update was needed (and done with success) for %d instances, errors occured for %d instances",
+		len(instances), skippedCount, updateNotDoneDueOkState, updateDone, updateNotDoneDueError))
+	return ReconcileStats{
+		instanceCnt:     len(instances),
+		updatedCnt:      updateDone,
+		updateErrorsCnt: updateNotDoneDueError,
+		skippedCnt:      skippedCount,
+		notChangedCnt:   updateNotDoneDueOkState,
+	}, nil
+}
+
+func (s *Manager) updateMetrics(metrics *Metrics, instance internal.Instance, runtimeSkipped bool) {
+	if metrics != nil {
+		if runtimeSkipped {
+			metrics.skippedSecrets.With(prometheus.Labels{"runtime": instance.RuntimeID, "state": "skipped"}).Set(float64(1))
+			metrics.skippedSecrets.With(prometheus.Labels{"runtime": instance.RuntimeID, "state": "reconciled"}).Set(float64(0))
+		} else {
+			metrics.skippedSecrets.With(prometheus.Labels{"runtime": instance.RuntimeID, "state": "reconciled"}).Set(float64(1))
+			metrics.skippedSecrets.With(prometheus.Labels{"runtime": instance.RuntimeID, "state": "skipped"}).Set(float64(0))
+		}
+	}
 }
 
 func (s *Manager) GetReconcileCandidates() ([]internal.Instance, error) {
@@ -159,41 +186,46 @@ func (s *Manager) GetReconcileCandidates() ([]internal.Instance, error) {
 	return instancesWithinRuntime, nil
 }
 
-func (s *Manager) ReconcileSecretForInstance(instance *internal.Instance) (bool, error) {
+func (s *Manager) ReconcileSecretForInstance(instance *internal.Instance) (bool, bool, error) {
 	s.logger.Info(fmt.Sprintf("reconciliation of btp-manager secret started for %s", instance.InstanceID))
 
 	futureSecret, err := PrepareSecret(instance.Parameters.ErsContext.SMOperatorCredentials, instance.InstanceDetails.ServiceManagerClusterID)
 	if err != nil {
-		return false, err
+		return false, false, err
 	}
 
 	k8sClient, err := s.k8sClientProvider.K8sClientForRuntimeID(instance.RuntimeID)
 	if err != nil {
-		return false, fmt.Errorf("while getting k8sClient for %s : %w", instance.InstanceID, err)
+		return false, false, fmt.Errorf("while getting k8sClient for %s : %w", instance.InstanceID, err)
 	}
 	s.logger.Info(fmt.Sprintf("connected to skr with success for instance %s", instance.InstanceID))
 
 	currentSecret := &v1.Secret{}
 	err = k8sClient.Get(context.Background(), client.ObjectKey{Name: BtpManagerSecretName, Namespace: BtpManagerSecretNamespace}, currentSecret)
 	if err != nil && errors.IsNotFound(err) {
-		s.logger.Info(fmt.Sprintf("not found btp-manager secret on cluster for instance: %s", instance.InstanceID))
+		s.logger.Info(fmt.Sprintf("sap-btp-manager secret for instance: %s not found on cluster", instance.InstanceID))
 		if s.dryRun {
-			s.logger.Info(fmt.Sprintf("[dry-run] secret for instance %s would be created", instance.InstanceID))
+			s.logger.Info(fmt.Sprintf("[dry-run] secret for instance %s would be re-created", instance.InstanceID))
 		} else {
 			if err := CreateOrUpdateSecret(k8sClient, futureSecret, s.logger); err != nil {
-				s.logger.Error(fmt.Sprintf("while creating secret in cluster for %s", instance.InstanceID))
-				return false, err
+				s.logger.Error(fmt.Sprintf("while re-creating secret in cluster for %s", instance.InstanceID))
+				return false, false, err
 			}
-			s.logger.Info(fmt.Sprintf("created btp-manager secret on cluster for instance %s successfully", instance.InstanceID))
+			s.logger.Info(fmt.Sprintf("sap-btp-manager secret on cluster for instance %s re-created successfully", instance.InstanceID))
 		}
-		return true, nil
+		return true, false, nil
 	} else if err != nil {
-		return false, fmt.Errorf("while getting secret from cluster for instance %s : %s", instance.InstanceID, err)
+		return false, false, fmt.Errorf("while getting secret from cluster for instance %s : %s", instance.InstanceID, err)
+	}
+
+	if value, ok := currentSecret.Labels[skipReconciliationLabel]; ok && value == "true" {
+		s.logger.Info(fmt.Sprintf("skip reconciliation of sap-btp-manager secret for instance %s", instance.InstanceID))
+		return false, true, nil
 	}
 
 	notMatchingKeys, err := s.compareSecrets(currentSecret, futureSecret)
 	if err != nil {
-		return false, fmt.Errorf("validation of secrets failed with unexpected reason for instance: %s : %s", instance.InstanceID, err)
+		return false, false, fmt.Errorf("validation of secrets failed with unexpected reason for instance: %s : %s", instance.InstanceID, err)
 	} else if len(notMatchingKeys) > 0 {
 		s.logger.Info(fmt.Sprintf("btp-manager secret on cluster does not match for instance credentials in db : %s, incorrect values for keys: %s", instance.InstanceID, strings.Join(notMatchingKeys, ",")))
 		if s.dryRun {
@@ -201,16 +233,16 @@ func (s *Manager) ReconcileSecretForInstance(instance *internal.Instance) (bool,
 		} else {
 			if err := CreateOrUpdateSecret(k8sClient, futureSecret, s.logger); err != nil {
 				s.logger.Error(fmt.Sprintf("while updating secret in cluster for %s %s", instance.InstanceID, err))
-				return false, err
+				return false, false, err
 			}
 			s.logger.Info(fmt.Sprintf("btp-manager secret on cluster updated for %s to match state from instances db", instance.InstanceID))
 		}
-		return true, nil
+		return true, false, nil
 	} else {
 		s.logger.Info(fmt.Sprintf("instance %s OK: btp-manager secret on cluster match within expected data", instance.InstanceID))
 	}
 
-	return false, nil
+	return false, false, nil
 }
 
 func (s *Manager) compareSecrets(s1, s2 *v1.Secret) ([]string, error) {

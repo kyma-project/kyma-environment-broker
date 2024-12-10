@@ -24,3 +24,17 @@ spec:
   selector:
     matchLabels:
       app.kubernetes.io/name: subaccount-sync
+---
+apiVersion: security.istio.io/v1beta1
+kind: PeerAuthentication
+metadata:
+  labels:
+    app.kubernetes.io/name: runtime-reconciler
+  name: runtime-reconciler
+  namespace: kcp-system
+spec:
+  mtls:
+    mode: PERMISSIVE
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: runtime-reconciler

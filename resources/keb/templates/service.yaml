@@ -38,3 +38,24 @@ spec:
       protocol: TCP
   selector:
     app.kubernetes.io/name: subaccount-sync
+---
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    app.kubernetes.io/name: runtime-reconciler
+    argocd.argoproj.io/instance: keb
+  name: runtime-reconciler
+  namespace: kcp-system
+spec:
+  type: {{ .Values.service.type }}
+  ports:
+    - name: http
+      port: {{ .Values.runtimeReconciler.metricsPort }}
+      protocol: TCP
+      targetPort: http
+    - name: proxy-status
+      port: {{ .Values.global.istio.proxy.port }}
+      protocol: TCP
+  selector:
+    app.kubernetes.io/name: runtime-reconciler

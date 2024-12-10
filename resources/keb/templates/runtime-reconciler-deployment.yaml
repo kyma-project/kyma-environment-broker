@@ -34,6 +34,9 @@ spec:
           env:
             - name: RUNTIME_RECONCILER_DRY_RUN
               value: "{{ .Values.runtimeReconciler.dryRun }}"
+            - name: RUNTIME_RECONCILER_METRICS_PORT
+              value: {{ .Values.runtimeReconciler.metricsPort | quote }}
+
             - name: RUNTIME_RECONCILER_JOB_ENABLED
               value: "{{ .Values.runtimeReconciler.jobEnabled }}"
             - name: RUNTIME_RECONCILER_JOB_INTERVAL

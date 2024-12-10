@@ -11,6 +11,8 @@ import (
 	"testing"
 	"time"
 
+	"github.com/prometheus/client_golang/prometheus"
+
 	"k8s.io/apimachinery/pkg/api/errors"
 
 	uuid2 "github.com/google/uuid"
@@ -31,29 +33,29 @@ import (
 )
 
 const (
-	expectedTakenInstancesCount    = 3
+	expectedInstancesCount         = 3
 	expectedRejectedInstancesCount = 1
-	expectedAllInstancesCount      = expectedTakenInstancesCount + expectedRejectedInstancesCount
+	expectedAllInstancesCount      = expectedInstancesCount + expectedRejectedInstancesCount
 	credentialsLen                 = 16
 	jobReconciliationDelay         = time.Second * 0
 )
 
 var (
-	changedInstancesCount = int(math.Ceil(expectedTakenInstancesCount / 2))
+	changedInstancesCount = int(math.Ceil(expectedInstancesCount / 2))
 	testDataIndexes       = []int{0, 2}
 	random                = rand.New(rand.NewSource(1))
 )
 
 type Environment struct {
-	ctx          context.Context
-	skrs         []*envtest.Environment
-	skrRuntimeId map[string]string
-	kcp          client.Client
-	kebDb        storage.BrokerStorage
-	logs         *slog.Logger
-	manager      *Manager
-	job          *Job
-	t            *testing.T
+	ctx           context.Context
+	skrs          []*envtest.Environment
+	instanceIds   []string
+	kcp           client.Client
+	brokerStorage storage.BrokerStorage
+	logs          *slog.Logger
+	manager       *Manager
+	job           *Job
+	t             *testing.T
 }
 
 func InitEnvironment(ctx context.Context, t *testing.T) *Environment {
@@ -61,17 +63,17 @@ func InitEnvironment(ctx context.Context, t *testing.T) *Environment {
 		Level: slog.LevelInfo,
 	}))
 	newEnvironment := &Environment{
-		skrs:  make([]*envtest.Environment, 0),
-		kebDb: storage.NewMemoryStorage(),
-		logs:  logs,
-		ctx:   ctx,
-		t:     t,
+		skrs:          make([]*envtest.Environment, 0),
+		brokerStorage: storage.NewMemoryStorage(),
+		logs:          logs,
+		ctx:           ctx,
+		t:             t,
 	}
 
 	newEnvironment.createTestData()
-	newEnvironment.manager = NewManager(ctx, newEnvironment.kcp, newEnvironment.kebDb.Instances(), logs, false)
-	newEnvironment.job = NewJob(newEnvironment.manager, logs)
-	newEnvironment.assertThatCorrectNumberOfInstancesExists()
+	newEnvironment.manager = NewManager(ctx, newEnvironment.kcp, newEnvironment.brokerStorage.Instances(), logs, false)
+	newEnvironment.job = NewJob(newEnvironment.manager, logs, prometheus.NewRegistry(), "8081", "runtime-reconciler-test")
+	newEnvironment.assertNumberOfInstancesInDb(expectedAllInstancesCount)
 	return newEnvironment
 }
 
@@ -85,59 +87,215 @@ func TestBtpManagerReconciler(t *testing.T) {
 		ctx, cancel := context.WithCancel(context.Background())
 		environment := InitEnvironment(ctx, t)
 
-		t.Run("reconcile, when all secrets are not set", func(t *testing.T) {
+		t.Run("reconcile when all secrets are not set", func(t *testing.T) {
 			environment.assertAllSecretsNotExists()
-			takenInstancesCount, updateDone, updateNotDoneDueError, updateNotDoneDueOkState, err := environment.manager.ReconcileAll(jobReconciliationDelay)
+			stats, err := environment.manager.ReconcileAll(jobReconciliationDelay, nil)
 			assert.NoError(t, err)
-			assert.Equal(t, expectedTakenInstancesCount, takenInstancesCount)
-			assert.Equal(t, expectedTakenInstancesCount, updateDone)
-			assert.Equal(t, 0, updateNotDoneDueError+updateNotDoneDueOkState)
+			assert.Equal(t, expectedInstancesCount, stats.instanceCnt)
+			assert.Equal(t, expectedInstancesCount, stats.updatedCnt)
+			assert.Equal(t, 0, stats.updateErrorsCnt+stats.notChangedCnt)
+			assert.Zero(t, stats.skippedCnt)
 			environment.assertAllSecretDataAreSet()
 			environment.assureConsistency()
 		})
 
-		t.Run("reconcile, when all secrets are correct", func(t *testing.T) {
+		// TODO all following test cases depend on the previous one - remove this dependency
+		t.Run("reconcile when all secrets are correct", func(t *testing.T) {
 			environment.assertAllSecretDataAreSet()
-			takenInstancesCount, updateDone, updateNotDoneDueError, updateNotDoneDueOkState, err := environment.manager.ReconcileAll(jobReconciliationDelay)
+			stats, err := environment.manager.ReconcileAll(jobReconciliationDelay, nil)
 			assert.NoError(t, err)
-			environment.assertThatCorrectNumberOfInstancesExists()
-			assert.Equal(t, expectedTakenInstancesCount, takenInstancesCount)
-			assert.Equal(t, updateDone, 0)
-			assert.Equal(t, updateNotDoneDueError+updateNotDoneDueOkState, expectedTakenInstancesCount)
+			environment.assertNumberOfInstancesInDb(expectedAllInstancesCount)
+			assert.Equal(t, expectedInstancesCount, stats.instanceCnt)
+			assert.Equal(t, 0, stats.updatedCnt)
+			assert.Equal(t, expectedInstancesCount, stats.updateErrorsCnt+stats.notChangedCnt)
+			assert.Zero(t, stats.skippedCnt)
 			environment.assertAllSecretDataAreSet()
 			environment.assureConsistency()
 		})
 
-		t.Run("reconcile, when some secrets are incorrect (dynamic selected)", func(t *testing.T) {
+		t.Run("reconcile when some secrets are incorrect (randomly selected)", func(t *testing.T) {
 			skrs := environment.getSkrsForSimulateChange([]int{})
 			environment.simulateSecretChangeOnSkr(skrs)
 			environment.assertAllSecretDataAreSet()
-			takenInstancesCount, updateDone, updateNotDoneDueError, updateNotDoneDueOkState, err := environment.manager.ReconcileAll(jobReconciliationDelay)
+			stats, err := environment.manager.ReconcileAll(jobReconciliationDelay, nil)
 			assert.NoError(t, err)
-			environment.assertThatCorrectNumberOfInstancesExists()
-			assert.Equal(t, expectedTakenInstancesCount, takenInstancesCount)
-			assert.Equal(t, updateDone, len(skrs))
-			assert.Equal(t, updateNotDoneDueError+updateNotDoneDueOkState, expectedTakenInstancesCount-len(skrs))
+			environment.assertNumberOfInstancesInDb(expectedAllInstancesCount)
+			assert.Equal(t, expectedInstancesCount, stats.instanceCnt)
+			assert.Equal(t, len(skrs), stats.updatedCnt)
+			assert.Equal(t, expectedInstancesCount-len(skrs), stats.updateErrorsCnt+stats.notChangedCnt)
+			assert.Zero(t, stats.skippedCnt)
+
 			environment.assertAllSecretDataAreSet()
 			environment.assureConsistency()
 		})
 
-		t.Run("reconcile, when some secrets are incorrect (static selected)", func(t *testing.T) {
+		t.Run("reconcile when some secrets are incorrect (static selected)", func(t *testing.T) {
 			max := max(testDataIndexes)
-			assert.GreaterOrEqual(t, expectedTakenInstancesCount-1, max)
+			assert.GreaterOrEqual(t, expectedInstancesCount-1, max)
 			skrs := environment.getSkrsForSimulateChange(testDataIndexes)
 			environment.simulateSecretChangeOnSkr(skrs)
 			environment.assertAllSecretDataAreSet()
-			takenInstancesCount, updateDone, updateNotDoneDueError, updateNotDoneDueOkState, err := environment.manager.ReconcileAll(jobReconciliationDelay)
+			stats, err := environment.manager.ReconcileAll(jobReconciliationDelay, nil)
 			assert.NoError(t, err)
-			environment.assertThatCorrectNumberOfInstancesExists()
-			assert.Equal(t, expectedTakenInstancesCount, takenInstancesCount)
-			assert.Equal(t, updateDone, len(testDataIndexes))
-			assert.Equal(t, updateNotDoneDueError+updateNotDoneDueOkState, expectedTakenInstancesCount-len(testDataIndexes))
+			environment.assertNumberOfInstancesInDb(expectedAllInstancesCount)
+			assert.Equal(t, expectedInstancesCount, stats.instanceCnt)
+			assert.Equal(t, len(testDataIndexes), stats.updatedCnt)
+			assert.Equal(t, expectedInstancesCount-len(testDataIndexes), stats.updateErrorsCnt+stats.notChangedCnt)
+			assert.Zero(t, stats.skippedCnt)
+
 			environment.assertAllSecretDataAreSet()
 			environment.assureConsistency()
 		})
 
+		t.Run("when one secret is labeled, changed and relabelled", func(t *testing.T) {
+			labeledSkrIdx := 0
+			skrToBeSkipped := environment.getSkrsForSimulateChange([]int{labeledSkrIdx})
+			labeledSkrInstanceId := environment.instanceIds[labeledSkrIdx]
+
+			// when secret is labeled with skip-reconciliation
+			environment.labelSecret(skrToBeSkipped[0].Config, skipReconciliationLabel, "true")
+
+			maxIndex := max(testDataIndexes)
+			assert.GreaterOrEqual(t, expectedInstancesCount-1, maxIndex)
+			skrs := environment.getSkrsForSimulateChange(testDataIndexes)
+			environment.simulateSecretChangeOnSkr(skrs)
+			environment.assertAllSecretDataAreSet()
+
+			// when we reconcile
+			stats, err := environment.manager.ReconcileAll(jobReconciliationDelay, nil)
+			assert.NoError(t, err)
+
+			// then
+			environment.assertNumberOfInstancesInDb(expectedAllInstancesCount)
+
+			assert.Equal(t, expectedInstancesCount, stats.instanceCnt)
+			assert.Equal(t, len(testDataIndexes)-1, stats.updatedCnt)
+			assert.Equal(t, expectedInstancesCount-len(testDataIndexes), stats.updateErrorsCnt+stats.notChangedCnt)
+			assert.Equal(t, 1, stats.skippedCnt)
+
+			environment.assertAllSecretDataAreSet()
+			environment.assureConsistencyExceptSkippedInstance(labeledSkrInstanceId)
+
+			// when secret is updated by the user
+			environment.setClusterID(skrToBeSkipped[0].Config, "custom-cluster-id")
+
+			// when we reconcile again
+			stats, err = environment.manager.ReconcileAll(jobReconciliationDelay, nil)
+			assert.NoError(t, err)
+
+			environment.assertNumberOfInstancesInDb(expectedAllInstancesCount)
+
+			assert.Equal(t, expectedInstancesCount, stats.instanceCnt)
+			assert.Equal(t, 0, stats.updatedCnt)
+			assert.Equal(t, 1, stats.skippedCnt)
+			environment.assertClusterID(skrToBeSkipped[0].Config, "custom-cluster-id")
+
+			// then we remove the secret
+			environment.removeSecretFromSkr(skrToBeSkipped[0].Config)
+
+			// when we reconcile
+			stats, err = environment.manager.ReconcileAll(jobReconciliationDelay, nil)
+			assert.NoError(t, err)
+
+			// then
+			environment.assertNumberOfInstancesInDb(expectedAllInstancesCount)
+
+			assert.Equal(t, expectedInstancesCount, stats.instanceCnt)
+			assert.Equal(t, 1, stats.updatedCnt)
+			assert.Zero(t, stats.skippedCnt)
+
+			environment.assureConsistency()
+			environment.assertAllSecretDataAreSet()
+
+		})
+
+		t.Run("when one secret is labeled, changed then removed", func(t *testing.T) {
+
+			labeledSkrIdx := 0
+			skrToBeSkipped := environment.getSkrsForSimulateChange([]int{labeledSkrIdx})
+			labeledSkrInstanceId := environment.instanceIds[labeledSkrIdx]
+
+			// when secret is labeled with skip-reconciliation
+			environment.labelSecret(skrToBeSkipped[0].Config, skipReconciliationLabel, "true")
+
+			maxIndex := max(testDataIndexes)
+			assert.GreaterOrEqual(t, expectedInstancesCount-1, maxIndex)
+			skrs := environment.getSkrsForSimulateChange(testDataIndexes)
+			environment.simulateSecretChangeOnSkr(skrs)
+			environment.assertAllSecretDataAreSet()
+
+			// when we reconcile
+			stats, err := environment.manager.ReconcileAll(jobReconciliationDelay, nil)
+			assert.NoError(t, err)
+
+			// then
+			environment.assertNumberOfInstancesInDb(expectedAllInstancesCount)
+
+			assert.Equal(t, expectedInstancesCount, stats.instanceCnt)
+			assert.Equal(t, len(testDataIndexes)-1, stats.updatedCnt)
+			assert.Equal(t, expectedInstancesCount-len(testDataIndexes), stats.updateErrorsCnt+stats.notChangedCnt)
+			assert.Equal(t, 1, stats.skippedCnt)
+
+			environment.assertAllSecretDataAreSet()
+			environment.assureConsistencyExceptSkippedInstance(labeledSkrInstanceId)
+
+			// when secret is updated by the user
+			environment.setClusterID(skrToBeSkipped[0].Config, "custom-cluster-id")
+
+			// when we reconcile again
+			stats, err = environment.manager.ReconcileAll(jobReconciliationDelay, nil)
+			assert.NoError(t, err)
+
+			environment.assertNumberOfInstancesInDb(expectedAllInstancesCount)
+
+			assert.Equal(t, expectedInstancesCount, stats.instanceCnt)
+			assert.Equal(t, 0, stats.updatedCnt)
+			assert.Equal(t, 1, stats.skippedCnt)
+			environment.assertClusterID(skrToBeSkipped[0].Config, "custom-cluster-id")
+
+			// then we change the label
+			environment.labelSecret(skrToBeSkipped[0].Config, skipReconciliationLabel, "false")
+			// when we reconcile
+
+			stats, err = environment.manager.ReconcileAll(jobReconciliationDelay, nil)
+			assert.NoError(t, err)
+
+			// then
+			environment.assertNumberOfInstancesInDb(expectedAllInstancesCount)
+
+			assert.Equal(t, expectedInstancesCount, stats.instanceCnt)
+			assert.Equal(t, 1, stats.updatedCnt)
+			assert.Zero(t, stats.skippedCnt)
+
+			environment.assureConsistency()
+			environment.assertAllSecretDataAreSet()
+
+		})
+
+		t.Run("reconcile when one secret is labeled with skip-reconciliation set not to true", func(t *testing.T) {
+			labeledSkrIdx := 0
+			skrToBeSkipped := environment.getSkrsForSimulateChange([]int{labeledSkrIdx})
+			environment.labelSecret(skrToBeSkipped[0].Config, skipReconciliationLabel, "not-true")
+
+			maxIndex := max(testDataIndexes)
+			assert.GreaterOrEqual(t, expectedInstancesCount-1, maxIndex)
+			skrs := environment.getSkrsForSimulateChange(testDataIndexes)
+			environment.simulateSecretChangeOnSkr(skrs)
+			environment.assertAllSecretDataAreSet()
+
+			stats, err := environment.manager.ReconcileAll(jobReconciliationDelay, nil)
+			assert.NoError(t, err)
+
+			environment.assertNumberOfInstancesInDb(expectedAllInstancesCount)
+
+			assert.Equal(t, expectedInstancesCount, stats.instanceCnt)
+			assert.Equal(t, len(testDataIndexes), stats.updatedCnt)
+			assert.Equal(t, expectedInstancesCount-len(testDataIndexes), stats.updateErrorsCnt+stats.notChangedCnt)
+			assert.Equal(t, 0, stats.skippedCnt)
+
+			environment.assertAllSecretDataAreSet()
+			environment.assureConsistency()
+		})
 		t.Cleanup(func() {
 			cancel()
 		})
@@ -279,16 +437,16 @@ func TestManager(t *testing.T) {
 }
 
 func (e *Environment) createTestData() {
-	e.createClusters(expectedTakenInstancesCount)
-	e.skrRuntimeId = make(map[string]string, 0)
-	for i := 0; i < expectedTakenInstancesCount; i++ {
+	e.createClusters(expectedInstancesCount)
+	e.instanceIds = make([]string, expectedInstancesCount)
+	for i := 0; i < expectedInstancesCount; i++ {
 		cfg := *e.skrs[i].Config
 		clusterId := cfg.Host
 		kubeConfig := restConfigToString(cfg)
 		require.NotEmpty(e.t, kubeConfig)
 		instanceId, runtimeId := e.createInstance(kubeConfig, generateServiceManagerCredentials(), clusterId)
+		e.instanceIds[i] = instanceId
 		e.createKyma(runtimeId, instanceId)
-		e.skrRuntimeId[clusterId] = runtimeId
 	}
 
 	for i := 0; i < expectedRejectedInstancesCount; i++ {
@@ -386,7 +544,7 @@ func (e *Environment) createInstance(kubeConfig string, credentials *internal.Se
 	}
 	instance.Reconcilable = reconcilable
 
-	err = e.kebDb.Instances().Insert(*instance)
+	err = e.brokerStorage.Instances().Insert(*instance)
 	require.NoError(e.t, err)
 	return instanceId.String(), runtimeId
 }
@@ -430,6 +588,41 @@ func (e *Environment) changeSecret(restCfg *rest.Config) {
 	e.updateSecretToSkr(restCfg, skrSecret)
 }
 
+func (e *Environment) setClusterID(restCfg *rest.Config, value string) {
+	skrSecret := e.getSecretFromSkr(restCfg)
+	require.NotNil(e.t, skrSecret)
+	skrSecret.Data[secretClusterId] = []byte(value)
+	e.updateSecretToSkr(restCfg, skrSecret)
+}
+
+func (e *Environment) assertClusterID(restCfg *rest.Config, value string) {
+	skrSecret := e.getSecretFromSkr(restCfg)
+	require.NotNil(e.t, skrSecret)
+	assert.Equal(e.t, value, string(skrSecret.Data[secretClusterId]))
+	e.updateSecretToSkr(restCfg, skrSecret)
+}
+
+func (e *Environment) labelSecret(restCfg *rest.Config, key, value string) {
+	skrSecret := e.getSecretFromSkr(restCfg)
+	require.NotNil(e.t, skrSecret)
+	skrSecret.Labels = make(map[string]string, 1)
+	skrSecret.Labels[key] = value
+	e.updateSecretToSkr(restCfg, skrSecret)
+}
+
+func (e *Environment) removeSecretFromSkr(restCfg *rest.Config) {
+	skrClient, err := client.New(restCfg, client.Options{})
+	require.NoError(e.t, err)
+	secret := &apicorev1.Secret{
+		ObjectMeta: metav1.ObjectMeta{
+			Namespace: BtpManagerSecretNamespace,
+			Name:      BtpManagerSecretName,
+		}}
+
+	err = skrClient.Delete(context.Background(), secret)
+	require.NoError(e.t, err)
+}
+
 func (e *Environment) getSecretFromSkr(restCfg *rest.Config) *apicorev1.Secret {
 	skrClient, err := client.New(restCfg, client.Options{})
 	require.NoError(e.t, err)
@@ -457,7 +650,7 @@ func (e *Environment) getSkrsForSimulateChange(skrIndexes []int) []*envtest.Envi
 			if len(indexSet) == changedInstancesCount {
 				break
 			}
-			random := rand.Intn(expectedTakenInstancesCount)
+			random := rand.Intn(expectedInstancesCount)
 			_, ok := indexSet[random]
 			if !ok {
 				indexSet[random] = struct{}{}
@@ -481,12 +674,6 @@ func (e *Environment) simulateSecretChangeOnSkr(skrs []*envtest.Environment) {
 	for _, skr := range skrs {
 		e.changeSecret(skr.Config)
 	}
-}
-
-func (e *Environment) findRuntimeIdForSkr(host string) string {
-	value, ok := e.skrRuntimeId[host]
-	require.True(e.t, ok)
-	return value
 }
 
 func (e *Environment) assertAllSecretsNotExists() {
@@ -518,11 +705,11 @@ func (e *Environment) assertAllSecretDataAreSet() {
 }
 
 func (e *Environment) assureConsistency() {
-	takenInstances, err := e.manager.GetReconcileCandidates()
+	instances, err := e.manager.GetReconcileCandidates()
 	require.NoError(e.t, err)
-	require.Equal(e.t, expectedTakenInstancesCount, len(takenInstances))
+	require.Equal(e.t, expectedInstancesCount, len(instances))
 
-	for _, instance := range takenInstances {
+	for _, instance := range instances {
 		skrK8sCfg, credentials := []byte(instance.Parameters.Parameters.Kubeconfig), instance.Parameters.ErsContext.SMOperatorCredentials
 		restCfg, err := clientcmd.RESTConfigFromKubeConfig(skrK8sCfg)
 		require.NoError(e.t, err)
@@ -537,13 +724,36 @@ func (e *Environment) assureConsistency() {
 	}
 }
 
-func (e *Environment) assureThatClusterIsInIncorrectState() int {
-	takenInstances, err := e.manager.GetReconcileCandidates()
+// TODO extend to make it more flexible
+func (e *Environment) assureConsistencyExceptSkippedInstance(instanceID string) {
+	instances, err := e.manager.GetReconcileCandidates()
 	require.NoError(e.t, err)
-	require.Equal(e.t, expectedTakenInstancesCount, len(takenInstances))
+	require.Equal(e.t, expectedInstancesCount, len(instances))
+
+	for _, instance := range instances {
+		if instance.InstanceID != instanceID {
+			skrK8sCfg, credentials := []byte(instance.Parameters.Parameters.Kubeconfig), instance.Parameters.ErsContext.SMOperatorCredentials
+			restCfg, err := clientcmd.RESTConfigFromKubeConfig(skrK8sCfg)
+			require.NoError(e.t, err)
+			skrSecret := e.getSecretFromSkr(restCfg)
+			require.NotNil(e.t, skrSecret)
+
+			require.Equal(e.t, getString(skrSecret.Data, secretClientId), credentials.ClientID)
+			require.Equal(e.t, getString(skrSecret.Data, secretClientSecret), credentials.ClientSecret)
+			require.Equal(e.t, getString(skrSecret.Data, secretSmUrl), credentials.ServiceManagerURL)
+			require.Equal(e.t, getString(skrSecret.Data, secretTokenUrl), credentials.URL)
+			require.Equal(e.t, getString(skrSecret.Data, secretClusterId), instance.InstanceDetails.ServiceManagerClusterID)
+		}
+	}
+}
+
+func (e *Environment) assureThatClusterIsInIncorrectState() int {
+	instances, err := e.manager.GetReconcileCandidates()
+	require.NoError(e.t, err)
+	require.Equal(e.t, expectedInstancesCount, len(instances))
 
 	incorrectClusters := 0
-	for _, instance := range takenInstances {
+	for _, instance := range instances {
 		require.NoError(e.t, err)
 		skrK8sCfg, credentials := []byte(instance.Parameters.Parameters.Kubeconfig), instance.Parameters.ErsContext.SMOperatorCredentials
 		restCfg, err := clientcmd.RESTConfigFromKubeConfig(skrK8sCfg)
@@ -572,10 +782,10 @@ func (e *Environment) assureThatClusterIsInIncorrectState() int {
 	return incorrectClusters
 }
 
-func (e *Environment) assertThatCorrectNumberOfInstancesExists() {
-	instances, _, _, err := e.kebDb.Instances().List(dbmodel.InstanceFilter{})
+func (e *Environment) assertNumberOfInstancesInDb(expectedInstancesInDbCount int) {
+	instances, _, _, err := e.brokerStorage.Instances().List(dbmodel.InstanceFilter{})
 	require.NoError(e.t, err)
-	require.Equal(e.t, expectedAllInstancesCount, len(instances))
+	require.Equal(e.t, expectedInstancesInDbCount, len(instances))
 }
 
 func restConfigToString(restConfig rest.Config) string {

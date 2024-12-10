@@ -7,6 +7,9 @@ import (
 	"os"
 	"time"
 
+	"github.com/prometheus/client_golang/prometheus"
+	"github.com/prometheus/client_golang/prometheus/collectors"
+
 	btpmanager "github.com/kyma-project/kyma-environment-broker/internal/btpmanager/credentials"
 	"github.com/kyma-project/kyma-environment-broker/internal/events"
 	"github.com/kyma-project/kyma-environment-broker/internal/storage"
@@ -22,7 +25,10 @@ type Config struct {
 	JobEnabled             bool   `envconfig:"default=false"`
 	JobInterval            int    `envconfig:"default=24"`
 	JobReconciliationDelay string `envconfig:"default=0s"`
+	MetricsPort            string `envconfig:"default=8081"`
 }
+
+const AppPrefix = "runtime_reconciler"
 
 func main() {
 	ctx, cancel := context.WithCancel(context.Background())
@@ -48,13 +54,16 @@ func main() {
 		fatalOnError(err, logs)
 	}
 
-	logs.Info(fmt.Sprintf("runtime-listener running as dry run? %t", cfg.DryRun))
+	logs.Info(fmt.Sprintf("runtime-reconciler running as dry run? %t", cfg.DryRun))
 
 	cipher := storage.NewEncrypter(cfg.Database.SecretKey)
 
 	db, _, err := storage.NewFromConfig(cfg.Database, cfg.Events, cipher)
 	fatalOnError(err, logs)
 	logs.Info("runtime-reconciler connected to database")
+
+	metricsRegistry := prometheus.NewRegistry()
+	metricsRegistry.MustRegister(collectors.NewGoCollector())
 
 	kcpK8sConfig, err := config.GetConfig()
 	fatalOnError(err, logs)
@@ -65,7 +74,7 @@ func main() {
 
 	logs.Info(fmt.Sprintf("job enabled? %t", cfg.JobEnabled))
 	if cfg.JobEnabled {
-		btpManagerCredentialsJob := btpmanager.NewJob(btpOperatorManager, logs)
+		btpManagerCredentialsJob := btpmanager.NewJob(btpOperatorManager, logs, metricsRegistry, cfg.MetricsPort, AppPrefix)
 		logs.Info(fmt.Sprintf("runtime-reconciler created job every %d m", cfg.JobInterval))
 		btpManagerCredentialsJob.Start(cfg.JobInterval, jobReconciliationDelay)
 	}
