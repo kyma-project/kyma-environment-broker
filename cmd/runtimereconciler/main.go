@@ -54,7 +54,7 @@ func main() {
 		fatalOnError(err, logs)
 	}
 
-	logs.Info(fmt.Sprintf("runtime-listener running as dry run? %t", cfg.DryRun))
+	logs.Info(fmt.Sprintf("runtime-reconciler running as dry run? %t", cfg.DryRun))
 
 	cipher := storage.NewEncrypter(cfg.Database.SecretKey)
 
