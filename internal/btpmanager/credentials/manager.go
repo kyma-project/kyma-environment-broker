@@ -3,11 +3,12 @@ package btpmgrcreds
 import (
 	"context"
 	"fmt"
-	"github.com/prometheus/client_golang/prometheus"
 	"log/slog"
 	"reflect"
 	"strings"
 	"time"
+
+	"github.com/prometheus/client_golang/prometheus"
 
 	"github.com/kyma-project/kyma-environment-broker/internal/kubeconfig"
 
