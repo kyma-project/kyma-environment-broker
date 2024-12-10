@@ -1,6 +1,7 @@
 package broker
 
 import (
+	"context"
 	"fmt"
 	"time"
 
@@ -24,7 +25,7 @@ func NewDefaultPoller() Poller {
 }
 
 func (p *DefaultPoller) Invoke(logic func() (bool, error)) error {
-	return wait.PollImmediate(p.PollInterval, p.PollTimeout, func() (bool, error) {
+	return wait.PollUntilContextTimeout(context.Background(), p.PollInterval, p.PollTimeout, true, func(ctx context.Context) (bool, error) {
 		return logic()
 	})
 }
@@ -52,7 +53,7 @@ type TimerPoller struct {
 
 func (p *TimerPoller) Invoke(logic func() (bool, error)) error {
 	var start = time.Now()
-	result := wait.PollImmediate(p.PollInterval, p.PollTimeout, func() (bool, error) {
+	result := wait.PollUntilContextTimeout(context.Background(), p.PollInterval, p.PollTimeout, true, func(ctx context.Context) (bool, error) {
 		return logic()
 	})
 	p.Log(fmt.Sprintf("Waiting for the logic execution took: %v", time.Since(start)))

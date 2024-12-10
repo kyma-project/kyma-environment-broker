@@ -56,7 +56,7 @@ func TestPubSub(t *testing.T) {
 	time.Sleep(1 * time.Millisecond)
 
 	// then
-	assert.NoError(t, wait.PollImmediate(20*time.Millisecond, 2*time.Second, func() (bool, error) {
+	assert.NoError(t, wait.PollUntilContextTimeout(context.Background(), 20*time.Millisecond, 2*time.Second, true, func(ctx context.Context) (bool, error) {
 		return containsA(gotEventAList1, eventA{msg: "first event"}) &&
 			containsA(gotEventAList1, eventA{msg: "third event"}) &&
 			containsA(gotEventAList2, eventA{msg: "first event"}) &&

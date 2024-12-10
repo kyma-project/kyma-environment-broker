@@ -12,7 +12,7 @@ COPY go.sum go.sum
 RUN CGO_ENABLED=0 go build -o /bin/subaccount-sync cmd/subaccountsync/main.go
 
 # Get latest CA certs
-FROM alpine:3.20.3 as certs
+FROM alpine:3.21.0 as certs
 RUN apk --update add ca-certificates
 
 # Final image

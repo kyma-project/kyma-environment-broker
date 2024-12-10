@@ -787,7 +787,7 @@ func createEnvTest(t *testing.T) (envtest.Environment, *rest.Config, client.Clie
 	}
 	var errEnvTest error
 	var config *rest.Config
-	err := wait.Poll(500*time.Millisecond, 5*time.Second, func() (done bool, err error) {
+	err := wait.PollUntilContextTimeout(context.Background(), 500*time.Millisecond, 5*time.Second, false, func(ctx context.Context) (done bool, err error) {
 		config, errEnvTest = env.Start()
 		if err != nil {
 			t.Logf("envtest could not start, retrying: %s", errEnvTest.Error())

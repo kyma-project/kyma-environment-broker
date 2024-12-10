@@ -27,7 +27,7 @@ func NewSecretClient(client client.Client, log logrus.FieldLogger) *SecretClient
 }
 
 func (c *SecretClient) Create(secret v1.Secret) error {
-	err := wait.PollImmediate(time.Second, timeout, func() (bool, error) {
+	err := wait.PollUntilContextTimeout(context.Background(), time.Second, timeout, true, func(ctx context.Context) (bool, error) {
 		err := c.client.Create(context.Background(), &secret)
 		if err != nil {
 			if apiErrors.IsAlreadyExists(err) {
@@ -53,7 +53,7 @@ func (c *SecretClient) Create(secret v1.Secret) error {
 }
 
 func (c *SecretClient) Delete(secret v1.Secret) error {
-	err := wait.PollImmediate(time.Second, timeout, func() (bool, error) {
+	err := wait.PollUntilContextTimeout(context.Background(), time.Second, timeout, true, func(ctx context.Context) (bool, error) {
 		err := c.client.Delete(context.Background(), &secret)
 		if err != nil {
 			if apiErrors.IsNotFound(err) {

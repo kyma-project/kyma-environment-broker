@@ -117,7 +117,7 @@ func (c *Client) ProvisionRuntime(kymaVersion string) (string, error) {
 
 	provisionURL := fmt.Sprintf("%s/service_instances/%s", c.baseURL(), c.InstanceID())
 	response := provisionResponse{}
-	err = wait.Poll(time.Second, time.Second*5, func() (bool, error) {
+	err = wait.PollUntilContextTimeout(context.Background(), time.Second, time.Second*5, false, func(ctx context.Context) (bool, error) {
 		err := c.executeRequest(http.MethodPut, provisionURL, http.StatusAccepted, bytes.NewReader(requestByte), &response)
 		if err != nil {
 			c.log.Warn(errors.Wrap(err, "while executing request").Error())
@@ -143,7 +143,7 @@ func (c *Client) DeprovisionRuntime() (string, error) {
 
 	response := provisionResponse{}
 	c.log.Infof("Deprovisioning Runtime [ID: %s, NAME: %s]", c.instanceID, c.clusterName)
-	err := wait.Poll(time.Second, time.Second*5, func() (bool, error) {
+	err := wait.PollUntilContextTimeout(context.Background(), time.Second, time.Second*5, false, func(ctx context.Context) (bool, error) {
 		err := c.executeRequest(http.MethodDelete, deprovisionURL, http.StatusAccepted, nil, &response)
 		if err != nil {
 			c.log.Warn(errors.Wrap(err, "while executing request").Error())
@@ -170,7 +170,7 @@ func (c *Client) SuspendRuntime() error {
 	suspensionURL := fmt.Sprintf(format, c.baseURL(), c.instanceID)
 
 	suspensionResponse := instanceDetailsResponse{}
-	err = wait.Poll(time.Second, time.Second*5, func() (bool, error) {
+	err = wait.PollUntilContextTimeout(context.Background(), time.Second, time.Second*5, false, func(ctx context.Context) (bool, error) {
 		err := c.executeRequest(http.MethodPatch, suspensionURL, http.StatusOK, bytes.NewReader(requestByte), &suspensionResponse)
 		if err != nil {
 			c.log.Warn(errors.Wrap(err, "while executing request").Error())
@@ -197,7 +197,7 @@ func (c *Client) UnsuspendRuntime() error {
 	suspensionURL := fmt.Sprintf(format, c.baseURL(), c.InstanceID())
 
 	unsuspensionResponse := instanceDetailsResponse{}
-	err = wait.Poll(time.Second, time.Second*5, func() (bool, error) {
+	err = wait.PollUntilContextTimeout(context.Background(), time.Second, time.Second*5, false, func(ctx context.Context) (bool, error) {
 		err := c.executeRequest(http.MethodPatch, suspensionURL, http.StatusOK, bytes.NewReader(requestByte), &unsuspensionResponse)
 		if err != nil {
 			c.log.Warn(errors.Wrap(err, "while executing request").Error())
@@ -245,7 +245,7 @@ func (c *Client) AwaitOperationSucceeded(operationID string, timeout time.Durati
 	c.log.Infof("Waiting for operation at most %s", timeout.String())
 
 	response := lastOperationResponse{}
-	err := wait.Poll(5*time.Minute, timeout, func() (bool, error) {
+	err := wait.PollUntilContextTimeout(context.Background(), 5*time.Minute, timeout, false, func(ctx context.Context) (bool, error) {
 		err := c.executeRequest(http.MethodGet, lastOperationURL, http.StatusOK, nil, &response)
 		if err != nil {
 			c.log.Warn(errors.Wrap(err, "while executing request").Error())
@@ -280,7 +280,7 @@ func (c *Client) FetchDashboardURL() (string, error) {
 
 	c.log.Info("Fetching the Runtime's dashboard URL")
 	response := instanceDetailsResponse{}
-	err := wait.Poll(time.Second, time.Second*5, func() (bool, error) {
+	err := wait.PollUntilContextTimeout(context.Background(), time.Second, time.Second*5, false, func(ctx context.Context) (bool, error) {
 		err := c.executeRequest(http.MethodGet, instanceDetailsURL, http.StatusOK, nil, &response)
 		if err != nil {
 			c.log.Warn(errors.Wrap(err, "while executing request").Error())
