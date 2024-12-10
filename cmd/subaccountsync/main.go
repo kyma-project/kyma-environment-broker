@@ -13,10 +13,8 @@ import (
 	"github.com/prometheus/client_golang/prometheus/collectors"
 
 	"github.com/kyma-project/kyma-environment-broker/internal/events"
-	"github.com/kyma-project/kyma-environment-broker/internal/storage"
-	"github.com/sirupsen/logrus"
-
 	"github.com/kyma-project/kyma-environment-broker/internal/kymacustomresource"
+	"github.com/kyma-project/kyma-environment-broker/internal/storage"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 
 	kebConfig "github.com/kyma-project/kyma-environment-broker/internal/config"
@@ -49,9 +47,10 @@ func main() {
 
 	logLevel := new(slog.LevelVar)
 	logLevel.Set(cfg.GetLogLevel())
-	slog.SetDefault(slog.New(slog.NewJSONHandler(os.Stdout, &slog.HandlerOptions{
+	logger := slog.New(slog.NewJSONHandler(os.Stdout, &slog.HandlerOptions{
 		Level: logLevel,
-	})).With("service", "subaccount-sync"))
+	})).With("service", "subaccount-sync")
+	slog.SetDefault(logger)
 
 	slog.Info(fmt.Sprintf("Configuration: events window size:%s, events sync interval:%s, accounts sync interval: %s, storage sync interval: %s, queue sleep interval: %s",
 		cfg.EventsWindowSize, cfg.EventsWindowInterval, cfg.AccountsSyncInterval, cfg.StorageSyncInterval, cfg.SyncQueueSleepInterval))
@@ -63,9 +62,9 @@ func main() {
 		cfg.EventsWindowSize = cfg.EventsWindowInterval
 	}
 
-	// create config provider - provider still uses logrus logger
+	// create config provider
 	configProvider := kebConfig.NewConfigProvider(
-		kebConfig.NewConfigMapReader(ctx, cli, logrus.WithField("service", "storage"), cfg.RuntimeConfigurationConfigMapName),
+		kebConfig.NewConfigMapReader(ctx, cli, logger.With("component", "config-map-reader"), cfg.RuntimeConfigurationConfigMapName),
 		kebConfig.NewConfigMapKeysValidator(),
 		kebConfig.NewConfigMapConverter())
 

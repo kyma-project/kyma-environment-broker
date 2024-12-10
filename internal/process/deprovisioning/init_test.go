@@ -9,7 +9,6 @@ import (
 	"github.com/kyma-project/kyma-environment-broker/internal/fixture"
 	"github.com/kyma-project/kyma-environment-broker/internal/storage"
 	"github.com/pivotal-cf/brokerapi/v8/domain"
-	"github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -23,7 +22,6 @@ const (
 
 func TestInitStep_happyPath(t *testing.T) {
 	// given
-	log := logrus.New()
 	memoryStorage := storage.NewMemoryStorage()
 	prepareProvisionedInstance(t, memoryStorage)
 	dOp := prepareDeprovisioningOperation(t, memoryStorage, orchestration.Pending)
@@ -31,7 +29,7 @@ func TestInitStep_happyPath(t *testing.T) {
 	svc := NewInitStep(memoryStorage.Operations(), memoryStorage.Instances(), 90*time.Second)
 
 	// when
-	op, d, err := svc.Run(dOp, log)
+	op, d, err := svc.Run(dOp, fixLogger())
 
 	// then
 	assert.Equal(t, domain.InProgress, op.State)
@@ -43,7 +41,6 @@ func TestInitStep_happyPath(t *testing.T) {
 
 func TestInitStep_existingUpdatingOperation(t *testing.T) {
 	// given
-	log := logrus.New()
 	memoryStorage := storage.NewMemoryStorage()
 	prepareProvisionedInstance(t, memoryStorage)
 	uOp := fixture.FixUpdatingOperation("uop-id", testInstanceID)
@@ -55,7 +52,7 @@ func TestInitStep_existingUpdatingOperation(t *testing.T) {
 	svc := NewInitStep(memoryStorage.Operations(), memoryStorage.Instances(), 90*time.Second)
 
 	// when
-	op, d, err := svc.Run(dOp, log)
+	op, d, err := svc.Run(dOp, fixLogger())
 
 	// then
 	assert.Equal(t, orchestration.Pending, string(op.State))

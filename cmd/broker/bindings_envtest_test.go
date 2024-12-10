@@ -6,8 +6,10 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"log/slog"
 	"net/http"
 	"net/http/httptest"
+	"os"
 	"testing"
 	"time"
 
@@ -75,6 +77,10 @@ func TestCreateBindingEndpoint(t *testing.T) {
 
 	// Given
 	//// logger
+	log := slog.New(slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{
+		Level: slog.LevelDebug,
+	}))
+
 	logs := logrus.New()
 	logs.SetLevel(logrus.DebugLevel)
 	logs.SetFormatter(&logrus.JSONFormatter{
@@ -200,7 +206,7 @@ func TestCreateBindingEndpoint(t *testing.T) {
 		MaxBindingsCount:     maxBindingsCount,
 	}
 
-	publisher := event.NewPubSub(logs)
+	publisher := event.NewPubSub(log)
 
 	//// api handler
 	bindEndpoint := broker.NewBind(*bindingCfg, db, logs, skrK8sClientProvider, skrK8sClientProvider, publisher)

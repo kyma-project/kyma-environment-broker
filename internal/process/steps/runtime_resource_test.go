@@ -13,7 +13,6 @@ import (
 
 	"github.com/kyma-project/kyma-environment-broker/internal/fixture"
 	"github.com/kyma-project/kyma-environment-broker/internal/storage"
-	"github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/assert"
 	"k8s.io/client-go/kubernetes/scheme"
 	"sigs.k8s.io/controller-runtime/pkg/client/fake"
@@ -38,7 +37,7 @@ func TestCheckRuntimeResource_RunWhenReady(t *testing.T) {
 	assert.NoError(t, err)
 
 	// when
-	_, backoff, err := step.Run(operation, logrus.New())
+	_, backoff, err := step.Run(operation, fixLogger())
 
 	// then
 	assert.NoError(t, err)
@@ -67,7 +66,7 @@ func TestCheckRuntimeResource_RunWhenNotReady_OperationFail(t *testing.T) {
 	assert.NoError(t, err)
 
 	// when
-	op, backoff, err := step.Run(operation, logrus.New())
+	op, backoff, err := step.Run(operation, fixLogger())
 
 	// then
 	assert.Error(t, err)
@@ -97,7 +96,7 @@ func TestCheckRuntimeResource_RunWhenNotReady_Retry(t *testing.T) {
 	assert.NoError(t, err)
 
 	// when
-	_, backoff, err := step.Run(operation, logrus.New())
+	_, backoff, err := step.Run(operation, fixLogger())
 
 	// then
 	assert.NoError(t, err)

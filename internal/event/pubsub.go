@@ -2,10 +2,10 @@ package event
 
 import (
 	"context"
+	"fmt"
+	"log/slog"
 	"reflect"
 	"sync"
-
-	"github.com/sirupsen/logrus"
 )
 
 type Handler = func(ctx context.Context, ev interface{}) error
@@ -21,12 +21,12 @@ type Subscriber interface {
 // PubSub implements a simple event broker which allows to send event across the application.
 type PubSub struct {
 	mu  sync.Mutex
-	log logrus.FieldLogger
+	log *slog.Logger
 
 	handlers map[reflect.Type][]Handler
 }
 
-func NewPubSub(log logrus.FieldLogger) *PubSub {
+func NewPubSub(log *slog.Logger) *PubSub {
 	return &PubSub{
 		log:      log,
 		handlers: make(map[reflect.Type][]Handler),
@@ -41,7 +41,7 @@ func (b *PubSub) Publish(ctx context.Context, ev interface{}) {
 			go func(h Handler) {
 				err := h(ctx, ev)
 				if err != nil {
-					b.log.Errorf("error while calling pubsub event handler: %s", err.Error())
+					b.log.Error(fmt.Sprintf("error while calling pubsub event handler: %s", err.Error()))
 				}
 			}(handler)
 		}

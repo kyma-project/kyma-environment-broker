@@ -2,8 +2,11 @@ package btpmgrcreds
 
 import (
 	"context"
+	"fmt"
+	"log/slog"
 	"math"
 	"math/rand"
+	"os"
 	"sync"
 	"testing"
 	"time"
@@ -15,7 +18,6 @@ import (
 	"github.com/kyma-project/kyma-environment-broker/internal"
 	"github.com/kyma-project/kyma-environment-broker/internal/storage"
 	"github.com/kyma-project/kyma-environment-broker/internal/storage/dbmodel"
-	"github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	apicorev1 "k8s.io/api/core/v1"
@@ -48,15 +50,16 @@ type Environment struct {
 	skrRuntimeId map[string]string
 	kcp          client.Client
 	kebDb        storage.BrokerStorage
-	logs         *logrus.Logger
+	logs         *slog.Logger
 	manager      *Manager
 	job          *Job
 	t            *testing.T
 }
 
 func InitEnvironment(ctx context.Context, t *testing.T) *Environment {
-	logs := logrus.New()
-	logs.SetFormatter(&logrus.JSONFormatter{})
+	logs := slog.New(slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{
+		Level: slog.LevelInfo,
+	}))
 	newEnvironment := &Environment{
 		skrs:  make([]*envtest.Environment, 0),
 		kebDb: storage.NewMemoryStorage(),
@@ -142,8 +145,11 @@ func TestBtpManagerReconciler(t *testing.T) {
 }
 
 func TestManager(t *testing.T) {
+	logger := slog.New(slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{
+		Level: slog.LevelInfo,
+	}))
 	manager := Manager{
-		logger: logrus.New(),
+		logger: logger,
 	}
 	t.Run("compare secrets with all different data", func(t *testing.T) {
 		current, err := PrepareSecret(&internal.ServiceManagerOperatorCredentials{
@@ -303,12 +309,12 @@ func (e *Environment) createClusters(skrCount int) {
 		}
 		cfg, err := testEnv.Start()
 		if err != nil {
-			e.logs.Errorf("%e", err)
+			e.logs.Error(fmt.Sprintf("%v", err))
 			return
 		}
 		k8sClient, err := client.New(cfg, client.Options{})
 		if err != nil {
-			e.logs.Errorf("%e", err)
+			e.logs.Error(fmt.Sprintf("%v", err))
 			return
 		}
 		e.kcp = k8sClient
@@ -317,7 +323,7 @@ func (e *Environment) createClusters(skrCount int) {
 		namespace.ObjectMeta = metav1.ObjectMeta{Name: kcpNamespace}
 		err = e.kcp.Create(context.Background(), namespace)
 		if err != nil {
-			e.logs.Errorf("while creating KCP cluster: %e", err)
+			e.logs.Error(fmt.Sprintf("while creating KCP cluster: %v", err))
 			return
 		}
 	}()
@@ -330,7 +336,7 @@ func (e *Environment) createClusters(skrCount int) {
 			testEnv := &envtest.Environment{}
 			_, err := testEnv.Start()
 			if err != nil {
-				e.logs.Errorf("while creating SKR cluster %e", err)
+				e.logs.Error(fmt.Sprintf("while creating SKR cluster %v", err))
 				return
 			}
 

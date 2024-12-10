@@ -2,19 +2,19 @@ package handlers
 
 import (
 	"fmt"
+	"log/slog"
 	"time"
 
 	orchestrationExt "github.com/kyma-project/kyma-environment-broker/common/orchestration"
 	"github.com/kyma-project/kyma-environment-broker/internal/storage"
-	"github.com/sirupsen/logrus"
 )
 
 type Canceler struct {
 	orchestrations storage.Orchestrations
-	log            logrus.FieldLogger
+	log            *slog.Logger
 }
 
-func NewCanceler(orchestrations storage.Orchestrations, logger logrus.FieldLogger) *Canceler {
+func NewCanceler(orchestrations storage.Orchestrations, logger *slog.Logger) *Canceler {
 	return &Canceler{
 		orchestrations: orchestrations,
 		log:            logger,

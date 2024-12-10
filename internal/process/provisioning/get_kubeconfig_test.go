@@ -8,7 +8,6 @@ import (
 	"github.com/kyma-project/kyma-environment-broker/internal/fixture"
 	"github.com/kyma-project/kyma-environment-broker/internal/provisioner"
 	"github.com/kyma-project/kyma-environment-broker/internal/storage"
-	"github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	apiextensionsv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
@@ -46,7 +45,7 @@ func TestGetKubeconfigStep(t *testing.T) {
 		require.NoError(t, err)
 
 		// when
-		processedOperation, d, err := step.Run(operation, logrus.New())
+		processedOperation, d, err := step.Run(operation, fixLogger())
 
 		// then
 		require.NoError(t, err)
@@ -70,7 +69,7 @@ func TestGetKubeconfigStep(t *testing.T) {
 		require.NoError(t, err)
 
 		// when
-		processedOperation, d, err := step.Run(operation, logrus.New())
+		processedOperation, d, err := step.Run(operation, fixLogger())
 
 		// then
 		require.NoError(t, err)
@@ -92,7 +91,7 @@ func TestGetKubeconfigStep(t *testing.T) {
 		require.NoError(t, err)
 
 		// when
-		processedOperation, d, err := step.Run(operation, logrus.New())
+		processedOperation, d, err := step.Run(operation, fixLogger())
 
 		// then
 		require.NoError(t, err)
@@ -115,7 +114,7 @@ func TestGetKubeconfigStep(t *testing.T) {
 		require.NoError(t, err)
 
 		// when
-		_, _, err = step.Run(operation, logrus.New())
+		_, _, err = step.Run(operation, fixLogger())
 
 		// then
 		require.ErrorContains(t, err, "Runtime ID is empty")

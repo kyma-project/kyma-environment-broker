@@ -3,8 +3,10 @@ package provisioner
 import (
 	"context"
 	"fmt"
+	"log/slog"
 	"net/http"
 	"net/http/httptest"
+	"os"
 	"testing"
 
 	"github.com/99designs/gqlgen/handler"
@@ -12,7 +14,6 @@ import (
 	schema "github.com/kyma-project/control-plane/components/provisioner/pkg/gqlschema"
 	kebError "github.com/kyma-project/kyma-environment-broker/internal/error"
 	"github.com/kyma-project/kyma-environment-broker/internal/ptr"
-	"github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -42,8 +43,11 @@ func TestClient_ProvisionRuntime(t *testing.T) {
 		tr := &testResolver{t: t, runtime: &testRuntime{}}
 		testServer := fixHTTPServer(tr)
 		defer testServer.Close()
+		log := slog.New(slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{
+			Level: slog.LevelInfo,
+		}))
 
-		client := NewProvisionerClient(testServer.URL, false, logrus.New())
+		client := NewProvisionerClient(testServer.URL, false, log)
 
 		// When
 		status, err := client.ProvisionRuntime(testAccountID, testSubAccountID, fixProvisionRuntimeInput())
@@ -62,8 +66,11 @@ func TestClient_ProvisionRuntime(t *testing.T) {
 		tr := &testResolver{t: t, runtime: &testRuntime{}}
 		testServer := fixHTTPServer(tr)
 		defer testServer.Close()
+		log := slog.New(slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{
+			Level: slog.LevelInfo,
+		}))
 
-		client := NewProvisionerClient(testServer.URL, false, logrus.New())
+		client := NewProvisionerClient(testServer.URL, false, log)
 
 		// When
 		status, err := client.ProvisionRuntime(testAccountID, testSubAccountID, fixProvisionRuntimeInputWithoutDnsConfig())
@@ -82,8 +89,11 @@ func TestClient_ProvisionRuntime(t *testing.T) {
 		tr := &testResolver{t: t, runtime: &testRuntime{}, failed: true}
 		testServer := fixHTTPServer(tr)
 		defer testServer.Close()
+		log := slog.New(slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{
+			Level: slog.LevelInfo,
+		}))
 
-		client := NewProvisionerClient(testServer.URL, false, logrus.New())
+		client := NewProvisionerClient(testServer.URL, false, log)
 
 		// When
 		status, err := client.ProvisionRuntime(testAccountID, testSubAccountID, fixProvisionRuntimeInput())
@@ -102,8 +112,11 @@ func TestClient_DeprovisionRuntime(t *testing.T) {
 		tr := &testResolver{t: t, runtime: &testRuntime{}}
 		testServer := fixHTTPServer(tr)
 		defer testServer.Close()
+		log := slog.New(slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{
+			Level: slog.LevelInfo,
+		}))
 
-		client := NewProvisionerClient(testServer.URL, false, logrus.New())
+		client := NewProvisionerClient(testServer.URL, false, log)
 		operation, err := client.ProvisionRuntime(testAccountID, testSubAccountID, fixProvisionRuntimeInput())
 		assert.NoError(t, err)
 
@@ -122,8 +135,11 @@ func TestClient_DeprovisionRuntime(t *testing.T) {
 		tr := &testResolver{t: t, runtime: &testRuntime{}}
 		testServer := fixHTTPServer(tr)
 		defer testServer.Close()
+		log := slog.New(slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{
+			Level: slog.LevelInfo,
+		}))
 
-		client := NewProvisionerClient(testServer.URL, false, logrus.New())
+		client := NewProvisionerClient(testServer.URL, false, log)
 		operation, err := client.ProvisionRuntime(testAccountID, testSubAccountID, fixProvisionRuntimeInput())
 		assert.NoError(t, err)
 
@@ -146,8 +162,11 @@ func TestClient_UpgradeRuntime(t *testing.T) {
 		tr := &testResolver{t: t, runtime: &testRuntime{}}
 		testServer := fixHTTPServer(tr)
 		defer testServer.Close()
+		log := slog.New(slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{
+			Level: slog.LevelInfo,
+		}))
 
-		client := NewProvisionerClient(testServer.URL, false, logrus.New())
+		client := NewProvisionerClient(testServer.URL, false, log)
 		operation, err := client.ProvisionRuntime(testAccountID, testSubAccountID, fixProvisionRuntimeInput())
 		assert.NoError(t, err)
 
@@ -167,8 +186,11 @@ func TestClient_UpgradeRuntime(t *testing.T) {
 		tr := &testResolver{t: t, runtime: &testRuntime{}}
 		testServer := fixHTTPServer(tr)
 		defer testServer.Close()
+		log := slog.New(slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{
+			Level: slog.LevelInfo,
+		}))
 
-		client := NewProvisionerClient(testServer.URL, false, logrus.New())
+		client := NewProvisionerClient(testServer.URL, false, log)
 		operation, err := client.ProvisionRuntime(testAccountID, testSubAccountID, fixProvisionRuntimeInput())
 		assert.NoError(t, err)
 
@@ -191,8 +213,11 @@ func TestClient_UpgradeShoot(t *testing.T) {
 		tr := &testResolver{t: t, runtime: &testRuntime{}}
 		testServer := fixHTTPServer(tr)
 		defer testServer.Close()
+		log := slog.New(slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{
+			Level: slog.LevelInfo,
+		}))
 
-		client := NewProvisionerClient(testServer.URL, false, logrus.New())
+		client := NewProvisionerClient(testServer.URL, false, log)
 		operation, err := client.ProvisionRuntime(testAccountID, testSubAccountID, fixProvisionRuntimeInput())
 		assert.NoError(t, err)
 
@@ -212,8 +237,11 @@ func TestClient_UpgradeShoot(t *testing.T) {
 		tr := &testResolver{t: t, runtime: &testRuntime{}}
 		testServer := fixHTTPServer(tr)
 		defer testServer.Close()
+		log := slog.New(slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{
+			Level: slog.LevelInfo,
+		}))
 
-		client := NewProvisionerClient(testServer.URL, false, logrus.New())
+		client := NewProvisionerClient(testServer.URL, false, log)
 		operation, err := client.ProvisionRuntime(testAccountID, testSubAccountID, fixProvisionRuntimeInput())
 		assert.NoError(t, err)
 
@@ -236,8 +264,11 @@ func TestClient_ReconnectRuntimeAgent(t *testing.T) {
 		tr := &testResolver{t: t, runtime: &testRuntime{}}
 		testServer := fixHTTPServer(tr)
 		defer testServer.Close()
+		log := slog.New(slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{
+			Level: slog.LevelInfo,
+		}))
 
-		client := NewProvisionerClient(testServer.URL, false, logrus.New())
+		client := NewProvisionerClient(testServer.URL, false, log)
 		operation, err := client.ProvisionRuntime(testAccountID, testSubAccountID, fixProvisionRuntimeInput())
 		assert.NoError(t, err)
 
@@ -254,8 +285,11 @@ func TestClient_ReconnectRuntimeAgent(t *testing.T) {
 		tr := &testResolver{t: t, runtime: &testRuntime{}}
 		testServer := fixHTTPServer(tr)
 		defer testServer.Close()
+		log := slog.New(slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{
+			Level: slog.LevelInfo,
+		}))
 
-		client := NewProvisionerClient(testServer.URL, false, logrus.New())
+		client := NewProvisionerClient(testServer.URL, false, log)
 		operation, err := client.ProvisionRuntime(testAccountID, testSubAccountID, fixProvisionRuntimeInput())
 		assert.NoError(t, err)
 
@@ -290,8 +324,11 @@ func TestClient_ReconnectRuntimeAgent(t *testing.T) {
 			  }
 			}`)
 		defer server.Close()
+		log := slog.New(slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{
+			Level: slog.LevelInfo,
+		}))
 
-		client := NewProvisionerClient(server.URL, false, logrus.New())
+		client := NewProvisionerClient(server.URL, false, log)
 
 		// when
 		_, err := client.ProvisionRuntime(testAccountID, testSubAccountID, fixProvisionRuntimeInput())
@@ -325,8 +362,11 @@ func TestClient_ReconnectRuntimeAgent(t *testing.T) {
 			  }
 			}`)
 		defer server.Close()
+		log := slog.New(slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{
+			Level: slog.LevelInfo,
+		}))
 
-		client := NewProvisionerClient(server.URL, false, logrus.New())
+		client := NewProvisionerClient(server.URL, false, log)
 
 		// when
 		_, err := client.ProvisionRuntime(testAccountID, testSubAccountID, fixProvisionRuntimeInput())
@@ -341,7 +381,10 @@ func TestClient_ReconnectRuntimeAgent(t *testing.T) {
 	})
 
 	t.Run("network error", func(t *testing.T) {
-		client := NewProvisionerClient("http://not-existing", false, logrus.New())
+		log := slog.New(slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{
+			Level: slog.LevelInfo,
+		}))
+		client := NewProvisionerClient("http://not-existing", false, log)
 
 		// when
 		_, err := client.ProvisionRuntime(testAccountID, testSubAccountID, fixProvisionRuntimeInput())
@@ -358,8 +401,11 @@ func TestClient_RuntimeOperationStatus(t *testing.T) {
 		tr := &testResolver{t: t, runtime: &testRuntime{}}
 		testServer := fixHTTPServer(tr)
 		defer testServer.Close()
+		log := slog.New(slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{
+			Level: slog.LevelInfo,
+		}))
 
-		client := NewProvisionerClient(testServer.URL, false, logrus.New())
+		client := NewProvisionerClient(testServer.URL, false, log)
 		_, err := client.ProvisionRuntime(testAccountID, testSubAccountID, fixProvisionRuntimeInput())
 		assert.NoError(t, err)
 
@@ -379,8 +425,11 @@ func TestClient_RuntimeOperationStatus(t *testing.T) {
 		tr := &testResolver{t: t, runtime: &testRuntime{}}
 		testServer := fixHTTPServer(tr)
 		defer testServer.Close()
+		log := slog.New(slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{
+			Level: slog.LevelInfo,
+		}))
 
-		client := NewProvisionerClient(testServer.URL, false, logrus.New())
+		client := NewProvisionerClient(testServer.URL, false, log)
 		_, err := client.ProvisionRuntime(testAccountID, testSubAccountID, fixProvisionRuntimeInput())
 		assert.NoError(t, err)
 

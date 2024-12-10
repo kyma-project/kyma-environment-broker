@@ -10,7 +10,6 @@ import (
 	automock2 "github.com/kyma-project/kyma-environment-broker/internal/process/input/automock"
 	"github.com/kyma-project/kyma-environment-broker/internal/storage"
 	"github.com/pivotal-cf/brokerapi/v8/domain"
-	"github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -44,7 +43,7 @@ func TestInitialisationStep_Run(t *testing.T) {
 	step := NewInitialisationStep(st.Operations(), st.Instances(), builder)
 
 	// when
-	op, retry, err := step.Run(operation, logrus.New())
+	op, retry, err := step.Run(operation, fixLogger())
 
 	// then
 	assert.NoError(t, err)

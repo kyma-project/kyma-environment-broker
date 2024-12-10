@@ -4,8 +4,10 @@ import (
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
+	"log/slog"
 	"net/http"
 	"net/http/httptest"
+	"os"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -13,7 +15,6 @@ import (
 	"github.com/kyma-project/kyma-environment-broker/common/orchestration"
 	"github.com/kyma-project/kyma-environment-broker/internal"
 	"github.com/kyma-project/kyma-environment-broker/internal/kubeconfig/automock"
-	"github.com/kyma-project/kyma-environment-broker/internal/logger"
 	"github.com/kyma-project/kyma-environment-broker/internal/storage"
 
 	"github.com/gorilla/mux"
@@ -120,9 +121,13 @@ func TestHandler_GetKubeconfig(t *testing.T) {
 				builder.On("Build", &instance).Return("", fmt.Errorf("builder error"))
 			}
 
+			log := slog.New(slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{
+				Level: slog.LevelInfo,
+			}))
+
 			router := mux.NewRouter()
 
-			handler := NewHandler(db, builder, "", ownClusterPlanID, logger.NewLogDummy())
+			handler := NewHandler(db, builder, "", ownClusterPlanID, log)
 			handler.AttachRoutes(router)
 
 			server := httptest.NewServer(router)
@@ -193,9 +198,13 @@ func TestHandler_GetKubeconfigForOwnCluster(t *testing.T) {
 	builder := &automock.KcBuilder{}
 	defer builder.AssertExpectations(t)
 
+	log := slog.New(slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{
+		Level: slog.LevelInfo,
+	}))
+
 	router := mux.NewRouter()
 
-	handler := NewHandler(db, builder, "", ownClusterPlanID, logger.NewLogDummy())
+	handler := NewHandler(db, builder, "", ownClusterPlanID, log)
 	handler.AttachRoutes(router)
 
 	server := httptest.NewServer(router)

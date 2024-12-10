@@ -4,6 +4,8 @@ import (
 	"context"
 	"encoding/base64"
 	"fmt"
+	"log/slog"
+	"os"
 	"testing"
 	"time"
 
@@ -67,6 +69,10 @@ func NewDeprovisioningSuite(t *testing.T) *DeprovisioningSuite {
 	}()
 	ctx, cancel := context.WithTimeout(context.Background(), 20*time.Minute)
 
+	log := slog.New(slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{
+		Level: slog.LevelInfo,
+	}))
+
 	logs := logrus.New()
 	logs.Formatter.(*logrus.TextFormatter).TimestampFormat = "15:04:05.000"
 
@@ -82,14 +88,14 @@ func NewDeprovisioningSuite(t *testing.T) *DeprovisioningSuite {
 			assert.NoError(t, err)
 		}
 	})
-	eventBroker := event.NewPubSub(logs)
+	eventBroker := event.NewPubSub(log)
 	provisionerClient := provisioner.NewFakeClient()
 
 	edpClient := fixEDPClient(t)
 
 	accountProvider := fixAccountProvider()
 
-	deprovisionManager := process.NewStagedManager(db.Operations(), eventBroker, time.Minute, cfg.Deprovisioning, logs.WithField("deprovisioning", "manager"))
+	deprovisionManager := process.NewStagedManager(db.Operations(), eventBroker, time.Minute, cfg.Deprovisioning, log.With("deprovisioning", "manager"))
 	deprovisionManager.SpeedUp(1000)
 	scheme := runtime.NewScheme()
 	err = apiextensionsv1.AddToScheme(scheme)
@@ -104,7 +110,7 @@ func NewDeprovisioningSuite(t *testing.T) *DeprovisioningSuite {
 	cli := fake.NewClientBuilder().WithScheme(sch).WithRuntimeObjects(fixK8sResources(defaultKymaVer, []string{})...).Build()
 
 	configProvider := kebConfig.NewConfigProvider(
-		kebConfig.NewConfigMapReader(ctx, cli, logrus.New(), "keb-runtime-config"),
+		kebConfig.NewConfigMapReader(ctx, cli, log, "keb-runtime-config"),
 		kebConfig.NewConfigMapKeysValidator(),
 		kebConfig.NewConfigMapConverter())
 
@@ -264,11 +270,14 @@ func (s *DeprovisioningSuite) AssertInstanceNotRemoved(instanceId string) {
 
 func fixEDPClient(t *testing.T) *edp.FakeClient {
 	client := edp.NewFakeClient()
+	log := slog.New(slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{
+		Level: slog.LevelInfo,
+	}))
 	err := client.CreateDataTenant(edp.DataTenantPayload{
 		Name:        subAccountID,
 		Environment: edpEnvironment,
 		Secret:      base64.StdEncoding.EncodeToString([]byte(fmt.Sprintf("%s%s", subAccountID, edpEnvironment))),
-	}, logrus.New())
+	}, log)
 	assert.NoError(t, err)
 
 	metadataTenantKeys := []string{
@@ -282,7 +291,7 @@ func fixEDPClient(t *testing.T) *edp.FakeClient {
 		err = client.CreateMetadataTenant(subAccountID, edpEnvironment, edp.MetadataTenantPayload{
 			Key:   key,
 			Value: "-",
-		}, logrus.New())
+		}, log)
 		assert.NoError(t, err)
 	}
 

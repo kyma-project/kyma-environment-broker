@@ -2,6 +2,7 @@ package deprovisioning
 
 import (
 	"fmt"
+	"log/slog"
 	"time"
 
 	kebError "github.com/kyma-project/kyma-environment-broker/internal/error"
@@ -12,7 +13,6 @@ import (
 	"github.com/kyma-project/kyma-environment-broker/internal/storage"
 	"github.com/kyma-project/kyma-environment-broker/internal/storage/dberr"
 	"github.com/pivotal-cf/brokerapi/v8/domain"
-	"github.com/sirupsen/logrus"
 )
 
 type InitStep struct {
@@ -36,9 +36,9 @@ func (s *InitStep) Name() string {
 	return "Initialisation"
 }
 
-func (s *InitStep) Run(operation internal.Operation, log logrus.FieldLogger) (internal.Operation, time.Duration, error) {
+func (s *InitStep) Run(operation internal.Operation, log *slog.Logger) (internal.Operation, time.Duration, error) {
 	if time.Since(operation.CreatedAt) > s.operationTimeout {
-		log.Infof("operation has reached the time limit: operation was created at: %s", operation.CreatedAt)
+		log.Info(fmt.Sprintf("operation has reached the time limit: operation was created at: %s", operation.CreatedAt))
 		return s.operationManager.OperationFailed(operation, fmt.Sprintf("operation has reached the time limit: %s", s.operationTimeout), nil, log)
 	}
 
@@ -51,7 +51,7 @@ func (s *InitStep) Run(operation internal.Operation, log logrus.FieldLogger) (in
 		return operation, time.Minute, nil
 	}
 	if !lastOp.IsFinished() {
-		log.Infof("waiting for %s operation (%s) to be finished", lastOp.Type, lastOp.ID)
+		log.Info(fmt.Sprintf("waiting for %s operation (%s) to be finished", lastOp.Type, lastOp.ID))
 		return operation, time.Minute, nil
 	}
 
@@ -59,7 +59,7 @@ func (s *InitStep) Run(operation internal.Operation, log logrus.FieldLogger) (in
 	instance, err := s.instanceStorage.GetByID(operation.InstanceID)
 	if err != nil {
 		if dberr.IsNotFound(err) {
-			log.Warnf("the instance already deprovisioned")
+			log.Warn("the instance already deprovisioned")
 			return s.operationManager.OperationFailed(operation, "the instance was already deprovisioned", err, log)
 		}
 		return operation, time.Second, nil
@@ -72,7 +72,7 @@ func (s *InitStep) Run(operation internal.Operation, log logrus.FieldLogger) (in
 		op.ProvisioningParameters.ErsContext = internal.InheritMissingERSContext(op.ProvisioningParameters.ErsContext, lastOp.ProvisioningParameters.ErsContext)
 	}, log)
 	if delay != 0 {
-		log.Errorf("unable to update the operation (move to 'in progress'), retrying")
+		log.Error("unable to update the operation (move to 'in progress'), retrying")
 		return operation, delay, nil
 	}
 

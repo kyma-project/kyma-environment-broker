@@ -3,13 +3,13 @@ package config_test
 import (
 	"context"
 	"fmt"
+	"log/slog"
 	"os"
 	"path"
 	"testing"
 
 	"github.com/kyma-project/kyma-environment-broker/internal/broker"
 	"github.com/kyma-project/kyma-environment-broker/internal/config"
-	"github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"gopkg.in/yaml.v2"
@@ -37,9 +37,10 @@ func TestConfigReaderSuccessFlow(t *testing.T) {
 	require.NoError(t, err)
 
 	fakeK8sClient := fake.NewClientBuilder().WithRuntimeObjects(cfgMap).Build()
-	logger := logrus.New()
-	logger.SetFormatter(&logrus.JSONFormatter{})
-	cfgReader := config.NewConfigMapReader(ctx, fakeK8sClient, logger, "keb-config")
+	log := slog.New(slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{
+		Level: slog.LevelInfo,
+	}))
+	cfgReader := config.NewConfigMapReader(ctx, fakeK8sClient, log, "keb-config")
 
 	t.Run("should read default KEB config", func(t *testing.T) {
 		// when
@@ -75,32 +76,33 @@ func TestConfigReaderErrors(t *testing.T) {
 
 	k8sClient := failingK8sClient{}
 	fakeK8sClient := fake.NewClientBuilder().Build()
-	logger := logrus.New()
-	logger.SetFormatter(&logrus.JSONFormatter{})
+	log := slog.New(slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{
+		Level: slog.LevelInfo,
+	}))
 
 	t.Run("should return error while fetching configmap on List() of K8s client", func(t *testing.T) {
 		// given
-		cfgReader := config.NewConfigMapReader(ctx, k8sClient, logger, "keb-config")
+		cfgReader := config.NewConfigMapReader(ctx, k8sClient, log, "keb-config")
 
 		// when
 		rawCfg, err := cfgReader.Read(broker.AzurePlanName)
 
 		// then
 		require.Error(t, err)
-		logger.Error(err)
+		log.Error(err.Error())
 		assert.Equal(t, "", rawCfg)
 	})
 
 	t.Run("should return error while getting config string for a plan", func(t *testing.T) {
 		// given
-		cfgReader := config.NewConfigMapReader(ctx, fakeK8sClient, logger, "keb-config")
+		cfgReader := config.NewConfigMapReader(ctx, fakeK8sClient, log, "keb-config")
 
 		// when
 		rawCfg, err := cfgReader.Read(broker.AzurePlanName)
 
 		// then
 		require.Error(t, err)
-		logger.Error(err)
+		log.Error(err.Error())
 		assert.Equal(t, "", rawCfg)
 	})
 }

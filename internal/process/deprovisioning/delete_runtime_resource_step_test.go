@@ -6,7 +6,6 @@ import (
 	"testing"
 
 	"github.com/kyma-project/kyma-environment-broker/internal/fixture"
-	"github.com/kyma-project/kyma-environment-broker/internal/logger"
 	"github.com/kyma-project/kyma-environment-broker/internal/storage"
 	"github.com/stretchr/testify/assert"
 	"k8s.io/apimachinery/pkg/api/errors"
@@ -31,11 +30,9 @@ func TestDeleteRuntimeResourceStep_RuntimeResourceDoesNotExists(t *testing.T) {
 	err = memoryStorage.Operations().InsertDeprovisioningOperation(op)
 	assert.NoError(t, err)
 
-	log := logger.NewLogDummy()
-
 	// when
 	step := NewDeleteRuntimeResourceStep(memoryStorage.Operations(), kcpClient)
-	postOperation, backoff, err := step.Run(op.Operation, log)
+	postOperation, backoff, err := step.Run(op.Operation, fixLogger())
 
 	// then
 
@@ -57,11 +54,10 @@ func TestDeleteRuntimeResourceStep_RuntimeResourceExists(t *testing.T) {
 	memoryStorage := storage.NewMemoryStorage()
 	err = memoryStorage.Operations().InsertDeprovisioningOperation(op)
 	kcpClient := fake.NewClientBuilder().WithRuntimeObjects(fixRuntimeResourceControlledByProvisioner("kyma-ns", "runtime-name", false)).Build()
-	log := logger.NewLogDummy()
 
 	// when
 	step := NewDeleteRuntimeResourceStep(memoryStorage.Operations(), kcpClient)
-	postOperation, backoff, err := step.Run(op.Operation, log)
+	postOperation, backoff, err := step.Run(op.Operation, fixLogger())
 
 	// then
 	assert.NoError(t, err)
@@ -83,11 +79,10 @@ func TestDeleteRuntimeResourceStep_RuntimeResourceExistsControlledByProvisioner(
 	err = memoryStorage.Operations().InsertDeprovisioningOperation(op)
 
 	kcpClient := fake.NewClientBuilder().WithRuntimeObjects(fixRuntimeResourceControlledByProvisioner("kyma-ns", "runtime-name", true)).Build()
-	log := logger.NewLogDummy()
 
 	// when
 	step := NewDeleteRuntimeResourceStep(memoryStorage.Operations(), kcpClient)
-	postOperation, backoff, err := step.Run(op.Operation, log)
+	postOperation, backoff, err := step.Run(op.Operation, fixLogger())
 
 	// then
 	assert.NoError(t, err)

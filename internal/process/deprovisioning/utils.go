@@ -1,11 +1,12 @@
 package deprovisioning
 
 import (
+	"fmt"
+	"log/slog"
 	"time"
 
 	"github.com/kyma-project/kyma-environment-broker/internal"
 	kebError "github.com/kyma-project/kyma-environment-broker/internal/error"
-	"github.com/sirupsen/logrus"
 )
 
 const (
@@ -16,15 +17,15 @@ const (
 )
 
 func handleError(stepName string, operation internal.Operation, err error,
-	log logrus.FieldLogger, msg string) (internal.Operation, time.Duration, error) {
+	log *slog.Logger, msg string) (internal.Operation, time.Duration, error) {
 
 	if kebError.IsTemporaryError(err) {
 		if time.Since(operation.CreatedAt) < 30*time.Minute {
-			log.Errorf("%s: %s. Retry...", msg, err)
+			log.Error(fmt.Sprintf("%s: %s. Retry...", msg, err))
 			return operation, 10 * time.Second, nil
 		}
 	}
 
-	log.Errorf("Step %s failed: %s.", stepName, err)
+	log.Error(fmt.Sprintf("Step %s failed: %s.", stepName, err))
 	return operation, 0, nil
 }

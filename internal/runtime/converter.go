@@ -43,6 +43,7 @@ func (c *converter) ApplyProvisioningOperation(dto *pkg.RuntimeDTO, pOpr *intern
 		dto.Status.Provisioning = &pkg.Operation{}
 		c.applyOperation(&pOpr.Operation, dto.Status.Provisioning)
 		c.adjustRuntimeState(dto)
+		dto.SubscriptionSecretName = pOpr.ProvisioningParameters.Parameters.TargetSecret
 	}
 }
 
@@ -68,6 +69,8 @@ func (c *converter) applyOperation(source *internal.Operation, target *pkg.Opera
 		target.FinishedStages = source.FinishedStages
 		target.ExecutedButNotCompletedSteps = source.ExcutedButNotCompleted
 		target.Parameters = source.ProvisioningParameters.Parameters
+		target.Parameters.TargetSecret = nil
+		target.Parameters.Kubeconfig = ""
 		if !reflect.DeepEqual(source.LastError, kebError.LastError{}) {
 			target.Error = &source.LastError
 		}
@@ -96,6 +99,11 @@ func (c *converter) NewDTO(instance internal.Instance) (pkg.RuntimeDTO, error) {
 		},
 		Parameters: instance.Parameters.Parameters,
 	}
+
+	toReturn.SubscriptionSecretName = instance.Parameters.Parameters.TargetSecret
+
+	toReturn.Parameters.TargetSecret = nil // TargetSecret is not a parameter sent by a customer
+	toReturn.Parameters.Kubeconfig = ""    // Kubeconfig should not be visible
 	if !instance.DeletedAt.IsZero() {
 		toReturn.Status.DeletedAt = &instance.DeletedAt
 	}

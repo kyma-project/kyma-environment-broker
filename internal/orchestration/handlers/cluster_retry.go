@@ -2,25 +2,25 @@ package handlers
 
 import (
 	"fmt"
+	"log/slog"
 	"time"
 
 	commonOrchestration "github.com/kyma-project/kyma-environment-broker/common/orchestration"
 	"github.com/kyma-project/kyma-environment-broker/internal"
 	"github.com/kyma-project/kyma-environment-broker/internal/process"
 	"github.com/kyma-project/kyma-environment-broker/internal/storage"
-	"github.com/sirupsen/logrus"
 )
 
 type Retryer struct {
 	orchestrations storage.Orchestrations
 	operations     storage.Operations
 	queue          *process.Queue
-	log            logrus.FieldLogger
+	log            *slog.Logger
 }
 
 type clusterRetryer Retryer
 
-func NewClusterRetryer(orchestrations storage.Orchestrations, operations storage.Operations, q *process.Queue, logger logrus.FieldLogger) *clusterRetryer {
+func NewClusterRetryer(orchestrations storage.Orchestrations, operations storage.Operations, q *process.Queue, logger *slog.Logger) *clusterRetryer {
 	return &clusterRetryer{
 		orchestrations: orchestrations,
 		operations:     operations,
@@ -119,7 +119,7 @@ func (r *clusterRetryer) latestOperationValidate(orchestrationID string, ops []i
 		if err != nil {
 			// fail for listing operations of one instance, then http return and report fail
 			err = fmt.Errorf("while getting operations by instanceID %s: %w", instanceID, err)
-			r.log.Error(err)
+			r.log.Error(err.Error())
 			return nil, nil, err
 		}
 
@@ -147,7 +147,7 @@ func (r *clusterRetryer) latestOperationValidate(orchestrationID string, ops []i
 
 		if num == 0 || errFound {
 			err = fmt.Errorf("while getting operations by instanceID %s: %w", instanceID, err)
-			r.log.Error(err)
+			r.log.Error(err.Error())
 			return nil, nil, err
 		}
 
@@ -161,16 +161,16 @@ func (r *clusterRetryer) latestOperationValidate(orchestrationID string, ops []i
 	return retryOps, oldIDs, nil
 }
 
-func orchestrationStateUpdate(orch *internal.Orchestration, orchestrations storage.Orchestrations, orchestrationID string, log logrus.FieldLogger) (string, error) {
+func orchestrationStateUpdate(orch *internal.Orchestration, orchestrations storage.Orchestrations, orchestrationID string, log *slog.Logger) (string, error) {
 	o, err := orchestrations.GetByID(orchestrationID)
 	if err != nil {
-		log.Errorf("while getting orchestration %s: %v", orchestrationID, err)
+		log.Error(fmt.Sprintf("while getting orchestration %s: %v", orchestrationID, err))
 		return "", fmt.Errorf("while getting orchestration %s: %w", orchestrationID, err)
 	}
 	// last minute check in case in progress one got canceled.
 	state := o.State
 	if state == commonOrchestration.Canceling || state == commonOrchestration.Canceled {
-		log.Infof("orchestration %s was canceled right before retrying", orchestrationID)
+		log.Info(fmt.Sprintf("orchestration %s was canceled right before retrying", orchestrationID))
 		return state, fmt.Errorf("orchestration %s was canceled right before retrying", orchestrationID)
 	}
 
@@ -183,13 +183,13 @@ func orchestrationStateUpdate(orch *internal.Orchestration, orchestrations stora
 	}
 	err = orchestrations.Update(*o)
 	if err != nil {
-		log.Errorf("while updating orchestration %s: %v", orchestrationID, err)
+		log.Error(fmt.Sprintf("while updating orchestration %s: %v", orchestrationID, err))
 		return state, fmt.Errorf("while updating orchestration %s: %w", orchestrationID, err)
 	}
 	return state, nil
 }
 
-func zeroValidOperationInfo(resp *commonOrchestration.RetryResponse, log logrus.FieldLogger) {
-	log.Infof("no valid operations to retry for orchestration %s", resp.OrchestrationID)
+func zeroValidOperationInfo(resp *commonOrchestration.RetryResponse, log *slog.Logger) {
+	log.Info(fmt.Sprintf("no valid operations to retry for orchestration %s", resp.OrchestrationID))
 	resp.Msg = fmt.Sprintf("No valid operations to retry for orchestration %s", resp.OrchestrationID)
 }

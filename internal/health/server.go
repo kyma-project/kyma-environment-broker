@@ -2,21 +2,21 @@ package health
 
 import (
 	"fmt"
+	"log/slog"
 	"net/http"
 
 	"github.com/gorilla/mux"
-	log "github.com/sirupsen/logrus"
 )
 
 type Server struct {
 	Address string
-	Log     log.FieldLogger
+	Log     *slog.Logger
 }
 
-func NewServer(host, port string, log *log.Logger) *Server {
+func NewServer(host, port string, log *slog.Logger) *Server {
 	return &Server{
 		Address: fmt.Sprintf("%s:%s", host, port),
-		Log:     log.WithField("server", "health"),
+		Log:     log.With("server", "health"),
 	}
 }
 
@@ -26,7 +26,7 @@ func (srv *Server) ServeAsync() {
 	go func() {
 		err := http.ListenAndServe(srv.Address, healthRouter)
 		if err != nil {
-			srv.Log.Errorf("HTTP Health server ListenAndServe: %v", err)
+			srv.Log.Error(fmt.Sprintf("HTTP Health server ListenAndServe: %v", err))
 		}
 	}()
 }

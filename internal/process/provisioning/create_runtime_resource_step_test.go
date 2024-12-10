@@ -32,7 +32,6 @@ import (
 
 	"github.com/kyma-project/kyma-environment-broker/internal/fixture"
 	"github.com/kyma-project/kyma-environment-broker/internal/storage"
-	"github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/assert"
 
 	pkg "github.com/kyma-project/kyma-environment-broker/common/runtime"
@@ -67,7 +66,6 @@ func TestCreateRuntimeResourceStep_OIDC_AllCustom(t *testing.T) {
 	// given
 	err := imv1.AddToScheme(scheme.Scheme)
 	assert.NoError(t, err)
-	log := logrus.New()
 	memoryStorage := storage.NewMemoryStorage()
 	instance, operation := fixInstanceAndOperation(broker.AzurePlanID, "westeurope", "platform-region")
 	operation.ProvisioningParameters.Parameters.OIDC = &pkg.OIDCConfigDTO{
@@ -85,8 +83,7 @@ func TestCreateRuntimeResourceStep_OIDC_AllCustom(t *testing.T) {
 	step := NewCreateRuntimeResourceStep(memoryStorage.Operations(), memoryStorage.Instances(), cli, kimConfig, inputConfig, nil, false, defaultOIDSConfig)
 
 	// when
-	entry := log.WithFields(logrus.Fields{"step": "TEST"})
-	_, repeat, err := step.Run(operation, entry)
+	_, repeat, err := step.Run(operation, fixLogger())
 
 	// then
 	assert.NoError(t, err)
@@ -111,7 +108,6 @@ func TestCreateRuntimeResourceStep_OIDC_MixedCustom(t *testing.T) {
 	// given
 	err := imv1.AddToScheme(scheme.Scheme)
 	assert.NoError(t, err)
-	log := logrus.New()
 	memoryStorage := storage.NewMemoryStorage()
 	instance, operation := fixInstanceAndOperation(broker.AzurePlanID, "westeurope", "platform-region")
 	operation.ProvisioningParameters.Parameters.OIDC = &pkg.OIDCConfigDTO{
@@ -127,8 +123,7 @@ func TestCreateRuntimeResourceStep_OIDC_MixedCustom(t *testing.T) {
 	step := NewCreateRuntimeResourceStep(memoryStorage.Operations(), memoryStorage.Instances(), cli, kimConfig, inputConfig, nil, false, defaultOIDSConfig)
 
 	// when
-	entry := log.WithFields(logrus.Fields{"step": "TEST"})
-	_, repeat, err := step.Run(operation, entry)
+	_, repeat, err := step.Run(operation, fixLogger())
 
 	// then
 	assert.NoError(t, err)
@@ -151,7 +146,6 @@ func TestCreateRuntimeResourceStep_OIDC_MixedCustom(t *testing.T) {
 
 func TestCreateRuntimeResourceStep_Defaults_Azure_MultiZone_YamlOnly(t *testing.T) {
 	// given
-	log := logrus.New()
 	memoryStorage := storage.NewMemoryStorage()
 
 	instance, operation := fixInstanceAndOperation(broker.AzurePlanID, "westeurope", "platform-region")
@@ -163,8 +157,7 @@ func TestCreateRuntimeResourceStep_Defaults_Azure_MultiZone_YamlOnly(t *testing.
 	step := NewCreateRuntimeResourceStep(memoryStorage.Operations(), memoryStorage.Instances(), nil, kimConfig, inputConfig, nil, false, defaultOIDSConfig)
 
 	// when
-	entry := log.WithFields(logrus.Fields{"step": "TEST"})
-	_, repeat, err := step.Run(operation, entry)
+	_, repeat, err := step.Run(operation, fixLogger())
 
 	// then
 	assert.NoError(t, err)
@@ -191,7 +184,6 @@ func TestCreateRuntimeResourceStep_AllYamls(t *testing.T) {
 		{"SAP Converged Cloud Multi Zone", broker.SapConvergedCloudPlanID, true, "eu-de-1"},
 	} {
 		t.Run(testCase.name, func(t *testing.T) {
-			log := logrus.New()
 			memoryStorage := storage.NewMemoryStorage()
 
 			instance, operation := fixInstanceAndOperation(testCase.planID, testCase.region, "platform-region")
@@ -203,8 +195,7 @@ func TestCreateRuntimeResourceStep_AllYamls(t *testing.T) {
 			step := NewCreateRuntimeResourceStep(memoryStorage.Operations(), memoryStorage.Instances(), nil, kimConfig, inputConfig, nil, false, defaultOIDSConfig)
 
 			// when
-			entry := log.WithFields(logrus.Fields{"step": "TEST"})
-			_, repeat, err := step.Run(operation, entry)
+			_, repeat, err := step.Run(operation, fixLogger())
 
 			// then
 			assert.NoError(t, err)
@@ -217,7 +208,6 @@ func TestCreateRuntimeResourceStep_AllYamls(t *testing.T) {
 
 func TestCreateRuntimeResourceStep_Defaults_AWS_SingleZone_EnforceSeed_ActualCreation(t *testing.T) {
 	// given
-	log := logrus.New()
 	memoryStorage := storage.NewMemoryStorage()
 
 	err := imv1.AddToScheme(scheme.Scheme)
@@ -233,8 +223,7 @@ func TestCreateRuntimeResourceStep_Defaults_AWS_SingleZone_EnforceSeed_ActualCre
 	step := NewCreateRuntimeResourceStep(memoryStorage.Operations(), memoryStorage.Instances(), cli, kimConfig, inputConfig, nil, false, defaultOIDSConfig)
 
 	// when
-	entry := log.WithFields(logrus.Fields{"step": "TEST"})
-	_, repeat, err := step.Run(operation, entry)
+	_, repeat, err := step.Run(operation, fixLogger())
 
 	// then
 	assert.NoError(t, err)
@@ -267,7 +256,6 @@ func TestCreateRuntimeResourceStep_Defaults_AWS_SingleZone_EnforceSeed_ActualCre
 
 func TestCreateRuntimeResourceStep_Defaults_AWS_SingleZone_DisableEnterpriseFilter_ActualCreation(t *testing.T) {
 	// given
-	log := logrus.New()
 	memoryStorage := storage.NewMemoryStorage()
 
 	err := imv1.AddToScheme(scheme.Scheme)
@@ -283,8 +271,7 @@ func TestCreateRuntimeResourceStep_Defaults_AWS_SingleZone_DisableEnterpriseFilt
 	step := NewCreateRuntimeResourceStep(memoryStorage.Operations(), memoryStorage.Instances(), cli, kimConfig, inputConfig, nil, false, defaultOIDSConfig)
 
 	// when
-	entry := log.WithFields(logrus.Fields{"step": "TEST"})
-	_, repeat, err := step.Run(operation, entry)
+	_, repeat, err := step.Run(operation, fixLogger())
 
 	// then
 	assert.NoError(t, err)
@@ -317,7 +304,6 @@ func TestCreateRuntimeResourceStep_Defaults_AWS_SingleZone_DisableEnterpriseFilt
 
 func TestCreateRuntimeResourceStep_Defaults_AWS_SingleZone_DefaultAdmin_ActualCreation(t *testing.T) {
 	// given
-	log := logrus.New()
 	memoryStorage := storage.NewMemoryStorage()
 
 	err := imv1.AddToScheme(scheme.Scheme)
@@ -333,8 +319,7 @@ func TestCreateRuntimeResourceStep_Defaults_AWS_SingleZone_DefaultAdmin_ActualCr
 	step := NewCreateRuntimeResourceStep(memoryStorage.Operations(), memoryStorage.Instances(), cli, kimConfig, inputConfig, nil, false, defaultOIDSConfig)
 
 	// when
-	entry := log.WithFields(logrus.Fields{"step": "TEST"})
-	_, repeat, err := step.Run(operation, entry)
+	_, repeat, err := step.Run(operation, fixLogger())
 
 	// then
 	assert.NoError(t, err)
@@ -366,7 +351,6 @@ func TestCreateRuntimeResourceStep_Defaults_AWS_SingleZone_DefaultAdmin_ActualCr
 
 func TestCreateRuntimeResourceStep_Defaults_AWS_SingleZone_DryRun_ActualCreation(t *testing.T) {
 	// given
-	log := logrus.New()
 	memoryStorage := storage.NewMemoryStorage()
 
 	err := imv1.AddToScheme(scheme.Scheme)
@@ -382,8 +366,7 @@ func TestCreateRuntimeResourceStep_Defaults_AWS_SingleZone_DryRun_ActualCreation
 	step := NewCreateRuntimeResourceStep(memoryStorage.Operations(), memoryStorage.Instances(), cli, kimConfig, inputConfig, nil, false, defaultOIDSConfig)
 
 	// when
-	entry := log.WithFields(logrus.Fields{"step": "TEST"})
-	_, repeat, err := step.Run(operation, entry)
+	_, repeat, err := step.Run(operation, fixLogger())
 
 	// then
 	assert.NoError(t, err)
@@ -415,7 +398,6 @@ func TestCreateRuntimeResourceStep_Defaults_AWS_SingleZone_DryRun_ActualCreation
 
 func TestCreateRuntimeResourceStep_Defaults_AWS_MultiZoneWithNetworking_ActualCreation(t *testing.T) {
 	// given
-	log := logrus.New()
 	memoryStorage := storage.NewMemoryStorage()
 
 	err := imv1.AddToScheme(scheme.Scheme)
@@ -436,8 +418,7 @@ func TestCreateRuntimeResourceStep_Defaults_AWS_MultiZoneWithNetworking_ActualCr
 	step := NewCreateRuntimeResourceStep(memoryStorage.Operations(), memoryStorage.Instances(), cli, kimConfig, inputConfig, nil, false, defaultOIDSConfig)
 
 	// when
-	entry := log.WithFields(logrus.Fields{"step": "TEST"})
-	_, repeat, err := step.Run(operation, entry)
+	_, repeat, err := step.Run(operation, fixLogger())
 
 	// then
 	assert.NoError(t, err)
@@ -473,7 +454,6 @@ func TestCreateRuntimeResourceStep_Defaults_AWS_MultiZoneWithNetworking_ActualCr
 
 func TestCreateRuntimeResourceStep_Defaults_AWS_MultiZone_ActualCreation(t *testing.T) {
 	// given
-	log := logrus.New()
 	memoryStorage := storage.NewMemoryStorage()
 
 	err := imv1.AddToScheme(scheme.Scheme)
@@ -488,8 +468,7 @@ func TestCreateRuntimeResourceStep_Defaults_AWS_MultiZone_ActualCreation(t *test
 	step := NewCreateRuntimeResourceStep(memoryStorage.Operations(), memoryStorage.Instances(), cli, kimConfig, inputConfig, nil, false, defaultOIDSConfig)
 
 	// when
-	entry := log.WithFields(logrus.Fields{"step": "TEST"})
-	_, repeat, err := step.Run(operation, entry)
+	_, repeat, err := step.Run(operation, fixLogger())
 
 	// then
 	assert.NoError(t, err)
@@ -518,7 +497,6 @@ func TestCreateRuntimeResourceStep_Defaults_AWS_MultiZone_ActualCreation(t *test
 
 func TestCreateRuntimeResourceStep_Defaults_Preview_SingleZone_ActualCreation(t *testing.T) {
 	// given
-	log := logrus.New()
 	memoryStorage := storage.NewMemoryStorage()
 
 	err := imv1.AddToScheme(scheme.Scheme)
@@ -533,8 +511,7 @@ func TestCreateRuntimeResourceStep_Defaults_Preview_SingleZone_ActualCreation(t 
 	step := NewCreateRuntimeResourceStep(memoryStorage.Operations(), memoryStorage.Instances(), cli, kimConfig, inputConfig, nil, false, defaultOIDSConfig)
 
 	// when
-	entry := log.WithFields(logrus.Fields{"step": "TEST"})
-	_, repeat, err := step.Run(operation, entry)
+	_, repeat, err := step.Run(operation, fixLogger())
 
 	// then
 	assert.NoError(t, err)
@@ -564,7 +541,6 @@ func TestCreateRuntimeResourceStep_Defaults_Preview_SingleZone_ActualCreation(t 
 
 func TestCreateRuntimeResourceStep_Defaults_Preview_SingleZone_ActualCreation_WithRetry(t *testing.T) {
 	// given
-	log := logrus.New()
 	memoryStorage := storage.NewMemoryStorage()
 
 	err := imv1.AddToScheme(scheme.Scheme)
@@ -579,8 +555,7 @@ func TestCreateRuntimeResourceStep_Defaults_Preview_SingleZone_ActualCreation_Wi
 	step := NewCreateRuntimeResourceStep(memoryStorage.Operations(), memoryStorage.Instances(), cli, kimConfig, inputConfig, nil, false, defaultOIDSConfig)
 
 	// when
-	entry := log.WithFields(logrus.Fields{"step": "TEST"})
-	_, repeat, err := step.Run(operation, entry)
+	_, repeat, err := step.Run(operation, fixLogger())
 
 	// then
 	assert.NoError(t, err)
@@ -604,7 +579,7 @@ func TestCreateRuntimeResourceStep_Defaults_Preview_SingleZone_ActualCreation_Wi
 	assertWorkers(t, runtime.Spec.Shoot.Provider.Workers, "m6i.large", 20, 3, 1, 0, 1, []string{"eu-west-2a", "eu-west-2b", "eu-west-2c"})
 
 	// then retry
-	_, repeat, err = step.Run(operation, entry)
+	_, repeat, err = step.Run(operation, fixLogger())
 	assert.NoError(t, err)
 	assert.Zero(t, repeat)
 	err = cli.Get(context.Background(), client.ObjectKey{
@@ -643,7 +618,6 @@ func TestCreateRuntimeResourceStep_SapConvergedCloud(t *testing.T) {
 		{"Multi zone", pkg.SapConvergedCloud, 3, "openstack", "g_c2_m8", "eu-de-1", []string{"eu-de-1a", "eu-de-1b", "eu-de-1d"}},
 	} {
 		t.Run(testCase.name, func(t *testing.T) {
-			log := logrus.New()
 			memoryStorage := storage.NewMemoryStorage()
 			err := imv1.AddToScheme(scheme.Scheme)
 			assert.NoError(t, err)
@@ -657,8 +631,7 @@ func TestCreateRuntimeResourceStep_SapConvergedCloud(t *testing.T) {
 			step := NewCreateRuntimeResourceStep(memoryStorage.Operations(), memoryStorage.Instances(), cli, kimConfig, inputConfig, nil, false, defaultOIDSConfig)
 
 			// when
-			entry := log.WithFields(logrus.Fields{"step": "TEST"})
-			gotOperation, repeat, err := step.Run(operation, entry)
+			gotOperation, repeat, err := step.Run(operation, fixLogger())
 
 			// then
 			assert.NoError(t, err)
@@ -695,7 +668,6 @@ func TestCreateRuntimeResourceStep_Defaults_Freemium(t *testing.T) {
 		{"aws", pkg.AWS, "aws", "m5.xlarge", "westeurope", []string{"eu-central-1a", "eu-central-1b", "eu-central-1c"}},
 	} {
 		t.Run(testCase.name, func(t *testing.T) {
-			log := logrus.New()
 			memoryStorage := storage.NewMemoryStorage()
 			err := imv1.AddToScheme(scheme.Scheme)
 			assert.NoError(t, err)
@@ -709,8 +681,7 @@ func TestCreateRuntimeResourceStep_Defaults_Freemium(t *testing.T) {
 			step := NewCreateRuntimeResourceStep(memoryStorage.Operations(), memoryStorage.Instances(), cli, kimConfig, inputConfig, nil, false, defaultOIDSConfig)
 
 			// when
-			entry := log.WithFields(logrus.Fields{"step": "TEST"})
-			gotOperation, repeat, err := step.Run(operation, entry)
+			gotOperation, repeat, err := step.Run(operation, fixLogger())
 
 			// then
 			assert.NoError(t, err)

@@ -62,6 +62,7 @@ type RuntimeDTO struct {
 	Bindings                    []BindingDTO                   `json:"bindings,omitempty"`
 	BetaEnabled                 string                         `json:"betaEnabled,omitempty"`
 	UsedForProduction           string                         `json:"usedForProduction,omitempty"`
+	SubscriptionSecretName      *string                        `json:"subscriptionSecretName,omitempty"`
 }
 
 type CloudProvider string

@@ -78,7 +78,7 @@ func TestUpgradeClusterOperationManager_RetryOperation(t *testing.T) {
 	require.NoError(t, err)
 
 	// then - first call
-	op, when, err := opManager.RetryOperation(op, errorMessage, errOut, retryInterval, maxtime, fixLogger())
+	op, when, err := opManager.RetryOperation(op, errorMessage, errOut, retryInterval, maxtime, logrus.New())
 
 	// when - first retry
 	assert.True(t, when > 0)
@@ -88,7 +88,7 @@ func TestUpgradeClusterOperationManager_RetryOperation(t *testing.T) {
 	t.Log(op.UpdatedAt.String())
 	op.UpdatedAt = op.UpdatedAt.Add(-retryInterval - time.Second) // simulate wait of first retry
 	t.Log(op.UpdatedAt.String())
-	op, when, err = opManager.RetryOperation(op, errorMessage, errOut, retryInterval, maxtime, fixLogger())
+	op, when, err = opManager.RetryOperation(op, errorMessage, errOut, retryInterval, maxtime, logrus.New())
 
 	// when - second call => retry
 	assert.True(t, when > 0)

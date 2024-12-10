@@ -14,13 +14,11 @@ import (
 	"github.com/kyma-project/kyma-environment-broker/internal/fixture"
 	"github.com/kyma-project/kyma-environment-broker/internal/storage"
 	"github.com/pivotal-cf/brokerapi/v8/domain"
-	"github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/assert"
 )
 
 func TestReleaseSubscriptionStep_HappyPath(t *testing.T) {
 	// given
-	log := logrus.New()
 	memoryStorage := storage.NewMemoryStorage()
 
 	operation := fixDeprovisioningOperationWithPlanID(broker.GCPPlanID)
@@ -35,7 +33,7 @@ func TestReleaseSubscriptionStep_HappyPath(t *testing.T) {
 	step := NewReleaseSubscriptionStep(memoryStorage.Operations(), memoryStorage.Instances(), accountProviderMock)
 
 	// when
-	operation, repeat, err := step.Run(operation, log)
+	operation, repeat, err := step.Run(operation, fixLogger())
 
 	assert.NoError(t, err)
 
@@ -48,7 +46,6 @@ func TestReleaseSubscriptionStep_HappyPath(t *testing.T) {
 
 func TestReleaseSubscriptionStep_TrialPlan(t *testing.T) {
 	// given
-	log := logrus.New()
 	memoryStorage := storage.NewMemoryStorage()
 
 	operation := fixDeprovisioningOperationWithPlanID(broker.TrialPlanID)
@@ -63,7 +60,7 @@ func TestReleaseSubscriptionStep_TrialPlan(t *testing.T) {
 	step := NewReleaseSubscriptionStep(memoryStorage.Operations(), memoryStorage.Instances(), accountProviderMock)
 
 	// when
-	operation, repeat, err := step.Run(operation, log)
+	operation, repeat, err := step.Run(operation, fixLogger())
 
 	assert.NoError(t, err)
 
@@ -76,7 +73,6 @@ func TestReleaseSubscriptionStep_TrialPlan(t *testing.T) {
 
 func TestReleaseSubscriptionStep_OwnClusterPlan(t *testing.T) {
 	// given
-	log := logrus.New()
 	memoryStorage := storage.NewMemoryStorage()
 
 	operation := fixDeprovisioningOperationWithPlanID(broker.OwnClusterPlanID)
@@ -91,7 +87,7 @@ func TestReleaseSubscriptionStep_OwnClusterPlan(t *testing.T) {
 	step := NewReleaseSubscriptionStep(memoryStorage.Operations(), memoryStorage.Instances(), accountProviderMock)
 
 	// when
-	operation, repeat, err := step.Run(operation, log)
+	operation, repeat, err := step.Run(operation, fixLogger())
 
 	assert.NoError(t, err)
 
@@ -104,7 +100,6 @@ func TestReleaseSubscriptionStep_OwnClusterPlan(t *testing.T) {
 
 func TestReleaseSubscriptionStep_InstanceNotFound(t *testing.T) {
 	// given
-	log := logrus.New()
 	memoryStorage := storage.NewMemoryStorage()
 
 	operation := fixDeprovisioningOperationWithPlanID(broker.GCPPlanID)
@@ -118,7 +113,7 @@ func TestReleaseSubscriptionStep_InstanceNotFound(t *testing.T) {
 	assert.NoError(t, err)
 
 	// when
-	operation, repeat, err := step.Run(operation, log)
+	operation, repeat, err := step.Run(operation, fixLogger())
 
 	assert.NoError(t, err)
 
@@ -131,7 +126,6 @@ func TestReleaseSubscriptionStep_InstanceNotFound(t *testing.T) {
 
 func TestReleaseSubscriptionStep_ProviderNotFound(t *testing.T) {
 	// given
-	log := logrus.New()
 	memoryStorage := storage.NewMemoryStorage()
 
 	operation := fixDeprovisioningOperationWithPlanID(broker.GCPPlanID)
@@ -149,7 +143,7 @@ func TestReleaseSubscriptionStep_ProviderNotFound(t *testing.T) {
 	assert.NoError(t, err)
 
 	// when
-	operation, repeat, err := step.Run(operation, log)
+	operation, repeat, err := step.Run(operation, fixLogger())
 
 	assert.NoError(t, err)
 
@@ -162,7 +156,6 @@ func TestReleaseSubscriptionStep_ProviderNotFound(t *testing.T) {
 
 func TestReleaseSubscriptionStepGardener_CallFails(t *testing.T) {
 	// given
-	log := logrus.New()
 	memoryStorage := storage.NewMemoryStorage()
 
 	operation := fixDeprovisioningOperationWithPlanID(broker.GCPPlanID)
@@ -177,7 +170,7 @@ func TestReleaseSubscriptionStepGardener_CallFails(t *testing.T) {
 	step := NewReleaseSubscriptionStep(memoryStorage.Operations(), memoryStorage.Instances(), accountProviderMock)
 
 	// when
-	operation, repeat, err := step.Run(operation, log)
+	operation, repeat, err := step.Run(operation, fixLogger())
 
 	assert.NoError(t, err)
 

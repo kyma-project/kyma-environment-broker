@@ -3,6 +3,8 @@ package provisioning
 import (
 	"context"
 	"fmt"
+	"log/slog"
+	"os"
 	"testing"
 
 	"github.com/kyma-project/kyma-environment-broker/common/gardener"
@@ -21,7 +23,6 @@ import (
 
 	pkg "github.com/kyma-project/kyma-environment-broker/common/runtime"
 	"github.com/kyma-project/kyma-environment-broker/internal/fixture"
-	"github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -43,7 +44,6 @@ var shootPurpose = "evaluation"
 
 func TestCreateResourceNamesStep_HappyPath(t *testing.T) {
 	// given
-	log := logrus.New()
 	memoryStorage := storage.NewMemoryStorage()
 
 	operation := fixProvisioningOperationWithEmptyResourceName()
@@ -56,8 +56,7 @@ func TestCreateResourceNamesStep_HappyPath(t *testing.T) {
 	step := NewCreateResourceNamesStep(memoryStorage.Operations())
 
 	// when
-	entry := log.WithFields(logrus.Fields{"step": "TEST"})
-	postOperation, backoff, err := step.Run(operation, entry)
+	postOperation, backoff, err := step.Run(operation, fixLogger())
 
 	// then
 	assert.NoError(t, err)
@@ -80,7 +79,6 @@ func fixProvisioningOperationWithEmptyResourceName() internal.Operation {
 
 func TestCreateResourceNamesStep_NoRuntimeID(t *testing.T) {
 	// given
-	log := logrus.New()
 	memoryStorage := storage.NewMemoryStorage()
 
 	operation := fixProvisioningOperationWithEmptyResourceName()
@@ -95,8 +93,7 @@ func TestCreateResourceNamesStep_NoRuntimeID(t *testing.T) {
 	step := NewCreateResourceNamesStep(memoryStorage.Operations())
 
 	// when
-	entry := log.WithFields(logrus.Fields{"step": "TEST"})
-	_, backoff, err := step.Run(operation, entry)
+	_, backoff, err := step.Run(operation, fixLogger())
 
 	// then
 	assert.ErrorContains(t, err, "RuntimeID not set")
@@ -159,8 +156,11 @@ func fixProvisioningParametersWithPlanID(planID, region string, platformRegion s
 
 func fixInputCreator(t *testing.T) internal.ProvisionerInputCreator {
 	cli := fake.NewClientBuilder().WithRuntimeObjects(fixConfigMap(kymaVersion)).Build()
+	log := slog.New(slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{
+		Level: slog.LevelInfo,
+	}))
 	configProvider := kebConfig.NewConfigProvider(
-		kebConfig.NewConfigMapReader(context.TODO(), cli, logrus.New(), "keb-config"),
+		kebConfig.NewConfigMapReader(context.TODO(), cli, log, "keb-config"),
 		kebConfig.NewConfigMapKeysValidator(),
 		kebConfig.NewConfigMapConverter())
 	ibf, err := input.NewInputBuilderFactory(configProvider, input.Config{

@@ -3,6 +3,8 @@ package process_test
 import (
 	"context"
 	"fmt"
+	"log/slog"
+	"os"
 	"sync"
 	"testing"
 	"time"
@@ -20,7 +22,6 @@ import (
 	"github.com/kyma-project/kyma-environment-broker/internal"
 	"github.com/kyma-project/kyma-environment-broker/internal/event"
 	"github.com/kyma-project/kyma-environment-broker/internal/storage"
-	"github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -169,8 +170,9 @@ func SetupStagedManager(t *testing.T, op internal.Operation) (*process.StagedMan
 	assert.NoError(t, err)
 
 	eventCollector := &CollectingEventHandler{}
-	l := logrus.New()
-	l.SetLevel(logrus.DebugLevel)
+	l := slog.New(slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{
+		Level: slog.LevelDebug,
+	}))
 	mgr := process.NewStagedManager(memoryStorage.Operations(), eventCollector, 3*time.Second, process.StagedManagerConfiguration{MaxStepProcessingTime: time.Second}, l)
 	mgr.SpeedUp(100000)
 	mgr.DefineStages([]string{"stage-1", "stage-2"})
@@ -186,8 +188,8 @@ type testingStep struct {
 func (s *testingStep) Name() string {
 	return s.name
 }
-func (s *testingStep) Run(operation internal.Operation, logger logrus.FieldLogger) (internal.Operation, time.Duration, error) {
-	logger.Infof("Running")
+func (s *testingStep) Run(operation internal.Operation, logger *slog.Logger) (internal.Operation, time.Duration, error) {
+	logger.Info("Running")
 	s.eventPublisher.Publish(context.Background(), s.name)
 	return operation, 0, nil
 }
@@ -201,13 +203,13 @@ type onceRetryingStep struct {
 func (s *onceRetryingStep) Name() string {
 	return s.name
 }
-func (s *onceRetryingStep) Run(operation internal.Operation, logger logrus.FieldLogger) (internal.Operation, time.Duration, error) {
+func (s *onceRetryingStep) Run(operation internal.Operation, logger *slog.Logger) (internal.Operation, time.Duration, error) {
 	s.eventPublisher.Publish(context.Background(), s.name)
 	if !s.processed {
 		s.processed = true
 		return operation, time.Millisecond, nil
 	}
-	logger.Infof("Running")
+	logger.Info("Running")
 	return operation, 0, nil
 }
 
@@ -221,9 +223,9 @@ func (s *panicStep) Name() string {
 	return s.name
 }
 
-func (s *panicStep) Run(_ internal.Operation, logger logrus.FieldLogger) (internal.Operation, time.Duration, error) {
+func (s *panicStep) Run(operation internal.Operation, logger *slog.Logger) (internal.Operation, time.Duration, error) {
 	s.eventPublisher.Publish(context.Background(), s.name)
-	logger.Infof("Panic!")
+	logger.Info("Panic!")
 	panic("Panicking just for test")
 }
 
@@ -336,8 +338,9 @@ func SetupStagedManager2(t *testing.T, op internal.Operation) (*process.StagedMa
 	err := memoryStorage.Operations().InsertOperation(op)
 	assert.NoError(t, err)
 
-	l := logrus.New()
-	l.SetLevel(logrus.DebugLevel)
+	l := slog.New(slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{
+		Level: slog.LevelDebug,
+	}))
 	pubSub := event.NewPubSub(nil)
 	mgr := process.NewStagedManager(memoryStorage.Operations(), pubSub, 3*time.Second, process.StagedManagerConfiguration{MaxStepProcessingTime: time.Second}, l)
 	mgr.SpeedUp(100000)

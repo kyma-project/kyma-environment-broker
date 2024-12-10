@@ -3,6 +3,7 @@ package provisioning
 import (
 	"encoding/json"
 	"fmt"
+	"log/slog"
 	"time"
 
 	kebError "github.com/kyma-project/kyma-environment-broker/internal/error"
@@ -12,13 +13,12 @@ import (
 	"github.com/kyma-project/kyma-environment-broker/internal/process"
 	"github.com/kyma-project/kyma-environment-broker/internal/process/steps"
 	"github.com/kyma-project/kyma-environment-broker/internal/storage"
-	"github.com/sirupsen/logrus"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 )
 
 type OverrideKymaModules struct {
 	operationManager *process.OperationManager
-	logger           logrus.FieldLogger
+	logger           *slog.Logger
 }
 
 var _ process.Step = &OverrideKymaModules{}
@@ -39,10 +39,10 @@ func NewOverrideKymaModules(os storage.Operations) *OverrideKymaModules {
 // 3 case -> if 'list' is given and is empty, then we don't install anything, no modules
 // default behaviour is when default = true, then default modules will be installed, also it applies to all other scenarios than mentioned in 1,2,3 point.
 
-func (k *OverrideKymaModules) Run(operation internal.Operation, logger logrus.FieldLogger) (internal.Operation, time.Duration, error) {
+func (k *OverrideKymaModules) Run(operation internal.Operation, logger *slog.Logger) (internal.Operation, time.Duration, error) {
 	k.logger = logger
 	if operation.Type != internal.OperationTypeProvision {
-		k.logger.Infof("%s is supposed to run only for Provisioning, skipping logic.", k.Name())
+		k.logger.Info(fmt.Sprintf("%s is supposed to run only for Provisioning, skipping logic.", k.Name()))
 		return operation, 0, nil
 	}
 
@@ -58,28 +58,28 @@ func (k *OverrideKymaModules) Run(operation internal.Operation, logger logrus.Fi
 	}
 
 	// default behaviour
-	k.logger.Infof("Kyma will be created with default modules. %s didn't perform any action.", k.Name())
+	k.logger.Info(fmt.Sprintf("Kyma will be created with default modules. %s didn't perform any action.", k.Name()))
 	return operation, 0, nil
 }
 
 func (k *OverrideKymaModules) handleModulesOverride(operation internal.Operation, modulesParams pkg.ModulesDTO) (internal.Operation, time.Duration, error) {
 	decodeKymaTemplate, err := steps.DecodeKymaTemplate(operation.KymaTemplate)
 	if err != nil {
-		k.logger.Errorf("while decoding Kyma template from previous step: %s", err.Error())
+		k.logger.Error(fmt.Sprintf("while decoding Kyma template from previous step: %s", err.Error()))
 		return k.operationManager.OperationFailed(operation, "while decoding Kyma template from previous step", err, k.logger)
 	}
 	if decodeKymaTemplate == nil {
-		k.logger.Errorf("while decoding Kyma template from previous step: object is nil")
+		k.logger.Error("while decoding Kyma template from previous step: object is nil")
 		return k.operationManager.OperationFailed(operation, "while decoding Kyma template from previous step: ", fmt.Errorf("object is nil"), k.logger)
 	}
 
 	if err := k.replaceModulesSpec(decodeKymaTemplate, modulesParams.List); err != nil {
-		k.logger.Errorf("unable to append modules to Kyma template: %s", err.Error())
+		k.logger.Error(fmt.Sprintf("unable to append modules to Kyma template: %s", err.Error()))
 		return k.operationManager.OperationFailed(operation, "unable to append modules to Kyma template:", err, k.logger)
 	}
 	updatedKymaTemplate, err := steps.EncodeKymaTemplate(decodeKymaTemplate)
 	if err != nil {
-		k.logger.Errorf("unable to create yaml Kyma template with custom custom modules: %s", err.Error())
+		k.logger.Error(fmt.Sprintf("unable to create yaml Kyma template with custom modules: %s", err.Error()))
 		return k.operationManager.OperationFailed(operation, "unable to create yaml Kyma template within added modules", err, k.logger)
 	}
 
@@ -130,6 +130,6 @@ func (k *OverrideKymaModules) prepareModulesSection(customModuleList []pkg.Modul
 		overridedModules = append(overridedModules, module)
 	}
 
-	k.logger.Infof("not empty list with custom modules passed to KEB. Number of modules: %d", len(overridedModules))
+	k.logger.Info(fmt.Sprintf("not empty list with custom modules passed to KEB. Number of modules: %d", len(overridedModules)))
 	return overridedModules
 }

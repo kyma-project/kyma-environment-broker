@@ -1,6 +1,8 @@
 package update
 
 import (
+	"log/slog"
+	"os"
 	"testing"
 
 	"github.com/kyma-project/kyma-environment-broker/common/orchestration"
@@ -8,7 +10,6 @@ import (
 	"github.com/kyma-project/kyma-environment-broker/internal/process/input/automock"
 	"github.com/kyma-project/kyma-environment-broker/internal/storage"
 	"github.com/pivotal-cf/brokerapi/v8/domain"
-	"github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
@@ -68,7 +69,7 @@ func TestInitialisationStep_OtherOperationIsInProgress(t *testing.T) {
 	} {
 		t.Run(tn, func(t *testing.T) {
 			db := storage.NewMemoryStorage()
-			os := db.Operations()
+			ops := db.Operations()
 			is := db.Instances()
 			rs := db.RuntimeStates()
 			inst := fixture.FixInstance("iid")
@@ -80,15 +81,18 @@ func TestInitialisationStep_OtherOperationIsInProgress(t *testing.T) {
 			builder := &automock.CreatorForPlan{}
 			builder.On("CreateUpgradeShootInput", mock.Anything).
 				Return(&fixture.SimpleInputCreator{}, nil)
-			step := NewInitialisationStep(is, os, builder)
+			step := NewInitialisationStep(is, ops, builder)
 			updatingOperation := fixture.FixUpdatingOperation("up-id", "iid")
 			updatingOperation.State = orchestration.Pending
-			err = os.InsertOperation(updatingOperation.Operation)
+			err = ops.InsertOperation(updatingOperation.Operation)
 			require.NoError(t, err)
-			tc.beforeFunc(os)
+			tc.beforeFunc(ops)
+			log := slog.New(slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{
+				Level: slog.LevelInfo,
+			}))
 
 			// when
-			_, d, err := step.Run(updatingOperation.Operation, logrus.New())
+			_, d, err := step.Run(updatingOperation.Operation, log)
 
 			// then
 			require.NoError(t, err)
