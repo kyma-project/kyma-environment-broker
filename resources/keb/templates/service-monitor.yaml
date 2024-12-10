@@ -60,4 +60,24 @@ spec:
   selector:
     matchLabels:
       app.kubernetes.io/name: subaccount-sync
+---
+apiVersion: operator.victoriametrics.com/v1beta1
+kind: VMServiceScrape
+metadata:
+  labels:
+    app.kubernetes.io/name: runtime-reconciler
+  name: runtime-reconciler
+  namespace: kcp-system
+spec:
+  endpoints:
+    - attach_metadata: {}
+      interval: 30s
+      port: http
+      scrapeTimeout: 10s
+  namespaceSelector:
+    matchNames:
+      - kcp-system
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: runtime-reconciler
 {{- end }}

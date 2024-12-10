@@ -406,6 +406,7 @@ runtimeReconciler:
   jobEnabled: false
   jobInterval: 1440
   jobReconciliationDelay: 1s
+  metricsPort: 8081
 
 migratorJobs:
   enabled: true
