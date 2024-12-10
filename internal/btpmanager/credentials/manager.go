@@ -40,7 +40,7 @@ const (
 	keb                     = "kcp-kyma-environment-broker"
 	kcpNamespace            = "kcp-system"
 	instanceIdLabel         = "kyma-project.io/instance-id"
-	skipReconciliationLabel = "kyma-project.io/skip-reconciliation"
+	skipReconciliationLabel = "operator.kyma-project.io/skip-reconciliation"
 )
 
 const (
