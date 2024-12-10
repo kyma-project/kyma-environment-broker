@@ -12,14 +12,12 @@ import (
 	"github.com/kyma-project/kyma-environment-broker/internal/ptr"
 	"github.com/kyma-project/kyma-environment-broker/internal/storage"
 	"github.com/pivotal-cf/brokerapi/v8/domain"
-	"github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 )
 
 func TestCreateRuntimeWithoutKyma_Run(t *testing.T) {
 	// given
-	log := logrus.New()
 	memoryStorage := storage.NewMemoryStorage()
 
 	operation := fixOperationCreateRuntime(t, broker.GCPPlanID, "europe-west3")
@@ -54,8 +52,7 @@ func TestCreateRuntimeWithoutKyma_Run(t *testing.T) {
 	step := NewCreateRuntimeWithoutKymaStep(memoryStorage.Operations(), memoryStorage.RuntimeStates(), memoryStorage.Instances(), provisionerClient, kimConfig)
 
 	// when
-	entry := log.WithFields(logrus.Fields{"step": "TEST"})
-	operation, repeat, err := step.Run(operation, entry)
+	operation, repeat, err := step.Run(operation, fixLogger())
 
 	// then
 	assert.NoError(t, err)
@@ -69,7 +66,6 @@ func TestCreateRuntimeWithoutKyma_Run(t *testing.T) {
 
 func TestCreateRuntimeWithoutKyma_SkipForKIM(t *testing.T) {
 	// given
-	log := logrus.New()
 	memoryStorage := storage.NewMemoryStorage()
 
 	operation := fixOperationCreateRuntime(t, broker.GCPPlanID, "europe-west3")
@@ -106,8 +102,7 @@ func TestCreateRuntimeWithoutKyma_SkipForKIM(t *testing.T) {
 	step := NewCreateRuntimeWithoutKymaStep(memoryStorage.Operations(), memoryStorage.RuntimeStates(), memoryStorage.Instances(), provisionerClient, kimConfig)
 
 	// when
-	entry := log.WithFields(logrus.Fields{"step": "TEST"})
-	operation, repeat, err := step.Run(operation, entry)
+	operation, repeat, err := step.Run(operation, fixLogger())
 
 	// then
 	assert.NoError(t, err)
@@ -117,7 +112,6 @@ func TestCreateRuntimeWithoutKyma_SkipForKIM(t *testing.T) {
 
 func TestCreateRuntimeWithoutKyma_RunWithEuAccess(t *testing.T) {
 	// given
-	log := logrus.New()
 	memoryStorage := storage.NewMemoryStorage()
 
 	operation := fixOperationCreateRuntimeWithPlatformRegion(t, broker.GCPPlanID, "europe-west3", "cf-ch20")
@@ -152,8 +146,7 @@ func TestCreateRuntimeWithoutKyma_RunWithEuAccess(t *testing.T) {
 	step := NewCreateRuntimeWithoutKymaStep(memoryStorage.Operations(), memoryStorage.RuntimeStates(), memoryStorage.Instances(), provisionerClient, kimConfig)
 
 	// when
-	entry := log.WithFields(logrus.Fields{"step": "TEST"})
-	operation, repeat, err := step.Run(operation, entry)
+	operation, repeat, err := step.Run(operation, fixLogger())
 
 	// then
 	assert.NoError(t, err)
@@ -233,7 +226,6 @@ func fixProvisionerInput(disabled bool, euAccess bool) gqlschema.ProvisionRuntim
 
 func TestCreateRuntimeWithoutKymaStep_RunWithBadRequestError(t *testing.T) {
 	// given
-	log := logrus.New()
 	memoryStorage := storage.NewMemoryStorage()
 
 	operation := fixOperationCreateRuntime(t, broker.AzurePlanID, "westeurope")
@@ -253,8 +245,7 @@ func TestCreateRuntimeWithoutKymaStep_RunWithBadRequestError(t *testing.T) {
 	step := NewCreateRuntimeWithoutKymaStep(memoryStorage.Operations(), memoryStorage.RuntimeStates(), memoryStorage.Instances(), provisionerClient, kimConfig)
 
 	// when
-	entry := log.WithFields(logrus.Fields{"step": "TEST"})
-	operation, _, err = step.Run(operation, entry)
+	operation, _, err = step.Run(operation, fixLogger())
 
 	// then
 	assert.Equal(t, domain.Failed, operation.State)

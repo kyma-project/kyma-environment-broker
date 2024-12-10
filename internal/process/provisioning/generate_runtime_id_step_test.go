@@ -5,7 +5,6 @@ import (
 
 	"github.com/kyma-project/kyma-environment-broker/internal/fixture"
 
-	"github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/assert"
 
 	"github.com/kyma-project/kyma-environment-broker/internal/storage"
@@ -13,7 +12,6 @@ import (
 
 func TestNewGenerateRuntimeIDStep_LeaveRuntimeIDIfNotEmpty(t *testing.T) {
 	// given
-	log := logrus.New()
 	memoryStorage := storage.NewMemoryStorage()
 
 	instance := fixInstance()
@@ -29,8 +27,7 @@ func TestNewGenerateRuntimeIDStep_LeaveRuntimeIDIfNotEmpty(t *testing.T) {
 	step := NewGenerateRuntimeIDStep(memoryStorage.Operations(), memoryStorage.Instances())
 
 	// when
-	entry := log.WithFields(logrus.Fields{"step": "TEST"})
-	operation, repeat, err := step.Run(operation, entry)
+	operation, repeat, err := step.Run(operation, fixLogger())
 
 	// then
 	assert.NoError(t, err)
@@ -44,7 +41,6 @@ func TestNewGenerateRuntimeIDStep_LeaveRuntimeIDIfNotEmpty(t *testing.T) {
 
 func TestNewGenerateRuntimeIDStep_LeaveCreateRuntimeIDIfEmpty(t *testing.T) {
 	// given
-	log := logrus.New()
 	memoryStorage := storage.NewMemoryStorage()
 
 	operation := fixture.FixProvisioningOperation(operationID, instanceID)
@@ -60,8 +56,7 @@ func TestNewGenerateRuntimeIDStep_LeaveCreateRuntimeIDIfEmpty(t *testing.T) {
 	step := NewGenerateRuntimeIDStep(memoryStorage.Operations(), memoryStorage.Instances())
 
 	// when
-	entry := log.WithFields(logrus.Fields{"step": "TEST"})
-	operation, repeat, err := step.Run(operation, entry)
+	operation, repeat, err := step.Run(operation, fixLogger())
 
 	// then
 	assert.NoError(t, err)

@@ -2,6 +2,8 @@ package deprovisioning
 
 import (
 	"context"
+	"fmt"
+	"log/slog"
 	"time"
 
 	kebError "github.com/kyma-project/kyma-environment-broker/internal/error"
@@ -10,7 +12,6 @@ import (
 	"github.com/kyma-project/kyma-environment-broker/internal"
 	"github.com/kyma-project/kyma-environment-broker/internal/process"
 	"github.com/kyma-project/kyma-environment-broker/internal/storage"
-	"github.com/sirupsen/logrus"
 	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/api/meta"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -36,19 +37,19 @@ func (step *CheckRuntimeResourceDeletionStep) Name() string {
 	return "Check_RuntimeResource_Deletion"
 }
 
-func (step *CheckRuntimeResourceDeletionStep) Run(operation internal.Operation, logger logrus.FieldLogger) (internal.Operation, time.Duration, error) {
+func (step *CheckRuntimeResourceDeletionStep) Run(operation internal.Operation, logger *slog.Logger) (internal.Operation, time.Duration, error) {
 	namespace := operation.KymaResourceNamespace
 	if namespace == "" {
-		logger.Warnf("namespace for Kyma resource not specified, setting 'kcp-system'")
+		logger.Warn("namespace for Kyma resource not specified, setting 'kcp-system'")
 		namespace = "kcp-system"
 	}
 	resourceName := operation.RuntimeResourceName
 	if resourceName == "" {
-		logger.Infof("Runtime resource name is empty, using runtime-id")
+		logger.Info("Runtime resource name is empty, using runtime-id")
 		resourceName = operation.RuntimeID
 	}
 	if resourceName == "" {
-		logger.Infof("Empty runtime ID, skipping")
+		logger.Info("Empty runtime ID, skipping")
 		return operation, 0, nil
 	}
 
@@ -65,7 +66,7 @@ func (step *CheckRuntimeResourceDeletionStep) Run(operation internal.Operation, 
 	}, runtime)
 
 	if err == nil {
-		logger.Infof("Runtime resource still exists")
+		logger.Info("Runtime resource still exists")
 		return step.operationManager.RetryOperation(operation, "Runtime resource still exists", nil, 20*time.Second, step.checkRuntimeResourceDeletionStepTimeout, logger)
 	}
 
@@ -75,7 +76,7 @@ func (step *CheckRuntimeResourceDeletionStep) Run(operation internal.Operation, 
 			return operation, 0, nil
 		}
 
-		logger.Warnf("unable to check Runtime resource existence: %s", err)
+		logger.Warn(fmt.Sprintf("unable to check Runtime resource existence: %s", err))
 		return step.operationManager.RetryOperation(operation, "unable to check Runtime resource existence", err, backoffForK8SOperation, timeoutForK8sOperation, logger)
 	}
 

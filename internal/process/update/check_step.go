@@ -2,11 +2,10 @@ package update
 
 import (
 	"fmt"
+	"log/slog"
 	"time"
 
 	kebError "github.com/kyma-project/kyma-environment-broker/internal/error"
-
-	"github.com/sirupsen/logrus"
 
 	"github.com/kyma-project/control-plane/components/provisioner/pkg/gqlschema"
 	"github.com/kyma-project/kyma-environment-broker/internal"
@@ -39,32 +38,32 @@ func (s *CheckStep) Name() string {
 	return "Check_Runtime"
 }
 
-func (s *CheckStep) Run(operation internal.Operation, log logrus.FieldLogger) (internal.Operation, time.Duration, error) {
+func (s *CheckStep) Run(operation internal.Operation, log *slog.Logger) (internal.Operation, time.Duration, error) {
 	if operation.RuntimeID == "" {
-		log.Errorf("Runtime ID is empty")
+		log.Error("Runtime ID is empty")
 		return s.operationManager.OperationFailed(operation, "Runtime ID is empty", nil, log)
 	}
-	return s.checkRuntimeStatus(operation, log.WithField("runtimeID", operation.RuntimeID))
+	return s.checkRuntimeStatus(operation, log.With("runtimeID", operation.RuntimeID))
 }
 
-func (s *CheckStep) checkRuntimeStatus(operation internal.Operation, log logrus.FieldLogger) (internal.Operation, time.Duration, error) {
+func (s *CheckStep) checkRuntimeStatus(operation internal.Operation, log *slog.Logger) (internal.Operation, time.Duration, error) {
 	if operation.ProvisionerOperationID == "" {
 		// it can happen, when only KIM is involved in the process
-		log.Infof("Provisioner operation ID is empty, skipping")
+		log.Info("Provisioner operation ID is empty, skipping")
 		return operation, 0, nil
 	}
 
 	if time.Since(operation.UpdatedAt) > s.provisioningTimeout {
-		log.Infof("operation has reached the time limit: updated operation time: %s", operation.UpdatedAt)
+		log.Info(fmt.Sprintf("operation has reached the time limit: updated operation time: %s", operation.UpdatedAt))
 		return s.operationManager.OperationFailed(operation, fmt.Sprintf("operation has reached the time limit: %s", s.provisioningTimeout), nil, log)
 	}
 
 	status, err := s.provisionerClient.RuntimeOperationStatus(operation.ProvisioningParameters.ErsContext.GlobalAccountID, operation.ProvisionerOperationID)
 	if err != nil {
-		log.Errorf("call to provisioner RuntimeOperationStatus failed: %s", err.Error())
+		log.Error(fmt.Sprintf("call to provisioner RuntimeOperationStatus failed: %s", err.Error()))
 		return operation, 1 * time.Minute, nil
 	}
-	log.Infof("call to provisioner returned %s status", status.State.String())
+	log.Info(fmt.Sprintf("call to provisioner returned %s status", status.State.String()))
 
 	var msg string
 	if status.Message != nil {

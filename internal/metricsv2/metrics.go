@@ -3,6 +3,7 @@ package metricsv2
 import (
 	"context"
 	"fmt"
+	"log/slog"
 	"math/rand"
 	"time"
 
@@ -15,7 +16,6 @@ import (
 	"github.com/kyma-project/kyma-environment-broker/internal/storage"
 	"github.com/pivotal-cf/brokerapi/v8/domain"
 	"github.com/prometheus/client_golang/prometheus"
-	"github.com/sirupsen/logrus"
 )
 
 const (
@@ -49,9 +49,9 @@ type RegisterContainer struct {
 	InstancesCollector         *InstancesCollector
 }
 
-func Register(ctx context.Context, sub event.Subscriber, db storage.BrokerStorage, cfg Config, logger logrus.FieldLogger) *RegisterContainer {
-	logger = logger.WithField("from:", logPrefix)
-	logrus.Infof("Registering metricsv2")
+func Register(ctx context.Context, sub event.Subscriber, db storage.BrokerStorage, cfg Config, logger *slog.Logger) *RegisterContainer {
+	logger = logger.With("from:", logPrefix)
+	logger.Info("Registering metricsv2")
 	opDurationCollector := NewOperationDurationCollector(logger)
 	prometheus.MustRegister(opDurationCollector)
 
@@ -83,7 +83,7 @@ func Register(ctx context.Context, sub event.Subscriber, db storage.BrokerStorag
 	sub.Subscribe(broker.UnbindRequestProcessed{}, bindDurationCollector.OnUnbindingExecuted)
 	sub.Subscribe(broker.BindingCreated{}, bindCrestedCollector.OnBindingCreated)
 
-	logger.Infof(fmt.Sprintf("%s -> enabled", logPrefix))
+	logger.Info(fmt.Sprintf("%s -> enabled", logPrefix))
 
 	return &RegisterContainer{
 		OperationResult:            opResult,

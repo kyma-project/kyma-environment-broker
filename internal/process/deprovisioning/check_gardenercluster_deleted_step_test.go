@@ -3,6 +3,8 @@ package deprovisioning
 import (
 	"context"
 	"fmt"
+	"log/slog"
+	"os"
 	"testing"
 
 	"github.com/kyma-project/kyma-environment-broker/internal"
@@ -11,7 +13,6 @@ import (
 	"github.com/kyma-project/kyma-environment-broker/internal/process/steps"
 
 	"github.com/kyma-project/kyma-environment-broker/internal/fixture"
-	"github.com/kyma-project/kyma-environment-broker/internal/logger"
 	"github.com/kyma-project/kyma-environment-broker/internal/storage"
 	"github.com/stretchr/testify/assert"
 	"k8s.io/apimachinery/pkg/api/errors"
@@ -39,7 +40,7 @@ func TestCheckGardenerClusterResourceDeleted_HappyFlow(t *testing.T) {
 	step := NewCheckGardenerClusterDeletedStep(memoryStorage.Operations(), kcpClient)
 
 	// When
-	_, backoff, err := step.Run(operation, logger.NewLogSpy().Logger)
+	_, backoff, err := step.Run(operation, fixLogger())
 
 	// Then
 	assert.Zero(t, backoff)
@@ -64,7 +65,7 @@ func TestCheckGardenerClusterResourceDeleted_EmptyResourceName(t *testing.T) {
 	step := NewCheckGardenerClusterDeletedStep(memoryStorage.Operations(), kcpClient)
 
 	// When
-	_, backoff, err := step.Run(operation, logger.NewLogSpy().Logger)
+	_, backoff, err := step.Run(operation, fixLogger())
 
 	// Then
 	// expected: the GardenerClusterName is empty, step do nothing
@@ -88,7 +89,7 @@ func TestCheckGardenerClusterResourceDeleted_RetryWhenStillExists(t *testing.T) 
 	step := NewCheckGardenerClusterDeletedStep(memoryStorage.Operations(), kcpClient)
 
 	// When
-	_, backoff, err := step.Run(operation, logger.NewLogSpy().Logger)
+	_, backoff, err := step.Run(operation, fixLogger())
 
 	// Then
 	assert.NotZero(t, backoff)
@@ -126,4 +127,10 @@ spec:
 	_, _, err := decoder.Decode([]byte(obj), nil, unstructuredObject)
 	assert.NoError(t, err)
 	return unstructuredObject
+}
+
+func fixLogger() *slog.Logger {
+	return slog.New(slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{
+		Level: slog.LevelInfo,
+	})).With("testing", true)
 }

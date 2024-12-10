@@ -7,7 +7,6 @@ import (
 	"github.com/kyma-project/kyma-environment-broker/internal"
 	"github.com/kyma-project/kyma-environment-broker/internal/broker"
 	"github.com/kyma-project/kyma-environment-broker/internal/edp"
-	"github.com/kyma-project/kyma-environment-broker/internal/logger"
 	"github.com/kyma-project/kyma-environment-broker/internal/storage"
 
 	"github.com/stretchr/testify/assert"
@@ -42,7 +41,7 @@ func TestEDPRegistration_Run(t *testing.T) {
 	assert.NoError(t, err)
 
 	// when
-	_, repeat, err := step.Run(operation, logger.NewLogDummy())
+	_, repeat, err := step.Run(operation, fixLogger())
 
 	// then
 	assert.Equal(t, 0*time.Second, repeat)
@@ -56,7 +55,7 @@ func TestEDPRegistration_Run(t *testing.T) {
 	}, dataTenant)
 
 	for key, value := range map[string]string{
-		edp.MaasConsumerEnvironmentKey: step.selectEnvironmentKey(edpRegion, logger.NewLogDummy()),
+		edp.MaasConsumerEnvironmentKey: step.selectEnvironmentKey(edpRegion, fixLogger()),
 		edp.MaasConsumerRegionKey:      edpRegion,
 		edp.MaasConsumerSubAccountKey:  edpName,
 		edp.MaasConsumerServicePlan:    edpPlan,
@@ -106,7 +105,7 @@ func TestEDPRegistrationStep_selectEnvironmentKey(t *testing.T) {
 			step := NewEDPRegistrationStep(nil, nil, edp.Config{})
 
 			// when
-			envKey := step.selectEnvironmentKey(tc.region, logger.NewLogDummy())
+			envKey := step.selectEnvironmentKey(tc.region, fixLogger())
 
 			// then
 			assert.Equal(t, tc.expected, envKey)

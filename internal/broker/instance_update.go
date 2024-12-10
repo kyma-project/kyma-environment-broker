@@ -288,7 +288,7 @@ func (b *UpdateEndpoint) processUpdateParameters(instance *internal.Instance, de
 		instance.Parameters.Parameters.MachineType = params.MachineType
 	}
 	if len(updateStorage) > 0 {
-		if err := wait.PollImmediate(500*time.Millisecond, 2*time.Second, func() (bool, error) {
+		if err := wait.PollUntilContextTimeout(context.Background(), 500*time.Millisecond, 2*time.Second, true, func(ctx context.Context) (bool, error) {
 			instance, err = b.instanceStorage.Update(*instance)
 			if err != nil {
 				params := strings.Join(updateStorage, ", ")

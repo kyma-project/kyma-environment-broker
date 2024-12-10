@@ -2,23 +2,23 @@ package orchestration
 
 import (
 	"fmt"
+	"log/slog"
 
 	"github.com/kyma-project/kyma-environment-broker/common/runtime"
 	runtimeInt "github.com/kyma-project/kyma-environment-broker/internal/runtime"
 	"github.com/kyma-project/kyma-environment-broker/internal/storage"
 	"github.com/kyma-project/kyma-environment-broker/internal/storage/dberr"
 	"github.com/kyma-project/kyma-environment-broker/internal/storage/dbmodel"
-	"github.com/sirupsen/logrus"
 )
 
 type RuntimeLister struct {
 	instancesDb  storage.Instances
 	operationsDb storage.Operations
 	converter    runtimeInt.Converter
-	log          logrus.FieldLogger
+	log          *slog.Logger
 }
 
-func NewRuntimeLister(instancesDb storage.Instances, operationsDb storage.Operations, converter runtimeInt.Converter, log logrus.FieldLogger) *RuntimeLister {
+func NewRuntimeLister(instancesDb storage.Instances, operationsDb storage.Operations, converter runtimeInt.Converter, log *slog.Logger) *RuntimeLister {
 	return &RuntimeLister{
 		instancesDb:  instancesDb,
 		operationsDb: operationsDb,
@@ -37,13 +37,13 @@ func (rl RuntimeLister) ListAllRuntimes() ([]runtime.RuntimeDTO, error) {
 	for _, inst := range instances {
 		dto, err := rl.converter.NewDTO(inst)
 		if err != nil {
-			rl.log.Errorf("cannot convert instance to DTO: %s", err.Error())
+			rl.log.Error(fmt.Sprintf("cannot convert instance to DTO: %s", err.Error()))
 			continue
 		}
 
 		pOprs, err := rl.operationsDb.ListProvisioningOperationsByInstanceID(inst.InstanceID)
 		if err != nil {
-			rl.log.Errorf("while getting provision operation for instance %s: %s", inst.InstanceID, err.Error())
+			rl.log.Error(fmt.Sprintf("while getting provision operation for instance %s: %s", inst.InstanceID, err.Error()))
 			continue
 		}
 		if len(pOprs) > 0 {
@@ -55,7 +55,7 @@ func (rl RuntimeLister) ListAllRuntimes() ([]runtime.RuntimeDTO, error) {
 
 		dOprs, err := rl.operationsDb.ListDeprovisioningOperationsByInstanceID(inst.InstanceID)
 		if err != nil && !dberr.IsNotFound(err) {
-			rl.log.Errorf("while getting deprovision operation for instance %s: %s", inst.InstanceID, err.Error())
+			rl.log.Error(fmt.Sprintf("while getting deprovision operation for instance %s: %s", inst.InstanceID, err.Error()))
 			continue
 		}
 		if len(dOprs) > 0 {

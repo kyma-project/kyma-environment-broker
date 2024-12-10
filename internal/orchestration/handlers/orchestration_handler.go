@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"fmt"
+	"log/slog"
 	"net/http"
 
 	apiErrors "k8s.io/apimachinery/pkg/api/errors"
@@ -18,8 +19,6 @@ import (
 
 	"github.com/gorilla/mux"
 	commonOrchestration "github.com/kyma-project/kyma-environment-broker/common/orchestration"
-
-	"github.com/sirupsen/logrus"
 )
 
 type orchestrationHandler struct {
@@ -28,7 +27,7 @@ type orchestrationHandler struct {
 	runtimeStates  storage.RuntimeStates
 
 	converter Converter
-	log       logrus.FieldLogger
+	log       *slog.Logger
 
 	canceler       *Canceler
 	clusterRetryer *clusterRetryer
@@ -42,7 +41,7 @@ func NewOrchestrationStatusHandler(operations storage.Operations,
 	runtimeStates storage.RuntimeStates,
 	clusterQueue *process.Queue,
 	defaultMaxPage int,
-	log logrus.FieldLogger) *orchestrationHandler {
+	log *slog.Logger) *orchestrationHandler {
 	return &orchestrationHandler{
 		operations:     operations,
 		orchestrations: orchestrations,
@@ -69,21 +68,21 @@ func (h *orchestrationHandler) getOrchestration(w http.ResponseWriter, r *http.R
 
 	o, err := h.orchestrations.GetByID(orchestrationID)
 	if err != nil {
-		h.log.Errorf("while getting orchestration %s: %v", orchestrationID, err)
+		h.log.Error(fmt.Sprintf("while getting orchestration %s: %v", orchestrationID, err))
 		httputil.WriteErrorResponse(w, h.resolveErrorStatus(err), fmt.Errorf("while getting orchestration %s: %w", orchestrationID, err))
 		return
 	}
 
 	stats, err := h.operations.GetOperationStatsForOrchestration(orchestrationID)
 	if err != nil {
-		h.log.Errorf("while getting orchestration %s operation statistics: %v", orchestrationID, err)
+		h.log.Error(fmt.Sprintf("while getting orchestration %s operation statistics: %v", orchestrationID, err))
 		httputil.WriteErrorResponse(w, h.resolveErrorStatus(err), fmt.Errorf("while getting orchestration %s operation statistics: %w", orchestrationID, err))
 		return
 	}
 
 	response, err := h.converter.OrchestrationToDTO(o, stats)
 	if err != nil {
-		h.log.Errorf("while converting orchestration: %v", err)
+		h.log.Error(fmt.Sprintf("while converting orchestration: %v", err))
 		httputil.WriteErrorResponse(w, http.StatusInternalServerError, fmt.Errorf("while converting orchestration: %w", err))
 		return
 	}
@@ -96,7 +95,7 @@ func (h *orchestrationHandler) cancelOrchestrationByID(w http.ResponseWriter, r 
 
 	err := h.canceler.CancelForID(orchestrationID)
 	if err != nil {
-		h.log.Errorf("while canceling orchestration %s: %v", orchestrationID, err)
+		h.log.Error(fmt.Sprintf("while canceling orchestration %s: %v", orchestrationID, err))
 		httputil.WriteErrorResponse(w, h.resolveErrorStatus(err), fmt.Errorf("while canceling orchestration %s: %w", orchestrationID, err))
 		return
 	}
@@ -109,7 +108,7 @@ func (h *orchestrationHandler) cancelOrchestrationByID(w http.ResponseWriter, r 
 func (h *orchestrationHandler) retryOrchestrationByID(w http.ResponseWriter, r *http.Request) {
 	contentType := r.Header.Get("Content-type")
 	if contentType != "application/x-www-form-urlencoded" {
-		h.log.Errorf("invalide content type %s for retrying orchestration", contentType)
+		h.log.Error(fmt.Sprintf("invalid content type %s for retrying orchestration", contentType))
 		httputil.WriteErrorResponse(w, http.StatusUnsupportedMediaType, fmt.Errorf("invalide content type %s for retrying orchestration", contentType))
 		return
 	}
@@ -119,7 +118,7 @@ func (h *orchestrationHandler) retryOrchestrationByID(w http.ResponseWriter, r *
 
 	if r.Body != nil {
 		if err := r.ParseForm(); err != nil {
-			h.log.Errorf("cannot parse form while retrying orchestration: %s: %v", orchestrationID, err)
+			h.log.Error(fmt.Sprintf("cannot parse form while retrying orchestration: %s: %v", orchestrationID, err))
 			httputil.WriteErrorResponse(w, h.resolveErrorStatus(err), fmt.Errorf("cannot parse form while retrying orchestration: %s: %w", orchestrationID, err))
 			return
 		}
@@ -129,7 +128,7 @@ func (h *orchestrationHandler) retryOrchestrationByID(w http.ResponseWriter, r *
 
 	o, err := h.orchestrations.GetByID(orchestrationID)
 	if err != nil {
-		h.log.Errorf("while retrying orchestration %s: %v", orchestrationID, err)
+		h.log.Error(fmt.Sprintf("while retrying orchestration %s: %v", orchestrationID, err))
 		httputil.WriteErrorResponse(w, h.resolveErrorStatus(err), fmt.Errorf("while retrying orchestration %s: %w", orchestrationID, err))
 		return
 	}
@@ -144,7 +143,7 @@ func (h *orchestrationHandler) retryOrchestrationByID(w http.ResponseWriter, r *
 	case commonOrchestration.UpgradeClusterOrchestration:
 		allOps, _, _, err := h.operations.ListUpgradeClusterOperationsByOrchestrationID(o.OrchestrationID, filter)
 		if err != nil {
-			h.log.Errorf("while getting operations: %v", err)
+			h.log.Error(fmt.Sprintf("while getting operations: %v", err))
 			httputil.WriteErrorResponse(w, http.StatusInternalServerError, fmt.Errorf("while getting operations: %w", err))
 			return
 		}
@@ -179,14 +178,14 @@ func (h *orchestrationHandler) listOrchestration(w http.ResponseWriter, r *http.
 
 	orchestrations, count, totalCount, err := h.orchestrations.List(filter)
 	if err != nil {
-		h.log.Errorf("while getting orchestrations: %v", err)
+		h.log.Error(fmt.Sprintf("while getting orchestrations: %v", err))
 		httputil.WriteErrorResponse(w, http.StatusInternalServerError, fmt.Errorf("while getting orchestrations: %w", err))
 		return
 	}
 
 	response, err := h.converter.OrchestrationListToDTO(orchestrations, count, totalCount)
 	if err != nil {
-		h.log.Errorf("while converting orchestrations: %v", err)
+		h.log.Error(fmt.Sprintf("while converting orchestrations: %v", err))
 		httputil.WriteErrorResponse(w, http.StatusInternalServerError, fmt.Errorf("while converting orchestrations: %w", err))
 		return
 	}
@@ -211,7 +210,7 @@ func (h *orchestrationHandler) listOperations(w http.ResponseWriter, r *http.Req
 
 	o, err := h.orchestrations.GetByID(orchestrationID)
 	if err != nil {
-		h.log.Errorf("while getting orchestration %s: %v", orchestrationID, err)
+		h.log.Error(fmt.Sprintf("while getting orchestration %s: %v", orchestrationID, err))
 		httputil.WriteErrorResponse(w, h.resolveErrorStatus(err), fmt.Errorf("while getting orchestration %s: %w", orchestrationID, err))
 		return
 	}
@@ -222,13 +221,13 @@ func (h *orchestrationHandler) listOperations(w http.ResponseWriter, r *http.Req
 	case commonOrchestration.UpgradeClusterOrchestration:
 		operations, count, totalCount, err := h.operations.ListUpgradeClusterOperationsByOrchestrationID(orchestrationID, filter)
 		if err != nil {
-			h.log.Errorf("while getting operations: %v", err)
+			h.log.Error(fmt.Sprintf("while getting operations: %v", err))
 			httputil.WriteErrorResponse(w, http.StatusInternalServerError, fmt.Errorf("while getting operations: %w", err))
 			return
 		}
 		response, err = h.converter.UpgradeClusterOperationListToDTO(operations, count, totalCount)
 		if err != nil {
-			h.log.Errorf("while converting operations: %v", err)
+			h.log.Error(fmt.Sprintf("while converting operations: %v", err))
 			httputil.WriteErrorResponse(w, http.StatusInternalServerError, fmt.Errorf("while converting operations: %w", err))
 			return
 		}
@@ -247,14 +246,14 @@ func (h *orchestrationHandler) getOperation(w http.ResponseWriter, r *http.Reque
 
 	o, err := h.orchestrations.GetByID(orchestrationID)
 	if err != nil {
-		h.log.Errorf("while getting orchestration %s: %v", orchestrationID, err)
+		h.log.Error(fmt.Sprintf("while getting orchestration %s: %v", orchestrationID, err))
 		httputil.WriteErrorResponse(w, h.resolveErrorStatus(err), fmt.Errorf("while getting orchestration %s: %w", orchestrationID, err))
 		return
 	}
 
 	upgradeState, err := h.runtimeStates.GetByOperationID(operationID)
 	if err != nil && !dberr.IsNotFound(err) {
-		h.log.Errorf("while getting runtime state for upgrade operation %s: %v", operationID, err)
+		h.log.Error(fmt.Sprintf("while getting runtime state for upgrade operation %s: %v", operationID, err))
 	}
 
 	var response commonOrchestration.OperationDetailResponse
@@ -263,14 +262,14 @@ func (h *orchestrationHandler) getOperation(w http.ResponseWriter, r *http.Reque
 	case commonOrchestration.UpgradeClusterOrchestration:
 		operation, err := h.operations.GetUpgradeClusterOperationByID(operationID)
 		if err != nil {
-			h.log.Errorf("while getting upgrade operation %s: %v", operationID, err)
+			h.log.Error(fmt.Sprintf("while getting upgrade operation %s: %v", operationID, err))
 			httputil.WriteErrorResponse(w, h.resolveErrorStatus(err), fmt.Errorf("while getting upgrade operation %s: %w", operationID, err))
 			return
 		}
 
 		response, err = h.converter.UpgradeClusterOperationToDetailDTO(*operation, &upgradeState.ClusterConfig)
 		if err != nil {
-			h.log.Errorf("while converting operation: %v", err)
+			h.log.Error(fmt.Sprintf("while converting operation: %v", err))
 			httputil.WriteErrorResponse(w, http.StatusInternalServerError, fmt.Errorf("while converting operation: %w", err))
 			return
 		}

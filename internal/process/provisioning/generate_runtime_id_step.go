@@ -2,6 +2,7 @@ package provisioning
 
 import (
 	"fmt"
+	"log/slog"
 
 	kebError "github.com/kyma-project/kyma-environment-broker/internal/error"
 
@@ -13,7 +14,6 @@ import (
 	"github.com/kyma-project/kyma-environment-broker/internal/process"
 	"github.com/kyma-project/kyma-environment-broker/internal/storage"
 	"github.com/kyma-project/kyma-environment-broker/internal/storage/dberr"
-	"github.com/sirupsen/logrus"
 )
 
 type GenerateRuntimeIDStep struct {
@@ -33,15 +33,15 @@ func (s *GenerateRuntimeIDStep) Name() string {
 	return "Generate_Runtime_ID"
 }
 
-func (s *GenerateRuntimeIDStep) Run(operation internal.Operation, log logrus.FieldLogger) (internal.Operation, time.Duration, error) {
+func (s *GenerateRuntimeIDStep) Run(operation internal.Operation, log *slog.Logger) (internal.Operation, time.Duration, error) {
 	if operation.RuntimeID != "" {
-		log.Infof("RuntimeID already set %s, skipping", operation.RuntimeID)
+		log.Info(fmt.Sprintf("RuntimeID already set %s, skipping", operation.RuntimeID))
 		return operation, 0, nil
 	}
 
 	runtimeID := uuid.New().String()
 
-	log.Infof("RuntimeID %s generated", runtimeID)
+	log.Info(fmt.Sprintf("RuntimeID %s generated", runtimeID))
 
 	repeatAfter := time.Duration(0)
 	operation, repeatAfter, _ = s.operationManager.UpdateOperation(operation, func(operation *internal.Operation) {
@@ -49,7 +49,7 @@ func (s *GenerateRuntimeIDStep) Run(operation internal.Operation, log logrus.Fie
 		operation.ProvisionerOperationID = ""
 	}, log)
 	if repeatAfter != 0 {
-		log.Errorf("cannot save RuntimeID in operation")
+		log.Error("cannot save RuntimeID in operation")
 		return operation, 5 * time.Second, nil
 	}
 
@@ -60,7 +60,7 @@ func (s *GenerateRuntimeIDStep) Run(operation internal.Operation, log logrus.Fie
 	case dberr.IsConflict(err):
 		err := s.updateInstance(operation.InstanceID, runtimeID)
 		if err != nil {
-			log.Errorf("cannot update instance: %s", err)
+			log.Error(fmt.Sprintf("cannot update instance: %s", err))
 			return operation, 1 * time.Minute, nil
 		}
 	}

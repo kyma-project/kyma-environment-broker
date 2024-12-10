@@ -22,7 +22,6 @@ import (
 	"github.com/kyma-project/kyma-environment-broker/common/hyperscaler"
 	hyperscalerMocks "github.com/kyma-project/kyma-environment-broker/common/hyperscaler/automock"
 	"github.com/kyma-project/kyma-environment-broker/internal/storage"
-	"github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -33,7 +32,6 @@ const (
 
 func TestResolveCredentialsStepHappyPath_Run(t *testing.T) {
 	// given
-	log := logrus.New()
 	memoryStorage := storage.NewMemoryStorage()
 
 	operation := fixOperationRuntimeStatus(broker.GCPPlanID, pkg.GCP)
@@ -46,7 +44,7 @@ func TestResolveCredentialsStepHappyPath_Run(t *testing.T) {
 	step := NewResolveCredentialsStep(memoryStorage.Operations(), accountProviderMock)
 
 	// when
-	operation, repeat, err := step.Run(operation, log)
+	operation, repeat, err := step.Run(operation, fixLogger())
 
 	assert.NoError(t, err)
 
@@ -60,7 +58,6 @@ func TestResolveCredentialsStepHappyPath_Run(t *testing.T) {
 
 func TestResolveCredentialsEUStepHappyPath_Run(t *testing.T) {
 	// given
-	log := logrus.New()
 	memoryStorage := storage.NewMemoryStorage()
 
 	operation := fixOperationRuntimeStatus(broker.AWSPlanID, pkg.AWS)
@@ -74,7 +71,7 @@ func TestResolveCredentialsEUStepHappyPath_Run(t *testing.T) {
 	step := NewResolveCredentialsStep(memoryStorage.Operations(), accountProviderMock)
 
 	// when
-	operation, repeat, err := step.Run(operation, log)
+	operation, repeat, err := step.Run(operation, fixLogger())
 
 	assert.NoError(t, err)
 
@@ -88,7 +85,6 @@ func TestResolveCredentialsEUStepHappyPath_Run(t *testing.T) {
 
 func TestResolveCredentialsCHStepHappyPath_Run(t *testing.T) {
 	// given
-	log := logrus.New()
 	memoryStorage := storage.NewMemoryStorage()
 
 	operation := fixOperationRuntimeStatus(broker.AWSPlanID, pkg.Azure)
@@ -102,7 +98,7 @@ func TestResolveCredentialsCHStepHappyPath_Run(t *testing.T) {
 	step := NewResolveCredentialsStep(memoryStorage.Operations(), accountProviderMock)
 
 	// when
-	operation, repeat, err := step.Run(operation, log)
+	operation, repeat, err := step.Run(operation, fixLogger())
 
 	assert.NoError(t, err)
 
@@ -116,7 +112,6 @@ func TestResolveCredentialsCHStepHappyPath_Run(t *testing.T) {
 
 func TestResolveCredentialsStepHappyPathTrialDefaultProvider_Run(t *testing.T) {
 	// given
-	log := logrus.New()
 	memoryStorage := storage.NewMemoryStorage()
 
 	operation := fixOperationRuntimeStatus(broker.TrialPlanID, pkg.Azure)
@@ -129,7 +124,7 @@ func TestResolveCredentialsStepHappyPathTrialDefaultProvider_Run(t *testing.T) {
 	step := NewResolveCredentialsStep(memoryStorage.Operations(), accountProviderMock)
 
 	// when
-	operation, repeat, err := step.Run(operation, log)
+	operation, repeat, err := step.Run(operation, fixLogger())
 
 	assert.NoError(t, err)
 
@@ -143,7 +138,6 @@ func TestResolveCredentialsStepHappyPathTrialDefaultProvider_Run(t *testing.T) {
 
 func TestResolveCredentialsStepHappyPathTrialGivenProvider_Run(t *testing.T) {
 	// given
-	log := logrus.New()
 	memoryStorage := storage.NewMemoryStorage()
 
 	operation := fixOperationRuntimeStatusWithProvider(broker.TrialPlanID, pkg.GCP)
@@ -157,7 +151,7 @@ func TestResolveCredentialsStepHappyPathTrialGivenProvider_Run(t *testing.T) {
 	step := NewResolveCredentialsStep(memoryStorage.Operations(), accountProviderMock)
 
 	// when
-	operation, repeat, err := step.Run(operation, log)
+	operation, repeat, err := step.Run(operation, fixLogger())
 
 	assert.NoError(t, err)
 
@@ -171,7 +165,6 @@ func TestResolveCredentialsStepHappyPathTrialGivenProvider_Run(t *testing.T) {
 
 func TestResolveCredentialsStepRetry_Run(t *testing.T) {
 	// given
-	log := logrus.New()
 	memoryStorage := storage.NewMemoryStorage()
 
 	operation := fixOperationRuntimeStatus(broker.GCPPlanID, pkg.GCP)
@@ -186,7 +179,7 @@ func TestResolveCredentialsStepRetry_Run(t *testing.T) {
 	operation.UpdatedAt = time.Now()
 
 	// when
-	operation, repeat, err := step.Run(operation, log)
+	operation, repeat, err := step.Run(operation, fixLogger())
 
 	assert.NoError(t, err)
 
@@ -196,7 +189,7 @@ func TestResolveCredentialsStepRetry_Run(t *testing.T) {
 	assert.Nil(t, operation.ProvisioningParameters.Parameters.TargetSecret)
 	assert.Equal(t, domain.InProgress, operation.State)
 
-	operation, repeat, err = step.Run(operation, log)
+	operation, repeat, err = step.Run(operation, fixLogger())
 
 	assert.NoError(t, err)
 	assert.Equal(t, 10*time.Second, repeat)
@@ -206,7 +199,6 @@ func TestResolveCredentialsStepRetry_Run(t *testing.T) {
 
 func TestResolveCredentials_IntegrationAWS(t *testing.T) {
 	// given
-	log := logrus.New()
 	memoryStorage := storage.NewMemoryStorage()
 	gc := gardener.NewDynamicFakeClient(
 		fixSecretBinding("s1aws", "aws"),
@@ -219,7 +211,7 @@ func TestResolveCredentials_IntegrationAWS(t *testing.T) {
 	step := NewResolveCredentialsStep(memoryStorage.Operations(), accountProvider)
 
 	// when
-	operation, backoff, err := step.Run(op, log)
+	operation, backoff, err := step.Run(op, fixLogger())
 
 	// then
 	assert.Zero(t, backoff)
@@ -229,7 +221,6 @@ func TestResolveCredentials_IntegrationAWS(t *testing.T) {
 
 func TestResolveCredentials_IntegrationAWSEuAccess(t *testing.T) {
 	// given
-	log := logrus.New()
 	memoryStorage := storage.NewMemoryStorage()
 	gc := gardener.NewDynamicFakeClient(
 		fixSecretBinding("aws", "aws"),
@@ -244,7 +235,7 @@ func TestResolveCredentials_IntegrationAWSEuAccess(t *testing.T) {
 	step := NewResolveCredentialsStep(memoryStorage.Operations(), accountProvider)
 
 	// when
-	operation, backoff, err := step.Run(op, log)
+	operation, backoff, err := step.Run(op, fixLogger())
 
 	// then
 	assert.Zero(t, backoff)
@@ -254,7 +245,6 @@ func TestResolveCredentials_IntegrationAWSEuAccess(t *testing.T) {
 
 func TestResolveCredentials_IntegrationAzure(t *testing.T) {
 	// given
-	log := logrus.New()
 	memoryStorage := storage.NewMemoryStorage()
 	gc := gardener.NewDynamicFakeClient(
 		fixSecretBinding("s1aws", "aws"),
@@ -267,7 +257,7 @@ func TestResolveCredentials_IntegrationAzure(t *testing.T) {
 	step := NewResolveCredentialsStep(memoryStorage.Operations(), accountProvider)
 
 	// when
-	operation, backoff, err := step.Run(op, log)
+	operation, backoff, err := step.Run(op, fixLogger())
 
 	// then
 	assert.Zero(t, backoff)
@@ -277,7 +267,6 @@ func TestResolveCredentials_IntegrationAzure(t *testing.T) {
 
 func TestResolveCredentials_IntegrationAzureEuAccess(t *testing.T) {
 	// given
-	log := logrus.New()
 	memoryStorage := storage.NewMemoryStorage()
 	gc := gardener.NewDynamicFakeClient(
 		fixSecretBinding("aws", "aws"),
@@ -292,7 +281,7 @@ func TestResolveCredentials_IntegrationAzureEuAccess(t *testing.T) {
 	step := NewResolveCredentialsStep(memoryStorage.Operations(), accountProvider)
 
 	// when
-	operation, backoff, err := step.Run(op, log)
+	operation, backoff, err := step.Run(op, fixLogger())
 
 	// then
 	assert.Zero(t, backoff)

@@ -3,13 +3,13 @@ package metricsv2
 import (
 	"context"
 	"fmt"
+	"log/slog"
 	"sync"
 	"time"
 
 	"github.com/kyma-project/kyma-environment-broker/internal/broker"
 	"github.com/kyma-project/kyma-environment-broker/internal/storage"
 	"github.com/prometheus/client_golang/prometheus"
-	"github.com/sirupsen/logrus"
 )
 
 // BindDurationCollector provides histograms which describes the time of bind/unbind request processing:
@@ -18,10 +18,10 @@ import (
 type BindDurationCollector struct {
 	bindHistorgam   *prometheus.HistogramVec
 	unbindHistogram *prometheus.HistogramVec
-	logger          logrus.FieldLogger
+	logger          *slog.Logger
 }
 
-func NewBindDurationCollector(logger logrus.FieldLogger) *BindDurationCollector {
+func NewBindDurationCollector(logger *slog.Logger) *BindDurationCollector {
 	return &BindDurationCollector{
 		bindHistorgam: prometheus.NewHistogramVec(prometheus.HistogramOpts{
 			Namespace: prometheusNamespacev2,
@@ -96,7 +96,7 @@ func (c *BindingCreationCollector) OnBindingCreated(ctx context.Context, ev inte
 
 type BindingStatitics struct {
 	db     storage.Bindings
-	logger logrus.FieldLogger
+	logger *slog.Logger
 
 	sync                                 sync.Mutex
 	pollingInterval                      time.Duration
@@ -105,7 +105,7 @@ type BindingStatitics struct {
 
 // NewBindingStatsCollector provides a collector which shows the time in minutes since the earliest binding expiration:
 // - kcp_keb_v2_minutes_since_earliest_binding_expiration
-func NewBindingStatsCollector(db storage.Bindings, pollingInterval time.Duration, logger logrus.FieldLogger) *BindingStatitics {
+func NewBindingStatsCollector(db storage.Bindings, pollingInterval time.Duration, logger *slog.Logger) *BindingStatitics {
 	return &BindingStatitics{
 		db:              db,
 		logger:          logger,
@@ -128,12 +128,12 @@ func (c *BindingStatitics) MustRegister(ctx context.Context) {
 func (c *BindingStatitics) Job(ctx context.Context) {
 	defer func() {
 		if recovery := recover(); recovery != nil {
-			c.logger.Errorf("panic recovered while handling in progress operation counter: %v", recovery)
+			c.logger.Error(fmt.Sprintf("panic recovered while handling in progress operation counter: %v", recovery))
 		}
 	}()
 
 	if err := c.updateMetrics(); err != nil {
-		c.logger.Error("failed to update metrics metrics", err)
+		c.logger.Error(fmt.Sprintf("failed to update metrics metrics: %v", err))
 	}
 
 	ticker := time.NewTicker(c.pollingInterval)
@@ -141,7 +141,7 @@ func (c *BindingStatitics) Job(ctx context.Context) {
 		select {
 		case <-ticker.C:
 			if err := c.updateMetrics(); err != nil {
-				c.logger.Error("failed to update operation stats metrics: ", err)
+				c.logger.Error(fmt.Sprintf("failed to update operation stats metrics: %v", err))
 			}
 		case <-ctx.Done():
 			return

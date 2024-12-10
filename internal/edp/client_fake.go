@@ -2,9 +2,8 @@ package edp
 
 import (
 	"fmt"
+	"log/slog"
 	"sync"
-
-	"github.com/sirupsen/logrus"
 )
 
 const (
@@ -27,7 +26,7 @@ func NewFakeClient() *FakeClient {
 	}
 }
 
-func (f *FakeClient) CreateDataTenant(data DataTenantPayload, log logrus.FieldLogger) error {
+func (f *FakeClient) CreateDataTenant(data DataTenantPayload, log *slog.Logger) error {
 	f.mu.Lock()
 	defer f.mu.Unlock()
 
@@ -50,7 +49,7 @@ func (f *FakeClient) CreateDataTenant(data DataTenantPayload, log logrus.FieldLo
 	return nil
 }
 
-func (f *FakeClient) CreateMetadataTenant(name, env string, data MetadataTenantPayload, log logrus.FieldLogger) error {
+func (f *FakeClient) CreateMetadataTenant(name, env string, data MetadataTenantPayload, log *slog.Logger) error {
 	f.mu.Lock()
 	defer f.mu.Unlock()
 
@@ -75,7 +74,7 @@ func (f *FakeClient) CreateMetadataTenant(name, env string, data MetadataTenantP
 	return nil
 }
 
-func (f *FakeClient) DeleteDataTenant(name, env string, log logrus.FieldLogger) error {
+func (f *FakeClient) DeleteDataTenant(name, env string, log *slog.Logger) error {
 	f.mu.Lock()
 	defer f.mu.Unlock()
 
@@ -89,7 +88,7 @@ func (f *FakeClient) DeleteDataTenant(name, env string, log logrus.FieldLogger) 
 	return nil
 }
 
-func (f *FakeClient) DeleteMetadataTenant(name, env, key string, log logrus.FieldLogger) error {
+func (f *FakeClient) DeleteMetadataTenant(name, env, key string, log *slog.Logger) error {
 	f.mu.Lock()
 	defer f.mu.Unlock()
 

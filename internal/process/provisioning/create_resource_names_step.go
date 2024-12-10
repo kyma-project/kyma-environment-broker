@@ -2,6 +2,7 @@ package provisioning
 
 import (
 	"fmt"
+	"log/slog"
 	"time"
 
 	kebError "github.com/kyma-project/kyma-environment-broker/internal/error"
@@ -11,7 +12,6 @@ import (
 	"github.com/kyma-project/kyma-environment-broker/internal"
 	"github.com/kyma-project/kyma-environment-broker/internal/process"
 	"github.com/kyma-project/kyma-environment-broker/internal/storage"
-	"github.com/sirupsen/logrus"
 )
 
 type CreateResourceNamesStep struct {
@@ -29,7 +29,7 @@ func (s *CreateResourceNamesStep) Name() string {
 }
 
 // The runtimeID could be generated and set in two different steps so we separated the logic to generate the Kyma name in this step
-func (s *CreateResourceNamesStep) Run(operation internal.Operation, log logrus.FieldLogger) (internal.Operation, time.Duration, error) {
+func (s *CreateResourceNamesStep) Run(operation internal.Operation, log *slog.Logger) (internal.Operation, time.Duration, error) {
 	if operation.RuntimeID == "" {
 		return s.operationManager.OperationFailed(operation, fmt.Sprint("RuntimeID not set, cannot create Kyma resource name and Runtime resource name"), nil, log)
 	}

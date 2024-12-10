@@ -3,12 +3,12 @@ package main
 import (
 	"encoding/base64"
 	"fmt"
+	"log/slog"
 	"os"
 	"strings"
 
 	"github.com/kyma-project/kyma-environment-broker/internal/broker"
 	"github.com/kyma-project/kyma-environment-broker/internal/edp"
-	"github.com/sirupsen/logrus"
 	"github.com/vrischmann/envconfig"
 )
 
@@ -58,6 +58,9 @@ func help() {
 
 func DeregisterCommand() {
 	fmt.Println("Delete DataTenant metadata")
+	log := slog.New(slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{
+		Level: slog.LevelInfo,
+	}))
 
 	subAccountID := strings.ToLower(subaccountId)
 	for _, key := range []string{
@@ -66,14 +69,14 @@ func DeregisterCommand() {
 		edp.MaasConsumerSubAccountKey,
 		edp.MaasConsumerServicePlan,
 	} {
-		err := edpClient.DeleteMetadataTenant(subAccountID, configuration.EDP.Environment, key, logrus.New())
+		err := edpClient.DeleteMetadataTenant(subAccountID, configuration.EDP.Environment, key, log)
 		if err != nil {
 			panic(err)
 		}
 	}
 
 	fmt.Println("Delete DataTenant")
-	err := edpClient.DeleteDataTenant(subAccountID, configuration.EDP.Environment, logrus.New())
+	err := edpClient.DeleteDataTenant(subAccountID, configuration.EDP.Environment, log)
 	if err != nil {
 		panic(err)
 	}
@@ -84,12 +87,16 @@ func RegisterCommand() {
 	platformRegion := os.Args[3]
 	plan := os.Args[4]
 
+	log := slog.New(slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{
+		Level: slog.LevelInfo,
+	}))
+
 	fmt.Println("Creating data tenant")
 	err := edpClient.CreateDataTenant(edp.DataTenantPayload{
 		Name:        subaccountId,
 		Environment: configuration.EDP.Environment,
 		Secret:      generateSecret(subaccountId, configuration.EDP.Environment),
-	}, logrus.New())
+	}, log)
 	if err != nil {
 		fmt.Println("Unable to create data tenant")
 		panic(err)
@@ -107,7 +114,7 @@ func RegisterCommand() {
 			Value: value,
 		}
 		fmt.Printf("Sending metadata %s: %s\n", payload.Key, payload.Value)
-		err = edpClient.CreateMetadataTenant(subaccountId, configuration.EDP.Environment, payload, logrus.New())
+		err = edpClient.CreateMetadataTenant(subaccountId, configuration.EDP.Environment, payload, log)
 		if err != nil {
 			if edp.IsConflictError(err) {
 				fmt.Println("Metadata already exists.")

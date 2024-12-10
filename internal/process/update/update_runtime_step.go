@@ -2,6 +2,7 @@ package update
 
 import (
 	"context"
+	"log/slog"
 	"time"
 
 	kebError "github.com/kyma-project/kyma-environment-broker/internal/error"
@@ -12,7 +13,6 @@ import (
 	"github.com/kyma-project/kyma-environment-broker/internal"
 	"github.com/kyma-project/kyma-environment-broker/internal/process"
 	"github.com/kyma-project/kyma-environment-broker/internal/storage"
-	"github.com/sirupsen/logrus"
 	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/util/intstr"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -37,14 +37,14 @@ func (s *UpdateRuntimeStep) Name() string {
 	return "Update_Runtime_Resource"
 }
 
-func (s *UpdateRuntimeStep) Run(operation internal.Operation, log logrus.FieldLogger) (internal.Operation, time.Duration, error) {
+func (s *UpdateRuntimeStep) Run(operation internal.Operation, log *slog.Logger) (internal.Operation, time.Duration, error) {
 	// Check if the runtime exists
 
 	var runtime = imv1.Runtime{}
 	err := s.k8sClient.Get(context.Background(), client.ObjectKey{Name: operation.GetRuntimeResourceName(), Namespace: operation.GetRuntimeResourceNamespace()}, &runtime)
 	if errors.IsNotFound(err) {
 		// todo: after the switch to KIM, this should throw an error
-		log.Infof("Runtime not found, skipping")
+		log.Info("Runtime not found, skipping")
 		return operation, 0, nil
 	}
 

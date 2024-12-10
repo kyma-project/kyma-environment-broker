@@ -7,7 +7,6 @@ import (
 	"github.com/kyma-project/kyma-environment-broker/internal"
 
 	"github.com/kyma-project/kyma-environment-broker/internal/fixture"
-	"github.com/kyma-project/kyma-environment-broker/internal/logger"
 	"github.com/kyma-project/kyma-environment-broker/internal/storage"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -42,7 +41,7 @@ func TestDeleteKymaResource_HappyFlow(t *testing.T) {
 	assert.Contains(t, err.Error(), fmt.Sprintf("instance operation with id %s already exist", fixOperationID))
 
 	// When
-	_, backoff, err := step.Run(operation, logger.NewLogSpy().Logger)
+	_, backoff, err := step.Run(operation, fixLogger())
 
 	// Then
 	assert.Zero(t, backoff)
@@ -68,7 +67,7 @@ func TestDeleteKymaResource_EmptyRuntimeIDAndKymaResourceName(t *testing.T) {
 	require.NoError(t, err)
 
 	// When
-	_, backoff, err := step.Run(operation, logger.NewLogSpy().Logger)
+	_, backoff, err := step.Run(operation, fixLogger())
 
 	// Then
 	assert.Zero(t, backoff)

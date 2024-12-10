@@ -1,6 +1,7 @@
 package postsql
 
 import (
+	"context"
 	"fmt"
 
 	"github.com/kyma-project/kyma-environment-broker/internal"
@@ -32,7 +33,7 @@ func (s *orchestrations) Insert(orchestration internal.Orchestration) error {
 	}
 
 	sess := s.NewWriteSession()
-	return wait.PollImmediate(defaultRetryInterval, defaultRetryTimeout, func() (bool, error) {
+	return wait.PollUntilContextTimeout(context.Background(), defaultRetryInterval, defaultRetryTimeout, true, func(ctx context.Context) (bool, error) {
 		err := sess.InsertOrchestration(dto)
 		if err != nil {
 			return false, nil
@@ -45,7 +46,7 @@ func (s *orchestrations) GetByID(orchestrationID string) (*internal.Orchestratio
 	sess := s.NewReadSession()
 	orchestration := internal.Orchestration{}
 	var lastErr error
-	err := wait.PollImmediate(defaultRetryInterval, defaultRetryTimeout, func() (bool, error) {
+	err := wait.PollUntilContextTimeout(context.Background(), defaultRetryInterval, defaultRetryTimeout, true, func(ctx context.Context) (bool, error) {
 		var dto dbmodel.OrchestrationDTO
 		dto, lastErr = sess.GetOrchestrationByID(orchestrationID)
 		if lastErr != nil {
@@ -70,7 +71,7 @@ func (s *orchestrations) List(filter dbmodel.OrchestrationFilter) ([]internal.Or
 		lastErr           error
 		count, totalCount int
 	)
-	err := wait.PollImmediate(defaultRetryInterval, defaultRetryTimeout, func() (bool, error) {
+	err := wait.PollUntilContextTimeout(context.Background(), defaultRetryInterval, defaultRetryTimeout, true, func(ctx context.Context) (bool, error) {
 		var dtos []dbmodel.OrchestrationDTO
 		dtos, count, totalCount, lastErr = sess.ListOrchestrations(filter)
 		if lastErr != nil {
@@ -103,7 +104,7 @@ func (s *orchestrations) Update(orchestration internal.Orchestration) error {
 
 	sess := s.NewWriteSession()
 	var lastErr dberr.Error
-	err = wait.PollImmediate(defaultRetryInterval, defaultRetryTimeout, func() (bool, error) {
+	err = wait.PollUntilContextTimeout(context.Background(), defaultRetryInterval, defaultRetryTimeout, true, func(ctx context.Context) (bool, error) {
 		lastErr = sess.UpdateOrchestration(dto)
 		if lastErr != nil {
 			if dberr.IsNotFound(lastErr) {

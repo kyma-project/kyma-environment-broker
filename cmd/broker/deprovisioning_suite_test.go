@@ -95,7 +95,7 @@ func NewDeprovisioningSuite(t *testing.T) *DeprovisioningSuite {
 
 	accountProvider := fixAccountProvider()
 
-	deprovisionManager := process.NewStagedManager(db.Operations(), eventBroker, time.Minute, cfg.Deprovisioning, logs.WithField("deprovisioning", "manager"))
+	deprovisionManager := process.NewStagedManager(db.Operations(), eventBroker, time.Minute, cfg.Deprovisioning, log.With("deprovisioning", "manager"))
 	deprovisionManager.SpeedUp(1000)
 	scheme := runtime.NewScheme()
 	err = apiextensionsv1.AddToScheme(scheme)
@@ -156,7 +156,7 @@ func (s *DeprovisioningSuite) CreateProvisionedRuntime(options RuntimeOptions) s
 }
 
 func (s *DeprovisioningSuite) finishProvisioningOperationByProvisioner(operationType gqlschema.OperationType, runtimeID string) {
-	err := wait.Poll(pollingInterval, 2*time.Second, func() (bool, error) {
+	err := wait.PollUntilContextTimeout(context.Background(), pollingInterval, 2*time.Second, false, func(ctx context.Context) (bool, error) {
 		status := s.provisionerClient.FindInProgressOperationByRuntimeIDAndType(runtimeID, operationType)
 		if status.ID != nil {
 			s.provisionerClient.FinishProvisionerOperation(*status.ID, gqlschema.OperationStateSucceeded)
@@ -186,7 +186,7 @@ func (s *DeprovisioningSuite) CreateDeprovisioning(operationID, instanceId strin
 
 func (s *DeprovisioningSuite) WaitForDeprovisioningState(operationID string, state domain.LastOperationState) {
 	var op *internal.Operation
-	err := wait.PollImmediate(pollingInterval, 2*time.Second, func() (done bool, err error) {
+	err := wait.PollUntilContextTimeout(context.Background(), pollingInterval, 2*time.Second, true, func(ctx context.Context) (done bool, err error) {
 		op, _ = s.storage.Operations().GetOperationByID(operationID)
 		return op.State == state, nil
 	})
@@ -195,7 +195,7 @@ func (s *DeprovisioningSuite) WaitForDeprovisioningState(operationID string, sta
 
 func (s *DeprovisioningSuite) AssertProvisionerStartedDeprovisioning(operationID string) {
 	var provisionerOperationID string
-	err := wait.Poll(pollingInterval, 2*time.Second, func() (bool, error) {
+	err := wait.PollUntilContextTimeout(context.Background(), pollingInterval, 2*time.Second, false, func(ctx context.Context) (bool, error) {
 		op, err := s.storage.Operations().GetOperationByID(operationID)
 		assert.NoError(s.t, err)
 		if op.ProvisionerOperationID != "" {
@@ -207,7 +207,7 @@ func (s *DeprovisioningSuite) AssertProvisionerStartedDeprovisioning(operationID
 	require.NoError(s.t, err)
 
 	var status gqlschema.OperationStatus
-	err = wait.Poll(pollingInterval, 2*time.Second, func() (bool, error) {
+	err = wait.PollUntilContextTimeout(context.Background(), pollingInterval, 2*time.Second, false, func(ctx context.Context) (bool, error) {
 		status = s.provisionerClient.FindOperationByProvisionerOperationID(provisionerOperationID)
 		if status.ID != nil {
 			return true, nil
@@ -220,7 +220,7 @@ func (s *DeprovisioningSuite) AssertProvisionerStartedDeprovisioning(operationID
 
 func (s *DeprovisioningSuite) FinishDeprovisioningOperationByProvisioner(operationID string) {
 	var op *internal.DeprovisioningOperation
-	err := wait.PollImmediate(pollingInterval, 2*time.Second, func() (done bool, err error) {
+	err := wait.PollUntilContextTimeout(context.Background(), pollingInterval, 2*time.Second, true, func(ctx context.Context) (done bool, err error) {
 		op, _ = s.storage.Operations().GetDeprovisioningOperationByID(operationID)
 		if op.RuntimeID != "" {
 			return true, nil
@@ -233,7 +233,7 @@ func (s *DeprovisioningSuite) FinishDeprovisioningOperationByProvisioner(operati
 }
 
 func (s *DeprovisioningSuite) finishOperationByProvisioner(provisionerOperationID string) {
-	err := wait.Poll(pollingInterval, 2*time.Second, func() (bool, error) {
+	err := wait.PollUntilContextTimeout(context.Background(), pollingInterval, 2*time.Second, false, func(ctx context.Context) (bool, error) {
 		status := s.provisionerClient.FindOperationByProvisionerOperationID(provisionerOperationID)
 		if status.ID != nil {
 			s.provisionerClient.FinishProvisionerOperation(*status.ID, gqlschema.OperationStateSucceeded)
@@ -270,11 +270,14 @@ func (s *DeprovisioningSuite) AssertInstanceNotRemoved(instanceId string) {
 
 func fixEDPClient(t *testing.T) *edp.FakeClient {
 	client := edp.NewFakeClient()
+	log := slog.New(slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{
+		Level: slog.LevelInfo,
+	}))
 	err := client.CreateDataTenant(edp.DataTenantPayload{
 		Name:        subAccountID,
 		Environment: edpEnvironment,
 		Secret:      base64.StdEncoding.EncodeToString([]byte(fmt.Sprintf("%s%s", subAccountID, edpEnvironment))),
-	}, logrus.New())
+	}, log)
 	assert.NoError(t, err)
 
 	metadataTenantKeys := []string{
@@ -288,7 +291,7 @@ func fixEDPClient(t *testing.T) *edp.FakeClient {
 		err = client.CreateMetadataTenant(subAccountID, edpEnvironment, edp.MetadataTenantPayload{
 			Key:   key,
 			Value: "-",
-		}, logrus.New())
+		}, log)
 		assert.NoError(t, err)
 	}
 

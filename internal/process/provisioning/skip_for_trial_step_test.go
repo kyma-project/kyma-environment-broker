@@ -6,13 +6,11 @@ import (
 
 	"github.com/kyma-project/kyma-environment-broker/internal/broker"
 	"github.com/kyma-project/kyma-environment-broker/internal/process/provisioning/automock"
-	"github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/assert"
 )
 
 func TestSkipForTrialPlanStepShouldSkip(t *testing.T) {
 	// Given
-	log := logrus.New()
 	wantSkipTime := time.Duration(0)
 	wantOperation := fixOperationWithPlanID(broker.TrialPlanID)
 
@@ -21,7 +19,7 @@ func TestSkipForTrialPlanStepShouldSkip(t *testing.T) {
 	skipStep := NewSkipForTrialPlanStep(mockStep)
 
 	// When
-	gotOperation, gotSkipTime, gotErr := skipStep.Run(wantOperation, log)
+	gotOperation, gotSkipTime, gotErr := skipStep.Run(wantOperation, fixLogger())
 
 	// Then
 	mockStep.AssertExpectations(t)
@@ -32,17 +30,16 @@ func TestSkipForTrialPlanStepShouldSkip(t *testing.T) {
 
 func TestSkipForTrialPlanStepShouldNotSkip(t *testing.T) {
 	// Given
-	log := logrus.New()
 	wantSkipTime := time.Duration(10)
 	givenOperation1 := fixOperationWithPlanID("operation1")
 	wantOperation2 := fixOperationWithPlanID("operation2")
 
 	mockStep := new(automock.Step)
-	mockStep.On("Run", givenOperation1, log).Return(wantOperation2, wantSkipTime, nil)
+	mockStep.On("Run", givenOperation1, fixLogger()).Return(wantOperation2, wantSkipTime, nil)
 	skipStep := NewSkipForTrialPlanStep(mockStep)
 
 	// When
-	gotOperation, gotSkipTime, gotErr := skipStep.Run(givenOperation1, log)
+	gotOperation, gotSkipTime, gotErr := skipStep.Run(givenOperation1, fixLogger())
 
 	// Then
 	mockStep.AssertExpectations(t)

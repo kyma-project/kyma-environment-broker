@@ -2,10 +2,11 @@ package steps
 
 import (
 	"context"
+	"log/slog"
+	"os"
 	"testing"
 
 	"github.com/kyma-project/kyma-environment-broker/internal/fixture"
-	"github.com/kyma-project/kyma-environment-broker/internal/logger"
 	"github.com/kyma-project/kyma-environment-broker/internal/storage"
 	"github.com/stretchr/testify/assert"
 	v1 "k8s.io/api/core/v1"
@@ -30,7 +31,7 @@ func TestCheckKymaKubeconfigCreated(t *testing.T) {
 	step := SyncKubeconfig(memoryStorage.Operations(), k8sClient)
 
 	// When
-	_, backoff, err := step.Run(operation, logger.NewLogSpy().Logger)
+	_, backoff, err := step.Run(operation, fixLogger())
 
 	// Then
 	assert.Zero(t, backoff)
@@ -57,7 +58,7 @@ func TestCheckKymaKubeconfigDeleted(t *testing.T) {
 	step := DeleteKubeconfig(memoryStorage.Operations(), k8sClient)
 
 	// When
-	_, backoff, err := step.Run(operation, logger.NewLogSpy().Logger)
+	_, backoff, err := step.Run(operation, fixLogger())
 
 	// Then
 	assert.Zero(t, backoff)
@@ -82,9 +83,15 @@ func TestCheckKymaKubeconfigDeleteSkipped(t *testing.T) {
 	step := DeleteKubeconfig(memoryStorage.Operations(), k8sClient)
 
 	// When
-	_, backoff, err := step.Run(operation, logger.NewLogSpy().Logger)
+	_, backoff, err := step.Run(operation, fixLogger())
 
 	// Then
 	assert.Zero(t, backoff)
 	assert.NoError(t, err)
+}
+
+func fixLogger() *slog.Logger {
+	return slog.New(slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{
+		Level: slog.LevelInfo,
+	}))
 }

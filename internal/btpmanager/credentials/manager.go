@@ -13,7 +13,6 @@ import (
 	"github.com/kyma-project/kyma-environment-broker/internal"
 	"github.com/kyma-project/kyma-environment-broker/internal/storage"
 	"github.com/kyma-project/kyma-environment-broker/internal/storage/dbmodel"
-	"github.com/sirupsen/logrus"
 	apicorev1 "k8s.io/api/core/v1"
 	v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
@@ -174,9 +173,6 @@ func (s *Manager) ReconcileSecretForInstance(instance *internal.Instance) (bool,
 	}
 	s.logger.Info(fmt.Sprintf("connected to skr with success for instance %s", instance.InstanceID))
 
-	logs := logrus.New()
-	logs.SetFormatter(&logrus.JSONFormatter{})
-
 	currentSecret := &v1.Secret{}
 	err = k8sClient.Get(context.Background(), client.ObjectKey{Name: BtpManagerSecretName, Namespace: BtpManagerSecretNamespace}, currentSecret)
 	if err != nil && errors.IsNotFound(err) {
@@ -184,7 +180,7 @@ func (s *Manager) ReconcileSecretForInstance(instance *internal.Instance) (bool,
 		if s.dryRun {
 			s.logger.Info(fmt.Sprintf("[dry-run] secret for instance %s would be created", instance.InstanceID))
 		} else {
-			if err := CreateOrUpdateSecret(k8sClient, futureSecret, logs); err != nil {
+			if err := CreateOrUpdateSecret(k8sClient, futureSecret, s.logger); err != nil {
 				s.logger.Error(fmt.Sprintf("while creating secret in cluster for %s", instance.InstanceID))
 				return false, err
 			}
@@ -203,7 +199,7 @@ func (s *Manager) ReconcileSecretForInstance(instance *internal.Instance) (bool,
 		if s.dryRun {
 			s.logger.Info(fmt.Sprintf("[dry-run] secret for instance %s would be updated", instance.InstanceID))
 		} else {
-			if err := CreateOrUpdateSecret(k8sClient, futureSecret, logs); err != nil {
+			if err := CreateOrUpdateSecret(k8sClient, futureSecret, s.logger); err != nil {
 				s.logger.Error(fmt.Sprintf("while updating secret in cluster for %s %s", instance.InstanceID, err))
 				return false, err
 			}
@@ -285,7 +281,7 @@ func PrepareSecret(credentials *internal.ServiceManagerOperatorCredentials, clus
 	}, nil
 }
 
-func CreateOrUpdateSecret(k8sClient client.Client, futureSecret *apicorev1.Secret, log logrus.FieldLogger) error {
+func CreateOrUpdateSecret(k8sClient client.Client, futureSecret *apicorev1.Secret, log *slog.Logger) error {
 	if futureSecret == nil {
 		return fmt.Errorf("empty secret data given")
 	}
@@ -310,7 +306,7 @@ func CreateOrUpdateSecret(k8sClient client.Client, futureSecret *apicorev1.Secre
 		return nil
 	default:
 		if !reflect.DeepEqual(currentSecret.Labels, BtpManagerLabels) {
-			log.Warnf("the secret %s was not created by KEB and its data will be overwritten", BtpManagerSecretName)
+			log.Warn(fmt.Sprintf("the secret %s was not created by KEB and its data will be overwritten", BtpManagerSecretName))
 		}
 
 		currentSecret.Data = futureSecret.Data

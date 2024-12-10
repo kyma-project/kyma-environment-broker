@@ -321,18 +321,18 @@ func main() {
 	eventBroker := event.NewPubSub(log)
 
 	// metrics collectors
-	_ = metricsv2.Register(ctx, eventBroker, db, cfg.MetricsV2, logs)
+	_ = metricsv2.Register(ctx, eventBroker, db, cfg.MetricsV2, log)
 
 	// run queues
-	provisionManager := process.NewStagedManager(db.Operations(), eventBroker, cfg.OperationTimeout, cfg.Provisioning, logs.WithField("provisioning", "manager"))
+	provisionManager := process.NewStagedManager(db.Operations(), eventBroker, cfg.OperationTimeout, cfg.Provisioning, log.With("provisioning", "manager"))
 	provisionQueue := NewProvisioningProcessingQueue(ctx, provisionManager, cfg.Provisioning.WorkersAmount, &cfg, db, provisionerClient, inputFactory,
 		edpClient, accountProvider, skrK8sClientProvider, kcpK8sClient, oidcDefaultValues, logs)
 
-	deprovisionManager := process.NewStagedManager(db.Operations(), eventBroker, cfg.OperationTimeout, cfg.Deprovisioning, logs.WithField("deprovisioning", "manager"))
+	deprovisionManager := process.NewStagedManager(db.Operations(), eventBroker, cfg.OperationTimeout, cfg.Deprovisioning, log.With("deprovisioning", "manager"))
 	deprovisionQueue := NewDeprovisioningProcessingQueue(ctx, cfg.Deprovisioning.WorkersAmount, deprovisionManager, &cfg, db, eventBroker, provisionerClient, edpClient, accountProvider,
 		skrK8sClientProvider, kcpK8sClient, configProvider, logs)
 
-	updateManager := process.NewStagedManager(db.Operations(), eventBroker, cfg.OperationTimeout, cfg.Update, logs.WithField("update", "manager"))
+	updateManager := process.NewStagedManager(db.Operations(), eventBroker, cfg.OperationTimeout, cfg.Update, log.With("update", "manager"))
 	updateQueue := NewUpdateProcessingQueue(ctx, updateManager, cfg.Update.WorkersAmount, db, inputFactory, provisionerClient, eventBroker,
 		cfg, skrK8sClientProvider, kcpK8sClient, logs)
 	/***/
@@ -354,14 +354,14 @@ func main() {
 	kcHandler := kubeconfig.NewHandler(db, kcBuilder, cfg.Kubeconfig.AllowOrigins, broker.OwnClusterPlanID, log.With("service", "kubeconfigHandle"))
 	kcHandler.AttachRoutes(router)
 
-	runtimeLister := orchestration.NewRuntimeLister(db.Instances(), db.Operations(), runtime.NewConverter(cfg.DefaultRequestRegion), logs)
-	runtimeResolver := orchestrationExt.NewGardenerRuntimeResolver(dynamicGardener, gardenerNamespace, runtimeLister, logs)
+	runtimeLister := orchestration.NewRuntimeLister(db.Instances(), db.Operations(), runtime.NewConverter(cfg.DefaultRequestRegion), log)
+	runtimeResolver := orchestrationExt.NewGardenerRuntimeResolver(dynamicGardener, gardenerNamespace, runtimeLister, log)
 
 	clusterQueue := NewClusterOrchestrationProcessingQueue(ctx, db, provisionerClient, eventBroker, inputFactory,
 		nil, time.Minute, runtimeResolver, notificationBuilder, logs, kcpK8sClient, cfg, 1)
 
 	// TODO: in case of cluster upgrade the same Azure Zones must be send to the Provisioner
-	orchestrationHandler := orchestrate.NewOrchestrationHandler(db, clusterQueue, cfg.MaxPaginationPage, logs)
+	orchestrationHandler := orchestrate.NewOrchestrationHandler(db, clusterQueue, cfg.MaxPaginationPage, log)
 
 	if !cfg.DisableProcessOperationsInProgress {
 		err = processOperationsInProgressByType(internal.OperationTypeProvision, db.Operations(), provisionQueue, logs)
@@ -391,11 +391,11 @@ func main() {
 		cfg.DefaultRequestRegion, provisionerClient,
 		kcpK8sClient,
 		cfg.Broker.KimConfig,
-		logs)
+		log)
 	runtimeHandler.AttachRoutes(router)
 
 	// create expiration endpoint
-	expirationHandler := expiration.NewHandler(db.Instances(), db.Operations(), deprovisionQueue, logs)
+	expirationHandler := expiration.NewHandler(db.Instances(), db.Operations(), deprovisionQueue, log)
 	expirationHandler.AttachRoutes(router)
 
 	router.StrictSlash(true).PathPrefix("/").Handler(http.StripPrefix("/", http.FileServer(http.Dir("/swagger"))))
@@ -567,7 +567,7 @@ func processCancelingOrchestrations(orchestrationType orchestrationExt.Type, orc
 func initClient(cfg *rest.Config) (client.Client, error) {
 	mapper, err := apiutil.NewDiscoveryRESTMapper(cfg)
 	if err != nil {
-		err = wait.Poll(time.Second, time.Minute, func() (bool, error) {
+		err = wait.PollUntilContextTimeout(context.Background(), time.Second, time.Minute, false, func(ctx context.Context) (bool, error) {
 			mapper, err = apiutil.NewDiscoveryRESTMapper(cfg)
 			if err != nil {
 				return false, nil

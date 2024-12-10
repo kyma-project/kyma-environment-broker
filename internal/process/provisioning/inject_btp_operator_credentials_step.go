@@ -1,6 +1,8 @@
 package provisioning
 
 import (
+	"fmt"
+	"log/slog"
 	"time"
 
 	btpmanagercredentials "github.com/kyma-project/kyma-environment-broker/internal/btpmanager/credentials"
@@ -10,7 +12,6 @@ import (
 	kebError "github.com/kyma-project/kyma-environment-broker/internal/error"
 	"github.com/kyma-project/kyma-environment-broker/internal/process"
 	"github.com/kyma-project/kyma-environment-broker/internal/storage"
-	"github.com/sirupsen/logrus"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
@@ -41,7 +42,7 @@ func (s *InjectBTPOperatorCredentialsStep) Name() string {
 	return "Inject_BTP_Operator_Credentials"
 }
 
-func (s *InjectBTPOperatorCredentialsStep) Run(operation internal.Operation, log logrus.FieldLogger) (internal.Operation, time.Duration, error) {
+func (s *InjectBTPOperatorCredentialsStep) Run(operation internal.Operation, log *slog.Logger) (internal.Operation, time.Duration, error) {
 
 	if operation.RuntimeID == "" {
 		log.Error("Runtime ID is empty")
@@ -50,7 +51,7 @@ func (s *InjectBTPOperatorCredentialsStep) Run(operation internal.Operation, log
 	k8sClient, err := s.k8sClientProvider.K8sClientForRuntimeID(operation.RuntimeID)
 
 	if err != nil {
-		log.Errorf("kubernetes client not set: %w", err)
+		log.Error(fmt.Sprintf("kubernetes client not set: %s", err))
 		return s.operationManager.RetryOperation(operation, "unable to get K8S client", err, retryInterval, retryTimeout, log)
 	}
 
@@ -61,7 +62,7 @@ func (s *InjectBTPOperatorCredentialsStep) Run(operation internal.Operation, log
 			op.InstanceDetails.ServiceManagerClusterID = clusterID
 		}, log)
 		if err != nil {
-			log.Errorf("failed to update operation: %s", err)
+			log.Error(fmt.Sprintf("failed to update operation: %s", err))
 		}
 		if backoff != 0 {
 			log.Error("cannot save cluster ID")

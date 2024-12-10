@@ -6,7 +6,6 @@ import (
 	"github.com/kyma-project/kyma-environment-broker/common/orchestration"
 	"github.com/kyma-project/kyma-environment-broker/internal/fixture"
 	"github.com/pivotal-cf/brokerapi/v8/domain"
-	"github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/assert"
 
 	"github.com/kyma-project/kyma-environment-broker/internal/storage"
@@ -31,7 +30,7 @@ func TestStartStep_RunIfDeprovisioningInProgress(t *testing.T) {
 	assert.NoError(t, err)
 
 	// when
-	operation, retry, err := step.Run(pOp, logrus.New())
+	operation, retry, err := step.Run(pOp, fixLogger())
 
 	// then
 	assert.Equal(t, domain.LastOperationState(orchestration.Pending), operation.State)
@@ -58,7 +57,7 @@ func TestStartStep_RunIfDeprovisioningDone(t *testing.T) {
 	assert.NoError(t, err)
 
 	// when
-	operation, retry, err := step.Run(pOp, logrus.New())
+	operation, retry, err := step.Run(pOp, fixLogger())
 
 	// then
 	assert.Equal(t, domain.InProgress, operation.State)

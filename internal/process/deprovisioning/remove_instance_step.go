@@ -1,6 +1,8 @@
 package deprovisioning
 
 import (
+	"fmt"
+	"log/slog"
 	"strings"
 	"time"
 
@@ -10,8 +12,6 @@ import (
 
 	"github.com/kyma-project/kyma-environment-broker/internal/process"
 	"github.com/kyma-project/kyma-environment-broker/internal/storage"
-
-	"github.com/sirupsen/logrus"
 
 	"github.com/kyma-project/kyma-environment-broker/internal"
 )
@@ -37,17 +37,17 @@ func (s *RemoveInstanceStep) Name() string {
 	return "Remove_Instance"
 }
 
-func (s *RemoveInstanceStep) Run(operation internal.Operation, log logrus.FieldLogger) (internal.Operation, time.Duration, error) {
+func (s *RemoveInstanceStep) Run(operation internal.Operation, log *slog.Logger) (internal.Operation, time.Duration, error) {
 	var backoff time.Duration
 
 	_, err := s.instanceStorage.GetByID(operation.InstanceID)
 	switch {
 	case err == nil:
 	case dberr.IsNotFound(err):
-		log.Infof("instance already deleted", err)
+		log.Info(fmt.Sprintf("instance already deleted: %v", err))
 		return operation, 0 * time.Second, nil
 	default:
-		log.Errorf("unable to get instance from the storage: %s", err)
+		log.Error(fmt.Sprintf("unable to get instance from the storage: %v", err))
 		return operation, 1 * time.Second, nil
 	}
 
@@ -63,7 +63,7 @@ func (s *RemoveInstanceStep) Run(operation internal.Operation, log logrus.FieldL
 			operation.RuntimeID = ""
 		}, log)
 	} else if operation.ExcutedButNotCompleted != nil {
-		log.Infof("Marking the instance needs to retry some steps (%s)", strings.Join(operation.ExcutedButNotCompleted, ", "))
+		log.Info(fmt.Sprintf("Marking the instance needs to retry some steps (%s)", strings.Join(operation.ExcutedButNotCompleted, ", ")))
 		backoff = s.markInstanceNeedsRetrySomeSteps(operation.InstanceID, log)
 		if backoff != 0 {
 			return operation, backoff, nil
@@ -86,12 +86,12 @@ func (s *RemoveInstanceStep) Run(operation internal.Operation, log logrus.FieldL
 	return operation, backoff, nil
 }
 
-func (s RemoveInstanceStep) removeRuntimeIDFromInstance(instanceID string, log logrus.FieldLogger) time.Duration {
+func (s RemoveInstanceStep) removeRuntimeIDFromInstance(instanceID string, log *slog.Logger) time.Duration {
 	backoff := time.Second
 
 	instance, err := s.instanceStorage.GetByID(instanceID)
 	if err != nil {
-		log.Errorf("unable to get instance %s from the storage: %s", instanceID, err)
+		log.Error(fmt.Sprintf("unable to get instance %s from the storage: %s", instanceID, err))
 		return backoff
 	}
 
@@ -99,40 +99,40 @@ func (s RemoveInstanceStep) removeRuntimeIDFromInstance(instanceID string, log l
 	instance.RuntimeID = ""
 	_, err = s.instanceStorage.Update(*instance)
 	if err != nil {
-		log.Errorf("unable to update instance %s in the storage: %s", instanceID, err)
+		log.Error(fmt.Sprintf("unable to update instance %s in the storage: %s", instanceID, err))
 		return backoff
 	}
 
 	return 0
 }
 
-func (s RemoveInstanceStep) removeInstancePermanently(instanceID string, log logrus.FieldLogger) time.Duration {
+func (s RemoveInstanceStep) removeInstancePermanently(instanceID string, log *slog.Logger) time.Duration {
 	err := s.instanceStorage.Delete(instanceID)
 	if err != nil {
-		log.Errorf("unable to remove instance %s from the storage: %s", instanceID, err)
+		log.Error(fmt.Sprintf("unable to remove instance %s from the storage: %s", instanceID, err))
 		return 10 * time.Second
 	}
 
 	return 0
 }
 
-func (s RemoveInstanceStep) markInstanceNeedsRetrySomeSteps(instanceID string, log logrus.FieldLogger) time.Duration {
+func (s RemoveInstanceStep) markInstanceNeedsRetrySomeSteps(instanceID string, log *slog.Logger) time.Duration {
 	backoff := time.Second
 
 	instance, err := s.instanceStorage.GetByID(instanceID)
 	if dberr.IsNotFound(err) {
-		log.Warnf("instance %s not found", instanceID)
+		log.Warn(fmt.Sprintf("instance %s not found", instanceID))
 		return 0
 	}
 	if err != nil {
-		log.Errorf("unable to get instance %s from the storage: %s", instanceID, err)
+		log.Error(fmt.Sprintf("unable to get instance %s from the storage: %s", instanceID, err))
 		return backoff
 	}
 
 	instance.DeletedAt = time.Now()
 	_, err = s.instanceStorage.Update(*instance)
 	if err != nil {
-		log.Errorf("unable to update instance %s in the storage: %s", instanceID, err)
+		log.Error(fmt.Sprintf("unable to update instance %s in the storage: %s", instanceID, err))
 		return backoff
 	}
 

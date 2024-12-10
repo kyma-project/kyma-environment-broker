@@ -2,6 +2,7 @@ package provisioning
 
 import (
 	"fmt"
+	"log/slog"
 	"time"
 
 	"github.com/kyma-project/kyma-environment-broker/internal"
@@ -11,7 +12,6 @@ import (
 	"github.com/kyma-project/kyma-environment-broker/internal/storage"
 
 	pkg "github.com/kyma-project/kyma-environment-broker/common/runtime"
-	"github.com/sirupsen/logrus"
 )
 
 const (
@@ -48,9 +48,9 @@ func (s *InitialisationStep) Name() string {
 	return "Provision_Initialization"
 }
 
-func (s *InitialisationStep) Run(operation internal.Operation, log logrus.FieldLogger) (internal.Operation, time.Duration, error) {
+func (s *InitialisationStep) Run(operation internal.Operation, log *slog.Logger) (internal.Operation, time.Duration, error) {
 	// create Provisioner InputCreator
-	log.Infof("create provisioner input creator for %q plan ID", operation.ProvisioningParameters.PlanID)
+	log.Info(fmt.Sprintf("create provisioner input creator for %q plan ID", operation.ProvisioningParameters.PlanID))
 	creator, err := s.inputBuilder.CreateProvisionInput(operation.ProvisioningParameters)
 
 	switch {
@@ -63,10 +63,10 @@ func (s *InitialisationStep) Run(operation internal.Operation, log logrus.FieldL
 
 		return operation, 0, nil
 	case kebError.IsTemporaryError(err):
-		log.Errorf("cannot create input creator at the moment for plan %s: %s", operation.ProvisioningParameters.PlanID, err)
+		log.Error(fmt.Sprintf("cannot create input creator at the moment for plan %s: %s", operation.ProvisioningParameters.PlanID, err))
 		return s.operationManager.RetryOperation(operation, "error while creating provisioning input creator", err, 5*time.Second, 5*time.Minute, log)
 	default:
-		log.Errorf("cannot create input creator for plan %s: %s", operation.ProvisioningParameters.PlanID, err)
+		log.Error(fmt.Sprintf("cannot create input creator for plan %s: %s", operation.ProvisioningParameters.PlanID, err))
 		return s.operationManager.OperationFailed(operation, "cannot create provisioning input creator", err, log)
 	}
 }

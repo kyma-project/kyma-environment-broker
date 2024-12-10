@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"fmt"
+	"log/slog"
 	"time"
 
 	"github.com/gorilla/mux"
@@ -9,7 +10,6 @@ import (
 	"github.com/kyma-project/kyma-environment-broker/internal/process"
 	"github.com/kyma-project/kyma-environment-broker/internal/storage"
 	"github.com/pkg/errors"
-	"github.com/sirupsen/logrus"
 )
 
 type Handler interface {
@@ -20,7 +20,7 @@ type handler struct {
 	handlers []Handler
 }
 
-func NewOrchestrationHandler(db storage.BrokerStorage, clusterQueue *process.Queue, defaultMaxPage int, log logrus.FieldLogger) Handler {
+func NewOrchestrationHandler(db storage.BrokerStorage, clusterQueue *process.Queue, defaultMaxPage int, log *slog.Logger) Handler {
 	return &handler{
 		handlers: []Handler{
 			NewKymaHandler(),

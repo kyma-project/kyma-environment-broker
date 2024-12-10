@@ -10,7 +10,6 @@ import (
 	"github.com/kyma-project/kyma-environment-broker/internal/process/steps"
 
 	"github.com/kyma-project/kyma-environment-broker/internal/fixture"
-	"github.com/kyma-project/kyma-environment-broker/internal/logger"
 	"github.com/kyma-project/kyma-environment-broker/internal/storage"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -38,7 +37,7 @@ func TestCheckKymaResourceDeleted_HappyFlow(t *testing.T) {
 	step := NewCheckKymaResourceDeletedStep(memoryStorage.Operations(), kcpClient, 30*time.Second)
 
 	// When
-	_, backoff, err := step.Run(operation, logger.NewLogSpy().Logger)
+	_, backoff, err := step.Run(operation, fixLogger())
 
 	// Then
 	assert.Zero(t, backoff)
@@ -65,7 +64,7 @@ func TestCheckKymaResourceDeleted_EmptyKymaResourceName(t *testing.T) {
 	step := NewCheckKymaResourceDeletedStep(memoryStorage.Operations(), kcpClient, 30*time.Second)
 
 	// When
-	_, backoff, err := step.Run(operation, logger.NewLogSpy().Logger)
+	_, backoff, err := step.Run(operation, fixLogger())
 
 	// Then
 	assert.Zero(t, backoff)
@@ -90,7 +89,7 @@ func TestCheckKymaResourceDeleted_RetryWhenStillExists(t *testing.T) {
 	step := NewCheckKymaResourceDeletedStep(memoryStorage.Operations(), kcpClient, 30*time.Second)
 
 	// When
-	_, backoff, err := step.Run(operation, logger.NewLogSpy().Logger)
+	_, backoff, err := step.Run(operation, fixLogger())
 
 	// Then
 	require.NoError(t, err)
