@@ -150,11 +150,11 @@ func (s *Manager) ReconcileAll(jobReconciliationDelay time.Duration, metrics *Me
 func (s *Manager) updateMetrics(metrics *Metrics, instance internal.Instance, runtimeSkipped bool) {
 	if metrics != nil {
 		if runtimeSkipped {
-			metrics.skippedSecrets.With(prometheus.Labels{"runtime": instance.RuntimeID, "state": "skipped"}).Set(float64(1))
-			metrics.skippedSecrets.With(prometheus.Labels{"runtime": instance.RuntimeID, "state": "reconciled"}).Set(float64(0))
+			metrics.skippedSecrets.With(prometheus.Labels{"shoot": instance.InstanceDetails.ShootName, "state": "skipped"}).Set(float64(1))
+			metrics.skippedSecrets.With(prometheus.Labels{"shoot": instance.InstanceDetails.ShootName, "state": "reconciled"}).Set(float64(0))
 		} else {
-			metrics.skippedSecrets.With(prometheus.Labels{"runtime": instance.RuntimeID, "state": "reconciled"}).Set(float64(1))
-			metrics.skippedSecrets.With(prometheus.Labels{"runtime": instance.RuntimeID, "state": "skipped"}).Set(float64(0))
+			metrics.skippedSecrets.With(prometheus.Labels{"shoot": instance.InstanceDetails.ShootName, "state": "reconciled"}).Set(float64(1))
+			metrics.skippedSecrets.With(prometheus.Labels{"shoot": instance.InstanceDetails.ShootName, "state": "skipped"}).Set(float64(0))
 		}
 	}
 }

@@ -12,7 +12,7 @@ func NewMetrics(reg prometheus.Registerer, namespace string) *Metrics {
 			Namespace: namespace,
 			Name:      "reconciled_secrets",
 			Help:      "Reconciled secrets.",
-		}, []string{"runtime", "state"}),
+		}, []string{"shoot", "state"}),
 	}
 	reg.MustRegister(m.skippedSecrets)
 	return m
