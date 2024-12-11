@@ -56,7 +56,7 @@ If the limit is not exceeded and the binding does not exist in the database, KEB
 In the binding creation phase, KEB creates a service binding object and generates a kubeconfig file with a JWT token. The kubeconfig file is valid for a specified period, defaulted or set in the request body. 
 
 > [!NOTE]
->  Expired bindings do not count towards the bindings limit. However, they prevent creating new bindings until they exist in the database. Only after they are removed by the cleanup job or manually can the binding be recreated again.
+>  Expired bindings do not count towards the bindings limit. However, they prevent creating new bindings with the same ID until they exist in the database. Only after they are removed by the cleanup job or manually can the binding be recreated again.
 
 After the insert has been done, KEB creates ServiceAccount, ClusterRole (administrator privileges), and ClusterRoleBinding, all named `kyma-binding-{{binding_id}}`. You can use the ClusterRole to modify permissions granted to the kubeconfig.
 
