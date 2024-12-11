@@ -2,9 +2,8 @@ package upgrade_cluster
 
 import (
 	"fmt"
+	"log/slog"
 	"time"
-
-	"github.com/sirupsen/logrus"
 
 	"github.com/kyma-project/kyma-environment-broker/internal"
 	kebError "github.com/kyma-project/kyma-environment-broker/internal/error"
@@ -29,7 +28,7 @@ func NewSendNotificationStep(os storage.Operations, bundleBuilder notification.B
 	}
 }
 
-func (s *SendNotificationStep) Run(operation internal.UpgradeClusterOperation, log logrus.FieldLogger) (internal.UpgradeClusterOperation, time.Duration, error) {
+func (s *SendNotificationStep) Run(operation internal.UpgradeClusterOperation, log *slog.Logger) (internal.UpgradeClusterOperation, time.Duration, error) {
 	if operation.RuntimeOperation.Notification {
 		tenants := []notification.NotificationTenant{
 			{
@@ -44,16 +43,16 @@ func (s *SendNotificationStep) Run(operation internal.UpgradeClusterOperation, l
 		}
 		notificationBundle, err := s.bundleBuilder.NewBundle(operation.OrchestrationID, notificationParams)
 		if err != nil {
-			log.Errorf("%s: %s", "Failed to create Notification Bundle", err)
+			log.Error(fmt.Sprintf("%s: %s", "Failed to create Notification Bundle", err))
 			return operation, 5 * time.Second, nil
 		}
 
-		log.Infof("Sending http request to customer notification service")
+		log.Info("Sending http request to customer notification service")
 		err = notificationBundle.UpdateNotificationEvent()
 		//currently notification error can only be temporary error
 		if err != nil && kebError.IsTemporaryError(err) {
 			msg := fmt.Sprintf("cannot update notification for orchestration %s", operation.OrchestrationID)
-			log.Errorf("%s: %s", msg, err)
+			log.Error(fmt.Sprintf("%s: %s", msg, err))
 			return operation, 5 * time.Second, nil
 		}
 	}

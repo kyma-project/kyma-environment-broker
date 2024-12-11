@@ -2,6 +2,7 @@ package upgrade_cluster
 
 import (
 	"fmt"
+	"log/slog"
 	"time"
 
 	"github.com/kyma-project/control-plane/components/provisioner/pkg/gqlschema"
@@ -14,7 +15,6 @@ import (
 	"github.com/kyma-project/kyma-environment-broker/internal/provisioner"
 	"github.com/kyma-project/kyma-environment-broker/internal/storage"
 	"github.com/pivotal-cf/brokerapi/v8/domain"
-	"github.com/sirupsen/logrus"
 )
 
 const (
@@ -64,7 +64,7 @@ func (s *InitialisationStep) Name() string {
 	return "Upgrade_Cluster_Initialisation"
 }
 
-func (s *InitialisationStep) Run(operation internal.UpgradeClusterOperation, log logrus.FieldLogger) (internal.UpgradeClusterOperation, time.Duration, error) {
+func (s *InitialisationStep) Run(operation internal.UpgradeClusterOperation, log *slog.Logger) (internal.UpgradeClusterOperation, time.Duration, error) {
 	// Check concurrent deprovisioning (or suspension) operation (launched after target resolution)
 	// Terminate (preempt) upgrade immediately with succeeded
 	lastOp, err := s.operationStorage.GetLastOperation(operation.InstanceID)
@@ -82,7 +82,7 @@ func (s *InitialisationStep) Run(operation internal.UpgradeClusterOperation, log
 			return operation, s.timeSchedule.Retry, nil
 		}
 		if orchestration.IsCanceled() {
-			log.Infof("Skipping processing because orchestration %s was canceled", operation.OrchestrationID)
+			log.Info(fmt.Sprintf("Skipping processing because orchestration %s was canceled", operation.OrchestrationID))
 			return s.operationManager.OperationCanceled(operation, fmt.Sprintf("orchestration %s was canceled", operation.OrchestrationID), log)
 		}
 
@@ -111,22 +111,22 @@ func (s *InitialisationStep) Run(operation internal.UpgradeClusterOperation, log
 		return s.initializeUpgradeShootRequest(operation, log)
 	}
 
-	log.Infof("runtime being upgraded, check operation status for provisioner operation id: %v", operation.ProvisionerOperationID)
-	return s.checkRuntimeStatus(operation, log.WithField("runtimeID", operation.RuntimeOperation.RuntimeID))
+	log.Info(fmt.Sprintf("runtime being upgraded, check operation status for provisioner operation id: %v", operation.ProvisionerOperationID))
+	return s.checkRuntimeStatus(operation, log.With("runtimeID", operation.RuntimeOperation.RuntimeID))
 }
 
-func (s *InitialisationStep) initializeUpgradeShootRequest(operation internal.UpgradeClusterOperation, log logrus.FieldLogger) (internal.UpgradeClusterOperation, time.Duration, error) {
-	log.Infof("create provisioner input creator for plan ID %q", operation.ProvisioningParameters)
+func (s *InitialisationStep) initializeUpgradeShootRequest(operation internal.UpgradeClusterOperation, log *slog.Logger) (internal.UpgradeClusterOperation, time.Duration, error) {
+	log.Info(fmt.Sprintf("create provisioner input creator for plan ID %+v", operation.ProvisioningParameters))
 	creator, err := s.inputBuilder.CreateUpgradeShootInput(operation.ProvisioningParameters)
 	switch {
 	case err == nil:
 		operation.InputCreator = creator
 		return operation, 0, nil // go to next step
 	case kebError.IsTemporaryError(err):
-		log.Errorf("cannot create upgrade shoot input creator at the moment for plan %s: %s", operation.ProvisioningParameters.PlanID, err)
+		log.Error(fmt.Sprintf("cannot create upgrade shoot input creator at the moment for plan %s: %s", operation.ProvisioningParameters.PlanID, err))
 		return s.operationManager.RetryOperation(operation, "error while creating upgrade shoot input creator", err, 5*time.Second, 5*time.Minute, log)
 	default:
-		log.Errorf("cannot create input creator for plan %s: %s", operation.ProvisioningParameters.PlanID, err)
+		log.Error(fmt.Sprintf("cannot create input creator for plan %s: %s", operation.ProvisioningParameters.PlanID, err))
 		return s.operationManager.OperationFailed(operation, "cannot create provisioning input creator", err, log)
 	}
 }
@@ -134,9 +134,9 @@ func (s *InitialisationStep) initializeUpgradeShootRequest(operation internal.Up
 // checkRuntimeStatus will check operation runtime status
 // It will also trigger performRuntimeTasks upgrade steps to ensure
 // all the required dependencies have been fulfilled for upgrade operation.
-func (s *InitialisationStep) checkRuntimeStatus(operation internal.UpgradeClusterOperation, log logrus.FieldLogger) (internal.UpgradeClusterOperation, time.Duration, error) {
+func (s *InitialisationStep) checkRuntimeStatus(operation internal.UpgradeClusterOperation, log *slog.Logger) (internal.UpgradeClusterOperation, time.Duration, error) {
 	if time.Since(operation.UpdatedAt) > CheckStatusTimeout {
-		log.Infof("operation has reached the time limit: updated operation time: %s", operation.UpdatedAt)
+		log.Info(fmt.Sprintf("operation has reached the time limit: updated operation time: %s", operation.UpdatedAt))
 		//send customer notification
 		if operation.RuntimeOperation.Notification {
 			err := s.sendNotificationComplete(operation, log)
@@ -152,7 +152,7 @@ func (s *InitialisationStep) checkRuntimeStatus(operation internal.UpgradeCluste
 	if err != nil {
 		return operation, s.timeSchedule.StatusCheck, nil
 	}
-	log.Infof("call to provisioner returned %s status", status.State.String())
+	log.Info(fmt.Sprintf("call to provisioner returned %s status", status.State.String()))
 
 	var msg string
 	if status.Message != nil {
@@ -194,7 +194,7 @@ func (s *InitialisationStep) checkRuntimeStatus(operation internal.UpgradeCluste
 	return s.operationManager.OperationFailed(operation, fmt.Sprintf("unsupported provisioner client status: %s", status.State.String()), nil, log)
 }
 
-func (s *InitialisationStep) sendNotificationComplete(operation internal.UpgradeClusterOperation, log logrus.FieldLogger) error {
+func (s *InitialisationStep) sendNotificationComplete(operation internal.UpgradeClusterOperation, log *slog.Logger) error {
 	tenants := []notification.NotificationTenant{
 		{
 			InstanceID: operation.InstanceID,
@@ -208,13 +208,13 @@ func (s *InitialisationStep) sendNotificationComplete(operation internal.Upgrade
 	}
 	notificationBundle, err := s.bundleBuilder.NewBundle(operation.OrchestrationID, notificationParams)
 	if err != nil {
-		log.Errorf("%s: %s", "Failed to create Notification Bundle", err)
+		log.Error(fmt.Sprintf("%s: %s", "Failed to create Notification Bundle", err))
 		return err
 	}
 	err2 := notificationBundle.UpdateNotificationEvent()
 	if err2 != nil {
 		msg := fmt.Sprintf("cannot update notification for orchestration %s", operation.OrchestrationID)
-		log.Errorf("%s: %s", msg, err)
+		log.Error(fmt.Sprintf("%s: %s", msg, err))
 		return err
 	}
 	return nil

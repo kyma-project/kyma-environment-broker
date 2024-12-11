@@ -1,13 +1,14 @@
 package strategies
 
 import (
+	"log/slog"
+	"os"
 	"sync"
 	"testing"
 	"time"
 
 	"github.com/kyma-project/kyma-environment-broker/common/orchestration"
 
-	"github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/assert"
 	"k8s.io/apimachinery/pkg/util/rand"
 )
@@ -38,7 +39,7 @@ func (t *testExecutor) Reschedule(operationID string, maintenanceWindowBegin, ma
 func TestNewParallelOrchestrationStrategy_Immediate(t *testing.T) {
 	// given
 	executor := &testExecutor{opCalled: map[string]bool{}}
-	s := NewParallelOrchestrationStrategy(executor, logrus.New(), 0)
+	s := NewParallelOrchestrationStrategy(executor, fixLogger(), 0)
 
 	ops := make([]orchestration.RuntimeOperation, 3)
 	for i := range ops {
@@ -58,7 +59,7 @@ func TestNewParallelOrchestrationStrategy_Immediate(t *testing.T) {
 func TestNewParallelOrchestrationStrategy_MaintenanceWindow(t *testing.T) {
 	// given
 	executor := &testExecutor{opCalled: map[string]bool{}}
-	s := NewParallelOrchestrationStrategy(executor, logrus.New(), 0)
+	s := NewParallelOrchestrationStrategy(executor, fixLogger(), 0)
 
 	start := time.Now().Add(3 * time.Second)
 
@@ -84,7 +85,7 @@ func TestNewParallelOrchestrationStrategy_MaintenanceWindow(t *testing.T) {
 func TestNewParallelOrchestrationStrategy_Reschedule(t *testing.T) {
 	// given
 	executor := &testExecutor{opCalled: map[string]bool{}}
-	s := NewParallelOrchestrationStrategy(executor, logrus.New(), 5*time.Second)
+	s := NewParallelOrchestrationStrategy(executor, fixLogger(), 5*time.Second)
 
 	start := time.Now().Add(-5 * time.Second)
 
@@ -105,4 +106,10 @@ func TestNewParallelOrchestrationStrategy_Reschedule(t *testing.T) {
 	// then
 	assert.NoError(t, err)
 	s.Wait(id)
+}
+
+func fixLogger() *slog.Logger {
+	return slog.New(slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{
+		Level: slog.LevelInfo,
+	}))
 }

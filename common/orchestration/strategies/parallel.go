@@ -2,13 +2,13 @@ package strategies
 
 import (
 	"fmt"
+	"log/slog"
 	"runtime/debug"
 	"sync"
 	"time"
 
 	"github.com/google/uuid"
 	"github.com/kyma-project/kyma-environment-broker/common/orchestration"
-	"github.com/sirupsen/logrus"
 	"k8s.io/client-go/util/workqueue"
 )
 
@@ -18,7 +18,7 @@ type ParallelOrchestrationStrategy struct {
 	pq              map[string]workqueue.DelayingInterface // processing queue, delaying queue for the in progress ops
 	wg              map[string]*sync.WaitGroup
 	mux             sync.RWMutex
-	log             logrus.FieldLogger
+	log             *slog.Logger
 	rescheduleDelay time.Duration
 	scheduleNum     map[string]int
 	speedFactor     int
@@ -26,7 +26,7 @@ type ParallelOrchestrationStrategy struct {
 
 // NewParallelOrchestrationStrategy returns a new parallel orchestration strategy, which
 // executes operations in parallel using a pool of workers and a delaying queue to support time-based scheduling.
-func NewParallelOrchestrationStrategy(executor orchestration.OperationExecutor, log logrus.FieldLogger, rescheduleDelay time.Duration) orchestration.Strategy {
+func NewParallelOrchestrationStrategy(executor orchestration.OperationExecutor, log *slog.Logger, rescheduleDelay time.Duration) orchestration.Strategy {
 	strategy := &ParallelOrchestrationStrategy{
 		executor:        executor,
 		dq:              map[string]workqueue.DelayingInterface{},
@@ -80,7 +80,7 @@ func (p *ParallelOrchestrationStrategy) Insert(execID string, operations []orche
 		if err != nil {
 			//error when read from storage or update to storage during maintenance window reschedule
 			p.handleRescheduleErrorOperation(execID, &operations[i])
-			p.log.Errorf("while processing operation %s: %v, will reschedule it", op.ID, err)
+			p.log.Error(fmt.Sprintf("while processing operation %s: %v, will reschedule it", op.ID, err))
 		} else {
 			if p.dq[execID].ShuttingDown() {
 				return fmt.Errorf("the execution ID %s is shutdown", execID)
@@ -128,7 +128,7 @@ func (p *ParallelOrchestrationStrategy) scheduleOperationsLoop(execID string, st
 
 		item, shutdown := dq.Get()
 		if shutdown {
-			p.log.Infof("scheduling queue is shutdown")
+			p.log.Info("scheduling queue is shutdown")
 			break
 		}
 
@@ -143,9 +143,9 @@ func (p *ParallelOrchestrationStrategy) scheduleOperationsLoop(execID string, st
 			continue
 		}
 
-		log := p.log.WithField("operationID", op.ID)
+		log := p.log.With("operationID", op.ID)
 		if duration <= 0 {
-			log.Infof("operation is scheduled now")
+			log.Info("operation is scheduled now")
 
 			pq.Add(item)
 			p.processOperation(execID)
@@ -154,7 +154,7 @@ func (p *ParallelOrchestrationStrategy) scheduleOperationsLoop(execID string, st
 			p.scheduleNum[execID]--
 			p.mux.Unlock()
 		} else {
-			log.Infof("operation will be scheduled in %v", duration)
+			log.Info(fmt.Sprintf("operation will be scheduled in %v", duration))
 			dq.AddAfter(item, duration)
 			dq.Done(item)
 		}
@@ -169,32 +169,32 @@ func (p *ParallelOrchestrationStrategy) processOperation(execID string) {
 		exit = func() bool {
 			item, quit := p.pq[execID].Get()
 			if quit {
-				p.log.Infof("processing queue is shutdown")
+				p.log.Info("processing queue is shutdown")
 				return true
 			}
 
 			op := item.(*orchestration.RuntimeOperation)
 			id := op.ID
-			log := p.log.WithField("operationID", id)
+			log := p.log.With("operationID", id)
 
 			defer func() {
 				if err := recover(); err != nil {
-					log.Errorf("panic error from process: %v. Stacktrace: %s", err, debug.Stack())
+					log.Error(fmt.Sprintf("panic error from process: %v. Stacktrace: %s", err, debug.Stack()))
 				}
 				p.pq[execID].Done(item)
 			}()
 
 			when, err := p.executor.Execute(id)
 			if err == nil && when != 0 {
-				log.Infof("Adding %q item after %v", id, when)
+				log.Info(fmt.Sprintf("Adding %q item after %v", id, when))
 				p.pq[execID].AddAfter(item, time.Duration(int64(when)/int64(p.speedFactor)))
 				return false
 			}
 			if err != nil {
-				log.Errorf("Error from process: %v", err)
+				log.Error(fmt.Sprintf("Error from process: %v", err))
 			}
 
-			log.Infof("Finishing processing operation")
+			log.Info("Finishing processing operation")
 			p.dq[execID].Done(item)
 
 			return true
@@ -249,7 +249,7 @@ func (p *ParallelOrchestrationStrategy) Cancel(executionID string) {
 	if executionID == "" {
 		return
 	}
-	p.log.Infof("Cancelling strategy execution %s", executionID)
+	p.log.Info(fmt.Sprintf("Cancelling strategy execution %s", executionID))
 
 	p.mux.Lock()
 	defer p.mux.Unlock()

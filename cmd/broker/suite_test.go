@@ -41,7 +41,6 @@ import (
 	kebRuntime "github.com/kyma-project/kyma-environment-broker/internal/runtime"
 	"github.com/kyma-project/kyma-environment-broker/internal/storage"
 	"github.com/pivotal-cf/brokerapi/v8/domain"
-	"github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
@@ -107,9 +106,6 @@ func NewOrchestrationSuite(t *testing.T, additionalKymaVersions []string) *Orche
 		Level: slog.LevelInfo,
 	}))
 
-	logs := logrus.New()
-	logs.Formatter.(*logrus.TextFormatter).TimestampFormat = "15:04:05.000"
-
 	var cfg Config
 	cfg.OrchestrationConfig = kebOrchestration.Config{
 		KubernetesVersion: "",
@@ -166,7 +162,7 @@ func NewOrchestrationSuite(t *testing.T, additionalKymaVersions []string) *Orche
 		Retry:                 2 * time.Millisecond,
 		StatusCheck:           20 * time.Millisecond,
 		UpgradeClusterTimeout: 4 * time.Second,
-	}, 250*time.Millisecond, runtimeResolver, notificationBundleBuilder, logs, cli, cfg, 1000)
+	}, 250*time.Millisecond, runtimeResolver, notificationBundleBuilder, log, cli, cfg, 1000)
 
 	clusterQueue.SpeedUp(1000)
 
@@ -546,7 +542,6 @@ func NewProvisioningSuite(t *testing.T, multiZoneCluster bool, controlPlaneFailu
 	log := slog.New(slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{
 		Level: slog.LevelInfo,
 	}))
-	logs := logrus.New()
 	storageCleanup, db, err := GetStorageForE2ETests()
 	assert.NoError(t, err)
 	t.Cleanup(func() {
@@ -593,7 +588,7 @@ func NewProvisioningSuite(t *testing.T, multiZoneCluster bool, controlPlaneFailu
 
 	provisionManager := process.NewStagedManager(db.Operations(), eventBroker, cfg.OperationTimeout, cfg.Provisioning, log.With("provisioning", "manager"))
 	provisioningQueue := NewProvisioningProcessingQueue(ctx, provisionManager, workersAmount, cfg, db, provisionerClient, inputFactory, edpClient, accountProvider,
-		kubeconfig.NewFakeK8sClientProvider(cli), cli, defaultOIDCValues(), logs)
+		kubeconfig.NewFakeK8sClientProvider(cli), cli, defaultOIDCValues(), log)
 
 	provisioningQueue.SpeedUp(10000)
 	provisionManager.SpeedUp(10000)

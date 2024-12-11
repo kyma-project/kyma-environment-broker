@@ -1,6 +1,8 @@
 package upgrade_cluster
 
 import (
+	"log/slog"
+	"os"
 	"testing"
 	"time"
 
@@ -23,7 +25,6 @@ import (
 	"github.com/kyma-project/kyma-environment-broker/internal"
 	"github.com/kyma-project/kyma-environment-broker/internal/broker"
 	"github.com/kyma-project/kyma-environment-broker/internal/storage"
-	"github.com/sirupsen/logrus"
 )
 
 const (
@@ -43,9 +44,11 @@ type fixHyperscalerInputProvider interface {
 }
 
 func TestInitialisationStep_Run(t *testing.T) {
+	log := slog.New(slog.NewJSONHandler(os.Stdout, &slog.HandlerOptions{
+		Level: slog.LevelInfo,
+	}))
 	t.Run("should mark operation as Succeeded when upgrade was successful", func(t *testing.T) {
 		// given
-		log := logrus.New()
 		memoryStorage := storage.NewMemoryStorage()
 
 		orch := internal.Orchestration{
@@ -114,7 +117,6 @@ func TestInitialisationStep_Run(t *testing.T) {
 
 	t.Run("should initialize UpgradeRuntimeInput request when run", func(t *testing.T) {
 		// given
-		log := logrus.New()
 		memoryStorage := storage.NewMemoryStorage()
 
 		err := memoryStorage.Orchestrations().Insert(fixOrchestrationWithKymaVer())
@@ -178,7 +180,6 @@ func TestInitialisationStep_Run(t *testing.T) {
 
 	t.Run("should mark finish if orchestration was canceled", func(t *testing.T) {
 		// given
-		log := logrus.New()
 		memoryStorage := storage.NewMemoryStorage()
 
 		err := memoryStorage.Orchestrations().Insert(internal.Orchestration{

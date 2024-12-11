@@ -1,11 +1,12 @@
 package upgrade_cluster
 
 import (
+	"log/slog"
+	"os"
 	"testing"
 	"time"
 
 	"github.com/kyma-project/kyma-environment-broker/internal"
-	"github.com/kyma-project/kyma-environment-broker/internal/logger"
 	"github.com/kyma-project/kyma-environment-broker/internal/notification"
 	"github.com/kyma-project/kyma-environment-broker/internal/notification/mocks"
 	"github.com/kyma-project/kyma-environment-broker/internal/storage"
@@ -16,6 +17,9 @@ import (
 func TestSendNotificationStep_Run(t *testing.T) {
 	// given
 	memoryStorage := storage.NewMemoryStorage()
+	log := slog.New(slog.NewJSONHandler(os.Stdout, &slog.HandlerOptions{
+		Level: slog.LevelInfo,
+	}))
 	tenants := []notification.NotificationTenant{
 		{
 			InstanceID: notification.FakeInstanceID,
@@ -42,7 +46,7 @@ func TestSendNotificationStep_Run(t *testing.T) {
 	step := NewSendNotificationStep(memoryStorage.Operations(), bundleBuilder)
 
 	// when
-	_, repeat, err := step.Run(operation, logger.NewLogDummy())
+	_, repeat, err := step.Run(operation, log)
 
 	// then
 	assert.NoError(t, err)

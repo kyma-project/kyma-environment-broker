@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"log/slog"
 	"regexp"
 	"strings"
 	"time"
@@ -20,7 +21,6 @@ import (
 	"github.com/kyma-project/kyma-environment-broker/internal/storage"
 	"github.com/kyma-project/kyma-environment-broker/internal/storage/dberr"
 	"github.com/pivotal-cf/brokerapi/v8/domain"
-	"github.com/sirupsen/logrus"
 )
 
 type OperationFactory interface {
@@ -41,7 +41,7 @@ type orchestrationManager struct {
 	resolver             orchestration.RuntimeResolver
 	factory              OperationFactory
 	executor             orchestration.OperationExecutor
-	log                  logrus.FieldLogger
+	log                  *slog.Logger
 	pollingInterval      time.Duration
 	k8sClient            client.Client
 	configNamespace      string
@@ -59,12 +59,12 @@ func (m *orchestrationManager) SpeedUp(factor int) {
 }
 
 func (m *orchestrationManager) Execute(orchestrationID string) (time.Duration, error) {
-	logger := m.log.WithField("orchestrationID", orchestrationID)
-	m.log.Infof("Processing orchestration %s", orchestrationID)
+	logger := m.log.With("orchestrationID", orchestrationID)
+	m.log.Info(fmt.Sprintf("Processing orchestration %s", orchestrationID))
 	o, err := m.orchestrationStorage.GetByID(orchestrationID)
 	if err != nil {
 		if o == nil {
-			m.log.Errorf("orchestration %s failed: %s", orchestrationID, err)
+			m.log.Error(fmt.Sprintf("orchestration %s failed: %s", orchestrationID, err))
 			return time.Minute, nil
 		}
 		return m.failOrchestration(o, fmt.Errorf("failed to get orchestration: %w", err))
@@ -89,12 +89,12 @@ func (m *orchestrationManager) Execute(orchestrationID string) (time.Duration, e
 
 	err = m.orchestrationStorage.Update(*o)
 	if err != nil {
-		logger.Errorf("while updating orchestration: %v", err)
+		logger.Error(fmt.Sprintf("while updating orchestration: %v", err))
 		return m.pollingInterval, nil
 	}
 	// do not perform any action if the orchestration is finished
 	if o.IsFinished() {
-		m.log.Infof("Orchestration was already finished, state: %s", o.State)
+		m.log.Info(fmt.Sprintf("Orchestration was already finished, state: %s", o.State))
 		return 0, nil
 	}
 
@@ -115,11 +115,11 @@ func (m *orchestrationManager) Execute(orchestrationID string) (time.Duration, e
 	o.UpdatedAt = time.Now()
 	err = m.orchestrationStorage.Update(*o)
 	if err != nil {
-		logger.Errorf("while updating orchestration: %v", err)
+		logger.Error(fmt.Sprintf("while updating orchestration: %v", err))
 		return m.pollingInterval, nil
 	}
 
-	logger.Infof("Finished processing orchestration, state: %s", o.State)
+	logger.Info(fmt.Sprintf("Finished processing orchestration, state: %s", o.State))
 	return 0, nil
 }
 
@@ -296,7 +296,7 @@ func (m *orchestrationManager) resolveOperations(o *internal.Orchestration, poli
 		o.Description = updateRetryingDescription(o.Description, fmt.Sprintf("retried %d operations", len(filterRuntimes)))
 		o.Parameters.RetryOperation.RetryOperations = nil
 		o.Parameters.RetryOperation.Immediate = false
-		m.log.Infof("Resuming %d operations for orchestration %s", len(result), o.OrchestrationID)
+		m.log.Info(fmt.Sprintf("Resuming %d operations for orchestration %s", len(result), o.OrchestrationID))
 	} else {
 		// Resume processing of not finished upgrade operations after restart
 		var err error
@@ -305,13 +305,13 @@ func (m *orchestrationManager) resolveOperations(o *internal.Orchestration, poli
 			return result, filterRuntimes, fmt.Errorf("while resuming operation: %w", err)
 		}
 
-		m.log.Infof("Resuming %d operations for orchestration %s", len(result), o.OrchestrationID)
+		m.log.Info(fmt.Sprintf("Resuming %d operations for orchestration %s", len(result), o.OrchestrationID))
 	}
 
 	return result, filterRuntimes, nil
 }
 
-func (m *orchestrationManager) resolveStrategy(sType orchestration.StrategyType, executor orchestration.OperationExecutor, log logrus.FieldLogger) orchestration.Strategy {
+func (m *orchestrationManager) resolveStrategy(sType orchestration.StrategyType, executor orchestration.OperationExecutor, log *slog.Logger) orchestration.Strategy {
 	switch sType {
 	case orchestration.ParallelStrategy:
 		s := strategies.NewParallelOrchestrationStrategy(executor, log, 0)
@@ -324,7 +324,7 @@ func (m *orchestrationManager) resolveStrategy(sType orchestration.StrategyType,
 }
 
 // waitForCompletion waits until processing of given orchestration ends or if it's canceled
-func (m *orchestrationManager) waitForCompletion(o *internal.Orchestration, strategy orchestration.Strategy, execID string, log logrus.FieldLogger) (*internal.Orchestration, error) {
+func (m *orchestrationManager) waitForCompletion(o *internal.Orchestration, strategy orchestration.Strategy, execID string, log *slog.Logger) (*internal.Orchestration, error) {
 	orchestrationID := o.OrchestrationID
 	canceled := false
 	var err error
@@ -341,15 +341,15 @@ func (m *orchestrationManager) waitForCompletion(o *internal.Orchestration, stra
 				canceled = true
 			}
 		case dberr.IsNotFound(err):
-			log.Errorf("while getting orchestration: %v", err)
+			log.Error(fmt.Sprintf("while getting orchestration: %v", err))
 			return false, err
 		default:
-			log.Errorf("while getting orchestration: %v", err)
+			log.Error(fmt.Sprintf("while getting orchestration: %v", err))
 			return false, nil
 		}
 		s, err := m.operationStorage.GetOperationStatsForOrchestration(o.OrchestrationID)
 		if err != nil {
-			log.Errorf("while getting operations: %v", err)
+			log.Error(fmt.Sprintf("while getting operations: %v", err))
 			return false, nil
 		}
 		stats = s
@@ -372,12 +372,12 @@ func (m *orchestrationManager) waitForCompletion(o *internal.Orchestration, stra
 			ops, err := m.factory.RetryOperations(o.Parameters.RetryOperation.RetryOperations)
 			if err != nil {
 				// don't block the polling and cancel signal
-				log.Errorf("PollUntilContextCancel() while handling retrying operations: %v", err)
+				log.Error(fmt.Sprintf("PollUntilContextCancel() while handling retrying operations: %v", err))
 			}
 
 			result, o, _, err := m.NewOperationForPendingRetrying(o, orchestration.MaintenancePolicy{}, ops, false)
 			if err != nil {
-				log.Errorf("PollUntilContextCancel() while new operation for retrying instanceid : %v", err)
+				log.Error(fmt.Sprintf("PollUntilContextCancel() while new operation for retrying instanceid : %v", err))
 			}
 
 			err = strategy.Insert(execID, result, o.Parameters.Strategy)
@@ -395,10 +395,10 @@ func (m *orchestrationManager) waitForCompletion(o *internal.Orchestration, stra
 
 			err = m.orchestrationStorage.Update(*o)
 			if err != nil {
-				log.Errorf("PollUntilContextCancel() while updating orchestration: %v", err)
+				log.Error(fmt.Sprintf("PollUntilContextCancel() while updating orchestration: %v", err))
 				return false, nil
 			}
-			m.log.Infof("PollUntilContextCancel() while resuming %d operations for orchestration %s", len(result), o.OrchestrationID)
+			m.log.Info(fmt.Sprintf("PollUntilContextCancel() while resuming %d operations for orchestration %s", len(result), o.OrchestrationID))
 		}
 
 		// don't wait for pending operations if orchestration was canceled
@@ -545,7 +545,7 @@ func resolveMaintenanceWindowTime(r orchestration.Runtime, policy orchestration.
 }
 
 func (m *orchestrationManager) failOrchestration(o *internal.Orchestration, err error) (time.Duration, error) {
-	m.log.Errorf("orchestration %s failed: %s", o.OrchestrationID, err)
+	m.log.Error(fmt.Sprintf("orchestration %s failed: %s", o.OrchestrationID, err))
 	return m.updateOrchestration(o, orchestration.Failed, err.Error()), nil
 }
 
@@ -556,7 +556,7 @@ func (m *orchestrationManager) updateOrchestration(o *internal.Orchestration, st
 	err := m.orchestrationStorage.Update(*o)
 	if err != nil {
 		if !dberr.IsNotFound(err) {
-			m.log.Errorf("while updating orchestration: %v", err)
+			m.log.Error(fmt.Sprintf("while updating orchestration: %v", err))
 			return time.Minute
 		}
 	}
@@ -597,12 +597,12 @@ func (m *orchestrationManager) sendNotificationCreate(o *internal.Orchestration,
 	m.log.Info("Start to create notification")
 	notificationBundle, err := m.bundleBuilder.NewBundle(o.OrchestrationID, notificationParams)
 	if err != nil {
-		m.log.Errorf("%s: %s", "failed to create Notification Bundle", err)
+		m.log.Error(fmt.Sprintf("%s: %s", "failed to create Notification Bundle", err))
 		return err
 	}
 	err = notificationBundle.CreateNotificationEvent()
 	if err != nil {
-		m.log.Errorf("%s: %s", "cannot send notification", err)
+		m.log.Error(fmt.Sprintf("%s: %s", "cannot send notification", err))
 		return err
 	}
 	m.log.Info("Creating notification succedded")
@@ -634,12 +634,12 @@ func (m *orchestrationManager) sendNotificationCancel(o *internal.Orchestration,
 	m.log.Info("Start to cancel notification")
 	notificationBundle, err := m.bundleBuilder.NewBundle(o.OrchestrationID, notificationParams)
 	if err != nil {
-		m.log.Errorf("%s: %s", "failed to create Notification Bundle", err)
+		m.log.Error(fmt.Sprintf("%s: %s", "failed to create Notification Bundle", err))
 		return err
 	}
 	err = notificationBundle.CancelNotificationEvent()
 	if err != nil {
-		m.log.Errorf("%s: %s", "cannot cancel notification", err)
+		m.log.Error(fmt.Sprintf("%s: %s", "cannot cancel notification", err))
 		return err
 	}
 	m.log.Info("Cancelling notification succedded")
@@ -658,7 +658,7 @@ func updateRetryingDescription(desc string, newDesc string) string {
 func (m *orchestrationManager) waitForStart(o *internal.Orchestration) ([]orchestration.RuntimeOperation, int, error) {
 	maintenancePolicy, err := m.getMaintenancePolicy()
 	if err != nil {
-		m.log.Warnf("while getting maintenance policy: %s", err)
+		m.log.Warn(fmt.Sprintf("while getting maintenance policy: %s", err))
 	}
 
 	//polling every 5 min until ochestration start

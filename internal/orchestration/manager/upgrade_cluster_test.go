@@ -2,6 +2,8 @@ package manager_test
 
 import (
 	"fmt"
+	"log/slog"
+	"os"
 	"testing"
 	"time"
 
@@ -14,7 +16,6 @@ import (
 	"github.com/kyma-project/kyma-environment-broker/internal/orchestration/manager"
 	"github.com/kyma-project/kyma-environment-broker/internal/storage"
 	"github.com/kyma-project/kyma-environment-broker/internal/storage/dbmodel"
-	"github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
@@ -32,6 +33,9 @@ func TestUpgradeClusterManager_Execute(t *testing.T) {
 		Namespace:         "default",
 		Name:              "policyConfig",
 	}
+	log := slog.New(slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{
+		Level: slog.LevelInfo,
+	}))
 
 	t.Run("Empty", func(t *testing.T) {
 		// given
@@ -72,7 +76,7 @@ func TestUpgradeClusterManager_Execute(t *testing.T) {
 		bundle.On("CreateNotificationEvent").Return(nil).Once()
 
 		svc := manager.NewUpgradeClusterManager(store.Orchestrations(), store.Operations(), store.Instances(), nil,
-			resolver, 20*time.Millisecond, logrus.New(), k8sClient, orchestrationConfig, notificationBuilder, 1000)
+			resolver, 20*time.Millisecond, log, k8sClient, orchestrationConfig, notificationBuilder, 1000)
 
 		// when
 		_, err = svc.Execute(id)
@@ -118,7 +122,7 @@ func TestUpgradeClusterManager_Execute(t *testing.T) {
 		bundle.On("CreateNotificationEvent").Return(nil).Once()
 
 		svc := manager.NewUpgradeClusterManager(store.Orchestrations(), store.Operations(), store.Instances(), &testExecutor{},
-			resolver, poolingInterval, logrus.New(), k8sClient, orchestrationConfig, notificationBuilder, 1000)
+			resolver, poolingInterval, log, k8sClient, orchestrationConfig, notificationBuilder, 1000)
 
 		// when
 		_, err = svc.Execute(id)
@@ -166,7 +170,7 @@ func TestUpgradeClusterManager_Execute(t *testing.T) {
 		bundle.On("CreateNotificationEvent").Return(nil).Once()
 
 		svc := manager.NewUpgradeClusterManager(store.Orchestrations(), store.Operations(), store.Instances(), nil,
-			resolver, poolingInterval, logrus.New(), k8sClient, orchestrationConfig, notificationBuilder, 1000)
+			resolver, poolingInterval, log, k8sClient, orchestrationConfig, notificationBuilder, 1000)
 
 		// when
 		_, err = svc.Execute(id)
@@ -241,7 +245,7 @@ func TestUpgradeClusterManager_Execute(t *testing.T) {
 		bundle.On("CreateNotificationEvent").Return(nil).Once()
 
 		svc := manager.NewUpgradeClusterManager(store.Orchestrations(), store.Operations(), store.Instances(), &testExecutor{},
-			resolver, poolingInterval, logrus.New(), k8sClient, orchestrationConfig, notificationBuilder, 1000)
+			resolver, poolingInterval, log, k8sClient, orchestrationConfig, notificationBuilder, 1000)
 
 		// when
 		_, err = svc.Execute(id)
@@ -294,7 +298,7 @@ func TestUpgradeClusterManager_Execute(t *testing.T) {
 		bundle.On("CancelNotificationEvent").Return(nil).Once()
 
 		svc := manager.NewUpgradeClusterManager(store.Orchestrations(), store.Operations(), store.Instances(), &testExecutor{}, resolver,
-			poolingInterval, logrus.New(), k8sClient, orchestrationConfig, notificationBuilder, 1000)
+			poolingInterval, log, k8sClient, orchestrationConfig, notificationBuilder, 1000)
 
 		// when
 		_, err = svc.Execute(id)
@@ -370,7 +374,7 @@ func TestUpgradeClusterManager_Execute(t *testing.T) {
 			upgradeType: orchestration.UpgradeClusterOrchestration,
 		}
 		svc := manager.NewUpgradeClusterManager(store.Orchestrations(), store.Operations(), store.Instances(), &executor, resolver,
-			poolingInterval, logrus.New(), k8sClient, orchestrationConfig, notificationBuilder, 1000)
+			poolingInterval, log, k8sClient, orchestrationConfig, notificationBuilder, 1000)
 
 		_, err = store.Orchestrations().GetByID(id)
 		require.NoError(t, err)
@@ -474,7 +478,7 @@ func TestUpgradeClusterManager_Execute(t *testing.T) {
 			upgradeType: orchestration.UpgradeClusterOrchestration,
 		}
 		svc := manager.NewUpgradeClusterManager(store.Orchestrations(), store.Operations(), store.Instances(), &executor, resolver,
-			poolingInterval, logrus.New(), k8sClient, orchestrationConfig, notificationBuilder, 1000)
+			poolingInterval, log, k8sClient, orchestrationConfig, notificationBuilder, 1000)
 
 		_, err = store.Operations().GetUpgradeClusterOperationByID(opId)
 		require.NoError(t, err)
@@ -566,7 +570,7 @@ func TestUpgradeClusterManager_Execute(t *testing.T) {
 			upgradeType: orchestration.UpgradeClusterOrchestration,
 		}
 		svc := manager.NewUpgradeClusterManager(store.Orchestrations(), store.Operations(), store.Instances(), &executor, resolver,
-			poolingInterval, logrus.New(), k8sClient, orchestrationConfig, notificationBuilder, 1000)
+			poolingInterval, log, k8sClient, orchestrationConfig, notificationBuilder, 1000)
 
 		// when
 		_, err = svc.Execute(id)

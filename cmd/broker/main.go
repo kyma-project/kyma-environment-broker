@@ -236,7 +236,7 @@ func main() {
 	// create and fill config
 	var cfg Config
 	err = envconfig.InitWithPrefix(&cfg, "APP")
-	fatalOnError(err, logs)
+	fatalOnError(err, log)
 
 	if cfg.LogLevel != "" {
 		l, _ := logrus.ParseLevel(cfg.LogLevel)
@@ -262,9 +262,9 @@ func main() {
 
 	// create kubernetes client
 	kcpK8sConfig, err := config.GetConfig()
-	fatalOnError(err, logs)
+	fatalOnError(err, log)
 	kcpK8sClient, err := initClient(kcpK8sConfig)
-	fatalOnError(err, logs)
+	fatalOnError(err, log)
 	skrK8sClientProvider := kubeconfig.NewK8sClientFromSecretProvider(kcpK8sClient)
 
 	// create storage
@@ -274,7 +274,7 @@ func main() {
 		db = storage.NewMemoryStorage()
 	} else {
 		store, conn, err := storage.NewFromConfig(cfg.Database, cfg.Events, cipher)
-		fatalOnError(err, logs)
+		fatalOnError(err, log)
 		db = store
 		dbStatsCollector := sqlstats.NewStatsCollector("broker", conn)
 		prometheus.MustRegister(dbStatsCollector)
@@ -293,13 +293,13 @@ func main() {
 		kebConfig.NewConfigMapKeysValidator(),
 		kebConfig.NewConfigMapConverter())
 	gardenerClusterConfig, err := gardener.NewGardenerClusterConfig(cfg.Gardener.KubeconfigPath)
-	fatalOnError(err, logs)
+	fatalOnError(err, log)
 	cfg.Gardener.DNSProviders, err = gardener.ReadDNSProvidersValuesFromYAML(cfg.SkrDnsProvidersValuesYAMLFilePath)
-	fatalOnError(err, logs)
+	fatalOnError(err, log)
 	dynamicGardener, err := dynamic.NewForConfig(gardenerClusterConfig)
-	fatalOnError(err, logs)
+	fatalOnError(err, log)
 	gardenerClient, err := initClient(gardenerClusterConfig)
-	fatalOnError(err, logs)
+	fatalOnError(err, log)
 
 	gardenerNamespace := fmt.Sprintf("garden-%v", cfg.Gardener.Project)
 	gardenerAccountPool := hyperscaler.NewAccountPool(dynamicGardener, gardenerNamespace)
@@ -307,13 +307,13 @@ func main() {
 	accountProvider := hyperscaler.NewAccountProvider(gardenerAccountPool, gardenerSharedPool)
 
 	regions, err := provider.ReadPlatformRegionMappingFromFile(cfg.TrialRegionMappingFilePath)
-	fatalOnError(err, logs)
+	fatalOnError(err, log)
 	log.Info(fmt.Sprintf("Platform region mapping for trial: %v", regions))
 
 	oidcDefaultValues, err := runtime.ReadOIDCDefaultValuesFromYAML(cfg.SkrOidcDefaultValuesYAMLFilePath)
-	fatalOnError(err, logs)
+	fatalOnError(err, log)
 	inputFactory, err := input.NewInputBuilderFactory(configProvider, cfg.Provisioner, regions, cfg.FreemiumProviders, oidcDefaultValues, cfg.Broker.UseSmallerMachineTypes)
-	fatalOnError(err, logs)
+	fatalOnError(err, log)
 
 	edpClient := edp.NewClient(cfg.EDP)
 
@@ -326,25 +326,25 @@ func main() {
 	// run queues
 	provisionManager := process.NewStagedManager(db.Operations(), eventBroker, cfg.OperationTimeout, cfg.Provisioning, log.With("provisioning", "manager"))
 	provisionQueue := NewProvisioningProcessingQueue(ctx, provisionManager, cfg.Provisioning.WorkersAmount, &cfg, db, provisionerClient, inputFactory,
-		edpClient, accountProvider, skrK8sClientProvider, kcpK8sClient, oidcDefaultValues, logs)
+		edpClient, accountProvider, skrK8sClientProvider, kcpK8sClient, oidcDefaultValues, log)
 
 	deprovisionManager := process.NewStagedManager(db.Operations(), eventBroker, cfg.OperationTimeout, cfg.Deprovisioning, log.With("deprovisioning", "manager"))
 	deprovisionQueue := NewDeprovisioningProcessingQueue(ctx, cfg.Deprovisioning.WorkersAmount, deprovisionManager, &cfg, db, eventBroker, provisionerClient, edpClient, accountProvider,
-		skrK8sClientProvider, kcpK8sClient, configProvider, logs)
+		skrK8sClientProvider, kcpK8sClient, configProvider, log)
 
 	updateManager := process.NewStagedManager(db.Operations(), eventBroker, cfg.OperationTimeout, cfg.Update, log.With("update", "manager"))
 	updateQueue := NewUpdateProcessingQueue(ctx, updateManager, cfg.Update.WorkersAmount, db, inputFactory, provisionerClient, eventBroker,
-		cfg, skrK8sClientProvider, kcpK8sClient, logs)
+		cfg, skrK8sClientProvider, kcpK8sClient, log)
 	/***/
 	servicesConfig, err := broker.NewServicesConfigFromFile(cfg.CatalogFilePath)
-	fatalOnError(err, logs)
+	fatalOnError(err, log)
 
 	// create kubeconfig builder
 	kcBuilder := kubeconfig.NewBuilder(provisionerClient, kcpK8sClient, skrK8sClientProvider)
 
 	// create server
 	router := mux.NewRouter()
-	createAPI(router, servicesConfig, inputFactory, &cfg, db, provisionQueue, deprovisionQueue, updateQueue, logger, logs,
+	createAPI(router, servicesConfig, inputFactory, &cfg, db, provisionQueue, deprovisionQueue, updateQueue, logger, logs, log,
 		inputFactory.GetPlanDefaults, kcBuilder, skrK8sClientProvider, skrK8sClientProvider, gardenerClient, kcpK8sClient, eventBroker)
 
 	// create metrics endpoint
@@ -358,20 +358,20 @@ func main() {
 	runtimeResolver := orchestrationExt.NewGardenerRuntimeResolver(dynamicGardener, gardenerNamespace, runtimeLister, log)
 
 	clusterQueue := NewClusterOrchestrationProcessingQueue(ctx, db, provisionerClient, eventBroker, inputFactory,
-		nil, time.Minute, runtimeResolver, notificationBuilder, logs, kcpK8sClient, cfg, 1)
+		nil, time.Minute, runtimeResolver, notificationBuilder, log, kcpK8sClient, cfg, 1)
 
 	// TODO: in case of cluster upgrade the same Azure Zones must be send to the Provisioner
 	orchestrationHandler := orchestrate.NewOrchestrationHandler(db, clusterQueue, cfg.MaxPaginationPage, log)
 
 	if !cfg.DisableProcessOperationsInProgress {
-		err = processOperationsInProgressByType(internal.OperationTypeProvision, db.Operations(), provisionQueue, logs)
-		fatalOnError(err, logs)
-		err = processOperationsInProgressByType(internal.OperationTypeDeprovision, db.Operations(), deprovisionQueue, logs)
-		fatalOnError(err, logs)
-		err = processOperationsInProgressByType(internal.OperationTypeUpdate, db.Operations(), updateQueue, logs)
-		fatalOnError(err, logs)
-		err = reprocessOrchestrations(orchestrationExt.UpgradeClusterOrchestration, db.Orchestrations(), db.Operations(), clusterQueue, logs)
-		fatalOnError(err, logs)
+		err = processOperationsInProgressByType(internal.OperationTypeProvision, db.Operations(), provisionQueue, log)
+		fatalOnError(err, log)
+		err = processOperationsInProgressByType(internal.OperationTypeDeprovision, db.Operations(), deprovisionQueue, log)
+		fatalOnError(err, log)
+		err = processOperationsInProgressByType(internal.OperationTypeUpdate, db.Operations(), updateQueue, log)
+		fatalOnError(err, log)
+		err = reprocessOrchestrations(orchestrationExt.UpgradeClusterOrchestration, db.Orchestrations(), db.Operations(), clusterQueue, log)
+		fatalOnError(err, log)
 	} else {
 		log.Info("Skipping processing operation in progress on start")
 	}
@@ -381,7 +381,7 @@ func main() {
 		"domain": cfg.DomainName,
 	}
 	err = swagger.NewTemplate("/swagger", swaggerTemplates).Execute()
-	fatalOnError(err, logs)
+	fatalOnError(err, log)
 
 	// create /orchestration
 	orchestrationHandler.AttachRoutes(router)
@@ -403,7 +403,7 @@ func main() {
 		log.Info(fmt.Sprintf("Call handled: method=%s url=%s statusCode=%d size=%d", params.Request.Method, params.URL.Path, params.StatusCode, params.Size))
 	})
 
-	fatalOnError(http.ListenAndServe(cfg.Host+":"+cfg.Port, svr), logs)
+	fatalOnError(http.ListenAndServe(cfg.Host+":"+cfg.Port, svr), log)
 }
 
 func logConfiguration(logs *slog.Logger, cfg Config) {
@@ -423,27 +423,27 @@ func logConfiguration(logs *slog.Logger, cfg Config) {
 }
 
 func createAPI(router *mux.Router, servicesConfig broker.ServicesConfig, planValidator broker.PlanValidator, cfg *Config, db storage.BrokerStorage,
-	provisionQueue, deprovisionQueue, updateQueue *process.Queue, logger lager.Logger, logs logrus.FieldLogger, planDefaults broker.PlanDefaults, kcBuilder kubeconfig.KcBuilder, clientProvider K8sClientProvider, kubeconfigProvider KubeconfigProvider, gardenerClient, kcpK8sClient client.Client, publisher event.Publisher) {
+	provisionQueue, deprovisionQueue, updateQueue *process.Queue, logger lager.Logger, logs logrus.FieldLogger, log *slog.Logger, planDefaults broker.PlanDefaults, kcBuilder kubeconfig.KcBuilder, clientProvider K8sClientProvider, kubeconfigProvider KubeconfigProvider, gardenerClient, kcpK8sClient client.Client, publisher event.Publisher) {
 
 	suspensionCtxHandler := suspension.NewContextUpdateHandler(db.Operations(), provisionQueue, deprovisionQueue, logs)
 
 	defaultPlansConfig, err := servicesConfig.DefaultPlansConfig()
-	fatalOnError(err, logs)
+	fatalOnError(err, log)
 
 	debugSink, err := lager.NewRedactingSink(lager.NewWriterSink(os.Stdout, lager.DEBUG), []string{"instance-details"}, []string{})
-	fatalOnError(err, logs)
+	fatalOnError(err, log)
 	logger.RegisterSink(debugSink)
 	errorSink, err := lager.NewRedactingSink(lager.NewWriterSink(os.Stderr, lager.ERROR), []string{"instance-details"}, []string{})
-	fatalOnError(err, logs)
+	fatalOnError(err, log)
 	logger.RegisterSink(errorSink)
 
 	freemiumGlobalAccountIds, err := whitelist.ReadWhitelistedGlobalAccountIdsFromFile(cfg.FreemiumWhitelistedGlobalAccountsFilePath)
-	fatalOnError(err, logs)
+	fatalOnError(err, log)
 	logs.Infof("Number of globalAccountIds for unlimited freeemium: %d\n", len(freemiumGlobalAccountIds))
 
 	// backward compatibility for tests
 	convergedCloudRegionProvider, err := broker.NewDefaultConvergedCloudRegionsProvider(cfg.SapConvergedCloudRegionMappingsFilePath, &broker.YamlRegionReader{})
-	fatalOnError(err, logs)
+	fatalOnError(err, log)
 	logs.Infof("%s plan region mappings loaded", broker.SapConvergedCloudPlanName)
 
 	// create KymaEnvironmentBroker endpoints
@@ -482,19 +482,19 @@ func createAPI(router *mux.Router, servicesConfig broker.ServicesConfig, planVal
 }
 
 // queues all in progress operations by type
-func processOperationsInProgressByType(opType internal.OperationType, op storage.Operations, queue *process.Queue, log logrus.FieldLogger) error {
+func processOperationsInProgressByType(opType internal.OperationType, op storage.Operations, queue *process.Queue, log *slog.Logger) error {
 	operations, err := op.GetNotFinishedOperationsByType(opType)
 	if err != nil {
 		return fmt.Errorf("while getting in progress operations from storage: %w", err)
 	}
 	for _, operation := range operations {
 		queue.Add(operation.ID)
-		log.Infof("Resuming the processing of %s operation ID: %s", opType, operation.ID)
+		log.Info(fmt.Sprintf("Resuming the processing of %s operation ID: %s", opType, operation.ID))
 	}
 	return nil
 }
 
-func reprocessOrchestrations(orchestrationType orchestrationExt.Type, orchestrationsStorage storage.Orchestrations, operationsStorage storage.Operations, queue *process.Queue, log logrus.FieldLogger) error {
+func reprocessOrchestrations(orchestrationType orchestrationExt.Type, orchestrationsStorage storage.Orchestrations, operationsStorage storage.Operations, queue *process.Queue, log *slog.Logger) error {
 	if err := processCancelingOrchestrations(orchestrationType, orchestrationsStorage, operationsStorage, queue, log); err != nil {
 		return fmt.Errorf("while processing canceled %s orchestrations: %w", orchestrationType, err)
 	}
@@ -510,7 +510,7 @@ func reprocessOrchestrations(orchestrationType orchestrationExt.Type, orchestrat
 	return nil
 }
 
-func processOrchestration(orchestrationType orchestrationExt.Type, state string, orchestrationsStorage storage.Orchestrations, queue *process.Queue, log logrus.FieldLogger) error {
+func processOrchestration(orchestrationType orchestrationExt.Type, state string, orchestrationsStorage storage.Orchestrations, queue *process.Queue, log *slog.Logger) error {
 	filter := dbmodel.OrchestrationFilter{
 		Types:  []string{string(orchestrationType)},
 		States: []string{state},
@@ -525,14 +525,14 @@ func processOrchestration(orchestrationType orchestrationExt.Type, state string,
 
 	for _, o := range orchestrations {
 		queue.Add(o.OrchestrationID)
-		log.Infof("Resuming the processing of %s %s orchestration ID: %s", state, orchestrationType, o.OrchestrationID)
+		log.Info(fmt.Sprintf("Resuming the processing of %s %s orchestration ID: %s", state, orchestrationType, o.OrchestrationID))
 	}
 	return nil
 }
 
 // processCancelingOrchestrations reprocess orchestrations with canceling state only when some in progress operations exists
 // reprocess only one orchestration to not clog up the orchestration queue on start
-func processCancelingOrchestrations(orchestrationType orchestrationExt.Type, orchestrationsStorage storage.Orchestrations, operationsStorage storage.Operations, queue *process.Queue, log logrus.FieldLogger) error {
+func processCancelingOrchestrations(orchestrationType orchestrationExt.Type, orchestrationsStorage storage.Orchestrations, operationsStorage storage.Operations, queue *process.Queue, log *slog.Logger) error {
 	filter := dbmodel.OrchestrationFilter{
 		Types:  []string{string(orchestrationType)},
 		States: []string{orchestrationExt.Canceling},
@@ -556,7 +556,7 @@ func processCancelingOrchestrations(orchestrationType orchestrationExt.Type, orc
 		}
 
 		if count > 0 {
-			log.Infof("Resuming the processing of %s %s orchestration ID: %s", orchestrationExt.Canceling, orchestrationType, o.OrchestrationID)
+			log.Info(fmt.Sprintf("Resuming the processing of %s %s orchestration ID: %s", orchestrationExt.Canceling, orchestrationType, o.OrchestrationID))
 			queue.Add(o.OrchestrationID)
 			return nil
 		}
@@ -585,9 +585,10 @@ func initClient(cfg *rest.Config) (client.Client, error) {
 	return cli, nil
 }
 
-func fatalOnError(err error, log logrus.FieldLogger) {
+func fatalOnError(err error, log *slog.Logger) {
 	if err != nil {
-		log.Fatal(err)
+		log.Error(err.Error())
+		os.Exit(1)
 	}
 }
 

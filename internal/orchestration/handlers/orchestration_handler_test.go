@@ -19,7 +19,6 @@ import (
 	"github.com/kyma-project/kyma-environment-broker/internal/process"
 	"github.com/kyma-project/kyma-environment-broker/internal/storage"
 	"github.com/pivotal-cf/brokerapi/v8/domain"
-	"github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -251,8 +250,7 @@ func TestStatusRetryHandler_AttachRoutes(t *testing.T) {
 		err = db.Operations().InsertUpgradeClusterOperation(sameInstOp)
 		require.NoError(t, err)
 
-		logs := logrus.New()
-		clusterQueue := process.NewQueue(&testExecutor{}, logs, "orchestration-test", 10*time.Second, 10*time.Second)
+		clusterQueue := process.NewQueue(&testExecutor{}, log, "orchestration-test", 10*time.Second, 10*time.Second)
 		kymaHandler := NewOrchestrationStatusHandler(db.Operations(), db.Orchestrations(), db.RuntimeStates(), clusterQueue, 100, log)
 
 		for i, id := range operationIDs {
@@ -334,8 +332,7 @@ func TestStatusRetryHandler_AttachRoutes(t *testing.T) {
 		err = db.Operations().InsertUpgradeClusterOperation(sameInstOp)
 		require.NoError(t, err)
 
-		logs := logrus.New()
-		clusterQueue := process.NewQueue(&testExecutor{}, logs, "status-retry", 10*time.Second, 10*time.Second)
+		clusterQueue := process.NewQueue(&testExecutor{}, log, "status-retry", 10*time.Second, 10*time.Second)
 		kymaHandler := NewOrchestrationStatusHandler(db.Operations(), db.Orchestrations(), db.RuntimeStates(), clusterQueue, 100, log)
 
 		req, err := http.NewRequest("POST", fmt.Sprintf("/orchestrations/%s/retry", orchestrationID), nil)
@@ -417,8 +414,7 @@ func TestStatusRetryHandler_AttachRoutes(t *testing.T) {
 		err = db.Operations().InsertDeprovisioningOperation(deprovisioningOperation)
 		require.NoError(t, err)
 
-		logs := logrus.New()
-		clusterQueue := process.NewQueue(&testExecutor{}, logs, "status-retry", 10*time.Second, 10*time.Second)
+		clusterQueue := process.NewQueue(&testExecutor{}, log, "status-retry", 10*time.Second, 10*time.Second)
 		kymaHandler := NewOrchestrationStatusHandler(db.Operations(), db.Orchestrations(), db.RuntimeStates(), clusterQueue, 100, log)
 
 		req, err := http.NewRequest("POST", fmt.Sprintf("/orchestrations/%s/retry", orchestrationID), nil)
@@ -480,8 +476,7 @@ func TestStatusRetryHandler_AttachRoutes(t *testing.T) {
 		err = fixInProgressOrchestrationOperations(db, orchestrationID)
 		require.NoError(t, err)
 
-		logs := logrus.New()
-		clusterQueue := process.NewQueue(&testExecutor{}, logs, "status-retry", 10*time.Second, 10*time.Second)
+		clusterQueue := process.NewQueue(&testExecutor{}, log, "status-retry", 10*time.Second, 10*time.Second)
 		kymaHandler := NewOrchestrationStatusHandler(db.Operations(), db.Orchestrations(), db.RuntimeStates(), clusterQueue, 100, log)
 
 		req, err := http.NewRequest("POST", fmt.Sprintf("/orchestrations/%s/retry", orchestrationID), nil)
