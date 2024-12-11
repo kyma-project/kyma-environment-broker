@@ -16,7 +16,6 @@ import (
 	"github.com/stretchr/testify/assert"
 
 	"github.com/gorilla/mux"
-	"github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/require"
 )
 
@@ -66,8 +65,7 @@ func fixClusterHandler(t *testing.T) *clusterHandler {
 	log := slog.New(slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{
 		Level: slog.LevelInfo,
 	}))
-	logs := logrus.New()
-	q := process.NewQueue(&testExecutor{}, logs, "test-handler", 10*time.Second, 10*time.Second)
+	q := process.NewQueue(&testExecutor{}, log, "test-handler", 10*time.Second, 10*time.Second)
 	handler := NewClusterHandler(db.Orchestrations(), q, log)
 
 	return handler

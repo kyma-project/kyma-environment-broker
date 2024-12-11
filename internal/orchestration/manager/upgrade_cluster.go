@@ -2,6 +2,7 @@ package manager
 
 import (
 	"fmt"
+	"log/slog"
 	"time"
 
 	internalOrchestration "github.com/kyma-project/kyma-environment-broker/internal/orchestration"
@@ -17,7 +18,6 @@ import (
 	"github.com/kyma-project/kyma-environment-broker/internal/storage"
 	"github.com/kyma-project/kyma-environment-broker/internal/storage/dbmodel"
 	"github.com/pivotal-cf/brokerapi/v8/domain"
-	"github.com/sirupsen/logrus"
 )
 
 type upgradeClusterFactory struct {
@@ -26,7 +26,7 @@ type upgradeClusterFactory struct {
 
 func NewUpgradeClusterManager(orchestrationStorage storage.Orchestrations, operationStorage storage.Operations, instanceStorage storage.Instances,
 	kymaClusterExecutor orchestration.OperationExecutor, resolver orchestration.RuntimeResolver, pollingInterval time.Duration,
-	log logrus.FieldLogger, cli client.Client, cfg internalOrchestration.Config, bundleBuilder notification.BundleBuilder, speedFactor int) process.Executor {
+	log *slog.Logger, cli client.Client, cfg internalOrchestration.Config, bundleBuilder notification.BundleBuilder, speedFactor int) process.Executor {
 	return &orchestrationManager{
 		orchestrationStorage: orchestrationStorage,
 		operationStorage:     operationStorage,

@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"log/slog"
 	"time"
 
 	"github.com/kyma-project/kyma-environment-broker/common/hyperscaler"
@@ -12,7 +13,6 @@ import (
 	"github.com/kyma-project/kyma-environment-broker/internal/process/steps"
 	"github.com/kyma-project/kyma-environment-broker/internal/provisioner"
 	"github.com/kyma-project/kyma-environment-broker/internal/storage"
-	"github.com/sirupsen/logrus"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
@@ -20,7 +20,7 @@ func NewDeprovisioningProcessingQueue(ctx context.Context, workersAmount int, de
 	cfg *Config, db storage.BrokerStorage, pub event.Publisher,
 	provisionerClient provisioner.Client,
 	edpClient deprovisioning.EDPClient, accountProvider hyperscaler.AccountProvider,
-	k8sClientProvider K8sClientProvider, cli client.Client, configProvider input.ConfigurationProvider, logs logrus.FieldLogger) *process.Queue {
+	k8sClientProvider K8sClientProvider, cli client.Client, configProvider input.ConfigurationProvider, logs *slog.Logger) *process.Queue {
 
 	deprovisioningSteps := []struct {
 		disabled bool

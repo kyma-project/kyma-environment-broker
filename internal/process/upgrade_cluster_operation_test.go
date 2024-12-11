@@ -9,7 +9,6 @@ import (
 	"github.com/kyma-project/kyma-environment-broker/internal/fixture"
 	"github.com/kyma-project/kyma-environment-broker/internal/storage"
 	"github.com/pivotal-cf/brokerapi/v8/domain"
-	"github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -24,7 +23,7 @@ func TestUpgradeClusterOperationManager_OperationSucceeded(t *testing.T) {
 	require.NoError(t, err)
 
 	// when
-	op, when, err := opManager.OperationSucceeded(op, "task succeeded", logrus.New())
+	op, when, err := opManager.OperationSucceeded(op, "task succeeded", fixLogger())
 
 	// then
 	assert.NoError(t, err)
@@ -45,7 +44,7 @@ func TestUpgradeClusterOperationManager_OperationFailed(t *testing.T) {
 	errOut := fmt.Errorf("error occurred")
 
 	// when
-	op, when, err := opManager.OperationFailed(op, errMsg, errOut, logrus.New())
+	op, when, err := opManager.OperationFailed(op, errMsg, errOut, fixLogger())
 
 	// then
 	assert.Error(t, err)
@@ -54,7 +53,7 @@ func TestUpgradeClusterOperationManager_OperationFailed(t *testing.T) {
 	assert.Equal(t, time.Duration(0), when)
 
 	// when
-	_, _, err = opManager.OperationFailed(op, errMsg, nil, logrus.New())
+	_, _, err = opManager.OperationFailed(op, errMsg, nil, fixLogger())
 
 	// then
 	assert.Error(t, err)
@@ -78,7 +77,7 @@ func TestUpgradeClusterOperationManager_RetryOperation(t *testing.T) {
 	require.NoError(t, err)
 
 	// then - first call
-	op, when, err := opManager.RetryOperation(op, errorMessage, errOut, retryInterval, maxtime, logrus.New())
+	op, when, err := opManager.RetryOperation(op, errorMessage, errOut, retryInterval, maxtime, fixLogger())
 
 	// when - first retry
 	assert.True(t, when > 0)
@@ -88,7 +87,7 @@ func TestUpgradeClusterOperationManager_RetryOperation(t *testing.T) {
 	t.Log(op.UpdatedAt.String())
 	op.UpdatedAt = op.UpdatedAt.Add(-retryInterval - time.Second) // simulate wait of first retry
 	t.Log(op.UpdatedAt.String())
-	op, when, err = opManager.RetryOperation(op, errorMessage, errOut, retryInterval, maxtime, logrus.New())
+	op, when, err = opManager.RetryOperation(op, errorMessage, errOut, retryInterval, maxtime, fixLogger())
 
 	// when - second call => retry
 	assert.True(t, when > 0)

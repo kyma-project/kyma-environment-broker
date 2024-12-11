@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"log/slog"
 	"time"
 
 	orchestrationExt "github.com/kyma-project/kyma-environment-broker/common/orchestration"
@@ -14,16 +15,15 @@ import (
 	"github.com/kyma-project/kyma-environment-broker/internal/process/upgrade_cluster"
 	"github.com/kyma-project/kyma-environment-broker/internal/provisioner"
 	"github.com/kyma-project/kyma-environment-broker/internal/storage"
-	"github.com/sirupsen/logrus"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
 func NewClusterOrchestrationProcessingQueue(ctx context.Context, db storage.BrokerStorage, provisionerClient provisioner.Client,
 	pub event.Publisher, inputFactory input.CreatorForPlan, icfg *upgrade_cluster.TimeSchedule, pollingInterval time.Duration,
-	runtimeResolver orchestrationExt.RuntimeResolver, notificationBuilder notification.BundleBuilder, logs logrus.FieldLogger,
+	runtimeResolver orchestrationExt.RuntimeResolver, notificationBuilder notification.BundleBuilder, logs *slog.Logger,
 	cli client.Client, cfg Config, speedFactor int) *process.Queue {
 
-	upgradeClusterManager := upgrade_cluster.NewManager(db.Operations(), pub, logs.WithField("upgradeCluster", "manager"))
+	upgradeClusterManager := upgrade_cluster.NewManager(db.Operations(), pub, logs.With("upgradeCluster", "manager"))
 	upgradeClusterInit := upgrade_cluster.NewInitialisationStep(db.Operations(), db.Orchestrations(), provisionerClient, inputFactory, icfg, notificationBuilder)
 	upgradeClusterManager.InitStep(upgradeClusterInit)
 
@@ -57,7 +57,7 @@ func NewClusterOrchestrationProcessingQueue(ctx context.Context, db storage.Brok
 	}
 
 	orchestrateClusterManager := manager.NewUpgradeClusterManager(db.Orchestrations(), db.Operations(), db.Instances(),
-		upgradeClusterManager, runtimeResolver, pollingInterval, logs.WithField("upgradeCluster", "orchestration"),
+		upgradeClusterManager, runtimeResolver, pollingInterval, logs.With("upgradeCluster", "orchestration"),
 		cli, cfg.OrchestrationConfig, notificationBuilder, speedFactor)
 	queue := process.NewQueue(orchestrateClusterManager, logs, "cluster-orchestration-processing", cfg.Broker.WorkerHealthCheckWarnInterval, cfg.Broker.WorkerHealthCheckInterval)
 

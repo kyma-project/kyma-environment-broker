@@ -1,6 +1,8 @@
 package upgrade_cluster
 
 import (
+	"log/slog"
+	"os"
 	"testing"
 	"time"
 
@@ -12,7 +14,6 @@ import (
 	provisionerAutomock "github.com/kyma-project/kyma-environment-broker/internal/provisioner/automock"
 	"github.com/kyma-project/kyma-environment-broker/internal/ptr"
 	"github.com/kyma-project/kyma-environment-broker/internal/storage"
-	"github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
@@ -29,7 +30,9 @@ const (
 func TestUpgradeClusterStep_Run(t *testing.T) {
 	// given
 	expectedOIDC := fixture.FixOIDCConfigDTO()
-	log := logrus.New()
+	log := slog.New(slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{
+		Level: slog.LevelInfo,
+	}))
 	memoryStorage := storage.NewMemoryStorage()
 
 	operation := fixUpgradeClusterOperationWithInputCreator(t)
@@ -97,7 +100,7 @@ func TestUpgradeClusterStep_Run(t *testing.T) {
 
 	// when
 
-	operation, repeat, err := step.Run(operation, log.WithFields(logrus.Fields{"step": "TEST"}))
+	operation, repeat, err := step.Run(operation, log.With("step", "TEST"))
 
 	// then
 	assert.NoError(t, err)

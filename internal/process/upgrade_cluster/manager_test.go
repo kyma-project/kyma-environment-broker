@@ -18,7 +18,6 @@ import (
 	"github.com/kyma-project/kyma-environment-broker/internal/event"
 	"github.com/kyma-project/kyma-environment-broker/internal/process"
 	"github.com/pivotal-cf/brokerapi/v8/domain"
-	"github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/assert"
 	"k8s.io/apimachinery/pkg/util/wait"
 )
@@ -68,7 +67,6 @@ func TestManager_Execute(t *testing.T) {
 			logger := slog.New(slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{
 				Level: slog.LevelInfo,
 			}))
-			log := logrus.New()
 			memoryStorage := storage.NewMemoryStorage()
 			operations := memoryStorage.Operations()
 			err := operations.InsertUpgradeClusterOperation(fixOperation(tc.operationID))
@@ -84,7 +82,7 @@ func TestManager_Execute(t *testing.T) {
 			eventCollector := &collectingEventHandler{}
 			eventBroker.Subscribe(process.UpgradeClusterStepProcessed{}, eventCollector.OnEvent)
 
-			manager := NewManager(operations, eventBroker, log)
+			manager := NewManager(operations, eventBroker, logger)
 			manager.InitStep(&sInit)
 
 			manager.AddStep(2, &sFinal, nil)
@@ -135,8 +133,8 @@ func (ts *testStep) Name() string {
 	return ts.name
 }
 
-func (ts *testStep) Run(operation internal.UpgradeClusterOperation, logger logrus.FieldLogger) (internal.UpgradeClusterOperation, time.Duration, error) {
-	logger.Infof("inside %s step", ts.name)
+func (ts *testStep) Run(operation internal.UpgradeClusterOperation, logger *slog.Logger) (internal.UpgradeClusterOperation, time.Duration, error) {
+	logger.Info(fmt.Sprintf("inside %s step", ts.name))
 
 	operation.Description = fmt.Sprintf("%s %s", operation.Description, ts.name)
 	updated, err := ts.storage.UpdateUpgradeClusterOperation(operation)

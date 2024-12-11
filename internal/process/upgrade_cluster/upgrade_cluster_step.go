@@ -2,6 +2,7 @@ package upgrade_cluster
 
 import (
 	"fmt"
+	"log/slog"
 	"time"
 
 	"github.com/kyma-project/control-plane/components/provisioner/pkg/gqlschema"
@@ -9,7 +10,6 @@ import (
 	"github.com/kyma-project/kyma-environment-broker/internal/process"
 	"github.com/kyma-project/kyma-environment-broker/internal/provisioner"
 	"github.com/kyma-project/kyma-environment-broker/internal/storage"
-	"github.com/sirupsen/logrus"
 )
 
 const DryRunPrefix = "dry_run-"
@@ -47,9 +47,9 @@ func (s *UpgradeClusterStep) Name() string {
 	return "Upgrade_Cluster"
 }
 
-func (s *UpgradeClusterStep) Run(operation internal.UpgradeClusterOperation, log logrus.FieldLogger) (internal.UpgradeClusterOperation, time.Duration, error) {
+func (s *UpgradeClusterStep) Run(operation internal.UpgradeClusterOperation, log *slog.Logger) (internal.UpgradeClusterOperation, time.Duration, error) {
 	if time.Since(operation.UpdatedAt) > s.timeSchedule.UpgradeClusterTimeout {
-		log.Infof("operation has reached the time limit: updated operation time: %s", operation.UpdatedAt)
+		log.Info(fmt.Sprintf("operation has reached the time limit: updated operation time: %s", operation.UpdatedAt))
 		return s.operationManager.OperationFailed(operation, fmt.Sprintf("operation has reached the time limit: %s", s.timeSchedule.UpgradeClusterTimeout), nil, log)
 	}
 
@@ -79,7 +79,7 @@ func (s *UpgradeClusterStep) Run(operation internal.UpgradeClusterOperation, log
 		// trigger upgradeRuntime mutation
 		provisionerResponse, err = s.provisionerClient.UpgradeShoot(operation.ProvisioningParameters.ErsContext.GlobalAccountID, operation.RuntimeOperation.RuntimeID, input)
 		if err != nil {
-			log.Errorf("call to provisioner failed: %s", err)
+			log.Error(fmt.Sprintf("call to provisioner failed: %s", err))
 			return operation, s.timeSchedule.Retry, nil
 		}
 
@@ -89,7 +89,7 @@ func (s *UpgradeClusterStep) Run(operation internal.UpgradeClusterOperation, log
 			op.Description = "cluster upgrade in progress"
 		}, log)
 		if repeat != 0 {
-			log.Errorf("cannot save operation ID from provisioner")
+			log.Error("cannot save operation ID from provisioner")
 			return operation, s.timeSchedule.Retry, nil
 		}
 	}
@@ -97,24 +97,24 @@ func (s *UpgradeClusterStep) Run(operation internal.UpgradeClusterOperation, log
 	if provisionerResponse.RuntimeID == nil {
 		provisionerResponse, err = s.provisionerClient.RuntimeOperationStatus(operation.ProvisioningParameters.ErsContext.GlobalAccountID, operation.ProvisionerOperationID)
 		if err != nil {
-			log.Errorf("call to provisioner about operation status failed: %s", err)
+			log.Error(fmt.Sprintf("call to provisioner about operation status failed: %s", err))
 			return operation, s.timeSchedule.Retry, nil
 		}
 	}
 	if provisionerResponse.RuntimeID == nil {
 		return operation, s.timeSchedule.StatusCheck, nil
 	}
-	log = log.WithField("runtimeID", *provisionerResponse.RuntimeID)
-	log.Infof("call to provisioner for upgrade succeeded, got operation ID %q", *provisionerResponse.ID)
+	log = log.With("runtimeID", *provisionerResponse.RuntimeID)
+	log.Info(fmt.Sprintf("call to provisioner for upgrade succeeded, got operation ID %q", *provisionerResponse.ID))
 
 	rs := internal.NewRuntimeState(*provisionerResponse.RuntimeID, operation.Operation.ID, nil, gardenerUpgradeInputToConfigInput(input))
 	err = s.runtimeStateStorage.Insert(rs)
 	if err != nil {
-		log.Errorf("cannot insert runtimeState: %s", err)
+		log.Error(fmt.Sprintf("cannot insert runtimeState: %s", err))
 		return operation, 10 * time.Second, nil
 	}
 
-	log.Infof("cluster upgrade process initiated successfully")
+	log.Info("cluster upgrade process initiated successfully")
 
 	// return repeat mode to start the initialization step which will now check the runtime status
 	return operation, s.timeSchedule.Retry, nil

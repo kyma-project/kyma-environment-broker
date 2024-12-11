@@ -31,7 +31,6 @@ import (
 	"github.com/kyma-project/kyma-environment-broker/internal/provisioner"
 	"github.com/kyma-project/kyma-environment-broker/internal/storage"
 	"github.com/pivotal-cf/brokerapi/v8/domain"
-	"github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"k8s.io/apimachinery/pkg/util/wait"
@@ -73,9 +72,6 @@ func NewDeprovisioningSuite(t *testing.T) *DeprovisioningSuite {
 		Level: slog.LevelInfo,
 	}))
 
-	logs := logrus.New()
-	logs.Formatter.(*logrus.TextFormatter).TimestampFormat = "15:04:05.000"
-
 	cfg := fixConfig()
 	cfg.EDP.Environment = edpEnvironment
 
@@ -116,7 +112,7 @@ func NewDeprovisioningSuite(t *testing.T) *DeprovisioningSuite {
 
 	deprovisioningQueue := NewDeprovisioningProcessingQueue(ctx, workersAmount, deprovisionManager, cfg, db, eventBroker,
 		provisionerClient,
-		edpClient, accountProvider, kubeconfig.NewFakeK8sClientProvider(fakeK8sSKRClient), fakeK8sSKRClient, configProvider, logs,
+		edpClient, accountProvider, kubeconfig.NewFakeK8sClientProvider(fakeK8sSKRClient), fakeK8sSKRClient, configProvider, log,
 	)
 
 	deprovisioningQueue.SpeedUp(10000)
