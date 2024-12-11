@@ -3,6 +3,7 @@ package broker
 import (
 	"context"
 	"fmt"
+	"log/slog"
 	"net/http"
 	"strings"
 
@@ -14,7 +15,6 @@ import (
 
 	"github.com/pivotal-cf/brokerapi/v8/domain"
 	"github.com/pivotal-cf/brokerapi/v8/domain/apiresponses"
-	"github.com/sirupsen/logrus"
 )
 
 const allSubaccountsIDs = "all"
@@ -25,29 +25,29 @@ type GetInstanceEndpoint struct {
 	operationsStorage storage.Provisioning
 	brokerURL         string
 	kcBuilder         kubeconfig.KcBuilder
-	log               logrus.FieldLogger
+	log               *slog.Logger
 }
 
 func NewGetInstance(cfg Config,
 	instancesStorage storage.Instances,
 	operationsStorage storage.Provisioning,
 	kcBuilder kubeconfig.KcBuilder,
-	log logrus.FieldLogger,
+	log *slog.Logger,
 ) *GetInstanceEndpoint {
 	return &GetInstanceEndpoint{
 		config:            cfg,
 		instancesStorage:  instancesStorage,
 		operationsStorage: operationsStorage,
 		kcBuilder:         kcBuilder,
-		log:               log.WithField("service", "GetInstanceEndpoint"),
+		log:               log.With("service", "GetInstanceEndpoint"),
 	}
 }
 
 // GetInstance fetches information about a service instance
 // GET /v2/service_instances/{instance_id}
 func (b *GetInstanceEndpoint) GetInstance(_ context.Context, instanceID string, _ domain.FetchInstanceDetails) (domain.GetInstanceDetailsSpec, error) {
-	logger := b.log.WithField("instanceID", instanceID)
-	logger.Infof("GetInstance called")
+	logger := b.log.With("instanceID", instanceID)
+	logger.Info("GetInstance called")
 
 	instance, err := b.instancesStorage.GetByID(instanceID)
 	if err != nil {

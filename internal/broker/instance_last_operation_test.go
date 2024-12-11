@@ -11,7 +11,6 @@ import (
 	"github.com/kyma-project/kyma-environment-broker/internal/fixture"
 	"github.com/kyma-project/kyma-environment-broker/internal/storage"
 	"github.com/pivotal-cf/brokerapi/v8/domain"
-	"github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -28,7 +27,7 @@ func TestLastOperation_LastOperation(t *testing.T) {
 		err := memoryStorage.Operations().InsertOperation(fixOperation())
 		assert.NoError(t, err)
 
-		lastOperationEndpoint := broker.NewLastOperation(memoryStorage.Operations(), memoryStorage.InstancesArchived(), logrus.StandardLogger())
+		lastOperationEndpoint := broker.NewLastOperation(memoryStorage.Operations(), memoryStorage.InstancesArchived(), fixLogger())
 
 		// when
 		response, err := lastOperationEndpoint.LastOperation(context.TODO(), instID, domain.PollDetails{OperationData: operationID})
@@ -46,7 +45,7 @@ func TestLastOperation_LastOperation(t *testing.T) {
 		err := memoryStorage.Operations().InsertOperation(fixOperation())
 		assert.NoError(t, err)
 
-		lastOperationEndpoint := broker.NewLastOperation(memoryStorage.Operations(), memoryStorage.InstancesArchived(), logrus.StandardLogger())
+		lastOperationEndpoint := broker.NewLastOperation(memoryStorage.Operations(), memoryStorage.InstancesArchived(), fixLogger())
 
 		// when
 		response, err := lastOperationEndpoint.LastOperation(context.TODO(), instID, domain.PollDetails{OperationData: ""})
@@ -66,7 +65,7 @@ func TestLastOperation_LastOperation(t *testing.T) {
 		err := memoryStorage.Operations().InsertUpdatingOperation(updateOp)
 		assert.NoError(t, err)
 
-		lastOperationEndpoint := broker.NewLastOperation(memoryStorage.Operations(), memoryStorage.InstancesArchived(), logrus.StandardLogger())
+		lastOperationEndpoint := broker.NewLastOperation(memoryStorage.Operations(), memoryStorage.InstancesArchived(), fixLogger())
 
 		// when
 		response, err := lastOperationEndpoint.LastOperation(context.TODO(), instID, domain.PollDetails{OperationData: ""})
@@ -94,7 +93,7 @@ func TestLastOperation_LastOperation(t *testing.T) {
 		err := memoryStorage.Operations().InsertUpdatingOperation(updateOp)
 		assert.NoError(t, err)
 
-		lastOperationEndpoint := broker.NewLastOperation(memoryStorage.Operations(), memoryStorage.InstancesArchived(), logrus.StandardLogger())
+		lastOperationEndpoint := broker.NewLastOperation(memoryStorage.Operations(), memoryStorage.InstancesArchived(), fixLogger())
 
 		// when
 		response, err := lastOperationEndpoint.LastOperation(context.TODO(), instID, domain.PollDetails{OperationData: ""})
@@ -125,7 +124,7 @@ func TestLastOperation_LastOperation(t *testing.T) {
 		err := memoryStorage.Operations().InsertUpdatingOperation(updateOp)
 		assert.NoError(t, err)
 
-		lastOperationEndpoint := broker.NewLastOperation(memoryStorage.Operations(), memoryStorage.InstancesArchived(), logrus.StandardLogger())
+		lastOperationEndpoint := broker.NewLastOperation(memoryStorage.Operations(), memoryStorage.InstancesArchived(), fixLogger())
 
 		// when
 		response, err := lastOperationEndpoint.LastOperation(context.TODO(), instID, domain.PollDetails{OperationData: ""})
@@ -155,7 +154,7 @@ func TestLastOperation_LastOperation(t *testing.T) {
 		err := memoryStorage.Operations().InsertUpdatingOperation(updateOp)
 		assert.NoError(t, err)
 
-		lastOperationEndpoint := broker.NewLastOperation(memoryStorage.Operations(), memoryStorage.InstancesArchived(), logrus.StandardLogger())
+		lastOperationEndpoint := broker.NewLastOperation(memoryStorage.Operations(), memoryStorage.InstancesArchived(), fixLogger())
 
 		// when
 		response, err := lastOperationEndpoint.LastOperation(context.TODO(), instID, domain.PollDetails{OperationData: ""})
@@ -190,7 +189,7 @@ func TestLastOperation_LastOperation(t *testing.T) {
 		err := memoryStorage.Operations().InsertOperation(provisioning)
 		assert.NoError(t, err)
 
-		lastOperationEndpoint := broker.NewLastOperation(memoryStorage.Operations(), memoryStorage.InstancesArchived(), logrus.StandardLogger())
+		lastOperationEndpoint := broker.NewLastOperation(memoryStorage.Operations(), memoryStorage.InstancesArchived(), fixLogger())
 
 		// when
 		response, err := lastOperationEndpoint.LastOperation(context.TODO(), instID, domain.PollDetails{OperationData: ""})

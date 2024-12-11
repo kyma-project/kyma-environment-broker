@@ -12,7 +12,6 @@ import (
 	"github.com/kyma-project/kyma-environment-broker/internal/storage/driver/memory"
 	"github.com/pivotal-cf/brokerapi/v8/domain"
 	"github.com/pivotal-cf/brokerapi/v8/domain/apiresponses"
-	"github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/require"
 )
 
@@ -37,7 +36,7 @@ func TestGetBinding(t *testing.T) {
 		endpoint := &GetBindingEndpoint{
 			bindings:   bindingsMemory,
 			operations: operationsMemory,
-			log:        &logrus.Logger{},
+			log:        fixLogger(),
 		}
 
 		// when
@@ -72,7 +71,7 @@ func TestGetBinding(t *testing.T) {
 		endpoint := &GetBindingEndpoint{
 			bindings:   bindingsMemory,
 			operations: operationsMemory,
-			log:        &logrus.Logger{},
+			log:        fixLogger(),
 		}
 
 		// when
@@ -107,7 +106,7 @@ func TestGetBinding(t *testing.T) {
 		endpoint := &GetBindingEndpoint{
 			bindings:   bindingsMemory,
 			operations: operationsMemory,
-			log:        &logrus.Logger{},
+			log:        fixLogger(),
 		}
 
 		// when

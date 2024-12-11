@@ -1,6 +1,8 @@
 package suspension
 
 import (
+	"log/slog"
+	"os"
 	"testing"
 	"time"
 
@@ -14,7 +16,6 @@ import (
 	"github.com/kyma-project/kyma-environment-broker/internal/ptr"
 	"github.com/kyma-project/kyma-environment-broker/internal/storage"
 	"github.com/pivotal-cf/brokerapi/v8/domain"
-	"github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -25,7 +26,7 @@ func TestSuspension(t *testing.T) {
 	deprovisioning := NewDummyQueue()
 	st := storage.NewMemoryStorage()
 
-	svc := NewContextUpdateHandler(st.Operations(), provisioning, deprovisioning, logrus.New())
+	svc := NewContextUpdateHandler(st.Operations(), provisioning, deprovisioning, fixLogger())
 	instance := fixInstance(fixActiveErsContext())
 	err := st.Instances().Insert(*instance)
 	require.NoError(t, err)
@@ -51,7 +52,7 @@ func TestSuspension_Retrigger(t *testing.T) {
 		deprovisioning := NewDummyQueue()
 		st := storage.NewMemoryStorage()
 
-		svc := NewContextUpdateHandler(st.Operations(), provisioning, deprovisioning, logrus.New())
+		svc := NewContextUpdateHandler(st.Operations(), provisioning, deprovisioning, fixLogger())
 		instance := fixInstance(fixInactiveErsContext())
 		err := st.Instances().Insert(*instance)
 		require.NoError(t, err)
@@ -89,7 +90,7 @@ func TestSuspension_Retrigger(t *testing.T) {
 		deprovisioning := NewDummyQueue()
 		st := storage.NewMemoryStorage()
 
-		svc := NewContextUpdateHandler(st.Operations(), provisioning, deprovisioning, logrus.New())
+		svc := NewContextUpdateHandler(st.Operations(), provisioning, deprovisioning, fixLogger())
 		instance := fixInstance(fixInactiveErsContext())
 		err := st.Instances().Insert(*instance)
 		require.NoError(t, err)
@@ -138,7 +139,7 @@ func TestUnsuspension(t *testing.T) {
 	deprovisioning := NewDummyQueue()
 	st := storage.NewMemoryStorage()
 
-	svc := NewContextUpdateHandler(st.Operations(), provisioning, deprovisioning, logrus.New())
+	svc := NewContextUpdateHandler(st.Operations(), provisioning, deprovisioning, fixLogger())
 	instance := fixInstance(fixInactiveErsContext())
 	instance.InstanceDetails.ShootName = "c-012345"
 	instance.InstanceDetails.ShootDomain = "c-012345.sap.com"
@@ -174,7 +175,7 @@ func TestUnsuspensionForDeprovisioningInstance(t *testing.T) {
 	deprovisioning := NewDummyQueue()
 	st := storage.NewMemoryStorage()
 
-	svc := NewContextUpdateHandler(st.Operations(), provisioning, deprovisioning, logrus.New())
+	svc := NewContextUpdateHandler(st.Operations(), provisioning, deprovisioning, fixLogger())
 	instance := fixInstance(fixInactiveErsContext())
 	instance.InstanceDetails.ShootName = "c-012345"
 	instance.InstanceDetails.ShootDomain = "c-012345.sap.com"
@@ -204,7 +205,7 @@ func TestUnsuspensionForExpiredInstance(t *testing.T) {
 	deprovisioning := NewDummyQueue()
 	st := storage.NewMemoryStorage()
 
-	svc := NewContextUpdateHandler(st.Operations(), provisioning, deprovisioning, logrus.New())
+	svc := NewContextUpdateHandler(st.Operations(), provisioning, deprovisioning, fixLogger())
 	instance := fixInstance(fixInactiveErsContext())
 	instance.InstanceDetails.ShootName = "c-012345"
 	instance.InstanceDetails.ShootDomain = "c-012345.sap.com"
@@ -255,4 +256,10 @@ func NewDummyQueue() *dummyQueue {
 
 func (q *dummyQueue) Add(id string) {
 	q.IDs = append(q.IDs, id)
+}
+
+func fixLogger() *slog.Logger {
+	return slog.New(slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{
+		Level: slog.LevelInfo,
+	}))
 }

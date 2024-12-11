@@ -3,6 +3,7 @@ package broker
 import (
 	"context"
 	"fmt"
+	"log/slog"
 	"net/http"
 
 	"github.com/kyma-project/kyma-environment-broker/internal"
@@ -13,11 +14,10 @@ import (
 	"github.com/kyma-project/kyma-environment-broker/internal/storage/dberr"
 	"github.com/pivotal-cf/brokerapi/v8/domain"
 	"github.com/pivotal-cf/brokerapi/v8/domain/apiresponses"
-	"github.com/sirupsen/logrus"
 )
 
 type DeprovisionEndpoint struct {
-	log logrus.FieldLogger
+	log *slog.Logger
 
 	instancesStorage  storage.Instances
 	operationsStorage storage.Deprovisioning
@@ -25,9 +25,9 @@ type DeprovisionEndpoint struct {
 	queue Queue
 }
 
-func NewDeprovision(instancesStorage storage.Instances, operationsStorage storage.Operations, q Queue, log logrus.FieldLogger) *DeprovisionEndpoint {
+func NewDeprovision(instancesStorage storage.Instances, operationsStorage storage.Operations, q Queue, log *slog.Logger) *DeprovisionEndpoint {
 	return &DeprovisionEndpoint{
-		log:               log.WithField("service", "DeprovisionEndpoint"),
+		log:               log.With("service", "DeprovisionEndpoint"),
 		instancesStorage:  instancesStorage,
 		operationsStorage: operationsStorage,
 
@@ -39,8 +39,8 @@ func NewDeprovision(instancesStorage storage.Instances, operationsStorage storag
 //
 //	DELETE /v2/service_instances/{instance_id}
 func (b *DeprovisionEndpoint) Deprovision(ctx context.Context, instanceID string, details domain.DeprovisionDetails, asyncAllowed bool) (domain.DeprovisionServiceSpec, error) {
-	logger := b.log.WithFields(logrus.Fields{"instanceID": instanceID})
-	logger.Infof("Deprovisioning triggered, details: %+v", details)
+	logger := b.log.With("instanceID", instanceID)
+	logger.Info(fmt.Sprintf("Deprovisioning triggered, details: %+v", details))
 
 	instance, err := b.instancesStorage.GetByID(instanceID)
 	switch {
@@ -51,16 +51,16 @@ func (b *DeprovisionEndpoint) Deprovision(ctx context.Context, instanceID string
 			IsAsync: false,
 		}, nil
 	default:
-		logger.Errorf("unable to get instance from a storage: %s", err)
+		logger.Error(fmt.Sprintf("unable to get instance from storage: %s", err))
 		return domain.DeprovisionServiceSpec{}, apiresponses.NewFailureResponse(fmt.Errorf("unable to get instance from the storage"), http.StatusInternalServerError, fmt.Sprintf("could not deprovision runtime, instanceID %s", instanceID))
 	}
 
-	logger = logger.WithFields(logrus.Fields{"runtimeID": instance.RuntimeID, "globalAccountID": instance.GlobalAccountID, "planID": instance.ServicePlanID})
+	logger = logger.With("runtimeID", instance.RuntimeID, "globalAccountID", instance.GlobalAccountID, "planID", instance.ServicePlanID)
 
 	// check if operation with the same instance ID is already created
 	existingOperation, errStorage := b.operationsStorage.GetDeprovisioningOperationByInstanceID(instanceID)
 	if errStorage != nil && !dberr.IsNotFound(errStorage) {
-		logger.Errorf("cannot get existing operation from storage %s", errStorage)
+		logger.Error(fmt.Sprintf("cannot get existing operation from storage %s", errStorage))
 		return domain.DeprovisionServiceSpec{}, fmt.Errorf("cannot get existing operation from storage")
 	}
 
@@ -86,10 +86,10 @@ func (b *DeprovisionEndpoint) Deprovision(ctx context.Context, instanceID string
 
 	// create and save new operation
 	operationID := uuid.New().String()
-	logger = logger.WithField("operationID", operationID)
+	logger = logger.With("operationID", operationID)
 	operation, err := internal.NewDeprovisioningOperationWithID(operationID, instance)
 	if err != nil {
-		logger.Errorf("cannot create new operation: %s", err)
+		logger.Error(fmt.Sprintf("cannot create new operation: %s", err))
 		return domain.DeprovisionServiceSpec{}, fmt.Errorf("cannot create new operation")
 	}
 	if v := ctx.Value("User-Agent"); v != nil {
@@ -97,7 +97,7 @@ func (b *DeprovisionEndpoint) Deprovision(ctx context.Context, instanceID string
 	}
 	err = b.operationsStorage.InsertDeprovisioningOperation(operation)
 	if err != nil {
-		logger.Errorf("cannot save operation: %s", err)
+		logger.Error(fmt.Sprintf("cannot save operation: %s", err))
 		return domain.DeprovisionServiceSpec{}, fmt.Errorf("cannot save operation")
 	}
 

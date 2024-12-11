@@ -2,6 +2,7 @@ package suspension
 
 import (
 	"fmt"
+	"log/slog"
 	"net/http"
 
 	"github.com/google/uuid"
@@ -12,7 +13,6 @@ import (
 	"github.com/kyma-project/kyma-environment-broker/internal/storage/dberr"
 	"github.com/pivotal-cf/brokerapi/v8/domain"
 	"github.com/pivotal-cf/brokerapi/v8/domain/apiresponses"
-	"github.com/sirupsen/logrus"
 )
 
 type ContextUpdateHandler struct {
@@ -20,14 +20,14 @@ type ContextUpdateHandler struct {
 	provisioningQueue   Adder
 	deprovisioningQueue Adder
 
-	log logrus.FieldLogger
+	log *slog.Logger
 }
 
 type Adder interface {
 	Add(processId string)
 }
 
-func NewContextUpdateHandler(operations storage.Operations, provisioningQueue Adder, deprovisioningQueue Adder, l logrus.FieldLogger) *ContextUpdateHandler {
+func NewContextUpdateHandler(operations storage.Operations, provisioningQueue Adder, deprovisioningQueue Adder, l *slog.Logger) *ContextUpdateHandler {
 	return &ContextUpdateHandler{
 		operations:          operations,
 		provisioningQueue:   provisioningQueue,
@@ -39,11 +39,11 @@ func NewContextUpdateHandler(operations storage.Operations, provisioningQueue Ad
 // Handle performs suspension/unsuspension for given instance.
 // Applies only when 'Active' parameter has changes and ServicePlanID is `Trial`
 func (h *ContextUpdateHandler) Handle(instance *internal.Instance, newCtx internal.ERSContext) (bool, error) {
-	l := h.log.WithFields(logrus.Fields{
-		"instanceID":      instance.InstanceID,
-		"runtimeID":       instance.RuntimeID,
-		"globalAccountID": instance.GlobalAccountID,
-	})
+	l := h.log.With(
+		"instanceID", instance.InstanceID,
+		"runtimeID", instance.RuntimeID,
+		"globalAccountID", instance.GlobalAccountID,
+	)
 
 	if !broker.IsTrialPlan(instance.ServicePlanID) {
 		l.Info("Context update for non-trial instance, skipping")
@@ -53,7 +53,7 @@ func (h *ContextUpdateHandler) Handle(instance *internal.Instance, newCtx intern
 	return h.handleContextChange(newCtx, instance, l)
 }
 
-func (h *ContextUpdateHandler) handleContextChange(newCtx internal.ERSContext, instance *internal.Instance, l logrus.FieldLogger) (bool, error) {
+func (h *ContextUpdateHandler) handleContextChange(newCtx internal.ERSContext, instance *internal.Instance, l *slog.Logger) (bool, error) {
 	isActivated := true
 	if instance.Parameters.ErsContext.Active != nil {
 		isActivated = *instance.Parameters.ErsContext.Active
@@ -66,20 +66,20 @@ func (h *ContextUpdateHandler) handleContextChange(newCtx internal.ERSContext, i
 	}
 
 	if newCtx.Active == nil || isActivated == *newCtx.Active {
-		l.Debugf("Context.Active flag was not changed, the current value: %v", isActivated)
+		l.Debug(fmt.Sprintf("Context.Active flag was not changed, the current value: %v", isActivated))
 		if isActivated {
 			// instance is marked as Active and incoming context update is unsuspension
 			// TODO: consider retriggering failed unsuspension here
-			l.Infof("Context.Active flag is true - not triggering suspension for instance ID %s", instance.InstanceID)
+			l.Info(fmt.Sprintf("Context.Active flag is true - not triggering suspension for instance ID %s", instance.InstanceID))
 			return false, nil
 		}
 		if !isActivated {
 			// instance is inactive and incoming context update is suspension - verify if KEB should retrigger the operation
 			if lastDeprovisioning.State == domain.Failed {
-				l.Infof("triggering suspension again for instance id %s", instance.InstanceID)
+				l.Info(fmt.Sprintf("triggering suspension again for instance id %s", instance.InstanceID))
 				return true, h.suspend(instance, l)
 			}
-			l.Infof("last deprovisioning is not in Failed state - not triggering suspension for instance ID %s", instance.InstanceID)
+			l.Info(fmt.Sprintf("last deprovisioning is not in Failed state - not triggering suspension for instance ID %s", instance.InstanceID))
 			return false, nil
 		}
 	}
@@ -90,7 +90,7 @@ func (h *ContextUpdateHandler) handleContextChange(newCtx internal.ERSContext, i
 			return false, nil
 		}
 		if lastDeprovisioning != nil && !lastDeprovisioning.Temporary {
-			l.Infof("Instance has a deprovisioning operation %s (%s), skipping unsuspension.", lastDeprovisioning.ID, lastDeprovisioning.State)
+			l.Info(fmt.Sprintf("Instance has a deprovisioning operation %s (%s), skipping unsuspension.", lastDeprovisioning.ID, lastDeprovisioning.State))
 			return false, nil
 		}
 		if lastDeprovisioning != nil && lastDeprovisioning.State == domain.Failed {
@@ -103,7 +103,7 @@ func (h *ContextUpdateHandler) handleContextChange(newCtx internal.ERSContext, i
 	}
 }
 
-func (h *ContextUpdateHandler) suspend(instance *internal.Instance, log logrus.FieldLogger) error {
+func (h *ContextUpdateHandler) suspend(instance *internal.Instance, log *slog.Logger) error {
 	lastDeprovisioning, err := h.operations.GetDeprovisioningOperationByInstanceID(instance.InstanceID)
 	// there was an error - fail
 	if err != nil && !dberr.IsNotFound(err) {
@@ -112,7 +112,7 @@ func (h *ContextUpdateHandler) suspend(instance *internal.Instance, log logrus.F
 
 	// no error, operation exists and is in progress
 	if err == nil && (lastDeprovisioning.State == domain.InProgress || lastDeprovisioning.State == orchestration.Pending) {
-		log.Infof("Suspension already started")
+		log.Info("Suspension already started")
 		return nil
 	}
 
@@ -126,7 +126,7 @@ func (h *ContextUpdateHandler) suspend(instance *internal.Instance, log logrus.F
 	return nil
 }
 
-func (h *ContextUpdateHandler) unsuspend(instance *internal.Instance, log logrus.FieldLogger) error {
+func (h *ContextUpdateHandler) unsuspend(instance *internal.Instance, log *slog.Logger) error {
 	if instance.IsExpired() {
 		log.Info("Expired instance cannot be unsuspended")
 		return nil
@@ -139,11 +139,11 @@ func (h *ContextUpdateHandler) unsuspend(instance *internal.Instance, log logrus
 	operation.KimDeprovisionsOnly = nil
 
 	if err != nil {
-		h.log.Errorf("unable to extract shoot name: %s", err.Error())
+		h.log.Error(fmt.Sprintf("unable to extract shoot name: %s", err.Error()))
 		return err
 	}
 	operation.State = orchestration.Pending
-	log.Infof("Starting unsuspension: shootName=%s shootDomain=%s", operation.ShootName, operation.ShootDomain)
+	log.Info(fmt.Sprintf("Starting unsuspension: shootName=%s shootDomain=%s", operation.ShootName, operation.ShootDomain))
 	// RuntimeID must be cleaned  - this mean that there is no runtime in the provisioner/director
 	operation.RuntimeID = ""
 	operation.DashboardURL = instance.DashboardURL

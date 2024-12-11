@@ -20,7 +20,6 @@ import (
 	"github.com/kyma-project/kyma-environment-broker/internal/storage"
 	"github.com/kyma-project/kyma-environment-broker/internal/storage/dberr"
 	"github.com/pivotal-cf/brokerapi/v8/domain"
-	"github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/require"
 )
 
@@ -49,14 +48,8 @@ func TestCreateBindingEndpoint(t *testing.T) {
 		Level: slog.LevelDebug,
 	}))
 
-	logs := logrus.New()
-	logs.SetLevel(logrus.DebugLevel)
-	logs.SetFormatter(&logrus.JSONFormatter{
-		TimestampFormat: time.RFC3339Nano,
-	})
-
 	brokerLogger := lager.NewLogger("test")
-	brokerLogger.RegisterSink(lager.NewWriterSink(logs.Writer(), lager.DEBUG))
+	brokerLogger.RegisterSink(lager.NewWriterSink(os.Stdout, lager.DEBUG))
 
 	//// schema
 
@@ -83,7 +76,7 @@ func TestCreateBindingEndpoint(t *testing.T) {
 	publisher := event.NewPubSub(log)
 
 	//// api handler
-	bindEndpoint := NewBind(*bindingCfg, db, logs, &provider{}, &provider{}, publisher)
+	bindEndpoint := NewBind(*bindingCfg, db, fixLogger(), &provider{}, &provider{}, publisher)
 
 	// test relies on checking if got nil on kubeconfig provider but the instance got inserted either way
 	t.Run("should INSERT binding despite error on k8s api call", func(t *testing.T) {
@@ -194,7 +187,7 @@ func TestCreateSecondBindingWithTheSameIdButDifferentParams(t *testing.T) {
 
 	publisher := event.NewPubSub(log)
 
-	svc := NewBind(*bindingCfg, brokerStorage, logrus.New(), nil, nil, publisher)
+	svc := NewBind(*bindingCfg, brokerStorage, fixLogger(), nil, nil, publisher)
 	params := BindingParams{
 		ExpirationSeconds: 601,
 	}
@@ -245,7 +238,7 @@ func TestCreateSecondBindingWithTheSameIdAndParams(t *testing.T) {
 
 	publisher := event.NewPubSub(log)
 
-	svc := NewBind(*bindingCfg, brokerStorage, logrus.New(), nil, nil, publisher)
+	svc := NewBind(*bindingCfg, brokerStorage, fixLogger(), nil, nil, publisher)
 	params := BindingParams{
 		ExpirationSeconds: 600,
 	}
@@ -297,7 +290,7 @@ func TestCreateSecondBindingWithTheSameIdAndParamsForExpired(t *testing.T) {
 	// event publisher
 	publisher := event.NewPubSub(log)
 
-	svc := NewBind(*bindingCfg, brokerStorage, logrus.New(), nil, nil, publisher)
+	svc := NewBind(*bindingCfg, brokerStorage, fixLogger(), nil, nil, publisher)
 	params := BindingParams{
 		ExpirationSeconds: 600,
 	}
@@ -351,7 +344,7 @@ func TestCreateSecondBindingWithTheSameIdAndParamsForBindingInProgress(t *testin
 	// event publisher
 	publisher := event.NewPubSub(log)
 
-	svc := NewBind(*bindingCfg, brokerStorage, logrus.New(), nil, nil, publisher)
+	svc := NewBind(*bindingCfg, brokerStorage, fixLogger(), nil, nil, publisher)
 	params := BindingParams{
 		ExpirationSeconds: 600,
 	}
@@ -402,7 +395,7 @@ func TestCreateSecondBindingWithTheSameIdAndParamsNotExplicitlyDefined(t *testin
 
 	publisher := event.NewPubSub(log)
 
-	svc := NewBind(*bindingCfg, brokerStorage, logrus.New(), nil, nil, publisher)
+	svc := NewBind(*bindingCfg, brokerStorage, fixLogger(), nil, nil, publisher)
 
 	// when
 	resp, err := svc.Bind(context.Background(), instanceID, bindingID, domain.BindDetails{}, false)

@@ -2,17 +2,21 @@ package broker
 
 import (
 	"encoding/json"
+	"log/slog"
+	"os"
 	"testing"
 
 	"github.com/kyma-project/kyma-environment-broker/common/gardener"
 	"github.com/kyma-project/kyma-environment-broker/internal/dashboard"
 	"github.com/pivotal-cf/brokerapi/v8/domain"
-	"github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
 func TestShootAndSeedSameRegion(t *testing.T) {
+	log := slog.New(slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{
+		Level: slog.LevelInfo,
+	}))
 
 	t.Run("should parse shootAndSeedSameRegion - true", func(t *testing.T) {
 		// given
@@ -30,7 +34,7 @@ func TestShootAndSeedSameRegion(t *testing.T) {
 			nil,
 			nil,
 			nil,
-			logrus.StandardLogger(),
+			log,
 			dashboard.Config{},
 			nil,
 			nil,
@@ -61,7 +65,7 @@ func TestShootAndSeedSameRegion(t *testing.T) {
 			nil,
 			nil,
 			nil,
-			logrus.StandardLogger(),
+			log,
 			dashboard.Config{},
 			nil,
 			nil,
@@ -92,7 +96,7 @@ func TestShootAndSeedSameRegion(t *testing.T) {
 			nil,
 			nil,
 			nil,
-			logrus.StandardLogger(),
+			log,
 			dashboard.Config{},
 			nil,
 			nil,

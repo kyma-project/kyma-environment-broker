@@ -2,6 +2,8 @@ package broker
 
 import (
 	"context"
+	"log/slog"
+	"os"
 	"testing"
 
 	"github.com/kyma-project/kyma-environment-broker/internal"
@@ -9,7 +11,6 @@ import (
 	"github.com/kyma-project/kyma-environment-broker/internal/fixture"
 	"github.com/kyma-project/kyma-environment-broker/internal/storage"
 	"github.com/pivotal-cf/brokerapi/v8/domain"
-	"github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
@@ -27,7 +28,7 @@ func TestDeprovisionEndpoint_DeprovisionNotExistingInstance(t *testing.T) {
 	queue := &automock.Queue{}
 	queue.On("Add", mock.AnythingOfType("string"))
 
-	svc := NewDeprovision(memoryStorage.Instances(), memoryStorage.Operations(), queue, logrus.StandardLogger())
+	svc := NewDeprovision(memoryStorage.Instances(), memoryStorage.Operations(), queue, fixLogger())
 
 	// when
 	_, err := svc.Deprovision(context.TODO(), "inst-0001", domain.DeprovisionDetails{}, true)
@@ -45,7 +46,7 @@ func TestDeprovisionEndpoint_DeprovisionExistingInstance(t *testing.T) {
 	queue := &automock.Queue{}
 	queue.On("Add", mock.AnythingOfType("string"))
 
-	svc := NewDeprovision(memoryStorage.Instances(), memoryStorage.Operations(), queue, logrus.StandardLogger())
+	svc := NewDeprovision(memoryStorage.Instances(), memoryStorage.Operations(), queue, fixLogger())
 
 	// when
 	_, err = svc.Deprovision(context.TODO(), instanceID, domain.DeprovisionDetails{}, true)
@@ -69,7 +70,7 @@ func TestDeprovisionEndpoint_DeprovisionExistingOperationInProgress(t *testing.T
 	queue := &automock.Queue{}
 	queue.On("Add", mock.AnythingOfType("string"))
 
-	svc := NewDeprovision(memoryStorage.Instances(), memoryStorage.Operations(), queue, logrus.StandardLogger())
+	svc := NewDeprovision(memoryStorage.Instances(), memoryStorage.Operations(), queue, fixLogger())
 
 	// when
 	res, err := svc.Deprovision(context.TODO(), instanceID, domain.DeprovisionDetails{}, true)
@@ -96,7 +97,7 @@ func TestDeprovisionEndpoint_DeprovisionExistingOperationFailed(t *testing.T) {
 	queue := &automock.Queue{}
 	queue.On("Add", mock.Anything)
 
-	svc := NewDeprovision(memoryStorage.Instances(), memoryStorage.Operations(), queue, logrus.StandardLogger())
+	svc := NewDeprovision(memoryStorage.Instances(), memoryStorage.Operations(), queue, fixLogger())
 
 	// when
 	res, err := svc.Deprovision(context.TODO(), instanceID, domain.DeprovisionDetails{}, true)
@@ -122,4 +123,10 @@ func fixInstance() internal.Instance {
 	instance.ServicePlanID = planID
 
 	return instance
+}
+
+func fixLogger() *slog.Logger {
+	return slog.New(slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{
+		Level: slog.LevelInfo,
+	}))
 }

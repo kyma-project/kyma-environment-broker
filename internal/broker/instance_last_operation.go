@@ -3,6 +3,7 @@ package broker
 import (
 	"context"
 	"fmt"
+	"log/slog"
 	"net/http"
 
 	"github.com/kyma-project/kyma-environment-broker/common/orchestration"
@@ -11,21 +12,20 @@ import (
 	"github.com/kyma-project/kyma-environment-broker/internal/storage/dberr"
 	"github.com/pivotal-cf/brokerapi/v8/domain"
 	"github.com/pivotal-cf/brokerapi/v8/domain/apiresponses"
-	"github.com/sirupsen/logrus"
 )
 
 type LastOperationEndpoint struct {
 	operationStorage  storage.Operations
 	instancesArchived storage.InstancesArchived
 
-	log logrus.FieldLogger
+	log *slog.Logger
 }
 
-func NewLastOperation(os storage.Operations, ia storage.InstancesArchived, log logrus.FieldLogger) *LastOperationEndpoint {
+func NewLastOperation(os storage.Operations, ia storage.InstancesArchived, log *slog.Logger) *LastOperationEndpoint {
 	return &LastOperationEndpoint{
 		operationStorage:  os,
 		instancesArchived: ia,
-		log:               log.WithField("service", "LastOperationEndpoint"),
+		log:               log.With("service", "LastOperationEndpoint"),
 	}
 }
 
@@ -33,7 +33,7 @@ func NewLastOperation(os storage.Operations, ia storage.InstancesArchived, log l
 //
 //	GET /v2/service_instances/{instance_id}/last_operation
 func (b *LastOperationEndpoint) LastOperation(ctx context.Context, instanceID string, details domain.PollDetails) (domain.LastOperation, error) {
-	logger := b.log.WithField("instanceID", instanceID).WithField("operationID", details.OperationData)
+	logger := b.log.With("instanceID", instanceID).With("operationID", details.OperationData)
 
 	if details.OperationData == "" {
 		lastOp, err := b.operationStorage.GetLastOperationByTypes(
@@ -49,7 +49,7 @@ func (b *LastOperationEndpoint) LastOperation(ctx context.Context, instanceID st
 			if dberr.IsNotFound(err) {
 				return b.responseFromInstanceArchived(instanceID, logger)
 			}
-			logger.Errorf("cannot get operation from storage: %s", err)
+			logger.Error(fmt.Sprintf("cannot get operation from storage: %s", err))
 			return domain.LastOperation{}, apiresponses.NewFailureResponse(err, statusCode,
 				fmt.Sprintf("while getting last operation from storage"))
 		}
@@ -65,14 +65,14 @@ func (b *LastOperationEndpoint) LastOperation(ctx context.Context, instanceID st
 		if dberr.IsNotFound(err) {
 			return b.responseFromInstanceArchived(instanceID, logger)
 		}
-		logger.Errorf("cannot get operation from storage: %s", err)
+		logger.Error(fmt.Sprintf("cannot get operation from storage: %s", err))
 		return domain.LastOperation{}, apiresponses.NewFailureResponse(err, statusCode,
 			fmt.Sprintf("while getting operation from storage"))
 	}
 
 	if operation.InstanceID != instanceID {
 		err := fmt.Errorf("operation exists, but instanceID is invalid")
-		logger.Errorf("%s", err.Error())
+		logger.Error(fmt.Sprintf("%s", err.Error()))
 		return domain.LastOperation{}, apiresponses.NewFailureResponse(err, http.StatusBadRequest, err.Error())
 	}
 
@@ -82,7 +82,7 @@ func (b *LastOperationEndpoint) LastOperation(ctx context.Context, instanceID st
 	}, nil
 }
 
-func (b *LastOperationEndpoint) responseFromInstanceArchived(instanceID string, logger *logrus.Entry) (domain.LastOperation, error) {
+func (b *LastOperationEndpoint) responseFromInstanceArchived(instanceID string, logger *slog.Logger) (domain.LastOperation, error) {
 	_, err := b.instancesArchived.GetByInstanceID(instanceID)
 
 	switch {
@@ -94,7 +94,7 @@ func (b *LastOperationEndpoint) responseFromInstanceArchived(instanceID string, 
 	case dberr.IsNotFound(err):
 		return domain.LastOperation{}, apiresponses.NewFailureResponse(fmt.Errorf("Operation not found"), http.StatusNotFound, "Instance not found")
 	default:
-		logger.Errorf("unable to get instance from archived storage: %s", err.Error())
+		logger.Error(fmt.Sprintf("unable to get instance from archived storage: %s", err.Error()))
 		return domain.LastOperation{}, apiresponses.NewFailureResponse(err, http.StatusInternalServerError, "")
 	}
 }

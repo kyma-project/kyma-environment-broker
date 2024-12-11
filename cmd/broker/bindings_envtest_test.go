@@ -209,9 +209,9 @@ func TestCreateBindingEndpoint(t *testing.T) {
 	publisher := event.NewPubSub(log)
 
 	//// api handler
-	bindEndpoint := broker.NewBind(*bindingCfg, db, logs, skrK8sClientProvider, skrK8sClientProvider, publisher)
-	getBindingEndpoint := broker.NewGetBinding(logs, db)
-	unbindEndpoint := broker.NewUnbind(logs, db, brokerBindings.NewServiceAccountBindingsManager(skrK8sClientProvider, skrK8sClientProvider), publisher)
+	bindEndpoint := broker.NewBind(*bindingCfg, db, log, skrK8sClientProvider, skrK8sClientProvider, publisher)
+	getBindingEndpoint := broker.NewGetBinding(log, db)
+	unbindEndpoint := broker.NewUnbind(log, db, brokerBindings.NewServiceAccountBindingsManager(skrK8sClientProvider, skrK8sClientProvider), publisher)
 	apiHandler := handlers.NewApiHandler(broker.KymaEnvironmentBroker{
 		ServicesEndpoint:             nil,
 		ProvisionEndpoint:            nil,
