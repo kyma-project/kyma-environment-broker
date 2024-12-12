@@ -56,11 +56,6 @@ func TestBinding(t *testing.T) {
 	suite.Log(string(b))
 	suite.Log(resp.Status)
 
-	respRuntimes := suite.CallAPI(http.MethodGet, "/runtimes?bindings=true", "")
-	b, _ = io.ReadAll(respRuntimes.Body)
-	suite.Log(string(b))
-	suite.Log(resp.Status)
-
 	t.Run("should return 400 when expiration seconds parameter is string instead of int", func(t *testing.T) {
 		resp = suite.CallAPI(http.MethodPut, fmt.Sprintf("oauth/v2/service_instances/%s/service_bindings/%s", iid, bid),
 			`{
