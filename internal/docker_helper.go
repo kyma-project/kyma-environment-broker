@@ -4,7 +4,7 @@ import (
 	"context"
 	"fmt"
 	"io"
-	"log"
+	"log/slog"
 	"os"
 
 	"github.com/docker/docker/api/types/container"
@@ -56,7 +56,7 @@ func (d *DockerHelper) CreateDBContainer(config ContainerCreateRequest) (func() 
 	image, err := d.client.ImageList(context.Background(), imagetypes.ListOptions{Filters: filterBy})
 
 	if err != nil || image == nil {
-		log.Print(fmt.Sprintf("image %s not found... pulling...", config.Image))
+		slog.Info(fmt.Sprintf("image %s not found... pulling...", config.Image))
 		reader, err := d.client.ImagePull(context.Background(), config.Image, imagetypes.PullOptions{})
 		if err != nil || reader == nil {
 			if reader != nil {
