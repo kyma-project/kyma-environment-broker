@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"log/slog"
 	"net/http"
 	"time"
 
@@ -12,8 +13,6 @@ import (
 	"github.com/pivotal-cf/brokerapi/v8/domain/apiresponses"
 	"github.com/pkg/errors"
 	"golang.org/x/oauth2/clientcredentials"
-
-	log "github.com/sirupsen/logrus"
 )
 
 const (
@@ -143,11 +142,11 @@ func (c *Client) Deprovision(instance internal.Instance) (string, error) {
 	}
 
 	response := serviceInstancesResponseDTO{}
-	log.Infof("Requesting deprovisioning of the environment with instance id: %q", instance.InstanceID)
+	slog.Info(fmt.Sprintf("Requesting deprovisioning of the environment with instance id: %q", instance.InstanceID))
 	err = c.poller.Invoke(func() (bool, error) {
 		err := c.executeRequest(http.MethodDelete, deprovisionURL, http.StatusAccepted, nil, &response)
 		if err != nil {
-			log.Warn(fmt.Sprintf("while executing request: %s", err.Error()))
+			slog.Warn(fmt.Sprintf("while executing request: %s", err.Error()))
 			return false, nil
 		}
 		return true, nil
@@ -200,13 +199,13 @@ func (c *Client) Unbind(binding internal.Binding) error {
 		return err
 	}
 
-	log.Infof("sending unbind request for service binding with ID %q and instance ID: %q", binding.ID, binding.InstanceID)
+	slog.Info(fmt.Sprintf("sending unbind request for service binding with ID %q and instance ID: %q", binding.ID, binding.InstanceID))
 
 	emptyResponse := &apiresponses.EmptyResponse{}
 	for requestAttemptNum := 1; requestAttemptNum <= c.RequestRetries; requestAttemptNum++ {
 		if err = c.executeRequest(http.MethodDelete, unbindURL, http.StatusOK, nil, emptyResponse); err != nil {
 			if errors.Is(err, context.DeadlineExceeded) {
-				log.Warnf("request failed - timeout (attempt %d/%d)", requestAttemptNum, c.RequestRetries)
+				slog.Warn(fmt.Sprintf("request failed - timeout (attempt %d/%d)", requestAttemptNum, c.RequestRetries))
 				continue
 			}
 			break
@@ -217,7 +216,7 @@ func (c *Client) Unbind(binding internal.Binding) error {
 		return err
 	}
 
-	log.Infof("successfully unbound service binding with ID %q", binding.ID)
+	slog.Info(fmt.Sprintf("successfully unbound service binding with ID %q", binding.ID))
 
 	return nil
 }
@@ -226,22 +225,22 @@ func processResponse(instanceID string, statusCode int, resp *http.Response) (su
 	switch statusCode {
 	case http.StatusAccepted, http.StatusOK:
 		{
-			log.Infof("Request for instanceID: %s accepted with status: %+v", instanceID, statusCode)
+			slog.Info(fmt.Sprintf("Request for instanceID: %s accepted with status: %+v", instanceID, statusCode))
 			operation, err := decodeOperation(resp)
 			if err != nil {
 				return false, err
 			}
-			log.Infof("For instanceID: %s we received operation: %s", instanceID, operation)
+			slog.Info(fmt.Sprintf("For instanceID: %s we received operation: %s", instanceID, operation))
 			return true, nil
 		}
 	case http.StatusUnprocessableEntity:
 		{
-			log.Warnf("For instanceID: %s we received entity unprocessable - status: %+v", instanceID, statusCode)
+			slog.Warn(fmt.Sprintf("For instanceID: %s we received entity unprocessable - status: %+v", instanceID, statusCode))
 			description, errorString, err := decodeErrorResponse(resp)
 			if err != nil {
 				return false, fmt.Errorf("for instanceID: %s: %w", instanceID, err)
 			}
-			log.Warnf("error: %+v description: %+v instanceID: %s", errorString, description, instanceID)
+			slog.Warn(fmt.Sprintf("error: %+v description: %+v instanceID: %s", errorString, description, instanceID))
 			return false, nil
 		}
 	default:
@@ -279,7 +278,7 @@ func decodeErrorResponse(resp *http.Response) (string, string, error) {
 func prepareExpirationRequest(instance internal.Instance, brokerConfigURL string) (*http.Request, error) {
 	expireInstanceUrl := fmt.Sprintf(updateInstanceTmpl, brokerConfigURL, expireInstanceURL, instance.InstanceID)
 
-	log.Infof("Requesting expiration of the environment with instanceID: %q", instance.InstanceID)
+	slog.Info(fmt.Sprintf("Requesting expiration of the environment with instanceID: %q", instance.InstanceID))
 
 	request, err := http.NewRequest(http.MethodPut, expireInstanceUrl, nil)
 	if err != nil {
@@ -345,7 +344,7 @@ func (c *Client) executeRequest(method, url string, expectedStatus int, requestB
 
 func (c *Client) warnOnError(do func() error) {
 	if err := do(); err != nil {
-		log.Warn(err.Error())
+		slog.Warn(err.Error())
 	}
 }
 

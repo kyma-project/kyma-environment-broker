@@ -3,26 +3,26 @@ package broker
 import (
 	"context"
 	"fmt"
+	"log/slog"
 
 	"github.com/pivotal-cf/brokerapi/v8/domain"
-	"github.com/sirupsen/logrus"
 )
 
 type LastBindingOperationEndpoint struct {
-	log logrus.FieldLogger
+	log *slog.Logger
 }
 
-func NewLastBindingOperation(log logrus.FieldLogger) *LastBindingOperationEndpoint {
-	return &LastBindingOperationEndpoint{log: log.WithField("service", "LastBindingOperationEndpoint")}
+func NewLastBindingOperation(log *slog.Logger) *LastBindingOperationEndpoint {
+	return &LastBindingOperationEndpoint{log: log.With("service", "LastBindingOperationEndpoint")}
 }
 
 // LastBindingOperation fetches last operation state for a service binding
 //
 //	GET /v2/service_instances/{instance_id}/service_bindings/{binding_id}/last_operation
 func (b *LastBindingOperationEndpoint) LastBindingOperation(ctx context.Context, instanceID, bindingID string, details domain.PollDetails) (domain.LastOperation, error) {
-	b.log.Infof("LastBindingOperation instanceID: %s", instanceID)
-	b.log.Infof("LastBindingOperation bindingID: %s", bindingID)
-	b.log.Infof("LastBindingOperation details: %+v", details)
+	b.log.Info(fmt.Sprintf("LastBindingOperation instanceID: %s", instanceID))
+	b.log.Info(fmt.Sprintf("LastBindingOperation bindingID: %s", bindingID))
+	b.log.Info(fmt.Sprintf("LastBindingOperation details: %+v", details))
 
 	return domain.LastOperation{}, fmt.Errorf("not supported")
 }

@@ -4,7 +4,7 @@ package automock
 
 import (
 	internal "github.com/kyma-project/kyma-environment-broker/internal"
-	logrus "github.com/sirupsen/logrus"
+	"log/slog"
 
 	mock "github.com/stretchr/testify/mock"
 
@@ -31,25 +31,25 @@ func (_m *Step) Name() string {
 }
 
 // Run provides a mock function with given fields: operation, logger
-func (_m *Step) Run(operation internal.DeprovisioningOperation, logger logrus.FieldLogger) (internal.DeprovisioningOperation, time.Duration, error) {
+func (_m *Step) Run(operation internal.DeprovisioningOperation, logger *slog.Logger) (internal.DeprovisioningOperation, time.Duration, error) {
 	ret := _m.Called(operation, logger)
 
 	var r0 internal.DeprovisioningOperation
-	if rf, ok := ret.Get(0).(func(internal.DeprovisioningOperation, logrus.FieldLogger) internal.DeprovisioningOperation); ok {
+	if rf, ok := ret.Get(0).(func(internal.DeprovisioningOperation, *slog.Logger) internal.DeprovisioningOperation); ok {
 		r0 = rf(operation, logger)
 	} else {
 		r0 = ret.Get(0).(internal.DeprovisioningOperation)
 	}
 
 	var r1 time.Duration
-	if rf, ok := ret.Get(1).(func(internal.DeprovisioningOperation, logrus.FieldLogger) time.Duration); ok {
+	if rf, ok := ret.Get(1).(func(internal.DeprovisioningOperation, *slog.Logger) time.Duration); ok {
 		r1 = rf(operation, logger)
 	} else {
 		r1 = ret.Get(1).(time.Duration)
 	}
 
 	var r2 error
-	if rf, ok := ret.Get(2).(func(internal.DeprovisioningOperation, logrus.FieldLogger) error); ok {
+	if rf, ok := ret.Get(2).(func(internal.DeprovisioningOperation, *slog.Logger) error); ok {
 		r2 = rf(operation, logger)
 	} else {
 		r2 = ret.Error(2)

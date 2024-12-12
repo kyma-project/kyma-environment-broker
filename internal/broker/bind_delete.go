@@ -3,6 +3,7 @@ package broker
 import (
 	"context"
 	"fmt"
+	"log/slog"
 	"net/http"
 	"time"
 
@@ -14,11 +15,10 @@ import (
 	"github.com/kyma-project/kyma-environment-broker/internal/storage/dberr"
 	"github.com/pivotal-cf/brokerapi/v8/domain"
 	"github.com/pivotal-cf/brokerapi/v8/domain/apiresponses"
-	"github.com/sirupsen/logrus"
 )
 
 type UnbindEndpoint struct {
-	log               logrus.FieldLogger
+	log               *slog.Logger
 	bindingsStorage   storage.Bindings
 	instancesStorage  storage.Instances
 	operationsStorage storage.Operations
@@ -26,8 +26,8 @@ type UnbindEndpoint struct {
 	publisher         event.Publisher
 }
 
-func NewUnbind(log logrus.FieldLogger, db storage.BrokerStorage, bindingsManager broker.BindingsManager, publisher event.Publisher) *UnbindEndpoint {
-	return &UnbindEndpoint{log: log.WithField("service", "UnbindEndpoint"),
+func NewUnbind(log *slog.Logger, db storage.BrokerStorage, bindingsManager broker.BindingsManager, publisher event.Publisher) *UnbindEndpoint {
+	return &UnbindEndpoint{log: log.With("service", "UnbindEndpoint"),
 		bindingsStorage:   db.Bindings(),
 		instancesStorage:  db.Instances(),
 		bindingsManager:   bindingsManager,
@@ -50,16 +50,16 @@ func (b *UnbindEndpoint) Unbind(ctx context.Context, instanceID, bindingID strin
 
 func (b *UnbindEndpoint) unbind(ctx context.Context, instanceID, bindingID string, details domain.UnbindDetails, asyncAllowed bool) (domain.UnbindSpec, error) {
 
-	b.log.Infof("Unbind instanceID: %s", instanceID)
-	b.log.Infof("Unbind details: %+v", details)
-	b.log.Infof("Unbind asyncAllowed: %v", asyncAllowed)
+	b.log.Info(fmt.Sprintf("Unbind instanceID: %s", instanceID))
+	b.log.Info(fmt.Sprintf("Unbind details: %+v", details))
+	b.log.Info(fmt.Sprintf("Unbind asyncAllowed: %v", asyncAllowed))
 
 	instance, err := b.instancesStorage.GetByID(instanceID)
 	switch {
 	case dberr.IsNotFound(err):
 		err = b.bindingsStorage.Delete(instanceID, bindingID)
 		if err != nil {
-			b.log.Errorf("Unbind error during removal of db entity: %v", err)
+			b.log.Error(fmt.Sprintf("Unbind error during removal of db entity: %v", err))
 			return domain.UnbindSpec{}, apiresponses.NewFailureResponse(fmt.Errorf("failed to delete binding for binding %s and not existing instance %s: %v", bindingID, instanceID, err), http.StatusInternalServerError, fmt.Sprintf("failed to delete resources for binding %s and not existing instance %s: %v", bindingID, instanceID, err))
 		}
 		return domain.UnbindSpec{}, apiresponses.ErrInstanceDoesNotExist
@@ -83,17 +83,17 @@ func (b *UnbindEndpoint) unbind(ctx context.Context, instanceID, bindingID strin
 	if lastOperation.Type != internal.OperationTypeDeprovision {
 		err = b.bindingsManager.Delete(ctx, instance, bindingID)
 		if err != nil {
-			b.log.Errorf("Unbind error during removal of service account resources: %s", err)
+			b.log.Error(fmt.Sprintf("Unbind error during removal of service account resources: %s", err))
 			return domain.UnbindSpec{}, apiresponses.NewFailureResponse(fmt.Errorf("failed to delete binding resources for binding %s and instance %s: %v", bindingID, instanceID, err), http.StatusInternalServerError, fmt.Sprintf("failed to delete resources for binding %s and instance %s: %v", bindingID, instanceID, err))
 		}
 	}
 
 	err = b.bindingsStorage.Delete(instanceID, bindingID)
 	if err != nil {
-		b.log.Errorf("Unbind error during removal of db entity: %v", err)
+		b.log.Error(fmt.Sprintf("Unbind error during removal of db entity: %v", err))
 		return domain.UnbindSpec{}, apiresponses.NewFailureResponse(fmt.Errorf("failed to delete binding resources for binding %s and instance %s: %v", bindingID, instanceID, err), http.StatusInternalServerError, fmt.Sprintf("failed to delete resources for binding %s and instance %s: %v", bindingID, instanceID, err))
 	}
-	b.log.Infof("Successfully removed binding %s for instance %s", bindingID, instanceID)
+	b.log.Info(fmt.Sprintf("Successfully removed binding %s for instance %s", bindingID, instanceID))
 
 	return domain.UnbindSpec{
 		IsAsync: false,

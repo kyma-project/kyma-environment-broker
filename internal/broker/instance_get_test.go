@@ -4,7 +4,9 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"log/slog"
 	"net/http"
+	"os"
 	"testing"
 	"time"
 
@@ -20,7 +22,6 @@ import (
 	"github.com/kyma-project/kyma-environment-broker/internal/storage"
 	"github.com/pivotal-cf/brokerapi/v8/domain"
 	"github.com/pivotal-cf/brokerapi/v8/domain/apiresponses"
-	"github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
@@ -30,7 +31,7 @@ func TestGetEndpoint_GetNonExistingInstance(t *testing.T) {
 	// given
 	st := storage.NewMemoryStorage()
 	kcBuilder := &kcMock.KcBuilder{}
-	svc := broker.NewGetInstance(broker.Config{}, st.Instances(), st.Operations(), kcBuilder, logrus.New())
+	svc := broker.NewGetInstance(broker.Config{}, st.Instances(), st.Operations(), kcBuilder, fixLogger())
 
 	// when
 	_, err := svc.GetInstance(context.Background(), instanceID, domain.FetchInstanceDetails{})
@@ -65,13 +66,13 @@ func TestGetEndpoint_GetProvisioningInstance(t *testing.T) {
 		factoryBuilder,
 		broker.PlansConfig{},
 		planDefaults,
-		logrus.StandardLogger(),
+		fixLogger(),
 		dashboardConfig,
 		kcBuilder,
 		whitelist.Set{},
 		&broker.OneForAllConvergedCloudRegionsProvider{},
 	)
-	getSvc := broker.NewGetInstance(broker.Config{EnableKubeconfigURLLabel: true}, st.Instances(), st.Operations(), kcBuilder, logrus.New())
+	getSvc := broker.NewGetInstance(broker.Config{EnableKubeconfigURLLabel: true}, st.Instances(), st.Operations(), kcBuilder, fixLogger())
 
 	// when
 	_, err := createSvc.Provision(fixRequestContext(t, "req-region"), instanceID, domain.ProvisionDetails{
@@ -127,7 +128,7 @@ func TestGetEndpoint_DoNotReturnInstanceWhereDeletedAtIsNotZero(t *testing.T) {
 	err = st.Instances().Insert(instance)
 	require.NoError(t, err)
 
-	svc := broker.NewGetInstance(cfg, st.Instances(), st.Operations(), kcBuilder, logrus.New())
+	svc := broker.NewGetInstance(cfg, st.Instances(), st.Operations(), kcBuilder, fixLogger())
 
 	// when
 	_, err = svc.GetInstance(context.Background(), instanceID, domain.FetchInstanceDetails{})
@@ -169,7 +170,7 @@ func TestGetEndpoint_GetExpiredInstanceWithExpirationDetails(t *testing.T) {
 	err = st.Instances().Insert(instance)
 	require.NoError(t, err)
 
-	svc := broker.NewGetInstance(cfg, st.Instances(), st.Operations(), kcBuilder, logrus.New())
+	svc := broker.NewGetInstance(cfg, st.Instances(), st.Operations(), kcBuilder, fixLogger())
 	// when
 	response, err := svc.GetInstance(context.Background(), instanceID, domain.FetchInstanceDetails{})
 
@@ -214,7 +215,7 @@ func TestGetEndpoint_GetExpiredInstanceWithExpirationDetailsAllSubaccountsIDs(t 
 	err = st.Instances().Insert(instance)
 	require.NoError(t, err)
 
-	svc := broker.NewGetInstance(cfg, st.Instances(), st.Operations(), kcBuilder, logrus.New())
+	svc := broker.NewGetInstance(cfg, st.Instances(), st.Operations(), kcBuilder, fixLogger())
 
 	// when
 	response, err := svc.GetInstance(context.Background(), instanceID, domain.FetchInstanceDetails{})
@@ -260,7 +261,7 @@ func TestGetEndpoint_GetExpiredInstanceWithoutExpirationInfo(t *testing.T) {
 	err = st.Instances().Insert(instance)
 	require.NoError(t, err)
 
-	svc := broker.NewGetInstance(cfg, st.Instances(), st.Operations(), kcBuilder, logrus.New())
+	svc := broker.NewGetInstance(cfg, st.Instances(), st.Operations(), kcBuilder, fixLogger())
 
 	// when
 	response, err := svc.GetInstance(context.Background(), instanceID, domain.FetchInstanceDetails{})
@@ -304,7 +305,7 @@ func TestGetEndpoint_GetExpiredFreeInstanceWithExpirationDetails(t *testing.T) {
 	err = st.Instances().Insert(instance)
 	require.NoError(t, err)
 
-	svc := broker.NewGetInstance(cfg, st.Instances(), st.Operations(), kcBuilder, logrus.New())
+	svc := broker.NewGetInstance(cfg, st.Instances(), st.Operations(), kcBuilder, fixLogger())
 
 	// when
 	response, err := svc.GetInstance(context.Background(), instanceID, domain.FetchInstanceDetails{})
@@ -317,4 +318,10 @@ func TestGetEndpoint_GetExpiredFreeInstanceWithExpirationDetails(t *testing.T) {
 	assert.NotContains(t, response.Metadata.Labels, "APIServerURL")
 	assert.Contains(t, response.Metadata.Labels, "Free plan expiration details")
 	assert.Contains(t, response.Metadata.Labels, "Available plans documentation")
+}
+
+func fixLogger() *slog.Logger {
+	return slog.New(slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{
+		Level: slog.LevelInfo,
+	}))
 }

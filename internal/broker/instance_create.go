@@ -5,6 +5,7 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
+	"log/slog"
 	"net"
 	"net/http"
 	"net/netip"
@@ -27,10 +28,6 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/kyma-incubator/compass/components/director/pkg/jsonschema"
-	"github.com/pivotal-cf/brokerapi/v8/domain"
-	"github.com/pivotal-cf/brokerapi/v8/domain/apiresponses"
-	"github.com/sirupsen/logrus"
-
 	"github.com/kyma-project/kyma-environment-broker/common/gardener"
 	pkg "github.com/kyma-project/kyma-environment-broker/common/runtime"
 	"github.com/kyma-project/kyma-environment-broker/internal"
@@ -39,6 +36,8 @@ import (
 	"github.com/kyma-project/kyma-environment-broker/internal/ptr"
 	"github.com/kyma-project/kyma-environment-broker/internal/storage"
 	"github.com/kyma-project/kyma-environment-broker/internal/storage/dberr"
+	"github.com/pivotal-cf/brokerapi/v8/domain"
+	"github.com/pivotal-cf/brokerapi/v8/domain/apiresponses"
 )
 
 //go:generate mockery --name=Queue --output=automock --outpkg=automock --case=underscore
@@ -76,7 +75,7 @@ type ProvisionEndpoint struct {
 
 	convergedCloudRegionsProvider ConvergedCloudRegionProvider
 
-	log logrus.FieldLogger
+	log *slog.Logger
 }
 
 const (
@@ -92,7 +91,7 @@ func NewProvision(cfg Config,
 	builderFactory PlanValidator,
 	plansConfig PlansConfig,
 	planDefaults PlanDefaults,
-	log logrus.FieldLogger,
+	log *slog.Logger,
 	dashboardConfig dashboard.Config,
 	kcBuilder kubeconfig.KcBuilder,
 	freemiumWhitelist whitelist.Set,
@@ -111,7 +110,7 @@ func NewProvision(cfg Config,
 		instanceArchivedStorage:       instanceArchivedStorage,
 		queue:                         queue,
 		builderFactory:                builderFactory,
-		log:                           log.WithField("service", "ProvisionEndpoint"),
+		log:                           log.With("service", "ProvisionEndpoint"),
 		enabledPlanIDs:                enabledPlanIDs,
 		plansConfig:                   plansConfig,
 		shootDomain:                   gardenerConfig.ShootDomain,
@@ -130,8 +129,8 @@ func NewProvision(cfg Config,
 //	PUT /v2/service_instances/{instance_id}
 func (b *ProvisionEndpoint) Provision(ctx context.Context, instanceID string, details domain.ProvisionDetails, asyncAllowed bool) (domain.ProvisionedServiceSpec, error) {
 	operationID := uuid.New().String()
-	logger := b.log.WithFields(logrus.Fields{"instanceID": instanceID, "operationID": operationID, "planID": details.PlanID})
-	logger.Infof("Provision called with context: %s", marshallRawContext(hideSensitiveDataFromRawContext(details.RawContext)))
+	logger := b.log.With("instanceID", instanceID, "operationID", operationID, "planID", details.PlanID)
+	logger.Info(fmt.Sprintf("Provision called with context: %s", marshallRawContext(hideSensitiveDataFromRawContext(details.RawContext))))
 
 	region, found := middleware.RegionFromContext(ctx)
 	if !found {
@@ -165,16 +164,16 @@ func (b *ProvisionEndpoint) Provision(ctx context.Context, instanceID string, de
 		PlatformProvider: platformProvider,
 	}
 
-	logger.Infof("Starting provisioning runtime: Name=%s, GlobalAccountID=%s, SubAccountID=%s PlatformRegion=%s, ProvisioningParameterts.Region=%s, ShootAndSeedSameRegion=%t, ProvisioningParameterts.MachineType=%s",
+	logger.Info(fmt.Sprintf("Starting provisioning runtime: Name=%s, GlobalAccountID=%s, SubAccountID=%s, PlatformRegion=%s, ProvisioningParameterts.Region=%s, ShootAndSeedSameRegion=%t, ProvisioningParameterts.MachineType=%s",
 		parameters.Name, ersContext.GlobalAccountID, ersContext.SubAccountID, region, valueOfPtr(parameters.Region),
-		valueOfBoolPtr(parameters.ShootAndSeedSameRegion), valueOfPtr(parameters.MachineType))
+		valueOfBoolPtr(parameters.ShootAndSeedSameRegion), valueOfPtr(parameters.MachineType)))
 	logParametersWithMaskedKubeconfig(parameters, logger)
 
 	// check if operation with instance ID already created
 	existingOperation, errStorage := b.operationsStorage.GetProvisioningOperationByInstanceID(instanceID)
 	switch {
 	case errStorage != nil && !dberr.IsNotFound(errStorage):
-		logger.Errorf("cannot get existing operation from storage %s", errStorage)
+		logger.Error(fmt.Sprintf("cannot get existing operation from storage %s", errStorage))
 		return domain.ProvisionedServiceSpec{}, fmt.Errorf("cannot get existing operation from storage")
 	case existingOperation != nil && !dberr.IsNotFound(errStorage):
 		return b.handleExistingOperation(existingOperation, provisioningParameters)
@@ -188,7 +187,7 @@ func (b *ProvisionEndpoint) Provision(ctx context.Context, instanceID string, de
 	// create and save new operation
 	operation, err := internal.NewProvisioningOperationWithID(operationID, instanceID, provisioningParameters)
 	if err != nil {
-		logger.Errorf("cannot create new operation: %s", err)
+		logger.Error(fmt.Sprintf("cannot create new operation: %s", err))
 		return domain.ProvisionedServiceSpec{}, fmt.Errorf("cannot create new operation")
 	}
 
@@ -201,11 +200,11 @@ func (b *ProvisionEndpoint) Provision(ctx context.Context, instanceID string, de
 		operation.ShootName = provisioningParameters.Parameters.ShootName
 		operation.ShootDomain = provisioningParameters.Parameters.ShootDomain
 	}
-	logger.Infof("Runtime ShootDomain: %s", operation.ShootDomain)
+	logger.Info(fmt.Sprintf("Runtime ShootDomain: %s", operation.ShootDomain))
 
 	err = b.operationsStorage.InsertOperation(operation.Operation)
 	if err != nil {
-		logger.Errorf("cannot save operation: %s", err)
+		logger.Error(fmt.Sprintf("cannot save operation: %s", err))
 		return domain.ProvisionedServiceSpec{}, fmt.Errorf("cannot save operation")
 	}
 
@@ -222,7 +221,7 @@ func (b *ProvisionEndpoint) Provision(ctx context.Context, instanceID string, de
 	}
 	err = b.instanceStorage.Insert(instance)
 	if err != nil {
-		logger.Errorf("cannot save instance in storage: %s", err)
+		logger.Error(fmt.Sprintf("cannot save instance in storage: %s", err))
 		return domain.ProvisionedServiceSpec{}, fmt.Errorf("cannot save instance")
 	}
 
@@ -239,9 +238,9 @@ func (b *ProvisionEndpoint) Provision(ctx context.Context, instanceID string, de
 	}, nil
 }
 
-func logParametersWithMaskedKubeconfig(parameters pkg.ProvisioningParametersDTO, logger *logrus.Entry) {
+func logParametersWithMaskedKubeconfig(parameters pkg.ProvisioningParametersDTO, logger *slog.Logger) {
 	parameters.Kubeconfig = "*****"
-	logger.Infof("Runtime parameters: %+v", parameters)
+	logger.Info(fmt.Sprintf("Runtime parameters: %+v", parameters))
 }
 
 func valueOfPtr(ptr *string) string {
@@ -258,7 +257,7 @@ func valueOfBoolPtr(ptr *bool) bool {
 	return *ptr
 }
 
-func (b *ProvisionEndpoint) validateAndExtract(details domain.ProvisionDetails, provider pkg.CloudProvider, ctx context.Context, l logrus.FieldLogger) (internal.ERSContext, pkg.ProvisioningParametersDTO, error) {
+func (b *ProvisionEndpoint) validateAndExtract(details domain.ProvisionDetails, provider pkg.CloudProvider, ctx context.Context, l *slog.Logger) (internal.ERSContext, pkg.ProvisioningParametersDTO, error) {
 	var ersContext internal.ERSContext
 	var parameters pkg.ProvisioningParametersDTO
 
@@ -270,7 +269,7 @@ func (b *ProvisionEndpoint) validateAndExtract(details domain.ProvisionDetails, 
 	}
 
 	ersContext, err := b.extractERSContext(details)
-	logger := l.WithField("globalAccountID", ersContext.GlobalAccountID)
+	logger := l.With("globalAccountID", ersContext.GlobalAccountID)
 	if err != nil {
 		return ersContext, parameters, fmt.Errorf("while extracting ers context: %w", err)
 	}
@@ -316,7 +315,7 @@ func (b *ProvisionEndpoint) validateAndExtract(details domain.ProvisionDetails, 
 
 	// EU Access
 	if isEuRestrictedAccess(ctx) {
-		logger.Infof("EU Access restricted instance creation")
+		logger.Info("EU Access restricted instance creation")
 	}
 
 	parameters.LicenceType = b.determineLicenceType(details.PlanID)

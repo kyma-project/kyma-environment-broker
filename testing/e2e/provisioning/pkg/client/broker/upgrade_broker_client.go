@@ -7,11 +7,11 @@ import (
 	"fmt"
 	"io"
 	"io/ioutil"
+	"log/slog"
 	"net/http"
 	"time"
 
 	"github.com/pkg/errors"
-	"github.com/sirupsen/logrus"
 	"golang.org/x/oauth2/clientcredentials"
 	"k8s.io/apimachinery/pkg/util/wait"
 )
@@ -23,12 +23,12 @@ const (
 )
 
 type UpgradeClient struct {
-	log    logrus.FieldLogger
+	log    *slog.Logger
 	URL    string
 	client *http.Client
 }
 
-func NewUpgradeClient(ctx context.Context, oAuthConfig BrokerOAuthConfig, config Config, log logrus.FieldLogger) *UpgradeClient {
+func NewUpgradeClient(ctx context.Context, oAuthConfig BrokerOAuthConfig, config Config, log *slog.Logger) *UpgradeClient {
 	cfg := clientcredentials.Config{
 		ClientID:     oAuthConfig.ClientID,
 		ClientSecret: oAuthConfig.ClientSecret,
@@ -39,7 +39,7 @@ func NewUpgradeClient(ctx context.Context, oAuthConfig BrokerOAuthConfig, config
 	httpClientOAuth.Timeout = 30 * time.Second
 
 	return &UpgradeClient{
-		log:    log.WithField("client", "upgrade_broker_client"),
+		log:    log.With("client", "upgrade_broker_client"),
 		URL:    config.URL,
 		client: httpClientOAuth,
 	}
@@ -81,7 +81,7 @@ func (c *UpgradeClient) FetchRuntimeID(instanceID string) (string, error) {
 			return true, errors.Wrap(err, "cannot fetch runtimeID")
 		}
 		if err != nil {
-			c.log.Warnf("runtime is not ready: %s ...", err)
+			c.log.Warn(fmt.Sprintf("runtime is not ready: %s ...", err))
 			return false, nil
 		}
 		runtimeID = id
@@ -129,7 +129,7 @@ func (c *UpgradeClient) AwaitOperationFinished(orchestrationID string, timeout t
 			return true, errors.Wrap(err, "cannot fetch operation status")
 		}
 		if err != nil {
-			c.log.Warnf("upgrade is not ready: %s ...", err)
+			c.log.Warn(fmt.Sprintf("upgrade is not ready: %s ...", err))
 			return false, nil
 		}
 		return true, nil

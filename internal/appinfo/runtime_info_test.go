@@ -3,8 +3,10 @@ package appinfo_test
 import (
 	"encoding/json"
 	"fmt"
+	"log/slog"
 	"net/http"
 	"net/http/httptest"
+	"os"
 	"testing"
 	"time"
 
@@ -15,7 +17,6 @@ import (
 	"github.com/kyma-project/kyma-environment-broker/internal/broker"
 	"github.com/kyma-project/kyma-environment-broker/internal/fixture"
 	"github.com/kyma-project/kyma-environment-broker/internal/httputil"
-	"github.com/kyma-project/kyma-environment-broker/internal/logger"
 	"github.com/kyma-project/kyma-environment-broker/internal/storage"
 	"github.com/kyma-project/kyma-environment-broker/internal/storage/driver/memory"
 	"github.com/pivotal-cf/brokerapi/v8/domain"
@@ -92,7 +93,7 @@ func TestRuntimeInfoHandlerSuccess(t *testing.T) {
 			var (
 				fixReq     = httptest.NewRequest("GET", "http://example.com/foo", nil)
 				respSpy    = httptest.NewRecorder()
-				writer     = httputil.NewResponseWriter(logger.NewLogDummy(), true)
+				writer     = httputil.NewResponseWriter(fixLogger(), true)
 				memStorage = newInMemoryStorage(t, tc.instances, tc.provisionOp, tc.deprovisionOp)
 			)
 
@@ -115,7 +116,7 @@ func TestRuntimeInfoHandlerFailures(t *testing.T) {
 	var (
 		fixReq  = httptest.NewRequest("GET", "http://example.com/foo", nil)
 		respSpy = httptest.NewRecorder()
-		writer  = httputil.NewResponseWriter(logger.NewLogDummy(), true)
+		writer  = httputil.NewResponseWriter(fixLogger(), true)
 		expBody = `{
 				  "status": 500,
 				  "requestId": "",
@@ -222,7 +223,7 @@ func TestRuntimeInfoHandlerOperationRecognition(t *testing.T) {
 		req, err := http.NewRequest("GET", "/info/runtimes", nil)
 		require.NoError(t, err)
 
-		responseWriter := httputil.NewResponseWriter(logger.NewLogDummy(), true)
+		responseWriter := httputil.NewResponseWriter(fixLogger(), true)
 		runtimesInfoHandler := appinfo.NewRuntimeInfoHandler(instances, operations, broker.PlansConfig{}, "", responseWriter)
 
 		rr := httptest.NewRecorder()
@@ -332,7 +333,7 @@ func TestRuntimeInfoHandlerOperationRecognition(t *testing.T) {
 		req, err := http.NewRequest("GET", "/info/runtimes", nil)
 		require.NoError(t, err)
 
-		responseWriter := httputil.NewResponseWriter(logger.NewLogDummy(), true)
+		responseWriter := httputil.NewResponseWriter(fixLogger(), true)
 		runtimesInfoHandler := appinfo.NewRuntimeInfoHandler(instances, operations, broker.PlansConfig{}, "", responseWriter)
 
 		rr := httptest.NewRecorder()
@@ -471,7 +472,7 @@ func TestRuntimeInfoHandlerOperationRecognition(t *testing.T) {
 		req, err := http.NewRequest("GET", "/info/runtimes", nil)
 		require.NoError(t, err)
 
-		responseWriter := httputil.NewResponseWriter(logger.NewLogDummy(), true)
+		responseWriter := httputil.NewResponseWriter(fixLogger(), true)
 		runtimesInfoHandler := appinfo.NewRuntimeInfoHandler(instances, operations, broker.PlansConfig{}, "", responseWriter)
 
 		rr := httptest.NewRecorder()
@@ -575,4 +576,10 @@ func fixSucceededOperation(operationType internal.OperationType, idx int) intern
 		Description:            fmt.Sprintf("esc for succeeded op.. IDX: %d", idx),
 		Type:                   operationType,
 	}
+}
+
+func fixLogger() *slog.Logger {
+	return slog.New(slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{
+		Level: slog.LevelInfo,
+	}))
 }

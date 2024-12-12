@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"log/slog"
 	"net/http"
 	"strings"
 	"time"
@@ -18,7 +19,6 @@ import (
 	"github.com/pivotal-cf/brokerapi/v8/domain/apiresponses"
 
 	"github.com/pivotal-cf/brokerapi/v8/domain"
-	"github.com/sirupsen/logrus"
 )
 
 const (
@@ -44,7 +44,7 @@ type BindEndpoint struct {
 	serviceAccountBindingManager broker.BindingsManager
 	publisher                    event.Publisher
 
-	log logrus.FieldLogger
+	log *slog.Logger
 }
 
 type BindingContext struct {
@@ -69,14 +69,14 @@ type Credentials struct {
 	Kubeconfig string `json:"kubeconfig"`
 }
 
-func NewBind(cfg BindingConfig, db storage.BrokerStorage, log logrus.FieldLogger, clientProvider broker.ClientProvider, kubeconfigProvider broker.KubeconfigProvider,
+func NewBind(cfg BindingConfig, db storage.BrokerStorage, log *slog.Logger, clientProvider broker.ClientProvider, kubeconfigProvider broker.KubeconfigProvider,
 	publisher event.Publisher) *BindEndpoint {
 	return &BindEndpoint{config: cfg,
 		instancesStorage:             db.Instances(),
 		bindingsStorage:              db.Bindings(),
 		publisher:                    publisher,
 		operationsStorage:            db.Operations(),
-		log:                          log.WithField("service", "BindEndpoint"),
+		log:                          log.With("service", "BindEndpoint"),
 		serviceAccountBindingManager: broker.NewServiceAccountBindingsManager(clientProvider, kubeconfigProvider),
 	}
 }
@@ -95,10 +95,10 @@ func (b *BindEndpoint) Bind(ctx context.Context, instanceID, bindingID string, d
 }
 
 func (b *BindEndpoint) bind(ctx context.Context, instanceID, bindingID string, details domain.BindDetails, asyncAllowed bool) (domain.Binding, error) {
-	b.log.Infof("Bind instanceID: %s", instanceID)
-	b.log.Infof("Bind parameters: %s", string(details.RawParameters))
-	b.log.Infof("Bind context: %s", string(details.RawContext))
-	b.log.Infof("Bind asyncAllowed: %v", asyncAllowed)
+	b.log.Info(fmt.Sprintf("Bind instanceID: %s", instanceID))
+	b.log.Info(fmt.Sprintf("Bind parameters: %s", string(details.RawParameters)))
+	b.log.Info(fmt.Sprintf("Bind context: %s", string(details.RawContext)))
+	b.log.Info(fmt.Sprintf("Bind asyncAllowed: %v", asyncAllowed))
 
 	if !b.config.Enabled {
 		return domain.Binding{}, fmt.Errorf("not supported")
@@ -203,7 +203,7 @@ func (b *BindEndpoint) bind(ctx context.Context, instanceID, bindingID string, d
 	bindingCount := len(bindingList)
 	message := fmt.Sprintf("reaching the maximum (%d) number of non expired bindings for instance %s", b.config.MaxBindingsCount, instanceID)
 	if bindingCount == b.config.MaxBindingsCount-1 {
-		b.log.Infof(message)
+		b.log.Info(message)
 	}
 	if bindingCount >= b.config.MaxBindingsCount {
 		expiredCount := 0
@@ -213,11 +213,11 @@ func (b *BindEndpoint) bind(ctx context.Context, instanceID, bindingID string, d
 			}
 		}
 		if (bindingCount - expiredCount) == (b.config.MaxBindingsCount - 1) {
-			b.log.Infof(message)
+			b.log.Info(message)
 		}
 		if (bindingCount - expiredCount) >= b.config.MaxBindingsCount {
 			message := fmt.Sprintf("maximum number of non expired bindings reached: %d", b.config.MaxBindingsCount)
-			b.log.Infof(message+" for instance %s", instanceID)
+			b.log.Info(fmt.Sprintf(message+" for instance %s", instanceID))
 			return domain.Binding{}, apiresponses.NewFailureResponse(fmt.Errorf(message), http.StatusBadRequest, message)
 		}
 	}
@@ -250,7 +250,7 @@ func (b *BindEndpoint) bind(ctx context.Context, instanceID, bindingID string, d
 	kubeconfig, expiresAt, err = b.serviceAccountBindingManager.Create(ctx, instance, bindingID, expirationSeconds)
 	if err != nil {
 		message := fmt.Sprintf("failed to create a Kyma binding using service account's kubeconfig: %s", err)
-		b.log.Errorf("for instance %s %s", instanceID, message)
+		b.log.Error(fmt.Sprintf("for instance %s %s", instanceID, message))
 		return domain.Binding{}, apiresponses.NewFailureResponse(fmt.Errorf(message), http.StatusBadRequest, message)
 	}
 
@@ -262,7 +262,7 @@ func (b *BindEndpoint) bind(ctx context.Context, instanceID, bindingID string, d
 		message := fmt.Sprintf("failed to update Kyma binding in storage: %s", err)
 		return domain.Binding{}, apiresponses.NewFailureResponse(fmt.Errorf(message), http.StatusInternalServerError, message)
 	}
-	b.log.Infof("Successfully created binding %s for instance %s", bindingID, instanceID)
+	b.log.Info(fmt.Sprintf("Successfully created binding %s for instance %s", bindingID, instanceID))
 	b.publisher.Publish(context.Background(), BindingCreated{PlanID: instance.ServicePlanID})
 
 	return domain.Binding{

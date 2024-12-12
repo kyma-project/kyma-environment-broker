@@ -2,10 +2,11 @@ package v1_client
 
 import (
 	"context"
+	"fmt"
+	"log/slog"
 	"time"
 
 	"github.com/pkg/errors"
-	"github.com/sirupsen/logrus"
 	v1 "k8s.io/api/core/v1"
 	apiErrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/util/wait"
@@ -19,10 +20,10 @@ type Secrets interface {
 
 type SecretClient struct {
 	client client.Client
-	log    logrus.FieldLogger
+	log    *slog.Logger
 }
 
-func NewSecretClient(client client.Client, log logrus.FieldLogger) *SecretClient {
+func NewSecretClient(client client.Client, log *slog.Logger) *SecretClient {
 	return &SecretClient{client: client, log: log}
 }
 
@@ -41,7 +42,7 @@ func (c *SecretClient) Create(secret v1.Secret) error {
 				}
 				return true, nil
 			}
-			c.log.Errorf("while creating secret: %v", err)
+			c.log.Error(fmt.Sprintf("while creating secret: %v", err))
 			return false, nil
 		}
 		return true, nil
@@ -60,7 +61,7 @@ func (c *SecretClient) Delete(secret v1.Secret) error {
 				c.log.Warn("secret not found")
 				return true, nil
 			}
-			c.log.Errorf("while creating secret: %v", err)
+			c.log.Error(fmt.Sprintf("while creating secret: %v", err))
 			return false, nil
 		}
 		return true, nil

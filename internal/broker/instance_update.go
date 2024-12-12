@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"log/slog"
 	"net/http"
 	"strings"
 	"time"
@@ -19,7 +20,6 @@ import (
 	"github.com/google/uuid"
 	"github.com/pivotal-cf/brokerapi/v8/domain"
 	"github.com/pivotal-cf/brokerapi/v8/domain/apiresponses"
-	"github.com/sirupsen/logrus"
 	"k8s.io/apimachinery/pkg/util/wait"
 
 	"github.com/kyma-project/kyma-environment-broker/internal"
@@ -35,7 +35,7 @@ type ContextUpdateHandler interface {
 
 type UpdateEndpoint struct {
 	config Config
-	log    logrus.FieldLogger
+	log    *slog.Logger
 
 	instanceStorage                          storage.Instances
 	runtimeStates                            storage.RuntimeStates
@@ -71,7 +71,7 @@ func NewUpdate(cfg Config,
 	queue Queue,
 	plansConfig PlansConfig,
 	planDefaults PlanDefaults,
-	log logrus.FieldLogger,
+	log *slog.Logger,
 	dashboardConfig dashboard.Config,
 	kcBuilder kubeconfig.KcBuilder,
 	convergedCloudRegionsProvider ConvergedCloudRegionProvider,
@@ -79,7 +79,7 @@ func NewUpdate(cfg Config,
 ) *UpdateEndpoint {
 	return &UpdateEndpoint{
 		config:                                   cfg,
-		log:                                      log.WithField("service", "UpdateEndpoint"),
+		log:                                      log.With("service", "UpdateEndpoint"),
 		instanceStorage:                          instanceStorage,
 		runtimeStates:                            runtimeStates,
 		operationStorage:                         operationStorage,
@@ -101,27 +101,27 @@ func NewUpdate(cfg Config,
 //
 //	PATCH /v2/service_instances/{instance_id}
 func (b *UpdateEndpoint) Update(_ context.Context, instanceID string, details domain.UpdateDetails, asyncAllowed bool) (domain.UpdateServiceSpec, error) {
-	logger := b.log.WithField("instanceID", instanceID)
-	logger.Infof("Updating instanceID: %s", instanceID)
-	logger.Infof("Updating asyncAllowed: %v", asyncAllowed)
-	logger.Infof("Parameters: '%s'", string(details.RawParameters))
+	logger := b.log.With("instanceID", instanceID)
+	logger.Info(fmt.Sprintf("Updating instanceID: %s", instanceID))
+	logger.Info(fmt.Sprintf("Updating asyncAllowed: %v", asyncAllowed))
+	logger.Info(fmt.Sprintf("Parameters: '%s'", string(details.RawParameters)))
 	instance, err := b.instanceStorage.GetByID(instanceID)
 	if err != nil && dberr.IsNotFound(err) {
-		logger.Errorf("unable to get instance: %s", err.Error())
+		logger.Error(fmt.Sprintf("unable to get instance: %s", err.Error()))
 		return domain.UpdateServiceSpec{}, apiresponses.NewFailureResponse(err, http.StatusNotFound, fmt.Sprintf("could not execute update for instanceID %s", instanceID))
 	} else if err != nil {
-		logger.Errorf("unable to get instance: %s", err.Error())
+		logger.Error(fmt.Sprintf("unable to get instance: %s", err.Error()))
 		return domain.UpdateServiceSpec{}, fmt.Errorf("unable to get instance")
 	}
-	logger.Infof("Plan ID/Name: %s/%s", instance.ServicePlanID, PlanNamesMapping[instance.ServicePlanID])
+	logger.Info(fmt.Sprintf("Plan ID/Name: %s/%s", instance.ServicePlanID, PlanNamesMapping[instance.ServicePlanID]))
 	var ersContext internal.ERSContext
 	err = json.Unmarshal(details.RawContext, &ersContext)
 	if err != nil {
-		logger.Errorf("unable to decode context: %s", err.Error())
+		logger.Error(fmt.Sprintf("unable to decode context: %s", err.Error()))
 		return domain.UpdateServiceSpec{}, fmt.Errorf("unable to unmarshal context")
 	}
-	logger.Infof("Global account ID: %s active: %s", instance.GlobalAccountID, ptr.BoolAsString(ersContext.Active))
-	logger.Infof("Received context: %s", marshallRawContext(hideSensitiveDataFromRawContext(details.RawContext)))
+	logger.Info(fmt.Sprintf("Global account ID: %s active: %s", instance.GlobalAccountID, ptr.BoolAsString(ersContext.Active)))
+	logger.Info(fmt.Sprintf("Received context: %s", marshallRawContext(hideSensitiveDataFromRawContext(details.RawContext))))
 	// validation of incoming input
 	if err := b.validateWithJsonSchemaValidator(details, instance); err != nil {
 		return domain.UpdateServiceSpec{}, apiresponses.NewFailureResponse(err, http.StatusBadRequest, "validation failed")
@@ -135,7 +135,7 @@ func (b *UpdateEndpoint) Update(_ context.Context, instanceID string, details do
 	}
 	lastProvisioningOperation, err := b.operationStorage.GetProvisioningOperationByInstanceID(instance.InstanceID)
 	if err != nil {
-		logger.Errorf("cannot fetch provisioning lastProvisioningOperation for instance with ID: %s : %s", instance.InstanceID, err.Error())
+		logger.Error(fmt.Sprintf("cannot fetch provisioning lastProvisioningOperation for instance with ID: %s : %s", instance.InstanceID, err.Error()))
 		return domain.UpdateServiceSpec{}, fmt.Errorf("unable to process the update")
 	}
 	if lastProvisioningOperation.State == domain.Failed {
@@ -144,13 +144,13 @@ func (b *UpdateEndpoint) Update(_ context.Context, instanceID string, details do
 
 	lastDeprovisioningOperation, err := b.operationStorage.GetDeprovisioningOperationByInstanceID(instance.InstanceID)
 	if err != nil && !dberr.IsNotFound(err) {
-		logger.Errorf("cannot fetch deprovisioning for instance with ID: %s : %s", instance.InstanceID, err.Error())
+		logger.Error(fmt.Sprintf("cannot fetch deprovisioning for instance with ID: %s : %s", instance.InstanceID, err.Error()))
 		return domain.UpdateServiceSpec{}, fmt.Errorf("unable to process the update")
 	}
 	if err == nil {
 		if !lastDeprovisioningOperation.Temporary {
 			// it is not a suspension, but real deprovisioning
-			logger.Warnf("Cannot process update, the instance has started deprovisioning process (operationID=%s)", lastDeprovisioningOperation.Operation.ID)
+			logger.Warn(fmt.Sprintf("Cannot process update, the instance has started deprovisioning process (operationID=%s)", lastDeprovisioningOperation.Operation.ID))
 			return domain.UpdateServiceSpec{}, apiresponses.NewFailureResponse(fmt.Errorf("Unable to process an update of a deprovisioned instance"), http.StatusUnprocessableEntity, "")
 		}
 	}
@@ -207,9 +207,9 @@ func shouldUpdate(instance *internal.Instance, details domain.UpdateDetails, ers
 	return ersContext.ERSUpdate()
 }
 
-func (b *UpdateEndpoint) processUpdateParameters(instance *internal.Instance, details domain.UpdateDetails, lastProvisioningOperation *internal.ProvisioningOperation, asyncAllowed bool, ersContext internal.ERSContext, logger logrus.FieldLogger) (domain.UpdateServiceSpec, error) {
+func (b *UpdateEndpoint) processUpdateParameters(instance *internal.Instance, details domain.UpdateDetails, lastProvisioningOperation *internal.ProvisioningOperation, asyncAllowed bool, ersContext internal.ERSContext, logger *slog.Logger) (domain.UpdateServiceSpec, error) {
 	if !shouldUpdate(instance, details, ersContext) {
-		logger.Debugf("Parameters not provided, skipping processing update parameters")
+		logger.Debug("Parameters not provided, skipping processing update parameters")
 		return domain.UpdateServiceSpec{
 			IsAsync:       false,
 			DashboardURL:  instance.DashboardURL,
@@ -227,23 +227,23 @@ func (b *UpdateEndpoint) processUpdateParameters(instance *internal.Instance, de
 	if len(details.RawParameters) != 0 {
 		err := json.Unmarshal(details.RawParameters, &params)
 		if err != nil {
-			logger.Errorf("unable to unmarshal parameters: %s", err.Error())
+			logger.Error(fmt.Sprintf("unable to unmarshal parameters: %s", err.Error()))
 			return domain.UpdateServiceSpec{}, fmt.Errorf("unable to unmarshal parameters")
 		}
-		logger.Debugf("Updating with params: %+v", params)
+		logger.Debug(fmt.Sprintf("Updating with params: %+v", params))
 	}
 
 	if params.OIDC.IsProvided() {
 		if err := params.OIDC.Validate(); err != nil {
-			logger.Errorf("invalid OIDC parameters: %s", err.Error())
+			logger.Error(fmt.Sprintf("invalid OIDC parameters: %s", err.Error()))
 			return domain.UpdateServiceSpec{}, apiresponses.NewFailureResponse(err, http.StatusUnprocessableEntity, err.Error())
 		}
 	}
 
 	operationID := uuid.New().String()
-	logger = logger.WithField("operationID", operationID)
+	logger = logger.With("operationID", operationID)
 
-	logger.Debugf("creating update operation %v", params)
+	logger.Debug(fmt.Sprintf("creating update operation %v", params))
 	operation := internal.NewUpdateOperation(operationID, instance, params)
 	planID := instance.Parameters.PlanID
 	if len(details.PlanID) != 0 {
@@ -251,7 +251,7 @@ func (b *UpdateEndpoint) processUpdateParameters(instance *internal.Instance, de
 	}
 	defaults, err := b.planDefaults(planID, instance.Provider, &instance.Provider)
 	if err != nil {
-		logger.Errorf("unable to obtain plan defaults: %s", err.Error())
+		logger.Error(fmt.Sprintf("unable to obtain plan defaults: %s", err.Error()))
 		return domain.UpdateServiceSpec{}, fmt.Errorf("unable to obtain plan defaults")
 	}
 	var autoscalerMin, autoscalerMax int
@@ -260,7 +260,7 @@ func (b *UpdateEndpoint) processUpdateParameters(instance *internal.Instance, de
 		autoscalerMin, autoscalerMax = p.AutoScalerMin, p.AutoScalerMax
 	}
 	if err := operation.ProvisioningParameters.Parameters.AutoScalerParameters.Validate(autoscalerMin, autoscalerMax); err != nil {
-		logger.Errorf("invalid autoscaler parameters: %s", err.Error())
+		logger.Error(fmt.Sprintf("invalid autoscaler parameters: %s", err.Error()))
 		return domain.UpdateServiceSpec{}, apiresponses.NewFailureResponse(err, http.StatusBadRequest, err.Error())
 	}
 	err = b.operationStorage.InsertOperation(operation)
@@ -292,7 +292,7 @@ func (b *UpdateEndpoint) processUpdateParameters(instance *internal.Instance, de
 			instance, err = b.instanceStorage.Update(*instance)
 			if err != nil {
 				params := strings.Join(updateStorage, ", ")
-				logger.Warnf("unable to update instance with new %v (%s), retrying", params, err.Error())
+				logger.Warn(fmt.Sprintf("unable to update instance with new %v (%s), retrying", params, err.Error()))
 				return false, nil
 			}
 			return true, nil
@@ -301,7 +301,7 @@ func (b *UpdateEndpoint) processUpdateParameters(instance *internal.Instance, de
 			return domain.UpdateServiceSpec{}, response
 		}
 	}
-	logger.Debugf("Adding update operation to the processing queue")
+	logger.Debug("Adding update operation to the processing queue")
 	b.updatingQueue.Add(operationID)
 
 	return domain.UpdateServiceSpec{
@@ -314,18 +314,18 @@ func (b *UpdateEndpoint) processUpdateParameters(instance *internal.Instance, de
 	}, nil
 }
 
-func (b *UpdateEndpoint) processContext(instance *internal.Instance, details domain.UpdateDetails, lastProvisioningOperation *internal.ProvisioningOperation, logger logrus.FieldLogger) (*internal.Instance, bool, error) {
+func (b *UpdateEndpoint) processContext(instance *internal.Instance, details domain.UpdateDetails, lastProvisioningOperation *internal.ProvisioningOperation, logger *slog.Logger) (*internal.Instance, bool, error) {
 	var ersContext internal.ERSContext
 	err := json.Unmarshal(details.RawContext, &ersContext)
 	if err != nil {
-		logger.Errorf("unable to decode context: %s", err.Error())
+		logger.Error(fmt.Sprintf("unable to decode context: %s", err.Error()))
 		return nil, false, fmt.Errorf("unable to unmarshal context")
 	}
-	logger.Infof("Global account ID: %s active: %s", instance.GlobalAccountID, ptr.BoolAsString(ersContext.Active))
+	logger.Info(fmt.Sprintf("Global account ID: %s active: %s", instance.GlobalAccountID, ptr.BoolAsString(ersContext.Active)))
 
 	lastOp, err := b.operationStorage.GetLastOperation(instance.InstanceID)
 	if err != nil {
-		logger.Errorf("unable to get last operation: %s", err.Error())
+		logger.Error(fmt.Sprintf("unable to get last operation: %s", err.Error()))
 		return nil, false, fmt.Errorf("failed to process ERS context")
 	}
 
@@ -344,7 +344,7 @@ func (b *UpdateEndpoint) processContext(instance *internal.Instance, details dom
 
 	changed, err := b.contextUpdateHandler.Handle(instance, ersContext)
 	if err != nil {
-		logger.Errorf("processing context updated failed: %s", err.Error())
+		logger.Error(fmt.Sprintf("processing context updated failed: %s", err.Error()))
 		return nil, changed, fmt.Errorf("unable to process the update")
 	}
 
@@ -360,12 +360,12 @@ func (b *UpdateEndpoint) processContext(instance *internal.Instance, details dom
 		}
 		instance.GlobalAccountID = ersContext.GlobalAccountID
 		needUpdateCustomResources = true
-		logger.Infof("Global account ID changed to: %s. need update labels", instance.GlobalAccountID)
+		logger.Info(fmt.Sprintf("Global account ID changed to: %s. need update labels", instance.GlobalAccountID))
 	}
 
 	newInstance, err := b.instanceStorage.Update(*instance)
 	if err != nil {
-		logger.Errorf("processing context updated failed: %s", err.Error())
+		logger.Error(fmt.Sprintf("processing context updated failed: %s", err.Error()))
 		return nil, changed, fmt.Errorf("unable to process the update")
 	} else if b.updateCustomResourcesLabelsOnAccountMove && needUpdateCustomResources {
 		logger.Info("updating labels on related CRs")
@@ -373,7 +373,7 @@ func (b *UpdateEndpoint) processContext(instance *internal.Instance, details dom
 		labeler := NewLabeler(b.kcpClient)
 		err = labeler.UpdateLabels(newInstance.RuntimeID, newInstance.GlobalAccountID)
 		if err != nil {
-			logger.Errorf("unable to update global account label on CRs while doing account move: %s", err.Error())
+			logger.Error(fmt.Sprintf("unable to update global account label on CRs while doing account move: %s", err.Error()))
 			response := apiresponses.NewFailureResponse(fmt.Errorf("Update CRs label failed"), http.StatusInternalServerError, err.Error())
 			return newInstance, changed, response
 		}
@@ -386,7 +386,7 @@ func (b *UpdateEndpoint) processContext(instance *internal.Instance, details dom
 func (b *UpdateEndpoint) extractActiveValue(id string, provisioning internal.ProvisioningOperation) (*bool, error) {
 	deprovisioning, dErr := b.operationStorage.GetDeprovisioningOperationByInstanceID(id)
 	if dErr != nil && !dberr.IsNotFound(dErr) {
-		b.log.Errorf("Unable to get deprovisioning operation for the instance %s to check the active flag: %s", id, dErr.Error())
+		b.log.Error(fmt.Sprintf("Unable to get deprovisioning operation for the instance %s to check the active flag: %s", id, dErr.Error()))
 		return nil, dErr
 	}
 	// there was no any deprovisioning in the past (any suspension)
@@ -399,7 +399,7 @@ func (b *UpdateEndpoint) extractActiveValue(id string, provisioning internal.Pro
 
 func (b *UpdateEndpoint) getJsonSchemaValidator(provider pkg.CloudProvider, planID string, platformRegion string) (JSONSchemaValidator, error) {
 	// shootAndSeedSameRegion is never enabled for update
-	b.log.Printf("region is: %s", platformRegion)
+	b.log.Info(fmt.Sprintf("region is: %s", platformRegion))
 	plans := Plans(b.plansConfig, provider, b.config.IncludeAdditionalParamsInSchema, euaccess.IsEURestrictedAccess(platformRegion), b.config.UseSmallerMachineTypes, false, b.convergedCloudRegionsProvider.GetRegions(platformRegion), assuredworkloads.IsKSA(platformRegion))
 	plan := plans[planID]
 	schema := string(Marshal(plan.Schemas.Instance.Update.Parameters))

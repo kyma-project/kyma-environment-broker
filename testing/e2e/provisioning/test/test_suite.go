@@ -3,7 +3,10 @@ package test
 import (
 	"context"
 	"crypto/tls"
+	"fmt"
+	"log/slog"
 	"net/http"
+	"os"
 	"testing"
 	"time"
 
@@ -14,7 +17,6 @@ import (
 	"github.com/kyma-project/kyma-environment-broker/testing/e2e/provisioning/pkg/client/v1_client"
 	"github.com/ory/hydra-maester/api/v1alpha1"
 	"github.com/pkg/errors"
-	"github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"github.com/vrischmann/envconfig"
@@ -51,7 +53,7 @@ type Suite struct {
 
 	upgradeSuite *UpgradeSuite
 
-	log             logrus.FieldLogger
+	log             *slog.Logger
 	brokerClient    *broker.Client
 	runtimeClient   *runtime.Client
 	secretClient    v1_client.Secrets
@@ -88,7 +90,9 @@ func newTestSuite(t *testing.T) *Suite {
 	err := envconfig.InitWithPrefix(cfg, "APP")
 	require.NoError(t, err)
 
-	log := logrus.New()
+	log := slog.New(slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{
+		Level: slog.LevelInfo,
+	}))
 
 	k8sConfig, err := config.GetConfig()
 	if err != nil {
@@ -114,14 +118,14 @@ func newTestSuite(t *testing.T) *Suite {
 		require.NoError(t, err)
 
 		instanceID = cfgMap.Data[instanceIdKey]
-		log.Infof("using instance ID %s", instanceID)
+		log.Info(fmt.Sprintf("using instance ID %s", instanceID))
 	}
 
 	httpClient := newHTTPClient(cfg.SkipCertVerification)
 
-	brokerClient := broker.NewClient(ctx, cfg.Broker, cfg.TenantID, instanceID, subAccountID, userID, oAuth2Config, log.WithField("service", "broker_client"))
+	brokerClient := broker.NewClient(ctx, cfg.Broker, cfg.TenantID, instanceID, subAccountID, userID, oAuth2Config, log.With("service", "broker_client"))
 
-	runtimeClient := runtime.NewClient(cfg.TenantID, instanceID, *httpClient, cli, log.WithField("service", "runtime_client"))
+	runtimeClient := runtime.NewClient(cfg.TenantID, instanceID, *httpClient, cli, log.With("service", "runtime_client"))
 
 	suite := &Suite{
 		t:   t,
@@ -167,7 +171,7 @@ func (ts *Suite) Cleanup() {
 
 // cleanupResources removes secret and config map used to store data about the test
 func (ts *Suite) cleanupResources() error {
-	ts.log.Infof("removing secret %s", ts.ConfigName)
+	ts.log.Info(fmt.Sprintf("removing secret %s", ts.ConfigName))
 	err := ts.secretClient.Delete(v1.Secret{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      ts.ConfigName,
@@ -178,7 +182,7 @@ func (ts *Suite) cleanupResources() error {
 		return errors.Wrapf(err, "while waiting for secret %s deletion", ts.ConfigName)
 	}
 
-	ts.log.Infof("removing config map %s", ts.ConfigName)
+	ts.log.Info(fmt.Sprintf("removing config map %s", ts.ConfigName))
 	err = ts.configMapClient.Delete(v1.ConfigMap{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      ts.ConfigName,

@@ -2,9 +2,9 @@ package httputil
 
 import (
 	"encoding/json"
+	"fmt"
+	"log/slog"
 	"net/http"
-
-	"github.com/sirupsen/logrus"
 )
 
 func WriteResponse(w http.ResponseWriter, code int, object interface{}) {
@@ -18,7 +18,7 @@ func WriteResponse(w http.ResponseWriter, code int, object interface{}) {
 	w.WriteHeader(code)
 	_, err = w.Write(data)
 	if err != nil {
-		logrus.Warnf("could not write response %s", string(data))
+		slog.Warn(fmt.Sprintf("could not write response %s", string(data)))
 	}
 }
 

@@ -3,10 +3,10 @@ package azure
 import (
 	"context"
 	"fmt"
+	"log/slog"
 
 	"github.com/Azure/azure-sdk-for-go/services/eventhub/mgmt/2017-04-01/eventhub"
 	"github.com/Azure/azure-sdk-for-go/services/resources/mgmt/2019-05-01/resources"
-	"github.com/sirupsen/logrus"
 )
 
 const (
@@ -30,7 +30,7 @@ type Client struct {
 	// the actual azure client
 	eventHubNamespaceClient eventhub.NamespacesClient
 	resourceGroupClient     resources.GroupsClient
-	logger                  logrus.FieldLogger
+	logger                  *slog.Logger
 }
 
 type ResourceGroupDoesNotExistError struct {
@@ -45,7 +45,7 @@ func (e ResourceGroupDoesNotExistError) Error() string {
 	return e.message
 }
 
-func NewAzureClient(namespaceClient eventhub.NamespacesClient, resourceGroupClient resources.GroupsClient, logger logrus.FieldLogger) *Client {
+func NewAzureClient(namespaceClient eventhub.NamespacesClient, resourceGroupClient resources.GroupsClient, logger *slog.Logger) *Client {
 	return &Client{
 		eventHubNamespaceClient: namespaceClient,
 		resourceGroupClient:     resourceGroupClient,
@@ -82,7 +82,7 @@ func (nc *Client) DeleteResourceGroup(ctx context.Context, tags Tags) (resources
 	if resourceGroup.Name == nil {
 		return resources.GroupsDeleteFuture{}, fmt.Errorf("resource group name is nil")
 	}
-	nc.logger.Infof("deleting resource group: %s", *resourceGroup.Name)
+	nc.logger.Info(fmt.Sprintf("deleting resource group: %s", *resourceGroup.Name))
 	future, err := nc.resourceGroupClient.Delete(ctx, *resourceGroup.Name)
 	return future, err
 }

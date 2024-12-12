@@ -2,17 +2,17 @@ package azure
 
 import (
 	"fmt"
+	"log/slog"
 
 	"github.com/Azure/azure-sdk-for-go/services/eventhub/mgmt/2017-04-01/eventhub"
 	"github.com/Azure/azure-sdk-for-go/services/resources/mgmt/2019-05-01/resources"
 	"github.com/Azure/go-autorest/autorest"
 	"github.com/Azure/go-autorest/autorest/adal"
 	"github.com/Azure/go-autorest/autorest/azure"
-	"github.com/sirupsen/logrus"
 )
 
 type HyperscalerProvider interface {
-	GetClient(config *Config, logger logrus.FieldLogger) (Interface, error)
+	GetClient(config *Config, logger *slog.Logger) (Interface, error)
 }
 
 var _ HyperscalerProvider = (*azureProvider)(nil)
@@ -24,7 +24,7 @@ func NewAzureProvider() HyperscalerProvider {
 }
 
 // GetClient gets a client for interacting with Azure
-func (ac *azureProvider) GetClient(config *Config, logger logrus.FieldLogger) (Interface, error) {
+func (ac *azureProvider) GetClient(config *Config, logger *slog.Logger) (Interface, error) {
 
 	environment, err := config.Environment()
 	if err != nil {

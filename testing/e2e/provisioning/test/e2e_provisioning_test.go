@@ -26,7 +26,7 @@ func Test_E2E_Provisioning(t *testing.T) {
 	operationID, err := ts.brokerClient.ProvisionRuntime("")
 	require.NoError(t, err)
 
-	ts.log.Infof("Creating config map %s with test data", ts.ConfigName)
+	ts.log.Info(fmt.Sprintf("Creating config map %s with test data", ts.ConfigName))
 	err = ts.configMapClient.Create(configMap)
 	require.NoError(t, err)
 
@@ -36,7 +36,7 @@ func Test_E2E_Provisioning(t *testing.T) {
 	dashboardURL, err := ts.brokerClient.FetchDashboardURL()
 	require.NoError(t, err)
 
-	ts.log.Infof("Updating config map %s with dashboardUrl", ts.ConfigName)
+	ts.log.Info(fmt.Sprintf("Updating config map %s with dashboardUrl", ts.ConfigName))
 	configMap.Data[dashboardUrlKey] = dashboardURL
 	err = ts.configMapClient.Update(configMap)
 	require.NoError(t, err)
@@ -45,7 +45,7 @@ func Test_E2E_Provisioning(t *testing.T) {
 	config, err := ts.runtimeClient.FetchRuntimeConfig()
 	require.NoError(t, err)
 
-	ts.log.Infof("Creating a secret %s with test data", ts.ConfigName)
+	ts.log.Info(fmt.Sprintf("Creating a secret %s with test data", ts.ConfigName))
 	err = ts.secretClient.Create(ts.testSecret(config))
 	require.NoError(t, err)
 

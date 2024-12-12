@@ -4,7 +4,9 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"log/slog"
 	"net/http"
+	"os"
 	"testing"
 
 	"github.com/kyma-project/kyma-environment-broker/internal/whitelist"
@@ -24,7 +26,6 @@ import (
 	"github.com/kyma-project/kyma-environment-broker/internal/ptr"
 	"github.com/kyma-project/kyma-environment-broker/internal/storage"
 	"github.com/pivotal-cf/brokerapi/v8/domain"
-	"github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
@@ -53,6 +54,9 @@ const (
 var dashboardConfig = dashboard.Config{LandscapeURL: "https://dashboard.example.com"}
 
 func TestProvision_Provision(t *testing.T) {
+	log := slog.New(slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{
+		Level: slog.LevelInfo,
+	}))
 	t.Run("new operation will be created", func(t *testing.T) {
 		// given
 		// #setup memory storage
@@ -85,7 +89,7 @@ func TestProvision_Provision(t *testing.T) {
 			factoryBuilder,
 			broker.PlansConfig{},
 			planDefaults,
-			logrus.StandardLogger(),
+			log,
 			dashboardConfig,
 			kcBuilder,
 			whitelist.Set{},
@@ -161,7 +165,7 @@ func TestProvision_Provision(t *testing.T) {
 			factoryBuilder,
 			broker.PlansConfig{},
 			planDefaults,
-			logrus.StandardLogger(),
+			log,
 			dashboardConfig,
 			kcBuilder,
 			whitelist.Set{},
@@ -241,7 +245,7 @@ func TestProvision_Provision(t *testing.T) {
 			factoryBuilder,
 			broker.PlansConfig{},
 			planDefaults,
-			logrus.StandardLogger(),
+			log,
 			dashboardConfig,
 			kcBuilder,
 			whitelist.Set{},
@@ -292,7 +296,7 @@ func TestProvision_Provision(t *testing.T) {
 			factoryBuilder,
 			broker.PlansConfig{},
 			planDefaults,
-			logrus.StandardLogger(),
+			log,
 			dashboardConfig,
 			kcBuilder,
 			whitelist.Set{},
@@ -368,7 +372,7 @@ func TestProvision_Provision(t *testing.T) {
 			factoryBuilder,
 			broker.PlansConfig{},
 			planDefaults,
-			logrus.StandardLogger(),
+			log,
 			dashboardConfig,
 			kcBuilder,
 			whitelist.Set{},
@@ -447,7 +451,7 @@ func TestProvision_Provision(t *testing.T) {
 			factoryBuilder,
 			broker.PlansConfig{},
 			planDefaults,
-			logrus.StandardLogger(),
+			log,
 			dashboardConfig,
 			kcBuilder,
 			whitelist.Set{},
@@ -498,7 +502,7 @@ func TestProvision_Provision(t *testing.T) {
 			factoryBuilder,
 			broker.PlansConfig{},
 			planDefaults,
-			logrus.StandardLogger(),
+			log,
 			dashboardConfig,
 			kcBuilder,
 			whitelist.Set{},
@@ -550,7 +554,7 @@ func TestProvision_Provision(t *testing.T) {
 			factoryBuilder,
 			broker.PlansConfig{},
 			planDefaults,
-			logrus.StandardLogger(),
+			log,
 			dashboardConfig,
 			kcBuilder,
 			whitelist.Set{},
@@ -616,7 +620,7 @@ func TestProvision_Provision(t *testing.T) {
 			factoryBuilder,
 			broker.PlansConfig{},
 			planDefaults,
-			logrus.StandardLogger(),
+			log,
 			dashboardConfig,
 			kcBuilder,
 			whitelist.Set{},
@@ -682,7 +686,7 @@ func TestProvision_Provision(t *testing.T) {
 			factoryBuilder,
 			broker.PlansConfig{},
 			planDefaults,
-			logrus.StandardLogger(),
+			log,
 			dashboardConfig,
 			kcBuilder,
 			whitelist.Set{},
@@ -728,7 +732,7 @@ func TestProvision_Provision(t *testing.T) {
 			factoryBuilder,
 			broker.PlansConfig{},
 			planDefaults,
-			logrus.StandardLogger(),
+			log,
 			dashboardConfig,
 			kcBuilder,
 			whitelist.Set{},
@@ -767,7 +771,7 @@ func TestProvision_Provision(t *testing.T) {
 			factoryBuilder,
 			broker.PlansConfig{},
 			planDefaults,
-			logrus.StandardLogger(),
+			log,
 			dashboardConfig,
 			kcBuilder,
 			whitelist.Set{},
@@ -810,7 +814,7 @@ func TestProvision_Provision(t *testing.T) {
 			factoryBuilder,
 			broker.PlansConfig{},
 			planDefaults,
-			logrus.StandardLogger(),
+			log,
 			dashboardConfig,
 			kcBuilder,
 			whitelist.Set{},
@@ -857,7 +861,7 @@ func TestProvision_Provision(t *testing.T) {
 			factoryBuilder,
 			broker.PlansConfig{},
 			planDefaults,
-			logrus.StandardLogger(),
+			log,
 			dashboardConfig,
 			kcBuilder,
 			whitelist.Set{},
@@ -910,7 +914,7 @@ func TestProvision_Provision(t *testing.T) {
 			factoryBuilder,
 			broker.PlansConfig{},
 			planDefaults,
-			logrus.StandardLogger(),
+			log,
 			dashboardConfig,
 			kcBuilder,
 			whitelist.Set{},
@@ -969,7 +973,7 @@ func TestProvision_Provision(t *testing.T) {
 			factoryBuilder,
 			broker.PlansConfig{},
 			planDefaults,
-			logrus.StandardLogger(),
+			log,
 			dashboardConfig,
 			kcBuilder,
 			whitelist.Set{},
@@ -1028,7 +1032,7 @@ func TestProvision_Provision(t *testing.T) {
 			factoryBuilder,
 			broker.PlansConfig{},
 			planDefaults,
-			logrus.StandardLogger(),
+			log,
 			dashboardConfig,
 			kcBuilder,
 			whitelist.Set{},
@@ -1088,7 +1092,7 @@ func TestProvision_Provision(t *testing.T) {
 			factoryBuilder,
 			broker.PlansConfig{},
 			planDefaults,
-			logrus.StandardLogger(),
+			log,
 			dashboardConfig,
 			kcBuilder,
 			whitelist.Set{},
@@ -1134,7 +1138,7 @@ func TestProvision_Provision(t *testing.T) {
 			factoryBuilder,
 			broker.PlansConfig{},
 			planDefaults,
-			logrus.StandardLogger(),
+			log,
 			dashboardConfig,
 			kcBuilder,
 			whitelist.Set{},
@@ -1202,7 +1206,7 @@ func TestProvision_Provision(t *testing.T) {
 			factoryBuilder,
 			broker.PlansConfig{},
 			planDefaults,
-			logrus.StandardLogger(),
+			log,
 			dashboardConfig,
 			kcBuilder,
 			whitelist.Set{},
@@ -1260,7 +1264,7 @@ func TestProvision_Provision(t *testing.T) {
 			factoryBuilder,
 			broker.PlansConfig{},
 			planDefaults,
-			logrus.StandardLogger(),
+			log,
 			dashboardConfig,
 			kcBuilder,
 			whitelist.Set{globalAccountID: struct{}{}},
@@ -1316,7 +1320,7 @@ func TestProvision_Provision(t *testing.T) {
 			factoryBuilder,
 			broker.PlansConfig{},
 			planDefaults,
-			logrus.StandardLogger(),
+			log,
 			dashboardConfig,
 			kcBuilder,
 			whitelist.Set{},
@@ -1363,7 +1367,7 @@ func TestProvision_Provision(t *testing.T) {
 			factoryBuilder,
 			broker.PlansConfig{},
 			planDefaults,
-			logrus.StandardLogger(),
+			log,
 			dashboardConfig,
 			kcBuilder,
 			whitelist.Set{},
@@ -1413,7 +1417,7 @@ func TestProvision_Provision(t *testing.T) {
 			factoryBuilder,
 			broker.PlansConfig{},
 			planDefaults,
-			logrus.StandardLogger(),
+			log,
 			dashboardConfig,
 			kcBuilder,
 			whitelist.Set{},
@@ -1466,7 +1470,7 @@ func TestProvision_Provision(t *testing.T) {
 			factoryBuilder,
 			broker.PlansConfig{},
 			planDefaults,
-			logrus.StandardLogger(),
+			log,
 			dashboardConfig,
 			kcBuilder,
 			whitelist.Set{},
@@ -1549,6 +1553,10 @@ func TestNetworkingValidation(t *testing.T) {
 			// #setup memory storage
 			memoryStorage := storage.NewMemoryStorage()
 
+			log := slog.New(slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{
+				Level: slog.LevelInfo,
+			}))
+
 			queue := &automock.Queue{}
 			queue.On("Add", mock.AnythingOfType("string"))
 
@@ -1570,7 +1578,7 @@ func TestNetworkingValidation(t *testing.T) {
 				factoryBuilder,
 				broker.PlansConfig{},
 				planDefaults,
-				logrus.StandardLogger(),
+				log,
 				dashboardConfig,
 				kcBuilder,
 				whitelist.Set{},
@@ -1647,6 +1655,10 @@ func TestRegionValidation(t *testing.T) {
 			// #setup memory storage
 			memoryStorage := storage.NewMemoryStorage()
 
+			log := slog.New(slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{
+				Level: slog.LevelInfo,
+			}))
+
 			queue := &automock.Queue{}
 			queue.On("Add", mock.AnythingOfType("string"))
 
@@ -1668,7 +1680,7 @@ func TestRegionValidation(t *testing.T) {
 				factoryBuilder,
 				broker.PlansConfig{},
 				planDefaults,
-				logrus.StandardLogger(),
+				log,
 				dashboardConfig,
 				kcBuilder,
 				whitelist.Set{},
@@ -1698,6 +1710,9 @@ func TestRegionValidation(t *testing.T) {
 }
 
 func TestSapConvergedCloudBlocking(t *testing.T) {
+	log := slog.New(slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{
+		Level: slog.LevelInfo,
+	}))
 	t.Run("Should succeed if converged cloud is enabled and converged plan selected", func(t *testing.T) {
 		// given
 		memoryStorage := storage.NewMemoryStorage()
@@ -1728,7 +1743,7 @@ func TestSapConvergedCloudBlocking(t *testing.T) {
 			factoryBuilder,
 			broker.PlansConfig{},
 			planDefaults,
-			logrus.StandardLogger(),
+			log,
 			dashboardConfig,
 			kcBuilder,
 			whitelist.Set{},
@@ -1779,7 +1794,7 @@ func TestSapConvergedCloudBlocking(t *testing.T) {
 			factoryBuilder,
 			broker.PlansConfig{},
 			planDefaults,
-			logrus.StandardLogger(),
+			log,
 			dashboardConfig,
 			kcBuilder,
 			whitelist.Set{},
@@ -1829,7 +1844,7 @@ func TestSapConvergedCloudBlocking(t *testing.T) {
 			factoryBuilder,
 			broker.PlansConfig{},
 			planDefaults,
-			logrus.StandardLogger(),
+			log,
 			dashboardConfig,
 			kcBuilder,
 			whitelist.Set{},

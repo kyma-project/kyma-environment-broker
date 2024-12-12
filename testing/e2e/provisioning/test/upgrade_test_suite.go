@@ -2,12 +2,12 @@ package test
 
 import (
 	"context"
+	"log/slog"
 	"testing"
 	"time"
 
 	"github.com/kyma-project/kyma-environment-broker/testing/e2e/provisioning/pkg/client/broker"
 
-	"github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/require"
 	"github.com/vrischmann/envconfig"
 )
@@ -22,7 +22,7 @@ type UpgradeSuite struct {
 	UpgradeTimeout time.Duration
 }
 
-func newUpgradeSuite(t *testing.T, ctx context.Context, oAuthConfig broker.BrokerOAuthConfig, config broker.Config, log logrus.FieldLogger) *UpgradeSuite {
+func newUpgradeSuite(t *testing.T, ctx context.Context, oAuthConfig broker.BrokerOAuthConfig, config broker.Config, log *slog.Logger) *UpgradeSuite {
 	cfg := &UpgradeConfig{}
 	err := envconfig.InitWithPrefix(cfg, "APP")
 	require.NoError(t, err)

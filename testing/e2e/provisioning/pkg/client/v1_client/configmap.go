@@ -2,10 +2,11 @@ package v1_client
 
 import (
 	"context"
+	"fmt"
+	"log/slog"
 	"time"
 
 	"github.com/pkg/errors"
-	"github.com/sirupsen/logrus"
 	v1 "k8s.io/api/core/v1"
 	apiErrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/util/wait"
@@ -25,10 +26,10 @@ type ConfigMaps interface {
 
 type ConfigMapClient struct {
 	client client.Client
-	log    logrus.FieldLogger
+	log    *slog.Logger
 }
 
-func NewConfigMapClient(client client.Client, log logrus.FieldLogger) *ConfigMapClient {
+func NewConfigMapClient(client client.Client, log *slog.Logger) *ConfigMapClient {
 	return &ConfigMapClient{client: client, log: log}
 }
 
@@ -40,7 +41,7 @@ func (c *ConfigMapClient) Get(name, namespace string) (*v1.ConfigMap, error) {
 			if apiErrors.IsNotFound(err) {
 				return false, err
 			}
-			c.log.Errorf("while creating config map: %v", err)
+			c.log.Error(fmt.Sprintf("while creating config map: %v", err))
 			return false, nil
 		}
 		return true, nil
@@ -62,7 +63,7 @@ func (c *ConfigMapClient) Create(configMap v1.ConfigMap) error {
 				}
 				return true, nil
 			}
-			c.log.Errorf("while creating config map: %v", err)
+			c.log.Error(fmt.Sprintf("while creating config map: %v", err))
 			return false, nil
 		}
 		return true, nil
@@ -77,7 +78,7 @@ func (c *ConfigMapClient) Update(configMap v1.ConfigMap) error {
 	err := wait.PollUntilContextTimeout(context.Background(), time.Second, timeout, true, func(ctx context.Context) (bool, error) {
 		err := c.client.Update(context.Background(), &configMap)
 		if err != nil {
-			c.log.Errorf("while updating config map: %v", err)
+			c.log.Error(fmt.Sprintf("while updating config map: %v", err))
 			return false, nil
 		}
 		return true, nil
@@ -96,7 +97,7 @@ func (c *ConfigMapClient) Delete(configMap v1.ConfigMap) error {
 				c.log.Warn("config map not found")
 				return true, nil
 			}
-			c.log.Errorf("while deleting config map: %v", err)
+			c.log.Error(fmt.Sprintf("while deleting config map: %v", err))
 			return false, nil
 		}
 		return true, nil
