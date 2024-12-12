@@ -18,7 +18,6 @@ If you want to know how to use KEB, read the documents in the [`user`](user) dir
 * [Check SAP BTP, Kyma Runtime Instance Details](./user/05-40-instance-details.md)
 * [Configure List of Modules](./user/05-50-configure-list-of-modules.md)
 * [Kyma Bindings](./user/05-60-kyma-bindings.md)
-* [Kyma Bindings: API Examples](./user/05-60-kyma-bindings-api-examples.md)
 * [Kyma Environment Broker Metrics](./user/06-10-metrics.md)
 
 For technical details of KEB, go to the `contributor` directory:  
@@ -32,6 +31,7 @@ For technical details of KEB, go to the `contributor` directory:
 * [Hyperscaler Account Pool](./contributor/03-10-hyperscaler-account-pool.md)
 * [EU Access](./contributor/03-20-eu-access.md)
 * [Trial and Free Instance Expiration](./contributor/03-30-trial-and-free-expiration.md)
+* [Kyma Bindings Processes](./contributor/03-40-kyma-bindings-processes.md)
 * [GitHub Actions Workflows](./contributor/04-10-workflows.md)
 * [Kyma Environment Broker Release Pipeline](./contributor/04-20-release.md)
 * [End-to-end Tests of Kyma Environment Broker](./contributor/05-10-e2e_tests.md)
