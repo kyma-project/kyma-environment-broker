@@ -31,7 +31,6 @@ import (
 	"github.com/kyma-project/kyma-environment-broker/internal/storage"
 	"github.com/pivotal-cf/brokerapi/v8/domain"
 	"github.com/pivotal-cf/brokerapi/v8/handlers"
-	"github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	corev1 "k8s.io/api/core/v1"
@@ -81,14 +80,8 @@ func TestCreateBindingEndpoint(t *testing.T) {
 		Level: slog.LevelDebug,
 	}))
 
-	logs := logrus.New()
-	logs.SetLevel(logrus.DebugLevel)
-	logs.SetFormatter(&logrus.JSONFormatter{
-		TimestampFormat: time.RFC3339Nano,
-	})
-
 	brokerLogger := lager.NewLogger("test")
-	brokerLogger.RegisterSink(lager.NewWriterSink(logs.Writer(), lager.DEBUG))
+	brokerLogger.RegisterSink(lager.NewWriterSink(os.Stdout, lager.DEBUG))
 
 	//// schema
 	sch := runtime.NewScheme()

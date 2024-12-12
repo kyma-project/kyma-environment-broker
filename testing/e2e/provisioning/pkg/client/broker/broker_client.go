@@ -7,14 +7,15 @@ import (
 	"fmt"
 	"io"
 	"io/ioutil"
+	"log/slog"
 	"net/http"
+	"os"
 	"strings"
 	"time"
 
 	"github.com/google/uuid"
 	"github.com/pivotal-cf/brokerapi/v7/domain"
 	"github.com/pkg/errors"
-	"github.com/sirupsen/logrus"
 	"github.com/thanhpk/randstr"
 	"golang.org/x/oauth2/clientcredentials"
 	"k8s.io/apimachinery/pkg/util/wait"
@@ -48,10 +49,10 @@ type Client struct {
 	userID          string
 
 	client *http.Client
-	log    logrus.FieldLogger
+	log    *slog.Logger
 }
 
-func NewClient(ctx context.Context, config Config, globalAccountID, instanceID, subAccountID, userID string, oAuthCfg BrokerOAuthConfig, log logrus.FieldLogger) *Client {
+func NewClient(ctx context.Context, config Config, globalAccountID, instanceID, subAccountID, userID string, oAuthCfg BrokerOAuthConfig, log *slog.Logger) *Client {
 	cfg := clientcredentials.Config{
 		ClientID:     oAuthCfg.ClientID,
 		ClientSecret: oAuthCfg.ClientSecret,
@@ -108,12 +109,12 @@ type provisionParameters struct {
 // ProvisionRuntime requests Runtime provisioning in KEB
 // kymaVersion is optional, if it is empty, the default KEB version will be used
 func (c *Client) ProvisionRuntime(kymaVersion string) (string, error) {
-	c.log.Infof("Provisioning Runtime [instanceID: %s, NAME: %s]", c.InstanceID(), c.ClusterName())
+	c.log.Info(fmt.Sprintf("Provisioning Runtime [instanceID: %s, NAME: %s]", c.InstanceID(), c.ClusterName()))
 	requestByte, err := c.prepareProvisionDetails(kymaVersion)
 	if err != nil {
 		return "", errors.Wrap(err, "while preparing provision details")
 	}
-	c.log.Infof("Provisioning parameters: %v", string(requestByte))
+	c.log.Info(fmt.Sprintf("Provisioning parameters: %v", string(requestByte)))
 
 	provisionURL := fmt.Sprintf("%s/service_instances/%s", c.baseURL(), c.InstanceID())
 	response := provisionResponse{}
@@ -132,7 +133,7 @@ func (c *Client) ProvisionRuntime(kymaVersion string) (string, error) {
 	if err != nil {
 		return "", errors.Wrap(err, "while waiting for successful provision call")
 	}
-	c.log.Infof("Successfully send provision request, got operation ID %s", response.Operation)
+	c.log.Info(fmt.Sprintf("Successfully send provision request, got operation ID %s", response.Operation))
 
 	return response.Operation, nil
 }
@@ -142,7 +143,7 @@ func (c *Client) DeprovisionRuntime() (string, error) {
 	deprovisionURL := fmt.Sprintf(format, c.baseURL(), c.InstanceID(), kymaClassID, c.brokerConfig.PlanID)
 
 	response := provisionResponse{}
-	c.log.Infof("Deprovisioning Runtime [ID: %s, NAME: %s]", c.instanceID, c.clusterName)
+	c.log.Info(fmt.Sprintf("Deprovisioning Runtime [ID: %s, NAME: %s]", c.instanceID, c.clusterName))
 	err := wait.PollUntilContextTimeout(context.Background(), time.Second, time.Second*5, false, func(ctx context.Context) (bool, error) {
 		err := c.executeRequest(http.MethodDelete, deprovisionURL, http.StatusAccepted, nil, &response)
 		if err != nil {
@@ -154,17 +155,17 @@ func (c *Client) DeprovisionRuntime() (string, error) {
 	if err != nil {
 		return "", errors.Wrap(err, "while waiting for successful deprovision call")
 	}
-	c.log.Infof("Successfully send deprovision request, got operation ID %s", response.Operation)
+	c.log.Info(fmt.Sprintf("Successfully send deprovision request, got operation ID %s", response.Operation))
 	return response.Operation, nil
 }
 
 func (c *Client) SuspendRuntime() error {
-	c.log.Infof("Suspending Runtime [instanceID: %s, NAME: %s]", c.instanceID, c.clusterName)
+	c.log.Info(fmt.Sprintf("Suspending Runtime [instanceID: %s, NAME: %s]", c.instanceID, c.clusterName))
 	requestByte, err := c.prepareUpdateDetails(BoolPtr(false))
 	if err != nil {
 		return errors.Wrap(err, "while preparing update details")
 	}
-	c.log.Infof("Suspension parameters: %v", string(requestByte))
+	c.log.Info(fmt.Sprintf("Suspension parameters: %v", string(requestByte)))
 
 	format := "%s/service_instances/%s"
 	suspensionURL := fmt.Sprintf(format, c.baseURL(), c.instanceID)
@@ -181,17 +182,17 @@ func (c *Client) SuspendRuntime() error {
 	if err != nil {
 		return errors.Wrap(err, "while waiting for successful suspension call")
 	}
-	c.log.Infof("Successfully send suspension request for %s", suspensionResponse)
+	c.log.Info(fmt.Sprintf("Successfully send suspension request for %s", suspensionResponse))
 	return nil
 }
 
 func (c *Client) UnsuspendRuntime() error {
-	c.log.Infof("Unsuspending Runtime [instanceID: %s, NAME: %s]", c.InstanceID(), c.ClusterName())
+	c.log.Info(fmt.Sprintf("Unsuspending Runtime [instanceID: %s, NAME: %s]", c.InstanceID(), c.ClusterName()))
 	requestByte, err := c.prepareUpdateDetails(BoolPtr(true))
 	if err != nil {
 		return errors.Wrap(err, "while preparing update details")
 	}
-	c.log.Infof("Unuspension parameters: %v", string(requestByte))
+	c.log.Info(fmt.Sprintf("Unsuspension parameters: %v", string(requestByte)))
 
 	format := "%s/service_instances/%s"
 	suspensionURL := fmt.Sprintf(format, c.baseURL(), c.InstanceID())
@@ -208,7 +209,7 @@ func (c *Client) UnsuspendRuntime() error {
 	if err != nil {
 		return errors.Wrap(err, "while waiting for successful unsuspension call")
 	}
-	c.log.Infof("Successfully send unsuspension request for %s", unsuspensionResponse)
+	c.log.Info(fmt.Sprintf("Successfully send unsuspension request for %s", unsuspensionResponse))
 	return nil
 }
 
@@ -242,7 +243,7 @@ func (c *Client) AwaitOperationSucceeded(operationID string, timeout time.Durati
 		lastOperationURL = fmt.Sprintf("%s/service_instances/%s/last_operation", c.baseURL(), c.InstanceID())
 	}
 
-	c.log.Infof("Waiting for operation at most %s", timeout.String())
+	c.log.Info(fmt.Sprintf("Waiting for operation at most %s", timeout.String()))
 
 	response := lastOperationResponse{}
 	err := wait.PollUntilContextTimeout(context.Background(), 5*time.Minute, timeout, false, func(ctx context.Context) (bool, error) {
@@ -251,10 +252,10 @@ func (c *Client) AwaitOperationSucceeded(operationID string, timeout time.Durati
 			c.log.Warn(errors.Wrap(err, "while executing request").Error())
 			return false, nil
 		}
-		c.log.Infof("Last operation status: %s", response.State)
+		c.log.Info(fmt.Sprintf("Last operation status: %s", response.State))
 		switch domain.LastOperationState(response.State) {
 		case domain.Succeeded:
-			c.log.Infof("Operation succeeded!")
+			c.log.Info("Operation succeeded!")
 			return true, nil
 		case domain.InProgress:
 			return false, nil
@@ -263,7 +264,7 @@ func (c *Client) AwaitOperationSucceeded(operationID string, timeout time.Durati
 			return true, errors.New("provisioning failed")
 		default:
 			if response.State == "" {
-				c.log.Infof("Got empty last operation response")
+				c.log.Info("Got empty last operation response")
 				return false, nil
 			}
 			return false, nil
@@ -295,7 +296,7 @@ func (c *Client) FetchDashboardURL() (string, error) {
 	if err != nil {
 		return "", errors.Wrap(err, "while waiting for dashboardURL")
 	}
-	c.log.Infof("Successfully fetched dashboard URL: %s", response.DashboardURL)
+	c.log.Info(fmt.Sprintf("Successfully fetched dashboard URL: %s", response.DashboardURL))
 
 	return response.DashboardURL, nil
 }
@@ -385,10 +386,11 @@ func (c *Client) executeRequest(method, url string, expectedStatus int, body io.
 	if resp.StatusCode != expectedStatus {
 		bodyBytes, err := ioutil.ReadAll(resp.Body)
 		if err != nil {
-			c.log.Fatal(err)
+			c.log.Error(err.Error())
+			os.Exit(1)
 		}
 		bodyString := string(bodyBytes)
-		c.log.Warnf("%s", bodyString)
+		c.log.Warn(fmt.Sprintf("%s", bodyString))
 		return errors.Errorf("got unexpected status code while calling Kyma Environment Broker: want: %d, got: %d (url=%s)", expectedStatus, resp.StatusCode, url)
 	}
 

@@ -4,11 +4,12 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"log/slog"
+	"os"
 	"strings"
 
 	"github.com/kyma-project/kyma-environment-broker/internal/customresources"
 
-	"github.com/sirupsen/logrus"
 	apiextensionsv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
 	k8serrors "k8s.io/apimachinery/pkg/api/errors"
 	metaerrors "k8s.io/apimachinery/pkg/api/meta"
@@ -20,13 +21,15 @@ import (
 
 type Labeler struct {
 	kcpClient client.Client
-	log       logrus.FieldLogger
+	log       *slog.Logger
 }
 
 func NewLabeler(kcpClient client.Client) *Labeler {
 	return &Labeler{
 		kcpClient: kcpClient,
-		log:       logrus.New(),
+		log: slog.New(slog.NewJSONHandler(os.Stdout, &slog.HandlerOptions{
+			Level: slog.LevelInfo,
+		})),
 	}
 }
 
@@ -39,7 +42,7 @@ func (l *Labeler) UpdateLabels(id, newGlobalAccountId string) error {
 }
 
 func (l *Labeler) updateCrLabel(id, crName, newGlobalAccountId string) error {
-	l.log.Infof("update label starting for runtime %s for %s cr with new value %s", id, crName, newGlobalAccountId)
+	l.log.Info(fmt.Sprintf("update label starting for runtime %s for %s cr with new value %s", id, crName, newGlobalAccountId))
 	gvk, err := customresources.GvkByName(crName)
 	if err != nil {
 		return fmt.Errorf("while getting gvk for name: %s: %s", crName, err.Error())
@@ -52,7 +55,7 @@ func (l *Labeler) updateCrLabel(id, crName, newGlobalAccountId string) error {
 		return fmt.Errorf("while checking existence of CRD for %s: %s", crName, err.Error())
 	}
 	if !crdExists {
-		l.log.Infof("CRD for %s does not exist, skipping", crName)
+		l.log.Info(fmt.Sprintf("CRD for %s does not exist, skipping", crName))
 		return nil
 	}
 
@@ -94,10 +97,10 @@ func (l *Labeler) checkCRDExistence(gvk schema.GroupVersionKind) (bool, error) {
 	crd := &apiextensionsv1.CustomResourceDefinition{}
 	if err := l.kcpClient.Get(context.Background(), client.ObjectKey{Name: crdName}, crd); err != nil {
 		if k8serrors.IsNotFound(err) || metaerrors.IsNoMatchError(err) {
-			l.log.Errorf("CustomResourceDefinition does not exist %s", err.Error())
+			l.log.Error(fmt.Sprintf("CustomResourceDefinition does not exist %s", err.Error()))
 			return false, nil
 		} else {
-			l.log.Errorf("while getting CRD %s: %s", crdName, err.Error())
+			l.log.Error(fmt.Sprintf("while getting CRD %s: %s", crdName, err.Error()))
 			return false, err
 		}
 	}
