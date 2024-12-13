@@ -5,16 +5,16 @@ metadata:
   name: runtime-reconciler
   namespace: kcp-system
   labels:
-    app: runtime-reconciler
+    app.kubernetes.io/name: runtime-reconciler
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app: runtime-reconciler
+      app.kubernetes.io/name: runtime-reconciler
   template:
     metadata:
       labels:
-        app: runtime-reconciler
+        app.kubernetes.io/name: runtime-reconciler
     spec:
       serviceAccountName: {{ .Values.global.kyma_environment_broker.serviceAccountName }}
       {{- with .Values.deployment.securityContext }}
