@@ -21,42 +21,40 @@ If a feature flag for Kyma bindings is enabled, KEB does the following:
 
 ## Request Validation
 
-The unmarshalled request is validated, and the correctness of its structure is checked. See the table for the data that you can pass to the request:
+1. The unmarshalled request is validated, and the correctness of its structure is checked. See the table for the data that you can pass to the request:
 
-| Name                   | Default | Description                                                                                                                                                                                                                                                                                                                                                          |
-|------------------------|---------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| **expiration_seconds** | `600`   | Specifies the duration (in seconds) for which the generated kubeconfig is valid. If not provided, the default value of `600` seconds (10 minutes) is used, which is also the minimum value that can be set. The maximum value that can be set is `7200` seconds (2 hours).                                             |
+   | Name                   | Default | Description                                                                                                                                                                                                                                                                |
+   |------------------------|---------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+   | **expiration_seconds** | `600`   | Specifies the duration (in seconds) for which the generated kubeconfig is valid. If not provided, the default value of `600` seconds (10 minutes) is used, which is also the minimum value that can be set. The maximum value that can be set is `7200` seconds (2 hours). |
 
-After unmarshaling, the following actions take place:
-1. The first check verifies the expiration value. The minimum and maximum limits are configurable and, by default, set to 600 and 7200 seconds, respectively.
-2. KEB checks the status of the instance. The instance must be provisioned for the binding creation.
-3. KEB checks if the binding already exists. The binding in the database is identified by the Kyma instance ID and the binding ID, which are passed as a path query parameter. If the binding exists, KEB checks the values of the parameters of the existing binding. The OSB API requires a request to create a binding to fail if an object has already been created and the request contains different parameters.
-4. If the found binding is not expired, KEB returns it in the response. If the found binding is expired and exists in the database, KEB responds with an error and the Bad Request status. This check is done in an implicit database insert statement. The query fails for expired but existing bindings because the primary key is defined on the instance and binding IDs, not the expiration date. This is the case until the cleanup job removes the expired binding from the database. If the binding does not exist, the flow returns to the process's execution path, where no bindings exist in the database.
-5. Whether the binding exists or not, the last step in the request validation is to verify the number of bindings. Every instance is allowed to create a limited number of active bindings. The limit is configurable and, by default, set to 10 non-expired bindings. If the limit is not exceeded and the binding does not exist in the database, KEB proceeds to the next phase of the process - binding creation.
+2. The first check verifies the expiration value. The minimum and maximum limits are configurable and, by default, set to 600 and 7200 seconds, respectively.
+3. KEB checks the status of the instance. The instance must be provisioned for the binding creation.
+4. KEB checks if the binding already exists. The binding in the database is identified by the Kyma instance ID and the binding ID, which are passed as a path query parameters. If the binding exists, KEB checks the values of the parameters of the existing binding. The OSB API requires a request to create a binding to fail if an object has already been created and the request contains different parameters.
+5. If the found binding is not expired, KEB returns it in the response. If the found binding is expired and exists in the database, KEB responds with an error and the Bad Request status. This check is done in an implicit database insert statement. The query fails for expired but existing bindings because the primary key is defined on the instance and binding IDs, not the expiration date. This is the case until the cleanup job removes the expired binding from the database. If the binding does not exist, the flow returns to the process's execution path, where no bindings exist in the database.
+6. Whether the binding exists or not, the last step in the request validation is to verify the number of bindings. Every instance is allowed to create a limited number of active bindings. The limit is configurable and, by default, set to 10 non-expired bindings. If the limit is not exceeded and the binding does not exist in the database, KEB proceeds to the next phase of the process - binding creation.
 
 ## Binding Creation
 
 Binding creation part consists of the following steps:
 1. KEB creates a service binding object and generates a kubeconfig file with a JWT token. The kubeconfig file is valid for a specified period, defaulted or set in the request body.
 
-> [!NOTE]
->  Expired bindings do not count towards the bindings limit. However, as long as they exist in the database, they prevent creating new bindings with the same ID. Only after they are removed by the cleanup job or manually can the binding be recreated again.
+   > [!NOTE]
+   >  Expired bindings do not count towards the bindings limit. However, as long as they exist in the database, they prevent creating new bindings with the same ID. Only after they are removed by the cleanup job or manually can the binding be recreated again.
 
 2. KEB creates ServiceAccount, ClusterRole (administrator privileges), and ClusterRoleBinding, all named `kyma-binding-{{binding_id}}`. You can use the ClusterRole to modify permissions granted to the kubeconfig.
 3. The created resources are used to generate a [TokenRequest](https://kubernetes.io/docs/reference/kubernetes-api/authentication-resources/token-request-v1/). The token is wrapped in a kubeconfig template and returned to the user.
 4. The encrypted credentials are stored as an attribute in the previously created database binding.
 
-> [!NOTE]
->  It is not recommended to create multiple and unused TokenRequest resources.
-
+   > [!NOTE]
+   >  It is not recommended to create multiple and unused TokenRequest resources.
 
 # The Process of Fetching a Kyma Binding
 
 ![Get Binding Flow](../assets/bindings-get-flow.drawio.svg)
 
 The process starts with a GET request sent to the KEB API.
-The first instruction in the process is to check if a Kyma instance exists. If a Kyma instance exists, it must not be deprovisioned or suspended.
-The endpoint doesn't return bindings for such instances. Existing bindings are retrieved by instance ID and binding ID. If any bindings exist, they are filtered by expiration date. KEB returns only non-expired bindings.
+KEB checks if the Kyma instance exists. The found instance must not be deprovisioned or suspended. Otherwise, the endpoint doesn't return bindings for such an instance. 
+Existing bindings are retrieved by instance ID and binding ID. If any bindings exist, they are filtered by expiration date. KEB returns only non-expired bindings.
 
 # The Process of Deleting a Kyma Binding
 

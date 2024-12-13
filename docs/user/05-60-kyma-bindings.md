@@ -11,9 +11,9 @@ You can manage credentials for accessing a given service through the bindings' H
 > [!NOTE]
 > You can find all endpoints in the KEB [Swagger Documentation](https://kyma-env-broker.cp.stage.kyma.cloud.sap/#/Bindings).
 
-# Kyma Bindings API Request Examples
+## Kyma Bindings API Request Examples
 
-## Create a Service Binding
+### Create a Service Binding
 
 To create a binding, use a PUT request to KEB API:
 
@@ -31,9 +31,11 @@ X-Broker-API-Version: 2.14
 }
 ```
 
-If a binding is successfully created, the endpoint returns the `201 Created` if the current request created it or the `200 OK` status code if it already existed.
+If a binding is successfully created, the endpoint returns one of the following responses: 
+* `201 Created` if the current request created the binding. 
+* `200 OK` if the binding already existed.
 
-## Fetch a Service Binding
+### Fetch a Service Binding
 
 To fetch a binding, use a GET request to KEB API:
 
@@ -46,7 +48,7 @@ KEB returns the `200 OK` status code with the kubeconfig in the response body. I
 
 All HTTP codes are based on the [OSB API specification](https://github.com/openservicebrokerapi/servicebroker/blob/master/spec.md#fetching-a-service-binding).
 
-## Remove a Service Binding
+### Remove a Service Binding
 
 To remove a binding, send a DELETE request to KEB API:
 
