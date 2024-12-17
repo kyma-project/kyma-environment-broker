@@ -17,7 +17,6 @@ import (
 	"github.com/kyma-project/kyma-environment-broker/internal/kubeconfig"
 	"github.com/kyma-project/kyma-environment-broker/internal/storage"
 	"github.com/pivotal-cf/brokerapi/v8/domain"
-	"github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"gopkg.in/yaml.v2"
@@ -51,11 +50,6 @@ func TestCreateBinding(t *testing.T) {
 	err := corev1.AddToScheme(sch)
 	assert.NoError(t, err)
 
-	logs := logrus.New()
-	logs.SetLevel(logrus.DebugLevel)
-	logs.SetFormatter(&logrus.JSONFormatter{
-		TimestampFormat: time.RFC3339Nano,
-	})
 	// prepare envtest to provide valid kubeconfig
 	envFirst, configFirst, clientFirst := createEnvTest(t)
 	defer func(env *envtest.Environment) {
