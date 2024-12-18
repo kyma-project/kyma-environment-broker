@@ -42,7 +42,6 @@ func (a *ApplyKymaStep) Name() string {
 
 func (a *ApplyKymaStep) Run(operation internal.Operation, logger *slog.Logger) (internal.Operation, time.Duration, error) {
 	template, err := steps.DecodeKymaTemplate(operation.KymaTemplate)
-	err = fmt.Errorf("technical error")
 	if err != nil {
 		return a.operationManager.OperationFailed(operation, "unable to create a kyma template", err, logger)
 	}
