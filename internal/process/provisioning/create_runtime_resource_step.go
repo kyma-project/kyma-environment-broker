@@ -70,6 +70,8 @@ func (s *CreateRuntimeResourceStep) Name() string {
 }
 
 func (s *CreateRuntimeResourceStep) Run(operation internal.Operation, log *slog.Logger) (internal.Operation, time.Duration, error) {
+	return s.operationManager.OperationFailed(operation, fmt.Sprintf("while updating Runtime resource object"), nil, log)
+
 	if time.Since(operation.UpdatedAt) > CreateRuntimeTimeout {
 		log.Info(fmt.Sprintf("operation has reached the time limit: updated operation time: %s", operation.UpdatedAt))
 		return s.operationManager.OperationFailed(operation, fmt.Sprintf("operation has reached the time limit: %s", CreateRuntimeTimeout), nil, log)
