@@ -96,8 +96,8 @@ func TestAzureLiteDefaults(t *testing.T) {
 		DefaultMachineType:   "Standard_D4s_v5",
 		Region:               "eastus",
 		Purpose:              "evaluation",
-		DiskType:             "Standard_LRS",
-		VolumeSizeGb:         50,
+		DiskType:             "StandardSSD_LRS",
+		VolumeSizeGb:         80,
 	}, values)
 }
 
@@ -203,7 +203,7 @@ func TestAzureLiteSpecific(t *testing.T) {
 		DefaultMachineType:   "Standard_D4s_v5",
 		Region:               "uksouth",
 		Purpose:              "evaluation",
-		DiskType:             "Standard_LRS",
-		VolumeSizeGb:         50,
+		DiskType:             "StandardSSD_LRS",
+		VolumeSizeGb:         80,
 	}, values)
 }

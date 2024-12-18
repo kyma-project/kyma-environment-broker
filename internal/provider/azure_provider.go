@@ -134,8 +134,8 @@ func (p *AzureLiteInput) Defaults() *gqlschema.ClusterConfigInput {
 	}
 	return &gqlschema.ClusterConfigInput{
 		GardenerConfig: &gqlschema.GardenerConfigInput{
-			DiskType:       ptr.String("Standard_LRS"),
-			VolumeSizeGb:   ptr.Integer(50),
+			DiskType:       ptr.String("StandardSSD_LRS"),
+			VolumeSizeGb:   ptr.Integer(80),
 			MachineType:    machineType,
 			Region:         DefaultAzureRegion,
 			Provider:       "azure",
