@@ -232,7 +232,6 @@ func (m *StagedManager) runStep(step Step, operation internal.Operation, logger 
 		stepLogger := logger.With("step", step.Name(), "operation", processedOperation.ID)
 		processedOperation, backoff, err = step.Run(processedOperation, stepLogger)
 		if err != nil {
-			processedOperation.LastError = kebError.ReasonForError(err, step.Name())
 			logOperation := stepLogger.With("error_component", processedOperation.LastError.GetComponent(), "error_reason", processedOperation.LastError.GetReason())
 			logOperation.Warn(fmt.Sprintf("Last error from step: %s", processedOperation.LastError.Error()))
 			// only save to storage, skip for alerting if error
