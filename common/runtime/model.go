@@ -389,8 +389,15 @@ type ModuleDTO struct {
 }
 
 type AdditionalWorkerNodePool struct {
-	AutoScalerParameters `json:",inline"`
+	Name          string `json:"name"`
+	MachineType   string `json:"machineType"`
+	AutoScalerMin int    `json:"autoScalerMin"`
+	AutoScalerMax int    `json:"autoScalerMax"`
+}
 
-	Name        string  `json:"name"`
-	MachineType *string `json:"machineType,omitempty"`
+func (a AdditionalWorkerNodePool) Validate() error {
+	if a.AutoScalerMin > a.AutoScalerMax {
+		return fmt.Errorf("AutoScalerMax %v should be larger than AutoScalerMin %v for %s worker node pool", a.AutoScalerMax, a.AutoScalerMin, a.Name)
+	}
+	return nil
 }

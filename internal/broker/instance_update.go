@@ -266,7 +266,7 @@ func (b *UpdateEndpoint) processUpdateParameters(instance *internal.Instance, de
 
 	if IsPreviewPlan(details.PlanID) {
 		for _, workerNodePool := range params.AdditionalWorkerNodePools {
-			if err := workerNodePool.AutoScalerParameters.Validate(autoscalerMin, autoscalerMax); err != nil {
+			if err := workerNodePool.Validate(); err != nil {
 				return domain.UpdateServiceSpec{}, apiresponses.NewFailureResponse(err, http.StatusBadRequest, err.Error())
 			}
 		}
