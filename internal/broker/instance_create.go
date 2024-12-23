@@ -295,6 +295,15 @@ func (b *ProvisionEndpoint) validateAndExtract(details domain.ProvisionDetails, 
 	if err := parameters.AutoScalerParameters.Validate(autoscalerMin, autoscalerMax); err != nil {
 		return ersContext, parameters, apiresponses.NewFailureResponse(err, http.StatusUnprocessableEntity, err.Error())
 	}
+
+	if IsPreviewPlan(details.PlanID) {
+		for _, workerNodePool := range parameters.AdditionalWorkerNodePools {
+			if err := workerNodePool.AutoScalerParameters.Validate(autoscalerMin, autoscalerMax); err != nil {
+				return ersContext, parameters, apiresponses.NewFailureResponse(err, http.StatusUnprocessableEntity, err.Error())
+			}
+		}
+	}
+
 	if parameters.OIDC.IsProvided() {
 		if err := parameters.OIDC.Validate(); err != nil {
 			return ersContext, parameters, apiresponses.NewFailureResponse(err, http.StatusUnprocessableEntity, err.Error())

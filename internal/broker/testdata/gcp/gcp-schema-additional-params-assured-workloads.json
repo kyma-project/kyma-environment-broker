@@ -44,6 +44,7 @@
         "n2-standard-32": "n2-standard-32 (32vCPU, 128GB RAM)",
         "n2-standard-48": "n2-standard-48 (48vCPU, 192B RAM)"
       },
+      "description": "Specifies the type of the machine.",
       "enum": [
         "n2-standard-2",
         "n2-standard-4",
