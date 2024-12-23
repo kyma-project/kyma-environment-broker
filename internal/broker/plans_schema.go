@@ -18,6 +18,8 @@ type RootSchema struct {
 	ShowFormView bool `json:"_show_form_view"`
 	// Specifies in what order properties will be displayed on the form
 	ControlsOrder []string `json:"_controlsOrder"`
+	// Specified to true loads current instance configuration into the update instance schema
+	LoadCurrentConfig bool `json:"_load_current_config"`
 }
 
 type ProvisioningProperties struct {
@@ -362,9 +364,10 @@ func NewSchema(properties interface{}, update bool, required []string) *RootSche
 		Type: Type{
 			Type: "object",
 		},
-		Properties:   properties,
-		ShowFormView: true,
-		Required:     required,
+		Properties:        properties,
+		ShowFormView:      true,
+		Required:          required,
+		LoadCurrentConfig: true,
 	}
 
 	if update {
