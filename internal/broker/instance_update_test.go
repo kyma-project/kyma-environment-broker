@@ -591,66 +591,88 @@ func TestUpdateEndpoint_UpdateParameters(t *testing.T) {
 		assert.Equal(t, expectedErr.ValidatedStatusCode(nil), apierr.ValidatedStatusCode(nil))
 		assert.Equal(t, expectedErr.LoggerAction(), apierr.LoggerAction())
 	})
+}
 
-	t.Run("Should pass with additional worker node pools", func(t *testing.T) {
-		// given
-		additionalWorkerNodePools := `[{"name": "name-1", "machineType": "m6i.large", "autoScalerMin": 3, "autoScalerMax": 20}, {"name": "name-2", "machineType": "m6i.large", "autoScalerMin": 3, "autoScalerMax": 20}]`
+func TestAdditionalWorkerNodePools(t *testing.T) {
+	for tn, tc := range map[string]struct {
+		additionalWorkerNodePools string
+		expectedError             bool
+	}{
+		"Valid additional worker node pools": {
+			additionalWorkerNodePools: `[{"name": "name-1", "machineType": "m6i.large", "autoScalerMin": 3, "autoScalerMax": 20}, {"name": "name-2", "machineType": "m6i.large", "autoScalerMin": 0, "autoScalerMax": 0}]`,
+			expectedError:             false,
+		},
+		"Empty additional worker node pools": {
+			additionalWorkerNodePools: "[]",
+			expectedError:             false,
+		},
+		"Empty name": {
+			additionalWorkerNodePools: `[{"name": "", "machineType": "m6i.large", "autoScalerMin": 3, "autoScalerMax": 20}]`,
+			expectedError:             true,
+		},
+		"Missing name": {
+			additionalWorkerNodePools: `[{"machineType": "m6i.large", "autoScalerMin": 3, "autoScalerMax": 20}]`,
+			expectedError:             true,
+		},
+		"Empty machine type": {
+			additionalWorkerNodePools: `[{"name": "name-1", "machineType": "", "autoScalerMin": 3, "autoScalerMax": 20}]`,
+			expectedError:             true,
+		},
+		"Missing machine type": {
+			additionalWorkerNodePools: `[{"name": "name-1", "autoScalerMin": 3, "autoScalerMax": 20}]`,
+			expectedError:             true,
+		},
+		"Missing autoScalerMin": {
+			additionalWorkerNodePools: `[{"name": "name-1", "machineType": "m6i.large", "autoScalerMax": 3}]`,
+			expectedError:             true,
+		},
+		"Missing autoScalerMax": {
+			additionalWorkerNodePools: `[{"name": "name-1", "machineType": "m6i.large", "autoScalerMin": 20}]`,
+			expectedError:             true,
+		},
+		"AutoScalerMax bigger than 300": {
+			additionalWorkerNodePools: `[{"name": "name-1", "machineType": "m6i.large", "autoScalerMin": 3, "autoScalerMax": 301}]`,
+			expectedError:             true,
+		},
+		"AutoScalerMin bigger than autoScalerMax": {
+			additionalWorkerNodePools: `[{"name": "name-1", "machineType": "m6i.large", "autoScalerMin": 20, "autoScalerMax": 3}]`,
+			expectedError:             true,
+		},
+	} {
+		t.Run(tn, func(t *testing.T) {
+			// given
+			instance := fixture.FixInstance(instanceID)
+			instance.ServicePlanID = PreviewPlanID
+			st := storage.NewMemoryStorage()
+			err := st.Instances().Insert(instance)
+			require.NoError(t, err)
+			err = st.Operations().InsertProvisioningOperation(fixProvisioningOperation("provisioning01"))
+			require.NoError(t, err)
 
-		// when
-		_, err := svc.Update(context.Background(), instanceID, domain.UpdateDetails{
-			ServiceID:       "",
-			PlanID:          PreviewPlanID,
-			RawParameters:   json.RawMessage("{\"additionalWorkerNodePools\":" + additionalWorkerNodePools + "}"),
-			PreviousValues:  domain.PreviousValues{},
-			RawContext:      json.RawMessage("{\"globalaccount_id\":\"globalaccount_id_1\", \"active\":true}"),
-			MaintenanceInfo: nil,
-		}, true)
+			handler := &handler{}
+			q := &automock.Queue{}
+			q.On("Add", mock.AnythingOfType("string"))
+			planDefaults := func(planID string, platformProvider pkg.CloudProvider, provider *pkg.CloudProvider) (*gqlschema.ClusterConfigInput, error) {
+				return &gqlschema.ClusterConfigInput{}, nil
+			}
+			kcBuilder := &kcMock.KcBuilder{}
+			svc := NewUpdate(Config{}, st.Instances(), st.RuntimeStates(), st.Operations(), handler, true, true, false, q, PlansConfig{},
+				planDefaults, fixLogger(), dashboardConfig, kcBuilder, &OneForAllConvergedCloudRegionsProvider{}, fakeKcpK8sClient)
 
-		// then
-		require.NoError(t, err)
-	})
+			// when
+			_, err = svc.Update(context.Background(), instanceID, domain.UpdateDetails{
+				ServiceID:       "",
+				PlanID:          PreviewPlanID,
+				RawParameters:   json.RawMessage("{\"additionalWorkerNodePools\":" + tc.additionalWorkerNodePools + "}"),
+				PreviousValues:  domain.PreviousValues{},
+				RawContext:      json.RawMessage("{\"globalaccount_id\":\"globalaccount_id_1\", \"active\":true}"),
+				MaintenanceInfo: nil,
+			}, true)
 
-	t.Run("Should pass with empty additional worker node pools", func(t *testing.T) {
-		// given
-		additionalWorkerNodePools := "[]"
-
-		// when
-		_, err := svc.Update(context.Background(), instanceID, domain.UpdateDetails{
-			ServiceID:       "",
-			PlanID:          PreviewPlanID,
-			RawParameters:   json.RawMessage("{\"additionalWorkerNodePools\":" + additionalWorkerNodePools + "}"),
-			PreviousValues:  domain.PreviousValues{},
-			RawContext:      json.RawMessage("{\"globalaccount_id\":\"globalaccount_id_1\", \"active\":true}"),
-			MaintenanceInfo: nil,
-		}, true)
-
-		// then
-		require.NoError(t, err)
-	})
-
-	t.Run("Should fail for autoScalerMin bigger than autoScalerMax", func(t *testing.T) {
-		// given
-		additionalWorkerNodePools := `[{"name": "name-1", "machineType": "m6i.large", "autoScalerMin": 20, "autoScalerMax": 3}, {"name": "name-2", "machineType": "m6i.large", "autoScalerMin": 3, "autoScalerMax": 20}]`
-		errMsg := fmt.Errorf("AutoScalerMax 3 should be larger than AutoScalerMin 20. User provided values min:20, max:3; plan defaults min:0, max:0")
-		expectedErr := apiresponses.NewFailureResponse(errMsg, http.StatusBadRequest, errMsg.Error())
-
-		// when
-		_, err := svc.Update(context.Background(), instanceID, domain.UpdateDetails{
-			ServiceID:       "",
-			PlanID:          PreviewPlanID,
-			RawParameters:   json.RawMessage("{\"additionalWorkerNodePools\":" + additionalWorkerNodePools + "}"),
-			PreviousValues:  domain.PreviousValues{},
-			RawContext:      json.RawMessage("{\"globalaccount_id\":\"globalaccount_id_1\", \"active\":true}"),
-			MaintenanceInfo: nil,
-		}, true)
-
-		// then
-		require.Error(t, err)
-		assert.IsType(t, &apiresponses.FailureResponse{}, err)
-		apierr := err.(*apiresponses.FailureResponse)
-		assert.Equal(t, expectedErr.ValidatedStatusCode(nil), apierr.ValidatedStatusCode(nil))
-		assert.Equal(t, expectedErr.LoggerAction(), apierr.LoggerAction())
-	})
+			// then
+			assert.Equal(t, tc.expectedError, err != nil)
+		})
+	}
 }
 
 func TestUpdateEndpoint_UpdateWithEnabledDashboard(t *testing.T) {

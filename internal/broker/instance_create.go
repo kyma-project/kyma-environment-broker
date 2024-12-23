@@ -298,7 +298,7 @@ func (b *ProvisionEndpoint) validateAndExtract(details domain.ProvisionDetails, 
 
 	if IsPreviewPlan(details.PlanID) {
 		for _, workerNodePool := range parameters.AdditionalWorkerNodePools {
-			if err := workerNodePool.AutoScalerParameters.Validate(autoscalerMin, autoscalerMax); err != nil {
+			if err := workerNodePool.Validate(); err != nil {
 				return ersContext, parameters, apiresponses.NewFailureResponse(err, http.StatusUnprocessableEntity, err.Error())
 			}
 		}
