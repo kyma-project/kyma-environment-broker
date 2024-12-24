@@ -5,9 +5,15 @@ import (
 	"encoding/json"
 	"fmt"
 	"log/slog"
+	"net/http"
 	"os"
 	"testing"
 	"time"
+
+	"github.com/kyma-project/kyma-environment-broker/internal"
+	"github.com/kyma-project/kyma-environment-broker/internal/kubeconfig"
+	"github.com/pivotal-cf/brokerapi/v8/domain/apiresponses"
+	"sigs.k8s.io/controller-runtime/pkg/client/fake"
 
 	"github.com/kyma-project/kyma-environment-broker/internal/event"
 
@@ -15,12 +21,10 @@ import (
 	"github.com/stretchr/testify/assert"
 	"k8s.io/client-go/kubernetes"
 
-	"code.cloudfoundry.org/lager"
 	"github.com/kyma-project/kyma-environment-broker/internal/fixture"
 	"github.com/kyma-project/kyma-environment-broker/internal/storage"
 	"github.com/kyma-project/kyma-environment-broker/internal/storage/dberr"
 	"github.com/pivotal-cf/brokerapi/v8/domain"
-	"github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/require"
 )
 
@@ -28,6 +32,20 @@ const (
 	instanceID1      = "1"
 	maxBindingsCount = 10
 )
+
+func fixBindingConfig() BindingConfig {
+	return BindingConfig{
+		Enabled: true,
+		BindablePlans: EnablePlans{
+			fixture.PlanName,
+		},
+		ExpirationSeconds:    600,
+		MaxExpirationSeconds: maxExpirationSeconds,
+		MinExpirationSeconds: minExpirationSeconds,
+		MaxBindingsCount:     maxBindingsCount,
+	}
+
+}
 
 type provider struct {
 }
@@ -40,7 +58,7 @@ func (p *provider) KubeconfigForRuntimeID(runtimeID string) ([]byte, error) {
 	return []byte{}, nil
 }
 
-func TestCreateBindingEndpoint(t *testing.T) {
+func TestCreateBindingEndpoint_dbInsertionInCaseOfError(t *testing.T) {
 	t.Log("test create binding endpoint")
 
 	// Given
@@ -48,15 +66,6 @@ func TestCreateBindingEndpoint(t *testing.T) {
 	log := slog.New(slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{
 		Level: slog.LevelDebug,
 	}))
-
-	logs := logrus.New()
-	logs.SetLevel(logrus.DebugLevel)
-	logs.SetFormatter(&logrus.JSONFormatter{
-		TimestampFormat: time.RFC3339Nano,
-	})
-
-	brokerLogger := lager.NewLogger("test")
-	brokerLogger.RegisterSink(lager.NewWriterSink(logs.Writer(), lager.DEBUG))
 
 	//// schema
 
@@ -76,14 +85,15 @@ func TestCreateBindingEndpoint(t *testing.T) {
 		BindablePlans: EnablePlans{
 			fixture.PlanName,
 		},
-		MaxBindingsCount: maxBindingsCount,
+		MaxBindingsCount:     maxBindingsCount,
+		MinExpirationSeconds: minExpirationSeconds,
 	}
 
 	// event publisher
 	publisher := event.NewPubSub(log)
 
 	//// api handler
-	bindEndpoint := NewBind(*bindingCfg, db, logs, &provider{}, &provider{}, publisher)
+	bindEndpoint := NewBind(*bindingCfg, db, fixLogger(), &provider{}, &provider{}, publisher)
 
 	// test relies on checking if got nil on kubeconfig provider but the instance got inserted either way
 	t.Run("should INSERT binding despite error on k8s api call", func(t *testing.T) {
@@ -108,6 +118,145 @@ func TestCreateBindingEndpoint(t *testing.T) {
 		require.NotNil(t, binding.ExpiresAt)
 		require.Empty(t, binding.Kubeconfig)
 	})
+}
+
+func TestCreateBindingExceedsAllowedNumberOfNonExpiredBindings(t *testing.T) {
+	// given
+	cfg := fixBindingConfig()
+	cfg.MaxBindingsCount = 1
+	bindEndpoint, db := prepareBindingEndpoint(t, cfg)
+	err := db.Bindings().Insert(&internal.Binding{
+		ID:                "existing-binding",
+		InstanceID:        instanceID1,
+		CreatedAt:         time.Now().Add(-2 * time.Hour),
+		UpdatedAt:         time.Time{},
+		ExpiresAt:         time.Now().Add(-1 * time.Hour),
+		Kubeconfig:        "abcd",
+		ExpirationSeconds: 600,
+		CreatedBy:         "",
+	})
+	require.NoError(t, err)
+
+	// when creating first binding
+	_, err = bindEndpoint.Bind(context.Background(), instanceID1, "binding-id-001", domain.BindDetails{
+		ServiceID:     "123",
+		PlanID:        fixture.PlanId,
+		RawParameters: json.RawMessage(`{}`),
+	}, false)
+
+	require.NoError(t, err)
+
+	// when creating second binding - expect error
+	_, err = bindEndpoint.Bind(context.Background(), instanceID1, "binding-id-002", domain.BindDetails{
+		ServiceID:     "123",
+		PlanID:        fixture.PlanId,
+		RawParameters: json.RawMessage(`{}`),
+	}, false)
+
+	assert.IsType(t, err, &apiresponses.FailureResponse{}, "Get request returned error of unexpected type")
+	apierr := err.(*apiresponses.FailureResponse)
+	assert.Equal(t, http.StatusBadRequest, apierr.ValidatedStatusCode(nil), "Get request status code not matching")
+
+}
+
+func TestCreateBindingEndpoint(t *testing.T) {
+	bindEndpoint, _ := prepareBindingEndpoint(t, fixBindingConfig())
+
+	t.Run("should return error when expiration_seconds is less than minExpirationSeconds", func(t *testing.T) {
+		_, err := bindEndpoint.Bind(context.Background(), instanceID1, "binding-id-001", domain.BindDetails{
+			ServiceID:     "123",
+			PlanID:        fixture.PlanId,
+			RawParameters: json.RawMessage(`{"expiration_seconds": 10}`),
+		}, false)
+
+		// then
+		assert.IsType(t, err, &apiresponses.FailureResponse{}, "Get request returned error of unexpected type")
+		apierr := err.(*apiresponses.FailureResponse)
+		assert.Equal(t, http.StatusBadRequest, apierr.ValidatedStatusCode(nil), "Get request status code not matching")
+	})
+
+	t.Run("should return error when expiration_seconds is greater than maxExpirationSeconds", func(t *testing.T) {
+		_, err := bindEndpoint.Bind(context.Background(), instanceID1, "binding-id-001", domain.BindDetails{
+			ServiceID:     "123",
+			PlanID:        fixture.PlanId,
+			RawParameters: json.RawMessage(`{"expiration_seconds": 100000}`),
+		}, false)
+
+		// then
+		assert.IsType(t, err, &apiresponses.FailureResponse{}, "Get request returned error of unexpected type")
+		apierr := err.(*apiresponses.FailureResponse)
+		assert.Equal(t, http.StatusBadRequest, apierr.ValidatedStatusCode(nil), "Get request status code not matching")
+	})
+
+	t.Run("should create binding", func(t *testing.T) {
+		binding, err := bindEndpoint.Bind(context.Background(), instanceID1, "binding-id-002", domain.BindDetails{
+			ServiceID:     "123",
+			PlanID:        fixture.PlanId,
+			RawParameters: json.RawMessage(`{}`),
+		}, false)
+
+		// then
+		require.NoError(t, err)
+		assert.NotEmptyf(t, binding.Credentials.(Credentials).Kubeconfig, "kubeconfig is empty")
+	})
+
+	t.Run("should create binding with expiration seconds provided", func(t *testing.T) {
+		binding, err := bindEndpoint.Bind(context.Background(), instanceID1, "binding-id-003", domain.BindDetails{
+			ServiceID:     "123",
+			PlanID:        fixture.PlanId,
+			RawParameters: json.RawMessage(`{"expiration_seconds": 1000}`),
+		}, false)
+
+		// then
+		require.NoError(t, err)
+		assert.NotEmptyf(t, binding.Credentials.(Credentials).Kubeconfig, "kubeconfig is empty")
+	})
+
+	t.Run("should report a conflict", func(t *testing.T) {
+		_, err := bindEndpoint.Bind(context.Background(), instanceID1, "binding-id-004", domain.BindDetails{
+			ServiceID:     "123",
+			PlanID:        fixture.PlanId,
+			RawParameters: json.RawMessage(`{"expiration_seconds": 1000}`),
+		}, false)
+
+		// then
+		require.NoError(t, err)
+
+		// when
+		_, err = bindEndpoint.Bind(context.Background(), instanceID1, "binding-id-004", domain.BindDetails{
+			ServiceID:     "123",
+			PlanID:        fixture.PlanId,
+			RawParameters: json.RawMessage(`{"expiration_seconds": 2000}`),
+		}, false)
+		// then
+		require.Error(t, err)
+
+		assert.IsType(t, err, &apiresponses.FailureResponse{}, "Get request returned error of unexpected type")
+		apierr := err.(*apiresponses.FailureResponse)
+		assert.Equal(t, http.StatusConflict, apierr.ValidatedStatusCode(nil), "Get request status code not matching")
+	})
+
+	t.Run("should not report a conflict if parameters are the same", func(t *testing.T) {
+		_, err := bindEndpoint.Bind(context.Background(), instanceID1, "binding-id-005", domain.BindDetails{
+			ServiceID:     "123",
+			PlanID:        fixture.PlanId,
+			RawParameters: json.RawMessage(`{"expiration_seconds": 1000}`),
+		}, false)
+
+		// then
+		require.NoError(t, err)
+
+		// when
+		_, err = bindEndpoint.Bind(context.Background(), instanceID1, "binding-id-005", domain.BindDetails{
+			ServiceID:     "123",
+			PlanID:        fixture.PlanId,
+			RawParameters: json.RawMessage(`{"expiration_seconds": 1000}`),
+		}, false)
+
+		// then
+		require.NoError(t, err)
+	})
+
 }
 
 func TestCreatedBy(t *testing.T) {
@@ -194,7 +343,7 @@ func TestCreateSecondBindingWithTheSameIdButDifferentParams(t *testing.T) {
 
 	publisher := event.NewPubSub(log)
 
-	svc := NewBind(*bindingCfg, brokerStorage, logrus.New(), nil, nil, publisher)
+	svc := NewBind(*bindingCfg, brokerStorage, fixLogger(), nil, nil, publisher)
 	params := BindingParams{
 		ExpirationSeconds: 601,
 	}
@@ -245,7 +394,7 @@ func TestCreateSecondBindingWithTheSameIdAndParams(t *testing.T) {
 
 	publisher := event.NewPubSub(log)
 
-	svc := NewBind(*bindingCfg, brokerStorage, logrus.New(), nil, nil, publisher)
+	svc := NewBind(*bindingCfg, brokerStorage, fixLogger(), nil, nil, publisher)
 	params := BindingParams{
 		ExpirationSeconds: 600,
 	}
@@ -297,7 +446,7 @@ func TestCreateSecondBindingWithTheSameIdAndParamsForExpired(t *testing.T) {
 	// event publisher
 	publisher := event.NewPubSub(log)
 
-	svc := NewBind(*bindingCfg, brokerStorage, logrus.New(), nil, nil, publisher)
+	svc := NewBind(*bindingCfg, brokerStorage, fixLogger(), nil, nil, publisher)
 	params := BindingParams{
 		ExpirationSeconds: 600,
 	}
@@ -351,7 +500,7 @@ func TestCreateSecondBindingWithTheSameIdAndParamsForBindingInProgress(t *testin
 	// event publisher
 	publisher := event.NewPubSub(log)
 
-	svc := NewBind(*bindingCfg, brokerStorage, logrus.New(), nil, nil, publisher)
+	svc := NewBind(*bindingCfg, brokerStorage, fixLogger(), nil, nil, publisher)
 	params := BindingParams{
 		ExpirationSeconds: 600,
 	}
@@ -402,7 +551,7 @@ func TestCreateSecondBindingWithTheSameIdAndParamsNotExplicitlyDefined(t *testin
 
 	publisher := event.NewPubSub(log)
 
-	svc := NewBind(*bindingCfg, brokerStorage, logrus.New(), nil, nil, publisher)
+	svc := NewBind(*bindingCfg, brokerStorage, fixLogger(), nil, nil, publisher)
 
 	// when
 	resp, err := svc.Bind(context.Background(), instanceID, bindingID, domain.BindDetails{}, false)
@@ -410,4 +559,23 @@ func TestCreateSecondBindingWithTheSameIdAndParamsNotExplicitlyDefined(t *testin
 	// then
 	assert.NoError(t, err)
 	assert.Equal(t, binding.ExpiresAt.Format(expiresAtLayout), resp.Metadata.ExpiresAt)
+}
+
+func prepareBindingEndpoint(t *testing.T, cfg BindingConfig) (*BindEndpoint, storage.BrokerStorage) {
+	sch := internal.NewSchemeForTests(t)
+	fakeK8sSKRClient := fake.NewClientBuilder().WithScheme(sch).Build()
+	k8sClientProvider := kubeconfig.NewFakeK8sClientProvider(fakeK8sSKRClient)
+	db := storage.NewMemoryStorage()
+	log := slog.New(slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{
+		Level: slog.LevelDebug,
+	}))
+
+	err := db.Instances().Insert(fixture.FixInstance(instanceID1))
+	require.NoError(t, err)
+
+	operation := fixture.FixOperation("operation-id", instanceID1, "provision")
+	err = db.Operations().InsertOperation(operation)
+	require.NoError(t, err)
+
+	return NewBind(cfg, db, log, k8sClientProvider, k8sClientProvider, event.NewPubSub(log)), db
 }

@@ -11,79 +11,52 @@ You can manage credentials for accessing a given service through the bindings' H
 > [!NOTE]
 > You can find all endpoints in the KEB [Swagger Documentation](https://kyma-env-broker.cp.stage.kyma.cloud.sap/#/Bindings).
 
-## The Process of Creating a Kyma Binding
+## Kyma Bindings API Request Examples
 
-The binding creation process, which starts with a PUT HTTP request sent to the `/oauth/v2/service_instances/{{instance_id}}/service_bindings/{{binding_id}}` endpoint, produces a binding with a kubeconfig that encapsulates a JWT token used for user authentication. The token is generated using Kubernetes TokenRequest attached to a ServiceAccount, ClusterRole, and ClusterRoleBinding, all named `kyma-binding-{{binding_id}}`. Such an approach allows for modifying permissions granted with the kubeconfig.
-Besides the kubeconfig, the response contains metadata with the **expires_at** field, which specifies the expiration time of the kubeconfig. 
-To specify the duration for which the generated kubeconfig is valid explicitly, provide the **expiration_seconds** in the `parameter` object of the request body.
+### Create a Service Binding
 
-The following diagram shows the flow of creating a service binding in Kyma Environment Broker. The process starts with a PUT request sent to KEB API. 
+To create a binding, use a PUT request to KEB API:
 
-> [!NOTE] 
-> On the diagram, "error" refers to a foreseen error in the process, not a server error.
+```
+PUT http://localhost:8080/oauth/v2/service_instances/{{instance_id}}/service_bindings/{{binding_id}}
+Content-Type: application/json
+X-Broker-API-Version: 2.14
 
-![Bindings Create Flow](../assets/bindings-create-flow.drawio.svg)
+{
+  "service_id": "{{service_id}}",
+  "plan_id": "{{plan_id}}",
+  "parameters": {
+    "expiration_seconds": 660
+  }
+}
+```
 
-The creation process is divided into three parts: configuration check, request validation, and binding creation.
+If a binding is successfully created, the endpoint returns one of the following responses: 
+* `201 Created` if the current request created the binding. 
+* `200 OK` if the binding already existed.
 
-### Configuration Check
+### Fetch a Service Binding
 
-If a feature flag for Kyma bindings is enabled, KEB first checks if the Kyma instance exists. If the instance is found and the plan it has been provisioned with is bindable, KEB proceeds to the validation phase.
+To fetch a binding, use a GET request to KEB API:
 
-### Request Validation
+```
+GET http://localhost:8080/oauth/v2/service_instances/{{instance_id}}/service_bindings/{{binding_id}}
+X-Broker-API-Version: 2.14
+```
 
-Now, the unmarshalled request is validated, and the correctness of its structure is checked. See the table for the data that you can pass to the request:
+KEB returns the `200 OK` status code with the kubeconfig in the response body. If the binding or the instance does not exist, or if the instance is suspended, KEB returns the `404 Not Found` status code.
 
-| Name                   | Default | Description                                                                                                                                                                                                                                                                                                                                                          |
-|------------------------|---------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| **expiration_seconds** | `600`   | Specifies the duration (in seconds) for which the generated kubeconfig is valid. If not provided, the default value of `600` seconds (10 minutes) is used, which is also the minimum value that can be set. The maximum value that can be set is `7200` seconds (2 hours).                                             |
+All HTTP codes are based on the [OSB API specification](https://github.com/openservicebrokerapi/servicebroker/blob/master/spec.md#fetching-a-service-binding).
 
-After unmarshaling, the data is validated against the allowed parameter values, which includes checks of the expiration value range, database record existence, parameter mutations verification, expiration of existing bindings, and binding number limits. 
-The first check verifies the expiration value. The minimum and maximum limits are configurable and, by default, set to 600 and 7200 seconds, respectively. 
-Next, KEB checks if the binding already exists. The binding in the database is identified by the Kyma instance ID and the binding ID, which are passed as a path query parameter. If the binding exists, KEB checks the mutation of the parameters of the existing binding. 
-The OSB API requires a request to create a binding to fail if an object has already been created and the request contains different parameters. 
-Next, if the found binding is not expired, KEB returns it in the response. At this point, the flow returns to the process's execution path, where no bindings exist in the database. 
-Whether the binding exists or not, the last step in the request validation is to verify the number of bindings. 
-Every instance is allowed to create a limited number of bindings. The limit is configurable and, by default, set to 10 non-expired bindings. 
-If the limit is not exceeded, KEB proceeds to the next phase of the process - binding creation.   
+### Remove a Service Binding
 
+To remove a binding, send a DELETE request to KEB API:
 
-### Binding Creation
+```
+DELETE http://localhost:8080/oauth/v2/service_instances/{{instance_id}}/service_bindings/{{binding_id}}?plan_id={{plan_id}}&service_id={{service_id}}
+X-Broker-API-Version: 2.14
+```
 
-In the binding creation phase, KEB creates a service binding object and generates a kubeconfig file with a JWT token. The kubeconfig file is valid for a specified period, defaulted or set in the request body. The first step in this part is to check again if an expired binding exists in the database. 
-This check is done in an implicit database insert statement. The query fails for expired but existing bindings because the primary key is defined on the instance and binding IDs, not the expiration date. This is the case until the expired binding is removed from the database by the cleanup job.  
+If the binding is successfully removed, KEB returns the `200 OK` status code. If the binding or service instance does not exist, KEB returns the `410 Gone` code.
 
-> [!NOTE]
->  Expired bindings do not count towards the bindings limit. However, they prevent creating new bindings until they exist in the database. Only after they are removed by the cleanup job or manually can the binding be recreated again.
-
-After the insert has been done, KEB creates ServiceAccount, ClusterRole (administrator privileges), and ClusterRoleBinding, all named `kyma-binding-{{binding_id}}`. You can use the ClusterRole to modify permissions granted to the kubeconfig.
-
-The created resources are then used to generate a [TokenRequest](https://kubernetes.io/docs/reference/kubernetes-api/authentication-resources/token-request-v1/). The token is then wrapped in a kubeconfig template and returned to the user. The encrypted credentials are then stored as an attribute in the previously created database binding.
-
-> [!NOTE]
->  Creation of multiple and unused TokenRequest resources is not recommended.
-
-
-## The Process of Fetching a Kyma Binding
-
-![Get Binding Flow](../assets/bindings-get-flow.drawio.svg)
-
-The diagram shows a flow of fetching a Kyma binding in KEB. The process starts with a GET request sent to the KEB API. 
-The first instruction in the process is to check if a Kyma instance exists. If a Kyma instance exists, it must not be deprovisioned or suspended. 
-The endpoint doesn't return bindings for such instances. Existing bindings are retrieved by instance ID and binding ID. If any bindings exist, they are filtered by expiration date. KEB returns only non-expired bindings.
-
-## The Process of Deleting a Kyma Binding
-
-![Delete Binding Flow](../assets/bindings-delete-flow.drawio.svg)
-
-The diagram shows the flow of removing a Kyma binding. The process starts with a DELETE request sent to the KEB API. The first instruction is to check if the Kyma instance that the request refers to exists. 
-Any bindings of non-existing instances are treated as orphaned and are removed. The next step is to conditionally delete the binding's ClusterRole, ClusterRoleBinding, and ServiceAccount, given that the cluster has been provisioned and not marked for removal. In case of deprovisioning or suspension of the Kyma cluster, this is unnecessary because the cluster is removed either way. 
-In case of errors during the resource removal process, the binding database record should not be removed, which is why the resource removal happens before the binding database record removal. 
-Finally, the last step is to remove the binding record from the database. 
-
-> [!WARNING]
-> Removing the ServiceAccount invalidates all tokens generated for that account, revoking access to the cluster for all clients using the kubeconfig from the binding.
-
-## Cleanup Job
-
-The Cleanup Job is a separate process decoupled from KEB. It is a CronJob that cleans up expired or orphaned Kyma bindings from the database. The value of **expires_at** field in the binding database record determines whether a binding is expired. If the value is in the past, the binding is considered expired and is removed from the database. 
+All HTTP codes are based on the [OSB API specification](https://github.com/openservicebrokerapi/servicebroker/blob/master/spec.md#unbinding).

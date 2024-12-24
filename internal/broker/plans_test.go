@@ -39,6 +39,7 @@ func TestSchemaGenerator(t *testing.T) {
 			},
 			machineTypes:        AwsMachinesNames(),
 			machineTypesDisplay: AwsMachinesDisplay(),
+			regionDisplay:       AWSRegionsDisplay(false),
 			path:                "aws",
 			file:                "aws-schema.json",
 			updateFile:          "update-aws-schema.json",
@@ -52,6 +53,7 @@ func TestSchemaGenerator(t *testing.T) {
 			},
 			machineTypes:        AwsMachinesNames(),
 			machineTypesDisplay: AwsMachinesDisplay(),
+			regionDisplay:       AWSRegionsDisplay(true),
 			path:                "aws",
 			file:                "aws-schema-eu.json",
 			updateFile:          "update-aws-schema.json",
@@ -161,6 +163,7 @@ func TestSchemaGenerator(t *testing.T) {
 				return FreemiumSchema(pkg.AWS, regionsDisplay, additionalParams, update, false)
 			},
 			machineTypes:   []string{},
+			regionDisplay:  AWSRegionsDisplay(false),
 			path:           "aws",
 			file:           "free-aws-schema.json",
 			updateFile:     "update-free-aws-schema.json",
@@ -186,6 +189,7 @@ func TestSchemaGenerator(t *testing.T) {
 				return FreemiumSchema(pkg.AWS, regionsDisplay, additionalParams, update, true)
 			},
 			machineTypes:   []string{},
+			regionDisplay:  AWSRegionsDisplay(true),
 			path:           "aws",
 			file:           "free-aws-schema-eu.json",
 			updateFile:     "update-free-aws-schema.json",

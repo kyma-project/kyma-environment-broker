@@ -2,9 +2,8 @@ package httputil
 
 import (
 	"fmt"
+	"log/slog"
 	"net/http"
-
-	"github.com/sirupsen/logrus"
 )
 
 // Writer provides syntactic sugar for writing http responses.
@@ -12,12 +11,12 @@ import (
 //   - devMode: true - returns a given error in the response under `details` field
 //   - devMode: false - only log the given error in context of the requestID but do not return it in response
 type Writer struct {
-	log     logrus.FieldLogger
+	log     *slog.Logger
 	devMode bool
 }
 
 // NewResponseWriter returns new instance of Writer
-func NewResponseWriter(log logrus.FieldLogger, devMode bool) *Writer {
+func NewResponseWriter(log *slog.Logger, devMode bool) *Writer {
 	return &Writer{
 		log:     log,
 		devMode: devMode,
@@ -45,12 +44,12 @@ func (w *Writer) InternalServerError(rw http.ResponseWriter, r *http.Request, er
 func (w *Writer) writeError(rw http.ResponseWriter, r *http.Request, errDTO ErrorDTO) {
 	errDTO.RequestID = r.Header.Get("X-Request-Id")
 	if !w.devMode {
-		w.log.WithField("request-id", errDTO.RequestID).Error(errDTO.Details)
+		w.log.With("request-id", errDTO.RequestID).Error(errDTO.Details)
 		errDTO.Details = ""
 	}
 
 	if err := JSONEncodeWithCode(rw, errDTO, errDTO.Status); err != nil {
-		w.log.WithField("request-id", errDTO.RequestID).Errorf("while encoding error DTO: %s", err)
+		w.log.With("request-id", errDTO.RequestID).Error(fmt.Sprintf("while encoding error DTO: %s", err))
 		rw.WriteHeader(http.StatusInternalServerError)
 		return
 	}

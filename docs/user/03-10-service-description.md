@@ -56,7 +56,7 @@ These are the provisioning parameters that you can configure:
 | **oidc.usernameClaim**                           | string | Provides an OIDC username claim for a Kyma runtime.                                                              |    No    | `email`         |
 | **oidc.usernamePrefix**                          | string | Provides an OIDC username prefix for a Kyma runtime.                                                             |    No    | None            |
 | **administrators**                               | string | Provides administrators for a Kyma runtime.                                                                      |    No    | None            |
-| **networking.nodes**                             | string | The Node network's CIDR.                                                                                         |    No    | `10.250.0.0/22` |
+| **networking.nodes**                             | string | The Node network's CIDR.                                                                                         |    No    | `10.250.0.0/16` |
 | **modules.default**                              | bool   | Defines whether to use a default list of modules                                                                 |    No    | None            |
 | **modules.list**                                 | array  | Defines a custom list of modules                                                                                 |    No    | None            |
 

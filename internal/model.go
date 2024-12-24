@@ -2,6 +2,8 @@ package internal
 
 import (
 	"database/sql"
+	"fmt"
+	"log/slog"
 	"time"
 
 	"github.com/kyma-project/kyma-environment-broker/internal/euaccess"
@@ -14,7 +16,6 @@ import (
 	kebError "github.com/kyma-project/kyma-environment-broker/internal/error"
 	"github.com/kyma-project/kyma-environment-broker/internal/events"
 	"github.com/pivotal-cf/brokerapi/v8/domain"
-	log "github.com/sirupsen/logrus"
 )
 
 type ProvisionerInputCreator interface {
@@ -499,12 +500,12 @@ func NewSuspensionOperationWithID(operationID string, instance *Instance) Deprov
 
 func (o *Operation) FinishStage(stageName string) {
 	if stageName == "" {
-		log.Warnf("Attempt to add empty stage.")
+		slog.Warn("Attempt to add empty stage.")
 		return
 	}
 
 	if exists := o.IsStageFinished(stageName); exists {
-		log.Warnf("Attempt to add stage (%s) which is already saved.", stageName)
+		slog.Warn(fmt.Sprintf("Attempt to add stage (%s) which is already saved.", stageName))
 		return
 	}
 

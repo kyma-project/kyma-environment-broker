@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"io/ioutil"
+	"log/slog"
 	"net/http"
 	"os"
 
@@ -11,7 +12,6 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	"github.com/pkg/errors"
-	"github.com/sirupsen/logrus"
 )
 
 // tenantHeaderName is a header key name for request send by graphQL client
@@ -20,14 +20,14 @@ const tenantHeaderName = "tenant"
 // Client allows to fetch runtime's config and execute the logic against it
 type Client struct {
 	httpClient http.Client
-	log        logrus.FieldLogger
+	log        *slog.Logger
 
 	instanceID   string
 	tenantID     string
 	kcpK8sClient client.Client
 }
 
-func NewClient(tenantID, instanceID string, clientHttp http.Client, kcpK8sClient client.Client, log logrus.FieldLogger) *Client {
+func NewClient(tenantID, instanceID string, clientHttp http.Client, kcpK8sClient client.Client, log *slog.Logger) *Client {
 	return &Client{
 		tenantID:     tenantID,
 		instanceID:   instanceID,
@@ -95,7 +95,8 @@ func (c *Client) writeConfigToFile(config string) (string, error) {
 func (c *Client) removeFile(fileName string) {
 	err := os.Remove(fileName)
 	if err != nil {
-		c.log.Fatal(err)
+		c.log.Error(err.Error())
+		os.Exit(1)
 	}
 }
 

@@ -3,6 +3,7 @@ package broker
 import (
 	"context"
 	"fmt"
+	"log/slog"
 
 	"github.com/kyma-project/kyma-environment-broker/internal/assuredworkloads"
 
@@ -11,7 +12,6 @@ import (
 	"github.com/kyma-project/kyma-environment-broker/internal/middleware"
 
 	"github.com/pivotal-cf/brokerapi/v8/domain"
-	"github.com/sirupsen/logrus"
 )
 
 const (
@@ -20,7 +20,7 @@ const (
 )
 
 type ServicesEndpoint struct {
-	log            logrus.FieldLogger
+	log            *slog.Logger
 	cfg            Config
 	servicesConfig ServicesConfig
 
@@ -28,7 +28,7 @@ type ServicesEndpoint struct {
 	convergedCloudRegionsProvider ConvergedCloudRegionProvider
 }
 
-func NewServices(cfg Config, servicesConfig ServicesConfig, log logrus.FieldLogger, convergedCloudRegionsProvider ConvergedCloudRegionProvider) *ServicesEndpoint {
+func NewServices(cfg Config, servicesConfig ServicesConfig, log *slog.Logger, convergedCloudRegionsProvider ConvergedCloudRegionProvider) *ServicesEndpoint {
 	enabledPlanIDs := map[string]struct{}{}
 	for _, planName := range cfg.EnablePlans {
 		id := PlanIDsMapping[planName]
@@ -36,7 +36,7 @@ func NewServices(cfg Config, servicesConfig ServicesConfig, log logrus.FieldLogg
 	}
 
 	return &ServicesEndpoint{
-		log:                           log.WithField("service", "ServicesEndpoint"),
+		log:                           log.With("service", "ServicesEndpoint"),
 		cfg:                           cfg,
 		servicesConfig:                servicesConfig,
 		enabledPlanIDs:                enabledPlanIDs,

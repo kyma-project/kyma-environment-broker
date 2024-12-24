@@ -136,7 +136,7 @@
       "description": "Networking configuration. These values are immutable and cannot be updated later. All provided CIDR ranges must not overlap one another.",
       "properties": {
         "nodes": {
-          "default": "10.250.0.0/22",
+          "default": "10.250.0.0/16",
           "description": "CIDR range for Nodes, must not overlap with the following CIDRs: 10.243.128.0/17, 10.242.0.0/16, 10.243.0.0/17, 10.64.0.0/11, 10.254.0.0/16, 10.243.0.0/16",
           "title": "CIDR range for Nodes",
           "type": "string"

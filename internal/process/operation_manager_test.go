@@ -118,10 +118,10 @@ func Test_OperationManager_LastError(t *testing.T) {
 		err := operations.InsertOperation(op)
 		require.NoError(t, err)
 		op, _, err = opManager.OperationFailed(op, "friendly message", nil, fixLogger())
-		assert.EqualValues(t, "", op.LastError.GetComponent())
+		assert.EqualValues(t, "provisioner", op.LastError.GetComponent())
 		assert.EqualValues(t, "", op.LastError.Error())
-		assert.EqualValues(t, "", op.LastError.GetReason())
-		assert.EqualValues(t, "", op.LastError.GetStep())
+		assert.EqualValues(t, "friendly message", op.LastError.GetReason())
+		assert.EqualValues(t, "some_step", op.LastError.GetStep())
 	})
 
 	t.Run("when no description passed", func(t *testing.T) {
@@ -146,10 +146,10 @@ func Test_OperationManager_LastError(t *testing.T) {
 		err := operations.InsertOperation(op)
 		require.NoError(t, err)
 		op, _, err = opManager.OperationFailed(op, "", nil, fixLogger())
-		assert.EqualValues(t, "", op.LastError.GetComponent())
+		assert.EqualValues(t, "reconciler", op.LastError.GetComponent())
 		assert.EqualValues(t, "", op.LastError.Error())
 		assert.EqualValues(t, "", op.LastError.GetReason())
-		assert.EqualValues(t, "", op.LastError.GetStep())
+		assert.EqualValues(t, "some_step", op.LastError.GetStep())
 	})
 }
 

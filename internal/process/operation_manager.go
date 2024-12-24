@@ -30,13 +30,13 @@ func (om *OperationManager) OperationSucceeded(operation internal.Operation, des
 
 // OperationFailed marks the operation as failed and returns status of the operation's update
 func (om *OperationManager) OperationFailed(operation internal.Operation, description string, err error, log *slog.Logger) (internal.Operation, time.Duration, error) {
+	operation.LastError = kebErr.LastError{
+		Reason:    kebErr.Reason(description),
+		Component: om.component,
+		Step:      om.step,
+	}
 	if err != nil {
-		operation.LastError = kebErr.LastError{
-			Message:   err.Error(),
-			Reason:    kebErr.Reason(description),
-			Component: om.component,
-			Step:      om.step,
-		}
+		operation.LastError.Message = err.Error()
 	}
 
 	op, t, _ := om.update(operation, domain.Failed, description, log)

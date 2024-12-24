@@ -1,7 +1,7 @@
 package networking
 
 const (
-	DefaultNodesCIDR    = "10.250.0.0/22"
+	DefaultNodesCIDR    = "10.250.0.0/16"
 	DefaultPodsCIDR     = "10.96.0.0/13"
 	DefaultServicesCIDR = "10.104.0.0/13"
 )

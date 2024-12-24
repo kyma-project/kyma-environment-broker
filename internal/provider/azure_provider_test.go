@@ -168,7 +168,7 @@ func TestAzureInput_SingleZone_ApplyParameters(t *testing.T) {
 		assert.Len(t, input.GardenerConfig.ProviderSpecificConfig.AzureConfig.AzureZones, 1)
 		assert.Subset(t, []int{1, 2, 3}, azureZoneNames(input.GardenerConfig.ProviderSpecificConfig.AzureConfig.AzureZones))
 		for i, zone := range input.GardenerConfig.ProviderSpecificConfig.AzureConfig.AzureZones {
-			assert.Equal(t, fmt.Sprintf("10.250.%d.0/25", 32*i), zone.Cidr)
+			assert.Equal(t, fmt.Sprintf("10.250.%d.0/19", 32*i), zone.Cidr)
 		}
 	})
 
@@ -188,7 +188,7 @@ func TestAzureInput_SingleZone_ApplyParameters(t *testing.T) {
 		assert.Len(t, input.GardenerConfig.ProviderSpecificConfig.AzureConfig.AzureZones, 2)
 		assert.Equal(t, []int{2, 3}, azureZoneNames(input.GardenerConfig.ProviderSpecificConfig.AzureConfig.AzureZones))
 
-		assertAzureZoneCidrs(t, []string{"10.250.0.0/25", "10.250.0.128/25"}, input)
+		assertAzureZoneCidrs(t, []string{"10.250.0.0/19", "10.250.32.0/19"}, input)
 	})
 }
 
@@ -213,7 +213,7 @@ func TestAzureInput_MultiZone_ApplyParameters(t *testing.T) {
 		assert.Len(t, input.GardenerConfig.ProviderSpecificConfig.AzureConfig.AzureZones, DefaultAzureMultiZoneCount)
 		assert.ElementsMatch(t, []int{1, 2, 3}, azureZoneNames(input.GardenerConfig.ProviderSpecificConfig.AzureConfig.AzureZones))
 
-		assertAzureZoneCidrs(t, []string{"10.250.0.0/25", "10.250.0.128/25", "10.250.1.0/25"}, input)
+		assertAzureZoneCidrs(t, []string{"10.250.0.0/19", "10.250.32.0/19", "10.250.64.0/19"}, input)
 		assert.Equal(t, "zone", *input.GardenerConfig.ControlPlaneFailureTolerance)
 	})
 
@@ -254,7 +254,7 @@ func TestAzureInput_MultiZone_ApplyParameters(t *testing.T) {
 		//then
 		assert.Len(t, input.GardenerConfig.ProviderSpecificConfig.AzureConfig.AzureZones, 2)
 		assert.Equal(t, []int{2, 3}, azureZoneNames(input.GardenerConfig.ProviderSpecificConfig.AzureConfig.AzureZones))
-		assertAzureZoneCidrs(t, []string{"10.250.0.0/25", "10.250.0.128/25"}, input)
+		assertAzureZoneCidrs(t, []string{"10.250.0.0/19", "10.250.32.0/19"}, input)
 		assert.Equal(t, "zone", *input.GardenerConfig.ControlPlaneFailureTolerance)
 	})
 }

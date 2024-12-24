@@ -55,8 +55,8 @@ This tutorial shows how to get the SAP BTP, Kyma runtime instance details.
                "usernamePrefix": ""
             },
             "networking": {
-               "nodes": "10.250.0.0/22"
-               "pods": "10.96.0.0/13"
+               "nodes": "10.250.0.0/22",
+               "pods": "10.96.0.0/13",
                "services": "10.104.0.0/13"
             }
          },

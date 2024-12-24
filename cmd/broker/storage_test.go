@@ -2,7 +2,7 @@ package main
 
 import (
 	"fmt"
-	"log"
+	"log/slog"
 	"os"
 	"strconv"
 	"testing"
@@ -35,18 +35,18 @@ func TestMain(m *testing.M) {
 		os.Exit(exitVal)
 	}()
 
+	log := slog.New(slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{
+		Level: slog.LevelInfo,
+	}))
+
 	if !dbInMemoryForE2ETests() {
 		config := brokerStorageE2ETestConfig()
 
 		docker, err := internal.NewDockerHandler()
-		if err != nil {
-			log.Fatal(err)
-		}
+		fatalOnError(err, log)
 		defer func(docker *internal.DockerHelper) {
 			err := docker.CloseDockerClient()
-			if err != nil {
-				log.Fatal(err)
-			}
+			fatalOnError(err, log)
 		}(docker)
 
 		cleanupContainer, err = docker.CreateDBContainer(internal.ContainerCreateRequest{
@@ -61,14 +61,10 @@ func TestMain(m *testing.M) {
 		defer func() {
 			if cleanupContainer != nil {
 				err := cleanupContainer()
-				if err != nil {
-					log.Fatal(err)
-				}
+				fatalOnError(err, log)
 			}
 		}()
-		if err != nil {
-			log.Fatal(err)
-		}
+		fatalOnError(err, log)
 	}
 
 	exitVal = m.Run()

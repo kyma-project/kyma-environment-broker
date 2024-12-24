@@ -60,7 +60,7 @@ You can configure SAP BTP, Kyma runtime operations by providing additional steps
     ```go
     type Step interface {
         Name() string
-        Run(operation internal.Operation, logger logrus.FieldLogger) (internal.Operation, time.Duration, error)
+        Run(operation internal.Operation, logger *slog.Logger) (internal.Operation, time.Duration, error)
     }
     ```
 
@@ -101,14 +101,14 @@ You can configure SAP BTP, Kyma runtime operations by providing additional steps
 
     import (
         "encoding/json"
+        "fmt"
+        "log/slog"     
         "net/http"
         "time"
 
         "github.com/kyma-incubator/compass/components/provisioner/pkg/gqlschema"
         "github.com/kyma-incubator/compass/components/kyma-environment-broker/internal"
         "github.com/kyma-incubator/compass/components/kyma-environment-broker/internal/storage"
-
-        "github.com/sirupsen/logrus"
     )
 
     type HelloWorldStep struct {
@@ -133,7 +133,7 @@ You can configure SAP BTP, Kyma runtime operations by providing additional steps
     }
 
     // Your step can be repeated in case any other step fails, even if your step has already done its job
-    func (s *HelloWorldStep) Run(operation internal.Operation, log *logrus.Entry) (internal.Operation, time.Duration, error) {
+    func (s *HelloWorldStep) Run(operation internal.Operation, log *slog.Logger) (internal.Operation, time.Duration, error) {
         log.Info("Start step")
 
         // Check whether your step should be run or if its job has been done in the previous iteration
@@ -153,7 +153,7 @@ You can configure SAP BTP, Kyma runtime operations by providing additional steps
         body := ExternalBodyResponse{}
         err = json.NewDecoder(response.Body).Decode(&body)
         if err != nil {
-            log.Errorf("error: %s", err)
+            log.Error(fmt.Sprintf("error: %s", err))
             // Handle a process failure by returning an error or time.Duration
         }
 
@@ -163,7 +163,7 @@ You can configure SAP BTP, Kyma runtime operations by providing additional steps
         operation.HelloWorlds = body.data
         updatedOperation, err := s.operationStorage.UpdateOperation(operation)
         if err != nil {
-            log.Errorf("error: %s", err)
+            log.Error(fmt.Sprintf("error: %s", err))
             // Handle a process failure by returning an error or time.Duration
         }
 

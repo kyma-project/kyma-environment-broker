@@ -2,17 +2,21 @@ package broker_test
 
 import (
 	"context"
+	"log/slog"
+	"os"
 	"strings"
 	"testing"
 
 	"github.com/kyma-project/kyma-environment-broker/internal/broker"
 	"github.com/pivotal-cf/brokerapi/v8/domain"
-	"github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
 func TestServices_Services(t *testing.T) {
+	log := slog.New(slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{
+		Level: slog.LevelInfo,
+	}))
 
 	t.Run("should get service and plans without OIDC", func(t *testing.T) {
 		// given
@@ -32,7 +36,7 @@ func TestServices_Services(t *testing.T) {
 				},
 			},
 		}
-		servicesEndpoint := broker.NewServices(cfg, servicesConfig, logrus.StandardLogger(), &broker.OneForAllConvergedCloudRegionsProvider{})
+		servicesEndpoint := broker.NewServices(cfg, servicesConfig, log, &broker.OneForAllConvergedCloudRegionsProvider{})
 
 		// when
 		services, err := servicesEndpoint.Services(context.TODO())
@@ -64,7 +68,7 @@ func TestServices_Services(t *testing.T) {
 				},
 			},
 		}
-		servicesEndpoint := broker.NewServices(cfg, servicesConfig, logrus.StandardLogger(), &broker.OneForAllConvergedCloudRegionsProvider{})
+		servicesEndpoint := broker.NewServices(cfg, servicesConfig, log, &broker.OneForAllConvergedCloudRegionsProvider{})
 
 		// when
 		services, err := servicesEndpoint.Services(context.TODO())
@@ -100,7 +104,7 @@ func TestServices_Services(t *testing.T) {
 				},
 			},
 		}
-		servicesEndpoint := broker.NewServices(cfg, servicesConfig, logrus.StandardLogger(), &broker.OneForAllConvergedCloudRegionsProvider{})
+		servicesEndpoint := broker.NewServices(cfg, servicesConfig, log, &broker.OneForAllConvergedCloudRegionsProvider{})
 
 		// when
 		services, err := servicesEndpoint.Services(context.TODO())
@@ -139,7 +143,7 @@ func TestServices_Services(t *testing.T) {
 				},
 			},
 		}
-		servicesEndpoint := broker.NewServices(cfg, servicesConfig, logrus.StandardLogger(), &broker.OneForAllConvergedCloudRegionsProvider{})
+		servicesEndpoint := broker.NewServices(cfg, servicesConfig, log, &broker.OneForAllConvergedCloudRegionsProvider{})
 
 		// when
 		services, err := servicesEndpoint.Services(context.TODO())

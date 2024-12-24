@@ -159,12 +159,41 @@ func AWSRegions(euRestrictedAccess bool) []string {
 	if euRestrictedAccess {
 		return []string{"eu-central-1"}
 	}
-	return []string{"eu-central-1", "eu-west-2", "ca-central-1", "sa-east-1", "us-east-1", "us-west-1",
-		"ap-northeast-1", "ap-northeast-2", "ap-south-1", "ap-southeast-1", "ap-southeast-2"}
+	return []string{
+		"eu-central-1",
+		"eu-west-2",
+		"ca-central-1",
+		"sa-east-1",
+		"us-east-1",
+		"us-west-1",
+		"us-west-2",
+		"ap-northeast-1",
+		"ap-northeast-2",
+		"ap-south-1",
+		"ap-southeast-1",
+		"ap-southeast-2"}
 }
 
-func AWSRegionsDisplay() map[string]string {
-	return nil
+func AWSRegionsDisplay(euRestrictedAccess bool) map[string]string {
+	if euRestrictedAccess {
+		return map[string]string{
+			"eu-central-1": "eu-central-1 (Europe, Frankfurt)",
+		}
+	}
+	return map[string]string{
+		"eu-central-1":   "eu-central-1 (Europe, Frankfurt)",
+		"eu-west-2":      "eu-west-2 (Europe, London)",
+		"ca-central-1":   "ca-central-1 (Canada, Montreal)",
+		"sa-east-1":      "sa-east-1 (Brazil, São Paulo)",
+		"us-east-1":      "us-east-1 (US East, N. Virginia)",
+		"us-west-1":      "us-west-1 (US West, N. California)",
+		"us-west-2":      "us-west-2 (US West, Oregon)",
+		"ap-northeast-1": "ap-northeast-1 (Asia Pacific, Tokyo)",
+		"ap-northeast-2": "ap-northeast-2 (Asia Pacific, Seoul)",
+		"ap-south-1":     "ap-south-1 (Asia Pacific, Mumbai)",
+		"ap-southeast-1": "ap-southeast-1 (Asia Pacific, Singapore)",
+		"ap-southeast-2": "ap-southeast-2 (Asia Pacific, Sydney)",
+	}
 }
 
 func SapConvergedCloudRegionsDisplay() map[string]string {
@@ -483,7 +512,7 @@ func unmarshalSchema(schema *RootSchema) *map[string]interface{} {
 func Plans(plans PlansConfig, provider pkg.CloudProvider, includeAdditionalParamsInSchema bool, euAccessRestricted bool, useSmallerMachineTypes bool, shootAndSeedFeatureFlag bool, sapConvergedCloudRegions []string, assuredWorkloads bool) map[string]domain.ServicePlan {
 	awsMachineNames := AwsMachinesNames()
 	awsMachinesDisplay := AwsMachinesDisplay()
-	awsRegionsDisplay := AWSRegionsDisplay()
+	awsRegionsDisplay := AWSRegionsDisplay(euAccessRestricted)
 	azureMachinesNames := AzureMachinesNames()
 	azureMachinesDisplay := AzureMachinesDisplay()
 	azureRegionsDisplay := AzureRegionsDisplay(euAccessRestricted)

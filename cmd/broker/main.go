@@ -57,7 +57,6 @@ import (
 	"github.com/kyma-project/kyma-environment-broker/internal/swagger"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
-	"github.com/sirupsen/logrus"
 	"github.com/vrischmann/envconfig"
 	apiextensionsv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
 	"k8s.io/apimachinery/pkg/util/wait"
@@ -218,14 +217,6 @@ func main() {
 	defer cancel()
 
 	// set default formatted
-	logrus.SetFormatter(&logrus.JSONFormatter{
-		TimestampFormat: time.RFC3339Nano,
-	})
-	logs := logrus.New()
-	logs.SetFormatter(&logrus.JSONFormatter{
-		TimestampFormat: time.RFC3339Nano,
-	})
-
 	logLevel := new(slog.LevelVar)
 	logLevel.Set(slog.LevelInfo)
 	log := slog.New(slog.NewJSONHandler(os.Stdout, &slog.HandlerOptions{
@@ -239,9 +230,6 @@ func main() {
 	fatalOnError(err, log)
 
 	if cfg.LogLevel != "" {
-		l, _ := logrus.ParseLevel(cfg.LogLevel)
-		logs.SetLevel(l)
-
 		logLevel.Set(cfg.getLogLevel())
 	}
 
@@ -344,7 +332,7 @@ func main() {
 
 	// create server
 	router := mux.NewRouter()
-	createAPI(router, servicesConfig, inputFactory, &cfg, db, provisionQueue, deprovisionQueue, updateQueue, logger, logs, log,
+	createAPI(router, servicesConfig, inputFactory, &cfg, db, provisionQueue, deprovisionQueue, updateQueue, logger, log,
 		inputFactory.GetPlanDefaults, kcBuilder, skrK8sClientProvider, skrK8sClientProvider, gardenerClient, kcpK8sClient, eventBroker)
 
 	// create metrics endpoint
@@ -423,28 +411,28 @@ func logConfiguration(logs *slog.Logger, cfg Config) {
 }
 
 func createAPI(router *mux.Router, servicesConfig broker.ServicesConfig, planValidator broker.PlanValidator, cfg *Config, db storage.BrokerStorage,
-	provisionQueue, deprovisionQueue, updateQueue *process.Queue, logger lager.Logger, logs logrus.FieldLogger, log *slog.Logger, planDefaults broker.PlanDefaults, kcBuilder kubeconfig.KcBuilder, clientProvider K8sClientProvider, kubeconfigProvider KubeconfigProvider, gardenerClient, kcpK8sClient client.Client, publisher event.Publisher) {
+	provisionQueue, deprovisionQueue, updateQueue *process.Queue, logger lager.Logger, logs *slog.Logger, planDefaults broker.PlanDefaults, kcBuilder kubeconfig.KcBuilder, clientProvider K8sClientProvider, kubeconfigProvider KubeconfigProvider, gardenerClient, kcpK8sClient client.Client, publisher event.Publisher) {
 
 	suspensionCtxHandler := suspension.NewContextUpdateHandler(db.Operations(), provisionQueue, deprovisionQueue, logs)
 
 	defaultPlansConfig, err := servicesConfig.DefaultPlansConfig()
-	fatalOnError(err, log)
+	fatalOnError(err, logs)
 
 	debugSink, err := lager.NewRedactingSink(lager.NewWriterSink(os.Stdout, lager.DEBUG), []string{"instance-details"}, []string{})
-	fatalOnError(err, log)
+	fatalOnError(err, logs)
 	logger.RegisterSink(debugSink)
 	errorSink, err := lager.NewRedactingSink(lager.NewWriterSink(os.Stderr, lager.ERROR), []string{"instance-details"}, []string{})
-	fatalOnError(err, log)
+	fatalOnError(err, logs)
 	logger.RegisterSink(errorSink)
 
 	freemiumGlobalAccountIds, err := whitelist.ReadWhitelistedGlobalAccountIdsFromFile(cfg.FreemiumWhitelistedGlobalAccountsFilePath)
-	fatalOnError(err, log)
-	logs.Infof("Number of globalAccountIds for unlimited freeemium: %d\n", len(freemiumGlobalAccountIds))
+	fatalOnError(err, logs)
+	logs.Info(fmt.Sprintf("Number of globalAccountIds for unlimited freemium: %d", len(freemiumGlobalAccountIds)))
 
 	// backward compatibility for tests
 	convergedCloudRegionProvider, err := broker.NewDefaultConvergedCloudRegionsProvider(cfg.SapConvergedCloudRegionMappingsFilePath, &broker.YamlRegionReader{})
-	fatalOnError(err, log)
-	logs.Infof("%s plan region mappings loaded", broker.SapConvergedCloudPlanName)
+	fatalOnError(err, logs)
+	logs.Info(fmt.Sprintf("%s plan region mappings loaded", broker.SapConvergedCloudPlanName))
 
 	// create KymaEnvironmentBroker endpoints
 	kymaEnvBroker := &broker.KymaEnvironmentBroker{

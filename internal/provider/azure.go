@@ -126,8 +126,8 @@ func (p *AzureLiteInputProvider) Provide() Values {
 		DefaultMachineType:   machineType,
 		Region:               region,
 		Purpose:              p.Purpose,
-		DiskType:             "Standard_LRS",
-		VolumeSizeGb:         50,
+		DiskType:             "StandardSSD_LRS",
+		VolumeSizeGb:         80,
 	}
 }
 

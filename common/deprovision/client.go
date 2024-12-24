@@ -2,10 +2,10 @@ package deprovision
 
 import (
 	"fmt"
+	"log/slog"
 	"net/http"
 	"time"
 
-	"github.com/sirupsen/logrus"
 	"golang.org/x/oauth2/clientcredentials"
 )
 
@@ -17,7 +17,7 @@ type Client interface {
 }
 
 type DeprovisionClient struct {
-	log    logrus.FieldLogger
+	log    *slog.Logger
 	URL    string
 	client *http.Client
 }
@@ -34,7 +34,7 @@ func NewDeprovisionClient(parameters DeprovisionParameters) *DeprovisionClient {
 	httpClientOAuth.Timeout = 30 * time.Second
 
 	return &DeprovisionClient{
-		log:    logrus.WithField("client", "deprovision"),
+		log:    slog.With("client", "deprovision"),
 		URL:    parameters.EndpointURL,
 		client: httpClientOAuth,
 	}
@@ -45,7 +45,7 @@ func (c DeprovisionClient) DeprovisionRuntime(instanceID string) error {
 	url := c.URL + "/oauth/v2/service_instances/" +
 		instanceID + "?accepts_incomplete=true&service_id=faebbe18-0a84-11e5-ab14-d663bd873d97&plan_id=0c712d43-b1e6-470s-9fe5-8e1d552aa6a5"
 
-	c.log.Infof("url: %s", url)
+	c.log.Info(fmt.Sprintf("url: %s", url))
 	request, err := http.NewRequest("DELETE", url, nil)
 	if err != nil {
 		return fmt.Errorf("while creating the HTTP Delete request for deprovisioning: %w", err)
@@ -65,7 +65,7 @@ func (c DeprovisionClient) DeprovisionRuntime(instanceID string) error {
 	if response.StatusCode != http.StatusOK {
 		return fmt.Errorf("calling %s returned %d (%s) status", request.URL.String(), response.StatusCode, response.Status)
 	}
-	c.log.Infof("Deprovisioning request returned code: " + response.Status)
+	c.log.Info(fmt.Sprintf("Deprovisioning request returned code: %s", response.Status))
 
 	return err
 }
