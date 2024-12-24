@@ -177,7 +177,7 @@ func (c *KEBClient) CallKEB(payload interface{}, endpoint, verb string) (map[str
 	}
 	defer resp.Body.Close()
 
-	if resp.StatusCode != http.StatusOK {
+	if resp.StatusCode != http.StatusOK && resp.StatusCode != http.StatusAccepted {
 		return nil, fmt.Errorf("error calling KEB: %s %s", resp.Status, resp.Status)
 	}
 

@@ -12,7 +12,7 @@ func main() {
 	setupCloseHandler()
 
 	kebClient := keb.NewKEBClient(keb.NewKEBConfig())
-	dummyCreds := map[string]interface{}{
+	/*dummyCreds := map[string]interface{}{
 		"clientid":     "dummy_client_id",
 		"clientsecret": "dummy_client_secret",
 		"smURL":        "dummy_url",
@@ -23,6 +23,13 @@ func main() {
 		fmt.Printf("Error provisioning SKR: %v\n", err)
 	} else {
 		fmt.Printf("Provisioning response: %v\n", resp)
+	}
+	*/
+	deprovisionResp, err := kebClient.DeprovisionSKR("mm-24122024")
+	if err != nil {
+		fmt.Printf("Error deprovisioning SKR: %v\n", err)
+	} else {
+		fmt.Printf("Deprovisioning response: %v\n", deprovisionResp)
 	}
 
 }
