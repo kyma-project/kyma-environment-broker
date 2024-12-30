@@ -318,7 +318,7 @@ func NewProvisioningProperties(machineTypesDisplay, regionsDisplay map[string]st
 				Type:            "string",
 				Enum:            ToInterfaceSlice(machineTypes),
 				EnumDisplayName: machineTypesDisplay,
-				Description:     "Specifies the type of the machine.",
+				Description:     "Specifies the type of the virtual machine.",
 			},
 		},
 		Name: NameProperty(),
@@ -452,7 +452,7 @@ func NewAdditionalWorkerNodePoolsSchema(machineTypesDisplay map[string]string, m
 					MinLength:       1,
 					Enum:            ToInterfaceSlice(machineTypes),
 					EnumDisplayName: machineTypesDisplay,
-					Description:     "Specifies the type of the machine.",
+					Description:     "Specifies the type of the virtual machine.",
 				},
 				AutoScalerMin: Type{
 					Type:        "integer",

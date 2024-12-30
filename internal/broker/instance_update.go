@@ -298,7 +298,6 @@ func (b *UpdateEndpoint) processUpdateParameters(instance *internal.Instance, de
 	}
 
 	if IsPreviewPlan(details.PlanID) {
-		// if the list is empty remove additional worker node pools
 		if params.AdditionalWorkerNodePools != nil {
 			newAdditionalWorkerNodePools := make([]pkg.AdditionalWorkerNodePool, 0, len(params.AdditionalWorkerNodePools))
 			newAdditionalWorkerNodePools = append(newAdditionalWorkerNodePools, params.AdditionalWorkerNodePools...)
