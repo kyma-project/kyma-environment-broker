@@ -4,34 +4,18 @@ import (
 	"fmt"
 	"os"
 	"os/signal"
-	keb "skr-tester/internal/kyma-environment-broker"
+	"skr-tester/pkg/command"
 	"syscall"
 )
 
 func main() {
 	setupCloseHandler()
+	cmd := command.New()
 
-	kebClient := keb.NewKEBClient(keb.NewKEBConfig())
-	/*dummyCreds := map[string]interface{}{
-		"clientid":     "dummy_client_id",
-		"clientsecret": "dummy_client_secret",
-		"smURL":        "dummy_url",
-		"url":          "dummy_token_url",
-	}
-	resp, err := kebClient.ProvisionSKR("mm-24122024", "mm-24122024", nil, dummyCreds, nil)
+	err := cmd.Execute()
 	if err != nil {
-		fmt.Printf("Error provisioning SKR: %v\n", err)
-	} else {
-		fmt.Printf("Provisioning response: %v\n", resp)
+		os.Exit(1)
 	}
-	*/
-	deprovisionResp, err := kebClient.DeprovisionSKR("mm-24122024")
-	if err != nil {
-		fmt.Printf("Error deprovisioning SKR: %v\n", err)
-	} else {
-		fmt.Printf("Deprovisioning response: %v\n", deprovisionResp)
-	}
-
 }
 
 func setupCloseHandler() {

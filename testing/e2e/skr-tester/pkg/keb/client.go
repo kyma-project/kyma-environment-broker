@@ -7,7 +7,6 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net/http"
-	"net/http/httputil"
 	"os"
 	"strings"
 	"time"
@@ -35,6 +34,60 @@ type OAuthToken struct {
 	Credentials OAuthCredentials
 	Token       string
 	Expiry      time.Time
+}
+
+type KEBClient struct {
+	Token           *OAuthToken
+	Host            string
+	GlobalAccountID string
+	SubaccountID    string
+	UserID          string
+	PlanID          string
+	Region          string
+	PlatformRegion  string
+}
+
+type KEBConfig struct {
+	Host            string
+	Credentials     OAuthCredentials
+	GlobalAccountID string
+	SubaccountID    string
+	UserID          string
+	PlanID          string
+	Region          string
+	PlatformRegion  string
+	TokenURL        string
+}
+
+func NewKEBConfig() *KEBConfig {
+	return &KEBConfig{
+		Host:            getEnvOrThrow("KEB_HOST"),
+		Credentials:     OAuthCredentials{ClientID: getEnvOrThrow("KEB_CLIENT_ID"), ClientSecret: getEnvOrThrow("KEB_CLIENT_SECRET")},
+		GlobalAccountID: getEnvOrThrow("KEB_GLOBALACCOUNT_ID"),
+		SubaccountID:    getEnvOrThrow("KEB_SUBACCOUNT_ID"),
+		UserID:          getEnvOrThrow("KEB_USER_ID"),
+		PlanID:          getEnvOrThrow("KEB_PLAN_ID"),
+		Region:          getEnvOrThrow("KEB_REGION"),
+		PlatformRegion:  os.Getenv("KEB_PLATFORM_REGION"),
+		TokenURL:        getEnvOrThrow("KEB_TOKEN_URL"),
+	}
+}
+
+func NewKEBClient(config *KEBConfig) *KEBClient {
+	tokenURL := fmt.Sprintf("https://oauth2.%s/oauth2/token", config.Host)
+	if config.TokenURL != "" {
+		tokenURL = config.TokenURL
+	}
+	return &KEBClient{
+		Token:           &OAuthToken{TokenURL: tokenURL, Credentials: config.Credentials},
+		Host:            config.Host,
+		GlobalAccountID: config.GlobalAccountID,
+		SubaccountID:    config.SubaccountID,
+		UserID:          config.UserID,
+		PlanID:          config.PlanID,
+		Region:          config.Region,
+		PlatformRegion:  config.PlatformRegion,
+	}
 }
 
 func (o *OAuthToken) GetToken(scopes string) (string, error) {
@@ -67,60 +120,6 @@ func (o *OAuthToken) GetToken(scopes string) (string, error) {
 	o.Expiry = time.Now().Add(time.Duration(result["expires_in"].(float64)) * time.Second)
 
 	return o.Token, nil
-}
-
-type KEBConfig struct {
-	Host            string
-	Credentials     OAuthCredentials
-	GlobalAccountID string
-	SubaccountID    string
-	UserID          string
-	PlanID          string
-	Region          string
-	PlatformRegion  string
-	TokenURL        string
-}
-
-func NewKEBConfig() *KEBConfig {
-	return &KEBConfig{
-		Host:            getEnvOrThrow("KEB_HOST"),
-		Credentials:     OAuthCredentials{ClientID: getEnvOrThrow("KEB_CLIENT_ID"), ClientSecret: getEnvOrThrow("KEB_CLIENT_SECRET")},
-		GlobalAccountID: getEnvOrThrow("KEB_GLOBALACCOUNT_ID"),
-		SubaccountID:    getEnvOrThrow("KEB_SUBACCOUNT_ID"),
-		UserID:          getEnvOrThrow("KEB_USER_ID"),
-		PlanID:          getEnvOrThrow("KEB_PLAN_ID"),
-		Region:          os.Getenv("KEB_REGION"),
-		PlatformRegion:  os.Getenv("KEB_PLATFORM_REGION"),
-		TokenURL:        os.Getenv("KEB_TOKEN_URL"),
-	}
-}
-
-type KEBClient struct {
-	Token           *OAuthToken
-	Host            string
-	GlobalAccountID string
-	SubaccountID    string
-	UserID          string
-	PlanID          string
-	Region          string
-	PlatformRegion  string
-}
-
-func NewKEBClient(config *KEBConfig) *KEBClient {
-	tokenURL := fmt.Sprintf("https://oauth2.%s/oauth2/token", config.Host)
-	if config.TokenURL != "" {
-		tokenURL = config.TokenURL
-	}
-	return &KEBClient{
-		Token:           &OAuthToken{TokenURL: tokenURL, Credentials: config.Credentials},
-		Host:            config.Host,
-		GlobalAccountID: config.GlobalAccountID,
-		SubaccountID:    config.SubaccountID,
-		UserID:          config.UserID,
-		PlanID:          config.PlanID,
-		Region:          config.Region,
-		PlatformRegion:  config.PlatformRegion,
-	}
 }
 
 func (c *KEBClient) BuildRequest(payload interface{}, endpoint, verb string) (*http.Request, error) {
@@ -166,11 +165,6 @@ func (c *KEBClient) CallKEB(payload interface{}, endpoint, verb string) (map[str
 	}
 
 	client := &http.Client{}
-	reqDump, err := httputil.DumpRequest(req, true)
-	if err != nil {
-		return nil, err
-	}
-	fmt.Printf("Request: %s\n", string(reqDump))
 	resp, err := client.Do(req)
 	if err != nil {
 		return nil, err
@@ -227,7 +221,7 @@ func (c *KEBClient) GetCatalog() (map[string]interface{}, error) {
 func (c *KEBClient) BuildPayload(name, instanceID string, platformCreds, btpOperatorCreds map[string]interface{}, customParams map[string]interface{}) map[string]interface{} {
 	payload := map[string]interface{}{
 		"service_id": KYMA_SERVICE_ID,
-		"plan_id":    c.PlanID,
+		"plan_id":    customParams["plan_id"],
 		"context": map[string]interface{}{
 			"globalaccount_id": c.GlobalAccountID,
 			"subaccount_id":    c.SubaccountID,
@@ -239,7 +233,7 @@ func (c *KEBClient) BuildPayload(name, instanceID string, platformCreds, btpOper
 	}
 
 	if c.PlanID != trialPlanID {
-		payload["parameters"].(map[string]interface{})["region"] = c.Region
+		payload["parameters"].(map[string]interface{})["region"] = customParams["region"]
 	}
 
 	for k, v := range customParams {
