@@ -6,7 +6,7 @@ import (
 
 func New() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:          "skr",
+		Use:          "skr-tester",
 		Short:        "SKR tester",
 		Long:         "SKR tester",
 		SilenceUsage: true,

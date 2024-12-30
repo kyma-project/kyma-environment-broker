@@ -52,16 +52,12 @@ func (cmd *ProvisionCommand) Run() error {
 		"url":          "dummy_token_url",
 	}
 	instanceID := uuid.New().String()
-	customParams := map[string]interface{}{
-		"plan_id": cmd.planID,
-		"region":  cmd.region,
-	}
 	fmt.Printf("Instance ID: %s\n", instanceID)
-	resp, err := kebClient.ProvisionSKR(instanceID, instanceID, nil, dummyCreds, customParams)
+	resp, err := kebClient.ProvisionSKR(instanceID, cmd.planID, cmd.region, dummyCreds)
 	if err != nil {
 		fmt.Printf("Error provisioning SKR: %v\n", err)
 	} else {
-		fmt.Printf("Provisioning response: %v\n", resp)
+		fmt.Printf("Provision operation ID: %s\n", resp["operation"].(string))
 	}
 
 	return nil

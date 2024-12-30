@@ -42,8 +42,6 @@ type KEBClient struct {
 	GlobalAccountID string
 	SubaccountID    string
 	UserID          string
-	PlanID          string
-	Region          string
 	PlatformRegion  string
 }
 
@@ -53,8 +51,6 @@ type KEBConfig struct {
 	GlobalAccountID string
 	SubaccountID    string
 	UserID          string
-	PlanID          string
-	Region          string
 	PlatformRegion  string
 	TokenURL        string
 }
@@ -66,8 +62,6 @@ func NewKEBConfig() *KEBConfig {
 		GlobalAccountID: getEnvOrThrow("KEB_GLOBALACCOUNT_ID"),
 		SubaccountID:    getEnvOrThrow("KEB_SUBACCOUNT_ID"),
 		UserID:          getEnvOrThrow("KEB_USER_ID"),
-		PlanID:          getEnvOrThrow("KEB_PLAN_ID"),
-		Region:          getEnvOrThrow("KEB_REGION"),
 		PlatformRegion:  os.Getenv("KEB_PLATFORM_REGION"),
 		TokenURL:        getEnvOrThrow("KEB_TOKEN_URL"),
 	}
@@ -84,8 +78,6 @@ func NewKEBClient(config *KEBConfig) *KEBClient {
 		GlobalAccountID: config.GlobalAccountID,
 		SubaccountID:    config.SubaccountID,
 		UserID:          config.UserID,
-		PlanID:          config.PlanID,
-		Region:          config.Region,
 		PlatformRegion:  config.PlatformRegion,
 	}
 }
@@ -218,10 +210,10 @@ func (c *KEBClient) GetCatalog() (map[string]interface{}, error) {
 	return c.CallKEB(nil, endpoint, "GET")
 }
 
-func (c *KEBClient) BuildPayload(name, instanceID string, platformCreds, btpOperatorCreds map[string]interface{}, customParams map[string]interface{}) map[string]interface{} {
+func (c *KEBClient) BuildPayload(name, instanceID, planID, region string, btpOperatorCreds map[string]interface{}) map[string]interface{} {
 	payload := map[string]interface{}{
 		"service_id": KYMA_SERVICE_ID,
-		"plan_id":    customParams["plan_id"],
+		"plan_id":    planID,
 		"context": map[string]interface{}{
 			"globalaccount_id": c.GlobalAccountID,
 			"subaccount_id":    c.SubaccountID,
@@ -232,25 +224,11 @@ func (c *KEBClient) BuildPayload(name, instanceID string, platformCreds, btpOper
 		},
 	}
 
-	if c.PlanID != trialPlanID {
-		payload["parameters"].(map[string]interface{})["region"] = customParams["region"]
+	if planID != trialPlanID {
+		payload["parameters"].(map[string]interface{})["region"] = region
 	}
 
-	for k, v := range customParams {
-		payload["parameters"].(map[string]interface{})[k] = v
-	}
-
-	if platformCreds != nil && btpOperatorCreds != nil {
-		payload["context"].(map[string]interface{})["sm_platform_credentials"] = map[string]interface{}{
-			"credentials": map[string]interface{}{
-				"basic": map[string]interface{}{
-					"username": platformCreds["username"],
-					"password": platformCreds["password"],
-				},
-			},
-			"url": btpOperatorCreds["smURL"],
-		}
-	} else if btpOperatorCreds != nil {
+	if btpOperatorCreds != nil {
 		payload["context"].(map[string]interface{})["sm_operator_credentials"] = map[string]interface{}{
 			"clientid":     btpOperatorCreds["clientid"],
 			"clientsecret": btpOperatorCreds["clientsecret"],
@@ -262,8 +240,8 @@ func (c *KEBClient) BuildPayload(name, instanceID string, platformCreds, btpOper
 	return payload
 }
 
-func (c *KEBClient) ProvisionSKR(name, instanceID string, platformCreds, btpOperatorCreds map[string]interface{}, customParams map[string]interface{}) (map[string]interface{}, error) {
-	payload := c.BuildPayload(name, instanceID, platformCreds, btpOperatorCreds, customParams)
+func (c *KEBClient) ProvisionSKR(instanceID, planID, region string, btpOperatorCreds map[string]interface{}) (map[string]interface{}, error) {
+	payload := c.BuildPayload(instanceID, instanceID, planID, region, btpOperatorCreds)
 	endpoint := fmt.Sprintf("service_instances/%s", instanceID)
 	return c.CallKEB(payload, endpoint, "PUT")
 }
@@ -297,7 +275,7 @@ func (c *KEBClient) GetOperation(instanceID, operationID string) (map[string]int
 }
 
 func (c *KEBClient) DeprovisionSKR(instanceID string) (map[string]interface{}, error) {
-	endpoint := fmt.Sprintf("service_instances/%s?service_id=%s&plan_id=%s", instanceID, KYMA_SERVICE_ID, c.PlanID)
+	endpoint := fmt.Sprintf("service_instances/%s?service_id=%s&plan_id=not-empty", instanceID, KYMA_SERVICE_ID)
 	return c.CallKEB(nil, endpoint, "DELETE")
 }
 
@@ -327,7 +305,7 @@ func (c *KEBClient) CreateBinding(instanceID, bindingID string, expirationSecond
 	}
 	payload := map[string]interface{}{
 		"service_id": KYMA_SERVICE_ID,
-		"plan_id":    c.PlanID,
+		"plan_id":    "not-empty",
 		"parameters": map[string]interface{}{
 			"expiration_seconds": expirationSeconds,
 		},
@@ -337,7 +315,7 @@ func (c *KEBClient) CreateBinding(instanceID, bindingID string, expirationSecond
 }
 
 func (c *KEBClient) DeleteBinding(instanceID, bindingID string) (map[string]interface{}, error) {
-	params := fmt.Sprintf("service_id=%s&plan_id=%s", KYMA_SERVICE_ID, c.PlanID)
+	params := fmt.Sprintf("service_id=%s&plan_id=not-empty", KYMA_SERVICE_ID)
 	endpoint := fmt.Sprintf("service_instances/%s/service_bindings/%s?accepts_incomplete=false&%s", instanceID, bindingID, params)
 	return c.CallKEB(nil, endpoint, "DELETE")
 }
