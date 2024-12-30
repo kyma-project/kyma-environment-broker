@@ -11,13 +11,9 @@ import (
 )
 
 type DeprovisionCommand struct {
-	cobraCmd        *cobra.Command
-	log             logger.Logger
-	shootName       string
-	globalAccountID string
-	subAccountID    string
-	outputPath      string
-	instanceID      string
+	cobraCmd   *cobra.Command
+	log        logger.Logger
+	instanceID string
 }
 
 func NewDeprovisionCmd() *cobra.Command {

@@ -12,14 +12,10 @@ import (
 )
 
 type ProvisionCommand struct {
-	cobraCmd        *cobra.Command
-	log             logger.Logger
-	shootName       string
-	globalAccountID string
-	subAccountID    string
-	outputPath      string
-	planID          string
-	region          string
+	cobraCmd *cobra.Command
+	log      logger.Logger
+	planID   string
+	region   string
 }
 
 func NewProvisionCmd() *cobra.Command {
