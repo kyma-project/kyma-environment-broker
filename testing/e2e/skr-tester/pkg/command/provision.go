@@ -60,7 +60,7 @@ func (cmd *ProvisionCommand) Run() error {
 }
 
 func (cmd *ProvisionCommand) Validate() error {
-	if cmd.planID != "" || cmd.region != "" {
+	if cmd.planID != "" && cmd.region != "" {
 		return nil
 	} else {
 		return errors.New("you must specify the planID and region")
