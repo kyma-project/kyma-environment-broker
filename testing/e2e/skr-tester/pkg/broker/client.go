@@ -57,13 +57,13 @@ type BrokerConfig struct {
 
 func NewBrokerConfig() *BrokerConfig {
 	return &BrokerConfig{
-		Host:            getEnvOrThrow("Broker_HOST"),
-		Credentials:     OAuthCredentials{ClientID: getEnvOrThrow("Broker_CLIENT_ID"), ClientSecret: getEnvOrThrow("Broker_CLIENT_SECRET")},
-		GlobalAccountID: getEnvOrThrow("Broker_GLOBALACCOUNT_ID"),
-		SubaccountID:    getEnvOrThrow("Broker_SUBACCOUNT_ID"),
-		UserID:          getEnvOrThrow("Broker_USER_ID"),
-		PlatformRegion:  os.Getenv("Broker_PLATFORM_REGION"),
-		TokenURL:        getEnvOrThrow("Broker_TOKEN_URL"),
+		Host:            getEnvOrThrow("KEB_HOST"),
+		Credentials:     OAuthCredentials{ClientID: getEnvOrThrow("KEB_CLIENT_ID"), ClientSecret: getEnvOrThrow("KEB_CLIENT_SECRET")},
+		GlobalAccountID: getEnvOrThrow("KEB_GLOBALACCOUNT_ID"),
+		SubaccountID:    getEnvOrThrow("KEB_SUBACCOUNT_ID"),
+		UserID:          getEnvOrThrow("KEB_USER_ID"),
+		PlatformRegion:  os.Getenv("KEB_PLATFORM_REGION"),
+		TokenURL:        getEnvOrThrow("KEB_TOKEN_URL"),
 	}
 }
 
