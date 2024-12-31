@@ -4,7 +4,7 @@ import (
 	"errors"
 	"fmt"
 
-	keb "skr-tester/pkg/keb"
+	broker "skr-tester/pkg/broker"
 	"skr-tester/pkg/logger"
 
 	"github.com/spf13/cobra"
@@ -21,26 +21,26 @@ func NewDeprovisionCmd() *cobra.Command {
 	cobraCmd := &cobra.Command{
 		Use:     "deprovision",
 		Aliases: []string{"d"},
-		Short:   "Deprovisions a Kyma Runtime",
-		Long:    "Deprovisions a Kyma Runtime",
-		Example: "skr-tester deprovision -i instanceID                            Deprovisions the SKR.",
+		Short:   "Deprovisions an instance",
+		Long:    "Deprovisions an instance",
+		Example: "skr-tester deprovision -i instanceID                            Deprovisions the instance.",
 
 		PreRunE: func(_ *cobra.Command, _ []string) error { return cmd.Validate() },
 		RunE:    func(_ *cobra.Command, _ []string) error { return cmd.Run() },
 	}
 	cmd.cobraCmd = cobraCmd
 
-	cobraCmd.Flags().StringVarP(&cmd.instanceID, "instanceID", "i", "", "InstanceID of the specific Kyma Runtime.")
+	cobraCmd.Flags().StringVarP(&cmd.instanceID, "instanceID", "i", "", "InstanceID of the specific instance.")
 
 	return cobraCmd
 }
 
 func (cmd *DeprovisionCommand) Run() error {
 	cmd.log = logger.New()
-	kebClient := keb.NewKEBClient(keb.NewKEBConfig())
-	resp, err := kebClient.DeprovisionSKR(cmd.instanceID)
+	brokerClient := broker.NewBrokerClient(broker.NewBrokerConfig())
+	resp, err := brokerClient.DeprovisionInstance(cmd.instanceID)
 	if err != nil {
-		fmt.Printf("Error deprovisioning SKR: %v\n", err)
+		fmt.Printf("Error deprovisioning instance: %v\n", err)
 	} else {
 		fmt.Printf("Deprovision operationID: %s\n", resp["operation"].(string))
 	}

@@ -1,4 +1,4 @@
-package keb
+package broker
 
 import (
 	"bytes"
@@ -36,7 +36,7 @@ type OAuthToken struct {
 	Expiry      time.Time
 }
 
-type KEBClient struct {
+type BrokerClient struct {
 	Token           *OAuthToken
 	Host            string
 	GlobalAccountID string
@@ -45,7 +45,7 @@ type KEBClient struct {
 	PlatformRegion  string
 }
 
-type KEBConfig struct {
+type BrokerConfig struct {
 	Host            string
 	Credentials     OAuthCredentials
 	GlobalAccountID string
@@ -55,24 +55,24 @@ type KEBConfig struct {
 	TokenURL        string
 }
 
-func NewKEBConfig() *KEBConfig {
-	return &KEBConfig{
-		Host:            getEnvOrThrow("KEB_HOST"),
-		Credentials:     OAuthCredentials{ClientID: getEnvOrThrow("KEB_CLIENT_ID"), ClientSecret: getEnvOrThrow("KEB_CLIENT_SECRET")},
-		GlobalAccountID: getEnvOrThrow("KEB_GLOBALACCOUNT_ID"),
-		SubaccountID:    getEnvOrThrow("KEB_SUBACCOUNT_ID"),
-		UserID:          getEnvOrThrow("KEB_USER_ID"),
-		PlatformRegion:  os.Getenv("KEB_PLATFORM_REGION"),
-		TokenURL:        getEnvOrThrow("KEB_TOKEN_URL"),
+func NewBrokerConfig() *BrokerConfig {
+	return &BrokerConfig{
+		Host:            getEnvOrThrow("Broker_HOST"),
+		Credentials:     OAuthCredentials{ClientID: getEnvOrThrow("Broker_CLIENT_ID"), ClientSecret: getEnvOrThrow("Broker_CLIENT_SECRET")},
+		GlobalAccountID: getEnvOrThrow("Broker_GLOBALACCOUNT_ID"),
+		SubaccountID:    getEnvOrThrow("Broker_SUBACCOUNT_ID"),
+		UserID:          getEnvOrThrow("Broker_USER_ID"),
+		PlatformRegion:  os.Getenv("Broker_PLATFORM_REGION"),
+		TokenURL:        getEnvOrThrow("Broker_TOKEN_URL"),
 	}
 }
 
-func NewKEBClient(config *KEBConfig) *KEBClient {
+func NewBrokerClient(config *BrokerConfig) *BrokerClient {
 	tokenURL := fmt.Sprintf("https://oauth2.%s/oauth2/token", config.Host)
 	if config.TokenURL != "" {
 		tokenURL = config.TokenURL
 	}
-	return &KEBClient{
+	return &BrokerClient{
 		Token:           &OAuthToken{TokenURL: tokenURL, Credentials: config.Credentials},
 		Host:            config.Host,
 		GlobalAccountID: config.GlobalAccountID,
@@ -114,7 +114,7 @@ func (o *OAuthToken) GetToken(scopes string) (string, error) {
 	return o.Token, nil
 }
 
-func (c *KEBClient) BuildRequest(payload interface{}, endpoint, verb string) (*http.Request, error) {
+func (c *BrokerClient) BuildRequest(payload interface{}, endpoint, verb string) (*http.Request, error) {
 	token, err := c.Token.GetToken(scope)
 	if err != nil {
 		return nil, err
@@ -135,7 +135,7 @@ func (c *KEBClient) BuildRequest(payload interface{}, endpoint, verb string) (*h
 	return req, nil
 }
 
-func (c *KEBClient) BuildRequestWithoutToken(payload interface{}, endpoint, verb string) (*http.Request, error) {
+func (c *BrokerClient) BuildRequestWithoutToken(payload interface{}, endpoint, verb string) (*http.Request, error) {
 	url := fmt.Sprintf("https://kyma-env-broker.%s/oauth/v2/%s", c.Host, endpoint)
 	jsonPayload, err := json.Marshal(payload)
 	if err != nil {
@@ -150,7 +150,7 @@ func (c *KEBClient) BuildRequestWithoutToken(payload interface{}, endpoint, verb
 	return req, nil
 }
 
-func (c *KEBClient) CallKEB(payload interface{}, endpoint, verb string) (map[string]interface{}, error) {
+func (c *BrokerClient) CallBroker(payload interface{}, endpoint, verb string) (map[string]interface{}, error) {
 	req, err := c.BuildRequest(payload, endpoint, verb)
 	if err != nil {
 		return nil, err
@@ -164,7 +164,7 @@ func (c *KEBClient) CallKEB(payload interface{}, endpoint, verb string) (map[str
 	defer resp.Body.Close()
 
 	if resp.StatusCode != http.StatusOK && resp.StatusCode != http.StatusAccepted {
-		return nil, fmt.Errorf("error calling KEB: %s %s", resp.Status, resp.Status)
+		return nil, fmt.Errorf("error calling Broker: %s %s", resp.Status, resp.Status)
 	}
 
 	var result map[string]interface{}
@@ -172,7 +172,7 @@ func (c *KEBClient) CallKEB(payload interface{}, endpoint, verb string) (map[str
 	return result, nil
 }
 
-func (c *KEBClient) CallKEBWithoutToken(payload interface{}, endpoint, verb string) error {
+func (c *BrokerClient) CallBrokerWithoutToken(payload interface{}, endpoint, verb string) error {
 	req, err := c.BuildRequestWithoutToken(payload, endpoint, verb)
 	fmt.Printf("Request: %s %s\n", req.Method, req.URL)
 	if err != nil {
@@ -200,17 +200,17 @@ func (c *KEBClient) CallKEBWithoutToken(payload interface{}, endpoint, verb stri
 	return nil
 }
 
-func (c *KEBClient) GetSKR(instanceID string) (map[string]interface{}, error) {
+func (c *BrokerClient) GetInstance(instanceID string) (map[string]interface{}, error) {
 	endpoint := fmt.Sprintf("service_instances/%s", instanceID)
-	return c.CallKEB(nil, endpoint, "GET")
+	return c.CallBroker(nil, endpoint, "GET")
 }
 
-func (c *KEBClient) GetCatalog() (map[string]interface{}, error) {
+func (c *BrokerClient) GetCatalog() (map[string]interface{}, error) {
 	endpoint := "catalog"
-	return c.CallKEB(nil, endpoint, "GET")
+	return c.CallBroker(nil, endpoint, "GET")
 }
 
-func (c *KEBClient) BuildPayload(name, instanceID, planID, region string, btpOperatorCreds map[string]interface{}) map[string]interface{} {
+func (c *BrokerClient) BuildPayload(name, instanceID, planID, region string, btpOperatorCreds map[string]interface{}) map[string]interface{} {
 	payload := map[string]interface{}{
 		"service_id": kymaServiceID,
 		"plan_id":    planID,
@@ -240,13 +240,13 @@ func (c *KEBClient) BuildPayload(name, instanceID, planID, region string, btpOpe
 	return payload
 }
 
-func (c *KEBClient) ProvisionSKR(instanceID, planID, region string, btpOperatorCreds map[string]interface{}) (map[string]interface{}, error) {
+func (c *BrokerClient) ProvisionInstance(instanceID, planID, region string, btpOperatorCreds map[string]interface{}) (map[string]interface{}, error) {
 	payload := c.BuildPayload(instanceID, instanceID, planID, region, btpOperatorCreds)
 	endpoint := fmt.Sprintf("service_instances/%s", instanceID)
-	return c.CallKEB(payload, endpoint, "PUT")
+	return c.CallBroker(payload, endpoint, "PUT")
 }
 
-func (c *KEBClient) UpdateSKR(instanceID string, customParams, btpOperatorCreds map[string]interface{}, isMigration bool) (map[string]interface{}, error) {
+func (c *BrokerClient) UpdateInstance(instanceID string, customParams, btpOperatorCreds map[string]interface{}, isMigration bool) (map[string]interface{}, error) {
 	payload := map[string]interface{}{
 		"service_id": kymaServiceID,
 		"context": map[string]interface{}{
@@ -266,20 +266,20 @@ func (c *KEBClient) UpdateSKR(instanceID string, customParams, btpOperatorCreds 
 	}
 
 	endpoint := fmt.Sprintf("service_instances/%s?accepts_incomplete=true", instanceID)
-	return c.CallKEB(payload, endpoint, "PATCH")
+	return c.CallBroker(payload, endpoint, "PATCH")
 }
 
-func (c *KEBClient) GetOperation(instanceID, operationID string) (map[string]interface{}, error) {
+func (c *BrokerClient) GetOperation(instanceID, operationID string) (map[string]interface{}, error) {
 	endpoint := fmt.Sprintf("service_instances/%s/last_operation?operation=%s", instanceID, operationID)
-	return c.CallKEB(nil, endpoint, "GET")
+	return c.CallBroker(nil, endpoint, "GET")
 }
 
-func (c *KEBClient) DeprovisionSKR(instanceID string) (map[string]interface{}, error) {
+func (c *BrokerClient) DeprovisionInstance(instanceID string) (map[string]interface{}, error) {
 	endpoint := fmt.Sprintf("service_instances/%s?service_id=%s&plan_id=not-empty", instanceID, kymaServiceID)
-	return c.CallKEB(nil, endpoint, "DELETE")
+	return c.CallBroker(nil, endpoint, "DELETE")
 }
 
-func (c *KEBClient) DownloadKubeconfig(instanceID string) (string, error) {
+func (c *BrokerClient) DownloadKubeconfig(instanceID string) (string, error) {
 	downloadUrl := fmt.Sprintf("https://kyma-env-broker.%s/kubeconfig/%s", c.Host, instanceID)
 	resp, err := http.Get(downloadUrl)
 	if err != nil {
@@ -299,7 +299,7 @@ func (c *KEBClient) DownloadKubeconfig(instanceID string) (string, error) {
 	return string(data), nil
 }
 
-func (c *KEBClient) CreateBinding(instanceID, bindingID string, expirationSeconds int) (map[string]interface{}, error) {
+func (c *BrokerClient) CreateBinding(instanceID, bindingID string, expirationSeconds int) (map[string]interface{}, error) {
 	if expirationSeconds == 0 {
 		expirationSeconds = defaultExpirationSeconds
 	}
@@ -311,21 +311,21 @@ func (c *KEBClient) CreateBinding(instanceID, bindingID string, expirationSecond
 		},
 	}
 	endpoint := fmt.Sprintf("service_instances/%s/service_bindings/%s?accepts_incomplete=false", instanceID, bindingID)
-	return c.CallKEB(payload, endpoint, "PUT")
+	return c.CallBroker(payload, endpoint, "PUT")
 }
 
-func (c *KEBClient) DeleteBinding(instanceID, bindingID string) (map[string]interface{}, error) {
+func (c *BrokerClient) DeleteBinding(instanceID, bindingID string) (map[string]interface{}, error) {
 	params := fmt.Sprintf("service_id=%s&plan_id=not-empty", kymaServiceID)
 	endpoint := fmt.Sprintf("service_instances/%s/service_bindings/%s?accepts_incomplete=false&%s", instanceID, bindingID, params)
-	return c.CallKEB(nil, endpoint, "DELETE")
+	return c.CallBroker(nil, endpoint, "DELETE")
 }
 
-func (c *KEBClient) GetBinding(instanceID, bindingID string) (map[string]interface{}, error) {
+func (c *BrokerClient) GetBinding(instanceID, bindingID string) (map[string]interface{}, error) {
 	endpoint := fmt.Sprintf("service_instances/%s/service_bindings/%s?accepts_incomplete=false", instanceID, bindingID)
-	return c.CallKEB(nil, endpoint, "GET")
+	return c.CallBroker(nil, endpoint, "GET")
 }
 
-func (c *KEBClient) GetPlatformRegion() string {
+func (c *BrokerClient) GetPlatformRegion() string {
 	if c.PlatformRegion != "" {
 		return fmt.Sprintf("%s/", c.PlatformRegion)
 	}
