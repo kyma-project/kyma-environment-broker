@@ -13,10 +13,10 @@ import (
 )
 
 const (
-	SCOPES                     = "broker:write"
-	KYMA_SERVICE_ID            = "47c9dcbf-ff30-448e-ab36-d3bad66ba281"
-	trialPlanID                = "7d55d31d-35ae-4438-bf13-6ffdfa107d9f"
-	DEFAULT_EXPIRATION_SECONDS = 600
+	scope                    = "broker:write"
+	kymaServiceID            = "47c9dcbf-ff30-448e-ab36-d3bad66ba281"
+	trialPlanID              = "7d55d31d-35ae-4438-bf13-6ffdfa107d9f"
+	defaultExpirationSeconds = 600
 )
 
 type OAuthCredentials struct {
@@ -115,7 +115,7 @@ func (o *OAuthToken) GetToken(scopes string) (string, error) {
 }
 
 func (c *KEBClient) BuildRequest(payload interface{}, endpoint, verb string) (*http.Request, error) {
-	token, err := c.Token.GetToken(SCOPES)
+	token, err := c.Token.GetToken(scope)
 	if err != nil {
 		return nil, err
 	}
@@ -212,7 +212,7 @@ func (c *KEBClient) GetCatalog() (map[string]interface{}, error) {
 
 func (c *KEBClient) BuildPayload(name, instanceID, planID, region string, btpOperatorCreds map[string]interface{}) map[string]interface{} {
 	payload := map[string]interface{}{
-		"service_id": KYMA_SERVICE_ID,
+		"service_id": kymaServiceID,
 		"plan_id":    planID,
 		"context": map[string]interface{}{
 			"globalaccount_id": c.GlobalAccountID,
@@ -248,7 +248,7 @@ func (c *KEBClient) ProvisionSKR(instanceID, planID, region string, btpOperatorC
 
 func (c *KEBClient) UpdateSKR(instanceID string, customParams, btpOperatorCreds map[string]interface{}, isMigration bool) (map[string]interface{}, error) {
 	payload := map[string]interface{}{
-		"service_id": KYMA_SERVICE_ID,
+		"service_id": kymaServiceID,
 		"context": map[string]interface{}{
 			"globalaccount_id": c.GlobalAccountID,
 			"isMigration":      isMigration,
@@ -275,7 +275,7 @@ func (c *KEBClient) GetOperation(instanceID, operationID string) (map[string]int
 }
 
 func (c *KEBClient) DeprovisionSKR(instanceID string) (map[string]interface{}, error) {
-	endpoint := fmt.Sprintf("service_instances/%s?service_id=%s&plan_id=not-empty", instanceID, KYMA_SERVICE_ID)
+	endpoint := fmt.Sprintf("service_instances/%s?service_id=%s&plan_id=not-empty", instanceID, kymaServiceID)
 	return c.CallKEB(nil, endpoint, "DELETE")
 }
 
@@ -301,10 +301,10 @@ func (c *KEBClient) DownloadKubeconfig(instanceID string) (string, error) {
 
 func (c *KEBClient) CreateBinding(instanceID, bindingID string, expirationSeconds int) (map[string]interface{}, error) {
 	if expirationSeconds == 0 {
-		expirationSeconds = DEFAULT_EXPIRATION_SECONDS
+		expirationSeconds = defaultExpirationSeconds
 	}
 	payload := map[string]interface{}{
-		"service_id": KYMA_SERVICE_ID,
+		"service_id": kymaServiceID,
 		"plan_id":    "not-empty",
 		"parameters": map[string]interface{}{
 			"expiration_seconds": expirationSeconds,
@@ -315,7 +315,7 @@ func (c *KEBClient) CreateBinding(instanceID, bindingID string, expirationSecond
 }
 
 func (c *KEBClient) DeleteBinding(instanceID, bindingID string) (map[string]interface{}, error) {
-	params := fmt.Sprintf("service_id=%s&plan_id=not-empty", KYMA_SERVICE_ID)
+	params := fmt.Sprintf("service_id=%s&plan_id=not-empty", kymaServiceID)
 	endpoint := fmt.Sprintf("service_instances/%s/service_bindings/%s?accepts_incomplete=false&%s", instanceID, bindingID, params)
 	return c.CallKEB(nil, endpoint, "DELETE")
 }
