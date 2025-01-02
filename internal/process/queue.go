@@ -23,7 +23,7 @@ type Queue struct {
 	log                     *slog.Logger
 	name                    string
 	workerExecutionTimes    map[string]time.Time
-	workerLastKeys		    map[string]string
+	workerLastKeys          map[string]string
 	warnAfterTime           time.Duration
 	healthCheckIntervalTime time.Duration
 
@@ -40,7 +40,7 @@ func NewQueue(executor Executor, log *slog.Logger, name string, warnAfterTime, h
 		speedFactor:             1,
 		name:                    name,
 		workerExecutionTimes:    make(map[string]time.Time),
-		workerLastKeys:   		 make(map[string]string),
+		workerLastKeys:          make(map[string]string),
 		warnAfterTime:           warnAfterTime,
 		healthCheckIntervalTime: healthCheckIntervalTime,
 	}
@@ -155,7 +155,7 @@ func (q *Queue) removeTimeIfInWarnMargin(key string, workerNameId string, log *s
 
 	if !ok {
 		log.Warn(fmt.Sprintf("worker %s has no start time", workerNameId))
-		return		
+		return
 	}
 
 	processingTime := time.Since(processingStart)
@@ -164,8 +164,8 @@ func (q *Queue) removeTimeIfInWarnMargin(key string, workerNameId string, log *s
 		log.Info(fmt.Sprintf("worker %s exceeded allowed limit of %s since last execution while processing %s", workerNameId, q.warnAfterTime, key))
 	}
 
-	delete(q.workerExecutionTimes, workerNameId)	
-	delete(q.workerLastKeys, workerNameId)	
+	delete(q.workerExecutionTimes, workerNameId)
+	delete(q.workerLastKeys, workerNameId)
 }
 
 func (q *Queue) logWorkersSummary() {
