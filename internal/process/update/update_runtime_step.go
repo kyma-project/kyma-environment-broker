@@ -2,16 +2,21 @@ package update
 
 import (
 	"context"
+	"fmt"
 	"log/slog"
+	"strconv"
 	"time"
 
-	kebError "github.com/kyma-project/kyma-environment-broker/internal/error"
-
-	"github.com/kyma-project/kyma-environment-broker/internal/process/provisioning"
-
+	gardener "github.com/gardener/gardener/pkg/apis/core/v1beta1"
 	imv1 "github.com/kyma-project/infrastructure-manager/api/v1"
 	"github.com/kyma-project/kyma-environment-broker/internal"
+	"github.com/kyma-project/kyma-environment-broker/internal/broker"
+	kebError "github.com/kyma-project/kyma-environment-broker/internal/error"
 	"github.com/kyma-project/kyma-environment-broker/internal/process"
+	"github.com/kyma-project/kyma-environment-broker/internal/process/input"
+	"github.com/kyma-project/kyma-environment-broker/internal/process/provisioning"
+	"github.com/kyma-project/kyma-environment-broker/internal/provider"
+	"github.com/kyma-project/kyma-environment-broker/internal/ptr"
 	"github.com/kyma-project/kyma-environment-broker/internal/storage"
 	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/util/intstr"
@@ -19,15 +24,21 @@ import (
 )
 
 type UpdateRuntimeStep struct {
-	operationManager *process.OperationManager
-	k8sClient        client.Client
-	delay            time.Duration
+	operationManager           *process.OperationManager
+	k8sClient                  client.Client
+	delay                      time.Duration
+	config                     input.Config
+	useSmallerMachineTypes     bool
+	trialPlatformRegionMapping map[string]string
 }
 
-func NewUpdateRuntimeStep(os storage.Operations, k8sClient client.Client, delay time.Duration) *UpdateRuntimeStep {
+func NewUpdateRuntimeStep(os storage.Operations, k8sClient client.Client, delay time.Duration, cfg input.Config, useSmallerMachines bool, trialPlatformRegionMapping map[string]string) *UpdateRuntimeStep {
 	step := &UpdateRuntimeStep{
-		k8sClient: k8sClient,
-		delay:     delay,
+		k8sClient:                  k8sClient,
+		delay:                      delay,
+		config:                     cfg,
+		useSmallerMachineTypes:     useSmallerMachines,
+		trialPlatformRegionMapping: trialPlatformRegionMapping,
 	}
 	step.operationManager = process.NewOperationManager(os, step.Name(), kebError.InfrastructureManagerDependency)
 	return step
@@ -58,6 +69,46 @@ func (s *UpdateRuntimeStep) Run(operation internal.Operation, log *slog.Logger) 
 	runtime.Spec.Shoot.Provider.Workers[0].MaxSurge = &maxSurge
 	maxUnavailable := intstr.FromInt32(int32(provisioning.DefaultIfParamNotSet(runtime.Spec.Shoot.Provider.Workers[0].MaxUnavailable.IntValue(), operation.UpdatingParameters.MaxUnavailable)))
 	runtime.Spec.Shoot.Provider.Workers[0].MaxUnavailable = &maxUnavailable
+
+	if operation.ProvisioningParameters.PlanID == broker.PreviewPlanID {
+		if len(operation.UpdatingParameters.AdditionalWorkerNodePools.List) > 0 {
+			values, err := provider.GetPlanSpecificValues(&operation, s.config.MultiZoneCluster, s.config.DefaultTrialProvider, s.useSmallerMachineTypes, s.trialPlatformRegionMapping, s.config.DefaultGardenerShootPurpose)
+			if err != nil {
+				return s.operationManager.OperationFailed(operation, fmt.Sprintf("while calculating plan specific values: %s", err), err, log)
+			}
+			additionalWorkerNodePoolsMaxSurge := intstr.FromInt32(int32(values.ZonesCount))
+			additionalWorkerNodePoolsMaxUnavailable := intstr.FromInt32(int32(0))
+			workers := make([]gardener.Worker, 0, len(operation.UpdatingParameters.AdditionalWorkerNodePools.List))
+			for _, additionalWorkerNodePool := range operation.UpdatingParameters.AdditionalWorkerNodePools.List {
+				worker := gardener.Worker{
+					Name: additionalWorkerNodePool.Name,
+					Machine: gardener.Machine{
+						Type: additionalWorkerNodePool.MachineType,
+						Image: &gardener.ShootMachineImage{
+							Name:    s.config.MachineImage,
+							Version: &s.config.MachineImageVersion,
+						},
+					},
+					Maximum:        int32(additionalWorkerNodePool.AutoScalerMax),
+					Minimum:        int32(additionalWorkerNodePool.AutoScalerMin),
+					MaxSurge:       &additionalWorkerNodePoolsMaxSurge,
+					MaxUnavailable: &additionalWorkerNodePoolsMaxUnavailable,
+					Zones:          values.Zones,
+				}
+				if values.ProviderType != "openstack" {
+					volumeSize := strconv.Itoa(values.VolumeSizeGb)
+					worker.Volume = &gardener.Volume{
+						Type:       ptr.String(values.DiskType),
+						VolumeSize: fmt.Sprintf("%sGi", volumeSize),
+					}
+				}
+				workers = append(workers, worker)
+			}
+			//runtime.Spec.Shoot.Provider.AdditionalWorkers = workers
+		} else if operation.UpdatingParameters.AdditionalWorkerNodePools.Remove {
+			//runtime.Spec.Shoot.Provider.AdditionalWorkers = []gardener.Worker{}
+		}
+	}
 
 	if operation.UpdatingParameters.OIDC != nil {
 		input := operation.UpdatingParameters.OIDC

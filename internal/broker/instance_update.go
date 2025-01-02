@@ -265,10 +265,8 @@ func (b *UpdateEndpoint) processUpdateParameters(instance *internal.Instance, de
 	}
 
 	if IsPreviewPlan(details.PlanID) {
-		for _, workerNodePool := range params.AdditionalWorkerNodePools {
-			if err := workerNodePool.Validate(); err != nil {
-				return domain.UpdateServiceSpec{}, apiresponses.NewFailureResponse(err, http.StatusBadRequest, err.Error())
-			}
+		if err := params.AdditionalWorkerNodePools.Validate(); err != nil {
+			return domain.UpdateServiceSpec{}, apiresponses.NewFailureResponse(err, http.StatusBadRequest, err.Error())
 		}
 	}
 
@@ -298,10 +296,13 @@ func (b *UpdateEndpoint) processUpdateParameters(instance *internal.Instance, de
 	}
 
 	if IsPreviewPlan(details.PlanID) {
-		if params.AdditionalWorkerNodePools != nil {
-			newAdditionalWorkerNodePools := make([]pkg.AdditionalWorkerNodePool, 0, len(params.AdditionalWorkerNodePools))
-			newAdditionalWorkerNodePools = append(newAdditionalWorkerNodePools, params.AdditionalWorkerNodePools...)
+		if len(params.AdditionalWorkerNodePools.List) > 0 {
+			newAdditionalWorkerNodePools := make([]pkg.AdditionalWorkerNodePool, 0, len(params.AdditionalWorkerNodePools.List))
+			newAdditionalWorkerNodePools = append(newAdditionalWorkerNodePools, params.AdditionalWorkerNodePools.List...)
 			instance.Parameters.Parameters.AdditionalWorkerNodePools = newAdditionalWorkerNodePools
+			updateStorage = append(updateStorage, "Additional Worker Node Pools")
+		} else if params.AdditionalWorkerNodePools.Remove {
+			instance.Parameters.Parameters.AdditionalWorkerNodePools = []pkg.AdditionalWorkerNodePool{}
 			updateStorage = append(updateStorage, "Additional Worker Node Pools")
 		}
 	}

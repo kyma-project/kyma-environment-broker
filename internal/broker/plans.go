@@ -368,7 +368,12 @@ func SapConvergedCloudSchema(machineTypesDisplay, regionsDisplay map[string]stri
 func PreviewSchema(machineTypesDisplay, regionsDisplay map[string]string, machineTypes []string, additionalParams, update bool, euAccessRestricted bool) *map[string]interface{} {
 	properties := NewProvisioningProperties(machineTypesDisplay, regionsDisplay, machineTypes, AWSRegions(euAccessRestricted), update)
 	properties.Networking = NewNetworkingSchema()
-	properties.AdditionalWorkerNodePools = NewAdditionalWorkerNodePoolsSchema(machineTypesDisplay, machineTypes)
+	if update {
+		properties.UpdateProperties.AdditionalWorkerNodePools = NewAdditionalWorkerNodePoolsSchema(machineTypesDisplay, machineTypes)
+	} else {
+		additionalWorkerNodePoolsList := NewAdditionalWorkerNodePoolsList(machineTypesDisplay, machineTypes)
+		properties.AdditionalWorkerNodePools = &additionalWorkerNodePoolsList
+	}
 	return createSchemaWithProperties(properties, additionalParams, update, requiredSchemaProperties(), false, false)
 }
 

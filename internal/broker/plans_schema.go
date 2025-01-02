@@ -23,13 +23,14 @@ type RootSchema struct {
 type ProvisioningProperties struct {
 	UpdateProperties
 
-	Name                   NameType        `json:"name"`
-	ShootName              *Type           `json:"shootName,omitempty"`
-	ShootDomain            *Type           `json:"shootDomain,omitempty"`
-	Region                 *Type           `json:"region,omitempty"`
-	Networking             *NetworkingType `json:"networking,omitempty"`
-	Modules                *Modules        `json:"modules,omitempty"`
-	ShootAndSeedSameRegion *Type           `json:"shootAndSeedSameRegion,omitempty"`
+	Name                      NameType                       `json:"name"`
+	ShootName                 *Type                          `json:"shootName,omitempty"`
+	ShootDomain               *Type                          `json:"shootDomain,omitempty"`
+	Region                    *Type                          `json:"region,omitempty"`
+	Networking                *NetworkingType                `json:"networking,omitempty"`
+	Modules                   *Modules                       `json:"modules,omitempty"`
+	ShootAndSeedSameRegion    *Type                          `json:"shootAndSeedSameRegion,omitempty"`
+	AdditionalWorkerNodePools *AdditionalWorkerNodePoolsList `json:"additionalWorkerNodePools,omitempty"`
 }
 
 type UpdateProperties struct {
@@ -150,17 +151,40 @@ type ModulesCustomListItemsProperties struct {
 
 type AdditionalWorkerNodePoolsType struct {
 	Type
-	Items AdditionalWorkerNodePoolsItems `json:"items,omitempty"`
+	OneOf []interface{} `json:"oneOf,omitempty"`
 }
 
-type AdditionalWorkerNodePoolsItems struct {
+type AdditionalWorkerNodePoolsRemoved struct {
 	Type
-	ControlsOrder []string                                 `json:"_controlsOrder,omitempty"`
-	Required      []string                                 `json:"required"`
-	Properties    AdditionalWorkerNodePoolsItemsProperties `json:"properties,omitempty"`
+	Properties AdditionalWorkerNodePoolsRemovedProperties `json:"properties,omitempty"`
 }
 
-type AdditionalWorkerNodePoolsItemsProperties struct {
+type AdditionalWorkerNodePoolsRemovedProperties struct {
+	Remove Type `json:"remove,omitempty"`
+}
+
+type AdditionalWorkerNodePoolsModified struct {
+	Type
+	Properties AdditionalWorkerNodePoolsModifiedProperties `json:"properties,omitempty"`
+}
+
+type AdditionalWorkerNodePoolsModifiedProperties struct {
+	List AdditionalWorkerNodePoolsList `json:"list,omitempty"`
+}
+
+type AdditionalWorkerNodePoolsList struct {
+	Type
+	Items AdditionalWorkerNodePoolsListItems `json:"items,omitempty"`
+}
+
+type AdditionalWorkerNodePoolsListItems struct {
+	Type
+	Required      []string                                     `json:"required"`
+	ControlsOrder []string                                     `json:"_controlsOrder,omitempty"`
+	Properties    AdditionalWorkerNodePoolsListItemsProperties `json:"properties,omitempty"`
+}
+
+type AdditionalWorkerNodePoolsListItemsProperties struct {
 	Name          Type `json:"name,omitempty"`
 	AutoScalerMin Type `json:"autoScalerMin,omitempty"`
 	AutoScalerMax Type `json:"autoScalerMax,omitempty"`
@@ -432,16 +456,53 @@ func AdministratorsProperty() *Type {
 func NewAdditionalWorkerNodePoolsSchema(machineTypesDisplay map[string]string, machineTypes []string) *AdditionalWorkerNodePoolsType {
 	return &AdditionalWorkerNodePoolsType{
 		Type: Type{
+			Type:        "object",
+			Description: "Specify a custom list of additional worker node pools or remove them entirely.",
+		},
+		OneOf: []any{
+			AdditionalWorkerNodePoolsModified{
+				Type: Type{
+					Type:                 "object",
+					Title:                "Modify",
+					AdditionalProperties: false,
+				},
+				Properties: AdditionalWorkerNodePoolsModifiedProperties{
+					List: NewAdditionalWorkerNodePoolsList(machineTypesDisplay, machineTypes),
+				},
+			},
+			AdditionalWorkerNodePoolsRemoved{
+				Type: Type{
+					Type:                 "object",
+					Title:                "Remove",
+					AdditionalProperties: false,
+				},
+				Properties: AdditionalWorkerNodePoolsRemovedProperties{
+					Type{
+						Type:     "boolean",
+						Title:    "Remove all additional worker node pools",
+						Default:  true,
+						ReadOnly: true,
+					},
+				},
+			},
+		},
+	}
+}
+
+func NewAdditionalWorkerNodePoolsList(machineTypesDisplay map[string]string, machineTypes []string) AdditionalWorkerNodePoolsList {
+	return AdditionalWorkerNodePoolsList{
+		Type: Type{
 			Type:        "array",
 			UniqueItems: true,
-			Description: "Specifies the list of additional worker node pools."},
-		Items: AdditionalWorkerNodePoolsItems{
+			Description: "Specifies the list of additional worker node pools.",
+		},
+		Items: AdditionalWorkerNodePoolsListItems{
 			ControlsOrder: []string{"name", "machineType", "autoScalerMin", "autoScalerMax"},
 			Required:      []string{"name", "machineType", "autoScalerMin", "autoScalerMax"},
 			Type: Type{
 				Type: "object",
 			},
-			Properties: AdditionalWorkerNodePoolsItemsProperties{
+			Properties: AdditionalWorkerNodePoolsListItemsProperties{
 				Name: Type{
 					Type:        "string",
 					MinLength:   1,
