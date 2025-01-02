@@ -15,6 +15,7 @@ func New() *cobra.Command {
 	cmd.AddCommand(
 		NewProvisionCmd(),
 		NewDeprovisionCmd(),
+		NewCheckOperationCommand(),
 	)
 
 	return cmd
