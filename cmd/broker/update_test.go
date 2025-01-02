@@ -2526,3 +2526,262 @@ func TestUpdateErsContextAndParamsForExpiredInstance(t *testing.T) {
 		}`)
 	assert.Equal(t, http.StatusBadRequest, response.StatusCode)
 }
+
+func TestUpdateAdditionalWorkerNodePools(t *testing.T) {
+	t.Run("should add additional worker node pools", func(t *testing.T) {
+		// given
+		suite := NewBrokerSuiteTest(t)
+		defer suite.TearDown()
+		iid := uuid.New().String()
+
+		resp := suite.CallAPI("PUT", fmt.Sprintf("oauth/cf-eu10/v2/service_instances/%s?accepts_incomplete=true&plan_id=7d55d31d-35ae-4438-bf13-6ffdfa107d9f&service_id=47c9dcbf-ff30-448e-ab36-d3bad66ba281", iid),
+			`{
+				   		"service_id": "47c9dcbf-ff30-448e-ab36-d3bad66ba281",
+				   		"plan_id": "5cb3d976-b85c-42ea-a636-79cadda109a9",
+				   		"context": {
+					   		"globalaccount_id": "g-account-id",
+					   		"subaccount_id": "sub-id",
+					   		"user_id": "john.smith@email.com"
+				   		},
+						"parameters": {
+							"name": "testing-cluster",
+							"region": "eu-central-1"
+						}
+   			}`)
+		opID := suite.DecodeOperationID(resp)
+		suite.waitForRuntimeAndMakeItReady(opID)
+		suite.WaitForOperationState(opID, domain.Succeeded)
+
+		// when
+		// OSB update:
+		resp = suite.CallAPI("PATCH", fmt.Sprintf("oauth/cf-eu10/v2/service_instances/%s?accepts_incomplete=true", iid),
+			`{
+       					"service_id": "47c9dcbf-ff30-448e-ab36-d3bad66ba281",
+       					"plan_id": "5cb3d976-b85c-42ea-a636-79cadda109a9",
+       					"context": {
+           					"globalaccount_id": "g-account-id",
+           					"user_id": "john.smith@email.com"
+       					},
+						"parameters": {
+							"additionalWorkerNodePools": {
+								"list": [
+									{
+										"name": "name-1",
+										"machineType": "m6i.large",
+										"autoScalerMin": 1,
+										"autoScalerMax": 10
+									},
+									{
+										"name": "name-2",
+										"machineType": "m5.large",
+										"autoScalerMin": 0,
+										"autoScalerMax": 0
+									}
+								]
+							}
+						}
+   			}`)
+		assert.Equal(t, http.StatusAccepted, resp.StatusCode)
+		upgradeOperationID := suite.DecodeOperationID(resp)
+
+		// then
+		suite.WaitForOperationState(upgradeOperationID, domain.Succeeded)
+		runtime := suite.GetRuntimeResourceByInstanceID(iid)
+		//assert.Len(t, runtime.Spec.Shoot.Provider.AdditionalWorkers, 2)
+		suite.assertAdditionalWorkerIsCreated(t, runtime.Spec.Shoot.Provider, "name-1", "m6i.large", 1, 10)
+		suite.assertAdditionalWorkerIsCreated(t, runtime.Spec.Shoot.Provider, "name-2", "m5.large", 0, 0)
+	})
+
+	t.Run("should replace additional worker node pools", func(t *testing.T) {
+		// given
+		suite := NewBrokerSuiteTest(t)
+		defer suite.TearDown()
+		iid := uuid.New().String()
+
+		resp := suite.CallAPI("PUT", fmt.Sprintf("oauth/cf-eu10/v2/service_instances/%s?accepts_incomplete=true&plan_id=7d55d31d-35ae-4438-bf13-6ffdfa107d9f&service_id=47c9dcbf-ff30-448e-ab36-d3bad66ba281", iid),
+			`{
+				   		"service_id": "47c9dcbf-ff30-448e-ab36-d3bad66ba281",
+				   		"plan_id": "5cb3d976-b85c-42ea-a636-79cadda109a9",
+				   		"context": {
+					   		"globalaccount_id": "g-account-id",
+					   		"subaccount_id": "sub-id",
+					   		"user_id": "john.smith@email.com"
+				   		},
+						"parameters": {
+							"name": "testing-cluster",
+							"region": "eu-central-1",
+							"additionalWorkerNodePools": [
+								{
+									"name": "name-1",
+									"machineType": "m6i.large",
+									"autoScalerMin": 1,
+									"autoScalerMax": 10
+								}
+							]
+						}
+   			}`)
+		opID := suite.DecodeOperationID(resp)
+		suite.waitForRuntimeAndMakeItReady(opID)
+		suite.WaitForOperationState(opID, domain.Succeeded)
+
+		// when
+		// OSB update:
+		resp = suite.CallAPI("PATCH", fmt.Sprintf("oauth/cf-eu10/v2/service_instances/%s?accepts_incomplete=true", iid),
+			`{
+       					"service_id": "47c9dcbf-ff30-448e-ab36-d3bad66ba281",
+       					"plan_id": "5cb3d976-b85c-42ea-a636-79cadda109a9",
+       					"context": {
+           					"globalaccount_id": "g-account-id",
+           					"user_id": "john.smith@email.com"
+       					},
+						"parameters": {
+							"additionalWorkerNodePools": {
+								"list": [
+									{
+										"name": "name-2",
+										"machineType": "m5.large",
+										"autoScalerMin": 0,
+										"autoScalerMax": 0
+									}
+								]
+							}
+						}
+   			}`)
+		assert.Equal(t, http.StatusAccepted, resp.StatusCode)
+		upgradeOperationID := suite.DecodeOperationID(resp)
+
+		// then
+		suite.WaitForOperationState(upgradeOperationID, domain.Succeeded)
+		runtime := suite.GetRuntimeResourceByInstanceID(iid)
+		//assert.Len(t, runtime.Spec.Shoot.Provider.AdditionalWorkers, 1)
+		suite.assertAdditionalWorkerIsCreated(t, runtime.Spec.Shoot.Provider, "name-2", "m5.large", 0, 0)
+	})
+
+	t.Run("should not change additional worker node pools when list is empty", func(t *testing.T) {
+		// given
+		suite := NewBrokerSuiteTest(t)
+		defer suite.TearDown()
+		iid := uuid.New().String()
+
+		resp := suite.CallAPI("PUT", fmt.Sprintf("oauth/cf-eu10/v2/service_instances/%s?accepts_incomplete=true&plan_id=7d55d31d-35ae-4438-bf13-6ffdfa107d9f&service_id=47c9dcbf-ff30-448e-ab36-d3bad66ba281", iid),
+			`{
+				   		"service_id": "47c9dcbf-ff30-448e-ab36-d3bad66ba281",
+				   		"plan_id": "5cb3d976-b85c-42ea-a636-79cadda109a9",
+				   		"context": {
+					   		"globalaccount_id": "g-account-id",
+					   		"subaccount_id": "sub-id",
+					   		"user_id": "john.smith@email.com"
+				   		},
+						"parameters": {
+							"name": "testing-cluster",
+							"region": "eu-central-1",
+							"additionalWorkerNodePools": [
+								{
+									"name": "name-1",
+									"machineType": "m6i.large",
+									"autoScalerMin": 1,
+									"autoScalerMax": 10
+								},
+								{
+									"name": "name-2",
+									"machineType": "m5.large",
+									"autoScalerMin": 0,
+									"autoScalerMax": 0
+								}
+							]
+						}
+   			}`)
+		opID := suite.DecodeOperationID(resp)
+		suite.waitForRuntimeAndMakeItReady(opID)
+		suite.WaitForOperationState(opID, domain.Succeeded)
+
+		// when
+		// OSB update:
+		resp = suite.CallAPI("PATCH", fmt.Sprintf("oauth/cf-eu10/v2/service_instances/%s?accepts_incomplete=true", iid),
+			`{
+       					"service_id": "47c9dcbf-ff30-448e-ab36-d3bad66ba281",
+       					"plan_id": "5cb3d976-b85c-42ea-a636-79cadda109a9",
+       					"context": {
+           					"globalaccount_id": "g-account-id",
+           					"user_id": "john.smith@email.com"
+       					},
+						"parameters": {
+							"additionalWorkerNodePools": {
+								"list": []
+							}
+						}
+   			}`)
+		assert.Equal(t, http.StatusAccepted, resp.StatusCode)
+		upgradeOperationID := suite.DecodeOperationID(resp)
+
+		// then
+		suite.WaitForOperationState(upgradeOperationID, domain.Succeeded)
+		runtime := suite.GetRuntimeResourceByInstanceID(iid)
+		//assert.Len(t, runtime.Spec.Shoot.Provider.AdditionalWorkers, 2)
+		suite.assertAdditionalWorkerIsCreated(t, runtime.Spec.Shoot.Provider, "name-1", "m6i.large", 1, 10)
+		suite.assertAdditionalWorkerIsCreated(t, runtime.Spec.Shoot.Provider, "name-2", "m5.large", 0, 0)
+	})
+
+	t.Run("should remove additional worker node pools", func(t *testing.T) {
+		// given
+		suite := NewBrokerSuiteTest(t)
+		defer suite.TearDown()
+		iid := uuid.New().String()
+
+		resp := suite.CallAPI("PUT", fmt.Sprintf("oauth/cf-eu10/v2/service_instances/%s?accepts_incomplete=true&plan_id=7d55d31d-35ae-4438-bf13-6ffdfa107d9f&service_id=47c9dcbf-ff30-448e-ab36-d3bad66ba281", iid),
+			`{
+				   		"service_id": "47c9dcbf-ff30-448e-ab36-d3bad66ba281",
+				   		"plan_id": "5cb3d976-b85c-42ea-a636-79cadda109a9",
+				   		"context": {
+					   		"globalaccount_id": "g-account-id",
+					   		"subaccount_id": "sub-id",
+					   		"user_id": "john.smith@email.com"
+				   		},
+						"parameters": {
+							"name": "testing-cluster",
+							"region": "eu-central-1",
+							"additionalWorkerNodePools": [
+								{
+									"name": "name-1",
+									"machineType": "m6i.large",
+									"autoScalerMin": 1,
+									"autoScalerMax": 10
+								},
+								{
+									"name": "name-2",
+									"machineType": "m5.large",
+									"autoScalerMin": 0,
+									"autoScalerMax": 0
+								}
+							]
+						}
+   			}`)
+		opID := suite.DecodeOperationID(resp)
+		suite.waitForRuntimeAndMakeItReady(opID)
+		suite.WaitForOperationState(opID, domain.Succeeded)
+
+		// when
+		// OSB update:
+		resp = suite.CallAPI("PATCH", fmt.Sprintf("oauth/cf-eu10/v2/service_instances/%s?accepts_incomplete=true", iid),
+			`{
+       					"service_id": "47c9dcbf-ff30-448e-ab36-d3bad66ba281",
+       					"plan_id": "5cb3d976-b85c-42ea-a636-79cadda109a9",
+       					"context": {
+           					"globalaccount_id": "g-account-id",
+           					"user_id": "john.smith@email.com"
+       					},
+						"parameters": {
+							"additionalWorkerNodePools": {
+								"remove": true
+							}
+						}
+   			}`)
+		assert.Equal(t, http.StatusAccepted, resp.StatusCode)
+		upgradeOperationID := suite.DecodeOperationID(resp)
+
+		// then
+		suite.WaitForOperationState(upgradeOperationID, domain.Succeeded)
+		//runtime := suite.GetRuntimeResourceByInstanceID(iid)
+		//assert.Len(t, runtime.Spec.Shoot.Provider.AdditionalWorkers, 0)
+	})
+}

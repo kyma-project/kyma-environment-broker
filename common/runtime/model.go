@@ -388,6 +388,25 @@ type ModuleDTO struct {
 	CustomResourcePolicy CustomResourcePolicy `json:"customResourcePolicy,omitempty" yaml:"customResourcePolicy,omitempty"`
 }
 
+type AdditionalWorkerNodePools struct {
+	List   []AdditionalWorkerNodePool `json:"list"`
+	Remove bool                       `json:"remove"`
+}
+
+func (a AdditionalWorkerNodePools) Validate() error {
+	if a.Remove && len(a.List) > 0 {
+		return fmt.Errorf("cannot remove additional worker node pools while the list is not empty")
+	}
+
+	for _, additionalWorkerNodePool := range a.List {
+		if err := additionalWorkerNodePool.Validate(); err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
 type AdditionalWorkerNodePool struct {
 	Name          string `json:"name"`
 	MachineType   string `json:"machineType"`
