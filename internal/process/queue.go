@@ -115,6 +115,7 @@ func (q *Queue) worker(queue workqueue.RateLimitingInterface, process func(key s
 
 				defer func() {
 					if err := recover(); err != nil {
+						q.removeTimeIfInWarnMargin(id, workerNameId, log)
 						log.Error(fmt.Sprintf("panic error from process: %v. Stacktrace: %s", err, debug.Stack()))
 					}
 					queue.Done(key)
@@ -170,16 +171,6 @@ func (q *Queue) removeTimeIfInWarnMargin(key string, workerNameId string, log *s
 
 func (q *Queue) logWorkersSummary() {
 	healthCheckLog := q.log.With("summary", q.name)
-	var buffer bytes.Buffer
-	buffer.WriteString(fmt.Sprintf("health - queue length %d", q.queue.Len()))
-
-	for name, lastTime := range q.workerExecutionTimes {
-		timeSinceLastExecution := time.Since(lastTime)
-
-		buffer.WriteString(fmt.Sprintf(", [worker %s, last execution time: %s, since last execution: %s]", name, lastTime, timeSinceLastExecution))
-	}
-
-	healthCheckLog.Info(buffer.String())
 
 	for name, lastTime := range q.workerExecutionTimes {
 		timeSinceLastExecution := time.Since(lastTime)
