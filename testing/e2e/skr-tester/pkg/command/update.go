@@ -3,11 +3,9 @@ package command
 import (
 	"errors"
 	"fmt"
-	"os"
-	"os/exec"
 	broker "skr-tester/pkg/broker"
+	kcp "skr-tester/pkg/kcp"
 	"skr-tester/pkg/logger"
-	"strings"
 
 	"github.com/spf13/cobra"
 )
@@ -63,7 +61,8 @@ func (cmd *UpdateCommand) Run() error {
 			continue
 		}
 		if cmd.updateMachineType {
-			currentMachineType, err := getCurrentMachineType(cmd.instanceID)
+			kcpClient := kcp.NewKCPClient()
+			currentMachineType, err := kcpClient.GetCurrentMachineType(cmd.instanceID)
 			if err != nil {
 				return fmt.Errorf("failed to get current machine type: %v", err)
 			}
@@ -108,25 +107,6 @@ func (cmd *UpdateCommand) Validate() error {
 	} else {
 		return errors.New("you must specify the planID and instanceID")
 	}
-}
-
-func getCurrentMachineType(instanceID string) (*string, error) {
-	args := []string{"login"}
-	if clientSecret := os.Getenv("KCP_OIDC_CLIENT_SECRET"); clientSecret != "" {
-		args = append(args, "-u", os.Getenv("KCP_TECH_USER_LOGIN"), "-p", os.Getenv("KCP_TECH_USER_PASSWORD"))
-	}
-	_, err := exec.Command("kcp", args...).Output()
-	if err != nil {
-		return nil, fmt.Errorf("failed to run kcp login: %v", err)
-	}
-	output, err := exec.Command("kcp", "rt", "-i", instanceID, "--runtime-config", "-o", "custom=:{.runtimeConfig.spec.shoot.provider.workers[0].machine.type}").Output()
-	if err != nil {
-		return nil, fmt.Errorf("failed to run kcp rt: %v", err)
-	}
-
-	machineType := string(output)
-	machineType = strings.TrimSpace(machineType)
-	return &machineType, nil
 }
 
 func extractSupportedMachineTypes(planMap map[string]interface{}) ([]interface{}, error) {
