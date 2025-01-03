@@ -58,15 +58,15 @@ func (cmd *UpdateCommand) Run() error {
 		if !ok {
 			return errors.New("service is not a map[string]interface{}")
 		}
+		if serviceMap["id"] != broker.KymaServiceID {
+			continue
+		}
 		if cmd.updateMachineType {
 			currentMachineType, err := getCurrentMachineType(cmd.instanceID)
 			if err != nil {
 				return fmt.Errorf("failed to get current machine type: %v", err)
 			}
 			fmt.Printf("Current machine type: %s\n", *currentMachineType)
-			if serviceMap["id"] != "47c9dcbf-ff30-448e-ab36-d3bad66ba281" {
-				continue
-			}
 			plans, ok := serviceMap["plans"].([]interface{})
 			if !ok {
 				return errors.New("plans field not found or invalid in serviceMap")

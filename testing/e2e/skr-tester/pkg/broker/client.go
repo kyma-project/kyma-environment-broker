@@ -14,7 +14,7 @@ import (
 
 const (
 	scope                    = "broker:write"
-	kymaServiceID            = "47c9dcbf-ff30-448e-ab36-d3bad66ba281"
+	KymaServiceID            = "47c9dcbf-ff30-448e-ab36-d3bad66ba281"
 	trialPlanID              = "7d55d31d-35ae-4438-bf13-6ffdfa107d9f"
 	defaultExpirationSeconds = 600
 )
@@ -212,7 +212,7 @@ func (c *BrokerClient) GetCatalog() (map[string]interface{}, error) {
 
 func (c *BrokerClient) BuildPayload(name, instanceID, planID, region string, btpOperatorCreds map[string]interface{}) map[string]interface{} {
 	payload := map[string]interface{}{
-		"service_id": kymaServiceID,
+		"service_id": KymaServiceID,
 		"plan_id":    planID,
 		"context": map[string]interface{}{
 			"globalaccount_id": c.GlobalAccountID,
@@ -248,7 +248,7 @@ func (c *BrokerClient) ProvisionInstance(instanceID, planID, region string, btpO
 
 func (c *BrokerClient) UpdateInstance(instanceID string, customParams map[string]interface{}) (map[string]interface{}, error) {
 	payload := map[string]interface{}{
-		"service_id": kymaServiceID,
+		"service_id": KymaServiceID,
 		"context": map[string]interface{}{
 			"globalaccount_id": c.GlobalAccountID,
 		},
@@ -265,7 +265,7 @@ func (c *BrokerClient) GetOperation(instanceID, operationID string) (map[string]
 }
 
 func (c *BrokerClient) DeprovisionInstance(instanceID string) (map[string]interface{}, error) {
-	endpoint := fmt.Sprintf("service_instances/%s?service_id=%s&plan_id=not-empty", instanceID, kymaServiceID)
+	endpoint := fmt.Sprintf("service_instances/%s?service_id=%s&plan_id=not-empty", instanceID, KymaServiceID)
 	return c.CallBroker(nil, endpoint, "DELETE")
 }
 
@@ -294,7 +294,7 @@ func (c *BrokerClient) CreateBinding(instanceID, bindingID string, expirationSec
 		expirationSeconds = defaultExpirationSeconds
 	}
 	payload := map[string]interface{}{
-		"service_id": kymaServiceID,
+		"service_id": KymaServiceID,
 		"plan_id":    "not-empty",
 		"parameters": map[string]interface{}{
 			"expiration_seconds": expirationSeconds,
@@ -305,7 +305,7 @@ func (c *BrokerClient) CreateBinding(instanceID, bindingID string, expirationSec
 }
 
 func (c *BrokerClient) DeleteBinding(instanceID, bindingID string) (map[string]interface{}, error) {
-	params := fmt.Sprintf("service_id=%s&plan_id=not-empty", kymaServiceID)
+	params := fmt.Sprintf("service_id=%s&plan_id=not-empty", KymaServiceID)
 	endpoint := fmt.Sprintf("service_instances/%s/service_bindings/%s?accepts_incomplete=false&%s", instanceID, bindingID, params)
 	return c.CallBroker(nil, endpoint, "DELETE")
 }
