@@ -28,7 +28,7 @@ func NewUpdateCommand() *cobra.Command {
 		Aliases: []string{"u"},
 		Short:   "Update the instnace",
 		Long:    "Update the instnace",
-		Example: "skr-tester update -i instanceID --updateMachineType                            Update the instance with new machineType.",
+		Example: "skr-tester update -i instanceID -p planID --updateMachineType                            Update the instance with new machineType.",
 
 		PreRunE: func(_ *cobra.Command, _ []string) error { return cmd.Validate() },
 		RunE:    func(_ *cobra.Command, _ []string) error { return cmd.Run() },
