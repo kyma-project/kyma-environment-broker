@@ -40,19 +40,16 @@ func NewUpdateCommand() *cobra.Command {
 	cobraCmd.Flags().BoolVarP(&cmd.updateMachineType, "updateMachineType", "m", false, "Should update machineType.")
 
 	return cobraCmd
-
 }
 
 func (cmd *UpdateCommand) Run() error {
 	cmd.log = logger.New()
 	brokerClient := broker.NewBrokerClient(broker.NewBrokerConfig())
 	catalog, _ := brokerClient.GetCatalog()
-
 	services, ok := catalog["services"]
 	if !ok {
 		return errors.New("state field not found in operation response")
 	}
-
 	for _, service := range services.([]interface{}) {
 		serviceMap, ok := service.(map[string]interface{})
 		if !ok {
@@ -125,52 +122,42 @@ func getCurrentMachineType(instanceID string) (*string, error) {
 	if err := json.Unmarshal(output, &outputData); err != nil {
 		return nil, fmt.Errorf("failed to unmarshal output: %v", err)
 	}
-
 	data, ok := outputData["data"].([]interface{})
 	if !ok || len(data) == 0 {
 		return nil, errors.New("data field not found or empty in output")
 	}
-
 	runtimeConfig, ok := data[0].(map[string]interface{})["runtimeConfig"].(map[string]interface{})
 	if !ok {
 		return nil, errors.New("runtimeConfig field not found in data")
 	}
-
 	spec, ok := runtimeConfig["spec"].(map[string]interface{})
 	if !ok {
 		return nil, errors.New("spec field not found in runtimeConfig")
 	}
-
 	shoot, ok := spec["shoot"].(map[string]interface{})
 	if !ok {
 		return nil, errors.New("shoot field not found in spec")
 	}
-
 	provider, ok := shoot["provider"].(map[string]interface{})
 	if !ok {
 		return nil, errors.New("provider field not found in shoot")
 	}
-
 	workers, ok := provider["workers"].([]interface{})
 	if !ok || len(workers) == 0 {
 		return nil, errors.New("workers field not found or empty in provider")
 	}
-
 	worker, ok := workers[0].(map[string]interface{})
 	if !ok {
 		return nil, errors.New("worker field not found in workers")
 	}
-
 	machine, ok := worker["machine"].(map[string]interface{})
 	if !ok {
 		return nil, errors.New("machine field not found in worker")
 	}
-
 	machineType, ok := machine["type"].(string)
 	if !ok {
 		return nil, errors.New("type field not found in machine")
 	}
-
 	return &machineType, nil
 }
 
