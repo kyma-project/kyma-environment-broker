@@ -45,12 +45,15 @@ func NewUpdateCommand() *cobra.Command {
 func (cmd *UpdateCommand) Run() error {
 	cmd.log = logger.New()
 	brokerClient := broker.NewBrokerClient(broker.NewBrokerConfig())
-	catalog, _ := brokerClient.GetCatalog()
-	services, ok := catalog["services"]
-	if !ok {
-		return errors.New("state field not found in operation response")
+	catalog, err := brokerClient.GetCatalog()
+	if err != nil {
+		return fmt.Errorf("failed to get catalog: %v", err)
 	}
-	for _, service := range services.([]interface{}) {
+	services, ok := catalog["services"].([]interface{})
+	if !ok {
+		return errors.New("services field not found or invalid in catalog")
+	}
+	for _, service := range services {
 		serviceMap, ok := service.(map[string]interface{})
 		if !ok {
 			return errors.New("service is not a map[string]interface{}")
@@ -64,18 +67,18 @@ func (cmd *UpdateCommand) Run() error {
 			if serviceMap["id"] != "47c9dcbf-ff30-448e-ab36-d3bad66ba281" {
 				continue
 			}
-			plans, ok := serviceMap["plans"]
+			plans, ok := serviceMap["plans"].([]interface{})
 			if !ok {
-				return errors.New("plans field not found in serviceMap")
+				return errors.New("plans field not found or invalid in serviceMap")
 			}
-			for _, p := range plans.([]interface{}) {
-				planMap := p.(map[string]interface{})
-				if planMap["id"] != cmd.planID {
+			for _, p := range plans {
+				planMap, ok := p.(map[string]interface{})
+				if !ok || planMap["id"] != cmd.planID {
 					continue
 				}
 				updateParams, err := extractUpdateParams(planMap)
 				if err != nil {
-					return err
+					return fmt.Errorf("failed to extract update parameters: %v", err)
 				}
 				if len(updateParams) < 2 {
 					continue
@@ -84,19 +87,16 @@ func (cmd *UpdateCommand) Run() error {
 					if m == *currentMachineType {
 						newMachineType := updateParams[(i+1)%len(updateParams)].(string)
 						fmt.Printf("Determined machine type to update: %s\n", newMachineType)
-
 						resp, err := brokerClient.UpdateInstance(cmd.instanceID, map[string]interface{}{"machineType": newMachineType})
 						if err != nil {
 							return fmt.Errorf("error updating instance: %v", err)
 						}
 						fmt.Printf("Update operationID: %s\n", resp["operation"].(string))
-
 						break
 					}
 				}
 			}
 		}
-
 	}
 	return nil
 }
