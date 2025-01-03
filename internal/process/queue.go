@@ -114,9 +114,9 @@ func (q *Queue) worker(queue workqueue.RateLimitingInterface, process func(key s
 
 				defer func() {
 					if err := recover(); err != nil {
-						q.removeTimeIfInWarnMargin(id, workerNameId, log)
 						log.Error(fmt.Sprintf("panic error from process: %v. Stacktrace: %s", err, debug.Stack()))
 					}
+					q.removeTimeIfInWarnMargin(id, workerNameId, log)
 					queue.Done(key)
 					log.Info("queue done processing")
 				}()
@@ -126,14 +126,12 @@ func (q *Queue) worker(queue workqueue.RateLimitingInterface, process func(key s
 					log.Info(fmt.Sprintf("Adding %q item after %s, queue length %d", id, when, q.queue.Len()))
 					afterDuration := time.Duration(int64(when) / q.speedFactor)
 					queue.AddAfter(key, afterDuration)
-					q.removeTimeIfInWarnMargin(id, workerNameId, log)
 					return false
 				}
 				if err != nil {
 					log.Error(fmt.Sprintf("Error from process: %v", err))
 				}
 
-				q.removeTimeIfInWarnMargin(id, workerNameId, log)
 				queue.Forget(key)
 				log.Info(fmt.Sprintf("item for %s has been processed, no retry, element forgotten", id))
 
