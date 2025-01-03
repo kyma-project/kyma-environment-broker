@@ -246,23 +246,13 @@ func (c *BrokerClient) ProvisionInstance(instanceID, planID, region string, btpO
 	return c.CallBroker(payload, endpoint, "PUT")
 }
 
-func (c *BrokerClient) UpdateInstance(instanceID string, customParams, btpOperatorCreds map[string]interface{}, isMigration bool) (map[string]interface{}, error) {
+func (c *BrokerClient) UpdateInstance(instanceID string, customParams map[string]interface{}) (map[string]interface{}, error) {
 	payload := map[string]interface{}{
 		"service_id": kymaServiceID,
 		"context": map[string]interface{}{
 			"globalaccount_id": c.GlobalAccountID,
-			"isMigration":      isMigration,
 		},
 		"parameters": customParams,
-	}
-
-	if btpOperatorCreds != nil {
-		payload["context"].(map[string]interface{})["sm_operator_credentials"] = map[string]interface{}{
-			"clientid":     btpOperatorCreds["clientid"],
-			"clientsecret": btpOperatorCreds["clientsecret"],
-			"sm_url":       btpOperatorCreds["smURL"],
-			"url":          btpOperatorCreds["url"],
-		}
 	}
 
 	endpoint := fmt.Sprintf("service_instances/%s?accepts_incomplete=true", instanceID)

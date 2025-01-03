@@ -56,6 +56,7 @@ func (cmd *CheckOperationCommand) Run() error {
 		if !ok {
 			return false, errors.New("state field not found in operation response")
 		}
+		fmt.Printf("Operation state: %s\n", state)
 		return state == "succeeded" || state == "failed", nil
 	}, cmd.timeout, cmd.interval)
 	if err != nil {
