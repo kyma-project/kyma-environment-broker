@@ -113,7 +113,7 @@ func (cmd *UpdateCommand) Validate() error {
 func getCurrentMachineType(instanceID string) (*string, error) {
 	args := []string{"login"}
 	if clientSecret := os.Getenv("KCP_OIDC_CLIENT_SECRET"); clientSecret != "" {
-		args = append(args, "-u", "username", "-p", "password")
+		args = append(args, "-u", os.Getenv("KCP_TECH_USER_LOGIN"), "-p", os.Getenv("KCP_TECH_USER_PASSWORD"))
 	}
 	_, err := exec.Command("kcp", args...).Output()
 	if err != nil {
