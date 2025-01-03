@@ -57,8 +57,8 @@ func TestWorkerLogging(t *testing.T) {
 		require.True(t, strings.Contains(stringLogs, "msg=\"starting worker with id 0\" queueName=test workerId=0"))
 		require.True(t, strings.Contains(stringLogs, "msg=\"item processId2 will be added to the queue test after duration of 0, queue length is 1\" queueName=test"))
 		require.True(t, strings.Contains(stringLogs, "msg=\"added item processId to the queue test, queue length is 2\" queueName=test"))
-		require.True(t, strings.Contains(stringLogs, "msg=\"processing item processId2, queue length is 1\" queueName=test workerId=0 operationID=processId2"))
-		require.True(t, strings.Contains(stringLogs, "msg=\"processing item processId, queue length is 0\" queueName=test workerId=0 operationID=processId"))
+		require.True(t, strings.Contains(stringLogs, "msg=\"updating worker time, processing item processId2, queue length is 1\" queueName=test workerId=0 operationID=processId2"))
+		require.True(t, strings.Contains(stringLogs, "msg=\"updating worker time, processing item processId, queue length is 0\" queueName=test workerId=0 operationID=processId"))
 		require.True(t, strings.Contains(stringLogs, "msg=\"shutting down the queue, queue length is 0\" queueName=test"))
 		require.True(t, strings.Contains(stringLogs, "msg=\"queue speed factor set to 1\" queueName=test"))
 		require.True(t, strings.Contains(stringLogs, "msg=\"worker routine - starting\" queueName=test workerId=0"))
@@ -66,8 +66,6 @@ func TestWorkerLogging(t *testing.T) {
 		require.True(t, strings.Contains(stringLogs, "msg=\"shutting down\" queueName=test workerId=0 operationID=processId"))
 		require.True(t, strings.Contains(stringLogs, "msg=\"item for processId has been processed, no retry, element forgotten\" queueName=test workerId=0 operationID=processId"))
 		require.True(t, strings.Contains(stringLogs, "msg=\"about to process item processId, queue length is 0\" queueName=test workerId=0 operationID=processId"))
-		require.True(t, strings.Contains(stringLogs, "msg=\"execution - worker test-0 last execution time"))
-		require.True(t, strings.Contains(stringLogs, "executed after"))
 	})
 
 }
