@@ -76,16 +76,16 @@ func (cmd *UpdateCommand) Run() error {
 				if !ok || planMap["id"] != cmd.planID {
 					continue
 				}
-				updateParams, err := extractUpdateParams(planMap)
+				supportedMachineTypes, err := extractSupportedMachineTypes(planMap)
 				if err != nil {
 					return fmt.Errorf("failed to extract update parameters: %v", err)
 				}
-				if len(updateParams) < 2 {
+				if len(supportedMachineTypes) < 2 {
 					continue
 				}
-				for i, m := range updateParams {
+				for i, m := range supportedMachineTypes {
 					if m == *currentMachineType {
-						newMachineType := updateParams[(i+1)%len(updateParams)].(string)
+						newMachineType := supportedMachineTypes[(i+1)%len(supportedMachineTypes)].(string)
 						fmt.Printf("Determined machine type to update: %s\n", newMachineType)
 						resp, err := brokerClient.UpdateInstance(cmd.instanceID, map[string]interface{}{"machineType": newMachineType})
 						if err != nil {
@@ -124,7 +124,7 @@ func getCurrentMachineType(instanceID string) (*string, error) {
 	return &machineType, nil
 }
 
-func extractUpdateParams(planMap map[string]interface{}) ([]interface{}, error) {
+func extractSupportedMachineTypes(planMap map[string]interface{}) ([]interface{}, error) {
 	schemas, ok := planMap["schemas"].(map[string]interface{})
 	if !ok {
 		return nil, errors.New("schemas field not found or invalid in planMap")
@@ -149,9 +149,9 @@ func extractUpdateParams(planMap map[string]interface{}) ([]interface{}, error) 
 	if !ok {
 		return nil, errors.New("machineType field not found or invalid in properties")
 	}
-	updateParams, ok := machineType["enum"].([]interface{})
+	supportedMachineTypes, ok := machineType["enum"].([]interface{})
 	if !ok {
 		return nil, errors.New("enum field not found or invalid in machineType")
 	}
-	return updateParams, nil
+	return supportedMachineTypes, nil
 }
