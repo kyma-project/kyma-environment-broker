@@ -3,6 +3,7 @@ package command
 import (
 	"errors"
 	"fmt"
+	"os"
 	"os/exec"
 	broker "skr-tester/pkg/broker"
 	"skr-tester/pkg/logger"
@@ -110,7 +111,11 @@ func (cmd *UpdateCommand) Validate() error {
 }
 
 func getCurrentMachineType(instanceID string) (*string, error) {
-	_, err := exec.Command("kcp", "login").Output()
+	args := []string{"login"}
+	if clientSecret := os.Getenv("KCP_OIDC_CLIENT_SECRET"); clientSecret != "" {
+		args = append(args, "-u", "username", "-p", "password")
+	}
+	_, err := exec.Command("kcp", args...).Output()
 	if err != nil {
 		return nil, fmt.Errorf("failed to run kcp login: %v", err)
 	}
