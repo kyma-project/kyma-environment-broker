@@ -697,6 +697,30 @@ func (r readSession) GetActiveInstanceStats() ([]dbmodel.InstanceByGlobalAccount
 	return rows, err
 }
 
+func (r readSession) GetSubaccountsInstanceStats() ([]dbmodel.InstanceBySubAccountIDStatEntry, error) {
+	var rows []dbmodel.InstanceBySubAccountIDStatEntry
+	var stmt *dbr.SelectStmt
+	filter := dbmodel.InstanceFilter{
+		States: []dbmodel.InstanceState{dbmodel.InstanceNotDeprovisioned},
+	}
+	// Find and join the last operation for each instance matching the state filter(s).
+	// Last operation is found with the greatest-n-per-group problem solved with OUTER JOIN, followed by a (INNER) JOIN to get instance columns.
+	stmt = r.session.
+		Select(fmt.Sprintf("%s.sub_account_id", InstancesTableName), "count(*) as total").
+		From(InstancesTableName).
+		Join(dbr.I(OperationTableName).As("o1"), fmt.Sprintf("%s.instance_id = o1.instance_id", InstancesTableName)).
+		LeftJoin(dbr.I(OperationTableName).As("o2"), fmt.Sprintf("%s.instance_id = o2.instance_id AND o1.created_at < o2.created_at AND o2.state NOT IN ('%s', '%s')", InstancesTableName, orchestration.Pending, orchestration.Canceled)).
+		Where("o2.created_at IS NULL").
+		Where("deleted_at = '0001-01-01T00:00:00.000Z'").
+		Where(fmt.Sprintf("o1.state NOT IN ('%s', '%s')", orchestration.Pending, orchestration.Canceled)).
+		Where(buildInstanceStateFilters("o1", filter)).
+		GroupBy(fmt.Sprintf("%s.sub_account_id", InstancesTableName)).
+		Having(fmt.Sprintf("count(*) > 1"))
+
+	_, err := stmt.Load(&rows)
+	return rows, err
+}
+
 func (r readSession) GetERSContextStats() ([]dbmodel.InstanceERSContextStatsEntry, error) {
 	var rows []dbmodel.InstanceERSContextStatsEntry
 	// group existing instances by license_Type from the last operation that is not pending or canceled

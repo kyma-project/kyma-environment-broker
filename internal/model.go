@@ -367,6 +367,7 @@ type OperationStatsV2 struct {
 type InstanceStats struct {
 	TotalNumberOfInstances int
 	PerGlobalAccountID     map[string]int
+	PerSubAcocuntID        map[string]int
 }
 
 // ERSContextStats provides aggregated information regarding ERSContext

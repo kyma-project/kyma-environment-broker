@@ -53,6 +53,11 @@ type InstanceByGlobalAccountIDStatEntry struct {
 	Total           int
 }
 
+type InstanceBySubAccountIDStatEntry struct {
+	SubAccountID string
+	Total        int
+}
+
 type InstanceERSContextStatsEntry struct {
 	LicenseType sql.NullString
 	Total       int

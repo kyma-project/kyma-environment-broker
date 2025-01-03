@@ -545,10 +545,19 @@ func (s *Instance) GetActiveInstanceStats() (internal.InstanceStats, error) {
 
 	result := internal.InstanceStats{
 		PerGlobalAccountID: make(map[string]int),
+		PerSubAcocuntID:    make(map[string]int),
 	}
 	for _, e := range entries {
 		result.PerGlobalAccountID[e.GlobalAccountID] = e.Total
 		result.TotalNumberOfInstances = result.TotalNumberOfInstances + e.Total
+	}
+
+	subEntries, err := s.NewReadSession().GetSubaccountsInstanceStats()
+	if err != nil {
+		return internal.InstanceStats{}, err
+	}
+	for _, e := range subEntries {
+		result.PerSubAcocuntID[e.SubAccountID] = e.Total
 	}
 	return result, nil
 }

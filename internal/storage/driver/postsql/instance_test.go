@@ -112,10 +112,10 @@ func TestInstance(t *testing.T) {
 
 		// populate database with samples
 		fixInstances := []internal.Instance{
-			*fixInstance(instanceData{val: "A1", globalAccountID: "A"}),
-			*fixInstance(instanceData{val: "A2", globalAccountID: "A", deletedAt: time.Time{}}),
-			*fixInstance(instanceData{val: "A3", globalAccountID: "A"}),
-			*fixInstance(instanceData{val: "C1", globalAccountID: "C"}),
+			*fixInstance(instanceData{val: "A1", globalAccountID: "A", subAccountID: "sub-01"}),
+			*fixInstance(instanceData{val: "A2", globalAccountID: "A", subAccountID: "sub-02", deletedAt: time.Time{}}),
+			*fixInstance(instanceData{val: "A3", globalAccountID: "A", subAccountID: "sub-02"}),
+			*fixInstance(instanceData{val: "C1", globalAccountID: "C", subAccountID: "sub-01"}),
 			*fixInstance(instanceData{val: "C2", globalAccountID: "C", deletedAt: time.Now()}),
 			*fixInstance(instanceData{val: "B1", globalAccountID: "B", deletedAt: time.Now()}),
 		}
@@ -155,6 +155,7 @@ func TestInstance(t *testing.T) {
 		assert.Equal(t, internal.InstanceStats{
 			TotalNumberOfInstances: 3,
 			PerGlobalAccountID:     map[string]int{"A": 2, "C": 1},
+			PerSubAcocuntID:        map[string]int{"sub-01": 2},
 		}, stats)
 		assert.Equal(t, 3, numberOfInstancesA)
 		assert.Equal(t, 1, numberOfInstancesC)

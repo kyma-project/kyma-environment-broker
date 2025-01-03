@@ -19,6 +19,7 @@ import (
 // - kcp_keb_instances_total - total number of all instances
 // - kcp_keb_global_account_id_instances_total - total number of all instances per global account
 // - kcp_keb_ers_context_license_type_total - count of instances grouped by license types
+// - kcp_keb_sub_account_id_instances_total - total number of instances per subaccount
 type InstancesStatsGetter interface {
 	GetActiveInstanceStats() (internal.InstanceStats, error)
 	GetERSContextStats() (internal.ERSContextStats, error)
@@ -29,6 +30,7 @@ type InstancesCollector struct {
 
 	instancesDesc        *prometheus.Desc
 	instancesPerGAIDDesc *prometheus.Desc
+	instancesPerSAIDDesc *prometheus.Desc
 	licenseTypeDesc      *prometheus.Desc
 	logger               *slog.Logger
 }
@@ -47,6 +49,11 @@ func NewInstancesCollector(statsGetter InstancesStatsGetter, logger *slog.Logger
 			"The total number of instances by Global Account ID",
 			[]string{"global_account_id"},
 			nil),
+		instancesPerSAIDDesc: prometheus.NewDesc(
+			prometheus.BuildFQName(prometheusNamespacev2, prometheusSubsystemv2, "sub_account_id_instances_total"),
+			"The total number of instances by SubAccount ID",
+			[]string{"sub_account_id"},
+			nil),
 		licenseTypeDesc: prometheus.NewDesc(
 			prometheus.BuildFQName(prometheusNamespacev2, prometheusSubsystemv2, "ers_context_license_type_total"),
 			"count of instances grouped by license types",
@@ -58,6 +65,7 @@ func NewInstancesCollector(statsGetter InstancesStatsGetter, logger *slog.Logger
 func (c *InstancesCollector) Describe(ch chan<- *prometheus.Desc) {
 	ch <- c.instancesDesc
 	ch <- c.instancesPerGAIDDesc
+	ch <- c.instancesPerSAIDDesc
 	ch <- c.licenseTypeDesc
 }
 
@@ -71,6 +79,10 @@ func (c *InstancesCollector) Collect(ch chan<- prometheus.Metric) {
 
 		for globalAccountID, num := range stats.PerGlobalAccountID {
 			collect(ch, c.instancesPerGAIDDesc, num, globalAccountID)
+		}
+
+		for subAccountID, num := range stats.PerSubAcocuntID {
+			collect(ch, c.instancesPerSAIDDesc, num, subAccountID)
 		}
 	}
 
