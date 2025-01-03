@@ -94,7 +94,7 @@ func (c *KCPClient) WriteConfigToFile() {
 }
 
 func (c *KCPClient) Login() error {
-	args := []string{"login"}
+	args := []string{"login", "--config", "config.yaml"}
 	if clientSecret := os.Getenv("KCP_OIDC_CLIENT_SECRET"); clientSecret != "" {
 		args = append(args, "-u", os.Getenv("KCP_TECH_USER_LOGIN"), "-p", os.Getenv("KCP_TECH_USER_PASSWORD"))
 	}
@@ -107,9 +107,9 @@ func (c *KCPClient) Login() error {
 
 func (c *KCPClient) GetCurrentMachineType(instanceID string) (*string, error) {
 	if err := c.Login(); err != nil {
-		return nil, fmt.Errorf("failed to login: %w", err)
+		return nil, err
 	}
-	output, err := exec.Command("kcp", "rt", "-i", instanceID, "--runtime-config", "-o", "custom=:{.runtimeConfig.spec.shoot.provider.workers[0].machine.type}").Output()
+	output, err := exec.Command("kcp", "rt", "-i", instanceID, "--runtime-config", "-o", "custom=:{.runtimeConfig.spec.shoot.provider.workers[0].machine.type}", "--config", "config.yaml").Output()
 	if err != nil {
 		return nil, fmt.Errorf("failed to get current machine type: %w", err)
 	}
