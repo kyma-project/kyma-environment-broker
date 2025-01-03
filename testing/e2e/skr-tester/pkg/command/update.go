@@ -78,7 +78,7 @@ func (cmd *UpdateCommand) Run() error {
 				}
 				supportedMachineTypes, err := extractSupportedMachineTypes(planMap)
 				if err != nil {
-					return fmt.Errorf("failed to extract update parameters: %v", err)
+					return fmt.Errorf("failed to extract supportedMachineTypes: %v", err)
 				}
 				if len(supportedMachineTypes) < 2 {
 					continue
