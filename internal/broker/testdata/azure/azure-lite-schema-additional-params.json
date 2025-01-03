@@ -41,6 +41,7 @@
         "Standard_D4s_v5":"Standard_D4s_v5 (4vCPU, 16GB RAM)",
         "Standard_D4_v3":"Standard_D4_v3 (4vCPU, 16GB RAM)"
       },
+      "description": "Specifies the type of the virtual machine.",
       "enum":[
         "Standard_D2s_v5",
         "Standard_D4s_v5",

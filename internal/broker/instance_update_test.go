@@ -593,6 +593,112 @@ func TestUpdateEndpoint_UpdateParameters(t *testing.T) {
 	})
 }
 
+func TestUpdateAdditionalWorkerNodePools(t *testing.T) {
+	for tn, tc := range map[string]struct {
+		additionalWorkerNodePools string
+		expectedError             bool
+	}{
+		"Valid additional worker node pools": {
+			additionalWorkerNodePools: `{"list": [{"name": "name-1", "machineType": "m6i.large", "autoScalerMin": 3, "autoScalerMax": 20}, {"name": "name-2", "machineType": "m6i.large", "autoScalerMin": 0, "autoScalerMax": 0}]}`,
+			expectedError:             false,
+		},
+		"Empty additional worker node pools": {
+			additionalWorkerNodePools: `{"list": []}`,
+			expectedError:             false,
+		},
+		"Remove set to false": {
+			additionalWorkerNodePools: `{"remove": false}`,
+			expectedError:             false,
+		},
+		"Remove set to true": {
+			additionalWorkerNodePools: `{"remove": true}`,
+			expectedError:             false,
+		},
+		"Valid additional worker node pools and remove set to false": {
+			additionalWorkerNodePools: `{"remove": false, "list": [{"name": "name-1", "machineType": "m6i.large", "autoScalerMin": 3, "autoScalerMax": 20}, {"name": "name-2", "machineType": "m6i.large", "autoScalerMin": 0, "autoScalerMax": 0}]}`,
+			expectedError:             true,
+		},
+		"Valid additional worker node pools and remove set to true": {
+			additionalWorkerNodePools: `{"remove": true, "list": [{"name": "name-1", "machineType": "m6i.large", "autoScalerMin": 3, "autoScalerMax": 20}, {"name": "name-2", "machineType": "m6i.large", "autoScalerMin": 0, "autoScalerMax": 0}]}`,
+			expectedError:             true,
+		},
+		"Empty additional worker node pools and remove set to false": {
+			additionalWorkerNodePools: `{"remove": false, "list": []}`,
+			expectedError:             true,
+		},
+		"Empty additional worker node pools and remove set to true": {
+			additionalWorkerNodePools: `{"remove": true, "list": []}`,
+			expectedError:             true,
+		},
+		"Empty name": {
+			additionalWorkerNodePools: `{"list": [{"name": "", "machineType": "m6i.large", "autoScalerMin": 3, "autoScalerMax": 20}]}`,
+			expectedError:             true,
+		},
+		"Missing name": {
+			additionalWorkerNodePools: `{"list": [{"machineType": "m6i.large", "autoScalerMin": 3, "autoScalerMax": 20}]}`,
+			expectedError:             true,
+		},
+		"Empty machine type": {
+			additionalWorkerNodePools: `{"list": [{"name": "name-1", "machineType": "", "autoScalerMin": 3, "autoScalerMax": 20}]}`,
+			expectedError:             true,
+		},
+		"Missing machine type": {
+			additionalWorkerNodePools: `{"list": [{"name": "name-1", "autoScalerMin": 3, "autoScalerMax": 20}]}`,
+			expectedError:             true,
+		},
+		"Missing autoScalerMin": {
+			additionalWorkerNodePools: `{"list": [{"name": "name-1", "machineType": "m6i.large", "autoScalerMax": 3}]}`,
+			expectedError:             true,
+		},
+		"Missing autoScalerMax": {
+			additionalWorkerNodePools: `{"list": [{"name": "name-1", "machineType": "m6i.large", "autoScalerMin": 20}]}`,
+			expectedError:             true,
+		},
+		"AutoScalerMax bigger than 300": {
+			additionalWorkerNodePools: `{"list": [{"name": "name-1", "machineType": "m6i.large", "autoScalerMin": 3, "autoScalerMax": 301}]}`,
+			expectedError:             true,
+		},
+		"AutoScalerMin bigger than autoScalerMax": {
+			additionalWorkerNodePools: `{"list": [{"name": "name-1", "machineType": "m6i.large", "autoScalerMin": 20, "autoScalerMax": 3}]}`,
+			expectedError:             true,
+		},
+	} {
+		t.Run(tn, func(t *testing.T) {
+			// given
+			instance := fixture.FixInstance(instanceID)
+			instance.ServicePlanID = PreviewPlanID
+			st := storage.NewMemoryStorage()
+			err := st.Instances().Insert(instance)
+			require.NoError(t, err)
+			err = st.Operations().InsertProvisioningOperation(fixProvisioningOperation("provisioning01"))
+			require.NoError(t, err)
+
+			handler := &handler{}
+			q := &automock.Queue{}
+			q.On("Add", mock.AnythingOfType("string"))
+			planDefaults := func(planID string, platformProvider pkg.CloudProvider, provider *pkg.CloudProvider) (*gqlschema.ClusterConfigInput, error) {
+				return &gqlschema.ClusterConfigInput{}, nil
+			}
+			kcBuilder := &kcMock.KcBuilder{}
+			svc := NewUpdate(Config{}, st.Instances(), st.RuntimeStates(), st.Operations(), handler, true, true, false, q, PlansConfig{},
+				planDefaults, fixLogger(), dashboardConfig, kcBuilder, &OneForAllConvergedCloudRegionsProvider{}, fakeKcpK8sClient)
+
+			// when
+			_, err = svc.Update(context.Background(), instanceID, domain.UpdateDetails{
+				ServiceID:       "",
+				PlanID:          PreviewPlanID,
+				RawParameters:   json.RawMessage("{\"additionalWorkerNodePools\":" + tc.additionalWorkerNodePools + "}"),
+				PreviousValues:  domain.PreviousValues{},
+				RawContext:      json.RawMessage("{\"globalaccount_id\":\"globalaccount_id_1\", \"active\":true}"),
+				MaintenanceInfo: nil,
+			}, true)
+
+			// then
+			assert.Equal(t, tc.expectedError, err != nil)
+		})
+	}
+}
+
 func TestUpdateEndpoint_UpdateWithEnabledDashboard(t *testing.T) {
 	// given
 	instance := internal.Instance{

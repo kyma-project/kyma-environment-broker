@@ -46,6 +46,7 @@
         "g_c32_m128": "g_c32_m128 (32vCPU, 128GB RAM)",
         "g_c64_m256": "g_c64_m256 (64vCPU, 256GB RAM)"
       },
+      "description": "Specifies the type of the virtual machine.",
       "enum": [
         "g_c2_m8",
         "g_c4_m16",

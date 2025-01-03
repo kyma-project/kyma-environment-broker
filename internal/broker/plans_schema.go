@@ -23,22 +23,24 @@ type RootSchema struct {
 type ProvisioningProperties struct {
 	UpdateProperties
 
-	Name                   NameType        `json:"name"`
-	ShootName              *Type           `json:"shootName,omitempty"`
-	ShootDomain            *Type           `json:"shootDomain,omitempty"`
-	Region                 *Type           `json:"region,omitempty"`
-	Networking             *NetworkingType `json:"networking,omitempty"`
-	Modules                *Modules        `json:"modules,omitempty"`
-	ShootAndSeedSameRegion *Type           `json:"shootAndSeedSameRegion,omitempty"`
+	Name                      NameType                       `json:"name"`
+	ShootName                 *Type                          `json:"shootName,omitempty"`
+	ShootDomain               *Type                          `json:"shootDomain,omitempty"`
+	Region                    *Type                          `json:"region,omitempty"`
+	Networking                *NetworkingType                `json:"networking,omitempty"`
+	Modules                   *Modules                       `json:"modules,omitempty"`
+	ShootAndSeedSameRegion    *Type                          `json:"shootAndSeedSameRegion,omitempty"`
+	AdditionalWorkerNodePools *AdditionalWorkerNodePoolsList `json:"additionalWorkerNodePools,omitempty"`
 }
 
 type UpdateProperties struct {
-	Kubeconfig     *Type     `json:"kubeconfig,omitempty"`
-	AutoScalerMin  *Type     `json:"autoScalerMin,omitempty"`
-	AutoScalerMax  *Type     `json:"autoScalerMax,omitempty"`
-	OIDC           *OIDCType `json:"oidc,omitempty"`
-	Administrators *Type     `json:"administrators,omitempty"`
-	MachineType    *Type     `json:"machineType,omitempty"`
+	Kubeconfig                *Type                          `json:"kubeconfig,omitempty"`
+	AutoScalerMin             *Type                          `json:"autoScalerMin,omitempty"`
+	AutoScalerMax             *Type                          `json:"autoScalerMax,omitempty"`
+	OIDC                      *OIDCType                      `json:"oidc,omitempty"`
+	Administrators            *Type                          `json:"administrators,omitempty"`
+	MachineType               *Type                          `json:"machineType,omitempty"`
+	AdditionalWorkerNodePools *AdditionalWorkerNodePoolsType `json:"additionalWorkerNodePools,omitempty"`
 }
 
 func (up *UpdateProperties) IncludeAdditional() {
@@ -145,6 +147,48 @@ type ModulesCustomListItemsProperties struct {
 	Name                 Type `json:"name,omitempty"`
 	Channel              Type `json:"channel,omitempty"`
 	CustomResourcePolicy Type `json:"customResourcePolicy,omitempty"`
+}
+
+type AdditionalWorkerNodePoolsType struct {
+	Type
+	OneOf []interface{} `json:"oneOf,omitempty"`
+}
+
+type AdditionalWorkerNodePoolsRemoved struct {
+	Type
+	Properties AdditionalWorkerNodePoolsRemovedProperties `json:"properties,omitempty"`
+}
+
+type AdditionalWorkerNodePoolsRemovedProperties struct {
+	Remove Type `json:"remove,omitempty"`
+}
+
+type AdditionalWorkerNodePoolsModified struct {
+	Type
+	Properties AdditionalWorkerNodePoolsModifiedProperties `json:"properties,omitempty"`
+}
+
+type AdditionalWorkerNodePoolsModifiedProperties struct {
+	List AdditionalWorkerNodePoolsList `json:"list,omitempty"`
+}
+
+type AdditionalWorkerNodePoolsList struct {
+	Type
+	Items AdditionalWorkerNodePoolsListItems `json:"items,omitempty"`
+}
+
+type AdditionalWorkerNodePoolsListItems struct {
+	Type
+	Required      []string                                     `json:"required"`
+	ControlsOrder []string                                     `json:"_controlsOrder,omitempty"`
+	Properties    AdditionalWorkerNodePoolsListItemsProperties `json:"properties,omitempty"`
+}
+
+type AdditionalWorkerNodePoolsListItemsProperties struct {
+	Name          Type `json:"name,omitempty"`
+	AutoScalerMin Type `json:"autoScalerMin,omitempty"`
+	AutoScalerMax Type `json:"autoScalerMax,omitempty"`
+	MachineType   Type `json:"machineType,omitempty"`
 }
 
 func NewModulesSchema() *Modules {
@@ -298,6 +342,7 @@ func NewProvisioningProperties(machineTypesDisplay, regionsDisplay map[string]st
 				Type:            "string",
 				Enum:            ToInterfaceSlice(machineTypes),
 				EnumDisplayName: machineTypesDisplay,
+				Description:     "Specifies the type of the virtual machine.",
 			},
 		},
 		Name: NameProperty(),
@@ -386,7 +431,7 @@ func unmarshalOrPanic(from, to interface{}) interface{} {
 }
 
 func DefaultControlsOrder() []string {
-	return []string{"name", "kubeconfig", "shootName", "shootDomain", "region", "shootAndSeedSameRegion", "machineType", "autoScalerMin", "autoScalerMax", "zonesCount", "modules", "networking", "oidc", "administrators"}
+	return []string{"name", "kubeconfig", "shootName", "shootDomain", "region", "shootAndSeedSameRegion", "machineType", "autoScalerMin", "autoScalerMax", "additionalWorkerNodePools", "zonesCount", "modules", "networking", "oidc", "administrators"}
 }
 
 func ToInterfaceSlice(input []string) []interface{} {
@@ -404,6 +449,84 @@ func AdministratorsProperty() *Type {
 		Description: "Specifies the list of runtime administrators",
 		Items: &Type{
 			Type: "string",
+		},
+	}
+}
+
+func NewAdditionalWorkerNodePoolsSchema(machineTypesDisplay map[string]string, machineTypes []string) *AdditionalWorkerNodePoolsType {
+	return &AdditionalWorkerNodePoolsType{
+		Type: Type{
+			Type:        "object",
+			Description: "Specify a custom list of additional worker node pools or remove them entirely.",
+		},
+		OneOf: []any{
+			AdditionalWorkerNodePoolsModified{
+				Type: Type{
+					Type:                 "object",
+					Title:                "Modify",
+					AdditionalProperties: false,
+				},
+				Properties: AdditionalWorkerNodePoolsModifiedProperties{
+					List: NewAdditionalWorkerNodePoolsList(machineTypesDisplay, machineTypes),
+				},
+			},
+			AdditionalWorkerNodePoolsRemoved{
+				Type: Type{
+					Type:                 "object",
+					Title:                "Remove",
+					AdditionalProperties: false,
+				},
+				Properties: AdditionalWorkerNodePoolsRemovedProperties{
+					Type{
+						Type:     "boolean",
+						Title:    "Remove all additional worker node pools",
+						Default:  true,
+						ReadOnly: true,
+					},
+				},
+			},
+		},
+	}
+}
+
+func NewAdditionalWorkerNodePoolsList(machineTypesDisplay map[string]string, machineTypes []string) AdditionalWorkerNodePoolsList {
+	return AdditionalWorkerNodePoolsList{
+		Type: Type{
+			Type:        "array",
+			UniqueItems: true,
+			Description: "Specifies the list of additional worker node pools.",
+		},
+		Items: AdditionalWorkerNodePoolsListItems{
+			ControlsOrder: []string{"name", "machineType", "autoScalerMin", "autoScalerMax"},
+			Required:      []string{"name", "machineType", "autoScalerMin", "autoScalerMax"},
+			Type: Type{
+				Type: "object",
+			},
+			Properties: AdditionalWorkerNodePoolsListItemsProperties{
+				Name: Type{
+					Type:        "string",
+					MinLength:   1,
+					Description: "Specifies the unique name of the additional worker node pool.",
+				},
+				MachineType: Type{
+					Type:            "string",
+					MinLength:       1,
+					Enum:            ToInterfaceSlice(machineTypes),
+					EnumDisplayName: machineTypesDisplay,
+					Description:     "Specifies the type of the virtual machine.",
+				},
+				AutoScalerMin: Type{
+					Type:        "integer",
+					Minimum:     0,
+					Description: "Specifies the minimum number of virtual machines to create.",
+				},
+				AutoScalerMax: Type{
+					Type:        "integer",
+					Minimum:     0,
+					Maximum:     300,
+					Description: "Specifies the maximum number of virtual machines to create.",
+				},
+			},
 		},
 	}
 }
