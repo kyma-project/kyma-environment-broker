@@ -47,6 +47,16 @@ metadata:
     shared: "true"
 ```
 
+It is possible to explicitly specify what plans or BTP regions should use shared credentials. This is done by adding given plan or region names to configuration list in KEB helm values. The mentioned configuration is controlled by `hap.sharedCredentials**` values. For example, the following configuration allows the `trial` and `sap-converged-cloud` plans to use shared credentials:
+
+
+
+```
+hap: 
+  sharedSecretPlans: "trial;sap-converged-cloud"
+  sharedSecretRegions: ""
+```
+
 ### Shared Credentials for `sap-converged-cloud` Plan
 
 For the `sap-converged-cloud` plan, each region is treated as a separate hyperscaler. Hence, Secrets are labeled with **openstack_{region name}**, for example, **openstack_eu-de-1**.
@@ -82,3 +92,5 @@ metadata:
     tenant-name: {TENANT_NAME}
     hyperscaler-type: "gcp_cf-sa30"
 ```
+
+## 
