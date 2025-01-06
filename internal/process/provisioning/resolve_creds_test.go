@@ -8,6 +8,8 @@ import (
 	"github.com/kyma-project/kyma-environment-broker/common/gardener"
 	pkg "github.com/kyma-project/kyma-environment-broker/common/runtime"
 	"github.com/kyma-project/kyma-environment-broker/internal/fixture"
+	"github.com/kyma-project/kyma-environment-broker/internal/hap"
+	"github.com/kyma-project/kyma-environment-broker/internal/utils"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 
@@ -41,7 +43,7 @@ func TestResolveCredentialsStepHappyPath_Run(t *testing.T) {
 	accountProviderMock := &hyperscalerMocks.AccountProvider{}
 	accountProviderMock.On("GardenerSecretName", hyperscaler.GCP("westeurope"), statusGlobalAccountID, false).Return("gardener-secret-gcp", nil)
 
-	step := NewResolveCredentialsStep(memoryStorage.Operations(), accountProviderMock)
+	step := NewResolveCredentialsStep(memoryStorage.Operations(), accountProviderMock, hap.Config{})
 
 	// when
 	operation, repeat, err := step.Run(operation, fixLogger())
@@ -68,7 +70,7 @@ func TestResolveCredentialsEUStepHappyPath_Run(t *testing.T) {
 	accountProviderMock := &hyperscalerMocks.AccountProvider{}
 	accountProviderMock.On("GardenerSecretName", hyperscaler.AWS(), statusGlobalAccountID, true).Return("gardener-secret-aws", nil)
 
-	step := NewResolveCredentialsStep(memoryStorage.Operations(), accountProviderMock)
+	step := NewResolveCredentialsStep(memoryStorage.Operations(), accountProviderMock, hap.Config{})
 
 	// when
 	operation, repeat, err := step.Run(operation, fixLogger())
@@ -95,7 +97,7 @@ func TestResolveCredentialsCHStepHappyPath_Run(t *testing.T) {
 	accountProviderMock := &hyperscalerMocks.AccountProvider{}
 	accountProviderMock.On("GardenerSecretName", hyperscaler.Azure(), statusGlobalAccountID, true).Return("gardener-secret-az", nil)
 
-	step := NewResolveCredentialsStep(memoryStorage.Operations(), accountProviderMock)
+	step := NewResolveCredentialsStep(memoryStorage.Operations(), accountProviderMock, hap.Config{})
 
 	// when
 	operation, repeat, err := step.Run(operation, fixLogger())
@@ -121,7 +123,7 @@ func TestResolveCredentialsStepHappyPathTrialDefaultProvider_Run(t *testing.T) {
 	accountProviderMock := &hyperscalerMocks.AccountProvider{}
 	accountProviderMock.On("GardenerSharedSecretName", hyperscaler.Azure(), false).Return("gardener-secret-azure", nil)
 
-	step := NewResolveCredentialsStep(memoryStorage.Operations(), accountProviderMock)
+	step := NewResolveCredentialsStep(memoryStorage.Operations(), accountProviderMock, hap.Config{})
 
 	// when
 	operation, repeat, err := step.Run(operation, fixLogger())
@@ -148,7 +150,7 @@ func TestResolveCredentialsStepHappyPathTrialGivenProvider_Run(t *testing.T) {
 	accountProviderMock := &hyperscalerMocks.AccountProvider{}
 	accountProviderMock.On("GardenerSharedSecretName", hyperscaler.GCP("westeurope"), false).Return("gardener-secret-gcp", nil)
 
-	step := NewResolveCredentialsStep(memoryStorage.Operations(), accountProviderMock)
+	step := NewResolveCredentialsStep(memoryStorage.Operations(), accountProviderMock, hap.Config{})
 
 	// when
 	operation, repeat, err := step.Run(operation, fixLogger())
@@ -163,6 +165,65 @@ func TestResolveCredentialsStepHappyPathTrialGivenProvider_Run(t *testing.T) {
 	assert.Equal(t, "gardener-secret-gcp", *operation.ProvisioningParameters.Parameters.TargetSecret)
 }
 
+func TestResolveCredentialsStepHappyPathSharedProviderBasedOnConfig_Run(t *testing.T) {
+
+	t.Run("should resolve shared secret based on plan config", func(t *testing.T) {
+		// given
+		memoryStorage := storage.NewMemoryStorage()
+
+		operation := fixOperationRuntimeStatusWithProvider(broker.GCPPlanID, pkg.GCP)
+
+		err := memoryStorage.Operations().InsertOperation(operation)
+		assert.NoError(t, err)
+
+		accountProviderMock := &hyperscalerMocks.AccountProvider{}
+		accountProviderMock.On("GardenerSharedSecretName", hyperscaler.GCP("westeurope"), false).Return("gardener-secret-gcp", nil)
+
+		step := NewResolveCredentialsStep(memoryStorage.Operations(), accountProviderMock, hap.Config{SharedSecretPlans: utils.Whitelist{"gcp": struct{}{}}})
+
+		// when
+		operation, repeat, err := step.Run(operation, fixLogger())
+
+		assert.NoError(t, err)
+
+		// then
+		assert.NoError(t, err)
+		assert.Equal(t, time.Duration(0), repeat)
+		assert.Empty(t, operation.State)
+		require.NotNil(t, operation.ProvisioningParameters.Parameters.TargetSecret)
+		assert.Equal(t, "gardener-secret-gcp", *operation.ProvisioningParameters.Parameters.TargetSecret)
+	})
+
+	t.Run("should resolve shared secret based on region config", func(t *testing.T) {
+		// given
+		memoryStorage := storage.NewMemoryStorage()
+
+		operation := fixOperationRuntimeStatusWithProvider(broker.GCPPlanID, pkg.GCP)
+		operation.ProvisioningParameters.PlatformRegion = "westeurope"
+
+		err := memoryStorage.Operations().InsertOperation(operation)
+		assert.NoError(t, err)
+
+		accountProviderMock := &hyperscalerMocks.AccountProvider{}
+		accountProviderMock.On("GardenerSharedSecretName", hyperscaler.GCP("westeurope"), false).Return("gardener-secret-gcp", nil)
+
+		step := NewResolveCredentialsStep(memoryStorage.Operations(), accountProviderMock, hap.Config{SharedSecretRegions: utils.Whitelist{"westeurope": struct{}{}}})
+
+		// when
+		operation, repeat, err := step.Run(operation, fixLogger())
+
+		assert.NoError(t, err)
+
+		// then
+		assert.NoError(t, err)
+		assert.Equal(t, time.Duration(0), repeat)
+		assert.Empty(t, operation.State)
+		require.NotNil(t, operation.ProvisioningParameters.Parameters.TargetSecret)
+		assert.Equal(t, "gardener-secret-gcp", *operation.ProvisioningParameters.Parameters.TargetSecret)
+	})
+
+}
+
 func TestResolveCredentialsStepRetry_Run(t *testing.T) {
 	// given
 	memoryStorage := storage.NewMemoryStorage()
@@ -174,7 +235,7 @@ func TestResolveCredentialsStepRetry_Run(t *testing.T) {
 	accountProviderMock := &hyperscalerMocks.AccountProvider{}
 	accountProviderMock.On("GardenerSecretName", hyperscaler.GCP("westeurope"), statusGlobalAccountID, false).Return("", fmt.Errorf("Failed!"))
 
-	step := NewResolveCredentialsStep(memoryStorage.Operations(), accountProviderMock)
+	step := NewResolveCredentialsStep(memoryStorage.Operations(), accountProviderMock, hap.Config{})
 
 	operation.UpdatedAt = time.Now()
 
@@ -208,7 +269,7 @@ func TestResolveCredentials_IntegrationAWS(t *testing.T) {
 	op := fixOperationWithPlatformRegion("cf-us10", pkg.AWS)
 	err := memoryStorage.Operations().InsertOperation(op)
 	assert.NoError(t, err)
-	step := NewResolveCredentialsStep(memoryStorage.Operations(), accountProvider)
+	step := NewResolveCredentialsStep(memoryStorage.Operations(), accountProvider, hap.Config{})
 
 	// when
 	operation, backoff, err := step.Run(op, fixLogger())
@@ -232,7 +293,7 @@ func TestResolveCredentials_IntegrationAWSEuAccess(t *testing.T) {
 	op := fixOperationWithPlatformRegion("cf-eu11", pkg.AWS)
 	err := memoryStorage.Operations().InsertOperation(op)
 	assert.NoError(t, err)
-	step := NewResolveCredentialsStep(memoryStorage.Operations(), accountProvider)
+	step := NewResolveCredentialsStep(memoryStorage.Operations(), accountProvider, hap.Config{})
 
 	// when
 	operation, backoff, err := step.Run(op, fixLogger())
@@ -254,7 +315,7 @@ func TestResolveCredentials_IntegrationAzure(t *testing.T) {
 	op := fixOperationWithPlatformRegion("cf-eu21", pkg.Azure)
 	err := memoryStorage.Operations().InsertOperation(op)
 	assert.NoError(t, err)
-	step := NewResolveCredentialsStep(memoryStorage.Operations(), accountProvider)
+	step := NewResolveCredentialsStep(memoryStorage.Operations(), accountProvider, hap.Config{})
 
 	// when
 	operation, backoff, err := step.Run(op, fixLogger())
@@ -278,7 +339,7 @@ func TestResolveCredentials_IntegrationAzureEuAccess(t *testing.T) {
 	op := fixOperationWithPlatformRegion("cf-ch20", pkg.Azure)
 	err := memoryStorage.Operations().InsertOperation(op)
 	assert.NoError(t, err)
-	step := NewResolveCredentialsStep(memoryStorage.Operations(), accountProvider)
+	step := NewResolveCredentialsStep(memoryStorage.Operations(), accountProvider, hap.Config{})
 
 	// when
 	operation, backoff, err := step.Run(op, fixLogger())

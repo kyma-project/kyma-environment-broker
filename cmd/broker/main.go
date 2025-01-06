@@ -18,6 +18,7 @@ import (
 	imv1 "github.com/kyma-project/infrastructure-manager/api/v1"
 
 	"github.com/kyma-project/kyma-environment-broker/internal/expiration"
+	"github.com/kyma-project/kyma-environment-broker/internal/hap"
 	"github.com/kyma-project/kyma-environment-broker/internal/metricsv2"
 	"github.com/kyma-project/kyma-environment-broker/internal/whitelist"
 
@@ -142,6 +143,7 @@ type Config struct {
 	Events events.Config
 
 	MetricsV2 metricsv2.Config
+	Hap       hap.Config
 
 	Provisioning    process.StagedManagerConfiguration
 	Deprovisioning  process.StagedManagerConfiguration
@@ -408,6 +410,8 @@ func logConfiguration(logs *slog.Logger, cfg Config) {
 		cfg.Broker.KimConfig.KimOnlyPlans))
 	logs.Info(fmt.Sprintf("Is SubaccountMovementEnabled: %t", cfg.Broker.SubaccountMovementEnabled))
 	logs.Info(fmt.Sprintf("Is UpdateCustomResourcesLabelsOnAccountMove enabled: %t", cfg.Broker.UpdateCustomResourcesLabelsOnAccountMove))
+	logs.Info(fmt.Sprintf("HAP's shared secerts enabled for plans: %s", cfg.Hap.SharedSecretPlans))
+	logs.Info(fmt.Sprintf("HAP's shared secerts enabled for regions: %s", cfg.Hap.SharedSecretRegions))
 }
 
 func createAPI(router *mux.Router, servicesConfig broker.ServicesConfig, planValidator broker.PlanValidator, cfg *Config, db storage.BrokerStorage,
