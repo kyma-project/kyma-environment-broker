@@ -16,10 +16,6 @@ type KCPConfig struct {
 	Password          string
 	ClientID          string
 	ClientSecret      string
-	OAuthClientID     string
-	OAuthSecret       string
-	OAuthIssuer       string
-	MotherShipApiUrl  string
 	KubeConfigApiUrl  string
 }
 
@@ -36,13 +32,12 @@ func NewKCPConfig() *KCPConfig {
 		AuthType:          getEnvOrThrow("KCP_AUTH_TYPE"),
 		Host:              getEnvOrThrow("KCP_KEB_API_URL"),
 		IssuerURL:         getEnvOrThrow("KCP_OIDC_ISSUER_URL"),
+		ClientID:          getEnvOrThrow("KCP_OIDC_CLIENT_ID"),
+		ClientSecret:      getEnvOrThrow("KCP_OIDC_CLIENT_SECRET"),
 		GardenerNamespace: getEnvOrThrow("KCP_GARDENER_NAMESPACE"),
 		Username:          getEnvOrThrow("KCP_TECH_USER_LOGIN"),
 		Password:          getEnvOrThrow("KCP_TECH_USER_PASSWORD"),
-		ClientID:          getEnvOrThrow("KCP_OIDC_CLIENT_ID"),
-		MotherShipApiUrl:  getEnvOrThrow("KCP_MOTHERSHIP_API_URL"),
 		KubeConfigApiUrl:  getEnvOrThrow("KCP_KUBECONFIG_API_URL"),
-		ClientSecret:      getEnvOrThrow("KCP_OIDC_CLIENT_SECRET"),
 	}
 }
 
@@ -68,11 +63,11 @@ func (c *KCPClient) WriteConfigToFile() {
 
 	file.WriteString(fmt.Sprintf("auth-type: \"%s\"\n", c.Config.AuthType))
 	file.WriteString(fmt.Sprintf("gardener-namespace: \"%s\"\n", c.Config.GardenerNamespace))
+	file.WriteString(fmt.Sprintf("oidc-issuer-url: \"%s\"\n", c.Config.IssuerURL))
 	file.WriteString(fmt.Sprintf("oidc-client-id: \"%s\"\n", c.Config.ClientID))
 	file.WriteString(fmt.Sprintf("oidc-client-secret: %s\n", c.Config.ClientSecret))
 	file.WriteString(fmt.Sprintf("username: %s\n", c.Config.Username))
 	file.WriteString(fmt.Sprintf("keb-api-url: \"%s\"\n", c.Config.Host))
-	file.WriteString(fmt.Sprintf("oidc-issuer-url: \"%s\"\n", c.Config.IssuerURL))
 	file.WriteString(fmt.Sprintf("kubeconfig-api-url: \"%s\"\n", c.Config.KubeConfigApiUrl))
 }
 
