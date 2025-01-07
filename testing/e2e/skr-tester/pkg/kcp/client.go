@@ -19,12 +19,8 @@ type KCPConfig struct {
 	KubeConfigApiUrl  string
 }
 
-func getEnvOrThrow(key string) string {
-	value := os.Getenv(key)
-	if value == "" {
-		panic(fmt.Sprintf("Environment variable %s is required", key))
-	}
-	return value
+type KCPClient struct {
+	Config *KCPConfig
 }
 
 func NewKCPConfig() *KCPConfig {
@@ -39,10 +35,6 @@ func NewKCPConfig() *KCPConfig {
 		Password:          getEnvOrThrow("KCP_TECH_USER_PASSWORD"),
 		KubeConfigApiUrl:  getEnvOrThrow("KCP_KUBECONFIG_API_URL"),
 	}
-}
-
-type KCPClient struct {
-	Config *KCPConfig
 }
 
 func NewKCPClient() *KCPClient {
@@ -94,4 +86,12 @@ func (c *KCPClient) GetCurrentMachineType(instanceID string) (*string, error) {
 	machineType := string(output)
 	machineType = strings.TrimSpace(machineType)
 	return &machineType, nil
+}
+
+func getEnvOrThrow(key string) string {
+	value := os.Getenv(key)
+	if value == "" {
+		panic(fmt.Sprintf("Environment variable %s is required", key))
+	}
+	return value
 }
