@@ -208,12 +208,14 @@ func AwsMachinesNames() []string {
 		"m6i.4xlarge",
 		"m6i.8xlarge",
 		"m6i.12xlarge",
+		"m6i.16xlarge",
 		"m5.large",
 		"m5.xlarge",
 		"m5.2xlarge",
 		"m5.4xlarge",
 		"m5.8xlarge",
 		"m5.12xlarge",
+		"m5.16xlarge",
 	}
 }
 
@@ -225,12 +227,14 @@ func AwsMachinesDisplay() map[string]string {
 		"m6i.4xlarge":  "m6i.4xlarge (16vCPU, 64GB RAM)",
 		"m6i.8xlarge":  "m6i.8xlarge (32vCPU, 128GB RAM)",
 		"m6i.12xlarge": "m6i.12xlarge (48vCPU, 192GB RAM)",
+		"m6i.16xlarge": "m6i.16xlarge (64vCPU, 256GB RAM)",
 		"m5.large":     "m5.large (2vCPU, 8GB RAM)",
 		"m5.xlarge":    "m5.xlarge (4vCPU, 16GB RAM)",
 		"m5.2xlarge":   "m5.2xlarge (8vCPU, 32GB RAM)",
 		"m5.4xlarge":   "m5.4xlarge (16vCPU, 64GB RAM)",
 		"m5.8xlarge":   "m5.8xlarge (32vCPU, 128GB RAM)",
 		"m5.12xlarge":  "m5.12xlarge (48vCPU, 192GB RAM)",
+		"m5.16xlarge":  "m5.16xlarge (64vCPU, 256GB RAM)",
 	}
 }
 
@@ -294,6 +298,7 @@ func GcpMachinesNames() []string {
 		"n2-standard-16",
 		"n2-standard-32",
 		"n2-standard-48",
+		"n2-standard-64",
 	}
 }
 
@@ -305,6 +310,7 @@ func GcpMachinesDisplay() map[string]string {
 		"n2-standard-16": "n2-standard-16 (16vCPU, 64GB RAM)",
 		"n2-standard-32": "n2-standard-32 (32vCPU, 128GB RAM)",
 		"n2-standard-48": "n2-standard-48 (48vCPU, 192B RAM)",
+		"n2-standard-64": "n2-standard-64 (64vCPU, 256GB RAM)",
 	}
 }
 
