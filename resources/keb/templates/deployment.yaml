@@ -289,8 +289,6 @@ spec:
               value: "{{ .Values.broker.updateCustomResourcesLabelsOnAccountMove }}"
             - name: APP_HAP_SHARED_SECRET_PLANS
               value: "{{ .Values.hap.sharedSecretPlans }}"
-            - name: APP_HAP_SHARED_SECRET_REGIONS
-              value: "{{ .Values.hap.sharedSecretRegions }}"
           ports:
             - name: http
               containerPort: {{ .Values.broker.port }}

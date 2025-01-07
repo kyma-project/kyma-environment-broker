@@ -411,7 +411,6 @@ func logConfiguration(logs *slog.Logger, cfg Config) {
 	logs.Info(fmt.Sprintf("Is SubaccountMovementEnabled: %t", cfg.Broker.SubaccountMovementEnabled))
 	logs.Info(fmt.Sprintf("Is UpdateCustomResourcesLabelsOnAccountMove enabled: %t", cfg.Broker.UpdateCustomResourcesLabelsOnAccountMove))
 	logs.Info(fmt.Sprintf("HAP's shared secerts enabled for plans: %s", cfg.Hap.SharedSecretPlans))
-	logs.Info(fmt.Sprintf("HAP's shared secerts enabled for regions: %s", cfg.Hap.SharedSecretRegions))
 }
 
 func createAPI(router *mux.Router, servicesConfig broker.ServicesConfig, planValidator broker.PlanValidator, cfg *Config, db storage.BrokerStorage,

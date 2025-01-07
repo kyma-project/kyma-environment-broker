@@ -5,6 +5,5 @@ import (
 )
 
 type Config struct {
-	SharedSecretPlans   utils.Whitelist `envconfig:"default=trial;sap-converged-cloud"`
-	SharedSecretRegions utils.Whitelist `envconfig:"optional"`
+	SharedSecretPlans utils.Whitelist `envconfig:"default=trial:*;sap-converged-cloud:*"`
 }

@@ -47,15 +47,21 @@ metadata:
     shared: "true"
 ```
 
-It is possible to explicitly specify what plans or BTP regions should use shared credentials. This is done by adding given plan or region names to configuration list in KEB helm values. The mentioned configuration is controlled by `hap.sharedCredentials**` values. For example, the following configuration allows the `trial` and `sap-converged-cloud` plans to use shared credentials:
-
-
+It is possible to explicitly specify what plans or BTP regions should use shared credentials. This is done by adding given plan or region names to configuration list in KEB helm values. The mentioned configuration is controlled by `hap.sharedSecretPlans` value. For example, the following configuration allows the `trial` and `sap-converged-cloud` plans to use shared credentials:
 
 ```
 hap: 
   sharedSecretPlans: "trial;sap-converged-cloud"
-  sharedSecretRegions: ""
 ```
+
+The property accepts a list of key value in the format `<PLAN_ID_1>:<REGION_ID_1>;<PLAN_ID_2>:<REGION_ID_2>`. Either plan or region (but never both) can be specified as wildcard `*` meaning all plans or regions should apply for specific second value. The following example lists valid and invalid configuration values:
+* `trial:eu` - valid, shared credentials will be used for the `trial` plan in the `eu` region,
+* `*:eu` - valid, shared credentials will be used for all plans in the `eu` region,
+* `trial:*` - valid, shared credentials will be used for the `trial` plan in all regions,
+* `*:eu;trial:eu` - valid, shared credentials will be used for all plans in the `eu` region and for the `trial` plan in the `eu` region, configuration can be duplicated
+* `trial:eu;trial:gcp` - valid, shared credentials will be used for trials plans but only in `eu` and `gcp` regions,
+* `eu:*` - invalid, plan must be specified in the first part of `<PLAN_ID>:<REGION_ID>` pair,
+* `*:*` - invalid, at least one of the values must be specified in the `<PLAN_ID>:<REGION_ID>` pair.
 
 ### Shared Credentials for `sap-converged-cloud` Plan
 
@@ -92,5 +98,3 @@ metadata:
     tenant-name: {TENANT_NAME}
     hyperscaler-type: "gcp_cf-sa30"
 ```
-
-## 

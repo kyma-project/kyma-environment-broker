@@ -165,9 +165,9 @@ func TestResolveCredentialsStepHappyPathTrialGivenProvider_Run(t *testing.T) {
 	assert.Equal(t, "gardener-secret-gcp", *operation.ProvisioningParameters.Parameters.TargetSecret)
 }
 
-func TestResolveCredentialsStepHappyPathSharedProviderBasedOnConfig_Run(t *testing.T) {
+func TestResolveCredentialsStepHappyPathSharedSecretBasedOnConfig_Run(t *testing.T) {
 
-	t.Run("should resolve shared secret based on plan config", func(t *testing.T) {
+	t.Run("should resolve shared secret based on plan config - region wildcard", func(t *testing.T) {
 		// given
 		memoryStorage := storage.NewMemoryStorage()
 
@@ -179,7 +179,7 @@ func TestResolveCredentialsStepHappyPathSharedProviderBasedOnConfig_Run(t *testi
 		accountProviderMock := &hyperscalerMocks.AccountProvider{}
 		accountProviderMock.On("GardenerSharedSecretName", hyperscaler.GCP("westeurope"), false).Return("gardener-secret-gcp", nil)
 
-		step := NewResolveCredentialsStep(memoryStorage.Operations(), accountProviderMock, hap.Config{SharedSecretPlans: utils.Whitelist{"gcp": struct{}{}}})
+		step := NewResolveCredentialsStep(memoryStorage.Operations(), accountProviderMock, hap.Config{SharedSecretPlans: utils.Whitelist{"gcp:*": struct{}{}}})
 
 		// when
 		operation, repeat, err := step.Run(operation, fixLogger())
@@ -194,7 +194,7 @@ func TestResolveCredentialsStepHappyPathSharedProviderBasedOnConfig_Run(t *testi
 		assert.Equal(t, "gardener-secret-gcp", *operation.ProvisioningParameters.Parameters.TargetSecret)
 	})
 
-	t.Run("should resolve shared secret based on region config", func(t *testing.T) {
+	t.Run("should resolve shared secret based on region config - all plans", func(t *testing.T) {
 		// given
 		memoryStorage := storage.NewMemoryStorage()
 
@@ -207,7 +207,91 @@ func TestResolveCredentialsStepHappyPathSharedProviderBasedOnConfig_Run(t *testi
 		accountProviderMock := &hyperscalerMocks.AccountProvider{}
 		accountProviderMock.On("GardenerSharedSecretName", hyperscaler.GCP("westeurope"), false).Return("gardener-secret-gcp", nil)
 
-		step := NewResolveCredentialsStep(memoryStorage.Operations(), accountProviderMock, hap.Config{SharedSecretRegions: utils.Whitelist{"westeurope": struct{}{}}})
+		step := NewResolveCredentialsStep(memoryStorage.Operations(), accountProviderMock, hap.Config{SharedSecretPlans: utils.Whitelist{"*:westeurope": struct{}{}}})
+
+		// when
+		operation, repeat, err := step.Run(operation, fixLogger())
+
+		assert.NoError(t, err)
+
+		// then
+		assert.NoError(t, err)
+		assert.Equal(t, time.Duration(0), repeat)
+		assert.Empty(t, operation.State)
+		require.NotNil(t, operation.ProvisioningParameters.Parameters.TargetSecret)
+		assert.Equal(t, "gardener-secret-gcp", *operation.ProvisioningParameters.Parameters.TargetSecret)
+	})
+
+	t.Run("should resolve shared secret based on region config - specific plans", func(t *testing.T) {
+		// given
+		memoryStorage := storage.NewMemoryStorage()
+
+		operation := fixOperationRuntimeStatusWithProvider(broker.GCPPlanID, pkg.GCP)
+		operation.ProvisioningParameters.PlatformRegion = "westeurope"
+
+		err := memoryStorage.Operations().InsertOperation(operation)
+		assert.NoError(t, err)
+
+		accountProviderMock := &hyperscalerMocks.AccountProvider{}
+		accountProviderMock.On("GardenerSharedSecretName", hyperscaler.GCP("westeurope"), false).Return("gardener-secret-gcp", nil)
+
+		step := NewResolveCredentialsStep(memoryStorage.Operations(), accountProviderMock, hap.Config{SharedSecretPlans: utils.Whitelist{"gcp:westeurope": struct{}{}}})
+
+		// when
+		operation, repeat, err := step.Run(operation, fixLogger())
+
+		assert.NoError(t, err)
+
+		// then
+		assert.NoError(t, err)
+		assert.Equal(t, time.Duration(0), repeat)
+		assert.Empty(t, operation.State)
+		require.NotNil(t, operation.ProvisioningParameters.Parameters.TargetSecret)
+		assert.Equal(t, "gardener-secret-gcp", *operation.ProvisioningParameters.Parameters.TargetSecret)
+	})
+
+	t.Run("should resolve shared secret based on region config - incorrect order", func(t *testing.T) {
+		// given
+		memoryStorage := storage.NewMemoryStorage()
+
+		operation := fixOperationRuntimeStatusWithProvider(broker.GCPPlanID, pkg.GCP)
+		operation.ProvisioningParameters.PlatformRegion = "westeurope"
+
+		err := memoryStorage.Operations().InsertOperation(operation)
+		assert.NoError(t, err)
+
+		accountProviderMock := &hyperscalerMocks.AccountProvider{}
+		accountProviderMock.On("GardenerSecretName", hyperscaler.GCP("westeurope"), statusGlobalAccountID, false).Return("gardener-secret-gcp", nil)
+
+		step := NewResolveCredentialsStep(memoryStorage.Operations(), accountProviderMock, hap.Config{SharedSecretPlans: utils.Whitelist{"westeurope:*": struct{}{}}})
+
+		// when
+		operation, repeat, err := step.Run(operation, fixLogger())
+
+		assert.NoError(t, err)
+
+		// then
+		assert.NoError(t, err)
+		assert.Equal(t, time.Duration(0), repeat)
+		assert.Empty(t, operation.State)
+		require.NotNil(t, operation.ProvisioningParameters.Parameters.TargetSecret)
+		assert.Equal(t, "gardener-secret-gcp", *operation.ProvisioningParameters.Parameters.TargetSecret)
+	})
+
+	t.Run("should resolve shared secret based on region config - multilple entries - only one correct", func(t *testing.T) {
+		// given
+		memoryStorage := storage.NewMemoryStorage()
+
+		operation := fixOperationRuntimeStatusWithProvider(broker.GCPPlanID, pkg.GCP)
+		operation.ProvisioningParameters.PlatformRegion = "westeurope"
+
+		err := memoryStorage.Operations().InsertOperation(operation)
+		assert.NoError(t, err)
+
+		accountProviderMock := &hyperscalerMocks.AccountProvider{}
+		accountProviderMock.On("GardenerSharedSecretName", hyperscaler.GCP("westeurope"), false).Return("gardener-secret-gcp", nil)
+
+		step := NewResolveCredentialsStep(memoryStorage.Operations(), accountProviderMock, hap.Config{SharedSecretPlans: utils.Whitelist{"azure:*": struct{}{}, "gcp:westeurope": struct{}{}}})
 
 		// when
 		operation, repeat, err := step.Run(operation, fixLogger())

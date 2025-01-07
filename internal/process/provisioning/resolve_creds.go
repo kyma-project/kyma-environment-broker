@@ -94,11 +94,8 @@ func (s *ResolveCredentialsStep) getTargetSecretFromGardener(operation internal.
 	var secretName string
 	var err error
 
-	var planName = broker.PlanNamesMapping[operation.ProvisioningParameters.PlanID]
-
 	if broker.IsTrialPlan(operation.ProvisioningParameters.PlanID) || broker.IsSapConvergedCloudPlan(operation.ProvisioningParameters.PlanID) ||
-		s.hapConfig.SharedSecretPlans.Contains(planName) ||
-		s.hapConfig.SharedSecretRegions.Contains(operation.ProvisioningParameters.PlatformRegion) {
+		s.isSharedSecret(operation.ProvisioningParameters) {
 		log.Info("HAP lookup for shared secret binding")
 		secretName, err = s.accountProvider.GardenerSharedSecretName(hypType, euAccess)
 	} else {
@@ -106,6 +103,15 @@ func (s *ResolveCredentialsStep) getTargetSecretFromGardener(operation internal.
 		secretName, err = s.accountProvider.GardenerSecretName(hypType, operation.ProvisioningParameters.ErsContext.GlobalAccountID, euAccess)
 	}
 	return secretName, err
+}
+
+func (s *ResolveCredentialsStep) isSharedSecret(provisioningParameters internal.ProvisioningParameters) bool {
+
+	var planName = broker.PlanNamesMapping[provisioningParameters.PlanID]
+	var platformRegion = provisioningParameters.PlatformRegion
+
+	return s.hapConfig.SharedSecretPlans.Contains(planName+":"+platformRegion) ||
+		s.hapConfig.SharedSecretPlans.Contains(planName+":*") || s.hapConfig.SharedSecretPlans.Contains("*:"+platformRegion)
 }
 
 // TODO: Calculate the region parameter using default SapConvergedCloud region. This is to be removed when region is mandatory (Jan 2024).
