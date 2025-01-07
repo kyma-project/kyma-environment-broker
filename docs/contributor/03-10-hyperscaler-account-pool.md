@@ -51,7 +51,7 @@ It is possible to explicitly specify what plans or BTP regions should use shared
 
 ```
 hap: 
-  sharedSecretPlans: "trial;sap-converged-cloud"
+  sharedSecretPlans: "trial:*;sap-converged-cloud:*"
 ```
 
 The property accepts a list of key value in the format `<PLAN_ID_1>:<REGION_ID_1>;<PLAN_ID_2>:<REGION_ID_2>`. Either plan or region (but never both) can be specified as wildcard `*` meaning all plans or regions should apply for specific second value. The following example lists valid and invalid configuration values:
