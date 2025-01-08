@@ -64,9 +64,9 @@ func (c *KCPClient) WriteConfigToFile() {
 }
 
 func (c *KCPClient) Login() error {
-	args := []string{"login", "--config", "config.yaml"}
+	args := []string{"login"}
 	if clientSecret := os.Getenv("KCP_OIDC_CLIENT_SECRET"); clientSecret != "" {
-		args = append(args, "-u", c.Config.Username, "-p", c.Config.Password)
+		args = append(args, "--config", "config.yaml", "-u", c.Config.Username, "-p", c.Config.Password)
 	}
 	_, err := exec.Command("kcp", args...).Output()
 	if err != nil {
