@@ -16,8 +16,7 @@ type UpdateCommand struct {
 	instanceID        string
 	planID            string
 	updateMachineType bool
-	// TODO
-	updateOIDC bool
+	updateOIDC        bool
 }
 
 func NewUpdateCommand() *cobra.Command {
@@ -37,6 +36,7 @@ func NewUpdateCommand() *cobra.Command {
 	cobraCmd.Flags().StringVarP(&cmd.instanceID, "instanceID", "i", "", "InstanceID of the specific instance.")
 	cobraCmd.Flags().StringVarP(&cmd.planID, "planID", "p", "", "PlanID of the specific instance.")
 	cobraCmd.Flags().BoolVarP(&cmd.updateMachineType, "updateMachineType", "m", false, "Should update machineType.")
+	cobraCmd.Flags().BoolVarP(&cmd.updateOIDC, "updateOIDC", "o", false, "Should update OIDC.")
 
 	return cobraCmd
 }
@@ -99,6 +99,27 @@ func (cmd *UpdateCommand) Run() error {
 					}
 				}
 			}
+		} else if cmd.updateOIDC {
+			kcpClient := kcp.NewKCPClient()
+			currentOIDCConfig, err := kcpClient.GetCurrentOIDCConfig(cmd.instanceID)
+			fmt.Printf("Current OIDC config: %v\n", currentOIDCConfig)
+			if err != nil {
+				return fmt.Errorf("failed to get current OIDC config: %v", err)
+			}
+			newOIDCConfig := map[string]interface{}{
+				"issuerURL":      "https://new.custom.ias.com",
+				"clientID":       "foo-bar",
+				"usernameClaim":  "email",
+				"groupsClaim":    "groups1",
+				"signingAlgs":    []string{"RS256"},
+				"usernamePrefix": "acme-",
+			}
+			fmt.Printf("Determined OIDC configuration to update: %v\n", newOIDCConfig)
+			resp, err := brokerClient.UpdateInstance(cmd.instanceID, map[string]interface{}{"oidc": newOIDCConfig})
+			if err != nil {
+				return fmt.Errorf("error updating instance: %v", err)
+			}
+			fmt.Printf("Update operationID: %s\n", resp["operation"].(string))
 		}
 	}
 	return nil
