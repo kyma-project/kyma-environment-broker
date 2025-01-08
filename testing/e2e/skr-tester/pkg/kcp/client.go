@@ -79,7 +79,11 @@ func (c *KCPClient) GetCurrentMachineType(instanceID string) (*string, error) {
 	if err := c.Login(); err != nil {
 		return nil, err
 	}
-	output, err := exec.Command("kcp", "rt", "-i", instanceID, "--runtime-config", "-o", "custom=:{.runtimeConfig.spec.shoot.provider.workers[0].machine.type}", "--config", "config.yaml").Output()
+	args := []string{"rt", "-i", instanceID, "--runtime-config", "-o", "custom=:{.runtimeConfig.spec.shoot.provider.workers[0].machine.type}"}
+	if clientSecret := os.Getenv("KCP_OIDC_CLIENT_SECRET"); clientSecret != "" {
+		args = append(args, "--config", "config.yaml")
+	}
+	output, err := exec.Command("kcp", args...).Output()
 	if err != nil {
 		return nil, fmt.Errorf("failed to get current machine type: %w", err)
 	}
