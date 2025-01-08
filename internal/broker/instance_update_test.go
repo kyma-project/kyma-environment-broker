@@ -606,28 +606,28 @@ func TestUpdateAdditionalWorkerNodePools(t *testing.T) {
 			additionalWorkerNodePools: `{"list": []}`,
 			expectedError:             false,
 		},
-		"Remove set to false": {
-			additionalWorkerNodePools: `{"remove": false}`,
+		"SkipModification set to false": {
+			additionalWorkerNodePools: `{"skipModification": false}`,
 			expectedError:             false,
 		},
-		"Remove set to true": {
-			additionalWorkerNodePools: `{"remove": true}`,
+		"SkipModification set to true": {
+			additionalWorkerNodePools: `{"skipModification": true}`,
 			expectedError:             false,
 		},
-		"Valid additional worker node pools and remove set to false": {
-			additionalWorkerNodePools: `{"remove": false, "list": [{"name": "name-1", "machineType": "m6i.large", "autoScalerMin": 3, "autoScalerMax": 20}, {"name": "name-2", "machineType": "m6i.large", "autoScalerMin": 0, "autoScalerMax": 0}]}`,
+		"Valid additional worker node pools and skipModification set to false": {
+			additionalWorkerNodePools: `{"skipModification": false, "list": [{"name": "name-1", "machineType": "m6i.large", "autoScalerMin": 3, "autoScalerMax": 20}, {"name": "name-2", "machineType": "m6i.large", "autoScalerMin": 0, "autoScalerMax": 0}]}`,
 			expectedError:             true,
 		},
-		"Valid additional worker node pools and remove set to true": {
-			additionalWorkerNodePools: `{"remove": true, "list": [{"name": "name-1", "machineType": "m6i.large", "autoScalerMin": 3, "autoScalerMax": 20}, {"name": "name-2", "machineType": "m6i.large", "autoScalerMin": 0, "autoScalerMax": 0}]}`,
+		"Valid additional worker node pools and skipModification set to true": {
+			additionalWorkerNodePools: `{"skipModification": true, "list": [{"name": "name-1", "machineType": "m6i.large", "autoScalerMin": 3, "autoScalerMax": 20}, {"name": "name-2", "machineType": "m6i.large", "autoScalerMin": 0, "autoScalerMax": 0}]}`,
 			expectedError:             true,
 		},
-		"Empty additional worker node pools and remove set to false": {
-			additionalWorkerNodePools: `{"remove": false, "list": []}`,
+		"Empty additional worker node pools and skipModification set to false": {
+			additionalWorkerNodePools: `{"skipModification": false, "list": []}`,
 			expectedError:             true,
 		},
-		"Empty additional worker node pools and remove set to true": {
-			additionalWorkerNodePools: `{"remove": true, "list": []}`,
+		"Empty additional worker node pools and skipModification set to true": {
+			additionalWorkerNodePools: `{"skipModification": true, "list": []}`,
 			expectedError:             true,
 		},
 		"Empty name": {

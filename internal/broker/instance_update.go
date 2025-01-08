@@ -264,7 +264,7 @@ func (b *UpdateEndpoint) processUpdateParameters(instance *internal.Instance, de
 		return domain.UpdateServiceSpec{}, apiresponses.NewFailureResponse(err, http.StatusBadRequest, err.Error())
 	}
 
-	if IsPreviewPlan(details.PlanID) {
+	if IsPreviewPlan(details.PlanID) && params.AdditionalWorkerNodePools.IsProvided() {
 		if err := params.AdditionalWorkerNodePools.Validate(); err != nil {
 			return domain.UpdateServiceSpec{}, apiresponses.NewFailureResponse(err, http.StatusBadRequest, err.Error())
 		}
@@ -295,16 +295,9 @@ func (b *UpdateEndpoint) processUpdateParameters(instance *internal.Instance, de
 		instance.Parameters.Parameters.MachineType = params.MachineType
 	}
 
-	if IsPreviewPlan(details.PlanID) {
-		if len(params.AdditionalWorkerNodePools.List) > 0 {
-			newAdditionalWorkerNodePools := make([]pkg.AdditionalWorkerNodePool, 0, len(params.AdditionalWorkerNodePools.List))
-			newAdditionalWorkerNodePools = append(newAdditionalWorkerNodePools, params.AdditionalWorkerNodePools.List...)
-			instance.Parameters.Parameters.AdditionalWorkerNodePools = newAdditionalWorkerNodePools
-			updateStorage = append(updateStorage, "Additional Worker Node Pools")
-		} else if params.AdditionalWorkerNodePools.Remove {
-			instance.Parameters.Parameters.AdditionalWorkerNodePools = []pkg.AdditionalWorkerNodePool{}
-			updateStorage = append(updateStorage, "Additional Worker Node Pools")
-		}
+	if IsPreviewPlan(details.PlanID) && params.AdditionalWorkerNodePools.IsProvided() {
+		instance.Parameters.Parameters.AdditionalWorkerNodePools = params.AdditionalWorkerNodePools
+		updateStorage = append(updateStorage, "Additional Worker Node Pools")
 	}
 
 	if len(updateStorage) > 0 {

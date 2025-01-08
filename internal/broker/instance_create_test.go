@@ -1499,43 +1499,67 @@ func TestAdditionalWorkerNodePools(t *testing.T) {
 		expectedError             bool
 	}{
 		"Valid additional worker node pools": {
-			additionalWorkerNodePools: `[{"name": "name-1", "machineType": "m6i.large", "autoScalerMin": 3, "autoScalerMax": 20}, {"name": "name-2", "machineType": "m6i.large", "autoScalerMin": 0, "autoScalerMax": 0}]`,
+			additionalWorkerNodePools: `{"list": [{"name": "name-1", "machineType": "m6i.large", "autoScalerMin": 3, "autoScalerMax": 20}, {"name": "name-2", "machineType": "m6i.large", "autoScalerMin": 0, "autoScalerMax": 0}]}`,
 			expectedError:             false,
 		},
 		"Empty additional worker node pools": {
-			additionalWorkerNodePools: "[]",
+			additionalWorkerNodePools: `{"list": []}`,
 			expectedError:             false,
 		},
+		"Sip set to false": {
+			additionalWorkerNodePools: `{"skipModification": false}`,
+			expectedError:             false,
+		},
+		"SkipModification set to true": {
+			additionalWorkerNodePools: `{"skipModification": true}`,
+			expectedError:             false,
+		},
+		"Valid additional worker node pools and skipModification set to false": {
+			additionalWorkerNodePools: `{"skipModification": false, "list": [{"name": "name-1", "machineType": "m6i.large", "autoScalerMin": 3, "autoScalerMax": 20}, {"name": "name-2", "machineType": "m6i.large", "autoScalerMin": 0, "autoScalerMax": 0}]}`,
+			expectedError:             true,
+		},
+		"Valid additional worker node pools and skipModification set to true": {
+			additionalWorkerNodePools: `{"skipModification": true, "list": [{"name": "name-1", "machineType": "m6i.large", "autoScalerMin": 3, "autoScalerMax": 20}, {"name": "name-2", "machineType": "m6i.large", "autoScalerMin": 0, "autoScalerMax": 0}]}`,
+			expectedError:             true,
+		},
+		"Empty additional worker node pools and skipModification set to false": {
+			additionalWorkerNodePools: `{"skipModification": false, "list": []}`,
+			expectedError:             true,
+		},
+		"Empty additional worker node pools and skipModification set to true": {
+			additionalWorkerNodePools: `{"skipModification": true, "list": []}`,
+			expectedError:             true,
+		},
 		"Empty name": {
-			additionalWorkerNodePools: `[{"name": "", "machineType": "m6i.large", "autoScalerMin": 3, "autoScalerMax": 20}]`,
+			additionalWorkerNodePools: `{"list": [{"name": "", "machineType": "m6i.large", "autoScalerMin": 3, "autoScalerMax": 20}]}`,
 			expectedError:             true,
 		},
 		"Missing name": {
-			additionalWorkerNodePools: `[{"machineType": "m6i.large", "autoScalerMin": 3, "autoScalerMax": 20}]`,
+			additionalWorkerNodePools: `{"list": [{"machineType": "m6i.large", "autoScalerMin": 3, "autoScalerMax": 20}]}`,
 			expectedError:             true,
 		},
 		"Empty machine type": {
-			additionalWorkerNodePools: `[{"name": "name-1", "machineType": "", "autoScalerMin": 3, "autoScalerMax": 20}]`,
+			additionalWorkerNodePools: `{"list": [{"name": "name-1", "machineType": "", "autoScalerMin": 3, "autoScalerMax": 20}]}`,
 			expectedError:             true,
 		},
 		"Missing machine type": {
-			additionalWorkerNodePools: `[{"name": "name-1", "autoScalerMin": 3, "autoScalerMax": 20}]`,
+			additionalWorkerNodePools: `{"list": [{"name": "name-1", "autoScalerMin": 3, "autoScalerMax": 20}]}`,
 			expectedError:             true,
 		},
 		"Missing autoScalerMin": {
-			additionalWorkerNodePools: `[{"name": "name-1", "machineType": "m6i.large", "autoScalerMax": 3}]`,
+			additionalWorkerNodePools: `{"list": [{"name": "name-1", "machineType": "m6i.large", "autoScalerMax": 3}]}`,
 			expectedError:             true,
 		},
 		"Missing autoScalerMax": {
-			additionalWorkerNodePools: `[{"name": "name-1", "machineType": "m6i.large", "autoScalerMin": 20}]`,
+			additionalWorkerNodePools: `{"list": [{"name": "name-1", "machineType": "m6i.large", "autoScalerMin": 20}]}`,
 			expectedError:             true,
 		},
 		"AutoScalerMax bigger than 300": {
-			additionalWorkerNodePools: `[{"name": "name-1", "machineType": "m6i.large", "autoScalerMin": 3, "autoScalerMax": 301}]`,
+			additionalWorkerNodePools: `{"list": [{"name": "name-1", "machineType": "m6i.large", "autoScalerMin": 3, "autoScalerMax": 301}]}`,
 			expectedError:             true,
 		},
 		"AutoScalerMin bigger than autoScalerMax": {
-			additionalWorkerNodePools: `[{"name": "name-1", "machineType": "m6i.large", "autoScalerMin": 20, "autoScalerMax": 3}]`,
+			additionalWorkerNodePools: `{"list": [{"name": "name-1", "machineType": "m6i.large", "autoScalerMin": 20, "autoScalerMax": 3}]}`,
 			expectedError:             true,
 		},
 	} {

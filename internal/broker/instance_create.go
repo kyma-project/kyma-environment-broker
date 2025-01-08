@@ -296,11 +296,9 @@ func (b *ProvisionEndpoint) validateAndExtract(details domain.ProvisionDetails, 
 		return ersContext, parameters, apiresponses.NewFailureResponse(err, http.StatusUnprocessableEntity, err.Error())
 	}
 
-	if IsPreviewPlan(details.PlanID) {
-		for _, workerNodePool := range parameters.AdditionalWorkerNodePools {
-			if err := workerNodePool.Validate(); err != nil {
-				return ersContext, parameters, apiresponses.NewFailureResponse(err, http.StatusUnprocessableEntity, err.Error())
-			}
+	if IsPreviewPlan(details.PlanID) && parameters.AdditionalWorkerNodePools.IsProvided() {
+		if err := parameters.AdditionalWorkerNodePools.Validate(); err != nil {
+			return ersContext, parameters, apiresponses.NewFailureResponse(err, http.StatusUnprocessableEntity, err.Error())
 		}
 	}
 

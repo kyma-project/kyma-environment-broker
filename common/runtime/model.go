@@ -101,7 +101,7 @@ type ProvisioningParametersDTO struct {
 	Networking                *NetworkingDTO             `json:"networking,omitempty"`
 	Modules                   *ModulesDTO                `json:"modules,omitempty"`
 	ShootAndSeedSameRegion    *bool                      `json:"shootAndSeedSameRegion,omitempty"`
-	AdditionalWorkerNodePools []AdditionalWorkerNodePool `json:"additionalWorkerNodePools,omitempty"`
+	AdditionalWorkerNodePools *AdditionalWorkerNodePools `json:"additionalWorkerNodePools,omitempty"`
 }
 
 type AutoScalerParameters struct {
@@ -389,15 +389,24 @@ type ModuleDTO struct {
 }
 
 type AdditionalWorkerNodePools struct {
-	List   []AdditionalWorkerNodePool `json:"list"`
-	Remove bool                       `json:"remove"`
+	List             []AdditionalWorkerNodePool `json:"list"`
+	SkipModification *bool                      `json:"skipModification,omitempty"`
 }
 
-func (a AdditionalWorkerNodePools) Validate() error {
-	if a.Remove && len(a.List) > 0 {
-		return fmt.Errorf("cannot remove additional worker node pools while the list is not empty")
+func (a *AdditionalWorkerNodePools) IsProvided() bool {
+	if a == nil {
+		return false
 	}
+	if a.SkipModification != nil && *a.SkipModification {
+		return false
+	}
+	if a.List == nil {
+		return false
+	}
+	return true
+}
 
+func (a *AdditionalWorkerNodePools) Validate() error {
 	for _, additionalWorkerNodePool := range a.List {
 		if err := additionalWorkerNodePool.Validate(); err != nil {
 			return err

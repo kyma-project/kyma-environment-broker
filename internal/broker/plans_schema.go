@@ -23,14 +23,13 @@ type RootSchema struct {
 type ProvisioningProperties struct {
 	UpdateProperties
 
-	Name                      NameType                       `json:"name"`
-	ShootName                 *Type                          `json:"shootName,omitempty"`
-	ShootDomain               *Type                          `json:"shootDomain,omitempty"`
-	Region                    *Type                          `json:"region,omitempty"`
-	Networking                *NetworkingType                `json:"networking,omitempty"`
-	Modules                   *Modules                       `json:"modules,omitempty"`
-	ShootAndSeedSameRegion    *Type                          `json:"shootAndSeedSameRegion,omitempty"`
-	AdditionalWorkerNodePools *AdditionalWorkerNodePoolsList `json:"additionalWorkerNodePools,omitempty"`
+	Name                   NameType        `json:"name"`
+	ShootName              *Type           `json:"shootName,omitempty"`
+	ShootDomain            *Type           `json:"shootDomain,omitempty"`
+	Region                 *Type           `json:"region,omitempty"`
+	Networking             *NetworkingType `json:"networking,omitempty"`
+	Modules                *Modules        `json:"modules,omitempty"`
+	ShootAndSeedSameRegion *Type           `json:"shootAndSeedSameRegion,omitempty"`
 }
 
 type UpdateProperties struct {
@@ -154,13 +153,13 @@ type AdditionalWorkerNodePoolsType struct {
 	OneOf []interface{} `json:"oneOf,omitempty"`
 }
 
-type AdditionalWorkerNodePoolsRemoved struct {
+type AdditionalWorkerNodePoolsSkipModification struct {
 	Type
-	Properties AdditionalWorkerNodePoolsRemovedProperties `json:"properties,omitempty"`
+	Properties AdditionalWorkerNodePoolsSkipModificationProperties `json:"properties,omitempty"`
 }
 
-type AdditionalWorkerNodePoolsRemovedProperties struct {
-	Remove Type `json:"remove,omitempty"`
+type AdditionalWorkerNodePoolsSkipModificationProperties struct {
+	SkipModification Type `json:"skipModification,omitempty"`
 }
 
 type AdditionalWorkerNodePoolsModified struct {
@@ -457,9 +456,24 @@ func NewAdditionalWorkerNodePoolsSchema(machineTypesDisplay map[string]string, m
 	return &AdditionalWorkerNodePoolsType{
 		Type: Type{
 			Type:        "object",
-			Description: "Specify a custom list of additional worker node pools or remove them entirely.",
+			Description: "Specify a custom list of additional worker node pools or leave them unmodified.",
 		},
 		OneOf: []any{
+			AdditionalWorkerNodePoolsSkipModification{
+				Type: Type{
+					Type:                 "object",
+					Title:                "Don't modify",
+					AdditionalProperties: false,
+				},
+				Properties: AdditionalWorkerNodePoolsSkipModificationProperties{
+					Type{
+						Type:     "boolean",
+						Title:    "Don't modify additional worker node pools",
+						Default:  true,
+						ReadOnly: true,
+					},
+				},
+			},
 			AdditionalWorkerNodePoolsModified{
 				Type: Type{
 					Type:                 "object",
@@ -467,64 +481,45 @@ func NewAdditionalWorkerNodePoolsSchema(machineTypesDisplay map[string]string, m
 					AdditionalProperties: false,
 				},
 				Properties: AdditionalWorkerNodePoolsModifiedProperties{
-					List: NewAdditionalWorkerNodePoolsList(machineTypesDisplay, machineTypes),
-				},
-			},
-			AdditionalWorkerNodePoolsRemoved{
-				Type: Type{
-					Type:                 "object",
-					Title:                "Remove",
-					AdditionalProperties: false,
-				},
-				Properties: AdditionalWorkerNodePoolsRemovedProperties{
-					Type{
-						Type:     "boolean",
-						Title:    "Remove all additional worker node pools",
-						Default:  true,
-						ReadOnly: true,
+					List: AdditionalWorkerNodePoolsList{
+						Type: Type{
+							Type:        "array",
+							UniqueItems: true,
+							Description: "Specifies additional worker node pools.",
+						},
+						Items: AdditionalWorkerNodePoolsListItems{
+							ControlsOrder: []string{"name", "machineType", "autoScalerMin", "autoScalerMax"},
+							Required:      []string{"name", "machineType", "autoScalerMin", "autoScalerMax"},
+							Type: Type{
+								Type: "object",
+							},
+							Properties: AdditionalWorkerNodePoolsListItemsProperties{
+								Name: Type{
+									Type:        "string",
+									MinLength:   1,
+									Description: "Specifies the unique name of the additional worker node pool.",
+								},
+								MachineType: Type{
+									Type:            "string",
+									MinLength:       1,
+									Enum:            ToInterfaceSlice(machineTypes),
+									EnumDisplayName: machineTypesDisplay,
+									Description:     "Specifies the type of the virtual machine.",
+								},
+								AutoScalerMin: Type{
+									Type:        "integer",
+									Minimum:     0,
+									Description: "Specifies the minimum number of virtual machines to create.",
+								},
+								AutoScalerMax: Type{
+									Type:        "integer",
+									Minimum:     0,
+									Maximum:     300,
+									Description: "Specifies the maximum number of virtual machines to create.",
+								},
+							},
+						},
 					},
-				},
-			},
-		},
-	}
-}
-
-func NewAdditionalWorkerNodePoolsList(machineTypesDisplay map[string]string, machineTypes []string) AdditionalWorkerNodePoolsList {
-	return AdditionalWorkerNodePoolsList{
-		Type: Type{
-			Type:        "array",
-			UniqueItems: true,
-			Description: "Specifies the list of additional worker node pools.",
-		},
-		Items: AdditionalWorkerNodePoolsListItems{
-			ControlsOrder: []string{"name", "machineType", "autoScalerMin", "autoScalerMax"},
-			Required:      []string{"name", "machineType", "autoScalerMin", "autoScalerMax"},
-			Type: Type{
-				Type: "object",
-			},
-			Properties: AdditionalWorkerNodePoolsListItemsProperties{
-				Name: Type{
-					Type:        "string",
-					MinLength:   1,
-					Description: "Specifies the unique name of the additional worker node pool.",
-				},
-				MachineType: Type{
-					Type:            "string",
-					MinLength:       1,
-					Enum:            ToInterfaceSlice(machineTypes),
-					EnumDisplayName: machineTypesDisplay,
-					Description:     "Specifies the type of the virtual machine.",
-				},
-				AutoScalerMin: Type{
-					Type:        "integer",
-					Minimum:     0,
-					Description: "Specifies the minimum number of virtual machines to create.",
-				},
-				AutoScalerMax: Type{
-					Type:        "integer",
-					Minimum:     0,
-					Maximum:     300,
-					Description: "Specifies the maximum number of virtual machines to create.",
 				},
 			},
 		},

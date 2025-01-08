@@ -1902,20 +1902,22 @@ func TestProvisioningWithAdditionalWorkerNodePools(t *testing.T) {
 					"parameters": {
 						"name": "testing-cluster",
 						"region": "eu-central-1",
-						"additionalWorkerNodePools": [
-							{
-								"name": "name-1",
-								"machineType": "m6i.large",
-								"autoScalerMin": 1,
-								"autoScalerMax": 10
-							},
-							{
-								"name": "name-2",
-								"machineType": "m5.large",
-								"autoScalerMin": 0,
-								"autoScalerMax": 0
-							}
-						]
+						"additionalWorkerNodePools": {
+							"list": [
+								{
+									"name": "name-1",
+									"machineType": "m6i.large",
+									"autoScalerMin": 1,
+									"autoScalerMax": 10
+								},
+								{
+									"name": "name-2",
+									"machineType": "m5.large",
+									"autoScalerMin": 0,
+									"autoScalerMax": 0
+								}
+							]
+						}
 					}
 		}`)
 
