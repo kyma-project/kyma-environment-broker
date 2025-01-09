@@ -37,13 +37,21 @@ func NewKCPConfig() *KCPConfig {
 	}
 }
 
-func NewKCPClient() *KCPClient {
+func NewKCPClient() (*KCPClient, error) {
 	client := &KCPClient{}
 	if clientSecret := os.Getenv("KCP_OIDC_CLIENT_SECRET"); clientSecret != "" {
 		client.Config = NewKCPConfig()
 		client.WriteConfigToFile()
 	}
-	return client
+	args := []string{"login"}
+	if clientSecret := os.Getenv("KCP_OIDC_CLIENT_SECRET"); clientSecret != "" {
+		args = append(args, "--config", "config.yaml", "-u", client.Config.Username, "-p", client.Config.Password)
+	}
+	_, err := exec.Command("kcp", args...).Output()
+	if err != nil {
+		return nil, fmt.Errorf("failed to login: %w", err)
+	}
+	return client, nil
 }
 
 func (c *KCPClient) WriteConfigToFile() {
@@ -63,22 +71,7 @@ func (c *KCPClient) WriteConfigToFile() {
 	file.WriteString(fmt.Sprintf("kubeconfig-api-url: \"%s\"\n", c.Config.KubeConfigApiUrl))
 }
 
-func (c *KCPClient) Login() error {
-	args := []string{"login"}
-	if clientSecret := os.Getenv("KCP_OIDC_CLIENT_SECRET"); clientSecret != "" {
-		args = append(args, "--config", "config.yaml", "-u", c.Config.Username, "-p", c.Config.Password)
-	}
-	_, err := exec.Command("kcp", args...).Output()
-	if err != nil {
-		return fmt.Errorf("failed to login: %w", err)
-	}
-	return nil
-}
-
 func (c *KCPClient) GetCurrentMachineType(instanceID string) (*string, error) {
-	if err := c.Login(); err != nil {
-		return nil, err
-	}
 	args := []string{"rt", "-i", instanceID, "--runtime-config", "-o", "custom=:{.runtimeConfig.spec.shoot.provider.workers[0].machine.type}"}
 	if clientSecret := os.Getenv("KCP_OIDC_CLIENT_SECRET"); clientSecret != "" {
 		args = append(args, "--config", "config.yaml")

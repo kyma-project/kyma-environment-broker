@@ -61,7 +61,10 @@ func (cmd *UpdateCommand) Run() error {
 			continue
 		}
 		if cmd.updateMachineType {
-			kcpClient := kcp.NewKCPClient()
+			kcpClient, err := kcp.NewKCPClient()
+			if err != nil {
+				return fmt.Errorf("failed to create KCP client: %v", err)
+			}
 			currentMachineType, err := kcpClient.GetCurrentMachineType(cmd.instanceID)
 			if err != nil {
 				return fmt.Errorf("failed to get current machine type: %v", err)
