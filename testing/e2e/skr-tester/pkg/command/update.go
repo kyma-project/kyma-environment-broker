@@ -129,11 +129,16 @@ func (cmd *UpdateCommand) Run() error {
 }
 
 func (cmd *UpdateCommand) Validate() error {
-	if cmd.instanceID != "" && cmd.planID != "" {
-		return nil
-	} else {
+	if cmd.instanceID == "" || cmd.planID == "" {
 		return errors.New("you must specify the planID and instanceID")
 	}
+	if !cmd.updateMachineType && !cmd.updateOIDC {
+		return errors.New("you must use at least one of updateMachineType or updateOIDC")
+	}
+	if cmd.updateMachineType && cmd.updateOIDC {
+		return errors.New("only one of updateMachineType or updateOIDC can be used")
+	}
+	return nil
 }
 
 func extractSupportedMachineTypes(planMap map[string]interface{}) ([]interface{}, error) {
