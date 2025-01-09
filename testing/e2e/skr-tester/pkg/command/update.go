@@ -133,7 +133,7 @@ func (cmd *UpdateCommand) Validate() error {
 		return errors.New("you must specify the planID and instanceID")
 	}
 	if !cmd.updateMachineType && !cmd.updateOIDC {
-		return errors.New("you must use at least one of updateMachineType or updateOIDC")
+		return errors.New("you must use one of updateMachineType or updateOIDC")
 	}
 	if cmd.updateMachineType && cmd.updateOIDC {
 		return errors.New("only one of updateMachineType or updateOIDC can be used")
