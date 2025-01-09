@@ -87,9 +87,6 @@ func (c *KCPClient) GetCurrentMachineType(instanceID string) (*string, error) {
 }
 
 func (c *KCPClient) GetCurrentOIDCConfig(instanceID string) (interface{}, error) {
-	if err := c.Login(); err != nil {
-		return nil, err
-	}
 	args := []string{"rt", "-i", instanceID, "--runtime-config", "-o", "custom=:{.runtimeConfig.spec.shoot.kubernetes.kubeAPIServer.oidcConfig}"}
 	if clientSecret := os.Getenv("KCP_OIDC_CLIENT_SECRET"); clientSecret != "" {
 		args = append(args, "--config", "config.yaml")
@@ -102,7 +99,6 @@ func (c *KCPClient) GetCurrentOIDCConfig(instanceID string) (interface{}, error)
 	if err := json.Unmarshal(output, &oidcConfig); err != nil {
 		return nil, fmt.Errorf("failed to unmarshal OIDC config: %w", err)
 	}
-
 	return oidcConfig, nil
 }
 

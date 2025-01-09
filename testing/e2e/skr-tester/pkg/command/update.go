@@ -100,18 +100,21 @@ func (cmd *UpdateCommand) Run() error {
 				}
 			}
 		} else if cmd.updateOIDC {
-			kcpClient := kcp.NewKCPClient()
+			kcpClient, err := kcp.NewKCPClient()
+			if err != nil {
+				return fmt.Errorf("failed to create KCP client: %v", err)
+			}
 			currentOIDCConfig, err := kcpClient.GetCurrentOIDCConfig(cmd.instanceID)
 			fmt.Printf("Current OIDC config: %v\n", currentOIDCConfig)
 			if err != nil {
 				return fmt.Errorf("failed to get current OIDC config: %v", err)
 			}
 			newOIDCConfig := map[string]interface{}{
-				"issuerURL":      "https://new.custom.ias.com",
 				"clientID":       "foo-bar",
-				"usernameClaim":  "email",
 				"groupsClaim":    "groups1",
+				"issuerURL":      "https://new.custom.ias.com",
 				"signingAlgs":    []string{"RS256"},
+				"usernameClaim":  "email",
 				"usernamePrefix": "acme-",
 			}
 			fmt.Printf("Determined OIDC configuration to update: %v\n", newOIDCConfig)
