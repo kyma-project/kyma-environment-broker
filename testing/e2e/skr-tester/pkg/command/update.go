@@ -44,27 +44,28 @@ func NewUpdateCommand() *cobra.Command {
 func (cmd *UpdateCommand) Run() error {
 	cmd.log = logger.New()
 	brokerClient := broker.NewBrokerClient(broker.NewBrokerConfig())
-	catalog, err := brokerClient.GetCatalog()
+	kcpClient, err := kcp.NewKCPClient()
 	if err != nil {
-		return fmt.Errorf("failed to get catalog: %v", err)
+		return fmt.Errorf("failed to create KCP client: %v", err)
 	}
-	services, ok := catalog["services"].([]interface{})
-	if !ok {
-		return errors.New("services field not found or invalid in catalog")
-	}
-	for _, service := range services {
-		serviceMap, ok := service.(map[string]interface{})
-		if !ok {
-			return errors.New("service is not a map[string]interface{}")
-		}
-		if serviceMap["id"] != broker.KymaServiceID {
-			continue
-		}
-		kcpClient, err := kcp.NewKCPClient()
+	if cmd.updateMachineType {
+		catalog, err := brokerClient.GetCatalog()
 		if err != nil {
-			return fmt.Errorf("failed to create KCP client: %v", err)
+			return fmt.Errorf("failed to get catalog: %v", err)
 		}
-		if cmd.updateMachineType {
+		services, ok := catalog["services"].([]interface{})
+		if !ok {
+			return errors.New("services field not found or invalid in catalog")
+		}
+		for _, service := range services {
+			serviceMap, ok := service.(map[string]interface{})
+			if !ok {
+				return errors.New("service is not a map[string]interface{}")
+			}
+			if serviceMap["id"] != broker.KymaServiceID {
+				continue
+			}
+
 			currentMachineType, err := kcpClient.GetCurrentMachineType(cmd.instanceID)
 			if err != nil {
 				return fmt.Errorf("failed to get current machine type: %v", err)
@@ -98,29 +99,29 @@ func (cmd *UpdateCommand) Run() error {
 						break
 					}
 				}
+
 			}
-		} else if cmd.updateOIDC {
-			currentOIDCConfig, err := kcpClient.GetCurrentOIDCConfig(cmd.instanceID)
-			fmt.Printf("Current OIDC config: %v\n", currentOIDCConfig)
-			if err != nil {
-				return fmt.Errorf("failed to get current OIDC config: %v", err)
-			}
-			newOIDCConfig := map[string]interface{}{
-				"clientID":       "foo-bar",
-				"groupsClaim":    "groups1",
-				"issuerURL":      "https://new.custom.ias.com",
-				"signingAlgs":    []string{"RS256"},
-				"usernameClaim":  "email",
-				"usernamePrefix": "acme-",
-			}
-			fmt.Printf("Determined OIDC configuration to update: %v\n", newOIDCConfig)
-			resp, err := brokerClient.UpdateInstance(cmd.instanceID, map[string]interface{}{"oidc": newOIDCConfig})
-			if err != nil {
-				return fmt.Errorf("error updating instance: %v", err)
-			}
-			fmt.Printf("Update operationID: %s\n", resp["operation"].(string))
-			break
 		}
+	} else if cmd.updateOIDC {
+		currentOIDCConfig, err := kcpClient.GetCurrentOIDCConfig(cmd.instanceID)
+		fmt.Printf("Current OIDC config: %v\n", currentOIDCConfig)
+		if err != nil {
+			return fmt.Errorf("failed to get current OIDC config: %v", err)
+		}
+		newOIDCConfig := map[string]interface{}{
+			"clientID":       "foo-bar",
+			"groupsClaim":    "groups1",
+			"issuerURL":      "https://new.custom.ias.com",
+			"signingAlgs":    []string{"RS256"},
+			"usernameClaim":  "email",
+			"usernamePrefix": "acme-",
+		}
+		fmt.Printf("Determined OIDC configuration to update: %v\n", newOIDCConfig)
+		resp, err := brokerClient.UpdateInstance(cmd.instanceID, map[string]interface{}{"oidc": newOIDCConfig})
+		if err != nil {
+			return fmt.Errorf("error updating instance: %v", err)
+		}
+		fmt.Printf("Update operationID: %s\n", resp["operation"].(string))
 	}
 	return nil
 }
