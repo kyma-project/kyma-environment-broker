@@ -104,10 +104,10 @@ func (cmd *UpdateCommand) Run() error {
 		}
 	} else if cmd.updateOIDC {
 		currentOIDCConfig, err := kcpClient.GetCurrentOIDCConfig(cmd.instanceID)
-		fmt.Printf("Current OIDC config: %v\n", currentOIDCConfig)
 		if err != nil {
 			return fmt.Errorf("failed to get current OIDC config: %v", err)
 		}
+		fmt.Printf("Current OIDC config: %v\n", currentOIDCConfig)
 		newOIDCConfig := map[string]interface{}{
 			"clientID":       "foo-bar",
 			"groupsClaim":    "groups1",
