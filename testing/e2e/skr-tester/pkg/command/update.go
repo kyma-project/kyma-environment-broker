@@ -96,7 +96,7 @@ func (cmd *UpdateCommand) Run() error {
 							return fmt.Errorf("error updating instance: %v", err)
 						}
 						fmt.Printf("Update operationID: %s\n", resp["operation"].(string))
-						break
+						return nil
 					}
 				}
 
