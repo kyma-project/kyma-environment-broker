@@ -15,6 +15,7 @@ type AssertCommand struct {
 	log         logger.Logger
 	instanceID  string
 	machineType string
+	OIDC        string
 }
 
 func NewAsertCmd() *cobra.Command {
@@ -33,17 +34,18 @@ func NewAsertCmd() *cobra.Command {
 
 	cobraCmd.Flags().StringVarP(&cmd.instanceID, "instanceID", "i", "", "InstanceID of the specific instance.")
 	cobraCmd.Flags().StringVarP(&cmd.machineType, "machineType", "m", "", "MachineType of the specific instance.")
+	cobraCmd.Flags().StringVarP(&cmd.OIDC, "OIDC", "o", "", "OIDC of the specific instance.")
 
 	return cobraCmd
 }
 
 func (cmd *AssertCommand) Run() error {
 	cmd.log = logger.New()
+	kcpClient, err := kcp.NewKCPClient()
+	if err != nil {
+		return fmt.Errorf("failed to create KCP client: %v", err)
+	}
 	if cmd.machineType != "" {
-		kcpClient, err := kcp.NewKCPClient()
-		if err != nil {
-			return fmt.Errorf("failed to create KCP client: %v", err)
-		}
 		currentMachineType, err := kcpClient.GetCurrentMachineType(cmd.instanceID)
 		if err != nil {
 			return fmt.Errorf("failed to get current machine type: %v", err)
@@ -53,14 +55,29 @@ func (cmd *AssertCommand) Run() error {
 		} else {
 			fmt.Println("Machine type assertion passed: expected and got", cmd.machineType)
 		}
+	} else if cmd.OIDC != "" {
+		currentOIDC, err := kcpClient.GetCurrentOIDCConfig(cmd.instanceID)
+		if err != nil {
+			return fmt.Errorf("failed to get current OIDC: %v", err)
+		}
+		if cmd.OIDC != fmt.Sprintf("%v", currentOIDC) {
+			return fmt.Errorf("OIDCs are not equal: expected %s, got %s", cmd.OIDC, fmt.Sprintf("%v", currentOIDC))
+		} else {
+			fmt.Println("OIDC assertion passed: expected and got", cmd.OIDC)
+		}
 	}
 	return nil
 }
 
 func (cmd *AssertCommand) Validate() error {
-	if cmd.instanceID != "" {
-		return nil
-	} else {
-		return errors.New("at least one of the following options have to be specified: instanceID")
+	if cmd.instanceID == "" {
+		return errors.New("instanceID must be specified")
 	}
+	if cmd.machineType == "" && cmd.OIDC == "" {
+		return errors.New("either machineType or OIDC must be specified")
+	}
+	if cmd.machineType != "" && cmd.OIDC != "" {
+		return errors.New("only one of machineType or OIDC must be specified")
+	}
+	return nil
 }
