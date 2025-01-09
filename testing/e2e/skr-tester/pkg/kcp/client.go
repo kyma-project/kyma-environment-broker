@@ -1,6 +1,7 @@
 package kcp
 
 import (
+	"encoding/json"
 	"fmt"
 	"os"
 	"os/exec"
@@ -83,6 +84,22 @@ func (c *KCPClient) GetCurrentMachineType(instanceID string) (*string, error) {
 	machineType := string(output)
 	machineType = strings.TrimSpace(machineType)
 	return &machineType, nil
+}
+
+func (c *KCPClient) GetCurrentOIDCConfig(instanceID string) (interface{}, error) {
+	args := []string{"rt", "-i", instanceID, "--runtime-config", "-o", "custom=:{.runtimeConfig.spec.shoot.kubernetes.kubeAPIServer.oidcConfig}"}
+	if clientSecret := os.Getenv("KCP_OIDC_CLIENT_SECRET"); clientSecret != "" {
+		args = append(args, "--config", "config.yaml")
+	}
+	output, err := exec.Command("kcp", args...).Output()
+	if err != nil {
+		return nil, fmt.Errorf("failed to get current OIDC config: %w", err)
+	}
+	var oidcConfig interface{}
+	if err := json.Unmarshal(output, &oidcConfig); err != nil {
+		return nil, fmt.Errorf("failed to unmarshal OIDC config: %w", err)
+	}
+	return oidcConfig, nil
 }
 
 func getEnvOrThrow(key string) string {

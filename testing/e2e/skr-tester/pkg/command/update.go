@@ -16,8 +16,7 @@ type UpdateCommand struct {
 	instanceID        string
 	planID            string
 	updateMachineType bool
-	// TODO
-	updateOIDC bool
+	updateOIDC        bool
 }
 
 func NewUpdateCommand() *cobra.Command {
@@ -37,6 +36,7 @@ func NewUpdateCommand() *cobra.Command {
 	cobraCmd.Flags().StringVarP(&cmd.instanceID, "instanceID", "i", "", "InstanceID of the specific instance.")
 	cobraCmd.Flags().StringVarP(&cmd.planID, "planID", "p", "", "PlanID of the specific instance.")
 	cobraCmd.Flags().BoolVarP(&cmd.updateMachineType, "updateMachineType", "m", false, "Should update machineType.")
+	cobraCmd.Flags().BoolVarP(&cmd.updateOIDC, "updateOIDC", "o", false, "Should update OIDC.")
 
 	return cobraCmd
 }
@@ -99,17 +99,46 @@ func (cmd *UpdateCommand) Run() error {
 					}
 				}
 			}
+		} else if cmd.updateOIDC {
+			kcpClient, err := kcp.NewKCPClient()
+			if err != nil {
+				return fmt.Errorf("failed to create KCP client: %v", err)
+			}
+			currentOIDCConfig, err := kcpClient.GetCurrentOIDCConfig(cmd.instanceID)
+			fmt.Printf("Current OIDC config: %v\n", currentOIDCConfig)
+			if err != nil {
+				return fmt.Errorf("failed to get current OIDC config: %v", err)
+			}
+			newOIDCConfig := map[string]interface{}{
+				"clientID":       "foo-bar",
+				"groupsClaim":    "groups1",
+				"issuerURL":      "https://new.custom.ias.com",
+				"signingAlgs":    []string{"RS256"},
+				"usernameClaim":  "email",
+				"usernamePrefix": "acme-",
+			}
+			fmt.Printf("Determined OIDC configuration to update: %v\n", newOIDCConfig)
+			resp, err := brokerClient.UpdateInstance(cmd.instanceID, map[string]interface{}{"oidc": newOIDCConfig})
+			if err != nil {
+				return fmt.Errorf("error updating instance: %v", err)
+			}
+			fmt.Printf("Update operationID: %s\n", resp["operation"].(string))
 		}
 	}
 	return nil
 }
 
 func (cmd *UpdateCommand) Validate() error {
-	if cmd.instanceID != "" && cmd.planID != "" {
-		return nil
-	} else {
+	if cmd.instanceID == "" || cmd.planID == "" {
 		return errors.New("you must specify the planID and instanceID")
 	}
+	if !cmd.updateMachineType && !cmd.updateOIDC {
+		return errors.New("you must use one of updateMachineType or updateOIDC")
+	}
+	if cmd.updateMachineType && cmd.updateOIDC {
+		return errors.New("only one of updateMachineType or updateOIDC can be used")
+	}
+	return nil
 }
 
 func extractSupportedMachineTypes(planMap map[string]interface{}) ([]interface{}, error) {
