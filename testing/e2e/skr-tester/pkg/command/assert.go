@@ -40,7 +40,10 @@ func NewAsertCmd() *cobra.Command {
 func (cmd *AssertCommand) Run() error {
 	cmd.log = logger.New()
 	if cmd.machineType != "" {
-		kcpClient := kcp.NewKCPClient()
+		kcpClient, err := kcp.NewKCPClient()
+		if err != nil {
+			return fmt.Errorf("failed to create KCP client: %v", err)
+		}
 		currentMachineType, err := kcpClient.GetCurrentMachineType(cmd.instanceID)
 		if err != nil {
 			return fmt.Errorf("failed to get current machine type: %v", err)
