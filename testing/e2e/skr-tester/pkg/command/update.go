@@ -60,11 +60,11 @@ func (cmd *UpdateCommand) Run() error {
 		if serviceMap["id"] != broker.KymaServiceID {
 			continue
 		}
+		kcpClient, err := kcp.NewKCPClient()
+		if err != nil {
+			return fmt.Errorf("failed to create KCP client: %v", err)
+		}
 		if cmd.updateMachineType {
-			kcpClient, err := kcp.NewKCPClient()
-			if err != nil {
-				return fmt.Errorf("failed to create KCP client: %v", err)
-			}
 			currentMachineType, err := kcpClient.GetCurrentMachineType(cmd.instanceID)
 			if err != nil {
 				return fmt.Errorf("failed to get current machine type: %v", err)
@@ -100,10 +100,6 @@ func (cmd *UpdateCommand) Run() error {
 				}
 			}
 		} else if cmd.updateOIDC {
-			kcpClient, err := kcp.NewKCPClient()
-			if err != nil {
-				return fmt.Errorf("failed to create KCP client: %v", err)
-			}
 			currentOIDCConfig, err := kcpClient.GetCurrentOIDCConfig(cmd.instanceID)
 			fmt.Printf("Current OIDC config: %v\n", currentOIDCConfig)
 			if err != nil {
@@ -123,6 +119,7 @@ func (cmd *UpdateCommand) Run() error {
 				return fmt.Errorf("error updating instance: %v", err)
 			}
 			fmt.Printf("Update operationID: %s\n", resp["operation"].(string))
+			break
 		}
 	}
 	return nil
