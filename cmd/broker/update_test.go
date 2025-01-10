@@ -2568,14 +2568,14 @@ func TestUpdateAdditionalWorkerNodePools(t *testing.T) {
 									{
 										"name": "name-1",
 										"machineType": "m6i.large",
-										"autoScalerMin": 1,
-										"autoScalerMax": 10
+										"autoScalerMin": 3,
+										"autoScalerMax": 20
 									},
 									{
 										"name": "name-2",
 										"machineType": "m5.large",
-										"autoScalerMin": 0,
-										"autoScalerMax": 0
+										"autoScalerMin": 4,
+										"autoScalerMax": 21
 									}
 								]
 							}
@@ -2588,8 +2588,8 @@ func TestUpdateAdditionalWorkerNodePools(t *testing.T) {
 		suite.WaitForOperationState(upgradeOperationID, domain.Succeeded)
 		runtime := suite.GetRuntimeResourceByInstanceID(iid)
 		//assert.Len(t, runtime.Spec.Shoot.Provider.AdditionalWorkers, 2)
-		suite.assertAdditionalWorkerIsCreated(t, runtime.Spec.Shoot.Provider, "name-1", "m6i.large", 1, 10)
-		suite.assertAdditionalWorkerIsCreated(t, runtime.Spec.Shoot.Provider, "name-2", "m5.large", 0, 0)
+		suite.assertAdditionalWorkerIsCreated(t, runtime.Spec.Shoot.Provider, "name-1", "m6i.large", 3, 20)
+		suite.assertAdditionalWorkerIsCreated(t, runtime.Spec.Shoot.Provider, "name-2", "m5.large", 4, 21)
 	})
 
 	t.Run("should replace additional worker node pools", func(t *testing.T) {
@@ -2615,8 +2615,8 @@ func TestUpdateAdditionalWorkerNodePools(t *testing.T) {
 									{
 										"name": "name-1",
 										"machineType": "m6i.large",
-										"autoScalerMin": 1,
-										"autoScalerMax": 10
+										"autoScalerMin": 3,
+										"autoScalerMax": 20
 									}
 								]
 							}
@@ -2642,8 +2642,8 @@ func TestUpdateAdditionalWorkerNodePools(t *testing.T) {
 									{
 										"name": "name-2",
 										"machineType": "m5.large",
-										"autoScalerMin": 0,
-										"autoScalerMax": 0
+										"autoScalerMin": 4,
+										"autoScalerMax": 21
 									}
 								]
 							}
@@ -2656,7 +2656,7 @@ func TestUpdateAdditionalWorkerNodePools(t *testing.T) {
 		suite.WaitForOperationState(upgradeOperationID, domain.Succeeded)
 		runtime := suite.GetRuntimeResourceByInstanceID(iid)
 		//assert.Len(t, runtime.Spec.Shoot.Provider.AdditionalWorkers, 1)
-		suite.assertAdditionalWorkerIsCreated(t, runtime.Spec.Shoot.Provider, "name-2", "m5.large", 0, 0)
+		suite.assertAdditionalWorkerIsCreated(t, runtime.Spec.Shoot.Provider, "name-2", "m5.large", 4, 21)
 	})
 
 	t.Run("should remove additional worker node pools when list is empty", func(t *testing.T) {
@@ -2682,14 +2682,14 @@ func TestUpdateAdditionalWorkerNodePools(t *testing.T) {
 									{
 										"name": "name-1",
 										"machineType": "m6i.large",
-										"autoScalerMin": 1,
-										"autoScalerMax": 10
+										"autoScalerMin": 3,
+										"autoScalerMax": 20
 									},
 									{
 										"name": "name-2",
 										"machineType": "m5.large",
-										"autoScalerMin": 0,
-										"autoScalerMax": 0
+										"autoScalerMin": 4,
+										"autoScalerMax": 21
 									}
 								]
 							}

@@ -508,13 +508,15 @@ func NewAdditionalWorkerNodePoolsSchema(machineTypesDisplay map[string]string, m
 								},
 								AutoScalerMin: Type{
 									Type:        "integer",
-									Minimum:     0,
+									Minimum:     3,
+									Default:     3,
 									Description: "Specifies the minimum number of virtual machines to create.",
 								},
 								AutoScalerMax: Type{
 									Type:        "integer",
-									Minimum:     0,
+									Minimum:     3,
 									Maximum:     300,
+									Default:     20,
 									Description: "Specifies the maximum number of virtual machines to create.",
 								},
 							},

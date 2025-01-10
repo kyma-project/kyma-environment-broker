@@ -599,7 +599,7 @@ func TestUpdateAdditionalWorkerNodePools(t *testing.T) {
 		expectedError             bool
 	}{
 		"Valid additional worker node pools": {
-			additionalWorkerNodePools: `{"list": [{"name": "name-1", "machineType": "m6i.large", "autoScalerMin": 3, "autoScalerMax": 20}, {"name": "name-2", "machineType": "m6i.large", "autoScalerMin": 0, "autoScalerMax": 0}]}`,
+			additionalWorkerNodePools: `{"list": [{"name": "name-1", "machineType": "m6i.large", "autoScalerMin": 3, "autoScalerMax": 20}, {"name": "name-2", "machineType": "m6i.large", "autoScalerMin": 3, "autoScalerMax": 20}]}`,
 			expectedError:             false,
 		},
 		"Empty additional worker node pools": {
@@ -652,6 +652,10 @@ func TestUpdateAdditionalWorkerNodePools(t *testing.T) {
 		},
 		"Missing autoScalerMax": {
 			additionalWorkerNodePools: `{"list": [{"name": "name-1", "machineType": "m6i.large", "autoScalerMin": 20}]}`,
+			expectedError:             true,
+		},
+		"AutoScalerMin smaller than 3": {
+			additionalWorkerNodePools: `{"list": [{"name": "name-1", "machineType": "m6i.large", "autoScalerMin": 2, "autoScalerMax": 300}]}`,
 			expectedError:             true,
 		},
 		"AutoScalerMax bigger than 300": {
