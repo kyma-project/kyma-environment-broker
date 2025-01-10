@@ -1,6 +1,7 @@
 package command
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"regexp"
@@ -10,6 +11,10 @@ import (
 	"skr-tester/pkg/logger"
 
 	"github.com/spf13/cobra"
+	rbacv1 "k8s.io/api/rbac/v1"
+	"k8s.io/client-go/tools/clientcmd"
+	"k8s.io/kubectl/pkg/scheme"
+	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
 type AssertCommand struct {
@@ -19,6 +24,7 @@ type AssertCommand struct {
 	machineType          string
 	clusterOIDCConfig    string
 	kubeconfigOIDCConfig []string
+	admins               []string
 }
 
 func NewAsertCmd() *cobra.Command {
@@ -41,6 +47,7 @@ func NewAsertCmd() *cobra.Command {
 	cobraCmd.Flags().StringVarP(&cmd.machineType, "machineType", "m", "", "MachineType of the specific instance.")
 	cobraCmd.Flags().StringVarP(&cmd.clusterOIDCConfig, "clusterOIDCConfig", "o", "", "clusterOIDCConfig of the specific instance.")
 	cobraCmd.Flags().StringSliceVarP(&cmd.kubeconfigOIDCConfig, "kubeconfigOIDCConfig", "k", nil, "kubeconfigOIDCConfig of the specific instance. Pass the issuerURL and clientID in the format issuerURL,clientID")
+	cobraCmd.Flags().StringSliceVarP(&cmd.admins, "admins", "a", nil, "Admins of the specific instance.")
 
 	return cobraCmd
 }
@@ -88,6 +95,46 @@ func (cmd *AssertCommand) Run() error {
 		}
 		fmt.Println("Kubeconfig OIDC assertion passed")
 
+	} else if cmd.admins != nil {
+		kubeconfig, err := kcpClient.GetKubeconfig(cmd.instanceID)
+		if err != nil {
+			return fmt.Errorf("failed to get kubeconfig: %v", err)
+		}
+		restCfg, err := clientcmd.RESTConfigFromKubeConfig(kubeconfig)
+		if err != nil {
+			return fmt.Errorf("while creating rest config from kubeconfig: %w", err)
+		}
+		k8sCli, err := client.New(restCfg, client.Options{
+			Scheme: scheme.Scheme,
+		})
+		if err != nil {
+			return fmt.Errorf("while creating k8s client: %w", err)
+		}
+		clusterRoleBindings := &rbacv1.ClusterRoleBindingList{}
+		err = k8sCli.List(context.TODO(), clusterRoleBindings, &client.ListOptions{})
+		if err != nil {
+			return fmt.Errorf("while listing cluster role bindings: %w", err)
+		}
+		adminsMap := make(map[string]bool)
+		for _, admin := range cmd.admins {
+			adminsMap[admin] = false
+		}
+		fmt.Println("Looking for the following admins:", cmd.admins)
+		for _, crb := range clusterRoleBindings.Items {
+			if crb.RoleRef.Name == "cluster-admin" {
+				for _, subject := range crb.Subjects {
+					if adminsMap[subject.Name] == false {
+						adminsMap[subject.Name] = true
+					}
+				}
+			}
+		}
+		for admin, found := range adminsMap {
+			if !found {
+				return fmt.Errorf("admin %s not found in cluster role bindings", admin)
+			}
+		}
+		fmt.Println("All specified admins are found in cluster role bindings")
 	}
 	return nil
 }
@@ -96,11 +143,21 @@ func (cmd *AssertCommand) Validate() error {
 	if cmd.instanceID == "" {
 		return errors.New("instanceID must be specified")
 	}
-	if cmd.machineType == "" && cmd.clusterOIDCConfig == "" && cmd.kubeconfigOIDCConfig == nil {
-		return errors.New("either machineType, clusterOIDCConfig, or kubeconfigOIDCConfig must be specified")
+	count := 0
+	if cmd.machineType != "" {
+		count++
 	}
-	if (cmd.machineType != "" && cmd.clusterOIDCConfig != "") || (cmd.machineType != "" && cmd.kubeconfigOIDCConfig != nil) || (cmd.clusterOIDCConfig != "" && cmd.kubeconfigOIDCConfig != nil) {
-		return errors.New("only one of machineType, clusterOIDCConfig, or kubeconfigOIDCConfig must be specified")
+	if cmd.clusterOIDCConfig != "" {
+		count++
+	}
+	if cmd.kubeconfigOIDCConfig != nil {
+		count++
+	}
+	if cmd.admins != nil {
+		count++
+	}
+	if count != 1 {
+		return errors.New("only one of machineType, clusterOIDCConfig, kubeconfigOIDCConfig, or admins must be specified")
 	}
 	return nil
 }

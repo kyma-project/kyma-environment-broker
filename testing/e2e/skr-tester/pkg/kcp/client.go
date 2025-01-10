@@ -102,6 +102,40 @@ func (c *KCPClient) GetCurrentOIDCConfig(instanceID string) (interface{}, error)
 	return oidcConfig, nil
 }
 
+func (c *KCPClient) GetShootID(instanceID string) (*string, error) {
+	args := []string{"rt", "-i", instanceID, "-o", "custom=:{.shootName}"}
+	if clientSecret := os.Getenv("KCP_OIDC_CLIENT_SECRET"); clientSecret != "" {
+		args = append(args, "--config", "config.yaml")
+	}
+	output, err := exec.Command("kcp", args...).Output()
+	if err != nil {
+		return nil, fmt.Errorf("failed to get shoot ID: %w", err)
+	}
+	shootID := strings.TrimSpace(string(output))
+	return &shootID, nil
+}
+
+func (c *KCPClient) GetKubeconfig(instanceID string) ([]byte, error) {
+	shootID, err := c.GetShootID(instanceID)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get shoot ID: %w", err)
+	}
+	args := []string{"kubeconfig", "-c", string(*shootID)}
+	if clientSecret := os.Getenv("KCP_OIDC_CLIENT_SECRET"); clientSecret != "" {
+		args = append(args, "--config", "config.yaml")
+	}
+	output, err := exec.Command("kcp", args...).Output()
+	if err != nil {
+		return nil, fmt.Errorf("failed to get kubeconfig: %w", err)
+	}
+	kubeconfigPath := strings.TrimSpace(strings.Split(string(output), " ")[3])
+	kubeconfig, err := os.ReadFile(kubeconfigPath)
+	if err != nil {
+		return nil, fmt.Errorf("failed to read kubeconfig file: %w", err)
+	}
+	return kubeconfig, nil
+}
+
 func getEnvOrThrow(key string) string {
 	value := os.Getenv(key)
 	if value == "" {
