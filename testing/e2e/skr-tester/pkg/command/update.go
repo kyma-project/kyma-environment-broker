@@ -125,7 +125,6 @@ func (cmd *UpdateCommand) Run() error {
 		}
 		fmt.Printf("Update operationID: %s\n", resp["operation"].(string))
 	} else if cmd.updateAdministrators {
-		//TODO print current admnistrators
 		newAdministrators := []string{"admin1@acme.com", "admin2@acme.com"}
 		fmt.Printf("Determined administrators to update: %v\n", newAdministrators)
 		resp, err := brokerClient.UpdateInstance(cmd.instanceID, map[string]interface{}{"administrators": newAdministrators})
