@@ -250,7 +250,7 @@ func (s *CreateRuntimeResourceStep) createShootProvider(operation *internal.Oper
 		}
 	}
 
-	if operation.ProvisioningParameters.PlanID == broker.PreviewPlanID && operation.ProvisioningParameters.Parameters.AdditionalWorkerNodePools.IsProvided() {
+	if operation.ProvisioningParameters.Parameters.AdditionalWorkerNodePools.IsProvided() {
 		additionalWorkerNodePoolsMaxSurge := intstr.FromInt32(int32(values.ZonesCount))
 		additionalWorkerNodePoolsMaxUnavailable := intstr.FromInt32(int32(0))
 		workers := make([]gardener.Worker, 0, len(operation.ProvisioningParameters.Parameters.AdditionalWorkerNodePools.List))

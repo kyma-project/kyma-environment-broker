@@ -296,7 +296,10 @@ func (b *ProvisionEndpoint) validateAndExtract(details domain.ProvisionDetails, 
 		return ersContext, parameters, apiresponses.NewFailureResponse(err, http.StatusUnprocessableEntity, err.Error())
 	}
 
-	if IsPreviewPlan(details.PlanID) && parameters.AdditionalWorkerNodePools.IsProvided() {
+	if parameters.AdditionalWorkerNodePools.IsProvided() {
+		if !supportsAdditionalWorkers(details.PlanID) {
+			return ersContext, parameters, fmt.Errorf("additional worker node pools are not supported for plan ID: %s", details.PlanID)
+		}
 		if err := parameters.AdditionalWorkerNodePools.Validate(); err != nil {
 			return ersContext, parameters, apiresponses.NewFailureResponse(err, http.StatusUnprocessableEntity, err.Error())
 		}
@@ -394,6 +397,18 @@ func (b *ProvisionEndpoint) validateAndExtract(details domain.ProvisionDetails, 
 func isEuRestrictedAccess(ctx context.Context) bool {
 	platformRegion, _ := middleware.RegionFromContext(ctx)
 	return euaccess.IsEURestrictedAccess(platformRegion)
+}
+
+func supportsAdditionalWorkers(planID string) bool {
+	var supportedPlans = []string{
+		PreviewPlanID,
+	}
+	for _, supportedPlan := range supportedPlans {
+		if planID == supportedPlan {
+			return true
+		}
+	}
+	return false
 }
 
 // Rudimentary kubeconfig validation

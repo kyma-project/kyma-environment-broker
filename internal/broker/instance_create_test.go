@@ -1624,6 +1624,91 @@ func TestAdditionalWorkerNodePools(t *testing.T) {
 	}
 }
 
+func TestAdditionalWorkerNodePoolsForUnsupportedPlans(t *testing.T) {
+	for tn, tc := range map[string]struct {
+		planID string
+	}{
+		"Trial": {
+			planID: broker.TrialPlanID,
+		},
+		"Free": {
+			planID: broker.FreemiumPlanID,
+		},
+		"Azure": {
+			planID: broker.AzurePlanID,
+		},
+		"Azure lite": {
+			planID: broker.AzureLitePlanID,
+		},
+		"AWS": {
+			planID: broker.AWSPlanID,
+		},
+		"GCP": {
+			planID: broker.GCPPlanID,
+		},
+		"SAP converged cloud": {
+			planID: broker.SapConvergedCloudPlanID,
+		},
+	} {
+		t.Run(tn, func(t *testing.T) {
+			// given
+			log := slog.New(slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{
+				Level: slog.LevelInfo,
+			}))
+
+			memoryStorage := storage.NewMemoryStorage()
+
+			queue := &automock.Queue{}
+			queue.On("Add", mock.AnythingOfType("string"))
+
+			factoryBuilder := &automock.PlanValidator{}
+			factoryBuilder.On("IsPlanSupport", tc.planID).Return(true)
+
+			planDefaults := func(planID string, platformProvider pkg.CloudProvider, provider *pkg.CloudProvider) (*gqlschema.ClusterConfigInput, error) {
+				return &gqlschema.ClusterConfigInput{}, nil
+			}
+			kcBuilder := &kcMock.KcBuilder{}
+			kcBuilder.On("GetServerURL", "").Return("", fmt.Errorf("error"))
+			// #create provisioner endpoint
+			provisionEndpoint := broker.NewProvision(
+				broker.Config{
+					EnablePlans:              []string{"trial", "free", "azure", "azure_lite", "aws", "gcp", "sap-converged-cloud"},
+					URL:                      brokerURL,
+					OnlySingleTrialPerGA:     true,
+					EnableKubeconfigURLLabel: true,
+				},
+				gardener.Config{Project: "test", ShootDomain: "example.com", DNSProviders: fixDNSProviders()},
+				memoryStorage.Operations(),
+				memoryStorage.Instances(),
+				memoryStorage.InstancesArchived(),
+				queue,
+				factoryBuilder,
+				broker.PlansConfig{},
+				planDefaults,
+				log,
+				dashboardConfig,
+				kcBuilder,
+				whitelist.Set{},
+				&broker.OneForAllConvergedCloudRegionsProvider{},
+			)
+
+			additionalWorkerNodePools := `{"list": [{"name": "name-1", "machineType": "m6i.large", "autoScalerMin": 3, "autoScalerMax": 20}]}`
+
+			// when
+			_, err := provisionEndpoint.Provision(fixRequestContext(t, "cf-sa30"), instanceID, domain.ProvisionDetails{
+				ServiceID:     serviceID,
+				PlanID:        tc.planID,
+				RawParameters: json.RawMessage(fmt.Sprintf(`{"name": "%s", "region": "%s","additionalWorkerNodePools": %s }`, clusterName, "eu-central-1", additionalWorkerNodePools)),
+				RawContext:    json.RawMessage(fmt.Sprintf(`{"globalaccount_id": "%s", "subaccount_id": "%s", "user_id": "%s"}`, "any-global-account-id", subAccountID, "Test@Test.pl")),
+			}, true)
+			t.Logf("%+v\n", *provisionEndpoint)
+
+			// then
+			assert.EqualError(t, err, fmt.Sprintf("additional worker node pools are not supported for plan ID: %s", tc.planID))
+		})
+	}
+}
+
 func TestNetworkingValidation(t *testing.T) {
 	for tn, tc := range map[string]struct {
 		givenNetworking string

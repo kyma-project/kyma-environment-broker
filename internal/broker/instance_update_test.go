@@ -703,6 +703,70 @@ func TestUpdateAdditionalWorkerNodePools(t *testing.T) {
 	}
 }
 
+func TestUpdateAdditionalWorkerNodePoolsForUnsupportedPlans(t *testing.T) {
+	for tn, tc := range map[string]struct {
+		planID string
+	}{
+		"Trial": {
+			planID: TrialPlanID,
+		},
+		"Free": {
+			planID: FreemiumPlanID,
+		},
+		"Azure": {
+			planID: AzurePlanID,
+		},
+		"Azure lite": {
+			planID: AzureLitePlanID,
+		},
+		"AWS": {
+			planID: AWSPlanID,
+		},
+		"GCP": {
+			planID: GCPPlanID,
+		},
+		"SAP converged cloud": {
+			planID: SapConvergedCloudPlanID,
+		},
+	} {
+		t.Run(tn, func(t *testing.T) {
+			// given
+			instance := fixture.FixInstance(instanceID)
+			instance.ServicePlanID = tc.planID
+			st := storage.NewMemoryStorage()
+			err := st.Instances().Insert(instance)
+			require.NoError(t, err)
+			err = st.Operations().InsertProvisioningOperation(fixProvisioningOperation("provisioning01"))
+			require.NoError(t, err)
+
+			handler := &handler{}
+			q := &automock.Queue{}
+			q.On("Add", mock.AnythingOfType("string"))
+			planDefaults := func(planID string, platformProvider pkg.CloudProvider, provider *pkg.CloudProvider) (*gqlschema.ClusterConfigInput, error) {
+				return &gqlschema.ClusterConfigInput{}, nil
+			}
+			kcBuilder := &kcMock.KcBuilder{}
+			svc := NewUpdate(Config{}, st.Instances(), st.RuntimeStates(), st.Operations(), handler, true, true, false, q, PlansConfig{},
+				planDefaults, fixLogger(), dashboardConfig, kcBuilder, &OneForAllConvergedCloudRegionsProvider{}, fakeKcpK8sClient)
+
+			additionalWorkerNodePools := `{"list": [{"name": "name-1", "machineType": "m6i.large", "autoScalerMin": 3, "autoScalerMax": 20}]}`
+
+			// when
+			_, err = svc.Update(context.Background(), instanceID, domain.UpdateDetails{
+				ServiceID:       "",
+				PlanID:          tc.planID,
+				RawParameters:   json.RawMessage("{\"additionalWorkerNodePools\":" + additionalWorkerNodePools + "}"),
+				PreviousValues:  domain.PreviousValues{},
+				RawContext:      json.RawMessage("{\"globalaccount_id\":\"globalaccount_id_1\", \"active\":true}"),
+				MaintenanceInfo: nil,
+			}, true)
+
+			// then
+			assert.EqualError(t, err, fmt.Sprintf("additional worker node pools are not supported for plan ID: %s", tc.planID))
+		})
+	}
+}
+
 func TestUpdateEndpoint_UpdateWithEnabledDashboard(t *testing.T) {
 	// given
 	instance := internal.Instance{

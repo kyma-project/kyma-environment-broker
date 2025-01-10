@@ -10,7 +10,6 @@ import (
 	gardener "github.com/gardener/gardener/pkg/apis/core/v1beta1"
 	imv1 "github.com/kyma-project/infrastructure-manager/api/v1"
 	"github.com/kyma-project/kyma-environment-broker/internal"
-	"github.com/kyma-project/kyma-environment-broker/internal/broker"
 	kebError "github.com/kyma-project/kyma-environment-broker/internal/error"
 	"github.com/kyma-project/kyma-environment-broker/internal/process"
 	"github.com/kyma-project/kyma-environment-broker/internal/process/input"
@@ -70,7 +69,7 @@ func (s *UpdateRuntimeStep) Run(operation internal.Operation, log *slog.Logger) 
 	maxUnavailable := intstr.FromInt32(int32(provisioning.DefaultIfParamNotSet(runtime.Spec.Shoot.Provider.Workers[0].MaxUnavailable.IntValue(), operation.UpdatingParameters.MaxUnavailable)))
 	runtime.Spec.Shoot.Provider.Workers[0].MaxUnavailable = &maxUnavailable
 
-	if operation.ProvisioningParameters.PlanID == broker.PreviewPlanID && operation.UpdatingParameters.AdditionalWorkerNodePools.IsProvided() {
+	if operation.UpdatingParameters.AdditionalWorkerNodePools.IsProvided() {
 		values, err := provider.GetPlanSpecificValues(&operation, s.config.MultiZoneCluster, s.config.DefaultTrialProvider, s.useSmallerMachineTypes, s.trialPlatformRegionMapping, s.config.DefaultGardenerShootPurpose)
 		if err != nil {
 			return s.operationManager.OperationFailed(operation, fmt.Sprintf("while calculating plan specific values: %s", err), err, log)

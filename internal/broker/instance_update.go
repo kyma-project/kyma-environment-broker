@@ -264,7 +264,10 @@ func (b *UpdateEndpoint) processUpdateParameters(instance *internal.Instance, de
 		return domain.UpdateServiceSpec{}, apiresponses.NewFailureResponse(err, http.StatusBadRequest, err.Error())
 	}
 
-	if IsPreviewPlan(details.PlanID) && params.AdditionalWorkerNodePools.IsProvided() {
+	if params.AdditionalWorkerNodePools.IsProvided() {
+		if !supportsAdditionalWorkers(details.PlanID) {
+			return domain.UpdateServiceSpec{}, fmt.Errorf("additional worker node pools are not supported for plan ID: %s", details.PlanID)
+		}
 		if err := params.AdditionalWorkerNodePools.Validate(); err != nil {
 			return domain.UpdateServiceSpec{}, apiresponses.NewFailureResponse(err, http.StatusBadRequest, err.Error())
 		}
