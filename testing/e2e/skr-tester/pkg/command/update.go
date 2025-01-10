@@ -144,7 +144,7 @@ func (cmd *UpdateCommand) Validate() error {
 	if !cmd.updateMachineType && !cmd.updateOIDC && !cmd.updateAdministrators {
 		return errors.New("you must use one of updateMachineType, updateOIDC, or updateAdministrators")
 	}
-	if (cmd.updateMachineType && cmd.updateOIDC) || (cmd.updateMachineType && cmd.updateAdministrators) || (cmd.updateOIDC && cmd.updateAdministrators) {
+	if (cmd.updateMachineType && cmd.updateOIDC) || (cmd.updateMachineType && cmd.updateAdministrators) || (cmd.updateOIDC && cmd.updateAdministrators) || (cmd.updateMachineType && cmd.updateOIDC && cmd.updateAdministrators) {
 		return errors.New("only one of updateMachineType, updateOIDC, or updateAdministrators can be used")
 	}
 	return nil
