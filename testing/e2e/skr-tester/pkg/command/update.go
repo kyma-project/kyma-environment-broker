@@ -11,12 +11,13 @@ import (
 )
 
 type UpdateCommand struct {
-	cobraCmd          *cobra.Command
-	log               logger.Logger
-	instanceID        string
-	planID            string
-	updateMachineType bool
-	updateOIDC        bool
+	cobraCmd             *cobra.Command
+	log                  logger.Logger
+	instanceID           string
+	planID               string
+	updateMachineType    bool
+	updateOIDC           bool
+	updateAdministrators bool
 }
 
 func NewUpdateCommand() *cobra.Command {
@@ -37,6 +38,7 @@ func NewUpdateCommand() *cobra.Command {
 	cobraCmd.Flags().StringVarP(&cmd.planID, "planID", "p", "", "PlanID of the specific instance.")
 	cobraCmd.Flags().BoolVarP(&cmd.updateMachineType, "updateMachineType", "m", false, "Should update machineType.")
 	cobraCmd.Flags().BoolVarP(&cmd.updateOIDC, "updateOIDC", "o", false, "Should update OIDC.")
+	cobraCmd.Flags().BoolVarP(&cmd.updateAdministrators, "updateAdministrators", "a", false, "Should update Administrators.")
 
 	return cobraCmd
 }
@@ -122,6 +124,15 @@ func (cmd *UpdateCommand) Run() error {
 			return fmt.Errorf("error updating instance: %v", err)
 		}
 		fmt.Printf("Update operationID: %s\n", resp["operation"].(string))
+	} else if cmd.updateAdministrators {
+		//TODO print current admnistrators
+		newAdministrators := []string{"admin1@acme.com", "admin2@acme.com"}
+		fmt.Printf("Determined administrators to update: %v\n", newAdministrators)
+		resp, err := brokerClient.UpdateInstance(cmd.instanceID, map[string]interface{}{"administrators": newAdministrators})
+		if err != nil {
+			return fmt.Errorf("error updating instance: %v", err)
+		}
+		fmt.Printf("Update operationID: %s\n", resp["operation"].(string))
 	}
 	return nil
 }
@@ -130,11 +141,11 @@ func (cmd *UpdateCommand) Validate() error {
 	if cmd.instanceID == "" || cmd.planID == "" {
 		return errors.New("you must specify the planID and instanceID")
 	}
-	if !cmd.updateMachineType && !cmd.updateOIDC {
-		return errors.New("you must use one of updateMachineType or updateOIDC")
+	if !cmd.updateMachineType && !cmd.updateOIDC && !cmd.updateAdministrators {
+		return errors.New("you must use one of updateMachineType, updateOIDC, or updateAdministrators")
 	}
-	if cmd.updateMachineType && cmd.updateOIDC {
-		return errors.New("only one of updateMachineType or updateOIDC can be used")
+	if (cmd.updateMachineType && cmd.updateOIDC) || (cmd.updateMachineType && cmd.updateAdministrators) || (cmd.updateOIDC && cmd.updateAdministrators) {
+		return errors.New("only one of updateMachineType, updateOIDC, or updateAdministrators can be used")
 	}
 	return nil
 }
