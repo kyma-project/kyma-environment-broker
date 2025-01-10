@@ -141,11 +141,18 @@ func (cmd *UpdateCommand) Validate() error {
 	if cmd.instanceID == "" || cmd.planID == "" {
 		return errors.New("you must specify the planID and instanceID")
 	}
-	if !cmd.updateMachineType && !cmd.updateOIDC && !cmd.updateAdministrators {
-		return errors.New("you must use one of updateMachineType, updateOIDC, or updateAdministrators")
+	updateCount := 0
+	if cmd.updateMachineType {
+		updateCount++
 	}
-	if (cmd.updateMachineType && cmd.updateOIDC) || (cmd.updateMachineType && cmd.updateAdministrators) || (cmd.updateOIDC && cmd.updateAdministrators) || (cmd.updateMachineType && cmd.updateOIDC && cmd.updateAdministrators) {
-		return errors.New("only one of updateMachineType, updateOIDC, or updateAdministrators can be used")
+	if cmd.updateOIDC {
+		updateCount++
+	}
+	if cmd.updateAdministrators {
+		updateCount++
+	}
+	if updateCount != 1 {
+		return errors.New("you must use exactly one of updateMachineType, updateOIDC, or updateAdministrators")
 	}
 	return nil
 }
