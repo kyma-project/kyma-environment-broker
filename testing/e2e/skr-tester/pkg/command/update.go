@@ -11,12 +11,13 @@ import (
 )
 
 type UpdateCommand struct {
-	cobraCmd          *cobra.Command
-	log               logger.Logger
-	instanceID        string
-	planID            string
-	updateMachineType bool
-	updateOIDC        bool
+	cobraCmd             *cobra.Command
+	log                  logger.Logger
+	instanceID           string
+	planID               string
+	updateMachineType    bool
+	updateOIDC           bool
+	updateAdministrators bool
 }
 
 func NewUpdateCommand() *cobra.Command {
@@ -37,6 +38,7 @@ func NewUpdateCommand() *cobra.Command {
 	cobraCmd.Flags().StringVarP(&cmd.planID, "planID", "p", "", "PlanID of the specific instance.")
 	cobraCmd.Flags().BoolVarP(&cmd.updateMachineType, "updateMachineType", "m", false, "Should update machineType.")
 	cobraCmd.Flags().BoolVarP(&cmd.updateOIDC, "updateOIDC", "o", false, "Should update OIDC.")
+	cobraCmd.Flags().BoolVarP(&cmd.updateAdministrators, "updateAdministrators", "a", false, "Should update Administrators.")
 
 	return cobraCmd
 }
@@ -44,27 +46,28 @@ func NewUpdateCommand() *cobra.Command {
 func (cmd *UpdateCommand) Run() error {
 	cmd.log = logger.New()
 	brokerClient := broker.NewBrokerClient(broker.NewBrokerConfig())
-	catalog, err := brokerClient.GetCatalog()
+	kcpClient, err := kcp.NewKCPClient()
 	if err != nil {
-		return fmt.Errorf("failed to get catalog: %v", err)
+		return fmt.Errorf("failed to create KCP client: %v", err)
 	}
-	services, ok := catalog["services"].([]interface{})
-	if !ok {
-		return errors.New("services field not found or invalid in catalog")
-	}
-	for _, service := range services {
-		serviceMap, ok := service.(map[string]interface{})
+	if cmd.updateMachineType {
+		catalog, err := brokerClient.GetCatalog()
+		if err != nil {
+			return fmt.Errorf("failed to get catalog: %v", err)
+		}
+		services, ok := catalog["services"].([]interface{})
 		if !ok {
-			return errors.New("service is not a map[string]interface{}")
+			return errors.New("services field not found or invalid in catalog")
 		}
-		if serviceMap["id"] != broker.KymaServiceID {
-			continue
-		}
-		if cmd.updateMachineType {
-			kcpClient, err := kcp.NewKCPClient()
-			if err != nil {
-				return fmt.Errorf("failed to create KCP client: %v", err)
+		for _, service := range services {
+			serviceMap, ok := service.(map[string]interface{})
+			if !ok {
+				return errors.New("service is not a map[string]interface{}")
 			}
+			if serviceMap["id"] != broker.KymaServiceID {
+				continue
+			}
+
 			currentMachineType, err := kcpClient.GetCurrentMachineType(cmd.instanceID)
 			if err != nil {
 				return fmt.Errorf("failed to get current machine type: %v", err)
@@ -95,35 +98,41 @@ func (cmd *UpdateCommand) Run() error {
 							return fmt.Errorf("error updating instance: %v", err)
 						}
 						fmt.Printf("Update operationID: %s\n", resp["operation"].(string))
-						break
+						return nil
 					}
 				}
+
 			}
-		} else if cmd.updateOIDC {
-			kcpClient, err := kcp.NewKCPClient()
-			if err != nil {
-				return fmt.Errorf("failed to create KCP client: %v", err)
-			}
-			currentOIDCConfig, err := kcpClient.GetCurrentOIDCConfig(cmd.instanceID)
-			fmt.Printf("Current OIDC config: %v\n", currentOIDCConfig)
-			if err != nil {
-				return fmt.Errorf("failed to get current OIDC config: %v", err)
-			}
-			newOIDCConfig := map[string]interface{}{
-				"clientID":       "foo-bar",
-				"groupsClaim":    "groups1",
-				"issuerURL":      "https://new.custom.ias.com",
-				"signingAlgs":    []string{"RS256"},
-				"usernameClaim":  "email",
-				"usernamePrefix": "acme-",
-			}
-			fmt.Printf("Determined OIDC configuration to update: %v\n", newOIDCConfig)
-			resp, err := brokerClient.UpdateInstance(cmd.instanceID, map[string]interface{}{"oidc": newOIDCConfig})
-			if err != nil {
-				return fmt.Errorf("error updating instance: %v", err)
-			}
-			fmt.Printf("Update operationID: %s\n", resp["operation"].(string))
 		}
+	} else if cmd.updateOIDC {
+		currentOIDCConfig, err := kcpClient.GetCurrentOIDCConfig(cmd.instanceID)
+		if err != nil {
+			return fmt.Errorf("failed to get current OIDC config: %v", err)
+		}
+		fmt.Printf("Current OIDC config: %v\n", currentOIDCConfig)
+		newOIDCConfig := map[string]interface{}{
+			"clientID":       "foo-bar",
+			"groupsClaim":    "groups1",
+			"issuerURL":      "https://new.custom.ias.com",
+			"signingAlgs":    []string{"RS256"},
+			"usernameClaim":  "email",
+			"usernamePrefix": "acme-",
+		}
+		fmt.Printf("Determined OIDC configuration to update: %v\n", newOIDCConfig)
+		resp, err := brokerClient.UpdateInstance(cmd.instanceID, map[string]interface{}{"oidc": newOIDCConfig})
+		if err != nil {
+			return fmt.Errorf("error updating instance: %v", err)
+		}
+		fmt.Printf("Update operationID: %s\n", resp["operation"].(string))
+	} else if cmd.updateAdministrators {
+		//TODO print current admnistrators
+		newAdministrators := []string{"admin1@acme.com", "admin2@acme.com"}
+		fmt.Printf("Determined administrators to update: %v\n", newAdministrators)
+		resp, err := brokerClient.UpdateInstance(cmd.instanceID, map[string]interface{}{"administrators": newAdministrators})
+		if err != nil {
+			return fmt.Errorf("error updating instance: %v", err)
+		}
+		fmt.Printf("Update operationID: %s\n", resp["operation"].(string))
 	}
 	return nil
 }
@@ -132,11 +141,18 @@ func (cmd *UpdateCommand) Validate() error {
 	if cmd.instanceID == "" || cmd.planID == "" {
 		return errors.New("you must specify the planID and instanceID")
 	}
-	if !cmd.updateMachineType && !cmd.updateOIDC {
-		return errors.New("you must use one of updateMachineType or updateOIDC")
+	updateCount := 0
+	if cmd.updateMachineType {
+		updateCount++
 	}
-	if cmd.updateMachineType && cmd.updateOIDC {
-		return errors.New("only one of updateMachineType or updateOIDC can be used")
+	if cmd.updateOIDC {
+		updateCount++
+	}
+	if cmd.updateAdministrators {
+		updateCount++
+	}
+	if updateCount != 1 {
+		return errors.New("you must use exactly one of updateMachineType, updateOIDC, or updateAdministrators")
 	}
 	return nil
 }
