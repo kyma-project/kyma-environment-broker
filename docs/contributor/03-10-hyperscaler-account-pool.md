@@ -47,21 +47,6 @@ metadata:
     shared: "true"
 ```
 
-It is possible to explicitly specify what plans or BTP regions should use shared credentials. This is done by adding given plan or region names to configuration list in KEB helm values. The mentioned configuration is controlled by `hap.sharedSecretPlans` value. For example, the following configuration allows the `trial` and `sap-converged-cloud` plans to use shared credentials:
-
-```
-hap: 
-  sharedSecretPlans: "trial:*;sap-converged-cloud:*"
-```
-
-The property accepts a list of key value in the format `<PLAN_ID_1>:<REGION_ID_1>;<PLAN_ID_2>:<REGION_ID_2>`. Either plan or region (but never both) can be specified as wildcard `*` meaning all plans or regions should apply for specific second value. The following example lists valid and invalid configuration values:
-* `trial:eu` - valid, shared credentials will be used for the `trial` plan in the `eu` region,
-* `*:eu` - valid, shared credentials will be used for all plans in the `eu` region,
-* `trial:*` - valid, shared credentials will be used for the `trial` plan in all regions,
-* `*:eu;trial:eu` - valid, shared credentials will be used for all plans in the `eu` region and for the `trial` plan in the `eu` region, configuration can be duplicated
-* `trial:eu;trial:gcp` - valid, shared credentials will be used for trials plans but only in `eu` and `gcp` regions,
-* `eu:*` - invalid, plan must be specified in the first part of `<PLAN_ID>:<REGION_ID>` pair,
-* `*:*` - invalid, at least one of the values must be specified in the `<PLAN_ID>:<REGION_ID>` pair.
 
 ### Shared Credentials for `sap-converged-cloud` Plan
 
@@ -98,3 +83,35 @@ metadata:
     tenant-name: {TENANT_NAME}
     hyperscaler-type: "gcp_cf-sa30"
 ```
+
+## HAP Configuration
+
+<!-- selection algorithm -->
+When selecting a Secret for a given hyperscaler, KEB evaluates a set of rules to determine what secret bindings it should query for a given plan and region that SKR is provisioned in. The search looks for a secret bindings with `hyperscaler-type` label only (always used in the search) or additionally with one of or both `euAccess: true` and `shared: true` labels. 
+
+`hyperscaler-type` label is the one that does contain region information in the format `hyperscaler_type: <HYPERSCALER_NAME>[_<PLATFORM_REGION>][_<CLUSTER_REGION>]`, where both `_<PLATFORM_REGION>` and `_<CLUSTER_REGION>` are optional.
+
+The configuration is done by specifying a list in KEB helm values. There are four possible properties, with rules evaluated for given cluster, that can be set:
+* `hap.platformRegionRules` - if evaluated to true the `_<PLATFOR_REGION>` is appended to the `hyperscaler-type` label when searching, refered to as platform region based search,
+* `hap.clusterRegionRules` - if evaluated to true the `_<CLUSTER_REGION>` is appended to the `hyperscaler-type` label when searching, refered to as cluster region based search,
+* `hap.sharedRules` - if evaluated to true the `shared: true` label is used when searching, refered to as shared based search,
+* `hap.euAccessRules` - if evaluated to true the `shared: true` label is used when searching, refered to as euAccess based search.
+
+![alt text](image.png)
+
+<!-- rules format -->
+Each configuration consists of a list (The list entries are separated with semicolons) of plans that the rule applies to. Additionally, a plan can be extended with `:region` suffix that makes the rule evaluate to true only if a cluster is provisioned in the specified region.
+
+The property accepts a list of key value in the format `<PLAN_ID_1>:<REGION_ID_1>;<PLAN_ID_2>:<REGION_ID_2>`. Either plan or region (but never both) can be specified as wildcard `*` meaning all plans or regions should apply for specific second value. The following example lists valid and invalid configuration values:
+* `trial` - valid, rule will be evaluated to true for the `trial` plan in all regions,
+* `trial:*` - valid, rule will be evaluated to true for the `trial` plan in all regions,
+* `trial:eu` - valid, rule will be evaluated to true for the `trial` plan in the `eu` region,
+
+* `*:eu` - valid, rule will be evaluated to true for all plans in the `eu` region,
+* `eu:*` - invalid, plan must be specified in the first part of `<PLAN_ID>:<REGION_ID>` pair,
+* `*:*` - invalid, at least one of the values must be specified in the `<PLAN_ID>:<REGION_ID>` pair.
+
+* `*:eu;trial:eu` - valid, rule will be evaluated to true for all plans in the `eu` region and for the `trial` plan in the `eu` region, configuration can be duplicated
+* `trial:eu;trial:gcp` - valid, rule will be evaluated to true for trials plans but only in `eu` and `gcp` regions,
+
+<!-- TODO: rules validation -->
