@@ -146,12 +146,15 @@ func (cmd *AssertCommand) Run() error {
 			}
 		}
 		fmt.Println("All specified admins are found in cluster role bindings")
-	} else if cmd.btpManagerSecretExists { //
+	} else if cmd.btpManagerSecretExists {
 		kubeconfig, err := kcpClient.GetKubeconfig(cmd.instanceID)
 		if err != nil {
 			return fmt.Errorf("failed to get kubeconfig: %v", err)
 		}
-		cmd.checkBTPManagerSecret(kubeconfig)
+		err = cmd.checkBTPManagerSecret(kubeconfig)
+		if err != nil {
+			return err
+		}
 	} else if cmd.deleteBtpManagerSecret {
 		kubeconfig, err := kcpClient.GetKubeconfig(cmd.instanceID)
 		if err != nil {
@@ -197,7 +200,10 @@ func (cmd *AssertCommand) Run() error {
 			}
 			fmt.Println("Waiting for the secret to be reconciled...")
 		}
-		cmd.checkBTPManagerSecret(kubeconfig)
+		err = cmd.checkBTPManagerSecret(kubeconfig)
+		if err != nil {
+			return err
+		}
 		fmt.Println("BTP manager secret delete test passed")
 	} else if cmd.editBtpManagerSecret {
 		kubeconfig, err := kcpClient.GetKubeconfig(cmd.instanceID)
@@ -248,7 +254,10 @@ func (cmd *AssertCommand) Run() error {
 			}
 			fmt.Println("Waiting for the secret to be reconciled...")
 		}
-		cmd.checkBTPManagerSecret(kubeconfig)
+		err = cmd.checkBTPManagerSecret(kubeconfig)
+		if err != nil {
+			return err
+		}
 		fmt.Println("BTP manager secret update test passed")
 	}
 	return nil
