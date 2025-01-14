@@ -189,7 +189,8 @@ func (cmd *AssertCommand) Run() error {
 			return fmt.Errorf("while deleting secret from instace: %w", err)
 		}
 		fmt.Println("BTP manager secret deleted successfully")
-		for i := 0; i < 10; i++ {
+		retriesBeforeTimeout := 10
+		for i := 0; i < retriesBeforeTimeout; i++ {
 			time.Sleep(6 * time.Second)
 			err = k8sCli.List(context.Background(), secrets, listOpts...)
 			if err != nil {
@@ -198,7 +199,7 @@ func (cmd *AssertCommand) Run() error {
 			if len(secrets.Items) == 1 {
 				break
 			}
-			fmt.Println("Waiting for the secret to be reconciled...")
+			fmt.Printf("Waiting for the secret to be reconciled... (retry %d/%d)\n", i+1, retriesBeforeTimeout)
 		}
 		err = cmd.checkBTPManagerSecret(kubeconfig)
 		if err != nil {
@@ -243,7 +244,8 @@ func (cmd *AssertCommand) Run() error {
 			return fmt.Errorf("while updating secret from instace: %w", err)
 		}
 		fmt.Println("BTP manager secret updated successfully")
-		for i := 0; i < 100; i++ {
+		retriesBeforeTimeout := 100
+		for i := 0; i < retriesBeforeTimeout; i++ {
 			time.Sleep(6 * time.Second)
 			err = k8sCli.List(context.Background(), secrets, listOpts...)
 			if err != nil {
@@ -252,7 +254,7 @@ func (cmd *AssertCommand) Run() error {
 			if secrets.Items[0].ObjectMeta.Name == "sap-btp-manager" && secrets.Items[0].ObjectMeta.ResourceVersion != secret.ObjectMeta.ResourceVersion {
 				break
 			}
-			fmt.Println("Waiting for the secret to be reconciled...")
+			fmt.Printf("Waiting for the secret to be reconciled... (retry %d/%d)\n", i+1, retriesBeforeTimeout)
 		}
 		err = cmd.checkBTPManagerSecret(kubeconfig)
 		if err != nil {
