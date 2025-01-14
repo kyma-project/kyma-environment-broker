@@ -159,7 +159,7 @@ func (cmd *AssertCommand) Run() error {
 		}
 		restCfg, err := clientcmd.RESTConfigFromKubeConfig(kubeconfig)
 		if err != nil {
-			return fmt.Errorf("while creating rest config from kubeconfig: %w", err)
+			return fmt.Errorf("while creating REST config from kubeconfig: %w", err)
 		}
 		k8sCli, err := client.New(restCfg, client.Options{
 			Scheme: scheme.Scheme,
