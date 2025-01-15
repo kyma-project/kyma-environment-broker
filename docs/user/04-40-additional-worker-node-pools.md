@@ -87,6 +87,7 @@ See the following JSON example with the `additionalWorkerNodePools` object with 
 ```
 
 See the following JSON example, where the `additionalWorkerNodePools` object contains an empty list:
+
 ```json
 {
    "service_id" : "47c9dcbf-ff30-448e-ab36-d3bad66ba281",
