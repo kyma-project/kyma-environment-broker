@@ -33,6 +33,7 @@ type AssertCommand struct {
 	btpManagerSecretExists bool
 	editBtpManagerSecret   bool
 	deleteBtpManagerSecret bool
+	suspensionInProgress   bool
 }
 
 func NewAsertCmd() *cobra.Command {
@@ -59,6 +60,7 @@ func NewAsertCmd() *cobra.Command {
 	cobraCmd.Flags().BoolVarP(&cmd.btpManagerSecretExists, "btpManagerSecretExists", "b", false, "Checks if the BTP manager secret exists in the instance.")
 	cobraCmd.Flags().BoolVarP(&cmd.editBtpManagerSecret, "editBtpManagerSecret", "e", false, "Edits the BTP manager secret in the instance and checks if the secret is reconciled.")
 	cobraCmd.Flags().BoolVarP(&cmd.deleteBtpManagerSecret, "deleteBtpManagerSecret", "d", false, "Deletes the BTP manager secret in the instance and checks if the secret is reconciled.")
+	cobraCmd.Flags().BoolVarP(&cmd.suspensionInProgress, "suspensionInProgress", "s", false, "Checks if the suspension operation is in progress for the instance.")
 
 	return cobraCmd
 }
@@ -247,6 +249,36 @@ func (cmd *AssertCommand) Run() error {
 			return err
 		}
 		fmt.Println("BTP manager secret update test passed")
+	} else if cmd.suspensionInProgress {
+		retriesBeforeTimeout := 11
+		var operationID *string
+		for i := 0; i < retriesBeforeTimeout; i++ {
+			operationID, err = kcpClient.GetSuspensionOperationID(cmd.instanceID)
+			if err != nil {
+				return fmt.Errorf("failed to get suspension status: %v", err)
+			}
+			if *operationID != "" {
+				break
+			}
+			fmt.Printf("Waiting for the suspension operation to start... (retry %d/%d)\n", i+1, retriesBeforeTimeout)
+			time.Sleep(time.Minute)
+		}
+		if *operationID == "" {
+			return fmt.Errorf("suspension operation not found")
+		}
+		resp, err := brokerClient.GetOperation(cmd.instanceID, *operationID)
+		if err != nil {
+			return err
+		}
+		state, ok := resp["state"].(string)
+		if !ok {
+			return fmt.Errorf("state field not found in suspension operation response")
+		}
+		if state != "in progress" {
+			return fmt.Errorf("suspension operation status is not 'in progress': %s", state)
+		}
+		fmt.Println("Suspension operation is in progress")
+		fmt.Printf("Suspension operationID: %s\n", *operationID)
 	}
 	return nil
 }
@@ -277,8 +309,11 @@ func (cmd *AssertCommand) Validate() error {
 	if cmd.deleteBtpManagerSecret {
 		count++
 	}
+	if cmd.suspensionInProgress {
+		count++
+	}
 	if count != 1 {
-		return errors.New("you must use exactly one of machineType, clusterOIDCConfig, kubeconfigOIDCConfig, admins, btpManagerSecretExists, editBtpManagerSecret, or deleteBtpManagerSecret")
+		return errors.New("you must use exactly one of machineType, clusterOIDCConfig, kubeconfigOIDCConfig, admins, btpManagerSecretExists, editBtpManagerSecret, deleteBtpManagerSecret, or suspensionInProgress")
 	}
 	return nil
 }

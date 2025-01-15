@@ -136,6 +136,19 @@ func (c *KCPClient) GetKubeconfig(instanceID string) ([]byte, error) {
 	return kubeconfig, nil
 }
 
+func (c *KCPClient) GetSuspensionOperationID(instanceID string) (*string, error) {
+	args := []string{"rt", "-i", instanceID, "-o", "custom=:{.status.suspension.data[0].operationID}", "--ops"}
+	if clientSecret := os.Getenv("KCP_OIDC_CLIENT_SECRET"); clientSecret != "" {
+		args = append(args, "--config", "config.yaml")
+	}
+	output, err := exec.Command("kcp", args...).Output()
+	if err != nil {
+		return nil, fmt.Errorf("failed to get suspension operation ID: %w", err)
+	}
+	operationID := strings.TrimSpace(string(output))
+	return &operationID, nil
+}
+
 func getEnvOrThrow(key string) string {
 	value := os.Getenv(key)
 	if value == "" {
