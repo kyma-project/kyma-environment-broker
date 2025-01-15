@@ -106,7 +106,7 @@ See the following JSON example, where the `additionalWorkerNodePools` object con
 ```
 
 To update additional worker node pools, provide a list of objects with values for the mandatory properties. Without these values, a validation error occurs.
-The update operation overwrites the additional worker node pools with the list provided in the JSON format. See the following scenario:
+The update operation overwrites the additional worker node pools with the list provided in the JSON file. See the following scenario:
 
 1. An existing instance has the following additional worker node pools:
 
@@ -131,7 +131,7 @@ The update operation overwrites the additional worker node pools with the list p
 }
 ```
 
-2. A user sends an update request (HTTP PUT) with the following JSON in the payload:
+2. A user sends an update request (HTTP PUT) with the following JSON file in the payload:
 ```json
 {
   "service_id": "47c9dcbf-ff30-448e-ab36-d3bad66ba281",
@@ -155,7 +155,7 @@ The update operation overwrites the additional worker node pools with the list p
 }
 ```
 
-3. The additional worker node pools are updated to include the values of the `additionalWorkerNodePools` object from JSON provided in the update request:
+3. The additional worker node pools are updated to include the values of the `additionalWorkerNodePools` object from JSON file provided in the update request:
 ```json
 {
    "additionalWorkerNodePools": {
