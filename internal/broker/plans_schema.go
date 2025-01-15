@@ -495,8 +495,10 @@ func NewAdditionalWorkerNodePoolsSchema(machineTypesDisplay map[string]string, m
 							},
 							Properties: AdditionalWorkerNodePoolsListItemsProperties{
 								Name: Type{
-									Type:        "string",
-									MinLength:   1,
+									Type:      "string",
+									MinLength: 1,
+									// Allows for all alphanumeric characters and '-'
+									Pattern:     "^[a-zA-Z0-9-]*$",
 									Description: "Specifies the unique name of the additional worker node pool.",
 								},
 								MachineType: Type{
