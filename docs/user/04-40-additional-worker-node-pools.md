@@ -52,6 +52,7 @@ If you do not provide the `additionalWorkerNodePools` object in the update reque
 However, if you provide an empty list in the update request, all additional worker node pools are removed.
 
 See the following JSON example without the `additionalWorkerNodePools` object:
+
 ```json
 {
   "service_id" : "47c9dcbf-ff30-448e-ab36-d3bad66ba281",
