@@ -46,7 +46,8 @@ See the example:
    }"
 ```
 
-If you do not provide the `additionalWorkerNodePools` object in the provisioning request, or set `skipModification` property to `true`, no additional worker node pools will be created.
+If you do not provide the `additionalWorkerNodePools` object in the provisioning request or set the **skipModification** property to `true`, no additional worker node pools are created.
+
 If you do not provide the `additionalWorkerNodePools` object in the update request or set `skipModification` property to `true`, saved additional worker node pools stay untouched.
 However, if you provide an empty list in the update request, all additional worker node pools will be removed.
 
