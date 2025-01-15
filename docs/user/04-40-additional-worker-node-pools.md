@@ -6,7 +6,7 @@
 To create an SAP BTP, Kyma runtime with additional worker node pools, specify the `additionalWorkerNodePools` provisioning parameter.
 
 > [!NOTE]
-> `name`, `machineType`, `autoScalerMin` and `autoScalerMax` values are mandatory for additional worker node pool configuration.
+> **name**, **machineType**, **autoScalerMin**, and **autoScalerMax** values are mandatory for additional worker node pool configuration.
 
 See the example:
 
