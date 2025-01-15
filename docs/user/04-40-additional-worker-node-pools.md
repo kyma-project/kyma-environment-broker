@@ -109,6 +109,7 @@ To update additional worker node pools, provide a list of objects with values fo
 The update operation overwrites the additional worker node pools with the list provided in JSON. See the following scenario:
 
 1. An existing instance has the following additional worker node pools:
+
 ```json
 {
   "additionalWorkerNodePools": {
