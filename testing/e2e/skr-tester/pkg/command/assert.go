@@ -14,6 +14,7 @@ import (
 	"github.com/spf13/cobra"
 	v1 "k8s.io/api/core/v1"
 	rbacv1 "k8s.io/api/rbac/v1"
+	k8serrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/client-go/tools/clientcmd"
 	"k8s.io/kubectl/pkg/scheme"
 	ctrl "sigs.k8s.io/controller-runtime"
@@ -170,21 +171,12 @@ func (cmd *AssertCommand) Run() error {
 		if err != nil {
 			return fmt.Errorf("while creating k8s client: %w", err)
 		}
-		secrets := &v1.SecretList{}
-		listOpts := []client.ListOption{
-			client.InNamespace("kyma-system"),
-			client.MatchingFields{"metadata.name": "sap-btp-manager"},
+		secret := &v1.Secret{}
+		objKey := client.ObjectKey{Namespace: "kyma-system", Name: "sap-btp-manager"}
+		if err := k8sCli.Get(context.Background(), objKey, secret); err != nil {
+			return fmt.Errorf("failed to get secret: %w", err)
 		}
-		err = k8sCli.List(context.Background(), secrets, listOpts...)
-		if err != nil {
-			return fmt.Errorf("while getting secret from instance: %w", err)
-		}
-
-		if len(secrets.Items) != 1 {
-			return fmt.Errorf("found %d secrets but expected 1", len(secrets.Items))
-		}
-		secret := secrets.Items[0]
-		err = k8sCli.Delete(context.Background(), &secret)
+		err = k8sCli.Delete(context.Background(), secret)
 		if err != nil {
 			return fmt.Errorf("while deleting secret from instace: %w", err)
 		}
@@ -192,14 +184,17 @@ func (cmd *AssertCommand) Run() error {
 		retriesBeforeTimeout := 10
 		for i := 0; i < retriesBeforeTimeout; i++ {
 			time.Sleep(6 * time.Second)
-			err = k8sCli.List(context.Background(), secrets, listOpts...)
-			if err != nil {
-				return fmt.Errorf("while getting secret from instance: %w", err)
-			}
-			if len(secrets.Items) == 1 {
+			secret := &v1.Secret{}
+			objKey := client.ObjectKey{Namespace: "kyma-system", Name: "sap-btp-manager"}
+			if err := k8sCli.Get(context.Background(), objKey, secret); err != nil {
+				if k8serrors.IsNotFound(err) {
+					fmt.Printf("Waiting for the secret to be reconciled... (retry %d/%d)\n", i+1, retriesBeforeTimeout)
+					continue
+				}
+				return fmt.Errorf("failed to get secret: %w", err)
+			} else {
 				break
 			}
-			fmt.Printf("Waiting for the secret to be reconciled... (retry %d/%d)\n", i+1, retriesBeforeTimeout)
 		}
 		err = cmd.checkBTPManagerSecret(kubeconfig)
 		if err != nil {
@@ -221,37 +216,28 @@ func (cmd *AssertCommand) Run() error {
 		if err != nil {
 			return fmt.Errorf("while creating k8s client: %w", err)
 		}
-		secrets := &v1.SecretList{}
-		listOpts := []client.ListOption{
-			client.InNamespace("kyma-system"),
-			client.MatchingFields{"metadata.name": "sap-btp-manager"},
+		secret := &v1.Secret{}
+		objKey := client.ObjectKey{Namespace: "kyma-system", Name: "sap-btp-manager"}
+		if err := k8sCli.Get(context.Background(), objKey, secret); err != nil {
+			return fmt.Errorf("failed to get secret: %w", err)
 		}
-		err = k8sCli.List(context.Background(), secrets, listOpts...)
-		if err != nil {
-			return fmt.Errorf("while getting secret from instance: %w", err)
-		}
-
-		if len(secrets.Items) != 1 {
-			return fmt.Errorf("found %d secrets but expected 1", len(secrets.Items))
-		}
-		secret := secrets.Items[0]
 		secret.Data["clientid"] = []byte("new_client_id")
 		secret.Data["clientsecret"] = []byte("new_client_secret")
 		secret.Data["sm_url"] = []byte("new_url")
 		secret.Data["tokenurl"] = []byte("new_token_url")
-		err = k8sCli.Update(context.Background(), &secret)
+		err = k8sCli.Update(context.Background(), secret)
 		if err != nil {
 			return fmt.Errorf("while updating secret from instace: %w", err)
 		}
 		fmt.Println("BTP manager secret updated successfully")
 		retriesBeforeTimeout := 100
+		reconciledSecret := &v1.Secret{}
 		for i := 0; i < retriesBeforeTimeout; i++ {
 			time.Sleep(6 * time.Second)
-			err = k8sCli.List(context.Background(), secrets, listOpts...)
-			if err != nil {
-				return fmt.Errorf("while getting secret from instance: %w", err)
+			if err := k8sCli.Get(context.Background(), objKey, reconciledSecret); err != nil {
+				return fmt.Errorf("failed to get secret: %w", err)
 			}
-			if secrets.Items[0].ObjectMeta.Name == "sap-btp-manager" && secrets.Items[0].ObjectMeta.ResourceVersion != secret.ObjectMeta.ResourceVersion {
+			if reconciledSecret.ObjectMeta.Name == "sap-btp-manager" && reconciledSecret.ObjectMeta.ResourceVersion != secret.ObjectMeta.ResourceVersion {
 				break
 			}
 			fmt.Printf("Waiting for the secret to be reconciled... (retry %d/%d)\n", i+1, retriesBeforeTimeout)
@@ -308,20 +294,11 @@ func (cmd *AssertCommand) checkBTPManagerSecret(kubeconfig []byte) error {
 	if err != nil {
 		return fmt.Errorf("while creating k8s client: %w", err)
 	}
-	secrets := &v1.SecretList{}
-	listOpts := []client.ListOption{
-		client.InNamespace("kyma-system"),
-		client.MatchingFields{"metadata.name": "sap-btp-manager"},
+	secret := &v1.Secret{}
+	objKey := client.ObjectKey{Namespace: "kyma-system", Name: "sap-btp-manager"}
+	if err := k8sCli.Get(context.Background(), objKey, secret); err != nil {
+		return fmt.Errorf("failed to get secret: %w", err)
 	}
-	err = k8sCli.List(context.Background(), secrets, listOpts...)
-	if err != nil {
-		return fmt.Errorf("while getting secret from instance: %w", err)
-	}
-
-	if len(secrets.Items) != 1 {
-		return fmt.Errorf("found %d secrets but expected 1", len(secrets.Items))
-	}
-	secret := secrets.Items[0]
 	if secret.Labels["app.kubernetes.io/managed-by"] != "kcp-kyma-environment-broker" {
 		return fmt.Errorf("secret label 'app.kubernetes.io/managed-by' is not 'kcp-kyma-environment-broker'")
 	}
