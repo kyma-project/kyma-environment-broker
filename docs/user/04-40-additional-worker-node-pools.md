@@ -105,7 +105,7 @@ See the following JSON example, where the `additionalWorkerNodePools` object con
 }
 ```
 
-To update additional worker node pools, provide list of objects with values for the mandatory properties. Without these values, a validation error occurs.
+To update additional worker node pools, provide a list of objects with values for the mandatory properties. Without these values, a validation error occurs.
 The update operation overwrites the additional worker node pools with the list provided in JSON. See the following scenario:
 
 1. An existing instance has the following additional worker node pools:
