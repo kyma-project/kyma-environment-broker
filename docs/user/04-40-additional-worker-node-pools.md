@@ -49,7 +49,7 @@ See the example:
 If you do not provide the `additionalWorkerNodePools` object in the provisioning request or set the **skipModification** property to `true`, no additional worker node pools are created.
 
 If you do not provide the `additionalWorkerNodePools` object in the update request or set the **skipModification** property to `true`, the saved additional worker node pools stay untouched.
-However, if you provide an empty list in the update request, all additional worker node pools will be removed.
+However, if you provide an empty list in the update request, all additional worker node pools are removed.
 
 See the following JSON example without the `additionalWorkerNodePools` object:
 ```json
