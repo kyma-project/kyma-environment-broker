@@ -5,26 +5,34 @@ import (
 	"errors"
 	"fmt"
 	"regexp"
+	"time"
 
 	broker "skr-tester/pkg/broker"
 	kcp "skr-tester/pkg/kcp"
 	"skr-tester/pkg/logger"
 
 	"github.com/spf13/cobra"
+	v1 "k8s.io/api/core/v1"
 	rbacv1 "k8s.io/api/rbac/v1"
+	k8serrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/client-go/tools/clientcmd"
 	"k8s.io/kubectl/pkg/scheme"
+	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
+	"sigs.k8s.io/controller-runtime/pkg/log/zap"
 )
 
 type AssertCommand struct {
-	cobraCmd             *cobra.Command
-	log                  logger.Logger
-	instanceID           string
-	machineType          string
-	clusterOIDCConfig    string
-	kubeconfigOIDCConfig []string
-	admins               []string
+	cobraCmd               *cobra.Command
+	log                    logger.Logger
+	instanceID             string
+	machineType            string
+	clusterOIDCConfig      string
+	kubeconfigOIDCConfig   []string
+	admins                 []string
+	btpManagerSecretExists bool
+	editBtpManagerSecret   bool
+	deleteBtpManagerSecret bool
 }
 
 func NewAsertCmd() *cobra.Command {
@@ -48,12 +56,16 @@ func NewAsertCmd() *cobra.Command {
 	cobraCmd.Flags().StringVarP(&cmd.clusterOIDCConfig, "clusterOIDCConfig", "o", "", "clusterOIDCConfig of the specific instance.")
 	cobraCmd.Flags().StringSliceVarP(&cmd.kubeconfigOIDCConfig, "kubeconfigOIDCConfig", "k", nil, "kubeconfigOIDCConfig of the specific instance. Pass the issuerURL and clientID in the format issuerURL,clientID")
 	cobraCmd.Flags().StringSliceVarP(&cmd.admins, "admins", "a", nil, "Admins of the specific instance.")
+	cobraCmd.Flags().BoolVarP(&cmd.btpManagerSecretExists, "btpManagerSecretExists", "b", false, "Checks if the BTP manager secret exists in the instance.")
+	cobraCmd.Flags().BoolVarP(&cmd.editBtpManagerSecret, "editBtpManagerSecret", "e", false, "Edits the BTP manager secret in the instance and checks if the secret is reconciled.")
+	cobraCmd.Flags().BoolVarP(&cmd.deleteBtpManagerSecret, "deleteBtpManagerSecret", "d", false, "Deletes the BTP manager secret in the instance and checks if the secret is reconciled.")
 
 	return cobraCmd
 }
 
 func (cmd *AssertCommand) Run() error {
 	cmd.log = logger.New()
+	ctrl.SetLogger(zap.New())
 	brokerClient := broker.NewBrokerClient(broker.NewBrokerConfig())
 	kcpClient, err := kcp.NewKCPClient()
 	if err != nil {
@@ -135,6 +147,106 @@ func (cmd *AssertCommand) Run() error {
 			}
 		}
 		fmt.Println("All specified admins are found in cluster role bindings")
+	} else if cmd.btpManagerSecretExists {
+		kubeconfig, err := kcpClient.GetKubeconfig(cmd.instanceID)
+		if err != nil {
+			return fmt.Errorf("failed to get kubeconfig: %v", err)
+		}
+		err = cmd.checkBTPManagerSecret(kubeconfig)
+		if err != nil {
+			return err
+		}
+	} else if cmd.deleteBtpManagerSecret {
+		kubeconfig, err := kcpClient.GetKubeconfig(cmd.instanceID)
+		if err != nil {
+			return fmt.Errorf("failed to get kubeconfig: %v", err)
+		}
+		restCfg, err := clientcmd.RESTConfigFromKubeConfig(kubeconfig)
+		if err != nil {
+			return fmt.Errorf("while creating REST config from kubeconfig: %w", err)
+		}
+		k8sCli, err := client.New(restCfg, client.Options{
+			Scheme: scheme.Scheme,
+		})
+		if err != nil {
+			return fmt.Errorf("while creating k8s client: %w", err)
+		}
+		secret := &v1.Secret{}
+		objKey := client.ObjectKey{Namespace: "kyma-system", Name: "sap-btp-manager"}
+		if err := k8sCli.Get(context.Background(), objKey, secret); err != nil {
+			return fmt.Errorf("failed to get secret: %w", err)
+		}
+		err = k8sCli.Delete(context.Background(), secret)
+		if err != nil {
+			return fmt.Errorf("while deleting secret from instace: %w", err)
+		}
+		fmt.Println("BTP manager secret deleted successfully")
+		retriesBeforeTimeout := 10
+		for i := 0; i < retriesBeforeTimeout; i++ {
+			time.Sleep(6 * time.Second)
+			secret := &v1.Secret{}
+			objKey := client.ObjectKey{Namespace: "kyma-system", Name: "sap-btp-manager"}
+			if err := k8sCli.Get(context.Background(), objKey, secret); err != nil {
+				if k8serrors.IsNotFound(err) {
+					fmt.Printf("Waiting for the secret to be reconciled... (retry %d/%d)\n", i+1, retriesBeforeTimeout)
+					continue
+				}
+				return fmt.Errorf("failed to get secret: %w", err)
+			} else {
+				break
+			}
+		}
+		err = cmd.checkBTPManagerSecret(kubeconfig)
+		if err != nil {
+			return err
+		}
+		fmt.Println("BTP manager secret delete test passed")
+	} else if cmd.editBtpManagerSecret {
+		kubeconfig, err := kcpClient.GetKubeconfig(cmd.instanceID)
+		if err != nil {
+			return fmt.Errorf("failed to get kubeconfig: %v", err)
+		}
+		restCfg, err := clientcmd.RESTConfigFromKubeConfig(kubeconfig)
+		if err != nil {
+			return fmt.Errorf("while creating REST config from kubeconfig: %w", err)
+		}
+		k8sCli, err := client.New(restCfg, client.Options{
+			Scheme: scheme.Scheme,
+		})
+		if err != nil {
+			return fmt.Errorf("while creating k8s client: %w", err)
+		}
+		secret := &v1.Secret{}
+		objKey := client.ObjectKey{Namespace: "kyma-system", Name: "sap-btp-manager"}
+		if err := k8sCli.Get(context.Background(), objKey, secret); err != nil {
+			return fmt.Errorf("failed to get secret: %w", err)
+		}
+		secret.Data["clientid"] = []byte("new_client_id")
+		secret.Data["clientsecret"] = []byte("new_client_secret")
+		secret.Data["sm_url"] = []byte("new_url")
+		secret.Data["tokenurl"] = []byte("new_token_url")
+		err = k8sCli.Update(context.Background(), secret)
+		if err != nil {
+			return fmt.Errorf("while updating secret from instace: %w", err)
+		}
+		fmt.Println("BTP manager secret updated successfully")
+		retriesBeforeTimeout := 100
+		reconciledSecret := &v1.Secret{}
+		for i := 0; i < retriesBeforeTimeout; i++ {
+			time.Sleep(6 * time.Second)
+			if err := k8sCli.Get(context.Background(), objKey, reconciledSecret); err != nil {
+				return fmt.Errorf("failed to get secret: %w", err)
+			}
+			if reconciledSecret.ObjectMeta.Name == "sap-btp-manager" && reconciledSecret.ObjectMeta.ResourceVersion != secret.ObjectMeta.ResourceVersion {
+				break
+			}
+			fmt.Printf("Waiting for the secret to be reconciled... (retry %d/%d)\n", i+1, retriesBeforeTimeout)
+		}
+		err = cmd.checkBTPManagerSecret(kubeconfig)
+		if err != nil {
+			return err
+		}
+		fmt.Println("BTP manager secret update test passed")
 	}
 	return nil
 }
@@ -156,8 +268,61 @@ func (cmd *AssertCommand) Validate() error {
 	if cmd.admins != nil {
 		count++
 	}
-	if count != 1 {
-		return errors.New("only one of machineType, clusterOIDCConfig, kubeconfigOIDCConfig, or admins must be specified")
+	if cmd.btpManagerSecretExists {
+		count++
 	}
+	if cmd.editBtpManagerSecret {
+		count++
+	}
+	if cmd.deleteBtpManagerSecret {
+		count++
+	}
+	if count != 1 {
+		return errors.New("you must use exactly one of machineType, clusterOIDCConfig, kubeconfigOIDCConfig, admins, btpManagerSecretExists, editBtpManagerSecret, or deleteBtpManagerSecret")
+	}
+	return nil
+}
+
+func (cmd *AssertCommand) checkBTPManagerSecret(kubeconfig []byte) error {
+	restCfg, err := clientcmd.RESTConfigFromKubeConfig(kubeconfig)
+	if err != nil {
+		return fmt.Errorf("while creating rest config from kubeconfig: %w", err)
+	}
+	k8sCli, err := client.New(restCfg, client.Options{
+		Scheme: scheme.Scheme,
+	})
+	if err != nil {
+		return fmt.Errorf("while creating k8s client: %w", err)
+	}
+	secret := &v1.Secret{}
+	objKey := client.ObjectKey{Namespace: "kyma-system", Name: "sap-btp-manager"}
+	if err := k8sCli.Get(context.Background(), objKey, secret); err != nil {
+		return fmt.Errorf("failed to get secret: %w", err)
+	}
+	if secret.Labels["app.kubernetes.io/managed-by"] != "kcp-kyma-environment-broker" {
+		return fmt.Errorf("secret label 'app.kubernetes.io/managed-by' is not 'kcp-kyma-environment-broker'")
+	}
+	fmt.Println("BTP manager secret exists")
+
+	requiredKeys := []string{"clientid", "clientsecret", "sm_url", "tokenurl", "cluster_id"}
+	for _, key := range requiredKeys {
+		if _, exists := secret.Data[key]; !exists {
+			return fmt.Errorf("secret data key %s not found", key)
+		}
+	}
+	fmt.Println("Required keys exist in BTP manager secret")
+
+	expectedCreds := map[string]string{
+		"clientid":     "dummy_client_id",
+		"clientsecret": "dummy_client_secret",
+		"sm_url":       "dummy_url",
+		"tokenurl":     "dummy_token_url",
+	}
+	for key, expectedValue := range expectedCreds {
+		if actualValue, exists := secret.Data[key]; !exists || string(actualValue) != expectedValue {
+			return fmt.Errorf("secret data key %s does not have the expected value: expected %s, got %s", key, expectedValue, string(actualValue))
+		}
+	}
+	fmt.Println("Required keys have the expected values in BTP manager secret")
 	return nil
 }
