@@ -110,7 +110,7 @@ jobs:
       - name: Create PR if needed
         working-directory: management-plane-charts
         env:
-          MANAGEMENT_PLANE_CHARTS_REPO_URL: "https://${{ vars.GH_TOOLS_HOST }}/kyma/${{ vars.MP_CHARTS_REPO_NAME }}"
+          MANAGEMENT_PLANE_CHARTS_REPO_URL: "https://${{ varqs.GH_TOOLS_HOST }}/kyma/${{ vars.MP_CHARTS_REPO_NAME }}"
           # needed by gh cli for GitHub enterprise
           GH_HOST: ${{ vars.GH_TOOLS_HOST }}
         run: |
@@ -120,4 +120,4 @@ jobs:
               echo "PR already exists, no need to create new one"
               exit 0
           fi
-          gh pr create -B chart/keb-sap --title "Bump keb to ${TAG}" --fill --body "${{env.KEB_RELEASES_URL }}/${TAG}"
+          gh pr create -B chart/keb-sap -H ${{ vars.GIT_USER_NAME }}:${BRANCH_NAME} -R https://${{ vars.GH_TOOLS_HOST }}/kyma/${{ vars.MP_CHARTS_REPO_NAME }}/ --title "Bump keb to ${TAG}" --fill --body "${{env.KEB_RELEASES_URL }}/${TAG}"
