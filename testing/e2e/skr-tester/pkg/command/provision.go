@@ -3,6 +3,7 @@ package command
 import (
 	"errors"
 	"fmt"
+	"strings"
 
 	broker "skr-tester/pkg/broker"
 	"skr-tester/pkg/logger"
@@ -12,10 +13,13 @@ import (
 )
 
 type ProvisionCommand struct {
-	cobraCmd *cobra.Command
-	log      logger.Logger
-	planID   string
-	region   string
+	cobraCmd      *cobra.Command
+	log           logger.Logger
+	planID        string
+	region        string
+	overlapIP     bool
+	invalidIP     bool
+	validCustomIP bool
 }
 
 func NewProvisionCmd() *cobra.Command {
@@ -34,6 +38,9 @@ func NewProvisionCmd() *cobra.Command {
 
 	cobraCmd.Flags().StringVarP(&cmd.planID, "planID", "p", "", "PlanID of the specific instance.")
 	cobraCmd.Flags().StringVarP(&cmd.region, "region", "r", "", "Region of the specific instance.")
+	cobraCmd.Flags().BoolVarP(&cmd.overlapIP, "overlapIP", "o", false, "Try to provision with overlapping restricted IP range.")
+	cobraCmd.Flags().BoolVarP(&cmd.invalidIP, "invalidIP", "i", false, "Try to provision with invalid IP range.")
+	cobraCmd.Flags().BoolVarP(&cmd.validCustomIP, "validCustomIP", "v", false, "Try to provision with valid custom IP range.")
 
 	return cobraCmd
 }
@@ -47,22 +54,49 @@ func (cmd *ProvisionCommand) Run() error {
 		"smURL":        "dummy_url",
 		"url":          "dummy_token_url",
 	}
+	customParams := map[string]interface{}{}
+	if cmd.overlapIP {
+		customParams = map[string]interface{}{
+			"networking": map[string]interface{}{
+				"nodes": "10.242.0.0/22",
+			},
+		}
+	} else if cmd.invalidIP {
+		customParams = map[string]interface{}{
+			"networking": map[string]interface{}{
+				"nodes": "333.242.0.0/22",
+			},
+		}
+	} else if cmd.validCustomIP {
+		customParams = map[string]interface{}{
+			"networking": map[string]interface{}{
+				"nodes": "10.253.0.0/21",
+			},
+		}
+	}
 	instanceID := uuid.New().String()
 	fmt.Printf("Instance ID: %s\n", instanceID)
-	resp, err := brokerClient.ProvisionInstance(instanceID, cmd.planID, cmd.region, dummyCreds)
+	resp, err := brokerClient.ProvisionInstance(instanceID, cmd.planID, cmd.region, dummyCreds, customParams)
 	if err != nil {
-		fmt.Printf("Error provisioning instance: %v\n", err)
-	} else {
-		fmt.Printf("Provision operationID: %s\n", resp["operation"].(string))
+		if cmd.overlapIP && strings.Contains(fmt.Sprintf("%v", resp), "overlap") && strings.Contains(fmt.Sprintf("%v", err), "400") {
+			fmt.Println("Provisioning failed due to overlapping IP range, which was expected.")
+			return nil
+		} else if cmd.invalidIP && strings.Contains(fmt.Sprintf("%v", resp), "invalid CIDR address") && strings.Contains(fmt.Sprintf("%v", err), "400") {
+			fmt.Println("Provisioning failed due to invalid CIDR address, which was expected.")
+			return nil
+		}
+		return err
 	}
-
+	fmt.Printf("Provision operationID: %s\n", resp["operation"].(string))
 	return nil
 }
 
 func (cmd *ProvisionCommand) Validate() error {
-	if cmd.planID != "" && cmd.region != "" {
-		return nil
-	} else {
+	if cmd.planID == "" || cmd.region == "" {
 		return errors.New("you must specify the planID and region")
 	}
+	if cmd.overlapIP && cmd.invalidIP {
+		return errors.New("you can only set one of overlapIP or invalidIP")
+	}
+	return nil
 }
