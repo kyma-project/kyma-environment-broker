@@ -457,7 +457,7 @@ func TestProvisioning_NetworkingParametersForAWS(t *testing.T) {
 					"name": "test",
 					"region": "eu-central-1",
 					"networking": {
-						"nodes": "192.168.48.0/20"
+						"nodes": "192.168.110.0/22"
 					}
 				}
 			}

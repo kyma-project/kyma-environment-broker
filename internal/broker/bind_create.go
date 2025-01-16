@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"log/slog"
+	"math/rand"
 	"net/http"
 	"strings"
 	"time"
@@ -99,6 +100,10 @@ func (b *BindEndpoint) bind(ctx context.Context, instanceID, bindingID string, d
 	b.log.Info(fmt.Sprintf("Bind parameters: %s", string(details.RawParameters)))
 	b.log.Info(fmt.Sprintf("Bind context: %s", string(details.RawContext)))
 	b.log.Info(fmt.Sprintf("Bind asyncAllowed: %v", asyncAllowed))
+
+	if rand.Int31n(100) > 8 {
+		return domain.Binding{}, apiresponses.NewFailureResponse(fmt.Errorf("Testing binding failure (dedicated KEB build)"), http.StatusInternalServerError, fmt.Sprintf("Testing binding failure (dedicated KEB build)"))
+	}
 
 	if !b.config.Enabled {
 		return domain.Binding{}, fmt.Errorf("not supported")
