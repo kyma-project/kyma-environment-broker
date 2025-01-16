@@ -505,7 +505,8 @@ func TestCreateRuntimeResourceStep_Defaults_AWS_MultiZoneWithNetworking_ActualCr
 	kimConfig := fixKimConfig("aws", false)
 
 	cli := getClientForTests(t)
-	inputConfig := input.Config{MultiZoneCluster: true, DefaultGardenerShootPurpose: provider.PurposeProduction}
+	inputConfig := input.Config{MultiZoneCluster: true, DefaultGardenerShootPurpose: provider.PurposeProduction, ControlPlaneFailureTolerance: "any-string"}
+
 	step := NewCreateRuntimeResourceStep(memoryStorage.Operations(), memoryStorage.Instances(), cli, kimConfig, inputConfig, nil, false, defaultOIDSConfig)
 
 	// when
@@ -539,6 +540,8 @@ func TestCreateRuntimeResourceStep_Defaults_AWS_MultiZoneWithNetworking_ActualCr
 		Type: ptr.String("calico"),
 	}, runtime.Spec.Shoot.Networking)
 
+	assert.Equal(t, "any-string", string(runtime.Spec.Shoot.ControlPlane.HighAvailability.FailureTolerance.Type))
+
 	_, err = memoryStorage.Instances().GetByID(operation.InstanceID)
 	assert.NoError(t, err)
 }
@@ -555,7 +558,7 @@ func TestCreateRuntimeResourceStep_Defaults_AWS_MultiZone_ActualCreation(t *test
 	kimConfig := fixKimConfig("aws", false)
 
 	cli := getClientForTests(t)
-	inputConfig := input.Config{MultiZoneCluster: true, DefaultGardenerShootPurpose: provider.PurposeProduction}
+	inputConfig := input.Config{MultiZoneCluster: true, DefaultGardenerShootPurpose: provider.PurposeProduction, ControlPlaneFailureTolerance: "any-string"}
 	step := NewCreateRuntimeResourceStep(memoryStorage.Operations(), memoryStorage.Instances(), cli, kimConfig, inputConfig, nil, false, defaultOIDSConfig)
 
 	// when
@@ -581,6 +584,7 @@ func TestCreateRuntimeResourceStep_Defaults_AWS_MultiZone_ActualCreation(t *test
 	assert.Equal(t, "eu-west-2", runtime.Spec.Shoot.Region)
 	assert.Equal(t, "production", string(runtime.Spec.Shoot.Purpose))
 	assertWorkers(t, runtime.Spec.Shoot.Provider.Workers, "m6i.large", 20, 3, 3, 0, 3, []string{"eu-west-2a", "eu-west-2b", "eu-west-2c"})
+	assert.Equal(t, "any-string", string(runtime.Spec.Shoot.ControlPlane.HighAvailability.FailureTolerance.Type))
 
 	_, err = memoryStorage.Instances().GetByID(operation.InstanceID)
 	assert.NoError(t, err)
@@ -598,7 +602,7 @@ func TestCreateRuntimeResourceStep_Defaults_Preview_SingleZone_ActualCreation(t 
 	kimConfig := fixKimConfig("preview", false)
 
 	cli := getClientForTests(t)
-	inputConfig := input.Config{MultiZoneCluster: false, DefaultGardenerShootPurpose: provider.PurposeProduction}
+	inputConfig := input.Config{MultiZoneCluster: false, DefaultGardenerShootPurpose: provider.PurposeProduction, ControlPlaneFailureTolerance: "zone"}
 	step := NewCreateRuntimeResourceStep(memoryStorage.Operations(), memoryStorage.Instances(), cli, kimConfig, inputConfig, nil, false, defaultOIDSConfig)
 
 	// when
@@ -625,6 +629,8 @@ func TestCreateRuntimeResourceStep_Defaults_Preview_SingleZone_ActualCreation(t 
 	assert.Equal(t, "production", string(runtime.Spec.Shoot.Purpose))
 	assertWorkers(t, runtime.Spec.Shoot.Provider.Workers, "m6i.large", 20, 3, 1, 0, 1, []string{"eu-west-2a", "eu-west-2b", "eu-west-2c"})
 
+	assert.Equal(t, "zone", string(runtime.Spec.Shoot.ControlPlane.HighAvailability.FailureTolerance.Type))
+
 	_, err = memoryStorage.Instances().GetByID(operation.InstanceID)
 	assert.NoError(t, err)
 
@@ -642,7 +648,7 @@ func TestCreateRuntimeResourceStep_Defaults_Preview_SingleZone_ActualCreation_Wi
 	kimConfig := fixKimConfig("preview", false)
 
 	cli := getClientForTests(t)
-	inputConfig := input.Config{MultiZoneCluster: false, DefaultGardenerShootPurpose: provider.PurposeProduction}
+	inputConfig := input.Config{MultiZoneCluster: false, DefaultGardenerShootPurpose: provider.PurposeProduction, ControlPlaneFailureTolerance: "zone"}
 	step := NewCreateRuntimeResourceStep(memoryStorage.Operations(), memoryStorage.Instances(), cli, kimConfig, inputConfig, nil, false, defaultOIDSConfig)
 
 	// when
@@ -689,6 +695,8 @@ func TestCreateRuntimeResourceStep_Defaults_Preview_SingleZone_ActualCreation_Wi
 	assert.Equal(t, "production", string(runtime.Spec.Shoot.Purpose))
 	assertWorkers(t, runtime.Spec.Shoot.Provider.Workers, "m6i.large", 20, 3, 1, 0, 1, []string{"eu-west-2a", "eu-west-2b", "eu-west-2c"})
 
+	assert.Equal(t, "zone", string(runtime.Spec.Shoot.ControlPlane.HighAvailability.FailureTolerance.Type))
+
 	_, err = memoryStorage.Instances().GetByID(operation.InstanceID)
 	assert.NoError(t, err)
 
@@ -718,7 +726,7 @@ func TestCreateRuntimeResourceStep_SapConvergedCloud(t *testing.T) {
 			kimConfig := fixKimConfig("sap-converged-cloud", false)
 
 			cli := getClientForTests(t)
-			inputConfig := input.Config{MultiZoneCluster: testCase.expectedZonesCount > 1}
+			inputConfig := input.Config{MultiZoneCluster: testCase.expectedZonesCount > 1, ControlPlaneFailureTolerance: "zone"}
 			step := NewCreateRuntimeResourceStep(memoryStorage.Operations(), memoryStorage.Instances(), cli, kimConfig, inputConfig, nil, false, defaultOIDSConfig)
 
 			// when
@@ -740,6 +748,8 @@ func TestCreateRuntimeResourceStep_SapConvergedCloud(t *testing.T) {
 			assert.Equal(t, testCase.expectedProvider, runtime.Spec.Shoot.Provider.Type)
 			assert.Nil(t, runtime.Spec.Shoot.Provider.Workers[0].Volume)
 			assertWorkers(t, runtime.Spec.Shoot.Provider.Workers, testCase.expectedMachineType, 20, 3, testCase.expectedZonesCount, 0, testCase.expectedZonesCount, testCase.possibleZones)
+
+			assert.Equal(t, "zone", string(runtime.Spec.Shoot.ControlPlane.HighAvailability.FailureTolerance.Type))
 
 		})
 	}
@@ -790,6 +800,7 @@ func TestCreateRuntimeResourceStep_Defaults_Freemium(t *testing.T) {
 			assert.Equal(t, testCase.expectedProvider, runtime.Spec.Shoot.Provider.Type)
 			assertWorkers(t, runtime.Spec.Shoot.Provider.Workers, testCase.expectedMachineType, 1, 1, 1, 0, 1, testCase.possibleZones)
 
+			assert.Nil(t, runtime.Spec.Shoot.ControlPlane.HighAvailability)
 		})
 	}
 }
