@@ -18,6 +18,7 @@ import (
 	imv1 "github.com/kyma-project/infrastructure-manager/api/v1"
 
 	"github.com/kyma-project/kyma-environment-broker/internal/expiration"
+	"github.com/kyma-project/kyma-environment-broker/internal/hap"
 	"github.com/kyma-project/kyma-environment-broker/internal/metricsv2"
 	"github.com/kyma-project/kyma-environment-broker/internal/whitelist"
 
@@ -142,6 +143,7 @@ type Config struct {
 	Events events.Config
 
 	MetricsV2 metricsv2.Config
+	Hap       hap.Config
 
 	Provisioning    process.StagedManagerConfiguration
 	Deprovisioning  process.StagedManagerConfiguration

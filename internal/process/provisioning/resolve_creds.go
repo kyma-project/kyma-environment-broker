@@ -23,12 +23,14 @@ type ResolveCredentialsStep struct {
 	accountProvider  hyperscaler.AccountProvider
 	opStorage        storage.Operations
 	tenant           string
+	hapConfig        *hap.Config
 }
 
-func NewResolveCredentialsStep(os storage.Operations, accountProvider hyperscaler.AccountProvider) *ResolveCredentialsStep {
+func NewResolveCredentialsStep(os storage.Operations, accountProvider hyperscaler.AccountProvider, hapConfig hap.Config) *ResolveCredentialsStep {
 	step := &ResolveCredentialsStep{
 		opStorage:       os,
 		accountProvider: accountProvider,
+		hapConfig:       &hapConfig,
 	}
 	step.operationManager = process.NewOperationManager(os, step.Name(), kebError.AccountPoolDependency)
 	return step
