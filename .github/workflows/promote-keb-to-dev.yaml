@@ -110,7 +110,7 @@ jobs:
       - name: Create PR if needed
         working-directory: management-plane-charts
         env:
-          MANAGEMENT_PLANE_CHARTS_REPO_URL: "https://${{ varqs.GH_TOOLS_HOST }}/kyma/${{ vars.MP_CHARTS_REPO_NAME }}"
+          MANAGEMENT_PLANE_CHARTS_REPO_URL: "https://${{ vars.GH_TOOLS_HOST }}/kyma/${{ vars.MP_CHARTS_REPO_NAME }}"
           # needed by gh cli for GitHub enterprise
           GH_HOST: ${{ vars.GH_TOOLS_HOST }}
         run: |
