@@ -92,7 +92,7 @@ jobs:
       - name: Check changes
         working-directory: management-plane-charts
         run: |
-          changes=$(git diff --shortstat)
+          changes=$(git diff --ignore-space-change --shortstat)
           echo "$changes"
           if [[ "$changes" != *"3 insertions(+), 3 deletions(-)"* ]]; then
             echo "Expected 3 insertions and 3 deletions, but found different changes."
