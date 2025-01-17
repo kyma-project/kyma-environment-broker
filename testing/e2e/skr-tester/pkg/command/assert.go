@@ -266,7 +266,7 @@ func (cmd *AssertCommand) Run() error {
 		if *operationID == "" {
 			return fmt.Errorf("suspension operation not found")
 		}
-		resp, err := brokerClient.GetOperation(cmd.instanceID, *operationID)
+		resp, _, err := brokerClient.GetOperation(cmd.instanceID, *operationID)
 		if err != nil {
 			return err
 		}
