@@ -72,232 +72,272 @@ func NewBindingCmd() *cobra.Command {
 func (cmd *BindingCommand) Run() error {
 	cmd.log = logger.New()
 	brokerClient := broker.NewBrokerClient(broker.NewBrokerConfig())
+
 	if cmd.create {
-		bindingID := uuid.New().String()
-		_, statusCode, err := brokerClient.CreateBinding(cmd.instanceID, bindingID, cmd.expirationSeconds)
-		if err != nil {
-			return fmt.Errorf("error creating binding: %v", err)
-		}
-		if *statusCode != http.StatusCreated {
-			return fmt.Errorf("error creating binding: received status code %d, expected %d", *statusCode, http.StatusCreated)
-		}
-
-		fmt.Printf("Binding with ID %s created successfully.\n", bindingID)
+		return cmd.createBinding(brokerClient)
 	} else if cmd.getByID != "" {
-		binding, statusCode, err := brokerClient.GetBinding(cmd.instanceID, cmd.getByID)
-		if err != nil {
-			return fmt.Errorf("error getting binding: %v", err)
-		}
-		if *statusCode != http.StatusOK {
-			return fmt.Errorf("error getting binding: received status code %d, expected %d", *statusCode, http.StatusOK)
-		}
-
-		fmt.Printf("Binding details: %v\n", binding)
+		return cmd.getBinding(brokerClient)
 	} else if cmd.checkKubeconfigValidity {
-		bindingID := uuid.New().String()
-		resp, _, err := brokerClient.CreateBinding(cmd.instanceID, bindingID, cmd.expirationSeconds)
-		if err != nil {
-			return fmt.Errorf("error creating binding: %v", err)
-		}
-		kubeconfig, ok := resp["credentials"].(map[string]interface{})["kubeconfig"].(string)
-		if !ok {
-			return errors.New("failed to parse kubeconfig from binding credentials")
-		}
-		restCfg, err := clientcmd.RESTConfigFromKubeConfig([]byte(kubeconfig))
-		if err != nil {
-			return fmt.Errorf("while creating rest config from kubeconfig: %w", err)
-		}
-		k8sCli, err := client.New(restCfg, client.Options{
-			Scheme: scheme.Scheme,
-		})
-		if err != nil {
-			return fmt.Errorf("while creating k8s client: %w", err)
-		}
-		secret := &v1.Secret{}
-		objKey := client.ObjectKey{Namespace: "kyma-system", Name: "sap-btp-manager"}
-		if err := k8sCli.Get(context.Background(), objKey, secret); err != nil {
-			return fmt.Errorf("failed to get secret: %w", err)
-		}
-		fmt.Printf("Secret data: %v\n", secret.Data)
-		fmt.Println("Kubeconfig received from create binding response is valid.")
-
-		binding, _, err := brokerClient.GetBinding(cmd.instanceID, bindingID)
-		if err != nil {
-			return fmt.Errorf("error getting binding: %v", err)
-		}
-		kubeconfig, ok = binding["credentials"].(map[string]interface{})["kubeconfig"].(string)
-		if !ok {
-			return errors.New("failed to parse kubeconfig from binding credentials")
-		}
-		restCfg, err = clientcmd.RESTConfigFromKubeConfig([]byte(kubeconfig))
-		if err != nil {
-			return fmt.Errorf("while creating rest config from kubeconfig: %w", err)
-		}
-		k8sCli, err = client.New(restCfg, client.Options{
-			Scheme: scheme.Scheme,
-		})
-		if err != nil {
-			return fmt.Errorf("while creating k8s client: %w", err)
-		}
-		secret = &v1.Secret{}
-		objKey = client.ObjectKey{Namespace: "kyma-system", Name: "sap-btp-manager"}
-		if err := k8sCli.Get(context.Background(), objKey, secret); err != nil {
-			return fmt.Errorf("failed to get secret: %w", err)
-		}
-		fmt.Printf("Secret data: %v\n", secret.Data)
-		fmt.Println("Kubeconfig received from get binding is valid.")
+		return cmd.checkKubeconfig(brokerClient)
 	} else if cmd.deleteByID != "" {
-		_, statusCode, err := brokerClient.DeleteBinding(cmd.instanceID, cmd.deleteByID)
-		if err != nil {
-			return fmt.Errorf("error deleting binding: %v", err)
-		}
-		if *statusCode != http.StatusOK {
-			return fmt.Errorf("error deleting binding: received status code %d, expected %d", *statusCode, http.StatusOK)
-		}
-
-		fmt.Printf("Binding with ID %s deleted successfully.\n", cmd.deleteByID)
+		return cmd.deleteBinding(brokerClient)
 	} else if cmd.deleteNonExistingByID != "" {
-		_, statusCode, err := brokerClient.DeleteBinding(cmd.instanceID, cmd.deleteNonExistingByID)
-		if err != nil {
-			if *statusCode != http.StatusGone {
-				return fmt.Errorf("error deleting binding: received status code %d, expected %d, error: %v", *statusCode, http.StatusGone, err)
-			}
-		} else {
-			return fmt.Errorf("expected error for deleting non-existing binding, but got nil")
-		}
-		fmt.Println("Attempted to delete a non-existing binding and received the expected status code.")
+		return cmd.deleteNonExistingBinding(brokerClient)
 	} else if cmd.getNonExistingByID != "" {
-		_, statusCode, err := brokerClient.GetBinding(cmd.instanceID, cmd.getNonExistingByID)
-		if err != nil {
-			if *statusCode != http.StatusNotFound {
-				return fmt.Errorf("error getting binding: received status code %d, expected %d, error: %v", *statusCode, http.StatusNotFound, err)
-			}
-		} else {
-			return fmt.Errorf("expected error for getting non-existing binding, but got nil")
-		}
-		fmt.Println("Attempted to get a non-existing binding and received the expected status code.")
+		return cmd.getNonExistingBinding(brokerClient)
 	} else if cmd.deleteAndCheckKubeconfig {
-		bindingID := uuid.New().String()
-		resp, _, err := brokerClient.CreateBinding(cmd.instanceID, bindingID, cmd.expirationSeconds)
-		if err != nil {
-			return fmt.Errorf("error creating binding: %v", err)
-		}
-		kubeconfig, ok := resp["credentials"].(map[string]interface{})["kubeconfig"].(string)
-		if !ok {
-			return errors.New("failed to parse kubeconfig from binding credentials")
-		}
-		restCfg, err := clientcmd.RESTConfigFromKubeConfig([]byte(kubeconfig))
-		if err != nil {
-			return fmt.Errorf("while creating rest config from kubeconfig: %w", err)
-		}
-		k8sCli, err := client.New(restCfg, client.Options{
-			Scheme: scheme.Scheme,
-		})
-		if err != nil {
-			return fmt.Errorf("while creating k8s client: %w", err)
-		}
-		secret := &v1.Secret{}
-		objKey := client.ObjectKey{Namespace: "kyma-system", Name: "sap-btp-manager"}
-		if err := k8sCli.Get(context.Background(), objKey, secret); err != nil {
-			return fmt.Errorf("failed to get secret: %w", err)
-		}
-		fmt.Printf("Secret data: %v\n", secret.Data)
-		fmt.Println("Kubeconfig received from create binding response is valid.")
-
-		_, statusCode, err := brokerClient.DeleteBinding(cmd.instanceID, bindingID)
-		if err != nil {
-			return fmt.Errorf("error deleting binding: %v", err)
-		}
-		if *statusCode != http.StatusOK {
-			return fmt.Errorf("error deleting binding: received status code %d, expected %d", *statusCode, http.StatusOK)
-		}
-
-		fmt.Printf("Binding with ID %s deleted successfully.\n", bindingID)
-		secret = &v1.Secret{}
-		objKey = client.ObjectKey{Namespace: "kyma-system", Name: "sap-btp-manager"}
-		if err := k8sCli.Get(context.Background(), objKey, secret); err != nil {
-			return fmt.Errorf("failed to get secret: %w", err)
-		}
-		fmt.Printf("Secret data: %v\n", secret.Data)
-
+		return cmd.deleteAndCheckKubeconfigValidity(brokerClient)
 	} else if cmd.checkExpirationBelowMin {
-		bindingID := uuid.New().String()
-		resp, statusCode, err := brokerClient.CreateBinding(cmd.instanceID, bindingID, 1)
-		if err != nil {
-			if *statusCode != http.StatusBadRequest {
-				return fmt.Errorf("error creating binding: received status code %d, expected %d", *statusCode, http.StatusBadRequest)
-			}
-			if description, ok := resp["description"].(string); ok && strings.Contains(description, "expiration_seconds cannot be less than") {
-				fmt.Println("Attempted to create a binding with expiration time below the minimum value and received the expected error message.")
-				return nil
-			}
-			return fmt.Errorf("error creating binding: %v", err)
-		}
-		fmt.Println("Expected an error for creating a binding with expiration time below the minimum value, but did not receive one.")
+		return cmd.checkExpirationBelowMinValue(brokerClient)
 	} else if cmd.checkExpirationAboveMax {
-		bindingID := uuid.New().String()
-		resp, statusCode, err := brokerClient.CreateBinding(cmd.instanceID, bindingID, 1000000000)
-		if err != nil {
-			if *statusCode != http.StatusBadRequest {
-				return fmt.Errorf("error creating binding: received status code %d, expected %d", *statusCode, http.StatusBadRequest)
-			}
-			if description, ok := resp["description"].(string); ok && strings.Contains(description, "expiration_seconds cannot be greater than") {
-				fmt.Println("Attempted to create a binding with expiration time above the maximum value and received the expected error message.")
-				return nil
-			}
-			return fmt.Errorf("error creating binding: %v", err)
-		}
-		fmt.Println("Expected an error for creating a binding with expiration time above the maximum value, but did not receive one.")
+		return cmd.checkExpirationAboveMaxValue(brokerClient)
 	} else if cmd.createTwoTimesTheSame {
-		bindingID := uuid.New().String()
-		_, statusCode, err := brokerClient.CreateBinding(cmd.instanceID, bindingID, cmd.expirationSeconds)
-		if err != nil {
-			return fmt.Errorf("error creating binding: %v", err)
-		}
-		if *statusCode != http.StatusCreated {
-			return fmt.Errorf("error creating binding: received status code %d, expected %d", *statusCode, http.StatusCreated)
-		}
-		_, statusCode, err = brokerClient.CreateBinding(cmd.instanceID, bindingID, cmd.expirationSeconds)
-		if err != nil {
-			return fmt.Errorf("error creating binding: %v", err)
-		}
-		if *statusCode != http.StatusOK {
-			return fmt.Errorf("error creating binding: received status code %d, expected %d", *statusCode, http.StatusOK)
-		}
-		fmt.Println("Attempted to create a binding with the same ID twice and received the expected status code.")
+		return cmd.createBindingTwice(brokerClient)
 	} else if cmd.createCheckConflict {
-		bindingID := uuid.New().String()
-		_, statusCode, err := brokerClient.CreateBinding(cmd.instanceID, bindingID, 800)
-		if err != nil {
-			return fmt.Errorf("error creating binding: %v", err)
-		}
-		if *statusCode != http.StatusCreated {
-			return fmt.Errorf("error creating binding: received status code %d, expected %d", *statusCode, http.StatusCreated)
-		}
-		_, statusCode, err = brokerClient.CreateBinding(cmd.instanceID, bindingID, 801)
-		if err != nil {
-			if *statusCode != http.StatusConflict {
-				return fmt.Errorf("error creating binding: received status code %d, expected %d", *statusCode, http.StatusConflict)
-			}
-		}
-		fmt.Println("Attempted to create a binding with the same ID but different expiration time and received the expected conflict status code.")
+		return cmd.createBindingCheckConflict(brokerClient)
 	} else if cmd.createAboveLimit {
-		for i := 0; i < 13; i++ {
-			bindingID := uuid.New().String()
-			resp, statusCode, err := brokerClient.CreateBinding(cmd.instanceID, bindingID, cmd.expirationSeconds)
-			if err != nil {
-				if *statusCode == http.StatusBadRequest && strings.Contains(resp["description"].(string), "maximum number of non expired bindings reached") {
-					fmt.Println("Received expected error message for exceeding maximum number of non expired bindings.")
-					return nil
-				}
-				return fmt.Errorf("error creating binding %d: %v", i, err)
-			}
-			fmt.Printf("Binding with ID %s created successfully.\n", bindingID)
-		}
-		return fmt.Errorf("created more bindings than the maximum allowed limit")
+		return cmd.createBindingsAboveLimit(brokerClient)
 	}
 
 	return nil
+}
+
+func (cmd *BindingCommand) createBinding(brokerClient *broker.BrokerClient) error {
+	bindingID := uuid.New().String()
+	resp, statusCode, err := brokerClient.CreateBinding(cmd.instanceID, bindingID, cmd.expirationSeconds)
+	if err != nil {
+		return fmt.Errorf("error creating binding: %v, response: %v", err, resp)
+	}
+	if *statusCode != http.StatusCreated {
+		return fmt.Errorf("error creating binding: received status code %d, expected %d, response: %v", *statusCode, http.StatusCreated, resp)
+	}
+
+	fmt.Printf("Created binding with ID: %s\n", bindingID)
+	return nil
+}
+
+func (cmd *BindingCommand) getBinding(brokerClient *broker.BrokerClient) error {
+	resp, statusCode, err := brokerClient.GetBinding(cmd.instanceID, cmd.getByID)
+	if err != nil {
+		return fmt.Errorf("error getting binding: %v, response: %v", err, resp)
+	}
+	if *statusCode != http.StatusOK {
+		return fmt.Errorf("error getting binding: received status code %d, expected %d", *statusCode, http.StatusOK)
+	}
+
+	fmt.Println("Binding retrieved successfully.")
+	return nil
+}
+
+func (cmd *BindingCommand) checkKubeconfig(brokerClient *broker.BrokerClient) error {
+	bindingID := uuid.New().String()
+	resp, _, err := brokerClient.CreateBinding(cmd.instanceID, bindingID, cmd.expirationSeconds)
+	if err != nil {
+		return fmt.Errorf("error creating binding: %v, response: %v", err, resp)
+	}
+	kubeconfig, ok := resp["credentials"].(map[string]interface{})["kubeconfig"].(string)
+	if !ok {
+		return errors.New("failed to parse kubeconfig from binding credentials")
+	}
+	fmt.Println("Testing kubeconfig returned in response from create binding.")
+	if err := cmd.validateKubeconfig(kubeconfig); err != nil {
+		return err
+	}
+
+	binding, _, err := brokerClient.GetBinding(cmd.instanceID, bindingID)
+	if err != nil {
+		return fmt.Errorf("error getting binding: %v", err)
+	}
+	kubeconfig, ok = binding["credentials"].(map[string]interface{})["kubeconfig"].(string)
+	if !ok {
+		return errors.New("failed to parse kubeconfig from binding credentials")
+	}
+	fmt.Println("Testing kubeconfig returned in response from get binding.")
+	return cmd.validateKubeconfig(kubeconfig)
+}
+
+func (cmd *BindingCommand) validateKubeconfig(kubeconfig string) error {
+	restCfg, err := clientcmd.RESTConfigFromKubeConfig([]byte(kubeconfig))
+	if err != nil {
+		return fmt.Errorf("while creating rest config from kubeconfig: %w", err)
+	}
+	k8sCli, err := client.New(restCfg, client.Options{
+		Scheme: scheme.Scheme,
+	})
+	if err != nil {
+		return fmt.Errorf("while creating k8s client: %w", err)
+	}
+	secret := &v1.Secret{}
+	objKey := client.ObjectKey{Namespace: "kyma-system", Name: "sap-btp-manager"}
+	if err := k8sCli.Get(context.Background(), objKey, secret); err != nil {
+		return fmt.Errorf("failed to get secret: %w", err)
+	}
+	fmt.Println("Kubeconfig is valid.")
+	return nil
+}
+
+func (cmd *BindingCommand) deleteBinding(brokerClient *broker.BrokerClient) error {
+	resp, statusCode, err := brokerClient.DeleteBinding(cmd.instanceID, cmd.deleteByID)
+	if err != nil {
+		return fmt.Errorf("error deleting binding: %v, response: %v", err, resp)
+	}
+	if *statusCode != http.StatusOK {
+		return fmt.Errorf("error deleting binding: received status code %d, expected %d", *statusCode, http.StatusOK)
+	}
+
+	fmt.Printf("Binding with ID %s deleted successfully.\n", cmd.deleteByID)
+	return nil
+}
+
+func (cmd *BindingCommand) deleteNonExistingBinding(brokerClient *broker.BrokerClient) error {
+	resp, statusCode, err := brokerClient.DeleteBinding(cmd.instanceID, cmd.deleteNonExistingByID)
+	if err != nil {
+		if *statusCode != http.StatusGone {
+			return fmt.Errorf("error deleting binding: received status code %d, expected %d, error: %v", *statusCode, http.StatusGone, err)
+		}
+	} else {
+		return fmt.Errorf("expected error for deleting non-existing binding, but got nil. Status code: %d, response: %v", *statusCode, resp)
+	}
+	fmt.Printf("Attempted to delete a non-existing binding and received the expected status code: %d.\n", *statusCode)
+	return nil
+}
+
+func (cmd *BindingCommand) getNonExistingBinding(brokerClient *broker.BrokerClient) error {
+	resp, statusCode, err := brokerClient.GetBinding(cmd.instanceID, cmd.getNonExistingByID)
+	if err != nil {
+		if *statusCode != http.StatusNotFound {
+			return fmt.Errorf("error getting binding: received status code %d, expected %d, error: %v", *statusCode, http.StatusNotFound, err)
+		}
+	} else {
+		return fmt.Errorf("expected error for getting non-existing binding, but got nil. Status code: %d", *statusCode)
+	}
+	fmt.Printf("Attempted to get a non-existing binding and received the expected status code: %d, response: %v.\n", *statusCode, resp)
+	return nil
+}
+
+func (cmd *BindingCommand) deleteAndCheckKubeconfigValidity(brokerClient *broker.BrokerClient) error {
+	bindingID := uuid.New().String()
+	fmt.Printf("Creating binding with ID: %s for test.\n", bindingID)
+	resp, _, err := brokerClient.CreateBinding(cmd.instanceID, bindingID, cmd.expirationSeconds)
+	if err != nil {
+		return fmt.Errorf("error creating binding: %v", err)
+	}
+	kubeconfig, ok := resp["credentials"].(map[string]interface{})["kubeconfig"].(string)
+	if !ok {
+		return errors.New("failed to parse kubeconfig from binding credentials")
+	}
+	if err := cmd.validateKubeconfig(kubeconfig); err != nil {
+		return err
+	}
+	_, statusCode, err := brokerClient.DeleteBinding(cmd.instanceID, bindingID)
+	if err != nil {
+		return fmt.Errorf("error deleting binding: %v", err)
+	}
+	if *statusCode != http.StatusOK {
+		return fmt.Errorf("error deleting binding: received status code %d, expected %d", *statusCode, http.StatusOK)
+	}
+
+	fmt.Printf("Binding with ID %s deleted successfully.\n", bindingID)
+	if err := cmd.validateKubeconfig(kubeconfig); err == nil {
+		return errors.New("expected kubeconfig to be invalid after binding deletion, but it is still valid")
+	} else if !strings.Contains(err.Error(), "failed to get secret: secrets") {
+		return fmt.Errorf("unexpected error: %v", err)
+	}
+	fmt.Println("Test passed: Kubeconfig is invalid after binding deletion.")
+	return nil
+}
+
+func (cmd *BindingCommand) checkExpirationBelowMinValue(brokerClient *broker.BrokerClient) error {
+	bindingID := uuid.New().String()
+	resp, statusCode, err := brokerClient.CreateBinding(cmd.instanceID, bindingID, 1)
+	if err != nil {
+		if *statusCode != http.StatusBadRequest {
+			return fmt.Errorf("error creating binding: received status code %d, expected %d", *statusCode, http.StatusBadRequest)
+		}
+		if description, ok := resp["description"].(string); ok && strings.Contains(description, "expiration_seconds cannot be less than") {
+			fmt.Printf("Attempted to create a binding with expiration time below the minimum value and received the expected error message: %s\n", description)
+			return nil
+		}
+		return fmt.Errorf("error creating binding: %v", err)
+	}
+	fmt.Println("Expected an error for creating a binding with expiration time below the minimum value, but did not receive one.")
+	return nil
+}
+
+func (cmd *BindingCommand) checkExpirationAboveMaxValue(brokerClient *broker.BrokerClient) error {
+	bindingID := uuid.New().String()
+	resp, statusCode, err := brokerClient.CreateBinding(cmd.instanceID, bindingID, 1000000000)
+	if err != nil {
+		if *statusCode != http.StatusBadRequest {
+			return fmt.Errorf("error creating binding: received status code %d, expected %d", *statusCode, http.StatusBadRequest)
+		}
+		if description, ok := resp["description"].(string); ok && strings.Contains(description, "expiration_seconds cannot be greater than") {
+			fmt.Printf("Attempted to create a binding with expiration time above the maximum value and received the expected error message: %s\n", description)
+			return nil
+		}
+		return fmt.Errorf("error creating binding: %v", err)
+	}
+	fmt.Println("Expected an error for creating a binding with expiration time above the maximum value, but did not receive one.")
+	return nil
+}
+
+func (cmd *BindingCommand) createBindingTwice(brokerClient *broker.BrokerClient) error {
+	bindingID := uuid.New().String()
+	_, statusCode, err := brokerClient.CreateBinding(cmd.instanceID, bindingID, cmd.expirationSeconds)
+	if err != nil {
+		return fmt.Errorf("error creating binding: %v", err)
+	}
+	if *statusCode != http.StatusCreated {
+		return fmt.Errorf("error creating binding: received status code %d, expected %d", *statusCode, http.StatusCreated)
+	}
+	fmt.Printf("Created first binding with ID: %s, status code: %d\n", bindingID, *statusCode)
+	_, statusCode, err = brokerClient.CreateBinding(cmd.instanceID, bindingID, cmd.expirationSeconds)
+	if err != nil {
+		return fmt.Errorf("error creating binding: %v", err)
+	}
+	if *statusCode != http.StatusOK {
+		return fmt.Errorf("error creating binding: received status code %d, expected %d", *statusCode, http.StatusOK)
+	}
+	fmt.Printf("Created second binding with ID: %s, status code: %d\n", bindingID, *statusCode)
+	fmt.Println("Attempted to create a binding with the same ID twice and received the expected status code.")
+	return nil
+}
+
+func (cmd *BindingCommand) createBindingCheckConflict(brokerClient *broker.BrokerClient) error {
+	bindingID := uuid.New().String()
+	_, statusCode, err := brokerClient.CreateBinding(cmd.instanceID, bindingID, 800)
+	if err != nil {
+		return fmt.Errorf("error creating binding: %v", err)
+	}
+	if *statusCode != http.StatusCreated {
+		return fmt.Errorf("error creating binding: received status code %d, expected %d", *statusCode, http.StatusCreated)
+	}
+	fmt.Printf("Created first binding with ID: %s, status code: %d\n", bindingID, *statusCode)
+	_, statusCode, err = brokerClient.CreateBinding(cmd.instanceID, bindingID, 801)
+	if err != nil {
+		if *statusCode != http.StatusConflict {
+			return fmt.Errorf("error creating binding: received status code %d, expected %d", *statusCode, http.StatusConflict)
+		}
+	}
+	fmt.Printf("Tried to create second binding with ID: %s, status code: %d\n", bindingID, *statusCode)
+	fmt.Println("Attempted to create a binding with the same ID but different expiration time and received the expected conflict status code.")
+	return nil
+}
+
+func (cmd *BindingCommand) createBindingsAboveLimit(brokerClient *broker.BrokerClient) error {
+	for i := 0; i < 13; i++ {
+		bindingID := uuid.New().String()
+		resp, statusCode, err := brokerClient.CreateBinding(cmd.instanceID, bindingID, cmd.expirationSeconds)
+		if err != nil {
+			if *statusCode == http.StatusBadRequest && strings.Contains(resp["description"].(string), "maximum number of non expired bindings reached") {
+				fmt.Printf("Received expected error message for exceeding maximum number of non expired bindings. Status code: %d, description: %s\n", *statusCode, resp["description"].(string))
+				return nil
+			}
+			return fmt.Errorf("error creating binding %d: %v, response: %v", i, err, resp)
+		}
+		fmt.Printf("Binding with ID %s created successfully.\n", bindingID)
+	}
+	return fmt.Errorf("created more bindings than the maximum allowed limit")
 }
 
 func (cmd *BindingCommand) Validate() error {
