@@ -301,9 +301,48 @@ func (cmd *BindingCommand) Run() error {
 }
 
 func (cmd *BindingCommand) Validate() error {
-	if cmd.instanceID != "" {
-		return nil
-	} else {
-		return errors.New("at least one of the following options have to be specified: instanceID")
+	if cmd.instanceID == "" {
+		return errors.New("instanceID must be specified")
 	}
+	count := 0
+	if cmd.create {
+		count++
+	}
+	if cmd.getByID != "" {
+		count++
+	}
+	if cmd.checkKubeconfigValidity {
+		count++
+	}
+	if cmd.deleteByID != "" {
+		count++
+	}
+	if cmd.deleteNonExistingByID != "" {
+		count++
+	}
+	if cmd.getNonExistingByID != "" {
+		count++
+	}
+	if cmd.deleteAndCheckKubeconfig {
+		count++
+	}
+	if cmd.checkExpirationBelowMin {
+		count++
+	}
+	if cmd.checkExpirationAboveMax {
+		count++
+	}
+	if cmd.createTwoTimesTheSame {
+		count++
+	}
+	if cmd.createCheckConflict {
+		count++
+	}
+	if cmd.createAboveLimit {
+		count++
+	}
+	if count != 1 {
+		return errors.New("you must use exactly one of create, getByID, checkKubeconfigValidity, deleteByID, deleteNonExistingByID, getNonExistingByID, deleteAndCheckKubeconfig, checkExpirationBelowMin, checkExpirationAboveMax, createTwoTimesTheSame, createCheckConflict, or createAboveLimit")
+	}
+	return nil
 }
