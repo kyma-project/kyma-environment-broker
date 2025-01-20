@@ -114,9 +114,7 @@ Each rule consists of a semicolon separated list of plans that the rule applies 
 
 Rules validation is done during the KEB startup. If the configuration is invalid, KEB will not start and an error message will be displayed in the logs. The constraints used for validation include:
 * Rules format check - all the rules must comply with the format specified above.
-* Plan ?and region? existence check.
-
-TODO: Independent and inclusive rules
+* Plan existence check.
 
 ### Examples
 
