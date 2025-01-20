@@ -10,6 +10,7 @@ type (
 		Purpose                string
 		MultiZone              bool
 		ProvisioningParameters internal.ProvisioningParameters
+		FailureTolerance       string
 	}
 
 	GCPTrialInputProvider struct {
@@ -34,6 +35,7 @@ func (p *GCPInputProvider) Provide() Values {
 		Purpose:              p.Purpose,
 		VolumeSizeGb:         80,
 		DiskType:             "pd-balanced",
+		FailureTolerance:     &p.FailureTolerance,
 	}
 }
 
@@ -79,6 +81,7 @@ func (p *GCPTrialInputProvider) Provide() Values {
 		Purpose:              PurposeEvaluation,
 		VolumeSizeGb:         30,
 		DiskType:             "pd-standard",
+		FailureTolerance:     nil,
 	}
 }
 

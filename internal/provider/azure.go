@@ -10,6 +10,7 @@ type (
 		Purpose                string
 		MultiZone              bool
 		ProvisioningParameters internal.ProvisioningParameters
+		FailureTolerance       string
 	}
 	AzureTrialInputProvider struct {
 		PlatformRegionMapping  map[string]string
@@ -45,6 +46,7 @@ func (p *AzureInputProvider) Provide() Values {
 		Purpose:              p.Purpose,
 		DiskType:             "StandardSSD_LRS",
 		VolumeSizeGb:         80,
+		FailureTolerance:     &p.FailureTolerance,
 	}
 }
 
@@ -84,6 +86,7 @@ func (p *AzureTrialInputProvider) Provide() Values {
 		Purpose:              PurposeEvaluation,
 		DiskType:             "Standard_LRS",
 		VolumeSizeGb:         50,
+		FailureTolerance:     nil,
 	}
 }
 
@@ -128,6 +131,7 @@ func (p *AzureLiteInputProvider) Provide() Values {
 		Purpose:              p.Purpose,
 		DiskType:             "StandardSSD_LRS",
 		VolumeSizeGb:         80,
+		FailureTolerance:     nil,
 	}
 }
 
@@ -163,6 +167,7 @@ func (p *AzureFreemiumInputProvider) Provide() Values {
 		Purpose:              PurposeEvaluation,
 		DiskType:             "Standard_LRS",
 		VolumeSizeGb:         50,
+		FailureTolerance:     nil,
 	}
 }
 

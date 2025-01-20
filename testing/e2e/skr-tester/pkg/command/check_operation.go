@@ -61,7 +61,6 @@ func (cmd *CheckOperationCommand) Run() error {
 	}, cmd.timeout, cmd.interval)
 	if err != nil {
 		return err
-
 	}
 	if state != "succeeded" {
 		return errors.New(fmt.Sprintf("error thrown by ensureOperationSucceeded: operation didn't succeed in time. Final state: %s", state))

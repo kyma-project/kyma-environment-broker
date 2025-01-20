@@ -1,7 +1,6 @@
 package process
 
 import (
-	"bytes"
 	"fmt"
 	"log/slog"
 	"runtime/debug"
@@ -23,6 +22,7 @@ type Queue struct {
 	log                     *slog.Logger
 	name                    string
 	workerExecutionTimes    map[string]time.Time
+	workerLastKeys          map[string]string
 	warnAfterTime           time.Duration
 	healthCheckIntervalTime time.Duration
 
@@ -39,6 +39,7 @@ func NewQueue(executor Executor, log *slog.Logger, name string, warnAfterTime, h
 		speedFactor:             1,
 		name:                    name,
 		workerExecutionTimes:    make(map[string]time.Time),
+		workerLastKeys:          make(map[string]string),
 		warnAfterTime:           warnAfterTime,
 		healthCheckIntervalTime: healthCheckIntervalTime,
 	}
@@ -95,7 +96,7 @@ func (q *Queue) createWorker(queue workqueue.RateLimitingInterface, process func
 	}()
 }
 
-func (q *Queue) worker(queue workqueue.RateLimitingInterface, process func(key string) (time.Duration, error), log *slog.Logger, nameId string) func() {
+func (q *Queue) worker(queue workqueue.RateLimitingInterface, process func(key string) (time.Duration, error), log *slog.Logger, workerNameId string) func() {
 	return func() {
 		exit := false
 		for !exit {
@@ -109,12 +110,13 @@ func (q *Queue) worker(queue workqueue.RateLimitingInterface, process func(key s
 				id := key.(string)
 				log = log.With("operationID", id)
 				log.Info(fmt.Sprintf("about to process item %s, queue length is %d", id, q.queue.Len()))
-				q.logAndUpdateWorkerTimes(key.(string), nameId, log)
+				q.updateWorkerTime(id, workerNameId, log)
 
 				defer func() {
 					if err := recover(); err != nil {
 						log.Error(fmt.Sprintf("panic error from process: %v. Stacktrace: %s", err, debug.Stack()))
 					}
+					q.removeTimeIfInWarnMargin(id, workerNameId, log)
 					queue.Done(key)
 					log.Info("queue done processing")
 				}()
@@ -139,35 +141,43 @@ func (q *Queue) worker(queue workqueue.RateLimitingInterface, process func(key s
 	}
 }
 
-func (q *Queue) logAndUpdateWorkerTimes(key string, name string, log *slog.Logger) {
-	// log time
-	now := time.Now()
-	lastTime, ok := q.workerExecutionTimes[name]
-	if ok {
-		log.Info(fmt.Sprintf("execution - worker %s last execution time %s, executed after %s", name, lastTime, now.Sub(lastTime)))
-	}
-	q.workerExecutionTimes[name] = now
+func (q *Queue) updateWorkerTime(key string, workerNameId string, log *slog.Logger) {
+	q.workerExecutionTimes[workerNameId] = time.Now()
+	q.workerLastKeys[workerNameId] = key
+	log.Info(fmt.Sprintf("updating worker time, processing item %s, queue length is %d", key, q.queue.Len()))
+}
 
-	log.Info(fmt.Sprintf("processing item %s, queue length is %d", key, q.queue.Len()))
+func (q *Queue) removeTimeIfInWarnMargin(key string, workerNameId string, log *slog.Logger) {
+
+	processingStart, ok := q.workerExecutionTimes[workerNameId]
+
+	if !ok {
+		log.Warn(fmt.Sprintf("worker %s has no start time", workerNameId))
+		return
+	}
+
+	processingTime := time.Since(processingStart)
+
+	if processingTime > q.warnAfterTime {
+		log.Info(fmt.Sprintf("worker %s exceeded allowed limit of %s since last execution while processing %s", workerNameId, q.warnAfterTime, key))
+	}
+
+	delete(q.workerExecutionTimes, workerNameId)
+	delete(q.workerLastKeys, workerNameId)
 }
 
 func (q *Queue) logWorkersSummary() {
 	healthCheckLog := q.log.With("summary", q.name)
-	var buffer bytes.Buffer
-	buffer.WriteString(fmt.Sprintf("health - queue length %d", q.queue.Len()))
 
 	for name, lastTime := range q.workerExecutionTimes {
 		timeSinceLastExecution := time.Since(lastTime)
+		lastItemKey, ok := q.workerLastKeys[name]
+		if !ok {
+			lastItemKey = "'already removed'"
+		}
 
-		buffer.WriteString(fmt.Sprintf(", [worker %s, last execution time: %s, since last execution: %s]", name, lastTime, timeSinceLastExecution))
-	}
-
-	healthCheckLog.Info(buffer.String())
-
-	for name, lastTime := range q.workerExecutionTimes {
-		timeSinceLastExecution := time.Since(lastTime)
 		if timeSinceLastExecution > q.warnAfterTime {
-			healthCheckLog.Info(fmt.Sprintf("worker %s exceeded allowed limit of %s since last execution, its last execution is %s, time since last execution %s", name, q.warnAfterTime, lastTime, timeSinceLastExecution))
+			healthCheckLog.Info(fmt.Sprintf("worker %s exceeded allowed limit of %s since last execution, its last execution is %s, time since last execution %s, while processing item %s", name, q.warnAfterTime, lastTime, timeSinceLastExecution, lastItemKey))
 		}
 	}
 }

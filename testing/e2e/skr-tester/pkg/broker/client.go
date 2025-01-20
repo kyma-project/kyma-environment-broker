@@ -164,7 +164,9 @@ func (c *BrokerClient) CallBroker(payload interface{}, endpoint, verb string) (m
 	defer resp.Body.Close()
 
 	if resp.StatusCode != http.StatusOK && resp.StatusCode != http.StatusAccepted {
-		return nil, fmt.Errorf("error calling Broker: %s %s", resp.Status, resp.Status)
+		var result map[string]interface{}
+		json.NewDecoder(resp.Body).Decode(&result)
+		return result, fmt.Errorf("error calling Broker: %s %s", resp.Status, resp.Status)
 	}
 
 	var result map[string]interface{}
@@ -210,7 +212,7 @@ func (c *BrokerClient) GetCatalog() (map[string]interface{}, error) {
 	return c.CallBroker(nil, endpoint, "GET")
 }
 
-func (c *BrokerClient) BuildPayload(name, instanceID, planID, region string, btpOperatorCreds map[string]interface{}) map[string]interface{} {
+func (c *BrokerClient) BuildPayload(name, instanceID, planID, region string, btpOperatorCreds, customParams map[string]interface{}) map[string]interface{} {
 	payload := map[string]interface{}{
 		"service_id": KymaServiceID,
 		"plan_id":    planID,
@@ -222,6 +224,10 @@ func (c *BrokerClient) BuildPayload(name, instanceID, planID, region string, btp
 		"parameters": map[string]interface{}{
 			"name": name,
 		},
+	}
+
+	for key, value := range customParams {
+		payload["parameters"].(map[string]interface{})[key] = value
 	}
 
 	if planID != trialPlanID {
@@ -240,8 +246,8 @@ func (c *BrokerClient) BuildPayload(name, instanceID, planID, region string, btp
 	return payload
 }
 
-func (c *BrokerClient) ProvisionInstance(instanceID, planID, region string, btpOperatorCreds map[string]interface{}) (map[string]interface{}, error) {
-	payload := c.BuildPayload(instanceID, instanceID, planID, region, btpOperatorCreds)
+func (c *BrokerClient) ProvisionInstance(instanceID, planID, region string, btpOperatorCreds, customParams map[string]interface{}) (map[string]interface{}, error) {
+	payload := c.BuildPayload(instanceID, instanceID, planID, region, btpOperatorCreds, customParams)
 	endpoint := fmt.Sprintf("service_instances/%s", instanceID)
 	return c.CallBroker(payload, endpoint, "PUT")
 }

@@ -18,6 +18,7 @@ func TestGCPDefaults(t *testing.T) {
 			Parameters:     pkg.ProvisioningParametersDTO{Region: nil},
 			PlatformRegion: "cf-eu11",
 		},
+		FailureTolerance: "zone",
 	}
 
 	// when
@@ -36,6 +37,7 @@ func TestGCPDefaults(t *testing.T) {
 		Purpose:              "production",
 		VolumeSizeGb:         80,
 		DiskType:             "pd-balanced",
+		FailureTolerance:     ptr.String("zone"),
 	}, values)
 }
 
@@ -51,6 +53,7 @@ func TestGCPSpecific(t *testing.T) {
 			},
 			PlatformRegion: "cf-eu11",
 		},
+		FailureTolerance: "zone",
 	}
 
 	// when
@@ -70,6 +73,7 @@ func TestGCPSpecific(t *testing.T) {
 		Purpose:              "production",
 		VolumeSizeGb:         80,
 		DiskType:             "pd-balanced",
+		FailureTolerance:     ptr.String("zone"),
 	}, values)
 }
 
