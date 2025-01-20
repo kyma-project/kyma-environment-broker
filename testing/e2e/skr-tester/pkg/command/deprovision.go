@@ -38,7 +38,7 @@ func NewDeprovisionCmd() *cobra.Command {
 func (cmd *DeprovisionCommand) Run() error {
 	cmd.log = logger.New()
 	brokerClient := broker.NewBrokerClient(broker.NewBrokerConfig())
-	resp, err := brokerClient.DeprovisionInstance(cmd.instanceID)
+	resp, _, err := brokerClient.DeprovisionInstance(cmd.instanceID)
 	if err != nil {
 		fmt.Printf("Error deprovisioning instance: %v\n", err)
 	} else {

@@ -76,7 +76,7 @@ func (cmd *ProvisionCommand) Run() error {
 	}
 	instanceID := uuid.New().String()
 	fmt.Printf("Instance ID: %s\n", instanceID)
-	resp, err := brokerClient.ProvisionInstance(instanceID, cmd.planID, cmd.region, dummyCreds, customParams)
+	resp, _, err := brokerClient.ProvisionInstance(instanceID, cmd.planID, cmd.region, dummyCreds, customParams)
 	if err != nil {
 		if cmd.overlapIP && strings.Contains(fmt.Sprintf("%v", resp), "overlap") && strings.Contains(fmt.Sprintf("%v", err), "400") {
 			fmt.Println("Provisioning failed due to overlapping IP range, which was expected.")
