@@ -45,6 +45,7 @@
         "m6i.12xlarge": "m6i.12xlarge (48vCPU, 192GB RAM)",
         "m6i.16xlarge": "m6i.16xlarge (64vCPU, 256GB RAM)"
       },
+      "description": "Specifies the type of the virtual machine.",
       "enum": [
         "m6i.large",
         "m6i.xlarge",
