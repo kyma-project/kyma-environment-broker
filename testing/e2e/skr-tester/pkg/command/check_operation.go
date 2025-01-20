@@ -47,7 +47,7 @@ func (cmd *CheckOperationCommand) Run() error {
 	var state string
 	err := wait(func() (bool, error) {
 		var err error
-		resp, err := brokerClient.GetOperation(cmd.instanceID, cmd.operationID)
+		resp, _, err := brokerClient.GetOperation(cmd.instanceID, cmd.operationID)
 		if err != nil {
 			return false, err
 		}
