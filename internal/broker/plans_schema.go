@@ -435,8 +435,8 @@ func AdministratorsProperty() *Type {
 	}
 }
 
-func NewAdditionalWorkerNodePoolsSchema(machineTypesDisplay map[string]string, machineTypes []string, update bool) *AdditionalWorkerNodePoolsType {
-	additionalWorkerNodePoolsType := AdditionalWorkerNodePoolsType{
+func NewAdditionalWorkerNodePoolsSchema(machineTypesDisplay map[string]string, machineTypes []string) *AdditionalWorkerNodePoolsType {
+	return &AdditionalWorkerNodePoolsType{
 		Type: Type{
 			Type:        "array",
 			UniqueItems: true,
@@ -478,10 +478,4 @@ func NewAdditionalWorkerNodePoolsSchema(machineTypesDisplay map[string]string, m
 			},
 		},
 	}
-
-	if update {
-		additionalWorkerNodePoolsType.Items.Properties.Name.ReadOnly = true
-	}
-
-	return &additionalWorkerNodePoolsType
 }
