@@ -150,7 +150,7 @@ func (c *BrokerClient) BuildRequestWithoutToken(payload interface{}, endpoint, v
 	return req, nil
 }
 
-func (c *BrokerClient) CallBroker(payload interface{}, endpoint, verb string) (map[string]interface{}, *int, error) {
+func (c *BrokerClient) CallBroker(payload interface{}, endpoint, verb string) (response map[string]interface{}, statusCode *int, err error) {
 	req, err := c.BuildRequest(payload, endpoint, verb)
 	if err != nil {
 		return nil, nil, err
@@ -203,12 +203,12 @@ func (c *BrokerClient) CallBrokerWithoutToken(payload interface{}, endpoint, ver
 	return nil
 }
 
-func (c *BrokerClient) GetInstance(instanceID string) (map[string]interface{}, *int, error) {
+func (c *BrokerClient) GetInstance(instanceID string) (response map[string]interface{}, statusCode *int, err error) {
 	endpoint := fmt.Sprintf("service_instances/%s", instanceID)
 	return c.CallBroker(nil, endpoint, "GET")
 }
 
-func (c *BrokerClient) GetCatalog() (map[string]interface{}, *int, error) {
+func (c *BrokerClient) GetCatalog() (response map[string]interface{}, statusCode *int, err error) {
 	endpoint := "catalog"
 	return c.CallBroker(nil, endpoint, "GET")
 }
@@ -247,13 +247,13 @@ func (c *BrokerClient) BuildPayload(name, instanceID, planID, region string, btp
 	return payload
 }
 
-func (c *BrokerClient) ProvisionInstance(instanceID, planID, region string, btpOperatorCreds, customParams map[string]interface{}) (map[string]interface{}, *int, error) {
+func (c *BrokerClient) ProvisionInstance(instanceID, planID, region string, btpOperatorCreds, customParams map[string]interface{}) (response map[string]interface{}, statusCode *int, err error) {
 	payload := c.BuildPayload(instanceID, instanceID, planID, region, btpOperatorCreds, customParams)
 	endpoint := fmt.Sprintf("service_instances/%s", instanceID)
 	return c.CallBroker(payload, endpoint, "PUT")
 }
 
-func (c *BrokerClient) UpdateInstance(instanceID string, customParams map[string]interface{}) (map[string]interface{}, *int, error) {
+func (c *BrokerClient) UpdateInstance(instanceID string, customParams map[string]interface{}) (response map[string]interface{}, statusCode *int, err error) {
 	payload := map[string]interface{}{
 		"service_id": KymaServiceID,
 		"context": map[string]interface{}{
@@ -266,12 +266,12 @@ func (c *BrokerClient) UpdateInstance(instanceID string, customParams map[string
 	return c.CallBroker(payload, endpoint, "PATCH")
 }
 
-func (c *BrokerClient) GetOperation(instanceID, operationID string) (map[string]interface{}, *int, error) {
+func (c *BrokerClient) GetOperation(instanceID, operationID string) (response map[string]interface{}, statusCode *int, err error) {
 	endpoint := fmt.Sprintf("service_instances/%s/last_operation?operation=%s", instanceID, operationID)
 	return c.CallBroker(nil, endpoint, "GET")
 }
 
-func (c *BrokerClient) DeprovisionInstance(instanceID string) (map[string]interface{}, *int, error) {
+func (c *BrokerClient) DeprovisionInstance(instanceID string) (response map[string]interface{}, statusCode *int, err error) {
 	endpoint := fmt.Sprintf("service_instances/%s?service_id=%s&plan_id=not-empty", instanceID, KymaServiceID)
 	return c.CallBroker(nil, endpoint, "DELETE")
 }
@@ -296,7 +296,7 @@ func (c *BrokerClient) DownloadKubeconfig(instanceID string) (string, error) {
 	return string(data), nil
 }
 
-func (c *BrokerClient) CreateBinding(instanceID, bindingID string, expirationSeconds int) (map[string]interface{}, *int, error) {
+func (c *BrokerClient) CreateBinding(instanceID, bindingID string, expirationSeconds int) (response map[string]interface{}, statusCode *int, err error) {
 	payload := map[string]interface{}{
 		"service_id": KymaServiceID,
 		"plan_id":    "not-empty",
@@ -308,13 +308,13 @@ func (c *BrokerClient) CreateBinding(instanceID, bindingID string, expirationSec
 	return c.CallBroker(payload, endpoint, "PUT")
 }
 
-func (c *BrokerClient) DeleteBinding(instanceID, bindingID string) (map[string]interface{}, *int, error) {
+func (c *BrokerClient) DeleteBinding(instanceID, bindingID string) (response map[string]interface{}, statusCode *int, err error) {
 	params := fmt.Sprintf("service_id=%s&plan_id=not-empty", KymaServiceID)
 	endpoint := fmt.Sprintf("service_instances/%s/service_bindings/%s?accepts_incomplete=false&%s", instanceID, bindingID, params)
 	return c.CallBroker(nil, endpoint, "DELETE")
 }
 
-func (c *BrokerClient) GetBinding(instanceID, bindingID string) (map[string]interface{}, *int, error) {
+func (c *BrokerClient) GetBinding(instanceID, bindingID string) (response map[string]interface{}, statusCode *int, err error) {
 	endpoint := fmt.Sprintf("service_instances/%s/service_bindings/%s?accepts_incomplete=false", instanceID, bindingID)
 	return c.CallBroker(nil, endpoint, "GET")
 }
