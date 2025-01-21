@@ -158,7 +158,7 @@ hap:
 
 ---
 
-As stated previously, it is possible to include multiple elements in each configuration rule. The example below shows how to configure multiple plan/region pairs for based on platformRegionRule. The same can be configured for all other rules (clusterRegionRule, sharedRule, euAccessRule). The list below allows to KEB to operate on 3 pools for gcp plan: one withouth a region, one for cf-sa30 region and one for jp30 region; 2 pools for aws plan: one without a region and one for eu11 region; multiple pools for openstack plan - all with a platform region specified; and one pool for azure without a platform region.
+As stated previously, it is possible to include multiple elements in each configuration rule. The example below shows how to configure multiple plan/region pairs for based on platformRegionRule. The same can be configured for all other rules (clusterRegionRule, sharedRule, euAccessRule). The list below allows to KEB to operate on 3 pools for gcp plan: one withouth a region, one for cf-sa30 region and one for cf_jp30 region; 2 pools for aws plan: one without a region and one for cf_eu11 region; multiple pools for openstack plan - all with a platform region specified; and one pool for azure without a platform region.
 
 ```
 hap: 
