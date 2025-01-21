@@ -108,7 +108,7 @@ Each rule consists of a semicolon separated list of plans that the rule applies 
 * `eu:*` - invalid, plan must be specified in the first part of `<PLAN_ID>:<REGION_ID>` pair,
 * `*:*` - invalid, at least one of the values must be specified in the `<PLAN_ID>:<REGION_ID>` pair.
 * `*:eu;trial:eu` - valid, rule is evaluated to true for all plans in the `eu` region and for the `trial` plan in the `eu` region, configuration can be duplicated
-* `trial:eu;trial:gcp` - valid, rule is evaluated to true for trials plans but only in `eu` and `gcp` regions,
+* `trial:eu;trial:us` - valid, rule is evaluated to true for trials plans but only in `eu` and `us` regions,
 
 ### Validation
 
