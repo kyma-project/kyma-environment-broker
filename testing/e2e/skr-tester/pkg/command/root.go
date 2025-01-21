@@ -18,6 +18,7 @@ func New() *cobra.Command {
 		NewCheckOperationCommand(),
 		NewUpdateCommand(),
 		NewAsertCmd(),
+		NewBindingCmd(),
 	)
 
 	return cmd

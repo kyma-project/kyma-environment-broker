@@ -176,7 +176,7 @@ func (s *CreateRuntimeResourceStep) updateRuntimeResourceObject(values provider.
 	if runtime.Spec.Shoot.ControlPlane == nil {
 		runtime.Spec.Shoot.ControlPlane = &gardener.ControlPlane{}
 	}
-	runtime.Spec.Shoot.ControlPlane.HighAvailability = s.createHighAvailabilityConfiguration(values.FailureTolerance)
+	runtime.Spec.Shoot.ControlPlane = s.createHighAvailabilityConfiguration(values.FailureTolerance)
 	runtime.Spec.Shoot.EnforceSeedLocation = operation.ProvisioningParameters.Parameters.ShootAndSeedSameRegion
 	runtime.Spec.Shoot.Networking = s.createNetworkingConfiguration(operation)
 	runtime.Spec.Shoot.Kubernetes = s.createKubernetesConfiguration(operation)
@@ -340,14 +340,18 @@ func (s *CreateRuntimeResourceStep) updateInstance(id string, region string) err
 	return nil
 }
 
-func (s *CreateRuntimeResourceStep) createHighAvailabilityConfiguration(tolerance *string) *gardener.HighAvailability {
+func (s *CreateRuntimeResourceStep) createHighAvailabilityConfiguration(tolerance *string) *gardener.ControlPlane {
 	if tolerance == nil {
 		return nil
 	}
-	return &gardener.HighAvailability{
+	if *tolerance == "" {
+		return nil
+	}
+	return &gardener.ControlPlane{HighAvailability: &gardener.HighAvailability{
 		FailureTolerance: gardener.FailureTolerance{
 			Type: gardener.FailureToleranceType(*tolerance),
 		},
+	},
 	}
 }
 

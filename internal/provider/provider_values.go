@@ -35,6 +35,7 @@ func GetPlanSpecificValues(
 			Purpose:                defaultPurpose,
 			MultiZone:              multiZoneCluster,
 			ProvisioningParameters: operation.ProvisioningParameters,
+			FailureTolerance:       commercialFailureTolerance,
 		}
 	case broker.AzurePlanID:
 		p = &AzureInputProvider{
