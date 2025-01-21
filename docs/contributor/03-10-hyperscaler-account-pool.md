@@ -88,11 +88,11 @@ metadata:
 
 ### Overview
 
-HAP evaluates a set of rules to determine what labels to use when querying secret bindings. Input to the rules consists of an SKR's plan, hyperscaler and region. By default, only unchanged hyperscaler type value (values like aws, azure etc.) is used to search for the right pool. If evaluated to true the rules modify or add labels used in the secret bindings resource query. There are four possible rules to configure:
-* `hap.platformRegionRule` - if evaluated to true the `_<PLATFOR_REGION>` is appended to the `hyperscaler-type` label when searching, refered to as platform region based search. 
+HAP evaluates a set of rules to determine what labels to use when querying secret bindings. Input to the rules consists of an SKR's plan, hyperscaler and region. By default, **hyperscalerType** label value value without any suffix (values like aws, azure etc.) is used to search for the right pool. If evaluated to true the rules modify or add labels used in the secret bindings resource query. There are four possible rules to configure:
+* `hap.platformRegionRule` - if evaluated to true the `_<PLATFORM_REGION>` is appended to the `hyperscaler-type` label when searching, refered to as platform region based search. 
 * `hap.clusterRegionRule` - if evaluated to true the `_<HYPERSCALER_REGION>` is appended to the `hyperscaler-type` label when searching, refered to as cluster region based search.
 * `hap.sharedRule` - if evaluated to true the `shared: true` label is used when searching, refered to as shared based search.
-* `hap.euAccessRule` - if evaluated to true the `shared: true` label is used when searching, refered to as euAccess based search.
+* `hap.euAccessRule` - if evaluated to true the `euAccess: true` label is used when searching, refered to as euAccess based search.
 The configuration is done by specifying above rules in KEB helm values.
 
 Rules are independent of each other. Each plan and region combination can occur in the all rules specified above at the same time.
