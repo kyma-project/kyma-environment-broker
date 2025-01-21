@@ -263,6 +263,18 @@ func (b *UpdateEndpoint) processUpdateParameters(instance *internal.Instance, de
 		logger.Error(fmt.Sprintf("invalid autoscaler parameters: %s", err.Error()))
 		return domain.UpdateServiceSpec{}, apiresponses.NewFailureResponse(err, http.StatusBadRequest, err.Error())
 	}
+
+	if params.AdditionalWorkerNodePools != nil {
+		if !supportsAdditionalWorkerNodePools(details.PlanID) {
+			return domain.UpdateServiceSpec{}, fmt.Errorf("additional worker node pools are not supported for plan ID: %s", details.PlanID)
+		}
+		for _, additionalWorkerNodePool := range params.AdditionalWorkerNodePools {
+			if err := additionalWorkerNodePool.Validate(); err != nil {
+				return domain.UpdateServiceSpec{}, apiresponses.NewFailureResponse(err, http.StatusBadRequest, err.Error())
+			}
+		}
+	}
+
 	err = b.operationStorage.InsertOperation(operation)
 	if err != nil {
 		return domain.UpdateServiceSpec{}, err
@@ -287,6 +299,14 @@ func (b *UpdateEndpoint) processUpdateParameters(instance *internal.Instance, de
 	if params.MachineType != nil && *params.MachineType != "" {
 		instance.Parameters.Parameters.MachineType = params.MachineType
 	}
+
+	if supportsAdditionalWorkerNodePools(details.PlanID) && params.AdditionalWorkerNodePools != nil {
+		newAdditionalWorkerNodePools := make([]pkg.AdditionalWorkerNodePool, 0, len(params.AdditionalWorkerNodePools))
+		newAdditionalWorkerNodePools = append(newAdditionalWorkerNodePools, params.AdditionalWorkerNodePools...)
+		instance.Parameters.Parameters.AdditionalWorkerNodePools = newAdditionalWorkerNodePools
+		updateStorage = append(updateStorage, "Additional Worker Node Pools")
+	}
+
 	if len(updateStorage) > 0 {
 		if err := wait.PollUntilContextTimeout(context.Background(), 500*time.Millisecond, 2*time.Second, true, func(ctx context.Context) (bool, error) {
 			instance, err = b.instanceStorage.Update(*instance)

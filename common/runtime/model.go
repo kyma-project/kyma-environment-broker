@@ -97,10 +97,11 @@ type ProvisioningParametersDTO struct {
 	ShootName   string `json:"shootName,omitempty"`
 	ShootDomain string `json:"shootDomain,omitempty"`
 
-	OIDC                   *OIDCConfigDTO `json:"oidc,omitempty"`
-	Networking             *NetworkingDTO `json:"networking,omitempty"`
-	Modules                *ModulesDTO    `json:"modules,omitempty"`
-	ShootAndSeedSameRegion *bool          `json:"shootAndSeedSameRegion,omitempty"`
+	OIDC                      *OIDCConfigDTO             `json:"oidc,omitempty"`
+	Networking                *NetworkingDTO             `json:"networking,omitempty"`
+	Modules                   *ModulesDTO                `json:"modules,omitempty"`
+	ShootAndSeedSameRegion    *bool                      `json:"shootAndSeedSameRegion,omitempty"`
+	AdditionalWorkerNodePools []AdditionalWorkerNodePool `json:"additionalWorkerNodePools,omitempty"`
 }
 
 type AutoScalerParameters struct {
@@ -385,4 +386,18 @@ type ModuleDTO struct {
 	Name                 string               `json:"name,omitempty" yaml:"name,omitempty"`
 	Channel              Channel              `json:"channel,omitempty" yaml:"channel,omitempty"`
 	CustomResourcePolicy CustomResourcePolicy `json:"customResourcePolicy,omitempty" yaml:"customResourcePolicy,omitempty"`
+}
+
+type AdditionalWorkerNodePool struct {
+	Name          string `json:"name"`
+	MachineType   string `json:"machineType"`
+	AutoScalerMin int    `json:"autoScalerMin"`
+	AutoScalerMax int    `json:"autoScalerMax"`
+}
+
+func (a AdditionalWorkerNodePool) Validate() error {
+	if a.AutoScalerMin > a.AutoScalerMax {
+		return fmt.Errorf("AutoScalerMax %v should be larger than AutoScalerMin %v for %s worker node pool", a.AutoScalerMax, a.AutoScalerMin, a.Name)
+	}
+	return nil
 }

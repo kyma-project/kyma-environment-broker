@@ -593,6 +593,156 @@ func TestUpdateEndpoint_UpdateParameters(t *testing.T) {
 	})
 }
 
+func TestUpdateAdditionalWorkerNodePools(t *testing.T) {
+	for tn, tc := range map[string]struct {
+		additionalWorkerNodePools string
+		expectedError             bool
+	}{
+		"Valid additional worker node pools": {
+			additionalWorkerNodePools: `[{"name": "name-1", "machineType": "m6i.large", "autoScalerMin": 3, "autoScalerMax": 20}, {"name": "name-2", "machineType": "m6i.large", "autoScalerMin": 3, "autoScalerMax": 20}]`,
+			expectedError:             false,
+		},
+		"Empty additional worker node pools": {
+			additionalWorkerNodePools: `[]`,
+			expectedError:             false,
+		},
+		"Empty name": {
+			additionalWorkerNodePools: `[{"name": "", "machineType": "m6i.large", "autoScalerMin": 3, "autoScalerMax": 20}]`,
+			expectedError:             true,
+		},
+		"Missing name": {
+			additionalWorkerNodePools: `[{"machineType": "m6i.large", "autoScalerMin": 3, "autoScalerMax": 20}]`,
+			expectedError:             true,
+		},
+		"Empty machine type": {
+			additionalWorkerNodePools: `[{"name": "name-1", "machineType": "", "autoScalerMin": 3, "autoScalerMax": 20}]`,
+			expectedError:             true,
+		},
+		"Missing machine type": {
+			additionalWorkerNodePools: `[{"name": "name-1", "autoScalerMin": 3, "autoScalerMax": 20}]`,
+			expectedError:             true,
+		},
+		"Missing autoScalerMin": {
+			additionalWorkerNodePools: `[{"name": "name-1", "machineType": "m6i.large", "autoScalerMax": 3}]`,
+			expectedError:             true,
+		},
+		"Missing autoScalerMax": {
+			additionalWorkerNodePools: `[{"name": "name-1", "machineType": "m6i.large", "autoScalerMin": 20}]`,
+			expectedError:             true,
+		},
+		"AutoScalerMin smaller than 3": {
+			additionalWorkerNodePools: `[{"name": "name-1", "machineType": "m6i.large", "autoScalerMin": 2, "autoScalerMax": 300}]`,
+			expectedError:             true,
+		},
+		"AutoScalerMax bigger than 300": {
+			additionalWorkerNodePools: `[{"name": "name-1", "machineType": "m6i.large", "autoScalerMin": 3, "autoScalerMax": 301}]`,
+			expectedError:             true,
+		},
+		"AutoScalerMin bigger than autoScalerMax": {
+			additionalWorkerNodePools: `[{"name": "name-1", "machineType": "m6i.large", "autoScalerMin": 20, "autoScalerMax": 3}]`,
+			expectedError:             true,
+		},
+	} {
+		t.Run(tn, func(t *testing.T) {
+			// given
+			instance := fixture.FixInstance(instanceID)
+			instance.ServicePlanID = PreviewPlanID
+			st := storage.NewMemoryStorage()
+			err := st.Instances().Insert(instance)
+			require.NoError(t, err)
+			err = st.Operations().InsertProvisioningOperation(fixProvisioningOperation("provisioning01"))
+			require.NoError(t, err)
+
+			handler := &handler{}
+			q := &automock.Queue{}
+			q.On("Add", mock.AnythingOfType("string"))
+			planDefaults := func(planID string, platformProvider pkg.CloudProvider, provider *pkg.CloudProvider) (*gqlschema.ClusterConfigInput, error) {
+				return &gqlschema.ClusterConfigInput{}, nil
+			}
+			kcBuilder := &kcMock.KcBuilder{}
+			svc := NewUpdate(Config{}, st.Instances(), st.RuntimeStates(), st.Operations(), handler, true, true, false, q, PlansConfig{},
+				planDefaults, fixLogger(), dashboardConfig, kcBuilder, &OneForAllConvergedCloudRegionsProvider{}, fakeKcpK8sClient)
+
+			// when
+			_, err = svc.Update(context.Background(), instanceID, domain.UpdateDetails{
+				ServiceID:       "",
+				PlanID:          PreviewPlanID,
+				RawParameters:   json.RawMessage("{\"additionalWorkerNodePools\":" + tc.additionalWorkerNodePools + "}"),
+				PreviousValues:  domain.PreviousValues{},
+				RawContext:      json.RawMessage("{\"globalaccount_id\":\"globalaccount_id_1\", \"active\":true}"),
+				MaintenanceInfo: nil,
+			}, true)
+
+			// then
+			assert.Equal(t, tc.expectedError, err != nil)
+		})
+	}
+}
+
+func TestUpdateAdditionalWorkerNodePoolsForUnsupportedPlans(t *testing.T) {
+	for tn, tc := range map[string]struct {
+		planID string
+	}{
+		"Trial": {
+			planID: TrialPlanID,
+		},
+		"Free": {
+			planID: FreemiumPlanID,
+		},
+		"Azure": {
+			planID: AzurePlanID,
+		},
+		"Azure lite": {
+			planID: AzureLitePlanID,
+		},
+		"AWS": {
+			planID: AWSPlanID,
+		},
+		"GCP": {
+			planID: GCPPlanID,
+		},
+		"SAP converged cloud": {
+			planID: SapConvergedCloudPlanID,
+		},
+	} {
+		t.Run(tn, func(t *testing.T) {
+			// given
+			instance := fixture.FixInstance(instanceID)
+			instance.ServicePlanID = tc.planID
+			st := storage.NewMemoryStorage()
+			err := st.Instances().Insert(instance)
+			require.NoError(t, err)
+			err = st.Operations().InsertProvisioningOperation(fixProvisioningOperation("provisioning01"))
+			require.NoError(t, err)
+
+			handler := &handler{}
+			q := &automock.Queue{}
+			q.On("Add", mock.AnythingOfType("string"))
+			planDefaults := func(planID string, platformProvider pkg.CloudProvider, provider *pkg.CloudProvider) (*gqlschema.ClusterConfigInput, error) {
+				return &gqlschema.ClusterConfigInput{}, nil
+			}
+			kcBuilder := &kcMock.KcBuilder{}
+			svc := NewUpdate(Config{}, st.Instances(), st.RuntimeStates(), st.Operations(), handler, true, true, false, q, PlansConfig{},
+				planDefaults, fixLogger(), dashboardConfig, kcBuilder, &OneForAllConvergedCloudRegionsProvider{}, fakeKcpK8sClient)
+
+			additionalWorkerNodePools := `[{"name": "name-1", "machineType": "m6i.large", "autoScalerMin": 3, "autoScalerMax": 20}]`
+
+			// when
+			_, err = svc.Update(context.Background(), instanceID, domain.UpdateDetails{
+				ServiceID:       "",
+				PlanID:          tc.planID,
+				RawParameters:   json.RawMessage("{\"additionalWorkerNodePools\":" + additionalWorkerNodePools + "}"),
+				PreviousValues:  domain.PreviousValues{},
+				RawContext:      json.RawMessage("{\"globalaccount_id\":\"globalaccount_id_1\", \"active\":true}"),
+				MaintenanceInfo: nil,
+			}, true)
+
+			// then
+			assert.EqualError(t, err, fmt.Sprintf("additional worker node pools are not supported for plan ID: %s", tc.planID))
+		})
+	}
+}
+
 func TestUpdateEndpoint_UpdateWithEnabledDashboard(t *testing.T) {
 	// given
 	instance := internal.Instance{

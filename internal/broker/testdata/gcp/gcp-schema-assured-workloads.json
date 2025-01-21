@@ -34,6 +34,7 @@
         "n2-standard-48": "n2-standard-48 (48vCPU, 192GB RAM)",
         "n2-standard-64": "n2-standard-64 (64vCPU, 256GB RAM)"
       },
+      "description": "Specifies the type of the virtual machine.",
       "enum": [
         "n2-standard-2",
         "n2-standard-4",
