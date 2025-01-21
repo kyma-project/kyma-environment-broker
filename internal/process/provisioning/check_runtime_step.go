@@ -77,7 +77,10 @@ func (s *CheckRuntimeStep) checkRuntimeStatus(operation internal.Operation, log 
 
 	switch status.State {
 	case gqlschema.OperationStateSucceeded:
-		return operation, 0, nil
+		// A dummy update to refresh updatedAt field in the operation
+		// This field is used by RetryOperation in next steps.
+		return s.operationManager.UpdateOperation(operation, func(op *internal.Operation) {
+		}, log)
 	case gqlschema.OperationStateInProgress:
 		return operation, 20 * time.Second, nil
 	case gqlschema.OperationStatePending:

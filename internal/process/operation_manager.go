@@ -118,6 +118,7 @@ func (om *OperationManager) RetryOperationOnce(operation internal.Operation, err
 }
 
 // UpdateOperation updates a given operation and handles conflict situation
+// The DB update call must be done even if there is no any change in the operation - this is required to update the operation's `UpdatedAt` field.
 func (om *OperationManager) UpdateOperation(operation internal.Operation, update func(operation *internal.Operation), log *slog.Logger) (internal.Operation, time.Duration, error) {
 	update(&operation)
 	op, err := om.storage.UpdateOperation(operation)
@@ -129,6 +130,7 @@ func (om *OperationManager) UpdateOperation(operation internal.Operation, update
 				log.Error(fmt.Sprintf("while getting operation: %v", err))
 				return operation, 1 * time.Minute, err
 			}
+			// do not optimize the flow by skipping the update call - it's required to update the `UpdatedAt` field
 			op.Merge(&operation)
 			update(op)
 			op, err = om.storage.UpdateOperation(*op)
