@@ -100,15 +100,15 @@ Rules are independent of each other. Each plan and region combination can occur 
 ### Format
 
 Each rule consists of a semicolon separated list of plans that the rule applies to. Additionally, a plan can be extended with `:region` suffix that makes the rule evaluate to true only if a cluster is provisioned in the specified region. List entries comply with the format `<PLAN_ID_1>:<REGION_ID_1>;<PLAN_ID_2>:<REGION_ID_2>`. Either plan or region (but never both) can be specified as wildcard `*` meaning all plans or regions should apply for specific second value. The following example lists valid and invalid configuration values:
-* `trial` - valid, rule is evaluated to true for the `trial` plan in all regions,
-* `trial:*` - valid, rule is evaluated to true for the `trial` plan in all regions,
-* `trial:eu` - valid, rule is evaluated to true for the `trial` plan in the `eu` region,
+* `trial` - valid, rule is evaluated to true for the `trial` plan in all regions.
+* `trial:*` - valid, rule is evaluated to true for the `trial` plan in all regions.
+* `trial:eu` - valid, rule is evaluated to true for the `trial` plan in the `eu` region.
 
-* `*:eu` - valid, rule is evaluated to true for all plans in the `eu` region,
-* `eu:*` - invalid, plan must be specified in the first part of `<PLAN_ID>:<REGION_ID>` pair,
+* `*:eu` - valid, rule is evaluated to true for all plans in the `eu` region.
+* `eu:*` - invalid, plan must be specified in the first part of `<PLAN_ID>:<REGION_ID>` pair.
 * `*:*` - invalid, at least one of the values must be specified in the `<PLAN_ID>:<REGION_ID>` pair.
 * `*:eu;trial:eu` - valid, rule is evaluated to true for all plans in the `eu` region and for the `trial` plan in the `eu` region, sets of clusters specified by each plan/region pair can overlap.
-* `trial:eu;trial:us` - valid, rule is evaluated to true for trials plans but only in `eu` and `us` regions,
+* `trial:eu;trial:us` - valid, rule is evaluated to true for trials plans but only in `eu` and `us` regions.
 
 ### Validation
 
