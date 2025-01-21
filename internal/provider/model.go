@@ -12,4 +12,5 @@ type Values struct {
 	Purpose              string
 	VolumeSizeGb         int
 	DiskType             string
+	FailureTolerance     *string
 }

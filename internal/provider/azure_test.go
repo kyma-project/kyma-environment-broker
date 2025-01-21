@@ -20,6 +20,7 @@ func TestAzureDefaults(t *testing.T) {
 			Parameters:     pkg.ProvisioningParametersDTO{Region: ptr.String("eastus")},
 			PlatformRegion: "cf-eu11",
 		},
+		FailureTolerance: "zone",
 	}
 
 	// when
@@ -38,6 +39,7 @@ func TestAzureDefaults(t *testing.T) {
 		Purpose:              "production",
 		DiskType:             "StandardSSD_LRS",
 		VolumeSizeGb:         80,
+		FailureTolerance:     ptr.String("zone"),
 	}, values)
 }
 
@@ -68,6 +70,7 @@ func TestAzureTrialDefaults(t *testing.T) {
 		Purpose:              "evaluation",
 		DiskType:             "Standard_LRS",
 		VolumeSizeGb:         50,
+		FailureTolerance:     nil,
 	}, values)
 }
 
@@ -115,6 +118,7 @@ func TestAzureSpecific(t *testing.T) {
 			PlatformRegion:   "cf-eu11",
 			PlatformProvider: "azure",
 		},
+		FailureTolerance: "zone",
 	}
 
 	// when
@@ -134,6 +138,7 @@ func TestAzureSpecific(t *testing.T) {
 		Purpose:              "production",
 		DiskType:             "StandardSSD_LRS",
 		VolumeSizeGb:         80,
+		FailureTolerance:     ptr.String("zone"),
 	}, values)
 }
 
@@ -170,6 +175,7 @@ func TestAzureTrialSpecific(t *testing.T) {
 		Purpose:              "evaluation",
 		DiskType:             "Standard_LRS",
 		VolumeSizeGb:         50,
+		FailureTolerance:     nil,
 	}, values)
 }
 
@@ -205,5 +211,6 @@ func TestAzureLiteSpecific(t *testing.T) {
 		Purpose:              "evaluation",
 		DiskType:             "StandardSSD_LRS",
 		VolumeSizeGb:         80,
+		FailureTolerance:     nil,
 	}, values)
 }

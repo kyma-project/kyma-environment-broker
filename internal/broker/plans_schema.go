@@ -18,6 +18,8 @@ type RootSchema struct {
 	ShowFormView bool `json:"_show_form_view"`
 	// Specifies in what order properties will be displayed on the form
 	ControlsOrder []string `json:"_controlsOrder"`
+	// Specified to true loads current instance configuration into the update instance schema
+	LoadCurrentConfig *bool `json:"_load_current_config,omitempty"`
 }
 
 type ProvisioningProperties struct {
@@ -356,7 +358,7 @@ func NewOIDCSchema() *OIDCType {
 	}
 }
 
-func NewSchema(properties interface{}, update bool, required []string) *RootSchema {
+func NewSchema(properties interface{}, update bool, required []string, loadCurrentConfig bool) *RootSchema {
 	schema := &RootSchema{
 		Schema: "http://json-schema.org/draft-04/schema#",
 		Type: Type{
@@ -369,6 +371,10 @@ func NewSchema(properties interface{}, update bool, required []string) *RootSche
 
 	if update {
 		schema.Required = []string{}
+	}
+
+	if loadCurrentConfig {
+		schema.LoadCurrentConfig = &loadCurrentConfig
 	}
 
 	return schema

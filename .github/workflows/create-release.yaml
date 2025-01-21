@@ -274,13 +274,17 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          COMMIT_SHA=$(gh api repos/${{ env.KYMA_ENVIRONMENT_BROKER_REPO }}/commits -q '.[1].sha')
-          echo "Latest commit sha: $COMMIT_SHA"
-          echo "Bump sha: ${{ github.sha }}"
-          if [ "$COMMIT_SHA" != "${{ github.sha }}" ]; then
-            echo "::error ::a PR have been merged before merging the bump PR. Don't rerun this workflow. Create a new release with the same version"
-            exit 1 
+          if [ "$PR_NUMBER" -gt 0 ]; then
+            COMMIT_SHA=$(gh api repos/${{ env.KYMA_ENVIRONMENT_BROKER_REPO }}/commits -q '.[1].sha')
+            echo "Latest commit sha: $COMMIT_SHA"
+            echo "Bump sha: ${{ github.sha }}"
+            if [ "$COMMIT_SHA" != "${{ github.sha }}" ]; then
+              echo "::error ::a PR have been merged before merging the bump PR. Don't rerun this workflow. Create a new release with the same version"
+              exit 1 
           fi
+          else
+            echo "Step skipped"
+          fi   
 
       - name: Save latest commit ref
         id: pull-ref

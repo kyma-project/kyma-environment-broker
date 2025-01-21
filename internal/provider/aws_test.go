@@ -21,6 +21,7 @@ func TestAWSDefaults(t *testing.T) {
 			Parameters:     pkg.ProvisioningParametersDTO{Region: nil},
 			PlatformRegion: "cf-eu11",
 		},
+		FailureTolerance: "zone",
 	}
 
 	// when
@@ -39,6 +40,7 @@ func TestAWSDefaults(t *testing.T) {
 		Purpose:              "production",
 		VolumeSizeGb:         80,
 		DiskType:             "gp3",
+		FailureTolerance:     ptr.String("zone"),
 	}, values)
 }
 
@@ -54,6 +56,7 @@ func TestAWSSpecific(t *testing.T) {
 			},
 			PlatformRegion: "cf-eu11",
 		},
+		FailureTolerance: "zone",
 	}
 
 	// when
@@ -73,6 +76,7 @@ func TestAWSSpecific(t *testing.T) {
 		Purpose:              "production",
 		VolumeSizeGb:         80,
 		DiskType:             "gp3",
+		FailureTolerance:     ptr.String("zone"),
 	}, values)
 }
 
@@ -103,6 +107,7 @@ func TestAWSTrialDefaults(t *testing.T) {
 		Purpose:              "evaluation",
 		VolumeSizeGb:         50,
 		DiskType:             "gp3",
+		FailureTolerance:     nil,
 	}, values)
 }
 
@@ -136,6 +141,7 @@ func TestAWSTrialSpecific(t *testing.T) {
 		Purpose:              "evaluation",
 		VolumeSizeGb:         50,
 		DiskType:             "gp3",
+		FailureTolerance:     nil,
 	}, values)
 }
 

@@ -15,6 +15,7 @@ type (
 		Purpose                string
 		MultiZone              bool
 		ProvisioningParameters internal.ProvisioningParameters
+		FailureTolerance       string
 	}
 )
 
@@ -39,5 +40,6 @@ func (p *SapConvergedCloudInputProvider) Provide() Values {
 		Region:               region,
 		Purpose:              p.Purpose,
 		DiskType:             "",
+		FailureTolerance:     &p.FailureTolerance,
 	}
 }

@@ -89,7 +89,8 @@ func (s *CreateRuntimeResourceStep) Run(operation internal.Operation, log *slog.
 	runtimeResourceName := steps.KymaRuntimeResourceName(operation)
 	log.Info(fmt.Sprintf("KymaResourceName: %s, KymaResourceNamespace: %s, RuntimeResourceName: %s", kymaResourceName, kymaResourceNamespace, runtimeResourceName))
 
-	values, err := provider.GetPlanSpecificValues(&operation, s.config.MultiZoneCluster, s.config.DefaultTrialProvider, s.useSmallerMachineTypes, s.trialPlatformRegionMapping, s.config.DefaultGardenerShootPurpose)
+	values, err := provider.GetPlanSpecificValues(&operation, s.config.MultiZoneCluster, s.config.DefaultTrialProvider, s.useSmallerMachineTypes, s.trialPlatformRegionMapping,
+		s.config.DefaultGardenerShootPurpose, s.config.ControlPlaneFailureTolerance)
 	if err != nil {
 		return s.operationManager.OperationFailed(operation, fmt.Sprintf("while updating calculating plan specific values : %s", err), err, log)
 	}
@@ -175,7 +176,7 @@ func (s *CreateRuntimeResourceStep) updateRuntimeResourceObject(values provider.
 	if runtime.Spec.Shoot.ControlPlane == nil {
 		runtime.Spec.Shoot.ControlPlane = &gardener.ControlPlane{}
 	}
-	runtime.Spec.Shoot.ControlPlane.HighAvailability = s.createHighAvailabilityConfiguration()
+	runtime.Spec.Shoot.ControlPlane = s.createHighAvailabilityConfiguration(values.FailureTolerance)
 	runtime.Spec.Shoot.EnforceSeedLocation = operation.ProvisioningParameters.Parameters.ShootAndSeedSameRegion
 	runtime.Spec.Shoot.Networking = s.createNetworkingConfiguration(operation)
 	runtime.Spec.Shoot.Kubernetes = s.createKubernetesConfiguration(operation)
@@ -250,20 +251,6 @@ func (s *CreateRuntimeResourceStep) createShootProvider(operation *internal.Oper
 		}
 	}
 	return provider, nil
-}
-
-func (s *CreateRuntimeResourceStep) createHighAvailabilityConfiguration() *gardener.HighAvailability {
-
-	failureToleranceType := gardener.FailureToleranceTypeZone
-	if s.config.ControlPlaneFailureTolerance != string(gardener.FailureToleranceTypeZone) {
-		failureToleranceType = gardener.FailureToleranceTypeNode
-	}
-
-	return &gardener.HighAvailability{
-		FailureTolerance: gardener.FailureTolerance{
-			Type: failureToleranceType,
-		},
-	}
 }
 
 func (s *CreateRuntimeResourceStep) createNetworkingConfiguration(operation internal.Operation) imv1.Networking {
@@ -351,6 +338,21 @@ func (s *CreateRuntimeResourceStep) updateInstance(id string, region string) err
 	}
 
 	return nil
+}
+
+func (s *CreateRuntimeResourceStep) createHighAvailabilityConfiguration(tolerance *string) *gardener.ControlPlane {
+	if tolerance == nil {
+		return nil
+	}
+	if *tolerance == "" {
+		return nil
+	}
+	return &gardener.ControlPlane{HighAvailability: &gardener.HighAvailability{
+		FailureTolerance: gardener.FailureTolerance{
+			Type: gardener.FailureToleranceType(*tolerance),
+		},
+	},
+	}
 }
 
 func DefaultIfParamNotSet[T interface{}](d T, param *T) T {
