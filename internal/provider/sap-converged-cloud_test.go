@@ -18,6 +18,7 @@ func TestSapConvergedCloudDefaults(t *testing.T) {
 			Parameters:     pkg.ProvisioningParametersDTO{Region: nil},
 			PlatformRegion: "cf-eu20",
 		},
+		FailureTolerance: "zone",
 	}
 
 	// when
@@ -36,6 +37,7 @@ func TestSapConvergedCloudDefaults(t *testing.T) {
 		Purpose:              "production",
 		DiskType:             "",
 		VolumeSizeGb:         0,
+		FailureTolerance:     ptr.String("zone"),
 	}, values)
 }
 
@@ -50,6 +52,7 @@ func TestSapConvergedCloudTwoZonesRegion(t *testing.T) {
 			Parameters:     pkg.ProvisioningParametersDTO{Region: ptr.String(region)},
 			PlatformRegion: "cf-eu20",
 		},
+		FailureTolerance: "zone",
 	}
 
 	// when
@@ -68,6 +71,7 @@ func TestSapConvergedCloudTwoZonesRegion(t *testing.T) {
 		Purpose:              "production",
 		DiskType:             "",
 		VolumeSizeGb:         0,
+		FailureTolerance:     ptr.String("zone"),
 	}, values)
 }
 
@@ -82,6 +86,7 @@ func TestSapConvergedCloudSingleZoneRegion(t *testing.T) {
 			Parameters:     pkg.ProvisioningParametersDTO{Region: ptr.String(region)},
 			PlatformRegion: "cf-eu20",
 		},
+		FailureTolerance: "zone",
 	}
 
 	// when
@@ -100,5 +105,6 @@ func TestSapConvergedCloudSingleZoneRegion(t *testing.T) {
 		Purpose:              "production",
 		DiskType:             "",
 		VolumeSizeGb:         0,
+		FailureTolerance:     ptr.String("zone"),
 	}, values)
 }

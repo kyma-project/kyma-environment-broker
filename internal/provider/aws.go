@@ -10,6 +10,7 @@ type (
 		Purpose                string
 		MultiZone              bool
 		ProvisioningParameters internal.ProvisioningParameters
+		FailureTolerance       string
 	}
 	AWSTrialInputProvider struct {
 		PlatformRegionMapping  map[string]string
@@ -40,6 +41,7 @@ func (p *AWSInputProvider) Provide() Values {
 		Purpose:              p.Purpose,
 		VolumeSizeGb:         80,
 		DiskType:             "gp3",
+		FailureTolerance:     &p.FailureTolerance,
 	}
 }
 
@@ -77,6 +79,7 @@ func (p *AWSTrialInputProvider) Provide() Values {
 		Purpose:              PurposeEvaluation,
 		VolumeSizeGb:         50,
 		DiskType:             "gp3",
+		FailureTolerance:     nil,
 	}
 }
 
@@ -120,6 +123,7 @@ func (p *AWSFreemiumInputProvider) Provide() Values {
 		Purpose:              PurposeEvaluation,
 		VolumeSizeGb:         50,
 		DiskType:             "gp3",
+		FailureTolerance:     nil,
 	}
 }
 

@@ -51,7 +51,7 @@ func (cmd *UpdateCommand) Run() error {
 		return fmt.Errorf("failed to create KCP client: %v", err)
 	}
 	if cmd.updateMachineType {
-		catalog, err := brokerClient.GetCatalog()
+		catalog, _, err := brokerClient.GetCatalog()
 		if err != nil {
 			return fmt.Errorf("failed to get catalog: %v", err)
 		}
@@ -93,7 +93,7 @@ func (cmd *UpdateCommand) Run() error {
 					if m == *currentMachineType {
 						newMachineType := supportedMachineTypes[(i+1)%len(supportedMachineTypes)].(string)
 						fmt.Printf("Determined machine type to update: %s\n", newMachineType)
-						resp, err := brokerClient.UpdateInstance(cmd.instanceID, map[string]interface{}{"machineType": newMachineType})
+						resp, _, err := brokerClient.UpdateInstance(cmd.instanceID, map[string]interface{}{"machineType": newMachineType})
 						if err != nil {
 							return fmt.Errorf("error updating instance: %v", err)
 						}
@@ -119,16 +119,15 @@ func (cmd *UpdateCommand) Run() error {
 			"usernamePrefix": "acme-",
 		}
 		fmt.Printf("Determined OIDC configuration to update: %v\n", newOIDCConfig)
-		resp, err := brokerClient.UpdateInstance(cmd.instanceID, map[string]interface{}{"oidc": newOIDCConfig})
+		resp, _, err := brokerClient.UpdateInstance(cmd.instanceID, map[string]interface{}{"oidc": newOIDCConfig})
 		if err != nil {
 			return fmt.Errorf("error updating instance: %v", err)
 		}
 		fmt.Printf("Update operationID: %s\n", resp["operation"].(string))
 	} else if cmd.updateAdministrators {
-		//TODO print current admnistrators
 		newAdministrators := []string{"admin1@acme.com", "admin2@acme.com"}
 		fmt.Printf("Determined administrators to update: %v\n", newAdministrators)
-		resp, err := brokerClient.UpdateInstance(cmd.instanceID, map[string]interface{}{"administrators": newAdministrators})
+		resp, _, err := brokerClient.UpdateInstance(cmd.instanceID, map[string]interface{}{"administrators": newAdministrators})
 		if err != nil {
 			return fmt.Errorf("error updating instance: %v", err)
 		}
