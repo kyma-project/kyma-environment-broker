@@ -1586,7 +1586,7 @@ func TestAdditionalWorkerNodePools(t *testing.T) {
 			)
 
 			// when
-			_, err := provisionEndpoint.Provision(fixRequestContext(t, "cf-sa30"), instanceID, domain.ProvisionDetails{
+			_, err := provisionEndpoint.Provision(fixRequestContext(t, "cf-eu10"), instanceID, domain.ProvisionDetails{
 				ServiceID:     serviceID,
 				PlanID:        broker.PreviewPlanID,
 				RawParameters: json.RawMessage(fmt.Sprintf(`{"name": "%s", "region": "%s","additionalWorkerNodePools": %s }`, clusterName, "eu-central-1", tc.additionalWorkerNodePools)),
@@ -1671,7 +1671,7 @@ func TestAdditionalWorkerNodePoolsForUnsupportedPlans(t *testing.T) {
 			additionalWorkerNodePools := `[{"name": "name-1", "machineType": "m6i.large", "autoScalerMin": 3, "autoScalerMax": 20}]`
 
 			// when
-			_, err := provisionEndpoint.Provision(fixRequestContext(t, "cf-sa30"), instanceID, domain.ProvisionDetails{
+			_, err := provisionEndpoint.Provision(fixRequestContext(t, "cf-eu10"), instanceID, domain.ProvisionDetails{
 				ServiceID:     serviceID,
 				PlanID:        tc.planID,
 				RawParameters: json.RawMessage(fmt.Sprintf(`{"name": "%s", "region": "%s","additionalWorkerNodePools": %s }`, clusterName, "eu-central-1", additionalWorkerNodePools)),

@@ -302,7 +302,7 @@ func (b *ProvisionEndpoint) validateAndExtract(details domain.ProvisionDetails, 
 	}
 
 	if parameters.AdditionalWorkerNodePools != nil {
-		if !supportsAdditionalWorkers(details.PlanID) {
+		if !supportsAdditionalWorkerNodePools(details.PlanID) {
 			return ersContext, parameters, fmt.Errorf("additional worker node pools are not supported for plan ID: %s", details.PlanID)
 		}
 		for _, additionalWorkerNodePool := range parameters.AdditionalWorkerNodePools {
@@ -400,7 +400,7 @@ func isEuRestrictedAccess(ctx context.Context) bool {
 	return euaccess.IsEURestrictedAccess(platformRegion)
 }
 
-func supportsAdditionalWorkers(planID string) bool {
+func supportsAdditionalWorkerNodePools(planID string) bool {
 	var supportedPlans = []string{
 		PreviewPlanID,
 	}

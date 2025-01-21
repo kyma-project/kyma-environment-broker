@@ -265,7 +265,7 @@ func (b *UpdateEndpoint) processUpdateParameters(instance *internal.Instance, de
 	}
 
 	if params.AdditionalWorkerNodePools != nil {
-		if !supportsAdditionalWorkers(details.PlanID) {
+		if !supportsAdditionalWorkerNodePools(details.PlanID) {
 			return domain.UpdateServiceSpec{}, fmt.Errorf("additional worker node pools are not supported for plan ID: %s", details.PlanID)
 		}
 		for _, additionalWorkerNodePool := range params.AdditionalWorkerNodePools {
@@ -300,7 +300,7 @@ func (b *UpdateEndpoint) processUpdateParameters(instance *internal.Instance, de
 		instance.Parameters.Parameters.MachineType = params.MachineType
 	}
 
-	if supportsAdditionalWorkers(details.PlanID) && params.AdditionalWorkerNodePools != nil {
+	if supportsAdditionalWorkerNodePools(details.PlanID) && params.AdditionalWorkerNodePools != nil {
 		newAdditionalWorkerNodePools := make([]pkg.AdditionalWorkerNodePool, 0, len(params.AdditionalWorkerNodePools))
 		newAdditionalWorkerNodePools = append(newAdditionalWorkerNodePools, params.AdditionalWorkerNodePools...)
 		instance.Parameters.Parameters.AdditionalWorkerNodePools = newAdditionalWorkerNodePools
