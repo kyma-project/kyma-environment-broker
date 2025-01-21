@@ -116,7 +116,7 @@ Rules validation is done during the KEB startup. If the configuration is invalid
 
 The section provides configuration examples of secret bindings selection rules and shows what hyperscaler pools they correspond to.
 
-By default, KEB uses the `hyperscaler-type` label to search for secrets without applying any sufixes to the label's value. It means that without any configuration the search is done by simple hyperscaler type value implemented in [KEB](https://github.com/kyma-project/kyma-environment-broker/blob/main/common/hyperscaler/hyperscaler_type.go).
+By default, KEB uses the `hyperscaler-type` label to search for secret bindings without applying any sufixes to the label's value. It means that without any configuration the search is done by simple hyperscaler type value implemented in [KEB](https://github.com/kyma-project/kyma-environment-broker/blob/main/common/hyperscaler/hyperscaler_type.go).
 
 ```
 hap: 
