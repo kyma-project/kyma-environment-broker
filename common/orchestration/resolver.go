@@ -39,10 +39,11 @@ type GardenerRuntimeResolver struct {
 }
 
 const (
-	globalAccountLabel      = "account"
-	subAccountLabel         = "subaccount"
-	runtimeIDAnnotation     = "kcp.provisioner.kyma-project.io/runtime-id"
-	maintenanceWindowFormat = "150405-0700"
+	globalAccountLabel             = "account"
+	subAccountLabel                = "subaccount"
+	runtimeIDAnnotationProvisioner = "kcp.provisioner.kyma-project.io/runtime-id"
+	runtimeIDAnnotationKim         = "infrastructuremanager.kyma-project.io/runtime-id"
+	maintenanceWindowFormat        = "150405-0700"
 )
 
 // NewGardenerRuntimeResolver constructs a GardenerRuntimeResolver with the mandatory input parameters.
@@ -136,10 +137,13 @@ func (resolver *GardenerRuntimeResolver) resolveRuntimeTarget(rt RuntimeTarget, 
 	// Iterate over all shoots. Evaluate target specs. If multiple are specified, all must match for a given shoot.
 	for _, s := range shoots {
 		shoot := &gardener.Shoot{Unstructured: s}
-		runtimeID := shoot.GetAnnotations()[runtimeIDAnnotation]
+		runtimeID := shoot.GetAnnotations()[runtimeIDAnnotationProvisioner]
 		if runtimeID == "" {
-			resolver.logger.Error(fmt.Sprintf("Failed to get runtimeID from %s annotation for Shoot %s", runtimeIDAnnotation, shoot.GetName()))
-			continue
+			runtimeID = shoot.GetAnnotations()[runtimeIDAnnotationKim]
+			if runtimeID == "" {
+				resolver.logger.Error(fmt.Sprintf("Failed to get runtimeID neither from %s annotation nor from %s for Shoot %s", runtimeIDAnnotationProvisioner, runtimeIDAnnotationKim, shoot.GetName()))
+				continue
+			}
 		}
 		r, ok := resolver.getRuntime(runtimeID)
 		if !ok {
