@@ -130,7 +130,7 @@ hap:
 
 ---
 
-The following configuration is an example of a rule that appends the platform region to the `hyperscaler-type` label when searching for secrets for all gcp clusters. The configuration means that there would be no possibillity to configure a pool with label `hyperscalerType: gcp` since KEB would search for `hyperscalerType: gcp__<PLATFOR_REGION>` bindings only.
+The following configuration is an example of a rule that appends the platform region to the `hyperscaler-type` label when searching for secrets for all gcp clusters. The configuration means that there would be no possibillity to configure a pool with label `hyperscalerType: gcp` since KEB would search for `hyperscalerType: gcp_<PLATFORM_REGION>` bindings only.
 
 ```
 hap: 
