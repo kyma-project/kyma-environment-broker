@@ -3,22 +3,21 @@ package command
 import (
 	"errors"
 	"fmt"
-	"os/exec"
 	broker "skr-tester/pkg/broker"
+	kcp "skr-tester/pkg/kcp"
 	"skr-tester/pkg/logger"
-	"strings"
 
 	"github.com/spf13/cobra"
 )
 
 type UpdateCommand struct {
-	cobraCmd          *cobra.Command
-	log               logger.Logger
-	instanceID        string
-	planID            string
-	updateMachineType bool
-	// TODO
-	updateOIDC bool
+	cobraCmd             *cobra.Command
+	log                  logger.Logger
+	instanceID           string
+	planID               string
+	updateMachineType    bool
+	updateOIDC           bool
+	updateAdministrators bool
 }
 
 func NewUpdateCommand() *cobra.Command {
@@ -38,6 +37,8 @@ func NewUpdateCommand() *cobra.Command {
 	cobraCmd.Flags().StringVarP(&cmd.instanceID, "instanceID", "i", "", "InstanceID of the specific instance.")
 	cobraCmd.Flags().StringVarP(&cmd.planID, "planID", "p", "", "PlanID of the specific instance.")
 	cobraCmd.Flags().BoolVarP(&cmd.updateMachineType, "updateMachineType", "m", false, "Should update machineType.")
+	cobraCmd.Flags().BoolVarP(&cmd.updateOIDC, "updateOIDC", "o", false, "Should update OIDC.")
+	cobraCmd.Flags().BoolVarP(&cmd.updateAdministrators, "updateAdministrators", "a", false, "Should update Administrators.")
 
 	return cobraCmd
 }
@@ -45,24 +46,29 @@ func NewUpdateCommand() *cobra.Command {
 func (cmd *UpdateCommand) Run() error {
 	cmd.log = logger.New()
 	brokerClient := broker.NewBrokerClient(broker.NewBrokerConfig())
-	catalog, err := brokerClient.GetCatalog()
+	kcpClient, err := kcp.NewKCPClient()
 	if err != nil {
-		return fmt.Errorf("failed to get catalog: %v", err)
+		return fmt.Errorf("failed to create KCP client: %v", err)
 	}
-	services, ok := catalog["services"].([]interface{})
-	if !ok {
-		return errors.New("services field not found or invalid in catalog")
-	}
-	for _, service := range services {
-		serviceMap, ok := service.(map[string]interface{})
+	if cmd.updateMachineType {
+		catalog, _, err := brokerClient.GetCatalog()
+		if err != nil {
+			return fmt.Errorf("failed to get catalog: %v", err)
+		}
+		services, ok := catalog["services"].([]interface{})
 		if !ok {
-			return errors.New("service is not a map[string]interface{}")
+			return errors.New("services field not found or invalid in catalog")
 		}
-		if serviceMap["id"] != broker.KymaServiceID {
-			continue
-		}
-		if cmd.updateMachineType {
-			currentMachineType, err := getCurrentMachineType(cmd.instanceID)
+		for _, service := range services {
+			serviceMap, ok := service.(map[string]interface{})
+			if !ok {
+				return errors.New("service is not a map[string]interface{}")
+			}
+			if serviceMap["id"] != broker.KymaServiceID {
+				continue
+			}
+
+			currentMachineType, err := kcpClient.GetCurrentMachineType(cmd.instanceID)
 			if err != nil {
 				return fmt.Errorf("failed to get current machine type: %v", err)
 			}
@@ -87,41 +93,67 @@ func (cmd *UpdateCommand) Run() error {
 					if m == *currentMachineType {
 						newMachineType := supportedMachineTypes[(i+1)%len(supportedMachineTypes)].(string)
 						fmt.Printf("Determined machine type to update: %s\n", newMachineType)
-						resp, err := brokerClient.UpdateInstance(cmd.instanceID, map[string]interface{}{"machineType": newMachineType})
+						resp, _, err := brokerClient.UpdateInstance(cmd.instanceID, map[string]interface{}{"machineType": newMachineType})
 						if err != nil {
 							return fmt.Errorf("error updating instance: %v", err)
 						}
 						fmt.Printf("Update operationID: %s\n", resp["operation"].(string))
-						break
+						return nil
 					}
 				}
+
 			}
 		}
+	} else if cmd.updateOIDC {
+		currentOIDCConfig, err := kcpClient.GetCurrentOIDCConfig(cmd.instanceID)
+		if err != nil {
+			return fmt.Errorf("failed to get current OIDC config: %v", err)
+		}
+		fmt.Printf("Current OIDC config: %v\n", currentOIDCConfig)
+		newOIDCConfig := map[string]interface{}{
+			"clientID":       "foo-bar",
+			"groupsClaim":    "groups1",
+			"issuerURL":      "https://new.custom.ias.com",
+			"signingAlgs":    []string{"RS256"},
+			"usernameClaim":  "email",
+			"usernamePrefix": "acme-",
+		}
+		fmt.Printf("Determined OIDC configuration to update: %v\n", newOIDCConfig)
+		resp, _, err := brokerClient.UpdateInstance(cmd.instanceID, map[string]interface{}{"oidc": newOIDCConfig})
+		if err != nil {
+			return fmt.Errorf("error updating instance: %v", err)
+		}
+		fmt.Printf("Update operationID: %s\n", resp["operation"].(string))
+	} else if cmd.updateAdministrators {
+		newAdministrators := []string{"admin1@acme.com", "admin2@acme.com"}
+		fmt.Printf("Determined administrators to update: %v\n", newAdministrators)
+		resp, _, err := brokerClient.UpdateInstance(cmd.instanceID, map[string]interface{}{"administrators": newAdministrators})
+		if err != nil {
+			return fmt.Errorf("error updating instance: %v", err)
+		}
+		fmt.Printf("Update operationID: %s\n", resp["operation"].(string))
 	}
 	return nil
 }
 
 func (cmd *UpdateCommand) Validate() error {
-	if cmd.instanceID != "" && cmd.planID != "" {
-		return nil
-	} else {
+	if cmd.instanceID == "" || cmd.planID == "" {
 		return errors.New("you must specify the planID and instanceID")
 	}
-}
-
-func getCurrentMachineType(instanceID string) (*string, error) {
-	_, err := exec.Command("kcp", "login").Output()
-	if err != nil {
-		return nil, fmt.Errorf("failed to run kcp login: %v", err)
+	updateCount := 0
+	if cmd.updateMachineType {
+		updateCount++
 	}
-	output, err := exec.Command("kcp", "rt", "-i", instanceID, "--runtime-config", "-o", "custom=:{.runtimeConfig.spec.shoot.provider.workers[0].machine.type}").Output()
-	if err != nil {
-		return nil, fmt.Errorf("failed to run kcp rt: %v", err)
+	if cmd.updateOIDC {
+		updateCount++
 	}
-
-	machineType := string(output)
-	machineType = strings.TrimSpace(machineType)
-	return &machineType, nil
+	if cmd.updateAdministrators {
+		updateCount++
+	}
+	if updateCount != 1 {
+		return errors.New("you must use exactly one of updateMachineType, updateOIDC, or updateAdministrators")
+	}
+	return nil
 }
 
 func extractSupportedMachineTypes(planMap map[string]interface{}) ([]interface{}, error) {

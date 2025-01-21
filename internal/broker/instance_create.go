@@ -513,8 +513,9 @@ func (b *ProvisionEndpoint) validateNetworking(parameters pkg.ProvisioningParame
 	}
 	// error is handled before, in the validate CIDR
 	cidr, _ := netip.ParsePrefix(parameters.Networking.NodesCidr)
-	if cidr.Bits() > 23 {
-		err = multierror.Append(err, fmt.Errorf("the suffix of the node CIDR must not be greater than 26"))
+	const maxSuffix = 23
+	if cidr.Bits() > maxSuffix {
+		err = multierror.Append(err, fmt.Errorf("the suffix of the node CIDR must not be greater than %d", maxSuffix))
 	}
 
 	if parameters.Networking.PodsCidr != nil {
