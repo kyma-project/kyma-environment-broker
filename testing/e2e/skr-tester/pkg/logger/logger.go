@@ -3,8 +3,9 @@ package logger
 import (
 	"os"
 
+	"log/slog"
+
 	"github.com/spf13/pflag"
-	"golang.org/x/exp/slog"
 )
 
 // CfgLevel is the configured logging level
