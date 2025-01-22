@@ -3,10 +3,8 @@ package broker
 import (
 	"bytes"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"net/http"
 	"os"
 	"strings"
@@ -103,7 +101,7 @@ func (o *OAuthToken) GetToken(scopes string) (string, error) {
 	defer resp.Body.Close()
 
 	if resp.StatusCode != http.StatusOK {
-		return "", errors.New("failed to get token")
+		return "", fmt.Errorf("failed to get token")
 	}
 
 	var result map[string]interface{}
@@ -189,7 +187,7 @@ func (c *BrokerClient) CallBrokerWithoutToken(payload interface{}, endpoint, ver
 	}
 	defer resp.Body.Close()
 
-	body, err := ioutil.ReadAll(resp.Body)
+	body, err := io.ReadAll(resp.Body)
 	if err != nil {
 		return err
 	}
@@ -288,7 +286,7 @@ func (c *BrokerClient) DownloadKubeconfig(instanceID string) (string, error) {
 		return "", fmt.Errorf("failed to download kubeconfig: %s", resp.Status)
 	}
 
-	data, err := ioutil.ReadAll(resp.Body)
+	data, err := io.ReadAll(resp.Body)
 	if err != nil {
 		return "", err
 	}

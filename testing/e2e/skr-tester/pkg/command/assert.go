@@ -2,7 +2,6 @@ package command
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"regexp"
 	"time"
@@ -285,7 +284,7 @@ func (cmd *AssertCommand) Run() error {
 
 func (cmd *AssertCommand) Validate() error {
 	if cmd.instanceID == "" {
-		return errors.New("instanceID must be specified")
+		return fmt.Errorf("instanceID must be specified")
 	}
 	count := 0
 	if cmd.machineType != "" {
@@ -313,7 +312,7 @@ func (cmd *AssertCommand) Validate() error {
 		count++
 	}
 	if count != 1 {
-		return errors.New("you must use exactly one of machineType, clusterOIDCConfig, kubeconfigOIDCConfig, admins, btpManagerSecretExists, editBtpManagerSecret, deleteBtpManagerSecret, or suspensionInProgress")
+		return fmt.Errorf("you must use exactly one of machineType, clusterOIDCConfig, kubeconfigOIDCConfig, admins, btpManagerSecretExists, editBtpManagerSecret, deleteBtpManagerSecret, or suspensionInProgress")
 	}
 	return nil
 }

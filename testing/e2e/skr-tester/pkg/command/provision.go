@@ -1,7 +1,6 @@
 package command
 
 import (
-	"errors"
 	"fmt"
 	"strings"
 
@@ -93,10 +92,10 @@ func (cmd *ProvisionCommand) Run() error {
 
 func (cmd *ProvisionCommand) Validate() error {
 	if cmd.planID == "" || cmd.region == "" {
-		return errors.New("you must specify the planID and region")
+		return fmt.Errorf("you must specify the planID and region")
 	}
 	if cmd.overlapIP && cmd.invalidIP {
-		return errors.New("you can only set one of overlapIP or invalidIP")
+		return fmt.Errorf("you can only set one of overlapIP or invalidIP")
 	}
 	return nil
 }

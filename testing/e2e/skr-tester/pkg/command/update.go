@@ -1,7 +1,6 @@
 package command
 
 import (
-	"errors"
 	"fmt"
 	broker "skr-tester/pkg/broker"
 	kcp "skr-tester/pkg/kcp"
@@ -57,12 +56,12 @@ func (cmd *UpdateCommand) Run() error {
 		}
 		services, ok := catalog["services"].([]interface{})
 		if !ok {
-			return errors.New("services field not found or invalid in catalog")
+			return fmt.Errorf("services field not found or invalid in catalog")
 		}
 		for _, service := range services {
 			serviceMap, ok := service.(map[string]interface{})
 			if !ok {
-				return errors.New("service is not a map[string]interface{}")
+				return fmt.Errorf("service is not a map[string]interface{}")
 			}
 			if serviceMap["id"] != broker.KymaServiceID {
 				continue
@@ -75,7 +74,7 @@ func (cmd *UpdateCommand) Run() error {
 			fmt.Printf("Current machine type: %s\n", *currentMachineType)
 			plans, ok := serviceMap["plans"].([]interface{})
 			if !ok {
-				return errors.New("plans field not found or invalid in serviceMap")
+				return fmt.Errorf("plans field not found or invalid in serviceMap")
 			}
 			for _, p := range plans {
 				planMap, ok := p.(map[string]interface{})
@@ -138,7 +137,7 @@ func (cmd *UpdateCommand) Run() error {
 
 func (cmd *UpdateCommand) Validate() error {
 	if cmd.instanceID == "" || cmd.planID == "" {
-		return errors.New("you must specify the planID and instanceID")
+		return fmt.Errorf("you must specify the planID and instanceID")
 	}
 	updateCount := 0
 	if cmd.updateMachineType {
@@ -151,7 +150,7 @@ func (cmd *UpdateCommand) Validate() error {
 		updateCount++
 	}
 	if updateCount != 1 {
-		return errors.New("you must use exactly one of updateMachineType, updateOIDC, or updateAdministrators")
+		return fmt.Errorf("you must use exactly one of updateMachineType, updateOIDC, or updateAdministrators")
 	}
 	return nil
 }
@@ -159,31 +158,31 @@ func (cmd *UpdateCommand) Validate() error {
 func extractSupportedMachineTypes(planMap map[string]interface{}) ([]interface{}, error) {
 	schemas, ok := planMap["schemas"].(map[string]interface{})
 	if !ok {
-		return nil, errors.New("schemas field not found or invalid in planMap")
+		return nil, fmt.Errorf("schemas field not found or invalid in planMap")
 	}
 	serviceInstance, ok := schemas["service_instance"].(map[string]interface{})
 	if !ok {
-		return nil, errors.New("service_instance field not found or invalid in schemas")
+		return nil, fmt.Errorf("service_instance field not found or invalid in schemas")
 	}
 	update, ok := serviceInstance["update"].(map[string]interface{})
 	if !ok {
-		return nil, errors.New("update field not found or invalid in service_instance")
+		return nil, fmt.Errorf("update field not found or invalid in service_instance")
 	}
 	parameters, ok := update["parameters"].(map[string]interface{})
 	if !ok {
-		return nil, errors.New("parameters field not found or invalid in update")
+		return nil, fmt.Errorf("parameters field not found or invalid in update")
 	}
 	properties, ok := parameters["properties"].(map[string]interface{})
 	if !ok {
-		return nil, errors.New("properties field not found or invalid in parameters")
+		return nil, fmt.Errorf("properties field not found or invalid in parameters")
 	}
 	machineType, ok := properties["machineType"].(map[string]interface{})
 	if !ok {
-		return nil, errors.New("machineType field not found or invalid in properties")
+		return nil, fmt.Errorf("machineType field not found or invalid in properties")
 	}
 	supportedMachineTypes, ok := machineType["enum"].([]interface{})
 	if !ok {
-		return nil, errors.New("enum field not found or invalid in machineType")
+		return nil, fmt.Errorf("enum field not found or invalid in machineType")
 	}
 	return supportedMachineTypes, nil
 }

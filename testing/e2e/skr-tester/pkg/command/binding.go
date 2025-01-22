@@ -2,7 +2,6 @@ package command
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"net/http"
 	"strings"
@@ -137,7 +136,7 @@ func (cmd *BindingCommand) checkKubeconfig(brokerClient *broker.BrokerClient) er
 	}
 	kubeconfig, ok := resp["credentials"].(map[string]interface{})["kubeconfig"].(string)
 	if !ok {
-		return errors.New("failed to parse kubeconfig from binding credentials")
+		return fmt.Errorf("failed to parse kubeconfig from binding credentials")
 	}
 	fmt.Println("Testing kubeconfig returned in response from create binding.")
 	if err := cmd.validateKubeconfig(kubeconfig); err != nil {
@@ -150,7 +149,7 @@ func (cmd *BindingCommand) checkKubeconfig(brokerClient *broker.BrokerClient) er
 	}
 	kubeconfig, ok = binding["credentials"].(map[string]interface{})["kubeconfig"].(string)
 	if !ok {
-		return errors.New("failed to parse kubeconfig from binding credentials")
+		return fmt.Errorf("failed to parse kubeconfig from binding credentials")
 	}
 	fmt.Println("Testing kubeconfig returned in response from get binding.")
 	return cmd.validateKubeconfig(kubeconfig)
@@ -224,7 +223,7 @@ func (cmd *BindingCommand) deleteAndCheckKubeconfigValidity(brokerClient *broker
 	}
 	kubeconfig, ok := resp["credentials"].(map[string]interface{})["kubeconfig"].(string)
 	if !ok {
-		return errors.New("failed to parse kubeconfig from binding credentials")
+		return fmt.Errorf("failed to parse kubeconfig from binding credentials")
 	}
 	if err := cmd.validateKubeconfig(kubeconfig); err != nil {
 		return err
@@ -239,7 +238,7 @@ func (cmd *BindingCommand) deleteAndCheckKubeconfigValidity(brokerClient *broker
 
 	fmt.Printf("Binding with ID %s deleted successfully.\n", bindingID)
 	if err := cmd.validateKubeconfig(kubeconfig); err == nil {
-		return errors.New("expected kubeconfig to be invalid after binding deletion, but it is still valid")
+		return fmt.Errorf("expected kubeconfig to be invalid after binding deletion, but it is still valid")
 	} else if !strings.Contains(err.Error(), "failed to get secret: secrets") {
 		return fmt.Errorf("unexpected error: %v", err)
 	}
@@ -342,7 +341,7 @@ func (cmd *BindingCommand) createBindingsAboveLimit(brokerClient *broker.BrokerC
 
 func (cmd *BindingCommand) Validate() error {
 	if cmd.instanceID == "" {
-		return errors.New("instanceID must be specified")
+		return fmt.Errorf("instanceID must be specified")
 	}
 	count := 0
 	if cmd.create {
@@ -382,7 +381,7 @@ func (cmd *BindingCommand) Validate() error {
 		count++
 	}
 	if count != 1 {
-		return errors.New("you must use exactly one of create, getByID, checkKubeconfigValidity, deleteByID, deleteNonExistingByID, getNonExistingByID, deleteAndCheckKubeconfig, checkExpirationBelowMin, checkExpirationAboveMax, createTwoTimesTheSame, createCheckConflict, or createAboveLimit")
+		return fmt.Errorf("you must use exactly one of create, getByID, checkKubeconfigValidity, deleteByID, deleteNonExistingByID, getNonExistingByID, deleteAndCheckKubeconfig, checkExpirationBelowMin, checkExpirationAboveMax, createTwoTimesTheSame, createCheckConflict, or createAboveLimit")
 	}
 	return nil
 }

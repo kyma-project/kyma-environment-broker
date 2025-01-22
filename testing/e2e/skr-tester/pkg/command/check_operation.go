@@ -1,7 +1,6 @@
 package command
 
 import (
-	"errors"
 	"fmt"
 	broker "skr-tester/pkg/broker"
 	"skr-tester/pkg/logger"
@@ -54,7 +53,7 @@ func (cmd *CheckOperationCommand) Run() error {
 		var ok bool
 		state, ok = resp["state"].(string)
 		if !ok {
-			return false, errors.New("state field not found in operation response")
+			return false, fmt.Errorf("state field not found in operation response")
 		}
 		fmt.Printf("Operation state: %s\n", state)
 		return state == "succeeded" || state == "failed", nil
@@ -63,7 +62,7 @@ func (cmd *CheckOperationCommand) Run() error {
 		return err
 	}
 	if state != "succeeded" {
-		return errors.New(fmt.Sprintf("error thrown by ensureOperationSucceeded: operation didn't succeed in time. Final state: %s", state))
+		return fmt.Errorf("error thrown by ensureOperationSucceeded: operation didn't succeed in time. Final state: %s", state)
 	}
 
 	fmt.Printf("Operation %s finished with state %s\n", cmd.operationID, state)
@@ -74,7 +73,7 @@ func (cmd *CheckOperationCommand) Validate() error {
 	if cmd.instanceID != "" && cmd.operationID != "" {
 		return nil
 	} else {
-		return errors.New("both of the following options have to be specified: instanceID, operationID")
+		return fmt.Errorf("both of the following options have to be specified: instanceID, operationID")
 	}
 }
 
@@ -92,7 +91,7 @@ func wait(condition func() (bool, error), timeout, interval time.Duration) error
 	for {
 		select {
 		case <-timeoutCh:
-			return errors.New("timeout reached")
+			return fmt.Errorf("timeout reached")
 		case <-ticker.C:
 			done, err := condition()
 			if err != nil {

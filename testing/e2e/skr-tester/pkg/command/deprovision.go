@@ -1,7 +1,6 @@
 package command
 
 import (
-	"errors"
 	"fmt"
 
 	broker "skr-tester/pkg/broker"
@@ -52,6 +51,6 @@ func (cmd *DeprovisionCommand) Validate() error {
 	if cmd.instanceID != "" {
 		return nil
 	} else {
-		return errors.New("at least one of the following options have to be specified: instanceID")
+		return fmt.Errorf("at least one of the following options have to be specified: instanceID")
 	}
 }
