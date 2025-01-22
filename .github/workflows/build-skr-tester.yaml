@@ -21,4 +21,6 @@ jobs:
         go-version-file: 'testing/e2e/skr-tester/go.mod'
 
     - name: Run make build
-      run: make build
+      run: |
+        cd testing/e2e/skr-tester
+        make build
