@@ -144,7 +144,7 @@ hap:
 
 ---
 
-It is possible to extend the configuration rule entry with region specified. Below configuration means that if a cluster is provisioned in cf-sa30 subaccount regiont then KEB would search for secret bindings with `hyperscalerType: gcp_cf-sa30` label. In other cases, for example when probisioning a gcp cluster in other region, KEB would search for `hyperscalerType: gcp` label. Differently than in previous example, in this case, it is possible to configure two different pools for the same hyperscaler type.
+It is possible to extend the configuration rule entry with specified region. Below configuration means that if a cluster is provisioned in cf-sa30 subaccount region then KEB would search for secret bindings with `hyperscalerType: gcp_cf-sa30` label. In other cases, for example when probisioning a gcp cluster in other region, KEB would search for `hyperscalerType: gcp` label. Differently than in previous example, in this case, it is possible to configure two different pools for the same hyperscaler type.
 
 ```
 hap: 
