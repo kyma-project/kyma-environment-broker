@@ -162,7 +162,7 @@ As stated previously, it is possible to include multiple elements in each config
 
 ```
 hap: 
-  platformRegionRule: "gcp:cf-sa30;gcp:cf-jp30;aws:cf-eu11;openstack"
+  platformRegionRule: "gcp:cf-sa30;gcp:cf-jp30;aws:cf-eu11;sap-converged-cloud"
   clusterRegionRule: ""
   sharedRule: ""
   euAccessRule: ""
