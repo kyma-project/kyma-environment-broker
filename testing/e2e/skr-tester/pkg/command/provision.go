@@ -28,18 +28,20 @@ func NewProvisionCmd() *cobra.Command {
 		Aliases: []string{"p"},
 		Short:   "Provisions an instance",
 		Long:    "Provisions an instance",
-		Example: "skr-tester provision -p 361c511f-f939-4621-b228-d0fb79a1fe15 -r eu-central-1                           Provisions the instance.",
-
+		Example: `  skr-tester provision -p planID -r region                         Provisions the instance with the specified planID and region.
+  skr-tester provision -p planID -r region --overlapIP             Tries to provision the instance with an overlapping restricted IP range.
+  skr-tester provision -p planID -r region --invalidIP             Tries to provision the instance with an invalid IP range.
+  skr-tester provision -p planID -r region --validCustomIP         Provisions the instance with a valid custom IP range.`,
 		PreRunE: func(_ *cobra.Command, _ []string) error { return cmd.Validate() },
 		RunE:    func(_ *cobra.Command, _ []string) error { return cmd.Run() },
 	}
 	cmd.cobraCmd = cobraCmd
 
-	cobraCmd.Flags().StringVarP(&cmd.planID, "planID", "p", "", "PlanID of the specific instance.")
+	cobraCmd.Flags().StringVarP(&cmd.planID, "planID", "p", "", "Plan ID of the specific instance.")
 	cobraCmd.Flags().StringVarP(&cmd.region, "region", "r", "", "Region of the specific instance.")
-	cobraCmd.Flags().BoolVarP(&cmd.overlapIP, "overlapIP", "o", false, "Try to provision with overlapping restricted IP range.")
-	cobraCmd.Flags().BoolVarP(&cmd.invalidIP, "invalidIP", "i", false, "Try to provision with invalid IP range.")
-	cobraCmd.Flags().BoolVarP(&cmd.validCustomIP, "validCustomIP", "v", false, "Try to provision with valid custom IP range.")
+	cobraCmd.Flags().BoolVarP(&cmd.overlapIP, "overlapIP", "o", false, "Try to provision with an overlapping restricted IP range.")
+	cobraCmd.Flags().BoolVarP(&cmd.invalidIP, "invalidIP", "i", false, "Try to provision with an invalid IP range.")
+	cobraCmd.Flags().BoolVarP(&cmd.validCustomIP, "validCustomIP", "v", false, "Provision with a valid custom IP range.")
 
 	return cobraCmd
 }

@@ -7,8 +7,8 @@ import (
 func New() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:          "skr-tester",
-		Short:        "SKR tester",
-		Long:         "SKR tester",
+		Short:        "Run SKR tests",
+		Long:         "This tool is used to perform SKR integration tests.",
 		SilenceUsage: true,
 	}
 	cmd.PersistentFlags().BoolP("help", "h", false, "Option that displays help for the CLI.")

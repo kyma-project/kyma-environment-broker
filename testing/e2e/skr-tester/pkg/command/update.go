@@ -24,20 +24,20 @@ func NewUpdateCommand() *cobra.Command {
 	cobraCmd := &cobra.Command{
 		Use:     "update",
 		Aliases: []string{"u"},
-		Short:   "Update the instnace",
-		Long:    "Update the instnace",
-		Example: "skr-tester update -i instanceID -p planID --updateMachineType                            Update the instance with new machineType.",
-
+		Short:   "Update the instance",
+		Long:    "Update the instance with a new machine type, OIDC configuration, or administrators.",
+		Example: `	skr-tester update -i instanceID -p planID --updateMachineType             Update the instance with a new machine type.
+	skr-tester update -i instanceID -p planID --updateOIDC                    Update the instance with a new OIDC configuration.
+	skr-tester update -i instanceID -p planID --updateAdministrators          Update the instance with new administrators.`,
 		PreRunE: func(_ *cobra.Command, _ []string) error { return cmd.Validate() },
 		RunE:    func(_ *cobra.Command, _ []string) error { return cmd.Run() },
 	}
 	cmd.cobraCmd = cobraCmd
-
-	cobraCmd.Flags().StringVarP(&cmd.instanceID, "instanceID", "i", "", "InstanceID of the specific instance.")
-	cobraCmd.Flags().StringVarP(&cmd.planID, "planID", "p", "", "PlanID of the specific instance.")
-	cobraCmd.Flags().BoolVarP(&cmd.updateMachineType, "updateMachineType", "m", false, "Should update machineType.")
-	cobraCmd.Flags().BoolVarP(&cmd.updateOIDC, "updateOIDC", "o", false, "Should update OIDC.")
-	cobraCmd.Flags().BoolVarP(&cmd.updateAdministrators, "updateAdministrators", "a", false, "Should update Administrators.")
+	cobraCmd.Flags().StringVarP(&cmd.instanceID, "instanceID", "i", "", "Instance ID of the specific instance.")
+	cobraCmd.Flags().StringVarP(&cmd.planID, "planID", "p", "", "Plan ID of the specific instance.")
+	cobraCmd.Flags().BoolVarP(&cmd.updateMachineType, "updateMachineType", "m", false, "Update machine type.")
+	cobraCmd.Flags().BoolVarP(&cmd.updateOIDC, "updateOIDC", "o", false, "Update OIDC configuration.")
+	cobraCmd.Flags().BoolVarP(&cmd.updateAdministrators, "updateAdministrators", "a", false, "Update administrators.")
 
 	return cobraCmd
 }

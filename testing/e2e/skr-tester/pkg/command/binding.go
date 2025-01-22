@@ -43,16 +43,27 @@ func NewBindingCmd() *cobra.Command {
 		Aliases: []string{"b"},
 		Short:   "Provides operations for bindings",
 		Long:    "Provides operations for bindings",
-		Example: "skr-tester binding -i instanceID --create                           Creates a binding.",
+		Example: `  skr-tester binding -i instanceID --create                             Creates a binding.
+  skr-tester binding -i instanceID --getByID bindingID                  Gets a binding by ID.
+  skr-tester binding -i instanceID --checkKubeconfigValidity            Checks the validity of the kubeconfig created by a binding.
+  skr-tester binding -i instanceID --deleteByID bindingID               Deletes a binding by ID.
+  skr-tester binding -i instanceID --deleteNonExistingByID bindingID    Deletes a non-existing binding.
+  skr-tester binding -i instanceID --getNonExistingByID bindingID       Gets a non-existing binding.
+  skr-tester binding -i instanceID --deleteAndCheckKubeconfig           Deletes a binding and checks if the kubeconfig is still valid.
+  skr-tester binding -i instanceID --checkExpirationBelowMin            Checks if the expiration time below the minimum value is correctly handled.
+  skr-tester binding -i instanceID --checkExpirationAboveMax            Checks if the expiration time above the maximum value is correctly handled.
+  skr-tester binding -i instanceID --createTwoTimesTheSame              Creates a binding two times with the same ID.
+  skr-tester binding -i instanceID --createCheckConflict                Checks if creating a binding two times with the same ID but different expiration time is possible.
+  skr-tester binding -i instanceID --createAboveLimit                   Checks if creating more bindings than the maximum limit is possible.`,
 
 		PreRunE: func(_ *cobra.Command, _ []string) error { return cmd.Validate() },
 		RunE:    func(_ *cobra.Command, _ []string) error { return cmd.Run() },
 	}
 	cmd.cobraCmd = cobraCmd
 
-	cobraCmd.Flags().StringVarP(&cmd.instanceID, "instanceID", "i", "", "InstanceID of the specific instance.")
+	cobraCmd.Flags().StringVarP(&cmd.instanceID, "instanceID", "i", "", "Instance ID of the specific instance.")
 	cobraCmd.Flags().BoolVar(&cmd.create, "create", false, "Create a binding.")
-	cobraCmd.Flags().IntVar(&cmd.expirationSeconds, "expirationSeconds", 600, "Expiration time in seconds for the binding. Leave empty for default value.")
+	cobraCmd.Flags().IntVar(&cmd.expirationSeconds, "expirationSeconds", 600, "Expiration time in seconds for the binding. Leave empty for the default value.")
 	cobraCmd.Flags().StringVar(&cmd.getByID, "getByID", "", "Get a binding by ID.")
 	cobraCmd.Flags().BoolVar(&cmd.checkKubeconfigValidity, "checkKubeconfigValidity", false, "Check the validity of the kubeconfig created by a binding.")
 	cobraCmd.Flags().StringVar(&cmd.deleteByID, "deleteByID", "", "Delete a binding by ID.")
@@ -62,7 +73,7 @@ func NewBindingCmd() *cobra.Command {
 	cobraCmd.Flags().BoolVar(&cmd.checkExpirationBelowMin, "checkExpirationBelowMin", false, "Check if the expiration time below the minimum value is correctly handled.")
 	cobraCmd.Flags().BoolVar(&cmd.checkExpirationAboveMax, "checkExpirationAboveMax", false, "Check if the expiration time above the maximum value is correctly handled.")
 	cobraCmd.Flags().BoolVar(&cmd.createTwoTimesTheSame, "createTwoTimesTheSame", false, "Create a binding two times with the same ID.")
-	cobraCmd.Flags().BoolVar(&cmd.createCheckConflict, "createCheckConflict", false, "Create a binding two times with the same ID but different expiration time.")
+	cobraCmd.Flags().BoolVar(&cmd.createCheckConflict, "createCheckConflict", false, "Create a binding two times with the same ID but different expiration times.")
 	cobraCmd.Flags().BoolVar(&cmd.createAboveLimit, "createAboveLimit", false, "Create more bindings than the maximum allowed limit.")
 
 	return cobraCmd

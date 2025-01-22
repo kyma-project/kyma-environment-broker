@@ -25,7 +25,7 @@ func NewCheckOperationCommand() *cobra.Command {
 		Aliases: []string{"o"},
 		Short:   "Waits for operation to finish",
 		Long:    "Waits for operation to finish",
-		Example: "skr-tester operation -i instanceID -op operationID                            Checks the operation status.",
+		Example: "	skr-tester operation -i instanceID -op operationID                            Checks the operation status.",
 
 		PreRunE: func(_ *cobra.Command, _ []string) error { return cmd.Validate() },
 		RunE:    func(_ *cobra.Command, _ []string) error { return cmd.Run() },

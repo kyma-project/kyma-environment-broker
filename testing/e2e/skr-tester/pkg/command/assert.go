@@ -40,21 +40,26 @@ func NewAsertCmd() *cobra.Command {
 	cobraCmd := &cobra.Command{
 		Use:     "assert",
 		Aliases: []string{"a"},
-		Short:   "Does an assertion",
-		Long:    "Does an assertion",
-		Example: "skr-tester assert -i instanceID -m m6i.large                           Asserts the instance has the machine type m6i.large.\n" +
-			"skr-tester assert -i instanceID -o oidcConfig                          Asserts the instance has the OIDC config equal to oidcConfig.\n" +
-			"skr-tester assert -i instanceID -k issuerURL,clientID                  Asserts the kubeconfig contains the specified issuerURL and clientID.",
+		Short:   "Performs an assertion",
+		Long:    "Performs an assertion",
+		Example: `  skr-tester assert -i instanceID -m m6i.large                           Asserts the instance has the machine type m6i.large.
+  skr-tester assert -i instanceID -o oidcConfig                          Asserts the instance has the OIDC config equal to oidcConfig.
+  skr-tester assert -i instanceID -k issuerURL,clientID                  Asserts the kubeconfig contains the specified issuerURL and clientID.
+  skr-tester assert -i instanceID -a admin1,admin2                       Asserts the specified admins are present in the cluster role bindings.
+  skr-tester assert -i instanceID -b                                     Checks if the BTP manager secret exists in the instance.
+  skr-tester assert -i instanceID -e                                     Edits the BTP manager secret in the instance and checks if the secret is reconciled.
+  skr-tester assert -i instanceID -d                                     Deletes the BTP manager secret in the instance and checks if the secret is reconciled.
+  skr-tester assert -i instanceID -s                                     Checks if the suspension operation is in progress for the instance.`,
 
 		PreRunE: func(_ *cobra.Command, _ []string) error { return cmd.Validate() },
 		RunE:    func(_ *cobra.Command, _ []string) error { return cmd.Run() },
 	}
 	cmd.cobraCmd = cobraCmd
 
-	cobraCmd.Flags().StringVarP(&cmd.instanceID, "instanceID", "i", "", "InstanceID of the specific instance.")
-	cobraCmd.Flags().StringVarP(&cmd.machineType, "machineType", "m", "", "MachineType of the specific instance.")
-	cobraCmd.Flags().StringVarP(&cmd.clusterOIDCConfig, "clusterOIDCConfig", "o", "", "clusterOIDCConfig of the specific instance.")
-	cobraCmd.Flags().StringSliceVarP(&cmd.kubeconfigOIDCConfig, "kubeconfigOIDCConfig", "k", nil, "kubeconfigOIDCConfig of the specific instance. Pass the issuerURL and clientID in the format issuerURL,clientID")
+	cobraCmd.Flags().StringVarP(&cmd.instanceID, "instanceID", "i", "", "Instance ID of the specific instance.")
+	cobraCmd.Flags().StringVarP(&cmd.machineType, "machineType", "m", "", "Asserts the instance has the specified machine type.")
+	cobraCmd.Flags().StringVarP(&cmd.clusterOIDCConfig, "clusterOIDCConfig", "o", "", "Asserts the instance has the specified cluster OIDC config.")
+	cobraCmd.Flags().StringSliceVarP(&cmd.kubeconfigOIDCConfig, "kubeconfigOIDCConfig", "k", nil, "Asserts the kubeconfig contains the specified issuer URL and client ID in the format issuerURL,clientID.")
 	cobraCmd.Flags().StringSliceVarP(&cmd.admins, "admins", "a", nil, "Admins of the specific instance.")
 	cobraCmd.Flags().BoolVarP(&cmd.btpManagerSecretExists, "btpManagerSecretExists", "b", false, "Checks if the BTP manager secret exists in the instance.")
 	cobraCmd.Flags().BoolVarP(&cmd.editBtpManagerSecret, "editBtpManagerSecret", "e", false, "Edits the BTP manager secret in the instance and checks if the secret is reconciled.")
