@@ -32,7 +32,7 @@ func NewCheckOperationCommand() *cobra.Command {
 	}
 	cmd.cobraCmd = cobraCmd
 
-	cobraCmd.Flags().StringVarP(&cmd.instanceID, "instanceID", "i", "", "InstanceID of the specific instance.")
+	cobraCmd.Flags().StringVarP(&cmd.instanceID, "instanceID", "i", "", "Instance ID of the specific instance.")
 	cobraCmd.Flags().StringVarP(&cmd.operationID, "operationID", "o", "", "OperationID of the specific operation.")
 	cobraCmd.Flags().DurationVarP(&cmd.timeout, "timeout", "t", 40*time.Minute, "Timeout for the operation to finish.")
 	cobraCmd.Flags().DurationVarP(&cmd.interval, "interval", "n", 1*time.Minute, "Interval between operation checks.")
