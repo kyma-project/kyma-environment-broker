@@ -305,7 +305,7 @@ func (b *ProvisionEndpoint) validateAndExtract(details domain.ProvisionDetails, 
 		if !supportsAdditionalWorkerNodePools(details.PlanID) {
 			return ersContext, parameters, fmt.Errorf("additional worker node pools are not supported for plan ID: %s", details.PlanID)
 		}
-		if !areNamesUnique(parameters.AdditionalWorkerNodePools) {
+		if !AreNamesUnique(parameters.AdditionalWorkerNodePools) {
 			return ersContext, parameters, fmt.Errorf("names of additional worker node pools must be unique")
 		}
 		for _, additionalWorkerNodePool := range parameters.AdditionalWorkerNodePools {
@@ -415,13 +415,13 @@ func supportsAdditionalWorkerNodePools(planID string) bool {
 	return false
 }
 
-func areNamesUnique(pools []pkg.AdditionalWorkerNodePool) bool {
-	nameSet := make(map[string]bool)
+func AreNamesUnique(pools []pkg.AdditionalWorkerNodePool) bool {
+	nameSet := make(map[string]struct{})
 	for _, pool := range pools {
-		if nameSet[pool.Name] {
+		if _, exists := nameSet[pool.Name]; exists {
 			return false
 		}
-		nameSet[pool.Name] = true
+		nameSet[pool.Name] = struct{}{}
 	}
 	return true
 }

@@ -1693,6 +1693,51 @@ func TestAdditionalWorkerNodePoolsForUnsupportedPlans(t *testing.T) {
 	}
 }
 
+func TestAreNamesUnique(t *testing.T) {
+	tests := []struct {
+		name     string
+		pools    []pkg.AdditionalWorkerNodePool
+		expected bool
+	}{
+		{
+			name: "Unique names",
+			pools: []pkg.AdditionalWorkerNodePool{
+				{Name: "name-1", MachineType: "m6i.large", HAZones: true, AutoScalerMin: 5, AutoScalerMax: 5},
+				{Name: "name-2", MachineType: "m6i.large", HAZones: false, AutoScalerMin: 2, AutoScalerMax: 10},
+				{Name: "name-3", MachineType: "m6i.large", HAZones: true, AutoScalerMin: 3, AutoScalerMax: 15},
+			},
+			expected: true,
+		},
+		{
+			name: "Duplicate names",
+			pools: []pkg.AdditionalWorkerNodePool{
+				{Name: "name-1", MachineType: "m6i.large", HAZones: true, AutoScalerMin: 5, AutoScalerMax: 5},
+				{Name: "name-2", MachineType: "m6i.large", HAZones: false, AutoScalerMin: 2, AutoScalerMax: 10},
+				{Name: "name-1", MachineType: "m6i.large", HAZones: true, AutoScalerMin: 3, AutoScalerMax: 5},
+			},
+			expected: false,
+		},
+		{
+			name:     "Empty list",
+			pools:    []pkg.AdditionalWorkerNodePool{},
+			expected: true,
+		},
+		{
+			name: "Single pool",
+			pools: []pkg.AdditionalWorkerNodePool{
+				{Name: "name-1", MachineType: "m6i.large", HAZones: false, AutoScalerMin: 1, AutoScalerMax: 5},
+			},
+			expected: true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			assert.Equal(t, tt.expected, broker.AreNamesUnique(tt.pools))
+		})
+	}
+}
+
 func TestNetworkingValidation(t *testing.T) {
 	for tn, tc := range map[string]struct {
 		givenNetworking string

@@ -687,47 +687,92 @@ func TestUpdateAdditionalWorkerNodePools(t *testing.T) {
 	}
 }
 
-func TestDisablingHAZones(t *testing.T) {
-	// given
-	instance := fixture.FixInstance(instanceID)
-	instance.ServicePlanID = PreviewPlanID
-	instance.Parameters.Parameters.AdditionalWorkerNodePools = []pkg.AdditionalWorkerNodePool{
-		{
-			Name:          "name-1",
-			MachineType:   "m6i.large",
-			HAZones:       true,
-			AutoScalerMin: 3,
-			AutoScalerMax: 20,
-		},
-	}
-	st := storage.NewMemoryStorage()
-	err := st.Instances().Insert(instance)
-	require.NoError(t, err)
-	err = st.Operations().InsertProvisioningOperation(fixProvisioningOperation("provisioning01"))
-	require.NoError(t, err)
+func TestHAZones(t *testing.T) {
+	t.Run("should fail when attempting to disable HA zones for additional worker node pool", func(t *testing.T) {
+		// given
+		instance := fixture.FixInstance(instanceID)
+		instance.ServicePlanID = PreviewPlanID
+		instance.Parameters.Parameters.AdditionalWorkerNodePools = []pkg.AdditionalWorkerNodePool{
+			{
+				Name:          "name-1",
+				MachineType:   "m6i.large",
+				HAZones:       true,
+				AutoScalerMin: 3,
+				AutoScalerMax: 20,
+			},
+		}
+		st := storage.NewMemoryStorage()
+		err := st.Instances().Insert(instance)
+		require.NoError(t, err)
+		err = st.Operations().InsertProvisioningOperation(fixProvisioningOperation("provisioning01"))
+		require.NoError(t, err)
 
-	handler := &handler{}
-	q := &automock.Queue{}
-	q.On("Add", mock.AnythingOfType("string"))
-	planDefaults := func(planID string, platformProvider pkg.CloudProvider, provider *pkg.CloudProvider) (*gqlschema.ClusterConfigInput, error) {
-		return &gqlschema.ClusterConfigInput{}, nil
-	}
-	kcBuilder := &kcMock.KcBuilder{}
-	svc := NewUpdate(Config{}, st.Instances(), st.RuntimeStates(), st.Operations(), handler, true, true, false, q, PlansConfig{},
-		planDefaults, fixLogger(), dashboardConfig, kcBuilder, &OneForAllConvergedCloudRegionsProvider{}, fakeKcpK8sClient)
+		handler := &handler{}
+		q := &automock.Queue{}
+		q.On("Add", mock.AnythingOfType("string"))
+		planDefaults := func(planID string, platformProvider pkg.CloudProvider, provider *pkg.CloudProvider) (*gqlschema.ClusterConfigInput, error) {
+			return &gqlschema.ClusterConfigInput{}, nil
+		}
+		kcBuilder := &kcMock.KcBuilder{}
+		svc := NewUpdate(Config{}, st.Instances(), st.RuntimeStates(), st.Operations(), handler, true, true, false, q, PlansConfig{},
+			planDefaults, fixLogger(), dashboardConfig, kcBuilder, &OneForAllConvergedCloudRegionsProvider{}, fakeKcpK8sClient)
 
-	// when
-	_, err = svc.Update(context.Background(), instanceID, domain.UpdateDetails{
-		ServiceID:       "",
-		PlanID:          PreviewPlanID,
-		RawParameters:   json.RawMessage(`{"additionalWorkerNodePools": [{"name": "name-1", "machineType": "m6i.large", "haZones": false, "autoScalerMin": 3, "autoScalerMax": 20}]}`),
-		PreviousValues:  domain.PreviousValues{},
-		RawContext:      json.RawMessage("{\"globalaccount_id\":\"globalaccount_id_1\", \"active\":true}"),
-		MaintenanceInfo: nil,
-	}, true)
+		// when
+		_, err = svc.Update(context.Background(), instanceID, domain.UpdateDetails{
+			ServiceID:       "",
+			PlanID:          PreviewPlanID,
+			RawParameters:   json.RawMessage(`{"additionalWorkerNodePools": [{"name": "name-1", "machineType": "m6i.large", "haZones": false, "autoScalerMin": 3, "autoScalerMax": 20}]}`),
+			PreviousValues:  domain.PreviousValues{},
+			RawContext:      json.RawMessage("{\"globalaccount_id\":\"globalaccount_id_1\", \"active\":true}"),
+			MaintenanceInfo: nil,
+		}, true)
 
-	// then
-	assert.EqualError(t, err, "HA zones cannot be disabled for name-1 additional worker node pool")
+		// then
+		assert.EqualError(t, err, "HA zones cannot be disabled for name-1 additional worker node pool")
+	})
+
+	t.Run("should succeed when enabling HA zones for additional worker node pool", func(t *testing.T) {
+		// given
+		instance := fixture.FixInstance(instanceID)
+		instance.ServicePlanID = PreviewPlanID
+		instance.Parameters.Parameters.AdditionalWorkerNodePools = []pkg.AdditionalWorkerNodePool{
+			{
+				Name:          "name-1",
+				MachineType:   "m6i.large",
+				HAZones:       false,
+				AutoScalerMin: 3,
+				AutoScalerMax: 20,
+			},
+		}
+		st := storage.NewMemoryStorage()
+		err := st.Instances().Insert(instance)
+		require.NoError(t, err)
+		err = st.Operations().InsertProvisioningOperation(fixProvisioningOperation("provisioning01"))
+		require.NoError(t, err)
+
+		handler := &handler{}
+		q := &automock.Queue{}
+		q.On("Add", mock.AnythingOfType("string"))
+		planDefaults := func(planID string, platformProvider pkg.CloudProvider, provider *pkg.CloudProvider) (*gqlschema.ClusterConfigInput, error) {
+			return &gqlschema.ClusterConfigInput{}, nil
+		}
+		kcBuilder := &kcMock.KcBuilder{}
+		svc := NewUpdate(Config{}, st.Instances(), st.RuntimeStates(), st.Operations(), handler, true, true, false, q, PlansConfig{},
+			planDefaults, fixLogger(), dashboardConfig, kcBuilder, &OneForAllConvergedCloudRegionsProvider{}, fakeKcpK8sClient)
+
+		// when
+		_, err = svc.Update(context.Background(), instanceID, domain.UpdateDetails{
+			ServiceID:       "",
+			PlanID:          PreviewPlanID,
+			RawParameters:   json.RawMessage(`{"additionalWorkerNodePools": [{"name": "name-1", "machineType": "m6i.large", "haZones": true, "autoScalerMin": 3, "autoScalerMax": 20}]}`),
+			PreviousValues:  domain.PreviousValues{},
+			RawContext:      json.RawMessage("{\"globalaccount_id\":\"globalaccount_id_1\", \"active\":true}"),
+			MaintenanceInfo: nil,
+		}, true)
+
+		// then
+		assert.NoError(t, err)
+	})
 }
 
 func TestUpdateAdditionalWorkerNodePoolsForUnsupportedPlans(t *testing.T) {
