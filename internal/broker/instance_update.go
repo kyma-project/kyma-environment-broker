@@ -268,8 +268,14 @@ func (b *UpdateEndpoint) processUpdateParameters(instance *internal.Instance, de
 		if !supportsAdditionalWorkerNodePools(details.PlanID) {
 			return domain.UpdateServiceSpec{}, fmt.Errorf("additional worker node pools are not supported for plan ID: %s", details.PlanID)
 		}
+		if !AreNamesUnique(params.AdditionalWorkerNodePools) {
+			return domain.UpdateServiceSpec{}, fmt.Errorf("names of additional worker node pools must be unique")
+		}
 		for _, additionalWorkerNodePool := range params.AdditionalWorkerNodePools {
 			if err := additionalWorkerNodePool.Validate(); err != nil {
+				return domain.UpdateServiceSpec{}, apiresponses.NewFailureResponse(err, http.StatusBadRequest, err.Error())
+			}
+			if err := additionalWorkerNodePool.ValidateDisablingHAZones(instance.Parameters.Parameters.AdditionalWorkerNodePools); err != nil {
 				return domain.UpdateServiceSpec{}, apiresponses.NewFailureResponse(err, http.StatusBadRequest, err.Error())
 			}
 		}

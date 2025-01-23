@@ -599,7 +599,7 @@ func TestUpdateAdditionalWorkerNodePools(t *testing.T) {
 		expectedError             bool
 	}{
 		"Valid additional worker node pools": {
-			additionalWorkerNodePools: `[{"name": "name-1", "machineType": "m6i.large", "autoScalerMin": 3, "autoScalerMax": 20}, {"name": "name-2", "machineType": "m6i.large", "autoScalerMin": 3, "autoScalerMax": 20}]`,
+			additionalWorkerNodePools: `[{"name": "name-1", "machineType": "m6i.large", "haZones": true, "autoScalerMin": 3, "autoScalerMax": 20}, {"name": "name-2", "machineType": "m6i.large", "haZones": false, "autoScalerMin": 1, "autoScalerMax": 20}]`,
 			expectedError:             false,
 		},
 		"Empty additional worker node pools": {
@@ -607,39 +607,47 @@ func TestUpdateAdditionalWorkerNodePools(t *testing.T) {
 			expectedError:             false,
 		},
 		"Empty name": {
-			additionalWorkerNodePools: `[{"name": "", "machineType": "m6i.large", "autoScalerMin": 3, "autoScalerMax": 20}]`,
+			additionalWorkerNodePools: `[{"name": "", "machineType": "m6i.large", "haZones": true, "autoScalerMin": 3, "autoScalerMax": 20}]`,
 			expectedError:             true,
 		},
 		"Missing name": {
-			additionalWorkerNodePools: `[{"machineType": "m6i.large", "autoScalerMin": 3, "autoScalerMax": 20}]`,
+			additionalWorkerNodePools: `[{"machineType": "m6i.large", "haZones": true, "autoScalerMin": 3, "autoScalerMax": 20}]`,
+			expectedError:             true,
+		},
+		"Not unique names": {
+			additionalWorkerNodePools: `[{"name": "name-1", "machineType": "m6i.large", "haZones": true, "autoScalerMin": 3, "autoScalerMax": 20}, {"name": "name-1", "machineType": "m6i.large", "haZones": true, "autoScalerMin": 3, "autoScalerMax": 20}]`,
 			expectedError:             true,
 		},
 		"Empty machine type": {
-			additionalWorkerNodePools: `[{"name": "name-1", "machineType": "", "autoScalerMin": 3, "autoScalerMax": 20}]`,
+			additionalWorkerNodePools: `[{"name": "name-1", "machineType": "", "haZones": true, "autoScalerMin": 3, "autoScalerMax": 20}]`,
 			expectedError:             true,
 		},
 		"Missing machine type": {
-			additionalWorkerNodePools: `[{"name": "name-1", "autoScalerMin": 3, "autoScalerMax": 20}]`,
+			additionalWorkerNodePools: `[{"name": "name-1", "haZones": true, "autoScalerMin": 3, "autoScalerMax": 20}]`,
+			expectedError:             true,
+		},
+		"Missing HA zones": {
+			additionalWorkerNodePools: `[{"name": "name-1", "machineType": "m6i.large", "autoScalerMin": 3, "autoScalerMax": 20}]`,
 			expectedError:             true,
 		},
 		"Missing autoScalerMin": {
-			additionalWorkerNodePools: `[{"name": "name-1", "machineType": "m6i.large", "autoScalerMax": 3}]`,
+			additionalWorkerNodePools: `[{"name": "name-1", "machineType": "m6i.large", "haZones": true, "autoScalerMax": 3}]`,
 			expectedError:             true,
 		},
 		"Missing autoScalerMax": {
-			additionalWorkerNodePools: `[{"name": "name-1", "machineType": "m6i.large", "autoScalerMin": 20}]`,
+			additionalWorkerNodePools: `[{"name": "name-1", "machineType": "m6i.large", "haZones": true, "autoScalerMin": 20}]`,
 			expectedError:             true,
 		},
-		"AutoScalerMin smaller than 3": {
-			additionalWorkerNodePools: `[{"name": "name-1", "machineType": "m6i.large", "autoScalerMin": 2, "autoScalerMax": 300}]`,
+		"AutoScalerMin smaller than 3 when HA zones are enabled": {
+			additionalWorkerNodePools: `[{"name": "name-1", "machineType": "m6i.large", "haZones": true, "autoScalerMin": 2, "autoScalerMax": 300}]`,
 			expectedError:             true,
 		},
 		"AutoScalerMax bigger than 300": {
-			additionalWorkerNodePools: `[{"name": "name-1", "machineType": "m6i.large", "autoScalerMin": 3, "autoScalerMax": 301}]`,
+			additionalWorkerNodePools: `[{"name": "name-1", "machineType": "m6i.large", "haZones": true, "autoScalerMin": 3, "autoScalerMax": 301}]`,
 			expectedError:             true,
 		},
 		"AutoScalerMin bigger than autoScalerMax": {
-			additionalWorkerNodePools: `[{"name": "name-1", "machineType": "m6i.large", "autoScalerMin": 20, "autoScalerMax": 3}]`,
+			additionalWorkerNodePools: `[{"name": "name-1", "machineType": "m6i.large", "haZones": true, "autoScalerMin": 20, "autoScalerMax": 3}]`,
 			expectedError:             true,
 		},
 	} {
@@ -677,6 +685,94 @@ func TestUpdateAdditionalWorkerNodePools(t *testing.T) {
 			assert.Equal(t, tc.expectedError, err != nil)
 		})
 	}
+}
+
+func TestHAZones(t *testing.T) {
+	t.Run("should fail when attempting to disable HA zones for additional worker node pool", func(t *testing.T) {
+		// given
+		instance := fixture.FixInstance(instanceID)
+		instance.ServicePlanID = PreviewPlanID
+		instance.Parameters.Parameters.AdditionalWorkerNodePools = []pkg.AdditionalWorkerNodePool{
+			{
+				Name:          "name-1",
+				MachineType:   "m6i.large",
+				HAZones:       true,
+				AutoScalerMin: 3,
+				AutoScalerMax: 20,
+			},
+		}
+		st := storage.NewMemoryStorage()
+		err := st.Instances().Insert(instance)
+		require.NoError(t, err)
+		err = st.Operations().InsertProvisioningOperation(fixProvisioningOperation("provisioning01"))
+		require.NoError(t, err)
+
+		handler := &handler{}
+		q := &automock.Queue{}
+		q.On("Add", mock.AnythingOfType("string"))
+		planDefaults := func(planID string, platformProvider pkg.CloudProvider, provider *pkg.CloudProvider) (*gqlschema.ClusterConfigInput, error) {
+			return &gqlschema.ClusterConfigInput{}, nil
+		}
+		kcBuilder := &kcMock.KcBuilder{}
+		svc := NewUpdate(Config{}, st.Instances(), st.RuntimeStates(), st.Operations(), handler, true, true, false, q, PlansConfig{},
+			planDefaults, fixLogger(), dashboardConfig, kcBuilder, &OneForAllConvergedCloudRegionsProvider{}, fakeKcpK8sClient)
+
+		// when
+		_, err = svc.Update(context.Background(), instanceID, domain.UpdateDetails{
+			ServiceID:       "",
+			PlanID:          PreviewPlanID,
+			RawParameters:   json.RawMessage(`{"additionalWorkerNodePools": [{"name": "name-1", "machineType": "m6i.large", "haZones": false, "autoScalerMin": 3, "autoScalerMax": 20}]}`),
+			PreviousValues:  domain.PreviousValues{},
+			RawContext:      json.RawMessage("{\"globalaccount_id\":\"globalaccount_id_1\", \"active\":true}"),
+			MaintenanceInfo: nil,
+		}, true)
+
+		// then
+		assert.EqualError(t, err, "HA zones cannot be disabled for name-1 additional worker node pool")
+	})
+
+	t.Run("should succeed when enabling HA zones for additional worker node pool", func(t *testing.T) {
+		// given
+		instance := fixture.FixInstance(instanceID)
+		instance.ServicePlanID = PreviewPlanID
+		instance.Parameters.Parameters.AdditionalWorkerNodePools = []pkg.AdditionalWorkerNodePool{
+			{
+				Name:          "name-1",
+				MachineType:   "m6i.large",
+				HAZones:       false,
+				AutoScalerMin: 3,
+				AutoScalerMax: 20,
+			},
+		}
+		st := storage.NewMemoryStorage()
+		err := st.Instances().Insert(instance)
+		require.NoError(t, err)
+		err = st.Operations().InsertProvisioningOperation(fixProvisioningOperation("provisioning01"))
+		require.NoError(t, err)
+
+		handler := &handler{}
+		q := &automock.Queue{}
+		q.On("Add", mock.AnythingOfType("string"))
+		planDefaults := func(planID string, platformProvider pkg.CloudProvider, provider *pkg.CloudProvider) (*gqlschema.ClusterConfigInput, error) {
+			return &gqlschema.ClusterConfigInput{}, nil
+		}
+		kcBuilder := &kcMock.KcBuilder{}
+		svc := NewUpdate(Config{}, st.Instances(), st.RuntimeStates(), st.Operations(), handler, true, true, false, q, PlansConfig{},
+			planDefaults, fixLogger(), dashboardConfig, kcBuilder, &OneForAllConvergedCloudRegionsProvider{}, fakeKcpK8sClient)
+
+		// when
+		_, err = svc.Update(context.Background(), instanceID, domain.UpdateDetails{
+			ServiceID:       "",
+			PlanID:          PreviewPlanID,
+			RawParameters:   json.RawMessage(`{"additionalWorkerNodePools": [{"name": "name-1", "machineType": "m6i.large", "haZones": true, "autoScalerMin": 3, "autoScalerMax": 20}]}`),
+			PreviousValues:  domain.PreviousValues{},
+			RawContext:      json.RawMessage("{\"globalaccount_id\":\"globalaccount_id_1\", \"active\":true}"),
+			MaintenanceInfo: nil,
+		}, true)
+
+		// then
+		assert.NoError(t, err)
+	})
 }
 
 func TestUpdateAdditionalWorkerNodePoolsForUnsupportedPlans(t *testing.T) {
