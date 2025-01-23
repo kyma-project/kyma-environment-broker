@@ -275,7 +275,7 @@ func (b *UpdateEndpoint) processUpdateParameters(instance *internal.Instance, de
 			if err := additionalWorkerNodePool.Validate(); err != nil {
 				return domain.UpdateServiceSpec{}, apiresponses.NewFailureResponse(err, http.StatusBadRequest, err.Error())
 			}
-			if err := additionalWorkerNodePool.ValidateDisablingHAZones(instance.Parameters.Parameters.AdditionalWorkerNodePools); err != nil {
+			if err := additionalWorkerNodePool.ValidateHAZonesUnchanged(instance.Parameters.Parameters.AdditionalWorkerNodePools); err != nil {
 				return domain.UpdateServiceSpec{}, apiresponses.NewFailureResponse(err, http.StatusBadRequest, err.Error())
 			}
 		}

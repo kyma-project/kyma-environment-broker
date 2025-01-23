@@ -467,7 +467,7 @@ func NewAdditionalWorkerNodePoolsSchema(machineTypesDisplay map[string]string, m
 					Type:        "boolean",
 					Title:       "HA zones",
 					Default:     true,
-					Description: "Specifies whether high availability (HA) zones are supported. If HA is disabled, all resources are placed in a single, randomly selected zone. Disabling HA allows setting both autoScalerMin and autoScalerMax to 1, which helps reduce costs. It is not recommended for production environments. Once HA is enabled, it cannot be disabled. When enabled, resources are distributed across three zones to enhance fault tolerance. Enabling HA requires setting autoScalerMin to the minimal value 3.",
+					Description: "Specifies whether high availability (HA) zones are supported. This setting is permanent and cannot be changed later. If HA is disabled, all resources are placed in a single, randomly selected zone. Disabled HA allows setting both autoScalerMin and autoScalerMax to 1, which helps reduce costs. It is not recommended for production environments. When enabled, resources are distributed across three zones to enhance fault tolerance. Enabled HA requires setting autoScalerMin to the minimal value 3.",
 				},
 				AutoScalerMin: Type{
 					Type:        "integer",

@@ -688,7 +688,7 @@ func TestUpdateAdditionalWorkerNodePools(t *testing.T) {
 }
 
 func TestHAZones(t *testing.T) {
-	t.Run("should fail when attempting to disable HA zones for additional worker node pool", func(t *testing.T) {
+	t.Run("should fail when attempting to disable HA zones for existing additional worker node pool", func(t *testing.T) {
 		// given
 		instance := fixture.FixInstance(instanceID)
 		instance.ServicePlanID = PreviewPlanID
@@ -728,10 +728,10 @@ func TestHAZones(t *testing.T) {
 		}, true)
 
 		// then
-		assert.EqualError(t, err, "HA zones cannot be disabled for name-1 additional worker node pool")
+		assert.EqualError(t, err, "HA zones setting is permanent and cannot be changed for name-1 additional worker node pool")
 	})
 
-	t.Run("should succeed when enabling HA zones for additional worker node pool", func(t *testing.T) {
+	t.Run("should fail when attempting to enable HA zones for existing additional worker node pool", func(t *testing.T) {
 		// given
 		instance := fixture.FixInstance(instanceID)
 		instance.ServicePlanID = PreviewPlanID
@@ -771,7 +771,7 @@ func TestHAZones(t *testing.T) {
 		}, true)
 
 		// then
-		assert.NoError(t, err)
+		assert.EqualError(t, err, "HA zones setting is permanent and cannot be changed for name-1 additional worker node pool")
 	})
 }
 
