@@ -406,10 +406,10 @@ func (a AdditionalWorkerNodePool) Validate() error {
 	return nil
 }
 
-func (a AdditionalWorkerNodePool) ValidateHAZones(instanceAdditionalWorkerNodePools []AdditionalWorkerNodePool) error {
-	for _, instanceAdditionalWorkerNodePool := range instanceAdditionalWorkerNodePools {
-		if a.Name == instanceAdditionalWorkerNodePool.Name {
-			if !a.HAZones && instanceAdditionalWorkerNodePool.HAZones {
+func (a AdditionalWorkerNodePool) ValidateDisablingHAZones(currentAdditionalWorkerNodePools []AdditionalWorkerNodePool) error {
+	for _, currentAdditionalWorkerNodePool := range currentAdditionalWorkerNodePools {
+		if a.Name == currentAdditionalWorkerNodePool.Name {
+			if !a.HAZones && currentAdditionalWorkerNodePool.HAZones {
 				return fmt.Errorf("HA zones cannot be disabled for %s additional worker node pool", a.Name)
 			}
 		}
