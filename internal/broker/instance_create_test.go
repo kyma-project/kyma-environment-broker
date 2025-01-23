@@ -1499,7 +1499,7 @@ func TestAdditionalWorkerNodePools(t *testing.T) {
 		expectedError             bool
 	}{
 		"Valid additional worker node pools": {
-			additionalWorkerNodePools: `[{"name": "name-1", "machineType": "m6i.large", "autoScalerMin": 3, "autoScalerMax": 20}, {"name": "name-2", "machineType": "m6i.large", "autoScalerMin": 3, "autoScalerMax": 20}]`,
+			additionalWorkerNodePools: `[{"name": "name-1", "machineType": "m6i.large", "haZones": true, "autoScalerMin": 3, "autoScalerMax": 20}, {"name": "name-2", "machineType": "m6i.large", "haZones": false, "autoScalerMin": 1, "autoScalerMax": 20}]`,
 			expectedError:             false,
 		},
 		"Empty additional worker node pools": {
@@ -1507,39 +1507,47 @@ func TestAdditionalWorkerNodePools(t *testing.T) {
 			expectedError:             false,
 		},
 		"Empty name": {
-			additionalWorkerNodePools: `[{"name": "", "machineType": "m6i.large", "autoScalerMin": 3, "autoScalerMax": 20}]`,
+			additionalWorkerNodePools: `[{"name": "", "machineType": "m6i.large", "haZones": true, "autoScalerMin": 3, "autoScalerMax": 20}]`,
 			expectedError:             true,
 		},
 		"Missing name": {
-			additionalWorkerNodePools: `[{"machineType": "m6i.large", "autoScalerMin": 3, "autoScalerMax": 20}]`,
+			additionalWorkerNodePools: `[{"machineType": "m6i.large", "haZones": true, "autoScalerMin": 3, "autoScalerMax": 20}]`,
+			expectedError:             true,
+		},
+		"Not unique names": {
+			additionalWorkerNodePools: `[{"name": "name-1", "machineType": "m6i.large", "haZones": true, "autoScalerMin": 3, "autoScalerMax": 20}, {"name": "name-1", "machineType": "m6i.large", "haZones": true, "autoScalerMin": 3, "autoScalerMax": 20}]`,
 			expectedError:             true,
 		},
 		"Empty machine type": {
-			additionalWorkerNodePools: `[{"name": "name-1", "machineType": "", "autoScalerMin": 3, "autoScalerMax": 20}]`,
+			additionalWorkerNodePools: `[{"name": "name-1", "machineType": "", "haZones": true, "autoScalerMin": 3, "autoScalerMax": 20}]`,
 			expectedError:             true,
 		},
 		"Missing machine type": {
-			additionalWorkerNodePools: `[{"name": "name-1", "autoScalerMin": 3, "autoScalerMax": 20}]`,
+			additionalWorkerNodePools: `[{"name": "name-1", "haZones": true, "autoScalerMin": 3, "autoScalerMax": 20}]`,
+			expectedError:             true,
+		},
+		"Missing HA zones": {
+			additionalWorkerNodePools: `[{"name": "name-1", "machineType": "m6i.large", "autoScalerMin": 3, "autoScalerMax": 20}]`,
 			expectedError:             true,
 		},
 		"Missing autoScalerMin": {
-			additionalWorkerNodePools: `[{"name": "name-1", "machineType": "m6i.large", "autoScalerMax": 3}]`,
+			additionalWorkerNodePools: `[{"name": "name-1", "machineType": "m6i.large", "haZones": true, "autoScalerMax": 3}]`,
 			expectedError:             true,
 		},
 		"Missing autoScalerMax": {
-			additionalWorkerNodePools: `[{"name": "name-1", "machineType": "m6i.large", "autoScalerMin": 20}]`,
+			additionalWorkerNodePools: `[{"name": "name-1", "machineType": "m6i.large", "haZones": true, "autoScalerMin": 20}]`,
 			expectedError:             true,
 		},
-		"AutoScalerMin smaller than 3": {
-			additionalWorkerNodePools: `[{"name": "name-1", "machineType": "m6i.large", "autoScalerMin": 2, "autoScalerMax": 300}]`,
+		"AutoScalerMin smaller than 3 when HA zones are enabled": {
+			additionalWorkerNodePools: `[{"name": "name-1", "machineType": "m6i.large", "haZones": true, "autoScalerMin": 2, "autoScalerMax": 300}]`,
 			expectedError:             true,
 		},
 		"AutoScalerMax bigger than 300": {
-			additionalWorkerNodePools: `[{"name": "name-1", "machineType": "m6i.large", "autoScalerMin": 3, "autoScalerMax": 301}]`,
+			additionalWorkerNodePools: `[{"name": "name-1", "machineType": "m6i.large", "haZones": true, "autoScalerMin": 3, "autoScalerMax": 301}]`,
 			expectedError:             true,
 		},
 		"AutoScalerMin bigger than autoScalerMax": {
-			additionalWorkerNodePools: `[{"name": "name-1", "machineType": "m6i.large", "autoScalerMin": 20, "autoScalerMax": 3}]`,
+			additionalWorkerNodePools: `[{"name": "name-1", "machineType": "m6i.large", "haZones": true, "autoScalerMin": 20, "autoScalerMax": 3}]`,
 			expectedError:             true,
 		},
 	} {
@@ -1681,6 +1689,51 @@ func TestAdditionalWorkerNodePoolsForUnsupportedPlans(t *testing.T) {
 
 			// then
 			assert.EqualError(t, err, fmt.Sprintf("additional worker node pools are not supported for plan ID: %s", tc.planID))
+		})
+	}
+}
+
+func TestAreNamesUnique(t *testing.T) {
+	tests := []struct {
+		name     string
+		pools    []pkg.AdditionalWorkerNodePool
+		expected bool
+	}{
+		{
+			name: "Unique names",
+			pools: []pkg.AdditionalWorkerNodePool{
+				{Name: "name-1", MachineType: "m6i.large", HAZones: true, AutoScalerMin: 5, AutoScalerMax: 5},
+				{Name: "name-2", MachineType: "m6i.large", HAZones: false, AutoScalerMin: 2, AutoScalerMax: 10},
+				{Name: "name-3", MachineType: "m6i.large", HAZones: true, AutoScalerMin: 3, AutoScalerMax: 15},
+			},
+			expected: true,
+		},
+		{
+			name: "Duplicate names",
+			pools: []pkg.AdditionalWorkerNodePool{
+				{Name: "name-1", MachineType: "m6i.large", HAZones: true, AutoScalerMin: 5, AutoScalerMax: 5},
+				{Name: "name-2", MachineType: "m6i.large", HAZones: false, AutoScalerMin: 2, AutoScalerMax: 10},
+				{Name: "name-1", MachineType: "m6i.large", HAZones: true, AutoScalerMin: 3, AutoScalerMax: 5},
+			},
+			expected: false,
+		},
+		{
+			name:     "Empty list",
+			pools:    []pkg.AdditionalWorkerNodePool{},
+			expected: true,
+		},
+		{
+			name: "Single pool",
+			pools: []pkg.AdditionalWorkerNodePool{
+				{Name: "name-1", MachineType: "m6i.large", HAZones: false, AutoScalerMin: 1, AutoScalerMax: 5},
+			},
+			expected: true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			assert.Equal(t, tt.expected, broker.AreNamesUnique(tt.pools))
 		})
 	}
 }
