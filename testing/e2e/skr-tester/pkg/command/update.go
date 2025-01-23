@@ -1,6 +1,7 @@
 package command
 
 import (
+	"encoding/json"
 	"fmt"
 	broker "skr-tester/pkg/broker"
 	kcp "skr-tester/pkg/kcp"
@@ -17,6 +18,9 @@ type UpdateCommand struct {
 	updateMachineType    bool
 	updateOIDC           bool
 	updateAdministrators bool
+	customMachineType    string
+	customOIDC           string
+	customAdministrators []string
 }
 
 func NewUpdateCommand() *cobra.Command {
@@ -28,7 +32,10 @@ func NewUpdateCommand() *cobra.Command {
 		Long:    "Update the instance with a new machine type, OIDC configuration, or administrators.",
 		Example: `	skr-tester update -i instanceID -p planID --updateMachineType             Update the instance with a new machine type.
 	skr-tester update -i instanceID -p planID --updateOIDC                    Update the instance with a new OIDC configuration.
-	skr-tester update -i instanceID -p planID --updateAdministrators          Update the instance with new administrators.`,
+	skr-tester update -i instanceID -p planID --updateAdministrators          Update the instance with new administrators.
+	skr-tester update -i instanceID -p planID --updateMachineType --machineType newMachineType                                             Update the instance with a custom machine type.
+	skr-tester update -i instanceID -p planID --updateOIDC --customOIDC '{"clientID":"foo-bar","issuerURL":"https://new.custom.ias.com"}'  Update the instance with a custom OIDC configuration.
+	skr-tester update -i instanceID -p planID --updateAdministrators --customAdministrators admin1@acme.com,admin2@acme.com                Update the instance with custom administrators.`,
 		PreRunE: func(_ *cobra.Command, _ []string) error { return cmd.Validate() },
 		RunE:    func(_ *cobra.Command, _ []string) error { return cmd.Run() },
 	}
@@ -38,6 +45,9 @@ func NewUpdateCommand() *cobra.Command {
 	cobraCmd.Flags().BoolVarP(&cmd.updateMachineType, "updateMachineType", "m", false, "Update machine type.")
 	cobraCmd.Flags().BoolVarP(&cmd.updateOIDC, "updateOIDC", "o", false, "Update OIDC configuration.")
 	cobraCmd.Flags().BoolVarP(&cmd.updateAdministrators, "updateAdministrators", "a", false, "Update administrators.")
+	cobraCmd.Flags().StringVar(&cmd.customMachineType, "customMachineType", "", "Machine type to update to (optional).")
+	cobraCmd.Flags().StringVar(&cmd.customOIDC, "customOIDC", "", "Custom OIDC configuration in JSON format (optional).")
+	cobraCmd.Flags().StringSliceVar(&cmd.customAdministrators, "customAdministrators", nil, "Custom administrators (optional).")
 
 	return cobraCmd
 }
@@ -50,6 +60,16 @@ func (cmd *UpdateCommand) Run() error {
 		return fmt.Errorf("failed to create KCP client: %v", err)
 	}
 	if cmd.updateMachineType {
+		if cmd.customMachineType != "" {
+			fmt.Printf("User provided machine type: %s\n", cmd.customMachineType)
+			resp, _, err := brokerClient.UpdateInstance(cmd.instanceID, map[string]interface{}{"machineType": cmd.customMachineType})
+			if err != nil {
+				return fmt.Errorf("error updating instance: %v", err)
+			}
+			fmt.Printf("Update operationID: %s\n", resp["operation"].(string))
+			return nil
+		}
+
 		catalog, _, err := brokerClient.GetCatalog()
 		if err != nil {
 			return fmt.Errorf("failed to get catalog: %v", err)
@@ -104,6 +124,21 @@ func (cmd *UpdateCommand) Run() error {
 			}
 		}
 	} else if cmd.updateOIDC {
+		if cmd.customOIDC != "" {
+			var newOIDCConfig map[string]interface{}
+			err := json.Unmarshal([]byte(cmd.customOIDC), &newOIDCConfig)
+			if err != nil {
+				return fmt.Errorf("failed to parse custom OIDC config: %v", err)
+			}
+			fmt.Printf("User provided custom OIDC config: %v\n", newOIDCConfig)
+			resp, _, err := brokerClient.UpdateInstance(cmd.instanceID, map[string]interface{}{"oidc": newOIDCConfig})
+			if err != nil {
+				return fmt.Errorf("error updating instance: %v", err)
+			}
+			fmt.Printf("Update operationID: %s\n", resp["operation"].(string))
+			return nil
+		}
+
 		currentOIDCConfig, err := kcpClient.GetCurrentOIDCConfig(cmd.instanceID)
 		if err != nil {
 			return fmt.Errorf("failed to get current OIDC config: %v", err)
@@ -124,6 +159,16 @@ func (cmd *UpdateCommand) Run() error {
 		}
 		fmt.Printf("Update operationID: %s\n", resp["operation"].(string))
 	} else if cmd.updateAdministrators {
+		if len(cmd.customAdministrators) > 0 {
+			fmt.Printf("User provided custom administrators: %v\n", cmd.customAdministrators)
+			resp, _, err := brokerClient.UpdateInstance(cmd.instanceID, map[string]interface{}{"administrators": cmd.customAdministrators})
+			if err != nil {
+				return fmt.Errorf("error updating instance: %v", err)
+			}
+			fmt.Printf("Update operationID: %s\n", resp["operation"].(string))
+			return nil
+		}
+
 		newAdministrators := []string{"admin1@acme.com", "admin2@acme.com"}
 		fmt.Printf("Determined administrators to update: %v\n", newAdministrators)
 		resp, _, err := brokerClient.UpdateInstance(cmd.instanceID, map[string]interface{}{"administrators": newAdministrators})
