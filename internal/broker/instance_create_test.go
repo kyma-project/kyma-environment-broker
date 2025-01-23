@@ -1499,7 +1499,7 @@ func TestAdditionalWorkerNodePools(t *testing.T) {
 		expectedError             bool
 	}{
 		"Valid additional worker node pools": {
-			additionalWorkerNodePools: `[{"name": "name-1", "machineType": "m6i.large", "autoScalerMin": 3, "autoScalerMax": 20}, {"name": "name-2", "machineType": "m6i.large", "autoScalerMin": 3, "autoScalerMax": 20}]`,
+			additionalWorkerNodePools: `[{"name": "name-1", "machineType": "m6i.large", "haZones": true, "autoScalerMin": 3, "autoScalerMax": 20}, {"name": "name-2", "machineType": "m6i.large", "haZones": false, "autoScalerMin": 1, "autoScalerMax": 20}]`,
 			expectedError:             false,
 		},
 		"Empty additional worker node pools": {
@@ -1507,39 +1507,47 @@ func TestAdditionalWorkerNodePools(t *testing.T) {
 			expectedError:             false,
 		},
 		"Empty name": {
-			additionalWorkerNodePools: `[{"name": "", "machineType": "m6i.large", "autoScalerMin": 3, "autoScalerMax": 20}]`,
+			additionalWorkerNodePools: `[{"name": "", "machineType": "m6i.large", "haZones": true, "autoScalerMin": 3, "autoScalerMax": 20}]`,
 			expectedError:             true,
 		},
 		"Missing name": {
-			additionalWorkerNodePools: `[{"machineType": "m6i.large", "autoScalerMin": 3, "autoScalerMax": 20}]`,
+			additionalWorkerNodePools: `[{"machineType": "m6i.large", "haZones": true, "autoScalerMin": 3, "autoScalerMax": 20}]`,
+			expectedError:             true,
+		},
+		"Not unique names": {
+			additionalWorkerNodePools: `[{"name": "name-1", "machineType": "m6i.large", "haZones": true, "autoScalerMin": 3, "autoScalerMax": 20}, {"name": "name-1", "machineType": "m6i.large", "haZones": true, "autoScalerMin": 3, "autoScalerMax": 20}]`,
 			expectedError:             true,
 		},
 		"Empty machine type": {
-			additionalWorkerNodePools: `[{"name": "name-1", "machineType": "", "autoScalerMin": 3, "autoScalerMax": 20}]`,
+			additionalWorkerNodePools: `[{"name": "name-1", "machineType": "", "haZones": true, "autoScalerMin": 3, "autoScalerMax": 20}]`,
 			expectedError:             true,
 		},
 		"Missing machine type": {
-			additionalWorkerNodePools: `[{"name": "name-1", "autoScalerMin": 3, "autoScalerMax": 20}]`,
+			additionalWorkerNodePools: `[{"name": "name-1", "haZones": true, "autoScalerMin": 3, "autoScalerMax": 20}]`,
+			expectedError:             true,
+		},
+		"Missing HA zones": {
+			additionalWorkerNodePools: `[{"name": "name-1", "machineType": "m6i.large", "autoScalerMin": 3, "autoScalerMax": 20}]`,
 			expectedError:             true,
 		},
 		"Missing autoScalerMin": {
-			additionalWorkerNodePools: `[{"name": "name-1", "machineType": "m6i.large", "autoScalerMax": 3}]`,
+			additionalWorkerNodePools: `[{"name": "name-1", "machineType": "m6i.large", "haZones": true, "autoScalerMax": 3}]`,
 			expectedError:             true,
 		},
 		"Missing autoScalerMax": {
-			additionalWorkerNodePools: `[{"name": "name-1", "machineType": "m6i.large", "autoScalerMin": 20}]`,
+			additionalWorkerNodePools: `[{"name": "name-1", "machineType": "m6i.large", "haZones": true, "autoScalerMin": 20}]`,
 			expectedError:             true,
 		},
-		"AutoScalerMin smaller than 3": {
-			additionalWorkerNodePools: `[{"name": "name-1", "machineType": "m6i.large", "autoScalerMin": 2, "autoScalerMax": 300}]`,
+		"AutoScalerMin smaller than 3 when HA zones are enabled": {
+			additionalWorkerNodePools: `[{"name": "name-1", "machineType": "m6i.large", "haZones": true, "autoScalerMin": 2, "autoScalerMax": 300}]`,
 			expectedError:             true,
 		},
 		"AutoScalerMax bigger than 300": {
-			additionalWorkerNodePools: `[{"name": "name-1", "machineType": "m6i.large", "autoScalerMin": 3, "autoScalerMax": 301}]`,
+			additionalWorkerNodePools: `[{"name": "name-1", "machineType": "m6i.large", "haZones": true, "autoScalerMin": 3, "autoScalerMax": 301}]`,
 			expectedError:             true,
 		},
 		"AutoScalerMin bigger than autoScalerMax": {
-			additionalWorkerNodePools: `[{"name": "name-1", "machineType": "m6i.large", "autoScalerMin": 20, "autoScalerMax": 3}]`,
+			additionalWorkerNodePools: `[{"name": "name-1", "machineType": "m6i.large", "haZones": true, "autoScalerMin": 20, "autoScalerMax": 3}]`,
 			expectedError:             true,
 		},
 	} {

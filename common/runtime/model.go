@@ -391,13 +391,28 @@ type ModuleDTO struct {
 type AdditionalWorkerNodePool struct {
 	Name          string `json:"name"`
 	MachineType   string `json:"machineType"`
+	HAZones       bool   `json:"haZones"`
 	AutoScalerMin int    `json:"autoScalerMin"`
 	AutoScalerMax int    `json:"autoScalerMax"`
 }
 
 func (a AdditionalWorkerNodePool) Validate() error {
 	if a.AutoScalerMin > a.AutoScalerMax {
-		return fmt.Errorf("AutoScalerMax %v should be larger than AutoScalerMin %v for %s worker node pool", a.AutoScalerMax, a.AutoScalerMin, a.Name)
+		return fmt.Errorf("AutoScalerMax %v should be larger than AutoScalerMin %v for %s additional worker node pool", a.AutoScalerMax, a.AutoScalerMin, a.Name)
+	}
+	if a.HAZones && a.AutoScalerMin < 3 {
+		return fmt.Errorf("AutoScalerMin %v should be at least 3 when HA zones are enabled for %s additional worker node pool", a.AutoScalerMin, a.Name)
+	}
+	return nil
+}
+
+func (a AdditionalWorkerNodePool) ValidateHAZones(instanceAdditionalWorkerNodePools []AdditionalWorkerNodePool) error {
+	for _, instanceAdditionalWorkerNodePool := range instanceAdditionalWorkerNodePools {
+		if a.Name == instanceAdditionalWorkerNodePool.Name {
+			if !a.HAZones && instanceAdditionalWorkerNodePool.HAZones {
+				return fmt.Errorf("HA zones cannot be disabled for %s additional worker node pool", a.Name)
+			}
+		}
 	}
 	return nil
 }

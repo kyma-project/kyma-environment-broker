@@ -164,9 +164,10 @@ type AdditionalWorkerNodePoolsItems struct {
 
 type AdditionalWorkerNodePoolsItemsProperties struct {
 	Name          Type `json:"name,omitempty"`
+	MachineType   Type `json:"machineType,omitempty"`
+	HAZones       Type `json:"haZones,omitempty"`
 	AutoScalerMin Type `json:"autoScalerMin,omitempty"`
 	AutoScalerMax Type `json:"autoScalerMax,omitempty"`
-	MachineType   Type `json:"machineType,omitempty"`
 }
 
 func NewModulesSchema() *Modules {
@@ -442,8 +443,8 @@ func NewAdditionalWorkerNodePoolsSchema(machineTypesDisplay map[string]string, m
 			UniqueItems: true,
 			Description: "Specifies the list of additional worker node pools."},
 		Items: AdditionalWorkerNodePoolsItems{
-			ControlsOrder: []string{"name", "machineType", "autoScalerMin", "autoScalerMax"},
-			Required:      []string{"name", "machineType", "autoScalerMin", "autoScalerMax"},
+			ControlsOrder: []string{"name", "machineType", "haZones", "autoScalerMin", "autoScalerMax"},
+			Required:      []string{"name", "machineType", "haZones", "autoScalerMin", "autoScalerMax"},
 			Type: Type{
 				Type: "object",
 			},
@@ -462,15 +463,21 @@ func NewAdditionalWorkerNodePoolsSchema(machineTypesDisplay map[string]string, m
 					EnumDisplayName: machineTypesDisplay,
 					Description:     "Specifies the type of the virtual machine.",
 				},
+				HAZones: Type{
+					Type:        "boolean",
+					Title:       "HA zones",
+					Default:     true,
+					Description: "Specifies whether high availability (HA) zones are supported. If HA is disabled, all resources are placed in a single, randomly selected zone. Disabling HA allows setting both autoScalerMin and autoScalerMax to 1, which helps reduce costs. It is not recommended for production environments. Once HA is enabled, it cannot be disabled. When enabled, resources are distributed across three zones to enhance fault tolerance. Enabling HA requires setting autoScalerMin to the minimal value 3.",
+				},
 				AutoScalerMin: Type{
 					Type:        "integer",
-					Minimum:     3,
+					Minimum:     1,
 					Default:     3,
 					Description: "Specifies the minimum number of virtual machines to create.",
 				},
 				AutoScalerMax: Type{
 					Type:        "integer",
-					Minimum:     3,
+					Minimum:     1,
 					Maximum:     300,
 					Default:     20,
 					Description: "Specifies the maximum number of virtual machines to create.",
