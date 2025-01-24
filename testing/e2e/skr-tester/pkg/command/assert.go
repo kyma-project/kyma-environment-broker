@@ -10,7 +10,6 @@ import (
 	kcp "skr-tester/pkg/kcp"
 	"skr-tester/pkg/logger"
 
-	"github.com/google/uuid"
 	"github.com/spf13/cobra"
 	v1 "k8s.io/api/core/v1"
 	rbacv1 "k8s.io/api/rbac/v1"
@@ -51,7 +50,8 @@ func NewAsertCmd() *cobra.Command {
   skr-tester assert -i instanceID -b                                     Checks if the BTP manager secret exists in the instance.
   skr-tester assert -i instanceID -e                                     Edits the BTP manager secret in the instance and checks if the secret is reconciled.
   skr-tester assert -i instanceID -d                                     Deletes the BTP manager secret in the instance and checks if the secret is reconciled.
-  skr-tester assert -i instanceID -s                                     Checks if the suspension operation is in progress for the instance.`,
+  skr-tester assert -i instanceID -s                                     Checks if the suspension operation is in progress for the instance.
+  skr-tester assert -i instanceID -n                                     Checks if KEB endpoints require authentication.`,
 
 		PreRunE: func(_ *cobra.Command, _ []string) error { return cmd.Validate() },
 		RunE:    func(_ *cobra.Command, _ []string) error { return cmd.Run() },
@@ -287,7 +287,6 @@ func (cmd *AssertCommand) Run() error {
 		fmt.Println("Suspension operation is in progress")
 		fmt.Printf("Suspension operationID: %s\n", *operationID)
 	} else if cmd.endpointsSecured {
-		instanceID := uuid.New().String()
 		brokerClient := broker.NewBrokerClient(broker.NewBrokerConfig())
 		platformRegion := brokerClient.GetPlatformRegion()
 		testData := []struct {
@@ -295,15 +294,15 @@ func (cmd *AssertCommand) Run() error {
 			endpoint string
 			method   string
 		}{
-			{payload: nil, endpoint: fmt.Sprintf("oauth/v2/service_instances/%s", instanceID), method: "GET"},
+			{payload: nil, endpoint: fmt.Sprintf("oauth/v2/service_instances/%s", cmd.instanceID), method: "GET"},
 			{payload: nil, endpoint: "runtimes", method: "GET"},
 			{payload: nil, endpoint: "info/runtimes", method: "GET"},
 			{payload: nil, endpoint: "orchestrations", method: "GET"},
-			{payload: nil, endpoint: fmt.Sprintf("oauth/%sv2/service_instances/%s", platformRegion, instanceID), method: "PUT"},
+			{payload: nil, endpoint: fmt.Sprintf("oauth/%sv2/service_instances/%s", platformRegion, cmd.instanceID), method: "PUT"},
 			{payload: nil, endpoint: "upgrade/cluster", method: "POST"},
 			{payload: nil, endpoint: "upgrade/kyma", method: "POST"},
-			{payload: nil, endpoint: fmt.Sprintf("oauth/v2/service_instances/%s", instanceID), method: "PATCH"},
-			{payload: nil, endpoint: fmt.Sprintf("oauth/v2/service_instances/%s", instanceID), method: "DELETE"},
+			{payload: nil, endpoint: fmt.Sprintf("oauth/v2/service_instances/%s", cmd.instanceID), method: "PATCH"},
+			{payload: nil, endpoint: fmt.Sprintf("oauth/v2/service_instances/%s", cmd.instanceID), method: "DELETE"},
 		}
 
 		for _, test := range testData {
