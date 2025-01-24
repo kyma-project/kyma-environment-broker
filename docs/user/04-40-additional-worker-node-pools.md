@@ -45,9 +45,9 @@ See the example:
 
 If you do not provide the `additionalWorkerNodePools` list in the provisioning request, no additional worker node pools are created. 
 The **haZones** property specifies whether high availability (HA) zones are supported. This setting is permanent and cannot be changed later. 
-If HA is disabled, all resources are placed in a single, randomly selected zone. Disabled HA allows setting both autoScalerMin and autoScalerMax to 1, which helps reduce costs. 
+If HA is disabled, all resources are placed in a single, randomly selected zone. Disabled HA allows setting both **autoScalerMin** and **autoScalerMax** to 1, which helps reduce costs. 
 It is not recommended for production environments. When enabled, resources are distributed across three zones to enhance fault tolerance. 
-Enabled HA requires setting autoScalerMin to the minimal value 3.
+Enabled HA requires setting **autoScalerMin** to the minimal value 3.
 
 If you do not provide the `additionalWorkerNodePools` list in the update request, the saved additional worker node pools stay untouched.
 However, if you provide an empty list in the update request, all additional worker node pools are removed.
