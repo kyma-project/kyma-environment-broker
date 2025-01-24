@@ -303,10 +303,12 @@ func (b *ProvisionEndpoint) validateAndExtract(details domain.ProvisionDetails, 
 
 	if parameters.AdditionalWorkerNodePools != nil {
 		if !supportsAdditionalWorkerNodePools(details.PlanID) {
-			return ersContext, parameters, fmt.Errorf("additional worker node pools are not supported for plan ID: %s", details.PlanID)
+			message := fmt.Sprintf("additional worker node pools are not supported for plan ID: %s", details.PlanID)
+			return ersContext, parameters, apiresponses.NewFailureResponse(fmt.Errorf(message), http.StatusUnprocessableEntity, message)
 		}
 		if !AreNamesUnique(parameters.AdditionalWorkerNodePools) {
-			return ersContext, parameters, fmt.Errorf("names of additional worker node pools must be unique")
+			message := "names of additional worker node pools must be unique"
+			return ersContext, parameters, apiresponses.NewFailureResponse(fmt.Errorf(message), http.StatusUnprocessableEntity, message)
 		}
 		for _, additionalWorkerNodePool := range parameters.AdditionalWorkerNodePools {
 			if err := additionalWorkerNodePool.Validate(); err != nil {
