@@ -33,6 +33,7 @@ type AssertCommand struct {
 	editBtpManagerSecret   bool
 	deleteBtpManagerSecret bool
 	suspensionInProgress   bool
+	endpointsSecured       bool
 }
 
 func NewAsertCmd() *cobra.Command {
@@ -49,7 +50,8 @@ func NewAsertCmd() *cobra.Command {
   skr-tester assert -i instanceID -b                                     Checks if the BTP manager secret exists in the instance.
   skr-tester assert -i instanceID -e                                     Edits the BTP manager secret in the instance and checks if the secret is reconciled.
   skr-tester assert -i instanceID -d                                     Deletes the BTP manager secret in the instance and checks if the secret is reconciled.
-  skr-tester assert -i instanceID -s                                     Checks if the suspension operation is in progress for the instance.`,
+  skr-tester assert -i instanceID -s                                     Checks if the suspension operation is in progress for the instance.
+  skr-tester assert -i instanceID -n                                     Checks if KEB endpoints require authentication.`,
 
 		PreRunE: func(_ *cobra.Command, _ []string) error { return cmd.Validate() },
 		RunE:    func(_ *cobra.Command, _ []string) error { return cmd.Run() },
@@ -65,6 +67,7 @@ func NewAsertCmd() *cobra.Command {
 	cobraCmd.Flags().BoolVarP(&cmd.editBtpManagerSecret, "editBtpManagerSecret", "e", false, "Edits the BTP manager secret in the instance and checks if the secret is reconciled.")
 	cobraCmd.Flags().BoolVarP(&cmd.deleteBtpManagerSecret, "deleteBtpManagerSecret", "d", false, "Deletes the BTP manager secret in the instance and checks if the secret is reconciled.")
 	cobraCmd.Flags().BoolVarP(&cmd.suspensionInProgress, "suspensionInProgress", "s", false, "Checks if the suspension operation is in progress for the instance.")
+	cobraCmd.Flags().BoolVarP(&cmd.endpointsSecured, "endpointsSecured", "n", false, "Tests the KEB endpoints without authorization.")
 
 	return cobraCmd
 }
@@ -283,7 +286,34 @@ func (cmd *AssertCommand) Run() error {
 		}
 		fmt.Println("Suspension operation is in progress")
 		fmt.Printf("Suspension operationID: %s\n", *operationID)
+	} else if cmd.endpointsSecured {
+		brokerClient := broker.NewBrokerClient(broker.NewBrokerConfig())
+		platformRegion := brokerClient.GetPlatformRegion()
+		testData := []struct {
+			payload  interface{}
+			endpoint string
+			method   string
+		}{
+			{payload: nil, endpoint: fmt.Sprintf("oauth/v2/service_instances/%s", cmd.instanceID), method: "GET"},
+			{payload: nil, endpoint: "runtimes", method: "GET"},
+			{payload: nil, endpoint: "info/runtimes", method: "GET"},
+			{payload: nil, endpoint: "orchestrations", method: "GET"},
+			{payload: nil, endpoint: fmt.Sprintf("oauth/%sv2/service_instances/%s", platformRegion, cmd.instanceID), method: "PUT"},
+			{payload: nil, endpoint: "upgrade/cluster", method: "POST"},
+			{payload: nil, endpoint: "upgrade/kyma", method: "POST"},
+			{payload: nil, endpoint: fmt.Sprintf("oauth/v2/service_instances/%s", cmd.instanceID), method: "PATCH"},
+			{payload: nil, endpoint: fmt.Sprintf("oauth/v2/service_instances/%s", cmd.instanceID), method: "DELETE"},
+		}
+
+		for _, test := range testData {
+			err := brokerClient.CallBrokerWithoutToken(test.payload, test.endpoint, test.method)
+			if err != nil {
+				return fmt.Errorf("error while calling KEB endpoint %q without authorization: %v", test.endpoint, err)
+			}
+		}
+		fmt.Println("KEB endpoints test passed")
 	}
+
 	return nil
 }
 
@@ -316,8 +346,11 @@ func (cmd *AssertCommand) Validate() error {
 	if cmd.suspensionInProgress {
 		count++
 	}
+	if cmd.endpointsSecured {
+		count++
+	}
 	if count != 1 {
-		return fmt.Errorf("you must use exactly one of machineType, clusterOIDCConfig, kubeconfigOIDCConfig, admins, btpManagerSecretExists, editBtpManagerSecret, deleteBtpManagerSecret, or suspensionInProgress")
+		return fmt.Errorf("you must use exactly one of machineType, clusterOIDCConfig, kubeconfigOIDCConfig, admins, btpManagerSecretExists, editBtpManagerSecret, deleteBtpManagerSecret, suspensionInProgress, or endpointsSecured")
 	}
 	return nil
 }

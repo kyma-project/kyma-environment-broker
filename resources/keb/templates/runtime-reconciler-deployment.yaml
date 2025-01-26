@@ -15,6 +15,7 @@ spec:
     metadata:
       labels:
         app.kubernetes.io/name: runtime-reconciler
+        app.kubernetes.io/instance: {{ .Values.namePrefix }}
     spec:
       serviceAccountName: {{ .Values.global.kyma_environment_broker.serviceAccountName }}
       {{- with .Values.deployment.securityContext }}

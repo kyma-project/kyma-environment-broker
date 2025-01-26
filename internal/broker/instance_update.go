@@ -266,10 +266,12 @@ func (b *UpdateEndpoint) processUpdateParameters(instance *internal.Instance, de
 
 	if params.AdditionalWorkerNodePools != nil {
 		if !supportsAdditionalWorkerNodePools(details.PlanID) {
-			return domain.UpdateServiceSpec{}, fmt.Errorf("additional worker node pools are not supported for plan ID: %s", details.PlanID)
+			message := fmt.Sprintf("additional worker node pools are not supported for plan ID: %s", details.PlanID)
+			return domain.UpdateServiceSpec{}, apiresponses.NewFailureResponse(fmt.Errorf(message), http.StatusBadRequest, message)
 		}
 		if !AreNamesUnique(params.AdditionalWorkerNodePools) {
-			return domain.UpdateServiceSpec{}, fmt.Errorf("names of additional worker node pools must be unique")
+			message := "names of additional worker node pools must be unique"
+			return domain.UpdateServiceSpec{}, apiresponses.NewFailureResponse(fmt.Errorf(message), http.StatusBadRequest, message)
 		}
 		for _, additionalWorkerNodePool := range params.AdditionalWorkerNodePools {
 			if err := additionalWorkerNodePool.Validate(); err != nil {
