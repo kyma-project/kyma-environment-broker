@@ -178,23 +178,30 @@ The last example shows initial configuration create to mimic the current bahavio
 * azure clusters in the region cf-ch20 and aws clusters in the region cf-eu11 have their own dedicated pool.
 
 ```
-hap: 
-  rule:
-  - azure(euAccess=*)
-  - aws(euAccess=*)
-  - trial(shared)
-  - gcp
-  - gcp(PR=cf-sa30) 
-  - openstack(CR=*, shared)
+hap:
+ rule: 
+  - "aws"
+  - "aws(EU,PR=cf-eu11)" 
+  - "azure"
+  - "azure(EU,PR=cf-ch20)"
+  - "gcp"
+  - "gcp(PR=cf-sa30)"
+  - "trial(S)"
+  - "sap-converged-cloud(S,CR=*)"
+
+?
+  - "azure_lite"
+  - "preview"
+?
 
 SecretBinding pools:
-- hyperscalerType: azure, 
 - hyperscalerType: aws, 
+- hyperscalerType: aws_cf-eu11; euAccess: true 
+- hyperscalerType: azure, 
+- hyperscalerType: azure_cf-ch20; euAccess: true 
 - hyperscalerType: gcp, 
+- hyperscalerType: gcp_cf-sa30, 
 - hyperscalerType: azure; shared: true - TRIAL POOL
 - hyperscalerType: aws; shared: true - TRIAL POOL 
-- hyperscalerType: azure; euAccess: true 
-- hyperscalerType: aws; euAccess: true 
-- hyperscalerType: gcp_cf-sa30, 
 - hyperscalerType: openstack_<CLUSTER_REGION>; shared: true, 
 ```
