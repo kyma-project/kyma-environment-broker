@@ -36,7 +36,7 @@ Every HAP Pool that the Rule Entry represents must be preconfigured in a Gardene
 The following example shows the Rule Entry format:
 
 ```
-PLAN(ATTR_1=VAL_1,ATTR_2=VAL_2,...,ATTR_N)
+PLAN(ATTR_1=VAL_1,ATTR_2=VAL_2,...,ATTR_N)->RESULT_1, RESULT_2, ..., RESULT_N
 ```
 
 In its minimal form each rule consists of a `PLAN` that the rule applies to.
@@ -47,13 +47,16 @@ List of possible attributes is described in the [Rule Attributes](#rule-attribut
 ```
 hap: 
   rule: 
-  - azure(ATTR_1=VAL_1,ATTR_2=VAL_2,...,ATTR_N)
+  - azure(ATTR_1=VAL_1,ATTR_2=VAL_2,...,ATTR_N)->RESULT_1, RESULT_2, ..., RESULT_N
 ```
 
 The extended version of a rule entry allows to pass a list of attribute/value pairs in parantheses. The attributes include **platformRegion** (`PR`), **clusterRegion** (`CR`), **shared** (`S`) and **euAccess** (`E`). Each attribute can be used at most once in a single rule entry.
 shared and euAccess attributes are logical which means that they are not matched with SKR attributes but are used only to apply their labels modifications if rest of matched attributes are equal to SKR's values. 
 
-Rule Attributes are described in [Rule Attributes](#rule-attributes) section.
+Rule Attributes include `PR`, `CR`. They are described in [Rule Attributes](#rule-attributes) section.
+
+Rule Entry results include `S` and `E`. They are described in [Rule Results](#rule-results) section.
+
 
 ## Rule Evaluation
 
@@ -129,8 +132,8 @@ The `shared` and `euAccess` attributes does not correspond to any physical SKR p
 ```
 hap: 
   rule: 
-    - gcp(S)
-    - azure(PR=cf-ch20, E)
+    - gcp -> S
+    - azure(PR=cf-ch20) -> E
 
 SecretBinding pools:
 - hyperscalerType: gcp; shared: true
@@ -153,10 +156,10 @@ SecretBinding pools:
 - hyperscalerType: gcp_cf-jp30
 ```
 
-The attributes that support `*` include: `PR`, `CR`, `shared` and `euAccess`.
+The attributes that support `*` include: `PR`, `CR`.
 
 > ![NOTE]
-> The above configuration effectivle disables usage of SecretBindings with only `hyperscalerType: gcp` label.
+> The above configuration example effectivle disables usage of SecretBindings with only `hyperscalerType: gcp` label.
 
 
 ## Validation
@@ -180,14 +183,14 @@ The last example shows initial configuration create to mimic the current bahavio
 ```
 hap:
  rule: 
-  - "aws"
-  - "aws(EU,PR=cf-eu11)" 
-  - "azure"
-  - "azure(EU,PR=cf-ch20)"
-  - "gcp"
-  - "gcp(PR=cf-sa30)"
-  - "trial(S)"
-  - "sap-converged-cloud(S,CR=*)"
+  - aws
+  - aws(PR=cf-eu11) -> EU
+  - azure
+  - azure(EU,PR=cf-ch20) -> EU
+  - gcp
+  - gcp(PR=cf-sa30)
+  - trial -> S
+  - sap-converged-cloud(CR=*) -> S
 
 ?
   - "azure_lite"
