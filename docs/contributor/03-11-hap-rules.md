@@ -50,7 +50,7 @@ hap:
   - azure(ATTR_1=VAL_1,ATTR_2=VAL_2,...,ATTR_N)
 ```
 
-The extended version of a rule entry allows to pass a list of attribute/value pairs in parantheses. The attributes include **platformRegion** (`PR`), **clusterRegion** (`CR`), **shared** and **euAccess**. Each attribute can be used at most once in a single rule entry.
+The extended version of a rule entry allows to pass a list of attribute/value pairs in parantheses. The attributes include **platformRegion** (`PR`), **clusterRegion** (`CR`), **shared** (`S`) and **euAccess** (`E`). Each attribute can be used at most once in a single rule entry.
 shared and euAccess attributes are logical which means that they are not matched with SKR attributes but are used only to apply their labels modifications if rest of matched attributes are equal to SKR's values. 
 
 Rule Attributes are described in [Rule Attributes](#rule-attributes) section.
@@ -129,8 +129,8 @@ The `shared` and `euAccess` attributes does not correspond to any physical SKR p
 ```
 hap: 
   rule: 
-    - gcp(shared)
-    - azure(PR=cf-ch20, euAccess=true)
+    - gcp(S)
+    - azure(PR=cf-ch20, E)
 
 SecretBinding pools:
 - hyperscalerType: gcp; shared: true
