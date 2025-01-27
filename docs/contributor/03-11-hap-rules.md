@@ -247,8 +247,6 @@ If more than one such attribute is specified then the error is returned during K
 
 An example of such failing configurations is presented below.
 
-// TODO:
-
 ## Initial Configuration
 
 The last example shows initial configuration create to mimic the current bahaviour of KEB at the time of writing the document. The configuration enforces that:
