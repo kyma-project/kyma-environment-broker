@@ -65,8 +65,6 @@ The input attribute types include **platformRegion** (`PR`), **hyperscalerRegion
 Each attribute can be used at most once in a single rule entry.
 **shared** and **euAccess** attributes are used only to apply their labels modifications if rest of matched attributes are equal to SKR's values. 
 
-Rule Entry results include `S` and `EU`. They are described in [Rule Results](#rule-results) section.
-
 ## Rule Evaluation
 
 HAP evaluates a set of rules to determine what labels to use when querying secret bindings.
