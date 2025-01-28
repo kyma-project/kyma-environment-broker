@@ -126,7 +126,7 @@ aws(PR=cf-eu11, HR=westeu) -> EU, S # search labels: hyperscalerType: aws_cf-eu1
 
 The HAP stores credentials for the hyperscaler accounts that have been set up in advance in Kubernetes Secrets that the Secret Bindings, that KEB searches for, point to. The SecretBindings are labeld with **hyperscalerType**, **shared** and **euAccess** labels. 
 
-The **hyperscaler-type** contains hyperscaler name and region information in the format `hyperscaler_type: <HYPERSCALER_NAME>[_<PLATFORM_REGION>][_<HYPERSCALER_REGION>]`, where both `_<PLATFORM_REGION>` and `_<HYPERSCALER_REGION>` are optional. The **hypercaler-type** label is mandatory. It is value is hardcoded and computed based on a plan in [hyperscaler_type.go](https://github.com/kyma-project/kyma-environment-broker/blob/main/common/hyperscaler/hyperscaler_type.go). This means that not all plans share their name with hyperscaler types, e.g. sap-converged-plan has `openstack` hyperscalerType and `trial` plan can have either `azure` or `aws` depending on the hyperscaler? regions. The **euAccess** and **shared** labels contain boolean values and they used to divide existing pools to secrets used by EU restricted regions and secrets shared by multiple Global Accounts. The **euAccess** and **shared** labels are optional
+The **hyperscaler-type** contains hyperscaler name and region information in the format `hyperscaler_type: <HYPERSCALER_NAME>[_<PLATFORM_REGION>][_<HYPERSCALER_REGION>]`, where both `_<PLATFORM_REGION>` and `_<HYPERSCALER_REGION>` are optional. The **hypercaler-type** label is mandatory. It is value is hardcoded and computed based on a plan in [hyperscaler_type.go](https://github.com/kyma-project/kyma-environment-broker/blob/main/common/hyperscaler/hyperscaler_type.go). This means that not all plans share their name with hyperscaler types, e.g. sap-converged-plan has `openstack` hyperscalerType and `trial` plan can have either `azure` or `aws` depending on the configured provider type. The **euAccess** and **shared** labels contain boolean values and they used to divide existing pools to secrets used by EU restricted regions and secrets shared by multiple Global Accounts. The **euAccess** and **shared** labels are optional
 
 Every rule must contain at least a plan and apply `hyperscaler_type: <HYPERSCALER_NAME>` label. For example, the following example shows a simple rule entry configuration and a SecretBinding pool that this configuration corresponds to:
 
@@ -263,7 +263,7 @@ The last example shows initial configuration create to mimic the current bahavio
 * azure, aws, gcp have their own pools of dedicated bindings.
 * gcp clusters in the region cf-sa30 use the pool of secret bindings marked with labels: `hyperscalerType: gcp_cf-sa30`,
 * sap-converged-cloud clusters use the pool of secret bindings marked with labels: `hyperscalerType: openstack_<HYPERSCALER_REGION>` and all of the are shared.
-* trial clusters can use one of two pool of shared secret bindings marked with labels: `hyperscalerType: azure` or `hyperscalerType: aws` (because of hardcoded mapping of trial plan to azure or aws providers) depending on the provider type.
+* trial clusters can use one of two pool of shared secret bindings marked with labels: `hyperscalerType: azure` or `hyperscalerType: aws` depending on the configured trial provider type.
 * azure clusters in the region cf-ch20 and aws clusters in the region cf-eu11 have their own dedicated pool.
 
 ```
