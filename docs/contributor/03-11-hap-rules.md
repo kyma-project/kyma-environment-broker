@@ -176,7 +176,7 @@ SecretBinding pools
 
 ### Hyperscaler Region Attribute
 
-A region that an SKR is provisioned in can be matched with an attribute named `HR`. Below configuration specifies azure plan as one for which to use hyperscaler region based search. In this case, cluster provisioned in with the azure plan would require a secret binding with `hyperscalerType: azure_<CLUSTER_REGION>` label. 
+A region that an SKR is provisioned in can be matched with an attribute named `HR`. Below configuration specifies azure plan as one for which to use hyperscaler region based search. In this case, cluster provisioned in with the azure plan would require a secret binding with `hyperscalerType: azure_<HYPERSCALER_REGION>` label. 
 
 ```
 hap: 
@@ -262,7 +262,7 @@ An example of such failing configurations is presented below.
 The last example shows initial configuration create to mimic the current bahaviour of KEB at the time of writing the document. The configuration enforces that:
 * azure, aws, gcp have their own pools of dedicated bindings.
 * gcp clusters in the region cf-sa30 use the pool of secret bindings marked with labels: `hyperscalerType: gcp_cf-sa30`,
-* sap-converged-cloud clusters use the pool of secret bindings marked with labels: `hyperscalerType: openstack_<CLUSTER_REGION>` and all of the are shared.
+* sap-converged-cloud clusters use the pool of secret bindings marked with labels: `hyperscalerType: openstack_<HYPERSCALER_REGION>` and all of the are shared.
 * trial clusters can use one of two pool of shared secret bindings marked with labels: `hyperscalerType: azure` or `hyperscalerType: aws` (because of hardcoded mapping of trial plan to azure or aws providers) depending on the provider type.
 * azure clusters in the region cf-ch20 and aws clusters in the region cf-eu11 have their own dedicated pool.
 
@@ -289,5 +289,5 @@ SecretBinding pools:
 - hyperscalerType: gcp_cf-sa30, 
 - hyperscalerType: azure; shared: true - TRIAL POOL
 - hyperscalerType: aws; shared: true - TRIAL POOL 
-- hyperscalerType: openstack_<CLUSTER_REGION>; shared: true, 
+- hyperscalerType: openstack_<HYPERSCALER_REGION>; shared: true, 
 ```
