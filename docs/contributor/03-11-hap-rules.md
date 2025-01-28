@@ -155,9 +155,6 @@ Below configuration means that if a gcp cluster is provisioned in cf-sa30 subacc
 hap: 
   rule: 
     - gcp(PR=cf-sa30) # pool: hyperscalerType: gcp_cf-sa30, 
-
-SecretBinding pools
-- 
 ```
 
 ### Hyperscaler Region Attribute
