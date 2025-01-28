@@ -53,7 +53,7 @@ Output attributes does not support values.
 Description of when the rule is triggered can be found in the [Rule Evaluation](#evaluation) section.
 Rule Attributes are described in [Rule Attributes](#rule-attributes) section. 
 
-Currently, possible OUTPUT_ATTR_x attributes values are `S` or `E`.
+Currently, possible OUTPUT_ATTR_x attributes values are `S` or `EU`.
 
 ```
 hap: 
@@ -61,13 +61,11 @@ hap:
   - azure(INPUT_ATTR_1=VAL_1,INPUT_ATTR_2=VAL_2,...,INPUT_ATTR_N) -> OUTPUT_ATTR_1=VAL_1,OUTPUT_ATTR_2=VAL_2,...,OUTPUT_ATTR_N
 ```
 
-The input attribute types include **platformRegion** (`PR`), **clusterRegion** (`CR`). The output attribute types include **shared** (`S`) and **euAccess** (`E`). 
+The input attribute types include **platformRegion** (`PR`), **clusterRegion** (`HR`). The output attribute types include **shared** (`S`) and **euAccess** (`EU`). 
 Each attribute can be used at most once in a single rule entry.
 **shared** and **euAccess** attributes are used only to apply their labels modifications if rest of matched attributes are equal to SKR's values. 
 
-Rule Entry results include `S` and `E`. They are described in [Rule Results](#rule-results) section.
-
-TODO: table with mapping...???
+Rule Entry results include `S` and `EU`. They are described in [Rule Results](#rule-results) section.
 
 ## Rule Evaluation
 
@@ -103,11 +101,11 @@ The similary behaviour occurs when the rule defined the same attributes values t
 ```
 hap:
   rule: 
-    - gcp(CR=europe-west3) 
-    - gcp(PR=*, CR=europe-west3) # invalid rules, both can be applied to the same skr
+    - gcp(HR=europe-west3) 
+    - gcp(PR=*, HR=europe-west3) # invalid rules, both can be applied to the same skr
 ```
 
-Rule configuration must contain only unique entries in the scope of that list. 
+Rule configuration must contain only unique entries in the scope of that list.
 If rule configuration contains duplicated rule entries an error during KEB startup is returned.
 
 Rule entry priority is selected by sorting all the rules entries that apply to the request by the number of indentification attributes they contain. 
@@ -121,14 +119,14 @@ The following example shows the priority of the rules from the general rule to m
 ```
 aws -> S # search labels: hyperscalerType: aws, shared: true
 aws(PR=cf-eu11) -> EU # search labels: hyperscalerType: aws_cf-eu11, euAccess: true
-aws(PR=cf-eu11, CR=westeu) -> EU, S # search labels: hyperscalerType: aws_cf-eu11_westeu, shared: true, euAccess: true
+aws(PR=cf-eu11, HR=westeu) -> EU, S # search labels: hyperscalerType: aws_cf-eu11_westeu, shared: true, euAccess: true
 ```
 
 ## Search Labels
 
 The HAP stores credentials for the hyperscaler accounts that have been set up in advance in Kubernetes Secrets that the Secret Bindings, that KEB searches for, point to. The SecretBindings are labeld with **hyperscalerType**, **shared** and **euAccess** labels. 
 
-The **hyperscaler-type** contains hyperscaler name and region information in the format `hyperscaler_type: <HYPERSCALER_NAME>[_<PLATFORM_REGION>][_<HYPERSCALER_REGION>]`, where both `_<PLATFORM_REGION>` and `_<HYPERSCALER_REGION>` are optional. The **hypercaler-type** label is mandatory. It is value is hardcoded and computed based on a plan in [hyperscaler_type.go](https://github.com/kyma-project/kyma-environment-broker/blob/main/common/hyperscaler/hyperscaler_type.go). This means that not all plans share their name with hyperscaler types, e.g. sap-converged-plan has `openstack` hyperscalerType and `trial` plan can have either `azure` or `aws` depending on the cluster regions. The **euAccess** and **shared** labels contain boolean values and they used to divide existing pools to secrets used by EU restricted regions and secrets shared by multiple Global Accounts. The **euAccess** and **shared** labels are optional
+The **hyperscaler-type** contains hyperscaler name and region information in the format `hyperscaler_type: <HYPERSCALER_NAME>[_<PLATFORM_REGION>][_<HYPERSCALER_REGION>]`, where both `_<PLATFORM_REGION>` and `_<HYPERSCALER_REGION>` are optional. The **hypercaler-type** label is mandatory. It is value is hardcoded and computed based on a plan in [hyperscaler_type.go](https://github.com/kyma-project/kyma-environment-broker/blob/main/common/hyperscaler/hyperscaler_type.go). This means that not all plans share their name with hyperscaler types, e.g. sap-converged-plan has `openstack` hyperscalerType and `trial` plan can have either `azure` or `aws` depending on the hyperscaler? regions. The **euAccess** and **shared** labels contain boolean values and they used to divide existing pools to secrets used by EU restricted regions and secrets shared by multiple Global Accounts. The **euAccess** and **shared** labels are optional
 
 Every rule must contain at least a plan and apply `hyperscaler_type: <HYPERSCALER_NAME>` label. For example, the following example shows a simple rule entry configuration and a SecretBinding pool that this configuration corresponds to:
 
@@ -140,6 +138,18 @@ hap:
 SecretBinding pools:
 - hyperscalerType: gcp
 ```
+
+The following table shows the mapping of plans to hyperscaler types:
+
+| Plan                	| Hyperscaler Type 	|
+|---------------------	|------------------	|
+| azure               	| azure            	|
+| azure_lite          	| azure            	|
+| aws                 	| aws              	|
+| gcp                 	| gcp              	|
+| preview             	| aws              	|
+| sap-converged-cloud 	| openstack_<HR>   	|
+| trial               	| aws              	|
 
 Rest of the examples in the document follow the same structure of presenting an example configuration and corresponding HAP pools as above snippet.
 
@@ -164,14 +174,14 @@ SecretBinding pools
 - hyperscalerType: gcp_cf-sa30, 
 ```
 
-### Cluster Region Attribute
+### Hyperscaler Region Attribute
 
-A region that an SKR is provisioned in can be matched with an attribute named `CR`. Below configuration specifies azure plan as one for which to use cluster region based search. In this case, cluster provisioned in with the azure plan would require a secret binding with `hyperscalerType: azure_<CLUSTER_REGION>` label. 
+A region that an SKR is provisioned in can be matched with an attribute named `HR`. Below configuration specifies azure plan as one for which to use hyperscaler region based search. In this case, cluster provisioned in with the azure plan would require a secret binding with `hyperscalerType: azure_<CLUSTER_REGION>` label. 
 
 ```
 hap: 
   rule: 
-    - gcp(CR=us-central1)
+    - gcp(HR=us-central1)
 
 SecretBinding pools
 - hyperscalerType: gcp_us-central1, 
@@ -208,7 +218,7 @@ SecretBinding pools:
 - hyperscalerType: gcp_cf-jp30
 ```
 
-The attributes that support `*` include: `PR`, `CR`.
+The attributes that support `*` include: `PR`, `HR`.
 
 > ![NOTE]
 > The above configuration example effectively disables usage of SecretBindings with only `hyperscalerType: gcp` label.
@@ -224,8 +234,8 @@ The following table summarizes the attributes that can be used in the rule entry
 
 | Name (Symbol)        	| Data Type and Possible Values                                                                                                                    	| Input Attribute 	| Output Attribute 	| Modified SecretBinding Search Labels                                                              	|
 |----------------------	|------------------------------------------------------------------------------------------------------------------------------------	|-----------------	|------------------	|---------------------------------------------------------------------------------------------------	|
-| Platform Region (PR) 	| string, platform regions as defined in https://help.sap.com/docs/btp/sap-business-technology-platform/regions-for-kyma-environment 	| true            	| false            	| hyperscalerType: `<providerType>_<PR>` or hyperscalerType: `<providerType>_<PR>_<CR>` if used with CR 	|
-| Cluster Region (CR)  	| string, cluster region as defined in https://help.sap.com/docs/btp/sap-business-technology-platform/regions-for-kyma-environment   	| true            	| false            	| hyperscalerType: `<providerType>_<CR>` or hyperscalerType: `<providerType>_<PR>_<CR>` if used with PR 	|
+| Platform Region (PR) 	| string, platform regions as defined in https://help.sap.com/docs/btp/sap-business-technology-platform/regions-for-kyma-environment 	| true            	| false            	| hyperscalerType: `<providerType>_<PR>` or hyperscalerType: `<providerType>_<PR>_<HR>` if used with HR 	|
+| Hyperscaler Region (HR)  	| string, hyperscaler region as defined in https://help.sap.com/docs/btp/sap-business-technology-platform/regions-for-kyma-environment   	| true            	| false            	| hyperscalerType: `<providerType>_<HR>` or hyperscalerType: `<providerType>_<PR>_<HR>` if used with PR 	|
 | Eu Access (EU)       	| no value                                                                                                                           	| false           	| true             	| euAccess: true                                                                                    	|
 | Shared (S)           	| no value                                                                                                                           	| false           	| true             	| shared: true                                                                                      	|
 
@@ -266,7 +276,7 @@ hap:
   - gcp
   - gcp(PR=cf-sa30)
   - trial -> S
-  - sap-converged-cloud(CR=*) -> S
+  - sap-converged-cloud(HR=*) -> S
   - azure_lite
   - preview
 
