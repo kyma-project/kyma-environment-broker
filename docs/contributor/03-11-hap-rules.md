@@ -92,15 +92,8 @@ hap:
     - gcp 
     - gcp -> S # invalid entry, output attributes does not take part into uniqnuess check
     - gcp(PR=*) # invalid entry, both can be applied to the same skr
-```
-
-The similary behaviour occurs when the rule defined the same attributes values together with `*` value.
-
-```
-hap:
-  rule: 
-    - gcp(HR=europe-west3) 
-    - gcp(PR=*, HR=europe-west3) # invalid rules, both can be applied to the same skr
+    - gcp(HR=europe-west3) # valid entry, new HR attribute makes the rule unique
+    - gcp(PR=*, HR=europe-west3) # invalid rules, the same as previous one because of addition of `PR=*` attribute
 ```
 
 Rule configuration must contain only unique entries in the scope of that list.
@@ -244,7 +237,6 @@ KEB validates HAP Rules during startup. If the configuration is invalid, KEB wil
 The constraints used for validation during KEB startup include:
 * Rules format check - all the rules must comply with the format specified above.
 * Every rule Entry must refer to an existing plan - if you define a rule with non existing pools then an error is returned if a during KEB startup
-* Every Rule Entry must refer to an existing pool.
 * Every supported plan needs at least one rule entry, if no rule entries for plan defined then error is returned for SKR.
 * Uniqnuess validation check - KEB checks that all rule entries are unique in the scope of the rule. 
 Specifying more than one rule with the same number of identification attributes is prohibited. 
