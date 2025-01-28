@@ -22,7 +22,7 @@ func Test_OperationManager_RetryOperationOnce(t *testing.T) {
 	opManager := NewOperationManager(operations, "some_step", kebErr.ProvisionerDependency)
 	op := internal.Operation{}
 	op.UpdatedAt = time.Now()
-	retryInterval := time.Hour
+	retryInterval := time.Millisecond
 	errMsg := fmt.Errorf("ups ... ")
 
 	// this is required to avoid storage retries (without this statement there will be an error => retry)
@@ -37,9 +37,7 @@ func Test_OperationManager_RetryOperationOnce(t *testing.T) {
 	assert.Nil(t, err)
 
 	// then - second call
-	t.Log(op.UpdatedAt.String())
-	op.UpdatedAt = op.UpdatedAt.Add(-retryInterval - time.Second) // simulate wait of first retry
-	t.Log(op.UpdatedAt.String())
+	time.Sleep(time.Millisecond * 2)
 	op, when, err = opManager.RetryOperationOnce(op, errMsg.Error(), errMsg, retryInterval, fixLogger())
 
 	// when - second call => no retry
