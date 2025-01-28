@@ -232,7 +232,7 @@ The last example shows initial configuration create to mimic the current bahavio
 * gcp clusters in the region cf-sa30 use the pool of secret bindings marked with labels: `hyperscalerType: gcp_cf-sa30`,
 * sap-converged-cloud clusters use the pool of secret bindings marked with labels: `hyperscalerType: openstack_<HYPERSCALER_REGION>` and all these pools are shared.
 * trial clusters can use one of two pool of shared secret bindings marked with labels: `hyperscalerType: azure` or `hyperscalerType: aws` depending on the configured trial provider type.
-* azure clusters in the region cf-ch20 and aws clusters in the region cf-eu11 have their own dedicated pool.
+* azure clusters in the region cf-ch20 and aws clusters in the region cf-eu11 have their own dedicated pools.
 
 ```
 hap:
