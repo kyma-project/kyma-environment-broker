@@ -115,7 +115,7 @@ aws(PR=cf-eu11, HR=westeu) -> EU, S # search labels: hyperscalerType: aws_cf-eu1
 
 ## Search Labels
 
-The HAP stores credentials for the hyperscaler accounts that have been set up in advance in Kubernetes Secrets that the Secret Bindings, that KEB searches for, point to. The SecretBindings are labeld with **hyperscalerType**, **shared** and **euAccess** labels. 
+The HAP stores credentials to the hyperscaler accounts in Kubernetes Secrets that the SecretBindings points to. KEB searches for those SecretBindings using thier labels **hyperscalerType**, **shared** and **euAccess**. 
 
 The **hyperscaler-type** contains hyperscaler name and region information in the format `hyperscaler_type: <HYPERSCALER_NAME>[_<PLATFORM_REGION>][_<HYPERSCALER_REGION>]`, where both `_<PLATFORM_REGION>` and `_<HYPERSCALER_REGION>` are optional. The **hypercaler-type** label is mandatory. It is value is hardcoded and computed based on a plan in [hyperscaler_type.go](https://github.com/kyma-project/kyma-environment-broker/blob/main/common/hyperscaler/hyperscaler_type.go). This means that not all plans share their name with hyperscaler types, e.g. sap-converged-plan has `openstack` hyperscalerType and `trial` plan can have either `azure` or `aws` depending on the configured provider type. The **euAccess** and **shared** labels contain boolean values and they used to divide existing pools to secrets used by EU restricted regions and secrets shared by multiple Global Accounts. The **euAccess** and **shared** labels are optional.
 
