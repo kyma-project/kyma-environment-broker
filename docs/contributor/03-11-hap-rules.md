@@ -36,7 +36,7 @@ Every HAP Pool that the Rule Entry represents must be preconfigured in a Gardene
 The following example shows the Rule Entry format:
 
 ```
-PLAN(INPUT_ATTR_1=VAL_1, INPUT_ATTR_2=VAL_2, ..., INPUT_ATTR_N=VAL_N) -> OUTPUT_ATTR_1, OUTPUT_ATTR_2, ..., OUTPUT_ATTR_N
+PLAN(INPUT_ATTR_1=VAL_1, INPUT_ATTR_2=VAL_2, ..., INPUT_ATTR_N=VAL_N) -> OUTPUT_ATTR_1, OUTPUT_ATTR_2, ..., OUTPUT_ATTR_M
 ```
 
 Every rule entry consists of input and output attributes separated by the arrow symbol - `->`. 
@@ -58,7 +58,7 @@ Currently, possible OUTPUT_ATTR_x attributes values are `S` or `EU`.
 ```
 hap: 
   rule: 
-  - azure(INPUT_ATTR_1=VAL_1,INPUT_ATTR_2=VAL_2,...,INPUT_ATTR_N) -> OUTPUT_ATTR_1=VAL_1,OUTPUT_ATTR_2=VAL_2,...,OUTPUT_ATTR_N
+  - azure(INPUT_ATTR_1=VAL_1,INPUT_ATTR_2=VAL_2,...,INPUT_ATTR_N) -> OUTPUT_ATTR_1=VAL_1,OUTPUT_ATTR_2=VAL_2,...,OUTPUT_ATTR_M
 ```
 
 The input attribute types include **platformRegion** (`PR`), **hyperscalerRegion** (`HR`). The output attribute types include **shared** (`S`) and **euAccess** (`EU`). 
