@@ -143,7 +143,7 @@ Rest of the examples in the document follow the same structure of presenting an 
 
 ## Rule Attributes
 
-Existence of an attribute in the rule means application of its specific behaviour making it more specific. The following section describes attributes that can be used in the rule entry.
+Existence of an attribute in the rule means making a set of clusters it applies to more constrained. The following section describes attributes that can be used in the rule entry.
 
 ### Platform Region Attribute
 
