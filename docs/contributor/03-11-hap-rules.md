@@ -147,7 +147,7 @@ Existence of an attribute in the rule means application of its specific behaviou
 
 ### Platform Region Attribute
 
-It is possible to extend the rule entry with specified platform region by adding  a `PR` rule attribute. The value of PR attributes is compared to region of a subaccount of SKR and, if triggered, applies `hyperscalerType: <HYPERSCALER_NAME>[_<PLATFORM_REGION>]` label.
+It is possible to extend the rule entry with specified platform region by adding  a `PR` rule attribute. If actual value of platform region attribute matches PR rule attribute, `hyperscalerType: <HYPERSCALER_NAME>[_<PLATFORM_REGION>]` label is used.
 
 Below configuration means that if a gcp cluster is provisioned in cf-sa30 subaccount region then KEB would search for secret bindings with `hyperscalerType: gcp_cf-sa30` label. 
 
