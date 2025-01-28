@@ -80,7 +80,7 @@ Only one rule can be triggered.
 
 If more than one rule entry match the request than only one is filterd out and applied. 
 
-The process of selecting the best matching rule is based on a rule uniqnues and priority.
+The process of selecting the best matching rule is based on a rule uniqueness and priority.
 
 Rule entry uniqnuess is determined by its plan and input parameters with its values (identification attributes) not including input parameters with `*`. 
 
