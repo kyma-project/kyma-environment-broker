@@ -16,7 +16,7 @@
 ## Rule Configuration
 
 The Rule is configured in values.yaml in `hap.rule` property.
-It is is a list of strings, each of which is a single Rule Entry that corresponds to a single HAP Pool. 
+It is a list of strings, each of which is a single Rule Entry that corresponds to a single HAP Pool. 
 Each Rule Entry is evaluated during a cluster provisioning process.
 If more than one rule applies the best matching rule is selected based on the rule [priority](#priority). The following examples presents the Rule Configuration in values.yaml:
 
