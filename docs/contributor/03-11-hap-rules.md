@@ -225,8 +225,6 @@ Specifying more than one rule with the same number of identification attributes 
 If more than one such attribute is specified then the error is returned failing KEB startup. For more details see [Uniqnuess & Priority](#uniqnuess--priority) section. 
 
 
-An example of such failing configurations is presented below.
-
 ## Initial Configuration
 
 The last example shows initial configuration create to mimic the current bahaviour of KEB at the time of writing the document. The configuration enforces that:
