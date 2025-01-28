@@ -180,7 +180,7 @@ hap:
 
 ### Attribute with "*"
 
-Input attributes values can be replaced with `*` which means that all SKR values of that attribute are matched and reused in unchanged form when applying [search labels](#search-labels) modifications. For example, the following configuration makes KEB search SecretBindings with `hyperscalerType: gcp_<PR>`, where `PR` corresponds to an SKR value, for all `gcp` clusters:
+Input attributes values can be replaced with `*` which means that all SKR values of that attribute are matched and used when creating [search labels](#search-labels). For example, the following configuration makes KEB search SecretBindings with `hyperscalerType: gcp_<PR>`, where `PR` corresponds to an SKR value, for all `gcp` clusters:
 
 ```
 hap: 
