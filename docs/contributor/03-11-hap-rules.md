@@ -189,7 +189,7 @@ hap:
               # pool: hyperscalerType: gcp_cf-jp30
 ```
 
-The attributes that support `*` include: `PR`, `HR`.
+The attributes that support `*` are: `PR`, `HR`.
 
 > ![NOTE]
 > The above configuration example effectively disables usage of SecretBindings with only `hyperscalerType: gcp` label.
