@@ -220,7 +220,7 @@ The constraints used for validation during KEB startup include:
 * Rules format check - all the rules must comply with the format specified above.
 * Every rule Entry must refer to an existing plan - if you define a rule with non existing pools then an error is returned during KEB startup that fails the process.
 * Every supported plan needs at least one rule entry, if no rule entries for plan defined then error is returned for SKR.
-* Uniqnuess validation check - KEB checks that all rule entries are unique in the scope of the rule. 
+* Uniqueness validation check - KEB checks that all rule entries are unique in the scope of the rule. 
 Specifying more than one rule with the same number of identification attributes is prohibited. 
 If more than one such attribute is specified then the error is returned failing KEB startup. For more details see [Uniqnuess & Priority](#uniqnuess--priority) section. 
 
