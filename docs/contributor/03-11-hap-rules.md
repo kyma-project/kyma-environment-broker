@@ -218,7 +218,7 @@ KEB validates HAP Rules during startup. If the configuration is invalid, KEB wil
 
 The constraints used for validation during KEB startup include:
 * Rules format check - all the rules must comply with the format specified above.
-* Every rule Entry must refer to an existing plan - if you define a rule with non existing pools then atermierror is returned during KEB startup failing the process.
+* Every rule Entry must refer to an existing plan - if you define a rule with non existing pools then an error is returned during KEB startup that fails the process.
 * Every supported plan needs at least one rule entry, if no rule entries for plan defined then error is returned for SKR.
 * Uniqnuess validation check - KEB checks that all rule entries are unique in the scope of the rule. 
 Specifying more than one rule with the same number of identification attributes is prohibited. 
@@ -230,7 +230,7 @@ If more than one such attribute is specified then the error is returned failing 
 The last example shows initial configuration create to mimic the current bahaviour of KEB at the time of writing the document. The configuration enforces that:
 * azure, aws, gcp have their own pools of dedicated bindings.
 * gcp clusters in the region cf-sa30 use the pool of secret bindings marked with labels: `hyperscalerType: gcp_cf-sa30`,
-* sap-converged-cloud clusters use the pool of secret bindings marked with labels: `hyperscalerType: openstack_<HYPERSCALER_REGION>` and all of the are shared.
+* sap-converged-cloud clusters use the pool of secret bindings marked with labels: `hyperscalerType: openstack_<HYPERSCALER_REGION>` and all these pools are shared.
 * trial clusters can use one of two pool of shared secret bindings marked with labels: `hyperscalerType: azure` or `hyperscalerType: aws` depending on the configured trial provider type.
 * azure clusters in the region cf-ch20 and aws clusters in the region cf-eu11 have their own dedicated pool.
 
