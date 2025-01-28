@@ -200,7 +200,7 @@ The following table summarizes the attributes that can be used in the rule entry
 * Name and symbol - the latter is used in rule entries.
 * Data type and possible values.
 * Input attributes - true when the attribute can occur in the input attributes section (left part) of a rule entry (see [Rule Format](#rule-format) section).
-* Output attributes - if value is true then the attribute can occure in the output attributes section (right part) of a rule entry (see [Rule Format](#rule-format) section).
+* Output attributes - true when the attribute can occur in the output attributes section (right part) of a rule entry (see [Rule Format](#rule-format) section).
 * Modified SecretBinding search labels - lists modifications of search labels that the rule entry containing the attribute adds to search labels if triggered. 
 
 | Name (Symbol)        	| Data Type and Possible Values                                                                                                                    	| Input Attribute 	| Output Attribute 	| Modified SecretBinding Search Labels                                                              	|
