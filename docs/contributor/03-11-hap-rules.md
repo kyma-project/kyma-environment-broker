@@ -97,7 +97,7 @@ hap:
 ```
 
 Rule configuration must contain only unique entries in the scope of that list.
-If rule configuration contains duplicated rule entries an error during KEB startup is returned.
+If rule configuration contains duplicated rule entries an error failing KEB startup is returned.
 
 Rule entry priority is selected by sorting all the rules entries that apply to the request by the number of identification attributes they contain. 
 For example, a rule with no attributes and only plan has lower priority then a rule with the same plan but a platform region attribute (`gcp` < `gcp(PR=cf-sa30)`).
@@ -225,7 +225,7 @@ The constraints used for validation during KEB startup include:
 * Every supported plan needs at least one rule entry, if no rule entries for plan defined then error is returned for SKR.
 * Uniqnuess validation check - KEB checks that all rule entries are unique in the scope of the rule. 
 Specifying more than one rule with the same number of identification attributes is prohibited. 
-If more than one such attribute is specified then the error is returned during KEB startup. For more details see [Uniqnuess & Priority](#uniqnuess--priority) section. 
+If more than one such attribute is specified then the error is returned failing KEB startup. For more details see [Uniqnuess & Priority](#uniqnuess--priority) section. 
 
 
 An example of such failing configurations is presented below.
