@@ -124,10 +124,7 @@ Every rule must contain at least a plan and apply `hyperscaler_type: <HYPERSCALE
 ```
 hap:
   rule:
-    - gcp
-
-SecretBinding pools:
-- hyperscalerType: gcp
+    - gcp # pool: hyperscalerType: gcp
 ```
 
 The following table shows the mapping of plans to hyperscaler types:
@@ -142,7 +139,7 @@ The following table shows the mapping of plans to hyperscaler types:
 | sap-converged-cloud 	| openstack_<HR>   	|
 | trial               	| aws              	|
 
-Rest of the examples in the document follow the same structure of presenting an example configuration and corresponding HAP Pools as above snippet.
+Rest of the examples in the document follow the same structure of presenting an example configuration and corresponding HAP Pools as above snippet with corresponding pool in the rule's comment.
 
 ## Rule Attributes
 
@@ -157,10 +154,10 @@ Below configuration means that if a gcp cluster is provisioned in cf-sa30 subacc
 ```
 hap: 
   rule: 
-    - gcp(PR=cf-sa30)
+    - gcp(PR=cf-sa30) # pool: hyperscalerType: gcp_cf-sa30, 
 
 SecretBinding pools
-- hyperscalerType: gcp_cf-sa30, 
+- 
 ```
 
 ### Hyperscaler Region Attribute
@@ -170,10 +167,7 @@ A region that an SKR is provisioned in can be matched with an attribute named `H
 ```
 hap: 
   rule: 
-    - gcp(HR=us-central1)
-
-SecretBinding pools
-- hyperscalerType: gcp_us-central1, 
+    - gcp(HR=us-central1) # pool: hyperscalerType: gcp_us-central1,
 ```
 
 ### Shared & EU Access attribute
@@ -183,12 +177,8 @@ The `shared` and `euAccess` attributes does not correspond to any SKR's property
 ```
 hap: 
   rule: 
-    - gcp -> S
-    - azure(PR=cf-ch20) -> E
-
-SecretBinding pools:
-- hyperscalerType: gcp; shared: true
-- hyperscalerType: azure_cf-ch20, euAccess: true
+    - gcp -> S                # pool: hyperscalerType: gcp; shared: true 
+    - azure(PR=cf-ch20) -> E  # pool: hyperscalerType: azure_cf-ch20, euAccess: true
 ```
 
 ### Attribute with "*"
@@ -198,13 +188,8 @@ Input attributes values can be replaced with `*` which means that all SKR values
 ```
 hap: 
   rule: 
-  - gcp(PR=*)
-```
-
-```
-SecretBinding pools:
-- hyperscalerType: gcp_cf-sa30
-- hyperscalerType: gcp_cf-jp30
+  - gcp(PR=*) # pool: hyperscalerType: gcp_cf-sa30
+              # pool: hyperscalerType: gcp_cf-jp30
 ```
 
 The attributes that support `*` include: `PR`, `HR`.
@@ -257,25 +242,15 @@ The last example shows initial configuration create to mimic the current bahavio
 ```
 hap:
  rule: 
-  - aws
-  - aws(PR=cf-eu11) -> EU
-  - azure
-  - azure(PR=cf-ch20) -> EU
-  - gcp
-  - gcp(PR=cf-sa30)
-  - trial -> S
-  - sap-converged-cloud(HR=*) -> S
-  - azure_lite
-  - preview
-
-SecretBinding pools:
-- hyperscalerType: aws, 
-- hyperscalerType: aws_cf-eu11; euAccess: true 
-- hyperscalerType: azure, 
-- hyperscalerType: azure_cf-ch20; euAccess: true 
-- hyperscalerType: gcp, 
-- hyperscalerType: gcp_cf-sa30, 
-- hyperscalerType: azure; shared: true - TRIAL POOL
-- hyperscalerType: aws; shared: true - TRIAL POOL 
-- hyperscalerType: openstack_<HYPERSCALER_REGION>; shared: true, 
+  - aws                             # pool: hyperscalerType: aws, 
+  - aws(PR=cf-eu11) -> EU           # pool: hyperscalerType: aws_cf-eu11; euAccess: true 
+  - azure                           # pool: hyperscalerType: azure, 
+  - azure(PR=cf-ch20) -> EU         # pool: hyperscalerType: azure_cf-ch20; euAccess: true 
+  - gcp                             # pool: hyperscalerType: gcp, 
+  - gcp(PR=cf-sa30)                 # pool: hyperscalerType: gcp_cf-sa30, 
+  - trial -> S                      # pool: hyperscalerType: azure; shared: true - TRIAL POOL
+                                    # pool: hyperscalerType: aws; shared: true - TRIAL POOL 
+  - sap-converged-cloud(HR=*) -> S  # pool: hyperscalerType: openstack_<HYPERSCALER_REGION>; shared: true, 
+  - azure_lite                      # pool: hyperscalerType: azure, 
+  - preview                         # pool: hyperscalerType: aws, 
 ```
