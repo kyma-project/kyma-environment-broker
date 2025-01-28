@@ -70,7 +70,7 @@ Each attribute can be used at most once in a single rule entry.
 HAP evaluates a set of rules to determine what labels to use when querying secret bindings.
 Rule is evaluated during cluster provisioning.
 Rule entries are analyzed one by one.
-Input attributes from every entry are compared with values from SKR input, if they are the same the rule entry is considered triggered.
+Input attributes from every entry are compared with values from SKR input, if they are the same the rule entry is considered matched.
 If there is more than one triggered rule then only one is selected in accordance to priority rules described in the [Priority](#priority) section.
 If there are no rule entries trigered then the error is returned. No fallback behaviour is defined in such case.
 
