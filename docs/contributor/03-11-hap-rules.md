@@ -78,7 +78,7 @@ If there are no rule entries trigered then the error is returned. No fallback be
 
 Only one rule can be triggered.
 
-If more than one rule entry match the request than only one is filterd out and applied. 
+If more than one rule entry match the request then only one is selected and applied. 
 
 The process of selecting the best matching rule is based on a rule uniqueness and priority.
 
