@@ -197,7 +197,7 @@ The attributes that support `*` include: `PR`, `HR`.
 ### Atributes Summary
 
 The following table summarizes the attributes that can be used in the rule entry. Its columns define:
-* Name and symbol - the later is used in rule entries.
+* Name and symbol - the latter is used in rule entries.
 * Data type and possible values.
 * Input attributes - if value is true then the attribute can occure in the input attributes section (left part) of a rule entry (see [Rule Format](#rule-format) section).
 * Output attributes - if value is true then the attribute can occure in the output attributes section (right part) of a rule entry (see [Rule Format](#rule-format) section).
