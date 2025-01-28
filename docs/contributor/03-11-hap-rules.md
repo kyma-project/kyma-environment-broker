@@ -84,7 +84,7 @@ The process of selecting the best matching rule is based on a rule uniqueness an
 
 Rule entry uniqueness is determined by its plan and input parameters with its values (identification attributes) not including input parameters with `*`. 
 
-Output parameters are not taken into account when establishing rule entry uniqnuess. For example the following rule will fail on startup because every skr can be matched by both rules:
+Output parameters are not taken into account when establishing rule entry uniqueness. For example the following rule will fail on startup because every SKR can be matched by both rules:
 
 ```
 hap:
