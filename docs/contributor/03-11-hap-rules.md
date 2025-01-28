@@ -109,7 +109,7 @@ If rule configuration contains duplicated rule entries an error during KEB start
 Rule entry priority is selected by sorting all the rules entries that apply to the request by the number of indentification attributes they contain. 
 For example, a rule with no attributes and only plan has lower priority then a rule with the same plan but a platform region attribute (`gcp` < `gcp(PR=cf-sa30)`).
 
-After sorting the entry that specifies most attributes (hence is more specific) is selected. 
+After sorting the entry that specifies most attributes (hence is the most specific) is selected. 
 Input attributes with value `*` is not taken into account when calculating priority.
 
 The following example shows the priority of the rules from the general rule to more specific ones:
