@@ -63,7 +63,7 @@ hap:
 
 The input attribute types include **platformRegion** (`PR`), **hyperscalerRegion** (`HR`). The output attribute types include **shared** (`S`) and **euAccess** (`EU`). 
 Each attribute can be used at most once in a single rule entry.
-**shared** and **euAccess** attributes are used only to apply their labels modifications if rest of matched attributes are equal to SKR's values. 
+**shared** and **euAccess** attributes are used only to apply their labels if rest of matched attributes are equal to SKR's values. 
 
 ## Rule Evaluation
 
