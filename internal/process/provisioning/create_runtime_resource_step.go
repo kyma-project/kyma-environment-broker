@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"log/slog"
+	"math/rand"
 	"strconv"
 	"time"
 
@@ -250,6 +251,49 @@ func (s *CreateRuntimeResourceStep) createShootProvider(operation *internal.Oper
 			VolumeSize: fmt.Sprintf("%sGi", volumeSize),
 		}
 	}
+
+	if len(operation.ProvisioningParameters.Parameters.AdditionalWorkerNodePools) > 0 {
+		additionalWorkerNodePoolsMaxUnavailable := intstr.FromInt32(int32(0))
+		workers := make([]gardener.Worker, 0, len(operation.ProvisioningParameters.Parameters.AdditionalWorkerNodePools))
+
+		for _, additionalWorkerNodePool := range operation.ProvisioningParameters.Parameters.AdditionalWorkerNodePools {
+			workerZones := values.Zones
+			if !additionalWorkerNodePool.HAZones {
+				randomIndex := rand.Intn(len(values.Zones))
+				workerZones = []string{values.Zones[randomIndex]}
+			}
+			workerMaxSurge := intstr.FromInt32(int32(len(workerZones)))
+
+			worker := gardener.Worker{
+				Name: additionalWorkerNodePool.Name,
+				Machine: gardener.Machine{
+					Type: additionalWorkerNodePool.MachineType,
+					Image: &gardener.ShootMachineImage{
+						Name:    s.config.MachineImage,
+						Version: &s.config.MachineImageVersion,
+					},
+				},
+				Maximum:        int32(additionalWorkerNodePool.AutoScalerMax),
+				Minimum:        int32(additionalWorkerNodePool.AutoScalerMin),
+				MaxSurge:       &workerMaxSurge,
+				MaxUnavailable: &additionalWorkerNodePoolsMaxUnavailable,
+				Zones:          workerZones,
+			}
+
+			if values.ProviderType != "openstack" {
+				volumeSize := strconv.Itoa(values.VolumeSizeGb)
+				worker.Volume = &gardener.Volume{
+					Type:       ptr.String(values.DiskType),
+					VolumeSize: fmt.Sprintf("%sGi", volumeSize),
+				}
+			}
+
+			workers = append(workers, worker)
+		}
+
+		provider.AdditionalWorkers = &workers
+	}
+
 	return provider, nil
 }
 

@@ -14,6 +14,8 @@ import (
 	"testing"
 	"time"
 
+	"github.com/gardener/gardener/pkg/apis/core/v1beta1"
+
 	"github.com/kyma-project/kyma-environment-broker/internal/customresources"
 
 	"github.com/kyma-project/kyma-environment-broker/internal/storage/dberr"
@@ -1275,4 +1277,19 @@ func createResource(t *testing.T, gvk schema.GroupVersionKind, k8sClient client.
 	object.SetName(name)
 	err := k8sClient.Create(context.TODO(), object)
 	assert.NoError(t, err)
+}
+
+func (s *BrokerSuiteTest) assertAdditionalWorkerIsCreated(t *testing.T, provider imv1.Provider, name, machineType string, autoScalerMin, autoScalerMax, zonesNumer int) {
+	var worker *v1beta1.Worker
+	for _, additionalWorker := range *provider.AdditionalWorkers {
+		if additionalWorker.Name == name {
+			worker = &additionalWorker
+		}
+	}
+	require.NotNil(t, worker)
+	assert.Equal(t, machineType, worker.Machine.Type)
+	assert.Equal(t, int32(autoScalerMin), worker.Minimum)
+	assert.Equal(t, int32(autoScalerMax), worker.Maximum)
+	assert.Equal(t, zonesNumer, worker.MaxSurge.IntValue())
+	assert.Len(t, worker.Zones, zonesNumer)
 }
