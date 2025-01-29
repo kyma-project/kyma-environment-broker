@@ -6,7 +6,7 @@ require (
 	code.cloudfoundry.org/lager v2.0.0+incompatible
 	github.com/99designs/gqlgen v0.17.64
 	github.com/Azure/azure-sdk-for-go v68.0.0+incompatible
-	github.com/Azure/go-autorest/autorest v0.11.29
+	github.com/Azure/go-autorest/autorest v0.11.30
 	github.com/Azure/go-autorest/autorest/adal v0.9.24
 	github.com/Masterminds/sprig v2.22.0+incompatible
 	github.com/dlmiddlecote/sqlstats v1.0.2
