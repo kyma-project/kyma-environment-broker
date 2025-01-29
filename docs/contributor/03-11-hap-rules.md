@@ -19,7 +19,7 @@ More about HAP process can be found in [Hyperscaler Account Pool](03-10-hypersca
 The rule is configured in values.yaml in `hap.rule` property.
 It is a list of strings, each of which is a single rule entry that corresponds to a single pool.
 Each rule entry is evaluated during cluster provisioning process.
-If more than one rule applies the best matching rule is selected based on the [priority](#priority). The following examples presents example configuration in values.yaml:
+If more than one rule applies the best matching rule is selected based on the [priority](#uniqnuess--priority). The following examples presents example configuration in values.yaml:
 
 ```
 hap: 
@@ -84,10 +84,10 @@ Output parameters are not taken into account when establishing rule entry unique
 hap:
   rule: 
     - gcp 
-    - gcp -> S # invalid entry, output attributes does not take part into uniqnuess check
-    - gcp(PR=*) # invalid entry, both can be applied to the same skr
-    - gcp(HR=europe-west3) # valid entry, new HR attribute makes the rule unique
-    - gcp(PR=*, HR=europe-west3) # invalid rules, the same as previous one because of addition of `PR=*` attribute
+    - gcp -> S                      # invalid entry, output attributes does not take part into uniqnuess check
+    - gcp(PR=*)                     # invalid entry, both can be applied to the same skr
+    - gcp(HR=europe-west3)          # valid entry, new HR attribute makes the rule unique
+    - gcp(PR=*, HR=europe-west3)    # invalid rules, the same as previous one because of addition of `PR=*` attribute
 ```
 
 Rule configuration must contain only unique entries in the scope of that list.
@@ -101,9 +101,9 @@ Input attributes with value `*` are not taken into account when calculating prio
 The following example shows priority of rules starting from the lowest priority:
 
 ```
-aws -> S # search labels: hyperscalerType: aws, shared: true
-aws(PR=cf-eu11) -> EU # search labels: hyperscalerType: aws_cf-eu11, euAccess: true
-aws(PR=cf-eu11, HR=westeu) -> EU, S # search labels: hyperscalerType: aws_cf-eu11_westeu, shared: true, euAccess: true
+aws -> S                              # search labels: hyperscalerType: aws, shared: true
+aws(PR=cf-eu11) -> EU                 # search labels: hyperscalerType: aws_cf-eu11, euAccess: true
+aws(PR=cf-eu11, HR=westeu) -> EU, S   # search labels: hyperscalerType: aws_cf-eu11_westeu, shared: true, euAccess: true
 ```
 
 ## Search Labels
@@ -121,7 +121,7 @@ The following table shows a mapping of plans to hyperscaler types:
 | aws                 	| aws              	|
 | gcp                 	| gcp              	|
 | preview             	| aws              	|
-| sap-converged-cloud 	| openstack_<HR>   	|
+| sap-converged-cloud 	| openstack       	|
 | trial               	| aws              	|
 
 The **euAccess** and **shared** labels contain boolean values and they are used to divide existing pools to secrets used by EU restricted regions and secrets shared by multiple Global Accounts. The **euAccess** and **shared** labels are optional.
@@ -131,7 +131,7 @@ Every rule must contain at least a plan and apply `hyperscaler_type: <HYPERSCALE
 ```
 hap:
   rule:
-    - gcp # pool: hyperscalerType: gcp
+    - gcp                             # pool: hyperscalerType: gcp
 ```
 
 Rest of examples in the document follow the same structure of presenting a configuration and its corresponding pools in the comment as the snippet above.
@@ -149,7 +149,7 @@ Below configuration means that if a gcp cluster is provisioned in cf-sa30 platfo
 ```
 hap: 
   rule: 
-    - gcp(PR=cf-sa30) # pool: hyperscalerType: gcp_cf-sa30
+    - gcp(PR=cf-sa30)                 # pool: hyperscalerType: gcp_cf-sa30
 ```
 
 ### Hyperscaler Region Attribute
@@ -159,7 +159,7 @@ A region that an SKR is provisioned in can be matched with an attribute named `H
 ```
 hap: 
   rule: 
-    - gcp(HR=us-central1) # pool: hyperscalerType: gcp_us-central1,
+    - gcp(HR=us-central1)             # pool: hyperscalerType: gcp_us-central1,
 ```
 
 ### Shared & EU Access attribute
@@ -169,8 +169,8 @@ The `shared` and `euAccess` attributes does not correspond to any SKR's property
 ```
 hap: 
   rule: 
-    - gcp -> S                # pool: hyperscalerType: gcp; shared: true 
-    - azure(PR=cf-ch20) -> E  # pool: hyperscalerType: azure_cf-ch20, euAccess: true
+    - gcp -> S                        # pool: hyperscalerType: gcp; shared: true 
+    - azure(PR=cf-ch20) -> E          # pool: hyperscalerType: azure_cf-ch20, euAccess: true
 ```
 
 ### Attribute with "*"
@@ -180,8 +180,8 @@ Input attributes' values can be replaced with `*`, which means that all SKR's va
 ```
 hap: 
   rule: 
-  - gcp(PR=*) # pool: hyperscalerType: gcp_cf-sa30
-              # pool: hyperscalerType: gcp_cf-jp30
+  - gcp(PR=*)                         # pool: hyperscalerType: gcp_cf-sa30
+                                      # pool: hyperscalerType: gcp_cf-jp30
 ```
 
 The attributes that support `*` are: `PR`, `HR`.
