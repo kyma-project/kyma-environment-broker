@@ -170,7 +170,7 @@ The `shared` and `euAccess` attributes does not correspond to any SKR's property
 hap: 
   rule: 
     - gcp -> S                        # pool: hyperscalerType: gcp; shared: true 
-    - azure(PR=cf-ch20) -> E          # pool: hyperscalerType: azure_cf-ch20, euAccess: true
+    - azure(PR=cf-ch20) -> EU          # pool: hyperscalerType: azure_cf-ch20, euAccess: true
 ```
 
 ### Attribute with "*"
@@ -213,7 +213,6 @@ KEB validates HAP Rules during startup. If the configuration is invalid, KEB wil
 
 The constraints used for validation during KEB startup include:
 * Rules format check - all the rules must comply with the format specified above.
-* Every rule entry must refer to an existing plan - if you define a rule with non existing plan then an error is returned during KEB startup that fails the process.
 * Every supported plan needs at least one rule entry, if no rule entry is defined for a plan then an error is returned during KEB startup.
 * Uniqueness validation check - KEB checks if all rule entries are unique in the scope of the rule. Specifying more than one entry with the same number of identification attributes is prohibited. If more than one such attribute is specified then the error is returned failing KEB startup. For more details see [Uniqnuess & Priority](#uniqnuess--priority) section. 
 
