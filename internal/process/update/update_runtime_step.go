@@ -4,16 +4,11 @@ import (
 	"context"
 	"fmt"
 	"log/slog"
-	"math/rand"
-	"strconv"
 	"time"
 
-	gardener "github.com/gardener/gardener/pkg/apis/core/v1beta1"
+	kebError "github.com/kyma-project/kyma-environment-broker/internal/error"
 	"github.com/kyma-project/kyma-environment-broker/internal/process/input"
 	"github.com/kyma-project/kyma-environment-broker/internal/provider"
-	"github.com/kyma-project/kyma-environment-broker/internal/ptr"
-
-	kebError "github.com/kyma-project/kyma-environment-broker/internal/error"
 
 	"github.com/kyma-project/kyma-environment-broker/internal/process/provisioning"
 
@@ -80,45 +75,8 @@ func (s *UpdateRuntimeStep) Run(operation internal.Operation, log *slog.Logger) 
 			return s.operationManager.OperationFailed(operation, fmt.Sprintf("while calculating plan specific values: %s", err), err, log)
 		}
 
-		additionalWorkerNodePoolsMaxUnavailable := intstr.FromInt32(int32(0))
-		workers := make([]gardener.Worker, 0, len(operation.UpdatingParameters.AdditionalWorkerNodePools))
-
-		for _, additionalWorkerNodePool := range operation.UpdatingParameters.AdditionalWorkerNodePools {
-			workerZones := runtime.Spec.Shoot.Provider.Workers[0].Zones
-			if !additionalWorkerNodePool.HAZones {
-				randomIndex := rand.Intn(len(values.Zones))
-				workerZones = []string{values.Zones[randomIndex]}
-			}
-			workerMaxSurge := intstr.FromInt32(int32(len(workerZones)))
-
-			worker := gardener.Worker{
-				Name: additionalWorkerNodePool.Name,
-				Machine: gardener.Machine{
-					Type: additionalWorkerNodePool.MachineType,
-					Image: &gardener.ShootMachineImage{
-						Name:    s.config.MachineImage,
-						Version: &s.config.MachineImageVersion,
-					},
-				},
-				Maximum:        int32(additionalWorkerNodePool.AutoScalerMax),
-				Minimum:        int32(additionalWorkerNodePool.AutoScalerMin),
-				MaxSurge:       &workerMaxSurge,
-				MaxUnavailable: &additionalWorkerNodePoolsMaxUnavailable,
-				Zones:          workerZones,
-			}
-
-			if values.ProviderType != "openstack" {
-				volumeSize := strconv.Itoa(values.VolumeSizeGb)
-				worker.Volume = &gardener.Volume{
-					Type:       ptr.String(values.DiskType),
-					VolumeSize: fmt.Sprintf("%sGi", volumeSize),
-				}
-			}
-
-			workers = append(workers, worker)
-		}
-
-		runtime.Spec.Shoot.Provider.AdditionalWorkers = &workers
+		additionalWorkers := provisioning.CreateAdditionalWorkers(s.config, values, operation.UpdatingParameters.AdditionalWorkerNodePools, runtime.Spec.Shoot.Provider.Workers[0].Zones)
+		runtime.Spec.Shoot.Provider.AdditionalWorkers = &additionalWorkers
 	}
 
 	if operation.UpdatingParameters.OIDC != nil {
