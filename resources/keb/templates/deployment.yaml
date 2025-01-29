@@ -287,6 +287,14 @@ spec:
               value: "{{ .Values.broker.subaccountMovementEnabled }}"
             - name: APP_BROKER_UPDATE_CUSTOM_RESOURCES_LABELS_ON_ACCOUNT_MOVE
               value: "{{ .Values.broker.updateCustomResourcesLabelsOnAccountMove }}"
+            - name: APP_HAP_PLATFORM_REGION_RULE
+              value: "{{ .Values.hap.platformRegionRule }}"
+            - name: APP_HAP_CLUSTER_REGION_RULE
+              value: "{{ .Values.hap.clusterRegionRule }}"
+            - name: APP_HAP_SHARED_RULE
+              value: "{{ .Values.hap.sharedRule }}"
+            - name: APP_HAP_EU_ACCESS_RULE
+              value: "{{ .Values.hap.euAccessRule }}"
           ports:
             - name: http
               containerPort: {{ .Values.broker.port }}
