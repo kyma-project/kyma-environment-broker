@@ -39,7 +39,7 @@ The update process is triggered by an [OSB API update operation](https://github.
 You can find all the updating steps in the [update](../../cmd/broker/update.go) file.
 
 > [!NOTE]
-> When SM Credentials are updated the change is not done by the use of update steps. Credentials are stored in the KEB database and [Runtime Reconciler](../contributor/07-10-runtime-reconciler.md) is responsible for updating them during reconciliation.
+> The updating process of Service Manager credentials is different. The credentials are stored in the KEB database, and [Runtime Reconciler](../contributor/07-10-runtime-reconciler.md) updates them during reconciliation.
 
 ## Upgrade Cluster
 
