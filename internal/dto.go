@@ -55,7 +55,7 @@ type UpdatingParametersDTO struct {
 	OIDC                      *pkg.OIDCConfigDTO             `json:"oidc,omitempty"`
 	RuntimeAdministrators     []string                       `json:"administrators,omitempty"`
 	MachineType               *string                        `json:"machineType,omitempty"`
-	AdditionalWorkerNodePools []pkg.AdditionalWorkerNodePool `json:"additionalWorkerNodePools,omitempty"`
+	AdditionalWorkerNodePools []pkg.AdditionalWorkerNodePool `json:"additionalWorkerNodePools"`
 }
 
 func (u UpdatingParametersDTO) UpdateAutoScaler(p *pkg.ProvisioningParametersDTO) bool {

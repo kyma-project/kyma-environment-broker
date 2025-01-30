@@ -2,10 +2,13 @@ package update
 
 import (
 	"context"
+	"fmt"
 	"log/slog"
 	"time"
 
 	kebError "github.com/kyma-project/kyma-environment-broker/internal/error"
+	"github.com/kyma-project/kyma-environment-broker/internal/process/input"
+	"github.com/kyma-project/kyma-environment-broker/internal/provider"
 
 	"github.com/kyma-project/kyma-environment-broker/internal/process/provisioning"
 
@@ -19,15 +22,21 @@ import (
 )
 
 type UpdateRuntimeStep struct {
-	operationManager *process.OperationManager
-	k8sClient        client.Client
-	delay            time.Duration
+	operationManager           *process.OperationManager
+	k8sClient                  client.Client
+	delay                      time.Duration
+	config                     input.Config
+	useSmallerMachineTypes     bool
+	trialPlatformRegionMapping map[string]string
 }
 
-func NewUpdateRuntimeStep(os storage.Operations, k8sClient client.Client, delay time.Duration) *UpdateRuntimeStep {
+func NewUpdateRuntimeStep(os storage.Operations, k8sClient client.Client, delay time.Duration, cfg input.Config, useSmallerMachines bool, trialPlatformRegionMapping map[string]string) *UpdateRuntimeStep {
 	step := &UpdateRuntimeStep{
-		k8sClient: k8sClient,
-		delay:     delay,
+		k8sClient:                  k8sClient,
+		delay:                      delay,
+		config:                     cfg,
+		useSmallerMachineTypes:     useSmallerMachines,
+		trialPlatformRegionMapping: trialPlatformRegionMapping,
 	}
 	step.operationManager = process.NewOperationManager(os, step.Name(), kebError.InfrastructureManagerDependency)
 	return step
@@ -58,6 +67,17 @@ func (s *UpdateRuntimeStep) Run(operation internal.Operation, log *slog.Logger) 
 	runtime.Spec.Shoot.Provider.Workers[0].MaxSurge = &maxSurge
 	maxUnavailable := intstr.FromInt32(int32(provisioning.DefaultIfParamNotSet(runtime.Spec.Shoot.Provider.Workers[0].MaxUnavailable.IntValue(), operation.UpdatingParameters.MaxUnavailable)))
 	runtime.Spec.Shoot.Provider.Workers[0].MaxUnavailable = &maxUnavailable
+
+	if operation.UpdatingParameters.AdditionalWorkerNodePools != nil {
+		values, err := provider.GetPlanSpecificValues(&operation, s.config.MultiZoneCluster, s.config.DefaultTrialProvider, s.useSmallerMachineTypes, s.trialPlatformRegionMapping,
+			s.config.DefaultGardenerShootPurpose, s.config.ControlPlaneFailureTolerance)
+		if err != nil {
+			return s.operationManager.OperationFailed(operation, fmt.Sprintf("while calculating plan specific values: %s", err), err, log)
+		}
+
+		additionalWorkers := provisioning.CreateAdditionalWorkers(s.config, values, operation.UpdatingParameters.AdditionalWorkerNodePools, runtime.Spec.Shoot.Provider.Workers[0].Zones)
+		runtime.Spec.Shoot.Provider.AdditionalWorkers = &additionalWorkers
+	}
 
 	if operation.UpdatingParameters.OIDC != nil {
 		input := operation.UpdatingParameters.OIDC

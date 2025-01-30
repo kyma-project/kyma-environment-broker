@@ -7,6 +7,8 @@ import (
 	"strconv"
 	"testing"
 
+	"github.com/kyma-project/kyma-environment-broker/internal/process/input"
+
 	"k8s.io/apimachinery/pkg/util/intstr"
 
 	"github.com/stretchr/testify/require"
@@ -30,7 +32,7 @@ func TestUpdateRuntimeStep_NoRuntime(t *testing.T) {
 	err := imv1.AddToScheme(scheme.Scheme)
 	assert.NoError(t, err)
 	kcpClient := fake.NewClientBuilder().Build()
-	step := NewUpdateRuntimeStep(nil, kcpClient, 0)
+	step := NewUpdateRuntimeStep(nil, kcpClient, 0, input.Config{}, false, nil)
 	operation := fixture.FixUpdatingOperation("op-id", "inst-id").Operation
 	operation.RuntimeResourceName = "runtime-name"
 	operation.KymaResourceNamespace = "kyma-ns"
@@ -48,7 +50,7 @@ func TestUpdateRuntimeStep_RunUpdateMachineType(t *testing.T) {
 	err := imv1.AddToScheme(scheme.Scheme)
 	assert.NoError(t, err)
 	kcpClient := fake.NewClientBuilder().WithRuntimeObjects(fixRuntimeResource("runtime-name", false)).Build()
-	step := NewUpdateRuntimeStep(nil, kcpClient, 0)
+	step := NewUpdateRuntimeStep(nil, kcpClient, 0, input.Config{}, false, nil)
 	operation := fixture.FixUpdatingOperation("op-id", "inst-id").Operation
 	operation.RuntimeResourceName = "runtime-name"
 	operation.KymaResourceNamespace = "kcp-system"
