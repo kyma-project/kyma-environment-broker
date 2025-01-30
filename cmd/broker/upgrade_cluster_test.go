@@ -12,7 +12,7 @@ import (
 	"github.com/kyma-project/kyma-environment-broker/internal/ptr"
 	"k8s.io/apimachinery/pkg/util/wait"
 
-	"github.com/pivotal-cf/brokerapi/v8/domain"
+	"github.com/pivotal-cf/brokerapi/v12/domain"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )

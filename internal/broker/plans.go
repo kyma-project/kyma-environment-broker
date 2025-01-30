@@ -5,7 +5,7 @@ import (
 
 	"github.com/kyma-incubator/compass/components/director/pkg/jsonschema"
 
-	"github.com/pivotal-cf/brokerapi/v8/domain"
+	"github.com/pivotal-cf/brokerapi/v12/domain"
 
 	pkg "github.com/kyma-project/kyma-environment-broker/common/runtime"
 )
