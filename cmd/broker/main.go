@@ -388,7 +388,12 @@ func main() {
 		log.Info(fmt.Sprintf("Call handled: method=%s url=%s statusCode=%d size=%d", params.Request.Method, params.URL.Path, params.StatusCode, params.Size))
 	})
 	*/
-	fatalOnError(http.ListenAndServe(cfg.Host+":"+cfg.Port, router), log)
+	svr := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		router.ServeHTTP(w, r)
+		log.Info(fmt.Sprintf("Call handled: method=%s url=%s", r.Method, r.URL.Path))
+
+	})
+	fatalOnError(http.ListenAndServe(cfg.Host+":"+cfg.Port, svr), log)
 }
 
 func logConfiguration(logs *slog.Logger, cfg Config) {
@@ -452,14 +457,6 @@ func createAPI(router *httputil.Router, servicesConfig broker.ServicesConfig, pl
 
 	router.Use(middleware.AddRegionToContext(cfg.DefaultRequestRegion))
 	router.Use(middleware.AddProviderToContext())
-	/*for _, prefix := range []string{
-		"/oauth/",          // oauth2 handled by Ory
-		"/oauth/{region}/", // oauth2 handled by Ory with region
-	} {
-		route := router.PathPrefix(prefix).Subrouter()
-		broker.AttachRoutes(r, kymaEnvBroker, logger, cfg.Broker.Binding.CreateBindingTimeout)
-	}
-	*/
 	prefixes := []string{"/oauth", "/oauth/{region}"}
 	broker.AttachRoutes(router, kymaEnvBroker, logs, cfg.Broker.Binding.CreateBindingTimeout, prefixes)
 
