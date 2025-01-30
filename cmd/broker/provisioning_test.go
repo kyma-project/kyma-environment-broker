@@ -1877,3 +1877,57 @@ func TestProvisioning_Modules(t *testing.T) {
 		assert.Equal(t, http.StatusBadRequest, resp.StatusCode)
 	})
 }
+
+func TestProvisioningWithAdditionalWorkerNodePools(t *testing.T) {
+	//given
+	cfg := fixConfig()
+	cfg.Broker.KimConfig.Enabled = true
+	cfg.Broker.KimConfig.Plans = []string{"preview"}
+	cfg.Broker.KimConfig.KimOnlyPlans = []string{"preview"}
+
+	suite := NewBrokerSuiteTestWithConfig(t, cfg)
+	defer suite.TearDown()
+	iid := uuid.New().String()
+
+	// when
+	resp := suite.CallAPI("PUT", fmt.Sprintf("oauth/cf-eu21/v2/service_instances/%s?accepts_incomplete=true", iid),
+		`{
+					"service_id": "47c9dcbf-ff30-448e-ab36-d3bad66ba281",
+					"plan_id": "5cb3d976-b85c-42ea-a636-79cadda109a9",
+					"context": {
+						"globalaccount_id": "g-account-id",
+						"subaccount_id": "sub-id",
+						"user_id": "john.smith@email.com"
+					},
+					"parameters": {
+						"name": "testing-cluster",
+						"region": "eu-central-1",
+						"additionalWorkerNodePools": [
+							{
+								"name": "name-1",
+								"machineType": "m6i.large",
+								"haZones": true,
+								"autoScalerMin": 3,
+								"autoScalerMax": 20
+							},
+							{
+								"name": "name-2",
+								"machineType": "m5.large",
+								"haZones": false,
+								"autoScalerMin": 1,
+								"autoScalerMax": 1
+							}
+						]
+					}
+		}`)
+
+	opID := suite.DecodeOperationID(resp)
+	suite.processKIMOnlyProvisioningByOperationID(opID)
+
+	// then
+	suite.WaitForOperationState(opID, domain.Succeeded)
+	runtime := suite.GetRuntimeResourceByInstanceID(iid)
+	assert.Len(t, *runtime.Spec.Shoot.Provider.AdditionalWorkers, 2)
+	suite.assertAdditionalWorkerIsCreated(t, runtime.Spec.Shoot.Provider, "name-1", "m6i.large", 3, 20, 3)
+	suite.assertAdditionalWorkerIsCreated(t, runtime.Spec.Shoot.Provider, "name-2", "m5.large", 1, 1, 1)
+}
