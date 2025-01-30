@@ -74,37 +74,7 @@ Input attributes from every entry are compared with values from SKR input. If th
 If there is more than one triggered rule then only one is selected in accordance to priority rules described in the [Priority](#priority) section.
 If there are no rule entries trigered then the error is returned. No fallback behaviour is defined in such case.
 
-## Uniqnuess & Priority
 
-Only one rule can be triggered. If more than one rule entry match the request then only one is selected and applied. The process of selecting the best matching rule is based on a rule uniqueness and priority.
-Rule entry uniqueness is determined by its plan and input parameters with its values (identification attributes) not including input parameters with `*`. 
-Output parameters are not taken into account when establishing rule entry uniqueness. For example the following rule will fail on startup because every SKR can be matched by both rules:
-
-```
-hap:
-  rule: 
-    - gcp 
-    - gcp -> S                      # invalid entry, output attributes does not take part into uniqnuess check
-    - gcp(PR=*)                     # invalid entry, both can be applied to the same skr
-    - gcp(HR=europe-west3)          # valid entry, new HR attribute makes the rule unique
-    - gcp(PR=*, HR=europe-west3)    # invalid rules, the same as previous one because of addition of `PR=*` attribute
-```
-
-Rule configuration must contain only unique entries in the scope of that list.
-If rule configuration contains duplicated rule entries an error that fails KEB startup is returned.
-
-Rule entry priority is selected by sorting all rule entries that apply to the request by the number of identification attributes they contain. 
-For example, a rule with no attributes and only a plan has lower priority then a rule with the same plan but a platform region attribute (`gcp` < `gcp(PR=cf-sa30)`).
-After sorting the entry that specifies most attributes (hence is the most specific) is selected. 
-Input attributes with value `*` are not taken into account when calculating priority.
-
-The following example shows priority of rules starting from the lowest priority:
-
-```
-aws -> S                              # search labels: hyperscalerType: aws, shared: true
-aws(PR=cf-eu11) -> EU                 # search labels: hyperscalerType: aws_cf-eu11, euAccess: true
-aws(PR=cf-eu11, HR=westeu) -> EU, S   # search labels: hyperscalerType: aws_cf-eu11_westeu, shared: true, euAccess: true
-```
 
 ## Search Labels
 
@@ -189,6 +159,8 @@ The attributes that support `*` are: `PR`, `HR`.
 > ![NOTE]
 > The above configuration example effectively disables usage of SecretBindings labeled only with `hyperscalerType: gcp`.
 
+
+
 ### Atributes Summary
 
 The following table summarizes the attributes that can be used in the rule entry. Its columns define:
@@ -205,7 +177,37 @@ The following table summarizes the attributes that can be used in the rule entry
 | Eu Access (EU)       	| no value                                                                                                                           	| false           	| true             	| euAccess: true                                                                                    	|
 | Shared (S)           	| no value                                                                                                                           	| false           	| true             	| shared: true                                                                                      	|
 
+## Uniqnuess & Priority
 
+Only one rule can be triggered. If more than one rule entry match the request then only one is selected and applied. The process of selecting the best matching rule is based on a rule uniqueness and priority.
+Rule entry uniqueness is determined by its plan and input parameters with its values (identification attributes) not including input parameters with `*`. 
+Output parameters are not taken into account when establishing rule entry uniqueness. For example the following rule will fail on startup because every SKR can be matched by both rules:
+
+```
+hap:
+  rule: 
+    - gcp 
+    - gcp -> S                      # invalid entry, output attributes does not take part into uniqnuess check
+    - gcp(PR=*)                     # invalid entry, both can be applied to the same skr
+    - gcp(HR=europe-west3)          # valid entry, new HR attribute makes the rule unique
+    - gcp(PR=*, HR=europe-west3)    # invalid rules, the same as previous one because of addition of `PR=*` attribute
+```
+
+Rule configuration must contain only unique entries in the scope of that list.
+If rule configuration contains duplicated rule entries an error that fails KEB startup is returned.
+
+Rule entry priority is selected by sorting all rule entries that apply to the request by the number of identification attributes they contain. 
+For example, a rule with no attributes and only a plan has lower priority then a rule with the same plan but a platform region attribute (`gcp` < `gcp(PR=cf-sa30)`).
+After sorting the entry that specifies most attributes (hence is the most specific) is selected. 
+Input attributes with value `*` are not taken into account when calculating priority.
+
+The following example shows priority of rules starting from the lowest priority:
+
+```
+aws -> S                              # search labels: hyperscalerType: aws, shared: true
+aws(PR=cf-eu11) -> EU                 # search labels: hyperscalerType: aws_cf-eu11, euAccess: true
+aws(PR=cf-eu11, HR=westeu) -> EU, S   # search labels: hyperscalerType: aws_cf-eu11_westeu, shared: true, euAccess: true
+```
 
 ## Validation
 
