@@ -50,6 +50,8 @@ type Config struct {
 	TrialDocsURL                            string        `envconfig:"default="`
 	EnableShootAndSeedSameRegion            bool          `envconfig:"default=false"`
 	AllowUpdateExpiredInstanceWithContext   bool          `envconfig:"default=false"`
+	EnableAdditionalWorkerNodePools         bool          `envconfig:"default=false"`
+	EnableLoadCurrentConfig                 bool          `envconfig:"default=false"`
 
 	Binding                BindingConfig
 	KimConfig              KimConfig

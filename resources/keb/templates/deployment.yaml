@@ -287,6 +287,10 @@ spec:
               value: "{{ .Values.broker.subaccountMovementEnabled }}"
             - name: APP_BROKER_UPDATE_CUSTOM_RESOURCES_LABELS_ON_ACCOUNT_MOVE
               value: "{{ .Values.broker.updateCustomResourcesLabelsOnAccountMove }}"
+            - name: APP_BROKER_ENABLE_ADDITIONAL_WORKER_NODE_POOLS
+              value: "{{ .Values.enableAdditionalWorkerNodePools }}"
+            - name: APP_BROKER_ENABLE_LOAD_CURRENT_CONFIG
+              value: "{{ .Values.enableLoadCurrentConfig }}"
           ports:
             - name: http
               containerPort: {{ .Values.broker.port }}

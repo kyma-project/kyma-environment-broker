@@ -1563,7 +1563,7 @@ func TestAdditionalWorkerNodePools(t *testing.T) {
 			queue.On("Add", mock.AnythingOfType("string"))
 
 			factoryBuilder := &automock.PlanValidator{}
-			factoryBuilder.On("IsPlanSupport", broker.PreviewPlanID).Return(true)
+			factoryBuilder.On("IsPlanSupport", broker.AWSPlanID).Return(true)
 
 			planDefaults := func(planID string, platformProvider pkg.CloudProvider, provider *pkg.CloudProvider) (*gqlschema.ClusterConfigInput, error) {
 				return &gqlschema.ClusterConfigInput{}, nil
@@ -1573,10 +1573,11 @@ func TestAdditionalWorkerNodePools(t *testing.T) {
 			// #create provisioner endpoint
 			provisionEndpoint := broker.NewProvision(
 				broker.Config{
-					EnablePlans:              []string{"preview"},
-					URL:                      brokerURL,
-					OnlySingleTrialPerGA:     true,
-					EnableKubeconfigURLLabel: true,
+					EnablePlans:                     []string{"aws"},
+					URL:                             brokerURL,
+					OnlySingleTrialPerGA:            true,
+					EnableKubeconfigURLLabel:        true,
+					EnableAdditionalWorkerNodePools: true,
 				},
 				gardener.Config{Project: "test", ShootDomain: "example.com", DNSProviders: fixDNSProviders()},
 				memoryStorage.Operations(),
@@ -1596,7 +1597,7 @@ func TestAdditionalWorkerNodePools(t *testing.T) {
 			// when
 			_, err := provisionEndpoint.Provision(fixRequestContext(t, "cf-eu10"), instanceID, domain.ProvisionDetails{
 				ServiceID:     serviceID,
-				PlanID:        broker.PreviewPlanID,
+				PlanID:        broker.AWSPlanID,
 				RawParameters: json.RawMessage(fmt.Sprintf(`{"name": "%s", "region": "%s","additionalWorkerNodePools": %s }`, clusterName, "eu-central-1", tc.additionalWorkerNodePools)),
 				RawContext:    json.RawMessage(fmt.Sprintf(`{"globalaccount_id": "%s", "subaccount_id": "%s", "user_id": "%s"}`, "any-global-account-id", subAccountID, "Test@Test.pl")),
 			}, true)
@@ -1617,21 +1618,6 @@ func TestAdditionalWorkerNodePoolsForUnsupportedPlans(t *testing.T) {
 		},
 		"Free": {
 			planID: broker.FreemiumPlanID,
-		},
-		"Azure": {
-			planID: broker.AzurePlanID,
-		},
-		"Azure lite": {
-			planID: broker.AzureLitePlanID,
-		},
-		"AWS": {
-			planID: broker.AWSPlanID,
-		},
-		"GCP": {
-			planID: broker.GCPPlanID,
-		},
-		"SAP converged cloud": {
-			planID: broker.SapConvergedCloudPlanID,
 		},
 	} {
 		t.Run(tn, func(t *testing.T) {
@@ -1656,10 +1642,11 @@ func TestAdditionalWorkerNodePoolsForUnsupportedPlans(t *testing.T) {
 			// #create provisioner endpoint
 			provisionEndpoint := broker.NewProvision(
 				broker.Config{
-					EnablePlans:              []string{"trial", "free", "azure", "azure_lite", "aws", "gcp", "sap-converged-cloud"},
-					URL:                      brokerURL,
-					OnlySingleTrialPerGA:     true,
-					EnableKubeconfigURLLabel: true,
+					EnablePlans:                     []string{"trial", "free"},
+					URL:                             brokerURL,
+					OnlySingleTrialPerGA:            true,
+					EnableKubeconfigURLLabel:        true,
+					EnableAdditionalWorkerNodePools: true,
 				},
 				gardener.Config{Project: "test", ShootDomain: "example.com", DNSProviders: fixDNSProviders()},
 				memoryStorage.Operations(),

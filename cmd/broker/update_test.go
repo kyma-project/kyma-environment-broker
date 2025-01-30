@@ -2530,14 +2530,20 @@ func TestUpdateErsContextAndParamsForExpiredInstance(t *testing.T) {
 func TestUpdateAdditionalWorkerNodePools(t *testing.T) {
 	t.Run("should add additional worker node pools", func(t *testing.T) {
 		// given
-		suite := NewBrokerSuiteTest(t)
+		cfg := fixConfig()
+		cfg.Broker.KimConfig.Enabled = true
+		cfg.Broker.KimConfig.Plans = []string{"aws"}
+		cfg.Broker.KimConfig.KimOnlyPlans = []string{"aws"}
+		cfg.Broker.EnableAdditionalWorkerNodePools = true
+
+		suite := NewBrokerSuiteTestWithConfig(t, cfg)
 		defer suite.TearDown()
 		iid := uuid.New().String()
 
-		resp := suite.CallAPI("PUT", fmt.Sprintf("oauth/cf-eu10/v2/service_instances/%s?accepts_incomplete=true&plan_id=7d55d31d-35ae-4438-bf13-6ffdfa107d9f&service_id=47c9dcbf-ff30-448e-ab36-d3bad66ba281", iid),
+		resp := suite.CallAPI("PUT", fmt.Sprintf("oauth/cf-eu10/v2/service_instances/%s?accepts_incomplete=true&plan_id=361c511f-f939-4621-b228-d0fb79a1fe15&service_id=47c9dcbf-ff30-448e-ab36-d3bad66ba281", iid),
 			`{
 				   		"service_id": "47c9dcbf-ff30-448e-ab36-d3bad66ba281",
-				   		"plan_id": "5cb3d976-b85c-42ea-a636-79cadda109a9",
+				   		"plan_id": "361c511f-f939-4621-b228-d0fb79a1fe15",
 				   		"context": {
 					   		"globalaccount_id": "g-account-id",
 					   		"subaccount_id": "sub-id",
@@ -2557,7 +2563,7 @@ func TestUpdateAdditionalWorkerNodePools(t *testing.T) {
 		resp = suite.CallAPI("PATCH", fmt.Sprintf("oauth/cf-eu10/v2/service_instances/%s?accepts_incomplete=true", iid),
 			`{
        					"service_id": "47c9dcbf-ff30-448e-ab36-d3bad66ba281",
-       					"plan_id": "5cb3d976-b85c-42ea-a636-79cadda109a9",
+       					"plan_id": "361c511f-f939-4621-b228-d0fb79a1fe15",
        					"context": {
            					"globalaccount_id": "g-account-id",
            					"user_id": "john.smith@email.com"
@@ -2594,14 +2600,20 @@ func TestUpdateAdditionalWorkerNodePools(t *testing.T) {
 
 	t.Run("should replace additional worker node pools", func(t *testing.T) {
 		// given
-		suite := NewBrokerSuiteTest(t)
+		cfg := fixConfig()
+		cfg.Broker.KimConfig.Enabled = true
+		cfg.Broker.KimConfig.Plans = []string{"aws"}
+		cfg.Broker.KimConfig.KimOnlyPlans = []string{"aws"}
+		cfg.Broker.EnableAdditionalWorkerNodePools = true
+
+		suite := NewBrokerSuiteTestWithConfig(t, cfg)
 		defer suite.TearDown()
 		iid := uuid.New().String()
 
-		resp := suite.CallAPI("PUT", fmt.Sprintf("oauth/cf-eu10/v2/service_instances/%s?accepts_incomplete=true&plan_id=7d55d31d-35ae-4438-bf13-6ffdfa107d9f&service_id=47c9dcbf-ff30-448e-ab36-d3bad66ba281", iid),
+		resp := suite.CallAPI("PUT", fmt.Sprintf("oauth/cf-eu10/v2/service_instances/%s?accepts_incomplete=true&plan_id=361c511f-f939-4621-b228-d0fb79a1fe15&service_id=47c9dcbf-ff30-448e-ab36-d3bad66ba281", iid),
 			`{
 				   		"service_id": "47c9dcbf-ff30-448e-ab36-d3bad66ba281",
-				   		"plan_id": "5cb3d976-b85c-42ea-a636-79cadda109a9",
+				   		"plan_id": "361c511f-f939-4621-b228-d0fb79a1fe15",
 				   		"context": {
 					   		"globalaccount_id": "g-account-id",
 					   		"subaccount_id": "sub-id",
@@ -2630,7 +2642,7 @@ func TestUpdateAdditionalWorkerNodePools(t *testing.T) {
 		resp = suite.CallAPI("PATCH", fmt.Sprintf("oauth/cf-eu10/v2/service_instances/%s?accepts_incomplete=true", iid),
 			`{
        					"service_id": "47c9dcbf-ff30-448e-ab36-d3bad66ba281",
-       					"plan_id": "5cb3d976-b85c-42ea-a636-79cadda109a9",
+       					"plan_id": "361c511f-f939-4621-b228-d0fb79a1fe15",
        					"context": {
            					"globalaccount_id": "g-account-id",
            					"user_id": "john.smith@email.com"
@@ -2659,14 +2671,20 @@ func TestUpdateAdditionalWorkerNodePools(t *testing.T) {
 
 	t.Run("should remove additional worker node pools when list is empty", func(t *testing.T) {
 		// given
-		suite := NewBrokerSuiteTest(t)
+		cfg := fixConfig()
+		cfg.Broker.KimConfig.Enabled = true
+		cfg.Broker.KimConfig.Plans = []string{"aws"}
+		cfg.Broker.KimConfig.KimOnlyPlans = []string{"aws"}
+		cfg.Broker.EnableAdditionalWorkerNodePools = true
+
+		suite := NewBrokerSuiteTestWithConfig(t, cfg)
 		defer suite.TearDown()
 		iid := uuid.New().String()
 
-		resp := suite.CallAPI("PUT", fmt.Sprintf("oauth/cf-eu10/v2/service_instances/%s?accepts_incomplete=true&plan_id=7d55d31d-35ae-4438-bf13-6ffdfa107d9f&service_id=47c9dcbf-ff30-448e-ab36-d3bad66ba281", iid),
+		resp := suite.CallAPI("PUT", fmt.Sprintf("oauth/cf-eu10/v2/service_instances/%s?accepts_incomplete=true&plan_id=361c511f-f939-4621-b228-d0fb79a1fe15&service_id=47c9dcbf-ff30-448e-ab36-d3bad66ba281", iid),
 			`{
 				   		"service_id": "47c9dcbf-ff30-448e-ab36-d3bad66ba281",
-				   		"plan_id": "5cb3d976-b85c-42ea-a636-79cadda109a9",
+				   		"plan_id": "361c511f-f939-4621-b228-d0fb79a1fe15",
 				   		"context": {
 					   		"globalaccount_id": "g-account-id",
 					   		"subaccount_id": "sub-id",
@@ -2702,7 +2720,7 @@ func TestUpdateAdditionalWorkerNodePools(t *testing.T) {
 		resp = suite.CallAPI("PATCH", fmt.Sprintf("oauth/cf-eu10/v2/service_instances/%s?accepts_incomplete=true", iid),
 			`{
        					"service_id": "47c9dcbf-ff30-448e-ab36-d3bad66ba281",
-       					"plan_id": "5cb3d976-b85c-42ea-a636-79cadda109a9",
+       					"plan_id": "361c511f-f939-4621-b228-d0fb79a1fe15",
        					"context": {
            					"globalaccount_id": "g-account-id",
            					"user_id": "john.smith@email.com"

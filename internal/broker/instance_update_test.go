@@ -654,7 +654,7 @@ func TestUpdateAdditionalWorkerNodePools(t *testing.T) {
 		t.Run(tn, func(t *testing.T) {
 			// given
 			instance := fixture.FixInstance(instanceID)
-			instance.ServicePlanID = PreviewPlanID
+			instance.ServicePlanID = AWSPlanID
 			st := storage.NewMemoryStorage()
 			err := st.Instances().Insert(instance)
 			require.NoError(t, err)
@@ -670,11 +670,12 @@ func TestUpdateAdditionalWorkerNodePools(t *testing.T) {
 			kcBuilder := &kcMock.KcBuilder{}
 			svc := NewUpdate(Config{}, st.Instances(), st.RuntimeStates(), st.Operations(), handler, true, true, false, q, PlansConfig{},
 				planDefaults, fixLogger(), dashboardConfig, kcBuilder, &OneForAllConvergedCloudRegionsProvider{}, fakeKcpK8sClient)
+			svc.config.EnableAdditionalWorkerNodePools = true
 
 			// when
 			_, err = svc.Update(context.Background(), instanceID, domain.UpdateDetails{
 				ServiceID:       "",
-				PlanID:          PreviewPlanID,
+				PlanID:          AWSPlanID,
 				RawParameters:   json.RawMessage("{\"additionalWorkerNodePools\":" + tc.additionalWorkerNodePools + "}"),
 				PreviousValues:  domain.PreviousValues{},
 				RawContext:      json.RawMessage("{\"globalaccount_id\":\"globalaccount_id_1\", \"active\":true}"),
@@ -691,7 +692,7 @@ func TestHAZones(t *testing.T) {
 	t.Run("should fail when attempting to disable HA zones for existing additional worker node pool", func(t *testing.T) {
 		// given
 		instance := fixture.FixInstance(instanceID)
-		instance.ServicePlanID = PreviewPlanID
+		instance.ServicePlanID = AWSPlanID
 		instance.Parameters.Parameters.AdditionalWorkerNodePools = []pkg.AdditionalWorkerNodePool{
 			{
 				Name:          "name-1",
@@ -716,11 +717,12 @@ func TestHAZones(t *testing.T) {
 		kcBuilder := &kcMock.KcBuilder{}
 		svc := NewUpdate(Config{}, st.Instances(), st.RuntimeStates(), st.Operations(), handler, true, true, false, q, PlansConfig{},
 			planDefaults, fixLogger(), dashboardConfig, kcBuilder, &OneForAllConvergedCloudRegionsProvider{}, fakeKcpK8sClient)
+		svc.config.EnableAdditionalWorkerNodePools = true
 
 		// when
 		_, err = svc.Update(context.Background(), instanceID, domain.UpdateDetails{
 			ServiceID:       "",
-			PlanID:          PreviewPlanID,
+			PlanID:          AWSPlanID,
 			RawParameters:   json.RawMessage(`{"additionalWorkerNodePools": [{"name": "name-1", "machineType": "m6i.large", "haZones": false, "autoScalerMin": 3, "autoScalerMax": 20}]}`),
 			PreviousValues:  domain.PreviousValues{},
 			RawContext:      json.RawMessage("{\"globalaccount_id\":\"globalaccount_id_1\", \"active\":true}"),
@@ -734,7 +736,7 @@ func TestHAZones(t *testing.T) {
 	t.Run("should fail when attempting to enable HA zones for existing additional worker node pool", func(t *testing.T) {
 		// given
 		instance := fixture.FixInstance(instanceID)
-		instance.ServicePlanID = PreviewPlanID
+		instance.ServicePlanID = AWSPlanID
 		instance.Parameters.Parameters.AdditionalWorkerNodePools = []pkg.AdditionalWorkerNodePool{
 			{
 				Name:          "name-1",
@@ -759,11 +761,12 @@ func TestHAZones(t *testing.T) {
 		kcBuilder := &kcMock.KcBuilder{}
 		svc := NewUpdate(Config{}, st.Instances(), st.RuntimeStates(), st.Operations(), handler, true, true, false, q, PlansConfig{},
 			planDefaults, fixLogger(), dashboardConfig, kcBuilder, &OneForAllConvergedCloudRegionsProvider{}, fakeKcpK8sClient)
+		svc.config.EnableAdditionalWorkerNodePools = true
 
 		// when
 		_, err = svc.Update(context.Background(), instanceID, domain.UpdateDetails{
 			ServiceID:       "",
-			PlanID:          PreviewPlanID,
+			PlanID:          AWSPlanID,
 			RawParameters:   json.RawMessage(`{"additionalWorkerNodePools": [{"name": "name-1", "machineType": "m6i.large", "haZones": true, "autoScalerMin": 3, "autoScalerMax": 20}]}`),
 			PreviousValues:  domain.PreviousValues{},
 			RawContext:      json.RawMessage("{\"globalaccount_id\":\"globalaccount_id_1\", \"active\":true}"),
@@ -785,21 +788,6 @@ func TestUpdateAdditionalWorkerNodePoolsForUnsupportedPlans(t *testing.T) {
 		"Free": {
 			planID: FreemiumPlanID,
 		},
-		"Azure": {
-			planID: AzurePlanID,
-		},
-		"Azure lite": {
-			planID: AzureLitePlanID,
-		},
-		"AWS": {
-			planID: AWSPlanID,
-		},
-		"GCP": {
-			planID: GCPPlanID,
-		},
-		"SAP converged cloud": {
-			planID: SapConvergedCloudPlanID,
-		},
 	} {
 		t.Run(tn, func(t *testing.T) {
 			// given
@@ -820,8 +808,9 @@ func TestUpdateAdditionalWorkerNodePoolsForUnsupportedPlans(t *testing.T) {
 			kcBuilder := &kcMock.KcBuilder{}
 			svc := NewUpdate(Config{}, st.Instances(), st.RuntimeStates(), st.Operations(), handler, true, true, false, q, PlansConfig{},
 				planDefaults, fixLogger(), dashboardConfig, kcBuilder, &OneForAllConvergedCloudRegionsProvider{}, fakeKcpK8sClient)
+			svc.config.EnableAdditionalWorkerNodePools = true
 
-			additionalWorkerNodePools := `[{"name": "name-1", "machineType": "m6i.large", "autoScalerMin": 3, "autoScalerMax": 20}]`
+			additionalWorkerNodePools := `[{"name": "name-1", "machineType": "m6i.large", "haZones": true, "autoScalerMin": 3, "autoScalerMax": 20}]`
 
 			// when
 			_, err = svc.Update(context.Background(), instanceID, domain.UpdateDetails{

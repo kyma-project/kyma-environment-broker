@@ -35,7 +35,7 @@ func TestSchemaGenerator(t *testing.T) {
 		{
 			name: "AWS schema is correct",
 			generator: func(machinesDisplay, regionsDisplay map[string]string, machines []string, additionalParams, update bool) *map[string]interface{} {
-				return AWSSchema(machinesDisplay, regionsDisplay, machines, additionalParams, update, false, additionalParams)
+				return AWSSchema(machinesDisplay, regionsDisplay, machines, additionalParams, update, false, additionalParams, false, false)
 			},
 			machineTypes:        AwsMachinesNames(),
 			machineTypesDisplay: AwsMachinesDisplay(),
@@ -49,7 +49,7 @@ func TestSchemaGenerator(t *testing.T) {
 		{
 			name: "AWS schema with EU access restriction is correct",
 			generator: func(machinesDisplay, regionsDisplay map[string]string, machines []string, additionalParams, update bool) *map[string]interface{} {
-				return AWSSchema(machinesDisplay, regionsDisplay, machines, additionalParams, update, true, additionalParams)
+				return AWSSchema(machinesDisplay, regionsDisplay, machines, additionalParams, update, true, additionalParams, false, false)
 			},
 			machineTypes:        AwsMachinesNames(),
 			machineTypesDisplay: AwsMachinesDisplay(),
@@ -63,7 +63,7 @@ func TestSchemaGenerator(t *testing.T) {
 		{
 			name: "Azure schema is correct",
 			generator: func(machinesDisplay, regionsDisplay map[string]string, machines []string, additionalParams, update bool) *map[string]interface{} {
-				return AzureSchema(machinesDisplay, regionsDisplay, machines, additionalParams, update, false, additionalParams)
+				return AzureSchema(machinesDisplay, regionsDisplay, machines, additionalParams, update, false, additionalParams, false, false)
 			},
 			machineTypes:        AzureMachinesNames(),
 			machineTypesDisplay: AzureMachinesDisplay(),
@@ -77,7 +77,7 @@ func TestSchemaGenerator(t *testing.T) {
 		{
 			name: "Azure schema with EU access restriction is correct",
 			generator: func(machinesDisplay, regionsDisplay map[string]string, machines []string, additionalParams, update bool) *map[string]interface{} {
-				return AzureSchema(machinesDisplay, regionsDisplay, machines, additionalParams, update, true, additionalParams)
+				return AzureSchema(machinesDisplay, regionsDisplay, machines, additionalParams, update, true, additionalParams, false, false)
 			},
 			machineTypes:        AzureMachinesNames(),
 			machineTypesDisplay: AzureMachinesDisplay(),
@@ -91,7 +91,7 @@ func TestSchemaGenerator(t *testing.T) {
 		{
 			name: "AzureLite schema is correct",
 			generator: func(machinesDisplay, regionsDisplay map[string]string, machines []string, additionalParams, update bool) *map[string]interface{} {
-				return AzureLiteSchema(machinesDisplay, regionsDisplay, machines, additionalParams, update, false, additionalParams)
+				return AzureLiteSchema(machinesDisplay, regionsDisplay, machines, additionalParams, update, false, additionalParams, false, false)
 			},
 			machineTypes:        AzureLiteMachinesNames(),
 			machineTypesDisplay: AzureLiteMachinesDisplay(),
@@ -105,7 +105,7 @@ func TestSchemaGenerator(t *testing.T) {
 		{
 			name: "AzureLite reduced schema is correct",
 			generator: func(machinesDisplay, regionsDisplay map[string]string, machines []string, additionalParams, update bool) *map[string]interface{} {
-				return AzureLiteSchema(machinesDisplay, regionsDisplay, machines, additionalParams, update, false, false)
+				return AzureLiteSchema(machinesDisplay, regionsDisplay, machines, additionalParams, update, false, false, false, false)
 			},
 			machineTypes:        azureLiteMachineNamesReduced,
 			machineTypesDisplay: azureLiteMachinesDisplayReduced,
@@ -119,7 +119,7 @@ func TestSchemaGenerator(t *testing.T) {
 		{
 			name: "AzureLite schema with EU access restriction is correct",
 			generator: func(machinesDisplay, regionsDisplay map[string]string, machines []string, additionalParams, update bool) *map[string]interface{} {
-				return AzureLiteSchema(machinesDisplay, regionsDisplay, machines, additionalParams, update, true, additionalParams)
+				return AzureLiteSchema(machinesDisplay, regionsDisplay, machines, additionalParams, update, true, additionalParams, false, false)
 			},
 			machineTypes:        AzureLiteMachinesNames(),
 			machineTypesDisplay: AzureLiteMachinesDisplay(),
@@ -133,7 +133,7 @@ func TestSchemaGenerator(t *testing.T) {
 		{
 			name: "AzureLite reduced schema with EU access restriction is correct",
 			generator: func(machinesDisplay, regionsDisplay map[string]string, machines []string, additionalParams, update bool) *map[string]interface{} {
-				return AzureLiteSchema(machinesDisplay, regionsDisplay, machines, additionalParams, update, true, false)
+				return AzureLiteSchema(machinesDisplay, regionsDisplay, machines, additionalParams, update, true, false, false, false)
 			},
 			machineTypes:        azureLiteMachineNamesReduced,
 			machineTypesDisplay: azureLiteMachinesDisplayReduced,
@@ -147,7 +147,7 @@ func TestSchemaGenerator(t *testing.T) {
 		{
 			name: "Freemium schema is correct",
 			generator: func(machinesDisplay, regionsDisplay map[string]string, machines []string, additionalParams, update bool) *map[string]interface{} {
-				return FreemiumSchema(pkg.Azure, regionsDisplay, additionalParams, update, false)
+				return FreemiumSchema(pkg.Azure, regionsDisplay, additionalParams, update, false, false)
 			},
 			machineTypes:   []string{},
 			regionDisplay:  AzureRegionsDisplay(false),
@@ -160,7 +160,7 @@ func TestSchemaGenerator(t *testing.T) {
 		{
 			name: "Freemium schema is correct",
 			generator: func(machinesDisplay, regionsDisplay map[string]string, machines []string, additionalParams, update bool) *map[string]interface{} {
-				return FreemiumSchema(pkg.AWS, regionsDisplay, additionalParams, update, false)
+				return FreemiumSchema(pkg.AWS, regionsDisplay, additionalParams, update, false, false)
 			},
 			machineTypes:   []string{},
 			regionDisplay:  AWSRegionsDisplay(false),
@@ -173,7 +173,7 @@ func TestSchemaGenerator(t *testing.T) {
 		{
 			name: "Freemium schema with EU access restriction is correct",
 			generator: func(machinesDisplay, regionsDisplay map[string]string, machines []string, additionalParams, update bool) *map[string]interface{} {
-				return FreemiumSchema(pkg.Azure, regionsDisplay, additionalParams, update, true)
+				return FreemiumSchema(pkg.Azure, regionsDisplay, additionalParams, update, true, false)
 			},
 			machineTypes:   []string{},
 			regionDisplay:  AzureRegionsDisplay(true),
@@ -186,7 +186,7 @@ func TestSchemaGenerator(t *testing.T) {
 		{
 			name: "Freemium schema with EU access restriction is correct",
 			generator: func(machinesDisplay, regionsDisplay map[string]string, machines []string, additionalParams, update bool) *map[string]interface{} {
-				return FreemiumSchema(pkg.AWS, regionsDisplay, additionalParams, update, true)
+				return FreemiumSchema(pkg.AWS, regionsDisplay, additionalParams, update, true, false)
 			},
 			machineTypes:   []string{},
 			regionDisplay:  AWSRegionsDisplay(true),
@@ -199,7 +199,7 @@ func TestSchemaGenerator(t *testing.T) {
 		{
 			name: "GCP schema is correct",
 			generator: func(machinesDisplay, regionsDisplay map[string]string, machines []string, additionalParams, update bool) *map[string]interface{} {
-				return GCPSchema(machinesDisplay, regionsDisplay, machines, additionalParams, update, additionalParams, false)
+				return GCPSchema(machinesDisplay, regionsDisplay, machines, additionalParams, update, additionalParams, false, false, false)
 			},
 			machineTypes:        GcpMachinesNames(),
 			machineTypesDisplay: GcpMachinesDisplay(),
@@ -213,7 +213,7 @@ func TestSchemaGenerator(t *testing.T) {
 		{
 			name: "GCP schema with assured workloads is correct",
 			generator: func(machinesDisplay, regionsDisplay map[string]string, machines []string, additionalParams, update bool) *map[string]interface{} {
-				return GCPSchema(machinesDisplay, regionsDisplay, machines, additionalParams, update, additionalParams, true)
+				return GCPSchema(machinesDisplay, regionsDisplay, machines, additionalParams, update, additionalParams, true, false, false)
 			},
 			machineTypes:        GcpMachinesNames(),
 			machineTypesDisplay: GcpMachinesDisplay(),
@@ -228,7 +228,7 @@ func TestSchemaGenerator(t *testing.T) {
 			name: "SapConvergedCloud schema is correct",
 			generator: func(machinesDisplay, regionsDisplay map[string]string, machines []string, additionalParams, update bool) *map[string]interface{} {
 				convergedCloudRegionProvider := &OneForAllConvergedCloudRegionsProvider{}
-				return SapConvergedCloudSchema(machinesDisplay, regionsDisplay, machines, additionalParams, update, additionalParams, convergedCloudRegionProvider.GetRegions(""))
+				return SapConvergedCloudSchema(machinesDisplay, regionsDisplay, machines, additionalParams, update, additionalParams, convergedCloudRegionProvider.GetRegions(""), false, false)
 			},
 			machineTypes:        SapConvergedCloudMachinesNames(),
 			machineTypesDisplay: SapConvergedCloudMachinesDisplay(),
@@ -241,7 +241,7 @@ func TestSchemaGenerator(t *testing.T) {
 		{
 			name: "Trial schema is correct",
 			generator: func(machinesDisplay, regionsDisplay map[string]string, machines []string, additionalParams, update bool) *map[string]interface{} {
-				return TrialSchema(additionalParams, update)
+				return TrialSchema(additionalParams, update, false)
 			},
 			machineTypes:   []string{},
 			path:           "azure",
@@ -287,7 +287,7 @@ func TestSapConvergedSchema(t *testing.T) {
 		regions := []string{"region1", "region2"}
 
 		// when
-		schema := Plans(nil, "", false, false, false, false, regions, false)
+		schema := Plans(nil, "", false, false, false, false, regions, false, false, false)
 		convergedSchema, found := schema[SapConvergedCloudPlanID]
 		schemaRegionsCreate := convergedSchema.Schemas.Instance.Create.Parameters["properties"].(map[string]interface{})["region"].(map[string]interface{})["enum"]
 
@@ -302,7 +302,7 @@ func TestSapConvergedSchema(t *testing.T) {
 		regions := []string{}
 
 		// when
-		schema := Plans(nil, "", false, false, false, false, regions, false)
+		schema := Plans(nil, "", false, false, false, false, regions, false, false, false)
 		_, found := schema[SapConvergedCloudPlanID]
 
 		// then
@@ -310,7 +310,7 @@ func TestSapConvergedSchema(t *testing.T) {
 		assert.False(t, found)
 
 		// when
-		schema = Plans(nil, "", false, false, false, false, nil, false)
+		schema = Plans(nil, "", false, false, false, false, nil, false, false, false)
 		_, found = schema[SapConvergedCloudPlanID]
 
 		// then

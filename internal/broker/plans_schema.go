@@ -163,11 +163,11 @@ type AdditionalWorkerNodePoolsItems struct {
 }
 
 type AdditionalWorkerNodePoolsItemsProperties struct {
-	Name          Type `json:"name,omitempty"`
-	MachineType   Type `json:"machineType,omitempty"`
-	HAZones       Type `json:"haZones,omitempty"`
-	AutoScalerMin Type `json:"autoScalerMin,omitempty"`
-	AutoScalerMax Type `json:"autoScalerMax,omitempty"`
+	Name          Type  `json:"name,omitempty"`
+	MachineType   Type  `json:"machineType,omitempty"`
+	HAZones       *Type `json:"haZones,omitempty"`
+	AutoScalerMin Type  `json:"autoScalerMin,omitempty"`
+	AutoScalerMax Type  `json:"autoScalerMax,omitempty"`
 }
 
 func NewModulesSchema() *Modules {
@@ -300,7 +300,7 @@ func ShootAndSeedSameRegionProperty() *Type {
 
 // NewProvisioningProperties creates a new properties for different plans
 // Note that the order of properties will be the same in the form on the website
-func NewProvisioningProperties(machineTypesDisplay, regionsDisplay map[string]string, machineTypes, regions []string, update bool) ProvisioningProperties {
+func NewProvisioningProperties(machineTypesDisplay, regionsDisplay map[string]string, machineTypes, regions []string, update, enableAdditionalWorkerNodePools bool) ProvisioningProperties {
 
 	properties := ProvisioningProperties{
 		UpdateProperties: UpdateProperties{
@@ -333,6 +333,10 @@ func NewProvisioningProperties(machineTypesDisplay, regionsDisplay map[string]st
 		},
 		Networking: NewNetworkingSchema(),
 		Modules:    NewModulesSchema(),
+	}
+
+	if enableAdditionalWorkerNodePools {
+		properties.AdditionalWorkerNodePools = NewAdditionalWorkerNodePoolsSchema(machineTypesDisplay, machineTypes)
 	}
 
 	if update {
@@ -380,7 +384,7 @@ func NewOIDCSchema() *OIDCType {
 	}
 }
 
-func NewSchema(properties interface{}, update bool, required []string, loadCurrentConfig bool) *RootSchema {
+func NewSchema(properties interface{}, update bool, required []string, enableLoadCurrentConfig bool) *RootSchema {
 	schema := &RootSchema{
 		Schema: "http://json-schema.org/draft-04/schema#",
 		Type: Type{
@@ -395,8 +399,8 @@ func NewSchema(properties interface{}, update bool, required []string, loadCurre
 		schema.Required = []string{}
 	}
 
-	if loadCurrentConfig {
-		schema.LoadCurrentConfig = &loadCurrentConfig
+	if enableLoadCurrentConfig {
+		schema.LoadCurrentConfig = &enableLoadCurrentConfig
 	}
 
 	return schema
@@ -463,7 +467,7 @@ func NewAdditionalWorkerNodePoolsSchema(machineTypesDisplay map[string]string, m
 					EnumDisplayName: machineTypesDisplay,
 					Description:     "Specifies the type of the virtual machine.",
 				},
-				HAZones: Type{
+				HAZones: &Type{
 					Type:        "boolean",
 					Title:       "HA zones",
 					Default:     true,

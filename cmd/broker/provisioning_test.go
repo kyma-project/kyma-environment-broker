@@ -1882,8 +1882,9 @@ func TestProvisioningWithAdditionalWorkerNodePools(t *testing.T) {
 	//given
 	cfg := fixConfig()
 	cfg.Broker.KimConfig.Enabled = true
-	cfg.Broker.KimConfig.Plans = []string{"preview"}
-	cfg.Broker.KimConfig.KimOnlyPlans = []string{"preview"}
+	cfg.Broker.KimConfig.Plans = []string{"aws"}
+	cfg.Broker.KimConfig.KimOnlyPlans = []string{"aws"}
+	cfg.Broker.EnableAdditionalWorkerNodePools = true
 
 	suite := NewBrokerSuiteTestWithConfig(t, cfg)
 	defer suite.TearDown()
@@ -1893,7 +1894,7 @@ func TestProvisioningWithAdditionalWorkerNodePools(t *testing.T) {
 	resp := suite.CallAPI("PUT", fmt.Sprintf("oauth/cf-eu21/v2/service_instances/%s?accepts_incomplete=true", iid),
 		`{
 					"service_id": "47c9dcbf-ff30-448e-ab36-d3bad66ba281",
-					"plan_id": "5cb3d976-b85c-42ea-a636-79cadda109a9",
+					"plan_id": "361c511f-f939-4621-b228-d0fb79a1fe15",
 					"context": {
 						"globalaccount_id": "g-account-id",
 						"subaccount_id": "sub-id",
