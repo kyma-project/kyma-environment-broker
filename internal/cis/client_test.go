@@ -142,7 +142,7 @@ func newServer(t *testing.T) *server {
 func fixHTTPServer(srv *server) *httptest.Server {
 	r := httputil.NewRouter()
 
-	r.HandleFunc("GET /public/rest/v2/events", srv.returnCISEvents)
+	r.HandleFunc("GET /events/v1/events/central", srv.returnCISEvents)
 
 	return httptest.NewServer(r)
 }
