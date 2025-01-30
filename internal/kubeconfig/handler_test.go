@@ -14,12 +14,12 @@ import (
 
 	"github.com/kyma-project/kyma-environment-broker/common/orchestration"
 	"github.com/kyma-project/kyma-environment-broker/internal"
+	"github.com/kyma-project/kyma-environment-broker/internal/httputil"
 	"github.com/kyma-project/kyma-environment-broker/internal/kubeconfig/automock"
 	"github.com/kyma-project/kyma-environment-broker/internal/storage"
 
-	"github.com/gorilla/mux"
 	pkg "github.com/kyma-project/kyma-environment-broker/common/runtime"
-	"github.com/pivotal-cf/brokerapi/v8/domain"
+	"github.com/pivotal-cf/brokerapi/v12/domain"
 	"github.com/stretchr/testify/require"
 )
 
@@ -125,7 +125,7 @@ func TestHandler_GetKubeconfig(t *testing.T) {
 				Level: slog.LevelInfo,
 			}))
 
-			router := mux.NewRouter()
+			router := httputil.NewRouter()
 
 			handler := NewHandler(db, builder, "", ownClusterPlanID, log)
 			handler.AttachRoutes(router)
@@ -202,7 +202,7 @@ func TestHandler_GetKubeconfigForOwnCluster(t *testing.T) {
 		Level: slog.LevelInfo,
 	}))
 
-	router := mux.NewRouter()
+	router := httputil.NewRouter()
 
 	handler := NewHandler(db, builder, "", ownClusterPlanID, log)
 	handler.AttachRoutes(router)

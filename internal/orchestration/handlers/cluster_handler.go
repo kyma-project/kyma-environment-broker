@@ -8,7 +8,6 @@ import (
 	"time"
 
 	"github.com/google/uuid"
-	"github.com/gorilla/mux"
 	"github.com/kyma-project/kyma-environment-broker/common/orchestration"
 	"github.com/kyma-project/kyma-environment-broker/internal"
 	"github.com/kyma-project/kyma-environment-broker/internal/httputil"
@@ -33,8 +32,8 @@ func NewClusterHandler(orchestrations storage.Orchestrations, q *process.Queue, 
 	}
 }
 
-func (h *clusterHandler) AttachRoutes(router *mux.Router) {
-	router.HandleFunc("/upgrade/cluster", h.createOrchestration).Methods(http.MethodPost)
+func (h *clusterHandler) AttachRoutes(r router) {
+	r.HandleFunc("POST /upgrade/cluster", h.createOrchestration)
 }
 
 func (h *clusterHandler) createOrchestration(w http.ResponseWriter, r *http.Request) {
