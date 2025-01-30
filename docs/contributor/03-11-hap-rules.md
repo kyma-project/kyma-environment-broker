@@ -24,10 +24,10 @@ If more than one rule applies the best matching rule is selected based on the [p
 ```
 hap: 
   rule: 
-  - rule_1
-  - rule_2
+  - rule_entry_1
+  - rule_entry_2
   ...
-  - rule_n
+  - rule_entry_n
 ```
 
 Every pool that a rule entry represents must be preconfigured in a Gardener cluster that KEB connects to.
