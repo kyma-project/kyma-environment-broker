@@ -414,8 +414,8 @@ func supportsAdditionalWorkerNodePools(planID string) bool {
 		FreemiumPlanID,
 		TrialPlanID,
 	}
-	for _, supportedPlan := range unsupportedPlans {
-		if planID == supportedPlan {
+	for _, unsupportedPlan := range unsupportedPlans {
+		if planID == unsupportedPlan {
 			return false
 		}
 	}
