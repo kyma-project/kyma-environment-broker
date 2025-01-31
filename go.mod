@@ -24,7 +24,7 @@ require (
 	github.com/kennygrant/sanitize v1.2.4
 	github.com/kyma-incubator/compass/components/director v0.0.0-20240704074401-a423d6070404
 	github.com/kyma-project/control-plane/components/provisioner v0.0.0-20240925074719-868d3d02df59
-	github.com/kyma-project/infrastructure-manager v0.0.0-20250128154549-67d41ee7791a
+	github.com/kyma-project/infrastructure-manager v1.20.0
 	github.com/lib/pq v1.10.9
 	github.com/matryer/is v1.4.1
 	github.com/pivotal-cf/brokerapi/v8 v8.2.3
