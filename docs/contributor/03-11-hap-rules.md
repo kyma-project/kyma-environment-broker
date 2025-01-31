@@ -89,6 +89,7 @@ The following table shows a mapping of plans to hyperscaler types:
 | azure               	| azure            	|
 | azure_lite          	| azure            	|
 | aws                 	| aws              	|
+| free                  | azure, aws        |
 | gcp                 	| gcp              	|
 | preview             	| aws              	|
 | sap-converged-cloud 	| openstack       	|
@@ -223,6 +224,7 @@ The constraints used for validation during KEB startup include:
 
 The last example shows initial configuration created to mimic the current bahaviour of KEB at the time of writing the document. The configuration enforces that:
 * azure, aws, gcp have their own pools of dedicated bindings.
+* free plan uses aws or azure dedicated bindings depending on the provider value.
 * gcp clusters in the region cf-sa30 use the pool of secret bindings marked with labels: `hyperscalerType: gcp_cf-sa30`,
 * sap-converged-cloud clusters use the pool of secret bindings marked with labels: `hyperscalerType: openstack_<HYPERSCALER_REGION>` and all these pools are shared.
 * trial clusters can use one of two pools of shared secret bindings marked with labels: `hyperscalerType: azure` or `hyperscalerType: aws` depending on the used trial provider type.
@@ -242,4 +244,6 @@ hap:
   - sap-converged-cloud(HR=*) -> S  # pool: hyperscalerType: openstack_<HYPERSCALER_REGION>; shared: true
   - azure_lite                      # pool: hyperscalerType: azure
   - preview                         # pool: hyperscalerType: aws
+  - free                            # pool: hyperscalerType: aws
+                                    # pool: hyperscalerType: azure
 ```
