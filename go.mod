@@ -3,6 +3,7 @@ module github.com/kyma-project/kyma-environment-broker
 go 1.23.5
 
 require (
+	github.com/antlr4-go/antlr/v4 v4.13.1
 	code.cloudfoundry.org/lager v2.0.0+incompatible
 	github.com/99designs/gqlgen v0.17.64
 	github.com/Azure/azure-sdk-for-go v68.0.0+incompatible
