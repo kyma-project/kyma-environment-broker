@@ -388,7 +388,7 @@ func main() {
 		log.Info(fmt.Sprintf("Call handled: method=%s url=%s statusCode=%d size=%d", params.Request.Method, params.URL.Path, params.StatusCode, params.Size))
 	})
 	*/
-	http.Handle("/", http.StripPrefix("/", http.FileServer(http.Dir("/swagger"))))
+	http.Handle("/", http.FileServer(http.Dir("/swagger")))
 	svr := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		router.ServeHTTP(w, r)
 		log.Info(fmt.Sprintf("Call handled: method=%s url=%s", r.Method, r.URL.Path))
