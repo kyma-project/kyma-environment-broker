@@ -13,7 +13,7 @@ import (
 	"testing"
 
 	"github.com/google/uuid"
-	"github.com/pivotal-cf/brokerapi/v8/domain"
+	"github.com/pivotal-cf/brokerapi/v12/domain"
 )
 
 type ErrorResponse struct {
