@@ -12,21 +12,31 @@ type RuleListener struct {
 }
 
 func (r RuleListener) EnterEntry(c *parser.EntryContext) {
-    r.processed.Plan = c.PLAN().GetText()
+	if c.PLAN() != nil {
+		r.processed.Plan = c.PLAN().GetText()
+	}
 }
 
 func (r *RuleListener) EnterPrVal(c *parser.PrValContext) {
-	r.processed.PlatformRegion = c.Val().GetText()
+	if c.Val() != nil {
+		r.processed.PlatformRegion = c.Val().GetText()
+	}
 }
 
 func (r *RuleListener) EnterHrVal(c *parser.HrValContext) {
-	r.processed.HyperscalerRegion = c.Val().GetText()
+	if c.Val() != nil {
+		r.processed.HyperscalerRegion = c.Val().GetText()
+	}
 }
 
 func (s *RuleListener) EnterS(c *parser.SContext) {
-	s.processed.Shared = true
+	if c.S() != nil {
+		s.processed.Shared = true
+	}
 }
 
 func (s *RuleListener) EnterEu(c *parser.EuContext) {
-	s.processed.EuAccess = true
+	if c.EU() != nil {
+		s.processed.EuAccess = true
+	}
 }

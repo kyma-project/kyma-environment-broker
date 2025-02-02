@@ -1,5 +1,5 @@
 package rules
 
 type Parser interface {
-    Parse(ruleEntry string) *Rule
+    Parse(ruleEntry string) (*Rule, error)
 }

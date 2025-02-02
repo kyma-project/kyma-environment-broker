@@ -3,7 +3,6 @@ package rules
 import "testing"
 
 func TestParser(t *testing.T) {
-
-    ParserTest(t, &SimpleParser{})
-    
+    ParserHappyPathTest(t, &SimpleParser{})
+    ParserValidationTest(t, &SimpleParser{})
 }
