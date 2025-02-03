@@ -352,3 +352,25 @@ func readJsonFile(t *testing.T, file string) string {
 
 	return string(jsonFile)
 }
+
+func TestRemoveString(t *testing.T) {
+	tests := []struct {
+		name     string
+		input    []string
+		remove   string
+		expected []string
+	}{
+		{"Remove existing element", []string{"alpha", "beta", "gamma"}, "beta", []string{"alpha", "gamma"}},
+		{"Remove non-existing element", []string{"alpha", "beta", "gamma"}, "delta", []string{"alpha", "beta", "gamma"}},
+		{"Remove from empty slice", []string{}, "alpha", []string{}},
+		{"Remove all occurrences", []string{"alpha", "alpha", "beta"}, "alpha", []string{"beta"}},
+		{"Remove only element", []string{"alpha"}, "alpha", []string{}},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			result := removeString(tt.input, tt.remove)
+			assert.Equal(t, tt.expected, result)
+		})
+	}
+}

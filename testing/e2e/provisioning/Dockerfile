@@ -1,4 +1,4 @@
-FROM golang:1.23.1-alpine3.20 as builder
+FROM golang:1.23.5-alpine3.20 as builder
 
 ENV SRC_DIR=/go/src/github.com/kyma-project/kyma-environment-broker/tests/e2e/provisioning
 

@@ -401,6 +401,9 @@ func AzureLiteSchema(machineTypesDisplay, regionsDisplay map[string]string, mach
 
 	if enableAdditionalWorkerNodePools {
 		properties.AdditionalWorkerNodePools.Items.Properties.HAZones = nil
+		properties.AdditionalWorkerNodePools.Items.ControlsOrder = removeString(properties.AdditionalWorkerNodePools.Items.ControlsOrder, "haZones")
+		properties.AdditionalWorkerNodePools.Items.Required = removeString(properties.AdditionalWorkerNodePools.Items.Required, "haZones")
+
 		properties.AdditionalWorkerNodePools.Items.Properties.AutoScalerMin.Default = 2
 		properties.AdditionalWorkerNodePools.Items.Properties.AutoScalerMax.Default = 10
 		properties.AdditionalWorkerNodePools.Items.Properties.AutoScalerMax.Maximum = 40
@@ -675,4 +678,14 @@ func filter(items *[]interface{}, included map[string]interface{}) interface{} {
 	}
 
 	return output
+}
+
+func removeString(slice []string, str string) []string {
+	result := []string{}
+	for _, v := range slice {
+		if v != str {
+			result = append(result, v)
+		}
+	}
+	return result
 }
