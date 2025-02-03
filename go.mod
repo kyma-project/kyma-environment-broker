@@ -32,7 +32,7 @@ require (
 	github.com/prometheus/client_golang v1.20.5
 	github.com/sebdah/goldie/v2 v2.5.5
 	github.com/stretchr/testify v1.10.0
-	github.com/vrischmann/envconfig v1.3.0
+	github.com/vrischmann/envconfig v1.4.1
 	golang.org/x/exp v0.0.0-20250106191152-7588d65b2ba8
 	golang.org/x/oauth2 v0.25.0
 	golang.org/x/time v0.9.0
