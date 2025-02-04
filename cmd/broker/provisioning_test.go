@@ -1946,7 +1946,11 @@ func TestProvisioningWithAdditionalWorkerNodePools(t *testing.T) {
 	provider, ok, err := unstructured.NestedMap(*config, "spec", "shoot", "provider")
 	assert.True(t, ok)
 	assert.NoError(t, err)
+
 	workers, ok, err := unstructured.NestedSlice(provider, "workers")
+	assert.True(t, ok)
+	assert.NoError(t, err)
+
 	additionalWorkers, ok, err := unstructured.NestedSlice(provider, "additionalWorkers")
 	assert.True(t, ok)
 	assert.NoError(t, err)
