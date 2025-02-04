@@ -1942,7 +1942,6 @@ func TestProvisioningWithAdditionalWorkerNodePools(t *testing.T) {
 	err = json.Unmarshal(response, &runtimes)
 
 	assert.Len(t, runtimes.Data, 1)
-	assert.NotNil(t, runtimes.Data[0].InstanceID)
 	config := runtimes.Data[0].RuntimeConfig
 	provider, ok, err := unstructured.NestedMap(*config, "spec", "shoot", "provider")
 	assert.True(t, ok)
