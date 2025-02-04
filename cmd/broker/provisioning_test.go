@@ -1943,6 +1943,8 @@ func TestProvisioningWithAdditionalWorkerNodePools(t *testing.T) {
 
 	assert.Len(t, runtimes.Data, 1)
 	config := runtimes.Data[0].RuntimeConfig
+	assert.NotNil(t, config)
+
 	provider, ok, err := unstructured.NestedMap(*config, "spec", "shoot", "provider")
 	assert.True(t, ok)
 	assert.NoError(t, err)
@@ -1962,8 +1964,6 @@ func TestProvisioningWithAdditionalWorkerNodePools(t *testing.T) {
 	assert.Equal(t, "name-1", additionalWorkers[0].(map[string]interface{})["name"])
 	assert.Equal(t, "name-2", additionalWorkers[1].(map[string]interface{})["name"])
 
-	assert.NoError(t, err)
-	assert.NotNil(t, config)
 	assert.Equal(t, http.StatusOK, resp.StatusCode)
 
 }
