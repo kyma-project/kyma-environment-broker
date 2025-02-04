@@ -148,10 +148,116 @@ func ParserHappyPathTest(t *testing.T, parser Parser) {
 
 func ParserValidationTest(t *testing.T, parser Parser) {
 
-    t.Run("with paranthesis only", func(t *testing.T) {
+    t.Run("with paranthesis only, no attributes", func(t *testing.T) {
         rule, err := parser.Parse("()")
         require.Nil(t, rule)
         require.Error(t, err)
+    })
+
+    t.Run("with duplicated arrow", func(t *testing.T) {
+        rule, err := parser.Parse("->->")
+        require.Nil(t, rule)
+        require.Error(t, err)
+
+        rule, err = parser.Parse("plan(PR=test, HR=test2) ->-> S, EU")
+        require.Nil(t, rule)
+        require.Error(t, err)
+    
+        rule, err = parser.Parse("plan(PR=test, HR=test2)-> S ->  EU")
+        require.Nil(t, rule)
+        require.Error(t, err)
+    
+        rule, err = parser.Parse("plan->(PR=test, HR=test2)-> S, EU")
+        require.Nil(t, rule)
+        require.Error(t, err)
+
+    })
+
+
+    t.Run("with invalid equal sign", func(t *testing.T) {
+        rule, err := parser.Parse("=")
+        require.Nil(t, rule)
+        require.Error(t, err)
+
+        rule, err = parser.Parse("==")
+        require.Nil(t, rule)
+        require.Error(t, err)
+    
+        rule, err = parser.Parse("===")
+        require.Nil(t, rule)
+        require.Error(t, err)
+
+        rule, err = parser.Parse("=azure=")
+        require.Nil(t, rule)
+        require.Error(t, err)
+    
+        rule, err = parser.Parse("azure==")
+        require.Nil(t, rule)
+        require.Error(t, err)
+    
+        rule, err = parser.Parse("azure=(PR=westeu, HR=easteu)=")
+        require.Nil(t, rule)
+        require.Error(t, err)
+
+        rule, err = parser.Parse("azure=(PR=westeu, HR=easteu=wsteu)")
+        require.Nil(t, rule)
+        require.Error(t, err)
+    })
+
+    t.Run("with duplicated or unclosed parantheses", func(t *testing.T) {
+        rule, err := parser.Parse("(())")
+        require.Nil(t, rule)
+        require.Error(t, err)
+
+        rule, err = parser.Parse("(")
+        require.Nil(t, rule)
+        require.Error(t, err)
+    
+        rule, err = parser.Parse("((")
+        require.Nil(t, rule)
+        require.Error(t, err)
+
+        rule, err = parser.Parse(")")
+        require.Nil(t, rule)
+        require.Error(t, err)
+    
+        rule, err = parser.Parse("))")
+        require.Nil(t, rule)
+        require.Error(t, err)
+    
+        rule, err = parser.Parse("())")
+        require.Nil(t, rule)
+        require.Error(t, err)
+
+        rule, err = parser.Parse("aws(())")
+        require.Nil(t, rule)
+        require.Error(t, err)
+
+        rule, err = parser.Parse("aws(")
+        require.Nil(t, rule)
+        require.Error(t, err)
+    
+        rule, err = parser.Parse("aws((")
+        require.Nil(t, rule)
+        require.Error(t, err)
+
+        rule, err = parser.Parse("aws)")
+        require.Nil(t, rule)
+        require.Error(t, err)
+    
+        rule, err = parser.Parse("aws))")
+        require.Nil(t, rule)
+        require.Error(t, err)
+    
+        rule, err = parser.Parse("aws())")
+        require.Nil(t, rule)
+        require.Error(t, err)
+
+
+        rule, err = parser.Parse("aws(PR=westeu, HR=easteu")
+        require.Nil(t, rule)
+        require.Error(t, err)
+
     })
 
     t.Run("with arrow only", func(t *testing.T) {
@@ -170,13 +276,121 @@ func ParserValidationTest(t *testing.T, parser Parser) {
         require.Error(t, err)
     })
 
-//     t.Run("with duplicated input attribute", func(t *testing.T) {
-//         rule, err := parser.Parse("azure(PR=test,PR=test2)")
-//         require.Nil(t, rule)
-//         require.Error(t, err)
+    t.Run("with duplicated input, output attribute - PR", func(t *testing.T) {
+        rule, err := parser.Parse("azure(PR=test,PR=test2)")
+        require.Nil(t, rule)
+        require.Error(t, err)
+        
+        rule, err = parser.Parse("azure(PR=test,PR)")
+        require.Nil(t, rule)
+        require.Error(t, err)
+        
+        rule, err = parser.Parse("azure(HR=test,HR=test2)")
+        require.Nil(t, rule)
+        require.Error(t, err)
+
+        rule, err = parser.Parse("azure(HR=test,HR)")
+        require.Nil(t, rule)
+        require.Error(t, err)
+
+        rule, err = parser.Parse("test(PR=west,HR=east)->EU,EU")
+        require.Nil(t, rule)
+        require.Error(t, err)
     
-//         rule, err = parser.Parse("test(PR=west,HR=east)->EU,EU")
-//         require.Nil(t, rule)
-//         require.Error(t, err)
-//     })
+        rule, err = parser.Parse("test(PR=west,HR=east)->S,S")
+        require.Nil(t, rule)
+        require.Error(t, err)
+
+    })
+
+    t.Run("with whitespace which should be ignored", func(t *testing.T) {
+        rule, err := parser.Parse("azure        (       PR              =     TEST, HR   =            TEST2                   ) ->          EU              ,             S")
+        require.NoError(t, err)
+
+        require.NotNil(t, rule)
+        require.Equal(t, "azure", rule.Plan)
+        require.Equal(t, "TEST", rule.PlatformRegion)
+        require.Equal(t, "TEST2", rule.HyperscalerRegion)
+
+        require.True(t, rule.EuAccess)
+        require.True(t, rule.Shared)
+    })
+
+    t.Run("with invalid comma", func(t *testing.T) {
+        rule, err := parser.Parse("azure(PR=test,,PR=test2)")
+        require.Nil(t, rule)
+        require.Error(t, err)
+        
+        rule, err = parser.Parse("azure(,,)")
+        require.Nil(t, rule)
+        require.Error(t, err)
+
+        rule, err = parser.Parse("test(PR=west,HR=east)->,,")
+        require.Nil(t, rule)
+        require.Error(t, err)
+    
+        rule, err = parser.Parse("test(PR=west,HR=east)->,S")
+        require.Nil(t, rule)
+        require.Error(t, err)
+
+        rule, err = parser.Parse("test(PR=west,,)->S,EU")
+        require.Nil(t, rule)
+        require.Error(t, err)
+    
+        rule, err = parser.Parse("test(PR=west,HR=east)->S,,")
+        require.Nil(t, rule)
+        require.Error(t, err)
+
+        rule, err = parser.Parse("test(PR=west.HR=east)->S")
+        require.Nil(t, rule)
+        require.Error(t, err)
+
+    })
+
+    t.Run("with unsupported attributes", func(t *testing.T) {
+        rule, err := parser.Parse("azure(DR=invalid-key)")
+        require.Nil(t, rule)
+        require.Error(t, err)
+
+        rule, err = parser.Parse("azure(PR=valid-key)->S,AA")
+        require.Nil(t, rule)
+        require.Error(t, err)
+
+        rule, err = parser.Parse("azure(PR=valid-key)->AA")
+        require.Nil(t, rule)
+        require.Error(t, err)
+    })
+
+    t.Run("with unsupported plan", func(t *testing.T) {
+        rule, err := parser.Parse("azuree")
+        require.Nil(t, rule)
+        require.Error(t, err)
+
+        rule, err = parser.Parse("azurrre(PR=valid-key)->S")
+        require.Nil(t, rule)
+        require.Error(t, err)
+
+        rule, err = parser.Parse("not-existing-plan(PR=valid-key)->EU")
+        require.Nil(t, rule)
+        require.Error(t, err)
+    })
+
+
+    t.Run("without input attirbute value", func(t *testing.T) {
+        rule, err := parser.Parse("azure(PR)")
+        require.Nil(t, rule)
+        require.Error(t, err)
+
+        rule, err = parser.Parse("azure(PR=)")
+        require.Nil(t, rule)
+        require.Error(t, err)
+
+        rule, err = parser.Parse("azure(PR, HR)")
+        require.Nil(t, rule)
+        require.Error(t, err)
+
+        rule, err = parser.Parse("azure(HR)")
+        require.Nil(t, rule)
+        require.Error(t, err)
+    })
 }
