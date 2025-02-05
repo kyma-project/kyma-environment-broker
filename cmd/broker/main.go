@@ -143,7 +143,6 @@ type Config struct {
 	Events events.Config
 
 	MetricsV2 metricsv2.Config
-	Hap       hap.Config
 
 	Provisioning    process.StagedManagerConfiguration
 	Deprovisioning  process.StagedManagerConfiguration

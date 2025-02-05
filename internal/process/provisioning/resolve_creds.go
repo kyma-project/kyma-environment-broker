@@ -23,14 +23,12 @@ type ResolveCredentialsStep struct {
 	accountProvider  hyperscaler.AccountProvider
 	opStorage        storage.Operations
 	tenant           string
-	hapConfig        *hap.Config
 }
 
-func NewResolveCredentialsStep(os storage.Operations, accountProvider hyperscaler.AccountProvider, hapConfig hap.Config) *ResolveCredentialsStep {
+func NewResolveCredentialsStep(os storage.Operations, accountProvider hyperscaler.AccountProvider) *ResolveCredentialsStep {
 	step := &ResolveCredentialsStep{
 		opStorage:       os,
 		accountProvider: accountProvider,
-		hapConfig:       &hapConfig,
 	}
 	step.operationManager = process.NewOperationManager(os, step.Name(), kebError.AccountPoolDependency)
 	return step
@@ -92,6 +90,7 @@ func (s *ResolveCredentialsStep) retryOrFailOperation(operation internal.Operati
 func (s *ResolveCredentialsStep) getTargetSecretFromGardener(operation internal.Operation, log *slog.Logger, hypType hyperscaler.Type, euAccess bool) (string, error) {
 	var secretName string
 	var err error
+
 	if broker.IsTrialPlan(operation.ProvisioningParameters.PlanID) || broker.IsSapConvergedCloudPlan(operation.ProvisioningParameters.PlanID) {
 		log.Info("HAP lookup for shared secret binding")
 		secretName, err = s.accountProvider.GardenerSharedSecretName(hypType, euAccess)
