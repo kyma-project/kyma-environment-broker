@@ -1,4 +1,4 @@
-package hap
+package hyperscaler
 
 import (
 	"os"
@@ -16,12 +16,11 @@ func TestHyperscalerConfigs(t *testing.T) {
 		err := envconfig.InitWithPrefix(&cfg, "APP_HAP")
 		require.NoError(t, err)
 
-		require.True(t, cfg.SharedSecretPlans.Contains("trial:*"))
-		require.True(t, cfg.SharedSecretPlans.Contains("sap-converged-cloud:*"))
+		require.Empty(t, cfg.Rule)
 	})
 
 	t.Run("should read single values from env variables", func(t *testing.T) {
-		err := os.Setenv("APP_HAP_SHARED_SECRET_PLANS", "aws:*;azure:*;gcp:eu1")
+		err := os.Setenv("APP_HAP_RULE", `- aws`)
 		require.NoError(t, err)
 
 		// given
@@ -29,9 +28,6 @@ func TestHyperscalerConfigs(t *testing.T) {
 		err = envconfig.InitWithPrefix(&cfg, "APP_HAP")
 		require.NoError(t, err)
 
-		require.True(t, cfg.SharedSecretPlans.Contains("aws:*"))
-		require.False(t, cfg.SharedSecretPlans.Contains("azure"))
-		require.True(t, cfg.SharedSecretPlans.Contains("azure:*"))
-		require.True(t, cfg.SharedSecretPlans.Contains("gcp:eu1"))
+		require.True(t, cfg.Rule.Contains("aws:*"))
 	})
 }
