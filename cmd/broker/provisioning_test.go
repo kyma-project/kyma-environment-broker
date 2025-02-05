@@ -10,6 +10,8 @@ import (
 	"os"
 	"testing"
 
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+
 	"github.com/kyma-project/kyma-environment-broker/internal/provider"
 	"github.com/stretchr/testify/require"
 
@@ -19,6 +21,7 @@ import (
 	"github.com/stretchr/testify/assert"
 
 	"github.com/kyma-project/kyma-environment-broker/common/hyperscaler"
+
 	pkg "github.com/kyma-project/kyma-environment-broker/common/runtime"
 	"github.com/kyma-project/kyma-environment-broker/internal"
 	"github.com/kyma-project/kyma-environment-broker/internal/broker"
@@ -1931,4 +1934,37 @@ func TestProvisioningWithAdditionalWorkerNodePools(t *testing.T) {
 	assert.Len(t, *runtime.Spec.Shoot.Provider.AdditionalWorkers, 2)
 	suite.assertAdditionalWorkerIsCreated(t, runtime.Spec.Shoot.Provider, "name-1", "m6i.large", 3, 20, 3)
 	suite.assertAdditionalWorkerIsCreated(t, runtime.Spec.Shoot.Provider, "name-2", "m5.large", 1, 1, 1)
+
+	resp = suite.CallAPI("GET", fmt.Sprintf("runtimes?runtime_config=true&account=%s&subaccount=%s&state=provisioned", "g-account-id", "sub-id"), "")
+	response, err := io.ReadAll(resp.Body)
+	assert.NoError(t, err)
+	var runtimes pkg.RuntimesPage
+
+	err = json.Unmarshal(response, &runtimes)
+
+	assert.Len(t, runtimes.Data, 1)
+	config := runtimes.Data[0].RuntimeConfig
+	assert.NotNil(t, config)
+
+	provider, ok, err := unstructured.NestedMap(*config, "spec", "shoot", "provider")
+	assert.True(t, ok)
+	assert.NoError(t, err)
+
+	workers, ok, err := unstructured.NestedSlice(provider, "workers")
+	assert.True(t, ok)
+	assert.NoError(t, err)
+
+	additionalWorkers, ok, err := unstructured.NestedSlice(provider, "additionalWorkers")
+	assert.True(t, ok)
+	assert.NoError(t, err)
+
+	assert.Len(t, workers, 1)
+	assert.Len(t, additionalWorkers, 2)
+
+	assert.Equal(t, "cpu-worker-0", workers[0].(map[string]interface{})["name"])
+	assert.Equal(t, "name-1", additionalWorkers[0].(map[string]interface{})["name"])
+	assert.Equal(t, "name-2", additionalWorkers[1].(map[string]interface{})["name"])
+
+	assert.Equal(t, http.StatusOK, resp.StatusCode)
+
 }
