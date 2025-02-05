@@ -45,8 +45,6 @@ function btpManagerSecretTest() {
     });
     // Check if the Secret is properly reconciled after being edited
     it('should check if Secret is reconciled after being edited', async function() {
-      console.log(`Waiting ${reconciliationTimeout} ms until edited Secret is created`);
-      await waitForSecret(secretName, ns, reconciliationTimeout);
       console.log(`Changing data in the "sap-btp-manager" Secret`);
       prepareSecretForApply(modifiedSecret);
       changeSecretData(modifiedSecret);
