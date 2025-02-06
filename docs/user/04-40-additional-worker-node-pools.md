@@ -50,7 +50,7 @@ If you rename your existing additional worker node pool, it is deleted, and a ne
 The **haZones** property specifies whether high availability zones are supported. This setting is permanent and cannot be changed later. 
 
 With high availability enabled, resources are distributed across three zones to enhance fault tolerance.
-In this scenario, you must set **autoScalerMin** to at least `3`
+In this scenario, you must set **autoScalerMin** to at least `3`.
 
 If high availability is disabled, all resources are placed in a single, randomly selected zone. In this case, you can set both **autoScalerMin** and **autoScalerMax** to `1`, which helps reduce costs. 
 However, it is not recommended for production environments. 
