@@ -3,13 +3,13 @@ module github.com/kyma-project/kyma-environment-broker
 go 1.23.5
 
 require (
-	github.com/antlr4-go/antlr/v4 v4.13.1
 	code.cloudfoundry.org/lager v2.0.0+incompatible
 	github.com/99designs/gqlgen v0.17.64
 	github.com/Azure/azure-sdk-for-go v68.0.0+incompatible
 	github.com/Azure/go-autorest/autorest v0.11.30
 	github.com/Azure/go-autorest/autorest/adal v0.9.24
 	github.com/Masterminds/sprig v2.22.0+incompatible
+	github.com/antlr4-go/antlr/v4 v4.13.1
 	github.com/dlmiddlecote/sqlstats v1.0.2
 	github.com/docker/docker v27.5.1+incompatible
 	github.com/docker/go-connections v0.5.0
@@ -32,6 +32,8 @@ require (
 	github.com/pkg/errors v0.9.1
 	github.com/prometheus/client_golang v1.20.5
 	github.com/sebdah/goldie/v2 v2.5.5
+	github.com/spf13/cobra v1.8.1
+	github.com/spf13/pflag v1.0.5
 	github.com/stretchr/testify v1.10.0
 	github.com/vrischmann/envconfig v1.3.0
 	golang.org/x/exp v0.0.0-20250106191152-7588d65b2ba8
@@ -83,6 +85,7 @@ require (
 	github.com/hashicorp/golang-lru/v2 v2.0.7 // indirect
 	github.com/huandu/xstrings v1.5.0 // indirect
 	github.com/imdario/mergo v1.0.1 // indirect
+	github.com/inconshreveable/mousetrap v1.1.0 // indirect
 	github.com/josharian/intern v1.0.0 // indirect
 	github.com/json-iterator/go v1.1.12 // indirect
 	github.com/klauspost/compress v1.17.11 // indirect
@@ -106,7 +109,6 @@ require (
 	github.com/sergi/go-diff v1.3.1 // indirect
 	github.com/sirupsen/logrus v1.9.3 // indirect
 	github.com/sosodev/duration v1.3.1 // indirect
-	github.com/spf13/pflag v1.0.5 // indirect
 	github.com/stretchr/objx v0.5.2 // indirect
 	github.com/tidwall/gjson v1.17.1 // indirect
 	github.com/tidwall/pretty v1.2.1 // indirect
