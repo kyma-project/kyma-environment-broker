@@ -54,7 +54,7 @@ Enabled HA requires setting **autoScalerMin** to the minimal value 3.
 
 If you do not provide the `additionalWorkerNodePools` list in the update request, the saved additional worker node pools stay unchanged.
 However, if you provide an empty list in the update request, all additional worker node pools are removed.
-Renaming the additional worker node pool will result in the deletion of the existing pool and the creation of a new one.
+If you rename your existing additional worker node pool, it is deleted, and a new one is created.
 
 See the following JSON example without the `additionalWorkerNodePools` list:
 
