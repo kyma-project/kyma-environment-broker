@@ -1,9 +1,7 @@
 # Additional Worker Node Pools
 
 To create an SAP BTP, Kyma runtime with additional worker node pools, specify the `additionalWorkerNodePools` provisioning parameter.
-
-> [!NOTE]
-> **name**, **machineType**, **haZones**, **autoScalerMin**, and **autoScalerMax** values are mandatory for additional worker node pool configuration.
+To use the additional worker node pool feature, you must provide the following values: **name**, **machineType**, **haZones**, **autoScalerMin**, and **autoScalerMax**.
 
 See the example:
 
@@ -45,16 +43,17 @@ See the example:
 
 If you do not provide the `additionalWorkerNodePools` list in the provisioning request, no additional worker node pools are created.
 
-The **haZones** property specifies whether high availability zones are supported. This setting is permanent and cannot be changed later. 
-If high availability is disabled, all resources are placed in a single, randomly selected zone. In this case, you can set both **autoScalerMin** and **autoScalerMax** to `1`, which helps reduce costs. 
-However, it is not recommended for production environments. 
-
-With high availability enabled, resources are distributed across three zones to enhance fault tolerance.
-Enabled HA requires setting **autoScalerMin** to the minimal value 3.
-
 If you do not provide the `additionalWorkerNodePools` list in the update request, the saved additional worker node pools stay unchanged.
 However, if you provide an empty list in the update request, all additional worker node pools are removed.
 If you rename your existing additional worker node pool, it is deleted, and a new one is created.
+
+The **haZones** property specifies whether high availability zones are supported. This setting is permanent and cannot be changed later. 
+
+With high availability enabled, resources are distributed across three zones to enhance fault tolerance.
+In this scenario, you must set **autoScalerMin** to at least `3`
+
+If high availability is disabled, all resources are placed in a single, randomly selected zone. In this case, you can set both **autoScalerMin** and **autoScalerMax** to `1`, which helps reduce costs. 
+However, it is not recommended for production environments. 
 
 See the following JSON example without the `additionalWorkerNodePools` list:
 
