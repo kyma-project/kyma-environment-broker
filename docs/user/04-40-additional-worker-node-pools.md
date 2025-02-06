@@ -138,7 +138,7 @@ The update operation overwrites the additional worker node pools with the list p
 }
 ```
 
-3. The additional worker node pools are updated to include the values of the `additionalWorkerNodePools` list from JSON file provided in the update request:
+3. The additional worker node pools are updated to include the values of the `additionalWorkerNodePools` list from the JSON file provided in the update request:
 ```json
 {
   "additionalWorkerNodePools": [
