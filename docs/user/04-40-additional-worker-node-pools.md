@@ -52,7 +52,7 @@ However, it is not recommended for production environments.
 With high availability enabled, resources are distributed across three zones to enhance fault tolerance.
 Enabled HA requires setting **autoScalerMin** to the minimal value 3.
 
-If you do not provide the `additionalWorkerNodePools` list in the update request, the saved additional worker node pools stay untouched.
+If you do not provide the `additionalWorkerNodePools` list in the update request, the saved additional worker node pools stay unchanged.
 However, if you provide an empty list in the update request, all additional worker node pools are removed.
 Renaming the additional worker node pool will result in the deletion of the existing pool and the creation of a new one.
 
