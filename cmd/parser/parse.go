@@ -12,6 +12,12 @@ import (
 	"gopkg.in/yaml.v2"
 )
 
+const colorError = "\033[0;31m"
+const colorOk= "\033[32m" 
+const colorNeutral = "\033[0m"
+
+
+
 func init() {
 	rootCmd.AddCommand(NewParseCmd())
 }
@@ -23,6 +29,7 @@ type ParseCommand struct {
 	useGrammar 			 bool
 	ruleFilePath 		 string
 	sort 			 bool
+	unique 			 bool
 }
 
 func NewParseCmd() *cobra.Command {
@@ -31,8 +38,31 @@ func NewParseCmd() *cobra.Command {
 		Use:     "parse",
 		Aliases: []string{"p"},
 		Short:   "Parses a HAP rule entry validating its format",
-		Long:    "Parses a HAP rule entry validating its format, by default using simple string splitting. Documentation can be found ... . ",
-		Example: `parser parse 'azure'`,
+		Long:    "Parses a HAP rule entry validating its format, by default using simple string splitting. Documentation can be found ... .",
+		Example: `
+	# Parse a rule entry using simple string splitting
+	hap parse -e 'azure(PR=westeurope), aws->EU' 
+	
+	# Parse multiple rules from a file using simple string splitting
+	hap parse -e 'azure(PR=westeurope), aws->EU' 
+	
+	# Parse a rule entry using antlr parser and lexer
+	hap parse -g -e 'azure(PR=westeurope)' 
+
+	# Parse multiple rules from a file:
+	# --- rules.yaml
+	# rule:
+	# - azure(PR=westeurope)
+	# - aws->EU 
+	# ---
+	hap parse -f rules.yaml
+
+	# Sort rule entries by their priority
+	hap parse -p -e 'azure(PR=westeurope), aws->EU'	
+	
+	# Disable duplicated rule entries
+	hap parse -u -e 'azure(PR=westeurope), azure(PR=westeurope)'
+		`,
 
 		RunE:    func(_ *cobra.Command, args []string) error { 
 			return cmd.Run() 
@@ -43,7 +73,8 @@ func NewParseCmd() *cobra.Command {
 	cobraCmd.Flags().StringVarP(&cmd.rule, "entry", "e", "", "A rule to validate where each rule entry is separated by comma.")
 	cobraCmd.Flags().StringVarP(&cmd.ruleFilePath, "file", "f", "", "Read rules from a file pointed to by parameter value. The file must contain a valid yaml list, where each rule entry starts with '-' and is placed in its own line.")
 	cobraCmd.Flags().BoolVarP(&cmd.useGrammar, "grammar", "g", false, "Use c parser and lexer generated with antlr instead of simple string splitting.")
-	cobraCmd.Flags().BoolVarP(&cmd.sort, "sort", "s", false, "Sort rule entries by their priority.")
+	cobraCmd.Flags().BoolVarP(&cmd.sort, "priority", "p", false, "Sort rule entries by their priority, in descending priority order.")
+	cobraCmd.Flags().BoolVarP(&cmd.unique, "unique", "u", false, "Display only non duplicated rules.")
 	cobraCmd.MarkFlagsOneRequired("entry", "file")
 
 	return cobraCmd
@@ -59,7 +90,7 @@ func (cmd *ParseCommand) Run() error {
 	var entries []string
 	if cmd.ruleFilePath != "" {
 		conf := &conf{}
-		conf.getConf()
+		conf.getConf(cmd.ruleFilePath)
 		fmt.Printf("Parsing rules from file: %s\n", cmd.ruleFilePath)
 		entries = conf.Rules
 	} else {
@@ -67,23 +98,69 @@ func (cmd *ParseCommand) Run() error {
 	}
 
 	results := make([]rules.ParsingResult, 0, len(entries))
+	errorResults := make([]rules.ParsingResult, 0, len(entries))
 	for _, entry := range entries {
 		rule, err := cmd.parser.Parse(entry)
 	
-		results = append(results, rules.ParsingResult{OriginalRule: entry,  Rule: rule, Err: err})	
+		if err != nil {
+			errorResults = append(errorResults, rules.ParsingResult{OriginalRule: entry,  Rule: rule, Err: err})	
+
+		} else {
+			results = append(results, rules.ParsingResult{OriginalRule: entry,  Rule: rule, Err: err})	
+		}
 	}
 
 	if cmd.sort {
 		results = rules.SortRuleEntries(results)
 	}
 
-	for _, result := range results {
-		fmt.Printf("Parsing rule: %s\n", result.OriginalRule)
+	if cmd.unique {
+		uniqnuessSet := make(map[string]rules.ParsingResult)
+
+		uniqueResults := make([]rules.ParsingResult, 0, len(results))
+		for _, result := range results {
+			if item, ok := uniqnuessSet[result.Rule.Plan + result.Rule.PlatformRegion + result.Rule.HyperscalerRegion]; !ok {
+				uniqnuessSet[result.Rule.Plan + result.Rule.PlatformRegion + result.Rule.HyperscalerRegion] = result
+				uniqueResults = append(uniqueResults, result)
+			} else {
+				errorResults = append(errorResults, rules.ParsingResult{OriginalRule: result.OriginalRule,  Rule: result.Rule, Err: fmt.Errorf("Duplicated rule with previously defined rule: %s", item.OriginalRule)})
+			}
+		}
+
+		results = uniqueResults
+	}
+
+
+	if cmd.unique {
+		uniqnuessSet := make(map[string]rules.ParsingResult)
+
+		for _, result := range results {
+			uniqnuessSet[result.Rule.Plan + result.Rule.PlatformRegion + result.Rule.HyperscalerRegion] = result
+		}
+
+	}
+	
+	fmt.Printf("\tParsing results with incorrect rules, take care of them first:\n")
+
+
+	for _, result := range errorResults {
+		fmt.Printf("\t\tParsing rule: %s\n", result.OriginalRule)
 
 		if result.Err != nil {
-			fmt.Printf("-> Error parsing rule: %s\n", result.Err)
+			fmt.Printf("\t\t-> %s Error %s parsing rule: %s\n", colorError, colorNeutral, result.Err)
 		} else {
-			fmt.Printf("-> Parsed rule: %+v\n", result.Rule)
+			fmt.Printf("\t\t-> %s OK %s Parsed rule: %+v\n", colorOk, colorNeutral, result.Rule)
+		}
+	}
+
+	fmt.Printf("\tParsing results with correct rules:\n")
+	for _, result := range results {
+		fmt.Printf("\t\tParsing rule: %s\n", result.OriginalRule)
+
+		if result.Err != nil {
+			fmt.Printf("\t\t-> %s Error %s parsing rule: %s\n", colorError, colorNeutral, result.Err)
+		} else {
+			fmt.Printf("\t\t-> %s OK %s Parsed rule: %+v\n", colorOk, colorNeutral, result.Rule)
 		}
 	}
 
@@ -94,8 +171,8 @@ type conf struct {
 	Rules []string `yaml:"rule"`
 }
 
-func (c *conf) getConf() *conf {
-	yamlFile, err := os.ReadFile("resources/rules.yaml")
+func (c *conf) getConf(file string) *conf {
+	yamlFile, err := os.ReadFile(file)
 	if err != nil {
 		log.Printf("yamlFile.Get err   #%v ", err)
 	}
