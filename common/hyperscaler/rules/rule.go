@@ -80,3 +80,19 @@ func (r* Rule) SetPlan(value string) (*Rule, error) {
     r.Plan = value
     return r, nil
 }
+
+func (r* Rule) NumberOfInputAtributes() int {
+    count:=0
+
+    if r.PlatformRegion != "" {
+        count++
+    }
+
+    if r.HyperscalerRegion != "" {
+        count++
+    }
+
+    return count
+}
+
+
