@@ -1,6 +1,7 @@
 package main
 
 import (
+	"encoding/json"
 	"fmt"
 	"log"
 	"os"
@@ -15,8 +16,7 @@ import (
 const colorError = "\033[0;31m"
 const colorOk= "\033[32m" 
 const colorNeutral = "\033[0m"
-
-
+const colorMatched = "\033[34m"
 
 func init() {
 	rootCmd.AddCommand(NewParseCmd())
@@ -30,6 +30,7 @@ type ParseCommand struct {
 	ruleFilePath 		 string
 	sort 			 bool
 	unique 			 bool
+	match 			 string
 }
 
 func NewParseCmd() *cobra.Command {
@@ -71,10 +72,11 @@ func NewParseCmd() *cobra.Command {
 	cmd.cobraCmd = cobraCmd
 
 	cobraCmd.Flags().StringVarP(&cmd.rule, "entry", "e", "", "A rule to validate where each rule entry is separated by comma.")
+	cobraCmd.Flags().StringVarP(&cmd.match, "match", "m", "", "Check what rule will be matched and triggered against the provided test data. Only valid entries are taking into account when matching. Data is passed in json format, example: '{\"plan\": \"aws\", \"platformRegion\": \"cf-eu11\"}'.")
 	cobraCmd.Flags().StringVarP(&cmd.ruleFilePath, "file", "f", "", "Read rules from a file pointed to by parameter value. The file must contain a valid yaml list, where each rule entry starts with '-' and is placed in its own line.")
 	cobraCmd.Flags().BoolVarP(&cmd.useGrammar, "grammar", "g", false, "Use c parser and lexer generated with antlr instead of simple string splitting.")
 	cobraCmd.Flags().BoolVarP(&cmd.sort, "priority", "p", false, "Sort rule entries by their priority, in descending priority order.")
-	cobraCmd.Flags().BoolVarP(&cmd.unique, "unique", "u", false, "Display only non duplicated rules.")
+	cobraCmd.Flags().BoolVarP(&cmd.unique, "unique", "u", false, "Display only non duplicated rules. Error entries are not considered for uniqueness.")
 	cobraCmd.MarkFlagsOneRequired("entry", "file")
 
 	return cobraCmd
@@ -82,6 +84,11 @@ func NewParseCmd() *cobra.Command {
 
 func (cmd *ParseCommand) Run() error {
 	cmd.parser = &rules.SimpleParser{}
+
+	if cmd.match != "" && (!cmd.sort || !cmd.unique) {
+		fmt.Printf("\tMatching is only supported when both priority and uniqnuess flags are specified.\n")
+		return nil
+	}
 	
 	if (cmd.useGrammar) {
 		cmd.parser = &grammar.GrammarParser{}
@@ -97,28 +104,40 @@ func (cmd *ParseCommand) Run() error {
 		entries = strings.Split(cmd.rule, ",")
 	}
 
-	results := make([]rules.ParsingResult, 0, len(entries))
+	allResults := make([]rules.ParsingResult, 0, len(entries))
+	okResults := make([]rules.ParsingResult, 0, len(entries))
 	errorResults := make([]rules.ParsingResult, 0, len(entries))
 	for _, entry := range entries {
 		rule, err := cmd.parser.Parse(entry)
+
+		result := rules.ParsingResult{OriginalRule: entry,  Rule: rule, Err: err}
 	
 		if err != nil {
-			errorResults = append(errorResults, rules.ParsingResult{OriginalRule: entry,  Rule: rule, Err: err})	
-
+			errorResults = append(errorResults, result)	
 		} else {
-			results = append(results, rules.ParsingResult{OriginalRule: entry,  Rule: rule, Err: err})	
+			okResults = append(okResults, result)	
 		}
+
+		allResults = append(allResults, result)
 	}
 
 	if cmd.sort {
-		results = rules.SortRuleEntries(results)
+		allResults = rules.SortRuleEntries(allResults)
+		okResults = rules.SortRuleEntries(allResults)
+		errorResults = rules.SortRuleEntries(allResults)
 	}
 
 	if cmd.unique {
 		uniqnuessSet := make(map[string]rules.ParsingResult)
 
-		uniqueResults := make([]rules.ParsingResult, 0, len(results))
-		for _, result := range results {
+		uniqueResults := make([]rules.ParsingResult, 0, len(allResults))
+		for _, result := range allResults {
+
+			if result.Err != nil {
+				uniqueResults = append(uniqueResults, result)
+				continue
+			}
+
 			if item, ok := uniqnuessSet[result.Rule.Plan + result.Rule.PlatformRegion + result.Rule.HyperscalerRegion]; !ok {
 				uniqnuessSet[result.Rule.Plan + result.Rule.PlatformRegion + result.Rule.HyperscalerRegion] = result
 				uniqueResults = append(uniqueResults, result)
@@ -127,42 +146,40 @@ func (cmd *ParseCommand) Run() error {
 			}
 		}
 
-		results = uniqueResults
+		allResults = uniqueResults
 	}
 
 
-	if cmd.unique {
-		uniqnuessSet := make(map[string]rules.ParsingResult)
-
-		for _, result := range results {
-			uniqnuessSet[result.Rule.Plan + result.Rule.PlatformRegion + result.Rule.HyperscalerRegion] = result
-		}
-
+	var testDataForMatching *rules.MatchableAttributes
+	if (cmd.match != "") {
+		testDataForMatching = getTestData(cmd.match)
 	}
 	
-	fmt.Printf("\tParsing results with incorrect rules, take care of them first:\n")
-
-
-	for _, result := range errorResults {
-		fmt.Printf("\t\tParsing rule: %s\n", result.OriginalRule)
+	for _, result := range allResults {
 
 		if result.Err != nil {
 			fmt.Printf("\t\t-> %s Error %s parsing rule: %s\n", colorError, colorNeutral, result.Err)
 		} else {
-			fmt.Printf("\t\t-> %s OK %s Parsed rule: %+v\n", colorOk, colorNeutral, result.Rule)
+
+			fmt.Printf("\t\t-> ")
+
+			if (cmd.match != "" && testDataForMatching != nil) {
+				matched := result.Rule.Matched(testDataForMatching)
+				if matched {
+					fmt.Printf("%s Matched %s - ", colorMatched, colorNeutral)
+				} 
+			}
+
+			fmt.Printf("%s OK %s %s\n", colorOk, colorNeutral, result.Rule.String())
 		}
 	}
 
-	fmt.Printf("\tParsing results with correct rules:\n")
-	for _, result := range results {
-		fmt.Printf("\t\tParsing rule: %s\n", result.OriginalRule)
-
-		if result.Err != nil {
-			fmt.Printf("\t\t-> %s Error %s parsing rule: %s\n", colorError, colorNeutral, result.Err)
-		} else {
-			fmt.Printf("\t\t-> %s OK %s Parsed rule: %+v\n", colorOk, colorNeutral, result.Rule)
-		}
+	if len(errorResults) != 0 {
+		fmt.Printf("\tThere are errors in your rule configuration. Fix above errors in your rule configuration and try again.\n")
+		return nil
 	}
+
+
 
 	return nil
 }
@@ -182,5 +199,15 @@ func (c *conf) getConf(file string) *conf {
 	}
 
 	return c
+}
+
+func getTestData(content string) *rules.MatchableAttributes {
+	testData := &rules.MatchableAttributes{}
+	err := json.Unmarshal([]byte(content), testData)
+	if err != nil {
+		log.Fatalf("Unmarshal: %v", err)
+	}
+
+	return testData
 }
 

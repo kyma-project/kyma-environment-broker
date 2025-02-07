@@ -3,7 +3,6 @@ package rules
 import (
 	"fmt"
 	"strings"
-
 )
 
 type SimpleParser struct{

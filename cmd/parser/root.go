@@ -8,7 +8,7 @@ import (
 var (
 	// Used for flags.
 	rootCmd = &cobra.Command{
-		Use:   "parser",
+		Use:   "hap",
 		Short: "A tool for parsing and validation of HAP rules",
 		Long: ``,
 	}
