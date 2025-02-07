@@ -436,7 +436,7 @@ func (cmd *AssertCommand) assertAdditionalWorkerNodePools(additionalWorkerNodePo
 	for _, additionalWorkerNodePool := range additionalWorkerNodePools {
 		currentAdditionalWorkerNodePool, exists := currentAdditionalWorkerNodePoolsSet[additionalWorkerNodePool["name"].(string)]
 		if !exists {
-			return fmt.Errorf("additional worker node pools %s not found", additionalWorkerNodePool["name"].(string))
+			return fmt.Errorf("additional worker node pool %s not found", additionalWorkerNodePool["name"].(string))
 		}
 		if additionalWorkerNodePool["machineType"] != currentAdditionalWorkerNodePool.(map[string]interface{})["machine"].(map[string]interface{})["type"] {
 			return fmt.Errorf(
@@ -464,8 +464,8 @@ func (cmd *AssertCommand) assertAdditionalWorkerNodePools(additionalWorkerNodePo
 		if additionalWorkerNodePool["autoScalerMax"] != currentAdditionalWorkerNodePool.(map[string]interface{})["maximum"] {
 			return fmt.Errorf(
 				"autoScalerMax expected to be %d, but found %d",
-				additionalWorkerNodePool["autoScalerMin"],
-				currentAdditionalWorkerNodePool.(map[string]interface{})["minimum"],
+				additionalWorkerNodePool["autoScalerMax"],
+				currentAdditionalWorkerNodePool.(map[string]interface{})["maximum"],
 			)
 		}
 	}
