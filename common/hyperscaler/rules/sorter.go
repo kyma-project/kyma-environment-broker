@@ -3,13 +3,17 @@ package rules
 import "sort"
 
 func SortRuleEntries(entries []ParsingResult) []ParsingResult {
-    sort.SliceStable(entries, func(i, j int) bool {
-        return entries[i].Err == nil && entries[i].Rule.Plan < entries[j].Rule.Plan
-    });
+	sort.SliceStable(entries, func(i, j int) bool {
+		if entries[i].Err != nil || entries[j].Err != nil {
+			return true
+		}
 
-    sort.SliceStable(entries, func(i, j int) bool {
-        return entries[i].Err == nil && entries[i].Rule.NumberOfInputAtributes() < entries[j].Rule.NumberOfInputAtributes()
-    });
+		if entries[i].Rule.Plan != entries[j].Rule.Plan {
+			return entries[i].Rule.Plan < entries[j].Rule.Plan
+		}
 
-    return entries
+		return entries[i].Rule.NumberOfInputAtributes() < entries[j].Rule.NumberOfInputAtributes()
+	})
+
+	return entries
 }
