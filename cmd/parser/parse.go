@@ -63,6 +63,9 @@ func NewParseCmd() *cobra.Command {
 	
 	# Disable duplicated rule entries
 	hap parse -u -e 'azure(PR=westeurope), azure(PR=westeurope)'
+
+	# Check what rule will be matched and triggered against the provided test data
+	hap parse -p -u  -f ./correct-rules.yaml -m '{"plan": "aws"}'
 		`,
 
 		RunE:    func(_ *cobra.Command, args []string) error { 
@@ -158,7 +161,7 @@ func (cmd *ParseCommand) Run() error {
 	for _, result := range allResults {
 
 		if result.Err != nil {
-			fmt.Printf("\t\t-> %s Error %s parsing rule: %s\n", colorError, colorNeutral, result.Err)
+			fmt.Printf("\t\t-> %s Error %s %s: %s\n", colorError, colorNeutral, result.OriginalRule, result.Err)
 		} else {
 
 			fmt.Printf("\t\t-> ")
