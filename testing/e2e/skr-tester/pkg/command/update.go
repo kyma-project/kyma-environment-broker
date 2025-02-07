@@ -11,16 +11,18 @@ import (
 )
 
 type UpdateCommand struct {
-	cobraCmd             *cobra.Command
-	log                  logger.Logger
-	instanceID           string
-	planID               string
-	updateMachineType    bool
-	updateOIDC           bool
-	updateAdministrators bool
-	customMachineType    string
-	customOIDC           string
-	customAdministrators []string
+	cobraCmd                        *cobra.Command
+	log                             logger.Logger
+	instanceID                      string
+	planID                          string
+	updateMachineType               bool
+	updateOIDC                      bool
+	updateAdministrators            bool
+	updateAdditionalWorkerNodePools bool
+	customMachineType               string
+	customOIDC                      string
+	customAdministrators            []string
+	customAdditionalWorkerNodePools string
 }
 
 func NewUpdateCommand() *cobra.Command {
@@ -30,12 +32,14 @@ func NewUpdateCommand() *cobra.Command {
 		Aliases: []string{"u"},
 		Short:   "Update the instance",
 		Long:    "Update the instance with a new machine type, OIDC configuration, or administrators.",
-		Example: `	skr-tester update -i instanceID -p planID --updateMachineType             Update the instance with a new machine type.
-	skr-tester update -i instanceID -p planID --updateOIDC                    Update the instance with a new OIDC configuration.
-	skr-tester update -i instanceID -p planID --updateAdministrators          Update the instance with new administrators.
+		Example: `	skr-tester update -i instanceID -p planID --updateMachineType                      Update the instance with a new machine type.
+	skr-tester update -i instanceID -p planID --updateOIDC                             Update the instance with a new OIDC configuration.
+	skr-tester update -i instanceID -p planID --updateAdministrators                   Update the instance with new administrators.
+	skr-tester update -i instanceID -p planID --updateAdditionalWorkerNodePools        Update the instance with new additional worker node pools.
 	skr-tester update -i instanceID -p planID --updateMachineType --machineType newMachineType                                             Update the instance with a custom machine type.
 	skr-tester update -i instanceID -p planID --updateOIDC --customOIDC '{"clientID":"foo-bar","issuerURL":"https://new.custom.ias.com"}'  Update the instance with a custom OIDC configuration.
-	skr-tester update -i instanceID -p planID --updateAdministrators --customAdministrators admin1@acme.com,admin2@acme.com                Update the instance with custom administrators.`,
+	skr-tester update -i instanceID -p planID --updateAdministrators --customAdministrators admin1@acme.com,admin2@acme.com                Update the instance with custom administrators.
+	skr-tester update -i instanceID -p planID --updateAdditionalWorkerNodePools --customAdditionalWorkerNodePools '[{"name":"worker-1","machineType":"m6i.large","haZones":true,"autoScalerMin":3,"autoScalerMax":20}]'      Update the instance with custom additional worker node pools.`,
 		PreRunE: func(_ *cobra.Command, _ []string) error { return cmd.Validate() },
 		RunE:    func(_ *cobra.Command, _ []string) error { return cmd.Run() },
 	}
@@ -45,9 +49,11 @@ func NewUpdateCommand() *cobra.Command {
 	cobraCmd.Flags().BoolVarP(&cmd.updateMachineType, "updateMachineType", "m", false, "Update machine type.")
 	cobraCmd.Flags().BoolVarP(&cmd.updateOIDC, "updateOIDC", "o", false, "Update OIDC configuration.")
 	cobraCmd.Flags().BoolVarP(&cmd.updateAdministrators, "updateAdministrators", "a", false, "Update administrators.")
+	cobraCmd.Flags().BoolVarP(&cmd.updateAdditionalWorkerNodePools, "updateAdditionalWorkerNodePools", "w", false, "Update additional worker node pools.")
 	cobraCmd.Flags().StringVar(&cmd.customMachineType, "customMachineType", "", "Machine type to update to (optional).")
 	cobraCmd.Flags().StringVar(&cmd.customOIDC, "customOIDC", "", "Custom OIDC configuration in JSON format (optional).")
 	cobraCmd.Flags().StringSliceVar(&cmd.customAdministrators, "customAdministrators", nil, "Custom administrators (optional).")
+	cobraCmd.Flags().StringVar(&cmd.customAdditionalWorkerNodePools, "customAdditionalWorkerNodePools", "", "Custom additional worker node pools in JSON format (optional).")
 
 	return cobraCmd
 }
@@ -176,6 +182,48 @@ func (cmd *UpdateCommand) Run() error {
 			return fmt.Errorf("error updating instance: %v", err)
 		}
 		fmt.Printf("Update operationID: %s\n", resp["operation"].(string))
+	} else if cmd.updateAdditionalWorkerNodePools {
+		if len(cmd.customAdditionalWorkerNodePools) > 0 {
+			fmt.Printf("User provided custom additional worker node pools: %v\n", cmd.customAdditionalWorkerNodePools)
+			var additionalWorkerNodePools []map[string]interface{}
+			err = json.Unmarshal([]byte(cmd.customAdditionalWorkerNodePools), &additionalWorkerNodePools)
+			if err != nil {
+				return fmt.Errorf("error unmarshaling additional worker node pools: %v", err)
+			}
+			resp, _, err := brokerClient.UpdateInstance(cmd.instanceID, map[string]interface{}{"additionalWorkerNodePools": additionalWorkerNodePools})
+			if err != nil {
+				return fmt.Errorf("error updating instance: %v", err)
+			}
+			fmt.Printf("Update operationID: %s\n", resp["operation"].(string))
+			return nil
+		}
+
+		currentMachineType, err := kcpClient.GetCurrentMachineType(cmd.instanceID)
+		if err != nil {
+			return fmt.Errorf("failed to get current machine type: %v", err)
+		}
+		newAdditionalWorkerNodePools := []map[string]interface{}{
+			{
+				"name":          "worker-1",
+				"machineType":   *currentMachineType,
+				"haZones":       true,
+				"autoScalerMin": 3,
+				"autoScalerMax": 20,
+			},
+			{
+				"name":          "worker-2",
+				"machineType":   *currentMachineType,
+				"haZones":       false,
+				"autoScalerMin": 1,
+				"autoScalerMax": 1,
+			},
+		}
+		fmt.Printf("Determined additional worker node pools to update: %v\n", newAdditionalWorkerNodePools)
+		resp, _, err := brokerClient.UpdateInstance(cmd.instanceID, map[string]interface{}{"additionalWorkerNodePools": newAdditionalWorkerNodePools})
+		if err != nil {
+			return fmt.Errorf("error updating instance: %v", err)
+		}
+		fmt.Printf("Update operationID: %s\n", resp["operation"].(string))
 	}
 	return nil
 }
@@ -194,8 +242,11 @@ func (cmd *UpdateCommand) Validate() error {
 	if cmd.updateAdministrators {
 		updateCount++
 	}
+	if cmd.updateAdditionalWorkerNodePools {
+		updateCount++
+	}
 	if updateCount != 1 {
-		return fmt.Errorf("you must use exactly one of updateMachineType, updateOIDC, or updateAdministrators")
+		return fmt.Errorf("you must use exactly one of updateMachineType, updateOIDC, updateAdministrators or updateAdditionalWorkerNodePools")
 	}
 	return nil
 }
