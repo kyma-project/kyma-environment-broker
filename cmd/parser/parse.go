@@ -126,14 +126,15 @@ func (cmd *ParseCommand) Run() error {
 
 	if cmd.sort {
 		allResults = rules.SortRuleEntries(allResults)
-		okResults = rules.SortRuleEntries(allResults)
-		errorResults = rules.SortRuleEntries(allResults)
+		okResults = rules.SortRuleEntries(okResults)
+		errorResults = rules.SortRuleEntries(errorResults)
 	}
 
 	if cmd.unique {
 		uniqnuessSet := make(map[string]rules.ParsingResult)
-
+		signatureSet := make(map[string]rules.ParsingResult)
 		uniqueResults := make([]rules.ParsingResult, 0, len(allResults))
+
 		for _, result := range allResults {
 
 			if result.Err != nil {
@@ -141,17 +142,77 @@ func (cmd *ParseCommand) Run() error {
 				continue
 			}
 
-			if item, ok := uniqnuessSet[result.Rule.Plan + result.Rule.PlatformRegion + result.Rule.HyperscalerRegion]; !ok {
-				uniqnuessSet[result.Rule.Plan + result.Rule.PlatformRegion + result.Rule.HyperscalerRegion] = result
-				uniqueResults = append(uniqueResults, result)
+			negativeSignatureKey := result.Rule.Plan
+			signatureKey := result.Rule.Plan
+			key := result.Rule.Plan
+			
+			key += "PR:" 
+			signatureKey += "PR:"
+			negativeSignatureKey += "PR:"
+			if result.Rule.PlatformRegion == "" || result.Rule.PlatformRegion == "*" {
+				key += "*"
+
+				signatureKey += "*"
+				negativeSignatureKey += "attr"
 			} else {
-				errorResults = append(errorResults, rules.ParsingResult{OriginalRule: result.OriginalRule,  Rule: result.Rule, Err: fmt.Errorf("Duplicated rule with previously defined rule: %s", item.OriginalRule)})
+				key += result.Rule.PlatformRegion
+			
+				signatureKey += "attr"
+				negativeSignatureKey += "*"
 			}
+			
+			key += "HR:"
+			signatureKey += "HR:"
+			negativeSignatureKey += "HR:"
+			if result.Rule.HyperscalerRegion == "" || result.Rule.HyperscalerRegion == "*" {
+				key += "*"
+			
+				signatureKey += "*"
+				negativeSignatureKey += "attr"
+
+			} else {
+				key += result.Rule.HyperscalerRegion
+			
+				signatureKey += "attr"
+				negativeSignatureKey += "*"
+			}
+
+			negativeSignatureItem, negativeSignatureExists := signatureSet[negativeSignatureKey]
+
+			if negativeSignatureExists {
+				err := fmt.Errorf("Duplicated negative signature with previously defined rule: '%s'", negativeSignatureItem.Rule.StringNoLabels())
+
+				errorResults = append(errorResults, rules.ParsingResult{OriginalRule: result.OriginalRule, Err: err})
+
+				uniqueResults = append(uniqueResults, rules.ParsingResult{OriginalRule: result.OriginalRule, Err: err})
+			
+				continue
+			}
+
+			alreadyExists := false
+			var item rules.ParsingResult
+			item, alreadyExists = uniqnuessSet[key]
+	
+			if !alreadyExists {
+
+				uniqnuessSet[key] = result
+				signatureSet[signatureKey] = result
+				uniqueResults = append(uniqueResults, result)
+
+			} else {
+				
+				err := fmt.Errorf("Duplicated rule with previously defined rule: '%s'", item.Rule.StringNoLabels())
+
+				errorResults = append(errorResults, rules.ParsingResult{OriginalRule: result.OriginalRule, Err: err})
+
+				uniqueResults = append(uniqueResults, rules.ParsingResult{OriginalRule: result.OriginalRule, Err: err})
+
+			}
+
 		}
 
 		allResults = uniqueResults
 	}
-
 
 	var testDataForMatching *rules.MatchableAttributes
 	if (cmd.match != "") {
@@ -160,29 +221,40 @@ func (cmd *ParseCommand) Run() error {
 	
 	for _, result := range allResults {
 
+		fmt.Printf("-> ")
 		if result.Err != nil {
-			fmt.Printf("\t\t-> %s Error %s %s: %s\n", colorError, colorNeutral, result.OriginalRule, result.Err)
-		} else {
 
-			fmt.Printf("\t\t-> ")
+			fmt.Printf("%s Error %s", colorError, colorNeutral)
+
+		} else {
 
 			if (cmd.match != "" && testDataForMatching != nil) {
 				matched := result.Rule.Matched(testDataForMatching)
+
 				if matched {
-					fmt.Printf("%s Matched %s - ", colorMatched, colorNeutral)
+					fmt.Printf("%s Matched %s ", colorMatched, colorNeutral)
 				} 
 			}
 
-			fmt.Printf("%s OK %s %s\n", colorOk, colorNeutral, result.Rule.String())
+			fmt.Printf("%s %5s %s", colorOk, "OK", colorNeutral)
 		}
+
+		if result.Rule != nil && result.Err == nil {
+			fmt.Printf(" %s", result.Rule.String())
+		}
+
+		if result.Err != nil {
+			fmt.Printf(" %s", result.OriginalRule)
+			fmt.Printf(" - %s", result.Err)
+		}
+
+		fmt.Printf("\n")
 	}
 
 	if len(errorResults) != 0 {
-		fmt.Printf("\tThere are errors in your rule configuration. Fix above errors in your rule configuration and try again.\n")
+		fmt.Printf("There are errors in your rule configuration. Fix above errors in your rule configuration and try again.\n")
 		return nil
 	}
-
-
 
 	return nil
 }

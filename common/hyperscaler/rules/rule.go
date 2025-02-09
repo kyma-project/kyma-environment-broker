@@ -58,7 +58,9 @@ func getHyperscalerName(plan string) (result string) {
 }
 
 func (r *Rule) Matched(attributes *MatchableAttributes) bool {
-	return r.Plan == attributes.Plan && r.PlatformRegion == attributes.PlatformRegion && r.HyperscalerRegion == attributes.HyperscalerRegion
+	return r.Plan == attributes.Plan &&
+		(r.PlatformRegion == attributes.PlatformRegion || r.PlatformRegion == "*") &&
+		(r.HyperscalerRegion == attributes.HyperscalerRegion || r.HyperscalerRegion == "*")
 }
 
 func (r *Rule) SetAttributeValue(attribute, value string) (*Rule, error) {
@@ -161,14 +163,55 @@ func (r *Rule) String() string {
 		if r.Shared {
 			ruleStr += fmt.Sprintf("Shared")
 		}
-
-        ruleStr += fmt.Sprintf(" %-15s#  ", "\t")
-
-		labels := r.Labels()
-		for _, label := range labels {
-			ruleStr += fmt.Sprintf("%s, ", string(label))
-		}
+	}
+	
+    // ruleStr += fmt.Sprintf("%35s# ", "\t")
+	labels := r.Labels()
+	labelsStr := "# "
+	for _, label := range labels {
+		labelsStr += fmt.Sprintf("%s, ", string(label))
 	}
 
+	return fmt.Sprintf("%-50s %-50s", ruleStr, labelsStr)
+}
+
+func (r *Rule) StringNoLabels() string {
+	ruleStr := fmt.Sprintf("%s", r.Plan)
+
+	if r.PlatformRegion != "" || r.HyperscalerRegion != "" {
+		ruleStr += fmt.Sprintf("(")
+
+		if r.PlatformRegion != "" {
+			ruleStr += fmt.Sprintf("PR=%s", r.PlatformRegion)
+
+			if r.HyperscalerRegion != "" {
+				ruleStr += fmt.Sprintf(", ")
+			}
+		}
+
+		if r.HyperscalerRegion != "" {
+			ruleStr += fmt.Sprintf("HR=%s", r.HyperscalerRegion)
+		}
+
+		ruleStr += fmt.Sprintf(")")
+	}
+
+	if r.EuAccess || r.Shared {
+		ruleStr += fmt.Sprintf("-> ")
+
+		if r.EuAccess {
+			ruleStr += fmt.Sprintf("EU")
+
+			if r.Shared {
+				ruleStr += fmt.Sprintf(", ")
+			}
+		}
+
+		if r.Shared {
+			ruleStr += fmt.Sprintf("Shared")
+		}
+	}
+	
 	return ruleStr
 }
+
