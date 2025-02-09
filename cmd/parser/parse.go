@@ -31,6 +31,7 @@ type ParseCommand struct {
 	sort 			 bool
 	unique 			 bool
 	match 			 string
+	signature 			 bool
 }
 
 func NewParseCmd() *cobra.Command {
@@ -80,6 +81,7 @@ func NewParseCmd() *cobra.Command {
 	cobraCmd.Flags().BoolVarP(&cmd.useGrammar, "grammar", "g", false, "Use c parser and lexer generated with antlr instead of simple string splitting.")
 	cobraCmd.Flags().BoolVarP(&cmd.sort, "priority", "p", false, "Sort rule entries by their priority, in descending priority order.")
 	cobraCmd.Flags().BoolVarP(&cmd.unique, "unique", "u", false, "Display only non duplicated rules. Error entries are not considered for uniqueness.")
+	cobraCmd.Flags().BoolVarP(&cmd.signature, "signature", "s", false, "Mark rules with the mirrored signatures as duplicated. For example aws(PR=*, HR=westeurope) and aws(PR=westeurope, HR=*) are considered duplicated because of having mirrored signatures.")
 	cobraCmd.MarkFlagsOneRequired("entry", "file")
 
 	return cobraCmd
@@ -110,6 +112,7 @@ func (cmd *ParseCommand) Run() error {
 	allResults := make([]rules.ParsingResult, 0, len(entries))
 	okResults := make([]rules.ParsingResult, 0, len(entries))
 	errorResults := make([]rules.ParsingResult, 0, len(entries))
+
 	for _, entry := range entries {
 		rule, err := cmd.parser.Parse(entry)
 
@@ -135,7 +138,10 @@ func (cmd *ParseCommand) Run() error {
 		signatureSet := make(map[string]rules.ParsingResult)
 		uniqueResults := make([]rules.ParsingResult, 0, len(allResults))
 
+
 		for _, result := range allResults {
+
+			containsWildcards := false
 
 			if result.Err != nil {
 				uniqueResults = append(uniqueResults, result)
@@ -154,6 +160,9 @@ func (cmd *ParseCommand) Run() error {
 
 				signatureKey += "*"
 				negativeSignatureKey += "attr"
+				if result.Rule.PlatformRegion == "*" {
+					containsWildcards = true
+				}
 			} else {
 				key += result.Rule.PlatformRegion
 			
@@ -170,6 +179,11 @@ func (cmd *ParseCommand) Run() error {
 				signatureKey += "*"
 				negativeSignatureKey += "attr"
 
+			
+				if result.Rule.HyperscalerRegion == "*" {
+					containsWildcards = true
+				}
+
 			} else {
 				key += result.Rule.HyperscalerRegion
 			
@@ -179,7 +193,7 @@ func (cmd *ParseCommand) Run() error {
 
 			negativeSignatureItem, negativeSignatureExists := signatureSet[negativeSignatureKey]
 
-			if negativeSignatureExists {
+			if negativeSignatureExists && containsWildcards && cmd.signature{
 				err := fmt.Errorf("Duplicated negative signature with previously defined rule: '%s'", negativeSignatureItem.Rule.StringNoLabels())
 
 				errorResults = append(errorResults, rules.ParsingResult{OriginalRule: result.OriginalRule, Err: err})
