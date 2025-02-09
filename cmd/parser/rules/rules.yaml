@@ -1,0 +1,37 @@
+rule:
+- aws(PR=cf-eu11) ->	 EU
+- aws
+- aws -> EU, S
+- aws(PR=cf-eu11) -> EU
+- aws(PR=cf-eu11) -> S -> EU  # Separator -> is optional and max 1 occurance. Current count: 2
+- aws(PR=cf-eu11) ->,S        # Output Attributes cannot be empty. Attribute No. 1 is empty
+- aws(PR=cf-eu11) -> ,,       # Output Attributes cannot be empty. Attribute No. 1 is empty
+- aws(PR=cf-eu11) -> S,       # Output Attributes cannot be empty. Attribute No. 2 is empty
+- aws(PR=cf-eu11) -> S,AA     # Allowed Output Attributes are [S EU]. Attribute No. 2 has not supported value: AA
+- aws(PR=cf-eu11) ->AA        # Allowed Output Attributes are [S EU]. Attribute No. 1 has not supported value: AA
+- aws(PR=cf-eu11) -> EU, S, S # Max number of Output Attributes equals number of supported Output Attributes. Supported: 2, current: 3
+- aws(PR=cf-eu11) -> EU, EU   # Allowed Output Attributes could be specified once. Attribute No. 2 is duplicated, value: EU
+- aws(PR=cf-eu11) -> S, S     # Allowed Output Attributes could be specified once. Attribute No. 2 is duplicated, value: S}
+- aaws                           # Allowed Plans: [aws azure gcp]. Plan and/or Input Attributes has incorrect syntax: aaws
+- awss                           # Allowed Plans: [aws azure gcp]. Plan and/or Input Attributes has incorrect syntax: awss
+- aws()                          # Allowed Plans: [aws azure gcp]. Plan and/or Input Attributes has incorrect syntax: aws()
+- aws(                           # Allowed Plans: [aws azure gcp]. Plan and/or Input Attributes has incorrect syntax: aws(
+- aws(PR=cf-eu11                 # Allowed Plans: [aws azure gcp]. Plan and/or Input Attributes has incorrect syntax: aws(PR=cf-eu11
+- awsPR=cf-eu11)                 # Allowed Plans: [aws azure gcp]. Plan and/or Input Attributes has incorrect syntax: awsPR=cf-eu11)
+- aws(X)                         # Input Attributes must contain `=` character. Attribute No. 1 is invalid, value: X
+- aws(, )                        # Input Attributes cannot be empty. Attribute No. 1 is empty
+- aws(PR)                        # Input Attributes must contain `=` character.Attribute No. 1 is invalid, value: PR
+- aws(PR=cf-eu11, PR)            # Input Attributes must contain `=` character. Attribute No. 2 is ivalid, value: PR
+- aws(PR=cf-=eu11)               # Input Attributes must contain only one `=` character. Attribute No. 1 is invalid, value: PR=cf-=eu11
+- aws(PR=cf.PR=eu11)             # Input Attributes must contain only one `=` character. Attribute No. 1 is invalid, value: PR=cf.PR=eu11
+- aws(HR=westeu, PR=cf-=eu11)    # Input Attributes must contain only one `=` character. Attribute No. 2 is invalid, value: PR=cf-=eu11}
+- aws(PR=cf-eu11, PR=)           # Input Attributes could be specified once. Attribute No. 2 is duplicated, value: PR
+- aws( PR=)                      # Input Attribute PR cannot be empty. Attribute No. 1, value: PR=
+- aws(PR=cf-eu11, PR=cf-eu11)    # Input Attributes could be specified once. Attribute No. 2 is duplicated, value: PR
+- aws(HR=cf-eu11, PR=)           # Input Attribute PR cannot be empty. Attribute No. 2, value: PR=}
+- aws( HR=)                      # Input Attribute HR cannot be empty. Attribute No. 1, value: HR=
+- aws(HR=cf-eu11, HR=cf-eu11)    # Input Attributes could be specified once. Attribute No. 2 is duplicated, value: HR
+- aws(PR=cf-eu11, HR=12, PR=88)  # Max number of Input Attributes equals number of supported Input Attributes. Supported: 2, current: 3
+- aws(KK=cf-eu11)                # Allowed Input Attributes are [PR HR]. Attribute No. 1 has not supported value: KK
+- aws(PR=cf-eu11, KK=cf-eu11)    # Allowed Input Attributes are [PR HR]. Attribute No. 2 has not supported value: KK
+- aws(KK=cf-eu11, PR=cf-eu11 )   # Allowed Input Attributes are [PR HR]. Attribute No. 1 has not supported value: KK

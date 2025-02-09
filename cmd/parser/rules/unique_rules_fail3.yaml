@@ -1,0 +1,5 @@
+ rule: 
+  - aws(HR=aa, PR=cf)                         
+  - aws(PR=cf, HR=aa)   
+  - gcp
+  - gcp       
