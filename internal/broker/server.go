@@ -24,22 +24,23 @@ func (h CreateBindingHandler) ServeHTTP(rw http.ResponseWriter, r *http.Request)
 // copied from github.com/pivotal-cf/brokerapi/api.go
 func AttachRoutes(router *httputil.Router, serviceBroker domain.ServiceBroker, logger *slog.Logger, createBindingTimeout time.Duration, prefixes []string) *httputil.Router {
 	apiHandler := handlers.NewApiHandler(serviceBroker, logger)
+	subrouter := router.Subrouter()
 	deprovision := func(w http.ResponseWriter, req *http.Request) {
 		req2 := req.WithContext(context.WithValue(req.Context(), "User-Agent", req.Header.Get("User-Agent")))
 		apiHandler.Deprovision(w, req2)
 	}
 	prefixes = append(prefixes, "")
 	for _, prefix := range prefixes {
-		registerRoutesAndHandlers(router, &apiHandler, deprovision, createBindingTimeout, prefix)
+		registerRoutesAndHandlers(subrouter, &apiHandler, deprovision, createBindingTimeout, prefix)
 	}
-	router.Use(middlewares.AddCorrelationIDToContext)
+	subrouter.Use(middlewares.AddCorrelationIDToContext)
 	apiVersionMiddleware := middlewares.APIVersionMiddleware{Logger: logger}
 
-	router.Use(middlewares.AddOriginatingIdentityToContext)
-	router.Use(apiVersionMiddleware.ValidateAPIVersionHdr)
-	router.Use(middlewares.AddInfoLocationToContext)
+	subrouter.Use(middlewares.AddOriginatingIdentityToContext)
+	subrouter.Use(apiVersionMiddleware.ValidateAPIVersionHdr)
+	subrouter.Use(middlewares.AddInfoLocationToContext)
 
-	return router
+	return subrouter
 }
 
 func registerRoutesAndHandlers(router *httputil.Router, apiHandler *handlers.APIHandler, deprovisionFunc func(w http.ResponseWriter, req *http.Request), createBindingTimeout time.Duration, pathPrefix string) {

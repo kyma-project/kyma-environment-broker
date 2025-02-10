@@ -43,3 +43,9 @@ func (r *Router) HandleFunc(pattern string, handleFunc func(http.ResponseWriter,
 	}
 	r.ServeMux.Handle(pattern, handler)
 }
+
+func (r *Router) Subrouter() *Router {
+	subrouter := NewRouter()
+	r.subrouters = append(r.subrouters, subrouter.ServeMux)
+	return subrouter
+}
