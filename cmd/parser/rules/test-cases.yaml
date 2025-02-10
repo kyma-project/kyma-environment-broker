@@ -1,0 +1,7 @@
+cases:
+- rule:
+  - aws -> EU, S
+  - aws(PR=cf-eu11) -> EU
+  expected: |
+    ->     OK  aws-> EU, Shared                                   # hyperscalerType: aws, euAccess: true, shared: true,
+    ->     OK  aws(PR=cf-eu11)-> EU                               # hyperscalerType: aws_cf-eu11, euAccess: true,

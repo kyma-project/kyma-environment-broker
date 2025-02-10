@@ -1,3 +1,0 @@
-rule:
-- aws -> EU, S
-- aws(PR=cf-eu11) -> EU

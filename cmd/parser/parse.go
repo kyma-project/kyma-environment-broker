@@ -13,10 +13,10 @@ import (
 	"gopkg.in/yaml.v2"
 )
 
-const colorError = "\033[0;31m"
-const colorOk= "\033[32m" 
-const colorNeutral = "\033[0m"
-const colorMatched = "\033[34m"
+var colorError = "\033[0;31m"
+var colorOk= "\033[32m" 
+var colorNeutral = "\033[0m"
+var colorMatched = "\033[34m"
 
 func init() {
 	rootCmd.AddCommand(NewParseCmd())
@@ -32,6 +32,7 @@ type ParseCommand struct {
 	unique 			 bool
 	match 			 string
 	signature 			 bool
+	noColor 			 bool
 }
 
 func NewParseCmd() *cobra.Command {
@@ -46,7 +47,7 @@ func NewParseCmd() *cobra.Command {
 	hap parse -e 'azure(PR=westeurope), aws->EU' 
 	
 	# Parse multiple rules from a file using simple string splitting
-	hap parse -e 'azure(PR=westeurope), aws->EU' 
+	hap parse -e 'azure(PR=westeurope); aws->EU' 
 	
 	# Parse a rule entry using antlr parser and lexer
 	hap parse -g -e 'azure(PR=westeurope)' 
@@ -82,6 +83,7 @@ func NewParseCmd() *cobra.Command {
 	cobraCmd.Flags().BoolVarP(&cmd.sort, "priority", "p", false, "Sort rule entries by their priority, in descending priority order.")
 	cobraCmd.Flags().BoolVarP(&cmd.unique, "unique", "u", false, "Display only non duplicated rules. Error entries are not considered for uniqueness.")
 	cobraCmd.Flags().BoolVarP(&cmd.signature, "signature", "s", false, "Mark rules with the mirrored signatures as duplicated. For example aws(PR=*, HR=westeurope) and aws(PR=westeurope, HR=*) are considered duplicated because of having mirrored signatures.")
+	cobraCmd.Flags().BoolVarP(&cmd.noColor, "no-color", "n", false, "Disable use color characters when generating output.")
 	cobraCmd.MarkFlagsOneRequired("entry", "file")
 
 	return cobraCmd
@@ -90,8 +92,15 @@ func NewParseCmd() *cobra.Command {
 func (cmd *ParseCommand) Run() error {
 	cmd.parser = &rules.SimpleParser{}
 
+	if cmd.noColor {
+		colorError = ""
+		colorOk = ""
+		colorNeutral = ""
+		colorMatched = ""
+	}
+
 	if cmd.match != "" && (!cmd.sort || !cmd.unique) {
-		fmt.Printf("\tMatching is only supported when both priority and uniqnuess flags are specified.\n")
+		cmd.cobraCmd.Printf("\tMatching is only supported when both priority and uniqnuess flags are specified.\n")
 		return nil
 	}
 	
@@ -103,10 +112,10 @@ func (cmd *ParseCommand) Run() error {
 	if cmd.ruleFilePath != "" {
 		conf := &conf{}
 		conf.getConf(cmd.ruleFilePath)
-		fmt.Printf("Parsing rules from file: %s\n", cmd.ruleFilePath)
+		cmd.cobraCmd.Printf("Parsing rules from file: %s\n", cmd.ruleFilePath)
 		entries = conf.Rules
 	} else {
-		entries = strings.Split(cmd.rule, ",")
+		entries = strings.Split(cmd.rule, ";")
 	}
 
 	allResults := make([]rules.ParsingResult, 0, len(entries))
@@ -255,10 +264,10 @@ func (cmd *ParseCommand) Run() error {
 	
 	for _, result := range allResults {
 
-		fmt.Printf("-> ")
+		cmd.cobraCmd.Printf("-> ")
 		if result.Err != nil {
 
-			fmt.Printf("%s Error %s", colorError, colorNeutral)
+			cmd.cobraCmd.Printf("%s Error %s", colorError, colorNeutral)
 
 		} else {
 
@@ -266,27 +275,27 @@ func (cmd *ParseCommand) Run() error {
 				matched := result.Rule.Matched(testDataForMatching)
 
 				if matched {
-					fmt.Printf("%s Matched %s ", colorMatched, colorNeutral)
+					cmd.cobraCmd.Printf("%s Matched %s ", colorMatched, colorNeutral)
 				} 
 			}
 
-			fmt.Printf("%s %5s %s", colorOk, "OK", colorNeutral)
+			cmd.cobraCmd.Printf("%s %5s %s", colorOk, "OK", colorNeutral)
 		}
 
 		if result.Rule != nil && result.Err == nil {
-			fmt.Printf(" %s", result.Rule.String())
+			cmd.cobraCmd.Printf(" %s", result.Rule.String())
 		}
 
 		if result.Err != nil {
-			fmt.Printf(" %s", result.OriginalRule)
-			fmt.Printf(" - %s", result.Err)
+			cmd.cobraCmd.Printf(" %s", result.OriginalRule)
+			cmd.cobraCmd.Printf(" - %s", result.Err)
 		}
 
-		fmt.Printf("\n")
+		cmd.cobraCmd.Printf("\n")
 	}
 
 	if len(errorResults) != 0 {
-		fmt.Printf("There are errors in your rule configuration. Fix above errors in your rule configuration and try again.\n")
+		cmd.cobraCmd.Printf("There are errors in your rule configuration. Fix above errors in your rule configuration and try again.\n")
 		return nil
 	}
 
