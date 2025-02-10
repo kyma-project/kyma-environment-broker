@@ -29,15 +29,16 @@ func AttachRoutes(router *httputil.Router, serviceBroker domain.ServiceBroker, l
 		apiHandler.Deprovision(w, req2)
 	}
 	prefixes = append(prefixes, "")
-	for _, prefix := range prefixes {
-		registerRoutesAndHandlers(router, &apiHandler, deprovision, createBindingTimeout, prefix)
-	}
 	router.Use(middlewares.AddCorrelationIDToContext)
 	apiVersionMiddleware := middlewares.APIVersionMiddleware{Logger: logger}
 
 	router.Use(middlewares.AddOriginatingIdentityToContext)
 	router.Use(apiVersionMiddleware.ValidateAPIVersionHdr)
 	router.Use(middlewares.AddInfoLocationToContext)
+
+	for _, prefix := range prefixes {
+		registerRoutesAndHandlers(router, &apiHandler, deprovision, createBindingTimeout, prefix)
+	}
 
 	return router
 }
