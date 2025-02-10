@@ -1,0 +1,4 @@
+ rule: 
+  - aws                      
+  - aws(PR=*)   
+  - aws(HR=*)   
