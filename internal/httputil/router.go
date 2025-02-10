@@ -45,7 +45,11 @@ func (r *Router) HandleFunc(pattern string, handleFunc func(http.ResponseWriter,
 }
 
 func (r *Router) Subrouter() *Router {
-	subrouter := NewRouter()
+	subrouter := &Router{
+		ServeMux:    http.NewServeMux(),
+		subrouters:  make([]*http.ServeMux, 0),
+		middlewares: append([]middleware.MiddlewareFunc{}, r.middlewares...),
+	}
 	r.subrouters = append(r.subrouters, subrouter.ServeMux)
 	return subrouter
 }
