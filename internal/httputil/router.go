@@ -32,6 +32,9 @@ func (r *Router) Handle(pattern string, handler http.Handler) {
 	}
 	r.ServeMux.Handle(pattern, handler)
 }
+func (r *Router) HandleWithoutMiddleware(pattern string, handler http.Handler) {
+	r.ServeMux.Handle(pattern, handler)
+}
 
 func (r *Router) HandleFunc(pattern string, handleFunc func(http.ResponseWriter, *http.Request)) {
 	var handler http.Handler = http.HandlerFunc(handleFunc)
