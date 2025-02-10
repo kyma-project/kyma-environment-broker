@@ -113,6 +113,8 @@ func (cmd *ParseCommand) Run() error {
 	okResults := make([]rules.ParsingResult, 0, len(entries))
 	errorResults := make([]rules.ParsingResult, 0, len(entries))
 
+	resolvedRules := make(map[string]rules.ParsingResult)
+
 	for _, entry := range entries {
 		rule, err := cmd.parser.Parse(entry)
 
@@ -122,6 +124,9 @@ func (cmd *ParseCommand) Run() error {
 			errorResults = append(errorResults, result)	
 		} else {
 			okResults = append(okResults, result)	
+			if rule.IsResolved() {
+				resolvedRules[rule.StringNoLabels()] = result
+			}
 		}
 
 		allResults = append(allResults, result)
@@ -193,13 +198,22 @@ func (cmd *ParseCommand) Run() error {
 
 			negativeSignatureItem, negativeSignatureExists := signatureSet[negativeSignatureKey]
 
-			if negativeSignatureExists && containsWildcards && cmd.signature{
-				err := fmt.Errorf("Duplicated negative signature with previously defined rule: '%s'", negativeSignatureItem.Rule.StringNoLabels())
-
-				errorResults = append(errorResults, rules.ParsingResult{OriginalRule: result.OriginalRule, Err: err})
-
-				uniqueResults = append(uniqueResults, rules.ParsingResult{OriginalRule: result.OriginalRule, Err: err})
 			
+
+			if negativeSignatureExists && containsWildcards && cmd.signature {
+				
+				resolvingSignaturePossibleRule := result.Rule.Combine(*negativeSignatureItem.Rule)
+
+			resolvingKey := resolvingSignaturePossibleRule.StringNoLabels()
+			_, resolvingRuleExists := resolvedRules[resolvingKey]
+
+				if !resolvingRuleExists {
+					err := fmt.Errorf("Duplicated negative signature with previously defined rule: '%s', consider introducing a resolving rule '%s'", negativeSignatureItem.Rule.StringNoLabels(), resolvingKey)
+
+					errorResults = append(errorResults, rules.ParsingResult{OriginalRule: result.OriginalRule, Err: err})
+
+					uniqueResults = append(uniqueResults, rules.ParsingResult{OriginalRule: result.OriginalRule, Err: err})
+				}
 				continue
 			}
 
@@ -226,6 +240,12 @@ func (cmd *ParseCommand) Run() error {
 		}
 
 		allResults = uniqueResults
+	}
+
+	if cmd.sort {
+		allResults = rules.SortRuleEntries(allResults)
+		okResults = rules.SortRuleEntries(okResults)
+		errorResults = rules.SortRuleEntries(errorResults)
 	}
 
 	var testDataForMatching *rules.MatchableAttributes
@@ -271,6 +291,35 @@ func (cmd *ParseCommand) Run() error {
 	}
 
 	return nil
+}
+
+func resolvingSignatureFormat(item rules.ParsingResult) string {
+	positiveSignature := item.Rule.Plan
+	if item.Rule.PlatformRegion == "*" || item.Rule.PlatformRegion != "" {
+		positiveSignature += "PR:attr"
+	}
+
+	if item.Rule.HyperscalerRegion == "*" || item.Rule.HyperscalerRegion != "" {
+		positiveSignature += "HR:attr"
+	}
+	return positiveSignature
+}
+
+func resolvingSignature(item1, item2 rules.ParsingResult) string{
+	resolvingSignature := item1.Rule.Plan
+	if item1.Rule.PlatformRegion != "*" && item1.Rule.PlatformRegion != "" {
+		resolvingSignature += "(PR=" + item1.Rule.PlatformRegion
+	} else if item2.Rule.PlatformRegion != "*" && item2.Rule.PlatformRegion != "" {
+		resolvingSignature += "(PR=" + item2.Rule.PlatformRegion
+	}
+
+	if item1.Rule.HyperscalerRegion != "*" && item1.Rule.HyperscalerRegion != "" {
+		resolvingSignature += "HR=" + item1.Rule.HyperscalerRegion
+	} else if item2.Rule.HyperscalerRegion != "*" && item2.Rule.HyperscalerRegion != "" {	
+		resolvingSignature += "HR=" + item2.Rule.HyperscalerRegion
+	}
+
+	return resolvingSignature
 }
 
 type conf struct {

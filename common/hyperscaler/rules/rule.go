@@ -14,6 +14,7 @@ type Rule struct {
 	Shared            bool
 }
 
+
 type MatchableAttributes struct {
 	Plan              string `json:"plan"`
 	PlatformRegion    string `json:"platformRegion"`
@@ -164,8 +165,7 @@ func (r *Rule) String() string {
 			ruleStr += fmt.Sprintf("Shared")
 		}
 	}
-	
-    // ruleStr += fmt.Sprintf("%35s# ", "\t")
+
 	labels := r.Labels()
 	labelsStr := "# "
 	for _, label := range labels {
@@ -211,7 +211,28 @@ func (r *Rule) StringNoLabels() string {
 			ruleStr += fmt.Sprintf("Shared")
 		}
 	}
-	
+
 	return ruleStr
 }
 
+func (r *Rule) IsResolved() bool {
+	return r.Plan != "" && r.PlatformRegion != "*" && r.HyperscalerRegion != "*"
+}
+
+func (r *Rule) Combine(rule Rule) Rule {
+	newRule := Rule{Plan: rule.Plan}
+
+	if r.PlatformRegion != "" && r.PlatformRegion != "*" {
+		newRule.PlatformRegion = r.PlatformRegion
+	} else {
+		newRule.PlatformRegion = rule.PlatformRegion
+	}
+
+	if r.HyperscalerRegion != "" && r.HyperscalerRegion != "*" {
+		newRule.HyperscalerRegion = r.HyperscalerRegion
+	} else {
+		newRule.HyperscalerRegion = rule.HyperscalerRegion
+	}
+
+	return newRule
+}
