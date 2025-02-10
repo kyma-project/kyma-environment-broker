@@ -202,6 +202,7 @@ func (cmd *UpdateCommand) Run() error {
 		if err != nil {
 			return fmt.Errorf("failed to get current machine type: %v", err)
 		}
+		fmt.Printf("Determined machine type to update: %s\n", *currentMachineType)
 		newAdditionalWorkerNodePools := []map[string]interface{}{
 			{
 				"name":          "worker-1",
