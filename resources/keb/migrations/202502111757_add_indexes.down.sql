@@ -1,1 +1,1 @@
-DROP INDEX operations_by_iid_created_at;
+--DROP INDEX operations_by_iid_created_at;
