@@ -8,14 +8,14 @@ import (
 
 type Router struct {
 	*http.ServeMux
-	subrouters  []*http.ServeMux
+	Subrouters  []*http.ServeMux
 	middlewares []middleware.MiddlewareFunc
 }
 
 func NewRouter() *Router {
 	return &Router{
 		ServeMux:    http.NewServeMux(),
-		subrouters:  make([]*http.ServeMux, 0),
+		Subrouters:  make([]*http.ServeMux, 0),
 		middlewares: make([]middleware.MiddlewareFunc, 0),
 	}
 }
@@ -47,9 +47,9 @@ func (r *Router) HandleFunc(pattern string, handleFunc func(http.ResponseWriter,
 func (r *Router) Subrouter() *Router {
 	subrouter := &Router{
 		ServeMux:    http.NewServeMux(),
-		subrouters:  make([]*http.ServeMux, 0),
+		Subrouters:  make([]*http.ServeMux, 0),
 		middlewares: append([]middleware.MiddlewareFunc{}, r.middlewares...),
 	}
-	r.subrouters = append(r.subrouters, subrouter.ServeMux)
+	r.Subrouters = append(r.Subrouters, subrouter.ServeMux)
 	return subrouter
 }
