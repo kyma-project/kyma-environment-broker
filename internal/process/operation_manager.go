@@ -26,14 +26,14 @@ type OperationManager struct {
 
 func NewOperationManager(storage storage.Operations, step string, component kebErr.Component) *OperationManager {
 	op := &OperationManager{storage: storage, component: component, step: step, retryTimestamps: make(map[string]time.Time)}
-	go func(step string) {
+	go func(op *OperationManager, step string) {
 		ticker := time.NewTicker(time.Hour)
 		defer ticker.Stop()
 		for {
 			<-ticker.C
 			runTimestampGC(op, step)
 		}
-	}(step)
+	}(op, step)
 	return op
 }
 
