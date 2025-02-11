@@ -339,7 +339,8 @@ func main() {
 
 	createAPI(router, servicesConfig, inputFactory, &cfg, db, provisionQueue, deprovisionQueue, updateQueue, logger, log,
 		inputFactory.GetPlanDefaults, kcBuilder, skrK8sClientProvider, skrK8sClientProvider, gardenerClient, kcpK8sClient, eventBroker)
-
+	router.Handle("/oauth", router.Subrouters[0])
+	router.Handle("/oauth/{region}", router.Subrouters[0])
 	// create metrics endpoint
 	router.Handle("/metrics", promhttp.Handler())
 
@@ -448,11 +449,6 @@ func createAPI(router *httputil.Router, servicesConfig broker.ServicesConfig, pl
 	convergedCloudRegionProvider, err := broker.NewDefaultConvergedCloudRegionsProvider(cfg.SapConvergedCloudRegionMappingsFilePath, &broker.YamlRegionReader{})
 	fatalOnError(err, logs)
 	logs.Info(fmt.Sprintf("%s plan region mappings loaded", broker.SapConvergedCloudPlanName))
-
-	// create swagger endpoint
-	router.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
-		http.StripPrefix("/", http.FileServer(http.Dir("/swagger"))).ServeHTTP(w, r)
-	})
 
 	// create KymaEnvironmentBroker endpoints
 	kymaEnvBroker := &broker.KymaEnvironmentBroker{
