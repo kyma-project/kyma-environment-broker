@@ -403,7 +403,6 @@ func main() {
 	*/
 	svr := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		router.ServeHTTP(w, r)
-		router.Subrouters[0].ServeHTTP(w, r)
 		log.Info(fmt.Sprintf("Call handled: method=%s url=%s", r.Method, r.URL.Path))
 
 	})
