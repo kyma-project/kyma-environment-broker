@@ -336,6 +336,7 @@ func main() {
 
 	// create server
 	router := httputil.NewRouter()
+
 	createAPI(router, servicesConfig, inputFactory, &cfg, db, provisionQueue, deprovisionQueue, updateQueue, logger, log,
 		inputFactory.GetPlanDefaults, kcBuilder, skrK8sClientProvider, skrK8sClientProvider, gardenerClient, kcpK8sClient, eventBroker)
 
@@ -474,7 +475,8 @@ func createAPI(router *httputil.Router, servicesConfig broker.ServicesConfig, pl
 	router.Use(middleware.AddRegionToContext(cfg.DefaultRequestRegion))
 	router.Use(middleware.AddProviderToContext())
 	prefixes := []string{"/oauth", "/oauth/{region}"}
-	broker.AttachRoutes(router, kymaEnvBroker, logs, cfg.Broker.Binding.CreateBindingTimeout, prefixes)
+	subRouter := router.Subrouter()
+	broker.AttachRoutes(subRouter, kymaEnvBroker, logs, cfg.Broker.Binding.CreateBindingTimeout, prefixes)
 
 	respWriter := httputil.NewResponseWriter(logs, cfg.DevelopmentMode)
 	runtimesInfoHandler := appinfo.NewRuntimeInfoHandler(db.Instances(), db.Operations(), defaultPlansConfig, cfg.DefaultRequestRegion, respWriter)
