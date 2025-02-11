@@ -470,9 +470,10 @@ func createAPI(router *httputil.Router, servicesConfig broker.ServicesConfig, pl
 
 	router.Use(middleware.AddRegionToContext(cfg.DefaultRequestRegion))
 	router.Use(middleware.AddProviderToContext())
-	prefixes := []string{"/oauth", "/oauth/{region}"}
+	prefixes := []string{"/{region}", ""}
 	subRouter := router.Subrouter()
 	broker.AttachRoutes(subRouter, kymaEnvBroker, logs, cfg.Broker.Binding.CreateBindingTimeout, prefixes)
+	router.Handle("/oauth/", http.StripPrefix("/oauth", subRouter))
 
 	respWriter := httputil.NewResponseWriter(logs, cfg.DevelopmentMode)
 	runtimesInfoHandler := appinfo.NewRuntimeInfoHandler(db.Instances(), db.Operations(), defaultPlansConfig, cfg.DefaultRequestRegion, respWriter)

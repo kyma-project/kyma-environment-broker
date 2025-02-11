@@ -28,7 +28,6 @@ func AttachRoutes(router *httputil.Router, serviceBroker domain.ServiceBroker, l
 		req2 := req.WithContext(context.WithValue(req.Context(), "User-Agent", req.Header.Get("User-Agent")))
 		apiHandler.Deprovision(w, req2)
 	}
-	prefixes = append(prefixes, "")
 	router.Use(middlewares.AddCorrelationIDToContext)
 	apiVersionMiddleware := middlewares.APIVersionMiddleware{Logger: logger}
 
