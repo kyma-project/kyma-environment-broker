@@ -327,6 +327,13 @@ func main() {
 	// create kubeconfig builder
 	kcBuilder := kubeconfig.NewBuilder(provisionerClient, kcpK8sClient, skrK8sClientProvider)
 
+	// configure templates e.g. {{.domain}} to replace it with the domain name
+	swaggerTemplates := map[string]string{
+		"domain": cfg.DomainName,
+	}
+	err = swagger.NewTemplate("/swagger", swaggerTemplates).Execute()
+	fatalOnError(err, log)
+
 	// create server
 	router := httputil.NewRouter()
 	createAPI(router, servicesConfig, inputFactory, &cfg, db, provisionQueue, deprovisionQueue, updateQueue, logger, log,
@@ -441,12 +448,6 @@ func createAPI(router *httputil.Router, servicesConfig broker.ServicesConfig, pl
 	logs.Info(fmt.Sprintf("%s plan region mappings loaded", broker.SapConvergedCloudPlanName))
 
 	// create swagger endpoint
-	// configure templates e.g. {{.domain}} to replace it with the domain name
-	swaggerTemplates := map[string]string{
-		"domain": cfg.DomainName,
-	}
-	err = swagger.NewTemplate("/swagger", swaggerTemplates).Execute()
-	fatalOnError(err, logs)
 	router.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		http.StripPrefix("/", http.FileServer(http.Dir("/swagger"))).ServeHTTP(w, r)
 	})
