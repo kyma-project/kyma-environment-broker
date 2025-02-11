@@ -64,7 +64,7 @@ func TestMain(t *testing.T) {
             b := bytes.NewBufferString("")
             cmd.SetOut(b)
             
-            cmd.SetArgs([]string{"-e", entries, "-n"})
+            cmd.SetArgs([]string{"-e", entries, "-nups"})
             cmd.Execute()
             out, err := io.ReadAll(b)
             if err != nil {

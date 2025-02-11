@@ -1,0 +1,5 @@
+ rule: 
+  - aws                             
+  - aws(PR=cf-eu11, HR=*)          
+  - aws(PR=*, HR=eastus)
+  - aws(PR=cf-eu11, HR=eastus)

@@ -128,7 +128,7 @@ func (cmd *ParseCommand) Run() error {
 		rule, err := cmd.parser.Parse(entry)
 
 		result := rules.ParsingResult{OriginalRule: entry,  Rule: rule, Err: err}
-	
+		
 		if err != nil {
 			errorResults = append(errorResults, result)	
 		} else {
@@ -155,7 +155,7 @@ func (cmd *ParseCommand) Run() error {
 
 		for _, result := range allResults {
 
-			containsWildcards := false
+			// containsWildcards := false
 
 			if result.Err != nil {
 				uniqueResults = append(uniqueResults, result)
@@ -175,7 +175,7 @@ func (cmd *ParseCommand) Run() error {
 				signatureKey += "*"
 				negativeSignatureKey += "attr"
 				if result.Rule.PlatformRegion == "*" {
-					containsWildcards = true
+					// containsWildcards = true
 				}
 			} else {
 				key += result.Rule.PlatformRegion
@@ -195,7 +195,7 @@ func (cmd *ParseCommand) Run() error {
 
 			
 				if result.Rule.HyperscalerRegion == "*" {
-					containsWildcards = true
+					// containsWildcards = true
 				}
 
 			} else {
@@ -209,7 +209,8 @@ func (cmd *ParseCommand) Run() error {
 
 			
 
-			if negativeSignatureExists && containsWildcards && cmd.signature {
+			// if negativeSignatureExists && containsWildcards && cmd.signature {
+			if negativeSignatureExists && cmd.signature {
 				
 				resolvingSignaturePossibleRule := result.Rule.Combine(*negativeSignatureItem.Rule)
 

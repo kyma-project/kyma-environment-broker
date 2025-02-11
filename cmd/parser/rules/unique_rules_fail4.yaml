@@ -3,4 +3,5 @@
   - aws(PR=test2, HR=*)   
   - aws(PR=*, HR=t)
   - aws(PR=*, HR=*)   
-  - aws   
+  - aws
+  - aws(PR=test2, HR=test1)

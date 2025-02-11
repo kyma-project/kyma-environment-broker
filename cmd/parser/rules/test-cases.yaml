@@ -5,3 +5,27 @@ cases:
   expected: |
     ->     OK  aws-> EU, Shared                                   # hyperscalerType: aws, euAccess: true, shared: true,
     ->     OK  aws(PR=cf-eu11)-> EU                               # hyperscalerType: aws_cf-eu11, euAccess: true,
+  rules:
+  - aws                             
+  - aws(PR=cf-eu11) -> EU         
+  - azure                          
+  - azure(PR=cf-ch20) -> EU          
+  - gcp                             
+  - gcp(PR=cf-sa30)                 
+  - trial -> S                      
+  - sap-converged-cloud(HR=*) -> S  
+  - azure_lite                     
+  - preview                         
+  - free
+  expected: |
+    ->     OK  aws                                                # hyperscalerType: aws,
+    ->     OK  aws(PR=cf-eu11)-> EU                               # hyperscalerType: aws_cf-eu11, euAccess: true,
+    ->     OK  azure                                              # hyperscalerType: azure,
+    ->     OK  azure(PR=cf-ch20)-> EU                             # hyperscalerType: azure_cf-ch20, euAccess: true,
+    ->     OK  azure_lite                                         # hyperscalerType: azure_lite,
+    ->     OK  free                                               # hyperscalerType: aws/azure,
+    ->     OK  gcp                                                # hyperscalerType: gcp,
+    ->     OK  gcp(PR=cf-sa30)                                    # hyperscalerType: gcp_cf-sa30,
+    ->     OK  preview                                            # hyperscalerType: aws,
+    ->     OK  sap-converged-cloud(HR=*)-> Shared                 # hyperscalerType: openstack_*, shared: true,
+    ->     OK  trial-> Shared                                     # hyperscalerType: aws, shared: true,
