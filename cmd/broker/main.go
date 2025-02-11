@@ -362,12 +362,12 @@ func main() {
 	}
 
 	// configure templates e.g. {{.domain}} to replace it with the domain name
-	swaggerTemplates := map[string]string{
+	/*swaggerTemplates := map[string]string{
 		"domain": cfg.DomainName,
 	}
 	err = swagger.NewTemplate("/swagger", swaggerTemplates).Execute()
 	fatalOnError(err, log)
-
+	*/
 	// create /orchestration
 	orchestrationHandler.AttachRoutes(router)
 
@@ -387,11 +387,11 @@ func main() {
 	svr := handlers.CustomLoggingHandler(os.Stdout, router, func(writer io.Writer, params handlers.LogFormatterParams) {
 		log.Info(fmt.Sprintf("Call handled: method=%s url=%s statusCode=%d size=%d", params.Request.Method, params.URL.Path, params.StatusCode, params.Size))
 	})
+	*/ /*
+		router.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
+			http.StripPrefix("/", http.FileServer(http.Dir("/swagger"))).ServeHTTP(w, r)
+		})
 	*/
-	router.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
-		http.StripPrefix("/", http.FileServer(http.Dir("/swagger"))).ServeHTTP(w, r)
-	})
-
 	svr := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		router.ServeHTTP(w, r)
 		log.Info(fmt.Sprintf("Call handled: method=%s url=%s", r.Method, r.URL.Path))
@@ -439,6 +439,17 @@ func createAPI(router *httputil.Router, servicesConfig broker.ServicesConfig, pl
 	convergedCloudRegionProvider, err := broker.NewDefaultConvergedCloudRegionsProvider(cfg.SapConvergedCloudRegionMappingsFilePath, &broker.YamlRegionReader{})
 	fatalOnError(err, logs)
 	logs.Info(fmt.Sprintf("%s plan region mappings loaded", broker.SapConvergedCloudPlanName))
+
+	// create swagger endpoint
+	// configure templates e.g. {{.domain}} to replace it with the domain name
+	swaggerTemplates := map[string]string{
+		"domain": cfg.DomainName,
+	}
+	err = swagger.NewTemplate("/swagger", swaggerTemplates).Execute()
+	fatalOnError(err, logs)
+	router.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
+		http.StripPrefix("/", http.FileServer(http.Dir("/swagger"))).ServeHTTP(w, r)
+	})
 
 	// create KymaEnvironmentBroker endpoints
 	kymaEnvBroker := &broker.KymaEnvironmentBroker{
