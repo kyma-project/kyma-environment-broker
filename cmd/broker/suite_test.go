@@ -932,7 +932,7 @@ func fixConfig() *Config {
 		},
 		UpdateProcessingEnabled: true,
 		Broker: broker.Config{
-			EnablePlans:                           []string{"azure", "trial", "aws", "own_cluster", "preview", "sap-converged-cloud", "gcp", "free"},
+			EnablePlans:                           []string{"azure", "trial", "aws", "own_cluster", "preview", "sap-converged-cloud", "gcp", "free", "build-runtime-aws"},
 			AllowUpdateExpiredInstanceWithContext: true,
 			Binding: broker.BindingConfig{
 				Enabled:              true,
@@ -945,8 +945,8 @@ func fixConfig() *Config {
 			},
 			KimConfig: broker.KimConfig{
 				Enabled:      true,
-				Plans:        []string{"preview"},
-				KimOnlyPlans: []string{"preview"},
+				Plans:        []string{"preview", "build-runtime-aws"},
+				KimOnlyPlans: []string{"preview", "build-runtime-aws"},
 			},
 			WorkerHealthCheckInterval:     10 * time.Minute,
 			WorkerHealthCheckWarnInterval: 10 * time.Minute,

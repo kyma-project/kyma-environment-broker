@@ -34,6 +34,9 @@ const (
 	OwnClusterPlanName        = "own_cluster"
 	PreviewPlanID             = "5cb3d976-b85c-42ea-a636-79cadda109a9"
 	PreviewPlanName           = "preview"
+
+	BuildRuntimeAWSPlanID   = "6aae0ff3-89f7-4f12-86de-51466145422e"
+	BuildRuntimeAWSPlanName = "build-runtime-aws"
 )
 
 var PlanNamesMapping = map[string]string{
@@ -46,6 +49,7 @@ var PlanNamesMapping = map[string]string{
 	FreemiumPlanID:          FreemiumPlanName,
 	OwnClusterPlanID:        OwnClusterPlanName,
 	PreviewPlanID:           PreviewPlanName,
+	BuildRuntimeAWSPlanID:   BuildRuntimeAWSPlanName,
 }
 
 var PlanIDsMapping = map[string]string{
@@ -58,6 +62,7 @@ var PlanIDsMapping = map[string]string{
 	FreemiumPlanName:          FreemiumPlanID,
 	OwnClusterPlanName:        OwnClusterPlanID,
 	PreviewPlanName:           PreviewPlanID,
+	BuildRuntimeAWSPlanName:   BuildRuntimeAWSPlanID,
 }
 
 type TrialCloudRegion string
@@ -554,8 +559,12 @@ func Plans(plans PlansConfig, provider pkg.CloudProvider, includeAdditionalParam
 
 	trialSchema := TrialSchema(includeAdditionalParamsInSchema, false, enableLoadCurrentConfig)
 
+	awsServicePlan := func(id, name string) domain.ServicePlan {
+		return defaultServicePlan(id, name, plans, awsSchema, AWSSchema(awsMachinesDisplay, awsRegionsDisplay, awsMachineNames, includeAdditionalParamsInSchema, true, euAccessRestricted, shootAndSeedFeatureFlag, enableAdditionalWorkerNodePools, enableLoadCurrentConfig))
+	}
+
 	outputPlans := map[string]domain.ServicePlan{
-		AWSPlanID:        defaultServicePlan(AWSPlanID, AWSPlanName, plans, awsSchema, AWSSchema(awsMachinesDisplay, awsRegionsDisplay, awsMachineNames, includeAdditionalParamsInSchema, true, euAccessRestricted, shootAndSeedFeatureFlag, enableAdditionalWorkerNodePools, enableLoadCurrentConfig)),
+		AWSPlanID:        awsServicePlan(AWSPlanID, AWSPlanName),
 		GCPPlanID:        defaultServicePlan(GCPPlanID, GCPPlanName, plans, gcpSchema, GCPSchema(gcpMachinesDisplay, gcpRegionsDisplay, gcpMachinesNames, includeAdditionalParamsInSchema, true, shootAndSeedFeatureFlag, assuredWorkloads, enableAdditionalWorkerNodePools, enableLoadCurrentConfig)),
 		AzurePlanID:      defaultServicePlan(AzurePlanID, AzurePlanName, plans, azureSchema, AzureSchema(azureMachinesDisplay, azureRegionsDisplay, azureMachinesNames, includeAdditionalParamsInSchema, true, euAccessRestricted, shootAndSeedFeatureFlag, enableAdditionalWorkerNodePools, enableLoadCurrentConfig)),
 		AzureLitePlanID:  defaultServicePlan(AzureLitePlanID, AzureLitePlanName, plans, azureLiteSchema, AzureLiteSchema(azureLiteMachinesDisplay, azureRegionsDisplay, azureLiteMachinesNames, includeAdditionalParamsInSchema, true, euAccessRestricted, shootAndSeedFeatureFlag, enableAdditionalWorkerNodePools, enableLoadCurrentConfig)),
@@ -563,6 +572,8 @@ func Plans(plans PlansConfig, provider pkg.CloudProvider, includeAdditionalParam
 		TrialPlanID:      defaultServicePlan(TrialPlanID, TrialPlanName, plans, trialSchema, TrialSchema(includeAdditionalParamsInSchema, true, enableLoadCurrentConfig)),
 		OwnClusterPlanID: defaultServicePlan(OwnClusterPlanID, OwnClusterPlanName, plans, ownClusterSchema, OwnClusterSchema(true)),
 		PreviewPlanID:    defaultServicePlan(PreviewPlanID, PreviewPlanName, plans, previewCatalogSchema, PreviewSchema(awsMachinesDisplay, awsRegionsDisplay, awsMachineNames, includeAdditionalParamsInSchema, true, euAccessRestricted, enableAdditionalWorkerNodePools, enableLoadCurrentConfig)),
+
+		BuildRuntimeAWSPlanID: awsServicePlan(BuildRuntimeAWSPlanID, BuildRuntimeAWSPlanName),
 	}
 
 	if len(sapConvergedCloudRegions) != 0 {

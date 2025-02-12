@@ -21,15 +21,18 @@ func GetPlanSpecificValues(
 	defaultPurpose string,
 	commercialFailureTolerance string,
 ) (Values, error) {
+	awsInputProvider := &AWSInputProvider{
+		Purpose:                defaultPurpose,
+		MultiZone:              multiZoneCluster,
+		ProvisioningParameters: operation.ProvisioningParameters,
+		FailureTolerance:       commercialFailureTolerance,
+	}
 	var p Provider
 	switch operation.ProvisioningParameters.PlanID {
 	case broker.AWSPlanID:
-		p = &AWSInputProvider{
-			Purpose:                defaultPurpose,
-			MultiZone:              multiZoneCluster,
-			ProvisioningParameters: operation.ProvisioningParameters,
-			FailureTolerance:       commercialFailureTolerance,
-		}
+		p = awsInputProvider
+	case broker.BuildRuntimeAWSPlanID:
+		p = awsInputProvider
 	case broker.PreviewPlanID:
 		p = &AWSInputProvider{
 			Purpose:                defaultPurpose,
