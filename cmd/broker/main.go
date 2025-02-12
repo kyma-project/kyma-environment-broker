@@ -176,6 +176,7 @@ const (
 	checkKymaStageName          = "check_kyma"
 	createKymaResourceStageName = "create_kyma_resource"
 	startStageName              = "start"
+	brokerAPISubrouterName      = "brokerAPI"
 )
 
 func periodicProfile(logger *slog.Logger, profiler ProfilerConfig) {
@@ -332,8 +333,11 @@ func main() {
 
 	createAPI(router, servicesConfig, inputFactory, &cfg, db, provisionQueue, deprovisionQueue, updateQueue, logger, log,
 		inputFactory.GetPlanDefaults, kcBuilder, skrK8sClientProvider, skrK8sClientProvider, gardenerClient, kcpK8sClient, eventBroker)
-	router.Handle("/oauth", router.Subrouters[0])
-	router.Handle("/oauth/{region}", router.Subrouters[0])
+	subRouter, err := router.GetSubRouter(brokerAPISubrouterName)
+	fatalOnError(err, log)
+	router.Handle("/oauth", subRouter)
+	router.Handle("/oauth/{region}", subRouter)
+
 	// create metrics endpoint
 	router.Handle("/metrics", promhttp.Handler())
 
@@ -464,7 +468,8 @@ func createAPI(router *httputil.Router, servicesConfig broker.ServicesConfig, pl
 	router.Use(middleware.AddRegionToContext(cfg.DefaultRequestRegion))
 	router.Use(middleware.AddProviderToContext())
 	prefixes := []string{"/{region}", ""}
-	subRouter := router.Subrouter()
+	subRouter, err := router.NewSubRouter(brokerAPISubrouterName)
+	fatalOnError(err, logs)
 	broker.AttachRoutes(subRouter, kymaEnvBroker, logs, cfg.Broker.Binding.CreateBindingTimeout, prefixes)
 	router.Handle("/oauth/", http.StripPrefix("/oauth", subRouter))
 

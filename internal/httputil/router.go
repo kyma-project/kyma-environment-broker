@@ -1,6 +1,7 @@
 package httputil
 
 import (
+	"fmt"
 	"net/http"
 
 	"github.com/kyma-project/kyma-environment-broker/internal/middleware"
@@ -8,14 +9,14 @@ import (
 
 type Router struct {
 	*http.ServeMux
-	Subrouters  []*http.ServeMux
+	subrouters  map[string]*http.ServeMux
 	middlewares []middleware.MiddlewareFunc
 }
 
 func NewRouter() *Router {
 	return &Router{
 		ServeMux:    http.NewServeMux(),
-		Subrouters:  make([]*http.ServeMux, 0),
+		subrouters:  make(map[string]*http.ServeMux),
 		middlewares: make([]middleware.MiddlewareFunc, 0),
 	}
 }
@@ -44,12 +45,23 @@ func (r *Router) HandleFunc(pattern string, handleFunc func(http.ResponseWriter,
 	r.ServeMux.Handle(pattern, handler)
 }
 
-func (r *Router) Subrouter() *Router {
+func (r *Router) NewSubRouter(name string) (*Router, error) {
+	if _, exists := r.subrouters[name]; exists {
+		return nil, fmt.Errorf("subrouter %s already exists", name)
+	}
 	subrouter := &Router{
 		ServeMux:    http.NewServeMux(),
-		Subrouters:  make([]*http.ServeMux, 0),
+		subrouters:  make(map[string]*http.ServeMux),
 		middlewares: append([]middleware.MiddlewareFunc{}, r.middlewares...),
 	}
-	r.Subrouters = append(r.Subrouters, subrouter.ServeMux)
-	return subrouter
+	r.subrouters[name] = subrouter.ServeMux
+	return subrouter, nil
+}
+
+func (r *Router) GetSubRouter(name string) (*http.ServeMux, error) {
+	subrouter, exists := r.subrouters[name]
+	if !exists {
+		return nil, fmt.Errorf("subrouter %s not found", name)
+	}
+	return subrouter, nil
 }
