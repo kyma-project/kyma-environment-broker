@@ -1,7 +1,0 @@
- rule: 
-  - aws(PR=*, HR=test1)                         
-  - aws(PR=test2, HR=*)   
-  - aws(PR=*, HR=t)
-  - aws(PR=*, HR=*)   
-  - aws
-  - aws(PR=test2, HR=test1)

@@ -1,4 +1,0 @@
- rule: 
-  - aws                      
-  - aws(PR=westeurope, HR=*)   
-  - aws(PR=westeurope, HR=westeurope)   

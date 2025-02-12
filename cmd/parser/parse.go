@@ -207,8 +207,6 @@ func (cmd *ParseCommand) Run() error {
 
 			negativeSignatureItem, negativeSignatureExists := signatureSet[negativeSignatureKey]
 
-			
-
 			// if negativeSignatureExists && containsWildcards && cmd.signature {
 			if negativeSignatureExists && cmd.signature {
 				
@@ -223,8 +221,8 @@ func (cmd *ParseCommand) Run() error {
 					errorResults = append(errorResults, rules.ParsingResult{OriginalRule: result.OriginalRule, Err: err})
 
 					uniqueResults = append(uniqueResults, rules.ParsingResult{OriginalRule: result.OriginalRule, Err: err})
+					continue
 				}
-				continue
 			}
 
 			alreadyExists := false
@@ -238,15 +236,12 @@ func (cmd *ParseCommand) Run() error {
 				uniqueResults = append(uniqueResults, result)
 
 			} else {
-				
 				err := fmt.Errorf("Duplicated rule with previously defined rule: '%s'", item.Rule.StringNoLabels())
 
 				errorResults = append(errorResults, rules.ParsingResult{OriginalRule: result.OriginalRule, Err: err})
 
 				uniqueResults = append(uniqueResults, rules.ParsingResult{OriginalRule: result.OriginalRule, Err: err})
-
 			}
-
 		}
 
 		allResults = uniqueResults

@@ -18,6 +18,7 @@ type TestCases struct {
 }
 
 type TestCase struct {
+	Name string `yaml:"name"`
 	Rules []string `yaml:"rule"`
     ExpectedRule string `yaml:"expected"`
 }
@@ -34,7 +35,6 @@ func (c *TestCases) loadCases() *TestCases {
 
 	return c
 }
-
 
 func TestMain(t *testing.T) {
  
@@ -77,8 +77,8 @@ func TestMain(t *testing.T) {
             output = strings.ReplaceAll(output, "\r", "")
             output = strings.ReplaceAll(output, "\f", "")
 
-            fmt.Print("Output is: " + string(out))
-            require.Equal(t, expected, strings.Trim(output, "\n"))
+            
+            require.Equal(t, expected, strings.Trim(output, "\n"), fmt.Sprintf("While evaluating: %s", string(c.Name)))
         }
 
 
