@@ -9,6 +9,8 @@ import (
 	"strings"
 	"time"
 
+	"github.com/kyma-project/kyma-environment-broker/internal/regionssupportingmachine"
+
 	pkg "github.com/kyma-project/kyma-environment-broker/common/runtime"
 	"github.com/kyma-project/kyma-environment-broker/internal/assuredworkloads"
 
@@ -57,6 +59,8 @@ type UpdateEndpoint struct {
 
 	convergedCloudRegionsProvider ConvergedCloudRegionProvider
 
+	regionsSupportingMachine map[string][]string
+
 	kcpClient client.Client
 }
 
@@ -76,6 +80,7 @@ func NewUpdate(cfg Config,
 	kcBuilder kubeconfig.KcBuilder,
 	convergedCloudRegionsProvider ConvergedCloudRegionProvider,
 	kcpClient client.Client,
+	regionsSupportingMachine map[string][]string,
 ) *UpdateEndpoint {
 	return &UpdateEndpoint{
 		config:                                   cfg,
@@ -94,6 +99,7 @@ func NewUpdate(cfg Config,
 		kcBuilder:                                kcBuilder,
 		convergedCloudRegionsProvider:            convergedCloudRegionsProvider,
 		kcpClient:                                kcpClient,
+		regionsSupportingMachine:                 regionsSupportingMachine,
 	}
 }
 
@@ -233,6 +239,16 @@ func (b *UpdateEndpoint) processUpdateParameters(instance *internal.Instance, de
 		logger.Debug(fmt.Sprintf("Updating with params: %+v", params))
 	}
 
+	if !regionssupportingmachine.IsSupported(b.regionsSupportingMachine, valueOfPtr(instance.Parameters.Parameters.Region), valueOfPtr(params.MachineType)) {
+		message := fmt.Sprintf(
+			"machine type %s is not supported in region %s, available regions for this machine type: %v",
+			valueOfPtr(params.MachineType),
+			valueOfPtr(instance.Parameters.Parameters.Region),
+			strings.Join(regionssupportingmachine.SupportedRegions(b.regionsSupportingMachine, valueOfPtr(params.MachineType)), ", "),
+		)
+		return domain.UpdateServiceSpec{}, apiresponses.NewFailureResponse(fmt.Errorf(message), http.StatusBadRequest, message)
+	}
+
 	if params.OIDC.IsProvided() {
 		if err := params.OIDC.Validate(); err != nil {
 			logger.Error(fmt.Sprintf("invalid OIDC parameters: %s", err.Error()))
@@ -283,6 +299,16 @@ func (b *UpdateEndpoint) processUpdateParameters(instance *internal.Instance, de
 			}
 			if err := additionalWorkerNodePool.ValidateHAZonesUnchanged(instance.Parameters.Parameters.AdditionalWorkerNodePools); err != nil {
 				return domain.UpdateServiceSpec{}, apiresponses.NewFailureResponse(err, http.StatusBadRequest, err.Error())
+			}
+			if !regionssupportingmachine.IsSupported(b.regionsSupportingMachine, valueOfPtr(instance.Parameters.Parameters.Region), additionalWorkerNodePool.MachineType) {
+				message := fmt.Sprintf(
+					"machine type %s is not supported in region %s for additional worker node pool %s, available regions for this machine type: %v",
+					additionalWorkerNodePool.MachineType,
+					valueOfPtr(instance.Parameters.Parameters.Region),
+					additionalWorkerNodePool.Name,
+					strings.Join(regionssupportingmachine.SupportedRegions(b.regionsSupportingMachine, additionalWorkerNodePool.MachineType), ", "),
+				)
+				return domain.UpdateServiceSpec{}, apiresponses.NewFailureResponse(fmt.Errorf(message), http.StatusBadRequest, message)
 			}
 		}
 	}

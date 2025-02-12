@@ -291,6 +291,8 @@ spec:
               value: "{{ .Values.enableAdditionalWorkerNodePools }}"
             - name: APP_BROKER_ENABLE_LOAD_CURRENT_CONFIG
               value: "{{ .Values.enableLoadCurrentConfig }}"
+            - name: APP_REGIONS_SUPPORTING_MACHINE_FILE_PATH
+              value: /config/regionsSupportingMachine.yaml
           ports:
             - name: http
               containerPort: {{ .Values.broker.port }}

@@ -94,6 +94,7 @@ func TestProvision_Provision(t *testing.T) {
 			kcBuilder,
 			whitelist.Set{},
 			&broker.OneForAllConvergedCloudRegionsProvider{},
+			nil,
 		)
 
 		// when
@@ -170,6 +171,7 @@ func TestProvision_Provision(t *testing.T) {
 			kcBuilder,
 			whitelist.Set{},
 			&broker.OneForAllConvergedCloudRegionsProvider{},
+			nil,
 		)
 
 		// when
@@ -250,6 +252,7 @@ func TestProvision_Provision(t *testing.T) {
 			kcBuilder,
 			whitelist.Set{},
 			&broker.OneForAllConvergedCloudRegionsProvider{},
+			nil,
 		)
 
 		// when
@@ -301,6 +304,7 @@ func TestProvision_Provision(t *testing.T) {
 			kcBuilder,
 			whitelist.Set{},
 			&broker.OneForAllConvergedCloudRegionsProvider{},
+			nil,
 		)
 
 		// when shootDomain is missing
@@ -377,6 +381,7 @@ func TestProvision_Provision(t *testing.T) {
 			kcBuilder,
 			whitelist.Set{},
 			&broker.OneForAllConvergedCloudRegionsProvider{},
+			nil,
 		)
 
 		// when
@@ -456,6 +461,7 @@ func TestProvision_Provision(t *testing.T) {
 			kcBuilder,
 			whitelist.Set{},
 			&broker.OneForAllConvergedCloudRegionsProvider{},
+			nil,
 		)
 
 		// when
@@ -507,6 +513,7 @@ func TestProvision_Provision(t *testing.T) {
 			kcBuilder,
 			whitelist.Set{},
 			&broker.OneForAllConvergedCloudRegionsProvider{},
+			nil,
 		)
 
 		// when
@@ -559,6 +566,7 @@ func TestProvision_Provision(t *testing.T) {
 			kcBuilder,
 			whitelist.Set{},
 			&broker.OneForAllConvergedCloudRegionsProvider{},
+			nil,
 		)
 
 		// when
@@ -625,6 +633,7 @@ func TestProvision_Provision(t *testing.T) {
 			kcBuilder,
 			whitelist.Set{},
 			&broker.OneForAllConvergedCloudRegionsProvider{},
+			nil,
 		)
 
 		// when
@@ -691,6 +700,7 @@ func TestProvision_Provision(t *testing.T) {
 			kcBuilder,
 			whitelist.Set{},
 			&broker.OneForAllConvergedCloudRegionsProvider{},
+			nil,
 		)
 
 		// when
@@ -737,6 +747,7 @@ func TestProvision_Provision(t *testing.T) {
 			kcBuilder,
 			whitelist.Set{},
 			&broker.OneForAllConvergedCloudRegionsProvider{},
+			nil,
 		)
 
 		// when
@@ -776,6 +787,7 @@ func TestProvision_Provision(t *testing.T) {
 			kcBuilder,
 			whitelist.Set{},
 			&broker.OneForAllConvergedCloudRegionsProvider{},
+			nil,
 		)
 
 		// when
@@ -819,6 +831,7 @@ func TestProvision_Provision(t *testing.T) {
 			kcBuilder,
 			whitelist.Set{},
 			&broker.OneForAllConvergedCloudRegionsProvider{},
+			nil,
 		)
 
 		// when
@@ -866,6 +879,7 @@ func TestProvision_Provision(t *testing.T) {
 			kcBuilder,
 			whitelist.Set{},
 			&broker.OneForAllConvergedCloudRegionsProvider{},
+			nil,
 		)
 
 		// when
@@ -919,6 +933,7 @@ func TestProvision_Provision(t *testing.T) {
 			kcBuilder,
 			whitelist.Set{},
 			&broker.OneForAllConvergedCloudRegionsProvider{},
+			nil,
 		)
 
 		oidcParams := `"clientID":"client-id"`
@@ -978,6 +993,7 @@ func TestProvision_Provision(t *testing.T) {
 			kcBuilder,
 			whitelist.Set{},
 			&broker.OneForAllConvergedCloudRegionsProvider{},
+			nil,
 		)
 
 		oidcParams := `"issuerURL":"https://test.local"`
@@ -1037,6 +1053,7 @@ func TestProvision_Provision(t *testing.T) {
 			kcBuilder,
 			whitelist.Set{},
 			&broker.OneForAllConvergedCloudRegionsProvider{},
+			nil,
 		)
 
 		oidcParams := `"clientID":"client-id","issuerURL":"https://test.local","signingAlgs":["RS256","notValid"]`
@@ -1097,6 +1114,7 @@ func TestProvision_Provision(t *testing.T) {
 			kcBuilder,
 			whitelist.Set{},
 			&broker.OneForAllConvergedCloudRegionsProvider{},
+			nil,
 		)
 
 		oidcParams := `"clientID":"client-id","issuerURL":"https://test.local","signingAlgs":["RS256"]`
@@ -1143,6 +1161,7 @@ func TestProvision_Provision(t *testing.T) {
 			kcBuilder,
 			whitelist.Set{},
 			&broker.OneForAllConvergedCloudRegionsProvider{},
+			nil,
 		)
 
 		// when
@@ -1211,6 +1230,7 @@ func TestProvision_Provision(t *testing.T) {
 			kcBuilder,
 			whitelist.Set{},
 			&broker.OneForAllConvergedCloudRegionsProvider{},
+			nil,
 		)
 
 		// when
@@ -1269,6 +1289,7 @@ func TestProvision_Provision(t *testing.T) {
 			kcBuilder,
 			whitelist.Set{globalAccountID: struct{}{}},
 			&broker.OneForAllConvergedCloudRegionsProvider{},
+			nil,
 		)
 
 		// when
@@ -1325,6 +1346,7 @@ func TestProvision_Provision(t *testing.T) {
 			kcBuilder,
 			whitelist.Set{},
 			&broker.OneForAllConvergedCloudRegionsProvider{},
+			nil,
 		)
 
 		// when
@@ -1372,6 +1394,7 @@ func TestProvision_Provision(t *testing.T) {
 			kcBuilder,
 			whitelist.Set{},
 			&broker.OneForAllConvergedCloudRegionsProvider{},
+			nil,
 		)
 
 		// when
@@ -1422,6 +1445,7 @@ func TestProvision_Provision(t *testing.T) {
 			kcBuilder,
 			whitelist.Set{},
 			&broker.OneForAllConvergedCloudRegionsProvider{},
+			nil,
 		)
 
 		oidcParams := `"clientID":"client-id","issuerURL":"https://test.local","signingAlgs":["RS256"]`
@@ -1475,6 +1499,7 @@ func TestProvision_Provision(t *testing.T) {
 			kcBuilder,
 			whitelist.Set{},
 			&broker.OneForAllConvergedCloudRegionsProvider{},
+			nil,
 		)
 
 		oidcParams := `"clientID":"client-id","issuerURL":"https://test.local","signingAlgs":["RS256"]`
@@ -1592,6 +1617,7 @@ func TestAdditionalWorkerNodePools(t *testing.T) {
 				kcBuilder,
 				whitelist.Set{},
 				&broker.OneForAllConvergedCloudRegionsProvider{},
+				nil,
 			)
 
 			// when
@@ -1661,6 +1687,7 @@ func TestAdditionalWorkerNodePoolsForUnsupportedPlans(t *testing.T) {
 				kcBuilder,
 				whitelist.Set{},
 				&broker.OneForAllConvergedCloudRegionsProvider{},
+				nil,
 			)
 
 			additionalWorkerNodePools := `[{"name": "name-1", "machineType": "m6i.large", "autoScalerMin": 3, "autoScalerMax": 20}]`
@@ -1815,6 +1842,7 @@ func TestNetworkingValidation(t *testing.T) {
 				kcBuilder,
 				whitelist.Set{},
 				&broker.OneForAllConvergedCloudRegionsProvider{},
+				nil,
 			)
 
 			// when
@@ -1917,6 +1945,7 @@ func TestRegionValidation(t *testing.T) {
 				kcBuilder,
 				whitelist.Set{},
 				&broker.OneForAllConvergedCloudRegionsProvider{},
+				nil,
 			)
 
 			// when
@@ -1980,6 +2009,7 @@ func TestSapConvergedCloudBlocking(t *testing.T) {
 			kcBuilder,
 			whitelist.Set{},
 			&broker.OneForAllConvergedCloudRegionsProvider{},
+			nil,
 		)
 
 		oidcParams := `"clientID":"client-id","issuerURL":"https://test.local","signingAlgs":["RS256"]`
@@ -2031,6 +2061,7 @@ func TestSapConvergedCloudBlocking(t *testing.T) {
 			kcBuilder,
 			whitelist.Set{},
 			&broker.OneForAllConvergedCloudRegionsProvider{},
+			nil,
 		)
 
 		oidcParams := `"clientID":"client-id","issuerURL":"https://test.local","signingAlgs":["RS256"]`
@@ -2081,6 +2112,7 @@ func TestSapConvergedCloudBlocking(t *testing.T) {
 			kcBuilder,
 			whitelist.Set{},
 			&broker.OneForAllConvergedCloudRegionsProvider{},
+			nil,
 		)
 
 		oidcParams := `"clientID":"client-id","issuerURL":"https://test.local","signingAlgs":["RS256"]`
@@ -2104,6 +2136,122 @@ func TestSapConvergedCloudBlocking(t *testing.T) {
 		assert.Equal(t, expectedErr.ValidatedStatusCode(nil), apierr.ValidatedStatusCode(nil))
 		assert.Equal(t, expectedErr.LoggerAction(), apierr.LoggerAction())
 	})
+}
+
+func TestUnsupportedMachineType(t *testing.T) {
+	// given
+	log := slog.New(slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{
+		Level: slog.LevelInfo,
+	}))
+
+	memoryStorage := storage.NewMemoryStorage()
+
+	queue := &automock.Queue{}
+	queue.On("Add", mock.AnythingOfType("string"))
+
+	factoryBuilder := &automock.PlanValidator{}
+	factoryBuilder.On("IsPlanSupport", broker.GCPPlanID).Return(true)
+
+	planDefaults := func(planID string, platformProvider pkg.CloudProvider, provider *pkg.CloudProvider) (*gqlschema.ClusterConfigInput, error) {
+		return &gqlschema.ClusterConfigInput{}, nil
+	}
+	kcBuilder := &kcMock.KcBuilder{}
+	kcBuilder.On("GetServerURL", "").Return("", fmt.Errorf("error"))
+	// #create provisioner endpoint
+	provisionEndpoint := broker.NewProvision(
+		broker.Config{
+			EnablePlans:                     []string{"gcp"},
+			URL:                             brokerURL,
+			OnlySingleTrialPerGA:            true,
+			EnableKubeconfigURLLabel:        true,
+			EnableAdditionalWorkerNodePools: true,
+		},
+		gardener.Config{Project: "test", ShootDomain: "example.com", DNSProviders: fixDNSProviders()},
+		memoryStorage.Operations(),
+		memoryStorage.Instances(),
+		memoryStorage.InstancesArchived(),
+		queue,
+		factoryBuilder,
+		broker.PlansConfig{},
+		planDefaults,
+		log,
+		dashboardConfig,
+		kcBuilder,
+		whitelist.Set{},
+		&broker.OneForAllConvergedCloudRegionsProvider{},
+		fixRegionsSupportingMachine(),
+	)
+
+	// when
+	_, err := provisionEndpoint.Provision(fixRequestContext(t, "cf-eu10"), instanceID, domain.ProvisionDetails{
+		ServiceID:     serviceID,
+		PlanID:        broker.GCPPlanID,
+		RawParameters: json.RawMessage(fmt.Sprintf(`{"name": "%s", "region": "%s", "machineType": "%s" }`, clusterName, "europe-west3", "c2d-highmem-32")),
+		RawContext:    json.RawMessage(fmt.Sprintf(`{"globalaccount_id": "%s", "subaccount_id": "%s", "user_id": "%s"}`, "any-global-account-id", subAccountID, "Test@Test.pl")),
+	}, true)
+	t.Logf("%+v\n", *provisionEndpoint)
+
+	// then
+	assert.EqualError(t, err, "machine type c2d-highmem-32 is not supported in region europe-west3, available regions for this machine type: us-central1, southamerica-east1")
+}
+
+func TestUnsupportedMachineTypeInAdditionalWorkerNodePools(t *testing.T) {
+	// given
+	log := slog.New(slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{
+		Level: slog.LevelInfo,
+	}))
+
+	memoryStorage := storage.NewMemoryStorage()
+
+	queue := &automock.Queue{}
+	queue.On("Add", mock.AnythingOfType("string"))
+
+	factoryBuilder := &automock.PlanValidator{}
+	factoryBuilder.On("IsPlanSupport", broker.AWSPlanID).Return(true)
+
+	planDefaults := func(planID string, platformProvider pkg.CloudProvider, provider *pkg.CloudProvider) (*gqlschema.ClusterConfigInput, error) {
+		return &gqlschema.ClusterConfigInput{}, nil
+	}
+	kcBuilder := &kcMock.KcBuilder{}
+	kcBuilder.On("GetServerURL", "").Return("", fmt.Errorf("error"))
+	// #create provisioner endpoint
+	provisionEndpoint := broker.NewProvision(
+		broker.Config{
+			EnablePlans:                     []string{"aws"},
+			URL:                             brokerURL,
+			OnlySingleTrialPerGA:            true,
+			EnableKubeconfigURLLabel:        true,
+			EnableAdditionalWorkerNodePools: true,
+		},
+		gardener.Config{Project: "test", ShootDomain: "example.com", DNSProviders: fixDNSProviders()},
+		memoryStorage.Operations(),
+		memoryStorage.Instances(),
+		memoryStorage.InstancesArchived(),
+		queue,
+		factoryBuilder,
+		broker.PlansConfig{},
+		planDefaults,
+		log,
+		dashboardConfig,
+		kcBuilder,
+		whitelist.Set{},
+		&broker.OneForAllConvergedCloudRegionsProvider{},
+		fixRegionsSupportingMachine(),
+	)
+
+	additionalWorkerNodePools := `[{"name": "name-1", "machineType": "m8g.large", "haZones": true, "autoScalerMin": 3, "autoScalerMax": 20}]`
+
+	// when
+	_, err := provisionEndpoint.Provision(fixRequestContext(t, "cf-eu10"), instanceID, domain.ProvisionDetails{
+		ServiceID:     serviceID,
+		PlanID:        broker.AWSPlanID,
+		RawParameters: json.RawMessage(fmt.Sprintf(`{"name": "%s", "region": "%s", "additionalWorkerNodePools": %s }`, clusterName, "eu-central-1", additionalWorkerNodePools)),
+		RawContext:    json.RawMessage(fmt.Sprintf(`{"globalaccount_id": "%s", "subaccount_id": "%s", "user_id": "%s"}`, "any-global-account-id", subAccountID, "Test@Test.pl")),
+	}, true)
+	t.Logf("%+v\n", *provisionEndpoint)
+
+	// then
+	assert.EqualError(t, err, "machine type m8g.large is not supported in region eu-central-1 for additional worker node pool name-1, available regions for this machine type: ap-northeast-1, ap-southeast-1, ca-central-1")
 }
 
 func fixExistOperation() internal.Operation {
@@ -2155,5 +2303,12 @@ func fixDNSProviders() gardener.DNSProvidersData {
 				Type:           "route53_type_test",
 			},
 		},
+	}
+}
+
+func fixRegionsSupportingMachine() map[string][]string {
+	return map[string][]string{
+		"m8g":         {"ap-northeast-1", "ap-southeast-1", "ca-central-1"},
+		"c2d-highmem": {"us-central1", "southamerica-east1"},
 	}
 }

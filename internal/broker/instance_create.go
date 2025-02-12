@@ -11,6 +11,8 @@ import (
 	"net/netip"
 	"strings"
 
+	"github.com/kyma-project/kyma-environment-broker/internal/regionssupportingmachine"
+
 	"github.com/kyma-project/kyma-environment-broker/internal/assuredworkloads"
 
 	"github.com/kyma-project/kyma-environment-broker/internal/kubeconfig"
@@ -75,6 +77,8 @@ type ProvisionEndpoint struct {
 
 	convergedCloudRegionsProvider ConvergedCloudRegionProvider
 
+	regionsSupportingMachine map[string][]string
+
 	log *slog.Logger
 }
 
@@ -96,6 +100,7 @@ func NewProvision(cfg Config,
 	kcBuilder kubeconfig.KcBuilder,
 	freemiumWhitelist whitelist.Set,
 	convergedCloudRegionsProvider ConvergedCloudRegionProvider,
+	regionsSupportingMachine map[string][]string,
 ) *ProvisionEndpoint {
 	enabledPlanIDs := map[string]struct{}{}
 	for _, planName := range cfg.EnablePlans {
@@ -121,6 +126,7 @@ func NewProvision(cfg Config,
 		freemiumWhiteList:             freemiumWhitelist,
 		kcBuilder:                     kcBuilder,
 		convergedCloudRegionsProvider: convergedCloudRegionsProvider,
+		regionsSupportingMachine:      regionsSupportingMachine,
 	}
 }
 
@@ -283,6 +289,15 @@ func (b *ProvisionEndpoint) validateAndExtract(details domain.ProvisionDetails, 
 		return ersContext, parameters, fmt.Errorf("while obtaining plan defaults: %w", err)
 	}
 
+	if !regionssupportingmachine.IsSupported(b.regionsSupportingMachine, valueOfPtr(parameters.Region), valueOfPtr(parameters.MachineType)) {
+		return ersContext, parameters, fmt.Errorf(
+			"machine type %s is not supported in region %s, available regions for this machine type: %v",
+			valueOfPtr(parameters.MachineType),
+			valueOfPtr(parameters.Region),
+			strings.Join(regionssupportingmachine.SupportedRegions(b.regionsSupportingMachine, valueOfPtr(parameters.MachineType)), ", "),
+		)
+	}
+
 	if err := b.validateNetworking(parameters); err != nil {
 		return ersContext, parameters, err
 	}
@@ -317,6 +332,15 @@ func (b *ProvisionEndpoint) validateAndExtract(details domain.ProvisionDetails, 
 		for _, additionalWorkerNodePool := range parameters.AdditionalWorkerNodePools {
 			if err := additionalWorkerNodePool.Validate(); err != nil {
 				return ersContext, parameters, apiresponses.NewFailureResponse(err, http.StatusUnprocessableEntity, err.Error())
+			}
+			if !regionssupportingmachine.IsSupported(b.regionsSupportingMachine, valueOfPtr(parameters.Region), additionalWorkerNodePool.MachineType) {
+				return ersContext, parameters, fmt.Errorf(
+					"machine type %s is not supported in region %s for additional worker node pool %s, available regions for this machine type: %v",
+					additionalWorkerNodePool.MachineType,
+					valueOfPtr(parameters.Region),
+					additionalWorkerNodePool.Name,
+					strings.Join(regionssupportingmachine.SupportedRegions(b.regionsSupportingMachine, additionalWorkerNodePool.MachineType), ", "),
+				)
 			}
 		}
 	}
