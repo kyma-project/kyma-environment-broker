@@ -11,52 +11,11 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/kyma-project/kyma-environment-broker/common/runtime"
-	pkg "github.com/kyma-project/kyma-environment-broker/common/runtime"
 	"github.com/pivotal-cf/brokerapi/v8/domain"
 	"github.com/stretchr/testify/assert"
 )
 
 const deprovisioningRequestPathFormat = "oauth/v2/service_instances/%s?accepts_incomplete=true&service_id=47c9dcbf-ff30-448e-ab36-d3bad66ba281&plan_id=%s"
-
-func TestKymaReDeprovisionFailed(t *testing.T) {
-	// given
-	runtimeOptions := RuntimeOptions{
-		GlobalAccountID: globalAccountID,
-		SubAccountID:    badSubAccountID,
-		Provider:        pkg.AWS,
-	}
-
-	suite := NewDeprovisioningSuite(t)
-	defer suite.TearDown()
-	instanceId := suite.CreateProvisionedRuntime(runtimeOptions)
-	// when
-	deprovisioningOperationID := suite.CreateDeprovisioning(deprovisioningOpID, instanceId)
-
-	// then
-	suite.WaitForDeprovisioningState(deprovisioningOperationID, domain.InProgress)
-	suite.AssertProvisionerStartedDeprovisioning(deprovisioningOperationID)
-
-	// when
-	suite.FinishDeprovisioningOperationByProvisioner(deprovisioningOperationID)
-
-	// then
-	suite.WaitForDeprovisioningState(deprovisioningOperationID, domain.Succeeded)
-	suite.AssertInstanceNotRemoved(instanceId)
-
-	// when
-	reDeprovisioningOperationID := suite.CreateDeprovisioning(reDeprovisioningOpID, instanceId)
-
-	// then
-	suite.WaitForDeprovisioningState(reDeprovisioningOperationID, domain.InProgress)
-	suite.AssertProvisionerStartedDeprovisioning(reDeprovisioningOperationID)
-
-	// when
-	suite.FinishDeprovisioningOperationByProvisioner(reDeprovisioningOperationID)
-
-	// then
-	suite.WaitForDeprovisioningState(reDeprovisioningOperationID, domain.Succeeded)
-	suite.AssertInstanceNotRemoved(instanceId)
-}
 
 func TestReDeprovision(t *testing.T) {
 	// given
@@ -83,7 +42,7 @@ func TestReDeprovision(t *testing.T) {
 					}
 		}`)
 	opID := suite.DecodeOperationID(resp)
-	suite.processProvisioningByOperationID(opID)
+	suite.processKIMProvisioningByOperationID(opID)
 
 	// then
 	suite.WaitForOperationState(opID, domain.Succeeded)
@@ -92,14 +51,13 @@ func TestReDeprovision(t *testing.T) {
 	resp = suite.CallAPI("DELETE", fmt.Sprintf("oauth/v2/service_instances/%s?accepts_incomplete=true&plan_id=7d55d31d-35ae-4438-bf13-6ffdfa107d9f&service_id=47c9dcbf-ff30-448e-ab36-d3bad66ba281", iid),
 		``)
 	deprovisioningID := suite.DecodeOperationID(resp)
-	suite.FailDeprovisioningOperationByProvisioner(deprovisioningID)
 	suite.WaitForOperationState(deprovisioningID, domain.Failed)
 
 	// SECOND DEPROVISION
 	resp = suite.CallAPI("DELETE", fmt.Sprintf("oauth/v2/service_instances/%s?accepts_incomplete=true&plan_id=7d55d31d-35ae-4438-bf13-6ffdfa107d9f&service_id=47c9dcbf-ff30-448e-ab36-d3bad66ba281", iid),
 		``)
 	deprovisioningID = suite.DecodeOperationID(resp)
-	suite.FinishDeprovisioningOperationByProvisioner(deprovisioningID)
+	suite.FinishDeprovisioningOperationByKIM(deprovisioningID)
 	// then
 	suite.WaitForInstanceArchivedCreated(iid)
 	suite.WaitFor(func() bool {
@@ -109,50 +67,6 @@ func TestReDeprovision(t *testing.T) {
 		return resp.StatusCode == http.StatusOK && data.State == domain.Succeeded
 	})
 	suite.WaitForOperationsNotExists(iid)
-}
-
-func TestReDeprovision_BlockProvisionerCallSecondTime(t *testing.T) {
-	// TODO: remove this tests when migration to from Provisioner to KIM is done
-	// given
-	cfg := fixConfig()
-	suite := NewBrokerSuiteTestWithConfig(t, cfg)
-	suite.DisableProvisioner()
-	defer suite.TearDown()
-	iid := uuid.New().String()
-
-	// when
-	// preview plan - KIM only (no provisioner)
-	resp := suite.CallAPI("PUT", fmt.Sprintf("oauth/v2/service_instances/%s?accepts_incomplete=true", iid),
-		`{
-					"service_id": "47c9dcbf-ff30-448e-ab36-d3bad66ba281",
-					"plan_id": "5cb3d976-b85c-42ea-a636-79cadda109a9",
-					"context": {
-						"globalaccount_id": "g-account-id",
-						"subaccount_id": "sub-id",
-						"user_id": "john.smith@email.com"
-					},
-					"parameters": {
-						"name": "testing-cluster",
-						"region": "eu-central-1"
-					}
-		}`)
-	opID := suite.DecodeOperationID(resp)
-
-	suite.processKIMOnlyProvisioningByOperationID(opID)
-
-	// then
-	suite.WaitForOperationState(opID, domain.Succeeded)
-
-	// when
-	resp = suite.CallAPI("DELETE", fmt.Sprintf("oauth/v2/service_instances/%s?accepts_incomplete=true&plan_id=7d55d31d-35ae-4438-bf13-6ffdfa107d9f&service_id=47c9dcbf-ff30-448e-ab36-d3bad66ba281", iid), ``)
-	opID = suite.DecodeOperationID(resp)
-	suite.WaitForOperationState(opID, domain.Succeeded)
-
-	// second deprovisioning (the first one removed runtime resource, but second must not call Provisioner)
-	resp = suite.CallAPI("DELETE", fmt.Sprintf("oauth/v2/service_instances/%s?accepts_incomplete=true&plan_id=7d55d31d-35ae-4438-bf13-6ffdfa107d9f&service_id=47c9dcbf-ff30-448e-ab36-d3bad66ba281", iid), ``)
-	opID = suite.DecodeOperationID(resp)
-	suite.WaitForOperationState(opID, domain.Succeeded)
-
 }
 
 func TestDeprovisioning_HappyPathAWS(t *testing.T) {
@@ -180,7 +94,7 @@ func TestDeprovisioning_HappyPathAWS(t *testing.T) {
 		}`)
 	opID := suite.DecodeOperationID(resp)
 
-	suite.processProvisioningByOperationID(opID)
+	suite.processKIMProvisioningByOperationID(opID)
 
 	// then
 	suite.WaitForOperationState(opID, domain.Succeeded)
@@ -188,8 +102,8 @@ func TestDeprovisioning_HappyPathAWS(t *testing.T) {
 	// when
 	resp = suite.CallAPI("DELETE", fmt.Sprintf("oauth/v2/service_instances/%s?accepts_incomplete=true&plan_id=7d55d31d-35ae-4438-bf13-6ffdfa107d9f&service_id=47c9dcbf-ff30-448e-ab36-d3bad66ba281", iid),
 		``)
-	deprovisioningID := suite.WaitForLastOperation(iid, domain.InProgress)
-	suite.FinishDeprovisioningOperationByProvisioner(deprovisioningID)
+	opID = suite.DecodeOperationID(resp)
+	suite.FinishDeprovisioningOperationByKIM(opID)
 
 	// then
 	suite.WaitForInstanceArchivedCreated(iid)
@@ -231,14 +145,14 @@ func TestRuntimesEndpointForDeprovisionedInstance(t *testing.T) {
 				}
    }`)
 	opID := suite.DecodeOperationID(resp)
-	suite.processProvisioningByOperationID(opID)
+	suite.processKIMProvisioningByOperationID(opID)
 
 	// deprovision
 	resp = suite.CallAPI("DELETE", fmt.Sprintf("oauth/cf-eu10/v2/service_instances/%s?accepts_incomplete=true&plan_id=7d55d31d-35ae-4438-bf13-6ffdfa107d9f&service_id=47c9dcbf-ff30-448e-ab36-d3bad66ba281", iid1),
 		``)
 	depOpID := suite.DecodeOperationID(resp)
 
-	suite.FinishDeprovisioningOperationByProvisioner(depOpID)
+	suite.FinishDeprovisioningOperationByKIM(depOpID)
 	suite.WaitForOperationsNotExists(iid1) // deprovisioning completed, no operations in the DB
 
 	iid2 := uuid.New().String()
@@ -263,14 +177,14 @@ func TestRuntimesEndpointForDeprovisionedInstance(t *testing.T) {
 				}
    }`)
 	opID = suite.DecodeOperationID(resp)
-	suite.processProvisioningByOperationID(opID)
+	suite.processKIMProvisioningByOperationID(opID)
 
 	// deprovision
 	resp = suite.CallAPI("DELETE", fmt.Sprintf("oauth/cf-eu10/v2/service_instances/%s?accepts_incomplete=true&plan_id=b1a5764e-2ea1-4f95-94c0-2b4538b37b55&service_id=47c9dcbf-ff30-448e-ab36-d3bad66ba281", iid2),
 		``)
 	depOpID = suite.DecodeOperationID(resp)
 
-	suite.FinishDeprovisioningOperationByProvisioner(depOpID)
+	suite.FinishDeprovisioningOperationByKIM(depOpID)
 	suite.WaitForOperationsNotExists(iid2) // deprovisioning completed, no operations in the DB
 
 	// when

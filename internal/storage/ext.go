@@ -59,7 +59,6 @@ type Operations interface {
 	ListOperations(filter dbmodel.OperationFilter) ([]internal.Operation, int, int, error)
 
 	InsertOperation(operation internal.Operation) error
-	GetOperationByInstanceID(instanceID string) (*internal.Operation, error)
 	UpdateOperation(operation internal.Operation) (*internal.Operation, error)
 	ListOperationsByInstanceID(instanceID string) ([]internal.Operation, error)
 	ListOperationsByInstanceIDGroupByType(instanceID string) (*internal.GroupedOperations, error)

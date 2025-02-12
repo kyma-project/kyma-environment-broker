@@ -4,11 +4,12 @@ import (
 	"fmt"
 	"net/http"
 	"testing"
+	"time"
 
+	gardener "github.com/gardener/gardener/pkg/apis/core/v1beta1"
 	"github.com/google/uuid"
-	"github.com/kyma-project/control-plane/components/provisioner/pkg/gqlschema"
-	pkg "github.com/kyma-project/kyma-environment-broker/common/runtime"
 	"github.com/kyma-project/kyma-environment-broker/internal"
+	"github.com/kyma-project/kyma-environment-broker/internal/ptr"
 	"github.com/pivotal-cf/brokerapi/v8/domain"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -47,8 +48,8 @@ func TestUpdate(t *testing.T) {
 			}
    }`)
 	opID := suite.DecodeOperationID(resp)
-	suite.processProvisioningByOperationID(opID)
-
+	suite.processKIMProvisioningByOperationID(opID)
+	suite.WaitForOperationState(opID, domain.Succeeded)
 	// when
 	// OSB update:
 	resp = suite.CallAPI("PATCH", fmt.Sprintf("oauth/cf-eu10/v2/service_instances/%s?accepts_incomplete=true", iid),
@@ -69,26 +70,19 @@ func TestUpdate(t *testing.T) {
    }`)
 	assert.Equal(t, http.StatusAccepted, resp.StatusCode)
 	upgradeOperationID := suite.DecodeOperationID(resp)
-
-	suite.FinishUpdatingOperationByProvisioner(upgradeOperationID)
-
 	suite.WaitForOperationState(upgradeOperationID, domain.Succeeded)
 
-	disabled := false
-	suite.AssertShootUpgrade(upgradeOperationID, gqlschema.UpgradeShootInput{
-		GardenerConfig: &gqlschema.GardenerUpgradeInput{
-			OidcConfig: &gqlschema.OIDCConfigInput{
-				ClientID:       "id-ooo",
-				GroupsClaim:    "groups",
-				IssuerURL:      "https://issuer.url.com",
-				SigningAlgs:    []string{"RS256"},
-				UsernameClaim:  "sub",
-				UsernamePrefix: "-",
-			},
-			ShootNetworkingFilterDisabled: &disabled,
-		},
-		Administrators: []string{"john.smith@email.com"},
-	})
+	runtime := suite.GetRuntimeResourceByInstanceID(iid)
+	oidc := runtime.Spec.Shoot.Kubernetes.KubeAPIServer.OidcConfig
+
+	assert.Equal(t, "id-ooo", *oidc.ClientID)
+	assert.Equal(t, []string{"RS256"}, oidc.SigningAlgs)
+	assert.Equal(t, "https://issuer.url.com", *oidc.IssuerURL)
+	assert.Equal(t, "groups", *oidc.GroupsClaim)
+	assert.Equal(t, "sub", *oidc.UsernameClaim)
+	assert.Equal(t, "-", *oidc.UsernamePrefix)
+	assert.Equal(t, []string{"john.smith@email.com"}, runtime.Spec.Security.Administrators)
+
 	suite.AssertKymaResourceExists(opID)
 	suite.AssertKymaLabelsExist(opID, map[string]string{
 		"kyma-project.io/region":          "eu-west-1",
@@ -185,7 +179,8 @@ func TestUpdateFailedInstance(t *testing.T) {
 				}
    }`)
 	opID := suite.DecodeOperationID(resp)
-	suite.failProvisioningByOperationID(opID)
+	suite.failRuntimeByKIM(iid)
+	suite.WaitForOperationState(opID, domain.Failed)
 
 	// when
 	// OSB update:
@@ -244,7 +239,8 @@ func TestUpdate_SapConvergedCloud(t *testing.T) {
 			}
    }`)
 	opID := suite.DecodeOperationID(resp)
-	suite.processProvisioningByOperationID(opID)
+	suite.processKIMProvisioningByOperationID(opID)
+	suite.WaitForOperationState(opID, domain.Succeeded)
 
 	// when
 	// OSB update:
@@ -267,25 +263,18 @@ func TestUpdate_SapConvergedCloud(t *testing.T) {
 	assert.Equal(t, http.StatusAccepted, resp.StatusCode)
 	upgradeOperationID := suite.DecodeOperationID(resp)
 
-	suite.FinishUpdatingOperationByProvisioner(upgradeOperationID)
-
 	suite.WaitForOperationState(upgradeOperationID, domain.Succeeded)
 
-	disabled := false
-	suite.AssertShootUpgrade(upgradeOperationID, gqlschema.UpgradeShootInput{
-		GardenerConfig: &gqlschema.GardenerUpgradeInput{
-			OidcConfig: &gqlschema.OIDCConfigInput{
-				ClientID:       "id-ooo",
-				GroupsClaim:    "groups",
-				IssuerURL:      "https://issuer.url.com",
-				SigningAlgs:    []string{"RS256"},
-				UsernameClaim:  "sub",
-				UsernamePrefix: "-",
-			},
-			ShootNetworkingFilterDisabled: &disabled,
-		},
-		Administrators: []string{"john.smith@email.com"},
-	})
+	runtime := suite.GetRuntimeResourceByInstanceID(iid)
+	oidc := runtime.Spec.Shoot.Kubernetes.KubeAPIServer.OidcConfig
+	assert.Equal(t, "id-ooo", *oidc.ClientID)
+	assert.Equal(t, []string{"RS256"}, oidc.SigningAlgs)
+	assert.Equal(t, "https://issuer.url.com", *oidc.IssuerURL)
+	assert.Equal(t, "groups", *oidc.GroupsClaim)
+	assert.Equal(t, "sub", *oidc.UsernameClaim)
+	assert.Equal(t, "-", *oidc.UsernamePrefix)
+	assert.Equal(t, []string{"john.smith@email.com"}, runtime.Spec.Security.Administrators)
+
 	suite.AssertKymaResourceExists(opID)
 	suite.AssertKymaLabelsExist(opID, map[string]string{
 		"kyma-project.io/region":          "eu-de-1",
@@ -319,7 +308,7 @@ func TestUpdateDeprovisioningInstance(t *testing.T) {
 				}
    }`)
 	opID := suite.DecodeOperationID(resp)
-	suite.processProvisioningByOperationID(opID)
+	suite.processKIMProvisioningByOperationID(opID)
 
 	// deprovision
 	resp = suite.CallAPI("DELETE", fmt.Sprintf("oauth/cf-eu10/v2/service_instances/%s?accepts_incomplete=true&plan_id=7d55d31d-35ae-4438-bf13-6ffdfa107d9f&service_id=47c9dcbf-ff30-448e-ab36-d3bad66ba281", iid),
@@ -378,7 +367,8 @@ func TestUpdateWithNoOIDCParams(t *testing.T) {
 			}
 		}`)
 	opID := suite.DecodeOperationID(resp)
-	suite.processProvisioningByOperationID(opID)
+	suite.processKIMProvisioningByOperationID(opID)
+	suite.WaitForOperationState(opID, domain.Succeeded)
 
 	// when
 	// OSB update:
@@ -396,18 +386,17 @@ func TestUpdateWithNoOIDCParams(t *testing.T) {
 	assert.Equal(t, http.StatusAccepted, resp.StatusCode)
 	upgradeOperationID := suite.DecodeOperationID(resp)
 
-	suite.FinishUpdatingOperationByProvisioner(upgradeOperationID)
-
 	suite.WaitForOperationState(upgradeOperationID, domain.Succeeded)
 
-	disabled := false
-	suite.AssertShootUpgrade(upgradeOperationID, gqlschema.UpgradeShootInput{
-		GardenerConfig: &gqlschema.GardenerUpgradeInput{
-			OidcConfig:                    defaultOIDCConfig(),
-			ShootNetworkingFilterDisabled: &disabled,
-		},
-		Administrators: []string{"john.smith@email.com"},
-	})
+	runtime := suite.GetRuntimeResourceByInstanceID(iid)
+	oidc := runtime.Spec.Shoot.Kubernetes.KubeAPIServer.OidcConfig
+	assert.Equal(t, defaultOIDCValues().ClientID, *oidc.ClientID)
+	assert.Equal(t, defaultOIDCValues().SigningAlgs, oidc.SigningAlgs)
+	assert.Equal(t, defaultOIDCValues().IssuerURL, *oidc.IssuerURL)
+	assert.Equal(t, defaultOIDCValues().GroupsClaim, *oidc.GroupsClaim)
+	assert.Equal(t, defaultOIDCValues().UsernameClaim, *oidc.UsernameClaim)
+	assert.Equal(t, defaultOIDCValues().UsernamePrefix, *oidc.UsernamePrefix)
+	assert.Equal(t, []string{"john.smith@email.com"}, runtime.Spec.Security.Administrators)
 
 	suite.AssertKymaResourceExists(opID)
 	suite.AssertKymaLabelsExist(opID, map[string]string{
@@ -448,7 +437,8 @@ func TestUpdateWithNoOidcOnUpdate(t *testing.T) {
 			}
 		}`)
 	opID := suite.DecodeOperationID(resp)
-	suite.processProvisioningByOperationID(opID)
+	suite.processKIMProvisioningByOperationID(opID)
+	suite.WaitForOperationState(opID, domain.Succeeded)
 
 	// when
 	// OSB update:
@@ -467,25 +457,17 @@ func TestUpdateWithNoOidcOnUpdate(t *testing.T) {
 	assert.Equal(t, http.StatusAccepted, resp.StatusCode)
 	upgradeOperationID := suite.DecodeOperationID(resp)
 
-	suite.FinishUpdatingOperationByProvisioner(upgradeOperationID)
-
 	suite.WaitForOperationState(upgradeOperationID, domain.Succeeded)
 
-	disabled := false
-	suite.AssertShootUpgrade(upgradeOperationID, gqlschema.UpgradeShootInput{
-		GardenerConfig: &gqlschema.GardenerUpgradeInput{
-			OidcConfig: &gqlschema.OIDCConfigInput{
-				ClientID:       "id-ooo",
-				GroupsClaim:    "groups",
-				IssuerURL:      "https://issuer.url.com",
-				SigningAlgs:    []string{"RS256"},
-				UsernameClaim:  "sub",
-				UsernamePrefix: "-",
-			},
-			ShootNetworkingFilterDisabled: &disabled,
-		},
-		Administrators: []string{"john.smith@email.com"},
-	})
+	runtime := suite.GetRuntimeResourceByInstanceID(iid)
+	oidc := runtime.Spec.Shoot.Kubernetes.KubeAPIServer.OidcConfig
+	assert.Equal(t, "id-ooo", *oidc.ClientID)
+	assert.Equal(t, []string{"RS256"}, oidc.SigningAlgs)
+	assert.Equal(t, "https://issuer.url.com", *oidc.IssuerURL)
+	assert.Equal(t, "groups", *oidc.GroupsClaim)
+	assert.Equal(t, "sub", *oidc.UsernameClaim)
+	assert.Equal(t, "-", *oidc.UsernamePrefix)
+	assert.Equal(t, []string{"john.smith@email.com"}, runtime.Spec.Security.Administrators)
 }
 
 func TestUpdateContext(t *testing.T) {
@@ -519,7 +501,7 @@ func TestUpdateContext(t *testing.T) {
 			}
 		}`)
 	opID := suite.DecodeOperationID(resp)
-	suite.processProvisioningByOperationID(opID)
+	suite.processKIMProvisioningByOperationID(opID)
 	suite.WaitForOperationState(opID, domain.Succeeded)
 
 	// when
@@ -568,7 +550,7 @@ func TestKymaResourceNameAndGardenerClusterNameAfterUnsuspension(t *testing.T) {
 			}
 		}`)
 	opID := suite.DecodeOperationID(resp)
-	suite.processProvisioningByOperationID(opID)
+	suite.processKIMProvisioningByOperationID(opID)
 
 	suite.WaitForOperationState(opID, domain.Succeeded)
 
@@ -589,7 +571,7 @@ func TestKymaResourceNameAndGardenerClusterNameAfterUnsuspension(t *testing.T) {
 	assert.Equal(t, http.StatusOK, resp.StatusCode)
 	suspensionOpID := suite.WaitForLastOperation(iid, domain.InProgress)
 
-	suite.FinishDeprovisioningOperationByProvisioner(suspensionOpID)
+	suite.FinishDeprovisioningOperationByKIM(suspensionOpID)
 	suite.WaitForOperationState(suspensionOpID, domain.Succeeded)
 
 	// OSB update
@@ -605,161 +587,15 @@ func TestKymaResourceNameAndGardenerClusterNameAfterUnsuspension(t *testing.T) {
        }
        
    }`)
-	assert.Equal(t, http.StatusOK, resp.StatusCode)
-	suite.processProvisioningByInstanceID(iid)
 
+	assert.Equal(t, http.StatusOK, resp.StatusCode)
+	suite.processKIMProvisioningByInstanceID(iid)
+
+	// the old Kyma resource not exists
 	suite.AssertKymaResourceNotExists(opID)
 	instance := suite.GetInstance(iid)
 	assert.Equal(t, instance.RuntimeID, instance.InstanceDetails.KymaResourceName)
-	assert.Equal(t, instance.RuntimeID, instance.InstanceDetails.GardenerClusterName)
-	suite.AssertKymaResourceExistsByInstanceID(iid)
-}
-
-func TestUnsuspensionTrialKyma20(t *testing.T) {
-	suite := NewBrokerSuiteTest(t)
-	defer suite.TearDown()
-	iid := uuid.New().String()
-
-	resp := suite.CallAPI("PUT", fmt.Sprintf("oauth/v2/service_instances/%s?accepts_incomplete=true&plan_id=7d55d31d-35ae-4438-bf13-6ffdfa107d9f&service_id=47c9dcbf-ff30-448e-ab36-d3bad66ba281", iid),
-		`{
-			"service_id": "47c9dcbf-ff30-448e-ab36-d3bad66ba281",
-			"plan_id": "7d55d31d-35ae-4438-bf13-6ffdfa107d9f",
-			"context": {
-				"sm_operator_credentials": {
-					"clientid": "cid",
-					"clientsecret": "cs",
-					"url": "url",
-					"sm_url": "sm_url"
-				},
-				"globalaccount_id": "g-account-id",
-				"subaccount_id": "sub-id",
-				"user_id": "john.smith@email.com"
-			},
-			"parameters": {
-				"name": "testing-cluster"
-			}
-		}`)
-	opID := suite.DecodeOperationID(resp)
-	suite.processProvisioningByOperationID(opID)
-
-	suite.WaitForOperationState(opID, domain.Succeeded)
-
-	suite.fixServiceBindingAndInstances(t)
-
-	suite.Log("*** Suspension ***")
-
-	// Process Suspension
-	// OSB context update (suspension)
-	resp = suite.CallAPI("PATCH", fmt.Sprintf("oauth/v2/service_instances/%s?accepts_incomplete=true", iid),
-		`{
-       "service_id": "47c9dcbf-ff30-448e-ab36-d3bad66ba281",
-       "plan_id": "7d55d31d-35ae-4438-bf13-6ffdfa107d9f",
-       "context": {
-           "globalaccount_id": "g-account-id",
-           "user_id": "john.smith@email.com",
-           "active": false
-       }
-   }`)
-	assert.Equal(t, http.StatusOK, resp.StatusCode)
-	suspensionOpID := suite.WaitForLastOperation(iid, domain.InProgress)
-
-	suite.FinishDeprovisioningOperationByProvisioner(suspensionOpID)
-	suite.WaitForOperationState(suspensionOpID, domain.Succeeded)
-
-	suite.assertServiceBindingAndInstancesAreRemoved(t)
-
-	// OSB update
-	suite.Log("*** Unsuspension ***")
-	resp = suite.CallAPI("PATCH", fmt.Sprintf("oauth/v2/service_instances/%s?accepts_incomplete=true", iid),
-		`{
-       "service_id": "47c9dcbf-ff30-448e-ab36-d3bad66ba281",
-       "plan_id": "7d55d31d-35ae-4438-bf13-6ffdfa107d9f",
-       "context": {
-           "globalaccount_id": "g-account-id",
-           "user_id": "john.smith@email.com",
-			"active": true
-       }
-       
-   }`)
-	assert.Equal(t, http.StatusOK, resp.StatusCode)
-	suite.processProvisioningByInstanceID(iid)
-
-	suite.AssertKymaResourceNotExists(opID)
-	suite.AssertKymaLabelNotExists(opID, "kyma-project.io/platform-region")
-	suite.AssertKymaResourceExistsByInstanceID(iid)
-}
-
-func TestUnsuspensionTrialWithDefaultProviderChangedForNonDefaultRegion(t *testing.T) {
-	suite := NewBrokerSuiteTest(t)
-	defer suite.TearDown()
-	iid := uuid.New().String()
-
-	resp := suite.CallAPI("PUT", fmt.Sprintf("oauth/cf-us10/v2/service_instances/%s?accepts_incomplete=true&plan_id=7d55d31d-35ae-4438-bf13-6ffdfa107d9f&service_id=47c9dcbf-ff30-448e-ab36-d3bad66ba281", iid),
-		`{
-			"service_id": "47c9dcbf-ff30-448e-ab36-d3bad66ba281",
-			"plan_id": "7d55d31d-35ae-4438-bf13-6ffdfa107d9f",
-			"context": {
-				"sm_operator_credentials": {
-					"clientid": "cid",
-					"clientsecret": "cs",
-					"url": "url",
-					"sm_url": "sm_url"
-				},
-				"globalaccount_id": "g-account-id",
-				"subaccount_id": "sub-id",
-				"user_id": "john.smith@email.com"
-			},
-			"parameters": {
-				"name": "testing-cluster"
-			}
-		}`)
-	opID := suite.DecodeOperationID(resp)
-	suite.processProvisioningByOperationID(opID)
-	suite.WaitForOperationState(opID, domain.Succeeded)
-
-	suite.Log("*** Suspension ***")
-
-	// Process Suspension
-	// OSB context update (suspension)
-	resp = suite.CallAPI("PATCH", fmt.Sprintf("oauth/cf-us10/v2/service_instances/%s?accepts_incomplete=true", iid),
-		`{
-       "service_id": "47c9dcbf-ff30-448e-ab36-d3bad66ba281",
-       "plan_id": "7d55d31d-35ae-4438-bf13-6ffdfa107d9f",
-       "context": {
-           "globalaccount_id": "g-account-id",
-           "user_id": "john.smith@email.com",
-           "active": false
-       }
-   }`)
-	assert.Equal(t, http.StatusOK, resp.StatusCode)
-	suspensionOpID := suite.WaitForLastOperation(iid, domain.InProgress)
-
-	suite.FinishDeprovisioningOperationByProvisioner(suspensionOpID)
-	suite.WaitForOperationState(suspensionOpID, domain.Succeeded)
-
-	// WHEN
-	suite.ChangeDefaultTrialProvider(pkg.AWS)
-	// OSB update
-	suite.Log("*** Unsuspension ***")
-	resp = suite.CallAPI("PATCH", fmt.Sprintf("oauth/cf-us10/v2/service_instances/%s?accepts_incomplete=true", iid),
-		`{
-       "service_id": "47c9dcbf-ff30-448e-ab36-d3bad66ba281",
-       "plan_id": "7d55d31d-35ae-4438-bf13-6ffdfa107d9f",
-       "context": {
-           "globalaccount_id": "g-account-id",
-           "user_id": "john.smith@email.com",
-			"active": true
-       }
-       
-   }`)
-	assert.Equal(t, http.StatusOK, resp.StatusCode)
-	suite.processProvisioningByInstanceID(iid)
-	suite.WaitForOperationState(opID, domain.Succeeded)
-
-	// check that the region and zone is set
-	suite.AssertAWSRegionAndZone("us-east-1")
-
-	suite.AssertKymaResourceNotExists(opID)
+	time.Sleep(time.Second)
 	suite.AssertKymaResourceExistsByInstanceID(iid)
 }
 
@@ -819,8 +655,6 @@ func TestUpdateOidcForSuspendedInstance(t *testing.T) {
 	// given
 	suite := NewBrokerSuiteTest(t)
 	defer suite.TearDown()
-	// uncomment to see graphql queries
-	//suite.EnableDumpingProvisionerRequests()
 	iid := uuid.New().String()
 
 	resp := suite.CallAPI("PUT", fmt.Sprintf("oauth/cf-eu10/v2/service_instances/%s?accepts_incomplete=true&plan_id=7d55d31d-35ae-4438-bf13-6ffdfa107d9f&service_id=47c9dcbf-ff30-448e-ab36-d3bad66ba281", iid),
@@ -848,7 +682,7 @@ func TestUpdateOidcForSuspendedInstance(t *testing.T) {
 			}
 		}`)
 	opID := suite.DecodeOperationID(resp)
-	suite.processProvisioningByOperationID(opID)
+	suite.processKIMProvisioningByOperationID(opID)
 	suite.WaitForOperationState(opID, domain.Succeeded)
 
 	suite.Log("*** Suspension ***")
@@ -868,7 +702,7 @@ func TestUpdateOidcForSuspendedInstance(t *testing.T) {
 	assert.Equal(t, http.StatusOK, resp.StatusCode)
 	suspensionOpID := suite.WaitForLastOperation(iid, domain.InProgress)
 
-	suite.FinishDeprovisioningOperationByProvisioner(suspensionOpID)
+	suite.FinishDeprovisioningOperationByKIM(suspensionOpID)
 	suite.WaitForOperationState(suspensionOpID, domain.Succeeded)
 
 	// WHEN
@@ -914,14 +748,15 @@ func TestUpdateOidcForSuspendedInstance(t *testing.T) {
 
 	assert.Equal(t, http.StatusOK, resp.StatusCode)
 	// WHEN
-	suite.processProvisioningByInstanceID(iid)
+	suite.processKIMProvisioningByInstanceID(iid)
 
 	// THEN
 	suite.WaitForLastOperation(iid, domain.Succeeded)
 	instance = suite.GetInstance(iid)
 	assert.Equal(t, "id-oooxx", instance.Parameters.Parameters.OIDC.ClientID)
-	input := suite.LastProvisionInput(iid)
-	assert.Equal(t, "id-oooxx", input.ClusterConfig.GardenerConfig.OidcConfig.ClientID)
+
+	runtime := suite.GetRuntimeResourceByInstanceID(iid)
+	assert.Equal(t, "id-oooxx", *runtime.Spec.Shoot.Kubernetes.KubeAPIServer.OidcConfig.ClientID)
 
 	suite.AssertKymaResourceNotExists(opID)
 	suite.AssertKymaResourceExistsByInstanceID(iid)
@@ -958,7 +793,7 @@ func TestUpdateNotExistingInstance(t *testing.T) {
 			}
 		}`)
 	opID := suite.DecodeOperationID(resp)
-	suite.processProvisioningByOperationID(opID)
+	suite.processKIMProvisioningByOperationID(opID)
 	suite.WaitForOperationState(opID, domain.Succeeded)
 
 	// provisioning done, let's start an update
@@ -987,7 +822,6 @@ func TestUpdateDefaultAdminNotChanged(t *testing.T) {
 	suite := NewBrokerSuiteTest(t)
 	defer suite.TearDown()
 	id := uuid.New().String()
-	expectedAdmins := []string{"john.smith@email.com"}
 
 	resp := suite.CallAPI("PUT", fmt.Sprintf("oauth/cf-eu10/v2/service_instances/%s?accepts_incomplete=true&plan_id=7d55d31d-35ae-4438-bf13-6ffdfa107d9f&service_id=47c9dcbf-ff30-448e-ab36-d3bad66ba281", id),
 		`{
@@ -1010,7 +844,7 @@ func TestUpdateDefaultAdminNotChanged(t *testing.T) {
 		}`)
 
 	opID := suite.DecodeOperationID(resp)
-	suite.processProvisioningByOperationID(opID)
+	suite.processKIMProvisioningByOperationID(opID)
 	suite.WaitForOperationState(opID, domain.Succeeded)
 
 	// when
@@ -1033,25 +867,12 @@ func TestUpdateDefaultAdminNotChanged(t *testing.T) {
 	upgradeOperationID := suite.DecodeOperationID(resp)
 	assert.NotEmpty(t, upgradeOperationID)
 
-	suite.FinishUpdatingOperationByProvisioner(upgradeOperationID)
-
 	// then
 	suite.WaitForOperationState(upgradeOperationID, domain.Succeeded)
-	disabled := false
-	suite.AssertShootUpgrade(upgradeOperationID, gqlschema.UpgradeShootInput{
-		GardenerConfig: &gqlschema.GardenerUpgradeInput{
-			OidcConfig: &gqlschema.OIDCConfigInput{
-				ClientID:       "client-id-oidc",
-				GroupsClaim:    "groups",
-				IssuerURL:      "https://issuer.url",
-				SigningAlgs:    []string{"RS256"},
-				UsernameClaim:  "sub",
-				UsernamePrefix: "-",
-			},
-			ShootNetworkingFilterDisabled: &disabled,
-		},
-		Administrators: expectedAdmins,
-	})
+	runtime := suite.GetRuntimeResourceByInstanceID(id)
+
+	assert.Equal(t, []string{"john.smith@email.com"}, runtime.Spec.Security.Administrators)
+
 }
 
 func TestUpdateDefaultAdminNotChangedWithCustomOIDC(t *testing.T) {
@@ -1059,7 +880,6 @@ func TestUpdateDefaultAdminNotChangedWithCustomOIDC(t *testing.T) {
 	suite := NewBrokerSuiteTest(t)
 	defer suite.TearDown()
 	id := uuid.New().String()
-	expectedAdmins := []string{"john.smith@email.com"}
 
 	resp := suite.CallAPI("PUT", fmt.Sprintf("oauth/cf-eu10/v2/service_instances/%s?accepts_incomplete=true&plan_id=7d55d31d-35ae-4438-bf13-6ffdfa107d9f&service_id=47c9dcbf-ff30-448e-ab36-d3bad66ba281", id),
 		`{
@@ -1086,7 +906,7 @@ func TestUpdateDefaultAdminNotChangedWithCustomOIDC(t *testing.T) {
 		}`)
 
 	opID := suite.DecodeOperationID(resp)
-	suite.processProvisioningByOperationID(opID)
+	suite.processKIMProvisioningByOperationID(opID)
 	suite.WaitForOperationState(opID, domain.Succeeded)
 
 	// when
@@ -1109,25 +929,18 @@ func TestUpdateDefaultAdminNotChangedWithCustomOIDC(t *testing.T) {
 	upgradeOperationID := suite.DecodeOperationID(resp)
 	assert.NotEmpty(t, upgradeOperationID)
 
-	suite.FinishUpdatingOperationByProvisioner(upgradeOperationID)
-
 	// then
 	suite.WaitForOperationState(upgradeOperationID, domain.Succeeded)
-	disabled := false
-	suite.AssertShootUpgrade(upgradeOperationID, gqlschema.UpgradeShootInput{
-		GardenerConfig: &gqlschema.GardenerUpgradeInput{
-			OidcConfig: &gqlschema.OIDCConfigInput{
-				ClientID:       "id-ooo",
-				GroupsClaim:    "groups",
-				IssuerURL:      "https://issuer.url.com",
-				SigningAlgs:    []string{"RS256"},
-				UsernameClaim:  "sub",
-				UsernamePrefix: "-",
-			},
-			ShootNetworkingFilterDisabled: &disabled,
-		},
-		Administrators: expectedAdmins,
-	})
+
+	runtime := suite.GetRuntimeResourceByInstanceID(id)
+	oidc := runtime.Spec.Shoot.Kubernetes.KubeAPIServer.OidcConfig
+	assert.Equal(t, "id-ooo", *oidc.ClientID)
+	assert.Equal(t, []string{"RS256"}, oidc.SigningAlgs)
+	assert.Equal(t, "https://issuer.url.com", *oidc.IssuerURL)
+	assert.Equal(t, "groups", *oidc.GroupsClaim)
+	assert.Equal(t, "sub", *oidc.UsernameClaim)
+	assert.Equal(t, "-", *oidc.UsernamePrefix)
+	assert.Equal(t, []string{"john.smith@email.com"}, runtime.Spec.Security.Administrators)
 }
 
 func TestUpdateDefaultAdminNotChangedWithOIDCUpdate(t *testing.T) {
@@ -1135,7 +948,6 @@ func TestUpdateDefaultAdminNotChangedWithOIDCUpdate(t *testing.T) {
 	suite := NewBrokerSuiteTest(t)
 	defer suite.TearDown()
 	id := uuid.New().String()
-	expectedAdmins := []string{"john.smith@email.com"}
 
 	resp := suite.CallAPI("PUT", fmt.Sprintf("oauth/cf-eu10/v2/service_instances/%s?accepts_incomplete=true&plan_id=7d55d31d-35ae-4438-bf13-6ffdfa107d9f&service_id=47c9dcbf-ff30-448e-ab36-d3bad66ba281", id),
 		`{
@@ -1158,7 +970,7 @@ func TestUpdateDefaultAdminNotChangedWithOIDCUpdate(t *testing.T) {
 		}`)
 
 	opID := suite.DecodeOperationID(resp)
-	suite.processProvisioningByOperationID(opID)
+	suite.processKIMProvisioningByOperationID(opID)
 	suite.WaitForOperationState(opID, domain.Succeeded)
 
 	// when
@@ -1189,25 +1001,17 @@ func TestUpdateDefaultAdminNotChangedWithOIDCUpdate(t *testing.T) {
 	upgradeOperationID := suite.DecodeOperationID(resp)
 	assert.NotEmpty(t, upgradeOperationID)
 
-	suite.FinishUpdatingOperationByProvisioner(upgradeOperationID)
-
 	// then
 	suite.WaitForOperationState(upgradeOperationID, domain.Succeeded)
-	disabled := false
-	suite.AssertShootUpgrade(upgradeOperationID, gqlschema.UpgradeShootInput{
-		GardenerConfig: &gqlschema.GardenerUpgradeInput{
-			OidcConfig: &gqlschema.OIDCConfigInput{
-				ClientID:       "id-ooo",
-				GroupsClaim:    "new-groups-claim",
-				IssuerURL:      "https://issuer.url.com",
-				SigningAlgs:    []string{"RS384"},
-				UsernameClaim:  "new-username-claim",
-				UsernamePrefix: "->",
-			},
-			ShootNetworkingFilterDisabled: &disabled,
-		},
-		Administrators: expectedAdmins,
-	})
+	runtime := suite.GetRuntimeResourceByInstanceID(id)
+	oidc := runtime.Spec.Shoot.Kubernetes.KubeAPIServer.OidcConfig
+	assert.Equal(t, "id-ooo", *oidc.ClientID)
+	assert.Equal(t, []string{"RS384"}, oidc.SigningAlgs)
+	assert.Equal(t, "https://issuer.url.com", *oidc.IssuerURL)
+	assert.Equal(t, "new-groups-claim", *oidc.GroupsClaim)
+	assert.Equal(t, "new-username-claim", *oidc.UsernameClaim)
+	assert.Equal(t, "->", *oidc.UsernamePrefix)
+	assert.Equal(t, []string{"john.smith@email.com"}, runtime.Spec.Security.Administrators)
 }
 
 func TestUpdateDefaultAdminOverwritten(t *testing.T) {
@@ -1238,7 +1042,7 @@ func TestUpdateDefaultAdminOverwritten(t *testing.T) {
 		}`)
 
 	opID := suite.DecodeOperationID(resp)
-	suite.processProvisioningByOperationID(opID)
+	suite.processKIMProvisioningByOperationID(opID)
 	suite.WaitForOperationState(opID, domain.Succeeded)
 
 	// when
@@ -1262,25 +1066,10 @@ func TestUpdateDefaultAdminOverwritten(t *testing.T) {
 	upgradeOperationID := suite.DecodeOperationID(resp)
 	assert.NotEmpty(t, upgradeOperationID)
 
-	suite.FinishUpdatingOperationByProvisioner(upgradeOperationID)
-
 	// then
 	suite.WaitForOperationState(upgradeOperationID, domain.Succeeded)
-	disabled := false
-	suite.AssertShootUpgrade(upgradeOperationID, gqlschema.UpgradeShootInput{
-		GardenerConfig: &gqlschema.GardenerUpgradeInput{
-			OidcConfig: &gqlschema.OIDCConfigInput{
-				ClientID:       "client-id-oidc",
-				GroupsClaim:    "groups",
-				IssuerURL:      "https://issuer.url",
-				SigningAlgs:    []string{"RS256"},
-				UsernameClaim:  "sub",
-				UsernamePrefix: "-",
-			},
-			ShootNetworkingFilterDisabled: &disabled,
-		},
-		Administrators: expectedAdmins,
-	})
+	runtime := suite.GetRuntimeResourceByInstanceID(id)
+	assert.Equal(t, expectedAdmins, runtime.Spec.Security.Administrators)
 	suite.AssertInstanceRuntimeAdmins(id, expectedAdmins)
 }
 
@@ -1313,9 +1102,12 @@ func TestUpdateCustomAdminsNotChanged(t *testing.T) {
 		}`)
 
 	opID := suite.DecodeOperationID(resp)
-	suite.processProvisioningByOperationID(opID)
+	suite.processKIMProvisioningByOperationID(opID)
 	suite.WaitForOperationState(opID, domain.Succeeded)
 
+	r := suite.GetRuntimeResourceByInstanceID(id)
+
+	fmt.Println("Runtime: ", r.Spec.Security.Administrators)
 	// when
 	resp = suite.CallAPI("PATCH", fmt.Sprintf("oauth/cf-eu10/v2/service_instances/%s?accepts_incomplete=true", id),
 		`{
@@ -1336,25 +1128,18 @@ func TestUpdateCustomAdminsNotChanged(t *testing.T) {
 	upgradeOperationID := suite.DecodeOperationID(resp)
 	assert.NotEmpty(t, upgradeOperationID)
 
-	suite.FinishUpdatingOperationByProvisioner(upgradeOperationID)
-
 	// then
 	suite.WaitForOperationState(upgradeOperationID, domain.Succeeded)
-	disabled := false
-	suite.AssertShootUpgrade(upgradeOperationID, gqlschema.UpgradeShootInput{
-		GardenerConfig: &gqlschema.GardenerUpgradeInput{
-			OidcConfig: &gqlschema.OIDCConfigInput{
-				ClientID:       "client-id-oidc",
-				GroupsClaim:    "groups",
-				IssuerURL:      "https://issuer.url",
-				SigningAlgs:    []string{"RS256"},
-				UsernameClaim:  "sub",
-				UsernamePrefix: "-",
-			},
-			ShootNetworkingFilterDisabled: &disabled,
-		},
-		Administrators: expectedAdmins,
-	})
+	time.Sleep(time.Second)
+	runtime := suite.GetRuntimeResourceByInstanceID(id)
+	oidc := runtime.Spec.Shoot.Kubernetes.KubeAPIServer.OidcConfig
+	assert.Equal(t, "client-id-oidc", *oidc.ClientID)
+	assert.Equal(t, []string{"RS256"}, oidc.SigningAlgs)
+	assert.Equal(t, "https://issuer.url", *oidc.IssuerURL)
+	assert.Equal(t, "groups", *oidc.GroupsClaim)
+	assert.Equal(t, "sub", *oidc.UsernameClaim)
+	assert.Equal(t, "-", *oidc.UsernamePrefix)
+	assert.Equal(t, expectedAdmins, runtime.Spec.Security.Administrators)
 	suite.AssertInstanceRuntimeAdmins(id, expectedAdmins)
 }
 
@@ -1387,7 +1172,7 @@ func TestUpdateCustomAdminsNotChangedWithOIDCUpdate(t *testing.T) {
 		}`)
 
 	opID := suite.DecodeOperationID(resp)
-	suite.processProvisioningByOperationID(opID)
+	suite.processKIMProvisioningByOperationID(opID)
 	suite.WaitForOperationState(opID, domain.Succeeded)
 
 	// when
@@ -1414,25 +1199,18 @@ func TestUpdateCustomAdminsNotChangedWithOIDCUpdate(t *testing.T) {
 	upgradeOperationID := suite.DecodeOperationID(resp)
 	assert.NotEmpty(t, upgradeOperationID)
 
-	suite.FinishUpdatingOperationByProvisioner(upgradeOperationID)
-
 	// then
 	suite.WaitForOperationState(upgradeOperationID, domain.Succeeded)
-	disabled := false
-	suite.AssertShootUpgrade(upgradeOperationID, gqlschema.UpgradeShootInput{
-		GardenerConfig: &gqlschema.GardenerUpgradeInput{
-			OidcConfig: &gqlschema.OIDCConfigInput{
-				ClientID:       "id-ooo",
-				GroupsClaim:    "groups",
-				IssuerURL:      "https://newissuer.url.com",
-				SigningAlgs:    []string{"ES256"},
-				UsernameClaim:  "sub",
-				UsernamePrefix: "-",
-			},
-			ShootNetworkingFilterDisabled: &disabled,
-		},
-		Administrators: expectedAdmins,
-	})
+	runtime := suite.GetRuntimeResourceByInstanceID(id)
+	oidc := runtime.Spec.Shoot.Kubernetes.KubeAPIServer.OidcConfig
+	assert.Equal(t, "id-ooo", *oidc.ClientID)
+	assert.Equal(t, []string{"ES256"}, oidc.SigningAlgs)
+	assert.Equal(t, "https://newissuer.url.com", *oidc.IssuerURL)
+	assert.Equal(t, "groups", *oidc.GroupsClaim)
+	assert.Equal(t, "sub", *oidc.UsernameClaim)
+	assert.Equal(t, "-", *oidc.UsernamePrefix)
+	assert.Equal(t, expectedAdmins, runtime.Spec.Security.Administrators)
+
 	suite.AssertInstanceRuntimeAdmins(id, expectedAdmins)
 }
 
@@ -1465,7 +1243,7 @@ func TestUpdateCustomAdminsOverwritten(t *testing.T) {
 		}`)
 
 	opID := suite.DecodeOperationID(resp)
-	suite.processProvisioningByOperationID(opID)
+	suite.processKIMProvisioningByOperationID(opID)
 	suite.WaitForOperationState(opID, domain.Succeeded)
 
 	// when
@@ -1489,25 +1267,19 @@ func TestUpdateCustomAdminsOverwritten(t *testing.T) {
 	upgradeOperationID := suite.DecodeOperationID(resp)
 	assert.NotEmpty(t, upgradeOperationID)
 
-	suite.FinishUpdatingOperationByProvisioner(upgradeOperationID)
-
 	// then
 	suite.WaitForOperationState(upgradeOperationID, domain.Succeeded)
-	disabled := false
-	suite.AssertShootUpgrade(upgradeOperationID, gqlschema.UpgradeShootInput{
-		GardenerConfig: &gqlschema.GardenerUpgradeInput{
-			OidcConfig: &gqlschema.OIDCConfigInput{
-				ClientID:       "client-id-oidc",
-				GroupsClaim:    "groups",
-				IssuerURL:      "https://issuer.url",
-				SigningAlgs:    []string{"RS256"},
-				UsernameClaim:  "sub",
-				UsernamePrefix: "-",
-			},
-			ShootNetworkingFilterDisabled: &disabled,
-		},
-		Administrators: expectedAdmins,
-	})
+
+	runtime := suite.GetRuntimeResourceByInstanceID(id)
+	oidc := runtime.Spec.Shoot.Kubernetes.KubeAPIServer.OidcConfig
+	assert.Equal(t, "client-id-oidc", *oidc.ClientID)
+	assert.Equal(t, []string{"RS256"}, oidc.SigningAlgs)
+	assert.Equal(t, "https://issuer.url", *oidc.IssuerURL)
+	assert.Equal(t, "groups", *oidc.GroupsClaim)
+	assert.Equal(t, "sub", *oidc.UsernameClaim)
+	assert.Equal(t, "-", *oidc.UsernamePrefix)
+	assert.Equal(t, expectedAdmins, runtime.Spec.Security.Administrators)
+
 	suite.AssertInstanceRuntimeAdmins(id, expectedAdmins)
 }
 
@@ -1540,7 +1312,7 @@ func TestUpdateCustomAdminsOverwrittenWithOIDCUpdate(t *testing.T) {
 		}`)
 
 	opID := suite.DecodeOperationID(resp)
-	suite.processProvisioningByOperationID(opID)
+	suite.processKIMProvisioningByOperationID(opID)
 	suite.WaitForOperationState(opID, domain.Succeeded)
 
 	// when
@@ -1568,25 +1340,19 @@ func TestUpdateCustomAdminsOverwrittenWithOIDCUpdate(t *testing.T) {
 
 	// when
 	upgradeOperationID := suite.DecodeOperationID(resp)
-	suite.FinishUpdatingOperationByProvisioner(upgradeOperationID)
 
 	// then
 	suite.WaitForOperationState(upgradeOperationID, domain.Succeeded)
-	disabled := false
-	suite.AssertShootUpgrade(upgradeOperationID, gqlschema.UpgradeShootInput{
-		GardenerConfig: &gqlschema.GardenerUpgradeInput{
-			OidcConfig: &gqlschema.OIDCConfigInput{
-				ClientID:       "id-ooo",
-				GroupsClaim:    "new-groups-claim",
-				IssuerURL:      "https://issuer.url.com",
-				SigningAlgs:    []string{"ES384"},
-				UsernameClaim:  "sub",
-				UsernamePrefix: "-",
-			},
-			ShootNetworkingFilterDisabled: &disabled,
-		},
-		Administrators: expectedAdmins,
-	})
+	runtime := suite.GetRuntimeResourceByInstanceID(id)
+	oidc := runtime.Spec.Shoot.Kubernetes.KubeAPIServer.OidcConfig
+	assert.Equal(t, "id-ooo", *oidc.ClientID)
+	assert.Equal(t, []string{"ES384"}, oidc.SigningAlgs)
+	assert.Equal(t, "https://issuer.url.com", *oidc.IssuerURL)
+	assert.Equal(t, "new-groups-claim", *oidc.GroupsClaim)
+	assert.Equal(t, "sub", *oidc.UsernameClaim)
+	assert.Equal(t, "-", *oidc.UsernamePrefix)
+	assert.Equal(t, expectedAdmins, runtime.Spec.Security.Administrators)
+
 	suite.AssertInstanceRuntimeAdmins(id, expectedAdmins)
 }
 
@@ -1620,7 +1386,8 @@ func TestUpdateCustomAdminsOverwrittenTwice(t *testing.T) {
 		}`)
 
 	opID := suite.DecodeOperationID(resp)
-	suite.processProvisioningByOperationID(opID)
+	suite.processKIMProvisioningByOperationID(opID)
+	suite.WaitForOperationState(opID, domain.Succeeded)
 
 	// when
 	resp = suite.CallAPI("PATCH", fmt.Sprintf("oauth/cf-eu10/v2/service_instances/%s?accepts_incomplete=true", id),
@@ -1643,25 +1410,12 @@ func TestUpdateCustomAdminsOverwrittenTwice(t *testing.T) {
 	upgradeOperationID := suite.DecodeOperationID(resp)
 	assert.NotEmpty(t, upgradeOperationID)
 
-	suite.FinishUpdatingOperationByProvisioner(upgradeOperationID)
-
 	// then
 	suite.WaitForOperationState(upgradeOperationID, domain.Succeeded)
-	disabled := false
-	suite.AssertShootUpgrade(upgradeOperationID, gqlschema.UpgradeShootInput{
-		GardenerConfig: &gqlschema.GardenerUpgradeInput{
-			OidcConfig: &gqlschema.OIDCConfigInput{
-				ClientID:       "client-id-oidc",
-				GroupsClaim:    "groups",
-				IssuerURL:      "https://issuer.url",
-				SigningAlgs:    []string{"RS256"},
-				UsernameClaim:  "sub",
-				UsernamePrefix: "-",
-			},
-			ShootNetworkingFilterDisabled: &disabled,
-		},
-		Administrators: expectedAdmins1,
-	})
+
+	runtime := suite.GetRuntimeResourceByInstanceID(id)
+	assert.Equal(t, expectedAdmins1, runtime.Spec.Security.Administrators)
+
 	suite.AssertInstanceRuntimeAdmins(id, expectedAdmins1)
 
 	// when
@@ -1688,23 +1442,10 @@ func TestUpdateCustomAdminsOverwrittenTwice(t *testing.T) {
 
 	// when
 	upgradeOperationID = suite.DecodeOperationID(resp)
-	suite.FinishUpdatingOperationByProvisioner(upgradeOperationID)
+	suite.WaitForOperationState(upgradeOperationID, domain.Succeeded)
 
-	disabled = false
-	suite.AssertShootUpgrade(upgradeOperationID, gqlschema.UpgradeShootInput{
-		GardenerConfig: &gqlschema.GardenerUpgradeInput{
-			OidcConfig: &gqlschema.OIDCConfigInput{
-				ClientID:       "id-ooo",
-				GroupsClaim:    "groups",
-				IssuerURL:      "https://newissuer.url.com",
-				SigningAlgs:    []string{"PS256"},
-				UsernameClaim:  "sub",
-				UsernamePrefix: "->",
-			},
-			ShootNetworkingFilterDisabled: &disabled,
-		},
-		Administrators: expectedAdmins2,
-	})
+	runtime = suite.GetRuntimeResourceByInstanceID(id)
+	assert.Equal(t, expectedAdmins2, runtime.Spec.Security.Administrators)
 	suite.AssertInstanceRuntimeAdmins(id, expectedAdmins2)
 }
 
@@ -1739,7 +1480,8 @@ func TestUpdateAutoscalerParams(t *testing.T) {
 }`)
 
 	opID := suite.DecodeOperationID(resp)
-	suite.processProvisioningByOperationID(opID)
+	suite.processKIMProvisioningByOperationID(opID)
+	suite.WaitForOperationState(opID, domain.Succeeded)
 
 	// when
 	resp = suite.CallAPI("PATCH", fmt.Sprintf("oauth/cf-eu10/v2/service_instances/%s?accepts_incomplete=true", id), `
@@ -1764,30 +1506,27 @@ func TestUpdateAutoscalerParams(t *testing.T) {
 	// when
 	upgradeOperationID := suite.DecodeOperationID(resp)
 	assert.NotEmpty(t, upgradeOperationID)
-	suite.FinishUpdatingOperationByProvisioner(upgradeOperationID)
 
 	min, max, surge, unav := 15, 25, 10, 7
 	// then
 	suite.WaitForOperationState(upgradeOperationID, domain.Succeeded)
-	disabled := false
-	suite.AssertShootUpgrade(upgradeOperationID, gqlschema.UpgradeShootInput{
-		GardenerConfig: &gqlschema.GardenerUpgradeInput{
-			OidcConfig: &gqlschema.OIDCConfigInput{
-				ClientID:       "client-id-oidc",
-				GroupsClaim:    "groups",
-				IssuerURL:      "https://issuer.url",
-				SigningAlgs:    []string{"RS256"},
-				UsernameClaim:  "sub",
-				UsernamePrefix: "-",
-			},
-			AutoScalerMin:                 &min,
-			AutoScalerMax:                 &max,
-			MaxSurge:                      &surge,
-			MaxUnavailable:                &unav,
-			ShootNetworkingFilterDisabled: &disabled,
-		},
-		Administrators: []string{"john.smith@email.com"},
-	})
+	runtime := suite.GetRuntimeResourceByInstanceID(id)
+	assert.True(t, runtime.Spec.Security.Networking.Filter.Egress.Enabled)
+	assert.Equal(t, min, int(runtime.Spec.Shoot.Provider.Workers[0].Minimum))
+	assert.Equal(t, max, int(runtime.Spec.Shoot.Provider.Workers[0].Maximum))
+	assert.Equal(t, surge, runtime.Spec.Shoot.Provider.Workers[0].MaxSurge.IntValue())
+	assert.Equal(t, unav, runtime.Spec.Shoot.Provider.Workers[0].MaxUnavailable.IntValue())
+
+	assert.Equal(t, gardener.OIDCConfig{
+		ClientID:       ptr.String("client-id-oidc"),
+		GroupsClaim:    ptr.String("groups"),
+		IssuerURL:      ptr.String("https://issuer.url"),
+		SigningAlgs:    []string{"RS256"},
+		UsernameClaim:  ptr.String("sub"),
+		UsernamePrefix: ptr.String("-"),
+	}, runtime.Spec.Shoot.Kubernetes.KubeAPIServer.OidcConfig)
+
+	assert.Equal(t, []string{"john.smith@email.com"}, runtime.Spec.Security.Administrators)
 }
 
 func TestUpdateAutoscalerWrongParams(t *testing.T) {
@@ -1821,7 +1560,8 @@ func TestUpdateAutoscalerWrongParams(t *testing.T) {
 }`)
 
 	opID := suite.DecodeOperationID(resp)
-	suite.processProvisioningByOperationID(opID)
+	suite.processKIMProvisioningByOperationID(opID)
+	suite.WaitForOperationState(opID, domain.Succeeded)
 
 	// when
 	resp = suite.CallAPI("PATCH", fmt.Sprintf("oauth/cf-eu10/v2/service_instances/%s?accepts_incomplete=true", id), `
@@ -1871,7 +1611,8 @@ func TestUpdateAutoscalerPartialSequence(t *testing.T) {
 }`)
 
 	opID := suite.DecodeOperationID(resp)
-	suite.processProvisioningByOperationID(opID)
+	suite.processKIMProvisioningByOperationID(opID)
+	suite.WaitForOperationState(opID, domain.Succeeded)
 
 	// when
 	resp = suite.CallAPI("PATCH", fmt.Sprintf("oauth/cf-eu10/v2/service_instances/%s?accepts_incomplete=true", id), `
@@ -1909,25 +1650,11 @@ func TestUpdateAutoscalerPartialSequence(t *testing.T) {
 	upgradeOperationID := suite.DecodeOperationID(resp)
 	assert.NotEmpty(t, upgradeOperationID)
 
-	suite.FinishUpdatingOperationByProvisioner(upgradeOperationID)
 	suite.WaitForOperationState(upgradeOperationID, domain.Succeeded)
-	max := 15
-	disabled := false
-	suite.AssertShootUpgrade(upgradeOperationID, gqlschema.UpgradeShootInput{
-		GardenerConfig: &gqlschema.GardenerUpgradeInput{
-			OidcConfig: &gqlschema.OIDCConfigInput{
-				ClientID:       "client-id-oidc",
-				GroupsClaim:    "groups",
-				IssuerURL:      "https://issuer.url",
-				SigningAlgs:    []string{"RS256"},
-				UsernameClaim:  "sub",
-				UsernamePrefix: "-",
-			},
-			AutoScalerMax:                 &max,
-			ShootNetworkingFilterDisabled: &disabled,
-		},
-		Administrators: []string{"john.smith@email.com"},
-	})
+
+	runtime := suite.GetRuntimeResourceByInstanceID(id)
+	assert.Equal(t, []string{"john.smith@email.com"}, runtime.Spec.Security.Administrators)
+	assert.Equal(t, 15, int(runtime.Spec.Shoot.Provider.Workers[0].Maximum))
 
 	// when
 	resp = suite.CallAPI("PATCH", fmt.Sprintf("oauth/cf-eu10/v2/service_instances/%s?accepts_incomplete=true", id), `
@@ -1947,24 +1674,9 @@ func TestUpdateAutoscalerPartialSequence(t *testing.T) {
 	suite.WaitForOperationState(upgradeOperationID, domain.Succeeded)
 	assert.Equal(t, http.StatusAccepted, resp.StatusCode)
 	upgradeOperationID = suite.DecodeOperationID(resp)
-	suite.FinishUpdatingOperationByProvisioner(upgradeOperationID)
-	min := 14
-	disabled = false
-	suite.AssertShootUpgrade(upgradeOperationID, gqlschema.UpgradeShootInput{
-		GardenerConfig: &gqlschema.GardenerUpgradeInput{
-			OidcConfig: &gqlschema.OIDCConfigInput{
-				ClientID:       "client-id-oidc",
-				GroupsClaim:    "groups",
-				IssuerURL:      "https://issuer.url",
-				SigningAlgs:    []string{"RS256"},
-				UsernameClaim:  "sub",
-				UsernamePrefix: "-",
-			},
-			AutoScalerMin:                 &min,
-			ShootNetworkingFilterDisabled: &disabled,
-		},
-		Administrators: []string{"john.smith@email.com"},
-	})
+	suite.WaitForOperationState(upgradeOperationID, domain.Succeeded)
+	runtime = suite.GetRuntimeResourceByInstanceID(id)
+	assert.Equal(t, 14, int(runtime.Spec.Shoot.Provider.Workers[0].Minimum))
 
 	// when
 	resp = suite.CallAPI("PATCH", fmt.Sprintf("oauth/cf-eu10/v2/service_instances/%s?accepts_incomplete=true", id), `
@@ -1988,8 +1700,7 @@ func TestUpdateWhenBothErsContextAndUpdateParametersProvided(t *testing.T) {
 	// given
 	suite := NewBrokerSuiteTest(t)
 	defer suite.TearDown()
-	// uncomment to see graphql queries
-	//suite.EnableDumpingProvisionerRequests()
+
 	iid := uuid.New().String()
 
 	resp := suite.CallAPI("PUT", fmt.Sprintf("oauth/cf-eu10/v2/service_instances/%s?accepts_incomplete=true&plan_id=7d55d31d-35ae-4438-bf13-6ffdfa107d9f&service_id=47c9dcbf-ff30-448e-ab36-d3bad66ba281", iid),
@@ -2017,7 +1728,7 @@ func TestUpdateWhenBothErsContextAndUpdateParametersProvided(t *testing.T) {
 			}
 		}`)
 	opID := suite.DecodeOperationID(resp)
-	suite.processProvisioningByOperationID(opID)
+	suite.processKIMProvisioningByOperationID(opID)
 	suite.WaitForOperationState(opID, domain.Succeeded)
 
 	suite.Log("*** Suspension ***")
@@ -2039,10 +1750,10 @@ func TestUpdateWhenBothErsContextAndUpdateParametersProvided(t *testing.T) {
 		}
    }`)
 	assert.Equal(t, http.StatusOK, resp.StatusCode)
-	suspensionOpID := suite.WaitForLastOperation(iid, domain.InProgress)
+	suspensionID := suite.WaitForLastOperation(iid, domain.InProgress)
+	suite.FinishDeprovisioningOperationByKIM(suspensionID)
 
-	suite.FinishDeprovisioningOperationByProvisioner(suspensionOpID)
-	suite.WaitForOperationState(suspensionOpID, domain.Succeeded)
+	suite.WaitForLastOperation(iid, domain.Succeeded)
 
 	// THEN
 	lastOp, err := suite.db.Operations().GetLastOperation(iid)
@@ -2075,14 +1786,10 @@ func TestUpdateMachineType(t *testing.T) {
 }`)
 
 	opID := suite.DecodeOperationID(resp)
-	suite.processProvisioningByOperationID(opID)
+	suite.processKIMProvisioningByOperationID(opID)
 	suite.WaitForOperationState(opID, domain.Succeeded)
-	i, err := suite.db.Instances().GetByID(id)
+	_, err := suite.db.Instances().GetByID(id)
 	assert.NoError(t, err, "instance after provisioning")
-	rs, err := suite.db.RuntimeStates().ListByRuntimeID(i.RuntimeID)
-	assert.NoError(t, err, "runtime states after provisioning")
-	assert.Equal(t, 1, len(rs), "runtime states after provisioning")
-	assert.Equal(t, "m5.xlarge", rs[0].ClusterConfig.MachineType, "after provisioning")
 
 	// when patch to change machine type
 
@@ -2098,91 +1805,14 @@ func TestUpdateMachineType(t *testing.T) {
 	}
 }`)
 
-	//c: [ccv1]
-
 	assert.Equal(t, http.StatusAccepted, resp.StatusCode)
 	updateOperationID := suite.DecodeOperationID(resp)
-	suite.FinishUpdatingOperationByProvisioner(updateOperationID)
 	suite.WaitForOperationState(updateOperationID, domain.Succeeded)
 
-	// check call to provisioner that machine type has been updated
-	rs, err = suite.db.RuntimeStates().ListByRuntimeID(i.RuntimeID)
-	assert.NoError(t, err, "runtime states after update")
-	assert.Equal(t, 2, len(rs), "runtime states after update")
-	assert.Equal(t, "m5.2xlarge", rs[0].ClusterConfig.MachineType, "after update")
+	runtime := suite.GetRuntimeResourceByInstanceID(id)
+	assert.Equal(t, "m5.2xlarge", runtime.Spec.Shoot.Provider.Workers[0].Machine.Type)
+
 }
-
-func TestUpdateBTPOperatorCredsSuccess(t *testing.T) {
-	// given
-	suite := NewBrokerSuiteTest(t)
-	defer suite.TearDown()
-	id := "InstanceID-BTPOperator"
-
-	resp := suite.CallAPI("PUT", fmt.Sprintf("oauth/cf-eu10/v2/service_instances/%s?accepts_incomplete=true&plan_id=7d55d31d-35ae-4438-bf13-6ffdfa107d9f&service_id=47c9dcbf-ff30-448e-ab36-d3bad66ba281", id), `
-{
-	"service_id": "47c9dcbf-ff30-448e-ab36-d3bad66ba281",
-	"plan_id": "7d55d31d-35ae-4438-bf13-6ffdfa107d9f",
-	"context": {
-		"sm_operator_credentials": {
-			"clientid": "cid",
-			"clientsecret": "cs",
-			"url": "url",
-			"sm_url": "sm_url"
-		},
-		"globalaccount_id": "g-account-id",
-		"subaccount_id": "sub-id",
-		"user_id": "john.smith@email.com"
-	},
-	"parameters": {
-		"name": "testing-cluster"
-	}
-}`)
-
-	opID := suite.DecodeOperationID(resp)
-	suite.processProvisioningByOperationID(opID)
-	suite.WaitForOperationState(opID, domain.Succeeded)
-	i, err := suite.db.Instances().GetByID(id)
-	assert.NoError(t, err, "getting instance after provisioning, before update")
-	rs, err := suite.db.RuntimeStates().GetLatestByRuntimeID(i.RuntimeID)
-	assert.Equal(t, opID, rs.OperationID, "runtime state provisioning operation ID")
-	assert.NoError(t, err, "getting runtime state after provisioning, before update")
-	assert.ElementsMatch(t, rs.KymaConfig.Components, []*gqlschema.ComponentConfigurationInput{})
-
-	rsu1, err := suite.db.RuntimeStates().GetLatestByRuntimeID(i.RuntimeID)
-	assert.NoError(t, err, "getting runtime after update")
-	i, err = suite.db.Instances().GetByID(id)
-	assert.NoError(t, err, "getting instance after update")
-	assert.ElementsMatch(t, rsu1.KymaConfig.Components, []*gqlschema.ComponentConfigurationInput{})
-
-	// when
-	resp = suite.CallAPI("PATCH", fmt.Sprintf("oauth/cf-eu10/v2/service_instances/%s?accepts_incomplete=true", id), `
-{
-	"service_id": "47c9dcbf-ff30-448e-ab36-d3bad66ba281",
-	"context": {
-		"globalaccount_id": "g-account-id",
-		"user_id": "john.smith@email.com",
-		"sm_operator_credentials": {
-			"clientid": "testClientID",
-			"clientsecret": "testClientSecret",
-			"sm_url": "https://service-manager.kyma.com",
-			"url": "https://test.auth.com",
-			"xsappname": "testXsappname"
-		}
-	}
-}`)
-
-	assert.Equal(t, http.StatusAccepted, resp.StatusCode)
-	updateOperationID := suite.DecodeOperationID(resp)
-	suite.FinishUpdatingOperationByProvisioner(updateOperationID)
-	suite.WaitForOperationState(updateOperationID, domain.Succeeded)
-
-	rsu2, err := suite.db.RuntimeStates().GetLatestByRuntimeID(i.RuntimeID)
-	assert.NoError(t, err, "getting runtime after update")
-	i, err = suite.db.Instances().GetByID(id)
-	assert.NoError(t, err, "getting instance after update")
-	assert.ElementsMatch(t, rsu2.KymaConfig.Components, []*gqlschema.ComponentConfigurationInput{})
-}
-
 func TestUpdateNetworkFilterPersisted(t *testing.T) {
 	// given
 	suite := NewBrokerSuiteTest(t, "2.0")
@@ -2212,13 +1842,13 @@ func TestUpdateNetworkFilterPersisted(t *testing.T) {
 		}`)
 
 	opID := suite.DecodeOperationID(resp)
-	suite.processProvisioningByOperationID(opID)
+	suite.processKIMProvisioningByOperationID(opID)
 	suite.WaitForOperationState(opID, domain.Succeeded)
 	instance := suite.GetInstance(id)
 
 	// then
-	disabled := true
-	suite.AssertDisabledNetworkFilterForProvisioning(&disabled)
+
+	suite.AssertNetworkFilteringDisabled(instance.InstanceID, true)
 	assert.Equal(suite.t, "CUSTOMER", *instance.Parameters.ErsContext.LicenseType)
 
 	// when
@@ -2245,11 +1875,10 @@ func TestUpdateNetworkFilterPersisted(t *testing.T) {
 	// then
 	assert.Equal(t, http.StatusAccepted, resp.StatusCode)
 	updateOperationID := suite.DecodeOperationID(resp)
-	suite.FinishUpdatingOperationByProvisioner(updateOperationID)
 	suite.WaitForOperationState(updateOperationID, domain.Succeeded)
 	updateOp, _ := suite.db.Operations().GetOperationByID(updateOperationID)
 	assert.NotNil(suite.t, updateOp.ProvisioningParameters.ErsContext.LicenseType)
-	suite.AssertDisabledNetworkFilterRuntimeState(instance.RuntimeID, updateOperationID, &disabled)
+	suite.AssertNetworkFilteringDisabled(instance.InstanceID, true)
 	instance2 := suite.GetInstance(id)
 	assert.Equal(suite.t, "CUSTOMER", *instance2.Parameters.ErsContext.LicenseType)
 }
@@ -2282,13 +1911,12 @@ func TestUpdateStoreNetworkFilterAndUpdate(t *testing.T) {
 		}`)
 
 	opID := suite.DecodeOperationID(resp)
-	suite.processProvisioningByOperationID(opID)
+	suite.processKIMProvisioningByOperationID(opID)
 	suite.WaitForOperationState(opID, domain.Succeeded)
 	instance := suite.GetInstance(id)
 
 	// then
-	disabled := false
-	suite.AssertDisabledNetworkFilterForProvisioning(&disabled)
+	suite.AssertNetworkFilteringDisabled(instance.InstanceID, false)
 	assert.Nil(suite.t, instance.Parameters.ErsContext.LicenseType)
 
 	// when
@@ -2310,18 +1938,17 @@ func TestUpdateStoreNetworkFilterAndUpdate(t *testing.T) {
 			}
 		}`)
 
-	// then
 	assert.Equal(t, http.StatusAccepted, resp.StatusCode)
 	updateOperationID := suite.DecodeOperationID(resp)
+	suite.WaitForOperationState(updateOperationID, domain.Succeeded)
+
+	//then
 	updateOp, _ := suite.db.Operations().GetOperationByID(updateOperationID)
 	assert.NotNil(suite.t, updateOp.ProvisioningParameters.ErsContext.LicenseType)
 	instance2 := suite.GetInstance(id)
 	// license_type should be stored in the instance table for ERS context and future upgrades
-	disabled = true
-	suite.AssertDisabledNetworkFilterRuntimeState(instance.RuntimeID, updateOperationID, &disabled)
+	suite.AssertNetworkFilteringDisabled(instance.InstanceID, true)
 	assert.Equal(suite.t, "CUSTOMER", *instance2.Parameters.ErsContext.LicenseType)
-	suite.FinishUpdatingOperationByProvisioner(updateOperationID)
-	suite.WaitForOperationState(updateOperationID, domain.Succeeded)
 }
 
 func TestMultipleUpdateNetworkFilterPersisted(t *testing.T) {
@@ -2352,14 +1979,12 @@ func TestMultipleUpdateNetworkFilterPersisted(t *testing.T) {
 		}`)
 
 	opID := suite.DecodeOperationID(resp)
-	suite.processProvisioningByOperationID(opID)
+	suite.processKIMProvisioningByOperationID(opID)
 	suite.WaitForOperationState(opID, domain.Succeeded)
 	instance := suite.GetInstance(id)
 
 	// then
-	disabled := false
-	suite.AssertDisabledNetworkFilterForProvisioning(&disabled)
-	suite.AssertDisabledNetworkFilterRuntimeState(instance.RuntimeID, opID, &disabled)
+	suite.AssertNetworkFilteringDisabled(instance.InstanceID, false)
 	assert.Nil(suite.t, instance.Parameters.ErsContext.LicenseType)
 
 	// when
@@ -2374,7 +1999,6 @@ func TestMultipleUpdateNetworkFilterPersisted(t *testing.T) {
 	// then
 	assert.Equal(t, http.StatusAccepted, resp.StatusCode)
 	updateOperationID := suite.DecodeOperationID(resp)
-	suite.FinishUpdatingOperationByProvisioner(updateOperationID)
 	suite.WaitForOperationState(updateOperationID, domain.Succeeded)
 	instance2 := suite.GetInstance(id)
 	assert.Equal(suite.t, "CUSTOMER", *instance2.Parameters.ErsContext.LicenseType)
@@ -2393,13 +2017,10 @@ func TestMultipleUpdateNetworkFilterPersisted(t *testing.T) {
 	// then
 	assert.Equal(t, http.StatusAccepted, resp.StatusCode)
 	updateOperation2ID := suite.DecodeOperationID(resp)
-	suite.WaitForLastOperation(id, domain.InProgress)
-	suite.FinishUpdatingOperationByProvisioner(updateOperation2ID)
 	suite.WaitForOperationState(updateOperation2ID, domain.Succeeded)
 	instance3 := suite.GetInstance(id)
 	assert.Equal(suite.t, "CUSTOMER", *instance3.Parameters.ErsContext.LicenseType)
-	disabled = true
-	suite.AssertDisabledNetworkFilterRuntimeState(instance.RuntimeID, updateOperation2ID, &disabled)
+	suite.AssertNetworkFilteringDisabled(instance.InstanceID, true)
 }
 
 func TestUpdateOnlyErsContextForExpiredInstance(t *testing.T) {
@@ -2427,7 +2048,7 @@ func TestUpdateOnlyErsContextForExpiredInstance(t *testing.T) {
 			}
 		}`)
 	opID := suite.DecodeOperationID(response)
-	suite.processProvisioningByOperationID(opID)
+	suite.processKIMProvisioningByOperationID(opID)
 	suite.WaitForOperationState(opID, domain.Succeeded)
 
 	response = suite.CallAPI(http.MethodPut, fmt.Sprintf("expire/service_instance/%s", iid), "")
@@ -2468,7 +2089,7 @@ func TestUpdateParamsForExpiredInstance(t *testing.T) {
 			}
 		}`)
 	opID := suite.DecodeOperationID(response)
-	suite.processProvisioningByOperationID(opID)
+	suite.processKIMProvisioningByOperationID(opID)
 	suite.WaitForOperationState(opID, domain.Succeeded)
 
 	response = suite.CallAPI(http.MethodPut, fmt.Sprintf("expire/service_instance/%s", iid), "")
@@ -2508,7 +2129,7 @@ func TestUpdateErsContextAndParamsForExpiredInstance(t *testing.T) {
 			}
 		}`)
 	opID := suite.DecodeOperationID(response)
-	suite.processProvisioningByOperationID(opID)
+	suite.processKIMProvisioningByOperationID(opID)
 	suite.WaitForOperationState(opID, domain.Succeeded)
 
 	response = suite.CallAPI(http.MethodPut, fmt.Sprintf("expire/service_instance/%s", iid), "")
