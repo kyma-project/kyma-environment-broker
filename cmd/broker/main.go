@@ -395,9 +395,7 @@ func main() {
 	})
 
 	svr := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		router.ServeHTTP(w, r)
 		log.Info(fmt.Sprintf("Call handled: method=%s url=%s", r.Method, r.URL.Path))
-
 	})
 	fatalOnError(http.ListenAndServe(cfg.Host+":"+cfg.Port, svr), log)
 }
