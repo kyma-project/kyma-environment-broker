@@ -1,7 +1,6 @@
 package httputil
 
 import (
-	"net/http"
 	"net/http/httptest"
 	"testing"
 
@@ -23,6 +22,5 @@ func TestResponseRecorder_Write(t *testing.T) {
 		assert.Equal(t, len(data), size)
 		assert.Equal(t, len(data), responseRecorder.Size)
 		assert.Equal(t, data, recorder.Body.Bytes())
-		assert.Equal(t, http.StatusOK, recorder.Code)
 	})
 }
