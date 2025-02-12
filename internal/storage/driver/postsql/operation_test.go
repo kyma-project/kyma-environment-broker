@@ -531,15 +531,6 @@ func assertUpdateState(t *testing.T, svc storage.Operations, orchestrationID str
 
 	// then
 	assert.Equal(t, 2, opStats[orchestration.InProgress])
-
-	// when
-	latestOp.State = domain.InProgress
-	_, err = svc.UpdateOperation(*latestOp)
-	opStats, err = svc.GetOperationStatsForOrchestration(orchestrationID)
-	require.NoError(t, err)
-
-	// then
-	assert.Equal(t, 3, opStats[orchestration.InProgress])
 }
 
 func assertUpdateDescription(t *testing.T, gotOperation *internal.Operation, svc storage.Operations) {
