@@ -256,17 +256,17 @@ func TestResolver_Resolve_StorageFailure(t *testing.T) {
 }
 
 var (
-	shoot1 = fixShoot(1, globalAccountID1, region1)
-	shoot2 = fixShoot(2, globalAccountID1, region2)
-	shoot3 = fixShoot(3, globalAccountID2, region3)
-	shoot4 = fixShoot(4, globalAccountID3, region1)
+	shoot1 = fixShootForKIM(1, globalAccountID1, region1)
+	shoot2 = fixShootForKIM(2, globalAccountID1, region2)
+	shoot3 = fixShootForKIM(3, globalAccountID2, region3)
+	shoot4 = fixShootForKIM(4, globalAccountID3, region1)
 	shoot5 = fixShoot(5, globalAccountID1, region1)
 	shoot6 = fixShoot(6, globalAccountID1, region1)
 	// shoot7 is purposefully missing to test missing cluster scenario
 	shoot8  = fixShoot(8, globalAccountID1, region1)
 	shoot9  = fixShoot(9, globalAccountID1, region1)
-	shoot10 = fixShoot(10, globalAccountID1, region1)
-	shoot11 = fixShoot(11, globalAccountID1, region1)
+	shoot10 = fixShootForKIM(10, globalAccountID1, region1)
+	shoot11 = fixShootForKIM(11, globalAccountID1, region1)
 
 	runtime1  = fixRuntimeDTO(1, globalAccountID1, plan2, runtimeOpState{provision: string(brokerapi.Succeeded)})
 	runtime2  = fixRuntimeDTO(2, globalAccountID1, plan1, runtimeOpState{provision: string(brokerapi.Succeeded)})
@@ -294,7 +294,36 @@ func fixShoot(id int, globalAccountID, region string) unstructured.Unstructured 
 					subAccountLabel:    fmt.Sprintf("subaccount-id-%d", id),
 				},
 				"annotations": map[string]interface{}{
-					runtimeIDAnnotation: fmt.Sprintf("runtime-id-%d", id),
+					runtimeIDAnnotationProvisioner: fmt.Sprintf("runtime-id-%d", id),
+				},
+			},
+			"spec": map[string]interface{}{
+				"region": region,
+				"maintenance": map[string]interface{}{
+					"timeWindow": map[string]interface{}{
+						"begin": "030000+0000",
+						"end":   "040000+0000",
+					},
+				},
+			},
+		},
+	}
+}
+
+func fixShootForKIM(id int, globalAccountID, region string) unstructured.Unstructured {
+	return unstructured.Unstructured{
+		Object: map[string]interface{}{
+			"apiVersion": "core.gardener.cloud/v1beta1",
+			"kind":       "Shoot",
+			"metadata": map[string]interface{}{
+				"name":      fmt.Sprintf("shoot%d", id),
+				"namespace": shootNamespace,
+				"labels": map[string]interface{}{
+					globalAccountLabel: globalAccountID,
+					subAccountLabel:    fmt.Sprintf("subaccount-id-%d", id),
+				},
+				"annotations": map[string]interface{}{
+					runtimeIDAnnotationKim: fmt.Sprintf("runtime-id-%d", id),
 				},
 			},
 			"spec": map[string]interface{}{

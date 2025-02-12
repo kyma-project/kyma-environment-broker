@@ -16,6 +16,7 @@ func NewInstanceArchivedFromOperationsAndInstance(instance internal.Instance, op
 	}
 	result.Provider = string(instance.Provider)
 	result.SubscriptionGlobalAccountID = instance.SubscriptionGlobalAccountID
+	result.Region = instance.ProviderRegion
 
 	return result, nil
 }

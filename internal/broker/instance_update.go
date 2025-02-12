@@ -263,6 +263,30 @@ func (b *UpdateEndpoint) processUpdateParameters(instance *internal.Instance, de
 		logger.Error(fmt.Sprintf("invalid autoscaler parameters: %s", err.Error()))
 		return domain.UpdateServiceSpec{}, apiresponses.NewFailureResponse(err, http.StatusBadRequest, err.Error())
 	}
+
+	if params.AdditionalWorkerNodePools != nil {
+		if !b.config.EnableAdditionalWorkerNodePools {
+			message := fmt.Sprintf("additional worker node pools are not supported")
+			return domain.UpdateServiceSpec{}, apiresponses.NewFailureResponse(fmt.Errorf(message), http.StatusBadRequest, message)
+		}
+		if !supportsAdditionalWorkerNodePools(details.PlanID) {
+			message := fmt.Sprintf("additional worker node pools are not supported for plan ID: %s", details.PlanID)
+			return domain.UpdateServiceSpec{}, apiresponses.NewFailureResponse(fmt.Errorf(message), http.StatusBadRequest, message)
+		}
+		if !AreNamesUnique(params.AdditionalWorkerNodePools) {
+			message := "names of additional worker node pools must be unique"
+			return domain.UpdateServiceSpec{}, apiresponses.NewFailureResponse(fmt.Errorf(message), http.StatusBadRequest, message)
+		}
+		for _, additionalWorkerNodePool := range params.AdditionalWorkerNodePools {
+			if err := additionalWorkerNodePool.Validate(); err != nil {
+				return domain.UpdateServiceSpec{}, apiresponses.NewFailureResponse(err, http.StatusBadRequest, err.Error())
+			}
+			if err := additionalWorkerNodePool.ValidateHAZonesUnchanged(instance.Parameters.Parameters.AdditionalWorkerNodePools); err != nil {
+				return domain.UpdateServiceSpec{}, apiresponses.NewFailureResponse(err, http.StatusBadRequest, err.Error())
+			}
+		}
+	}
+
 	err = b.operationStorage.InsertOperation(operation)
 	if err != nil {
 		return domain.UpdateServiceSpec{}, err
@@ -287,6 +311,14 @@ func (b *UpdateEndpoint) processUpdateParameters(instance *internal.Instance, de
 	if params.MachineType != nil && *params.MachineType != "" {
 		instance.Parameters.Parameters.MachineType = params.MachineType
 	}
+
+	if supportsAdditionalWorkerNodePools(details.PlanID) && params.AdditionalWorkerNodePools != nil {
+		newAdditionalWorkerNodePools := make([]pkg.AdditionalWorkerNodePool, 0, len(params.AdditionalWorkerNodePools))
+		newAdditionalWorkerNodePools = append(newAdditionalWorkerNodePools, params.AdditionalWorkerNodePools...)
+		instance.Parameters.Parameters.AdditionalWorkerNodePools = newAdditionalWorkerNodePools
+		updateStorage = append(updateStorage, "Additional Worker Node Pools")
+	}
+
 	if len(updateStorage) > 0 {
 		if err := wait.PollUntilContextTimeout(context.Background(), 500*time.Millisecond, 2*time.Second, true, func(ctx context.Context) (bool, error) {
 			instance, err = b.instanceStorage.Update(*instance)
@@ -365,7 +397,7 @@ func (b *UpdateEndpoint) processContext(instance *internal.Instance, details dom
 
 	newInstance, err := b.instanceStorage.Update(*instance)
 	if err != nil {
-		logger.Error(fmt.Sprintf("processing context updated failed: %s", err.Error()))
+		logger.Error(fmt.Sprintf("instance updated failed: %s", err.Error()))
 		return nil, changed, fmt.Errorf("unable to process the update")
 	} else if b.updateCustomResourcesLabelsOnAccountMove && needUpdateCustomResources {
 		logger.Info("updating labels on related CRs")
@@ -400,7 +432,7 @@ func (b *UpdateEndpoint) extractActiveValue(id string, provisioning internal.Pro
 func (b *UpdateEndpoint) getJsonSchemaValidator(provider pkg.CloudProvider, planID string, platformRegion string) (JSONSchemaValidator, error) {
 	// shootAndSeedSameRegion is never enabled for update
 	b.log.Info(fmt.Sprintf("region is: %s", platformRegion))
-	plans := Plans(b.plansConfig, provider, b.config.IncludeAdditionalParamsInSchema, euaccess.IsEURestrictedAccess(platformRegion), b.config.UseSmallerMachineTypes, false, b.convergedCloudRegionsProvider.GetRegions(platformRegion), assuredworkloads.IsKSA(platformRegion))
+	plans := Plans(b.plansConfig, provider, b.config.IncludeAdditionalParamsInSchema, euaccess.IsEURestrictedAccess(platformRegion), b.config.UseSmallerMachineTypes, false, b.convergedCloudRegionsProvider.GetRegions(platformRegion), assuredworkloads.IsKSA(platformRegion), b.config.EnableAdditionalWorkerNodePools, b.config.EnableLoadCurrentConfig)
 	plan := plans[planID]
 	schema := string(Marshal(plan.Schemas.Instance.Update.Parameters))
 

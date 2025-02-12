@@ -1,66 +1,67 @@
 package logger
 
 import (
-	"github.com/int128/kubelogin/pkg/infrastructure/logger"
-	"github.com/sirupsen/logrus"
+	"os"
+
+	"log/slog"
+
 	"github.com/spf13/pflag"
 )
 
 // CfgLevel is the configured logging level
 var CfgLevel int
 
-// New returns a Logger with the standard log.Logger
+// New returns a Logger with the standard slog.Logger
 func New() Logger {
-	log := logrus.New()
-	log.Level = logrus.Level(CfgLevel)
+	handler := slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{
+		Level: slog.Level(CfgLevel),
+	})
+	log := slog.New(handler)
 	return &logging{
-		FieldLogger: log,
-		verbosity:   CfgLevel,
+		Logger:    log,
+		verbosity: CfgLevel,
 	}
 }
 
 // Logger is the interface to interact with a CLI logging instance
 type Logger interface {
-	logrus.FieldLogger
+	Info(msg string, args ...interface{})
+	Error(msg string, args ...interface{})
 	AddFlags(f *pflag.FlagSet)
-	V(level int) logger.Verbose
+	V(level int) Verbose
 	IsEnabled(level int) bool
 }
 
-// logging provides logging facility using log.Logger and klog.
+// logging provides logging facility using slog.
 type logging struct {
-	logrus.FieldLogger
+	*slog.Logger
 	verbosity int
 }
 
-type verbose struct {
-	l     *logging
-	level int
+// Verbose is a helper type for conditional logging.
+type Verbose bool
+
+// V returns a Verbose instance for conditional logging.
+func (l *logging) V(level int) Verbose {
+	return Verbose(l.verbosity >= level)
 }
 
-// AddFlags adds the flags such as -v.
-func (l *logging) AddFlags(f *pflag.FlagSet) {
-	f.IntVarP(&l.verbosity, "verbose", "v", 0, "Option that turns verbose logging to stderr. Valid values are 0 (default) - 6 (maximum verbosity).")
-}
-
-func AddFlags(f *pflag.FlagSet) {
-	f.IntVarP(&CfgLevel, "verbose", "v", 0, "Option that turns verbose logging to stderr. Valid values are 0 (default) - 6 (maximum verbosity).")
-}
-
-// V returns a logger enabled only if the level is enabled.
-func (l *logging) V(level int) logger.Verbose {
-	v := &verbose{l: l, level: level}
-	return v
-}
-
-// IsEnabled returns true if the level is enabled.
+// IsEnabled checks if the given verbosity level is enabled.
 func (l *logging) IsEnabled(level int) bool {
 	return l.verbosity >= level
 }
 
-// Infof logs a verbose info message with he given format and arguments based on the configured verbosity
-func (v *verbose) Infof(format string, args ...interface{}) {
-	if v.l.verbosity >= v.level {
-		v.l.Infof(format, args...)
-	}
+// AddFlags adds logging flags to the given flag set.
+func (l *logging) AddFlags(f *pflag.FlagSet) {
+	f.IntVar(&CfgLevel, "v", 0, "set the log level verbosity")
+}
+
+// Info logs an info message.
+func (l *logging) Info(msg string, args ...interface{}) {
+	l.Logger.Info(msg, args...)
+}
+
+// Error logs an error message.
+func (l *logging) Error(msg string, args ...interface{}) {
+	l.Logger.Error(msg, args...)
 }

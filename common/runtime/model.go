@@ -97,10 +97,11 @@ type ProvisioningParametersDTO struct {
 	ShootName   string `json:"shootName,omitempty"`
 	ShootDomain string `json:"shootDomain,omitempty"`
 
-	OIDC                   *OIDCConfigDTO `json:"oidc,omitempty"`
-	Networking             *NetworkingDTO `json:"networking,omitempty"`
-	Modules                *ModulesDTO    `json:"modules,omitempty"`
-	ShootAndSeedSameRegion *bool          `json:"shootAndSeedSameRegion,omitempty"`
+	OIDC                      *OIDCConfigDTO             `json:"oidc,omitempty"`
+	Networking                *NetworkingDTO             `json:"networking,omitempty"`
+	Modules                   *ModulesDTO                `json:"modules,omitempty"`
+	ShootAndSeedSameRegion    *bool                      `json:"shootAndSeedSameRegion,omitempty"`
+	AdditionalWorkerNodePools []AdditionalWorkerNodePool `json:"additionalWorkerNodePools,omitempty"`
 }
 
 type AutoScalerParameters struct {
@@ -385,4 +386,33 @@ type ModuleDTO struct {
 	Name                 string               `json:"name,omitempty" yaml:"name,omitempty"`
 	Channel              Channel              `json:"channel,omitempty" yaml:"channel,omitempty"`
 	CustomResourcePolicy CustomResourcePolicy `json:"customResourcePolicy,omitempty" yaml:"customResourcePolicy,omitempty"`
+}
+
+type AdditionalWorkerNodePool struct {
+	Name          string `json:"name"`
+	MachineType   string `json:"machineType"`
+	HAZones       bool   `json:"haZones"`
+	AutoScalerMin int    `json:"autoScalerMin"`
+	AutoScalerMax int    `json:"autoScalerMax"`
+}
+
+func (a AdditionalWorkerNodePool) Validate() error {
+	if a.AutoScalerMin > a.AutoScalerMax {
+		return fmt.Errorf("AutoScalerMax %v should be larger than AutoScalerMin %v for %s additional worker node pool", a.AutoScalerMax, a.AutoScalerMin, a.Name)
+	}
+	if a.HAZones && a.AutoScalerMin < 3 {
+		return fmt.Errorf("AutoScalerMin %v should be at least 3 when HA zones are enabled for %s additional worker node pool", a.AutoScalerMin, a.Name)
+	}
+	return nil
+}
+
+func (a AdditionalWorkerNodePool) ValidateHAZonesUnchanged(currentAdditionalWorkerNodePools []AdditionalWorkerNodePool) error {
+	for _, currentAdditionalWorkerNodePool := range currentAdditionalWorkerNodePools {
+		if a.Name == currentAdditionalWorkerNodePool.Name {
+			if a.HAZones != currentAdditionalWorkerNodePool.HAZones {
+				return fmt.Errorf("HA zones setting is permanent and cannot be changed for %s additional worker node pool", a.Name)
+			}
+		}
+	}
+	return nil
 }

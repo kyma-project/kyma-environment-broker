@@ -4,6 +4,8 @@ import (
 	"context"
 	"log/slog"
 
+	"github.com/kyma-project/kyma-environment-broker/internal/provider"
+
 	"github.com/kyma-project/kyma-environment-broker/internal/process/steps"
 
 	"github.com/kyma-project/kyma-environment-broker/internal/event"
@@ -18,6 +20,11 @@ import (
 func NewUpdateProcessingQueue(ctx context.Context, manager *process.StagedManager, workersAmount int, db storage.BrokerStorage, inputFactory input.CreatorForPlan,
 	provisionerClient provisioner.Client, publisher event.Publisher,
 	cfg Config, k8sClientProvider K8sClientProvider, cli client.Client, logs *slog.Logger) *process.Queue {
+
+	trialRegionsMapping, err := provider.ReadPlatformRegionMappingFromFile(cfg.TrialRegionMappingFilePath)
+	if err != nil {
+		fatalOnError(err, logs)
+	}
 
 	manager.DefineStages([]string{"cluster", "btp-operator", "btp-operator-check", "check", "runtime_resource", "check_runtime_resource"})
 	updateSteps := []struct {
@@ -42,7 +49,7 @@ func NewUpdateProcessingQueue(ctx context.Context, manager *process.StagedManage
 		},
 		{
 			stage:     "runtime_resource",
-			step:      update.NewUpdateRuntimeStep(db.Operations(), cli, cfg.UpdateRuntimeResourceDelay),
+			step:      update.NewUpdateRuntimeStep(db.Operations(), cli, cfg.UpdateRuntimeResourceDelay, cfg.Provisioner, cfg.Broker.UseSmallerMachineTypes, trialRegionsMapping),
 			condition: update.SkipForOwnClusterPlan,
 		},
 		{

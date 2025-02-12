@@ -55,36 +55,15 @@ func (s *ResolveCredentialsStep) Run(operation internal.Operation, log *slog.Log
 
 	targetSecret, err := s.getTargetSecretFromGardener(operation, log, hypType, euAccess)
 	if err != nil {
-		return s.retryOrFailOperation(operation, log, hypType, err)
+		msg := fmt.Sprintf("Unable to resolve provisioning secret binding for global account ID %s on Hyperscaler %s", operation.ProvisioningParameters.ErsContext.GlobalAccountID, hypType.GetKey())
+		return s.operationManager.RetryOperation(operation, msg, err, 10*time.Second, time.Minute, log)
 	}
 
-	operation.ProvisioningParameters.Parameters.TargetSecret = &targetSecret
+	log.Info(fmt.Sprintf("Resolved %s as target secret name to use for cluster provisioning for global account ID %s on Hyperscaler %s", targetSecret, operation.ProvisioningParameters.ErsContext.GlobalAccountID, hypType.GetKey()))
 
-	updatedOperation, err := s.opStorage.UpdateOperation(operation)
-	if err != nil {
-		return operation, 1 * time.Minute, nil
-	}
-
-	log.Info(fmt.Sprintf("Resolved %s as target secret name to use for cluster provisioning for global account ID %s on Hyperscaler %s", *operation.ProvisioningParameters.Parameters.TargetSecret, operation.ProvisioningParameters.ErsContext.GlobalAccountID, hypType.GetKey()))
-
-	return *updatedOperation, 0, nil
-}
-
-func (s *ResolveCredentialsStep) retryOrFailOperation(operation internal.Operation, log *slog.Logger, hypType hyperscaler.Type, err error) (internal.Operation, time.Duration, error) {
-	msg := fmt.Sprintf("HAP lookup for secret binding to provision cluster for global account ID %s on Hyperscaler %s has failed", operation.ProvisioningParameters.ErsContext.GlobalAccountID, hypType.GetKey())
-	errMsg := fmt.Sprintf("%s: %s", msg, err)
-	log.Info(errMsg)
-
-	// if failed retry step every 10s by next 10min
-	dur := time.Since(operation.UpdatedAt).Round(time.Minute)
-
-	if dur < 10*time.Minute {
-		return operation, 10 * time.Second, nil
-	}
-
-	log.Error(fmt.Sprintf("Aborting after 10 minutes of failing to resolve provisioning secret binding for global account ID %s on Hyperscaler %s", operation.ProvisioningParameters.ErsContext.GlobalAccountID, hypType.GetKey()))
-
-	return s.operationManager.OperationFailed(operation, msg, err, log)
+	return s.operationManager.UpdateOperation(operation, func(op *internal.Operation) {
+		op.ProvisioningParameters.Parameters.TargetSecret = &targetSecret
+	}, log)
 }
 
 func (s *ResolveCredentialsStep) getTargetSecretFromGardener(operation internal.Operation, log *slog.Logger, hypType hyperscaler.Type, euAccess bool) (string, error) {

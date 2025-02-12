@@ -10,6 +10,7 @@ The job checks if the Secret on the Kyma runtime matches the credentials from th
 
 > [!NOTE] 
 > If you modify or delete the `sap-btp-manager` Secret, it is modified back to its previous settings or regenerated within up to 24 hours. However, if the Secret is labeled with `kyma-project.io/skip-reconciliation: "true"`, the job skips the reconciliation for this Secret.
+> To revert the Secret to its default state (stored in the KEB database), restart Runtime Reconciler, for example, by scaling down the deployment to `0` and then back to `1`.
 
 ## Prerequisites
 

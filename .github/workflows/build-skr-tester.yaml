@@ -1,0 +1,26 @@
+name: Build SKR tester
+
+on:
+  pull_request:
+    branches: [ main ]
+    paths:
+      - ".github/workflows/build-skr-tester.yaml"
+      - "testing/e2e/skr-tester/**"
+    
+jobs:
+  build-skr-tester:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Set up go environment
+      uses: actions/setup-go@v4
+      with:
+        go-version-file: 'testing/e2e/skr-tester/go.mod'
+
+    - name: Run make build
+      run: |
+        cd testing/e2e/skr-tester
+        make build

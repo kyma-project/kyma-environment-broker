@@ -58,28 +58,6 @@ func (s *operations) InsertOperation(operation internal.Operation) error {
 	return s.insert(dto)
 }
 
-// GetOperationByInstanceID fetches the latest Operation by given instanceID, returns error if not found
-func (s *operations) GetOperationByInstanceID(instanceID string) (*internal.Operation, error) {
-
-	op, err := s.getByInstanceID(instanceID)
-	if err != nil {
-		return nil, err
-	}
-
-	var operation internal.Operation
-	err = json.Unmarshal([]byte(op.Data), &operation)
-	if err != nil {
-		return nil, fmt.Errorf("unable to unmarshall provisioning data: %w", err)
-	}
-
-	ret, err := s.toOperation(op, operation)
-	if err != nil {
-		return nil, fmt.Errorf("while converting DTO to Operation: %w", err)
-	}
-
-	return &ret, nil
-}
-
 // GetProvisioningOperationByID fetches the ProvisioningOperation by given ID, returns error if not found
 func (s *operations) GetProvisioningOperationByID(operationID string) (*internal.ProvisioningOperation, error) {
 	operation, err := s.getByID(operationID)

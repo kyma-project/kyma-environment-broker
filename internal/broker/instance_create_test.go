@@ -1493,6 +1493,238 @@ func TestProvision_Provision(t *testing.T) {
 	})
 }
 
+func TestAdditionalWorkerNodePools(t *testing.T) {
+	for tn, tc := range map[string]struct {
+		additionalWorkerNodePools string
+		expectedError             bool
+	}{
+		"Valid additional worker node pools": {
+			additionalWorkerNodePools: `[{"name": "name-1", "machineType": "m6i.large", "haZones": true, "autoScalerMin": 3, "autoScalerMax": 20}, {"name": "name-2", "machineType": "m6i.large", "haZones": false, "autoScalerMin": 1, "autoScalerMax": 20}]`,
+			expectedError:             false,
+		},
+		"Empty additional worker node pools": {
+			additionalWorkerNodePools: `[]`,
+			expectedError:             false,
+		},
+		"Empty name": {
+			additionalWorkerNodePools: `[{"name": "", "machineType": "m6i.large", "haZones": true, "autoScalerMin": 3, "autoScalerMax": 20}]`,
+			expectedError:             true,
+		},
+		"Missing name": {
+			additionalWorkerNodePools: `[{"machineType": "m6i.large", "haZones": true, "autoScalerMin": 3, "autoScalerMax": 20}]`,
+			expectedError:             true,
+		},
+		"Not unique names": {
+			additionalWorkerNodePools: `[{"name": "name-1", "machineType": "m6i.large", "haZones": true, "autoScalerMin": 3, "autoScalerMax": 20}, {"name": "name-1", "machineType": "m6i.large", "haZones": true, "autoScalerMin": 3, "autoScalerMax": 20}]`,
+			expectedError:             true,
+		},
+		"Empty machine type": {
+			additionalWorkerNodePools: `[{"name": "name-1", "machineType": "", "haZones": true, "autoScalerMin": 3, "autoScalerMax": 20}]`,
+			expectedError:             true,
+		},
+		"Missing machine type": {
+			additionalWorkerNodePools: `[{"name": "name-1", "haZones": true, "autoScalerMin": 3, "autoScalerMax": 20}]`,
+			expectedError:             true,
+		},
+		"Missing HA zones": {
+			additionalWorkerNodePools: `[{"name": "name-1", "machineType": "m6i.large", "autoScalerMin": 3, "autoScalerMax": 20}]`,
+			expectedError:             true,
+		},
+		"Missing autoScalerMin": {
+			additionalWorkerNodePools: `[{"name": "name-1", "machineType": "m6i.large", "haZones": true, "autoScalerMax": 3}]`,
+			expectedError:             true,
+		},
+		"Missing autoScalerMax": {
+			additionalWorkerNodePools: `[{"name": "name-1", "machineType": "m6i.large", "haZones": true, "autoScalerMin": 20}]`,
+			expectedError:             true,
+		},
+		"AutoScalerMin smaller than 3 when HA zones are enabled": {
+			additionalWorkerNodePools: `[{"name": "name-1", "machineType": "m6i.large", "haZones": true, "autoScalerMin": 2, "autoScalerMax": 300}]`,
+			expectedError:             true,
+		},
+		"AutoScalerMax bigger than 300": {
+			additionalWorkerNodePools: `[{"name": "name-1", "machineType": "m6i.large", "haZones": true, "autoScalerMin": 3, "autoScalerMax": 301}]`,
+			expectedError:             true,
+		},
+		"AutoScalerMin bigger than autoScalerMax": {
+			additionalWorkerNodePools: `[{"name": "name-1", "machineType": "m6i.large", "haZones": true, "autoScalerMin": 20, "autoScalerMax": 3}]`,
+			expectedError:             true,
+		},
+	} {
+		t.Run(tn, func(t *testing.T) {
+			// given
+			log := slog.New(slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{
+				Level: slog.LevelInfo,
+			}))
+
+			memoryStorage := storage.NewMemoryStorage()
+
+			queue := &automock.Queue{}
+			queue.On("Add", mock.AnythingOfType("string"))
+
+			factoryBuilder := &automock.PlanValidator{}
+			factoryBuilder.On("IsPlanSupport", broker.AWSPlanID).Return(true)
+
+			planDefaults := func(planID string, platformProvider pkg.CloudProvider, provider *pkg.CloudProvider) (*gqlschema.ClusterConfigInput, error) {
+				return &gqlschema.ClusterConfigInput{}, nil
+			}
+			kcBuilder := &kcMock.KcBuilder{}
+			kcBuilder.On("GetServerURL", "").Return("", fmt.Errorf("error"))
+			// #create provisioner endpoint
+			provisionEndpoint := broker.NewProvision(
+				broker.Config{
+					EnablePlans:                     []string{"aws"},
+					URL:                             brokerURL,
+					OnlySingleTrialPerGA:            true,
+					EnableKubeconfigURLLabel:        true,
+					EnableAdditionalWorkerNodePools: true,
+				},
+				gardener.Config{Project: "test", ShootDomain: "example.com", DNSProviders: fixDNSProviders()},
+				memoryStorage.Operations(),
+				memoryStorage.Instances(),
+				memoryStorage.InstancesArchived(),
+				queue,
+				factoryBuilder,
+				broker.PlansConfig{},
+				planDefaults,
+				log,
+				dashboardConfig,
+				kcBuilder,
+				whitelist.Set{},
+				&broker.OneForAllConvergedCloudRegionsProvider{},
+			)
+
+			// when
+			_, err := provisionEndpoint.Provision(fixRequestContext(t, "cf-eu10"), instanceID, domain.ProvisionDetails{
+				ServiceID:     serviceID,
+				PlanID:        broker.AWSPlanID,
+				RawParameters: json.RawMessage(fmt.Sprintf(`{"name": "%s", "region": "%s","additionalWorkerNodePools": %s }`, clusterName, "eu-central-1", tc.additionalWorkerNodePools)),
+				RawContext:    json.RawMessage(fmt.Sprintf(`{"globalaccount_id": "%s", "subaccount_id": "%s", "user_id": "%s"}`, "any-global-account-id", subAccountID, "Test@Test.pl")),
+			}, true)
+			t.Logf("%+v\n", *provisionEndpoint)
+
+			// then
+			assert.Equal(t, tc.expectedError, err != nil)
+		})
+	}
+}
+
+func TestAdditionalWorkerNodePoolsForUnsupportedPlans(t *testing.T) {
+	for tn, tc := range map[string]struct {
+		planID string
+	}{
+		"Trial": {
+			planID: broker.TrialPlanID,
+		},
+		"Free": {
+			planID: broker.FreemiumPlanID,
+		},
+	} {
+		t.Run(tn, func(t *testing.T) {
+			// given
+			log := slog.New(slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{
+				Level: slog.LevelInfo,
+			}))
+
+			memoryStorage := storage.NewMemoryStorage()
+
+			queue := &automock.Queue{}
+			queue.On("Add", mock.AnythingOfType("string"))
+
+			factoryBuilder := &automock.PlanValidator{}
+			factoryBuilder.On("IsPlanSupport", tc.planID).Return(true)
+
+			planDefaults := func(planID string, platformProvider pkg.CloudProvider, provider *pkg.CloudProvider) (*gqlschema.ClusterConfigInput, error) {
+				return &gqlschema.ClusterConfigInput{}, nil
+			}
+			kcBuilder := &kcMock.KcBuilder{}
+			kcBuilder.On("GetServerURL", "").Return("", fmt.Errorf("error"))
+			// #create provisioner endpoint
+			provisionEndpoint := broker.NewProvision(
+				broker.Config{
+					EnablePlans:                     []string{"trial", "free"},
+					URL:                             brokerURL,
+					OnlySingleTrialPerGA:            true,
+					EnableKubeconfigURLLabel:        true,
+					EnableAdditionalWorkerNodePools: true,
+				},
+				gardener.Config{Project: "test", ShootDomain: "example.com", DNSProviders: fixDNSProviders()},
+				memoryStorage.Operations(),
+				memoryStorage.Instances(),
+				memoryStorage.InstancesArchived(),
+				queue,
+				factoryBuilder,
+				broker.PlansConfig{},
+				planDefaults,
+				log,
+				dashboardConfig,
+				kcBuilder,
+				whitelist.Set{},
+				&broker.OneForAllConvergedCloudRegionsProvider{},
+			)
+
+			additionalWorkerNodePools := `[{"name": "name-1", "machineType": "m6i.large", "autoScalerMin": 3, "autoScalerMax": 20}]`
+
+			// when
+			_, err := provisionEndpoint.Provision(fixRequestContext(t, "cf-eu10"), instanceID, domain.ProvisionDetails{
+				ServiceID:     serviceID,
+				PlanID:        tc.planID,
+				RawParameters: json.RawMessage(fmt.Sprintf(`{"name": "%s", "region": "%s","additionalWorkerNodePools": %s }`, clusterName, "eu-central-1", additionalWorkerNodePools)),
+				RawContext:    json.RawMessage(fmt.Sprintf(`{"globalaccount_id": "%s", "subaccount_id": "%s", "user_id": "%s"}`, "any-global-account-id", subAccountID, "Test@Test.pl")),
+			}, true)
+			t.Logf("%+v\n", *provisionEndpoint)
+
+			// then
+			assert.EqualError(t, err, fmt.Sprintf("additional worker node pools are not supported for plan ID: %s", tc.planID))
+		})
+	}
+}
+
+func TestAreNamesUnique(t *testing.T) {
+	tests := []struct {
+		name     string
+		pools    []pkg.AdditionalWorkerNodePool
+		expected bool
+	}{
+		{
+			name: "Unique names",
+			pools: []pkg.AdditionalWorkerNodePool{
+				{Name: "name-1", MachineType: "m6i.large", HAZones: true, AutoScalerMin: 5, AutoScalerMax: 5},
+				{Name: "name-2", MachineType: "m6i.large", HAZones: false, AutoScalerMin: 2, AutoScalerMax: 10},
+				{Name: "name-3", MachineType: "m6i.large", HAZones: true, AutoScalerMin: 3, AutoScalerMax: 15},
+			},
+			expected: true,
+		},
+		{
+			name: "Duplicate names",
+			pools: []pkg.AdditionalWorkerNodePool{
+				{Name: "name-1", MachineType: "m6i.large", HAZones: true, AutoScalerMin: 5, AutoScalerMax: 5},
+				{Name: "name-2", MachineType: "m6i.large", HAZones: false, AutoScalerMin: 2, AutoScalerMax: 10},
+				{Name: "name-1", MachineType: "m6i.large", HAZones: true, AutoScalerMin: 3, AutoScalerMax: 5},
+			},
+			expected: false,
+		},
+		{
+			name:     "Empty list",
+			pools:    []pkg.AdditionalWorkerNodePool{},
+			expected: true,
+		},
+		{
+			name: "Single pool",
+			pools: []pkg.AdditionalWorkerNodePool{
+				{Name: "name-1", MachineType: "m6i.large", HAZones: false, AutoScalerMin: 1, AutoScalerMax: 5},
+			},
+			expected: true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			assert.Equal(t, tt.expected, broker.AreNamesUnique(tt.pools))
+		})
+	}
+}
+
 func TestNetworkingValidation(t *testing.T) {
 	for tn, tc := range map[string]struct {
 		givenNetworking string
