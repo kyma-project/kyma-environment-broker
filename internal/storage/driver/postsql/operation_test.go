@@ -9,7 +9,6 @@ import (
 	"github.com/kyma-project/kyma-environment-broker/internal"
 	"github.com/kyma-project/kyma-environment-broker/internal/broker"
 	"github.com/kyma-project/kyma-environment-broker/internal/fixture"
-	"github.com/kyma-project/kyma-environment-broker/internal/storage"
 	"github.com/kyma-project/kyma-environment-broker/internal/storage/dbmodel"
 	"github.com/pivotal-cf/brokerapi/v8/domain"
 	"github.com/stretchr/testify/assert"
@@ -420,31 +419,16 @@ func TestOperation(t *testing.T) {
 	})
 }
 
-func assertUpdateState(t *testing.T, svc storage.Operations, orchestrationID string, latestOp *internal.Operation) {
-	// when
-	stats, err := svc.GetOperationStatsByPlan()
-	require.NoError(t, err)
+func assertDeprovisioningOperation(t *testing.T, expected, got internal.DeprovisioningOperation) {
+	// do not check zones and monothonic clock, see: https://golang.org/pkg/time/#Time
+	assert.True(t, expected.CreatedAt.Equal(got.CreatedAt), fmt.Sprintf("Expected %s got %s", expected.CreatedAt, got.CreatedAt))
+	assert.Equal(t, expected.InstanceDetails, got.InstanceDetails)
 
-	assert.Equal(t, 1, stats[broker.TrialPlanID].Provisioning[domain.InProgress])
+	expected.CreatedAt = got.CreatedAt
+	expected.UpdatedAt = got.UpdatedAt
+	expected.FinishedStages = got.FinishedStages
 
-	opStats, err := svc.GetOperationStatsForOrchestration(orchestrationID)
-	require.NoError(t, err)
-
-	// then
-	assert.Equal(t, 2, opStats[orchestration.InProgress])
-}
-
-func assertUpdateDescription(t *testing.T, gotOperation *internal.Operation, svc storage.Operations) {
-	// when
-	gotOperation.Description = "new modified description"
-	_, err := svc.UpdateOperation(*gotOperation)
-	require.NoError(t, err)
-
-	// then
-	gotOperation2, err := svc.GetOperationByID("operation-id")
-	require.NoError(t, err)
-
-	assert.Equal(t, "new modified description", gotOperation2.Description)
+	assert.Equal(t, expected, got)
 }
 
 func assertUpgradeClusterOperation(t *testing.T, expected, got internal.UpgradeClusterOperation) {
