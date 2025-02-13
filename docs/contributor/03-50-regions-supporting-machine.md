@@ -5,7 +5,7 @@
 The **regionsSupportingMachine** configuration field defines machine type families that are not universally available across all regions. 
 This configuration ensures that if a machine type family is listed, it is restricted to the explicitly specified regions.
 
-## Sample configuration
+See a sample configuration:
 
 ```yaml
 regionsSupportingMachine: |-
