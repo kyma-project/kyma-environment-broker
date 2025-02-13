@@ -31,3 +31,5 @@ data:
 {{- with .Values.regionsSupportingMachine }}
 {{ tpl . $ | indent 4 }}
 {{- end }}
+  hapRule.yaml: |-
+{{ toYaml .Values.hap.rule | indent 4  }}
