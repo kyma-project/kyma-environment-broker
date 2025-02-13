@@ -12,6 +12,7 @@ If you want to know how to use KEB, read the documents in the [`user`](user) dir
 * [Custom OIDC Configuration](./user/04-10-custom-oidc-configuration.md)
 * [Set a Custom List of SAP BTP, Kyma Runtime Administrators](./user/04-20-custom-administrators.md)
 * [Custom Networking Configuration](./user/04-30-custom-networking-configuration.md)
+* [Additional Worker Node Pools](./user/04-40-additional-worker-node-pools.md)
 * [Provision SAP BTP, Kyma Runtime Using Kyma Environment Broker](./user/05-10-provisioning-kyma-environment.md)
 * [Deprovision SAP BTP, Kyma Runtime Using Kyma Environment Broker](./user/05-20-deprovisioning-kyma-environment.md)
 * [Check Operation Status](./user/05-30-operation-status.md)
