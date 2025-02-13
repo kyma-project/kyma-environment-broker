@@ -969,9 +969,10 @@ func TestProvisioning_ClusterParameters(t *testing.T) {
 			expectedSubscriptionHyperscalerType: hyperscaler.Azure(),
 		},
 		"Production Azure": {
-			planID:    broker.AzurePlanID,
-			region:    "westeurope",
-			multiZone: false,
+			planID:                       broker.AzurePlanID,
+			region:                       "westeurope",
+			multiZone:                    false,
+			controlPlaneFailureTolerance: "zone",
 
 			expectedZonesCount:                  ptr.Integer(1),
 			expectedMinimalNumberOfNodes:        3,
@@ -996,9 +997,10 @@ func TestProvisioning_ClusterParameters(t *testing.T) {
 			expectedSubscriptionHyperscalerType: hyperscaler.Azure(),
 		},
 		"Production AWS": {
-			planID:    broker.AWSPlanID,
-			region:    "us-east-1",
-			multiZone: false,
+			planID:                       broker.AWSPlanID,
+			region:                       "us-east-1",
+			multiZone:                    false,
+			controlPlaneFailureTolerance: "zone",
 
 			expectedZonesCount:                  ptr.Integer(1),
 			expectedMinimalNumberOfNodes:        3,
@@ -1023,9 +1025,10 @@ func TestProvisioning_ClusterParameters(t *testing.T) {
 			expectedSubscriptionHyperscalerType: hyperscaler.AWS(),
 		},
 		"Production GCP": {
-			planID:    broker.GCPPlanID,
-			region:    "us-central1",
-			multiZone: false,
+			planID:                       broker.GCPPlanID,
+			region:                       "us-central1",
+			multiZone:                    false,
+			controlPlaneFailureTolerance: "zone",
 
 			expectedZonesCount:                  ptr.Integer(1),
 			expectedMinimalNumberOfNodes:        3,
@@ -1036,10 +1039,11 @@ func TestProvisioning_ClusterParameters(t *testing.T) {
 			expectedSubscriptionHyperscalerType: hyperscaler.GCP("cf-us30"),
 		},
 		"Production GCP KSA": {
-			planID:             broker.GCPPlanID,
-			platformRegionPart: "cf-sa30/",
-			region:             "me-central2",
-			multiZone:          false,
+			planID:                       broker.GCPPlanID,
+			platformRegionPart:           "cf-sa30/",
+			region:                       "me-central2",
+			multiZone:                    false,
+			controlPlaneFailureTolerance: "zone",
 
 			expectedZonesCount:                  ptr.Integer(1),
 			expectedMinimalNumberOfNodes:        3,
@@ -1117,8 +1121,9 @@ func TestProvisioning_ClusterParameters(t *testing.T) {
 			}
 			if tc.controlPlaneFailureTolerance != "" {
 				assert.Equal(t, tc.controlPlaneFailureTolerance, string(runtimeCR.Spec.Shoot.ControlPlane.HighAvailability.FailureTolerance.Type))
+			} else {
+				assert.Nil(t, runtimeCR.Spec.Shoot.ControlPlane)
 			}
-			//assert.Equal(t, tc.controlPlaneFailureTolerance, runtimeCR.Spec.Shoot.ControlPlane.HighAvailability.FailureTolerance)
 
 			suite.AssertSubscription(iid, tc.expectedSharedSubscription, tc.expectedSubscriptionHyperscalerType)
 		})

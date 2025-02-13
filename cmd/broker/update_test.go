@@ -595,7 +595,7 @@ func TestKymaResourceNameAndGardenerClusterNameAfterUnsuspension(t *testing.T) {
 	suite.AssertKymaResourceNotExists(opID)
 	instance := suite.GetInstance(iid)
 	assert.Equal(t, instance.RuntimeID, instance.InstanceDetails.KymaResourceName)
-	time.Sleep(time.Second)
+	//time.Sleep(time.Second)
 	suite.AssertKymaResourceExistsByInstanceID(iid)
 }
 
