@@ -38,8 +38,7 @@ func (c *TestCases) loadCases() *TestCases {
 
 func TestMain(t *testing.T) {
  
-    t.Run("should parse simple plan", func (t *testing.T)  {
-
+    t.Run("should verify parser command", func (t *testing.T)  {
         cases := TestCases{}
         cases.loadCases()
 
@@ -80,5 +79,4 @@ func TestMain(t *testing.T) {
             require.Equal(t, expected, strings.Trim(output, "\n"), fmt.Sprintf("While evaluating: %s", string(c.Name)))
         }
     })
- 
 }

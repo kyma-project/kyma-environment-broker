@@ -2,7 +2,6 @@ package main
 
 import (
 	"encoding/json"
-	"fmt"
 	"log"
 	"os"
 	"strings"
@@ -97,7 +96,7 @@ func (cmd *ParseCommand) Run() error {
 	}
 
 	if cmd.match != "" && (!cmd.sort || !cmd.unique) {
-		cmd.cobraCmd.Printf("\tMatching is only supported when both priority and uniqnuess flags are specified.\n")
+		cmd.cobraCmd.Printf("\tMatching is only supported when both priority and uniqueness flags are specified.\n")
 		return nil
 	}
 	
@@ -111,139 +110,28 @@ func (cmd *ParseCommand) Run() error {
 		entries = strings.Split(cmd.rule, ";")
 	}
 
-	allResults := make([]rules.ParsingResult, 0, len(entries))
-	okResults := make([]rules.ParsingResult, 0, len(entries))
-	errorResults := make([]rules.ParsingResult, 0, len(entries))
-
-	resolvedRules := make(map[string]rules.ParsingResult)
+	results := rules.NewParsingResults()
 
 	for _, entry := range entries {
 		rule, err := cmd.parser.Parse(entry)
 
-		result := rules.ParsingResult{OriginalRule: entry,  Rule: rule, Err: err}
-		
-		if err != nil {
-			errorResults = append(errorResults, result)	
-		} else {
-			okResults = append(okResults, result)	
-			if rule.IsResolved() {
-				resolvedRules[rule.StringNoLabels()] = result
-			}
-		}
-
-		allResults = append(allResults, result)
+		results.Apply(entry, rule, err)
 	}
 
 	if cmd.sort {
-		allResults = rules.SortRuleEntries(allResults)
-		okResults = rules.SortRuleEntries(okResults)
-		errorResults = rules.SortRuleEntries(errorResults)
+		results.Sort()
 	}
 
 	if cmd.unique {
-		uniqnuessSet := make(map[string]rules.ParsingResult)
-		signatureSet := make(map[string]rules.ParsingResult)
-		uniqueResults := make([]rules.ParsingResult, 0, len(allResults))
+		results.CheckUniqueness()
+	}
 
-
-		for _, result := range allResults {
-
-			// containsWildcards := false
-
-			if result.Err != nil {
-				uniqueResults = append(uniqueResults, result)
-				continue
-			}
-
-			negativeSignatureKey := result.Rule.Plan
-			signatureKey := result.Rule.Plan
-			key := result.Rule.Plan
-			
-			key += "PR:" 
-			signatureKey += "PR:"
-			negativeSignatureKey += "PR:"
-			if result.Rule.PlatformRegion == "" || result.Rule.PlatformRegion == "*" {
-				key += "*"
-
-				signatureKey += "*"
-				negativeSignatureKey += "attr"
-				if result.Rule.PlatformRegion == "*" {
-					// containsWildcards = true
-				}
-			} else {
-				key += result.Rule.PlatformRegion
-			
-				signatureKey += "attr"
-				negativeSignatureKey += "*"
-			}
-			
-			key += "HR:"
-			signatureKey += "HR:"
-			negativeSignatureKey += "HR:"
-			if result.Rule.HyperscalerRegion == "" || result.Rule.HyperscalerRegion == "*" {
-				key += "*"
-			
-				signatureKey += "*"
-				negativeSignatureKey += "attr"
-
-			
-				if result.Rule.HyperscalerRegion == "*" {
-					// containsWildcards = true
-				}
-
-			} else {
-				key += result.Rule.HyperscalerRegion
-			
-				signatureKey += "attr"
-				negativeSignatureKey += "*"
-			}
-
-			negativeSignatureItem, negativeSignatureExists := signatureSet[negativeSignatureKey]
-
-			// if negativeSignatureExists && containsWildcards && cmd.signature {
-			if negativeSignatureExists && cmd.signature {
-				
-				resolvingSignaturePossibleRule := result.Rule.Combine(*negativeSignatureItem.Rule)
-
-			resolvingKey := resolvingSignaturePossibleRule.StringNoLabels()
-			_, resolvingRuleExists := resolvedRules[resolvingKey]
-
-				if !resolvingRuleExists {
-					err := fmt.Errorf("Duplicated negative signature with previously defined rule: '%s', consider introducing a resolving rule '%s'", negativeSignatureItem.Rule.StringNoLabels(), resolvingKey)
-
-					errorResults = append(errorResults, rules.ParsingResult{OriginalRule: result.OriginalRule, Err: err})
-
-					uniqueResults = append(uniqueResults, rules.ParsingResult{OriginalRule: result.OriginalRule, Err: err})
-					continue
-				}
-			}
-
-			alreadyExists := false
-			var item rules.ParsingResult
-			item, alreadyExists = uniqnuessSet[key]
-	
-			if !alreadyExists {
-
-				uniqnuessSet[key] = result
-				signatureSet[signatureKey] = result
-				uniqueResults = append(uniqueResults, result)
-
-			} else {
-				err := fmt.Errorf("Duplicated rule with previously defined rule: '%s'", item.Rule.StringNoLabels())
-
-				errorResults = append(errorResults, rules.ParsingResult{OriginalRule: result.OriginalRule, Err: err})
-
-				uniqueResults = append(uniqueResults, rules.ParsingResult{OriginalRule: result.OriginalRule, Err: err})
-			}
-		}
-
-		allResults = uniqueResults
+	if cmd.signature {
+		results.CheckSignatures()
 	}
 
 	if cmd.sort {
-		allResults = rules.SortRuleEntries(allResults)
-		okResults = rules.SortRuleEntries(okResults)
-		errorResults = rules.SortRuleEntries(errorResults)
+		results.Sort()
 	}
 
 	var testDataForMatching *rules.MatchableAttributes
@@ -251,7 +139,19 @@ func (cmd *ParseCommand) Run() error {
 		testDataForMatching = getTestData(cmd.match)
 	}
 	
-	for _, result := range allResults {
+	Print(cmd, results, testDataForMatching)
+	
+
+	if results.HasErrors(){
+		cmd.cobraCmd.Printf("There are errors in your rule configuration. Fix above errors in your rule configuration and try again.\n")
+		return nil
+	}
+
+	return nil
+}
+
+func Print(cmd *ParseCommand, results *rules.ParsingResults, testDataForMatching *rules.MatchableAttributes) {
+	for _, result := range results.AllResults {
 
 		cmd.cobraCmd.Printf("-> ")
 		if result.Err != nil {
@@ -282,13 +182,6 @@ func (cmd *ParseCommand) Run() error {
 
 		cmd.cobraCmd.Printf("\n")
 	}
-
-	if len(errorResults) != 0 {
-		cmd.cobraCmd.Printf("There are errors in your rule configuration. Fix above errors in your rule configuration and try again.\n")
-		return nil
-	}
-
-	return nil
 }
 
 func resolvingSignatureFormat(item rules.ParsingResult) string {
@@ -305,17 +198,34 @@ func resolvingSignatureFormat(item rules.ParsingResult) string {
 
 func resolvingSignature(item1, item2 rules.ParsingResult) string{
 	resolvingSignature := item1.Rule.Plan
-	if item1.Rule.PlatformRegion != "*" && item1.Rule.PlatformRegion != "" {
-		resolvingSignature += "(PR=" + item1.Rule.PlatformRegion
-	} else if item2.Rule.PlatformRegion != "*" && item2.Rule.PlatformRegion != "" {
-		resolvingSignature += "(PR=" + item2.Rule.PlatformRegion
-	}
 
-	if item1.Rule.HyperscalerRegion != "*" && item1.Rule.HyperscalerRegion != "" {
-		resolvingSignature += "HR=" + item1.Rule.HyperscalerRegion
-	} else if item2.Rule.HyperscalerRegion != "*" && item2.Rule.HyperscalerRegion != "" {	
-		resolvingSignature += "HR=" + item2.Rule.HyperscalerRegion
+	for _, attribute := range rules.InputAttributes {
+		if attribute.HasValue {
+			var valueRule *rules.Rule
+
+			if attribute.HasSpecificValue(item1.Rule) {
+				valueRule = item1.Rule
+			} else if attribute.HasSpecificValue(item2.Rule) {
+				valueRule = item2.Rule
+			} else {
+				continue
+			}
+
+			resolvingSignature += attribute.Name + "=" + attribute.Getter(valueRule)
+		}
 	}
+	
+	// if item1.Rule.PlatformRegion != "*" && item1.Rule.PlatformRegion != "" {
+	// 	resolvingSignature += "(PR=" + item1.Rule.PlatformRegion
+	// } else if item2.Rule.PlatformRegion != "*" && item2.Rule.PlatformRegion != "" {
+	// 	resolvingSignature += "(PR=" + item2.Rule.PlatformRegion
+	// }
+
+	// if item1.Rule.HyperscalerRegion != "*" && item1.Rule.HyperscalerRegion != "" {
+	// 	resolvingSignature += "HR=" + item1.Rule.HyperscalerRegion
+	// } else if item2.Rule.HyperscalerRegion != "*" && item2.Rule.HyperscalerRegion != "" {	
+	// 	resolvingSignature += "HR=" + item2.Rule.HyperscalerRegion
+	// }
 
 	return resolvingSignature
 }

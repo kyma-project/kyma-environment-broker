@@ -8,21 +8,173 @@ import (
 	"github.com/kyma-project/kyma-environment-broker/internal/broker"
 )
 
+type ParsingResults struct {
+	AllResults    []ParsingResult
+	okResults     []ParsingResult
+	errorResults  []ParsingResult
+	resolvedRules map[string]ParsingResult
+}
+
+func (p *ParsingResults) Print() {
+	panic("unimplemented")
+}
+
+func (p *ParsingResults) CheckUniqueness() {
+	uniquenessSet := make(map[string]ParsingResult)
+	uniqueResults := make([]ParsingResult, 0, len(p.AllResults))
+
+	for _, result := range p.AllResults {
+
+		if result.Err != nil {
+			uniqueResults = append(uniqueResults, result)
+			continue
+		}
+
+		key := result.Rule.Signature()
+
+		alreadyExists := false
+		var item ParsingResult
+		item, alreadyExists = uniquenessSet[key]
+
+		if !alreadyExists {
+
+			uniquenessSet[key] = result
+			uniqueResults = append(uniqueResults, result)
+
+		} else {
+
+			err := fmt.Errorf("Duplicated rule with previously defined rule: '%s'", item.Rule.StringNoLabels())
+
+			p.errorResults = append(p.errorResults, ParsingResult{OriginalRule: result.OriginalRule, Err: err})
+
+			uniqueResults = append(uniqueResults, ParsingResult{OriginalRule: result.OriginalRule, Err: err})
+
+		}
+	}
+
+	p.AllResults = uniqueResults
+}
+
+func (p *ParsingResults) composeSignatureSet() map[string]ParsingResult {
+	signatureSet := make(map[string]ParsingResult)
+
+	for _, result := range p.AllResults {
+		signature := buildSignature(result, ASTERISK, ATTRIBUTE_PREFIX)
+		signatureSet[signature] = result
+	}
+
+	return signatureSet
+}
+
+func (p *ParsingResults) CheckSignatures() {
+	signatureSet := make(map[string]ParsingResult)
+	uniqueResults := make([]ParsingResult, 0, len(p.AllResults))
+
+	for _, result := range p.AllResults {
+		// signatureKey := buildSignature(result, ASTERISK, ATTRIBUTE_PREFIX)
+		negativeSignatureKey := buildSignature(result, ATTRIBUTE_PREFIX, ASTERISK)
+
+		negativeSignatureItem, negativeSignatureExists := signatureSet[negativeSignatureKey]
+
+		var negativeSignatureError error = nil
+		if negativeSignatureExists {
+
+			resolvingSignaturePossibleRule := result.Rule.Combine(*negativeSignatureItem.Rule)
+
+			resolvingKey := resolvingSignaturePossibleRule.StringNoLabels()
+			_, resolvingRuleExists := p.resolvedRules[resolvingKey]
+
+			if !resolvingRuleExists {
+				negativeSignatureError = fmt.Errorf("Duplicated negative signature with previously defined rule: '%s', consider introducing a resolving rule '%s'", negativeSignatureItem.Rule.StringNoLabels(), resolvingKey)
+
+				p.errorResults = append(p.errorResults, ParsingResult{OriginalRule: result.OriginalRule, Err: negativeSignatureError})
+			}
+		} else {
+			signatureSet[buildSignature(result, ASTERISK, ATTRIBUTE_PREFIX)] = result
+		}
+
+		uniqueResults = append(uniqueResults, ParsingResult{OriginalRule: result.OriginalRule, Rule: result.Rule, Err: negativeSignatureError})
+	}
+
+	p.AllResults = uniqueResults
+}
+
+func buildSignature(result ParsingResult, positiveKey, negativeKey string) string {
+
+	signatureKey := result.Rule.Plan
+	signatureKey += PR_ATTR_NAME + SIGNATURE_ATTR_SEPARATOR
+	checkValue := result.Rule.PlatformRegion
+	signatureKey += getAttrValueSymbol(checkValue, positiveKey, negativeKey)
+	signatureKey += HYPERSCALER_LABEL + SIGNATURE_ATTR_SEPARATOR
+
+	checkValue = result.Rule.HyperscalerRegion
+	signatureKey += getAttrValueSymbol(checkValue, positiveKey, negativeKey)
+
+	return signatureKey
+}
+
+func getAttrValueSymbol(checkedValue, returnedValueTrue, returnedValueFalse string) string {
+	if checkedValue == "" || checkedValue == ASTERISK {
+		return returnedValueTrue
+	} else {
+		return returnedValueFalse
+	}
+
+}
+
+func (p *ParsingResults) HasErrors() bool {
+	return len(p.errorResults) != 0
+}
+
+func (p *ParsingResults) Sort() {
+	p.AllResults = SortRuleEntries(p.AllResults)
+	p.okResults = SortRuleEntries(p.okResults)
+	p.errorResults = SortRuleEntries(p.errorResults)
+}
+
+func (p *ParsingResults) Apply(entry string, rule *Rule, err error) {
+	result := ParsingResult{OriginalRule: entry, Rule: rule, Err: err}
+	if err != nil {
+		p.errorResults = append(p.errorResults, result)
+	} else {
+		p.okResults = append(p.okResults, result)
+		if rule.IsResolved() {
+			p.resolvedRules[rule.StringNoLabels()] = result
+		}
+	}
+
+	p.AllResults = append(p.AllResults, result)
+}
+
+func NewParsingResults() *ParsingResults {
+	return &ParsingResults{
+		AllResults:    make([]ParsingResult, 0),
+		okResults:     make([]ParsingResult, 0),
+		errorResults:  make([]ParsingResult, 0),
+		resolvedRules: make(map[string]ParsingResult),
+	}
+}
+
 type Attribute struct {
 	Name          string
 	Description   string
-	setter        func(*Rule, string) (*Rule, error)
-	getter        func(*Rule) string
+	Setter        func(*Rule, string) (*Rule, error)
+	Getter        func(*Rule) string
 	input         bool
 	output        bool
 	modifiedLabel string
+	HasValue      bool
 
 	modifiedLabelName string
 	ApplyLabel        func(r *Rule, labels map[string]string) map[string]string
 }
 
+func (a Attribute) HasSpecificValue(rule *Rule) bool{
+	return rule.PlatformRegion != "*" && rule.PlatformRegion != ""
+}
+
 func (a Attribute) String(r *Rule) any {
-	val := a.getter(r)
+	val := a.Getter(r)
 	output := ""
 	if val == "true" {
 		output += fmt.Sprintf("%s, ", a.Name)
@@ -43,17 +195,20 @@ const (
 	EUACCESS_LABEL    = "euAccess"
 	SHARED_LABEL      = "shared"
 
-	ASTERISK = "*"
+	ASTERISK                 = "*"
+	ATTRIBUTE_PREFIX         = "attr"
+	SIGNATURE_ATTR_SEPARATOR = ":"
 )
 
 var InputAttributes = []Attribute{
 	{
 		Name:        PR_ATTR_NAME,
 		Description: "Platform Region",
-		setter:      setPlatformRegion,
-		getter:      func(r *Rule) string { return r.PlatformRegion },
+		Setter:      setPlatformRegion,
+		Getter:      func(r *Rule) string { return r.PlatformRegion },
 		input:       true,
 		output:      false,
+		HasValue:    true,
 		ApplyLabel: func(r *Rule, labels map[string]string) map[string]string {
 			if labels[HYPERSCALER_LABEL] == "" {
 				labels[HYPERSCALER_LABEL] = r.Plan
@@ -66,10 +221,12 @@ var InputAttributes = []Attribute{
 	{
 		Name:        HR_ATTR_NAME,
 		Description: "Hyperscaler Region",
-		setter:      setHyperscalerRegion,
-		getter:      func(r *Rule) string { return r.HyperscalerRegion },
+		Setter:      setHyperscalerRegion,
+		Getter:      func(r *Rule) string { return r.HyperscalerRegion },
 		input:       true,
 		output:      false,
+		HasValue:    true,
+
 		ApplyLabel: func(r *Rule, labels map[string]string) map[string]string {
 			if labels[HYPERSCALER_LABEL] == "" {
 				labels[HYPERSCALER_LABEL] = r.Plan
@@ -85,10 +242,11 @@ var OutputAttributes = []Attribute{
 	{
 		Name:        EU_ATTR_NAME,
 		Description: "EU Access",
-		setter:      setEuAccess,
-		getter:      func(r *Rule) string { return strconv.FormatBool(r.EuAccess) },
+		Setter:      setEuAccess,
+		Getter:      func(r *Rule) string { return strconv.FormatBool(r.EuAccess) },
 		input:       false,
 		output:      true,
+		HasValue:    false,
 		ApplyLabel: func(r *Rule, labels map[string]string) map[string]string {
 			if r.EuAccess {
 				labels[EUACCESS_LABEL] = "true"
@@ -99,10 +257,11 @@ var OutputAttributes = []Attribute{
 	{
 		Name:        S_ATTR_NAME,
 		Description: "Shared",
-		setter:      setShared,
-		getter:      func(r *Rule) string { return strconv.FormatBool(r.Shared) },
+		Setter:      setShared,
+		Getter:      func(r *Rule) string { return strconv.FormatBool(r.Shared) },
 		input:       false,
 		output:      true,
+		HasValue:    false,
 		ApplyLabel: func(r *Rule, labels map[string]string) map[string]string {
 			if r.Shared {
 				labels[SHARED_LABEL] = "true"
@@ -118,15 +277,15 @@ type Labels struct {
 }
 
 type Rule struct {
-	Plan                     string
-	PlatformRegion           string
-	HyperscalerRegion        string
-	EuAccess                 bool
-	Shared                   bool
-	Labels                   map[string]string
+	Plan              string
+	PlatformRegion    string
+	HyperscalerRegion string
+	EuAccess          bool
+	Shared            bool
+	Labels            map[string]string
 	// Attributes               []Attribute
-	ContainsInputAttributes  bool
-	ContainsOutputAttributes bool
+	ContainsInputAttributes        bool
+	ContainsOutputAttributes       bool
 	hyperscalerNameMappingFunction func(string) string
 }
 
@@ -135,7 +294,7 @@ var AllAttributes = append(InputAttributes, OutputAttributes...)
 func NewRule() *Rule {
 	return &Rule{
 		hyperscalerNameMappingFunction: getHyperscalerName,
-		Labels: 					  make(map[string]string),
+		Labels:                         make(map[string]string),
 	}
 }
 
@@ -150,10 +309,8 @@ func (r *Rule) CalculateLabels() map[string]string {
 }
 
 func (r *Rule) CalculateLabelsWith(hyperscalerName string) map[string]string {
-	// labels := make(map[string]string)
-
 	for _, attr := range AllAttributes {
-		if attr.getter(r) != "" {
+		if attr.Getter(r) != "" {
 			r.Labels = attr.ApplyLabel(r, r.Labels)
 		}
 	}
@@ -179,14 +336,14 @@ func getHyperscalerName(plan string) (result string) {
 
 func (r *Rule) Matched(attributes *MatchableAttributes) bool {
 	return r.Plan == attributes.Plan &&
-		(r.PlatformRegion == attributes.PlatformRegion || r.PlatformRegion == ASTERISK) &&
-		(r.HyperscalerRegion == attributes.HyperscalerRegion || r.HyperscalerRegion == ASTERISK)
+		(r.PlatformRegion == attributes.PlatformRegion || r.PlatformRegion == ASTERISK || r.PlatformRegion == "") &&
+		(r.HyperscalerRegion == attributes.HyperscalerRegion || r.HyperscalerRegion == ASTERISK || r.HyperscalerRegion == "")
 }
 
 func (r *Rule) SetAttributeValue(attribute, value string) (*Rule, error) {
 	for _, attr := range AllAttributes {
 		if attr.Name == attribute {
-			return attr.setter(r, value)
+			return attr.Setter(r, value)
 		}
 	}
 
@@ -355,4 +512,26 @@ func (r *Rule) Combine(rule Rule) *Rule {
 	newRule.hyperscalerNameMappingFunction = r.hyperscalerNameMappingFunction
 
 	return newRule
+}
+
+func (r *Rule) Signature() string {
+	key := r.Plan
+
+	key += PR_ATTR_NAME + SIGNATURE_ATTR_SEPARATOR
+
+	if r.PlatformRegion == "" || r.PlatformRegion == ASTERISK {
+		key += ASTERISK
+	} else {
+		key += r.PlatformRegion
+	}
+
+	key += HYPERSCALER_LABEL + SIGNATURE_ATTR_SEPARATOR
+
+	if r.HyperscalerRegion == "" || r.HyperscalerRegion == ASTERISK {
+		key += ASTERISK
+	} else {
+		key += r.HyperscalerRegion
+	}
+
+	return key
 }
