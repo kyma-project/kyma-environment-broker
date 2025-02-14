@@ -472,7 +472,7 @@ func NewUpdateOperation(operationID string, instance *Instance, updatingParams U
 		op.ProvisioningParameters.Parameters.MachineType = updatingParams.MachineType
 	}
 
-	if len(updatingParams.AdditionalWorkerNodePools) != 0 {
+	if updatingParams.AdditionalWorkerNodePools != nil {
 		op.ProvisioningParameters.Parameters.AdditionalWorkerNodePools = updatingParams.AdditionalWorkerNodePools
 	}
 
