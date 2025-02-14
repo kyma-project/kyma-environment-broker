@@ -397,7 +397,7 @@ func (b *UpdateEndpoint) processContext(instance *internal.Instance, details dom
 
 	newInstance, err := b.instanceStorage.Update(*instance)
 	if err != nil {
-		logger.Error(fmt.Sprintf("processing context updated failed: %s", err.Error()))
+		logger.Error(fmt.Sprintf("instance updated failed: %s", err.Error()))
 		return nil, changed, fmt.Errorf("unable to process the update")
 	} else if b.updateCustomResourcesLabelsOnAccountMove && needUpdateCustomResources {
 		logger.Info("updating labels on related CRs")

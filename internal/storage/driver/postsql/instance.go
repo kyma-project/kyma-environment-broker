@@ -483,7 +483,7 @@ func (s *Instance) Update(instance internal.Instance) (*internal.Instance, error
 			}
 
 			// the operation exists but the version is different
-			lastErr = dberr.Conflict("operation update conflict, operation ID: %s", instance.InstanceID)
+			lastErr = dberr.Conflict("instance update conflict, instance ID: %s", instance.InstanceID)
 			return false, lastErr
 		case lastErr != nil:
 			return false, nil
