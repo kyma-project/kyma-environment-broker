@@ -8,7 +8,6 @@ import (
 	"strings"
 
 	"github.com/kyma-project/kyma-environment-broker/common/hyperscaler/rules"
-	"github.com/kyma-project/kyma-environment-broker/common/hyperscaler/rules/grammar"
 	"github.com/spf13/cobra"
 	"gopkg.in/yaml.v2"
 )
@@ -26,7 +25,6 @@ type ParseCommand struct {
 	cobraCmd               *cobra.Command
 	rule 				 string
 	parser 				 rules.Parser
-	useGrammar 			 bool
 	ruleFilePath 		 string
 	sort 			 bool
 	unique 			 bool
@@ -79,7 +77,6 @@ func NewParseCmd() *cobra.Command {
 	cobraCmd.Flags().StringVarP(&cmd.rule, "entry", "e", "", "A rule to validate where each rule entry is separated by comma.")
 	cobraCmd.Flags().StringVarP(&cmd.match, "match", "m", "", "Check what rule will be matched and triggered against the provided test data. Only valid entries are taking into account when matching. Data is passed in json format, example: '{\"plan\": \"aws\", \"platformRegion\": \"cf-eu11\"}'.")
 	cobraCmd.Flags().StringVarP(&cmd.ruleFilePath, "file", "f", "", "Read rules from a file pointed to by parameter value. The file must contain a valid yaml list, where each rule entry starts with '-' and is placed in its own line.")
-	cobraCmd.Flags().BoolVarP(&cmd.useGrammar, "grammar", "g", false, "Use c parser and lexer generated with antlr instead of simple string splitting.")
 	cobraCmd.Flags().BoolVarP(&cmd.sort, "priority", "p", false, "Sort rule entries by their priority, in descending priority order.")
 	cobraCmd.Flags().BoolVarP(&cmd.unique, "unique", "u", false, "Display only non duplicated rules. Error entries are not considered for uniqueness.")
 	cobraCmd.Flags().BoolVarP(&cmd.signature, "signature", "s", false, "Mark rules with the mirrored signatures as duplicated. For example aws(PR=*, HR=westeurope) and aws(PR=westeurope, HR=*) are considered duplicated because of having mirrored signatures.")
@@ -104,10 +101,6 @@ func (cmd *ParseCommand) Run() error {
 		return nil
 	}
 	
-	if (cmd.useGrammar) {
-		cmd.parser = &grammar.GrammarParser{}
-	}
-
 	var entries []string
 	if cmd.ruleFilePath != "" {
 		conf := &conf{}

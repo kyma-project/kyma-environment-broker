@@ -76,12 +76,9 @@ func TestMain(t *testing.T) {
             output = strings.ReplaceAll(output, "\n", "")
             output = strings.ReplaceAll(output, "\r", "")
             output = strings.ReplaceAll(output, "\f", "")
-
             
             require.Equal(t, expected, strings.Trim(output, "\n"), fmt.Sprintf("While evaluating: %s", string(c.Name)))
         }
-
-
     })
  
 }
