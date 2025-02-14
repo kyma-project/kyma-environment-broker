@@ -95,6 +95,7 @@ func AzureRegions(euRestrictedAccess bool) []string {
 		"southeastasia",
 		"australiaeast",
 		"brazilsouth",
+		"canadacentral",
 	}
 }
 
@@ -115,6 +116,7 @@ func AzureRegionsDisplay(euRestrictedAccess bool) map[string]string {
 		"southeastasia": "southeastasia (Asia Pacific, Singapore)",
 		"australiaeast": "australiaeast (Australia, Sydney)",
 		"brazilsouth":   "brazilsouth (Brazil, São Paulo)",
+		"canadacentral": "canadacentral (Canada, Toronto)",
 	}
 }
 
