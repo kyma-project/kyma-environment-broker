@@ -11,7 +11,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 
-	brokerapi "github.com/pivotal-cf/brokerapi/v8/domain"
+	brokerapi "github.com/pivotal-cf/brokerapi/v12/domain"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	k8s "k8s.io/apimachinery/pkg/runtime"
 	dynamicfake "k8s.io/client-go/dynamic/fake"
