@@ -6,9 +6,11 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func ParserHappyPathTest(t *testing.T, parser Parser) {
+func TestParserHappyPath(t *testing.T) {
 
     t.Run("with plan", func(t *testing.T) {
+        parser := &SimpleParser{}
+        
         rule, err := parser.Parse("azure")
         require.NoError(t, err)
 
@@ -22,6 +24,7 @@ func ParserHappyPathTest(t *testing.T, parser Parser) {
     })
 
     t.Run("with plan and single input attribute", func(t *testing.T) {
+        parser := &SimpleParser{}
         rule, err := parser.Parse("azure(PR=westeurope)")
         require.NoError(t, err)
 
@@ -46,6 +49,7 @@ func ParserHappyPathTest(t *testing.T, parser Parser) {
     })
 
     t.Run("with plan all output attributes - different positions", func(t *testing.T) {
+        parser := &SimpleParser{}
         rule, err := parser.Parse("azure(PR=easteurope,HR=westeurope)")
         require.NoError(t, err)
 
@@ -70,6 +74,7 @@ func ParserHappyPathTest(t *testing.T, parser Parser) {
     })
 
     t.Run("with plan and single output attribute", func(t *testing.T) {
+        parser := &SimpleParser{}
         rule, err := parser.Parse("azure->S")
         require.NoError(t, err)
 
@@ -95,6 +100,7 @@ func ParserHappyPathTest(t *testing.T, parser Parser) {
 
 
     t.Run("with plan and all output attributes - different positions", func(t *testing.T) {
+        parser := &SimpleParser{}
         rule, err := parser.Parse("azure->S,EU")
         require.NoError(t, err)
 
@@ -119,6 +125,7 @@ func ParserHappyPathTest(t *testing.T, parser Parser) {
     })
 
     t.Run("with plan and single output/input attributes", func(t *testing.T) {
+        parser := &SimpleParser{}
         rule, err := parser.Parse("azure(PR=westeurope)->EU")
         require.NoError(t, err)
 
@@ -132,6 +139,7 @@ func ParserHappyPathTest(t *testing.T, parser Parser) {
     }) 
 
     t.Run("with plan and all input/output attributes", func(t *testing.T) {
+        parser := &SimpleParser{}
         rule, err := parser.Parse("azure(PR=westeurope, HR=easteurope)->EU,S")
         require.NoError(t, err)
 

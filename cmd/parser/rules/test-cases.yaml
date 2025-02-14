@@ -5,8 +5,8 @@ cases:
   - aws -> EU, S
   - aws(PR=cf-eu11) -> EU
   expected: |
-    ->     OK  aws-> EU, Shared                                   # hyperscalerType: aws, euAccess: true, shared: true,
-    ->     OK  aws(PR=cf-eu11)-> EU                               # hyperscalerType: aws_cf-eu11, euAccess: true,
+    ->     OK  aws-> EU, S                                   # euAccess: true, hyperscalerType: aws, shared: true
+    ->     OK  aws(PR=cf-eu11)-> EU                               # euAccess: true, hyperscalerType: aws_cf-eu11
 
 - name: Final Configuration
   rule:
@@ -22,17 +22,17 @@ cases:
   - preview                         
   - free
   expected: |
-    ->     OK  aws                                                # hyperscalerType: aws,
-    ->     OK  aws(PR=cf-eu11)-> EU                               # hyperscalerType: aws_cf-eu11, euAccess: true,
-    ->     OK  azure                                              # hyperscalerType: azure,
-    ->     OK  azure(PR=cf-ch20)-> EU                             # hyperscalerType: azure_cf-ch20, euAccess: true,
-    ->     OK  azure_lite                                         # hyperscalerType: azure_lite,
-    ->     OK  free                                               # hyperscalerType: aws/azure,
-    ->     OK  gcp                                                # hyperscalerType: gcp,
-    ->     OK  gcp(PR=cf-sa30)                                    # hyperscalerType: gcp_cf-sa30,
-    ->     OK  preview                                            # hyperscalerType: aws,
-    ->     OK  sap-converged-cloud(HR=*)-> Shared                 # hyperscalerType: openstack_*, shared: true,
-    ->     OK  trial-> Shared                                     # hyperscalerType: aws, shared: true,
+    ->     OK  aws                                                # hyperscalerType: aws
+    ->     OK  aws(PR=cf-eu11)-> EU                               # euAccess: true, hyperscalerType: aws_cf-eu11
+    ->     OK  azure                                              # hyperscalerType: azure
+    ->     OK  azure(PR=cf-ch20)-> EU                             # euAccess: true, hyperscalerType: azure_cf-ch20
+    ->     OK  azure_lite                                         # hyperscalerType: azure_lite
+    ->     OK  free                                               # hyperscalerType: aws/azure
+    ->     OK  gcp                                                # hyperscalerType: gcp
+    ->     OK  gcp(PR=cf-sa30)                                    # hyperscalerType: gcp_cf-sa30
+    ->     OK  preview                                            # hyperscalerType: aws
+    ->     OK  sap-converged-cloud(HR=*)-> S                 # hyperscalerType: openstack_*, shared: true
+    ->     OK  trial-> S                                     # hyperscalerType: aws, shared: true
 
 - name: Duplicated Rule
   rule: 
@@ -41,8 +41,8 @@ cases:
   - aws(HR=eastus)
   expected: |
     ->  Error  aws(HR=eastus) - Duplicated negative signature with previously defined rule: 'aws(PR=cf-eu11)', consider introducing a resolving rule 'aws(PR=cf-eu11, HR=eastus)'
-    ->     OK  aws                                                # hyperscalerType: aws,
-    ->     OK  aws(PR=cf-eu11)                                    # hyperscalerType: aws_cf-eu11,
+    ->     OK  aws                                                # hyperscalerType: aws
+    ->     OK  aws(PR=cf-eu11)                                    # hyperscalerType: aws_cf-eu11
     There are errors in your rule configuration. Fix above errors in your rule configuration and try again.
 
 
@@ -52,7 +52,7 @@ cases:
   - aws(PR=*)
   expected: |
     ->  Error  aws(PR=*) - Duplicated rule with previously defined rule: 'aws'
-    ->     OK  aws                                                # hyperscalerType: aws,
+    ->     OK  aws                                                # hyperscalerType: aws
     There are errors in your rule configuration. Fix above errors in your rule configuration and try again.
 
 - name: Duplicated Rules
@@ -64,8 +64,8 @@ cases:
   expected: |
     ->  Error  gcp - Duplicated rule with previously defined rule: 'gcp'
     ->  Error  aws(PR=cf, HR=aa) - Duplicated rule with previously defined rule: 'aws(PR=cf, HR=aa)'
-    ->     OK  aws(PR=cf, HR=aa)                                  # hyperscalerType: aws_cf_aa,
-    ->     OK  gcp                                                # hyperscalerType: gcp,
+    ->     OK  aws(PR=cf, HR=aa)                                  # hyperscalerType: aws_cf_aa
+    ->     OK  gcp                                                # hyperscalerType: gcp
     There are errors in your rule configuration. Fix above errors in your rule configuration and try again.
 
 - name: Duplicated Rules - No 2
@@ -79,10 +79,10 @@ cases:
   expected: | 
     ->  Error  aws(PR=*, HR=*) - Duplicated rule with previously defined rule: 'aws'
     ->  Error  aws(PR=*, HR=t) - Duplicated negative signature with previously defined rule: 'aws(PR=test2, HR=*)', consider introducing a resolving rule 'aws(PR=test2, HR=t)'
-    ->     OK  aws                                                # hyperscalerType: aws,
-    ->     OK  aws(PR=*, HR=test1)                                # hyperscalerType: aws_*_test1,
-    ->     OK  aws(PR=test2, HR=*)                                # hyperscalerType: aws_test2_*,
-    ->     OK  aws(PR=test2, HR=test1)                            # hyperscalerType: aws_test2_test1,
+    ->     OK  aws                                                # hyperscalerType: aws
+    ->     OK  aws(PR=*, HR=test1)                                # hyperscalerType: aws_*_test1
+    ->     OK  aws(PR=test2, HR=*)                                # hyperscalerType: aws_test2_*
+    ->     OK  aws(PR=test2, HR=test1)                            # hyperscalerType: aws_test2_test1
     There are errors in your rule configuration. Fix above errors in your rule configuration and try again.
 
 - name: Unresolved Rule - No 2
@@ -93,7 +93,7 @@ cases:
   expected: |
     ->  Error  aws(HR=*) - Duplicated rule with previously defined rule: 'aws'
     ->  Error  aws(PR=*) - Duplicated rule with previously defined rule: 'aws'
-    ->     OK  aws                                                # hyperscalerType: aws,
+    ->     OK  aws                                                # hyperscalerType: aws
     There are errors in your rule configuration. Fix above errors in your rule configuration and try again. 
 
 - name: Resolved Rule - No 1
@@ -102,9 +102,9 @@ cases:
   - aws(PR=westeurope, HR=*)   
   - aws(PR=westeurope, HR=westeurope)   
   expected: |
-    ->     OK  aws                                                # hyperscalerType: aws,
-    ->     OK  aws(PR=westeurope, HR=*)                           # hyperscalerType: aws_westeurope_*,
-    ->     OK  aws(PR=westeurope, HR=westeurope)                  # hyperscalerType: aws_westeurope_westeurope,
+    ->     OK  aws                                                # hyperscalerType: aws
+    ->     OK  aws(PR=westeurope, HR=*)                           # hyperscalerType: aws_westeurope_*
+    ->     OK  aws(PR=westeurope, HR=westeurope)                  # hyperscalerType: aws_westeurope_westeurope
 
 - name: Resolved Rule - No 2
   rule: 
@@ -112,17 +112,17 @@ cases:
   - aws(PR=cf-eu11)          
   - aws(PR=cf-eu11, HR=eastus)
   expected: |
-    ->     OK  aws                                                # hyperscalerType: aws,
-    ->     OK  aws(PR=cf-eu11)                                    # hyperscalerType: aws_cf-eu11,
-    ->     OK  aws(PR=cf-eu11, HR=eastus)                         # hyperscalerType: aws_cf-eu11_eastus,
+    ->     OK  aws                                                # hyperscalerType: aws
+    ->     OK  aws(PR=cf-eu11)                                    # hyperscalerType: aws_cf-eu11
+    ->     OK  aws(PR=cf-eu11, HR=eastus)                         # hyperscalerType: aws_cf-eu11_eastus
 
 - name: Resolved Rule - No 3
   rule:      
   - aws(PR=*)                            
   - aws(PR=cf-eu11, HR=eastus)
   expected: |
-    ->     OK  aws(PR=*)                                          # hyperscalerType: aws_*,
-    ->     OK  aws(PR=cf-eu11, HR=eastus)                         # hyperscalerType: aws_cf-eu11_eastus,
+    ->     OK  aws(PR=*)                                          # hyperscalerType: aws_*
+    ->     OK  aws(PR=cf-eu11, HR=eastus)                         # hyperscalerType: aws_cf-eu11_eastus
 
 - name: Resolved Rule - No 4
   rule:
@@ -130,9 +130,9 @@ cases:
   - aws(PR=cf-eu11)          
   - aws(PR=cf-eu12, HR=eastus)
   expected: |
-    ->     OK  aws                                                # hyperscalerType: aws,
-    ->     OK  aws(PR=cf-eu11)                                    # hyperscalerType: aws_cf-eu11,
-    ->     OK  aws(PR=cf-eu12, HR=eastus)                         # hyperscalerType: aws_cf-eu12_eastus,
+    ->     OK  aws                                                # hyperscalerType: aws
+    ->     OK  aws(PR=cf-eu11)                                    # hyperscalerType: aws_cf-eu11
+    ->     OK  aws(PR=cf-eu12, HR=eastus)                         # hyperscalerType: aws_cf-eu12_eastus
 
 - rule:
   - aws                             
@@ -140,7 +140,7 @@ cases:
   - aws(PR=*, HR=eastus)
   - aws(PR=cf-eu11, HR=eastus)
   expected: |
-    ->     OK  aws                                                # hyperscalerType: aws,
-    ->     OK  aws(PR=cf-eu11, HR=*)                              # hyperscalerType: aws_cf-eu11_*,
-    ->     OK  aws(PR=*, HR=eastus)                               # hyperscalerType: aws_*_eastus,
-    ->     OK  aws(PR=cf-eu11, HR=eastus)                         # hyperscalerType: aws_cf-eu11_eastus,
+    ->     OK  aws                                                # hyperscalerType: aws
+    ->     OK  aws(PR=cf-eu11, HR=*)                              # hyperscalerType: aws_cf-eu11_*
+    ->     OK  aws(PR=*, HR=eastus)                               # hyperscalerType: aws_*_eastus
+    ->     OK  aws(PR=cf-eu11, HR=eastus)                         # hyperscalerType: aws_cf-eu11_eastus

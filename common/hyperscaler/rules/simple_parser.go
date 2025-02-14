@@ -6,11 +6,10 @@ import (
 )
 
 type SimpleParser struct{
-    
 }
 
 func (g* SimpleParser) Parse(ruleEntry string) (*Rule, error) {
-    outputRule := &Rule{}
+    outputRule := NewRule()
 
     ruleEntry = strings.ReplaceAll(ruleEntry, " ", "")
     ruleEntry = strings.ReplaceAll(ruleEntry, "\t", "")
@@ -39,11 +38,11 @@ func (g* SimpleParser) Parse(ruleEntry string) (*Rule, error) {
     }
 
     if strings.Contains(inputPart, "(") && !strings.Contains(inputPart, ")") {
-        return nil, fmt.Errorf("rule has unclosed parantheses")
+        return nil, fmt.Errorf("rule has unclosed parentheses")
     }
 
     if !strings.Contains(inputPart, "(") && strings.Contains(inputPart, ")") {
-        return nil, fmt.Errorf("rule has unclosed parantheses")
+        return nil, fmt.Errorf("rule has unclosed parentheses")
     }
 
     _, err := outputRule.SetPlan(planAndInputAttr[0])

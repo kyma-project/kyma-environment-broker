@@ -12,7 +12,7 @@ func SortRuleEntries(entries []ParsingResult) []ParsingResult {
 			return entries[i].Rule.Plan < entries[j].Rule.Plan
 		}
 
-		return entries[i].Rule.NumberOfInputAtributes() < entries[j].Rule.NumberOfInputAtributes()
+		return entries[i].Rule.NumberOfInputAttributes() < entries[j].Rule.NumberOfInputAttributes()
 	})
 
 	return entries
