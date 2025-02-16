@@ -8,4 +8,6 @@ type ParsingResult struct {
 	OriginalRule string
 	Rule *Rule
 	Err  error
+	Matched bool
+	FinalMatch bool
 }

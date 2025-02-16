@@ -9,10 +9,10 @@ import (
 )
 
 type ParsingResults struct {
-	AllResults    []ParsingResult
-	okResults     []ParsingResult
-	errorResults  []ParsingResult
-	resolvedRules map[string]ParsingResult
+	AllResults    []*ParsingResult
+	okResults     []*ParsingResult
+	errorResults  []*ParsingResult
+	resolvedRules map[string]*ParsingResult
 }
 
 func (p *ParsingResults) Print() {
@@ -20,8 +20,8 @@ func (p *ParsingResults) Print() {
 }
 
 func (p *ParsingResults) CheckUniqueness() {
-	uniquenessSet := make(map[string]ParsingResult)
-	uniqueResults := make([]ParsingResult, 0, len(p.AllResults))
+	uniquenessSet := make(map[string]*ParsingResult)
+	uniqueResults := make([]*ParsingResult, 0, len(p.AllResults))
 
 	for _, result := range p.AllResults {
 
@@ -33,7 +33,7 @@ func (p *ParsingResults) CheckUniqueness() {
 		key := result.Rule.Signature()
 
 		alreadyExists := false
-		var item ParsingResult
+		var item *ParsingResult
 		item, alreadyExists = uniquenessSet[key]
 
 		if !alreadyExists {
@@ -45,9 +45,9 @@ func (p *ParsingResults) CheckUniqueness() {
 
 			err := fmt.Errorf("Duplicated rule with previously defined rule: '%s'", item.Rule.StringNoLabels())
 
-			p.errorResults = append(p.errorResults, ParsingResult{OriginalRule: result.OriginalRule, Err: err})
+			p.errorResults = append(p.errorResults, &ParsingResult{OriginalRule: result.OriginalRule, Err: err})
 
-			uniqueResults = append(uniqueResults, ParsingResult{OriginalRule: result.OriginalRule, Err: err})
+			uniqueResults = append(uniqueResults, &ParsingResult{OriginalRule: result.OriginalRule, Err: err})
 
 		}
 	}
@@ -55,11 +55,11 @@ func (p *ParsingResults) CheckUniqueness() {
 	p.AllResults = uniqueResults
 }
 
-func (p *ParsingResults) composeSignatureSet() map[string]ParsingResult {
-	signatureSet := make(map[string]ParsingResult)
+func (p *ParsingResults) composeSignatureSet() map[string]*ParsingResult {
+	signatureSet := make(map[string]*ParsingResult)
 
 	for _, result := range p.AllResults {
-		signature := buildSignature(result, ASTERISK, ATTRIBUTE_PREFIX)
+		signature := buildSignature(*result, ASTERISK, ATTRIBUTE_PREFIX)
 		signatureSet[signature] = result
 	}
 
@@ -68,11 +68,15 @@ func (p *ParsingResults) composeSignatureSet() map[string]ParsingResult {
 
 func (p *ParsingResults) CheckSignatures() {
 	signatureSet := make(map[string]ParsingResult)
-	uniqueResults := make([]ParsingResult, 0, len(p.AllResults))
+	uniqueResults := make([]*ParsingResult, 0, len(p.AllResults))
 
 	for _, result := range p.AllResults {
-		// signatureKey := buildSignature(result, ASTERISK, ATTRIBUTE_PREFIX)
-		negativeSignatureKey := buildSignature(result, ATTRIBUTE_PREFIX, ASTERISK)
+
+		if result.Err != nil {
+			uniqueResults = append(uniqueResults, result)
+			continue
+		}
+		negativeSignatureKey := buildSignature(*result, ATTRIBUTE_PREFIX, ASTERISK)
 
 		negativeSignatureItem, negativeSignatureExists := signatureSet[negativeSignatureKey]
 
@@ -87,13 +91,15 @@ func (p *ParsingResults) CheckSignatures() {
 			if !resolvingRuleExists {
 				negativeSignatureError = fmt.Errorf("Duplicated negative signature with previously defined rule: '%s', consider introducing a resolving rule '%s'", negativeSignatureItem.Rule.StringNoLabels(), resolvingKey)
 
-				p.errorResults = append(p.errorResults, ParsingResult{OriginalRule: result.OriginalRule, Err: negativeSignatureError})
+				p.errorResults = append(p.errorResults, &ParsingResult{OriginalRule: result.OriginalRule, Err: negativeSignatureError})
+			} else {
+				signatureSet[buildSignature(*result, ASTERISK, ATTRIBUTE_PREFIX)] = *result
 			}
 		} else {
-			signatureSet[buildSignature(result, ASTERISK, ATTRIBUTE_PREFIX)] = result
+			signatureSet[buildSignature(*result, ASTERISK, ATTRIBUTE_PREFIX)] = *result
 		}
 
-		uniqueResults = append(uniqueResults, ParsingResult{OriginalRule: result.OriginalRule, Rule: result.Rule, Err: negativeSignatureError})
+		uniqueResults = append(uniqueResults, &ParsingResult{OriginalRule: result.OriginalRule, Rule: result.Rule, Err: negativeSignatureError})
 	}
 
 	p.AllResults = uniqueResults
@@ -101,6 +107,9 @@ func (p *ParsingResults) CheckSignatures() {
 
 func buildSignature(result ParsingResult, positiveKey, negativeKey string) string {
 
+	if result.Rule == nil {
+		panic("Rule is nil")
+	}
 	signatureKey := result.Rule.Plan
 	signatureKey += PR_ATTR_NAME + SIGNATURE_ATTR_SEPARATOR
 	checkValue := result.Rule.PlatformRegion
@@ -133,7 +142,7 @@ func (p *ParsingResults) Sort() {
 }
 
 func (p *ParsingResults) Apply(entry string, rule *Rule, err error) {
-	result := ParsingResult{OriginalRule: entry, Rule: rule, Err: err}
+	result := &ParsingResult{OriginalRule: entry, Rule: rule, Err: err}
 	if err != nil {
 		p.errorResults = append(p.errorResults, result)
 	} else {
@@ -148,10 +157,10 @@ func (p *ParsingResults) Apply(entry string, rule *Rule, err error) {
 
 func NewParsingResults() *ParsingResults {
 	return &ParsingResults{
-		AllResults:    make([]ParsingResult, 0),
-		okResults:     make([]ParsingResult, 0),
-		errorResults:  make([]ParsingResult, 0),
-		resolvedRules: make(map[string]ParsingResult),
+		AllResults:    make([]*ParsingResult, 0),
+		okResults:     make([]*ParsingResult, 0),
+		errorResults:  make([]*ParsingResult, 0),
+		resolvedRules: make(map[string]*ParsingResult),
 	}
 }
 
@@ -169,7 +178,7 @@ type Attribute struct {
 	ApplyLabel        func(r *Rule, labels map[string]string) map[string]string
 }
 
-func (a Attribute) HasSpecificValue(rule *Rule) bool{
+func (a Attribute) HasLiteral(rule *Rule) bool{
 	return rule.PlatformRegion != "*" && rule.PlatformRegion != ""
 }
 

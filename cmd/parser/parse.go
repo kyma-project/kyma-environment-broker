@@ -151,6 +151,24 @@ func (cmd *ParseCommand) Run() error {
 }
 
 func Print(cmd *ParseCommand, results *rules.ParsingResults, testDataForMatching *rules.MatchableAttributes) {
+
+
+	if cmd.match != ""  && testDataForMatching != nil {
+		var lastMatch *rules.ParsingResult = nil
+		for _, result := range results.AllResults {
+			if result.Err == nil {
+				result.Matched = result.Rule.Matched(testDataForMatching)
+				if result.Matched {
+					lastMatch = result
+				}
+			}
+		}
+
+		if lastMatch != nil {
+			lastMatch.FinalMatch = true
+		}
+	}
+
 	for _, result := range results.AllResults {
 
 		cmd.cobraCmd.Printf("-> ")
@@ -160,13 +178,6 @@ func Print(cmd *ParseCommand, results *rules.ParsingResults, testDataForMatching
 
 		} else {
 
-			if (cmd.match != "" && testDataForMatching != nil) {
-				matched := result.Rule.Matched(testDataForMatching)
-
-				if matched {
-					cmd.cobraCmd.Printf("%s Matched %s ", colorMatched, colorNeutral)
-				} 
-			}
 
 			cmd.cobraCmd.Printf("%s %5s %s", colorOk, "OK", colorNeutral)
 		}
@@ -178,6 +189,14 @@ func Print(cmd *ParseCommand, results *rules.ParsingResults, testDataForMatching
 		if result.Err != nil {
 			cmd.cobraCmd.Printf(" %s", result.OriginalRule)
 			cmd.cobraCmd.Printf(" - %s", result.Err)
+		}
+
+		if (result.Err == nil && cmd.match != "" && testDataForMatching != nil) {
+			if result.Matched && !result.FinalMatch {
+				cmd.cobraCmd.Printf("%s Matched %s ", colorMatched, colorNeutral)
+			} else if result.FinalMatch {
+				cmd.cobraCmd.Printf("%s Matched, Selected %s ", colorMatched, colorNeutral)
+			}
 		}
 
 		cmd.cobraCmd.Printf("\n")
@@ -203,9 +222,9 @@ func resolvingSignature(item1, item2 rules.ParsingResult) string{
 		if attribute.HasValue {
 			var valueRule *rules.Rule
 
-			if attribute.HasSpecificValue(item1.Rule) {
+			if attribute.HasLiteral(item1.Rule) {
 				valueRule = item1.Rule
-			} else if attribute.HasSpecificValue(item2.Rule) {
+			} else if attribute.HasLiteral(item2.Rule) {
 				valueRule = item2.Rule
 			} else {
 				continue
