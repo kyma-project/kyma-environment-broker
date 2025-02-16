@@ -64,7 +64,7 @@ func NewParseCmd() *cobra.Command {
 	hap parse -u -e 'azure(PR=westeurope), azure(PR=westeurope)'
 
 	# Check what rule will be matched and triggered against the provided test data
-	hap parse -p -u  -f ./correct-rules.yaml -m '{"plan": "aws"}'
+	hap parse -p -u  -f ./correct-rules.yaml -m '{"plan": "aws", "platformRegion": "cf-eu11", "hyperscalerRegion": "westeurope"}'
 		`,
 
 		RunE:    func(_ *cobra.Command, args []string) error { 
