@@ -92,41 +92,6 @@ func (s *Instance) InsertWithoutEncryption(instance internal.Instance) error {
 	})
 }
 
-func (s *Instance) ListWithoutDecryption(filter dbmodel.InstanceFilter) ([]internal.Instance, int, int, error) {
-	dtos, count, totalCount, err := s.NewReadSession().ListInstances(filter)
-	if err != nil {
-		return []internal.Instance{}, 0, 0, err
-	}
-	var instances []internal.Instance
-	for _, dto := range dtos {
-		var params internal.ProvisioningParameters
-		err := json.Unmarshal([]byte(dto.InstanceDTO.ProvisioningParameters), &params)
-		if err != nil {
-			return nil, 0, 0, fmt.Errorf("while unmarshal parameters: %w", err)
-		}
-		instance := internal.Instance{
-			InstanceID:      dto.InstanceDTO.InstanceID,
-			RuntimeID:       dto.RuntimeID,
-			GlobalAccountID: dto.GlobalAccountID,
-			SubAccountID:    dto.SubAccountID,
-			ServiceID:       dto.ServiceID,
-			ServiceName:     dto.ServiceName,
-			ServicePlanID:   dto.ServicePlanID,
-			ServicePlanName: dto.ServicePlanName,
-			DashboardURL:    dto.DashboardURL,
-			Parameters:      params,
-			ProviderRegion:  dto.ProviderRegion,
-			CreatedAt:       dto.InstanceDTO.CreatedAt,
-			UpdatedAt:       dto.InstanceDTO.UpdatedAt,
-			DeletedAt:       dto.DeletedAt,
-			Version:         dto.InstanceDTO.Version,
-			Provider:        pkg.CloudProvider(dto.Provider),
-		}
-		instances = append(instances, instance)
-	}
-	return instances, count, totalCount, err
-}
-
 func (s *Instance) UpdateWithoutEncryption(instance internal.Instance) (*internal.Instance, error) {
 	sess := s.NewWriteSession()
 	params, err := json.Marshal(instance.Parameters)
