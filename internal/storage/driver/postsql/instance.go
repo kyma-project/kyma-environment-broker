@@ -414,7 +414,17 @@ func (s *Instance) Delete(instanceID string) error {
 }
 
 func (s *Instance) GetActiveInstanceStats() (internal.InstanceStats, error) {
-	entries, err := s.NewReadSession().GetActiveInstanceStats()
+
+	var entries []dbmodel.InstanceByGlobalAccountIDStatEntry
+	var err error
+
+	//TODO remove conditional after migration
+	if s.UseLastOperationID {
+		entries, err = s.NewReadSession().GetActiveInstanceStatsUsingLastOperationID()
+	} else {
+		entries, err = s.NewReadSession().GetActiveInstanceStats()
+	}
+
 	if err != nil {
 		return internal.InstanceStats{}, err
 	}
@@ -428,7 +438,15 @@ func (s *Instance) GetActiveInstanceStats() (internal.InstanceStats, error) {
 		result.TotalNumberOfInstances = result.TotalNumberOfInstances + e.Total
 	}
 
-	subEntries, err := s.NewReadSession().GetSubaccountsInstanceStats()
+	var subEntries []dbmodel.InstanceBySubAccountIDStatEntry
+
+	//TODO remove conditional after migration
+	if s.UseLastOperationID {
+		subEntries, err = s.NewReadSession().GetSubaccountsInstanceStatsUsingLastOperationID()
+	} else {
+		subEntries, err = s.NewReadSession().GetSubaccountsInstanceStats()
+	}
+
 	if err != nil {
 		return internal.InstanceStats{}, err
 	}
