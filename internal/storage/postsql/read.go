@@ -843,7 +843,7 @@ func (r readSession) ListInstances(filter dbmodel.InstanceFilter) ([]dbmodel.Ins
 		stmt = stmt.Paginate(uint64(filter.Page), uint64(filter.PageSize))
 	}
 
-	addInstanceFilters(stmt, filter)
+	addInstanceFiltersUsingO1Alias(stmt, filter)
 
 	_, err := stmt.Load(&instances)
 	if err != nil {
@@ -894,7 +894,7 @@ func (r readSession) ListInstancesWithSubaccountStates(filter dbmodel.InstanceFi
 		stmt = stmt.Paginate(uint64(filter.Page), uint64(filter.PageSize))
 	}
 
-	addInstanceFilters(stmt, filter)
+	addInstanceFiltersUsingO1Alias(stmt, filter)
 
 	_, err := stmt.Load(&instances)
 	if err != nil {
@@ -922,9 +922,9 @@ func (r readSession) ListInstancesWithSubaccountStatesWithUseLastOperationID(fil
 	var stmt *dbr.SelectStmt
 
 	// select an instance with a last operation
-	stmt = r.session.Select("o.data", "o.state", "o.type", fmt.Sprintf("%s.*", InstancesTableName), "ss.beta_enabled", "ss.used_for_production").
+	stmt = r.session.Select("o1.data", "o1.state", "o1.type", fmt.Sprintf("%s.*", InstancesTableName), "ss.beta_enabled", "ss.used_for_production").
 		From(InstancesTableName).
-		Join(dbr.I(OperationTableName).As("o"), fmt.Sprintf("%s.last_operation_id = o.id", InstancesTableName)).
+		Join(dbr.I(OperationTableName).As("o1"), fmt.Sprintf("%s.last_operation_id = o1.id", InstancesTableName)).
 		LeftJoin(dbr.I(SubaccountStatesTableName).As("ss"), fmt.Sprintf("%s.sub_account_id = ss.id", InstancesTableName)).
 		OrderBy(fmt.Sprintf("%s.%s", InstancesTableName, CreatedAtField))
 
@@ -938,7 +938,7 @@ func (r readSession) ListInstancesWithSubaccountStatesWithUseLastOperationID(fil
 		stmt = stmt.Paginate(uint64(filter.Page), uint64(filter.PageSize))
 	}
 
-	addInstanceFilters(stmt, filter)
+	addInstanceFiltersUsingO1Alias(stmt, filter)
 
 	_, err := stmt.Load(&instances)
 	if err != nil {
@@ -979,14 +979,14 @@ func (r readSession) getInstanceCountByLastOperationID(filter dbmodel.InstanceFi
 	stmt = r.session.
 		Select("count(*) as total").
 		From(InstancesTableName).
-		Join(dbr.I(OperationTableName).As("o"), fmt.Sprintf("%s.last_operation_id = o.id", InstancesTableName))
+		Join(dbr.I(OperationTableName).As("o1"), fmt.Sprintf("%s.last_operation_id = o1.id", InstancesTableName))
 
 	if len(filter.States) > 0 || filter.Suspended != nil {
 		stateFilters := buildInstanceStateFilters("o1", filter)
 		stmt.Where(stateFilters)
 	}
 
-	addInstanceFilters(stmt, filter)
+	addInstanceFiltersUsingO1Alias(stmt, filter)
 	err := stmt.LoadOne(&res)
 
 	return res.Total, err
@@ -1010,7 +1010,7 @@ func (r readSession) getInstanceCount(filter dbmodel.InstanceFilter) (int, error
 		stmt.Where(stateFilters)
 	}
 
-	addInstanceFilters(stmt, filter)
+	addInstanceFiltersUsingO1Alias(stmt, filter)
 	err := stmt.LoadOne(&res)
 
 	return res.Total, err
@@ -1078,7 +1078,7 @@ func buildInstanceStateFilters(table string, filter dbmodel.InstanceFilter) dbr.
 	return dbr.Or(exprs...)
 }
 
-func addInstanceFilters(stmt *dbr.SelectStmt, filter dbmodel.InstanceFilter) {
+func addInstanceFiltersUsingO1Alias(stmt *dbr.SelectStmt, filter dbmodel.InstanceFilter) {
 	if len(filter.GlobalAccountIDs) > 0 {
 		stmt.Where("instances.global_account_id IN ?", filter.GlobalAccountIDs)
 	}
