@@ -24,9 +24,6 @@ type Instances interface {
 	List(dbmodel.InstanceFilter) ([]internal.Instance, int, int, error)
 	ListWithSubaccountState(dbmodel.InstanceFilter) ([]internal.InstanceWithSubaccountState, int, int, error)
 
-	// todo: remove after instances parameters migration is done
-	InsertWithoutEncryption(instance internal.Instance) error
-	UpdateWithoutEncryption(instance internal.Instance) (*internal.Instance, error)
 	ListDeletedInstanceIDs(int) ([]string, error)
 
 	DeletedInstancesStatistics() (internal.DeletedStats, error)

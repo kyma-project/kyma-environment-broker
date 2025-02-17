@@ -92,59 +92,6 @@ func (s *Instance) InsertWithoutEncryption(instance internal.Instance) error {
 	})
 }
 
-func (s *Instance) UpdateWithoutEncryption(instance internal.Instance) (*internal.Instance, error) {
-	sess := s.NewWriteSession()
-	params, err := json.Marshal(instance.Parameters)
-	if err != nil {
-		return nil, fmt.Errorf("while marshaling parameters: %w", err)
-	}
-	dto := dbmodel.InstanceDTO{
-		InstanceID:             instance.InstanceID,
-		RuntimeID:              instance.RuntimeID,
-		GlobalAccountID:        instance.GlobalAccountID,
-		SubAccountID:           instance.SubAccountID,
-		ServiceID:              instance.ServiceID,
-		ServiceName:            instance.ServiceName,
-		ServicePlanID:          instance.ServicePlanID,
-		ServicePlanName:        instance.ServicePlanName,
-		DashboardURL:           instance.DashboardURL,
-		ProvisioningParameters: string(params),
-		ProviderRegion:         instance.ProviderRegion,
-		CreatedAt:              instance.CreatedAt,
-		UpdatedAt:              instance.UpdatedAt,
-		DeletedAt:              instance.DeletedAt,
-		Version:                instance.Version,
-		Provider:               string(instance.Provider),
-	}
-	var lastErr dberr.Error
-	err = wait.PollUntilContextTimeout(context.Background(), defaultRetryInterval, defaultRetryTimeout, true, func(ctx context.Context) (bool, error) {
-		lastErr = sess.UpdateInstance(dto)
-
-		switch {
-		case dberr.IsNotFound(lastErr):
-			_, lastErr = s.NewReadSession().GetInstanceByID(instance.InstanceID)
-			if dberr.IsNotFound(lastErr) {
-				return false, dberr.NotFound("Instance with id %s not exist", instance.InstanceID)
-			}
-			if lastErr != nil {
-				return false, nil
-			}
-
-			// the operation exists but the version is different
-			lastErr = dberr.Conflict("operation update conflict, operation ID: %s", instance.InstanceID)
-			return false, lastErr
-		case lastErr != nil:
-			return false, nil
-		}
-		return true, nil
-	})
-	if err != nil {
-		return nil, lastErr
-	}
-	instance.Version = instance.Version + 1
-	return &instance, nil
-}
-
 func (s *Instance) FindAllJoinedWithOperations(prct ...predicate.Predicate) ([]internal.InstanceWithOperation, error) {
 	sess := s.NewReadSession()
 	var (
