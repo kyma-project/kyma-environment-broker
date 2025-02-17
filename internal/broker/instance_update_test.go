@@ -1186,7 +1186,7 @@ func TestUpdateUnsupportedMachine(t *testing.T) {
 	}, true)
 
 	// then
-	assert.EqualError(t, err, "machine type Standard_D16s_v5 is not supported in region westeurope, available regions for this machine type: uksouth, brazilsouth")
+	assert.EqualError(t, err, "In the region westeurope, the machine type Standard_D16s_v5 is not available, it is supported in the uksouth, brazilsouth")
 }
 
 func TestUpdateUnsupportedMachineInAdditionalWorkerNodePools(t *testing.T) {
@@ -1209,20 +1209,44 @@ func TestUpdateUnsupportedMachineInAdditionalWorkerNodePools(t *testing.T) {
 		planDefaults, fixLogger(), dashboardConfig, kcBuilder, &OneForAllConvergedCloudRegionsProvider{}, fakeKcpK8sClient, fixRegionsSupportingMachine())
 	svc.config.EnableAdditionalWorkerNodePools = true
 
-	additionalWorkerNodePools := `[{"name": "name-1", "machineType": "Standard_D8s_v5", "haZones": true, "autoScalerMin": 3, "autoScalerMax": 20}]`
+	testCases := []struct {
+		name                      string
+		additionalWorkerNodePools string
+		expectedError             string
+	}{
+		{
+			name:                      "Single unsupported machine type",
+			additionalWorkerNodePools: `[{"name": "name-1", "machineType": "Standard_D8s_v5", "haZones": true, "autoScalerMin": 3, "autoScalerMax": 20}]`,
+			expectedError:             "In the region westeurope, the following machine types are not available: Standard_D8s_v5 (used in: name-1), it is supported in the uksouth, brazilsouth",
+		},
+		{
+			name:                      "Multiple unsupported machine types",
+			additionalWorkerNodePools: `[{"name": "name-1", "machineType": "Standard_D8s_v5", "haZones": true, "autoScalerMin": 3, "autoScalerMax": 20}, {"name": "name-2", "machineType": "Standard_D16s_v5", "haZones": true, "autoScalerMin": 3, "autoScalerMax": 20}]`,
+			expectedError:             "In the region westeurope, the following machine types are not available: Standard_D8s_v5 (used in: name-1), it is supported in the uksouth, brazilsouth; Standard_D16s_v5 (used in: name-2), it is supported in the uksouth, brazilsouth",
+		},
+		{
+			name:                      "Duplicate unsupported machine type",
+			additionalWorkerNodePools: `[{"name": "name-1", "machineType": "Standard_D8s_v5", "haZones": true, "autoScalerMin": 3, "autoScalerMax": 20}, {"name": "name-2", "machineType": "Standard_D8s_v5", "haZones": true, "autoScalerMin": 3, "autoScalerMax": 20}]`,
+			expectedError:             "In the region westeurope, the following machine types are not available: Standard_D8s_v5 (used in: name-1, name-2), it is supported in the uksouth, brazilsouth",
+		},
+	}
 
-	// when
-	_, err = svc.Update(context.Background(), instanceID, domain.UpdateDetails{
-		ServiceID:       "",
-		PlanID:          AzurePlanID,
-		RawParameters:   json.RawMessage("{\"additionalWorkerNodePools\":" + additionalWorkerNodePools + "}"),
-		PreviousValues:  domain.PreviousValues{},
-		RawContext:      json.RawMessage("{\"globalaccount_id\":\"globalaccount_id_1\", \"active\":true}"),
-		MaintenanceInfo: nil,
-	}, true)
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			// when
+			_, err = svc.Update(context.Background(), instanceID, domain.UpdateDetails{
+				ServiceID:       "",
+				PlanID:          AzurePlanID,
+				RawParameters:   json.RawMessage("{\"additionalWorkerNodePools\":" + tc.additionalWorkerNodePools + "}"),
+				PreviousValues:  domain.PreviousValues{},
+				RawContext:      json.RawMessage("{\"globalaccount_id\":\"globalaccount_id_1\", \"active\":true}"),
+				MaintenanceInfo: nil,
+			}, true)
 
-	// then
-	assert.EqualError(t, err, "machine type Standard_D8s_v5 is not supported in region westeurope for additional worker node pool name-1, available regions for this machine type: uksouth, brazilsouth")
+			// then
+			assert.EqualError(t, err, tc.expectedError)
+		})
+	}
 }
 
 func registerCRD() {

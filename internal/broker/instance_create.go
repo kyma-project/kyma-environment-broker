@@ -297,9 +297,9 @@ func (b *ProvisionEndpoint) validateAndExtract(details domain.ProvisionDetails, 
 
 	if !regionssupportingmachine.IsSupported(b.regionsSupportingMachine, valueOfPtr(parameters.Region), valueOfPtr(parameters.MachineType)) {
 		return ersContext, parameters, fmt.Errorf(
-			"machine type %s is not supported in region %s, available regions for this machine type: %v",
-			valueOfPtr(parameters.MachineType),
+			"In the region %s, the machine type %s is not available, it is supported in the %v",
 			valueOfPtr(parameters.Region),
+			valueOfPtr(parameters.MachineType),
 			strings.Join(regionssupportingmachine.SupportedRegions(b.regionsSupportingMachine, valueOfPtr(parameters.MachineType)), ", "),
 		)
 	}
@@ -339,15 +339,9 @@ func (b *ProvisionEndpoint) validateAndExtract(details domain.ProvisionDetails, 
 			if err := additionalWorkerNodePool.Validate(); err != nil {
 				return ersContext, parameters, apiresponses.NewFailureResponse(err, http.StatusUnprocessableEntity, err.Error())
 			}
-			if !regionssupportingmachine.IsSupported(b.regionsSupportingMachine, valueOfPtr(parameters.Region), additionalWorkerNodePool.MachineType) {
-				return ersContext, parameters, fmt.Errorf(
-					"machine type %s is not supported in region %s for additional worker node pool %s, available regions for this machine type: %v",
-					additionalWorkerNodePool.MachineType,
-					valueOfPtr(parameters.Region),
-					additionalWorkerNodePool.Name,
-					strings.Join(regionssupportingmachine.SupportedRegions(b.regionsSupportingMachine, additionalWorkerNodePool.MachineType), ", "),
-				)
-			}
+		}
+		if err := checkUnsupportedMachines(b.regionsSupportingMachine, valueOfPtr(parameters.Region), parameters.AdditionalWorkerNodePools); err != nil {
+			return ersContext, parameters, apiresponses.NewFailureResponse(err, http.StatusUnprocessableEntity, err.Error())
 		}
 	}
 
@@ -461,6 +455,37 @@ func AreNamesUnique(pools []pkg.AdditionalWorkerNodePool) bool {
 		nameSet[pool.Name] = struct{}{}
 	}
 	return true
+}
+
+func checkUnsupportedMachines(regionsSupportingMachine map[string][]string, region string, additionalWorkerNodePools []pkg.AdditionalWorkerNodePool) error {
+	unsupportedMachines := make(map[string][]string)
+	var orderedMachineTypes []string
+
+	for _, pool := range additionalWorkerNodePools {
+		if !regionssupportingmachine.IsSupported(regionsSupportingMachine, region, pool.MachineType) {
+			if _, exists := unsupportedMachines[pool.MachineType]; !exists {
+				orderedMachineTypes = append(orderedMachineTypes, pool.MachineType)
+			}
+			unsupportedMachines[pool.MachineType] = append(unsupportedMachines[pool.MachineType], pool.Name)
+		}
+	}
+
+	if len(unsupportedMachines) == 0 {
+		return nil
+	}
+
+	var errorMsg strings.Builder
+	errorMsg.WriteString(fmt.Sprintf("In the region %s, the following machine types are not available: ", region))
+
+	for i, machineType := range orderedMachineTypes {
+		if i > 0 {
+			errorMsg.WriteString("; ")
+		}
+		availableRegions := strings.Join(regionssupportingmachine.SupportedRegions(regionsSupportingMachine, machineType), ", ")
+		errorMsg.WriteString(fmt.Sprintf("%s (used in: %s), it is supported in the %s", machineType, strings.Join(unsupportedMachines[machineType], ", "), availableRegions))
+	}
+
+	return fmt.Errorf(errorMsg.String())
 }
 
 // Rudimentary kubeconfig validation
