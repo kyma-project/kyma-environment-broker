@@ -839,7 +839,7 @@ func (r readSession) ListInstances(filter dbmodel.InstanceFilter) ([]dbmodel.Ins
 		stmt = stmt.Paginate(uint64(filter.Page), uint64(filter.PageSize))
 	}
 
-	addInstanceFiltersUsingO1Alias(stmt, filter)
+	addInstanceFilters(stmt, filter, "o1")
 
 	_, err := stmt.Load(&instances)
 	if err != nil {
@@ -857,7 +857,7 @@ func (r readSession) ListInstances(filter dbmodel.InstanceFilter) ([]dbmodel.Ins
 		nil
 }
 
-// todo: refactor after migration to ListInstancesUsingLastOperationID
+// TODO: remove after migration
 func (r readSession) ListInstancesWithSubaccountStates(filter dbmodel.InstanceFilter) ([]dbmodel.InstanceWithSubaccountStateDTO, int, int, error) {
 	var instances []dbmodel.InstanceWithSubaccountStateDTO
 
@@ -890,7 +890,7 @@ func (r readSession) ListInstancesWithSubaccountStates(filter dbmodel.InstanceFi
 		stmt = stmt.Paginate(uint64(filter.Page), uint64(filter.PageSize))
 	}
 
-	addInstanceFiltersUsingO1Alias(stmt, filter)
+	addInstanceFilters(stmt, filter, "o1")
 
 	_, err := stmt.Load(&instances)
 	if err != nil {
@@ -934,7 +934,7 @@ func (r readSession) ListInstancesWithSubaccountStatesWithUseLastOperationID(fil
 		stmt = stmt.Paginate(uint64(filter.Page), uint64(filter.PageSize))
 	}
 
-	addInstanceFiltersUsingO1Alias(stmt, filter)
+	addInstanceFilters(stmt, filter, "o1")
 
 	_, err := stmt.Load(&instances)
 	if err != nil {
@@ -982,7 +982,7 @@ func (r readSession) getInstanceCountByLastOperationID(filter dbmodel.InstanceFi
 		stmt.Where(stateFilters)
 	}
 
-	addInstanceFiltersUsingO1Alias(stmt, filter)
+	addInstanceFilters(stmt, filter, "o1")
 	err := stmt.LoadOne(&res)
 
 	return res.Total, err
@@ -1006,7 +1006,7 @@ func (r readSession) getInstanceCount(filter dbmodel.InstanceFilter) (int, error
 		stmt.Where(stateFilters)
 	}
 
-	addInstanceFiltersUsingO1Alias(stmt, filter)
+	addInstanceFilters(stmt, filter, "o1")
 	err := stmt.LoadOne(&res)
 
 	return res.Total, err
@@ -1074,7 +1074,7 @@ func buildInstanceStateFilters(table string, filter dbmodel.InstanceFilter) dbr.
 	return dbr.Or(exprs...)
 }
 
-func addInstanceFiltersUsingO1Alias(stmt *dbr.SelectStmt, filter dbmodel.InstanceFilter) {
+func addInstanceFilters(stmt *dbr.SelectStmt, filter dbmodel.InstanceFilter, alias string) {
 	if len(filter.GlobalAccountIDs) > 0 {
 		stmt.Where("instances.global_account_id IN ?", filter.GlobalAccountIDs)
 	}
@@ -1098,7 +1098,7 @@ func addInstanceFiltersUsingO1Alias(stmt *dbr.SelectStmt, filter dbmodel.Instanc
 	}
 	if len(filter.Shoots) > 0 {
 		shootNameMatch := fmt.Sprintf(`^(%s)$`, strings.Join(filter.Shoots, "|"))
-		stmt.Where("o1.data::json->>'shoot_name' ~ ?", shootNameMatch)
+		stmt.Where(fmt.Sprintf("%s.data::json->>'shoot_name' ~ ?", alias), shootNameMatch)
 	}
 
 	if filter.Expired != nil {
