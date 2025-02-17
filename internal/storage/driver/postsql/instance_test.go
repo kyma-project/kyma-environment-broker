@@ -1936,11 +1936,15 @@ func TestInstance_UsingLastOperationID(t *testing.T) {
 		provOp1.State = domain.Succeeded
 		err = brokerStorage.Operations().InsertOperation(provOp1)
 		require.NoError(t, err)
+		err = brokerStorage.Instances().UpdateInstanceLastOperation("inst1", provOp1.ID)
+		require.NoError(t, err)
 
 		// inst2 is in succeeded state
 		provOp2 := fixProvisionOperation("inst2")
 		provOp2.State = domain.Succeeded
 		err = brokerStorage.Operations().InsertOperation(provOp2)
+		require.NoError(t, err)
+		err = brokerStorage.Instances().UpdateInstanceLastOperation("inst2", provOp2.ID)
 		require.NoError(t, err)
 
 		// inst3 is in succeeded state
@@ -1954,11 +1958,15 @@ func TestInstance_UsingLastOperationID(t *testing.T) {
 		deprovOp3.CreatedAt = deprovOp3.CreatedAt.Add(2 * time.Minute)
 		err = brokerStorage.Operations().InsertDeprovisioningOperation(deprovOp3)
 		require.NoError(t, err)
+		err = brokerStorage.Instances().UpdateInstanceLastOperation("inst3", provOp3.ID)
+		require.NoError(t, err)
 
 		// inst4 is in failed state
 		provOp4 := fixProvisionOperation("inst4")
 		provOp4.State = domain.Failed
 		err = brokerStorage.Operations().InsertOperation(provOp4)
+		require.NoError(t, err)
+		err = brokerStorage.Instances().UpdateInstanceLastOperation("inst4", provOp4.ID)
 		require.NoError(t, err)
 
 		// when
@@ -2003,11 +2011,15 @@ func TestInstance_UsingLastOperationID(t *testing.T) {
 		provOp1.State = domain.Succeeded
 		err = brokerStorage.Operations().InsertOperation(provOp1)
 		require.NoError(t, err)
+		err = brokerStorage.Instances().UpdateInstanceLastOperation("inst1", provOp1.ID)
+		require.NoError(t, err)
 
 		// inst2 is in succeeded state
 		provOp2 := fixProvisionOperation("inst2")
 		provOp2.State = domain.Succeeded
 		err = brokerStorage.Operations().InsertOperation(provOp2)
+		require.NoError(t, err)
+		err = brokerStorage.Instances().UpdateInstanceLastOperation("inst2", provOp2.ID)
 		require.NoError(t, err)
 
 		// inst3 is in succeeded state
@@ -2021,11 +2033,15 @@ func TestInstance_UsingLastOperationID(t *testing.T) {
 		deprovOp3.CreatedAt = deprovOp3.CreatedAt.Add(2 * time.Minute)
 		err = brokerStorage.Operations().InsertDeprovisioningOperation(deprovOp3)
 		require.NoError(t, err)
+		err = brokerStorage.Instances().UpdateInstanceLastOperation("inst3", provOp3.ID)
+		require.NoError(t, err)
 
 		// inst4 is in failed state
 		provOp4 := fixProvisionOperation("inst4")
 		provOp4.State = domain.Failed
 		err = brokerStorage.Operations().InsertOperation(provOp4)
+		require.NoError(t, err)
+		err = brokerStorage.Instances().UpdateInstanceLastOperation("inst4", provOp4.ID)
 		require.NoError(t, err)
 
 		// when
@@ -2065,6 +2081,8 @@ func TestInstance_UsingLastOperationID(t *testing.T) {
 		provOp1.State = domain.Succeeded
 		err = brokerStorage.Operations().InsertOperation(provOp1)
 		require.NoError(t, err)
+		err = brokerStorage.Instances().UpdateInstanceLastOperation("inst1", provOp1.ID)
+		require.NoError(t, err)
 
 		// inst2 is in succeeded state
 		provOp2 := fixProvisionOperation("inst2")
@@ -2076,6 +2094,8 @@ func TestInstance_UsingLastOperationID(t *testing.T) {
 		deprovOp2.State = domain.Succeeded
 		deprovOp2.CreatedAt = deprovOp2.CreatedAt.Add(2 * time.Minute)
 		err = brokerStorage.Operations().InsertDeprovisioningOperation(deprovOp2)
+		require.NoError(t, err)
+		err = brokerStorage.Instances().UpdateInstanceLastOperation("inst2", provOp2.ID)
 		require.NoError(t, err)
 
 		// inst3 is in succeeded state
@@ -2089,11 +2109,15 @@ func TestInstance_UsingLastOperationID(t *testing.T) {
 		deprovOp3.CreatedAt = deprovOp3.CreatedAt.Add(2 * time.Minute)
 		err = brokerStorage.Operations().InsertDeprovisioningOperation(deprovOp3)
 		require.NoError(t, err)
+		err = brokerStorage.Instances().UpdateInstanceLastOperation("inst3", provOp3.ID)
+		require.NoError(t, err)
 
 		// inst4 is in failed state
 		provOp4 := fixProvisionOperation("inst4")
 		provOp4.State = domain.Failed
 		err = brokerStorage.Operations().InsertOperation(provOp4)
+		require.NoError(t, err)
+		err = brokerStorage.Instances().UpdateInstanceLastOperation("inst4", provOp4.ID)
 		require.NoError(t, err)
 
 		// when
