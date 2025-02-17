@@ -68,6 +68,38 @@ func TestWorkerLogging(t *testing.T) {
 		require.True(t, strings.Contains(stringLogs, "msg=\"about to process item processId, queue length is 0\" queueName=test workerId=0 operationID=processId"))
 	})
 
+	t.Run("should not log duplicated operationID", func(t *testing.T) {
+		// given
+		cw := &captureWriter{buf: &bytes.Buffer{}}
+		handler := slog.NewTextHandler(cw, nil)
+		logger := slog.New(handler)
+
+		cancelContext, cancel := context.WithCancel(context.Background())
+		var waitForProcessing sync.WaitGroup
+
+		queue := NewQueue(&StdExecutor{logger: func(msg string) {
+			t.Log(msg)
+			waitForProcessing.Done()
+		}}, logger, "test", 10*time.Millisecond, 10*time.Millisecond)
+
+		waitForProcessing.Add(2)
+		queue.AddAfter("processId2", 0)
+		queue.Add("processId")
+		queue.SpeedUp(1)
+		queue.Run(cancelContext.Done(), 1)
+
+		waitForProcessing.Wait()
+
+		queue.ShutDown()
+		cancel()
+		queue.waitGroup.Wait()
+
+		// then
+		stringLogs := cw.buf.String()
+		t.Log(stringLogs)
+		require.NotContains(t, stringLogs, "operationID=processId2 operationID=processId")
+	})
+
 }
 
 type captureWriter struct {
