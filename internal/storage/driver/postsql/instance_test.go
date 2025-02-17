@@ -1171,6 +1171,8 @@ func TestInstance_UsingLastOperationID(t *testing.T) {
 		for _, i := range fixOperations {
 			err = brokerStorage.Operations().InsertOperation(i)
 			require.NoError(t, err)
+			err = brokerStorage.Instances().UpdateInstanceLastOperation(i.InstanceID, i.ID)
+			require.NoError(t, err)
 		}
 
 		// when
