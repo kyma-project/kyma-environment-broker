@@ -775,7 +775,7 @@ func (r readSession) GetNumberOfInstancesForGlobalAccountID(globalAccountID stri
 func (r readSession) ListInstancesUsingLastOperationID(filter dbmodel.InstanceFilter) ([]dbmodel.InstanceWithExtendedOperationDTO, int, int, error) {
 	var instances []dbmodel.InstanceWithExtendedOperationDTO
 
-	slog.Info("List instances - ListInstancesUsingLastOperationID", "filter", filter)
+	slog.Info("Calling - ListInstancesUsingLastOperationID", "filter", filter)
 
 	// select an instance with a last operation
 	stmt := r.session.Select("o.data", "o.state", "o.type", fmt.Sprintf("%s.*", InstancesTableName)).
@@ -814,6 +814,8 @@ func (r readSession) ListInstancesUsingLastOperationID(filter dbmodel.InstanceFi
 // deprecated, use ListInstancesUsingLastOperationID
 func (r readSession) ListInstances(filter dbmodel.InstanceFilter) ([]dbmodel.InstanceWithExtendedOperationDTO, int, int, error) {
 	var instances []dbmodel.InstanceWithExtendedOperationDTO
+
+	slog.Info("Calling ListInstances", "filter", filter)
 
 	// Base select and order by created at
 	var stmt *dbr.SelectStmt
@@ -863,7 +865,7 @@ func (r readSession) ListInstances(filter dbmodel.InstanceFilter) ([]dbmodel.Ins
 func (r readSession) ListInstancesWithSubaccountStates(filter dbmodel.InstanceFilter) ([]dbmodel.InstanceWithSubaccountStateDTO, int, int, error) {
 	var instances []dbmodel.InstanceWithSubaccountStateDTO
 
-	slog.Info("Calling ListInstancesWithSubaccountStates")
+	slog.Info("Calling ListInstancesWithSubaccountStates", "filter", filter)
 
 	// Base select and order by created at
 	var stmt *dbr.SelectStmt
@@ -913,6 +915,8 @@ func (r readSession) ListInstancesWithSubaccountStates(filter dbmodel.InstanceFi
 
 func (r readSession) ListInstancesWithSubaccountStatesWithUseLastOperationID(filter dbmodel.InstanceFilter) ([]dbmodel.InstanceWithSubaccountStateDTO, int, int, error) {
 	var instances []dbmodel.InstanceWithSubaccountStateDTO
+
+	slog.Info("Calling ListInstancesWithSubaccountStatesWithUseLastOperationID", "filter", filter)
 
 	// Base select and order by created at
 	var stmt *dbr.SelectStmt
@@ -971,6 +975,9 @@ func (r readSession) getInstanceCountByLastOperationID(filter dbmodel.InstanceFi
 	var res struct {
 		Total int
 	}
+
+	slog.Info("Calling getInstanceCountByLastOperationID", "filter", filter)
+
 	var stmt *dbr.SelectStmt
 	stmt = r.session.
 		Select("count(*) as total").
@@ -993,6 +1000,9 @@ func (r readSession) getInstanceCount(filter dbmodel.InstanceFilter) (int, error
 		Total int
 	}
 	var stmt *dbr.SelectStmt
+
+	slog.Info("Calling getInstanceCount", "filter", filter)
+
 	stmt = r.session.
 		Select("count(*) as total").
 		From(InstancesTableName).
