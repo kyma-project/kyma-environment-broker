@@ -241,9 +241,9 @@ func (b *UpdateEndpoint) processUpdateParameters(instance *internal.Instance, de
 
 	if !regionssupportingmachine.IsSupported(b.regionsSupportingMachine, valueOfPtr(instance.Parameters.Parameters.Region), valueOfPtr(params.MachineType)) {
 		message := fmt.Sprintf(
-			"machine type %s is not supported in region %s, available regions for this machine type: %v",
-			valueOfPtr(params.MachineType),
+			"In the region %s, the machine type %s is not available, it is supported in the %v",
 			valueOfPtr(instance.Parameters.Parameters.Region),
+			valueOfPtr(params.MachineType),
 			strings.Join(regionssupportingmachine.SupportedRegions(b.regionsSupportingMachine, valueOfPtr(params.MachineType)), ", "),
 		)
 		return domain.UpdateServiceSpec{}, apiresponses.NewFailureResponse(fmt.Errorf(message), http.StatusBadRequest, message)
@@ -300,16 +300,9 @@ func (b *UpdateEndpoint) processUpdateParameters(instance *internal.Instance, de
 			if err := additionalWorkerNodePool.ValidateHAZonesUnchanged(instance.Parameters.Parameters.AdditionalWorkerNodePools); err != nil {
 				return domain.UpdateServiceSpec{}, apiresponses.NewFailureResponse(err, http.StatusBadRequest, err.Error())
 			}
-			if !regionssupportingmachine.IsSupported(b.regionsSupportingMachine, valueOfPtr(instance.Parameters.Parameters.Region), additionalWorkerNodePool.MachineType) {
-				message := fmt.Sprintf(
-					"machine type %s is not supported in region %s for additional worker node pool %s, available regions for this machine type: %v",
-					additionalWorkerNodePool.MachineType,
-					valueOfPtr(instance.Parameters.Parameters.Region),
-					additionalWorkerNodePool.Name,
-					strings.Join(regionssupportingmachine.SupportedRegions(b.regionsSupportingMachine, additionalWorkerNodePool.MachineType), ", "),
-				)
-				return domain.UpdateServiceSpec{}, apiresponses.NewFailureResponse(fmt.Errorf(message), http.StatusBadRequest, message)
-			}
+		}
+		if err := checkUnsupportedMachines(b.regionsSupportingMachine, valueOfPtr(instance.Parameters.Parameters.Region), params.AdditionalWorkerNodePools); err != nil {
+			return domain.UpdateServiceSpec{}, apiresponses.NewFailureResponse(err, http.StatusBadRequest, err.Error())
 		}
 	}
 

@@ -2192,7 +2192,7 @@ func TestUnsupportedMachineType(t *testing.T) {
 	t.Logf("%+v\n", *provisionEndpoint)
 
 	// then
-	assert.EqualError(t, err, "machine type c2d-highmem-32 is not supported in region europe-west3, available regions for this machine type: us-central1, southamerica-east1")
+	assert.EqualError(t, err, "In the region europe-west3, the machine type c2d-highmem-32 is not available, it is supported in the us-central1, southamerica-east1")
 }
 
 func TestUnsupportedMachineTypeInAdditionalWorkerNodePools(t *testing.T) {
@@ -2239,19 +2239,43 @@ func TestUnsupportedMachineTypeInAdditionalWorkerNodePools(t *testing.T) {
 		fixRegionsSupportingMachine(),
 	)
 
-	additionalWorkerNodePools := `[{"name": "name-1", "machineType": "m8g.large", "haZones": true, "autoScalerMin": 3, "autoScalerMax": 20}]`
+	testCases := []struct {
+		name                      string
+		additionalWorkerNodePools string
+		expectedError             string
+	}{
+		{
+			name:                      "Single unsupported machine type",
+			additionalWorkerNodePools: `[{"name": "name-1", "machineType": "m8g.large", "haZones": true, "autoScalerMin": 3, "autoScalerMax": 20}]`,
+			expectedError:             "In the region eu-central-1, the following machine types are not available: m8g.large (used in: name-1), it is supported in the ap-northeast-1, ap-southeast-1, ca-central-1",
+		},
+		{
+			name:                      "Multiple unsupported machine types",
+			additionalWorkerNodePools: `[{"name": "name-1", "machineType": "m8g.large", "haZones": true, "autoScalerMin": 3, "autoScalerMax": 20}, {"name": "name-2", "machineType": "m7g.xlarge", "haZones": true, "autoScalerMin": 3, "autoScalerMax": 20}]`,
+			expectedError:             "In the region eu-central-1, the following machine types are not available: m8g.large (used in: name-1), it is supported in the ap-northeast-1, ap-southeast-1, ca-central-1; m7g.xlarge (used in: name-2), it is supported in the us-west-2",
+		},
+		{
+			name:                      "Duplicate unsupported machine type",
+			additionalWorkerNodePools: `[{"name": "name-1", "machineType": "m8g.large", "haZones": true, "autoScalerMin": 3, "autoScalerMax": 20}, {"name": "name-2", "machineType": "m8g.large", "haZones": true, "autoScalerMin": 3, "autoScalerMax": 20}]`,
+			expectedError:             "In the region eu-central-1, the following machine types are not available: m8g.large (used in: name-1, name-2), it is supported in the ap-northeast-1, ap-southeast-1, ca-central-1",
+		},
+	}
 
-	// when
-	_, err := provisionEndpoint.Provision(fixRequestContext(t, "cf-eu10"), instanceID, domain.ProvisionDetails{
-		ServiceID:     serviceID,
-		PlanID:        broker.AWSPlanID,
-		RawParameters: json.RawMessage(fmt.Sprintf(`{"name": "%s", "region": "%s", "additionalWorkerNodePools": %s }`, clusterName, "eu-central-1", additionalWorkerNodePools)),
-		RawContext:    json.RawMessage(fmt.Sprintf(`{"globalaccount_id": "%s", "subaccount_id": "%s", "user_id": "%s"}`, "any-global-account-id", subAccountID, "Test@Test.pl")),
-	}, true)
-	t.Logf("%+v\n", *provisionEndpoint)
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			// when
+			_, err := provisionEndpoint.Provision(fixRequestContext(t, "cf-eu10"), instanceID, domain.ProvisionDetails{
+				ServiceID:     serviceID,
+				PlanID:        broker.AWSPlanID,
+				RawParameters: json.RawMessage(fmt.Sprintf(`{"name": "%s", "region": "%s", "additionalWorkerNodePools": %s }`, clusterName, "eu-central-1", tc.additionalWorkerNodePools)),
+				RawContext:    json.RawMessage(fmt.Sprintf(`{"globalaccount_id": "%s", "subaccount_id": "%s", "user_id": "%s"}`, "any-global-account-id", subAccountID, "Test@Test.pl")),
+			}, true)
+			t.Logf("%+v\n", *provisionEndpoint)
 
-	// then
-	assert.EqualError(t, err, "machine type m8g.large is not supported in region eu-central-1 for additional worker node pool name-1, available regions for this machine type: ap-northeast-1, ap-southeast-1, ca-central-1")
+			// then
+			assert.EqualError(t, err, tc.expectedError)
+		})
+	}
 }
 
 func fixExistOperation() internal.Operation {
@@ -2309,6 +2333,7 @@ func fixDNSProviders() gardener.DNSProvidersData {
 func fixRegionsSupportingMachine() map[string][]string {
 	return map[string][]string{
 		"m8g":         {"ap-northeast-1", "ap-southeast-1", "ca-central-1"},
+		"m7g":         {"us-west-2"},
 		"c2d-highmem": {"us-central1", "southamerica-east1"},
 	}
 }
