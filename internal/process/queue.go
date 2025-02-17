@@ -108,32 +108,32 @@ func (q *Queue) worker(queue workqueue.RateLimitingInterface, process func(key s
 				}
 
 				id := key.(string)
-				log = log.With("operationID", id)
-				log.Info(fmt.Sprintf("about to process item %s, queue length is %d", id, q.queue.Len()))
-				q.updateWorkerTime(id, workerNameId, log)
+				workerLogger := log.With("operationID", id)
+				workerLogger.Info(fmt.Sprintf("about to process item %s, queue length is %d", id, q.queue.Len()))
+				q.updateWorkerTime(id, workerNameId, workerLogger)
 
 				defer func() {
 					if err := recover(); err != nil {
-						log.Error(fmt.Sprintf("panic error from process: %v. Stacktrace: %s", err, debug.Stack()))
+						workerLogger.Error(fmt.Sprintf("panic error from process: %v. Stacktrace: %s", err, debug.Stack()))
 					}
 					q.removeTimeIfInWarnMargin(id, workerNameId, log)
 					queue.Done(key)
-					log.Info("queue done processing")
+					workerLogger.Info("queue done processing")
 				}()
 
 				when, err := process(id)
 				if err == nil && when != 0 {
-					log.Info(fmt.Sprintf("Adding %q item after %s, queue length %d", id, when, q.queue.Len()))
+					workerLogger.Info(fmt.Sprintf("Adding %q item after %s, queue length %d", id, when, q.queue.Len()))
 					afterDuration := time.Duration(int64(when) / q.speedFactor)
 					queue.AddAfter(key, afterDuration)
 					return false
 				}
 				if err != nil {
-					log.Error(fmt.Sprintf("Error from process: %v", err))
+					workerLogger.Error(fmt.Sprintf("Error from process: %v", err))
 				}
 
 				queue.Forget(key)
-				log.Info(fmt.Sprintf("item for %s has been processed, no retry, element forgotten", id))
+				workerLogger.Info(fmt.Sprintf("item for %s has been processed, no retry, element forgotten", id))
 
 				return false
 			}()
