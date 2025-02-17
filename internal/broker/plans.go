@@ -139,6 +139,7 @@ func GcpRegions(assuredWorkloads bool) []string {
 		"asia-southeast1",
 		"us-west1",
 		"us-east4",
+		"europe-west4",
 	}
 }
 
@@ -161,6 +162,7 @@ func GcpRegionsDisplay(assuredWorkloads bool) map[string]string {
 		"asia-southeast1":      "asia-southeast1 (Singapore, Jurong West)",
 		"us-west1":             "us-west1 (North America, Oregon)",
 		"us-east4":             "us-east4 (North America, Virginia)",
+		"europe-west4":         "europe-west4 (Europe, Netherlands)",
 	}
 }
 
