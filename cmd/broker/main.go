@@ -39,7 +39,6 @@ import (
 	"github.com/kyma-project/kyma-environment-broker/internal/health"
 	"github.com/kyma-project/kyma-environment-broker/internal/httputil"
 	"github.com/kyma-project/kyma-environment-broker/internal/kubeconfig"
-	"github.com/kyma-project/kyma-environment-broker/internal/middleware"
 	"github.com/kyma-project/kyma-environment-broker/internal/notification"
 	"github.com/kyma-project/kyma-environment-broker/internal/orchestration"
 	orchestrate "github.com/kyma-project/kyma-environment-broker/internal/orchestration/handlers"
@@ -456,12 +455,10 @@ func createAPI(router *httputil.Router, servicesConfig broker.ServicesConfig, pl
 		LastBindingOperationEndpoint: broker.NewLastBindingOperation(logs),
 	}
 
-	router.Use(middleware.AddRegionToContext(cfg.DefaultRequestRegion))
-	router.Use(middleware.AddProviderToContext())
 	prefixes := []string{"/{region}", ""}
 	subRouter, err := router.NewSubRouter(brokerAPISubrouterName)
 	fatalOnError(err, logs)
-	broker.AttachRoutes(subRouter, kymaEnvBroker, logs, cfg.Broker.Binding.CreateBindingTimeout, prefixes)
+	broker.AttachRoutes(subRouter, kymaEnvBroker, logs, cfg.Broker.Binding.CreateBindingTimeout, cfg.DefaultRequestRegion, prefixes)
 	router.Handle("/oauth/", http.StripPrefix("/oauth", subRouter))
 
 	respWriter := httputil.NewResponseWriter(logs, cfg.DevelopmentMode)

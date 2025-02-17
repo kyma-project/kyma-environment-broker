@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/kyma-project/kyma-environment-broker/internal/httputil"
+	"github.com/kyma-project/kyma-environment-broker/internal/middleware"
 	"github.com/pivotal-cf/brokerapi/v12/domain"
 	"github.com/pivotal-cf/brokerapi/v12/handlers"
 	"github.com/pivotal-cf/brokerapi/v12/middlewares"
@@ -22,7 +23,7 @@ func (h CreateBindingHandler) ServeHTTP(rw http.ResponseWriter, r *http.Request)
 }
 
 // copied from github.com/pivotal-cf/brokerapi/api.go
-func AttachRoutes(router *httputil.Router, serviceBroker domain.ServiceBroker, logger *slog.Logger, createBindingTimeout time.Duration, prefixes []string) *httputil.Router {
+func AttachRoutes(router *httputil.Router, serviceBroker domain.ServiceBroker, logger *slog.Logger, createBindingTimeout time.Duration, defaultRequestRegion string, prefixes []string) *httputil.Router {
 	apiHandler := handlers.NewApiHandler(serviceBroker, logger)
 	deprovision := func(w http.ResponseWriter, req *http.Request) {
 		req2 := req.WithContext(context.WithValue(req.Context(), "User-Agent", req.Header.Get("User-Agent")))
@@ -34,6 +35,8 @@ func AttachRoutes(router *httputil.Router, serviceBroker domain.ServiceBroker, l
 	router.Use(middlewares.AddOriginatingIdentityToContext)
 	router.Use(apiVersionMiddleware.ValidateAPIVersionHdr)
 	router.Use(middlewares.AddInfoLocationToContext)
+	router.Use(middleware.AddRegionToContext(defaultRequestRegion))
+	router.Use(middleware.AddProviderToContext())
 
 	for _, prefix := range prefixes {
 		registerRoutesAndHandlers(router, &apiHandler, deprovision, createBindingTimeout, prefix)
