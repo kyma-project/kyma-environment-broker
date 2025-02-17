@@ -333,10 +333,6 @@ func main() {
 
 	createAPI(router, servicesConfig, inputFactory, &cfg, db, provisionQueue, deprovisionQueue, updateQueue, logger, log,
 		inputFactory.GetPlanDefaults, kcBuilder, skrK8sClientProvider, skrK8sClientProvider, gardenerClient, kcpK8sClient, eventBroker)
-	subRouter, err := router.GetSubRouter(brokerAPISubrouterName)
-	fatalOnError(err, log)
-	router.Handle("/oauth", subRouter)
-	router.Handle("/oauth/{region}", subRouter)
 
 	// create metrics endpoint
 	router.Handle("/metrics", promhttp.Handler())
