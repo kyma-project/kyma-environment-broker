@@ -172,6 +172,7 @@
         "southeastasia": "southeastasia (Asia Pacific, Singapore)",
         "australiaeast": "australiaeast (Australia, Sydney)",
         "brazilsouth": "brazilsouth (Brazil, São Paulo)"
+        "canadacentral": "canadacentral (Canada, Toronto)"
       },
       "enum": [
         "eastus",
@@ -183,7 +184,8 @@
         "japaneast",
         "southeastasia",
         "australiaeast",
-        "brazilsouth"
+        "brazilsouth",
+        "canadacentral"
       ],
       "minLength": 1,
       "type": "string"
