@@ -1384,6 +1384,8 @@ func TestInstance_UsingLastOperationID(t *testing.T) {
 		for _, i := range fixOperations {
 			err = brokerStorage.Operations().InsertOperation(i)
 			require.NoError(t, err)
+			err = brokerStorage.Instances().UpdateInstanceLastOperation(i.InstanceID, i.ID)
+			require.NoError(t, err)
 		}
 		// when
 		out, count, totalCount, err := brokerStorage.Instances().List(dbmodel.InstanceFilter{PageSize: 2, Page: 1})
@@ -1441,6 +1443,8 @@ func TestInstance_UsingLastOperationID(t *testing.T) {
 		}
 		for _, i := range fixOperations {
 			err = brokerStorage.Operations().InsertOperation(i)
+			require.NoError(t, err)
+			err = brokerStorage.Instances().UpdateInstanceLastOperation(i.InstanceID, i.ID)
 			require.NoError(t, err)
 		}
 		// when
@@ -1599,6 +1603,8 @@ func TestInstance_UsingLastOperationID(t *testing.T) {
 		for _, i := range fixOperations {
 			err = brokerStorage.Operations().InsertOperation(i)
 			require.NoError(t, err)
+			err = brokerStorage.Instances().UpdateInstanceLastOperation(i.InstanceID, i.ID)
+			require.NoError(t, err)
 		}
 		// when
 		out, count, totalCount, err := brokerStorage.Instances().ListWithSubaccountState(dbmodel.InstanceFilter{InstanceIDs: []string{fixInstances[0].InstanceID}})
@@ -1733,6 +1739,8 @@ func TestInstance_UsingLastOperationID(t *testing.T) {
 		}
 		for _, i := range fixOperations {
 			err = brokerStorage.Operations().InsertOperation(i)
+			require.NoError(t, err)
+			err = brokerStorage.Instances().UpdateInstanceLastOperation(i.InstanceID, i.ID)
 			require.NoError(t, err)
 		}
 		// when
