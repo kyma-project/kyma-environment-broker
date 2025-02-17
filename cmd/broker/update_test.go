@@ -19,7 +19,9 @@ const updateRequestPathFormat = "oauth/v2/service_instances/%s?accepts_incomplet
 
 func TestUpdate(t *testing.T) {
 	// given
-	suite := NewBrokerSuiteTest(t)
+	cfg := fixConfig()
+	cfg.Database.UseLastOperationID = true
+	suite := NewBrokerSuiteTestWithConfig(t, cfg)
 	defer suite.TearDown()
 	iid := uuid.New().String()
 
@@ -50,6 +52,7 @@ func TestUpdate(t *testing.T) {
 	opID := suite.DecodeOperationID(resp)
 	suite.processKIMProvisioningByOperationID(opID)
 	suite.WaitForOperationState(opID, domain.Succeeded)
+	assert.Equal(t, opID, suite.LastOperation(iid).ID)
 	// when
 	// OSB update:
 	resp = suite.CallAPI("PATCH", fmt.Sprintf("oauth/cf-eu10/v2/service_instances/%s?accepts_incomplete=true", iid),
@@ -71,6 +74,7 @@ func TestUpdate(t *testing.T) {
 	assert.Equal(t, http.StatusAccepted, resp.StatusCode)
 	upgradeOperationID := suite.DecodeOperationID(resp)
 	suite.WaitForOperationState(upgradeOperationID, domain.Succeeded)
+	assert.Equal(t, upgradeOperationID, suite.LastOperation(iid).ID)
 
 	runtime := suite.GetRuntimeResourceByInstanceID(iid)
 	oidc := runtime.Spec.Shoot.Kubernetes.KubeAPIServer.OidcConfig
@@ -595,7 +599,7 @@ func TestKymaResourceNameAndGardenerClusterNameAfterUnsuspension(t *testing.T) {
 	suite.AssertKymaResourceNotExists(opID)
 	instance := suite.GetInstance(iid)
 	assert.Equal(t, instance.RuntimeID, instance.InstanceDetails.KymaResourceName)
-	time.Sleep(time.Second)
+	//time.Sleep(time.Second)
 	suite.AssertKymaResourceExistsByInstanceID(iid)
 }
 

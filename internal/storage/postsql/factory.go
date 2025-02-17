@@ -25,6 +25,7 @@ type ReadSession interface {
 	FindAllInstancesForSubAccounts(subAccountslist []string) ([]dbmodel.InstanceDTO, dberr.Error)
 	GetInstanceByID(instanceID string) (dbmodel.InstanceDTO, dberr.Error)
 	GetLastOperation(instanceID string, types []internal.OperationType) (dbmodel.OperationDTO, dberr.Error)
+	GetLastOperationByLastOperationID(instanceID string, types []internal.OperationType) (dbmodel.OperationDTO, dberr.Error)
 	GetOperationByID(opID string) (dbmodel.OperationDTO, dberr.Error)
 	GetNotFinishedOperationsByType(operationType internal.OperationType) ([]dbmodel.OperationDTO, dberr.Error)
 	CountNotFinishedOperationsByInstanceID(instanceID string) (int, dberr.Error)
@@ -45,7 +46,9 @@ type ReadSession interface {
 	GetOrchestrationByID(oID string) (dbmodel.OrchestrationDTO, dberr.Error)
 	ListOrchestrations(filter dbmodel.OrchestrationFilter) ([]dbmodel.OrchestrationDTO, int, int, error)
 	ListInstances(filter dbmodel.InstanceFilter) ([]dbmodel.InstanceWithExtendedOperationDTO, int, int, error)
+	ListInstancesUsingLastOperationID(filter dbmodel.InstanceFilter) ([]dbmodel.InstanceWithExtendedOperationDTO, int, int, error)
 	ListInstancesWithSubaccountStates(filter dbmodel.InstanceFilter) ([]dbmodel.InstanceWithSubaccountStateDTO, int, int, error)
+	ListInstancesWithSubaccountStatesWithUseLastOperationID(filter dbmodel.InstanceFilter) ([]dbmodel.InstanceWithSubaccountStateDTO, int, int, error)
 	ListOperationsByOrchestrationID(orchestrationID string, filter dbmodel.OperationFilter) ([]dbmodel.OperationDTO, int, int, error)
 	ListOperationsInTimeRange(from, to time.Time) ([]dbmodel.OperationDTO, error)
 	GetOperationStatsForOrchestration(orchestrationID string) ([]dbmodel.OperationStatEntry, error)
@@ -89,6 +92,7 @@ type WriteSession interface {
 	InsertBinding(binding dbmodel.BindingDTO) dberr.Error
 	UpdateBinding(binding dbmodel.BindingDTO) dberr.Error
 	DeleteBinding(instanceID, bindingID string) dberr.Error
+	UpdateInstanceLastOperation(instanceID, operationID string) error
 }
 
 type Transaction interface {

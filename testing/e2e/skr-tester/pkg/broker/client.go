@@ -154,7 +154,9 @@ func (c *BrokerClient) CallBroker(payload interface{}, endpoint, verb string) (r
 		return nil, nil, err
 	}
 
-	client := &http.Client{}
+	client := &http.Client{
+		Timeout: time.Minute,
+	}
 	resp, err := client.Do(req)
 	if err != nil {
 		return nil, nil, err

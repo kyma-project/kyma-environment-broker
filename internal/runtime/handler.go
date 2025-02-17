@@ -133,7 +133,7 @@ func (h *Handler) listInstances(filter dbmodel.InstanceFilter) ([]pkg.RuntimeDTO
 	}
 
 	var result []pkg.RuntimeDTO
-	instances, count, total, err := h.instancesDb.ListWithSubaccountState(filter)
+	instances, count, total, err := h.instancesDb.ListWithSubaccountState(filter) // TODO remove conditional after migration
 	if err != nil {
 		return []pkg.RuntimeDTO{}, 0, 0, err
 	}

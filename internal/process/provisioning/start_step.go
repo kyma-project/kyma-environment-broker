@@ -69,9 +69,16 @@ func (s *StartStep) Run(operation internal.Operation, log *slog.Logger) (interna
 	}
 	lastOp, err := s.operationStorage.GetLastOperation(operation.InstanceID)
 	if err != nil && !dberr.IsNotFound(err) {
-		log.Warn(fmt.Sprintf("Failed to get last operation for ERSContext: %s", err.Error()))
+		log.Warn(fmt.Sprintf("Failed to get last operation: %s", err.Error()))
 		return operation, time.Minute, nil
 	}
+
+	log.Info("Setting lastOperation ID in the instance")
+	err = s.instanceStorage.UpdateInstanceLastOperation(operation.InstanceID, operation.ID)
+	if err != nil {
+		return s.operationManager.RetryOperation(operation, "error while updating last operation ID", err, 5*time.Second, 1*time.Minute, log)
+	}
+
 	log.Info("Setting the operation to 'InProgress'")
 	newOp, retry, _ := s.operationManager.UpdateOperation(operation, func(op *internal.Operation) {
 		if lastOp != nil {

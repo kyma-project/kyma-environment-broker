@@ -71,6 +71,7 @@ func TestGetEndpoint_GetProvisioningInstance(t *testing.T) {
 		kcBuilder,
 		whitelist.Set{},
 		&broker.OneForAllConvergedCloudRegionsProvider{},
+		nil,
 	)
 	getSvc := broker.NewGetInstance(broker.Config{EnableKubeconfigURLLabel: true}, st.Instances(), st.Operations(), kcBuilder, fixLogger())
 

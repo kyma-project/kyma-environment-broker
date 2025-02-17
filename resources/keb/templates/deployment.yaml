@@ -155,6 +155,8 @@ spec:
                 secretKeyRef:
                   name: "{{ .Values.edp.secretName }}"
                   key: secret
+            - name: APP_DATABASE_USE_LAST_OPERATION_ID
+              value: "{{ .Values.useLastOperationID }}"
             - name: APP_DATABASE_SECRET_KEY
               valueFrom:
                 secretKeyRef:
@@ -265,6 +267,8 @@ spec:
               value: "{{ .Values.metricsv2.operationStatsPoolingInterval }}"
             - name: APP_FREEMIUM_WHITELISTED_GLOBAL_ACCOUNTS_FILE_PATH
               value: /config/freemiumWhitelistedGlobalAccountIds.yaml
+            - name: APP_HAP_RULE_FILE_PATH
+              value: /config/hapRule.yaml
             - name: APP_KYMA_RESOURCE_DELETION_TIMEOUT
               value: "{{ .Values.kymaResourceDeletionTimeout }}"
             - name: APP_BROKER_USE_SMALLER_MACHINE_TYPES
@@ -291,6 +295,8 @@ spec:
               value: "{{ .Values.enableAdditionalWorkerNodePools }}"
             - name: APP_BROKER_ENABLE_LOAD_CURRENT_CONFIG
               value: "{{ .Values.enableLoadCurrentConfig }}"
+            - name: APP_REGIONS_SUPPORTING_MACHINE_FILE_PATH
+              value: /config/regionsSupportingMachine.yaml
           ports:
             - name: http
               containerPort: {{ .Values.broker.port }}

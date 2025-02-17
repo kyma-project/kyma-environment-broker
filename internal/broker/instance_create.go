@@ -11,6 +11,8 @@ import (
 	"net/netip"
 	"strings"
 
+	"github.com/kyma-project/kyma-environment-broker/internal/regionssupportingmachine"
+
 	"github.com/kyma-project/kyma-environment-broker/internal/assuredworkloads"
 
 	"github.com/kyma-project/kyma-environment-broker/internal/kubeconfig"
@@ -75,6 +77,8 @@ type ProvisionEndpoint struct {
 
 	convergedCloudRegionsProvider ConvergedCloudRegionProvider
 
+	regionsSupportingMachine map[string][]string
+
 	log *slog.Logger
 }
 
@@ -96,6 +100,7 @@ func NewProvision(cfg Config,
 	kcBuilder kubeconfig.KcBuilder,
 	freemiumWhitelist whitelist.Set,
 	convergedCloudRegionsProvider ConvergedCloudRegionProvider,
+	regionsSupportingMachine map[string][]string,
 ) *ProvisionEndpoint {
 	enabledPlanIDs := map[string]struct{}{}
 	for _, planName := range cfg.EnablePlans {
@@ -121,6 +126,7 @@ func NewProvision(cfg Config,
 		freemiumWhiteList:             freemiumWhitelist,
 		kcBuilder:                     kcBuilder,
 		convergedCloudRegionsProvider: convergedCloudRegionsProvider,
+		regionsSupportingMachine:      regionsSupportingMachine,
 	}
 }
 
@@ -225,6 +231,12 @@ func (b *ProvisionEndpoint) Provision(ctx context.Context, instanceID string, de
 		return domain.ProvisionedServiceSpec{}, fmt.Errorf("cannot save instance")
 	}
 
+	err = b.instanceStorage.UpdateInstanceLastOperation(instanceID, operationID)
+	if err != nil {
+		logger.Error(fmt.Sprintf("cannot save instance in storage: %s", err))
+		return domain.ProvisionedServiceSpec{}, fmt.Errorf("cannot save instance")
+	}
+
 	logger.Info("Adding operation to provisioning queue")
 	b.queue.Add(operation.ID)
 
@@ -283,6 +295,15 @@ func (b *ProvisionEndpoint) validateAndExtract(details domain.ProvisionDetails, 
 		return ersContext, parameters, fmt.Errorf("while obtaining plan defaults: %w", err)
 	}
 
+	if !regionssupportingmachine.IsSupported(b.regionsSupportingMachine, valueOfPtr(parameters.Region), valueOfPtr(parameters.MachineType)) {
+		return ersContext, parameters, fmt.Errorf(
+			"In the region %s, the machine type %s is not available, it is supported in the %v",
+			valueOfPtr(parameters.Region),
+			valueOfPtr(parameters.MachineType),
+			strings.Join(regionssupportingmachine.SupportedRegions(b.regionsSupportingMachine, valueOfPtr(parameters.MachineType)), ", "),
+		)
+	}
+
 	if err := b.validateNetworking(parameters); err != nil {
 		return ersContext, parameters, err
 	}
@@ -318,6 +339,9 @@ func (b *ProvisionEndpoint) validateAndExtract(details domain.ProvisionDetails, 
 			if err := additionalWorkerNodePool.Validate(); err != nil {
 				return ersContext, parameters, apiresponses.NewFailureResponse(err, http.StatusUnprocessableEntity, err.Error())
 			}
+		}
+		if err := checkUnsupportedMachines(b.regionsSupportingMachine, valueOfPtr(parameters.Region), parameters.AdditionalWorkerNodePools); err != nil {
+			return ersContext, parameters, apiresponses.NewFailureResponse(err, http.StatusUnprocessableEntity, err.Error())
 		}
 	}
 
@@ -431,6 +455,37 @@ func AreNamesUnique(pools []pkg.AdditionalWorkerNodePool) bool {
 		nameSet[pool.Name] = struct{}{}
 	}
 	return true
+}
+
+func checkUnsupportedMachines(regionsSupportingMachine map[string][]string, region string, additionalWorkerNodePools []pkg.AdditionalWorkerNodePool) error {
+	unsupportedMachines := make(map[string][]string)
+	var orderedMachineTypes []string
+
+	for _, pool := range additionalWorkerNodePools {
+		if !regionssupportingmachine.IsSupported(regionsSupportingMachine, region, pool.MachineType) {
+			if _, exists := unsupportedMachines[pool.MachineType]; !exists {
+				orderedMachineTypes = append(orderedMachineTypes, pool.MachineType)
+			}
+			unsupportedMachines[pool.MachineType] = append(unsupportedMachines[pool.MachineType], pool.Name)
+		}
+	}
+
+	if len(unsupportedMachines) == 0 {
+		return nil
+	}
+
+	var errorMsg strings.Builder
+	errorMsg.WriteString(fmt.Sprintf("In the region %s, the following machine types are not available: ", region))
+
+	for i, machineType := range orderedMachineTypes {
+		if i > 0 {
+			errorMsg.WriteString("; ")
+		}
+		availableRegions := strings.Join(regionssupportingmachine.SupportedRegions(regionsSupportingMachine, machineType), ", ")
+		errorMsg.WriteString(fmt.Sprintf("%s (used in: %s), it is supported in the %s", machineType, strings.Join(unsupportedMachines[machineType], ", "), availableRegions))
+	}
+
+	return fmt.Errorf(errorMsg.String())
 }
 
 // Rudimentary kubeconfig validation

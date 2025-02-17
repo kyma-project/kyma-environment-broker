@@ -21,6 +21,7 @@ func TestReDeprovision(t *testing.T) {
 	// given
 	cfg := fixConfig()
 	cfg.EDP.Disabled = true // disable EDP to have all steps successful executed
+	cfg.Database.UseLastOperationID = true
 	suite := NewBrokerSuiteTestWithConfig(t, cfg)
 	defer suite.TearDown()
 	iid := uuid.New().String()
@@ -57,6 +58,9 @@ func TestReDeprovision(t *testing.T) {
 	resp = suite.CallAPI("DELETE", fmt.Sprintf("oauth/v2/service_instances/%s?accepts_incomplete=true&plan_id=7d55d31d-35ae-4438-bf13-6ffdfa107d9f&service_id=47c9dcbf-ff30-448e-ab36-d3bad66ba281", iid),
 		``)
 	deprovisioningID = suite.DecodeOperationID(resp)
+
+	suite.WaitForOperationState(deprovisioningID, domain.InProgress)
+	assert.Equal(t, deprovisioningID, suite.LastOperation(iid).ID)
 	suite.FinishDeprovisioningOperationByKIM(deprovisioningID)
 	// then
 	suite.WaitForInstanceArchivedCreated(iid)

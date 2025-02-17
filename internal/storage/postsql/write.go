@@ -21,6 +21,18 @@ type writeSession struct {
 	transaction *dbr.Tx
 }
 
+func (ws writeSession) UpdateInstanceLastOperation(instanceID, operationID string) error {
+	_, err := ws.update(InstancesTableName).
+		Set("last_operation_id", operationID).
+		Where(dbr.Eq("instance_id", instanceID)).
+		Exec()
+
+	if err != nil {
+		return dberr.Internal("Failed to update instance with last operation id: %s", err)
+	}
+	return nil
+}
+
 func (ws writeSession) DeleteBinding(instanceID, bindingID string) dberr.Error {
 	_, err := ws.deleteFrom(BindingsTableName).
 		Where(dbr.Eq("id", bindingID)).

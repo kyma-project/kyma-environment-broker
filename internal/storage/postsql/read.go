@@ -3,6 +3,7 @@ package postsql
 import (
 	"errors"
 	"fmt"
+	"log/slog"
 	"strings"
 	"time"
 
@@ -204,6 +205,25 @@ func (r readSession) FindAllInstancesForSubAccounts(subAccountslist []string) ([
 }
 
 func (r readSession) GetLastOperation(instanceID string, types []internal.OperationType) (dbmodel.OperationDTO, dberr.Error) {
+	inst := dbr.Eq("instance_id", instanceID)
+	state := dbr.Neq("state", []string{orchestration.Pending, orchestration.Canceled})
+	condition := dbr.And(inst, state)
+	if len(types) > 0 {
+		condition = dbr.And(condition, dbr.Expr("type IN ?", types))
+	}
+	operation, err := r.getLastOperation(condition)
+	if err != nil {
+		switch {
+		case dberr.IsNotFound(err):
+			return dbmodel.OperationDTO{}, dberr.NotFound("for instance ID: %s %s", instanceID, err)
+		default:
+			return dbmodel.OperationDTO{}, err
+		}
+	}
+	return operation, nil
+}
+
+func (r readSession) GetLastOperationByLastOperationID(instanceID string, types []internal.OperationType) (dbmodel.OperationDTO, dberr.Error) {
 	inst := dbr.Eq("instance_id", instanceID)
 	state := dbr.Neq("state", []string{orchestration.Pending, orchestration.Canceled})
 	condition := dbr.And(inst, state)
@@ -752,8 +772,50 @@ func (r readSession) GetNumberOfInstancesForGlobalAccountID(globalAccountID stri
 	return res.Total, err
 }
 
+func (r readSession) ListInstancesUsingLastOperationID(filter dbmodel.InstanceFilter) ([]dbmodel.InstanceWithExtendedOperationDTO, int, int, error) {
+	var instances []dbmodel.InstanceWithExtendedOperationDTO
+
+	slog.Info("Calling - ListInstancesUsingLastOperationID", "filter", filter)
+
+	// select an instance with a last operation
+	stmt := r.session.Select("o.data", "o.state", "o.type", fmt.Sprintf("%s.*", InstancesTableName)).
+		From(InstancesTableName).
+		Join(dbr.I(OperationTableName).As("o"), fmt.Sprintf("%s.last_operation_id = o.id", InstancesTableName)).
+		OrderBy(fmt.Sprintf("%s.%s", InstancesTableName, CreatedAtField))
+
+	if len(filter.States) > 0 || filter.Suspended != nil {
+		stateFilters := buildInstanceStateFilters("o", filter)
+		stmt.Where(stateFilters)
+	}
+
+	// Add pagination
+	if filter.Page > 0 && filter.PageSize > 0 {
+		stmt = stmt.Paginate(uint64(filter.Page), uint64(filter.PageSize))
+	}
+
+	addInstanceFilters(stmt, filter, "o")
+
+	_, err := stmt.Load(&instances)
+	if err != nil {
+		return nil, -1, -1, fmt.Errorf("while fetching instances: %w", err)
+	}
+
+	totalCount, err := r.getInstanceCountByLastOperationID(filter)
+	if err != nil {
+		return nil, -1, -1, err
+	}
+
+	return instances,
+		len(instances),
+		totalCount,
+		nil
+}
+
+// deprecated, use ListInstancesUsingLastOperationID
 func (r readSession) ListInstances(filter dbmodel.InstanceFilter) ([]dbmodel.InstanceWithExtendedOperationDTO, int, int, error) {
 	var instances []dbmodel.InstanceWithExtendedOperationDTO
+
+	slog.Info("Calling ListInstances", "filter", filter)
 
 	// Base select and order by created at
 	var stmt *dbr.SelectStmt
@@ -781,7 +843,7 @@ func (r readSession) ListInstances(filter dbmodel.InstanceFilter) ([]dbmodel.Ins
 		stmt = stmt.Paginate(uint64(filter.Page), uint64(filter.PageSize))
 	}
 
-	addInstanceFilters(stmt, filter)
+	addInstanceFilters(stmt, filter, "o1")
 
 	_, err := stmt.Load(&instances)
 	if err != nil {
@@ -799,8 +861,11 @@ func (r readSession) ListInstances(filter dbmodel.InstanceFilter) ([]dbmodel.Ins
 		nil
 }
 
+// TODO: remove after migration
 func (r readSession) ListInstancesWithSubaccountStates(filter dbmodel.InstanceFilter) ([]dbmodel.InstanceWithSubaccountStateDTO, int, int, error) {
 	var instances []dbmodel.InstanceWithSubaccountStateDTO
+
+	slog.Info("Calling ListInstancesWithSubaccountStates", "filter", filter)
 
 	// Base select and order by created at
 	var stmt *dbr.SelectStmt
@@ -829,7 +894,7 @@ func (r readSession) ListInstancesWithSubaccountStates(filter dbmodel.InstanceFi
 		stmt = stmt.Paginate(uint64(filter.Page), uint64(filter.PageSize))
 	}
 
-	addInstanceFilters(stmt, filter)
+	addInstanceFilters(stmt, filter, "o1")
 
 	_, err := stmt.Load(&instances)
 	if err != nil {
@@ -838,6 +903,50 @@ func (r readSession) ListInstancesWithSubaccountStates(filter dbmodel.InstanceFi
 
 	// getInstanceCount is appropriate for this query because we added only left join without any additional selection/filtering
 	totalCount, err := r.getInstanceCount(filter)
+	if err != nil {
+		return nil, -1, -1, err
+	}
+
+	return instances,
+		len(instances),
+		totalCount,
+		nil
+}
+
+func (r readSession) ListInstancesWithSubaccountStatesWithUseLastOperationID(filter dbmodel.InstanceFilter) ([]dbmodel.InstanceWithSubaccountStateDTO, int, int, error) {
+	var instances []dbmodel.InstanceWithSubaccountStateDTO
+
+	slog.Info("Calling ListInstancesWithSubaccountStatesWithUseLastOperationID", "filter", filter)
+
+	// Base select and order by created at
+	var stmt *dbr.SelectStmt
+
+	// select an instance with a last operation
+	stmt = r.session.Select("o1.data", "o1.state", "o1.type", fmt.Sprintf("%s.*", InstancesTableName), "ss.beta_enabled", "ss.used_for_production").
+		From(InstancesTableName).
+		Join(dbr.I(OperationTableName).As("o1"), fmt.Sprintf("%s.last_operation_id = o1.id", InstancesTableName)).
+		LeftJoin(dbr.I(SubaccountStatesTableName).As("ss"), fmt.Sprintf("%s.sub_account_id = ss.id", InstancesTableName)).
+		OrderBy(fmt.Sprintf("%s.%s", InstancesTableName, CreatedAtField))
+
+	if len(filter.States) > 0 || filter.Suspended != nil {
+		stateFilters := buildInstanceStateFilters("o1", filter)
+		stmt.Where(stateFilters)
+	}
+
+	// Add pagination
+	if filter.Page > 0 && filter.PageSize > 0 {
+		stmt = stmt.Paginate(uint64(filter.Page), uint64(filter.PageSize))
+	}
+
+	addInstanceFilters(stmt, filter, "o1")
+
+	_, err := stmt.Load(&instances)
+	if err != nil {
+		return nil, -1, -1, fmt.Errorf("while fetching instances: %w", err)
+	}
+
+	// getInstanceCount is appropriate for this query because we added only left join without any additional selection/filtering
+	totalCount, err := r.getInstanceCountByLastOperationID(filter)
 	if err != nil {
 		return nil, -1, -1, err
 	}
@@ -862,11 +971,38 @@ func (r readSession) ListEvents(filter events.EventFilter) ([]events.EventDTO, e
 	return events, err
 }
 
+func (r readSession) getInstanceCountByLastOperationID(filter dbmodel.InstanceFilter) (int, error) {
+	var res struct {
+		Total int
+	}
+
+	slog.Info("Calling getInstanceCountByLastOperationID", "filter", filter)
+
+	var stmt *dbr.SelectStmt
+	stmt = r.session.
+		Select("count(*) as total").
+		From(InstancesTableName).
+		Join(dbr.I(OperationTableName).As("o1"), fmt.Sprintf("%s.last_operation_id = o1.id", InstancesTableName))
+
+	if len(filter.States) > 0 || filter.Suspended != nil {
+		stateFilters := buildInstanceStateFilters("o1", filter)
+		stmt.Where(stateFilters)
+	}
+
+	addInstanceFilters(stmt, filter, "o1")
+	err := stmt.LoadOne(&res)
+
+	return res.Total, err
+}
+
 func (r readSession) getInstanceCount(filter dbmodel.InstanceFilter) (int, error) {
 	var res struct {
 		Total int
 	}
 	var stmt *dbr.SelectStmt
+
+	slog.Info("Calling getInstanceCount", "filter", filter)
+
 	stmt = r.session.
 		Select("count(*) as total").
 		From(InstancesTableName).
@@ -880,7 +1016,7 @@ func (r readSession) getInstanceCount(filter dbmodel.InstanceFilter) (int, error
 		stmt.Where(stateFilters)
 	}
 
-	addInstanceFilters(stmt, filter)
+	addInstanceFilters(stmt, filter, "o1")
 	err := stmt.LoadOne(&res)
 
 	return res.Total, err
@@ -948,7 +1084,7 @@ func buildInstanceStateFilters(table string, filter dbmodel.InstanceFilter) dbr.
 	return dbr.Or(exprs...)
 }
 
-func addInstanceFilters(stmt *dbr.SelectStmt, filter dbmodel.InstanceFilter) {
+func addInstanceFilters(stmt *dbr.SelectStmt, filter dbmodel.InstanceFilter, alias string) {
 	if len(filter.GlobalAccountIDs) > 0 {
 		stmt.Where("instances.global_account_id IN ?", filter.GlobalAccountIDs)
 	}
@@ -972,7 +1108,7 @@ func addInstanceFilters(stmt *dbr.SelectStmt, filter dbmodel.InstanceFilter) {
 	}
 	if len(filter.Shoots) > 0 {
 		shootNameMatch := fmt.Sprintf(`^(%s)$`, strings.Join(filter.Shoots, "|"))
-		stmt.Where("o1.data::json->>'shoot_name' ~ ?", shootNameMatch)
+		stmt.Where(fmt.Sprintf("%s.data::json->>'shoot_name' ~ ?", alias), shootNameMatch)
 	}
 
 	if filter.Expired != nil {

@@ -65,6 +65,12 @@ func (s *InitStep) Run(operation internal.Operation, log *slog.Logger) (internal
 		return operation, time.Second, nil
 	}
 
+	log.Info("Setting lastOperation ID in the instance")
+	err = s.instanceStorage.UpdateInstanceLastOperation(operation.InstanceID, operation.ID)
+	if err != nil {
+		return s.operationManager.RetryOperation(operation, "error while updating last operation ID", err, 5*time.Second, 1*time.Minute, log)
+	}
+
 	log.Info("Setting state 'in progress' and refreshing instance details")
 	opr, delay, err := s.operationManager.UpdateOperation(operation, func(op *internal.Operation) {
 		op.State = domain.InProgress
