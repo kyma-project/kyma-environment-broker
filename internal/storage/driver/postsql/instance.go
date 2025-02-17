@@ -582,6 +582,7 @@ func (s *Instance) List(filter dbmodel.InstanceFilter) ([]internal.Instance, int
 	var totalCount, count int
 	var err error
 	var dtos []dbmodel.InstanceWithExtendedOperationDTO
+	//TODO remove conditional after migration
 	if s.UseLastOperationID {
 		dtos, count, totalCount, err = s.NewReadSession().ListInstancesUsingLastOperationID(filter)
 	} else {
@@ -624,6 +625,7 @@ func (s *Instance) ListWithSubaccountState(filter dbmodel.InstanceFilter) ([]int
 	var count, totalCount int
 	var dtos []dbmodel.InstanceWithSubaccountStateDTO
 	var err error
+	//TODO remove conditional after migration
 	if s.UseLastOperationID {
 		dtos, count, totalCount, err = s.NewReadSession().ListInstancesWithSubaccountStatesWithUseLastOperationID(filter)
 	} else {
