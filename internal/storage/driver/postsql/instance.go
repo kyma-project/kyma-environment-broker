@@ -54,44 +54,6 @@ func NewInstance(sess postsql.Factory, operations *operations, cipher Cipher, us
 	}
 }
 
-func (s *Instance) InsertWithoutEncryption(instance internal.Instance) error {
-	_, err := s.GetByID(instance.InstanceID)
-	if err == nil {
-		return dberr.AlreadyExists("instance with id %s already exist", instance.InstanceID)
-	}
-	params, err := json.Marshal(instance.Parameters)
-	if err != nil {
-		return fmt.Errorf("while marshaling parameters: %w", err)
-	}
-	dto := dbmodel.InstanceDTO{
-		InstanceID:             instance.InstanceID,
-		RuntimeID:              instance.RuntimeID,
-		GlobalAccountID:        instance.GlobalAccountID,
-		SubAccountID:           instance.SubAccountID,
-		ServiceID:              instance.ServiceID,
-		ServiceName:            instance.ServiceName,
-		ServicePlanID:          instance.ServicePlanID,
-		ServicePlanName:        instance.ServicePlanName,
-		DashboardURL:           instance.DashboardURL,
-		ProvisioningParameters: string(params),
-		ProviderRegion:         instance.ProviderRegion,
-		CreatedAt:              instance.CreatedAt,
-		UpdatedAt:              instance.UpdatedAt,
-		DeletedAt:              instance.DeletedAt,
-		Version:                instance.Version,
-		Provider:               string(instance.Provider),
-	}
-
-	sess := s.NewWriteSession()
-	return wait.PollUntilContextTimeout(context.Background(), defaultRetryInterval, defaultRetryTimeout, true, func(ctx context.Context) (bool, error) {
-		err := sess.InsertInstance(dto)
-		if err != nil {
-			return false, nil
-		}
-		return true, nil
-	})
-}
-
 func (s *Instance) FindAllJoinedWithOperations(prct ...predicate.Predicate) ([]internal.InstanceWithOperation, error) {
 	sess := s.NewReadSession()
 	var (
