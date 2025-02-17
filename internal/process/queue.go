@@ -110,7 +110,7 @@ func (q *Queue) worker(queue workqueue.RateLimitingInterface, process func(key s
 				id := key.(string)
 				workerLogger := log.With("operationID", id)
 				workerLogger.Info(fmt.Sprintf("about to process item %s, queue length is %d", id, q.queue.Len()))
-				q.updateWorkerTime(id, workerNameId, log)
+				q.updateWorkerTime(id, workerNameId, workerLogger)
 
 				defer func() {
 					if err := recover(); err != nil {
