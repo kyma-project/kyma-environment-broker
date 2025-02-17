@@ -43,7 +43,14 @@
               "Standard_D16_v3",
               "Standard_D32_v3",
               "Standard_D48_v3",
-              "Standard_D64_v3"
+              "Standard_D64_v3",
+              "Standard_F2s_v2",
+              "Standard_F4s_v2",
+              "Standard_F8s_v2",
+              "Standard_F16s_v2",
+              "Standard_F32s_v2",
+              "Standard_F48s_v2",
+              "Standard_F64s_v2"
             ],
             "_enumDisplayName": {
               "Standard_D2s_v5":  "Standard_D2s_v5 (2vCPU, 8GB RAM)",
@@ -58,7 +65,14 @@
               "Standard_D16_v3":  "Standard_D16_v3 (16vCPU, 64GB RAM)",
               "Standard_D32_v3":  "Standard_D32_v3 (32vCPU, 128GB RAM)",
               "Standard_D48_v3":  "Standard_D48_v3 (48vCPU, 192GB RAM)",
-              "Standard_D64_v3":  "Standard_D64_v3 (64vCPU, 256GB RAM)"
+              "Standard_D64_v3":  "Standard_D64_v3 (64vCPU, 256GB RAM)",
+              "Standard_F2s_v2": "Standard_F2s_v2 (2vCPU, 4GB RAM)",
+              "Standard_F4s_v2": "Standard_F4s_v2 (4vCPU, 8GB RAM)",
+              "Standard_F8s_v2": "Standard_F8s_v2 (8vCPU, 16GB RAM)",
+              "Standard_F16s_v2": "Standard_F16s_v2 (16vCPU, 32GB RAM)",
+              "Standard_F32s_v2": "Standard_F32s_v2 (32vCPU, 64GB RAM)",
+              "Standard_F48s_v2": "Standard_F48s_v2 (48vCPU, 96GB RAM)",
+              "Standard_F64s_v2": "Standard_F64s_v2 (64vCPU, 128GB RAM)"
             }
           },
           "haZones": {

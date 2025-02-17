@@ -37,7 +37,13 @@
               "n2-standard-16",
               "n2-standard-32",
               "n2-standard-48",
-              "n2-standard-64"
+              "n2-standard-64",
+              "c2d-highcpu-2",
+              "c2d-highcpu-4",
+              "c2d-highcpu-8",
+              "c2d-highcpu-16",
+              "c2d-highcpu-32",
+              "c2d-highcpu-56"
             ],
             "_enumDisplayName": {
               "n2-standard-2":  "n2-standard-2 (2vCPU, 8GB RAM)",
@@ -46,7 +52,13 @@
               "n2-standard-16": "n2-standard-16 (16vCPU, 64GB RAM)",
               "n2-standard-32": "n2-standard-32 (32vCPU, 128GB RAM)",
               "n2-standard-48": "n2-standard-48 (48vCPU, 192GB RAM)",
-              "n2-standard-64": "n2-standard-64 (64vCPU, 256GB RAM)"
+              "n2-standard-64": "n2-standard-64 (64vCPU, 256GB RAM)",
+              "c2d-highcpu-2": "c2d-highcpu-2 (2vCPU, 4GB RAM)",
+              "c2d-highcpu-4": "c2d-highcpu-4 (4vCPU, 8GB RAM)",
+              "c2d-highcpu-8": "c2d-highcpu-8 (8vCPU, 16GB RAM)",
+              "c2d-highcpu-16": "c2d-highcpu-16 (16vCPU, 32GB RAM)",
+              "c2d-highcpu-32": "c2d-highcpu-32 (32vCPU, 64GB RAM)",
+              "c2d-highcpu-56": "c2d-highcpu-56 (56vCPU, 112GB RAM)"
             }
           },
           "haZones": {

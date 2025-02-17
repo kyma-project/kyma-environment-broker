@@ -35,10 +35,10 @@ func TestSchemaGenerator(t *testing.T) {
 		{
 			name: "AWS schema is correct",
 			generator: func(machinesDisplay, regionsDisplay map[string]string, machines []string, additionalParams, update bool) *map[string]interface{} {
-				return AWSSchema(machinesDisplay, regionsDisplay, machines, additionalParams, update, false, additionalParams, true, true)
+				return AWSSchema(machinesDisplay, AwsMachinesDisplay(true), regionsDisplay, machines, AwsMachinesNames(true), additionalParams, update, false, additionalParams, true, true)
 			},
-			machineTypes:        AwsMachinesNames(),
-			machineTypesDisplay: AwsMachinesDisplay(),
+			machineTypes:        AwsMachinesNames(false),
+			machineTypesDisplay: AwsMachinesDisplay(false),
 			regionDisplay:       AWSRegionsDisplay(false),
 			path:                "aws",
 			file:                "aws-schema.json",
@@ -49,10 +49,10 @@ func TestSchemaGenerator(t *testing.T) {
 		{
 			name: "AWS schema with EU access restriction is correct",
 			generator: func(machinesDisplay, regionsDisplay map[string]string, machines []string, additionalParams, update bool) *map[string]interface{} {
-				return AWSSchema(machinesDisplay, regionsDisplay, machines, additionalParams, update, true, additionalParams, true, true)
+				return AWSSchema(machinesDisplay, AwsMachinesDisplay(true), regionsDisplay, machines, AwsMachinesNames(true), additionalParams, update, true, additionalParams, true, true)
 			},
-			machineTypes:        AwsMachinesNames(),
-			machineTypesDisplay: AwsMachinesDisplay(),
+			machineTypes:        AwsMachinesNames(false),
+			machineTypesDisplay: AwsMachinesDisplay(false),
 			regionDisplay:       AWSRegionsDisplay(true),
 			path:                "aws",
 			file:                "aws-schema-eu.json",
@@ -63,10 +63,10 @@ func TestSchemaGenerator(t *testing.T) {
 		{
 			name: "Azure schema is correct",
 			generator: func(machinesDisplay, regionsDisplay map[string]string, machines []string, additionalParams, update bool) *map[string]interface{} {
-				return AzureSchema(machinesDisplay, regionsDisplay, machines, additionalParams, update, false, additionalParams, true, true)
+				return AzureSchema(machinesDisplay, AzureMachinesDisplay(true), regionsDisplay, machines, AzureMachinesNames(true), additionalParams, update, false, additionalParams, true, true)
 			},
-			machineTypes:        AzureMachinesNames(),
-			machineTypesDisplay: AzureMachinesDisplay(),
+			machineTypes:        AzureMachinesNames(false),
+			machineTypesDisplay: AzureMachinesDisplay(false),
 			regionDisplay:       AzureRegionsDisplay(false),
 			path:                "azure",
 			file:                "azure-schema.json",
@@ -77,10 +77,10 @@ func TestSchemaGenerator(t *testing.T) {
 		{
 			name: "Azure schema with EU access restriction is correct",
 			generator: func(machinesDisplay, regionsDisplay map[string]string, machines []string, additionalParams, update bool) *map[string]interface{} {
-				return AzureSchema(machinesDisplay, regionsDisplay, machines, additionalParams, update, true, additionalParams, true, true)
+				return AzureSchema(machinesDisplay, AzureMachinesDisplay(true), regionsDisplay, machines, AzureMachinesNames(true), additionalParams, update, true, additionalParams, true, true)
 			},
-			machineTypes:        AzureMachinesNames(),
-			machineTypesDisplay: AzureMachinesDisplay(),
+			machineTypes:        AzureMachinesNames(false),
+			machineTypesDisplay: AzureMachinesDisplay(false),
 			regionDisplay:       AzureRegionsDisplay(true),
 			path:                "azure",
 			file:                "azure-schema-eu.json",
@@ -199,10 +199,10 @@ func TestSchemaGenerator(t *testing.T) {
 		{
 			name: "GCP schema is correct",
 			generator: func(machinesDisplay, regionsDisplay map[string]string, machines []string, additionalParams, update bool) *map[string]interface{} {
-				return GCPSchema(machinesDisplay, regionsDisplay, machines, additionalParams, update, additionalParams, false, true, true)
+				return GCPSchema(machinesDisplay, GcpMachinesDisplay(true), regionsDisplay, machines, GcpMachinesNames(true), additionalParams, update, additionalParams, false, true, true)
 			},
-			machineTypes:        GcpMachinesNames(),
-			machineTypesDisplay: GcpMachinesDisplay(),
+			machineTypes:        GcpMachinesNames(false),
+			machineTypesDisplay: GcpMachinesDisplay(false),
 			regionDisplay:       GcpRegionsDisplay(false),
 			path:                "gcp",
 			file:                "gcp-schema.json",
@@ -213,10 +213,10 @@ func TestSchemaGenerator(t *testing.T) {
 		{
 			name: "GCP schema with assured workloads is correct",
 			generator: func(machinesDisplay, regionsDisplay map[string]string, machines []string, additionalParams, update bool) *map[string]interface{} {
-				return GCPSchema(machinesDisplay, regionsDisplay, machines, additionalParams, update, additionalParams, true, true, true)
+				return GCPSchema(machinesDisplay, GcpMachinesDisplay(true), regionsDisplay, machines, GcpMachinesNames(true), additionalParams, update, additionalParams, true, true, true)
 			},
-			machineTypes:        GcpMachinesNames(),
-			machineTypesDisplay: GcpMachinesDisplay(),
+			machineTypes:        GcpMachinesNames(false),
+			machineTypesDisplay: GcpMachinesDisplay(false),
 			regionDisplay:       GcpRegionsDisplay(true),
 			path:                "gcp",
 			file:                "gcp-schema-assured-workloads.json",
