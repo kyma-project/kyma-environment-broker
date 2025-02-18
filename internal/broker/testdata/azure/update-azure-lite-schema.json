@@ -19,10 +19,11 @@
         "_controlsOrder": ["name", "machineType", "autoScalerMin", "autoScalerMax"],
         "properties": {
           "name": {
-            "description": "Specifies the unique name of the additional worker node pool.",
+            "description": "Specifies the unique name of the additional worker node pool. The name must consist of lowercase alphanumeric characters or '-', must start and end with an alphanumeric character, and can be a maximum of 15 characters in length.",
             "type": "string",
             "minLength": 1,
-            "pattern": "^[a-zA-Z0-9-]*$"
+            "maxLength": 15,
+            "pattern": "^[a-z0-9]([-a-z0-9]*[a-z0-9])?$"
           },
           "machineType": {
             "description": "Specifies the type of the virtual machine.",
