@@ -2,9 +2,23 @@ package rules
 
 import "sort"
 
-func SortRuleEntries(entries []*ParsingResult) []*ParsingResult {
+func SortRuleEntries(entries []*ParsingResult2) []*ParsingResult2 {
 	sort.SliceStable(entries, func(i, j int) bool {
-		if entries[i].Err != nil || entries[j].Err != nil {
+		
+		if len(entries[i].ParsingErrors) != 0 && len(entries[j].ParsingErrors) != 0 {
+			return len(entries[i].ParsingErrors) < len(entries[j].ParsingErrors)
+		}
+
+		if len(entries[i].ParsingErrors) != 0 || len(entries[j].ParsingErrors) != 0  {
+			return true
+		}
+
+		if len(entries[i].ParsingErrors) != 0 && len(entries[j].ParsingErrors) != 0 {
+			return len(entries[i].ProcessingErrors) < len(entries[j].ProcessingErrors)
+		}
+
+
+		if len(entries[i].ProcessingErrors) != 0 || len(entries[j].ProcessingErrors) != 0  {
 			return true
 		}
 

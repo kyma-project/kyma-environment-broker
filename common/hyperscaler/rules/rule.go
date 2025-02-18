@@ -9,10 +9,8 @@ import (
 )
 
 type ParsingResults struct {
-	AllResults    []*ParsingResult
-	okResults     []*ParsingResult
-	errorResults  []*ParsingResult
-	resolvedRules map[string]*ParsingResult
+	Results    []*ParsingResult2
+	resolvedRules map[string]*ParsingResult2
 }
 
 func (p *ParsingResults) Print() {
@@ -20,12 +18,12 @@ func (p *ParsingResults) Print() {
 }
 
 func (p *ParsingResults) CheckUniqueness() {
-	uniquenessSet := make(map[string]*ParsingResult)
-	uniqueResults := make([]*ParsingResult, 0, len(p.AllResults))
+	uniquenessSet := make(map[string]*ParsingResult2)
+	uniqueResults := make([]*ParsingResult2, 0, len(p.Results))
 
-	for _, result := range p.AllResults {
+	for _, result := range p.Results {
 
-		if result.Err != nil {
+		if result.HasErrors() {
 			uniqueResults = append(uniqueResults, result)
 			continue
 		}
@@ -33,7 +31,7 @@ func (p *ParsingResults) CheckUniqueness() {
 		key := result.Rule.Signature()
 
 		alreadyExists := false
-		var item *ParsingResult
+		var item *ParsingResult2
 		item, alreadyExists = uniquenessSet[key]
 
 		if !alreadyExists {
@@ -45,20 +43,20 @@ func (p *ParsingResults) CheckUniqueness() {
 
 			err := fmt.Errorf("Duplicated rule with previously defined rule: '%s'", item.Rule.StringNoLabels())
 
-			p.errorResults = append(p.errorResults, &ParsingResult{OriginalRule: result.OriginalRule, Err: err})
+			result.AddProcessingError(err)
 
-			uniqueResults = append(uniqueResults, &ParsingResult{OriginalRule: result.OriginalRule, Err: err})
+			uniqueResults = append(uniqueResults, result)
 
 		}
 	}
 
-	p.AllResults = uniqueResults
+	p.Results = uniqueResults
 }
 
-func (p *ParsingResults) composeSignatureSet() map[string]*ParsingResult {
-	signatureSet := make(map[string]*ParsingResult)
+func (p *ParsingResults) composeSignatureSet() map[string]*ParsingResult2 {
+	signatureSet := make(map[string]*ParsingResult2)
 
-	for _, result := range p.AllResults {
+	for _, result := range p.Results {
 		signature := buildSignature(*result, ASTERISK, ATTRIBUTE_PREFIX)
 		signatureSet[signature] = result
 	}
@@ -67,45 +65,60 @@ func (p *ParsingResults) composeSignatureSet() map[string]*ParsingResult {
 }
 
 func (p *ParsingResults) CheckSignatures() {
-	signatureSet := make(map[string]ParsingResult)
-	uniqueResults := make([]*ParsingResult, 0, len(p.AllResults))
+	signatureSet := make(map[string][]ParsingResult2)
+    uniqueResults := make([]*ParsingResult2, 0, len(p.Results))
+	proposedResolutions := make(map[string]bool)
 
-	for _, result := range p.AllResults {
+	for _, result := range p.Results {
+		if result.HasErrors() {
+			continue
+		}
 
-		if result.Err != nil {
+		signature := buildSignature(*result, ASTERISK, ATTRIBUTE_PREFIX)
+		signatureSet[signature] = append(signatureSet[signature], *result)
+	}
+
+	for _, result := range p.Results {
+
+		if result.HasErrors() {
 			uniqueResults = append(uniqueResults, result)
 			continue
 		}
-		negativeSignatureKey := buildSignature(*result, ATTRIBUTE_PREFIX, ASTERISK)
+		mirroredSignatureKey := buildSignature(*result, ATTRIBUTE_PREFIX, ASTERISK)
 
-		negativeSignatureItem, negativeSignatureExists := signatureSet[negativeSignatureKey]
+		mirroredSignatureItems, mirroredSignatureExists := signatureSet[mirroredSignatureKey]
 
-		var negativeSignatureError error = nil
-		if negativeSignatureExists {
+		var mirroredSignatureError error = nil
+		if mirroredSignatureExists {
 
-			resolvingSignaturePossibleRule := result.Rule.Combine(*negativeSignatureItem.Rule)
+			for _, mirroredSignatureItem := range mirroredSignatureItems {
+								
+				resolvingSignaturePossibleRule := result.Rule.Combine(*mirroredSignatureItem.Rule)
 
-			resolvingKey := resolvingSignaturePossibleRule.StringNoLabels()
-			_, resolvingRuleExists := p.resolvedRules[resolvingKey]
+				resolvingKey := resolvingSignaturePossibleRule.StringNoLabels()
+				_, resolvingRuleExists := p.resolvedRules[resolvingKey]
 
-			if !resolvingRuleExists {
-				negativeSignatureError = fmt.Errorf("Duplicated negative signature with previously defined rule: '%s', consider introducing a resolving rule '%s'", negativeSignatureItem.Rule.StringNoLabels(), resolvingKey)
+				_, alreadyProposed := proposedResolutions[resolvingKey]
 
-				p.errorResults = append(p.errorResults, &ParsingResult{OriginalRule: result.OriginalRule, Err: negativeSignatureError})
-			} else {
-				signatureSet[buildSignature(*result, ASTERISK, ATTRIBUTE_PREFIX)] = *result
+				if !resolvingRuleExists && !alreadyProposed{
+					mirroredSignatureError = fmt.Errorf("Ambiguous with previously defined entry: '%s', consider introducing a resolving entry '%s'", mirroredSignatureItem.Rule.StringNoLabels(), resolvingKey)
+
+					proposedResolutions[resolvingKey] = true
+
+					result.AddProcessingError(mirroredSignatureError)
+				} 
+		
 			}
-		} else {
-			signatureSet[buildSignature(*result, ASTERISK, ATTRIBUTE_PREFIX)] = *result
+
 		}
 
-		uniqueResults = append(uniqueResults, &ParsingResult{OriginalRule: result.OriginalRule, Rule: result.Rule, Err: negativeSignatureError})
+		uniqueResults = append(uniqueResults, result)
 	}
 
-	p.AllResults = uniqueResults
+	p.Results = uniqueResults
 }
 
-func buildSignature(result ParsingResult, positiveKey, negativeKey string) string {
+func buildSignature(result ParsingResult2, positiveKey, mirroredKey string) string {
 
 	if result.Rule == nil {
 		panic("Rule is nil")
@@ -113,11 +126,11 @@ func buildSignature(result ParsingResult, positiveKey, negativeKey string) strin
 	signatureKey := result.Rule.Plan
 	signatureKey += PR_ATTR_NAME + SIGNATURE_ATTR_SEPARATOR
 	checkValue := result.Rule.PlatformRegion
-	signatureKey += getAttrValueSymbol(checkValue, positiveKey, negativeKey)
+	signatureKey += getAttrValueSymbol(checkValue, positiveKey, mirroredKey)
 	signatureKey += HYPERSCALER_LABEL + SIGNATURE_ATTR_SEPARATOR
 
 	checkValue = result.Rule.HyperscalerRegion
-	signatureKey += getAttrValueSymbol(checkValue, positiveKey, negativeKey)
+	signatureKey += getAttrValueSymbol(checkValue, positiveKey, mirroredKey)
 
 	return signatureKey
 }
@@ -131,36 +144,28 @@ func getAttrValueSymbol(checkedValue, returnedValueTrue, returnedValueFalse stri
 
 }
 
-func (p *ParsingResults) HasErrors() bool {
-	return len(p.errorResults) != 0
-}
-
 func (p *ParsingResults) Sort() {
-	p.AllResults = SortRuleEntries(p.AllResults)
-	p.okResults = SortRuleEntries(p.okResults)
-	p.errorResults = SortRuleEntries(p.errorResults)
+	p.Results = SortRuleEntries(p.Results)
 }
 
 func (p *ParsingResults) Apply(entry string, rule *Rule, err error) {
-	result := &ParsingResult{OriginalRule: entry, Rule: rule, Err: err}
+	result := NewParsingResult2(entry, rule)
+
 	if err != nil {
-		p.errorResults = append(p.errorResults, result)
+		result.AddParsingError(err)
 	} else {
-		p.okResults = append(p.okResults, result)
 		if rule.IsResolved() {
 			p.resolvedRules[rule.StringNoLabels()] = result
 		}
 	}
 
-	p.AllResults = append(p.AllResults, result)
+	p.Results = append(p.Results, result)
 }
 
 func NewParsingResults() *ParsingResults {
 	return &ParsingResults{
-		AllResults:    make([]*ParsingResult, 0),
-		okResults:     make([]*ParsingResult, 0),
-		errorResults:  make([]*ParsingResult, 0),
-		resolvedRules: make(map[string]*ParsingResult),
+		Results:    make([]*ParsingResult2, 0),
+		resolvedRules: make(map[string]*ParsingResult2),
 	}
 }
 

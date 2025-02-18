@@ -141,8 +141,16 @@ func (cmd *ParseCommand) Run() error {
 	
 	Print(cmd, results, testDataForMatching)
 	
+	hasErrors := false
+	for _, result := range results.Results {
+		if result.HasErrors() {
+			hasErrors = true
+			break
+		}
+	}
 
-	if results.HasErrors(){
+
+	if hasErrors {
 		cmd.cobraCmd.Printf("There are errors in your rule configuration. Fix above errors in your rule configuration and try again.\n")
 		return nil
 	}
@@ -152,11 +160,10 @@ func (cmd *ParseCommand) Run() error {
 
 func Print(cmd *ParseCommand, results *rules.ParsingResults, testDataForMatching *rules.MatchableAttributes) {
 
-
 	if cmd.match != ""  && testDataForMatching != nil {
-		var lastMatch *rules.ParsingResult = nil
-		for _, result := range results.AllResults {
-			if result.Err == nil {
+		var lastMatch *rules.ParsingResult2 = nil
+		for _, result := range results.Results {
+			if !result.HasParsingErrors() {
 				result.Matched = result.Rule.Matched(testDataForMatching)
 				if result.Matched {
 					lastMatch = result
@@ -169,29 +176,33 @@ func Print(cmd *ParseCommand, results *rules.ParsingResults, testDataForMatching
 		}
 	}
 
-	for _, result := range results.AllResults {
+	for _, result := range results.Results {
 
 		cmd.cobraCmd.Printf("-> ")
-		if result.Err != nil {
-
+		hasErrors := result.HasErrors()
+		if hasErrors {
 			cmd.cobraCmd.Printf("%s Error %s", colorError, colorNeutral)
-
 		} else {
-
-
 			cmd.cobraCmd.Printf("%s %5s %s", colorOk, "OK", colorNeutral)
 		}
 
-		if result.Rule != nil && result.Err == nil {
+		if result.Rule != nil && !hasErrors {
 			cmd.cobraCmd.Printf(" %s", result.Rule.String())
 		}
 
-		if result.Err != nil {
+		if hasErrors {
 			cmd.cobraCmd.Printf(" %s", result.OriginalRule)
-			cmd.cobraCmd.Printf(" - %s", result.Err)
+			for _, err := range result.ParsingErrors {
+				cmd.cobraCmd.Printf("\n - %s", err)
+			}
+		
+			for _, err := range result.ProcessingErrors {
+				cmd.cobraCmd.Printf("\n - %s", err)
+			}
+
 		}
 
-		if (result.Err == nil && cmd.match != "" && testDataForMatching != nil) {
+		if (!hasErrors && cmd.match != "" && testDataForMatching != nil) {
 			if result.Matched && !result.FinalMatch {
 				cmd.cobraCmd.Printf("%s Matched %s ", colorMatched, colorNeutral)
 			} else if result.FinalMatch {
@@ -203,7 +214,7 @@ func Print(cmd *ParseCommand, results *rules.ParsingResults, testDataForMatching
 	}
 }
 
-func resolvingSignatureFormat(item rules.ParsingResult) string {
+func resolvingSignatureFormat(item rules.ParsingResult2) string {
 	positiveSignature := item.Rule.Plan
 	if item.Rule.PlatformRegion == "*" || item.Rule.PlatformRegion != "" {
 		positiveSignature += "PR:attr"
@@ -215,7 +226,7 @@ func resolvingSignatureFormat(item rules.ParsingResult) string {
 	return positiveSignature
 }
 
-func resolvingSignature(item1, item2 rules.ParsingResult) string{
+func resolvingSignature(item1, item2 rules.ParsingResult2) string{
 	resolvingSignature := item1.Rule.Plan
 
 	for _, attribute := range rules.InputAttributes {
@@ -234,18 +245,6 @@ func resolvingSignature(item1, item2 rules.ParsingResult) string{
 		}
 	}
 	
-	// if item1.Rule.PlatformRegion != "*" && item1.Rule.PlatformRegion != "" {
-	// 	resolvingSignature += "(PR=" + item1.Rule.PlatformRegion
-	// } else if item2.Rule.PlatformRegion != "*" && item2.Rule.PlatformRegion != "" {
-	// 	resolvingSignature += "(PR=" + item2.Rule.PlatformRegion
-	// }
-
-	// if item1.Rule.HyperscalerRegion != "*" && item1.Rule.HyperscalerRegion != "" {
-	// 	resolvingSignature += "HR=" + item1.Rule.HyperscalerRegion
-	// } else if item2.Rule.HyperscalerRegion != "*" && item2.Rule.HyperscalerRegion != "" {	
-	// 	resolvingSignature += "HR=" + item2.Rule.HyperscalerRegion
-	// }
-
 	return resolvingSignature
 }
 

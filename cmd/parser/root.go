@@ -10,7 +10,7 @@ var (
 	rootCmd = &cobra.Command{
 		Use:   "hap",
 		Short: "A tool for parsing and validation of HAP rules",
-		Version: "v0.0.11",
+		Version: "v0.0.12",
 		Long: ``,
 	}
 )
