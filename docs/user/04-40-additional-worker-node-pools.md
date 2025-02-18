@@ -1,12 +1,7 @@
 # Additional Worker Node Pools
 
-> [!NOTE]
-> This feature is still being developed and will be available soon.
-
 To create an SAP BTP, Kyma runtime with additional worker node pools, specify the `additionalWorkerNodePools` provisioning parameter.
-
-> [!NOTE]
-> **name**, **machineType**, **autoScalerMin**, and **autoScalerMax** values are mandatory for additional worker node pool configuration.
+To use the additional worker node pool feature, you must provide the following values: **name**, **machineType**, **haZones**, **autoScalerMin**, and **autoScalerMax**.
 
 See the example:
 
@@ -26,32 +21,41 @@ See the example:
        \"parameters\": {
            \"name\": \"$NAME\",
            \"region\": \"$REGION\",
-           \"additionalWorkerNodePools\": {
-               \"list\": [
-                   {
-                       \"name\": \"worker-1\",
-                       \"machineType\": \"Standard_D2s_v5\",
-                       \"autoScalerMin\": 3,
-                       \"autoScalerMax\": 20
-                   },
-                   {
-                       \"name\": \"worker-2\",
-                       \"machineType\": \"Standard_D4s_v5\",
-                       \"autoScalerMin\": 5,
-                       \"autoScalerMax\": 25
-                   }
-               ]
-           }
+           \"additionalWorkerNodePools\": [
+               {
+                   \"name\": \"worker-1\",
+                   \"machineType\": \"Standard_D2s_v5\",
+                   \"haZones\": true,
+                   \"autoScalerMin\": 3,
+                   \"autoScalerMax\": 20
+               },
+               {
+                   \"name\": \"worker-2\",
+                   \"machineType\": \"Standard_D4s_v5\",
+                   \"haZones\": false,
+                   \"autoScalerMin\": 1,
+                   \"autoScalerMax\": 1
+               }
+           ]
        }
    }"
 ```
 
-If you do not provide the `additionalWorkerNodePools` object in the provisioning request or set the **skipModification** property to `true`, no additional worker node pools are created.
+If you do not provide the `additionalWorkerNodePools` list in the provisioning request, no additional worker node pools are created.
 
-If you do not provide the `additionalWorkerNodePools` object in the update request or set the **skipModification** property to `true`, the saved additional worker node pools stay untouched.
+If you do not provide the `additionalWorkerNodePools` list in the update request, the saved additional worker node pools stay unchanged.
 However, if you provide an empty list in the update request, all additional worker node pools are removed.
+If you rename your existing additional worker node pool, it is deleted, and a new one is created.
 
-See the following JSON example without the `additionalWorkerNodePools` object:
+The **haZones** property specifies whether high availability zones are supported. This setting is permanent and cannot be changed later. 
+
+With high availability enabled, resources are distributed across three zones to enhance fault tolerance.
+In this scenario, you must set **autoScalerMin** to at least `3`.
+
+If high availability is disabled, all resources are placed in a single, randomly selected zone. In this case, you can set both **autoScalerMin** and **autoScalerMax** to `1`, which helps reduce costs. 
+However, it is not recommended for production environments. 
+
+See the following JSON example without the `additionalWorkerNodePools` list:
 
 ```json
 {
@@ -67,26 +71,7 @@ See the following JSON example without the `additionalWorkerNodePools` object:
 }
 ```
 
-See the following JSON example with the `additionalWorkerNodePools` object with `skipModification` property set to `true`:
-
-```json
-{
-  "service_id" : "47c9dcbf-ff30-448e-ab36-d3bad66ba281",
-  "plan_id" : "4deee563-e5ec-4731-b9b1-53b42d855f0c",
-  "context" : {
-    "globalaccount_id" : {GLOBAL_ACCOUNT_ID}
-  },
-  "parameters" : {
-    "region": {REGION},
-    "name" : {CLUSTER_NAME},
-    "additionalWorkerNodePools" : {
-      "skipModification": true
-    }
-  }
-}
-```
-
-See the following JSON example, where the `additionalWorkerNodePools` object contains an empty list:
+See the following JSON example, where the `additionalWorkerNodePools` is an empty list:
 
 ```json
 {
@@ -98,9 +83,7 @@ See the following JSON example, where the `additionalWorkerNodePools` object con
    "parameters" : {
       "region": {REGION},
       "name" : {CLUSTER_NAME},
-      "additionalWorkerNodePools" : {
-         "list": []
-      }
+      "additionalWorkerNodePools": []
    }
 }
 ```
@@ -112,22 +95,22 @@ The update operation overwrites the additional worker node pools with the list p
 
 ```json
 {
-  "additionalWorkerNodePools": {
-    "list": [
-      {
-        "name": "worker-1",
-        "machineType": "Standard_D2s_v5",
-        "autoScalerMin": 3,
-        "autoScalerMax": 20
-      },
-      {
-        "name": "worker-2",
-        "machineType": "Standard_D4s_v5",
-        "autoScalerMin": 5,
-        "autoScalerMax": 25
-      }
-    ]
-  }
+  "additionalWorkerNodePools": [
+    {
+      "name": "worker-1",
+      "machineType": "Standard_D2s_v5",
+      "haZones": true,
+      "autoScalerMin": 3,
+      "autoScalerMax": 20
+    },
+    {
+      "name": "worker-2",
+      "machineType": "Standard_D4s_v5",
+      "haZones": false,
+      "autoScalerMin": 1,
+      "autoScalerMax": 1
+    }
+  ]
 }
 ```
 
@@ -141,32 +124,30 @@ The update operation overwrites the additional worker node pools with the list p
   },
   "parameters": {
     "name" : {CLUSTER_NAME},
-    "additionalWorkerNodePools": {
-      "list": [
-        {
-          "name": "worker-3",
-          "machineType": "Standard_D8s_v5",
-          "autoScalerMin": 10,
-          "autoScalerMax": 30
-        }
-      ]
-    }
+    "additionalWorkerNodePools": [
+      {
+        "name": "worker-3",
+        "machineType": "Standard_D8s_v5",
+        "haZones": true,
+        "autoScalerMin": 10,
+        "autoScalerMax": 30
+      }
+    ]
   }
 }
 ```
 
-3. The additional worker node pools are updated to include the values of the `additionalWorkerNodePools` object from JSON file provided in the update request:
+3. The additional worker node pools are updated to include the values of the `additionalWorkerNodePools` list from the JSON file provided in the update request:
 ```json
 {
-   "additionalWorkerNodePools": {
-      "list": [
-         {
-            "name": "worker-3",
-            "machineType": "Standard_D8s_v5",
-            "autoScalerMin": 10,
-            "autoScalerMax": 30
-         }
-      ]
-   }
+  "additionalWorkerNodePools": [
+    {
+      "name": "worker-3",
+      "machineType": "Standard_D8s_v5",
+      "haZones": true,
+      "autoScalerMin": 10,
+      "autoScalerMax": 30
+    }
+  ]
 }
 ```
