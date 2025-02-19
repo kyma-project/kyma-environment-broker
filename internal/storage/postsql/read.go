@@ -803,6 +803,18 @@ GROUP BY license_type;
 	return rows, err
 }
 
+func (r readSession) GetERSContextStatsUsingLastOperationID() ([]dbmodel.InstanceERSContextStatsEntry, error) {
+	var rows []dbmodel.InstanceERSContextStatsEntry
+	// group existing instances by license_Type from the last operation
+	_, err := r.session.SelectBySql(`
+SELECT count(*), (o.provisioning_parameters -> 'ers_context' -> 'license_type')::VARCHAR AS license_type
+FROM instances i
+         INNER JOIN operations o ON i.last_operation_id = o.id
+WHERE i.deleted_at = '0001-01-01T00:00:00.000Z'
+GROUP BY license_type;`).Load(&rows)
+	return rows, err
+}
+
 func (r readSession) GetNumberOfInstancesForGlobalAccountID(globalAccountID string) (int, error) {
 	var res struct {
 		Total int

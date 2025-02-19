@@ -457,7 +457,15 @@ func (s *Instance) GetActiveInstanceStats() (internal.InstanceStats, error) {
 }
 
 func (s *Instance) GetERSContextStats() (internal.ERSContextStats, error) {
-	entries, err := s.NewReadSession().GetERSContextStats()
+	var err error
+	var entries []dbmodel.InstanceERSContextStatsEntry
+
+	//TODO remove conditional after migration
+	if s.UseLastOperationID {
+		entries, err = s.NewReadSession().GetERSContextStatsUsingLastOperationID()
+	} else {
+		entries, err = s.NewReadSession().GetERSContextStats()
+	}
 	if err != nil {
 		return internal.ERSContextStats{}, err
 	}
