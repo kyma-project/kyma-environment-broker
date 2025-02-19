@@ -3,10 +3,75 @@
   "_controlsOrder": [
     "machineType",
     "autoScalerMin",
-    "autoScalerMax"
+    "autoScalerMax",
+    "additionalWorkerNodePools"
   ],
+  "_load_current_config": true,
   "_show_form_view": true,
   "properties": {
+    "additionalWorkerNodePools": {
+      "description": "Specifies the list of additional worker node pools.",
+      "type": "array",
+      "uniqueItems": true,
+      "items": {
+        "type": "object",
+        "required": ["name", "machineType", "haZones", "autoScalerMin", "autoScalerMax"],
+        "_controlsOrder": ["name", "machineType", "haZones", "autoScalerMin", "autoScalerMax"],
+        "properties": {
+          "name": {
+            "description": "Specifies the unique name of the additional worker node pool. The name must consist of lowercase alphanumeric characters or '-', must start and end with an alphanumeric character, and can be a maximum of 15 characters in length.",
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 15,
+            "pattern": "^[a-z0-9]([-a-z0-9]*[a-z0-9])?$"
+          },
+          "machineType": {
+            "description": "Specifies the type of the virtual machine.",
+            "type": "string",
+            "minLength": 1,
+            "enum": [
+              "g_c2_m8",
+              "g_c4_m16",
+              "g_c6_m24",
+              "g_c8_m32",
+              "g_c12_m48",
+              "g_c16_m64",
+              "g_c32_m128",
+              "g_c64_m256"
+            ],
+            "_enumDisplayName": {
+              "g_c2_m8":    "g_c2_m8 (2vCPU, 8GB RAM)",
+              "g_c4_m16":   "g_c4_m16 (4vCPU, 16GB RAM)",
+              "g_c6_m24":   "g_c6_m24 (6vCPU, 24GB RAM)",
+              "g_c8_m32":   "g_c8_m32 (8vCPU, 32GB RAM)",
+              "g_c12_m48":  "g_c12_m48 (12vCPU, 48GB RAM)",
+              "g_c16_m64":  "g_c16_m64 (16vCPU, 64GB RAM)",
+              "g_c32_m128": "g_c32_m128 (32vCPU, 128GB RAM)",
+              "g_c64_m256": "g_c64_m256 (64vCPU, 256GB RAM)"
+            }
+          },
+          "haZones": {
+            "description": "Specifies whether high availability (HA) zones are supported. This setting is permanent and cannot be changed later. If HA is disabled, all resources are placed in a single, randomly selected zone. Disabled HA allows setting both autoScalerMin and autoScalerMax to 1, which helps reduce costs. It is not recommended for production environments. When enabled, resources are distributed across three zones to enhance fault tolerance. Enabled HA requires setting autoScalerMin to the minimal value 3.",
+            "title": "HA zones",
+            "type": "boolean",
+            "default": true
+          },
+          "autoScalerMin": {
+            "description": "Specifies the minimum number of virtual machines to create.",
+            "type": "integer",
+            "minimum": 1,
+            "default": 3
+          },
+          "autoScalerMax": {
+            "description": "Specifies the maximum number of virtual machines to create.",
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 300,
+            "default": 20
+          }
+        }
+      }
+    },
     "autoScalerMax": {
       "description": "Specifies the maximum number of virtual machines to create",
       "maximum": 300,

@@ -300,7 +300,7 @@ func ShootAndSeedSameRegionProperty() *Type {
 
 // NewProvisioningProperties creates a new properties for different plans
 // Note that the order of properties will be the same in the form on the website
-func NewProvisioningProperties(machineTypesDisplay, regionsDisplay map[string]string, machineTypes, regions []string, update, enableAdditionalWorkerNodePools bool) ProvisioningProperties {
+func NewProvisioningProperties(machineTypesDisplay, additionalMachineTypesDisplay, regionsDisplay map[string]string, machineTypes, additionalMachineTypes, regions []string, update, enableAdditionalWorkerNodePools bool) ProvisioningProperties {
 
 	properties := ProvisioningProperties{
 		UpdateProperties: UpdateProperties{
@@ -336,7 +336,7 @@ func NewProvisioningProperties(machineTypesDisplay, regionsDisplay map[string]st
 	}
 
 	if enableAdditionalWorkerNodePools {
-		properties.AdditionalWorkerNodePools = NewAdditionalWorkerNodePoolsSchema(machineTypesDisplay, machineTypes)
+		properties.AdditionalWorkerNodePools = NewAdditionalWorkerNodePoolsSchema(additionalMachineTypesDisplay, additionalMachineTypes)
 	}
 
 	if update {
