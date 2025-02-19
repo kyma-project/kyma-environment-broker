@@ -34,6 +34,12 @@ const (
 	OwnClusterPlanName        = "own_cluster"
 	PreviewPlanID             = "5cb3d976-b85c-42ea-a636-79cadda109a9"
 	PreviewPlanName           = "preview"
+	BuildRuntimeAWSPlanID     = "6aae0ff3-89f7-4f12-86de-51466145422e"
+	BuildRuntimeAWSPlanName   = "build-runtime-aws"
+	BuildRuntimeGCPPlanID     = "a310cd6b-6452-45a0-935d-d24ab53f9eba"
+	BuildRuntimeGCPPlanName   = "build-runtime-gcp"
+	BuildRuntimeAzurePlanID   = "499244b4-1bef-48c9-be68-495269899f8e"
+	BuildRuntimeAzurePlanName = "build-runtime-azure"
 )
 
 var PlanNamesMapping = map[string]string{
