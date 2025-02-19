@@ -807,7 +807,7 @@ func (r readSession) GetERSContextStatsUsingLastOperationID() ([]dbmodel.Instanc
 	var rows []dbmodel.InstanceERSContextStatsEntry
 	// group existing instances by license_Type from the last operation
 	_, err := r.session.SelectBySql(`
-SELECT count(*), (o.provisioning_parameters -> 'ers_context' -> 'license_type')::VARCHAR AS license_type
+SELECT count(*) as total, (o.provisioning_parameters -> 'ers_context' -> 'license_type')::VARCHAR AS license_type
 FROM instances i
          INNER JOIN operations o ON i.last_operation_id = o.id
 WHERE i.deleted_at = '0001-01-01T00:00:00.000Z'
