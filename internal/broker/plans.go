@@ -52,6 +52,9 @@ var PlanNamesMapping = map[string]string{
 	FreemiumPlanID:          FreemiumPlanName,
 	OwnClusterPlanID:        OwnClusterPlanName,
 	PreviewPlanID:           PreviewPlanName,
+	BuildRuntimeAWSPlanID:   BuildRuntimeAWSPlanName,
+	BuildRuntimeGCPPlanID:   BuildRuntimeGCPPlanName,
+	BuildRuntimeAzurePlanID: BuildRuntimeAzurePlanName,
 }
 
 var PlanIDsMapping = map[string]string{
@@ -64,6 +67,9 @@ var PlanIDsMapping = map[string]string{
 	FreemiumPlanName:          FreemiumPlanID,
 	OwnClusterPlanName:        OwnClusterPlanID,
 	PreviewPlanName:           PreviewPlanID,
+	BuildRuntimeAWSPlanName:   BuildRuntimeAWSPlanID,
+	BuildRuntimeGCPPlanName:   BuildRuntimeGCPPlanID,
+	BuildRuntimeAzurePlanName: BuildRuntimeAzurePlanID,
 }
 
 type TrialCloudRegion string
