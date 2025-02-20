@@ -2159,7 +2159,6 @@ func TestUpdateAdditionalWorkerNodePools(t *testing.T) {
 		cfg.Broker.KimConfig.Enabled = true
 		cfg.Broker.KimConfig.Plans = []string{"aws"}
 		cfg.Broker.KimConfig.KimOnlyPlans = []string{"aws"}
-		cfg.Broker.EnableAdditionalWorkerNodePools = true
 
 		suite := NewBrokerSuiteTestWithConfig(t, cfg)
 		defer suite.TearDown()
@@ -2229,7 +2228,6 @@ func TestUpdateAdditionalWorkerNodePools(t *testing.T) {
 		cfg.Broker.KimConfig.Enabled = true
 		cfg.Broker.KimConfig.Plans = []string{"aws"}
 		cfg.Broker.KimConfig.KimOnlyPlans = []string{"aws"}
-		cfg.Broker.EnableAdditionalWorkerNodePools = true
 
 		suite := NewBrokerSuiteTestWithConfig(t, cfg)
 		defer suite.TearDown()
@@ -2300,7 +2298,6 @@ func TestUpdateAdditionalWorkerNodePools(t *testing.T) {
 		cfg.Broker.KimConfig.Enabled = true
 		cfg.Broker.KimConfig.Plans = []string{"aws"}
 		cfg.Broker.KimConfig.KimOnlyPlans = []string{"aws"}
-		cfg.Broker.EnableAdditionalWorkerNodePools = true
 
 		suite := NewBrokerSuiteTestWithConfig(t, cfg)
 		defer suite.TearDown()

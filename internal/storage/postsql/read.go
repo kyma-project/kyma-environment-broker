@@ -704,6 +704,9 @@ func (r readSession) GetActiveInstanceStats() ([]dbmodel.InstanceByGlobalAccount
 	filter := dbmodel.InstanceFilter{
 		States: []dbmodel.InstanceState{dbmodel.InstanceNotDeprovisioned},
 	}
+
+	slog.Info("Calling - GetActiveInstanceStats", "filter", filter)
+
 	// Find and join the last operation for each instance matching the state filter(s).
 	// Last operation is found with the greatest-n-per-group problem solved with OUTER JOIN, followed by a (INNER) JOIN to get instance columns.
 	stmt = r.session.
@@ -727,6 +730,8 @@ func (r readSession) GetActiveInstanceStatsUsingLastOperationID() ([]dbmodel.Ins
 	filter := dbmodel.InstanceFilter{
 		States: []dbmodel.InstanceState{dbmodel.InstanceNotDeprovisioned},
 	}
+	slog.Info("Calling - GetActiveInstanceStatsUsingLastOperationID", "filter", filter)
+
 	// Find and join the last operation for each instance matching the state filter(s).
 	stmt = r.session.
 		Select(fmt.Sprintf("%s.global_account_id", InstancesTableName), "count(*) as total").
@@ -767,6 +772,7 @@ func (r readSession) GetSubaccountsInstanceStats() ([]dbmodel.InstanceBySubAccou
 	filter := dbmodel.InstanceFilter{
 		States: []dbmodel.InstanceState{dbmodel.InstanceNotDeprovisioned},
 	}
+
 	// Find and join the last operation for each instance matching the state filter(s).
 	// Last operation is found with the greatest-n-per-group problem solved with OUTER JOIN, followed by a (INNER) JOIN to get instance columns.
 	stmt = r.session.
@@ -1053,14 +1059,14 @@ func (r readSession) getInstanceCountByLastOperationID(filter dbmodel.InstanceFi
 
 func (r readSession) getInstanceCount(filter dbmodel.InstanceFilter) (int, error) {
 	var res struct {
-		Total int
+		Total1 int
 	}
 	var stmt *dbr.SelectStmt
 
 	slog.Info("Calling getInstanceCount", "filter", filter)
 
 	stmt = r.session.
-		Select("count(*) as total").
+		Select("count(*) as total1").
 		From(InstancesTableName).
 		Join(dbr.I(OperationTableName).As("o1"), fmt.Sprintf("%s.instance_id = o1.instance_id", InstancesTableName)).
 		LeftJoin(dbr.I(OperationTableName).As("o2"), fmt.Sprintf("%s.instance_id = o2.instance_id AND o1.created_at < o2.created_at AND o2.state NOT IN ('%s', '%s')", InstancesTableName, orchestration.Pending, orchestration.Canceled)).
@@ -1075,7 +1081,7 @@ func (r readSession) getInstanceCount(filter dbmodel.InstanceFilter) (int, error
 	addInstanceFilters(stmt, filter, "o1")
 	err := stmt.LoadOne(&res)
 
-	return res.Total, err
+	return res.Total1, err
 }
 
 func buildInstanceStateFilters(table string, filter dbmodel.InstanceFilter) dbr.Builder {
