@@ -23,7 +23,7 @@ func GetPlanSpecificValues(
 ) (Values, error) {
 	var p Provider
 	switch operation.ProvisioningParameters.PlanID {
-	case broker.AWSPlanID:
+	case broker.AWSPlanID, broker.BuildRuntimeAWSPlanID:
 		p = &AWSInputProvider{
 			Purpose:                defaultPurpose,
 			MultiZone:              multiZoneCluster,
@@ -37,7 +37,7 @@ func GetPlanSpecificValues(
 			ProvisioningParameters: operation.ProvisioningParameters,
 			FailureTolerance:       commercialFailureTolerance,
 		}
-	case broker.AzurePlanID:
+	case broker.AzurePlanID, broker.BuildRuntimeAzurePlanID:
 		p = &AzureInputProvider{
 			Purpose:                defaultPurpose,
 			MultiZone:              multiZoneCluster,
@@ -50,7 +50,7 @@ func GetPlanSpecificValues(
 			UseSmallerMachineTypes: useSmallerMachineTypes,
 			ProvisioningParameters: operation.ProvisioningParameters,
 		}
-	case broker.GCPPlanID:
+	case broker.GCPPlanID, broker.BuildRuntimeGCPPlanID:
 		p = &GCPInputProvider{
 			Purpose:                defaultPurpose,
 			MultiZone:              multiZoneCluster,
