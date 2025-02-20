@@ -180,7 +180,7 @@ func (h *Handler) InstanceFromInstanceArchived(archived internal.InstanceArchive
 	}
 }
 
-func (h *Handler) getRuntimes(w http.ResponseWriter, req *http.Request) { //runtime tu wchodzi
+func (h *Handler) getRuntimes(w http.ResponseWriter, req *http.Request) {
 	toReturn := make([]pkg.RuntimeDTO, 0)
 
 	pageSize, page, err := pagination.ExtractPaginationConfigFromRequest(req, h.defaultMaxPage)
