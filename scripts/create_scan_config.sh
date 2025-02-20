@@ -41,7 +41,7 @@ mend:
     - "**/*fake*.go"
     - "**/*mock*.go"
 checkmarx-one:
-    preset: go-default
+  preset: go-default
   exclude:
     - "**/*_test.go"
     - "testing/**"
