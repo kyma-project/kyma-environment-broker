@@ -1059,14 +1059,14 @@ func (r readSession) getInstanceCountByLastOperationID(filter dbmodel.InstanceFi
 
 func (r readSession) getInstanceCount(filter dbmodel.InstanceFilter) (int, error) {
 	var res struct {
-		Total1 int
+		Total int
 	}
 	var stmt *dbr.SelectStmt
 
 	slog.Info("Calling getInstanceCount", "filter", filter)
 
 	stmt = r.session.
-		Select("count(*) as total1").
+		Select("count(*) as total").
 		From(InstancesTableName).
 		Join(dbr.I(OperationTableName).As("o1"), fmt.Sprintf("%s.instance_id = o1.instance_id", InstancesTableName)).
 		LeftJoin(dbr.I(OperationTableName).As("o2"), fmt.Sprintf("%s.instance_id = o2.instance_id AND o1.created_at < o2.created_at AND o2.state NOT IN ('%s', '%s')", InstancesTableName, orchestration.Pending, orchestration.Canceled)).
@@ -1081,7 +1081,7 @@ func (r readSession) getInstanceCount(filter dbmodel.InstanceFilter) (int, error
 	addInstanceFilters(stmt, filter, "o1")
 	err := stmt.LoadOne(&res)
 
-	return res.Total1, err
+	return res.Total, err
 }
 
 func buildInstanceStateFilters(table string, filter dbmodel.InstanceFilter) dbr.Builder {
@@ -1146,7 +1146,7 @@ func buildInstanceStateFilters(table string, filter dbmodel.InstanceFilter) dbr.
 	return dbr.Or(exprs...)
 }
 
-func addInstanceFilters(stmt *dbr.SelectStmt, filter dbmodel.InstanceFilter, alias string) {
+func addInstanceFilters(stmt *dbr.SelectStmt, filter dbmodel.InstanceFilter, table string) {
 	if len(filter.GlobalAccountIDs) > 0 {
 		stmt.Where("instances.global_account_id IN ?", filter.GlobalAccountIDs)
 	}
@@ -1170,7 +1170,7 @@ func addInstanceFilters(stmt *dbr.SelectStmt, filter dbmodel.InstanceFilter, ali
 	}
 	if len(filter.Shoots) > 0 {
 		shootNameMatch := fmt.Sprintf(`^(%s)$`, strings.Join(filter.Shoots, "|"))
-		stmt.Where(fmt.Sprintf("%s.data::json->>'shoot_name' ~ ?", alias), shootNameMatch)
+		stmt.Where(fmt.Sprintf("%s.data::json->>'shoot_name' ~ ?", table), shootNameMatch)
 	}
 
 	if filter.Expired != nil {
