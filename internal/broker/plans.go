@@ -212,8 +212,8 @@ func SapConvergedCloudRegionsDisplay() map[string]string {
 	return nil
 }
 
-func AwsMachinesNames() []string {
-	return []string{
+func AwsMachinesNames(additionalMachines bool) []string {
+	machines := []string{
 		"m6i.large",
 		"m6i.xlarge",
 		"m6i.2xlarge",
@@ -229,10 +229,24 @@ func AwsMachinesNames() []string {
 		"m5.12xlarge",
 		"m5.16xlarge",
 	}
+
+	if additionalMachines {
+		machines = append(machines,
+			"c7i.large",
+			"c7i.xlarge",
+			"c7i.2xlarge",
+			"c7i.4xlarge",
+			"c7i.8xlarge",
+			"c7i.12xlarge",
+			"c7i.16xlarge",
+		)
+	}
+
+	return machines
 }
 
-func AwsMachinesDisplay() map[string]string {
-	return map[string]string{
+func AwsMachinesDisplay(additionalMachines bool) map[string]string {
+	machines := map[string]string{
 		"m6i.large":    "m6i.large (2vCPU, 8GB RAM)",
 		"m6i.xlarge":   "m6i.xlarge (4vCPU, 16GB RAM)",
 		"m6i.2xlarge":  "m6i.2xlarge (8vCPU, 32GB RAM)",
@@ -248,10 +262,22 @@ func AwsMachinesDisplay() map[string]string {
 		"m5.12xlarge":  "m5.12xlarge (48vCPU, 192GB RAM)",
 		"m5.16xlarge":  "m5.16xlarge (64vCPU, 256GB RAM)",
 	}
+
+	if additionalMachines {
+		machines["c7i.large"] = "c7i.large (2vCPU, 4GB RAM)"
+		machines["c7i.xlarge"] = "c7i.xlarge (4vCPU, 8GB RAM)"
+		machines["c7i.2xlarge"] = "c7i.2xlarge (8vCPU, 16GB RAM)"
+		machines["c7i.4xlarge"] = "c7i.4xlarge (16vCPU, 32GB RAM)"
+		machines["c7i.8xlarge"] = "c7i.8xlarge (32vCPU, 64GB RAM)"
+		machines["c7i.12xlarge"] = "c7i.12xlarge (48vCPU, 96GB RAM)"
+		machines["c7i.16xlarge"] = "c7i.16xlarge (64vCPU, 128GB RAM)"
+	}
+
+	return machines
 }
 
-func AzureMachinesNames() []string {
-	return []string{
+func AzureMachinesNames(additionalMachines bool) []string {
+	machines := []string{
 		"Standard_D2s_v5",
 		"Standard_D4s_v5",
 		"Standard_D8s_v5",
@@ -266,10 +292,24 @@ func AzureMachinesNames() []string {
 		"Standard_D48_v3",
 		"Standard_D64_v3",
 	}
+
+	if additionalMachines {
+		machines = append(machines,
+			"Standard_F2s_v2",
+			"Standard_F4s_v2",
+			"Standard_F8s_v2",
+			"Standard_F16s_v2",
+			"Standard_F32s_v2",
+			"Standard_F48s_v2",
+			"Standard_F64s_v2",
+		)
+	}
+
+	return machines
 }
 
-func AzureMachinesDisplay() map[string]string {
-	return map[string]string{
+func AzureMachinesDisplay(additionalMachines bool) map[string]string {
+	machines := map[string]string{
 		"Standard_D2s_v5":  "Standard_D2s_v5 (2vCPU, 8GB RAM)",
 		"Standard_D4s_v5":  "Standard_D4s_v5 (4vCPU, 16GB RAM)",
 		"Standard_D8s_v5":  "Standard_D8s_v5 (8vCPU, 32GB RAM)",
@@ -284,6 +324,18 @@ func AzureMachinesDisplay() map[string]string {
 		"Standard_D48_v3":  "Standard_D48_v3 (48vCPU, 192GB RAM)",
 		"Standard_D64_v3":  "Standard_D64_v3 (64vCPU, 256GB RAM)",
 	}
+
+	if additionalMachines {
+		machines["Standard_F2s_v2"] = "Standard_F2s_v2 (2vCPU, 4GB RAM)"
+		machines["Standard_F4s_v2"] = "Standard_F4s_v2 (4vCPU, 8GB RAM)"
+		machines["Standard_F8s_v2"] = "Standard_F8s_v2 (8vCPU, 16GB RAM)"
+		machines["Standard_F16s_v2"] = "Standard_F16s_v2 (16vCPU, 32GB RAM)"
+		machines["Standard_F32s_v2"] = "Standard_F32s_v2 (32vCPU, 64GB RAM)"
+		machines["Standard_F48s_v2"] = "Standard_F48s_v2 (48vCPU, 96GB RAM)"
+		machines["Standard_F64s_v2"] = "Standard_F64s_v2 (64vCPU, 128GB RAM)"
+	}
+
+	return machines
 }
 
 func AzureLiteMachinesNames() []string {
@@ -302,8 +354,8 @@ func AzureLiteMachinesDisplay() map[string]string {
 	}
 }
 
-func GcpMachinesNames() []string {
-	return []string{
+func GcpMachinesNames(additionalMachines bool) []string {
+	machines := []string{
 		"n2-standard-2",
 		"n2-standard-4",
 		"n2-standard-8",
@@ -312,10 +364,23 @@ func GcpMachinesNames() []string {
 		"n2-standard-48",
 		"n2-standard-64",
 	}
+
+	if additionalMachines {
+		machines = append(machines,
+			"c2d-highcpu-2",
+			"c2d-highcpu-4",
+			"c2d-highcpu-8",
+			"c2d-highcpu-16",
+			"c2d-highcpu-32",
+			"c2d-highcpu-56",
+		)
+	}
+
+	return machines
 }
 
-func GcpMachinesDisplay() map[string]string {
-	return map[string]string{
+func GcpMachinesDisplay(additionalMachines bool) map[string]string {
+	machines := map[string]string{
 		"n2-standard-2":  "n2-standard-2 (2vCPU, 8GB RAM)",
 		"n2-standard-4":  "n2-standard-4 (4vCPU, 16GB RAM)",
 		"n2-standard-8":  "n2-standard-8 (8vCPU, 32GB RAM)",
@@ -324,6 +389,17 @@ func GcpMachinesDisplay() map[string]string {
 		"n2-standard-48": "n2-standard-48 (48vCPU, 192GB RAM)",
 		"n2-standard-64": "n2-standard-64 (64vCPU, 256GB RAM)",
 	}
+
+	if additionalMachines {
+		machines["c2d-highcpu-2"] = "c2d-highcpu-2 (2vCPU, 4GB RAM)"
+		machines["c2d-highcpu-4"] = "c2d-highcpu-4 (4vCPU, 8GB RAM)"
+		machines["c2d-highcpu-8"] = "c2d-highcpu-8 (8vCPU, 16GB RAM)"
+		machines["c2d-highcpu-16"] = "c2d-highcpu-16 (16vCPU, 32GB RAM)"
+		machines["c2d-highcpu-32"] = "c2d-highcpu-32 (32vCPU, 64GB RAM)"
+		machines["c2d-highcpu-56"] = "c2d-highcpu-56 (56vCPU, 112GB RAM)"
+	}
+
+	return machines
 }
 
 func SapConvergedCloudMachinesNames() []string {
@@ -378,58 +454,55 @@ func requiredOwnClusterSchemaProperties() []string {
 	return []string{"name", "kubeconfig", "shootName", "shootDomain"}
 }
 
-func SapConvergedCloudSchema(machineTypesDisplay, regionsDisplay map[string]string, machineTypes []string, additionalParams, update bool, shootAndSeedFeatureFlag bool, sapConvergedCloudRegions []string, enableAdditionalWorkerNodePools bool, enableLoadCurrentConfig bool) *map[string]interface{} {
-	properties := NewProvisioningProperties(machineTypesDisplay, regionsDisplay, machineTypes, sapConvergedCloudRegions, update, enableAdditionalWorkerNodePools)
-	return createSchemaWithProperties(properties, additionalParams, update, requiredSchemaProperties(), true, shootAndSeedFeatureFlag, enableLoadCurrentConfig)
+func SapConvergedCloudSchema(machineTypesDisplay, regionsDisplay map[string]string, machineTypes []string, additionalParams, update bool, shootAndSeedFeatureFlag bool, sapConvergedCloudRegions []string) *map[string]interface{} {
+	properties := NewProvisioningProperties(machineTypesDisplay, machineTypesDisplay, regionsDisplay, machineTypes, machineTypes, sapConvergedCloudRegions, update)
+	return createSchemaWithProperties(properties, additionalParams, update, requiredSchemaProperties(), true, shootAndSeedFeatureFlag)
 }
 
-func PreviewSchema(machineTypesDisplay, regionsDisplay map[string]string, machineTypes []string, additionalParams, update bool, euAccessRestricted bool, enableAdditionalWorkerNodePools bool, enableLoadCurrentConfig bool) *map[string]interface{} {
-	properties := NewProvisioningProperties(machineTypesDisplay, regionsDisplay, machineTypes, AWSRegions(euAccessRestricted), update, enableAdditionalWorkerNodePools)
+func PreviewSchema(machineTypesDisplay, additionalMachineTypesDisplay, regionsDisplay map[string]string, machineTypes, additionalMachineTypes []string, additionalParams, update bool, euAccessRestricted bool) *map[string]interface{} {
+	properties := NewProvisioningProperties(machineTypesDisplay, additionalMachineTypesDisplay, regionsDisplay, machineTypes, additionalMachineTypes, AWSRegions(euAccessRestricted), update)
 	properties.Networking = NewNetworkingSchema()
-	return createSchemaWithProperties(properties, additionalParams, update, requiredSchemaProperties(), false, false, enableLoadCurrentConfig)
+	return createSchemaWithProperties(properties, additionalParams, update, requiredSchemaProperties(), false, false)
 }
 
-func GCPSchema(machineTypesDisplay, regionsDisplay map[string]string, machineTypes []string, additionalParams, update bool, shootAndSeedFeatureFlag bool, assuredWorkloads bool, enableAdditionalWorkerNodePools bool, enableLoadCurrentConfig bool) *map[string]interface{} {
-	properties := NewProvisioningProperties(machineTypesDisplay, regionsDisplay, machineTypes, GcpRegions(assuredWorkloads), update, enableAdditionalWorkerNodePools)
-	return createSchemaWithProperties(properties, additionalParams, update, requiredSchemaProperties(), true, shootAndSeedFeatureFlag, enableLoadCurrentConfig)
+func GCPSchema(machineTypesDisplay, additionalMachineTypesDisplay, regionsDisplay map[string]string, machineTypes, additionalMachineTypes []string, additionalParams, update bool, shootAndSeedFeatureFlag bool, assuredWorkloads bool) *map[string]interface{} {
+	properties := NewProvisioningProperties(machineTypesDisplay, additionalMachineTypesDisplay, regionsDisplay, machineTypes, additionalMachineTypes, GcpRegions(assuredWorkloads), update)
+	return createSchemaWithProperties(properties, additionalParams, update, requiredSchemaProperties(), true, shootAndSeedFeatureFlag)
 }
 
-func AWSSchema(machineTypesDisplay, regionsDisplay map[string]string, machineTypes []string, additionalParams, update bool, euAccessRestricted bool, shootAndSeedSameRegion bool, enableAdditionalWorkerNodePools bool, enableLoadCurrentConfig bool) *map[string]interface{} {
-	properties := NewProvisioningProperties(machineTypesDisplay, regionsDisplay, machineTypes, AWSRegions(euAccessRestricted), update, enableAdditionalWorkerNodePools)
-	return createSchemaWithProperties(properties, additionalParams, update, requiredSchemaProperties(), true, shootAndSeedSameRegion, enableLoadCurrentConfig)
+func AWSSchema(machineTypesDisplay, additionalMachineTypesDisplay, regionsDisplay map[string]string, machineTypes, additionalMachineTypes []string, additionalParams, update bool, euAccessRestricted bool, shootAndSeedSameRegion bool) *map[string]interface{} {
+	properties := NewProvisioningProperties(machineTypesDisplay, additionalMachineTypesDisplay, regionsDisplay, machineTypes, additionalMachineTypes, AWSRegions(euAccessRestricted), update)
+	return createSchemaWithProperties(properties, additionalParams, update, requiredSchemaProperties(), true, shootAndSeedSameRegion)
 }
 
-func AzureSchema(machineTypesDisplay, regionsDisplay map[string]string, machineTypes []string, additionalParams, update bool, euAccessRestricted bool, shootAndSeedFeatureFlag bool, enableAdditionalWorkerNodePools bool, enableLoadCurrentConfig bool) *map[string]interface{} {
-	properties := NewProvisioningProperties(machineTypesDisplay, regionsDisplay, machineTypes, AzureRegions(euAccessRestricted), update, enableAdditionalWorkerNodePools)
-	return createSchemaWithProperties(properties, additionalParams, update, requiredSchemaProperties(), true, shootAndSeedFeatureFlag, enableLoadCurrentConfig)
+func AzureSchema(machineTypesDisplay, additionalMachineTypesDisplay, regionsDisplay map[string]string, machineTypes, additionalMachineTypes []string, additionalParams, update bool, euAccessRestricted bool, shootAndSeedFeatureFlag bool) *map[string]interface{} {
+	properties := NewProvisioningProperties(machineTypesDisplay, additionalMachineTypesDisplay, regionsDisplay, machineTypes, additionalMachineTypes, AzureRegions(euAccessRestricted), update)
+	return createSchemaWithProperties(properties, additionalParams, update, requiredSchemaProperties(), true, shootAndSeedFeatureFlag)
 }
 
-func AzureLiteSchema(machineTypesDisplay, regionsDisplay map[string]string, machineTypes []string, additionalParams, update bool, euAccessRestricted bool, shootAndSeedFeatureFlag bool, enableAdditionalWorkerNodePools bool, enableLoadCurrentConfig bool) *map[string]interface{} {
-	properties := NewProvisioningProperties(machineTypesDisplay, regionsDisplay, machineTypes, AzureRegions(euAccessRestricted), update, enableAdditionalWorkerNodePools)
+func AzureLiteSchema(machineTypesDisplay, regionsDisplay map[string]string, machineTypes []string, additionalParams, update bool, euAccessRestricted bool, shootAndSeedFeatureFlag bool) *map[string]interface{} {
+	properties := NewProvisioningProperties(machineTypesDisplay, machineTypesDisplay, regionsDisplay, machineTypes, machineTypes, AzureRegions(euAccessRestricted), update)
 
 	properties.AutoScalerMax.Minimum = 2
 	properties.AutoScalerMin.Minimum = 2
 	properties.AutoScalerMax.Maximum = 40
 
-	if enableAdditionalWorkerNodePools {
-		properties.AdditionalWorkerNodePools.Items.Properties.HAZones = nil
-		properties.AdditionalWorkerNodePools.Items.ControlsOrder = removeString(properties.AdditionalWorkerNodePools.Items.ControlsOrder, "haZones")
-		properties.AdditionalWorkerNodePools.Items.Required = removeString(properties.AdditionalWorkerNodePools.Items.Required, "haZones")
-
-		properties.AdditionalWorkerNodePools.Items.Properties.AutoScalerMin.Default = 2
-		properties.AdditionalWorkerNodePools.Items.Properties.AutoScalerMax.Default = 10
-		properties.AdditionalWorkerNodePools.Items.Properties.AutoScalerMax.Maximum = 40
-	}
+	properties.AdditionalWorkerNodePools.Items.Properties.HAZones = nil
+	properties.AdditionalWorkerNodePools.Items.ControlsOrder = removeString(properties.AdditionalWorkerNodePools.Items.ControlsOrder, "haZones")
+	properties.AdditionalWorkerNodePools.Items.Required = removeString(properties.AdditionalWorkerNodePools.Items.Required, "haZones")
+	properties.AdditionalWorkerNodePools.Items.Properties.AutoScalerMin.Default = 2
+	properties.AdditionalWorkerNodePools.Items.Properties.AutoScalerMax.Default = 10
+	properties.AdditionalWorkerNodePools.Items.Properties.AutoScalerMax.Maximum = 40
 
 	if !update {
 		properties.AutoScalerMax.Default = 10
 		properties.AutoScalerMin.Default = 2
 	}
 
-	return createSchemaWithProperties(properties, additionalParams, update, requiredSchemaProperties(), true, shootAndSeedFeatureFlag, enableLoadCurrentConfig)
+	return createSchemaWithProperties(properties, additionalParams, update, requiredSchemaProperties(), true, shootAndSeedFeatureFlag)
 }
 
-func FreemiumSchema(provider pkg.CloudProvider, regionsDisplay map[string]string, additionalParams, update bool, euAccessRestricted bool, enableLoadCurrentConfig bool) *map[string]interface{} {
+func FreemiumSchema(provider pkg.CloudProvider, regionsDisplay map[string]string, additionalParams, update bool, euAccessRestricted bool) *map[string]interface{} {
 	if update && !additionalParams {
 		return empty()
 	}
@@ -457,10 +530,10 @@ func FreemiumSchema(provider pkg.CloudProvider, regionsDisplay map[string]string
 		properties.Modules = NewModulesSchema()
 	}
 
-	return createSchemaWithProperties(properties, additionalParams, update, requiredSchemaProperties(), false, false, enableLoadCurrentConfig)
+	return createSchemaWithProperties(properties, additionalParams, update, requiredSchemaProperties(), false, false)
 }
 
-func TrialSchema(additionalParams, update bool, enableLoadCurrentConfig bool) *map[string]interface{} {
+func TrialSchema(additionalParams, update bool) *map[string]interface{} {
 	properties := ProvisioningProperties{
 		Name: NameProperty(),
 	}
@@ -473,7 +546,7 @@ func TrialSchema(additionalParams, update bool, enableLoadCurrentConfig bool) *m
 		return empty()
 	}
 
-	return createSchemaWithProperties(properties, additionalParams, update, requiredTrialSchemaProperties(), false, false, enableLoadCurrentConfig)
+	return createSchemaWithProperties(properties, additionalParams, update, requiredTrialSchemaProperties(), false, false)
 }
 
 func OwnClusterSchema(update bool) *map[string]interface{} {
@@ -487,10 +560,10 @@ func OwnClusterSchema(update bool) *map[string]interface{} {
 	}
 
 	if update {
-		return createSchemaWith(properties.UpdateProperties, update, requiredOwnClusterSchemaProperties(), false)
+		return createSchemaWith(properties.UpdateProperties, update, requiredOwnClusterSchemaProperties())
 	} else {
 		properties.Modules = NewModulesSchema()
-		return createSchemaWith(properties, update, requiredOwnClusterSchemaProperties(), false)
+		return createSchemaWith(properties, update, requiredOwnClusterSchemaProperties())
 	}
 }
 
@@ -499,7 +572,7 @@ func empty() *map[string]interface{} {
 	return &empty
 }
 
-func createSchemaWithProperties(properties ProvisioningProperties, additionalParams, update bool, required []string, shootAndSeedSameRegion bool, shootAndSeedFeatureFlag bool, enableLoadCurrentConfig bool) *map[string]interface{} {
+func createSchemaWithProperties(properties ProvisioningProperties, additionalParams, update bool, required []string, shootAndSeedSameRegion bool, shootAndSeedFeatureFlag bool) *map[string]interface{} {
 	if additionalParams {
 		properties.IncludeAdditional()
 	}
@@ -509,14 +582,14 @@ func createSchemaWithProperties(properties ProvisioningProperties, additionalPar
 	}
 
 	if update {
-		return createSchemaWith(properties.UpdateProperties, update, required, enableLoadCurrentConfig)
+		return createSchemaWith(properties.UpdateProperties, update, required)
 	} else {
-		return createSchemaWith(properties, update, required, enableLoadCurrentConfig)
+		return createSchemaWith(properties, update, required)
 	}
 }
 
-func createSchemaWith(properties interface{}, update bool, requiered []string, enableLoadCurrentConfig bool) *map[string]interface{} {
-	schema := NewSchema(properties, update, requiered, enableLoadCurrentConfig)
+func createSchemaWith(properties interface{}, update bool, requiered []string) *map[string]interface{} {
+	schema := NewSchema(properties, update, requiered)
 
 	return unmarshalSchema(schema)
 }
@@ -537,17 +610,23 @@ func unmarshalSchema(schema *RootSchema) *map[string]interface{} {
 
 // Plans is designed to hold plan defaulting logic
 // keep internal/hyperscaler/azure/config.go in sync with any changes to available zones
-func Plans(plans PlansConfig, provider pkg.CloudProvider, includeAdditionalParamsInSchema bool, euAccessRestricted bool, useSmallerMachineTypes bool, shootAndSeedFeatureFlag bool, sapConvergedCloudRegions []string, assuredWorkloads bool, enableAdditionalWorkerNodePools bool, enableLoadCurrentConfig bool) map[string]domain.ServicePlan {
-	awsMachineNames := AwsMachinesNames()
-	awsMachinesDisplay := AwsMachinesDisplay()
+func Plans(plans PlansConfig, provider pkg.CloudProvider, includeAdditionalParamsInSchema bool, euAccessRestricted bool, useSmallerMachineTypes bool, shootAndSeedFeatureFlag bool, sapConvergedCloudRegions []string, assuredWorkloads bool) map[string]domain.ServicePlan {
+	awsMachineNames := AwsMachinesNames(false)
+	awsMachinesDisplay := AwsMachinesDisplay(false)
+	awsAdditionalMachineNames := AwsMachinesNames(true)
+	awsAdditionalMachinesDisplay := AwsMachinesDisplay(true)
 	awsRegionsDisplay := AWSRegionsDisplay(euAccessRestricted)
-	azureMachinesNames := AzureMachinesNames()
-	azureMachinesDisplay := AzureMachinesDisplay()
+	azureMachinesNames := AzureMachinesNames(false)
+	azureMachinesDisplay := AzureMachinesDisplay(false)
+	azureAdditionalMachinesNames := AzureMachinesNames(true)
+	azureAdditionalMachinesDisplay := AzureMachinesDisplay(true)
 	azureRegionsDisplay := AzureRegionsDisplay(euAccessRestricted)
 	azureLiteMachinesNames := AzureLiteMachinesNames()
 	azureLiteMachinesDisplay := AzureLiteMachinesDisplay()
-	gcpMachinesNames := GcpMachinesNames()
-	gcpMachinesDisplay := GcpMachinesDisplay()
+	gcpMachinesNames := GcpMachinesNames(false)
+	gcpMachinesDisplay := GcpMachinesDisplay(false)
+	gcpAdditionalMachinesNames := GcpMachinesNames(true)
+	gcpAdditionalMachinesDisplay := GcpMachinesDisplay(true)
 	gcpRegionsDisplay := GcpRegionsDisplay(assuredWorkloads)
 
 	if !useSmallerMachineTypes {
@@ -555,34 +634,34 @@ func Plans(plans PlansConfig, provider pkg.CloudProvider, includeAdditionalParam
 		delete(azureLiteMachinesDisplay, "Standard_D2s_v5")
 	}
 
-	awsSchema := AWSSchema(awsMachinesDisplay, awsRegionsDisplay, awsMachineNames, includeAdditionalParamsInSchema, false, euAccessRestricted, shootAndSeedFeatureFlag, enableAdditionalWorkerNodePools, enableLoadCurrentConfig)
+	awsSchema := AWSSchema(awsMachinesDisplay, awsAdditionalMachinesDisplay, awsRegionsDisplay, awsMachineNames, awsAdditionalMachineNames, includeAdditionalParamsInSchema, false, euAccessRestricted, shootAndSeedFeatureFlag)
 	// awsHASchema := AWSHASchema(awsMachinesDisplay, awsMachines, includeAdditionalParamsInSchema, false)
-	azureSchema := AzureSchema(azureMachinesDisplay, azureRegionsDisplay, azureMachinesNames, includeAdditionalParamsInSchema, false, euAccessRestricted, shootAndSeedFeatureFlag, enableAdditionalWorkerNodePools, enableLoadCurrentConfig)
-	azureLiteSchema := AzureLiteSchema(azureLiteMachinesDisplay, azureRegionsDisplay, azureLiteMachinesNames, includeAdditionalParamsInSchema, false, euAccessRestricted, shootAndSeedFeatureFlag, enableAdditionalWorkerNodePools, enableLoadCurrentConfig)
-	freemiumSchema := FreemiumSchema(provider, azureRegionsDisplay, includeAdditionalParamsInSchema, false, euAccessRestricted, enableLoadCurrentConfig)
-	gcpSchema := GCPSchema(gcpMachinesDisplay, gcpRegionsDisplay, gcpMachinesNames, includeAdditionalParamsInSchema, false, shootAndSeedFeatureFlag, assuredWorkloads, enableAdditionalWorkerNodePools, enableLoadCurrentConfig)
+	azureSchema := AzureSchema(azureMachinesDisplay, azureAdditionalMachinesDisplay, azureRegionsDisplay, azureMachinesNames, azureAdditionalMachinesNames, includeAdditionalParamsInSchema, false, euAccessRestricted, shootAndSeedFeatureFlag)
+	azureLiteSchema := AzureLiteSchema(azureLiteMachinesDisplay, azureRegionsDisplay, azureLiteMachinesNames, includeAdditionalParamsInSchema, false, euAccessRestricted, shootAndSeedFeatureFlag)
+	freemiumSchema := FreemiumSchema(provider, azureRegionsDisplay, includeAdditionalParamsInSchema, false, euAccessRestricted)
+	gcpSchema := GCPSchema(gcpMachinesDisplay, gcpAdditionalMachinesDisplay, gcpRegionsDisplay, gcpMachinesNames, gcpAdditionalMachinesNames, includeAdditionalParamsInSchema, false, shootAndSeedFeatureFlag, assuredWorkloads)
 	ownClusterSchema := OwnClusterSchema(false)
-	previewCatalogSchema := PreviewSchema(awsMachinesDisplay, awsRegionsDisplay, awsMachineNames, includeAdditionalParamsInSchema, false, euAccessRestricted, enableAdditionalWorkerNodePools, enableLoadCurrentConfig)
+	previewCatalogSchema := PreviewSchema(awsMachinesDisplay, awsAdditionalMachinesDisplay, awsRegionsDisplay, awsMachineNames, awsAdditionalMachineNames, includeAdditionalParamsInSchema, false, euAccessRestricted)
 
-	trialSchema := TrialSchema(includeAdditionalParamsInSchema, false, enableLoadCurrentConfig)
+	trialSchema := TrialSchema(includeAdditionalParamsInSchema, false)
 
 	outputPlans := map[string]domain.ServicePlan{
-		AWSPlanID:        defaultServicePlan(AWSPlanID, AWSPlanName, plans, awsSchema, AWSSchema(awsMachinesDisplay, awsRegionsDisplay, awsMachineNames, includeAdditionalParamsInSchema, true, euAccessRestricted, shootAndSeedFeatureFlag, enableAdditionalWorkerNodePools, enableLoadCurrentConfig)),
-		GCPPlanID:        defaultServicePlan(GCPPlanID, GCPPlanName, plans, gcpSchema, GCPSchema(gcpMachinesDisplay, gcpRegionsDisplay, gcpMachinesNames, includeAdditionalParamsInSchema, true, shootAndSeedFeatureFlag, assuredWorkloads, enableAdditionalWorkerNodePools, enableLoadCurrentConfig)),
-		AzurePlanID:      defaultServicePlan(AzurePlanID, AzurePlanName, plans, azureSchema, AzureSchema(azureMachinesDisplay, azureRegionsDisplay, azureMachinesNames, includeAdditionalParamsInSchema, true, euAccessRestricted, shootAndSeedFeatureFlag, enableAdditionalWorkerNodePools, enableLoadCurrentConfig)),
-		AzureLitePlanID:  defaultServicePlan(AzureLitePlanID, AzureLitePlanName, plans, azureLiteSchema, AzureLiteSchema(azureLiteMachinesDisplay, azureRegionsDisplay, azureLiteMachinesNames, includeAdditionalParamsInSchema, true, euAccessRestricted, shootAndSeedFeatureFlag, enableAdditionalWorkerNodePools, enableLoadCurrentConfig)),
-		FreemiumPlanID:   defaultServicePlan(FreemiumPlanID, FreemiumPlanName, plans, freemiumSchema, FreemiumSchema(provider, azureRegionsDisplay, includeAdditionalParamsInSchema, true, euAccessRestricted, enableLoadCurrentConfig)),
-		TrialPlanID:      defaultServicePlan(TrialPlanID, TrialPlanName, plans, trialSchema, TrialSchema(includeAdditionalParamsInSchema, true, enableLoadCurrentConfig)),
+		AWSPlanID:        defaultServicePlan(AWSPlanID, AWSPlanName, plans, awsSchema, AWSSchema(awsMachinesDisplay, awsAdditionalMachinesDisplay, awsRegionsDisplay, awsMachineNames, awsAdditionalMachineNames, includeAdditionalParamsInSchema, true, euAccessRestricted, shootAndSeedFeatureFlag)),
+		GCPPlanID:        defaultServicePlan(GCPPlanID, GCPPlanName, plans, gcpSchema, GCPSchema(gcpMachinesDisplay, gcpAdditionalMachinesDisplay, gcpRegionsDisplay, gcpMachinesNames, gcpAdditionalMachinesNames, includeAdditionalParamsInSchema, true, shootAndSeedFeatureFlag, assuredWorkloads)),
+		AzurePlanID:      defaultServicePlan(AzurePlanID, AzurePlanName, plans, azureSchema, AzureSchema(azureMachinesDisplay, azureAdditionalMachinesDisplay, azureRegionsDisplay, azureMachinesNames, azureAdditionalMachinesNames, includeAdditionalParamsInSchema, true, euAccessRestricted, shootAndSeedFeatureFlag)),
+		AzureLitePlanID:  defaultServicePlan(AzureLitePlanID, AzureLitePlanName, plans, azureLiteSchema, AzureLiteSchema(azureLiteMachinesDisplay, azureRegionsDisplay, azureLiteMachinesNames, includeAdditionalParamsInSchema, true, euAccessRestricted, shootAndSeedFeatureFlag)),
+		FreemiumPlanID:   defaultServicePlan(FreemiumPlanID, FreemiumPlanName, plans, freemiumSchema, FreemiumSchema(provider, azureRegionsDisplay, includeAdditionalParamsInSchema, true, euAccessRestricted)),
+		TrialPlanID:      defaultServicePlan(TrialPlanID, TrialPlanName, plans, trialSchema, TrialSchema(includeAdditionalParamsInSchema, true)),
 		OwnClusterPlanID: defaultServicePlan(OwnClusterPlanID, OwnClusterPlanName, plans, ownClusterSchema, OwnClusterSchema(true)),
-		PreviewPlanID:    defaultServicePlan(PreviewPlanID, PreviewPlanName, plans, previewCatalogSchema, PreviewSchema(awsMachinesDisplay, awsRegionsDisplay, awsMachineNames, includeAdditionalParamsInSchema, true, euAccessRestricted, enableAdditionalWorkerNodePools, enableLoadCurrentConfig)),
+		PreviewPlanID:    defaultServicePlan(PreviewPlanID, PreviewPlanName, plans, previewCatalogSchema, PreviewSchema(awsMachinesDisplay, awsAdditionalMachinesDisplay, awsRegionsDisplay, awsMachineNames, awsAdditionalMachineNames, includeAdditionalParamsInSchema, true, euAccessRestricted)),
 	}
 
 	if len(sapConvergedCloudRegions) != 0 {
 		sapConvergedCloudMachinesNames := SapConvergedCloudMachinesNames()
 		sapConvergedCloudMachinesDisplay := SapConvergedCloudMachinesDisplay()
 		sapConvergedCloudRegionsDisplay := SapConvergedCloudRegionsDisplay()
-		sapConvergedCloudSchema := SapConvergedCloudSchema(sapConvergedCloudMachinesDisplay, sapConvergedCloudRegionsDisplay, sapConvergedCloudMachinesNames, includeAdditionalParamsInSchema, false, shootAndSeedFeatureFlag, sapConvergedCloudRegions, enableAdditionalWorkerNodePools, enableLoadCurrentConfig)
-		outputPlans[SapConvergedCloudPlanID] = defaultServicePlan(SapConvergedCloudPlanID, SapConvergedCloudPlanName, plans, sapConvergedCloudSchema, SapConvergedCloudSchema(sapConvergedCloudMachinesDisplay, sapConvergedCloudRegionsDisplay, sapConvergedCloudMachinesNames, includeAdditionalParamsInSchema, true, shootAndSeedFeatureFlag, sapConvergedCloudRegions, enableAdditionalWorkerNodePools, enableLoadCurrentConfig))
+		sapConvergedCloudSchema := SapConvergedCloudSchema(sapConvergedCloudMachinesDisplay, sapConvergedCloudRegionsDisplay, sapConvergedCloudMachinesNames, includeAdditionalParamsInSchema, false, shootAndSeedFeatureFlag, sapConvergedCloudRegions)
+		outputPlans[SapConvergedCloudPlanID] = defaultServicePlan(SapConvergedCloudPlanID, SapConvergedCloudPlanName, plans, sapConvergedCloudSchema, SapConvergedCloudSchema(sapConvergedCloudMachinesDisplay, sapConvergedCloudRegionsDisplay, sapConvergedCloudMachinesNames, includeAdditionalParamsInSchema, true, shootAndSeedFeatureFlag, sapConvergedCloudRegions))
 	}
 
 	return outputPlans

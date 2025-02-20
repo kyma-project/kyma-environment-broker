@@ -168,6 +168,15 @@ func (o *OIDCConfigDTO) Validate() error {
 		if err != nil || (issuer != nil && len(issuer.Host) == 0) {
 			errs = append(errs, "issuerURL must be a valid URL")
 		}
+		if issuer != nil && issuer.Fragment != "" {
+			errs = append(errs, "issuerURL must not contain a fragment")
+		}
+		if issuer != nil && issuer.User != nil {
+			errs = append(errs, "issuerURL must not contain a username or password")
+		}
+		if issuer != nil && len(issuer.RawQuery) > 0 {
+			errs = append(errs, "issuerURL must not contain a query")
+		}
 		if issuer != nil && issuer.Scheme != "https" {
 			errs = append(errs, "issuerURL must have https scheme")
 		}

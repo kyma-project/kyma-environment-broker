@@ -164,6 +164,72 @@ func TestInstance(t *testing.T) {
 		assert.Equal(t, 0, numberOfInstancesB)
 	})
 
+	t.Run("Should fetch ERS context statistics", func(t *testing.T) {
+		storageCleanup, brokerStorage, err := GetStorageForDatabaseTests()
+		require.NoError(t, err)
+		require.NotNil(t, brokerStorage)
+		defer func() {
+			err := storageCleanup()
+			assert.NoError(t, err)
+		}()
+
+		// populate database with samples
+		fixInstances := []internal.Instance{
+			*fixInstance(instanceData{val: "A1", globalAccountID: "A", subAccountID: "sub-01"}),
+			*fixInstance(instanceData{val: "A2", globalAccountID: "A", subAccountID: "sub-02", deletedAt: time.Time{}}),
+			*fixInstance(instanceData{val: "A3", globalAccountID: "A", subAccountID: "sub-02"}),
+			*fixInstance(instanceData{val: "C1", globalAccountID: "C", subAccountID: "sub-01"}),
+			*fixInstance(instanceData{val: "C2", globalAccountID: "C", deletedAt: time.Now()}), // deleted - should not be counted
+			*fixInstance(instanceData{val: "B1", globalAccountID: "B", deletedAt: time.Now()}), // deleted - should not be counted
+		}
+
+		for _, i := range fixInstances {
+			err = brokerStorage.Instances().Insert(i)
+			require.NoError(t, err)
+		}
+
+		op1 := fixture.FixProvisioningOperation("op1", "A1")
+
+		op2 := fixture.FixProvisioningOperation("op2", "A2")
+		op2.ProvisioningParameters.ErsContext.LicenseType = ptr.String("SAPOTHER")
+
+		op3 := fixture.FixSuspensionOperationAsOperation("op3", "A3")
+
+		// simulating update with different license type, since query is based on created_at date we need to adjust creation times
+		// provisioning precedes update
+		op4 := fixture.FixProvisioningOperation("op4", "C1")
+		op4.CreatedAt = time.Date(2025, 2, 19, 11, 0, 0, 0, time.UTC)
+		op5 := fixture.FixUpdatingOperation("op5", "C1").Operation
+		op5.CreatedAt = time.Date(2025, 2, 19, 12, 0, 0, 0, time.UTC)
+		op5.ProvisioningParameters.ErsContext.LicenseType = ptr.String("SAPOTHER")
+
+		op6 := fixture.FixProvisioningOperation("op6", "C2") // this instance is deleted, should not be counted
+
+		// simulating update with different license type, since query is based on created_at date we need to adjust creation times
+		// but the instance is already deleted
+		op7 := fixture.FixProvisioningOperation("op7", "B1")
+		op7.CreatedAt = time.Date(2025, 2, 19, 11, 0, 0, 0, time.UTC)
+		op8 := fixture.FixUpdatingOperation("op8", "B1").Operation
+		op8.CreatedAt = time.Date(2025, 2, 19, 12, 0, 0, 0, time.UTC)
+		op8.ProvisioningParameters.ErsContext.LicenseType = ptr.String("SAPOTHER")
+
+		fixOperations := []internal.Operation{op1, op2, op3, op4, op5, op6, op7, op8}
+
+		for _, i := range fixOperations {
+			err = brokerStorage.Operations().InsertOperation(i)
+			require.NoError(t, err)
+		}
+
+		// when
+		stats, err := brokerStorage.Instances().GetERSContextStats()
+		require.NoError(t, err)
+
+		t.Logf("%+v", stats)
+
+		// then
+		assert.Equal(t, internal.ERSContextStats{LicenseType: map[string]int{"SAPDEV": 2, "SAPOTHER": 2}}, stats)
+	})
+
 	t.Run("Should get distinct subaccounts from active instances", func(t *testing.T) {
 		storageCleanup, brokerStorage, err := GetStorageForDatabaseTests()
 		require.NoError(t, err)
@@ -1196,6 +1262,74 @@ func TestInstance_UsingLastOperationID(t *testing.T) {
 		assert.Equal(t, 3, numberOfInstancesA)
 		assert.Equal(t, 1, numberOfInstancesC)
 		assert.Equal(t, 0, numberOfInstancesB)
+	})
+
+	t.Run("Should fetch ERS context statistics", func(t *testing.T) {
+		storageCleanup, brokerStorage, err := storage.GetStorageForTest(cfg)
+		require.NoError(t, err)
+		require.NotNil(t, brokerStorage)
+		defer func() {
+			err := storageCleanup()
+			assert.NoError(t, err)
+		}()
+
+		// populate database with samples
+		fixInstances := []internal.Instance{
+			*fixInstance(instanceData{val: "A1", globalAccountID: "A", subAccountID: "sub-01"}),
+			*fixInstance(instanceData{val: "A2", globalAccountID: "A", subAccountID: "sub-02", deletedAt: time.Time{}}),
+			*fixInstance(instanceData{val: "A3", globalAccountID: "A", subAccountID: "sub-02"}),
+			*fixInstance(instanceData{val: "C1", globalAccountID: "C", subAccountID: "sub-01"}),
+			*fixInstance(instanceData{val: "C2", globalAccountID: "C", deletedAt: time.Now()}), // deleted - should not be counted
+			*fixInstance(instanceData{val: "B1", globalAccountID: "B", deletedAt: time.Now()}), // deleted - should not be counted
+		}
+
+		for _, i := range fixInstances {
+			err = brokerStorage.Instances().Insert(i)
+			require.NoError(t, err)
+		}
+
+		op1 := fixture.FixProvisioningOperation("op1", "A1")
+
+		op2 := fixture.FixProvisioningOperation("op2", "A2")
+		op2.ProvisioningParameters.ErsContext.LicenseType = ptr.String("SAPOTHER")
+
+		op3 := fixture.FixSuspensionOperationAsOperation("op3", "A3")
+
+		// simulating update with different license type, since query is based on created_at date we need to adjust creation times
+		// provisioning precedes update
+		op4 := fixture.FixProvisioningOperation("op4", "C1")
+		op4.CreatedAt = time.Date(2025, 2, 19, 11, 0, 0, 0, time.UTC)
+		op5 := fixture.FixUpdatingOperation("op5", "C1").Operation
+		op5.CreatedAt = time.Date(2025, 2, 19, 12, 0, 0, 0, time.UTC)
+		op5.ProvisioningParameters.ErsContext.LicenseType = ptr.String("SAPOTHER")
+
+		op6 := fixture.FixProvisioningOperation("op6", "C2") // this instance is deleted, should not be counted
+
+		// simulating update with different license type, since query is based on created_at date we need to adjust creation times
+		// but the instance is already deleted
+		op7 := fixture.FixProvisioningOperation("op7", "B1")
+		op7.CreatedAt = time.Date(2025, 2, 19, 11, 0, 0, 0, time.UTC)
+		op8 := fixture.FixUpdatingOperation("op8", "B1").Operation
+		op8.CreatedAt = time.Date(2025, 2, 19, 12, 0, 0, 0, time.UTC)
+		op8.ProvisioningParameters.ErsContext.LicenseType = ptr.String("SAPOTHER")
+
+		fixOperations := []internal.Operation{op1, op2, op3, op4, op5, op6, op7, op8}
+
+		for _, i := range fixOperations {
+			err = brokerStorage.Operations().InsertOperation(i)
+			require.NoError(t, err)
+			err = brokerStorage.Instances().UpdateInstanceLastOperation(i.InstanceID, i.ID)
+			require.NoError(t, err)
+		}
+
+		// when
+		stats, err := brokerStorage.Instances().GetERSContextStats()
+		require.NoError(t, err)
+
+		t.Logf("%+v", stats)
+
+		// then
+		assert.Equal(t, internal.ERSContextStats{LicenseType: map[string]int{"SAPDEV": 2, "SAPOTHER": 2}}, stats)
 	})
 
 	t.Run("Should get distinct subaccounts from active instances", func(t *testing.T) {

@@ -6,11 +6,100 @@
     "machineType",
     "autoScalerMin",
     "autoScalerMax",
+    "additionalWorkerNodePools",
     "modules",
     "networking"
   ],
+  "_load_current_config": true,
   "_show_form_view": true,
   "properties": {
+    "additionalWorkerNodePools": {
+      "description": "Specifies the list of additional worker node pools.",
+      "type": "array",
+      "uniqueItems": true,
+      "items": {
+        "type": "object",
+        "required": ["name", "machineType", "haZones", "autoScalerMin", "autoScalerMax"],
+        "_controlsOrder": ["name", "machineType", "haZones", "autoScalerMin", "autoScalerMax"],
+        "properties": {
+          "name": {
+            "description": "Specifies the unique name of the additional worker node pool. The name must consist of lowercase alphanumeric characters or '-', must start and end with an alphanumeric character, and can be a maximum of 15 characters in length.",
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 15,
+            "pattern": "^[a-z0-9]([-a-z0-9]*[a-z0-9])?$"
+          },
+          "machineType": {
+            "description": "Specifies the type of the virtual machine.",
+            "type": "string",
+            "minLength": 1,
+            "enum": [
+              "Standard_D2s_v5",
+              "Standard_D4s_v5",
+              "Standard_D8s_v5",
+              "Standard_D16s_v5",
+              "Standard_D32s_v5",
+              "Standard_D48s_v5",
+              "Standard_D64s_v5",
+              "Standard_D4_v3",
+              "Standard_D8_v3",
+              "Standard_D16_v3",
+              "Standard_D32_v3",
+              "Standard_D48_v3",
+              "Standard_D64_v3",
+              "Standard_F2s_v2",
+              "Standard_F4s_v2",
+              "Standard_F8s_v2",
+              "Standard_F16s_v2",
+              "Standard_F32s_v2",
+              "Standard_F48s_v2",
+              "Standard_F64s_v2"
+            ],
+            "_enumDisplayName": {
+              "Standard_D2s_v5":  "Standard_D2s_v5 (2vCPU, 8GB RAM)",
+              "Standard_D4s_v5":  "Standard_D4s_v5 (4vCPU, 16GB RAM)",
+              "Standard_D8s_v5":  "Standard_D8s_v5 (8vCPU, 32GB RAM)",
+              "Standard_D16s_v5": "Standard_D16s_v5 (16vCPU, 64GB RAM)",
+              "Standard_D32s_v5": "Standard_D32s_v5 (32vCPU, 128GB RAM)",
+              "Standard_D48s_v5": "Standard_D48s_v5 (48vCPU, 192GB RAM)",
+              "Standard_D64s_v5": "Standard_D64s_v5 (64vCPU, 256GB RAM)",
+              "Standard_D4_v3":   "Standard_D4_v3 (4vCPU, 16GB RAM)",
+              "Standard_D8_v3":   "Standard_D8_v3 (8vCPU, 32GB RAM)",
+              "Standard_D16_v3":  "Standard_D16_v3 (16vCPU, 64GB RAM)",
+              "Standard_D32_v3":  "Standard_D32_v3 (32vCPU, 128GB RAM)",
+              "Standard_D48_v3":  "Standard_D48_v3 (48vCPU, 192GB RAM)",
+              "Standard_D64_v3":  "Standard_D64_v3 (64vCPU, 256GB RAM)",
+              "Standard_F2s_v2": "Standard_F2s_v2 (2vCPU, 4GB RAM)",
+              "Standard_F4s_v2": "Standard_F4s_v2 (4vCPU, 8GB RAM)",
+              "Standard_F8s_v2": "Standard_F8s_v2 (8vCPU, 16GB RAM)",
+              "Standard_F16s_v2": "Standard_F16s_v2 (16vCPU, 32GB RAM)",
+              "Standard_F32s_v2": "Standard_F32s_v2 (32vCPU, 64GB RAM)",
+              "Standard_F48s_v2": "Standard_F48s_v2 (48vCPU, 96GB RAM)",
+              "Standard_F64s_v2": "Standard_F64s_v2 (64vCPU, 128GB RAM)"
+            }
+          },
+          "haZones": {
+            "description": "Specifies whether high availability (HA) zones are supported. This setting is permanent and cannot be changed later. If HA is disabled, all resources are placed in a single, randomly selected zone. Disabled HA allows setting both autoScalerMin and autoScalerMax to 1, which helps reduce costs. It is not recommended for production environments. When enabled, resources are distributed across three zones to enhance fault tolerance. Enabled HA requires setting autoScalerMin to the minimal value 3.",
+            "title": "HA zones",
+            "type": "boolean",
+            "default": true
+          },
+          "autoScalerMin": {
+            "description": "Specifies the minimum number of virtual machines to create.",
+            "type": "integer",
+            "minimum": 1,
+            "default": 3
+          },
+          "autoScalerMax": {
+            "description": "Specifies the maximum number of virtual machines to create.",
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 300,
+            "default": 20
+          }
+        }
+      }
+    },
     "autoScalerMax": {
       "default": 20,
       "description": "Specifies the maximum number of virtual machines to create",

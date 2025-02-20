@@ -521,28 +521,68 @@ func TestUpdateEndpoint_UpdateParameters(t *testing.T) {
 		assert.Equal(t, expectedErr.LoggerAction(), apierr.LoggerAction())
 	})
 
-	t.Run("Should fail on insufficient OIDC params (missing issuerURL)", func(t *testing.T) {
-		// given
-		oidcParams := `"clientID":"client-id"`
-		errMsg := fmt.Errorf("issuerURL must not be empty")
-		expectedErr := apiresponses.NewFailureResponse(errMsg, http.StatusUnprocessableEntity, errMsg.Error())
+	t.Run("Should fail on invalid OIDC issuerURL param", func(t *testing.T) {
+		testCases := []struct {
+			name          string
+			oidcParams    string
+			expectedError string
+		}{
+			{
+				name:          "wrong scheme",
+				oidcParams:    `"clientID":"client-id","issuerURL":"http://test.local","signingAlgs":["RS256"]`,
+				expectedError: "issuerURL must have https scheme",
+			},
+			{
+				name:          "missing issuerURL",
+				oidcParams:    `"clientID":"client-id"`,
+				expectedError: "issuerURL must not be empty",
+			},
+			{
+				name:          "URL with fragment",
+				oidcParams:    `"clientID":"client-id","issuerURL":"https://test.local#fragment","signingAlgs":["RS256"]`,
+				expectedError: "issuerURL must not contain a fragment",
+			},
+			{
+				name:          "URL with username",
+				oidcParams:    `"clientID":"client-id","issuerURL":"https://user@test.local","signingAlgs":["RS256"]`,
+				expectedError: "issuerURL must not contain a username or password",
+			},
+			{
+				name:          "URL with query",
+				oidcParams:    `"clientID":"client-id","issuerURL":"https://test.local?query=param","signingAlgs":["RS256"]`,
+				expectedError: "issuerURL must not contain a query",
+			},
+			{
+				name:          "URL with empty host",
+				oidcParams:    `"clientID":"client-id","issuerURL":"https:///path","signingAlgs":["RS256"]`,
+				expectedError: "issuerURL must be a valid URL",
+			},
+		}
 
-		// when
-		_, err := svc.Update(context.Background(), instanceID, domain.UpdateDetails{
-			ServiceID:       "",
-			PlanID:          AzurePlanID,
-			RawParameters:   json.RawMessage("{\"oidc\":{" + oidcParams + "}}"),
-			PreviousValues:  domain.PreviousValues{},
-			RawContext:      json.RawMessage("{\"globalaccount_id\":\"globalaccount_id_1\", \"active\":true}"),
-			MaintenanceInfo: nil,
-		}, true)
+		for _, tc := range testCases {
+			t.Run(tc.name, func(t *testing.T) {
+				// given
+				errMsg := fmt.Errorf(tc.expectedError)
+				expectedErr := apiresponses.NewFailureResponse(errMsg, http.StatusUnprocessableEntity, errMsg.Error())
 
-		// then
-		require.Error(t, err)
-		assert.IsType(t, &apiresponses.FailureResponse{}, err)
-		apierr := err.(*apiresponses.FailureResponse)
-		assert.Equal(t, expectedErr.ValidatedStatusCode(nil), apierr.ValidatedStatusCode(nil))
-		assert.Equal(t, expectedErr.LoggerAction(), apierr.LoggerAction())
+				// when
+				_, err := svc.Update(context.Background(), instanceID, domain.UpdateDetails{
+					ServiceID:       "",
+					PlanID:          AzurePlanID,
+					RawParameters:   json.RawMessage("{\"oidc\":{" + tc.oidcParams + "}}"),
+					PreviousValues:  domain.PreviousValues{},
+					RawContext:      json.RawMessage("{\"globalaccount_id\":\"globalaccount_id_1\", \"active\":true}"),
+					MaintenanceInfo: nil,
+				}, true)
+
+				// then
+				require.Error(t, err)
+				assert.IsType(t, &apiresponses.FailureResponse{}, err)
+				apierr := err.(*apiresponses.FailureResponse)
+				assert.Equal(t, expectedErr.ValidatedStatusCode(nil), apierr.ValidatedStatusCode(nil))
+				assert.Equal(t, expectedErr.LoggerAction(), apierr.LoggerAction())
+			})
+		}
 	})
 
 	t.Run("Should fail on insufficient OIDC params (missing clientID)", func(t *testing.T) {
@@ -687,7 +727,6 @@ func TestUpdateAdditionalWorkerNodePools(t *testing.T) {
 			kcBuilder := &kcMock.KcBuilder{}
 			svc := NewUpdate(Config{}, st.Instances(), st.RuntimeStates(), st.Operations(), handler, true, true, false, q, PlansConfig{},
 				planDefaults, fixLogger(), dashboardConfig, kcBuilder, &OneForAllConvergedCloudRegionsProvider{}, fakeKcpK8sClient, nil)
-			svc.config.EnableAdditionalWorkerNodePools = true
 
 			// when
 			_, err = svc.Update(context.Background(), instanceID, domain.UpdateDetails{
@@ -734,7 +773,6 @@ func TestHAZones(t *testing.T) {
 		kcBuilder := &kcMock.KcBuilder{}
 		svc := NewUpdate(Config{}, st.Instances(), st.RuntimeStates(), st.Operations(), handler, true, true, false, q, PlansConfig{},
 			planDefaults, fixLogger(), dashboardConfig, kcBuilder, &OneForAllConvergedCloudRegionsProvider{}, fakeKcpK8sClient, nil)
-		svc.config.EnableAdditionalWorkerNodePools = true
 
 		// when
 		_, err = svc.Update(context.Background(), instanceID, domain.UpdateDetails{
@@ -778,7 +816,6 @@ func TestHAZones(t *testing.T) {
 		kcBuilder := &kcMock.KcBuilder{}
 		svc := NewUpdate(Config{}, st.Instances(), st.RuntimeStates(), st.Operations(), handler, true, true, false, q, PlansConfig{},
 			planDefaults, fixLogger(), dashboardConfig, kcBuilder, &OneForAllConvergedCloudRegionsProvider{}, fakeKcpK8sClient, nil)
-		svc.config.EnableAdditionalWorkerNodePools = true
 
 		// when
 		_, err = svc.Update(context.Background(), instanceID, domain.UpdateDetails{
@@ -825,7 +862,6 @@ func TestUpdateAdditionalWorkerNodePoolsForUnsupportedPlans(t *testing.T) {
 			kcBuilder := &kcMock.KcBuilder{}
 			svc := NewUpdate(Config{}, st.Instances(), st.RuntimeStates(), st.Operations(), handler, true, true, false, q, PlansConfig{},
 				planDefaults, fixLogger(), dashboardConfig, kcBuilder, &OneForAllConvergedCloudRegionsProvider{}, fakeKcpK8sClient, nil)
-			svc.config.EnableAdditionalWorkerNodePools = true
 
 			additionalWorkerNodePools := `[{"name": "name-1", "machineType": "m6i.large", "haZones": true, "autoScalerMin": 3, "autoScalerMax": 20}]`
 
@@ -1223,7 +1259,6 @@ func TestUpdateUnsupportedMachineInAdditionalWorkerNodePools(t *testing.T) {
 	kcBuilder := &kcMock.KcBuilder{}
 	svc := NewUpdate(Config{}, st.Instances(), st.RuntimeStates(), st.Operations(), handler, true, true, false, q, PlansConfig{},
 		planDefaults, fixLogger(), dashboardConfig, kcBuilder, &OneForAllConvergedCloudRegionsProvider{}, fakeKcpK8sClient, fixRegionsSupportingMachine())
-	svc.config.EnableAdditionalWorkerNodePools = true
 
 	testCases := []struct {
 		name                      string
