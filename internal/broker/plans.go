@@ -251,6 +251,12 @@ func AwsMachinesNames(additionalMachines bool) []string {
 			"c7i.8xlarge",
 			"c7i.12xlarge",
 			"c7i.16xlarge",
+			"g4dn.xlarge",
+			"g4dn.2xlarge",
+			"g4dn.4xlarge",
+			"g4dn.8xlarge",
+			"g4dn.12xlarge",
+			"g4dn.16xlarge",
 		)
 	}
 
@@ -283,6 +289,12 @@ func AwsMachinesDisplay(additionalMachines bool) map[string]string {
 		machines["c7i.8xlarge"] = "c7i.8xlarge (32vCPU, 64GB RAM)"
 		machines["c7i.12xlarge"] = "c7i.12xlarge (48vCPU, 96GB RAM)"
 		machines["c7i.16xlarge"] = "c7i.16xlarge (64vCPU, 128GB RAM)"
+		machines["g4dn.xlarge"] = "g4dn.xlarge (1GPU, 4vCPU, 16GB RAM)"
+		machines["g4dn.2xlarge"] = "g4dn.2xlarge (1GPU, 8vCPU, 32GB RAM)"
+		machines["g4dn.4xlarge"] = "g4dn.4xlarge (1GPU, 16vCPU, 64GB RAM)"
+		machines["g4dn.8xlarge"] = "g4dn.8xlarge (1GPU, 32vCPU, 128GB RAM)"
+		machines["g4dn.12xlarge"] = "g4dn.12xlarge (4GPU, 48vCPU, 192GB RAM)"
+		machines["g4dn.16xlarge"] = "g4dn.16xlarge (1GPU, 64vCPU, 256GB RAM)"
 	}
 
 	return machines
@@ -385,6 +397,13 @@ func GcpMachinesNames(additionalMachines bool) []string {
 			"c2d-highcpu-16",
 			"c2d-highcpu-32",
 			"c2d-highcpu-56",
+			"g2-standard-4",
+			"g2-standard-8",
+			"g2-standard-12",
+			"g2-standard-16",
+			"g2-standard-24",
+			"g2-standard-32",
+			"g2-standard-48",
 		)
 	}
 
@@ -409,6 +428,13 @@ func GcpMachinesDisplay(additionalMachines bool) map[string]string {
 		machines["c2d-highcpu-16"] = "c2d-highcpu-16 (16vCPU, 32GB RAM)"
 		machines["c2d-highcpu-32"] = "c2d-highcpu-32 (32vCPU, 64GB RAM)"
 		machines["c2d-highcpu-56"] = "c2d-highcpu-56 (56vCPU, 112GB RAM)"
+		machines["g2-standard-4"] = "g2-standard-4 (1GPU, 4vCPU, 16GB RAM)"
+		machines["g2-standard-8"] = "g2-standard-8 (1GPU, 8vCPU, 32GB RAM)"
+		machines["g2-standard-12"] = "g2-standard-12 (1GPU, 12vCPU, 48GB RAM)"
+		machines["g2-standard-16"] = "g2-standard-16 (1GPU, 16vCPU, 64GB RAM)"
+		machines["g2-standard-24"] = "g2-standard-24 (2GPU, 24vCPU, 96GB RAM)"
+		machines["g2-standard-32"] = "g2-standard-32 (1GPU, 32vCPU, 128GB RAM)"
+		machines["g2-standard-48"] = "g2-standard-48 (4GPU, 48vCPU, 192GB RAM)"
 	}
 
 	return machines
