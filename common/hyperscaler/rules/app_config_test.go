@@ -25,8 +25,8 @@ const VALUES_FILE = HELM_CHART + "/values.yaml"
 const NOTES_FILE = "keb/templates/NOTES.txt"
 
 const ENV_NAME = "APP_HAP_RULE_FILE_PATH"
-const ENV_FILENAME = "/hapRule.yaml"
-const ENV_PATH = "config" + ENV_FILENAME
+const ENV_FILENAME = "hapRule.yaml"
+const ENV_PATH = "/config/" + ENV_FILENAME
 
 // Test for checking if expected format of
 func TestAppConfig(t *testing.T) {
@@ -37,8 +37,7 @@ func TestAppConfig(t *testing.T) {
 	sch := internal.NewSchemeForTests(t)
 	require.NotNil(t, sch)
 
-	// helm ch
-
+	// helm chart
 	ch, err := loader.Load(HELM_CHART)
 	require.NoError(t, err)
 	require.NotNil(t, ch)
