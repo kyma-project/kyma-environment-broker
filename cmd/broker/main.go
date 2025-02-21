@@ -30,6 +30,7 @@ import (
 	"github.com/gorilla/mux"
 	"github.com/kyma-project/kyma-environment-broker/common/gardener"
 	"github.com/kyma-project/kyma-environment-broker/common/hyperscaler"
+	"github.com/kyma-project/kyma-environment-broker/common/hyperscaler/rules"
 	orchestrationExt "github.com/kyma-project/kyma-environment-broker/common/orchestration"
 	"github.com/kyma-project/kyma-environment-broker/internal"
 	"github.com/kyma-project/kyma-environment-broker/internal/appinfo"
@@ -161,6 +162,8 @@ type Config struct {
 	ProvisionerDeprovisioningDisabled bool          `envconfig:"default=false"`
 
 	RegionsSupportingMachineFilePath string
+
+	HapRuleFilePath string
 }
 
 type ProfilerConfig struct {
@@ -318,7 +321,7 @@ func main() {
 	// run queues
 	provisionManager := process.NewStagedManager(db.Operations(), eventBroker, cfg.OperationTimeout, cfg.Provisioning, log.With("provisioning", "manager"))
 	provisionQueue := NewProvisioningProcessingQueue(ctx, provisionManager, cfg.Provisioning.WorkersAmount, &cfg, db, provisionerClient, inputFactory,
-		edpClient, accountProvider, skrK8sClientProvider, kcpK8sClient, oidcDefaultValues, log)
+		edpClient, accountProvider, skrK8sClientProvider, kcpK8sClient, oidcDefaultValues, log, &rules.RulesService{})
 
 	deprovisionManager := process.NewStagedManager(db.Operations(), eventBroker, cfg.OperationTimeout, cfg.Deprovisioning, log.With("deprovisioning", "manager"))
 	deprovisionQueue := NewDeprovisioningProcessingQueue(ctx, cfg.Deprovisioning.WorkersAmount, deprovisionManager, &cfg, db, eventBroker, provisionerClient, edpClient, accountProvider,
