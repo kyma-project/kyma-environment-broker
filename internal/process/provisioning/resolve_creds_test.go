@@ -21,6 +21,7 @@ import (
 
 	"github.com/kyma-project/kyma-environment-broker/common/hyperscaler"
 	hyperscalerMocks "github.com/kyma-project/kyma-environment-broker/common/hyperscaler/automock"
+	"github.com/kyma-project/kyma-environment-broker/common/hyperscaler/rules"
 	"github.com/kyma-project/kyma-environment-broker/internal/storage"
 	"github.com/stretchr/testify/assert"
 )
@@ -41,7 +42,7 @@ func TestResolveCredentialsStepHappyPath_Run(t *testing.T) {
 	accountProviderMock := &hyperscalerMocks.AccountProvider{}
 	accountProviderMock.On("GardenerSecretName", hyperscaler.GCP("westeurope"), statusGlobalAccountID, false).Return("gardener-secret-gcp", nil)
 
-	step := NewResolveCredentialsStep(memoryStorage.Operations(), accountProviderMock)
+	step := NewResolveCredentialsStep(memoryStorage.Operations(), accountProviderMock, &rules.RulesService{})
 
 	// when
 	operation, repeat, err := step.Run(operation, fixLogger())
@@ -68,7 +69,7 @@ func TestResolveCredentialsEUStepHappyPath_Run(t *testing.T) {
 	accountProviderMock := &hyperscalerMocks.AccountProvider{}
 	accountProviderMock.On("GardenerSecretName", hyperscaler.AWS(), statusGlobalAccountID, true).Return("gardener-secret-aws", nil)
 
-	step := NewResolveCredentialsStep(memoryStorage.Operations(), accountProviderMock)
+	step := NewResolveCredentialsStep(memoryStorage.Operations(), accountProviderMock, &rules.RulesService{})
 
 	// when
 	operation, repeat, err := step.Run(operation, fixLogger())
@@ -95,7 +96,7 @@ func TestResolveCredentialsCHStepHappyPath_Run(t *testing.T) {
 	accountProviderMock := &hyperscalerMocks.AccountProvider{}
 	accountProviderMock.On("GardenerSecretName", hyperscaler.Azure(), statusGlobalAccountID, true).Return("gardener-secret-az", nil)
 
-	step := NewResolveCredentialsStep(memoryStorage.Operations(), accountProviderMock)
+	step := NewResolveCredentialsStep(memoryStorage.Operations(), accountProviderMock, &rules.RulesService{})
 
 	// when
 	operation, repeat, err := step.Run(operation, fixLogger())
@@ -121,7 +122,7 @@ func TestResolveCredentialsStepHappyPathTrialDefaultProvider_Run(t *testing.T) {
 	accountProviderMock := &hyperscalerMocks.AccountProvider{}
 	accountProviderMock.On("GardenerSharedSecretName", hyperscaler.Azure(), false).Return("gardener-secret-azure", nil)
 
-	step := NewResolveCredentialsStep(memoryStorage.Operations(), accountProviderMock)
+	step := NewResolveCredentialsStep(memoryStorage.Operations(), accountProviderMock, &rules.RulesService{})
 
 	// when
 	operation, repeat, err := step.Run(operation, fixLogger())
@@ -148,7 +149,7 @@ func TestResolveCredentialsStepHappyPathTrialGivenProvider_Run(t *testing.T) {
 	accountProviderMock := &hyperscalerMocks.AccountProvider{}
 	accountProviderMock.On("GardenerSharedSecretName", hyperscaler.GCP("westeurope"), false).Return("gardener-secret-gcp", nil)
 
-	step := NewResolveCredentialsStep(memoryStorage.Operations(), accountProviderMock)
+	step := NewResolveCredentialsStep(memoryStorage.Operations(), accountProviderMock, &rules.RulesService{})
 
 	// when
 	operation, repeat, err := step.Run(operation, fixLogger())
@@ -174,7 +175,7 @@ func TestResolveCredentialsStepRetry_Run(t *testing.T) {
 	accountProviderMock := &hyperscalerMocks.AccountProvider{}
 	accountProviderMock.On("GardenerSecretName", hyperscaler.GCP("westeurope"), statusGlobalAccountID, false).Return("", fmt.Errorf("Failed!"))
 
-	step := NewResolveCredentialsStep(memoryStorage.Operations(), accountProviderMock)
+	step := NewResolveCredentialsStep(memoryStorage.Operations(), accountProviderMock, &rules.RulesService{})
 
 	operation.UpdatedAt = time.Now()
 
@@ -208,7 +209,7 @@ func TestResolveCredentials_IntegrationAWS(t *testing.T) {
 	op := fixOperationWithPlatformRegion("cf-us10", pkg.AWS)
 	err := memoryStorage.Operations().InsertOperation(op)
 	assert.NoError(t, err)
-	step := NewResolveCredentialsStep(memoryStorage.Operations(), accountProvider)
+	step := NewResolveCredentialsStep(memoryStorage.Operations(), accountProvider, &rules.RulesService{})
 
 	// when
 	operation, backoff, err := step.Run(op, fixLogger())
@@ -232,7 +233,7 @@ func TestResolveCredentials_IntegrationAWSEuAccess(t *testing.T) {
 	op := fixOperationWithPlatformRegion("cf-eu11", pkg.AWS)
 	err := memoryStorage.Operations().InsertOperation(op)
 	assert.NoError(t, err)
-	step := NewResolveCredentialsStep(memoryStorage.Operations(), accountProvider)
+	step := NewResolveCredentialsStep(memoryStorage.Operations(), accountProvider, &rules.RulesService{})
 
 	// when
 	operation, backoff, err := step.Run(op, fixLogger())
@@ -254,7 +255,7 @@ func TestResolveCredentials_IntegrationAzure(t *testing.T) {
 	op := fixOperationWithPlatformRegion("cf-eu21", pkg.Azure)
 	err := memoryStorage.Operations().InsertOperation(op)
 	assert.NoError(t, err)
-	step := NewResolveCredentialsStep(memoryStorage.Operations(), accountProvider)
+	step := NewResolveCredentialsStep(memoryStorage.Operations(), accountProvider, &rules.RulesService{})
 
 	// when
 	operation, backoff, err := step.Run(op, fixLogger())
@@ -278,7 +279,7 @@ func TestResolveCredentials_IntegrationAzureEuAccess(t *testing.T) {
 	op := fixOperationWithPlatformRegion("cf-ch20", pkg.Azure)
 	err := memoryStorage.Operations().InsertOperation(op)
 	assert.NoError(t, err)
-	step := NewResolveCredentialsStep(memoryStorage.Operations(), accountProvider)
+	step := NewResolveCredentialsStep(memoryStorage.Operations(), accountProvider, &rules.RulesService{})
 
 	// when
 	operation, backoff, err := step.Run(op, fixLogger())

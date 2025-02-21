@@ -17,6 +17,7 @@ import (
 	corev1 "k8s.io/api/core/v1"
 
 	"github.com/kyma-project/kyma-environment-broker/common/hyperscaler"
+	"github.com/kyma-project/kyma-environment-broker/common/hyperscaler/rules"
 
 	"github.com/gardener/gardener/pkg/apis/core/v1beta1"
 
@@ -219,8 +220,12 @@ func NewBrokerSuiteTestWithConfig(t *testing.T, cfg *Config, version ...string) 
 	fakeK8sSKRClient := fake.NewClientBuilder().WithScheme(sch).Build()
 	k8sClientProvider := kubeconfig.NewFakeK8sClientProvider(fakeK8sSKRClient)
 	provisionManager := process.NewStagedManager(db.Operations(), eventBroker, cfg.OperationTimeout, cfg.Provisioning, log.With("provisioning", "manager"))
+	
+	rulesService, err := rules.NewRulesServiceFromFile("testdata/hap-rules.yaml")
+	require.NoError(t, err)
+
 	provisioningQueue := NewProvisioningProcessingQueue(context.Background(), provisionManager, workersAmount, cfg, db, provisionerClient, inputFactory,
-		edpClient, accountProvider, k8sClientProvider, cli, defaultOIDCValues(), log)
+		edpClient, accountProvider, k8sClientProvider, cli, defaultOIDCValues(), log, rulesService)
 
 	provisioningQueue.SpeedUp(10000)
 	provisionManager.SpeedUp(10000)
