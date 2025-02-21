@@ -11,7 +11,6 @@ func TestLoad(t *testing.T) {
 	t.Run("should load rules from a file", func(t *testing.T) {
   
         // given
-		// Create a temporary YAML file for testing
 		expectedRules := []string{"rule1", "rule2"}
         content := "rule:\n"
   

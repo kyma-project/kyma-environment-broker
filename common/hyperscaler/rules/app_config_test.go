@@ -1,14 +1,13 @@
 package rules
 
 import (
-	"fmt"
 	"strings"
 	"testing"
 
 	"github.com/kyma-project/kyma-environment-broker/internal"
 	"github.com/stretchr/testify/require"
-	v1 "k8s.io/api/core/v1"
 	appsv1 "k8s.io/api/apps/v1"
+	v1 "k8s.io/api/core/v1"
 	"k8s.io/kubectl/pkg/scheme"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/client/fake"
@@ -18,6 +17,16 @@ import (
 	"helm.sh/helm/v3/pkg/engine"
 	_ "istio.io/client-go/pkg/clientset/versioned/fake"
 )
+
+const HELM_CHART = "../../../resources/keb"
+const BROKER_CONTAINER_NAME = "kyma-environment-broker"
+const BROKER_CHART_NAME = "kcp-kyma-environment-broker"
+const VALUES_FILE = HELM_CHART + "/values.yaml"
+const NOTES_FILE = "keb/templates/NOTES.txt"
+
+const ENV_NAME = "APP_HAP_RULE_FILE_PATH"
+const ENV_FILENAME = "/hapRule.yaml"
+const ENV_PATH = "config" + ENV_FILENAME
 
 // Test for checking if expected format of
 func TestAppConfig(t *testing.T) {
@@ -29,14 +38,14 @@ func TestAppConfig(t *testing.T) {
 	require.NotNil(t, sch)
 
 	// helm ch
-	ch, err := loader.Load("../../../resources/keb")
+
+	ch, err := loader.Load(HELM_CHART)
 	require.NoError(t, err)
 	require.NotNil(t, ch)
 
-	values, err := chartutil.ReadValuesFile("../../../resources/keb/values.yaml")
+	values, err := chartutil.ReadValuesFile(VALUES_FILE)
 	require.NotNil(t, values)
 	require.NoError(t, err)
-
 
 	values["hap"] = map[string]interface{}{
 		"rule": []string{
@@ -53,7 +62,7 @@ func TestAppConfig(t *testing.T) {
 	clientBuilder := fake.NewClientBuilder()
 
 	for filename, res := range resources {
-		if filename == "keb/templates/NOTES.txt" {
+		if filename == NOTES_FILE {
 			continue
 		}
 		res = strings.Trim(res, "\n")
@@ -61,12 +70,10 @@ func TestAppConfig(t *testing.T) {
 		if res == "" || res == "\n" || strings.Contains(res, "istio") {
 			continue
 		}
-		fmt.Println("res: " + res)
+
 		decoder := scheme.Codecs.UniversalDeserializer()
-		runtimeObject, groupVersionKind, err := decoder.Decode([]byte(res), nil, nil)
+		runtimeObject, _, err := decoder.Decode([]byte(res), nil, nil)
 		require.NoError(t, err)
-		fmt.Printf("groupVersionKind: %v\n", groupVersionKind)
-		fmt.Printf("runtimeObject: %v\n", runtimeObject)
 
 		clientBuilder.WithRuntimeObjects(runtimeObject)
 	}
@@ -78,14 +85,14 @@ func TestAppConfig(t *testing.T) {
 		// when
 		appConfig := &v1.ConfigMap{}
 		err = cli.Get(t.Context(), client.ObjectKey{
-			Name: "kcp-kyma-environment-broker",
+			Name: BROKER_CHART_NAME,
 		}, appConfig)
 
 		// then
 		require.NoError(t, err)
 		require.NotNil(t, appConfig)
 
-		data, ok := appConfig.Data["hapRule.yaml"]
+		data, ok := appConfig.Data[ENV_FILENAME]
 		require.True(t, ok)
 		require.Equal(t, "rule:\n- aws", data)
 	})
@@ -94,7 +101,7 @@ func TestAppConfig(t *testing.T) {
 		// when
 		deployment := &appsv1.Deployment{}
 		err = cli.Get(t.Context(), client.ObjectKey{
-			Name: "kcp-kyma-environment-broker",
+			Name: BROKER_CHART_NAME,
 		}, deployment)
 
 		// then
@@ -103,12 +110,12 @@ func TestAppConfig(t *testing.T) {
 
 		envFound := false
 		for _, container := range deployment.Spec.Template.Spec.Containers {
-			if container.Name == "kyma-environment-broker" {
+			if container.Name == BROKER_CONTAINER_NAME {
 				for _, env := range container.Env {
-					if env.Name == "APP_HAP_RULE_FILE_PATH" &&
-						env.Value == "/config/hapRule.yaml" {
+					if env.Name == ENV_NAME &&
+						env.Value == ENV_PATH {
 						envFound = true
-							break
+						break
 					}
 				}
 			}
