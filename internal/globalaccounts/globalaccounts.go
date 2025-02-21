@@ -50,6 +50,8 @@ func Run(ctx context.Context, cfg Config) {
 	slog.Info(fmt.Sprintf("*** Start at: %s ***", time.Now().Format(time.RFC3339)))
 	slog.Info(fmt.Sprintf("is dry run?: %t", cfg.DryRun))
 
+	slog.Info(fmt.Sprintf("config.Database.UseLastOperationID: %+v", cfg.Database.UseLastOperationID))
+
 	svc, db, connection, kcp, err := initAll(ctx, cfg)
 
 	fatalOnError(err)

@@ -704,6 +704,9 @@ func (r readSession) GetActiveInstanceStats() ([]dbmodel.InstanceByGlobalAccount
 	filter := dbmodel.InstanceFilter{
 		States: []dbmodel.InstanceState{dbmodel.InstanceNotDeprovisioned},
 	}
+
+	slog.Info("Calling - GetActiveInstanceStats", "filter", filter)
+
 	// Find and join the last operation for each instance matching the state filter(s).
 	// Last operation is found with the greatest-n-per-group problem solved with OUTER JOIN, followed by a (INNER) JOIN to get instance columns.
 	stmt = r.session.
@@ -727,6 +730,8 @@ func (r readSession) GetActiveInstanceStatsUsingLastOperationID() ([]dbmodel.Ins
 	filter := dbmodel.InstanceFilter{
 		States: []dbmodel.InstanceState{dbmodel.InstanceNotDeprovisioned},
 	}
+	slog.Info("Calling - GetActiveInstanceStatsUsingLastOperationID", "filter", filter)
+
 	// Find and join the last operation for each instance matching the state filter(s).
 	stmt = r.session.
 		Select(fmt.Sprintf("%s.global_account_id", InstancesTableName), "count(*) as total").
@@ -767,6 +772,7 @@ func (r readSession) GetSubaccountsInstanceStats() ([]dbmodel.InstanceBySubAccou
 	filter := dbmodel.InstanceFilter{
 		States: []dbmodel.InstanceState{dbmodel.InstanceNotDeprovisioned},
 	}
+
 	// Find and join the last operation for each instance matching the state filter(s).
 	// Last operation is found with the greatest-n-per-group problem solved with OUTER JOIN, followed by a (INNER) JOIN to get instance columns.
 	stmt = r.session.
@@ -1140,7 +1146,7 @@ func buildInstanceStateFilters(table string, filter dbmodel.InstanceFilter) dbr.
 	return dbr.Or(exprs...)
 }
 
-func addInstanceFilters(stmt *dbr.SelectStmt, filter dbmodel.InstanceFilter, alias string) {
+func addInstanceFilters(stmt *dbr.SelectStmt, filter dbmodel.InstanceFilter, table string) {
 	if len(filter.GlobalAccountIDs) > 0 {
 		stmt.Where("instances.global_account_id IN ?", filter.GlobalAccountIDs)
 	}
@@ -1164,7 +1170,7 @@ func addInstanceFilters(stmt *dbr.SelectStmt, filter dbmodel.InstanceFilter, ali
 	}
 	if len(filter.Shoots) > 0 {
 		shootNameMatch := fmt.Sprintf(`^(%s)$`, strings.Join(filter.Shoots, "|"))
-		stmt.Where(fmt.Sprintf("%s.data::json->>'shoot_name' ~ ?", alias), shootNameMatch)
+		stmt.Where(fmt.Sprintf("%s.data::json->>'shoot_name' ~ ?", table), shootNameMatch)
 	}
 
 	if filter.Expired != nil {

@@ -253,7 +253,7 @@ func (s *CreateRuntimeResourceStep) createShootProvider(operation *internal.Oper
 	}
 
 	if len(operation.ProvisioningParameters.Parameters.AdditionalWorkerNodePools) > 0 {
-		additionalWorkers := CreateAdditionalWorkers(s.config, values, operation.ProvisioningParameters.Parameters.AdditionalWorkerNodePools, values.Zones)
+		additionalWorkers := CreateAdditionalWorkers(s.config, values, nil, operation.ProvisioningParameters.Parameters.AdditionalWorkerNodePools, values.Zones)
 		provider.AdditionalWorkers = &additionalWorkers
 	}
 
@@ -377,15 +377,22 @@ func RuntimeToYaml(runtime *imv1.Runtime) (string, error) {
 	return string(result), nil
 }
 
-func CreateAdditionalWorkers(config input.Config, values provider.Values, additionalWorkerNodePools []pkg.AdditionalWorkerNodePool, zones []string) []gardener.Worker {
+func CreateAdditionalWorkers(config input.Config, values provider.Values, currentAdditionalWorkers map[string]gardener.Worker, additionalWorkerNodePools []pkg.AdditionalWorkerNodePool, zones []string) []gardener.Worker {
 	additionalWorkerNodePoolsMaxUnavailable := intstr.FromInt32(int32(0))
 	workers := make([]gardener.Worker, 0, len(additionalWorkerNodePools))
 
 	for _, additionalWorkerNodePool := range additionalWorkerNodePools {
-		workerZones := zones
-		if !additionalWorkerNodePool.HAZones {
-			rand.Shuffle(len(workerZones), func(i, j int) { workerZones[i], workerZones[j] = workerZones[j], workerZones[i] })
-			workerZones = workerZones[:1]
+		currentAdditionalWorker, exists := currentAdditionalWorkers[additionalWorkerNodePool.Name]
+
+		var workerZones []string
+		if exists {
+			workerZones = currentAdditionalWorker.Zones
+		} else {
+			workerZones = zones
+			if !additionalWorkerNodePool.HAZones {
+				rand.Shuffle(len(workerZones), func(i, j int) { workerZones[i], workerZones[j] = workerZones[j], workerZones[i] })
+				workerZones = workerZones[:1]
+			}
 		}
 		workerMaxSurge := intstr.FromInt32(int32(len(workerZones)))
 
