@@ -8,6 +8,7 @@
     "oidc",
     "administrators"
   ],
+  "_load_current_config": true,
   "_show_form_view": true,
   "properties": {
     "administrators": {

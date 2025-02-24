@@ -4,11 +4,87 @@
     "machineType",
     "autoScalerMin",
     "autoScalerMax",
+    "additionalWorkerNodePools",
     "oidc",
     "administrators"
   ],
+  "_load_current_config": true,
   "_show_form_view": true,
   "properties": {
+    "additionalWorkerNodePools": {
+      "description": "Specifies the list of additional worker node pools.",
+      "type": "array",
+      "uniqueItems": true,
+      "items": {
+        "type": "object",
+        "required": ["name", "machineType", "haZones", "autoScalerMin", "autoScalerMax"],
+        "_controlsOrder": ["name", "machineType", "haZones", "autoScalerMin", "autoScalerMax"],
+        "properties": {
+          "name": {
+            "description": "Specifies the unique name of the additional worker node pool. The name must consist of lowercase alphanumeric characters or '-', must start and end with an alphanumeric character, and can be a maximum of 15 characters in length.",
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 15,
+            "pattern": "^[a-z0-9]([-a-z0-9]*[a-z0-9])?$"
+          },
+          "machineType": {
+            "description": "Specifies the type of the virtual machine.",
+            "type": "string",
+            "minLength": 1,
+            "enum": [
+              "m6i.large", "m6i.xlarge", "m6i.2xlarge", "m6i.4xlarge",
+              "m6i.8xlarge", "m6i.12xlarge", "m6i.16xlarge", "m5.large",
+              "m5.xlarge", "m5.2xlarge", "m5.4xlarge", "m5.8xlarge",
+              "m5.12xlarge", "m5.16xlarge", "c7i.large", "c7i.xlarge",
+              "c7i.2xlarge", "c7i.4xlarge", "c7i.8xlarge", "c7i.12xlarge",
+              "c7i.16xlarge"
+            ],
+            "_enumDisplayName": {
+              "m5.12xlarge": "m5.12xlarge (48vCPU, 192GB RAM)",
+              "m5.16xlarge": "m5.16xlarge (64vCPU, 256GB RAM)",
+              "m5.2xlarge": "m5.2xlarge (8vCPU, 32GB RAM)",
+              "m5.4xlarge": "m5.4xlarge (16vCPU, 64GB RAM)",
+              "m5.8xlarge": "m5.8xlarge (32vCPU, 128GB RAM)",
+              "m5.large": "m5.large (2vCPU, 8GB RAM)",
+              "m5.xlarge": "m5.xlarge (4vCPU, 16GB RAM)",
+              "m6i.12xlarge": "m6i.12xlarge (48vCPU, 192GB RAM)",
+              "m6i.16xlarge": "m6i.16xlarge (64vCPU, 256GB RAM)",
+              "m6i.2xlarge": "m6i.2xlarge (8vCPU, 32GB RAM)",
+              "m6i.4xlarge": "m6i.4xlarge (16vCPU, 64GB RAM)",
+              "m6i.8xlarge": "m6i.8xlarge (32vCPU, 128GB RAM)",
+              "m6i.large": "m6i.large (2vCPU, 8GB RAM)",
+              "m6i.xlarge": "m6i.xlarge (4vCPU, 16GB RAM)",
+              "c7i.large": "c7i.large (2vCPU, 4GB RAM)",
+              "c7i.xlarge": "c7i.xlarge (4vCPU, 8GB RAM)",
+              "c7i.2xlarge": "c7i.2xlarge (8vCPU, 16GB RAM)",
+              "c7i.4xlarge": "c7i.4xlarge (16vCPU, 32GB RAM)",
+              "c7i.8xlarge": "c7i.8xlarge (32vCPU, 64GB RAM)",
+              "c7i.12xlarge": "c7i.12xlarge (48vCPU, 96GB RAM)",
+              "c7i.16xlarge": "c7i.16xlarge (64vCPU, 128GB RAM)"
+            }
+          },
+          "haZones": {
+            "description": "Specifies whether high availability (HA) zones are supported. This setting is permanent and cannot be changed later. If HA is disabled, all resources are placed in a single, randomly selected zone. Disabled HA allows setting both autoScalerMin and autoScalerMax to 1, which helps reduce costs. It is not recommended for production environments. When enabled, resources are distributed across three zones to enhance fault tolerance. Enabled HA requires setting autoScalerMin to the minimal value 3.",
+            "title": "HA zones",
+            "type": "boolean",
+            "default": true
+          },
+          "autoScalerMin": {
+            "description": "Specifies the minimum number of virtual machines to create.",
+            "type": "integer",
+            "minimum": 1,
+            "default": 3
+          },
+          "autoScalerMax": {
+            "description": "Specifies the maximum number of virtual machines to create.",
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 300,
+            "default": 20
+          }
+        }
+      }
+    },
     "administrators": {
       "description": "Specifies the list of runtime administrators",
       "items": {

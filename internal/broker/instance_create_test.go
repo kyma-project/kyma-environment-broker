@@ -898,66 +898,6 @@ func TestProvision_Provision(t *testing.T) {
 		assert.Equal(t, ptr.String(internal.LicenceTypeLite), operation.ProvisioningParameters.Parameters.LicenceType)
 	})
 
-	t.Run("Should fail on insufficient OIDC params (missing issuerURL)", func(t *testing.T) {
-		// given
-		memoryStorage := storage.NewMemoryStorage()
-
-		queue := &automock.Queue{}
-		queue.On("Add", mock.AnythingOfType("string"))
-
-		factoryBuilder := &automock.PlanValidator{}
-		factoryBuilder.On("IsPlanSupport", planID).Return(true)
-
-		planDefaults := func(planID string, platformProvider pkg.CloudProvider, provider *pkg.CloudProvider) (*gqlschema.ClusterConfigInput, error) {
-			return &gqlschema.ClusterConfigInput{}, nil
-		}
-		kcBuilder := &kcMock.KcBuilder{}
-		// #create provisioner endpoint
-		provisionEndpoint := broker.NewProvision(
-			broker.Config{
-				EnablePlans:              []string{"gcp", "azure"},
-				URL:                      brokerURL,
-				OnlySingleTrialPerGA:     true,
-				EnableKubeconfigURLLabel: true,
-			},
-			gardener.Config{Project: "test", ShootDomain: "example.com", DNSProviders: fixDNSProviders()},
-			memoryStorage.Operations(),
-			memoryStorage.Instances(),
-			memoryStorage.InstancesArchived(),
-			queue,
-			factoryBuilder,
-			broker.PlansConfig{},
-			planDefaults,
-			log,
-			dashboardConfig,
-			kcBuilder,
-			whitelist.Set{},
-			&broker.OneForAllConvergedCloudRegionsProvider{},
-			nil,
-		)
-
-		oidcParams := `"clientID":"client-id"`
-		err := fmt.Errorf("issuerURL must not be empty")
-		errMsg := fmt.Sprintf("[instanceID: %s] %s", instanceID, err)
-		expectedErr := apiresponses.NewFailureResponse(err, http.StatusBadRequest, errMsg)
-
-		// when
-		_, err = provisionEndpoint.Provision(fixRequestContext(t, "req-region"), instanceID, domain.ProvisionDetails{
-			ServiceID:     serviceID,
-			PlanID:        planID,
-			RawParameters: json.RawMessage(fmt.Sprintf(`{"name": "%s", "region": "%s","oidc":{ %s }}`, clusterName, clusterRegion, oidcParams)),
-			RawContext:    json.RawMessage(fmt.Sprintf(`{"globalaccount_id": "%s", "subaccount_id": "%s", "user_id": "%s"}`, globalAccountID, subAccountID, "Test@Test.pl")),
-		}, true)
-		t.Logf("%+v\n", *provisionEndpoint)
-
-		// then
-		require.Error(t, err)
-		assert.IsType(t, &apiresponses.FailureResponse{}, err)
-		apierr := err.(*apiresponses.FailureResponse)
-		assert.Equal(t, expectedErr.(*apiresponses.FailureResponse).ValidatedStatusCode(nil), apierr.ValidatedStatusCode(nil))
-		assert.Equal(t, expectedErr.(*apiresponses.FailureResponse).LoggerAction(), apierr.LoggerAction())
-	})
-
 	t.Run("Should fail on insufficient OIDC params (missing clientID)", func(t *testing.T) {
 		// given
 		memoryStorage := storage.NewMemoryStorage()
@@ -1076,6 +1016,106 @@ func TestProvision_Provision(t *testing.T) {
 		apierr := err.(*apiresponses.FailureResponse)
 		assert.Equal(t, expectedErr.(*apiresponses.FailureResponse).ValidatedStatusCode(nil), apierr.ValidatedStatusCode(nil))
 		assert.Equal(t, expectedErr.(*apiresponses.FailureResponse).LoggerAction(), apierr.LoggerAction())
+	})
+
+	t.Run("Should fail on invalid OIDC issuerURL params", func(t *testing.T) {
+		// given
+		memoryStorage := storage.NewMemoryStorage()
+
+		queue := &automock.Queue{}
+		queue.On("Add", mock.AnythingOfType("string"))
+
+		factoryBuilder := &automock.PlanValidator{}
+		factoryBuilder.On("IsPlanSupport", planID).Return(true)
+
+		planDefaults := func(planID string, platformProvider pkg.CloudProvider, provider *pkg.CloudProvider) (*gqlschema.ClusterConfigInput, error) {
+			return &gqlschema.ClusterConfigInput{}, nil
+		}
+		kcBuilder := &kcMock.KcBuilder{}
+		// #create provisioner endpoint
+		provisionEndpoint := broker.NewProvision(
+			broker.Config{
+				EnablePlans:              []string{"gcp", "azure"},
+				URL:                      brokerURL,
+				OnlySingleTrialPerGA:     true,
+				EnableKubeconfigURLLabel: true,
+			},
+			gardener.Config{Project: "test", ShootDomain: "example.com", DNSProviders: fixDNSProviders()},
+			memoryStorage.Operations(),
+			memoryStorage.Instances(),
+			memoryStorage.InstancesArchived(),
+			queue,
+			factoryBuilder,
+			broker.PlansConfig{},
+			planDefaults,
+			log,
+			dashboardConfig,
+			kcBuilder,
+			whitelist.Set{},
+			&broker.OneForAllConvergedCloudRegionsProvider{},
+			nil,
+		)
+
+		testCases := []struct {
+			name          string
+			oidcParams    string
+			expectedError string
+		}{
+			{
+				name:          "wrong scheme",
+				oidcParams:    `"clientID":"client-id","issuerURL":"http://test.local","signingAlgs":["RS256"]`,
+				expectedError: "issuerURL must have https scheme",
+			},
+			{
+				name:          "missing issuerURL",
+				oidcParams:    `"clientID":"client-id"`,
+				expectedError: "issuerURL must not be empty",
+			},
+			{
+				name:          "URL with fragment",
+				oidcParams:    `"clientID":"client-id","issuerURL":"https://test.local#fragment","signingAlgs":["RS256"]`,
+				expectedError: "issuerURL must not contain a fragment",
+			},
+			{
+				name:          "URL with username",
+				oidcParams:    `"clientID":"client-id","issuerURL":"https://user@test.local","signingAlgs":["RS256"]`,
+				expectedError: "issuerURL must not contain a username or password",
+			},
+			{
+				name:          "URL with query",
+				oidcParams:    `"clientID":"client-id","issuerURL":"https://test.local?query=param","signingAlgs":["RS256"]`,
+				expectedError: "issuerURL must not contain a query",
+			},
+			{
+				name:          "URL with empty host",
+				oidcParams:    `"clientID":"client-id","issuerURL":"https:///path","signingAlgs":["RS256"]`,
+				expectedError: "issuerURL must be a valid URL",
+			},
+		}
+
+		for _, tc := range testCases {
+			t.Run(tc.name, func(t *testing.T) {
+				err := fmt.Errorf(tc.expectedError)
+				errMsg := fmt.Sprintf("[instanceID: %s] %s", instanceID, err)
+				expectedErr := apiresponses.NewFailureResponse(err, http.StatusBadRequest, errMsg)
+
+				// when
+				_, err = provisionEndpoint.Provision(fixRequestContext(t, "req-region"), instanceID, domain.ProvisionDetails{
+					ServiceID:     serviceID,
+					PlanID:        planID,
+					RawParameters: json.RawMessage(fmt.Sprintf(`{"name": "%s", "region": "%s","oidc":{ %s }}`, clusterName, clusterRegion, tc.oidcParams)),
+					RawContext:    json.RawMessage(fmt.Sprintf(`{"globalaccount_id": "%s", "subaccount_id": "%s", "user_id": "%s"}`, globalAccountID, subAccountID, "Test@Test.pl")),
+				}, true)
+				t.Logf("%+v\n", *provisionEndpoint)
+
+				// then
+				require.Error(t, err)
+				assert.IsType(t, &apiresponses.FailureResponse{}, err)
+				apierr := err.(*apiresponses.FailureResponse)
+				assert.Equal(t, expectedErr.(*apiresponses.FailureResponse).ValidatedStatusCode(nil), apierr.ValidatedStatusCode(nil))
+				assert.Equal(t, expectedErr.(*apiresponses.FailureResponse).LoggerAction(), apierr.LoggerAction())
+			})
+		}
 	})
 
 	t.Run("Should pass for any globalAccountId - EU Access", func(t *testing.T) {
@@ -1575,6 +1615,22 @@ func TestAdditionalWorkerNodePools(t *testing.T) {
 			additionalWorkerNodePools: `[{"name": "name-1", "machineType": "m6i.large", "haZones": true, "autoScalerMin": 20, "autoScalerMax": 3}]`,
 			expectedError:             true,
 		},
+		"Name contains capital letter": {
+			additionalWorkerNodePools: `[{"name": "workerName", "machineType": "m6i.large", "haZones": true, "autoScalerMin": 3, "autoScalerMax": 20}]`,
+			expectedError:             true,
+		},
+		"Name starts with hyphen": {
+			additionalWorkerNodePools: `[{"name": "-name", "machineType": "m6i.large", "haZones": true, "autoScalerMin": 3, "autoScalerMax": 20}]`,
+			expectedError:             true,
+		},
+		"Name ends with hyphen": {
+			additionalWorkerNodePools: `[{"name": "name-", "machineType": "m6i.large", "haZones": true, "autoScalerMin": 3, "autoScalerMax": 20}]`,
+			expectedError:             true,
+		},
+		"Name longer than 15 characters": {
+			additionalWorkerNodePools: `[{"name": "aaaaaaaaaaaaaaaa", "machineType": "m6i.large", "haZones": true, "autoScalerMin": 3, "autoScalerMax": 20}]`,
+			expectedError:             true,
+		},
 	} {
 		t.Run(tn, func(t *testing.T) {
 			// given
@@ -1598,11 +1654,10 @@ func TestAdditionalWorkerNodePools(t *testing.T) {
 			// #create provisioner endpoint
 			provisionEndpoint := broker.NewProvision(
 				broker.Config{
-					EnablePlans:                     []string{"aws"},
-					URL:                             brokerURL,
-					OnlySingleTrialPerGA:            true,
-					EnableKubeconfigURLLabel:        true,
-					EnableAdditionalWorkerNodePools: true,
+					EnablePlans:              []string{"aws"},
+					URL:                      brokerURL,
+					OnlySingleTrialPerGA:     true,
+					EnableKubeconfigURLLabel: true,
 				},
 				gardener.Config{Project: "test", ShootDomain: "example.com", DNSProviders: fixDNSProviders()},
 				memoryStorage.Operations(),
@@ -1668,11 +1723,10 @@ func TestAdditionalWorkerNodePoolsForUnsupportedPlans(t *testing.T) {
 			// #create provisioner endpoint
 			provisionEndpoint := broker.NewProvision(
 				broker.Config{
-					EnablePlans:                     []string{"trial", "free"},
-					URL:                             brokerURL,
-					OnlySingleTrialPerGA:            true,
-					EnableKubeconfigURLLabel:        true,
-					EnableAdditionalWorkerNodePools: true,
+					EnablePlans:              []string{"trial", "free"},
+					URL:                      brokerURL,
+					OnlySingleTrialPerGA:     true,
+					EnableKubeconfigURLLabel: true,
 				},
 				gardener.Config{Project: "test", ShootDomain: "example.com", DNSProviders: fixDNSProviders()},
 				memoryStorage.Operations(),
@@ -2160,11 +2214,10 @@ func TestUnsupportedMachineType(t *testing.T) {
 	// #create provisioner endpoint
 	provisionEndpoint := broker.NewProvision(
 		broker.Config{
-			EnablePlans:                     []string{"gcp"},
-			URL:                             brokerURL,
-			OnlySingleTrialPerGA:            true,
-			EnableKubeconfigURLLabel:        true,
-			EnableAdditionalWorkerNodePools: true,
+			EnablePlans:              []string{"gcp"},
+			URL:                      brokerURL,
+			OnlySingleTrialPerGA:     true,
+			EnableKubeconfigURLLabel: true,
 		},
 		gardener.Config{Project: "test", ShootDomain: "example.com", DNSProviders: fixDNSProviders()},
 		memoryStorage.Operations(),
@@ -2217,11 +2270,10 @@ func TestUnsupportedMachineTypeInAdditionalWorkerNodePools(t *testing.T) {
 	// #create provisioner endpoint
 	provisionEndpoint := broker.NewProvision(
 		broker.Config{
-			EnablePlans:                     []string{"aws"},
-			URL:                             brokerURL,
-			OnlySingleTrialPerGA:            true,
-			EnableKubeconfigURLLabel:        true,
-			EnableAdditionalWorkerNodePools: true,
+			EnablePlans:              []string{"aws"},
+			URL:                      brokerURL,
+			OnlySingleTrialPerGA:     true,
+			EnableKubeconfigURLLabel: true,
 		},
 		gardener.Config{Project: "test", ShootDomain: "example.com", DNSProviders: fixDNSProviders()},
 		memoryStorage.Operations(),

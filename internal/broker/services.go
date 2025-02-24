@@ -66,8 +66,6 @@ func (b *ServicesEndpoint) Services(ctx context.Context) ([]domain.Service, erro
 		b.cfg.EnableShootAndSeedSameRegion,
 		b.convergedCloudRegionsProvider.GetRegions(platformRegion),
 		assuredworkloads.IsKSA(platformRegion),
-		b.cfg.EnableAdditionalWorkerNodePools,
-		b.cfg.EnableLoadCurrentConfig,
 	) {
 
 		// filter out not enabled plans

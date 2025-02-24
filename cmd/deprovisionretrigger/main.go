@@ -51,6 +51,8 @@ func main() {
 		slog.Info("Dry run only - no changes")
 	}
 
+	slog.Info(fmt.Sprintf("config.Database.UseLastOperationID: %+v", cfg.Database.UseLastOperationID))
+
 	ctx := context.Background()
 	brokerClient := broker.NewClient(ctx, cfg.Broker)
 
