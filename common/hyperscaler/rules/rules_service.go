@@ -13,9 +13,9 @@ type RulesService struct {
 func NewRulesServiceFromFile(rulesFilePath string) (*RulesService, error) {
 	rulesConfig := &model.RulesConfig{}
 
-    if rulesFilePath == "" {
-        return nil, fmt.Errorf("No HAP rules file provided")
-    }
+	if rulesFilePath == "" {
+		return nil, fmt.Errorf("No HAP rules file provided")
+	}
 
 	log.Printf("Parsing rules from file: %s\n", rulesFilePath)
 	rulesConfig, err := rulesConfig.Load(rulesFilePath)
@@ -25,4 +25,3 @@ func NewRulesServiceFromFile(rulesFilePath string) (*RulesService, error) {
 
 	return &RulesService{}, nil
 }
-
