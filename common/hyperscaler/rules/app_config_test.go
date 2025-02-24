@@ -1,6 +1,7 @@
 package rules
 
 import (
+	"context"
 	"strings"
 	"testing"
 
@@ -83,7 +84,7 @@ func TestAppConfig(t *testing.T) {
 	t.Run("app config map should contain data with rules", func(t *testing.T) {
 		// when
 		appConfig := &v1.ConfigMap{}
-		err = cli.Get(t.Context(), client.ObjectKey{
+		err = cli.Get(context.Background(), client.ObjectKey{
 			Name: BROKER_CHART_NAME,
 		}, appConfig)
 
@@ -99,7 +100,7 @@ func TestAppConfig(t *testing.T) {
 	t.Run("keb deployment should contain env variable with file path", func(t *testing.T) {
 		// when
 		deployment := &appsv1.Deployment{}
-		err = cli.Get(t.Context(), client.ObjectKey{
+		err = cli.Get(context.Background(), client.ObjectKey{
 			Name: BROKER_CHART_NAME,
 		}, deployment)
 
