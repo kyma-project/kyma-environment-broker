@@ -705,7 +705,7 @@ func (r readSession) GetActiveInstanceStats() ([]dbmodel.InstanceByGlobalAccount
 		States: []dbmodel.InstanceState{dbmodel.InstanceNotDeprovisioned},
 	}
 
-	slog.Info("Calling - GetActiveInstanceStats", "filter", filter)
+	slog.Info("[last_operation_id] Calling GetActiveInstanceStats()")
 
 	// Find and join the last operation for each instance matching the state filter(s).
 	// Last operation is found with the greatest-n-per-group problem solved with OUTER JOIN, followed by a (INNER) JOIN to get instance columns.
@@ -730,7 +730,7 @@ func (r readSession) GetActiveInstanceStatsUsingLastOperationID() ([]dbmodel.Ins
 	filter := dbmodel.InstanceFilter{
 		States: []dbmodel.InstanceState{dbmodel.InstanceNotDeprovisioned},
 	}
-	slog.Info("Calling - GetActiveInstanceStatsUsingLastOperationID", "filter", filter)
+	slog.Info("[last_operation_id] Calling GetActiveInstanceStatsUsingLastOperationID()")
 
 	// Find and join the last operation for each instance matching the state filter(s).
 	stmt = r.session.
@@ -837,7 +837,7 @@ func (r readSession) GetNumberOfInstancesForGlobalAccountID(globalAccountID stri
 func (r readSession) ListInstancesUsingLastOperationID(filter dbmodel.InstanceFilter) ([]dbmodel.InstanceWithExtendedOperationDTO, int, int, error) {
 	var instances []dbmodel.InstanceWithExtendedOperationDTO
 
-	slog.Info("Calling - ListInstancesUsingLastOperationID", "filter", filter)
+	slog.Info("[last_operation_id] Calling ListInstancesUsingLastOperationID()")
 
 	// select an instance with a last operation
 	stmt := r.session.Select("o.data", "o.state", "o.type", fmt.Sprintf("%s.*", InstancesTableName)).
@@ -877,7 +877,7 @@ func (r readSession) ListInstancesUsingLastOperationID(filter dbmodel.InstanceFi
 func (r readSession) ListInstances(filter dbmodel.InstanceFilter) ([]dbmodel.InstanceWithExtendedOperationDTO, int, int, error) {
 	var instances []dbmodel.InstanceWithExtendedOperationDTO
 
-	slog.Info("Calling ListInstances", "filter", filter)
+	slog.Info("[last_operation_id] Calling ListInstances()")
 
 	// Base select and order by created at
 	var stmt *dbr.SelectStmt
@@ -927,7 +927,7 @@ func (r readSession) ListInstances(filter dbmodel.InstanceFilter) ([]dbmodel.Ins
 func (r readSession) ListInstancesWithSubaccountStates(filter dbmodel.InstanceFilter) ([]dbmodel.InstanceWithSubaccountStateDTO, int, int, error) {
 	var instances []dbmodel.InstanceWithSubaccountStateDTO
 
-	slog.Info("Calling ListInstancesWithSubaccountStates", "filter", filter)
+	slog.Info("[last_operation_id] Calling ListInstancesWithSubaccountStates()")
 
 	// Base select and order by created at
 	var stmt *dbr.SelectStmt
@@ -978,7 +978,7 @@ func (r readSession) ListInstancesWithSubaccountStates(filter dbmodel.InstanceFi
 func (r readSession) ListInstancesWithSubaccountStatesWithUseLastOperationID(filter dbmodel.InstanceFilter) ([]dbmodel.InstanceWithSubaccountStateDTO, int, int, error) {
 	var instances []dbmodel.InstanceWithSubaccountStateDTO
 
-	slog.Info("Calling ListInstancesWithSubaccountStatesWithUseLastOperationID", "filter", filter)
+	slog.Info("[last_operation_id] Calling ListInstancesWithSubaccountStatesWithUseLastOperationID()")
 
 	// Base select and order by created at
 	var stmt *dbr.SelectStmt
@@ -1038,7 +1038,7 @@ func (r readSession) getInstanceCountByLastOperationID(filter dbmodel.InstanceFi
 		Total int
 	}
 
-	slog.Info("Calling getInstanceCountByLastOperationID", "filter", filter)
+	slog.Info("[last_operation_id] Calling getInstanceCountByLastOperationID()")
 
 	var stmt *dbr.SelectStmt
 	stmt = r.session.
@@ -1063,7 +1063,7 @@ func (r readSession) getInstanceCount(filter dbmodel.InstanceFilter) (int, error
 	}
 	var stmt *dbr.SelectStmt
 
-	slog.Info("Calling getInstanceCount", "filter", filter)
+	slog.Info("[last_operation_id]  Calling getInstanceCount()")
 
 	stmt = r.session.
 		Select("count(*) as total").
