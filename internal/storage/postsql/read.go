@@ -705,7 +705,7 @@ func (r readSession) GetActiveInstanceStats() ([]dbmodel.InstanceByGlobalAccount
 		States: []dbmodel.InstanceState{dbmodel.InstanceNotDeprovisioned},
 	}
 
-	slog.Info("[last_operation_id] Calling GetActiveInstanceStats")
+	slog.Info("[last_operation_id] Calling GetActiveInstanceStats()")
 
 	// Find and join the last operation for each instance matching the state filter(s).
 	// Last operation is found with the greatest-n-per-group problem solved with OUTER JOIN, followed by a (INNER) JOIN to get instance columns.
@@ -730,7 +730,7 @@ func (r readSession) GetActiveInstanceStatsUsingLastOperationID() ([]dbmodel.Ins
 	filter := dbmodel.InstanceFilter{
 		States: []dbmodel.InstanceState{dbmodel.InstanceNotDeprovisioned},
 	}
-	slog.Info("[last_operation_id] Calling GetActiveInstanceStatsUsingLastOperationID")
+	slog.Info("[last_operation_id] Calling GetActiveInstanceStatsUsingLastOperationID()")
 
 	// Find and join the last operation for each instance matching the state filter(s).
 	stmt = r.session.
@@ -837,7 +837,7 @@ func (r readSession) GetNumberOfInstancesForGlobalAccountID(globalAccountID stri
 func (r readSession) ListInstancesUsingLastOperationID(filter dbmodel.InstanceFilter) ([]dbmodel.InstanceWithExtendedOperationDTO, int, int, error) {
 	var instances []dbmodel.InstanceWithExtendedOperationDTO
 
-	slog.Info("Calling ListInstancesUsingLastOperationID()")
+	slog.Info("[last_operation_id] Calling ListInstancesUsingLastOperationID()")
 
 	// select an instance with a last operation
 	stmt := r.session.Select("o.data", "o.state", "o.type", fmt.Sprintf("%s.*", InstancesTableName)).
