@@ -2,6 +2,7 @@ package rules
 
 import (
 	"context"
+	"slices"
 	"strings"
 	"testing"
 
@@ -106,20 +107,15 @@ func TestAppConfig(t *testing.T) {
 		require.NoError(t, err)
 		require.NotNil(t, deployment)
 
-		envFound := false
-		for _, container := range deployment.Spec.Template.Spec.Containers {
-			if container.Name == BROKER_CONTAINER_NAME {
-				for _, env := range container.Env {
-					if env.Name == ENV_NAME &&
-						env.Value == ENV_PATH {
-						envFound = true
-						break
-					}
-				}
-			}
-		}
+		containers := deployment.Spec.Template.Spec.Containers
+		cIndex := slices.IndexFunc(containers, func(c v1.Container) bool { return c.Name == BROKER_CONTAINER_NAME })
 
-		require.True(t, envFound)
+		found := slices.ContainsFunc(containers[cIndex].Env, func(e v1.EnvVar) bool {
+			return e.Name == ENV_NAME &&
+				e.Value == ENV_PATH
+		})
+
+		require.True(t, found)
 	})
 
 }
