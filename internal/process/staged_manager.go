@@ -87,7 +87,8 @@ func (m *StagedManager) SpeedUp(speedFactor int64) {
 }
 
 func (m *StagedManager) DefineStages(names []string) {
-	m.stages = make([]*stage, len(names))
+	var dummy = names
+	m.stages = make([]*stage, len(dummy))
 	for i, n := range names {
 		m.stages[i] = &stage{name: n, steps: []StepWithCondition{}}
 	}
