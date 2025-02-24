@@ -53,4 +53,26 @@ func TestNewRulesServiceFromFile(t *testing.T) {
 		require.Error(t, err)
 		require.Nil(t, service)
 	})
+
+	t.Run("should return error when YAML file is corrupted", func(t *testing.T) {
+		// given
+		content := "rule:\n- rule1\n- rule2\ncorrupted_content"
+		tmpfile, err := os.CreateTemp("", "test*.yaml")
+		require.NoError(t, err)
+		defer os.Remove(tmpfile.Name())
+
+		if _, err := tmpfile.Write([]byte(content)); err != nil {
+			t.Fatalf("Failed to write to temp file: %v", err)
+		}
+		if err := tmpfile.Close(); err != nil {
+			t.Fatalf("Failed to close temp file: %v", err)
+		}
+
+		// when
+		service, err := NewRulesServiceFromFile(tmpfile.Name())
+
+		// then
+		require.Error(t, err)
+		require.Nil(t, service)
+	})
 }

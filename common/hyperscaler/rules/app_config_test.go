@@ -29,7 +29,6 @@ const ENV_NAME = "APP_HAP_RULE_FILE_PATH"
 const ENV_FILENAME = "hapRule.yaml"
 const ENV_PATH = "/config/" + ENV_FILENAME
 
-// Test for checking if expected format of
 func TestAppConfig(t *testing.T) {
 
 	// given
@@ -65,8 +64,7 @@ func TestAppConfig(t *testing.T) {
 		if filename == NOTES_FILE {
 			continue
 		}
-		res = strings.Trim(res, "\n")
-		res = strings.Trim(res, " ")
+		res = strings.Trim(res, "\n ")
 		if res == "" || res == "\n" || strings.Contains(res, "istio") {
 			continue
 		}
