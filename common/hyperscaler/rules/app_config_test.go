@@ -110,10 +110,7 @@ func TestAppConfig(t *testing.T) {
 		containers := deployment.Spec.Template.Spec.Containers
 		cIndex := slices.IndexFunc(containers, func(c v1.Container) bool { return c.Name == BROKER_CONTAINER_NAME })
 
-		found := slices.ContainsFunc(containers[cIndex].Env, func(e v1.EnvVar) bool {
-			return e.Name == ENV_NAME &&
-				e.Value == ENV_PATH
-		})
+		found := slices.ContainsFunc(containers[cIndex].Env, func(e v1.EnvVar) bool { return e.Name == ENV_NAME && e.Value == ENV_PATH })
 
 		require.True(t, found)
 	})
