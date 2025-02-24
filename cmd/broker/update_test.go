@@ -2359,4 +2359,127 @@ func TestUpdateAdditionalWorkerNodePools(t *testing.T) {
 		runtime := suite.GetRuntimeResourceByInstanceID(iid)
 		assert.Len(t, *runtime.Spec.Shoot.Provider.AdditionalWorkers, 0)
 	})
+
+	t.Run("updated additional worker node pool should have the same zones", func(t *testing.T) {
+		// given
+		cfg := fixConfig()
+		cfg.Broker.KimConfig.Enabled = true
+		cfg.Broker.KimConfig.Plans = []string{"aws"}
+		cfg.Broker.KimConfig.KimOnlyPlans = []string{"aws"}
+
+		suite := NewBrokerSuiteTestWithConfig(t, cfg)
+		defer suite.TearDown()
+		iid := uuid.New().String()
+
+		resp := suite.CallAPI("PUT", fmt.Sprintf("oauth/cf-eu10/v2/service_instances/%s?accepts_incomplete=true&plan_id=361c511f-f939-4621-b228-d0fb79a1fe15&service_id=47c9dcbf-ff30-448e-ab36-d3bad66ba281", iid),
+			`{
+				   		"service_id": "47c9dcbf-ff30-448e-ab36-d3bad66ba281",
+				   		"plan_id": "361c511f-f939-4621-b228-d0fb79a1fe15",
+				   		"context": {
+					   		"globalaccount_id": "g-account-id",
+					   		"subaccount_id": "sub-id",
+					   		"user_id": "john.smith@email.com"
+				   		},
+						"parameters": {
+							"name": "testing-cluster",
+							"region": "eu-central-1",
+							"additionalWorkerNodePools": [
+								{
+									"name": "worker-1",
+									"machineType": "m6i.large",
+									"haZones": false,
+									"autoScalerMin": 3,
+									"autoScalerMax": 20
+								},
+								{
+									"name": "worker-2",
+									"machineType": "m6i.large",
+									"haZones": false,
+									"autoScalerMin": 3,
+									"autoScalerMax": 20
+								},
+								{
+									"name": "worker-3",
+									"machineType": "m6i.large",
+									"haZones": true,
+									"autoScalerMin": 3,
+									"autoScalerMax": 20
+								},
+								{
+									"name": "worker-4",
+									"machineType": "m6i.large",
+									"haZones": true,
+									"autoScalerMin": 3,
+									"autoScalerMax": 20
+								}
+							]
+						}
+   			}`)
+		opID := suite.DecodeOperationID(resp)
+		suite.waitForRuntimeAndMakeItReady(opID)
+		suite.WaitForOperationState(opID, domain.Succeeded)
+		runtime := suite.GetRuntimeResourceByInstanceID(iid)
+		worker1Zones := (*runtime.Spec.Shoot.Provider.AdditionalWorkers)[0].Zones
+		worker2Zones := (*runtime.Spec.Shoot.Provider.AdditionalWorkers)[1].Zones
+		worker3Zones := (*runtime.Spec.Shoot.Provider.AdditionalWorkers)[2].Zones
+		worker4Zones := (*runtime.Spec.Shoot.Provider.AdditionalWorkers)[3].Zones
+
+		// when
+		// OSB update:
+		resp = suite.CallAPI("PATCH", fmt.Sprintf("oauth/cf-eu10/v2/service_instances/%s?accepts_incomplete=true", iid),
+			`{
+       					"service_id": "47c9dcbf-ff30-448e-ab36-d3bad66ba281",
+       					"plan_id": "361c511f-f939-4621-b228-d0fb79a1fe15",
+       					"context": {
+           					"globalaccount_id": "g-account-id",
+           					"user_id": "john.smith@email.com"
+       					},
+						"parameters": {
+							"additionalWorkerNodePools": [
+								{
+									"name": "worker-1",
+									"machineType": "m6i.large",
+									"haZones": false,
+									"autoScalerMin": 3,
+									"autoScalerMax": 20
+								},
+								{
+									"name": "worker-2",
+									"machineType": "m6i.large",
+									"haZones": false,
+									"autoScalerMin": 3,
+									"autoScalerMax": 20
+								},
+								{
+									"name": "worker-3",
+									"machineType": "m6i.large",
+									"haZones": true,
+									"autoScalerMin": 3,
+									"autoScalerMax": 20
+								},
+								{
+									"name": "worker-4",
+									"machineType": "m6i.large",
+									"haZones": true,
+									"autoScalerMin": 3,
+									"autoScalerMax": 20
+								}
+							]
+						}
+   			}`)
+		assert.Equal(t, http.StatusAccepted, resp.StatusCode)
+		upgradeOperationID := suite.DecodeOperationID(resp)
+		suite.WaitForOperationState(upgradeOperationID, domain.Succeeded)
+		updatedRuntime := suite.GetRuntimeResourceByInstanceID(iid)
+		updatedWorker1Zones := (*updatedRuntime.Spec.Shoot.Provider.AdditionalWorkers)[0].Zones
+		updatedWorker2Zones := (*updatedRuntime.Spec.Shoot.Provider.AdditionalWorkers)[1].Zones
+		updatedWorker3Zones := (*updatedRuntime.Spec.Shoot.Provider.AdditionalWorkers)[2].Zones
+		updatedWorker4Zones := (*updatedRuntime.Spec.Shoot.Provider.AdditionalWorkers)[3].Zones
+
+		// then
+		assert.Equal(t, worker1Zones, updatedWorker1Zones)
+		assert.Equal(t, worker2Zones, updatedWorker2Zones)
+		assert.Equal(t, worker3Zones, updatedWorker3Zones)
+		assert.Equal(t, worker4Zones, updatedWorker4Zones)
+	})
 }
