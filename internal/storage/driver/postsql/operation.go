@@ -294,7 +294,7 @@ func (s *operations) GetLastOperation(instanceID string) (*internal.Operation, e
 	var lastErr dberr.Error
 	err := wait.PollUntilContextTimeout(context.Background(), defaultRetryInterval, defaultRetryTimeout, true, func(ctx context.Context) (bool, error) {
 
-		operation, lastErr = session.GetLastOperationByLastOperationID(instanceID, []internal.OperationType{})
+		operation, lastErr = session.GetLastOperation(instanceID, []internal.OperationType{})
 		if lastErr != nil {
 			if dberr.IsNotFound(lastErr) {
 				lastErr = dberr.NotFound("Operation with instance_id %s not exist", instanceID)
@@ -321,7 +321,7 @@ func (s *operations) GetLastOperation(instanceID string) (*internal.Operation, e
 // GetLastOperationByTypes returns Operation (with one of given types) for given instance ID which is not in 'pending' state. Returns an error if the operation does not exist.
 func (s *operations) GetLastOperationByTypes(instanceID string, types []internal.OperationType) (*internal.Operation, error) {
 	session := s.NewReadSession()
-	dto, dbErr := session.GetLastOperationByLastOperationID(instanceID, types)
+	dto, dbErr := session.GetLastOperation(instanceID, types)
 	if dbErr != nil {
 		return nil, dbErr
 	}

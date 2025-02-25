@@ -413,7 +413,7 @@ func (s *Instance) Delete(instanceID string) error {
 
 func (s *Instance) GetActiveInstanceStats() (internal.InstanceStats, error) {
 
-	entries, err := s.NewReadSession().GetActiveInstanceStatsUsingLastOperationID()
+	entries, err := s.NewReadSession().GetActiveInstanceStats()
 
 	if err != nil {
 		return internal.InstanceStats{}, err
@@ -428,7 +428,7 @@ func (s *Instance) GetActiveInstanceStats() (internal.InstanceStats, error) {
 		result.TotalNumberOfInstances = result.TotalNumberOfInstances + e.Total
 	}
 
-	subEntries, err := s.NewReadSession().GetSubaccountsInstanceStatsUsingLastOperationID()
+	subEntries, err := s.NewReadSession().GetSubaccountsInstanceStats()
 
 	if err != nil {
 		return internal.InstanceStats{}, err
@@ -441,7 +441,7 @@ func (s *Instance) GetActiveInstanceStats() (internal.InstanceStats, error) {
 
 func (s *Instance) GetERSContextStats() (internal.ERSContextStats, error) {
 
-	entries, err := s.NewReadSession().GetERSContextStatsUsingLastOperationID()
+	entries, err := s.NewReadSession().GetERSContextStats()
 	if err != nil {
 		return internal.ERSContextStats{}, err
 	}
@@ -456,7 +456,7 @@ func (s *Instance) GetERSContextStats() (internal.ERSContextStats, error) {
 
 func (s *Instance) List(filter dbmodel.InstanceFilter) ([]internal.Instance, int, int, error) {
 
-	dtos, count, totalCount, err := s.NewReadSession().ListInstancesUsingLastOperationID(filter)
+	dtos, count, totalCount, err := s.NewReadSession().ListInstances(filter)
 
 	if err != nil {
 		return []internal.Instance{}, 0, 0, err
@@ -492,7 +492,7 @@ func (s *Instance) UpdateInstanceLastOperation(instanceID, operationID string) e
 
 func (s *Instance) ListWithSubaccountState(filter dbmodel.InstanceFilter) ([]internal.InstanceWithSubaccountState, int, int, error) {
 
-	dtos, count, totalCount, err := s.NewReadSession().ListInstancesWithSubaccountStatesWithUseLastOperationID(filter)
+	dtos, count, totalCount, err := s.NewReadSession().ListInstancesWithSubaccountStates(filter)
 
 	if err != nil {
 		return []internal.InstanceWithSubaccountState{}, 0, 0, err

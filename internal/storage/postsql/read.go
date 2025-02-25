@@ -204,7 +204,7 @@ func (r readSession) FindAllInstancesForSubAccounts(subAccountslist []string) ([
 	return instances, nil
 }
 
-func (r readSession) GetLastOperationByLastOperationID(instanceID string, types []internal.OperationType) (dbmodel.OperationDTO, dberr.Error) {
+func (r readSession) GetLastOperation(instanceID string, types []internal.OperationType) (dbmodel.OperationDTO, dberr.Error) {
 	inst := dbr.Eq("instance_id", instanceID)
 	state := dbr.Neq("state", []string{orchestration.Pending, orchestration.Canceled})
 	condition := dbr.And(inst, state)
@@ -678,7 +678,7 @@ func (r readSession) GetOperationStatsForOrchestration(orchestrationID string) (
 	return rows, err
 }
 
-func (r readSession) GetActiveInstanceStatsUsingLastOperationID() ([]dbmodel.InstanceByGlobalAccountIDStatEntry, error) {
+func (r readSession) GetActiveInstanceStats() ([]dbmodel.InstanceByGlobalAccountIDStatEntry, error) {
 	var rows []dbmodel.InstanceByGlobalAccountIDStatEntry
 	var stmt *dbr.SelectStmt
 	filter := dbmodel.InstanceFilter{
@@ -698,7 +698,7 @@ func (r readSession) GetActiveInstanceStatsUsingLastOperationID() ([]dbmodel.Ins
 	return rows, err
 }
 
-func (r readSession) GetSubaccountsInstanceStatsUsingLastOperationID() ([]dbmodel.InstanceBySubAccountIDStatEntry, error) {
+func (r readSession) GetSubaccountsInstanceStats() ([]dbmodel.InstanceBySubAccountIDStatEntry, error) {
 	var rows []dbmodel.InstanceBySubAccountIDStatEntry
 	var stmt *dbr.SelectStmt
 	filter := dbmodel.InstanceFilter{
@@ -718,7 +718,7 @@ func (r readSession) GetSubaccountsInstanceStatsUsingLastOperationID() ([]dbmode
 	return rows, err
 }
 
-func (r readSession) GetERSContextStatsUsingLastOperationID() ([]dbmodel.InstanceERSContextStatsEntry, error) {
+func (r readSession) GetERSContextStats() ([]dbmodel.InstanceERSContextStatsEntry, error) {
 	var rows []dbmodel.InstanceERSContextStatsEntry
 	// group existing instances by license_Type from the last operation
 	_, err := r.session.SelectBySql(`
@@ -743,7 +743,7 @@ func (r readSession) GetNumberOfInstancesForGlobalAccountID(globalAccountID stri
 	return res.Total, err
 }
 
-func (r readSession) ListInstancesUsingLastOperationID(filter dbmodel.InstanceFilter) ([]dbmodel.InstanceWithExtendedOperationDTO, int, int, error) {
+func (r readSession) ListInstances(filter dbmodel.InstanceFilter) ([]dbmodel.InstanceWithExtendedOperationDTO, int, int, error) {
 	var instances []dbmodel.InstanceWithExtendedOperationDTO
 
 	// select an instance with a last operation
@@ -780,7 +780,7 @@ func (r readSession) ListInstancesUsingLastOperationID(filter dbmodel.InstanceFi
 		nil
 }
 
-func (r readSession) ListInstancesWithSubaccountStatesWithUseLastOperationID(filter dbmodel.InstanceFilter) ([]dbmodel.InstanceWithSubaccountStateDTO, int, int, error) {
+func (r readSession) ListInstancesWithSubaccountStates(filter dbmodel.InstanceFilter) ([]dbmodel.InstanceWithSubaccountStateDTO, int, int, error) {
 	var instances []dbmodel.InstanceWithSubaccountStateDTO
 
 	// Base select and order by created at
