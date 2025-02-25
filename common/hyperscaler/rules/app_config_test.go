@@ -33,7 +33,6 @@ const ENV_PATH = "/config/" + ENV_FILENAME
 func TestAppConfig(t *testing.T) {
 
 	// given
-
 	// kubernetes client
 	sch := internal.NewSchemeForTests(t)
 	require.NotNil(t, sch)
@@ -66,7 +65,7 @@ func TestAppConfig(t *testing.T) {
 			continue
 		}
 		res = strings.Trim(res, "\n ")
-		if res == "" || res == "\n" || strings.Contains(res, "istio") {
+		if res == "" || strings.Contains(res, "istio") {
 			continue
 		}
 
