@@ -115,8 +115,10 @@ func (p *secretBindingsAccountPool) IsSecretBindingUsed(hyperscalerType Type, te
 }
 
 func (p *secretBindingsAccountPool) CredentialsSecretBinding(hyperscalerType Type, tenantName string, euAccess bool) (*gardener.SecretBinding, error) {
-	labelSelector := fmt.Sprintf("tenantName=%s, hyperscalerType=%s, !dirty", tenantName, hyperscalerType.GetKey())
-	labelSelector = addEuAccessSelector(labelSelector, euAccess)
+	hapOnlySelector := fmt.Sprintf("hyperscalerType=%s", hyperscalerType.GetKey())
+	hapOnlySelector = addEuAccessSelector(hapOnlySelector, euAccess)
+
+	labelSelector := fmt.Sprintf("%s, tenantName=%s, !dirty", hapOnlySelector, tenantName)
 	secretBinding, err := p.getSecretBinding(labelSelector)
 	if err != nil {
 		return nil, fmt.Errorf("getting secret binding: %w", err)
@@ -130,9 +132,9 @@ func (p *secretBindingsAccountPool) CredentialsSecretBinding(hyperscalerType Typ
 	p.mux.Lock()
 	defer p.mux.Unlock()
 
-	labelSelector = fmt.Sprintf("shared!=true, !tenantName, !dirty, hyperscalerType=%s", hyperscalerType.GetKey())
-	labelSelector = addEuAccessSelector(labelSelector, euAccess)
-	secretBinding, err = p.getSecretBinding(labelSelector)
+	unassignedSelector := fmt.Sprintf("%s, shared!=true, !tenantName, !dirty", hapOnlySelector)
+
+	secretBinding, err = p.getSecretBinding(unassignedSelector)
 	if err != nil {
 		return nil, fmt.Errorf("getting secret binding: %w", err)
 	}
@@ -140,6 +142,7 @@ func (p *secretBindingsAccountPool) CredentialsSecretBinding(hyperscalerType Typ
 		return nil, fmt.Errorf("failed to find unassigned secret binding for hyperscalerType: %s", hyperscalerType.GetKey())
 	}
 
+	// assign
 	labels := secretBinding.GetLabels()
 	labels["tenantName"] = tenantName
 	secretBinding.SetLabels(labels)
