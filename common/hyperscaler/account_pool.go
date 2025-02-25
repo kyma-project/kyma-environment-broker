@@ -24,13 +24,13 @@ type AccountPool interface {
 func NewAccountPool(gardenerClient dynamic.Interface, gardenerNamespace string) AccountPool {
 	return &secretBindingsAccountPool{
 		gardenerClient: gardenerClient,
-		namespace:     gardenerNamespace,
+		namespace:      gardenerNamespace,
 	}
 }
 
 type secretBindingsAccountPool struct {
 	gardenerClient dynamic.Interface
-	namespace     string
+	namespace      string
 	mux            sync.Mutex
 }
 
@@ -170,7 +170,6 @@ func (p *secretBindingsAccountPool) getSecretBinding(labelSelector string) (*gar
 	return nil, nil
 }
 
-
 func (sp *secretBindingsAccountPool) SharedCredentialsSecretBinding(hyperscalerType Type, euAccess bool) (*gardener.SecretBinding, error) {
 	labelSelector := fmt.Sprintf("shared=true,hyperscalerType=%s", hyperscalerType.GetKey())
 	secretBindings, err := sp.getSecretBindings(labelSelector)
@@ -234,7 +233,6 @@ func (sp *secretBindingsAccountPool) getLeastUsed(secretBindings []unstructured.
 
 	return &gardener.SecretBinding{Unstructured: secretBindings[minIndex]}, nil
 }
-
 
 func addEuAccessSelector(selector string, euAccess bool) string {
 	if euAccess {
