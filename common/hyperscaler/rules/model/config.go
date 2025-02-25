@@ -11,9 +11,9 @@ type RulesConfig struct {
 	Rules []string `yaml:"rule"`
 }
 
-func (c *RulesConfig) Load(file string) (*RulesConfig, error) {
+func (c *RulesConfig) Load(filePath string) (*RulesConfig, error) {
 
-	yamlFile, err := os.ReadFile(file)
+	yamlFile, err := os.ReadFile(filePath)
 	if err != nil {
 		return nil, fmt.Errorf("failed to read YAML file: %s", err)
 	}
