@@ -490,5 +490,3 @@ regionsSupportingMachine: |-
     - europe-west3
     - asia-south1
     - us-central1
-
-useLastOperationID: false
