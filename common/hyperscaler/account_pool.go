@@ -3,6 +3,7 @@ package hyperscaler
 import (
 	"context"
 	"fmt"
+	"strings"
 	"sync"
 
 	"github.com/kyma-project/kyma-environment-broker/common/gardener"
@@ -35,8 +36,10 @@ type secretBindingsAccountPool struct {
 }
 
 func (p *secretBindingsAccountPool) IsSecretBindingInternal(hyperscalerType Type, tenantName string, euAccess bool) (bool, error) {
-	labelSelector := fmt.Sprintf("internal=true, tenantName=%s,hyperscalerType=%s", tenantName, hyperscalerType.GetKey())
-	labelSelector = addEuAccessSelector(labelSelector, euAccess)
+	hypLabels := fmt.Sprintf("hyperscalerType=%s", hyperscalerType.GetKey())
+	hypLabels = addEuAccessSelector(hypLabels, euAccess)
+
+	labelSelector := fmt.Sprintf("%s, internal=true, tenantName=%s", hypLabels, tenantName)
 	secretBinding, err := p.getSecretBinding(labelSelector)
 	if err != nil {
 		return false, fmt.Errorf("looking for a secret binding used by the tenant %s and hyperscaler %s: %w", tenantName, hyperscalerType.GetKey(), err)
@@ -49,8 +52,10 @@ func (p *secretBindingsAccountPool) IsSecretBindingInternal(hyperscalerType Type
 }
 
 func (p *secretBindingsAccountPool) IsSecretBindingDirty(hyperscalerType Type, tenantName string, euAccess bool) (bool, error) {
-	labelSelector := fmt.Sprintf("shared!=true, dirty=true, tenantName=%s,hyperscalerType=%s", tenantName, hyperscalerType.GetKey())
-	labelSelector = addEuAccessSelector(labelSelector, euAccess)
+	hypLabels := fmt.Sprintf("hyperscalerType=%s, shared!=true", hyperscalerType.GetKey())
+	hypLabels = addEuAccessSelector(hypLabels, euAccess)
+
+	labelSelector := fmt.Sprintf("%s, dirty=true, tenantName=%s", hypLabels, tenantName)
 	secretBinding, err := p.getSecretBinding(labelSelector)
 	if err != nil {
 		return false, fmt.Errorf("looking for a secret binding used by the tenant %s and hyperscaler %s: %w", tenantName, hyperscalerType.GetKey(), err)
@@ -66,8 +71,10 @@ func (p *secretBindingsAccountPool) MarkSecretBindingAsDirty(hyperscalerType Typ
 	p.mux.Lock()
 	defer p.mux.Unlock()
 
-	labelSelector := fmt.Sprintf("shared!=true, tenantName=%s,hyperscalerType=%s", tenantName, hyperscalerType.GetKey())
-	labelSelector = addEuAccessSelector(labelSelector, euAccess)
+	hypLabels := fmt.Sprintf("hyperscalerType=%s, shared!=true", hyperscalerType.GetKey())
+	hypLabels = addEuAccessSelector(hypLabels, euAccess)
+
+	labelSelector := fmt.Sprintf("%s, tenantName=%s", hypLabels, tenantName)
 	secretBinding, err := p.getSecretBinding(labelSelector)
 	if err != nil {
 		return fmt.Errorf("marking secret binding as dirty: failed to find secret binding used by the tenant %s and"+" hyperscaler %s: %w", tenantName, hyperscalerType.GetKey(), err)
@@ -90,8 +97,11 @@ func (p *secretBindingsAccountPool) MarkSecretBindingAsDirty(hyperscalerType Typ
 }
 
 func (p *secretBindingsAccountPool) IsSecretBindingUsed(hyperscalerType Type, tenantName string, euAccess bool) (bool, error) {
-	labelSelector := fmt.Sprintf("tenantName=%s,hyperscalerType=%s", tenantName, hyperscalerType.GetKey())
-	labelSelector = addEuAccessSelector(labelSelector, euAccess)
+
+	hypLabels := fmt.Sprintf("hyperscalerType=%s", hyperscalerType.GetKey())
+	hypLabels = addEuAccessSelector(hypLabels, euAccess)
+
+	labelSelector := fmt.Sprintf("%s, tenantName=%s", hypLabels, tenantName)
 	secretBinding, err := p.getSecretBinding(labelSelector)
 	if err != nil {
 		return false, fmt.Errorf("counting subscription usage: could not find secret binding used by the tenant %s and hyperscaler %s: %w", tenantName, hyperscalerType.GetKey(), err)
@@ -117,10 +127,11 @@ func (p *secretBindingsAccountPool) IsSecretBindingUsed(hyperscalerType Type, te
 }
 
 func (p *secretBindingsAccountPool) CredentialsSecretBinding(hyperscalerType Type, tenantName string, euAccess bool) (*gardener.SecretBinding, error) {
-	hapOnlySelector := fmt.Sprintf("hyperscalerType=%s", hyperscalerType.GetKey())
-	hapOnlySelector = addEuAccessSelector(hapOnlySelector, euAccess)
+	hypSelector := fmt.Sprintf("hyperscalerType=%s, shared!=true", hyperscalerType.GetKey())
+	hypSelector = addEuAccessSelector(hypSelector, euAccess)
 
-	labelSelector := fmt.Sprintf("%s, tenantName=%s, !dirty", hapOnlySelector, tenantName)
+	labelSelector := fmt.Sprintf("%s, tenantName=%s, !dirty", hypSelector, tenantName)
+	labelSelector = strings.Trim(labelSelector, ", shared!=true")
 	secretBinding, err := p.getSecretBinding(labelSelector)
 	if err != nil {
 		return nil, fmt.Errorf("getting secret binding: %w", err)
@@ -134,7 +145,7 @@ func (p *secretBindingsAccountPool) CredentialsSecretBinding(hyperscalerType Typ
 	p.mux.Lock()
 	defer p.mux.Unlock()
 
-	unassignedSelector := fmt.Sprintf("%s, shared!=true, !tenantName, !dirty", hapOnlySelector)
+	unassignedSelector := fmt.Sprintf("%s, !tenantName, !dirty", hypSelector)
 
 	secretBinding, err = p.getSecretBinding(unassignedSelector)
 	if err != nil {
@@ -171,8 +182,10 @@ func (p *secretBindingsAccountPool) getSecretBinding(labelSelector string) (*gar
 }
 
 func (sp *secretBindingsAccountPool) SharedCredentialsSecretBinding(hyperscalerType Type, euAccess bool) (*gardener.SecretBinding, error) {
-	labelSelector := fmt.Sprintf("shared=true,hyperscalerType=%s", hyperscalerType.GetKey())
-	secretBindings, err := sp.getSecretBindings(labelSelector)
+
+	hypLabels := fmt.Sprintf("hyperscalerType=%s, shared=true", hyperscalerType.GetKey())
+
+	secretBindings, err := sp.getSecretBindings(hypLabels)
 	if err != nil {
 		return nil, fmt.Errorf("getting secret binding: %w", err)
 	}
