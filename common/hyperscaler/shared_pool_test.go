@@ -200,7 +200,7 @@ func TestSharedPool_SharedCredentialsSecretBinding(t *testing.T) {
 			t.Run(testCase.description, func(t *testing.T) {
 				// given
 				gardenerFake := gardener.NewDynamicFakeClient(append(testCase.shoots, testCase.secretBindings...)...)
-				pool := NewSharedGardenerAccountPool(gardenerFake, testNamespace)
+				pool := NewAccountPool(gardenerFake, testNamespace)
 
 				// when
 				secretBinding, err := pool.SharedCredentialsSecretBinding(testCase.hyperscaler, euAccess)
@@ -220,7 +220,7 @@ func TestSharedPool_SharedCredentialsSecretBinding_Errors(t *testing.T) {
 			newSecretBinding("sb1", "s1", "azure", true, false),
 			newSecretBinding("sb2", "s2", "gcp", false, false),
 		)
-		pool := NewSharedGardenerAccountPool(gardenerFake, testNamespace)
+		pool := NewAccountPool(gardenerFake, testNamespace)
 
 		// when
 		_, err := pool.SharedCredentialsSecretBinding(GCP("cf-jp30"), false)

@@ -15,7 +15,7 @@ import (
 func TestGardenerSecretName(t *testing.T) {
 	t.Run("should return error if account pool is not configured", func(t *testing.T) {
 		//given
-		accountProvider := NewAccountProvider(nil, nil)
+		accountProvider := NewAccountProvider(nil)
 
 		//when
 		_, err := accountProvider.GardenerSecretName(GCP("cf-jp30"), "tenantname", false)
@@ -30,7 +30,7 @@ func TestGardenerSecretName(t *testing.T) {
 		gardenerFake := gardener.NewDynamicFakeClient(newSecretBinding("secretBinding1", "secret1", "azure", false, false))
 		accountPool := NewAccountPool(gardenerFake, testNamespace)
 
-		accountProvider := NewAccountProvider(accountPool, nil)
+		accountProvider := NewAccountProvider(accountPool)
 
 		//when
 		secretName, err := accountProvider.GardenerSecretName(Azure(), "tenantname", false)
@@ -61,7 +61,7 @@ func TestGardenerSecretName(t *testing.T) {
 		gardenerFake := gardener.NewDynamicFakeClient(sb)
 		accountPool := NewAccountPool(gardenerFake, testNamespace)
 
-		accountProvider := NewAccountProvider(accountPool, nil)
+		accountProvider := NewAccountProvider(accountPool)
 
 		//when
 		secretName, err := accountProvider.GardenerSecretName(Azure(), "tenantname", false)
@@ -76,7 +76,7 @@ func TestGardenerSecretName(t *testing.T) {
 		gardenerFake := gardener.NewDynamicFakeClient()
 		accountPool := NewAccountPool(gardenerFake, testNamespace)
 
-		accountProvider := NewAccountProvider(accountPool, nil)
+		accountProvider := NewAccountProvider(accountPool)
 
 		//when
 		_, err := accountProvider.GardenerSecretName(Azure(), "tenantname", false)
@@ -89,7 +89,7 @@ func TestGardenerSecretName(t *testing.T) {
 func TestGardenerSharedSecretName(t *testing.T) {
 	t.Run("should return error if shared account pool is not configured", func(t *testing.T) {
 		//given
-		accountProvider := NewAccountProvider(nil, nil)
+		accountProvider := NewAccountProvider(nil)
 
 		//when
 		_, err := accountProvider.GardenerSharedSecretName(GCP("cf-jp30"), false)
@@ -102,9 +102,9 @@ func TestGardenerSharedSecretName(t *testing.T) {
 	t.Run("should return correct shared secret name", func(t *testing.T) {
 		//given
 		gardenerFake := gardener.NewDynamicFakeClient(newSecretBinding("secretBinding1", "secret1", "azure", true, false))
-		sharedAccountPool := NewSharedGardenerAccountPool(gardenerFake, testNamespace)
+		sharedAccountPool := NewAccountPool(gardenerFake, testNamespace)
 
-		accountProvider := NewAccountProvider(nil, sharedAccountPool)
+		accountProvider := NewAccountProvider(sharedAccountPool)
 
 		//when
 		secretName, err := accountProvider.GardenerSharedSecretName(Azure(), false)
@@ -134,9 +134,9 @@ func TestGardenerSharedSecretName(t *testing.T) {
 		}
 		sb.SetGroupVersionKind(secretBindingGVK)
 		gardenerFake := gardener.NewDynamicFakeClient(sb)
-		sharedAccountPool := NewSharedGardenerAccountPool(gardenerFake, testNamespace)
+		sharedAccountPool := NewAccountPool(gardenerFake, testNamespace)
 
-		accountProvider := NewAccountProvider(nil, sharedAccountPool)
+		accountProvider := NewAccountProvider(sharedAccountPool)
 
 		//when
 		secretName, err := accountProvider.GardenerSharedSecretName(Azure(), false)
@@ -149,9 +149,9 @@ func TestGardenerSharedSecretName(t *testing.T) {
 	t.Run("should return error when failed to find secret binding", func(t *testing.T) {
 		//given
 		gardenerFake := gardener.NewDynamicFakeClient()
-		sharedAccountPool := NewSharedGardenerAccountPool(gardenerFake, testNamespace)
+		sharedAccountPool := NewAccountPool(gardenerFake, testNamespace)
 
-		accountProvider := NewAccountProvider(nil, sharedAccountPool)
+		accountProvider := NewAccountProvider(sharedAccountPool)
 
 		//when
 		_, err := accountProvider.GardenerSharedSecretName(Azure(), false)
@@ -169,7 +169,7 @@ func TestMarkUnusedGardenerSecretBindingAsDirty(t *testing.T) {
 				//given
 				pool, secretBindingMock := newTestAccountPoolWithoutShoots(euAccess)
 
-				accountProvider := NewAccountProvider(pool, nil)
+				accountProvider := NewAccountProvider(pool)
 
 				//when
 				err := accountProvider.MarkUnusedGardenerSecretBindingAsDirty(Azure(), "tenant1", euAccess)
@@ -185,7 +185,7 @@ func TestMarkUnusedGardenerSecretBindingAsDirty(t *testing.T) {
 				//given
 				pool, secretBindingMock := newTestAccountPoolWithSecretBindingInternal(euAccess)
 
-				accountProvider := NewAccountProvider(pool, nil)
+				accountProvider := NewAccountProvider(pool)
 
 				//when
 				err := accountProvider.MarkUnusedGardenerSecretBindingAsDirty(Azure(), "tenant1", euAccess)
@@ -201,7 +201,7 @@ func TestMarkUnusedGardenerSecretBindingAsDirty(t *testing.T) {
 				//given
 				pool, secretBindingMock := newTestAccountPoolWithSingleShoot(euAccess)
 
-				accountProvider := NewAccountProvider(pool, nil)
+				accountProvider := NewAccountProvider(pool)
 
 				//when
 				err := accountProvider.MarkUnusedGardenerSecretBindingAsDirty(Azure(), "tenant1", euAccess)
@@ -217,7 +217,7 @@ func TestMarkUnusedGardenerSecretBindingAsDirty(t *testing.T) {
 				//given
 				pool, secretBindingMock := newTestAccountPoolWithSecretBindingDirty(euAccess)
 
-				accountProvider := NewAccountProvider(pool, nil)
+				accountProvider := NewAccountProvider(pool)
 
 				//when
 				err := accountProvider.MarkUnusedGardenerSecretBindingAsDirty(Azure(), "tenant1", euAccess)
@@ -233,7 +233,7 @@ func TestMarkUnusedGardenerSecretBindingAsDirty(t *testing.T) {
 				//given
 				pool, secretBindingMock := newTestAccountPoolWithShootsUsingSecretBinding(euAccess)
 
-				accountProvider := NewAccountProvider(pool, nil)
+				accountProvider := NewAccountProvider(pool)
 
 				//when
 				err := accountProvider.MarkUnusedGardenerSecretBindingAsDirty(Azure(), "tenant1", euAccess)
@@ -247,7 +247,7 @@ func TestMarkUnusedGardenerSecretBindingAsDirty(t *testing.T) {
 
 			t.Run("should return error if failed to read secrets for particular hyperscaler type", func(t *testing.T) {
 				//given
-				accountProvider := NewAccountProvider(nil, nil)
+				accountProvider := NewAccountProvider(nil)
 
 				//when
 				err := accountProvider.MarkUnusedGardenerSecretBindingAsDirty(GCP("cf-jp30"), "tenant1", euAccess)

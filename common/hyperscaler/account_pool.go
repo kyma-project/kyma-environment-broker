@@ -8,6 +8,7 @@ import (
 	"github.com/kyma-project/kyma-environment-broker/common/gardener"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/client-go/dynamic"
 )
 
@@ -17,18 +18,19 @@ type AccountPool interface {
 	IsSecretBindingUsed(hyperscalerType Type, tenantName string, euAccess bool) (bool, error)
 	IsSecretBindingDirty(hyperscalerType Type, tenantName string, euAccess bool) (bool, error)
 	IsSecretBindingInternal(hyperscalerType Type, tenantName string, euAccess bool) (bool, error)
+	SharedCredentialsSecretBinding(hyperscalerType Type, euAccess bool) (*gardener.SecretBinding, error)
 }
 
 func NewAccountPool(gardenerClient dynamic.Interface, gardenerNamespace string) AccountPool {
 	return &secretBindingsAccountPool{
 		gardenerClient: gardenerClient,
-		gardenerNS:     gardenerNamespace,
+		namespace:     gardenerNamespace,
 	}
 }
 
 type secretBindingsAccountPool struct {
 	gardenerClient dynamic.Interface
-	gardenerNS     string
+	namespace     string
 	mux            sync.Mutex
 }
 
@@ -79,7 +81,7 @@ func (p *secretBindingsAccountPool) MarkSecretBindingAsDirty(hyperscalerType Typ
 	labels["dirty"] = "true"
 	secretBinding.SetLabels(labels)
 
-	_, err = p.gardenerClient.Resource(gardener.SecretBindingResource).Namespace(p.gardenerNS).Update(context.Background(), &secretBinding.Unstructured, v1.UpdateOptions{})
+	_, err = p.gardenerClient.Resource(gardener.SecretBindingResource).Namespace(p.namespace).Update(context.Background(), &secretBinding.Unstructured, v1.UpdateOptions{})
 	if err != nil {
 		return fmt.Errorf("marking secret binding as dirty: failed to update secret binding for tenant: %s and hyperscaler: %s: %w", tenantName, hyperscalerType.GetKey(), err)
 
@@ -99,7 +101,7 @@ func (p *secretBindingsAccountPool) IsSecretBindingUsed(hyperscalerType Type, te
 		return false, nil
 	}
 
-	shootlist, err := p.gardenerClient.Resource(gardener.ShootResource).Namespace(p.gardenerNS).List(context.Background(), metav1.ListOptions{})
+	shootlist, err := p.gardenerClient.Resource(gardener.ShootResource).Namespace(p.namespace).List(context.Background(), metav1.ListOptions{})
 	if err != nil {
 		return false, fmt.Errorf("listing Gardener shoots: %w", err)
 	}
@@ -146,7 +148,7 @@ func (p *secretBindingsAccountPool) CredentialsSecretBinding(hyperscalerType Typ
 	labels := secretBinding.GetLabels()
 	labels["tenantName"] = tenantName
 	secretBinding.SetLabels(labels)
-	updatedSecretBinding, err := p.gardenerClient.Resource(gardener.SecretBindingResource).Namespace(p.gardenerNS).Update(context.Background(), &secretBinding.Unstructured, v1.UpdateOptions{})
+	updatedSecretBinding, err := p.gardenerClient.Resource(gardener.SecretBindingResource).Namespace(p.namespace).Update(context.Background(), &secretBinding.Unstructured, v1.UpdateOptions{})
 	if err != nil {
 		return nil, fmt.Errorf("updating secret binding with tenantName: %s: %w", tenantName, err)
 	}
@@ -155,7 +157,7 @@ func (p *secretBindingsAccountPool) CredentialsSecretBinding(hyperscalerType Typ
 }
 
 func (p *secretBindingsAccountPool) getSecretBinding(labelSelector string) (*gardener.SecretBinding, error) {
-	secretBindings, err := p.gardenerClient.Resource(gardener.SecretBindingResource).Namespace(p.gardenerNS).List(context.Background(), metav1.ListOptions{
+	secretBindings, err := p.gardenerClient.Resource(gardener.SecretBindingResource).Namespace(p.namespace).List(context.Background(), metav1.ListOptions{
 		LabelSelector: labelSelector,
 	})
 	if err != nil {
@@ -167,6 +169,72 @@ func (p *secretBindingsAccountPool) getSecretBinding(labelSelector string) (*gar
 	}
 	return nil, nil
 }
+
+
+func (sp *secretBindingsAccountPool) SharedCredentialsSecretBinding(hyperscalerType Type, euAccess bool) (*gardener.SecretBinding, error) {
+	labelSelector := fmt.Sprintf("shared=true,hyperscalerType=%s", hyperscalerType.GetKey())
+	secretBindings, err := sp.getSecretBindings(labelSelector)
+	if err != nil {
+		return nil, fmt.Errorf("getting secret binding: %w", err)
+	}
+
+	return sp.getLeastUsed(secretBindings)
+}
+
+func (sp *secretBindingsAccountPool) getSecretBindings(labelSelector string) ([]unstructured.Unstructured, error) {
+	secretBindings, err := sp.gardenerClient.Resource(gardener.SecretBindingResource).Namespace(sp.namespace).List(context.Background(), metav1.ListOptions{
+		LabelSelector: labelSelector,
+	})
+	if err != nil {
+		return nil, fmt.Errorf("error listing secret bindings for %s label selector: %w", labelSelector, err)
+	}
+
+	if secretBindings == nil || len(secretBindings.Items) == 0 {
+		return nil, fmt.Errorf("secretBindingsAccountPool error: no shared secret binding found for %s label selector, "+
+			"namespace %s", labelSelector, sp.namespace)
+	}
+
+	return secretBindings.Items, nil
+}
+
+func (sp *secretBindingsAccountPool) getLeastUsed(secretBindings []unstructured.Unstructured) (*gardener.SecretBinding, error) {
+	usageCount := make(map[string]int, len(secretBindings))
+	for _, s := range secretBindings {
+		usageCount[s.GetName()] = 0
+	}
+
+	shoots, err := sp.gardenerClient.Resource(gardener.ShootResource).Namespace(sp.namespace).List(context.Background(), metav1.ListOptions{})
+	if err != nil {
+		return nil, fmt.Errorf("error while listing Shoots: %w", err)
+	}
+
+	if shoots == nil || len(shoots.Items) == 0 {
+		return &gardener.SecretBinding{Unstructured: secretBindings[0]}, nil
+	}
+
+	for _, shoot := range shoots.Items {
+		s := gardener.Shoot{Unstructured: shoot}
+		count, found := usageCount[s.GetSpecSecretBindingName()]
+		if !found {
+			continue
+		}
+
+		usageCount[s.GetSpecSecretBindingName()] = count + 1
+	}
+
+	min := usageCount[secretBindings[0].GetName()]
+	minIndex := 0
+
+	for i, sb := range secretBindings {
+		if usageCount[sb.GetName()] < min {
+			min = usageCount[sb.GetName()]
+			minIndex = i
+		}
+	}
+
+	return &gardener.SecretBinding{Unstructured: secretBindings[minIndex]}, nil
+}
+
 
 func addEuAccessSelector(selector string, euAccess bool) string {
 	if euAccess {

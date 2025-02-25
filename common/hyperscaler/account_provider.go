@@ -21,13 +21,11 @@ type Credentials struct {
 
 type accountProvider struct {
 	gardenerPool       AccountPool
-	sharedGardenerPool SharedPool
 }
 
-func NewAccountProvider(gardenerPool AccountPool, sharedGardenerPool SharedPool) AccountProvider {
+func NewAccountProvider(gardenerPool AccountPool) AccountProvider {
 	return &accountProvider{
 		gardenerPool:       gardenerPool,
-		sharedGardenerPool: sharedGardenerPool,
 	}
 }
 
@@ -60,11 +58,11 @@ func (p *accountProvider) GardenerSecretName(hyperscalerType Type, tenantName st
 }
 
 func (p *accountProvider) GardenerSharedSecretName(hyperscalerType Type, euAccess bool) (string, error) {
-	if p.sharedGardenerPool == nil {
+	if p.gardenerPool == nil {
 		return "", fmt.Errorf("failed to get shared Secret Binding name. Gardener Shared Account pool is not configured for hyperscaler type %s", hyperscalerType.GetKey())
 	}
 
-	secretBinding, err := p.sharedGardenerPool.SharedCredentialsSecretBinding(hyperscalerType, euAccess)
+	secretBinding, err := p.gardenerPool.SharedCredentialsSecretBinding(hyperscalerType, euAccess)
 	if err != nil {
 		return "", fmt.Errorf("getting shared secret binding: %w", err)
 	}
