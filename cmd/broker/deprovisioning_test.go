@@ -21,7 +21,6 @@ func TestReDeprovision(t *testing.T) {
 	// given
 	cfg := fixConfig()
 	cfg.EDP.Disabled = true // disable EDP to have all steps successful executed
-	cfg.Database.UseLastOperationID = true
 	suite := NewBrokerSuiteTestWithConfig(t, cfg)
 	defer suite.TearDown()
 	iid := uuid.New().String()

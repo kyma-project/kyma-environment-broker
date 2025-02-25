@@ -44,7 +44,7 @@ func (s *Instance) GetDistinctSubAccounts() ([]string, error) {
 	return subAccounts, nil
 }
 
-func NewInstance(sess postsql.Factory, operations *operations, cipher Cipher, useLastInsdtanceID bool) *Instance {
+func NewInstance(sess postsql.Factory, operations *operations, cipher Cipher) *Instance {
 	return &Instance{
 		Factory:    sess,
 		operations: operations,

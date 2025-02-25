@@ -28,7 +28,6 @@ import (
 
 func TestInstance_UsingLastOperationID(t *testing.T) {
 	cfg := brokerStorageDatabaseTestConfig()
-	cfg.UseLastOperationID = true
 
 	t.Run("Should create and update instance", func(t *testing.T) {
 		storageCleanup, brokerStorage, err := storage.GetStorageForTest(cfg)
@@ -1172,7 +1171,6 @@ func TestInstance_UsingLastOperationID(t *testing.T) {
 func TestInstanceStorage_ListInstancesUsingLastOperationID(t *testing.T) {
 	// given
 	cfg := brokerStorageDatabaseTestConfig()
-	cfg.UseLastOperationID = true
 	storageCleanup, brokerStorage, err := storage.GetStorageForTest(cfg)
 	require.NoError(t, err)
 	require.NotNil(t, brokerStorage)

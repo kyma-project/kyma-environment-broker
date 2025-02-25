@@ -27,15 +27,13 @@ const (
 
 type operations struct {
 	postsql.Factory
-	cipher             Cipher
-	useLastOperationID bool
+	cipher Cipher
 }
 
-func NewOperation(sess postsql.Factory, cipher Cipher, useLastOperationID bool) *operations {
+func NewOperation(sess postsql.Factory, cipher Cipher) *operations {
 	return &operations{
-		Factory:            sess,
-		cipher:             cipher,
-		useLastOperationID: useLastOperationID,
+		Factory: sess,
+		cipher:  cipher,
 	}
 }
 
