@@ -401,6 +401,18 @@ func (s *BrokerSuiteTest) CreateAPI(inputFactory broker.PlanValidator, cfg *Conf
 					Description: broker.SapConvergedCloudPlanName,
 					Metadata:    broker.PlanMetadata{},
 				},
+				broker.BuildRuntimeAWSPlanName: {
+					Description: broker.BuildRuntimeAWSPlanName,
+					Metadata:    broker.PlanMetadata{},
+				},
+				broker.BuildRuntimeGCPPlanID: {
+					Description: broker.BuildRuntimeGCPPlanName,
+					Metadata:    broker.PlanMetadata{},
+				},
+				broker.BuildRuntimeAzurePlanName: {
+					Description: broker.BuildRuntimeAzurePlanName,
+					Metadata:    broker.PlanMetadata{},
+				},
 			},
 		},
 	}
