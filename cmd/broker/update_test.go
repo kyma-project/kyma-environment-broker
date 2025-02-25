@@ -20,7 +20,6 @@ const updateRequestPathFormat = "oauth/v2/service_instances/%s?accepts_incomplet
 func TestUpdate(t *testing.T) {
 	// given
 	cfg := fixConfig()
-	cfg.Database.UseLastOperationID = true
 	suite := NewBrokerSuiteTestWithConfig(t, cfg)
 	defer suite.TearDown()
 	iid := uuid.New().String()

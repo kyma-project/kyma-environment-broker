@@ -20,9 +20,8 @@ import (
 
 type Instance struct {
 	postsql.Factory
-	operations         *operations
-	cipher             Cipher
-	UseLastOperationID bool
+	operations *operations
+	cipher     Cipher
 }
 
 func (s *Instance) GetDistinctSubAccounts() ([]string, error) {
@@ -45,12 +44,11 @@ func (s *Instance) GetDistinctSubAccounts() ([]string, error) {
 	return subAccounts, nil
 }
 
-func NewInstance(sess postsql.Factory, operations *operations, cipher Cipher, useLastInsdtanceID bool) *Instance {
+func NewInstance(sess postsql.Factory, operations *operations, cipher Cipher) *Instance {
 	return &Instance{
-		Factory:            sess,
-		operations:         operations,
-		cipher:             cipher,
-		UseLastOperationID: useLastInsdtanceID,
+		Factory:    sess,
+		operations: operations,
+		cipher:     cipher,
 	}
 }
 
@@ -415,15 +413,7 @@ func (s *Instance) Delete(instanceID string) error {
 
 func (s *Instance) GetActiveInstanceStats() (internal.InstanceStats, error) {
 
-	var entries []dbmodel.InstanceByGlobalAccountIDStatEntry
-	var err error
-
-	//TODO remove conditional after migration
-	if s.UseLastOperationID {
-		entries, err = s.NewReadSession().GetActiveInstanceStatsUsingLastOperationID()
-	} else {
-		entries, err = s.NewReadSession().GetActiveInstanceStats()
-	}
+	entries, err := s.NewReadSession().GetActiveInstanceStats()
 
 	if err != nil {
 		return internal.InstanceStats{}, err
@@ -438,14 +428,7 @@ func (s *Instance) GetActiveInstanceStats() (internal.InstanceStats, error) {
 		result.TotalNumberOfInstances = result.TotalNumberOfInstances + e.Total
 	}
 
-	var subEntries []dbmodel.InstanceBySubAccountIDStatEntry
-
-	//TODO remove conditional after migration
-	if s.UseLastOperationID {
-		subEntries, err = s.NewReadSession().GetSubaccountsInstanceStatsUsingLastOperationID()
-	} else {
-		subEntries, err = s.NewReadSession().GetSubaccountsInstanceStats()
-	}
+	subEntries, err := s.NewReadSession().GetSubaccountsInstanceStats()
 
 	if err != nil {
 		return internal.InstanceStats{}, err
@@ -457,15 +440,8 @@ func (s *Instance) GetActiveInstanceStats() (internal.InstanceStats, error) {
 }
 
 func (s *Instance) GetERSContextStats() (internal.ERSContextStats, error) {
-	var err error
-	var entries []dbmodel.InstanceERSContextStatsEntry
 
-	//TODO remove conditional after migration
-	if s.UseLastOperationID {
-		entries, err = s.NewReadSession().GetERSContextStatsUsingLastOperationID()
-	} else {
-		entries, err = s.NewReadSession().GetERSContextStats()
-	}
+	entries, err := s.NewReadSession().GetERSContextStats()
 	if err != nil {
 		return internal.ERSContextStats{}, err
 	}
@@ -479,15 +455,8 @@ func (s *Instance) GetERSContextStats() (internal.ERSContextStats, error) {
 }
 
 func (s *Instance) List(filter dbmodel.InstanceFilter) ([]internal.Instance, int, int, error) {
-	var totalCount, count int
-	var err error
-	var dtos []dbmodel.InstanceWithExtendedOperationDTO
-	//TODO remove conditional after migration
-	if s.UseLastOperationID {
-		dtos, count, totalCount, err = s.NewReadSession().ListInstancesUsingLastOperationID(filter)
-	} else {
-		dtos, count, totalCount, err = s.NewReadSession().ListInstances(filter)
-	}
+
+	dtos, count, totalCount, err := s.NewReadSession().ListInstances(filter)
 
 	if err != nil {
 		return []internal.Instance{}, 0, 0, err
@@ -522,15 +491,8 @@ func (s *Instance) UpdateInstanceLastOperation(instanceID, operationID string) e
 }
 
 func (s *Instance) ListWithSubaccountState(filter dbmodel.InstanceFilter) ([]internal.InstanceWithSubaccountState, int, int, error) {
-	var count, totalCount int
-	var dtos []dbmodel.InstanceWithSubaccountStateDTO
-	var err error
-	//TODO remove conditional after migration
-	if s.UseLastOperationID {
-		dtos, count, totalCount, err = s.NewReadSession().ListInstancesWithSubaccountStatesWithUseLastOperationID(filter)
-	} else {
-		dtos, count, totalCount, err = s.NewReadSession().ListInstancesWithSubaccountStates(filter)
-	}
+
+	dtos, count, totalCount, err := s.NewReadSession().ListInstancesWithSubaccountStates(filter)
 
 	if err != nil {
 		return []internal.InstanceWithSubaccountState{}, 0, 0, err

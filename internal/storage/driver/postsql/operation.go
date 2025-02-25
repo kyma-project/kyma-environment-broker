@@ -27,15 +27,13 @@ const (
 
 type operations struct {
 	postsql.Factory
-	cipher             Cipher
-	useLastOperationID bool
+	cipher Cipher
 }
 
-func NewOperation(sess postsql.Factory, cipher Cipher, useLastOperationID bool) *operations {
+func NewOperation(sess postsql.Factory, cipher Cipher) *operations {
 	return &operations{
-		Factory:            sess,
-		cipher:             cipher,
-		useLastOperationID: useLastOperationID,
+		Factory: sess,
+		cipher:  cipher,
 	}
 }
 
@@ -296,11 +294,7 @@ func (s *operations) GetLastOperation(instanceID string) (*internal.Operation, e
 	var lastErr dberr.Error
 	err := wait.PollUntilContextTimeout(context.Background(), defaultRetryInterval, defaultRetryTimeout, true, func(ctx context.Context) (bool, error) {
 
-		if s.useLastOperationID {
-			operation, lastErr = session.GetLastOperationByLastOperationID(instanceID, []internal.OperationType{})
-		} else {
-			operation, lastErr = session.GetLastOperation(instanceID, []internal.OperationType{})
-		}
+		operation, lastErr = session.GetLastOperation(instanceID, []internal.OperationType{})
 		if lastErr != nil {
 			if dberr.IsNotFound(lastErr) {
 				lastErr = dberr.NotFound("Operation with instance_id %s not exist", instanceID)
