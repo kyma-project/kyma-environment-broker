@@ -126,6 +126,18 @@ func (p *secretBindingsAccountPool) IsSecretBindingUsed(hyperscalerType Type, te
 	return false, nil
 }
 
+func (sp *secretBindingsAccountPool) SharedCredentialsSecretBinding(hyperscalerType Type, euAccess bool) (*gardener.SecretBinding, error) {
+
+	hypLabels := fmt.Sprintf("hyperscalerType=%s, shared=true", hyperscalerType.GetKey())
+
+	secretBindings, err := sp.getSecretBindings(hypLabels)
+	if err != nil {
+		return nil, fmt.Errorf("getting secret binding: %w", err)
+	}
+
+	return sp.getLeastUsed(secretBindings)
+}
+
 func (p *secretBindingsAccountPool) CredentialsSecretBinding(hyperscalerType Type, tenantName string, euAccess bool) (*gardener.SecretBinding, error) {
 	hypSelector := fmt.Sprintf("hyperscalerType=%s, shared!=true", hyperscalerType.GetKey())
 	hypSelector = addEuAccessSelector(hypSelector, euAccess)
@@ -181,17 +193,7 @@ func (p *secretBindingsAccountPool) getSecretBinding(labelSelector string) (*gar
 	return nil, nil
 }
 
-func (sp *secretBindingsAccountPool) SharedCredentialsSecretBinding(hyperscalerType Type, euAccess bool) (*gardener.SecretBinding, error) {
 
-	hypLabels := fmt.Sprintf("hyperscalerType=%s, shared=true", hyperscalerType.GetKey())
-
-	secretBindings, err := sp.getSecretBindings(hypLabels)
-	if err != nil {
-		return nil, fmt.Errorf("getting secret binding: %w", err)
-	}
-
-	return sp.getLeastUsed(secretBindings)
-}
 
 func (sp *secretBindingsAccountPool) getSecretBindings(labelSelector string) ([]unstructured.Unstructured, error) {
 	secretBindings, err := sp.gardenerClient.Resource(gardener.SecretBindingResource).Namespace(sp.namespace).List(context.Background(), metav1.ListOptions{
