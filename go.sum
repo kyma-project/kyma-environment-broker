@@ -31,6 +31,8 @@ github.com/Azure/go-autorest/logger v0.2.1/go.mod h1:T9E3cAhj2VqvPOtCYAvby9aBXkZ
 github.com/Azure/go-autorest/logger v0.2.2 h1:hYqBsEBywrrOSW24kkOCXRcKfKhK76OzLTfF+MYDE2o=
 github.com/Azure/go-autorest/logger v0.2.2/go.mod h1:I5fg9K52o+iuydlWfa9T5K6WFos9XYr9dYTFzpqgibw=
 github.com/Azure/go-autorest/tracing v0.6.0/go.mod h1:+vhtPC754Xsa23ID7GlGsrdKBpUA79WCAKPPZVC2DeU=
+github.com/Azure/go-autorest/tracing v0.6.1 h1:YUMSrC/CeD1ZnnXcNYU4a/fzsO35u2Fsful9L/2nyR0=
+github.com/Azure/go-autorest/tracing v0.6.1/go.mod h1:/3EgjbsjraOqiicERAeu3m7/z0x1TzjQGAwDrJrXGkc=
 github.com/BurntSushi/toml v1.4.1-0.20240526193622-a339e1f7089c h1:pxW6RcqyfI9/kWtOwnv/G+AzdKuy2ZrqINhenH4HyNs=
 github.com/BurntSushi/toml v1.4.1-0.20240526193622-a339e1f7089c/go.mod h1:ukJfTF/6rtPPRCnwkur4qwRxa8vTRFBF0uk2lLoLwho=
 github.com/DATA-DOG/go-sqlmock v1.3.3/go.mod h1:f/Ixk793poVmq4qj/V1dPUg2JEAKC73Q5eFN3EC/SaM=
@@ -106,6 +108,8 @@ github.com/felixge/httpsnoop v1.0.4 h1:NFTV2Zj1bL4mc9sqWACXbQFVBBg2W3GPvqp8/ESS2
 github.com/felixge/httpsnoop v1.0.4/go.mod h1:m8KPJKqk1gH5J9DgRY2ASl2lWCfGKXixSwevea8zH2U=
 github.com/fluent/fluent-operator/v2 v2.9.0 h1:VFGgRPOI+yxnOrTIAL6sgFCtc+quDda12iyVL1lRQag=
 github.com/fluent/fluent-operator/v2 v2.9.0/go.mod h1:Hthhi/3oO26udvro6t5foUx20PZAMn7WGUhSnEWUV9U=
+github.com/frankban/quicktest v1.14.6 h1:7Xjx+VpznH+oBnejlPUj8oUpdxnVs4f8XU8WnHkI4W8=
+github.com/frankban/quicktest v1.14.6/go.mod h1:4ptaffx2x8+WTWXmUCuVU6aPUX1/Mz7zb5vbUoiM6w0=
 github.com/fsnotify/fsnotify v1.6.0/go.mod h1:sl3t1tCWJFWoRz9R8WJCbQihKKwmorjAbSClcnxKAGw=
 github.com/fsnotify/fsnotify v1.8.0 h1:dAwr6QBTBZIkG8roQaJjGof0pp0EeF+tNV7YBP3F/8M=
 github.com/fsnotify/fsnotify v1.8.0/go.mod h1:8jBTzvmWwFyi3Pb8djgCCO5IBqzKJ/Jwo8TRcHyHii0=
@@ -231,8 +235,8 @@ github.com/kylelemons/godebug v1.1.0 h1:RPNrshWIDI6G2gRW9EHilWtl7Z6Sb1BR0xunSBf0
 github.com/kylelemons/godebug v1.1.0/go.mod h1:9/0rRGxNHcop5bhtWyNeEfOS8JIWk580+fNqagV/RAw=
 github.com/kyma-incubator/compass/components/director v0.0.0-20240704074401-a423d6070404 h1:qQwa2HQy3vvddKutHN/fTvLkpyWo68lO2D0TgDmZkmU=
 github.com/kyma-incubator/compass/components/director v0.0.0-20240704074401-a423d6070404/go.mod h1:ReQk0Ajocp4iS4tby7YMFXe5khAxRYnS1SBUr8dEMkQ=
-github.com/kyma-project/control-plane/components/provisioner v0.0.0-20240925074719-868d3d02df59 h1:PAynE3RawB3Kvg9Q430hNB9FoBMViTxfy7BzC/o335U=
-github.com/kyma-project/control-plane/components/provisioner v0.0.0-20240925074719-868d3d02df59/go.mod h1:xgWRmQjXFgIBX+TAvHr8iQIpjFhamm4HOpHPfGmnz2Q=
+github.com/kyma-project/control-plane/components/provisioner v0.0.0-20250211135938-08eff574dc14 h1:fNIEgFUXAa53XxVMCPkPT99lYzQJdesnDrF0SqTHWSk=
+github.com/kyma-project/control-plane/components/provisioner v0.0.0-20250211135938-08eff574dc14/go.mod h1:xgWRmQjXFgIBX+TAvHr8iQIpjFhamm4HOpHPfGmnz2Q=
 github.com/kyma-project/infrastructure-manager v0.0.0-20250128154549-67d41ee7791a h1:RAbKl9hZ1HpV6wEwT4fI6GO6NCZWJkMZHGsyFPckk6Y=
 github.com/kyma-project/infrastructure-manager v0.0.0-20250128154549-67d41ee7791a/go.mod h1:8eSCG1g+C1CjSFJELkzsPODBpDijaHS1LCjguiHpJYc=
 github.com/lib/pq v1.0.0/go.mod h1:5WUZQaWbwv1U+lTReE5YruASi9Al49XbQIvNi/34Woo=
