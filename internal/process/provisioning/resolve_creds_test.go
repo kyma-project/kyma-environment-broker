@@ -67,7 +67,7 @@ func TestResolveCredentialsEUStepHappyPath_Run(t *testing.T) {
 	assert.NoError(t, err)
 
 	accountProviderMock := &hyperscalerMocks.AccountProvider{}
-	accountProviderMock.On("GardenerSecretName", hyperscaler.AWS(), statusGlobalAccountID, true).Return("gardener-secret-aws", nil)
+	accountProviderMock.On("GardenerSecretName", hyperscaler.AWS(), statusGlobalAccountID, true, false).Return("gardener-secret-aws", nil)
 
 	step := NewResolveCredentialsStep(memoryStorage.Operations(), accountProviderMock, &rules.RulesService{})
 
@@ -94,7 +94,7 @@ func TestResolveCredentialsCHStepHappyPath_Run(t *testing.T) {
 	assert.NoError(t, err)
 
 	accountProviderMock := &hyperscalerMocks.AccountProvider{}
-	accountProviderMock.On("GardenerSecretName", hyperscaler.Azure(), statusGlobalAccountID, true).Return("gardener-secret-az", nil)
+	accountProviderMock.On("GardenerSecretName", hyperscaler.Azure(), statusGlobalAccountID, true, false).Return("gardener-secret-az", nil)
 
 	step := NewResolveCredentialsStep(memoryStorage.Operations(), accountProviderMock, &rules.RulesService{})
 
