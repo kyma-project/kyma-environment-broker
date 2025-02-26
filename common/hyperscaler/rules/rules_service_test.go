@@ -11,11 +11,9 @@ import (
 func TestNewRulesServiceFromFile(t *testing.T) {
 	t.Run("should create RulesService from valid file", func(t *testing.T) {
 		// given
-		expectedRules := []string{"rule1", "rule2"}
-		content := "rule:\n"
-		for _, rule := range expectedRules {
-			content += "- " + rule + "\n"
-		}
+		content := `rule:
+                      - rule1
+					  - rule2`
 
 		tmpfile, err := model.CreateTempFile(content)
 		require.NoError(t, err)
@@ -51,7 +49,7 @@ func TestNewRulesServiceFromFile(t *testing.T) {
 
 	t.Run("should return error when YAML file is corrupted", func(t *testing.T) {
 		// given
-		content := "rule:\n- rule1\n- rule2\ncorrupted_content"
+		content := "corrupted_content"
 
 		tmpfile, err := model.CreateTempFile(content)
 		require.NoError(t, err)
