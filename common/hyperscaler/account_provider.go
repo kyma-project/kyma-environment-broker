@@ -3,6 +3,7 @@ package hyperscaler
 import (
 	"fmt"
 
+	"github.com/kyma-project/kyma-environment-broker/common/gardener"
 	pkg "github.com/kyma-project/kyma-environment-broker/common/runtime"
 )
 
@@ -50,21 +51,23 @@ func (p *accountProvider) GardenerSecretName(hyperscalerType Type, tenantName st
 		return "", fmt.Errorf("failed to get shared Secret Binding name. Gardener Account pool is not configured for hyperscaler type %s, shared %t, tenantName %s", hyperscalerType.GetKey(), shared, tenantName)
 	}
 
+
+	var err error = nil
+	var secretBinding *gardener.SecretBinding
 	if !shared {
-		secretBinding, err := p.gardenerPool.CredentialsSecretBinding(hyperscalerType, tenantName, euAccess)
-		if err != nil {
-			return "", fmt.Errorf("failed to get Gardener Credentials for tenant %s: %w", tenantName, err)
-		}
-
-		return secretBinding.GetSecretRefName(), nil
+		secretBinding, err = p.gardenerPool.CredentialsSecretBinding(hyperscalerType, tenantName, euAccess)
+		
 	} else {
-		secretBinding, err := p.gardenerPool.SharedCredentialsSecretBinding(hyperscalerType, euAccess)
-		if err != nil {
-			return "", fmt.Errorf("getting shared secret binding: %w", err)
-		}
-
-		return secretBinding.GetSecretRefName(), nil
+		secretBinding, err = p.gardenerPool.SharedCredentialsSecretBinding(hyperscalerType, euAccess)
+		
 	}
+
+	if err != nil {
+		return "", fmt.Errorf("failed to get Gardener Credentials for tenant %s, shared %t: %w", tenantName, shared, err)
+	}
+
+	return secretBinding.GetSecretRefName(), nil
+
 }
 
 func (p *accountProvider) GardenerSharedSecretName(hyperscalerType Type, euAccess bool) (string, error) {
