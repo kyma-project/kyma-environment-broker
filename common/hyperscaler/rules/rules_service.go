@@ -18,7 +18,7 @@ func NewRulesServiceFromFile(rulesFilePath string) (*RulesService, error) {
 	}
 
 	log.Printf("Parsing rules from file: %s\n", rulesFilePath)
-	rulesConfig, err := rulesConfig.Load(rulesFilePath)
+	err := rulesConfig.Load(rulesFilePath)
 	if err != nil {
 		return nil, err
 	}
