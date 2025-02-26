@@ -13,7 +13,7 @@ func TestNewRulesServiceFromFile(t *testing.T) {
 		// given
 		content := `rule:
                       - rule1
-					  - rule2`
+                      - rule2`
 
 		tmpfile, err := model.CreateTempFile(content)
 		require.NoError(t, err)
@@ -35,7 +35,7 @@ func TestNewRulesServiceFromFile(t *testing.T) {
 		// then
 		require.Error(t, err)
 		require.Nil(t, service)
-		require.Equal(t, "No HAP rules file provided", err.Error())
+		require.Equal(t, "No HAP rules file path provided", err.Error())
 	})
 
 	t.Run("should return error when file does not exist", func(t *testing.T) {
