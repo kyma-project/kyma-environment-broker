@@ -126,9 +126,7 @@ func (p *secretBindingsAccountPool) IsSecretBindingUsed(hyperscalerType Type, te
 	return false, nil
 }
 
-func (sp *secretBindingsAccountPool) SharedCredentialsSecretBinding(hyperscalerType Type, euAccess bool) (*gardener.SecretBinding, error) {
-	// selector
-	shared := true
+func getLabelsSelector(hyperscalerType Type, shared bool, euAccess bool) string {
 	hypSelector := fmt.Sprintf("hyperscalerType=%s", hyperscalerType.GetKey())
 	if !shared {
 		hypSelector = fmt.Sprintf("%s, shared!=true", hypSelector)	
@@ -137,10 +135,18 @@ func (sp *secretBindingsAccountPool) SharedCredentialsSecretBinding(hyperscalerT
 	}
 	hypSelector = addEuAccessSelector(hypSelector, euAccess)
 
+	// old SharedCredentialsSecretBinding method ignored euAccess param
 	if shared {
 		hypSelector = strings.ReplaceAll(hypSelector, ", euAccess=true", "")
 		hypSelector = strings.ReplaceAll(hypSelector, ", !euAccess", "")
 	}
+	return hypSelector
+}
+
+func (sp *secretBindingsAccountPool) SharedCredentialsSecretBinding(hyperscalerType Type, euAccess bool) (*gardener.SecretBinding, error) {
+	// selector
+	shared := true
+	hypSelector := getLabelsSelector(hyperscalerType, shared, euAccess)
 
 	// get binding
 	secretBindings, err := sp.getSecretBindings(hypSelector)
@@ -153,18 +159,7 @@ func (sp *secretBindingsAccountPool) SharedCredentialsSecretBinding(hyperscalerT
 
 func (p *secretBindingsAccountPool) CredentialsSecretBinding(hyperscalerType Type, tenantName string, euAccess bool, shared bool) (*gardener.SecretBinding, error) {
 	// selector
-	hypSelector := fmt.Sprintf("hyperscalerType=%s", hyperscalerType.GetKey())
-	if !shared {
-		hypSelector = fmt.Sprintf("%s, shared!=true", hypSelector)	
-	} else {
-		hypSelector = fmt.Sprintf("%s, shared=true", hypSelector)
-	}
-	hypSelector = addEuAccessSelector(hypSelector, euAccess)
-
-	if shared {
-		hypSelector = strings.ReplaceAll(hypSelector, ", euAccess=true", "")
-		hypSelector = strings.ReplaceAll(hypSelector, ", !euAccess", "")
-	}
+	hypSelector := getLabelsSelector(hyperscalerType, shared, euAccess)
 
 	// label selector modifications
 	labelSelector := fmt.Sprintf("%s, tenantName=%s, !dirty", hypSelector, tenantName)
