@@ -17,7 +17,6 @@ import (
 	"helm.sh/helm/v3/pkg/chart/loader"
 	"helm.sh/helm/v3/pkg/chartutil"
 	"helm.sh/helm/v3/pkg/engine"
-	_ "istio.io/client-go/pkg/clientset/versioned/fake"
 )
 
 const HELM_CHART = "../../../resources/keb"
