@@ -35,6 +35,24 @@ type secretBindingsAccountPool struct {
 	mux            sync.Mutex
 }
 
+
+func getLabelsSelector(hyperscalerType Type, shared bool, euAccess bool) string {
+	hypSelector := fmt.Sprintf("hyperscalerType=%s", hyperscalerType.GetKey())
+	if !shared {
+		hypSelector = fmt.Sprintf("%s, shared!=true", hypSelector)	
+	} else {
+		hypSelector = fmt.Sprintf("%s, shared=true", hypSelector)
+	}
+	hypSelector = addEuAccessSelector(hypSelector, euAccess)
+
+	// old SharedCredentialsSecretBinding method ignored euAccess param
+	if shared {
+		hypSelector = strings.ReplaceAll(hypSelector, ", euAccess=true", "")
+		hypSelector = strings.ReplaceAll(hypSelector, ", !euAccess", "")
+	}
+	return hypSelector
+}
+
 func (p *secretBindingsAccountPool) IsSecretBindingInternal(hyperscalerType Type, tenantName string, euAccess bool) (bool, error) {
 	hypLabels := fmt.Sprintf("hyperscalerType=%s", hyperscalerType.GetKey())
 	hypLabels = addEuAccessSelector(hypLabels, euAccess)
@@ -126,22 +144,7 @@ func (p *secretBindingsAccountPool) IsSecretBindingUsed(hyperscalerType Type, te
 	return false, nil
 }
 
-func getLabelsSelector(hyperscalerType Type, shared bool, euAccess bool) string {
-	hypSelector := fmt.Sprintf("hyperscalerType=%s", hyperscalerType.GetKey())
-	if !shared {
-		hypSelector = fmt.Sprintf("%s, shared!=true", hypSelector)	
-	} else {
-		hypSelector = fmt.Sprintf("%s, shared=true", hypSelector)
-	}
-	hypSelector = addEuAccessSelector(hypSelector, euAccess)
 
-	// old SharedCredentialsSecretBinding method ignored euAccess param
-	if shared {
-		hypSelector = strings.ReplaceAll(hypSelector, ", euAccess=true", "")
-		hypSelector = strings.ReplaceAll(hypSelector, ", !euAccess", "")
-	}
-	return hypSelector
-}
 
 func (sp *secretBindingsAccountPool) SharedCredentialsSecretBinding(hyperscalerType Type, euAccess bool) (*gardener.SecretBinding, error) {
 	// selector
