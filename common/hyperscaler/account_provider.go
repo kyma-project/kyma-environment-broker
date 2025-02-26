@@ -8,7 +8,7 @@ import (
 
 //go:generate mockery --name=AccountProvider --output=automock --outpkg=automock --case=underscore
 type AccountProvider interface {
-	GardenerSecretName(hyperscalerType Type, tenantName string, euAccess bool) (string, error)
+	GardenerSecretName(hyperscalerType Type, tenantName string, euAccess bool, shared bool) (string, error)
 	GardenerSharedSecretName(hyperscalerType Type, euAccess bool) (string, error)
 	MarkUnusedGardenerSecretBindingAsDirty(hyperscalerType Type, tenantName string, euAccess bool) error
 }
@@ -44,7 +44,7 @@ func HypTypeFromCloudProviderWithRegion(cloudProvider pkg.CloudProvider, regionF
 	}
 }
 
-func (p *accountProvider) GardenerSecretName(hyperscalerType Type, tenantName string, euAccess bool) (string, error) {
+func (p *accountProvider) GardenerSecretName(hyperscalerType Type, tenantName string, euAccess bool, shared bool) (string, error) {
 	if p.gardenerPool == nil {
 		return "", fmt.Errorf("failed to get Gardener Credentials. Gardener Account pool is not configured for tenant %s", tenantName)
 	}

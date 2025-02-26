@@ -18,7 +18,7 @@ func TestGardenerSecretName(t *testing.T) {
 		accountProvider := NewAccountProvider(nil)
 
 		//when
-		_, err := accountProvider.GardenerSecretName(GCP("cf-jp30"), "tenantname", false)
+		_, err := accountProvider.GardenerSecretName(GCP("cf-jp30"), "tenantname", false, false)
 		require.Error(t, err)
 
 		//then
@@ -33,7 +33,7 @@ func TestGardenerSecretName(t *testing.T) {
 		accountProvider := NewAccountProvider(accountPool)
 
 		//when
-		secretName, err := accountProvider.GardenerSecretName(Azure(), "tenantname", false)
+		secretName, err := accountProvider.GardenerSecretName(Azure(), "tenantname", false, false)
 
 		//then
 		require.NoError(t, err)
@@ -64,7 +64,7 @@ func TestGardenerSecretName(t *testing.T) {
 		accountProvider := NewAccountProvider(accountPool)
 
 		//when
-		secretName, err := accountProvider.GardenerSecretName(Azure(), "tenantname", false)
+		secretName, err := accountProvider.GardenerSecretName(Azure(), "tenantname", false, false)
 
 		//then
 		require.NoError(t, err)
@@ -79,7 +79,7 @@ func TestGardenerSecretName(t *testing.T) {
 		accountProvider := NewAccountProvider(accountPool)
 
 		//when
-		_, err := accountProvider.GardenerSecretName(Azure(), "tenantname", false)
+		_, err := accountProvider.GardenerSecretName(Azure(), "tenantname", false, false)
 
 		//then
 		require.Error(t, err)
