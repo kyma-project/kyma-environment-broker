@@ -236,6 +236,34 @@ func sharedSubscription(ht hyperscaler.Type) string {
 }
 
 func fixConfig() *Config {
+	brokerConfigPlans := []string{
+		"azure",
+		"trial",
+		"aws",
+		"own_cluster",
+		"preview",
+		"sap-converged-cloud",
+		"gcp",
+		"free",
+		"build-runtime-aws",
+		"build-runtime-gcp",
+		"build-runtime-azure",
+	}
+
+	kimConfigPlans := []string{
+		"preview",
+		"aws",
+		"gcp",
+		"azure",
+		"trial",
+		"free",
+		"sap-converged-cloud",
+		"azure_lite",
+		"build-runtime-aws",
+		"build-runtime-gcp",
+		"build-runtime-azure",
+	}
+
 	return &Config{
 		DbInMemory:                         true,
 		DisableProcessOperationsInProgress: false,
@@ -265,7 +293,7 @@ func fixConfig() *Config {
 
 		UpdateProcessingEnabled: true,
 		Broker: broker.Config{
-			EnablePlans:                           []string{"azure", "trial", "aws", "own_cluster", "preview", "sap-converged-cloud", "gcp", "free"},
+			EnablePlans:                           brokerConfigPlans,
 			AllowUpdateExpiredInstanceWithContext: true,
 			Binding: broker.BindingConfig{
 				Enabled:              true,
@@ -278,8 +306,8 @@ func fixConfig() *Config {
 			},
 			KimConfig: broker.KimConfig{
 				Enabled:      true,
-				Plans:        []string{"preview", "aws", "gcp", "azure", "trial", "free", "sap-converged-cloud", "azure_lite"},
-				KimOnlyPlans: []string{"preview", "aws", "gcp", "azure", "trial", "free", "sap-converged-cloud", "azure_lite"},
+				Plans:        kimConfigPlans,
+				KimOnlyPlans: kimConfigPlans,
 			},
 			WorkerHealthCheckInterval:     10 * time.Minute,
 			WorkerHealthCheckWarnInterval: 10 * time.Minute,

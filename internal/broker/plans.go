@@ -34,6 +34,12 @@ const (
 	OwnClusterPlanName        = "own_cluster"
 	PreviewPlanID             = "5cb3d976-b85c-42ea-a636-79cadda109a9"
 	PreviewPlanName           = "preview"
+	BuildRuntimeAWSPlanID     = "6aae0ff3-89f7-4f12-86de-51466145422e"
+	BuildRuntimeAWSPlanName   = "build-runtime-aws"
+	BuildRuntimeGCPPlanID     = "a310cd6b-6452-45a0-935d-d24ab53f9eba"
+	BuildRuntimeGCPPlanName   = "build-runtime-gcp"
+	BuildRuntimeAzurePlanID   = "499244b4-1bef-48c9-be68-495269899f8e"
+	BuildRuntimeAzurePlanName = "build-runtime-azure"
 )
 
 var PlanNamesMapping = map[string]string{
@@ -46,6 +52,9 @@ var PlanNamesMapping = map[string]string{
 	FreemiumPlanID:          FreemiumPlanName,
 	OwnClusterPlanID:        OwnClusterPlanName,
 	PreviewPlanID:           PreviewPlanName,
+	BuildRuntimeAWSPlanID:   BuildRuntimeAWSPlanName,
+	BuildRuntimeGCPPlanID:   BuildRuntimeGCPPlanName,
+	BuildRuntimeAzurePlanID: BuildRuntimeAzurePlanName,
 }
 
 var PlanIDsMapping = map[string]string{
@@ -58,6 +67,9 @@ var PlanIDsMapping = map[string]string{
 	FreemiumPlanName:          FreemiumPlanID,
 	OwnClusterPlanName:        OwnClusterPlanID,
 	PreviewPlanName:           PreviewPlanID,
+	BuildRuntimeAWSPlanName:   BuildRuntimeAWSPlanID,
+	BuildRuntimeGCPPlanName:   BuildRuntimeGCPPlanID,
+	BuildRuntimeAzurePlanName: BuildRuntimeAzurePlanID,
 }
 
 type TrialCloudRegion string
@@ -634,34 +646,44 @@ func Plans(plans PlansConfig, provider pkg.CloudProvider, includeAdditionalParam
 		delete(azureLiteMachinesDisplay, "Standard_D2s_v5")
 	}
 
-	awsSchema := AWSSchema(awsMachinesDisplay, awsAdditionalMachinesDisplay, awsRegionsDisplay, awsMachineNames, awsAdditionalMachineNames, includeAdditionalParamsInSchema, false, euAccessRestricted, shootAndSeedFeatureFlag)
-	// awsHASchema := AWSHASchema(awsMachinesDisplay, awsMachines, includeAdditionalParamsInSchema, false)
-	azureSchema := AzureSchema(azureMachinesDisplay, azureAdditionalMachinesDisplay, azureRegionsDisplay, azureMachinesNames, azureAdditionalMachinesNames, includeAdditionalParamsInSchema, false, euAccessRestricted, shootAndSeedFeatureFlag)
-	azureLiteSchema := AzureLiteSchema(azureLiteMachinesDisplay, azureRegionsDisplay, azureLiteMachinesNames, includeAdditionalParamsInSchema, false, euAccessRestricted, shootAndSeedFeatureFlag)
-	freemiumSchema := FreemiumSchema(provider, azureRegionsDisplay, includeAdditionalParamsInSchema, false, euAccessRestricted)
-	gcpSchema := GCPSchema(gcpMachinesDisplay, gcpAdditionalMachinesDisplay, gcpRegionsDisplay, gcpMachinesNames, gcpAdditionalMachinesNames, includeAdditionalParamsInSchema, false, shootAndSeedFeatureFlag, assuredWorkloads)
-	ownClusterSchema := OwnClusterSchema(false)
-	previewCatalogSchema := PreviewSchema(awsMachinesDisplay, awsAdditionalMachinesDisplay, awsRegionsDisplay, awsMachineNames, awsAdditionalMachineNames, includeAdditionalParamsInSchema, false, euAccessRestricted)
-
-	trialSchema := TrialSchema(includeAdditionalParamsInSchema, false)
+	awsCreateSchema := AWSSchema(awsMachinesDisplay, awsAdditionalMachinesDisplay, awsRegionsDisplay, awsMachineNames, awsAdditionalMachineNames, includeAdditionalParamsInSchema, false, euAccessRestricted, shootAndSeedFeatureFlag)
+	awsUpdateSchema := AWSSchema(awsMachinesDisplay, awsAdditionalMachinesDisplay, awsRegionsDisplay, awsMachineNames, awsAdditionalMachineNames, includeAdditionalParamsInSchema, true, euAccessRestricted, shootAndSeedFeatureFlag)
+	azureCreateSchema := AzureSchema(azureMachinesDisplay, azureAdditionalMachinesDisplay, azureRegionsDisplay, azureMachinesNames, azureAdditionalMachinesNames, includeAdditionalParamsInSchema, false, euAccessRestricted, shootAndSeedFeatureFlag)
+	azureUpdateSchema := AzureSchema(azureMachinesDisplay, azureAdditionalMachinesDisplay, azureRegionsDisplay, azureMachinesNames, azureAdditionalMachinesNames, includeAdditionalParamsInSchema, true, euAccessRestricted, shootAndSeedFeatureFlag)
+	azureLiteCreateSchema := AzureLiteSchema(azureLiteMachinesDisplay, azureRegionsDisplay, azureLiteMachinesNames, includeAdditionalParamsInSchema, false, euAccessRestricted, shootAndSeedFeatureFlag)
+	azureLiteUpdateSchema := AzureLiteSchema(azureLiteMachinesDisplay, azureRegionsDisplay, azureLiteMachinesNames, includeAdditionalParamsInSchema, true, euAccessRestricted, shootAndSeedFeatureFlag)
+	freemiumCreateSchema := FreemiumSchema(provider, azureRegionsDisplay, includeAdditionalParamsInSchema, false, euAccessRestricted)
+	freemiumUpdateSchema := FreemiumSchema(provider, azureRegionsDisplay, includeAdditionalParamsInSchema, true, euAccessRestricted)
+	gcpCreateSchema := GCPSchema(gcpMachinesDisplay, gcpAdditionalMachinesDisplay, gcpRegionsDisplay, gcpMachinesNames, gcpAdditionalMachinesNames, includeAdditionalParamsInSchema, false, shootAndSeedFeatureFlag, assuredWorkloads)
+	gcpUpdateSchema := GCPSchema(gcpMachinesDisplay, gcpAdditionalMachinesDisplay, gcpRegionsDisplay, gcpMachinesNames, gcpAdditionalMachinesNames, includeAdditionalParamsInSchema, true, shootAndSeedFeatureFlag, assuredWorkloads)
+	ownClusterCreateSchema := OwnClusterSchema(false)
+	ownClusterUpdateSchema := OwnClusterSchema(true)
+	previewCreateSchema := PreviewSchema(awsMachinesDisplay, awsAdditionalMachinesDisplay, awsRegionsDisplay, awsMachineNames, awsAdditionalMachineNames, includeAdditionalParamsInSchema, false, euAccessRestricted)
+	previewUpdateSchema := PreviewSchema(awsMachinesDisplay, awsAdditionalMachinesDisplay, awsRegionsDisplay, awsMachineNames, awsAdditionalMachineNames, includeAdditionalParamsInSchema, true, euAccessRestricted)
+	trialCreateSchema := TrialSchema(includeAdditionalParamsInSchema, false)
+	trialUpdateSchema := TrialSchema(includeAdditionalParamsInSchema, true)
 
 	outputPlans := map[string]domain.ServicePlan{
-		AWSPlanID:        defaultServicePlan(AWSPlanID, AWSPlanName, plans, awsSchema, AWSSchema(awsMachinesDisplay, awsAdditionalMachinesDisplay, awsRegionsDisplay, awsMachineNames, awsAdditionalMachineNames, includeAdditionalParamsInSchema, true, euAccessRestricted, shootAndSeedFeatureFlag)),
-		GCPPlanID:        defaultServicePlan(GCPPlanID, GCPPlanName, plans, gcpSchema, GCPSchema(gcpMachinesDisplay, gcpAdditionalMachinesDisplay, gcpRegionsDisplay, gcpMachinesNames, gcpAdditionalMachinesNames, includeAdditionalParamsInSchema, true, shootAndSeedFeatureFlag, assuredWorkloads)),
-		AzurePlanID:      defaultServicePlan(AzurePlanID, AzurePlanName, plans, azureSchema, AzureSchema(azureMachinesDisplay, azureAdditionalMachinesDisplay, azureRegionsDisplay, azureMachinesNames, azureAdditionalMachinesNames, includeAdditionalParamsInSchema, true, euAccessRestricted, shootAndSeedFeatureFlag)),
-		AzureLitePlanID:  defaultServicePlan(AzureLitePlanID, AzureLitePlanName, plans, azureLiteSchema, AzureLiteSchema(azureLiteMachinesDisplay, azureRegionsDisplay, azureLiteMachinesNames, includeAdditionalParamsInSchema, true, euAccessRestricted, shootAndSeedFeatureFlag)),
-		FreemiumPlanID:   defaultServicePlan(FreemiumPlanID, FreemiumPlanName, plans, freemiumSchema, FreemiumSchema(provider, azureRegionsDisplay, includeAdditionalParamsInSchema, true, euAccessRestricted)),
-		TrialPlanID:      defaultServicePlan(TrialPlanID, TrialPlanName, plans, trialSchema, TrialSchema(includeAdditionalParamsInSchema, true)),
-		OwnClusterPlanID: defaultServicePlan(OwnClusterPlanID, OwnClusterPlanName, plans, ownClusterSchema, OwnClusterSchema(true)),
-		PreviewPlanID:    defaultServicePlan(PreviewPlanID, PreviewPlanName, plans, previewCatalogSchema, PreviewSchema(awsMachinesDisplay, awsAdditionalMachinesDisplay, awsRegionsDisplay, awsMachineNames, awsAdditionalMachineNames, includeAdditionalParamsInSchema, true, euAccessRestricted)),
+		AWSPlanID:               defaultServicePlan(AWSPlanID, AWSPlanName, plans, awsCreateSchema, awsUpdateSchema),
+		GCPPlanID:               defaultServicePlan(GCPPlanID, GCPPlanName, plans, gcpCreateSchema, gcpUpdateSchema),
+		AzurePlanID:             defaultServicePlan(AzurePlanID, AzurePlanName, plans, azureCreateSchema, azureUpdateSchema),
+		AzureLitePlanID:         defaultServicePlan(AzureLitePlanID, AzureLitePlanName, plans, azureLiteCreateSchema, azureLiteUpdateSchema),
+		FreemiumPlanID:          defaultServicePlan(FreemiumPlanID, FreemiumPlanName, plans, freemiumCreateSchema, freemiumUpdateSchema),
+		TrialPlanID:             defaultServicePlan(TrialPlanID, TrialPlanName, plans, trialCreateSchema, trialUpdateSchema),
+		OwnClusterPlanID:        defaultServicePlan(OwnClusterPlanID, OwnClusterPlanName, plans, ownClusterCreateSchema, ownClusterUpdateSchema),
+		PreviewPlanID:           defaultServicePlan(PreviewPlanID, PreviewPlanName, plans, previewCreateSchema, previewUpdateSchema),
+		BuildRuntimeAWSPlanID:   defaultServicePlan(BuildRuntimeAWSPlanID, BuildRuntimeAWSPlanName, plans, awsCreateSchema, awsUpdateSchema),
+		BuildRuntimeGCPPlanID:   defaultServicePlan(BuildRuntimeGCPPlanID, BuildRuntimeGCPPlanName, plans, gcpCreateSchema, gcpUpdateSchema),
+		BuildRuntimeAzurePlanID: defaultServicePlan(BuildRuntimeAzurePlanID, BuildRuntimeAzurePlanName, plans, azureCreateSchema, azureUpdateSchema),
 	}
 
 	if len(sapConvergedCloudRegions) != 0 {
 		sapConvergedCloudMachinesNames := SapConvergedCloudMachinesNames()
 		sapConvergedCloudMachinesDisplay := SapConvergedCloudMachinesDisplay()
 		sapConvergedCloudRegionsDisplay := SapConvergedCloudRegionsDisplay()
-		sapConvergedCloudSchema := SapConvergedCloudSchema(sapConvergedCloudMachinesDisplay, sapConvergedCloudRegionsDisplay, sapConvergedCloudMachinesNames, includeAdditionalParamsInSchema, false, shootAndSeedFeatureFlag, sapConvergedCloudRegions)
-		outputPlans[SapConvergedCloudPlanID] = defaultServicePlan(SapConvergedCloudPlanID, SapConvergedCloudPlanName, plans, sapConvergedCloudSchema, SapConvergedCloudSchema(sapConvergedCloudMachinesDisplay, sapConvergedCloudRegionsDisplay, sapConvergedCloudMachinesNames, includeAdditionalParamsInSchema, true, shootAndSeedFeatureFlag, sapConvergedCloudRegions))
+		sapConvergedCloudCreateSchema := SapConvergedCloudSchema(sapConvergedCloudMachinesDisplay, sapConvergedCloudRegionsDisplay, sapConvergedCloudMachinesNames, includeAdditionalParamsInSchema, false, shootAndSeedFeatureFlag, sapConvergedCloudRegions)
+		sapConvergedCloudUpdateSchema := SapConvergedCloudSchema(sapConvergedCloudMachinesDisplay, sapConvergedCloudRegionsDisplay, sapConvergedCloudMachinesNames, includeAdditionalParamsInSchema, true, shootAndSeedFeatureFlag, sapConvergedCloudRegions)
+		outputPlans[SapConvergedCloudPlanID] = defaultServicePlan(SapConvergedCloudPlanID, SapConvergedCloudPlanName, plans, sapConvergedCloudCreateSchema, sapConvergedCloudUpdateSchema)
 	}
 
 	return outputPlans

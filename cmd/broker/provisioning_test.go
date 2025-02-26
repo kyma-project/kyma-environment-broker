@@ -1909,7 +1909,7 @@ func TestProvisioning_Modules(t *testing.T) {
 }
 
 func TestProvisioningWithAdditionalWorkerNodePools(t *testing.T) {
-	//given
+	// given
 	cfg := fixConfig()
 	cfg.Broker.KimConfig.Enabled = true
 	cfg.Broker.KimConfig.Plans = []string{"aws"}
@@ -1993,4 +1993,94 @@ func TestProvisioningWithAdditionalWorkerNodePools(t *testing.T) {
 
 	assert.Equal(t, http.StatusOK, resp.StatusCode)
 
+}
+
+func TestProvisioning_BuildRuntimePlans(t *testing.T) {
+	// given
+	suite := NewBrokerSuiteTest(t)
+	defer suite.TearDown()
+
+	t.Run("should provision instance with build-runtime-aws plan", func(t *testing.T) {
+		// given
+		instanceID := uuid.New().String()
+
+		// when
+		resp := suite.CallAPI("PUT", fmt.Sprintf(provisioningRequestPathFormat, instanceID),
+			`{
+					"service_id": "47c9dcbf-ff30-448e-ab36-d3bad66ba281",
+					"plan_id": "6aae0ff3-89f7-4f12-86de-51466145422e",
+					"context": {
+						"globalaccount_id": "g-account-id",
+						"subaccount_id": "sub-id",
+						"user_id": "john.smith@email.com"
+					},
+					"parameters": {
+						"name": "build-runtime-aws-1",
+						"region": "eu-central-1"
+					}
+		}`)
+
+		opID := suite.DecodeOperationID(resp)
+		suite.processKIMProvisioningByOperationID(opID)
+
+		// then
+		suite.WaitForOperationState(opID, domain.Succeeded)
+		suite.AssertRuntimeResourceLabels(opID)
+	})
+
+	t.Run("should provision instance with build-runtime-gcp plan", func(t *testing.T) {
+		// given
+		instanceID := uuid.New().String()
+
+		// when
+		resp := suite.CallAPI("PUT", fmt.Sprintf(provisioningRequestPathFormat, instanceID),
+			`{
+					"service_id": "47c9dcbf-ff30-448e-ab36-d3bad66ba281",
+					"plan_id": "a310cd6b-6452-45a0-935d-d24ab53f9eba",
+					"context": {
+						"globalaccount_id": "g-account-id",
+						"subaccount_id": "sub-id",
+						"user_id": "john.smith@email.com"
+					},
+					"parameters": {
+						"name": "build-runtime-gcp-1",
+						"region": "europe-west3"
+					}
+		}`)
+
+		opID := suite.DecodeOperationID(resp)
+		suite.processKIMProvisioningByOperationID(opID)
+
+		// then
+		suite.WaitForOperationState(opID, domain.Succeeded)
+		suite.AssertRuntimeResourceLabels(opID)
+	})
+
+	t.Run("should provision instance with build-runtime-azure plan", func(t *testing.T) {
+		// given
+		instanceID := uuid.New().String()
+
+		// when
+		resp := suite.CallAPI("PUT", fmt.Sprintf(provisioningRequestPathFormat, instanceID),
+			`{
+					"service_id": "47c9dcbf-ff30-448e-ab36-d3bad66ba281",
+					"plan_id": "499244b4-1bef-48c9-be68-495269899f8e",
+					"context": {
+						"globalaccount_id": "g-account-id",
+						"subaccount_id": "sub-id",
+						"user_id": "john.smith@email.com"
+					},
+					"parameters": {
+						"name": "build-runtime-azure-1",
+						"region": "westeurope"
+					}
+		}`)
+
+		opID := suite.DecodeOperationID(resp)
+		suite.processKIMProvisioningByOperationID(opID)
+
+		// then
+		suite.WaitForOperationState(opID, domain.Succeeded)
+		suite.AssertRuntimeResourceLabels(opID)
+	})
 }
