@@ -129,9 +129,11 @@ func (p *secretBindingsAccountPool) IsSecretBindingUsed(hyperscalerType Type, te
 func (sp *secretBindingsAccountPool) SharedCredentialsSecretBinding(hyperscalerType Type, euAccess bool) (*gardener.SecretBinding, error) {
 	// selector
 	hypLabels := fmt.Sprintf("hyperscalerType=%s, shared=true", hyperscalerType.GetKey())
+	hypLabels = addEuAccessSelector(hypLabels, euAccess)
 
 	// label selector moditifactions
-	// - not present in SharedCredentialsSecretBinding
+	hypLabels = strings.ReplaceAll(hypLabels, ", euAccess=true", "")
+	hypLabels = strings.ReplaceAll(hypLabels, ", !euAccess", "")
 
 	// get binding
 	secretBindings, err := sp.getSecretBindings(hypLabels)
