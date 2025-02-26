@@ -16,7 +16,7 @@ import (
 	cloudProvider "github.com/kyma-project/kyma-environment-broker/internal/provider"
 	provisionerAutomock "github.com/kyma-project/kyma-environment-broker/internal/provisioner/automock"
 	"github.com/kyma-project/kyma-environment-broker/internal/ptr"
-	"github.com/pivotal-cf/brokerapi/v8/domain"
+	"github.com/pivotal-cf/brokerapi/v12/domain"
 	"github.com/stretchr/testify/assert"
 
 	"github.com/stretchr/testify/require"

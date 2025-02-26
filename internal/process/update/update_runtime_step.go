@@ -6,6 +6,8 @@ import (
 	"log/slog"
 	"time"
 
+	gardener "github.com/gardener/gardener/pkg/apis/core/v1beta1"
+
 	kebError "github.com/kyma-project/kyma-environment-broker/internal/error"
 	"github.com/kyma-project/kyma-environment-broker/internal/process/input"
 	"github.com/kyma-project/kyma-environment-broker/internal/provider"
@@ -75,7 +77,14 @@ func (s *UpdateRuntimeStep) Run(operation internal.Operation, log *slog.Logger) 
 			return s.operationManager.OperationFailed(operation, fmt.Sprintf("while calculating plan specific values: %s", err), err, log)
 		}
 
-		additionalWorkers := provisioning.CreateAdditionalWorkers(s.config, values, operation.UpdatingParameters.AdditionalWorkerNodePools, runtime.Spec.Shoot.Provider.Workers[0].Zones)
+		currentAdditionalWorkers := make(map[string]gardener.Worker)
+		if runtime.Spec.Shoot.Provider.AdditionalWorkers != nil {
+			for _, worker := range *runtime.Spec.Shoot.Provider.AdditionalWorkers {
+				currentAdditionalWorkers[worker.Name] = worker
+			}
+		}
+
+		additionalWorkers := provisioning.CreateAdditionalWorkers(s.config, values, currentAdditionalWorkers, operation.UpdatingParameters.AdditionalWorkerNodePools, runtime.Spec.Shoot.Provider.Workers[0].Zones)
 		runtime.Spec.Shoot.Provider.AdditionalWorkers = &additionalWorkers
 	}
 

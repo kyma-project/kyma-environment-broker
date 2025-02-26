@@ -20,7 +20,6 @@ import (
 	"github.com/kyma-project/kyma-environment-broker/internal/ptr"
 	"golang.org/x/exp/slices"
 
-	"github.com/gorilla/mux"
 	"github.com/kyma-project/kyma-environment-broker/common/pagination"
 	pkg "github.com/kyma-project/kyma-environment-broker/common/runtime"
 	"github.com/kyma-project/kyma-environment-broker/internal"
@@ -67,7 +66,7 @@ func NewHandler(storage storage.BrokerStorage, defaultMaxPage int, defaultReques
 	}
 }
 
-func (h *Handler) AttachRoutes(router *mux.Router) {
+func (h *Handler) AttachRoutes(router *httputil.Router) {
 	router.HandleFunc("/runtimes", h.getRuntimes)
 }
 
@@ -180,7 +179,7 @@ func (h *Handler) InstanceFromInstanceArchived(archived internal.InstanceArchive
 	}
 }
 
-func (h *Handler) getRuntimes(w http.ResponseWriter, req *http.Request) { //runtime tu wchodzi
+func (h *Handler) getRuntimes(w http.ResponseWriter, req *http.Request) {
 	toReturn := make([]pkg.RuntimeDTO, 0)
 
 	pageSize, page, err := pagination.ExtractPaginationConfigFromRequest(req, h.defaultMaxPage)

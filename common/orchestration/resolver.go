@@ -10,7 +10,7 @@ import (
 
 	"github.com/kyma-project/kyma-environment-broker/common/gardener"
 	"github.com/kyma-project/kyma-environment-broker/common/runtime"
-	brokerapi "github.com/pivotal-cf/brokerapi/v8/domain"
+	brokerapi "github.com/pivotal-cf/brokerapi/v12/domain"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/client-go/dynamic"

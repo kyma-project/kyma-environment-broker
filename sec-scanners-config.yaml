@@ -1,20 +1,28 @@
 module-name: kyma-environment-broker
-rc-tag: 1.14.0
-protecode:
-  - europe-docker.pkg.dev/kyma-project/prod/kyma-environment-broker:1.14.0
-  - europe-docker.pkg.dev/kyma-project/prod/kyma-environment-deprovision-retrigger-job:1.14.0
-  - europe-docker.pkg.dev/kyma-project/prod/kyma-environments-cleanup-job:1.14.0
-  - europe-docker.pkg.dev/kyma-project/prod/kyma-environment-runtime-reconciler:1.14.0
-  - europe-docker.pkg.dev/kyma-project/prod/kyma-environment-archiver-job:1.14.0
-  - europe-docker.pkg.dev/kyma-project/prod/kyma-environment-expirator-job:1.14.0
-  - europe-docker.pkg.dev/kyma-project/prod/kyma-environment-subaccount-cleanup-job:1.14.0
-  - europe-docker.pkg.dev/kyma-project/prod/kyma-environment-subaccount-sync:1.14.0
-  - europe-docker.pkg.dev/kyma-project/prod/kyma-environment-broker-globalaccounts:1.14.0
-  - europe-docker.pkg.dev/kyma-project/prod/kyma-environment-broker-schema-migrator:1.14.0
-  - europe-docker.pkg.dev/kyma-project/prod/kyma-environment-service-binding-cleanup-job:1.14.0
-whitesource:
+kind: kcp
+rc-tag: 1.15.0
+bdba:
+  - europe-docker.pkg.dev/kyma-project/prod/kyma-environment-broker:1.15.0
+  - europe-docker.pkg.dev/kyma-project/prod/kyma-environment-deprovision-retrigger-job:1.15.0
+  - europe-docker.pkg.dev/kyma-project/prod/kyma-environments-cleanup-job:1.15.0
+  - europe-docker.pkg.dev/kyma-project/prod/kyma-environment-runtime-reconciler:1.15.0
+  - europe-docker.pkg.dev/kyma-project/prod/kyma-environment-archiver-job:1.15.0
+  - europe-docker.pkg.dev/kyma-project/prod/kyma-environment-expirator-job:1.15.0
+  - europe-docker.pkg.dev/kyma-project/prod/kyma-environment-subaccount-cleanup-job:1.15.0
+  - europe-docker.pkg.dev/kyma-project/prod/kyma-environment-subaccount-sync:1.15.0
+  - europe-docker.pkg.dev/kyma-project/prod/kyma-environment-broker-globalaccounts:1.15.0
+  - europe-docker.pkg.dev/kyma-project/prod/kyma-environment-broker-schema-migrator:1.15.0
+  - europe-docker.pkg.dev/kyma-project/prod/kyma-environment-service-binding-cleanup-job:1.15.0
+mend:
   language: golang-mod
-  subprojects: false
+  exclude:
+    - "**/*_test.go"
+    - "testing/**"
+    - "**/automock/**"
+    - "**/*fake*.go"
+    - "**/*mock*.go"
+checkmarx-one:
+  preset: go-default
   exclude:
     - "**/*_test.go"
     - "testing/**"

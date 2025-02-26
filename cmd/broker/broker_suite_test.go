@@ -17,10 +17,12 @@ import (
 	corev1 "k8s.io/api/core/v1"
 
 	"github.com/kyma-project/kyma-environment-broker/common/hyperscaler"
+	"github.com/kyma-project/kyma-environment-broker/common/hyperscaler/rules"
 
 	"github.com/gardener/gardener/pkg/apis/core/v1beta1"
 
 	"github.com/kyma-project/kyma-environment-broker/internal/customresources"
+	"github.com/kyma-project/kyma-environment-broker/internal/httputil"
 
 	"github.com/kyma-project/kyma-environment-broker/internal/storage/dberr"
 
@@ -33,7 +35,6 @@ import (
 
 	"code.cloudfoundry.org/lager"
 	"github.com/google/uuid"
-	"github.com/gorilla/mux"
 	"github.com/kyma-project/control-plane/components/provisioner/pkg/gqlschema"
 	"github.com/kyma-project/kyma-environment-broker/common/gardener"
 	"github.com/kyma-project/kyma-environment-broker/common/orchestration"
@@ -56,8 +57,8 @@ import (
 	"github.com/kyma-project/kyma-environment-broker/internal/provisioner"
 	kebRuntime "github.com/kyma-project/kyma-environment-broker/internal/runtime"
 	"github.com/kyma-project/kyma-environment-broker/internal/storage"
-	"github.com/pivotal-cf/brokerapi/v8/domain"
-	"github.com/pivotal-cf/brokerapi/v8/domain/apiresponses"
+	"github.com/pivotal-cf/brokerapi/v12/domain"
+	"github.com/pivotal-cf/brokerapi/v12/domain/apiresponses"
 	"github.com/pkg/errors"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -102,7 +103,7 @@ type BrokerSuiteTest struct {
 	gardenerClient dynamic.Interface
 
 	httpServer *httptest.Server
-	router     *mux.Router
+	router     *httputil.Router
 
 	t                   *testing.T
 	inputBuilderFactory input.CreatorForPlan
@@ -219,8 +220,12 @@ func NewBrokerSuiteTestWithConfig(t *testing.T, cfg *Config, version ...string) 
 	fakeK8sSKRClient := fake.NewClientBuilder().WithScheme(sch).Build()
 	k8sClientProvider := kubeconfig.NewFakeK8sClientProvider(fakeK8sSKRClient)
 	provisionManager := process.NewStagedManager(db.Operations(), eventBroker, cfg.OperationTimeout, cfg.Provisioning, log.With("provisioning", "manager"))
+
+	rulesService, err := rules.NewRulesServiceFromFile("testdata/hap-rules.yaml")
+	require.NoError(t, err)
+
 	provisioningQueue := NewProvisioningProcessingQueue(context.Background(), provisionManager, workersAmount, cfg, db, provisionerClient, inputFactory,
-		edpClient, accountProvider, k8sClientProvider, cli, defaultOIDCValues(), log)
+		edpClient, accountProvider, k8sClientProvider, cli, defaultOIDCValues(), log, rulesService)
 
 	provisioningQueue.SpeedUp(10000)
 	provisionManager.SpeedUp(10000)
@@ -244,7 +249,7 @@ func NewBrokerSuiteTestWithConfig(t *testing.T, cfg *Config, version ...string) 
 		db:                  db,
 		storageCleanup:      storageCleanup,
 		gardenerClient:      gardenerClient,
-		router:              mux.NewRouter(),
+		router:              httputil.NewRouter(),
 		t:                   t,
 		inputBuilderFactory: inputFactory,
 		k8sKcp:              cli,
@@ -399,6 +404,18 @@ func (s *BrokerSuiteTest) CreateAPI(inputFactory broker.PlanValidator, cfg *Conf
 				},
 				broker.SapConvergedCloudPlanName: {
 					Description: broker.SapConvergedCloudPlanName,
+					Metadata:    broker.PlanMetadata{},
+				},
+				broker.BuildRuntimeAWSPlanName: {
+					Description: broker.BuildRuntimeAWSPlanName,
+					Metadata:    broker.PlanMetadata{},
+				},
+				broker.BuildRuntimeGCPPlanID: {
+					Description: broker.BuildRuntimeGCPPlanName,
+					Metadata:    broker.PlanMetadata{},
+				},
+				broker.BuildRuntimeAzurePlanName: {
+					Description: broker.BuildRuntimeAzurePlanName,
 					Metadata:    broker.PlanMetadata{},
 				},
 			},

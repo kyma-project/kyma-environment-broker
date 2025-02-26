@@ -19,7 +19,7 @@ type RootSchema struct {
 	// Specifies in what order properties will be displayed on the form
 	ControlsOrder []string `json:"_controlsOrder"`
 	// Specified to true loads current instance configuration into the update instance schema
-	LoadCurrentConfig *bool `json:"_load_current_config,omitempty"`
+	LoadCurrentConfig bool `json:"_load_current_config,omitempty"`
 }
 
 type ProvisioningProperties struct {
@@ -300,7 +300,7 @@ func ShootAndSeedSameRegionProperty() *Type {
 
 // NewProvisioningProperties creates a new properties for different plans
 // Note that the order of properties will be the same in the form on the website
-func NewProvisioningProperties(machineTypesDisplay, additionalMachineTypesDisplay, regionsDisplay map[string]string, machineTypes, additionalMachineTypes, regions []string, update, enableAdditionalWorkerNodePools bool) ProvisioningProperties {
+func NewProvisioningProperties(machineTypesDisplay, additionalMachineTypesDisplay, regionsDisplay map[string]string, machineTypes, additionalMachineTypes, regions []string, update bool) ProvisioningProperties {
 
 	properties := ProvisioningProperties{
 		UpdateProperties: UpdateProperties{
@@ -323,6 +323,7 @@ func NewProvisioningProperties(machineTypesDisplay, additionalMachineTypesDispla
 				EnumDisplayName: machineTypesDisplay,
 				Description:     "Specifies the type of the virtual machine.",
 			},
+			AdditionalWorkerNodePools: NewAdditionalWorkerNodePoolsSchema(additionalMachineTypesDisplay, additionalMachineTypes),
 		},
 		Name: NameProperty(),
 		Region: &Type{
@@ -333,10 +334,6 @@ func NewProvisioningProperties(machineTypesDisplay, additionalMachineTypesDispla
 		},
 		Networking: NewNetworkingSchema(),
 		Modules:    NewModulesSchema(),
-	}
-
-	if enableAdditionalWorkerNodePools {
-		properties.AdditionalWorkerNodePools = NewAdditionalWorkerNodePoolsSchema(additionalMachineTypesDisplay, additionalMachineTypes)
 	}
 
 	if update {
@@ -384,23 +381,20 @@ func NewOIDCSchema() *OIDCType {
 	}
 }
 
-func NewSchema(properties interface{}, update bool, required []string, enableLoadCurrentConfig bool) *RootSchema {
+func NewSchema(properties interface{}, update bool, required []string) *RootSchema {
 	schema := &RootSchema{
 		Schema: "http://json-schema.org/draft-04/schema#",
 		Type: Type{
 			Type: "object",
 		},
-		Properties:   properties,
-		ShowFormView: true,
-		Required:     required,
+		Properties:        properties,
+		ShowFormView:      true,
+		Required:          required,
+		LoadCurrentConfig: true,
 	}
 
 	if update {
 		schema.Required = []string{}
-	}
-
-	if enableLoadCurrentConfig {
-		schema.LoadCurrentConfig = &enableLoadCurrentConfig
 	}
 
 	return schema
