@@ -77,7 +77,7 @@ func (s *ResolveCredentialsStep) getTargetSecretFromGardener(operation internal.
 
 	if shared {
 		log.Info("HAP lookup for shared secret binding")
-		secretName, err = s.accountProvider.GardenerSharedSecretName(hypType, euAccess)
+		secretName, err = s.accountProvider.GardenerSecretName(hypType, operation.ProvisioningParameters.ErsContext.GlobalAccountID, euAccess, shared)
 	} else {
 		log.Info("HAP lookup for secret binding")
 		secretName, err = s.accountProvider.GardenerSecretName(hypType, operation.ProvisioningParameters.ErsContext.GlobalAccountID, euAccess, shared)

@@ -10,7 +10,6 @@ import (
 //go:generate mockery --name=AccountProvider --output=automock --outpkg=automock --case=underscore
 type AccountProvider interface {
 	GardenerSecretName(hyperscalerType Type, tenantName string, euAccess bool, shared bool) (string, error)
-	GardenerSharedSecretName(hyperscalerType Type, euAccess bool) (string, error)
 	MarkUnusedGardenerSecretBindingAsDirty(hyperscalerType Type, tenantName string, euAccess bool) error
 }
 
@@ -68,19 +67,6 @@ func (p *accountProvider) GardenerSecretName(hyperscalerType Type, tenantName st
 
 	return secretBinding.GetSecretRefName(), nil
 
-}
-
-func (p *accountProvider) GardenerSharedSecretName(hyperscalerType Type, euAccess bool) (string, error) {
-	if p.gardenerPool == nil {
-		return "", fmt.Errorf("failed to get shared Secret Binding name. Gardener Shared Account pool is not configured for hyperscaler type %s", hyperscalerType.GetKey())
-	}
-
-	secretBinding, err := p.gardenerPool.SharedCredentialsSecretBinding(hyperscalerType, euAccess)
-	if err != nil {
-		return "", fmt.Errorf("getting shared secret binding: %w", err)
-	}
-
-	return secretBinding.GetSecretRefName(), nil
 }
 
 func (p *accountProvider) MarkUnusedGardenerSecretBindingAsDirty(hyperscalerType Type, tenantName string, euAccess bool) error {

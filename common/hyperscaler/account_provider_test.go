@@ -92,7 +92,7 @@ func TestGardenerSharedSecretName(t *testing.T) {
 		accountProvider := NewAccountProvider(nil)
 
 		//when
-		_, err := accountProvider.GardenerSharedSecretName(GCP("cf-jp30"), false)
+		_, err := accountProvider.GardenerSecretName(GCP("cf-jp30"), "tenant", false, true)
 		require.Error(t, err)
 
 		//then
@@ -107,7 +107,7 @@ func TestGardenerSharedSecretName(t *testing.T) {
 		accountProvider := NewAccountProvider(sharedAccountPool)
 
 		//when
-		secretName, err := accountProvider.GardenerSharedSecretName(Azure(), false)
+		secretName, err := accountProvider.GardenerSecretName(Azure(), "tenant", false, true)
 
 		//then
 		require.NoError(t, err)
@@ -139,7 +139,7 @@ func TestGardenerSharedSecretName(t *testing.T) {
 		accountProvider := NewAccountProvider(sharedAccountPool)
 
 		//when
-		secretName, err := accountProvider.GardenerSharedSecretName(Azure(), false)
+		secretName, err := accountProvider.GardenerSecretName(Azure(), "tenant", false, true)
 
 		//then
 		require.NoError(t, err)
@@ -154,7 +154,7 @@ func TestGardenerSharedSecretName(t *testing.T) {
 		accountProvider := NewAccountProvider(sharedAccountPool)
 
 		//when
-		_, err := accountProvider.GardenerSharedSecretName(Azure(), false)
+		_, err := accountProvider.GardenerSecretName(Azure(), "tenant", false, true)
 
 		//then
 		require.Error(t, err)
