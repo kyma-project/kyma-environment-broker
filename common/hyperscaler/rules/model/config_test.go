@@ -17,20 +17,13 @@ func TestLoad(t *testing.T) {
 		for _, rule := range expectedRules {
 			content += "- " + rule + "\n"
 		}
-		tmpfile, err := os.CreateTemp("", "test*.yaml")
+		tmpfile, err := CreateTempFile(content)
 		require.NoError(t, err)
-		defer os.Remove(tmpfile.Name())
-
-		if _, err := tmpfile.Write([]byte(content)); err != nil {
-			t.Fatalf("Failed to write to temp file: %v", err)
-		}
-		if err := tmpfile.Close(); err != nil {
-			t.Fatalf("Failed to close temp file: %v", err)
-		}
+		defer os.Remove(tmpfile)
 
 		// when
 		var config RulesConfig
-		_, err = config.Load(tmpfile.Name())
+		_, err = config.Load(tmpfile)
 		require.NoError(t, err)
 
 		// then

@@ -4,6 +4,7 @@ import (
 	"os"
 	"testing"
 
+	"github.com/kyma-project/kyma-environment-broker/common/hyperscaler/rules/model"
 	"github.com/stretchr/testify/require"
 )
 
@@ -16,7 +17,8 @@ func TestNewRulesServiceFromFile(t *testing.T) {
 			content += "- " + rule + "\n"
 		}
 
-		tmpfile := createTempFile(t, content)
+		tmpfile, err := model.CreateTempFile(content)
+		require.NoError(t, err)
 
 		defer os.Remove(tmpfile)
 
@@ -51,7 +53,8 @@ func TestNewRulesServiceFromFile(t *testing.T) {
 		// given
 		content := "rule:\n- rule1\n- rule2\ncorrupted_content"
 
-		tmpfile := createTempFile(t, content)
+		tmpfile, err := model.CreateTempFile(content)
+		require.NoError(t, err)
 		defer os.Remove(tmpfile)
 
 		// when
@@ -64,16 +67,3 @@ func TestNewRulesServiceFromFile(t *testing.T) {
 
 }
 
-func createTempFile(t *testing.T, content string) string {
-	tmpfile, err := os.CreateTemp("", "test*.yaml")
-	require.NoError(t, err)
-
-	if _, err := tmpfile.Write([]byte(content)); err != nil {
-		t.Fatalf("Failed to write to temp file: %v", err)
-	}
-	if err := tmpfile.Close(); err != nil {
-		t.Fatalf("Failed to close temp file: %v", err)
-	}
-
-	return tmpfile.Name()
-}
