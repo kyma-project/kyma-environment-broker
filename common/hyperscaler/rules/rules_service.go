@@ -14,7 +14,7 @@ func NewRulesServiceFromFile(rulesFilePath string) (*RulesService, error) {
 	rulesConfig := &model.RulesConfig{}
 
 	if rulesFilePath == "" {
-		return nil, fmt.Errorf("No HAP rules file provided")
+		return nil, fmt.Errorf("No HAP rules file path provided")
 	}
 
 	log.Printf("Parsing rules from file: %s\n", rulesFilePath)
