@@ -60,12 +60,12 @@ func (p *accountProvider) GardenerSecretName(hyperscalerType Type, tenantName st
 		if p.gardenerPool == nil {
 			return "", fmt.Errorf("failed to get shared Secret Binding name. Gardener Shared Account pool is not configured for hyperscaler type %s", hyperscalerType.GetKey())
 		}
-	
+
 		secretBinding, err := p.gardenerPool.SharedCredentialsSecretBinding(hyperscalerType, euAccess)
 		if err != nil {
 			return "", fmt.Errorf("getting shared secret binding: %w", err)
 		}
-	
+
 		return secretBinding.GetSecretRefName(), nil
 	}
 }
