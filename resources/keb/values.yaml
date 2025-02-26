@@ -19,6 +19,9 @@ global:
     kyma_environment_trial_cleanup_job:
       dir:
       version: "1.14.4"
+    subscription_cleanup_job:
+      dir:
+      version: "v20250217-1ba6d70d"
     kyma_environment_expirator_job:
       dir:
       version: "1.14.4"

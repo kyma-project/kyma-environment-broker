@@ -1,0 +1,35 @@
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: subscription-cleanup-job
+  annotations:
+    argocd.argoproj.io/sync-options: Prune=false
+spec:
+  jobTemplate:
+    metadata:
+      name: subscription-cleanup-job
+    spec:
+      template:
+        spec:
+          containers:
+            - image: "{{ .Values.global.images.container_registry.path }}/{{ .Values.global.images.kyma_environment_broker.dir }}subscription-cleanup-job:{{ .Values.global.images.subscription_cleanup_job.version }}"
+              name: subscription-cleanup-job
+              command:
+                - "/bin/main"
+              env:
+                - name: APP_GARDENER_PROJECT
+                  value: {{ .Values.gardener.project }}
+                - name: APP_GARDENER_KUBECONFIG_PATH
+                  value: {{ .Values.gardener.kubeconfigPath }}
+              volumeMounts:
+                - mountPath: /gardener/kubeconfig
+                  name: gardener-kubeconfig
+                  readOnly: true
+              resources: {}
+          restartPolicy: OnFailure
+          volumes:
+            - name: gardener-kubeconfig
+              secret:
+                secretName: {{ .Values.gardener.secretName }}
+  schedule: '0 2,14 * * *'
+status: {}
