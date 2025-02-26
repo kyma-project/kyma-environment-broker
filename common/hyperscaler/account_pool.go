@@ -193,8 +193,6 @@ func (p *secretBindingsAccountPool) getSecretBinding(labelSelector string) (*gar
 	return nil, nil
 }
 
-
-
 func (sp *secretBindingsAccountPool) getSecretBindings(labelSelector string) ([]unstructured.Unstructured, error) {
 	secretBindings, err := sp.gardenerClient.Resource(gardener.SecretBindingResource).Namespace(sp.namespace).List(context.Background(), metav1.ListOptions{
 		LabelSelector: labelSelector,
