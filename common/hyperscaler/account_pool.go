@@ -143,7 +143,7 @@ func (p *secretBindingsAccountPool) CredentialsSecretBinding(hyperscalerType Typ
 	hypSelector = addEuAccessSelector(hypSelector, euAccess)
 
 	labelSelector := fmt.Sprintf("%s, tenantName=%s, !dirty", hypSelector, tenantName)
-	labelSelector = strings.Trim(labelSelector, ", shared!=true")
+	labelSelector = strings.ReplaceAll(labelSelector, ", shared!=true", "")
 	secretBinding, err := p.getSecretBinding(labelSelector)
 	if err != nil {
 		return nil, fmt.Errorf("getting secret binding: %w", err)
