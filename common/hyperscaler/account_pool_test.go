@@ -82,7 +82,7 @@ func TestCredentialsSecretBinding(t *testing.T) {
 	for _, testcase := range testcases {
 
 		t.Run(testcase.testDescription, func(t *testing.T) {
-			secretBinding, err := pool.CredentialsSecretBinding(testcase.hyperscalerType, testcase.tenantName, false)
+			secretBinding, err := pool.CredentialsSecretBinding(testcase.hyperscalerType, testcase.tenantName, false, false)
 			actualError := ""
 			if err != nil {
 				actualError = err.Error()
