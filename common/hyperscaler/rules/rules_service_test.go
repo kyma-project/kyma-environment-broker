@@ -64,4 +64,3 @@ func TestNewRulesServiceFromFile(t *testing.T) {
 	})
 
 }
-
