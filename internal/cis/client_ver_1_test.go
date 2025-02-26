@@ -9,7 +9,7 @@ import (
 	"os"
 	"testing"
 
-	"github.com/gorilla/mux"
+	"github.com/kyma-project/kyma-environment-broker/internal/httputil"
 	"github.com/stretchr/testify/require"
 )
 
@@ -82,9 +82,9 @@ func newServerVer1(t *testing.T) *serverVer1 {
 }
 
 func fixHTTPServerVer1(srv *serverVer1) *httptest.Server {
-	r := mux.NewRouter()
+	r := httputil.NewRouter()
 
-	r.HandleFunc("/public/rest/v2/events", srv.returnCISEvents).Methods(http.MethodGet)
+	r.HandleFunc("GET /public/rest/v2/events", srv.returnCISEvents)
 
 	return httptest.NewServer(r)
 }

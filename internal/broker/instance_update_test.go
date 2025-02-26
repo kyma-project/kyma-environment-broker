@@ -30,8 +30,8 @@ import (
 	kcMock "github.com/kyma-project/kyma-environment-broker/internal/kubeconfig/automock"
 	"github.com/kyma-project/kyma-environment-broker/internal/ptr"
 	"github.com/kyma-project/kyma-environment-broker/internal/storage"
-	"github.com/pivotal-cf/brokerapi/v8/domain"
-	"github.com/pivotal-cf/brokerapi/v8/domain/apiresponses"
+	"github.com/pivotal-cf/brokerapi/v12/domain"
+	"github.com/pivotal-cf/brokerapi/v12/domain/apiresponses"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -517,8 +517,8 @@ func TestUpdateEndpoint_UpdateParameters(t *testing.T) {
 		require.Error(t, err)
 		assert.IsType(t, &apiresponses.FailureResponse{}, err)
 		apierr := err.(*apiresponses.FailureResponse)
-		assert.Equal(t, expectedErr.ValidatedStatusCode(nil), apierr.ValidatedStatusCode(nil))
-		assert.Equal(t, expectedErr.LoggerAction(), apierr.LoggerAction())
+		assert.Equal(t, expectedErr.(*apiresponses.FailureResponse).ValidatedStatusCode(nil), apierr.ValidatedStatusCode(nil))
+		assert.Equal(t, expectedErr.(*apiresponses.FailureResponse).LoggerAction(), apierr.LoggerAction())
 	})
 
 	t.Run("Should fail on invalid OIDC issuerURL param", func(t *testing.T) {
@@ -579,8 +579,8 @@ func TestUpdateEndpoint_UpdateParameters(t *testing.T) {
 				require.Error(t, err)
 				assert.IsType(t, &apiresponses.FailureResponse{}, err)
 				apierr := err.(*apiresponses.FailureResponse)
-				assert.Equal(t, expectedErr.ValidatedStatusCode(nil), apierr.ValidatedStatusCode(nil))
-				assert.Equal(t, expectedErr.LoggerAction(), apierr.LoggerAction())
+				assert.Equal(t, expectedErr.(*apiresponses.FailureResponse).ValidatedStatusCode(nil), apierr.ValidatedStatusCode(nil))
+				assert.Equal(t, expectedErr.(*apiresponses.FailureResponse).LoggerAction(), apierr.LoggerAction())
 			})
 		}
 	})
@@ -605,8 +605,8 @@ func TestUpdateEndpoint_UpdateParameters(t *testing.T) {
 		require.Error(t, err)
 		assert.IsType(t, &apiresponses.FailureResponse{}, err)
 		apierr := err.(*apiresponses.FailureResponse)
-		assert.Equal(t, expectedErr.ValidatedStatusCode(nil), apierr.ValidatedStatusCode(nil))
-		assert.Equal(t, expectedErr.LoggerAction(), apierr.LoggerAction())
+		assert.Equal(t, expectedErr.(*apiresponses.FailureResponse).ValidatedStatusCode(nil), apierr.ValidatedStatusCode(nil))
+		assert.Equal(t, expectedErr.(*apiresponses.FailureResponse).LoggerAction(), apierr.LoggerAction())
 	})
 
 	t.Run("Should fail on invalid OIDC signingAlgs param", func(t *testing.T) {
@@ -629,8 +629,8 @@ func TestUpdateEndpoint_UpdateParameters(t *testing.T) {
 		require.Error(t, err)
 		assert.IsType(t, &apiresponses.FailureResponse{}, err)
 		apierr := err.(*apiresponses.FailureResponse)
-		assert.Equal(t, expectedErr.ValidatedStatusCode(nil), apierr.ValidatedStatusCode(nil))
-		assert.Equal(t, expectedErr.LoggerAction(), apierr.LoggerAction())
+		assert.Equal(t, expectedErr.(*apiresponses.FailureResponse).ValidatedStatusCode(nil), apierr.ValidatedStatusCode(nil))
+		assert.Equal(t, expectedErr.(*apiresponses.FailureResponse).LoggerAction(), apierr.LoggerAction())
 	})
 }
 

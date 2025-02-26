@@ -22,6 +22,7 @@ import (
 	"github.com/gardener/gardener/pkg/apis/core/v1beta1"
 
 	"github.com/kyma-project/kyma-environment-broker/internal/customresources"
+	"github.com/kyma-project/kyma-environment-broker/internal/httputil"
 
 	"github.com/kyma-project/kyma-environment-broker/internal/storage/dberr"
 
@@ -34,7 +35,6 @@ import (
 
 	"code.cloudfoundry.org/lager"
 	"github.com/google/uuid"
-	"github.com/gorilla/mux"
 	"github.com/kyma-project/control-plane/components/provisioner/pkg/gqlschema"
 	"github.com/kyma-project/kyma-environment-broker/common/gardener"
 	"github.com/kyma-project/kyma-environment-broker/common/orchestration"
@@ -57,8 +57,8 @@ import (
 	"github.com/kyma-project/kyma-environment-broker/internal/provisioner"
 	kebRuntime "github.com/kyma-project/kyma-environment-broker/internal/runtime"
 	"github.com/kyma-project/kyma-environment-broker/internal/storage"
-	"github.com/pivotal-cf/brokerapi/v8/domain"
-	"github.com/pivotal-cf/brokerapi/v8/domain/apiresponses"
+	"github.com/pivotal-cf/brokerapi/v12/domain"
+	"github.com/pivotal-cf/brokerapi/v12/domain/apiresponses"
 	"github.com/pkg/errors"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -103,7 +103,7 @@ type BrokerSuiteTest struct {
 	gardenerClient dynamic.Interface
 
 	httpServer *httptest.Server
-	router     *mux.Router
+	router     *httputil.Router
 
 	t                   *testing.T
 	inputBuilderFactory input.CreatorForPlan
@@ -249,7 +249,7 @@ func NewBrokerSuiteTestWithConfig(t *testing.T, cfg *Config, version ...string) 
 		db:                  db,
 		storageCleanup:      storageCleanup,
 		gardenerClient:      gardenerClient,
-		router:              mux.NewRouter(),
+		router:              httputil.NewRouter(),
 		t:                   t,
 		inputBuilderFactory: inputFactory,
 		k8sKcp:              cli,
