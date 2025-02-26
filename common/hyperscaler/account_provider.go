@@ -45,16 +45,29 @@ func HypTypeFromCloudProviderWithRegion(cloudProvider pkg.CloudProvider, regionF
 }
 
 func (p *accountProvider) GardenerSecretName(hyperscalerType Type, tenantName string, euAccess bool, shared bool) (string, error) {
-	if p.gardenerPool == nil {
-		return "", fmt.Errorf("failed to get Gardener Credentials. Gardener Account pool is not configured for tenant %s", tenantName)
-	}
+	if !shared {
+		if p.gardenerPool == nil {
+			return "", fmt.Errorf("failed to get Gardener Credentials. Gardener Account pool is not configured for tenant %s", tenantName)
+		}
 
-	secretBinding, err := p.gardenerPool.CredentialsSecretBinding(hyperscalerType, tenantName, euAccess)
-	if err != nil {
-		return "", fmt.Errorf("failed to get Gardener Credentials for tenant %s: %w", tenantName, err)
-	}
+		secretBinding, err := p.gardenerPool.CredentialsSecretBinding(hyperscalerType, tenantName, euAccess)
+		if err != nil {
+			return "", fmt.Errorf("failed to get Gardener Credentials for tenant %s: %w", tenantName, err)
+		}
 
-	return secretBinding.GetSecretRefName(), nil
+		return secretBinding.GetSecretRefName(), nil
+	} else {
+		if p.gardenerPool == nil {
+			return "", fmt.Errorf("failed to get shared Secret Binding name. Gardener Shared Account pool is not configured for hyperscaler type %s", hyperscalerType.GetKey())
+		}
+	
+		secretBinding, err := p.gardenerPool.SharedCredentialsSecretBinding(hyperscalerType, euAccess)
+		if err != nil {
+			return "", fmt.Errorf("getting shared secret binding: %w", err)
+		}
+	
+		return secretBinding.GetSecretRefName(), nil
+	}
 }
 
 func (p *accountProvider) GardenerSharedSecretName(hyperscalerType Type, euAccess bool) (string, error) {
