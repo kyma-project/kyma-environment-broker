@@ -45,7 +45,6 @@ func main() {
 	err := envconfig.InitWithPrefix(&cfg, "RUNTIME_RECONCILER")
 	fatalOnError(err, logs)
 	logs.Info("runtime-reconciler config loaded")
-	logs.Info(fmt.Sprintf("config.Database.UseLastOperationID: %+v", cfg.Database.UseLastOperationID))
 
 	if !cfg.JobEnabled {
 		logs.Info("job disabled, module stopped.")

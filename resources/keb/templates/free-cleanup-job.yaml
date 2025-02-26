@@ -83,8 +83,6 @@ spec:
                   value: "{{ .Values.freeCleanup.testSubaccountID }}"
                 - name: APP_PLAN_ID
                   value: "b1a5764e-2ea1-4f95-94c0-2b4538b37b55"
-                - name: APP_DATABASE_USE_LAST_OPERATION_ID
-                  value: "{{ .Values.useLastOperationID }}"
               command:
                 - "/bin/main"
               volumeMounts:

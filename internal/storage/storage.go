@@ -32,8 +32,8 @@ const (
 )
 
 func NewFromConfig(cfg Config, evcfg events.Config, cipher postgres.Cipher) (BrokerStorage, *dbr.Connection, error) {
-	slog.Info(fmt.Sprintf("Setting DB connection pool params: connectionMaxLifetime=%s maxIdleConnections=%d maxOpenConnections=%d useLastOperationID=%v",
-		cfg.ConnMaxLifetime, cfg.MaxIdleConns, cfg.MaxOpenConns, cfg.UseLastOperationID))
+	slog.Info(fmt.Sprintf("Setting DB connection pool params: connectionMaxLifetime=%s maxIdleConnections=%d maxOpenConnections=%d",
+		cfg.ConnMaxLifetime, cfg.MaxIdleConns, cfg.MaxOpenConns))
 
 	connection, err := postsql.InitializeDatabase(cfg.ConnectionURL(), connectionRetries)
 	if err != nil {
@@ -46,9 +46,9 @@ func NewFromConfig(cfg Config, evcfg events.Config, cipher postgres.Cipher) (Bro
 
 	fact := postsql.NewFactory(connection)
 
-	operation := postgres.NewOperation(fact, cipher, cfg.UseLastOperationID)
+	operation := postgres.NewOperation(fact, cipher)
 	return storage{
-		instance:          postgres.NewInstance(fact, operation, cipher, cfg.UseLastOperationID),
+		instance:          postgres.NewInstance(fact, operation, cipher),
 		operation:         operation,
 		orchestrations:    postgres.NewOrchestrations(fact),
 		runtimeStates:     postgres.NewRuntimeStates(fact, cipher),
