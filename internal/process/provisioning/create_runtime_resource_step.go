@@ -35,7 +35,12 @@ import (
 	"github.com/kyma-project/kyma-environment-broker/internal/storage"
 )
 
-const CreateRuntimeTimeout = time.Hour
+const (
+	kcpRetryInterval = 3 * time.Second
+	kcpRetryTimeout  = 20 * time.Second
+	dbRetryInterval  = 10 * time.Second
+	dbRetryTimeout   = 1 * time.Minute
+)
 
 type CreateRuntimeResourceStep struct {
 	operationManager           *process.OperationManager
@@ -67,10 +72,6 @@ func (s *CreateRuntimeResourceStep) Name() string {
 }
 
 func (s *CreateRuntimeResourceStep) Run(operation internal.Operation, log *slog.Logger) (internal.Operation, time.Duration, error) {
-	if time.Since(operation.UpdatedAt) > CreateRuntimeTimeout {
-		log.Info(fmt.Sprintf("operation has reached the time limit: updated operation time: %s", operation.UpdatedAt))
-		return s.operationManager.OperationFailed(operation, fmt.Sprintf("operation has reached the time limit: %s", CreateRuntimeTimeout), nil, log)
-	}
 
 	kymaResourceName := operation.KymaResourceName
 	kymaResourceNamespace := operation.KymaResourceNamespace
@@ -87,43 +88,45 @@ func (s *CreateRuntimeResourceStep) Run(operation internal.Operation, log *slog.
 	runtimeCR, err := s.getEmptyOrExistingRuntimeResource(runtimeResourceName, kymaResourceNamespace)
 	if err != nil {
 		log.Error(fmt.Sprintf("unable to get Runtime resource %s/%s", operation.KymaResourceNamespace, runtimeResourceName))
-		return s.operationManager.RetryOperation(operation, "unable to get Runtime resource", err, 3*time.Second, 20*time.Second, log)
+		return s.operationManager.RetryOperation(operation, "unable to get Runtime resource", err, kcpRetryInterval, kcpRetryTimeout, log)
 	}
 
 	if runtimeCR.GetResourceVersion() != "" {
 		log.Info(fmt.Sprintf("Runtime resource already created %s/%s: ", operation.KymaResourceNamespace, runtimeResourceName))
 		return operation, 0, nil
 	} else {
-		err := s.updateRuntimeResourceObject(values, runtimeCR, operation, runtimeResourceName, operation.CloudProvider)
+		err = s.updateRuntimeResourceObject(values, runtimeCR, operation, runtimeResourceName, operation.CloudProvider)
 		if err != nil {
 			return s.operationManager.OperationFailed(operation, fmt.Sprintf("while creating Runtime CR object: %s", err), err, log)
 		}
 		err = s.k8sClient.Create(context.Background(), runtimeCR)
 		if err != nil {
 			log.Error(fmt.Sprintf("unable to create Runtime resource: %s/%s: %s", operation.KymaResourceNamespace, runtimeResourceName, err.Error()))
-			return s.operationManager.RetryOperation(operation, "unable to create Runtime resource", err, 3*time.Second, 20*time.Second, log)
+			return s.operationManager.RetryOperation(operation, "unable to create Runtime resource", err, kcpRetryInterval, kcpRetryTimeout, log)
 		}
 		log.Info(fmt.Sprintf("Runtime resource %s/%s creation process finished successfully", operation.KymaResourceNamespace, runtimeResourceName))
 
-		newOp, backoff, _ := s.operationManager.UpdateOperation(operation, func(op *internal.Operation) {
+		operation, backoff, _ := s.operationManager.UpdateOperation(operation, func(op *internal.Operation) {
 			op.Region = runtimeCR.Spec.Shoot.Region
 			op.CloudProvider = operation.CloudProvider
 		}, log)
 		if backoff > 0 {
-			return newOp, backoff, nil
+			return s.operationManager.RetryOperation(operation, "cannot update operation", err, dbRetryInterval, dbRetryTimeout, log)
 		}
-		operation = newOp
 
 		err = s.updateInstance(operation.InstanceID, runtimeCR.Spec.Shoot.Region)
 
 		switch {
 		case err == nil:
 		case dberr.IsConflict(err):
-			err := s.updateInstance(operation.InstanceID, runtimeCR.Spec.Shoot.Region)
+			err = s.updateInstance(operation.InstanceID, runtimeCR.Spec.Shoot.Region)
 			if err != nil {
 				log.Error(fmt.Sprintf("cannot update instance: %s", err))
-				return operation, 1 * time.Minute, nil
+				return s.operationManager.RetryOperation(operation, "cannot update instance", err, dbRetryInterval, dbRetryTimeout, log)
 			}
+		default:
+			log.Error(fmt.Sprintf("cannot update instance: %s", err))
+			return s.operationManager.RetryOperation(operation, "cannot update instance", err, dbRetryInterval, dbRetryTimeout, log)
 		}
 	}
 	return operation, 0, nil
