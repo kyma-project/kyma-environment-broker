@@ -22,7 +22,7 @@ func TestGardenerSecretName(t *testing.T) {
 		require.Error(t, err)
 
 		//then
-		assert.Contains(t, err.Error(), "Gardener Account pool is not configured")
+		require.Equal(t, err.Error(), "failed to get shared Secret Binding name, gardener account pool is not configured for hyperscaler type gcp, shared false, tenantName tenantname")
 	})
 
 	t.Run("should return correct secret name", func(t *testing.T) {
@@ -96,7 +96,7 @@ func TestGardenerSharedSecretName(t *testing.T) {
 		require.Error(t, err)
 
 		//then
-		assert.Contains(t, err.Error(), "Gardener Shared Account pool is not configured")
+		require.Equal(t, "failed to get shared Secret Binding name, gardener account pool is not configured for hyperscaler type gcp, shared true, tenantName tenant", err.Error())
 	})
 
 	t.Run("should return correct shared secret name", func(t *testing.T) {

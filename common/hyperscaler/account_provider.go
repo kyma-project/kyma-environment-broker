@@ -47,7 +47,7 @@ func HypTypeFromCloudProviderWithRegion(cloudProvider pkg.CloudProvider, regionF
 func (p *accountProvider) GardenerSecretName(hyperscalerType Type, tenantName string, euAccess bool, shared bool) (string, error) {
 
 	if p.gardenerPool == nil {
-		return "", fmt.Errorf("failed to get shared Secret Binding name. Gardener Account pool is not configured for hyperscaler type %s, shared %t, tenantName %s", hyperscalerType.GetKey(), shared, tenantName)
+		return "", fmt.Errorf("failed to get shared Secret Binding name, gardener account pool is not configured for hyperscaler type %s, shared %t, tenantName %s", hyperscalerType.GetKey(), shared, tenantName)
 	}
 
 	var err error = nil
