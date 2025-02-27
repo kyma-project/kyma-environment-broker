@@ -23,7 +23,7 @@ require (
 	github.com/kyma-project/infrastructure-manager v0.0.0-20250128154549-67d41ee7791a
 	github.com/lib/pq v1.10.9
 	github.com/matryer/is v1.4.1
-	github.com/pivotal-cf/brokerapi/v12 v12.0.0
+	github.com/pivotal-cf/brokerapi/v12 v12.0.1
 	github.com/pkg/errors v0.9.1
 	github.com/prometheus/client_golang v1.21.0
 	github.com/sebdah/goldie/v2 v2.5.5
