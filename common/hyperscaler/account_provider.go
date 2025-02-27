@@ -56,7 +56,6 @@ func (p *accountProvider) GardenerSecretName(hyperscalerType Type, tenantName st
 		secretBinding, err = p.gardenerPool.CredentialsSecretBinding(hyperscalerType, euAccess, shared, tenantName)
 	} else {
 		secretBinding, err = p.gardenerPool.SharedCredentialsSecretBinding(hyperscalerType, euAccess)
-
 	}
 
 	if err != nil {
