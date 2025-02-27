@@ -14,7 +14,7 @@ import (
 )
 
 type AccountPool interface {
-	CredentialsSecretBinding(hyperscalerType Type, tenantName string, euAccess bool, shared bool) (*gardener.SecretBinding, error)
+	CredentialsSecretBinding(hyperscalerType Type, euAccess bool, shared bool, tenantName string) (*gardener.SecretBinding, error)
 	MarkSecretBindingAsDirty(hyperscalerType Type, tenantName string, euAccess bool) error
 	IsSecretBindingUsed(hyperscalerType Type, tenantName string, euAccess bool) (bool, error)
 	IsSecretBindingDirty(hyperscalerType Type, tenantName string, euAccess bool) (bool, error)
@@ -156,7 +156,7 @@ func (sp *secretBindingsAccountPool) SharedCredentialsSecretBinding(hyperscalerT
 	return sp.getLeastUsed(secretBindings)
 }
 
-func (p *secretBindingsAccountPool) CredentialsSecretBinding(hyperscalerType Type, tenantName string, euAccess bool, shared bool) (*gardener.SecretBinding, error) {
+func (p *secretBindingsAccountPool) CredentialsSecretBinding(hyperscalerType Type, euAccess bool, shared bool, tenantName string) (*gardener.SecretBinding, error) {
 	// selector
 	hypSelector := getLabelsSelector(hyperscalerType, shared, euAccess)
 
