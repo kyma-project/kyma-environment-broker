@@ -6,10 +6,11 @@ import (
 	"net/http"
 	"strings"
 
+	"github.com/kyma-project/kyma-environment-broker/internal"
+
 	"github.com/kennygrant/sanitize"
 
 	"github.com/kyma-project/kyma-environment-broker/common/orchestration"
-	"github.com/kyma-project/kyma-environment-broker/internal"
 	"github.com/kyma-project/kyma-environment-broker/internal/httputil"
 	"github.com/kyma-project/kyma-environment-broker/internal/storage"
 	"github.com/kyma-project/kyma-environment-broker/internal/storage/dberr"

@@ -28,15 +28,18 @@ import (
 	"github.com/kyma-project/kyma-environment-broker/internal/provider"
 	"k8s.io/apimachinery/pkg/util/intstr"
 
-	"sigs.k8s.io/yaml"
-
 	imv1 "github.com/kyma-project/infrastructure-manager/api/v1"
-	"github.com/kyma-project/kyma-environment-broker/internal/broker"
-
 	pkg "github.com/kyma-project/kyma-environment-broker/common/runtime"
 	"github.com/kyma-project/kyma-environment-broker/internal"
 	"github.com/kyma-project/kyma-environment-broker/internal/process"
 	"github.com/kyma-project/kyma-environment-broker/internal/storage"
+)
+
+const (
+	kcpRetryInterval = 3 * time.Second
+	kcpRetryTimeout  = 20 * time.Second
+	dbRetryInterval  = 10 * time.Second
+	dbRetryTimeout   = 1 * time.Minute
 )
 
 type CreateRuntimeResourceStep struct {
@@ -44,18 +47,16 @@ type CreateRuntimeResourceStep struct {
 	instanceStorage            storage.Instances
 	runtimeStateStorage        storage.RuntimeStates
 	k8sClient                  client.Client
-	kimConfig                  broker.KimConfig
 	config                     input.Config
 	trialPlatformRegionMapping map[string]string
 	useSmallerMachineTypes     bool
 	oidcDefaultValues          pkg.OIDCConfigDTO
 }
 
-func NewCreateRuntimeResourceStep(os storage.Operations, is storage.Instances, k8sClient client.Client, kimConfig broker.KimConfig, cfg input.Config,
+func NewCreateRuntimeResourceStep(os storage.Operations, is storage.Instances, k8sClient client.Client, cfg input.Config,
 	trialPlatformRegionMapping map[string]string, useSmallerMachines bool, oidcDefaultValues pkg.OIDCConfigDTO) *CreateRuntimeResourceStep {
 	step := &CreateRuntimeResourceStep{
 		instanceStorage:            is,
-		kimConfig:                  kimConfig,
 		k8sClient:                  k8sClient,
 		config:                     cfg,
 		trialPlatformRegionMapping: trialPlatformRegionMapping,
@@ -71,19 +72,6 @@ func (s *CreateRuntimeResourceStep) Name() string {
 }
 
 func (s *CreateRuntimeResourceStep) Run(operation internal.Operation, log *slog.Logger) (internal.Operation, time.Duration, error) {
-	if time.Since(operation.UpdatedAt) > CreateRuntimeTimeout {
-		log.Info(fmt.Sprintf("operation has reached the time limit: updated operation time: %s", operation.UpdatedAt))
-		return s.operationManager.OperationFailed(operation, fmt.Sprintf("operation has reached the time limit: %s", CreateRuntimeTimeout), nil, log)
-	}
-
-	if !s.kimConfig.IsEnabledForPlan(broker.PlanNamesMapping[operation.ProvisioningParameters.PlanID]) {
-		if !s.kimConfig.Enabled {
-			log.Info("KIM is not enabled, skipping")
-			return operation, 0, nil
-		}
-		log.Info(fmt.Sprintf("KIM is not enabled for plan %s, skipping", broker.PlanNamesMapping[operation.ProvisioningParameters.PlanID]))
-		return operation, 0, nil
-	}
 
 	kymaResourceName := operation.KymaResourceName
 	kymaResourceNamespace := operation.KymaResourceNamespace
@@ -97,60 +85,48 @@ func (s *CreateRuntimeResourceStep) Run(operation internal.Operation, log *slog.
 	}
 	operation.CloudProvider = string(provider.ProviderToCloudProvider(values.ProviderType))
 
-	if s.kimConfig.DryRun {
-		runtimeCR := &imv1.Runtime{}
-		err := s.updateRuntimeResourceObject(values, runtimeCR, operation, runtimeResourceName, operation.CloudProvider)
+	runtimeCR, err := s.getEmptyOrExistingRuntimeResource(runtimeResourceName, kymaResourceNamespace)
+	if err != nil {
+		log.Error(fmt.Sprintf("unable to get Runtime resource %s/%s", operation.KymaResourceNamespace, runtimeResourceName))
+		return s.operationManager.RetryOperation(operation, "unable to get Runtime resource", err, kcpRetryInterval, kcpRetryTimeout, log)
+	}
 
-		if err != nil {
-			return s.operationManager.OperationFailed(operation, fmt.Sprintf("while updating Runtime resource object: %s", err), err, log)
-		}
-		yaml, err := RuntimeToYaml(runtimeCR)
-		if err != nil {
-			log.Error(fmt.Sprintf("failed to encode Runtime resource as yaml: %s", err))
-		} else {
-			fmt.Println(yaml)
-		}
+	if runtimeCR.GetResourceVersion() != "" {
+		log.Info(fmt.Sprintf("Runtime resource already created %s/%s: ", operation.KymaResourceNamespace, runtimeResourceName))
+		return operation, 0, nil
 	} else {
-		runtimeCR, err := s.getEmptyOrExistingRuntimeResource(runtimeResourceName, kymaResourceNamespace)
+		err = s.updateRuntimeResourceObject(values, runtimeCR, operation, runtimeResourceName, operation.CloudProvider)
 		if err != nil {
-			log.Error(fmt.Sprintf("unable to get Runtime resource %s/%s", operation.KymaResourceNamespace, runtimeResourceName))
-			return s.operationManager.RetryOperation(operation, "unable to get Runtime resource", err, 3*time.Second, 20*time.Second, log)
+			return s.operationManager.OperationFailed(operation, fmt.Sprintf("while creating Runtime CR object: %s", err), err, log)
 		}
-		if runtimeCR.GetResourceVersion() != "" {
-			log.Info(fmt.Sprintf("Runtime resource already created %s/%s: ", operation.KymaResourceNamespace, runtimeResourceName))
-			return operation, 0, nil
-		} else {
-			err := s.updateRuntimeResourceObject(values, runtimeCR, operation, runtimeResourceName, operation.CloudProvider)
-			if err != nil {
-				return s.operationManager.OperationFailed(operation, fmt.Sprintf("while creating Runtime CR object: %s", err), err, log)
-			}
-			err = s.k8sClient.Create(context.Background(), runtimeCR)
-			if err != nil {
-				log.Error(fmt.Sprintf("unable to create Runtime resource: %s/%s: %s", operation.KymaResourceNamespace, runtimeResourceName, err.Error()))
-				return s.operationManager.RetryOperation(operation, "unable to create Runtime resource", err, 3*time.Second, 20*time.Second, log)
-			}
+		err = s.k8sClient.Create(context.Background(), runtimeCR)
+		if err != nil {
+			log.Error(fmt.Sprintf("unable to create Runtime resource: %s/%s: %s", operation.KymaResourceNamespace, runtimeResourceName, err.Error()))
+			return s.operationManager.RetryOperation(operation, "unable to create Runtime resource", err, kcpRetryInterval, kcpRetryTimeout, log)
 		}
 		log.Info(fmt.Sprintf("Runtime resource %s/%s creation process finished successfully", operation.KymaResourceNamespace, runtimeResourceName))
 
-		newOp, backoff, _ := s.operationManager.UpdateOperation(operation, func(op *internal.Operation) {
+		operation, backoff, _ := s.operationManager.UpdateOperation(operation, func(op *internal.Operation) {
 			op.Region = runtimeCR.Spec.Shoot.Region
 			op.CloudProvider = operation.CloudProvider
 		}, log)
 		if backoff > 0 {
-			return newOp, backoff, nil
+			return s.operationManager.RetryOperation(operation, "cannot update operation", err, dbRetryInterval, dbRetryTimeout, log)
 		}
-		operation = newOp
 
 		err = s.updateInstance(operation.InstanceID, runtimeCR.Spec.Shoot.Region)
 
 		switch {
 		case err == nil:
 		case dberr.IsConflict(err):
-			err := s.updateInstance(operation.InstanceID, runtimeCR.Spec.Shoot.Region)
+			err = s.updateInstance(operation.InstanceID, runtimeCR.Spec.Shoot.Region)
 			if err != nil {
 				log.Error(fmt.Sprintf("cannot update instance: %s", err))
-				return operation, 1 * time.Minute, nil
+				return s.operationManager.RetryOperation(operation, "cannot update instance", err, dbRetryInterval, dbRetryTimeout, log)
 			}
+		default:
+			log.Error(fmt.Sprintf("cannot update instance: %s", err))
+			return s.operationManager.RetryOperation(operation, "cannot update instance", err, dbRetryInterval, dbRetryTimeout, log)
 		}
 	}
 	return operation, 0, nil
@@ -192,8 +168,6 @@ func (s *CreateRuntimeResourceStep) createLabelsForRuntime(operation internal.Op
 	labels[customresources.RegionLabel] = region
 	labels[customresources.CloudProviderLabel] = cloudProvider
 
-	controlledByProvisioner := s.kimConfig.ViewOnly && !s.kimConfig.IsDrivenByKimOnly(broker.PlanNamesMapping[operation.ProvisioningParameters.PlanID])
-	labels[imv1.LabelControlledByProvisioner] = strconv.FormatBool(controlledByProvisioner)
 	return labels
 }
 
@@ -367,14 +341,6 @@ func DefaultIfParamNotSet[T interface{}](d T, param *T) T {
 		return d
 	}
 	return *param
-}
-
-func RuntimeToYaml(runtime *imv1.Runtime) (string, error) {
-	result, err := yaml.Marshal(runtime)
-	if err != nil {
-		return "", err
-	}
-	return string(result), nil
 }
 
 func CreateAdditionalWorkers(config input.Config, values provider.Values, currentAdditionalWorkers map[string]gardener.Worker, additionalWorkerNodePools []pkg.AdditionalWorkerNodePool, zones []string) []gardener.Worker {
