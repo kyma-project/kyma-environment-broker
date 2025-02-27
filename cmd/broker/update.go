@@ -12,13 +12,12 @@ import (
 	"github.com/kyma-project/kyma-environment-broker/internal/process"
 	"github.com/kyma-project/kyma-environment-broker/internal/process/input"
 	"github.com/kyma-project/kyma-environment-broker/internal/process/update"
-	"github.com/kyma-project/kyma-environment-broker/internal/provisioner"
 	"github.com/kyma-project/kyma-environment-broker/internal/storage"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
 func NewUpdateProcessingQueue(ctx context.Context, manager *process.StagedManager, workersAmount int, db storage.BrokerStorage, inputFactory input.CreatorForPlan,
-	provisionerClient provisioner.Client, publisher event.Publisher,
+	publisher event.Publisher,
 	cfg Config, k8sClientProvider K8sClientProvider, cli client.Client, logs *slog.Logger) *process.Queue {
 
 	trialRegionsMapping, err := provider.ReadPlatformRegionMappingFromFile(cfg.TrialRegionMappingFilePath)
@@ -36,16 +35,6 @@ func NewUpdateProcessingQueue(ctx context.Context, manager *process.StagedManage
 		{
 			stage: "cluster",
 			step:  update.NewInitialisationStep(db.Instances(), db.Operations(), inputFactory),
-		},
-		{
-			stage:     "cluster",
-			step:      update.NewUpgradeShootStep(db.Operations(), db.RuntimeStates(), provisionerClient, cli),
-			condition: update.SkipForOwnClusterPlan,
-		},
-		{
-			stage:     "check",
-			step:      update.NewCheckStep(db.Operations(), provisionerClient, cfg.Provisioner.ClusterUpdateStepTimeout),
-			condition: update.SkipForOwnClusterPlan,
 		},
 		{
 			stage:     "runtime_resource",

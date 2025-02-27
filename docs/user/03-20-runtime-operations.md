@@ -41,11 +41,6 @@ You can find all the updating steps in the [update](../../cmd/broker/update.go) 
 > [!NOTE]
 > The updating process of Service Manager credentials is different. The credentials are stored in the KEB database, and [Runtime Reconciler](../contributor/07-10-runtime-reconciler.md) updates them during reconciliation.
 
-## Upgrade Cluster
-
-The upgrade cluster process is triggered by upgrade cluster orchestration.
-You can find all the upgrading cluster steps in the [upgrade_cluster](../../cmd/broker/upgrade_cluster.go) file.
-
 ## Provide Additional Steps
 
 You can configure SAP BTP, Kyma runtime operations by providing additional steps. Every operation (see the implementation of `internal.Operation` structure in [model.go](../../internal/model.go)) is based on the same Operation structure. The following examples present how to extend the KEB process based on provisioning operation. Extensions for other processes follow the same steps but require their specific structures.

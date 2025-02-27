@@ -13,13 +13,12 @@ import (
 	"github.com/kyma-project/kyma-environment-broker/internal/process/input"
 	"github.com/kyma-project/kyma-environment-broker/internal/process/provisioning"
 	"github.com/kyma-project/kyma-environment-broker/internal/process/steps"
-	"github.com/kyma-project/kyma-environment-broker/internal/provisioner"
 	"github.com/kyma-project/kyma-environment-broker/internal/storage"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
 func NewProvisioningProcessingQueue(ctx context.Context, provisionManager *process.StagedManager, workersAmount int, cfg *Config,
-	db storage.BrokerStorage, provisionerClient provisioner.Client, inputFactory input.CreatorForPlan,
+	db storage.BrokerStorage, inputFactory input.CreatorForPlan,
 	edpClient provisioning.EDPClient, accountProvider hyperscaler.AccountProvider,
 	k8sClientProvider provisioning.K8sClientProvider, cli client.Client, defaultOIDC pkg.OIDCConfigDTO, logs *slog.Logger, rulesService *rules.RulesService) *process.Queue {
 
@@ -79,11 +78,6 @@ func NewProvisioningProcessingQueue(ctx context.Context, provisionManager *proce
 			condition: provisioning.SkipForOwnClusterPlan,
 		},
 		{
-			condition: provisioning.SkipForOwnClusterPlan,
-			stage:     createRuntimeStageName,
-			step:      provisioning.NewCreateRuntimeWithoutKymaStep(db.Operations(), db.RuntimeStates(), db.Instances(), provisionerClient, cfg.Broker.KimConfig),
-		},
-		{
 			stage: createRuntimeStageName,
 			step:  provisioning.NewGenerateRuntimeIDStep(db.Operations(), db.Instances()),
 		},
@@ -98,29 +92,8 @@ func NewProvisioningProcessingQueue(ctx context.Context, provisionManager *proce
 			step:  provisioning.NewCreateRuntimeResourceStep(db.Operations(), db.Instances(), cli, cfg.Broker.KimConfig, cfg.Provisioner, trialRegionsMapping, cfg.Broker.UseSmallerMachineTypes, defaultOIDC),
 		},
 		{
-			stage:     createRuntimeStageName,
-			step:      provisioning.NewCheckRuntimeStep(db.Operations(), provisionerClient, cfg.Provisioner.ProvisioningTimeout, cfg.Broker.KimConfig),
-			condition: provisioning.SkipForOwnClusterPlan,
-		},
-		{
 			stage: createRuntimeStageName,
 			step:  steps.NewCheckRuntimeResourceStep(db.Operations(), cli, cfg.Broker.KimConfig, cfg.Provisioner.RuntimeResourceStepTimeout),
-		},
-		{
-			stage:     createRuntimeStageName,
-			disabled:  cfg.InfrastructureManagerIntegrationDisabled,
-			step:      steps.NewSyncGardenerCluster(db.Operations(), cli, cfg.Broker.KimConfig),
-			condition: provisioning.SkipForOwnClusterPlan,
-		},
-		{
-			stage:     createRuntimeStageName,
-			disabled:  cfg.InfrastructureManagerIntegrationDisabled,
-			step:      steps.NewCheckGardenerCluster(db.Operations(), cli, cfg.Broker.KimConfig, cfg.Provisioner.GardenerClusterStepTimeout),
-			condition: provisioning.SkipForOwnClusterPlan,
-		},
-		{ // TODO: this step must be removed when kubeconfig is created by IM only
-			stage: createRuntimeStageName,
-			step:  provisioning.NewGetKubeconfigStep(db.Operations(), provisionerClient, cfg.Broker.KimConfig),
 		},
 		{ // TODO: this step must be removed when kubeconfig is created by IM and own_cluster plan is permanently removed
 			disabled:  cfg.LifecycleManagerIntegrationDisabled,

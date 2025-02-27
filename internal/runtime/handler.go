@@ -16,7 +16,6 @@ import (
 
 	"github.com/kyma-project/kyma-environment-broker/internal/broker"
 
-	"github.com/kyma-project/kyma-environment-broker/internal/provisioner"
 	"github.com/kyma-project/kyma-environment-broker/internal/ptr"
 	"golang.org/x/exp/slices"
 
@@ -40,14 +39,12 @@ type Handler struct {
 	subaccountStatesDb  storage.SubaccountStates
 	converter           Converter
 	defaultMaxPage      int
-	provisionerClient   provisioner.Client
 	k8sClient           client.Client
 	kimConfig           broker.KimConfig
 	logger              *slog.Logger
 }
 
 func NewHandler(storage storage.BrokerStorage, defaultMaxPage int, defaultRequestRegion string,
-	provisionerClient provisioner.Client,
 	k8sClient client.Client, kimConfig broker.KimConfig,
 	logger *slog.Logger) *Handler {
 	return &Handler{
@@ -59,7 +56,6 @@ func NewHandler(storage storage.BrokerStorage, defaultMaxPage int, defaultReques
 		subaccountStatesDb:  storage.SubaccountStates(),
 		converter:           NewConverter(defaultRequestRegion),
 		defaultMaxPage:      defaultMaxPage,
-		provisionerClient:   provisionerClient,
 		kimConfig:           kimConfig,
 		k8sClient:           k8sClient,
 		logger:              logger.With("service", "RuntimeHandler"),
@@ -194,7 +190,6 @@ func (h *Handler) getRuntimes(w http.ResponseWriter, req *http.Request) {
 	opDetail := getOpDetail(req)
 	kymaConfig := getBoolParam(pkg.KymaConfigParam, req)
 	clusterConfig := getBoolParam(pkg.ClusterConfigParam, req)
-	gardenerConfig := getBoolParam(pkg.GardenerConfigParam, req)
 	runtimeResourceConfig := getBoolParam(pkg.RuntimeConfigParam, req)
 	bindings := getBoolParam(pkg.BindingsParam, req)
 
@@ -226,9 +221,7 @@ func (h *Handler) getRuntimes(w http.ResponseWriter, req *http.Request) {
 			return
 		}
 
-		instanceDrivenByKimOnly := h.kimConfig.IsDrivenByKimOnly(dto.ServicePlanName)
-
-		err = h.setRuntimeOptionalAttributes(&dto, kymaConfig, clusterConfig, gardenerConfig, instanceDrivenByKimOnly)
+		err = h.setRuntimeOptionalAttributes(&dto, kymaConfig, clusterConfig)
 		if err != nil {
 			h.logger.Warn(fmt.Sprintf("unable to set optional attributes: %s", err.Error()))
 			httputil.WriteErrorResponse(w, http.StatusInternalServerError, err)
@@ -423,7 +416,7 @@ func (h *Handler) setRuntimeLastOperation(dto *pkg.RuntimeDTO) error {
 	return nil
 }
 
-func (h *Handler) setRuntimeOptionalAttributes(dto *pkg.RuntimeDTO, kymaConfig, clusterConfig, gardenerConfig, drivenByKimOnly bool) error {
+func (h *Handler) setRuntimeOptionalAttributes(dto *pkg.RuntimeDTO, kymaConfig, clusterConfig bool) error {
 
 	if kymaConfig || clusterConfig {
 		states, err := h.runtimeStatesDb.ListByRuntimeID(dto.RuntimeID)
@@ -442,16 +435,6 @@ func (h *Handler) setRuntimeOptionalAttributes(dto *pkg.RuntimeDTO, kymaConfig, 
 			if dto.KymaConfig != nil && dto.ClusterConfig != nil {
 				break
 			}
-		}
-	}
-
-	if gardenerConfig && dto.RuntimeID != "" && !drivenByKimOnly {
-		runtimeStatus, err := h.provisionerClient.RuntimeStatus(dto.GlobalAccountID, dto.RuntimeID)
-		if err != nil {
-			dto.Status.GardenerConfig = nil
-			h.logger.Warn(fmt.Sprintf("unable to fetch runtime status for instance %s: %s", dto.InstanceID, err.Error()))
-		} else {
-			dto.Status.GardenerConfig = runtimeStatus.RuntimeConfiguration.ClusterConfig
 		}
 	}
 

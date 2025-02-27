@@ -44,11 +44,9 @@ import (
 	"github.com/kyma-project/kyma-environment-broker/internal/kubeconfig"
 	"github.com/kyma-project/kyma-environment-broker/internal/notification"
 	"github.com/kyma-project/kyma-environment-broker/internal/orchestration"
-	orchestrate "github.com/kyma-project/kyma-environment-broker/internal/orchestration/handlers"
 	"github.com/kyma-project/kyma-environment-broker/internal/process"
 	"github.com/kyma-project/kyma-environment-broker/internal/process/input"
 	"github.com/kyma-project/kyma-environment-broker/internal/provider"
-	"github.com/kyma-project/kyma-environment-broker/internal/provisioner"
 	"github.com/kyma-project/kyma-environment-broker/internal/runtime"
 	"github.com/kyma-project/kyma-environment-broker/internal/storage"
 	"github.com/kyma-project/kyma-environment-broker/internal/storage/dbmodel"
@@ -154,8 +152,7 @@ type Config struct {
 
 	RuntimeConfigurationConfigMapName string `envconfig:"default=keb-runtime-config"`
 
-	UpdateRuntimeResourceDelay        time.Duration `envconfig:"default=4s"`
-	ProvisionerDeprovisioningDisabled bool          `envconfig:"default=false"`
+	UpdateRuntimeResourceDelay time.Duration `envconfig:"default=4s"`
 
 	RegionsSupportingMachineFilePath string
 
@@ -249,9 +246,6 @@ func main() {
 
 	logConfiguration(log, cfg)
 
-	// create provisioner client
-	provisionerClient := provisioner.NewProvisionerClient(cfg.Provisioner.URL, cfg.DumpProvisionerRequests, log.With("service", "provisioner"))
-
 	// create kubernetes client
 	kcpK8sConfig, err := config.GetConfig()
 	fatalOnError(err, log)
@@ -271,13 +265,6 @@ func main() {
 		dbStatsCollector := sqlstats.NewStatsCollector("broker", conn)
 		prometheus.MustRegister(dbStatsCollector)
 	}
-
-	// Customer Notification
-	clientHTTPForNotification := httputil.NewClient(60, true)
-	notificationClient := notification.NewClient(clientHTTPForNotification, notification.ClientConfig{
-		URL: cfg.Notification.Url,
-	})
-	notificationBuilder := notification.NewBundleBuilder(notificationClient, cfg.Notification)
 
 	// provides configuration for specified Kyma version and plan
 	configProvider := kebConfig.NewConfigProvider(
@@ -317,22 +304,22 @@ func main() {
 
 	// run queues
 	provisionManager := process.NewStagedManager(db.Operations(), eventBroker, cfg.OperationTimeout, cfg.Provisioning, log.With("provisioning", "manager"))
-	provisionQueue := NewProvisioningProcessingQueue(ctx, provisionManager, cfg.Provisioning.WorkersAmount, &cfg, db, provisionerClient, inputFactory,
+	provisionQueue := NewProvisioningProcessingQueue(ctx, provisionManager, cfg.Provisioning.WorkersAmount, &cfg, db, inputFactory,
 		edpClient, accountProvider, skrK8sClientProvider, kcpK8sClient, oidcDefaultValues, log, &rules.RulesService{})
 
 	deprovisionManager := process.NewStagedManager(db.Operations(), eventBroker, cfg.OperationTimeout, cfg.Deprovisioning, log.With("deprovisioning", "manager"))
-	deprovisionQueue := NewDeprovisioningProcessingQueue(ctx, cfg.Deprovisioning.WorkersAmount, deprovisionManager, &cfg, db, eventBroker, provisionerClient, edpClient, accountProvider,
+	deprovisionQueue := NewDeprovisioningProcessingQueue(ctx, cfg.Deprovisioning.WorkersAmount, deprovisionManager, &cfg, db, eventBroker, edpClient, accountProvider,
 		skrK8sClientProvider, kcpK8sClient, configProvider, log)
 
 	updateManager := process.NewStagedManager(db.Operations(), eventBroker, cfg.OperationTimeout, cfg.Update, log.With("update", "manager"))
-	updateQueue := NewUpdateProcessingQueue(ctx, updateManager, cfg.Update.WorkersAmount, db, inputFactory, provisionerClient, eventBroker,
+	updateQueue := NewUpdateProcessingQueue(ctx, updateManager, cfg.Update.WorkersAmount, db, inputFactory, eventBroker,
 		cfg, skrK8sClientProvider, kcpK8sClient, log)
 	/***/
 	servicesConfig, err := broker.NewServicesConfigFromFile(cfg.CatalogFilePath)
 	fatalOnError(err, log)
 
 	// create kubeconfig builder
-	kcBuilder := kubeconfig.NewBuilder(provisionerClient, kcpK8sClient, skrK8sClientProvider)
+	kcBuilder := kubeconfig.NewBuilder(kcpK8sClient, skrK8sClientProvider)
 
 	// create server
 	router := httputil.NewRouter()
@@ -347,23 +334,12 @@ func main() {
 	kcHandler := kubeconfig.NewHandler(db, kcBuilder, cfg.Kubeconfig.AllowOrigins, broker.OwnClusterPlanID, log.With("service", "kubeconfigHandle"))
 	kcHandler.AttachRoutes(router)
 
-	runtimeLister := orchestration.NewRuntimeLister(db.Instances(), db.Operations(), runtime.NewConverter(cfg.DefaultRequestRegion), log)
-	runtimeResolver := orchestrationExt.NewGardenerRuntimeResolver(dynamicGardener, gardenerNamespace, runtimeLister, log)
-
-	clusterQueue := NewClusterOrchestrationProcessingQueue(ctx, db, provisionerClient, eventBroker, inputFactory,
-		nil, time.Minute, runtimeResolver, notificationBuilder, log, kcpK8sClient, cfg, 1)
-
-	// TODO: in case of cluster upgrade the same Azure Zones must be send to the Provisioner
-	orchestrationHandler := orchestrate.NewOrchestrationHandler(db, clusterQueue, cfg.MaxPaginationPage, log)
-
 	if !cfg.DisableProcessOperationsInProgress {
 		err = processOperationsInProgressByType(internal.OperationTypeProvision, db.Operations(), provisionQueue, log)
 		fatalOnError(err, log)
 		err = processOperationsInProgressByType(internal.OperationTypeDeprovision, db.Operations(), deprovisionQueue, log)
 		fatalOnError(err, log)
 		err = processOperationsInProgressByType(internal.OperationTypeUpdate, db.Operations(), updateQueue, log)
-		fatalOnError(err, log)
-		err = reprocessOrchestrations(orchestrationExt.UpgradeClusterOrchestration, db.Orchestrations(), db.Operations(), clusterQueue, log)
 		fatalOnError(err, log)
 	} else {
 		log.Info("Skipping processing operation in progress on start")
@@ -376,12 +352,9 @@ func main() {
 	err = swagger.NewTemplate("/swagger", swaggerTemplates).Execute()
 	fatalOnError(err, log)
 
-	// create /orchestration
-	orchestrationHandler.AttachRoutes(router)
-
 	// create list runtimes endpoint
 	runtimeHandler := runtime.NewHandler(db, cfg.MaxPaginationPage,
-		cfg.DefaultRequestRegion, provisionerClient,
+		cfg.DefaultRequestRegion,
 		kcpK8sClient,
 		cfg.Broker.KimConfig,
 		log)

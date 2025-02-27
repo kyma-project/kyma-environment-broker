@@ -10,15 +10,12 @@ import (
 	"github.com/kyma-project/kyma-environment-broker/internal/process"
 	"github.com/kyma-project/kyma-environment-broker/internal/process/deprovisioning"
 	"github.com/kyma-project/kyma-environment-broker/internal/process/input"
-	"github.com/kyma-project/kyma-environment-broker/internal/process/steps"
-	"github.com/kyma-project/kyma-environment-broker/internal/provisioner"
 	"github.com/kyma-project/kyma-environment-broker/internal/storage"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
 func NewDeprovisioningProcessingQueue(ctx context.Context, workersAmount int, deprovisionManager *process.StagedManager,
 	cfg *Config, db storage.BrokerStorage, pub event.Publisher,
-	provisionerClient provisioner.Client,
 	edpClient deprovisioning.EDPClient, accountProvider hyperscaler.AccountProvider,
 	k8sClientProvider K8sClientProvider, cli client.Client, configProvider input.ConfigurationProvider, logs *slog.Logger) *process.Queue {
 
@@ -51,25 +48,7 @@ func NewDeprovisioningProcessingQueue(ctx context.Context, workersAmount int, de
 			step: deprovisioning.NewCheckRuntimeResourceDeletionStep(db.Operations(), cli, cfg.Provisioner.CheckRuntimeResourceDeletionStepTimeout),
 		},
 		{
-			step: deprovisioning.NewDeleteGardenerClusterStep(db.Operations(), cli, db.Instances()),
-		},
-		{
-			step: deprovisioning.NewCheckGardenerClusterDeletedStep(db.Operations(), cli),
-		},
-		{
-			disabled: cfg.ProvisionerDeprovisioningDisabled,
-			step:     deprovisioning.NewRemoveRuntimeStep(db.Operations(), db.Instances(), provisionerClient, cfg.Provisioner.DeprovisioningTimeout),
-		},
-		{
-			disabled: cfg.ProvisionerDeprovisioningDisabled,
-			step:     deprovisioning.NewCheckRuntimeRemovalStep(db.Operations(), db.Instances(), provisionerClient, cfg.Provisioner.DeprovisioningTimeout),
-		},
-		{
 			step: deprovisioning.NewReleaseSubscriptionStep(db.Operations(), db.Instances(), accountProvider),
-		},
-		{
-			disabled: true,
-			step:     steps.DeleteKubeconfig(db.Operations(), cli),
 		},
 		{
 			disabled: !cfg.ArchiveEnabled,

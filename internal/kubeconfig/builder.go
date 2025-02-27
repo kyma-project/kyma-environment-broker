@@ -7,12 +7,10 @@ import (
 	"text/template"
 
 	imv1 "github.com/kyma-project/infrastructure-manager/api/v1"
-	"github.com/kyma-project/kyma-environment-broker/internal/provisioner"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	"github.com/kyma-project/kyma-environment-broker/internal"
 	"gopkg.in/yaml.v2"
-	"k8s.io/apimachinery/pkg/api/errors"
 )
 
 type Config struct {
@@ -22,18 +20,16 @@ type Config struct {
 type Builder struct {
 	kubeconfigProvider kubeconfigProvider
 	kcpClient          client.Client
-	provisionerClient  provisioner.Client
 }
 
 type kubeconfigProvider interface {
 	KubeconfigForRuntimeID(runtimeID string) ([]byte, error)
 }
 
-func NewBuilder(provisionerClient provisioner.Client, kcpClient client.Client, provider kubeconfigProvider) *Builder {
+func NewBuilder(kcpClient client.Client, provider kubeconfigProvider) *Builder {
 	return &Builder{
 		kcpClient:          kcpClient,
 		kubeconfigProvider: provider,
-		provisionerClient:  provisionerClient,
 	}
 }
 
@@ -70,9 +66,6 @@ func (b *Builder) BuildFromAdminKubeconfig(instance *internal.Instance, adminKub
 		return "", fmt.Errorf("RuntimeID must not be empty")
 	}
 	issuerURL, clientID, err := b.getOidcDataFromRuntimeResource(instance.RuntimeID)
-	if errors.IsNotFound(err) {
-		issuerURL, clientID, err = b.getOidcDataFromProvisioner(instance)
-	}
 	if err != nil {
 		return "", fmt.Errorf("while fetching oidc data: %w", err)
 	}
@@ -179,12 +172,4 @@ func (b *Builder) getOidcDataFromRuntimeResource(id string) (string, string, err
 		return "", "", fmt.Errorf("Runtime Resource contains an empty OIDC client ID")
 	}
 	return *runtime.Spec.Shoot.Kubernetes.KubeAPIServer.OidcConfig.IssuerURL, *runtime.Spec.Shoot.Kubernetes.KubeAPIServer.OidcConfig.ClientID, nil
-}
-
-func (b *Builder) getOidcDataFromProvisioner(instance *internal.Instance) (string, string, error) {
-	status, err := b.provisionerClient.RuntimeStatus(instance.GlobalAccountID, instance.RuntimeID)
-	if err != nil {
-		return "", "", err
-	}
-	return status.RuntimeConfiguration.ClusterConfig.OidcConfig.IssuerURL, status.RuntimeConfiguration.ClusterConfig.OidcConfig.ClientID, nil
 }

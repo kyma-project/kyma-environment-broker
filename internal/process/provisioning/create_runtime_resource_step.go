@@ -39,6 +39,8 @@ import (
 	"github.com/kyma-project/kyma-environment-broker/internal/storage"
 )
 
+const CreateRuntimeTimeout = time.Hour
+
 type CreateRuntimeResourceStep struct {
 	operationManager           *process.OperationManager
 	instanceStorage            storage.Instances
