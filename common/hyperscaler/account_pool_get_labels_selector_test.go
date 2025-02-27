@@ -77,7 +77,10 @@ func TestGetLabelsSelector(t *testing.T) {
 
                     labelSelector := getLabelsSelector(hypType, shared, euAccess)
 
-                    fmt.Printf("hypType: %s, shared: %t, euAccess: %t, labelSelector: %s\n", hypType.GetKey(), shared, euAccess, labelSelector)
+					// TODO: inject new implementation
+					newLabelSelector := labelSelector
+
+					require.Equal(t, labelSelector, newLabelSelector, 	fmt.Sprintf("platformRegion: %s, clusterRegion: %s, cloudProvider: %s, plan: %s, labelSelector: %s, newLabelSelector: %s\n", platformRegion, clusterRegion, cloudProvider, plan, labelSelector, newLabelSelector))
                 }
 			}
 		}
