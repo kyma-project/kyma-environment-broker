@@ -52,11 +52,7 @@ func (s *ResolveCredentialsStep) Run(operation internal.Operation, log *slog.Log
 		return s.operationManager.OperationFailed(operation, msg, err, log)
 	}
 
-	euAccess := euaccess.IsEURestrictedAccess(operation.ProvisioningParameters.PlatformRegion)
-
-	log.Info(fmt.Sprintf("HAP lookup for credentials secret binding to provision cluster for global account ID %s on Hyperscaler %s, euAccess %v", operation.ProvisioningParameters.ErsContext.GlobalAccountID, hypType.GetKey(), euAccess))
-
-	targetSecret, err := s.getTargetSecretFromGardener(operation, log, hypType, euAccess)
+	targetSecret, err := s.getTargetSecretFromGardener(operation, log, hypType)
 	if err != nil {
 		msg := fmt.Sprintf("Unable to resolve provisioning secret binding for global account ID %s on Hyperscaler %s", operation.ProvisioningParameters.ErsContext.GlobalAccountID, hypType.GetKey())
 		return s.operationManager.RetryOperation(operation, msg, err, 10*time.Second, time.Minute, log)
@@ -69,9 +65,13 @@ func (s *ResolveCredentialsStep) Run(operation internal.Operation, log *slog.Log
 	}, log)
 }
 
-func (s *ResolveCredentialsStep) getTargetSecretFromGardener(operation internal.Operation, log *slog.Logger, hypType hyperscaler.Type, euAccess bool) (string, error) {
+func (s *ResolveCredentialsStep) getTargetSecretFromGardener(operation internal.Operation, log *slog.Logger, hypType hyperscaler.Type) (string, error) {
 	var secretName string
 	var err error
+
+	euAccess := euaccess.IsEURestrictedAccess(operation.ProvisioningParameters.PlatformRegion)
+
+	log.Info(fmt.Sprintf("HAP lookup for credentials secret binding to provision cluster for global account ID %s on Hyperscaler %s, euAccess %v", operation.ProvisioningParameters.ErsContext.GlobalAccountID, hypType.GetKey(), euAccess))
 
 	var shared = broker.IsTrialPlan(operation.ProvisioningParameters.PlanID) || broker.IsSapConvergedCloudPlan(operation.ProvisioningParameters.PlanID)
 
