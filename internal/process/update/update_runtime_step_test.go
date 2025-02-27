@@ -81,7 +81,6 @@ func TestUpdateRuntimeStep_RunUpdateOIDC(t *testing.T) {
 	operation := fixture.FixUpdatingOperation("op-id", "inst-id").Operation
 	operation.RuntimeResourceName = "runtime-name"
 	operation.KymaResourceNamespace = "kcp-system"
-
 	expectedOIDCConfig := gardener.OIDCConfig{
 		ClientID:       ptr.String("clinet-id-oidc"),
 		GroupsClaim:    ptr.String("groups"),
