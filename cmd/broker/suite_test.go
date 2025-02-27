@@ -345,9 +345,14 @@ func fixConfig() *Config {
 func fixAccountProvider() *hyperscalerautomock.AccountProvider {
 	accountProvider := hyperscalerautomock.AccountProvider{}
 
-	accountProvider.On("GardenerSecretName", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(
+	accountProvider.On("GardenerSecretName", mock.Anything, mock.Anything, mock.Anything, false).Return(
 		func(ht hyperscaler.Type, tn string, euaccess bool, shared bool) string {
 			return regularSubscription(ht)
+		}, nil)
+
+	accountProvider.On("GardenerSecretName", mock.Anything, mock.Anything, mock.Anything, true).Return(
+		func(ht hyperscaler.Type, tn string, euaccess bool, shared bool) string {
+			return sharedSubscription(ht)
 		}, nil)
 
 	accountProvider.On("GardenerSharedSecretName", hyperscaler.Azure(), mock.Anything).Return(
