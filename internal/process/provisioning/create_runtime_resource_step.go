@@ -28,8 +28,6 @@ import (
 	"github.com/kyma-project/kyma-environment-broker/internal/provider"
 	"k8s.io/apimachinery/pkg/util/intstr"
 
-	"sigs.k8s.io/yaml"
-
 	imv1 "github.com/kyma-project/infrastructure-manager/api/v1"
 	pkg "github.com/kyma-project/kyma-environment-broker/common/runtime"
 	"github.com/kyma-project/kyma-environment-broker/internal"
@@ -340,14 +338,6 @@ func DefaultIfParamNotSet[T interface{}](d T, param *T) T {
 		return d
 	}
 	return *param
-}
-
-func RuntimeToYaml(runtime *imv1.Runtime) (string, error) {
-	result, err := yaml.Marshal(runtime)
-	if err != nil {
-		return "", err
-	}
-	return string(result), nil
 }
 
 func CreateAdditionalWorkers(config input.Config, values provider.Values, currentAdditionalWorkers map[string]gardener.Worker, additionalWorkerNodePools []pkg.AdditionalWorkerNodePool, zones []string) []gardener.Worker {

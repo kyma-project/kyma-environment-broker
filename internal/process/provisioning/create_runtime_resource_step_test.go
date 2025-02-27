@@ -828,24 +828,6 @@ func getClientForTests(t *testing.T) client.Client {
 	return cli
 }
 
-func fixKimConfig(planName string, dryRun bool) broker.KimConfig {
-	return broker.KimConfig{
-		Enabled:  true,
-		Plans:    []string{planName},
-		ViewOnly: false,
-		DryRun:   dryRun,
-	}
-}
-
-func fixKimConfigWithAllPlans(dryRun bool) broker.KimConfig {
-	return broker.KimConfig{
-		Enabled:  true,
-		Plans:    []string{"azure", "gcp", "azure_lite", "trial", "aws", "free", "preview", "sap-converged-cloud"},
-		ViewOnly: false,
-		DryRun:   dryRun,
-	}
-}
-
 func fixInstanceAndOperation(planID, region, platformRegion string) (internal.Instance, internal.Operation) {
 	instance := fixInstance()
 	operation := fixOperationForCreateRuntimeResourceStep(OperationID, instance.InstanceID, planID, region, platformRegion)

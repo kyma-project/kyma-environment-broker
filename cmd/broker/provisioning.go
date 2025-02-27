@@ -27,7 +27,6 @@ func NewProvisioningProcessingQueue(ctx context.Context, provisionManager *proce
 		fatalOnError(err, logs)
 	}
 
-	const postActionsStageName = "post_actions"
 	provisionManager.DefineStages([]string{startStageName, createRuntimeStageName,
 		checkKymaStageName, createKymaResourceStageName})
 	/*
