@@ -77,6 +77,14 @@ func TestCreateRuntimeResourceStep_OIDC_AllCustom(t *testing.T) {
 		UsernamePrefix: "up-custom",
 	}
 	assertInsertions(t, memoryStorage, instance, operation)
+	expectedOIDCConfig := gardener.OIDCConfig{
+		ClientID:       ptr.String("client-id-custom"),
+		GroupsClaim:    ptr.String("gc-custom"),
+		IssuerURL:      ptr.String("issuer-url-custom"),
+		SigningAlgs:    []string{"sa-custom"},
+		UsernameClaim:  ptr.String("uc-custom"),
+		UsernamePrefix: ptr.String("up-custom"),
+	}
 	inputConfig := input.Config{MultiZoneCluster: true}
 	cli := getClientForTests(t)
 	step := NewCreateRuntimeResourceStep(memoryStorage.Operations(), memoryStorage.Instances(), cli, inputConfig, nil, false, defaultOIDSConfig)
@@ -93,22 +101,8 @@ func TestCreateRuntimeResourceStep_OIDC_AllCustom(t *testing.T) {
 		Name:      operation.RuntimeID,
 	}, &runtime)
 	assert.NoError(t, err)
-	assert.Equal(t, gardener.OIDCConfig{
-		ClientID:       ptr.String("client-id-custom"),
-		GroupsClaim:    ptr.String("gc-custom"),
-		IssuerURL:      ptr.String("issuer-url-custom"),
-		SigningAlgs:    []string{"sa-custom"},
-		UsernameClaim:  ptr.String("uc-custom"),
-		UsernamePrefix: ptr.String("up-custom"),
-	}, runtime.Spec.Shoot.Kubernetes.KubeAPIServer.OidcConfig)
-	assert.Equal(t, gardener.OIDCConfig{
-		ClientID:       ptr.String("client-id-custom"),
-		GroupsClaim:    ptr.String("gc-custom"),
-		IssuerURL:      ptr.String("issuer-url-custom"),
-		SigningAlgs:    []string{"sa-custom"},
-		UsernameClaim:  ptr.String("uc-custom"),
-		UsernamePrefix: ptr.String("up-custom"),
-	}, (*runtime.Spec.Shoot.Kubernetes.KubeAPIServer.AdditionalOidcConfig)[0])
+	assert.Equal(t, expectedOIDCConfig, runtime.Spec.Shoot.Kubernetes.KubeAPIServer.OidcConfig)
+	assert.Equal(t, expectedOIDCConfig, (*runtime.Spec.Shoot.Kubernetes.KubeAPIServer.AdditionalOidcConfig)[0])
 }
 
 func TestCreateRuntimeResourceStep_OIDC_MixedCustom(t *testing.T) {
@@ -124,6 +118,14 @@ func TestCreateRuntimeResourceStep_OIDC_MixedCustom(t *testing.T) {
 		UsernameClaim: "uc-custom",
 	}
 	assertInsertions(t, memoryStorage, instance, operation)
+	expectedOIDCConfig := gardener.OIDCConfig{
+		ClientID:       ptr.String("client-id-custom"),
+		GroupsClaim:    ptr.String("gc-custom"),
+		IssuerURL:      ptr.String("issuer-url-custom"),
+		SigningAlgs:    []string{"sa-default"},
+		UsernameClaim:  ptr.String("uc-custom"),
+		UsernamePrefix: ptr.String("up-default"),
+	}
 	inputConfig := input.Config{MultiZoneCluster: true}
 	cli := getClientForTests(t)
 	step := NewCreateRuntimeResourceStep(memoryStorage.Operations(), memoryStorage.Instances(), cli, inputConfig, nil, false, defaultOIDSConfig)
