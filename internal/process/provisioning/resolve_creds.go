@@ -43,7 +43,7 @@ func (s *ResolveCredentialsStep) Name() string {
 
 func (s *ResolveCredentialsStep) Run(operation internal.Operation, log *slog.Logger) (internal.Operation, time.Duration, error) {
 	cloudProvider := operation.InputCreator.Provider()
-	effectiveRegion := getEffectiveRegionForSapConvergedCloud(operation.ProvisioningParameters.Parameters.Region)
+	effectiveRegion := provider.GetEffectiveRegionForSapConvergedCloud(operation.ProvisioningParameters.Parameters.Region)
 
 	hypType, err := hyperscaler.HypTypeFromCloudProviderWithRegion(cloudProvider, &effectiveRegion, &operation.ProvisioningParameters.PlatformRegion)
 	if err != nil {
@@ -81,10 +81,4 @@ func (s *ResolveCredentialsStep) getTargetSecretFromGardener(operation internal.
 	return secretName, err
 }
 
-// TODO: Calculate the region parameter using default SapConvergedCloud region. This is to be removed when region is mandatory (Jan 2024).
-func getEffectiveRegionForSapConvergedCloud(provisioningParametersRegion *string) string {
-	if provisioningParametersRegion != nil && *provisioningParametersRegion != "" {
-		return *provisioningParametersRegion
-	}
-	return provider.DefaultSapConvergedCloudRegion
-}
+
