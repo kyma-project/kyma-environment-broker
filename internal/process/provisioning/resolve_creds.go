@@ -73,12 +73,10 @@ func (s *ResolveCredentialsStep) getTargetSecretFromGardener(operation internal.
 
 	log.Info(fmt.Sprintf("HAP lookup for credentials secret binding to provision cluster for global account ID %s on Hyperscaler %s, euAccess %v", operation.ProvisioningParameters.ErsContext.GlobalAccountID, hypType.GetKey(), euAccess))
 
-	var shared = broker.IsTrialPlan(operation.ProvisioningParameters.PlanID) || broker.IsSapConvergedCloudPlan(operation.ProvisioningParameters.PlanID)
+	var shared = broker.IsShared(operation.ProvisioningParameters.PlanID)
 
 	log.Info("HAP lookup for shared secret binding")
 	secretName, err = s.accountProvider.GardenerSecretName(hypType, operation.ProvisioningParameters.ErsContext.GlobalAccountID, euAccess, shared)
 
 	return secretName, err
 }
-
-

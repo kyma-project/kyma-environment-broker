@@ -780,6 +780,10 @@ func IsOwnClusterPlan(planID string) bool {
 	return planID == OwnClusterPlanID
 }
 
+func IsShared(planId string) bool {
+	return IsTrialPlan(planId) || IsSapConvergedCloudPlan(planId)
+}
+
 func filter(items *[]interface{}, included map[string]interface{}) interface{} {
 	output := make([]interface{}, 0)
 	for i := 0; i < len(*items); i++ {
