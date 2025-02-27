@@ -43,7 +43,7 @@ func NewUpdateProcessingQueue(ctx context.Context, manager *process.StagedManage
 		},
 		{
 			stage:     "check_runtime_resource",
-			step:      steps.NewCheckRuntimeResourceStep(db.Operations(), cli, cfg.Broker.KimConfig, cfg.Provisioner.RuntimeResourceStepTimeout),
+			step:      steps.NewCheckRuntimeResourceStep(db.Operations(), cli, cfg.Provisioner.RuntimeResourceStepTimeout),
 			condition: update.SkipForOwnClusterPlan,
 		},
 	}
