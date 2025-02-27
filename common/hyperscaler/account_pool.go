@@ -35,11 +35,10 @@ type secretBindingsAccountPool struct {
 	mux            sync.Mutex
 }
 
-
 func getLabelsSelector(hyperscalerType Type, shared bool, euAccess bool) string {
 	hypSelector := fmt.Sprintf("hyperscalerType=%s", hyperscalerType.GetKey())
 	if !shared {
-		hypSelector = fmt.Sprintf("%s, shared!=true", hypSelector)	
+		hypSelector = fmt.Sprintf("%s, shared!=true", hypSelector)
 	} else {
 		hypSelector = fmt.Sprintf("%s, shared=true", hypSelector)
 	}
@@ -56,7 +55,7 @@ func getLabelsSelector(hyperscalerType Type, shared bool, euAccess bool) string 
 func (p *secretBindingsAccountPool) IsSecretBindingInternal(hyperscalerType Type, tenantName string, euAccess bool) (bool, error) {
 
 	hypLabels := getLabelsSelector(hyperscalerType, false, euAccess)
-	
+
 	labelSelector := fmt.Sprintf("%s, internal=true, tenantName=%s", hypLabels, tenantName)
 	labelSelector = strings.ReplaceAll(labelSelector, ", shared!=true", "")
 	secretBinding, err := p.getSecretBinding(labelSelector)
@@ -164,7 +163,7 @@ func (p *secretBindingsAccountPool) CredentialsSecretBinding(hyperscalerType Typ
 	// label selector modifications
 	labelSelector := fmt.Sprintf("%s, tenantName=%s, !dirty", hypSelector, tenantName)
 	labelSelector = strings.ReplaceAll(labelSelector, ", shared!=true", "")
-	
+
 	// get binding
 	secretBinding, err := p.getSecretBinding(labelSelector)
 	if err != nil {
