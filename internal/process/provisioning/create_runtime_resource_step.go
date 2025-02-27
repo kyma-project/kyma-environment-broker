@@ -302,7 +302,7 @@ func (s *CreateRuntimeResourceStep) createKubernetesConfiguration(operation inte
 		Version: ptr.String(s.config.KubernetesVersion),
 		KubeAPIServer: imv1.APIServer{
 			OidcConfig:           oidc,
-			AdditionalOidcConfig: nil,
+			AdditionalOidcConfig: &[]gardener.OIDCConfig{oidc},
 		},
 	}
 }

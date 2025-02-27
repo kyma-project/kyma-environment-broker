@@ -72,6 +72,44 @@ func TestUpdateRuntimeStep_RunUpdateMachineType(t *testing.T) {
 
 }
 
+func TestUpdateRuntimeStep_RunUpdateOIDC(t *testing.T) {
+	// given
+	err := imv1.AddToScheme(scheme.Scheme)
+	assert.NoError(t, err)
+	kcpClient := fake.NewClientBuilder().WithRuntimeObjects(fixRuntimeResource("runtime-name", false)).Build()
+	step := NewUpdateRuntimeStep(nil, kcpClient, 0, input.Config{}, false, nil)
+	operation := fixture.FixUpdatingOperation("op-id", "inst-id").Operation
+	operation.RuntimeResourceName = "runtime-name"
+	operation.KymaResourceNamespace = "kcp-system"
+
+	// when
+	_, backoff, err := step.Run(operation, fixLogger())
+
+	// then
+	assert.NoError(t, err)
+	assert.Zero(t, backoff)
+
+	var gotRuntime imv1.Runtime
+	err = kcpClient.Get(context.Background(), client.ObjectKey{Name: operation.RuntimeResourceName, Namespace: "kcp-system"}, &gotRuntime)
+	require.NoError(t, err)
+	assert.Equal(t, gardener.OIDCConfig{
+		ClientID:       ptr.String("clinet-id-oidc"),
+		GroupsClaim:    ptr.String("groups"),
+		IssuerURL:      ptr.String("issuer-url"),
+		SigningAlgs:    []string{"signingAlgs"},
+		UsernameClaim:  ptr.String("sub"),
+		UsernamePrefix: nil,
+	}, gotRuntime.Spec.Shoot.Kubernetes.KubeAPIServer.OidcConfig)
+	assert.Equal(t, gardener.OIDCConfig{
+		ClientID:       ptr.String("clinet-id-oidc"),
+		GroupsClaim:    ptr.String("groups"),
+		IssuerURL:      ptr.String("issuer-url"),
+		SigningAlgs:    []string{"signingAlgs"},
+		UsernameClaim:  ptr.String("sub"),
+		UsernamePrefix: nil,
+	}, (*gotRuntime.Spec.Shoot.Kubernetes.KubeAPIServer.AdditionalOidcConfig)[0])
+}
+
 func fixRuntimeResource(name string, controlledByProvisioner bool) runtime.Object {
 	maxSurge := intstr.FromInt32(1)
 	maxUnavailable := intstr.FromInt32(0)
