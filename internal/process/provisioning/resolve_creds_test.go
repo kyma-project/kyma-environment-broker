@@ -40,7 +40,7 @@ func TestResolveCredentialsStepHappyPath_Run(t *testing.T) {
 	assert.NoError(t, err)
 
 	accountProviderMock := &hyperscalerMocks.AccountProvider{}
-	accountProviderMock.On("GardenerSecretName", hyperscaler.GCP("westeurope"), statusGlobalAccountID, false).Return("gardener-secret-gcp", nil)
+	accountProviderMock.On("GardenerSecretName", hyperscaler.GCP("westeurope"), statusGlobalAccountID, false, false).Return("gardener-secret-gcp", nil)
 
 	step := NewResolveCredentialsStep(memoryStorage.Operations(), accountProviderMock, &rules.RulesService{})
 
@@ -67,7 +67,7 @@ func TestResolveCredentialsEUStepHappyPath_Run(t *testing.T) {
 	assert.NoError(t, err)
 
 	accountProviderMock := &hyperscalerMocks.AccountProvider{}
-	accountProviderMock.On("GardenerSecretName", hyperscaler.AWS(), statusGlobalAccountID, true).Return("gardener-secret-aws", nil)
+	accountProviderMock.On("GardenerSecretName", hyperscaler.AWS(), statusGlobalAccountID, true, false).Return("gardener-secret-aws", nil)
 
 	step := NewResolveCredentialsStep(memoryStorage.Operations(), accountProviderMock, &rules.RulesService{})
 
@@ -94,7 +94,7 @@ func TestResolveCredentialsCHStepHappyPath_Run(t *testing.T) {
 	assert.NoError(t, err)
 
 	accountProviderMock := &hyperscalerMocks.AccountProvider{}
-	accountProviderMock.On("GardenerSecretName", hyperscaler.Azure(), statusGlobalAccountID, true).Return("gardener-secret-az", nil)
+	accountProviderMock.On("GardenerSecretName", hyperscaler.Azure(), statusGlobalAccountID, true, false).Return("gardener-secret-az", nil)
 
 	step := NewResolveCredentialsStep(memoryStorage.Operations(), accountProviderMock, &rules.RulesService{})
 
@@ -120,7 +120,7 @@ func TestResolveCredentialsStepHappyPathTrialDefaultProvider_Run(t *testing.T) {
 	assert.NoError(t, err)
 
 	accountProviderMock := &hyperscalerMocks.AccountProvider{}
-	accountProviderMock.On("GardenerSharedSecretName", hyperscaler.Azure(), false).Return("gardener-secret-azure", nil)
+	accountProviderMock.On("GardenerSecretName", hyperscaler.Azure(), statusGlobalAccountID, false, true).Return("gardener-secret-azure", nil)
 
 	step := NewResolveCredentialsStep(memoryStorage.Operations(), accountProviderMock, &rules.RulesService{})
 
@@ -147,7 +147,7 @@ func TestResolveCredentialsStepHappyPathTrialGivenProvider_Run(t *testing.T) {
 	assert.NoError(t, err)
 
 	accountProviderMock := &hyperscalerMocks.AccountProvider{}
-	accountProviderMock.On("GardenerSharedSecretName", hyperscaler.GCP("westeurope"), false).Return("gardener-secret-gcp", nil)
+	accountProviderMock.On("GardenerSecretName", hyperscaler.GCP("westeurope"), statusGlobalAccountID, false, true).Return("gardener-secret-gcp", nil)
 
 	step := NewResolveCredentialsStep(memoryStorage.Operations(), accountProviderMock, &rules.RulesService{})
 
@@ -173,7 +173,7 @@ func TestResolveCredentialsStepRetry_Run(t *testing.T) {
 	assert.NoError(t, err)
 
 	accountProviderMock := &hyperscalerMocks.AccountProvider{}
-	accountProviderMock.On("GardenerSecretName", hyperscaler.GCP("westeurope"), statusGlobalAccountID, false).Return("", fmt.Errorf("Failed!"))
+	accountProviderMock.On("GardenerSecretName", hyperscaler.GCP("westeurope"), statusGlobalAccountID, false, false).Return("", fmt.Errorf("Failed!"))
 
 	step := NewResolveCredentialsStep(memoryStorage.Operations(), accountProviderMock, &rules.RulesService{})
 
@@ -204,7 +204,9 @@ func TestResolveCredentials_IntegrationAWS(t *testing.T) {
 	gc := gardener.NewDynamicFakeClient(
 		fixSecretBinding("s1aws", "aws"),
 		fixSecretBinding("s1azure", "azure"))
-	accountProvider := hyperscaler.NewAccountProvider(hyperscaler.NewAccountPool(gc, namespace), hyperscaler.NewSharedGardenerAccountPool(gc, namespace))
+
+	bindingsClient := hyperscaler.NewGardenerClient(gc, namespace)
+	accountProvider := hyperscaler.NewAccountProvider(hyperscaler.NewAccountPool(bindingsClient))
 
 	op := fixOperationWithPlatformRegion("cf-us10", pkg.AWS)
 	err := memoryStorage.Operations().InsertOperation(op)
@@ -228,7 +230,9 @@ func TestResolveCredentials_IntegrationAWSEuAccess(t *testing.T) {
 		fixSecretBinding("azure", "azure"),
 		fixEuAccessSecretBinding("awseu", "aws"),
 		fixEuAccessSecretBinding("azureeu", "azure"))
-	accountProvider := hyperscaler.NewAccountProvider(hyperscaler.NewAccountPool(gc, namespace), hyperscaler.NewSharedGardenerAccountPool(gc, namespace))
+
+	bindingsClient := hyperscaler.NewGardenerClient(gc, namespace)
+	accountProvider := hyperscaler.NewAccountProvider(hyperscaler.NewAccountPool(bindingsClient))
 
 	op := fixOperationWithPlatformRegion("cf-eu11", pkg.AWS)
 	err := memoryStorage.Operations().InsertOperation(op)
@@ -250,7 +254,8 @@ func TestResolveCredentials_IntegrationAzure(t *testing.T) {
 	gc := gardener.NewDynamicFakeClient(
 		fixSecretBinding("s1aws", "aws"),
 		fixSecretBinding("s1azure", "azure"))
-	accountProvider := hyperscaler.NewAccountProvider(hyperscaler.NewAccountPool(gc, namespace), hyperscaler.NewSharedGardenerAccountPool(gc, namespace))
+	bindingsClient := hyperscaler.NewGardenerClient(gc, namespace)
+	accountProvider := hyperscaler.NewAccountProvider(hyperscaler.NewAccountPool(bindingsClient))
 
 	op := fixOperationWithPlatformRegion("cf-eu21", pkg.Azure)
 	err := memoryStorage.Operations().InsertOperation(op)
@@ -274,7 +279,9 @@ func TestResolveCredentials_IntegrationAzureEuAccess(t *testing.T) {
 		fixSecretBinding("azure", "azure"),
 		fixEuAccessSecretBinding("awseu", "aws"),
 		fixEuAccessSecretBinding("azureeu", "azure"))
-	accountProvider := hyperscaler.NewAccountProvider(hyperscaler.NewAccountPool(gc, namespace), hyperscaler.NewSharedGardenerAccountPool(gc, namespace))
+
+	bindingsClient := hyperscaler.NewGardenerClient(gc, namespace)
+	accountProvider := hyperscaler.NewAccountProvider(hyperscaler.NewAccountPool(bindingsClient))
 
 	op := fixOperationWithPlatformRegion("cf-ch20", pkg.Azure)
 	err := memoryStorage.Operations().InsertOperation(op)

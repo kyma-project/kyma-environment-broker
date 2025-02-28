@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/kyma-project/kyma-environment-broker/internal/metricsv2"
@@ -20,6 +21,7 @@ import (
 	"github.com/stretchr/testify/mock"
 	coreV1 "k8s.io/api/core/v1"
 	metaV1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 )
@@ -238,6 +240,7 @@ func sharedSubscription(ht hyperscaler.Type) string {
 func fixConfig() *Config {
 	brokerConfigPlans := []string{
 		"azure",
+		"azure_lite",
 		"trial",
 		"aws",
 		"own_cluster",
@@ -342,11 +345,72 @@ func fixConfig() *Config {
 	}
 }
 
+type LoggingBindingsClient struct {
+	requestedLabels []string
+}
+
+func (b *LoggingBindingsClient) returnBinding(labelSelector string) (*gardener.SecretBinding, error) {
+	if strings.Contains(labelSelector, "shared=true") ||
+		strings.Contains(labelSelector, "shared,") || strings.HasSuffix(labelSelector, "shared") {
+		return &gardener.SecretBinding{
+			Unstructured: unstructured.Unstructured{
+				Object: map[string]interface{}{
+					"secretRef": map[string]interface{}{
+						"name": sharedSubscription(hyperscaler.AWS()), // any hyperscaler
+					},
+				},
+			},
+		}, nil
+	}
+
+	return &gardener.SecretBinding{
+		Unstructured: unstructured.Unstructured{
+			Object: map[string]interface{}{
+				"secretRef": map[string]interface{}{
+					"name": regularSubscription(hyperscaler.AWS()), // any hyperscaler
+				},
+			},
+		},
+	}, nil
+}
+
+func (b *LoggingBindingsClient) GetSecretBinding(labelSelector string) (*gardener.SecretBinding, error) {
+	b.requestedLabels = append(b.requestedLabels, labelSelector)
+	return b.returnBinding(labelSelector)
+}
+
+func (b *LoggingBindingsClient) GetSecretBindings(labelSelector string) ([]unstructured.Unstructured, error) {
+	b.requestedLabels = append(b.requestedLabels, labelSelector)
+	binding, err := b.returnBinding(labelSelector)
+	return []unstructured.Unstructured{
+		binding.Unstructured,
+	}, err
+}
+
+func (b *LoggingBindingsClient) GetLeastUsed(secretBindings []unstructured.Unstructured) (*gardener.SecretBinding, error) {
+	return &gardener.SecretBinding{secretBindings[0]}, nil
+}
+
+func (b *LoggingBindingsClient) UpdateSecretBinding(secretBinding *gardener.SecretBinding) (*unstructured.Unstructured, error) {
+	return &secretBinding.Unstructured, nil
+}
+
+func (b *LoggingBindingsClient) IsUsedByShoot(secretBinding *gardener.SecretBinding) (bool, error) {
+	return false, nil
+}
+
 func fixAccountProvider() *hyperscalerautomock.AccountProvider {
 	accountProvider := hyperscalerautomock.AccountProvider{}
 
-	accountProvider.On("GardenerSecretName", mock.Anything, mock.Anything, mock.Anything).Return(
-		func(ht hyperscaler.Type, tn string, euaccess bool) string { return regularSubscription(ht) }, nil)
+	accountProvider.On("GardenerSecretName", mock.Anything, mock.Anything, mock.Anything, false).Return(
+		func(ht hyperscaler.Type, tn string, euaccess bool, shared bool) string {
+			return regularSubscription(ht)
+		}, nil)
+
+	accountProvider.On("GardenerSecretName", mock.Anything, mock.Anything, mock.Anything, true).Return(
+		func(ht hyperscaler.Type, tn string, euaccess bool, shared bool) string {
+			return sharedSubscription(ht)
+		}, nil)
 
 	accountProvider.On("GardenerSharedSecretName", hyperscaler.Azure(), mock.Anything).Return(
 		func(ht hyperscaler.Type, euaccess bool) string { return sharedSubscription(ht) }, nil)

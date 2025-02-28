@@ -281,9 +281,9 @@ func main() {
 	fatalOnError(err, log)
 
 	gardenerNamespace := fmt.Sprintf("garden-%v", cfg.Gardener.Project)
-	gardenerAccountPool := hyperscaler.NewAccountPool(dynamicGardener, gardenerNamespace)
-	gardenerSharedPool := hyperscaler.NewSharedGardenerAccountPool(dynamicGardener, gardenerNamespace)
-	accountProvider := hyperscaler.NewAccountProvider(gardenerAccountPool, gardenerSharedPool)
+	bindingsClient := hyperscaler.NewGardenerClient(dynamicGardener, gardenerNamespace)
+	gardenerAccountPool := hyperscaler.NewAccountPool(bindingsClient)
+	accountProvider := hyperscaler.NewAccountProvider(gardenerAccountPool)
 
 	regions, err := provider.ReadPlatformRegionMappingFromFile(cfg.TrialRegionMappingFilePath)
 	fatalOnError(err, log)

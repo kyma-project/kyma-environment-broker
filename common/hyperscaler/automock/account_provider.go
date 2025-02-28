@@ -13,19 +13,19 @@ type AccountProvider struct {
 }
 
 // GardenerSecretName provides a mock function with given fields: hyperscalerType, tenantName, euAccess
-func (_m *AccountProvider) GardenerSecretName(hyperscalerType hyperscaler.Type, tenantName string, euAccess bool) (string, error) {
-	ret := _m.Called(hyperscalerType, tenantName, euAccess)
+func (_m *AccountProvider) GardenerSecretName(hyperscalerType hyperscaler.Type, tenantName string, euAccess bool, shared bool) (string, error) {
+	ret := _m.Called(hyperscalerType, tenantName, euAccess, shared)
 
 	var r0 string
-	if rf, ok := ret.Get(0).(func(hyperscaler.Type, string, bool) string); ok {
-		r0 = rf(hyperscalerType, tenantName, euAccess)
+	if rf, ok := ret.Get(0).(func(hyperscaler.Type, string, bool, bool) string); ok {
+		r0 = rf(hyperscalerType, tenantName, euAccess, shared)
 	} else {
 		r0 = ret.Get(0).(string)
 	}
 
 	var r1 error
-	if rf, ok := ret.Get(1).(func(hyperscaler.Type, string, bool) error); ok {
-		r1 = rf(hyperscalerType, tenantName, euAccess)
+	if rf, ok := ret.Get(1).(func(hyperscaler.Type, string, bool, bool) error); ok {
+		r1 = rf(hyperscalerType, tenantName, euAccess, shared)
 	} else {
 		r1 = ret.Error(1)
 	}

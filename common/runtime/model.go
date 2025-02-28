@@ -75,6 +75,8 @@ const (
 	SapConvergedCloud CloudProvider = "SapConvergedCloud"
 )
 
+var CloudProviders = []CloudProvider{Azure, AWS, GCP, SapConvergedCloud}
+
 type ProvisioningParametersDTO struct {
 	AutoScalerParameters `json:",inline"`
 
