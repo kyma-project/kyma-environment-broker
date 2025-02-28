@@ -35,7 +35,6 @@ For technical details of KEB, go to the `contributor` directory:
 * [Kyma Bindings Processes](./contributor/03-40-kyma-bindings-processes.md)
 * [GitHub Actions Workflows](./contributor/04-10-workflows.md)
 * [Kyma Environment Broker Release Pipeline](./contributor/04-20-release.md)
-* [End-to-end Tests of Kyma Environment Broker](./contributor/05-10-e2e_tests.md)
 * [Kyma Environment Broker CronJobs](./contributor/06-10-keb-cronjobs.md)
 * [Environments Cleanup CronJob](./contributor/06-20-environments-cleanup-cronjob.md)
 * [Subaccount Cleanup CronJob](./contributor/06-30-subaccount-cleanup-cronjob.md)
