@@ -405,7 +405,8 @@ func newTestAccountPool() AccountPool {
 	gardenerFake := gardener.NewDynamicFakeClient(secretBinding1, secretBinding2, secretBinding3, secretBinding4,
 		secretBinding5, secretBinding6, secretBinding7, secretBinding8, secretBinding9, secretBinding10, secretBinding11)
 
-	return NewAccountPool(gardenerFake, testNamespace)
+	bindingsClient := NewGardenerClient(gardenerFake, testNamespace)
+	return NewAccountPool(bindingsClient)
 }
 
 func newTestAccountPoolWithSingleShoot(euAccess bool) (AccountPool, dynamic.ResourceInterface) {
@@ -448,14 +449,16 @@ func newTestAccountPoolWithSingleShoot(euAccess bool) (AccountPool, dynamic.Reso
 	shoot1.SetGroupVersionKind(shootGVK)
 
 	gardenerFake := gardener.NewDynamicFakeClient(shoot1, secretBinding1)
-	return NewAccountPool(gardenerFake, testNamespace), gardenerFake.Resource(gardener.SecretBindingResource).Namespace(testNamespace)
+	bindingsClient := NewGardenerClient(gardenerFake, testNamespace)
+	return NewAccountPool(bindingsClient), gardenerFake.Resource(gardener.SecretBindingResource).Namespace(testNamespace)
 }
 
 func newEmptyTestAccountPool() AccountPool {
 	secretBinding1 := &unstructured.Unstructured{}
 	secretBinding1.SetGroupVersionKind(secretBindingGVK)
 	gardenerFake := gardener.NewDynamicFakeClient(secretBinding1)
-	return NewAccountPool(gardenerFake, testNamespace)
+	bindingsClient := NewGardenerClient(gardenerFake, testNamespace)
+	return NewAccountPool(bindingsClient)
 }
 
 func applyEuAccess(obj *unstructured.Unstructured, euAccess bool) {
@@ -488,7 +491,8 @@ func newTestAccountPoolWithSecretBindingInternal(euAccess bool) (AccountPool, dy
 	secretBinding1.SetGroupVersionKind(secretBindingGVK)
 
 	gardenerFake := gardener.NewDynamicFakeClient(secretBinding1)
-	return NewAccountPool(gardenerFake, testNamespace), gardenerFake.Resource(gardener.SecretBindingResource).Namespace(testNamespace)
+	bindingsClient := NewGardenerClient(gardenerFake, testNamespace)
+	return NewAccountPool(bindingsClient), gardenerFake.Resource(gardener.SecretBindingResource).Namespace(testNamespace)
 }
 
 func newTestAccountPoolWithSecretBindingDirty(euAccess bool) (AccountPool, dynamic.ResourceInterface) {
@@ -532,7 +536,8 @@ func newTestAccountPoolWithSecretBindingDirty(euAccess bool) (AccountPool, dynam
 	shoot1.SetGroupVersionKind(shootGVK)
 
 	gardenerFake := gardener.NewDynamicFakeClient(shoot1, secretBinding1)
-	return NewAccountPool(gardenerFake, testNamespace), gardenerFake.Resource(gardener.SecretBindingResource).Namespace(testNamespace)
+	bindingsClient := NewGardenerClient(gardenerFake, testNamespace)
+	return NewAccountPool(bindingsClient), gardenerFake.Resource(gardener.SecretBindingResource).Namespace(testNamespace)
 }
 
 func newTestAccountPoolWithShootsUsingSecretBinding(euAccess bool) (AccountPool, dynamic.ResourceInterface) {
@@ -594,7 +599,8 @@ func newTestAccountPoolWithShootsUsingSecretBinding(euAccess bool) (AccountPool,
 	shoot2.SetGroupVersionKind(shootGVK)
 
 	gardenerFake := gardener.NewDynamicFakeClient(shoot1, shoot2, secretBinding1)
-	return NewAccountPool(gardenerFake, testNamespace), gardenerFake.Resource(gardener.SecretBindingResource).Namespace(testNamespace)
+	bindingsClient := NewGardenerClient(gardenerFake, testNamespace)
+	return NewAccountPool(bindingsClient), gardenerFake.Resource(gardener.SecretBindingResource).Namespace(testNamespace)
 }
 
 func newTestAccountPoolWithoutShoots(euAccess bool) (AccountPool, dynamic.ResourceInterface) {
@@ -618,5 +624,6 @@ func newTestAccountPoolWithoutShoots(euAccess bool) (AccountPool, dynamic.Resour
 	secretBinding1.SetGroupVersionKind(secretBindingGVK)
 
 	gardenerFake := gardener.NewDynamicFakeClient(secretBinding1)
-	return NewAccountPool(gardenerFake, testNamespace), gardenerFake.Resource(gardener.SecretBindingResource).Namespace(testNamespace)
+	bindingsClient := NewGardenerClient(gardenerFake, testNamespace)
+	return NewAccountPool(bindingsClient), gardenerFake.Resource(gardener.SecretBindingResource).Namespace(testNamespace)
 }

@@ -204,7 +204,9 @@ func TestResolveCredentials_IntegrationAWS(t *testing.T) {
 	gc := gardener.NewDynamicFakeClient(
 		fixSecretBinding("s1aws", "aws"),
 		fixSecretBinding("s1azure", "azure"))
-	accountProvider := hyperscaler.NewAccountProvider(hyperscaler.NewAccountPool(gc, namespace))
+
+	bindingsClient := hyperscaler.NewGardenerClient(gc, namespace)
+	accountProvider := hyperscaler.NewAccountProvider(hyperscaler.NewAccountPool(bindingsClient))
 
 	op := fixOperationWithPlatformRegion("cf-us10", pkg.AWS)
 	err := memoryStorage.Operations().InsertOperation(op)
@@ -228,7 +230,9 @@ func TestResolveCredentials_IntegrationAWSEuAccess(t *testing.T) {
 		fixSecretBinding("azure", "azure"),
 		fixEuAccessSecretBinding("awseu", "aws"),
 		fixEuAccessSecretBinding("azureeu", "azure"))
-	accountProvider := hyperscaler.NewAccountProvider(hyperscaler.NewAccountPool(gc, namespace))
+
+	bindingsClient := hyperscaler.NewGardenerClient(gc, namespace)
+	accountProvider := hyperscaler.NewAccountProvider(hyperscaler.NewAccountPool(bindingsClient))
 
 	op := fixOperationWithPlatformRegion("cf-eu11", pkg.AWS)
 	err := memoryStorage.Operations().InsertOperation(op)
@@ -250,7 +254,8 @@ func TestResolveCredentials_IntegrationAzure(t *testing.T) {
 	gc := gardener.NewDynamicFakeClient(
 		fixSecretBinding("s1aws", "aws"),
 		fixSecretBinding("s1azure", "azure"))
-	accountProvider := hyperscaler.NewAccountProvider(hyperscaler.NewAccountPool(gc, namespace))
+	bindingsClient := hyperscaler.NewGardenerClient(gc, namespace)
+	accountProvider := hyperscaler.NewAccountProvider(hyperscaler.NewAccountPool(bindingsClient))
 
 	op := fixOperationWithPlatformRegion("cf-eu21", pkg.Azure)
 	err := memoryStorage.Operations().InsertOperation(op)
@@ -274,7 +279,9 @@ func TestResolveCredentials_IntegrationAzureEuAccess(t *testing.T) {
 		fixSecretBinding("azure", "azure"),
 		fixEuAccessSecretBinding("awseu", "aws"),
 		fixEuAccessSecretBinding("azureeu", "azure"))
-	accountProvider := hyperscaler.NewAccountProvider(hyperscaler.NewAccountPool(gc, namespace))
+
+	bindingsClient := hyperscaler.NewGardenerClient(gc, namespace)
+	accountProvider := hyperscaler.NewAccountProvider(hyperscaler.NewAccountPool(bindingsClient))
 
 	op := fixOperationWithPlatformRegion("cf-ch20", pkg.Azure)
 	err := memoryStorage.Operations().InsertOperation(op)

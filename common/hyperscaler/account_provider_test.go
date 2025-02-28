@@ -28,7 +28,9 @@ func TestGardenerSecretName(t *testing.T) {
 	t.Run("should return correct secret name", func(t *testing.T) {
 		//given
 		gardenerFake := gardener.NewDynamicFakeClient(newSecretBinding("secretBinding1", "secret1", "azure", false, false))
-		accountPool := NewAccountPool(gardenerFake, testNamespace)
+
+		bindingsClient := NewGardenerClient(gardenerFake, testNamespace)
+		accountPool := NewAccountPool(bindingsClient)
 
 		accountProvider := NewAccountProvider(accountPool)
 
@@ -59,7 +61,8 @@ func TestGardenerSecretName(t *testing.T) {
 		}
 		sb.SetGroupVersionKind(secretBindingGVK)
 		gardenerFake := gardener.NewDynamicFakeClient(sb)
-		accountPool := NewAccountPool(gardenerFake, testNamespace)
+		bindingsClient := NewGardenerClient(gardenerFake, testNamespace)
+		accountPool := NewAccountPool(bindingsClient)
 
 		accountProvider := NewAccountProvider(accountPool)
 
@@ -74,7 +77,8 @@ func TestGardenerSecretName(t *testing.T) {
 	t.Run("should return error when failed to find secret binding", func(t *testing.T) {
 		//given
 		gardenerFake := gardener.NewDynamicFakeClient()
-		accountPool := NewAccountPool(gardenerFake, testNamespace)
+		bindingsClient := NewGardenerClient(gardenerFake, testNamespace)
+		accountPool := NewAccountPool(bindingsClient)
 
 		accountProvider := NewAccountProvider(accountPool)
 
@@ -102,7 +106,8 @@ func TestGardenerSharedSecretName(t *testing.T) {
 	t.Run("should return correct shared secret name", func(t *testing.T) {
 		//given
 		gardenerFake := gardener.NewDynamicFakeClient(newSecretBinding("secretBinding1", "secret1", "azure", true, false))
-		sharedAccountPool := NewAccountPool(gardenerFake, testNamespace)
+		bindingsClient := NewGardenerClient(gardenerFake, testNamespace)
+		sharedAccountPool := NewAccountPool(bindingsClient)
 
 		accountProvider := NewAccountProvider(sharedAccountPool)
 
@@ -134,7 +139,8 @@ func TestGardenerSharedSecretName(t *testing.T) {
 		}
 		sb.SetGroupVersionKind(secretBindingGVK)
 		gardenerFake := gardener.NewDynamicFakeClient(sb)
-		sharedAccountPool := NewAccountPool(gardenerFake, testNamespace)
+		bindingsClient := NewGardenerClient(gardenerFake, testNamespace)
+		sharedAccountPool := NewAccountPool(bindingsClient)
 
 		accountProvider := NewAccountProvider(sharedAccountPool)
 
@@ -149,7 +155,8 @@ func TestGardenerSharedSecretName(t *testing.T) {
 	t.Run("should return error when failed to find secret binding", func(t *testing.T) {
 		//given
 		gardenerFake := gardener.NewDynamicFakeClient()
-		sharedAccountPool := NewAccountPool(gardenerFake, testNamespace)
+		bindingsClient := NewGardenerClient(gardenerFake, testNamespace)
+		sharedAccountPool := NewAccountPool(bindingsClient)
 
 		accountProvider := NewAccountProvider(sharedAccountPool)
 
