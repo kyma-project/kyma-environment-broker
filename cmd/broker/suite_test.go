@@ -240,6 +240,7 @@ func sharedSubscription(ht hyperscaler.Type) string {
 func fixConfig() *Config {
 	brokerConfigPlans := []string{
 		"azure",
+		"azure_lite",
 		"trial",
 		"aws",
 		"own_cluster",
