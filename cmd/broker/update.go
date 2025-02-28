@@ -4,6 +4,7 @@ import (
 	"context"
 	"log/slog"
 
+	"github.com/kyma-project/kyma-environment-broker/internal"
 	"github.com/kyma-project/kyma-environment-broker/internal/provider"
 
 	"github.com/kyma-project/kyma-environment-broker/internal/process/steps"
@@ -43,7 +44,7 @@ func NewUpdateProcessingQueue(ctx context.Context, manager *process.StagedManage
 		},
 		{
 			stage:     "check_runtime_resource",
-			step:      steps.NewCheckRuntimeResourceStep(db.Operations(), cli, cfg.Provisioner.RuntimeResourceStepTimeout),
+			step:      steps.NewCheckRuntimeResourceStep(db.Operations(), cli, internal.RetryTuple{Timeout: cfg.Provisioner.RuntimeResourceStepTimeout, Interval: resourceStateRetryInterval}),
 			condition: update.SkipForOwnClusterPlan,
 		},
 	}
