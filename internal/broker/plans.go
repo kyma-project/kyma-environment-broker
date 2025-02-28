@@ -121,8 +121,6 @@ var ClusterRegions = []string{
 	"europe-west4",
 }
 
-
-
 type TrialCloudRegion string
 
 const (
