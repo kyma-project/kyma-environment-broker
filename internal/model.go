@@ -570,3 +570,8 @@ type Binding struct {
 	ExpirationSeconds int64
 	CreatedBy         string
 }
+
+type RetryTuple struct {
+	Timeout  time.Duration
+	Interval time.Duration
+}

@@ -15,25 +15,24 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
-func NewCheckRuntimeResourceStep(os storage.Operations, k8sClient client.Client, runtimeResourceStepTimeout time.Duration) *checkRuntimeResource {
+func NewCheckRuntimeResourceStep(os storage.Operations, k8sClient client.Client, runtimeResourceStateRetry internal.RetryTuple) *checkRuntimeResource {
 	step := &checkRuntimeResource{
-		k8sClient:                  k8sClient,
-		runtimeResourceStepTimeout: runtimeResourceStepTimeout,
+		k8sClient:                 k8sClient,
+		runtimeResourceStateRetry: runtimeResourceStateRetry,
 	}
 	step.operationManager = process.NewOperationManager(os, step.Name(), kebError.InfrastructureManagerDependency)
 	return step
 }
 
 type checkRuntimeResource struct {
-	k8sClient                  client.Client
-	operationManager           *process.OperationManager
-	runtimeResourceStepTimeout time.Duration
+	k8sClient                 client.Client
+	operationManager          *process.OperationManager
+	runtimeResourceStateRetry internal.RetryTuple
 }
 
 const (
-	kcpRetryInterval           = 3 * time.Second
-	kcpRetryTimeout            = 20 * time.Second
-	resourceStateRetryInterval = 10 * time.Second
+	kcpRetryInterval = 3 * time.Second
+	kcpRetryTimeout  = 20 * time.Second
 )
 
 func (_ *checkRuntimeResource) Name() string {
@@ -52,8 +51,8 @@ func (s *checkRuntimeResource) Run(operation internal.Operation, log *slog.Logge
 	state := runtime.Status.State
 	log.Info(fmt.Sprintf("Runtime resource state: %s", state))
 	if state != imv1.RuntimeStateReady {
-		log.Info(fmt.Sprintf("Runtime resource status: %v; retrying with timeout: %v", runtime.Status, s.runtimeResourceStepTimeout))
-		return s.operationManager.RetryOperation(operation, "Runtime resource not ready", nil, resourceStateRetryInterval, s.runtimeResourceStepTimeout, log)
+		log.Info(fmt.Sprintf("Runtime resource status: %v; retrying in %v steps for: %v", runtime.Status, s.runtimeResourceStateRetry.Interval, s.runtimeResourceStateRetry.Timeout))
+		return s.operationManager.RetryOperation(operation, fmt.Sprintf("Runtime resource not in %s state", imv1.RuntimeStateReady), nil, s.runtimeResourceStateRetry.Interval, s.runtimeResourceStateRetry.Timeout, log)
 	}
 	return operation, 0, nil
 }
