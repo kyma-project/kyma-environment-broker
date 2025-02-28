@@ -15,6 +15,9 @@ The supported plans are as follows:
 | `trial`               | `7d55d31d-35ae-4438-bf13-6ffdfa107d9f` | Installs Kyma trial plan on Azure, AWS or GCP.          |
 | `sap-converged-cloud` | `03b812ac-c991-4528-b5bd-08b303523a63` | Installs Kyma runtime in the SapConvergedCloud cluster. |
 | `free`                | `b1a5764e-2ea1-4f95-94c0-2b4538b37b55` | Installs Kyma free plan on Azure or AWS.                |
+| `build-runtime-aws`   | `6aae0ff3-89f7-4f12-86de-51466145422e` | Installs Kyma runtime in the AWS cluster.               |
+| `build-runtime-azure` | `499244b4-1bef-48c9-be68-495269899f8e` | Installs Kyma runtime in the Azure cluster.             |
+| `build-runtime-gcp`   | `a310cd6b-6452-45a0-935d-d24ab53f9eba` | Installs Kyma runtime in the GCP cluster.               |
 
 There is also an experimental plan:
 
