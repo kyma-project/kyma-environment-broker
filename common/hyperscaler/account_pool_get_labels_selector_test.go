@@ -65,23 +65,23 @@ func TestGetLabelsSelector(t *testing.T) {
 	for _, platformRegion := range platformRegions {
 		for _, clusterRegion := range clusterRegions {
 			for _, cloudProvider := range cloudProviders {
-                for _, plan := range broker.PlanNamesMapping {
-                    effectiveRegion := provider.GetEffectiveRegionForSapConvergedCloud(&clusterRegion)
+				for _, plan := range broker.PlanNamesMapping {
+					effectiveRegion := provider.GetEffectiveRegionForSapConvergedCloud(&clusterRegion)
 
-                    hypType, err := HypTypeFromCloudProviderWithRegion(cloudProvider, &effectiveRegion, &platformRegion)
-                    require.NoError(t, err)
+					hypType, err := HypTypeFromCloudProviderWithRegion(cloudProvider, &effectiveRegion, &platformRegion)
+					require.NoError(t, err)
 
-                    euAccess := euaccess.IsEURestrictedAccess(platformRegion)
+					euAccess := euaccess.IsEURestrictedAccess(platformRegion)
 
-                    var shared = broker.IsTrialPlan(plan) || broker.IsSapConvergedCloudPlan(plan)
+					var shared = broker.IsTrialPlan(plan) || broker.IsSapConvergedCloudPlan(plan)
 
-                    labelSelector := getLabelsSelector(hypType, shared, euAccess)
+					labelSelector := getLabelsSelector(hypType, shared, euAccess)
 
 					// TODO: inject new implementation
 					newLabelSelector := labelSelector
 
-					require.Equal(t, labelSelector, newLabelSelector, 	fmt.Sprintf("platformRegion: %s, clusterRegion: %s, cloudProvider: %s, plan: %s, labelSelector: %s, newLabelSelector: %s\n", platformRegion, clusterRegion, cloudProvider, plan, labelSelector, newLabelSelector))
-                }
+					require.Equal(t, labelSelector, newLabelSelector, fmt.Sprintf("platformRegion: %s, clusterRegion: %s, cloudProvider: %s, plan: %s, labelSelector: %s, newLabelSelector: %s\n", platformRegion, clusterRegion, cloudProvider, plan, labelSelector, newLabelSelector))
+				}
 			}
 		}
 	}
