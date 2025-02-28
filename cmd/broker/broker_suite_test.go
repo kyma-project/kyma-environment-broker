@@ -111,6 +111,7 @@ type BrokerSuiteTest struct {
 	eventBroker              *event.PubSub
 	metrics                  *metricsv2.RegisterContainer
 	k8sDeletionObjectTracker Deleter
+	loggingBindingsClient    LoggingBindingsClient
 }
 
 func (s *BrokerSuiteTest) TearDown() {
@@ -208,7 +209,8 @@ func NewBrokerSuiteTestWithConfig(t *testing.T, cfg *Config, version ...string) 
 	eventBroker := event.NewPubSub(log)
 
 	edpClient := edp.NewFakeClient()
-	accountProvider := fixAccountProvider()
+	loggingBindingsClient := &LoggingBindingsClient{}
+	accountProvider := hyperscaler.NewAccountProvider(hyperscaler.NewAccountPool(loggingBindingsClient))
 	require.NoError(t, err)
 
 	fakeK8sSKRClient := fake.NewClientBuilder().WithScheme(sch).Build()
@@ -251,6 +253,7 @@ func NewBrokerSuiteTestWithConfig(t *testing.T, cfg *Config, version ...string) 
 		eventBroker:         eventBroker,
 
 		k8sDeletionObjectTracker: ot,
+		loggingBindingsClient:    *loggingBindingsClient,
 	}
 	ts.poller = &broker.TimerPoller{PollInterval: 3 * time.Millisecond, PollTimeout: 800 * time.Millisecond, Log: ts.t.Log}
 
