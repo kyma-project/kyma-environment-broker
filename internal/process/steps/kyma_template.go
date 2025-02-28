@@ -2,6 +2,8 @@ package steps
 
 import (
 	"fmt"
+	"github.com/kyma-project/kyma-environment-broker/internal/broker"
+	"github.com/kyma-project/kyma-environment-broker/internal/process/input"
 	"log/slog"
 	"time"
 
@@ -14,12 +16,15 @@ import (
 
 type InitKymaTemplate struct {
 	operationManager *process.OperationManager
+	configProvider   input.ConfigurationProvider
 }
 
 var _ process.Step = &InitKymaTemplate{}
 
-func NewInitKymaTemplate(os storage.Operations) *InitKymaTemplate {
-	step := &InitKymaTemplate{}
+func NewInitKymaTemplate(os storage.Operations, configProvider input.ConfigurationProvider) *InitKymaTemplate {
+	step := &InitKymaTemplate{
+		configProvider: configProvider,
+	}
 	step.operationManager = process.NewOperationManager(os, step.Name(), kebError.KEBDependency)
 	return step
 }
@@ -29,8 +34,15 @@ func (s *InitKymaTemplate) Name() string {
 }
 
 func (s *InitKymaTemplate) Run(operation internal.Operation, logger *slog.Logger) (internal.Operation, time.Duration, error) {
-	tmpl := operation.InputCreator.Configuration().KymaTemplate
-	obj, err := DecodeKymaTemplate(tmpl)
+	planName, found := broker.PlanNamesMapping[operation.ProvisioningParameters.PlanID]
+	if !found {
+		return s.operationManager.OperationFailed(operation, fmt.Sprintf("PlanID %s not found in PlanNamesMapping", operation.ProvisioningParameters.PlanID), nil, logger)
+	}
+	config, err := s.configProvider.ProvideForGivenPlan(planName)
+	if err != nil {
+		return s.operationManager.RetryOperation(operation, fmt.Sprintf("unable to provide configuration for plan %s", planName), err, 10*time.Second, 30*time.Second, logger)
+	}
+	obj, err := DecodeKymaTemplate(config.KymaTemplate)
 	if err != nil {
 		logger.Error(fmt.Sprintf("Unable to create kyma template: %s", err.Error()))
 		return s.operationManager.OperationFailed(operation, "unable to create a kyma template", err, logger)
@@ -38,6 +50,6 @@ func (s *InitKymaTemplate) Run(operation internal.Operation, logger *slog.Logger
 	logger.Info(fmt.Sprintf("Decoded kyma template: %v", obj))
 	return s.operationManager.UpdateOperation(operation, func(op *internal.Operation) {
 		op.KymaResourceNamespace = obj.GetNamespace()
-		op.KymaTemplate = tmpl
+		op.KymaTemplate = config.KymaTemplate
 	}, logger)
 }

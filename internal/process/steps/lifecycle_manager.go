@@ -2,6 +2,7 @@ package steps
 
 import (
 	"fmt"
+	"github.com/kyma-project/kyma-environment-broker/common/runtime"
 	"strings"
 
 	"github.com/kyma-project/kyma-environment-broker/internal/customresources"
@@ -12,17 +13,15 @@ import (
 
 // ApplyLabelsAndAnnotationsForLM Set common labels and annotations for kyma lifecycle manager
 func ApplyLabelsAndAnnotationsForLM(object client.Object, operation internal.Operation) {
-	l := object.GetLabels()
 
+	cloudProvider := runtime.CloudProviderFromString(operation.ProviderValues.ProviderType)
+	l := object.GetLabels()
+	fmt.Println(cloudProvider)
 	l = SetCommonLabels(l, operation)
 
 	l[customresources.RegionLabel] = operation.Region
 	l[customresources.ManagedByLabel] = "lifecycle-manager"
-	if operation.CloudProvider != "" {
-		l[customresources.CloudProviderLabel] = operation.CloudProvider
-	} else { // fallback to inputCreator that will be removed when provisioner is decommissioned
-		l[customresources.CloudProviderLabel] = string(operation.InputCreator.Provider())
-	}
+	l[customresources.CloudProviderLabel] = string(cloudProvider)
 
 	if isKymaResourceInternal(operation) {
 		l[customresources.InternalLabel] = "true"

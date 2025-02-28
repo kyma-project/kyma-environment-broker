@@ -50,7 +50,9 @@ func (_ deleteKubeconfig) Name() string {
 }
 
 func (s syncKubeconfig) Run(o internal.Operation, log *slog.Logger) (internal.Operation, time.Duration, error) {
+	log.Info("creating secret")
 	secret := initSecret(o)
+	log.Info("secret created")
 	if err := s.k8sClient.Create(context.Background(), secret); errors.IsAlreadyExists(err) {
 		log.Info(fmt.Sprintf("Kubeconfig already exists in the secret %s, skipping", secret.Name))
 	} else if err != nil {
@@ -85,6 +87,8 @@ func initSecret(o internal.Operation) *corev1.Secret {
 			"config": o.Kubeconfig,
 		},
 	}
+	slog.Info("seccreet 1")
 	ApplyLabelsAndAnnotationsForLM(secret, o)
+	slog.Info("labels applied")
 	return secret
 }

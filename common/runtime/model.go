@@ -111,6 +111,22 @@ type AutoScalerParameters struct {
 	MaxUnavailable *int `json:"maxUnavailable,omitempty"`
 }
 
+func CloudProviderFromString(provider string) CloudProvider {
+	p := strings.ToLower(provider)
+	switch p {
+	case "aws":
+		return AWS
+	case "azure":
+		return Azure
+	case "gcp":
+		return GCP
+	case "sapconvergedcloud", "openstack":
+		return SapConvergedCloud
+	default:
+		return UnknownProvider
+	}
+}
+
 // FIXME: this is a makeshift check until the provisioner is capable of returning error messages
 // https://github.com/kyma-project/control-plane/issues/946
 func (p AutoScalerParameters) Validate(planMin, planMax int) error {

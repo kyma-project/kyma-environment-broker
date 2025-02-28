@@ -29,7 +29,7 @@ func TestAWSDefaults(t *testing.T) {
 
 	// then
 
-	assertValues(t, Values{
+	assertValues(t, ProviderValues{
 		DefaultAutoScalerMax: 20,
 		DefaultAutoScalerMin: 3,
 		ZonesCount:           3,
@@ -64,7 +64,7 @@ func TestAWSSpecific(t *testing.T) {
 
 	// then
 
-	assertValues(t, Values{
+	assertValues(t, ProviderValues{
 		// default values does not depend on provisioning parameters
 		DefaultAutoScalerMax: 20,
 		DefaultAutoScalerMin: 3,
@@ -96,7 +96,7 @@ func TestAWSTrialDefaults(t *testing.T) {
 
 	// then
 
-	assertValues(t, Values{
+	assertValues(t, ProviderValues{
 		DefaultAutoScalerMax: 1,
 		DefaultAutoScalerMin: 1,
 		ZonesCount:           1,
@@ -129,7 +129,7 @@ func TestAWSTrialSpecific(t *testing.T) {
 
 	// then
 
-	assertValues(t, Values{
+	assertValues(t, ProviderValues{
 		// default values do not depend on provisioning parameters
 		DefaultAutoScalerMax: 1,
 		DefaultAutoScalerMin: 1,
@@ -145,7 +145,7 @@ func TestAWSTrialSpecific(t *testing.T) {
 	}, values)
 }
 
-func assertValues(t *testing.T, expected Values, got Values) {
+func assertValues(t *testing.T, expected ProviderValues, got ProviderValues) {
 	assert.Equal(t, expected.ZonesCount, len(got.Zones))
 	assert.Subset(t, expected.Zones, got.Zones)
 	got.Zones = nil

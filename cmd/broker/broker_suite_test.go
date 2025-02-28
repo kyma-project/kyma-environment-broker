@@ -218,7 +218,7 @@ func NewBrokerSuiteTestWithConfig(t *testing.T, cfg *Config, version ...string) 
 	rulesService, err := rules.NewRulesServiceFromFile("testdata/hap-rules.yaml")
 	require.NoError(t, err)
 
-	provisioningQueue := NewProvisioningProcessingQueue(context.Background(), provisionManager, workersAmount, cfg, db, inputFactory,
+	provisioningQueue := NewProvisioningProcessingQueue(context.Background(), provisionManager, workersAmount, cfg, db, configProvider,
 		edpClient, accountProvider, k8sClientProvider, cli, defaultOIDCValues(), log, rulesService)
 
 	provisioningQueue.SpeedUp(10000)
