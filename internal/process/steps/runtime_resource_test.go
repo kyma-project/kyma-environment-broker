@@ -4,12 +4,11 @@ import (
 	"testing"
 	"time"
 
-	"github.com/kyma-project/kyma-environment-broker/internal/broker"
-
 	imv1 "github.com/kyma-project/infrastructure-manager/api/v1"
+	"github.com/kyma-project/kyma-environment-broker/internal"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
-	"github.com/pivotal-cf/brokerapi/v8/domain"
+	"github.com/pivotal-cf/brokerapi/v12/domain"
 
 	"github.com/kyma-project/kyma-environment-broker/internal/fixture"
 	"github.com/kyma-project/kyma-environment-broker/internal/storage"
@@ -26,9 +25,8 @@ func TestCheckRuntimeResource_RunWhenReady(t *testing.T) {
 	os := storage.NewMemoryStorage().Operations()
 	existingRuntime := createRuntime("Ready")
 	k8sClient := fake.NewClientBuilder().WithRuntimeObjects(&existingRuntime).Build()
-	kimConfig := fixKimConfigForAzure()
 
-	step := NewCheckRuntimeResourceStep(os, k8sClient, kimConfig, time.Second)
+	step := NewCheckRuntimeResourceStep(os, k8sClient, internal.RetryTuple{Timeout: 2 * time.Second, Interval: time.Second})
 	operation := fixture.FixProvisioningOperation("op", "instance-id")
 	operation.KymaResourceNamespace = "kcp-system"
 	operation.RuntimeID = "runtime-id-000"
@@ -53,10 +51,9 @@ func TestCheckRuntimeResource_RunWhenNotReady_OperationFail(t *testing.T) {
 
 	existingRuntime := createRuntime("In Progress")
 
-	kimConfig := fixKimConfigForAzure()
-
 	k8sClient := fake.NewClientBuilder().WithRuntimeObjects(&existingRuntime).Build()
-	step := NewCheckRuntimeResourceStep(os, k8sClient, kimConfig, time.Second)
+	// force immediate timeout
+	step := NewCheckRuntimeResourceStep(os, k8sClient, internal.RetryTuple{Timeout: -1 * time.Second, Interval: 2 * time.Second})
 	operation := fixture.FixProvisioningOperation("op", "instance-id")
 	operation.KymaResourceNamespace = "kcp-system"
 	operation.RuntimeID = "runtime-id-000"
@@ -82,11 +79,9 @@ func TestCheckRuntimeResource_RunWhenNotReady_Retry(t *testing.T) {
 
 	existingRuntime := createRuntime("In Progress")
 
-	kimConfig := fixKimConfigForAzure()
-
 	k8sClient := fake.NewClientBuilder().WithRuntimeObjects(&existingRuntime).Build()
 
-	step := NewCheckRuntimeResourceStep(os, k8sClient, kimConfig, time.Second)
+	step := NewCheckRuntimeResourceStep(os, k8sClient, internal.RetryTuple{Timeout: 2 * time.Second, Interval: time.Second})
 	operation := fixture.FixProvisioningOperation("op", "instance-id")
 	operation.KymaResourceNamespace = "kcp-system"
 	operation.RuntimeID = "runtime-id-000"
@@ -101,14 +96,6 @@ func TestCheckRuntimeResource_RunWhenNotReady_Retry(t *testing.T) {
 	// then
 	assert.NoError(t, err)
 	assert.NotZero(t, backoff)
-}
-
-func fixKimConfigForAzure() broker.KimConfig {
-	return broker.KimConfig{
-		Enabled:  true,
-		Plans:    []string{"azure"},
-		ViewOnly: false,
-	}
 }
 
 func createRuntime(state imv1.State) imv1.Runtime {

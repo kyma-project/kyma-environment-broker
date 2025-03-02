@@ -32,4 +32,5 @@ data:
 {{ tpl . $ | indent 4 }}
 {{- end }}
   hapRule.yaml: |-
+    rule:
 {{ toYaml .Values.hap.rule | indent 4  }}

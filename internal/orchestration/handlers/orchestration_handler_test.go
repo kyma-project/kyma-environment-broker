@@ -11,14 +11,14 @@ import (
 	"testing"
 	"time"
 
-	"github.com/gorilla/mux"
 	"github.com/kyma-project/control-plane/components/provisioner/pkg/gqlschema"
 	"github.com/kyma-project/kyma-environment-broker/common/orchestration"
 	"github.com/kyma-project/kyma-environment-broker/internal"
 	"github.com/kyma-project/kyma-environment-broker/internal/fixture"
+	"github.com/kyma-project/kyma-environment-broker/internal/httputil"
 	"github.com/kyma-project/kyma-environment-broker/internal/process"
 	"github.com/kyma-project/kyma-environment-broker/internal/storage"
-	"github.com/pivotal-cf/brokerapi/v8/domain"
+	"github.com/pivotal-cf/brokerapi/v12/domain"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -43,7 +43,7 @@ func TestStatusHandler_AttachRoutes(t *testing.T) {
 		require.NoError(t, err)
 
 		rr := httptest.NewRecorder()
-		router := mux.NewRouter()
+		router := httputil.NewRouter()
 		kymaHandler.AttachRoutes(router)
 
 		// when
@@ -151,7 +151,7 @@ func TestStatusHandler_AttachRoutes(t *testing.T) {
 		require.NoError(t, err)
 
 		rr := httptest.NewRecorder()
-		router := mux.NewRouter()
+		router := httputil.NewRouter()
 		kymaHandler.AttachRoutes(router)
 
 		// when
@@ -201,7 +201,7 @@ func TestStatusHandler_AttachRoutes(t *testing.T) {
 		require.NoError(t, err)
 
 		rr := httptest.NewRecorder()
-		router := mux.NewRouter()
+		router := httputil.NewRouter()
 		kymaHandler.AttachRoutes(router)
 
 		// when
@@ -261,7 +261,7 @@ func TestStatusRetryHandler_AttachRoutes(t *testing.T) {
 		req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
 
 		rr := httptest.NewRecorder()
-		router := mux.NewRouter()
+		router := httputil.NewRouter()
 		kymaHandler.AttachRoutes(router)
 
 		// when
@@ -340,7 +340,7 @@ func TestStatusRetryHandler_AttachRoutes(t *testing.T) {
 		req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
 
 		rr := httptest.NewRecorder()
-		router := mux.NewRouter()
+		router := httputil.NewRouter()
 		kymaHandler.AttachRoutes(router)
 
 		// when
@@ -422,7 +422,7 @@ func TestStatusRetryHandler_AttachRoutes(t *testing.T) {
 		req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
 
 		rr := httptest.NewRecorder()
-		router := mux.NewRouter()
+		router := httputil.NewRouter()
 		kymaHandler.AttachRoutes(router)
 
 		// when
@@ -484,7 +484,7 @@ func TestStatusRetryHandler_AttachRoutes(t *testing.T) {
 		req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
 
 		rr := httptest.NewRecorder()
-		router := mux.NewRouter()
+		router := httputil.NewRouter()
 		kymaHandler.AttachRoutes(router)
 
 		// when

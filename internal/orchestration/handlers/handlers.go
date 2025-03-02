@@ -3,17 +3,21 @@ package handlers
 import (
 	"fmt"
 	"log/slog"
+	"net/http"
 	"time"
 
-	"github.com/gorilla/mux"
 	"github.com/kyma-project/kyma-environment-broker/common/orchestration"
 	"github.com/kyma-project/kyma-environment-broker/internal/process"
 	"github.com/kyma-project/kyma-environment-broker/internal/storage"
 	"github.com/pkg/errors"
 )
 
+type router interface {
+	HandleFunc(pattern string, handler func(http.ResponseWriter, *http.Request))
+}
+
 type Handler interface {
-	AttachRoutes(router *mux.Router)
+	AttachRoutes(r router)
 }
 
 type handler struct {
@@ -30,9 +34,9 @@ func NewOrchestrationHandler(db storage.BrokerStorage, clusterQueue *process.Que
 	}
 }
 
-func (h *handler) AttachRoutes(router *mux.Router) {
+func (h *handler) AttachRoutes(r router) {
 	for _, handler := range h.handlers {
-		handler.AttachRoutes(router)
+		handler.AttachRoutes(r)
 	}
 }
 

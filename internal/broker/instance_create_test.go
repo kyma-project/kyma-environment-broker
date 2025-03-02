@@ -11,7 +11,7 @@ import (
 
 	"github.com/kyma-project/kyma-environment-broker/internal/whitelist"
 
-	"github.com/pivotal-cf/brokerapi/v8/domain/apiresponses"
+	"github.com/pivotal-cf/brokerapi/v12/domain/apiresponses"
 
 	"github.com/kyma-project/control-plane/components/provisioner/pkg/gqlschema"
 	"github.com/kyma-project/kyma-environment-broker/common/gardener"
@@ -25,7 +25,7 @@ import (
 	"github.com/kyma-project/kyma-environment-broker/internal/middleware"
 	"github.com/kyma-project/kyma-environment-broker/internal/ptr"
 	"github.com/kyma-project/kyma-environment-broker/internal/storage"
-	"github.com/pivotal-cf/brokerapi/v8/domain"
+	"github.com/pivotal-cf/brokerapi/v12/domain"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
@@ -954,8 +954,8 @@ func TestProvision_Provision(t *testing.T) {
 		require.Error(t, err)
 		assert.IsType(t, &apiresponses.FailureResponse{}, err)
 		apierr := err.(*apiresponses.FailureResponse)
-		assert.Equal(t, expectedErr.ValidatedStatusCode(nil), apierr.ValidatedStatusCode(nil))
-		assert.Equal(t, expectedErr.LoggerAction(), apierr.LoggerAction())
+		assert.Equal(t, expectedErr.(*apiresponses.FailureResponse).ValidatedStatusCode(nil), apierr.ValidatedStatusCode(nil))
+		assert.Equal(t, expectedErr.(*apiresponses.FailureResponse).LoggerAction(), apierr.LoggerAction())
 	})
 
 	t.Run("Should fail on invalid OIDC signingAlgs param", func(t *testing.T) {
@@ -1014,8 +1014,8 @@ func TestProvision_Provision(t *testing.T) {
 		require.Error(t, err)
 		assert.IsType(t, &apiresponses.FailureResponse{}, err)
 		apierr := err.(*apiresponses.FailureResponse)
-		assert.Equal(t, expectedErr.ValidatedStatusCode(nil), apierr.ValidatedStatusCode(nil))
-		assert.Equal(t, expectedErr.LoggerAction(), apierr.LoggerAction())
+		assert.Equal(t, expectedErr.(*apiresponses.FailureResponse).ValidatedStatusCode(nil), apierr.ValidatedStatusCode(nil))
+		assert.Equal(t, expectedErr.(*apiresponses.FailureResponse).LoggerAction(), apierr.LoggerAction())
 	})
 
 	t.Run("Should fail on invalid OIDC issuerURL params", func(t *testing.T) {
@@ -1112,8 +1112,8 @@ func TestProvision_Provision(t *testing.T) {
 				require.Error(t, err)
 				assert.IsType(t, &apiresponses.FailureResponse{}, err)
 				apierr := err.(*apiresponses.FailureResponse)
-				assert.Equal(t, expectedErr.ValidatedStatusCode(nil), apierr.ValidatedStatusCode(nil))
-				assert.Equal(t, expectedErr.LoggerAction(), apierr.LoggerAction())
+				assert.Equal(t, expectedErr.(*apiresponses.FailureResponse).ValidatedStatusCode(nil), apierr.ValidatedStatusCode(nil))
+				assert.Equal(t, expectedErr.(*apiresponses.FailureResponse).LoggerAction(), apierr.LoggerAction())
 			})
 		}
 	})
@@ -1654,11 +1654,10 @@ func TestAdditionalWorkerNodePools(t *testing.T) {
 			// #create provisioner endpoint
 			provisionEndpoint := broker.NewProvision(
 				broker.Config{
-					EnablePlans:                     []string{"aws"},
-					URL:                             brokerURL,
-					OnlySingleTrialPerGA:            true,
-					EnableKubeconfigURLLabel:        true,
-					EnableAdditionalWorkerNodePools: true,
+					EnablePlans:              []string{"aws"},
+					URL:                      brokerURL,
+					OnlySingleTrialPerGA:     true,
+					EnableKubeconfigURLLabel: true,
 				},
 				gardener.Config{Project: "test", ShootDomain: "example.com", DNSProviders: fixDNSProviders()},
 				memoryStorage.Operations(),
@@ -1724,11 +1723,10 @@ func TestAdditionalWorkerNodePoolsForUnsupportedPlans(t *testing.T) {
 			// #create provisioner endpoint
 			provisionEndpoint := broker.NewProvision(
 				broker.Config{
-					EnablePlans:                     []string{"trial", "free"},
-					URL:                             brokerURL,
-					OnlySingleTrialPerGA:            true,
-					EnableKubeconfigURLLabel:        true,
-					EnableAdditionalWorkerNodePools: true,
+					EnablePlans:              []string{"trial", "free"},
+					URL:                      brokerURL,
+					OnlySingleTrialPerGA:     true,
+					EnableKubeconfigURLLabel: true,
 				},
 				gardener.Config{Project: "test", ShootDomain: "example.com", DNSProviders: fixDNSProviders()},
 				memoryStorage.Operations(),
@@ -2189,8 +2187,8 @@ func TestSapConvergedCloudBlocking(t *testing.T) {
 		require.Error(t, err)
 		assert.IsType(t, &apiresponses.FailureResponse{}, err)
 		apierr := err.(*apiresponses.FailureResponse)
-		assert.Equal(t, expectedErr.ValidatedStatusCode(nil), apierr.ValidatedStatusCode(nil))
-		assert.Equal(t, expectedErr.LoggerAction(), apierr.LoggerAction())
+		assert.Equal(t, expectedErr.(*apiresponses.FailureResponse).ValidatedStatusCode(nil), apierr.ValidatedStatusCode(nil))
+		assert.Equal(t, expectedErr.(*apiresponses.FailureResponse).LoggerAction(), apierr.LoggerAction())
 	})
 }
 
@@ -2216,11 +2214,10 @@ func TestUnsupportedMachineType(t *testing.T) {
 	// #create provisioner endpoint
 	provisionEndpoint := broker.NewProvision(
 		broker.Config{
-			EnablePlans:                     []string{"gcp"},
-			URL:                             brokerURL,
-			OnlySingleTrialPerGA:            true,
-			EnableKubeconfigURLLabel:        true,
-			EnableAdditionalWorkerNodePools: true,
+			EnablePlans:              []string{"gcp"},
+			URL:                      brokerURL,
+			OnlySingleTrialPerGA:     true,
+			EnableKubeconfigURLLabel: true,
 		},
 		gardener.Config{Project: "test", ShootDomain: "example.com", DNSProviders: fixDNSProviders()},
 		memoryStorage.Operations(),
@@ -2273,11 +2270,10 @@ func TestUnsupportedMachineTypeInAdditionalWorkerNodePools(t *testing.T) {
 	// #create provisioner endpoint
 	provisionEndpoint := broker.NewProvision(
 		broker.Config{
-			EnablePlans:                     []string{"aws"},
-			URL:                             brokerURL,
-			OnlySingleTrialPerGA:            true,
-			EnableKubeconfigURLLabel:        true,
-			EnableAdditionalWorkerNodePools: true,
+			EnablePlans:              []string{"aws"},
+			URL:                      brokerURL,
+			OnlySingleTrialPerGA:     true,
+			EnableKubeconfigURLLabel: true,
 		},
 		gardener.Config{Project: "test", ShootDomain: "example.com", DNSProviders: fixDNSProviders()},
 		memoryStorage.Operations(),

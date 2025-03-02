@@ -15,7 +15,7 @@ import (
 	pkg "github.com/kyma-project/kyma-environment-broker/common/runtime"
 	kebError "github.com/kyma-project/kyma-environment-broker/internal/error"
 	"github.com/kyma-project/kyma-environment-broker/internal/events"
-	"github.com/pivotal-cf/brokerapi/v8/domain"
+	"github.com/pivotal-cf/brokerapi/v12/domain"
 )
 
 type ProvisionerInputCreator interface {
@@ -569,4 +569,9 @@ type Binding struct {
 	Kubeconfig        string
 	ExpirationSeconds int64
 	CreatedBy         string
+}
+
+type RetryTuple struct {
+	Timeout  time.Duration
+	Interval time.Duration
 }

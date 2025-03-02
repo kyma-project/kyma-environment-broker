@@ -47,7 +47,7 @@ type ServiceAccountBindingsManager struct {
 func NewServiceAccountBindingsManager(clientProvider ClientProvider, kubeconfigProvider KubeconfigProvider) *ServiceAccountBindingsManager {
 	return &ServiceAccountBindingsManager{
 		clientProvider:    clientProvider,
-		kubeconfigBuilder: kubeconfig.NewBuilder(nil, nil, kubeconfigProvider),
+		kubeconfigBuilder: kubeconfig.NewBuilder(nil, kubeconfigProvider),
 	}
 }
 

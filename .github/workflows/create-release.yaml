@@ -8,6 +8,10 @@ env:
   GIT_NAME: kyma-gopher-bot
   BUMP_CHART_AND_IMAGES: bump-chart-and-images-${{ inputs.name }}
 
+permissions:
+  contents: write
+  id-token: write
+
 on:
   workflow_dispatch:
     inputs:

@@ -11,7 +11,7 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/kyma-project/kyma-environment-broker/common/runtime"
-	"github.com/pivotal-cf/brokerapi/v8/domain"
+	"github.com/pivotal-cf/brokerapi/v12/domain"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -21,7 +21,6 @@ func TestReDeprovision(t *testing.T) {
 	// given
 	cfg := fixConfig()
 	cfg.EDP.Disabled = true // disable EDP to have all steps successful executed
-	cfg.Database.UseLastOperationID = true
 	suite := NewBrokerSuiteTestWithConfig(t, cfg)
 	defer suite.TearDown()
 	iid := uuid.New().String()

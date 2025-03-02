@@ -9,7 +9,7 @@ import (
 	"os"
 	"testing"
 
-	"github.com/gorilla/mux"
+	"github.com/kyma-project/kyma-environment-broker/internal/httputil"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -135,18 +135,18 @@ func TestClient_DeleteMetadataTenant(t *testing.T) {
 }
 
 func fixHTTPServer(t *testing.T) *httptest.Server {
-	r := mux.NewRouter()
+	r := httputil.NewRouter()
 	srv := newServer(t)
 
-	r.HandleFunc("/namespaces/{namespace}/dataTenants", srv.createDataTenant).Methods(http.MethodPost)
-	r.HandleFunc("/namespaces/{namespace}/dataTenants/{name}/{env}", srv.deleteDataTenant).Methods(http.MethodDelete)
+	r.HandleFunc("POST /namespaces/{namespace}/dataTenants", srv.createDataTenant)
+	r.HandleFunc("DELETE /namespaces/{namespace}/dataTenants/{name}/{env}", srv.deleteDataTenant)
 
-	r.HandleFunc("/namespaces/{namespace}/dataTenants/{name}/{env}/metadata", srv.createMetadata).Methods(http.MethodPost)
-	r.HandleFunc("/namespaces/{namespace}/dataTenants/{name}/{env}/metadata", srv.getMetadata).Methods(http.MethodGet)
-	r.HandleFunc("/namespaces/{namespace}/dataTenants/{name}/{env}/metadata/{key}", srv.deleteMetadata).Methods(http.MethodDelete)
+	r.HandleFunc("POST /namespaces/{namespace}/dataTenants/{name}/{env}/metadata", srv.createMetadata)
+	r.HandleFunc("GET /namespaces/{namespace}/dataTenants/{name}/{env}/metadata", srv.getMetadata)
+	r.HandleFunc("DELETE /namespaces/{namespace}/dataTenants/{name}/{env}/metadata/{key}", srv.deleteMetadata)
 
 	// enpoints use only for test (exist in real EDP)
-	r.HandleFunc("/namespaces/{namespace}/dataTenants/{name}/{env}", srv.getDataTenants).Methods(http.MethodGet)
+	r.HandleFunc("GET /namespaces/{namespace}/dataTenants/{name}/{env}", srv.getDataTenants)
 
 	return httptest.NewServer(r)
 }
@@ -166,8 +166,8 @@ func newServer(t *testing.T) *server {
 }
 
 func (s *server) checkNamespace(w http.ResponseWriter, r *http.Request) (string, bool) {
-	namespace, ok := mux.Vars(r)["namespace"]
-	if !ok {
+	namespace := r.PathValue("namespace")
+	if len(namespace) == 0 {
 		s.t.Error("key namespace doesn't exist")
 		w.WriteHeader(http.StatusMethodNotAllowed)
 		return "", false
@@ -182,11 +182,10 @@ func (s *server) checkNamespace(w http.ResponseWriter, r *http.Request) (string,
 }
 
 func (s *server) fetchNameAndEnv(w http.ResponseWriter, r *http.Request) (string, string, bool) {
-	vars := mux.Vars(r)
-	name, okName := vars["name"]
-	env, okEnv := vars["env"]
+	name := r.PathValue("name")
+	env := r.PathValue("env")
 
-	if !okName || !okEnv {
+	if len(name) == 0 || len(env) == 0 {
 		s.t.Error("one of the required key doesn't exist")
 		w.WriteHeader(http.StatusMethodNotAllowed)
 		return "", "", false
@@ -282,9 +281,8 @@ func (s *server) deleteMetadata(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	vars := mux.Vars(r)
-	key, ok := vars["key"]
-	if !ok {
+	key := r.PathValue("key")
+	if len(key) == 0 {
 		s.t.Error("key doesn't exist")
 		w.WriteHeader(http.StatusNotFound)
 		return

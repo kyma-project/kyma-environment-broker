@@ -4,14 +4,15 @@ import (
 	"fmt"
 	"testing"
 
+	gardener "github.com/gardener/gardener/pkg/apis/core/v1beta1"
+	"github.com/kyma-project/kyma-environment-broker/internal/ptr"
+
 	imv1 "github.com/kyma-project/infrastructure-manager/api/v1"
 	"github.com/stretchr/testify/assert"
 	"k8s.io/client-go/kubernetes/scheme"
 	"sigs.k8s.io/controller-runtime/pkg/client/fake"
 
-	schema "github.com/kyma-project/control-plane/components/provisioner/pkg/gqlschema"
 	"github.com/kyma-project/kyma-environment-broker/internal"
-	"github.com/kyma-project/kyma-environment-broker/internal/provisioner/automock"
 
 	"github.com/stretchr/testify/require"
 )
@@ -24,93 +25,23 @@ const (
 	clientID  = "c1id"
 )
 
-func TestBuilder_BuildFromProvisioner(t *testing.T) {
-	err := imv1.AddToScheme(scheme.Scheme)
-	assert.NoError(t, err)
-	kcpClient := fake.NewClientBuilder().Build()
-
-	t.Run("new kubeconfig was build properly", func(t *testing.T) {
-		// given
-		provisionerClient := &automock.Client{}
-		provisionerClient.On("RuntimeStatus", globalAccountID, runtimeID).Return(schema.RuntimeStatus{
-			RuntimeConfiguration: &schema.RuntimeConfig{
-				Kubeconfig: skrKubeconfig(),
-				ClusterConfig: &schema.GardenerConfig{
-					OidcConfig: &schema.OIDCConfig{
-						ClientID:       clientID,
-						GroupsClaim:    "gclaim",
-						IssuerURL:      issuerURL,
-						SigningAlgs:    nil,
-						UsernameClaim:  "uclaim",
-						UsernamePrefix: "-",
-					},
-				},
-			},
-		}, nil)
-		defer provisionerClient.AssertExpectations(t)
-
-		builder := NewBuilder(provisionerClient, kcpClient, NewFakeKubeconfigProvider(skrKubeconfig()))
-
-		instance := &internal.Instance{
-			RuntimeID:       runtimeID,
-			GlobalAccountID: globalAccountID,
-		}
-
-		// when
-		kubeconfig, err := builder.Build(instance)
-
-		//then
-		require.NoError(t, err)
-		require.Equal(t, kubeconfig, newKubeconfig())
-	})
-
-	t.Run("provisioner client returned error", func(t *testing.T) {
-		// given
-		provisionerClient := &automock.Client{}
-		provisionerClient.On("RuntimeStatus", globalAccountID, runtimeID).Return(schema.RuntimeStatus{}, fmt.Errorf("cannot return kubeconfig"))
-		defer provisionerClient.AssertExpectations(t)
-
-		builder := NewBuilder(provisionerClient, kcpClient, NewFakeKubeconfigProvider(skrKubeconfig()))
-		instance := &internal.Instance{
-			RuntimeID:       runtimeID,
-			GlobalAccountID: globalAccountID,
-		}
-
-		// when
-		_, err := builder.Build(instance)
-
-		//then
-		require.Error(t, err)
-		require.Contains(t, err.Error(), "while fetching oidc data")
-	})
-}
-
 func TestBuilder_BuildFromRuntimeResource(t *testing.T) {
 	err := imv1.AddToScheme(scheme.Scheme)
 	assert.NoError(t, err)
-	kcpClient := fake.NewClientBuilder().Build()
+
+	runtimeResource := &imv1.Runtime{}
+	runtimeResource.ObjectMeta.Name = runtimeID
+	runtimeResource.ObjectMeta.Namespace = "kcp-system"
+	runtimeResource.Spec.Shoot.Kubernetes.KubeAPIServer.OidcConfig = gardener.OIDCConfig{
+		ClientID:  ptr.String(clientID),
+		IssuerURL: ptr.String(issuerURL),
+	}
+
+	kcpClient := fake.NewClientBuilder().WithRuntimeObjects(runtimeResource).Build()
 
 	t.Run("new kubeconfig was built properly", func(t *testing.T) {
 		// given
-		provisionerClient := &automock.Client{}
-		provisionerClient.On("RuntimeStatus", globalAccountID, runtimeID).Return(schema.RuntimeStatus{
-			RuntimeConfiguration: &schema.RuntimeConfig{
-				Kubeconfig: skrKubeconfig(),
-				ClusterConfig: &schema.GardenerConfig{
-					OidcConfig: &schema.OIDCConfig{
-						ClientID:       clientID,
-						GroupsClaim:    "gclaim",
-						IssuerURL:      issuerURL,
-						SigningAlgs:    nil,
-						UsernameClaim:  "uclaim",
-						UsernamePrefix: "-",
-					},
-				},
-			},
-		}, nil)
-		defer provisionerClient.AssertExpectations(t)
-
-		builder := NewBuilder(provisionerClient, kcpClient, NewFakeKubeconfigProvider(skrKubeconfig()))
+		builder := NewBuilder(kcpClient, NewFakeKubeconfigProvider(skrKubeconfig()))
 
 		instance := &internal.Instance{
 			RuntimeID:       runtimeID,
@@ -129,28 +60,20 @@ func TestBuilder_BuildFromRuntimeResource(t *testing.T) {
 func TestBuilder_BuildFromAdminKubeconfig(t *testing.T) {
 	err := imv1.AddToScheme(scheme.Scheme)
 	assert.NoError(t, err)
-	kcpClient := fake.NewClientBuilder().Build()
+	runtimeResource := &imv1.Runtime{}
+	runtimeResource.ObjectMeta.Name = runtimeID
+	runtimeResource.ObjectMeta.Namespace = "kcp-system"
+	runtimeResource.Spec.Shoot.Kubernetes.KubeAPIServer.OidcConfig = gardener.OIDCConfig{
+		ClientID:  ptr.String(clientID),
+		IssuerURL: ptr.String(issuerURL),
+	}
+
+	kcpClient := fake.NewClientBuilder().WithRuntimeObjects(runtimeResource).Build()
+
 	t.Run("new kubeconfig was build properly", func(t *testing.T) {
 		// given
-		provisionerClient := &automock.Client{}
-		provisionerClient.On("RuntimeStatus", globalAccountID, runtimeID).Return(schema.RuntimeStatus{
-			RuntimeConfiguration: &schema.RuntimeConfig{
-				Kubeconfig: skrKubeconfig(),
-				ClusterConfig: &schema.GardenerConfig{
-					OidcConfig: &schema.OIDCConfig{
-						ClientID:       clientID,
-						GroupsClaim:    "gclaim",
-						IssuerURL:      issuerURL,
-						SigningAlgs:    nil,
-						UsernameClaim:  "uclaim",
-						UsernamePrefix: "-",
-					},
-				},
-			},
-		}, nil)
-		defer provisionerClient.AssertExpectations(t)
 
-		builder := NewBuilder(provisionerClient, kcpClient, NewFakeKubeconfigProvider(skrKubeconfig()))
+		builder := NewBuilder(kcpClient, NewFakeKubeconfigProvider(skrKubeconfig()))
 
 		instance := &internal.Instance{
 			RuntimeID:       runtimeID,

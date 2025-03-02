@@ -17,10 +17,12 @@ import (
 	corev1 "k8s.io/api/core/v1"
 
 	"github.com/kyma-project/kyma-environment-broker/common/hyperscaler"
+	"github.com/kyma-project/kyma-environment-broker/common/hyperscaler/rules"
 
 	"github.com/gardener/gardener/pkg/apis/core/v1beta1"
 
 	"github.com/kyma-project/kyma-environment-broker/internal/customresources"
+	"github.com/kyma-project/kyma-environment-broker/internal/httputil"
 
 	"github.com/kyma-project/kyma-environment-broker/internal/storage/dberr"
 
@@ -33,7 +35,6 @@ import (
 
 	"code.cloudfoundry.org/lager"
 	"github.com/google/uuid"
-	"github.com/gorilla/mux"
 	"github.com/kyma-project/control-plane/components/provisioner/pkg/gqlschema"
 	"github.com/kyma-project/kyma-environment-broker/common/gardener"
 	"github.com/kyma-project/kyma-environment-broker/common/orchestration"
@@ -46,18 +47,13 @@ import (
 	"github.com/kyma-project/kyma-environment-broker/internal/expiration"
 	"github.com/kyma-project/kyma-environment-broker/internal/fixture"
 	kcMock "github.com/kyma-project/kyma-environment-broker/internal/kubeconfig/automock"
-	"github.com/kyma-project/kyma-environment-broker/internal/notification"
-	kebOrchestration "github.com/kyma-project/kyma-environment-broker/internal/orchestration"
-	orchestrate "github.com/kyma-project/kyma-environment-broker/internal/orchestration/handlers"
 	"github.com/kyma-project/kyma-environment-broker/internal/process"
 	"github.com/kyma-project/kyma-environment-broker/internal/process/input"
 	"github.com/kyma-project/kyma-environment-broker/internal/process/steps"
-	"github.com/kyma-project/kyma-environment-broker/internal/process/upgrade_cluster"
-	"github.com/kyma-project/kyma-environment-broker/internal/provisioner"
 	kebRuntime "github.com/kyma-project/kyma-environment-broker/internal/runtime"
 	"github.com/kyma-project/kyma-environment-broker/internal/storage"
-	"github.com/pivotal-cf/brokerapi/v8/domain"
-	"github.com/pivotal-cf/brokerapi/v8/domain/apiresponses"
+	"github.com/pivotal-cf/brokerapi/v12/domain"
+	"github.com/pivotal-cf/brokerapi/v12/domain/apiresponses"
 	"github.com/pkg/errors"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -102,7 +98,7 @@ type BrokerSuiteTest struct {
 	gardenerClient dynamic.Interface
 
 	httpServer *httptest.Server
-	router     *mux.Router
+	router     *httputil.Router
 
 	t                   *testing.T
 	inputBuilderFactory input.CreatorForPlan
@@ -209,7 +205,6 @@ func NewBrokerSuiteTestWithConfig(t *testing.T, cfg *Config, version ...string) 
 
 	gardenerClient := gardener.NewDynamicFakeClient()
 
-	provisionerClient := provisioner.NewFakeClientWithGardener(gardenerClient, "kcp-system")
 	eventBroker := event.NewPubSub(log)
 
 	edpClient := edp.NewFakeClient()
@@ -219,14 +214,18 @@ func NewBrokerSuiteTestWithConfig(t *testing.T, cfg *Config, version ...string) 
 	fakeK8sSKRClient := fake.NewClientBuilder().WithScheme(sch).Build()
 	k8sClientProvider := kubeconfig.NewFakeK8sClientProvider(fakeK8sSKRClient)
 	provisionManager := process.NewStagedManager(db.Operations(), eventBroker, cfg.OperationTimeout, cfg.Provisioning, log.With("provisioning", "manager"))
-	provisioningQueue := NewProvisioningProcessingQueue(context.Background(), provisionManager, workersAmount, cfg, db, provisionerClient, inputFactory,
-		edpClient, accountProvider, k8sClientProvider, cli, defaultOIDCValues(), log)
+
+	rulesService, err := rules.NewRulesServiceFromFile("testdata/hap-rules.yaml")
+	require.NoError(t, err)
+
+	provisioningQueue := NewProvisioningProcessingQueue(context.Background(), provisionManager, workersAmount, cfg, db, inputFactory,
+		edpClient, accountProvider, k8sClientProvider, cli, defaultOIDCValues(), log, rulesService)
 
 	provisioningQueue.SpeedUp(10000)
 	provisionManager.SpeedUp(10000)
 
 	updateManager := process.NewStagedManager(db.Operations(), eventBroker, time.Hour, cfg.Update, log.With("update", "manager"))
-	updateQueue := NewUpdateProcessingQueue(context.Background(), updateManager, 1, db, inputFactory, provisionerClient,
+	updateQueue := NewUpdateProcessingQueue(context.Background(), updateManager, 1, db, inputFactory,
 		eventBroker, *cfg, k8sClientProvider, cli, log)
 	updateQueue.SpeedUp(10000)
 	updateManager.SpeedUp(10000)
@@ -234,7 +233,7 @@ func NewBrokerSuiteTestWithConfig(t *testing.T, cfg *Config, version ...string) 
 	deprovisionManager := process.NewStagedManager(db.Operations(), eventBroker, time.Hour, cfg.Deprovisioning, log.With("deprovisioning", "manager"))
 
 	deprovisioningQueue := NewDeprovisioningProcessingQueue(ctx, workersAmount, deprovisionManager, cfg, db, eventBroker,
-		provisionerClient, edpClient, accountProvider, k8sClientProvider, cli, configProvider, log,
+		edpClient, accountProvider, k8sClientProvider, cli, configProvider, log,
 	)
 	deprovisionManager.SpeedUp(10000)
 
@@ -244,7 +243,7 @@ func NewBrokerSuiteTestWithConfig(t *testing.T, cfg *Config, version ...string) 
 		db:                  db,
 		storageCleanup:      storageCleanup,
 		gardenerClient:      gardenerClient,
-		router:              mux.NewRouter(),
+		router:              httputil.NewRouter(),
 		t:                   t,
 		inputBuilderFactory: inputFactory,
 		k8sKcp:              cli,
@@ -257,28 +256,10 @@ func NewBrokerSuiteTestWithConfig(t *testing.T, cfg *Config, version ...string) 
 
 	ts.CreateAPI(inputFactory, cfg, db, provisioningQueue, deprovisioningQueue, updateQueue, log, k8sClientProvider, gardener.NewFakeClient(), eventBroker)
 
-	notificationFakeClient := notification.NewFakeClient()
-	notificationBundleBuilder := notification.NewBundleBuilder(notificationFakeClient, cfg.Notification)
-
-	runtimeLister := kebOrchestration.NewRuntimeLister(db.Instances(), db.Operations(), kebRuntime.NewConverter(defaultRegion), log)
-	runtimeResolver := orchestration.NewGardenerRuntimeResolver(gardenerClient, fixedGardenerNamespace, runtimeLister, log)
-
-	clusterQueue := NewClusterOrchestrationProcessingQueue(ctx, db, provisionerClient, eventBroker, inputFactory, &upgrade_cluster.TimeSchedule{
-		Retry:                 10 * time.Millisecond,
-		StatusCheck:           100 * time.Millisecond,
-		UpgradeClusterTimeout: 3 * time.Second,
-	}, 250*time.Millisecond, runtimeResolver, notificationBundleBuilder, log, cli, *cfg, 1000)
-
-	clusterQueue.SpeedUp(1000)
-
-	// TODO: in case of cluster upgrade the same Azure Zones must be send to the Provisioner
-	orchestrationHandler := orchestrate.NewOrchestrationHandler(db, clusterQueue, cfg.MaxPaginationPage, log)
-	orchestrationHandler.AttachRoutes(ts.router)
-
 	expirationHandler := expiration.NewHandler(db.Instances(), db.Operations(), deprovisioningQueue, log)
 	expirationHandler.AttachRoutes(ts.router)
 
-	runtimeHandler := kebRuntime.NewHandler(db, cfg.MaxPaginationPage, cfg.DefaultRequestRegion, provisionerClient, cli, broker.KimConfig{
+	runtimeHandler := kebRuntime.NewHandler(db, cfg.MaxPaginationPage, cfg.DefaultRequestRegion, cli, broker.KimConfig{
 		Enabled: false,
 	}, log)
 	runtimeHandler.AttachRoutes(ts.router)
@@ -314,26 +295,6 @@ func defaultOIDCConfig() *gqlschema.OIDCConfigInput {
 		UsernameClaim:  defaultOIDCValues().UsernameClaim,
 		UsernamePrefix: defaultOIDCValues().UsernamePrefix,
 	}
-}
-
-func (s *BrokerSuiteTest) ProcessInfrastructureManagerProvisioningGardenerCluster(runtimeID string) {
-	err := s.poller.Invoke(func() (bool, error) {
-		gardenerCluster := &unstructured.Unstructured{}
-		gardenerCluster.SetGroupVersionKind(steps.GardenerClusterGVK())
-		err := s.k8sKcp.Get(context.Background(), client.ObjectKey{
-			Namespace: "kyma-system",
-			Name:      runtimeID,
-		}, gardenerCluster)
-		if err != nil {
-			return false, nil
-		}
-
-		err = unstructured.SetNestedField(gardenerCluster.Object, "Ready", "status", "state")
-		assert.NoError(s.t, err)
-		err = s.k8sKcp.Update(context.Background(), gardenerCluster)
-		return err == nil, nil
-	})
-	assert.NoError(s.t, err)
 }
 
 func (s *BrokerSuiteTest) SetRuntimeResourceStateReady(runtimeID string) {
@@ -399,6 +360,18 @@ func (s *BrokerSuiteTest) CreateAPI(inputFactory broker.PlanValidator, cfg *Conf
 				},
 				broker.SapConvergedCloudPlanName: {
 					Description: broker.SapConvergedCloudPlanName,
+					Metadata:    broker.PlanMetadata{},
+				},
+				broker.BuildRuntimeAWSPlanName: {
+					Description: broker.BuildRuntimeAWSPlanName,
+					Metadata:    broker.PlanMetadata{},
+				},
+				broker.BuildRuntimeGCPPlanID: {
+					Description: broker.BuildRuntimeGCPPlanName,
+					Metadata:    broker.PlanMetadata{},
+				},
+				broker.BuildRuntimeAzurePlanName: {
+					Description: broker.BuildRuntimeAzurePlanName,
 					Metadata:    broker.PlanMetadata{},
 				},
 			},

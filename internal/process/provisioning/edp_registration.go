@@ -136,6 +136,8 @@ func (s *EDPRegistrationStep) selectServicePlan(planID string) string {
 		return "free"
 	case broker.AzureLitePlanID:
 		return "tdd"
+	case broker.BuildRuntimeAWSPlanID, broker.BuildRuntimeGCPPlanID, broker.BuildRuntimeAzurePlanID:
+		return "build-runtime"
 	default:
 		return "standard"
 	}
