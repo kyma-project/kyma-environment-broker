@@ -87,7 +87,14 @@ func (s *InitialisationStep) Run(operation internal.Operation, log *slog.Logger)
 			log.Error("unable to update the operation (move to 'in progress'), retrying")
 			return operation, delay, nil
 		}
+
 		operation = op
+	}
+
+	log.Info("updating last operation id in the instance")
+	err = s.instanceStorage.UpdateInstanceLastOperation(operation.InstanceID, operation.ID)
+	if err != nil {
+		return s.operationManager.RetryOperation(operation, "error while updating last operation ID", err, 5*time.Second, 1*time.Minute, log)
 	}
 
 	if lastOp.Type == internal.OperationTypeDeprovision {

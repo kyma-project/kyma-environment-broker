@@ -50,14 +50,17 @@ function btpManagerSecretTest() {
       changeSecretData(modifiedSecret);
       console.log(`Applying edited Secret`);
       await k8sApply([modifiedSecret], ns);
-      console.log(`Waiting ${reconciliationTimeout} ms until edited Secret is created`);
-      await waitForSecret(secretName, ns, reconciliationTimeout);
       let actualSecret = await getSecret(secretName, ns);
       console.log(`Waiting for the reconciliation for ${reconciliationTimeout} ms`);
+      console.log(`Expected resourceVersion is ${actualSecret.metadata.resourceVersion}`);
       await waitForK8sObject(
           `/api/v1/namespaces/${ns}/secrets`,
           {},
           (_type, _apiObj, watchObj) => {
+            if (watchObj.object.metadata.name.includes(secretName)) {
+              console.log('Found a secret: ' + watchObj.object.metadata.name);
+              console.log('Found resourceVersion is: ' + watchObj.object.metadata.resourceVersion);
+            }
             return (
               watchObj.object.metadata.name.includes(secretName) &&
                         watchObj.object.metadata.resourceVersion !== actualSecret.metadata.resourceVersion

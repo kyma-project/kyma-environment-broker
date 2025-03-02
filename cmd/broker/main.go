@@ -13,6 +13,8 @@ import (
 	"strings"
 	"time"
 
+	"github.com/kyma-project/kyma-environment-broker/internal/regionssupportingmachine"
+
 	"k8s.io/client-go/kubernetes"
 
 	imv1 "github.com/kyma-project/infrastructure-manager/api/v1"
@@ -157,6 +159,8 @@ type Config struct {
 
 	UpdateRuntimeResourceDelay        time.Duration `envconfig:"default=4s"`
 	ProvisionerDeprovisioningDisabled bool          `envconfig:"default=false"`
+
+	RegionsSupportingMachineFilePath string
 }
 
 type ProfilerConfig struct {
@@ -434,17 +438,21 @@ func createAPI(router *mux.Router, servicesConfig broker.ServicesConfig, planVal
 	fatalOnError(err, logs)
 	logs.Info(fmt.Sprintf("%s plan region mappings loaded", broker.SapConvergedCloudPlanName))
 
+	regionsSupportingMachine, err := regionssupportingmachine.ReadRegionsSupportingMachineFromFile(cfg.RegionsSupportingMachineFilePath)
+	fatalOnError(err, logs)
+	logs.Info(fmt.Sprintf("Number of machine types families that are not universally supported across all regions: %d", len(regionsSupportingMachine)))
+
 	// create KymaEnvironmentBroker endpoints
 	kymaEnvBroker := &broker.KymaEnvironmentBroker{
 		ServicesEndpoint: broker.NewServices(cfg.Broker, servicesConfig, logs, convergedCloudRegionProvider),
 		ProvisionEndpoint: broker.NewProvision(cfg.Broker, cfg.Gardener, db.Operations(), db.Instances(), db.InstancesArchived(),
 			provisionQueue, planValidator, defaultPlansConfig,
-			planDefaults, logs, cfg.KymaDashboardConfig, kcBuilder, freemiumGlobalAccountIds, convergedCloudRegionProvider,
+			planDefaults, logs, cfg.KymaDashboardConfig, kcBuilder, freemiumGlobalAccountIds, convergedCloudRegionProvider, regionsSupportingMachine,
 		),
 		DeprovisionEndpoint: broker.NewDeprovision(db.Instances(), db.Operations(), deprovisionQueue, logs),
 		UpdateEndpoint: broker.NewUpdate(cfg.Broker, db.Instances(), db.RuntimeStates(), db.Operations(),
 			suspensionCtxHandler, cfg.UpdateProcessingEnabled, cfg.Broker.SubaccountMovementEnabled, cfg.Broker.UpdateCustomResourcesLabelsOnAccountMove, updateQueue, defaultPlansConfig,
-			planDefaults, logs, cfg.KymaDashboardConfig, kcBuilder, convergedCloudRegionProvider, kcpK8sClient),
+			planDefaults, logs, cfg.KymaDashboardConfig, kcBuilder, convergedCloudRegionProvider, kcpK8sClient, regionsSupportingMachine),
 		GetInstanceEndpoint:          broker.NewGetInstance(cfg.Broker, db.Instances(), db.Operations(), kcBuilder, logs),
 		LastOperationEndpoint:        broker.NewLastOperation(db.Operations(), db.InstancesArchived(), logs),
 		BindEndpoint:                 broker.NewBind(cfg.Broker.Binding, db, logs, clientProvider, kubeconfigProvider, publisher),

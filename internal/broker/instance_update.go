@@ -9,6 +9,8 @@ import (
 	"strings"
 	"time"
 
+	"github.com/kyma-project/kyma-environment-broker/internal/regionssupportingmachine"
+
 	pkg "github.com/kyma-project/kyma-environment-broker/common/runtime"
 	"github.com/kyma-project/kyma-environment-broker/internal/assuredworkloads"
 
@@ -57,6 +59,8 @@ type UpdateEndpoint struct {
 
 	convergedCloudRegionsProvider ConvergedCloudRegionProvider
 
+	regionsSupportingMachine map[string][]string
+
 	kcpClient client.Client
 }
 
@@ -76,6 +80,7 @@ func NewUpdate(cfg Config,
 	kcBuilder kubeconfig.KcBuilder,
 	convergedCloudRegionsProvider ConvergedCloudRegionProvider,
 	kcpClient client.Client,
+	regionsSupportingMachine map[string][]string,
 ) *UpdateEndpoint {
 	return &UpdateEndpoint{
 		config:                                   cfg,
@@ -94,6 +99,7 @@ func NewUpdate(cfg Config,
 		kcBuilder:                                kcBuilder,
 		convergedCloudRegionsProvider:            convergedCloudRegionsProvider,
 		kcpClient:                                kcpClient,
+		regionsSupportingMachine:                 regionsSupportingMachine,
 	}
 }
 
@@ -233,6 +239,16 @@ func (b *UpdateEndpoint) processUpdateParameters(instance *internal.Instance, de
 		logger.Debug(fmt.Sprintf("Updating with params: %+v", params))
 	}
 
+	if !regionssupportingmachine.IsSupported(b.regionsSupportingMachine, valueOfPtr(instance.Parameters.Parameters.Region), valueOfPtr(params.MachineType)) {
+		message := fmt.Sprintf(
+			"In the region %s, the machine type %s is not available, it is supported in the %v",
+			valueOfPtr(instance.Parameters.Parameters.Region),
+			valueOfPtr(params.MachineType),
+			strings.Join(regionssupportingmachine.SupportedRegions(b.regionsSupportingMachine, valueOfPtr(params.MachineType)), ", "),
+		)
+		return domain.UpdateServiceSpec{}, apiresponses.NewFailureResponse(fmt.Errorf(message), http.StatusBadRequest, message)
+	}
+
 	if params.OIDC.IsProvided() {
 		if err := params.OIDC.Validate(); err != nil {
 			logger.Error(fmt.Sprintf("invalid OIDC parameters: %s", err.Error()))
@@ -284,6 +300,9 @@ func (b *UpdateEndpoint) processUpdateParameters(instance *internal.Instance, de
 			if err := additionalWorkerNodePool.ValidateHAZonesUnchanged(instance.Parameters.Parameters.AdditionalWorkerNodePools); err != nil {
 				return domain.UpdateServiceSpec{}, apiresponses.NewFailureResponse(err, http.StatusBadRequest, err.Error())
 			}
+		}
+		if err := checkUnsupportedMachines(b.regionsSupportingMachine, valueOfPtr(instance.Parameters.Parameters.Region), params.AdditionalWorkerNodePools); err != nil {
+			return domain.UpdateServiceSpec{}, apiresponses.NewFailureResponse(err, http.StatusBadRequest, err.Error())
 		}
 	}
 
@@ -397,7 +416,7 @@ func (b *UpdateEndpoint) processContext(instance *internal.Instance, details dom
 
 	newInstance, err := b.instanceStorage.Update(*instance)
 	if err != nil {
-		logger.Error(fmt.Sprintf("processing context updated failed: %s", err.Error()))
+		logger.Error(fmt.Sprintf("instance updated failed: %s", err.Error()))
 		return nil, changed, fmt.Errorf("unable to process the update")
 	} else if b.updateCustomResourcesLabelsOnAccountMove && needUpdateCustomResources {
 		logger.Info("updating labels on related CRs")

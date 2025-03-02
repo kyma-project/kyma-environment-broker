@@ -42,7 +42,7 @@ func TestBinding(t *testing.T) {
 					}
 		}`)
 	opID := suite.DecodeOperationID(resp)
-	suite.processProvisioningByOperationID(opID)
+	suite.processKIMProvisioningByOperationID(opID)
 	suite.WaitForOperationState(opID, domain.Succeeded)
 
 	// when
@@ -182,7 +182,7 @@ func TestDeprovisioningWithExistingBindings(t *testing.T) {
 					}
 		}`)
 	opID := suite.DecodeOperationID(response)
-	suite.processProvisioningByOperationID(opID)
+	suite.processKIMProvisioningByOperationID(opID)
 	suite.WaitForOperationState(opID, domain.Succeeded)
 
 	// when we create two bindings
@@ -204,7 +204,7 @@ func TestDeprovisioningWithExistingBindings(t *testing.T) {
 	response = suite.CallAPI(http.MethodDelete, fmt.Sprintf("oauth/v2/service_instances/%s?accepts_incomplete=true&plan_id=361c511f-f939-4621-b228-d0fb79a1fe15&service_id=47c9dcbf-ff30-448e-ab36-d3bad66ba281", iid),
 		``)
 	deprovisioningID := suite.DecodeOperationID(response)
-	suite.FinishDeprovisioningOperationByProvisioner(deprovisioningID)
+	suite.FinishDeprovisioningOperationByKIM(deprovisioningID)
 	suite.WaitForInstanceRemoval(iid)
 
 	// when we remove bindings and the instance is already removed
@@ -243,7 +243,9 @@ func TestFailedProvisioning(t *testing.T) {
 					}
 		}`)
 	opID := suite.DecodeOperationID(response)
-	suite.failProvisioningByOperationID(opID)
+	suite.WaitForOperationState(opID, domain.InProgress)
+	suite.failRuntimeByKIM(iid)
+	suite.WaitForOperationState(opID, domain.Failed)
 
 	// when we create binding
 	response = suite.CallAPI(http.MethodPut, fmt.Sprintf("oauth/v2/service_instances/%s/service_bindings/%s", iid, bindingID1),
@@ -317,7 +319,7 @@ func TestRemoveBindingsFromSuspended(t *testing.T) {
 					}
 		}`)
 	opID := suite.DecodeOperationID(response)
-	suite.processProvisioningByOperationID(opID)
+	suite.processKIMProvisioningByOperationID(opID)
 	suite.WaitForOperationState(opID, domain.Succeeded)
 
 	//then we create two bindings
@@ -349,7 +351,7 @@ func TestRemoveBindingsFromSuspended(t *testing.T) {
 	assert.Equal(t, http.StatusOK, response.StatusCode)
 	suspensionOpID := suite.WaitForLastOperation(iid, domain.InProgress)
 
-	suite.FinishDeprovisioningOperationByProvisioner(suspensionOpID)
+	suite.FinishDeprovisioningOperationByKIM(suspensionOpID)
 	suite.WaitForOperationState(suspensionOpID, domain.Succeeded)
 
 	// when we remove bindings we just return OK

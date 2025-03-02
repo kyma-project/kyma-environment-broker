@@ -300,7 +300,7 @@ func ShootAndSeedSameRegionProperty() *Type {
 
 // NewProvisioningProperties creates a new properties for different plans
 // Note that the order of properties will be the same in the form on the website
-func NewProvisioningProperties(machineTypesDisplay, regionsDisplay map[string]string, machineTypes, regions []string, update, enableAdditionalWorkerNodePools bool) ProvisioningProperties {
+func NewProvisioningProperties(machineTypesDisplay, additionalMachineTypesDisplay, regionsDisplay map[string]string, machineTypes, additionalMachineTypes, regions []string, update, enableAdditionalWorkerNodePools bool) ProvisioningProperties {
 
 	properties := ProvisioningProperties{
 		UpdateProperties: UpdateProperties{
@@ -336,7 +336,7 @@ func NewProvisioningProperties(machineTypesDisplay, regionsDisplay map[string]st
 	}
 
 	if enableAdditionalWorkerNodePools {
-		properties.AdditionalWorkerNodePools = NewAdditionalWorkerNodePoolsSchema(machineTypesDisplay, machineTypes)
+		properties.AdditionalWorkerNodePools = NewAdditionalWorkerNodePoolsSchema(additionalMachineTypesDisplay, additionalMachineTypes)
 	}
 
 	if update {
@@ -456,9 +456,10 @@ func NewAdditionalWorkerNodePoolsSchema(machineTypesDisplay map[string]string, m
 				Name: Type{
 					Type:      "string",
 					MinLength: 1,
+					MaxLength: 15,
 					// Allows for all alphanumeric characters and '-'
-					Pattern:     "^[a-zA-Z0-9-]*$",
-					Description: "Specifies the unique name of the additional worker node pool.",
+					Pattern:     "^[a-z0-9]([-a-z0-9]*[a-z0-9])?$",
+					Description: "Specifies the unique name of the additional worker node pool. The name must consist of lowercase alphanumeric characters or '-', must start and end with an alphanumeric character, and can be a maximum of 15 characters in length.",
 				},
 				MachineType: Type{
 					Type:            "string",

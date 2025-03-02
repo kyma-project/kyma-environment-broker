@@ -89,49 +89,49 @@ func TestMetrics(t *testing.T) {
 
 		instance1 := uuid.New().String()
 		opID := provisionReq(instance1, broker.AzurePlanID)
-		suite.processProvisioningByOperationID(opID)
+		suite.processKIMProvisioningByOperationID(opID)
 		suite.WaitForOperationState(opID, domain.Succeeded)
 		op1 := suite.GetOperation(opID)
 		assert.NotNil(t, op1)
 
 		instance2 := uuid.New().String()
 		opID = provisionReq(instance2, broker.TrialPlanID)
-		suite.failProvisioningByOperationID(opID)
+		suite.failRuntimeByKIM(instance2)
 		suite.WaitForOperationState(opID, domain.Failed)
 		op2 := suite.GetOperation(opID)
 		assert.NotNil(t, op2)
 
 		instance3 := uuid.New().String()
 		opID = provisionReq(instance3, broker.AWSPlanID)
-		suite.processProvisioningByOperationID(opID)
+		suite.processKIMProvisioningByOperationID(opID)
 		suite.WaitForOperationState(opID, domain.Succeeded)
 		op3 := suite.GetOperation(opID)
 		assert.NotNil(t, op3)
 
 		instance4 := uuid.New().String()
 		opID = provisionReq(instance4, broker.AzurePlanID)
-		suite.failProvisioningByOperationID(opID)
+		suite.failRuntimeByKIM(instance4)
 		suite.WaitForOperationState(opID, domain.Failed)
 		op4 := suite.GetOperation(opID)
 		assert.NotNil(t, op4)
 
 		instance5 := uuid.New().String()
 		opID = provisionReq(instance5, broker.AzurePlanID)
-		suite.processProvisioningByOperationID(opID)
+		suite.processKIMProvisioningByOperationID(opID)
 		suite.WaitForOperationState(opID, domain.Succeeded)
 		op5 := suite.GetOperation(opID)
 		assert.NotNil(t, op5)
 
 		instance6 := uuid.New().String()
 		opID = provisionReq(instance6, broker.TrialPlanID)
-		suite.processProvisioningByOperationID(opID)
+		suite.processKIMProvisioningByOperationID(opID)
 		suite.WaitForOperationState(opID, domain.Succeeded)
 		op6 := suite.GetOperation(opID)
 		assert.NotNil(t, op6)
 
 		instance7 := uuid.New().String()
 		opID = provisionReq(instance7, broker.AzurePlanID)
-		suite.processProvisioningByOperationID(opID)
+		suite.processKIMProvisioningByOperationID(opID)
 		suite.WaitForOperationState(opID, domain.Succeeded)
 		op7 := suite.GetOperation(opID)
 		assert.NotNil(t, op7)
@@ -143,7 +143,6 @@ func TestMetrics(t *testing.T) {
 		// Updates
 
 		opID = updateReq(instance5)
-		suite.FinishUpdatingOperationByProvisioner(opID)
 		suite.WaitForOperationState(opID, domain.Succeeded)
 		op8 := suite.GetOperation(opID)
 		assert.NotNil(t, op8)
@@ -151,7 +150,7 @@ func TestMetrics(t *testing.T) {
 		// Deprovisioning
 
 		opID = deleteReq(instance1)
-		suite.FinishDeprovisioningOperationByProvisioner(opID)
+		suite.FinishDeprovisioningOperationByKIM(opID)
 		suite.WaitForInstanceArchivedCreated(instance1)
 		suite.WaitFor(
 			func() bool {
@@ -165,7 +164,7 @@ func TestMetrics(t *testing.T) {
 		assert.Nil(t, op9)
 
 		opID = deleteReq(instance7)
-		suite.FinishDeprovisioningOperationByProvisioner(opID)
+		suite.FinishDeprovisioningOperationByKIM(opID)
 		suite.WaitForInstanceArchivedCreated(instance7)
 		suite.WaitFor(
 			func() bool {
@@ -179,13 +178,11 @@ func TestMetrics(t *testing.T) {
 		assert.Nil(t, op10)
 
 		opID = deleteReq(instance6)
-		suite.FailDeprovisioningOperationByProvisioner(opID)
 		suite.WaitForOperationState(opID, domain.Failed)
 		op11 := suite.GetOperation(opID)
 		assert.NotNil(t, op11)
 
 		opID = deleteReq(instance3)
-		suite.FailDeprovisioningOperationByProvisioner(opID)
 		suite.WaitForOperationState(opID, domain.Failed)
 		op12 := suite.GetOperation(opID)
 		assert.NotNil(t, op12)

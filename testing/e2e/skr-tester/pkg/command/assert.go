@@ -2,6 +2,7 @@ package command
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"regexp"
 	"time"
@@ -22,18 +23,19 @@ import (
 )
 
 type AssertCommand struct {
-	cobraCmd               *cobra.Command
-	log                    logger.Logger
-	instanceID             string
-	machineType            string
-	clusterOIDCConfig      string
-	kubeconfigOIDCConfig   []string
-	admins                 []string
-	btpManagerSecretExists bool
-	editBtpManagerSecret   bool
-	deleteBtpManagerSecret bool
-	suspensionInProgress   bool
-	endpointsSecured       bool
+	cobraCmd                  *cobra.Command
+	log                       logger.Logger
+	instanceID                string
+	machineType               string
+	clusterOIDCConfig         string
+	kubeconfigOIDCConfig      []string
+	admins                    []string
+	btpManagerSecretExists    bool
+	editBtpManagerSecret      bool
+	deleteBtpManagerSecret    bool
+	suspensionInProgress      bool
+	endpointsSecured          bool
+	additionalWorkerNodePools string
 }
 
 func NewAsertCmd() *cobra.Command {
@@ -51,7 +53,8 @@ func NewAsertCmd() *cobra.Command {
   skr-tester assert -i instanceID -e                                     Edits the BTP manager secret in the instance and checks if the secret is reconciled.
   skr-tester assert -i instanceID -d                                     Deletes the BTP manager secret in the instance and checks if the secret is reconciled.
   skr-tester assert -i instanceID -s                                     Checks if the suspension operation is in progress for the instance.
-  skr-tester assert -i instanceID -n                                     Checks if KEB endpoints require authentication.`,
+  skr-tester assert -i instanceID -n                                     Checks if KEB endpoints require authentication.
+  skr-tester assert -i instanceID -w additionalWorkerNodePools           Asserts the instance has the specified additional worker node pools.`,
 
 		PreRunE: func(_ *cobra.Command, _ []string) error { return cmd.Validate() },
 		RunE:    func(_ *cobra.Command, _ []string) error { return cmd.Run() },
@@ -68,6 +71,7 @@ func NewAsertCmd() *cobra.Command {
 	cobraCmd.Flags().BoolVarP(&cmd.deleteBtpManagerSecret, "deleteBtpManagerSecret", "d", false, "Deletes the BTP manager secret in the instance and checks if the secret is reconciled.")
 	cobraCmd.Flags().BoolVarP(&cmd.suspensionInProgress, "suspensionInProgress", "s", false, "Checks if the suspension operation is in progress for the instance.")
 	cobraCmd.Flags().BoolVarP(&cmd.endpointsSecured, "endpointsSecured", "n", false, "Tests the KEB endpoints without authorization.")
+	cobraCmd.Flags().StringVarP(&cmd.additionalWorkerNodePools, "additionalWorkerNodePools", "w", "", "Additional worker node pools of the specific instance.")
 
 	return cobraCmd
 }
@@ -312,6 +316,29 @@ func (cmd *AssertCommand) Run() error {
 			}
 		}
 		fmt.Println("KEB endpoints test passed")
+	} else if cmd.additionalWorkerNodePools != "" {
+		currentAdditionalWorkerNodePools, err := kcpClient.GetAdditionalWorkerNodePools(cmd.instanceID)
+		if err != nil {
+			return fmt.Errorf("failed to get current additional worker node pools: %v", err)
+		}
+		currentAdditionalWorkerNodePoolsSet := make(map[string]interface{}, len(currentAdditionalWorkerNodePools))
+		for _, pool := range currentAdditionalWorkerNodePools {
+			currentAdditionalWorkerNodePoolsSet[pool["name"].(string)] = pool
+		}
+		planName, err := kcpClient.GetPlanName(cmd.instanceID)
+		if err != nil {
+			return fmt.Errorf("failed to get plan name: %v", err)
+		}
+		var additionalWorkerNodePools []map[string]interface{}
+		err = json.Unmarshal([]byte(cmd.additionalWorkerNodePools), &additionalWorkerNodePools)
+		if err != nil {
+			return fmt.Errorf("error unmarshaling additional worker node pools: %v", err)
+		}
+		fmt.Println("Looking for the following additional worker node pools:", additionalWorkerNodePools)
+		if err = cmd.assertAdditionalWorkerNodePools(additionalWorkerNodePools, currentAdditionalWorkerNodePoolsSet, planName); err != nil {
+			return err
+		}
+		fmt.Println("All specified additional worker node pools are found in the instance")
 	}
 
 	return nil
@@ -349,8 +376,11 @@ func (cmd *AssertCommand) Validate() error {
 	if cmd.endpointsSecured {
 		count++
 	}
+	if cmd.additionalWorkerNodePools != "" {
+		count++
+	}
 	if count != 1 {
-		return fmt.Errorf("you must use exactly one of machineType, clusterOIDCConfig, kubeconfigOIDCConfig, admins, btpManagerSecretExists, editBtpManagerSecret, deleteBtpManagerSecret, suspensionInProgress, or endpointsSecured")
+		return fmt.Errorf("you must use exactly one of machineType, clusterOIDCConfig, kubeconfigOIDCConfig, admins, btpManagerSecretExists, editBtpManagerSecret, deleteBtpManagerSecret, suspensionInProgress, endpointsSecured or additionalWorkerNodePools")
 	}
 	return nil
 }
@@ -396,5 +426,48 @@ func (cmd *AssertCommand) checkBTPManagerSecret(kubeconfig []byte) error {
 		}
 	}
 	fmt.Println("Required keys have the expected values in BTP manager secret")
+	return nil
+}
+
+func (cmd *AssertCommand) assertAdditionalWorkerNodePools(additionalWorkerNodePools []map[string]interface{}, currentAdditionalWorkerNodePoolsSet map[string]interface{}, planName string) error {
+	if len(additionalWorkerNodePools) != len(currentAdditionalWorkerNodePoolsSet) {
+		return fmt.Errorf("expected %d additional worker node pools, but found %d", len(additionalWorkerNodePools), len(currentAdditionalWorkerNodePoolsSet))
+	}
+	for _, additionalWorkerNodePool := range additionalWorkerNodePools {
+		currentAdditionalWorkerNodePool, exists := currentAdditionalWorkerNodePoolsSet[additionalWorkerNodePool["name"].(string)]
+		if !exists {
+			return fmt.Errorf("additional worker node pool %s not found", additionalWorkerNodePool["name"].(string))
+		}
+		if additionalWorkerNodePool["machineType"] != currentAdditionalWorkerNodePool.(map[string]interface{})["machine"].(map[string]interface{})["type"] {
+			return fmt.Errorf(
+				"machineType expected to be %d, but found %d",
+				additionalWorkerNodePool["machineType"],
+				currentAdditionalWorkerNodePool.(map[string]interface{})["machine"].(map[string]interface{})["type"],
+			)
+		}
+		if additionalWorkerNodePool["haZones"].(bool) && planName != "azure_lite" {
+			if len(currentAdditionalWorkerNodePool.(map[string]interface{})["zones"].([]interface{})) != 3 {
+				return fmt.Errorf("expected 3 zones, but found %d", len(currentAdditionalWorkerNodePool.(map[string]interface{})["zones"].([]interface{})))
+			}
+		} else {
+			if len(currentAdditionalWorkerNodePool.(map[string]interface{})["zones"].([]interface{})) != 1 {
+				return fmt.Errorf("expected 1 zones, but found %d", len(currentAdditionalWorkerNodePool.(map[string]interface{})["zones"].([]interface{})))
+			}
+		}
+		if additionalWorkerNodePool["autoScalerMin"] != currentAdditionalWorkerNodePool.(map[string]interface{})["minimum"] {
+			return fmt.Errorf(
+				"autoScalerMin expected to be %d, but found %d",
+				additionalWorkerNodePool["autoScalerMin"],
+				currentAdditionalWorkerNodePool.(map[string]interface{})["minimum"],
+			)
+		}
+		if additionalWorkerNodePool["autoScalerMax"] != currentAdditionalWorkerNodePool.(map[string]interface{})["maximum"] {
+			return fmt.Errorf(
+				"autoScalerMax expected to be %d, but found %d",
+				additionalWorkerNodePool["autoScalerMax"],
+				currentAdditionalWorkerNodePool.(map[string]interface{})["maximum"],
+			)
+		}
+	}
 	return nil
 }

@@ -14,6 +14,10 @@ import (
 	"testing"
 	"time"
 
+	corev1 "k8s.io/api/core/v1"
+
+	"github.com/kyma-project/kyma-environment-broker/common/hyperscaler"
+
 	"github.com/gardener/gardener/pkg/apis/core/v1beta1"
 
 	"github.com/kyma-project/kyma-environment-broker/internal/customresources"
@@ -58,7 +62,6 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	apiextensionsv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
-	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/client-go/dynamic"
@@ -94,10 +97,9 @@ var (
 // BrokerSuiteTest is a helper which allows to write simple tests of any KEB processes (provisioning, deprovisioning, update).
 // The starting point of a test could be an HTTP call to Broker API.
 type BrokerSuiteTest struct {
-	db                storage.BrokerStorage
-	storageCleanup    func() error
-	provisionerClient *provisioner.FakeClient
-	gardenerClient    dynamic.Interface
+	db             storage.BrokerStorage
+	storageCleanup func() error
+	gardenerClient dynamic.Interface
 
 	httpServer *httptest.Server
 	router     *mux.Router
@@ -110,8 +112,9 @@ type BrokerSuiteTest struct {
 
 	poller broker.Poller
 
-	eventBroker *event.PubSub
-	metrics     *metricsv2.RegisterContainer
+	eventBroker              *event.PubSub
+	metrics                  *metricsv2.RegisterContainer
+	k8sDeletionObjectTracker Deleter
 }
 
 func (s *BrokerSuiteTest) TearDown() {
@@ -176,7 +179,10 @@ func NewBrokerSuiteTestWithConfig(t *testing.T, cfg *Config, version ...string) 
 	require.NoError(t, err)
 	additionalKymaVersions := []string{"1.19", "1.20", "main", "2.0"}
 	additionalKymaVersions = append(additionalKymaVersions, version...)
-	cli := fake.NewClientBuilder().WithScheme(sch).WithRuntimeObjects(fixK8sResources(defaultKymaVer, additionalKymaVersions)...).Build()
+
+	ot := NewTestingObjectTracker(sch)
+	cli := fake.NewClientBuilder().WithScheme(sch).WithRuntimeObjects(fixK8sResources(defaultKymaVer, additionalKymaVersions)...).
+		WithObjectTracker(ot).Build()
 	log := slog.New(slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{
 		Level: slog.LevelDebug,
 	}))
@@ -226,6 +232,7 @@ func NewBrokerSuiteTestWithConfig(t *testing.T, cfg *Config, version ...string) 
 	updateManager.SpeedUp(10000)
 
 	deprovisionManager := process.NewStagedManager(db.Operations(), eventBroker, time.Hour, cfg.Deprovisioning, log.With("deprovisioning", "manager"))
+
 	deprovisioningQueue := NewDeprovisioningProcessingQueue(ctx, workersAmount, deprovisionManager, cfg, db, eventBroker,
 		provisionerClient, edpClient, accountProvider, k8sClientProvider, cli, configProvider, log,
 	)
@@ -236,7 +243,6 @@ func NewBrokerSuiteTestWithConfig(t *testing.T, cfg *Config, version ...string) 
 	ts := &BrokerSuiteTest{
 		db:                  db,
 		storageCleanup:      storageCleanup,
-		provisionerClient:   provisionerClient,
 		gardenerClient:      gardenerClient,
 		router:              mux.NewRouter(),
 		t:                   t,
@@ -244,8 +250,10 @@ func NewBrokerSuiteTestWithConfig(t *testing.T, cfg *Config, version ...string) 
 		k8sKcp:              cli,
 		k8sSKR:              fakeK8sSKRClient,
 		eventBroker:         eventBroker,
+
+		k8sDeletionObjectTracker: ot,
 	}
-	ts.poller = &broker.TimerPoller{PollInterval: 3 * time.Millisecond, PollTimeout: 3 * time.Second, Log: ts.t.Log}
+	ts.poller = &broker.TimerPoller{PollInterval: 3 * time.Millisecond, PollTimeout: 800 * time.Millisecond, Log: ts.t.Log}
 
 	ts.CreateAPI(inputFactory, cfg, db, provisioningQueue, deprovisioningQueue, updateQueue, log, k8sClientProvider, gardener.NewFakeClient(), eventBroker)
 
@@ -328,7 +336,15 @@ func (s *BrokerSuiteTest) ProcessInfrastructureManagerProvisioningGardenerCluste
 	assert.NoError(s.t, err)
 }
 
-func (s *BrokerSuiteTest) ProcessInfrastructureManagerProvisioningRuntimeResource(runtimeID string) {
+func (s *BrokerSuiteTest) SetRuntimeResourceStateReady(runtimeID string) {
+	s.processInfrastructureManagerProvisioningRuntimeResource(runtimeID, "Ready")
+}
+
+func (s *BrokerSuiteTest) SetRuntimeResourceFailed(runtimeID string) {
+	s.processInfrastructureManagerProvisioningRuntimeResource(runtimeID, "Failed")
+}
+
+func (s *BrokerSuiteTest) processInfrastructureManagerProvisioningRuntimeResource(runtimeID string, state string) {
 	err := s.poller.Invoke(func() (bool, error) {
 		runtimeResource := &unstructured.Unstructured{}
 		gvk, _ := customresources.GvkByName(customresources.RuntimeCr)
@@ -341,7 +357,7 @@ func (s *BrokerSuiteTest) ProcessInfrastructureManagerProvisioningRuntimeResourc
 			return false, nil
 		}
 
-		err = unstructured.SetNestedField(runtimeResource.Object, "Ready", "status", "state")
+		err = unstructured.SetNestedField(runtimeResource.Object, state, "status", "state")
 		assert.NoError(s.t, err)
 		err = s.k8sKcp.Update(context.Background(), runtimeResource)
 		return err == nil, nil
@@ -472,6 +488,16 @@ func (s *BrokerSuiteTest) WaitForInstanceRemoval(iid string) {
 	assert.NoError(s.t, err, "timeout waiting for the instance %s to be removed", iid)
 }
 
+func (s *BrokerSuiteTest) AssertSubscription(iid string, shared bool, ht hyperscaler.Type) {
+	runtime := s.GetRuntimeResourceByInstanceID(iid)
+	secretName := runtime.Spec.Shoot.SecretBindingName
+	if shared {
+		assert.Equal(s.t, sharedSubscription(ht), secretName)
+	} else {
+		assert.Equal(s.t, regularSubscription(ht), secretName)
+	}
+}
+
 func (s *BrokerSuiteTest) AssertBindingRemoval(iid string, bindingID string) {
 	_, err := s.db.Bindings().Get(iid, bindingID)
 	assert.True(s.t, dberr.IsNotFound(err), "bindings should be removed")
@@ -480,23 +506,6 @@ func (s *BrokerSuiteTest) AssertBindingRemoval(iid string, bindingID string) {
 func (s *BrokerSuiteTest) LastOperation(iid string) *internal.Operation {
 	op, _ := s.db.Operations().GetLastOperation(iid)
 	return op
-}
-
-func (s *BrokerSuiteTest) FinishProvisioningOperationByProvisionerAndInfrastructureManager(operationID string, operationState gqlschema.OperationState) {
-	var op *internal.ProvisioningOperation
-	err := s.poller.Invoke(func() (done bool, err error) {
-		op, _ = s.db.Operations().GetProvisioningOperationByID(operationID)
-		if op.RuntimeID != "" {
-			return true, nil
-		}
-		return false, nil
-	})
-	assert.NoError(s.t, err, "timeout waiting for the operation with runtimeID. The existing operation %+v", op)
-
-	s.finishOperationByProvisioner(gqlschema.OperationTypeProvision, operationState, op.RuntimeID)
-	if operationState == gqlschema.OperationStateSucceeded {
-		s.ProcessInfrastructureManagerProvisioningGardenerCluster(op.RuntimeID)
-	}
 }
 
 func (s *BrokerSuiteTest) FinishProvisioningOperationByInfrastructureManager(operationID string) {
@@ -510,98 +519,7 @@ func (s *BrokerSuiteTest) FinishProvisioningOperationByInfrastructureManager(ope
 	})
 	assert.NoError(s.t, err, "timeout waiting for the operation with runtimeID. The existing operation %+v", op)
 
-	s.ProcessInfrastructureManagerProvisioningRuntimeResource(op.RuntimeID)
-}
-
-func (s *BrokerSuiteTest) FailProvisioningOperationByProvisioner(operationID string) {
-	var op *internal.ProvisioningOperation
-	err := s.poller.Invoke(func() (done bool, err error) {
-		op, _ = s.db.Operations().GetProvisioningOperationByID(operationID)
-		if op.RuntimeID != "" {
-			return true, nil
-		}
-		return false, nil
-	})
-	assert.NoError(s.t, err, "timeout waiting for the operation with runtimeID. The existing operation %+v", op)
-
-	s.finishOperationByProvisioner(gqlschema.OperationTypeProvision, gqlschema.OperationStateFailed, op.RuntimeID)
-}
-
-func (s *BrokerSuiteTest) FailDeprovisioningOperationByProvisioner(operationID string) {
-	var op *internal.DeprovisioningOperation
-	err := s.poller.Invoke(func() (done bool, err error) {
-		op, _ = s.db.Operations().GetDeprovisioningOperationByID(operationID)
-		if op.RuntimeID != "" {
-			return true, nil
-		}
-		return false, nil
-	})
-	assert.NoError(s.t, err, "timeout waiting for the operation with runtimeID. The existing operation %+v", op)
-
-	s.finishOperationByProvisioner(gqlschema.OperationTypeDeprovision, gqlschema.OperationStateFailed, op.RuntimeID)
-}
-
-func (s *BrokerSuiteTest) FinishDeprovisioningOperationByProvisioner(operationID string) {
-	var op *internal.DeprovisioningOperation
-	err := s.poller.Invoke(func() (done bool, err error) {
-		op, err = s.db.Operations().GetDeprovisioningOperationByID(operationID)
-		if err != nil {
-			return false, nil
-		}
-		return true, nil
-	})
-	assert.NoError(s.t, err, "timeout waiting for the operation with runtimeID. The existing operation %+v", op)
-
-	err = s.gardenerClient.Resource(gardener.ShootResource).
-		Namespace(fixedGardenerNamespace).
-		Delete(context.Background(), op.ShootName, v1.DeleteOptions{})
-
-	s.finishOperationByProvisioner(gqlschema.OperationTypeDeprovision, gqlschema.OperationStateSucceeded, op.RuntimeID)
-}
-
-func (s *BrokerSuiteTest) FinishUpdatingOperationByProvisioner(operationID string) {
-	var op *internal.Operation
-	err := s.poller.Invoke(func() (done bool, err error) {
-		op, _ = s.db.Operations().GetOperationByID(operationID)
-		if op == nil || op.RuntimeID == "" || op.ProvisionerOperationID == "" {
-			return false, nil
-		}
-		return true, nil
-	})
-	assert.NoError(s.t, err, "timeout waiting for the operation with runtimeID. The existing operation %+v", op)
-	s.finishOperationByOpIDByProvisioner(gqlschema.OperationTypeUpgradeShoot, gqlschema.OperationStateSucceeded, op.ID)
-}
-
-func (s *BrokerSuiteTest) FinishDeprovisioningOperationByProvisionerForGivenOpId(operationID string) {
-	var op *internal.DeprovisioningOperation
-	err := s.poller.Invoke(func() (done bool, err error) {
-		op, err = s.db.Operations().GetDeprovisioningOperationByID(operationID)
-		if err != nil {
-			return false, nil
-		}
-		if op.RuntimeID != "" && op.ProvisionerOperationID != "" {
-			return true, nil
-		}
-		return false, nil
-	})
-	assert.NoError(s.t, err, "timeout waiting for the operation with runtimeID. The existing operation %+v", op)
-
-	uns, err := s.gardenerClient.Resource(gardener.ShootResource).
-		Namespace(fixedGardenerNamespace).
-		List(context.Background(), v1.ListOptions{})
-	require.NoError(s.t, err)
-	if len(uns.Items) == 0 {
-		s.Log(fmt.Sprintf("shoot %s doesn't exist", op.ShootName))
-		s.finishOperationByOpIDByProvisioner(gqlschema.OperationTypeDeprovision, gqlschema.OperationStateSucceeded, op.ID)
-		return
-	}
-
-	err = s.gardenerClient.Resource(gardener.ShootResource).
-		Namespace(fixedGardenerNamespace).
-		Delete(context.Background(), op.ShootName, v1.DeleteOptions{})
-	require.NoError(s.t, err)
-
-	s.finishOperationByOpIDByProvisioner(gqlschema.OperationTypeDeprovision, gqlschema.OperationStateSucceeded, op.ID)
+	s.SetRuntimeResourceStateReady(op.RuntimeID)
 }
 
 func (s *BrokerSuiteTest) waitForRuntimeAndMakeItReady(id string) {
@@ -633,87 +551,6 @@ func (s *BrokerSuiteTest) waitForRuntimeAndMakeItReady(id string) {
 	runtime.Status.State = imv1.RuntimeStateReady
 	err = s.k8sKcp.Update(context.Background(), &runtime)
 	assert.NoError(s.t, err)
-}
-
-func (s *BrokerSuiteTest) finishOperationByProvisioner(operationType gqlschema.OperationType, state gqlschema.OperationState, runtimeID string) {
-	err := s.poller.Invoke(func() (bool, error) {
-		status := s.provisionerClient.FindInProgressOperationByRuntimeIDAndType(runtimeID, operationType)
-		if status.ID != nil {
-			s.provisionerClient.FinishProvisionerOperation(*status.ID, state)
-			return true, nil
-		}
-		return false, nil
-	})
-	assert.NoError(s.t, err, "timeout waiting for provisioner operation to exist")
-}
-
-func (s *BrokerSuiteTest) finishOperationByOpIDByProvisioner(operationType gqlschema.OperationType, state gqlschema.OperationState, operationID string) {
-	err := s.poller.Invoke(func() (bool, error) {
-		op, err := s.db.Operations().GetOperationByID(operationID)
-		if err != nil {
-			s.Log(fmt.Sprintf("failed to GetOperationsByID: %v", err))
-			return false, nil
-		}
-		status, err := s.provisionerClient.RuntimeOperationStatus("", op.ProvisionerOperationID)
-		if err != nil {
-			s.Log(fmt.Sprintf("failed to get RuntimeOperationStatus: %v", err))
-			return false, nil
-		}
-		if status.Operation != operationType {
-			s.Log(fmt.Sprintf("operation types don't match, expected: %s, actual: %s", operationType.String(), status.Operation.String()))
-			return false, nil
-		}
-		if status.ID != nil {
-			s.provisionerClient.FinishProvisionerOperation(*status.ID, state)
-			return true, nil
-		}
-		return false, nil
-	})
-	assert.NoError(s.t, err, "timeout waiting for provisioner operation to exist")
-}
-
-func (s *BrokerSuiteTest) AssertProvisionerStartedProvisioning(operationID string) {
-	// wait until ProvisioningOperation reaches CreateRuntime step
-	var provisioningOp *internal.ProvisioningOperation
-	err := s.poller.Invoke(func() (bool, error) {
-		op, err := s.db.Operations().GetProvisioningOperationByID(operationID)
-		if err != nil {
-			return false, nil
-		}
-		if op.ProvisionerOperationID != "" {
-			provisioningOp = op
-			return true, nil
-		}
-		return false, nil
-	})
-	assert.NoError(s.t, err)
-	require.NotNil(s.t, provisioningOp, "Provisioning operation should not be nil")
-
-	var status gqlschema.OperationStatus
-	err = s.poller.Invoke(func() (bool, error) {
-		status = s.provisionerClient.FindInProgressOperationByRuntimeIDAndType(provisioningOp.RuntimeID, gqlschema.OperationTypeProvision)
-		if status.ID != nil {
-			return true, nil
-		}
-		return false, nil
-	})
-	assert.NoError(s.t, err)
-	assert.Equal(s.t, gqlschema.OperationStateInProgress, status.State)
-}
-
-func (s *BrokerSuiteTest) FinishUpgradeClusterOperationByProvisioner(operationID string) {
-	var upgradeOp *internal.UpgradeClusterOperation
-	err := s.poller.Invoke(func() (bool, error) {
-		op, err := s.db.Operations().GetUpgradeClusterOperationByID(operationID)
-		if err != nil {
-			return false, nil
-		}
-		upgradeOp = op
-		return true, nil
-	})
-	assert.NoError(s.t, err)
-
-	s.finishOperationByOpIDByProvisioner(gqlschema.OperationTypeUpgradeShoot, gqlschema.OperationStateSucceeded, upgradeOp.Operation.ID)
 }
 
 func (s *BrokerSuiteTest) DecodeErrorResponse(resp *http.Response) apiresponses.ErrorResponse {
@@ -808,34 +645,6 @@ func (s *BrokerSuiteTest) DecodeLastUpgradeClusterOperationIDFromOrchestration(o
 	return operationsList.Data[len(operationsList.Data)-1].OperationID, nil
 }
 
-func (s *BrokerSuiteTest) AssertShootUpgrade(operationID string, config gqlschema.UpgradeShootInput) {
-	// wait until the operation reaches the call to a Provisioner (provisioner operation ID is stored)
-	var provisioningOp *internal.Operation
-	err := s.poller.Invoke(func() (bool, error) {
-		op, err := s.db.Operations().GetOperationByID(operationID)
-		assert.NoError(s.t, err)
-		if op.ProvisionerOperationID != "" || broker.IsOwnClusterPlan(op.ProvisioningParameters.PlanID) {
-			provisioningOp = op
-			return true, nil
-		}
-		return false, nil
-	})
-	require.NoError(s.t, err)
-
-	var shootUpgrade gqlschema.UpgradeShootInput
-	var found bool
-	err = s.poller.Invoke(func() (bool, error) {
-		shootUpgrade, found = s.provisionerClient.LastShootUpgrade(provisioningOp.RuntimeID)
-		if found {
-			return true, nil
-		}
-		return false, nil
-	})
-	require.NoError(s.t, err)
-
-	assert.Equal(s.t, config, shootUpgrade)
-}
-
 func (s *BrokerSuiteTest) AssertInstanceRuntimeAdmins(instanceId string, expectedAdmins []string) {
 	var instance *internal.Instance
 	err := s.poller.Invoke(func() (bool, error) {
@@ -847,45 +656,6 @@ func (s *BrokerSuiteTest) AssertInstanceRuntimeAdmins(instanceId string, expecte
 	})
 	assert.NoError(s.t, err)
 	assert.Equal(s.t, expectedAdmins, instance.Parameters.Parameters.RuntimeAdministrators)
-}
-
-func (s *BrokerSuiteTest) fetchProvisionInput() gqlschema.ProvisionRuntimeInput {
-	input := s.provisionerClient.GetLatestProvisionRuntimeInput()
-	return input
-}
-
-func (s *BrokerSuiteTest) AssertProvider(expectedProvider string) {
-	input := s.fetchProvisionInput()
-	assert.Equal(s.t, expectedProvider, input.ClusterConfig.GardenerConfig.Provider)
-}
-
-func (s *BrokerSuiteTest) AssertProvisionRuntimeInputWithoutKymaConfig() {
-	input := s.fetchProvisionInput()
-	assert.Nil(s.t, input.KymaConfig)
-}
-
-func (s *BrokerSuiteTest) AssertDisabledNetworkFilterForProvisioning(val *bool) {
-	var got, exp string
-	err := s.poller.Invoke(func() (bool, error) {
-		input := s.provisionerClient.GetLatestProvisionRuntimeInput()
-		gc := input.ClusterConfig.GardenerConfig
-		if reflect.DeepEqual(val, gc.ShootNetworkingFilterDisabled) {
-			return true, nil
-		}
-		got = "<nil>"
-		if gc.ShootNetworkingFilterDisabled != nil {
-			got = fmt.Sprintf("%v", *gc.ShootNetworkingFilterDisabled)
-		}
-		exp = "<nil>"
-		if val != nil {
-			exp = fmt.Sprintf("%v", *val)
-		}
-		return false, nil
-	})
-	if err != nil {
-		err = fmt.Errorf("ShootNetworkingFilterDisabled expected %v, got %v", exp, got)
-	}
-	require.NoError(s.t, err)
 }
 
 func (s *BrokerSuiteTest) AssertDisabledNetworkFilterRuntimeState(runtimeid, op string, val *bool) {
@@ -918,27 +688,9 @@ func (s *BrokerSuiteTest) AssertDisabledNetworkFilterRuntimeState(runtimeid, op 
 	require.NoError(s.t, err)
 }
 
-func (s *BrokerSuiteTest) LastProvisionInput(iid string) gqlschema.ProvisionRuntimeInput {
-	// wait until the operation reaches the call to a Provisioner (provisioner operation ID is stored)
-	err := s.poller.Invoke(func() (bool, error) {
-		op, err := s.db.Operations().GetProvisioningOperationByInstanceID(iid)
-		assert.NoError(s.t, err)
-		if op.ProvisionerOperationID != "" {
-			return true, nil
-		}
-		return false, nil
-	})
-	assert.NoError(s.t, err)
-	return s.provisionerClient.LastProvisioning()
-}
-
 func (s *BrokerSuiteTest) Log(msg string) {
 	s.t.Helper()
 	s.t.Log(msg)
-}
-
-func (s *BrokerSuiteTest) EnableDumpingProvisionerRequests() {
-	s.provisionerClient.EnableRequestDumping()
 }
 
 func (s *BrokerSuiteTest) GetInstance(iid string) *internal.Instance {
@@ -947,41 +699,25 @@ func (s *BrokerSuiteTest) GetInstance(iid string) *internal.Instance {
 	return inst
 }
 
-func (s *BrokerSuiteTest) processProvisioningByOperationID(opID string) {
-	s.WaitForProvisioningState(opID, domain.InProgress)
-	s.AssertProvisionerStartedProvisioning(opID)
-
-	s.FinishProvisioningOperationByProvisionerAndInfrastructureManager(opID, gqlschema.OperationStateSucceeded)
-	_, err := s.gardenerClient.Resource(gardener.ShootResource).Namespace(fixedGardenerNamespace).Create(context.Background(), s.fixGardenerShootForOperationID(opID), v1.CreateOptions{})
-	require.NoError(s.t, err)
-
-	// provisioner finishes the operation
-	s.WaitForOperationState(opID, domain.Succeeded)
-}
-
-func (s *BrokerSuiteTest) processKIMOnlyProvisioningByOperationID(opID string) {
+func (s *BrokerSuiteTest) processKIMProvisioningByOperationID(opID string) {
 	s.WaitForProvisioningState(opID, domain.InProgress)
 
 	s.FinishProvisioningOperationByInfrastructureManager(opID)
 }
 
-func (s *BrokerSuiteTest) processUpdatingByOperationID(opID string) {
-	s.WaitForProvisioningState(opID, domain.InProgress)
+func (s *BrokerSuiteTest) processKIMProvisioningByInstanceID(iid string) {
+	var runtimeID string
+	err := s.poller.Invoke(func() (done bool, err error) {
+		instance, _ := s.db.Instances().GetByID(iid)
+		if instance.RuntimeID != "" {
+			runtimeID = instance.RuntimeID
+			return true, nil
+		}
+		return false, nil
+	})
+	assert.NoError(s.t, err, "timeout waiting for the runtimeID to be created.")
 
-	s.FinishUpdatingOperationByProvisioner(opID)
-
-	// provisioner finishes the operation
-	s.WaitForOperationState(opID, domain.Succeeded)
-}
-
-func (s *BrokerSuiteTest) failProvisioningByOperationID(opID string) {
-	s.WaitForProvisioningState(opID, domain.InProgress)
-	s.AssertProvisionerStartedProvisioning(opID)
-
-	s.FinishProvisioningOperationByProvisionerAndInfrastructureManager(opID, gqlschema.OperationStateFailed)
-
-	// provisioner finishes the operation
-	s.WaitForOperationState(opID, domain.Failed)
+	s.SetRuntimeResourceStateReady(runtimeID)
 }
 
 func (s *BrokerSuiteTest) fixGardenerShootForOperationID(opID string) *unstructured.Unstructured {
@@ -1016,23 +752,6 @@ func (s *BrokerSuiteTest) fixGardenerShootForOperationID(opID string) *unstructu
 	return &un
 }
 
-func (s *BrokerSuiteTest) processProvisioningByInstanceID(iid string) {
-	opID := s.WaitForLastOperation(iid, domain.InProgress)
-
-	s.processProvisioningByOperationID(opID)
-}
-
-func (s *BrokerSuiteTest) AssertAWSRegionAndZone(region string) {
-	input := s.provisionerClient.GetLatestProvisionRuntimeInput()
-	assert.Equal(s.t, region, input.ClusterConfig.GardenerConfig.Region)
-	assert.Contains(s.t, input.ClusterConfig.GardenerConfig.ProviderSpecificConfig.AwsConfig.AwsZones[0].Name, region)
-}
-
-func (s *BrokerSuiteTest) AssertAzureRegion(region string) {
-	input := s.provisionerClient.GetLatestProvisionRuntimeInput()
-	assert.Equal(s.t, region, input.ClusterConfig.GardenerConfig.Region)
-}
-
 func (s *BrokerSuiteTest) AssertKymaResourceExists(opId string) {
 	operation, err := s.db.Operations().GetOperationByID(opId)
 	assert.NoError(s.t, err)
@@ -1063,8 +782,13 @@ func (s *BrokerSuiteTest) AssertKymaResourceExistsByInstanceID(instanceID string
 		Kind:    "Kyma",
 	})
 
-	err := s.k8sKcp.Get(context.Background(), client.ObjectKeyFromObject(obj), obj)
-
+	err := s.poller.Invoke(func() (done bool, err error) {
+		err = s.k8sKcp.Get(context.Background(), client.ObjectKeyFromObject(obj), obj)
+		if err != nil {
+			return false, nil
+		}
+		return true, nil
+	})
 	assert.NoError(s.t, err)
 }
 
@@ -1258,8 +982,47 @@ func (s *BrokerSuiteTest) GetRuntimeResourceByInstanceID(iid string) imv1.Runtim
 	return runtimes.Items[0]
 }
 
-func (s *BrokerSuiteTest) DisableProvisioner() {
-	s.provisionerClient.EnableErrorSimulation()
+func (s *BrokerSuiteTest) AssertRuntimeAdminsByInstanceID(id string, admins []string) {
+	runtime := s.GetRuntimeResourceByInstanceID(id)
+	assert.Equal(s.t, admins, runtime.Spec.Security.Administrators)
+}
+
+func (s *BrokerSuiteTest) AssertNetworkFilteringDisabled(iid string, expected bool) {
+	runtime := s.GetRuntimeResourceByInstanceID(iid)
+	assert.Equal(s.t, !expected, runtime.Spec.Security.Networking.Filter.Egress.Enabled)
+}
+
+func (s *BrokerSuiteTest) failRuntimeByKIM(iid string) {
+	err := s.poller.Invoke(func() (bool, error) {
+		var runtimes imv1.RuntimeList
+		err := s.k8sKcp.List(context.Background(), &runtimes, client.MatchingLabels{"kyma-project.io/instance-id": iid})
+		require.NoError(s.t, err)
+		if len(runtimes.Items) == 0 {
+			return false, nil
+		}
+
+		runtime := runtimes.Items[0]
+		runtime.Status.State = imv1.RuntimeStateFailed
+
+		err = s.k8sKcp.Update(context.Background(), &runtime)
+		return true, nil
+	})
+	require.NoError(s.t, err)
+}
+
+func (s *BrokerSuiteTest) FinishDeprovisioningOperationByKIM(opID string) {
+	op, err := s.db.Operations().GetOperationByID(opID)
+	require.NoError(s.t, err)
+	iid := op.InstanceID
+	runtime := s.GetRuntimeResourceByInstanceID(iid)
+	s.k8sDeletionObjectTracker.ProcessRuntimeDeletion(runtime.Name)
+}
+
+func (s *BrokerSuiteTest) AssertBTPOperatorSecret() {
+	secret := &corev1.Secret{}
+	err := s.k8sSKR.Get(context.Background(), client.ObjectKey{Namespace: "kyma-installer", Name: "btp-operator"}, secret)
+	require.NoError(s.t, err)
+	assert.Equal(s.t, "btp-operator", secret.Name)
 }
 
 func assertResourcesAreRemoved(t *testing.T, gvk schema.GroupVersionKind, k8sClient client.Client) {

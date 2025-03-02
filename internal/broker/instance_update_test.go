@@ -99,7 +99,8 @@ func TestUpdateEndpoint_UpdateSuspension(t *testing.T) {
 		dashboardConfig,
 		kcBuilder,
 		&OneForAllConvergedCloudRegionsProvider{},
-		fakeKcpK8sClient)
+		fakeKcpK8sClient,
+		nil)
 
 	// when
 	response, err := svc.Update(context.Background(), instanceID, domain.UpdateDetails{
@@ -156,7 +157,7 @@ func TestUpdateEndpoint_UpdateOfExpiredTrial(t *testing.T) {
 	}
 	kcBuilder := &kcMock.KcBuilder{}
 	svc := NewUpdate(Config{}, st.Instances(), st.RuntimeStates(), st.Operations(), handler, true, false, true, q, PlansConfig{},
-		planDefaults, fixLogger(), dashboardConfig, kcBuilder, &OneForAllConvergedCloudRegionsProvider{}, fakeKcpK8sClient)
+		planDefaults, fixLogger(), dashboardConfig, kcBuilder, &OneForAllConvergedCloudRegionsProvider{}, fakeKcpK8sClient, nil)
 
 	// when
 	response, err := svc.Update(context.Background(), instanceID, domain.UpdateDetails{
@@ -206,7 +207,7 @@ func TestUpdateEndpoint_UpdateAutoscalerParams(t *testing.T) {
 	}
 	kcBuilder := &kcMock.KcBuilder{}
 	svc := NewUpdate(Config{}, st.Instances(), st.RuntimeStates(), st.Operations(), handler, true, false, true, q, PlansConfig{},
-		planDefaults, fixLogger(), dashboardConfig, kcBuilder, &OneForAllConvergedCloudRegionsProvider{}, fakeKcpK8sClient)
+		planDefaults, fixLogger(), dashboardConfig, kcBuilder, &OneForAllConvergedCloudRegionsProvider{}, fakeKcpK8sClient, nil)
 
 	t.Run("Should fail on invalid (too low) autoScalerMin and autoScalerMax", func(t *testing.T) {
 
@@ -300,7 +301,7 @@ func TestUpdateEndpoint_UpdateUnsuspension(t *testing.T) {
 	}
 	kcBuilder := &kcMock.KcBuilder{}
 	svc := NewUpdate(Config{}, st.Instances(), st.RuntimeStates(), st.Operations(), handler, true, false, true, q, PlansConfig{},
-		planDefaults, fixLogger(), dashboardConfig, kcBuilder, &OneForAllConvergedCloudRegionsProvider{}, fakeKcpK8sClient)
+		planDefaults, fixLogger(), dashboardConfig, kcBuilder, &OneForAllConvergedCloudRegionsProvider{}, fakeKcpK8sClient, nil)
 
 	// when
 	_, err = svc.Update(context.Background(), instanceID, domain.UpdateDetails{
@@ -351,7 +352,7 @@ func TestUpdateEndpoint_UpdateInstanceWithWrongActiveValue(t *testing.T) {
 	}
 	kcBuilder := &kcMock.KcBuilder{}
 	svc := NewUpdate(Config{}, st.Instances(), st.RuntimeStates(), st.Operations(), handler, true, false, true, q, PlansConfig{},
-		planDefaults, fixLogger(), dashboardConfig, kcBuilder, &OneForAllConvergedCloudRegionsProvider{}, fakeKcpK8sClient)
+		planDefaults, fixLogger(), dashboardConfig, kcBuilder, &OneForAllConvergedCloudRegionsProvider{}, fakeKcpK8sClient, nil)
 
 	// when
 	_, err = svc.Update(context.Background(), instanceID, domain.UpdateDetails{
@@ -383,7 +384,7 @@ func TestUpdateEndpoint_UpdateNonExistingInstance(t *testing.T) {
 	}
 	kcBuilder := &kcMock.KcBuilder{}
 	svc := NewUpdate(Config{}, st.Instances(), st.RuntimeStates(), st.Operations(), handler, true, false, true, q, PlansConfig{},
-		planDefaults, fixLogger(), dashboardConfig, kcBuilder, &OneForAllConvergedCloudRegionsProvider{}, fakeKcpK8sClient)
+		planDefaults, fixLogger(), dashboardConfig, kcBuilder, &OneForAllConvergedCloudRegionsProvider{}, fakeKcpK8sClient, nil)
 
 	// when
 	_, err := svc.Update(context.Background(), instanceID, domain.UpdateDetails{
@@ -450,7 +451,7 @@ func TestUpdateEndpoint_UpdateGlobalAccountID(t *testing.T) {
 
 	kcBuilder := &kcMock.KcBuilder{}
 	svc := NewUpdate(Config{}, st.Instances(), st.RuntimeStates(), st.Operations(), handler, true, true, false, q, PlansConfig{},
-		planDefaults, fixLogger(), dashboardConfig, kcBuilder, &OneForAllConvergedCloudRegionsProvider{}, fakeKcpK8sClient)
+		planDefaults, fixLogger(), dashboardConfig, kcBuilder, &OneForAllConvergedCloudRegionsProvider{}, fakeKcpK8sClient, nil)
 
 	// when
 	response, err := svc.Update(context.Background(), instanceID, domain.UpdateDetails{
@@ -494,7 +495,7 @@ func TestUpdateEndpoint_UpdateParameters(t *testing.T) {
 	}
 	kcBuilder := &kcMock.KcBuilder{}
 	svc := NewUpdate(Config{}, st.Instances(), st.RuntimeStates(), st.Operations(), handler, true, true, false, q, PlansConfig{},
-		planDefaults, fixLogger(), dashboardConfig, kcBuilder, &OneForAllConvergedCloudRegionsProvider{}, fakeKcpK8sClient)
+		planDefaults, fixLogger(), dashboardConfig, kcBuilder, &OneForAllConvergedCloudRegionsProvider{}, fakeKcpK8sClient, nil)
 
 	t.Run("Should fail on invalid OIDC params", func(t *testing.T) {
 		// given
@@ -520,28 +521,68 @@ func TestUpdateEndpoint_UpdateParameters(t *testing.T) {
 		assert.Equal(t, expectedErr.LoggerAction(), apierr.LoggerAction())
 	})
 
-	t.Run("Should fail on insufficient OIDC params (missing issuerURL)", func(t *testing.T) {
-		// given
-		oidcParams := `"clientID":"client-id"`
-		errMsg := fmt.Errorf("issuerURL must not be empty")
-		expectedErr := apiresponses.NewFailureResponse(errMsg, http.StatusUnprocessableEntity, errMsg.Error())
+	t.Run("Should fail on invalid OIDC issuerURL param", func(t *testing.T) {
+		testCases := []struct {
+			name          string
+			oidcParams    string
+			expectedError string
+		}{
+			{
+				name:          "wrong scheme",
+				oidcParams:    `"clientID":"client-id","issuerURL":"http://test.local","signingAlgs":["RS256"]`,
+				expectedError: "issuerURL must have https scheme",
+			},
+			{
+				name:          "missing issuerURL",
+				oidcParams:    `"clientID":"client-id"`,
+				expectedError: "issuerURL must not be empty",
+			},
+			{
+				name:          "URL with fragment",
+				oidcParams:    `"clientID":"client-id","issuerURL":"https://test.local#fragment","signingAlgs":["RS256"]`,
+				expectedError: "issuerURL must not contain a fragment",
+			},
+			{
+				name:          "URL with username",
+				oidcParams:    `"clientID":"client-id","issuerURL":"https://user@test.local","signingAlgs":["RS256"]`,
+				expectedError: "issuerURL must not contain a username or password",
+			},
+			{
+				name:          "URL with query",
+				oidcParams:    `"clientID":"client-id","issuerURL":"https://test.local?query=param","signingAlgs":["RS256"]`,
+				expectedError: "issuerURL must not contain a query",
+			},
+			{
+				name:          "URL with empty host",
+				oidcParams:    `"clientID":"client-id","issuerURL":"https:///path","signingAlgs":["RS256"]`,
+				expectedError: "issuerURL must be a valid URL",
+			},
+		}
 
-		// when
-		_, err := svc.Update(context.Background(), instanceID, domain.UpdateDetails{
-			ServiceID:       "",
-			PlanID:          AzurePlanID,
-			RawParameters:   json.RawMessage("{\"oidc\":{" + oidcParams + "}}"),
-			PreviousValues:  domain.PreviousValues{},
-			RawContext:      json.RawMessage("{\"globalaccount_id\":\"globalaccount_id_1\", \"active\":true}"),
-			MaintenanceInfo: nil,
-		}, true)
+		for _, tc := range testCases {
+			t.Run(tc.name, func(t *testing.T) {
+				// given
+				errMsg := fmt.Errorf(tc.expectedError)
+				expectedErr := apiresponses.NewFailureResponse(errMsg, http.StatusUnprocessableEntity, errMsg.Error())
 
-		// then
-		require.Error(t, err)
-		assert.IsType(t, &apiresponses.FailureResponse{}, err)
-		apierr := err.(*apiresponses.FailureResponse)
-		assert.Equal(t, expectedErr.ValidatedStatusCode(nil), apierr.ValidatedStatusCode(nil))
-		assert.Equal(t, expectedErr.LoggerAction(), apierr.LoggerAction())
+				// when
+				_, err := svc.Update(context.Background(), instanceID, domain.UpdateDetails{
+					ServiceID:       "",
+					PlanID:          AzurePlanID,
+					RawParameters:   json.RawMessage("{\"oidc\":{" + tc.oidcParams + "}}"),
+					PreviousValues:  domain.PreviousValues{},
+					RawContext:      json.RawMessage("{\"globalaccount_id\":\"globalaccount_id_1\", \"active\":true}"),
+					MaintenanceInfo: nil,
+				}, true)
+
+				// then
+				require.Error(t, err)
+				assert.IsType(t, &apiresponses.FailureResponse{}, err)
+				apierr := err.(*apiresponses.FailureResponse)
+				assert.Equal(t, expectedErr.ValidatedStatusCode(nil), apierr.ValidatedStatusCode(nil))
+				assert.Equal(t, expectedErr.LoggerAction(), apierr.LoggerAction())
+			})
+		}
 	})
 
 	t.Run("Should fail on insufficient OIDC params (missing clientID)", func(t *testing.T) {
@@ -650,6 +691,22 @@ func TestUpdateAdditionalWorkerNodePools(t *testing.T) {
 			additionalWorkerNodePools: `[{"name": "name-1", "machineType": "m6i.large", "haZones": true, "autoScalerMin": 20, "autoScalerMax": 3}]`,
 			expectedError:             true,
 		},
+		"Name contains capital letter": {
+			additionalWorkerNodePools: `[{"name": "workerName", "machineType": "m6i.large", "haZones": true, "autoScalerMin": 3, "autoScalerMax": 20}]`,
+			expectedError:             true,
+		},
+		"Name starts with hyphen": {
+			additionalWorkerNodePools: `[{"name": "-name", "machineType": "m6i.large", "haZones": true, "autoScalerMin": 3, "autoScalerMax": 20}]`,
+			expectedError:             true,
+		},
+		"Name ends with hyphen": {
+			additionalWorkerNodePools: `[{"name": "name-", "machineType": "m6i.large", "haZones": true, "autoScalerMin": 3, "autoScalerMax": 20}]`,
+			expectedError:             true,
+		},
+		"Name longer than 15 characters": {
+			additionalWorkerNodePools: `[{"name": "aaaaaaaaaaaaaaaa", "machineType": "m6i.large", "haZones": true, "autoScalerMin": 3, "autoScalerMax": 20}]`,
+			expectedError:             true,
+		},
 	} {
 		t.Run(tn, func(t *testing.T) {
 			// given
@@ -669,7 +726,7 @@ func TestUpdateAdditionalWorkerNodePools(t *testing.T) {
 			}
 			kcBuilder := &kcMock.KcBuilder{}
 			svc := NewUpdate(Config{}, st.Instances(), st.RuntimeStates(), st.Operations(), handler, true, true, false, q, PlansConfig{},
-				planDefaults, fixLogger(), dashboardConfig, kcBuilder, &OneForAllConvergedCloudRegionsProvider{}, fakeKcpK8sClient)
+				planDefaults, fixLogger(), dashboardConfig, kcBuilder, &OneForAllConvergedCloudRegionsProvider{}, fakeKcpK8sClient, nil)
 			svc.config.EnableAdditionalWorkerNodePools = true
 
 			// when
@@ -716,7 +773,7 @@ func TestHAZones(t *testing.T) {
 		}
 		kcBuilder := &kcMock.KcBuilder{}
 		svc := NewUpdate(Config{}, st.Instances(), st.RuntimeStates(), st.Operations(), handler, true, true, false, q, PlansConfig{},
-			planDefaults, fixLogger(), dashboardConfig, kcBuilder, &OneForAllConvergedCloudRegionsProvider{}, fakeKcpK8sClient)
+			planDefaults, fixLogger(), dashboardConfig, kcBuilder, &OneForAllConvergedCloudRegionsProvider{}, fakeKcpK8sClient, nil)
 		svc.config.EnableAdditionalWorkerNodePools = true
 
 		// when
@@ -760,7 +817,7 @@ func TestHAZones(t *testing.T) {
 		}
 		kcBuilder := &kcMock.KcBuilder{}
 		svc := NewUpdate(Config{}, st.Instances(), st.RuntimeStates(), st.Operations(), handler, true, true, false, q, PlansConfig{},
-			planDefaults, fixLogger(), dashboardConfig, kcBuilder, &OneForAllConvergedCloudRegionsProvider{}, fakeKcpK8sClient)
+			planDefaults, fixLogger(), dashboardConfig, kcBuilder, &OneForAllConvergedCloudRegionsProvider{}, fakeKcpK8sClient, nil)
 		svc.config.EnableAdditionalWorkerNodePools = true
 
 		// when
@@ -807,7 +864,7 @@ func TestUpdateAdditionalWorkerNodePoolsForUnsupportedPlans(t *testing.T) {
 			}
 			kcBuilder := &kcMock.KcBuilder{}
 			svc := NewUpdate(Config{}, st.Instances(), st.RuntimeStates(), st.Operations(), handler, true, true, false, q, PlansConfig{},
-				planDefaults, fixLogger(), dashboardConfig, kcBuilder, &OneForAllConvergedCloudRegionsProvider{}, fakeKcpK8sClient)
+				planDefaults, fixLogger(), dashboardConfig, kcBuilder, &OneForAllConvergedCloudRegionsProvider{}, fakeKcpK8sClient, nil)
 			svc.config.EnableAdditionalWorkerNodePools = true
 
 			additionalWorkerNodePools := `[{"name": "name-1", "machineType": "m6i.large", "haZones": true, "autoScalerMin": 3, "autoScalerMax": 20}]`
@@ -860,7 +917,7 @@ func TestUpdateEndpoint_UpdateWithEnabledDashboard(t *testing.T) {
 	}
 	kcBuilder := &kcMock.KcBuilder{}
 	svc := NewUpdate(Config{AllowUpdateExpiredInstanceWithContext: true}, st.Instances(), st.RuntimeStates(), st.Operations(), handler, true, false, true, q, PlansConfig{},
-		planDefaults, fixLogger(), dashboardConfig, kcBuilder, &OneForAllConvergedCloudRegionsProvider{}, fakeKcpK8sClient)
+		planDefaults, fixLogger(), dashboardConfig, kcBuilder, &OneForAllConvergedCloudRegionsProvider{}, fakeKcpK8sClient, nil)
 	createFakeCRs(t)
 	// when
 	response, err := svc.Update(context.Background(), instanceID, domain.UpdateDetails{
@@ -916,7 +973,7 @@ func TestUpdateExpiredInstance(t *testing.T) {
 	}
 
 	svc := NewUpdate(Config{AllowUpdateExpiredInstanceWithContext: true}, storage.Instances(), storage.RuntimeStates(), storage.Operations(), handler, true, false, true, queue, PlansConfig{},
-		planDefaults, fixLogger(), dashboardConfig, kcBuilder, &OneForAllConvergedCloudRegionsProvider{}, fakeKcpK8sClient)
+		planDefaults, fixLogger(), dashboardConfig, kcBuilder, &OneForAllConvergedCloudRegionsProvider{}, fakeKcpK8sClient, nil)
 
 	t.Run("should accept if it is same as previous", func(t *testing.T) {
 		_, err = svc.Update(context.Background(), instanceID, domain.UpdateDetails{
@@ -1004,7 +1061,7 @@ func TestSubaccountMovement(t *testing.T) {
 	}
 
 	svc := NewUpdate(Config{SubaccountMovementEnabled: true}, storage.Instances(), storage.RuntimeStates(), storage.Operations(), handler, true, true, true, queue, PlansConfig{},
-		planDefaults, fixLogger(), dashboardConfig, kcBuilder, &OneForAllConvergedCloudRegionsProvider{}, fakeKcpK8sClient)
+		planDefaults, fixLogger(), dashboardConfig, kcBuilder, &OneForAllConvergedCloudRegionsProvider{}, fakeKcpK8sClient, nil)
 
 	t.Run("no move performed so subscription should be empty", func(t *testing.T) {
 		_, err = svc.Update(context.Background(), instanceID, domain.UpdateDetails{
@@ -1095,7 +1152,7 @@ func TestLabelChangeWhenMovingSubaccount(t *testing.T) {
 	}
 
 	svc := NewUpdate(Config{SubaccountMovementEnabled: true}, storage.Instances(), storage.RuntimeStates(), storage.Operations(), handler, true, true, true, queue, PlansConfig{},
-		planDefaults, fixLogger(), dashboardConfig, kcBuilder, &OneForAllConvergedCloudRegionsProvider{}, fakeKcpK8sClient)
+		planDefaults, fixLogger(), dashboardConfig, kcBuilder, &OneForAllConvergedCloudRegionsProvider{}, fakeKcpK8sClient, nil)
 
 	t.Run("simulate flow of moving account with labels on CRs", func(t *testing.T) {
 		// initial state of instance - moving account was never donex
@@ -1153,6 +1210,99 @@ func TestLabelChangeWhenMovingSubaccount(t *testing.T) {
 		assert.Len(t, labels, 1)
 		assert.Equal(t, newGlobalAccountId, labels[customresources.GlobalAccountIdLabel])
 	})
+}
+
+func TestUpdateUnsupportedMachine(t *testing.T) {
+	// given
+	instance := fixture.FixInstance(instanceID)
+	st := storage.NewMemoryStorage()
+	err := st.Instances().Insert(instance)
+	require.NoError(t, err)
+	err = st.Operations().InsertProvisioningOperation(fixProvisioningOperation("provisioning01"))
+	require.NoError(t, err)
+
+	handler := &handler{}
+	q := &automock.Queue{}
+	q.On("Add", mock.AnythingOfType("string"))
+	planDefaults := func(planID string, platformProvider pkg.CloudProvider, provider *pkg.CloudProvider) (*gqlschema.ClusterConfigInput, error) {
+		return &gqlschema.ClusterConfigInput{}, nil
+	}
+	kcBuilder := &kcMock.KcBuilder{}
+	svc := NewUpdate(Config{}, st.Instances(), st.RuntimeStates(), st.Operations(), handler, true, true, false, q, PlansConfig{},
+		planDefaults, fixLogger(), dashboardConfig, kcBuilder, &OneForAllConvergedCloudRegionsProvider{}, fakeKcpK8sClient, fixRegionsSupportingMachine())
+
+	// when
+	_, err = svc.Update(context.Background(), instanceID, domain.UpdateDetails{
+		ServiceID:       "",
+		PlanID:          AzurePlanID,
+		RawParameters:   json.RawMessage("{\"machineType\":" + "\"Standard_D16s_v5\"" + "}"),
+		PreviousValues:  domain.PreviousValues{},
+		RawContext:      json.RawMessage("{\"globalaccount_id\":\"globalaccount_id_1\", \"active\":true}"),
+		MaintenanceInfo: nil,
+	}, true)
+
+	// then
+	assert.EqualError(t, err, "In the region westeurope, the machine type Standard_D16s_v5 is not available, it is supported in the uksouth, brazilsouth")
+}
+
+func TestUpdateUnsupportedMachineInAdditionalWorkerNodePools(t *testing.T) {
+	// given
+	instance := fixture.FixInstance(instanceID)
+	st := storage.NewMemoryStorage()
+	err := st.Instances().Insert(instance)
+	require.NoError(t, err)
+	err = st.Operations().InsertProvisioningOperation(fixProvisioningOperation("provisioning01"))
+	require.NoError(t, err)
+
+	handler := &handler{}
+	q := &automock.Queue{}
+	q.On("Add", mock.AnythingOfType("string"))
+	planDefaults := func(planID string, platformProvider pkg.CloudProvider, provider *pkg.CloudProvider) (*gqlschema.ClusterConfigInput, error) {
+		return &gqlschema.ClusterConfigInput{}, nil
+	}
+	kcBuilder := &kcMock.KcBuilder{}
+	svc := NewUpdate(Config{}, st.Instances(), st.RuntimeStates(), st.Operations(), handler, true, true, false, q, PlansConfig{},
+		planDefaults, fixLogger(), dashboardConfig, kcBuilder, &OneForAllConvergedCloudRegionsProvider{}, fakeKcpK8sClient, fixRegionsSupportingMachine())
+	svc.config.EnableAdditionalWorkerNodePools = true
+
+	testCases := []struct {
+		name                      string
+		additionalWorkerNodePools string
+		expectedError             string
+	}{
+		{
+			name:                      "Single unsupported machine type",
+			additionalWorkerNodePools: `[{"name": "name-1", "machineType": "Standard_D8s_v5", "haZones": true, "autoScalerMin": 3, "autoScalerMax": 20}]`,
+			expectedError:             "In the region westeurope, the following machine types are not available: Standard_D8s_v5 (used in: name-1), it is supported in the uksouth, brazilsouth",
+		},
+		{
+			name:                      "Multiple unsupported machine types",
+			additionalWorkerNodePools: `[{"name": "name-1", "machineType": "Standard_D8s_v5", "haZones": true, "autoScalerMin": 3, "autoScalerMax": 20}, {"name": "name-2", "machineType": "Standard_D16s_v5", "haZones": true, "autoScalerMin": 3, "autoScalerMax": 20}]`,
+			expectedError:             "In the region westeurope, the following machine types are not available: Standard_D8s_v5 (used in: name-1), it is supported in the uksouth, brazilsouth; Standard_D16s_v5 (used in: name-2), it is supported in the uksouth, brazilsouth",
+		},
+		{
+			name:                      "Duplicate unsupported machine type",
+			additionalWorkerNodePools: `[{"name": "name-1", "machineType": "Standard_D8s_v5", "haZones": true, "autoScalerMin": 3, "autoScalerMax": 20}, {"name": "name-2", "machineType": "Standard_D8s_v5", "haZones": true, "autoScalerMin": 3, "autoScalerMax": 20}]`,
+			expectedError:             "In the region westeurope, the following machine types are not available: Standard_D8s_v5 (used in: name-1, name-2), it is supported in the uksouth, brazilsouth",
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			// when
+			_, err = svc.Update(context.Background(), instanceID, domain.UpdateDetails{
+				ServiceID:       "",
+				PlanID:          AzurePlanID,
+				RawParameters:   json.RawMessage("{\"additionalWorkerNodePools\":" + tc.additionalWorkerNodePools + "}"),
+				PreviousValues:  domain.PreviousValues{},
+				RawContext:      json.RawMessage("{\"globalaccount_id\":\"globalaccount_id_1\", \"active\":true}"),
+				MaintenanceInfo: nil,
+			}, true)
+
+			// then
+			assert.EqualError(t, err, tc.expectedError)
+		})
+	}
 }
 
 func registerCRD() {
@@ -1217,4 +1367,10 @@ func cleanFakeCRs(t *testing.T, runtimeID string) {
 	createCustomResource(t, runtimeID, customresources.KymaCr)
 	createCustomResource(t, runtimeID, customresources.GardenerClusterCr)
 	createCustomResource(t, runtimeID, customresources.RuntimeCr)
+}
+
+func fixRegionsSupportingMachine() map[string][]string {
+	return map[string][]string{
+		"Standard_D": {"uksouth", "brazilsouth"},
+	}
 }
