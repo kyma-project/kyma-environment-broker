@@ -96,7 +96,7 @@ func (om *OperationManager) OperationCanceled(operation internal.Operation, desc
 
 // RetryOperation checks if operation should be retried or if it's the status should be marked as failed
 func (om *OperationManager) RetryOperation(operation internal.Operation, errorMessage string, err error, retryInterval time.Duration, maxTime time.Duration, log *slog.Logger) (internal.Operation, time.Duration, error) {
-	log.Info(fmt.Sprintf("Retry Operation was triggered with message: %s", errorMessage))
+	log.Info(fmt.Sprintf("Retry Operation was called with message: %s", errorMessage))
 	log.Info(fmt.Sprintf("Retrying for %s in %s steps", maxTime.String(), retryInterval.String()))
 
 	om.storeTimestampIfMissing(operation.ID)
@@ -104,12 +104,12 @@ func (om *OperationManager) RetryOperation(operation internal.Operation, errorMe
 		return operation, retryInterval, nil
 	}
 
-	log.Error(fmt.Sprintf("Aborting after %s of failing retries", maxTime.String()))
+	log.Error(fmt.Sprintf("Failing operation after %s of failing retries", maxTime.String()))
 	op, retry, err := om.OperationFailed(operation, errorMessage, err, log)
 	if err == nil {
-		err = fmt.Errorf("Too many retries")
+		err = fmt.Errorf("too many retries")
 	} else {
-		err = fmt.Errorf("Failed to set status for operation after too many retries: %v", err)
+		err = fmt.Errorf("failed to set status `Failed` for operation after too many retries: %v", err)
 	}
 	return op, retry, err
 }
