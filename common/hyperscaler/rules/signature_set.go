@@ -22,9 +22,9 @@ func NewSignatureSet(results []*ParsingResult) *SignatureSet {
 }
 
 func (s *SignatureSet) ContainsMirrored(rule *Rule) []*ParsingResult {
-    mirroredSignatureKey := rule.MirroredSignature()
+	mirroredSignatureKey := rule.MirroredSignature()
 
-    mirroredSignatureItems, _ := s.items[mirroredSignatureKey]
+	mirroredSignatureItems, _ := s.items[mirroredSignatureKey]
 
-    return  mirroredSignatureItems
+	return mirroredSignatureItems
 }

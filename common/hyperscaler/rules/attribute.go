@@ -18,7 +18,7 @@ type Attribute struct {
 }
 
 func (a Attribute) HasLiteral(rule *Rule) bool {
-    value := a.Getter(rule)
+	value := a.Getter(rule)
 	return value != "*" && value != ""
 }
 

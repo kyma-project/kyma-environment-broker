@@ -11,15 +11,15 @@ type Evaluator struct {
 }
 
 func NewEvaluator(rules []*Rule) *Evaluator {
-    evaluator := &Evaluator{
-        rules: make(map[string][]*Rule),
-    }
+	evaluator := &Evaluator{
+		rules: make(map[string][]*Rule),
+	}
 
 	for _, rule := range rules {
 		if _, exists := evaluator.rules[rule.Plan]; !exists {
 			evaluator.rules[rule.Plan] = make([]*Rule, 0)
 		}
-		evaluator.rules[rule.Plan] = append(evaluator.rules[rule.Plan], rule)	
+		evaluator.rules[rule.Plan] = append(evaluator.rules[rule.Plan], rule)
 	}
 
 	return evaluator
@@ -42,5 +42,5 @@ func (e *Evaluator) Evaluate(matchableAttributes *MatchableAttributes) ([]*Rule,
 	}
 
 	// apply one found rule
-    return matchedRules, nil
+	return matchedRules, nil
 }

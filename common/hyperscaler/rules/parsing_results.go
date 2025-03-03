@@ -4,7 +4,7 @@ import "fmt"
 
 type ParsingResults struct {
 	resolvedRules map[string]*ParsingResult
-	uniquenessSet map[string]*ParsingResult 
+	uniquenessSet map[string]*ParsingResult
 	uniqueResults []*ParsingResult
 
 	Results []*ParsingResult
@@ -33,7 +33,7 @@ func NewParsingResults() *ParsingResults {
 	}
 }
 
-func (p* ParsingResults) IsResolved(resolvingKey string) bool {
+func (p *ParsingResults) IsResolved(resolvingKey string) bool {
 	_, resolvingRuleExists := p.resolvedRules[resolvingKey]
 	return resolvingRuleExists
 }
@@ -72,7 +72,6 @@ func (p *ParsingResults) CheckUniqueness() {
 	p.Results = p.uniqueResults
 }
 
-
 func (p *ParsingResults) CheckSignatures() {
 	uniqueResults := make([]*ParsingResult, 0, len(p.Results))
 	proposedResolutions := make(map[string]bool)
@@ -94,7 +93,7 @@ func (p *ParsingResults) CheckSignatures() {
 			possibleResolvingRule := result.Rule.Combine(*mirroredSignatureItem.Rule)
 
 			resolvingKey := possibleResolvingRule.StringNoLabels()
-			
+
 			_, alreadyProposed := proposedResolutions[resolvingKey]
 
 			if !p.IsResolved(resolvingKey) && !alreadyProposed {
@@ -111,4 +110,3 @@ func (p *ParsingResults) CheckSignatures() {
 
 	p.Results = uniqueResults
 }
-

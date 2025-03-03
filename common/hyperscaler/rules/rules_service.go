@@ -123,7 +123,7 @@ func (rs *RulesService) FailOnParsingErrors() error {
 			buffer := ""
 			var printer *Printer = NewNoColor(func(format string, a ...interface{}) {
 				buffer += fmt.Sprintf(format, a...)
-			})			
+			})
 
 			printer.Print(rs.Parsed.Results, nil)
 			log.Fatalf("Parsing errors occurred during rules parsing")

@@ -1,7 +1,6 @@
 package rules
 
 import (
-
 	"github.com/google/uuid"
 )
 
@@ -21,7 +20,7 @@ func NewColored(print Printf) *Printer {
 		colorOk:      "\033[32m",
 		colorNeutral: "\033[0m",
 		colorMatched: "\033[34m",
-		print: print,
+		print:        print,
 	}
 }
 
@@ -31,7 +30,7 @@ func NewNoColor(print Printf) *Printer {
 		colorOk:      "",
 		colorNeutral: "",
 		colorMatched: "",
-		print: print,
+		print:        print,
 	}
 }
 

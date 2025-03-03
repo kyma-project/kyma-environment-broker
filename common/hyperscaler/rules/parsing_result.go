@@ -10,22 +10,20 @@ type ParsingResult struct {
 	Rule *Rule
 	// array with errors that occurred during parsing of rule entry
 	ParsingErrors []error
-	
+
 	// array with errors that occurred after successful rule parsing
 	ProcessingErrors []error
 }
 
-
 func NewParsingResult(originalRule string, rule *Rule) *ParsingResult {
 	return &ParsingResult{
-		ID: uuid.New(),
-		OriginalRule: originalRule,
-		ParsingErrors: make([]error, 0),
+		ID:               uuid.New(),
+		OriginalRule:     originalRule,
+		ParsingErrors:    make([]error, 0),
 		ProcessingErrors: make([]error, 0),
-		Rule: rule,
+		Rule:             rule,
 	}
 }
-
 
 func (r *ParsingResult) HasParsingErrors() bool {
 	return len(r.ParsingErrors) > 0
@@ -47,5 +45,3 @@ func (r *ParsingResult) AddProcessingError(err error) {
 func (r *ParsingResult) AddParsingError(err error) {
 	r.ParsingErrors = append(r.ParsingErrors, err)
 }
-
-
