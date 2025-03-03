@@ -251,12 +251,12 @@ func AwsMachinesNames(additionalMachines bool) []string {
 			"c7i.8xlarge",
 			"c7i.12xlarge",
 			"c7i.16xlarge",
-			"g4dn.xlarge",
-			"g4dn.2xlarge",
-			"g4dn.4xlarge",
-			"g4dn.8xlarge",
-			"g4dn.12xlarge",
-			"g4dn.16xlarge",
+			"g6.xlarge",
+			"g6.2xlarge",
+			"g6.4xlarge",
+			"g6.8xlarge",
+			"g6.12xlarge",
+			"g6.16xlarge",
 		)
 	}
 
@@ -289,12 +289,12 @@ func AwsMachinesDisplay(additionalMachines bool) map[string]string {
 		machines["c7i.8xlarge"] = "c7i.8xlarge (32vCPU, 64GB RAM)"
 		machines["c7i.12xlarge"] = "c7i.12xlarge (48vCPU, 96GB RAM)"
 		machines["c7i.16xlarge"] = "c7i.16xlarge (64vCPU, 128GB RAM)"
-		machines["g4dn.xlarge"] = "g4dn.xlarge (1GPU, 4vCPU, 16GB RAM)"
-		machines["g4dn.2xlarge"] = "g4dn.2xlarge (1GPU, 8vCPU, 32GB RAM)"
-		machines["g4dn.4xlarge"] = "g4dn.4xlarge (1GPU, 16vCPU, 64GB RAM)"
-		machines["g4dn.8xlarge"] = "g4dn.8xlarge (1GPU, 32vCPU, 128GB RAM)"
-		machines["g4dn.12xlarge"] = "g4dn.12xlarge (4GPU, 48vCPU, 192GB RAM)"
-		machines["g4dn.16xlarge"] = "g4dn.16xlarge (1GPU, 64vCPU, 256GB RAM)"
+		machines["g6.xlarge"] = "g6.xlarge (1GPU, 4vCPU, 16GB RAM)"
+		machines["g6.2xlarge"] = "g6.2xlarge (1GPU, 8vCPU, 32GB RAM)"
+		machines["g6.4xlarge"] = "g6.4xlarge (1GPU, 16vCPU, 64GB RAM)"
+		machines["g6.8xlarge"] = "g6.8xlarge (1GPU, 32vCPU, 128GB RAM)"
+		machines["g6.12xlarge"] = "g6.12xlarge (4GPU, 48vCPU, 192GB RAM)"
+		machines["g6.16xlarge"] = "g6.16xlarge (1GPU, 64vCPU, 256GB RAM)"
 	}
 
 	return machines
@@ -326,6 +326,10 @@ func AzureMachinesNames(additionalMachines bool) []string {
 			"Standard_F32s_v2",
 			"Standard_F48s_v2",
 			"Standard_F64s_v2",
+			"Standard_NC4as_T4_v3",
+			"Standard_NC8as_T4_v3",
+			"Standard_NC16as_T4_v3",
+			"Standard_NC64as_T4_v3",
 		)
 	}
 
@@ -357,6 +361,10 @@ func AzureMachinesDisplay(additionalMachines bool) map[string]string {
 		machines["Standard_F32s_v2"] = "Standard_F32s_v2 (32vCPU, 64GB RAM)"
 		machines["Standard_F48s_v2"] = "Standard_F48s_v2 (48vCPU, 96GB RAM)"
 		machines["Standard_F64s_v2"] = "Standard_F64s_v2 (64vCPU, 128GB RAM)"
+		machines["Standard_NC4as_T4_v3"] = "Standard_NC4as_T4_v3 (1GPU, 4vCPU, 28GB RAM)"
+		machines["Standard_NC8as_T4_v3"] = "Standard_NC8as_T4_v3 (1GPU, 8vCPU, 56GB RAM)"
+		machines["Standard_NC16as_T4_v3"] = "Standard_NC16as_T4_v3 (1GPU, 16vCPU, 110GB RAM)"
+		machines["Standard_NC64as_T4_v3"] = "Standard_NC64as_T4_v3 (4GPU, 64vCPU, 440GB RAM)"
 	}
 
 	return machines
