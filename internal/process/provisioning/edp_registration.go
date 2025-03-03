@@ -30,6 +30,11 @@ type EDPRegistrationStep struct {
 	config           edp.Config
 }
 
+const (
+	edpRetryInterval = 10 * time.Second
+	edpRetryTimeout  = 30 * time.Minute
+)
+
 func NewEDPRegistrationStep(os storage.Operations, client EDPClient, config edp.Config) *EDPRegistrationStep {
 	step := &EDPRegistrationStep{
 		client: client,
@@ -89,8 +94,8 @@ func (s *EDPRegistrationStep) Run(operation internal.Operation, log *slog.Logger
 		op.EDPCreated = true
 	}, log)
 	if repeat != 0 {
-		log.Error("cannot save operation")
-		return newOp, 5 * time.Second, nil
+		log.Error("cannot update operation")
+		return s.operationManager.RetryOperation(newOp, "cannot update operation", err, dbRetryInterval, dbRetryTimeout, log)
 	}
 
 	return newOp, 0, nil
@@ -100,11 +105,8 @@ func (s *EDPRegistrationStep) handleError(operation internal.Operation, err erro
 	log.Warn(fmt.Sprintf("%s: %s", msg, err))
 
 	if kebError.IsTemporaryError(err) {
-		since := time.Since(operation.UpdatedAt)
-		if since < time.Minute*30 {
-			log.Warn(fmt.Sprintf("request to EDP failed: %s. Retry...", err))
-			return operation, 10 * time.Second, nil
-		}
+		log.Warn(fmt.Sprintf("request to EDP failed: %s. Retry...", err))
+		return s.operationManager.RetryOperation(operation, "request to EDP failed", err, edpRetryInterval, edpRetryTimeout, log)
 	}
 
 	if !s.config.Required {
