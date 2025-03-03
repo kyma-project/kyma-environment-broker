@@ -103,22 +103,20 @@ func (s *EDPRegistrationStep) Run(operation internal.Operation, log *slog.Logger
 
 func (s *EDPRegistrationStep) handleError(operation internal.Operation, err error, log *slog.Logger, msg string) (internal.Operation, time.Duration, error) {
 	log.Warn(fmt.Sprintf("%s: %s", msg, err))
-
-	if kebError.IsTemporaryError(err) {
-		log.Warn(fmt.Sprintf("request to EDP failed: %s. Retry...", err))
-		if s.config.Required {
+	if s.config.Required {
+		if kebError.IsTemporaryError(err) {
+			log.Warn(fmt.Sprintf("request to EDP failed: %s. Retry...", err))
 			return s.operationManager.RetryOperation(operation, "request to EDP failed", err, edpRetryInterval, edpRetryTimeout, log)
-		} else {
+		}
+		return s.operationManager.OperationFailed(operation, msg, err, log)
+	} else {
+		if kebError.IsTemporaryError(err) {
+			log.Warn(fmt.Sprintf("request to EDP failed: %s. Retry...", err))
 			return s.operationManager.RetryOperationWithoutFail(operation, s.Name(), "request to EDP failed", edpRetryInterval, edpRetryTimeout, log, err)
 		}
-	}
-
-	if !s.config.Required {
-		log.Warn(fmt.Sprintf("Step %s failed. Step is not required. Skip step.", s.Name()))
+		log.Warn(fmt.Sprintf("Step %s failed. Step is not required. Quit step.", s.Name()))
 		return operation, 0, nil
 	}
-
-	return s.operationManager.OperationFailed(operation, msg, err, log)
 }
 
 func (s *EDPRegistrationStep) selectEnvironmentKey(region string, log *slog.Logger) string {

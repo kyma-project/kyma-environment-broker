@@ -56,7 +56,7 @@ func (s *EDPDeregistrationStep) Run(operation internal.Operation, log *slog.Logg
 	instances, err := s.dbInstances.FindAllInstancesForSubAccounts([]string{operation.SubAccountID})
 	if err != nil {
 		log.Error(fmt.Sprintf("Unable to get instances for given subaccount: %s", err.Error()))
-		return operation, time.Second, nil
+		return s.operationManager.RetryOperation(operation, "unable to get instances for given subaccount", err, dbRetryInterval, dbRetryTimeout, log)
 	}
 	// check if there is any other instance for given subaccount and such instances are not being deprovisioned
 	numberOfInstancesWithEDP := 0
@@ -65,7 +65,7 @@ func (s *EDPDeregistrationStep) Run(operation internal.Operation, log *slog.Logg
 		lastOperation, err := s.dbOperations.GetLastOperation(instance.InstanceID)
 		if err != nil {
 			log.Error(fmt.Sprintf("Unable to get last operation for given instance (Id=%s): %s", instance.InstanceID, err.Error()))
-			return operation, time.Second, nil
+			return s.operationManager.RetryOperation(operation, "unable to get last operation for given instance", err, dbRetryInterval, dbRetryTimeout, log)
 		}
 		if lastOperation.Type != internal.OperationTypeDeprovision {
 			numberOfInstancesWithEDP = numberOfInstancesWithEDP + 1

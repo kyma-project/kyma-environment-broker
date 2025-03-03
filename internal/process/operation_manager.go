@@ -136,11 +136,11 @@ func (om *OperationManager) RetryOperationWithoutFail(operation internal.Operati
 		return op, repeat, err
 	}
 
-	op.EventErrorf(fmt.Errorf(description), "step %s failed retries: operation continues", stepName)
+	op.EventErrorf(fmt.Errorf(description), "step %s failed all retries: operation continues", stepName)
 	if opErr != nil {
-		log.Error(fmt.Sprintf("omitting after %s of failing retries, last error: %s", maxTime.String(), opErr.Error()))
+		log.Error(fmt.Sprintf("quiting step after %s of failing retries, last error: %s", maxTime.String(), opErr.Error()))
 	} else {
-		log.Error(fmt.Sprintf("omitting after %s of failing retries", maxTime.String()))
+		log.Error(fmt.Sprintf("quiting step after %s of failing retries", maxTime.String()))
 	}
 	return op, 0, nil
 }
