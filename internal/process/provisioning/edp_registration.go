@@ -176,6 +176,6 @@ func (s *EDPRegistrationStep) handleConflict(operation internal.Operation, log *
 	}
 
 	log.Info("Retrying...")
-	// this retry operation is guarded by operation timeout at staged manager level
+	// CAVEAT this retry operation is guarded by operation timeout at staged manager level, and it fails eventually after timeout
 	return operation, time.Second, nil
 }
