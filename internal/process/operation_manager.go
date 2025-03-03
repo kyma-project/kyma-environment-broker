@@ -180,7 +180,7 @@ func (om *OperationManager) UpdateOperation(operation internal.Operation, update
 	return *op, 0, nil
 }
 
-func (om *OperationManager) MarkStepAsExcutedButNotCompleted(operation internal.Operation, stepName string, msg string, log *slog.Logger) (internal.Operation, time.Duration, error) {
+func (om *OperationManager) MarkStepAsExecutedButNotCompleted(operation internal.Operation, stepName string, msg string, log *slog.Logger) (internal.Operation, time.Duration, error) {
 	op, repeat, err := om.UpdateOperation(operation, func(operation *internal.Operation) {
 		operation.ExcutedButNotCompleted = append(operation.ExcutedButNotCompleted, stepName)
 	}, log)

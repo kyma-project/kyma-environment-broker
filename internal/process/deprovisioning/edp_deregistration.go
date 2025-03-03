@@ -107,9 +107,10 @@ func (s *EDPDeregistrationStep) handleError(operation internal.Operation, err er
 	}
 
 	errMsg := fmt.Sprintf("Step %s failed. EDP data have not been deleted.", s.Name())
-	operation, repeat, err := s.operationManager.MarkStepAsExcutedButNotCompleted(operation, s.Name(), errMsg, log)
+	operation, repeat, err := s.operationManager.MarkStepAsExecutedButNotCompleted(operation, s.Name(), errMsg, log)
 	if repeat != 0 {
-		return s.operationManager.RetryOperationWithoutFail(operation, s.Name(), "marking step as not completed failed", edpRetryInterval, edpRetryTimeout, log, err)
+		// caveat: this retry is guarded by the staged manager timeout for entire operation - and it could fail the operation eventually
+		return operation, repeat, err
 	}
 
 	log.Error(fmt.Sprintf("%s: %s", msg, err))
