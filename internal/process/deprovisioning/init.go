@@ -24,7 +24,6 @@ type InitStep struct {
 
 const (
 	opRetryInterval = 1 * time.Minute
-	opRetryTimeout  = 120 * time.Minute
 	dbRetryInterval = 10 * time.Second
 	dbRetryTimeout  = 1 * time.Minute
 )
@@ -44,10 +43,6 @@ func (s *InitStep) Name() string {
 }
 
 func (s *InitStep) Run(operation internal.Operation, log *slog.Logger) (internal.Operation, time.Duration, error) {
-	if time.Since(operation.CreatedAt) > s.operationTimeout {
-		log.Info(fmt.Sprintf("operation has reached the time limit: operation was created at: %s", operation.CreatedAt))
-		return s.operationManager.OperationFailed(operation, fmt.Sprintf("operation has reached the time limit: %s", s.operationTimeout), nil, log)
-	}
 
 	if operation.State != orchestration.Pending {
 		return operation, 0, nil
@@ -59,7 +54,7 @@ func (s *InitStep) Run(operation internal.Operation, log *slog.Logger) (internal
 	}
 	if !lastOp.IsFinished() {
 		log.Info(fmt.Sprintf("waiting for %s operation (%s) to be finished", lastOp.Type, lastOp.ID))
-		return s.operationManager.RetryOperation(operation, "waiting for operation to be finished", err, opRetryInterval, opRetryTimeout, log)
+		return s.operationManager.RetryOperation(operation, "waiting for operation to be finished", err, opRetryInterval, s.operationTimeout, log)
 	}
 
 	// read the instance details (it could happen that created deprovisioning operation has outdated one)
