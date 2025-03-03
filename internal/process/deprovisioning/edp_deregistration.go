@@ -43,6 +43,11 @@ func NewEDPDeregistrationStep(os storage.Operations, is storage.Instances, clien
 	return step
 }
 
+const (
+	edpRetryInterval = 10 * time.Second
+	edpRetryTimeout  = 30 * time.Minute
+)
+
 func (s *EDPDeregistrationStep) Name() string {
 	return "EDP_Deregistration"
 }
@@ -98,17 +103,13 @@ func (s *EDPDeregistrationStep) Run(operation internal.Operation, log *slog.Logg
 
 func (s *EDPDeregistrationStep) handleError(operation internal.Operation, err error, log *slog.Logger, msg string) (internal.Operation, time.Duration, error) {
 	if kebError.IsTemporaryError(err) {
-		since := time.Since(operation.UpdatedAt)
-		if since < time.Minute*30 {
-			log.Warn(fmt.Sprintf("request to EDP failed: %s. Retry...", err))
-			return operation, 10 * time.Second, nil
-		}
+		return s.operationManager.RetryOperationWithoutFail(operation, s.Name(), "request to EDP failed", edpRetryInterval, edpRetryTimeout, log, err)
 	}
 
 	errMsg := fmt.Sprintf("Step %s failed. EDP data have not been deleted.", s.Name())
 	operation, repeat, err := s.operationManager.MarkStepAsExcutedButNotCompleted(operation, s.Name(), errMsg, log)
 	if repeat != 0 {
-		return operation, repeat, err
+		return s.operationManager.RetryOperationWithoutFail(operation, s.Name(), "marking step as not completed failed", edpRetryInterval, edpRetryTimeout, log, err)
 	}
 
 	log.Error(fmt.Sprintf("%s: %s", msg, err))
