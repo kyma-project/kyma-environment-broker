@@ -106,7 +106,11 @@ func (s *EDPRegistrationStep) handleError(operation internal.Operation, err erro
 
 	if kebError.IsTemporaryError(err) {
 		log.Warn(fmt.Sprintf("request to EDP failed: %s. Retry...", err))
-		return s.operationManager.RetryOperation(operation, "request to EDP failed", err, edpRetryInterval, edpRetryTimeout, log)
+		if s.config.Required {
+			return s.operationManager.RetryOperation(operation, "request to EDP failed", err, edpRetryInterval, edpRetryTimeout, log)
+		} else {
+			return s.operationManager.RetryOperationWithoutFail(operation, s.Name(), "request to EDP failed", edpRetryInterval, edpRetryTimeout, log, err)
+		}
 	}
 
 	if !s.config.Required {
