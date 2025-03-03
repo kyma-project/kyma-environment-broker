@@ -7,7 +7,6 @@ import (
 	"github.com/kyma-project/kyma-environment-broker/common/runtime"
 	"github.com/kyma-project/kyma-environment-broker/internal/broker"
 	"github.com/kyma-project/kyma-environment-broker/internal/euaccess"
-	"github.com/kyma-project/kyma-environment-broker/internal/provider"
 	"github.com/stretchr/testify/require"
 )
 
@@ -17,9 +16,8 @@ func TestGetLabelsSelector(t *testing.T) {
 		for _, clusterRegion := range broker.ClusterRegions {
 			for _, cloudProvider := range runtime.CloudProviders {
 				for _, plan := range broker.PlanNamesMapping {
-					effectiveRegion := provider.GetEffectiveRegionForSapConvergedCloud(&clusterRegion)
 
-					hypType, err := HypTypeFromCloudProviderWithRegion(cloudProvider, &effectiveRegion, &platformRegion)
+					hypType, err := HypTypeFromCloudProviderWithRegion(cloudProvider, &clusterRegion, &platformRegion)
 					require.NoError(t, err)
 
 					euAccess := euaccess.IsEURestrictedAccess(platformRegion)

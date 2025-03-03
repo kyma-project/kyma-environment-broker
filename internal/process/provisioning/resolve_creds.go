@@ -9,8 +9,6 @@ import (
 
 	"github.com/kyma-project/kyma-environment-broker/internal/euaccess"
 
-	"github.com/kyma-project/kyma-environment-broker/internal/provider"
-
 	"github.com/kyma-project/kyma-environment-broker/common/hyperscaler"
 	"github.com/kyma-project/kyma-environment-broker/common/hyperscaler/rules"
 	"github.com/kyma-project/kyma-environment-broker/internal"
@@ -43,9 +41,8 @@ func (s *ResolveCredentialsStep) Name() string {
 
 func (s *ResolveCredentialsStep) Run(operation internal.Operation, log *slog.Logger) (internal.Operation, time.Duration, error) {
 	cloudProvider := operation.InputCreator.Provider()
-	effectiveRegion := provider.GetEffectiveRegionForSapConvergedCloud(operation.ProvisioningParameters.Parameters.Region)
 
-	hypType, err := hyperscaler.HypTypeFromCloudProviderWithRegion(cloudProvider, &effectiveRegion, &operation.ProvisioningParameters.PlatformRegion)
+	hypType, err := hyperscaler.HypTypeFromCloudProviderWithRegion(cloudProvider, operation.ProvisioningParameters.Parameters.Region, &operation.ProvisioningParameters.PlatformRegion)
 	if err != nil {
 		msg := fmt.Sprintf("failing to determine the type of Hyperscaler to use for planID: %s", operation.ProvisioningParameters.PlanID)
 		log.Error(fmt.Sprintf("Aborting after %s", msg))

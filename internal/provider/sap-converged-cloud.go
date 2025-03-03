@@ -43,11 +43,3 @@ func (p *SapConvergedCloudInputProvider) Provide() Values {
 		FailureTolerance:     &p.FailureTolerance,
 	}
 }
-
-// TODO: Calculate the region parameter using default SapConvergedCloud region. This is to be removed when region is mandatory (Jan 2024).
-func GetEffectiveRegionForSapConvergedCloud(provisioningParametersRegion *string) string {
-	if provisioningParametersRegion != nil && *provisioningParametersRegion != "" {
-		return *provisioningParametersRegion
-	}
-	return DefaultSapConvergedCloudRegion
-}
