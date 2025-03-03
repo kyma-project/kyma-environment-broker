@@ -4,32 +4,27 @@ import (
 	"encoding/json"
 	"log"
 	"os"
-	"strings"
 
+	"github.com/google/uuid"
 	"github.com/kyma-project/kyma-environment-broker/common/hyperscaler/rules"
 	"github.com/spf13/cobra"
 	"gopkg.in/yaml.v2"
 )
-
-var colorError = "\033[0;31m"
-var colorOk= "\033[32m" 
-var colorNeutral = "\033[0m"
-var colorMatched = "\033[34m"
 
 func init() {
 	rootCmd.AddCommand(NewParseCmd())
 }
 
 type ParseCommand struct {
-	cobraCmd               *cobra.Command
-	rule 				 string
-	parser 				 rules.Parser
-	ruleFilePath 		 string
-	sort 			 bool
-	unique 			 bool
-	match 			 string
-	signature 			 bool
-	noColor 			 bool
+	cobraCmd     *cobra.Command
+	rule         string
+	parser       rules.Parser
+	ruleFilePath string
+	sort         bool
+	unique       bool
+	match        string
+	signature    bool
+	noColor      bool
 }
 
 func NewParseCmd() *cobra.Command {
@@ -67,8 +62,8 @@ func NewParseCmd() *cobra.Command {
 	hap parse -p -u  -f ./correct-rules.yaml -m '{"plan": "aws", "platformRegion": "cf-eu11", "hyperscalerRegion": "westeurope"}'
 		`,
 
-		RunE:    func(_ *cobra.Command, args []string) error { 
-			return cmd.Run() 
+		RunE: func(_ *cobra.Command, args []string) error {
+			return cmd.Run()
 		},
 	}
 	cmd.cobraCmd = cobraCmd
@@ -85,70 +80,56 @@ func NewParseCmd() *cobra.Command {
 	return cobraCmd
 }
 
-func (cmd *ParseCommand) Run() error {
-	cmd.parser = &rules.SimpleParser{}
+type ProcessingPair struct {
+	ParsingResults  *rules.ParsingResult
+	MatchingResults *rules.MatchingResult
+}
 
+func (cmd *ParseCommand) Run() error {
+
+	printer := rules.NewColored(cmd.cobraCmd.Printf)
 	if cmd.noColor {
-		colorError = ""
-		colorOk = ""
-		colorNeutral = ""
-		colorMatched = ""
+		printer = rules.NewNoColor(cmd.cobraCmd.Printf)
 	}
 
 	if cmd.match != "" && (!cmd.sort || !cmd.unique) {
 		cmd.cobraCmd.Printf("\tMatching is only supported when both priority and uniqueness flags are specified.\n")
 		return nil
 	}
-	
-	var entries []string
+
+	var rulesService *rules.RulesService
+	var err error
 	if cmd.ruleFilePath != "" {
-		conf := &conf{}
-		conf.getConf(cmd.ruleFilePath)
 		cmd.cobraCmd.Printf("Parsing rules from file: %s\n", cmd.ruleFilePath)
-		entries = conf.Rules
+		rulesService, err = rules.NewRulesServiceFromFile(cmd.ruleFilePath, cmd.sort, cmd.unique, cmd.signature)
 	} else {
-		entries = strings.Split(cmd.rule, ";")
+		rulesService, err = rules.NewRulesServiceFromString(cmd.rule, cmd.sort, cmd.unique, cmd.signature)
 	}
 
-	results := rules.NewParsingResults()
-
-	for _, entry := range entries {
-		rule, err := cmd.parser.Parse(entry)
-
-		results.Apply(entry, rule, err)
-	}
-
-	if cmd.sort {
-		results.Sort()
-	}
-
-	if cmd.unique {
-		results.CheckUniqueness()
-	}
-
-	if cmd.signature {
-		results.CheckSignatures()
-	}
-
-	if cmd.sort {
-		results.Sort()
+	if err != nil {
+		cmd.cobraCmd.Printf("Error: %s\n", err)
+		return nil
 	}
 
 	var testDataForMatching *rules.MatchableAttributes
-	if (cmd.match != "") {
+	if cmd.match != "" {
 		testDataForMatching = getTestData(cmd.match)
 	}
-	
-	Print(cmd, results, testDataForMatching)
-	
+
+	var matchingResults map[uuid.UUID]*rules.MatchingResult
+	if cmd.match != "" && testDataForMatching != nil {
+		matchingResults = rulesService.Match(testDataForMatching)
+	}
+
+	printer.Print(rulesService.Parsed.Results, matchingResults)
+
 	hasErrors := false
-	for _, result := range results.Results {
+	for _, result := range rulesService.Parsed.Results {
 		if result.HasErrors() {
 			hasErrors = true
 			break
 		}
 	}
-
 
 	if hasErrors {
 		cmd.cobraCmd.Printf("There are errors in your rule configuration. Fix above errors in your rule configuration and try again.\n")
@@ -156,96 +137,6 @@ func (cmd *ParseCommand) Run() error {
 	}
 
 	return nil
-}
-
-func Print(cmd *ParseCommand, results *rules.ParsingResults, testDataForMatching *rules.MatchableAttributes) {
-
-	if cmd.match != ""  && testDataForMatching != nil {
-		var lastMatch *rules.ParsingResult2 = nil
-		for _, result := range results.Results {
-			if !result.HasParsingErrors() {
-				result.Matched = result.Rule.Matched(testDataForMatching)
-				if result.Matched {
-					lastMatch = result
-				}
-			}
-		}
-
-		if lastMatch != nil {
-			lastMatch.FinalMatch = true
-		}
-	}
-
-	for _, result := range results.Results {
-
-		cmd.cobraCmd.Printf("-> ")
-		hasErrors := result.HasErrors()
-		if hasErrors {
-			cmd.cobraCmd.Printf("%s Error %s", colorError, colorNeutral)
-		} else {
-			cmd.cobraCmd.Printf("%s %5s %s", colorOk, "OK", colorNeutral)
-		}
-
-		if result.Rule != nil && !hasErrors {
-			cmd.cobraCmd.Printf(" %s", result.Rule.String())
-		}
-
-		if hasErrors {
-			cmd.cobraCmd.Printf(" %s", result.OriginalRule)
-			for _, err := range result.ParsingErrors {
-				cmd.cobraCmd.Printf("\n - %s", err)
-			}
-		
-			for _, err := range result.ProcessingErrors {
-				cmd.cobraCmd.Printf("\n - %s", err)
-			}
-
-		}
-
-		if (!hasErrors && cmd.match != "" && testDataForMatching != nil) {
-			if result.Matched && !result.FinalMatch {
-				cmd.cobraCmd.Printf("%s Matched %s ", colorMatched, colorNeutral)
-			} else if result.FinalMatch {
-				cmd.cobraCmd.Printf("%s Matched, Selected %s ", colorMatched, colorNeutral)
-			}
-		}
-
-		cmd.cobraCmd.Printf("\n")
-	}
-}
-
-func resolvingSignatureFormat(item rules.ParsingResult2) string {
-	positiveSignature := item.Rule.Plan
-	if item.Rule.PlatformRegion == "*" || item.Rule.PlatformRegion != "" {
-		positiveSignature += "PR:attr"
-	}
-
-	if item.Rule.HyperscalerRegion == "*" || item.Rule.HyperscalerRegion != "" {
-		positiveSignature += "HR:attr"
-	}
-	return positiveSignature
-}
-
-func resolvingSignature(item1, item2 rules.ParsingResult2) string{
-	resolvingSignature := item1.Rule.Plan
-
-	for _, attribute := range rules.InputAttributes {
-		if attribute.HasValue {
-			var valueRule *rules.Rule
-
-			if attribute.HasLiteral(item1.Rule) {
-				valueRule = item1.Rule
-			} else if attribute.HasLiteral(item2.Rule) {
-				valueRule = item2.Rule
-			} else {
-				continue
-			}
-
-			resolvingSignature += attribute.Name + "=" + attribute.Getter(valueRule)
-		}
-	}
-	
-	return resolvingSignature
 }
 
 type conf struct {
@@ -274,4 +165,3 @@ func getTestData(content string) *rules.MatchableAttributes {
 
 	return testData
 }
-

@@ -1,8 +1,10 @@
 package rules
 
-import "sort"
+import (
+	"sort"
+)
 
-func SortRuleEntries(entries []*ParsingResult2) []*ParsingResult2 {
+func SortRuleEntries(entries []*ParsingResult) []*ParsingResult {
 	sort.SliceStable(entries, func(i, j int) bool {
 		
 		if len(entries[i].ParsingErrors) != 0 && len(entries[j].ParsingErrors) != 0 {

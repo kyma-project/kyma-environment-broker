@@ -154,7 +154,9 @@ func TestParserHappyPath(t *testing.T) {
 }
 
 
-func ParserValidationTest(t *testing.T, parser Parser) {
+func TestParserValidation(t *testing.T) {
+
+    parser := &SimpleParser{}
 
     t.Run("with paranthesis only, no attributes", func(t *testing.T) {
         rule, err := parser.Parse("()")

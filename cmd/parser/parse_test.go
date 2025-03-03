@@ -23,8 +23,6 @@ type TestCase struct {
 	ExpectedRule string   `yaml:"expected"`
 }
 
-
-
 func (c *TestCases) loadCases() *TestCases {
 	yamlFile, err := os.ReadFile("rules/test-cases.yaml")
 	if err != nil {
@@ -39,7 +37,6 @@ func (c *TestCases) loadCases() *TestCases {
 }
 
 func (c *TestCases) writeCases() *TestCases {
-
     os.Remove("rules/test-cases.yaml")
 
 	bytes, err := yaml.Marshal(c)
@@ -64,7 +61,6 @@ func TestMain(t *testing.T) {
 		overwrite := false
 
 		for _, c := range cases.Case {
-
 			expected := strings.ReplaceAll(c.ExpectedRule, " ", "")
 			expected = strings.ReplaceAll(expected, "\t", "")
 			expected = strings.ReplaceAll(expected, "\n", "")
