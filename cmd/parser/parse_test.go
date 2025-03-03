@@ -37,7 +37,7 @@ func (c *TestCases) loadCases() *TestCases {
 }
 
 func (c *TestCases) writeCases() *TestCases {
-    os.Remove("rules/test-cases.yaml")
+	os.Remove("rules/test-cases.yaml")
 
 	bytes, err := yaml.Marshal(c)
 	if err != nil {
@@ -57,7 +57,7 @@ func TestMain(t *testing.T) {
 	t.Run("should verify parser command", func(t *testing.T) {
 		cases := TestCases{}
 		cases.loadCases()
- 
+
 		overwrite := false
 
 		for _, c := range cases.Case {
@@ -101,9 +101,9 @@ func TestMain(t *testing.T) {
 
 		}
 
-        if overwrite {
-            cases.writeCases()
-        }
+		if overwrite {
+			cases.writeCases()
+		}
 	})
 
 }

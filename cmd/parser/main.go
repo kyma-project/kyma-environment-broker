@@ -26,7 +26,6 @@ func setupCloseHandler() {
 	go func() {
 		sig := <-c
 		fmt.Printf("\r- Signal '%v' received from Terminal. Exiting...\n ", sig)
-	os.Exit(0)
+		os.Exit(0)
 	}()
 }
-
