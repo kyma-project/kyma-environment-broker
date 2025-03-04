@@ -3,12 +3,10 @@ package main
 import (
 	"encoding/json"
 	"log"
-	"os"
 
 	"github.com/google/uuid"
 	"github.com/kyma-project/kyma-environment-broker/common/hyperscaler/rules"
 	"github.com/spf13/cobra"
-	"gopkg.in/yaml.v2"
 )
 
 func init() {
@@ -138,19 +136,6 @@ func (cmd *ParseCommand) Run() error {
 
 type conf struct {
 	Rules []string `yaml:"rule"`
-}
-
-func (c *conf) getConf(file string) *conf {
-	yamlFile, err := os.ReadFile(file)
-	if err != nil {
-		log.Printf("yamlFile.Get err   #%v ", err)
-	}
-	err = yaml.Unmarshal(yamlFile, c)
-	if err != nil {
-		log.Fatalf("Unmarshal: %v", err)
-	}
-
-	return c
 }
 
 func getTestData(content string) *rules.MatchableAttributes {
