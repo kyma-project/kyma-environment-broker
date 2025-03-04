@@ -40,9 +40,6 @@ func NewParseCmd() *cobra.Command {
 	
 	# Parse multiple rules from a file using simple string splitting
 	hap parse -e 'azure(PR=westeurope); aws->EU' 
-	
-	# Parse a rule entry using antlr parser and lexer
-	hap parse -g -e 'azure(PR=westeurope)' 
 
 	# Parse multiple rules from a file:
 	# --- rules.yaml
