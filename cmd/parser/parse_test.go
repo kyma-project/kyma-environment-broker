@@ -13,6 +13,8 @@ import (
 	"gopkg.in/yaml.v2"
 )
 
+const RULES_TEST_CASES = "rules/test-cases.yaml"
+
 type TestCases struct {
 	Case []*TestCase `yaml:"cases"`
 }
@@ -24,7 +26,7 @@ type TestCase struct {
 }
 
 func (c *TestCases) loadCases() *TestCases {
-	yamlFile, err := os.ReadFile("rules/test-cases.yaml")
+	yamlFile, err := os.ReadFile(RULES_TEST_CASES)
 	if err != nil {
 		log.Printf("err while reading a file %v ", err)
 	}
@@ -37,14 +39,14 @@ func (c *TestCases) loadCases() *TestCases {
 }
 
 func (c *TestCases) writeCases() *TestCases {
-	os.Remove("rules/test-cases.yaml")
+	os.Remove(RULES_TEST_CASES)
 
 	bytes, err := yaml.Marshal(c)
 	if err != nil {
 		log.Fatalf("Marshal: %v", err)
 	}
 
-	err = os.WriteFile("rules/test-cases.yaml", bytes, os.ModePerm)
+	err = os.WriteFile(RULES_TEST_CASES, bytes, os.ModePerm)
 	if err != nil {
 		log.Printf("err while writing a file %v ", err)
 	}
