@@ -222,5 +222,4 @@ func getAttrValueSymbol(checkedValue, returnedValueTrue, returnedValueFalse stri
 	} else {
 		return returnedValueFalse
 	}
-
 }

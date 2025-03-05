@@ -15,8 +15,6 @@ type RulesService struct {
 	signature bool
 
 	parser Parser
-	// TODO: change to private
-	// TODO: change so that Rules Service Contains only the Parsed rules
 	Parsed *ParsingResults
 }
 
