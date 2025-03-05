@@ -119,6 +119,7 @@ func (r *Rule) String() string {
 		labelsStr += fmt.Sprintf("%s, ", key)
 	}
 
+	// remove the last ", "
 	labelsStr = labelsStr[:len(labelsStr)-2]
 
 	return fmt.Sprintf("%-50s %-50s", ruleStr, labelsStr)
