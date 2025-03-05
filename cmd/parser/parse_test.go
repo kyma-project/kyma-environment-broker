@@ -68,14 +68,7 @@ func TestMain(t *testing.T) {
 			log.Printf("Expected formatted:\n %s", c.ExpectedRule)
 			expected := rules.RemoveWhitespaces(c.ExpectedRule)
 
-			entries := ""
-			for i, rule := range c.Rules {
-				entries += rule
-
-				if i < len(c.Rules)-1 {
-					entries += "; "
-				}
-			}
+			entries := strings.Join(c.Rules, "; ")
 
 			cmd := NewParseCmd()
 			b := bytes.NewBufferString("")
