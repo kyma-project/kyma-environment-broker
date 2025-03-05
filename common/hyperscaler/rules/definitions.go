@@ -11,7 +11,7 @@ const (
 	PR_ATTR_NAME = "PR"
 	HR_ATTR_NAME = "HR"
 	EU_ATTR_NAME = "EU"
-	S_ATTR_NAME  = "S"
+	SHARED_ATTR_NAME  = "S"
 
 	HYPERSCALER_LABEL = "hyperscalerType"
 	EUACCESS_LABEL    = "euAccess"
@@ -78,7 +78,7 @@ var OutputAttributes = []Attribute{
 		},
 	},
 	{
-		Name:        S_ATTR_NAME,
+		Name:        SHARED_ATTR_NAME,
 		Description: "Shared",
 		Setter:      setShared,
 		Getter:      func(r *Rule) string { return strconv.FormatBool(r.Shared) },
