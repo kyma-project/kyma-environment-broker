@@ -11,11 +11,7 @@ type SimpleParser struct {
 func (g *SimpleParser) Parse(ruleEntry string) (*Rule, error) {
 	outputRule := NewRule()
 
-	ruleEntry = strings.ReplaceAll(ruleEntry, " ", "")
-	ruleEntry = strings.ReplaceAll(ruleEntry, "\t", "")
-	ruleEntry = strings.ReplaceAll(ruleEntry, "\n", "")
-	ruleEntry = strings.ReplaceAll(ruleEntry, "\r", "")
-	ruleEntry = strings.ReplaceAll(ruleEntry, "\f", "")
+	ruleEntry = RemoveWhitespaces(ruleEntry)
 
 	outputInputPart := strings.Split(ruleEntry, "->")
 

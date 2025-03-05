@@ -9,6 +9,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/kyma-project/kyma-environment-broker/common/hyperscaler/rules"
 	"github.com/stretchr/testify/require"
 	"gopkg.in/yaml.v2"
 )
@@ -65,11 +66,7 @@ func TestMain(t *testing.T) {
 		for _, c := range cases.Case {
 			log.Printf("Input:\n %s", c.Rules)
 			log.Printf("Expected formatted:\n %s", c.ExpectedRule)
-			expected := strings.ReplaceAll(c.ExpectedRule, " ", "")
-			expected = strings.ReplaceAll(expected, "\t", "")
-			expected = strings.ReplaceAll(expected, "\n", "")
-			expected = strings.ReplaceAll(expected, "\r", "")
-			expected = strings.ReplaceAll(expected, "\f", "")
+			expected := rules.RemoveWhitespaces(c.ExpectedRule)
 
 			entries := ""
 			for i, rule := range c.Rules {
@@ -95,11 +92,7 @@ func TestMain(t *testing.T) {
 				c.ExpectedRule = string(out)
 			} else {
 				log.Printf("Actual formatted:\n %s", out)
-				output := strings.ReplaceAll(string(out), " ", "")
-				output = strings.ReplaceAll(output, "\t", "")
-				output = strings.ReplaceAll(output, "\n", "")
-				output = strings.ReplaceAll(output, "\r", "")
-				output = strings.ReplaceAll(output, "\f", "")
+				output := rules.RemoveWhitespaces(string(out))
 
 				require.Equal(t, expected, strings.Trim(output, "\n"), fmt.Sprintf("While evaluating: %s", string(c.Name)))
 			}
@@ -110,5 +103,5 @@ func TestMain(t *testing.T) {
 			cases.writeCases()
 		}
 	})
-
 }
+
