@@ -131,26 +131,27 @@ func (r *Rule) StringNoLabels() string {
 	if r.ContainsInputAttributes {
 
 		ruleStr += fmt.Sprintf("(")
-
-		for _, attr := range InputAttributes {
-			attrStr := attr.String(r)
-			ruleStr += fmt.Sprintf("%s", attrStr)
-		}
-
-		ruleStr = ruleStr[:len(ruleStr)-2]
+		ruleStr = r.append(ruleStr, InputAttributes)
 		ruleStr += fmt.Sprintf(")")
 	}
 
 	if r.ContainsOutputAttributes {
 		ruleStr += fmt.Sprintf("-> ")
-
-		for _, attr := range OutputAttributes {
-			attrStr := attr.String(r)
-			ruleStr += fmt.Sprintf("%s", attrStr)
-		}
-
-		ruleStr = ruleStr[:len(ruleStr)-2]
+		ruleStr = r.append(ruleStr, OutputAttributes)
 	}
+
+	return ruleStr
+}
+
+func (r* Rule) append(ruleStr string, attributes []Attribute) string {
+	
+	for _, attr := range attributes {
+		attrStr := attr.String(r)
+		ruleStr += fmt.Sprintf("%s", attrStr)
+	}
+
+	// remove the last ", "
+	ruleStr = ruleStr[:len(ruleStr)-2]
 
 	return ruleStr
 }
