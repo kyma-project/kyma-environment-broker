@@ -33,7 +33,7 @@
             "pattern": "^[a-z0-9]([-a-z0-9]*[a-z0-9])?$"
           },
           "machineType": {
-            "description": "Specifies the type of the virtual machine.",
+            "description": "Specifies the type of the virtual machine. The machine type marked with “*” has limited availability and generates high cost.",
             "type": "string",
             "minLength": 1,
             "enum": [
@@ -83,10 +83,10 @@
               "Standard_F32s_v2": "Standard_F32s_v2 (32vCPU, 64GB RAM)",
               "Standard_F48s_v2": "Standard_F48s_v2 (48vCPU, 96GB RAM)",
               "Standard_F64s_v2": "Standard_F64s_v2 (64vCPU, 128GB RAM)",
-              "Standard_NC4as_T4_v3": "Standard_NC4as_T4_v3 (1GPU, 4vCPU, 28GB RAM)",
-              "Standard_NC8as_T4_v3": "Standard_NC8as_T4_v3 (1GPU, 8vCPU, 56GB RAM)",
-              "Standard_NC16as_T4_v3": "Standard_NC16as_T4_v3 (1GPU, 16vCPU, 110GB RAM)",
-              "Standard_NC64as_T4_v3": "Standard_NC64as_T4_v3 (4GPU, 64vCPU, 440GB RAM)"
+              "Standard_NC4as_T4_v3": "Standard_NC4as_T4_v3 (1GPU, 4vCPU, 28GB RAM)*",
+              "Standard_NC8as_T4_v3": "Standard_NC8as_T4_v3 (1GPU, 8vCPU, 56GB RAM)*",
+              "Standard_NC16as_T4_v3": "Standard_NC16as_T4_v3 (1GPU, 16vCPU, 110GB RAM)*",
+              "Standard_NC64as_T4_v3": "Standard_NC64as_T4_v3 (4GPU, 64vCPU, 440GB RAM)*"
             }
           },
           "haZones": {
