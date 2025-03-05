@@ -34,7 +34,7 @@ Every pool that a rule entry represents must be preconfigured in a Gardener clus
 
 ## Rule Format 
 
-The following example shows the Rule Entry format:
+See the following example of a rule entry format:
 
 ```
 PLAN(INPUT_ATTR_1=VAL_1, INPUT_ATTR_2=VAL_2, ..., INPUT_ATTR_N=VAL_N) -> OUTPUT_ATTR_1, OUTPUT_ATTR_2, ..., OUTPUT_ATTR_M
@@ -42,19 +42,19 @@ PLAN(INPUT_ATTR_1=VAL_1, INPUT_ATTR_2=VAL_2, ..., INPUT_ATTR_N=VAL_N) -> OUTPUT_
 
 Every rule entry consists of input and output attributes separated by the arrow symbol - `->`.
 Input attributes are used to match rule entry with the SKR request and to modify [search labels](#search-labels). Output attributes are only used to modify the [search labels](#search-labels).
-In its minimal form each rule consists of a `PLAN` that the rule applies to.
-In its extended form a rule entry contains lists of input attributes and its values passed in the form of `ATTR=VAL` pairs in parantheses.
+In its minimal form, each rule consists of a **PLAN** that the rule applies to.
+In its extended form, a rule entry contains lists of input attributes. Their values are passed as `ATTR=VAL` pairs in parentheses.
 
-> ![NOTE]
-> The following rule entries are considered valid and the same:
+> [!NOTE]
+> If you do not provide any values, use empty parentheses or do not use them at all, for example:
 > * `aws`
 > * `aws()`
 
-Output attributes does not support values.
+Output attributes do not support values.
 Description of when the rule is triggered can be found in the [Rule Evaluation](#evaluation) section.
 Rule attributes are described in [Rule Attributes](#rule-attributes) section. 
 
-Currently, possible OUTPUT_ATTR_x attributes values are `S` or `EU`.
+The possible **OUTPUT_ATTR_x** attribute values are `S` or `EU`.
 
 ```
 hap: 
@@ -63,16 +63,16 @@ hap:
 ```
 
 The input attribute types include **platformRegion** (`PR`) and **hyperscalerRegion** (`HR`). The output attribute types include **shared** (`S`) and **euAccess** (`EU`). 
-Each attribute can be used at most once in a single rule entry.
-**shared** and **euAccess** attributes are used only to apply their labels if rest of matched attributes are equal to SKR's values. 
+You can only use each attribute once in a single rule entry.
+Use the **shared** and **euAccess** attributes only to apply their labels if the other matched attributes are equal to Kyma runtime's values. 
 
 ## Rule Evaluation
 
-HAP evaluates a set of rules to determine what labels to use when querying secret bindings.
+During cluster provisioning, HAP evaluates a set of rules to determine which labels to use when querying Secret bindings.
 Rule is evaluated during cluster provisioning. Rule entries are analyzed one by one.
 Input attributes from every entry are compared with values from SKR input. If they are the same then the rule entry is considered matched.
-If there is more than one triggered rule then only one is selected in accordance to priority rules described in the [Priority](#priority) section.
-If there are no rule entries trigered then the error is returned. No fallback behaviour is defined in such case.
+If more than one rule is triggered, only one is selected, as described in the [Priority](#uniqueness-and-priority) section.
+If no rule entries are triggered, an error is returned. In this case, no fallback behavior is defined.
 
 
 
@@ -133,7 +133,7 @@ hap:
     - gcp(HR=us-central1)             # pool: hyperscalerType: gcp_us-central1,
 ```
 
-### Shared & EU Access attribute
+### Shared and EU Access Attributes
 
 The `shared` and `euAccess` attributes does not correspond to any SKR's property. Those atributes are only used to add search labels. If the rule entry contains `shared` or `euAccess` attributes then when triggered, a `shared: true` or `euAccess: true` labels are added to the [search labels](#search-labels). Shared label on a SecretBindings marks it as assignable to more than one SKR and euAccess is used to mark EU regions (more on that can be found in [HAP Pool document](03-10-hyperscaler-account-pool.md)). Below configuration specifies that all gcp clusters will use the same pool of shared secret bindings marked with labels `hyperscalerType: gcp`, `shared: true` and azure clusters in the region cf-ch20 will use a pool of secret bindings marked with labels `hyperscalerType: azure`, `euAccess: true`.
 
@@ -157,12 +157,12 @@ hap:
 
 The attributes that support `*` are: `PR`, `HR`.
 
-> ![NOTE]
+> [!NOTE]
 > The above configuration example effectively disables usage of SecretBindings labeled only with `hyperscalerType: gcp`.
 
 
 
-### Atributes Summary
+### Attributes Summary
 
 The following table summarizes the attributes that can be used in the rule entry. Its columns define:
 * Name and symbol - the latter is used in rule entries.
@@ -175,7 +175,7 @@ The following table summarizes the attributes that can be used in the rule entry
 |----------------------	|------------------------------------------------------------------------------------------------------------------------------------	|-----------------	|------------------	|---------------------------------------------------------------------------------------------------	|
 | Platform Region (PR) 	| string, platform regions as defined in https://help.sap.com/docs/btp/sap-business-technology-platform/regions-for-kyma-environment 	| true            	| false            	| hyperscalerType: `<providerType>_<PR>` or hyperscalerType: `<providerType>_<PR>_<HR>` if used with HR 	|
 | Hyperscaler Region (HR)  	| string, hyperscaler region as defined in https://help.sap.com/docs/btp/sap-business-technology-platform/regions-for-kyma-environment   	| true            	| false            	| hyperscalerType: `<providerType>_<HR>` or hyperscalerType: `<providerType>_<PR>_<HR>` if used with PR 	|
-| Eu Access (EU)       	| no value                                                                                                                           	| false           	| true             	| euAccess: true                                                                                    	|
+| EU Access (EU)       	| no value                                                                                                                           	| false           	| true             	| euAccess: true                                                                                    	|
 | Shared (S)           	| no value                                                                                                                           	| false           	| true             	| shared: true                                                                                      	|
 
 ## Uniqnuess & Priority
@@ -212,21 +212,20 @@ aws(PR=cf-eu11, HR=westeu) -> EU, S   # search labels: hyperscalerType: aws_cf-e
 
 ## Validation
 
-KEB validates HAP Rules during startup. If the configuration is invalid, KEB will not start and an error message will be displayed in the logs. 
+KEB validates HAP rules during startup. If the configuration is invalid, KEB does not start, and an error message is displayed in the logs. 
 
-The constraints used for validation during KEB startup include:
+The constraints used for validation during KEB startup include the following:
 * Rules format check - all the rules must comply with the format specified above.
 * Every supported plan needs at least one rule entry, if no rule entry is defined for a plan then an error is returned during KEB startup.
 * Uniqueness validation check - KEB checks if all rule entries are unique in the scope of the rule. Specifying more than one entry with the same number of identification attributes is prohibited. If more than one such attribute is specified then the error is returned failing KEB startup. For more details see [Uniqnuess & Priority](#uniqnuess--priority) section. 
-
 
 ## Initial Configuration
 
 The last example shows initial configuration created to mimic the current bahaviour of KEB at the time of writing the document. The configuration enforces that:
 * azure, aws, gcp have their own pools of dedicated bindings.
 * free plan uses aws or azure dedicated bindings depending on the provider value.
-* gcp clusters in the region cf-sa30 use the pool of secret bindings marked with labels: `hyperscalerType: gcp_cf-sa30`,
-* sap-converged-cloud clusters use the pool of secret bindings marked with labels: `hyperscalerType: openstack_<HYPERSCALER_REGION>` and all these pools are shared.
+* gcp clusters in the cf-sa30 region use the pool of secret bindings marked with the `hyperscalerType: gcp_cf-sa30` label.
+* sap-converged-cloud clusters use the pool of secret bindings marked with the `hyperscalerType: openstack_<HYPERSCALER_REGION>` label, and all these pools are shared.
 * trial clusters can use one of two pools of shared secret bindings marked with labels: `hyperscalerType: azure` or `hyperscalerType: aws` depending on the used trial provider type.
 * azure clusters in the region cf-ch20 and aws clusters in the region cf-eu11 have their own dedicated pools and are euAccess specific.
 
