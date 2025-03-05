@@ -61,6 +61,8 @@ func TestMain(t *testing.T) {
 		overwrite := false
 
 		for _, c := range cases.Case {
+			log.Printf("Input:\n %s", c.Rules)
+			log.Printf("Expected formatted:\n %s", c.ExpectedRule)
 			expected := strings.ReplaceAll(c.ExpectedRule, " ", "")
 			expected = strings.ReplaceAll(expected, "\t", "")
 			expected = strings.ReplaceAll(expected, "\n", "")
@@ -90,6 +92,7 @@ func TestMain(t *testing.T) {
 			if overwrite {
 				c.ExpectedRule = string(out)
 			} else {
+				log.Printf("Actual formatted:\n %s", out)
 				output := strings.ReplaceAll(string(out), " ", "")
 				output = strings.ReplaceAll(output, "\t", "")
 				output = strings.ReplaceAll(output, "\n", "")
