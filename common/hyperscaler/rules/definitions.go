@@ -8,10 +8,10 @@ import (
 )
 
 const (
-	PR_ATTR_NAME = "PR"
-	HR_ATTR_NAME = "HR"
-	EU_ATTR_NAME = "EU"
-	SHARED_ATTR_NAME  = "S"
+	PR_ATTR_NAME     = "PR"
+	HR_ATTR_NAME     = "HR"
+	EU_ATTR_NAME     = "EU"
+	SHARED_ATTR_NAME = "S"
 
 	HYPERSCALER_LABEL = "hyperscalerType"
 	EUACCESS_LABEL    = "euAccess"
@@ -33,11 +33,7 @@ var InputAttributes = []Attribute{
 		output:          false,
 		HasValue:        true,
 		ApplyLabel: func(r *Rule, labels map[string]string) map[string]string {
-			if labels[HYPERSCALER_LABEL] == "" {
-				labels[HYPERSCALER_LABEL] = r.Plan
-			} else {
-				labels[HYPERSCALER_LABEL] += "_" + r.PlatformRegion
-			}
+			labels[HYPERSCALER_LABEL] += "_" + r.PlatformRegion
 			return labels
 		},
 	},
@@ -49,13 +45,8 @@ var InputAttributes = []Attribute{
 		input:       true,
 		output:      false,
 		HasValue:    true,
-
 		ApplyLabel: func(r *Rule, labels map[string]string) map[string]string {
-			if labels[HYPERSCALER_LABEL] == "" {
-				labels[HYPERSCALER_LABEL] = r.Plan
-			} else {
-				labels[HYPERSCALER_LABEL] += "_" + r.HyperscalerRegion
-			}
+			labels[HYPERSCALER_LABEL] += "_" + r.HyperscalerRegion
 			return labels
 		},
 	},
