@@ -80,7 +80,7 @@ func (p *ParsingResults) CheckSignatures() {
 
 		var mirroredSignatureError error = nil
 
-		mirrored := signatureSet.ContainsMirrored(result.Rule)
+		mirrored := signatureSet.Mirrored(result.Rule)
 
 		for _, mirroredSignatureItem := range mirrored {
 
