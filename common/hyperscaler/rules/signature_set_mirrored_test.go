@@ -1,0 +1,27 @@
+package rules
+
+import (
+	"testing"
+
+	"github.com/kyma-project/kyma-environment-broker/internal/broker"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+)
+
+func TestSignatureSet_Mirrored(t *testing.T) {
+
+	t.Run("should return empty list for non existing signature", func(t *testing.T) {
+		rule1 := NewRule()
+
+		signatureSet := NewSignatureSet([]*ParsingResult{})
+
+		rule1.SetPlan("aws", &broker.EnablePlans{"aws"})
+		mirroredResults := signatureSet.Mirrored(rule1)
+
+		assert.Nil(t, mirroredResults)
+ 
+        for _, _ = range mirroredResults {
+            require.Fail(t, "should not return any result")
+        }
+	})
+}
