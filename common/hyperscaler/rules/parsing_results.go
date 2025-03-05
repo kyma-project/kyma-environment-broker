@@ -56,7 +56,6 @@ func (p *ParsingResults) CheckUniqueness() {
 		if !alreadyExists {
 
 			p.uniquenessSet[key] = result
-			p.uniqueResults = append(p.uniqueResults, result)
 
 		} else {
 
@@ -64,9 +63,10 @@ func (p *ParsingResults) CheckUniqueness() {
 
 			result.AddProcessingError(err)
 
-			p.uniqueResults = append(p.uniqueResults, result)
-
 		}
+	
+		p.uniqueResults = append(p.uniqueResults, result)
+
 	}
 
 	p.Results = p.uniqueResults
