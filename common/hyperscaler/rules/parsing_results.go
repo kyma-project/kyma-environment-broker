@@ -43,7 +43,6 @@ func (p *ParsingResults) CheckUniqueness() {
 	for _, result := range p.Results {
 
 		if result.HasErrors() {
-			p.uniqueResults = append(p.uniqueResults, result)
 			continue
 		}
 
@@ -64,12 +63,7 @@ func (p *ParsingResults) CheckUniqueness() {
 			result.AddProcessingError(err)
 
 		}
-	
-		p.uniqueResults = append(p.uniqueResults, result)
-
 	}
-
-	p.Results = p.uniqueResults
 }
 
 func (p *ParsingResults) CheckSignatures() {
