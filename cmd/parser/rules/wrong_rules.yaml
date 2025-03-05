@@ -1,0 +1,33 @@
+ rule:  
+  - aws(PR=cf-eu11) -> 
+  - aws(PR=cf-eu11) -> S -> EU
+  - aws(PR=cf-eu11) ->,S
+  - aws(PR=cf-eu11) -> ,,
+  - aws(PR=cf-eu11) -> S,
+  - aws(PR=cf-eu11) -> S,A
+  - aws(PR=cf-eu11) ->AA
+  - aws(PR=cf-eu11) -> EU, S, S
+  - aws(PR=cf-eu11) -> EU, EU
+  - aws(PR=cf-eu11) -> S, S
+  - aaws
+  - awss
+  - aws()
+  - aws(
+  - aws(PR=cf-eu11
+  - awsPR=cf-eu11)
+  - aws(X)
+  - aws(, )
+  - aws(PR)
+  - aws(PR=cf-eu11, PR) 
+  - aws(PR=cf-=eu11)
+  - aws(PR=cf.PR=eu11)
+  - aws(HR=westeu, PR=cf-=eu11)
+  - aws(PR=cf-eu11, PR=)
+  - aws( PR=)
+  - aws(PR=cf-eu11, PR=cf-eu11)
+  - aws(HR=cf-eu11, PR=)
+  - aws( HR=)
+  - aws(PR=cf-eu11, HR=12, PR=88)
+  - aws(KK=cf-eu11) 
+  - aws(PR=cf-eu11, KK=cf-eu11) 
+  - aws(KK=cf-eu11, PR=cf-eu11 )

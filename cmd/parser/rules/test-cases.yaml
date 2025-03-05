@@ -1,0 +1,195 @@
+cases:
+- name: Simple Rule
+  rule:
+  - aws -> EU, S
+  - aws(PR=cf-eu11) -> EU
+  expected: |
+    ->     OK  aws-> EU, S                                        # euAccess:
+    true, hyperscalerType: aws, shared: true
+    ->     OK  aws(PR=cf-eu11)-> EU                               #
+    euAccess: true, hyperscalerType: aws_cf-eu11    
+- name: Final Configuration
+  rule:
+  - aws
+  - aws(PR=cf-eu11) -> EU
+  - azure
+  - azure(PR=cf-ch20) -> EU
+  - gcp
+  - gcp(PR=cf-sa30)
+  - trial -> S
+  - sap-converged-cloud(HR=*) -> S
+  - azure_lite
+  - preview
+  - free
+  expected: |
+    ->     OK  aws                                                # hyperscalerType:
+    aws                            
+    ->     OK  aws(PR=cf-eu11)-> EU                               #
+    euAccess: true, hyperscalerType: aws_cf-eu11    
+    ->     OK  azure                                              #
+    hyperscalerType: azure                          
+    ->     OK  azure(PR=cf-ch20)->
+    EU                             # euAccess: true, hyperscalerType: azure_cf-ch20
+   
+    ->     OK  azure_lite                                         # hyperscalerType:
+    azure_lite                     
+    ->     OK  free                                               #
+    hyperscalerType: aws/azure                      
+    ->     OK  gcp                                                #
+    hyperscalerType: gcp                            
+    ->     OK  gcp(PR=cf-sa30)                                    #
+    hyperscalerType: gcp_cf-sa30                    
+    ->     OK  preview                                            #
+    hyperscalerType: aws                            
+    ->     OK  sap-converged-cloud(HR=*)->
+    S                      # hyperscalerType: openstack_*, shared: true      
+    ->     OK  trial-> S                                          # hyperscalerType:
+    aws, shared: true              
+- name: Duplicated Rule
+  rule:
+  - aws
+  - aws(PR=cf-eu11)
+  - aws(HR=eastus)
+  expected: |
+    -> Error   aws(PR=cf-eu11)
+     - Ambiguous with previously defined entry:
+    'aws(HR=eastus)', consider introducing a resolving entry 'aws(PR=cf-eu11, HR=eastus)'
+    ->     OK  aws                                                # hyperscalerType:
+    aws                            
+    ->     OK  aws(HR=eastus)                                     #
+    hyperscalerType: aws_eastus                     
+    There are errors in your rule
+    configuration. Fix above errors in your rule configuration and try again.
+- name: Simple Asterix Rule
+  rule:
+  - aws
+  - aws(PR=*)
+  expected: |
+    -> Error   aws(PR=*)
+     - Duplicated rule with previously defined rule:
+    'aws'
+    ->     OK  aws                                                # hyperscalerType:
+    aws                            
+    There are errors in your rule configuration.
+    Fix above errors in your rule configuration and try again.
+- name: Duplicated Rules
+  rule:
+  - aws(HR=aa, PR=cf)
+  - aws(PR=cf, HR=aa)
+  - gcp
+  - gcp
+  expected: |
+    -> Error   gcp
+     - Duplicated rule with previously defined rule: 'gcp'
+    -> Error   aws(PR=cf, HR=aa)
+     - Duplicated rule with previously defined rule:
+    'aws(PR=cf, HR=aa)'
+    ->     OK  aws(PR=cf, HR=aa)                                  #
+    hyperscalerType: aws_cf_aa                      
+    ->     OK  gcp                                                #
+    hyperscalerType: gcp                            
+    There are errors in your rule
+    configuration. Fix above errors in your rule configuration and try again.
+- name: Duplicated Rules - No 2
+  rule:
+  - aws(PR=*, HR=test1)
+  - aws(PR=test2, HR=*)
+  - aws(PR=*, HR=t)
+  - aws(PR=*, HR=*)
+  - aws
+  - aws(PR=test2, HR=test1)
+  expected: |
+    ->  Error   aws(PR=*, HR=*)
+     - Duplicated rule with previously defined
+    rule: 'aws'
+    ->  Error   aws(PR=test2, HR=*)
+     - Ambiguous with previously defined
+    entry: 'aws(PR=*, HR=t)', consider introducing a resolving entry 'aws(PR=test2,
+    HR=t)'
+    ->     OK  aws                                                # hyperscalerType:
+    aws                            
+    ->     OK  aws(PR=*, HR=test1)                                #
+    hyperscalerType: aws_*_test1                    
+    ->     OK  aws(PR=*, HR=t)                                    #
+    hyperscalerType: aws_*_t                        
+    ->     OK  aws(PR=test2, HR=test1)
+                             # hyperscalerType: aws_test2_test1                
+    There
+    are errors in your rule configuration. Fix above errors in your rule configuration
+    and try again.
+- name: Unresolved Rule - No 2
+  rule:
+  - aws
+  - aws(PR=*)
+  - aws(HR=*)
+  expected: |
+    ->  Error   aws(HR=*)
+     - Duplicated rule with previously defined rule:
+    'aws'
+    ->  Error   aws(PR=*)
+     - Duplicated rule with previously defined rule:
+    'aws'
+    ->     OK  aws                                                # hyperscalerType:
+    aws                            
+    There are errors in your rule configuration.
+    Fix above errors in your rule configuration and try again.
+- name: Resolved Rule - No 1
+  rule:
+  - aws
+  - aws(PR=westeurope, HR=*)
+  - aws(PR=westeurope, HR=westeurope)
+  expected: |
+    ->     OK  aws                                                # hyperscalerType:
+    aws                            
+    ->     OK  aws(PR=westeurope, HR=*)                           #
+    hyperscalerType: aws_westeurope_*               
+    ->     OK  aws(PR=westeurope,
+    HR=westeurope)                  # hyperscalerType: aws_westeurope_westeurope      
+- name: Resolved Rule - No 2
+  rule:
+  - aws
+  - aws(PR=cf-eu11)
+  - aws(PR=cf-eu11, HR=eastus)
+  expected: |
+    ->     OK  aws                                                # hyperscalerType:
+    aws                            
+    ->     OK  aws(PR=cf-eu11)                                    #
+    hyperscalerType: aws_cf-eu11                    
+    ->     OK  aws(PR=cf-eu11, HR=eastus)
+                          # hyperscalerType: aws_cf-eu11_eastus             
+- name: Resolved Rule - No 3
+  rule:
+  - aws(PR=*)
+  - aws(PR=cf-eu11, HR=eastus)
+  expected: |
+    ->     OK  aws(PR=*)                                          # hyperscalerType:
+    aws_*                          
+    ->     OK  aws(PR=cf-eu11, HR=eastus)                         #
+    hyperscalerType: aws_cf-eu11_eastus             
+- name: Resolved Rule - No 4
+  rule:
+  - aws
+  - aws(PR=cf-eu11)
+  - aws(PR=cf-eu12, HR=eastus)
+  expected: |
+    -> OK  aws                                                # hyperscalerType:
+    aws                            
+    ->     OK  aws(PR=cf-eu11)                                    #
+    hyperscalerType: aws_cf-eu11                    
+    ->     OK  aws(PR=cf-eu12, HR=eastus)
+                          # hyperscalerType: aws_cf-eu12_eastus             
+- name: ""
+  rule:
+  - aws
+  - aws(PR=cf-eu11, HR=*)
+  - aws(PR=*, HR=eastus)
+  - aws(PR=cf-eu11, HR=eastus)
+  expected: |
+    ->     OK  aws                                                # hyperscalerType:
+    aws                            
+    ->     OK  aws(PR=cf-eu11, HR=*)                              #
+    hyperscalerType: aws_cf-eu11_*                  
+    ->     OK  aws(PR=*, HR=eastus)
+                                # hyperscalerType: aws_*_eastus                   
+    ->     OK  aws(PR=cf-eu11, HR=eastus)                         # hyperscalerType:
+    aws_cf-eu11_eastus             

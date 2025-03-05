@@ -4,7 +4,6 @@ import (
 	"os"
 	"testing"
 
-	"github.com/kyma-project/kyma-environment-broker/common/hyperscaler/rules/model"
 	"github.com/stretchr/testify/require"
 )
 
@@ -15,13 +14,13 @@ func TestNewRulesServiceFromFile(t *testing.T) {
                       - rule1
                       - rule2`
 
-		tmpfile, err := model.CreateTempFile(content)
+		tmpfile, err := CreateTempFile(content)
 		require.NoError(t, err)
 
 		defer os.Remove(tmpfile)
 
 		// when
-		service, err := NewRulesServiceFromFile(tmpfile)
+		service, err := NewRulesServiceFromFile(tmpfile, false, false, false)
 
 		// then
 		require.NoError(t, err)
@@ -30,7 +29,7 @@ func TestNewRulesServiceFromFile(t *testing.T) {
 
 	t.Run("should return error when file path is empty", func(t *testing.T) {
 		// when
-		service, err := NewRulesServiceFromFile("")
+		service, err := NewRulesServiceFromFile("", false, false, false)
 
 		// then
 		require.Error(t, err)
@@ -40,7 +39,7 @@ func TestNewRulesServiceFromFile(t *testing.T) {
 
 	t.Run("should return error when file does not exist", func(t *testing.T) {
 		// when
-		service, err := NewRulesServiceFromFile("nonexistent.yaml")
+		service, err := NewRulesServiceFromFile("nonexistent.yaml", false, false, false)
 
 		// then
 		require.Error(t, err)
@@ -51,12 +50,12 @@ func TestNewRulesServiceFromFile(t *testing.T) {
 		// given
 		content := "corrupted_content"
 
-		tmpfile, err := model.CreateTempFile(content)
+		tmpfile, err := CreateTempFile(content)
 		require.NoError(t, err)
 		defer os.Remove(tmpfile)
 
 		// when
-		service, err := NewRulesServiceFromFile(tmpfile)
+		service, err := NewRulesServiceFromFile(tmpfile, false, false, false)
 
 		// then
 		require.Error(t, err)
