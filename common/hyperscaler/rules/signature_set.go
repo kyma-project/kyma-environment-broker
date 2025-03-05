@@ -14,7 +14,7 @@ func NewSignatureSet(results []*ParsingResult) *SignatureSet {
 			continue
 		}
 
-		signature := result.Rule.SignaturePreKeys(ASTERISK, ATTRIBUTE_WITH_VALUE)
+		signature := result.Rule.SignatureWithSymbols(ASTERISK, ATTRIBUTE_WITH_VALUE)
 		signatureSet.items[signature] = append(signatureSet.items[signature], result)
 	}
 

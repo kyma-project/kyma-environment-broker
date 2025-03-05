@@ -201,10 +201,10 @@ func (r *Rule) SignatureWithValues() string {
 }
 
 func (r *Rule) MirroredSignature() string {
-	return r.SignaturePreKeys(ATTRIBUTE_WITH_VALUE, ASTERISK)
+	return r.SignatureWithSymbols(ATTRIBUTE_WITH_VALUE, ASTERISK)
 }
 
-func (r *Rule) SignaturePreKeys(positiveKey, mirroredKey string) string {
+func (r *Rule) SignatureWithSymbols(positiveKey, mirroredKey string) string {
 	signatureKey := r.Plan
 
 	for _, attr := range InputAttributes {
