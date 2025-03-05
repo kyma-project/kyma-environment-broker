@@ -10,7 +10,7 @@ import (
 
 func TestSignatureSet_Mirrored(t *testing.T) {
 
-	t.Run("should return empty list for non existing signature", func(t *testing.T) {
+	t.Run("should return nil list for non existing signature", func(t *testing.T) {
 		rule1 := NewRule()
 
 		signatureSet := NewSignatureSet([]*ParsingResult{})
