@@ -189,15 +189,15 @@ func (r *Rule) Combine(rule Rule) *Rule {
 }
 
 func (r *Rule) SignatureWithValues() string {
-	key := r.Plan
+	signature := r.Plan
 
 	for _, attr := range InputAttributes {
-		key += attr.Name + SIGNATURE_ATTR_SEPARATOR
+		signature += attr.Name + SIGNATURE_ATTR_SEPARATOR
 		checkValue := attr.Getter(r)
-		key += getAttrValueSymbol(checkValue, ASTERISK, checkValue)
+		signature += getAttrValueSymbol(checkValue, ASTERISK, checkValue)
 	}
 
-	return key
+	return signature
 }
 
 func (r *Rule) MirroredSignature() string {
