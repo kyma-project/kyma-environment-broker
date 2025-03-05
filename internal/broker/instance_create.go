@@ -49,10 +49,6 @@ type (
 	Queue interface {
 		Add(operationId string)
 	}
-
-	PlanValidator interface {
-		IsPlanSupport(planID string) bool
-	}
 )
 
 type ProvisionEndpoint struct {
@@ -61,7 +57,6 @@ type ProvisionEndpoint struct {
 	instanceStorage         storage.Instances
 	instanceArchivedStorage storage.InstancesArchived
 	queue                   Queue
-	builderFactory          PlanValidator
 	enabledPlanIDs          map[string]struct{}
 	plansConfig             PlansConfig
 	planDefaults            PlanDefaults
@@ -92,7 +87,6 @@ func NewProvision(cfg Config,
 	instanceStorage storage.Instances,
 	instanceArchivedStorage storage.InstancesArchived,
 	queue Queue,
-	builderFactory PlanValidator,
 	plansConfig PlansConfig,
 	planDefaults PlanDefaults,
 	log *slog.Logger,
@@ -114,7 +108,6 @@ func NewProvision(cfg Config,
 		instanceStorage:               instanceStorage,
 		instanceArchivedStorage:       instanceArchivedStorage,
 		queue:                         queue,
-		builderFactory:                builderFactory,
 		log:                           log.With("service", "ProvisionEndpoint"),
 		enabledPlanIDs:                enabledPlanIDs,
 		plansConfig:                   plansConfig,
@@ -359,11 +352,6 @@ func (b *ProvisionEndpoint) validateAndExtract(details domain.ProvisionDetails, 
 	}
 
 	parameters.LicenceType = b.determineLicenceType(details.PlanID)
-
-	found := b.builderFactory.IsPlanSupport(details.PlanID)
-	if !found {
-		return ersContext, parameters, fmt.Errorf("the plan ID not known, planID: %s", details.PlanID)
-	}
 
 	if IsOwnClusterPlan(details.PlanID) {
 		decodedKubeconfig, err := base64.StdEncoding.DecodeString(parameters.Kubeconfig)

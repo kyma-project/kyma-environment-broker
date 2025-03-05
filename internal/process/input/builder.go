@@ -23,7 +23,6 @@ type (
 	}
 
 	CreatorForPlan interface {
-		IsPlanSupport(planID string) bool
 		CreateProvisionInput(parameters internal.ProvisioningParameters) (internal.ProvisionerInputCreator, error)
 		CreateUpgradeInput(parameters internal.ProvisioningParameters) (internal.ProvisionerInputCreator, error)
 		CreateUpgradeShootInput(parameters internal.ProvisioningParameters) (internal.ProvisionerInputCreator, error)
@@ -66,17 +65,6 @@ func NewInputBuilderFactory(configProvider ConfigurationProvider,
 // SetDefaultTrialProvider is used for testing scenario, when the default trial provider is being changed
 func (f *InputBuilderFactory) SetDefaultTrialProvider(p pkg.CloudProvider) {
 	f.config.DefaultTrialProvider = p
-}
-
-func (f *InputBuilderFactory) IsPlanSupport(planID string) bool {
-	switch planID {
-	case broker.AWSPlanID, broker.GCPPlanID, broker.AzurePlanID, broker.FreemiumPlanID,
-		broker.AzureLitePlanID, broker.TrialPlanID, broker.SapConvergedCloudPlanID, broker.OwnClusterPlanID,
-		broker.PreviewPlanID, broker.BuildRuntimeAWSPlanID, broker.BuildRuntimeGCPPlanID, broker.BuildRuntimeAzurePlanID:
-		return true
-	default:
-		return false
-	}
 }
 
 func (f *InputBuilderFactory) GetPlanDefaults(planID string, platformProvider pkg.CloudProvider, parametersProvider *pkg.CloudProvider) (*gqlschema.ClusterConfigInput, error) {
