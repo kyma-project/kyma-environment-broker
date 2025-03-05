@@ -109,15 +109,26 @@ func setEuAccess(r *Rule, value string) (*Rule, error) {
 	return r, nil
 }
 
-func (r *Rule) SetPlan(value string) (*Rule, error) {
+func (r *Rule) SetPlan(value string, enabledPlans *broker.EnablePlans) (*Rule, error) {
 	if value == "" {
 		return nil, fmt.Errorf("plan is empty")
 	}
 
 	// validate that the plan is supported
-	_, ok := broker.PlanIDsMapping[value]
+ 	ok := enabledPlans.Contains(value)
 	if !ok {
 		return nil, fmt.Errorf("plan %s is not supported", value)
+	}
+
+	r.Plan = value
+	r.Labels[HYPERSCALER_LABEL] = r.hyperscalerNameMappingFunction(value)
+
+	return r, nil
+}
+
+func (r *Rule) SetPlanNoValidation(value string) (*Rule, error) {
+	if value == "" {
+		return nil, fmt.Errorf("plan is empty")
 	}
 
 	r.Plan = value

@@ -6,6 +6,7 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/kyma-project/kyma-environment-broker/common/hyperscaler/rules"
+	"github.com/kyma-project/kyma-environment-broker/internal/broker"
 	"github.com/spf13/cobra"
 )
 
@@ -92,13 +93,19 @@ func (cmd *ParseCommand) Run() error {
 		return nil
 	}
 
+	// create enabled plans
+	enabledPlans := broker.EnablePlans{}
+	for _, plan := range broker.PlanNamesMapping { 
+		enabledPlans = append(enabledPlans, plan)
+	}
+
 	var rulesService *rules.RulesService
 	var err error
 	if cmd.ruleFilePath != "" {
 		cmd.cobraCmd.Printf("Parsing rules from file: %s\n", cmd.ruleFilePath)
-		rulesService, err = rules.NewRulesServiceFromFile(cmd.ruleFilePath, cmd.sort, cmd.unique, cmd.signature)
+		rulesService, err = rules.NewRulesServiceFromFile(cmd.ruleFilePath, &enabledPlans, cmd.sort, cmd.unique, cmd.signature)
 	} else {
-		rulesService, err = rules.NewRulesServiceFromString(cmd.rule, cmd.sort, cmd.unique, cmd.signature)
+		rulesService, err = rules.NewRulesServiceFromString(cmd.rule, &enabledPlans, cmd.sort, cmd.unique, cmd.signature)
 	}
 
 	if err != nil {

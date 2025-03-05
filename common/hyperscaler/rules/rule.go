@@ -167,7 +167,7 @@ func (r *Rule) IsResolved() bool {
 
 func (r *Rule) Combine(rule Rule) *Rule {
 	newRule := NewRule()
-	newRule.SetPlan(r.Plan)
+	newRule.SetPlanNoValidation(r.Plan)
 
 	for _, attr := range InputAttributes {
 		value := attr.Getter(r)

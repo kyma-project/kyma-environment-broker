@@ -4,11 +4,12 @@ import (
 	"os"
 	"testing"
 
+	"github.com/kyma-project/kyma-environment-broker/internal/broker"
 	"github.com/stretchr/testify/require"
 )
 
 func TestNewRulesServiceFromFile(t *testing.T) {
-	t.Run("should create RulesService from valid file", func(t *testing.T) {
+	t.Run("should create RulesService from valid file ane parse simple rules", func(t *testing.T) {
 		// given
 		content := `rule:
                       - rule1
@@ -20,16 +21,22 @@ func TestNewRulesServiceFromFile(t *testing.T) {
 		defer os.Remove(tmpfile)
 
 		// when
-		service, err := NewRulesServiceFromFile(tmpfile, false, false, false)
+		enabledPlans := &broker.EnablePlans{"rule1", "rule2"}
+		service, err := NewRulesServiceFromFile(tmpfile, enabledPlans, false, false, false)
 
 		// then
 		require.NoError(t, err)
 		require.NotNil(t, service)
+		
+		require.Equal(t, 2, len(service.Parsed.Results))
+		for _, result := range service.Parsed.Results {
+			require.False(t, result.HasErrors())
+		}
 	})
 
 	t.Run("should return error when file path is empty", func(t *testing.T) {
 		// when
-		service, err := NewRulesServiceFromFile("", false, false, false)
+		service, err := NewRulesServiceFromFile("",  &broker.EnablePlans{}, false, false, false)
 
 		// then
 		require.Error(t, err)
@@ -39,7 +46,7 @@ func TestNewRulesServiceFromFile(t *testing.T) {
 
 	t.Run("should return error when file does not exist", func(t *testing.T) {
 		// when
-		service, err := NewRulesServiceFromFile("nonexistent.yaml", false, false, false)
+		service, err := NewRulesServiceFromFile("nonexistent.yaml", &broker.EnablePlans{}, false, false, false)
 
 		// then
 		require.Error(t, err)
@@ -55,7 +62,7 @@ func TestNewRulesServiceFromFile(t *testing.T) {
 		defer os.Remove(tmpfile)
 
 		// when
-		service, err := NewRulesServiceFromFile(tmpfile, false, false, false)
+		service, err := NewRulesServiceFromFile(tmpfile,  &broker.EnablePlans{}, false, false, false)
 
 		// then
 		require.Error(t, err)

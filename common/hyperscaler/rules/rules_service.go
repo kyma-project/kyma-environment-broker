@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	"github.com/google/uuid"
+	"github.com/kyma-project/kyma-environment-broker/internal/broker"
 )
 
 type RulesService struct {
@@ -19,7 +20,7 @@ type RulesService struct {
 	Parsed *ParsingResults
 }
 
-func NewRulesServiceFromFile(rulesFilePath string, sort, unique, signature bool) (*RulesService, error) {
+func NewRulesServiceFromFile(rulesFilePath string, enabledPlans *broker.EnablePlans, sort, unique, signature bool) (*RulesService, error) {
 	rulesConfig := &RulesConfig{}
 
 	if rulesFilePath == "" {
@@ -33,7 +34,9 @@ func NewRulesServiceFromFile(rulesFilePath string, sort, unique, signature bool)
 	}
 
 	rs := &RulesService{
-		parser:    &SimpleParser{},
+		parser: &SimpleParser{
+			enabledPlans: enabledPlans,
+		},
 		sort:      sort,
 		unique:    unique,
 		signature: signature,
@@ -43,7 +46,7 @@ func NewRulesServiceFromFile(rulesFilePath string, sort, unique, signature bool)
 	return rs, err
 }
 
-func NewRulesServiceFromString(rules string, sort, unique, signature bool) (*RulesService, error) {
+func NewRulesServiceFromString(rules string, enabledPlans *broker.EnablePlans, sort, unique, signature bool) (*RulesService, error) {
 	entries := strings.Split(rules, ";")
 
 	rulesConfig := &RulesConfig{
@@ -51,7 +54,9 @@ func NewRulesServiceFromString(rules string, sort, unique, signature bool) (*Rul
 	}
 
 	rs := &RulesService{
-		parser:    &SimpleParser{},
+		parser: &SimpleParser{
+			enabledPlans: enabledPlans,
+		},
 		sort:      sort,
 		unique:    unique,
 		signature: signature,

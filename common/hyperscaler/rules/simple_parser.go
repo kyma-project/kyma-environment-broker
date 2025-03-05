@@ -3,9 +3,12 @@ package rules
 import (
 	"fmt"
 	"strings"
+
+	"github.com/kyma-project/kyma-environment-broker/internal/broker"
 )
 
 type SimpleParser struct {
+	enabledPlans *broker.EnablePlans
 }
 
 func (g *SimpleParser) Parse(ruleEntry string) (*Rule, error) {
@@ -41,7 +44,7 @@ func (g *SimpleParser) Parse(ruleEntry string) (*Rule, error) {
 		return nil, fmt.Errorf("rule has unclosed parentheses")
 	}
 
-	_, err := outputRule.SetPlan(planAndInputAttr[0])
+	_, err := outputRule.SetPlan(planAndInputAttr[0], g.enabledPlans)
 	if err != nil {
 		return nil, err
 	}
