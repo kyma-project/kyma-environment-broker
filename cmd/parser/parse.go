@@ -106,14 +106,14 @@ func (cmd *ParseCommand) Run() error {
 		return nil
 	}
 
-	var testDataForMatching *rules.MatchableAttributes
+	var dataForMatching *rules.MatchableAttributes
 	if cmd.match != "" {
-		testDataForMatching = getTestData(cmd.match)
+		dataForMatching = getDataForMatching(cmd.match)
 	}
 
 	var matchingResults map[uuid.UUID]*rules.MatchingResult
-	if cmd.match != "" && testDataForMatching != nil {
-		matchingResults = rulesService.Match(testDataForMatching)
+	if cmd.match != "" && dataForMatching != nil {
+		matchingResults = rulesService.Match(dataForMatching)
 	}
 
 	printer.Print(rulesService.Parsed.Results, matchingResults)
@@ -138,7 +138,7 @@ type conf struct {
 	Rules []string `yaml:"rule"`
 }
 
-func getTestData(content string) *rules.MatchableAttributes {
+func getDataForMatching(content string) *rules.MatchableAttributes {
 	testData := &rules.MatchableAttributes{}
 	err := json.Unmarshal([]byte(content), testData)
 	if err != nil {
