@@ -90,7 +90,7 @@ func (r *Rule) SetAttributeValue(attribute, value string) (*Rule, error) {
 	return nil, fmt.Errorf("unknown attribute %s", attribute)
 }
 
-func (r *Rule) NumberOfInputAttributes() int {
+func (r *Rule) NumberOfNonEmptyInputAttributes() int {
 	count := 0
 
 	for _, attr := range InputAttributes {
