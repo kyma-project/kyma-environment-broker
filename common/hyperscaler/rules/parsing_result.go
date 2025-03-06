@@ -37,7 +37,6 @@ func (r *ParsingResult) HasErrors() bool {
 	return r.HasParsingErrors() || r.HasProcessingErrors()
 }
 
-// TODO: Change name to Uniqueness errors or something like that
 func (r *ParsingResult) AddProcessingError(err error) {
 	r.ProcessingErrors = append(r.ProcessingErrors, err)
 }
