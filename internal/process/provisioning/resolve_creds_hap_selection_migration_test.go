@@ -107,7 +107,7 @@ func TestResolveCredentials_IntegrationAzure2(t *testing.T) {
 				label = strings.Trim(label, " ")
 				if label != "" && label != " " && label != "!dirty" && label != "!euAccess" && label != "shared!=true" && label != "!tenantName" {
 					// at this point all labels should be in format key=value
-					require.Contains(t, label, "=", "Found a signle value label: %s", label)
+					require.Contains(t, label, "=", "Found a single value label: %s", label)
 					filteredSplit = append(filteredSplit, label)
 				}
 			}
