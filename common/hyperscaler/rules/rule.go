@@ -143,8 +143,8 @@ func (r *Rule) StringNoLabels() string {
 	return ruleStr
 }
 
-func (r* Rule) append(ruleStr string, attributes []Attribute) string {
-	
+func (r *Rule) append(ruleStr string, attributes []Attribute) string {
+
 	for _, attr := range attributes {
 		attrStr := attr.String(r)
 		ruleStr += fmt.Sprintf("%s", attrStr)

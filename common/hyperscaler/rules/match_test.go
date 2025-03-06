@@ -26,9 +26,9 @@ func TestMatch(t *testing.T) {
 	svc, err := NewRulesServiceFromFile(tmpfile, &broker.EnablePlans{"azure", "gcp", "trial", "aws"}, false, false, true)
 	require.NoError(t, err)
 
-    for _, result := range svc.Parsed.Results { 
-        require.False(t, result.HasErrors())
-    } 
+	for _, result := range svc.Parsed.Results {
+		require.False(t, result.HasErrors())
+	}
 
 	result := svc.Match(&ProvisioningAttributes{
 		Plan:              "azure",
@@ -36,17 +36,17 @@ func TestMatch(t *testing.T) {
 		HyperscalerRegion: "eu-central-1",
 	})
 
-    require.NoError(t, err)
+	require.NoError(t, err)
 
-    found := false
-    for _, matchingResult := range result {
-        if matchingResult.FinalMatch {
-            require.Equal(t, "azure", matchingResult.Rule.Plan)
-            require.Equal(t, "", matchingResult.Rule.HyperscalerRegion)
-            require.Equal(t, "", matchingResult.Rule.PlatformRegion)
-            found = true
-        }
-    }
+	found := false
+	for _, matchingResult := range result {
+		if matchingResult.FinalMatch {
+			require.Equal(t, "azure", matchingResult.Rule.Plan)
+			require.Equal(t, "", matchingResult.Rule.HyperscalerRegion)
+			require.Equal(t, "", matchingResult.Rule.PlatformRegion)
+			found = true
+		}
+	}
 
-    require.True(t, found)
+	require.True(t, found)
 }

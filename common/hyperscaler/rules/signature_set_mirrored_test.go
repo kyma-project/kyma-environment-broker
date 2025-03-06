@@ -19,9 +19,9 @@ func TestSignatureSet_Mirrored(t *testing.T) {
 		mirroredResults := signatureSet.Mirrored(rule1)
 
 		assert.Nil(t, mirroredResults)
- 
-        for _, _ = range mirroredResults {
-            require.Fail(t, "should not return any result")
-        }
+
+		for _, _ = range mirroredResults {
+			require.Fail(t, "should not return any result")
+		}
 	})
 }
