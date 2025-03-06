@@ -7,7 +7,7 @@ type Attribute struct {
 	Description     string
 	Setter          func(*Rule, string) (*Rule, error)
 	Getter          func(*Rule) string
-	MatchableGetter func(*MatchableAttributes) string
+	MatchableGetter func(*ProvisioningAttributes) string
 	input           bool
 	output          bool
 	modifiedLabel   string

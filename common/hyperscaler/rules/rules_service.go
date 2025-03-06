@@ -92,7 +92,7 @@ func (rs *RulesService) parse(rulesConfig *RulesConfig) *ParsingResults {
 	return results
 }
 
-func (rs *RulesService) Match(data *MatchableAttributes) map[uuid.UUID]*MatchingResult {
+func (rs *RulesService) Match(data *ProvisioningAttributes) map[uuid.UUID]*MatchingResult {
 	var matchingResults map[uuid.UUID]*MatchingResult = make(map[uuid.UUID]*MatchingResult)
 
 	var lastMatch *MatchingResult = nil

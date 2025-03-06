@@ -28,7 +28,7 @@ var InputAttributes = []Attribute{
 		Description:     "Platform Region",
 		Setter:          setPlatformRegion,
 		Getter:          func(r *Rule) string { return r.PlatformRegion },
-		MatchableGetter: func(r *MatchableAttributes) string { return r.PlatformRegion },
+		MatchableGetter: func(r *ProvisioningAttributes) string { return r.PlatformRegion },
 		input:           true,
 		output:          false,
 		HasValue:        true,

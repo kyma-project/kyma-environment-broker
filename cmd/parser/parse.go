@@ -113,7 +113,7 @@ func (cmd *ParseCommand) Run() error {
 		return nil
 	}
 
-	var dataForMatching *rules.MatchableAttributes
+	var dataForMatching *rules.ProvisioningAttributes
 	if cmd.match != "" {
 		dataForMatching = getDataForMatching(cmd.match)
 	}
@@ -145,8 +145,8 @@ type conf struct {
 	Rules []string `yaml:"rule"`
 }
 
-func getDataForMatching(content string) *rules.MatchableAttributes {
-	testData := &rules.MatchableAttributes{}
+func getDataForMatching(content string) *rules.ProvisioningAttributes {
+	testData := &rules.ProvisioningAttributes{}
 	err := json.Unmarshal([]byte(content), testData)
 	if err != nil {
 		log.Fatalf("Unmarshal: %v", err)

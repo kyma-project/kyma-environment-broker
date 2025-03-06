@@ -28,7 +28,7 @@ func NewRule() *Rule {
 	}
 }
 
-type MatchableAttributes struct {
+type ProvisioningAttributes struct {
 	Plan              string `json:"plan"`
 	PlatformRegion    string `json:"platformRegion"`
 	HyperscalerRegion string `json:"hyperscalerRegion"`
@@ -64,7 +64,7 @@ func getHyperscalerName(plan string) (result string) {
 	}
 }
 
-func (r *Rule) Matched(attributes *MatchableAttributes) bool {
+func (r *Rule) Matched(attributes *ProvisioningAttributes) bool {
 
 	if r.Plan != attributes.Plan {
 		return false
