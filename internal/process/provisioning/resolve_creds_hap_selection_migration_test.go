@@ -169,7 +169,7 @@ func TestResolveCredentials_IntegrationAzure2(t *testing.T) {
 					require.Zero(t, when)
 
 					for label, count := range queriesCountMap {
-						require.Zero(t, count, "second invocation produced wront number of queries for label: %s, count: %d", label, count)
+						require.Zero(t, count, "second invocation produced wrong number of queries for label: %s, count: %d", label, count)
 					}
 
 					queriesCountMap = map[string]int{}
