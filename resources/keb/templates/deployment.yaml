@@ -231,6 +231,10 @@ spec:
               value: "{{ .Values.gardener.controlPlaneFailureTolerance }}"
             - name: APP_PROVISIONER_ENABLE_SHOOT_AND_SEED_SAME_REGION
               value: "{{ .Values.provisioner.gardener.enableShootAndSeedSameRegion }}"
+            - name: APP_PROVISIONER_USE_MAIN_OIDC
+              value: "{{ .Values.provisioner.useMainOIDC }}"
+            - name: APP_PROVISIONER_USE_ADDITIONAL_OIDC
+              value: "{{ .Values.provisioner.useAdditionalOIDC }}"
             - name: APP_DEFAULT_REQUEST_REGION
               value: "{{ .Values.broker.defaultRequestRegion }}"
             - name: APP_UPDATE_PROCESSING_ENABLED
