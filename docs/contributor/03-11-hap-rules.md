@@ -81,9 +81,9 @@ HAP stores credentials to hyperscaler accounts in Kubernetes Secrets that Secret
 
 The **hyperscaler-type** contains a hyperscaler name and region information as `hyperscaler_type: <HYPERSCALER_NAME>[_<PLATFORM_REGION>][_<HYPERSCALER_REGION>]`, where both `_<PLATFORM_REGION>` and `_<HYPERSCALER_REGION>` are optional. The **hyperscaler-type** label is mandatory. Its value is computed based on the plan and regions provided, and mapped in [hyperscaler_type.go](https://github.com/kyma-project/kyma-environment-broker/blob/main/common/hyperscaler/hyperscaler_type.go). Not all plans share their name with hyperscaler types, for example, the `sap-converged-plan` has the `openstack` hyperscalerType and the `trial` plan can have either `azure` or `aws` depending on the configured provider type. 
 
-The following table shows a mapping of plans to hyperscaler types:
+In all the cases `HYPERSCALER_NAME` refers to a provider type. The following table shows a mapping of plans to provider types:
 
-| Plan                	| Hyperscaler Type 	|
+| Plan                	| Provider Type 	|
 |---------------------	|------------------	|
 | azure               	| azure            	|
 | azure_lite          	| azure            	|
