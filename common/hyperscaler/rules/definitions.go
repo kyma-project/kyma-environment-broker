@@ -38,14 +38,14 @@ var InputAttributes = []Attribute{
 		},
 	},
 	{
-		Name:        HR_ATTR_NAME,
-		Description: "Hyperscaler Region",
-		Setter:      setHyperscalerRegion,
-		Getter:      func(r *Rule) string { return r.HyperscalerRegion },
+		Name:            HR_ATTR_NAME,
+		Description:     "Hyperscaler Region",
+		Setter:          setHyperscalerRegion,
+		Getter:          func(r *Rule) string { return r.HyperscalerRegion },
 		MatchableGetter: func(r *ProvisioningAttributes) string { return r.PlatformRegion },
-		input:       true,
-		output:      false,
-		HasValue:    true,
+		input:           true,
+		output:          false,
+		HasValue:        true,
 		ApplyLabel: func(r *Rule, labels map[string]string) map[string]string {
 			labels[HYPERSCALER_LABEL] += "_" + r.HyperscalerRegion
 			return labels
@@ -116,7 +116,7 @@ func (r *Rule) SetPlan(value string, enabledPlans *broker.EnablePlans) (*Rule, e
 	}
 
 	// validate that the plan is supported
- 	ok := enabledPlans.Contains(value)
+	ok := enabledPlans.Contains(value)
 	if !ok {
 		return nil, fmt.Errorf("plan %s is not supported", value)
 	}
