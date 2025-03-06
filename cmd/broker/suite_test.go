@@ -281,6 +281,8 @@ func fixConfig() *Config {
 			CheckRuntimeResourceDeletionStepTimeout: 50 * time.Millisecond,
 			DefaultTrialProvider:                    "AWS",
 			ControlPlaneFailureTolerance:            "zone",
+			UseMainOIDC:                             true,
+			UseAdditionalOIDC:                       false,
 		},
 		Database: storage.Config{
 			SecretKey: dbSecretKey,
