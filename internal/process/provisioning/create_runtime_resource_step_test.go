@@ -229,7 +229,11 @@ func TestCreateRuntimeResourceStep_OIDC_MixedCustom(t *testing.T) {
 		UsernameClaim:  ptr.String("uc-custom"),
 		UsernamePrefix: ptr.String("up-default"),
 	}
-	inputConfig := input.Config{MultiZoneCluster: true}
+	inputConfig := input.Config{
+		MultiZoneCluster:  true,
+		UseMainOIDC:       true,
+		UseAdditionalOIDC: false,
+	}
 	cli := getClientForTests(t)
 	step := NewCreateRuntimeResourceStep(memoryStorage.Operations(), memoryStorage.Instances(), cli, inputConfig, nil, false, defaultOIDSConfig)
 
