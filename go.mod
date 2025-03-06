@@ -25,7 +25,7 @@ require (
 	github.com/matryer/is v1.4.1
 	github.com/pivotal-cf/brokerapi/v12 v12.0.1
 	github.com/pkg/errors v0.9.1
-	github.com/prometheus/client_golang v1.21.0
+	github.com/prometheus/client_golang v1.21.1
 	github.com/sebdah/goldie/v2 v2.5.5
 	github.com/stretchr/testify v1.10.0
 	github.com/vrischmann/envconfig v1.4.1
