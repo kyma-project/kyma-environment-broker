@@ -84,5 +84,5 @@ func dbInMemoryForE2ETests() bool {
 	} else {
 		fmt.Println("running e2e test on real postgres database")
 	}
-	return true
+	return v
 }
