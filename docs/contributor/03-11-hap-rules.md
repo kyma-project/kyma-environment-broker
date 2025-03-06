@@ -3,7 +3,7 @@
 > [!NOTE]
 > This feature is still being developed and will be available soon.
 
-The Hyperscaler Account Pool (HAP) Rule Configuration is a functionality that allows to control pool selection from a configurable helm property. 
+The Hyperscaler Account Pool (HAP) rule configuration is a functionality that allows you to control pool selection from a configurable helm property. 
 A pool is a set of Gardener's SecretBinding resources that share the same search labels. 
 Pool selection is a process that decides on which SecretBinding pool is the most suitable to use for every SKR creation request.
 The process generates a list of [search labels](#search-labels) based on SKR's attributes.
