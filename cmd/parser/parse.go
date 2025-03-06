@@ -142,11 +142,11 @@ type conf struct {
 }
 
 func getDataForMatching(content string) *rules.ProvisioningAttributes {
-	testData := &rules.ProvisioningAttributes{}
-	err := json.Unmarshal([]byte(content), testData)
+	data := &rules.ProvisioningAttributes{}
+	err := json.Unmarshal([]byte(content), data)
 	if err != nil {
 		log.Fatalf("Unmarshal: %v", err)
 	}
 
-	return testData
+	return data
 }
