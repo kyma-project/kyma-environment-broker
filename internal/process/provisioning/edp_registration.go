@@ -30,6 +30,11 @@ type EDPRegistrationStep struct {
 	config           edp.Config
 }
 
+const (
+	edpRetryInterval = 10 * time.Second
+	edpRetryTimeout  = 30 * time.Minute
+)
+
 func NewEDPRegistrationStep(os storage.Operations, client EDPClient, config edp.Config) *EDPRegistrationStep {
 	step := &EDPRegistrationStep{
 		client: client,
@@ -89,8 +94,8 @@ func (s *EDPRegistrationStep) Run(operation internal.Operation, log *slog.Logger
 		op.EDPCreated = true
 	}, log)
 	if repeat != 0 {
-		log.Error("cannot save operation")
-		return newOp, 5 * time.Second, nil
+		log.Error("cannot update operation")
+		return s.operationManager.RetryOperation(newOp, "cannot update operation", err, dbRetryInterval, dbRetryTimeout, log)
 	}
 
 	return newOp, 0, nil
@@ -100,19 +105,20 @@ func (s *EDPRegistrationStep) handleError(operation internal.Operation, err erro
 	log.Warn(fmt.Sprintf("%s: %s", msg, err))
 
 	if kebError.IsTemporaryError(err) {
-		since := time.Since(operation.UpdatedAt)
-		if since < time.Minute*30 {
-			log.Warn(fmt.Sprintf("request to EDP failed: %s. Retry...", err))
-			return operation, 10 * time.Second, nil
+		log.Warn(fmt.Sprintf("request to EDP failed: %s. Retry...", err))
+		if s.config.Required {
+			return s.operationManager.RetryOperation(operation, "request to EDP failed", err, edpRetryInterval, edpRetryTimeout, log)
+		} else {
+			return s.operationManager.RetryOperationWithoutFail(operation, s.Name(), "request to EDP failed", edpRetryInterval, edpRetryTimeout, log, err)
 		}
 	}
 
-	if !s.config.Required {
-		log.Warn(fmt.Sprintf("Step %s failed. Step is not required. Skip step.", s.Name()))
+	if s.config.Required {
+		return s.operationManager.OperationFailed(operation, msg, err, log)
+	} else {
+		log.Warn(fmt.Sprintf("Step %s failed. Step is not required. Quit step.", s.Name()))
 		return operation, 0, nil
 	}
-
-	return s.operationManager.OperationFailed(operation, msg, err, log)
 }
 
 func (s *EDPRegistrationStep) selectEnvironmentKey(region string, log *slog.Logger) string {
@@ -170,5 +176,6 @@ func (s *EDPRegistrationStep) handleConflict(operation internal.Operation, log *
 	}
 
 	log.Info("Retrying...")
+	// CAVEAT this retry operation is guarded by operation timeout at staged manager level, and could fail the operation eventually
 	return operation, time.Second, nil
 }

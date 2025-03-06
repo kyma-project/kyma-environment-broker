@@ -2,6 +2,7 @@ package provisioning
 
 import (
 	"fmt"
+	"strings"
 	"testing"
 	"time"
 
@@ -27,8 +28,15 @@ import (
 )
 
 const (
-	namespace = "kyma-dev"
-	tenant    = "tenant"
+	namespace                    = "kyma-dev"
+	tenant                       = "tenant"
+	statusOperationID            = "17f3ddba-1132-466d-a3c5-920f544d7ea6"
+	statusInstanceID             = "9d75a545-2e1e-4786-abd8-a37b14e185b9"
+	statusRuntimeID              = "ef4e3210-652c-453e-8015-bba1c1cd1e1c"
+	statusGlobalAccountID        = "abf73c71-a653-4951-b9c2-a26d6c2cccbd"
+	statusProvisionerOperationID = "e04de524-53b3-4890-b05a-296be393e4ba"
+
+	dashboardURL = "http://runtime.com"
 )
 
 func TestResolveCredentialsStepHappyPath_Run(t *testing.T) {
@@ -36,6 +44,9 @@ func TestResolveCredentialsStepHappyPath_Run(t *testing.T) {
 	memoryStorage := storage.NewMemoryStorage()
 
 	operation := fixOperationRuntimeStatus(broker.GCPPlanID, pkg.GCP)
+	operation.ProviderValues = &internal.ProviderValues{
+		ProviderType: "gcp",
+	}
 	err := memoryStorage.Operations().InsertOperation(operation)
 	assert.NoError(t, err)
 
@@ -207,6 +218,9 @@ func TestResolveCredentials_IntegrationAWS(t *testing.T) {
 	accountProvider := hyperscaler.NewAccountProvider(hyperscaler.NewAccountPool(gc, namespace), hyperscaler.NewSharedGardenerAccountPool(gc, namespace))
 
 	op := fixOperationWithPlatformRegion("cf-us10", pkg.AWS)
+	op.ProviderValues = &internal.ProviderValues{
+		ProviderType: "aws",
+	}
 	err := memoryStorage.Operations().InsertOperation(op)
 	assert.NoError(t, err)
 	step := NewResolveCredentialsStep(memoryStorage.Operations(), accountProvider, &rules.RulesService{})
@@ -231,6 +245,9 @@ func TestResolveCredentials_IntegrationAWSEuAccess(t *testing.T) {
 	accountProvider := hyperscaler.NewAccountProvider(hyperscaler.NewAccountPool(gc, namespace), hyperscaler.NewSharedGardenerAccountPool(gc, namespace))
 
 	op := fixOperationWithPlatformRegion("cf-eu11", pkg.AWS)
+	op.ProviderValues = &internal.ProviderValues{
+		ProviderType: "aws",
+	}
 	err := memoryStorage.Operations().InsertOperation(op)
 	assert.NoError(t, err)
 	step := NewResolveCredentialsStep(memoryStorage.Operations(), accountProvider, &rules.RulesService{})
@@ -253,6 +270,9 @@ func TestResolveCredentials_IntegrationAzure(t *testing.T) {
 	accountProvider := hyperscaler.NewAccountProvider(hyperscaler.NewAccountPool(gc, namespace), hyperscaler.NewSharedGardenerAccountPool(gc, namespace))
 
 	op := fixOperationWithPlatformRegion("cf-eu21", pkg.Azure)
+	op.ProviderValues = &internal.ProviderValues{
+		ProviderType: "azure",
+	}
 	err := memoryStorage.Operations().InsertOperation(op)
 	assert.NoError(t, err)
 	step := NewResolveCredentialsStep(memoryStorage.Operations(), accountProvider, &rules.RulesService{})
@@ -277,6 +297,9 @@ func TestResolveCredentials_IntegrationAzureEuAccess(t *testing.T) {
 	accountProvider := hyperscaler.NewAccountProvider(hyperscaler.NewAccountPool(gc, namespace), hyperscaler.NewSharedGardenerAccountPool(gc, namespace))
 
 	op := fixOperationWithPlatformRegion("cf-ch20", pkg.Azure)
+	op.ProviderValues = &internal.ProviderValues{
+		ProviderType: "azure",
+	}
 	err := memoryStorage.Operations().InsertOperation(op)
 	assert.NoError(t, err)
 	step := NewResolveCredentialsStep(memoryStorage.Operations(), accountProvider, &rules.RulesService{})
@@ -325,4 +348,31 @@ func fixEuAccessSecretBinding(name, hyperscalerType string) *unstructured.Unstru
 	labels["euAccess"] = "true"
 	o.SetLabels(labels)
 	return o
+}
+
+func fixOperationRuntimeStatus(planId string, provider pkg.CloudProvider) internal.Operation {
+	provisioningOperation := fixture.FixProvisioningOperationWithProvider(statusOperationID, statusInstanceID, provider)
+	provisioningOperation.State = domain.InProgress
+	provisioningOperation.ProvisionerOperationID = statusProvisionerOperationID
+	provisioningOperation.InstanceDetails.RuntimeID = runtimeID
+	provisioningOperation.ProvisioningParameters.PlanID = planId
+	provisioningOperation.ProvisioningParameters.ErsContext.GlobalAccountID = statusGlobalAccountID
+	provisioningOperation.ProviderValues = &internal.ProviderValues{
+		ProviderType: strings.ToLower(string(provider)),
+	}
+
+	return provisioningOperation
+}
+
+func fixOperationRuntimeStatusWithProvider(planId string, provider pkg.CloudProvider) internal.Operation {
+	provisioningOperation := fixture.FixProvisioningOperationWithProvider(statusOperationID, statusInstanceID, provider)
+	provisioningOperation.State = ""
+	provisioningOperation.ProvisionerOperationID = statusProvisionerOperationID
+	provisioningOperation.ProvisioningParameters.PlanID = planId
+	provisioningOperation.ProvisioningParameters.ErsContext.GlobalAccountID = statusGlobalAccountID
+	provisioningOperation.ProvisioningParameters.Parameters.Provider = &provider
+	provisioningOperation.ProviderValues = &internal.ProviderValues{
+		ProviderType: strings.ToLower(string(provider)),
+	}
+	return provisioningOperation
 }

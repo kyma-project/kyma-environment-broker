@@ -11,7 +11,6 @@ import (
 	"github.com/kyma-project/kyma-environment-broker/internal"
 	kebError "github.com/kyma-project/kyma-environment-broker/internal/error"
 	"github.com/kyma-project/kyma-environment-broker/internal/process"
-	"github.com/kyma-project/kyma-environment-broker/internal/process/input"
 	"github.com/kyma-project/kyma-environment-broker/internal/storage"
 	"github.com/pivotal-cf/brokerapi/v12/domain"
 )
@@ -20,14 +19,12 @@ type InitialisationStep struct {
 	operationManager *process.OperationManager
 	operationStorage storage.Operations
 	instanceStorage  storage.Instances
-	inputBuilder     input.CreatorForPlan
 }
 
-func NewInitialisationStep(is storage.Instances, os storage.Operations, b input.CreatorForPlan) *InitialisationStep {
+func NewInitialisationStep(is storage.Instances, os storage.Operations) *InitialisationStep {
 	step := &InitialisationStep{
 		operationStorage: os,
 		instanceStorage:  is,
-		inputBuilder:     b,
 	}
 	step.operationManager = process.NewOperationManager(os, step.Name(), kebError.KEBDependency)
 	return step
@@ -101,7 +98,7 @@ func (s *InitialisationStep) Run(operation internal.Operation, log *slog.Logger)
 		return s.operationManager.OperationSucceeded(operation, fmt.Sprintf("operation preempted by deprovisioning %s", lastOp.ID), log)
 	}
 
-	return s.initializeUpgradeShootRequest(operation, log)
+	return operation, 0, nil
 }
 
 func (s *InitialisationStep) getRuntimeIdFromProvisioningOp(operation *internal.Operation) error {
@@ -111,20 +108,4 @@ func (s *InitialisationStep) getRuntimeIdFromProvisioningOp(operation *internal.
 	}
 	operation.RuntimeID = provOp.RuntimeID
 	return nil
-}
-
-func (s *InitialisationStep) initializeUpgradeShootRequest(operation internal.Operation, log *slog.Logger) (internal.Operation, time.Duration, error) {
-	log.Info(fmt.Sprintf("create provisioner input creator for plan ID %+v", operation.ProvisioningParameters))
-	creator, err := s.inputBuilder.CreateUpgradeShootInput(operation.ProvisioningParameters)
-	switch {
-	case err == nil:
-		operation.InputCreator = creator
-		return operation, 0, nil // go to next step
-	case kebError.IsTemporaryError(err):
-		log.Error(fmt.Sprintf("cannot create upgrade shoot input creator at the moment for plan %s: %s", operation.ProvisioningParameters.PlanID, err))
-		return s.operationManager.RetryOperation(operation, "error while creating upgrade shoot input creator", err, 5*time.Second, 1*time.Minute, log)
-	default:
-		log.Error(fmt.Sprintf("cannot create input creator for plan %s: %s", operation.ProvisioningParameters.PlanID, err))
-		return s.operationManager.OperationFailed(operation, "cannot create provisioning input creator", err, log)
-	}
 }

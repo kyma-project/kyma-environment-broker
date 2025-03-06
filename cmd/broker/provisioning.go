@@ -22,7 +22,7 @@ import (
 const resourceStateRetryInterval = 10 * time.Second
 
 func NewProvisioningProcessingQueue(ctx context.Context, provisionManager *process.StagedManager, workersAmount int, cfg *Config,
-	db storage.BrokerStorage, inputFactory input.CreatorForPlan,
+	db storage.BrokerStorage, configProvider input.ConfigurationProvider,
 	edpClient provisioning.EDPClient, accountProvider hyperscaler.AccountProvider,
 	k8sClientProvider provisioning.K8sClientProvider, cli client.Client, defaultOIDC pkg.OIDCConfigDTO, logs *slog.Logger, rulesService *rules.RulesService) *process.Queue {
 
@@ -59,11 +59,11 @@ func NewProvisioningProcessingQueue(ctx context.Context, provisionManager *proce
 		},
 		{
 			stage: createRuntimeStageName,
-			step:  provisioning.NewInitialisationStep(db.Operations(), db.Instances(), inputFactory),
+			step:  provisioning.NewInitProviderValuesStep(db.Operations(), cfg.Provisioner, trialRegionsMapping, cfg.Broker.UseSmallerMachineTypes),
 		},
 		{
 			stage: createRuntimeStageName,
-			step:  steps.NewInitKymaTemplate(db.Operations()),
+			step:  steps.NewInitKymaTemplate(db.Operations(), configProvider),
 		},
 		{
 			stage: createRuntimeStageName,

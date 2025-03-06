@@ -26,7 +26,7 @@ func TestSapConvergedCloudDefaults(t *testing.T) {
 
 	// then
 
-	assertValues(t, Values{
+	assertValues(t, internal.ProviderValues{
 		DefaultAutoScalerMax: 20,
 		DefaultAutoScalerMin: 3,
 		ZonesCount:           3,
@@ -60,7 +60,7 @@ func TestSapConvergedCloudTwoZonesRegion(t *testing.T) {
 
 	// then
 
-	assertValues(t, Values{
+	assertValues(t, internal.ProviderValues{
 		DefaultAutoScalerMax: 20,
 		DefaultAutoScalerMin: 3,
 		ZonesCount:           2,
@@ -94,7 +94,7 @@ func TestSapConvergedCloudSingleZoneRegion(t *testing.T) {
 
 	// then
 
-	assertValues(t, Values{
+	assertValues(t, internal.ProviderValues{
 		DefaultAutoScalerMax: 20,
 		DefaultAutoScalerMin: 3,
 		ZonesCount:           1,

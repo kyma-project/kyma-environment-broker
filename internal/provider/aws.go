@@ -23,14 +23,14 @@ type (
 	}
 )
 
-func (p *AWSInputProvider) Provide() Values {
+func (p *AWSInputProvider) Provide() internal.ProviderValues {
 	zonesCount := p.zonesCount()
 	zones := p.zones()
 	region := DefaultAWSRegion
 	if p.ProvisioningParameters.Parameters.Region != nil {
 		region = *p.ProvisioningParameters.Parameters.Region
 	}
-	return Values{
+	return internal.ProviderValues{
 		DefaultAutoScalerMax: 20,
 		DefaultAutoScalerMin: 3,
 		ZonesCount:           zonesCount,
@@ -61,14 +61,14 @@ func (p *AWSInputProvider) zones() []string {
 	return MultipleZonesForAWSRegion(region, p.zonesCount())
 }
 
-func (p *AWSTrialInputProvider) Provide() Values {
+func (p *AWSTrialInputProvider) Provide() internal.ProviderValues {
 	machineType := DefaultOldAWSTrialMachineType
 	if p.UseSmallerMachineTypes {
 		machineType = DefaultAWSMachineType
 	}
 	region := p.region()
 
-	return Values{
+	return internal.ProviderValues{
 		DefaultAutoScalerMax: 1,
 		DefaultAutoScalerMin: 1,
 		ZonesCount:           1,
@@ -105,19 +105,19 @@ func (p *AWSTrialInputProvider) region() string {
 	return DefaultAWSTrialRegion
 }
 
-func (p *AWSFreemiumInputProvider) Provide() Values {
+func (p *AWSFreemiumInputProvider) Provide() internal.ProviderValues {
 	machineType := DefaultOldAWSTrialMachineType
 	if p.UseSmallerMachineTypes {
 		machineType = DefaultAWSMachineType
 	}
 	region := p.region()
 
-	return Values{
+	return internal.ProviderValues{
 		DefaultAutoScalerMax: 1,
 		DefaultAutoScalerMin: 1,
 		ZonesCount:           1,
 		Zones:                MultipleZonesForAWSRegion(region, 1),
-		ProviderType:         "aws",
+		ProviderType:         AWSProviderType,
 		DefaultMachineType:   machineType,
 		Region:               region,
 		Purpose:              PurposeEvaluation,

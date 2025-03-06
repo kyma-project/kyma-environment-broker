@@ -13,7 +13,6 @@ import (
 	pkg "github.com/kyma-project/kyma-environment-broker/common/runtime"
 	"github.com/kyma-project/kyma-environment-broker/internal/broker"
 	"github.com/kyma-project/kyma-environment-broker/internal/notification"
-	kebOrchestration "github.com/kyma-project/kyma-environment-broker/internal/orchestration"
 	"github.com/kyma-project/kyma-environment-broker/internal/process"
 	"github.com/kyma-project/kyma-environment-broker/internal/process/input"
 	"github.com/kyma-project/kyma-environment-broker/internal/storage"
@@ -314,10 +313,6 @@ func fixConfig() *Config {
 		},
 		Notification: notification.Config{
 			Url: "http://host:8080/",
-		},
-		OrchestrationConfig: kebOrchestration.Config{
-			Namespace: "kcp-system",
-			Name:      "orchestration-config",
 		},
 		TrialRegionMappingFilePath:                "testdata/trial-regions.yaml",
 		SapConvergedCloudRegionMappingsFilePath:   "testdata/old-sap-converged-cloud-region-mappings.yaml",

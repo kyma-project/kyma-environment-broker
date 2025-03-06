@@ -40,7 +40,6 @@ func (_ *checkRuntimeResource) Name() string {
 }
 
 func (s *checkRuntimeResource) Run(operation internal.Operation, log *slog.Logger) (internal.Operation, time.Duration, error) {
-
 	runtime, err := s.GetRuntimeResource(operation.RuntimeID, operation.KymaResourceNamespace)
 	if err != nil {
 		log.Error(fmt.Sprintf("unable to get Runtime resource %s/%s", operation.KymaResourceNamespace, operation.RuntimeID))

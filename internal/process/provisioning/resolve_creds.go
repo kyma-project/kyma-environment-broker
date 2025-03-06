@@ -5,6 +5,8 @@ import (
 	"log/slog"
 	"time"
 
+	"github.com/kyma-project/kyma-environment-broker/common/runtime"
+
 	kebError "github.com/kyma-project/kyma-environment-broker/internal/error"
 
 	"github.com/kyma-project/kyma-environment-broker/internal/euaccess"
@@ -42,7 +44,8 @@ func (s *ResolveCredentialsStep) Name() string {
 }
 
 func (s *ResolveCredentialsStep) Run(operation internal.Operation, log *slog.Logger) (internal.Operation, time.Duration, error) {
-	cloudProvider := operation.InputCreator.Provider()
+	providerType := operation.ProviderValues.ProviderType
+	cloudProvider := runtime.CloudProviderFromString(providerType)
 	effectiveRegion := getEffectiveRegionForSapConvergedCloud(operation.ProvisioningParameters.Parameters.Region)
 
 	hypType, err := hyperscaler.HypTypeFromCloudProviderWithRegion(cloudProvider, &effectiveRegion, &operation.ProvisioningParameters.PlatformRegion)

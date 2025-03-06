@@ -194,31 +194,20 @@ func FixOperation(id, instanceId string, opType internal.OperationType) internal
 	return FixOperationWithProvisioningParameters(id, instanceId, opType, FixProvisioningParameters(id))
 }
 
-func FixInputCreator(provider pkg.CloudProvider) *SimpleInputCreator {
-	return &SimpleInputCreator{
-		Labels:        make(map[string]string),
-		ShootName:     ptr.String("ShootName"),
-		CloudProvider: provider,
-	}
-}
-
 func FixProvisioningOperation(operationId, instanceId string) internal.Operation {
 	o := FixOperation(operationId, instanceId, internal.OperationTypeProvision)
-	o.InputCreator = FixInputCreator(pkg.Azure)
 	o.DashboardURL = "https://console.kyma.org"
 	return o
 }
 
 func FixProvisioningOperationWithProvisioningParameters(operationId, instanceId string, provisioningParameters internal.ProvisioningParameters) internal.Operation {
 	o := FixOperationWithProvisioningParameters(operationId, instanceId, internal.OperationTypeProvision, provisioningParameters)
-	o.InputCreator = FixInputCreator(pkg.Azure)
 	o.DashboardURL = "https://console.kyma.org"
 	return o
 }
 
 func FixUpdatingOperation(operationId, instanceId string) internal.UpdatingOperation {
 	o := FixOperation(operationId, instanceId, internal.OperationTypeUpdate)
-	o.InputCreator = FixInputCreator(pkg.Azure)
 	o.UpdatingParameters = internal.UpdatingParametersDTO{
 		OIDC: &pkg.OIDCConfigDTO{
 			ClientID:       "clinet-id-oidc",
@@ -236,7 +225,6 @@ func FixUpdatingOperation(operationId, instanceId string) internal.UpdatingOpera
 
 func FixProvisioningOperationWithProvider(operationId, instanceId string, provider pkg.CloudProvider) internal.Operation {
 	o := FixOperation(operationId, instanceId, internal.OperationTypeProvision)
-	o.InputCreator = FixInputCreator(provider)
 	o.DashboardURL = "https://console.kyma.org"
 	return o
 }
@@ -288,7 +276,6 @@ func FixRuntimeOperation(operationId string) orchestration.RuntimeOperation {
 func FixUpgradeClusterOperation(operationId, instanceId string) internal.UpgradeClusterOperation {
 	o := FixOperation(operationId, instanceId, internal.OperationTypeUpgradeCluster)
 	o.RuntimeOperation = FixRuntimeOperation(operationId)
-	o.InputCreator = FixInputCreator(pkg.Azure)
 	return internal.UpgradeClusterOperation{
 		Operation: o,
 	}

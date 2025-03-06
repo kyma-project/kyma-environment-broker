@@ -132,7 +132,7 @@ func (s *CreateRuntimeResourceStep) Run(operation internal.Operation, log *slog.
 	return operation, 0, nil
 }
 
-func (s *CreateRuntimeResourceStep) updateRuntimeResourceObject(values provider.Values, runtime *imv1.Runtime, operation internal.Operation, runtimeName, cloudProvider string) error {
+func (s *CreateRuntimeResourceStep) updateRuntimeResourceObject(values internal.ProviderValues, runtime *imv1.Runtime, operation internal.Operation, runtimeName, cloudProvider string) error {
 
 	runtime.ObjectMeta.Name = runtimeName
 	runtime.ObjectMeta.Namespace = operation.KymaResourceNamespace
@@ -189,7 +189,7 @@ func (s *CreateRuntimeResourceStep) createSecurityConfiguration(operation intern
 	return security
 }
 
-func (s *CreateRuntimeResourceStep) createShootProvider(operation *internal.Operation, values provider.Values) (imv1.Provider, error) {
+func (s *CreateRuntimeResourceStep) createShootProvider(operation *internal.Operation, values internal.ProviderValues) (imv1.Provider, error) {
 
 	maxSurge := intstr.FromInt32(int32(DefaultIfParamNotSet(values.ZonesCount, operation.ProvisioningParameters.Parameters.MaxSurge)))
 	maxUnavailable := intstr.FromInt32(int32(DefaultIfParamNotSet(0, operation.ProvisioningParameters.Parameters.MaxUnavailable)))
@@ -343,7 +343,7 @@ func DefaultIfParamNotSet[T interface{}](d T, param *T) T {
 	return *param
 }
 
-func CreateAdditionalWorkers(config input.Config, values provider.Values, currentAdditionalWorkers map[string]gardener.Worker, additionalWorkerNodePools []pkg.AdditionalWorkerNodePool, zones []string) []gardener.Worker {
+func CreateAdditionalWorkers(config input.Config, values internal.ProviderValues, currentAdditionalWorkers map[string]gardener.Worker, additionalWorkerNodePools []pkg.AdditionalWorkerNodePool, zones []string) []gardener.Worker {
 	additionalWorkerNodePoolsMaxUnavailable := intstr.FromInt32(int32(0))
 	workers := make([]gardener.Worker, 0, len(additionalWorkerNodePools))
 

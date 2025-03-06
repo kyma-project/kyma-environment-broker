@@ -35,7 +35,7 @@ func NewUpdateProcessingQueue(ctx context.Context, manager *process.StagedManage
 	}{
 		{
 			stage: "cluster",
-			step:  update.NewInitialisationStep(db.Instances(), db.Operations(), inputFactory),
+			step:  update.NewInitialisationStep(db.Instances(), db.Operations()),
 		},
 		{
 			stage:     "runtime_resource",

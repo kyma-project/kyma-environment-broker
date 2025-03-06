@@ -81,7 +81,7 @@ func TestInitialisationStep_OtherOperationIsInProgress(t *testing.T) {
 			builder := &automock.CreatorForPlan{}
 			builder.On("CreateUpgradeShootInput", mock.Anything).
 				Return(&fixture.SimpleInputCreator{}, nil)
-			step := NewInitialisationStep(is, ops, builder)
+			step := NewInitialisationStep(is, ops)
 			updatingOperation := fixture.FixUpdatingOperation("up-id", "iid")
 			updatingOperation.State = orchestration.Pending
 			err = ops.InsertOperation(updatingOperation.Operation)

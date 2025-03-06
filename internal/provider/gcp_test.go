@@ -26,7 +26,7 @@ func TestGCPDefaults(t *testing.T) {
 
 	// then
 
-	assertValues(t, Values{
+	assertValues(t, internal.ProviderValues{
 		DefaultAutoScalerMax: 20,
 		DefaultAutoScalerMin: 3,
 		ZonesCount:           3,
@@ -61,7 +61,7 @@ func TestGCPSpecific(t *testing.T) {
 
 	// then
 
-	assertValues(t, Values{
+	assertValues(t, internal.ProviderValues{
 		// default values does not depend on provisioning parameters
 		DefaultAutoScalerMax: 20,
 		DefaultAutoScalerMin: 3,
@@ -92,7 +92,7 @@ func TestGCPTrial_Defaults(t *testing.T) {
 
 	// then
 
-	assertValues(t, Values{
+	assertValues(t, internal.ProviderValues{
 		DefaultAutoScalerMax: 1,
 		DefaultAutoScalerMin: 1,
 		ZonesCount:           1,
@@ -121,7 +121,7 @@ func TestGCPTrial_AbstractRegion(t *testing.T) {
 
 	// then
 
-	assertValues(t, Values{
+	assertValues(t, internal.ProviderValues{
 		DefaultAutoScalerMax: 1,
 		DefaultAutoScalerMin: 1,
 		ZonesCount:           1,
@@ -151,7 +151,7 @@ func TestGCPTrial_PlatformRegion(t *testing.T) {
 
 	// then
 
-	assertValues(t, Values{
+	assertValues(t, internal.ProviderValues{
 		DefaultAutoScalerMax: 1,
 		DefaultAutoScalerMin: 1,
 		ZonesCount:           1,
@@ -181,7 +181,7 @@ func TestGCPTrial_PlatformRegionNotInMapping(t *testing.T) {
 
 	// then
 
-	assertValues(t, Values{
+	assertValues(t, internal.ProviderValues{
 		DefaultAutoScalerMax: 1,
 		DefaultAutoScalerMin: 1,
 		ZonesCount:           1,
@@ -211,7 +211,7 @@ func TestGCPTrial_PlatformRegionNotInMapping_AbstractRegion(t *testing.T) {
 
 	// then
 
-	assertValues(t, Values{
+	assertValues(t, internal.ProviderValues{
 		DefaultAutoScalerMax: 1,
 		DefaultAutoScalerMin: 1,
 		ZonesCount:           1,
@@ -240,7 +240,7 @@ func TestGCPTrial_InvalidAbstractRegion(t *testing.T) {
 
 	// then
 
-	assertValues(t, Values{
+	assertValues(t, internal.ProviderValues{
 		DefaultAutoScalerMax: 1,
 		DefaultAutoScalerMin: 1,
 		ZonesCount:           1,
@@ -272,7 +272,7 @@ func TestGCPTrial_RegionNotConsistentWithPlatformRegion(t *testing.T) {
 
 	// then
 
-	assertValues(t, Values{
+	assertValues(t, internal.ProviderValues{
 		// default values do not depend on provisioning parameters
 		DefaultAutoScalerMax: 1,
 		DefaultAutoScalerMin: 1,
@@ -305,7 +305,7 @@ func TestGCPTrial_KSA(t *testing.T) {
 
 	// then
 
-	assertValues(t, Values{
+	assertValues(t, internal.ProviderValues{
 		// default values do not depend on provisioning parameters
 		DefaultAutoScalerMax: 1,
 		DefaultAutoScalerMin: 1,

@@ -6,12 +6,12 @@ import (
 	"log/slog"
 	"time"
 
+	"github.com/kyma-project/kyma-environment-broker/internal/provider"
+
 	gardener "github.com/gardener/gardener/pkg/apis/core/v1beta1"
 
 	kebError "github.com/kyma-project/kyma-environment-broker/internal/error"
 	"github.com/kyma-project/kyma-environment-broker/internal/process/input"
-	"github.com/kyma-project/kyma-environment-broker/internal/provider"
-
 	"github.com/kyma-project/kyma-environment-broker/internal/process/provisioning"
 
 	imv1 "github.com/kyma-project/infrastructure-manager/api/v1"

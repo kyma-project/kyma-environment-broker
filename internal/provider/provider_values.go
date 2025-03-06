@@ -9,7 +9,7 @@ import (
 )
 
 type Provider interface {
-	Provide() Values
+	Provide() internal.ProviderValues
 }
 
 func GetPlanSpecificValues(
@@ -20,7 +20,7 @@ func GetPlanSpecificValues(
 	trialPlatformRegionMapping map[string]string,
 	defaultPurpose string,
 	commercialFailureTolerance string,
-) (Values, error) {
+) (internal.ProviderValues, error) {
 	var p Provider
 	switch operation.ProvisioningParameters.PlanID {
 	case broker.AWSPlanID, broker.BuildRuntimeAWSPlanID:
@@ -70,7 +70,7 @@ func GetPlanSpecificValues(
 				ProvisioningParameters: operation.ProvisioningParameters,
 			}
 		default:
-			return Values{}, fmt.Errorf("freemium provider for '%s' is not supported", operation.ProvisioningParameters.PlatformProvider)
+			return internal.ProviderValues{}, fmt.Errorf("freemium provider for '%s' is not supported", operation.ProvisioningParameters.PlatformProvider)
 		}
 	case broker.SapConvergedCloudPlanID:
 		p = &SapConvergedCloudInputProvider{
@@ -105,11 +105,13 @@ func GetPlanSpecificValues(
 				ProvisioningParameters: operation.ProvisioningParameters,
 			}
 		default:
-			return Values{}, fmt.Errorf("trial provider for %s not yet implemented", trialProvider)
+			return internal.ProviderValues{}, fmt.Errorf("trial provider for %s not yet implemented", trialProvider)
 		}
 
+	case broker.OwnClusterPlanID:
+		p = &OwnClusterinputProvider{}
 	default:
-		return Values{}, fmt.Errorf("plan %s not supported", operation.ProvisioningParameters.PlanID)
+		return internal.ProviderValues{}, fmt.Errorf("plan %s not supported", operation.ProvisioningParameters.PlanID)
 	}
 	return p.Provide(), nil
 }

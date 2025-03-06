@@ -57,7 +57,6 @@ func TestOperation(t *testing.T) {
 		orchestrationID := "orch-id"
 
 		givenOperation := fixture.FixProvisioningOperation("operation-id", "inst-id")
-		givenOperation.InputCreator = nil
 		givenOperation.State = domain.InProgress
 		givenOperation.CreatedAt = givenOperation.CreatedAt.Truncate(time.Millisecond)
 		givenOperation.UpdatedAt = givenOperation.UpdatedAt.Truncate(time.Millisecond)
@@ -66,7 +65,6 @@ func TestOperation(t *testing.T) {
 		givenOperation.ProvisioningParameters.PlanID = broker.TrialPlanID
 
 		latestOperation := fixture.FixProvisioningOperation("latest-id", "inst-id")
-		latestOperation.InputCreator = nil
 		latestOperation.State = domain.InProgress
 		latestOperation.CreatedAt = latestOperation.CreatedAt.Truncate(time.Millisecond).Add(time.Minute)
 		latestOperation.UpdatedAt = latestOperation.UpdatedAt.Truncate(time.Millisecond).Add(2 * time.Minute)
@@ -75,7 +73,6 @@ func TestOperation(t *testing.T) {
 		latestOperation.ProvisioningParameters.PlanID = broker.TrialPlanID
 
 		latestPendingOperation := fixture.FixProvisioningOperation("latest-id-pending", "inst-id")
-		latestPendingOperation.InputCreator = nil
 		latestPendingOperation.State = orchestration.Pending
 		latestPendingOperation.CreatedAt = latestPendingOperation.CreatedAt.Truncate(time.Millisecond).Add(2 * time.Minute)
 		latestPendingOperation.UpdatedAt = latestPendingOperation.UpdatedAt.Truncate(time.Millisecond).Add(3 * time.Minute)

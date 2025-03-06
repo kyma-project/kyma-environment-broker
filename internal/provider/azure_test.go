@@ -28,7 +28,7 @@ func TestAzureDefaults(t *testing.T) {
 
 	// then
 
-	assertValues(t, Values{
+	assertValues(t, internal.ProviderValues{
 		DefaultAutoScalerMax: 20,
 		DefaultAutoScalerMin: 3,
 		ZonesCount:           3,
@@ -59,7 +59,7 @@ func TestAzureTrialDefaults(t *testing.T) {
 
 	// then
 
-	assertValues(t, Values{
+	assertValues(t, internal.ProviderValues{
 		DefaultAutoScalerMax: 1,
 		DefaultAutoScalerMin: 1,
 		ZonesCount:           1,
@@ -90,7 +90,7 @@ func TestAzureLiteDefaults(t *testing.T) {
 
 	// then
 
-	assertValues(t, Values{
+	assertValues(t, internal.ProviderValues{
 		DefaultAutoScalerMax: 10,
 		DefaultAutoScalerMin: 2,
 		ZonesCount:           1,
@@ -126,7 +126,7 @@ func TestAzureSpecific(t *testing.T) {
 
 	// then
 
-	assertValues(t, Values{
+	assertValues(t, internal.ProviderValues{
 		// default values do not depend on provisioning parameters
 		DefaultAutoScalerMax: 20,
 		DefaultAutoScalerMin: 3,
@@ -163,7 +163,7 @@ func TestAzureTrialSpecific(t *testing.T) {
 
 	// then
 
-	assertValues(t, Values{
+	assertValues(t, internal.ProviderValues{
 		// default values do not depend on provisioning parameters
 		DefaultAutoScalerMax: 1,
 		DefaultAutoScalerMin: 1,
@@ -199,7 +199,7 @@ func TestAzureLiteSpecific(t *testing.T) {
 
 	// then
 
-	assertValues(t, Values{
+	assertValues(t, internal.ProviderValues{
 		// default values do not depend on provisioning parameters
 		DefaultAutoScalerMax: 10,
 		DefaultAutoScalerMin: 2,

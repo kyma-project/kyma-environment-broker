@@ -107,7 +107,6 @@ func fixOperationCreateRuntime(t *testing.T, planID, region string) internal.Ope
 func fixOperationCreateRuntimeWithPlatformRegion(t *testing.T, planID, region, platformRegion string) internal.Operation {
 	provisioningOperation := fixture.FixProvisioningOperation(operationID, instanceID)
 	provisioningOperation.State = domain.InProgress
-	provisioningOperation.InputCreator = fixInputCreator(t)
 	provisioningOperation.InstanceDetails.ShootName = shootName
 	provisioningOperation.InstanceDetails.ShootDNSProviders = gardener.DNSProvidersData{
 		Providers: []gardener.DNSProviderData{
