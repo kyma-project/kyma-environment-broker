@@ -47,7 +47,7 @@ func TestResolveCredentials_IntegrationAzure2(t *testing.T) {
 
 		oldImplementationLog = bufio.NewWriter(oldLog)
 
-		newLog, err := os.OpenFile("./hap-new-implementation.log", os.O_RDWR|os.O_CREATE|os.O_TRUNC, 0755)
+		newLog, err := os.OpenFile("./hap-new-implementation.log", os.O_RDWR|os.O_CREATE|os.O_TRUNC, os.ModeAppend)
 		require.NoError(t, err)
 		defer newLog.Close()
 
