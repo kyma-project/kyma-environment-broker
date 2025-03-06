@@ -16,10 +16,10 @@ More about HAP process can be found in [Hyperscaler Account Pool](03-10-hypersca
 
 ## Rule Configuration
 
-The rule is configured in values.yaml in `hap.rule` property.
-It is a list of strings, each of which is a single rule entry that corresponds to a single pool.
-Each rule entry is evaluated during cluster provisioning process.
-If more than one rule applies the best matching rule is selected based on the [priority](#uniqnuess--priority). The following examples presents example configuration in values.yaml:
+The rule is configured in `values.yaml` in the `hap.rule` property.
+It is a list of strings, where each string is a single rule entry that corresponds to a single pool.
+Each rule entry is evaluated during cluster provisioning.
+If more than one rule applies, the best matching rule is selected based on the [priority](#uniqnuess--priority). See an example configuration in `values.yaml`:
 
 ```
 hap: 
@@ -30,7 +30,7 @@ hap:
   - rule_entry_n
 ```
 
-Every pool that a rule entry represents must be preconfigured in a Gardener cluster that KEB connects to.
+Every pool represented by a rule entry must be preconfigured in a Gardener cluster that KEB connects to.
 
 ## Rule Format 
 
@@ -41,7 +41,7 @@ PLAN(INPUT_ATTR_1=VAL_1, INPUT_ATTR_2=VAL_2, ..., INPUT_ATTR_N=VAL_N) -> OUTPUT_
 ```
 
 Every rule entry consists of input and output attributes separated by the arrow symbol - `->`.
-Input attributes are used to match rule entry with the SKR request and to modify [search labels](#search-labels). Output attributes are only used to modify the [search labels](#search-labels).
+The input attributes match a rule entry with the Kyma runtime request and modify [search labels](#search-labels). The output attributes only modify the search labels.
 In its minimal form, each rule consists of a **PLAN** that the rule applies to.
 In its extended form, a rule entry contains lists of input attributes. Their values are passed as `ATTR=VAL` pairs in parentheses.
 
@@ -69,18 +69,16 @@ Use the **shared** and **euAccess** attributes only to apply their labels if the
 ## Rule Evaluation
 
 During cluster provisioning, HAP evaluates a set of rules to determine which labels to use when querying Secret bindings.
-Rule is evaluated during cluster provisioning. Rule entries are analyzed one by one.
-Input attributes from every entry are compared with values from SKR input. If they are the same then the rule entry is considered matched.
+Rule entries are analyzed one by one.
+Input attributes from every entry are compared with values from the Kyma runtime input. If they are the same, the rule entry is considered matched.
 If more than one rule is triggered, only one is selected, as described in the [Priority](#uniqueness-and-priority) section.
 If no rule entries are triggered, an error is returned. In this case, no fallback behavior is defined.
-
-
 
 ## Search Labels
 
 HAP stores credentials to hyperscaler accounts in Kubernetes Secrets that SecretBindings points to. KEB searches for SecretBindings using labels **hyperscalerType**, **shared** and **euAccess**. 
 
-The **hyperscaler-type** contains hyperscaler name and region information in the format of `hyperscaler_type: <HYPERSCALER_NAME>[_<PLATFORM_REGION>][_<HYPERSCALER_REGION>]`, where both `_<PLATFORM_REGION>` and `_<HYPERSCALER_REGION>` are optional. The **hypercaler-type** label is mandatory. Its value is computed based on a plan and regions and mapped in [hyperscaler_type.go](https://github.com/kyma-project/kyma-environment-broker/blob/main/common/hyperscaler/hyperscaler_type.go). Not all plans share their name with hyperscaler types, e.g. sap-converged-plan has `openstack` hyperscalerType and `trial` plan can have either `azure` or `aws` depending on the configured provider type. 
+The **hyperscaler-type** contains a hyperscaler name and region information as `hyperscaler_type: <HYPERSCALER_NAME>[_<PLATFORM_REGION>][_<HYPERSCALER_REGION>]`, where both `_<PLATFORM_REGION>` and `_<HYPERSCALER_REGION>` are optional. The **hyperscaler-type** label is mandatory. Its value is computed based on the plan and regions provided, and mapped in [hyperscaler_type.go](https://github.com/kyma-project/kyma-environment-broker/blob/main/common/hyperscaler/hyperscaler_type.go). Not all plans share their name with hyperscaler types, for example, the `sap-converged-plan` has the `openstack` hyperscalerType and the `trial` plan can have either `azure` or `aws` depending on the configured provider type. 
 
 The following table shows a mapping of plans to hyperscaler types:
 
@@ -95,9 +93,9 @@ The following table shows a mapping of plans to hyperscaler types:
 | sap-converged-cloud 	| openstack       	|
 | trial               	| aws              	|
 
-The **euAccess** and **shared** labels contain boolean values and they are used to divide existing pools to secrets used by EU restricted regions and secrets shared by multiple Global Accounts. The **euAccess** and **shared** labels are optional.
+The **euAccess** and **shared** labels contain boolean values and are optional. They divide existing pools between Secrets used by EU-restricted regions and Secrets shared by multiple global accounts.
 
-Every rule must contain at least a plan and apply `hyperscaler_type: <HYPERSCALER_NAME>` label. The following example shows a simple rule entry configuration and a SecretBinding pool that this configuration corresponds to:
+Every rule must contain at least a plan and apply the `hyperscaler_type: <HYPERSCALER_NAME>` label. See an example of a simple rule entry configuration and a SecretBinding pool that this configuration corresponds to:
 
 ```
 hap:
@@ -109,7 +107,7 @@ Rest of examples in the document follow the same structure of presenting a confi
 
 ## Rule Attributes
 
-Existence of an attribute in a rule means a set of clusters it applies to is constrained not only by a plan but by the attribute itself. The following section describes attributes that can be used in rule entries.
+If an attribute exists in a rule, it constrains a set of clusters it applies to in the same way as the plan. The following section describes the attributes that you can use in rule entries.
 
 ### Platform Region Attribute
 
@@ -135,7 +133,7 @@ hap:
 
 ### Shared and EU Access Attributes
 
-The `shared` and `euAccess` attributes does not correspond to any SKR's property. Those atributes are only used to add search labels. If the rule entry contains `shared` or `euAccess` attributes then when triggered, a `shared: true` or `euAccess: true` labels are added to the [search labels](#search-labels). Shared label on a SecretBindings marks it as assignable to more than one SKR and euAccess is used to mark EU regions (more on that can be found in [HAP Pool document](03-10-hyperscaler-account-pool.md)). Below configuration specifies that all gcp clusters will use the same pool of shared secret bindings marked with labels `hyperscalerType: gcp`, `shared: true` and azure clusters in the region cf-ch20 will use a pool of secret bindings marked with labels `hyperscalerType: azure`, `euAccess: true`.
+The **shared** and **euAccess** attributes do not correspond to any Kyma runtime property. Use these attributes only to add search labels. If the rule entry contains either of the attributes, then when the rule is triggered, the `shared: true` or `euAccess: true` labels are added to the [search labels](#search-labels). The shared label on a SecretBinding marks it as assignable to more than one Kyma runtime, and euAccess is used to mark EU regions (see [HAP Pool document](03-10-hyperscaler-account-pool.md)). The following configuration specifies that all `gcp` clusters use the same pool of shared secret bindings marked with labels `hyperscalerType: gcp`, `shared: true`, and azure clusters in the region cf-ch20 use a pool of secret bindings marked with labels `hyperscalerType: azure`, and `euAccess: true`.
 
 ```
 hap: 
@@ -164,7 +162,7 @@ The attributes that support `*` are: `PR`, `HR`.
 
 ### Attributes Summary
 
-The following table summarizes the attributes that can be used in the rule entry. Its columns define:
+You can use the following attributes in the rule entry.
 * Name and symbol - the latter is used in rule entries.
 * Data type and possible values.
 * Input attributes - true when the attribute can occur in the input attributes section (left part) of a rule entry (see [Rule Format](#rule-format) section).
@@ -178,11 +176,11 @@ The following table summarizes the attributes that can be used in the rule entry
 | EU Access (EU)       	| no value                                                                                                                           	| false           	| true             	| euAccess: true                                                                                    	|
 | Shared (S)           	| no value                                                                                                                           	| false           	| true             	| shared: true                                                                                      	|
 
-## Uniqnuess & Priority
+## Uniqueness and Priority
 
 Only one rule can be triggered. If more than one rule entry match the request then only one is selected and applied. The process of selecting the best matching rule is based on a rule uniqueness and priority.
 Rule entry uniqueness is determined by its plan and input parameters with its values (identification attributes) not including input parameters with `*`. 
-Output parameters are not taken into account when establishing rule entry uniqueness. For example the following rule will fail on startup because every SKR can be matched by both rules:
+Output parameters are not taken into account when establishing rule entry uniqueness. For example, the following rule fails on startup because both rules can match every Kyma runtime:
 
 ```
 hap:
@@ -195,14 +193,14 @@ hap:
 ```
 
 Rule configuration must contain only unique entries in the scope of that list.
-If rule configuration contains duplicated rule entries an error that fails KEB startup is returned.
+Otherwise, an error that fails KEB's startup is returned.
 
 Rule entry priority is selected by sorting all rule entries that apply to the request by the number of identification attributes they contain. 
-For example, a rule with no attributes and only a plan has lower priority then a rule with the same plan but a platform region attribute (`gcp` < `gcp(PR=cf-sa30)`).
-After sorting the entry that specifies most attributes (hence is the most specific) is selected. 
+For example, a rule including only a plan and no attributes has lower priority than a rule with the same plan and a platform region attribute (`gcp` < `gcp(PR=cf-sa30)`).
+After sorting, the entry that specifies the most attributes is selected because it is the most specific. 
 Input attributes with value `*` are not taken into account when calculating priority.
 
-The following example shows priority of rules starting from the lowest priority:
+The following example shows the priority of the listed rules starting from the lowest:
 
 ```
 aws -> S                              # search labels: hyperscalerType: aws, shared: true
@@ -215,19 +213,19 @@ aws(PR=cf-eu11, HR=westeu) -> EU, S   # search labels: hyperscalerType: aws_cf-e
 KEB validates HAP rules during startup. If the configuration is invalid, KEB does not start, and an error message is displayed in the logs. 
 
 The constraints used for validation during KEB startup include the following:
-* Rules format check - all the rules must comply with the format specified above.
-* Every supported plan needs at least one rule entry, if no rule entry is defined for a plan then an error is returned during KEB startup.
-* Uniqueness validation check - KEB checks if all rule entries are unique in the scope of the rule. Specifying more than one entry with the same number of identification attributes is prohibited. If more than one such attribute is specified then the error is returned failing KEB startup. For more details see [Uniqnuess & Priority](#uniqnuess--priority) section. 
+* Rules format check: All the rules must comply with the specified format.
+* Every supported plan needs at least one rule entry; if no rule entry is defined for a plan,  an error is returned during KEB startup.
+* Uniqueness validation check: KEB checks if all rule entries are unique in the rule's scope. You must not specify more than one entry with the same number of identification attributes. Otherwise, the error is returned, failing KEB startup. For more details, see the [Uniqueness & Priority](#uniqueness-and-priority) section. 
 
 ## Initial Configuration
 
-The last example shows initial configuration created to mimic the current bahaviour of KEB at the time of writing the document. The configuration enforces that:
-* azure, aws, gcp have their own pools of dedicated bindings.
-* free plan uses aws or azure dedicated bindings depending on the provider value.
+The following example shows the initial configuration created to mimic KEB behavior. The configuration enforces the following:
+* The azure, aws, and gcp plans have their own pools of dedicated bindings.
+* The free plan uses aws or azure dedicated bindings, depending on the provider value.
 * gcp clusters in the cf-sa30 region use the pool of secret bindings marked with the `hyperscalerType: gcp_cf-sa30` label.
 * sap-converged-cloud clusters use the pool of secret bindings marked with the `hyperscalerType: openstack_<HYPERSCALER_REGION>` label, and all these pools are shared.
 * trial clusters can use one of two pools of shared secret bindings marked with labels: `hyperscalerType: azure` or `hyperscalerType: aws` depending on the used trial provider type.
-* azure clusters in the region cf-ch20 and aws clusters in the region cf-eu11 have their own dedicated pools and are euAccess specific.
+* azure clusters in the cf-ch20 region and aws clusters in the cf-eu11 region have their own dedicated pools and are euAccess specific.
 
 ```
 hap:
