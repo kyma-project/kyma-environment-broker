@@ -214,6 +214,8 @@ provisioner:
 
   gardener:
     enableShootAndSeedSameRegion: "false"
+  useMainOIDC: "true"
+  useAdditionalOIDC: "false"
 
 trialRegionsMapping: |-
   cf-eu10: europe

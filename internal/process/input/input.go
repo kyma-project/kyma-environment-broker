@@ -42,6 +42,8 @@ type Config struct {
 	ClusterUpdateStepTimeout                time.Duration     `envconfig:"default=2h"`
 	CheckRuntimeResourceDeletionStepTimeout time.Duration     `envconfig:"default=1h"`
 	EnableShootAndSeedSameRegion            bool              `envconfig:"default=false"`
+	UseMainOIDC                             bool              `envconfig:"default=true"`
+	UseAdditionalOIDC                       bool              `envconfig:"default=false"`
 }
 
 type RuntimeInput struct {
