@@ -42,6 +42,7 @@ var InputAttributes = []Attribute{
 		Description: "Hyperscaler Region",
 		Setter:      setHyperscalerRegion,
 		Getter:      func(r *Rule) string { return r.HyperscalerRegion },
+		MatchableGetter: func(r *ProvisioningAttributes) string { return r.PlatformRegion },
 		input:       true,
 		output:      false,
 		HasValue:    true,
