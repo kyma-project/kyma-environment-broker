@@ -305,6 +305,7 @@ func (s *CreateRuntimeResourceStep) createKubernetesConfiguration(operation inte
 
 	if s.config.UseMainOIDC {
 		kubernetesConfig.KubeAPIServer.OidcConfig = oidc
+		kubernetesConfig.KubeAPIServer.AdditionalOidcConfig = nil
 	}
 
 	if s.config.UseAdditionalOIDC {
