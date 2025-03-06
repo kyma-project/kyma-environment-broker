@@ -59,7 +59,8 @@ func NewParseCmd() *cobra.Command {
 		`,
 
 		RunE: func(_ *cobra.Command, args []string) error {
-			return cmd.Run()
+			cmd.Run()
+			return nil
 		},
 	}
 	cmd.cobraCmd = cobraCmd
@@ -81,7 +82,7 @@ type ProcessingPair struct {
 	MatchingResults *rules.MatchingResult
 }
 
-func (cmd *ParseCommand) Run() error {
+func (cmd *ParseCommand) Run() {
 
 	printer := rules.NewColored(cmd.cobraCmd.Printf)
 	if cmd.noColor {
@@ -90,7 +91,6 @@ func (cmd *ParseCommand) Run() error {
 
 	if cmd.match != "" && (!cmd.sort || !cmd.unique) {
 		cmd.cobraCmd.Printf("\tMatching is only supported when both priority and uniqueness flags are specified.\n")
-		return nil
 	}
 
 	// create enabled plans
@@ -110,7 +110,6 @@ func (cmd *ParseCommand) Run() error {
 
 	if err != nil {
 		cmd.cobraCmd.Printf("Error: %s\n", err)
-		return nil
 	}
 
 	var dataForMatching *rules.ProvisioningAttributes
@@ -135,10 +134,7 @@ func (cmd *ParseCommand) Run() error {
 
 	if hasErrors {
 		cmd.cobraCmd.Printf("There are errors in your rule configuration. Fix above errors in your rule configuration and try again.\n")
-		return nil
 	}
-
-	return nil
 }
 
 type conf struct {
