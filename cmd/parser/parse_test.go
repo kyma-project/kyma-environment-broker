@@ -26,7 +26,7 @@ type TestCase struct {
 	ExpectedRule string   `yaml:"expected"`
 }
 
-func (c *TestCases) loadCases() *TestCases {
+func (c *TestCases) loadCases() {
 	yamlFile, err := os.ReadFile(RULES_TEST_CASES)
 	if err != nil {
 		log.Printf("err while reading a file %v ", err)
@@ -35,11 +35,9 @@ func (c *TestCases) loadCases() *TestCases {
 	if err != nil {
 		log.Fatalf("Unmarshal: %v", err)
 	}
-
-	return c
 }
 
-func (c *TestCases) writeCases() *TestCases {
+func (c *TestCases) writeCases() {
 	os.Remove(RULES_TEST_CASES)
 
 	bytes, err := yaml.Marshal(c)
@@ -51,8 +49,6 @@ func (c *TestCases) writeCases() *TestCases {
 	if err != nil {
 		log.Printf("err while writing a file %v ", err)
 	}
-
-	return c
 }
 
 func TestMain(t *testing.T) {
