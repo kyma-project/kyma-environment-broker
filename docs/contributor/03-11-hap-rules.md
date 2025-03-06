@@ -49,7 +49,7 @@ In its extended form, a rule entry contains lists of input attributes. Their val
 > * `aws()`
 
 Output attributes do not support values.
-Description of when the rule is triggered can be found in the [Rule Evaluation](#evaluation) section.
+To learn when the rule is triggered, see the [Rule Evaluation](#rule-evaluation) section.
 Rule attributes are described in [Rule Attributes](#rule-attributes) section. 
 
 The possible **OUTPUT_ATTR_x** attribute values are `S` or `EU`.
