@@ -185,7 +185,7 @@ Output parameters are not taken into account when establishing rule entry unique
 hap:
   rule: 
     - gcp 
-    - gcp -> S                      # invalid entry, output attributes does not take part into uniqnuess check
+    - gcp -> S                      # invalid entry, output attributes does not take part into uniqueness check
     - gcp(PR=*)                     # invalid entry, both can be applied to the same skr
     - gcp(HR=europe-west3)          # valid entry, new HR attribute makes the rule unique
     - gcp(PR=*, HR=europe-west3)    # invalid rules, the same as previous one because of addition of `PR=*` attribute
