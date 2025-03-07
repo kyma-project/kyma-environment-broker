@@ -191,7 +191,7 @@ hap:
     - gcp(PR=*, HR=europe-west3)    # invalid rules, the same as previous one because of addition of `PR=*` attribute
 ```
 
-Rule configuration must contain only unique entries in the scope of that list.
+Rule configuration must contain only unique entries.
 Otherwise, an error that fails KEB's startup is returned.
 
 Rule entry priority is selected by sorting all rule entries that apply to the request by the number of identification attributes they contain. 
