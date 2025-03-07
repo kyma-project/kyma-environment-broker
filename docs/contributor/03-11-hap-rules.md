@@ -219,12 +219,12 @@ The constraints used for validation during KEB startup include the following:
 ## Initial Configuration
 
 The following example shows the initial configuration created to mimic KEB behavior. The configuration enforces the following:
-* The azure, aws, and gcp plans have their own pools of dedicated bindings.
-* The free plan uses aws or azure dedicated bindings, depending on the provider value.
-* gcp clusters in the cf-sa30 region use the pool of secret bindings marked with the `hyperscalerType: gcp_cf-sa30` label.
-* sap-converged-cloud clusters use the pool of secret bindings marked with the `hyperscalerType: openstack_<HYPERSCALER_REGION>` label, and all these pools are shared.
-* trial clusters can use one of two pools of shared secret bindings marked with labels `hyperscalerType: azure` or `hyperscalerType: aws`, depending on the trial provider type used.
-* azure clusters in the cf-ch20 region and aws clusters in the cf-eu11 region have their own dedicated pools and are euAccess specific.
+* The `azure`, `aws`, and `gcp` plans have their own pools of dedicated bindings.
+* The `free` plan uses `aws` or `azure` dedicated bindings, depending on the provider value.
+* `gcp` clusters in the cf-sa30 region use the pool of secret bindings marked with the `hyperscalerType: gcp_cf-sa30` label.
+* `sap-converged-cloud` clusters use the pool of secret bindings marked with the `hyperscalerType: openstack_<HYPERSCALER_REGION>` label, and all these pools are shared.
+* `trial` clusters can use one of two pools of shared secret bindings marked with labels `hyperscalerType: azure` or `hyperscalerType: aws`, depending on the `trial` provider type used.
+* `azure` clusters in the cf-ch20 region and `aws` clusters in the cf-eu11 region have their own dedicated pools and are euAccess specific.
 
 See an example of the initial configuration created to mimic KEB behavior.
 ```
