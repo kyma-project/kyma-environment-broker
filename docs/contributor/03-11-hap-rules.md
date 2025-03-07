@@ -103,7 +103,7 @@ hap:
     - gcp                             # pool: hyperscalerType: gcp
 ```
 
-All the examples in the document show the structure of a configuration and corresponding pools in the comment as the snippet above.
+All the examples in the document show the structure of configuration and corresponding pools in the comment as the snippet above.
 
 ## Rule Attributes
 
