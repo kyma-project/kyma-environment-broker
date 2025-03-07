@@ -13,6 +13,8 @@ type Labels struct {
 type Rule struct {
 	Plan                           string
 	PlatformRegion                 string
+	PlatformRegionSuffix           bool
+	HyperscalerRegionSuffix        bool
 	HyperscalerRegion              string
 	EuAccess                       bool
 	Shared                         bool
@@ -35,14 +37,14 @@ type ProvisioningAttributes struct {
 	HyperscalerRegion string `json:"hyperscalerRegion"`
 }
 
-func (r *Rule) CalculateLabels() map[string]string {
-	return r.CalculateLabelsWith(getHyperscalerName(r.Plan))
+func (r *Rule) CalculateLabels(provisioningAttributes *ProvisioningAttributes) map[string]string {
+	return r.CalculateLabelsWith(getHyperscalerName(r.Plan), provisioningAttributes)
 }
 
-func (r *Rule) CalculateLabelsWith(hyperscalerName string) map[string]string {
-	for _, attr := range AllAttributes {
+func (r *Rule) CalculateLabelsWith(hyperscalerName string, provisioningAttributes *ProvisioningAttributes) map[string]string {
+	for _, attr := range OutputAttributes {
 		if attr.Getter(r) != "" {
-			r.Labels = attr.ApplyLabel(r, r.Labels)
+			r.Labels = attr.ApplyLabel(r, provisioningAttributes, r.Labels)
 		}
 	}
 
@@ -81,8 +83,8 @@ func (r *Rule) Matched(attributes *ProvisioningAttributes) bool {
 	return matched
 }
 
-func (r *Rule) SetAttributeValue(attribute, value string) (*Rule, error) {
-	for _, attr := range AllAttributes {
+func (r *Rule) SetAttributeValue(attribute, value string, attributes []Attribute) (*Rule, error) {
+	for _, attr := range attributes {
 		if attr.Name == attribute {
 			return attr.Setter(r, value)
 		}
@@ -107,7 +109,7 @@ func (r *Rule) NumberOfNonEmptyInputAttributes() int {
 func (r *Rule) String() string {
 	ruleStr := r.StringNoLabels()
 
-	labels := r.CalculateLabels()
+	labels := r.CalculateLabels(&ProvisioningAttributes{})
 	labelsStr := "# "
 	labelsToSort := make([]string, 0, len(labels))
 	for key, value := range labels {

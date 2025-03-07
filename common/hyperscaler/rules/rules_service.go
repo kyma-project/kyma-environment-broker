@@ -99,14 +99,16 @@ func (rs *RulesService) Match(data *ProvisioningAttributes) map[uuid.UUID]*Match
 	for _, result := range rs.Parsed.Results {
 		if !result.HasParsingErrors() {
 			matchingResult := &MatchingResult{
-				ParsingResultID: result.ID,
-				OriginalRule:    result.OriginalRule,
-				Rule:            result.Rule,
+				ParsingResultID:        result.ID,
+				OriginalRule:           result.OriginalRule,
+				Rule:                   result.Rule,
+				ProvisioningAttributes: data,
 			}
 
 			matchingResult.Matched = result.Rule.Matched(data)
 			if matchingResult.Matched {
 				lastMatch = matchingResult
+				matchingResult.labels = result.Rule.CalculateLabels(data)
 			}
 
 			matchingResults[result.ID] = matchingResult
