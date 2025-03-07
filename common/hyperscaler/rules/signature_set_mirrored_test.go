@@ -21,7 +21,7 @@ func TestSignatureSet_Mirrored(t *testing.T) {
 
 		assert.Nil(t, mirroredResults)
 
-		for _, _ = range mirroredResults {
+		for range mirroredResults {
 			require.Fail(t, "should not return any result")
 		}
 	})
