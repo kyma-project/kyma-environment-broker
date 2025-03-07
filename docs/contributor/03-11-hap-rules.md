@@ -172,13 +172,13 @@ You can use the following attributes in the rule entry.
 | Name (Symbol)        	| Data Type and Possible Values                                                                                                                    	| Input Attribute 	| Output Attribute 	| Modified SecretBinding Search Labels                                                              	|
 |----------------------	|------------------------------------------------------------------------------------------------------------------------------------	|-----------------	|------------------	|---------------------------------------------------------------------------------------------------	|
 | Platform Region (PR) 	| string, platform regions as defined in https://help.sap.com/docs/btp/sap-business-technology-platform/regions-for-kyma-environment 	| true            	| false            	| hyperscalerType: `<providerType>_<PR>` or hyperscalerType: `<providerType>_<PR>_<HR>` if used with HR 	|
-| Hyperscaler Region (HR)  	| string, hyperscaler region as defined in https://help.sap.com/docs/btp/sap-business-technology-platform/regions-for-kyma-environment   	| true            	| false            	| hyperscalerType: `<providerType>_<HR>` or hyperscalerType: `<providerType>_<PR>_<HR>` if used with PR 	|
+| Hyperscaler Region (HR)  	| string, hyperscaler region as defined in [Regions for the Kyma Environment](https://help.sap.com/docs/btp/sap-business-technology-platform/regions-for-kyma-environment)   	| true            	| false            	| hyperscalerType: `<providerType>_<HR>` or hyperscalerType: `<providerType>_<PR>_<HR>` if used with PR 	|
 | EU Access (EU)       	| no value                                                                                                                           	| false           	| true             	| euAccess: true                                                                                    	|
 | Shared (S)           	| no value                                                                                                                           	| false           	| true             	| shared: true                                                                                      	|
 
 ## Uniqueness and Priority
 
-Only one rule can be triggered. If more than one rule entry match the request then only one is selected and applied. The process of selecting the best matching rule is based on a rule uniqueness and priority.
+Only one rule can be triggered. If more than one rule entry matches the request, only one is selected and applied. The process of selecting the best matching rule is based on rule uniqueness and priority.
 Rule entry uniqueness is determined by its plan and input parameters with its values (identification attributes) not including input parameters with `*`. 
 Output parameters are not taken into account when establishing rule entry uniqueness. For example, the following rule fails on startup because both rules can match every Kyma runtime:
 
