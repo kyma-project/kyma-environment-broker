@@ -178,7 +178,7 @@ You can use the following attributes in the rule entry.
 ## Uniqueness and Priority
 
 Only one rule can be triggered. If more than one rule entry matches the request, only one is selected and applied. The process of selecting the best matching rule is based on rule uniqueness and priority.
-Rule entry uniqueness is determined by its plan and input parameters with its values (identification attributes) not including input parameters with `*`. 
+Rule entry uniqueness is determined by its plan and input parameters' values (identification attributes) not including input parameters with `*`. 
 Output parameters are not taken into account when establishing rule entry uniqueness. For example, the following rule fails on startup because both rules can match every Kyma runtime:
 
 ```
