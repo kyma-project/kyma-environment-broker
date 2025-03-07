@@ -133,7 +133,7 @@ hap:
 
 ### Shared and EU Access Attributes
 
-The **shared** and **euAccess** attributes do not correspond to any Kyma runtime property. Use these attributes only to add search labels. If the rule entry contains either of the attributes, then when the rule is triggered, the `shared: true` or `euAccess: true` labels are added to the [search labels](#search-labels). The shared label on a SecretBinding marks it as assignable to more than one Kyma runtime, and euAccess is used to mark EU regions (see [HAP Pool document](03-10-hyperscaler-account-pool.md)). The following configuration specifies that all `gcp` clusters use the same pool of shared secret bindings marked with labels `hyperscalerType: gcp`, `shared: true`, and azure clusters in the region cf-ch20 use a pool of secret bindings marked with labels `hyperscalerType: azure`, and `euAccess: true`.
+The **shared** and **euAccess** attributes do not correspond to any Kyma runtime property. Use these attributes only to add search labels. If the rule entry contains either of the attributes, then when the rule is triggered, the `shared: true` or `euAccess: true` labels are added to the [search labels](#search-labels). The shared label on a SecretBinding marks it as assignable to more than one Kyma runtime, and euAccess is used to mark EU regions (see [Hyperscaler Account Pool](03-10-hyperscaler-account-pool.md)). The following configuration specifies that all `gcp` clusters use the same pool of shared secret bindings marked with labels `hyperscalerType: gcp`, `shared: true`, and azure clusters in the region cf-ch20 use a pool of secret bindings marked with labels `hyperscalerType: azure`, and `euAccess: true`.
 
 ```
 hap: 
@@ -144,7 +144,7 @@ hap:
 
 ### Attribute with "*"
 
-Input attributes' values can be replaced with `*`, which means that all SKR's values of that attribute are matched and used when creating [search labels](#search-labels). For example, the following configuration makes KEB search for SecretBindings with `hyperscalerType: gcp_<PR>`, where `PR` corresponds to an SKR value, for all `gcp` clusters:
+You can replace input attributes' values with `*`, which means that they match all Kyma runtime values of that attribute. They are used when creating [search labels](#search-labels). See the example configuration that makes KEB search for SecretBindings with `hyperscalerType: gcp_<PR>`, where `PR` matches the corresponding Kyma runtime value for all `gcp` clusters:
 
 ```
 hap: 
@@ -156,9 +156,7 @@ hap:
 The attributes that support `*` are: `PR`, `HR`.
 
 > [!NOTE]
-> The above configuration example effectively disables usage of SecretBindings labeled only with `hyperscalerType: gcp`.
-
-
+> This configuration example effectively disables the usage of SecretBindings labeled only with `hyperscalerType: gcp`.
 
 ### Attributes Summary
 
