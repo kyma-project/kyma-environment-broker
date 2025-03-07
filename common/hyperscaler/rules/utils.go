@@ -8,10 +8,10 @@ import (
 
 func RemoveWhitespaces(s string) string {
 	var replacer = strings.NewReplacer(
-		" ", "", 
+		" ", "",
 		"\t", "",
-	    "\n", "",
-		"\r", "", 
+		"\n", "",
+		"\r", "",
 		"\f", "")
 	return replacer.Replace(s)
 }
