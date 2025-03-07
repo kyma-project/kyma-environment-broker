@@ -27,7 +27,7 @@ func TestNewRulesServiceFromFile(t *testing.T) {
 		// then
 		require.NoError(t, err)
 		require.NotNil(t, service)
-		
+
 		require.Equal(t, 2, len(service.Parsed.Results))
 		for _, result := range service.Parsed.Results {
 			require.False(t, result.HasErrors())
@@ -36,7 +36,7 @@ func TestNewRulesServiceFromFile(t *testing.T) {
 
 	t.Run("should return error when file path is empty", func(t *testing.T) {
 		// when
-		service, err := NewRulesServiceFromFile("",  &broker.EnablePlans{}, false, false, false)
+		service, err := NewRulesServiceFromFile("", &broker.EnablePlans{}, false, false, false)
 
 		// then
 		require.Error(t, err)
@@ -62,7 +62,7 @@ func TestNewRulesServiceFromFile(t *testing.T) {
 		defer os.Remove(tmpfile)
 
 		// when
-		service, err := NewRulesServiceFromFile(tmpfile,  &broker.EnablePlans{}, false, false, false)
+		service, err := NewRulesServiceFromFile(tmpfile, &broker.EnablePlans{}, false, false, false)
 
 		// then
 		require.Error(t, err)

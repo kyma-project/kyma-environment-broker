@@ -95,7 +95,7 @@ func (cmd *ParseCommand) Run() {
 
 	// create enabled plans
 	enabledPlans := broker.EnablePlans{}
-	for _, plan := range broker.PlanNamesMapping { 
+	for _, plan := range broker.PlanNamesMapping {
 		enabledPlans = append(enabledPlans, plan)
 	}
 
