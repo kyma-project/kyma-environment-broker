@@ -216,7 +216,7 @@ KEB validates HAP rules during startup. If the configuration is invalid, KEB doe
 The constraints used for validation during KEB startup include the following:
 * Rules format check: All the rules must comply with the specified format.
 * Every supported plan needs at least one rule entry; if no rule entry is defined for a plan,  an error is returned during KEB startup.
-* Uniqueness validation check: KEB checks if all rule entries are unique in the rule's scope. You must not specify more than one entry with the same number of identification attributes. Otherwise, the error is returned, failing KEB startup. For more details, see the [Uniqueness & Priority](#uniqueness-and-priority) section. 
+* Uniqueness validation check: KEB checks if all rule entries are unique in the rule's scope. You must not specify more than one entry with the same number of identification attributes. Otherwise, the error is returned, failing KEB's startup. For more details, see the [Uniqueness and Priority](#uniqueness-and-priority) section. 
 
 ## Initial Configuration
 
