@@ -78,7 +78,7 @@ For more information on the HAP process, see [Hyperscaler Account Pool](03-10-hy
 
 HAP stores credentials to hyperscaler accounts in Kubernetes Secrets that SecretBindings point to. KEB searches for SecretBindings using labels **hyperscalerType**, **shared**, and **euAccess**. 
 
-The **hyperscaler-type** contains a hyperscaler name and region information as `hyperscaler_type: <HYPERSCALER_NAME>[_<PLATFORM_REGION>][_<HYPERSCALER_REGION>]`, where both `_<PLATFORM_REGION>` and `_<HYPERSCALER_REGION>` are optional. The **hyperscaler-type** label is mandatory. Its value is computed based on the plan and regions provided, and mapped in [hyperscaler_type.go](https://github.com/kyma-project/kyma-environment-broker/blob/main/common/hyperscaler/hyperscaler_type.go). Not all plans share their name with hyperscaler types, for example, the `sap-converged-plan` has the `openstack` hyperscalerType and the `trial` plan can have either `azure` or `aws` depending on the configured provider type. 
+The hyperscaler type contains a hyperscaler name and region information as `hyperscalerType: <HYPERSCALER_NAME>[_<PLATFORM_REGION>][_<HYPERSCALER_REGION>]`, where both `_<PLATFORM_REGION>` and `_<HYPERSCALER_REGION>` are optional. The **hyperscalerType** label is mandatory. Its value is computed based on the plan and regions provided, and mapped in [hyperscaler_type.go](https://github.com/kyma-project/kyma-environment-broker/blob/main/common/hyperscaler/hyperscaler_type.go). Not all plans share their name with hyperscaler types, for example, the `sap-converged-plan` has the `openstack` hyperscaler type and the `trial` plan can have either `azure` or `aws` depending on the configured provider type. 
 
 In all the cases, `HYPERSCALER_NAME` refers to a provider type. The following table shows the plan-provider type mapping:
 
@@ -95,7 +95,7 @@ In all the cases, `HYPERSCALER_NAME` refers to a provider type. The following ta
 
 The **euAccess** and **shared** labels contain boolean values and are optional. They divide existing pools between Secrets used by EU-restricted regions and Secrets shared by multiple global accounts.
 
-Every rule must contain at least a plan and apply the `hyperscaler_type: <HYPERSCALER_NAME>` label. See an example of a simple rule entry configuration and a SecretBinding pool that this configuration corresponds to:
+Every rule must contain at least a plan and apply the `hyperscalerType: <HYPERSCALER_NAME>` label. See an example of a simple rule entry configuration and a SecretBinding pool that this configuration corresponds to:
 
 ```
 hap:
