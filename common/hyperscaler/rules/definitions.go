@@ -8,10 +8,12 @@ import (
 )
 
 const (
-	PR_ATTR_NAME     = "PR"
-	HR_ATTR_NAME     = "HR"
-	EU_ATTR_NAME     = "EU"
-	SHARED_ATTR_NAME = "S"
+	PR_ATTR_NAME        = "PR"
+	HR_ATTR_NAME        = "HR"
+	EU_ATTR_NAME        = "EU"
+	SHARED_ATTR_NAME    = "S"
+	PR_SUFFIX_ATTR_NAME = "PR"
+	HR_SUFFIX_ATTR_NAME = "HR"
 
 	HYPERSCALER_LABEL = "hyperscalerType"
 	EUACCESS_LABEL    = "euAccess"
@@ -32,8 +34,7 @@ var InputAttributes = []Attribute{
 		input:           true,
 		output:          false,
 		HasValue:        true,
-		ApplyLabel: func(r *Rule, labels map[string]string) map[string]string {
-			labels[HYPERSCALER_LABEL] += "_" + r.PlatformRegion
+		ApplyLabel: func(r *Rule, provisioningAttributes *ProvisioningAttributes, labels map[string]string) map[string]string {
 			return labels
 		},
 	},
@@ -46,8 +47,7 @@ var InputAttributes = []Attribute{
 		input:           true,
 		output:          false,
 		HasValue:        true,
-		ApplyLabel: func(r *Rule, labels map[string]string) map[string]string {
-			labels[HYPERSCALER_LABEL] += "_" + r.HyperscalerRegion
+		ApplyLabel: func(r *Rule, provisioningAttributes *ProvisioningAttributes, labels map[string]string) map[string]string {
 			return labels
 		},
 	},
@@ -62,7 +62,7 @@ var OutputAttributes = []Attribute{
 		input:       false,
 		output:      true,
 		HasValue:    false,
-		ApplyLabel: func(r *Rule, labels map[string]string) map[string]string {
+		ApplyLabel: func(r *Rule, provisioningAttributes *ProvisioningAttributes, labels map[string]string) map[string]string {
 			if r.EuAccess {
 				labels[EUACCESS_LABEL] = "true"
 			}
@@ -77,11 +77,41 @@ var OutputAttributes = []Attribute{
 		input:       false,
 		output:      true,
 		HasValue:    false,
-		ApplyLabel: func(r *Rule, labels map[string]string) map[string]string {
+		ApplyLabel: func(r *Rule, provisioningAttributes *ProvisioningAttributes, labels map[string]string) map[string]string {
 			if r.Shared {
 				labels[SHARED_LABEL] = "true"
 			}
 
+			return labels
+		},
+	},
+	{
+		Name:        PR_SUFFIX_ATTR_NAME,
+		Description: "Platform Region suffix",
+		Setter:      setPlatoformRegionSuffix,
+		Getter:      func(r *Rule) string { return strconv.FormatBool(r.PlatformRegionSuffix) },
+		input:       false,
+		output:      true,
+		HasValue:    false,
+		ApplyLabel: func(r *Rule, provisioningAttributes *ProvisioningAttributes, labels map[string]string) map[string]string {
+			if r.PlatformRegionSuffix {
+				labels[HYPERSCALER_LABEL] += "_" + provisioningAttributes.PlatformRegion
+			}
+			return labels
+		},
+	},
+	{
+		Name:        HR_SUFFIX_ATTR_NAME,
+		Description: "Platform Region suffix",
+		Setter:      setHyperscalerRegionSuffix,
+		Getter:      func(r *Rule) string { return strconv.FormatBool(r.HyperscalerRegionSuffix) },
+		input:       false,
+		output:      true,
+		HasValue:    false,
+		ApplyLabel: func(r *Rule, provisioningAttributes *ProvisioningAttributes, labels map[string]string) map[string]string {
+			if r.HyperscalerRegionSuffix {
+				labels[HYPERSCALER_LABEL] += "_" + provisioningAttributes.HyperscalerRegion
+			}
 			return labels
 		},
 	},
@@ -96,6 +126,28 @@ func setShared(r *Rule, value string) (*Rule, error) {
 
 	r.ContainsOutputAttributes = true
 	r.Shared = true
+
+	return r, nil
+}
+
+func setPlatoformRegionSuffix(r *Rule, value string) (*Rule, error) {
+	if r.PlatformRegionSuffix {
+		return nil, fmt.Errorf("PlatformRegionSuffix already set")
+	}
+
+	r.ContainsOutputAttributes = true
+	r.PlatformRegionSuffix = true
+
+	return r, nil
+}
+
+func setHyperscalerRegionSuffix(r *Rule, value string) (*Rule, error) {
+	if r.HyperscalerRegionSuffix {
+		return nil, fmt.Errorf("HyperscalerRegionSuffix already set")
+	}
+
+	r.ContainsOutputAttributes = true
+	r.HyperscalerRegionSuffix = true
 
 	return r, nil
 }
@@ -138,7 +190,7 @@ func setPlatformRegion(r *Rule, value string) (*Rule, error) {
 		return nil, fmt.Errorf("PlatformRegion is empty")
 	}
 
-	r.ContainsInputAttributes = true
+	//r.ContainsInputAttributes = true
 	r.PlatformRegion = value
 
 	return r, nil

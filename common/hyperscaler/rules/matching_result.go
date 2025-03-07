@@ -12,4 +12,12 @@ type MatchingResult struct {
 	Matched bool
 
 	FinalMatch bool
+
+	ProvisioningAttributes *ProvisioningAttributes
+
+	labels map[string]string
+}
+
+func (r *MatchingResult) Labels() map[string]string {
+	return r.labels
 }
