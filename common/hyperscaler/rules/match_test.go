@@ -67,6 +67,16 @@ func TestMatchDifferentArtificialScenarios(t *testing.T) {
 				"hyperscalerType": "gcp_cf-sa30_ksa",
 			},
 		},
+		"gcp with PR and HR in labels2": {
+			given: ProvisioningAttributes{
+				Plan:              "gcp",
+				PlatformRegion:    "cf-sa30",
+				HyperscalerRegion: "ksa",
+			},
+			expected: map[string]string{
+				"hyperscalerType": "gcp_cf-sa30_ksa",
+			},
+		},
 		"trial": {
 			given: ProvisioningAttributes{
 				Plan:              "trial",
