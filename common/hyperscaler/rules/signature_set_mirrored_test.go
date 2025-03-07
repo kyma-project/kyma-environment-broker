@@ -15,7 +15,8 @@ func TestSignatureSet_Mirrored(t *testing.T) {
 
 		signatureSet := NewSignatureSet([]*ParsingResult{})
 
-		rule1.SetPlan("aws", &broker.EnablePlans{"aws"})
+		_, err := rule1.SetPlan("aws", &broker.EnablePlans{"aws"})
+		require.NoError(t, err)
 		mirroredResults := signatureSet.Mirrored(rule1)
 
 		assert.Nil(t, mirroredResults)

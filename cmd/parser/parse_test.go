@@ -71,7 +71,9 @@ func TestMain(t *testing.T) {
 			cmd.SetOut(b)
 
 			cmd.SetArgs([]string{"-e", entries, "-nups"})
-			cmd.Execute()
+			err := cmd.Execute()
+			require.NoError(t, err)
+
 			out, err := io.ReadAll(b)
 			if err != nil {
 				t.Fatal(err)
