@@ -59,7 +59,7 @@ hap:
   - azure(INPUT_ATTR_1=VAL_1,INPUT_ATTR_2=VAL_2,...,INPUT_ATTR_N) -> OUTPUT_ATTR_1=VAL_1,OUTPUT_ATTR_2=VAL_2,...,OUTPUT_ATTR_M
 ```
 
-The input attribute types include **platformRegion** (`PR`) and **hyperscalerRegion** (`HR`). The output attribute types include **shared** (`S`) and **euAccess** (`EU`). 
+The input attribute types include **platformRegion** (**PR**) and **hyperscalerRegion** (**HR**). The output attribute types include **shared** (**S**) and **euAccess** (**EU**). 
 You can only use each attribute once in a single rule entry.
 Use the **shared** and **euAccess** attributes only to apply their labels if the other matched attributes are equal to Kyma runtime's values. 
 
@@ -123,7 +123,7 @@ hap:
 
 ### Hyperscaler Region Attribute
 
-A region where a Kyma runtime is provisioned can be matched with the `HR` attribute. The following configuration specifies the `azure` plan for using the hyperscaler region-based search. In this case, the cluster provisioned with the `azure` plan requires a secret binding with the `hyperscalerType: azure_<HYPERSCALER_REGION>` label. 
+A region where a Kyma runtime is provisioned can be matched with the **HR** attribute. The following configuration specifies the `azure` plan for using the hyperscaler region-based search. In this case, the cluster provisioned with the `azure` plan requires a secret binding with the `hyperscalerType: azure_<HYPERSCALER_REGION>` label. 
 
 ```
 hap: 
@@ -144,7 +144,7 @@ hap:
 
 ### Attribute with "*"
 
-You can replace input attributes' values with `*`, which means that they match all Kyma runtime values of that attribute. They are used when creating [search labels](#search-labels). See the example configuration that makes KEB search for SecretBindings with `hyperscalerType: gcp_<PR>`, where `PR` matches the corresponding Kyma runtime value for all `gcp` clusters:
+You can replace input attributes' values with `*`, which means that they match all Kyma runtime values of that attribute. They are used when creating [search labels](#search-labels). See the example configuration that makes KEB search for SecretBindings with `hyperscalerType: gcp_<PR>`, where **PR** matches the corresponding Kyma runtime value for all `gcp` clusters:
 
 ```
 hap: 
@@ -153,7 +153,7 @@ hap:
                                       # pool: hyperscalerType: gcp_cf-jp30
 ```
 
-The attributes that support `*` are: `PR`, `HR`.
+The attributes that support `*` are: **PR**, **HR**.
 
 > [!NOTE]
 > This configuration example effectively disables the usage of SecretBindings labeled only with `hyperscalerType: gcp`.
@@ -166,10 +166,10 @@ You can use the following attributes in the rule entry.
 
 | Name (Symbol)        	| Data Type and Possible Values                                                                                                                    	| Input Attribute 	| Output Attribute 	| Modified SecretBinding Search Labels                                                              	|
 |----------------------	|------------------------------------------------------------------------------------------------------------------------------------	|-----------------	|------------------	|---------------------------------------------------------------------------------------------------	|
-| Platform Region (PR) 	| string, subaccount regions as defined in [Regions for the Kyma Environment](https://help.sap.com/docs/btp/sap-business-technology-platform/regions-for-kyma-environment) 	| true            	| false            	| hyperscalerType: `<providerType>_<PR>` or hyperscalerType: `<providerType>_<PR>_<HR>` if used with HR 	|
-| Hyperscaler Region (HR)  	| string, cluster region as defined in [Regions for the Kyma Environment](https://help.sap.com/docs/btp/sap-business-technology-platform/regions-for-kyma-environment)   	| true            	| false            	| hyperscalerType: `<providerType>_<HR>` or hyperscalerType: `<providerType>_<PR>_<HR>` if used with PR 	|
-| EU Access (EU)       	| no value                                                                                                                           	| false           	| true             	| euAccess: true                                                                                    	|
-| Shared (S)           	| no value                                                                                                                           	| false           	| true             	| shared: true                                                                                      	|
+| Platform Region (**PR**) 	| string, subaccount regions as defined in [Regions for the Kyma Environment](https://help.sap.com/docs/btp/sap-business-technology-platform/regions-for-kyma-environment) 	| true            	| false            	| hyperscalerType: `<providerType>_<PR>` or hyperscalerType: `<providerType>_<PR>_<HR>` if used with **HR** 	|
+| Hyperscaler Region (**HR**)  	| string, cluster region as defined in [Regions for the Kyma Environment](https://help.sap.com/docs/btp/sap-business-technology-platform/regions-for-kyma-environment)   	| true            	| false            	| hyperscalerType: `<providerType>_<HR>` or hyperscalerType: `<providerType>_<PR>_<HR>` if used with **PR**	|
+| EU Access (**EU**)       	| no value                                                                                                                           	| false           	| true             	| euAccess: true                                                                                    	|
+| Shared (**S**)           	| no value                                                                                                                           	| false           	| true             	| shared: true                                                                                      	|
 
 > [!NOTE] 
 > * Input/Output attributes - true when the attribute can occur in the input/output attributes section (left part) of a rule entry (see [Rule Format](#rule-format) section).
@@ -186,8 +186,8 @@ hap:
   rule: 
     - gcp 
     - gcp -> S                      # invalid entry, output attributes does not take part into uniqueness check
-    - gcp(PR=*)                     # invalid entry, both can be applied to the same skr
-    - gcp(HR=europe-west3)          # valid entry, new HR attribute makes the rule unique
+    - gcp(PR=*)                     # invalid entry, both can be applied to the same Kyma Runtime
+    - gcp(HR=europe-west3)          # valid entry, new **HR** attribute makes the rule unique
     - gcp(PR=*, HR=europe-west3)    # invalid rules, the same as previous one because of addition of `PR=*` attribute
 ```
 
