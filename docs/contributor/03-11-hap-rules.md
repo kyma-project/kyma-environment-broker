@@ -163,11 +163,8 @@ The attributes that support `*` are: `PR`, `HR`.
 ### Attributes Summary
 
 You can use the following attributes in the rule entry.
-* Name and symbol - the latter is used in rule entries.
-* Data type and possible values.
-* Input attributes - true when the attribute can occur in the input attributes section (left part) of a rule entry (see [Rule Format](#rule-format) section).
-* Output attributes - true when the attribute can occur in the output attributes section (right part) of a rule entry (see [Rule Format](#rule-format) section).
-* Modified SecretBinding search labels - lists modifications of search labels that the rule entry containing the attribute adds to search labels if triggered. 
+
+
 
 | Name (Symbol)        	| Data Type and Possible Values                                                                                                                    	| Input Attribute 	| Output Attribute 	| Modified SecretBinding Search Labels                                                              	|
 |----------------------	|------------------------------------------------------------------------------------------------------------------------------------	|-----------------	|------------------	|---------------------------------------------------------------------------------------------------	|
@@ -175,6 +172,10 @@ You can use the following attributes in the rule entry.
 | Hyperscaler Region (HR)  	| string, hyperscaler region as defined in [Regions for the Kyma Environment](https://help.sap.com/docs/btp/sap-business-technology-platform/regions-for-kyma-environment)   	| true            	| false            	| hyperscalerType: `<providerType>_<HR>` or hyperscalerType: `<providerType>_<PR>_<HR>` if used with PR 	|
 | EU Access (EU)       	| no value                                                                                                                           	| false           	| true             	| euAccess: true                                                                                    	|
 | Shared (S)           	| no value                                                                                                                           	| false           	| true             	| shared: true                                                                                      	|
+
+> [!NOTE] 
+> * Input/Output attributes - true when the attribute can occur in the input/output attributes section (left part) of a rule entry (see [Rule Format](#rule-format) section).
+> * Modified SecretBinding search labels - lists modifications of search labels that the rule entry containing the attribute adds to search labels if triggered. 
 
 ## Uniqueness and Priority
 
