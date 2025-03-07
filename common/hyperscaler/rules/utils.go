@@ -1,9 +1,20 @@
-package model
+package rules
 
 import (
 	"fmt"
 	"os"
+	"strings"
 )
+
+func RemoveWhitespaces(s string) string {
+	var replacer = strings.NewReplacer(
+		" ", "",
+		"\t", "",
+		"\n", "",
+		"\r", "",
+		"\f", "")
+	return replacer.Replace(s)
+}
 
 func CreateTempFile(content string) (string, error) {
 	tmpfile, err := os.CreateTemp("", "test*.yaml")

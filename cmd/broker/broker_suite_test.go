@@ -215,7 +215,7 @@ func NewBrokerSuiteTestWithConfig(t *testing.T, cfg *Config, version ...string) 
 	k8sClientProvider := kubeconfig.NewFakeK8sClientProvider(fakeK8sSKRClient)
 	provisionManager := process.NewStagedManager(db.Operations(), eventBroker, cfg.OperationTimeout, cfg.Provisioning, log.With("provisioning", "manager"))
 
-	rulesService, err := rules.NewRulesServiceFromFile("testdata/hap-rules.yaml")
+	rulesService, err := rules.NewRulesServiceFromFile("testdata/hap-rules.yaml", &cfg.Broker.EnablePlans, false, false, false)
 	require.NoError(t, err)
 
 	provisioningQueue := NewProvisioningProcessingQueue(context.Background(), provisionManager, workersAmount, cfg, db, configProvider,
