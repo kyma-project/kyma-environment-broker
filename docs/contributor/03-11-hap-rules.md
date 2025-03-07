@@ -8,7 +8,7 @@ A pool is a set of Gardener's SecretBinding resources that share the same search
 Pool selection is a process that decides which SecretBinding pool is the most suitable for every SAP BTP, Kyma runtime creation request.
 The process generates a list of [search labels](#search-labels) based on Kyma runtime's attributes.
 
-The [search labels](#search-labels) are used to query Gardener's secret bindings.
+The search labels are used to query Gardener's secret bindings.
 
 ![Rules Evaluation Process](../assets/hap-rules-general.drawio.svg)
 
