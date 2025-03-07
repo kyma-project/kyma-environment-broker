@@ -228,6 +228,7 @@ The following example shows the initial configuration created to mimic KEB behav
 * trial clusters can use one of two pools of shared secret bindings marked with labels: `hyperscalerType: azure` or `hyperscalerType: aws` depending on the used trial provider type.
 * azure clusters in the cf-ch20 region and aws clusters in the cf-eu11 region have their own dedicated pools and are euAccess specific.
 
+See an example of the initial configuration created to mimic KEB behavior.
 ```
 hap:
  rule: 
