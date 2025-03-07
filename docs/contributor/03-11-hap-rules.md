@@ -28,7 +28,7 @@ hap:
   - rule_entry_n
 ```
 
-Every pool represented by a rule entry must be preconfigured in a Gardener cluster that KEB connects to.
+Every pool represented by a rule entry must be preconfigured in a Gardener cluster that Kyma Environment Broker (KEB) connects to.
 
 ## Rule Format 
 
