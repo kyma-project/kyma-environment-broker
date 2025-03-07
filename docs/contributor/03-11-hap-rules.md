@@ -17,7 +17,7 @@ The [search labels](#search-labels) are used to query Gardener's secret bindings
 The rule is configured in `values.yaml` in the `hap.rule` property.
 It is a list of strings, where each string is a single rule entry that corresponds to a single pool.
 Each rule entry is evaluated during cluster provisioning.
-If more than one rule applies, the best matching rule is selected based on the [priority](#uniqnuess--priority). See an example configuration in `values.yaml`:
+If more than one rule applies, the best matching rule is selected based on the [priority](#uniqueness-and-priority). See an example configuration in `values.yaml`:
 
 ```
 hap: 
@@ -49,8 +49,7 @@ In its extended form, a rule entry contains lists of input attributes. Their val
 > * `aws()`
 
 Output attributes do not support values.
-To learn when the rule is triggered, see the [Rule Evaluation](#rule-evaluation) section.
-Rule attributes are described in [Rule Attributes](#rule-attributes) section. 
+To learn about rule attributes and when the rule is triggered, see the [Rule Evaluation](#rule-evaluation) section.
 
 The possible **OUTPUT_ATTR_x** attribute values are `S` or `EU`.
 
@@ -81,7 +80,7 @@ HAP stores credentials to hyperscaler accounts in Kubernetes Secrets that Secret
 
 The **hyperscaler-type** contains a hyperscaler name and region information as `hyperscaler_type: <HYPERSCALER_NAME>[_<PLATFORM_REGION>][_<HYPERSCALER_REGION>]`, where both `_<PLATFORM_REGION>` and `_<HYPERSCALER_REGION>` are optional. The **hyperscaler-type** label is mandatory. Its value is computed based on the plan and regions provided, and mapped in [hyperscaler_type.go](https://github.com/kyma-project/kyma-environment-broker/blob/main/common/hyperscaler/hyperscaler_type.go). Not all plans share their name with hyperscaler types, for example, the `sap-converged-plan` has the `openstack` hyperscalerType and the `trial` plan can have either `azure` or `aws` depending on the configured provider type. 
 
-In all the cases `HYPERSCALER_NAME` refers to a provider type. The following table shows a mapping of plans to provider types:
+In all the cases, `HYPERSCALER_NAME` refers to a provider type. The following table shows the plan-provider type mapping:
 
 | Plan                	| Provider Type 	|
 |---------------------	|-----------------|
