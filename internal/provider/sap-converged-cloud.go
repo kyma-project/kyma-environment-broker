@@ -19,7 +19,7 @@ type (
 	}
 )
 
-func (p *SapConvergedCloudInputProvider) Provide() Values {
+func (p *SapConvergedCloudInputProvider) Provide() internal.ProviderValues {
 	region := DefaultSapConvergedCloudRegion
 	if p.ProvisioningParameters.Parameters.Region != nil {
 		region = *p.ProvisioningParameters.Parameters.Region
@@ -30,12 +30,12 @@ func (p *SapConvergedCloudInputProvider) Provide() Values {
 	}
 
 	zones := ZonesForSapConvergedCloud(region, zonesCount)
-	return Values{
+	return internal.ProviderValues{
 		DefaultAutoScalerMax: 20,
 		DefaultAutoScalerMin: 3,
 		ZonesCount:           zonesCount,
 		Zones:                zones,
-		ProviderType:         "openstack",
+		ProviderType:         OpenstackProviderType,
 		DefaultMachineType:   DefaultSapConvergedCloudMachineType,
 		Region:               region,
 		Purpose:              p.Purpose,

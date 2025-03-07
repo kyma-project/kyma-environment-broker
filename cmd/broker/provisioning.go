@@ -3,31 +3,34 @@ package main
 import (
 	"context"
 	"log/slog"
+	"time"
 
+	"github.com/kyma-project/kyma-environment-broker/internal"
 	"github.com/kyma-project/kyma-environment-broker/internal/provider"
 
 	"github.com/kyma-project/kyma-environment-broker/common/hyperscaler"
+	"github.com/kyma-project/kyma-environment-broker/common/hyperscaler/rules"
 	pkg "github.com/kyma-project/kyma-environment-broker/common/runtime"
 	"github.com/kyma-project/kyma-environment-broker/internal/process"
 	"github.com/kyma-project/kyma-environment-broker/internal/process/input"
 	"github.com/kyma-project/kyma-environment-broker/internal/process/provisioning"
 	"github.com/kyma-project/kyma-environment-broker/internal/process/steps"
-	"github.com/kyma-project/kyma-environment-broker/internal/provisioner"
 	"github.com/kyma-project/kyma-environment-broker/internal/storage"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
+const resourceStateRetryInterval = 10 * time.Second
+
 func NewProvisioningProcessingQueue(ctx context.Context, provisionManager *process.StagedManager, workersAmount int, cfg *Config,
-	db storage.BrokerStorage, provisionerClient provisioner.Client, inputFactory input.CreatorForPlan,
+	db storage.BrokerStorage, configProvider input.ConfigurationProvider,
 	edpClient provisioning.EDPClient, accountProvider hyperscaler.AccountProvider,
-	k8sClientProvider provisioning.K8sClientProvider, cli client.Client, defaultOIDC pkg.OIDCConfigDTO, logs *slog.Logger) *process.Queue {
+	k8sClientProvider provisioning.K8sClientProvider, cli client.Client, defaultOIDC pkg.OIDCConfigDTO, logs *slog.Logger, rulesService *rules.RulesService) *process.Queue {
 
 	trialRegionsMapping, err := provider.ReadPlatformRegionMappingFromFile(cfg.TrialRegionMappingFilePath)
 	if err != nil {
 		fatalOnError(err, logs)
 	}
 
-	const postActionsStageName = "post_actions"
 	provisionManager.DefineStages([]string{startStageName, createRuntimeStageName,
 		checkKymaStageName, createKymaResourceStageName})
 	/*
@@ -56,11 +59,11 @@ func NewProvisioningProcessingQueue(ctx context.Context, provisionManager *proce
 		},
 		{
 			stage: createRuntimeStageName,
-			step:  provisioning.NewInitialisationStep(db.Operations(), db.Instances(), inputFactory),
+			step:  provisioning.NewInitProviderValuesStep(db.Operations(), cfg.Provisioner, trialRegionsMapping, cfg.Broker.UseSmallerMachineTypes),
 		},
 		{
 			stage: createRuntimeStageName,
-			step:  steps.NewInitKymaTemplate(db.Operations()),
+			step:  steps.NewInitKymaTemplate(db.Operations(), configProvider),
 		},
 		{
 			stage: createRuntimeStageName,
@@ -68,7 +71,7 @@ func NewProvisioningProcessingQueue(ctx context.Context, provisionManager *proce
 		},
 		{
 			stage:     createRuntimeStageName,
-			step:      provisioning.NewResolveCredentialsStep(db.Operations(), accountProvider),
+			step:      provisioning.NewResolveCredentialsStep(db.Operations(), accountProvider, rulesService),
 			condition: provisioning.SkipForOwnClusterPlan,
 		},
 		{
@@ -76,11 +79,6 @@ func NewProvisioningProcessingQueue(ctx context.Context, provisionManager *proce
 			step:      provisioning.NewEDPRegistrationStep(db.Operations(), edpClient, cfg.EDP),
 			disabled:  cfg.EDP.Disabled,
 			condition: provisioning.SkipForOwnClusterPlan,
-		},
-		{
-			condition: provisioning.SkipForOwnClusterPlan,
-			stage:     createRuntimeStageName,
-			step:      provisioning.NewCreateRuntimeWithoutKymaStep(db.Operations(), db.RuntimeStates(), db.Instances(), provisionerClient, cfg.Broker.KimConfig),
 		},
 		{
 			stage: createRuntimeStageName,
@@ -93,33 +91,14 @@ func NewProvisioningProcessingQueue(ctx context.Context, provisionManager *proce
 		},
 		// postcondition: operation.KymaResourceName, operation.RuntimeResourceName is set
 		{
-			stage: createRuntimeStageName,
-			step:  provisioning.NewCreateRuntimeResourceStep(db.Operations(), db.Instances(), cli, cfg.Broker.KimConfig, cfg.Provisioner, trialRegionsMapping, cfg.Broker.UseSmallerMachineTypes, defaultOIDC),
-		},
-		{
 			stage:     createRuntimeStageName,
-			step:      provisioning.NewCheckRuntimeStep(db.Operations(), provisionerClient, cfg.Provisioner.ProvisioningTimeout, cfg.Broker.KimConfig),
-			condition: provisioning.SkipForOwnClusterPlan,
-		},
-		{
-			stage: createRuntimeStageName,
-			step:  steps.NewCheckRuntimeResourceStep(db.Operations(), cli, cfg.Broker.KimConfig, cfg.Provisioner.RuntimeResourceStepTimeout),
-		},
-		{
-			stage:     createRuntimeStageName,
-			disabled:  cfg.InfrastructureManagerIntegrationDisabled,
-			step:      steps.NewSyncGardenerCluster(db.Operations(), cli, cfg.Broker.KimConfig),
+			step:      provisioning.NewCreateRuntimeResourceStep(db.Operations(), db.Instances(), cli, cfg.Provisioner, trialRegionsMapping, cfg.Broker.UseSmallerMachineTypes, defaultOIDC),
 			condition: provisioning.SkipForOwnClusterPlan,
 		},
 		{
 			stage:     createRuntimeStageName,
-			disabled:  cfg.InfrastructureManagerIntegrationDisabled,
-			step:      steps.NewCheckGardenerCluster(db.Operations(), cli, cfg.Broker.KimConfig, cfg.Provisioner.GardenerClusterStepTimeout),
+			step:      steps.NewCheckRuntimeResourceStep(db.Operations(), cli, internal.RetryTuple{Timeout: cfg.Provisioner.RuntimeResourceStepTimeout, Interval: resourceStateRetryInterval}),
 			condition: provisioning.SkipForOwnClusterPlan,
-		},
-		{ // TODO: this step must be removed when kubeconfig is created by IM only
-			stage: createRuntimeStageName,
-			step:  provisioning.NewGetKubeconfigStep(db.Operations(), provisionerClient, cfg.Broker.KimConfig),
 		},
 		{ // TODO: this step must be removed when kubeconfig is created by IM and own_cluster plan is permanently removed
 			disabled:  cfg.LifecycleManagerIntegrationDisabled,
@@ -127,7 +106,7 @@ func NewProvisioningProcessingQueue(ctx context.Context, provisionManager *proce
 			step:      steps.SyncKubeconfig(db.Operations(), cli),
 			condition: provisioning.DoForOwnClusterPlanOnly,
 		},
-		{ // must be run after the secret with kubeconfig is created ("syncKubeconfig" or "checkGardenerCluster")
+		{ // must be run after the secret with kubeconfig is created ("syncKubeconfig")
 			condition: provisioning.WhenBTPOperatorCredentialsProvided,
 			stage:     createRuntimeStageName,
 			step:      provisioning.NewInjectBTPOperatorCredentialsStep(db.Operations(), k8sClientProvider),

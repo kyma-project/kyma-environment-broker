@@ -12,7 +12,7 @@ import (
 	"github.com/kyma-project/kyma-environment-broker/internal/process"
 	"github.com/kyma-project/kyma-environment-broker/internal/storage"
 	"github.com/kyma-project/kyma-environment-broker/internal/storage/dberr"
-	"github.com/pivotal-cf/brokerapi/v8/domain"
+	"github.com/pivotal-cf/brokerapi/v12/domain"
 )
 
 type InitStep struct {
@@ -21,6 +21,12 @@ type InitStep struct {
 	operationStorage storage.Operations
 	instanceStorage  storage.Instances
 }
+
+const (
+	opRetryInterval = 1 * time.Minute
+	dbRetryInterval = 10 * time.Second
+	dbRetryTimeout  = 1 * time.Minute
+)
 
 func NewInitStep(operations storage.Operations, instances storage.Instances, operationTimeout time.Duration) *InitStep {
 	step := &InitStep{
@@ -37,10 +43,6 @@ func (s *InitStep) Name() string {
 }
 
 func (s *InitStep) Run(operation internal.Operation, log *slog.Logger) (internal.Operation, time.Duration, error) {
-	if time.Since(operation.CreatedAt) > s.operationTimeout {
-		log.Info(fmt.Sprintf("operation has reached the time limit: operation was created at: %s", operation.CreatedAt))
-		return s.operationManager.OperationFailed(operation, fmt.Sprintf("operation has reached the time limit: %s", s.operationTimeout), nil, log)
-	}
 
 	if operation.State != orchestration.Pending {
 		return operation, 0, nil
@@ -48,11 +50,11 @@ func (s *InitStep) Run(operation internal.Operation, log *slog.Logger) (internal
 	// Check concurrent operation
 	lastOp, err := s.operationStorage.GetLastOperation(operation.InstanceID)
 	if err != nil {
-		return operation, time.Minute, nil
+		return s.operationManager.RetryOperation(operation, "getting last operation", err, dbRetryInterval, dbRetryTimeout, log)
 	}
 	if !lastOp.IsFinished() {
 		log.Info(fmt.Sprintf("waiting for %s operation (%s) to be finished", lastOp.Type, lastOp.ID))
-		return operation, time.Minute, nil
+		return s.operationManager.RetryOperation(operation, "waiting for operation to be finished", err, opRetryInterval, s.operationTimeout, log)
 	}
 
 	// read the instance details (it could happen that created deprovisioning operation has outdated one)
@@ -62,7 +64,13 @@ func (s *InitStep) Run(operation internal.Operation, log *slog.Logger) (internal
 			log.Warn("the instance already deprovisioned")
 			return s.operationManager.OperationFailed(operation, "the instance was already deprovisioned", err, log)
 		}
-		return operation, time.Second, nil
+		return s.operationManager.RetryOperation(operation, "getting instance by ID", err, dbRetryInterval, dbRetryTimeout, log)
+	}
+
+	log.Info("Setting lastOperation ID in the instance")
+	err = s.instanceStorage.UpdateInstanceLastOperation(operation.InstanceID, operation.ID)
+	if err != nil {
+		return s.operationManager.RetryOperation(operation, "error while updating last operation ID", err, dbRetryInterval, dbRetryTimeout, log)
 	}
 
 	log.Info("Setting state 'in progress' and refreshing instance details")
@@ -73,7 +81,7 @@ func (s *InitStep) Run(operation internal.Operation, log *slog.Logger) (internal
 	}, log)
 	if delay != 0 {
 		log.Error("unable to update the operation (move to 'in progress'), retrying")
-		return operation, delay, nil
+		return s.operationManager.RetryOperation(operation, "unable to update the operation", err, dbRetryInterval, dbRetryTimeout, log)
 	}
 
 	return opr, 0, nil

@@ -6,16 +6,16 @@ import (
 	"net/http"
 	"strings"
 
+	"github.com/kyma-project/kyma-environment-broker/internal"
+
 	"github.com/kennygrant/sanitize"
 
 	"github.com/kyma-project/kyma-environment-broker/common/orchestration"
-	"github.com/kyma-project/kyma-environment-broker/internal"
 	"github.com/kyma-project/kyma-environment-broker/internal/httputil"
 	"github.com/kyma-project/kyma-environment-broker/internal/storage"
 	"github.com/kyma-project/kyma-environment-broker/internal/storage/dberr"
 
-	"github.com/gorilla/mux"
-	"github.com/pivotal-cf/brokerapi/v8/domain"
+	"github.com/pivotal-cf/brokerapi/v12/domain"
 )
 
 const attachmentName = "kubeconfig.yaml"
@@ -26,6 +26,10 @@ type KcBuilder interface {
 	Build(*internal.Instance) (string, error)
 	BuildFromAdminKubeconfig(instance *internal.Instance, adminKubeconfig string) (string, error)
 	GetServerURL(runtimeID string) (string, error)
+}
+
+type router interface {
+	HandleFunc(pattern string, handler func(http.ResponseWriter, *http.Request))
 }
 
 type Handler struct {
@@ -48,11 +52,9 @@ func NewHandler(storage storage.BrokerStorage, b KcBuilder, origins string, ownC
 	}
 }
 
-func (h *Handler) AttachRoutes(router *mux.Router) {
-	router.HandleFunc("/kubeconfig/{instance_id}", h.GetKubeconfig).Methods(http.MethodGet)
-	router.NotFoundHandler = http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		h.handleResponse(w, http.StatusNotFound, fmt.Errorf("instanceID is required"))
-	})
+func (h *Handler) AttachRoutes(r router) {
+	r.HandleFunc("GET /kubeconfig/{instance_id}", h.GetKubeconfig)
+	r.HandleFunc("GET /kubeconfig/", h.GetKubeconfig)
 }
 
 type ErrorResponse struct {
@@ -60,8 +62,11 @@ type ErrorResponse struct {
 }
 
 func (h *Handler) GetKubeconfig(w http.ResponseWriter, r *http.Request) {
-	vars := mux.Vars(r)
-	instanceID := vars["instance_id"]
+	instanceID := r.PathValue("instance_id")
+	if instanceID == "" {
+		h.handleResponse(w, http.StatusNotFound, fmt.Errorf("instanceID is required"))
+		return
+	}
 
 	h.specifyAllowOriginHeader(r, w)
 

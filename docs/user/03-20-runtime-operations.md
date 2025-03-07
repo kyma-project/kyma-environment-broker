@@ -38,10 +38,8 @@ You can find all the deprovisioning steps in the [deprovisioning](../../cmd/brok
 The update process is triggered by an [OSB API update operation](https://github.com/openservicebrokerapi/servicebroker/blob/master/spec.md#updating-a-service-instance) request.
 You can find all the updating steps in the [update](../../cmd/broker/update.go) file.
 
-## Upgrade Cluster
-
-The upgrade cluster process is triggered by upgrade cluster orchestration.
-You can find all the upgrading cluster steps in the [upgrade_cluster](../../cmd/broker/upgrade_cluster.go) file.
+> [!NOTE]
+> The updating process of Service Manager credentials is different. The credentials are stored in the KEB database, and [Runtime Reconciler](../contributor/07-10-runtime-reconciler.md) updates them during reconciliation.
 
 ## Provide Additional Steps
 

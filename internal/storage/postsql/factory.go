@@ -89,6 +89,7 @@ type WriteSession interface {
 	InsertBinding(binding dbmodel.BindingDTO) dberr.Error
 	UpdateBinding(binding dbmodel.BindingDTO) dberr.Error
 	DeleteBinding(instanceID, bindingID string) dberr.Error
+	UpdateInstanceLastOperation(instanceID, operationID string) error
 }
 
 type Transaction interface {

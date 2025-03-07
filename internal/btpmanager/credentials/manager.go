@@ -207,7 +207,7 @@ func (s *Manager) ReconcileSecretForInstance(instance *internal.Instance) (bool,
 		if s.dryRun {
 			s.logger.Info(fmt.Sprintf("[dry-run] secret for instance %s would be re-created", instance.InstanceID))
 		} else {
-			if err := CreateOrUpdateSecret(k8sClient, futureSecret, s.logger); err != nil {
+			if err := CreateOrUpdateSecret(k8sClient, futureSecret, s.logger.With("instanceID", instance.InstanceID)); err != nil {
 				s.logger.Error(fmt.Sprintf("while re-creating secret in cluster for %s", instance.InstanceID))
 				return false, false, err
 			}

@@ -6,6 +6,8 @@ import (
 	"os"
 	"testing"
 
+	"github.com/kyma-project/kyma-environment-broker/internal"
+
 	"github.com/kyma-project/kyma-environment-broker/internal/fixture"
 	"github.com/kyma-project/kyma-environment-broker/internal/storage"
 	"github.com/stretchr/testify/assert"
@@ -20,7 +22,9 @@ func TestCheckKymaKubeconfigCreated(t *testing.T) {
 	// Given
 	operation := fixture.FixProvisioningOperation("op", "instance")
 	operation.KymaResourceNamespace = "kyma-system"
-	operation.InputCreator = fixture.FixInputCreator("Test")
+	operation.ProviderValues = &internal.ProviderValues{
+		ProviderType: "aws",
+	}
 
 	k8sClient := fake.NewClientBuilder().Build()
 
@@ -45,7 +49,9 @@ func TestCheckKymaKubeconfigDeleted(t *testing.T) {
 	// Given
 	operation := fixture.FixDeprovisioningOperationAsOperation("op", "instance")
 	operation.KymaResourceNamespace = "kyma-system"
-	operation.InputCreator = fixture.FixInputCreator("Test")
+	operation.ProviderValues = &internal.ProviderValues{
+		ProviderType: "aws",
+	}
 
 	k8sClient := fake.NewClientBuilder().Build()
 	err := k8sClient.Create(context.Background(), &v1.Secret{ObjectMeta: metav1.ObjectMeta{Namespace: "kyma-system", Name: "kubeconfig-runtime-instance"}})
@@ -72,7 +78,9 @@ func TestCheckKymaKubeconfigDeleted(t *testing.T) {
 func TestCheckKymaKubeconfigDeleteSkipped(t *testing.T) {
 	// Given
 	operation := fixture.FixDeprovisioningOperationAsOperation("op", "instance")
-	operation.InputCreator = fixture.FixInputCreator("Test")
+	operation.ProviderValues = &internal.ProviderValues{
+		ProviderType: "aws",
+	}
 
 	k8sClient := fake.NewClientBuilder().Build()
 

@@ -1,0 +1,1 @@
+DROP INDEX operations_by_iid_created_at;

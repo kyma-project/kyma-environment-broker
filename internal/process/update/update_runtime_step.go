@@ -6,10 +6,12 @@ import (
 	"log/slog"
 	"time"
 
-	kebError "github.com/kyma-project/kyma-environment-broker/internal/error"
-	"github.com/kyma-project/kyma-environment-broker/internal/process/input"
 	"github.com/kyma-project/kyma-environment-broker/internal/provider"
 
+	gardener "github.com/gardener/gardener/pkg/apis/core/v1beta1"
+
+	kebError "github.com/kyma-project/kyma-environment-broker/internal/error"
+	"github.com/kyma-project/kyma-environment-broker/internal/process/input"
 	"github.com/kyma-project/kyma-environment-broker/internal/process/provisioning"
 
 	imv1 "github.com/kyma-project/infrastructure-manager/api/v1"
@@ -75,7 +77,14 @@ func (s *UpdateRuntimeStep) Run(operation internal.Operation, log *slog.Logger) 
 			return s.operationManager.OperationFailed(operation, fmt.Sprintf("while calculating plan specific values: %s", err), err, log)
 		}
 
-		additionalWorkers := provisioning.CreateAdditionalWorkers(s.config, values, operation.UpdatingParameters.AdditionalWorkerNodePools, runtime.Spec.Shoot.Provider.Workers[0].Zones)
+		currentAdditionalWorkers := make(map[string]gardener.Worker)
+		if runtime.Spec.Shoot.Provider.AdditionalWorkers != nil {
+			for _, worker := range *runtime.Spec.Shoot.Provider.AdditionalWorkers {
+				currentAdditionalWorkers[worker.Name] = worker
+			}
+		}
+
+		additionalWorkers := provisioning.CreateAdditionalWorkers(s.config, values, currentAdditionalWorkers, operation.UpdatingParameters.AdditionalWorkerNodePools, runtime.Spec.Shoot.Provider.Workers[0].Zones)
 		runtime.Spec.Shoot.Provider.AdditionalWorkers = &additionalWorkers
 	}
 
@@ -101,8 +110,13 @@ func (s *UpdateRuntimeStep) Run(operation internal.Operation, log *slog.Logger) 
 		}
 	}
 
-	if len(operation.UpdatingParameters.RuntimeAdministrators) > 0 {
-		runtime.Spec.Security.Administrators = operation.UpdatingParameters.RuntimeAdministrators
+	// operation.ProvisioningParameters were calculated and joined across provisioning and all update operations
+	if len(operation.ProvisioningParameters.Parameters.RuntimeAdministrators) != 0 {
+		// prepare new admins list for existing runtime
+		newAdministrators := make([]string, 0, len(operation.ProvisioningParameters.Parameters.RuntimeAdministrators))
+		newAdministrators = append(newAdministrators, operation.ProvisioningParameters.Parameters.RuntimeAdministrators...)
+
+		runtime.Spec.Security.Administrators = newAdministrators
 	} else {
 		if operation.ProvisioningParameters.ErsContext.UserID != "" {
 			// get default admin (user_id from provisioning operation)
@@ -111,6 +125,11 @@ func (s *UpdateRuntimeStep) Run(operation internal.Operation, log *slog.Logger) 
 			// some old clusters does not have an user_id
 			runtime.Spec.Security.Administrators = []string{}
 		}
+	}
+
+	if operation.ProvisioningParameters.ErsContext.LicenseType != nil {
+		disabled := *operation.ProvisioningParameters.ErsContext.DisableEnterprisePolicyFilter()
+		runtime.Spec.Security.Networking.Filter.Egress.Enabled = !disabled
 	}
 
 	err = s.k8sClient.Update(context.Background(), &runtime)

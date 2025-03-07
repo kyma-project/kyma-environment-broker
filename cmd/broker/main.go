@@ -3,7 +3,6 @@ package main
 import (
 	"context"
 	"fmt"
-	"io"
 	"log/slog"
 	"net/http"
 	"os"
@@ -12,6 +11,8 @@ import (
 	"sort"
 	"strings"
 	"time"
+
+	"github.com/kyma-project/kyma-environment-broker/internal/regionssupportingmachine"
 
 	"k8s.io/client-go/kubernetes"
 
@@ -24,10 +25,9 @@ import (
 	"code.cloudfoundry.org/lager"
 	"github.com/dlmiddlecote/sqlstats"
 	shoot "github.com/gardener/gardener/pkg/apis/core/v1beta1"
-	"github.com/gorilla/handlers"
-	"github.com/gorilla/mux"
 	"github.com/kyma-project/kyma-environment-broker/common/gardener"
 	"github.com/kyma-project/kyma-environment-broker/common/hyperscaler"
+	"github.com/kyma-project/kyma-environment-broker/common/hyperscaler/rules"
 	orchestrationExt "github.com/kyma-project/kyma-environment-broker/common/orchestration"
 	"github.com/kyma-project/kyma-environment-broker/internal"
 	"github.com/kyma-project/kyma-environment-broker/internal/appinfo"
@@ -42,14 +42,10 @@ import (
 	"github.com/kyma-project/kyma-environment-broker/internal/health"
 	"github.com/kyma-project/kyma-environment-broker/internal/httputil"
 	"github.com/kyma-project/kyma-environment-broker/internal/kubeconfig"
-	"github.com/kyma-project/kyma-environment-broker/internal/middleware"
 	"github.com/kyma-project/kyma-environment-broker/internal/notification"
-	"github.com/kyma-project/kyma-environment-broker/internal/orchestration"
-	orchestrate "github.com/kyma-project/kyma-environment-broker/internal/orchestration/handlers"
 	"github.com/kyma-project/kyma-environment-broker/internal/process"
 	"github.com/kyma-project/kyma-environment-broker/internal/process/input"
 	"github.com/kyma-project/kyma-environment-broker/internal/provider"
-	"github.com/kyma-project/kyma-environment-broker/internal/provisioner"
 	"github.com/kyma-project/kyma-environment-broker/internal/runtime"
 	"github.com/kyma-project/kyma-environment-broker/internal/storage"
 	"github.com/kyma-project/kyma-environment-broker/internal/storage/dbmodel"
@@ -117,8 +113,6 @@ type Config struct {
 
 	KymaDashboardConfig dashboard.Config
 
-	OrchestrationConfig orchestration.Config
-
 	TrialRegionMappingFilePath string
 
 	SapConvergedCloudRegionMappingsFilePath string
@@ -155,8 +149,11 @@ type Config struct {
 
 	RuntimeConfigurationConfigMapName string `envconfig:"default=keb-runtime-config"`
 
-	UpdateRuntimeResourceDelay        time.Duration `envconfig:"default=4s"`
-	ProvisionerDeprovisioningDisabled bool          `envconfig:"default=false"`
+	UpdateRuntimeResourceDelay time.Duration `envconfig:"default=4s"`
+
+	RegionsSupportingMachineFilePath string
+
+	HapRuleFilePath string
 }
 
 type ProfilerConfig struct {
@@ -179,6 +176,7 @@ const (
 	checkKymaStageName          = "check_kyma"
 	createKymaResourceStageName = "create_kyma_resource"
 	startStageName              = "start"
+	brokerAPISubrouterName      = "brokerAPI"
 )
 
 func periodicProfile(logger *slog.Logger, profiler ProfilerConfig) {
@@ -233,7 +231,6 @@ func main() {
 		logLevel.Set(cfg.getLogLevel())
 	}
 
-	cfg.OrchestrationConfig.KubernetesVersion = cfg.Provisioner.KubernetesVersion
 	// create logger
 	logger := lager.NewLogger("kyma-env-broker")
 
@@ -244,9 +241,6 @@ func main() {
 	go periodicProfile(log, cfg.Profiler)
 
 	logConfiguration(log, cfg)
-
-	// create provisioner client
-	provisionerClient := provisioner.NewProvisionerClient(cfg.Provisioner.URL, cfg.DumpProvisionerRequests, log.With("service", "provisioner"))
 
 	// create kubernetes client
 	kcpK8sConfig, err := config.GetConfig()
@@ -267,13 +261,6 @@ func main() {
 		dbStatsCollector := sqlstats.NewStatsCollector("broker", conn)
 		prometheus.MustRegister(dbStatsCollector)
 	}
-
-	// Customer Notification
-	clientHTTPForNotification := httputil.NewClient(60, true)
-	notificationClient := notification.NewClient(clientHTTPForNotification, notification.ClientConfig{
-		URL: cfg.Notification.Url,
-	})
-	notificationBuilder := notification.NewBundleBuilder(notificationClient, cfg.Notification)
 
 	// provides configuration for specified Kyma version and plan
 	configProvider := kebConfig.NewConfigProvider(
@@ -313,25 +300,26 @@ func main() {
 
 	// run queues
 	provisionManager := process.NewStagedManager(db.Operations(), eventBroker, cfg.OperationTimeout, cfg.Provisioning, log.With("provisioning", "manager"))
-	provisionQueue := NewProvisioningProcessingQueue(ctx, provisionManager, cfg.Provisioning.WorkersAmount, &cfg, db, provisionerClient, inputFactory,
-		edpClient, accountProvider, skrK8sClientProvider, kcpK8sClient, oidcDefaultValues, log)
+	provisionQueue := NewProvisioningProcessingQueue(ctx, provisionManager, cfg.Provisioning.WorkersAmount, &cfg, db, configProvider,
+		edpClient, accountProvider, skrK8sClientProvider, kcpK8sClient, oidcDefaultValues, log, &rules.RulesService{})
 
 	deprovisionManager := process.NewStagedManager(db.Operations(), eventBroker, cfg.OperationTimeout, cfg.Deprovisioning, log.With("deprovisioning", "manager"))
-	deprovisionQueue := NewDeprovisioningProcessingQueue(ctx, cfg.Deprovisioning.WorkersAmount, deprovisionManager, &cfg, db, eventBroker, provisionerClient, edpClient, accountProvider,
+	deprovisionQueue := NewDeprovisioningProcessingQueue(ctx, cfg.Deprovisioning.WorkersAmount, deprovisionManager, &cfg, db, eventBroker, edpClient, accountProvider,
 		skrK8sClientProvider, kcpK8sClient, configProvider, log)
 
 	updateManager := process.NewStagedManager(db.Operations(), eventBroker, cfg.OperationTimeout, cfg.Update, log.With("update", "manager"))
-	updateQueue := NewUpdateProcessingQueue(ctx, updateManager, cfg.Update.WorkersAmount, db, inputFactory, provisionerClient, eventBroker,
+	updateQueue := NewUpdateProcessingQueue(ctx, updateManager, cfg.Update.WorkersAmount, db, inputFactory, eventBroker,
 		cfg, skrK8sClientProvider, kcpK8sClient, log)
 	/***/
 	servicesConfig, err := broker.NewServicesConfigFromFile(cfg.CatalogFilePath)
 	fatalOnError(err, log)
 
 	// create kubeconfig builder
-	kcBuilder := kubeconfig.NewBuilder(provisionerClient, kcpK8sClient, skrK8sClientProvider)
+	kcBuilder := kubeconfig.NewBuilder(kcpK8sClient, skrK8sClientProvider)
 
 	// create server
-	router := mux.NewRouter()
+	router := httputil.NewRouter()
+
 	createAPI(router, servicesConfig, inputFactory, &cfg, db, provisionQueue, deprovisionQueue, updateQueue, logger, log,
 		inputFactory.GetPlanDefaults, kcBuilder, skrK8sClientProvider, skrK8sClientProvider, gardenerClient, kcpK8sClient, eventBroker)
 
@@ -342,23 +330,12 @@ func main() {
 	kcHandler := kubeconfig.NewHandler(db, kcBuilder, cfg.Kubeconfig.AllowOrigins, broker.OwnClusterPlanID, log.With("service", "kubeconfigHandle"))
 	kcHandler.AttachRoutes(router)
 
-	runtimeLister := orchestration.NewRuntimeLister(db.Instances(), db.Operations(), runtime.NewConverter(cfg.DefaultRequestRegion), log)
-	runtimeResolver := orchestrationExt.NewGardenerRuntimeResolver(dynamicGardener, gardenerNamespace, runtimeLister, log)
-
-	clusterQueue := NewClusterOrchestrationProcessingQueue(ctx, db, provisionerClient, eventBroker, inputFactory,
-		nil, time.Minute, runtimeResolver, notificationBuilder, log, kcpK8sClient, cfg, 1)
-
-	// TODO: in case of cluster upgrade the same Azure Zones must be send to the Provisioner
-	orchestrationHandler := orchestrate.NewOrchestrationHandler(db, clusterQueue, cfg.MaxPaginationPage, log)
-
 	if !cfg.DisableProcessOperationsInProgress {
 		err = processOperationsInProgressByType(internal.OperationTypeProvision, db.Operations(), provisionQueue, log)
 		fatalOnError(err, log)
 		err = processOperationsInProgressByType(internal.OperationTypeDeprovision, db.Operations(), deprovisionQueue, log)
 		fatalOnError(err, log)
 		err = processOperationsInProgressByType(internal.OperationTypeUpdate, db.Operations(), updateQueue, log)
-		fatalOnError(err, log)
-		err = reprocessOrchestrations(orchestrationExt.UpgradeClusterOrchestration, db.Orchestrations(), db.Operations(), clusterQueue, log)
 		fatalOnError(err, log)
 	} else {
 		log.Info("Skipping processing operation in progress on start")
@@ -371,12 +348,9 @@ func main() {
 	err = swagger.NewTemplate("/swagger", swaggerTemplates).Execute()
 	fatalOnError(err, log)
 
-	// create /orchestration
-	orchestrationHandler.AttachRoutes(router)
-
 	// create list runtimes endpoint
 	runtimeHandler := runtime.NewHandler(db, cfg.MaxPaginationPage,
-		cfg.DefaultRequestRegion, provisionerClient,
+		cfg.DefaultRequestRegion,
 		kcpK8sClient,
 		cfg.Broker.KimConfig,
 		log)
@@ -386,11 +360,15 @@ func main() {
 	expirationHandler := expiration.NewHandler(db.Instances(), db.Operations(), deprovisionQueue, log)
 	expirationHandler.AttachRoutes(router)
 
-	router.StrictSlash(true).PathPrefix("/").Handler(http.StripPrefix("/", http.FileServer(http.Dir("/swagger"))))
-	svr := handlers.CustomLoggingHandler(os.Stdout, router, func(writer io.Writer, params handlers.LogFormatterParams) {
-		log.Info(fmt.Sprintf("Call handled: method=%s url=%s statusCode=%d size=%d", params.Request.Method, params.URL.Path, params.StatusCode, params.Size))
+	router.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
+		http.StripPrefix("/", http.FileServer(http.Dir("/swagger"))).ServeHTTP(w, r)
 	})
 
+	svr := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		rec := httputil.NewResponseRecorder(w)
+		router.ServeHTTP(rec, r)
+		log.Info(fmt.Sprintf("Call handled: method=%s url=%s statusCode=%d size=%d", r.Method, r.URL.Path, rec.StatusCode, rec.Size))
+	})
 	fatalOnError(http.ListenAndServe(cfg.Host+":"+cfg.Port, svr), log)
 }
 
@@ -410,7 +388,7 @@ func logConfiguration(logs *slog.Logger, cfg Config) {
 	logs.Info(fmt.Sprintf("Is UpdateCustomResourcesLabelsOnAccountMove enabled: %t", cfg.Broker.UpdateCustomResourcesLabelsOnAccountMove))
 }
 
-func createAPI(router *mux.Router, servicesConfig broker.ServicesConfig, planValidator broker.PlanValidator, cfg *Config, db storage.BrokerStorage,
+func createAPI(router *httputil.Router, servicesConfig broker.ServicesConfig, planValidator broker.PlanValidator, cfg *Config, db storage.BrokerStorage,
 	provisionQueue, deprovisionQueue, updateQueue *process.Queue, logger lager.Logger, logs *slog.Logger, planDefaults broker.PlanDefaults, kcBuilder kubeconfig.KcBuilder, clientProvider K8sClientProvider, kubeconfigProvider KubeconfigProvider, gardenerClient, kcpK8sClient client.Client, publisher event.Publisher) {
 
 	suspensionCtxHandler := suspension.NewContextUpdateHandler(db.Operations(), provisionQueue, deprovisionQueue, logs)
@@ -434,17 +412,21 @@ func createAPI(router *mux.Router, servicesConfig broker.ServicesConfig, planVal
 	fatalOnError(err, logs)
 	logs.Info(fmt.Sprintf("%s plan region mappings loaded", broker.SapConvergedCloudPlanName))
 
+	regionsSupportingMachine, err := regionssupportingmachine.ReadRegionsSupportingMachineFromFile(cfg.RegionsSupportingMachineFilePath)
+	fatalOnError(err, logs)
+	logs.Info(fmt.Sprintf("Number of machine types families that are not universally supported across all regions: %d", len(regionsSupportingMachine)))
+
 	// create KymaEnvironmentBroker endpoints
 	kymaEnvBroker := &broker.KymaEnvironmentBroker{
 		ServicesEndpoint: broker.NewServices(cfg.Broker, servicesConfig, logs, convergedCloudRegionProvider),
 		ProvisionEndpoint: broker.NewProvision(cfg.Broker, cfg.Gardener, db.Operations(), db.Instances(), db.InstancesArchived(),
 			provisionQueue, planValidator, defaultPlansConfig,
-			planDefaults, logs, cfg.KymaDashboardConfig, kcBuilder, freemiumGlobalAccountIds, convergedCloudRegionProvider,
+			planDefaults, logs, cfg.KymaDashboardConfig, kcBuilder, freemiumGlobalAccountIds, convergedCloudRegionProvider, regionsSupportingMachine,
 		),
 		DeprovisionEndpoint: broker.NewDeprovision(db.Instances(), db.Operations(), deprovisionQueue, logs),
 		UpdateEndpoint: broker.NewUpdate(cfg.Broker, db.Instances(), db.RuntimeStates(), db.Operations(),
 			suspensionCtxHandler, cfg.UpdateProcessingEnabled, cfg.Broker.SubaccountMovementEnabled, cfg.Broker.UpdateCustomResourcesLabelsOnAccountMove, updateQueue, defaultPlansConfig,
-			planDefaults, logs, cfg.KymaDashboardConfig, kcBuilder, convergedCloudRegionProvider, kcpK8sClient),
+			planDefaults, logs, cfg.KymaDashboardConfig, kcBuilder, convergedCloudRegionProvider, kcpK8sClient, regionsSupportingMachine),
 		GetInstanceEndpoint:          broker.NewGetInstance(cfg.Broker, db.Instances(), db.Operations(), kcBuilder, logs),
 		LastOperationEndpoint:        broker.NewLastOperation(db.Operations(), db.InstancesArchived(), logs),
 		BindEndpoint:                 broker.NewBind(cfg.Broker.Binding, db, logs, clientProvider, kubeconfigProvider, publisher),
@@ -453,15 +435,11 @@ func createAPI(router *mux.Router, servicesConfig broker.ServicesConfig, planVal
 		LastBindingOperationEndpoint: broker.NewLastBindingOperation(logs),
 	}
 
-	router.Use(middleware.AddRegionToContext(cfg.DefaultRequestRegion))
-	router.Use(middleware.AddProviderToContext())
-	for _, prefix := range []string{
-		"/oauth/",          // oauth2 handled by Ory
-		"/oauth/{region}/", // oauth2 handled by Ory with region
-	} {
-		route := router.PathPrefix(prefix).Subrouter()
-		broker.AttachRoutes(route, kymaEnvBroker, logger, cfg.Broker.Binding.CreateBindingTimeout)
-	}
+	prefixes := []string{"/{region}", ""}
+	subRouter, err := router.NewSubRouter(brokerAPISubrouterName)
+	fatalOnError(err, logs)
+	broker.AttachRoutes(subRouter, kymaEnvBroker, logs, cfg.Broker.Binding.CreateBindingTimeout, cfg.DefaultRequestRegion, prefixes)
+	router.Handle("/oauth/", http.StripPrefix("/oauth", subRouter))
 
 	respWriter := httputil.NewResponseWriter(logs, cfg.DevelopmentMode)
 	runtimesInfoHandler := appinfo.NewRuntimeInfoHandler(db.Instances(), db.Operations(), defaultPlansConfig, cfg.DefaultRequestRegion, respWriter)

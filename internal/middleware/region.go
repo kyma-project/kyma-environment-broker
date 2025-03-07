@@ -3,8 +3,6 @@ package middleware
 import (
 	"context"
 	"net/http"
-
-	"github.com/gorilla/mux"
 )
 
 // The key type is no exported to prevent collisions with context keys
@@ -16,12 +14,11 @@ const (
 	requestRegionKey key = iota + 1
 )
 
-func AddRegionToContext(defaultRegion string) mux.MiddlewareFunc {
+func AddRegionToContext(defaultRegion string) MiddlewareFunc {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
-			vars := mux.Vars(req)
-			region, found := vars["region"]
-			if !found {
+			region := req.PathValue("region")
+			if region == "" {
 				region = defaultRegion
 			}
 

@@ -27,3 +27,10 @@ data:
 {{- with .Values.freemiumWhitelistedGlobalAccountIds }}
 {{ tpl . $ | indent 4 }}
 {{- end }}
+  regionsSupportingMachine.yaml: |-
+{{- with .Values.regionsSupportingMachine }}
+{{ tpl . $ | indent 4 }}
+{{- end }}
+  hapRule.yaml: |-
+    rule:
+{{ toYaml .Values.hap.rule | indent 4  }}

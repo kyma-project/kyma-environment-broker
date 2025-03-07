@@ -18,8 +18,9 @@ echo "Creating security scan configuration file:"
 
 cat <<EOF | tee ${FILENAME}
 module-name: kyma-environment-broker
+kind: kcp
 rc-tag: ${TAG}
-protecode:
+bdba:
   - europe-docker.pkg.dev/kyma-project/prod/kyma-environment-broker:${TAG}
   - europe-docker.pkg.dev/kyma-project/prod/kyma-environment-deprovision-retrigger-job:${TAG}
   - europe-docker.pkg.dev/kyma-project/prod/kyma-environments-cleanup-job:${TAG}
@@ -31,9 +32,16 @@ protecode:
   - europe-docker.pkg.dev/kyma-project/prod/kyma-environment-broker-globalaccounts:${TAG}
   - europe-docker.pkg.dev/kyma-project/prod/kyma-environment-broker-schema-migrator:${TAG}
   - europe-docker.pkg.dev/kyma-project/prod/kyma-environment-service-binding-cleanup-job:${TAG}
-whitesource:
+mend:
   language: golang-mod
-  subprojects: false
+  exclude:
+    - "**/*_test.go"
+    - "testing/**"
+    - "**/automock/**"
+    - "**/*fake*.go"
+    - "**/*mock*.go"
+checkmarx-one:
+  preset: go-default
   exclude:
     - "**/*_test.go"
     - "testing/**"

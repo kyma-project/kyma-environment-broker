@@ -149,6 +149,38 @@ func (c *KCPClient) GetSuspensionOperationID(instanceID string) (*string, error)
 	return &operationID, nil
 }
 
+func (c *KCPClient) GetAdditionalWorkerNodePools(instanceID string) ([]map[string]interface{}, error) {
+	args := []string{"rt", "-i", instanceID, "--runtime-config", "-o", "custom=:{.runtimeConfig.spec.shoot.provider.additionalWorkers}"}
+	if clientSecret := os.Getenv("KCP_OIDC_CLIENT_SECRET"); clientSecret != "" {
+		args = append(args, "--config", "config.yaml")
+	}
+	output, err := exec.Command("kcp", args...).Output()
+	if err != nil {
+		return nil, fmt.Errorf("failed to get additional worker node pools: %w", err)
+	}
+	var additionalWorkerNodePools []map[string]interface{}
+	if len(strings.TrimSpace(string(output))) == 0 {
+		return additionalWorkerNodePools, nil
+	}
+	if err := json.Unmarshal(output, &additionalWorkerNodePools); err != nil {
+		return nil, fmt.Errorf("failed to unmarshal additionalWorkerNodePools: %w", err)
+	}
+	return additionalWorkerNodePools, nil
+}
+
+func (c *KCPClient) GetPlanName(instanceID string) (string, error) {
+	args := []string{"rt", "-i", instanceID, "-o", "custom=:{.servicePlanName}"}
+	if clientSecret := os.Getenv("KCP_OIDC_CLIENT_SECRET"); clientSecret != "" {
+		args = append(args, "--config", "config.yaml")
+	}
+	output, err := exec.Command("kcp", args...).Output()
+	if err != nil {
+		return "", fmt.Errorf("failed to get plan name: %w", err)
+	}
+	planName := strings.TrimSpace(string(output))
+	return planName, nil
+}
+
 func getEnvOrThrow(key string) string {
 	value := os.Getenv(key)
 	if value == "" {

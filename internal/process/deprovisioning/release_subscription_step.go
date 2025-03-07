@@ -45,7 +45,7 @@ func (s ReleaseSubscriptionStep) Run(operation internal.Operation, log *slog.Log
 		instance, err := s.instanceStorage.GetByID(operation.InstanceID)
 		if err != nil {
 			msg := fmt.Sprintf("after successful deprovisioning failing to release hyperscaler subscription - get the instance data for instanceID [%s]: %s", operation.InstanceID, err.Error())
-			operation, repeat, err := s.operationManager.MarkStepAsExcutedButNotCompleted(operation, s.Name(), msg, log)
+			operation, repeat, err := s.operationManager.MarkStepAsExecutedButNotCompleted(operation, s.Name(), msg, log)
 			if repeat != 0 {
 				return operation, repeat, err
 			}
@@ -60,7 +60,7 @@ func (s ReleaseSubscriptionStep) Run(operation internal.Operation, log *slog.Log
 		hypType, err := hyperscaler.HypTypeFromCloudProviderWithRegion(instance.Provider, &instance.ProviderRegion, &operation.ProvisioningParameters.PlatformRegion)
 		if err != nil {
 			msg := fmt.Sprintf("after successful deprovisioning failing to release hyperscaler subscription - determine the type of hyperscaler to use for planID [%s]: %s", planID, err.Error())
-			operation, repeat, err := s.operationManager.MarkStepAsExcutedButNotCompleted(operation, s.Name(), msg, log)
+			operation, repeat, err := s.operationManager.MarkStepAsExecutedButNotCompleted(operation, s.Name(), msg, log)
 			if repeat != 0 {
 				return operation, repeat, err
 			}

@@ -3,7 +3,6 @@ package memory
 import (
 	"database/sql"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"sort"
 	"sync"
@@ -13,7 +12,7 @@ import (
 	"github.com/kyma-project/kyma-environment-broker/internal/storage/dberr"
 	"github.com/kyma-project/kyma-environment-broker/internal/storage/dbmodel"
 	"github.com/kyma-project/kyma-environment-broker/internal/storage/predicate"
-	"github.com/pivotal-cf/brokerapi/v8/domain"
+	"github.com/pivotal-cf/brokerapi/v12/domain"
 )
 
 type instances struct {
@@ -45,14 +44,8 @@ func (s *instances) GetDistinctSubAccounts() ([]string, error) {
 	return subAccounts, nil
 }
 
-func (s *instances) InsertWithoutEncryption(instance internal.Instance) error {
-	return errors.New("not implemented")
-}
-func (s *instances) UpdateWithoutEncryption(instance internal.Instance) (*internal.Instance, error) {
-	return nil, errors.New("not implemented")
-}
-func (s *instances) ListWithoutDecryption(dbmodel.InstanceFilter) ([]internal.Instance, int, int, error) {
-	return nil, 0, 0, errors.New("not implemented")
+func (s *instances) UpdateInstanceLastOperation(instanceID, operationID string) error {
+	return nil
 }
 
 func (s *instances) FindAllJoinedWithOperations(prct ...predicate.Predicate) ([]internal.InstanceWithOperation, error) {

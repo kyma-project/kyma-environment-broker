@@ -15,7 +15,7 @@ import (
 	"golang.org/x/exp/slices"
 
 	"github.com/gocraft/dbr"
-	"github.com/pivotal-cf/brokerapi/v8/domain"
+	"github.com/pivotal-cf/brokerapi/v12/domain"
 )
 
 type readSession struct {
@@ -104,6 +104,7 @@ func (r readSession) GetDistinctSubAccounts() ([]string, dberr.Error) {
 	return subAccounts, nil
 }
 
+// TODO: CAVEAT in case of large operations table
 func (r readSession) getInstancesJoinedWithOperationStatement() *dbr.SelectStmt {
 	join := fmt.Sprintf("%s.instance_id = %s.instance_id", InstancesTableName, OperationTableName)
 	stmt := r.session.
@@ -263,6 +264,7 @@ func (r readSession) ListOperations(filter dbmodel.OperationFilter) ([]dbmodel.O
 	}
 
 	// Apply filtering if provided
+	// TODO - assumes aliases o and i for operations and instances tables
 	addOperationFilters(stmt, filter)
 
 	_, err := stmt.Load(&operations)
@@ -476,6 +478,7 @@ func (r readSession) ListOperationsByOrchestrationID(orchestrationID string, fil
 	}
 
 	// Apply filtering if provided
+	// TODO - assumes aliases o and i for operations and instances tables
 	addOperationFilters(stmt, filter)
 
 	_, err := stmt.Load(&ops)
@@ -494,6 +497,7 @@ func (r readSession) ListOperationsByOrchestrationID(orchestrationID string, fil
 		nil
 }
 
+// TODO quite a tough query as for now
 func (r readSession) ListOperationsInTimeRange(from, to time.Time) ([]dbmodel.OperationDTO, error) {
 	var ops []dbmodel.OperationDTO
 	condition := dbr.Or(
@@ -680,16 +684,13 @@ func (r readSession) GetActiveInstanceStats() ([]dbmodel.InstanceByGlobalAccount
 	filter := dbmodel.InstanceFilter{
 		States: []dbmodel.InstanceState{dbmodel.InstanceNotDeprovisioned},
 	}
+
 	// Find and join the last operation for each instance matching the state filter(s).
-	// Last operation is found with the greatest-n-per-group problem solved with OUTER JOIN, followed by a (INNER) JOIN to get instance columns.
 	stmt = r.session.
 		Select(fmt.Sprintf("%s.global_account_id", InstancesTableName), "count(*) as total").
 		From(InstancesTableName).
-		Join(dbr.I(OperationTableName).As("o1"), fmt.Sprintf("%s.instance_id = o1.instance_id", InstancesTableName)).
-		LeftJoin(dbr.I(OperationTableName).As("o2"), fmt.Sprintf("%s.instance_id = o2.instance_id AND o1.created_at < o2.created_at AND o2.state NOT IN ('%s', '%s')", InstancesTableName, orchestration.Pending, orchestration.Canceled)).
-		Where("o2.created_at IS NULL").
+		Join(dbr.I(OperationTableName).As("o1"), fmt.Sprintf("%s.last_operation_id = o1.id", InstancesTableName)).
 		Where("deleted_at = '0001-01-01T00:00:00.000Z'").
-		Where(fmt.Sprintf("o1.state NOT IN ('%s', '%s')", orchestration.Pending, orchestration.Canceled)).
 		Where(buildInstanceStateFilters("o1", filter)).
 		GroupBy(fmt.Sprintf("%s.global_account_id", InstancesTableName))
 
@@ -704,15 +705,11 @@ func (r readSession) GetSubaccountsInstanceStats() ([]dbmodel.InstanceBySubAccou
 		States: []dbmodel.InstanceState{dbmodel.InstanceNotDeprovisioned},
 	}
 	// Find and join the last operation for each instance matching the state filter(s).
-	// Last operation is found with the greatest-n-per-group problem solved with OUTER JOIN, followed by a (INNER) JOIN to get instance columns.
 	stmt = r.session.
 		Select(fmt.Sprintf("%s.sub_account_id", InstancesTableName), "count(*) as total").
 		From(InstancesTableName).
-		Join(dbr.I(OperationTableName).As("o1"), fmt.Sprintf("%s.instance_id = o1.instance_id", InstancesTableName)).
-		LeftJoin(dbr.I(OperationTableName).As("o2"), fmt.Sprintf("%s.instance_id = o2.instance_id AND o1.created_at < o2.created_at AND o2.state NOT IN ('%s', '%s')", InstancesTableName, orchestration.Pending, orchestration.Canceled)).
-		Where("o2.created_at IS NULL").
+		Join(dbr.I(OperationTableName).As("o1"), fmt.Sprintf("%s.last_operation_id = o1.id", InstancesTableName)).
 		Where("deleted_at = '0001-01-01T00:00:00.000Z'").
-		Where(fmt.Sprintf("o1.state NOT IN ('%s', '%s')", orchestration.Pending, orchestration.Canceled)).
 		Where(buildInstanceStateFilters("o1", filter)).
 		GroupBy(fmt.Sprintf("%s.sub_account_id", InstancesTableName)).
 		Having(fmt.Sprintf("count(*) > 1"))
@@ -723,19 +720,13 @@ func (r readSession) GetSubaccountsInstanceStats() ([]dbmodel.InstanceBySubAccou
 
 func (r readSession) GetERSContextStats() ([]dbmodel.InstanceERSContextStatsEntry, error) {
 	var rows []dbmodel.InstanceERSContextStatsEntry
-	// group existing instances by license_Type from the last operation that is not pending or canceled
+	// group existing instances by license_Type from the last operation
 	_, err := r.session.SelectBySql(`
-SELECT license_type, count(1) as total
-FROM (
-    SELECT DISTINCT ON (instances.instance_id) instances.instance_id, operations.id, state, type, (operations.provisioning_parameters->'ers_context'->'license_type')::VARCHAR AS license_type
-    FROM operations
-    INNER JOIN instances
-    ON operations.instance_id = instances.instance_id
-    WHERE (operations.state != 'pending' OR operations.state != 'canceled') AND deleted_at = '0001-01-01T00:00:00.000Z'
-    ORDER BY instance_id, operations.created_at DESC
-) t
-GROUP BY license_type;
-`).Load(&rows)
+SELECT count(*) as total, (o.provisioning_parameters -> 'ers_context' -> 'license_type')::VARCHAR AS license_type
+FROM instances i
+         INNER JOIN operations o ON i.last_operation_id = o.id
+WHERE i.deleted_at = '0001-01-01T00:00:00.000Z'
+GROUP BY license_type;`).Load(&rows)
 	return rows, err
 }
 
@@ -755,24 +746,14 @@ func (r readSession) GetNumberOfInstancesForGlobalAccountID(globalAccountID stri
 func (r readSession) ListInstances(filter dbmodel.InstanceFilter) ([]dbmodel.InstanceWithExtendedOperationDTO, int, int, error) {
 	var instances []dbmodel.InstanceWithExtendedOperationDTO
 
-	// Base select and order by created at
-	var stmt *dbr.SelectStmt
-	// Find and join the last operation for each instance matching the state filter(s).
-	// Last operation is found with the greatest-n-per-group problem solved with OUTER JOIN, followed by a (INNER) JOIN to get instance columns.
-	stmt = r.session.
-		// Order in select is important - dbr iterates over result and checks for matching fields in go structures.
-		// Because of that and Operation having common fields with Instance with current order operation attributes will
-		// be loaded into structures (e.g. created_at, provisioning_parameters, etc.) and will be overwritten by instance attributes.
-		Select("o1.data", "o1.state", "o1.type", fmt.Sprintf("%s.*", InstancesTableName)).
+	// select an instance with a last operation
+	stmt := r.session.Select("o.data", "o.state", "o.type", fmt.Sprintf("%s.*", InstancesTableName)).
 		From(InstancesTableName).
-		Join(dbr.I(OperationTableName).As("o1"), fmt.Sprintf("%s.instance_id = o1.instance_id", InstancesTableName)).
-		LeftJoin(dbr.I(OperationTableName).As("o2"), fmt.Sprintf("%s.instance_id = o2.instance_id AND o1.created_at < o2.created_at AND o2.state NOT IN ('%s', '%s')", InstancesTableName, orchestration.Pending, orchestration.Canceled)).
-		Where("o2.created_at IS NULL").
-		Where(fmt.Sprintf("o1.state NOT IN ('%s', '%s')", orchestration.Pending, orchestration.Canceled)).
+		Join(dbr.I(OperationTableName).As("o"), fmt.Sprintf("%s.last_operation_id = o.id", InstancesTableName)).
 		OrderBy(fmt.Sprintf("%s.%s", InstancesTableName, CreatedAtField))
 
 	if len(filter.States) > 0 || filter.Suspended != nil {
-		stateFilters := buildInstanceStateFilters("o1", filter)
+		stateFilters := buildInstanceStateFilters("o", filter)
 		stmt.Where(stateFilters)
 	}
 
@@ -781,14 +762,14 @@ func (r readSession) ListInstances(filter dbmodel.InstanceFilter) ([]dbmodel.Ins
 		stmt = stmt.Paginate(uint64(filter.Page), uint64(filter.PageSize))
 	}
 
-	addInstanceFilters(stmt, filter)
+	addInstanceFilters(stmt, filter, "o")
 
 	_, err := stmt.Load(&instances)
 	if err != nil {
 		return nil, -1, -1, fmt.Errorf("while fetching instances: %w", err)
 	}
 
-	totalCount, err := r.getInstanceCount(filter)
+	totalCount, err := r.getInstanceCountByLastOperationID(filter)
 	if err != nil {
 		return nil, -1, -1, err
 	}
@@ -804,19 +785,12 @@ func (r readSession) ListInstancesWithSubaccountStates(filter dbmodel.InstanceFi
 
 	// Base select and order by created at
 	var stmt *dbr.SelectStmt
-	// Find and join the last operation for each instance matching the state filter(s).
-	// Last operation is found with the greatest-n-per-group problem solved with OUTER JOIN, followed by a (INNER) JOIN to get instance columns.
-	stmt = r.session.
-		// Order in select is important - dbr iterates over result and checks for matching fields in go structures.
-		// Because of that and Operation having common fields with Instance with current order operation attributes will
-		// be loaded into structures (e.g. created_at, provisioning_parameters, etc.) and will be overwritten by instance attributes.
-		Select("o1.data", "o1.state", "o1.type", fmt.Sprintf("%s.*", InstancesTableName), "ss.beta_enabled", "ss.used_for_production").
+
+	// select an instance with a last operation
+	stmt = r.session.Select("o1.data", "o1.state", "o1.type", fmt.Sprintf("%s.*", InstancesTableName), "ss.beta_enabled", "ss.used_for_production").
 		From(InstancesTableName).
-		Join(dbr.I(OperationTableName).As("o1"), fmt.Sprintf("%s.instance_id = o1.instance_id", InstancesTableName)).
-		LeftJoin(dbr.I(OperationTableName).As("o2"), fmt.Sprintf("%s.instance_id = o2.instance_id AND o1.created_at < o2.created_at AND o2.state NOT IN ('%s', '%s')", InstancesTableName, orchestration.Pending, orchestration.Canceled)).
+		Join(dbr.I(OperationTableName).As("o1"), fmt.Sprintf("%s.last_operation_id = o1.id", InstancesTableName)).
 		LeftJoin(dbr.I(SubaccountStatesTableName).As("ss"), fmt.Sprintf("%s.sub_account_id = ss.id", InstancesTableName)).
-		Where("o2.created_at IS NULL").
-		Where(fmt.Sprintf("o1.state NOT IN ('%s', '%s')", orchestration.Pending, orchestration.Canceled)).
 		OrderBy(fmt.Sprintf("%s.%s", InstancesTableName, CreatedAtField))
 
 	if len(filter.States) > 0 || filter.Suspended != nil {
@@ -829,7 +803,7 @@ func (r readSession) ListInstancesWithSubaccountStates(filter dbmodel.InstanceFi
 		stmt = stmt.Paginate(uint64(filter.Page), uint64(filter.PageSize))
 	}
 
-	addInstanceFilters(stmt, filter)
+	addInstanceFilters(stmt, filter, "o1")
 
 	_, err := stmt.Load(&instances)
 	if err != nil {
@@ -837,7 +811,7 @@ func (r readSession) ListInstancesWithSubaccountStates(filter dbmodel.InstanceFi
 	}
 
 	// getInstanceCount is appropriate for this query because we added only left join without any additional selection/filtering
-	totalCount, err := r.getInstanceCount(filter)
+	totalCount, err := r.getInstanceCountByLastOperationID(filter)
 	if err != nil {
 		return nil, -1, -1, err
 	}
@@ -862,11 +836,34 @@ func (r readSession) ListEvents(filter events.EventFilter) ([]events.EventDTO, e
 	return events, err
 }
 
+func (r readSession) getInstanceCountByLastOperationID(filter dbmodel.InstanceFilter) (int, error) {
+	var res struct {
+		Total int
+	}
+
+	var stmt *dbr.SelectStmt
+	stmt = r.session.
+		Select("count(*) as total").
+		From(InstancesTableName).
+		Join(dbr.I(OperationTableName).As("o1"), fmt.Sprintf("%s.last_operation_id = o1.id", InstancesTableName))
+
+	if len(filter.States) > 0 || filter.Suspended != nil {
+		stateFilters := buildInstanceStateFilters("o1", filter)
+		stmt.Where(stateFilters)
+	}
+
+	addInstanceFilters(stmt, filter, "o1")
+	err := stmt.LoadOne(&res)
+
+	return res.Total, err
+}
+
 func (r readSession) getInstanceCount(filter dbmodel.InstanceFilter) (int, error) {
 	var res struct {
 		Total int
 	}
 	var stmt *dbr.SelectStmt
+
 	stmt = r.session.
 		Select("count(*) as total").
 		From(InstancesTableName).
@@ -880,7 +877,7 @@ func (r readSession) getInstanceCount(filter dbmodel.InstanceFilter) (int, error
 		stmt.Where(stateFilters)
 	}
 
-	addInstanceFilters(stmt, filter)
+	addInstanceFilters(stmt, filter, "o1")
 	err := stmt.LoadOne(&res)
 
 	return res.Total, err
@@ -948,7 +945,7 @@ func buildInstanceStateFilters(table string, filter dbmodel.InstanceFilter) dbr.
 	return dbr.Or(exprs...)
 }
 
-func addInstanceFilters(stmt *dbr.SelectStmt, filter dbmodel.InstanceFilter) {
+func addInstanceFilters(stmt *dbr.SelectStmt, filter dbmodel.InstanceFilter, table string) {
 	if len(filter.GlobalAccountIDs) > 0 {
 		stmt.Where("instances.global_account_id IN ?", filter.GlobalAccountIDs)
 	}
@@ -972,7 +969,7 @@ func addInstanceFilters(stmt *dbr.SelectStmt, filter dbmodel.InstanceFilter) {
 	}
 	if len(filter.Shoots) > 0 {
 		shootNameMatch := fmt.Sprintf(`^(%s)$`, strings.Join(filter.Shoots, "|"))
-		stmt.Where("o1.data::json->>'shoot_name' ~ ?", shootNameMatch)
+		stmt.Where(fmt.Sprintf("%s.data::json->>'shoot_name' ~ ?", table), shootNameMatch)
 	}
 
 	if filter.Expired != nil {
@@ -1029,6 +1026,8 @@ func (r readSession) getOperationCount(filter dbmodel.OperationFilter) (int, err
 	}
 	stmt := r.session.Select("count(1) as total").
 		From(dbr.I(OperationTableName).As("o"))
+
+	// TODO - assumes aliases o and i for operations and instances tables
 	addOperationFilters(stmt, filter)
 	err := stmt.LoadOne(&res)
 
@@ -1042,6 +1041,8 @@ func (r readSession) getUpgradeOperationCount(orchestrationID string, filter dbm
 	stmt := r.session.Select("count(1) as total").
 		From(dbr.I(OperationTableName).As("o")).
 		Where(dbr.Eq("o.orchestration_id", orchestrationID))
+
+	// TODO - assumes aliases o and i for operations and instances tables
 	addOperationFilters(stmt, filter)
 	err := stmt.LoadOne(&res)
 

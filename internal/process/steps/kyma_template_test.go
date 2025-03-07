@@ -16,10 +16,23 @@ func TestInitKymaTemplate_Run(t *testing.T) {
 	operation := fixture.FixOperation("op-id", "inst-id", internal.OperationTypeProvision)
 	err := db.Operations().InsertOperation(operation)
 	require.NoError(t, err)
-	svc := NewInitKymaTemplate(db.Operations())
-	ic := fixture.FixInputCreator("aws")
-	ic.Config = &internal.ConfigForPlan{
-		KymaTemplate: `
+
+	svc := NewInitKymaTemplate(db.Operations(), &fakeConfigProvider{})
+
+	// when
+	op, backoff, err := svc.Run(operation, fixLogger())
+	require.NoError(t, err)
+
+	// then
+	assert.Zero(t, backoff)
+	assert.Equal(t, "kyma-system", op.KymaResourceNamespace)
+	assert.NotEmptyf(t, op.KymaTemplate, "KymaTemplate should not be empty")
+}
+
+type fakeConfigProvider struct{}
+
+func (f fakeConfigProvider) ProvideForGivenPlan(plan string) (*internal.ConfigForPlan, error) {
+	return &internal.ConfigForPlan{KymaTemplate: `
 apiVersion: operator.kyma-project.io/v1beta2
 kind: Kyma
 metadata:
@@ -30,16 +43,5 @@ spec:
         strategy: secret
     channel: stable
     modules: []
-`,
-	}
-	operation.InputCreator = ic
-
-	// when
-	op, backoff, err := svc.Run(operation, fixLogger())
-	require.NoError(t, err)
-
-	// then
-	assert.Zero(t, backoff)
-	assert.Equal(t, "kyma-system", op.KymaResourceNamespace)
-	assert.Equal(t, ic.Config.KymaTemplate, op.KymaTemplate)
+`}, nil
 }

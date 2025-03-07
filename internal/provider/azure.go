@@ -28,14 +28,14 @@ type (
 	}
 )
 
-func (p *AzureInputProvider) Provide() Values {
+func (p *AzureInputProvider) Provide() internal.ProviderValues {
 	zonesCount := p.zonesCount()
 	zones := p.zones()
 	region := DefaultAzureRegion
 	if p.ProvisioningParameters.Parameters.Region != nil {
 		region = *p.ProvisioningParameters.Parameters.Region
 	}
-	return Values{
+	return internal.ProviderValues{
 		DefaultAutoScalerMax: 20,
 		DefaultAutoScalerMin: 3,
 		ZonesCount:           zonesCount,
@@ -66,7 +66,7 @@ func (p *AzureInputProvider) generateRandomAzureZones(zonesCount int) []string {
 	return GenerateAzureZones(zonesCount)
 }
 
-func (p *AzureTrialInputProvider) Provide() Values {
+func (p *AzureTrialInputProvider) Provide() internal.ProviderValues {
 	machineType := DefaultOldAzureTrialMachineType
 	if p.UseSmallerMachineTypes {
 		machineType = DefaultAzureMachineType
@@ -75,7 +75,7 @@ func (p *AzureTrialInputProvider) Provide() Values {
 	zones := p.zones()
 	region := p.region()
 
-	return Values{
+	return internal.ProviderValues{
 		DefaultAutoScalerMax: 1,
 		DefaultAutoScalerMin: 1,
 		ZonesCount:           1,
@@ -110,7 +110,7 @@ func (p *AzureTrialInputProvider) region() string {
 	return DefaultAzureRegion
 }
 
-func (p *AzureLiteInputProvider) Provide() Values {
+func (p *AzureLiteInputProvider) Provide() internal.ProviderValues {
 	machineType := DefaultOldAzureTrialMachineType
 	if p.UseSmallerMachineTypes {
 		machineType = DefaultAzureMachineType
@@ -120,12 +120,12 @@ func (p *AzureLiteInputProvider) Provide() Values {
 	if p.ProvisioningParameters.Parameters.Region != nil {
 		region = *p.ProvisioningParameters.Parameters.Region
 	}
-	return Values{
+	return internal.ProviderValues{
 		DefaultAutoScalerMax: 10,
 		DefaultAutoScalerMin: 2,
 		ZonesCount:           1,
 		Zones:                zones,
-		ProviderType:         "azure",
+		ProviderType:         AzureProviderType,
 		DefaultMachineType:   machineType,
 		Region:               region,
 		Purpose:              p.Purpose,
@@ -146,7 +146,7 @@ func (p *AzureLiteInputProvider) region() string {
 	return DefaultAzureRegion
 }
 
-func (p *AzureFreemiumInputProvider) Provide() Values {
+func (p *AzureFreemiumInputProvider) Provide() internal.ProviderValues {
 	machineType := DefaultOldAzureTrialMachineType
 	if p.UseSmallerMachineTypes {
 		machineType = DefaultAzureMachineType
@@ -156,12 +156,12 @@ func (p *AzureFreemiumInputProvider) Provide() Values {
 	if p.ProvisioningParameters.Parameters.Region != nil {
 		region = *p.ProvisioningParameters.Parameters.Region
 	}
-	return Values{
+	return internal.ProviderValues{
 		DefaultAutoScalerMax: 1,
 		DefaultAutoScalerMin: 1,
 		ZonesCount:           1,
 		Zones:                zones,
-		ProviderType:         "azure",
+		ProviderType:         AzureProviderType,
 		DefaultMachineType:   machineType,
 		Region:               region,
 		Purpose:              PurposeEvaluation,

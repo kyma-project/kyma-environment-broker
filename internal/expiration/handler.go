@@ -8,7 +8,6 @@ import (
 	"time"
 
 	"github.com/google/uuid"
-	"github.com/gorilla/mux"
 	"github.com/kyma-project/kyma-environment-broker/common/orchestration"
 	"github.com/kyma-project/kyma-environment-broker/internal"
 	"github.com/kyma-project/kyma-environment-broker/internal/broker"
@@ -17,15 +16,19 @@ import (
 	"github.com/kyma-project/kyma-environment-broker/internal/storage"
 	"github.com/kyma-project/kyma-environment-broker/internal/storage/dberr"
 	"github.com/kyma-project/kyma-environment-broker/internal/suspension"
-	"github.com/pivotal-cf/brokerapi/v8/domain"
+	"github.com/pivotal-cf/brokerapi/v12/domain"
 )
+
+type router interface {
+	HandleFunc(pattern string, handler func(http.ResponseWriter, *http.Request))
+}
 
 type expirationResponse struct {
 	SuspensionOpID string `json:"operation"`
 }
 
 type Handler interface {
-	AttachRoutes(router *mux.Router)
+	AttachRoutes(r router)
 }
 
 type handler struct {
@@ -44,12 +47,12 @@ func NewHandler(instancesStorage storage.Instances, operationsStorage storage.Op
 	}
 }
 
-func (h *handler) AttachRoutes(router *mux.Router) {
-	router.HandleFunc("/expire/service_instance/{instance_id}", h.expireInstance).Methods("PUT")
+func (h *handler) AttachRoutes(r router) {
+	r.HandleFunc("PUT /expire/service_instance/{instance_id}", h.expireInstance)
 }
 
 func (h *handler) expireInstance(w http.ResponseWriter, req *http.Request) {
-	instanceID := mux.Vars(req)["instance_id"]
+	instanceID := req.PathValue("instance_id")
 
 	h.log.Info(fmt.Sprintf("Expiration triggered for instanceID: %s", instanceID))
 	logger := h.log.With("instanceID", instanceID)

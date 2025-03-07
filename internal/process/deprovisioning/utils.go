@@ -3,6 +3,7 @@ package deprovisioning
 import (
 	"fmt"
 	"log/slog"
+	"os"
 	"time"
 
 	"github.com/kyma-project/kyma-environment-broker/internal"
@@ -28,4 +29,10 @@ func handleError(stepName string, operation internal.Operation, err error,
 
 	log.Error(fmt.Sprintf("Step %s failed: %s.", stepName, err))
 	return operation, 0, nil
+}
+
+func fixLogger() *slog.Logger {
+	return slog.New(slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{
+		Level: slog.LevelInfo,
+	})).With("testing", true)
 }

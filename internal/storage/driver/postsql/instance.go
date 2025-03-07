@@ -7,7 +7,7 @@ import (
 	"log/slog"
 	"strings"
 
-	"github.com/pivotal-cf/brokerapi/v8/domain"
+	"github.com/pivotal-cf/brokerapi/v12/domain"
 
 	pkg "github.com/kyma-project/kyma-environment-broker/common/runtime"
 	"github.com/kyma-project/kyma-environment-broker/internal"
@@ -50,132 +50,6 @@ func NewInstance(sess postsql.Factory, operations *operations, cipher Cipher) *I
 		operations: operations,
 		cipher:     cipher,
 	}
-}
-
-func (s *Instance) InsertWithoutEncryption(instance internal.Instance) error {
-	_, err := s.GetByID(instance.InstanceID)
-	if err == nil {
-		return dberr.AlreadyExists("instance with id %s already exist", instance.InstanceID)
-	}
-	params, err := json.Marshal(instance.Parameters)
-	if err != nil {
-		return fmt.Errorf("while marshaling parameters: %w", err)
-	}
-	dto := dbmodel.InstanceDTO{
-		InstanceID:             instance.InstanceID,
-		RuntimeID:              instance.RuntimeID,
-		GlobalAccountID:        instance.GlobalAccountID,
-		SubAccountID:           instance.SubAccountID,
-		ServiceID:              instance.ServiceID,
-		ServiceName:            instance.ServiceName,
-		ServicePlanID:          instance.ServicePlanID,
-		ServicePlanName:        instance.ServicePlanName,
-		DashboardURL:           instance.DashboardURL,
-		ProvisioningParameters: string(params),
-		ProviderRegion:         instance.ProviderRegion,
-		CreatedAt:              instance.CreatedAt,
-		UpdatedAt:              instance.UpdatedAt,
-		DeletedAt:              instance.DeletedAt,
-		Version:                instance.Version,
-		Provider:               string(instance.Provider),
-	}
-
-	sess := s.NewWriteSession()
-	return wait.PollUntilContextTimeout(context.Background(), defaultRetryInterval, defaultRetryTimeout, true, func(ctx context.Context) (bool, error) {
-		err := sess.InsertInstance(dto)
-		if err != nil {
-			return false, nil
-		}
-		return true, nil
-	})
-}
-
-func (s *Instance) ListWithoutDecryption(filter dbmodel.InstanceFilter) ([]internal.Instance, int, int, error) {
-	dtos, count, totalCount, err := s.NewReadSession().ListInstances(filter)
-	if err != nil {
-		return []internal.Instance{}, 0, 0, err
-	}
-	var instances []internal.Instance
-	for _, dto := range dtos {
-		var params internal.ProvisioningParameters
-		err := json.Unmarshal([]byte(dto.InstanceDTO.ProvisioningParameters), &params)
-		if err != nil {
-			return nil, 0, 0, fmt.Errorf("while unmarshal parameters: %w", err)
-		}
-		instance := internal.Instance{
-			InstanceID:      dto.InstanceDTO.InstanceID,
-			RuntimeID:       dto.RuntimeID,
-			GlobalAccountID: dto.GlobalAccountID,
-			SubAccountID:    dto.SubAccountID,
-			ServiceID:       dto.ServiceID,
-			ServiceName:     dto.ServiceName,
-			ServicePlanID:   dto.ServicePlanID,
-			ServicePlanName: dto.ServicePlanName,
-			DashboardURL:    dto.DashboardURL,
-			Parameters:      params,
-			ProviderRegion:  dto.ProviderRegion,
-			CreatedAt:       dto.InstanceDTO.CreatedAt,
-			UpdatedAt:       dto.InstanceDTO.UpdatedAt,
-			DeletedAt:       dto.DeletedAt,
-			Version:         dto.InstanceDTO.Version,
-			Provider:        pkg.CloudProvider(dto.Provider),
-		}
-		instances = append(instances, instance)
-	}
-	return instances, count, totalCount, err
-}
-
-func (s *Instance) UpdateWithoutEncryption(instance internal.Instance) (*internal.Instance, error) {
-	sess := s.NewWriteSession()
-	params, err := json.Marshal(instance.Parameters)
-	if err != nil {
-		return nil, fmt.Errorf("while marshaling parameters: %w", err)
-	}
-	dto := dbmodel.InstanceDTO{
-		InstanceID:             instance.InstanceID,
-		RuntimeID:              instance.RuntimeID,
-		GlobalAccountID:        instance.GlobalAccountID,
-		SubAccountID:           instance.SubAccountID,
-		ServiceID:              instance.ServiceID,
-		ServiceName:            instance.ServiceName,
-		ServicePlanID:          instance.ServicePlanID,
-		ServicePlanName:        instance.ServicePlanName,
-		DashboardURL:           instance.DashboardURL,
-		ProvisioningParameters: string(params),
-		ProviderRegion:         instance.ProviderRegion,
-		CreatedAt:              instance.CreatedAt,
-		UpdatedAt:              instance.UpdatedAt,
-		DeletedAt:              instance.DeletedAt,
-		Version:                instance.Version,
-		Provider:               string(instance.Provider),
-	}
-	var lastErr dberr.Error
-	err = wait.PollUntilContextTimeout(context.Background(), defaultRetryInterval, defaultRetryTimeout, true, func(ctx context.Context) (bool, error) {
-		lastErr = sess.UpdateInstance(dto)
-
-		switch {
-		case dberr.IsNotFound(lastErr):
-			_, lastErr = s.NewReadSession().GetInstanceByID(instance.InstanceID)
-			if dberr.IsNotFound(lastErr) {
-				return false, dberr.NotFound("Instance with id %s not exist", instance.InstanceID)
-			}
-			if lastErr != nil {
-				return false, nil
-			}
-
-			// the operation exists but the version is different
-			lastErr = dberr.Conflict("operation update conflict, operation ID: %s", instance.InstanceID)
-			return false, lastErr
-		case lastErr != nil:
-			return false, nil
-		}
-		return true, nil
-	})
-	if err != nil {
-		return nil, lastErr
-	}
-	instance.Version = instance.Version + 1
-	return &instance, nil
 }
 
 func (s *Instance) FindAllJoinedWithOperations(prct ...predicate.Predicate) ([]internal.InstanceWithOperation, error) {
@@ -483,7 +357,7 @@ func (s *Instance) Update(instance internal.Instance) (*internal.Instance, error
 			}
 
 			// the operation exists but the version is different
-			lastErr = dberr.Conflict("operation update conflict, operation ID: %s", instance.InstanceID)
+			lastErr = dberr.Conflict("instance update conflict, instance ID: %s", instance.InstanceID)
 			return false, lastErr
 		case lastErr != nil:
 			return false, nil
@@ -538,7 +412,9 @@ func (s *Instance) Delete(instanceID string) error {
 }
 
 func (s *Instance) GetActiveInstanceStats() (internal.InstanceStats, error) {
+
 	entries, err := s.NewReadSession().GetActiveInstanceStats()
+
 	if err != nil {
 		return internal.InstanceStats{}, err
 	}
@@ -553,6 +429,7 @@ func (s *Instance) GetActiveInstanceStats() (internal.InstanceStats, error) {
 	}
 
 	subEntries, err := s.NewReadSession().GetSubaccountsInstanceStats()
+
 	if err != nil {
 		return internal.InstanceStats{}, err
 	}
@@ -563,6 +440,7 @@ func (s *Instance) GetActiveInstanceStats() (internal.InstanceStats, error) {
 }
 
 func (s *Instance) GetERSContextStats() (internal.ERSContextStats, error) {
+
 	entries, err := s.NewReadSession().GetERSContextStats()
 	if err != nil {
 		return internal.ERSContextStats{}, err
@@ -577,7 +455,9 @@ func (s *Instance) GetERSContextStats() (internal.ERSContextStats, error) {
 }
 
 func (s *Instance) List(filter dbmodel.InstanceFilter) ([]internal.Instance, int, int, error) {
+
 	dtos, count, totalCount, err := s.NewReadSession().ListInstances(filter)
+
 	if err != nil {
 		return []internal.Instance{}, 0, 0, err
 	}
@@ -605,8 +485,15 @@ func (s *Instance) List(filter dbmodel.InstanceFilter) ([]internal.Instance, int
 	return instances, count, totalCount, err
 }
 
+func (s *Instance) UpdateInstanceLastOperation(instanceID, operationID string) error {
+	sess := s.NewWriteSession()
+	return sess.UpdateInstanceLastOperation(instanceID, operationID)
+}
+
 func (s *Instance) ListWithSubaccountState(filter dbmodel.InstanceFilter) ([]internal.InstanceWithSubaccountState, int, int, error) {
+
 	dtos, count, totalCount, err := s.NewReadSession().ListInstancesWithSubaccountStates(filter)
+
 	if err != nil {
 		return []internal.InstanceWithSubaccountState{}, 0, 0, err
 	}

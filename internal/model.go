@@ -15,7 +15,7 @@ import (
 	pkg "github.com/kyma-project/kyma-environment-broker/common/runtime"
 	kebError "github.com/kyma-project/kyma-environment-broker/internal/error"
 	"github.com/kyma-project/kyma-environment-broker/internal/events"
-	"github.com/pivotal-cf/brokerapi/v8/domain"
+	"github.com/pivotal-cf/brokerapi/v12/domain"
 )
 
 type ProvisionerInputCreator interface {
@@ -135,7 +135,8 @@ type Operation struct {
 	InstanceDetails
 
 	// PROVISIONING
-	DashboardURL string `json:"dashboardURL"`
+	DashboardURL   string          `json:"dashboardURL"`
+	ProviderValues *ProviderValues `json:"providerValues"`
 
 	// DEPROVISIONING
 	// Temporary indicates that this deprovisioning operation must not remove the instance
@@ -155,9 +156,21 @@ type Operation struct {
 	KymaTemplate string `json:"KymaTemplate"`
 
 	LastError kebError.LastError `json:"last_error"`
+}
 
-	// following fields are not stored in the storage and should be added to the Merge function
-	InputCreator ProvisionerInputCreator `json:"-"`
+// ProviderValues contains values which are specific to particular plans (and provisioning parameters)
+type ProviderValues struct {
+	DefaultAutoScalerMax int
+	DefaultAutoScalerMin int
+	ZonesCount           int
+	Zones                []string
+	ProviderType         string
+	DefaultMachineType   string
+	Region               string
+	Purpose              string
+	VolumeSizeGb         int
+	DiskType             string
+	FailureTolerance     *string
 }
 
 type GroupedOperations struct {
@@ -180,7 +193,6 @@ func (o *Operation) EventErrorf(err error, fmt string, args ...any) {
 }
 
 func (o *Operation) Merge(operation *Operation) {
-	o.InputCreator = operation.InputCreator
 }
 
 // Orchestration holds all information about an orchestration.
@@ -472,6 +484,10 @@ func NewUpdateOperation(operationID string, instance *Instance, updatingParams U
 		op.ProvisioningParameters.Parameters.MachineType = updatingParams.MachineType
 	}
 
+	if updatingParams.AdditionalWorkerNodePools != nil {
+		op.ProvisioningParameters.Parameters.AdditionalWorkerNodePools = updatingParams.AdditionalWorkerNodePools
+	}
+
 	return op
 }
 
@@ -565,4 +581,9 @@ type Binding struct {
 	Kubeconfig        string
 	ExpirationSeconds int64
 	CreatedBy         string
+}
+
+type RetryTuple struct {
+	Timeout  time.Duration
+	Interval time.Duration
 }

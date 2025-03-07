@@ -15,6 +15,9 @@ The supported plans are as follows:
 | `trial`               | `7d55d31d-35ae-4438-bf13-6ffdfa107d9f` | Installs Kyma trial plan on Azure, AWS or GCP.          |
 | `sap-converged-cloud` | `03b812ac-c991-4528-b5bd-08b303523a63` | Installs Kyma runtime in the SapConvergedCloud cluster. |
 | `free`                | `b1a5764e-2ea1-4f95-94c0-2b4538b37b55` | Installs Kyma free plan on Azure or AWS.                |
+| `build-runtime-aws`   | `6aae0ff3-89f7-4f12-86de-51466145422e` | Installs Kyma runtime in the AWS cluster.               |
+| `build-runtime-azure` | `499244b4-1bef-48c9-be68-495269899f8e` | Installs Kyma runtime in the Azure cluster.             |
+| `build-runtime-gcp`   | `a310cd6b-6452-45a0-935d-d24ab53f9eba` | Installs Kyma runtime in the GCP cluster.               |
 
 There is also an experimental plan:
 
@@ -72,18 +75,17 @@ These are the provisioning parameters for Azure that you can configure:
 
 <!-- markdown-link-check-disable -->
 
-| Parameter name                                                                                       | Type   | Description                                                                         | Required | Default value     |
-|------------------------------------------------------------------------------------------------------|--------|-------------------------------------------------------------------------------------|:--------:|-------------------|
-| **machineType**                                                                                      | string | Specifies the provider-specific virtual machine type.                               |    No    | `Standard_D2s_v5` |
-| **volumeSizeGb**                                                                                     | int    | Specifies the size of the root volume.                                              |    No    | `50`              |
-| **region**                                                                                           | string | Defines the cluster region.                                                         |   Yes    | None              |
-| **zones**                                                                                            | string | Defines the list of zones in which Runtime Provisioner creates a cluster.           |    No    | `["1"]`           |
-| **autoScalerMin[<sup>1</sup>](#update)**                                                             | int    | Specifies the minimum number of virtual machines to create.                         |    No    | `2`               |
-| **autoScalerMax[<sup>1</sup>](#update)**                                                             | int    | Specifies the maximum number of virtual machines to create, up to `40` allowed.     |    No    | `10`              |
-| **maxSurge[<sup>1</sup>](#update)**                                                                  | int    | Specifies the maximum number of virtual machines that are created during an update. |    No    | `4`               |
-| **maxUnavailable[<sup>1</sup>](#update)**                                                            | int    | Specifies the maximum number of VMs that can be unavailable during an update.       |    No    | `1`               |
-| **additionalWorkerNodePools.list[<sup>1</sup>](#update) [<sup>2</sup>](#not_supported)**             | array  | Defines a custom list of additional worker node pools                               |    No    | None              |
-| **additionalWorkerNodePools.skipModification[<sup>1</sup>](#update) [<sup>2</sup>](#not_supported)** | bool   | Defines whether to skip modification of additional worker node pools                |    No    | None              |
+| Parameter name                                       | Type   | Description                                                                         | Required | Default value     |
+|------------------------------------------------------|--------|-------------------------------------------------------------------------------------|:--------:|-------------------|
+| **machineType**                                      | string | Specifies the provider-specific virtual machine type.                               |    No    | `Standard_D2s_v5` |
+| **volumeSizeGb**                                     | int    | Specifies the size of the root volume.                                              |    No    | `50`              |
+| **region**                                           | string | Defines the cluster region.                                                         |   Yes    | None              |
+| **zones**                                            | string | Defines the list of zones in which Runtime Provisioner creates a cluster.           |    No    | `["1"]`           |
+| **autoScalerMin[<sup>1</sup>](#update)**             | int    | Specifies the minimum number of virtual machines to create.                         |    No    | `2`               |
+| **autoScalerMax[<sup>1</sup>](#update)**             | int    | Specifies the maximum number of virtual machines to create, up to `40` allowed.     |    No    | `10`              |
+| **maxSurge[<sup>1</sup>](#update)**                  | int    | Specifies the maximum number of virtual machines that are created during an update. |    No    | `4`               |
+| **maxUnavailable[<sup>1</sup>](#update)**            | int    | Specifies the maximum number of VMs that can be unavailable during an update.       |    No    | `1`               |
+| **additionalWorkerNodePools[<sup>1</sup>](#update)** | array  | Defines a custom list of additional worker node pools                               |    No    | None              |
 
 <!-- markdown-link-check-enable-->
 
@@ -95,18 +97,17 @@ These are the provisioning parameters for Azure that you can configure:
 
 <!-- markdown-link-check-disable -->
 
-| Parameter name                                                                                       | Type   | Description                                                                         | Required | Default value     |
-|------------------------------------------------------------------------------------------------------|--------|-------------------------------------------------------------------------------------|:--------:|-------------------|
-| **machineType**                                                                                      | string | Specifies the provider-specific virtual machine type.                               |    No    | `Standard_D4s_v5` |
-| **volumeSizeGb**                                                                                     | int    | Specifies the size of the root volume.                                              |    No    | `50`              |
-| **region**                                                                                           | string | Defines the cluster region.                                                         |   Yes    | None              |
-| **zones**                                                                                            | string | Defines the list of zones in which Runtime Provisioner creates a cluster.           |    No    | `["1"]`           |
-| **autoScalerMin[<sup>1</sup>](#update)**                                                             | int    | Specifies the minimum number of virtual machines to create.                         |    No    | `2`               |
-| **autoScalerMax[<sup>1</sup>](#update)**                                                             | int    | Specifies the maximum number of virtual machines to create, up to `40` allowed.     |    No    | `10`              |
-| **maxSurge[<sup>1</sup>](#update)**                                                                  | int    | Specifies the maximum number of virtual machines that are created during an update. |    No    | `4`               |
-| **maxUnavailable[<sup>1</sup>](#update)**                                                            | int    | Specifies the maximum number of VMs that can be unavailable during an update.       |    No    | `1`               |
-| **additionalWorkerNodePools.list[<sup>1</sup>](#update) [<sup>2</sup>](#not_supported)**             | array  | Defines a custom list of additional worker node pools                               |    No    | None              |
-| **additionalWorkerNodePools.skipModification[<sup>1</sup>](#update) [<sup>2</sup>](#not_supported)** | bool   | Defines whether to skip modification of additional worker node pools                |    No    | None              |
+| Parameter name                                       | Type   | Description                                                                         | Required | Default value     |
+|------------------------------------------------------|--------|-------------------------------------------------------------------------------------|:--------:|-------------------|
+| **machineType**                                      | string | Specifies the provider-specific virtual machine type.                               |    No    | `Standard_D4s_v5` |
+| **volumeSizeGb**                                     | int    | Specifies the size of the root volume.                                              |    No    | `50`              |
+| **region**                                           | string | Defines the cluster region.                                                         |   Yes    | None              |
+| **zones**                                            | string | Defines the list of zones in which Runtime Provisioner creates a cluster.           |    No    | `["1"]`           |
+| **autoScalerMin[<sup>1</sup>](#update)**             | int    | Specifies the minimum number of virtual machines to create.                         |    No    | `2`               |
+| **autoScalerMax[<sup>1</sup>](#update)**             | int    | Specifies the maximum number of virtual machines to create, up to `40` allowed.     |    No    | `10`              |
+| **maxSurge[<sup>1</sup>](#update)**                  | int    | Specifies the maximum number of virtual machines that are created during an update. |    No    | `4`               |
+| **maxUnavailable[<sup>1</sup>](#update)**            | int    | Specifies the maximum number of VMs that can be unavailable during an update.       |    No    | `1`               |
+| **additionalWorkerNodePools[<sup>1</sup>](#update)** | array  | Defines a custom list of additional worker node pools                               |    No    | None              |
 
 <!-- markdown-link-check-enable-->
 
@@ -122,18 +123,17 @@ These are the provisioning parameters for AWS that you can configure:
 
 <!-- markdown-link-check-disable -->
 
-| Parameter name                                                                                       | Type   | Description                                                                                | Required | Default value |
-|------------------------------------------------------------------------------------------------------|--------|--------------------------------------------------------------------------------------------|:--------:|---------------|
-| **machineType**                                                                                      | string | Specifies the provider-specific virtual machine type.                                      |    No    | `m6i.large`   |
-| **volumeSizeGb**                                                                                     | int    | Specifies the size of the root volume.                                                     |    No    | `50`          |
-| **region**                                                                                           | string | Defines the cluster region.                                                                |   Yes    | None          |
-| **zones**                                                                                            | string | Defines the list of zones in which Runtime Provisioner creates a cluster.                  |    No    | `["1"]`       |
-| **autoScalerMin[<sup>1</sup>](#update)**                                                             | int    | Specifies the minimum number of virtual machines to create.                                |    No    | `3`           |
-| **autoScalerMax[<sup>1</sup>](#update)**                                                             | int    | Specifies the maximum number of virtual machines to create, up to `40` allowed.            |    No    | `10`          |
-| **maxSurge[<sup>1</sup>](#update)**                                                                  | int    | Specifies the maximum number of virtual machines that are created during an update.        |    No    | `4`           |
-| **maxUnavailable[<sup>1</sup>](#update)**                                                            | int    | Specifies the maximum number of virtual machines that can be unavailable during an update. |    No    | `1`           |
-| **additionalWorkerNodePools.list[<sup>1</sup>](#update) [<sup>2</sup>](#not_supported)**             | array  | Defines a custom list of additional worker node pools                                      |    No    | None          |
-| **additionalWorkerNodePools.skipModification[<sup>1</sup>](#update) [<sup>2</sup>](#not_supported)** | bool   | Defines whether to skip modification of additional worker node pools                       |    No    | None          |
+| Parameter name                                       | Type   | Description                                                                                | Required | Default value |
+|------------------------------------------------------|--------|--------------------------------------------------------------------------------------------|:--------:|---------------|
+| **machineType**                                      | string | Specifies the provider-specific virtual machine type.                                      |    No    | `m6i.large`   |
+| **volumeSizeGb**                                     | int    | Specifies the size of the root volume.                                                     |    No    | `50`          |
+| **region**                                           | string | Defines the cluster region.                                                                |   Yes    | None          |
+| **zones**                                            | string | Defines the list of zones in which Runtime Provisioner creates a cluster.                  |    No    | `["1"]`       |
+| **autoScalerMin[<sup>1</sup>](#update)**             | int    | Specifies the minimum number of virtual machines to create.                                |    No    | `3`           |
+| **autoScalerMax[<sup>1</sup>](#update)**             | int    | Specifies the maximum number of virtual machines to create, up to `40` allowed.            |    No    | `10`          |
+| **maxSurge[<sup>1</sup>](#update)**                  | int    | Specifies the maximum number of virtual machines that are created during an update.        |    No    | `4`           |
+| **maxUnavailable[<sup>1</sup>](#update)**            | int    | Specifies the maximum number of virtual machines that can be unavailable during an update. |    No    | `1`           |
+| **additionalWorkerNodePools[<sup>1</sup>](#update)** | array  | Defines a custom list of additional worker node pools                                      |    No    | None          |
 
 <!-- markdown-link-check-enable-->
 
@@ -150,18 +150,17 @@ These are the provisioning parameters for GCP that you can configure:
 
 <!-- markdown-link-check-disable -->
 
-| Parameter name                                                                                       | Type   | Description                                                                         | Required | Default value   |
-|------------------------------------------------------------------------------------------------------|--------|-------------------------------------------------------------------------------------|:--------:|-----------------|
-| **machineType**                                                                                      | string | Specifies the provider-specific virtual machine type.                               |    No    | `n2-standard-2` |
-| **volumeSizeGb**                                                                                     | int    | Specifies the size of the root volume.                                              |    No    | `30`            |
-| **region**                                                                                           | string | Defines the cluster region.                                                         |   Yes    | None            |
-| **zones**                                                                                            | string | Defines the list of zones in which Runtime Provisioner creates a cluster.           |    No    | `["a"]`         |
-| **autoScalerMin[<sup>1</sup>](#update)**                                                             | int    | Specifies the minimum number of virtual machines to create.                         |    No    | `3`             |
-| **autoScalerMax[<sup>1</sup>](#update)**                                                             | int    | Specifies the maximum number of virtual machines to create.                         |    No    | `4`             |
-| **maxSurge[<sup>1</sup>](#update)**                                                                  | int    | Specifies the maximum number of virtual machines that are created during an update. |    No    | `4`             |
-| **maxUnavailable[<sup>1</sup>](#update)**                                                            | int    | Specifies the maximum number of VMs that can be unavailable during an update.       |    No    | `1`             |
-| **additionalWorkerNodePools.list[<sup>1</sup>](#update) [<sup>2</sup>](#not_supported)**             | array  | Defines a custom list of additional worker node pools                               |    No    | None            |
-| **additionalWorkerNodePools.skipModification[<sup>1</sup>](#update) [<sup>2</sup>](#not_supported)** | bool   | Defines whether to skip modification of additional worker node pools                |    No    | None            |
+| Parameter name                                       | Type   | Description                                                                         | Required | Default value   |
+|------------------------------------------------------|--------|-------------------------------------------------------------------------------------|:--------:|-----------------|
+| **machineType**                                      | string | Specifies the provider-specific virtual machine type.                               |    No    | `n2-standard-2` |
+| **volumeSizeGb**                                     | int    | Specifies the size of the root volume.                                              |    No    | `30`            |
+| **region**                                           | string | Defines the cluster region.                                                         |   Yes    | None            |
+| **zones**                                            | string | Defines the list of zones in which Runtime Provisioner creates a cluster.           |    No    | `["a"]`         |
+| **autoScalerMin[<sup>1</sup>](#update)**             | int    | Specifies the minimum number of virtual machines to create.                         |    No    | `3`             |
+| **autoScalerMax[<sup>1</sup>](#update)**             | int    | Specifies the maximum number of virtual machines to create.                         |    No    | `4`             |
+| **maxSurge[<sup>1</sup>](#update)**                  | int    | Specifies the maximum number of virtual machines that are created during an update. |    No    | `4`             |
+| **maxUnavailable[<sup>1</sup>](#update)**            | int    | Specifies the maximum number of VMs that can be unavailable during an update.       |    No    | `1`             |
+| **additionalWorkerNodePools[<sup>1</sup>](#update)** | array  | Defines a custom list of additional worker node pools                               |    No    | None            |
 
 <!-- markdown-link-check-enable -->
 
@@ -178,18 +177,17 @@ These are the provisioning parameters for SapConvergedCloud that you can configu
 
 <!-- markdown-link-check-disable -->
 
-| Parameter name                                                                                        | Type   | Description                                                                                | Required | Default value |
-|-------------------------------------------------------------------------------------------------------|--------|--------------------------------------------------------------------------------------------|:--------:|---------------|
-| **machineType**                                                                                       | string | Specifies the provider-specific virtual machine type.                                      |    No    | `g_c2_m8`     |
-| **volumeSizeGb**                                                                                      | int    | Specifies the size of the root volume.                                                     |    No    | `30`          |
-| **region**                                                                                            | string | Defines the cluster region.                                                                |   Yes    | None          |
-| **zones**                                                                                             | string | Defines the list of zones in which Runtime Provisioner creates a cluster.                  |    No    | `["a"]`       |
-| **autoScalerMin[<sup>1</sup>](#update)**                                                              | int    | Specifies the minimum number of virtual machines to create.                                |    No    | `3`           |
-| **autoScalerMax[<sup>1</sup>](#update)**                                                              | int    | Specifies the maximum number of virtual machines to create.                                |    No    | `20`          |
-| **maxSurge[<sup>1</sup>](#update)**                                                                   | int    | Specifies the maximum number of virtual machines that are created during an update.        |    No    | `4`           |
-| **maxUnavailable[<sup>1</sup>](#update)**                                                             | int    | Specifies the maximum number of virtual machines that can be unavailable during an update. |    No    | `1`           |
-| **additionalWorkerNodePools.list[<sup>1</sup>](#update)  [<sup>2</sup>](#not_supported)**             | array  | Defines a custom list of additional worker node pools                                      |    No    | None          |
-| **additionalWorkerNodePools.skipModification[<sup>1</sup>](#update)  [<sup>2</sup>](#not_supported)** | bool   | Defines whether to skip modification of additional worker node pools                       |    No    | None          |
+| Parameter name                                       | Type   | Description                                                                                | Required | Default value |
+|------------------------------------------------------|--------|--------------------------------------------------------------------------------------------|:--------:|---------------|
+| **machineType**                                      | string | Specifies the provider-specific virtual machine type.                                      |    No    | `g_c2_m8`     |
+| **volumeSizeGb**                                     | int    | Specifies the size of the root volume.                                                     |    No    | `30`          |
+| **region**                                           | string | Defines the cluster region.                                                                |   Yes    | None          |
+| **zones**                                            | string | Defines the list of zones in which Runtime Provisioner creates a cluster.                  |    No    | `["a"]`       |
+| **autoScalerMin[<sup>1</sup>](#update)**             | int    | Specifies the minimum number of virtual machines to create.                                |    No    | `3`           |
+| **autoScalerMax[<sup>1</sup>](#update)**             | int    | Specifies the maximum number of virtual machines to create.                                |    No    | `20`          |
+| **maxSurge[<sup>1</sup>](#update)**                  | int    | Specifies the maximum number of virtual machines that are created during an update.        |    No    | `4`           |
+| **maxUnavailable[<sup>1</sup>](#update)**            | int    | Specifies the maximum number of virtual machines that can be unavailable during an update. |    No    | `1`           |
+| **additionalWorkerNodePools[<sup>1</sup>](#update)** | array  | Defines a custom list of additional worker node pools                                      |    No    | None          |
 
 <!-- markdown-link-check-enable -->
 
@@ -271,18 +269,17 @@ These are the provisioning parameters for the `preview` plan that you configure:
 
 <!-- markdown-link-check-disable -->
 
-| Parameter name                                                                                       | Type   | Description                                                                                | Required | Default value |
-|------------------------------------------------------------------------------------------------------|--------|--------------------------------------------------------------------------------------------|:--------:|---------------|
-| **machineType**                                                                                      | string | Specifies the provider-specific virtual machine type.                                      |    No    | `m6i.large`   |
-| **volumeSizeGb**                                                                                     | int    | Specifies the size of the root volume.                                                     |    No    | `50`          |
-| **region**                                                                                           | string | Defines the cluster region.                                                                |   Yes    | None          |
-| **zones**                                                                                            | string | Defines the list of zones in which Runtime Provisioner creates a cluster.                  |    No    | `["1"]`       |
-| **autoScalerMin[<sup>1</sup>](#update)**                                                             | int    | Specifies the minimum number of virtual machines to create.                                |    No    | `3`           |
-| **autoScalerMax[<sup>1</sup>](#update)**                                                             | int    | Specifies the maximum number of virtual machines to create, up to `40` allowed.            |    No    | `10`          |
-| **maxSurge[<sup>1</sup>](#update)**                                                                  | int    | Specifies the maximum number of virtual machines that are created during an update.        |    No    | `4`           |
-| **maxUnavailable[<sup>1</sup>](#update)**                                                            | int    | Specifies the maximum number of virtual machines that can be unavailable during an update. |    No    | `1`           |
-| **additionalWorkerNodePools.list[<sup>1</sup>](#update)  [<sup>2</sup>](#not_supported)**            | array  | Defines a custom list of additional worker node pools                                      |    No    | None          |
-| **additionalWorkerNodePools.skipModification[<sup>1</sup>](#update) [<sup>2</sup>](#not_supported)** | bool   | Defines whether to skip modification of additional worker node pools                       |    No    | None          |
+| Parameter name                                       | Type   | Description                                                                                | Required | Default value |
+|------------------------------------------------------|--------|--------------------------------------------------------------------------------------------|:--------:|---------------|
+| **machineType**                                      | string | Specifies the provider-specific virtual machine type.                                      |    No    | `m6i.large`   |
+| **volumeSizeGb**                                     | int    | Specifies the size of the root volume.                                                     |    No    | `50`          |
+| **region**                                           | string | Defines the cluster region.                                                                |   Yes    | None          |
+| **zones**                                            | string | Defines the list of zones in which Runtime Provisioner creates a cluster.                  |    No    | `["1"]`       |
+| **autoScalerMin[<sup>1</sup>](#update)**             | int    | Specifies the minimum number of virtual machines to create.                                |    No    | `3`           |
+| **autoScalerMax[<sup>1</sup>](#update)**             | int    | Specifies the maximum number of virtual machines to create, up to `40` allowed.            |    No    | `10`          |
+| **maxSurge[<sup>1</sup>](#update)**                  | int    | Specifies the maximum number of virtual machines that are created during an update.        |    No    | `4`           |
+| **maxUnavailable[<sup>1</sup>](#update)**            | int    | Specifies the maximum number of virtual machines that can be unavailable during an update. |    No    | `1`           |
+| **additionalWorkerNodePools[<sup>1</sup>](#update)** | array  | Defines a custom list of additional worker node pools                                      |    No    | None          |
 
 <!-- markdown-link-check-enable -->
 
@@ -290,5 +287,3 @@ These are the provisioning parameters for the `preview` plan that you configure:
 </div>
 <br>
 <a name="update"><sup>1</sup> This parameter is available for <code>PATCH</code> as well, and can be updated with the same constraints as during provisioning.</a>
-<br>
-<a name="not_supported"><sup>2</sup> This parameter is not yet supported.</a>

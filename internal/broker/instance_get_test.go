@@ -20,8 +20,8 @@ import (
 	"github.com/kyma-project/kyma-environment-broker/internal/fixture"
 	kcMock "github.com/kyma-project/kyma-environment-broker/internal/kubeconfig/automock"
 	"github.com/kyma-project/kyma-environment-broker/internal/storage"
-	"github.com/pivotal-cf/brokerapi/v8/domain"
-	"github.com/pivotal-cf/brokerapi/v8/domain/apiresponses"
+	"github.com/pivotal-cf/brokerapi/v12/domain"
+	"github.com/pivotal-cf/brokerapi/v12/domain/apiresponses"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
@@ -71,6 +71,7 @@ func TestGetEndpoint_GetProvisioningInstance(t *testing.T) {
 		kcBuilder,
 		whitelist.Set{},
 		&broker.OneForAllConvergedCloudRegionsProvider{},
+		nil,
 	)
 	getSvc := broker.NewGetInstance(broker.Config{EnableKubeconfigURLLabel: true}, st.Instances(), st.Operations(), kcBuilder, fixLogger())
 

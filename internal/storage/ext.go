@@ -24,13 +24,11 @@ type Instances interface {
 	List(dbmodel.InstanceFilter) ([]internal.Instance, int, int, error)
 	ListWithSubaccountState(dbmodel.InstanceFilter) ([]internal.InstanceWithSubaccountState, int, int, error)
 
-	// todo: remove after instances parameters migration is done
-	InsertWithoutEncryption(instance internal.Instance) error
-	UpdateWithoutEncryption(instance internal.Instance) (*internal.Instance, error)
-	ListWithoutDecryption(dbmodel.InstanceFilter) ([]internal.Instance, int, int, error)
 	ListDeletedInstanceIDs(int) ([]string, error)
 
 	DeletedInstancesStatistics() (internal.DeletedStats, error)
+
+	UpdateInstanceLastOperation(instanceID, operationID string) error
 }
 
 type InstancesArchived interface {
@@ -59,7 +57,6 @@ type Operations interface {
 	ListOperations(filter dbmodel.OperationFilter) ([]internal.Operation, int, int, error)
 
 	InsertOperation(operation internal.Operation) error
-	GetOperationByInstanceID(instanceID string) (*internal.Operation, error)
 	UpdateOperation(operation internal.Operation) (*internal.Operation, error)
 	ListOperationsByInstanceID(instanceID string) ([]internal.Operation, error)
 	ListOperationsByInstanceIDGroupByType(instanceID string) (*internal.GroupedOperations, error)

@@ -14,7 +14,7 @@ import (
 	"github.com/kyma-project/kyma-environment-broker/internal/storage/dbmodel"
 	"github.com/kyma-project/kyma-environment-broker/internal/storage/postsql"
 
-	"github.com/pivotal-cf/brokerapi/v8/domain"
+	"github.com/pivotal-cf/brokerapi/v12/domain"
 	"k8s.io/apimachinery/pkg/util/wait"
 )
 
@@ -56,28 +56,6 @@ func (s *operations) InsertOperation(operation internal.Operation) error {
 	}
 
 	return s.insert(dto)
-}
-
-// GetOperationByInstanceID fetches the latest Operation by given instanceID, returns error if not found
-func (s *operations) GetOperationByInstanceID(instanceID string) (*internal.Operation, error) {
-
-	op, err := s.getByInstanceID(instanceID)
-	if err != nil {
-		return nil, err
-	}
-
-	var operation internal.Operation
-	err = json.Unmarshal([]byte(op.Data), &operation)
-	if err != nil {
-		return nil, fmt.Errorf("unable to unmarshall provisioning data: %w", err)
-	}
-
-	ret, err := s.toOperation(op, operation)
-	if err != nil {
-		return nil, fmt.Errorf("while converting DTO to Operation: %w", err)
-	}
-
-	return &ret, nil
 }
 
 // GetProvisioningOperationByID fetches the ProvisioningOperation by given ID, returns error if not found
@@ -315,6 +293,7 @@ func (s *operations) GetLastOperation(instanceID string) (*internal.Operation, e
 	op := internal.Operation{}
 	var lastErr dberr.Error
 	err := wait.PollUntilContextTimeout(context.Background(), defaultRetryInterval, defaultRetryTimeout, true, func(ctx context.Context) (bool, error) {
+
 		operation, lastErr = session.GetLastOperation(instanceID, []internal.OperationType{})
 		if lastErr != nil {
 			if dberr.IsNotFound(lastErr) {

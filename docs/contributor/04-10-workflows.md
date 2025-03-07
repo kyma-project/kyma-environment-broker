@@ -1,14 +1,5 @@
 # GitHub Actions Workflows
 
-## ESLint Workflow
-
-This [workflow](/.github/workflows/run-eslint.yaml) runs the ESLint.
-
-The workflow:
-
-1. Checks out code
-2. Invokes `make lint -C testing/e2e/skr`
-
 ## Markdown Link Check Workflow
 
 This [workflow](/.github/workflows/markdown-link-check.yaml) checks for broken links in all Markdown files. It is triggered:

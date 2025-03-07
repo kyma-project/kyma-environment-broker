@@ -1,16 +1,9 @@
 package provider
 
-// Values contains values which are specific to particular plans (and provisioning parameters)
-type Values struct {
-	DefaultAutoScalerMax int
-	DefaultAutoScalerMin int
-	ZonesCount           int
-	Zones                []string
-	ProviderType         string
-	DefaultMachineType   string
-	Region               string
-	Purpose              string
-	VolumeSizeGb         int
-	DiskType             string
-	FailureTolerance     *string
-}
+const (
+	AzureProviderType     = "azure"
+	GCPProviderType       = "gcp"
+	OpenstackProviderType = "openstack"
+	AWSProviderType       = "aws"
+	OwnProviderType       = "own"
+)

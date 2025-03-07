@@ -20,16 +20,16 @@ type (
 	}
 )
 
-func (p *GCPInputProvider) Provide() Values {
+func (p *GCPInputProvider) Provide() internal.ProviderValues {
 	zonesCount := p.zonesCount()
 	zones := p.zones()
 	region := p.region()
-	return Values{
+	return internal.ProviderValues{
 		DefaultAutoScalerMax: 20,
 		DefaultAutoScalerMin: 3,
 		ZonesCount:           zonesCount,
 		Zones:                zones,
-		ProviderType:         "gcp",
+		ProviderType:         GCPProviderType,
 		DefaultMachineType:   DefaultGCPMachineType,
 		Region:               region,
 		Purpose:              p.Purpose,
@@ -67,15 +67,15 @@ func (p *GCPInputProvider) region() string {
 	return DefaultGCPRegion
 }
 
-func (p *GCPTrialInputProvider) Provide() Values {
+func (p *GCPTrialInputProvider) Provide() internal.ProviderValues {
 	region := p.region()
 
-	return Values{
+	return internal.ProviderValues{
 		DefaultAutoScalerMax: 1,
 		DefaultAutoScalerMin: 1,
 		ZonesCount:           1,
 		Zones:                ZonesForGCPRegion(region, 1),
-		ProviderType:         "gcp",
+		ProviderType:         GCPProviderType,
 		DefaultMachineType:   DefaultGCPTrialMachineType,
 		Region:               region,
 		Purpose:              PurposeEvaluation,
