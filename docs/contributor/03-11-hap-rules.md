@@ -111,7 +111,7 @@ If an attribute exists in a rule, it constrains a set of clusters it applies to 
 
 ### Platform Region Attribute
 
-It is possible to extend a rule entry with specified platform region by adding  a `PR` rule attribute. If an actual value of SKR's platform region attribute matches the PR rule attribute then `hyperscalerType: <HYPERSCALER_NAME>[_<PLATFORM_REGION>]` label is used.
+To extend a rule entry with a specified platform region, add the **PR** rule attribute. If the value of Kyma runtime's platform region attribute matches the **PR** rule attribute, the `hyperscalerType: <HYPERSCALER_NAME>_<PLATFORM_REGION>` label is used.
 
 The following configuration means that if a `gcp` cluster is provisioned in the cf-sa30 platform region, KEB searches for secret bindings with the `hyperscalerType: gcp_cf-sa30` label. 
 
