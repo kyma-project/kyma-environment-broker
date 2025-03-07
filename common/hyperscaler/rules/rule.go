@@ -2,6 +2,7 @@ package rules
 
 import (
 	"fmt"
+	"log"
 	"sort"
 )
 
@@ -169,16 +170,25 @@ func (r *Rule) IsResolved() bool {
 
 func (r *Rule) Combine(rule Rule) *Rule {
 	newRule := NewRule()
-	newRule.SetPlanNoValidation(r.Plan)
+	_, err := newRule.SetPlanNoValidation(r.Plan)
+	if err != nil {
+		log.Panicf("unexpected error while setting a plan : %v", err)
+	}
 
 	for _, attr := range InputAttributes {
 		value := attr.Getter(r)
 		if value != "" && value != ASTERISK {
-			attr.Setter(newRule, value)
+			_, err = attr.Setter(newRule, value)
+			if err != nil {
+				log.Panicf("unexpected error while setting a plan : %v", err)
+			}
 			newRule.ContainsInputAttributes = true
 		} else {
 			valueR := attr.Getter(&rule)
-			attr.Setter(newRule, valueR)
+			_, err := attr.Setter(newRule, valueR)
+			if err != nil {
+				log.Panicf("unexpected error while setting a plan : %v", err)
+			}
 			newRule.ContainsInputAttributes = true
 		}
 	}
