@@ -84,15 +84,15 @@ The **hyperscaler-type** contains a hyperscaler name and region information as `
 In all the cases `HYPERSCALER_NAME` refers to a provider type. The following table shows a mapping of plans to provider types:
 
 | Plan                	| Provider Type 	|
-|---------------------	|------------------	|
-| azure               	| azure            	|
-| azure_lite          	| azure            	|
-| aws                 	| aws              	|
-| free                  | azure, aws        |
-| gcp                 	| gcp              	|
-| preview             	| aws              	|
-| sap-converged-cloud 	| openstack       	|
-| trial               	| aws              	|
+|---------------------	|-----------------|
+| `azure`               | `azure`         |
+| `azure_lite`          | `azure`         |
+| `aws`                 | `aws`           |
+| `free`                | `azure`, `aws`  |
+| `gcp`                 | `gcp`           |
+| `preview`             | `aws`           |
+| `sap-converged-cloud` | `openstack`     |
+| `trial`              	| `aws`           |
 
 The **euAccess** and **shared** labels contain boolean values and are optional. They divide existing pools between Secrets used by EU-restricted regions and Secrets shared by multiple global accounts.
 
@@ -225,7 +225,7 @@ The following example shows the initial configuration created to mimic KEB behav
 * The free plan uses aws or azure dedicated bindings, depending on the provider value.
 * gcp clusters in the cf-sa30 region use the pool of secret bindings marked with the `hyperscalerType: gcp_cf-sa30` label.
 * sap-converged-cloud clusters use the pool of secret bindings marked with the `hyperscalerType: openstack_<HYPERSCALER_REGION>` label, and all these pools are shared.
-* trial clusters can use one of two pools of shared secret bindings marked with labels: `hyperscalerType: azure` or `hyperscalerType: aws` depending on the used trial provider type.
+* trial clusters can use one of two pools of shared secret bindings marked with labels `hyperscalerType: azure` or `hyperscalerType: aws`, depending on the trial provider type used.
 * azure clusters in the cf-ch20 region and aws clusters in the cf-eu11 region have their own dedicated pools and are euAccess specific.
 
 See an example of the initial configuration created to mimic KEB behavior.
