@@ -460,7 +460,7 @@ func NewAdditionalWorkerNodePoolsSchema(machineTypesDisplay map[string]string, m
 					MinLength:       1,
 					Enum:            ToInterfaceSlice(machineTypes),
 					EnumDisplayName: machineTypesDisplay,
-					Description:     "Specifies the type of the virtual machine.",
+					Description:     "Specifies the type of the virtual machine. The machine type marked with “*” has limited availability and generates high cost.",
 				},
 				HAZones: &Type{
 					Type:        "boolean",

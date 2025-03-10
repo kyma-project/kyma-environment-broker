@@ -1300,6 +1300,128 @@ func TestUpdateUnsupportedMachineInAdditionalWorkerNodePools(t *testing.T) {
 	}
 }
 
+func TestUpdateGPUMachineForInternalUser(t *testing.T) {
+	// given
+	instance := fixture.FixInstance(instanceID)
+	st := storage.NewMemoryStorage()
+	err := st.Instances().Insert(instance)
+	require.NoError(t, err)
+	err = st.Operations().InsertProvisioningOperation(fixProvisioningOperation("provisioning01"))
+	require.NoError(t, err)
+
+	handler := &handler{}
+	q := &automock.Queue{}
+	q.On("Add", mock.AnythingOfType("string"))
+	planDefaults := func(planID string, platformProvider pkg.CloudProvider, provider *pkg.CloudProvider) (*gqlschema.ClusterConfigInput, error) {
+		return &gqlschema.ClusterConfigInput{}, nil
+	}
+	kcBuilder := &kcMock.KcBuilder{}
+	svc := NewUpdate(Config{}, st.Instances(), st.RuntimeStates(), st.Operations(), handler, true, true, false, q, PlansConfig{},
+		planDefaults, fixLogger(), dashboardConfig, kcBuilder, &OneForAllConvergedCloudRegionsProvider{}, fakeKcpK8sClient, nil)
+
+	additionalWorkerNodePools := `[{"name": "name-1", "machineType": "Standard_NC4as_T4_v3", "haZones": true, "autoScalerMin": 3, "autoScalerMax": 20}]`
+	// when
+	_, err = svc.Update(context.Background(), instanceID, domain.UpdateDetails{
+		ServiceID:       "",
+		PlanID:          AzurePlanID,
+		RawParameters:   json.RawMessage("{\"machineType\":\"Standard_D16s_v5\", \"additionalWorkerNodePools\": " + additionalWorkerNodePools + "}"),
+		PreviousValues:  domain.PreviousValues{},
+		RawContext:      json.RawMessage("{\"globalaccount_id\":\"globalaccount_id_1\", \"active\":true}"),
+		MaintenanceInfo: nil,
+	}, true)
+
+	// then
+	assert.NoError(t, err)
+}
+
+func TestUpdateGPUMachineForExternalCustomer(t *testing.T) {
+	for tn, tc := range map[string]struct {
+		planID                    string
+		additionalWorkerNodePools string
+		expectedError             string
+	}{
+		"Single AWS GPU machine type": {
+			planID:                    AWSPlanID,
+			additionalWorkerNodePools: `[{"name": "name-1", "machineType": "g6.xlarge", "haZones": true, "autoScalerMin": 3, "autoScalerMax": 20}]`,
+			expectedError:             "The following GPU machine types: g6.xlarge (used in worker node pools: name-1) are not available for your account. For details, please contact your sales representative.",
+		},
+		"Multiple AWS GPU machine types": {
+			planID:                    AWSPlanID,
+			additionalWorkerNodePools: `[{"name": "name-1", "machineType": "g6.xlarge", "haZones": true, "autoScalerMin": 3, "autoScalerMax": 20}, {"name": "name-2", "machineType": "g6.2xlarge", "haZones": true, "autoScalerMin": 3, "autoScalerMax": 20}]`,
+			expectedError:             "The following GPU machine types: g6.xlarge (used in worker node pools: name-1), g6.2xlarge (used in worker node pools: name-2) are not available for your account. For details, please contact your sales representative.",
+		},
+		"Duplicate AWS GPU machine type": {
+			planID:                    AWSPlanID,
+			additionalWorkerNodePools: `[{"name": "name-1", "machineType": "g6.xlarge", "haZones": true, "autoScalerMin": 3, "autoScalerMax": 20}, {"name": "name-2", "machineType": "g6.xlarge", "haZones": true, "autoScalerMin": 3, "autoScalerMax": 20}]`,
+			expectedError:             "The following GPU machine types: g6.xlarge (used in worker node pools: name-1, name-2) are not available for your account. For details, please contact your sales representative.",
+		},
+		"Single GCP GPU machine type": {
+			planID:                    GCPPlanID,
+			additionalWorkerNodePools: `[{"name": "name-1", "machineType": "g2-standard-4", "haZones": true, "autoScalerMin": 3, "autoScalerMax": 20}]`,
+			expectedError:             "The following GPU machine types: g2-standard-4 (used in worker node pools: name-1) are not available for your account. For details, please contact your sales representative.",
+		},
+		"Multiple GCP GPU machine types": {
+			planID:                    GCPPlanID,
+			additionalWorkerNodePools: `[{"name": "name-1", "machineType": "g2-standard-4", "haZones": true, "autoScalerMin": 3, "autoScalerMax": 20}, {"name": "name-2", "machineType": "g2-standard-8", "haZones": true, "autoScalerMin": 3, "autoScalerMax": 20}]`,
+			expectedError:             "The following GPU machine types: g2-standard-4 (used in worker node pools: name-1), g2-standard-8 (used in worker node pools: name-2) are not available for your account. For details, please contact your sales representative.",
+		},
+		"Duplicate GCP GPU machine type": {
+			planID:                    GCPPlanID,
+			additionalWorkerNodePools: `[{"name": "name-1", "machineType": "g2-standard-4", "haZones": true, "autoScalerMin": 3, "autoScalerMax": 20}, {"name": "name-2", "machineType": "g2-standard-4", "haZones": true, "autoScalerMin": 3, "autoScalerMax": 20}]`,
+			expectedError:             "The following GPU machine types: g2-standard-4 (used in worker node pools: name-1, name-2) are not available for your account. For details, please contact your sales representative.",
+		},
+		"Single Azure GPU machine type": {
+			planID:                    AzurePlanID,
+			additionalWorkerNodePools: `[{"name": "name-1", "machineType": "Standard_NC4as_T4_v3", "haZones": true, "autoScalerMin": 3, "autoScalerMax": 20}]`,
+			expectedError:             "The following GPU machine types: Standard_NC4as_T4_v3 (used in worker node pools: name-1) are not available for your account. For details, please contact your sales representative.",
+		},
+		"Multiple Azure GPU machine types": {
+			planID:                    AzurePlanID,
+			additionalWorkerNodePools: `[{"name": "name-1", "machineType": "Standard_NC4as_T4_v3", "haZones": true, "autoScalerMin": 3, "autoScalerMax": 20}, {"name": "name-2", "machineType": "Standard_NC8as_T4_v3", "haZones": true, "autoScalerMin": 3, "autoScalerMax": 20}]`,
+			expectedError:             "The following GPU machine types: Standard_NC4as_T4_v3 (used in worker node pools: name-1), Standard_NC8as_T4_v3 (used in worker node pools: name-2) are not available for your account. For details, please contact your sales representative.",
+		},
+		"Duplicate Azure GPU machine type": {
+			planID:                    AzurePlanID,
+			additionalWorkerNodePools: `[{"name": "name-1", "machineType": "Standard_NC4as_T4_v3", "haZones": true, "autoScalerMin": 3, "autoScalerMax": 20}, {"name": "name-2", "machineType": "Standard_NC4as_T4_v3", "haZones": true, "autoScalerMin": 3, "autoScalerMax": 20}]`,
+			expectedError:             "The following GPU machine types: Standard_NC4as_T4_v3 (used in worker node pools: name-1, name-2) are not available for your account. For details, please contact your sales representative.",
+		},
+	} {
+		t.Run(tn, func(t *testing.T) {
+			// given
+			instance := fixture.FixInstance(instanceID)
+			instance.ServicePlanID = tc.planID
+			st := storage.NewMemoryStorage()
+			err := st.Instances().Insert(instance)
+			require.NoError(t, err)
+			err = st.Operations().InsertProvisioningOperation(fixProvisioningOperation("provisioning01"))
+			require.NoError(t, err)
+
+			handler := &handler{}
+			q := &automock.Queue{}
+			q.On("Add", mock.AnythingOfType("string"))
+			planDefaults := func(planID string, platformProvider pkg.CloudProvider, provider *pkg.CloudProvider) (*gqlschema.ClusterConfigInput, error) {
+				return &gqlschema.ClusterConfigInput{}, nil
+			}
+			kcBuilder := &kcMock.KcBuilder{}
+			svc := NewUpdate(Config{}, st.Instances(), st.RuntimeStates(), st.Operations(), handler, true, true, false, q, PlansConfig{},
+				planDefaults, fixLogger(), dashboardConfig, kcBuilder, &OneForAllConvergedCloudRegionsProvider{}, fakeKcpK8sClient, nil)
+
+			// when
+			_, err = svc.Update(context.Background(), instanceID, domain.UpdateDetails{
+				ServiceID:       "",
+				PlanID:          tc.planID,
+				RawParameters:   json.RawMessage("{\"additionalWorkerNodePools\":" + tc.additionalWorkerNodePools + "}"),
+				PreviousValues:  domain.PreviousValues{},
+				RawContext:      json.RawMessage("{\"globalaccount_id\":\"globalaccount_id_1\", \"active\":true, \"license_type\": \"CUSTOMER\"}"),
+				MaintenanceInfo: nil,
+			}, true)
+
+			// then
+			assert.EqualError(t, err, tc.expectedError)
+		})
+	}
+}
+
 func registerCRD() {
 	var customResourceDefinition apiextensionsv1.CustomResourceDefinition
 	customResourceDefinition.SetGroupVersionKind(schema.GroupVersionKind{

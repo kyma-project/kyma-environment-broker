@@ -33,7 +33,7 @@
             "pattern": "^[a-z0-9]([-a-z0-9]*[a-z0-9])?$"
           },
           "machineType": {
-            "description": "Specifies the type of the virtual machine.",
+            "description": "Specifies the type of the virtual machine. The machine type marked with “*” has limited availability and generates high cost.",
             "type": "string",
             "minLength": 1,
             "enum": [
@@ -42,7 +42,8 @@
               "m5.xlarge", "m5.2xlarge", "m5.4xlarge", "m5.8xlarge",
               "m5.12xlarge", "m5.16xlarge", "c7i.large", "c7i.xlarge",
               "c7i.2xlarge", "c7i.4xlarge", "c7i.8xlarge", "c7i.12xlarge",
-              "c7i.16xlarge"
+              "c7i.16xlarge", "g6.xlarge", "g6.2xlarge", "g6.4xlarge",
+              "g6.8xlarge", "g6.12xlarge", "g6.16xlarge"
             ],
             "_enumDisplayName": {
               "m5.12xlarge": "m5.12xlarge (48vCPU, 192GB RAM)",
@@ -65,7 +66,13 @@
               "c7i.4xlarge": "c7i.4xlarge (16vCPU, 32GB RAM)",
               "c7i.8xlarge": "c7i.8xlarge (32vCPU, 64GB RAM)",
               "c7i.12xlarge": "c7i.12xlarge (48vCPU, 96GB RAM)",
-              "c7i.16xlarge": "c7i.16xlarge (64vCPU, 128GB RAM)"
+              "c7i.16xlarge": "c7i.16xlarge (64vCPU, 128GB RAM)",
+              "g6.xlarge": "g6.xlarge (1GPU, 4vCPU, 16GB RAM)*",
+              "g6.2xlarge": "g6.2xlarge (1GPU, 8vCPU, 32GB RAM)*",
+              "g6.4xlarge": "g6.4xlarge (1GPU, 16vCPU, 64GB RAM)*",
+              "g6.8xlarge": "g6.8xlarge (1GPU, 32vCPU, 128GB RAM)*",
+              "g6.12xlarge": "g6.12xlarge (4GPU, 48vCPU, 192GB RAM)*",
+              "g6.16xlarge": "g6.16xlarge (1GPU, 64vCPU, 256GB RAM)*"
             }
           },
           "haZones": {
