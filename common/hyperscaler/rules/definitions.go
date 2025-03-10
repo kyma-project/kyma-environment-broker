@@ -32,7 +32,7 @@ var InputAttributes = []Attribute{
 		Getter:          func(r *Rule) string { return r.PlatformRegion },
 		MatchableGetter: func(r *ProvisioningAttributes) string { return r.PlatformRegion },
 		input:           true,
-		output:          false,
+		output:          true,
 		HasValue:        true,
 		ApplyLabel: func(r *Rule, provisioningAttributes *ProvisioningAttributes, labels map[string]string) map[string]string {
 			return labels
@@ -45,7 +45,7 @@ var InputAttributes = []Attribute{
 		Getter:          func(r *Rule) string { return r.HyperscalerRegion },
 		MatchableGetter: func(r *ProvisioningAttributes) string { return r.PlatformRegion },
 		input:           true,
-		output:          false,
+		output:          true,
 		HasValue:        true,
 		ApplyLabel: func(r *Rule, provisioningAttributes *ProvisioningAttributes, labels map[string]string) map[string]string {
 			return labels
@@ -95,7 +95,11 @@ var OutputAttributes = []Attribute{
 		HasValue:    false,
 		ApplyLabel: func(r *Rule, provisioningAttributes *ProvisioningAttributes, labels map[string]string) map[string]string {
 			if r.PlatformRegionSuffix {
-				labels[HYPERSCALER_LABEL] += "_" + provisioningAttributes.PlatformRegion
+				if provisioningAttributes.PlatformRegion != "" {
+					labels[HYPERSCALER_LABEL] += "_" + provisioningAttributes.PlatformRegion
+				} else {
+					labels[HYPERSCALER_LABEL] += "_<PR>"
+				}
 			}
 			return labels
 		},
@@ -110,7 +114,11 @@ var OutputAttributes = []Attribute{
 		HasValue:    false,
 		ApplyLabel: func(r *Rule, provisioningAttributes *ProvisioningAttributes, labels map[string]string) map[string]string {
 			if r.HyperscalerRegionSuffix {
-				labels[HYPERSCALER_LABEL] += "_" + provisioningAttributes.HyperscalerRegion
+				if provisioningAttributes.HyperscalerRegion != "" {
+					labels[HYPERSCALER_LABEL] += "_" + provisioningAttributes.HyperscalerRegion
+				} else {
+					labels[HYPERSCALER_LABEL] += "_<HR>"
+				}
 			}
 			return labels
 		},
@@ -189,7 +197,7 @@ func setPlatformRegion(r *Rule, value string) (*Rule, error) {
 		return nil, fmt.Errorf("PlatformRegion is empty")
 	}
 
-	//r.ContainsInputAttributes = true
+	r.ContainsInputAttributes = true
 	r.PlatformRegion = value
 
 	return r, nil
