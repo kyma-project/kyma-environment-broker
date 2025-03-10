@@ -39,7 +39,7 @@ func TestUpdateRuntimeStep_NoRuntime(t *testing.T) {
 	operation := fixture.FixUpdatingOperation("op-id", "inst-id").Operation
 	operation.RuntimeResourceName = "runtime-name"
 	operation.KymaResourceNamespace = "kyma-ns"
-	operations.InsertOperation(operation)
+	err = operations.InsertOperation(operation)
 	require.NoError(t, err)
 
 	step := NewUpdateRuntimeStep(operations, kcpClient, 0, input.Config{}, false, nil)
