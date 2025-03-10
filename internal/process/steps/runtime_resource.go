@@ -2,7 +2,6 @@ package steps
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"log/slog"
 	"time"
@@ -54,9 +53,8 @@ func (s *checkRuntimeResource) Run(operation internal.Operation, log *slog.Logge
 	case imv1.RuntimeStateReady:
 		return operation, 0, nil
 	case imv1.RuntimeStateFailed:
-		msg := fmt.Sprintf("Runtime resource in %s state", imv1.RuntimeStateFailed)
-		log.Info(fmt.Sprintf("%s, status: %v; failing operation", msg, runtime.Status))
-		return s.operationManager.OperationFailed(operation, msg, errors.New(msg), log)
+		log.Info(fmt.Sprintf("Runtime resource status: %v; failing operation", runtime.Status))
+		return s.operationManager.OperationFailed(operation, fmt.Sprintf("Runtime resource in %s state", imv1.RuntimeStateFailed), nil, log)
 	default:
 		log.Info(fmt.Sprintf("Runtime resource status: %v; retrying in %v steps for: %v", runtime.Status, s.runtimeResourceStateRetry.Interval, s.runtimeResourceStateRetry.Timeout))
 		return s.operationManager.RetryOperation(operation, fmt.Sprintf("Runtime resource not in %s state", imv1.RuntimeStateReady), nil, s.runtimeResourceStateRetry.Interval, s.runtimeResourceStateRetry.Timeout, log)
