@@ -298,13 +298,21 @@ func (s *CreateRuntimeResourceStep) createKubernetesConfiguration(operation inte
 		}
 	}
 
-	return imv1.Kubernetes{
-		Version: ptr.String(s.config.KubernetesVersion),
-		KubeAPIServer: imv1.APIServer{
-			OidcConfig:           oidc,
-			AdditionalOidcConfig: nil,
-		},
+	kubernetesConfig := imv1.Kubernetes{
+		Version:       ptr.String(s.config.KubernetesVersion),
+		KubeAPIServer: imv1.APIServer{},
 	}
+
+	if s.config.UseMainOIDC {
+		kubernetesConfig.KubeAPIServer.OidcConfig = oidc
+		kubernetesConfig.KubeAPIServer.AdditionalOidcConfig = nil
+	}
+
+	if s.config.UseAdditionalOIDC {
+		kubernetesConfig.KubeAPIServer.AdditionalOidcConfig = &[]gardener.OIDCConfig{oidc}
+	}
+
+	return kubernetesConfig
 }
 
 func (s *CreateRuntimeResourceStep) updateInstance(id string, region string) error {
