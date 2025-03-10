@@ -51,7 +51,7 @@ func (c *TestCases) writeCases() {
 	}
 }
 
-func TestMain(t *testing.T) {
+func TestParser(t *testing.T) {
 
 	t.Run("should verify parser command", func(t *testing.T) {
 		cases := TestCases{}
@@ -60,6 +60,7 @@ func TestMain(t *testing.T) {
 		overwrite := false
 
 		for _, c := range cases.Case {
+			log.Printf("Running test case: %s", c.Name)
 			log.Printf("Input:\n %s", c.Rules)
 			log.Printf("Expected formatted:\n %s", c.ExpectedRule)
 			expected := rules.RemoveWhitespaces(c.ExpectedRule)
