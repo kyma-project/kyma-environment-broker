@@ -8,6 +8,7 @@ import (
 	"testing"
 
 	"github.com/kyma-project/kyma-environment-broker/internal/process/input"
+	"github.com/kyma-project/kyma-environment-broker/internal/storage"
 
 	"k8s.io/apimachinery/pkg/util/intstr"
 
@@ -32,17 +33,23 @@ func TestUpdateRuntimeStep_NoRuntime(t *testing.T) {
 	err := imv1.AddToScheme(scheme.Scheme)
 	assert.NoError(t, err)
 	kcpClient := fake.NewClientBuilder().Build()
-	step := NewUpdateRuntimeStep(nil, kcpClient, 0, input.Config{}, false, nil)
+	db := storage.NewMemoryStorage()
+	operations := db.Operations()
+
 	operation := fixture.FixUpdatingOperation("op-id", "inst-id").Operation
 	operation.RuntimeResourceName = "runtime-name"
 	operation.KymaResourceNamespace = "kyma-ns"
+	err = operations.InsertOperation(operation)
+	require.NoError(t, err)
+
+	step := NewUpdateRuntimeStep(operations, kcpClient, 0, input.Config{}, false, nil)
 
 	// when
 	_, backoff, err := step.Run(operation, fixLogger())
 
 	// then
-	assert.NoError(t, err)
 	assert.Zero(t, backoff)
+	assert.Error(t, err)
 }
 
 func TestUpdateRuntimeStep_RunUpdateMachineType(t *testing.T) {
