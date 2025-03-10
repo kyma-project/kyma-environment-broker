@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/kyma-project/kyma-environment-broker/internal/provider"
+	"k8s.io/apimachinery/pkg/api/errors"
 
 	gardener "github.com/gardener/gardener/pkg/apis/core/v1beta1"
 
@@ -18,7 +19,6 @@ import (
 	"github.com/kyma-project/kyma-environment-broker/internal"
 	"github.com/kyma-project/kyma-environment-broker/internal/process"
 	"github.com/kyma-project/kyma-environment-broker/internal/storage"
-	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/util/intstr"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
@@ -53,10 +53,11 @@ func (s *UpdateRuntimeStep) Run(operation internal.Operation, log *slog.Logger) 
 
 	var runtime = imv1.Runtime{}
 	err := s.k8sClient.Get(context.Background(), client.ObjectKey{Name: operation.GetRuntimeResourceName(), Namespace: operation.GetRuntimeResourceNamespace()}, &runtime)
-	if errors.IsNotFound(err) {
-		// todo: after the switch to KIM, this should throw an error
-		log.Info("Runtime not found, skipping")
-		return operation, 0, nil
+	if err != nil {
+		if errors.IsNotFound(err) {
+			return s.operationManager.OperationFailed(operation, fmt.Sprintf("Runtime Resource  %s not found", operation.GetRuntimeResourceName()), err, log)
+		}
+		return s.operationManager.RetryOperation(operation, fmt.Sprintf("unable to get Runtime Resource %s", operation.GetRuntimeResourceName()), err, 10*time.Second, 1*time.Minute, log)
 	}
 
 	// Update the runtime
@@ -160,7 +161,7 @@ func (s *UpdateRuntimeStep) Run(operation internal.Operation, log *slog.Logger) 
 
 	err = s.k8sClient.Update(context.Background(), &runtime)
 	if err != nil {
-		return s.operationManager.RetryOperation(operation, "unable to update runtime", err, 10*time.Second, 1*time.Minute, log)
+		return s.operationManager.RetryOperation(operation, fmt.Sprintf("unable to update Runtime Resource %s", operation.GetRuntimeResourceName()), err, 10*time.Second, 1*time.Minute, log)
 	}
 
 	// this sleep is needed to wait for the runtime to be updated by the infrastructure manager with state PENDING,
