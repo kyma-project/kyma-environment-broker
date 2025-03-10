@@ -7,17 +7,15 @@ type MatchingResult struct {
 
 	OriginalRule string
 
-	Rule *Rule
+	Rule Rule
 
 	Matched bool
 
 	FinalMatch bool
 
 	ProvisioningAttributes *ProvisioningAttributes
-
-	labels map[string]string
 }
 
-func (r *MatchingResult) Labels() map[string]string {
-	return r.labels
+func (m *MatchingResult) Labels() map[string]string {
+	return m.Rule.Labels(m.ProvisioningAttributes)
 }

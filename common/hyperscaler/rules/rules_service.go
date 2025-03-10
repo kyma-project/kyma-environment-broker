@@ -101,14 +101,13 @@ func (rs *RulesService) Match(data *ProvisioningAttributes) map[uuid.UUID]*Match
 			matchingResult := &MatchingResult{
 				ParsingResultID:        result.ID,
 				OriginalRule:           result.OriginalRule,
-				Rule:                   result.Rule,
+				Rule:                   *result.Rule,
 				ProvisioningAttributes: data,
 			}
 
 			matchingResult.Matched = result.Rule.Matched(data)
 			if matchingResult.Matched {
 				lastMatch = matchingResult
-				matchingResult.labels = result.Rule.CalculateLabels(data)
 			}
 
 			matchingResults[result.ID] = matchingResult

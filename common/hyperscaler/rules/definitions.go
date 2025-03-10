@@ -178,7 +178,6 @@ func (r *Rule) SetPlanNoValidation(value string) (*Rule, error) {
 	}
 
 	r.Plan = value
-	r.Labels[HYPERSCALER_LABEL] = r.hyperscalerNameMappingFunction(value)
 
 	return r, nil
 }

@@ -22,9 +22,14 @@ func TestMatchDifferentArtificialScenarios(t *testing.T) {
 
 	content := `rule:
   - azure(PR=cf-ch20) -> EU
+  - gcp
+  - azure
+  - aws
+  - aws(PR=cf-eu11) -> EU
   - gcp(PR=cf-sa30) -> PR,HR        # HR must be taken from ProvisioningAttributes
   - trial -> S					  # TRIAL POOL
   - trial(PR=cf-eu11) -> EU, S
+  - free
 `
 
 	tmpfile, err := CreateTempFile(content)
@@ -32,7 +37,7 @@ func TestMatchDifferentArtificialScenarios(t *testing.T) {
 
 	defer os.Remove(tmpfile)
 
-	svc, err := NewRulesServiceFromFile(tmpfile, &broker.EnablePlans{"azure", "gcp", "trial", "aws"}, false, false, true)
+	svc, err := NewRulesServiceFromFile(tmpfile, &broker.EnablePlans{"azure", "gcp", "trial", "aws", "free"}, true, true, true)
 	require.NoError(t, err)
 
 	for _, result := range svc.Parsed.Results {
@@ -51,10 +56,34 @@ func TestMatchDifferentArtificialScenarios(t *testing.T) {
 				Plan:              "azure",
 				PlatformRegion:    "cf-ch20",
 				HyperscalerRegion: "switzerlandnorth",
+				Hyperscaler:       "azure",
 			},
 			expected: map[string]string{
 				"hyperscalerType": "azure",
 				"euAccess":        "true",
+			},
+		},
+		"aws eu": {
+			given: ProvisioningAttributes{
+				Plan:              "aws",
+				PlatformRegion:    "cf-eu11",
+				HyperscalerRegion: "eu-central1",
+				Hyperscaler:       "aws",
+			},
+			expected: map[string]string{
+				"hyperscalerType": "aws",
+				"euAccess":        "true",
+			},
+		},
+		"free": {
+			given: ProvisioningAttributes{
+				Plan:              "free",
+				PlatformRegion:    "cf-eu21",
+				HyperscalerRegion: "westeurope",
+				Hyperscaler:       "azure",
+			},
+			expected: map[string]string{
+				"hyperscalerType": "azure",
 			},
 		},
 		"gcp with PR and HR in labels": {
@@ -62,6 +91,7 @@ func TestMatchDifferentArtificialScenarios(t *testing.T) {
 				Plan:              "gcp",
 				PlatformRegion:    "cf-sa30",
 				HyperscalerRegion: "ksa",
+				Hyperscaler:       "gcp",
 			},
 			expected: map[string]string{
 				"hyperscalerType": "gcp_cf-sa30_ksa",
@@ -72,6 +102,7 @@ func TestMatchDifferentArtificialScenarios(t *testing.T) {
 				Plan:              "gcp",
 				PlatformRegion:    "cf-sa30",
 				HyperscalerRegion: "ksa",
+				Hyperscaler:       "gcp",
 			},
 			expected: map[string]string{
 				"hyperscalerType": "gcp_cf-sa30_ksa",
@@ -82,6 +113,7 @@ func TestMatchDifferentArtificialScenarios(t *testing.T) {
 				Plan:              "trial",
 				PlatformRegion:    "cf-us11",
 				HyperscalerRegion: "us-west",
+				Hyperscaler:       "aws",
 			},
 			expected: map[string]string{
 				"hyperscalerType": "aws",
@@ -93,6 +125,7 @@ func TestMatchDifferentArtificialScenarios(t *testing.T) {
 				Plan:              "trial",
 				PlatformRegion:    "cf-eu11",
 				HyperscalerRegion: "us-west",
+				Hyperscaler:       "aws",
 			},
 			expected: map[string]string{
 				"hyperscalerType": "aws",
@@ -102,40 +135,18 @@ func TestMatchDifferentArtificialScenarios(t *testing.T) {
 		},
 	} {
 		t.Run(tn, func(t *testing.T) {
-			result := svc.Match(&tc.given)
 
+			result := svc.Match(&tc.given)
 			require.NoError(t, err)
 
-			/**
-
-			  HAP step
-
-			  svc.Match(ProvisioningAttr) -> one result
-
-
-			  result.Labels()
-
-			  result.IsShared()
-
-
-			*/
-
-			//found := false
+			found := false
 			for _, matchingResult := range result {
 				if matchingResult.FinalMatch {
-					fmt.Println("Given:")
-					fmt.Println("   ", tc)
-					fmt.Println("Matched:")
-					for k, v := range matchingResult.Labels() {
-						fmt.Println(k, v)
-					}
 					assert.Equal(t, tc.expected, matchingResult.Labels())
-					//require.Equal(t, "azure", matchingResult.Rule.Plan)
-					//require.Equal(t, "", matchingResult.Rule.HyperscalerRegion)
-					//require.Equal(t, "", matchingResult.Rule.PlatformRegion)
-					//found = true
+					found = true
 				}
 			}
+			assert.True(t, found)
 		})
 	}
 
