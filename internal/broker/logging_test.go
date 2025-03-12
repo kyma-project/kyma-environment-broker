@@ -27,3 +27,21 @@ func TestHideSensitiveDataFromContext(t *testing.T) {
 	require.NoError(t, err)
 	assert.Equal(t, `{"isValid":true,"password":"*****","subobject":{"secret":"*****","sm_url":"https://sm.url.com"},"username":"*****"}`, string(d))
 }
+
+func Test_hideSensitiveDataFromRawContextInputWithNullValue(t *testing.T) {
+	// when
+	out := hideSensitiveDataFromRawContext([]byte(`
+{
+    "xaappname": null
+}
+`))
+
+	assert.Equal(t, map[string]interface{}{"xaappname": nil}, out)
+}
+
+func TestInputWithNullValue(t *testing.T) {
+	// when
+	out := hideSensitiveDataFromContext(map[string]interface{}{"xappname": nil})
+
+	assert.Equal(t, map[string]interface{}{"xappname": nil}, out)
+}

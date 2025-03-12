@@ -13,10 +13,11 @@ type Labels struct {
 type Rule struct {
 	Plan                           string
 	PlatformRegion                 string
+	PlatformRegionSuffix           bool
+	HyperscalerRegionSuffix        bool
 	HyperscalerRegion              string
 	EuAccess                       bool
 	Shared                         bool
-	Labels                         map[string]string
 	ContainsInputAttributes        bool
 	ContainsOutputAttributes       bool
 	hyperscalerNameMappingFunction func(string) string
@@ -25,7 +26,6 @@ type Rule struct {
 func NewRule() *Rule {
 	return &Rule{
 		hyperscalerNameMappingFunction: getHyperscalerName,
-		Labels:                         make(map[string]string),
 	}
 }
 
@@ -33,20 +33,57 @@ type ProvisioningAttributes struct {
 	Plan              string `json:"plan"`
 	PlatformRegion    string `json:"platformRegion"`
 	HyperscalerRegion string `json:"hyperscalerRegion"`
+	Hyperscaler       string `json:"hyperscaler"`
 }
 
-func (r *Rule) CalculateLabels() map[string]string {
-	return r.CalculateLabelsWith(getHyperscalerName(r.Plan))
+/*
+LabelsWithCalculatedHyperscaler calulactes the labels for the rule instead of using ProvisioningAttributes field.
+In KEB CalculateLabels must be used
+*/
+func (r *Rule) LabelsWithCalculatedHyperscaler(provisioningAttributes *ProvisioningAttributes) map[string]string {
+	return r.calculateLabels(getHyperscalerName(r.Plan), provisioningAttributes)
 }
 
-func (r *Rule) CalculateLabelsWith(hyperscalerName string) map[string]string {
-	for _, attr := range AllAttributes {
+func (r *Rule) Labels(provisioningAttributes *ProvisioningAttributes) map[string]string {
+	return r.calculateLabels(provisioningAttributes.Hyperscaler, provisioningAttributes)
+}
+
+func (r *Rule) calculateLabels(hyperscalerName string, provisioningAttributes *ProvisioningAttributes) map[string]string {
+	labels := map[string]string{
+		HYPERSCALER_LABEL: hyperscalerName,
+	}
+
+	for _, attr := range OutputAttributes {
 		if attr.Getter(r) != "" {
-			r.Labels = attr.ApplyLabel(r, r.Labels)
+			labels = attr.ApplyLabel(r, provisioningAttributes, labels)
 		}
 	}
 
-	return r.Labels
+	return labels
+}
+
+func (r *Rule) LabelsNew(provisioningAttributes *ProvisioningAttributes) map[string]string {
+	labels := map[string]string{
+		HYPERSCALER_LABEL: r.hyperscalerNameMappingFunction(r.Plan),
+	}
+
+	if r.EuAccess {
+		labels[EUACCESS_LABEL] = "true"
+	}
+
+	if r.Shared {
+		labels[SHARED_LABEL] = "true"
+	}
+
+	if r.PlatformRegionSuffix {
+		labels[HYPERSCALER_LABEL] += "_" + provisioningAttributes.PlatformRegion
+	}
+
+	if r.HyperscalerRegionSuffix {
+		labels[HYPERSCALER_LABEL] += "_" + provisioningAttributes.HyperscalerRegion
+	}
+
+	return labels
 }
 
 func getHyperscalerName(plan string) (result string) {
@@ -81,8 +118,8 @@ func (r *Rule) Matched(attributes *ProvisioningAttributes) bool {
 	return matched
 }
 
-func (r *Rule) SetAttributeValue(attribute, value string) (*Rule, error) {
-	for _, attr := range AllAttributes {
+func (r *Rule) SetAttributeValue(attribute, value string, attributes []Attribute) (*Rule, error) {
+	for _, attr := range attributes {
 		if attr.Name == attribute {
 			return attr.Setter(r, value)
 		}
@@ -107,7 +144,7 @@ func (r *Rule) NumberOfNonEmptyInputAttributes() int {
 func (r *Rule) String() string {
 	ruleStr := r.StringNoLabels()
 
-	labels := r.CalculateLabels()
+	labels := r.LabelsWithCalculatedHyperscaler(&ProvisioningAttributes{})
 	labelsStr := "# "
 	labelsToSort := make([]string, 0, len(labels))
 	for key, value := range labels {

@@ -436,7 +436,7 @@ func TestProvisioning_AWSWithEURestrictedAccessBadRequest(t *testing.T) {
 					},
 					"parameters": {
 						"name": "testing-cluster",
-						"region":"us-west-1"
+						"region":"us-west-2"
 					}
 		}`)
 	// then

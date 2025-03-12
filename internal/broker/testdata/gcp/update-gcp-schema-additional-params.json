@@ -28,7 +28,7 @@
             "pattern": "^[a-z0-9]([-a-z0-9]*[a-z0-9])?$"
           },
           "machineType": {
-            "description": "Specifies the type of the virtual machine.",
+            "description": "Specifies the type of the virtual machine. The machine type marked with “*” has limited availability and generates high cost.",
             "type": "string",
             "minLength": 1,
             "enum": [
@@ -44,7 +44,14 @@
               "c2d-highcpu-8",
               "c2d-highcpu-16",
               "c2d-highcpu-32",
-              "c2d-highcpu-56"
+              "c2d-highcpu-56",
+              "g2-standard-4",
+              "g2-standard-8",
+              "g2-standard-12",
+              "g2-standard-16",
+              "g2-standard-24",
+              "g2-standard-32",
+              "g2-standard-48"
             ],
             "_enumDisplayName": {
               "n2-standard-2":  "n2-standard-2 (2vCPU, 8GB RAM)",
@@ -59,7 +66,14 @@
               "c2d-highcpu-8": "c2d-highcpu-8 (8vCPU, 16GB RAM)",
               "c2d-highcpu-16": "c2d-highcpu-16 (16vCPU, 32GB RAM)",
               "c2d-highcpu-32": "c2d-highcpu-32 (32vCPU, 64GB RAM)",
-              "c2d-highcpu-56": "c2d-highcpu-56 (56vCPU, 112GB RAM)"
+              "c2d-highcpu-56": "c2d-highcpu-56 (56vCPU, 112GB RAM)",
+              "g2-standard-4": "g2-standard-4 (1GPU, 4vCPU, 16GB RAM)*",
+              "g2-standard-8": "g2-standard-8 (1GPU, 8vCPU, 32GB RAM)*",
+              "g2-standard-12": "g2-standard-12 (1GPU, 12vCPU, 48GB RAM)*",
+              "g2-standard-16": "g2-standard-16 (1GPU, 16vCPU, 64GB RAM)*",
+              "g2-standard-24": "g2-standard-24 (2GPU, 24vCPU, 96GB RAM)*",
+              "g2-standard-32": "g2-standard-32 (1GPU, 32vCPU, 128GB RAM)*",
+              "g2-standard-48": "g2-standard-48 (4GPU, 48vCPU, 192GB RAM)*"
             }
           },
           "haZones": {

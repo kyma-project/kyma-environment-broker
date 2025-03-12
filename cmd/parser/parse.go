@@ -115,6 +115,11 @@ func (cmd *ParseCommand) Run() {
 	var dataForMatching *rules.ProvisioningAttributes
 	if cmd.match != "" {
 		dataForMatching = getDataForMatching(cmd.match)
+	} else {
+		dataForMatching = &rules.ProvisioningAttributes{
+			PlatformRegion:    "<pr>",
+			HyperscalerRegion: "<hr>",
+		}
 	}
 
 	var matchingResults map[uuid.UUID]*rules.MatchingResult
