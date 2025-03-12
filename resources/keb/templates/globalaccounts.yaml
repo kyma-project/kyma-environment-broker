@@ -84,8 +84,6 @@ spec:
                   name: kcp-postgresql
             - name: GLOBALACCOUNTS_DATABASE_SSLROOTCERT
               value: /secrets/cloudsql-sslrootcert/server-ca.pem
-            - name: GLOBALACCOUNTS_DATABASE_USE_LAST_OPERATION_ID
-              value: "{{ .Values.useLastOperationID }}"
 
         {{- if and (eq .Values.global.database.embedded.enabled false) (eq .Values.global.database.cloudsqlproxy.enabled false)}}
           volumeMounts:
