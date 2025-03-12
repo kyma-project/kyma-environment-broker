@@ -21,6 +21,9 @@ func hideSensitiveDataFromRawContext(d []byte) map[string]interface{} {
 		return map[string]interface{}{}
 	}
 	for k, v := range data {
+		if v == nil {
+			continue
+		}
 		switch reflect.TypeOf(v).Kind() {
 		case reflect.String:
 			if _, exists := openKeys[k]; !exists {
@@ -36,6 +39,9 @@ func hideSensitiveDataFromRawContext(d []byte) map[string]interface{} {
 
 func hideSensitiveDataFromContext(input map[string]interface{}) map[string]interface{} {
 	for k, v := range input {
+		if v == nil {
+			continue
+		}
 		if reflect.TypeOf(v).Kind() == reflect.String {
 			if _, exists := openKeys[k]; !exists {
 				input[k] = "*****"
