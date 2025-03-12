@@ -74,7 +74,8 @@ func (g *SimpleParser) Parse(ruleEntry string) (*Rule, error) {
 				return nil, fmt.Errorf("input attribute has no value")
 			}
 
-			_, err := outputRule.SetAttributeValue(attribute[0], attribute[1])
+			_, err := outputRule.SetAttributeValue(attribute[0], attribute[1], InputAttributes)
+
 			if err != nil {
 				return nil, err
 			}
@@ -89,7 +90,7 @@ func (g *SimpleParser) Parse(ruleEntry string) (*Rule, error) {
 				return nil, fmt.Errorf("output attribute is empty")
 			}
 
-			_, err := outputRule.SetAttributeValue(outputAttr, "true")
+			_, err := outputRule.SetAttributeValue(outputAttr, "true", OutputAttributes)
 			if err != nil {
 				return nil, err
 			}

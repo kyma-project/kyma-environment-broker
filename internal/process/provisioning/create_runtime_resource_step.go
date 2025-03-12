@@ -43,25 +43,21 @@ const (
 )
 
 type CreateRuntimeResourceStep struct {
-	operationManager           *process.OperationManager
-	instanceStorage            storage.Instances
-	runtimeStateStorage        storage.RuntimeStates
-	k8sClient                  client.Client
-	config                     input.Config
-	trialPlatformRegionMapping map[string]string
-	useSmallerMachineTypes     bool
-	oidcDefaultValues          pkg.OIDCConfigDTO
+	operationManager    *process.OperationManager
+	instanceStorage     storage.Instances
+	runtimeStateStorage storage.RuntimeStates
+	k8sClient           client.Client
+	config              input.Config
+	oidcDefaultValues   pkg.OIDCConfigDTO
 }
 
 func NewCreateRuntimeResourceStep(os storage.Operations, is storage.Instances, k8sClient client.Client, cfg input.Config,
-	trialPlatformRegionMapping map[string]string, useSmallerMachines bool, oidcDefaultValues pkg.OIDCConfigDTO) *CreateRuntimeResourceStep {
+	oidcDefaultValues pkg.OIDCConfigDTO) *CreateRuntimeResourceStep {
 	step := &CreateRuntimeResourceStep{
-		instanceStorage:            is,
-		k8sClient:                  k8sClient,
-		config:                     cfg,
-		trialPlatformRegionMapping: trialPlatformRegionMapping,
-		useSmallerMachineTypes:     useSmallerMachines,
-		oidcDefaultValues:          oidcDefaultValues,
+		instanceStorage:   is,
+		k8sClient:         k8sClient,
+		config:            cfg,
+		oidcDefaultValues: oidcDefaultValues,
 	}
 	step.operationManager = process.NewOperationManager(os, step.Name(), kebError.InfrastructureManagerDependency)
 	return step
@@ -78,12 +74,7 @@ func (s *CreateRuntimeResourceStep) Run(operation internal.Operation, log *slog.
 	runtimeResourceName := steps.KymaRuntimeResourceName(operation)
 	log.Info(fmt.Sprintf("KymaResourceName: %s, KymaResourceNamespace: %s, RuntimeResourceName: %s", kymaResourceName, kymaResourceNamespace, runtimeResourceName))
 
-	values, err := provider.GetPlanSpecificValues(&operation, s.config.MultiZoneCluster, s.config.DefaultTrialProvider, s.useSmallerMachineTypes, s.trialPlatformRegionMapping,
-		s.config.DefaultGardenerShootPurpose, s.config.ControlPlaneFailureTolerance)
-	if err != nil {
-		return s.operationManager.OperationFailed(operation, fmt.Sprintf("while updating calculating plan specific values : %s", err), err, log)
-	}
-	operation.CloudProvider = string(provider.ProviderToCloudProvider(values.ProviderType))
+	operation.CloudProvider = string(provider.ProviderToCloudProvider(operation.ProviderValues.ProviderType))
 
 	runtimeCR, err := s.getEmptyOrExistingRuntimeResource(runtimeResourceName, kymaResourceNamespace)
 	if err != nil {
@@ -95,7 +86,7 @@ func (s *CreateRuntimeResourceStep) Run(operation internal.Operation, log *slog.
 		log.Info(fmt.Sprintf("Runtime resource already created %s/%s: ", operation.KymaResourceNamespace, runtimeResourceName))
 		return operation, 0, nil
 	} else {
-		err = s.updateRuntimeResourceObject(values, runtimeCR, operation, runtimeResourceName, operation.CloudProvider)
+		err = s.updateRuntimeResourceObject(*operation.ProviderValues, runtimeCR, operation, runtimeResourceName, operation.CloudProvider)
 		if err != nil {
 			return s.operationManager.OperationFailed(operation, fmt.Sprintf("while creating Runtime CR object: %s", err), err, log)
 		}

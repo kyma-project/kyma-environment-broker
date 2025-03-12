@@ -7,7 +7,7 @@ cases:
     ->     OK  aws-> EU, S                                        # euAccess:
     true, hyperscalerType: aws, shared: true
     ->     OK  aws(PR=cf-eu11)-> EU                               #
-    euAccess: true, hyperscalerType: aws_cf-eu11    
+    euAccess: true, hyperscalerType: aws
 - name: Final Configuration
   rule:
   - aws
@@ -15,9 +15,9 @@ cases:
   - azure
   - azure(PR=cf-ch20) -> EU
   - gcp
-  - gcp(PR=cf-sa30)
+  - gcp(PR=cf-sa30) -> PR
   - trial -> S
-  - sap-converged-cloud(HR=*) -> S
+  - sap-converged-cloud -> S, HR
   - azure_lite
   - preview
   - free
@@ -25,11 +25,11 @@ cases:
     ->     OK  aws                                                # hyperscalerType:
     aws                            
     ->     OK  aws(PR=cf-eu11)-> EU                               #
-    euAccess: true, hyperscalerType: aws_cf-eu11    
+    euAccess: true, hyperscalerType: aws    
     ->     OK  azure                                              #
     hyperscalerType: azure                          
     ->     OK  azure(PR=cf-ch20)->
-    EU                             # euAccess: true, hyperscalerType: azure_cf-ch20
+    EU                             # euAccess: true, hyperscalerType: azure
    
     ->     OK  azure_lite                                         # hyperscalerType:
     azure_lite                     
@@ -37,12 +37,12 @@ cases:
     hyperscalerType: aws/azure                      
     ->     OK  gcp                                                #
     hyperscalerType: gcp                            
-    ->     OK  gcp(PR=cf-sa30)                                    #
-    hyperscalerType: gcp_cf-sa30                    
+    ->     OK  gcp(PR=cf-sa30) -> PR                              #
+    hyperscalerType: gcp_<PR>                    
     ->     OK  preview                                            #
     hyperscalerType: aws                            
-    ->     OK  sap-converged-cloud(HR=*)->
-    S                      # hyperscalerType: openstack_*, shared: true      
+    ->     OK  sap-converged-cloud -> S, HR
+                           # hyperscalerType: openstack_<HR>, shared: true      
     ->     OK  trial-> S                                          # hyperscalerType:
     aws, shared: true              
 - name: Duplicated Rule
@@ -57,7 +57,7 @@ cases:
     ->     OK  aws                                                # hyperscalerType:
     aws                            
     ->     OK  aws(HR=eastus)                                     #
-    hyperscalerType: aws_eastus                     
+    hyperscalerType: aws                     
     There are errors in your rule
     configuration. Fix above errors in your rule configuration and try again.
 - name: Simple Asterix Rule
@@ -85,7 +85,7 @@ cases:
      - Duplicated rule with previously defined rule:
     'aws(PR=cf, HR=aa)'
     ->     OK  aws(PR=cf, HR=aa)                                  #
-    hyperscalerType: aws_cf_aa                      
+    hyperscalerType: aws                      
     ->     OK  gcp                                                #
     hyperscalerType: gcp                            
     There are errors in your rule
@@ -109,11 +109,11 @@ cases:
     ->     OK  aws                                                # hyperscalerType:
     aws                            
     ->     OK  aws(PR=*, HR=test1)                                #
-    hyperscalerType: aws_*_test1                    
+    hyperscalerType: aws                    
     ->     OK  aws(PR=*, HR=t)                                    #
-    hyperscalerType: aws_*_t                        
+    hyperscalerType: aws                        
     ->     OK  aws(PR=test2, HR=test1)
-                             # hyperscalerType: aws_test2_test1                
+                             # hyperscalerType: aws              
     There
     are errors in your rule configuration. Fix above errors in your rule configuration
     and try again.
@@ -142,9 +142,9 @@ cases:
     ->     OK  aws                                                # hyperscalerType:
     aws                            
     ->     OK  aws(PR=westeurope, HR=*)                           #
-    hyperscalerType: aws_westeurope_*               
+    hyperscalerType: aws               
     ->     OK  aws(PR=westeurope,
-    HR=westeurope)                  # hyperscalerType: aws_westeurope_westeurope      
+    HR=westeurope)                  # hyperscalerType: aws
 - name: Resolved Rule - No 2
   rule:
   - aws
@@ -154,18 +154,18 @@ cases:
     ->     OK  aws                                                # hyperscalerType:
     aws                            
     ->     OK  aws(PR=cf-eu11)                                    #
-    hyperscalerType: aws_cf-eu11                    
+    hyperscalerType: aws                    
     ->     OK  aws(PR=cf-eu11, HR=eastus)
-                          # hyperscalerType: aws_cf-eu11_eastus             
+                          # hyperscalerType: aws
 - name: Resolved Rule - No 3
   rule:
   - aws(PR=*)
   - aws(PR=cf-eu11, HR=eastus)
   expected: |
     ->     OK  aws(PR=*)                                          # hyperscalerType:
-    aws_*                          
+    aws                          
     ->     OK  aws(PR=cf-eu11, HR=eastus)                         #
-    hyperscalerType: aws_cf-eu11_eastus             
+    hyperscalerType: aws
 - name: Resolved Rule - No 4
   rule:
   - aws
@@ -175,9 +175,9 @@ cases:
     -> OK  aws                                                # hyperscalerType:
     aws                            
     ->     OK  aws(PR=cf-eu11)                                    #
-    hyperscalerType: aws_cf-eu11                    
+    hyperscalerType: aws                    
     ->     OK  aws(PR=cf-eu12, HR=eastus)
-                          # hyperscalerType: aws_cf-eu12_eastus             
+                          # hyperscalerType: aws
 - name: ""
   rule:
   - aws
@@ -188,8 +188,8 @@ cases:
     ->     OK  aws                                                # hyperscalerType:
     aws                            
     ->     OK  aws(PR=cf-eu11, HR=*)                              #
-    hyperscalerType: aws_cf-eu11_*                  
+    hyperscalerType: aws                  
     ->     OK  aws(PR=*, HR=eastus)
-                                # hyperscalerType: aws_*_eastus                   
+                                # hyperscalerType: aws                   
     ->     OK  aws(PR=cf-eu11, HR=eastus)                         # hyperscalerType:
-    aws_cf-eu11_eastus             
+    aws             

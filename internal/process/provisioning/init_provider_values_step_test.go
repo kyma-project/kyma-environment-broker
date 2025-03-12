@@ -3,6 +3,8 @@ package provisioning
 import (
 	"testing"
 
+	"github.com/kyma-project/kyma-environment-broker/common/runtime"
+
 	"github.com/kyma-project/kyma-environment-broker/internal/broker"
 	"github.com/kyma-project/kyma-environment-broker/internal/fixture"
 	"github.com/kyma-project/kyma-environment-broker/internal/process/input"
@@ -21,10 +23,14 @@ func TestInitProviderValuesStep_Run(t *testing.T) {
 	operation.ProvisioningParameters.PlanID = broker.AWSPlanID
 	operation.ProvisioningParameters.Parameters.Region = ptr.String("eu-central-1")
 
-	err := memoryStorage.Operations().InsertOperation(operation)
+	instance := fixture.FixInstance("i-id")
+	instance.Provider = ""
+	err := memoryStorage.Instances().Insert(instance)
+	require.NoError(t, err)
+	err = memoryStorage.Operations().InsertOperation(operation)
 	assert.NoError(t, err)
 
-	step := NewInitProviderValuesStep(memoryStorage.Operations(), input.Config{
+	step := NewInitProviderValuesStep(memoryStorage.Operations(), memoryStorage.Instances(), input.Config{
 		DefaultGardenerShootPurpose:  "production",
 		TrialNodesNumber:             1,
 		DefaultTrialProvider:         "aws",
@@ -50,4 +56,9 @@ func TestInitProviderValuesStep_Run(t *testing.T) {
 	assert.Equal(t, storedOperation.ProviderValues.Region, "eu-central-1")
 	assert.Equal(t, storedOperation.ProviderValues.Purpose, "production")
 	assert.Equal(t, storedOperation.ProviderValues.FailureTolerance, ptr.String("node"))
+
+	gotInstance, err := memoryStorage.Instances().GetByID("i-id")
+	require.NoError(t, err)
+	assert.Equal(t, runtime.CloudProvider("AWS"), gotInstance.Provider)
+
 }

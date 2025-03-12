@@ -14,7 +14,7 @@ type Attribute struct {
 	HasValue        bool
 
 	modifiedLabelName string
-	ApplyLabel        func(r *Rule, labels map[string]string) map[string]string
+	ApplyLabel        func(r *Rule, provisioningAttributes *ProvisioningAttributes, labels map[string]string) map[string]string
 }
 
 func (a Attribute) HasLiteral(rule *Rule) bool {
