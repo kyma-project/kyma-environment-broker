@@ -171,9 +171,10 @@ func (m *StagedManager) Execute(operationID string) (time.Duration, error) {
 
 			// the step needs a retry
 			if when > 0 {
-				logStep.Warn(fmt.Sprintf("retrying step by restarting the operation in %d s", int64(when.Seconds())))
+				logStep.Warn(fmt.Sprintf("retrying step %s by restarting the operation in %d s", step.Name(), int64(when.Seconds())))
 				return when, nil
 			}
+			logStep.Info(fmt.Sprintf("Step %q processed successfully", step.Name()))
 		}
 
 		processedOperation, err = m.saveFinishedStage(processedOperation, stage, logOperation)
