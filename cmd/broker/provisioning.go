@@ -59,7 +59,7 @@ func NewProvisioningProcessingQueue(ctx context.Context, provisionManager *proce
 		},
 		{
 			stage: createRuntimeStageName,
-			step:  provisioning.NewInitProviderValuesStep(db.Operations(), cfg.Provisioner, trialRegionsMapping, cfg.Broker.UseSmallerMachineTypes),
+			step:  provisioning.NewInitProviderValuesStep(db.Operations(), db.Instances(), cfg.Provisioner, trialRegionsMapping, cfg.Broker.UseSmallerMachineTypes),
 		},
 		{
 			stage: createRuntimeStageName,

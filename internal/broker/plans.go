@@ -189,7 +189,6 @@ func AWSRegions(euRestrictedAccess bool) []string {
 		"ca-central-1",
 		"sa-east-1",
 		"us-east-1",
-		"us-west-1",
 		"us-west-2",
 		"ap-northeast-1",
 		"ap-northeast-2",
@@ -210,7 +209,6 @@ func AWSRegionsDisplay(euRestrictedAccess bool) map[string]string {
 		"ca-central-1":   "ca-central-1 (Canada, Montreal)",
 		"sa-east-1":      "sa-east-1 (Brazil, São Paulo)",
 		"us-east-1":      "us-east-1 (US East, N. Virginia)",
-		"us-west-1":      "us-west-1 (US West, N. California)",
 		"us-west-2":      "us-west-2 (US West, Oregon)",
 		"ap-northeast-1": "ap-northeast-1 (Asia Pacific, Tokyo)",
 		"ap-northeast-2": "ap-northeast-2 (Asia Pacific, Seoul)",
@@ -251,6 +249,12 @@ func AwsMachinesNames(additionalMachines bool) []string {
 			"c7i.8xlarge",
 			"c7i.12xlarge",
 			"c7i.16xlarge",
+			"g6.xlarge",
+			"g6.2xlarge",
+			"g6.4xlarge",
+			"g6.8xlarge",
+			"g6.12xlarge",
+			"g6.16xlarge",
 		)
 	}
 
@@ -283,6 +287,12 @@ func AwsMachinesDisplay(additionalMachines bool) map[string]string {
 		machines["c7i.8xlarge"] = "c7i.8xlarge (32vCPU, 64GB RAM)"
 		machines["c7i.12xlarge"] = "c7i.12xlarge (48vCPU, 96GB RAM)"
 		machines["c7i.16xlarge"] = "c7i.16xlarge (64vCPU, 128GB RAM)"
+		machines["g6.xlarge"] = "g6.xlarge (1GPU, 4vCPU, 16GB RAM)*"
+		machines["g6.2xlarge"] = "g6.2xlarge (1GPU, 8vCPU, 32GB RAM)*"
+		machines["g6.4xlarge"] = "g6.4xlarge (1GPU, 16vCPU, 64GB RAM)*"
+		machines["g6.8xlarge"] = "g6.8xlarge (1GPU, 32vCPU, 128GB RAM)*"
+		machines["g6.12xlarge"] = "g6.12xlarge (4GPU, 48vCPU, 192GB RAM)*"
+		machines["g6.16xlarge"] = "g6.16xlarge (1GPU, 64vCPU, 256GB RAM)*"
 	}
 
 	return machines
@@ -314,6 +324,10 @@ func AzureMachinesNames(additionalMachines bool) []string {
 			"Standard_F32s_v2",
 			"Standard_F48s_v2",
 			"Standard_F64s_v2",
+			"Standard_NC4as_T4_v3",
+			"Standard_NC8as_T4_v3",
+			"Standard_NC16as_T4_v3",
+			"Standard_NC64as_T4_v3",
 		)
 	}
 
@@ -345,6 +359,10 @@ func AzureMachinesDisplay(additionalMachines bool) map[string]string {
 		machines["Standard_F32s_v2"] = "Standard_F32s_v2 (32vCPU, 64GB RAM)"
 		machines["Standard_F48s_v2"] = "Standard_F48s_v2 (48vCPU, 96GB RAM)"
 		machines["Standard_F64s_v2"] = "Standard_F64s_v2 (64vCPU, 128GB RAM)"
+		machines["Standard_NC4as_T4_v3"] = "Standard_NC4as_T4_v3 (1GPU, 4vCPU, 28GB RAM)*"
+		machines["Standard_NC8as_T4_v3"] = "Standard_NC8as_T4_v3 (1GPU, 8vCPU, 56GB RAM)*"
+		machines["Standard_NC16as_T4_v3"] = "Standard_NC16as_T4_v3 (1GPU, 16vCPU, 110GB RAM)*"
+		machines["Standard_NC64as_T4_v3"] = "Standard_NC64as_T4_v3 (4GPU, 64vCPU, 440GB RAM)*"
 	}
 
 	return machines
@@ -385,6 +403,13 @@ func GcpMachinesNames(additionalMachines bool) []string {
 			"c2d-highcpu-16",
 			"c2d-highcpu-32",
 			"c2d-highcpu-56",
+			"g2-standard-4",
+			"g2-standard-8",
+			"g2-standard-12",
+			"g2-standard-16",
+			"g2-standard-24",
+			"g2-standard-32",
+			"g2-standard-48",
 		)
 	}
 
@@ -409,6 +434,13 @@ func GcpMachinesDisplay(additionalMachines bool) map[string]string {
 		machines["c2d-highcpu-16"] = "c2d-highcpu-16 (16vCPU, 32GB RAM)"
 		machines["c2d-highcpu-32"] = "c2d-highcpu-32 (32vCPU, 64GB RAM)"
 		machines["c2d-highcpu-56"] = "c2d-highcpu-56 (56vCPU, 112GB RAM)"
+		machines["g2-standard-4"] = "g2-standard-4 (1GPU, 4vCPU, 16GB RAM)*"
+		machines["g2-standard-8"] = "g2-standard-8 (1GPU, 8vCPU, 32GB RAM)*"
+		machines["g2-standard-12"] = "g2-standard-12 (1GPU, 12vCPU, 48GB RAM)*"
+		machines["g2-standard-16"] = "g2-standard-16 (1GPU, 16vCPU, 64GB RAM)*"
+		machines["g2-standard-24"] = "g2-standard-24 (2GPU, 24vCPU, 96GB RAM)*"
+		machines["g2-standard-32"] = "g2-standard-32 (1GPU, 32vCPU, 128GB RAM)*"
+		machines["g2-standard-48"] = "g2-standard-48 (4GPU, 48vCPU, 192GB RAM)*"
 	}
 
 	return machines
