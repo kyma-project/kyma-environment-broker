@@ -10,8 +10,6 @@ The process generates a list of [search labels](#search-labels) based on Kyma ru
 
 The search labels are used to query Gardener's secret bindings.
 
-![Rules Evaluation Process](../assets/hap-rules-general.drawio.svg)
-
 ## Rule Configuration
 
 The rule is configured in `values.yaml` in the `hap.rule` property.
