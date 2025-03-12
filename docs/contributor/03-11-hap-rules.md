@@ -145,7 +145,7 @@ hap:
 
 ### Shared and EU Access Attributes
 
-The **shared** and **euAccess** attributes do not correspond to any Kyma runtime property. Use these attributes only to add search labels. If the rule entry contains either of the attributes, then when the rule is triggered, the `shared: true` or `euAccess: true` labels are added to the [search labels](#search-labels). The shared label on a SecretBinding marks it as assignable to more than one Kyma runtime, and euAccess is used to mark EU regions (see [Hyperscaler Account Pool](03-10-hyperscaler-account-pool.md)). The following configuration specifies that all `gcp` clusters use the same pool of shared secret bindings marked with labels `hyperscalerType: gcp`, `shared: true`, and azure clusters in the region cf-ch20 use a pool of secret bindings marked with labels `hyperscalerType: azure`, and `euAccess: true`.
+Use these attributes only to add search labels. If the rule entry contains either of the attributes, then when the rule is triggered, the `shared: true` or `euAccess: true` labels are added to the [search labels](#search-labels). The shared label on a SecretBinding marks it as assignable to more than one Kyma runtime, and euAccess is used to mark EU regions (see [Hyperscaler Account Pool](03-10-hyperscaler-account-pool.md)). The following configuration specifies that all `gcp` clusters use the same pool of shared secret bindings marked with labels `hyperscalerType: gcp`, `shared: true`, and azure clusters in the region cf-ch20 use a pool of secret bindings marked with labels `hyperscalerType: azure`, and `euAccess: true`.
 
 ```
 hap: 
@@ -154,25 +154,10 @@ hap:
     - azure(PR=cf-ch20) -> EU, PR     # pool: hyperscalerType: azure_cf-ch20, euAccess: true
 ```
 
-### Attribute with "*"
-
-You can replace input attributes' values with `*`, which means that they match all Kyma runtime values of that attribute. They are used when creating [search labels](#search-labels). See the example configuration that makes KEB search for SecretBindings with `hyperscalerType: gcp_<PR>`, where **PR** matches the corresponding Kyma runtime value for all `gcp` clusters:
-
-```
-hap: 
-  rule: 
-  - gcp(PR=*) -> PR                    # pool: hyperscalerType: gcp_cf-sa30
-                                       # pool: hyperscalerType: gcp_cf-jp30
-```
-
-
-> [!NOTE]
-> This configuration example effectively disables the usage of SecretBindings labeled only with `hyperscalerType: gcp`.
-
 ## Uniqueness and Priority
 
 Only one rule can be triggered. If more than one rule entry matches the request, only one is selected and applied. The process of selecting the best matching rule is based on rule uniqueness and priority.
-Rule entry uniqueness is determined by its plan and input parameters' values (identification attributes) not including input parameters with `*`. 
+Rule entry uniqueness is determined by its plan and input parameters' values (identification attributes). 
 Output parameters are not taken into account when establishing rule entry uniqueness. For example, the following rule fails on startup because both rules can match every Kyma runtime:
 
 ```
@@ -180,9 +165,8 @@ hap:
   rule: 
     - gcp 
     - gcp -> S                      # invalid entry, output attributes do not take part into uniqueness check
-    - gcp(PR=*)                     # invalid entry, both can be applied to the same Kyma Runtime
     - gcp(HR=europe-west3)          # valid entry, new HR attribute makes the rule unique
-    - gcp(PR=*, HR=europe-west3)    # invalid rules, the same as previous one because of addition of `PR=*` attribute
+    - gcp(HR=europe-west3)          # invalid entry, duplicate of the previous one 
 ```
 
 Rule configuration must contain only unique entries.
@@ -191,7 +175,6 @@ Otherwise, an error that fails KEB's startup is returned.
 Rule entry priority is selected by sorting all rule entries that apply to the request by the number of identification attributes they contain. 
 For example, a rule including only a plan and no attributes has lower priority than a rule with the same plan and a platform region attribute (`gcp` < `gcp(PR=cf-sa30)`).
 After sorting, the entry that specifies the most attributes is selected because it is the most specific. 
-Input attributes with value `*` are not taken into account when calculating priority.
 
 The following example shows the priority of the listed rules starting from the lowest:
 
@@ -232,7 +215,7 @@ hap:
   - gcp(PR=cf-sa30) -> PR               # pool: hyperscalerType: gcp_cf-sa30
   - trial -> S                          # pool: hyperscalerType: azure; shared: true
                                         # pool: hyperscalerType: aws; shared: true 
-  - sap-converged-cloud(HR=*) -> HR, S  # pool: hyperscalerType: openstack_<HYPERSCALER_REGION>; shared: true
+  - sap-converged-cloud -> HR, S        # pool: hyperscalerType: openstack_<HYPERSCALER_REGION>; shared: true
   - azure_lite                          # pool: hyperscalerType: azure
   - preview                             # pool: hyperscalerType: aws
   - free                                # pool: hyperscalerType: aws
