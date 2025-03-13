@@ -39,7 +39,7 @@ go-lint-install: ## linter config in file at root of project -> '.golangci.yaml'
 
 .PHONY: build-hap
 build-hap:
-	go build -o $(ARTIFACTS)/hap cmd/parser/main.go
+	go build -ldflags "-X main.gitCommit=$(GIT_SHA)" -o $(ARTIFACTS)/hap cmd/parser/main.go
 
 ##@ Tests
 

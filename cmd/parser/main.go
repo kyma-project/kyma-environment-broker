@@ -9,11 +9,13 @@ import (
 	"github.com/spf13/cobra"
 )
 
+var gitCommit string
+
 var (
 	rootCmd = &cobra.Command{
 		Use:     "hap",
 		Short:   "Check HAP rules",
-		Version: "v0.0.13",
+		Version: gitCommit,
 		Long:    "A tool for parsing and matching data using HAP rules",
 	}
 )
