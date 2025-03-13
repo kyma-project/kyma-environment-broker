@@ -2,20 +2,18 @@ package main
 
 import (
 	"fmt"
-	"log"
 	"os"
 	"os/signal"
 	"syscall"
 )
 
+var gitCommit string
+
 func main() {
 	setupCloseHandler()
-	logger := log.New(os.Stdout, "INFO: ", log.Ldate|log.Ltime|log.Lshortfile)
 
 	err := Execute()
 	if err != nil {
-		logger.Printf("Error: %v", err)
-
 		os.Exit(1)
 	}
 }

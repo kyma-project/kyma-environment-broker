@@ -9,12 +9,11 @@ var (
 	rootCmd = &cobra.Command{
 		Use:     "hap",
 		Short:   "A tool for parsing and validation of HAP rules",
-		Version: "v0.0.12",
+		Version: "0.0.13",
 		Long:    ``,
 	}
 )
 
-// Execute executes the root command.
 func Execute() error {
 	return rootCmd.Execute()
 }

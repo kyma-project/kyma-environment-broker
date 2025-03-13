@@ -3,6 +3,14 @@ ifeq (,$(GOLINT_TIMEOUT))
 GOLINT_TIMEOUT=2m
 endif
 
+ifndef ARTIFACTS
+	ARTIFACTS = .
+endif
+
+ifndef GIT_SHA
+	GIT_SHA = ${shell git describe --tags --always}
+endif
+
  ## The headers are represented by '##@' like 'General' and the descriptions of given command is text after '##''.
 .PHONY: help
 help: 
@@ -50,3 +58,9 @@ check-go-mod-tidy: ## check if go mod tidy needed
 fix: go-lint-install ## try to fix automatically issues
 	go mod tidy -v
 	golangci-lint run --fix
+
+##@ Tools
+
+.PHONY: build-hap
+build-hap:
+	cd cmd/parser; go build -ldflags "-X main.gitCommit=$(GIT_SHA)" -o $(ARTIFACTS)/hap
