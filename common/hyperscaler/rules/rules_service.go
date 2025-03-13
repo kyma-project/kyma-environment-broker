@@ -3,6 +3,7 @@ package rules
 import (
 	"fmt"
 	"log"
+	"os"
 	"strings"
 
 	"github.com/google/uuid"
@@ -19,14 +20,29 @@ type RulesService struct {
 }
 
 func NewRulesServiceFromFile(rulesFilePath string, enabledPlans *broker.EnablePlans, sort, unique, signature bool) (*RulesService, error) {
-	rulesConfig := &RulesConfig{}
 
 	if rulesFilePath == "" {
 		return nil, fmt.Errorf("No HAP rules file path provided")
 	}
 
 	log.Printf("Parsing rules from file: %s\n", rulesFilePath)
-	err := rulesConfig.Load(rulesFilePath)
+	file, err := os.Open(rulesFilePath)
+	if err != nil {
+		return nil, fmt.Errorf("failed to open file: %s", err)
+	}
+
+	rs, err := NewRulesService(file, enabledPlans, sort, unique, signature)
+	return rs, err
+}
+
+func NewRulesService(file *os.File, enabledPlans *broker.EnablePlans, sort, unique, signature bool) (*RulesService, error) {
+	rulesConfig := &RulesConfig{}
+
+	if file == nil {
+		return nil, fmt.Errorf("No HAP rules file provided")
+	}
+
+	err := rulesConfig.LoadFromFile(file)
 	if err != nil {
 		return nil, err
 	}
