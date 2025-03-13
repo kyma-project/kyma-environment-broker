@@ -7,6 +7,10 @@ ifndef ARTIFACTS
 	ARTIFACTS = bin
 endif
 
+ifndef GIT_SHA
+	GIT_SHA = ${shell git describe --tags --always}
+endif
+
  ## The headers are represented by '##@' like 'General' and the descriptions of given command is text after '##''.
 .PHONY: help
 help: 
