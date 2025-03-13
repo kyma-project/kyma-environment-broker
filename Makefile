@@ -3,6 +3,10 @@ ifeq (,$(GOLINT_TIMEOUT))
 GOLINT_TIMEOUT=2m
 endif
 
+ifndef ARTIFACTS
+	ARTIFACTS = bin
+endif
+
  ## The headers are represented by '##@' like 'General' and the descriptions of given command is text after '##''.
 .PHONY: help
 help: 
@@ -27,6 +31,12 @@ go-lint-install: ## linter config in file at root of project -> '.golangci.yaml'
 		echo golangci installed with version: $(shell command golangci-lint version --format short); \
 	fi;
 	
+##@ Tools
+
+.PHONY: build-hap
+build-hap:
+	go build -o $(ARTIFACTS)/hap cmd/parser/main.go
+
 ##@ Tests
 
 .PHONY: test 

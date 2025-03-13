@@ -47,13 +47,13 @@ func (c *TestCases) writeCases() {
 
 	err = os.WriteFile(RULES_TEST_CASES, bytes, os.ModePerm)
 	if err != nil {
-		log.Printf("err while writing a file %v ", err)
+		log.Printf("error while writing a file %v ", err)
 	}
 }
 
-func TestParser(t *testing.T) {
+func TestCheckCommand(t *testing.T) {
 
-	t.Run("should verify parser command", func(t *testing.T) {
+	t.Run("should verify hap check command", func(t *testing.T) {
 		cases := TestCases{}
 		cases.loadCases()
 
@@ -67,11 +67,11 @@ func TestParser(t *testing.T) {
 
 			entries := strings.Join(c.Rules, "; ")
 
-			cmd := NewParseCmd()
+			cmd := NewCheckCmd()
 			b := bytes.NewBufferString("")
 			cmd.SetOut(b)
 
-			cmd.SetArgs([]string{"-e", entries, "-nups"})
+			cmd.SetArgs([]string{"-e", entries, "-n"})
 			err := cmd.Execute()
 			require.NoError(t, err)
 

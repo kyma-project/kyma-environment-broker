@@ -2,20 +2,26 @@ package main
 
 import (
 	"fmt"
-	"log"
 	"os"
 	"os/signal"
 	"syscall"
+
+	"github.com/spf13/cobra"
+)
+
+var (
+	rootCmd = &cobra.Command{
+		Use:     "hap",
+		Short:   "Check HAP rules",
+		Version: "v0.0.13",
+		Long:    "A tool for parsing and matching data using HAP rules",
+	}
 )
 
 func main() {
 	setupCloseHandler()
-	logger := log.New(os.Stdout, "INFO: ", log.Ldate|log.Ltime|log.Lshortfile)
-
-	err := Execute()
+	err := rootCmd.Execute()
 	if err != nil {
-		logger.Printf("Error: %v", err)
-
 		os.Exit(1)
 	}
 }
