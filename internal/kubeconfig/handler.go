@@ -1,20 +1,18 @@
 package kubeconfig
 
 import (
+	"errors"
 	"fmt"
 	"log/slog"
 	"net/http"
 	"strings"
 
-	"github.com/kyma-project/kyma-environment-broker/internal"
-
 	"github.com/kennygrant/sanitize"
-
 	"github.com/kyma-project/kyma-environment-broker/common/orchestration"
+	"github.com/kyma-project/kyma-environment-broker/internal"
 	"github.com/kyma-project/kyma-environment-broker/internal/httputil"
 	"github.com/kyma-project/kyma-environment-broker/internal/storage"
 	"github.com/kyma-project/kyma-environment-broker/internal/storage/dberr"
-
 	"github.com/pivotal-cf/brokerapi/v12/domain"
 )
 
@@ -125,7 +123,13 @@ func (h *Handler) GetKubeconfig(w http.ResponseWriter, r *http.Request) {
 		newKubeconfig, err = h.kubeconfigBuilder.Build(instance)
 	}
 	if err != nil {
-		h.log.Error(fmt.Sprintf("while building kubeconfig, error: %s", err))
+		msgFmt := "while building kubeconfig: %s"
+		if IsNotFound(err) {
+			h.log.Info(fmt.Sprintf(msgFmt, err))
+			h.handleResponse(w, http.StatusNotFound, errors.New("kubeconfig does not exist"))
+			return
+		}
+		h.log.Error(fmt.Sprintf(msgFmt, err))
 		h.handleResponse(w, http.StatusInternalServerError, fmt.Errorf("cannot fetch SKR kubeconfig: %s", err))
 		return
 	}

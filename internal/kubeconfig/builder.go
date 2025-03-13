@@ -7,10 +7,9 @@ import (
 	"text/template"
 
 	imv1 "github.com/kyma-project/infrastructure-manager/api/v1"
-	"sigs.k8s.io/controller-runtime/pkg/client"
-
 	"github.com/kyma-project/kyma-environment-broker/internal"
 	"gopkg.in/yaml.v2"
+	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
 type Config struct {

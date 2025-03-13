@@ -24,6 +24,7 @@ const (
 	freeDocsKey           = "Available plans documentation"
 	freeExpiredInfoFormat = "Your cluster has expired. It is not operational, and the link to Kyma dashboard is no longer valid." +
 		"  To continue using Kyma, you must use a paid service plan. To learn more about the available plans, follow the link to the documentation."
+	apiServerURLErrorFormat = "while getting APIServerURL: %s"
 )
 
 func ResponseLabels(op internal.ProvisioningOperation, instance internal.Instance, brokerURL string, enableKubeconfigLabel bool, kubeconfigBuilder kubeconfig.KcBuilder) map[string]any {
@@ -35,12 +36,14 @@ func ResponseLabels(op internal.ProvisioningOperation, instance internal.Instanc
 	if enableKubeconfigLabel && !IsOwnClusterPlan(instance.ServicePlanID) {
 		responseLabels[kubeconfigURLKey] = fmt.Sprintf("https://%s/kubeconfig/%s", brokerURL, instance.InstanceID)
 		apiServerUrl, err := kubeconfigBuilder.GetServerURL(instance.RuntimeID)
-		if err != nil {
-			slog.Error(fmt.Sprintf("while getting APIServerURL: %s", err))
-			return responseLabels
+		switch {
+		case err == nil && apiServerUrl != "":
+			responseLabels[apiServerURLKey] = apiServerUrl
+		case kubeconfig.IsNotFound(err):
+			slog.Info(fmt.Sprintf(apiServerURLErrorFormat, err))
+		default:
+			slog.Error(fmt.Sprintf(apiServerURLErrorFormat, err))
 		}
-		responseLabels[apiServerURLKey] = apiServerUrl
-
 	}
 
 	return responseLabels

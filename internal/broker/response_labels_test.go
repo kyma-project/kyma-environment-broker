@@ -7,6 +7,7 @@ import (
 
 	"github.com/kyma-project/kyma-environment-broker/internal"
 	"github.com/kyma-project/kyma-environment-broker/internal/fixture"
+	"github.com/kyma-project/kyma-environment-broker/internal/kubeconfig"
 	"github.com/kyma-project/kyma-environment-broker/internal/kubeconfig/automock"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -139,5 +140,24 @@ func TestResponseLabels(t *testing.T) {
 		assert.NotContains(t, labels, kubeconfigURLKey)
 		assert.NotContains(t, labels, apiServerURLKey)
 		require.Equal(t, "cluster-test", labels["Name"])
+	})
+
+	t.Run("should not return API server URL label", func(t *testing.T) {
+		// given
+		instance := fixture.FixInstance("instance-no-apiserverurl")
+		operation := fixture.FixProvisioningOperation("provisioning-op-no-apiserverurl", instance.InstanceID)
+		wrapper := internal.ProvisioningOperation{Operation: operation}
+
+		kcBuilder := &automock.KcBuilder{}
+		kcBuilder.On("GetServerURL", instance.RuntimeID).Return("", kubeconfig.NewNotFoundError("missing secret"))
+
+		// when
+		labels := ResponseLabels(wrapper, instance, "https://example.com", true, kcBuilder)
+
+		// then
+		require.Len(t, labels, 2)
+		assert.NotContains(t, labels, apiServerURLKey)
+		require.Equal(t, "cluster-test", labels["Name"])
+		require.Equal(t, fmt.Sprintf("https://example.com/kubeconfig/%s", instance.InstanceID), labels["KubeconfigURL"])
 	})
 }

@@ -10,16 +10,14 @@ import (
 	"os"
 	"testing"
 
-	"github.com/stretchr/testify/assert"
-
 	"github.com/kyma-project/kyma-environment-broker/common/orchestration"
+	pkg "github.com/kyma-project/kyma-environment-broker/common/runtime"
 	"github.com/kyma-project/kyma-environment-broker/internal"
 	"github.com/kyma-project/kyma-environment-broker/internal/httputil"
 	"github.com/kyma-project/kyma-environment-broker/internal/kubeconfig/automock"
 	"github.com/kyma-project/kyma-environment-broker/internal/storage"
-
-	pkg "github.com/kyma-project/kyma-environment-broker/common/runtime"
 	"github.com/pivotal-cf/brokerapi/v12/domain"
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
@@ -33,6 +31,7 @@ const (
 func TestHandler_GetKubeconfig(t *testing.T) {
 	cases := map[string]struct {
 		pass                 bool
+		missingSecret        bool
 		instanceID           string
 		runtimeID            string
 		operationStatus      domain.LastOperationState
@@ -89,6 +88,14 @@ func TestHandler_GetKubeconfig(t *testing.T) {
 			expectedStatusCode:   http.StatusInternalServerError,
 			expectedErrorMessage: "cannot fetch SKR kubeconfig: builder error",
 		},
+		"kubeconfig secret is missing": {
+			pass:                 false,
+			missingSecret:        true,
+			instanceID:           instanceID,
+			runtimeID:            instanceRuntimeID,
+			expectedStatusCode:   http.StatusNotFound,
+			expectedErrorMessage: "kubeconfig does not exist",
+		},
 	}
 	for name, d := range cases {
 		t.Run(name, func(t *testing.T) {
@@ -117,6 +124,8 @@ func TestHandler_GetKubeconfig(t *testing.T) {
 			if d.pass {
 				builder.On("Build", &instance).Return("--kubeconfig file", nil)
 				defer builder.AssertExpectations(t)
+			} else if d.missingSecret {
+				builder.On("Build", &instance).Return("", NewNotFoundError("secret is missing"))
 			} else {
 				builder.On("Build", &instance).Return("", fmt.Errorf("builder error"))
 			}
