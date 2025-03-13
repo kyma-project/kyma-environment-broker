@@ -68,6 +68,10 @@ type OIDCProperties struct {
 	SigningAlgs    Type `json:"signingAlgs"`
 	UsernameClaim  Type `json:"usernameClaim"`
 	UsernamePrefix Type `json:"usernamePrefix"`
+}
+
+type OIDCPropertiesExpanded struct {
+	OIDCProperties
 	RequiredClaims Type `json:"requiredClaims"`
 }
 
@@ -75,6 +79,12 @@ type OIDCType struct {
 	Type
 	Properties OIDCProperties `json:"properties"`
 	Required   []string       `json:"required"`
+}
+
+type OIDCTypeExpanded struct {
+	Type
+	Properties OIDCPropertiesExpanded `json:"properties"`
+	Required   []string               `json:"required"`
 }
 
 type Type struct {
@@ -202,8 +212,9 @@ type AdditionalOIDCList struct {
 
 type AdditionalOIDCListItems struct {
 	Type
-	ControlsOrder []string       `json:"_controlsOrder,omitempty"`
-	Properties    OIDCProperties `json:"properties,omitempty"`
+	ControlsOrder []string               `json:"_controlsOrder,omitempty"`
+	Properties    OIDCPropertiesExpanded `json:"properties,omitempty"`
+	Required      []string               `json:"required,omitempty"`
 }
 
 func NewAdditionalOIDCSchema() *MultipleOIDC {
@@ -242,18 +253,20 @@ func NewAdditionalOIDCSchema() *MultipleOIDC {
 							Type: Type{
 								Type: "object",
 							},
-							Properties: OIDCProperties{
-								ClientID:       Type{Type: "string", Description: "The client ID for the OpenID Connect client."},
-								IssuerURL:      Type{Type: "string", Description: "The URL of the OpenID issuer, only HTTPS scheme will be accepted."},
-								GroupsClaim:    Type{Type: "string", Description: "If provided, the name of a custom OpenID Connect claim for specifying user groups."},
-								UsernameClaim:  Type{Type: "string", Description: "The OpenID claim to use as the user name."},
-								UsernamePrefix: Type{Type: "string", Description: "If provided, all usernames will be prefixed with this value. If not provided, username claims other than 'email' are prefixed by the issuer URL to avoid clashes. To skip any prefixing, provide the value '-' (dash character without additional characters)."},
-								SigningAlgs: Type{
-									Type: "array",
-									Items: &Type{
-										Type: "string",
+							Properties: OIDCPropertiesExpanded{
+								OIDCProperties: OIDCProperties{
+									ClientID:       Type{Type: "string", Description: "The client ID for the OpenID Connect client."},
+									IssuerURL:      Type{Type: "string", Description: "The URL of the OpenID issuer, only HTTPS scheme will be accepted."},
+									GroupsClaim:    Type{Type: "string", Description: "If provided, the name of a custom OpenID Connect claim for specifying user groups."},
+									UsernameClaim:  Type{Type: "string", Description: "The OpenID claim to use as the user name."},
+									UsernamePrefix: Type{Type: "string", Description: "If provided, all usernames will be prefixed with this value. If not provided, username claims other than 'email' are prefixed by the issuer URL to avoid clashes. To skip any prefixing, provide the value '-' (dash character without additional characters)."},
+									SigningAlgs: Type{
+										Type: "array",
+										Items: &Type{
+											Type: "string",
+										},
+										Description: "Comma separated list of allowed JOSE asymmetric signing algorithms, for example, RS256, ES256",
 									},
-									Description: "Comma separated list of allowed JOSE asymmetric signing algorithms, for example, RS256, ES256",
 								},
 								RequiredClaims: Type{
 									Type: "array",
@@ -263,28 +276,32 @@ func NewAdditionalOIDCSchema() *MultipleOIDC {
 									Description: "Comma separated list of required claims, for example, repository:myorg/foo-app, workflow:verify-foo-app",
 								},
 							},
+							Required: []string{"clientID", "issuerURL"},
 						},
-					}},
+					},
+				},
 			},
-			OIDCType{
+			OIDCTypeExpanded{
 				Type: Type{
 					Type:                 "object",
 					Title:                "Object (not recommended)",
 					Description:          "OIDC configuration",
 					AdditionalProperties: false,
 				},
-				Properties: OIDCProperties{
-					ClientID:       Type{Type: "string", Description: "The client ID for the OpenID Connect client."},
-					IssuerURL:      Type{Type: "string", Description: "The URL of the OpenID issuer, only HTTPS scheme will be accepted."},
-					GroupsClaim:    Type{Type: "string", Description: "If provided, the name of a custom OpenID Connect claim for specifying user groups."},
-					UsernameClaim:  Type{Type: "string", Description: "The OpenID claim to use as the user name."},
-					UsernamePrefix: Type{Type: "string", Description: "If provided, all usernames will be prefixed with this value. If not provided, username claims other than 'email' are prefixed by the issuer URL to avoid clashes. To skip any prefixing, provide the value '-' (dash character without additional characters)."},
-					SigningAlgs: Type{
-						Type: "array",
-						Items: &Type{
-							Type: "string",
+				Properties: OIDCPropertiesExpanded{
+					OIDCProperties: OIDCProperties{
+						ClientID:       Type{Type: "string", Description: "The client ID for the OpenID Connect client."},
+						IssuerURL:      Type{Type: "string", Description: "The URL of the OpenID issuer, only HTTPS scheme will be accepted."},
+						GroupsClaim:    Type{Type: "string", Description: "If provided, the name of a custom OpenID Connect claim for specifying user groups."},
+						UsernameClaim:  Type{Type: "string", Description: "The OpenID claim to use as the user name."},
+						UsernamePrefix: Type{Type: "string", Description: "If provided, all usernames will be prefixed with this value. If not provided, username claims other than 'email' are prefixed by the issuer URL to avoid clashes. To skip any prefixing, provide the value '-' (dash character without additional characters)."},
+						SigningAlgs: Type{
+							Type: "array",
+							Items: &Type{
+								Type: "string",
+							},
+							Description: "Comma separated list of allowed JOSE asymmetric signing algorithms, for example, RS256, ES256",
 						},
-						Description: "Comma separated list of allowed JOSE asymmetric signing algorithms, for example, RS256, ES256",
 					},
 					RequiredClaims: Type{
 						Type: "array",
