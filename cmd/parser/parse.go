@@ -31,7 +31,7 @@ func NewParseCmd() *cobra.Command {
 	cobraCmd := &cobra.Command{
 		Use:     "parse",
 		Aliases: []string{"p"},
-		Short:   "Parses a HAP rule entry validating its format",
+		Short:   "Parses a HAP rule entry validating its format.",
 		Long:    "Parses a HAP rule entry validating its format.",
 		Example: `
 	# Parse multiple rules from command line arguments
