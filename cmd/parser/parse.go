@@ -34,7 +34,7 @@ func NewParseCmd() *cobra.Command {
 		Short:   "Parses a HAP rule entry validating its format",
 		Long:    "Parses a HAP rule entry validating its format.",
 		Example: `
-	# Parse multiple rules from command arguments
+	# Parse multiple rules from command line arguments
 	hap parse -e 'azure(PR=westeurope), aws->EU' 
 
 	# Parse multiple rules from a file:
