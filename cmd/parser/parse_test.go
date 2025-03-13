@@ -71,7 +71,7 @@ func TestParser(t *testing.T) {
 			b := bytes.NewBufferString("")
 			cmd.SetOut(b)
 
-			cmd.SetArgs([]string{"-e", entries, "-nups"})
+			cmd.SetArgs([]string{"-e", entries, "-n"})
 			err := cmd.Execute()
 			require.NoError(t, err)
 
