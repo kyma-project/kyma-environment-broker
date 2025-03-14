@@ -71,7 +71,7 @@ func NewProvisioningProcessingQueue(ctx context.Context, provisionManager *proce
 		},
 		{
 			stage:     createRuntimeStageName,
-			step:      provisioning.NewResolveCredentialsStep(db.Operations(), accountProvider, rulesService, cfg.UseHapParser),
+			step:      provisioning.NewResolveCredentialsStep(db.Operations(), accountProvider, rulesService),
 			condition: provisioning.SkipForOwnClusterPlan,
 		},
 		{
