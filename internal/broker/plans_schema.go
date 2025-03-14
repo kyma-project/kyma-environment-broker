@@ -39,7 +39,7 @@ type UpdateProperties struct {
 	Kubeconfig    *Type `json:"kubeconfig,omitempty"`
 	AutoScalerMin *Type `json:"autoScalerMin,omitempty"`
 	AutoScalerMax *Type `json:"autoScalerMax,omitempty"`
-	// Change the type to *MultipleOIDC after we are fully migrated to additionalOIDC
+	// Change the type to *OIDCs after we are fully migrated to additionalOIDC
 	OIDC                      interface{}                    `json:"oidc,omitempty"`
 	Administrators            *Type                          `json:"administrators,omitempty"`
 	MachineType               *Type                          `json:"machineType,omitempty"`
@@ -48,7 +48,7 @@ type UpdateProperties struct {
 
 func (up *UpdateProperties) IncludeAdditional(useAdditionalOIDCSchema bool, defaultOIDCConfig *pkg.OIDCConfigDTO) {
 	if useAdditionalOIDCSchema {
-		up.OIDC = NewAdditionalOIDCSchema(defaultOIDCConfig)
+		up.OIDC = NewMultipleOIDCSchema(defaultOIDCConfig)
 	} else {
 		up.OIDC = NewOIDCSchema()
 	}
@@ -188,21 +188,11 @@ type AdditionalWorkerNodePoolsItemsProperties struct {
 	AutoScalerMax Type  `json:"autoScalerMax,omitempty"`
 }
 
-type MultipleOIDC struct {
+type OIDCs struct {
 	Type
 	ControlsOrder []string      `json:"_controlsOrder,omitempty"`
 	OneOf         []interface{} `json:"oneOf,omitempty"`
 }
-
-type MainOIDCDefault struct {
-	Type
-	Properties MainOIDCProperties `json:"properties,omitempty"`
-}
-
-type MainOIDCProperties struct {
-	Default Type `json:"default,omitempty"`
-}
-
 type AdditionalOIDC struct {
 	Type
 	Properties AdditionalOIDCProperties `json:"properties,omitempty"`
@@ -224,8 +214,8 @@ type AdditionalOIDCListItems struct {
 	Required      []string               `json:"required,omitempty"`
 }
 
-func NewAdditionalOIDCSchema(defaultOIDCConfig *pkg.OIDCConfigDTO) *MultipleOIDC {
-	return &MultipleOIDC{
+func NewMultipleOIDCSchema(defaultOIDCConfig *pkg.OIDCConfigDTO) *OIDCs {
+	return &OIDCs{
 		Type: Type{
 			Type:        "object",
 			Description: "OIDC configuration",
