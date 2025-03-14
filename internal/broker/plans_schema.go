@@ -83,8 +83,9 @@ type OIDCType struct {
 
 type OIDCTypeExpanded struct {
 	Type
-	Properties OIDCPropertiesExpanded `json:"properties"`
-	Required   []string               `json:"required"`
+	Properties    OIDCPropertiesExpanded `json:"properties"`
+	Required      []string               `json:"required"`
+	ControlsOrder []string               `json:"_controlsOrder,omitempty"`
 }
 
 type Type struct {
@@ -228,7 +229,7 @@ func NewAdditionalOIDCSchema() *MultipleOIDC {
 				Type: Type{
 					Type:                 "object",
 					Title:                "List",
-					Description:          "Additional OIDC configuration list",
+					Description:          "OIDC configuration list",
 					AdditionalProperties: false,
 				},
 				Properties: AdditionalOIDCProperties{
@@ -250,6 +251,7 @@ func NewAdditionalOIDCSchema() *MultipleOIDC {
 							},
 						},
 						Items: AdditionalOIDCListItems{
+							ControlsOrder: []string{"clientID", "groupsClaim", "issuerURL", "signingAlgs", "usernameClaim", "usernamePrefix", "requiredClaims"},
 							Type: Type{
 								Type: "object",
 							},
@@ -282,6 +284,7 @@ func NewAdditionalOIDCSchema() *MultipleOIDC {
 				},
 			},
 			OIDCTypeExpanded{
+				ControlsOrder: []string{"clientID", "groupsClaim", "issuerURL", "signingAlgs", "usernameClaim", "usernamePrefix", "requiredClaims"},
 				Type: Type{
 					Type:                 "object",
 					Title:                "Object (not recommended)",
