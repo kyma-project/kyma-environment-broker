@@ -1,6 +1,7 @@
 package provisioning
 
 import (
+	"errors"
 	"fmt"
 	"log/slog"
 	"time"
@@ -26,13 +27,15 @@ type ResolveCredentialsStep struct {
 	accountProvider  hyperscaler.AccountProvider
 	opStorage        storage.Operations
 	rulesService     *rules.RulesService
+	useHapParser     bool
 }
 
-func NewResolveCredentialsStep(os storage.Operations, accountProvider hyperscaler.AccountProvider, rulesService *rules.RulesService) *ResolveCredentialsStep {
+func NewResolveCredentialsStep(os storage.Operations, accountProvider hyperscaler.AccountProvider, rulesService *rules.RulesService, useHapParser bool) *ResolveCredentialsStep {
 	step := &ResolveCredentialsStep{
 		opStorage:       os,
 		accountProvider: accountProvider,
 		rulesService:    rulesService,
+		useHapParser:    useHapParser,
 	}
 	step.operationManager = process.NewOperationManager(os, step.Name(), kebError.AccountPoolDependency)
 	return step
@@ -43,6 +46,13 @@ func (s *ResolveCredentialsStep) Name() string {
 }
 
 func (s *ResolveCredentialsStep) Run(operation internal.Operation, log *slog.Logger) (internal.Operation, time.Duration, error) {
+	if s.useHapParser {
+		return s.resolveSecretUsingHapParserData(operation, log)
+	}
+	return s.determineHyperscalerTypeFromOpDataAndResolveSecret(operation, log) // old way of determining the secret
+}
+
+func (s *ResolveCredentialsStep) determineHyperscalerTypeFromOpDataAndResolveSecret(operation internal.Operation, log *slog.Logger) (internal.Operation, time.Duration, error) {
 	providerType := operation.ProviderValues.ProviderType
 	cloudProvider := runtime.CloudProviderFromString(providerType)
 	effectiveRegion := getEffectiveRegionForSapConvergedCloud(operation.ProvisioningParameters.Parameters.Region)
@@ -83,6 +93,10 @@ func (s *ResolveCredentialsStep) getTargetSecretFromGardener(operation internal.
 		secretName, err = s.accountProvider.GardenerSecretName(hypType, operation.ProvisioningParameters.ErsContext.GlobalAccountID, euAccess)
 	}
 	return secretName, err
+}
+
+func (s *ResolveCredentialsStep) resolveSecretUsingHapParserData(operation internal.Operation, log *slog.Logger) (internal.Operation, time.Duration, error) {
+	return operation, 0, errors.New("not implemented")
 }
 
 // TODO: Calculate the region parameter using default SapConvergedCloud region. This is to be removed when region is mandatory (Jan 2024).
