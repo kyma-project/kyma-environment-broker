@@ -23,7 +23,7 @@
             "type": "string",
             "minLength": 1,
             "maxLength": 15,
-            "pattern": "^[a-z0-9]([-a-z0-9]*[a-z0-9])?$"
+            "pattern": "^(?!cpu-worker-0$)[a-z0-9]([-a-z0-9]*[a-z0-9])?$"
           },
           "machineType": {
             "description": "Specifies the type of the virtual machine. The machine type marked with “*” has limited availability and generates high cost.",
@@ -150,6 +150,5 @@
       "type": "string"
     }
   },
-  "required": [],
   "type": "object"
 }

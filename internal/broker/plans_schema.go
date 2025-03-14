@@ -12,7 +12,7 @@ type RootSchema struct {
 	Schema string `json:"$schema"`
 	Type
 	Properties interface{} `json:"properties"`
-	Required   []string    `json:"required"`
+	Required   []string    `json:"required,omitempty"`
 
 	// Specified to true enables form view on website
 	ShowFormView bool `json:"_show_form_view"`
@@ -452,7 +452,7 @@ func NewAdditionalWorkerNodePoolsSchema(machineTypesDisplay map[string]string, m
 					MinLength: 1,
 					MaxLength: 15,
 					// Allows for all alphanumeric characters and '-'
-					Pattern:     "^[a-z0-9]([-a-z0-9]*[a-z0-9])?$",
+					Pattern:     "^(?!cpu-worker-0$)[a-z0-9]([-a-z0-9]*[a-z0-9])?$",
 					Description: "Specifies the unique name of the additional worker node pool. The name must consist of lowercase alphanumeric characters or '-', must start and end with an alphanumeric character, and can be a maximum of 15 characters in length.",
 				},
 				MachineType: Type{
