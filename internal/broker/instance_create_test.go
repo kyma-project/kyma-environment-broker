@@ -317,7 +317,7 @@ func TestProvision_Provision(t *testing.T) {
 		t.Logf("%+v\n", *provisionEndpoint)
 
 		// then
-		assert.ErrorContains(t, err, "while validating input parameters: (root): shootDomain is required")
+		assert.ErrorContains(t, err, "while validating input parameters: at '': missing property 'shootDomain'")
 
 		// when shootName is missing
 		_, err = provisionEndpoint.Provision(fixRequestContext(t, "req-region"), instanceID, domain.ProvisionDetails{
@@ -329,7 +329,7 @@ func TestProvision_Provision(t *testing.T) {
 		t.Logf("%+v\n", *provisionEndpoint)
 
 		// then
-		assert.ErrorContains(t, err, "while validating input parameters: (root): shootName is required")
+		assert.ErrorContains(t, err, "while validating input parameters: at '': missing property 'shootName'")
 
 		// when shootDomain is missing
 		_, err = provisionEndpoint.Provision(fixRequestContext(t, "req-region"), instanceID, domain.ProvisionDetails{
@@ -341,7 +341,7 @@ func TestProvision_Provision(t *testing.T) {
 		t.Logf("%+v\n", *provisionEndpoint)
 
 		// then
-		assert.ErrorContains(t, err, "while validating input parameters: (root): kubeconfig is required")
+		assert.ErrorContains(t, err, "while validating input parameters: at '': missing property 'kubeconfig'")
 	})
 
 	t.Run("for plan other than own_cluster invalid kubeconfig will be ignored", func(t *testing.T) {
@@ -1554,7 +1554,7 @@ func TestProvision_Provision(t *testing.T) {
 		t.Logf("%+v\n", *provisionEndpoint)
 
 		// then
-		require.EqualError(t, err, "while validating input parameters: region: region must be one of the following: \"me-central2\"")
+		require.EqualError(t, err, "while validating input parameters: at '/region': value must be 'me-central2'")
 	})
 }
 
@@ -1629,6 +1629,10 @@ func TestAdditionalWorkerNodePools(t *testing.T) {
 		},
 		"Name longer than 15 characters": {
 			additionalWorkerNodePools: `[{"name": "aaaaaaaaaaaaaaaa", "machineType": "m6i.large", "haZones": true, "autoScalerMin": 3, "autoScalerMax": 20}]`,
+			expectedError:             true,
+		},
+		"Name equal cpu-worker-0": {
+			additionalWorkerNodePools: `[{"name": "cpu-worker-0", "machineType": "m6i.large", "haZones": true, "autoScalerMin": 3, "autoScalerMax": 20}]`,
 			expectedError:             true,
 		},
 	} {

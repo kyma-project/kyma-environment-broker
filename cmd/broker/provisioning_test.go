@@ -304,7 +304,7 @@ func TestProvisioning_HappyPathSapConvergedCloud(t *testing.T) {
 					}
 		}`)
 		parsedResponse := suite.ReadResponse(resp)
-		assert.Contains(t, string(parsedResponse), "while validating input parameters: region: region must be one of the following")
+		assert.Contains(t, string(parsedResponse), "while validating input parameters: at '/region': value must be")
 	})
 
 }

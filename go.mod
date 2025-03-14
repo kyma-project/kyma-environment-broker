@@ -7,6 +7,7 @@ require (
 	github.com/Azure/azure-sdk-for-go v68.0.0+incompatible
 	github.com/Azure/go-autorest/autorest v0.11.30
 	github.com/Azure/go-autorest/autorest/adal v0.9.24
+	github.com/dlclark/regexp2 v1.11.5
 	github.com/dlmiddlecote/sqlstats v1.0.2
 	github.com/docker/docker v28.0.1+incompatible
 	github.com/docker/go-connections v0.5.0
@@ -18,7 +19,6 @@ require (
 	github.com/google/uuid v1.6.0
 	github.com/hashicorp/go-multierror v1.1.1
 	github.com/kennygrant/sanitize v1.2.4
-	github.com/kyma-incubator/compass/components/director v0.0.0-20240704074401-a423d6070404
 	github.com/kyma-project/control-plane/components/provisioner v0.0.0-20250211135938-08eff574dc14
 	github.com/kyma-project/infrastructure-manager v0.0.0-20250128154549-67d41ee7791a
 	github.com/lib/pq v1.10.9
@@ -26,6 +26,7 @@ require (
 	github.com/pivotal-cf/brokerapi/v12 v12.0.1
 	github.com/pkg/errors v0.9.1
 	github.com/prometheus/client_golang v1.21.1
+	github.com/santhosh-tekuri/jsonschema/v6 v6.0.1
 	github.com/sebdah/goldie/v2 v2.5.5
 	github.com/spf13/cobra v1.9.1
 	github.com/stretchr/testify v1.10.0
@@ -88,6 +89,7 @@ require (
 	github.com/json-iterator/go v1.1.12 // indirect
 	github.com/klauspost/compress v1.18.0 // indirect
 	github.com/kylelemons/godebug v1.1.0 // indirect
+	github.com/kyma-incubator/compass/components/director v0.0.0-20240704074401-a423d6070404 // indirect
 	github.com/mailru/easyjson v0.9.0 // indirect
 	github.com/mitchellh/copystructure v1.2.0 // indirect
 	github.com/mitchellh/reflectwalk v1.0.2 // indirect
