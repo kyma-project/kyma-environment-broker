@@ -154,6 +154,7 @@ type Config struct {
 	RegionsSupportingMachineFilePath string
 
 	HapRuleFilePath string
+	UseHapParser    bool
 }
 
 type ProfilerConfig struct {
