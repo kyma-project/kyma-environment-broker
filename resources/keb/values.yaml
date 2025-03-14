@@ -272,6 +272,7 @@ trialDocsURL: "https://help.sap.com/docs/"
 useSmallerMachineTypes: "false"
 
 osbUpdateProcessingEnabled: "false"
+useAdditionalOIDCSchema: "false"
 
 
 gardener:

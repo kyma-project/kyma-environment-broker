@@ -52,6 +52,7 @@ type (
 
 	PlanValidator interface {
 		IsPlanSupport(planID string) bool
+		GetDefaultOIDC() *pkg.OIDCConfigDTO
 	}
 )
 
@@ -612,7 +613,7 @@ func (b *ProvisionEndpoint) determineLicenceType(planId string) *string {
 
 func (b *ProvisionEndpoint) validator(details *domain.ProvisionDetails, provider pkg.CloudProvider, ctx context.Context) (JSONSchemaValidator, error) {
 	platformRegion, _ := middleware.RegionFromContext(ctx)
-	plans := Plans(b.plansConfig, provider, b.config.IncludeAdditionalParamsInSchema, euaccess.IsEURestrictedAccess(platformRegion), b.config.UseSmallerMachineTypes, b.config.EnableShootAndSeedSameRegion, b.convergedCloudRegionsProvider.GetRegions(platformRegion), assuredworkloads.IsKSA(platformRegion))
+	plans := Plans(b.plansConfig, provider, nil, b.config.IncludeAdditionalParamsInSchema, euaccess.IsEURestrictedAccess(platformRegion), b.config.UseSmallerMachineTypes, b.config.EnableShootAndSeedSameRegion, b.convergedCloudRegionsProvider.GetRegions(platformRegion), assuredworkloads.IsKSA(platformRegion), b.config.UseAdditionalOIDCSchema)
 	plan := plans[details.PlanID]
 	schema := string(Marshal(plan.Schemas.Instance.Create.Parameters))
 

@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"strings"
 
+	pkg "github.com/kyma-project/kyma-environment-broker/common/runtime"
 	"github.com/kyma-project/kyma-environment-broker/internal/networking"
 )
 
@@ -35,17 +36,22 @@ type ProvisioningProperties struct {
 }
 
 type UpdateProperties struct {
-	Kubeconfig                *Type                          `json:"kubeconfig,omitempty"`
-	AutoScalerMin             *Type                          `json:"autoScalerMin,omitempty"`
-	AutoScalerMax             *Type                          `json:"autoScalerMax,omitempty"`
-	OIDC                      *OIDCType                      `json:"oidc,omitempty"`
+	Kubeconfig    *Type `json:"kubeconfig,omitempty"`
+	AutoScalerMin *Type `json:"autoScalerMin,omitempty"`
+	AutoScalerMax *Type `json:"autoScalerMax,omitempty"`
+	// Change the type to *OIDCs after we are fully migrated to additionalOIDC
+	OIDC                      interface{}                    `json:"oidc,omitempty"`
 	Administrators            *Type                          `json:"administrators,omitempty"`
 	MachineType               *Type                          `json:"machineType,omitempty"`
 	AdditionalWorkerNodePools *AdditionalWorkerNodePoolsType `json:"additionalWorkerNodePools,omitempty"`
 }
 
-func (up *UpdateProperties) IncludeAdditional() {
-	up.OIDC = NewOIDCSchema()
+func (up *UpdateProperties) IncludeAdditional(useAdditionalOIDCSchema bool, defaultOIDCConfig *pkg.OIDCConfigDTO) {
+	if useAdditionalOIDCSchema {
+		up.OIDC = NewMultipleOIDCSchema(defaultOIDCConfig)
+	} else {
+		up.OIDC = NewOIDCSchema()
+	}
 	up.Administrators = AdministratorsProperty()
 }
 
@@ -70,10 +76,22 @@ type OIDCProperties struct {
 	UsernamePrefix Type `json:"usernamePrefix"`
 }
 
+type OIDCPropertiesExpanded struct {
+	OIDCProperties
+	RequiredClaims Type `json:"requiredClaims"`
+}
+
 type OIDCType struct {
 	Type
 	Properties OIDCProperties `json:"properties"`
 	Required   []string       `json:"required"`
+}
+
+type OIDCTypeExpanded struct {
+	Type
+	Properties    OIDCPropertiesExpanded `json:"properties"`
+	Required      []string               `json:"required"`
+	ControlsOrder []string               `json:"_controlsOrder,omitempty"`
 }
 
 type Type struct {
@@ -168,6 +186,155 @@ type AdditionalWorkerNodePoolsItemsProperties struct {
 	HAZones       *Type `json:"haZones,omitempty"`
 	AutoScalerMin Type  `json:"autoScalerMin,omitempty"`
 	AutoScalerMax Type  `json:"autoScalerMax,omitempty"`
+}
+
+type OIDCs struct {
+	Type
+	ControlsOrder []string      `json:"_controlsOrder,omitempty"`
+	OneOf         []interface{} `json:"oneOf,omitempty"`
+}
+type AdditionalOIDC struct {
+	Type
+	Properties AdditionalOIDCProperties `json:"properties,omitempty"`
+}
+
+type AdditionalOIDCProperties struct {
+	List AdditionalOIDCList `json:"list,omitempty"`
+}
+
+type AdditionalOIDCList struct {
+	Type
+	Items AdditionalOIDCListItems `json:"items,omitempty"`
+}
+
+type AdditionalOIDCListItems struct {
+	Type
+	ControlsOrder []string               `json:"_controlsOrder,omitempty"`
+	Properties    OIDCPropertiesExpanded `json:"properties,omitempty"`
+	Required      []string               `json:"required,omitempty"`
+}
+
+func NewMultipleOIDCSchema(defaultOIDCConfig *pkg.OIDCConfigDTO) *OIDCs {
+	return &OIDCs{
+		Type: Type{
+			Type:        "object",
+			Description: "OIDC configuration",
+		},
+		OneOf: []any{
+			AdditionalOIDC{
+				Type: Type{
+					Type:                 "object",
+					Title:                "List",
+					Description:          "OIDC configuration list",
+					AdditionalProperties: false,
+				},
+				Properties: AdditionalOIDCProperties{
+					AdditionalOIDCList{
+						Type: Type{
+							Type:        "array",
+							UniqueItems: true,
+							Description: "Check a module technical name on this <a href=https://help.sap.com/docs/btp/sap-business-technology-platform/kyma-modules?version=Cloud>website</a>. You can only use a module technical name once. Provide an empty custom list of modules if you don’t want any modules enabled.",
+							Default: []interface{}{
+								map[string]interface{}{
+									"clientID":       defaultOIDCConfig.ClientID,
+									"issuerURL":      defaultOIDCConfig.IssuerURL,
+									"groupsClaim":    defaultOIDCConfig.GroupsClaim,
+									"signingAlgs":    defaultOIDCConfig.SigningAlgs,
+									"usernameClaim":  defaultOIDCConfig.UsernameClaim,
+									"usernamePrefix": defaultOIDCConfig.UsernamePrefix,
+									"requiredClaims": []interface{}{},
+								},
+							},
+						},
+						Items: AdditionalOIDCListItems{
+							ControlsOrder: []string{"clientID", "groupsClaim", "issuerURL", "signingAlgs", "usernameClaim", "usernamePrefix", "requiredClaims"},
+							Type: Type{
+								Type: "object",
+							},
+							Properties: OIDCPropertiesExpanded{
+								OIDCProperties: OIDCProperties{
+									ClientID:       Type{Type: "string", Description: "The client ID for the OpenID Connect client."},
+									IssuerURL:      Type{Type: "string", Description: "The URL of the OpenID issuer, only HTTPS scheme will be accepted."},
+									GroupsClaim:    Type{Type: "string", Description: "If provided, the name of a custom OpenID Connect claim for specifying user groups."},
+									UsernameClaim:  Type{Type: "string", Description: "The OpenID claim to use as the user name."},
+									UsernamePrefix: Type{Type: "string", Description: "If provided, all usernames will be prefixed with this value. If not provided, username claims other than 'email' are prefixed by the issuer URL to avoid clashes. To skip any prefixing, provide the value '-' (dash character without additional characters)."},
+									SigningAlgs: Type{
+										Type: "array",
+										Items: &Type{
+											Type: "string",
+										},
+										Description: "Comma separated list of allowed JOSE asymmetric signing algorithms, for example, RS256, ES256",
+									},
+								},
+								RequiredClaims: Type{
+									Type: "array",
+									Items: &Type{
+										Type: "string",
+									},
+									Description: "Comma separated list of required claims, for example, repository:myorg/foo-app, workflow:verify-foo-app",
+								},
+							},
+							Required: []string{"clientID", "issuerURL"},
+						},
+					},
+				},
+			},
+			OIDCTypeExpanded{
+				ControlsOrder: []string{"clientID", "groupsClaim", "issuerURL", "signingAlgs", "usernameClaim", "usernamePrefix", "requiredClaims"},
+				Type: Type{
+					Type:                 "object",
+					Title:                "Object (not recommended)",
+					Description:          "OIDC configuration",
+					AdditionalProperties: false,
+				},
+				Properties: OIDCPropertiesExpanded{
+					OIDCProperties: OIDCProperties{
+						ClientID:       Type{Type: "string", Description: "The client ID for the OpenID Connect client."},
+						IssuerURL:      Type{Type: "string", Description: "The URL of the OpenID issuer, only HTTPS scheme will be accepted."},
+						GroupsClaim:    Type{Type: "string", Description: "If provided, the name of a custom OpenID Connect claim for specifying user groups."},
+						UsernameClaim:  Type{Type: "string", Description: "The OpenID claim to use as the user name."},
+						UsernamePrefix: Type{Type: "string", Description: "If provided, all usernames will be prefixed with this value. If not provided, username claims other than 'email' are prefixed by the issuer URL to avoid clashes. To skip any prefixing, provide the value '-' (dash character without additional characters)."},
+						SigningAlgs: Type{
+							Type: "array",
+							Items: &Type{
+								Type: "string",
+							},
+							Description: "Comma separated list of allowed JOSE asymmetric signing algorithms, for example, RS256, ES256",
+						},
+					},
+					RequiredClaims: Type{
+						Type: "array",
+						Items: &Type{
+							Type: "string",
+						},
+						Description: "Comma separated list of required claims, for example, repository:myorg/foo-app, workflow:verify-foo-app",
+					},
+				},
+				Required: []string{"clientID", "issuerURL"},
+			},
+		},
+	}
+}
+
+func NewOIDCSchema() *OIDCType {
+	return &OIDCType{
+		Type: Type{Type: "object", Description: "OIDC configuration"},
+		Properties: OIDCProperties{
+			ClientID:       Type{Type: "string", Description: "The client ID for the OpenID Connect client."},
+			IssuerURL:      Type{Type: "string", Description: "The URL of the OpenID issuer, only HTTPS scheme will be accepted."},
+			GroupsClaim:    Type{Type: "string", Description: "If provided, the name of a custom OpenID Connect claim for specifying user groups."},
+			UsernameClaim:  Type{Type: "string", Description: "The OpenID claim to use as the user name."},
+			UsernamePrefix: Type{Type: "string", Description: "If provided, all usernames will be prefixed with this value. If not provided, username claims other than 'email' are prefixed by the issuer URL to avoid clashes. To skip any prefixing, provide the value '-' (dash character without additional characters)."},
+			SigningAlgs: Type{
+				Type: "array",
+				Items: &Type{
+					Type: "string",
+				},
+				Description: "Comma separated list of allowed JOSE asymmetric signing algorithms, for example, RS256, ES256",
+			},
+		},
+		Required: []string{"clientID", "issuerURL"},
+	}
 }
 
 func NewModulesSchema() *Modules {
@@ -357,27 +524,6 @@ func NewNetworkingSchema() *NetworkingType {
 				Default: networking.DefaultNodesCIDR},
 		},
 		Required: []string{"nodes"},
-	}
-}
-
-func NewOIDCSchema() *OIDCType {
-	return &OIDCType{
-		Type: Type{Type: "object", Description: "OIDC configuration"},
-		Properties: OIDCProperties{
-			ClientID:       Type{Type: "string", Description: "The client ID for the OpenID Connect client."},
-			IssuerURL:      Type{Type: "string", Description: "The URL of the OpenID issuer, only HTTPS scheme will be accepted."},
-			GroupsClaim:    Type{Type: "string", Description: "If provided, the name of a custom OpenID Connect claim for specifying user groups."},
-			UsernameClaim:  Type{Type: "string", Description: "The OpenID claim to use as the user name."},
-			UsernamePrefix: Type{Type: "string", Description: "If provided, all usernames will be prefixed with this value. If not provided, username claims other than 'email' are prefixed by the issuer URL to avoid clashes. To skip any prefixing, provide the value '-' (dash character without additional characters)."},
-			SigningAlgs: Type{
-				Type: "array",
-				Items: &Type{
-					Type: "string",
-				},
-				Description: "Comma separated list of allowed JOSE asymmetric signing algorithms, for example, RS256, ES256",
-			},
-		},
-		Required: []string{"clientID", "issuerURL"},
 	}
 }
 

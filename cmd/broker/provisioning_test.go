@@ -36,8 +36,8 @@ func TestCatalog(t *testing.T) {
 	t.Skip()
 	catalogTestFile := "catalog-test.json"
 	catalogTestFilePerm := os.FileMode.Perm(0666)
-	outputToFile := false
-	prettyJson := false
+	outputToFile := true
+	prettyJson := true
 	prettify := func(content []byte) *bytes.Buffer {
 		var prettyJSON bytes.Buffer
 		err := json.Indent(&prettyJSON, content, "", "    ")
