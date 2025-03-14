@@ -137,17 +137,9 @@ func TestMatchDifferentArtificialScenarios(t *testing.T) {
 	} {
 		t.Run(tn, func(t *testing.T) {
 
-			result := svc.Match(&tc.given)
-			require.NoError(t, err)
-
-			found := false
-			for _, matchingResult := range result {
-				if matchingResult.FinalMatch {
-					assert.Equal(t, tc.expected, matchingResult.Labels())
-					found = true
-				}
-			}
+			result, found := svc.MatchProvisioningAttributes(&tc.given)
 			assert.True(t, found)
+			assert.Equal(t, tc.expected, map[string]string(result))
 		})
 	}
 

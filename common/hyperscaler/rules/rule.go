@@ -112,7 +112,7 @@ func (r *Rule) Matched(attributes *ProvisioningAttributes) bool {
 	for _, attr := range InputAttributes {
 		value := attr.Getter(r)
 		matchableValue := attr.MatchableGetter(attributes)
-		matched = matched && (value == matchableValue || value == ASTERISK || value == "")
+		matched = matched && (value == matchableValue || value == "")
 	}
 
 	return matched
@@ -236,13 +236,17 @@ func (r *Rule) Combine(rule Rule) *Rule {
 }
 
 func (r *Rule) SignatureWithValues() string {
-	signature := r.Plan
+	signature := r.Plan + L_PAREN
 
-	for _, attr := range InputAttributes {
-		signature += attr.Name + SIGNATURE_ATTR_SEPARATOR
+	for i, attr := range InputAttributes {
+		signature += attr.Name + EQUAL
 		checkValue := attr.Getter(r)
 		signature += getAttrValueSymbol(checkValue, ASTERISK, checkValue)
+		if i < len(InputAttributes)-1 {
+			signature += COMMA
+		}
 	}
+	signature = signature + R_PAREN
 
 	return signature
 }
@@ -252,21 +256,26 @@ func (r *Rule) MirroredSignature() string {
 }
 
 func (r *Rule) SignatureWithSymbols(positiveKey, mirroredKey string) string {
-	signatureKey := r.Plan
+	signatureKey := r.Plan + L_PAREN
 
-	for _, attr := range InputAttributes {
-		signatureKey += attr.Name + SIGNATURE_ATTR_SEPARATOR
+	for i, attr := range InputAttributes {
+		signatureKey += attr.Name + EQUAL
 		checkValue := attr.Getter(r)
 		signatureKey += getAttrValueSymbol(checkValue, positiveKey, mirroredKey)
+		if i < len(InputAttributes)-1 {
+			signatureKey += COMMA
+		}
 	}
+
+	signatureKey = signatureKey + R_PAREN
 
 	return signatureKey
 }
 
-func getAttrValueSymbol(checkedValue, returnedValueTrue, returnedValueFalse string) string {
-	if checkedValue == "" || checkedValue == ASTERISK {
-		return returnedValueTrue
+func getAttrValueSymbol(checkedValue, valueIfEmpty, valueIfNotEmpty string) string {
+	if checkedValue == "" {
+		return valueIfEmpty
 	} else {
-		return returnedValueFalse
+		return valueIfNotEmpty
 	}
 }

@@ -2,11 +2,11 @@ package rules
 
 import (
 	"fmt"
+	"github.com/google/uuid"
 	"log"
 	"os"
 	"strings"
 
-	"github.com/google/uuid"
 	"github.com/kyma-project/kyma-environment-broker/internal/broker"
 )
 
@@ -106,6 +106,20 @@ func (rs *RulesService) parse(rulesConfig *RulesConfig) *ParsingResults {
 	}
 
 	return results
+}
+
+// Match finds the matching rule for the given provisioning attributes and provide the set of labels, which must be used to find proper secret binding.
+func (rs *RulesService) MatchProvisioningAttributes(provisioningAttributes *ProvisioningAttributes) (Result, bool) {
+	var result Result
+	found := false
+	for _, parsingResult := range rs.Parsed.Results {
+		if !parsingResult.HasParsingErrors() && parsingResult.Rule.Matched(provisioningAttributes) {
+			result = parsingResult.Rule.Labels(provisioningAttributes)
+			found = true
+		}
+	}
+
+	return result, found
 }
 
 func (rs *RulesService) Match(data *ProvisioningAttributes) map[uuid.UUID]*MatchingResult {
