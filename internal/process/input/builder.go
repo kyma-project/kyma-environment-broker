@@ -28,6 +28,7 @@ type (
 		CreateUpgradeInput(parameters internal.ProvisioningParameters) (internal.ProvisionerInputCreator, error)
 		CreateUpgradeShootInput(parameters internal.ProvisioningParameters) (internal.ProvisionerInputCreator, error)
 		GetPlanDefaults(planID string, platformProvider pkg.CloudProvider, parametersProvider *pkg.CloudProvider) (*gqlschema.ClusterConfigInput, error)
+		GetDefaultOIDC() *pkg.OIDCConfigDTO
 	}
 
 	ConfigurationProvider interface {
@@ -85,6 +86,10 @@ func (f *InputBuilderFactory) GetPlanDefaults(planID string, platformProvider pk
 		return nil, err
 	}
 	return h.Defaults(), nil
+}
+
+func (f *InputBuilderFactory) GetDefaultOIDC() *pkg.OIDCConfigDTO {
+	return &f.oidcDefaultValues
 }
 
 func (f *InputBuilderFactory) getHyperscalerProviderForPlanID(planID string, platformProvider pkg.CloudProvider, parametersProvider *pkg.CloudProvider) (HyperscalerInputProvider, error) {

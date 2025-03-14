@@ -11,6 +11,7 @@ import (
 
 	"github.com/kyma-project/kyma-environment-broker/internal/middleware"
 
+	pkg "github.com/kyma-project/kyma-environment-broker/common/runtime"
 	"github.com/pivotal-cf/brokerapi/v12/domain"
 )
 
@@ -26,9 +27,10 @@ type ServicesEndpoint struct {
 
 	enabledPlanIDs                map[string]struct{}
 	convergedCloudRegionsProvider ConvergedCloudRegionProvider
+	defaultOIDCConfig             *pkg.OIDCConfigDTO
 }
 
-func NewServices(cfg Config, servicesConfig ServicesConfig, log *slog.Logger, convergedCloudRegionsProvider ConvergedCloudRegionProvider) *ServicesEndpoint {
+func NewServices(cfg Config, servicesConfig ServicesConfig, log *slog.Logger, convergedCloudRegionsProvider ConvergedCloudRegionProvider, defaultOIDCConfig *pkg.OIDCConfigDTO) *ServicesEndpoint {
 	enabledPlanIDs := map[string]struct{}{}
 	for _, planName := range cfg.EnablePlans {
 		id := PlanIDsMapping[planName]
@@ -41,6 +43,7 @@ func NewServices(cfg Config, servicesConfig ServicesConfig, log *slog.Logger, co
 		servicesConfig:                servicesConfig,
 		enabledPlanIDs:                enabledPlanIDs,
 		convergedCloudRegionsProvider: convergedCloudRegionsProvider,
+		defaultOIDCConfig:             defaultOIDCConfig,
 	}
 }
 
@@ -60,12 +63,14 @@ func (b *ServicesEndpoint) Services(ctx context.Context) ([]domain.Service, erro
 	platformRegion, ok := middleware.RegionFromContext(ctx)
 	for _, plan := range Plans(class.Plans,
 		provider,
+		b.defaultOIDCConfig,
 		b.cfg.IncludeAdditionalParamsInSchema,
 		euaccess.IsEURestrictedAccess(platformRegion),
 		b.cfg.UseSmallerMachineTypes,
 		b.cfg.EnableShootAndSeedSameRegion,
 		b.convergedCloudRegionsProvider.GetRegions(platformRegion),
 		assuredworkloads.IsKSA(platformRegion),
+		b.cfg.UseAdditionalOIDCSchema,
 	) {
 
 		// filter out not enabled plans

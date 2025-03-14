@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"strings"
 
+	pkg "github.com/kyma-project/kyma-environment-broker/common/runtime"
 	"github.com/kyma-project/kyma-environment-broker/internal/networking"
 )
 
@@ -35,17 +36,22 @@ type ProvisioningProperties struct {
 }
 
 type UpdateProperties struct {
-	Kubeconfig                *Type                          `json:"kubeconfig,omitempty"`
-	AutoScalerMin             *Type                          `json:"autoScalerMin,omitempty"`
-	AutoScalerMax             *Type                          `json:"autoScalerMax,omitempty"`
-	OIDC                      *MultipleOIDC                  `json:"oidc,omitempty"`
+	Kubeconfig    *Type `json:"kubeconfig,omitempty"`
+	AutoScalerMin *Type `json:"autoScalerMin,omitempty"`
+	AutoScalerMax *Type `json:"autoScalerMax,omitempty"`
+	// Change the type to *MultipleOIDC after we are fully migrated to additionalOIDC
+	OIDC                      interface{}                    `json:"oidc,omitempty"`
 	Administrators            *Type                          `json:"administrators,omitempty"`
 	MachineType               *Type                          `json:"machineType,omitempty"`
 	AdditionalWorkerNodePools *AdditionalWorkerNodePoolsType `json:"additionalWorkerNodePools,omitempty"`
 }
 
-func (up *UpdateProperties) IncludeAdditional() {
-	up.OIDC = NewAdditionalOIDCSchema()
+func (up *UpdateProperties) IncludeAdditional(useAdditionalOIDCSchema bool, defaultOIDCConfig *pkg.OIDCConfigDTO) {
+	if useAdditionalOIDCSchema {
+		up.OIDC = NewAdditionalOIDCSchema(defaultOIDCConfig)
+	} else {
+		up.OIDC = NewOIDCSchema()
+	}
 	up.Administrators = AdministratorsProperty()
 }
 
@@ -218,7 +224,7 @@ type AdditionalOIDCListItems struct {
 	Required      []string               `json:"required,omitempty"`
 }
 
-func NewAdditionalOIDCSchema() *MultipleOIDC {
+func NewAdditionalOIDCSchema(defaultOIDCConfig *pkg.OIDCConfigDTO) *MultipleOIDC {
 	return &MultipleOIDC{
 		Type: Type{
 			Type:        "object",
@@ -240,13 +246,13 @@ func NewAdditionalOIDCSchema() *MultipleOIDC {
 							Description: "Check a module technical name on this <a href=https://help.sap.com/docs/btp/sap-business-technology-platform/kyma-modules?version=Cloud>website</a>. You can only use a module technical name once. Provide an empty custom list of modules if you don’t want any modules enabled.",
 							Default: []interface{}{
 								map[string]interface{}{
-									"clientID":       "default-client-id",
-									"issuerURL":      "https://default-issuer-url.com",
-									"groupsClaim":    "default-groups-claim",
-									"requiredClaims": []interface{}{"default-required-claim"},
-									"signingAlgs":    []interface{}{"RS256"},
-									"usernameClaim":  "default-username-claim",
-									"usernamePrefix": "default-username-prefix",
+									"clientID":       defaultOIDCConfig.ClientID,
+									"issuerURL":      defaultOIDCConfig.IssuerURL,
+									"groupsClaim":    defaultOIDCConfig.GroupsClaim,
+									"signingAlgs":    defaultOIDCConfig.SigningAlgs,
+									"usernameClaim":  defaultOIDCConfig.UsernameClaim,
+									"usernamePrefix": defaultOIDCConfig.UsernamePrefix,
+									"requiredClaims": []interface{}{},
 								},
 							},
 						},
