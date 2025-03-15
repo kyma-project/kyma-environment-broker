@@ -1,7 +1,11 @@
 package main
 
 import (
+	"context"
 	"fmt"
+	"github.com/stretchr/testify/require"
+	"k8s.io/client-go/dynamic/fake"
+	"testing"
 	"time"
 
 	"github.com/kyma-project/kyma-environment-broker/internal/metricsv2"
@@ -9,14 +13,12 @@ import (
 	"github.com/google/uuid"
 	"github.com/kyma-project/kyma-environment-broker/common/gardener"
 	"github.com/kyma-project/kyma-environment-broker/common/hyperscaler"
-	hyperscalerautomock "github.com/kyma-project/kyma-environment-broker/common/hyperscaler/automock"
 	pkg "github.com/kyma-project/kyma-environment-broker/common/runtime"
 	"github.com/kyma-project/kyma-environment-broker/internal/broker"
 	"github.com/kyma-project/kyma-environment-broker/internal/notification"
 	"github.com/kyma-project/kyma-environment-broker/internal/process"
 	"github.com/kyma-project/kyma-environment-broker/internal/process/input"
 	"github.com/kyma-project/kyma-environment-broker/internal/storage"
-	"github.com/stretchr/testify/mock"
 	coreV1 "k8s.io/api/core/v1"
 	metaV1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -339,25 +341,58 @@ func fixConfig() *Config {
 	}
 }
 
-func fixAccountProvider() *hyperscalerautomock.AccountProvider {
-	accountProvider := hyperscalerautomock.AccountProvider{}
+func fixAccountProvider(t *testing.T, gc *fake.FakeDynamicClient) hyperscaler.AccountProvider {
 
-	accountProvider.On("GardenerSecretName", mock.Anything, mock.Anything, mock.Anything).Return(
-		func(ht hyperscaler.Type, tn string, euaccess bool) string { return regularSubscription(ht) }, nil)
+	for sbName, labels := range map[string]map[string]string{
+		"sb-azure": {
+			"hyperscalerType": "azure",
+		},
+		"sb-aws": {
+			"hyperscalerType": "aws",
+		},
+		"sb-gcp": {
+			"hyperscalerType": "gcp",
+		},
+		"sb-gcp_cf-sa30": {
+			"hyperscalerType": "gcp_cf-sa30",
+		},
+		"sb-aws-shared": {
+			"hyperscalerType": "aws",
+			"shared":          "true",
+		},
+		"sb-aws-eu-access": {
+			"hyperscalerType": "aws",
+			"euAccess":        "true",
+		},
+		"sb-azure-eu-access": {
+			"hyperscalerType": "azure",
+			"euAccess":        "true",
+		},
+		"sb-gcp-ksa": {
+			"hyperscalerType": "gcp-cf-sa30",
+		},
+		"sb-openstack_eu-de-1": {
+			"hyperscalerType": "openstack_eu-de-1",
+			"shared":          "true",
+		},
+		"sb-openstack_eu-de-2": {
+			"hyperscalerType": "openstack_eu-de-2",
+			"shared":          "true",
+		},
+	} {
 
-	accountProvider.On("GardenerSharedSecretName", hyperscaler.Azure(), mock.Anything).Return(
-		func(ht hyperscaler.Type, euaccess bool) string { return sharedSubscription(ht) }, nil)
+		sb := gardener.SecretBinding{}
+		sb.SetName(sbName)
+		sb.SetNamespace("kyma")
+		sb.SetLabels(labels)
+		sb.SetSecretRefName(sbName)
 
-	accountProvider.On("GardenerSharedSecretName", hyperscaler.AWS(), mock.Anything).Return(
-		func(ht hyperscaler.Type, euaccess bool) string { return sharedSubscription(ht) }, nil)
+		_, err := gc.Resource(gardener.SecretBindingResource).Namespace("kyma").Create(context.Background(), &sb.Unstructured, metaV1.CreateOptions{})
 
-	accountProvider.On("GardenerSharedSecretName", hyperscaler.SapConvergedCloud("eu-de-2"), mock.Anything).Return(
-		func(ht hyperscaler.Type, euaccess bool) string { return sharedSubscription(ht) }, nil)
+		require.NoError(t, err)
+	}
 
-	accountProvider.On("GardenerSharedSecretName", hyperscaler.SapConvergedCloud("eu-de-1"), mock.Anything).Return(
-		func(ht hyperscaler.Type, euaccess bool) string { return sharedSubscription(ht) }, nil)
+	accountProvider := hyperscaler.NewAccountProvider(hyperscaler.NewAccountPool(gc, "kyma"), hyperscaler.NewSharedGardenerAccountPool(gc, "kyma"))
 
-	accountProvider.On("MarkUnusedGardenerSecretBindingAsDirty", hyperscaler.Azure(), mock.Anything, mock.Anything).Return(nil)
-	accountProvider.On("MarkUnusedGardenerSecretBindingAsDirty", hyperscaler.AWS(), mock.Anything, mock.Anything).Return(nil)
-	return &accountProvider
+	return accountProvider
 }
