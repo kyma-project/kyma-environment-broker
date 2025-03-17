@@ -6,6 +6,7 @@ import (
 
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime/schema"
+	"k8s.io/client-go/dynamic"
 	restclient "k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/clientcmd"
 )
@@ -18,6 +19,22 @@ const (
 	SharedLabelKey          = "shared"
 	EUAccessLabelKey        = "euAccess"
 )
+
+type Client struct {
+	dynamic.Interface
+	namespace string
+}
+
+func NewClient(k8sClient dynamic.Interface, namespace string) *Client {
+	return &Client{
+		Interface: k8sClient,
+		namespace: namespace,
+	}
+}
+
+func (c *Client) Namespace() string {
+	return c.namespace
+}
 
 type SecretBinding struct {
 	unstructured.Unstructured
