@@ -17,7 +17,6 @@ import (
 	"github.com/kyma-project/kyma-environment-broker/internal/storage"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
-	"k8s.io/client-go/dynamic"
 )
 
 type HAPParserResult interface {
@@ -50,17 +49,17 @@ type LabelSelectorBuilder struct {
 }
 
 type ResolveHyperscalerAccountCredentialsSecretStep struct {
-	operationManager    *process.OperationManager
-	secretBindingClient dynamic.ResourceInterface
-	opStorage           storage.Operations
-	rulesService        *rules.RulesService
+	operationManager *process.OperationManager
+	gardenerClient   *gardener.Client
+	opStorage        storage.Operations
+	rulesService     *rules.RulesService
 }
 
-func NewResolveHyperscalerAccountCredentialsSecretStep(os storage.Operations, secretBindingClient dynamic.ResourceInterface, rulesService *rules.RulesService) *ResolveHyperscalerAccountCredentialsSecretStep {
+func NewResolveHyperscalerAccountCredentialsSecretStep(os storage.Operations, gardenerClient *gardener.Client, rulesService *rules.RulesService) *ResolveHyperscalerAccountCredentialsSecretStep {
 	step := &ResolveHyperscalerAccountCredentialsSecretStep{
-		opStorage:           os,
-		secretBindingClient: secretBindingClient,
-		rulesService:        rulesService,
+		opStorage:      os,
+		gardenerClient: gardenerClient,
+		rulesService:   rulesService,
 	}
 	step.operationManager = process.NewOperationManager(os, step.Name(), kebError.AccountPoolDependency)
 	return step
@@ -120,7 +119,7 @@ func (s *ResolveHyperscalerAccountCredentialsSecretStep) createLabelSelectorBuil
 func (s *ResolveHyperscalerAccountCredentialsSecretStep) getSecretBindings(labelSelector string) (*unstructured.UnstructuredList, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), requestTimeout)
 	defer cancel()
-	return s.secretBindingClient.List(ctx, metav1.ListOptions{LabelSelector: labelSelector})
+	return s.gardenerClient.Resource(gardener.SecretBindingResource).Namespace(s.gardenerClient.Namespace()).List(ctx, metav1.ListOptions{LabelSelector: labelSelector})
 }
 
 func NewLabelSelectorBuilder() *LabelSelectorBuilder {
