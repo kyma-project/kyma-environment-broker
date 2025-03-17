@@ -2,10 +2,10 @@ package provisioning
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"log/slog"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/kyma-project/kyma-environment-broker/common/gardener"
@@ -37,10 +37,12 @@ const (
 	sharedSelector   = gardener.SharedLabelKey + "=true"
 	euAccessSelector = gardener.EUAccessLabelKey + "=true"
 
-	notDirtySelector    = `!` + gardener.DirtyLabelKey
-	notInternalSelector = `!` + gardener.InternalLabelKey
-	notSharedSelector   = `!` + gardener.SharedLabelKey
-	notEUAccessSelector = `!` + gardener.EUAccessLabelKey
+	notSharedSelector = gardener.SharedLabelKey + `!=true`
+
+	notDirtySelector       = `!` + gardener.DirtyLabelKey
+	notInternalSelector    = `!` + gardener.InternalLabelKey
+	notEUAccessSelector    = `!` + gardener.EUAccessLabelKey
+	notTenantNamedSelector = `!` + gardener.TenantNameLabelKey
 )
 
 type LabelSelectorBuilder struct {
@@ -53,6 +55,7 @@ type ResolveHyperscalerAccountCredentialsSecretStep struct {
 	gardenerClient   *gardener.Client
 	opStorage        storage.Operations
 	rulesService     *rules.RulesService
+	mux              sync.Mutex
 }
 
 func NewResolveHyperscalerAccountCredentialsSecretStep(os storage.Operations, gardenerClient *gardener.Client, rulesService *rules.RulesService) *ResolveHyperscalerAccountCredentialsSecretStep {
@@ -70,18 +73,32 @@ func (s *ResolveHyperscalerAccountCredentialsSecretStep) Name() string {
 }
 
 func (s *ResolveHyperscalerAccountCredentialsSecretStep) Run(operation internal.Operation, log *slog.Logger) (internal.Operation, time.Duration, error) {
+	var targetSecretBindingName string
 	attr := s.provisioningAttributesFromOperationData(operation)
 	s.rulesService.Match(attr)
 	var hapParserResult HAPParserResult
 	labelSelectorBuilder := s.createLabelSelectorBuilder(hapParserResult, operation.ProvisioningParameters.ErsContext.GlobalAccountID)
 	secretBindings, err := s.getSecretBindings(labelSelectorBuilder.String())
-	_ = secretBindings
 	if err != nil {
 		msg := fmt.Sprintf("listing service bindings with selector %q", labelSelectorBuilder.String())
 		return s.operationManager.RetryOperation(operation, msg, err, 10*time.Second, time.Minute, log)
 	}
+	switch {
+	case hapParserResult.IsShared():
+		targetSecretBindingName, err = s.getLeastUsedSecretBindingName(secretBindings)
+		if err != nil {
+			msg := fmt.Sprintf("unable to resolve secret binding for global account ID %s on hyperscaler %s", operation.ProvisioningParameters.ErsContext.GlobalAccountID, hapParserResult.HyperscalerType())
+			return s.operationManager.RetryOperation(operation, msg, err, 10*time.Second, time.Minute, log)
+		}
+	}
 
-	return operation, 0, errors.New("not implemented")
+	if targetSecretBindingName == "" {
+		return s.operationManager.OperationFailed(operation, "failed to determine secret binding name", err, log)
+	}
+
+	return s.operationManager.UpdateOperation(operation, func(op *internal.Operation) {
+		op.ProvisioningParameters.Parameters.TargetSecret = &targetSecretBindingName
+	}, log)
 }
 
 func (s *ResolveHyperscalerAccountCredentialsSecretStep) provisioningAttributesFromOperationData(operation internal.Operation) *rules.ProvisioningAttributes {
@@ -120,6 +137,53 @@ func (s *ResolveHyperscalerAccountCredentialsSecretStep) getSecretBindings(label
 	ctx, cancel := context.WithTimeout(context.Background(), requestTimeout)
 	defer cancel()
 	return s.gardenerClient.Resource(gardener.SecretBindingResource).Namespace(s.gardenerClient.Namespace()).List(ctx, metav1.ListOptions{LabelSelector: labelSelector})
+}
+
+func (s *ResolveHyperscalerAccountCredentialsSecretStep) getLeastUsedSecretBindingName(secretBindings *unstructured.UnstructuredList) (string, error) {
+	secretBinding, err := s.getLeastUsedSecretBinding(secretBindings.Items)
+	if err != nil {
+		return "", fmt.Errorf("while getting least used secret binding: %w", err)
+	}
+
+	return secretBinding.GetSecretRefName(), nil
+}
+
+func (s *ResolveHyperscalerAccountCredentialsSecretStep) getLeastUsedSecretBinding(secretBindings []unstructured.Unstructured) (*gardener.SecretBinding, error) {
+	usageCount := make(map[string]int, len(secretBindings))
+	for _, s := range secretBindings {
+		usageCount[s.GetName()] = 0
+	}
+
+	shoots, err := s.gardenerClient.Resource(gardener.ShootResource).Namespace(s.gardenerClient.Namespace()).List(context.Background(), metav1.ListOptions{})
+	if err != nil {
+		return nil, fmt.Errorf("while listing shoots: %w", err)
+	}
+
+	if shoots == nil || len(shoots.Items) == 0 {
+		return &gardener.SecretBinding{Unstructured: secretBindings[0]}, nil
+	}
+
+	for _, shoot := range shoots.Items {
+		s := gardener.Shoot{Unstructured: shoot}
+		count, found := usageCount[s.GetSpecSecretBindingName()]
+		if !found {
+			continue
+		}
+
+		usageCount[s.GetSpecSecretBindingName()] = count + 1
+	}
+
+	min := usageCount[secretBindings[0].GetName()]
+	minIndex := 0
+
+	for i, sb := range secretBindings {
+		if usageCount[sb.GetName()] < min {
+			min = usageCount[sb.GetName()]
+			minIndex = i
+		}
+	}
+
+	return &gardener.SecretBinding{Unstructured: secretBindings[minIndex]}, nil
 }
 
 func NewLabelSelectorBuilder() *LabelSelectorBuilder {
