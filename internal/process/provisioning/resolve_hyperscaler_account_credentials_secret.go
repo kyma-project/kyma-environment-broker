@@ -2,6 +2,7 @@ package provisioning
 
 import (
 	"errors"
+	"fmt"
 	"log/slog"
 	"strings"
 	"time"
@@ -24,6 +25,9 @@ type HAPParserResult interface {
 
 // SecretBinding selectors
 const (
+	hyperscalerTypeSelectorFmt = gardener.HyperscalerTypeLabelKey + "=%s"
+	tenantNameSelectorFmt      = gardener.TenantNameLabelKey + "=%s"
+
 	dirtySelector    = gardener.DirtyLabelKey + "=true"
 	internalSelector = gardener.InternalLabelKey + "=true"
 	sharedSelector   = gardener.SharedLabelKey + "=true"
@@ -34,6 +38,11 @@ const (
 	notSharedSelector   = `!` + gardener.SharedLabelKey
 	notEUAccessSelector = `!` + gardener.EUAccessLabelKey
 )
+
+type LabelSelectorBuilder struct {
+	strings.Builder
+	base string
+}
 
 type ResolveHyperscalerAccountCredentialsSecretStep struct {
 	operationManager *process.OperationManager
@@ -58,7 +67,6 @@ func (s *ResolveHyperscalerAccountCredentialsSecretStep) Name() string {
 
 func (s *ResolveHyperscalerAccountCredentialsSecretStep) Run(operation internal.Operation, log *slog.Logger) (internal.Operation, time.Duration, error) {
 	attr := s.provisioningAttributesFromOperationData(operation)
-
 	s.rulesService.Match(attr)
 
 	return operation, 0, errors.New("not implemented")
@@ -73,8 +81,45 @@ func (s *ResolveHyperscalerAccountCredentialsSecretStep) provisioningAttributesF
 	}
 }
 
-func (s *ResolveHyperscalerAccountCredentialsSecretStep) buildLabelSelector(hapParserResult HAPParserResult) string {
-	var selectorBuilder strings.Builder
+func (s *ResolveHyperscalerAccountCredentialsSecretStep) createLabelSelectorBuilder(hapParserResult HAPParserResult, tenantName string) *LabelSelectorBuilder {
+	b := NewLabelSelectorBuilder()
+	b.With(fmt.Sprintf(hyperscalerTypeSelectorFmt, hapParserResult.HyperscalerType()))
+	b.With(notDirtySelector)
 
-	return selectorBuilder.String()
+	if hapParserResult.IsShared() {
+		b.With(sharedSelector)
+		b.SaveBase()
+		return b
+	}
+
+	if hapParserResult.IsEUAccess() {
+		b.With(euAccessSelector)
+	} else {
+		b.With(notEUAccessSelector)
+	}
+
+	b.SaveBase()
+	b.With(fmt.Sprintf(tenantNameSelectorFmt, tenantName))
+
+	return b
+}
+
+func NewLabelSelectorBuilder() *LabelSelectorBuilder {
+	return &LabelSelectorBuilder{}
+}
+
+func (b *LabelSelectorBuilder) With(s string) {
+	if b.Len() == 0 {
+		b.WriteString(s)
+	}
+	b.WriteString("," + s)
+}
+
+func (b *LabelSelectorBuilder) SaveBase() {
+	b.base = b.String()
+}
+
+func (b *LabelSelectorBuilder) RevertToBase() {
+	b.Reset()
+	b.WriteString(b.base)
 }
