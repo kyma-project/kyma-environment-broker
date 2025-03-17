@@ -6,7 +6,6 @@ import (
 	"time"
 
 	"github.com/kyma-project/kyma-environment-broker/common/hyperscaler"
-	"github.com/kyma-project/kyma-environment-broker/internal/event"
 	"github.com/kyma-project/kyma-environment-broker/internal/process"
 	"github.com/kyma-project/kyma-environment-broker/internal/process/deprovisioning"
 	"github.com/kyma-project/kyma-environment-broker/internal/process/input"
@@ -15,7 +14,7 @@ import (
 )
 
 func NewDeprovisioningProcessingQueue(ctx context.Context, workersAmount int, deprovisionManager *process.StagedManager,
-	cfg *Config, db storage.BrokerStorage, pub event.Publisher,
+	cfg *Config, db storage.BrokerStorage,
 	edpClient deprovisioning.EDPClient, accountProvider hyperscaler.AccountProvider,
 	k8sClientProvider K8sClientProvider, cli client.Client, configProvider input.ConfigurationProvider, logs *slog.Logger) *process.Queue {
 
