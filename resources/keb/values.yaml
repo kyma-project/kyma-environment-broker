@@ -9,34 +9,34 @@ global:
       path: europe-docker.pkg.dev/kyma-project/prod
     kyma_environment_broker:
       dir:
-      version: "1.16.2"
+      version: "1.16.3"
     kyma_environment_broker_schema_migrator:
       dir:
-      version: 1.16.2
+      version: 1.16.3
     kyma_environments_subaccount_cleanup_job:
       dir:
-      version: "1.16.2"
+      version: "1.16.3"
     kyma_environment_trial_cleanup_job:
       dir:
-      version: "1.16.2"
+      version: "1.16.3"
     kyma_environment_expirator_job:
       dir:
-      version: "1.16.2"
+      version: "1.16.3"
     kyma_environment_deprovision_retrigger_job:
       dir:
-      version: "1.16.2"
+      version: "1.16.3"
     kyma_environment_runtime_reconciler:
       dir:
-      version: "1.16.2"
+      version: "1.16.3"
     kyma_environment_subaccount_sync:
       dir:
-      version: "1.16.2"
+      version: "1.16.3"
     kyma_environment_globalaccounts:
       dir:
-      version: "1.16.2"
+      version: "1.16.3"
     kyma_environment_service_binding_cleanup_job:
       dir:
-      version: 1.16.2
+      version: 1.16.3
       
   kyma_environment_broker:
     serviceAccountName: "kcp-kyma-environment-broker"
@@ -333,13 +333,6 @@ cis:
 
 notification:
   url: "TBD"
-
-kim:
-  enabled: false
-  dryRun: true
-  viewOnly: true
-  plans: "preview"  # comma separated list of plans where KIM will be used
-  kimOnlyPlans: "no-plan" # comma separated list of plans where KIM will be used exclusively
 
 oidc:
   issuer: https://kymatest.accounts400.ondemand.com

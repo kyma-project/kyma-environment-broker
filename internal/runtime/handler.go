@@ -40,13 +40,11 @@ type Handler struct {
 	converter           Converter
 	defaultMaxPage      int
 	k8sClient           client.Client
-	kimConfig           broker.KimConfig
 	logger              *slog.Logger
 }
 
 func NewHandler(storage storage.BrokerStorage, defaultMaxPage int, defaultRequestRegion string,
-	k8sClient client.Client, kimConfig broker.KimConfig,
-	logger *slog.Logger) *Handler {
+	k8sClient client.Client, logger *slog.Logger) *Handler {
 	return &Handler{
 		instancesDb:         storage.Instances(),
 		operationsDb:        storage.Operations(),
@@ -56,7 +54,6 @@ func NewHandler(storage storage.BrokerStorage, defaultMaxPage int, defaultReques
 		subaccountStatesDb:  storage.SubaccountStates(),
 		converter:           NewConverter(defaultRequestRegion),
 		defaultMaxPage:      defaultMaxPage,
-		kimConfig:           kimConfig,
 		k8sClient:           k8sClient,
 		logger:              logger.With("service", "RuntimeHandler"),
 	}
