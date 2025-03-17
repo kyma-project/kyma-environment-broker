@@ -36,7 +36,7 @@ mend:
   language: golang-mod
   exclude:
     - "**/*_test.go"
-    - "testing/**"
+    - "**/testing/**"
     - "**/automock/**"
     - "**/*fake*.go"
     - "**/*mock*.go"
@@ -44,7 +44,7 @@ checkmarx-one:
   preset: go-default
   exclude:
     - "**/*_test.go"
-    - "testing/**"
+    - "**/testing/**"
     - "**/automock/**"
     - "**/*fake*.go"
     - "**/*mock*.go"
