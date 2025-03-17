@@ -3,8 +3,6 @@ package broker
 import (
 	"strings"
 
-	"github.com/kyma-incubator/compass/components/director/pkg/jsonschema"
-
 	"github.com/pivotal-cf/brokerapi/v12/domain"
 
 	pkg "github.com/kyma-project/kyma-environment-broker/common/runtime"
@@ -84,10 +82,6 @@ var validRegionsForTrial = map[TrialCloudRegion]struct{}{
 	Europe: {},
 	Us:     {},
 	Asia:   {},
-}
-
-type JSONSchemaValidator interface {
-	ValidateString(json string) (jsonschema.ValidationResult, error)
 }
 
 func AzureRegions(euRestrictedAccess bool) []string {

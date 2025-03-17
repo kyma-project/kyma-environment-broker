@@ -9,12 +9,14 @@ import (
 	"strings"
 	"time"
 
+	"github.com/kyma-project/kyma-environment-broker/internal/validator"
+	"github.com/santhosh-tekuri/jsonschema/v6"
+
 	"github.com/kyma-project/kyma-environment-broker/internal/regionssupportingmachine"
 
 	pkg "github.com/kyma-project/kyma-environment-broker/common/runtime"
 	"github.com/kyma-project/kyma-environment-broker/internal/assuredworkloads"
 
-	"github.com/kyma-incubator/compass/components/director/pkg/jsonschema"
 	"github.com/kyma-project/kyma-environment-broker/internal/euaccess"
 	"github.com/kyma-project/kyma-environment-broker/internal/kubeconfig"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -195,12 +197,12 @@ func (b *UpdateEndpoint) validateWithJsonSchemaValidator(details domain.UpdateDe
 		if err != nil {
 			return fmt.Errorf("while creating plan validator: %w", err)
 		}
-		result, err := planValidator.ValidateString(string(details.RawParameters))
-		if err != nil {
-			return fmt.Errorf("while executing JSON schema validator: %w", err)
+		var rawParameters any
+		if err = json.Unmarshal(details.RawParameters, &rawParameters); err != nil {
+			return fmt.Errorf("while unmarshaling raw parameters: %w", err)
 		}
-		if !result.Valid {
-			return fmt.Errorf("while validating update parameters: %w", result.Error)
+		if err = planValidator.Validate(rawParameters); err != nil {
+			return fmt.Errorf("while validating update parameters: %s", validator.FormatError(err))
 		}
 	}
 	return nil
@@ -449,12 +451,11 @@ func (b *UpdateEndpoint) extractActiveValue(id string, provisioning internal.Pro
 	return ptr.Bool(deprovisioning.CreatedAt.Before(provisioning.CreatedAt)), nil
 }
 
-func (b *UpdateEndpoint) getJsonSchemaValidator(provider pkg.CloudProvider, planID string, platformRegion string) (JSONSchemaValidator, error) {
+func (b *UpdateEndpoint) getJsonSchemaValidator(provider pkg.CloudProvider, planID string, platformRegion string) (*jsonschema.Schema, error) {
 	// shootAndSeedSameRegion is never enabled for update
 	b.log.Info(fmt.Sprintf("region is: %s", platformRegion))
 	plans := Plans(b.plansConfig, provider, nil, b.config.IncludeAdditionalParamsInSchema, euaccess.IsEURestrictedAccess(platformRegion), b.config.UseSmallerMachineTypes, false, b.convergedCloudRegionsProvider.GetRegions(platformRegion), assuredworkloads.IsKSA(platformRegion), b.config.UseAdditionalOIDCSchema)
 	plan := plans[planID]
-	schema := string(Marshal(plan.Schemas.Instance.Update.Parameters))
 
-	return jsonschema.NewValidatorFromStringSchema(schema)
+	return validator.NewFromSchema(plan.Schemas.Instance.Update.Parameters)
 }
