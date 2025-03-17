@@ -8,6 +8,14 @@ func SortRuleEntries(entries []*ParsingResult) []*ParsingResult {
 	sort.SliceStable(entries, func(i, j int) bool {
 
 		if len(entries[i].ParsingErrors) != 0 && len(entries[j].ParsingErrors) != 0 {
+			return len(entries[i].ParsingErrors) < len(entries[j].ParsingErrors)
+		}
+
+		if len(entries[i].ParsingErrors) != 0 || len(entries[j].ParsingErrors) != 0 {
+			return true
+		}
+
+		if len(entries[i].ParsingErrors) != 0 && len(entries[j].ParsingErrors) != 0 {
 			return len(entries[i].ProcessingErrors) < len(entries[j].ProcessingErrors)
 		}
 
