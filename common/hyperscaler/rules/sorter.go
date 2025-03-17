@@ -11,6 +11,7 @@ func SortRuleEntries(entries []*ParsingResult) []*ParsingResult {
 			return len(entries[i].ProcessingErrors) < len(entries[j].ProcessingErrors)
 		}
 
+		//TODO this is not correct rule without errors should precede rule with errors
 		if len(entries[i].ProcessingErrors) != 0 || len(entries[j].ProcessingErrors) != 0 {
 			return true
 		}
