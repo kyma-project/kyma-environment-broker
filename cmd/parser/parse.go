@@ -86,9 +86,9 @@ func (cmd *ParseCommand) Run() {
 	var err error
 	if cmd.ruleFilePath != "" {
 		cmd.cobraCmd.Printf("Parsing rules from file: %s\n", cmd.ruleFilePath)
-		rulesService, err = rules.NewRulesServiceFromFile(cmd.ruleFilePath, &enabledPlans, true, true, true)
+		rulesService, err = rules.NewRulesServiceFromFile(cmd.ruleFilePath, &enabledPlans)
 	} else {
-		rulesService, err = rules.NewRulesServiceFromString(cmd.rule, &enabledPlans, true, true, true)
+		rulesService, err = rules.NewRulesServiceFromString(cmd.rule, &enabledPlans)
 	}
 
 	if err != nil {

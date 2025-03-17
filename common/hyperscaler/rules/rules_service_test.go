@@ -22,7 +22,7 @@ func TestNewRulesServiceFromFile(t *testing.T) {
 
 		// when
 		enabledPlans := &broker.EnablePlans{"rule1", "rule2"}
-		service, err := NewRulesServiceFromFile(tmpfile, enabledPlans, false, false, false)
+		service, err := NewRulesServiceFromFile(tmpfile, enabledPlans)
 
 		// then
 		require.NoError(t, err)
@@ -36,7 +36,7 @@ func TestNewRulesServiceFromFile(t *testing.T) {
 
 	t.Run("should return error when file path is empty", func(t *testing.T) {
 		// when
-		service, err := NewRulesServiceFromFile("", &broker.EnablePlans{}, false, false, false)
+		service, err := NewRulesServiceFromFile("", &broker.EnablePlans{})
 
 		// then
 		require.Error(t, err)
@@ -46,7 +46,7 @@ func TestNewRulesServiceFromFile(t *testing.T) {
 
 	t.Run("should return error when file does not exist", func(t *testing.T) {
 		// when
-		service, err := NewRulesServiceFromFile("nonexistent.yaml", &broker.EnablePlans{}, false, false, false)
+		service, err := NewRulesServiceFromFile("nonexistent.yaml", &broker.EnablePlans{})
 
 		// then
 		require.Error(t, err)
@@ -62,7 +62,7 @@ func TestNewRulesServiceFromFile(t *testing.T) {
 		defer os.Remove(tmpfile)
 
 		// when
-		service, err := NewRulesServiceFromFile(tmpfile, &broker.EnablePlans{}, false, false, false)
+		service, err := NewRulesServiceFromFile(tmpfile, &broker.EnablePlans{})
 
 		// then
 		require.Error(t, err)

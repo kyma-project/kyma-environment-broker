@@ -11,15 +11,11 @@ import (
 )
 
 type RulesService struct {
-	sort      bool
-	unique    bool
-	signature bool
-
 	parser Parser
 	Parsed *ParsingResults
 }
 
-func NewRulesServiceFromFile(rulesFilePath string, enabledPlans *broker.EnablePlans, sort, unique, signature bool) (*RulesService, error) {
+func NewRulesServiceFromFile(rulesFilePath string, enabledPlans *broker.EnablePlans) (*RulesService, error) {
 
 	if rulesFilePath == "" {
 		return nil, fmt.Errorf("No HAP rules file path provided")
@@ -31,11 +27,11 @@ func NewRulesServiceFromFile(rulesFilePath string, enabledPlans *broker.EnablePl
 		return nil, fmt.Errorf("failed to open file: %s", err)
 	}
 
-	rs, err := NewRulesService(file, enabledPlans, sort, unique, signature)
+	rs, err := NewRulesService(file, enabledPlans)
 	return rs, err
 }
 
-func NewRulesService(file *os.File, enabledPlans *broker.EnablePlans, sort, unique, signature bool) (*RulesService, error) {
+func NewRulesService(file *os.File, enabledPlans *broker.EnablePlans) (*RulesService, error) {
 	rulesConfig := &RulesConfig{}
 
 	if file == nil {
@@ -51,16 +47,13 @@ func NewRulesService(file *os.File, enabledPlans *broker.EnablePlans, sort, uniq
 		parser: &SimpleParser{
 			enabledPlans: enabledPlans,
 		},
-		sort:      sort,
-		unique:    unique,
-		signature: signature,
 	}
 
 	rs.Parsed = rs.parse(rulesConfig)
 	return rs, err
 }
 
-func NewRulesServiceFromString(rules string, enabledPlans *broker.EnablePlans, sort, unique, signature bool) (*RulesService, error) {
+func NewRulesServiceFromString(rules string, enabledPlans *broker.EnablePlans) (*RulesService, error) {
 	entries := strings.Split(rules, ";")
 
 	rulesConfig := &RulesConfig{
@@ -71,9 +64,6 @@ func NewRulesServiceFromString(rules string, enabledPlans *broker.EnablePlans, s
 		parser: &SimpleParser{
 			enabledPlans: enabledPlans,
 		},
-		sort:      sort,
-		unique:    unique,
-		signature: signature,
 	}
 
 	rs.Parsed = rs.parse(rulesConfig)
@@ -89,21 +79,13 @@ func (rs *RulesService) parse(rulesConfig *RulesConfig) *ParsingResults {
 		results.Apply(entry, rule, err)
 	}
 
-	if rs.sort {
-		results.Results = SortRuleEntries(results.Results)
-	}
+	results.Results = SortRuleEntries(results.Results)
 
-	if rs.unique {
-		results.CheckUniqueness()
-	}
+	results.CheckUniqueness()
 
-	if rs.signature {
-		results.CheckSignatures()
-	}
+	results.CheckSignatures()
 
-	if rs.sort {
-		results.Results = SortRuleEntries(results.Results)
-	}
+	results.Results = SortRuleEntries(results.Results)
 
 	return results
 }

@@ -38,7 +38,7 @@ func TestMatchDifferentArtificialScenarios(t *testing.T) {
 
 	defer os.Remove(tmpfile)
 
-	svc, err := NewRulesServiceFromFile(tmpfile, &broker.EnablePlans{"azure", "gcp", "trial", "aws", "free"}, true, true, true)
+	svc, err := NewRulesServiceFromFile(tmpfile, &broker.EnablePlans{"azure", "gcp", "trial", "aws", "free"})
 	require.NoError(t, err)
 
 	for _, result := range svc.Parsed.Results {
