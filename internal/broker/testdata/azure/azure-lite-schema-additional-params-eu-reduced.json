@@ -25,11 +25,11 @@
         "_controlsOrder": ["name", "machineType", "autoScalerMin", "autoScalerMax"],
         "properties": {
           "name": {
-            "description": "Specifies the unique name of the additional worker node pool. The name must consist of lowercase alphanumeric characters or '-', must start and end with an alphanumeric character, and can be a maximum of 15 characters in length.",
+            "description": "Specifies the unique name of the additional worker node pool. The name must consist of lowercase alphanumeric characters or '-', must start and end with an alphanumeric character, and can be a maximum of 15 characters in length. Do not use the name “cpu-worker-0” because it's reserved for the Kyma worker node pool.",
             "type": "string",
             "minLength": 1,
             "maxLength": 15,
-            "pattern": "^[a-z0-9]([-a-z0-9]*[a-z0-9])?$"
+            "pattern": "^(?!cpu-worker-0$)[a-z0-9]([-a-z0-9]*[a-z0-9])?$"
           },
           "machineType": {
             "description": "Specifies the type of the virtual machine. The machine type marked with “*” has limited availability and generates high cost.",

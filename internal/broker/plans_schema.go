@@ -13,7 +13,7 @@ type RootSchema struct {
 	Schema string `json:"$schema"`
 	Type
 	Properties interface{} `json:"properties"`
-	Required   []string    `json:"required"`
+	Required   []string    `json:"required,omitempty"`
 
 	// Specified to true enables form view on website
 	ShowFormView bool `json:"_show_form_view"`
@@ -594,12 +594,11 @@ func NewAdditionalWorkerNodePoolsSchema(machineTypesDisplay map[string]string, m
 			},
 			Properties: AdditionalWorkerNodePoolsItemsProperties{
 				Name: Type{
-					Type:      "string",
-					MinLength: 1,
-					MaxLength: 15,
-					// Allows for all alphanumeric characters and '-'
-					Pattern:     "^[a-z0-9]([-a-z0-9]*[a-z0-9])?$",
-					Description: "Specifies the unique name of the additional worker node pool. The name must consist of lowercase alphanumeric characters or '-', must start and end with an alphanumeric character, and can be a maximum of 15 characters in length.",
+					Type:        "string",
+					MinLength:   1,
+					MaxLength:   15,
+					Pattern:     "^(?!cpu-worker-0$)[a-z0-9]([-a-z0-9]*[a-z0-9])?$",
+					Description: "Specifies the unique name of the additional worker node pool. The name must consist of lowercase alphanumeric characters or '-', must start and end with an alphanumeric character, and can be a maximum of 15 characters in length. Do not use the name “cpu-worker-0” because it's reserved for the Kyma worker node pool.",
 				},
 				MachineType: Type{
 					Type:            "string",
