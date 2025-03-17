@@ -90,6 +90,32 @@ func (s *ResolveHyperscalerAccountCredentialsSecretStep) Run(operation internal.
 			msg := fmt.Sprintf("unable to resolve secret binding for global account ID %s on hyperscaler %s", operation.ProvisioningParameters.ErsContext.GlobalAccountID, hapParserResult.HyperscalerType())
 			return s.operationManager.RetryOperation(operation, msg, err, 10*time.Second, time.Minute, log)
 		}
+	case secretBindings != nil && len(secretBindings.Items) > 0:
+		targetSecretBindingName = gardener.SecretBinding{Unstructured: secretBindings.Items[0]}.GetSecretRefName()
+	case secretBindings != nil && len(secretBindings.Items) == 0:
+		labelSelectorBuilder.RevertToBase()
+		labelSelectorBuilder.With(notSharedSelector)
+		labelSelectorBuilder.With(notTenantNamedSelector)
+		secretBindings, err = s.getSecretBindings(labelSelectorBuilder.String())
+		if err != nil {
+			msg := fmt.Sprintf("listing service bindings with selector %q", labelSelectorBuilder.String())
+			return s.operationManager.RetryOperation(operation, msg, err, 10*time.Second, time.Minute, log)
+		}
+		if secretBindings == nil || len(secretBindings.Items) == 0 {
+			err := fmt.Errorf("failed to find unassigned secret binding for hyperscaler: %s", hapParserResult.HyperscalerType())
+			return s.operationManager.RetryOperation(operation, "getting unassigned secret binding", err, 10*time.Second, time.Minute, log)
+		}
+		secretBinding := &gardener.SecretBinding{Unstructured: secretBindings.Items[0]}
+		labels := secretBinding.GetLabels()
+		labels["tenantName"] = operation.ProvisioningParameters.ErsContext.GlobalAccountID
+		secretBinding.SetLabels(labels)
+		// mutex
+		updatedSecretBinding, err := s.gardenerClient.Resource(gardener.SecretBindingResource).Namespace(s.gardenerClient.Namespace()).Update(context.Background(), &secretBinding.Unstructured, metav1.UpdateOptions{})
+		if err != nil {
+			err = fmt.Errorf("while updating secret binding with tenantName: %s: %w", operation.ProvisioningParameters.ErsContext.GlobalAccountID, err)
+			return s.operationManager.RetryOperation(operation, "updating unassigned secret binding", err, 10*time.Second, time.Minute, log)
+		}
+		targetSecretBindingName = gardener.SecretBinding{Unstructured: *updatedSecretBinding}.GetSecretRefName()
 	}
 
 	if targetSecretBindingName == "" {
