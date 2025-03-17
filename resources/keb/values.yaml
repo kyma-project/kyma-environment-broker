@@ -334,13 +334,6 @@ cis:
 notification:
   url: "TBD"
 
-kim:
-  enabled: false
-  dryRun: true
-  viewOnly: true
-  plans: "preview"  # comma separated list of plans where KIM will be used
-  kimOnlyPlans: "no-plan" # comma separated list of plans where KIM will be used exclusively
-
 oidc:
   issuer: https://kymatest.accounts400.ondemand.com
   keysURL: https://kymatest.accounts400.ondemand.com/oauth2/certs

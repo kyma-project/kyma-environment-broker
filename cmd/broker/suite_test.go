@@ -249,20 +249,6 @@ func fixConfig() *Config {
 		"build-runtime-azure",
 	}
 
-	kimConfigPlans := []string{
-		"preview",
-		"aws",
-		"gcp",
-		"azure",
-		"trial",
-		"free",
-		"sap-converged-cloud",
-		"azure_lite",
-		"build-runtime-aws",
-		"build-runtime-gcp",
-		"build-runtime-azure",
-	}
-
 	return &Config{
 		DbInMemory:                         true,
 		DisableProcessOperationsInProgress: false,
@@ -304,11 +290,6 @@ func fixConfig() *Config {
 				MinExpirationSeconds: 600,
 				MaxBindingsCount:     10,
 				CreateBindingTimeout: 15 * time.Second,
-			},
-			KimConfig: broker.KimConfig{
-				Enabled:      true,
-				Plans:        kimConfigPlans,
-				KimOnlyPlans: kimConfigPlans,
 			},
 			WorkerHealthCheckInterval:     10 * time.Minute,
 			WorkerHealthCheckWarnInterval: 10 * time.Minute,
