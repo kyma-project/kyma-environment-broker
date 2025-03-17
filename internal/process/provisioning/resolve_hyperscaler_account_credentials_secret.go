@@ -8,13 +8,13 @@ import (
 	"time"
 
 	"github.com/kyma-project/kyma-environment-broker/common/gardener"
-	"github.com/kyma-project/kyma-environment-broker/common/hyperscaler"
 	"github.com/kyma-project/kyma-environment-broker/common/hyperscaler/rules"
 	"github.com/kyma-project/kyma-environment-broker/internal"
 	"github.com/kyma-project/kyma-environment-broker/internal/broker"
 	kebError "github.com/kyma-project/kyma-environment-broker/internal/error"
 	"github.com/kyma-project/kyma-environment-broker/internal/process"
 	"github.com/kyma-project/kyma-environment-broker/internal/storage"
+	"k8s.io/client-go/dynamic"
 )
 
 type HAPParserResult interface {
@@ -45,17 +45,17 @@ type LabelSelectorBuilder struct {
 }
 
 type ResolveHyperscalerAccountCredentialsSecretStep struct {
-	operationManager *process.OperationManager
-	accountProvider  hyperscaler.AccountProvider
-	opStorage        storage.Operations
-	rulesService     *rules.RulesService
+	operationManager    *process.OperationManager
+	secretBindingClient dynamic.ResourceInterface
+	opStorage           storage.Operations
+	rulesService        *rules.RulesService
 }
 
-func NewResolveHyperscalerAccountCredentialsSecretStep(os storage.Operations, accountProvider hyperscaler.AccountProvider, rulesService *rules.RulesService) *ResolveHyperscalerAccountCredentialsSecretStep {
+func NewResolveHyperscalerAccountCredentialsSecretStep(os storage.Operations, secretBindingClient dynamic.ResourceInterface, rulesService *rules.RulesService) *ResolveHyperscalerAccountCredentialsSecretStep {
 	step := &ResolveHyperscalerAccountCredentialsSecretStep{
-		opStorage:       os,
-		accountProvider: accountProvider,
-		rulesService:    rulesService,
+		opStorage:           os,
+		secretBindingClient: secretBindingClient,
+		rulesService:        rulesService,
 	}
 	step.operationManager = process.NewOperationManager(os, step.Name(), kebError.AccountPoolDependency)
 	return step
