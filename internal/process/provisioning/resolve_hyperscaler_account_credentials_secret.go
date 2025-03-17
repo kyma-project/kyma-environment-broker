@@ -1,6 +1,7 @@
 package provisioning
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"log/slog"
@@ -14,6 +15,8 @@ import (
 	kebError "github.com/kyma-project/kyma-environment-broker/internal/error"
 	"github.com/kyma-project/kyma-environment-broker/internal/process"
 	"github.com/kyma-project/kyma-environment-broker/internal/storage"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/client-go/dynamic"
 )
 
@@ -22,6 +25,8 @@ type HAPParserResult interface {
 	IsShared() bool
 	IsEUAccess() bool
 }
+
+const requestTimeout = 10 * time.Second
 
 // SecretBinding selectors
 const (
@@ -68,6 +73,14 @@ func (s *ResolveHyperscalerAccountCredentialsSecretStep) Name() string {
 func (s *ResolveHyperscalerAccountCredentialsSecretStep) Run(operation internal.Operation, log *slog.Logger) (internal.Operation, time.Duration, error) {
 	attr := s.provisioningAttributesFromOperationData(operation)
 	s.rulesService.Match(attr)
+	var hapParserResult HAPParserResult
+	labelSelectorBuilder := s.createLabelSelectorBuilder(hapParserResult, operation.ProvisioningParameters.ErsContext.GlobalAccountID)
+	secretBindings, err := s.getSecretBindings(labelSelectorBuilder.String())
+	_ = secretBindings
+	if err != nil {
+		msg := fmt.Sprintf("listing service bindings with selector %q", labelSelectorBuilder.String())
+		return s.operationManager.RetryOperation(operation, msg, err, 10*time.Second, time.Minute, log)
+	}
 
 	return operation, 0, errors.New("not implemented")
 }
@@ -102,6 +115,12 @@ func (s *ResolveHyperscalerAccountCredentialsSecretStep) createLabelSelectorBuil
 	b.With(fmt.Sprintf(tenantNameSelectorFmt, tenantName))
 
 	return b
+}
+
+func (s *ResolveHyperscalerAccountCredentialsSecretStep) getSecretBindings(labelSelector string) (*unstructured.UnstructuredList, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), requestTimeout)
+	defer cancel()
+	return s.secretBindingClient.List(ctx, metav1.ListOptions{LabelSelector: labelSelector})
 }
 
 func NewLabelSelectorBuilder() *LabelSelectorBuilder {
