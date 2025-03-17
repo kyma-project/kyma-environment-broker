@@ -133,7 +133,7 @@ func (rs *RulesService) Match(data *ProvisioningAttributes) map[uuid.UUID]*Match
 	return matchingResults
 }
 
-func (rs *RulesService) FailOnParsingErrors() error {
+func (rs *RulesService) FirstParsingError() error {
 	for _, result := range rs.Parsed.Results {
 		if result.HasErrors() {
 			buffer := ""

@@ -300,7 +300,7 @@ func main() {
 
 	rulesService, err := rules.NewRulesServiceFromFile(cfg.HapRuleFilePath, &cfg.Broker.EnablePlans)
 	fatalOnError(err, log)
-	err = rulesService.FailOnParsingErrors()
+	err = rulesService.FirstParsingError()
 	if err != nil {
 		log.Error(fmt.Sprintf("Error: %s", err))
 	}
