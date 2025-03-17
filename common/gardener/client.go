@@ -10,6 +10,15 @@ import (
 	"k8s.io/client-go/tools/clientcmd"
 )
 
+const (
+	TenantNameLabelKey      = "tenantName"
+	HyperscalerTypeLabelKey = "hyperscalerType"
+	DirtyLabelKey           = "dirty"
+	InternalLabelKey        = "internal"
+	SharedLabelKey          = "shared"
+	EUAccessLabelKey        = "euAccess"
+)
+
 type SecretBinding struct {
 	unstructured.Unstructured
 }
