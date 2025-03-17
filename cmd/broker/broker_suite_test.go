@@ -261,9 +261,7 @@ func NewBrokerSuiteTestWithConfig(t *testing.T, cfg *Config, version ...string) 
 	expirationHandler := expiration.NewHandler(db.Instances(), db.Operations(), deprovisioningQueue, log)
 	expirationHandler.AttachRoutes(ts.router)
 
-	runtimeHandler := kebRuntime.NewHandler(db, cfg.MaxPaginationPage, cfg.DefaultRequestRegion, cli, broker.KimConfig{
-		Enabled: false,
-	}, log)
+	runtimeHandler := kebRuntime.NewHandler(db, cfg.MaxPaginationPage, cfg.DefaultRequestRegion, cli, log)
 	runtimeHandler.AttachRoutes(ts.router)
 
 	ts.httpServer = httptest.NewServer(ts.router)

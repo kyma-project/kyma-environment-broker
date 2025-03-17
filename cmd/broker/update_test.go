@@ -2155,9 +2155,6 @@ func TestUpdateAdditionalWorkerNodePools(t *testing.T) {
 	t.Run("should add additional worker node pools", func(t *testing.T) {
 		// given
 		cfg := fixConfig()
-		cfg.Broker.KimConfig.Enabled = true
-		cfg.Broker.KimConfig.Plans = []string{"aws"}
-		cfg.Broker.KimConfig.KimOnlyPlans = []string{"aws"}
 
 		suite := NewBrokerSuiteTestWithConfig(t, cfg)
 		defer suite.TearDown()
@@ -2224,9 +2221,6 @@ func TestUpdateAdditionalWorkerNodePools(t *testing.T) {
 	t.Run("should replace additional worker node pools", func(t *testing.T) {
 		// given
 		cfg := fixConfig()
-		cfg.Broker.KimConfig.Enabled = true
-		cfg.Broker.KimConfig.Plans = []string{"aws"}
-		cfg.Broker.KimConfig.KimOnlyPlans = []string{"aws"}
 
 		suite := NewBrokerSuiteTestWithConfig(t, cfg)
 		defer suite.TearDown()
@@ -2294,9 +2288,6 @@ func TestUpdateAdditionalWorkerNodePools(t *testing.T) {
 	t.Run("should remove additional worker node pools when list is empty", func(t *testing.T) {
 		// given
 		cfg := fixConfig()
-		cfg.Broker.KimConfig.Enabled = true
-		cfg.Broker.KimConfig.Plans = []string{"aws"}
-		cfg.Broker.KimConfig.KimOnlyPlans = []string{"aws"}
 
 		suite := NewBrokerSuiteTestWithConfig(t, cfg)
 		defer suite.TearDown()
@@ -2362,9 +2353,6 @@ func TestUpdateAdditionalWorkerNodePools(t *testing.T) {
 	t.Run("updated additional worker node pool should have the same zones", func(t *testing.T) {
 		// given
 		cfg := fixConfig()
-		cfg.Broker.KimConfig.Enabled = true
-		cfg.Broker.KimConfig.Plans = []string{"aws"}
-		cfg.Broker.KimConfig.KimOnlyPlans = []string{"aws"}
 
 		suite := NewBrokerSuiteTestWithConfig(t, cfg)
 		defer suite.TearDown()

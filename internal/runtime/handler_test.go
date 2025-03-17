@@ -32,9 +32,6 @@ import (
 
 func TestRuntimeHandler(t *testing.T) {
 	k8sClient := fake.NewClientBuilder().Build()
-	kimConfig := broker.KimConfig{
-		Enabled: false,
-	}
 	log := slog.New(slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{
 		Level: slog.LevelInfo,
 	}))
@@ -64,7 +61,7 @@ func TestRuntimeHandler(t *testing.T) {
 		err = instances.Insert(testInstance2)
 		require.NoError(t, err)
 
-		runtimeHandler := runtime.NewHandler(db, 2, "", k8sClient, kimConfig, log)
+		runtimeHandler := runtime.NewHandler(db, 2, "", k8sClient, log)
 
 		req, err := http.NewRequest("GET", "/runtimes?page_size=1", nil)
 		require.NoError(t, err)
@@ -113,7 +110,7 @@ func TestRuntimeHandler(t *testing.T) {
 
 		db := storage.NewMemoryStorage()
 
-		runtimeHandler := runtime.NewHandler(db, 2, "region", k8sClient, kimConfig, log)
+		runtimeHandler := runtime.NewHandler(db, 2, "region", k8sClient, log)
 
 		req, err := http.NewRequest("GET", "/runtimes?page_size=a", nil)
 		require.NoError(t, err)
@@ -168,7 +165,7 @@ func TestRuntimeHandler(t *testing.T) {
 		err = operations.InsertOperation(testOp2)
 		require.NoError(t, err)
 
-		runtimeHandler := runtime.NewHandler(db, 2, "", k8sClient, kimConfig, log)
+		runtimeHandler := runtime.NewHandler(db, 2, "", k8sClient, log)
 
 		req, err := http.NewRequest("GET", fmt.Sprintf("/runtimes?account=%s&subaccount=%s&instance_id=%s&runtime_id=%s&region=%s&shoot=%s", testID1, testID1, testID1, testID1, testID1, fmt.Sprintf("Shoot-%s", testID1)), nil)
 		require.NoError(t, err)
@@ -241,7 +238,7 @@ func TestRuntimeHandler(t *testing.T) {
 		err = operations.InsertDeprovisioningOperation(deprovOp3)
 		require.NoError(t, err)
 
-		runtimeHandler := runtime.NewHandler(db, 2, "", k8sClient, kimConfig, log)
+		runtimeHandler := runtime.NewHandler(db, 2, "", k8sClient, log)
 
 		rr := httptest.NewRecorder()
 		router := httputil.NewRouter()
@@ -347,7 +344,7 @@ func TestRuntimeHandler(t *testing.T) {
 		})
 		require.NoError(t, err)
 
-		runtimeHandler := runtime.NewHandler(db, 2, "", k8sClient, kimConfig, log)
+		runtimeHandler := runtime.NewHandler(db, 2, "", k8sClient, log)
 
 		req, err := http.NewRequest("GET", "/runtimes", nil)
 		require.NoError(t, err)
@@ -417,7 +414,7 @@ func TestRuntimeHandler(t *testing.T) {
 		})
 		require.NoError(t, err)
 
-		runtimeHandler := runtime.NewHandler(db, 2, "", k8sClient, kimConfig, log)
+		runtimeHandler := runtime.NewHandler(db, 2, "", k8sClient, log)
 
 		req, err := http.NewRequest("GET", "/runtimes", nil)
 		require.NoError(t, err)
@@ -486,7 +483,7 @@ func TestRuntimeHandler(t *testing.T) {
 		})
 		require.NoError(t, err)
 
-		runtimeHandler := runtime.NewHandler(db, 2, "", k8sClient, kimConfig, log)
+		runtimeHandler := runtime.NewHandler(db, 2, "", k8sClient, log)
 
 		req, err := http.NewRequest("GET", "/runtimes", nil)
 		require.NoError(t, err)
@@ -538,7 +535,7 @@ func TestRuntimeHandler(t *testing.T) {
 		err = operations.InsertUpdatingOperation(updOp)
 		require.NoError(t, err)
 
-		runtimeHandler := runtime.NewHandler(db, 2, "", k8sClient, kimConfig, log)
+		runtimeHandler := runtime.NewHandler(db, 2, "", k8sClient, log)
 
 		rr := httptest.NewRecorder()
 		router := httputil.NewRouter()
@@ -667,7 +664,7 @@ func TestRuntimeHandler(t *testing.T) {
 		err = states.Insert(fixOpgClusterState)
 		require.NoError(t, err)
 
-		runtimeHandler := runtime.NewHandler(db, 2, "", k8sClient, kimConfig, log)
+		runtimeHandler := runtime.NewHandler(db, 2, "", k8sClient, log)
 
 		rr := httptest.NewRecorder()
 		router := httputil.NewRouter()
@@ -699,11 +696,6 @@ func TestRuntimeHandler(t *testing.T) {
 func TestRuntimeHandler_WithKimOnlyDrivenInstances(t *testing.T) {
 	runtimeObj := fixRuntimeResource(t, "runtime-test1", "kcp-system")
 	k8sClient := fake.NewClientBuilder().WithRuntimeObjects(runtimeObj.obj).Build()
-	kimConfig := broker.KimConfig{
-		Enabled:      true,
-		Plans:        []string{"preview"},
-		KimOnlyPlans: []string{"preview"},
-	}
 
 	log := slog.New(slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{
 		Level: slog.LevelInfo,
@@ -731,7 +723,7 @@ func TestRuntimeHandler_WithKimOnlyDrivenInstances(t *testing.T) {
 		err = operations.InsertUpdatingOperation(updOp)
 		require.NoError(t, err)
 
-		runtimeHandler := runtime.NewHandler(db, 2, "", k8sClient, kimConfig, log)
+		runtimeHandler := runtime.NewHandler(db, 2, "", k8sClient, log)
 
 		rr := httptest.NewRecorder()
 		router := httputil.NewRouter()
@@ -841,7 +833,7 @@ func TestRuntimeHandler_WithKimOnlyDrivenInstances(t *testing.T) {
 		err = operations.InsertUpdatingOperation(updOp)
 		require.NoError(t, err)
 
-		runtimeHandler := runtime.NewHandler(db, 4, "", k8sClient, kimConfig, log)
+		runtimeHandler := runtime.NewHandler(db, 4, "", k8sClient, log)
 
 		rr := httptest.NewRecorder()
 		router := httputil.NewRouter()
@@ -978,7 +970,7 @@ func TestRuntimeHandler_WithKimOnlyDrivenInstances(t *testing.T) {
 		err = states.Insert(fixOpgClusterState)
 		require.NoError(t, err)
 
-		runtimeHandler := runtime.NewHandler(db, 2, "", k8sClient, kimConfig, log)
+		runtimeHandler := runtime.NewHandler(db, 2, "", k8sClient, log)
 
 		rr := httptest.NewRecorder()
 		router := httputil.NewRouter()
@@ -1031,7 +1023,7 @@ func TestRuntimeHandler_WithKimOnlyDrivenInstances(t *testing.T) {
 		err = bindings.Insert(&binding)
 		require.NoError(t, err)
 
-		runtimeHandler := runtime.NewHandler(db, 2, "", k8sClient, kimConfig, log)
+		runtimeHandler := runtime.NewHandler(db, 2, "", k8sClient, log)
 
 		rr := httptest.NewRecorder()
 		router := httputil.NewRouter()
@@ -1070,7 +1062,7 @@ func TestRuntimeHandler_WithKimOnlyDrivenInstances(t *testing.T) {
 		err = operations.InsertOperation(provOp)
 		require.NoError(t, err)
 
-		runtimeHandler := runtime.NewHandler(db, 2, "", k8sClient, kimConfig, log)
+		runtimeHandler := runtime.NewHandler(db, 2, "", k8sClient, log)
 
 		rr := httptest.NewRecorder()
 		router := httputil.NewRouter()

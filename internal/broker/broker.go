@@ -52,7 +52,6 @@ type Config struct {
 	AllowUpdateExpiredInstanceWithContext   bool          `envconfig:"default=false"`
 
 	Binding                BindingConfig
-	KimConfig              KimConfig
 	UseSmallerMachineTypes bool `envconfig:"default=false"`
 
 	DisableSapConvergedCloud bool `envconfig:"default=false"`

@@ -357,7 +357,6 @@ func main() {
 	runtimeHandler := runtime.NewHandler(db, cfg.MaxPaginationPage,
 		cfg.DefaultRequestRegion,
 		kcpK8sClient,
-		cfg.Broker.KimConfig,
 		log)
 	runtimeHandler.AttachRoutes(router)
 
@@ -383,12 +382,6 @@ func logConfiguration(logs *slog.Logger, cfg Config) {
 	logs.Info(fmt.Sprintf("InfrastructureManagerIntegrationDisabled: %v", cfg.InfrastructureManagerIntegrationDisabled))
 	logs.Info(fmt.Sprintf("Archiving enabled: %v, dry run: %v", cfg.ArchiveEnabled, cfg.ArchiveDryRun))
 	logs.Info(fmt.Sprintf("Cleaning enabled: %v, dry run: %v", cfg.CleaningEnabled, cfg.CleaningDryRun))
-	logs.Info(fmt.Sprintf("KIM enabled: %t, dry run: %t, view only CR: %t, plans: %s, KIM only plans: %s",
-		cfg.Broker.KimConfig.Enabled,
-		cfg.Broker.KimConfig.DryRun,
-		cfg.Broker.KimConfig.ViewOnly,
-		cfg.Broker.KimConfig.Plans,
-		cfg.Broker.KimConfig.KimOnlyPlans))
 	logs.Info(fmt.Sprintf("Is SubaccountMovementEnabled: %t", cfg.Broker.SubaccountMovementEnabled))
 	logs.Info(fmt.Sprintf("Is UpdateCustomResourcesLabelsOnAccountMove enabled: %t", cfg.Broker.UpdateCustomResourcesLabelsOnAccountMove))
 }
