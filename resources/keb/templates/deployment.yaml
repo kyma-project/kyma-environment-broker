@@ -277,16 +277,6 @@ spec:
               value: "{{ .Values.useSmallerMachineTypes }}"
             - name: APP_BROKER_USE_ADDITIONAL_OIDC_SCHEMA
               value: "{{ .Values.broker.useAdditionalOIDCSchema }}"
-            - name: APP_BROKER_KIM_CONFIG_ENABLED
-              value: "{{ .Values.kim.enabled }}"
-            - name: APP_BROKER_KIM_CONFIG_DRY_RUN
-              value: "{{ .Values.kim.dryRun }}"
-            - name: APP_BROKER_KIM_CONFIG_VIEW_ONLY
-              value: "{{ .Values.kim.viewOnly }}"
-            - name: APP_BROKER_KIM_CONFIG_PLANS
-              value: "{{ .Values.kim.plans }}"
-            - name: APP_BROKER_KIM_CONFIG_KIM_ONLY_PLANS
-              value: "{{ .Values.kim.kimOnlyPlans }}"
             - name: APP_BROKER_DISABLE_SAP_CONVERGED_CLOUD
               value: "{{ .Values.disableSapConvergedCloud }}"
             - name: APP_BROKER_ALLOW_UPDATE_EXPIRED_INSTANCE_WITH_CONTEXT
