@@ -301,7 +301,11 @@ func main() {
 	rulesService, err := rules.NewRulesServiceFromFile(cfg.HapRuleFilePath, &cfg.Broker.EnablePlans, true, true, true)
 	fatalOnError(err, log)
 	err = rulesService.FailOnParsingErrors()
-	fatalOnError(err, log)
+	if err != nil {
+		log.Error(fmt.Sprintf("Error: %s", err))
+	}
+	//TODO fail on error when we are ready with HAP parsing
+	//fatalOnError(err, log)
 
 	// run queues
 	provisionManager := process.NewStagedManager(db.Operations(), eventBroker, cfg.OperationTimeout, cfg.Provisioning, log.With("provisioning", "manager"))
