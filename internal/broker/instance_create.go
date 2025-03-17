@@ -12,6 +12,8 @@ import (
 	"strings"
 
 	"github.com/kyma-project/kyma-environment-broker/internal/regionssupportingmachine"
+	"github.com/kyma-project/kyma-environment-broker/internal/validator"
+	"github.com/santhosh-tekuri/jsonschema/v6"
 
 	"github.com/kyma-project/kyma-environment-broker/internal/assuredworkloads"
 
@@ -29,7 +31,6 @@ import (
 	"k8s.io/client-go/tools/clientcmd"
 
 	"github.com/google/uuid"
-	"github.com/kyma-incubator/compass/components/director/pkg/jsonschema"
 	"github.com/kyma-project/kyma-environment-broker/common/gardener"
 	pkg "github.com/kyma-project/kyma-environment-broker/common/runtime"
 	"github.com/kyma-project/kyma-environment-broker/internal"
@@ -351,12 +352,14 @@ func (b *ProvisionEndpoint) validateAndExtract(details domain.ProvisionDetails, 
 	if err != nil {
 		return ersContext, parameters, fmt.Errorf("while creating plan validator: %w", err)
 	}
-	result, err := planValidator.ValidateString(string(details.RawParameters))
-	if err != nil {
-		return ersContext, parameters, fmt.Errorf("while executing JSON schema validator: %w", err)
+
+	var rawParameters any
+	if err = json.Unmarshal(details.RawParameters, &rawParameters); err != nil {
+		return ersContext, parameters, fmt.Errorf("while unmarshaling raw parameters: %w", err)
 	}
-	if !result.Valid {
-		return ersContext, parameters, fmt.Errorf("while validating input parameters: %w", result.Error)
+
+	if err = planValidator.Validate(rawParameters); err != nil {
+		return ersContext, parameters, fmt.Errorf("while validating input parameters: %s", validator.FormatError(err))
 	}
 
 	// EU Access
@@ -611,13 +614,12 @@ func (b *ProvisionEndpoint) determineLicenceType(planId string) *string {
 	return nil
 }
 
-func (b *ProvisionEndpoint) validator(details *domain.ProvisionDetails, provider pkg.CloudProvider, ctx context.Context) (JSONSchemaValidator, error) {
+func (b *ProvisionEndpoint) validator(details *domain.ProvisionDetails, provider pkg.CloudProvider, ctx context.Context) (*jsonschema.Schema, error) {
 	platformRegion, _ := middleware.RegionFromContext(ctx)
 	plans := Plans(b.plansConfig, provider, nil, b.config.IncludeAdditionalParamsInSchema, euaccess.IsEURestrictedAccess(platformRegion), b.config.UseSmallerMachineTypes, b.config.EnableShootAndSeedSameRegion, b.convergedCloudRegionsProvider.GetRegions(platformRegion), assuredworkloads.IsKSA(platformRegion), b.config.UseAdditionalOIDCSchema)
 	plan := plans[details.PlanID]
-	schema := string(Marshal(plan.Schemas.Instance.Create.Parameters))
 
-	return jsonschema.NewValidatorFromStringSchema(schema)
+	return validator.NewFromSchema(plan.Schemas.Instance.Create.Parameters)
 }
 
 func (b *ProvisionEndpoint) createDashboardURL(planID, instanceID string) string {
