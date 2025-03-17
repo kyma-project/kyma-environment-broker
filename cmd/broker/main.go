@@ -280,6 +280,7 @@ func main() {
 	gardenerAccountPool := hyperscaler.NewAccountPool(dynamicGardener, gardenerNamespace)
 	gardenerSharedPool := hyperscaler.NewSharedGardenerAccountPool(dynamicGardener, gardenerNamespace)
 	accountProvider := hyperscaler.NewAccountProvider(gardenerAccountPool, gardenerSharedPool)
+	// gardenerSecretBindingClient := dynamicGardener.Resource(gardener.SecretBindingResource).Namespace(gardenerNamespace)
 
 	regions, err := provider.ReadPlatformRegionMappingFromFile(cfg.TrialRegionMappingFilePath)
 	fatalOnError(err, log)
