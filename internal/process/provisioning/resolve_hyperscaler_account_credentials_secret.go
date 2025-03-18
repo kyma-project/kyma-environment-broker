@@ -152,16 +152,16 @@ func (s *ResolveHyperscalerAccountCredentialsSecretStep) createLabelSelectorBuil
 	b.With(fmt.Sprintf(hyperscalerTypeSelectorFmt, parsedRule.Hyperscaler()))
 	b.With(notDirtySelector)
 
-	if parsedRule.IsShared() {
-		b.With(sharedSelector)
-		b.SaveBase()
-		return b
-	}
-
 	if parsedRule.IsEUAccess() {
 		b.With(euAccessSelector)
 	} else {
 		b.With(notEUAccessSelector)
+	}
+
+	if parsedRule.IsShared() {
+		b.With(sharedSelector)
+		b.SaveBase()
+		return b
 	}
 
 	b.SaveBase()
