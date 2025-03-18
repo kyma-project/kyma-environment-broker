@@ -84,7 +84,7 @@ func (s *ResolveHyperscalerAccountCredentialsSecretStep) Run(operation internal.
 func (s *ResolveHyperscalerAccountCredentialsSecretStep) resolveSecretBindingName(operation internal.Operation, log *slog.Logger) (string, error) {
 	attr := s.provisioningAttributesFromOperationData(operation)
 
-	log.Info("Matching provisioning attributes %q to HAP rule", attr)
+	log.Info(fmt.Sprintf("matching provisioning attributes %q to HAP rule", attr))
 	parsedRule, err := s.matchProvisioningAttributesToRule(attr)
 	if err != nil {
 		return "", err
@@ -92,7 +92,7 @@ func (s *ResolveHyperscalerAccountCredentialsSecretStep) resolveSecretBindingNam
 
 	labelSelectorBuilder := s.createLabelSelectorBuilder(parsedRule, operation.ProvisioningParameters.ErsContext.GlobalAccountID)
 
-	log.Info("Getting secret binding with selector %q", labelSelectorBuilder.String())
+	log.Info(fmt.Sprintf("getting secret binding with selector %q", labelSelectorBuilder.String()))
 	if parsedRule.IsShared() {
 		return s.getSharedSecretBindingName(labelSelectorBuilder.String())
 	}
@@ -106,13 +106,13 @@ func (s *ResolveHyperscalerAccountCredentialsSecretStep) resolveSecretBindingNam
 		return secretBinding.GetSecretRefName(), nil
 	}
 
-	log.Info("no secret binding found for tenant: %q", operation.ProvisioningParameters.ErsContext.GlobalAccountID)
+	log.Info(fmt.Sprintf("no secret binding found for tenant: %q", operation.ProvisioningParameters.ErsContext.GlobalAccountID))
 
 	labelSelectorBuilder.RevertToBase()
 	labelSelectorBuilder.With(notSharedSelector)
 	labelSelectorBuilder.With(notTenantNamedSelector)
 
-	log.Info("Getting secret binding with selector %q", labelSelectorBuilder.String())
+	log.Info(fmt.Sprintf("getting secret binding with selector %q", labelSelectorBuilder.String()))
 	secretBinding, err = s.getSecretBinding(labelSelectorBuilder.String())
 	if err != nil {
 		if kebError.IsNotFoundError(err) {
@@ -121,7 +121,7 @@ func (s *ResolveHyperscalerAccountCredentialsSecretStep) resolveSecretBindingNam
 		return "", err
 	}
 
-	log.Info("Claiming secret binding for tenant %q", operation.ProvisioningParameters.ErsContext.GlobalAccountID)
+	log.Info(fmt.Sprintf("claiming secret binding for tenant %q", operation.ProvisioningParameters.ErsContext.GlobalAccountID))
 	secretBinding, err = s.claimSecretBinding(secretBinding, operation.ProvisioningParameters.ErsContext.GlobalAccountID)
 	if err != nil {
 		return "", fmt.Errorf("while claiming secret binding for tenant: %s: %w", operation.ProvisioningParameters.ErsContext.GlobalAccountID, err)
