@@ -19,8 +19,8 @@ import (
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 )
 
-type HAPParserResult interface {
-	HyperscalerType() string
+type ParsedRule interface {
+	Hyperscaler() string
 	IsShared() bool
 	IsEUAccess() bool
 }
@@ -89,23 +89,26 @@ func (s *ResolveHyperscalerAccountCredentialsSecretStep) Run(operation internal.
 }
 
 func (s *ResolveHyperscalerAccountCredentialsSecretStep) resolveSecretBindingName(operation internal.Operation, log *slog.Logger) (string, error) {
-	targetSecretBindingName := ""
+	var result ParsedRule
+	var targetSecretBindingName string
 
 	attr := s.provisioningAttributesFromOperationData(operation)
-	s.rulesService.Match(attr)
+	result, found := s.rulesService.MatchProvisioningAttributes(attr)
+	if !found {
+		return "", fmt.Errorf("no matching rule for attributes %q", attr)
+	}
 
-	var hapParserResult HAPParserResult
-	labelSelectorBuilder := s.createLabelSelectorBuilder(hapParserResult, operation.ProvisioningParameters.ErsContext.GlobalAccountID)
+	labelSelectorBuilder := s.createLabelSelectorBuilder(result, operation.ProvisioningParameters.ErsContext.GlobalAccountID)
 	secretBindings, err := s.getSecretBindings(labelSelectorBuilder.String())
 	if err != nil {
 		return "", fmt.Errorf("while listing secret bindings with selector %q: %w", labelSelectorBuilder.String(), err)
 	}
 	switch {
-	case hapParserResult.IsShared():
+	case result.IsShared():
 		targetSecretBindingName, err = s.getLeastUsedSecretBindingName(secretBindings)
 		if err != nil {
 			return "", fmt.Errorf("unable to resolve the least used secret binding for global account ID %s on hyperscaler %s: %w",
-				operation.ProvisioningParameters.ErsContext.GlobalAccountID, hapParserResult.HyperscalerType(), err)
+				operation.ProvisioningParameters.ErsContext.GlobalAccountID, result.Hyperscaler(), err)
 		}
 	case secretBindings != nil && len(secretBindings.Items) > 0:
 		targetSecretBindingName = gardener.NewSecretBinding(secretBindings.Items[0]).GetSecretRefName()
@@ -119,7 +122,7 @@ func (s *ResolveHyperscalerAccountCredentialsSecretStep) resolveSecretBindingNam
 		}
 		if secretBindings == nil || len(secretBindings.Items) == 0 {
 			return "", fmt.Errorf("failed to find unassigned secret binding for global account ID %s on hyperscaler %s: %w",
-				operation.ProvisioningParameters.ErsContext.GlobalAccountID, hapParserResult.HyperscalerType(), err)
+				operation.ProvisioningParameters.ErsContext.GlobalAccountID, result.Hyperscaler(), err)
 		}
 		secretBinding := &gardener.SecretBinding{Unstructured: secretBindings.Items[0]}
 		labels := secretBinding.GetLabels()
@@ -144,9 +147,9 @@ func (s *ResolveHyperscalerAccountCredentialsSecretStep) provisioningAttributesF
 	}
 }
 
-func (s *ResolveHyperscalerAccountCredentialsSecretStep) createLabelSelectorBuilder(hapParserResult HAPParserResult, tenantName string) *LabelSelectorBuilder {
+func (s *ResolveHyperscalerAccountCredentialsSecretStep) createLabelSelectorBuilder(hapParserResult ParsedRule, tenantName string) *LabelSelectorBuilder {
 	b := NewLabelSelectorBuilder()
-	b.With(fmt.Sprintf(hyperscalerTypeSelectorFmt, hapParserResult.HyperscalerType()))
+	b.With(fmt.Sprintf(hyperscalerTypeSelectorFmt, hapParserResult.Hyperscaler()))
 	b.With(notDirtySelector)
 
 	if hapParserResult.IsShared() {
