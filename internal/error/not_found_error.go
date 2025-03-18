@@ -1,22 +1,31 @@
 package error
 
 type NotFoundError struct {
+	reason    Reason
+	component Component
 }
 
-func (NotFoundError) Error() string {
+func NewNotFoundError(reason Reason, component Component) NotFoundError {
+	return NotFoundError{
+		reason:    reason,
+		component: component,
+	}
+}
+
+func (e NotFoundError) Error() string {
 	return "not found"
 }
 
-func (NotFoundError) IsNotFound() bool {
+func (e NotFoundError) IsNotFound() bool {
 	return true
 }
 
-func (NotFoundError) GetReason() Reason {
-	return ClusterNotFoundCode
+func (e NotFoundError) GetReason() Reason {
+	return e.reason
 }
 
-func (NotFoundError) GetComponent() Component {
-	return ReconcileDependency
+func (e NotFoundError) GetComponent() Component {
+	return e.component
 }
 
 func IsNotFoundError(err error) bool {

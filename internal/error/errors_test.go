@@ -108,7 +108,7 @@ func TestTemporaryErrorToLastError(t *testing.T) {
 
 func TestNotFoundError(t *testing.T) {
 	// given
-	err := fmt.Errorf("something: %w", kebError.NotFoundError{})
+	err := fmt.Errorf("something: %w", kebError.NewNotFoundError(kebError.ClusterNotFoundCode, kebError.ReconcileDependency))
 
 	// when
 	lastErr := kebError.ReasonForError(err, "s2")
