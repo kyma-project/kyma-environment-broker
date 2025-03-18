@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"log"
 	"os"
-	"strings"
 
 	"github.com/google/uuid"
 	"github.com/kyma-project/kyma-environment-broker/internal/broker"
@@ -53,11 +52,10 @@ func NewRulesService(file *os.File, enabledPlans *broker.EnablePlans) (*RulesSer
 	return rs, err
 }
 
-func NewRulesServiceFromString(rules string, enabledPlans *broker.EnablePlans) (*RulesService, error) {
-	entries := strings.Split(rules, ";")
+func NewRulesServiceFromSlice(rules []string, enabledPlans *broker.EnablePlans) (*RulesService, error) {
 
 	rulesConfig := &RulesConfig{
-		Rules: entries,
+		Rules: rules,
 	}
 
 	rs := &RulesService{

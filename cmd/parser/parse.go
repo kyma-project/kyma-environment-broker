@@ -3,6 +3,7 @@ package main
 import (
 	"encoding/json"
 	"log"
+	"strings"
 
 	"github.com/google/uuid"
 	"github.com/kyma-project/kyma-environment-broker/common/hyperscaler/rules"
@@ -88,7 +89,7 @@ func (cmd *ParseCommand) Run() {
 		cmd.cobraCmd.Printf("Parsing rules from file: %s\n", cmd.ruleFilePath)
 		rulesService, err = rules.NewRulesServiceFromFile(cmd.ruleFilePath, &enabledPlans)
 	} else {
-		rulesService, err = rules.NewRulesServiceFromString(cmd.rule, &enabledPlans)
+		rulesService, err = rules.NewRulesServiceFromSlice(strings.Split(cmd.rule, ";"), &enabledPlans)
 	}
 
 	if err != nil {
