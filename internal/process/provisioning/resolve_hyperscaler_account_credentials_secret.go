@@ -97,35 +97,7 @@ func (s *ResolveHyperscalerAccountCredentialsSecretStep) resolveSecretBindingNam
 		return s.getSharedSecretBindingName(labelSelectorBuilder.String())
 	}
 
-	return s.getSecretBindingName(labelSelectorBuilder.String())
-	/*
-		case secretBindings != nil && len(secretBindings.Items) > 0:
-			targetSecretBindingName = gardener.NewSecretBinding(secretBindings.Items[0]).GetSecretRefName()
-		case secretBindings != nil && len(secretBindings.Items) == 0:
-			labelSelectorBuilder.RevertToBase()
-			labelSelectorBuilder.With(notSharedSelector)
-			labelSelectorBuilder.With(notTenantNamedSelector)
-			secretBindings, err = s.getSecretBinding(labelSelectorBuilder.String())
-			if err != nil {
-				return "", fmt.Errorf("while listing secret bindings with selector %q: %w", labelSelectorBuilder.String(), err)
-			}
-			if secretBindings == nil || len(secretBindings.Items) == 0 {
-				return "", fmt.Errorf("failed to find unassigned secret binding for global account ID %s on hyperscaler %s: %w",
-					operation.ProvisioningParameters.ErsContext.GlobalAccountID, parsedRule.Hyperscaler(), err)
-			}
-			secretBinding := &gardener.SecretBinding{Unstructured: secretBindings.Items[0]}
-			labels := secretBinding.GetLabels()
-			labels["tenantName"] = operation.ProvisioningParameters.ErsContext.GlobalAccountID
-			secretBinding.SetLabels(labels)
-			// mutex
-			updatedSecretBinding, err := s.gardenerClient.Resource(gardener.SecretBindingResource).Namespace(s.gardenerClient.Namespace()).Update(context.Background(), &secretBinding.Unstructured, metav1.UpdateOptions{})
-			if err != nil {
-				return "", fmt.Errorf("while updating secret binding with tenantName: %s: %w", operation.ProvisioningParameters.ErsContext.GlobalAccountID, err)
-			}
-			targetSecretBindingName = gardener.NewSecretBinding(*updatedSecretBinding).GetSecretRefName()
-		}
-		return targetSecretBindingName, nil
-	*/
+	return s.getSecretBindingName(labelSelectorBuilder, operation.ProvisioningParameters.ErsContext.GlobalAccountID)
 }
 
 func (s *ResolveHyperscalerAccountCredentialsSecretStep) provisioningAttributesFromOperationData(operation internal.Operation) *rules.ProvisioningAttributes {
@@ -190,8 +162,51 @@ func (s *ResolveHyperscalerAccountCredentialsSecretStep) getSharedSecretBinding(
 	return secretBinding, nil
 }
 
-func (s *ResolveHyperscalerAccountCredentialsSecretStep) getSecretBindingName(labelSelector string) (string, error) {
-	return "", nil
+func (s *ResolveHyperscalerAccountCredentialsSecretStep) getSecretBindingName(labelSelectorBuilder *LabelSelectorBuilder, tenantName string) (string, error) {
+	secretBinding, err := s.getSecretBinding(labelSelectorBuilder, tenantName)
+	if err != nil {
+		return "", err
+	}
+
+	return secretBinding.GetSecretRefName(), nil
+}
+
+func (s *ResolveHyperscalerAccountCredentialsSecretStep) getSecretBinding(labelSelectorBuilder *LabelSelectorBuilder, tenantName string) (*gardener.SecretBinding, error) {
+	secretBindings, err := s.gardenerClient.GetSecretBindings(labelSelectorBuilder.String())
+	if err != nil {
+		return nil, fmt.Errorf("while getting secret bindings with selector %q: %w", labelSelectorBuilder.String(), err)
+	}
+	if secretBindings != nil && len(secretBindings.Items) > 0 {
+		return gardener.NewSecretBinding(secretBindings.Items[0]), nil
+	}
+
+	labelSelectorBuilder.RevertToBase()
+	labelSelectorBuilder.With(notSharedSelector)
+	labelSelectorBuilder.With(notTenantNamedSelector)
+
+	secretBindings, err = s.gardenerClient.GetSecretBindings(labelSelectorBuilder.String())
+	if err != nil {
+		return nil, fmt.Errorf("while getting secret bindings with selector %q: %w", labelSelectorBuilder.String(), err)
+	}
+	if secretBindings == nil || len(secretBindings.Items) == 0 {
+		return nil, fmt.Errorf("failed to find unassigned secret binding with selector %q", labelSelectorBuilder.String())
+	}
+
+	secretBinding, err := s.claimSecretBinding(gardener.NewSecretBinding(secretBindings.Items[0]), tenantName)
+	if err != nil {
+		return nil, fmt.Errorf("while claiming secret binding for tenant: %s: %w", tenantName, err)
+	}
+
+	return secretBinding, nil
+
+}
+
+func (s *ResolveHyperscalerAccountCredentialsSecretStep) claimSecretBinding(secretBinding *gardener.SecretBinding, tenantName string) (*gardener.SecretBinding, error) {
+	labels := secretBinding.GetLabels()
+	labels[gardener.TenantNameLabelKey] = tenantName
+	secretBinding.SetLabels(labels)
+
+	return s.gardenerClient.UpdateSecretBinding(secretBinding)
 }
 
 func NewLabelSelectorBuilder() *LabelSelectorBuilder {
