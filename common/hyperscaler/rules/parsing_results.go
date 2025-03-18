@@ -45,9 +45,7 @@ func (p *ParsingResults) CheckUniqueness() {
 
 		key := result.Rule.SignatureWithValues()
 
-		var alreadyExists bool
-		var item *ParsingResult
-		item, alreadyExists = uniquenessSet[key]
+		item, alreadyExists := uniquenessSet[key]
 
 		if alreadyExists {
 			result.AddProcessingError(fmt.Errorf("Duplicated rule with previously defined rule: '%s'", item.Rule.StringNoLabels()))
