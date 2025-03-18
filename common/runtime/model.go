@@ -189,43 +189,80 @@ func (o *OIDCsDTO) IsProvided() bool {
 }
 
 func (o *OIDCsDTO) Validate() error {
-	if len(o.List) == 0 { //no oidc should be set, event not the default one
-		return nil
+	if o.List != nil && o.OIDCConfigDTO != nil {
+		return fmt.Errorf("both list and object OIDC cannot be set")
 	}
 	errs := make([]string, 0)
-	if len(o.OIDCConfigDTO.ClientID) == 0 {
-		errs = append(errs, "clientID must not be empty")
-	}
-	if len(o.OIDCConfigDTO.IssuerURL) == 0 {
-		errs = append(errs, "issuerURL must not be empty")
-	} else {
-		issuer, err := url.Parse(o.OIDCConfigDTO.IssuerURL)
-		if err != nil || (issuer != nil && len(issuer.Host) == 0) {
-			errs = append(errs, "issuerURL must be a valid URL")
+	if o.OIDCConfigDTO != nil {
+		if len(o.OIDCConfigDTO.ClientID) == 0 {
+			errs = append(errs, "clientID must not be empty")
 		}
-		if issuer != nil && issuer.Fragment != "" {
-			errs = append(errs, "issuerURL must not contain a fragment")
+		if len(o.OIDCConfigDTO.IssuerURL) == 0 {
+			errs = append(errs, "issuerURL must not be empty")
+		} else {
+			issuer, err := url.Parse(o.OIDCConfigDTO.IssuerURL)
+			if err != nil || (issuer != nil && len(issuer.Host) == 0) {
+				errs = append(errs, "issuerURL must be a valid URL")
+			}
+			if issuer != nil && issuer.Fragment != "" {
+				errs = append(errs, "issuerURL must not contain a fragment")
+			}
+			if issuer != nil && issuer.User != nil {
+				errs = append(errs, "issuerURL must not contain a username or password")
+			}
+			if issuer != nil && len(issuer.RawQuery) > 0 {
+				errs = append(errs, "issuerURL must not contain a query")
+			}
+			if issuer != nil && issuer.Scheme != "https" {
+				errs = append(errs, "issuerURL must have https scheme")
+			}
 		}
-		if issuer != nil && issuer.User != nil {
-			errs = append(errs, "issuerURL must not contain a username or password")
-		}
-		if issuer != nil && len(issuer.RawQuery) > 0 {
-			errs = append(errs, "issuerURL must not contain a query")
-		}
-		if issuer != nil && issuer.Scheme != "https" {
-			errs = append(errs, "issuerURL must have https scheme")
-		}
-	}
-	if len(o.OIDCConfigDTO.SigningAlgs) != 0 {
-		validSigningAlgs := o.validSigningAlgsSet()
-		for _, providedAlg := range o.OIDCConfigDTO.SigningAlgs {
-			if !validSigningAlgs[providedAlg] {
-				errs = append(errs, "signingAlgs must contain valid signing algorithm(s)")
-				break
+		if len(o.OIDCConfigDTO.SigningAlgs) != 0 {
+			validSigningAlgs := o.validSigningAlgsSet()
+			for _, providedAlg := range o.OIDCConfigDTO.SigningAlgs {
+				if !validSigningAlgs[providedAlg] {
+					errs = append(errs, "signingAlgs must contain valid signing algorithm(s)")
+					break
+				}
 			}
 		}
 	}
-
+	if o.List != nil && len(o.List) > 0 {
+		for i, oidc := range o.List {
+			if len(oidc.ClientID) == 0 {
+				errs = append(errs, fmt.Sprintf("clientID must not be empty for OIDC at index %d", i))
+			}
+			if len(oidc.IssuerURL) == 0 {
+				errs = append(errs, fmt.Sprintf("issuerURL must not be empty for OIDC at index %d", i))
+			} else {
+				issuer, err := url.Parse(oidc.IssuerURL)
+				if err != nil || (issuer != nil && len(issuer.Host) == 0) {
+					errs = append(errs, fmt.Sprintf("issuerURL must be a valid URL for OIDC at index %d", i))
+				}
+				if issuer != nil && issuer.Fragment != "" {
+					errs = append(errs, fmt.Sprintf("issuerURL must not contain a fragment for OIDC at index %d", i))
+				}
+				if issuer != nil && issuer.User != nil {
+					errs = append(errs, fmt.Sprintf("issuerURL must not contain a username or password for OIDC at index %d", i))
+				}
+				if issuer != nil && len(issuer.RawQuery) > 0 {
+					errs = append(errs, fmt.Sprintf("issuerURL must not contain a query for OIDC at index %d", i))
+				}
+				if issuer != nil && issuer.Scheme != "https" {
+					errs = append(errs, fmt.Sprintf("issuerURL must have https scheme for OIDC at index %d", i))
+				}
+			}
+			if len(oidc.SigningAlgs) != 0 {
+				validSigningAlgs := o.validSigningAlgsSet()
+				for _, providedAlg := range oidc.SigningAlgs {
+					if !validSigningAlgs[providedAlg] {
+						errs = append(errs, fmt.Sprintf("signingAlgs must contain valid signing algorithm(s) for OIDC at index %d", i))
+						break
+					}
+				}
+			}
+		}
+	}
 	if len(errs) > 0 {
 		err := fmt.Errorf(strings.Join(errs, ", "))
 		return err
