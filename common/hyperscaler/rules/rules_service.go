@@ -49,7 +49,7 @@ func NewRulesService(file *os.File, enabledPlans *broker.EnablePlans) (*RulesSer
 	}
 
 	rs.ParsedRuleset = rs.parse(rulesConfig)
-	return rs, err
+	return rs, nil
 }
 
 func NewRulesServiceFromSlice(rules []string, enabledPlans *broker.EnablePlans) (*RulesService, error) {
@@ -135,6 +135,7 @@ func (rs *RulesService) Match(data *ProvisioningAttributes) map[uuid.UUID]*Match
 	return matchingResults
 }
 
+// TODO redesign this method
 func (rs *RulesService) FirstParsingError() error {
 	for _, result := range rs.ParsedRuleset.Results {
 		if result.HasErrors() {
