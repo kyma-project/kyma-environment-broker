@@ -97,7 +97,37 @@ func (s *ResolveHyperscalerAccountCredentialsSecretStep) resolveSecretBindingNam
 		return s.getSharedSecretBindingName(labelSelectorBuilder.String())
 	}
 
-	return s.getSecretBindingName(labelSelectorBuilder, operation.ProvisioningParameters.ErsContext.GlobalAccountID)
+	secretBinding, err := s.getSecretBinding(labelSelectorBuilder.String())
+	if err != nil && !kebError.IsNotFoundError(err) {
+		return "", err
+	}
+
+	if secretBinding != nil {
+		return secretBinding.GetSecretRefName(), nil
+	}
+
+	log.Info("no secret binding found for tenant: %q", operation.ProvisioningParameters.ErsContext.GlobalAccountID)
+
+	labelSelectorBuilder.RevertToBase()
+	labelSelectorBuilder.With(notSharedSelector)
+	labelSelectorBuilder.With(notTenantNamedSelector)
+
+	log.Info("Getting secret binding with selector %q", labelSelectorBuilder.String())
+	secretBinding, err = s.getSecretBinding(labelSelectorBuilder.String())
+	if err != nil {
+		if kebError.IsNotFoundError(err) {
+			return "", fmt.Errorf("failed to find unassigned secret binding with selector %q", labelSelectorBuilder.String())
+		}
+		return "", err
+	}
+
+	log.Info("Claiming secret binding for tenant %q", operation.ProvisioningParameters.ErsContext.GlobalAccountID)
+	secretBinding, err = s.claimSecretBinding(secretBinding, operation.ProvisioningParameters.ErsContext.GlobalAccountID)
+	if err != nil {
+		return "", fmt.Errorf("while claiming secret binding for tenant: %s: %w", operation.ProvisioningParameters.ErsContext.GlobalAccountID, err)
+	}
+
+	return secretBinding.GetSecretRefName(), nil
 }
 
 func (s *ResolveHyperscalerAccountCredentialsSecretStep) provisioningAttributesFromOperationData(operation internal.Operation) *rules.ProvisioningAttributes {
@@ -154,6 +184,9 @@ func (s *ResolveHyperscalerAccountCredentialsSecretStep) getSharedSecretBinding(
 	if err != nil {
 		return nil, err
 	}
+	if secretBindings == nil || len(secretBindings.Items) == 0 {
+		return nil, kebError.NewNotFoundError(kebError.K8SNoMatchCode, kebError.AccountPoolDependency)
+	}
 	secretBinding, err := s.gardenerClient.GetLeastUsedSecretBindingFromSecretBindings(secretBindings.Items)
 	if err != nil {
 		return nil, fmt.Errorf("while getting least used secret binding: %w", err)
@@ -162,43 +195,15 @@ func (s *ResolveHyperscalerAccountCredentialsSecretStep) getSharedSecretBinding(
 	return secretBinding, nil
 }
 
-func (s *ResolveHyperscalerAccountCredentialsSecretStep) getSecretBindingName(labelSelectorBuilder *LabelSelectorBuilder, tenantName string) (string, error) {
-	secretBinding, err := s.getSecretBinding(labelSelectorBuilder, tenantName)
+func (s *ResolveHyperscalerAccountCredentialsSecretStep) getSecretBinding(labelSelector string) (*gardener.SecretBinding, error) {
+	secretBindings, err := s.gardenerClient.GetSecretBindings(labelSelector)
 	if err != nil {
-		return "", err
-	}
-
-	return secretBinding.GetSecretRefName(), nil
-}
-
-func (s *ResolveHyperscalerAccountCredentialsSecretStep) getSecretBinding(labelSelectorBuilder *LabelSelectorBuilder, tenantName string) (*gardener.SecretBinding, error) {
-	secretBindings, err := s.gardenerClient.GetSecretBindings(labelSelectorBuilder.String())
-	if err != nil {
-		return nil, fmt.Errorf("while getting secret bindings with selector %q: %w", labelSelectorBuilder.String(), err)
-	}
-	if secretBindings != nil && len(secretBindings.Items) > 0 {
-		return gardener.NewSecretBinding(secretBindings.Items[0]), nil
-	}
-
-	labelSelectorBuilder.RevertToBase()
-	labelSelectorBuilder.With(notSharedSelector)
-	labelSelectorBuilder.With(notTenantNamedSelector)
-
-	secretBindings, err = s.gardenerClient.GetSecretBindings(labelSelectorBuilder.String())
-	if err != nil {
-		return nil, fmt.Errorf("while getting secret bindings with selector %q: %w", labelSelectorBuilder.String(), err)
+		return nil, fmt.Errorf("while getting secret bindings with selector %q: %w", labelSelector, err)
 	}
 	if secretBindings == nil || len(secretBindings.Items) == 0 {
-		return nil, fmt.Errorf("failed to find unassigned secret binding with selector %q", labelSelectorBuilder.String())
+		return nil, kebError.NewNotFoundError(kebError.K8SNoMatchCode, kebError.AccountPoolDependency)
 	}
-
-	secretBinding, err := s.claimSecretBinding(gardener.NewSecretBinding(secretBindings.Items[0]), tenantName)
-	if err != nil {
-		return nil, fmt.Errorf("while claiming secret binding for tenant: %s: %w", tenantName, err)
-	}
-
-	return secretBinding, nil
-
+	return gardener.NewSecretBinding(secretBindings.Items[0]), nil
 }
 
 func (s *ResolveHyperscalerAccountCredentialsSecretStep) claimSecretBinding(secretBinding *gardener.SecretBinding, tenantName string) (*gardener.SecretBinding, error) {
