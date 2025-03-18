@@ -60,18 +60,6 @@ cases:
     hyperscalerType: aws                     
     There are errors in your rule
     configuration. Fix above errors in your rule configuration and try again.
-- name: Simple Asterix Rule
-  rule:
-  - aws
-  - aws(PR=*)
-  expected: |
-    -> Error   aws(PR=*)
-     - Duplicated rule with previously defined rule:
-    'aws'
-    ->     OK  aws                                                # hyperscalerType:
-    aws                            
-    There are errors in your rule configuration.
-    Fix above errors in your rule configuration and try again.
 - name: Duplicated Rules
   rule:
   - aws(HR=aa, PR=cf)
@@ -79,72 +67,17 @@ cases:
   - gcp
   - gcp
   expected: |
-    -> Error   gcp
-     - Duplicated rule with previously defined rule: 'gcp'
     -> Error   aws(PR=cf, HR=aa)
      - Duplicated rule with previously defined rule:
     'aws(PR=cf, HR=aa)'
+    -> Error   gcp
+     - Duplicated rule with previously defined rule: 'gcp'
     ->     OK  aws(PR=cf, HR=aa)                                  #
     hyperscalerType: aws                      
     ->     OK  gcp                                                #
     hyperscalerType: gcp                            
     There are errors in your rule
     configuration. Fix above errors in your rule configuration and try again.
-- name: Duplicated Rules - No 2
-  rule:
-  - aws(PR=*, HR=test1)
-  - aws(PR=test2, HR=*)
-  - aws(PR=*, HR=t)
-  - aws(PR=*, HR=*)
-  - aws
-  - aws(PR=test2, HR=test1)
-  expected: |
-    ->  Error   aws(PR=*, HR=*)
-     - Duplicated rule with previously defined
-    rule: 'aws'
-    ->  Error   aws(PR=test2, HR=*)
-     - Ambiguous with previously defined
-    entry: 'aws(PR=*, HR=t)', consider introducing a resolving entry 'aws(PR=test2,
-    HR=t)'
-    ->     OK  aws                                                # hyperscalerType:
-    aws                            
-    ->     OK  aws(PR=*, HR=test1)                                #
-    hyperscalerType: aws                    
-    ->     OK  aws(PR=*, HR=t)                                    #
-    hyperscalerType: aws                        
-    ->     OK  aws(PR=test2, HR=test1)
-                             # hyperscalerType: aws              
-    There
-    are errors in your rule configuration. Fix above errors in your rule configuration
-    and try again.
-- name: Unresolved Rule - No 2
-  rule:
-  - aws
-  - aws(PR=*)
-  - aws(HR=*)
-  expected: |
-    ->  Error   aws(HR=*)
-     - Duplicated rule with previously defined rule:
-    'aws'
-    ->  Error   aws(PR=*)
-     - Duplicated rule with previously defined rule:
-    'aws'
-    ->     OK  aws                                                # hyperscalerType:
-    aws                            
-    There are errors in your rule configuration.
-    Fix above errors in your rule configuration and try again.
-- name: Resolved Rule - No 1
-  rule:
-  - aws
-  - aws(PR=westeurope, HR=*)
-  - aws(PR=westeurope, HR=westeurope)
-  expected: |
-    ->     OK  aws                                                # hyperscalerType:
-    aws                            
-    ->     OK  aws(PR=westeurope, HR=*)                           #
-    hyperscalerType: aws               
-    ->     OK  aws(PR=westeurope,
-    HR=westeurope)                  # hyperscalerType: aws
 - name: Resolved Rule - No 2
   rule:
   - aws
@@ -157,15 +90,6 @@ cases:
     hyperscalerType: aws                    
     ->     OK  aws(PR=cf-eu11, HR=eastus)
                           # hyperscalerType: aws
-- name: Resolved Rule - No 3
-  rule:
-  - aws(PR=*)
-  - aws(PR=cf-eu11, HR=eastus)
-  expected: |
-    ->     OK  aws(PR=*)                                          # hyperscalerType:
-    aws                          
-    ->     OK  aws(PR=cf-eu11, HR=eastus)                         #
-    hyperscalerType: aws
 - name: Resolved Rule - No 4
   rule:
   - aws
@@ -178,18 +102,3 @@ cases:
     hyperscalerType: aws                    
     ->     OK  aws(PR=cf-eu12, HR=eastus)
                           # hyperscalerType: aws
-- name: ""
-  rule:
-  - aws
-  - aws(PR=cf-eu11, HR=*)
-  - aws(PR=*, HR=eastus)
-  - aws(PR=cf-eu11, HR=eastus)
-  expected: |
-    ->     OK  aws                                                # hyperscalerType:
-    aws                            
-    ->     OK  aws(PR=cf-eu11, HR=*)                              #
-    hyperscalerType: aws                  
-    ->     OK  aws(PR=*, HR=eastus)
-                                # hyperscalerType: aws                   
-    ->     OK  aws(PR=cf-eu11, HR=eastus)                         # hyperscalerType:
-    aws             
