@@ -36,6 +36,11 @@ type ProvisioningAttributes struct {
 	Hyperscaler       string `json:"hyperscaler"`
 }
 
+func (a *ProvisioningAttributes) String() string {
+	return fmt.Sprintf("plan=%s, platformRegion=%s, hyperscalerRegion=%s, hyperscaler=%s",
+		a.Plan, a.PlatformRegion, a.HyperscalerRegion, a.Hyperscaler)
+}
+
 /*
 LabelsWithCalculatedHyperscaler calulactes the labels for the rule instead of using ProvisioningAttributes field.
 In KEB CalculateLabels must be used
