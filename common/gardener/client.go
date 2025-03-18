@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"io/ioutil"
+	"sync"
 	"time"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -14,7 +15,7 @@ import (
 	"k8s.io/client-go/tools/clientcmd"
 )
 
-const getRequestTimeout = 10 * time.Second
+const requestTimeout = 10 * time.Second
 
 const (
 	TenantNameLabelKey      = "tenantName"
@@ -28,6 +29,7 @@ const (
 type Client struct {
 	dynamic.Interface
 	namespace string
+	m         sync.Mutex
 }
 
 func NewClient(k8sClient dynamic.Interface, namespace string) *Client {
@@ -42,13 +44,13 @@ func (c *Client) Namespace() string {
 }
 
 func (c *Client) GetSecretBindings(labelSelector string) (*unstructured.UnstructuredList, error) {
-	ctx, cancel := context.WithTimeout(context.Background(), getRequestTimeout)
+	ctx, cancel := context.WithTimeout(context.Background(), requestTimeout)
 	defer cancel()
 	return c.Resource(SecretBindingResource).Namespace(c.namespace).List(ctx, metav1.ListOptions{LabelSelector: labelSelector})
 }
 
 func (c *Client) GetShoots() (*unstructured.UnstructuredList, error) {
-	ctx, cancel := context.WithTimeout(context.Background(), getRequestTimeout)
+	ctx, cancel := context.WithTimeout(context.Background(), requestTimeout)
 	defer cancel()
 	return c.Resource(ShootResource).Namespace(c.namespace).List(ctx, metav1.ListOptions{})
 }
@@ -89,6 +91,18 @@ func (c *Client) GetLeastUsedSecretBindingFromSecretBindings(secretBindings []un
 	}
 
 	return &SecretBinding{Unstructured: secretBindings[minIndex]}, nil
+}
+
+func (c *Client) UpdateSecretBinding(secretBinding *SecretBinding) (*SecretBinding, error) {
+	c.m.Lock()
+	defer c.m.Unlock()
+	ctx, cancel := context.WithTimeout(context.Background(), requestTimeout)
+	defer cancel()
+	u, err := c.Resource(SecretBindingResource).Namespace(c.namespace).Update(ctx, &secretBinding.Unstructured, metav1.UpdateOptions{})
+	if err != nil {
+		return nil, err
+	}
+	return NewSecretBinding(*u), nil
 }
 
 type SecretBinding struct {
