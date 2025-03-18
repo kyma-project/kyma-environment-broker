@@ -73,22 +73,39 @@ func (s *ResolveHyperscalerAccountCredentialsSecretStep) Name() string {
 }
 
 func (s *ResolveHyperscalerAccountCredentialsSecretStep) Run(operation internal.Operation, log *slog.Logger) (internal.Operation, time.Duration, error) {
-	var targetSecretBindingName string
+	targetSecretBindingName, err := s.resolveSecretBindingName(operation, log)
+	if err != nil {
+		msg := fmt.Sprintf("resolving secret binding name")
+		return s.operationManager.RetryOperation(operation, msg, err, 10*time.Second, time.Minute, log)
+	}
+
+	if targetSecretBindingName == "" {
+		return s.operationManager.OperationFailed(operation, "failed to determine secret binding name", fmt.Errorf("target secret binding name is empty"), log)
+	}
+
+	return s.operationManager.UpdateOperation(operation, func(op *internal.Operation) {
+		op.ProvisioningParameters.Parameters.TargetSecret = &targetSecretBindingName
+	}, log)
+}
+
+func (s *ResolveHyperscalerAccountCredentialsSecretStep) resolveSecretBindingName(operation internal.Operation, log *slog.Logger) (string, error) {
+	targetSecretBindingName := ""
+
 	attr := s.provisioningAttributesFromOperationData(operation)
 	s.rulesService.Match(attr)
+
 	var hapParserResult HAPParserResult
 	labelSelectorBuilder := s.createLabelSelectorBuilder(hapParserResult, operation.ProvisioningParameters.ErsContext.GlobalAccountID)
 	secretBindings, err := s.getSecretBindings(labelSelectorBuilder.String())
 	if err != nil {
-		msg := fmt.Sprintf("listing service bindings with selector %q", labelSelectorBuilder.String())
-		return s.operationManager.RetryOperation(operation, msg, err, 10*time.Second, time.Minute, log)
+		return "", fmt.Errorf("while listing secret bindings with selector %q: %w", labelSelectorBuilder.String(), err)
 	}
 	switch {
 	case hapParserResult.IsShared():
 		targetSecretBindingName, err = s.getLeastUsedSecretBindingName(secretBindings)
 		if err != nil {
-			msg := fmt.Sprintf("unable to resolve secret binding for global account ID %s on hyperscaler %s", operation.ProvisioningParameters.ErsContext.GlobalAccountID, hapParserResult.HyperscalerType())
-			return s.operationManager.RetryOperation(operation, msg, err, 10*time.Second, time.Minute, log)
+			return "", fmt.Errorf("unable to resolve the least used secret binding for global account ID %s on hyperscaler %s: %w",
+				operation.ProvisioningParameters.ErsContext.GlobalAccountID, hapParserResult.HyperscalerType(), err)
 		}
 	case secretBindings != nil && len(secretBindings.Items) > 0:
 		targetSecretBindingName = gardener.SecretBinding{Unstructured: secretBindings.Items[0]}.GetSecretRefName()
@@ -98,12 +115,11 @@ func (s *ResolveHyperscalerAccountCredentialsSecretStep) Run(operation internal.
 		labelSelectorBuilder.With(notTenantNamedSelector)
 		secretBindings, err = s.getSecretBindings(labelSelectorBuilder.String())
 		if err != nil {
-			msg := fmt.Sprintf("listing service bindings with selector %q", labelSelectorBuilder.String())
-			return s.operationManager.RetryOperation(operation, msg, err, 10*time.Second, time.Minute, log)
+			return "", fmt.Errorf("while listing secret bindings with selector %q: %w", labelSelectorBuilder.String(), err)
 		}
 		if secretBindings == nil || len(secretBindings.Items) == 0 {
-			err := fmt.Errorf("failed to find unassigned secret binding for hyperscaler: %s", hapParserResult.HyperscalerType())
-			return s.operationManager.RetryOperation(operation, "getting unassigned secret binding", err, 10*time.Second, time.Minute, log)
+			return "", fmt.Errorf("failed to find unassigned secret binding for global account ID %s on hyperscaler %s: %w",
+				operation.ProvisioningParameters.ErsContext.GlobalAccountID, hapParserResult.HyperscalerType(), err)
 		}
 		secretBinding := &gardener.SecretBinding{Unstructured: secretBindings.Items[0]}
 		labels := secretBinding.GetLabels()
@@ -112,19 +128,11 @@ func (s *ResolveHyperscalerAccountCredentialsSecretStep) Run(operation internal.
 		// mutex
 		updatedSecretBinding, err := s.gardenerClient.Resource(gardener.SecretBindingResource).Namespace(s.gardenerClient.Namespace()).Update(context.Background(), &secretBinding.Unstructured, metav1.UpdateOptions{})
 		if err != nil {
-			err = fmt.Errorf("while updating secret binding with tenantName: %s: %w", operation.ProvisioningParameters.ErsContext.GlobalAccountID, err)
-			return s.operationManager.RetryOperation(operation, "updating unassigned secret binding", err, 10*time.Second, time.Minute, log)
+			return "", fmt.Errorf("while updating secret binding with tenantName: %s: %w", operation.ProvisioningParameters.ErsContext.GlobalAccountID, err)
 		}
 		targetSecretBindingName = gardener.SecretBinding{Unstructured: *updatedSecretBinding}.GetSecretRefName()
 	}
-
-	if targetSecretBindingName == "" {
-		return s.operationManager.OperationFailed(operation, "failed to determine secret binding name", err, log)
-	}
-
-	return s.operationManager.UpdateOperation(operation, func(op *internal.Operation) {
-		op.ProvisioningParameters.Parameters.TargetSecret = &targetSecretBindingName
-	}, log)
+	return targetSecretBindingName, nil
 }
 
 func (s *ResolveHyperscalerAccountCredentialsSecretStep) provisioningAttributesFromOperationData(operation internal.Operation) *rules.ProvisioningAttributes {
