@@ -4,7 +4,6 @@ import "fmt"
 
 type ParsingResults struct {
 	resolvedRules map[string]*ParsingResult
-	uniquenessSet map[string]*ParsingResult
 	uniqueResults []*ParsingResult
 
 	Results []*ParsingResult
@@ -28,7 +27,6 @@ func NewParsingResults() *ParsingResults {
 	return &ParsingResults{
 		Results:       make([]*ParsingResult, 0),
 		resolvedRules: make(map[string]*ParsingResult),
-		uniquenessSet: make(map[string]*ParsingResult),
 		uniqueResults: make([]*ParsingResult, 0),
 	}
 }
@@ -40,28 +38,21 @@ func (p *ParsingResults) IsResolved(resolvingKey string) bool {
 
 func (p *ParsingResults) CheckUniqueness() {
 
-	for _, result := range p.Results {
+	uniquenessSet := make(map[string]*ParsingResult)
+	resultsWithoutErrors := getResultsWithoutErrors(p.Results)
 
-		if result.HasErrors() {
-			continue
-		}
+	for _, result := range resultsWithoutErrors {
 
 		key := result.Rule.SignatureWithValues()
 
-		alreadyExists := false
+		var alreadyExists bool
 		var item *ParsingResult
-		item, alreadyExists = p.uniquenessSet[key]
+		item, alreadyExists = uniquenessSet[key]
 
-		if !alreadyExists {
-
-			p.uniquenessSet[key] = result
-
+		if alreadyExists {
+			result.AddProcessingError(fmt.Errorf("Duplicated rule with previously defined rule: '%s'", item.Rule.StringNoLabels()))
 		} else {
-
-			err := fmt.Errorf("Duplicated rule with previously defined rule: '%s'", item.Rule.StringNoLabels())
-
-			result.AddProcessingError(err)
-
+			uniquenessSet[key] = result
 		}
 	}
 }
@@ -103,4 +94,16 @@ func (p *ParsingResults) CheckSignatures() {
 	}
 
 	p.Results = uniqueResults
+}
+
+func getResultsWithoutErrors(results []*ParsingResult) []*ParsingResult {
+	resultsWithoutErrors := make([]*ParsingResult, 0, len(results))
+
+	for _, result := range results {
+		if !result.HasErrors() {
+			resultsWithoutErrors = append(resultsWithoutErrors, result)
+		}
+	}
+
+	return resultsWithoutErrors
 }

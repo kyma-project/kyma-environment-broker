@@ -110,10 +110,10 @@ func (cmd *ParseCommand) Run() {
 		matchingResults = rulesService.Match(dataForMatching)
 	}
 
-	printer.Print(rulesService.Parsed.Results, matchingResults)
+	printer.Print(rulesService.ParsedRuleset.Results, matchingResults)
 
 	hasErrors := false
-	for _, result := range rulesService.Parsed.Results {
+	for _, result := range rulesService.ParsedRuleset.Results {
 		if result.HasErrors() {
 			hasErrors = true
 			break
