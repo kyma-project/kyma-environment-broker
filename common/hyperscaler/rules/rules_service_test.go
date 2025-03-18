@@ -34,6 +34,26 @@ func TestNewRulesServiceFromFile(t *testing.T) {
 		}
 	})
 
+	t.Run("should fail if a plan has no any rule", func(t *testing.T) {
+		// given
+		content := `rule:
+  - aws
+  - azure`
+
+		tmpfile, err := CreateTempFile(content)
+		require.NoError(t, err)
+
+		defer os.Remove(tmpfile)
+
+		// when
+		enabledPlans := &broker.EnablePlans{"aws", "azure", "gcp"}
+		_, err = NewRulesServiceFromFile(tmpfile, enabledPlans)
+
+		// then
+		require.Error(t, err)
+		require.Equal(t, "one or more plans does not have rule defined: gcp", err.Error())
+	})
+
 	t.Run("should return error when file path is empty", func(t *testing.T) {
 		// when
 		service, err := NewRulesServiceFromFile("", &broker.EnablePlans{})

@@ -12,15 +12,6 @@ import (
 )
 
 func TestMatchDifferentArtificialScenarios(t *testing.T) {
-	//content := `rule:
-	//- aws                             # pool: hyperscalerType: aws
-	//- aws(PR=cf-eu11) -> EU           # pool: hyperscalerType: aws_cf-eu11; euAccess: true
-	//- azure                           # pool: hyperscalerType: azure
-	//- azure(PR=cf-ch20) -> EU         # pool: hyperscalerType: azure; euAccess: true
-	//- gcp                             # pool: hyperscalerType: gcp
-	//- gcp(PR=cf-sa30)                 # pool: hyperscalerType: gcp_cf-sa30
-	//- trial -> S                      # pool: hyperscalerType: azure; shared: true - TRIAL POOL`
-
 	content := `rule:
   - azure(PR=cf-ch20) -> EU
   - gcp

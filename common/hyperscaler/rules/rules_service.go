@@ -2,6 +2,7 @@ package rules
 
 import (
 	"fmt"
+	"golang.org/x/exp/maps"
 	"log"
 	"os"
 	"strings"
@@ -11,8 +12,9 @@ import (
 )
 
 type RulesService struct {
-	parser Parser
-	Parsed *ParsingResults
+	parser        Parser
+	Parsed        *ParsingResults
+	requiredPlans *broker.EnablePlans
 }
 
 func NewRulesServiceFromFile(rulesFilePath string, enabledPlans *broker.EnablePlans) (*RulesService, error) {
@@ -44,12 +46,11 @@ func NewRulesService(file *os.File, enabledPlans *broker.EnablePlans) (*RulesSer
 	}
 
 	rs := &RulesService{
-		parser: &SimpleParser{
-			enabledPlans: enabledPlans,
-		},
+		parser:        &SimpleParser{},
+		requiredPlans: enabledPlans,
 	}
 
-	rs.Parsed = rs.parse(rulesConfig)
+	rs.Parsed, err = rs.parse(rulesConfig)
 	return rs, err
 }
 
@@ -61,16 +62,16 @@ func NewRulesServiceFromString(rules string, enabledPlans *broker.EnablePlans) (
 	}
 
 	rs := &RulesService{
-		parser: &SimpleParser{
-			enabledPlans: enabledPlans,
-		},
+		parser:        &SimpleParser{},
+		requiredPlans: enabledPlans,
 	}
 
-	rs.Parsed = rs.parse(rulesConfig)
-	return rs, nil
+	var err error
+	rs.Parsed, err = rs.parse(rulesConfig)
+	return rs, err
 }
 
-func (rs *RulesService) parse(rulesConfig *RulesConfig) *ParsingResults {
+func (rs *RulesService) parse(rulesConfig *RulesConfig) (*ParsingResults, error) {
 	results := NewParsingResults()
 
 	for _, entry := range rulesConfig.Rules {
@@ -87,7 +88,19 @@ func (rs *RulesService) parse(rulesConfig *RulesConfig) *ParsingResults {
 
 	results.Results = SortRuleEntries(results.Results)
 
-	return results
+	expectedpPlans := map[string]struct{}{}
+	for _, plan := range *rs.requiredPlans {
+		expectedpPlans[plan] = struct{}{}
+	}
+	delete(expectedpPlans, broker.OwnClusterPlanName)
+	for _, result := range results.Results {
+		delete(expectedpPlans, result.Rule.Plan)
+	}
+	if len(expectedpPlans) > 0 {
+		return results, fmt.Errorf("one or more plans does not have rule defined: %s", strings.Join(maps.Keys(expectedpPlans), ", "))
+	}
+
+	return results, nil
 }
 
 // MatchProvisioningAttributes finds the matching rule for the given provisioning attributes and provide values needed to create labels, which must be used to find proper secret binding.

@@ -299,7 +299,11 @@ func main() {
 	_ = metricsv2.Register(ctx, eventBroker, db, cfg.MetricsV2, log)
 
 	rulesService, err := rules.NewRulesServiceFromFile(cfg.HapRuleFilePath, &cfg.Broker.EnablePlans)
-	fatalOnError(err, log)
+	if err != nil {
+		log.Error(fmt.Sprintf("Error: %s", err))
+	}
+	//TODO fail on error when we are ready with HAP parsing
+	//fatalOnError(err, log)
 	err = rulesService.FirstParsingError()
 	if err != nil {
 		log.Error(fmt.Sprintf("Error: %s", err))

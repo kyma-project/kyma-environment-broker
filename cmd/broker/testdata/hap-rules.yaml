@@ -12,3 +12,6 @@
   - preview                         # pool: hyperscalerType: aws
   - free                            # pool: hyperscalerType: aws
                                     # pool: hyperscalerType: azure
+  - build-runtime-aws
+  - build-runtime-gcp
+  - build-runtime-azure
