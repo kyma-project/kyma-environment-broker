@@ -1,35 +1,50 @@
 package rules
 
 import (
-	"sort"
+	"cmp"
+
+	"golang.org/x/exp/slices"
 )
 
+var lessParsingResult = func(x, y *ParsingResult) int {
+	// less errors precede more errors
+	if len(x.ParsingErrors) != 0 && len(y.ParsingErrors) != 0 {
+		return len(x.ParsingErrors) - len(y.ParsingErrors)
+	}
+
+	// Errors precede OK
+	if len(x.ParsingErrors) != 0 {
+		return -1
+	}
+
+	if len(y.ParsingErrors) != 0 {
+		return 1
+	}
+
+	// less errors precede more errors
+	if len(x.ProcessingErrors) != 0 && len(y.ProcessingErrors) != 0 {
+		return len(x.ProcessingErrors) - len(y.ProcessingErrors)
+	}
+
+	// Errors precede OK
+	if len(x.ProcessingErrors) != 0 {
+		return -1
+	}
+
+	if len(y.ProcessingErrors) != 0 {
+		return 1
+	}
+
+	// plans are sorted lexicographically
+	if x.Rule.Plan != y.Rule.Plan {
+		return cmp.Compare(x.Rule.Plan, y.Rule.Plan)
+	}
+
+	// less input attributes precede more input attributes
+	return x.Rule.NumberOfNonEmptyInputAttributes() - y.Rule.NumberOfNonEmptyInputAttributes()
+}
+
 func SortRuleEntries(entries []*ParsingResult) []*ParsingResult {
-	sort.SliceStable(entries, func(i, j int) bool {
-
-		if len(entries[i].ParsingErrors) != 0 && len(entries[j].ParsingErrors) != 0 {
-			return len(entries[i].ParsingErrors) < len(entries[j].ParsingErrors)
-		}
-
-		if len(entries[i].ParsingErrors) != 0 || len(entries[j].ParsingErrors) != 0 {
-			return true
-		}
-
-		if len(entries[i].ParsingErrors) != 0 && len(entries[j].ParsingErrors) != 0 {
-			return len(entries[i].ProcessingErrors) < len(entries[j].ProcessingErrors)
-		}
-
-		//TODO this is not correct rule without errors should precede rule with errors
-		if len(entries[i].ProcessingErrors) != 0 || len(entries[j].ProcessingErrors) != 0 {
-			return true
-		}
-
-		if entries[i].Rule.Plan != entries[j].Rule.Plan {
-			return entries[i].Rule.Plan < entries[j].Rule.Plan
-		}
-
-		return entries[i].Rule.NumberOfNonEmptyInputAttributes() < entries[j].Rule.NumberOfNonEmptyInputAttributes()
-	})
-
+	slices.SortStableFunc(entries, lessParsingResult)
 	return entries
 }
