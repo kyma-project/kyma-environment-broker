@@ -97,7 +97,7 @@ type ProvisioningParametersDTO struct {
 	ShootName   string `json:"shootName,omitempty"`
 	ShootDomain string `json:"shootDomain,omitempty"`
 
-	OIDC                      *OIDCConfigDTO             `json:"oidc,omitempty"`
+	OIDC                      *OIDCsDTO                  `json:"oidc,omitempty"`
 	Networking                *NetworkingDTO             `json:"networking,omitempty"`
 	Modules                   *ModulesDTO                `json:"modules,omitempty"`
 	ShootAndSeedSameRegion    *bool                      `json:"shootAndSeedSameRegion,omitempty"`
@@ -158,15 +158,27 @@ type OIDCConfigDTO struct {
 	SigningAlgs    []string `json:"signingAlgs" yaml:"signingAlgs"`
 	UsernameClaim  string   `json:"usernameClaim" yaml:"usernameClaim"`
 	UsernamePrefix string   `json:"usernamePrefix" yaml:"usernamePrefix"`
+	RequiredClaims []string `json:"requiredClaims" yaml:"requiredClaims"`
 }
 
 const oidcValidSigningAlgs = "RS256,RS384,RS512,ES256,ES384,ES512,PS256,PS384,PS512"
 
-func (o *OIDCConfigDTO) IsProvided() bool {
-	if o == nil {
+/*
+	func (o *OIDCConfigDTO) IsProvided() bool {
+		if o == nil {
+			return false
+		}
+		if o.ClientID == "" && o.IssuerURL == "" && o.GroupsClaim == "" && o.UsernamePrefix == "" && o.UsernameClaim == "" && len(o.SigningAlgs) == 0 {
+			return false
+		}
+		return true
+	}
+*/
+func (o *OIDCsDTO) IsProvided() bool {
+	if o.OIDCConfigDTO == nil {
 		return false
 	}
-	if o.ClientID == "" && o.IssuerURL == "" && o.GroupsClaim == "" && o.UsernamePrefix == "" && o.UsernameClaim == "" && len(o.SigningAlgs) == 0 {
+	if o.OIDCConfigDTO.ClientID == "" && o.OIDCConfigDTO.IssuerURL == "" && o.OIDCConfigDTO.GroupsClaim == "" && o.OIDCConfigDTO.UsernamePrefix == "" && o.OIDCConfigDTO.UsernameClaim == "" && len(o.OIDCConfigDTO.SigningAlgs) == 0 {
 		return false
 	}
 	return true
@@ -396,6 +408,11 @@ func (rt RuntimeDTO) LastOperation() Operation {
 	}
 
 	return op
+}
+
+type OIDCsDTO struct {
+	*OIDCConfigDTO
+	List []OIDCConfigDTO `json:"list" yaml:"list"`
 }
 
 type ModulesDTO struct {
