@@ -108,7 +108,7 @@ func (s *ResolveHyperscalerAccountCredentialsSecretStep) resolveSecretBindingNam
 				operation.ProvisioningParameters.ErsContext.GlobalAccountID, hapParserResult.HyperscalerType(), err)
 		}
 	case secretBindings != nil && len(secretBindings.Items) > 0:
-		targetSecretBindingName = gardener.SecretBinding{Unstructured: secretBindings.Items[0]}.GetSecretRefName()
+		targetSecretBindingName = gardener.NewSecretBinding(secretBindings.Items[0]).GetSecretRefName()
 	case secretBindings != nil && len(secretBindings.Items) == 0:
 		labelSelectorBuilder.RevertToBase()
 		labelSelectorBuilder.With(notSharedSelector)
@@ -130,7 +130,7 @@ func (s *ResolveHyperscalerAccountCredentialsSecretStep) resolveSecretBindingNam
 		if err != nil {
 			return "", fmt.Errorf("while updating secret binding with tenantName: %s: %w", operation.ProvisioningParameters.ErsContext.GlobalAccountID, err)
 		}
-		targetSecretBindingName = gardener.SecretBinding{Unstructured: *updatedSecretBinding}.GetSecretRefName()
+		targetSecretBindingName = gardener.NewSecretBinding(*updatedSecretBinding).GetSecretRefName()
 	}
 	return targetSecretBindingName, nil
 }

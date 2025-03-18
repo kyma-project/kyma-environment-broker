@@ -40,6 +40,10 @@ type SecretBinding struct {
 	unstructured.Unstructured
 }
 
+func NewSecretBinding(u unstructured.Unstructured) *SecretBinding {
+	return &SecretBinding{u}
+}
+
 func (b *SecretBinding) GetSecretRefName() string {
 	str, _, err := unstructured.NestedString(b.Unstructured.Object, "secretRef", "name")
 	if err != nil {
