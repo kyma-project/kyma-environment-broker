@@ -67,7 +67,7 @@ func TestParsingResults_CheckUniqueness(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			parsingResults := fixParsingResults(tc.ruleset)
 			parsingResults.CheckUniqueness()
-			assert.Equal(t, tc.output, getProcessingErrorsCount(parsingResults.Results))
+			assert.Equal(t, tc.output, countRulesWithProcessingErrors(parsingResults.Results))
 
 		})
 	}
