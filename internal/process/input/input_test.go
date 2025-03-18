@@ -336,7 +336,7 @@ func TestCreateProvisionRuntimeInput_ConfigureOIDC(t *testing.T) {
 		assert.NoError(t, err)
 
 		provisioningParams := fixture.FixProvisioningParameters(id)
-		provisioningParams.Parameters.OIDC = &pkg.OIDCConfigDTO{}
+		provisioningParams.Parameters.OIDC = &pkg.OIDCsDTO{}
 
 		creator, err := inputBuilder.CreateProvisionInput(provisioningParams)
 		require.NoError(t, err)
@@ -372,13 +372,15 @@ func TestCreateProvisionRuntimeInput_ConfigureOIDC(t *testing.T) {
 		assert.NoError(t, err)
 
 		provisioningParams := fixture.FixProvisioningParameters(id)
-		provisioningParams.Parameters.OIDC = &pkg.OIDCConfigDTO{
-			ClientID:       "provided-id",
-			GroupsClaim:    "fake-groups-claim",
-			IssuerURL:      "https://test.domain.local",
-			SigningAlgs:    []string{"RS256", "HS256"},
-			UsernameClaim:  "usernameClaim",
-			UsernamePrefix: "<<",
+		provisioningParams.Parameters.OIDC = &pkg.OIDCsDTO{
+			OIDCConfigDTO: &pkg.OIDCConfigDTO{
+				ClientID:       "provided-id",
+				GroupsClaim:    "fake-groups-claim",
+				IssuerURL:      "https://test.domain.local",
+				SigningAlgs:    []string{"RS256", "HS256"},
+				UsernameClaim:  "usernameClaim",
+				UsernamePrefix: "<<",
+			},
 		}
 
 		creator, err := inputBuilder.CreateProvisionInput(provisioningParams)

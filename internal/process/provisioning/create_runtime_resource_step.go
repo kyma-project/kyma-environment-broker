@@ -268,24 +268,24 @@ func (s *CreateRuntimeResourceStep) createKubernetesConfiguration(operation inte
 		UsernameClaim:  &s.oidcDefaultValues.UsernameClaim,
 		UsernamePrefix: &s.oidcDefaultValues.UsernamePrefix,
 	}
-	if operation.ProvisioningParameters.Parameters.OIDC != nil {
-		if operation.ProvisioningParameters.Parameters.OIDC.ClientID != "" {
-			oidc.ClientID = &operation.ProvisioningParameters.Parameters.OIDC.ClientID
+	if operation.ProvisioningParameters.Parameters.OIDC != nil && operation.ProvisioningParameters.Parameters.OIDC.OIDCConfigDTO != nil {
+		if operation.ProvisioningParameters.Parameters.OIDC.OIDCConfigDTO.ClientID != "" {
+			oidc.ClientID = &operation.ProvisioningParameters.Parameters.OIDC.OIDCConfigDTO.ClientID
 		}
-		if operation.ProvisioningParameters.Parameters.OIDC.GroupsClaim != "" {
-			oidc.GroupsClaim = &operation.ProvisioningParameters.Parameters.OIDC.GroupsClaim
+		if operation.ProvisioningParameters.Parameters.OIDC.OIDCConfigDTO.GroupsClaim != "" {
+			oidc.GroupsClaim = &operation.ProvisioningParameters.Parameters.OIDC.OIDCConfigDTO.GroupsClaim
 		}
-		if operation.ProvisioningParameters.Parameters.OIDC.IssuerURL != "" {
-			oidc.IssuerURL = &operation.ProvisioningParameters.Parameters.OIDC.IssuerURL
+		if operation.ProvisioningParameters.Parameters.OIDC.OIDCConfigDTO.IssuerURL != "" {
+			oidc.IssuerURL = &operation.ProvisioningParameters.Parameters.OIDC.OIDCConfigDTO.IssuerURL
 		}
-		if len(operation.ProvisioningParameters.Parameters.OIDC.SigningAlgs) > 0 {
-			oidc.SigningAlgs = operation.ProvisioningParameters.Parameters.OIDC.SigningAlgs
+		if len(operation.ProvisioningParameters.Parameters.OIDC.OIDCConfigDTO.SigningAlgs) > 0 {
+			oidc.SigningAlgs = operation.ProvisioningParameters.Parameters.OIDC.OIDCConfigDTO.SigningAlgs
 		}
-		if operation.ProvisioningParameters.Parameters.OIDC.UsernameClaim != "" {
-			oidc.UsernameClaim = &operation.ProvisioningParameters.Parameters.OIDC.UsernameClaim
+		if operation.ProvisioningParameters.Parameters.OIDC.OIDCConfigDTO.UsernameClaim != "" {
+			oidc.UsernameClaim = &operation.ProvisioningParameters.Parameters.OIDC.OIDCConfigDTO.UsernameClaim
 		}
-		if operation.ProvisioningParameters.Parameters.OIDC.UsernamePrefix != "" {
-			oidc.UsernamePrefix = &operation.ProvisioningParameters.Parameters.OIDC.UsernamePrefix
+		if operation.ProvisioningParameters.Parameters.OIDC.OIDCConfigDTO.UsernamePrefix != "" {
+			oidc.UsernamePrefix = &operation.ProvisioningParameters.Parameters.OIDC.OIDCConfigDTO.UsernamePrefix
 		}
 	}
 
@@ -300,7 +300,11 @@ func (s *CreateRuntimeResourceStep) createKubernetesConfiguration(operation inte
 	}
 
 	if s.config.UseAdditionalOIDC {
-		kubernetesConfig.KubeAPIServer.AdditionalOidcConfig = &[]gardener.OIDCConfig{oidc}
+		if operation.ProvisioningParameters.Parameters.OIDC.List == nil {
+			kubernetesConfig.KubeAPIServer.AdditionalOidcConfig = &[]gardener.OIDCConfig{oidc}
+		} else {
+			kubernetesConfig.KubeAPIServer.AdditionalOidcConfig = ConvertOIDCConfigList(operation.ProvisioningParameters.Parameters.OIDC.List)
+		}
 	}
 
 	return kubernetesConfig
@@ -389,4 +393,22 @@ func CreateAdditionalWorkers(config input.Config, values internal.ProviderValues
 	}
 
 	return workers
+}
+
+func ConvertOIDCConfigList(oidcList []pkg.OIDCConfigDTO) *[]gardener.OIDCConfig {
+	if oidcList == nil {
+		return nil
+	}
+	var convertedList []gardener.OIDCConfig
+	for _, oidc := range oidcList {
+		convertedList = append(convertedList, gardener.OIDCConfig{
+			ClientID:       &oidc.ClientID,
+			GroupsClaim:    &oidc.GroupsClaim,
+			IssuerURL:      &oidc.IssuerURL,
+			SigningAlgs:    oidc.SigningAlgs,
+			UsernameClaim:  &oidc.UsernameClaim,
+			UsernamePrefix: &oidc.UsernamePrefix,
+		})
+	}
+	return &convertedList
 }
