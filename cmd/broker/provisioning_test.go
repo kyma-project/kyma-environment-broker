@@ -18,8 +18,6 @@ import (
 	"github.com/pivotal-cf/brokerapi/v12/domain"
 	"github.com/stretchr/testify/assert"
 
-	"github.com/kyma-project/kyma-environment-broker/common/hyperscaler"
-
 	pkg "github.com/kyma-project/kyma-environment-broker/common/runtime"
 	"github.com/kyma-project/kyma-environment-broker/internal"
 	"github.com/kyma-project/kyma-environment-broker/internal/broker"
@@ -872,94 +870,83 @@ func TestProvisioning_ClusterParameters(t *testing.T) {
 	for tn, tc := range map[string]struct {
 		planID                       string
 		platformRegionPart           string
-		platformProvider             pkg.CloudProvider
 		region                       string
 		multiZone                    bool
 		controlPlaneFailureTolerance string
 		useSmallerMachineTypes       bool
 
-		expectedZonesCount                  *int
-		expectedProvider                    string
-		expectedMinimalNumberOfNodes        int
-		expectedMaximumNumberOfNodes        int
-		expectedMachineType                 string
-		expectedSharedSubscription          bool
-		expectedSubscriptionHyperscalerType hyperscaler.Type
+		expectedZonesCount           *int
+		expectedProvider             string
+		expectedMinimalNumberOfNodes int
+		expectedMaximumNumberOfNodes int
+		expectedMachineType          string
+		expectedSubscriptionName     string
 	}{
 		"Regular trial": {
 			planID: broker.TrialPlanID,
 
-			expectedMinimalNumberOfNodes:        1,
-			expectedMaximumNumberOfNodes:        1,
-			expectedMachineType:                 "m5.xlarge",
-			expectedProvider:                    "aws",
-			expectedSharedSubscription:          true,
-			expectedSubscriptionHyperscalerType: hyperscaler.AWS(),
+			expectedMinimalNumberOfNodes: 1,
+			expectedMaximumNumberOfNodes: 1,
+			expectedMachineType:          "m5.xlarge",
+			expectedProvider:             "aws",
+			expectedSubscriptionName:     "sb-aws-shared",
 		},
 		"Regular trial with smaller machines": {
 			planID:                 broker.TrialPlanID,
 			useSmallerMachineTypes: true,
 
-			expectedMinimalNumberOfNodes:        1,
-			expectedMaximumNumberOfNodes:        1,
-			expectedMachineType:                 "m6i.large",
-			expectedProvider:                    "aws",
-			expectedSharedSubscription:          true,
-			expectedSubscriptionHyperscalerType: hyperscaler.AWS(),
+			expectedMinimalNumberOfNodes: 1,
+			expectedMaximumNumberOfNodes: 1,
+			expectedMachineType:          "m6i.large",
+			expectedProvider:             "aws",
+			expectedSubscriptionName:     "sb-aws-shared",
 		},
 		"Freemium aws": {
 			planID:             broker.FreemiumPlanID,
-			platformProvider:   pkg.AWS,
 			region:             "eu-central-1",
-			platformRegionPart: "cf-eu11/",
+			platformRegionPart: "cf-eu10/",
 
-			expectedMinimalNumberOfNodes:        1,
-			expectedMaximumNumberOfNodes:        1,
-			expectedProvider:                    "aws",
-			expectedSharedSubscription:          false,
-			expectedMachineType:                 "m5.xlarge",
-			expectedSubscriptionHyperscalerType: hyperscaler.AWS(),
+			expectedMinimalNumberOfNodes: 1,
+			expectedMaximumNumberOfNodes: 1,
+			expectedProvider:             "aws",
+
+			expectedMachineType:      "m5.xlarge",
+			expectedSubscriptionName: "sb-aws",
 		},
 		"Freemium aws with smaller machines": {
 			planID:                 broker.FreemiumPlanID,
-			platformProvider:       pkg.AWS,
-			platformRegionPart:     "cf-eu11/",
+			platformRegionPart:     "cf-eu10/",
 			useSmallerMachineTypes: true,
 			region:                 "eu-central-1",
 
-			expectedMinimalNumberOfNodes:        1,
-			expectedMaximumNumberOfNodes:        1,
-			expectedProvider:                    "aws",
-			expectedSharedSubscription:          false,
-			expectedMachineType:                 "m6i.large",
-			expectedSubscriptionHyperscalerType: hyperscaler.AWS(),
+			expectedMinimalNumberOfNodes: 1,
+			expectedMaximumNumberOfNodes: 1,
+			expectedProvider:             "aws",
+			expectedMachineType:          "m6i.large",
+			expectedSubscriptionName:     "sb-aws",
 		},
 		"Freemium azure": {
 			planID:             broker.FreemiumPlanID,
-			platformProvider:   pkg.Azure,
 			platformRegionPart: "cf-eu21/",
 			region:             "westeurope",
 
-			expectedMinimalNumberOfNodes:        1,
-			expectedMaximumNumberOfNodes:        1,
-			expectedProvider:                    "azure",
-			expectedSharedSubscription:          false,
-			expectedMachineType:                 "Standard_D4s_v5",
-			expectedSubscriptionHyperscalerType: hyperscaler.Azure(),
+			expectedMinimalNumberOfNodes: 1,
+			expectedMaximumNumberOfNodes: 1,
+			expectedProvider:             "azure",
+			expectedMachineType:          "Standard_D4s_v5",
+			expectedSubscriptionName:     "sb-azure",
 		},
 		"Freemium azure with smaller machines": {
 			planID:                 broker.FreemiumPlanID,
-			platformProvider:       pkg.Azure,
 			useSmallerMachineTypes: true,
 			platformRegionPart:     "cf-eu21/",
 			region:                 "westeurope",
 
-			expectedMinimalNumberOfNodes:        1,
-			expectedMaximumNumberOfNodes:        1,
-			expectedProvider:                    "azure",
-			expectedSharedSubscription:          false,
-			expectedMachineType:                 "Standard_D2s_v5",
-			expectedSubscriptionHyperscalerType: hyperscaler.Azure(),
+			expectedMinimalNumberOfNodes: 1,
+			expectedMaximumNumberOfNodes: 1,
+			expectedProvider:             "azure",
+			expectedMachineType:          "Standard_D2s_v5",
+			expectedSubscriptionName:     "sb-azure",
 		},
 		"Production Azure": {
 			planID:                       broker.AzurePlanID,
@@ -967,13 +954,12 @@ func TestProvisioning_ClusterParameters(t *testing.T) {
 			multiZone:                    false,
 			controlPlaneFailureTolerance: "zone",
 
-			expectedZonesCount:                  ptr.Integer(1),
-			expectedMinimalNumberOfNodes:        3,
-			expectedMaximumNumberOfNodes:        20,
-			expectedMachineType:                 provider.DefaultAzureMachineType,
-			expectedProvider:                    "azure",
-			expectedSharedSubscription:          false,
-			expectedSubscriptionHyperscalerType: hyperscaler.Azure(),
+			expectedZonesCount:           ptr.Integer(1),
+			expectedMinimalNumberOfNodes: 3,
+			expectedMaximumNumberOfNodes: 20,
+			expectedMachineType:          provider.DefaultAzureMachineType,
+			expectedProvider:             "azure",
+			expectedSubscriptionName:     "sb-azure",
 		},
 		"Production Multi-AZ Azure": {
 			planID:                       broker.AzurePlanID,
@@ -981,13 +967,12 @@ func TestProvisioning_ClusterParameters(t *testing.T) {
 			multiZone:                    true,
 			controlPlaneFailureTolerance: "zone",
 
-			expectedZonesCount:                  ptr.Integer(3),
-			expectedMinimalNumberOfNodes:        3,
-			expectedMaximumNumberOfNodes:        20,
-			expectedMachineType:                 provider.DefaultAzureMachineType,
-			expectedProvider:                    "azure",
-			expectedSharedSubscription:          false,
-			expectedSubscriptionHyperscalerType: hyperscaler.Azure(),
+			expectedZonesCount:           ptr.Integer(3),
+			expectedMinimalNumberOfNodes: 3,
+			expectedMaximumNumberOfNodes: 20,
+			expectedMachineType:          provider.DefaultAzureMachineType,
+			expectedProvider:             "azure",
+			expectedSubscriptionName:     "sb-azure",
 		},
 		"Production AWS": {
 			planID:                       broker.AWSPlanID,
@@ -995,13 +980,13 @@ func TestProvisioning_ClusterParameters(t *testing.T) {
 			multiZone:                    false,
 			controlPlaneFailureTolerance: "zone",
 
-			expectedZonesCount:                  ptr.Integer(1),
-			expectedMinimalNumberOfNodes:        3,
-			expectedMaximumNumberOfNodes:        20,
-			expectedMachineType:                 provider.DefaultAWSMachineType,
-			expectedProvider:                    "aws",
-			expectedSharedSubscription:          false,
-			expectedSubscriptionHyperscalerType: hyperscaler.AWS(),
+			expectedZonesCount:           ptr.Integer(1),
+			expectedMinimalNumberOfNodes: 3,
+			expectedMaximumNumberOfNodes: 20,
+			expectedMachineType:          provider.DefaultAWSMachineType,
+			expectedProvider:             "aws",
+
+			expectedSubscriptionName: "sb-aws",
 		},
 		"Production Multi-AZ AWS": {
 			planID:                       broker.AWSPlanID,
@@ -1009,13 +994,12 @@ func TestProvisioning_ClusterParameters(t *testing.T) {
 			multiZone:                    true,
 			controlPlaneFailureTolerance: "zone",
 
-			expectedZonesCount:                  ptr.Integer(3),
-			expectedMinimalNumberOfNodes:        3,
-			expectedMaximumNumberOfNodes:        20,
-			expectedMachineType:                 provider.DefaultAWSMachineType,
-			expectedProvider:                    "aws",
-			expectedSharedSubscription:          false,
-			expectedSubscriptionHyperscalerType: hyperscaler.AWS(),
+			expectedZonesCount:           ptr.Integer(3),
+			expectedMinimalNumberOfNodes: 3,
+			expectedMaximumNumberOfNodes: 20,
+			expectedMachineType:          provider.DefaultAWSMachineType,
+			expectedProvider:             "aws",
+			expectedSubscriptionName:     "sb-aws",
 		},
 		"Production GCP": {
 			planID:                       broker.GCPPlanID,
@@ -1023,13 +1007,12 @@ func TestProvisioning_ClusterParameters(t *testing.T) {
 			multiZone:                    false,
 			controlPlaneFailureTolerance: "zone",
 
-			expectedZonesCount:                  ptr.Integer(1),
-			expectedMinimalNumberOfNodes:        3,
-			expectedMaximumNumberOfNodes:        20,
-			expectedMachineType:                 provider.DefaultGCPMachineType,
-			expectedProvider:                    "gcp",
-			expectedSharedSubscription:          false,
-			expectedSubscriptionHyperscalerType: hyperscaler.GCP("cf-us30"),
+			expectedZonesCount:           ptr.Integer(1),
+			expectedMinimalNumberOfNodes: 3,
+			expectedMaximumNumberOfNodes: 20,
+			expectedMachineType:          provider.DefaultGCPMachineType,
+			expectedProvider:             "gcp",
+			expectedSubscriptionName:     "sb-gcp",
 		},
 		"Production GCP KSA": {
 			planID:                       broker.GCPPlanID,
@@ -1038,13 +1021,12 @@ func TestProvisioning_ClusterParameters(t *testing.T) {
 			multiZone:                    false,
 			controlPlaneFailureTolerance: "zone",
 
-			expectedZonesCount:                  ptr.Integer(1),
-			expectedMinimalNumberOfNodes:        3,
-			expectedMaximumNumberOfNodes:        20,
-			expectedMachineType:                 provider.DefaultGCPMachineType,
-			expectedProvider:                    "gcp",
-			expectedSharedSubscription:          false,
-			expectedSubscriptionHyperscalerType: hyperscaler.GCP("cf-sa30"),
+			expectedZonesCount:           ptr.Integer(1),
+			expectedMinimalNumberOfNodes: 3,
+			expectedMaximumNumberOfNodes: 20,
+			expectedMachineType:          provider.DefaultGCPMachineType,
+			expectedProvider:             "gcp",
+			expectedSubscriptionName:     "sb-gcp_cf-sa30",
 		},
 		"Production Multi-AZ GCP": {
 			planID:                       broker.GCPPlanID,
@@ -1052,13 +1034,42 @@ func TestProvisioning_ClusterParameters(t *testing.T) {
 			multiZone:                    true,
 			controlPlaneFailureTolerance: "zone",
 
-			expectedZonesCount:                  ptr.Integer(3),
-			expectedMinimalNumberOfNodes:        3,
-			expectedMaximumNumberOfNodes:        20,
-			expectedMachineType:                 provider.DefaultGCPMachineType,
-			expectedProvider:                    "gcp",
-			expectedSharedSubscription:          false,
-			expectedSubscriptionHyperscalerType: hyperscaler.GCP("cf-us30"),
+			expectedZonesCount:           ptr.Integer(3),
+			expectedMinimalNumberOfNodes: 3,
+			expectedMaximumNumberOfNodes: 20,
+			expectedMachineType:          provider.DefaultGCPMachineType,
+			expectedProvider:             "gcp",
+			expectedSubscriptionName:     "sb-gcp",
+		},
+		"sap converged cloud eu-de-1": {
+			planID: broker.SapConvergedCloudPlanID,
+			region: "eu-de-1",
+			// this is mandatory because the plan is not existing if the platform region is not in the list (cmd/broker/testdata/old-sap-converged-cloud-region-mappings)
+			platformRegionPart:           "cf-eu20-staging/",
+			multiZone:                    true,
+			controlPlaneFailureTolerance: "zone",
+
+			expectedZonesCount:           ptr.Integer(3),
+			expectedMinimalNumberOfNodes: 3,
+			expectedMaximumNumberOfNodes: 20,
+			expectedMachineType:          provider.DefaultSapConvergedCloudMachineType,
+			expectedProvider:             "openstack",
+			expectedSubscriptionName:     "sb-openstack_eu-de-1",
+		},
+		"sap converged cloud eu-de-2": {
+			planID:                       broker.SapConvergedCloudPlanID,
+			region:                       "eu-de-2",
+			platformRegionPart:           "cf-eu20-staging/",
+			multiZone:                    true,
+			controlPlaneFailureTolerance: "zone",
+
+			// available zones are defined in the internal/provider/zones.go (sapConvergedCloudZones)
+			expectedZonesCount:           ptr.Integer(2),
+			expectedMinimalNumberOfNodes: 3,
+			expectedMaximumNumberOfNodes: 20,
+			expectedMachineType:          provider.DefaultSapConvergedCloudMachineType,
+			expectedProvider:             "openstack",
+			expectedSubscriptionName:     "sb-openstack_eu-de-2",
 		},
 	} {
 		t.Run(tn, func(t *testing.T) {
@@ -1118,7 +1129,9 @@ func TestProvisioning_ClusterParameters(t *testing.T) {
 				assert.Nil(t, runtimeCR.Spec.Shoot.ControlPlane)
 			}
 
-			suite.AssertSubscription(iid, tc.expectedSharedSubscription, tc.expectedSubscriptionHyperscalerType)
+			if tc.expectedSubscriptionName != "" {
+				assert.Equal(t, tc.expectedSubscriptionName, runtimeCR.Spec.Shoot.SecretBindingName)
+			}
 		})
 
 	}
