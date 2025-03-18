@@ -174,25 +174,32 @@ const oidcValidSigningAlgs = "RS256,RS384,RS512,ES256,ES384,ES512,PS256,PS384,PS
 		return true
 	}
 */
+
 func (o *OIDCsDTO) IsProvided() bool {
-	if o.OIDCConfigDTO == nil {
+	if o == nil {
 		return false
 	}
-	if o.OIDCConfigDTO.ClientID == "" && o.OIDCConfigDTO.IssuerURL == "" && o.OIDCConfigDTO.GroupsClaim == "" && o.OIDCConfigDTO.UsernamePrefix == "" && o.OIDCConfigDTO.UsernameClaim == "" && len(o.OIDCConfigDTO.SigningAlgs) == 0 {
-		return false
+	if o.OIDCConfigDTO != nil && (o.OIDCConfigDTO.ClientID != "" || o.OIDCConfigDTO.IssuerURL != "" || o.OIDCConfigDTO.GroupsClaim != "" || o.OIDCConfigDTO.UsernamePrefix != "" || o.OIDCConfigDTO.UsernameClaim != "" || len(o.OIDCConfigDTO.SigningAlgs) > 0) {
+		return true
 	}
-	return true
+	if o.List != nil {
+		return true
+	}
+	return false
 }
 
-func (o *OIDCConfigDTO) Validate() error {
+func (o *OIDCsDTO) Validate() error {
+	if len(o.List) == 0 { //no oidc should be set, event not the default one
+		return nil
+	}
 	errs := make([]string, 0)
-	if len(o.ClientID) == 0 {
+	if len(o.OIDCConfigDTO.ClientID) == 0 {
 		errs = append(errs, "clientID must not be empty")
 	}
-	if len(o.IssuerURL) == 0 {
+	if len(o.OIDCConfigDTO.IssuerURL) == 0 {
 		errs = append(errs, "issuerURL must not be empty")
 	} else {
-		issuer, err := url.Parse(o.IssuerURL)
+		issuer, err := url.Parse(o.OIDCConfigDTO.IssuerURL)
 		if err != nil || (issuer != nil && len(issuer.Host) == 0) {
 			errs = append(errs, "issuerURL must be a valid URL")
 		}
@@ -209,9 +216,9 @@ func (o *OIDCConfigDTO) Validate() error {
 			errs = append(errs, "issuerURL must have https scheme")
 		}
 	}
-	if len(o.SigningAlgs) != 0 {
+	if len(o.OIDCConfigDTO.SigningAlgs) != 0 {
 		validSigningAlgs := o.validSigningAlgsSet()
-		for _, providedAlg := range o.SigningAlgs {
+		for _, providedAlg := range o.OIDCConfigDTO.SigningAlgs {
 			if !validSigningAlgs[providedAlg] {
 				errs = append(errs, "signingAlgs must contain valid signing algorithm(s)")
 				break
@@ -226,7 +233,7 @@ func (o *OIDCConfigDTO) Validate() error {
 	return nil
 }
 
-func (o *OIDCConfigDTO) validSigningAlgsSet() map[string]bool {
+func (o *OIDCsDTO) validSigningAlgsSet() map[string]bool {
 	algs := strings.Split(oidcValidSigningAlgs, ",")
 	signingAlgsSet := make(map[string]bool, len(algs))
 
