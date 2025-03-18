@@ -95,6 +95,7 @@ func (p *ParsingResults) CheckSignatures() {
 
 	p.Results = uniqueResults
 }
+
 func getProcessingErrorCount(results []*ParsingResult) int {
 	errorCount := 0
 
