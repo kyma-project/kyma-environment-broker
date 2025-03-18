@@ -73,13 +73,15 @@ func TestCreateRuntimeResourceStep_onlyMainOIDC_AllCustom(t *testing.T) {
 		UseAdditionalOIDC: false,
 	}
 	instance, operation := fixInstanceAndOperation(broker.AzurePlanID, "westeurope", "platform-region", inputConfig, pkg.Azure)
-	operation.ProvisioningParameters.Parameters.OIDC = &pkg.OIDCConfigDTO{
-		ClientID:       "client-id-custom",
-		GroupsClaim:    "gc-custom",
-		IssuerURL:      "issuer-url-custom",
-		SigningAlgs:    []string{"sa-custom"},
-		UsernameClaim:  "uc-custom",
-		UsernamePrefix: "up-custom",
+	operation.ProvisioningParameters.Parameters.OIDC = &pkg.OIDCsDTO{
+		OIDCConfigDTO: &pkg.OIDCConfigDTO{
+			ClientID:       "client-id-custom",
+			GroupsClaim:    "gc-custom",
+			IssuerURL:      "issuer-url-custom",
+			SigningAlgs:    []string{"sa-custom"},
+			UsernameClaim:  "uc-custom",
+			UsernamePrefix: "up-custom",
+		},
 	}
 	assertInsertions(t, memoryStorage, instance, operation)
 	expectedOIDCConfig := gardener.OIDCConfig{
@@ -120,13 +122,15 @@ func TestCreateRuntimeResourceStep_MainAndAdditionalOIDC_AllCustom(t *testing.T)
 		UseAdditionalOIDC: true,
 	}
 	instance, operation := fixInstanceAndOperation(broker.AzurePlanID, "westeurope", "platform-region", inputConfig, pkg.Azure)
-	operation.ProvisioningParameters.Parameters.OIDC = &pkg.OIDCConfigDTO{
-		ClientID:       "client-id-custom",
-		GroupsClaim:    "gc-custom",
-		IssuerURL:      "issuer-url-custom",
-		SigningAlgs:    []string{"sa-custom"},
-		UsernameClaim:  "uc-custom",
-		UsernamePrefix: "up-custom",
+	operation.ProvisioningParameters.Parameters.OIDC = &pkg.OIDCsDTO{
+		OIDCConfigDTO: &pkg.OIDCConfigDTO{
+			ClientID:       "client-id-custom",
+			GroupsClaim:    "gc-custom",
+			IssuerURL:      "issuer-url-custom",
+			SigningAlgs:    []string{"sa-custom"},
+			UsernameClaim:  "uc-custom",
+			UsernamePrefix: "up-custom",
+		},
 	}
 	assertInsertions(t, memoryStorage, instance, operation)
 	expectedOIDCConfig := gardener.OIDCConfig{
@@ -167,13 +171,15 @@ func TestCreateRuntimeResourceStep_onlyAdditionalOIDC_AllCustom(t *testing.T) {
 		UseAdditionalOIDC: true,
 	}
 	instance, operation := fixInstanceAndOperation(broker.AzurePlanID, "westeurope", "platform-region", inputConfig, pkg.Azure)
-	operation.ProvisioningParameters.Parameters.OIDC = &pkg.OIDCConfigDTO{
-		ClientID:       "client-id-custom",
-		GroupsClaim:    "gc-custom",
-		IssuerURL:      "issuer-url-custom",
-		SigningAlgs:    []string{"sa-custom"},
-		UsernameClaim:  "uc-custom",
-		UsernamePrefix: "up-custom",
+	operation.ProvisioningParameters.Parameters.OIDC = &pkg.OIDCsDTO{
+		OIDCConfigDTO: &pkg.OIDCConfigDTO{
+			ClientID:       "client-id-custom",
+			GroupsClaim:    "gc-custom",
+			IssuerURL:      "issuer-url-custom",
+			SigningAlgs:    []string{"sa-custom"},
+			UsernameClaim:  "uc-custom",
+			UsernamePrefix: "up-custom",
+		},
 	}
 	assertInsertions(t, memoryStorage, instance, operation)
 	expectedOIDCConfig := gardener.OIDCConfig{
@@ -219,11 +225,13 @@ func TestCreateRuntimeResourceStep_OIDC_MixedCustom(t *testing.T) {
 		UseAdditionalOIDC: false,
 	}
 	instance, operation := fixInstanceAndOperation(broker.AzurePlanID, "westeurope", "platform-region", inputConfig, pkg.Azure)
-	operation.ProvisioningParameters.Parameters.OIDC = &pkg.OIDCConfigDTO{
-		ClientID:      "client-id-custom",
-		GroupsClaim:   "gc-custom",
-		IssuerURL:     "issuer-url-custom",
-		UsernameClaim: "uc-custom",
+	operation.ProvisioningParameters.Parameters.OIDC = &pkg.OIDCsDTO{
+		OIDCConfigDTO: &pkg.OIDCConfigDTO{
+			ClientID:      "client-id-custom",
+			GroupsClaim:   "gc-custom",
+			IssuerURL:     "issuer-url-custom",
+			UsernameClaim: "uc-custom",
+		},
 	}
 	assertInsertions(t, memoryStorage, instance, operation)
 	expectedOIDCConfig := gardener.OIDCConfig{
