@@ -12,6 +12,8 @@ import (
 type RulesService struct {
 	parser        Parser
 	ParsedRuleset *ParsingResults
+	ValidSet      *ValidRuleset
+	InvalidSet    *ValidationErrors
 }
 
 func NewRulesServiceFromFile(rulesFilePath string, enabledPlans *broker.EnablePlans) (*RulesService, error) {
@@ -48,8 +50,9 @@ func NewRulesService(file *os.File, enabledPlans *broker.EnablePlans) (*RulesSer
 		},
 	}
 
-	rs.ParsedRuleset = rs.parse(rulesConfig)
-	return rs, nil
+	rs.ParsedRuleset = rs.process(rulesConfig)
+	_, rs.ValidSet, rs.InvalidSet = rs.processAndValidate(rulesConfig)
+	return rs, err
 }
 
 func NewRulesServiceFromSlice(rules []string, enabledPlans *broker.EnablePlans) (*RulesService, error) {
@@ -64,13 +67,63 @@ func NewRulesServiceFromSlice(rules []string, enabledPlans *broker.EnablePlans) 
 		},
 	}
 
-	rs.ParsedRuleset = rs.parse(rulesConfig)
+	rs.ParsedRuleset = rs.process(rulesConfig)
+	_, rs.ValidSet, rs.InvalidSet = rs.processAndValidate(rulesConfig)
 	return rs, nil
 }
 
-func (rs *RulesService) parse(rulesConfig *RulesConfig) *ParsingResults {
+func (rs *RulesService) processAndValidate(rulesConfig *RulesConfig) (bool, *ValidRuleset, *ValidationErrors) {
 
-	results := rs.parseRuleset(rulesConfig)
+	validRuleset, validationErrors := rs.postParse(rulesConfig)
+	if len(validationErrors.ParsingErrors) > 0 {
+		return false, nil, validationErrors
+	}
+
+	ok, duplicateErrors := validRuleset.checkUniqueness()
+	if !ok {
+		validationErrors.UniquenessErrors = append(validationErrors.UniquenessErrors, duplicateErrors...)
+		return false, nil, validationErrors
+	}
+
+	ok, ambiguityErrors := validRuleset.checkAmbiguity()
+	if !ok {
+		validationErrors.AmbiguityErrors = append(validationErrors.AmbiguityErrors, ambiguityErrors...)
+		return false, nil, validationErrors
+	}
+	return true, validRuleset, nil
+}
+
+func (rs *RulesService) postParse(rulesConfig *RulesConfig) (*ValidRuleset, *ValidationErrors) {
+	validRuleset := NewValidRuleset()
+	validationErrors := NewValidationErrors()
+
+	for _, entry := range rulesConfig.Rules {
+		rule, err := rs.parser.Parse(entry)
+		if err != nil {
+			validationErrors.ParsingErrors = append(validationErrors.ParsingErrors, err)
+		} else {
+			validRule := toValidRule(rule)
+			validRuleset.Rules = append(validRuleset.Rules, *validRule)
+		}
+	}
+
+	if len(validationErrors.ParsingErrors) > 0 {
+		return nil, validationErrors
+	}
+
+	return validRuleset, validationErrors
+}
+
+func (rs *RulesService) process(rulesConfig *RulesConfig) *ParsingResults {
+	results := NewParsingResults()
+
+	for _, entry := range rulesConfig.Rules {
+		rule, err := rs.parser.Parse(entry)
+
+		results.Apply(entry, rule, err)
+	}
+
+	results.Results = SortRuleEntries(results.Results)
 
 	results.CheckUniqueness()
 
@@ -135,7 +188,6 @@ func (rs *RulesService) Match(data *ProvisioningAttributes) map[uuid.UUID]*Match
 	return matchingResults
 }
 
-// TODO redesign this method
 func (rs *RulesService) FirstParsingError() error {
 	for _, result := range rs.ParsedRuleset.Results {
 		if result.HasErrors() {
@@ -151,4 +203,31 @@ func (rs *RulesService) FirstParsingError() error {
 	}
 
 	return nil
+}
+
+func toValidRule(rule *Rule) *ValidRule {
+	vr := &ValidRule{
+		Plan: PatternAttribute{
+			literal: rule.Plan,
+		},
+		PlatformRegion: PatternAttribute{
+			literal: rule.PlatformRegion,
+		},
+		HyperscalerRegion: PatternAttribute{
+			literal: rule.HyperscalerRegion,
+		},
+		Shared:                  rule.Shared,
+		EuAccess:                rule.EuAccess,
+		PlatformRegionSuffix:    rule.PlatformRegionSuffix,
+		HyperscalerRegionSuffix: rule.HyperscalerRegionSuffix,
+	}
+	if vr.PlatformRegion.literal == "" {
+		vr.PlatformRegion.matchAny = true
+		vr.MatchAnyCount++
+	}
+	if vr.HyperscalerRegion.literal == "" {
+		vr.HyperscalerRegion.matchAny = true
+		vr.MatchAnyCount++
+	}
+	return vr
 }
