@@ -44,15 +44,15 @@ type LabelSelectorBuilder struct {
 	base string
 }
 
-type ResolveHyperscalerAccountCredentialsSecretStep struct {
+type ResolveSubscriptionSecretStep struct {
 	operationManager *process.OperationManager
 	gardenerClient   *gardener.Client
 	opStorage        storage.Operations
 	rulesService     *rules.RulesService
 }
 
-func NewResolveHyperscalerAccountCredentialsSecretStep(os storage.Operations, gardenerClient *gardener.Client, rulesService *rules.RulesService) *ResolveHyperscalerAccountCredentialsSecretStep {
-	step := &ResolveHyperscalerAccountCredentialsSecretStep{
+func NewResolveSubscriptionSecretStep(os storage.Operations, gardenerClient *gardener.Client, rulesService *rules.RulesService) *ResolveSubscriptionSecretStep {
+	step := &ResolveSubscriptionSecretStep{
 		opStorage:      os,
 		gardenerClient: gardenerClient,
 		rulesService:   rulesService,
@@ -61,11 +61,11 @@ func NewResolveHyperscalerAccountCredentialsSecretStep(os storage.Operations, ga
 	return step
 }
 
-func (s *ResolveHyperscalerAccountCredentialsSecretStep) Name() string {
-	return "Resolve_Hyperscaler_Account_Credentials_Secret"
+func (s *ResolveSubscriptionSecretStep) Name() string {
+	return "Resolve_Subscription_Secret"
 }
 
-func (s *ResolveHyperscalerAccountCredentialsSecretStep) Run(operation internal.Operation, log *slog.Logger) (internal.Operation, time.Duration, error) {
+func (s *ResolveSubscriptionSecretStep) Run(operation internal.Operation, log *slog.Logger) (internal.Operation, time.Duration, error) {
 	targetSecretName, err := s.resolveSecretName(operation, log)
 	if err != nil {
 		msg := fmt.Sprintf("resolving secret name")
@@ -81,7 +81,7 @@ func (s *ResolveHyperscalerAccountCredentialsSecretStep) Run(operation internal.
 	}, log)
 }
 
-func (s *ResolveHyperscalerAccountCredentialsSecretStep) resolveSecretName(operation internal.Operation, log *slog.Logger) (string, error) {
+func (s *ResolveSubscriptionSecretStep) resolveSecretName(operation internal.Operation, log *slog.Logger) (string, error) {
 	attr := s.provisioningAttributesFromOperationData(operation)
 
 	log.Info(fmt.Sprintf("matching provisioning attributes %q to filtering rule", attr))
@@ -130,7 +130,7 @@ func (s *ResolveHyperscalerAccountCredentialsSecretStep) resolveSecretName(opera
 	return secretBinding.GetSecretRefName(), nil
 }
 
-func (s *ResolveHyperscalerAccountCredentialsSecretStep) provisioningAttributesFromOperationData(operation internal.Operation) *rules.ProvisioningAttributes {
+func (s *ResolveSubscriptionSecretStep) provisioningAttributesFromOperationData(operation internal.Operation) *rules.ProvisioningAttributes {
 	return &rules.ProvisioningAttributes{
 		Plan:              broker.PlanNamesMapping[operation.ProvisioningParameters.PlanID],
 		PlatformRegion:    operation.ProvisioningParameters.PlatformRegion,
@@ -139,7 +139,7 @@ func (s *ResolveHyperscalerAccountCredentialsSecretStep) provisioningAttributesF
 	}
 }
 
-func (s *ResolveHyperscalerAccountCredentialsSecretStep) matchProvisioningAttributesToRule(attr *rules.ProvisioningAttributes) (ParsedRule, error) {
+func (s *ResolveSubscriptionSecretStep) matchProvisioningAttributesToRule(attr *rules.ProvisioningAttributes) (ParsedRule, error) {
 	result, found := s.rulesService.MatchProvisioningAttributes(attr)
 	if !found {
 		return nil, fmt.Errorf("no matching rule for provisioning attributes %q", attr)
@@ -147,7 +147,7 @@ func (s *ResolveHyperscalerAccountCredentialsSecretStep) matchProvisioningAttrib
 	return result, nil
 }
 
-func (s *ResolveHyperscalerAccountCredentialsSecretStep) createLabelSelectorBuilder(parsedRule ParsedRule, tenantName string) *LabelSelectorBuilder {
+func (s *ResolveSubscriptionSecretStep) createLabelSelectorBuilder(parsedRule ParsedRule, tenantName string) *LabelSelectorBuilder {
 	b := NewLabelSelectorBuilder()
 	b.With(fmt.Sprintf(hyperscalerTypeReqFmt, parsedRule.Hyperscaler()))
 	b.With(notDirtyReq)
@@ -170,7 +170,7 @@ func (s *ResolveHyperscalerAccountCredentialsSecretStep) createLabelSelectorBuil
 	return b
 }
 
-func (s *ResolveHyperscalerAccountCredentialsSecretStep) getSharedSecretName(labelSelector string) (string, error) {
+func (s *ResolveSubscriptionSecretStep) getSharedSecretName(labelSelector string) (string, error) {
 	secretBinding, err := s.getSharedSecretBinding(labelSelector)
 	if err != nil {
 		return "", fmt.Errorf("while getting secret binding with selector %q: %w", labelSelector, err)
@@ -179,7 +179,7 @@ func (s *ResolveHyperscalerAccountCredentialsSecretStep) getSharedSecretName(lab
 	return secretBinding.GetSecretRefName(), nil
 }
 
-func (s *ResolveHyperscalerAccountCredentialsSecretStep) getSharedSecretBinding(labelSelector string) (*gardener.SecretBinding, error) {
+func (s *ResolveSubscriptionSecretStep) getSharedSecretBinding(labelSelector string) (*gardener.SecretBinding, error) {
 	secretBindings, err := s.gardenerClient.GetSecretBindings(labelSelector)
 	if err != nil {
 		return nil, err
@@ -195,7 +195,7 @@ func (s *ResolveHyperscalerAccountCredentialsSecretStep) getSharedSecretBinding(
 	return secretBinding, nil
 }
 
-func (s *ResolveHyperscalerAccountCredentialsSecretStep) getSecretBinding(labelSelector string) (*gardener.SecretBinding, error) {
+func (s *ResolveSubscriptionSecretStep) getSecretBinding(labelSelector string) (*gardener.SecretBinding, error) {
 	secretBindings, err := s.gardenerClient.GetSecretBindings(labelSelector)
 	if err != nil {
 		return nil, fmt.Errorf("while getting secret bindings with selector %q: %w", labelSelector, err)
@@ -206,7 +206,7 @@ func (s *ResolveHyperscalerAccountCredentialsSecretStep) getSecretBinding(labelS
 	return gardener.NewSecretBinding(secretBindings.Items[0]), nil
 }
 
-func (s *ResolveHyperscalerAccountCredentialsSecretStep) claimSecretBinding(secretBinding *gardener.SecretBinding, tenantName string) (*gardener.SecretBinding, error) {
+func (s *ResolveSubscriptionSecretStep) claimSecretBinding(secretBinding *gardener.SecretBinding, tenantName string) (*gardener.SecretBinding, error) {
 	labels := secretBinding.GetLabels()
 	labels[gardener.TenantNameLabelKey] = tenantName
 	secretBinding.SetLabels(labels)
