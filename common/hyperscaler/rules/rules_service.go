@@ -4,15 +4,14 @@ import (
 	"fmt"
 	"log"
 	"os"
-	"strings"
 
 	"github.com/google/uuid"
 	"github.com/kyma-project/kyma-environment-broker/internal/broker"
 )
 
 type RulesService struct {
-	parser Parser
-	Parsed *ParsingResults
+	parser        Parser
+	ParsedRuleset *ParsingResults
 }
 
 func NewRulesServiceFromFile(rulesFilePath string, enabledPlans *broker.EnablePlans) (*RulesService, error) {
@@ -49,15 +48,14 @@ func NewRulesService(file *os.File, enabledPlans *broker.EnablePlans) (*RulesSer
 		},
 	}
 
-	rs.Parsed = rs.parse(rulesConfig)
-	return rs, err
+	rs.ParsedRuleset = rs.parse(rulesConfig)
+	return rs, nil
 }
 
-func NewRulesServiceFromString(rules string, enabledPlans *broker.EnablePlans) (*RulesService, error) {
-	entries := strings.Split(rules, ";")
+func NewRulesServiceFromSlice(rules []string, enabledPlans *broker.EnablePlans) (*RulesService, error) {
 
 	rulesConfig := &RulesConfig{
-		Rules: entries,
+		Rules: rules,
 	}
 
 	rs := &RulesService{
@@ -66,20 +64,13 @@ func NewRulesServiceFromString(rules string, enabledPlans *broker.EnablePlans) (
 		},
 	}
 
-	rs.Parsed = rs.parse(rulesConfig)
+	rs.ParsedRuleset = rs.parse(rulesConfig)
 	return rs, nil
 }
 
 func (rs *RulesService) parse(rulesConfig *RulesConfig) *ParsingResults {
-	results := NewParsingResults()
 
-	for _, entry := range rulesConfig.Rules {
-		rule, err := rs.parser.Parse(entry)
-
-		results.Apply(entry, rule, err)
-	}
-
-	results.Results = SortRuleEntries(results.Results)
+	results := rs.parseRuleset(rulesConfig)
 
 	results.CheckUniqueness()
 
@@ -90,11 +81,22 @@ func (rs *RulesService) parse(rulesConfig *RulesConfig) *ParsingResults {
 	return results
 }
 
+func (rs *RulesService) parseRuleset(rulesConfig *RulesConfig) *ParsingResults {
+	results := NewParsingResults()
+
+	for _, entry := range rulesConfig.Rules {
+		parsedRule, err := rs.parser.Parse(entry)
+
+		results.Apply(entry, parsedRule, err)
+	}
+	return results
+}
+
 // MatchProvisioningAttributes finds the matching rule for the given provisioning attributes and provide values needed to create labels, which must be used to find proper secret binding.
 func (rs *RulesService) MatchProvisioningAttributes(provisioningAttributes *ProvisioningAttributes) (Result, bool) {
 	var result Result
 	found := false
-	for _, parsingResult := range rs.Parsed.Results {
+	for _, parsingResult := range rs.ParsedRuleset.Results {
 		if parsingResult.Rule.Matched(provisioningAttributes) {
 			result = parsingResult.Rule.ProvideResult(provisioningAttributes)
 			found = true
@@ -108,7 +110,7 @@ func (rs *RulesService) Match(data *ProvisioningAttributes) map[uuid.UUID]*Match
 	var matchingResults map[uuid.UUID]*MatchingResult = make(map[uuid.UUID]*MatchingResult)
 
 	var lastMatch *MatchingResult = nil
-	for _, result := range rs.Parsed.Results {
+	for _, result := range rs.ParsedRuleset.Results {
 		if !result.HasParsingErrors() {
 			matchingResult := &MatchingResult{
 				ParsingResultID:        result.ID,
@@ -133,15 +135,16 @@ func (rs *RulesService) Match(data *ProvisioningAttributes) map[uuid.UUID]*Match
 	return matchingResults
 }
 
+// TODO redesign this method
 func (rs *RulesService) FirstParsingError() error {
-	for _, result := range rs.Parsed.Results {
+	for _, result := range rs.ParsedRuleset.Results {
 		if result.HasErrors() {
 			buffer := ""
 			var printer *Printer = NewNoColor(func(format string, a ...interface{}) {
 				buffer += fmt.Sprintf(format, a...)
 			})
 
-			printer.Print(rs.Parsed.Results, nil)
+			printer.Print(rs.ParsedRuleset.Results, nil)
 			log.Fatalf("Parsing errors occurred during rules parsing")
 			return fmt.Errorf("Parsing errors occurred during rules parsing, results are: %s", buffer)
 		}

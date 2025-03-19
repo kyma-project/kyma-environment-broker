@@ -41,7 +41,7 @@ func TestMatchDifferentArtificialScenarios(t *testing.T) {
 	svc, err := NewRulesServiceFromFile(tmpfile, &broker.EnablePlans{"azure", "gcp", "trial", "aws", "free"})
 	require.NoError(t, err)
 
-	for _, result := range svc.Parsed.Results {
+	for _, result := range svc.ParsedRuleset.Results {
 		if result.HasErrors() {
 			fmt.Println(result.ParsingErrors)
 			fmt.Println(result.ProcessingErrors)

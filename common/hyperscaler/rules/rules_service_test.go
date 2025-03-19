@@ -28,8 +28,8 @@ func TestNewRulesServiceFromFile(t *testing.T) {
 		require.NoError(t, err)
 		require.NotNil(t, service)
 
-		require.Equal(t, 2, len(service.Parsed.Results))
-		for _, result := range service.Parsed.Results {
+		require.Equal(t, 2, len(service.ParsedRuleset.Results))
+		for _, result := range service.ParsedRuleset.Results {
 			require.False(t, result.HasErrors())
 		}
 	})
