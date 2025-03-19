@@ -224,6 +224,7 @@ func TestPostParse(t *testing.T) {
 	}
 }
 
+// TODO implement at least the same test cases but starting with fixed ValidRuleset (not using postParse)
 func TestValidRuleset_CheckUniqueness(t *testing.T) {
 
 	testCases := []struct {

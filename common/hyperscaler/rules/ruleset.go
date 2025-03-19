@@ -67,7 +67,7 @@ func (vr *ValidRuleset) checkUniqueness() (bool, []error) {
 	return len(duplicateErrors) == 0, duplicateErrors
 }
 
-func (vr *ValidRuleset) checkAmbiguity() (bool, []error) {
+func (vr *ValidRuleset) checkUnambiguity() (bool, []error) {
 	ambiguityErrors := make([]error, 0)
 
 	return len(ambiguityErrors) == 0, ambiguityErrors

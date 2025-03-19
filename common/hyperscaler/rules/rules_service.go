@@ -85,7 +85,7 @@ func (rs *RulesService) processAndValidate(rulesConfig *RulesConfig) (bool, *Val
 		return false, nil, validationErrors
 	}
 
-	ok, ambiguityErrors := validRuleset.checkAmbiguity()
+	ok, ambiguityErrors := validRuleset.checkUnambiguity()
 	if !ok {
 		validationErrors.AmbiguityErrors = append(validationErrors.AmbiguityErrors, ambiguityErrors...)
 		return false, nil, validationErrors
@@ -197,7 +197,6 @@ func (rs *RulesService) FirstParsingError() error {
 			})
 
 			printer.Print(rs.ParsedRuleset.Results, nil)
-			log.Fatalf("Parsing errors occurred during rules parsing")
 			return fmt.Errorf("Parsing errors occurred during rules parsing, results are: %s", buffer)
 		}
 	}
