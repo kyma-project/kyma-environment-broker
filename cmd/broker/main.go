@@ -323,7 +323,7 @@ func main() {
 	fatalOnError(err, log)
 
 	// create kubeconfig builder
-	kcBuilder := kubeconfig.NewBuilder(kcpK8sClient, skrK8sClientProvider, cfg.Provisioner.UseMainOIDC, cfg.Provisioner.UseAdditionalOIDC)
+	kcBuilder := kubeconfig.NewBuilder(kcpK8sClient, skrK8sClientProvider, cfg.Provisioner.UseAdditionalOIDC, cfg.Provisioner.UseMainOIDC)
 
 	// create server
 	router := httputil.NewRouter()
