@@ -135,7 +135,7 @@ func (s *ResolveHyperscalerAccountCredentialsSecretStep) provisioningAttributesF
 		Plan:              broker.PlanNamesMapping[operation.ProvisioningParameters.PlanID],
 		PlatformRegion:    operation.ProvisioningParameters.PlatformRegion,
 		HyperscalerRegion: operation.Region,
-		Hyperscaler:       operation.CloudProvider,
+		Hyperscaler:       operation.ProviderValues.ProviderType,
 	}
 }
 
