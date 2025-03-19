@@ -67,8 +67,42 @@ func (vr *ValidRuleset) checkUniqueness() (bool, []error) {
 	return len(duplicateErrors) == 0, duplicateErrors
 }
 
+// This is 2D solution that does not scale to more than 2 attributes
 func (vr *ValidRuleset) checkUnambiguity() (bool, []error) {
 	ambiguityErrors := make([]error, 0)
+
+	mostSpecificRules := make(map[string]struct{})
+	prSpecified := make([]ValidRule, 0)
+	hrSpecified := make([]ValidRule, 0)
+
+	//TODO extract preparation
+	for _, rule := range vr.Rules {
+		if rule.MatchAnyCount == 0 {
+			mostSpecificRules[rule.keyString()] = struct{}{}
+		}
+		if rule.MatchAnyCount == 1 {
+			if !rule.PlatformRegion.matchAny {
+				prSpecified = append(prSpecified, rule)
+			} else {
+				hrSpecified = append(hrSpecified, rule)
+			}
+		}
+	}
+
+	for _, prRule := range prSpecified {
+		for _, hrRule := range hrSpecified {
+			if prRule.Plan.literal == hrRule.Plan.literal {
+				unionRule := ValidRule{
+					Plan:              prRule.Plan,
+					PlatformRegion:    prRule.PlatformRegion,
+					HyperscalerRegion: hrRule.HyperscalerRegion,
+				}
+				if _, ok := mostSpecificRules[unionRule.keyString()]; !ok {
+					ambiguityErrors = append(ambiguityErrors, fmt.Errorf("rules %s and %s are ambiguous: missing %s", prRule.keyString(), hrRule.keyString(), unionRule.keyString()))
+				}
+			}
+		}
+	}
 
 	return len(ambiguityErrors) == 0, ambiguityErrors
 }
