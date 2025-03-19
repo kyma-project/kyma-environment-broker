@@ -5,11 +5,9 @@ resource (CR) labels with subaccount attributes.
 
 ## Details
 
-The `operator.kyma-project.io/beta` label of all Kyma CRs for a given subaccount is synchronized with
-the `Enable beta features` attribute of this subaccount.
-The current state of the attribute is persisted in the `subaccount_states` database table.
-`Used for production` is monitored as well and its state is persisted in the same table. However, it does not affect
-any resources.
+The `operator.kyma-project.io/beta` and `operator.kyma-project.io/used-for-production` labels of all Kyma CRs for a given subaccount are synchronized 
+with the `Enable beta features` and `Used for Production` attributes accordingly.
+The current state of the attributes is persisted in the `subaccount_states` database table.
 
 The table structure:
 
