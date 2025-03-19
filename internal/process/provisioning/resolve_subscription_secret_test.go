@@ -38,15 +38,17 @@ func TestResolveSubscriptionSecretStep(t *testing.T) {
 	t.Run("should resolve secret name for aws hyperscaler and existing tenant", func(t *testing.T) {
 		// given
 		const (
-			operationName = "provisioning-operation-1"
-			instanceID    = "instance-1"
+			operationName  = "provisioning-operation-1"
+			instanceID     = "instance-1"
+			platformRegion = "cf-eu11"
+			providerType   = "aws"
 		)
 
 		operation := fixture.FixProvisioningOperationWithProvider(operationName, instanceID, pkg.AWS)
 		operation.ProvisioningParameters.PlanID = broker.AWSPlanID
 		operation.ProvisioningParameters.ErsContext.GlobalAccountID = awsTenantName
-		operation.ProvisioningParameters.PlatformRegion = "cf-eu11"
-		operation.ProviderValues = &internal.ProviderValues{ProviderType: "aws"}
+		operation.ProvisioningParameters.PlatformRegion = platformRegion
+		operation.ProviderValues = &internal.ProviderValues{ProviderType: providerType}
 		require.NoError(t, operationsStorage.InsertOperation(operation))
 
 		step := NewResolveSubscriptionSecretStep(operationsStorage, gardenerClient, rulesService)
