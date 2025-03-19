@@ -14,34 +14,34 @@ import (
 
 func TestGardenerSecretName(t *testing.T) {
 	t.Run("should return error if account pool is not configured", func(t *testing.T) {
-		//given
+		// given
 		accountProvider := NewAccountProvider(nil, nil)
 
-		//when
+		// when
 		_, err := accountProvider.GardenerSecretName(GCP("cf-jp30"), "tenantname", false)
 		require.Error(t, err)
 
-		//then
+		// then
 		assert.Contains(t, err.Error(), "Gardener Account pool is not configured")
 	})
 
 	t.Run("should return correct secret name", func(t *testing.T) {
-		//given
+		// given
 		gardenerFake := gardener.NewDynamicFakeClient(newSecretBinding("secretBinding1", "secret1", "azure", false, false))
 		accountPool := NewAccountPool(gardenerFake, testNamespace)
 
 		accountProvider := NewAccountProvider(accountPool, nil)
 
-		//when
+		// when
 		secretName, err := accountProvider.GardenerSecretName(Azure(), "tenantname", false)
 
-		//then
+		// then
 		require.NoError(t, err)
 		assert.Equal(t, secretName, "secret1")
 	})
 
 	t.Run("should return correct shared secret name when secret is in another namespace", func(t *testing.T) {
-		//given
+		// given
 		sb := &unstructured.Unstructured{
 			Object: map[string]interface{}{
 				"metadata": map[string]interface{}{
@@ -63,59 +63,59 @@ func TestGardenerSecretName(t *testing.T) {
 
 		accountProvider := NewAccountProvider(accountPool, nil)
 
-		//when
+		// when
 		secretName, err := accountProvider.GardenerSecretName(Azure(), "tenantname", false)
 
-		//then
+		// then
 		require.NoError(t, err)
 		assert.Equal(t, secretName, "secret1")
 	})
 
 	t.Run("should return error when failed to find secret binding", func(t *testing.T) {
-		//given
+		// given
 		gardenerFake := gardener.NewDynamicFakeClient()
 		accountPool := NewAccountPool(gardenerFake, testNamespace)
 
 		accountProvider := NewAccountProvider(accountPool, nil)
 
-		//when
+		// when
 		_, err := accountProvider.GardenerSecretName(Azure(), "tenantname", false)
 
-		//then
+		// then
 		require.Error(t, err)
 	})
 }
 
 func TestGardenerSharedSecretName(t *testing.T) {
 	t.Run("should return error if shared account pool is not configured", func(t *testing.T) {
-		//given
+		// given
 		accountProvider := NewAccountProvider(nil, nil)
 
-		//when
+		// when
 		_, err := accountProvider.GardenerSharedSecretName(GCP("cf-jp30"), false)
 		require.Error(t, err)
 
-		//then
+		// then
 		assert.Contains(t, err.Error(), "Gardener Shared Account pool is not configured")
 	})
 
 	t.Run("should return correct shared secret name", func(t *testing.T) {
-		//given
+		// given
 		gardenerFake := gardener.NewDynamicFakeClient(newSecretBinding("secretBinding1", "secret1", "azure", true, false))
 		sharedAccountPool := NewSharedGardenerAccountPool(gardenerFake, testNamespace)
 
 		accountProvider := NewAccountProvider(nil, sharedAccountPool)
 
-		//when
+		// when
 		secretName, err := accountProvider.GardenerSharedSecretName(Azure(), false)
 
-		//then
+		// then
 		require.NoError(t, err)
 		assert.Equal(t, secretName, "secret1")
 	})
 
 	t.Run("should return correct shared secret name when secret is in another namespace", func(t *testing.T) {
-		//given
+		// given
 		sb := &unstructured.Unstructured{
 			Object: map[string]interface{}{
 				"metadata": map[string]interface{}{
@@ -138,25 +138,25 @@ func TestGardenerSharedSecretName(t *testing.T) {
 
 		accountProvider := NewAccountProvider(nil, sharedAccountPool)
 
-		//when
+		// when
 		secretName, err := accountProvider.GardenerSharedSecretName(Azure(), false)
 
-		//then
+		// then
 		require.NoError(t, err)
 		assert.Equal(t, secretName, "secret1")
 	})
 
 	t.Run("should return error when failed to find secret binding", func(t *testing.T) {
-		//given
+		// given
 		gardenerFake := gardener.NewDynamicFakeClient()
 		sharedAccountPool := NewSharedGardenerAccountPool(gardenerFake, testNamespace)
 
 		accountProvider := NewAccountProvider(nil, sharedAccountPool)
 
-		//when
+		// when
 		_, err := accountProvider.GardenerSharedSecretName(Azure(), false)
 
-		//then
+		// then
 		require.Error(t, err)
 	})
 }
@@ -166,15 +166,15 @@ func TestMarkUnusedGardenerSecretBindingAsDirty(t *testing.T) {
 	for _, euAccess := range []bool{false, true} {
 		t.Run(fmt.Sprintf("EuAccess=%v", euAccess), func(t *testing.T) {
 			t.Run("should mark secret binding as dirty if unused", func(t *testing.T) {
-				//given
+				// given
 				pool, secretBindingMock := newTestAccountPoolWithoutShoots(euAccess)
 
 				accountProvider := NewAccountProvider(pool, nil)
 
-				//when
+				// when
 				err := accountProvider.MarkUnusedGardenerSecretBindingAsDirty(Azure(), "tenant1", euAccess)
 
-				//then
+				// then
 				require.NoError(t, err)
 				secretBinding, err := secretBindingMock.Get(context.Background(), "secretBinding1", machineryv1.GetOptions{})
 				require.NoError(t, err)
@@ -182,15 +182,15 @@ func TestMarkUnusedGardenerSecretBindingAsDirty(t *testing.T) {
 			})
 
 			t.Run("should not mark secret binding as dirty if internal", func(t *testing.T) {
-				//given
+				// given
 				pool, secretBindingMock := newTestAccountPoolWithSecretBindingInternal(euAccess)
 
 				accountProvider := NewAccountProvider(pool, nil)
 
-				//when
+				// when
 				err := accountProvider.MarkUnusedGardenerSecretBindingAsDirty(Azure(), "tenant1", euAccess)
 
-				//then
+				// then
 				require.NoError(t, err)
 				secretBinding, err := secretBindingMock.Get(context.Background(), "secretBinding1", machineryv1.GetOptions{})
 				require.NoError(t, err)
@@ -198,15 +198,15 @@ func TestMarkUnusedGardenerSecretBindingAsDirty(t *testing.T) {
 			})
 
 			t.Run("should not mark secret binding as dirty if used by a cluster", func(t *testing.T) {
-				//given
+				// given
 				pool, secretBindingMock := newTestAccountPoolWithSingleShoot(euAccess)
 
 				accountProvider := NewAccountProvider(pool, nil)
 
-				//when
+				// when
 				err := accountProvider.MarkUnusedGardenerSecretBindingAsDirty(Azure(), "tenant1", euAccess)
 
-				//then
+				// then
 				require.NoError(t, err)
 				secretBinding, err := secretBindingMock.Get(context.Background(), "secretBinding1", machineryv1.GetOptions{})
 				require.NoError(t, err)
@@ -214,15 +214,15 @@ func TestMarkUnusedGardenerSecretBindingAsDirty(t *testing.T) {
 			})
 
 			t.Run("should not modify a secret binding if marked as dirty", func(t *testing.T) {
-				//given
+				// given
 				pool, secretBindingMock := newTestAccountPoolWithSecretBindingDirty(euAccess)
 
 				accountProvider := NewAccountProvider(pool, nil)
 
-				//when
+				// when
 				err := accountProvider.MarkUnusedGardenerSecretBindingAsDirty(Azure(), "tenant1", euAccess)
 
-				//then
+				// then
 				require.NoError(t, err)
 				secretBinding, err := secretBindingMock.Get(context.Background(), "secretBinding1", machineryv1.GetOptions{})
 				require.NoError(t, err)
@@ -230,15 +230,15 @@ func TestMarkUnusedGardenerSecretBindingAsDirty(t *testing.T) {
 			})
 
 			t.Run("should not mark secret binding as dirty if used by multiple cluster", func(t *testing.T) {
-				//given
+				// given
 				pool, secretBindingMock := newTestAccountPoolWithShootsUsingSecretBinding(euAccess)
 
 				accountProvider := NewAccountProvider(pool, nil)
 
-				//when
+				// when
 				err := accountProvider.MarkUnusedGardenerSecretBindingAsDirty(Azure(), "tenant1", euAccess)
 
-				//then
+				// then
 				require.NoError(t, err)
 				secretBinding, err := secretBindingMock.Get(context.Background(), "secretBinding1", machineryv1.GetOptions{})
 				require.NoError(t, err)
@@ -246,13 +246,13 @@ func TestMarkUnusedGardenerSecretBindingAsDirty(t *testing.T) {
 			})
 
 			t.Run("should return error if failed to read secrets for particular hyperscaler type", func(t *testing.T) {
-				//given
+				// given
 				accountProvider := NewAccountProvider(nil, nil)
 
-				//when
+				// when
 				err := accountProvider.MarkUnusedGardenerSecretBindingAsDirty(GCP("cf-jp30"), "tenant1", euAccess)
 
-				//when
+				// when
 				require.Error(t, err)
 				assert.Contains(t, err.Error(), "failed to release subscription for tenant tenant1. Gardener Account pool is not configured")
 			})
