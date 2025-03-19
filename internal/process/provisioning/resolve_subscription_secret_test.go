@@ -18,14 +18,14 @@ import (
 )
 
 const (
-	tenantName1 = "tenant-1"
-	tenantName2 = "tenant-2"
+	awsTenantName   = "aws-tenant-1"
+	azureTenantName = "azure-tenant-2"
 
-	secretName1 = "secret-1"
-	secretName2 = "secret-2"
-	secretName3 = "secret-3"
-	secretName4 = "secret-4"
-	secretName5 = "secret-5"
+	awsEUAccessClaimedSecretName   = "aws-euaccess-tenant-1"
+	azureEUAccessClaimedSecretName = "azure-euaccess-tenant-2"
+	gcpEUAccessSharedSecretName    = "gcp-euaccess-shared"
+	awsMostUsedSharedSecretName    = "aws-most-used-shared"
+	awsLeastUsedSharedSecretName   = "aws-least-used-shared"
 )
 
 func TestResolveSubscriptionSecretStep(t *testing.T) {
@@ -44,7 +44,7 @@ func TestResolveSubscriptionSecretStep(t *testing.T) {
 
 		operation := fixture.FixProvisioningOperationWithProvider(operationName, instanceID, pkg.AWS)
 		operation.ProvisioningParameters.PlanID = broker.AWSPlanID
-		operation.ProvisioningParameters.ErsContext.GlobalAccountID = tenantName1
+		operation.ProvisioningParameters.ErsContext.GlobalAccountID = awsTenantName
 		operation.ProvisioningParameters.PlatformRegion = "cf-eu11"
 		operation.ProviderValues = &internal.ProviderValues{ProviderType: "aws"}
 		require.NoError(t, operationsStorage.InsertOperation(operation))
@@ -57,7 +57,7 @@ func TestResolveSubscriptionSecretStep(t *testing.T) {
 		// then
 		require.NoError(t, err)
 		assert.Zero(t, backoff)
-		assert.Equal(t, secretName1, *operation.ProvisioningParameters.Parameters.TargetSecret)
+		assert.Equal(t, awsEUAccessClaimedSecretName, *operation.ProvisioningParameters.Parameters.TargetSecret)
 	})
 }
 
@@ -70,26 +70,26 @@ func createGardenerClient() *gardener.Client {
 		secretBindingName4 = "secret-binding-4"
 		secretBindingName5 = "secret-binding-5"
 	)
-	sb1 := createSecretBinding(secretBindingName1, namespace, secretName1, map[string]string{
+	sb1 := createSecretBinding(secretBindingName1, namespace, awsEUAccessClaimedSecretName, map[string]string{
 		gardener.HyperscalerTypeLabelKey: "aws",
 		gardener.EUAccessLabelKey:        "true",
-		gardener.TenantNameLabelKey:      tenantName1,
+		gardener.TenantNameLabelKey:      awsTenantName,
 	})
-	sb2 := createSecretBinding(secretBindingName2, namespace, secretName2, map[string]string{
+	sb2 := createSecretBinding(secretBindingName2, namespace, azureEUAccessClaimedSecretName, map[string]string{
 		gardener.HyperscalerTypeLabelKey: "azure",
 		gardener.EUAccessLabelKey:        "true",
-		gardener.TenantNameLabelKey:      tenantName2,
+		gardener.TenantNameLabelKey:      azureTenantName,
 	})
-	sb3 := createSecretBinding(secretBindingName3, namespace, secretName3, map[string]string{
+	sb3 := createSecretBinding(secretBindingName3, namespace, gcpEUAccessSharedSecretName, map[string]string{
 		gardener.HyperscalerTypeLabelKey: "gcp",
 		gardener.EUAccessLabelKey:        "true",
 		gardener.SharedLabelKey:          "true",
 	})
-	sb4 := createSecretBinding(secretBindingName4, namespace, secretName4, map[string]string{
+	sb4 := createSecretBinding(secretBindingName4, namespace, awsMostUsedSharedSecretName, map[string]string{
 		gardener.HyperscalerTypeLabelKey: "aws",
 		gardener.SharedLabelKey:          "true",
 	})
-	sb5 := createSecretBinding(secretBindingName5, namespace, secretName5, map[string]string{
+	sb5 := createSecretBinding(secretBindingName5, namespace, awsLeastUsedSharedSecretName, map[string]string{
 		gardener.HyperscalerTypeLabelKey: "aws",
 		gardener.SharedLabelKey:          "true",
 	})
