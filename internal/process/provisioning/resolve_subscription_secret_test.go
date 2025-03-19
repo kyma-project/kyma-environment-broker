@@ -1,13 +1,18 @@
 package provisioning
 
 import (
+	"log/slog"
 	"os"
 	"testing"
 
 	"github.com/kyma-project/kyma-environment-broker/common/gardener"
 	"github.com/kyma-project/kyma-environment-broker/common/hyperscaler/rules"
+	pkg "github.com/kyma-project/kyma-environment-broker/common/runtime"
+	"github.com/kyma-project/kyma-environment-broker/internal"
 	"github.com/kyma-project/kyma-environment-broker/internal/broker"
+	"github.com/kyma-project/kyma-environment-broker/internal/fixture"
 	"github.com/kyma-project/kyma-environment-broker/internal/storage"
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 )
@@ -28,9 +33,31 @@ func TestResolveSubscriptionSecretStep(t *testing.T) {
 	operationsStorage := storage.NewMemoryStorage().Operations()
 	gardenerClient := createGardenerClient()
 	rulesService := createRulesService(t)
+	log := slog.New(slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{Level: slog.LevelInfo}))
 
-	t.Run("", func(t *testing.T) {
-		_ = NewResolveSubscriptionSecretStep(operationsStorage, gardenerClient, rulesService)
+	t.Run("should resolve secret name for aws hyperscaler and existing tenant", func(t *testing.T) {
+		// given
+		const (
+			operationName = "provisioning-operation-1"
+			instanceID    = "instance-1"
+		)
+
+		operation := fixture.FixProvisioningOperationWithProvider(operationName, instanceID, pkg.AWS)
+		operation.ProvisioningParameters.PlanID = broker.AWSPlanID
+		operation.ProvisioningParameters.ErsContext.GlobalAccountID = tenantName1
+		operation.ProvisioningParameters.PlatformRegion = "cf-eu11"
+		operation.ProviderValues = &internal.ProviderValues{ProviderType: "aws"}
+		require.NoError(t, operationsStorage.InsertOperation(operation))
+
+		step := NewResolveSubscriptionSecretStep(operationsStorage, gardenerClient, rulesService)
+
+		// when
+		operation, backoff, err := step.Run(operation, log)
+
+		// then
+		require.NoError(t, err)
+		assert.Zero(t, backoff)
+		assert.Equal(t, secretName1, *operation.ProvisioningParameters.Parameters.TargetSecret)
 	})
 }
 
@@ -81,7 +108,6 @@ func createSecretBinding(name, namespace, secretName string, labels map[string]s
 			"metadata": map[string]interface{}{
 				"name":      name,
 				"namespace": namespace,
-				"labels":    labels,
 			},
 			"secretRef": map[string]interface{}{
 				"name":      secretName,
@@ -89,6 +115,7 @@ func createSecretBinding(name, namespace, secretName string, labels map[string]s
 			},
 		},
 	}
+	u.SetLabels(labels)
 	u.SetGroupVersionKind(gardener.SecretBindingGVK)
 
 	return u
@@ -119,14 +146,13 @@ func createShoot(name, namespace, secretBindingName string) *unstructured.Unstru
 
 func createRulesService(t *testing.T) *rules.RulesService {
 	content := `rule:
-				- aws(PR=cf-eu11) -> EU
-				- azure(PR=cf-ch20) -> EU
-				- gcp(PR=cf-eu30) -> EU,S
-				- trial -> S
-	`
+                      - aws(PR=cf-eu11) -> EU
+                      - azure(PR=cf-ch20) -> EU
+                      - gcp(PR=cf-eu30) -> EU,S
+                      - trial -> S`
 	tmpfile, err := rules.CreateTempFile(content)
 	require.NoError(t, err)
-	defer require.NoError(t, os.Remove(tmpfile))
+	defer os.Remove(tmpfile)
 
 	enabledPlans := &broker.EnablePlans{"aws", "azure", "gcp", "trial"}
 	rs, err := rules.NewRulesServiceFromFile(tmpfile, enabledPlans)
