@@ -19,16 +19,20 @@ type Config struct {
 type Builder struct {
 	kubeconfigProvider kubeconfigProvider
 	kcpClient          client.Client
+	useAdditionalOIDC  bool
+	useMainOIDC        bool
 }
 
 type kubeconfigProvider interface {
 	KubeconfigForRuntimeID(runtimeID string) ([]byte, error)
 }
 
-func NewBuilder(kcpClient client.Client, provider kubeconfigProvider) *Builder {
+func NewBuilder(kcpClient client.Client, provider kubeconfigProvider, useAdditionalOIDC, useMainOIDC bool) *Builder {
 	return &Builder{
 		kcpClient:          kcpClient,
 		kubeconfigProvider: provider,
+		useAdditionalOIDC:  useAdditionalOIDC,
+		useMainOIDC:        useMainOIDC,
 	}
 }
 
@@ -160,15 +164,32 @@ func (b *Builder) validKubeconfig(kc kubeconfig) error {
 
 func (b *Builder) getOidcDataFromRuntimeResource(id string) (string, string, error) {
 	var runtime imv1.Runtime
+	var issuerURL, clientID string
 	err := b.kcpClient.Get(context.Background(), client.ObjectKey{Name: id, Namespace: kcpNamespace}, &runtime)
 	if err != nil {
 		return "", "", err
 	}
-	if runtime.Spec.Shoot.Kubernetes.KubeAPIServer.OidcConfig.IssuerURL == nil {
-		return "", "", fmt.Errorf("Runtime Resource contains an empty OIDC issuer URL")
+	if !b.useMainOIDC && b.useAdditionalOIDC {
+		if runtime.Spec.Shoot.Kubernetes.KubeAPIServer.AdditionalOidcConfig == nil {
+			return "", "", fmt.Errorf("Runtime Resource contains no OIDC config")
+		}
+		if (*runtime.Spec.Shoot.Kubernetes.KubeAPIServer.AdditionalOidcConfig)[0].IssuerURL == nil {
+			return "", "", fmt.Errorf("Runtime Resource contains an empty OIDC issuer URL")
+		}
+		if (*runtime.Spec.Shoot.Kubernetes.KubeAPIServer.AdditionalOidcConfig)[0].ClientID == nil {
+			return "", "", fmt.Errorf("Runtime Resource contains an empty OIDC client ID")
+		}
+		issuerURL = *(*runtime.Spec.Shoot.Kubernetes.KubeAPIServer.AdditionalOidcConfig)[0].IssuerURL
+		clientID = *(*runtime.Spec.Shoot.Kubernetes.KubeAPIServer.AdditionalOidcConfig)[0].ClientID
+	} else {
+		if runtime.Spec.Shoot.Kubernetes.KubeAPIServer.OidcConfig.IssuerURL == nil {
+			return "", "", fmt.Errorf("Runtime Resource contains an empty OIDC issuer URL")
+		}
+		if runtime.Spec.Shoot.Kubernetes.KubeAPIServer.OidcConfig.ClientID == nil {
+			return "", "", fmt.Errorf("Runtime Resource contains an empty OIDC client ID")
+		}
+		issuerURL = *runtime.Spec.Shoot.Kubernetes.KubeAPIServer.OidcConfig.IssuerURL
+		clientID = *runtime.Spec.Shoot.Kubernetes.KubeAPIServer.OidcConfig.ClientID
 	}
-	if runtime.Spec.Shoot.Kubernetes.KubeAPIServer.OidcConfig.ClientID == nil {
-		return "", "", fmt.Errorf("Runtime Resource contains an empty OIDC client ID")
-	}
-	return *runtime.Spec.Shoot.Kubernetes.KubeAPIServer.OidcConfig.IssuerURL, *runtime.Spec.Shoot.Kubernetes.KubeAPIServer.OidcConfig.ClientID, nil
+	return issuerURL, clientID, nil
 }
