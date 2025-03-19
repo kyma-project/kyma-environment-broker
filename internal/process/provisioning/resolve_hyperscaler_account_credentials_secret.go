@@ -66,22 +66,22 @@ func (s *ResolveHyperscalerAccountCredentialsSecretStep) Name() string {
 }
 
 func (s *ResolveHyperscalerAccountCredentialsSecretStep) Run(operation internal.Operation, log *slog.Logger) (internal.Operation, time.Duration, error) {
-	targetSecretBindingName, err := s.resolveSecretBindingName(operation, log)
+	targetSecretName, err := s.resolveSecretName(operation, log)
 	if err != nil {
-		msg := fmt.Sprintf("resolving secret binding name")
+		msg := fmt.Sprintf("resolving secret name")
 		return s.operationManager.RetryOperation(operation, msg, err, 10*time.Second, time.Minute, log)
 	}
 
-	if targetSecretBindingName == "" {
-		return s.operationManager.OperationFailed(operation, "failed to determine secret binding name", fmt.Errorf("target secret binding name is empty"), log)
+	if targetSecretName == "" {
+		return s.operationManager.OperationFailed(operation, "failed to determine secret name", fmt.Errorf("target secret name is empty"), log)
 	}
 
 	return s.operationManager.UpdateOperation(operation, func(op *internal.Operation) {
-		op.ProvisioningParameters.Parameters.TargetSecret = &targetSecretBindingName
+		op.ProvisioningParameters.Parameters.TargetSecret = &targetSecretName
 	}, log)
 }
 
-func (s *ResolveHyperscalerAccountCredentialsSecretStep) resolveSecretBindingName(operation internal.Operation, log *slog.Logger) (string, error) {
+func (s *ResolveHyperscalerAccountCredentialsSecretStep) resolveSecretName(operation internal.Operation, log *slog.Logger) (string, error) {
 	attr := s.provisioningAttributesFromOperationData(operation)
 
 	log.Info(fmt.Sprintf("matching provisioning attributes %q to filtering rule", attr))
@@ -94,7 +94,7 @@ func (s *ResolveHyperscalerAccountCredentialsSecretStep) resolveSecretBindingNam
 
 	log.Info(fmt.Sprintf("getting secret binding with selector %q", labelSelectorBuilder.String()))
 	if parsedRule.IsShared() {
-		return s.getSharedSecretBindingName(labelSelectorBuilder.String())
+		return s.getSharedSecretName(labelSelectorBuilder.String())
 	}
 
 	secretBinding, err := s.getSecretBinding(labelSelectorBuilder.String())
@@ -170,7 +170,7 @@ func (s *ResolveHyperscalerAccountCredentialsSecretStep) createLabelSelectorBuil
 	return b
 }
 
-func (s *ResolveHyperscalerAccountCredentialsSecretStep) getSharedSecretBindingName(labelSelector string) (string, error) {
+func (s *ResolveHyperscalerAccountCredentialsSecretStep) getSharedSecretName(labelSelector string) (string, error) {
 	secretBinding, err := s.getSharedSecretBinding(labelSelector)
 	if err != nil {
 		return "", fmt.Errorf("while getting secret binding with selector %q: %w", labelSelector, err)
