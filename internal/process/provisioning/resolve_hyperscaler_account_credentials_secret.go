@@ -21,22 +21,22 @@ type ParsedRule interface {
 	IsEUAccess() bool
 }
 
-// SecretBinding selectors
+// SecretBinding selector requirements
 const (
-	hyperscalerTypeSelectorFmt = gardener.HyperscalerTypeLabelKey + "=%s"
-	tenantNameSelectorFmt      = gardener.TenantNameLabelKey + "=%s"
+	hyperscalerTypeReqFmt = gardener.HyperscalerTypeLabelKey + "=%s"
+	tenantNameReqFmt      = gardener.TenantNameLabelKey + "=%s"
 
-	dirtySelector    = gardener.DirtyLabelKey + "=true"
-	internalSelector = gardener.InternalLabelKey + "=true"
-	sharedSelector   = gardener.SharedLabelKey + "=true"
-	euAccessSelector = gardener.EUAccessLabelKey + "=true"
+	dirtyReq    = gardener.DirtyLabelKey + "=true"
+	internalReq = gardener.InternalLabelKey + "=true"
+	sharedReq   = gardener.SharedLabelKey + "=true"
+	euAccessReq = gardener.EUAccessLabelKey + "=true"
 
-	notSharedSelector = gardener.SharedLabelKey + `!=true`
+	notSharedReq = gardener.SharedLabelKey + `!=true`
 
-	notDirtySelector       = `!` + gardener.DirtyLabelKey
-	notInternalSelector    = `!` + gardener.InternalLabelKey
-	notEUAccessSelector    = `!` + gardener.EUAccessLabelKey
-	notTenantNamedSelector = `!` + gardener.TenantNameLabelKey
+	notDirtyReq       = `!` + gardener.DirtyLabelKey
+	notInternalReq    = `!` + gardener.InternalLabelKey
+	notEUAccessReq    = `!` + gardener.EUAccessLabelKey
+	notTenantNamedReq = `!` + gardener.TenantNameLabelKey
 )
 
 type LabelSelectorBuilder struct {
@@ -109,8 +109,8 @@ func (s *ResolveHyperscalerAccountCredentialsSecretStep) resolveSecretBindingNam
 	log.Info(fmt.Sprintf("no secret binding found for tenant: %q", operation.ProvisioningParameters.ErsContext.GlobalAccountID))
 
 	labelSelectorBuilder.RevertToBase()
-	labelSelectorBuilder.With(notSharedSelector)
-	labelSelectorBuilder.With(notTenantNamedSelector)
+	labelSelectorBuilder.With(notSharedReq)
+	labelSelectorBuilder.With(notTenantNamedReq)
 
 	log.Info(fmt.Sprintf("getting secret binding with selector %q", labelSelectorBuilder.String()))
 	secretBinding, err = s.getSecretBinding(labelSelectorBuilder.String())
@@ -149,23 +149,23 @@ func (s *ResolveHyperscalerAccountCredentialsSecretStep) matchProvisioningAttrib
 
 func (s *ResolveHyperscalerAccountCredentialsSecretStep) createLabelSelectorBuilder(parsedRule ParsedRule, tenantName string) *LabelSelectorBuilder {
 	b := NewLabelSelectorBuilder()
-	b.With(fmt.Sprintf(hyperscalerTypeSelectorFmt, parsedRule.Hyperscaler()))
-	b.With(notDirtySelector)
+	b.With(fmt.Sprintf(hyperscalerTypeReqFmt, parsedRule.Hyperscaler()))
+	b.With(notDirtyReq)
 
 	if parsedRule.IsEUAccess() {
-		b.With(euAccessSelector)
+		b.With(euAccessReq)
 	} else {
-		b.With(notEUAccessSelector)
+		b.With(notEUAccessReq)
 	}
 
 	if parsedRule.IsShared() {
-		b.With(sharedSelector)
+		b.With(sharedReq)
 		b.SaveBase()
 		return b
 	}
 
 	b.SaveBase()
-	b.With(fmt.Sprintf(tenantNameSelectorFmt, tenantName))
+	b.With(fmt.Sprintf(tenantNameReqFmt, tenantName))
 
 	return b
 }
