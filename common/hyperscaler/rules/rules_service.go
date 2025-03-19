@@ -145,7 +145,6 @@ func (rs *RulesService) FirstParsingError() error {
 			})
 
 			printer.Print(rs.ParsedRuleset.Results, nil)
-			log.Fatalf("Parsing errors occurred during rules parsing")
 			return fmt.Errorf("Parsing errors occurred during rules parsing, results are: %s", buffer)
 		}
 	}
