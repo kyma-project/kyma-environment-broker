@@ -10,65 +10,67 @@ import (
 func TestParsingResults_CheckUniqueness(t *testing.T) {
 
 	testCases := []struct {
-		name    string
-		ruleset []string
-		output  int
+		name              string
+		ruleset           []string
+		invalidRulesCount int
 	}{
 		{name: "simple duplicate",
-			ruleset: []string{"aws", "aws"},
-			output:  1,
+			ruleset:           []string{"aws", "aws"},
+			invalidRulesCount: 1,
 		},
 		{name: "four duplicates",
-			ruleset: []string{"aws", "aws", "aws", "aws"},
-			output:  3,
+			ruleset:           []string{"aws", "aws", "aws", "aws"},
+			invalidRulesCount: 3,
 		},
-		{name: "simple duplicate with output",
-			ruleset: []string{"aws->EU", "aws->S"},
-			output:  1,
+		{name: "simple duplicate with invalidRulesCount",
+			ruleset:           []string{"aws->EU", "aws->S"},
+			invalidRulesCount: 1,
 		},
 		{name: "duplicate with one attribute",
-			ruleset: []string{"aws(PR=x)", "aws(PR=x)"},
-			output:  1,
+			ruleset:           []string{"aws(PR=x)", "aws(PR=x)"},
+			invalidRulesCount: 1,
 		},
 		{name: "no duplicate with one attribute",
-			ruleset: []string{"aws(PR=x)", "aws(PR=y)"},
-			output:  0,
+			ruleset:           []string{"aws(PR=x)", "aws(PR=y)"},
+			invalidRulesCount: 0,
 		},
 		{name: "duplicate with two attributes",
-			ruleset: []string{"aws(PR=x,HR=y)", "aws(PR=x,HR=y)"},
-			output:  1,
+			ruleset:           []string{"aws(PR=x,HR=y)", "aws(PR=x,HR=y)"},
+			invalidRulesCount: 1,
 		},
 		{name: "duplicate with two attributes reversed",
-			ruleset: []string{"aws(HR=y,PR=x)", "aws(PR=x,HR=y)"},
-			output:  1,
+			ruleset:           []string{"aws(HR=y,PR=x)", "aws(PR=x,HR=y)"},
+			invalidRulesCount: 1,
 		},
 		{name: "no duplicate with two attributes reversed",
-			ruleset: []string{"aws(HR=y,PR=x)", "aws(PR=x,HR=z)"},
-			output:  0,
+			ruleset:           []string{"aws(HR=y,PR=x)", "aws(PR=x,HR=z)"},
+			invalidRulesCount: 0,
 		},
 		{name: "duplicate with two attributes reversed and whitespaces",
-			ruleset: []string{"aws ( HR= y,PR=x)", "aws(	PR =x,HR = y )"},
-			output:  1,
+			ruleset:           []string{"aws ( HR= y,PR=x)", "aws(	PR =x,HR = y )"},
+			invalidRulesCount: 1,
 		},
 		{name: "more duplicates with two attributes reversed and whitespaces",
-			ruleset: []string{"aws ( HR= y,PR=x)", "aws(	PR =x,HR = y )", "azure ( HR= a,PR=b)", "azure(	PR =b,HR = a )"},
-			output:  2,
+			ruleset:           []string{"aws ( HR= y,PR=x)", "aws(	PR =x,HR = y )", "azure ( HR= a,PR=b)", "azure(	PR =b,HR = a )"},
+			invalidRulesCount: 2,
 		},
 		{name: "not duplicate",
-			ruleset: []string{"aws", "azure"},
-			output:  0,
+			ruleset:           []string{"aws", "azure"},
+			invalidRulesCount: 0,
 		},
 		{name: "duplicate amongst many",
-			ruleset: []string{"aws", "azure", "aws"},
-			output:  1,
+			ruleset:           []string{"aws", "azure", "aws"},
+			invalidRulesCount: 1,
 		},
 	}
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
+			//given
 			parsingResults := fixParsingResults(tc.ruleset)
+			//when
 			parsingResults.CheckUniqueness()
-			assert.Equal(t, tc.output, countRulesWithProcessingErrors(parsingResults.Results))
-
+			//then
+			assert.Equal(t, tc.invalidRulesCount, countRulesWithProcessingErrors(parsingResults.Results))
 		})
 	}
 }
