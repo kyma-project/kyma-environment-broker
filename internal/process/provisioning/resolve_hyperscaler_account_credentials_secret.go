@@ -84,7 +84,7 @@ func (s *ResolveHyperscalerAccountCredentialsSecretStep) Run(operation internal.
 func (s *ResolveHyperscalerAccountCredentialsSecretStep) resolveSecretBindingName(operation internal.Operation, log *slog.Logger) (string, error) {
 	attr := s.provisioningAttributesFromOperationData(operation)
 
-	log.Info(fmt.Sprintf("matching provisioning attributes %q to HAP rule", attr))
+	log.Info(fmt.Sprintf("matching provisioning attributes %q to filtering rule", attr))
 	parsedRule, err := s.matchProvisioningAttributesToRule(attr)
 	if err != nil {
 		return "", err
