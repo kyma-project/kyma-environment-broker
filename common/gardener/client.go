@@ -175,8 +175,12 @@ func (b Shoot) GetSpecRegion() string {
 	return str
 }
 
-var SecretBindingResource = schema.GroupVersionResource{Group: "core.gardener.cloud", Version: "v1beta1", Resource: "secretbindings"}
-var ShootResource = schema.GroupVersionResource{Group: "core.gardener.cloud", Version: "v1beta1", Resource: "shoots"}
+var (
+	SecretBindingResource = schema.GroupVersionResource{Group: "core.gardener.cloud", Version: "v1beta1", Resource: "secretbindings"}
+	ShootResource         = schema.GroupVersionResource{Group: "core.gardener.cloud", Version: "v1beta1", Resource: "shoots"}
+	SecretBindingGVK      = schema.GroupVersionKind{Group: "core.gardener.cloud", Version: "v1beta1", Kind: "SecretBinding"}
+	ShootGVK              = schema.GroupVersionKind{Group: "core.gardener.cloud", Version: "v1beta1", Kind: "Shoot"}
+)
 
 func NewGardenerClusterConfig(kubeconfigPath string) (*restclient.Config, error) {
 
