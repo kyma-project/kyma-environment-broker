@@ -23,6 +23,7 @@ const (
 
 	awsEUAccessClaimedSecretName   = "aws-euaccess-tenant-1"
 	azureEUAccessClaimedSecretName = "azure-euaccess-tenant-2"
+	azureUnclaimedSecretName       = "azure-unclaimed"
 	gcpEUAccessSharedSecretName    = "gcp-euaccess-shared"
 	awsMostUsedSharedSecretName    = "aws-most-used-shared"
 	awsLeastUsedSharedSecretName   = "aws-least-used-shared"
@@ -61,6 +62,111 @@ func TestResolveSubscriptionSecretStep(t *testing.T) {
 		assert.Zero(t, backoff)
 		assert.Equal(t, awsEUAccessClaimedSecretName, *operation.ProvisioningParameters.Parameters.TargetSecret)
 	})
+
+	t.Run("should resolve secret name for azure hyperscaler and existing tenant", func(t *testing.T) {
+		// given
+		const (
+			operationName  = "provisioning-operation-2"
+			instanceID     = "instance-2"
+			platformRegion = "cf-ch20"
+			providerType   = "azure"
+		)
+
+		operation := fixture.FixProvisioningOperationWithProvider(operationName, instanceID, pkg.Azure)
+		operation.ProvisioningParameters.PlanID = broker.AzurePlanID
+		operation.ProvisioningParameters.ErsContext.GlobalAccountID = azureTenantName
+		operation.ProvisioningParameters.PlatformRegion = platformRegion
+		operation.ProviderValues = &internal.ProviderValues{ProviderType: providerType}
+		require.NoError(t, operationsStorage.InsertOperation(operation))
+
+		step := NewResolveSubscriptionSecretStep(operationsStorage, gardenerClient, rulesService)
+
+		// when
+		operation, backoff, err := step.Run(operation, log)
+
+		// then
+		require.NoError(t, err)
+		assert.Zero(t, backoff)
+		assert.Equal(t, azureEUAccessClaimedSecretName, *operation.ProvisioningParameters.Parameters.TargetSecret)
+	})
+
+	t.Run("should resolve unclaimed secret name for azure hyperscaler", func(t *testing.T) {
+		// given
+		const (
+			operationName  = "provisioning-operation-3"
+			instanceID     = "instance-3"
+			platformRegion = "cf-ap21"
+			providerType   = "azure"
+		)
+
+		operation := fixture.FixProvisioningOperationWithProvider(operationName, instanceID, pkg.Azure)
+		operation.ProvisioningParameters.PlanID = broker.AzurePlanID
+		operation.ProvisioningParameters.PlatformRegion = platformRegion
+		operation.ProviderValues = &internal.ProviderValues{ProviderType: providerType}
+		require.NoError(t, operationsStorage.InsertOperation(operation))
+
+		step := NewResolveSubscriptionSecretStep(operationsStorage, gardenerClient, rulesService)
+
+		// when
+		operation, backoff, err := step.Run(operation, log)
+
+		// then
+		require.NoError(t, err)
+		assert.Zero(t, backoff)
+		assert.Equal(t, azureUnclaimedSecretName, *operation.ProvisioningParameters.Parameters.TargetSecret)
+	})
+
+	t.Run("should resolve shared secret name for gcp hyperscaler", func(t *testing.T) {
+		// given
+		const (
+			operationName  = "provisioning-operation-4"
+			instanceID     = "instance-4"
+			platformRegion = "cf-eu30"
+			providerType   = "gcp"
+		)
+
+		operation := fixture.FixProvisioningOperationWithProvider(operationName, instanceID, pkg.GCP)
+		operation.ProvisioningParameters.PlanID = broker.GCPPlanID
+		operation.ProvisioningParameters.PlatformRegion = platformRegion
+		operation.ProviderValues = &internal.ProviderValues{ProviderType: providerType}
+		require.NoError(t, operationsStorage.InsertOperation(operation))
+
+		step := NewResolveSubscriptionSecretStep(operationsStorage, gardenerClient, rulesService)
+
+		// when
+		operation, backoff, err := step.Run(operation, log)
+
+		// then
+		require.NoError(t, err)
+		assert.Zero(t, backoff)
+		assert.Equal(t, gcpEUAccessSharedSecretName, *operation.ProvisioningParameters.Parameters.TargetSecret)
+	})
+
+	t.Run("should resolve the least used shared secret name for aws hyperscaler and trial plan", func(t *testing.T) {
+		// given
+		const (
+			operationName  = "provisioning-operation-5"
+			instanceID     = "instance-5"
+			platformRegion = "cf-eu10"
+			providerType   = "aws"
+		)
+
+		operation := fixture.FixProvisioningOperationWithProvider(operationName, instanceID, pkg.AWS)
+		operation.ProvisioningParameters.PlanID = broker.TrialPlanID
+		operation.ProvisioningParameters.PlatformRegion = platformRegion
+		operation.ProviderValues = &internal.ProviderValues{ProviderType: providerType}
+		require.NoError(t, operationsStorage.InsertOperation(operation))
+
+		step := NewResolveSubscriptionSecretStep(operationsStorage, gardenerClient, rulesService)
+
+		// when
+		operation, backoff, err := step.Run(operation, log)
+
+		// then
+		require.NoError(t, err)
+		assert.Zero(t, backoff)
+		assert.Equal(t, awsLeastUsedSharedSecretName, *operation.ProvisioningParameters.Parameters.TargetSecret)
+	})
 }
 
 func createGardenerClient() *gardener.Client {
@@ -71,6 +177,7 @@ func createGardenerClient() *gardener.Client {
 		secretBindingName3 = "secret-binding-3"
 		secretBindingName4 = "secret-binding-4"
 		secretBindingName5 = "secret-binding-5"
+		secretBindingName6 = "secret-binding-6"
 	)
 	sb1 := createSecretBinding(secretBindingName1, namespace, awsEUAccessClaimedSecretName, map[string]string{
 		gardener.HyperscalerTypeLabelKey: "aws",
@@ -82,24 +189,27 @@ func createGardenerClient() *gardener.Client {
 		gardener.EUAccessLabelKey:        "true",
 		gardener.TenantNameLabelKey:      azureTenantName,
 	})
-	sb3 := createSecretBinding(secretBindingName3, namespace, gcpEUAccessSharedSecretName, map[string]string{
+	sb3 := createSecretBinding(secretBindingName3, namespace, azureUnclaimedSecretName, map[string]string{
+		gardener.HyperscalerTypeLabelKey: "azure",
+	})
+	sb4 := createSecretBinding(secretBindingName4, namespace, gcpEUAccessSharedSecretName, map[string]string{
 		gardener.HyperscalerTypeLabelKey: "gcp",
 		gardener.EUAccessLabelKey:        "true",
 		gardener.SharedLabelKey:          "true",
 	})
-	sb4 := createSecretBinding(secretBindingName4, namespace, awsMostUsedSharedSecretName, map[string]string{
+	sb5 := createSecretBinding(secretBindingName5, namespace, awsMostUsedSharedSecretName, map[string]string{
 		gardener.HyperscalerTypeLabelKey: "aws",
 		gardener.SharedLabelKey:          "true",
 	})
-	sb5 := createSecretBinding(secretBindingName5, namespace, awsLeastUsedSharedSecretName, map[string]string{
+	sb6 := createSecretBinding(secretBindingName6, namespace, awsLeastUsedSharedSecretName, map[string]string{
 		gardener.HyperscalerTypeLabelKey: "aws",
 		gardener.SharedLabelKey:          "true",
 	})
-	shoot1 := createShoot("shoot-1", namespace, secretBindingName4)
-	shoot2 := createShoot("shoot-2", namespace, secretBindingName4)
-	shoot3 := createShoot("shoot-3", namespace, secretBindingName5)
+	shoot1 := createShoot("shoot-1", namespace, secretBindingName5)
+	shoot2 := createShoot("shoot-2", namespace, secretBindingName5)
+	shoot3 := createShoot("shoot-3", namespace, secretBindingName6)
 
-	fakeGardenerClient := gardener.NewDynamicFakeClient(sb1, sb2, sb3, sb4, sb5, shoot1, shoot2, shoot3)
+	fakeGardenerClient := gardener.NewDynamicFakeClient(sb1, sb2, sb3, sb4, sb5, sb6, shoot1, shoot2, shoot3)
 
 	return gardener.NewClient(fakeGardenerClient, namespace)
 }
@@ -150,6 +260,7 @@ func createRulesService(t *testing.T) *rules.RulesService {
 	content := `rule:
                       - aws(PR=cf-eu11) -> EU
                       - azure(PR=cf-ch20) -> EU
+                      - azure(PR=cf-ap21)
                       - gcp(PR=cf-eu30) -> EU,S
                       - trial -> S`
 	tmpfile, err := rules.CreateTempFile(content)
