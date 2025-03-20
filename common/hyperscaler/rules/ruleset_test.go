@@ -6,7 +6,7 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestValidRule_KeyString(t *testing.T) {
+func TestValidRule_keyString(t *testing.T) {
 	testCases := []struct {
 		input       *ValidRule
 		expectedKey string
@@ -168,4 +168,66 @@ func TestRuleToValidRuleConversion(t *testing.T) {
 			assert.Equal(t, vr, tc.output)
 		})
 	}
+}
+
+func TestValidRule_toResult(t *testing.T) {
+	testCases := []struct {
+		name     string
+		input    *ValidRule
+		expected Result
+	}{
+		{
+			name: "simple trial with aws",
+			input: &ValidRule{PatternAttribute{literal: "trial"},
+				PatternAttribute{literal: "cf-eu10"},
+				PatternAttribute{literal: "eu-west-2"}, false, false, false, false, 0},
+			expected: Result{
+				HyperscalerType: "aws",
+				EUAccess:        false,
+				Shared:          false,
+			},
+		},
+		{
+			name: "trial with full right side",
+			input: &ValidRule{PatternAttribute{literal: "trial"},
+				PatternAttribute{literal: "cf-eu10"},
+				PatternAttribute{literal: "eu-west-2"}, false, true, true, true, 0},
+			expected: Result{
+				HyperscalerType: "aws_cf-eu10_eu-west-2",
+				EUAccess:        true,
+				Shared:          false,
+			},
+		},
+		{
+			name: "trial with platform region only",
+			input: &ValidRule{PatternAttribute{literal: "trial"},
+				PatternAttribute{literal: "cf-eu10"},
+				PatternAttribute{literal: "eu-west-2"}, false, true, true, false, 0},
+			expected: Result{
+				HyperscalerType: "aws_cf-eu10",
+				EUAccess:        true,
+				Shared:          false,
+			},
+		},
+		{
+			name: "trial with hyperscaler region only",
+			input: &ValidRule{PatternAttribute{literal: "trial"},
+				PatternAttribute{literal: "cf-eu10"},
+				PatternAttribute{literal: "eu-west-2"}, true, true, false, true, 44},
+			expected: Result{
+				HyperscalerType: "aws_eu-west-2",
+				EUAccess:        true,
+				Shared:          true,
+			},
+		},
+	}
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			//when
+			result := tc.input.toResult(&ProvisioningAttributes{Plan: "trial", Hyperscaler: "aws", PlatformRegion: "cf-eu10", HyperscalerRegion: "eu-west-2"})
+			//then
+			assert.Equal(t, tc.expected, result)
+		})
+	}
+
 }
