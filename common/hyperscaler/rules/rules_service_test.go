@@ -72,119 +72,6 @@ func TestNewRulesServiceFromFile(t *testing.T) {
 
 }
 
-func TestRuleToValidRuleConversion(t *testing.T) {
-	testCases := []struct {
-		name   string
-		rule   *Rule
-		output *ValidRule
-	}{
-		{name: "simple aws",
-			rule: &Rule{
-				Plan:              "aws",
-				PlatformRegion:    "",
-				HyperscalerRegion: "",
-			},
-			output: &ValidRule{
-				Plan:                    PatternAttribute{literal: "aws"},
-				PlatformRegion:          PatternAttribute{literal: "", matchAny: true},
-				HyperscalerRegion:       PatternAttribute{literal: "", matchAny: true},
-				PlatformRegionSuffix:    false,
-				HyperscalerRegionSuffix: false,
-				EuAccess:                false,
-				Shared:                  false,
-				MatchAnyCount:           2,
-			},
-		},
-		{name: "aws with full right side",
-			rule: &Rule{
-				Plan:                    "aws",
-				PlatformRegion:          "",
-				HyperscalerRegion:       "",
-				Shared:                  true,
-				EuAccess:                true,
-				PlatformRegionSuffix:    true,
-				HyperscalerRegionSuffix: true,
-			},
-			output: &ValidRule{
-				Plan:                    PatternAttribute{literal: "aws"},
-				PlatformRegion:          PatternAttribute{literal: "", matchAny: true},
-				HyperscalerRegion:       PatternAttribute{literal: "", matchAny: true},
-				PlatformRegionSuffix:    true,
-				HyperscalerRegionSuffix: true,
-				EuAccess:                true,
-				Shared:                  true,
-				MatchAnyCount:           2,
-			},
-		},
-		{name: "aws with one literal",
-			rule: &Rule{
-				Plan:                    "aws",
-				PlatformRegion:          "cf-eu10",
-				HyperscalerRegion:       "",
-				PlatformRegionSuffix:    true,
-				HyperscalerRegionSuffix: true,
-			},
-			output: &ValidRule{
-				Plan:                    PatternAttribute{literal: "aws"},
-				PlatformRegion:          PatternAttribute{literal: "cf-eu10", matchAny: false},
-				HyperscalerRegion:       PatternAttribute{literal: "", matchAny: true},
-				PlatformRegionSuffix:    true,
-				HyperscalerRegionSuffix: true,
-				EuAccess:                false,
-				Shared:                  false,
-				MatchAnyCount:           1,
-			},
-		},
-		{name: "aws with second literal",
-			rule: &Rule{
-				Plan:                    "aws",
-				PlatformRegion:          "",
-				HyperscalerRegion:       "eu-west-2",
-				PlatformRegionSuffix:    true,
-				HyperscalerRegionSuffix: true,
-			},
-			output: &ValidRule{
-				Plan:                    PatternAttribute{literal: "aws"},
-				PlatformRegion:          PatternAttribute{literal: "", matchAny: true},
-				HyperscalerRegion:       PatternAttribute{literal: "eu-west-2", matchAny: false},
-				PlatformRegionSuffix:    true,
-				HyperscalerRegionSuffix: true,
-				EuAccess:                false,
-				Shared:                  false,
-				MatchAnyCount:           1,
-			},
-		},
-		{name: "aws with two literals",
-			rule: &Rule{
-				Plan:                    "aws",
-				PlatformRegion:          "cf-eu10",
-				HyperscalerRegion:       "eu-west-2",
-				PlatformRegionSuffix:    true,
-				HyperscalerRegionSuffix: true,
-			},
-			output: &ValidRule{
-				Plan:                    PatternAttribute{literal: "aws"},
-				PlatformRegion:          PatternAttribute{literal: "cf-eu10", matchAny: false},
-				HyperscalerRegion:       PatternAttribute{literal: "eu-west-2", matchAny: false},
-				PlatformRegionSuffix:    true,
-				HyperscalerRegionSuffix: true,
-				EuAccess:                false,
-				Shared:                  false,
-				MatchAnyCount:           0,
-			},
-		},
-	}
-
-	for _, tc := range testCases {
-		t.Run(tc.name, func(t *testing.T) {
-			//when
-			vr := toValidRule(tc.rule)
-			//then
-			assert.Equal(t, vr, tc.output)
-		})
-	}
-}
-
 func TestPostParse(t *testing.T) {
 	testCases := []struct {
 		name               string
@@ -225,6 +112,7 @@ func TestPostParse(t *testing.T) {
 }
 
 // TODO implement at least the same test cases but starting with fixed ValidRuleset (not using postParse)
+
 func TestValidRuleset_CheckUniqueness(t *testing.T) {
 
 	testCases := []struct {
@@ -240,7 +128,7 @@ func TestValidRuleset_CheckUniqueness(t *testing.T) {
 			ruleset:              []string{"aws", "aws", "aws", "aws"},
 			duplicateErrorsCount: 3,
 		},
-		{name: "simple duplicate with duplicateErrorsCount",
+		{name: "simple duplicate with ambiguityErrorCount",
 			ruleset:              []string{"aws->EU", "aws->S"},
 			duplicateErrorsCount: 1,
 		},
@@ -293,6 +181,55 @@ func TestValidRuleset_CheckUniqueness(t *testing.T) {
 			//then
 			assert.Equal(t, tc.duplicateErrorsCount, len(duplicateErrors))
 			assert.Equal(t, len(duplicateErrors) == 0, ok)
+		})
+	}
+}
+
+// TODO implement at least the same test cases but starting with fixed ValidRuleset (not using postParse)
+func TestValidRuleset_CheckAmbiguity(t *testing.T) {
+
+	testCases := []struct {
+		name                string
+		ruleset             []string
+		ambiguityErrorCount int
+	}{
+		{name: "simple plan",
+			ruleset:             []string{"aws"},
+			ambiguityErrorCount: 0,
+		},
+		{name: "basic ambiguity",
+			ruleset:             []string{"aws(PR=x)", "aws(HR=y)"},
+			ambiguityErrorCount: 1,
+		},
+		{name: "basic ambiguity - but disambiguation added",
+			ruleset:             []string{"aws(PR=x)", "aws(HR=y)", "aws(PR=x,HR=y)"},
+			ambiguityErrorCount: 0,
+		},
+		{name: "basic ambiguity - wrong disambiguation added",
+			ruleset:             []string{"aws(PR=x)", "aws(HR=y)", "azure(PR=x,HR=y)"},
+			ambiguityErrorCount: 1,
+		},
+		{name: "basic ambiguity - wrong disambiguation added",
+			ruleset:             []string{"aws(PR=x)", "aws(HR=y)", "aws(PR=x,HR=z)"},
+			ambiguityErrorCount: 1,
+		},
+		{name: "this is not basic ambiguity",
+			ruleset:             []string{"aws(PR=x)", "azure(HR=y)"},
+			ambiguityErrorCount: 0,
+		},
+	}
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			//given
+			rulesService := fixRulesService()
+			validRules, _ := rulesService.postParse(&RulesConfig{
+				Rules: tc.ruleset,
+			})
+			//when
+			ok, ambiguityErrors := validRules.checkUnambiguity()
+			//then
+			assert.Equal(t, tc.ambiguityErrorCount, len(ambiguityErrors))
+			assert.Equal(t, len(ambiguityErrors) == 0, ok)
 		})
 	}
 }

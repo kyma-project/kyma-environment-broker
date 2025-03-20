@@ -21,7 +21,7 @@ func TestParsingResults_CheckUniqueness(t *testing.T) {
 			ruleset:           []string{"aws", "aws", "aws", "aws"},
 			invalidRulesCount: 3,
 		},
-		{name: "simple duplicate with duplicateErrorsCount",
+		{name: "simple duplicate with ambiguityErrorCount",
 			ruleset:           []string{"aws->EU", "aws->S"},
 			invalidRulesCount: 1,
 		},
