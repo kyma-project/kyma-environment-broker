@@ -205,13 +205,14 @@ func NewBrokerSuiteTestWithConfig(t *testing.T, cfg *Config, version ...string) 
 	require.NoError(t, err)
 
 	gardenerClient := gardener.NewDynamicFakeClient()
-	gardenerClientWithNamespace := gardener.NewClient(gardenerClient, gardenerKymaNamespace)
 
 	eventBroker := event.NewPubSub(log)
 
 	edpClient := edp.NewFakeClient()
 	accountProvider := fixAccountProvider(t, gardenerClient)
 	require.NoError(t, err)
+
+	gardenerClientWithNamespace := gardener.NewClient(gardenerClient, gardenerKymaNamespace)
 
 	fakeK8sSKRClient := fake.NewClientBuilder().WithScheme(sch).Build()
 	k8sClientProvider := kubeconfig.NewFakeK8sClientProvider(fakeK8sSKRClient)
