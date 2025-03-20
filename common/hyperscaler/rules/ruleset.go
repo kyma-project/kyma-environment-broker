@@ -31,6 +31,41 @@ func (pa *PatternAttribute) Match(value string) bool {
 	return pa.literal == value
 }
 
+func (vr *ValidRule) Match(provisioningAttributes *ProvisioningAttributes) bool {
+	if !vr.Plan.Match(provisioningAttributes.Plan) {
+		return false
+	}
+
+	return vr.matchRegions(provisioningAttributes)
+}
+
+func (vr *ValidRule) matchRegions(provisioningAttributes *ProvisioningAttributes) bool {
+	if !vr.PlatformRegion.Match(provisioningAttributes.PlatformRegion) {
+		return false
+	}
+
+	if !vr.HyperscalerRegion.Match(provisioningAttributes.HyperscalerRegion) {
+		return false
+	}
+	return true
+}
+
+func (r *ValidRule) toResult(provisioningAttributes *ProvisioningAttributes) Result {
+	hyperscalerType := provisioningAttributes.Hyperscaler
+	if r.PlatformRegionSuffix {
+		hyperscalerType += "_" + provisioningAttributes.PlatformRegion
+	}
+	if r.HyperscalerRegionSuffix {
+		hyperscalerType += "_" + provisioningAttributes.HyperscalerRegion
+	}
+
+	return Result{
+		HyperscalerType: hyperscalerType,
+		EUAccess:        r.EuAccess,
+		Shared:          r.Shared,
+	}
+}
+
 type ValidRuleset struct {
 	Rules []ValidRule
 }

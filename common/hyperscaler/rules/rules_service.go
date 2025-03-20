@@ -2,8 +2,9 @@ package rules
 
 import (
 	"fmt"
-	"log"
+	"log/slog"
 	"os"
+	"slices"
 
 	"github.com/google/uuid"
 	"github.com/kyma-project/kyma-environment-broker/internal/broker"
@@ -22,7 +23,7 @@ func NewRulesServiceFromFile(rulesFilePath string, enabledPlans *broker.EnablePl
 		return nil, fmt.Errorf("No HAP rules file path provided")
 	}
 
-	log.Printf("Parsing rules from file: %s\n", rulesFilePath)
+	slog.Info(fmt.Sprintf("Parsing rules from file: %s\n", rulesFilePath))
 	file, err := os.Open(rulesFilePath)
 	if err != nil {
 		return nil, fmt.Errorf("failed to open file: %s", err)
@@ -153,6 +154,48 @@ func (rs *RulesService) MatchProvisioningAttributes(provisioningAttributes *Prov
 		if parsingResult.Rule.Matched(provisioningAttributes) {
 			result = parsingResult.Rule.ProvideResult(provisioningAttributes)
 			found = true
+		}
+	}
+
+	return result, found
+}
+
+func (rs *RulesService) getSortedRulesForPlan(plan string) []ValidRule {
+	rulesForPlan := make([]ValidRule, 0)
+	for _, validRule := range rs.ValidSet.Rules {
+		if validRule.Plan.literal == plan {
+			rulesForPlan = append(rulesForPlan, validRule)
+		}
+	}
+	//sort rules by MatchAnyCount
+	slices.SortStableFunc(rulesForPlan, func(x, y ValidRule) int {
+		return x.MatchAnyCount - y.MatchAnyCount
+	})
+	return rulesForPlan
+}
+
+func (rs *RulesService) MatchProvisioningAttributesWithValidRuleset(provisioningAttributes *ProvisioningAttributes) (Result, bool) {
+	if rs.ValidSet == nil || len(rs.ValidSet.Rules) == 0 {
+		slog.Warn("No valid ruleset or empty valid ruleset")
+		return Result{}, false
+	}
+
+	rulesForPlan := rs.getSortedRulesForPlan(provisioningAttributes.Plan)
+
+	if len(rulesForPlan) == 0 {
+		slog.Warn(fmt.Sprintf("No valid rules for plan: %s", provisioningAttributes.Plan))
+		return Result{}, false
+	}
+
+	//find first matching rule which is the most specific one (lowest MatchAnyCount)
+	var result Result
+	found := false
+	for _, validRule := range rulesForPlan {
+		//plan is already matched
+		if validRule.matchRegions(provisioningAttributes) {
+			result = validRule.toResult(provisioningAttributes)
+			found = true
+			break
 		}
 	}
 
