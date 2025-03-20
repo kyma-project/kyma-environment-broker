@@ -180,7 +180,6 @@ func TestResolveSubscriptionSecretStep(t *testing.T) {
 	})
 
 	t.Run("should return error on missing match for given provisioning attributes", func(t *testing.T) {
-		t.Skip("not running due to error dismiss in operation retry mechanism")
 		// given
 		const (
 			operationName  = "provisioning-operation-6"
@@ -202,12 +201,11 @@ func TestResolveSubscriptionSecretStep(t *testing.T) {
 
 		// then
 		assert.Error(t, err)
-		assert.Equal(t, 10*time.Second, backoff)
+		assert.Zero(t, backoff)
 		assert.True(t, strings.Contains(err.Error(), "no matching rule for provisioning attributes"))
 	})
 
 	t.Run("should fail operation when target secret name is empty", func(t *testing.T) {
-		t.Skip("not running due to error dismiss in operation retry mechanism")
 		// given
 		const (
 			operationName  = "provisioning-operation-7"
@@ -244,6 +242,7 @@ func createGardenerClient() *gardener.Client {
 		secretBindingName4 = "secret-binding-4"
 		secretBindingName5 = "secret-binding-5"
 		secretBindingName6 = "secret-binding-6"
+		secretBindingName7 = "secret-binding-7"
 	)
 	sb1 := createSecretBinding(secretBindingName1, namespace, awsEUAccessClaimedSecretName, map[string]string{
 		gardener.HyperscalerTypeLabelKey: "aws",
@@ -271,11 +270,14 @@ func createGardenerClient() *gardener.Client {
 		gardener.HyperscalerTypeLabelKey: "aws",
 		gardener.SharedLabelKey:          "true",
 	})
+	sb7 := createSecretBinding(secretBindingName7, namespace, "", map[string]string{
+		gardener.HyperscalerTypeLabelKey: "gcp",
+	})
 	shoot1 := createShoot("shoot-1", namespace, secretBindingName5)
 	shoot2 := createShoot("shoot-2", namespace, secretBindingName5)
 	shoot3 := createShoot("shoot-3", namespace, secretBindingName6)
 
-	fakeGardenerClient := gardener.NewDynamicFakeClient(sb1, sb2, sb3, sb4, sb5, sb6, shoot1, shoot2, shoot3)
+	fakeGardenerClient := gardener.NewDynamicFakeClient(sb1, sb2, sb3, sb4, sb5, sb6, sb7, shoot1, shoot2, shoot3)
 
 	return gardener.NewClient(fakeGardenerClient, namespace)
 }
