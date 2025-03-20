@@ -3,7 +3,9 @@ package provisioning
 import (
 	"log/slog"
 	"os"
+	"strings"
 	"testing"
+	"time"
 
 	"github.com/kyma-project/kyma-environment-broker/common/gardener"
 	"github.com/kyma-project/kyma-environment-broker/common/hyperscaler/rules"
@@ -12,6 +14,7 @@ import (
 	"github.com/kyma-project/kyma-environment-broker/internal/broker"
 	"github.com/kyma-project/kyma-environment-broker/internal/fixture"
 	"github.com/kyma-project/kyma-environment-broker/internal/storage"
+	"github.com/pivotal-cf/brokerapi/v12/domain"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
@@ -167,6 +170,61 @@ func TestResolveSubscriptionSecretStep(t *testing.T) {
 		assert.Zero(t, backoff)
 		assert.Equal(t, awsLeastUsedSharedSecretName, *operation.ProvisioningParameters.Parameters.TargetSecret)
 	})
+
+	t.Run("should return error on missing match for given provisioning attributes", func(t *testing.T) {
+		t.Skip("not running due to error dismiss in operation retry mechanism")
+		// given
+		const (
+			operationName  = "provisioning-operation-6"
+			instanceID     = "instance-6"
+			platformRegion = "non-existent-region"
+			providerType   = "openstack"
+		)
+
+		operation := fixture.FixProvisioningOperationWithProvider(operationName, instanceID, pkg.AWS)
+		operation.ProvisioningParameters.PlanID = broker.SapConvergedCloudPlanID
+		operation.ProvisioningParameters.PlatformRegion = platformRegion
+		operation.ProviderValues = &internal.ProviderValues{ProviderType: providerType}
+		require.NoError(t, operationsStorage.InsertOperation(operation))
+
+		step := NewResolveSubscriptionSecretStep(operationsStorage, gardenerClient, rulesService)
+
+		// when
+		_, backoff, err := step.Run(operation, log)
+
+		// then
+		assert.Error(t, err)
+		assert.Equal(t, 10*time.Second, backoff)
+		assert.True(t, strings.Contains(err.Error(), "no matching rule for provisioning attributes"))
+	})
+
+	t.Run("should fail operation when target secret name is empty", func(t *testing.T) {
+		t.Skip("not running due to error dismiss in operation retry mechanism")
+		// given
+		const (
+			operationName  = "provisioning-operation-7"
+			instanceID     = "instance-7"
+			platformRegion = "cf-us30"
+			providerType   = "gcp"
+		)
+
+		operation := fixture.FixProvisioningOperationWithProvider(operationName, instanceID, pkg.GCP)
+		operation.ProvisioningParameters.PlanID = broker.GCPPlanID
+		operation.ProvisioningParameters.PlatformRegion = platformRegion
+		operation.ProviderValues = &internal.ProviderValues{ProviderType: providerType}
+		require.NoError(t, operationsStorage.InsertOperation(operation))
+
+		step := NewResolveSubscriptionSecretStep(operationsStorage, gardenerClient, rulesService)
+
+		// when
+		operation, backoff, err := step.Run(operation, log)
+
+		// then
+		require.Error(t, err)
+		assert.Zero(t, backoff)
+		assert.ErrorContains(t, err, "failed to determine secret name")
+		assert.Equal(t, domain.Failed, operation.State)
+	})
 }
 
 func createGardenerClient() *gardener.Client {
@@ -262,6 +320,7 @@ func createRulesService(t *testing.T) *rules.RulesService {
                       - azure(PR=cf-ch20) -> EU
                       - azure(PR=cf-ap21)
                       - gcp(PR=cf-eu30) -> EU,S
+                      - gcp(PR=cf-us30)
                       - trial -> S`
 	tmpfile, err := rules.CreateTempFile(content)
 	require.NoError(t, err)
