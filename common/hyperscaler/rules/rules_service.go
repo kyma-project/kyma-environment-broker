@@ -82,7 +82,7 @@ func (rs *RulesService) processAndValidate(rulesConfig *RulesConfig) (bool, *Val
 
 	ok, duplicateErrors := validRuleset.checkUniqueness()
 	if !ok {
-		validationErrors.UniquenessErrors = append(validationErrors.UniquenessErrors, duplicateErrors...)
+		validationErrors.DuplicateErrors = append(validationErrors.DuplicateErrors, duplicateErrors...)
 		return false, nil, validationErrors
 	}
 

@@ -19,9 +19,9 @@ type ValidRule struct {
 }
 
 type ValidationErrors struct {
-	ParsingErrors    []error
-	UniquenessErrors []error
-	AmbiguityErrors  []error
+	ParsingErrors   []error
+	DuplicateErrors []error
+	AmbiguityErrors []error
 }
 
 func (pa *PatternAttribute) Match(value string) bool {
@@ -77,9 +77,9 @@ func NewValidRuleset() *ValidRuleset {
 
 func NewValidationErrors() *ValidationErrors {
 	return &ValidationErrors{
-		ParsingErrors:    make([]error, 0),
-		UniquenessErrors: make([]error, 0),
-		AmbiguityErrors:  make([]error, 0),
+		ParsingErrors:   make([]error, 0),
+		DuplicateErrors: make([]error, 0),
+		AmbiguityErrors: make([]error, 0),
 	}
 }
 
