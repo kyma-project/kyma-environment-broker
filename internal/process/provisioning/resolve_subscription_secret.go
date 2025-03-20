@@ -136,7 +136,7 @@ func (s *ResolveSubscriptionSecretStep) provisioningAttributesFromOperationData(
 	return &rules.ProvisioningAttributes{
 		Plan:              broker.PlanNamesMapping[operation.ProvisioningParameters.PlanID],
 		PlatformRegion:    operation.ProvisioningParameters.PlatformRegion,
-		HyperscalerRegion: operation.Region,
+		HyperscalerRegion: operation.ProviderValues.Region,
 		Hyperscaler:       operation.ProviderValues.ProviderType,
 	}
 }
