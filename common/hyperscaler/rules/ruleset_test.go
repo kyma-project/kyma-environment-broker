@@ -177,7 +177,7 @@ func TestValidRule_toResult(t *testing.T) {
 		expected Result
 	}{
 		{
-			name: "simple trial with aws",
+			name: "simple trial",
 			input: &ValidRule{PatternAttribute{literal: "trial"},
 				PatternAttribute{literal: "cf-eu10"},
 				PatternAttribute{literal: "eu-west-2"}, false, false, false, false, 0},
@@ -230,4 +230,79 @@ func TestValidRule_toResult(t *testing.T) {
 		})
 	}
 
+}
+
+func TestValidRule_Match(t *testing.T) {
+	testCases := []struct {
+		name     string
+		input    *ValidRule
+		expected bool
+	}{
+		{
+			name: "specific trial",
+			input: &ValidRule{PatternAttribute{literal: "trial"},
+				PatternAttribute{literal: "cf-eu10"},
+				PatternAttribute{literal: "eu-west-2"}, false, false, false, false, 0},
+			expected: true,
+		},
+		{
+			name: "general trial",
+			input: &ValidRule{PatternAttribute{literal: "trial"},
+				PatternAttribute{literal: "", matchAny: true},
+				PatternAttribute{literal: "", matchAny: true}, false, false, false, false, 0},
+			expected: true,
+		},
+		{
+			name: "plan mismatch",
+			input: &ValidRule{PatternAttribute{literal: "aws"},
+				PatternAttribute{literal: "cf-eu10"},
+				PatternAttribute{literal: "eu-west-2"}, false, false, false, false, 0},
+			expected: false,
+		},
+		{
+			name: "plan mismatch",
+			input: &ValidRule{PatternAttribute{literal: "aws"},
+				PatternAttribute{literal: "", matchAny: true},
+				PatternAttribute{literal: "", matchAny: true}, false, false, false, false, 0},
+			expected: false,
+		},
+		{
+			name: "hyperscaler region mismatch",
+			input: &ValidRule{PatternAttribute{literal: "trial"},
+				PatternAttribute{literal: "cf-eu10"},
+				PatternAttribute{literal: "eu-west-1"}, false, false, false, false, 0},
+			expected: false,
+		},
+		{
+			name: "hyperscaler region mismatch",
+			input: &ValidRule{PatternAttribute{literal: "trial"},
+				PatternAttribute{literal: "", matchAny: true},
+				PatternAttribute{literal: "eu-west-1"}, false, false, false, false, 0},
+			expected: false,
+		},
+		{
+			name: "platform region mismatch",
+			input: &ValidRule{PatternAttribute{literal: "trial"},
+				PatternAttribute{literal: "cf-jp30"},
+				PatternAttribute{literal: "eu-west-2"},
+				false, false, false, false, 0},
+			expected: false,
+		},
+		{
+			name: "platform region mismatch",
+			input: &ValidRule{PatternAttribute{literal: "trial"},
+				PatternAttribute{literal: "cf-jp30"},
+				PatternAttribute{literal: "", matchAny: true},
+				false, false, false, false, 0},
+			expected: false,
+		},
+	}
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			//when
+			result := tc.input.Match(&ProvisioningAttributes{Plan: "trial", Hyperscaler: "aws", PlatformRegion: "cf-eu10", HyperscalerRegion: "eu-west-2"})
+			//then
+			assert.Equal(t, tc.expected, result)
+		})
+	}
 }
