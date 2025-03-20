@@ -280,7 +280,6 @@ func main() {
 	gardenerAccountPool := hyperscaler.NewAccountPool(dynamicGardener, gardenerNamespace)
 	gardenerSharedPool := hyperscaler.NewSharedGardenerAccountPool(dynamicGardener, gardenerNamespace)
 	accountProvider := hyperscaler.NewAccountProvider(gardenerAccountPool, gardenerSharedPool)
-	// gardenerSecretBindingClient := dynamicGardener.Resource(gardener.SecretBindingResource).Namespace(gardenerNamespace)
 
 	regions, err := provider.ReadPlatformRegionMappingFromFile(cfg.TrialRegionMappingFilePath)
 	fatalOnError(err, log)
@@ -305,8 +304,8 @@ func main() {
 	if err != nil {
 		log.Error(fmt.Sprintf("Error: %s", err))
 	}
-	//TODO fail on error when we are ready with HAP parsing
-	//fatalOnError(err, log)
+	// TODO fail on error when we are ready with HAP parsing
+	// fatalOnError(err, log)
 
 	// run queues
 	provisionManager := process.NewStagedManager(db.Operations(), eventBroker, cfg.OperationTimeout, cfg.Provisioning, log.With("provisioning", "manager"))
@@ -330,7 +329,7 @@ func main() {
 	router := httputil.NewRouter()
 
 	createAPI(router, servicesConfig, inputFactory, &cfg, db, provisionQueue, deprovisionQueue, updateQueue, logger, log,
-		inputFactory.GetPlanDefaults, kcBuilder, skrK8sClientProvider, skrK8sClientProvider, gardenerClient, kcpK8sClient, eventBroker)
+		inputFactory.GetPlanDefaults, kcBuilder, skrK8sClientProvider, skrK8sClientProvider, kcpK8sClient, eventBroker)
 
 	// create metrics endpoint
 	router.Handle("/metrics", promhttp.Handler())
@@ -391,7 +390,7 @@ func logConfiguration(logs *slog.Logger, cfg Config) {
 }
 
 func createAPI(router *httputil.Router, servicesConfig broker.ServicesConfig, planValidator broker.PlanValidator, cfg *Config, db storage.BrokerStorage,
-	provisionQueue, deprovisionQueue, updateQueue *process.Queue, logger lager.Logger, logs *slog.Logger, planDefaults broker.PlanDefaults, kcBuilder kubeconfig.KcBuilder, clientProvider K8sClientProvider, kubeconfigProvider KubeconfigProvider, gardenerClient, kcpK8sClient client.Client, publisher event.Publisher) {
+	provisionQueue, deprovisionQueue, updateQueue *process.Queue, logger lager.Logger, logs *slog.Logger, planDefaults broker.PlanDefaults, kcBuilder kubeconfig.KcBuilder, clientProvider K8sClientProvider, kubeconfigProvider KubeconfigProvider, kcpK8sClient client.Client, publisher event.Publisher) {
 
 	suspensionCtxHandler := suspension.NewContextUpdateHandler(db.Operations(), provisionQueue, deprovisionQueue, logs)
 
