@@ -11,10 +11,10 @@ import (
 )
 
 type RulesService struct {
-	parser        Parser
-	ParsedRuleset *ParsingResults
-	ValidSet      *ValidRuleset
-	InvalidSet    *ValidationErrors
+	parser         Parser
+	ParsedRuleset  *ParsingResults
+	ValidRules     *ValidRuleset
+	ValidationInfo *ValidationErrors
 }
 
 func NewRulesServiceFromFile(rulesFilePath string, enabledPlans *broker.EnablePlans) (*RulesService, error) {
@@ -52,7 +52,7 @@ func NewRulesService(file *os.File, enabledPlans *broker.EnablePlans) (*RulesSer
 	}
 
 	rs.ParsedRuleset = rs.process(rulesConfig)
-	_, rs.ValidSet, rs.InvalidSet = rs.processAndValidate(rulesConfig)
+	_, rs.ValidRules, rs.ValidationInfo = rs.processAndValidate(rulesConfig)
 	return rs, err
 }
 
@@ -69,7 +69,7 @@ func NewRulesServiceFromSlice(rules []string, enabledPlans *broker.EnablePlans) 
 	}
 
 	rs.ParsedRuleset = rs.process(rulesConfig)
-	_, rs.ValidSet, rs.InvalidSet = rs.processAndValidate(rulesConfig)
+	_, rs.ValidRules, rs.ValidationInfo = rs.processAndValidate(rulesConfig)
 	return rs, nil
 }
 
@@ -162,7 +162,7 @@ func (rs *RulesService) MatchProvisioningAttributes(provisioningAttributes *Prov
 
 func (rs *RulesService) getSortedRulesForPlan(plan string) []ValidRule {
 	rulesForPlan := make([]ValidRule, 0)
-	for _, validRule := range rs.ValidSet.Rules {
+	for _, validRule := range rs.ValidRules.Rules {
 		if validRule.Plan.literal == plan {
 			rulesForPlan = append(rulesForPlan, validRule)
 		}
@@ -175,7 +175,7 @@ func (rs *RulesService) getSortedRulesForPlan(plan string) []ValidRule {
 }
 
 func (rs *RulesService) MatchProvisioningAttributesWithValidRuleset(provisioningAttributes *ProvisioningAttributes) (Result, bool) {
-	if rs.ValidSet == nil || len(rs.ValidSet.Rules) == 0 {
+	if rs.ValidRules == nil || len(rs.ValidRules.Rules) == 0 {
 		slog.Warn("No valid ruleset or empty valid ruleset")
 		return Result{}, false
 	}
