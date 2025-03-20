@@ -30,36 +30,41 @@ func TestSecretBindingLabelSelector(t *testing.T) {
 			for _, tc := range []struct {
 				providerType string
 				planID       string
+				regions      []string
 			}{
-				{providerType: "aws", planID: broker.AWSPlanID},
-				{providerType: "azure", planID: broker.AzurePlanID},
-				{providerType: "gcp", planID: broker.GCPPlanID},
-				{providerType: "aws", planID: broker.TrialPlanID},
-				{providerType: "azure", planID: broker.TrialPlanID},
-				{providerType: "openstack", planID: broker.SapConvergedCloudPlanID},
-				{providerType: "aws", planID: broker.FreemiumPlanID},
+				{providerType: "aws", planID: broker.AWSPlanID, regions: []string{"eu-central-1", "eu-west-2"}},
+				{providerType: "azure", planID: broker.AzurePlanID, regions: []string{"eastus", "westeurope"}},
+				{providerType: "gcp", planID: broker.GCPPlanID, regions: []string{"australia-southeast1", "me-west1", "europe-west3"}},
+				{providerType: "aws", planID: broker.TrialPlanID, regions: []string{"eu-central-1"}},
+				{providerType: "azure", planID: broker.TrialPlanID, regions: []string{"westeurope"}},
+				{providerType: "openstack", planID: broker.SapConvergedCloudPlanID, regions: []string{"eu-de-1", "eu-de-2"}},
+				{providerType: "aws", planID: broker.FreemiumPlanID, regions: []string{"eu-central-1"}},
 			} {
 				planName := broker.PlanNamesMapping[tc.planID]
 				t.Run(planName, func(t *testing.T) {
-					var referenceSelector *string = ptr.String("")
-					var gotSelector *string = ptr.String("")
+					for _, region := range tc.regions {
+						t.Run(region, func(t *testing.T) {
+							var referenceSelector *string = ptr.String("")
+							var gotSelector *string = ptr.String("")
 
-					// given
-					operation := fixProvisioningOperation("westeurope", platformRegion, tc.planID, tc.providerType)
-					step := fixResolveCredentialStep(t, referenceSelector, operation)
+							// given
+							operation := fixProvisioningOperation(region, platformRegion, tc.planID, tc.providerType)
+							step := fixResolveCredentialStep(t, referenceSelector, operation)
 
-					_, backoff, _ := step.Run(operation, fixLogger())
-					// after the old step is run - we have referenceSelector with a reference value, which is used for an assertion
+							_, backoff, _ := step.Run(operation, fixLogger())
+							// after the old step is run - we have referenceSelector with a reference value, which is used for an assertion
 
-					require.Zero(t, backoff)
-					newStep := fixNewResolveStep(t, gotSelector, operation)
+							require.Zero(t, backoff)
+							newStep := fixNewResolveStep(t, gotSelector, operation)
 
-					// when
-					_, backoff, _ = newStep.Run(operation, fixLogger())
-					require.Zero(t, backoff)
+							// when
+							_, backoff, _ = newStep.Run(operation, fixLogger())
+							require.Zero(t, backoff)
 
-					// then
-					assertSelectors(t, referenceSelector, gotSelector)
+							// then
+							assertSelectors(t, referenceSelector, gotSelector)
+						})
+					}
 				})
 			}
 		})
@@ -69,6 +74,7 @@ func TestSecretBindingLabelSelector(t *testing.T) {
 func assertSelectors(t *testing.T, expected *string, got *string) {
 	t.Helper()
 	t.Log("expectedSet: ", *expected)
+	assert.NotZerof(t, len(*expected), "expected selector is empty")
 	expectedParts := strings.Split(*expected, ",")
 	expectedSet := sets.New(expectedParts...)
 
