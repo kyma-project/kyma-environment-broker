@@ -2169,6 +2169,7 @@ func TestProvisioning_ResolveSubscriptionSecretStepEnabled(t *testing.T) {
 		t.Run(tn, func(t *testing.T) {
 			// given
 			cfg := fixConfig()
+			cfg.Broker.EnablePlans = append(cfg.Broker.EnablePlans, "azure_lite")
 			cfg.ResolveSubscriptionSecretStepDisabled = false
 			suite := NewBrokerSuiteTestWithConfig(t, cfg)
 			defer suite.TearDown()

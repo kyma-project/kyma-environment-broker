@@ -4,10 +4,10 @@
   - azure                           # pool: hyperscalerType: azure
   - azure(PR=cf-ch20) -> EU         # pool: hyperscalerType: azure_cf-ch20; euAccess: true 
   - gcp                             # pool: hyperscalerType: gcp
-  - gcp(PR=cf-sa30)                 # pool: hyperscalerType: gcp_cf-sa30
+  - gcp(PR=cf-sa30) -> PR           # pool: hyperscalerType: gcp_cf-sa30
   - trial -> S                      # pool: hyperscalerType: azure; shared: true - TRIAL POOL
                                     # pool: hyperscalerType: aws; shared: true - TRIAL POOL 
-  - sap-converged-cloud(HR=*) -> S  # pool: hyperscalerType: openstack_<HYPERSCALER_REGION>; shared: true
+  - sap-converged-cloud -> HR,S     # pool: hyperscalerType: openstack_<HYPERSCALER_REGION>; shared: true
   - azure_lite                      # pool: hyperscalerType: azure
   - preview                         # pool: hyperscalerType: aws
   - free                            # pool: hyperscalerType: aws
