@@ -201,6 +201,9 @@ infrastructureManager:
 lifecycleManager:
   disabled: "true"
 
+resolveSubscriptionSecretStep:
+  disabled: "true"
+
 provisioner:
   URL: "http://kcp-provisioner.kcp-system.svc.cluster.local:3000/graphql"
   provisioningTimeout: "6h"
