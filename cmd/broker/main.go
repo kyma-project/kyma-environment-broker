@@ -104,6 +104,7 @@ type Config struct {
 	UpdateProcessingEnabled                  bool   `envconfig:"default=false"`
 	LifecycleManagerIntegrationDisabled      bool   `envconfig:"default=true"`
 	InfrastructureManagerIntegrationDisabled bool   `envconfig:"default=true"`
+	ResolveSubscriptionSecretStepDisabled    bool   `envconfig:"default=true"`
 	Broker                                   broker.Config
 	CatalogFilePath                          string
 
@@ -273,13 +274,12 @@ func main() {
 	fatalOnError(err, log)
 	dynamicGardener, err := dynamic.NewForConfig(gardenerClusterConfig)
 	fatalOnError(err, log)
-	gardenerClient, err := initClient(gardenerClusterConfig)
-	fatalOnError(err, log)
 
 	gardenerNamespace := fmt.Sprintf("garden-%v", cfg.Gardener.Project)
 	gardenerAccountPool := hyperscaler.NewAccountPool(dynamicGardener, gardenerNamespace)
 	gardenerSharedPool := hyperscaler.NewSharedGardenerAccountPool(dynamicGardener, gardenerNamespace)
 	accountProvider := hyperscaler.NewAccountProvider(gardenerAccountPool, gardenerSharedPool)
+	gardenetClient := gardener.NewClient(dynamicGardener, gardenerNamespace)
 
 	regions, err := provider.ReadPlatformRegionMappingFromFile(cfg.TrialRegionMappingFilePath)
 	fatalOnError(err, log)
@@ -310,7 +310,7 @@ func main() {
 	// run queues
 	provisionManager := process.NewStagedManager(db.Operations(), eventBroker, cfg.OperationTimeout, cfg.Provisioning, log.With("provisioning", "manager"))
 	provisionQueue := NewProvisioningProcessingQueue(ctx, provisionManager, cfg.Provisioning.WorkersAmount, &cfg, db, configProvider,
-		edpClient, accountProvider, skrK8sClientProvider, kcpK8sClient, oidcDefaultValues, log, rulesService)
+		edpClient, accountProvider, skrK8sClientProvider, kcpK8sClient, gardenetClient, oidcDefaultValues, log, rulesService)
 
 	deprovisionManager := process.NewStagedManager(db.Operations(), eventBroker, cfg.OperationTimeout, cfg.Deprovisioning, log.With("deprovisioning", "manager"))
 	deprovisionQueue := NewDeprovisioningProcessingQueue(ctx, cfg.Deprovisioning.WorkersAmount, deprovisionManager, &cfg, db, edpClient, accountProvider,
