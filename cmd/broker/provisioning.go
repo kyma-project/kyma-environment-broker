@@ -20,7 +20,12 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
-const resourceStateRetryInterval = 10 * time.Second
+const (
+	resourceStateRetryInterval             = 10 * time.Second
+	resolveSubscriptionSecretRetryInterval = 10 * time.Second
+
+	resolveSubscriptionSecretTimeout = 1 * time.Minute
+)
 
 func NewProvisioningProcessingQueue(ctx context.Context, provisionManager *process.StagedManager, workersAmount int, cfg *Config,
 	db storage.BrokerStorage, configProvider input.ConfigurationProvider,
@@ -78,7 +83,7 @@ func NewProvisioningProcessingQueue(ctx context.Context, provisionManager *proce
 		},
 		{
 			stage:     createRuntimeStageName,
-			step:      provisioning.NewResolveSubscriptionSecretStep(db.Operations(), gardenerClient, rulesService),
+			step:      provisioning.NewResolveSubscriptionSecretStep(db.Operations(), gardenerClient, rulesService, internal.RetryTuple{Timeout: resolveSubscriptionSecretTimeout, Interval: resolveSubscriptionSecretRetryInterval}),
 			condition: provisioning.SkipForOwnClusterPlan,
 			disabled:  cfg.ResolveSubscriptionSecretStepDisabled,
 		},

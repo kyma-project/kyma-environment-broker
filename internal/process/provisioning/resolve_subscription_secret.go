@@ -49,13 +49,15 @@ type ResolveSubscriptionSecretStep struct {
 	gardenerClient   *gardener.Client
 	opStorage        storage.Operations
 	rulesService     *rules.RulesService
+	stepRetryTuple   internal.RetryTuple
 }
 
-func NewResolveSubscriptionSecretStep(os storage.Operations, gardenerClient *gardener.Client, rulesService *rules.RulesService) *ResolveSubscriptionSecretStep {
+func NewResolveSubscriptionSecretStep(os storage.Operations, gardenerClient *gardener.Client, rulesService *rules.RulesService, stepRetryTuple internal.RetryTuple) *ResolveSubscriptionSecretStep {
 	step := &ResolveSubscriptionSecretStep{
 		opStorage:      os,
 		gardenerClient: gardenerClient,
 		rulesService:   rulesService,
+		stepRetryTuple: stepRetryTuple,
 	}
 	step.operationManager = process.NewOperationManager(os, step.Name(), kebError.AccountPoolDependency)
 	return step
@@ -69,7 +71,7 @@ func (s *ResolveSubscriptionSecretStep) Run(operation internal.Operation, log *s
 	targetSecretName, err := s.resolveSecretName(operation, log)
 	if err != nil {
 		msg := fmt.Sprintf("resolving secret name")
-		return s.operationManager.RetryOperation(operation, msg, err, 10*time.Second, time.Minute, log)
+		return s.operationManager.RetryOperation(operation, msg, err, s.stepRetryTuple.Interval, s.stepRetryTuple.Timeout, log)
 	}
 
 	if targetSecretName == "" {

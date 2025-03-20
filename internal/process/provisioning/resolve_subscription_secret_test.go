@@ -37,6 +37,14 @@ func TestResolveSubscriptionSecretStep(t *testing.T) {
 	operationsStorage := storage.NewMemoryStorage().Operations()
 	gardenerClient := createGardenerClient()
 	rulesService := createRulesService(t)
+	stepRetryTuple := internal.RetryTuple{
+		Timeout:  2 * time.Second,
+		Interval: 1 * time.Second,
+	}
+	immediateTimeout := internal.RetryTuple{
+		Timeout:  -1 * time.Second,
+		Interval: 1 * time.Second,
+	}
 	log := slog.New(slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{Level: slog.LevelInfo}))
 
 	t.Run("should resolve secret name for aws hyperscaler and existing tenant", func(t *testing.T) {
@@ -55,7 +63,7 @@ func TestResolveSubscriptionSecretStep(t *testing.T) {
 		operation.ProviderValues = &internal.ProviderValues{ProviderType: providerType}
 		require.NoError(t, operationsStorage.InsertOperation(operation))
 
-		step := NewResolveSubscriptionSecretStep(operationsStorage, gardenerClient, rulesService)
+		step := NewResolveSubscriptionSecretStep(operationsStorage, gardenerClient, rulesService, stepRetryTuple)
 
 		// when
 		operation, backoff, err := step.Run(operation, log)
@@ -82,7 +90,7 @@ func TestResolveSubscriptionSecretStep(t *testing.T) {
 		operation.ProviderValues = &internal.ProviderValues{ProviderType: providerType}
 		require.NoError(t, operationsStorage.InsertOperation(operation))
 
-		step := NewResolveSubscriptionSecretStep(operationsStorage, gardenerClient, rulesService)
+		step := NewResolveSubscriptionSecretStep(operationsStorage, gardenerClient, rulesService, stepRetryTuple)
 
 		// when
 		operation, backoff, err := step.Run(operation, log)
@@ -108,7 +116,7 @@ func TestResolveSubscriptionSecretStep(t *testing.T) {
 		operation.ProviderValues = &internal.ProviderValues{ProviderType: providerType}
 		require.NoError(t, operationsStorage.InsertOperation(operation))
 
-		step := NewResolveSubscriptionSecretStep(operationsStorage, gardenerClient, rulesService)
+		step := NewResolveSubscriptionSecretStep(operationsStorage, gardenerClient, rulesService, stepRetryTuple)
 
 		// when
 		operation, backoff, err := step.Run(operation, log)
@@ -134,7 +142,7 @@ func TestResolveSubscriptionSecretStep(t *testing.T) {
 		operation.ProviderValues = &internal.ProviderValues{ProviderType: providerType}
 		require.NoError(t, operationsStorage.InsertOperation(operation))
 
-		step := NewResolveSubscriptionSecretStep(operationsStorage, gardenerClient, rulesService)
+		step := NewResolveSubscriptionSecretStep(operationsStorage, gardenerClient, rulesService, stepRetryTuple)
 
 		// when
 		operation, backoff, err := step.Run(operation, log)
@@ -160,7 +168,7 @@ func TestResolveSubscriptionSecretStep(t *testing.T) {
 		operation.ProviderValues = &internal.ProviderValues{ProviderType: providerType}
 		require.NoError(t, operationsStorage.InsertOperation(operation))
 
-		step := NewResolveSubscriptionSecretStep(operationsStorage, gardenerClient, rulesService)
+		step := NewResolveSubscriptionSecretStep(operationsStorage, gardenerClient, rulesService, stepRetryTuple)
 
 		// when
 		operation, backoff, err := step.Run(operation, log)
@@ -187,7 +195,7 @@ func TestResolveSubscriptionSecretStep(t *testing.T) {
 		operation.ProviderValues = &internal.ProviderValues{ProviderType: providerType}
 		require.NoError(t, operationsStorage.InsertOperation(operation))
 
-		step := NewResolveSubscriptionSecretStep(operationsStorage, gardenerClient, rulesService)
+		step := NewResolveSubscriptionSecretStep(operationsStorage, gardenerClient, rulesService, immediateTimeout)
 
 		// when
 		_, backoff, err := step.Run(operation, log)
@@ -214,7 +222,7 @@ func TestResolveSubscriptionSecretStep(t *testing.T) {
 		operation.ProviderValues = &internal.ProviderValues{ProviderType: providerType}
 		require.NoError(t, operationsStorage.InsertOperation(operation))
 
-		step := NewResolveSubscriptionSecretStep(operationsStorage, gardenerClient, rulesService)
+		step := NewResolveSubscriptionSecretStep(operationsStorage, gardenerClient, rulesService, immediateTimeout)
 
 		// when
 		operation, backoff, err := step.Run(operation, log)
