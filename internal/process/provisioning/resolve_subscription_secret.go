@@ -221,6 +221,7 @@ func NewLabelSelectorBuilder() *LabelSelectorBuilder {
 func (b *LabelSelectorBuilder) With(s string) {
 	if b.Len() == 0 {
 		b.WriteString(s)
+		return
 	}
 	b.WriteString("," + s)
 }
