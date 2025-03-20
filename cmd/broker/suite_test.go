@@ -27,18 +27,19 @@ import (
 )
 
 const (
-	globalAccountLabel   = "account"
-	subAccountLabel      = "subaccount"
-	runtimeIDAnnotation  = "kcp.provisioner.kyma-project.io/runtime-id"
-	defaultKymaVer       = "2.4.0"
-	defaultRegion        = "cf-eu10"
-	globalAccountID      = "dummy-ga-id"
-	dashboardURL         = "http://console.garden-dummy.kyma.io"
-	operationID          = "provisioning-op-id"
-	deprovisioningOpID   = "deprovisioning-op-id"
-	reDeprovisioningOpID = "re-deprovisioning-op-id"
-	instanceID           = "instance-id"
-	dbSecretKey          = "1234567890123456"
+	globalAccountLabel    = "account"
+	subAccountLabel       = "subaccount"
+	runtimeIDAnnotation   = "kcp.provisioner.kyma-project.io/runtime-id"
+	defaultKymaVer        = "2.4.0"
+	defaultRegion         = "cf-eu10"
+	globalAccountID       = "dummy-ga-id"
+	dashboardURL          = "http://console.garden-dummy.kyma.io"
+	operationID           = "provisioning-op-id"
+	deprovisioningOpID    = "deprovisioning-op-id"
+	reDeprovisioningOpID  = "re-deprovisioning-op-id"
+	instanceID            = "instance-id"
+	dbSecretKey           = "1234567890123456"
+	gardenerKymaNamespace = "kyma"
 
 	pollingInterval = 3 * time.Millisecond
 )
@@ -253,11 +254,12 @@ func fixConfig() *Config {
 	}
 
 	return &Config{
-		DbInMemory:                         true,
-		DisableProcessOperationsInProgress: false,
-		DevelopmentMode:                    true,
-		DumpProvisionerRequests:            true,
-		OperationTimeout:                   2 * time.Minute,
+		DbInMemory:                            true,
+		DisableProcessOperationsInProgress:    false,
+		ResolveSubscriptionSecretStepDisabled: true,
+		DevelopmentMode:                       true,
+		DumpProvisionerRequests:               true,
+		OperationTimeout:                      2 * time.Minute,
 		Provisioner: input.Config{
 			ProvisioningTimeout:                     2 * time.Minute,
 			DeprovisioningTimeout:                   2 * time.Minute,
@@ -368,16 +370,16 @@ func fixAccountProvider(t *testing.T, gc *fake.FakeDynamicClient) hyperscaler.Ac
 
 		sb := gardener.SecretBinding{}
 		sb.SetName(sbName)
-		sb.SetNamespace("kyma")
+		sb.SetNamespace(gardenerKymaNamespace)
 		sb.SetLabels(labels)
 		sb.SetSecretRefName(sbName)
 
-		_, err := gc.Resource(gardener.SecretBindingResource).Namespace("kyma").Create(context.Background(), &sb.Unstructured, metaV1.CreateOptions{})
+		_, err := gc.Resource(gardener.SecretBindingResource).Namespace(gardenerKymaNamespace).Create(context.Background(), &sb.Unstructured, metaV1.CreateOptions{})
 
 		require.NoError(t, err)
 	}
 
-	accountProvider := hyperscaler.NewAccountProvider(hyperscaler.NewAccountPool(gc, "kyma"), hyperscaler.NewSharedGardenerAccountPool(gc, "kyma"))
+	accountProvider := hyperscaler.NewAccountProvider(hyperscaler.NewAccountPool(gc, gardenerKymaNamespace), hyperscaler.NewSharedGardenerAccountPool(gc, gardenerKymaNamespace))
 
 	return accountProvider
 }

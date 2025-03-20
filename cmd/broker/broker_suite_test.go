@@ -205,6 +205,7 @@ func NewBrokerSuiteTestWithConfig(t *testing.T, cfg *Config, version ...string) 
 	require.NoError(t, err)
 
 	gardenerClient := gardener.NewDynamicFakeClient()
+	gardenerClientWithNamespace := gardener.NewClient(gardenerClient, gardenerKymaNamespace)
 
 	eventBroker := event.NewPubSub(log)
 
@@ -220,7 +221,7 @@ func NewBrokerSuiteTestWithConfig(t *testing.T, cfg *Config, version ...string) 
 	require.NoError(t, err)
 
 	provisioningQueue := NewProvisioningProcessingQueue(context.Background(), provisionManager, workersAmount, cfg, db, configProvider,
-		edpClient, accountProvider, k8sClientProvider, cli, defaultOIDCValues(), log, rulesService)
+		edpClient, accountProvider, k8sClientProvider, cli, gardenerClientWithNamespace, defaultOIDCValues(), log, rulesService)
 
 	provisioningQueue.SpeedUp(10000)
 	provisionManager.SpeedUp(10000)
