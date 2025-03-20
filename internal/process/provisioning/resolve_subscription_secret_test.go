@@ -179,7 +179,7 @@ func TestResolveSubscriptionSecretStep(t *testing.T) {
 		assert.Equal(t, awsLeastUsedSharedSecretName, *operation.ProvisioningParameters.Parameters.TargetSecret)
 	})
 
-	t.Run("should return error on missing match for given provisioning attributes", func(t *testing.T) {
+	t.Run("should return error on missing rule match for given provisioning attributes", func(t *testing.T) {
 		// given
 		const (
 			operationName  = "provisioning-operation-6"
@@ -188,7 +188,7 @@ func TestResolveSubscriptionSecretStep(t *testing.T) {
 			providerType   = "openstack"
 		)
 
-		operation := fixture.FixProvisioningOperationWithProvider(operationName, instanceID, pkg.AWS)
+		operation := fixture.FixProvisioningOperationWithProvider(operationName, instanceID, pkg.SapConvergedCloud)
 		operation.ProvisioningParameters.PlanID = broker.SapConvergedCloudPlanID
 		operation.ProvisioningParameters.PlatformRegion = platformRegion
 		operation.ProviderValues = &internal.ProviderValues{ProviderType: providerType}
@@ -205,11 +205,37 @@ func TestResolveSubscriptionSecretStep(t *testing.T) {
 		assert.True(t, strings.Contains(err.Error(), "no matching rule for provisioning attributes"))
 	})
 
-	t.Run("should fail operation when target secret name is empty", func(t *testing.T) {
+	t.Run("should return error on missing secret binding for given selector", func(t *testing.T) {
 		// given
 		const (
 			operationName  = "provisioning-operation-7"
 			instanceID     = "instance-7"
+			platformRegion = "cf-ap11"
+			providerType   = "aws"
+		)
+
+		operation := fixture.FixProvisioningOperationWithProvider(operationName, instanceID, pkg.AWS)
+		operation.ProvisioningParameters.PlanID = broker.AWSPlanID
+		operation.ProvisioningParameters.PlatformRegion = platformRegion
+		operation.ProviderValues = &internal.ProviderValues{ProviderType: providerType}
+		require.NoError(t, operationsStorage.InsertOperation(operation))
+
+		step := NewResolveSubscriptionSecretStep(operationsStorage, gardenerClient, rulesService, immediateTimeout)
+
+		// when
+		_, backoff, err := step.Run(operation, log)
+
+		// then
+		assert.Error(t, err)
+		assert.Zero(t, backoff)
+		assert.True(t, strings.Contains(err.Error(), "failed to find unassigned secret binding with selector"))
+	})
+
+	t.Run("should fail operation when target secret name is empty", func(t *testing.T) {
+		// given
+		const (
+			operationName  = "provisioning-operation-8"
+			instanceID     = "instance-8"
 			platformRegion = "cf-us30"
 			providerType   = "gcp"
 		)
@@ -327,6 +353,7 @@ func createShoot(name, namespace, secretBindingName string) *unstructured.Unstru
 func createRulesService(t *testing.T) *rules.RulesService {
 	content := `rule:
                       - aws(PR=cf-eu11) -> EU
+                      - aws(PR=cf-ap11)
                       - azure(PR=cf-ch20) -> EU
                       - azure(PR=cf-ap21)
                       - gcp(PR=cf-eu30) -> EU,S
