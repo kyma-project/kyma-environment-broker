@@ -21,33 +21,36 @@ const (
 )
 
 type Updater struct {
-	k8sClient     dynamic.Interface
-	queue         syncqueues.MultiConsumerPriorityQueue
-	kymaGVR       schema.GroupVersionResource
-	sleepDuration time.Duration
-	labelKey      string
-	ctx           context.Context
-	logger        *slog.Logger
+	k8sClient                 dynamic.Interface
+	queue                     syncqueues.MultiConsumerPriorityQueue
+	kymaGVR                   schema.GroupVersionResource
+	sleepDuration             time.Duration
+	betaEnabledLabelKey       string
+	usedForProductionLabelKey string
+	ctx                       context.Context
+	logger                    *slog.Logger
 }
 
 func NewUpdater(k8sClient dynamic.Interface,
 	queue syncqueues.MultiConsumerPriorityQueue,
 	gvr schema.GroupVersionResource,
 	sleepDuration time.Duration,
-	labelKey string,
+	betaEnabledLabelKey string,
+	usedForProductionLabelKey string,
 	ctx context.Context,
 	logger *slog.Logger) (*Updater, error) {
 
-	logger.Info(fmt.Sprintf("Creating Kyma CR updater for label: %s", labelKey))
+	logger.Info(fmt.Sprintf("Creating Kyma CR updater for labels: %s and %s", betaEnabledLabelKey, usedForProductionLabelKey))
 
 	return &Updater{
-		k8sClient:     k8sClient,
-		queue:         queue,
-		kymaGVR:       gvr,
-		logger:        logger,
-		sleepDuration: sleepDuration,
-		labelKey:      labelKey,
-		ctx:           ctx,
+		k8sClient:                 k8sClient,
+		queue:                     queue,
+		kymaGVR:                   gvr,
+		logger:                    logger,
+		sleepDuration:             sleepDuration,
+		betaEnabledLabelKey:       betaEnabledLabelKey,
+		usedForProductionLabelKey: usedForProductionLabelKey,
+		ctx:                       ctx,
 	}, nil
 }
 
@@ -78,7 +81,7 @@ func (u *Updater) Run() error {
 		retryRequired := false
 		u.logger.Debug(fmt.Sprintf("found %d Kyma CRs for subaccount ", len(unstructuredList.Items)))
 		for _, kymaCrUnstructured := range unstructuredList.Items {
-			if err := u.updateBetaEnabledLabel(kymaCrUnstructured, item.BetaEnabled, ctxWithTimeout); err != nil {
+			if err := u.updateLabels(kymaCrUnstructured, item.BetaEnabled, item.UsedForProduction, ctxWithTimeout); err != nil {
 				u.logger.Warn("while updating Kyma CR: " + err.Error() + " item will be added back to the queue")
 				retryRequired = true
 			}
@@ -90,12 +93,13 @@ func (u *Updater) Run() error {
 	}
 }
 
-func (u *Updater) updateBetaEnabledLabel(un unstructured.Unstructured, betaEnabled string, ctx context.Context) error {
+func (u *Updater) updateLabels(un unstructured.Unstructured, betaEnabled string, usedForProduction string, ctx context.Context) error {
 	labels := un.GetLabels()
 	if labels == nil {
 		labels = make(map[string]string)
 	}
-	labels[u.labelKey] = betaEnabled
+	labels[u.betaEnabledLabelKey] = betaEnabled
+	labels[u.usedForProductionLabelKey] = usedForProduction
 	un.SetLabels(labels)
 	_, err := u.k8sClient.Resource(u.kymaGVR).Namespace(namespace).Update(ctx, &un, metav1.UpdateOptions{})
 	return err

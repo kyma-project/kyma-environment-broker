@@ -16,9 +16,10 @@ type ElementWrapper struct {
 }
 
 type QueueElement struct {
-	SubaccountID string
-	BetaEnabled  string
-	ModifiedAt   int64
+	SubaccountID      string
+	BetaEnabled       string
+	UsedForProduction string
+	ModifiedAt        int64
 }
 
 type EventHandler struct {

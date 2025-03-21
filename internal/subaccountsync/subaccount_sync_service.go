@@ -23,12 +23,13 @@ import (
 )
 
 const (
-	subaccountIDLabel     = "kyma-project.io/subaccount-id"
-	runtimeIDLabel        = "kyma-project.io/runtime-id"
-	betaEnabledLabel      = "operator.kyma-project.io/beta"
-	eventServicePath      = "%s/events/v1/events/central"
-	subaccountServicePath = "%s/accounts/v1/technical/subaccounts/%s"
-	eventType             = "Subaccount_Creation,Subaccount_Update"
+	subaccountIDLabel         = "kyma-project.io/subaccount-id"
+	runtimeIDLabel            = "kyma-project.io/runtime-id"
+	betaEnabledLabel          = "operator.kyma-project.io/beta"
+	usedForProductionLabelKey = "operator.kyma-project.io/used-for-production"
+	eventServicePath          = "%s/events/v1/events/central"
+	subaccountServicePath     = "%s/accounts/v1/technical/subaccounts/%s"
+	eventType                 = "Subaccount_Creation,Subaccount_Update"
 )
 
 type (
@@ -134,6 +135,7 @@ func (s *SyncService) Run() {
 			s.kymaGVR,
 			s.cfg.SyncQueueSleepInterval,
 			betaEnabledLabel,
+			usedForProductionLabelKey,
 			s.ctx,
 			logger.With("component", "updater"))
 		fatalOnError(err)
