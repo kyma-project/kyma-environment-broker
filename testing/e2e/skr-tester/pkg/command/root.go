@@ -19,6 +19,7 @@ func New() *cobra.Command {
 		NewUpdateCommand(),
 		NewAsertCmd(),
 		NewBindingCmd(),
+		NewEventsCmd(),
 	)
 
 	return cmd
