@@ -3,6 +3,7 @@ package command
 import (
 	"fmt"
 	broker "skr-tester/pkg/broker"
+	"skr-tester/pkg/kcp"
 	"skr-tester/pkg/logger"
 	"time"
 
@@ -43,8 +44,21 @@ func NewCheckOperationCommand() *cobra.Command {
 func (cmd *CheckOperationCommand) Run() error {
 	cmd.log = logger.New()
 	brokerClient := broker.NewBrokerClient(broker.NewBrokerConfig())
+	kcpClient, err := kcp.NewKCPClient()
+	if err != nil {
+		return fmt.Errorf("failed to create KCP client: %v", err)
+	}
+	defer func() {
+		status, err := kcpClient.GetStatus(cmd.instanceID)
+		if err != nil {
+			fmt.Printf("failed to get status: %v\n", err)
+			return
+		}
+		fmt.Println("Operation status:")
+		fmt.Println(status)
+	}()
 	var state string
-	err := wait(func() (bool, error) {
+	err = wait(func() (bool, error) {
 		var err error
 		resp, _, err := brokerClient.GetOperation(cmd.instanceID, cmd.operationID)
 		if err != nil {
