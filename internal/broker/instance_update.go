@@ -251,12 +251,12 @@ func (b *UpdateEndpoint) processUpdateParameters(instance *internal.Instance, de
 		return domain.UpdateServiceSpec{}, apiresponses.NewFailureResponse(fmt.Errorf(message), http.StatusBadRequest, message)
 	}
 
-	//if params.OIDC.IsProvided() {
-	//	if err := params.OIDC.Validate(); err != nil {
-	//		logger.Error(fmt.Sprintf("invalid OIDC parameters: %s", err.Error()))
-	//		return domain.UpdateServiceSpec{}, apiresponses.NewFailureResponse(err, http.StatusUnprocessableEntity, err.Error())
-	//	}
-	//}
+	if params.OIDC.IsProvided() {
+		if err := params.OIDC.Validate(); err != nil {
+			logger.Error(fmt.Sprintf("invalid OIDC parameters: %s", err.Error()))
+			return domain.UpdateServiceSpec{}, apiresponses.NewFailureResponse(err, http.StatusUnprocessableEntity, err.Error())
+		}
+	}
 
 	operationID := uuid.New().String()
 	logger = logger.With("operationID", operationID)
