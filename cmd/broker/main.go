@@ -104,6 +104,7 @@ type Config struct {
 	UpdateProcessingEnabled                  bool   `envconfig:"default=false"`
 	LifecycleManagerIntegrationDisabled      bool   `envconfig:"default=true"`
 	InfrastructureManagerIntegrationDisabled bool   `envconfig:"default=true"`
+	ResolveSubscriptionSecretStepDisabled    bool   `envconfig:"default=true"`
 	Broker                                   broker.Config
 	CatalogFilePath                          string
 
@@ -273,13 +274,12 @@ func main() {
 	fatalOnError(err, log)
 	dynamicGardener, err := dynamic.NewForConfig(gardenerClusterConfig)
 	fatalOnError(err, log)
-	gardenerClient, err := initClient(gardenerClusterConfig)
-	fatalOnError(err, log)
 
 	gardenerNamespace := fmt.Sprintf("garden-%v", cfg.Gardener.Project)
 	gardenerAccountPool := hyperscaler.NewAccountPool(dynamicGardener, gardenerNamespace)
 	gardenerSharedPool := hyperscaler.NewSharedGardenerAccountPool(dynamicGardener, gardenerNamespace)
 	accountProvider := hyperscaler.NewAccountProvider(gardenerAccountPool, gardenerSharedPool)
+	gardenetClient := gardener.NewClient(dynamicGardener, gardenerNamespace)
 
 	regions, err := provider.ReadPlatformRegionMappingFromFile(cfg.TrialRegionMappingFilePath)
 	fatalOnError(err, log)
@@ -304,13 +304,13 @@ func main() {
 	if err != nil {
 		log.Error(fmt.Sprintf("Error: %s", err))
 	}
-	//TODO fail on error when we are ready with HAP parsing
-	//fatalOnError(err, log)
+	// TODO fail on error when we are ready with HAP parsing
+	// fatalOnError(err, log)
 
 	// run queues
 	provisionManager := process.NewStagedManager(db.Operations(), eventBroker, cfg.OperationTimeout, cfg.Provisioning, log.With("provisioning", "manager"))
 	provisionQueue := NewProvisioningProcessingQueue(ctx, provisionManager, cfg.Provisioning.WorkersAmount, &cfg, db, configProvider,
-		edpClient, accountProvider, skrK8sClientProvider, kcpK8sClient, oidcDefaultValues, log, rulesService)
+		edpClient, accountProvider, skrK8sClientProvider, kcpK8sClient, gardenetClient, oidcDefaultValues, log, rulesService)
 
 	deprovisionManager := process.NewStagedManager(db.Operations(), eventBroker, cfg.OperationTimeout, cfg.Deprovisioning, log.With("deprovisioning", "manager"))
 	deprovisionQueue := NewDeprovisioningProcessingQueue(ctx, cfg.Deprovisioning.WorkersAmount, deprovisionManager, &cfg, db, edpClient, accountProvider,
@@ -329,7 +329,7 @@ func main() {
 	router := httputil.NewRouter()
 
 	createAPI(router, servicesConfig, inputFactory, &cfg, db, provisionQueue, deprovisionQueue, updateQueue, logger, log,
-		inputFactory.GetPlanDefaults, kcBuilder, skrK8sClientProvider, skrK8sClientProvider, gardenerClient, kcpK8sClient, eventBroker)
+		inputFactory.GetPlanDefaults, kcBuilder, skrK8sClientProvider, skrK8sClientProvider, kcpK8sClient, eventBroker)
 
 	// create metrics endpoint
 	router.Handle("/metrics", promhttp.Handler())
@@ -387,10 +387,11 @@ func logConfiguration(logs *slog.Logger, cfg Config) {
 	logs.Info(fmt.Sprintf("Cleaning enabled: %v, dry run: %v", cfg.CleaningEnabled, cfg.CleaningDryRun))
 	logs.Info(fmt.Sprintf("Is SubaccountMovementEnabled: %t", cfg.Broker.SubaccountMovementEnabled))
 	logs.Info(fmt.Sprintf("Is UpdateCustomResourcesLabelsOnAccountMove enabled: %t", cfg.Broker.UpdateCustomResourcesLabelsOnAccountMove))
+	logs.Info(fmt.Sprintf("ResolveSubscriptionSecretStepDisabled: %v", cfg.ResolveSubscriptionSecretStepDisabled))
 }
 
 func createAPI(router *httputil.Router, servicesConfig broker.ServicesConfig, planValidator broker.PlanValidator, cfg *Config, db storage.BrokerStorage,
-	provisionQueue, deprovisionQueue, updateQueue *process.Queue, logger lager.Logger, logs *slog.Logger, planDefaults broker.PlanDefaults, kcBuilder kubeconfig.KcBuilder, clientProvider K8sClientProvider, kubeconfigProvider KubeconfigProvider, gardenerClient, kcpK8sClient client.Client, publisher event.Publisher) {
+	provisionQueue, deprovisionQueue, updateQueue *process.Queue, logger lager.Logger, logs *slog.Logger, planDefaults broker.PlanDefaults, kcBuilder kubeconfig.KcBuilder, clientProvider K8sClientProvider, kubeconfigProvider KubeconfigProvider, kcpK8sClient client.Client, publisher event.Publisher) {
 
 	suspensionCtxHandler := suspension.NewContextUpdateHandler(db.Operations(), provisionQueue, deprovisionQueue, logs)
 

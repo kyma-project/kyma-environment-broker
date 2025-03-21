@@ -212,6 +212,8 @@ func NewBrokerSuiteTestWithConfig(t *testing.T, cfg *Config, version ...string) 
 	accountProvider := fixAccountProvider(t, gardenerClient)
 	require.NoError(t, err)
 
+	gardenerClientWithNamespace := gardener.NewClient(gardenerClient, gardenerKymaNamespace)
+
 	fakeK8sSKRClient := fake.NewClientBuilder().WithScheme(sch).Build()
 	k8sClientProvider := kubeconfig.NewFakeK8sClientProvider(fakeK8sSKRClient)
 	provisionManager := process.NewStagedManager(db.Operations(), eventBroker, cfg.OperationTimeout, cfg.Provisioning, log.With("provisioning", "manager"))
@@ -220,7 +222,7 @@ func NewBrokerSuiteTestWithConfig(t *testing.T, cfg *Config, version ...string) 
 	require.NoError(t, err)
 
 	provisioningQueue := NewProvisioningProcessingQueue(context.Background(), provisionManager, workersAmount, cfg, db, configProvider,
-		edpClient, accountProvider, k8sClientProvider, cli, defaultOIDCValues(), log, rulesService)
+		edpClient, accountProvider, k8sClientProvider, cli, gardenerClientWithNamespace, defaultOIDCValues(), log, rulesService)
 
 	provisioningQueue.SpeedUp(10000)
 	provisionManager.SpeedUp(10000)
@@ -253,7 +255,7 @@ func NewBrokerSuiteTestWithConfig(t *testing.T, cfg *Config, version ...string) 
 	}
 	ts.poller = &broker.TimerPoller{PollInterval: 3 * time.Millisecond, PollTimeout: 800 * time.Millisecond, Log: ts.t.Log}
 
-	ts.CreateAPI(inputFactory, cfg, db, provisioningQueue, deprovisioningQueue, updateQueue, log, k8sClientProvider, gardener.NewFakeClient(), eventBroker)
+	ts.CreateAPI(inputFactory, cfg, db, provisioningQueue, deprovisioningQueue, updateQueue, log, k8sClientProvider, eventBroker)
 
 	expirationHandler := expiration.NewHandler(db.Instances(), db.Operations(), deprovisioningQueue, log)
 	expirationHandler.AttachRoutes(ts.router)
@@ -338,7 +340,7 @@ func (s *BrokerSuiteTest) CallAPI(method string, path string, body string) *http
 	return resp
 }
 
-func (s *BrokerSuiteTest) CreateAPI(inputFactory broker.PlanValidator, cfg *Config, db storage.BrokerStorage, provisioningQueue *process.Queue, deprovisionQueue *process.Queue, updateQueue *process.Queue, log *slog.Logger, skrK8sClientProvider *kubeconfig.FakeProvider, gardenerClient client.Client, eventBroker *event.PubSub) {
+func (s *BrokerSuiteTest) CreateAPI(inputFactory broker.PlanValidator, cfg *Config, db storage.BrokerStorage, provisioningQueue *process.Queue, deprovisionQueue *process.Queue, updateQueue *process.Queue, log *slog.Logger, skrK8sClientProvider *kubeconfig.FakeProvider, eventBroker *event.PubSub) {
 	servicesConfig := map[string]broker.Service{
 		broker.KymaServiceName: {
 			Description: "",
@@ -381,7 +383,7 @@ func (s *BrokerSuiteTest) CreateAPI(inputFactory broker.PlanValidator, cfg *Conf
 	kcBuilder := &kcMock.KcBuilder{}
 	kcBuilder.On("Build", nil).Return("--kubeconfig file", nil)
 	createAPI(s.router, servicesConfig, inputFactory, cfg, db, provisioningQueue, deprovisionQueue, updateQueue,
-		lager.NewLogger("api"), log, planDefaults, kcBuilder, skrK8sClientProvider, skrK8sClientProvider, gardenerClient, fakeKcpK8sClient, eventBroker)
+		lager.NewLogger("api"), log, planDefaults, kcBuilder, skrK8sClientProvider, skrK8sClientProvider, fakeKcpK8sClient, eventBroker)
 
 	s.httpServer = httptest.NewServer(s.router)
 }

@@ -1,17 +1,112 @@
 package gardener
 
 import (
+	"context"
 	"fmt"
 	"io/ioutil"
+	"time"
 
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime/schema"
+	"k8s.io/client-go/dynamic"
 	restclient "k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/clientcmd"
 )
 
+const requestTimeout = 10 * time.Second
+
+const (
+	TenantNameLabelKey      = "tenantName"
+	HyperscalerTypeLabelKey = "hyperscalerType"
+	DirtyLabelKey           = "dirty"
+	InternalLabelKey        = "internal"
+	SharedLabelKey          = "shared"
+	EUAccessLabelKey        = "euAccess"
+)
+
+type Client struct {
+	dynamic.Interface
+	namespace string
+}
+
+func NewClient(k8sClient dynamic.Interface, namespace string) *Client {
+	return &Client{
+		Interface: k8sClient,
+		namespace: namespace,
+	}
+}
+
+func (c *Client) Namespace() string {
+	return c.namespace
+}
+
+func (c *Client) GetSecretBindings(labelSelector string) (*unstructured.UnstructuredList, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), requestTimeout)
+	defer cancel()
+	return c.Resource(SecretBindingResource).Namespace(c.namespace).List(ctx, metav1.ListOptions{LabelSelector: labelSelector})
+}
+
+func (c *Client) GetShoots() (*unstructured.UnstructuredList, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), requestTimeout)
+	defer cancel()
+	return c.Resource(ShootResource).Namespace(c.namespace).List(ctx, metav1.ListOptions{})
+}
+
+func (c *Client) GetLeastUsedSecretBindingFromSecretBindings(secretBindings []unstructured.Unstructured) (*SecretBinding, error) {
+	usageCount := make(map[string]int, len(secretBindings))
+	for _, s := range secretBindings {
+		usageCount[s.GetName()] = 0
+	}
+
+	shoots, err := c.GetShoots()
+	if err != nil {
+		return nil, fmt.Errorf("while listing shoots: %w", err)
+	}
+
+	if shoots == nil || len(shoots.Items) == 0 {
+		return &SecretBinding{Unstructured: secretBindings[0]}, nil
+	}
+
+	for _, shoot := range shoots.Items {
+		s := Shoot{Unstructured: shoot}
+		count, found := usageCount[s.GetSpecSecretBindingName()]
+		if !found {
+			continue
+		}
+
+		usageCount[s.GetSpecSecretBindingName()] = count + 1
+	}
+
+	min := usageCount[secretBindings[0].GetName()]
+	minIndex := 0
+
+	for i, sb := range secretBindings {
+		if usageCount[sb.GetName()] < min {
+			min = usageCount[sb.GetName()]
+			minIndex = i
+		}
+	}
+
+	return &SecretBinding{Unstructured: secretBindings[minIndex]}, nil
+}
+
+func (c *Client) UpdateSecretBinding(secretBinding *SecretBinding) (*SecretBinding, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), requestTimeout)
+	defer cancel()
+	u, err := c.Resource(SecretBindingResource).Namespace(c.namespace).Update(ctx, &secretBinding.Unstructured, metav1.UpdateOptions{})
+	if err != nil {
+		return nil, err
+	}
+	return NewSecretBinding(*u), nil
+}
+
 type SecretBinding struct {
 	unstructured.Unstructured
+}
+
+func NewSecretBinding(u unstructured.Unstructured) *SecretBinding {
+	return &SecretBinding{u}
 }
 
 func (b *SecretBinding) GetSecretRefName() string {
@@ -76,8 +171,12 @@ func (b Shoot) GetSpecRegion() string {
 	return str
 }
 
-var SecretBindingResource = schema.GroupVersionResource{Group: "core.gardener.cloud", Version: "v1beta1", Resource: "secretbindings"}
-var ShootResource = schema.GroupVersionResource{Group: "core.gardener.cloud", Version: "v1beta1", Resource: "shoots"}
+var (
+	SecretBindingResource = schema.GroupVersionResource{Group: "core.gardener.cloud", Version: "v1beta1", Resource: "secretbindings"}
+	ShootResource         = schema.GroupVersionResource{Group: "core.gardener.cloud", Version: "v1beta1", Resource: "shoots"}
+	SecretBindingGVK      = schema.GroupVersionKind{Group: "core.gardener.cloud", Version: "v1beta1", Kind: "SecretBinding"}
+	ShootGVK              = schema.GroupVersionKind{Group: "core.gardener.cloud", Version: "v1beta1", Kind: "Shoot"}
+)
 
 func NewGardenerClusterConfig(kubeconfigPath string) (*restclient.Config, error) {
 

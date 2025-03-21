@@ -25,7 +25,6 @@ type ResolveCredentialsStep struct {
 	operationManager *process.OperationManager
 	accountProvider  hyperscaler.AccountProvider
 	opStorage        storage.Operations
-	tenant           string
 	rulesService     *rules.RulesService
 }
 

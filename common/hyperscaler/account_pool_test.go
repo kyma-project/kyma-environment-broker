@@ -11,14 +11,13 @@ import (
 	machineryv1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
-	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/client-go/dynamic"
 )
 
 var (
 	scheme           = runtime.NewScheme()
-	secretBindingGVK = schema.GroupVersionKind{Group: "core.gardener.cloud", Version: "v1beta1", Kind: "SecretBinding"}
-	shootGVK         = schema.GroupVersionKind{Group: "core.gardener.cloud", Version: "v1beta1", Kind: "Shoot"}
+	secretBindingGVK = gardener.SecretBindingGVK
+	shootGVK         = gardener.ShootGVK
 )
 
 const (
@@ -100,37 +99,37 @@ func TestSecretsAccountPool_IsSecretBindingInternal(t *testing.T) {
 	for _, euAccess := range []bool{false, true} {
 		t.Run(fmt.Sprintf("EuAccess=%v", euAccess), func(t *testing.T) {
 			t.Run("should return true if internal secret binding found", func(t *testing.T) {
-				//given
+				// given
 				accPool, _ := newTestAccountPoolWithSecretBindingInternal(euAccess)
 
-				//when
+				// when
 				internal, err := accPool.IsSecretBindingInternal(Azure(), "tenant1", euAccess)
 
-				//then
+				// then
 				require.NoError(t, err)
 				assert.True(t, internal)
 			})
 
 			t.Run("should return false if internal secret binding not found", func(t *testing.T) {
-				//given
+				// given
 				accPool := newTestAccountPool()
 
-				//when
+				// when
 				internal, err := accPool.IsSecretBindingInternal(Azure(), "tenant1", euAccess)
 
-				//then
+				// then
 				require.NoError(t, err)
 				assert.False(t, internal)
 			})
 
 			t.Run("should return false when there is no secret binding in the pool", func(t *testing.T) {
-				//given
+				// given
 				accPool := newEmptyTestAccountPool()
 
-				//when
+				// when
 				internal, err := accPool.IsSecretBindingInternal(Azure(), "tenant1", euAccess)
 
-				//then
+				// then
 				require.NoError(t, err)
 				assert.False(t, internal)
 			})
@@ -142,25 +141,25 @@ func TestSecretsAccountPool_IsSecretBindingDirty(t *testing.T) {
 	for _, euAccess := range []bool{false, true} {
 		t.Run(fmt.Sprintf("EuAccess=%v", euAccess), func(t *testing.T) {
 			t.Run("should return true if dirty secret binding found", func(t *testing.T) {
-				//given
+				// given
 				accPool, _ := newTestAccountPoolWithSecretBindingDirty(euAccess)
 
-				//when
+				// when
 				isdirty, err := accPool.IsSecretBindingDirty(Azure(), "tenant1", euAccess)
 
-				//then
+				// then
 				require.NoError(t, err)
 				assert.True(t, isdirty)
 			})
 
 			t.Run("should return false if dirty secret binding not found", func(t *testing.T) {
-				//given
+				// given
 				accPool := newTestAccountPool()
 
-				//when
+				// when
 				isdirty, err := accPool.IsSecretBindingDirty(Azure(), "tenant1", euAccess)
 
-				//then
+				// then
 				require.NoError(t, err)
 				assert.False(t, isdirty)
 			})
@@ -172,25 +171,25 @@ func TestSecretsAccountPool_IsSecretBindingUsed(t *testing.T) {
 	for _, euAccess := range []bool{false, true} {
 		t.Run(fmt.Sprintf("EuAccess=%v", euAccess), func(t *testing.T) {
 			t.Run("should return true when secret binding is in use", func(t *testing.T) {
-				//given
+				// given
 				accPool, _ := newTestAccountPoolWithSingleShoot(euAccess)
 
-				//when
+				// when
 				used, err := accPool.IsSecretBindingUsed(Azure(), "tenant1", euAccess)
 
-				//then
+				// then
 				require.NoError(t, err)
 				assert.True(t, used)
 			})
 
 			t.Run("should return false when secret binding is not in use", func(t *testing.T) {
-				//given
+				// given
 				accPool, _ := newTestAccountPoolWithoutShoots(euAccess)
 
-				//when
+				// when
 				used, err := accPool.IsSecretBindingUsed(Azure(), "tenant1", euAccess)
 
-				//then
+				// then
 				require.NoError(t, err)
 				assert.False(t, used)
 			})
@@ -202,13 +201,13 @@ func TestSecretsAccountPool_MarkSecretBindingAsDirty(t *testing.T) {
 	for _, euAccess := range []bool{false, true} {
 		t.Run(fmt.Sprintf("EuAccess=%v", euAccess), func(t *testing.T) {
 			t.Run("should mark secret binding as dirty", func(t *testing.T) {
-				//given
+				// given
 				accPool, gardenerClient := newTestAccountPoolWithoutShoots(euAccess)
 
-				//when
+				// when
 				err := accPool.MarkSecretBindingAsDirty(Azure(), "tenant1", euAccess)
 
-				//then
+				// then
 				require.NoError(t, err)
 				secretBinding, err := gardenerClient.Get(context.Background(), "secretBinding1", machineryv1.GetOptions{})
 				require.NoError(t, err)

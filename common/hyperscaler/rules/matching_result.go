@@ -25,3 +25,15 @@ type Result struct {
 	EUAccess        bool
 	Shared          bool
 }
+
+func (r Result) Hyperscaler() string {
+	return r.HyperscalerType
+}
+
+func (r Result) IsShared() bool {
+	return r.Shared
+}
+
+func (r Result) IsEUAccess() bool {
+	return r.EUAccess
+}

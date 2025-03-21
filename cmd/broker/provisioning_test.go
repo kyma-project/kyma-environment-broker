@@ -2088,3 +2088,132 @@ func TestProvisioning_BuildRuntimePlans(t *testing.T) {
 		suite.AssertRuntimeResourceLabels(opID)
 	})
 }
+
+func TestProvisioning_ResolveSubscriptionSecretStepEnabled(t *testing.T) {
+	for tn, tc := range map[string]struct {
+		planID         string
+		region         string
+		platformRegion string
+
+		expectedProvider         string
+		expectedSubscriptionName string
+	}{
+		"Trial": {
+			planID: broker.TrialPlanID,
+
+			expectedProvider:         "aws",
+			expectedSubscriptionName: "sb-aws-shared",
+		},
+		"Freemium aws": {
+			planID:         broker.FreemiumPlanID,
+			region:         "eu-central-1",
+			platformRegion: "cf-eu10",
+
+			expectedProvider:         "aws",
+			expectedSubscriptionName: "sb-aws",
+		},
+		"Freemium azure": {
+			planID:         broker.FreemiumPlanID,
+			region:         "westeurope",
+			platformRegion: "cf-eu21",
+
+			expectedProvider:         "azure",
+			expectedSubscriptionName: "sb-azure",
+		},
+		"Production Azure": {
+			planID: broker.AzurePlanID,
+			region: "westeurope",
+
+			expectedProvider:         "azure",
+			expectedSubscriptionName: "sb-azure",
+		},
+		"Production AWS": {
+			planID: broker.AWSPlanID,
+			region: "us-east-1",
+
+			expectedProvider:         "aws",
+			expectedSubscriptionName: "sb-aws",
+		},
+		"Production GCP": {
+			planID: broker.GCPPlanID,
+			region: "us-central1",
+
+			expectedProvider:         "gcp",
+			expectedSubscriptionName: "sb-gcp",
+		},
+		"Production GCP KSA": {
+			planID:         broker.GCPPlanID,
+			region:         "me-central2",
+			platformRegion: "cf-sa30",
+
+			expectedProvider:         "gcp",
+			expectedSubscriptionName: "sb-gcp_cf-sa30",
+		},
+		"sap converged cloud eu-de-1": {
+			planID:         broker.SapConvergedCloudPlanID,
+			region:         "eu-de-1",
+			platformRegion: "cf-eu20-staging",
+
+			expectedProvider:         "openstack",
+			expectedSubscriptionName: "sb-openstack_eu-de-1",
+		},
+		"sap converged cloud eu-de-2": {
+			planID:         broker.SapConvergedCloudPlanID,
+			region:         "eu-de-2",
+			platformRegion: "cf-eu20-staging",
+
+			expectedProvider:         "openstack",
+			expectedSubscriptionName: "sb-openstack_eu-de-2",
+		},
+	} {
+		t.Run(tn, func(t *testing.T) {
+			// given
+			cfg := fixConfig()
+			cfg.Broker.EnablePlans = append(cfg.Broker.EnablePlans, "azure_lite")
+			cfg.ResolveSubscriptionSecretStepDisabled = false
+			suite := NewBrokerSuiteTestWithConfig(t, cfg)
+			defer suite.TearDown()
+			iid := uuid.New().String()
+
+			// when
+			var platformRegion, clusterRegion string
+			if tc.region != "" {
+				clusterRegion = fmt.Sprintf(`"region": "%s",`, tc.region)
+			}
+			if tc.platformRegion != "" {
+				platformRegion = fmt.Sprintf("%s/", tc.platformRegion)
+			}
+			resp := suite.CallAPI("PUT", fmt.Sprintf("oauth/%sv2/service_instances/%s?accepts_incomplete=true", platformRegion, iid),
+				fmt.Sprintf(`{
+					"service_id": "47c9dcbf-ff30-448e-ab36-d3bad66ba281",
+					"plan_id": "%s",
+					"context": {
+						"sm_platform_credentials": {
+							  "url": "https://sm.url",
+							  "credentials": {}
+					    },
+						"globalaccount_id": "g-account-id",
+						"subaccount_id": "sub-id",
+						"user_id": "john.smith@email.com"
+					},
+					"parameters": {
+						%s
+						"name": "testing-cluster"
+					}
+		}`, tc.planID, clusterRegion))
+			require.Equal(t, http.StatusAccepted, resp.StatusCode)
+			opID := suite.DecodeOperationID(resp)
+
+			// then
+			suite.processKIMProvisioningByOperationID(opID)
+
+			// then
+			suite.WaitForProvisioningState(opID, domain.Succeeded)
+
+			runtimeCR := suite.GetRuntimeResourceByInstanceID(iid)
+
+			assert.Equal(t, tc.expectedSubscriptionName, runtimeCR.Spec.Shoot.SecretBindingName)
+		})
+
+	}
+}
