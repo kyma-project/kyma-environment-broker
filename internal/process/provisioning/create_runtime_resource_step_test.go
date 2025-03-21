@@ -214,6 +214,80 @@ func TestCreateRuntimeResourceStep_onlyAdditionalOIDC_AllCustom(t *testing.T) {
 	assert.Equal(t, expectedOIDCConfig, (*runtime.Spec.Shoot.Kubernetes.KubeAPIServer.AdditionalOidcConfig)[0])
 }
 
+func TestCreateRuntimeResourceStep_HandleMultipleAdditionalOIDC(t *testing.T) {
+	// given
+	err := imv1.AddToScheme(scheme.Scheme)
+	assert.NoError(t, err)
+	memoryStorage := storage.NewMemoryStorage()
+	inputConfig := input.Config{
+		MultiZoneCluster:                true,
+		UseMainOIDC:                     false,
+		UseAdditionalOIDC:               true,
+		UseAdditionalOIDCSchemaHandling: true,
+	}
+	instance, operation := fixInstanceAndOperation(broker.AzurePlanID, "westeurope", "platform-region", inputConfig, pkg.Azure)
+	operation.ProvisioningParameters.Parameters.OIDC = &pkg.OIDCsDTO{
+		List: []pkg.OIDCConfigDTO{
+			{
+				ClientID:       "first-client-id-custom",
+				GroupsClaim:    "first-gc-custom",
+				IssuerURL:      "first-issuer-url-custom",
+				SigningAlgs:    []string{"first-sa-custom"},
+				UsernameClaim:  "first-uc-custom",
+				UsernamePrefix: "first-up-custom",
+			},
+			{
+				ClientID:       "second-client-id-custom",
+				GroupsClaim:    "second-gc-custom",
+				IssuerURL:      "second-issuer-url-custom",
+				SigningAlgs:    []string{"second-sa-custom"},
+				UsernameClaim:  "second-uc-custom",
+				UsernamePrefix: "second-up-custom",
+			},
+		},
+	}
+	assertInsertions(t, memoryStorage, instance, operation)
+	firstExpectedOIDCConfig := gardener.OIDCConfig{
+		ClientID:       ptr.String("first-client-id-custom"),
+		GroupsClaim:    ptr.String("first-gc-custom"),
+		IssuerURL:      ptr.String("first-issuer-url-custom"),
+		SigningAlgs:    []string{"first-sa-custom"},
+		UsernameClaim:  ptr.String("first-uc-custom"),
+		UsernamePrefix: ptr.String("first-up-custom"),
+	}
+	secondExpectedOIDCConfig := gardener.OIDCConfig{
+		ClientID:       ptr.String("second-client-id-custom"),
+		GroupsClaim:    ptr.String("second-gc-custom"),
+		IssuerURL:      ptr.String("second-issuer-url-custom"),
+		SigningAlgs:    []string{"second-sa-custom"},
+		UsernameClaim:  ptr.String("second-uc-custom"),
+		UsernamePrefix: ptr.String("second-up-custom"),
+	}
+	cli := getClientForTests(t)
+	step := NewCreateRuntimeResourceStep(memoryStorage.Operations(), memoryStorage.Instances(), cli, inputConfig, defaultOIDSConfig)
+
+	// when
+	_, repeat, err := step.Run(operation, fixLogger())
+
+	// then
+	assert.NoError(t, err)
+	assert.Zero(t, repeat)
+	runtime := imv1.Runtime{}
+	err = cli.Get(context.Background(), client.ObjectKey{
+		Namespace: "kyma-system",
+		Name:      operation.RuntimeID,
+	}, &runtime)
+	assert.NoError(t, err)
+	assert.Nil(t, runtime.Spec.Shoot.Kubernetes.KubeAPIServer.OidcConfig.ClientID)
+	assert.Nil(t, runtime.Spec.Shoot.Kubernetes.KubeAPIServer.OidcConfig.GroupsClaim)
+	assert.Nil(t, runtime.Spec.Shoot.Kubernetes.KubeAPIServer.OidcConfig.IssuerURL)
+	assert.Nil(t, runtime.Spec.Shoot.Kubernetes.KubeAPIServer.OidcConfig.SigningAlgs)
+	assert.Nil(t, runtime.Spec.Shoot.Kubernetes.KubeAPIServer.OidcConfig.UsernameClaim)
+	assert.Nil(t, runtime.Spec.Shoot.Kubernetes.KubeAPIServer.OidcConfig.UsernamePrefix)
+	assert.Equal(t, firstExpectedOIDCConfig, (*runtime.Spec.Shoot.Kubernetes.KubeAPIServer.AdditionalOidcConfig)[0])
+	assert.Equal(t, secondExpectedOIDCConfig, (*runtime.Spec.Shoot.Kubernetes.KubeAPIServer.AdditionalOidcConfig)[1])
+}
+
 func TestCreateRuntimeResourceStep_OIDC_MixedCustom(t *testing.T) {
 	// given
 	err := imv1.AddToScheme(scheme.Scheme)
