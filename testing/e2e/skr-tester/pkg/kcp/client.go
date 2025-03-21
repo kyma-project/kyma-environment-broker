@@ -190,6 +190,13 @@ func (c *KCPClient) GetStatus(instanceID string) (string, error) {
 	if err != nil {
 		return "", fmt.Errorf("failed to get status: %w", err)
 	}
+	if len(strings.TrimSpace(string(output))) == 0 {
+		args = append(args, "--state", "deprovisioned")
+		output, err = exec.Command("kcp", args...).Output()
+		if err != nil {
+			return "", fmt.Errorf("failed to get status: %w", err)
+		}
+	}
 	var status map[string]interface{}
 	if err := json.Unmarshal(output, &status); err != nil {
 		return "", fmt.Errorf("failed to parse JSON: %w", err)
