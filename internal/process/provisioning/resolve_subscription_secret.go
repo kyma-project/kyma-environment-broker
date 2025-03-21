@@ -116,8 +116,7 @@ func (s *ResolveSubscriptionSecretStep) resolveSecretName(operation internal.Ope
 	defer s.mu.Unlock()
 
 	labelSelectorBuilder.RevertToBase()
-	labelSelectorBuilder.With(notSharedReq)
-	labelSelectorBuilder.With(notTenantNamedReq)
+	labelSelectorBuilder.ForSecretBindingClaim()
 
 	log.Info(fmt.Sprintf("getting secret binding with selector %q", labelSelectorBuilder.String()))
 	secretBinding, err = s.getSecretBinding(labelSelectorBuilder.String())
@@ -157,7 +156,6 @@ func (s *ResolveSubscriptionSecretStep) matchProvisioningAttributesToRule(attr *
 func (s *ResolveSubscriptionSecretStep) createLabelSelectorBuilder(parsedRule ParsedRule, tenantName string) *LabelSelectorBuilder {
 	b := NewLabelSelectorBuilder()
 	b.With(fmt.Sprintf(hyperscalerTypeReqFmt, parsedRule.Hyperscaler()))
-	b.With(notDirtyReq)
 
 	if parsedRule.IsEUAccess() {
 		b.With(euAccessReq)
@@ -171,7 +169,9 @@ func (s *ResolveSubscriptionSecretStep) createLabelSelectorBuilder(parsedRule Pa
 		return b
 	}
 
+	b.With(notDirtyReq)
 	b.SaveBase()
+
 	b.With(fmt.Sprintf(tenantNameReqFmt, tenantName))
 
 	return b
@@ -223,6 +223,11 @@ func (s *ResolveSubscriptionSecretStep) claimSecretBinding(secretBinding *garden
 
 func NewLabelSelectorBuilder() *LabelSelectorBuilder {
 	return &LabelSelectorBuilder{}
+}
+
+func (b *LabelSelectorBuilder) ForSecretBindingClaim() {
+	b.With(notSharedReq)
+	b.With(notTenantNamedReq)
 }
 
 func (b *LabelSelectorBuilder) With(s string) {
