@@ -44,6 +44,7 @@ type Config struct {
 	EnableShootAndSeedSameRegion            bool              `envconfig:"default=false"`
 	UseMainOIDC                             bool              `envconfig:"default=true"`
 	UseAdditionalOIDC                       bool              `envconfig:"default=false"`
+	UseAdditionalOIDCSchemaHandling         bool              `envconfig:"default=false"`
 }
 
 type RuntimeInput struct {

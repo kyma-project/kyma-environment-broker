@@ -89,8 +89,8 @@ func (s *UpdateRuntimeStep) Run(operation internal.Operation, log *slog.Logger) 
 		runtime.Spec.Shoot.Provider.AdditionalWorkers = &additionalWorkers
 	}
 
-	if operation.UpdatingParameters.OIDC != nil {
-		input := operation.UpdatingParameters.OIDC
+	if !s.config.UseAdditionalOIDCSchemaHandling && operation.UpdatingParameters.OIDC != nil && operation.UpdatingParameters.OIDC.OIDCConfigDTO != nil {
+		input := operation.UpdatingParameters.OIDC.OIDCConfigDTO
 		if s.config.UseMainOIDC {
 			if len(input.SigningAlgs) > 0 {
 				runtime.Spec.Shoot.Kubernetes.KubeAPIServer.OidcConfig.SigningAlgs = input.SigningAlgs
@@ -133,6 +133,47 @@ func (s *UpdateRuntimeStep) Run(operation internal.Operation, log *slog.Logger) 
 			}
 			if input.UsernameClaim != "" {
 				(*runtime.Spec.Shoot.Kubernetes.KubeAPIServer.AdditionalOidcConfig)[0].UsernameClaim = &input.UsernameClaim
+			}
+		}
+		if s.config.UseAdditionalOIDCSchemaHandling {
+		}
+	} else if s.config.UseAdditionalOIDCSchemaHandling && operation.UpdatingParameters.OIDC != nil {
+		if operation.UpdatingParameters.OIDC.OIDCConfigDTO != nil {
+			input := operation.UpdatingParameters.OIDC.OIDCConfigDTO
+			if runtime.Spec.Shoot.Kubernetes.KubeAPIServer.AdditionalOidcConfig == nil {
+				runtime.Spec.Shoot.Kubernetes.KubeAPIServer.AdditionalOidcConfig = &[]gardener.OIDCConfig{{}}
+			}
+			if len(input.SigningAlgs) > 0 {
+				(*runtime.Spec.Shoot.Kubernetes.KubeAPIServer.AdditionalOidcConfig)[0].SigningAlgs = input.SigningAlgs
+			}
+			if input.ClientID != "" {
+				(*runtime.Spec.Shoot.Kubernetes.KubeAPIServer.AdditionalOidcConfig)[0].ClientID = &input.ClientID
+			}
+			if input.IssuerURL != "" {
+				(*runtime.Spec.Shoot.Kubernetes.KubeAPIServer.AdditionalOidcConfig)[0].IssuerURL = &input.IssuerURL
+			}
+			if input.GroupsClaim != "" {
+				(*runtime.Spec.Shoot.Kubernetes.KubeAPIServer.AdditionalOidcConfig)[0].GroupsClaim = &input.GroupsClaim
+			}
+			if input.UsernamePrefix != "" {
+				(*runtime.Spec.Shoot.Kubernetes.KubeAPIServer.AdditionalOidcConfig)[0].UsernamePrefix = &input.UsernamePrefix
+			}
+			if input.UsernameClaim != "" {
+				(*runtime.Spec.Shoot.Kubernetes.KubeAPIServer.AdditionalOidcConfig)[0].UsernameClaim = &input.UsernameClaim
+			}
+		} else if operation.UpdatingParameters.OIDC.List != nil {
+			if runtime.Spec.Shoot.Kubernetes.KubeAPIServer.AdditionalOidcConfig == nil {
+				runtime.Spec.Shoot.Kubernetes.KubeAPIServer.AdditionalOidcConfig = &[]gardener.OIDCConfig{}
+			}
+			for _, oidcConfig := range operation.UpdatingParameters.OIDC.List {
+				(*runtime.Spec.Shoot.Kubernetes.KubeAPIServer.AdditionalOidcConfig) = append(*runtime.Spec.Shoot.Kubernetes.KubeAPIServer.AdditionalOidcConfig, gardener.OIDCConfig{
+					ClientID:       &oidcConfig.ClientID,
+					IssuerURL:      &oidcConfig.IssuerURL,
+					SigningAlgs:    oidcConfig.SigningAlgs,
+					GroupsClaim:    &oidcConfig.GroupsClaim,
+					UsernamePrefix: &oidcConfig.UsernamePrefix,
+					UsernameClaim:  &oidcConfig.UsernameClaim,
+				})
 			}
 		}
 	}
