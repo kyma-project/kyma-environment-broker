@@ -135,8 +135,7 @@ func (s *UpdateRuntimeStep) Run(operation internal.Operation, log *slog.Logger) 
 				(*runtime.Spec.Shoot.Kubernetes.KubeAPIServer.AdditionalOidcConfig)[0].UsernameClaim = &input.UsernameClaim
 			}
 		}
-		if s.config.UseAdditionalOIDCSchemaHandling {
-		}
+
 	} else if s.config.UseAdditionalOIDCSchemaHandling && operation.UpdatingParameters.OIDC != nil {
 		if operation.UpdatingParameters.OIDC.OIDCConfigDTO != nil {
 			input := operation.UpdatingParameters.OIDC.OIDCConfigDTO
