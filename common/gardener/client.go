@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"io/ioutil"
-	"sync"
 	"time"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -29,7 +28,6 @@ const (
 type Client struct {
 	dynamic.Interface
 	namespace string
-	m         sync.Mutex
 }
 
 func NewClient(k8sClient dynamic.Interface, namespace string) *Client {
@@ -94,8 +92,6 @@ func (c *Client) GetLeastUsedSecretBindingFromSecretBindings(secretBindings []un
 }
 
 func (c *Client) UpdateSecretBinding(secretBinding *SecretBinding) (*SecretBinding, error) {
-	c.m.Lock()
-	defer c.m.Unlock()
 	ctx, cancel := context.WithTimeout(context.Background(), requestTimeout)
 	defer cancel()
 	u, err := c.Resource(SecretBindingResource).Namespace(c.namespace).Update(ctx, &secretBinding.Unstructured, metav1.UpdateOptions{})

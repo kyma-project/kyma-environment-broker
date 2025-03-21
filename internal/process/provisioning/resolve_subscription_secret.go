@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"log/slog"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/kyma-project/kyma-environment-broker/common/gardener"
@@ -50,6 +51,7 @@ type ResolveSubscriptionSecretStep struct {
 	opStorage        storage.Operations
 	rulesService     *rules.RulesService
 	stepRetryTuple   internal.RetryTuple
+	mu               sync.Mutex
 }
 
 func NewResolveSubscriptionSecretStep(os storage.Operations, gardenerClient *gardener.Client, rulesService *rules.RulesService, stepRetryTuple internal.RetryTuple) *ResolveSubscriptionSecretStep {
@@ -109,6 +111,9 @@ func (s *ResolveSubscriptionSecretStep) resolveSecretName(operation internal.Ope
 	}
 
 	log.Info(fmt.Sprintf("no secret binding found for tenant: %q", operation.ProvisioningParameters.ErsContext.GlobalAccountID))
+
+	s.mu.Lock()
+	defer s.mu.Unlock()
 
 	labelSelectorBuilder.RevertToBase()
 	labelSelectorBuilder.With(notSharedReq)
