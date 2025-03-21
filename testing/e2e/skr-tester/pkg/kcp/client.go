@@ -208,6 +208,22 @@ func (c *KCPClient) GetStatus(instanceID string) (string, error) {
 	return string(formattedStatus), nil
 }
 
+func (c *KCPClient) GetEvents(instanceID string) (string, error) {
+	args := []string{"rt", "-i", instanceID, "--events"}
+	if clientSecret := os.Getenv("KCP_OIDC_CLIENT_SECRET"); clientSecret != "" {
+		args = append(args, "--config", "config.yaml")
+	}
+	output, err := exec.Command("kcp", args...).Output()
+	if err != nil {
+		return "", fmt.Errorf("failed to get events: %w", err)
+	}
+	events := strings.Split(string(output), "\n")
+	if len(events) <= 2 {
+		return "", fmt.Errorf("failed to format events")
+	}
+	return strings.Join(events[2:], "\n"), nil
+}
+
 func getEnvOrThrow(key string) string {
 	value := os.Getenv(key)
 	if value == "" {
