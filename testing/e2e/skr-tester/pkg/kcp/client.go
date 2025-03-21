@@ -213,11 +213,15 @@ func (c *KCPClient) GetEvents(instanceID string) (string, error) {
 	if clientSecret := os.Getenv("KCP_OIDC_CLIENT_SECRET"); clientSecret != "" {
 		args = append(args, "--config", "config.yaml")
 	}
-	events, err := exec.Command("kcp", args...).Output()
+	output, err := exec.Command("kcp", args...).Output()
 	if err != nil {
 		return "", fmt.Errorf("failed to get events: %w", err)
 	}
-	return string(events), nil
+	events := strings.Split(string(output), "\n")
+	if len(events) <= 2 {
+		return "", fmt.Errorf("failed to format events")
+	}
+	return strings.Join(events[2:], "\n"), nil
 }
 
 func getEnvOrThrow(key string) string {
