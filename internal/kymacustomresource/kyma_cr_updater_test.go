@@ -157,7 +157,7 @@ func TestUpdater(t *testing.T) {
 			assert.Len(t, actual.Items, 2)
 			require.NoError(t, err)
 			for _, un := range actual.Items {
-				if un.GetLabels()[betaEnabledLabelKey] != "true" && un.GetLabels()[usedForProductionLabelKey] == "USED_FOR_PRODUCTION" {
+				if un.GetLabels()[betaEnabledLabelKey] != "true" && un.GetLabels()[usedForProductionLabelKey] != "USED_FOR_PRODUCTION" {
 					return false, nil
 				}
 			}
@@ -208,7 +208,7 @@ func TestUpdater(t *testing.T) {
 			require.NoError(t, err)
 			assert.Len(t, actual.Items, 1)
 			for _, un := range actual.Items {
-				if un.GetLabels()[betaEnabledLabelKey] != "true" && un.GetLabels()[usedForProductionLabelKey] == "USED_FOR_PRODUCTION" {
+				if un.GetLabels()[betaEnabledLabelKey] != "true" && un.GetLabels()[usedForProductionLabelKey] != "USED_FOR_PRODUCTION" {
 					return false, nil
 				}
 			}
@@ -219,6 +219,7 @@ func TestUpdater(t *testing.T) {
 		actual, err := fakeK8sClient.Resource(gvr).Namespace(namespace).Get(context.TODO(), kymaCRName2, metav1.GetOptions{})
 		require.NoError(t, err)
 		assert.NotContains(t, actual.GetLabels(), betaEnabledLabelKey)
+		assert.NotContains(t, actual.GetLabels(), usedForProductionLabelKey)
 		assert.True(t, queue.IsEmpty())
 	})
 }
