@@ -15,11 +15,17 @@ import (
 	v1 "k8s.io/api/core/v1"
 	rbacv1 "k8s.io/api/rbac/v1"
 	k8serrors "k8s.io/apimachinery/pkg/api/errors"
+	k8sWait "k8s.io/apimachinery/pkg/util/wait"
 	"k8s.io/client-go/tools/clientcmd"
 	"k8s.io/kubectl/pkg/scheme"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/log/zap"
+)
+
+const (
+	SKRAccessInterval = 10 * time.Second
+	SKRAccessTimeout  = 30 * time.Second
 )
 
 type AssertCommand struct {
@@ -125,13 +131,7 @@ func (cmd *AssertCommand) Run() error {
 		if err != nil {
 			return fmt.Errorf("failed to get kubeconfig: %v", err)
 		}
-		restCfg, err := clientcmd.RESTConfigFromKubeConfig(kubeconfig)
-		if err != nil {
-			return fmt.Errorf("while creating rest config from kubeconfig: %w", err)
-		}
-		k8sCli, err := client.New(restCfg, client.Options{
-			Scheme: scheme.Scheme,
-		})
+		k8sCli, err := cmd.newK8sClient(kubeconfig)
 		if err != nil {
 			return fmt.Errorf("while creating k8s client: %w", err)
 		}
@@ -174,13 +174,7 @@ func (cmd *AssertCommand) Run() error {
 		if err != nil {
 			return fmt.Errorf("failed to get kubeconfig: %v", err)
 		}
-		restCfg, err := clientcmd.RESTConfigFromKubeConfig(kubeconfig)
-		if err != nil {
-			return fmt.Errorf("while creating REST config from kubeconfig: %w", err)
-		}
-		k8sCli, err := client.New(restCfg, client.Options{
-			Scheme: scheme.Scheme,
-		})
+		k8sCli, err := cmd.newK8sClient(kubeconfig)
 		if err != nil {
 			return fmt.Errorf("while creating k8s client: %w", err)
 		}
@@ -219,13 +213,7 @@ func (cmd *AssertCommand) Run() error {
 		if err != nil {
 			return fmt.Errorf("failed to get kubeconfig: %v", err)
 		}
-		restCfg, err := clientcmd.RESTConfigFromKubeConfig(kubeconfig)
-		if err != nil {
-			return fmt.Errorf("while creating REST config from kubeconfig: %w", err)
-		}
-		k8sCli, err := client.New(restCfg, client.Options{
-			Scheme: scheme.Scheme,
-		})
+		k8sCli, err := cmd.newK8sClient(kubeconfig)
 		if err != nil {
 			return fmt.Errorf("while creating k8s client: %w", err)
 		}
@@ -386,13 +374,7 @@ func (cmd *AssertCommand) Validate() error {
 }
 
 func (cmd *AssertCommand) checkBTPManagerSecret(kubeconfig []byte) error {
-	restCfg, err := clientcmd.RESTConfigFromKubeConfig(kubeconfig)
-	if err != nil {
-		return fmt.Errorf("while creating rest config from kubeconfig: %w", err)
-	}
-	k8sCli, err := client.New(restCfg, client.Options{
-		Scheme: scheme.Scheme,
-	})
+	k8sCli, err := cmd.newK8sClient(kubeconfig)
 	if err != nil {
 		return fmt.Errorf("while creating k8s client: %w", err)
 	}
@@ -470,4 +452,30 @@ func (cmd *AssertCommand) assertAdditionalWorkerNodePools(additionalWorkerNodePo
 		}
 	}
 	return nil
+}
+
+func (cmd *AssertCommand) newK8sClient(kubeconfig []byte) (client.Client, error) {
+	restCfg, err := clientcmd.RESTConfigFromKubeConfig(kubeconfig)
+	if err != nil {
+		return nil, fmt.Errorf("while creating REST config from kubeconfig: %w", err)
+	}
+	k8sCli, err := client.New(restCfg, client.Options{
+		Scheme: scheme.Scheme,
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	ctx, cancel := context.WithTimeout(context.Background(), SKRAccessTimeout)
+	defer cancel()
+
+	return k8sCli, k8sWait.PollUntilContextTimeout(ctx, SKRAccessInterval, SKRAccessTimeout, true, func(ctx context.Context) (bool, error) {
+		podList := &v1.PodList{}
+		err := k8sCli.List(ctx, podList, &client.ListOptions{Namespace: "kyma-system"})
+		if err != nil {
+			fmt.Printf("Technical user access to the SKR is not yet granted. Retrying in %s: %v\n", SKRAccessInterval, err)
+			return false, nil
+		}
+		return true, nil
+	})
 }

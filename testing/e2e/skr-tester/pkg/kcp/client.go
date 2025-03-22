@@ -181,6 +181,33 @@ func (c *KCPClient) GetPlanName(instanceID string) (string, error) {
 	return planName, nil
 }
 
+func (c *KCPClient) GetStatus(instanceID string) (string, error) {
+	args := []string{"rt", "-i", instanceID, "-o", "custom=:{.status}"}
+	if clientSecret := os.Getenv("KCP_OIDC_CLIENT_SECRET"); clientSecret != "" {
+		args = append(args, "--config", "config.yaml")
+	}
+	output, err := exec.Command("kcp", args...).Output()
+	if err != nil {
+		return "", fmt.Errorf("failed to get status: %w", err)
+	}
+	if len(strings.TrimSpace(string(output))) == 0 {
+		args = append(args, "--state", "deprovisioned")
+		output, err = exec.Command("kcp", args...).Output()
+		if err != nil {
+			return "", fmt.Errorf("failed to get status: %w", err)
+		}
+	}
+	var status map[string]interface{}
+	if err := json.Unmarshal(output, &status); err != nil {
+		return "", fmt.Errorf("failed to parse JSON: %w", err)
+	}
+	formattedStatus, err := json.MarshalIndent(status, "", "  ")
+	if err != nil {
+		return "", fmt.Errorf("failed to format JSON: %w", err)
+	}
+	return string(formattedStatus), nil
+}
+
 func getEnvOrThrow(key string) string {
 	value := os.Getenv(key)
 	if value == "" {
