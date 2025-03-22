@@ -2,16 +2,19 @@ package rules
 
 import (
 	"fmt"
-	"log"
+	"log/slog"
 	"os"
+	"slices"
 
 	"github.com/google/uuid"
 	"github.com/kyma-project/kyma-environment-broker/internal/broker"
 )
 
 type RulesService struct {
-	parser        Parser
-	ParsedRuleset *ParsingResults
+	parser         Parser
+	ParsedRuleset  *ParsingResults
+	ValidRules     *ValidRuleset
+	ValidationInfo *ValidationErrors
 }
 
 func NewRulesServiceFromFile(rulesFilePath string, enabledPlans *broker.EnablePlans) (*RulesService, error) {
@@ -20,7 +23,7 @@ func NewRulesServiceFromFile(rulesFilePath string, enabledPlans *broker.EnablePl
 		return nil, fmt.Errorf("No HAP rules file path provided")
 	}
 
-	log.Printf("Parsing rules from file: %s\n", rulesFilePath)
+	slog.Info(fmt.Sprintf("Parsing rules from file: %s\n", rulesFilePath))
 	file, err := os.Open(rulesFilePath)
 	if err != nil {
 		return nil, fmt.Errorf("failed to open file: %s", err)
@@ -48,8 +51,9 @@ func NewRulesService(file *os.File, enabledPlans *broker.EnablePlans) (*RulesSer
 		},
 	}
 
-	rs.ParsedRuleset = rs.parse(rulesConfig)
-	return rs, nil
+	rs.ParsedRuleset = rs.process(rulesConfig)
+	_, rs.ValidRules, rs.ValidationInfo = rs.processAndValidate(rulesConfig)
+	return rs, err
 }
 
 func NewRulesServiceFromSlice(rules []string, enabledPlans *broker.EnablePlans) (*RulesService, error) {
@@ -64,13 +68,63 @@ func NewRulesServiceFromSlice(rules []string, enabledPlans *broker.EnablePlans) 
 		},
 	}
 
-	rs.ParsedRuleset = rs.parse(rulesConfig)
+	rs.ParsedRuleset = rs.process(rulesConfig)
+	_, rs.ValidRules, rs.ValidationInfo = rs.processAndValidate(rulesConfig)
 	return rs, nil
 }
 
-func (rs *RulesService) parse(rulesConfig *RulesConfig) *ParsingResults {
+func (rs *RulesService) processAndValidate(rulesConfig *RulesConfig) (bool, *ValidRuleset, *ValidationErrors) {
 
-	results := rs.parseRuleset(rulesConfig)
+	validRuleset, validationErrors := rs.postParse(rulesConfig)
+	if len(validationErrors.ParsingErrors) > 0 {
+		return false, nil, validationErrors
+	}
+
+	ok, duplicateErrors := validRuleset.checkUniqueness()
+	if !ok {
+		validationErrors.DuplicateErrors = append(validationErrors.DuplicateErrors, duplicateErrors...)
+		return false, nil, validationErrors
+	}
+
+	ok, ambiguityErrors := validRuleset.checkUnambiguity()
+	if !ok {
+		validationErrors.AmbiguityErrors = append(validationErrors.AmbiguityErrors, ambiguityErrors...)
+		return false, nil, validationErrors
+	}
+	return true, validRuleset, nil
+}
+
+func (rs *RulesService) postParse(rulesConfig *RulesConfig) (*ValidRuleset, *ValidationErrors) {
+	validRuleset := NewValidRuleset()
+	validationErrors := NewValidationErrors()
+
+	for _, entry := range rulesConfig.Rules {
+		rule, err := rs.parser.Parse(entry)
+		if err != nil {
+			validationErrors.ParsingErrors = append(validationErrors.ParsingErrors, err)
+		} else {
+			validRule := toValidRule(rule)
+			validRuleset.Rules = append(validRuleset.Rules, *validRule)
+		}
+	}
+
+	if len(validationErrors.ParsingErrors) > 0 {
+		return nil, validationErrors
+	}
+
+	return validRuleset, validationErrors
+}
+
+func (rs *RulesService) process(rulesConfig *RulesConfig) *ParsingResults {
+	results := NewParsingResults()
+
+	for _, entry := range rulesConfig.Rules {
+		rule, err := rs.parser.Parse(entry)
+
+		results.Apply(entry, rule, err)
+	}
+
+	results.Results = SortRuleEntries(results.Results)
 
 	results.CheckUniqueness()
 
@@ -106,6 +160,48 @@ func (rs *RulesService) MatchProvisioningAttributes(provisioningAttributes *Prov
 	return result, found
 }
 
+func (rs *RulesService) getSortedRulesForPlan(plan string) []ValidRule {
+	rulesForPlan := make([]ValidRule, 0)
+	for _, validRule := range rs.ValidRules.Rules {
+		if validRule.Plan.literal == plan {
+			rulesForPlan = append(rulesForPlan, validRule)
+		}
+	}
+	//sort rules by MatchAnyCount
+	slices.SortStableFunc(rulesForPlan, func(x, y ValidRule) int {
+		return x.MatchAnyCount - y.MatchAnyCount
+	})
+	return rulesForPlan
+}
+
+func (rs *RulesService) MatchProvisioningAttributesWithValidRuleset(provisioningAttributes *ProvisioningAttributes) (Result, bool) {
+	if rs.ValidRules == nil || len(rs.ValidRules.Rules) == 0 {
+		slog.Warn("No valid ruleset or empty valid ruleset")
+		return Result{}, false
+	}
+
+	rulesForPlan := rs.getSortedRulesForPlan(provisioningAttributes.Plan)
+
+	if len(rulesForPlan) == 0 {
+		slog.Warn(fmt.Sprintf("No valid rules for plan: %s", provisioningAttributes.Plan))
+		return Result{}, false
+	}
+
+	//find first matching rule which is the most specific one (lowest MatchAnyCount)
+	var result Result
+	found := false
+	for _, validRule := range rulesForPlan {
+		//plan is already matched
+		if validRule.matchRegions(provisioningAttributes) {
+			result = validRule.toResult(provisioningAttributes)
+			found = true
+			break
+		}
+	}
+
+	return result, found
+}
+
 func (rs *RulesService) Match(data *ProvisioningAttributes) map[uuid.UUID]*MatchingResult {
 	var matchingResults map[uuid.UUID]*MatchingResult = make(map[uuid.UUID]*MatchingResult)
 
@@ -135,7 +231,6 @@ func (rs *RulesService) Match(data *ProvisioningAttributes) map[uuid.UUID]*Match
 	return matchingResults
 }
 
-// TODO redesign this method
 func (rs *RulesService) FirstParsingError() error {
 	for _, result := range rs.ParsedRuleset.Results {
 		if result.HasErrors() {
@@ -150,4 +245,31 @@ func (rs *RulesService) FirstParsingError() error {
 	}
 
 	return nil
+}
+
+func toValidRule(rule *Rule) *ValidRule {
+	vr := &ValidRule{
+		Plan: PatternAttribute{
+			literal: rule.Plan,
+		},
+		PlatformRegion: PatternAttribute{
+			literal: rule.PlatformRegion,
+		},
+		HyperscalerRegion: PatternAttribute{
+			literal: rule.HyperscalerRegion,
+		},
+		Shared:                  rule.Shared,
+		EuAccess:                rule.EuAccess,
+		PlatformRegionSuffix:    rule.PlatformRegionSuffix,
+		HyperscalerRegionSuffix: rule.HyperscalerRegionSuffix,
+	}
+	if vr.PlatformRegion.literal == "" {
+		vr.PlatformRegion.matchAny = true
+		vr.MatchAnyCount++
+	}
+	if vr.HyperscalerRegion.literal == "" {
+		vr.HyperscalerRegion.matchAny = true
+		vr.MatchAnyCount++
+	}
+	return vr
 }

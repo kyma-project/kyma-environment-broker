@@ -3,7 +3,6 @@ package rules
 import (
 	"testing"
 
-	"github.com/kyma-project/kyma-environment-broker/internal/broker"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -22,7 +21,7 @@ func TestParsingResults_CheckUniqueness(t *testing.T) {
 			ruleset:           []string{"aws", "aws", "aws", "aws"},
 			invalidRulesCount: 3,
 		},
-		{name: "simple duplicate with invalidRulesCount",
+		{name: "simple duplicate with ambiguityErrorCount",
 			ruleset:           []string{"aws->EU", "aws->S"},
 			invalidRulesCount: 1,
 		},
@@ -66,29 +65,14 @@ func TestParsingResults_CheckUniqueness(t *testing.T) {
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
 			//given
-			parsingResults := fixParsingResults(tc.ruleset)
+			rs := fixRulesService()
+			parsingResults := rs.parseRuleset(&RulesConfig{
+				Rules: tc.ruleset,
+			})
 			//when
 			parsingResults.CheckUniqueness()
 			//then
 			assert.Equal(t, tc.invalidRulesCount, countRulesWithProcessingErrors(parsingResults.Results))
 		})
 	}
-}
-
-func fixParsingResults(rules []string) *ParsingResults {
-
-	enabledPlans := append(broker.EnablePlans{}, "aws")
-	enabledPlans = append(enabledPlans, "azure")
-
-	rulesConfig := &RulesConfig{
-		Rules: rules,
-	}
-
-	rs := &RulesService{
-		parser: &SimpleParser{
-			enabledPlans: &enabledPlans,
-		},
-	}
-
-	return rs.parseRuleset(rulesConfig)
 }
