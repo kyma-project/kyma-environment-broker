@@ -163,18 +163,6 @@ type OIDCConfigDTO struct {
 
 const oidcValidSigningAlgs = "RS256,RS384,RS512,ES256,ES384,ES512,PS256,PS384,PS512"
 
-/*
-	func (o *OIDCConfigDTO) IsProvided() bool {
-		if o == nil {
-			return false
-		}
-		if o.ClientID == "" && o.IssuerURL == "" && o.GroupsClaim == "" && o.UsernamePrefix == "" && o.UsernameClaim == "" && len(o.SigningAlgs) == 0 {
-			return false
-		}
-		return true
-	}
-*/
-
 func (o *OIDCsDTO) IsProvided() bool {
 	if o == nil {
 		return false

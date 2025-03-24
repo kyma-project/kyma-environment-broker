@@ -1492,10 +1492,8 @@ func TestProvision_Provision(t *testing.T) {
 
 		// when
 		_, err := provisionEndpoint.Provision(fixRequestContext(t, "cf-sa30"), instanceID, domain.ProvisionDetails{
-			ServiceID: serviceID,
-			PlanID:    broker.GCPPlanID,
-			//	RawParameters: json.RawMessage(fmt.Sprintf(`{"name": "%s", "region": "%s","oidc":{ "list": [{ %s }] }}`, clusterName, "me-central2", oidcParams)),
-
+			ServiceID:     serviceID,
+			PlanID:        broker.GCPPlanID,
 			RawParameters: json.RawMessage(fmt.Sprintf(`{"name": "%s", "region": "%s","oidc":{ %s }}`, clusterName, "me-central2", oidcParams)),
 			RawContext:    json.RawMessage(fmt.Sprintf(`{"globalaccount_id": "%s", "subaccount_id": "%s", "user_id": "%s"}`, "any-global-account-id", subAccountID, "Test@Test.pl")),
 		}, true)
