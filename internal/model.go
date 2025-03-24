@@ -471,9 +471,9 @@ func NewUpdateOperation(operationID string, instance *Instance, updatingParams U
 				Region: instance.ProviderRegion},
 		},
 	}
-	//if updatingParams.OIDC != nil {
-	//	op.ProvisioningParameters.Parameters.OIDC = updatingParams.OIDC
-	//}
+	if updatingParams.OIDC != nil {
+		op.ProvisioningParameters.Parameters.OIDC = updatingParams.OIDC
+	}
 
 	if len(updatingParams.RuntimeAdministrators) != 0 {
 		op.ProvisioningParameters.Parameters.RuntimeAdministrators = updatingParams.RuntimeAdministrators
