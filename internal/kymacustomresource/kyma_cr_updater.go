@@ -14,43 +14,39 @@ import (
 )
 
 const (
-	namespace               = "kcp-system"
-	subaccountIdLabelKey    = "kyma-project.io/subaccount-id"
-	subaccountIdLabelFormat = "kyma-project.io/subaccount-id=%s"
-	k8sRequestInterval      = 5 * time.Second
+	namespace                 = "kcp-system"
+	subaccountIdLabelKey      = "kyma-project.io/subaccount-id"
+	subaccountIdLabelFormat   = "kyma-project.io/subaccount-id=%s"
+	k8sRequestInterval        = 5 * time.Second
+	BetaEnabledLabelKey       = "operator.kyma-project.io/beta"
+	UsedForProductionLabelKey = "operator.kyma-project.io/used-for-production"
 )
 
 type Updater struct {
-	k8sClient                 dynamic.Interface
-	queue                     syncqueues.MultiConsumerPriorityQueue
-	kymaGVR                   schema.GroupVersionResource
-	sleepDuration             time.Duration
-	betaEnabledLabelKey       string
-	usedForProductionLabelKey string
-	ctx                       context.Context
-	logger                    *slog.Logger
+	k8sClient     dynamic.Interface
+	queue         syncqueues.MultiConsumerPriorityQueue
+	kymaGVR       schema.GroupVersionResource
+	sleepDuration time.Duration
+	ctx           context.Context
+	logger        *slog.Logger
 }
 
 func NewUpdater(k8sClient dynamic.Interface,
 	queue syncqueues.MultiConsumerPriorityQueue,
 	gvr schema.GroupVersionResource,
 	sleepDuration time.Duration,
-	betaEnabledLabelKey string,
-	usedForProductionLabelKey string,
 	ctx context.Context,
 	logger *slog.Logger) (*Updater, error) {
 
-	logger.Info(fmt.Sprintf("Creating Kyma CR updater for labels: %s and %s", betaEnabledLabelKey, usedForProductionLabelKey))
+	logger.Info(fmt.Sprintf("Creating Kyma CR updater for labels: %s and %s", BetaEnabledLabelKey, UsedForProductionLabelKey))
 
 	return &Updater{
-		k8sClient:                 k8sClient,
-		queue:                     queue,
-		kymaGVR:                   gvr,
-		logger:                    logger,
-		sleepDuration:             sleepDuration,
-		betaEnabledLabelKey:       betaEnabledLabelKey,
-		usedForProductionLabelKey: usedForProductionLabelKey,
-		ctx:                       ctx,
+		k8sClient:     k8sClient,
+		queue:         queue,
+		kymaGVR:       gvr,
+		logger:        logger,
+		sleepDuration: sleepDuration,
+		ctx:           ctx,
 	}, nil
 }
 
@@ -98,8 +94,8 @@ func (u *Updater) updateLabels(un unstructured.Unstructured, betaEnabled string,
 	if labels == nil {
 		labels = make(map[string]string)
 	}
-	labels[u.betaEnabledLabelKey] = betaEnabled
-	labels[u.usedForProductionLabelKey] = usedForProduction
+	labels[BetaEnabledLabelKey] = betaEnabled
+	labels[UsedForProductionLabelKey] = usedForProduction
 	un.SetLabels(labels)
 	_, err := u.k8sClient.Resource(u.kymaGVR).Namespace(namespace).Update(ctx, &un, metav1.UpdateOptions{})
 	return err

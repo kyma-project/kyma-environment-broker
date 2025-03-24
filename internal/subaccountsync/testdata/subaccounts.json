@@ -31,7 +31,7 @@
     "region": "eu10-canary",
     "subdomain": "subaccount-2-efgh",
     "betaEnabled": true,
-    "usedForProduction": "USED_FOR_PRODUCTION",
+    "usedForProduction": "NOT_USED_FOR_PRODUCTION",
     "description": null,
     "state": "OK",
     "stateMessage": "Subaccount created.",

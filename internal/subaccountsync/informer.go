@@ -19,12 +19,12 @@ func configureInformer(informer *cache.SharedIndexInformer, stateReconciler *sta
 				logger.Error(fmt.Sprintf("added Kyma CR is not an Unstructured: %s", obj))
 				return
 			}
-			subaccountID, runtimeID, betaEnabled, err := getRequiredData(u, logger, stateReconciler, alwaysUseDB)
+			subaccountID, runtimeID, betaEnabled, usedForProduction, err := getRequiredData(u, logger, stateReconciler, alwaysUseDB)
 			if err != nil {
 				return
 			}
 
-			stateReconciler.reconcileResourceUpdate(subaccountIDType(subaccountID), runtimeIDType(runtimeID), runtimeStateType{betaEnabled: betaEnabled})
+			stateReconciler.reconcileResourceUpdate(subaccountIDType(subaccountID), runtimeIDType(runtimeID), runtimeStateType{betaEnabled: betaEnabled, usedForProduction: usedForProduction})
 			data, err := stateReconciler.accountsClient.GetSubaccountData(subaccountID)
 			if err != nil {
 				logger.Warn(fmt.Sprintf("while getting data for subaccount:%s", err))
@@ -39,12 +39,12 @@ func configureInformer(informer *cache.SharedIndexInformer, stateReconciler *sta
 				logger.Error(fmt.Sprintf("updated Kyma CR is not an Unstructured: %s", newObj))
 				return
 			}
-			subaccountID, runtimeID, betaEnabled, err := getRequiredData(u, logger, stateReconciler, alwaysUseDB)
+			subaccountID, runtimeID, betaEnabled, usedForProduction, err := getRequiredData(u, logger, stateReconciler, alwaysUseDB)
 			if err != nil {
 				return
 			}
 			if !reflect.DeepEqual(oldObj.(*unstructured.Unstructured).GetLabels(), u.GetLabels()) {
-				stateReconciler.reconcileResourceUpdate(subaccountIDType(subaccountID), runtimeIDType(runtimeID), runtimeStateType{betaEnabled: betaEnabled})
+				stateReconciler.reconcileResourceUpdate(subaccountIDType(subaccountID), runtimeIDType(runtimeID), runtimeStateType{betaEnabled: betaEnabled, usedForProduction: usedForProduction})
 			}
 		},
 		DeleteFunc: func(obj interface{}) {
