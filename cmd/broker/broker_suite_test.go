@@ -127,6 +127,9 @@ func (s *BrokerSuiteTest) TearDown() {
 
 func NewBrokerSuiteTest(t *testing.T, version ...string) *BrokerSuiteTest {
 	cfg := fixConfig()
+	cfg.Provisioner.UseAdditionalOIDC = true
+	cfg.Provisioner.UseMainOIDC = false
+	cfg.Provisioner.UseAdditionalOIDCSchemaHandling = true
 	return NewBrokerSuiteTestWithConfig(t, cfg, version...)
 }
 

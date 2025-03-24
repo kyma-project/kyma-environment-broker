@@ -272,7 +272,9 @@ func (s *CreateRuntimeResourceStep) createKubernetesConfiguration(operation inte
 		Version:       ptr.String(s.config.KubernetesVersion),
 		KubeAPIServer: imv1.APIServer{},
 	}
-
+	if operation.ProvisioningParameters.Parameters.OIDC == nil {
+		s.setKubeAPIServerOIDCConfig(&kubernetesConfig, oidc)
+	}
 	if !s.config.UseAdditionalOIDCSchemaHandling && operation.ProvisioningParameters.Parameters.OIDC != nil {
 		s.updateOIDCConfig(&oidc, operation.ProvisioningParameters.Parameters.OIDC.OIDCConfigDTO)
 		s.setKubeAPIServerOIDCConfig(&kubernetesConfig, oidc)
@@ -284,6 +286,8 @@ func (s *CreateRuntimeResourceStep) createKubernetesConfiguration(operation inte
 			s.setKubeAPIServerOIDCConfig(&kubernetesConfig, oidc)
 		} else if operation.ProvisioningParameters.Parameters.OIDC.List != nil {
 			s.setKubeAPIServerAdditionalOIDCConfig(&kubernetesConfig, operation.ProvisioningParameters.Parameters.OIDC.List)
+		} else {
+			s.setKubeAPIServerOIDCConfig(&kubernetesConfig, oidc)
 		}
 	}
 
