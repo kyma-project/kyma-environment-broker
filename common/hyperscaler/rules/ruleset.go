@@ -29,6 +29,14 @@ type ValidationErrors struct {
 	AmbiguityErrors []error
 }
 
+func (vr *ValidRule) Rule() string {
+	return vr.RawData.Rule
+}
+
+func (vr *ValidRule) NumberedRule() string {
+	return fmt.Sprintf("%d: %s", vr.RawData.RuleNo, vr.RawData.Rule)
+}
+
 func (pa *PatternAttribute) Match(value string) bool {
 	if pa.matchAny {
 		return true
@@ -55,20 +63,20 @@ func (vr *ValidRule) matchInputParameters(provisioningAttributes *ProvisioningAt
 	return true
 }
 
-func (r *ValidRule) toResult(provisioningAttributes *ProvisioningAttributes) Result {
+func (vr *ValidRule) toResult(provisioningAttributes *ProvisioningAttributes) Result {
 	hyperscalerType := provisioningAttributes.Hyperscaler
-	if r.PlatformRegionSuffix {
+	if vr.PlatformRegionSuffix {
 		hyperscalerType += "_" + provisioningAttributes.PlatformRegion
 	}
-	if r.HyperscalerRegionSuffix {
+	if vr.HyperscalerRegionSuffix {
 		hyperscalerType += "_" + provisioningAttributes.HyperscalerRegion
 	}
 
 	return Result{
 		HyperscalerType: hyperscalerType,
-		EUAccess:        r.EuAccess,
-		Shared:          r.Shared,
-		RawData:         r.RawData,
+		EUAccess:        vr.EuAccess,
+		Shared:          vr.Shared,
+		RawData:         vr.RawData,
 	}
 }
 
@@ -98,7 +106,7 @@ func (vr *ValidRuleset) checkUniqueness() (bool, []error) {
 	duplicateErrors := make([]error, 0)
 	for _, rule := range vr.Rules {
 		if _, ok := uniqueRules[rule.keyString()]; ok {
-			duplicateErrors = append(duplicateErrors, fmt.Errorf("rule %d: %s is not unique", rule.RawData.RuleNo, rule.RawData.Rule))
+			duplicateErrors = append(duplicateErrors, fmt.Errorf("rule %s is not unique", rule.NumberedRule()))
 		} else {
 			uniqueRules[rule.keyString()] = struct{}{}
 		}
@@ -137,7 +145,7 @@ func (vr *ValidRuleset) checkUnambiguity() (bool, []error) {
 					HyperscalerRegion: hrRule.HyperscalerRegion,
 				}
 				if _, ok := mostSpecificRules[unionRule.keyString()]; !ok {
-					ambiguityErrors = append(ambiguityErrors, fmt.Errorf("rules %d: %s and %d: %s are ambiguous: missing %s", prRule.RawData.RuleNo, prRule.RawData.Rule, hrRule.RawData.RuleNo, hrRule.RawData.Rule, unionRule.keyString()))
+					ambiguityErrors = append(ambiguityErrors, fmt.Errorf("rules %s and %s are ambiguous: missing %s", prRule.NumberedRule(), hrRule.NumberedRule(), unionRule.keyString()))
 				}
 			}
 		}
