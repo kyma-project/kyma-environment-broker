@@ -121,14 +121,14 @@ func TestStateReconcilerWithFakeCisServer(t *testing.T) {
 
 		// given
 		// initial event from a kyma resource, first runtime, no label
-		reconciler.reconcileResourceUpdate(cis.FakeSubaccountID1, runtimeId11, runtimeStateType{betaEnabled: "", usedForProduction: "NOT_USED_FOR_PRODUCTION"})
+		reconciler.reconcileResourceUpdate(cis.FakeSubaccountID1, runtimeId11, runtimeStateType{betaEnabled: ""})
 		assert.Equal(t, 1, len(reconciler.inMemoryState))
 
 		// queue should be empty since we have not got state from CIS
 		assert.True(t, reconciler.syncQueue.IsEmpty())
 
 		// then the same subaccount, second runtime, with false label
-		reconciler.reconcileResourceUpdate(cis.FakeSubaccountID1, runtimeId12, runtimeStateType{betaEnabled: "false", usedForProduction: "NOT_USED_FOR_PRODUCTION"})
+		reconciler.reconcileResourceUpdate(cis.FakeSubaccountID1, runtimeId12, runtimeStateType{betaEnabled: "false"})
 		assert.Equal(t, 1, len(reconciler.inMemoryState))
 		assert.True(t, reconciler.syncQueue.IsEmpty())
 
@@ -141,15 +141,15 @@ func TestStateReconcilerWithFakeCisServer(t *testing.T) {
 		assert.True(t, ok)
 		assert.Equal(t, cis.FakeSubaccountID1, element.SubaccountID)
 		assert.Equal(t, "false", element.BetaEnabled)
-		assert.Equal(t, "NOT_USED_FOR_PRODUCTION", element.UsedForProduction)
+		assert.Equal(t, "NOT_USED_FOR_PRODUCTION", reconciler.inMemoryState[cis.FakeSubaccountID1].cisState.UsedForProduction)
 		assert.True(t, reconciler.syncQueue.IsEmpty())
 
 		//then we got update from the plane (updater updated resources)
-		reconciler.reconcileResourceUpdate(cis.FakeSubaccountID1, runtimeId11, runtimeStateType{betaEnabled: "false", usedForProduction: "NOT_USED_FOR_PRODUCTION"})
-		reconciler.reconcileResourceUpdate(cis.FakeSubaccountID1, runtimeId12, runtimeStateType{betaEnabled: "false", usedForProduction: "NOT_USED_FOR_PRODUCTION"})
+		reconciler.reconcileResourceUpdate(cis.FakeSubaccountID1, runtimeId11, runtimeStateType{betaEnabled: "false"})
+		reconciler.reconcileResourceUpdate(cis.FakeSubaccountID1, runtimeId12, runtimeStateType{betaEnabled: "false"})
 
 		// then we add kyma resource, so we got update from informer
-		reconciler.reconcileResourceUpdate(cis.FakeSubaccountID2, runtimeId21, runtimeStateType{betaEnabled: "false", usedForProduction: "NOT_USED_FOR_PRODUCTION"})
+		reconciler.reconcileResourceUpdate(cis.FakeSubaccountID2, runtimeId21, runtimeStateType{betaEnabled: "false"})
 		assert.Equal(t, 2, len(reconciler.inMemoryState))
 		assert.True(t, reconciler.syncQueue.IsEmpty())
 
@@ -162,7 +162,7 @@ func TestStateReconcilerWithFakeCisServer(t *testing.T) {
 		assert.True(t, ok)
 		assert.Equal(t, cis.FakeSubaccountID2, element.SubaccountID)
 		assert.Equal(t, "true", element.BetaEnabled)
-		assert.Equal(t, "NOT_USED_FOR_PRODUCTION", element.UsedForProduction)
+		assert.Equal(t, "USED_FOR_PRODUCTION", reconciler.inMemoryState[cis.FakeSubaccountID2].cisState.UsedForProduction)
 		assert.True(t, reconciler.syncQueue.IsEmpty())
 	})
 
@@ -174,8 +174,8 @@ func TestStateReconcilerWithFakeCisServer(t *testing.T) {
 
 		// given
 		// initial event from a kyma resources, all true
-		reconciler.reconcileResourceUpdate(cis.FakeSubaccountID1, runtimeId11, runtimeStateType{betaEnabled: "true", usedForProduction: "NOT_USED_FOR_PRODUCTION"})
-		reconciler.reconcileResourceUpdate(cis.FakeSubaccountID2, runtimeId21, runtimeStateType{betaEnabled: "true", usedForProduction: "NOT_USED_FOR_PRODUCTION"})
+		reconciler.reconcileResourceUpdate(cis.FakeSubaccountID1, runtimeId11, runtimeStateType{betaEnabled: "true"})
+		reconciler.reconcileResourceUpdate(cis.FakeSubaccountID2, runtimeId21, runtimeStateType{betaEnabled: "true"})
 		assert.Equal(t, 2, len(reconciler.inMemoryState))
 
 		// queue should be empty since we have not got state from CIS
@@ -190,11 +190,11 @@ func TestStateReconcilerWithFakeCisServer(t *testing.T) {
 		assert.True(t, ok)
 		assert.Equal(t, cis.FakeSubaccountID1, element.SubaccountID)
 		assert.Equal(t, "false", element.BetaEnabled)
-		assert.Equal(t, "NOT_USED_FOR_PRODUCTION", element.UsedForProduction)
+		assert.Equal(t, "NOT_USED_FOR_PRODUCTION", reconciler.inMemoryState[cis.FakeSubaccountID1].cisState.UsedForProduction)
 		assert.True(t, reconciler.syncQueue.IsEmpty())
 
 		//then we got update from the plane (updater updated resources)
-		reconciler.reconcileResourceUpdate(cis.FakeSubaccountID1, runtimeId11, runtimeStateType{betaEnabled: "false", usedForProduction: "NOT_USED_FOR_PRODUCTION"})
+		reconciler.reconcileResourceUpdate(cis.FakeSubaccountID1, runtimeId11, runtimeStateType{betaEnabled: "false"})
 
 		assert.True(t, reconciler.syncQueue.IsEmpty())
 
@@ -213,8 +213,8 @@ func TestStateReconcilerWithFakeCisServer(t *testing.T) {
 
 		// given
 		// initial event from a kyma resources, all true
-		reconciler.reconcileResourceUpdate(cis.FakeSubaccountID1, runtimeId11, runtimeStateType{betaEnabled: "true", usedForProduction: "NOT_USED_FOR_PRODUCTION"})
-		reconciler.reconcileResourceUpdate(cis.FakeSubaccountID2, runtimeId21, runtimeStateType{betaEnabled: "true", usedForProduction: "NOT_USED_FOR_PRODUCTION"})
+		reconciler.reconcileResourceUpdate(cis.FakeSubaccountID1, runtimeId11, runtimeStateType{betaEnabled: "true"})
+		reconciler.reconcileResourceUpdate(cis.FakeSubaccountID2, runtimeId21, runtimeStateType{betaEnabled: "true"})
 		assert.Equal(t, 2, len(reconciler.inMemoryState))
 
 		// queue should be empty since we have not got state from CIS
@@ -229,11 +229,11 @@ func TestStateReconcilerWithFakeCisServer(t *testing.T) {
 		assert.True(t, ok)
 		assert.Equal(t, cis.FakeSubaccountID1, element.SubaccountID)
 		assert.Equal(t, "false", element.BetaEnabled)
-		assert.Equal(t, "NOT_USED_FOR_PRODUCTION", element.UsedForProduction)
+		assert.Equal(t, "NOT_USED_FOR_PRODUCTION", reconciler.inMemoryState[cis.FakeSubaccountID1].cisState.UsedForProduction)
 		assert.True(t, reconciler.syncQueue.IsEmpty())
 
 		//then we got update from the plane (updater updated resources)
-		reconciler.reconcileResourceUpdate(cis.FakeSubaccountID1, runtimeId11, runtimeStateType{betaEnabled: "false", usedForProduction: "NOT_USED_FOR_PRODUCTION"})
+		reconciler.reconcileResourceUpdate(cis.FakeSubaccountID1, runtimeId11, runtimeStateType{betaEnabled: "false"})
 
 		assert.True(t, reconciler.syncQueue.IsEmpty())
 
@@ -246,11 +246,11 @@ func TestStateReconcilerWithFakeCisServer(t *testing.T) {
 		assert.True(t, ok)
 		assert.Equal(t, cis.FakeSubaccountID1, element.SubaccountID)
 		assert.Equal(t, "true", element.BetaEnabled)
-		assert.Equal(t, "NOT_USED_FOR_PRODUCTION", element.UsedForProduction)
+		assert.Equal(t, "UNSET", reconciler.inMemoryState[cis.FakeSubaccountID1].cisState.UsedForProduction)
 		assert.True(t, reconciler.syncQueue.IsEmpty())
 
 		//then we got update from the plane (updater updated resources)
-		reconciler.reconcileResourceUpdate(cis.FakeSubaccountID1, runtimeId11, runtimeStateType{betaEnabled: "true", usedForProduction: "NOT_USED_FOR_PRODUCTION"})
+		reconciler.reconcileResourceUpdate(cis.FakeSubaccountID1, runtimeId11, runtimeStateType{betaEnabled: "true"})
 
 		assert.True(t, reconciler.syncQueue.IsEmpty())
 	})
@@ -263,8 +263,8 @@ func TestStateReconcilerWithFakeCisServer(t *testing.T) {
 
 		// given
 		// initial event from a kyma resources, all true
-		reconciler.reconcileResourceUpdate(cis.FakeSubaccountID1, runtimeId11, runtimeStateType{betaEnabled: "true", usedForProduction: "NOT_USED_FOR_PRODUCTION"})
-		reconciler.reconcileResourceUpdate(cis.FakeSubaccountID1, runtimeId12, runtimeStateType{betaEnabled: "true", usedForProduction: "NOT_USED_FOR_PRODUCTION"})
+		reconciler.reconcileResourceUpdate(cis.FakeSubaccountID1, runtimeId11, runtimeStateType{betaEnabled: "true"})
+		reconciler.reconcileResourceUpdate(cis.FakeSubaccountID1, runtimeId12, runtimeStateType{betaEnabled: "true"})
 		assert.Equal(t, 1, len(reconciler.inMemoryState))
 
 		// queue should be empty since we have not got state from CIS
@@ -279,11 +279,11 @@ func TestStateReconcilerWithFakeCisServer(t *testing.T) {
 		assert.True(t, ok)
 		assert.Equal(t, cis.FakeSubaccountID1, element.SubaccountID)
 		assert.Equal(t, "false", element.BetaEnabled)
-		assert.Equal(t, "NOT_USED_FOR_PRODUCTION", element.UsedForProduction)
+		assert.Equal(t, "NOT_USED_FOR_PRODUCTION", reconciler.inMemoryState[cis.FakeSubaccountID1].cisState.UsedForProduction)
 		assert.True(t, reconciler.syncQueue.IsEmpty())
 
 		//then we got update from the plane (updater updated first resource)
-		reconciler.reconcileResourceUpdate(cis.FakeSubaccountID1, runtimeId11, runtimeStateType{betaEnabled: "false", usedForProduction: "NOT_USED_FOR_PRODUCTION"})
+		reconciler.reconcileResourceUpdate(cis.FakeSubaccountID1, runtimeId11, runtimeStateType{betaEnabled: "false"})
 
 		// but we still have one resource with true label so we enqueue the update request again
 		assert.False(t, reconciler.syncQueue.IsEmpty())
@@ -291,11 +291,11 @@ func TestStateReconcilerWithFakeCisServer(t *testing.T) {
 		assert.True(t, ok)
 		assert.Equal(t, cis.FakeSubaccountID1, element.SubaccountID)
 		assert.Equal(t, "false", element.BetaEnabled)
-		assert.Equal(t, "NOT_USED_FOR_PRODUCTION", element.UsedForProduction)
+		assert.Equal(t, "NOT_USED_FOR_PRODUCTION", reconciler.inMemoryState[cis.FakeSubaccountID1].cisState.UsedForProduction)
 		assert.True(t, reconciler.syncQueue.IsEmpty())
 
 		//then we got update from the plane (updater updated second resource)
-		reconciler.reconcileResourceUpdate(cis.FakeSubaccountID1, runtimeId12, runtimeStateType{betaEnabled: "false", usedForProduction: "NOT_USED_FOR_PRODUCTION"})
+		reconciler.reconcileResourceUpdate(cis.FakeSubaccountID1, runtimeId12, runtimeStateType{betaEnabled: "false"})
 
 		assert.True(t, reconciler.syncQueue.IsEmpty())
 	})
@@ -308,8 +308,8 @@ func TestStateReconcilerWithFakeCisServer(t *testing.T) {
 
 		// given
 		// initial event from a kyma resources, all true
-		reconciler.reconcileResourceUpdate(cis.FakeSubaccountID1, runtimeId11, runtimeStateType{betaEnabled: "true", usedForProduction: "NOT_USED_FOR_PRODUCTION"})
-		reconciler.reconcileResourceUpdate(cis.FakeSubaccountID1, runtimeId12, runtimeStateType{betaEnabled: "true", usedForProduction: "NOT_USED_FOR_PRODUCTION"})
+		reconciler.reconcileResourceUpdate(cis.FakeSubaccountID1, runtimeId11, runtimeStateType{betaEnabled: "true"})
+		reconciler.reconcileResourceUpdate(cis.FakeSubaccountID1, runtimeId12, runtimeStateType{betaEnabled: "true"})
 		assert.Equal(t, 1, len(reconciler.inMemoryState))
 
 		// queue should be empty since we have not got state from CIS
@@ -324,11 +324,11 @@ func TestStateReconcilerWithFakeCisServer(t *testing.T) {
 		assert.True(t, ok)
 		assert.Equal(t, cis.FakeSubaccountID1, element.SubaccountID)
 		assert.Equal(t, "false", element.BetaEnabled)
-		assert.Equal(t, "NOT_USED_FOR_PRODUCTION", element.UsedForProduction)
+		assert.Equal(t, "NOT_USED_FOR_PRODUCTION", reconciler.inMemoryState[cis.FakeSubaccountID1].cisState.UsedForProduction)
 		assert.True(t, reconciler.syncQueue.IsEmpty())
 
 		//then we got update from the plane (updater updated first resource)
-		reconciler.reconcileResourceUpdate(cis.FakeSubaccountID1, runtimeId11, runtimeStateType{betaEnabled: "false", usedForProduction: "NOT_USED_FOR_PRODUCTION"})
+		reconciler.reconcileResourceUpdate(cis.FakeSubaccountID1, runtimeId11, runtimeStateType{betaEnabled: "false"})
 
 		// but we still have one resource with true label so we enqueue the update request again
 		assert.False(t, reconciler.syncQueue.IsEmpty())
@@ -343,11 +343,11 @@ func TestStateReconcilerWithFakeCisServer(t *testing.T) {
 		assert.True(t, ok)
 		assert.Equal(t, cis.FakeSubaccountID1, element.SubaccountID)
 		assert.Equal(t, "true", element.BetaEnabled)
-		assert.Equal(t, "NOT_USED_FOR_PRODUCTION", element.UsedForProduction)
+		assert.Equal(t, "UNSET", reconciler.inMemoryState[cis.FakeSubaccountID1].cisState.UsedForProduction)
 		assert.True(t, reconciler.syncQueue.IsEmpty())
 
 		//then we got outstanding update from the plane (updater updated second resource with false label)
-		reconciler.reconcileResourceUpdate(cis.FakeSubaccountID1, runtimeId12, runtimeStateType{betaEnabled: "false", usedForProduction: "NOT_USED_FOR_PRODUCTION"})
+		reconciler.reconcileResourceUpdate(cis.FakeSubaccountID1, runtimeId12, runtimeStateType{betaEnabled: "false"})
 
 		// so we have not reached the stable state so we enqueue the update request again
 		assert.False(t, reconciler.syncQueue.IsEmpty())
@@ -358,7 +358,7 @@ func TestStateReconcilerWithFakeCisServer(t *testing.T) {
 		assert.True(t, reconciler.syncQueue.IsEmpty())
 
 		//then we got update from the plane (updater updated second resource with true label)
-		reconciler.reconcileResourceUpdate(cis.FakeSubaccountID1, runtimeId12, runtimeStateType{betaEnabled: "true", usedForProduction: "NOT_USED_FOR_PRODUCTION"})
+		reconciler.reconcileResourceUpdate(cis.FakeSubaccountID1, runtimeId12, runtimeStateType{betaEnabled: "true"})
 
 		assert.False(t, reconciler.syncQueue.IsEmpty())
 		element, ok = reconciler.syncQueue.Extract()
@@ -368,7 +368,7 @@ func TestStateReconcilerWithFakeCisServer(t *testing.T) {
 		assert.True(t, reconciler.syncQueue.IsEmpty())
 
 		//then we got update from the plane (updater updated second resource with true label)
-		reconciler.reconcileResourceUpdate(cis.FakeSubaccountID1, runtimeId11, runtimeStateType{betaEnabled: "true", usedForProduction: "NOT_USED_FOR_PRODUCTION"})
+		reconciler.reconcileResourceUpdate(cis.FakeSubaccountID1, runtimeId11, runtimeStateType{betaEnabled: "true"})
 		assert.True(t, reconciler.syncQueue.IsEmpty())
 	})
 }

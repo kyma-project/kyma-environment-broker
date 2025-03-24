@@ -38,7 +38,7 @@
       "jobLocation": null,
       "subdomain": "subaccount-1-subdomain",
       "betaEnabled": true,
-      "usedForProduction": "NOT_USED_FOR_PRODUCTION",
+      "usedForProduction": "UNSET",
       "labels": {}
     },
     "globalAccountGUID": "bbecf441-f9bd-4d09-8a3d-877a7519b949",
@@ -62,7 +62,7 @@
       "jobLocation": null,
       "subdomain": "subaccount-2-subdomain",
       "betaEnabled": true,
-      "usedForProduction": "NOT_USED_FOR_PRODUCTION",
+      "usedForProduction": "USED_FOR_PRODUCTION",
       "labels": {}
     },
     "globalAccountGUID": "54130280-9eef-4fab-94b6-be2bea4fa1d0",
@@ -86,7 +86,7 @@
       "jobLocation": null,
       "subdomain": "subaccount-2-subdomain",
       "betaEnabled": false,
-      "usedForProduction": "NOT_USED_FOR_PRODUCTION",
+      "usedForProduction": "USED_FOR_PRODUCTION",
       "labels": {}
     },
     "globalAccountGUID": "54130280-9eef-4fab-94b6-be2bea4fa1d0",
@@ -110,7 +110,7 @@
       "jobLocation": null,
       "subdomain": "subaccount-1-subdomain",
       "betaEnabled": false,
-      "usedForProduction": "NOT_USED_FOR_PRODUCTION",
+      "usedForProduction": null,
       "labels": {}
     },
     "globalAccountGUID": "bbecf441-f9bd-4d09-8a3d-877a7519b949",
@@ -134,7 +134,7 @@
       "jobLocation": null,
       "subdomain": "subaccount-1-subdomain",
       "betaEnabled": false,
-      "usedForProduction": "NOT_USED_FOR_PRODUCTION",
+      "usedForProduction": "USED_FOR_PRODUCTION",
       "labels": {}
     },
     "globalAccountGUID": "bbecf441-f9bd-4d09-8a3d-877a7519b949",
