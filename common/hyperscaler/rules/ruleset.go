@@ -7,6 +7,10 @@ type PatternAttribute struct {
 	literal  string
 }
 
+type RawData struct {
+	Rule   string
+	RuleNo int
+}
 type ValidRule struct {
 	Plan                    PatternAttribute
 	PlatformRegion          PatternAttribute
@@ -16,6 +20,7 @@ type ValidRule struct {
 	PlatformRegionSuffix    bool
 	HyperscalerRegionSuffix bool
 	MatchAnyCount           int
+	RawData                 RawData
 }
 
 type ValidationErrors struct {
@@ -63,6 +68,7 @@ func (r *ValidRule) toResult(provisioningAttributes *ProvisioningAttributes) Res
 		HyperscalerType: hyperscalerType,
 		EUAccess:        r.EuAccess,
 		Shared:          r.Shared,
+		RawData:         r.RawData,
 	}
 }
 

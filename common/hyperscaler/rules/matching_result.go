@@ -24,4 +24,5 @@ type Result struct {
 	HyperscalerType string
 	EUAccess        bool
 	Shared          bool
+	RawData         RawData
 }

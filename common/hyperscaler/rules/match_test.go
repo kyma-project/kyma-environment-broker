@@ -202,6 +202,10 @@ func TestMatch_UseValidRuleset(t *testing.T) {
 				HyperscalerType: "azure",
 				EUAccess:        true,
 				Shared:          false,
+				RawData: RawData{
+					Rule:   "azure(PR=cf-ch20) -> EU",
+					RuleNo: 0,
+				},
 			},
 		},
 		"aws eu": {
@@ -215,6 +219,10 @@ func TestMatch_UseValidRuleset(t *testing.T) {
 				HyperscalerType: "aws",
 				EUAccess:        true,
 				Shared:          false,
+				RawData: RawData{
+					Rule:   "aws(PR=cf-eu11) -> EU",
+					RuleNo: 4,
+				},
 			},
 		},
 		"free": {
@@ -228,6 +236,10 @@ func TestMatch_UseValidRuleset(t *testing.T) {
 				HyperscalerType: "azure",
 				EUAccess:        false,
 				Shared:          false,
+				RawData: RawData{
+					Rule:   "free",
+					RuleNo: 8,
+				},
 			},
 		},
 		"gcp with PR and HR in labels": {
@@ -241,6 +253,10 @@ func TestMatch_UseValidRuleset(t *testing.T) {
 				HyperscalerType: "gcp_cf-sa30_ksa",
 				EUAccess:        false,
 				Shared:          false,
+				RawData: RawData{
+					Rule:   "gcp(PR=cf-sa30) -> PR,HR",
+					RuleNo: 5,
+				},
 			},
 		},
 		// second check to verify idempotence
@@ -255,6 +271,10 @@ func TestMatch_UseValidRuleset(t *testing.T) {
 				HyperscalerType: "gcp_cf-sa30_ksa",
 				EUAccess:        false,
 				Shared:          false,
+				RawData: RawData{
+					Rule:   "gcp(PR=cf-sa30) -> PR,HR",
+					RuleNo: 5,
+				},
 			},
 		},
 		"trial": {
@@ -268,6 +288,10 @@ func TestMatch_UseValidRuleset(t *testing.T) {
 				HyperscalerType: "aws",
 				EUAccess:        false,
 				Shared:          true,
+				RawData: RawData{
+					Rule:   "trial -> S",
+					RuleNo: 6,
+				},
 			},
 		},
 		"trial eu": {
@@ -281,6 +305,10 @@ func TestMatch_UseValidRuleset(t *testing.T) {
 				HyperscalerType: "aws",
 				EUAccess:        true,
 				Shared:          true,
+				RawData: RawData{
+					Rule:   "trial(PR=cf-eu11) -> EU, S",
+					RuleNo: 7,
+				},
 			},
 		},
 	} {

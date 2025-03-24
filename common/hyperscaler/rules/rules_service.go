@@ -98,12 +98,12 @@ func (rs *RulesService) postParse(rulesConfig *RulesConfig) (*ValidRuleset, *Val
 	validRuleset := NewValidRuleset()
 	validationErrors := NewValidationErrors()
 
-	for _, entry := range rulesConfig.Rules {
-		rule, err := rs.parser.Parse(entry)
+	for ruleNo, rawRule := range rulesConfig.Rules {
+		rule, err := rs.parser.Parse(rawRule)
 		if err != nil {
 			validationErrors.ParsingErrors = append(validationErrors.ParsingErrors, err)
 		} else {
-			validRule := toValidRule(rule)
+			validRule := toValidRule(rule, rawRule, ruleNo)
 			validRuleset.Rules = append(validRuleset.Rules, *validRule)
 		}
 	}
@@ -240,14 +240,14 @@ func (rs *RulesService) FirstParsingError() error {
 			})
 
 			printer.Print(rs.ParsedRuleset.Results, nil)
-			return fmt.Errorf("Parsing errors occurred during rules parsing, results are: %s", buffer)
+			return fmt.Errorf("parsing errors occurred during rules parsing, results are: %s", buffer)
 		}
 	}
 
 	return nil
 }
 
-func toValidRule(rule *Rule) *ValidRule {
+func toValidRule(rule *Rule, rawRule string, ruleNo int) *ValidRule {
 	vr := &ValidRule{
 		Plan: PatternAttribute{
 			literal: rule.Plan,
@@ -270,6 +270,10 @@ func toValidRule(rule *Rule) *ValidRule {
 	if vr.HyperscalerRegion.literal == "" {
 		vr.HyperscalerRegion.matchAny = true
 		vr.MatchAnyCount++
+	}
+	vr.RawData = RawData{
+		Rule:   rawRule,
+		RuleNo: ruleNo,
 	}
 	return vr
 }
