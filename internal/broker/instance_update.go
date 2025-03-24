@@ -315,10 +315,10 @@ func (b *UpdateEndpoint) processUpdateParameters(instance *internal.Instance, de
 	}
 
 	var updateStorage []string
-	//if params.OIDC.IsProvided() {
-	//	instance.Parameters.Parameters.OIDC = params.OIDC
-	//	updateStorage = append(updateStorage, "OIDC")
-	//}
+	if params.OIDC.IsProvided() {
+		instance.Parameters.Parameters.OIDC = params.OIDC
+		updateStorage = append(updateStorage, "OIDC")
+	}
 
 	if len(params.RuntimeAdministrators) != 0 {
 		newAdministrators := make([]string, 0, len(params.RuntimeAdministrators))
