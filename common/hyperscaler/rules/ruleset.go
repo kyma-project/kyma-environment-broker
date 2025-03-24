@@ -36,10 +36,10 @@ func (vr *ValidRule) Match(provisioningAttributes *ProvisioningAttributes) bool 
 		return false
 	}
 
-	return vr.matchRegions(provisioningAttributes)
+	return vr.matchInputParameters(provisioningAttributes)
 }
 
-func (vr *ValidRule) matchRegions(provisioningAttributes *ProvisioningAttributes) bool {
+func (vr *ValidRule) matchInputParameters(provisioningAttributes *ProvisioningAttributes) bool {
 	if !vr.PlatformRegion.Match(provisioningAttributes.PlatformRegion) {
 		return false
 	}

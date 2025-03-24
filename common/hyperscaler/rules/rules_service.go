@@ -192,7 +192,7 @@ func (rs *RulesService) MatchProvisioningAttributesWithValidRuleset(provisioning
 	found := false
 	for _, validRule := range rulesForPlan {
 		//plan is already matched
-		if validRule.matchRegions(provisioningAttributes) {
+		if validRule.matchInputParameters(provisioningAttributes) {
 			result = validRule.toResult(provisioningAttributes)
 			found = true
 			break
