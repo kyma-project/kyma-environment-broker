@@ -98,8 +98,7 @@ func (vr *ValidRuleset) checkUniqueness() (bool, []error) {
 	duplicateErrors := make([]error, 0)
 	for _, rule := range vr.Rules {
 		if _, ok := uniqueRules[rule.keyString()]; ok {
-			//TODO consider referring to rule number (line number), referring to both duplicated rules in their raw/unprocessed form
-			duplicateErrors = append(duplicateErrors, fmt.Errorf("rule is not unique: %s", rule.keyString()))
+			duplicateErrors = append(duplicateErrors, fmt.Errorf("rule %d: %s is not unique", rule.RawData.RuleNo, rule.RawData.Rule))
 		} else {
 			uniqueRules[rule.keyString()] = struct{}{}
 		}
@@ -116,7 +115,6 @@ func (vr *ValidRuleset) checkUnambiguity() (bool, []error) {
 	prSpecified := make([]ValidRule, 0)
 	hrSpecified := make([]ValidRule, 0)
 
-	//TODO extract preparation
 	for _, rule := range vr.Rules {
 		if rule.MatchAnyCount == 0 {
 			mostSpecificRules[rule.keyString()] = struct{}{}
@@ -139,7 +137,7 @@ func (vr *ValidRuleset) checkUnambiguity() (bool, []error) {
 					HyperscalerRegion: hrRule.HyperscalerRegion,
 				}
 				if _, ok := mostSpecificRules[unionRule.keyString()]; !ok {
-					ambiguityErrors = append(ambiguityErrors, fmt.Errorf("rules %s and %s are ambiguous: missing %s", prRule.keyString(), hrRule.keyString(), unionRule.keyString()))
+					ambiguityErrors = append(ambiguityErrors, fmt.Errorf("rules %d: %s and %d: %s are ambiguous: missing %s", prRule.RawData.RuleNo, prRule.RawData.Rule, hrRule.RawData.RuleNo, hrRule.RawData.Rule, unionRule.keyString()))
 				}
 			}
 		}
