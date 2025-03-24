@@ -52,7 +52,7 @@ func NewRulesService(file *os.File, enabledPlans *broker.EnablePlans) (*RulesSer
 	}
 
 	rs.ParsedRuleset = rs.process(rulesConfig)
-	_, rs.ValidRules, rs.ValidationInfo = rs.processAndValidate(rulesConfig)
+	rs.ValidRules, rs.ValidationInfo = rs.processAndValidate(rulesConfig)
 	return rs, err
 }
 
@@ -69,29 +69,29 @@ func NewRulesServiceFromSlice(rules []string, enabledPlans *broker.EnablePlans) 
 	}
 
 	rs.ParsedRuleset = rs.process(rulesConfig)
-	_, rs.ValidRules, rs.ValidationInfo = rs.processAndValidate(rulesConfig)
+	rs.ValidRules, rs.ValidationInfo = rs.processAndValidate(rulesConfig)
 	return rs, nil
 }
 
-func (rs *RulesService) processAndValidate(rulesConfig *RulesConfig) (bool, *ValidRuleset, *ValidationErrors) {
+func (rs *RulesService) processAndValidate(rulesConfig *RulesConfig) (*ValidRuleset, *ValidationErrors) {
 
 	validRuleset, validationErrors := rs.postParse(rulesConfig)
 	if len(validationErrors.ParsingErrors) > 0 {
-		return false, nil, validationErrors
+		return nil, validationErrors
 	}
 
 	ok, duplicateErrors := validRuleset.checkUniqueness()
 	if !ok {
 		validationErrors.DuplicateErrors = append(validationErrors.DuplicateErrors, duplicateErrors...)
-		return false, nil, validationErrors
+		return nil, validationErrors
 	}
 
 	ok, ambiguityErrors := validRuleset.checkUnambiguity()
 	if !ok {
 		validationErrors.AmbiguityErrors = append(validationErrors.AmbiguityErrors, ambiguityErrors...)
-		return false, nil, validationErrors
+		return nil, validationErrors
 	}
-	return true, validRuleset, nil
+	return validRuleset, nil
 }
 
 func (rs *RulesService) postParse(rulesConfig *RulesConfig) (*ValidRuleset, *ValidationErrors) {
