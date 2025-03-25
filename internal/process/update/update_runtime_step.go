@@ -115,6 +115,9 @@ func (s *UpdateRuntimeStep) Run(operation internal.Operation, log *slog.Logger) 
 				firstOidcConfig := (*runtime.Spec.Shoot.Kubernetes.KubeAPIServer.AdditionalOidcConfig)[0]
 				runtime.Spec.Shoot.Kubernetes.KubeAPIServer.AdditionalOidcConfig = &[]gardener.OIDCConfig{firstOidcConfig}
 			}
+			if runtime.Spec.Shoot.Kubernetes.KubeAPIServer.AdditionalOidcConfig == nil || len(*runtime.Spec.Shoot.Kubernetes.KubeAPIServer.AdditionalOidcConfig) == 0 {
+				runtime.Spec.Shoot.Kubernetes.KubeAPIServer.AdditionalOidcConfig = &[]gardener.OIDCConfig{{}}
+			}
 			if len(input.SigningAlgs) > 0 {
 				(*runtime.Spec.Shoot.Kubernetes.KubeAPIServer.AdditionalOidcConfig)[0].SigningAlgs = input.SigningAlgs
 			}
