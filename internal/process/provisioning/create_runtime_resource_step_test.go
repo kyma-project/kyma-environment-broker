@@ -68,9 +68,7 @@ func TestCreateRuntimeResourceStep_onlyMainOIDC_AllCustom(t *testing.T) {
 	assert.NoError(t, err)
 	memoryStorage := storage.NewMemoryStorage()
 	inputConfig := input.Config{
-		MultiZoneCluster:  true,
-		UseMainOIDC:       true,
-		UseAdditionalOIDC: false,
+		MultiZoneCluster: true,
 	}
 	instance, operation := fixInstanceAndOperation(broker.AzurePlanID, "westeurope", "platform-region", inputConfig, pkg.Azure)
 	operation.ProvisioningParameters.Parameters.OIDC = &pkg.OIDCsDTO{
@@ -117,9 +115,7 @@ func TestCreateRuntimeResourceStep_MainAndAdditionalOIDC_AllCustom(t *testing.T)
 	assert.NoError(t, err)
 	memoryStorage := storage.NewMemoryStorage()
 	inputConfig := input.Config{
-		MultiZoneCluster:  true,
-		UseMainOIDC:       true,
-		UseAdditionalOIDC: true,
+		MultiZoneCluster: true,
 	}
 	instance, operation := fixInstanceAndOperation(broker.AzurePlanID, "westeurope", "platform-region", inputConfig, pkg.Azure)
 	operation.ProvisioningParameters.Parameters.OIDC = &pkg.OIDCsDTO{
@@ -166,9 +162,7 @@ func TestCreateRuntimeResourceStep_onlyAdditionalOIDC_AllCustom(t *testing.T) {
 	assert.NoError(t, err)
 	memoryStorage := storage.NewMemoryStorage()
 	inputConfig := input.Config{
-		MultiZoneCluster:  true,
-		UseMainOIDC:       false,
-		UseAdditionalOIDC: true,
+		MultiZoneCluster: true,
 	}
 	instance, operation := fixInstanceAndOperation(broker.AzurePlanID, "westeurope", "platform-region", inputConfig, pkg.Azure)
 	operation.ProvisioningParameters.Parameters.OIDC = &pkg.OIDCsDTO{
@@ -220,10 +214,7 @@ func TestCreateRuntimeResourceStep_HandleMultipleAdditionalOIDC(t *testing.T) {
 	assert.NoError(t, err)
 	memoryStorage := storage.NewMemoryStorage()
 	inputConfig := input.Config{
-		MultiZoneCluster:                true,
-		UseMainOIDC:                     false,
-		UseAdditionalOIDC:               true,
-		UseAdditionalOIDCSchemaHandling: true,
+		MultiZoneCluster: true,
 	}
 	instance, operation := fixInstanceAndOperation(broker.AzurePlanID, "westeurope", "platform-region", inputConfig, pkg.Azure)
 	operation.ProvisioningParameters.Parameters.OIDC = &pkg.OIDCsDTO{
@@ -294,9 +285,7 @@ func TestCreateRuntimeResourceStep_OIDC_MixedCustom(t *testing.T) {
 	assert.NoError(t, err)
 	memoryStorage := storage.NewMemoryStorage()
 	inputConfig := input.Config{
-		MultiZoneCluster:  true,
-		UseMainOIDC:       true,
-		UseAdditionalOIDC: false,
+		MultiZoneCluster: true,
 	}
 	instance, operation := fixInstanceAndOperation(broker.AzurePlanID, "westeurope", "platform-region", inputConfig, pkg.Azure)
 	operation.ProvisioningParameters.Parameters.OIDC = &pkg.OIDCsDTO{

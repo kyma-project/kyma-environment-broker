@@ -217,8 +217,6 @@ provisioner:
 
   gardener:
     enableShootAndSeedSameRegion: "false"
-  useMainOIDC: "true"
-  useAdditionalOIDC: "false"
 
 stepTimeouts:
   checkRuntimeResourceUpdate: 180m
