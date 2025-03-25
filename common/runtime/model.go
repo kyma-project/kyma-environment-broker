@@ -256,8 +256,8 @@ func (o *OIDCsDTO) Validate() error {
 					}
 				}
 			}
-			if len(o.OIDCConfigDTO.RequiredClaims) != 0 {
-				for _, claim := range o.OIDCConfigDTO.RequiredClaims {
+			if len(oidc.RequiredClaims) != 0 {
+				for _, claim := range oidc.RequiredClaims {
 					if !strings.Contains(claim, "=") {
 						errs = append(errs, fmt.Sprintf("requiredClaims must be in claim=value format, invalid claim: %s for OIDC at index %d", claim, i))
 					}
