@@ -220,6 +220,10 @@ provisioner:
   useMainOIDC: "true"
   useAdditionalOIDC: "false"
 
+stepTimeouts:
+  checkRuntimeResourceUpdate: 180m
+  checkRuntimeResourceCreate: 60m
+
 trialRegionsMapping: |-
   cf-eu10: europe
   cf-us10: us
