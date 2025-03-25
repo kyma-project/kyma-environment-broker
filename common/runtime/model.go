@@ -167,7 +167,7 @@ func (o *OIDCsDTO) IsProvided() bool {
 	if o == nil {
 		return false
 	}
-	if o.OIDCConfigDTO != nil && (o.OIDCConfigDTO.ClientID != "" || o.OIDCConfigDTO.IssuerURL != "" || o.OIDCConfigDTO.GroupsClaim != "" || o.OIDCConfigDTO.UsernamePrefix != "" || o.OIDCConfigDTO.UsernameClaim != "" || len(o.OIDCConfigDTO.SigningAlgs) > 0) {
+	if o.OIDCConfigDTO != nil && (o.OIDCConfigDTO.ClientID != "" || o.OIDCConfigDTO.IssuerURL != "" || o.OIDCConfigDTO.GroupsClaim != "" || o.OIDCConfigDTO.UsernamePrefix != "" || o.OIDCConfigDTO.UsernameClaim != "" || len(o.OIDCConfigDTO.SigningAlgs) > 0 || len(o.OIDCConfigDTO.RequiredClaims) > 0) {
 		return true
 	}
 	if o.List != nil {
@@ -214,6 +214,13 @@ func (o *OIDCsDTO) Validate() error {
 				}
 			}
 		}
+		if len(o.OIDCConfigDTO.RequiredClaims) != 0 {
+			for _, claim := range o.OIDCConfigDTO.RequiredClaims {
+				if !strings.Contains(claim, "=") {
+					errs = append(errs, fmt.Sprintf("requiredClaims must be in claim=value format, invalid claim: %s", claim))
+				}
+			}
+		}
 	}
 	if o.List != nil && len(o.List) > 0 {
 		for i, oidc := range o.List {
@@ -249,6 +256,13 @@ func (o *OIDCsDTO) Validate() error {
 					}
 				}
 			}
+			if len(o.OIDCConfigDTO.RequiredClaims) != 0 {
+				for _, claim := range o.OIDCConfigDTO.RequiredClaims {
+					if !strings.Contains(claim, "=") {
+						errs = append(errs, fmt.Sprintf("requiredClaims must be in claim=value format, invalid claim: %s for OIDC at index %d", claim, i))
+					}
+				}
+			}
 		}
 	}
 	if len(errs) > 0 {
@@ -259,6 +273,17 @@ func (o *OIDCsDTO) Validate() error {
 }
 
 func (o *OIDCsDTO) validSigningAlgsSet() map[string]bool {
+	algs := strings.Split(oidcValidSigningAlgs, ",")
+	signingAlgsSet := make(map[string]bool, len(algs))
+
+	for _, v := range algs {
+		signingAlgsSet[v] = true
+	}
+
+	return signingAlgsSet
+}
+
+func (o *OIDCsDTO) validRequiredClaimst() map[string]bool {
 	algs := strings.Split(oidcValidSigningAlgs, ",")
 	signingAlgsSet := make(map[string]bool, len(algs))
 
