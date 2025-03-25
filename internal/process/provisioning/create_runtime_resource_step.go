@@ -6,6 +6,7 @@ import (
 	"log/slog"
 	"math/rand"
 	"strconv"
+	"strings"
 	"time"
 
 	kebError "github.com/kyma-project/kyma-environment-broker/internal/error"
@@ -279,6 +280,11 @@ func (s *CreateRuntimeResourceStep) createKubernetesConfiguration(operation inte
 		if oidcInput.List != nil {
 			kubernetesConfig.KubeAPIServer.AdditionalOidcConfig = &[]gardener.OIDCConfig{}
 			for _, oidcConfig := range oidcInput.List {
+				requiredClaims := make(map[string]string)
+				for _, claim := range oidcConfig.RequiredClaims {
+					parts := strings.SplitN(claim, "=", 2)
+					requiredClaims[parts[0]] = parts[1]
+				}
 				*kubernetesConfig.KubeAPIServer.AdditionalOidcConfig = append(*kubernetesConfig.KubeAPIServer.AdditionalOidcConfig, gardener.OIDCConfig{
 					ClientID:       &oidcConfig.ClientID,
 					IssuerURL:      &oidcConfig.IssuerURL,
@@ -286,6 +292,7 @@ func (s *CreateRuntimeResourceStep) createKubernetesConfiguration(operation inte
 					GroupsClaim:    &oidcConfig.GroupsClaim,
 					UsernamePrefix: &oidcConfig.UsernamePrefix,
 					UsernameClaim:  &oidcConfig.UsernameClaim,
+					RequiredClaims: requiredClaims,
 				})
 			}
 		} else if oidcInput.OIDCConfigDTO != nil {
@@ -307,6 +314,12 @@ func (s *CreateRuntimeResourceStep) createKubernetesConfiguration(operation inte
 			if oidcInput.OIDCConfigDTO.UsernamePrefix != "" {
 				oidc.UsernamePrefix = &oidcInput.OIDCConfigDTO.UsernamePrefix
 			}
+			requiredClaims := make(map[string]string)
+			for _, claim := range oidcInput.OIDCConfigDTO.RequiredClaims {
+				parts := strings.SplitN(claim, "=", 2)
+				requiredClaims[parts[0]] = parts[1]
+			}
+			oidc.RequiredClaims = requiredClaims
 			kubernetesConfig.KubeAPIServer.AdditionalOidcConfig = &[]gardener.OIDCConfig{oidc}
 		}
 	}
