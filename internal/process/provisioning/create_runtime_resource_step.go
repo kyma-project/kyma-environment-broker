@@ -268,80 +268,49 @@ func (s *CreateRuntimeResourceStep) createKubernetesConfiguration(operation inte
 		UsernameClaim:  &s.oidcDefaultValues.UsernameClaim,
 		UsernamePrefix: &s.oidcDefaultValues.UsernamePrefix,
 	}
+	oidcInput := operation.ProvisioningParameters.Parameters.OIDC
 	kubernetesConfig := imv1.Kubernetes{
 		Version:       ptr.String(s.config.KubernetesVersion),
 		KubeAPIServer: imv1.APIServer{},
 	}
-	if operation.ProvisioningParameters.Parameters.OIDC == nil {
-		s.setKubeAPIServerOIDCConfig(&kubernetesConfig, oidc)
-	}
-	if !s.config.UseAdditionalOIDCSchemaHandling && operation.ProvisioningParameters.Parameters.OIDC != nil {
-		s.updateOIDCConfig(&oidc, operation.ProvisioningParameters.Parameters.OIDC.OIDCConfigDTO)
-		s.setKubeAPIServerOIDCConfig(&kubernetesConfig, oidc)
-	}
-
-	if s.config.UseAdditionalOIDCSchemaHandling && operation.ProvisioningParameters.Parameters.OIDC != nil {
-		if operation.ProvisioningParameters.Parameters.OIDC.OIDCConfigDTO != nil {
-			s.updateOIDCConfig(&oidc, operation.ProvisioningParameters.Parameters.OIDC.OIDCConfigDTO)
-			s.setKubeAPIServerOIDCConfig(&kubernetesConfig, oidc)
-		} else if operation.ProvisioningParameters.Parameters.OIDC.List != nil {
-			s.setKubeAPIServerAdditionalOIDCConfig(&kubernetesConfig, operation.ProvisioningParameters.Parameters.OIDC.List)
-		} else {
-			s.setKubeAPIServerOIDCConfig(&kubernetesConfig, oidc)
+	if oidcInput == nil {
+		kubernetesConfig.KubeAPIServer.AdditionalOidcConfig = &[]gardener.OIDCConfig{oidc}
+	} else {
+		if oidcInput.List != nil {
+			kubernetesConfig.KubeAPIServer.AdditionalOidcConfig = &[]gardener.OIDCConfig{}
+			for _, oidcConfig := range oidcInput.List {
+				*kubernetesConfig.KubeAPIServer.AdditionalOidcConfig = append(*kubernetesConfig.KubeAPIServer.AdditionalOidcConfig, gardener.OIDCConfig{
+					ClientID:       &oidcConfig.ClientID,
+					IssuerURL:      &oidcConfig.IssuerURL,
+					SigningAlgs:    oidcConfig.SigningAlgs,
+					GroupsClaim:    &oidcConfig.GroupsClaim,
+					UsernamePrefix: &oidcConfig.UsernamePrefix,
+					UsernameClaim:  &oidcConfig.UsernameClaim,
+				})
+			}
+		} else if oidcInput.OIDCConfigDTO != nil {
+			if oidcInput.OIDCConfigDTO.ClientID != "" {
+				oidc.ClientID = &oidcInput.OIDCConfigDTO.ClientID
+			}
+			if oidcInput.OIDCConfigDTO.GroupsClaim != "" {
+				oidc.GroupsClaim = &oidcInput.OIDCConfigDTO.GroupsClaim
+			}
+			if oidcInput.OIDCConfigDTO.IssuerURL != "" {
+				oidc.IssuerURL = &oidcInput.OIDCConfigDTO.IssuerURL
+			}
+			if len(oidcInput.OIDCConfigDTO.SigningAlgs) > 0 {
+				oidc.SigningAlgs = oidcInput.OIDCConfigDTO.SigningAlgs
+			}
+			if oidcInput.OIDCConfigDTO.UsernameClaim != "" {
+				oidc.UsernameClaim = &oidcInput.OIDCConfigDTO.UsernameClaim
+			}
+			if oidcInput.OIDCConfigDTO.UsernamePrefix != "" {
+				oidc.UsernamePrefix = &oidcInput.OIDCConfigDTO.UsernamePrefix
+			}
+			kubernetesConfig.KubeAPIServer.AdditionalOidcConfig = &[]gardener.OIDCConfig{oidc}
 		}
 	}
-
 	return kubernetesConfig
-}
-
-func (s *CreateRuntimeResourceStep) updateOIDCConfig(oidc *gardener.OIDCConfig, input *pkg.OIDCConfigDTO) {
-	if input == nil {
-		return
-	}
-	if input.ClientID != "" {
-		oidc.ClientID = &input.ClientID
-	}
-	if input.GroupsClaim != "" {
-		oidc.GroupsClaim = &input.GroupsClaim
-	}
-	if input.IssuerURL != "" {
-		oidc.IssuerURL = &input.IssuerURL
-	}
-	if len(input.SigningAlgs) > 0 {
-		oidc.SigningAlgs = input.SigningAlgs
-	}
-	if input.UsernameClaim != "" {
-		oidc.UsernameClaim = &input.UsernameClaim
-	}
-	if input.UsernamePrefix != "" {
-		oidc.UsernamePrefix = &input.UsernamePrefix
-	}
-}
-
-func (s *CreateRuntimeResourceStep) setKubeAPIServerOIDCConfig(kubernetesConfig *imv1.Kubernetes, oidc gardener.OIDCConfig) {
-	if s.config.UseMainOIDC {
-		kubernetesConfig.KubeAPIServer.OidcConfig = oidc
-		kubernetesConfig.KubeAPIServer.AdditionalOidcConfig = nil
-	}
-	if s.config.UseAdditionalOIDC {
-		kubernetesConfig.KubeAPIServer.AdditionalOidcConfig = &[]gardener.OIDCConfig{oidc}
-	}
-}
-
-func (s *CreateRuntimeResourceStep) setKubeAPIServerAdditionalOIDCConfig(kubernetesConfig *imv1.Kubernetes, oidcList []pkg.OIDCConfigDTO) {
-	if kubernetesConfig.KubeAPIServer.AdditionalOidcConfig == nil {
-		kubernetesConfig.KubeAPIServer.AdditionalOidcConfig = &[]gardener.OIDCConfig{}
-	}
-	for _, oidcConfig := range oidcList {
-		*kubernetesConfig.KubeAPIServer.AdditionalOidcConfig = append(*kubernetesConfig.KubeAPIServer.AdditionalOidcConfig, gardener.OIDCConfig{
-			ClientID:       &oidcConfig.ClientID,
-			IssuerURL:      &oidcConfig.IssuerURL,
-			SigningAlgs:    oidcConfig.SigningAlgs,
-			GroupsClaim:    &oidcConfig.GroupsClaim,
-			UsernamePrefix: &oidcConfig.UsernamePrefix,
-			UsernameClaim:  &oidcConfig.UsernameClaim,
-		})
-	}
 }
 
 func (s *CreateRuntimeResourceStep) updateInstance(id string, region string) error {
