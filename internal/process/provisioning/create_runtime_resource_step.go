@@ -321,6 +321,8 @@ func (s *CreateRuntimeResourceStep) createKubernetesConfiguration(operation inte
 			}
 			oidc.RequiredClaims = requiredClaims
 			kubernetesConfig.KubeAPIServer.AdditionalOidcConfig = &[]gardener.OIDCConfig{oidc}
+		} else {
+			kubernetesConfig.KubeAPIServer.AdditionalOidcConfig = &[]gardener.OIDCConfig{oidc}
 		}
 	}
 	return kubernetesConfig
