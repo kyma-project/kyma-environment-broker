@@ -39,10 +39,10 @@ func (r Result) IsEUAccess() bool {
 	return r.EUAccess
 }
 
-func (r *Result) Rule() string {
+func (r Result) Rule() string {
 	return r.RawData.Rule
 }
 
-func (r *Result) NumberedRule() string {
+func (r Result) NumberedRule() string {
 	return r.RawData.NumberedRule()
 }

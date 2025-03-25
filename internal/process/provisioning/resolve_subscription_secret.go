@@ -20,6 +20,7 @@ type ParsedRule interface {
 	Hyperscaler() string
 	IsShared() bool
 	IsEUAccess() bool
+	Rule() string
 }
 
 // SecretBinding selector requirements
