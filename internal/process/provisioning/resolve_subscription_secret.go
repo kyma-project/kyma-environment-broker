@@ -95,6 +95,7 @@ func (s *ResolveSubscriptionSecretStep) resolveSecretName(operation internal.Ope
 		return "", err
 	}
 
+	log.Info(fmt.Sprintf("matched rule: %q", parsedRule.Rule()))
 	labelSelectorBuilder := s.createLabelSelectorBuilder(parsedRule, operation.ProvisioningParameters.ErsContext.GlobalAccountID)
 
 	log.Info(fmt.Sprintf("getting secret binding with selector %q", labelSelectorBuilder.String()))
@@ -147,7 +148,7 @@ func (s *ResolveSubscriptionSecretStep) provisioningAttributesFromOperationData(
 }
 
 func (s *ResolveSubscriptionSecretStep) matchProvisioningAttributesToRule(attr *rules.ProvisioningAttributes) (ParsedRule, error) {
-	result, found := s.rulesService.MatchProvisioningAttributes(attr)
+	result, found := s.rulesService.MatchProvisioningAttributesWithValidRuleset(attr)
 	if !found {
 		return nil, fmt.Errorf("no matching rule for provisioning attributes %q", attr)
 	}
