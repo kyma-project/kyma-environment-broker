@@ -226,8 +226,7 @@ func TestCreateRuntimeResourceStep_OIDC_MixedCustom(t *testing.T) {
 		Name:      operation.RuntimeID,
 	}, &runtime)
 	assert.NoError(t, err)
-	assert.Equal(t, expectedOIDCConfig, runtime.Spec.Shoot.Kubernetes.KubeAPIServer.OidcConfig)
-	assert.Nil(t, runtime.Spec.Shoot.Kubernetes.KubeAPIServer.AdditionalOidcConfig)
+	assert.Equal(t, expectedOIDCConfig, (*runtime.Spec.Shoot.Kubernetes.KubeAPIServer.AdditionalOidcConfig)[0])
 }
 
 func TestCreateRuntimeResourceStep_FailureToleranceForTrial(t *testing.T) {
