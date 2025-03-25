@@ -127,9 +127,6 @@ func (s *BrokerSuiteTest) TearDown() {
 
 func NewBrokerSuiteTest(t *testing.T, version ...string) *BrokerSuiteTest {
 	cfg := fixConfig()
-	cfg.Provisioner.UseAdditionalOIDC = true
-	cfg.Provisioner.UseMainOIDC = false
-	cfg.Provisioner.UseAdditionalOIDCSchemaHandling = true
 	return NewBrokerSuiteTestWithConfig(t, cfg, version...)
 }
 
@@ -198,8 +195,6 @@ func NewBrokerSuiteTestWithConfig(t *testing.T, cfg *Config, version ...string) 
 		DefaultGardenerShootPurpose:  "testing",
 		DefaultTrialProvider:         pkg.AWS,
 		EnableShootAndSeedSameRegion: cfg.Provisioner.EnableShootAndSeedSameRegion,
-		UseMainOIDC:                  true,
-		UseAdditionalOIDC:            false,
 	}, map[string]string{"cf-eu10": "europe", "cf-us10": "us"}, cfg.FreemiumProviders, defaultOIDCValues(), cfg.Broker.UseSmallerMachineTypes)
 
 	storageCleanup, db, err := GetStorageForE2ETests()
