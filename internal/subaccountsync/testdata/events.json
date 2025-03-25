@@ -14,7 +14,7 @@
       "jobLocation": null,
       "subdomain": "subaccount-2-subdomain",
       "betaEnabled": true,
-      "usedForProduction": "NOT_USED_FOR_PRODUCTION",
+      "usedForProduction": "USED_FOR_PRODUCTION",
       "labels": {}
     },
     "globalAccountGUID": "54130280-9eef-4fab-94b6-be2bea4fa1d0",
@@ -86,7 +86,7 @@
       "jobLocation": null,
       "subdomain": "subaccount-2-subdomain",
       "betaEnabled": false,
-      "usedForProduction": "USED_FOR_PRODUCTION",
+      "usedForProduction": "NOT_USED_FOR_PRODUCTION",
       "labels": {}
     },
     "globalAccountGUID": "54130280-9eef-4fab-94b6-be2bea4fa1d0",

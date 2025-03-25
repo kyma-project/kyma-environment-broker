@@ -28,10 +28,9 @@ const (
 )
 
 const (
-	subaccountID        = "subaccount-id-1"
-	betaEnabledLabelKey = "operator.kyma-project.io/beta"
-	interval            = 100 * time.Millisecond
-	timeout             = 2 * time.Second
+	subaccountID = "subaccount-id-1"
+	interval     = 100 * time.Millisecond
+	timeout      = 2 * time.Second
 )
 
 var log = slog.New(slog.NewTextHandler(os.Stderr, nil))
@@ -61,7 +60,7 @@ func TestUpdater(t *testing.T) {
 
 		queue := syncqueues.NewPriorityQueueWithCallbacksForSize(log, nil, 4)
 		fakeK8sClient := fake.NewSimpleDynamicClient(scheme, mockKymaCR)
-		updater, err := NewUpdater(fakeK8sClient, queue, gvr, timeout, betaEnabledLabelKey, context.TODO(), log)
+		updater, err := NewUpdater(fakeK8sClient, queue, gvr, timeout, context.TODO(), log)
 		require.NoError(t, err)
 
 		// when
@@ -74,7 +73,7 @@ func TestUpdater(t *testing.T) {
 
 		actual, err := fakeK8sClient.Resource(gvr).Namespace(namespace).Get(context.TODO(), kymaCRName, metav1.GetOptions{})
 		require.NoError(t, err)
-		assert.NotContains(t, actual.GetLabels(), betaEnabledLabelKey)
+		assert.NotContains(t, actual.GetLabels(), BetaEnabledLabelKey)
 	})
 
 	t.Run("should update a Kyma CR with the given subaccount id label when the queue has a matching element", func(t *testing.T) {
@@ -89,14 +88,15 @@ func TestUpdater(t *testing.T) {
 
 		queue := syncqueues.NewPriorityQueueWithCallbacksForSize(log, nil, 4)
 		queue.Insert(syncqueues.QueueElement{
-			SubaccountID: subaccountID,
-			BetaEnabled:  "true",
-			ModifiedAt:   time.Now().Unix(),
+			SubaccountID:      subaccountID,
+			BetaEnabled:       "true",
+			UsedForProduction: "USED_FOR_PRODUCTION",
+			ModifiedAt:        time.Now().Unix(),
 		})
 		assert.False(t, queue.IsEmpty())
 
 		fakeK8sClient := fake.NewSimpleDynamicClient(scheme, mockKymaCR)
-		updater, err := NewUpdater(fakeK8sClient, queue, gvr, timeout, betaEnabledLabelKey, context.TODO(), log)
+		updater, err := NewUpdater(fakeK8sClient, queue, gvr, timeout, context.TODO(), log)
 		require.NoError(t, err)
 
 		// when
@@ -108,7 +108,7 @@ func TestUpdater(t *testing.T) {
 		err = wait.PollUntilContextTimeout(context.Background(), interval, timeout, true, func(ctx context.Context) (bool, error) {
 			actual, err := fakeK8sClient.Resource(gvr).Namespace(namespace).Get(context.TODO(), kymaCRName, metav1.GetOptions{})
 			require.NoError(t, err)
-			if actual.GetLabels()[betaEnabledLabelKey] == "true" {
+			if actual.GetLabels()[BetaEnabledLabelKey] == "true" && actual.GetLabels()[UsedForProductionLabelKey] == "USED_FOR_PRODUCTION" {
 				return true, nil
 			}
 			return false, nil
@@ -133,14 +133,15 @@ func TestUpdater(t *testing.T) {
 		queue := syncqueues.NewPriorityQueueWithCallbacksForSize(log, nil, 4)
 
 		queue.Insert(syncqueues.QueueElement{
-			SubaccountID: subaccountID,
-			BetaEnabled:  "true",
-			ModifiedAt:   time.Now().Unix(),
+			SubaccountID:      subaccountID,
+			BetaEnabled:       "true",
+			UsedForProduction: "USED_FOR_PRODUCTION",
+			ModifiedAt:        time.Now().Unix(),
 		})
 		assert.False(t, queue.IsEmpty())
 
 		fakeK8sClient := fake.NewSimpleDynamicClient(scheme, mockKymaCR1, mockKymaCR2)
-		updater, err := NewUpdater(fakeK8sClient, queue, gvr, timeout, betaEnabledLabelKey, context.TODO(), log)
+		updater, err := NewUpdater(fakeK8sClient, queue, gvr, timeout, context.TODO(), log)
 		require.NoError(t, err)
 
 		// when
@@ -154,7 +155,7 @@ func TestUpdater(t *testing.T) {
 			assert.Len(t, actual.Items, 2)
 			require.NoError(t, err)
 			for _, un := range actual.Items {
-				if un.GetLabels()[betaEnabledLabelKey] != "true" {
+				if un.GetLabels()[BetaEnabledLabelKey] != "true" && un.GetLabels()[UsedForProductionLabelKey] != "USED_FOR_PRODUCTION" {
 					return false, nil
 				}
 			}
@@ -183,14 +184,15 @@ func TestUpdater(t *testing.T) {
 
 		queue := syncqueues.NewPriorityQueueWithCallbacksForSize(log, nil, 4)
 		queue.Insert(syncqueues.QueueElement{
-			SubaccountID: subaccountID,
-			BetaEnabled:  "true",
-			ModifiedAt:   time.Now().Unix(),
+			SubaccountID:      subaccountID,
+			BetaEnabled:       "true",
+			UsedForProduction: "USED_FOR_PRODUCTION",
+			ModifiedAt:        time.Now().Unix(),
 		})
 		assert.False(t, queue.IsEmpty())
 
 		fakeK8sClient := fake.NewSimpleDynamicClient(scheme, mockKymaCR1, mockKymaCR2)
-		updater, err := NewUpdater(fakeK8sClient, queue, gvr, timeout, betaEnabledLabelKey, context.TODO(), log)
+		updater, err := NewUpdater(fakeK8sClient, queue, gvr, timeout, context.TODO(), log)
 		require.NoError(t, err)
 
 		// when
@@ -204,7 +206,7 @@ func TestUpdater(t *testing.T) {
 			require.NoError(t, err)
 			assert.Len(t, actual.Items, 1)
 			for _, un := range actual.Items {
-				if un.GetLabels()[betaEnabledLabelKey] != "true" {
+				if un.GetLabels()[BetaEnabledLabelKey] != "true" && un.GetLabels()[UsedForProductionLabelKey] != "USED_FOR_PRODUCTION" {
 					return false, nil
 				}
 			}
@@ -214,7 +216,8 @@ func TestUpdater(t *testing.T) {
 
 		actual, err := fakeK8sClient.Resource(gvr).Namespace(namespace).Get(context.TODO(), kymaCRName2, metav1.GetOptions{})
 		require.NoError(t, err)
-		assert.NotContains(t, actual.GetLabels(), betaEnabledLabelKey)
+		assert.NotContains(t, actual.GetLabels(), BetaEnabledLabelKey)
+		assert.NotContains(t, actual.GetLabels(), UsedForProductionLabelKey)
 		assert.True(t, queue.IsEmpty())
 	})
 }

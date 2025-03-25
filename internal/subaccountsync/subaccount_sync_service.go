@@ -25,7 +25,6 @@ import (
 const (
 	subaccountIDLabel     = "kyma-project.io/subaccount-id"
 	runtimeIDLabel        = "kyma-project.io/runtime-id"
-	betaEnabledLabel      = "operator.kyma-project.io/beta"
 	eventServicePath      = "%s/events/v1/events/central"
 	subaccountServicePath = "%s/accounts/v1/technical/subaccounts/%s"
 	eventType             = "Subaccount_Creation,Subaccount_Update"
@@ -35,7 +34,8 @@ type (
 	subaccountIDType string
 	runtimeIDType    string
 	runtimeStateType struct {
-		betaEnabled string
+		betaEnabled       string
+		usedForProduction string
 	}
 	subaccountRuntimesType map[runtimeIDType]runtimeStateType
 	statesFromCisType      map[subaccountIDType]CisStateType
@@ -133,7 +133,6 @@ func (s *SyncService) Run() {
 			priorityQueue,
 			s.kymaGVR,
 			s.cfg.SyncQueueSleepInterval,
-			betaEnabledLabel,
 			s.ctx,
 			logger.With("component", "updater"))
 		fatalOnError(err)
@@ -212,11 +211,12 @@ func getSubaccountIDFromDB(runtimeID string, db storage.BrokerStorage) (string, 
 	return subaccountID, nil
 }
 
-func getRequiredData(u *unstructured.Unstructured, logger *slog.Logger, stateReconciler *stateReconcilerType, alwaysUseDB bool) (string, string, string, error) {
+func getRequiredData(u *unstructured.Unstructured, logger *slog.Logger, stateReconciler *stateReconcilerType, alwaysUseDB bool) (string, string, string, string, error) {
 	labels := u.GetLabels()
 	subaccountID := labels[subaccountIDLabel]
 	runtimeID := labels[runtimeIDLabel]
-	betaEnabled := labels[betaEnabledLabel]
+	betaEnabled := labels[kymacustomresource.BetaEnabledLabelKey]
+	usedForProduction := labels[kymacustomresource.UsedForProductionLabelKey]
 	if runtimeID == "" {
 		logger.Warn(fmt.Sprintf("Kyma resource has no runtime label, falling back to resource name: %s", u.GetName()))
 		runtimeID = u.GetName()
@@ -225,10 +225,10 @@ func getRequiredData(u *unstructured.Unstructured, logger *slog.Logger, stateRec
 	if subaccountID == "" || alwaysUseDB {
 		subaccountID, err = getSubaccountIDFromDB(runtimeID, stateReconciler.db)
 		if err != nil {
-			return "", "", "", fmt.Errorf("cannot determine subaccountID for Kyma resource: %s - %s", u.GetName(), err)
+			return "", "", "", "", fmt.Errorf("cannot determine subaccountID for Kyma resource: %s - %s", u.GetName(), err)
 		}
 	}
-	return subaccountID, runtimeID, betaEnabled, nil
+	return subaccountID, runtimeID, betaEnabled, usedForProduction, nil
 }
 
 func fatalOnError(err error) {

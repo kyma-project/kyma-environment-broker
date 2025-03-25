@@ -54,7 +54,7 @@ func (q *SubaccountAwarePriorityQueueWithCallbacks) Insert(element QueueElement)
 	if idx, ok := q.idx[e.SubaccountID]; ok {
 		if q.elements[idx].ModifiedAt > e.ModifiedAt {
 			// new element is older than one already in the queue, do not insert
-			q.log.Debug(fmt.Sprintf("Element with subaccountID %s, betaEnabled %s, modifiedAt %d is older than %d - ignoring", e.SubaccountID, e.BetaEnabled, e.ModifiedAt, q.elements[idx].ModifiedAt))
+			q.log.Debug(fmt.Sprintf("Element with subaccountID %s, betaEnabled %s, usedForProduction %s, modifiedAt %d is older than %d - ignoring", e.SubaccountID, e.BetaEnabled, e.UsedForProduction, e.ModifiedAt, q.elements[idx].ModifiedAt))
 			return
 		}
 		// extraction and re-insertion
@@ -66,9 +66,9 @@ func (q *SubaccountAwarePriorityQueueWithCallbacks) Insert(element QueueElement)
 		q.idx[q.elements[0].SubaccountID] = 0
 		q.size--
 		q.siftDown()
-		q.log.Debug(fmt.Sprintf("Element with subaccountID %s is updated with betaEnabled %s, modifiedAt %d", e.SubaccountID, e.BetaEnabled, e.ModifiedAt))
+		q.log.Debug(fmt.Sprintf("Element with subaccountID %s is updated with betaEnabled %s, usedForProduction %s, modifiedAt %d", e.SubaccountID, e.BetaEnabled, e.UsedForProduction, e.ModifiedAt))
 	} else {
-		q.log.Debug(fmt.Sprintf("Element with subaccountID %s is inserted with betaEnabled %s, modifiedAt %d", e.SubaccountID, e.BetaEnabled, e.ModifiedAt))
+		q.log.Debug(fmt.Sprintf("Element with subaccountID %s is inserted with betaEnabled %s, usedForProduction %s, modifiedAt %d", e.SubaccountID, e.BetaEnabled, e.UsedForProduction, e.ModifiedAt))
 		q.idx[e.SubaccountID] = q.size
 	}
 
@@ -103,7 +103,7 @@ func (q *SubaccountAwarePriorityQueueWithCallbacks) Extract() (QueueElement, boo
 	if q.eventHandler != nil && q.eventHandler.OnExtract != nil {
 		q.eventHandler.OnExtract(q.size, time.Now().UnixNano()-e.entryTime)
 	}
-	q.log.Debug(fmt.Sprintf("Element dequeued - subaccountID: %s, betaEnabled %s", e.SubaccountID, e.BetaEnabled))
+	q.log.Debug(fmt.Sprintf("Element dequeued - subaccountID: %s, betaEnabled %s, usedForProduction %s", e.SubaccountID, e.BetaEnabled, e.UsedForProduction))
 	return e.QueueElement, true
 }
 
