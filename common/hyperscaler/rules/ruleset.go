@@ -34,7 +34,11 @@ func (vr *ValidRule) Rule() string {
 }
 
 func (vr *ValidRule) NumberedRule() string {
-	return fmt.Sprintf("%d: %s", vr.RawData.RuleNo, vr.RawData.Rule)
+	return vr.RawData.NumberedRule()
+}
+
+func (rd *RawData) NumberedRule() string {
+	return fmt.Sprintf("%d: %s", rd.RuleNo, rd.Rule)
 }
 
 func (pa *PatternAttribute) Match(value string) bool {

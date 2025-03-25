@@ -26,3 +26,11 @@ type Result struct {
 	Shared          bool
 	RawData         RawData
 }
+
+func (r *Result) Rule() string {
+	return r.RawData.Rule
+}
+
+func (r *Result) NumberedRule() string {
+	return r.RawData.NumberedRule()
+}
