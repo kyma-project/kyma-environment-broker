@@ -111,7 +111,10 @@ func (s *UpdateRuntimeStep) Run(operation internal.Operation, log *slog.Logger) 
 			}
 		} else if operation.UpdatingParameters.OIDC.OIDCConfigDTO != nil {
 			input := operation.UpdatingParameters.OIDC.OIDCConfigDTO
-			firstOidcConfig := (*runtime.Spec.Shoot.Kubernetes.KubeAPIServer.AdditionalOidcConfig)[0]
+			var firstOidcConfig gardener.OIDCConfig
+			if runtime.Spec.Shoot.Kubernetes.KubeAPIServer.AdditionalOidcConfig != nil && len(*runtime.Spec.Shoot.Kubernetes.KubeAPIServer.AdditionalOidcConfig) > 0 {
+				firstOidcConfig = (*runtime.Spec.Shoot.Kubernetes.KubeAPIServer.AdditionalOidcConfig)[0]
+			}
 			runtime.Spec.Shoot.Kubernetes.KubeAPIServer.AdditionalOidcConfig = &[]gardener.OIDCConfig{firstOidcConfig}
 			if len(input.SigningAlgs) > 0 {
 				(*runtime.Spec.Shoot.Kubernetes.KubeAPIServer.AdditionalOidcConfig)[0].SigningAlgs = input.SigningAlgs
