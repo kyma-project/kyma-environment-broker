@@ -76,7 +76,7 @@ func TestUpdate(t *testing.T) {
 	assert.Equal(t, upgradeOperationID, suite.LastOperation(iid).ID)
 
 	runtime := suite.GetRuntimeResourceByInstanceID(iid)
-	oidc := runtime.Spec.Shoot.Kubernetes.KubeAPIServer.OidcConfig
+	oidc := (*runtime.Spec.Shoot.Kubernetes.KubeAPIServer.AdditionalOidcConfig)[0]
 
 	assert.Equal(t, "id-ooo", *oidc.ClientID)
 	assert.Equal(t, []string{"RS256"}, oidc.SigningAlgs)
