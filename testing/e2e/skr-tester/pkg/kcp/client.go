@@ -79,7 +79,7 @@ func (c *KCPClient) GetCurrentMachineType(instanceID string) (*string, error) {
 	}
 	output, err := exec.Command("kcp", args...).Output()
 	if err != nil {
-		return nil, fmt.Errorf("failed to get current machine type: %w", err)
+		return nil, newKCPClientError("failed to get current machine type: %w", err)
 	}
 	machineType := string(output)
 	machineType = strings.TrimSpace(machineType)
@@ -93,11 +93,11 @@ func (c *KCPClient) GetCurrentOIDCConfig(instanceID string) (interface{}, error)
 	}
 	output, err := exec.Command("kcp", args...).Output()
 	if err != nil {
-		return nil, fmt.Errorf("failed to get current OIDC config: %w", err)
+		return nil, newKCPClientError("failed to get current OIDC config: %w", err)
 	}
 	var oidcConfig interface{}
 	if err := json.Unmarshal(output, &oidcConfig); err != nil {
-		return nil, fmt.Errorf("failed to unmarshal OIDC config: %w", err)
+		return nil, newKCPClientError("failed to unmarshal OIDC config: %w", err)
 	}
 	return oidcConfig, nil
 }
@@ -109,7 +109,7 @@ func (c *KCPClient) GetShootID(instanceID string) (*string, error) {
 	}
 	output, err := exec.Command("kcp", args...).Output()
 	if err != nil {
-		return nil, fmt.Errorf("failed to get shoot ID: %w", err)
+		return nil, newKCPClientError("failed to get shoot ID: %w", err)
 	}
 	shootID := strings.TrimSpace(string(output))
 	return &shootID, nil
@@ -118,7 +118,7 @@ func (c *KCPClient) GetShootID(instanceID string) (*string, error) {
 func (c *KCPClient) GetKubeconfig(instanceID string) ([]byte, error) {
 	shootID, err := c.GetShootID(instanceID)
 	if err != nil {
-		return nil, fmt.Errorf("failed to get shoot ID: %w", err)
+		return nil, newKCPClientError("failed to get shoot ID: %w", err)
 	}
 	args := []string{"kubeconfig", "-c", string(*shootID)}
 	if clientSecret := os.Getenv("KCP_OIDC_CLIENT_SECRET"); clientSecret != "" {
@@ -126,12 +126,12 @@ func (c *KCPClient) GetKubeconfig(instanceID string) ([]byte, error) {
 	}
 	output, err := exec.Command("kcp", args...).Output()
 	if err != nil {
-		return nil, fmt.Errorf("failed to get kubeconfig: %w", err)
+		return nil, newKCPClientError("failed to get kubeconfig: %w", err)
 	}
 	kubeconfigPath := strings.TrimSpace(strings.Split(string(output), " ")[3])
 	kubeconfig, err := os.ReadFile(kubeconfigPath)
 	if err != nil {
-		return nil, fmt.Errorf("failed to read kubeconfig file: %w", err)
+		return nil, newKCPClientError("failed to read kubeconfig file: %w", err)
 	}
 	return kubeconfig, nil
 }
@@ -143,7 +143,7 @@ func (c *KCPClient) GetSuspensionOperationID(instanceID string) (*string, error)
 	}
 	output, err := exec.Command("kcp", args...).Output()
 	if err != nil {
-		return nil, fmt.Errorf("failed to get suspension operation ID: %w", err)
+		return nil, newKCPClientError("failed to get suspension operation ID: %w", err)
 	}
 	operationID := strings.TrimSpace(string(output))
 	return &operationID, nil
@@ -156,14 +156,14 @@ func (c *KCPClient) GetAdditionalWorkerNodePools(instanceID string) ([]map[strin
 	}
 	output, err := exec.Command("kcp", args...).Output()
 	if err != nil {
-		return nil, fmt.Errorf("failed to get additional worker node pools: %w", err)
+		return nil, newKCPClientError("failed to get additional worker node pools: %w", err)
 	}
 	var additionalWorkerNodePools []map[string]interface{}
 	if len(strings.TrimSpace(string(output))) == 0 {
 		return additionalWorkerNodePools, nil
 	}
 	if err := json.Unmarshal(output, &additionalWorkerNodePools); err != nil {
-		return nil, fmt.Errorf("failed to unmarshal additionalWorkerNodePools: %w", err)
+		return nil, newKCPClientError("failed to unmarshal additionalWorkerNodePools: %w", err)
 	}
 	return additionalWorkerNodePools, nil
 }
@@ -175,7 +175,7 @@ func (c *KCPClient) GetPlanName(instanceID string) (string, error) {
 	}
 	output, err := exec.Command("kcp", args...).Output()
 	if err != nil {
-		return "", fmt.Errorf("failed to get plan name: %w", err)
+		return "", newKCPClientError("failed to get plan name: %w", err)
 	}
 	planName := strings.TrimSpace(string(output))
 	return planName, nil
@@ -188,22 +188,22 @@ func (c *KCPClient) GetStatus(instanceID string) (string, error) {
 	}
 	output, err := exec.Command("kcp", args...).Output()
 	if err != nil {
-		return "", fmt.Errorf("failed to get status: %w", err)
+		return "", newKCPClientError("failed to get status: %w", err)
 	}
 	if len(strings.TrimSpace(string(output))) == 0 {
 		args = append(args, "--state", "deprovisioned")
 		output, err = exec.Command("kcp", args...).Output()
 		if err != nil {
-			return "", fmt.Errorf("failed to get status: %w", err)
+			return "", newKCPClientError("failed to get status: %w", err)
 		}
 	}
 	var status map[string]interface{}
 	if err := json.Unmarshal(output, &status); err != nil {
-		return "", fmt.Errorf("failed to parse JSON: %w", err)
+		return "", newKCPClientError("failed to parse JSON: %w", err)
 	}
 	formattedStatus, err := json.MarshalIndent(status, "", "  ")
 	if err != nil {
-		return "", fmt.Errorf("failed to format JSON: %w", err)
+		return "", newKCPClientError("failed to format JSON: %w", err)
 	}
 	return string(formattedStatus), nil
 }
@@ -215,7 +215,7 @@ func (c *KCPClient) GetEvents(instanceID string) (string, error) {
 	}
 	events, err := exec.Command("kcp", args...).Output()
 	if err != nil {
-		return "", fmt.Errorf("failed to get events: %w", err)
+		return "", newKCPClientError("failed to get events: %w", err)
 	}
 	return string(events), nil
 }
@@ -226,4 +226,9 @@ func getEnvOrThrow(key string) string {
 		panic(fmt.Sprintf("Environment variable %s is required", key))
 	}
 	return value
+}
+
+func newKCPClientError(format string, a ...any) error {
+	prefixedFormat := fmt.Sprintf("KCP client error: %s", format)
+	return fmt.Errorf(prefixedFormat, a...)
 }
