@@ -209,13 +209,36 @@ func FixProvisioningOperationWithProvisioningParameters(operationId, instanceId 
 func FixUpdatingOperation(operationId, instanceId string) internal.UpdatingOperation {
 	o := FixOperation(operationId, instanceId, internal.OperationTypeUpdate)
 	o.UpdatingParameters = internal.UpdatingParametersDTO{
-		OIDC: &pkg.OIDCConfigDTO{
-			ClientID:       "clinet-id-oidc",
-			GroupsClaim:    "groups",
-			IssuerURL:      "issuer-url",
-			SigningAlgs:    []string{"signingAlgs"},
-			UsernameClaim:  "sub",
-			UsernamePrefix: "",
+		OIDC: &pkg.OIDCsDTO{
+			List: []pkg.OIDCConfigDTO{
+				{
+					ClientID:       "clinet-id-oidc",
+					GroupsClaim:    "groups",
+					IssuerURL:      "issuer-url",
+					SigningAlgs:    []string{"signingAlgs"},
+					UsernameClaim:  "sub",
+					UsernamePrefix: "",
+				},
+			},
+		},
+	}
+	return internal.UpdatingOperation{
+		Operation: o,
+	}
+}
+
+func FixUpdatingOperationWithOIDCObject(operationId, instanceId string) internal.UpdatingOperation {
+	o := FixOperation(operationId, instanceId, internal.OperationTypeUpdate)
+	o.UpdatingParameters = internal.UpdatingParametersDTO{
+		OIDC: &pkg.OIDCsDTO{
+			OIDCConfigDTO: &pkg.OIDCConfigDTO{
+				ClientID:       "clinet-id-oidc",
+				GroupsClaim:    "groups",
+				IssuerURL:      "issuer-url",
+				SigningAlgs:    []string{"signingAlgs"},
+				UsernameClaim:  "sub",
+				UsernamePrefix: "",
+			},
 		},
 	}
 	return internal.UpdatingOperation{

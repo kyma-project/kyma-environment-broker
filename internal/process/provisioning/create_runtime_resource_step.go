@@ -6,6 +6,7 @@ import (
 	"log/slog"
 	"math/rand"
 	"strconv"
+	"strings"
 	"time"
 
 	kebError "github.com/kyma-project/kyma-environment-broker/internal/error"
@@ -268,41 +269,62 @@ func (s *CreateRuntimeResourceStep) createKubernetesConfiguration(operation inte
 		UsernameClaim:  &s.oidcDefaultValues.UsernameClaim,
 		UsernamePrefix: &s.oidcDefaultValues.UsernamePrefix,
 	}
-	if operation.ProvisioningParameters.Parameters.OIDC != nil {
-		if operation.ProvisioningParameters.Parameters.OIDC.ClientID != "" {
-			oidc.ClientID = &operation.ProvisioningParameters.Parameters.OIDC.ClientID
-		}
-		if operation.ProvisioningParameters.Parameters.OIDC.GroupsClaim != "" {
-			oidc.GroupsClaim = &operation.ProvisioningParameters.Parameters.OIDC.GroupsClaim
-		}
-		if operation.ProvisioningParameters.Parameters.OIDC.IssuerURL != "" {
-			oidc.IssuerURL = &operation.ProvisioningParameters.Parameters.OIDC.IssuerURL
-		}
-		if len(operation.ProvisioningParameters.Parameters.OIDC.SigningAlgs) > 0 {
-			oidc.SigningAlgs = operation.ProvisioningParameters.Parameters.OIDC.SigningAlgs
-		}
-		if operation.ProvisioningParameters.Parameters.OIDC.UsernameClaim != "" {
-			oidc.UsernameClaim = &operation.ProvisioningParameters.Parameters.OIDC.UsernameClaim
-		}
-		if operation.ProvisioningParameters.Parameters.OIDC.UsernamePrefix != "" {
-			oidc.UsernamePrefix = &operation.ProvisioningParameters.Parameters.OIDC.UsernamePrefix
-		}
-	}
-
+	oidcInput := operation.ProvisioningParameters.Parameters.OIDC
 	kubernetesConfig := imv1.Kubernetes{
 		Version:       ptr.String(s.config.KubernetesVersion),
 		KubeAPIServer: imv1.APIServer{},
 	}
-
-	if s.config.UseMainOIDC {
-		kubernetesConfig.KubeAPIServer.OidcConfig = oidc
-		kubernetesConfig.KubeAPIServer.AdditionalOidcConfig = nil
-	}
-
-	if s.config.UseAdditionalOIDC {
+	if oidcInput == nil {
 		kubernetesConfig.KubeAPIServer.AdditionalOidcConfig = &[]gardener.OIDCConfig{oidc}
+	} else {
+		if oidcInput.List != nil {
+			kubernetesConfig.KubeAPIServer.AdditionalOidcConfig = &[]gardener.OIDCConfig{}
+			for _, oidcConfig := range oidcInput.List {
+				requiredClaims := make(map[string]string)
+				for _, claim := range oidcConfig.RequiredClaims {
+					parts := strings.SplitN(claim, "=", 2)
+					requiredClaims[parts[0]] = parts[1]
+				}
+				*kubernetesConfig.KubeAPIServer.AdditionalOidcConfig = append(*kubernetesConfig.KubeAPIServer.AdditionalOidcConfig, gardener.OIDCConfig{
+					ClientID:       &oidcConfig.ClientID,
+					IssuerURL:      &oidcConfig.IssuerURL,
+					SigningAlgs:    oidcConfig.SigningAlgs,
+					GroupsClaim:    &oidcConfig.GroupsClaim,
+					UsernamePrefix: &oidcConfig.UsernamePrefix,
+					UsernameClaim:  &oidcConfig.UsernameClaim,
+					RequiredClaims: requiredClaims,
+				})
+			}
+		} else if oidcInput.OIDCConfigDTO != nil {
+			if oidcInput.OIDCConfigDTO.ClientID != "" {
+				oidc.ClientID = &oidcInput.OIDCConfigDTO.ClientID
+			}
+			if oidcInput.OIDCConfigDTO.GroupsClaim != "" {
+				oidc.GroupsClaim = &oidcInput.OIDCConfigDTO.GroupsClaim
+			}
+			if oidcInput.OIDCConfigDTO.IssuerURL != "" {
+				oidc.IssuerURL = &oidcInput.OIDCConfigDTO.IssuerURL
+			}
+			if len(oidcInput.OIDCConfigDTO.SigningAlgs) > 0 {
+				oidc.SigningAlgs = oidcInput.OIDCConfigDTO.SigningAlgs
+			}
+			if oidcInput.OIDCConfigDTO.UsernameClaim != "" {
+				oidc.UsernameClaim = &oidcInput.OIDCConfigDTO.UsernameClaim
+			}
+			if oidcInput.OIDCConfigDTO.UsernamePrefix != "" {
+				oidc.UsernamePrefix = &oidcInput.OIDCConfigDTO.UsernamePrefix
+			}
+			requiredClaims := make(map[string]string)
+			for _, claim := range oidcInput.OIDCConfigDTO.RequiredClaims {
+				parts := strings.SplitN(claim, "=", 2)
+				requiredClaims[parts[0]] = parts[1]
+			}
+			oidc.RequiredClaims = requiredClaims
+			kubernetesConfig.KubeAPIServer.AdditionalOidcConfig = &[]gardener.OIDCConfig{oidc}
+		} else {
+			kubernetesConfig.KubeAPIServer.AdditionalOidcConfig = &[]gardener.OIDCConfig{oidc}
+		}
 	}
-
 	return kubernetesConfig
 }
 

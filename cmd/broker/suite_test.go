@@ -272,8 +272,6 @@ func fixConfig() *Config {
 			CheckRuntimeResourceDeletionStepTimeout: 50 * time.Millisecond,
 			DefaultTrialProvider:                    "AWS",
 			ControlPlaneFailureTolerance:            "zone",
-			UseMainOIDC:                             true,
-			UseAdditionalOIDC:                       false,
 		},
 		StepTimeouts: StepTimeoutsConfig{
 			checkRuntimeResourceUpdate: 180 * time.Second,

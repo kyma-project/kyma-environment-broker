@@ -25,39 +25,7 @@ const (
 	clientID  = "c1id"
 )
 
-func TestBuilder_BuildFromRuntimeResource_MainOIDC(t *testing.T) {
-	err := imv1.AddToScheme(scheme.Scheme)
-	assert.NoError(t, err)
-
-	runtimeResource := &imv1.Runtime{}
-	runtimeResource.ObjectMeta.Name = runtimeID
-	runtimeResource.ObjectMeta.Namespace = "kcp-system"
-	runtimeResource.Spec.Shoot.Kubernetes.KubeAPIServer.OidcConfig = gardener.OIDCConfig{
-		ClientID:  ptr.String(clientID),
-		IssuerURL: ptr.String(issuerURL),
-	}
-
-	kcpClient := fake.NewClientBuilder().WithRuntimeObjects(runtimeResource).Build()
-
-	t.Run("new kubeconfig was built properly", func(t *testing.T) {
-		// given
-		builder := NewBuilder(kcpClient, NewFakeKubeconfigProvider(skrKubeconfig()), false, true)
-
-		instance := &internal.Instance{
-			RuntimeID:       runtimeID,
-			GlobalAccountID: globalAccountID,
-		}
-
-		// when
-		kubeconfig, err := builder.Build(instance)
-
-		//then
-		require.NoError(t, err)
-		require.Equal(t, kubeconfig, newKubeconfig())
-	})
-}
-
-func TestBuilder_BuildFromRuntimeResource_AdditionalOIDC(t *testing.T) {
+func TestBuilder_BuildFromRuntimeResource(t *testing.T) {
 	err := imv1.AddToScheme(scheme.Scheme)
 	assert.NoError(t, err)
 
@@ -75,7 +43,7 @@ func TestBuilder_BuildFromRuntimeResource_AdditionalOIDC(t *testing.T) {
 
 	t.Run("new kubeconfig was built properly", func(t *testing.T) {
 		// given
-		builder := NewBuilder(kcpClient, NewFakeKubeconfigProvider(skrKubeconfig()), true, false)
+		builder := NewBuilder(kcpClient, NewFakeKubeconfigProvider(skrKubeconfig()))
 
 		instance := &internal.Instance{
 			RuntimeID:       runtimeID,
@@ -91,39 +59,7 @@ func TestBuilder_BuildFromRuntimeResource_AdditionalOIDC(t *testing.T) {
 	})
 }
 
-func TestBuilder_BuildFromAdminKubeconfig_MainOIDC(t *testing.T) {
-	err := imv1.AddToScheme(scheme.Scheme)
-	assert.NoError(t, err)
-	runtimeResource := &imv1.Runtime{}
-	runtimeResource.ObjectMeta.Name = runtimeID
-	runtimeResource.ObjectMeta.Namespace = "kcp-system"
-	runtimeResource.Spec.Shoot.Kubernetes.KubeAPIServer.OidcConfig = gardener.OIDCConfig{
-		ClientID:  ptr.String(clientID),
-		IssuerURL: ptr.String(issuerURL),
-	}
-
-	kcpClient := fake.NewClientBuilder().WithRuntimeObjects(runtimeResource).Build()
-
-	t.Run("new kubeconfig was build properly", func(t *testing.T) {
-		// given
-
-		builder := NewBuilder(kcpClient, NewFakeKubeconfigProvider(skrKubeconfig()), false, true)
-
-		instance := &internal.Instance{
-			RuntimeID:       runtimeID,
-			GlobalAccountID: globalAccountID,
-		}
-
-		// when
-		kubeconfig, err := builder.BuildFromAdminKubeconfig(instance, adminKubeconfig())
-
-		//then
-		require.NoError(t, err)
-		require.Equal(t, kubeconfig, newOwnClusterKubeconfig())
-	})
-}
-
-func TestBuilder_BuildFromAdminKubeconfig_AdditionalOIDC(t *testing.T) {
+func TestBuilder_BuildFromAdminKubeconfig(t *testing.T) {
 	err := imv1.AddToScheme(scheme.Scheme)
 	assert.NoError(t, err)
 	runtimeResource := &imv1.Runtime{}
@@ -141,7 +77,7 @@ func TestBuilder_BuildFromAdminKubeconfig_AdditionalOIDC(t *testing.T) {
 	t.Run("new kubeconfig was build properly", func(t *testing.T) {
 		// given
 
-		builder := NewBuilder(kcpClient, NewFakeKubeconfigProvider(skrKubeconfig()), true, false)
+		builder := NewBuilder(kcpClient, NewFakeKubeconfigProvider(skrKubeconfig()))
 
 		instance := &internal.Instance{
 			RuntimeID:       runtimeID,

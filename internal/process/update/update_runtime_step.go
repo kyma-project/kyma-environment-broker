@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"log/slog"
+	"strings"
 	"time"
 
 	"github.com/kyma-project/kyma-environment-broker/internal/provider"
@@ -90,30 +91,31 @@ func (s *UpdateRuntimeStep) Run(operation internal.Operation, log *slog.Logger) 
 	}
 
 	if operation.UpdatingParameters.OIDC != nil {
-		input := operation.UpdatingParameters.OIDC
-		if s.config.UseMainOIDC {
-			if len(input.SigningAlgs) > 0 {
-				runtime.Spec.Shoot.Kubernetes.KubeAPIServer.OidcConfig.SigningAlgs = input.SigningAlgs
+		if operation.UpdatingParameters.OIDC.List != nil {
+			runtime.Spec.Shoot.Kubernetes.KubeAPIServer.AdditionalOidcConfig = &[]gardener.OIDCConfig{}
+			for _, oidcConfig := range operation.UpdatingParameters.OIDC.List {
+				requiredClaims := make(map[string]string)
+				for _, claim := range oidcConfig.RequiredClaims {
+					parts := strings.SplitN(claim, "=", 2)
+					requiredClaims[parts[0]] = parts[1]
+				}
+				(*runtime.Spec.Shoot.Kubernetes.KubeAPIServer.AdditionalOidcConfig) = append(*runtime.Spec.Shoot.Kubernetes.KubeAPIServer.AdditionalOidcConfig, gardener.OIDCConfig{
+					ClientID:       &oidcConfig.ClientID,
+					IssuerURL:      &oidcConfig.IssuerURL,
+					SigningAlgs:    oidcConfig.SigningAlgs,
+					GroupsClaim:    &oidcConfig.GroupsClaim,
+					UsernamePrefix: &oidcConfig.UsernamePrefix,
+					UsernameClaim:  &oidcConfig.UsernameClaim,
+					RequiredClaims: requiredClaims,
+				})
 			}
-			if input.ClientID != "" {
-				runtime.Spec.Shoot.Kubernetes.KubeAPIServer.OidcConfig.ClientID = &input.ClientID
+		} else if operation.UpdatingParameters.OIDC.OIDCConfigDTO != nil {
+			input := operation.UpdatingParameters.OIDC.OIDCConfigDTO
+			if runtime.Spec.Shoot.Kubernetes.KubeAPIServer.AdditionalOidcConfig != nil && len(*runtime.Spec.Shoot.Kubernetes.KubeAPIServer.AdditionalOidcConfig) > 0 {
+				firstOidcConfig := (*runtime.Spec.Shoot.Kubernetes.KubeAPIServer.AdditionalOidcConfig)[0]
+				runtime.Spec.Shoot.Kubernetes.KubeAPIServer.AdditionalOidcConfig = &[]gardener.OIDCConfig{firstOidcConfig}
 			}
-			if input.IssuerURL != "" {
-				runtime.Spec.Shoot.Kubernetes.KubeAPIServer.OidcConfig.IssuerURL = &input.IssuerURL
-			}
-			if input.GroupsClaim != "" {
-				runtime.Spec.Shoot.Kubernetes.KubeAPIServer.OidcConfig.GroupsClaim = &input.GroupsClaim
-			}
-			if input.UsernamePrefix != "" {
-				runtime.Spec.Shoot.Kubernetes.KubeAPIServer.OidcConfig.UsernamePrefix = &input.UsernamePrefix
-			}
-			if input.UsernameClaim != "" {
-				runtime.Spec.Shoot.Kubernetes.KubeAPIServer.OidcConfig.UsernameClaim = &input.UsernameClaim
-			}
-		}
-
-		if s.config.UseAdditionalOIDC {
-			if runtime.Spec.Shoot.Kubernetes.KubeAPIServer.AdditionalOidcConfig == nil {
+			if runtime.Spec.Shoot.Kubernetes.KubeAPIServer.AdditionalOidcConfig == nil || len(*runtime.Spec.Shoot.Kubernetes.KubeAPIServer.AdditionalOidcConfig) == 0 {
 				runtime.Spec.Shoot.Kubernetes.KubeAPIServer.AdditionalOidcConfig = &[]gardener.OIDCConfig{{}}
 			}
 			if len(input.SigningAlgs) > 0 {
@@ -133,6 +135,14 @@ func (s *UpdateRuntimeStep) Run(operation internal.Operation, log *slog.Logger) 
 			}
 			if input.UsernameClaim != "" {
 				(*runtime.Spec.Shoot.Kubernetes.KubeAPIServer.AdditionalOidcConfig)[0].UsernameClaim = &input.UsernameClaim
+			}
+			if len(input.RequiredClaims) > 0 {
+				requiredClaims := make(map[string]string)
+				for _, claim := range input.RequiredClaims {
+					parts := strings.SplitN(claim, "=", 2)
+					requiredClaims[parts[0]] = parts[1]
+				}
+				(*runtime.Spec.Shoot.Kubernetes.KubeAPIServer.AdditionalOidcConfig)[0].RequiredClaims = requiredClaims
 			}
 		}
 	}
