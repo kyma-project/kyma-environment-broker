@@ -96,7 +96,7 @@ In all the cases, `HYPERSCALER_NAME` refers to a provider type. The following ta
 
 The **tenantName** label holds the tenant's global account ID, which allows the tenant to reuse of an already claimed SecretBinding by the tenant. The label is skipped when there is no associated SecretBinding to the tenant.
 
-The **dirty** label marks the SecretBinding which is being released from the tenant. SecretBindings are marked with the **dirty** label during the instance deprovisioning process. The label remains in the SecretBinding until the Subscription Cleanup Job removes the tenant's data in the hyperscaler.
+The **dirty** label marks the SecretBinding while it is being released from the tenant. SecretBindings are marked with the **dirty** label during the instance deprovisioning process. The label remains in the SecretBinding until the Subscription Cleanup Job removes the tenant's data in the hyperscaler.
 
 The **internal** label restricts the SecretBinding for the internal usage. SecretBindings with the **internal** label are not selected for the production instances.
 
