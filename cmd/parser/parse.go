@@ -69,19 +69,15 @@ func NewParseCmd() *cobra.Command {
 
 func (cmd *ParseCommand) Run() error {
 
-	// create enabled plans
-	enabledPlans := broker.EnablePlans{}
-	for _, plan := range broker.PlanNamesMapping {
-		enabledPlans = append(enabledPlans, plan)
-	}
-
 	var rulesService *rules.RulesService
 	var err error
+	allowedPlans := sets.New(maps.Keys(broker.PlanIDsMapping)...)
+	requiredPlans := sets.New[string]()
 	if cmd.ruleFilePath != "" {
 		cmd.cobraCmd.Printf("Parsing rules from file: %s\n", cmd.ruleFilePath)
-		rulesService, err = rules.NewRulesServiceFromFile(cmd.ruleFilePath, sets.New(maps.Keys(broker.PlanIDsMapping)...), sets.New[string]())
+		rulesService, err = rules.NewRulesServiceFromFile(cmd.ruleFilePath, allowedPlans, requiredPlans)
 	} else {
-		rulesService, err = rules.NewRulesServiceFromSlice(strings.Split(cmd.rule, ";"), sets.New(maps.Keys(broker.PlanIDsMapping)...), sets.New[string]())
+		rulesService, err = rules.NewRulesServiceFromSlice(strings.Split(cmd.rule, ";"), allowedPlans, requiredPlans)
 	}
 
 	if err != nil {
@@ -89,11 +85,8 @@ func (cmd *ParseCommand) Run() error {
 		return UsageError
 	}
 
-	rulesetValid := rulesService.ValidRules == nil || len(rulesService.ValidRules.Rules) == 0
+	rulesetValid := rulesService.ValidRules != nil && len(rulesService.ValidRules.Rules) > 0
 	if rulesetValid {
-		cmd.cobraCmd.Printf("There are errors in your rule configuration.\n")
-		return InvalidRuleError
-	} else {
 		var dataToMatch *rules.ProvisioningAttributes
 		cmd.cobraCmd.Printf("Your rule configuration is OK.\n")
 		if cmd.match != "" {
@@ -110,6 +103,9 @@ func (cmd *ParseCommand) Run() error {
 				return InvalidRuleError
 			}
 		}
+	} else {
+		cmd.cobraCmd.Printf("There are errors in your rule configuration.\n")
+		return InvalidRuleError
 	}
 	return nil
 }

@@ -8,8 +8,8 @@ cases:
   expected: There are errors in your rule configuration.
 - name: Simple Rule
   rule:
-  - aws -> EU, S
-  - aws(PR=cf-eu11) -> EU
+    - aws -> EU, S
+    - aws(PR=cf-eu11) -> EU
   expected: Your rule configuration is OK.
 - name: Final Configuration
   rule:

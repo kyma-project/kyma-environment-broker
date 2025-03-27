@@ -68,10 +68,10 @@ func NewRulesServiceFromSlice(rules []string, allowedPlans sets.Set[string], req
 		parser: &SimpleParser{},
 	}
 
-	rs.ParsedRuleset = rs.process(rulesConfig)
-	rs.ValidRules, rs.ValidationInfo = rs.processAndValidate(rulesConfig)
 	rs.requiredPlans = requiredPlans
 	rs.allowedPlans = allowedPlans
+	rs.ParsedRuleset = rs.process(rulesConfig)
+	rs.ValidRules, rs.ValidationInfo = rs.processAndValidate(rulesConfig)
 	return rs, nil
 }
 
