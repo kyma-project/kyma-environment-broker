@@ -26,7 +26,6 @@ func NewRulesServiceFromFile(rulesFilePath string, allowedPlans sets.Set[string]
 		return nil, fmt.Errorf("No HAP rules file path provided")
 	}
 
-	slog.Info(fmt.Sprintf("Parsing rules from file: %s\n", rulesFilePath))
 	file, err := os.Open(rulesFilePath)
 	if err != nil {
 		return nil, fmt.Errorf("failed to open file: %s", err)
@@ -189,7 +188,7 @@ func (rs *RulesService) MatchProvisioningAttributesWithValidRuleset(provisioning
 		slog.Warn("No valid ruleset or empty valid ruleset")
 		return Result{}, false
 	}
-
+	// TODO validate defensively ProvisioningAttributes passed here
 	rulesForPlan := rs.getSortedRulesForPlan(provisioningAttributes.Plan)
 
 	if len(rulesForPlan) == 0 {

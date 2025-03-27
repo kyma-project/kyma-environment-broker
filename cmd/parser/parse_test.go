@@ -57,8 +57,6 @@ func TestParser(t *testing.T) {
 		cases := TestCases{}
 		cases.loadCases()
 
-		overwrite := false
-
 		for _, c := range cases.Case {
 			log.Printf("Running test case: %s", c.Name)
 			log.Printf("Input:\n %s", c.Rules)
@@ -71,28 +69,18 @@ func TestParser(t *testing.T) {
 			b := bytes.NewBufferString("")
 			cmd.SetOut(b)
 
-			cmd.SetArgs([]string{"-e", entries, "-n"})
+			cmd.SetArgs([]string{"-e", entries})
 			err := cmd.Execute()
-			require.NoError(t, err)
 
 			out, err := io.ReadAll(b)
 			if err != nil {
 				t.Fatal(err)
 			}
 
-			if overwrite {
-				c.ExpectedRule = string(out)
-			} else {
-				log.Printf("Actual formatted:\n %s", out)
-				output := rules.RemoveWhitespaces(string(out))
-
-				require.Equal(t, expected, strings.Trim(output, "\n"), fmt.Sprintf("While evaluating: %s", string(c.Name)))
-			}
-
-		}
-
-		if overwrite {
-			cases.writeCases()
+			log.Printf("Actual formatted:\n %s", out)
+			output := rules.RemoveWhitespaces(string(out))
+			outputTrimmed := strings.Trim(output, "\n")
+			require.Equal(t, expected, outputTrimmed, fmt.Sprintf("While evaluating: %s", string(c.Name)))
 		}
 	})
 }

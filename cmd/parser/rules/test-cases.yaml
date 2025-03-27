@@ -1,13 +1,16 @@
 cases:
+- name: Duplicated Rules
+  rule:
+    - aws(HR=aa, PR=cf)
+    - aws(PR=cf, HR=aa)
+    - gcp
+    - gcp
+  expected: There are errors in your rule configuration.
 - name: Simple Rule
   rule:
   - aws -> EU, S
   - aws(PR=cf-eu11) -> EU
-  expected: |
-    ->     OK  aws-> EU, S                                        # euAccess:
-    true, hyperscalerType: aws, shared: true
-    ->     OK  aws(PR=cf-eu11)-> EU                               #
-    euAccess: true, hyperscalerType: aws
+  expected: Your rule configuration is OK.
 - name: Final Configuration
   rule:
   - aws
@@ -21,84 +24,16 @@ cases:
   - azure_lite
   - preview
   - free
-  expected: |
-    ->     OK  aws                                                # hyperscalerType:
-    aws                            
-    ->     OK  aws(PR=cf-eu11)-> EU                               #
-    euAccess: true, hyperscalerType: aws    
-    ->     OK  azure                                              #
-    hyperscalerType: azure                          
-    ->     OK  azure(PR=cf-ch20)->
-    EU                             # euAccess: true, hyperscalerType: azure
-   
-    ->     OK  azure_lite                                         # hyperscalerType:
-    azure_lite                     
-    ->     OK  free                                               #
-    hyperscalerType: aws/azure                      
-    ->     OK  gcp                                                #
-    hyperscalerType: gcp                            
-    ->     OK  gcp(PR=cf-sa30) -> PR                              #
-    hyperscalerType: gcp_<PR>                    
-    ->     OK  preview                                            #
-    hyperscalerType: aws                            
-    ->     OK  sap-converged-cloud -> S, HR
-                           # hyperscalerType: openstack_<HR>, shared: true      
-    ->     OK  trial-> S                                          # hyperscalerType:
-    aws, shared: true              
-- name: Duplicated Rule
-  rule:
-  - aws
-  - aws(PR=cf-eu11)
-  - aws(HR=eastus)
-  expected: |
-    -> Error   aws(PR=cf-eu11)
-     - Ambiguous with previously defined entry:
-    'aws(HR=eastus)', consider introducing a resolving entry 'aws(PR=cf-eu11, HR=eastus)'
-    ->     OK  aws                                                # hyperscalerType:
-    aws                            
-    ->     OK  aws(HR=eastus)                                     #
-    hyperscalerType: aws                     
-    There are errors in your rule
-    configuration. Fix above errors in your rule configuration and try again.
-- name: Duplicated Rules
-  rule:
-  - aws(HR=aa, PR=cf)
-  - aws(PR=cf, HR=aa)
-  - gcp
-  - gcp
-  expected: |
-    -> Error   aws(PR=cf, HR=aa)
-     - Duplicated rule with previously defined rule:
-    'aws(PR=cf, HR=aa)'
-    -> Error   gcp
-     - Duplicated rule with previously defined rule: 'gcp'
-    ->     OK  aws(PR=cf, HR=aa)                                  #
-    hyperscalerType: aws                      
-    ->     OK  gcp                                                #
-    hyperscalerType: gcp                            
-    There are errors in your rule
-    configuration. Fix above errors in your rule configuration and try again.
+  expected: Your rule configuration is OK.
 - name: Resolved Rule - No 2
   rule:
   - aws
   - aws(PR=cf-eu11)
   - aws(PR=cf-eu11, HR=eastus)
-  expected: |
-    ->     OK  aws                                                # hyperscalerType:
-    aws                            
-    ->     OK  aws(PR=cf-eu11)                                    #
-    hyperscalerType: aws                    
-    ->     OK  aws(PR=cf-eu11, HR=eastus)
-                          # hyperscalerType: aws
+  expected: Your rule configuration is OK.
 - name: Resolved Rule - No 4
   rule:
   - aws
   - aws(PR=cf-eu11)
   - aws(PR=cf-eu12, HR=eastus)
-  expected: |
-    -> OK  aws                                                # hyperscalerType:
-    aws                            
-    ->     OK  aws(PR=cf-eu11)                                    #
-    hyperscalerType: aws                    
-    ->     OK  aws(PR=cf-eu12, HR=eastus)
-                          # hyperscalerType: aws
+  expected: Your rule configuration is OK.

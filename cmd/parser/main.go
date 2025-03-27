@@ -10,11 +10,23 @@ import (
 )
 
 var gitCommit string
+var rootCmd *cobra.Command
 
 func main() {
 	setupCloseHandler()
 
-	err := Execute()
+	rootCmd = &cobra.Command{
+		Use:           "hap",
+		Short:         "A tool for parsing and validation of HAP rules",
+		Version:       gitCommit,
+		Long:          ``,
+		SilenceErrors: true,
+		SilenceUsage:  true,
+	}
+
+	rootCmd.AddCommand(NewParseCmd())
+
+	err := rootCmd.Execute()
 	if err != nil {
 		os.Exit(1)
 	}
@@ -28,18 +40,4 @@ func setupCloseHandler() {
 		fmt.Printf("\r- Signal '%v' received from Terminal. Exiting...\n ", sig)
 		os.Exit(0)
 	}()
-}
-
-var (
-	// Used for flags.
-	rootCmd = &cobra.Command{
-		Use:     "hap",
-		Short:   "A tool for parsing and validation of HAP rules",
-		Version: gitCommit,
-		Long:    ``,
-	}
-)
-
-func Execute() error {
-	return rootCmd.Execute()
 }

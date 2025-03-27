@@ -4,7 +4,7 @@ GOLINT_TIMEOUT=2m
 endif
 
 ifndef ARTIFACTS
-	ARTIFACTS = .
+	ARTIFACTS = ./bin
 endif
 
 ifndef GIT_SHA
@@ -63,4 +63,4 @@ fix: go-lint-install ## try to fix automatically issues
 
 .PHONY: build-hap
 build-hap:
-	cd cmd/parser; go build -ldflags "-X main.gitCommit=$(GIT_SHA)" -o $(ARTIFACTS)/hap
+	cd cmd/parser; go build -ldflags "-X main.gitCommit=$(GIT_SHA)" -o ../../$(ARTIFACTS)/hap

@@ -2,21 +2,20 @@ package main
 
 import (
 	"encoding/json"
-	"log"
+	"errors"
+	"fmt"
 	"strings"
 
 	"golang.org/x/exp/maps"
 	"k8s.io/apimachinery/pkg/util/sets"
 
-	"github.com/google/uuid"
 	"github.com/kyma-project/kyma-environment-broker/common/hyperscaler/rules"
 	"github.com/kyma-project/kyma-environment-broker/internal/broker"
 	"github.com/spf13/cobra"
 )
 
-func init() {
-	rootCmd.AddCommand(NewParseCmd())
-}
+var UsageError = errors.New("UsageError")
+var InvalidRuleError = errors.New("InvalidRuleError")
 
 type ParseCommand struct {
 	cobraCmd     *cobra.Command
@@ -53,32 +52,22 @@ func NewParseCmd() *cobra.Command {
 	hap parse  -f ./correct-rules.yaml -m '{"plan": "aws", "platformRegion": "cf-eu11", "hyperscalerRegion": "westeurope"}'
 		`,
 		RunE: func(_ *cobra.Command, args []string) error {
-			cmd.Run()
-			return nil
+			return cmd.Run()
 		},
+		SilenceErrors: true,
+		SilenceUsage:  true,
 	}
 	cmd.cobraCmd = cobraCmd
 
 	cobraCmd.Flags().StringVarP(&cmd.rule, "entry", "e", "", "A rule to validate where each rule entry is separated by comma.")
 	cobraCmd.Flags().StringVarP(&cmd.match, "match", "m", "", "Check what rule will be matched and triggered against the provided test data. Only valid entries are taking into account when matching. Data is passed in json format, example: '{\"plan\": \"aws\", \"platformRegion\": \"cf-eu11\"}'.")
 	cobraCmd.Flags().StringVarP(&cmd.ruleFilePath, "file", "f", "", "Read rules from a file pointed to by parameter value. The file must contain a valid yaml list, where each rule entry starts with '-' and is placed in its own line.")
-	cobraCmd.Flags().BoolVarP(&cmd.noColor, "no-color", "n", false, "Disable use color characters when generating output.")
 	cobraCmd.MarkFlagsOneRequired("entry", "file")
 
 	return cobraCmd
 }
 
-type ProcessingPair struct {
-	ParsingResults  *rules.ParsingResult
-	MatchingResults *rules.MatchingResult
-}
-
-func (cmd *ParseCommand) Run() {
-
-	printer := rules.NewColored(cmd.cobraCmd.Printf)
-	if cmd.noColor {
-		printer = rules.NewNoColor(cmd.cobraCmd.Printf)
-	}
+func (cmd *ParseCommand) Run() error {
 
 	// create enabled plans
 	enabledPlans := broker.EnablePlans{}
@@ -97,48 +86,52 @@ func (cmd *ParseCommand) Run() {
 
 	if err != nil {
 		cmd.cobraCmd.Printf("Error: %s\n", err)
+		return UsageError
 	}
 
-	var dataForMatching *rules.ProvisioningAttributes
-	if cmd.match != "" {
-		dataForMatching = getDataForMatching(cmd.match)
+	rulesetValid := rulesService.ValidRules == nil || len(rulesService.ValidRules.Rules) == 0
+	if rulesetValid {
+		cmd.cobraCmd.Printf("There are errors in your rule configuration.\n")
+		return InvalidRuleError
 	} else {
-		dataForMatching = &rules.ProvisioningAttributes{
-			PlatformRegion:    "<pr>",
-			HyperscalerRegion: "<hr>",
+		var dataToMatch *rules.ProvisioningAttributes
+		cmd.cobraCmd.Printf("Your rule configuration is OK.\n")
+		if cmd.match != "" {
+			dataToMatch, err = getDataForMatching(cmd.match)
+			if err != nil {
+				cmd.cobraCmd.Printf("Provided data to match is not valid: %s\n", err)
+				return UsageError
+			}
+			matchingResults, matched := rulesService.MatchProvisioningAttributesWithValidRuleset(dataToMatch)
+			if matched {
+				cmd.cobraCmd.Printf("Matched rule: %s\n", matchingResults.Rule())
+			} else {
+				cmd.cobraCmd.Printf("No rule matched the provided data.\n")
+				return InvalidRuleError
+			}
 		}
 	}
-
-	var matchingResults map[uuid.UUID]*rules.MatchingResult
-	if cmd.match != "" && dataForMatching != nil {
-		matchingResults = rulesService.Match(dataForMatching)
-	}
-
-	printer.Print(rulesService.ParsedRuleset.Results, matchingResults)
-
-	hasErrors := false
-	for _, result := range rulesService.ParsedRuleset.Results {
-		if result.HasErrors() {
-			hasErrors = true
-			break
-		}
-	}
-
-	if hasErrors {
-		cmd.cobraCmd.Printf("There are errors in your rule configuration. Fix above errors in your rule configuration and try again.\n")
-	}
+	return nil
 }
 
-type conf struct {
-	Rules []string `yaml:"rule"`
-}
-
-func getDataForMatching(content string) *rules.ProvisioningAttributes {
+func getDataForMatching(content string) (*rules.ProvisioningAttributes, error) {
 	data := &rules.ProvisioningAttributes{}
 	err := json.Unmarshal([]byte(content), data)
 	if err != nil {
-		log.Fatalf("Unmarshal: %v", err)
+		return nil, err
 	}
 
-	return data
+	if data.Plan == "" {
+		return nil, fmt.Errorf("Plan is a required field.")
+	}
+	if data.PlatformRegion == "" {
+		return nil, fmt.Errorf("PlatformRegion is a required field.")
+	}
+	if data.HyperscalerRegion == "" {
+		return nil, fmt.Errorf("HyperscalerRegion is a required field.")
+	}
+	if data.Hyperscaler == "" {
+		return nil, fmt.Errorf("Hyperscaler is a required field.")
+	}
+	return data, nil
 }
