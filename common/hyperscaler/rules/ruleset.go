@@ -183,3 +183,30 @@ func (vr *ValidRuleset) checkPlans(allowed sets.Set[string], required sets.Set[s
 	}
 	return len(planErrors) == 0, planErrors
 }
+
+type Result struct {
+	HyperscalerType string
+	EUAccess        bool
+	Shared          bool
+	RawData         RawData
+}
+
+func (r Result) Hyperscaler() string {
+	return r.HyperscalerType
+}
+
+func (r Result) IsShared() bool {
+	return r.Shared
+}
+
+func (r Result) IsEUAccess() bool {
+	return r.EUAccess
+}
+
+func (r Result) Rule() string {
+	return r.RawData.Rule
+}
+
+func (r Result) NumberedRule() string {
+	return r.RawData.NumberedRule()
+}

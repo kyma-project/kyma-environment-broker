@@ -11,29 +11,6 @@ import (
 )
 
 func TestNewRulesServiceFromFile(t *testing.T) {
-	t.Run("should create RulesService from valid file ane parse simple rules", func(t *testing.T) {
-		// given
-		content := `rule:
-                      - rule1
-                      - rule2`
-
-		tmpfile, err := CreateTempFile(content)
-		require.NoError(t, err)
-
-		defer os.Remove(tmpfile)
-
-		// when
-		service, err := NewRulesServiceFromFile(tmpfile, sets.New("rule1", "rule2"), sets.New("rule1", "rule2"))
-
-		// then
-		require.NoError(t, err)
-		require.NotNil(t, service)
-
-		require.Equal(t, 2, len(service.ParsedRuleset.Results))
-		for _, result := range service.ParsedRuleset.Results {
-			require.False(t, result.HasErrors())
-		}
-	})
 
 	t.Run("should return error when file path is empty", func(t *testing.T) {
 		// when

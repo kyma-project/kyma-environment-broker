@@ -24,7 +24,7 @@ func (g *SimpleParser) Parse(ruleEntry string) (*Rule, error) {
 	outputInputPart := strings.Split(ruleEntry, ARROW)
 
 	if len(outputInputPart) > 2 {
-		return nil, fmt.Errorf("rule has more than one arrows")
+		return nil, fmt.Errorf("rule has more than one arrow")
 	}
 
 	inputPart := outputInputPart[0]
@@ -42,11 +42,11 @@ func (g *SimpleParser) Parse(ruleEntry string) (*Rule, error) {
 	}
 
 	if strings.Contains(inputPart, L_PAREN) && !strings.Contains(inputPart, R_PAREN) {
-		return nil, fmt.Errorf("rule has unclosed parentheses")
+		return nil, fmt.Errorf("rule has not balanced parentheses")
 	}
 
 	if !strings.Contains(inputPart, L_PAREN) && strings.Contains(inputPart, R_PAREN) {
-		return nil, fmt.Errorf("rule has unclosed parentheses")
+		return nil, fmt.Errorf("rule has not balanced parentheses")
 	}
 
 	_, err := outputRule.SetPlan(planAndInputAttr[0])

@@ -7,13 +7,10 @@ import (
 	"slices"
 
 	"k8s.io/apimachinery/pkg/util/sets"
-
-	"github.com/google/uuid"
 )
 
 type RulesService struct {
 	parser         Parser
-	ParsedRuleset  *ParsingResults
 	ValidRules     *ValidRuleset
 	ValidationInfo *ValidationErrors
 	requiredPlans  sets.Set[string]
@@ -57,7 +54,6 @@ func NewRulesService(file *os.File, allowedPlans sets.Set[string], requiredPlans
 		allowedPlans:  allowedPlans,
 	}
 
-	rs.ParsedRuleset = rs.process(rulesConfig)
 	rs.ValidRules, rs.ValidationInfo = rs.processAndValidate(rulesConfig)
 	return rs, err
 }
@@ -74,7 +70,6 @@ func NewRulesServiceFromSlice(rules []string, allowedPlans sets.Set[string], req
 
 	rs.requiredPlans = requiredPlans
 	rs.allowedPlans = allowedPlans
-	rs.ParsedRuleset = rs.process(rulesConfig)
 	rs.ValidRules, rs.ValidationInfo = rs.processAndValidate(rulesConfig)
 	return rs, nil
 }
@@ -128,51 +123,6 @@ func (rs *RulesService) postParse(rulesConfig *RulesConfig) (*ValidRuleset, *Val
 	return validRuleset, validationErrors
 }
 
-func (rs *RulesService) process(rulesConfig *RulesConfig) *ParsingResults {
-	results := NewParsingResults()
-
-	for _, entry := range rulesConfig.Rules {
-		rule, err := rs.parser.Parse(entry)
-
-		results.Apply(entry, rule, err)
-	}
-
-	results.Results = SortRuleEntries(results.Results)
-
-	results.CheckUniqueness()
-
-	results.CheckSignatures()
-
-	results.Results = SortRuleEntries(results.Results)
-
-	return results
-}
-
-func (rs *RulesService) parseRuleset(rulesConfig *RulesConfig) *ParsingResults {
-	results := NewParsingResults()
-
-	for _, entry := range rulesConfig.Rules {
-		parsedRule, err := rs.parser.Parse(entry)
-
-		results.Apply(entry, parsedRule, err)
-	}
-	return results
-}
-
-// MatchProvisioningAttributes finds the matching rule for the given provisioning attributes and provide values needed to create labels, which must be used to find proper secret binding.
-func (rs *RulesService) MatchProvisioningAttributes(provisioningAttributes *ProvisioningAttributes) (Result, bool) {
-	var result Result
-	found := false
-	for _, parsingResult := range rs.ParsedRuleset.Results {
-		if parsingResult.Rule.Matched(provisioningAttributes) {
-			result = parsingResult.Rule.ProvideResult(provisioningAttributes)
-			found = true
-		}
-	}
-
-	return result, found
-}
-
 func (rs *RulesService) getSortedRulesForPlan(plan string) []ValidRule {
 	rulesForPlan := make([]ValidRule, 0)
 	for _, validRule := range rs.ValidRules.Rules {
@@ -213,35 +163,6 @@ func (rs *RulesService) MatchProvisioningAttributesWithValidRuleset(provisioning
 	}
 
 	return result, found
-}
-
-func (rs *RulesService) Match(data *ProvisioningAttributes) map[uuid.UUID]*MatchingResult {
-	var matchingResults map[uuid.UUID]*MatchingResult = make(map[uuid.UUID]*MatchingResult)
-
-	var lastMatch *MatchingResult = nil
-	for _, result := range rs.ParsedRuleset.Results {
-		if !result.HasParsingErrors() {
-			matchingResult := &MatchingResult{
-				ParsingResultID:        result.ID,
-				OriginalRule:           result.OriginalRule,
-				Rule:                   *result.Rule,
-				ProvisioningAttributes: data,
-			}
-
-			matchingResult.Matched = result.Rule.Matched(data)
-			if matchingResult.Matched {
-				lastMatch = matchingResult
-			}
-
-			matchingResults[result.ID] = matchingResult
-		}
-	}
-
-	if lastMatch != nil {
-		lastMatch.FinalMatch = true
-	}
-
-	return matchingResults
 }
 
 func toValidRule(rule *Rule, rawRule string, ruleNo int) *ValidRule {
