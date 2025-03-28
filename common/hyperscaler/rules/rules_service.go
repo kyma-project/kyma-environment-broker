@@ -244,22 +244,6 @@ func (rs *RulesService) Match(data *ProvisioningAttributes) map[uuid.UUID]*Match
 	return matchingResults
 }
 
-func (rs *RulesService) FirstParsingError() error {
-	for _, result := range rs.ParsedRuleset.Results {
-		if result.HasErrors() {
-			buffer := ""
-			var printer *Printer = NewNoColor(func(format string, a ...interface{}) {
-				buffer += fmt.Sprintf(format, a...)
-			})
-
-			printer.Print(rs.ParsedRuleset.Results, nil)
-			return fmt.Errorf("parsing errors occurred during rules parsing, results are: %s", buffer)
-		}
-	}
-
-	return nil
-}
-
 func toValidRule(rule *Rule, rawRule string, ruleNo int) *ValidRule {
 	vr := &ValidRule{
 		Plan: PatternAttribute{
