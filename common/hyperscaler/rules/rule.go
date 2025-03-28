@@ -4,10 +4,6 @@ import (
 	"fmt"
 )
 
-type Labels struct {
-	Labels []string
-}
-
 type Rule struct {
 	Plan                           string
 	PlatformRegion                 string

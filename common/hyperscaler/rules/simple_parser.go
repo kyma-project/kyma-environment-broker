@@ -42,7 +42,7 @@ func (g *SimpleParser) Parse(ruleEntry string) (*Rule, error) {
 	}
 
 	if strings.Contains(inputPart, L_PAREN) && !strings.Contains(inputPart, R_PAREN) {
-		return nil, fmt.Errorf("rule has unclosed parentheses")
+		return nil, fmt.Errorf("rule has not balanced parentheses")
 	}
 
 	if !strings.Contains(inputPart, L_PAREN) && strings.Contains(inputPart, R_PAREN) {
