@@ -309,11 +309,15 @@ func main() {
 
 	rulesService, err := rules.NewRulesServiceFromFile(cfg.HapRuleFilePath, sets.New(maps.Keys(broker.PlanIDsMapping)...), sets.New([]string(cfg.Broker.EnablePlans)...).Delete("own_cluster"))
 	fatalOnError(err, log)
-	err = rulesService.FirstParsingError()
-	if err != nil {
-		log.Error(fmt.Sprintf("Error: %s", err))
 
-		// when he ruleservice is used (the step is not disabled) - the configuration must be valid
+	rulesetValid := rulesService.IsRulesetValid()
+
+	if !rulesetValid {
+		log.Error("There are errors in rules configuration")
+		for _, ve := range rulesService.ValidationInfo.All() {
+			log.Error("%s", ve)
+		}
+		// when the ruleservice is used (the step is not disabled) - the configuration must be valid
 		if !cfg.ResolveSubscriptionSecretStepDisabled {
 			fatalOnError(err, log)
 		}

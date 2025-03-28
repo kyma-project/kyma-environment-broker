@@ -35,6 +35,10 @@ func NewRulesServiceFromFile(rulesFilePath string, allowedPlans sets.Set[string]
 	return rs, err
 }
 
+func (rs *RulesService) IsRulesetValid() bool {
+	return rs.ValidRules != nil && len(rs.ValidRules.Rules) > 0
+}
+
 func NewRulesService(file *os.File, allowedPlans sets.Set[string], requiredPlans sets.Set[string]) (*RulesService, error) {
 	rulesConfig := &RulesConfig{}
 

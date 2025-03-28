@@ -85,7 +85,7 @@ func (cmd *ParseCommand) Run() error {
 		return UsageError
 	}
 
-	rulesetValid := rulesService.ValidRules != nil && len(rulesService.ValidRules.Rules) > 0
+	rulesetValid := rulesService.IsRulesetValid()
 	if rulesetValid {
 		var dataToMatch *rules.ProvisioningAttributes
 		cmd.cobraCmd.Printf("Your rule configuration is OK.\n")
@@ -105,6 +105,9 @@ func (cmd *ParseCommand) Run() error {
 		}
 	} else {
 		cmd.cobraCmd.Printf("There are errors in your rule configuration.\n")
+		for _, ve := range rulesService.ValidationInfo.All() {
+			cmd.cobraCmd.Printf("%s\n", ve)
+		}
 		return InvalidRuleError
 	}
 	return nil
