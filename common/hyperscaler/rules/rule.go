@@ -22,9 +22,7 @@ type Rule struct {
 }
 
 func NewRule() *Rule {
-	return &Rule{
-		hyperscalerNameMappingFunction: getHyperscalerName,
-	}
+	return &Rule{}
 }
 
 type ProvisioningAttributes struct {
@@ -32,22 +30,6 @@ type ProvisioningAttributes struct {
 	PlatformRegion    string `json:"platformRegion"`
 	HyperscalerRegion string `json:"hyperscalerRegion"`
 	Hyperscaler       string `json:"hyperscaler"`
-}
-
-func getHyperscalerName(plan string) (result string) {
-	if plan == "aws" || plan == "gcp" || plan == "azure" || plan == "azure_lite" {
-		return plan
-	} else if plan == "trial" {
-		return "aws"
-	} else if plan == "free" {
-		return "aws/azure"
-	} else if plan == "sap-converged-cloud" {
-		return "openstack"
-	} else if plan == "preview" {
-		return "aws"
-	} else {
-		return ""
-	}
 }
 
 func (r *Rule) SetAttributeValue(attribute, value string, attributes []Attribute) (*Rule, error) {

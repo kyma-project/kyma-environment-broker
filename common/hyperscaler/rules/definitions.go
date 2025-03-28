@@ -16,10 +16,6 @@ const (
 	HYPERSCALER_LABEL = "hyperscalerType"
 	EUACCESS_LABEL    = "euAccess"
 	SHARED_LABEL      = "shared"
-
-	ASTERISK                 = "*"
-	ATTRIBUTE_WITH_VALUE     = "attr"
-	SIGNATURE_ATTR_SEPARATOR = ":"
 )
 
 var InputAttributes = []Attribute{
