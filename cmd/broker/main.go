@@ -315,7 +315,7 @@ func main() {
 	if !rulesetValid {
 		log.Error("There are errors in rules configuration")
 		for _, ve := range rulesService.ValidationInfo.All() {
-			log.Error("%s", ve)
+			log.Error(fmt.Sprintf("%s", ve))
 		}
 		// when the ruleservice is used (the step is not disabled) - the configuration must be valid
 		if !cfg.ResolveSubscriptionSecretStepDisabled {
