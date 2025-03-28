@@ -1,7 +1,7 @@
 rule: 
   - aws                             
   - aws(PR=cf-eu11) -> EU         
-  - azure                          
+  - azure
   - azure(PR=cf-ch20) -> EU          
   - gcp                             
   - gcp(PR=cf-sa30)                 

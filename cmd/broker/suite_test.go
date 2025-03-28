@@ -276,8 +276,8 @@ func fixConfig() *Config {
 			UseAdditionalOIDC:                       false,
 		},
 		StepTimeouts: StepTimeoutsConfig{
-			checkRuntimeResourceUpdate: 180 * time.Second,
-			checkRuntimeResourceCreate: 60 * time.Second,
+			CheckRuntimeResourceUpdate: 180 * time.Second,
+			CheckRuntimeResourceCreate: 60 * time.Second,
 		},
 		Database: storage.Config{
 			SecretKey: dbSecretKey,

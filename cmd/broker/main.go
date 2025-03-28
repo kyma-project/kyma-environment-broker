@@ -168,8 +168,8 @@ type ProfilerConfig struct {
 }
 
 type StepTimeoutsConfig struct {
-	checkRuntimeResourceCreate time.Duration `envconfig:"default=60m"`
-	checkRuntimeResourceUpdate time.Duration `envconfig:"default=180m"`
+	CheckRuntimeResourceCreate time.Duration `envconfig:"default=60m"`
+	CheckRuntimeResourceUpdate time.Duration `envconfig:"default=180m"`
 }
 
 type K8sClientProvider interface {
@@ -403,7 +403,7 @@ func logConfiguration(logs *slog.Logger, cfg Config) {
 	logs.Info(fmt.Sprintf("Cleaning enabled: %v, dry run: %v", cfg.CleaningEnabled, cfg.CleaningDryRun))
 	logs.Info(fmt.Sprintf("Is SubaccountMovementEnabled: %t", cfg.Broker.SubaccountMovementEnabled))
 	logs.Info(fmt.Sprintf("Is UpdateCustomResourcesLabelsOnAccountMove enabled: %t", cfg.Broker.UpdateCustomResourcesLabelsOnAccountMove))
-	logs.Info(fmt.Sprintf("StepTimeouts: checkRuntimeResourceCreate=%s, checkRuntimeResourceUpdate=%s", cfg.StepTimeouts.checkRuntimeResourceCreate, cfg.StepTimeouts.checkRuntimeResourceUpdate))
+	logs.Info(fmt.Sprintf("StepTimeouts: CheckRuntimeResourceCreate=%s, CheckRuntimeResourceUpdate=%s", cfg.StepTimeouts.CheckRuntimeResourceCreate, cfg.StepTimeouts.CheckRuntimeResourceUpdate))
 	logs.Info(fmt.Sprintf("ResolveSubscriptionSecretStepDisabled: %v", cfg.ResolveSubscriptionSecretStepDisabled))
 }
 
