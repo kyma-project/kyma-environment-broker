@@ -313,7 +313,7 @@ func main() {
 	rulesetValid := rulesService.IsRulesetValid()
 
 	if !rulesetValid {
-		log.Error("There are errors in rules configuration")
+		log.Error("There are errors in rules configuration:")
 		for _, ve := range rulesService.ValidationInfo.All() {
 			log.Error(fmt.Sprintf("%s", ve))
 		}
