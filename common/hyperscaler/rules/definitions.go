@@ -123,8 +123,6 @@ var OutputAttributes = []Attribute{
 	},
 }
 
-var AllAttributes = append(InputAttributes, OutputAttributes...)
-
 func setShared(r *Rule, value string) (*Rule, error) {
 	if r.Shared {
 		return nil, fmt.Errorf("Shared already set")
