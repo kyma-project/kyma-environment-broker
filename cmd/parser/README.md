@@ -4,7 +4,7 @@ This folder contains the sources of the tools for verifying the correctness of t
 
 ### Build Tool
 
-Run the following command to build the binary:
+To build the binary, run the following command:
 
 ```
 make build-hap
