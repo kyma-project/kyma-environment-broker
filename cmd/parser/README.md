@@ -10,7 +10,7 @@ To build the binary, run the following command:
 make build-hap
 ```
 
-Executable file `hap` will be created in the `./bin` directory.
+The executable `hap` file is created in the `./bin` directory.
 
 ### Running
 
