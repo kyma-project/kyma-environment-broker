@@ -2440,22 +2440,40 @@ func TestGPUMachinesForExternalCustomer(t *testing.T) {
 		expectedError             string
 	}{
 		{
-			name:                      "Single AWS GPU machine type",
+			name:                      "Single AWS G6 GPU machine type",
 			planID:                    broker.AWSPlanID,
 			additionalWorkerNodePools: `[{"name": "name-1", "machineType": "g6.xlarge", "haZones": true, "autoScalerMin": 3, "autoScalerMax": 20}]`,
 			expectedError:             "The following GPU machine types: g6.xlarge (used in worker node pools: name-1) are not available for your account. For details, please contact your sales representative.",
 		},
 		{
-			name:                      "Multiple AWS GPU machine types",
+			name:                      "Multiple AWS G6 GPU machine types",
 			planID:                    broker.AWSPlanID,
 			additionalWorkerNodePools: `[{"name": "name-1", "machineType": "g6.xlarge", "haZones": true, "autoScalerMin": 3, "autoScalerMax": 20}, {"name": "name-2", "machineType": "g6.2xlarge", "haZones": true, "autoScalerMin": 3, "autoScalerMax": 20}]`,
 			expectedError:             "The following GPU machine types: g6.xlarge (used in worker node pools: name-1), g6.2xlarge (used in worker node pools: name-2) are not available for your account. For details, please contact your sales representative.",
 		},
 		{
-			name:                      "Duplicate AWS GPU machine type",
+			name:                      "Duplicate AWS G6 GPU machine type",
 			planID:                    broker.AWSPlanID,
 			additionalWorkerNodePools: `[{"name": "name-1", "machineType": "g6.xlarge", "haZones": true, "autoScalerMin": 3, "autoScalerMax": 20}, {"name": "name-2", "machineType": "g6.xlarge", "haZones": true, "autoScalerMin": 3, "autoScalerMax": 20}]`,
 			expectedError:             "The following GPU machine types: g6.xlarge (used in worker node pools: name-1, name-2) are not available for your account. For details, please contact your sales representative.",
+		},
+		{
+			name:                      "Single AWS G4dn GPU machine type",
+			planID:                    broker.AWSPlanID,
+			additionalWorkerNodePools: `[{"name": "name-1", "machineType": "g4dn.xlarge", "haZones": true, "autoScalerMin": 3, "autoScalerMax": 20}]`,
+			expectedError:             "The following GPU machine types: g4dn.xlarge (used in worker node pools: name-1) are not available for your account. For details, please contact your sales representative.",
+		},
+		{
+			name:                      "Multiple AWS G4dn GPU machine types",
+			planID:                    broker.AWSPlanID,
+			additionalWorkerNodePools: `[{"name": "name-1", "machineType": "g4dn.xlarge", "haZones": true, "autoScalerMin": 3, "autoScalerMax": 20}, {"name": "name-2", "machineType": "g4dn.2xlarge", "haZones": true, "autoScalerMin": 3, "autoScalerMax": 20}]`,
+			expectedError:             "The following GPU machine types: g4dn.xlarge (used in worker node pools: name-1), g4dn.2xlarge (used in worker node pools: name-2) are not available for your account. For details, please contact your sales representative.",
+		},
+		{
+			name:                      "Duplicate AWS G4dn GPU machine type",
+			planID:                    broker.AWSPlanID,
+			additionalWorkerNodePools: `[{"name": "name-1", "machineType": "g4dn.xlarge", "haZones": true, "autoScalerMin": 3, "autoScalerMax": 20}, {"name": "name-2", "machineType": "g4dn.xlarge", "haZones": true, "autoScalerMin": 3, "autoScalerMax": 20}]`,
+			expectedError:             "The following GPU machine types: g4dn.xlarge (used in worker node pools: name-1, name-2) are not available for your account. For details, please contact your sales representative.",
 		},
 		{
 			name:                      "Single GCP GPU machine type",

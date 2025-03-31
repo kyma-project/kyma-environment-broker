@@ -470,6 +470,7 @@ func checkGPUMachinesUsage(additionalWorkerNodePools []pkg.AdditionalWorkerNodeP
 	var GPUMachines = []string{
 		"g2-standard",
 		"g6",
+		"g4dn",
 		"Standard_NC",
 	}
 
