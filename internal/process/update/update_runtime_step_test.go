@@ -303,6 +303,43 @@ func TestUpdateRuntimeStep_RunUpdateMultipleAdditionalOIDCWithMultipleAdditional
 	assert.Equal(t, secondExpectedOIDCConfig, (*gotRuntime.Spec.Shoot.Kubernetes.KubeAPIServer.AdditionalOidcConfig)[1])
 }
 
+func TestUpdateRuntimeStep_RunUpdateMultipleAdditionalOIDCWitEmptyAdditionalOIDC(t *testing.T) {
+	// given
+	err := imv1.AddToScheme(scheme.Scheme)
+	assert.NoError(t, err)
+	kcpClient := fake.NewClientBuilder().WithRuntimeObjects(fixRuntimeResourceWithMultipleAdditionalOidc("runtime-name", false)).Build()
+	step := NewUpdateRuntimeStep(nil, kcpClient, 0, input.Config{}, false, nil)
+	operation := fixture.FixUpdatingOperation("op-id", "inst-id").Operation
+	operation.RuntimeResourceName = "runtime-name"
+	operation.KymaResourceNamespace = "kcp-system"
+	operation.UpdatingParameters = internal.UpdatingParametersDTO{
+		OIDC: &pkg.OIDCsDTO{
+			List: []pkg.OIDCConfigDTO{},
+		},
+	}
+	var gotRuntime imv1.Runtime
+	err = kcpClient.Get(context.Background(), client.ObjectKey{Name: operation.RuntimeResourceName, Namespace: "kcp-system"}, &gotRuntime)
+	require.NoError(t, err)
+	t.Logf("gotRuntime: %+v", gotRuntime)
+	// when
+	_, backoff, err := step.Run(operation, fixLogger())
+
+	// then
+	assert.NoError(t, err)
+	assert.Zero(t, backoff)
+
+	err = kcpClient.Get(context.Background(), client.ObjectKey{Name: operation.RuntimeResourceName, Namespace: "kcp-system"}, &gotRuntime)
+	require.NoError(t, err)
+	assert.Nil(t, gotRuntime.Spec.Shoot.Kubernetes.KubeAPIServer.OidcConfig.ClientID)
+	assert.Nil(t, gotRuntime.Spec.Shoot.Kubernetes.KubeAPIServer.OidcConfig.GroupsClaim)
+	assert.Nil(t, gotRuntime.Spec.Shoot.Kubernetes.KubeAPIServer.OidcConfig.IssuerURL)
+	assert.Nil(t, gotRuntime.Spec.Shoot.Kubernetes.KubeAPIServer.OidcConfig.SigningAlgs)
+	assert.Nil(t, gotRuntime.Spec.Shoot.Kubernetes.KubeAPIServer.OidcConfig.UsernameClaim)
+	assert.Nil(t, gotRuntime.Spec.Shoot.Kubernetes.KubeAPIServer.OidcConfig.UsernamePrefix)
+	assert.NotNil(t, gotRuntime.Spec.Shoot.Kubernetes.KubeAPIServer.AdditionalOidcConfig)
+	assert.Len(t, *gotRuntime.Spec.Shoot.Kubernetes.KubeAPIServer.AdditionalOidcConfig, 0)
+}
+
 func fixRuntimeResource(name string, controlledByProvisioner bool) runtime.Object {
 	maxSurge := intstr.FromInt32(1)
 	maxUnavailable := intstr.FromInt32(0)
@@ -416,40 +453,6 @@ func fixRuntimeResourceWithMultipleAdditionalOidc(name string, controlledByProvi
 								UsernamePrefix: ptr.String("third-initial-username-prefix"),
 							},
 						},
-					},
-				},
-				Provider: imv1.Provider{
-					Workers: []gardener.Worker{
-						{
-							Machine: gardener.Machine{
-								Type: "original-type",
-							},
-							MaxSurge:       &maxSurge,
-							MaxUnavailable: &maxUnavailable,
-						},
-					},
-				},
-			},
-		},
-	}
-}
-
-func fixRuntimeResourceWithEmptyAdditionalOidcArray(name string, controlledByProvisioner bool) runtime.Object {
-	maxSurge := intstr.FromInt32(1)
-	maxUnavailable := intstr.FromInt32(0)
-	return &imv1.Runtime{
-		ObjectMeta: v1.ObjectMeta{
-			Name:      name,
-			Namespace: "kcp-system",
-			Labels: map[string]string{
-				imv1.LabelControlledByProvisioner: strconv.FormatBool(controlledByProvisioner),
-			},
-		},
-		Spec: imv1.RuntimeSpec{
-			Shoot: imv1.RuntimeShoot{
-				Kubernetes: imv1.Kubernetes{
-					KubeAPIServer: imv1.APIServer{
-						AdditionalOidcConfig: &[]gardener.OIDCConfig{},
 					},
 				},
 				Provider: imv1.Provider{
