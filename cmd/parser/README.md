@@ -21,7 +21,7 @@ To show the help message for the `parse` command, run:
 
 ### Examples
 
-Run the following command to verify the correctness of the HAP configuration and check which rule will be matched given the provisioning data:
+To verify the correctness of the HAP configuration and check which rule is matched given the provisioning data, run the following command:
 ```
 ./bin/hap parse  -e 'aws;gcp'  -m '{"plan": "aws", "platformRegion": "cf-eu11", "hyperscalerRegion": "westeurope", "hyperscaler":"aws"}'
 Your rule configuration is OK.
