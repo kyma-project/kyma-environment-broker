@@ -1,6 +1,6 @@
 # HAP Parser
 
-This folder contains sources of the tools that allow you to verify the correctness of the Hyperscaler Account Pool (HAP) configuration.
+This folder contains the sources of the tools for verifying the correctness of the Hyperscaler Account Pool (HAP) configuration.
 
 ### Build tool
 
