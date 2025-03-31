@@ -478,6 +478,197 @@ func TestUpdateEndpoint_UpdateGlobalAccountID(t *testing.T) {
 	assert.Len(t, response.Metadata.Labels, 1)
 }
 
+func TestUpdateEndpoint_UpdateFromOIDCObject(t *testing.T) {
+	// given
+	instance := fixture.FixInstance(instanceID)
+	instance.Parameters.Parameters.OIDC = &pkg.OIDCsDTO{
+		OIDCConfigDTO: &pkg.OIDCConfigDTO{
+			ClientID:       "client-id",
+			GroupsClaim:    "groups",
+			IssuerURL:      "https://test.local",
+			SigningAlgs:    []string{"RS256"},
+			UsernameClaim:  "email",
+			UsernamePrefix: "-",
+		},
+	}
+	st := storage.NewMemoryStorage()
+	err := st.Instances().Insert(instance)
+	require.NoError(t, err)
+	err = st.Operations().InsertProvisioningOperation(fixProvisioningOperation("provisioning01"))
+	require.NoError(t, err)
+
+	handler := &handler{}
+	q := &automock.Queue{}
+	q.On("Add", mock.AnythingOfType("string"))
+	planDefaults := func(planID string, platformProvider pkg.CloudProvider, provider *pkg.CloudProvider) (*gqlschema.ClusterConfigInput, error) {
+		return &gqlschema.ClusterConfigInput{}, nil
+	}
+	kcBuilder := &kcMock.KcBuilder{}
+	svc := NewUpdate(Config{}, st.Instances(), st.RuntimeStates(), st.Operations(), handler, true, true, false, q, PlansConfig{},
+		planDefaults, fixLogger(), dashboardConfig, kcBuilder, &OneForAllConvergedCloudRegionsProvider{}, fakeKcpK8sClient, nil)
+
+	t.Run("Should accept update to OIDC object", func(t *testing.T) {
+		// given
+		oidcParams := `"clientID":"updated-client","groupsClaim":"groups","issuerURL":"https://test.com","signingAlgs":["RS256"],"usernameClaim":"email","usernamePrefix":"-"`
+
+		// when
+		response, err := svc.Update(context.Background(), instanceID, domain.UpdateDetails{
+			ServiceID:       "",
+			PlanID:          AzurePlanID,
+			RawParameters:   json.RawMessage("{\"oidc\":{" + oidcParams + "}}"),
+			PreviousValues:  domain.PreviousValues{},
+			RawContext:      json.RawMessage("{\"globalaccount_id\":\"globalaccount_id_1\", \"active\":true}"),
+			MaintenanceInfo: nil,
+		}, true)
+		operation, err := st.Operations().GetProvisioningOperationByID(response.OperationData)
+
+		// then
+		require.NoError(t, err)
+		assert.Equal(t, &pkg.OIDCConfigDTO{
+			ClientID:       "updated-client",
+			GroupsClaim:    "groups",
+			IssuerURL:      "https://test.com",
+			SigningAlgs:    []string{"RS256"},
+			UsernameClaim:  "email",
+			UsernamePrefix: "-",
+		}, operation.ProvisioningParameters.Parameters.OIDC.OIDCConfigDTO)
+	})
+	t.Run("Should accept update to OIDC list", func(t *testing.T) {
+		// given
+		oidcParams := `"clientID":"updated-client","groupsClaim":"groups","issuerURL":"https://test.com","signingAlgs":["RS256"],"usernameClaim":"email","usernamePrefix":"-"`
+
+		// when
+		response, err := svc.Update(context.Background(), instanceID, domain.UpdateDetails{
+			ServiceID:       "",
+			PlanID:          AzurePlanID,
+			RawParameters:   json.RawMessage("{\"oidc\":{ \"list\":[{" + oidcParams + "}]}}"),
+			PreviousValues:  domain.PreviousValues{},
+			RawContext:      json.RawMessage("{\"globalaccount_id\":\"globalaccount_id_1\", \"active\":true}"),
+			MaintenanceInfo: nil,
+		}, true)
+		operation, err := st.Operations().GetProvisioningOperationByID(response.OperationData)
+
+		// then
+		require.NoError(t, err)
+		assert.Equal(t, pkg.OIDCConfigDTO{
+			ClientID:       "updated-client",
+			GroupsClaim:    "groups",
+			IssuerURL:      "https://test.com",
+			SigningAlgs:    []string{"RS256"},
+			UsernameClaim:  "email",
+			UsernamePrefix: "-",
+		}, operation.ProvisioningParameters.Parameters.OIDC.List[0])
+	})
+	t.Run("Should accept update to empty OIDC list", func(t *testing.T) {
+		// when
+		response, err := svc.Update(context.Background(), instanceID, domain.UpdateDetails{
+			ServiceID:       "",
+			PlanID:          AzurePlanID,
+			RawParameters:   json.RawMessage("{\"oidc\":{ \"list\":[]}}"),
+			PreviousValues:  domain.PreviousValues{},
+			RawContext:      json.RawMessage("{\"globalaccount_id\":\"globalaccount_id_1\", \"active\":true}"),
+			MaintenanceInfo: nil,
+		}, true)
+		operation, err := st.Operations().GetProvisioningOperationByID(response.OperationData)
+
+		// then
+		require.NoError(t, err)
+		assert.Len(t, operation.ProvisioningParameters.Parameters.OIDC.List, 0)
+	})
+}
+
+func TestUpdateEndpoint_UpdateFromOIDCList(t *testing.T) {
+	// given
+	instance := fixture.FixInstance(instanceID)
+	instance.Parameters.Parameters.OIDC = &pkg.OIDCsDTO{
+		List: []pkg.OIDCConfigDTO{
+			{
+				ClientID:       "client-id",
+				GroupsClaim:    "groups",
+				IssuerURL:      "https://test.local",
+				SigningAlgs:    []string{"RS256"},
+				UsernameClaim:  "email",
+				UsernamePrefix: "-",
+			},
+		},
+	}
+	st := storage.NewMemoryStorage()
+	err := st.Instances().Insert(instance)
+	require.NoError(t, err)
+	err = st.Operations().InsertProvisioningOperation(fixProvisioningOperation("provisioning01"))
+	require.NoError(t, err)
+
+	handler := &handler{}
+	q := &automock.Queue{}
+	q.On("Add", mock.AnythingOfType("string"))
+	planDefaults := func(planID string, platformProvider pkg.CloudProvider, provider *pkg.CloudProvider) (*gqlschema.ClusterConfigInput, error) {
+		return &gqlschema.ClusterConfigInput{}, nil
+	}
+	kcBuilder := &kcMock.KcBuilder{}
+	svc := NewUpdate(Config{}, st.Instances(), st.RuntimeStates(), st.Operations(), handler, true, true, false, q, PlansConfig{},
+		planDefaults, fixLogger(), dashboardConfig, kcBuilder, &OneForAllConvergedCloudRegionsProvider{}, fakeKcpK8sClient, nil)
+
+	t.Run("Should reject update to OIDC object", func(t *testing.T) {
+		// given
+		oidcParams := `"clientID":"updated-client","groupsClaim":"groups","issuerURL":"https://test.com","signingAlgs":["RS256"],"usernameClaim":"email","usernamePrefix":"-"`
+
+		// when
+		_, err := svc.Update(context.Background(), instanceID, domain.UpdateDetails{
+			ServiceID:       "",
+			PlanID:          AzurePlanID,
+			RawParameters:   json.RawMessage("{\"oidc\":{" + oidcParams + "}}"),
+			PreviousValues:  domain.PreviousValues{},
+			RawContext:      json.RawMessage("{\"globalaccount_id\":\"globalaccount_id_1\", \"active\":true}"),
+			MaintenanceInfo: nil,
+		}, true)
+
+		// then
+		assert.EqualError(t, err, "an object OIDC cannot be used because the instance OIDC configuration uses a list")
+	})
+	t.Run("Should accept update to OIDC list", func(t *testing.T) {
+		// given
+		oidcParams := `"clientID":"updated-client","groupsClaim":"groups","issuerURL":"https://test.com","signingAlgs":["RS256"],"usernameClaim":"email","usernamePrefix":"-"`
+
+		// when
+		response, err := svc.Update(context.Background(), instanceID, domain.UpdateDetails{
+			ServiceID:       "",
+			PlanID:          AzurePlanID,
+			RawParameters:   json.RawMessage("{\"oidc\":{ \"list\":[{" + oidcParams + "}]}}"),
+			PreviousValues:  domain.PreviousValues{},
+			RawContext:      json.RawMessage("{\"globalaccount_id\":\"globalaccount_id_1\", \"active\":true}"),
+			MaintenanceInfo: nil,
+		}, true)
+		operation, err := st.Operations().GetProvisioningOperationByID(response.OperationData)
+
+		// then
+		require.NoError(t, err)
+		assert.Equal(t, pkg.OIDCConfigDTO{
+			ClientID:       "updated-client",
+			GroupsClaim:    "groups",
+			IssuerURL:      "https://test.com",
+			SigningAlgs:    []string{"RS256"},
+			UsernameClaim:  "email",
+			UsernamePrefix: "-",
+		}, operation.ProvisioningParameters.Parameters.OIDC.List[0])
+	})
+	t.Run("Should accept update to empty OIDC list", func(t *testing.T) {
+		// when
+		response, err := svc.Update(context.Background(), instanceID, domain.UpdateDetails{
+			ServiceID:       "",
+			PlanID:          AzurePlanID,
+			RawParameters:   json.RawMessage("{\"oidc\":{ \"list\":[]}}"),
+			PreviousValues:  domain.PreviousValues{},
+			RawContext:      json.RawMessage("{\"globalaccount_id\":\"globalaccount_id_1\", \"active\":true}"),
+			MaintenanceInfo: nil,
+		}, true)
+		operation, err := st.Operations().GetProvisioningOperationByID(response.OperationData)
+
+		// then
+		require.NoError(t, err)
+		assert.Len(t, operation.ProvisioningParameters.Parameters.OIDC.List, 0)
+	})
+}
+
 func TestUpdateEndpoint_UpdateParameters(t *testing.T) {
 	// given
 	instance := fixture.FixInstance(instanceID)

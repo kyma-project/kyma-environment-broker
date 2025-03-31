@@ -319,7 +319,7 @@ func (b *ProvisionEndpoint) validateAndExtract(details domain.ProvisionDetails, 
 		return ersContext, parameters, apiresponses.NewFailureResponse(err, http.StatusUnprocessableEntity, err.Error())
 	}
 	if parameters.OIDC.IsProvided() {
-		if err := parameters.OIDC.Validate(); err != nil {
+		if err := parameters.OIDC.Validate(nil); err != nil {
 			return ersContext, parameters, apiresponses.NewFailureResponse(err, http.StatusUnprocessableEntity, err.Error())
 		}
 	}

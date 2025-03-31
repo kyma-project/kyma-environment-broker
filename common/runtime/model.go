@@ -176,12 +176,15 @@ func (o *OIDCsDTO) IsProvided() bool {
 	return false
 }
 
-func (o *OIDCsDTO) Validate() error {
+func (o *OIDCsDTO) Validate(instanceOidcConfig *OIDCsDTO) error {
 	if o.List != nil && o.OIDCConfigDTO != nil {
 		return fmt.Errorf("both list and object OIDC cannot be set")
 	}
 	errs := make([]string, 0)
 	if o.OIDCConfigDTO != nil {
+		if instanceOidcConfig != nil && instanceOidcConfig.List != nil {
+			return fmt.Errorf("an object OIDC cannot be used because the instance OIDC configuration uses a list")
+		}
 		if len(o.OIDCConfigDTO.ClientID) == 0 {
 			errs = append(errs, "clientID must not be empty")
 		}
@@ -221,8 +224,7 @@ func (o *OIDCsDTO) Validate() error {
 				}
 			}
 		}
-	}
-	if o.List != nil && len(o.List) > 0 {
+	} else if o.List != nil && len(o.List) > 0 {
 		for i, oidc := range o.List {
 			if len(oidc.ClientID) == 0 {
 				errs = append(errs, fmt.Sprintf("clientID must not be empty for OIDC at index %d", i))
