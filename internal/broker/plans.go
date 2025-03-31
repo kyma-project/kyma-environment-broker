@@ -249,6 +249,12 @@ func AwsMachinesNames(additionalMachines bool) []string {
 			"g6.8xlarge",
 			"g6.12xlarge",
 			"g6.16xlarge",
+			"g4dn.xlarge",
+			"g4dn.2xlarge",
+			"g4dn.4xlarge",
+			"g4dn.8xlarge",
+			"g4dn.12xlarge",
+			"g4dn.16xlarge",
 		)
 	}
 
@@ -287,6 +293,12 @@ func AwsMachinesDisplay(additionalMachines bool) map[string]string {
 		machines["g6.8xlarge"] = "g6.8xlarge (1GPU, 32vCPU, 128GB RAM)*"
 		machines["g6.12xlarge"] = "g6.12xlarge (4GPU, 48vCPU, 192GB RAM)*"
 		machines["g6.16xlarge"] = "g6.16xlarge (1GPU, 64vCPU, 256GB RAM)*"
+		machines["g4dn.xlarge"] = "g4dn.xlarge (1GPU, 4vCPU, 16GB RAM)*"
+		machines["g4dn.2xlarge"] = "g4dn.2xlarge (1GPU, 8vCPU, 32GB RAM)*"
+		machines["g4dn.4xlarge"] = "g4dn.4xlarge (1GPU, 16vCPU, 64GB RAM)*"
+		machines["g4dn.8xlarge"] = "g4dn.8xlarge (1GPU, 32vCPU, 128GB RAM)*"
+		machines["g4dn.12xlarge"] = "g4dn.12xlarge (4GPU, 48vCPU, 192GB RAM)*"
+		machines["g4dn.16xlarge"] = "g4dn.16xlarge (1GPU, 64vCPU, 256GB RAM)*"
 	}
 
 	return machines
