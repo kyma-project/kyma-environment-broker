@@ -14,7 +14,7 @@ The executable `hap` file is created in the `./bin` directory.
 
 ### Running
 
-Run the following command to show the help message for the `parse` command:
+To show the help message for the `parse` command, run:
 ```
 ./bin/hap parse -h
 ```
