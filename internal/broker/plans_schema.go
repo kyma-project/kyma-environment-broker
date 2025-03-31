@@ -269,9 +269,10 @@ func NewMultipleOIDCSchema(defaultOIDCConfig *pkg.OIDCConfigDTO) *OIDCs {
 								RequiredClaims: Type{
 									Type: "array",
 									Items: &Type{
-										Type: "string",
+										Type:    "string",
+										Pattern: "^[^=]+=[^=]+$",
 									},
-									Description: "Comma separated list of required claims, for example, repository:myorg/foo-app, workflow:verify-foo-app",
+									Description: "Comma separated list of required claims in the format claim=value, for example, repository=myorg/foo-app, workflow=verify-foo-app",
 								},
 							},
 							Required: []string{"clientID", "issuerURL"},
@@ -284,30 +285,33 @@ func NewMultipleOIDCSchema(defaultOIDCConfig *pkg.OIDCConfigDTO) *OIDCs {
 				Type: Type{
 					Type:                 "object",
 					Title:                "Object (not recommended)",
-					Description:          "OIDC configuration",
+					Description:          "Legacy OIDC configuration",
 					AdditionalProperties: false,
 				},
 				Properties: OIDCPropertiesExpanded{
 					OIDCProperties: OIDCProperties{
-						ClientID:       Type{Type: "string", Description: "The client ID for the OpenID Connect client."},
-						IssuerURL:      Type{Type: "string", Description: "The URL of the OpenID issuer, only HTTPS scheme will be accepted."},
-						GroupsClaim:    Type{Type: "string", Description: "If provided, the name of a custom OpenID Connect claim for specifying user groups."},
-						UsernameClaim:  Type{Type: "string", Description: "The OpenID claim to use as the user name."},
-						UsernamePrefix: Type{Type: "string", Description: "If provided, all usernames will be prefixed with this value. If not provided, username claims other than 'email' are prefixed by the issuer URL to avoid clashes. To skip any prefixing, provide the value '-' (dash character without additional characters)."},
+						ClientID:       Type{Type: "string", ReadOnly: true, Description: "The client ID for the OpenID Connect client."},
+						IssuerURL:      Type{Type: "string", ReadOnly: true, Description: "The URL of the OpenID issuer, only HTTPS scheme will be accepted."},
+						GroupsClaim:    Type{Type: "string", ReadOnly: true, Description: "If provided, the name of a custom OpenID Connect claim for specifying user groups."},
+						UsernameClaim:  Type{Type: "string", ReadOnly: true, Description: "The OpenID claim to use as the user name."},
+						UsernamePrefix: Type{Type: "string", ReadOnly: true, Description: "If provided, all usernames will be prefixed with this value. If not provided, username claims other than 'email' are prefixed by the issuer URL to avoid clashes. To skip any prefixing, provide the value '-' (dash character without additional characters)."},
 						SigningAlgs: Type{
 							Type: "array",
 							Items: &Type{
 								Type: "string",
 							},
+							ReadOnly:    true,
 							Description: "Comma separated list of allowed JOSE asymmetric signing algorithms, for example, RS256, ES256",
 						},
 					},
 					RequiredClaims: Type{
 						Type: "array",
 						Items: &Type{
-							Type: "string",
+							Type:    "string",
+							Pattern: "^[^=]+=[^=]+$",
 						},
-						Description: "Comma separated list of required claims, for example, repository:myorg/foo-app, workflow:verify-foo-app",
+						ReadOnly:    true,
+						Description: "Comma separated list of required claims in the format claim=value, for example, repository=myorg/foo-app, workflow=verify-foo-app",
 					},
 				},
 				Required: []string{"clientID", "issuerURL"},
