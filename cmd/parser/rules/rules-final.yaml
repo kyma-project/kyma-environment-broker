@@ -6,7 +6,7 @@ rule:
   - gcp                             
   - gcp(PR=cf-sa30)                 
   - trial -> S                      
-  - sap-converged-cloud(HR=*) -> S  
+  - sap-converged-cloud -> S, HR
   - azure_lite                     
   - preview                         
   - free                            
