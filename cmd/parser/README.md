@@ -2,7 +2,7 @@
 
 This folder contains the sources of the tools for verifying the correctness of the Hyperscaler Account Pool (HAP) configuration.
 
-### Build tool
+### Build Tool
 
 Run the following command to build the binary:
 
