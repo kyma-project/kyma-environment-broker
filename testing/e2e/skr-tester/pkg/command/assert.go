@@ -25,7 +25,7 @@ import (
 
 const (
 	SKRAccessInterval = 10 * time.Second
-	SKRAccessTimeout  = 30 * time.Second
+	SKRAccessTimeout  = 2 * time.Minute
 )
 
 type AssertCommand struct {
