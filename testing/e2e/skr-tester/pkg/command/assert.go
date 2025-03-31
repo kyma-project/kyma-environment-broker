@@ -188,7 +188,7 @@ func (cmd *AssertCommand) Run() error {
 			return fmt.Errorf("while deleting secret from instace: %w", err)
 		}
 		fmt.Println("BTP manager secret deleted successfully")
-		retriesBeforeTimeout := 10
+		retriesBeforeTimeout := 100
 		for i := 0; i < retriesBeforeTimeout; i++ {
 			time.Sleep(6 * time.Second)
 			secret := &v1.Secret{}
