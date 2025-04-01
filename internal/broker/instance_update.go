@@ -264,10 +264,10 @@ func (b *UpdateEndpoint) processUpdateParameters(instance *internal.Instance, de
 
 	logger.Debug(fmt.Sprintf("creating update operation %v", params))
 	operation := internal.NewUpdateOperation(operationID, instance, params)
-	planID := instance.Parameters.PlanID
-	if len(details.PlanID) != 0 {
-		planID = details.PlanID
-	}
+	//planID := instance.Parameters.PlanID
+	//if len(details.PlanID) != 0 {
+	//	planID = details.PlanID
+	//}
 
 	providerValues, err := b.valuesProvider.ValuesForPlanAndParameters(instance.Parameters)
 	if err != nil {

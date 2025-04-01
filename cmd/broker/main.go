@@ -298,12 +298,6 @@ func main() {
 	accountProvider := hyperscaler.NewAccountProvider(gardenerAccountPool, gardenerSharedPool)
 	gardenerClient := gardener.NewClient(dynamicGardener, gardenerNamespace)
 
-	regions, err := provider.ReadPlatformRegionMappingFromFile(cfg.TrialRegionMappingFilePath)
-	fatalOnError(err, log)
-	log.Info(fmt.Sprintf("Platform region mapping for trial: %v", regions))
-
-	valuesProvider := provider.NewPlanSpecificValuesProvider(cfg.Provisioner.MultiZoneCluster, cfg.Provisioner.DefaultTrialProvider, cfg.Broker.UseSmallerMachineTypes, regions, cfg.Provisioner.DefaultGardenerShootPurpose, cfg.Provisioner.ControlPlaneFailureTolerance)
-
 	oidcDefaultValues, err := runtime.ReadOIDCDefaultValuesFromYAML(cfg.SkrOidcDefaultValuesYAMLFilePath)
 	fatalOnError(err, log)
 
@@ -353,7 +347,7 @@ func main() {
 	router := httputil.NewRouter()
 
 	createAPI(router, servicesConfig, &cfg, db, provisionQueue, deprovisionQueue, updateQueue, logger, log,
-		 kcBuilder, skrK8sClientProvider, skrK8sClientProvider, kcpK8sClient, eventBroker, valuesProvider)
+		kcBuilder, skrK8sClientProvider, skrK8sClientProvider, kcpK8sClient, eventBroker)
 
 	// create metrics endpoint
 	router.Handle("/metrics", promhttp.Handler())
@@ -473,7 +467,12 @@ func logConfiguration(logs *slog.Logger, cfg Config) {
 
 func createAPI(router *httputil.Router, servicesConfig broker.ServicesConfig, cfg *Config, db storage.BrokerStorage,
 	provisionQueue, deprovisionQueue, updateQueue *process.Queue, logger lager.Logger, logs *slog.Logger, kcBuilder kubeconfig.KcBuilder, clientProvider K8sClientProvider,
-	kubeconfigProvider KubeconfigProvider, kcpK8sClient client.Client, publisher event.Publisher, valuesProvider broker.ValuesProvider) {
+	kubeconfigProvider KubeconfigProvider, kcpK8sClient client.Client, publisher event.Publisher) {
+
+	regions, err := provider.ReadPlatformRegionMappingFromFile(cfg.TrialRegionMappingFilePath)
+	fatalOnError(err, logs)
+	logs.Info(fmt.Sprintf("Platform region mapping for trial: %v", regions))
+	valuesProvider := provider.NewPlanSpecificValuesProvider(cfg.Provisioner.MultiZoneCluster, cfg.Provisioner.DefaultTrialProvider, cfg.Broker.UseSmallerMachineTypes, regions, cfg.Provisioner.DefaultGardenerShootPurpose, cfg.Provisioner.ControlPlaneFailureTolerance)
 
 	suspensionCtxHandler := suspension.NewContextUpdateHandler(db.Operations(), provisionQueue, deprovisionQueue, logs)
 
@@ -499,7 +498,6 @@ func createAPI(router *httputil.Router, servicesConfig broker.ServicesConfig, cf
 	regionsSupportingMachine, err := regionssupportingmachine.ReadRegionsSupportingMachineFromFile(cfg.RegionsSupportingMachineFilePath)
 	fatalOnError(err, logs)
 	logs.Info(fmt.Sprintf("Number of machine types families that are not universally supported across all regions: %d", len(regionsSupportingMachine)))
-
 
 	// create KymaEnvironmentBroker endpoints
 	kymaEnvBroker := &broker.KymaEnvironmentBroker{

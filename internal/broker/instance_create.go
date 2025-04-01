@@ -5,8 +5,7 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
-    "github.com/docker/docker/daemon/logger"
-    "github.com/kyma-project/kyma-environment-broker/internal/provider"
+
 	"log/slog"
 	"net"
 	"net/http"
@@ -369,7 +368,7 @@ func (b *ProvisionEndpoint) validate(ctx context.Context, details domain.Provisi
 
 	// EU Access
 	if isEuRestrictedAccess(ctx) {
-		logger.Info("EU Access restricted instance creation")
+		l.Info("EU Access restricted instance creation")
 	}
 
 	parameters.LicenceType = b.determineLicenceType(details.PlanID)
@@ -400,7 +399,7 @@ func (b *ProvisionEndpoint) validate(ctx context.Context, details domain.Provisi
 		}
 
 		if count > 0 {
-			logger.Info("Provisioning Trial SKR rejected, such instance was already created for this Global Account")
+			l.Info("Provisioning Trial SKR rejected, such instance was already created for this Global Account")
 			return fmt.Errorf("trial Kyma was created for the global account, but there is only one allowed")
 		}
 	}
@@ -411,7 +410,7 @@ func (b *ProvisionEndpoint) validate(ctx context.Context, details domain.Provisi
 			return fmt.Errorf("while checking if a free Kyma instance existed for given global account: %w", err)
 		}
 		if count > 0 {
-			logger.Info("Provisioning Free SKR rejected, such instance was already created for this Global Account")
+			l.Info("Provisioning Free SKR rejected, such instance was already created for this Global Account")
 			return fmt.Errorf("provisioning request rejected, you have already used the available free service plan quota in this global account")
 		}
 
@@ -425,7 +424,7 @@ func (b *ProvisionEndpoint) validate(ctx context.Context, details domain.Provisi
 			return fmt.Errorf("while checking if a free Kyma instance existed for given global account: %w", err)
 		}
 		if count > 0 {
-			logger.Info("Provisioning Free SKR rejected, such instance was already created for this Global Account")
+			l.Info("Provisioning Free SKR rejected, such instance was already created for this Global Account")
 			return fmt.Errorf("provisioning request rejected, you have already used the available free service plan quota in this global account")
 		}
 	}
