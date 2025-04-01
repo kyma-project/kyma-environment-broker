@@ -1075,7 +1075,7 @@ func TestProvision_Provision(t *testing.T) {
 		assert.Equal(t, "client-id", operation.ProvisioningParameters.Parameters.OIDC.OIDCConfigDTO.ClientID)
 		assert.Equal(t, "https://test.local", operation.ProvisioningParameters.Parameters.OIDC.OIDCConfigDTO.IssuerURL)
 		assert.Equal(t, []string{"RS256"}, operation.ProvisioningParameters.Parameters.OIDC.OIDCConfigDTO.SigningAlgs)
-		assert.Equal(t, []string{"claim=value"}, operation.ProvisioningParameters.Parameters.OIDC.List[0].RequiredClaims)
+		assert.Equal(t, []string{"claim=value"}, operation.ProvisioningParameters.Parameters.OIDC.OIDCConfigDTO.RequiredClaims)
 
 		instance, err := memoryStorage.Instances().GetByID(instanceID)
 		require.NoError(t, err)
