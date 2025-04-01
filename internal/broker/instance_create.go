@@ -5,6 +5,8 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
+    "github.com/docker/docker/daemon/logger"
+    "github.com/kyma-project/kyma-environment-broker/internal/provider"
 	"log/slog"
 	"net"
 	"net/http"
@@ -57,16 +59,18 @@ type (
 	}
 )
 
+type ValuesProvider interface {
+	ValuesForPlanAndParameters(provisioningParameters internal.ProvisioningParameters) (internal.ProviderValues, error)
+}
+
 type ProvisionEndpoint struct {
 	config                  Config
 	operationsStorage       storage.Operations
 	instanceStorage         storage.Instances
 	instanceArchivedStorage storage.InstancesArchived
 	queue                   Queue
-	builderFactory          PlanValidator
 	enabledPlanIDs          map[string]struct{}
 	plansConfig             PlansConfig
-	planDefaults            PlanDefaults
 
 	shootDomain       string
 	shootProject      string
@@ -81,7 +85,8 @@ type ProvisionEndpoint struct {
 
 	regionsSupportingMachine map[string][]string
 
-	log *slog.Logger
+	log            *slog.Logger
+	valuesProvider ValuesProvider
 }
 
 const (
@@ -94,15 +99,14 @@ func NewProvision(cfg Config,
 	instanceStorage storage.Instances,
 	instanceArchivedStorage storage.InstancesArchived,
 	queue Queue,
-	builderFactory PlanValidator,
 	plansConfig PlansConfig,
-	planDefaults PlanDefaults,
 	log *slog.Logger,
 	dashboardConfig dashboard.Config,
 	kcBuilder kubeconfig.KcBuilder,
 	freemiumWhitelist whitelist.Set,
 	convergedCloudRegionsProvider ConvergedCloudRegionProvider,
 	regionsSupportingMachine map[string][]string,
+	valuesProvider ValuesProvider,
 ) *ProvisionEndpoint {
 	enabledPlanIDs := map[string]struct{}{}
 	for _, planName := range cfg.EnablePlans {
@@ -116,19 +120,18 @@ func NewProvision(cfg Config,
 		instanceStorage:               instanceStorage,
 		instanceArchivedStorage:       instanceArchivedStorage,
 		queue:                         queue,
-		builderFactory:                builderFactory,
 		log:                           log.With("service", "ProvisionEndpoint"),
 		enabledPlanIDs:                enabledPlanIDs,
 		plansConfig:                   plansConfig,
 		shootDomain:                   gardenerConfig.ShootDomain,
 		shootProject:                  gardenerConfig.Project,
 		shootDnsProviders:             gardenerConfig.DNSProviders,
-		planDefaults:                  planDefaults,
 		dashboardConfig:               dashboardConfig,
 		freemiumWhiteList:             freemiumWhitelist,
 		kcBuilder:                     kcBuilder,
 		convergedCloudRegionsProvider: convergedCloudRegionsProvider,
 		regionsSupportingMachine:      regionsSupportingMachine,
+		valuesProvider:                valuesProvider,
 	}
 }
 
@@ -151,8 +154,33 @@ func (b *ProvisionEndpoint) Provision(ctx context.Context, instanceID string, de
 		return domain.ProvisionedServiceSpec{}, apiresponses.NewFailureResponse(err, http.StatusInternalServerError, "provisioning")
 	}
 
+	// EXTRACT INPUT PARAMETERS / PROVISIONING PARAMETERS
+	parameters, err := b.extractInputParameters(details)
+	if err != nil {
+		return domain.ProvisionedServiceSpec{}, apiresponses.NewFailureResponse(err, http.StatusBadRequest, "while extracting input parameters")
+	}
+	ersContext, err := b.extractERSContext(details)
+	logger = logger.With("globalAccountID", ersContext.GlobalAccountID)
+	if err != nil {
+		return domain.ProvisionedServiceSpec{}, apiresponses.NewFailureResponse(err, http.StatusBadRequest, "while extracting context")
+
+	}
+	provisioningParameters := internal.ProvisioningParameters{
+		PlanID:           details.PlanID,
+		ServiceID:        details.ServiceID,
+		ErsContext:       ersContext,
+		Parameters:       parameters,
+		PlatformRegion:   region,
+		PlatformProvider: platformProvider,
+	}
+	providerValues, err := b.valuesProvider.ValuesForPlanAndParameters(provisioningParameters)
+	if err != nil {
+		errMsg := fmt.Sprintf("unable to provide default values %s", instanceID, err)
+		return domain.ProvisionedServiceSpec{}, apiresponses.NewFailureResponse(err, http.StatusBadRequest, errMsg)
+	}
+
 	// validation of incoming input
-	ersContext, parameters, err := b.validateAndExtract(details, platformProvider, ctx, logger)
+	err = b.validate(ctx, details, provisioningParameters, logger)
 	if err != nil {
 		errMsg := fmt.Sprintf("[instanceID: %s] %s", instanceID, err)
 		return domain.ProvisionedServiceSpec{}, apiresponses.NewFailureResponse(err, http.StatusBadRequest, errMsg)
@@ -161,15 +189,6 @@ func (b *ProvisionEndpoint) Provision(ctx context.Context, instanceID string, de
 	if b.config.DisableSapConvergedCloud && details.PlanID == SapConvergedCloudPlanID {
 		err := fmt.Errorf(CONVERGED_CLOUD_BLOCKED_MSG)
 		return domain.ProvisionedServiceSpec{}, apiresponses.NewFailureResponse(err, http.StatusBadRequest, CONVERGED_CLOUD_BLOCKED_MSG)
-	}
-
-	provisioningParameters := internal.ProvisioningParameters{
-		PlanID:           details.PlanID,
-		ServiceID:        details.ServiceID,
-		ErsContext:       ersContext,
-		Parameters:       parameters,
-		PlatformRegion:   region,
-		PlatformProvider: platformProvider,
 	}
 
 	logger.Info(fmt.Sprintf("Starting provisioning runtime: Name=%s, GlobalAccountID=%s, SubAccountID=%s, PlatformRegion=%s, ProvisioningParameterts.Region=%s, ShootAndSeedSameRegion=%t, ProvisioningParameterts.MachineType=%s",
@@ -199,6 +218,7 @@ func (b *ProvisionEndpoint) Provision(ctx context.Context, instanceID string, de
 		return domain.ProvisionedServiceSpec{}, fmt.Errorf("cannot create new operation")
 	}
 
+	operation.ProviderValues = &providerValues
 	operation.ShootName = shootName
 	operation.ShootDomain = fmt.Sprintf("%s.%s", shootName, shootDomainSuffix)
 	operation.ShootDNSProviders = b.shootDnsProviders
@@ -271,34 +291,24 @@ func valueOfBoolPtr(ptr *bool) bool {
 	return *ptr
 }
 
-func (b *ProvisionEndpoint) validateAndExtract(details domain.ProvisionDetails, provider pkg.CloudProvider, ctx context.Context, l *slog.Logger) (internal.ERSContext, pkg.ProvisioningParametersDTO, error) {
+func (b *ProvisionEndpoint) validate(ctx context.Context, details domain.ProvisionDetails, provisioningParameters internal.ProvisioningParameters, l *slog.Logger) error {
 	var ersContext internal.ERSContext
 	var parameters pkg.ProvisioningParametersDTO
 
 	if details.ServiceID != KymaServiceID {
-		return ersContext, parameters, fmt.Errorf("service_id not recognized")
+		return fmt.Errorf("service_id not recognized")
 	}
 	if _, exists := b.enabledPlanIDs[details.PlanID]; !exists {
-		return ersContext, parameters, fmt.Errorf("plan ID %q is not recognized", details.PlanID)
+		return fmt.Errorf("plan ID %q is not recognized", details.PlanID)
 	}
 
-	ersContext, err := b.extractERSContext(details)
-	logger := l.With("globalAccountID", ersContext.GlobalAccountID)
+	values, err := b.valuesProvider.ValuesForPlanAndParameters(provisioningParameters)
 	if err != nil {
-		return ersContext, parameters, fmt.Errorf("while extracting ers context: %w", err)
-	}
-
-	parameters, err = b.extractInputParameters(details)
-	if err != nil {
-		return ersContext, parameters, fmt.Errorf("while extracting input parameters: %w", err)
-	}
-	defaults, err := b.planDefaults(details.PlanID, provider, parameters.Provider)
-	if err != nil {
-		return ersContext, parameters, fmt.Errorf("while obtaining plan defaults: %w", err)
+		return fmt.Errorf("while obtaining plan defaults: %w", err)
 	}
 
 	if !regionssupportingmachine.IsSupported(b.regionsSupportingMachine, valueOfPtr(parameters.Region), valueOfPtr(parameters.MachineType)) {
-		return ersContext, parameters, fmt.Errorf(
+		return fmt.Errorf(
 			"In the region %s, the machine type %s is not available, it is supported in the %v",
 			valueOfPtr(parameters.Region),
 			valueOfPtr(parameters.MachineType),
@@ -307,59 +317,54 @@ func (b *ProvisionEndpoint) validateAndExtract(details domain.ProvisionDetails, 
 	}
 
 	if err := b.validateNetworking(parameters); err != nil {
-		return ersContext, parameters, err
+		return err
 	}
 
-	var autoscalerMin, autoscalerMax int
-	if defaults.GardenerConfig != nil {
-		p := defaults.GardenerConfig
-		autoscalerMin, autoscalerMax = p.AutoScalerMin, p.AutoScalerMax
-	}
-	if err := parameters.AutoScalerParameters.Validate(autoscalerMin, autoscalerMax); err != nil {
-		return ersContext, parameters, apiresponses.NewFailureResponse(err, http.StatusUnprocessableEntity, err.Error())
+	if err := parameters.AutoScalerParameters.Validate(values.DefaultAutoScalerMin, values.DefaultAutoScalerMax); err != nil {
+		return apiresponses.NewFailureResponse(err, http.StatusUnprocessableEntity, err.Error())
 	}
 	if parameters.OIDC.IsProvided() {
 		if err := parameters.OIDC.Validate(); err != nil {
-			return ersContext, parameters, apiresponses.NewFailureResponse(err, http.StatusUnprocessableEntity, err.Error())
+			return apiresponses.NewFailureResponse(err, http.StatusUnprocessableEntity, err.Error())
 		}
 	}
 
 	if parameters.AdditionalWorkerNodePools != nil {
 		if !supportsAdditionalWorkerNodePools(details.PlanID) {
 			message := fmt.Sprintf("additional worker node pools are not supported for plan ID: %s", details.PlanID)
-			return ersContext, parameters, apiresponses.NewFailureResponse(fmt.Errorf(message), http.StatusUnprocessableEntity, message)
+			return apiresponses.NewFailureResponse(fmt.Errorf(message), http.StatusUnprocessableEntity, message)
 		}
 		if !AreNamesUnique(parameters.AdditionalWorkerNodePools) {
 			message := "names of additional worker node pools must be unique"
-			return ersContext, parameters, apiresponses.NewFailureResponse(fmt.Errorf(message), http.StatusUnprocessableEntity, message)
+			return apiresponses.NewFailureResponse(fmt.Errorf(message), http.StatusUnprocessableEntity, message)
 		}
 		for _, additionalWorkerNodePool := range parameters.AdditionalWorkerNodePools {
 			if err := additionalWorkerNodePool.Validate(); err != nil {
-				return ersContext, parameters, apiresponses.NewFailureResponse(err, http.StatusUnprocessableEntity, err.Error())
+				return apiresponses.NewFailureResponse(err, http.StatusUnprocessableEntity, err.Error())
 			}
 		}
 		if isExternalCustomer(ersContext) {
 			if err := checkGPUMachinesUsage(parameters.AdditionalWorkerNodePools); err != nil {
-				return ersContext, parameters, apiresponses.NewFailureResponse(err, http.StatusUnprocessableEntity, err.Error())
+				return apiresponses.NewFailureResponse(err, http.StatusUnprocessableEntity, err.Error())
 			}
 		}
 		if err := checkUnsupportedMachines(b.regionsSupportingMachine, valueOfPtr(parameters.Region), parameters.AdditionalWorkerNodePools); err != nil {
-			return ersContext, parameters, apiresponses.NewFailureResponse(err, http.StatusUnprocessableEntity, err.Error())
+			return apiresponses.NewFailureResponse(err, http.StatusUnprocessableEntity, err.Error())
 		}
 	}
 
-	planValidator, err := b.validator(&details, provider, ctx)
+	planValidator, err := b.validator(&details, provisioningParameters.PlatformProvider, ctx)
 	if err != nil {
-		return ersContext, parameters, fmt.Errorf("while creating plan validator: %w", err)
+		return fmt.Errorf("while creating plan validator: %w", err)
 	}
 
 	var rawParameters any
 	if err = json.Unmarshal(details.RawParameters, &rawParameters); err != nil {
-		return ersContext, parameters, fmt.Errorf("while unmarshaling raw parameters: %w", err)
+		return fmt.Errorf("while unmarshaling raw parameters: %w", err)
 	}
 
 	if err = planValidator.Validate(rawParameters); err != nil {
-		return ersContext, parameters, fmt.Errorf("while validating input parameters: %s", validator.FormatError(err))
+		return fmt.Errorf("while validating input parameters: %s", validator.FormatError(err))
 	}
 
 	// EU Access
@@ -369,50 +374,45 @@ func (b *ProvisionEndpoint) validateAndExtract(details domain.ProvisionDetails, 
 
 	parameters.LicenceType = b.determineLicenceType(details.PlanID)
 
-	found := b.builderFactory.IsPlanSupport(details.PlanID)
-	if !found {
-		return ersContext, parameters, fmt.Errorf("the plan ID not known, planID: %s", details.PlanID)
-	}
-
 	if IsOwnClusterPlan(details.PlanID) {
 		decodedKubeconfig, err := base64.StdEncoding.DecodeString(parameters.Kubeconfig)
 		if err != nil {
-			return ersContext, parameters, fmt.Errorf("while decoding kubeconfig: %w", err)
+			return fmt.Errorf("while decoding kubeconfig: %w", err)
 		}
 		parameters.Kubeconfig = string(decodedKubeconfig)
 		err = validateKubeconfig(parameters.Kubeconfig)
 		if err != nil {
-			return ersContext, parameters, fmt.Errorf("while validating kubeconfig: %w", err)
+			return fmt.Errorf("while validating kubeconfig: %w", err)
 		}
 	}
 
 	if IsTrialPlan(details.PlanID) && parameters.Region != nil && *parameters.Region != "" {
 		_, valid := validRegionsForTrial[TrialCloudRegion(*parameters.Region)]
 		if !valid {
-			return ersContext, parameters, fmt.Errorf("invalid region specified in request for trial")
+			return fmt.Errorf("invalid region specified in request for trial")
 		}
 	}
 
 	if IsTrialPlan(details.PlanID) && b.config.OnlySingleTrialPerGA {
 		count, err := b.instanceStorage.GetNumberOfInstancesForGlobalAccountID(ersContext.GlobalAccountID)
 		if err != nil {
-			return ersContext, parameters, fmt.Errorf("while checking if a trial Kyma instance exists for given global account: %w", err)
+			return fmt.Errorf("while checking if a trial Kyma instance exists for given global account: %w", err)
 		}
 
 		if count > 0 {
 			logger.Info("Provisioning Trial SKR rejected, such instance was already created for this Global Account")
-			return ersContext, parameters, fmt.Errorf("trial Kyma was created for the global account, but there is only one allowed")
+			return fmt.Errorf("trial Kyma was created for the global account, but there is only one allowed")
 		}
 	}
 
 	if IsFreemiumPlan(details.PlanID) && b.config.OnlyOneFreePerGA && whitelist.IsNotWhitelisted(ersContext.GlobalAccountID, b.freemiumWhiteList) {
 		count, err := b.instanceArchivedStorage.TotalNumberOfInstancesArchivedForGlobalAccountID(ersContext.GlobalAccountID, FreemiumPlanID)
 		if err != nil {
-			return ersContext, parameters, fmt.Errorf("while checking if a free Kyma instance existed for given global account: %w", err)
+			return fmt.Errorf("while checking if a free Kyma instance existed for given global account: %w", err)
 		}
 		if count > 0 {
 			logger.Info("Provisioning Free SKR rejected, such instance was already created for this Global Account")
-			return ersContext, parameters, fmt.Errorf("provisioning request rejected, you have already used the available free service plan quota in this global account")
+			return fmt.Errorf("provisioning request rejected, you have already used the available free service plan quota in this global account")
 		}
 
 		instanceFilter := dbmodel.InstanceFilter{
@@ -422,15 +422,15 @@ func (b *ProvisionEndpoint) validateAndExtract(details domain.ProvisionDetails, 
 		}
 		_, _, count, err = b.instanceStorage.List(instanceFilter)
 		if err != nil {
-			return ersContext, parameters, fmt.Errorf("while checking if a free Kyma instance existed for given global account: %w", err)
+			return fmt.Errorf("while checking if a free Kyma instance existed for given global account: %w", err)
 		}
 		if count > 0 {
 			logger.Info("Provisioning Free SKR rejected, such instance was already created for this Global Account")
-			return ersContext, parameters, fmt.Errorf("provisioning request rejected, you have already used the available free service plan quota in this global account")
+			return fmt.Errorf("provisioning request rejected, you have already used the available free service plan quota in this global account")
 		}
 	}
 
-	return ersContext, parameters, nil
+	return nil
 }
 
 func isEuRestrictedAccess(ctx context.Context) bool {
