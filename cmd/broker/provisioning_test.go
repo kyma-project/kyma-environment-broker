@@ -1179,6 +1179,7 @@ func TestProvisioning_OIDCValues(t *testing.T) {
 		assert.Equal(t, defaultOIDCValues().SigningAlgs, (*gotOIDC)[0].SigningAlgs)
 		assert.Equal(t, defaultOIDCValues().UsernameClaim, *(*gotOIDC)[0].UsernameClaim)
 		assert.Equal(t, defaultOIDCValues().UsernamePrefix, *(*gotOIDC)[0].UsernamePrefix)
+		assert.Nil(t, (*gotOIDC)[0].RequiredClaims)
 	})
 
 	t.Run("should apply OIDC values list with one element", func(t *testing.T) {
@@ -1212,7 +1213,8 @@ func TestProvisioning_OIDCValues(t *testing.T) {
 									"issuerURL": "https://testurl.local",
 									"signingAlgs": ["RS256", "RS384"],
 									"usernameClaim": "fakeUsernameClaim",
-									"usernamePrefix": "::"
+									"usernamePrefix": "::",
+									"requiredClaims": ["claim=value"]
 								}
 							]
 						}
@@ -1233,6 +1235,7 @@ func TestProvisioning_OIDCValues(t *testing.T) {
 		assert.Equal(t, []string{"RS256", "RS384"}, (*gotOIDC)[0].SigningAlgs)
 		assert.Equal(t, ptr.String("fakeUsernameClaim"), (*gotOIDC)[0].UsernameClaim)
 		assert.Equal(t, ptr.String("::"), (*gotOIDC)[0].UsernamePrefix)
+		assert.Equal(t, map[string]string{"claim": "value"}, (*gotOIDC)[0].RequiredClaims)
 	})
 
 	t.Run("should apply empty OIDC list", func(t *testing.T) {

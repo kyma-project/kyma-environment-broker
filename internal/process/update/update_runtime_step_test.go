@@ -96,6 +96,10 @@ func TestUpdateRuntimeStep_RunUpdateEmptyOIDCConfigWithOIDCObject(t *testing.T) 
 		SigningAlgs:    []string{"signingAlgs"},
 		UsernameClaim:  ptr.String("sub"),
 		UsernamePrefix: nil,
+		RequiredClaims: map[string]string{
+			"claim1": "value1",
+			"claim2": "value2",
+		},
 	}
 	var gotRuntime imv1.Runtime
 	err = kcpClient.Get(context.Background(), client.ObjectKey{Name: operation.RuntimeResourceName, Namespace: "kcp-system"}, &gotRuntime)
@@ -136,6 +140,10 @@ func TestUpdateRuntimeStep_RunUpdateOIDCWithOIDCObject(t *testing.T) {
 		SigningAlgs:    []string{"signingAlgs"},
 		UsernameClaim:  ptr.String("sub"),
 		UsernamePrefix: ptr.String("initial-username-prefix"),
+		RequiredClaims: map[string]string{
+			"claim1": "value1",
+			"claim2": "value2",
+		},
 	}
 	var gotRuntime imv1.Runtime
 	err = kcpClient.Get(context.Background(), client.ObjectKey{Name: operation.RuntimeResourceName, Namespace: "kcp-system"}, &gotRuntime)
@@ -179,6 +187,7 @@ func TestUpdateRuntimeStep_RunUpdateEmptyAdditionalOIDCWithMultipleAdditionalOID
 					SigningAlgs:    []string{"first-sa-custom"},
 					UsernameClaim:  "first-uc-custom",
 					UsernamePrefix: "first-up-custom",
+					RequiredClaims: []string{"claim1=value1", "claim2=value2"},
 				},
 				{
 					ClientID:       "second-client-id-custom",
@@ -198,6 +207,10 @@ func TestUpdateRuntimeStep_RunUpdateEmptyAdditionalOIDCWithMultipleAdditionalOID
 		SigningAlgs:    []string{"first-sa-custom"},
 		UsernameClaim:  ptr.String("first-uc-custom"),
 		UsernamePrefix: ptr.String("first-up-custom"),
+		RequiredClaims: map[string]string{
+			"claim1": "value1",
+			"claim2": "value2",
+		},
 	}
 	secondExpectedOIDCConfig := gardener.OIDCConfig{
 		ClientID:       ptr.String("second-client-id-custom"),
@@ -250,6 +263,7 @@ func TestUpdateRuntimeStep_RunUpdateMultipleAdditionalOIDCWithMultipleAdditional
 					SigningAlgs:    []string{"first-sa-custom"},
 					UsernameClaim:  "first-uc-custom",
 					UsernamePrefix: "first-up-custom",
+					RequiredClaims: []string{"claim1=value1", "claim2=value2"},
 				},
 				{
 					ClientID:       "second-client-id-custom",
@@ -258,6 +272,7 @@ func TestUpdateRuntimeStep_RunUpdateMultipleAdditionalOIDCWithMultipleAdditional
 					SigningAlgs:    []string{"second-sa-custom"},
 					UsernameClaim:  "second-uc-custom",
 					UsernamePrefix: "second-up-custom",
+					RequiredClaims: []string{"claim3=value3", "claim4=value4"},
 				},
 			},
 		},
@@ -269,6 +284,10 @@ func TestUpdateRuntimeStep_RunUpdateMultipleAdditionalOIDCWithMultipleAdditional
 		SigningAlgs:    []string{"first-sa-custom"},
 		UsernameClaim:  ptr.String("first-uc-custom"),
 		UsernamePrefix: ptr.String("first-up-custom"),
+		RequiredClaims: map[string]string{
+			"claim1": "value1",
+			"claim2": "value2",
+		},
 	}
 	secondExpectedOIDCConfig := gardener.OIDCConfig{
 		ClientID:       ptr.String("second-client-id-custom"),
@@ -277,6 +296,10 @@ func TestUpdateRuntimeStep_RunUpdateMultipleAdditionalOIDCWithMultipleAdditional
 		SigningAlgs:    []string{"second-sa-custom"},
 		UsernameClaim:  ptr.String("second-uc-custom"),
 		UsernamePrefix: ptr.String("second-up-custom"),
+		RequiredClaims: map[string]string{
+			"claim3": "value3",
+			"claim4": "value4",
+		},
 	}
 	var gotRuntime imv1.Runtime
 	err = kcpClient.Get(context.Background(), client.ObjectKey{Name: operation.RuntimeResourceName, Namespace: "kcp-system"}, &gotRuntime)
@@ -297,6 +320,7 @@ func TestUpdateRuntimeStep_RunUpdateMultipleAdditionalOIDCWithMultipleAdditional
 	assert.Nil(t, gotRuntime.Spec.Shoot.Kubernetes.KubeAPIServer.OidcConfig.SigningAlgs)
 	assert.Nil(t, gotRuntime.Spec.Shoot.Kubernetes.KubeAPIServer.OidcConfig.UsernameClaim)
 	assert.Nil(t, gotRuntime.Spec.Shoot.Kubernetes.KubeAPIServer.OidcConfig.UsernamePrefix)
+	assert.Nil(t, gotRuntime.Spec.Shoot.Kubernetes.KubeAPIServer.OidcConfig.RequiredClaims)
 	assert.NotNil(t, gotRuntime.Spec.Shoot.Kubernetes.KubeAPIServer.AdditionalOidcConfig)
 	assert.Len(t, *gotRuntime.Spec.Shoot.Kubernetes.KubeAPIServer.AdditionalOidcConfig, 2)
 	assert.Equal(t, firstExpectedOIDCConfig, (*gotRuntime.Spec.Shoot.Kubernetes.KubeAPIServer.AdditionalOidcConfig)[0])

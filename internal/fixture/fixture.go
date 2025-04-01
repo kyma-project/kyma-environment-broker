@@ -238,6 +238,7 @@ func FixUpdatingOperationWithOIDCObject(operationId, instanceId string) internal
 				SigningAlgs:    []string{"signingAlgs"},
 				UsernameClaim:  "sub",
 				UsernamePrefix: "",
+				RequiredClaims: []string{"claim1=value1", "claim2=value2"},
 			},
 		},
 	}

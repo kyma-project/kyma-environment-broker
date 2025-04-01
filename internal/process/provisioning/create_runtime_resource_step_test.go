@@ -79,6 +79,7 @@ func TestCreateRuntimeResourceStep_AllCustom(t *testing.T) {
 			SigningAlgs:    []string{"sa-custom"},
 			UsernameClaim:  "uc-custom",
 			UsernamePrefix: "up-custom",
+			RequiredClaims: []string{"claim=value"},
 		},
 	}
 	assertInsertions(t, memoryStorage, instance, operation)
@@ -89,6 +90,7 @@ func TestCreateRuntimeResourceStep_AllCustom(t *testing.T) {
 		SigningAlgs:    []string{"sa-custom"},
 		UsernameClaim:  ptr.String("uc-custom"),
 		UsernamePrefix: ptr.String("up-custom"),
+		RequiredClaims: map[string]string{"claim": "value"},
 	}
 	cli := getClientForTests(t)
 	step := NewCreateRuntimeResourceStep(memoryStorage.Operations(), memoryStorage.Instances(), cli, inputConfig, defaultOIDSConfig)
@@ -111,6 +113,7 @@ func TestCreateRuntimeResourceStep_AllCustom(t *testing.T) {
 	assert.Nil(t, runtime.Spec.Shoot.Kubernetes.KubeAPIServer.OidcConfig.SigningAlgs)
 	assert.Nil(t, runtime.Spec.Shoot.Kubernetes.KubeAPIServer.OidcConfig.UsernameClaim)
 	assert.Nil(t, runtime.Spec.Shoot.Kubernetes.KubeAPIServer.OidcConfig.UsernamePrefix)
+	assert.Nil(t, runtime.Spec.Shoot.Kubernetes.KubeAPIServer.OidcConfig.RequiredClaims)
 	assert.Equal(t, expectedOIDCConfig, (*runtime.Spec.Shoot.Kubernetes.KubeAPIServer.AdditionalOidcConfig)[0])
 }
 
@@ -132,6 +135,7 @@ func TestCreateRuntimeResourceStep_AllCustomWithOIDCList(t *testing.T) {
 				SigningAlgs:    []string{"sa-custom"},
 				UsernameClaim:  "uc-custom",
 				UsernamePrefix: "up-custom",
+				RequiredClaims: []string{"claim=value"},
 			},
 		},
 	}
@@ -143,6 +147,7 @@ func TestCreateRuntimeResourceStep_AllCustomWithOIDCList(t *testing.T) {
 		SigningAlgs:    []string{"sa-custom"},
 		UsernameClaim:  ptr.String("uc-custom"),
 		UsernamePrefix: ptr.String("up-custom"),
+		RequiredClaims: map[string]string{"claim": "value"},
 	}
 	cli := getClientForTests(t)
 	step := NewCreateRuntimeResourceStep(memoryStorage.Operations(), memoryStorage.Instances(), cli, inputConfig, defaultOIDSConfig)
@@ -165,6 +170,7 @@ func TestCreateRuntimeResourceStep_AllCustomWithOIDCList(t *testing.T) {
 	assert.Nil(t, runtime.Spec.Shoot.Kubernetes.KubeAPIServer.OidcConfig.SigningAlgs)
 	assert.Nil(t, runtime.Spec.Shoot.Kubernetes.KubeAPIServer.OidcConfig.UsernameClaim)
 	assert.Nil(t, runtime.Spec.Shoot.Kubernetes.KubeAPIServer.OidcConfig.UsernamePrefix)
+	assert.Nil(t, runtime.Spec.Shoot.Kubernetes.KubeAPIServer.OidcConfig.RequiredClaims)
 	assert.Equal(t, expectedOIDCConfig, (*runtime.Spec.Shoot.Kubernetes.KubeAPIServer.AdditionalOidcConfig)[0])
 }
 

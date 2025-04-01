@@ -823,6 +823,27 @@ func TestUpdateEndpoint_UpdateParameters(t *testing.T) {
 		assert.Equal(t, expectedErr.(*apiresponses.FailureResponse).ValidatedStatusCode(nil), apierr.ValidatedStatusCode(nil))
 		assert.Equal(t, expectedErr.(*apiresponses.FailureResponse).LoggerAction(), apierr.LoggerAction())
 	})
+
+	t.Run("Should fail on invalid OIDC requiredClaims param", func(t *testing.T) {
+		// given
+		oidcParams := `"clientID":"client-id","issuerURL":"https://test.local","signingAlgs":["RS256"],"requiredClaims":["claim=value","notValid"]`
+
+		// when
+		_, err := svc.Update(context.Background(), instanceID, domain.UpdateDetails{
+			ServiceID:       "",
+			PlanID:          AzurePlanID,
+			RawParameters:   json.RawMessage("{\"oidc\":{" + oidcParams + "}}"),
+			PreviousValues:  domain.PreviousValues{},
+			RawContext:      json.RawMessage("{\"globalaccount_id\":\"globalaccount_id_1\", \"active\":true}"),
+			MaintenanceInfo: nil,
+		}, true)
+
+		// then
+		require.Error(t, err)
+		assert.IsType(t, &apiresponses.FailureResponse{}, err)
+		apierr := err.(*apiresponses.FailureResponse)
+		assert.Equal(t, http.StatusUnprocessableEntity, apierr.ValidatedStatusCode(nil))
+	})
 }
 
 func TestUpdateAdditionalWorkerNodePools(t *testing.T) {
