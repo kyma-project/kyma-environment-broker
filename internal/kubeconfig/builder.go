@@ -160,22 +160,23 @@ func (b *Builder) validKubeconfig(kc kubeconfig) error {
 
 func (b *Builder) getOidcDataFromRuntimeResource(id string) (string, string, error) {
 	var runtime imv1.Runtime
-	var issuerURL, clientID string
 	err := b.kcpClient.Get(context.Background(), client.ObjectKey{Name: id, Namespace: kcpNamespace}, &runtime)
 	if err != nil {
 		return "", "", err
 	}
-	if runtime.Spec.Shoot.Kubernetes.KubeAPIServer.AdditionalOidcConfig == nil {
-		return "", "", fmt.Errorf("Runtime Resource contains no OIDC config")
-	}
-	if (*runtime.Spec.Shoot.Kubernetes.KubeAPIServer.AdditionalOidcConfig)[0].IssuerURL == nil {
-		return "", "", fmt.Errorf("Runtime Resource contains an empty OIDC issuer URL")
-	}
-	if (*runtime.Spec.Shoot.Kubernetes.KubeAPIServer.AdditionalOidcConfig)[0].ClientID == nil {
-		return "", "", fmt.Errorf("Runtime Resource contains an empty OIDC client ID")
-	}
-	issuerURL = *(*runtime.Spec.Shoot.Kubernetes.KubeAPIServer.AdditionalOidcConfig)[0].IssuerURL
-	clientID = *(*runtime.Spec.Shoot.Kubernetes.KubeAPIServer.AdditionalOidcConfig)[0].ClientID
 
-	return issuerURL, clientID, nil
+	oidcConfig := runtime.Spec.Shoot.Kubernetes.KubeAPIServer.AdditionalOidcConfig
+	if oidcConfig == nil || len(*oidcConfig) == 0 {
+		return "", "", fmt.Errorf("runtime resource contains no OIDC config")
+	}
+
+	config := (*oidcConfig)[0]
+	if config.IssuerURL == nil || *config.IssuerURL == "" {
+		return "", "", fmt.Errorf("runtime resource contains an empty OIDC issuer URL")
+	}
+	if config.ClientID == nil || *config.ClientID == "" {
+		return "", "", fmt.Errorf("runtime resource contains an empty OIDC client ID")
+	}
+
+	return *config.IssuerURL, *config.ClientID, nil
 }

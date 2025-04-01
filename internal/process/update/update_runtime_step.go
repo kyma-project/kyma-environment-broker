@@ -90,16 +90,18 @@ func (s *UpdateRuntimeStep) Run(operation internal.Operation, log *slog.Logger) 
 		runtime.Spec.Shoot.Provider.AdditionalWorkers = &additionalWorkers
 	}
 
-	if operation.UpdatingParameters.OIDC != nil {
-		if operation.UpdatingParameters.OIDC.List != nil {
-			runtime.Spec.Shoot.Kubernetes.KubeAPIServer.AdditionalOidcConfig = &[]gardener.OIDCConfig{}
-			for _, oidcConfig := range operation.UpdatingParameters.OIDC.List {
+	if oidc := operation.UpdatingParameters.OIDC; oidc != nil {
+		if oidc.List != nil {
+			oidcConfigs := make([]gardener.OIDCConfig, 0)
+			for _, oidcConfig := range oidc.List {
 				requiredClaims := make(map[string]string)
 				for _, claim := range oidcConfig.RequiredClaims {
 					parts := strings.SplitN(claim, "=", 2)
-					requiredClaims[parts[0]] = parts[1]
+					if len(parts) == 2 {
+						requiredClaims[parts[0]] = parts[1]
+					}
 				}
-				(*runtime.Spec.Shoot.Kubernetes.KubeAPIServer.AdditionalOidcConfig) = append(*runtime.Spec.Shoot.Kubernetes.KubeAPIServer.AdditionalOidcConfig, gardener.OIDCConfig{
+				oidcConfigs = append(oidcConfigs, gardener.OIDCConfig{
 					ClientID:       &oidcConfig.ClientID,
 					IssuerURL:      &oidcConfig.IssuerURL,
 					SigningAlgs:    oidcConfig.SigningAlgs,
@@ -109,36 +111,39 @@ func (s *UpdateRuntimeStep) Run(operation internal.Operation, log *slog.Logger) 
 					RequiredClaims: requiredClaims,
 				})
 			}
-		} else if operation.UpdatingParameters.OIDC.OIDCConfigDTO != nil {
-			input := operation.UpdatingParameters.OIDC.OIDCConfigDTO
+			runtime.Spec.Shoot.Kubernetes.KubeAPIServer.AdditionalOidcConfig = &oidcConfigs
+		} else if dto := oidc.OIDCConfigDTO; dto != nil {
 			if runtime.Spec.Shoot.Kubernetes.KubeAPIServer.AdditionalOidcConfig == nil {
 				runtime.Spec.Shoot.Kubernetes.KubeAPIServer.AdditionalOidcConfig = &[]gardener.OIDCConfig{{}}
 			}
-			if len(input.SigningAlgs) > 0 {
-				(*runtime.Spec.Shoot.Kubernetes.KubeAPIServer.AdditionalOidcConfig)[0].SigningAlgs = input.SigningAlgs
+			config := &(*runtime.Spec.Shoot.Kubernetes.KubeAPIServer.AdditionalOidcConfig)[0]
+			if len(dto.SigningAlgs) > 0 {
+				config.SigningAlgs = dto.SigningAlgs
 			}
-			if input.ClientID != "" {
-				(*runtime.Spec.Shoot.Kubernetes.KubeAPIServer.AdditionalOidcConfig)[0].ClientID = &input.ClientID
+			if dto.ClientID != "" {
+				config.ClientID = &dto.ClientID
 			}
-			if input.IssuerURL != "" {
-				(*runtime.Spec.Shoot.Kubernetes.KubeAPIServer.AdditionalOidcConfig)[0].IssuerURL = &input.IssuerURL
+			if dto.IssuerURL != "" {
+				config.IssuerURL = &dto.IssuerURL
 			}
-			if input.GroupsClaim != "" {
-				(*runtime.Spec.Shoot.Kubernetes.KubeAPIServer.AdditionalOidcConfig)[0].GroupsClaim = &input.GroupsClaim
+			if dto.GroupsClaim != "" {
+				config.GroupsClaim = &dto.GroupsClaim
 			}
-			if input.UsernamePrefix != "" {
-				(*runtime.Spec.Shoot.Kubernetes.KubeAPIServer.AdditionalOidcConfig)[0].UsernamePrefix = &input.UsernamePrefix
+			if dto.UsernamePrefix != "" {
+				config.UsernamePrefix = &dto.UsernamePrefix
 			}
-			if input.UsernameClaim != "" {
-				(*runtime.Spec.Shoot.Kubernetes.KubeAPIServer.AdditionalOidcConfig)[0].UsernameClaim = &input.UsernameClaim
+			if dto.UsernameClaim != "" {
+				config.UsernameClaim = &dto.UsernameClaim
 			}
-			if len(input.RequiredClaims) > 0 {
+			if len(dto.RequiredClaims) > 0 {
 				requiredClaims := make(map[string]string)
-				for _, claim := range input.RequiredClaims {
+				for _, claim := range dto.RequiredClaims {
 					parts := strings.SplitN(claim, "=", 2)
-					requiredClaims[parts[0]] = parts[1]
+					if len(parts) == 2 {
+						requiredClaims[parts[0]] = parts[1]
+					}
 				}
-				(*runtime.Spec.Shoot.Kubernetes.KubeAPIServer.AdditionalOidcConfig)[0].RequiredClaims = requiredClaims
+				config.RequiredClaims = requiredClaims
 			}
 		}
 	}

@@ -261,7 +261,25 @@ func (s *CreateRuntimeResourceStep) getEmptyOrExistingRuntimeResource(name, name
 }
 
 func (s *CreateRuntimeResourceStep) createKubernetesConfiguration(operation internal.Operation) imv1.Kubernetes {
-	oidc := gardener.OIDCConfig{
+	oidc := s.createDefaultOIDCConfig()
+	oidcInput := operation.ProvisioningParameters.Parameters.OIDC
+
+	kubernetesConfig := imv1.Kubernetes{
+		Version:       ptr.String(s.config.KubernetesVersion),
+		KubeAPIServer: imv1.APIServer{},
+	}
+
+	if oidcInput == nil {
+		kubernetesConfig.KubeAPIServer.AdditionalOidcConfig = &[]gardener.OIDCConfig{oidc}
+	} else {
+		kubernetesConfig.KubeAPIServer.AdditionalOidcConfig = s.createOIDCConfigFromInput(oidcInput, oidc)
+	}
+
+	return kubernetesConfig
+}
+
+func (s *CreateRuntimeResourceStep) createDefaultOIDCConfig() gardener.OIDCConfig {
+	return gardener.OIDCConfig{
 		ClientID:       &s.oidcDefaultValues.ClientID,
 		GroupsClaim:    &s.oidcDefaultValues.GroupsClaim,
 		IssuerURL:      &s.oidcDefaultValues.IssuerURL,
@@ -269,63 +287,70 @@ func (s *CreateRuntimeResourceStep) createKubernetesConfiguration(operation inte
 		UsernameClaim:  &s.oidcDefaultValues.UsernameClaim,
 		UsernamePrefix: &s.oidcDefaultValues.UsernamePrefix,
 	}
-	oidcInput := operation.ProvisioningParameters.Parameters.OIDC
-	kubernetesConfig := imv1.Kubernetes{
-		Version:       ptr.String(s.config.KubernetesVersion),
-		KubeAPIServer: imv1.APIServer{},
+}
+
+func (s *CreateRuntimeResourceStep) createOIDCConfigFromInput(oidcInput *pkg.OIDCsDTO, defaultOIDC gardener.OIDCConfig) *[]gardener.OIDCConfig {
+	if oidcInput.List != nil {
+		return s.createOIDCConfigList(oidcInput.List)
 	}
-	if oidcInput == nil {
-		kubernetesConfig.KubeAPIServer.AdditionalOidcConfig = &[]gardener.OIDCConfig{oidc}
-	} else {
-		if oidcInput.List != nil {
-			kubernetesConfig.KubeAPIServer.AdditionalOidcConfig = &[]gardener.OIDCConfig{}
-			for _, oidcConfig := range oidcInput.List {
-				requiredClaims := make(map[string]string)
-				for _, claim := range oidcConfig.RequiredClaims {
-					parts := strings.SplitN(claim, "=", 2)
-					requiredClaims[parts[0]] = parts[1]
-				}
-				*kubernetesConfig.KubeAPIServer.AdditionalOidcConfig = append(*kubernetesConfig.KubeAPIServer.AdditionalOidcConfig, gardener.OIDCConfig{
-					ClientID:       &oidcConfig.ClientID,
-					IssuerURL:      &oidcConfig.IssuerURL,
-					SigningAlgs:    oidcConfig.SigningAlgs,
-					GroupsClaim:    &oidcConfig.GroupsClaim,
-					UsernamePrefix: &oidcConfig.UsernamePrefix,
-					UsernameClaim:  &oidcConfig.UsernameClaim,
-					RequiredClaims: requiredClaims,
-				})
-			}
-		} else if oidcInput.OIDCConfigDTO != nil {
-			if oidcInput.OIDCConfigDTO.ClientID != "" {
-				oidc.ClientID = &oidcInput.OIDCConfigDTO.ClientID
-			}
-			if oidcInput.OIDCConfigDTO.GroupsClaim != "" {
-				oidc.GroupsClaim = &oidcInput.OIDCConfigDTO.GroupsClaim
-			}
-			if oidcInput.OIDCConfigDTO.IssuerURL != "" {
-				oidc.IssuerURL = &oidcInput.OIDCConfigDTO.IssuerURL
-			}
-			if len(oidcInput.OIDCConfigDTO.SigningAlgs) > 0 {
-				oidc.SigningAlgs = oidcInput.OIDCConfigDTO.SigningAlgs
-			}
-			if oidcInput.OIDCConfigDTO.UsernameClaim != "" {
-				oidc.UsernameClaim = &oidcInput.OIDCConfigDTO.UsernameClaim
-			}
-			if oidcInput.OIDCConfigDTO.UsernamePrefix != "" {
-				oidc.UsernamePrefix = &oidcInput.OIDCConfigDTO.UsernamePrefix
-			}
-			requiredClaims := make(map[string]string)
-			for _, claim := range oidcInput.OIDCConfigDTO.RequiredClaims {
-				parts := strings.SplitN(claim, "=", 2)
-				requiredClaims[parts[0]] = parts[1]
-			}
-			oidc.RequiredClaims = requiredClaims
-			kubernetesConfig.KubeAPIServer.AdditionalOidcConfig = &[]gardener.OIDCConfig{oidc}
-		} else {
-			kubernetesConfig.KubeAPIServer.AdditionalOidcConfig = &[]gardener.OIDCConfig{oidc}
-		}
+
+	if oidcInput.OIDCConfigDTO != nil {
+		return &[]gardener.OIDCConfig{s.mergeOIDCConfig(defaultOIDC, oidcInput.OIDCConfigDTO)}
 	}
-	return kubernetesConfig
+
+	return &[]gardener.OIDCConfig{defaultOIDC}
+}
+
+func (s *CreateRuntimeResourceStep) createOIDCConfigList(oidcList []pkg.OIDCConfigDTO) *[]gardener.OIDCConfig {
+	configs := make([]gardener.OIDCConfig, 0, len(oidcList))
+
+	for _, oidcConfig := range oidcList {
+		requiredClaims := s.parseRequiredClaims(oidcConfig.RequiredClaims)
+		configs = append(configs, gardener.OIDCConfig{
+			ClientID:       &oidcConfig.ClientID,
+			IssuerURL:      &oidcConfig.IssuerURL,
+			SigningAlgs:    oidcConfig.SigningAlgs,
+			GroupsClaim:    &oidcConfig.GroupsClaim,
+			UsernamePrefix: &oidcConfig.UsernamePrefix,
+			UsernameClaim:  &oidcConfig.UsernameClaim,
+			RequiredClaims: requiredClaims,
+		})
+	}
+
+	return &configs
+}
+
+func (s *CreateRuntimeResourceStep) mergeOIDCConfig(defaultOIDC gardener.OIDCConfig, inputOIDC *pkg.OIDCConfigDTO) gardener.OIDCConfig {
+	if inputOIDC.ClientID != "" {
+		defaultOIDC.ClientID = &inputOIDC.ClientID
+	}
+	if inputOIDC.GroupsClaim != "" {
+		defaultOIDC.GroupsClaim = &inputOIDC.GroupsClaim
+	}
+	if inputOIDC.IssuerURL != "" {
+		defaultOIDC.IssuerURL = &inputOIDC.IssuerURL
+	}
+	if len(inputOIDC.SigningAlgs) > 0 {
+		defaultOIDC.SigningAlgs = inputOIDC.SigningAlgs
+	}
+	if inputOIDC.UsernameClaim != "" {
+		defaultOIDC.UsernameClaim = &inputOIDC.UsernameClaim
+	}
+	if inputOIDC.UsernamePrefix != "" {
+		defaultOIDC.UsernamePrefix = &inputOIDC.UsernamePrefix
+	}
+	defaultOIDC.RequiredClaims = s.parseRequiredClaims(inputOIDC.RequiredClaims)
+
+	return defaultOIDC
+}
+
+func (s *CreateRuntimeResourceStep) parseRequiredClaims(claims []string) map[string]string {
+	requiredClaims := make(map[string]string)
+	for _, claim := range claims {
+		parts := strings.SplitN(claim, "=", 2)
+		requiredClaims[parts[0]] = parts[1]
+	}
+	return requiredClaims
 }
 
 func (s *CreateRuntimeResourceStep) updateInstance(id string, region string) error {
