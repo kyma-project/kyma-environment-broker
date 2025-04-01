@@ -291,9 +291,7 @@ func valueOfBoolPtr(ptr *bool) bool {
 }
 
 func (b *ProvisionEndpoint) validate(ctx context.Context, details domain.ProvisionDetails, provisioningParameters internal.ProvisioningParameters, l *slog.Logger) error {
-	var ersContext internal.ERSContext
-	var parameters pkg.ProvisioningParametersDTO
-
+	parameters := provisioningParameters.Parameters
 	if details.ServiceID != KymaServiceID {
 		return fmt.Errorf("service_id not recognized")
 	}
@@ -342,7 +340,7 @@ func (b *ProvisionEndpoint) validate(ctx context.Context, details domain.Provisi
 				return apiresponses.NewFailureResponse(err, http.StatusUnprocessableEntity, err.Error())
 			}
 		}
-		if isExternalCustomer(ersContext) {
+		if isExternalCustomer(provisioningParameters.ErsContext) {
 			if err := checkGPUMachinesUsage(parameters.AdditionalWorkerNodePools); err != nil {
 				return apiresponses.NewFailureResponse(err, http.StatusUnprocessableEntity, err.Error())
 			}
@@ -393,7 +391,7 @@ func (b *ProvisionEndpoint) validate(ctx context.Context, details domain.Provisi
 	}
 
 	if IsTrialPlan(details.PlanID) && b.config.OnlySingleTrialPerGA {
-		count, err := b.instanceStorage.GetNumberOfInstancesForGlobalAccountID(ersContext.GlobalAccountID)
+		count, err := b.instanceStorage.GetNumberOfInstancesForGlobalAccountID(provisioningParameters.ErsContext.GlobalAccountID)
 		if err != nil {
 			return fmt.Errorf("while checking if a trial Kyma instance exists for given global account: %w", err)
 		}
@@ -404,8 +402,8 @@ func (b *ProvisionEndpoint) validate(ctx context.Context, details domain.Provisi
 		}
 	}
 
-	if IsFreemiumPlan(details.PlanID) && b.config.OnlyOneFreePerGA && whitelist.IsNotWhitelisted(ersContext.GlobalAccountID, b.freemiumWhiteList) {
-		count, err := b.instanceArchivedStorage.TotalNumberOfInstancesArchivedForGlobalAccountID(ersContext.GlobalAccountID, FreemiumPlanID)
+	if IsFreemiumPlan(details.PlanID) && b.config.OnlyOneFreePerGA && whitelist.IsNotWhitelisted(provisioningParameters.ErsContext.GlobalAccountID, b.freemiumWhiteList) {
+		count, err := b.instanceArchivedStorage.TotalNumberOfInstancesArchivedForGlobalAccountID(provisioningParameters.ErsContext.GlobalAccountID, FreemiumPlanID)
 		if err != nil {
 			return fmt.Errorf("while checking if a free Kyma instance existed for given global account: %w", err)
 		}
@@ -415,7 +413,7 @@ func (b *ProvisionEndpoint) validate(ctx context.Context, details domain.Provisi
 		}
 
 		instanceFilter := dbmodel.InstanceFilter{
-			GlobalAccountIDs: []string{ersContext.GlobalAccountID},
+			GlobalAccountIDs: []string{provisioningParameters.ErsContext.GlobalAccountID},
 			PlanIDs:          []string{FreemiumPlanID},
 			States:           []dbmodel.InstanceState{dbmodel.InstanceSucceeded},
 		}
