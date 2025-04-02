@@ -47,14 +47,14 @@ func fixBindingConfig() BindingConfig {
 
 }
 
-type provider struct {
+type dummyProvider struct {
 }
 
-func (p *provider) K8sClientSetForRuntimeID(runtimeID string) (kubernetes.Interface, error) {
+func (p *dummyProvider) K8sClientSetForRuntimeID(runtimeID string) (kubernetes.Interface, error) {
 	return nil, fmt.Errorf("error")
 }
 
-func (p *provider) KubeconfigForRuntimeID(runtimeID string) ([]byte, error) {
+func (p *dummyProvider) KubeconfigForRuntimeID(runtimeID string) ([]byte, error) {
 	return []byte{}, nil
 }
 
@@ -93,9 +93,9 @@ func TestCreateBindingEndpoint_dbInsertionInCaseOfError(t *testing.T) {
 	publisher := event.NewPubSub(log)
 
 	//// api handler
-	bindEndpoint := NewBind(*bindingCfg, db, fixLogger(), &provider{}, &provider{}, publisher, false, true)
+	bindEndpoint := NewBind(*bindingCfg, db, fixLogger(), &dummyProvider{}, &dummyProvider{}, publisher, false, true)
 
-	// test relies on checking if got nil on kubeconfig provider but the instance got inserted either way
+	// test relies on checking if got nil on kubeconfig dummyProvider but the instance got inserted either way
 	t.Run("should INSERT binding despite error on k8s api call", func(t *testing.T) {
 		// given
 		_, err := db.Bindings().Get(instanceID1, "binding-id")

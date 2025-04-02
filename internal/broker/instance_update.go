@@ -271,7 +271,7 @@ func (b *UpdateEndpoint) processUpdateParameters(instance *internal.Instance, de
 
 	providerValues, err := b.valuesProvider.ValuesForPlanAndParameters(instance.Parameters)
 	if err != nil {
-		logger.Error(fmt.Sprintf("unable to obtain provider values: %s", err.Error()))
+		logger.Error(fmt.Sprintf("unable to obtain dummyProvider values: %s", err.Error()))
 		return domain.UpdateServiceSpec{}, fmt.Errorf("unable to process the request")
 	}
 

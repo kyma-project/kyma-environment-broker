@@ -173,7 +173,7 @@ func GcpRegionsDisplay(assuredWorkloads bool) map[string]string {
 }
 
 func AWSRegions(euRestrictedAccess bool) []string {
-	// be aware of zones defined in internal/provider/aws_provider.go
+	// be aware of zones defined in internal/dummyProvider/aws_provider.go
 	if euRestrictedAccess {
 		return []string{"eu-central-1"}
 	}

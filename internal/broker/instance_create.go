@@ -149,7 +149,7 @@ func (b *ProvisionEndpoint) Provision(ctx context.Context, instanceID string, de
 	}
 	platformProvider, found := middleware.ProviderFromContext(ctx)
 	if !found {
-		err := fmt.Errorf("No provider specified in request.")
+		err := fmt.Errorf("No dummyProvider specified in request.")
 		return domain.ProvisionedServiceSpec{}, apiresponses.NewFailureResponse(err, http.StatusInternalServerError, "provisioning")
 	}
 
@@ -174,7 +174,7 @@ func (b *ProvisionEndpoint) Provision(ctx context.Context, instanceID string, de
 	}
 	providerValues, err := b.valuesProvider.ValuesForPlanAndParameters(provisioningParameters)
 	if err != nil {
-		errMsg := fmt.Sprintf("unable to provide default values %s", instanceID, err)
+		errMsg := fmt.Sprintf("unable to provide default values for instance %s: %s", instanceID, err)
 		return domain.ProvisionedServiceSpec{}, apiresponses.NewFailureResponse(err, http.StatusBadRequest, errMsg)
 	}
 
@@ -576,6 +576,7 @@ func (b *ProvisionEndpoint) extractInputParameters(details domain.ProvisionDetai
 		return parameters, fmt.Errorf("while unmarshaling raw parameters: %w", err)
 	}
 
+	parameters.LicenceType = b.determineLicenceType(details.PlanID)
 	return parameters, nil
 }
 

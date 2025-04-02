@@ -1,9 +1,11 @@
-package broker
+package broker_test
 
 import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"github.com/kyma-project/kyma-environment-broker/internal/broker"
+	"github.com/kyma-project/kyma-environment-broker/internal/provider"
 	"net/http"
 	"strings"
 	"testing"
@@ -23,7 +25,6 @@ import (
 
 	"github.com/stretchr/testify/mock"
 
-	"github.com/kyma-project/control-plane/components/provisioner/pkg/gqlschema"
 	"github.com/kyma-project/kyma-environment-broker/internal/dashboard"
 
 	"github.com/kyma-project/kyma-environment-broker/internal/fixture"
@@ -55,9 +56,9 @@ func TestUpdateEndpoint_UpdateSuspension(t *testing.T) {
 	// given
 	instance := internal.Instance{
 		InstanceID:    instanceID,
-		ServicePlanID: TrialPlanID,
+		ServicePlanID: broker.TrialPlanID,
 		Parameters: internal.ProvisioningParameters{
-			PlanID: TrialPlanID,
+			PlanID: broker.TrialPlanID,
 			ErsContext: internal.ERSContext{
 				TenantID:        "",
 				SubAccountID:    "",
@@ -79,12 +80,9 @@ func TestUpdateEndpoint_UpdateSuspension(t *testing.T) {
 	handler := &handler{}
 	q := &automock.Queue{}
 	q.On("Add", mock.AnythingOfType("string"))
-	planDefaults := func(planID string, platformProvider pkg.CloudProvider, provider *pkg.CloudProvider) (*gqlschema.ClusterConfigInput, error) {
-		return &gqlschema.ClusterConfigInput{}, nil
-	}
 	kcBuilder := &kcMock.KcBuilder{}
-	svc := NewUpdate(
-		Config{},
+	svc := broker.NewUpdate(
+		broker.Config{},
 		st.Instances(),
 		st.RuntimeStates(),
 		st.Operations(),
@@ -93,19 +91,19 @@ func TestUpdateEndpoint_UpdateSuspension(t *testing.T) {
 		false,
 		true,
 		q,
-		PlansConfig{},
-		planDefaults,
+		broker.PlansConfig{},
+		nil,
 		fixLogger(),
 		dashboardConfig,
 		kcBuilder,
-		&OneForAllConvergedCloudRegionsProvider{},
+		&broker.OneForAllConvergedCloudRegionsProvider{},
 		fakeKcpK8sClient,
 		nil)
 
 	// when
 	response, err := svc.Update(context.Background(), instanceID, domain.UpdateDetails{
 		ServiceID:       "",
-		PlanID:          TrialPlanID,
+		PlanID:          broker.TrialPlanID,
 		RawParameters:   nil,
 		PreviousValues:  domain.PreviousValues{},
 		RawContext:      json.RawMessage("{\"active\":false}"),
@@ -131,9 +129,9 @@ func TestUpdateEndpoint_UpdateOfExpiredTrial(t *testing.T) {
 	// given
 	instance := internal.Instance{
 		InstanceID:    instanceID,
-		ServicePlanID: TrialPlanID,
+		ServicePlanID: broker.TrialPlanID,
 		Parameters: internal.ProvisioningParameters{
-			PlanID: TrialPlanID,
+			PlanID: broker.TrialPlanID,
 			ErsContext: internal.ERSContext{
 				TenantID:        "",
 				SubAccountID:    "",
@@ -152,17 +150,14 @@ func TestUpdateEndpoint_UpdateOfExpiredTrial(t *testing.T) {
 	handler := &handler{}
 	q := &automock.Queue{}
 	q.On("Add", mock.AnythingOfType("string"))
-	planDefaults := func(planID string, platformProvider pkg.CloudProvider, provider *pkg.CloudProvider) (*gqlschema.ClusterConfigInput, error) {
-		return &gqlschema.ClusterConfigInput{}, nil
-	}
 	kcBuilder := &kcMock.KcBuilder{}
-	svc := NewUpdate(Config{}, st.Instances(), st.RuntimeStates(), st.Operations(), handler, true, false, true, q, PlansConfig{},
-		planDefaults, fixLogger(), dashboardConfig, kcBuilder, &OneForAllConvergedCloudRegionsProvider{}, fakeKcpK8sClient, nil)
+	svc := broker.NewUpdate(broker.Config{}, st.Instances(), st.RuntimeStates(), st.Operations(), handler, true, false, true, q, broker.PlansConfig{},
+		nil, fixLogger(), dashboardConfig, kcBuilder, &broker.OneForAllConvergedCloudRegionsProvider{}, fakeKcpK8sClient, nil)
 
 	// when
 	response, err := svc.Update(context.Background(), instanceID, domain.UpdateDetails{
 		ServiceID:       "",
-		PlanID:          TrialPlanID,
+		PlanID:          broker.TrialPlanID,
 		RawParameters:   json.RawMessage(`{"autoScalerMin": 3}`),
 		PreviousValues:  domain.PreviousValues{},
 		RawContext:      json.RawMessage("{\"active\":false}"),
@@ -182,9 +177,9 @@ func TestUpdateEndpoint_UpdateAutoscalerParams(t *testing.T) {
 	// given
 	instance := internal.Instance{
 		InstanceID:    instanceID,
-		ServicePlanID: AWSPlanID,
+		ServicePlanID: broker.AWSPlanID,
 		Parameters: internal.ProvisioningParameters{
-			PlanID: AWSPlanID,
+			PlanID: broker.AWSPlanID,
 			ErsContext: internal.ERSContext{
 				TenantID:        "",
 				SubAccountID:    "",
@@ -202,19 +197,17 @@ func TestUpdateEndpoint_UpdateAutoscalerParams(t *testing.T) {
 	handler := &handler{}
 	q := &automock.Queue{}
 	q.On("Add", mock.AnythingOfType("string"))
-	planDefaults := func(planID string, platformProvider pkg.CloudProvider, provider *pkg.CloudProvider) (*gqlschema.ClusterConfigInput, error) {
-		return &gqlschema.ClusterConfigInput{}, nil
-	}
+
 	kcBuilder := &kcMock.KcBuilder{}
-	svc := NewUpdate(Config{}, st.Instances(), st.RuntimeStates(), st.Operations(), handler, true, false, true, q, PlansConfig{},
-		planDefaults, fixLogger(), dashboardConfig, kcBuilder, &OneForAllConvergedCloudRegionsProvider{}, fakeKcpK8sClient, nil)
+	svc := broker.NewUpdate(broker.Config{}, st.Instances(), st.RuntimeStates(), st.Operations(), handler, true, false, true, q, broker.PlansConfig{},
+		nil, fixLogger(), dashboardConfig, kcBuilder, &broker.OneForAllConvergedCloudRegionsProvider{}, fakeKcpK8sClient, nil)
 
 	t.Run("Should fail on invalid (too low) autoScalerMin and autoScalerMax", func(t *testing.T) {
 
 		// when
 		response, err := svc.Update(context.Background(), instanceID, domain.UpdateDetails{
 			ServiceID:       "",
-			PlanID:          AWSPlanID,
+			PlanID:          broker.AWSPlanID,
 			RawParameters:   json.RawMessage(`{"autoScalerMin": 1, "autoScalerMax": 1}`),
 			PreviousValues:  domain.PreviousValues{},
 			RawContext:      json.RawMessage("{\"active\":false}"),
@@ -234,7 +227,7 @@ func TestUpdateEndpoint_UpdateAutoscalerParams(t *testing.T) {
 		// when
 		response, err := svc.Update(context.Background(), instanceID, domain.UpdateDetails{
 			ServiceID:       "",
-			PlanID:          AWSPlanID,
+			PlanID:          broker.AWSPlanID,
 			RawParameters:   json.RawMessage(`{"autoScalerMin": 4, "autoScalerMax": 3}`),
 			PreviousValues:  domain.PreviousValues{},
 			RawContext:      json.RawMessage("{\"active\":false}"),
@@ -254,7 +247,7 @@ func TestUpdateEndpoint_UpdateAutoscalerParams(t *testing.T) {
 		// when
 		response, err := svc.Update(context.Background(), instanceID, domain.UpdateDetails{
 			ServiceID:       "",
-			PlanID:          AWSPlanID,
+			PlanID:          broker.AWSPlanID,
 			RawParameters:   json.RawMessage(`{"autoScalerMin": 2, "autoScalerMax": 1}`),
 			PreviousValues:  domain.PreviousValues{},
 			RawContext:      json.RawMessage("{\"active\":false}"),
@@ -274,9 +267,9 @@ func TestUpdateEndpoint_UpdateUnsuspension(t *testing.T) {
 	// given
 	instance := internal.Instance{
 		InstanceID:    instanceID,
-		ServicePlanID: TrialPlanID,
+		ServicePlanID: broker.TrialPlanID,
 		Parameters: internal.ProvisioningParameters{
-			PlanID: TrialPlanID,
+			PlanID: broker.TrialPlanID,
 			ErsContext: internal.ERSContext{
 				TenantID:        "",
 				SubAccountID:    "",
@@ -296,17 +289,14 @@ func TestUpdateEndpoint_UpdateUnsuspension(t *testing.T) {
 	handler := &handler{}
 	q := &automock.Queue{}
 	q.On("Add", mock.AnythingOfType("string"))
-	planDefaults := func(planID string, platformProvider pkg.CloudProvider, provider *pkg.CloudProvider) (*gqlschema.ClusterConfigInput, error) {
-		return &gqlschema.ClusterConfigInput{}, nil
-	}
 	kcBuilder := &kcMock.KcBuilder{}
-	svc := NewUpdate(Config{}, st.Instances(), st.RuntimeStates(), st.Operations(), handler, true, false, true, q, PlansConfig{},
-		planDefaults, fixLogger(), dashboardConfig, kcBuilder, &OneForAllConvergedCloudRegionsProvider{}, fakeKcpK8sClient, nil)
+	svc := broker.NewUpdate(broker.Config{}, st.Instances(), st.RuntimeStates(), st.Operations(), handler, true, false, true, q, broker.PlansConfig{},
+		nil, fixLogger(), dashboardConfig, kcBuilder, &broker.OneForAllConvergedCloudRegionsProvider{}, fakeKcpK8sClient, nil)
 
 	// when
 	_, err = svc.Update(context.Background(), instanceID, domain.UpdateDetails{
 		ServiceID:       "",
-		PlanID:          TrialPlanID,
+		PlanID:          broker.TrialPlanID,
 		RawParameters:   nil,
 		PreviousValues:  domain.PreviousValues{},
 		RawContext:      json.RawMessage("{\"active\":true}"),
@@ -328,9 +318,9 @@ func TestUpdateEndpoint_UpdateInstanceWithWrongActiveValue(t *testing.T) {
 	// given
 	instance := internal.Instance{
 		InstanceID:    instanceID,
-		ServicePlanID: TrialPlanID,
+		ServicePlanID: broker.TrialPlanID,
 		Parameters: internal.ProvisioningParameters{
-			PlanID: TrialPlanID,
+			PlanID: broker.TrialPlanID,
 			ErsContext: internal.ERSContext{
 				TenantID:        "",
 				SubAccountID:    "",
@@ -347,17 +337,14 @@ func TestUpdateEndpoint_UpdateInstanceWithWrongActiveValue(t *testing.T) {
 	handler := &handler{}
 	q := &automock.Queue{}
 	q.On("Add", mock.AnythingOfType("string"))
-	planDefaults := func(planID string, platformProvider pkg.CloudProvider, provider *pkg.CloudProvider) (*gqlschema.ClusterConfigInput, error) {
-		return &gqlschema.ClusterConfigInput{}, nil
-	}
 	kcBuilder := &kcMock.KcBuilder{}
-	svc := NewUpdate(Config{}, st.Instances(), st.RuntimeStates(), st.Operations(), handler, true, false, true, q, PlansConfig{},
-		planDefaults, fixLogger(), dashboardConfig, kcBuilder, &OneForAllConvergedCloudRegionsProvider{}, fakeKcpK8sClient, nil)
+	svc := broker.NewUpdate(broker.Config{}, st.Instances(), st.RuntimeStates(), st.Operations(), handler, true, false, true, q, broker.PlansConfig{},
+		nil, fixLogger(), dashboardConfig, kcBuilder, &broker.OneForAllConvergedCloudRegionsProvider{}, fakeKcpK8sClient, nil)
 
 	// when
 	_, err = svc.Update(context.Background(), instanceID, domain.UpdateDetails{
 		ServiceID:       "",
-		PlanID:          TrialPlanID,
+		PlanID:          broker.TrialPlanID,
 		RawParameters:   nil,
 		PreviousValues:  domain.PreviousValues{},
 		RawContext:      json.RawMessage("{\"active\":false}"),
@@ -379,17 +366,14 @@ func TestUpdateEndpoint_UpdateNonExistingInstance(t *testing.T) {
 	handler := &handler{}
 	q := &automock.Queue{}
 	q.On("Add", mock.AnythingOfType("string"))
-	planDefaults := func(planID string, platformProvider pkg.CloudProvider, provider *pkg.CloudProvider) (*gqlschema.ClusterConfigInput, error) {
-		return &gqlschema.ClusterConfigInput{}, nil
-	}
 	kcBuilder := &kcMock.KcBuilder{}
-	svc := NewUpdate(Config{}, st.Instances(), st.RuntimeStates(), st.Operations(), handler, true, false, true, q, PlansConfig{},
-		planDefaults, fixLogger(), dashboardConfig, kcBuilder, &OneForAllConvergedCloudRegionsProvider{}, fakeKcpK8sClient, nil)
+	svc := broker.NewUpdate(broker.Config{}, st.Instances(), st.RuntimeStates(), st.Operations(), handler, true, false, true, q, broker.PlansConfig{},
+		nil, fixLogger(), dashboardConfig, kcBuilder, &broker.OneForAllConvergedCloudRegionsProvider{}, fakeKcpK8sClient, nil)
 
 	// when
 	_, err := svc.Update(context.Background(), instanceID, domain.UpdateDetails{
 		ServiceID:       "",
-		PlanID:          TrialPlanID,
+		PlanID:          broker.TrialPlanID,
 		RawParameters:   nil,
 		PreviousValues:  domain.PreviousValues{},
 		RawContext:      json.RawMessage("{\"active\":false}"),
@@ -419,10 +403,10 @@ func TestUpdateEndpoint_UpdateGlobalAccountID(t *testing.T) {
 	// given
 	instance := internal.Instance{
 		InstanceID:      instanceID,
-		ServicePlanID:   TrialPlanID,
+		ServicePlanID:   broker.TrialPlanID,
 		GlobalAccountID: "origin-account-id",
 		Parameters: internal.ProvisioningParameters{
-			PlanID: TrialPlanID,
+			PlanID: broker.TrialPlanID,
 			ErsContext: internal.ERSContext{
 				TenantID:        "",
 				SubAccountID:    "",
@@ -445,18 +429,15 @@ func TestUpdateEndpoint_UpdateGlobalAccountID(t *testing.T) {
 	handler := &handler{}
 	q := &automock.Queue{}
 	q.On("Add", mock.AnythingOfType("string"))
-	planDefaults := func(planID string, platformProvider pkg.CloudProvider, provider *pkg.CloudProvider) (*gqlschema.ClusterConfigInput, error) {
-		return &gqlschema.ClusterConfigInput{}, nil
-	}
 
 	kcBuilder := &kcMock.KcBuilder{}
-	svc := NewUpdate(Config{}, st.Instances(), st.RuntimeStates(), st.Operations(), handler, true, true, false, q, PlansConfig{},
-		planDefaults, fixLogger(), dashboardConfig, kcBuilder, &OneForAllConvergedCloudRegionsProvider{}, fakeKcpK8sClient, nil)
+	svc := broker.NewUpdate(broker.Config{}, st.Instances(), st.RuntimeStates(), st.Operations(), handler, true, true, false, q, broker.PlansConfig{},
+		nil, fixLogger(), dashboardConfig, kcBuilder, &broker.OneForAllConvergedCloudRegionsProvider{}, fakeKcpK8sClient, nil)
 
 	// when
 	response, err := svc.Update(context.Background(), instanceID, domain.UpdateDetails{
 		ServiceID:       "",
-		PlanID:          TrialPlanID,
+		PlanID:          broker.TrialPlanID,
 		RawParameters:   nil,
 		PreviousValues:  domain.PreviousValues{},
 		RawContext:      json.RawMessage("{\"globalaccount_id\":\"" + newGlobalAccountID + "\", \"active\":true}"),
@@ -490,12 +471,9 @@ func TestUpdateEndpoint_UpdateParameters(t *testing.T) {
 	handler := &handler{}
 	q := &automock.Queue{}
 	q.On("Add", mock.AnythingOfType("string"))
-	planDefaults := func(planID string, platformProvider pkg.CloudProvider, provider *pkg.CloudProvider) (*gqlschema.ClusterConfigInput, error) {
-		return &gqlschema.ClusterConfigInput{}, nil
-	}
 	kcBuilder := &kcMock.KcBuilder{}
-	svc := NewUpdate(Config{}, st.Instances(), st.RuntimeStates(), st.Operations(), handler, true, true, false, q, PlansConfig{},
-		planDefaults, fixLogger(), dashboardConfig, kcBuilder, &OneForAllConvergedCloudRegionsProvider{}, fakeKcpK8sClient, nil)
+	svc := broker.NewUpdate(broker.Config{}, st.Instances(), st.RuntimeStates(), st.Operations(), handler, true, true, false, q, broker.PlansConfig{},
+		nil, fixLogger(), dashboardConfig, kcBuilder, &broker.OneForAllConvergedCloudRegionsProvider{}, fakeKcpK8sClient, nil)
 
 	t.Run("Should fail on invalid OIDC params", func(t *testing.T) {
 		// given
@@ -506,7 +484,7 @@ func TestUpdateEndpoint_UpdateParameters(t *testing.T) {
 		// when
 		_, err := svc.Update(context.Background(), instanceID, domain.UpdateDetails{
 			ServiceID:       "",
-			PlanID:          AzurePlanID,
+			PlanID:          broker.AzurePlanID,
 			RawParameters:   json.RawMessage("{\"oidc\":{" + oidcParams + "}}"),
 			PreviousValues:  domain.PreviousValues{},
 			RawContext:      json.RawMessage("{\"globalaccount_id\":\"globalaccount_id_1\", \"active\":true}"),
@@ -568,7 +546,7 @@ func TestUpdateEndpoint_UpdateParameters(t *testing.T) {
 				// when
 				_, err := svc.Update(context.Background(), instanceID, domain.UpdateDetails{
 					ServiceID:       "",
-					PlanID:          AzurePlanID,
+					PlanID:          broker.AzurePlanID,
 					RawParameters:   json.RawMessage("{\"oidc\":{" + tc.oidcParams + "}}"),
 					PreviousValues:  domain.PreviousValues{},
 					RawContext:      json.RawMessage("{\"globalaccount_id\":\"globalaccount_id_1\", \"active\":true}"),
@@ -594,7 +572,7 @@ func TestUpdateEndpoint_UpdateParameters(t *testing.T) {
 		// when
 		_, err := svc.Update(context.Background(), instanceID, domain.UpdateDetails{
 			ServiceID:       "",
-			PlanID:          AzurePlanID,
+			PlanID:          broker.AzurePlanID,
 			RawParameters:   json.RawMessage("{\"oidc\":{" + oidcParams + "}}"),
 			PreviousValues:  domain.PreviousValues{},
 			RawContext:      json.RawMessage("{\"globalaccount_id\":\"globalaccount_id_1\", \"active\":true}"),
@@ -618,7 +596,7 @@ func TestUpdateEndpoint_UpdateParameters(t *testing.T) {
 		// when
 		_, err := svc.Update(context.Background(), instanceID, domain.UpdateDetails{
 			ServiceID:       "",
-			PlanID:          AzurePlanID,
+			PlanID:          broker.AzurePlanID,
 			RawParameters:   json.RawMessage("{\"oidc\":{" + oidcParams + "}}"),
 			PreviousValues:  domain.PreviousValues{},
 			RawContext:      json.RawMessage("{\"globalaccount_id\":\"globalaccount_id_1\", \"active\":true}"),
@@ -711,7 +689,7 @@ func TestUpdateAdditionalWorkerNodePools(t *testing.T) {
 		t.Run(tn, func(t *testing.T) {
 			// given
 			instance := fixture.FixInstance(instanceID)
-			instance.ServicePlanID = AWSPlanID
+			instance.ServicePlanID = broker.AWSPlanID
 			st := storage.NewMemoryStorage()
 			err := st.Instances().Insert(instance)
 			require.NoError(t, err)
@@ -721,17 +699,15 @@ func TestUpdateAdditionalWorkerNodePools(t *testing.T) {
 			handler := &handler{}
 			q := &automock.Queue{}
 			q.On("Add", mock.AnythingOfType("string"))
-			planDefaults := func(planID string, platformProvider pkg.CloudProvider, provider *pkg.CloudProvider) (*gqlschema.ClusterConfigInput, error) {
-				return &gqlschema.ClusterConfigInput{}, nil
-			}
+
 			kcBuilder := &kcMock.KcBuilder{}
-			svc := NewUpdate(Config{}, st.Instances(), st.RuntimeStates(), st.Operations(), handler, true, true, false, q, PlansConfig{},
-				planDefaults, fixLogger(), dashboardConfig, kcBuilder, &OneForAllConvergedCloudRegionsProvider{}, fakeKcpK8sClient, nil)
+			svc := broker.NewUpdate(broker.Config{}, st.Instances(), st.RuntimeStates(), st.Operations(), handler, true, true, false, q, broker.PlansConfig{},
+				nil, fixLogger(), dashboardConfig, kcBuilder, &broker.OneForAllConvergedCloudRegionsProvider{}, fakeKcpK8sClient, nil)
 
 			// when
 			_, err = svc.Update(context.Background(), instanceID, domain.UpdateDetails{
 				ServiceID:       "",
-				PlanID:          AWSPlanID,
+				PlanID:          broker.AWSPlanID,
 				RawParameters:   json.RawMessage("{\"additionalWorkerNodePools\":" + tc.additionalWorkerNodePools + "}"),
 				PreviousValues:  domain.PreviousValues{},
 				RawContext:      json.RawMessage("{\"globalaccount_id\":\"globalaccount_id_1\", \"active\":true}"),
@@ -748,7 +724,7 @@ func TestHAZones(t *testing.T) {
 	t.Run("should fail when attempting to disable HA zones for existing additional worker node pool", func(t *testing.T) {
 		// given
 		instance := fixture.FixInstance(instanceID)
-		instance.ServicePlanID = AWSPlanID
+		instance.ServicePlanID = broker.AWSPlanID
 		instance.Parameters.Parameters.AdditionalWorkerNodePools = []pkg.AdditionalWorkerNodePool{
 			{
 				Name:          "name-1",
@@ -767,17 +743,15 @@ func TestHAZones(t *testing.T) {
 		handler := &handler{}
 		q := &automock.Queue{}
 		q.On("Add", mock.AnythingOfType("string"))
-		planDefaults := func(planID string, platformProvider pkg.CloudProvider, provider *pkg.CloudProvider) (*gqlschema.ClusterConfigInput, error) {
-			return &gqlschema.ClusterConfigInput{}, nil
-		}
+
 		kcBuilder := &kcMock.KcBuilder{}
-		svc := NewUpdate(Config{}, st.Instances(), st.RuntimeStates(), st.Operations(), handler, true, true, false, q, PlansConfig{},
-			planDefaults, fixLogger(), dashboardConfig, kcBuilder, &OneForAllConvergedCloudRegionsProvider{}, fakeKcpK8sClient, nil)
+		svc := broker.NewUpdate(broker.Config{}, st.Instances(), st.RuntimeStates(), st.Operations(), handler, true, true, false, q, broker.PlansConfig{},
+			nil, fixLogger(), dashboardConfig, kcBuilder, &broker.OneForAllConvergedCloudRegionsProvider{}, fakeKcpK8sClient, nil)
 
 		// when
 		_, err = svc.Update(context.Background(), instanceID, domain.UpdateDetails{
 			ServiceID:       "",
-			PlanID:          AWSPlanID,
+			PlanID:          broker.AWSPlanID,
 			RawParameters:   json.RawMessage(`{"additionalWorkerNodePools": [{"name": "name-1", "machineType": "m6i.large", "haZones": false, "autoScalerMin": 3, "autoScalerMax": 20}]}`),
 			PreviousValues:  domain.PreviousValues{},
 			RawContext:      json.RawMessage("{\"globalaccount_id\":\"globalaccount_id_1\", \"active\":true}"),
@@ -791,7 +765,7 @@ func TestHAZones(t *testing.T) {
 	t.Run("should fail when attempting to enable HA zones for existing additional worker node pool", func(t *testing.T) {
 		// given
 		instance := fixture.FixInstance(instanceID)
-		instance.ServicePlanID = AWSPlanID
+		instance.ServicePlanID = broker.AWSPlanID
 		instance.Parameters.Parameters.AdditionalWorkerNodePools = []pkg.AdditionalWorkerNodePool{
 			{
 				Name:          "name-1",
@@ -810,17 +784,15 @@ func TestHAZones(t *testing.T) {
 		handler := &handler{}
 		q := &automock.Queue{}
 		q.On("Add", mock.AnythingOfType("string"))
-		planDefaults := func(planID string, platformProvider pkg.CloudProvider, provider *pkg.CloudProvider) (*gqlschema.ClusterConfigInput, error) {
-			return &gqlschema.ClusterConfigInput{}, nil
-		}
+
 		kcBuilder := &kcMock.KcBuilder{}
-		svc := NewUpdate(Config{}, st.Instances(), st.RuntimeStates(), st.Operations(), handler, true, true, false, q, PlansConfig{},
-			planDefaults, fixLogger(), dashboardConfig, kcBuilder, &OneForAllConvergedCloudRegionsProvider{}, fakeKcpK8sClient, nil)
+		svc := broker.NewUpdate(broker.Config{}, st.Instances(), st.RuntimeStates(), st.Operations(), handler, true, true, false, q, broker.PlansConfig{},
+			nil, fixLogger(), dashboardConfig, kcBuilder, &broker.OneForAllConvergedCloudRegionsProvider{}, fakeKcpK8sClient, nil)
 
 		// when
 		_, err = svc.Update(context.Background(), instanceID, domain.UpdateDetails{
 			ServiceID:       "",
-			PlanID:          AWSPlanID,
+			PlanID:          broker.AWSPlanID,
 			RawParameters:   json.RawMessage(`{"additionalWorkerNodePools": [{"name": "name-1", "machineType": "m6i.large", "haZones": true, "autoScalerMin": 3, "autoScalerMax": 20}]}`),
 			PreviousValues:  domain.PreviousValues{},
 			RawContext:      json.RawMessage("{\"globalaccount_id\":\"globalaccount_id_1\", \"active\":true}"),
@@ -837,10 +809,10 @@ func TestUpdateAdditionalWorkerNodePoolsForUnsupportedPlans(t *testing.T) {
 		planID string
 	}{
 		"Trial": {
-			planID: TrialPlanID,
+			planID: broker.TrialPlanID,
 		},
 		"Free": {
-			planID: FreemiumPlanID,
+			planID: broker.FreemiumPlanID,
 		},
 	} {
 		t.Run(tn, func(t *testing.T) {
@@ -856,12 +828,10 @@ func TestUpdateAdditionalWorkerNodePoolsForUnsupportedPlans(t *testing.T) {
 			handler := &handler{}
 			q := &automock.Queue{}
 			q.On("Add", mock.AnythingOfType("string"))
-			planDefaults := func(planID string, platformProvider pkg.CloudProvider, provider *pkg.CloudProvider) (*gqlschema.ClusterConfigInput, error) {
-				return &gqlschema.ClusterConfigInput{}, nil
-			}
+
 			kcBuilder := &kcMock.KcBuilder{}
-			svc := NewUpdate(Config{}, st.Instances(), st.RuntimeStates(), st.Operations(), handler, true, true, false, q, PlansConfig{},
-				planDefaults, fixLogger(), dashboardConfig, kcBuilder, &OneForAllConvergedCloudRegionsProvider{}, fakeKcpK8sClient, nil)
+			svc := broker.NewUpdate(broker.Config{}, st.Instances(), st.RuntimeStates(), st.Operations(), handler, true, true, false, q, broker.PlansConfig{},
+				nil, fixLogger(), dashboardConfig, kcBuilder, &broker.OneForAllConvergedCloudRegionsProvider{}, fakeKcpK8sClient, nil)
 
 			additionalWorkerNodePools := `[{"name": "name-1", "machineType": "m6i.large", "haZones": true, "autoScalerMin": 3, "autoScalerMax": 20}]`
 
@@ -885,9 +855,9 @@ func TestUpdateEndpoint_UpdateWithEnabledDashboard(t *testing.T) {
 	// given
 	instance := internal.Instance{
 		InstanceID:    instanceID,
-		ServicePlanID: TrialPlanID,
+		ServicePlanID: broker.TrialPlanID,
 		Parameters: internal.ProvisioningParameters{
-			PlanID: TrialPlanID,
+			PlanID: broker.TrialPlanID,
 			ErsContext: internal.ERSContext{
 				TenantID:        "",
 				SubAccountID:    "",
@@ -908,17 +878,15 @@ func TestUpdateEndpoint_UpdateWithEnabledDashboard(t *testing.T) {
 	handler := &handler{}
 	q := &automock.Queue{}
 	q.On("Add", mock.AnythingOfType("string"))
-	planDefaults := func(planID string, platformProvider pkg.CloudProvider, provider *pkg.CloudProvider) (*gqlschema.ClusterConfigInput, error) {
-		return &gqlschema.ClusterConfigInput{}, nil
-	}
+
 	kcBuilder := &kcMock.KcBuilder{}
-	svc := NewUpdate(Config{AllowUpdateExpiredInstanceWithContext: true}, st.Instances(), st.RuntimeStates(), st.Operations(), handler, true, false, true, q, PlansConfig{},
-		planDefaults, fixLogger(), dashboardConfig, kcBuilder, &OneForAllConvergedCloudRegionsProvider{}, fakeKcpK8sClient, nil)
+	svc := broker.NewUpdate(broker.Config{AllowUpdateExpiredInstanceWithContext: true}, st.Instances(), st.RuntimeStates(), st.Operations(), handler, true, false, true, q, broker.PlansConfig{},
+		nil, fixLogger(), dashboardConfig, kcBuilder, &broker.OneForAllConvergedCloudRegionsProvider{}, fakeKcpK8sClient, nil)
 	createFakeCRs(t)
 	// when
 	response, err := svc.Update(context.Background(), instanceID, domain.UpdateDetails{
 		ServiceID:       "",
-		PlanID:          TrialPlanID,
+		PlanID:          broker.TrialPlanID,
 		RawParameters:   nil,
 		PreviousValues:  domain.PreviousValues{},
 		RawContext:      json.RawMessage("{\"active\":false}"),
@@ -939,10 +907,10 @@ func TestUpdateEndpoint_UpdateWithEnabledDashboard(t *testing.T) {
 func TestUpdateExpiredInstance(t *testing.T) {
 	instance := internal.Instance{
 		InstanceID:      instanceID,
-		ServicePlanID:   TrialPlanID,
+		ServicePlanID:   broker.TrialPlanID,
 		GlobalAccountID: "globalaccount_id_init",
 		Parameters: internal.ProvisioningParameters{
-			PlanID:     TrialPlanID,
+			PlanID:     broker.TrialPlanID,
 			ErsContext: internal.ERSContext{},
 		},
 	}
@@ -964,17 +932,13 @@ func TestUpdateExpiredInstance(t *testing.T) {
 	queue := &automock.Queue{}
 	queue.On("Add", mock.AnythingOfType("string"))
 
-	planDefaults := func(planID string, platformProvider pkg.CloudProvider, provider *pkg.CloudProvider) (*gqlschema.ClusterConfigInput, error) {
-		return &gqlschema.ClusterConfigInput{}, nil
-	}
-
-	svc := NewUpdate(Config{AllowUpdateExpiredInstanceWithContext: true}, storage.Instances(), storage.RuntimeStates(), storage.Operations(), handler, true, false, true, queue, PlansConfig{},
-		planDefaults, fixLogger(), dashboardConfig, kcBuilder, &OneForAllConvergedCloudRegionsProvider{}, fakeKcpK8sClient, nil)
+	svc := broker.NewUpdate(broker.Config{AllowUpdateExpiredInstanceWithContext: true}, storage.Instances(), storage.RuntimeStates(), storage.Operations(), handler, true, false, true, queue, broker.PlansConfig{},
+		nil, fixLogger(), dashboardConfig, kcBuilder, &broker.OneForAllConvergedCloudRegionsProvider{}, fakeKcpK8sClient, nil)
 
 	t.Run("should accept if it is same as previous", func(t *testing.T) {
 		_, err = svc.Update(context.Background(), instanceID, domain.UpdateDetails{
-			ServiceID:       KymaServiceID,
-			PlanID:          TrialPlanID,
+			ServiceID:       broker.KymaServiceID,
+			PlanID:          broker.TrialPlanID,
 			RawParameters:   nil,
 			PreviousValues:  domain.PreviousValues{},
 			RawContext:      json.RawMessage("{\"globalaccount_id\":\"globalaccount_id_init\"}"),
@@ -985,8 +949,8 @@ func TestUpdateExpiredInstance(t *testing.T) {
 
 	t.Run("should accept change GA", func(t *testing.T) {
 		_, err = svc.Update(context.Background(), instanceID, domain.UpdateDetails{
-			ServiceID:       KymaServiceID,
-			PlanID:          TrialPlanID,
+			ServiceID:       broker.KymaServiceID,
+			PlanID:          broker.TrialPlanID,
 			RawParameters:   nil,
 			PreviousValues:  domain.PreviousValues{},
 			RawContext:      json.RawMessage("{\"globalaccount_id\":\"globalaccount_id_new\"}"),
@@ -997,8 +961,8 @@ func TestUpdateExpiredInstance(t *testing.T) {
 
 	t.Run("should accept change GA, with params", func(t *testing.T) {
 		_, err = svc.Update(context.Background(), instanceID, domain.UpdateDetails{
-			ServiceID:       KymaServiceID,
-			PlanID:          TrialPlanID,
+			ServiceID:       broker.KymaServiceID,
+			PlanID:          broker.TrialPlanID,
 			PreviousValues:  domain.PreviousValues{},
 			RawContext:      json.RawMessage("{\"globalaccount_id\":\"globalaccount_id_new_2\", \"active\":true}"),
 			RawParameters:   json.RawMessage(`{"autoScalerMin": 4, "autoScalerMax": 3}`),
@@ -1009,8 +973,8 @@ func TestUpdateExpiredInstance(t *testing.T) {
 
 	t.Run("should fail as not global account passed", func(t *testing.T) {
 		_, err = svc.Update(context.Background(), instanceID, domain.UpdateDetails{
-			ServiceID:       KymaServiceID,
-			PlanID:          TrialPlanID,
+			ServiceID:       broker.KymaServiceID,
+			PlanID:          broker.TrialPlanID,
 			PreviousValues:  domain.PreviousValues{},
 			RawContext:      json.RawMessage("{\"x\":\"y\", \"active\":true}"),
 			RawParameters:   json.RawMessage(`{"autoScalerMin": 4, "autoScalerMax": 3}`),
@@ -1028,10 +992,10 @@ func TestSubaccountMovement(t *testing.T) {
 	instance := internal.Instance{
 		InstanceID:      instanceID,
 		RuntimeID:       runtimeId,
-		ServicePlanID:   TrialPlanID,
+		ServicePlanID:   broker.TrialPlanID,
 		GlobalAccountID: "InitialGlobalAccountID",
 		Parameters: internal.ProvisioningParameters{
-			PlanID: TrialPlanID,
+			PlanID: broker.TrialPlanID,
 			ErsContext: internal.ERSContext{
 				GlobalAccountID: "InitialGlobalAccountID",
 			},
@@ -1052,17 +1016,13 @@ func TestSubaccountMovement(t *testing.T) {
 	queue := &automock.Queue{}
 	queue.On("Add", mock.AnythingOfType("string"))
 
-	planDefaults := func(planID string, platformProvider pkg.CloudProvider, provider *pkg.CloudProvider) (*gqlschema.ClusterConfigInput, error) {
-		return &gqlschema.ClusterConfigInput{}, nil
-	}
-
-	svc := NewUpdate(Config{SubaccountMovementEnabled: true}, storage.Instances(), storage.RuntimeStates(), storage.Operations(), handler, true, true, true, queue, PlansConfig{},
-		planDefaults, fixLogger(), dashboardConfig, kcBuilder, &OneForAllConvergedCloudRegionsProvider{}, fakeKcpK8sClient, nil)
+	svc := broker.NewUpdate(broker.Config{SubaccountMovementEnabled: true}, storage.Instances(), storage.RuntimeStates(), storage.Operations(), handler, true, true, true, queue, broker.PlansConfig{},
+		nil, fixLogger(), dashboardConfig, kcBuilder, &broker.OneForAllConvergedCloudRegionsProvider{}, fakeKcpK8sClient, nil)
 
 	t.Run("no move performed so subscription should be empty", func(t *testing.T) {
 		_, err = svc.Update(context.Background(), instanceID, domain.UpdateDetails{
-			ServiceID:       KymaServiceID,
-			PlanID:          TrialPlanID,
+			ServiceID:       broker.KymaServiceID,
+			PlanID:          broker.TrialPlanID,
 			PreviousValues:  domain.PreviousValues{},
 			RawContext:      json.RawMessage("{\"globalaccount_id\":\"ChangedlGlobalAccountID\"}"),
 			RawParameters:   json.RawMessage("{\"name\":\"test\"}"),
@@ -1077,8 +1037,8 @@ func TestSubaccountMovement(t *testing.T) {
 
 	t.Run("move subaccount first time", func(t *testing.T) {
 		_, err = svc.Update(context.Background(), instanceID, domain.UpdateDetails{
-			ServiceID:       KymaServiceID,
-			PlanID:          TrialPlanID,
+			ServiceID:       broker.KymaServiceID,
+			PlanID:          broker.TrialPlanID,
 			PreviousValues:  domain.PreviousValues{},
 			RawContext:      json.RawMessage("{\"globalaccount_id\":\"newGlobalAccountID-v1\"}"),
 			MaintenanceInfo: nil,
@@ -1092,8 +1052,8 @@ func TestSubaccountMovement(t *testing.T) {
 
 	t.Run("move subaccount second time", func(t *testing.T) {
 		_, err = svc.Update(context.Background(), instanceID, domain.UpdateDetails{
-			ServiceID:       KymaServiceID,
-			PlanID:          TrialPlanID,
+			ServiceID:       broker.KymaServiceID,
+			PlanID:          broker.TrialPlanID,
 			PreviousValues:  domain.PreviousValues{},
 			RawContext:      json.RawMessage("{\"globalaccount_id\":\"newGlobalAccountID-v2\"}"),
 			MaintenanceInfo: nil,
@@ -1118,11 +1078,11 @@ func TestLabelChangeWhenMovingSubaccount(t *testing.T) {
 
 	instance := internal.Instance{
 		InstanceID:      instanceID,
-		ServicePlanID:   TrialPlanID,
+		ServicePlanID:   broker.TrialPlanID,
 		GlobalAccountID: oldGlobalAccountId,
 		RuntimeID:       runtimeId,
 		Parameters: internal.ProvisioningParameters{
-			PlanID: TrialPlanID,
+			PlanID: broker.TrialPlanID,
 			ErsContext: internal.ERSContext{
 				GlobalAccountID: newGlobalAccountId,
 			},
@@ -1143,12 +1103,8 @@ func TestLabelChangeWhenMovingSubaccount(t *testing.T) {
 	queue := &automock.Queue{}
 	queue.On("Add", mock.AnythingOfType("string"))
 
-	planDefaults := func(planID string, platformProvider pkg.CloudProvider, provider *pkg.CloudProvider) (*gqlschema.ClusterConfigInput, error) {
-		return &gqlschema.ClusterConfigInput{}, nil
-	}
-
-	svc := NewUpdate(Config{SubaccountMovementEnabled: true}, storage.Instances(), storage.RuntimeStates(), storage.Operations(), handler, true, true, true, queue, PlansConfig{},
-		planDefaults, fixLogger(), dashboardConfig, kcBuilder, &OneForAllConvergedCloudRegionsProvider{}, fakeKcpK8sClient, nil)
+	svc := broker.NewUpdate(broker.Config{SubaccountMovementEnabled: true}, storage.Instances(), storage.RuntimeStates(), storage.Operations(), handler, true, true, true, queue, broker.PlansConfig{},
+		nil, fixLogger(), dashboardConfig, kcBuilder, &broker.OneForAllConvergedCloudRegionsProvider{}, fakeKcpK8sClient, nil)
 
 	t.Run("simulate flow of moving account with labels on CRs", func(t *testing.T) {
 		// initial state of instance - moving account was never donex
@@ -1160,8 +1116,8 @@ func TestLabelChangeWhenMovingSubaccount(t *testing.T) {
 
 		// simulate moving account with new global account id - it means that we should update labels in CR
 		_, err = svc.Update(context.Background(), instanceID, domain.UpdateDetails{
-			ServiceID:       KymaServiceID,
-			PlanID:          TrialPlanID,
+			ServiceID:       broker.KymaServiceID,
+			PlanID:          broker.TrialPlanID,
 			PreviousValues:  domain.PreviousValues{},
 			RawContext:      json.RawMessage("{\"globalaccount_id\":\"changed-global-account-id\"}"),
 			MaintenanceInfo: nil,
@@ -1180,7 +1136,7 @@ func TestLabelChangeWhenMovingSubaccount(t *testing.T) {
 		require.NoError(t, err)
 		cr := &unstructured.Unstructured{}
 		cr.SetGroupVersionKind(gvk)
-		err = fakeKcpK8sClient.Get(context.Background(), client.ObjectKey{Name: i.RuntimeID, Namespace: KcpNamespace}, cr)
+		err = fakeKcpK8sClient.Get(context.Background(), client.ObjectKey{Name: i.RuntimeID, Namespace: broker.KcpNamespace}, cr)
 		require.NoError(t, err)
 		labels := cr.GetLabels()
 		assert.Len(t, labels, 1)
@@ -1190,7 +1146,7 @@ func TestLabelChangeWhenMovingSubaccount(t *testing.T) {
 		require.NoError(t, err)
 		cr = &unstructured.Unstructured{}
 		cr.SetGroupVersionKind(gvk)
-		err = fakeKcpK8sClient.Get(context.Background(), client.ObjectKey{Name: i.RuntimeID, Namespace: KcpNamespace}, cr)
+		err = fakeKcpK8sClient.Get(context.Background(), client.ObjectKey{Name: i.RuntimeID, Namespace: broker.KcpNamespace}, cr)
 		require.NoError(t, err)
 		labels = cr.GetLabels()
 		assert.Len(t, labels, 1)
@@ -1200,7 +1156,7 @@ func TestLabelChangeWhenMovingSubaccount(t *testing.T) {
 		require.NoError(t, err)
 		cr = &unstructured.Unstructured{}
 		cr.SetGroupVersionKind(gvk)
-		err = fakeKcpK8sClient.Get(context.Background(), client.ObjectKey{Name: i.RuntimeID, Namespace: KcpNamespace}, cr)
+		err = fakeKcpK8sClient.Get(context.Background(), client.ObjectKey{Name: i.RuntimeID, Namespace: broker.KcpNamespace}, cr)
 		require.NoError(t, err)
 		labels = cr.GetLabels()
 		assert.Len(t, labels, 1)
@@ -1220,17 +1176,15 @@ func TestUpdateUnsupportedMachine(t *testing.T) {
 	handler := &handler{}
 	q := &automock.Queue{}
 	q.On("Add", mock.AnythingOfType("string"))
-	planDefaults := func(planID string, platformProvider pkg.CloudProvider, provider *pkg.CloudProvider) (*gqlschema.ClusterConfigInput, error) {
-		return &gqlschema.ClusterConfigInput{}, nil
-	}
+
 	kcBuilder := &kcMock.KcBuilder{}
-	svc := NewUpdate(Config{}, st.Instances(), st.RuntimeStates(), st.Operations(), handler, true, true, false, q, PlansConfig{},
-		planDefaults, fixLogger(), dashboardConfig, kcBuilder, &OneForAllConvergedCloudRegionsProvider{}, fakeKcpK8sClient, fixRegionsSupportingMachine())
+	svc := broker.NewUpdate(broker.Config{}, st.Instances(), st.RuntimeStates(), st.Operations(), handler, true, true, false, q, broker.PlansConfig{},
+		nil, fixLogger(), dashboardConfig, kcBuilder, &broker.OneForAllConvergedCloudRegionsProvider{}, fakeKcpK8sClient, fixRegionsSupportingMachine())
 
 	// when
 	_, err = svc.Update(context.Background(), instanceID, domain.UpdateDetails{
 		ServiceID:       "",
-		PlanID:          AzurePlanID,
+		PlanID:          broker.AzurePlanID,
 		RawParameters:   json.RawMessage("{\"machineType\":" + "\"Standard_D16s_v5\"" + "}"),
 		PreviousValues:  domain.PreviousValues{},
 		RawContext:      json.RawMessage("{\"globalaccount_id\":\"globalaccount_id_1\", \"active\":true}"),
@@ -1253,12 +1207,10 @@ func TestUpdateUnsupportedMachineInAdditionalWorkerNodePools(t *testing.T) {
 	handler := &handler{}
 	q := &automock.Queue{}
 	q.On("Add", mock.AnythingOfType("string"))
-	planDefaults := func(planID string, platformProvider pkg.CloudProvider, provider *pkg.CloudProvider) (*gqlschema.ClusterConfigInput, error) {
-		return &gqlschema.ClusterConfigInput{}, nil
-	}
+
 	kcBuilder := &kcMock.KcBuilder{}
-	svc := NewUpdate(Config{}, st.Instances(), st.RuntimeStates(), st.Operations(), handler, true, true, false, q, PlansConfig{},
-		planDefaults, fixLogger(), dashboardConfig, kcBuilder, &OneForAllConvergedCloudRegionsProvider{}, fakeKcpK8sClient, fixRegionsSupportingMachine())
+	svc := broker.NewUpdate(broker.Config{}, st.Instances(), st.RuntimeStates(), st.Operations(), handler, true, true, false, q, broker.PlansConfig{},
+		nil, fixLogger(), dashboardConfig, kcBuilder, &broker.OneForAllConvergedCloudRegionsProvider{}, fakeKcpK8sClient, fixRegionsSupportingMachine())
 
 	testCases := []struct {
 		name                      string
@@ -1287,7 +1239,7 @@ func TestUpdateUnsupportedMachineInAdditionalWorkerNodePools(t *testing.T) {
 			// when
 			_, err = svc.Update(context.Background(), instanceID, domain.UpdateDetails{
 				ServiceID:       "",
-				PlanID:          AzurePlanID,
+				PlanID:          broker.AzurePlanID,
 				RawParameters:   json.RawMessage("{\"additionalWorkerNodePools\":" + tc.additionalWorkerNodePools + "}"),
 				PreviousValues:  domain.PreviousValues{},
 				RawContext:      json.RawMessage("{\"globalaccount_id\":\"globalaccount_id_1\", \"active\":true}"),
@@ -1312,18 +1264,16 @@ func TestUpdateGPUMachineForInternalUser(t *testing.T) {
 	handler := &handler{}
 	q := &automock.Queue{}
 	q.On("Add", mock.AnythingOfType("string"))
-	planDefaults := func(planID string, platformProvider pkg.CloudProvider, provider *pkg.CloudProvider) (*gqlschema.ClusterConfigInput, error) {
-		return &gqlschema.ClusterConfigInput{}, nil
-	}
+
 	kcBuilder := &kcMock.KcBuilder{}
-	svc := NewUpdate(Config{}, st.Instances(), st.RuntimeStates(), st.Operations(), handler, true, true, false, q, PlansConfig{},
-		planDefaults, fixLogger(), dashboardConfig, kcBuilder, &OneForAllConvergedCloudRegionsProvider{}, fakeKcpK8sClient, nil)
+	svc := broker.NewUpdate(broker.Config{}, st.Instances(), st.RuntimeStates(), st.Operations(), handler, true, true, false, q, broker.PlansConfig{},
+		nil, fixLogger(), dashboardConfig, kcBuilder, &broker.OneForAllConvergedCloudRegionsProvider{}, fakeKcpK8sClient, nil)
 
 	additionalWorkerNodePools := `[{"name": "name-1", "machineType": "Standard_NC4as_T4_v3", "haZones": true, "autoScalerMin": 3, "autoScalerMax": 20}]`
 	// when
 	_, err = svc.Update(context.Background(), instanceID, domain.UpdateDetails{
 		ServiceID:       "",
-		PlanID:          AzurePlanID,
+		PlanID:          broker.AzurePlanID,
 		RawParameters:   json.RawMessage("{\"machineType\":\"Standard_D16s_v5\", \"additionalWorkerNodePools\": " + additionalWorkerNodePools + "}"),
 		PreviousValues:  domain.PreviousValues{},
 		RawContext:      json.RawMessage("{\"globalaccount_id\":\"globalaccount_id_1\", \"active\":true}"),
@@ -1341,62 +1291,62 @@ func TestUpdateGPUMachineForExternalCustomer(t *testing.T) {
 		expectedError             string
 	}{
 		"Single AWS G6 GPU machine type": {
-			planID:                    AWSPlanID,
+			planID:                    broker.AWSPlanID,
 			additionalWorkerNodePools: `[{"name": "name-1", "machineType": "g6.xlarge", "haZones": true, "autoScalerMin": 3, "autoScalerMax": 20}]`,
 			expectedError:             "The following GPU machine types: g6.xlarge (used in worker node pools: name-1) are not available for your account. For details, please contact your sales representative.",
 		},
 		"Multiple AWS G6 GPU machine types": {
-			planID:                    AWSPlanID,
+			planID:                    broker.AWSPlanID,
 			additionalWorkerNodePools: `[{"name": "name-1", "machineType": "g6.xlarge", "haZones": true, "autoScalerMin": 3, "autoScalerMax": 20}, {"name": "name-2", "machineType": "g6.2xlarge", "haZones": true, "autoScalerMin": 3, "autoScalerMax": 20}]`,
 			expectedError:             "The following GPU machine types: g6.xlarge (used in worker node pools: name-1), g6.2xlarge (used in worker node pools: name-2) are not available for your account. For details, please contact your sales representative.",
 		},
 		"Duplicate AWS G6 GPU machine type": {
-			planID:                    AWSPlanID,
+			planID:                    broker.AWSPlanID,
 			additionalWorkerNodePools: `[{"name": "name-1", "machineType": "g6.xlarge", "haZones": true, "autoScalerMin": 3, "autoScalerMax": 20}, {"name": "name-2", "machineType": "g6.xlarge", "haZones": true, "autoScalerMin": 3, "autoScalerMax": 20}]`,
 			expectedError:             "The following GPU machine types: g6.xlarge (used in worker node pools: name-1, name-2) are not available for your account. For details, please contact your sales representative.",
 		},
 		"Single AWS G4dn GPU machine type": {
-			planID:                    AWSPlanID,
+			planID:                    broker.AWSPlanID,
 			additionalWorkerNodePools: `[{"name": "name-1", "machineType": "g4dn.xlarge", "haZones": true, "autoScalerMin": 3, "autoScalerMax": 20}]`,
 			expectedError:             "The following GPU machine types: g4dn.xlarge (used in worker node pools: name-1) are not available for your account. For details, please contact your sales representative.",
 		},
 		"Multiple AWS G4dn GPU machine types": {
-			planID:                    AWSPlanID,
+			planID:                    broker.AWSPlanID,
 			additionalWorkerNodePools: `[{"name": "name-1", "machineType": "g4dn.xlarge", "haZones": true, "autoScalerMin": 3, "autoScalerMax": 20}, {"name": "name-2", "machineType": "g4dn.2xlarge", "haZones": true, "autoScalerMin": 3, "autoScalerMax": 20}]`,
 			expectedError:             "The following GPU machine types: g4dn.xlarge (used in worker node pools: name-1), g4dn.2xlarge (used in worker node pools: name-2) are not available for your account. For details, please contact your sales representative.",
 		},
 		"Duplicate AWS G4dn GPU machine type": {
-			planID:                    AWSPlanID,
+			planID:                    broker.AWSPlanID,
 			additionalWorkerNodePools: `[{"name": "name-1", "machineType": "g4dn.xlarge", "haZones": true, "autoScalerMin": 3, "autoScalerMax": 20}, {"name": "name-2", "machineType": "g4dn.xlarge", "haZones": true, "autoScalerMin": 3, "autoScalerMax": 20}]`,
 			expectedError:             "The following GPU machine types: g4dn.xlarge (used in worker node pools: name-1, name-2) are not available for your account. For details, please contact your sales representative.",
 		},
 		"Single GCP GPU machine type": {
-			planID:                    GCPPlanID,
+			planID:                    broker.GCPPlanID,
 			additionalWorkerNodePools: `[{"name": "name-1", "machineType": "g2-standard-4", "haZones": true, "autoScalerMin": 3, "autoScalerMax": 20}]`,
 			expectedError:             "The following GPU machine types: g2-standard-4 (used in worker node pools: name-1) are not available for your account. For details, please contact your sales representative.",
 		},
 		"Multiple GCP GPU machine types": {
-			planID:                    GCPPlanID,
+			planID:                    broker.GCPPlanID,
 			additionalWorkerNodePools: `[{"name": "name-1", "machineType": "g2-standard-4", "haZones": true, "autoScalerMin": 3, "autoScalerMax": 20}, {"name": "name-2", "machineType": "g2-standard-8", "haZones": true, "autoScalerMin": 3, "autoScalerMax": 20}]`,
 			expectedError:             "The following GPU machine types: g2-standard-4 (used in worker node pools: name-1), g2-standard-8 (used in worker node pools: name-2) are not available for your account. For details, please contact your sales representative.",
 		},
 		"Duplicate GCP GPU machine type": {
-			planID:                    GCPPlanID,
+			planID:                    broker.GCPPlanID,
 			additionalWorkerNodePools: `[{"name": "name-1", "machineType": "g2-standard-4", "haZones": true, "autoScalerMin": 3, "autoScalerMax": 20}, {"name": "name-2", "machineType": "g2-standard-4", "haZones": true, "autoScalerMin": 3, "autoScalerMax": 20}]`,
 			expectedError:             "The following GPU machine types: g2-standard-4 (used in worker node pools: name-1, name-2) are not available for your account. For details, please contact your sales representative.",
 		},
 		"Single Azure GPU machine type": {
-			planID:                    AzurePlanID,
+			planID:                    broker.AzurePlanID,
 			additionalWorkerNodePools: `[{"name": "name-1", "machineType": "Standard_NC4as_T4_v3", "haZones": true, "autoScalerMin": 3, "autoScalerMax": 20}]`,
 			expectedError:             "The following GPU machine types: Standard_NC4as_T4_v3 (used in worker node pools: name-1) are not available for your account. For details, please contact your sales representative.",
 		},
 		"Multiple Azure GPU machine types": {
-			planID:                    AzurePlanID,
+			planID:                    broker.AzurePlanID,
 			additionalWorkerNodePools: `[{"name": "name-1", "machineType": "Standard_NC4as_T4_v3", "haZones": true, "autoScalerMin": 3, "autoScalerMax": 20}, {"name": "name-2", "machineType": "Standard_NC8as_T4_v3", "haZones": true, "autoScalerMin": 3, "autoScalerMax": 20}]`,
 			expectedError:             "The following GPU machine types: Standard_NC4as_T4_v3 (used in worker node pools: name-1), Standard_NC8as_T4_v3 (used in worker node pools: name-2) are not available for your account. For details, please contact your sales representative.",
 		},
 		"Duplicate Azure GPU machine type": {
-			planID:                    AzurePlanID,
+			planID:                    broker.AzurePlanID,
 			additionalWorkerNodePools: `[{"name": "name-1", "machineType": "Standard_NC4as_T4_v3", "haZones": true, "autoScalerMin": 3, "autoScalerMax": 20}, {"name": "name-2", "machineType": "Standard_NC4as_T4_v3", "haZones": true, "autoScalerMin": 3, "autoScalerMax": 20}]`,
 			expectedError:             "The following GPU machine types: Standard_NC4as_T4_v3 (used in worker node pools: name-1, name-2) are not available for your account. For details, please contact your sales representative.",
 		},
@@ -1414,12 +1364,10 @@ func TestUpdateGPUMachineForExternalCustomer(t *testing.T) {
 			handler := &handler{}
 			q := &automock.Queue{}
 			q.On("Add", mock.AnythingOfType("string"))
-			planDefaults := func(planID string, platformProvider pkg.CloudProvider, provider *pkg.CloudProvider) (*gqlschema.ClusterConfigInput, error) {
-				return &gqlschema.ClusterConfigInput{}, nil
-			}
 			kcBuilder := &kcMock.KcBuilder{}
-			svc := NewUpdate(Config{}, st.Instances(), st.RuntimeStates(), st.Operations(), handler, true, true, false, q, PlansConfig{},
-				planDefaults, fixLogger(), dashboardConfig, kcBuilder, &OneForAllConvergedCloudRegionsProvider{}, fakeKcpK8sClient, nil)
+
+			svc := broker.NewUpdate(broker.Config{}, st.Instances(), st.RuntimeStates(), st.Operations(), handler, true, true, false, q, broker.PlansConfig{},
+				fixValueProvider(), fixLogger(), dashboardConfig, kcBuilder, &broker.OneForAllConvergedCloudRegionsProvider{}, fakeKcpK8sClient, nil)
 
 			// when
 			_, err = svc.Update(context.Background(), instanceID, domain.UpdateDetails{
@@ -1435,6 +1383,10 @@ func TestUpdateGPUMachineForExternalCustomer(t *testing.T) {
 			assert.EqualError(t, err, tc.expectedError)
 		})
 	}
+}
+
+func fixValueProvider() broker.ValuesProvider {
+	return provider.NewPlanSpecificValuesProvider(true, pkg.AWS, true, nil, "production", "")
 }
 
 func registerCRD() {
@@ -1471,7 +1423,7 @@ func createFakeCRs(t *testing.T) string {
 		us := unstructured.Unstructured{}
 		us.SetGroupVersionKind(gvk)
 		us.SetName(runtimeID)
-		us.SetNamespace(KcpNamespace)
+		us.SetNamespace(broker.KcpNamespace)
 		err = fakeKcpK8sClient.Create(context.Background(), &us)
 		require.NoError(t, err)
 	}
@@ -1491,7 +1443,7 @@ func cleanFakeCRs(t *testing.T, runtimeID string) {
 		us := unstructured.Unstructured{}
 		us.SetGroupVersionKind(gvk)
 		us.SetName(runtimeID)
-		us.SetNamespace(KcpNamespace)
+		us.SetNamespace(broker.KcpNamespace)
 		err = fakeKcpK8sClient.Delete(context.Background(), &us)
 		require.NoError(t, err)
 	}
@@ -1499,10 +1451,4 @@ func cleanFakeCRs(t *testing.T, runtimeID string) {
 	createCustomResource(t, runtimeID, customresources.KymaCr)
 	createCustomResource(t, runtimeID, customresources.GardenerClusterCr)
 	createCustomResource(t, runtimeID, customresources.RuntimeCr)
-}
-
-func fixRegionsSupportingMachine() map[string][]string {
-	return map[string][]string{
-		"Standard_D": {"uksouth", "brazilsouth"},
-	}
 }
