@@ -79,7 +79,7 @@ func TestCreateRuntimeResourceStep_AllCustom(t *testing.T) {
 			SigningAlgs:    []string{"sa-custom"},
 			UsernameClaim:  "uc-custom",
 			UsernamePrefix: "up-custom",
-			RequiredClaims: []string{"claim=value"},
+			RequiredClaims: []string{"claim=value", "claim2=value2=value2", "claim3==value3", "claim4=value4=", "claim5=,value5", "claim6=="},
 		},
 	}
 	assertInsertions(t, memoryStorage, instance, operation)
@@ -90,7 +90,14 @@ func TestCreateRuntimeResourceStep_AllCustom(t *testing.T) {
 		SigningAlgs:    []string{"sa-custom"},
 		UsernameClaim:  ptr.String("uc-custom"),
 		UsernamePrefix: ptr.String("up-custom"),
-		RequiredClaims: map[string]string{"claim": "value"},
+		RequiredClaims: map[string]string{
+			"claim":  "value",
+			"claim2": "value2=value2",
+			"claim3": "=value3",
+			"claim4": "value4=",
+			"claim5": ",value5",
+			"claim6": "=",
+		},
 	}
 	cli := getClientForTests(t)
 	step := NewCreateRuntimeResourceStep(memoryStorage.Operations(), memoryStorage.Instances(), cli, inputConfig, defaultOIDSConfig, true)
