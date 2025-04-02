@@ -63,6 +63,8 @@ type RuntimeDTO struct {
 	BetaEnabled                 string                         `json:"betaEnabled,omitempty"`
 	UsedForProduction           string                         `json:"usedForProduction,omitempty"`
 	SubscriptionSecretName      *string                        `json:"subscriptionSecretName,omitempty"`
+	LicenseType                 *string                        `json:"licenseType,omitempty"`
+	CommercialModel             *string                        `json:"commercialModel,omitempty"`
 }
 
 type CloudProvider string
