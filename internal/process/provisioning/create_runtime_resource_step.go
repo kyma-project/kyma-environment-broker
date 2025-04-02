@@ -44,21 +44,23 @@ const (
 )
 
 type CreateRuntimeResourceStep struct {
-	operationManager    *process.OperationManager
-	instanceStorage     storage.Instances
-	runtimeStateStorage storage.RuntimeStates
-	k8sClient           client.Client
-	config              input.Config
-	oidcDefaultValues   pkg.OIDCConfigDTO
+	operationManager        *process.OperationManager
+	instanceStorage         storage.Instances
+	runtimeStateStorage     storage.RuntimeStates
+	k8sClient               client.Client
+	config                  input.Config
+	oidcDefaultValues       pkg.OIDCConfigDTO
+	useAdditionalOIDCSchema bool
 }
 
 func NewCreateRuntimeResourceStep(os storage.Operations, is storage.Instances, k8sClient client.Client, cfg input.Config,
-	oidcDefaultValues pkg.OIDCConfigDTO) *CreateRuntimeResourceStep {
+	oidcDefaultValues pkg.OIDCConfigDTO, useAdditionalOIDCSchema bool) *CreateRuntimeResourceStep {
 	step := &CreateRuntimeResourceStep{
-		instanceStorage:   is,
-		k8sClient:         k8sClient,
-		config:            cfg,
-		oidcDefaultValues: oidcDefaultValues,
+		instanceStorage:         is,
+		k8sClient:               k8sClient,
+		config:                  cfg,
+		oidcDefaultValues:       oidcDefaultValues,
+		useAdditionalOIDCSchema: useAdditionalOIDCSchema,
 	}
 	step.operationManager = process.NewOperationManager(os, step.Name(), kebError.InfrastructureManagerDependency)
 	return step
@@ -339,8 +341,9 @@ func (s *CreateRuntimeResourceStep) mergeOIDCConfig(defaultOIDC gardener.OIDCCon
 	if inputOIDC.UsernamePrefix != "" {
 		defaultOIDC.UsernamePrefix = &inputOIDC.UsernamePrefix
 	}
-	defaultOIDC.RequiredClaims = s.parseRequiredClaims(inputOIDC.RequiredClaims)
-
+	if s.useAdditionalOIDCSchema {
+		defaultOIDC.RequiredClaims = s.parseRequiredClaims(inputOIDC.RequiredClaims)
+	}
 	return defaultOIDC
 }
 

@@ -31,15 +31,17 @@ type UpdateRuntimeStep struct {
 	config                     input.Config
 	useSmallerMachineTypes     bool
 	trialPlatformRegionMapping map[string]string
+	useAdditionalOIDCSchema    bool
 }
 
-func NewUpdateRuntimeStep(os storage.Operations, k8sClient client.Client, delay time.Duration, cfg input.Config, useSmallerMachines bool, trialPlatformRegionMapping map[string]string) *UpdateRuntimeStep {
+func NewUpdateRuntimeStep(os storage.Operations, k8sClient client.Client, delay time.Duration, cfg input.Config, useSmallerMachines bool, trialPlatformRegionMapping map[string]string, useAdditionalOIDCSchema bool) *UpdateRuntimeStep {
 	step := &UpdateRuntimeStep{
 		k8sClient:                  k8sClient,
 		delay:                      delay,
 		config:                     cfg,
 		useSmallerMachineTypes:     useSmallerMachines,
 		trialPlatformRegionMapping: trialPlatformRegionMapping,
+		useAdditionalOIDCSchema:    useAdditionalOIDCSchema,
 	}
 	step.operationManager = process.NewOperationManager(os, step.Name(), kebError.InfrastructureManagerDependency)
 	return step
@@ -135,7 +137,7 @@ func (s *UpdateRuntimeStep) Run(operation internal.Operation, log *slog.Logger) 
 			if dto.UsernameClaim != "" {
 				config.UsernameClaim = &dto.UsernameClaim
 			}
-			if len(dto.RequiredClaims) > 0 {
+			if s.useAdditionalOIDCSchema && len(dto.RequiredClaims) > 0 {
 				requiredClaims := make(map[string]string)
 				for _, claim := range dto.RequiredClaims {
 					parts := strings.SplitN(claim, "=", 2)
