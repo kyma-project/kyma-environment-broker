@@ -230,6 +230,6 @@ hap:
                                         # hyperscalerType=azure, !dirty
 ```
 
-## Links
-To get more details on using the Job, visit its [`README`](../../cmd/parser/README.md).
+## CLI Tool
+There is CLI tool available for validation of rules. To get more details on building and using this tool, see [`README`](../../cmd/parser/README.md).
 
