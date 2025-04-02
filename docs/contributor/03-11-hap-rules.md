@@ -229,3 +229,7 @@ hap:
   - free                                # hyperscalerType=aws, !dirty
                                         # hyperscalerType=azure, !dirty
 ```
+
+## Links
+To get more details on using the Job, visit its [`README`](../../cmd/parser/README.md).
+
