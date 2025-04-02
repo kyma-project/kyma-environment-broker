@@ -296,14 +296,16 @@ func (o *OIDCsDTO) validateSigningAlgsForIndex(signingAlgs []string, index int, 
 }
 
 func (o *OIDCsDTO) validateRequiredClaims(requiredClaims []string, errs *[]string) {
-	for _, claim := range requiredClaims {
-		if !strings.Contains(claim, "=") {
-			*errs = append(*errs, fmt.Sprintf("requiredClaims must be in claim=value format, invalid claim: %s", claim))
-			continue
-		}
-		parts := strings.SplitN(claim, "=", 2)
-		if len(parts[0]) == 0 || len(parts[1]) == 0 {
-			*errs = append(*errs, fmt.Sprintf("requiredClaims must be in claim=value format, invalid claim: %s", claim))
+	if len(requiredClaims) != 0 {
+		for _, claim := range requiredClaims {
+			if !strings.Contains(claim, "=") {
+				*errs = append(*errs, fmt.Sprintf("requiredClaims must be in claim=value format, invalid claim: %s", claim))
+				continue
+			}
+			parts := strings.SplitN(claim, "=", 2)
+			if len(parts[0]) == 0 || len(parts[1]) == 0 {
+				*errs = append(*errs, fmt.Sprintf("requiredClaims must be in claim=value format, invalid claim: %s", claim))
+			}
 		}
 	}
 }
