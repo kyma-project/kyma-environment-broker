@@ -472,7 +472,8 @@ func createAPI(router *httputil.Router, servicesConfig broker.ServicesConfig, cf
 	regions, err := provider.ReadPlatformRegionMappingFromFile(cfg.TrialRegionMappingFilePath)
 	fatalOnError(err, logs)
 	logs.Info(fmt.Sprintf("Platform region mapping for trial: %v", regions))
-	valuesProvider := provider.NewPlanSpecificValuesProvider(cfg.Provisioner.MultiZoneCluster, cfg.Provisioner.DefaultTrialProvider, cfg.Broker.UseSmallerMachineTypes, regions, cfg.Provisioner.DefaultGardenerShootPurpose, cfg.Provisioner.ControlPlaneFailureTolerance)
+	valuesProvider := provider.NewPlanSpecificValuesProvider(cfg.InfrastructureManager.MultiZoneCluster, cfg.InfrastructureManager.DefaultTrialProvider,
+		cfg.InfrastructureManager.UseSmallerMachineTypes, regions, cfg.InfrastructureManager.DefaultGardenerShootPurpose, cfg.InfrastructureManager.ControlPlaneFailureTolerance)
 
 	suspensionCtxHandler := suspension.NewContextUpdateHandler(db.Operations(), provisionQueue, deprovisionQueue, logs)
 
