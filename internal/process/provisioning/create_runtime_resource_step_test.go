@@ -89,6 +89,7 @@ func TestCreateRuntimeResourceStep_onlyMainOIDC_AllCustom(t *testing.T) {
 		SigningAlgs:    []string{"sa-custom"},
 		UsernameClaim:  ptr.String("uc-custom"),
 		UsernamePrefix: ptr.String("up-custom"),
+		GroupsPrefix:   ptr.String("-"),
 	}
 	cli := getClientForTests(t)
 	step := NewCreateRuntimeResourceStep(memoryStorage.Operations(), memoryStorage.Instances(), cli, inputConfig, defaultOIDSConfig)
@@ -136,6 +137,7 @@ func TestCreateRuntimeResourceStep_MainAndAdditionalOIDC_AllCustom(t *testing.T)
 		SigningAlgs:    []string{"sa-custom"},
 		UsernameClaim:  ptr.String("uc-custom"),
 		UsernamePrefix: ptr.String("up-custom"),
+		GroupsPrefix:   ptr.String("-"),
 	}
 	cli := getClientForTests(t)
 	step := NewCreateRuntimeResourceStep(memoryStorage.Operations(), memoryStorage.Instances(), cli, inputConfig, defaultOIDSConfig)
@@ -183,6 +185,7 @@ func TestCreateRuntimeResourceStep_onlyAdditionalOIDC_AllCustom(t *testing.T) {
 		SigningAlgs:    []string{"sa-custom"},
 		UsernameClaim:  ptr.String("uc-custom"),
 		UsernamePrefix: ptr.String("up-custom"),
+		GroupsPrefix:   ptr.String("-"),
 	}
 	cli := getClientForTests(t)
 	step := NewCreateRuntimeResourceStep(memoryStorage.Operations(), memoryStorage.Instances(), cli, inputConfig, defaultOIDSConfig)
@@ -233,6 +236,7 @@ func TestCreateRuntimeResourceStep_OIDC_MixedCustom(t *testing.T) {
 		SigningAlgs:    []string{"sa-default"},
 		UsernameClaim:  ptr.String("uc-custom"),
 		UsernamePrefix: ptr.String("up-default"),
+		GroupsPrefix:   ptr.String("-"),
 	}
 	cli := getClientForTests(t)
 	step := NewCreateRuntimeResourceStep(memoryStorage.Operations(), memoryStorage.Instances(), cli, inputConfig, defaultOIDSConfig)

@@ -98,6 +98,7 @@ func TestUpdateRuntimeStep_RunUpdateOnlyMainOIDC(t *testing.T) {
 		SigningAlgs:    []string{"signingAlgs"},
 		UsernameClaim:  ptr.String("sub"),
 		UsernamePrefix: nil,
+		GroupsPrefix:   ptr.String("-"),
 	}
 
 	// when
@@ -133,6 +134,7 @@ func TestUpdateRuntimeStep_RunUpdateMainAndAdditionalOIDC(t *testing.T) {
 		SigningAlgs:    []string{"signingAlgs"},
 		UsernameClaim:  ptr.String("sub"),
 		UsernamePrefix: nil,
+		GroupsPrefix:   ptr.String("-"),
 	}
 
 	// when
@@ -169,6 +171,7 @@ func TestUpdateRuntimeStep_RunUpdateOnlyAdditionalOIDC(t *testing.T) {
 		SigningAlgs:    []string{"signingAlgs"},
 		UsernameClaim:  ptr.String("sub"),
 		UsernamePrefix: nil,
+		GroupsPrefix:   ptr.String("-"),
 	}
 	var gotRuntime imv1.Runtime
 	err = kcpClient.Get(context.Background(), client.ObjectKey{Name: operation.RuntimeResourceName, Namespace: "kcp-system"}, &gotRuntime)

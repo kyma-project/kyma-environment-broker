@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/kyma-project/kyma-environment-broker/internal/provider"
+	"github.com/kyma-project/kyma-environment-broker/internal/ptr"
 	"k8s.io/apimachinery/pkg/api/errors"
 
 	gardener "github.com/gardener/gardener/pkg/apis/core/v1beta1"
@@ -91,6 +92,7 @@ func (s *UpdateRuntimeStep) Run(operation internal.Operation, log *slog.Logger) 
 
 	if operation.UpdatingParameters.OIDC != nil {
 		input := operation.UpdatingParameters.OIDC
+		runtime.Spec.Shoot.Kubernetes.KubeAPIServer.OidcConfig.GroupsPrefix = ptr.String("-")
 		if s.config.UseMainOIDC {
 			if len(input.SigningAlgs) > 0 {
 				runtime.Spec.Shoot.Kubernetes.KubeAPIServer.OidcConfig.SigningAlgs = input.SigningAlgs

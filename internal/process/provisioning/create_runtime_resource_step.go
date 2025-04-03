@@ -267,6 +267,7 @@ func (s *CreateRuntimeResourceStep) createKubernetesConfiguration(operation inte
 		SigningAlgs:    s.oidcDefaultValues.SigningAlgs,
 		UsernameClaim:  &s.oidcDefaultValues.UsernameClaim,
 		UsernamePrefix: &s.oidcDefaultValues.UsernamePrefix,
+		GroupsPrefix:   ptr.String("-"),
 	}
 	if operation.ProvisioningParameters.Parameters.OIDC != nil {
 		if operation.ProvisioningParameters.Parameters.OIDC.ClientID != "" {
