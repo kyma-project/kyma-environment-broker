@@ -217,8 +217,8 @@ infrastructureManager:
 
 provisioner:
   #these settings are being moved to infrastructureManager section - keep these in sync
-  useMainOIDC: false
-  useAdditionalOIDC: true
+  useMainOIDC: "true"
+  useAdditionalOIDC: "false"
   #end
 
 stepTimeouts:
