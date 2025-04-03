@@ -253,7 +253,7 @@ func TestUpdateRuntimeStep_RunUpdateMultipleAdditionalOIDCWithMultipleAdditional
 	err := imv1.AddToScheme(scheme.Scheme)
 	assert.NoError(t, err)
 	kcpClient := fake.NewClientBuilder().WithRuntimeObjects(fixRuntimeResourceWithMultipleAdditionalOidc("runtime-name", false)).Build()
-	step := NewUpdateRuntimeStep(nil, kcpClient, 0, input.Config{}, false, nil, true)
+	step := NewUpdateRuntimeStep(nil, kcpClient, 0, input.InfrastructureManagerConfig{}, false, nil, true)
 	operation := fixture.FixUpdatingOperation("op-id", "inst-id").Operation
 	operation.RuntimeResourceName = "runtime-name"
 	operation.KymaResourceNamespace = "kcp-system"
@@ -338,7 +338,7 @@ func TestUpdateRuntimeStep_RunUpdateMultipleAdditionalOIDCWitEmptyAdditionalOIDC
 	err := imv1.AddToScheme(scheme.Scheme)
 	assert.NoError(t, err)
 	kcpClient := fake.NewClientBuilder().WithRuntimeObjects(fixRuntimeResourceWithMultipleAdditionalOidc("runtime-name", false)).Build()
-	step := NewUpdateRuntimeStep(nil, kcpClient, 0, input.Config{}, false, nil, true)
+	step := NewUpdateRuntimeStep(nil, kcpClient, 0, input.InfrastructureManagerConfig{}, false, nil, true)
 	operation := fixture.FixUpdatingOperation("op-id", "inst-id").Operation
 	operation.RuntimeResourceName = "runtime-name"
 	operation.KymaResourceNamespace = "kcp-system"
