@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/kyma-project/kyma-environment-broker/internal/provider"
+	"github.com/kyma-project/kyma-environment-broker/internal/ptr"
 	"k8s.io/apimachinery/pkg/api/errors"
 
 	gardener "github.com/gardener/gardener/pkg/apis/core/v1beta1"
@@ -147,6 +148,7 @@ func (s *UpdateRuntimeStep) Run(operation internal.Operation, log *slog.Logger) 
 				}
 				config.RequiredClaims = requiredClaims
 			}
+			(*runtime.Spec.Shoot.Kubernetes.KubeAPIServer.AdditionalOidcConfig)[0].GroupsPrefix = ptr.String("-")
 		}
 	}
 

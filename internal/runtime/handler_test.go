@@ -1083,6 +1083,50 @@ func TestRuntimeHandler_WithKimOnlyDrivenInstances(t *testing.T) {
 		assert.NotNil(t, out.Data[0].Status.Provisioning.Parameters.MachineType)
 		assert.NotNil(t, out.Data[0].Parameters.MachineType)
 	})
+
+	t.Run("test licenseType and commercialModel", func(t *testing.T) {
+		// given
+		db := storage.NewMemoryStorage()
+		operations := db.Operations()
+		instances := db.Instances()
+		testID := "Test1"
+		testTime := time.Now()
+		testInstance := fixInstanceForPreview(testID, testTime)
+		licenseType := "SAPDEV"
+		testInstance.Parameters.ErsContext.LicenseType = &licenseType
+		commercialModel := "SUBSCRIPTION"
+		testInstance.Parameters.ErsContext.CommercialModel = &commercialModel
+
+		err := instances.Insert(testInstance)
+		require.NoError(t, err)
+
+		provOp := fixture.FixProvisioningOperation(fixRandomID(), testID)
+		err = operations.InsertOperation(provOp)
+		require.NoError(t, err)
+
+		runtimeHandler := runtime.NewHandler(db, 2, "", k8sClient, log)
+
+		rr := httptest.NewRecorder()
+		router := httputil.NewRouter()
+		runtimeHandler.AttachRoutes(router)
+
+		// when
+		req, err := http.NewRequest("GET", "/runtimes", nil)
+		require.NoError(t, err)
+		router.ServeHTTP(rr, req)
+
+		// then
+		require.Equal(t, http.StatusOK, rr.Code)
+
+		var out pkg.RuntimesPage
+
+		err = json.Unmarshal(rr.Body.Bytes(), &out)
+		require.NoError(t, err)
+		require.NotNil(t, out.Data[0].LicenseType)
+		assert.Equal(t, licenseType, *out.Data[0].LicenseType)
+		require.NotNil(t, out.Data[0].CommercialModel)
+		assert.Equal(t, commercialModel, *out.Data[0].CommercialModel)
+	})
 }
 
 func fixInstance(id string, t time.Time) internal.Instance {

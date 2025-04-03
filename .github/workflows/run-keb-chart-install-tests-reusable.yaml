@@ -122,3 +122,5 @@ jobs:
           else
             helm install keb ../keb --namespace kcp-system -f values.yaml --set global.database.embedded.enabled=false --set testConfig.kebDeployment.useAnnotations=true --set global.images.container_registry.path="europe-docker.pkg.dev/kyma-project/dev" --set global.secrets.mechanism=secrets --debug --wait
           fi
+          echo "Waiting for kyma-environment-broker pod to be in READY state..."
+          kubectl wait --namespace kcp-system --for=condition=Ready pod -l app.kubernetes.io/name=kyma-environment-broker --timeout=180s

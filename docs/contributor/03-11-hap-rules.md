@@ -229,3 +229,8 @@ hap:
   - free                                # hyperscalerType=aws, !dirty
                                         # hyperscalerType=azure, !dirty
 ```
+
+## CLI Tool
+
+A CLI tool for validating rules is available. For more details on building and using this tool, see [HAP Parser](../../cmd/parser/README.md).
+
