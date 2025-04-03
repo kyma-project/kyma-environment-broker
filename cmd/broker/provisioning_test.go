@@ -175,11 +175,13 @@ func TestProvisioning_SeedAndShootSameRegion(t *testing.T) {
 	// given
 	suite := NewBrokerSuiteTest(t)
 	defer suite.TearDown()
-	iid := uuid.New().String()
 
-	// when
-	resp := suite.CallAPI("PUT", fmt.Sprintf("oauth/v2/service_instances/%s?accepts_incomplete=true", iid),
-		`{
+	t.Run("should accept the provisioning param and set EnforceSeedLocation to false in Runtime CR", func(t *testing.T) {
+		iid := uuid.New().String()
+
+		// when
+		resp := suite.CallAPI("PUT", fmt.Sprintf("oauth/v2/service_instances/%s?accepts_incomplete=true", iid),
+			`{
 					"service_id": "47c9dcbf-ff30-448e-ab36-d3bad66ba281",
 					"plan_id": "361c511f-f939-4621-b228-d0fb79a1fe15",
 					"context": {
@@ -193,15 +195,46 @@ func TestProvisioning_SeedAndShootSameRegion(t *testing.T) {
 						"shootAndSeedSameRegion": false
 					}
 		}`)
-	opID := suite.DecodeOperationID(resp)
+		opID := suite.DecodeOperationID(resp)
 
-	suite.processKIMProvisioningByOperationID(opID)
+		suite.processKIMProvisioningByOperationID(opID)
 
-	// then
-	suite.WaitForOperationState(opID, domain.Succeeded)
+		// then
+		suite.WaitForOperationState(opID, domain.Succeeded)
 
-	runtime := suite.GetRuntimeResourceByInstanceID(iid)
-	assert.False(t, *runtime.Spec.Shoot.EnforceSeedLocation)
+		runtime := suite.GetRuntimeResourceByInstanceID(iid)
+		assert.False(t, *runtime.Spec.Shoot.EnforceSeedLocation)
+	})
+
+	t.Run("should accept the provisioning param and set EnforceSeedLocation to true in Runtime CR", func(t *testing.T) {
+		iid := uuid.New().String()
+
+		// when
+		resp := suite.CallAPI("PUT", fmt.Sprintf("oauth/v2/service_instances/%s?accepts_incomplete=true", iid),
+			`{
+					"service_id": "47c9dcbf-ff30-448e-ab36-d3bad66ba281",
+					"plan_id": "361c511f-f939-4621-b228-d0fb79a1fe15",
+					"context": {
+						"globalaccount_id": "g-account-id",
+						"subaccount_id": "sub-id",
+						"user_id": "john.smith@email.com"
+					},
+					"parameters": {
+						"name": "testing-cluster",
+						"region": "us-east-1",
+						"shootAndSeedSameRegion": true
+					}
+		}`)
+		opID := suite.DecodeOperationID(resp)
+
+		suite.processKIMProvisioningByOperationID(opID)
+
+		// then
+		suite.WaitForOperationState(opID, domain.Succeeded)
+
+		runtime := suite.GetRuntimeResourceByInstanceID(iid)
+		assert.True(t, *runtime.Spec.Shoot.EnforceSeedLocation)
+	})
 }
 
 func TestProvisioning_HappyPathSapConvergedCloud(t *testing.T) {
