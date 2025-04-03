@@ -112,6 +112,7 @@ func (s *UpdateRuntimeStep) Run(operation internal.Operation, log *slog.Logger) 
 					UsernamePrefix: &oidcConfig.UsernamePrefix,
 					UsernameClaim:  &oidcConfig.UsernameClaim,
 					RequiredClaims: requiredClaims,
+					GroupsPrefix:   ptr.String("-"),
 				})
 			}
 			runtime.Spec.Shoot.Kubernetes.KubeAPIServer.AdditionalOidcConfig = &oidcConfigs

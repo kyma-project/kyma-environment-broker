@@ -1527,6 +1527,7 @@ func TestUpdateAutoscalerParams(t *testing.T) {
 		SigningAlgs:    []string{"RS256"},
 		UsernameClaim:  ptr.String("sub"),
 		UsernamePrefix: ptr.String("-"),
+		GroupsPrefix:   ptr.String("-"),
 	}, (*runtime.Spec.Shoot.Kubernetes.KubeAPIServer.AdditionalOidcConfig)[0])
 
 	assert.Equal(t, []string{"john.smith@email.com"}, runtime.Spec.Security.Administrators)

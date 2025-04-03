@@ -100,6 +100,7 @@ func TestUpdateRuntimeStep_RunUpdateEmptyOIDCConfigWithOIDCObject(t *testing.T) 
 			"claim1": "value1",
 			"claim2": "value2",
 		},
+		GroupsPrefix: ptr.String("-"),
 	}
 	var gotRuntime imv1.Runtime
 	err = kcpClient.Get(context.Background(), client.ObjectKey{Name: operation.RuntimeResourceName, Namespace: "kcp-system"}, &gotRuntime)
@@ -133,7 +134,7 @@ func TestUpdateRuntimeStep_RunUpdateOIDCWithOIDCObject(t *testing.T) {
 	operation := fixture.FixUpdatingOperationWithOIDCObject("op-id", "inst-id").Operation
 	operation.RuntimeResourceName = "runtime-name"
 	operation.KymaResourceNamespace = "kcp-system"
-	expectedMainOIDCConfig := gardener.OIDCConfig{
+	expectedOIDCConfig := gardener.OIDCConfig{
 		ClientID:       ptr.String("clinet-id-oidc"),
 		GroupsClaim:    ptr.String("groups"),
 		IssuerURL:      ptr.String("issuer-url"),
@@ -144,6 +145,7 @@ func TestUpdateRuntimeStep_RunUpdateOIDCWithOIDCObject(t *testing.T) {
 			"claim1": "value1",
 			"claim2": "value2",
 		},
+		GroupsPrefix: ptr.String("-"),
 	}
 	var gotRuntime imv1.Runtime
 	err = kcpClient.Get(context.Background(), client.ObjectKey{Name: operation.RuntimeResourceName, Namespace: "kcp-system"}, &gotRuntime)
@@ -165,7 +167,7 @@ func TestUpdateRuntimeStep_RunUpdateOIDCWithOIDCObject(t *testing.T) {
 	assert.Nil(t, gotRuntime.Spec.Shoot.Kubernetes.KubeAPIServer.OidcConfig.UsernameClaim)
 	assert.Nil(t, gotRuntime.Spec.Shoot.Kubernetes.KubeAPIServer.OidcConfig.UsernamePrefix)
 	assert.NotNil(t, gotRuntime.Spec.Shoot.Kubernetes.KubeAPIServer.AdditionalOidcConfig)
-	assert.Equal(t, expectedAdditionalOIDCConfig, (*gotRuntime.Spec.Shoot.Kubernetes.KubeAPIServer.AdditionalOidcConfig)[0])
+	assert.Equal(t, expectedOIDCConfig, (*gotRuntime.Spec.Shoot.Kubernetes.KubeAPIServer.AdditionalOidcConfig)[0])
 }
 
 func TestUpdateRuntimeStep_RunUpdateEmptyAdditionalOIDCWithMultipleAdditionalOIDC(t *testing.T) {
@@ -211,6 +213,7 @@ func TestUpdateRuntimeStep_RunUpdateEmptyAdditionalOIDCWithMultipleAdditionalOID
 			"claim1": "value1",
 			"claim2": "value2",
 		},
+		GroupsPrefix: ptr.String("-"),
 	}
 	secondExpectedOIDCConfig := gardener.OIDCConfig{
 		ClientID:       ptr.String("second-client-id-custom"),
@@ -219,6 +222,7 @@ func TestUpdateRuntimeStep_RunUpdateEmptyAdditionalOIDCWithMultipleAdditionalOID
 		SigningAlgs:    []string{"second-sa-custom"},
 		UsernameClaim:  ptr.String("second-uc-custom"),
 		UsernamePrefix: ptr.String("second-up-custom"),
+		GroupsPrefix:   ptr.String("-"),
 	}
 	var gotRuntime imv1.Runtime
 	err = kcpClient.Get(context.Background(), client.ObjectKey{Name: operation.RuntimeResourceName, Namespace: "kcp-system"}, &gotRuntime)
@@ -288,6 +292,7 @@ func TestUpdateRuntimeStep_RunUpdateMultipleAdditionalOIDCWithMultipleAdditional
 			"claim1": "value1",
 			"claim2": "value2",
 		},
+		GroupsPrefix: ptr.String("-"),
 	}
 	secondExpectedOIDCConfig := gardener.OIDCConfig{
 		ClientID:       ptr.String("second-client-id-custom"),
@@ -300,6 +305,7 @@ func TestUpdateRuntimeStep_RunUpdateMultipleAdditionalOIDCWithMultipleAdditional
 			"claim3": "value3",
 			"claim4": "value4",
 		},
+		GroupsPrefix: ptr.String("-"),
 	}
 	var gotRuntime imv1.Runtime
 	err = kcpClient.Get(context.Background(), client.ObjectKey{Name: operation.RuntimeResourceName, Namespace: "kcp-system"}, &gotRuntime)

@@ -98,6 +98,7 @@ func TestCreateRuntimeResourceStep_AllCustom(t *testing.T) {
 			"claim5": ",value5",
 			"claim6": "=",
 		},
+		GroupsPrefix: ptr.String("-"),
 	}
 	cli := getClientForTests(t)
 	step := NewCreateRuntimeResourceStep(memoryStorage.Operations(), memoryStorage.Instances(), cli, inputConfig, defaultOIDSConfig, true)
@@ -154,16 +155,10 @@ func TestCreateRuntimeResourceStep_AllCustomWithOIDCList(t *testing.T) {
 		SigningAlgs:    []string{"sa-custom"},
 		UsernameClaim:  ptr.String("uc-custom"),
 		UsernamePrefix: ptr.String("up-custom"),
-		GroupsPrefix:   ptr.String("-"),
-	}
-	expectedMainOIDCConfig := gardener.OIDCConfig{
-		ClientID:       ptr.String("client-id-custom"),
-		GroupsClaim:    ptr.String("gc-custom"),
-		IssuerURL:      ptr.String("issuer-url-custom"),
-		SigningAlgs:    []string{"sa-custom"},
-		UsernameClaim:  ptr.String("uc-custom"),
-		UsernamePrefix: ptr.String("up-custom"),
-		RequiredClaims: map[string]string{"claim": "value"},
+		RequiredClaims: map[string]string{
+			"claim": "value",
+		},
+		GroupsPrefix: ptr.String("-"),
 	}
 	cli := getClientForTests(t)
 	step := NewCreateRuntimeResourceStep(memoryStorage.Operations(), memoryStorage.Instances(), cli, inputConfig, defaultOIDSConfig, true)
@@ -187,7 +182,6 @@ func TestCreateRuntimeResourceStep_AllCustomWithOIDCList(t *testing.T) {
 	assert.Nil(t, runtime.Spec.Shoot.Kubernetes.KubeAPIServer.OidcConfig.UsernameClaim)
 	assert.Nil(t, runtime.Spec.Shoot.Kubernetes.KubeAPIServer.OidcConfig.UsernamePrefix)
 	assert.Nil(t, runtime.Spec.Shoot.Kubernetes.KubeAPIServer.OidcConfig.RequiredClaims)
-	assert.Equal(t, expectedMainOIDCConfig, runtime.Spec.Shoot.Kubernetes.KubeAPIServer.OidcConfig)
 	assert.Equal(t, expectedAdditionalOIDCConfig, (*runtime.Spec.Shoot.Kubernetes.KubeAPIServer.AdditionalOidcConfig)[0])
 }
 
@@ -228,6 +222,7 @@ func TestCreateRuntimeResourceStep_HandleMultipleAdditionalOIDC(t *testing.T) {
 		SigningAlgs:    []string{"first-sa-custom"},
 		UsernameClaim:  ptr.String("first-uc-custom"),
 		UsernamePrefix: ptr.String("first-up-custom"),
+		GroupsPrefix:   ptr.String("-"),
 	}
 	secondExpectedOIDCConfig := gardener.OIDCConfig{
 		ClientID:       ptr.String("second-client-id-custom"),
@@ -287,6 +282,7 @@ func TestCreateRuntimeResourceStep_OIDC_MixedCustom(t *testing.T) {
 		SigningAlgs:    []string{"sa-default"},
 		UsernameClaim:  ptr.String("uc-custom"),
 		UsernamePrefix: ptr.String("up-default"),
+		GroupsPrefix:   ptr.String("-"),
 	}
 	cli := getClientForTests(t)
 	step := NewCreateRuntimeResourceStep(memoryStorage.Operations(), memoryStorage.Instances(), cli, inputConfig, defaultOIDSConfig, true)
@@ -362,6 +358,7 @@ func TestCreateRuntimeResourceStep_HandleNotNilOIDCWithoutListOrObject(t *testin
 		SigningAlgs:    []string{"sa-default"},
 		UsernameClaim:  ptr.String("uc-default"),
 		UsernamePrefix: ptr.String("up-default"),
+		GroupsPrefix:   ptr.String("-"),
 	}
 	cli := getClientForTests(t)
 	step := NewCreateRuntimeResourceStep(memoryStorage.Operations(), memoryStorage.Instances(), cli, inputConfig, defaultOIDSConfig, true)

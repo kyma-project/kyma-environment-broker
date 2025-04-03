@@ -288,6 +288,7 @@ func (s *CreateRuntimeResourceStep) createDefaultOIDCConfig() gardener.OIDCConfi
 		SigningAlgs:    s.oidcDefaultValues.SigningAlgs,
 		UsernameClaim:  &s.oidcDefaultValues.UsernameClaim,
 		UsernamePrefix: &s.oidcDefaultValues.UsernamePrefix,
+		GroupsPrefix:   ptr.String("-"),
 	}
 }
 
@@ -316,6 +317,7 @@ func (s *CreateRuntimeResourceStep) createOIDCConfigList(oidcList []pkg.OIDCConf
 			UsernamePrefix: &oidcConfig.UsernamePrefix,
 			UsernameClaim:  &oidcConfig.UsernameClaim,
 			RequiredClaims: requiredClaims,
+			GroupsPrefix:   ptr.String("-"),
 		})
 	}
 
