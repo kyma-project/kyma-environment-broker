@@ -216,7 +216,20 @@ infrastructureManager:
   useSmallerMachineTypes: "false"
 
 provisioner:
-  #these settings are being moved to infrastructureManager section - keep these in sync
+  URL: "http://kcp-provisioner.kcp-system.svc.cluster.local:3000/graphql"
+  provisioningTimeout: "6h"
+  deprovisioningTimeout: "5h"
+  gardenerClusterStepTimeout: "3m"
+  runtimeResourceStepTimeout: "8m"
+  clusterUpdateStepTimeout: "2h"
+  checkRuntimeResourceDeletionStepTimeout: "1h"
+
+  deprovisioningDisabled: "false"
+
+  gardener:
+    enableShootAndSeedSameRegion: "false"
+
+  # these values are being moved to the infrastructure manager section - please keep in sync
   useMainOIDC: "true"
   useAdditionalOIDC: "false"
   #end
@@ -289,8 +302,19 @@ gardener:
   shootDomain: "kyma-dev.shoot.canary.k8s-hana.ondemand.com"
   kubeconfigPath: "/gardener/kubeconfig/kubeconfig"
   secretName: "gardener-credentials"
-  #looks like not used
+  kubernetesVersion: "1.16.9"
+  defaultShootPurpose: "development"
+  # if empty, the Gardener default value is used
+  machineImage: ""
+  # if empty, the Gardener default value is used
+  machineImageVersion: ""
+  trialNodesNumber: "1"
   freemiumProviders: "azure,aws"
+  defaultTrialProvider: "Azure" # Azure, AWS
+  autoUpdateKubernetesVersion: "true"
+  autoUpdateMachineImageVersion: "false"
+  multiZoneCluster: "false"
+  controlPlaneFailureTolerance: ""
 
 kubeconfig:
   allowOrigins: "*"

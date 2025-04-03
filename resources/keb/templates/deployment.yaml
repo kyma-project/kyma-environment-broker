@@ -64,6 +64,8 @@ spec:
               value: "{{ include "kyma-env-broker.fullname" . }}-runtime-configuration"
             - name: APP_DISABLE_PROCESS_OPERATIONS_IN_PROGRESS
               value: "{{ .Values.disableProcessOperationsInProgress }}"
+            - name: APP_PROVISIONER_DEPROVISIONING_DISABLED
+              value: "{{ .Values.provisioner.deprovisioningDisabled }}"
             - name: APP_BROKER_ENABLE_PLANS
               value: "{{ .Values.enablePlans }}"
             - name: APP_ARCHIVE_ENABLED
@@ -116,6 +118,20 @@ spec:
               value: "{{ .Values.infrastructureManager.disabled}}"
             - name: APP_RESOLVE_SUBSCRIPTION_SECRET_STEP_DISABLED
               value: "{{ .Values.resolveSubscriptionSecretStep.disabled}}"
+            - name: APP_PROVISIONER_URL
+              value: "{{ .Values.provisioner.URL }}"
+            - name: APP_PROVISIONER_PROVISIONING_TIMEOUT
+              value: "{{ .Values.provisioner.provisioningTimeout }}"
+            - name: APP_PROVISIONER_DEPROVISIONING_TIMEOUT
+              value: "{{ .Values.provisioner.deprovisioningTimeout }}"
+            - name: APP_PROVISIONER_GARDENER_CLUSTER_STEP_TIMEOUT
+              value: "{{ .Values.provisioner.gardenerClusterStepTimeout }}"
+            - name: APP_PROVISIONER_RUNTIME_RESOURCE_STEP_TIMEOUT
+              value: "{{ .Values.provisioner.runtimeResourceStepTimeout }}"
+            - name: APP_PROVISIONER_CLUSTER_UPDATE_STEP_TIMEOUT
+              value: "{{ .Values.provisioner.clusterUpdateStepTimeout }}"
+            - name: APP_PROVISIONER_CHECK_RUNTIME_RESOURCE_DELETION_STEP_TIMEOUT
+              value: "{{ .Values.provisioner.checkRuntimeResourceDeletionStepTimeout }}"
             - name: APP_PROVISIONER_DEFAULT_GARDENER_SHOOT_PURPOSE
               value: "{{ .Values.gardener.defaultShootPurpose }}"
             - name: APP_PROVISIONER_DEFAULT_TRIAL_PROVIDER
@@ -221,6 +237,8 @@ spec:
               value: "{{ .Values.gardener.multiZoneCluster }}"
             - name: APP_PROVISIONER_CONTROL_PLANE_FAILURE_TOLERANCE
               value: "{{ .Values.gardener.controlPlaneFailureTolerance }}"
+            - name: APP_PROVISIONER_ENABLE_SHOOT_AND_SEED_SAME_REGION
+              value: "{{ .Values.provisioner.gardener.enableShootAndSeedSameRegion }}"
             - name: APP_PROVISIONER_USE_MAIN_OIDC
               value: "{{ .Values.provisioner.useMainOIDC }}"
             - name: APP_PROVISIONER_USE_ADDITIONAL_OIDC
