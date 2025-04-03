@@ -122,5 +122,17 @@ jobs:
           else
             helm install keb ../keb --namespace kcp-system -f values.yaml --set global.database.embedded.enabled=false --set testConfig.kebDeployment.useAnnotations=true --set global.images.container_registry.path="europe-docker.pkg.dev/kyma-project/dev" --set global.secrets.mechanism=secrets --debug --wait
           fi
+
+      - name: Check if KEB pod is in READY state
+        run: |
+          set +e
           echo "Waiting for kyma-environment-broker pod to be in READY state..."
-          kubectl wait --namespace kcp-system --for=condition=Ready pod -l app.kubernetes.io/name=kyma-environment-broker --timeout=180s
+          kubectl wait --namespace kcp-system --for=condition=Ready pod -l app.kubernetes.io/name=kyma-environment-broker --timeout=60s
+          EXIT_CODE=$?
+          if [ $EXIT_CODE -ne 0 ]; then
+            echo "The kyma-environment-broker pod did not become READY within the timeout."
+            echo "Fetching the logs from the pod..."
+            POD_NAME=$(kubectl get pod -l app.kubernetes.io/name=kyma-environment-broker -n kcp-system -o jsonpath='{.items[0].metadata.name}')
+            kubectl logs $POD_NAME -n kcp-system
+            exit 1
+          fi

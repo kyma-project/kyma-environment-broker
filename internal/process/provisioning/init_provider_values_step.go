@@ -20,21 +20,19 @@ Those values can be used across the provisioning process and won't be used later
 */
 type InitProviderValuesStep struct {
 	operationManager           *process.OperationManager
-	config                     input.Config
+	config                     input.InfrastructureManagerConfig
 	trialPlatformRegionMapping map[string]string
-	useSmallerMachineTypes     bool
 
 	instanceStorage storage.Instances
 }
 
 var _ process.Step = &InitProviderValuesStep{}
 
-func NewInitProviderValuesStep(os storage.Operations, is storage.Instances, cfg input.Config, trialPlatformRegionMapping map[string]string, useSmallerMachineTypes bool) *InitProviderValuesStep {
+func NewInitProviderValuesStep(os storage.Operations, is storage.Instances, infrastructureManagerConfig input.InfrastructureManagerConfig, trialPlatformRegionMapping map[string]string) *InitProviderValuesStep {
 	return &InitProviderValuesStep{
 		operationManager:           process.NewOperationManager(os, "InitProviderValuesStep", kebError.KEBDependency),
-		config:                     cfg,
+		config:                     infrastructureManagerConfig,
 		trialPlatformRegionMapping: trialPlatformRegionMapping,
-		useSmallerMachineTypes:     useSmallerMachineTypes,
 		instanceStorage:            is,
 	}
 }
@@ -48,7 +46,7 @@ func (s *InitProviderValuesStep) Run(operation internal.Operation, logger *slog.
 		logger.Info("Provider values already exist, skipping step")
 		return operation, 0, nil
 	}
-	values, err := provider.GetPlanSpecificValues(&operation, s.config.MultiZoneCluster, s.config.DefaultTrialProvider, s.useSmallerMachineTypes, s.trialPlatformRegionMapping,
+	values, err := provider.GetPlanSpecificValues(&operation, s.config.MultiZoneCluster, s.config.DefaultTrialProvider, s.config.UseSmallerMachineTypes, s.trialPlatformRegionMapping,
 		s.config.DefaultGardenerShootPurpose, s.config.ControlPlaneFailureTolerance)
 	if err != nil {
 		return s.operationManager.OperationFailed(operation, fmt.Sprintf("while calculating plan specific values : %s", err), err, logger)

@@ -140,6 +140,8 @@ spec:
               value: "{{ .Values.stepTimeouts.checkRuntimeResourceCreate }}"
             - name: APP_STEP_TIMEOUTS_CHECK_RUNTIME_RESOURCE_UPDATE
               value: "{{ .Values.stepTimeouts.checkRuntimeResourceUpdate }}"
+            - name: APP_STEP_TIMEOUTS_CHECK_RUNTIME_RESOURCE_DELETION
+              value: "{{ .Values.stepTimeouts.checkRuntimeResourceDeletion }}"
             - name: APP_PORT
               value: "{{ .Values.broker.port }}"
             - name: APP_STATUS_PORT
@@ -237,6 +239,28 @@ spec:
               value: "{{ .Values.gardener.controlPlaneFailureTolerance }}"
             - name: APP_PROVISIONER_ENABLE_SHOOT_AND_SEED_SAME_REGION
               value: "{{ .Values.provisioner.gardener.enableShootAndSeedSameRegion }}"
+            - name: APP_PROVISIONER_USE_MAIN_OIDC
+              value: "{{ .Values.provisioner.useMainOIDC }}"
+            - name: APP_PROVISIONER_USE_ADDITIONAL_OIDC
+              value: "{{ .Values.provisioner.useAdditionalOIDC }}"
+            - name: APP_INFRASTRUCTURE_MANAGER_KUBERNETES_VERSION
+              value: "{{ .Values.infrastructureManager.kubernetesVersion }}"
+            - name: APP_INFRASTRUCTURE_MANAGER_MACHINE_IMAGE
+              value: {{ .Values.infrastructureManager.machineImage }}
+            - name: APP_INFRASTRUCTURE_MANAGER_MACHINE_IMAGE_VERSION
+              value: {{ .Values.infrastructureManager.machineImageVersion }}
+            - name: APP_INFRASTRUCTURE_MANAGER_MULTI_ZONE_CLUSTER
+              value: "{{ .Values.infrastructureManager.multiZoneCluster }}"
+            - name: APP_INFRASTRUCTURE_MANAGER_CONTROL_PLANE_FAILURE_TOLERANCE
+              value: "{{ .Values.infrastructureManager.controlPlaneFailureTolerance }}"
+            - name: APP_INFRASTRUCTURE_MANAGER_USE_SMALLER_MACHINE_TYPES
+              value: "{{ .Values.infrastructureManager.useSmallerMachineTypes }}"
+            - name: APP_INFRASTRUCTURE_MANAGER_USE_MAIN_OIDC
+              value: "{{ .Values.infrastructureManager.useMainOIDC }}"
+            - name: APP_INFRASTRUCTURE_MANAGER_USE_ADDITIONAL_OIDC
+              value: "{{ .Values.infrastructureManager.useAdditionalOIDC }}"
+            - name: APP_INFRASTRUCTURE_MANAGER_DEFAULT_GARDENER_SHOOT_PURPOSE
+              value: "{{ .Values.infrastructureManager.defaultShootPurpose }}"
             - name: APP_DEFAULT_REQUEST_REGION
               value: "{{ .Values.broker.defaultRequestRegion }}"
             - name: APP_UPDATE_PROCESSING_ENABLED

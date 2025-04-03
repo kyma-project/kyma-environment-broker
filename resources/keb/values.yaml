@@ -9,34 +9,34 @@ global:
       path: europe-docker.pkg.dev/kyma-project/prod
     kyma_environment_broker:
       dir:
-      version: "1.17.2"
+      version: "1.17.3"
     kyma_environment_broker_schema_migrator:
       dir:
-      version: 1.17.2
+      version: 1.17.3
     kyma_environments_subaccount_cleanup_job:
       dir:
-      version: "1.17.2"
+      version: "1.17.3"
     kyma_environment_trial_cleanup_job:
       dir:
-      version: "1.17.2"
+      version: "1.17.3"
     kyma_environment_expirator_job:
       dir:
-      version: "1.17.2"
+      version: "1.17.3"
     kyma_environment_deprovision_retrigger_job:
       dir:
-      version: "1.17.2"
+      version: "1.17.3"
     kyma_environment_runtime_reconciler:
       dir:
-      version: "1.17.2"
+      version: "1.17.3"
     kyma_environment_subaccount_sync:
       dir:
-      version: "1.17.2"
+      version: "1.17.3"
     kyma_environment_globalaccounts:
       dir:
-      version: "1.17.2"
+      version: "1.17.3"
     kyma_environment_service_binding_cleanup_job:
       dir:
-      version: 1.17.2
+      version: 1.17.3
       
   kyma_environment_broker:
     serviceAccountName: "kcp-kyma-environment-broker"
@@ -189,20 +189,31 @@ resources:
   #   cpu: 100m
   #   memory: 128Mi
   # requests:
-  #   cpu: 100m
+#   cpu: 100m
 #   memory: 128Mi
 
 serviceAccount:
   annotations: { }
-
-infrastructureManager:
-  disabled: "true"
 
 lifecycleManager:
   disabled: "true"
 
 resolveSubscriptionSecretStep:
   disabled: "true"
+
+infrastructureManager:
+  useMainOIDC: "true"
+  useAdditionalOIDC: "false"
+  kubernetesVersion: "1.16.9"
+  defaultShootPurpose: "development"
+  # if empty, the Gardener default value is used
+  machineImage: ""
+  # if empty, the Gardener default value is used
+  machineImageVersion: ""
+  defaultTrialProvider: "Azure" # Azure, AWS
+  multiZoneCluster: "false"
+  controlPlaneFailureTolerance: ""
+  useSmallerMachineTypes: "false"
 
 provisioner:
   URL: "http://kcp-provisioner.kcp-system.svc.cluster.local:3000/graphql"
@@ -221,6 +232,7 @@ provisioner:
 stepTimeouts:
   checkRuntimeResourceUpdate: 180m
   checkRuntimeResourceCreate: 60m
+  checkRuntimeResourceDeletion: 60m
 
 trialRegionsMapping: |-
   cf-eu10: europe
@@ -250,7 +262,7 @@ disableSapConvergedCloud: false
 disableProcessOperationsInProgress: "false"
 enablePlans: "azure,gcp,azure_lite,trial"
 hap:
- rule: 
+ rule:
   - aws                             # pool: hyperscalerType: aws
   - aws(PR=cf-eu11) -> EU           # pool: hyperscalerType: aws; euAccess: true
   - azure                           # pool: hyperscalerType: azure
@@ -258,7 +270,7 @@ hap:
   - gcp                             # pool: hyperscalerType: gcp
   - gcp(PR=cf-sa30) -> PR           # pool: hyperscalerType: gcp_cf-sa30
   - trial -> S                      # pool: hyperscalerType: azure; shared: true - TRIAL POOL
-                                    # pool: hyperscalerType: aws; shared: true - TRIAL POOL 
+                                    # pool: hyperscalerType: aws; shared: true - TRIAL POOL
   - sap-converged-cloud(HR=*) -> S  # pool: hyperscalerType: openstack_<HYPERSCALER_REGION>; shared: true
   - azure_lite                      # pool: hyperscalerType: azure
   - preview                         # pool: hyperscalerType: aws

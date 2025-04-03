@@ -75,7 +75,7 @@ func TestProvisioningWithKIMOnlyForTrial(t *testing.T) {
 
 	cfg := fixConfig()
 
-	cfg.Provisioner.DefaultTrialProvider = pkg.AWS
+	cfg.InfrastructureManager.DefaultTrialProvider = pkg.AWS
 
 	suite := NewBrokerSuiteTestWithConfig(t, cfg)
 	defer suite.TearDown()
@@ -1076,9 +1076,9 @@ func TestProvisioning_ClusterParameters(t *testing.T) {
 			// given
 			cfg := fixConfig()
 			if tc.useSmallerMachineTypes {
-				cfg.Broker.UseSmallerMachineTypes = true
+				cfg.InfrastructureManager.UseSmallerMachineTypes = true
 			}
-			cfg.Provisioner.MultiZoneCluster = tc.multiZone
+			cfg.InfrastructureManager.MultiZoneCluster = tc.multiZone
 			suite := NewBrokerSuiteTestWithConfig(t, cfg)
 			defer suite.TearDown()
 			iid := uuid.New().String()
