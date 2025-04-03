@@ -1210,7 +1210,7 @@ func TestUpdateUnsupportedMachineInAdditionalWorkerNodePools(t *testing.T) {
 
 	kcBuilder := &kcMock.KcBuilder{}
 	svc := broker.NewUpdate(broker.Config{}, st.Instances(), st.RuntimeStates(), st.Operations(), handler, true, true, false, q, broker.PlansConfig{},
-		nil, fixLogger(), dashboardConfig, kcBuilder, &broker.OneForAllConvergedCloudRegionsProvider{}, fakeKcpK8sClient, fixRegionsSupportingMachine())
+		fixValueProvider(), fixLogger(), dashboardConfig, kcBuilder, &broker.OneForAllConvergedCloudRegionsProvider{}, fakeKcpK8sClient, fixRegionsSupportingMachine())
 
 	testCases := []struct {
 		name                      string

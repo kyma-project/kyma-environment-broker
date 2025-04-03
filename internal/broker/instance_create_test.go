@@ -2433,5 +2433,6 @@ func fixRegionsSupportingMachine() map[string][]string {
 		"m8g":         {"ap-northeast-1", "ap-southeast-1", "ca-central-1"},
 		"m7g":         {"us-west-2"},
 		"c2d-highmem": {"us-central1", "southamerica-east1"},
+		"Standard_D":  {"uksouth", "brazilsouth"},
 	}
 }
