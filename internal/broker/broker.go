@@ -51,7 +51,8 @@ type Config struct {
 	EnableShootAndSeedSameRegion            bool          `envconfig:"default=false"`
 	AllowUpdateExpiredInstanceWithContext   bool          `envconfig:"default=false"`
 
-	Binding                BindingConfig
+	Binding BindingConfig
+	// Deprecated - is being moved to InfrastructureManager config
 	UseSmallerMachineTypes bool `envconfig:"default=false"`
 
 	DisableSapConvergedCloud bool `envconfig:"default=false"`

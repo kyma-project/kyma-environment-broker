@@ -96,11 +96,12 @@ type Config struct {
 	Port       string `envconfig:"default=8080"`
 	StatusPort string `envconfig:"default=8071"`
 
-	Provisioner  input.Config
-	Database     storage.Config
-	Gardener     gardener.Config
-	Kubeconfig   kubeconfig.Config
-	StepTimeouts StepTimeoutsConfig
+	Provisioner           input.Config
+	InfrastructureManager input.InfrastructureManagerConfig
+	Database              storage.Config
+	Gardener              gardener.Config
+	Kubeconfig            kubeconfig.Config
+	StepTimeouts          StepTimeoutsConfig
 
 	SkrOidcDefaultValuesYAMLFilePath         string
 	SkrDnsProvidersValuesYAMLFilePath        string
@@ -168,8 +169,9 @@ type ProfilerConfig struct {
 }
 
 type StepTimeoutsConfig struct {
-	CheckRuntimeResourceCreate time.Duration `envconfig:"default=60m"`
-	CheckRuntimeResourceUpdate time.Duration `envconfig:"default=180m"`
+	CheckRuntimeResourceCreate   time.Duration `envconfig:"default=60m"`
+	CheckRuntimeResourceUpdate   time.Duration `envconfig:"default=180m"`
+	CheckRuntimeResourceDeletion time.Duration `envconfig:"default=1h"`
 }
 
 type K8sClientProvider interface {
@@ -251,6 +253,12 @@ func main() {
 	go periodicProfile(log, cfg.Profiler)
 
 	logConfiguration(log, cfg)
+
+	// TODO this is temporary function to be removed after settings are migrated to infrastructureManager section/structure
+	// since settings are doubled for the time of migration we need to detect discrepancies and abort when they are found
+	if notSync := validateTemporarilyInfrastructureSettings(log, cfg); notSync {
+		fatalOnError(fmt.Errorf("infrastructure settings are not synchronized"), log)
+	}
 
 	// create kubernetes client
 	kcpK8sConfig, err := config.GetConfig()
@@ -339,7 +347,7 @@ func main() {
 	fatalOnError(err, log)
 
 	// create kubeconfig builder
-	kcBuilder := kubeconfig.NewBuilder(kcpK8sClient, skrK8sClientProvider, cfg.Provisioner.UseAdditionalOIDC, cfg.Provisioner.UseMainOIDC)
+	kcBuilder := kubeconfig.NewBuilder(kcpK8sClient, skrK8sClientProvider, cfg.InfrastructureManager.UseAdditionalOIDC, cfg.InfrastructureManager.UseMainOIDC)
 
 	// create server
 	router := httputil.NewRouter()
@@ -395,15 +403,71 @@ func main() {
 	fatalOnError(http.ListenAndServe(cfg.Host+":"+cfg.Port, svr), log)
 }
 
+// Function will be removed after all settings are migrated to infrastructureManager section/structure
+func validateTemporarilyInfrastructureSettings(logs *slog.Logger, cfg Config) (notSync bool) {
+	if cfg.InfrastructureManager.UseMainOIDC != cfg.Provisioner.UseMainOIDC {
+		notSync = true
+		logs.Warn(fmt.Sprintf("UseMainOIDC settings for Provisioner and InfrastructureManager are different. %v!=%v", cfg.Provisioner.UseMainOIDC, cfg.InfrastructureManager.UseMainOIDC))
+	}
+	if cfg.InfrastructureManager.UseAdditionalOIDC != cfg.Provisioner.UseAdditionalOIDC {
+		notSync = true
+		logs.Warn(fmt.Sprintf("UseAdditionalOIDC settings for Provisioner and InfrastructureManager are different. %v!=%v", cfg.Provisioner.UseAdditionalOIDC, cfg.InfrastructureManager.UseAdditionalOIDC))
+	}
+	if cfg.InfrastructureManager.UseSmallerMachineTypes != cfg.Broker.UseSmallerMachineTypes {
+		notSync = true
+		logs.Warn(fmt.Sprintf("UseSmallerMachineTypes settings for Provisioner and InfrastructureManager are different. %v!=%v", cfg.Broker.UseSmallerMachineTypes, cfg.InfrastructureManager.UseSmallerMachineTypes))
+	}
+	if cfg.InfrastructureManager.KubernetesVersion != cfg.Provisioner.KubernetesVersion {
+		notSync = true
+		logs.Warn(fmt.Sprintf("KubernetesVersion settings for Provisioner and InfrastructureManager are different. %s!=%s", cfg.Provisioner.KubernetesVersion, cfg.InfrastructureManager.KubernetesVersion))
+	}
+	if cfg.InfrastructureManager.DefaultGardenerShootPurpose != cfg.Provisioner.DefaultGardenerShootPurpose {
+		notSync = true
+		logs.Warn(fmt.Sprintf("DefaultGardenerShootPurpose settings for Provisioner and InfrastructureManager are different. %s!=%s", cfg.Provisioner.DefaultGardenerShootPurpose, cfg.InfrastructureManager.DefaultGardenerShootPurpose))
+	}
+	if cfg.InfrastructureManager.MachineImage != cfg.Provisioner.MachineImage {
+		notSync = true
+		logs.Warn(fmt.Sprintf("MachineImage settings for Provisioner and InfrastructureManager are different. %s!=%s", cfg.Provisioner.MachineImage, cfg.InfrastructureManager.MachineImage))
+	}
+	if cfg.InfrastructureManager.MachineImageVersion != cfg.Provisioner.MachineImageVersion {
+		notSync = true
+		logs.Warn(fmt.Sprintf("MachineImageVersion settings for Provisioner and InfrastructureManager are different. %s!=%s", cfg.Provisioner.MachineImageVersion, cfg.InfrastructureManager.MachineImageVersion))
+	}
+	if cfg.InfrastructureManager.DefaultTrialProvider != cfg.Provisioner.DefaultTrialProvider {
+		notSync = true
+		logs.Warn(fmt.Sprintf("DefaultTrialProvider settings for Provisioner and InfrastructureManager are different. %s!=%s", cfg.Provisioner.DefaultTrialProvider, cfg.InfrastructureManager.DefaultTrialProvider))
+	}
+	if cfg.InfrastructureManager.MultiZoneCluster != cfg.Provisioner.MultiZoneCluster {
+		notSync = true
+		logs.Warn(fmt.Sprintf("MultiZoneCluster settings for Provisioner and InfrastructureManager are different. %v!=%v", cfg.Provisioner.MultiZoneCluster, cfg.InfrastructureManager.MultiZoneCluster))
+	}
+	if cfg.InfrastructureManager.ControlPlaneFailureTolerance != cfg.Provisioner.ControlPlaneFailureTolerance {
+		notSync = true
+		logs.Warn(fmt.Sprintf("ControlPlaneFailureTolerance settings for Provisioner and InfrastructureManager are different. %s!=%s", cfg.Provisioner.ControlPlaneFailureTolerance, cfg.InfrastructureManager.ControlPlaneFailureTolerance))
+	}
+	return notSync
+}
+
 func logConfiguration(logs *slog.Logger, cfg Config) {
-	logs.Info(fmt.Sprintf("Setting provisioner timeouts: provisioning=%s, deprovisioning=%s", cfg.Provisioner.ProvisioningTimeout, cfg.Provisioner.DeprovisioningTimeout))
 	logs.Info(fmt.Sprintf("Setting staged manager configuration: provisioning=%s, deprovisioning=%s, update=%s", cfg.Provisioning, cfg.Deprovisioning, cfg.Update))
 	logs.Info(fmt.Sprintf("InfrastructureManagerIntegrationDisabled: %v", cfg.InfrastructureManagerIntegrationDisabled))
 	logs.Info(fmt.Sprintf("Archiving enabled: %v, dry run: %v", cfg.ArchiveEnabled, cfg.ArchiveDryRun))
 	logs.Info(fmt.Sprintf("Cleaning enabled: %v, dry run: %v", cfg.CleaningEnabled, cfg.CleaningDryRun))
 	logs.Info(fmt.Sprintf("Is SubaccountMovementEnabled: %t", cfg.Broker.SubaccountMovementEnabled))
 	logs.Info(fmt.Sprintf("Is UpdateCustomResourcesLabelsOnAccountMove enabled: %t", cfg.Broker.UpdateCustomResourcesLabelsOnAccountMove))
-	logs.Info(fmt.Sprintf("StepTimeouts: CheckRuntimeResourceCreate=%s, CheckRuntimeResourceUpdate=%s", cfg.StepTimeouts.CheckRuntimeResourceCreate, cfg.StepTimeouts.CheckRuntimeResourceUpdate))
+	logs.Info(fmt.Sprintf("StepTimeouts: CheckRuntimeResourceCreate=%s, CheckRuntimeResourceUpdate=%s, CheckRuntimeResourceDeletion=%s", cfg.StepTimeouts.CheckRuntimeResourceCreate, cfg.StepTimeouts.CheckRuntimeResourceUpdate, cfg.StepTimeouts.CheckRuntimeResourceDeletion))
+
+	logs.Info(fmt.Sprintf("InfrastructureManager.Kubernetes Version: %s", cfg.InfrastructureManager.KubernetesVersion))
+	logs.Info(fmt.Sprintf("InfrastructureManager.DefaultGardenerShootPurpose: %s", cfg.InfrastructureManager.DefaultGardenerShootPurpose))
+	logs.Info(fmt.Sprintf("InfrastructureManager.MachineImage: %s", cfg.InfrastructureManager.MachineImage))
+	logs.Info(fmt.Sprintf("InfrastructureManager.MachineImageVersion: %s", cfg.InfrastructureManager.MachineImageVersion))
+	logs.Info(fmt.Sprintf("InfrastructureManager.DefaultTrialProvider: %s", cfg.InfrastructureManager.DefaultTrialProvider))
+	logs.Info(fmt.Sprintf("InfrastructureManager.MultiZoneCluster: %v", cfg.InfrastructureManager.MultiZoneCluster))
+	logs.Info(fmt.Sprintf("InfrastructureManager.ControlPlaneFailureTolerance: %s", cfg.InfrastructureManager.ControlPlaneFailureTolerance))
+	logs.Info(fmt.Sprintf("InfrastructureManager.UseMainOIDC: %v", cfg.InfrastructureManager.UseMainOIDC))
+	logs.Info(fmt.Sprintf("InfrastructureManager.UseAdditionalOIDC: %v", cfg.InfrastructureManager.UseAdditionalOIDC))
+	logs.Info(fmt.Sprintf("InfrastructureManager.UseSmallerMachineTypes: %v", cfg.InfrastructureManager.UseSmallerMachineTypes))
+
 	logs.Info(fmt.Sprintf("ResolveSubscriptionSecretStepDisabled: %v", cfg.ResolveSubscriptionSecretStepDisabled))
 }
 
@@ -448,8 +512,8 @@ func createAPI(router *httputil.Router, servicesConfig broker.ServicesConfig, pl
 			planDefaults, logs, cfg.KymaDashboardConfig, kcBuilder, convergedCloudRegionProvider, kcpK8sClient, regionsSupportingMachine),
 		GetInstanceEndpoint:          broker.NewGetInstance(cfg.Broker, db.Instances(), db.Operations(), kcBuilder, logs),
 		LastOperationEndpoint:        broker.NewLastOperation(db.Operations(), db.InstancesArchived(), logs),
-		BindEndpoint:                 broker.NewBind(cfg.Broker.Binding, db, logs, clientProvider, kubeconfigProvider, publisher, cfg.Provisioner.UseAdditionalOIDC, cfg.Provisioner.UseMainOIDC),
-		UnbindEndpoint:               broker.NewUnbind(logs, db, brokerBindings.NewServiceAccountBindingsManager(clientProvider, kubeconfigProvider, cfg.Provisioner.UseAdditionalOIDC, cfg.Provisioner.UseMainOIDC), publisher),
+		BindEndpoint:                 broker.NewBind(cfg.Broker.Binding, db, logs, clientProvider, kubeconfigProvider, publisher, cfg.InfrastructureManager.UseAdditionalOIDC, cfg.InfrastructureManager.UseMainOIDC),
+		UnbindEndpoint:               broker.NewUnbind(logs, db, brokerBindings.NewServiceAccountBindingsManager(clientProvider, kubeconfigProvider, cfg.InfrastructureManager.UseAdditionalOIDC, cfg.InfrastructureManager.UseMainOIDC), publisher),
 		GetBindingEndpoint:           broker.NewGetBinding(logs, db),
 		LastBindingOperationEndpoint: broker.NewLastBindingOperation(logs),
 	}

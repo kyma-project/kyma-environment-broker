@@ -189,14 +189,11 @@ resources:
   #   cpu: 100m
   #   memory: 128Mi
   # requests:
-  #   cpu: 100m
+#   cpu: 100m
 #   memory: 128Mi
 
 serviceAccount:
   annotations: { }
-
-infrastructureManager:
-  disabled: "true"
 
 lifecycleManager:
   disabled: "true"
@@ -204,25 +201,30 @@ lifecycleManager:
 resolveSubscriptionSecretStep:
   disabled: "true"
 
-provisioner:
-  URL: "http://kcp-provisioner.kcp-system.svc.cluster.local:3000/graphql"
-  provisioningTimeout: "6h"
-  deprovisioningTimeout: "5h"
-  gardenerClusterStepTimeout: "3m"
-  runtimeResourceStepTimeout: "8m"
-  clusterUpdateStepTimeout: "2h"
-  checkRuntimeResourceDeletionStepTimeout: "1h"
-
-  deprovisioningDisabled: "false"
-
-  gardener:
-    enableShootAndSeedSameRegion: "false"
+infrastructureManager:
   useMainOIDC: "true"
   useAdditionalOIDC: "false"
+  kubernetesVersion: "1.16.9"
+  defaultShootPurpose: "development"
+  # if empty, the Gardener default value is used
+  machineImage: ""
+  # if empty, the Gardener default value is used
+  machineImageVersion: ""
+  defaultTrialProvider: "Azure" # Azure, AWS
+  multiZoneCluster: "false"
+  controlPlaneFailureTolerance: ""
+  useSmallerMachineTypes: "false"
+
+provisioner:
+  #these settings are being moved to infrastructureManager section - keep these in sync
+  useMainOIDC: false
+  useAdditionalOIDC: true
+  #end
 
 stepTimeouts:
   checkRuntimeResourceUpdate: 180m
   checkRuntimeResourceCreate: 60m
+  checkRuntimeResourceDeletion: 60m
 
 trialRegionsMapping: |-
   cf-eu10: europe
@@ -252,7 +254,7 @@ disableSapConvergedCloud: false
 disableProcessOperationsInProgress: "false"
 enablePlans: "azure,gcp,azure_lite,trial"
 hap:
- rule: 
+ rule:
   - aws                             # pool: hyperscalerType: aws
   - aws(PR=cf-eu11) -> EU           # pool: hyperscalerType: aws; euAccess: true
   - azure                           # pool: hyperscalerType: azure
@@ -260,7 +262,7 @@ hap:
   - gcp                             # pool: hyperscalerType: gcp
   - gcp(PR=cf-sa30) -> PR           # pool: hyperscalerType: gcp_cf-sa30
   - trial -> S                      # pool: hyperscalerType: azure; shared: true - TRIAL POOL
-                                    # pool: hyperscalerType: aws; shared: true - TRIAL POOL 
+                                    # pool: hyperscalerType: aws; shared: true - TRIAL POOL
   - sap-converged-cloud(HR=*) -> S  # pool: hyperscalerType: openstack_<HYPERSCALER_REGION>; shared: true
   - azure_lite                      # pool: hyperscalerType: azure
   - preview                         # pool: hyperscalerType: aws
@@ -287,19 +289,8 @@ gardener:
   shootDomain: "kyma-dev.shoot.canary.k8s-hana.ondemand.com"
   kubeconfigPath: "/gardener/kubeconfig/kubeconfig"
   secretName: "gardener-credentials"
-  kubernetesVersion: "1.16.9"
-  defaultShootPurpose: "development"
-  # if empty, the Gardener default value is used
-  machineImage: ""
-  # if empty, the Gardener default value is used
-  machineImageVersion: ""
-  trialNodesNumber: "1"
+  #looks like not used
   freemiumProviders: "azure,aws"
-  defaultTrialProvider: "Azure" # Azure, AWS
-  autoUpdateKubernetesVersion: "true"
-  autoUpdateMachineImageVersion: "false"
-  multiZoneCluster: "false"
-  controlPlaneFailureTolerance: ""
 
 kubeconfig:
   allowOrigins: "*"

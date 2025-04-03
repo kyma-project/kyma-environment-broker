@@ -275,9 +275,19 @@ func fixConfig() *Config {
 			UseMainOIDC:                             true,
 			UseAdditionalOIDC:                       false,
 		},
+		InfrastructureManager: input.InfrastructureManagerConfig{
+			MachineImage:                 "gardenlinux",
+			MachineImageVersion:          "12345.6",
+			MultiZoneCluster:             true,
+			DefaultTrialProvider:         "AWS",
+			ControlPlaneFailureTolerance: "zone",
+			UseMainOIDC:                  true,
+			UseAdditionalOIDC:            false,
+		},
 		StepTimeouts: StepTimeoutsConfig{
-			CheckRuntimeResourceUpdate: 180 * time.Second,
-			CheckRuntimeResourceCreate: 60 * time.Second,
+			CheckRuntimeResourceUpdate:   180 * time.Second,
+			CheckRuntimeResourceCreate:   60 * time.Second,
+			CheckRuntimeResourceDeletion: 60 * time.Second,
 		},
 		Database: storage.Config{
 			SecretKey: dbSecretKey,
@@ -286,7 +296,6 @@ func fixConfig() *Config {
 			Project:     "kyma",
 			ShootDomain: "kyma.sap.com",
 		},
-
 		UpdateProcessingEnabled: true,
 		Broker: broker.Config{
 			EnablePlans:                           brokerConfigPlans,

@@ -47,16 +47,16 @@ type CreateRuntimeResourceStep struct {
 	instanceStorage     storage.Instances
 	runtimeStateStorage storage.RuntimeStates
 	k8sClient           client.Client
-	config              input.Config
+	config              input.InfrastructureManagerConfig
 	oidcDefaultValues   pkg.OIDCConfigDTO
 }
 
-func NewCreateRuntimeResourceStep(os storage.Operations, is storage.Instances, k8sClient client.Client, cfg input.Config,
+func NewCreateRuntimeResourceStep(os storage.Operations, is storage.Instances, k8sClient client.Client, infrastructureManagerConfig input.InfrastructureManagerConfig,
 	oidcDefaultValues pkg.OIDCConfigDTO) *CreateRuntimeResourceStep {
 	step := &CreateRuntimeResourceStep{
 		instanceStorage:   is,
 		k8sClient:         k8sClient,
-		config:            cfg,
+		config:            infrastructureManagerConfig,
 		oidcDefaultValues: oidcDefaultValues,
 	}
 	step.operationManager = process.NewOperationManager(os, step.Name(), kebError.InfrastructureManagerDependency)
@@ -343,7 +343,7 @@ func DefaultIfParamNotSet[T interface{}](d T, param *T) T {
 	return *param
 }
 
-func CreateAdditionalWorkers(config input.Config, values internal.ProviderValues, currentAdditionalWorkers map[string]gardener.Worker, additionalWorkerNodePools []pkg.AdditionalWorkerNodePool, zones []string) []gardener.Worker {
+func CreateAdditionalWorkers(imConfig input.InfrastructureManagerConfig, values internal.ProviderValues, currentAdditionalWorkers map[string]gardener.Worker, additionalWorkerNodePools []pkg.AdditionalWorkerNodePool, zones []string) []gardener.Worker {
 	additionalWorkerNodePoolsMaxUnavailable := intstr.FromInt32(int32(0))
 	workers := make([]gardener.Worker, 0, len(additionalWorkerNodePools))
 
@@ -367,8 +367,8 @@ func CreateAdditionalWorkers(config input.Config, values internal.ProviderValues
 			Machine: gardener.Machine{
 				Type: additionalWorkerNodePool.MachineType,
 				Image: &gardener.ShootMachineImage{
-					Name:    config.MachineImage,
-					Version: &config.MachineImageVersion,
+					Name:    imConfig.MachineImage,
+					Version: &imConfig.MachineImageVersion,
 				},
 			},
 			Maximum:        int32(additionalWorkerNodePool.AutoScalerMax),

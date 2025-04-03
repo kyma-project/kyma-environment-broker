@@ -65,7 +65,7 @@ func NewProvisioningProcessingQueue(ctx context.Context, provisionManager *proce
 		},
 		{
 			stage: createRuntimeStageName,
-			step:  provisioning.NewInitProviderValuesStep(db.Operations(), db.Instances(), cfg.Provisioner, trialRegionsMapping, cfg.Broker.UseSmallerMachineTypes),
+			step:  provisioning.NewInitProviderValuesStep(db.Operations(), db.Instances(), cfg.InfrastructureManager, trialRegionsMapping),
 		},
 		{
 			stage: createRuntimeStageName,
@@ -105,7 +105,7 @@ func NewProvisioningProcessingQueue(ctx context.Context, provisionManager *proce
 		// postcondition: operation.KymaResourceName, operation.RuntimeResourceName is set
 		{
 			stage:     createRuntimeStageName,
-			step:      provisioning.NewCreateRuntimeResourceStep(db.Operations(), db.Instances(), cli, cfg.Provisioner, defaultOIDC),
+			step:      provisioning.NewCreateRuntimeResourceStep(db.Operations(), db.Instances(), cli, cfg.InfrastructureManager, defaultOIDC),
 			condition: provisioning.SkipForOwnClusterPlan,
 		},
 		{

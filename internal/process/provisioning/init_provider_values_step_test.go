@@ -30,13 +30,12 @@ func TestInitProviderValuesStep_Run(t *testing.T) {
 	err = memoryStorage.Operations().InsertOperation(operation)
 	assert.NoError(t, err)
 
-	step := NewInitProviderValuesStep(memoryStorage.Operations(), memoryStorage.Instances(), input.Config{
+	step := NewInitProviderValuesStep(memoryStorage.Operations(), memoryStorage.Instances(), input.InfrastructureManagerConfig{
 		DefaultGardenerShootPurpose:  "production",
-		TrialNodesNumber:             1,
 		DefaultTrialProvider:         "aws",
 		MultiZoneCluster:             false,
 		ControlPlaneFailureTolerance: "node",
-	}, nil, false)
+	}, nil)
 
 	// when
 	gotOperation, repeat, err := step.Run(operation, fixLogger())

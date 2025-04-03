@@ -42,7 +42,7 @@ func TestUpdateRuntimeStep_NoRuntime(t *testing.T) {
 	err = operations.InsertOperation(operation)
 	require.NoError(t, err)
 
-	step := NewUpdateRuntimeStep(operations, kcpClient, 0, input.Config{}, false, nil)
+	step := NewUpdateRuntimeStep(operations, kcpClient, 0, input.InfrastructureManagerConfig{}, false, nil)
 
 	// when
 	_, backoff, err := step.Run(operation, fixLogger())
@@ -57,7 +57,7 @@ func TestUpdateRuntimeStep_RunUpdateMachineType(t *testing.T) {
 	err := imv1.AddToScheme(scheme.Scheme)
 	assert.NoError(t, err)
 	kcpClient := fake.NewClientBuilder().WithRuntimeObjects(fixRuntimeResource("runtime-name", false)).Build()
-	step := NewUpdateRuntimeStep(nil, kcpClient, 0, input.Config{}, false, nil)
+	step := NewUpdateRuntimeStep(nil, kcpClient, 0, input.InfrastructureManagerConfig{}, false, nil)
 	operation := fixture.FixUpdatingOperation("op-id", "inst-id").Operation
 	operation.RuntimeResourceName = "runtime-name"
 	operation.KymaResourceNamespace = "kcp-system"
@@ -84,7 +84,7 @@ func TestUpdateRuntimeStep_RunUpdateOnlyMainOIDC(t *testing.T) {
 	err := imv1.AddToScheme(scheme.Scheme)
 	assert.NoError(t, err)
 	kcpClient := fake.NewClientBuilder().WithRuntimeObjects(fixRuntimeResource("runtime-name", false)).Build()
-	step := NewUpdateRuntimeStep(nil, kcpClient, 0, input.Config{
+	step := NewUpdateRuntimeStep(nil, kcpClient, 0, input.InfrastructureManagerConfig{
 		UseMainOIDC:       true,
 		UseAdditionalOIDC: false,
 	}, false, nil)
@@ -119,8 +119,7 @@ func TestUpdateRuntimeStep_RunUpdateMainAndAdditionalOIDC(t *testing.T) {
 	err := imv1.AddToScheme(scheme.Scheme)
 	assert.NoError(t, err)
 	kcpClient := fake.NewClientBuilder().WithRuntimeObjects(fixRuntimeResource("runtime-name", false)).Build()
-	step := NewUpdateRuntimeStep(nil, kcpClient, 0, input.Config{
-		UseMainOIDC:       true,
+	step := NewUpdateRuntimeStep(nil, kcpClient, 0, input.InfrastructureManagerConfig{UseMainOIDC: true,
 		UseAdditionalOIDC: true,
 	}, false, nil)
 	operation := fixture.FixUpdatingOperation("op-id", "inst-id").Operation
@@ -164,7 +163,7 @@ func TestUpdateRuntimeStep_RunUpdateOnlyAdditionalOIDC(t *testing.T) {
 	err := imv1.AddToScheme(scheme.Scheme)
 	assert.NoError(t, err)
 	kcpClient := fake.NewClientBuilder().WithRuntimeObjects(fixRuntimeResource("runtime-name", false)).Build()
-	step := NewUpdateRuntimeStep(nil, kcpClient, 0, input.Config{
+	step := NewUpdateRuntimeStep(nil, kcpClient, 0, input.InfrastructureManagerConfig{
 		UseMainOIDC:       false,
 		UseAdditionalOIDC: true,
 	}, false, nil)

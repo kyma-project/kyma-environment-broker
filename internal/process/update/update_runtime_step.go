@@ -28,16 +28,16 @@ type UpdateRuntimeStep struct {
 	operationManager           *process.OperationManager
 	k8sClient                  client.Client
 	delay                      time.Duration
-	config                     input.Config
+	config                     input.InfrastructureManagerConfig
 	useSmallerMachineTypes     bool
 	trialPlatformRegionMapping map[string]string
 }
 
-func NewUpdateRuntimeStep(os storage.Operations, k8sClient client.Client, delay time.Duration, cfg input.Config, useSmallerMachines bool, trialPlatformRegionMapping map[string]string) *UpdateRuntimeStep {
+func NewUpdateRuntimeStep(os storage.Operations, k8sClient client.Client, delay time.Duration, infrastructureManagerConfig input.InfrastructureManagerConfig, useSmallerMachines bool, trialPlatformRegionMapping map[string]string) *UpdateRuntimeStep {
 	step := &UpdateRuntimeStep{
 		k8sClient:                  k8sClient,
 		delay:                      delay,
-		config:                     cfg,
+		config:                     infrastructureManagerConfig,
 		useSmallerMachineTypes:     useSmallerMachines,
 		trialPlatformRegionMapping: trialPlatformRegionMapping,
 	}
@@ -73,7 +73,7 @@ func (s *UpdateRuntimeStep) Run(operation internal.Operation, log *slog.Logger) 
 	runtime.Spec.Shoot.Provider.Workers[0].MaxUnavailable = &maxUnavailable
 
 	if operation.UpdatingParameters.AdditionalWorkerNodePools != nil {
-		values, err := provider.GetPlanSpecificValues(&operation, s.config.MultiZoneCluster, s.config.DefaultTrialProvider, s.useSmallerMachineTypes, s.trialPlatformRegionMapping,
+		values, err := provider.GetPlanSpecificValues(&operation, s.config.MultiZoneCluster, s.config.DefaultTrialProvider, s.config.UseSmallerMachineTypes, s.trialPlatformRegionMapping,
 			s.config.DefaultGardenerShootPurpose, s.config.ControlPlaneFailureTolerance)
 		if err != nil {
 			return s.operationManager.OperationFailed(operation, fmt.Sprintf("while calculating plan specific values: %s", err), err, log)
