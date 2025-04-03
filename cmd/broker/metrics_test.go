@@ -187,7 +187,7 @@ func TestMetrics(t *testing.T) {
 		op12 := suite.GetOperation(opID)
 		assert.NotNil(t, op12)
 
-		time.Sleep(3 * time.Second)
+		time.Sleep(1 * time.Second)
 		suite.AssertMetric(internal.OperationTypeProvision, domain.Succeeded, broker.AzurePlanID, 3)
 		suite.AssertMetric(internal.OperationTypeProvision, domain.Succeeded, broker.TrialPlanID, 1)
 		suite.AssertMetric(internal.OperationTypeProvision, domain.Succeeded, broker.AWSPlanID, 1)
