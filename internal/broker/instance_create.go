@@ -172,7 +172,7 @@ func (b *ProvisionEndpoint) Provision(ctx context.Context, instanceID string, de
 		PlatformProvider: platformProvider,
 	}
 
-	logger.Info(fmt.Sprintf("Starting provisioning runtime: Name=%s, GlobalAccountID=%s, SubAccountID=%s, PlatformRegion=%s, ProvisioningParameterts.Region=%s, ShootAndSeedSameRegion=%t, ProvisioningParameterts.MachineType=%s",
+	logger.Info(fmt.Sprintf("Starting provisioning runtime: Name=%s, GlobalAccountID=%s, SubAccountID=%s, PlatformRegion=%s, ProvisioningParameters.Region=%s, ProvisioningParameters.ShootAndSeedSameRegion=%t, ProvisioningParameters.MachineType=%s",
 		parameters.Name, ersContext.GlobalAccountID, ersContext.SubAccountID, region, valueOfPtr(parameters.Region),
 		valueOfBoolPtr(parameters.ShootAndSeedSameRegion), valueOfPtr(parameters.MachineType)))
 	logParametersWithMaskedKubeconfig(parameters, logger)
