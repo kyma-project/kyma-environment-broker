@@ -489,5 +489,7 @@ serviceBindingCleanup:
   requestRetries: 2
 
 regionsSupportingMachine: |-
-  key: value
-  key: duplicate
+  c2d-highcpu:
+    - europe-west3
+    - asia-south1
+    - us-central1
