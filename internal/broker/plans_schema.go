@@ -218,7 +218,7 @@ func NewMultipleOIDCSchema(defaultOIDCConfig *pkg.OIDCConfigDTO) *OIDCs {
 	return &OIDCs{
 		Type: Type{
 			Type:        "object",
-			Description: "OIDC configuration",
+			Description: "OIDC Configration. We recommend using the list-based configuration. The object-based configuration is provided for backward compatibility. The object-based configuration inputs are still writable, but only from the JSON view.",
 		},
 		OneOf: []any{
 			AdditionalOIDC{
@@ -233,7 +233,7 @@ func NewMultipleOIDCSchema(defaultOIDCConfig *pkg.OIDCConfigDTO) *OIDCs {
 						Type: Type{
 							Type:        "array",
 							UniqueItems: true,
-							Description: "Check a module technical name on this <a href=https://help.sap.com/docs/btp/sap-business-technology-platform/kyma-modules?version=Cloud>website</a>. You can only use a module technical name once. Provide an empty custom list of modules if you don’t want any modules enabled.",
+							Description: "Specifies the list of OIDC configurations. Besides the default OIDC configuration, you can add multiple custom OIDC configurations. Leave the list empty to not use any OIDC configuration.",
 							Default: []interface{}{
 								map[string]interface{}{
 									"clientID":       defaultOIDCConfig.ClientID,
@@ -249,7 +249,8 @@ func NewMultipleOIDCSchema(defaultOIDCConfig *pkg.OIDCConfigDTO) *OIDCs {
 						Items: AdditionalOIDCListItems{
 							ControlsOrder: []string{"clientID", "groupsClaim", "issuerURL", "signingAlgs", "usernameClaim", "usernamePrefix", "requiredClaims"},
 							Type: Type{
-								Type: "object",
+								Type:                 "object",
+								AdditionalProperties: false,
 							},
 							Properties: OIDCPropertiesExpanded{
 								OIDCProperties: OIDCProperties{
@@ -283,10 +284,9 @@ func NewMultipleOIDCSchema(defaultOIDCConfig *pkg.OIDCConfigDTO) *OIDCs {
 			OIDCTypeExpanded{
 				ControlsOrder: []string{"clientID", "groupsClaim", "issuerURL", "signingAlgs", "usernameClaim", "usernamePrefix", "requiredClaims"},
 				Type: Type{
-					Type:                 "object",
-					Title:                "Object (not recommended)",
-					Description:          "Legacy OIDC configuration",
-					AdditionalProperties: false,
+					Type:        "object",
+					Title:       "Object (not recommended)",
+					Description: "Legacy OIDC configuration",
 				},
 				Properties: OIDCPropertiesExpanded{
 					OIDCProperties: OIDCProperties{
