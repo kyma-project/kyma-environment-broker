@@ -98,7 +98,6 @@ func TestUpdateRuntimeStep_RunUpdateOnlyMainOIDC(t *testing.T) {
 		SigningAlgs:    []string{"signingAlgs"},
 		UsernameClaim:  ptr.String("sub"),
 		UsernamePrefix: nil,
-		GroupsPrefix:   ptr.String("-"),
 	}
 
 	// when
@@ -127,7 +126,15 @@ func TestUpdateRuntimeStep_RunUpdateMainAndAdditionalOIDC(t *testing.T) {
 	operation := fixture.FixUpdatingOperation("op-id", "inst-id").Operation
 	operation.RuntimeResourceName = "runtime-name"
 	operation.KymaResourceNamespace = "kcp-system"
-	expectedOIDCConfig := gardener.OIDCConfig{
+	expectedMainOIDCConfig := gardener.OIDCConfig{
+		ClientID:       ptr.String("clinet-id-oidc"),
+		GroupsClaim:    ptr.String("groups"),
+		IssuerURL:      ptr.String("issuer-url"),
+		SigningAlgs:    []string{"signingAlgs"},
+		UsernameClaim:  ptr.String("sub"),
+		UsernamePrefix: nil,
+	}
+	expectedAdditionalOIDCConfig := gardener.OIDCConfig{
 		ClientID:       ptr.String("clinet-id-oidc"),
 		GroupsClaim:    ptr.String("groups"),
 		IssuerURL:      ptr.String("issuer-url"),
@@ -147,9 +154,9 @@ func TestUpdateRuntimeStep_RunUpdateMainAndAdditionalOIDC(t *testing.T) {
 	var gotRuntime imv1.Runtime
 	err = kcpClient.Get(context.Background(), client.ObjectKey{Name: operation.RuntimeResourceName, Namespace: "kcp-system"}, &gotRuntime)
 	require.NoError(t, err)
-	assert.Equal(t, expectedOIDCConfig, gotRuntime.Spec.Shoot.Kubernetes.KubeAPIServer.OidcConfig)
+	assert.Equal(t, expectedMainOIDCConfig, gotRuntime.Spec.Shoot.Kubernetes.KubeAPIServer.OidcConfig)
 	assert.NotNil(t, gotRuntime.Spec.Shoot.Kubernetes.KubeAPIServer.AdditionalOidcConfig)
-	assert.Equal(t, expectedOIDCConfig, (*gotRuntime.Spec.Shoot.Kubernetes.KubeAPIServer.AdditionalOidcConfig)[0])
+	assert.Equal(t, expectedAdditionalOIDCConfig, (*gotRuntime.Spec.Shoot.Kubernetes.KubeAPIServer.AdditionalOidcConfig)[0])
 }
 
 func TestUpdateRuntimeStep_RunUpdateOnlyAdditionalOIDC(t *testing.T) {

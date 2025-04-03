@@ -111,7 +111,6 @@ func (s *UpdateRuntimeStep) Run(operation internal.Operation, log *slog.Logger) 
 			if input.UsernameClaim != "" {
 				runtime.Spec.Shoot.Kubernetes.KubeAPIServer.OidcConfig.UsernameClaim = &input.UsernameClaim
 			}
-			runtime.Spec.Shoot.Kubernetes.KubeAPIServer.OidcConfig.GroupsPrefix = ptr.String("-")
 		}
 
 		if s.config.UseAdditionalOIDC {

@@ -267,7 +267,6 @@ func (s *CreateRuntimeResourceStep) createKubernetesConfiguration(operation inte
 		SigningAlgs:    s.oidcDefaultValues.SigningAlgs,
 		UsernameClaim:  &s.oidcDefaultValues.UsernameClaim,
 		UsernamePrefix: &s.oidcDefaultValues.UsernamePrefix,
-		GroupsPrefix:   ptr.String("-"),
 	}
 	if operation.ProvisioningParameters.Parameters.OIDC != nil {
 		if operation.ProvisioningParameters.Parameters.OIDC.ClientID != "" {
@@ -301,6 +300,7 @@ func (s *CreateRuntimeResourceStep) createKubernetesConfiguration(operation inte
 	}
 
 	if s.config.UseAdditionalOIDC {
+		oidc.GroupsPrefix = ptr.String("-")
 		kubernetesConfig.KubeAPIServer.AdditionalOidcConfig = &[]gardener.OIDCConfig{oidc}
 	}
 
