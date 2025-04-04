@@ -319,7 +319,7 @@ func (b *ProvisionEndpoint) validateAndExtract(details domain.ProvisionDetails, 
 		return ersContext, parameters, apiresponses.NewFailureResponse(err, http.StatusUnprocessableEntity, err.Error())
 	}
 	if parameters.OIDC.IsProvided() {
-		if err := parameters.OIDC.Validate(); err != nil {
+		if err := parameters.OIDC.Validate(nil); err != nil {
 			return ersContext, parameters, apiresponses.NewFailureResponse(err, http.StatusUnprocessableEntity, err.Error())
 		}
 	}
@@ -577,6 +577,11 @@ func (b *ProvisionEndpoint) extractInputParameters(details domain.ProvisionDetai
 	err := json.Unmarshal(details.RawParameters, &parameters)
 	if err != nil {
 		return parameters, fmt.Errorf("while unmarshaling raw parameters: %w", err)
+	}
+	if !b.config.UseAdditionalOIDCSchema && parameters.OIDC != nil {
+		if parameters.OIDC.OIDCConfigDTO != nil && parameters.OIDC.OIDCConfigDTO.RequiredClaims != nil {
+			parameters.OIDC.OIDCConfigDTO.RequiredClaims = nil
+		}
 	}
 
 	return parameters, nil

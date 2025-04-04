@@ -198,8 +198,6 @@ func NewBrokerSuiteTestWithConfig(t *testing.T, cfg *Config, version ...string) 
 		DefaultGardenerShootPurpose:  "testing",
 		DefaultTrialProvider:         pkg.AWS,
 		EnableShootAndSeedSameRegion: cfg.Provisioner.EnableShootAndSeedSameRegion,
-		UseMainOIDC:                  true,
-		UseAdditionalOIDC:            false,
 	}, map[string]string{"cf-eu10": "europe", "cf-us10": "us"}, cfg.FreemiumProviders, defaultOIDCValues(), cfg.Broker.UseSmallerMachineTypes)
 
 	storageCleanup, db, err := GetStorageForE2ETests()
@@ -284,6 +282,7 @@ func defaultOIDCValues() pkg.OIDCConfigDTO {
 	return pkg.OIDCConfigDTO{
 		ClientID:       "client-id-oidc",
 		GroupsClaim:    "groups",
+		GroupsPrefix:   "-",
 		IssuerURL:      "https://issuer.url",
 		SigningAlgs:    []string{"RS256"},
 		UsernameClaim:  "sub",

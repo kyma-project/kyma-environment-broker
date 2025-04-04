@@ -76,7 +76,7 @@ func TestUpdate(t *testing.T) {
 	assert.Equal(t, upgradeOperationID, suite.LastOperation(iid).ID)
 
 	runtime := suite.GetRuntimeResourceByInstanceID(iid)
-	oidc := runtime.Spec.Shoot.Kubernetes.KubeAPIServer.OidcConfig
+	oidc := (*runtime.Spec.Shoot.Kubernetes.KubeAPIServer.AdditionalOidcConfig)[0]
 
 	assert.Equal(t, "id-ooo", *oidc.ClientID)
 	assert.Equal(t, []string{"RS256"}, oidc.SigningAlgs)
@@ -153,7 +153,7 @@ func TestUpdateWithKIM(t *testing.T) {
 	suite.WaitForOperationState(upgradeOperationID, domain.Succeeded)
 	runtime := suite.GetRuntimeResourceByInstanceID(iid)
 
-	assert.Equal(t, "id-ooo", *runtime.Spec.Shoot.Kubernetes.KubeAPIServer.OidcConfig.ClientID)
+	assert.Equal(t, "id-ooo", *(*runtime.Spec.Shoot.Kubernetes.KubeAPIServer.AdditionalOidcConfig)[0].ClientID)
 }
 
 func TestUpdateFailedInstance(t *testing.T) {
@@ -269,13 +269,13 @@ func TestUpdate_SapConvergedCloud(t *testing.T) {
 	suite.WaitForOperationState(upgradeOperationID, domain.Succeeded)
 
 	runtime := suite.GetRuntimeResourceByInstanceID(iid)
-	oidc := runtime.Spec.Shoot.Kubernetes.KubeAPIServer.OidcConfig
-	assert.Equal(t, "id-ooo", *oidc.ClientID)
-	assert.Equal(t, []string{"RS256"}, oidc.SigningAlgs)
-	assert.Equal(t, "https://issuer.url.com", *oidc.IssuerURL)
-	assert.Equal(t, "groups", *oidc.GroupsClaim)
-	assert.Equal(t, "sub", *oidc.UsernameClaim)
-	assert.Equal(t, "-", *oidc.UsernamePrefix)
+	oidc := runtime.Spec.Shoot.Kubernetes.KubeAPIServer.AdditionalOidcConfig
+	assert.Equal(t, "id-ooo", *(*oidc)[0].ClientID)
+	assert.Equal(t, []string{"RS256"}, (*oidc)[0].SigningAlgs)
+	assert.Equal(t, "https://issuer.url.com", *(*oidc)[0].IssuerURL)
+	assert.Equal(t, "groups", *(*oidc)[0].GroupsClaim)
+	assert.Equal(t, "sub", *(*oidc)[0].UsernameClaim)
+	assert.Equal(t, "-", *(*oidc)[0].UsernamePrefix)
 	assert.Equal(t, []string{"john.smith@email.com"}, runtime.Spec.Security.Administrators)
 
 	suite.AssertKymaResourceExists(opID)
@@ -392,13 +392,13 @@ func TestUpdateWithNoOIDCParams(t *testing.T) {
 	suite.WaitForOperationState(upgradeOperationID, domain.Succeeded)
 
 	runtime := suite.GetRuntimeResourceByInstanceID(iid)
-	oidc := runtime.Spec.Shoot.Kubernetes.KubeAPIServer.OidcConfig
-	assert.Equal(t, defaultOIDCValues().ClientID, *oidc.ClientID)
-	assert.Equal(t, defaultOIDCValues().SigningAlgs, oidc.SigningAlgs)
-	assert.Equal(t, defaultOIDCValues().IssuerURL, *oidc.IssuerURL)
-	assert.Equal(t, defaultOIDCValues().GroupsClaim, *oidc.GroupsClaim)
-	assert.Equal(t, defaultOIDCValues().UsernameClaim, *oidc.UsernameClaim)
-	assert.Equal(t, defaultOIDCValues().UsernamePrefix, *oidc.UsernamePrefix)
+	oidc := runtime.Spec.Shoot.Kubernetes.KubeAPIServer.AdditionalOidcConfig
+	assert.Equal(t, defaultOIDCValues().ClientID, *(*oidc)[0].ClientID)
+	assert.Equal(t, defaultOIDCValues().SigningAlgs, (*oidc)[0].SigningAlgs)
+	assert.Equal(t, defaultOIDCValues().IssuerURL, *(*oidc)[0].IssuerURL)
+	assert.Equal(t, defaultOIDCValues().GroupsClaim, *(*oidc)[0].GroupsClaim)
+	assert.Equal(t, defaultOIDCValues().UsernameClaim, *(*oidc)[0].UsernameClaim)
+	assert.Equal(t, defaultOIDCValues().UsernamePrefix, *(*oidc)[0].UsernamePrefix)
 	assert.Equal(t, []string{"john.smith@email.com"}, runtime.Spec.Security.Administrators)
 
 	suite.AssertKymaResourceExists(opID)
@@ -463,13 +463,13 @@ func TestUpdateWithNoOidcOnUpdate(t *testing.T) {
 	suite.WaitForOperationState(upgradeOperationID, domain.Succeeded)
 
 	runtime := suite.GetRuntimeResourceByInstanceID(iid)
-	oidc := runtime.Spec.Shoot.Kubernetes.KubeAPIServer.OidcConfig
-	assert.Equal(t, "id-ooo", *oidc.ClientID)
-	assert.Equal(t, []string{"RS256"}, oidc.SigningAlgs)
-	assert.Equal(t, "https://issuer.url.com", *oidc.IssuerURL)
-	assert.Equal(t, "groups", *oidc.GroupsClaim)
-	assert.Equal(t, "sub", *oidc.UsernameClaim)
-	assert.Equal(t, "-", *oidc.UsernamePrefix)
+	oidc := runtime.Spec.Shoot.Kubernetes.KubeAPIServer.AdditionalOidcConfig
+	assert.Equal(t, "id-ooo", *(*oidc)[0].ClientID)
+	assert.Equal(t, []string{"RS256"}, (*oidc)[0].SigningAlgs)
+	assert.Equal(t, "https://issuer.url.com", *(*oidc)[0].IssuerURL)
+	assert.Equal(t, "groups", *(*oidc)[0].GroupsClaim)
+	assert.Equal(t, "sub", *(*oidc)[0].UsernameClaim)
+	assert.Equal(t, "-", *(*oidc)[0].UsernamePrefix)
 	assert.Equal(t, []string{"john.smith@email.com"}, runtime.Spec.Security.Administrators)
 }
 
@@ -759,7 +759,7 @@ func TestUpdateOidcForSuspendedInstance(t *testing.T) {
 	assert.Equal(t, "id-oooxx", instance.Parameters.Parameters.OIDC.ClientID)
 
 	runtime := suite.GetRuntimeResourceByInstanceID(iid)
-	assert.Equal(t, "id-oooxx", *runtime.Spec.Shoot.Kubernetes.KubeAPIServer.OidcConfig.ClientID)
+	assert.Equal(t, "id-oooxx", *(*runtime.Spec.Shoot.Kubernetes.KubeAPIServer.AdditionalOidcConfig)[0].ClientID)
 
 	suite.AssertKymaResourceNotExists(opID)
 	suite.AssertKymaResourceExistsByInstanceID(iid)
@@ -936,13 +936,13 @@ func TestUpdateDefaultAdminNotChangedWithCustomOIDC(t *testing.T) {
 	suite.WaitForOperationState(upgradeOperationID, domain.Succeeded)
 
 	runtime := suite.GetRuntimeResourceByInstanceID(id)
-	oidc := runtime.Spec.Shoot.Kubernetes.KubeAPIServer.OidcConfig
-	assert.Equal(t, "id-ooo", *oidc.ClientID)
-	assert.Equal(t, []string{"RS256"}, oidc.SigningAlgs)
-	assert.Equal(t, "https://issuer.url.com", *oidc.IssuerURL)
-	assert.Equal(t, "groups", *oidc.GroupsClaim)
-	assert.Equal(t, "sub", *oidc.UsernameClaim)
-	assert.Equal(t, "-", *oidc.UsernamePrefix)
+	oidc := runtime.Spec.Shoot.Kubernetes.KubeAPIServer.AdditionalOidcConfig
+	assert.Equal(t, "id-ooo", *(*oidc)[0].ClientID)
+	assert.Equal(t, []string{"RS256"}, (*oidc)[0].SigningAlgs)
+	assert.Equal(t, "https://issuer.url.com", *(*oidc)[0].IssuerURL)
+	assert.Equal(t, "groups", *(*oidc)[0].GroupsClaim)
+	assert.Equal(t, "sub", *(*oidc)[0].UsernameClaim)
+	assert.Equal(t, "-", *(*oidc)[0].UsernamePrefix)
 	assert.Equal(t, []string{"john.smith@email.com"}, runtime.Spec.Security.Administrators)
 }
 
@@ -1007,13 +1007,13 @@ func TestUpdateDefaultAdminNotChangedWithOIDCUpdate(t *testing.T) {
 	// then
 	suite.WaitForOperationState(upgradeOperationID, domain.Succeeded)
 	runtime := suite.GetRuntimeResourceByInstanceID(id)
-	oidc := runtime.Spec.Shoot.Kubernetes.KubeAPIServer.OidcConfig
-	assert.Equal(t, "id-ooo", *oidc.ClientID)
-	assert.Equal(t, []string{"RS384"}, oidc.SigningAlgs)
-	assert.Equal(t, "https://issuer.url.com", *oidc.IssuerURL)
-	assert.Equal(t, "new-groups-claim", *oidc.GroupsClaim)
-	assert.Equal(t, "new-username-claim", *oidc.UsernameClaim)
-	assert.Equal(t, "->", *oidc.UsernamePrefix)
+	oidc := runtime.Spec.Shoot.Kubernetes.KubeAPIServer.AdditionalOidcConfig
+	assert.Equal(t, "id-ooo", *(*oidc)[0].ClientID)
+	assert.Equal(t, []string{"RS384"}, (*oidc)[0].SigningAlgs)
+	assert.Equal(t, "https://issuer.url.com", *(*oidc)[0].IssuerURL)
+	assert.Equal(t, "new-groups-claim", *(*oidc)[0].GroupsClaim)
+	assert.Equal(t, "new-username-claim", *(*oidc)[0].UsernameClaim)
+	assert.Equal(t, "->", *(*oidc)[0].UsernamePrefix)
 	assert.Equal(t, []string{"john.smith@email.com"}, runtime.Spec.Security.Administrators)
 }
 
@@ -1135,13 +1135,13 @@ func TestUpdateCustomAdminsNotChanged(t *testing.T) {
 	suite.WaitForOperationState(upgradeOperationID, domain.Succeeded)
 	time.Sleep(time.Second)
 	runtime := suite.GetRuntimeResourceByInstanceID(id)
-	oidc := runtime.Spec.Shoot.Kubernetes.KubeAPIServer.OidcConfig
-	assert.Equal(t, "client-id-oidc", *oidc.ClientID)
-	assert.Equal(t, []string{"RS256"}, oidc.SigningAlgs)
-	assert.Equal(t, "https://issuer.url", *oidc.IssuerURL)
-	assert.Equal(t, "groups", *oidc.GroupsClaim)
-	assert.Equal(t, "sub", *oidc.UsernameClaim)
-	assert.Equal(t, "-", *oidc.UsernamePrefix)
+	oidc := runtime.Spec.Shoot.Kubernetes.KubeAPIServer.AdditionalOidcConfig
+	assert.Equal(t, "client-id-oidc", *(*oidc)[0].ClientID)
+	assert.Equal(t, []string{"RS256"}, (*oidc)[0].SigningAlgs)
+	assert.Equal(t, "https://issuer.url", *(*oidc)[0].IssuerURL)
+	assert.Equal(t, "groups", *(*oidc)[0].GroupsClaim)
+	assert.Equal(t, "sub", *(*oidc)[0].UsernameClaim)
+	assert.Equal(t, "-", *(*oidc)[0].UsernamePrefix)
 	assert.Equal(t, expectedAdmins, runtime.Spec.Security.Administrators)
 	suite.AssertInstanceRuntimeAdmins(id, expectedAdmins)
 }
@@ -1205,13 +1205,13 @@ func TestUpdateCustomAdminsNotChangedWithOIDCUpdate(t *testing.T) {
 	// then
 	suite.WaitForOperationState(upgradeOperationID, domain.Succeeded)
 	runtime := suite.GetRuntimeResourceByInstanceID(id)
-	oidc := runtime.Spec.Shoot.Kubernetes.KubeAPIServer.OidcConfig
-	assert.Equal(t, "id-ooo", *oidc.ClientID)
-	assert.Equal(t, []string{"ES256"}, oidc.SigningAlgs)
-	assert.Equal(t, "https://newissuer.url.com", *oidc.IssuerURL)
-	assert.Equal(t, "groups", *oidc.GroupsClaim)
-	assert.Equal(t, "sub", *oidc.UsernameClaim)
-	assert.Equal(t, "-", *oidc.UsernamePrefix)
+	oidc := runtime.Spec.Shoot.Kubernetes.KubeAPIServer.AdditionalOidcConfig
+	assert.Equal(t, "id-ooo", *(*oidc)[0].ClientID)
+	assert.Equal(t, []string{"ES256"}, (*oidc)[0].SigningAlgs)
+	assert.Equal(t, "https://newissuer.url.com", *(*oidc)[0].IssuerURL)
+	assert.Equal(t, "groups", *(*oidc)[0].GroupsClaim)
+	assert.Equal(t, "sub", *(*oidc)[0].UsernameClaim)
+	assert.Equal(t, "-", *(*oidc)[0].UsernamePrefix)
 	assert.Equal(t, expectedAdmins, runtime.Spec.Security.Administrators)
 
 	suite.AssertInstanceRuntimeAdmins(id, expectedAdmins)
@@ -1274,13 +1274,13 @@ func TestUpdateCustomAdminsOverwritten(t *testing.T) {
 	suite.WaitForOperationState(upgradeOperationID, domain.Succeeded)
 
 	runtime := suite.GetRuntimeResourceByInstanceID(id)
-	oidc := runtime.Spec.Shoot.Kubernetes.KubeAPIServer.OidcConfig
-	assert.Equal(t, "client-id-oidc", *oidc.ClientID)
-	assert.Equal(t, []string{"RS256"}, oidc.SigningAlgs)
-	assert.Equal(t, "https://issuer.url", *oidc.IssuerURL)
-	assert.Equal(t, "groups", *oidc.GroupsClaim)
-	assert.Equal(t, "sub", *oidc.UsernameClaim)
-	assert.Equal(t, "-", *oidc.UsernamePrefix)
+	oidc := runtime.Spec.Shoot.Kubernetes.KubeAPIServer.AdditionalOidcConfig
+	assert.Equal(t, "client-id-oidc", *(*oidc)[0].ClientID)
+	assert.Equal(t, []string{"RS256"}, (*oidc)[0].SigningAlgs)
+	assert.Equal(t, "https://issuer.url", *(*oidc)[0].IssuerURL)
+	assert.Equal(t, "groups", *(*oidc)[0].GroupsClaim)
+	assert.Equal(t, "sub", *(*oidc)[0].UsernameClaim)
+	assert.Equal(t, "-", *(*oidc)[0].UsernamePrefix)
 	assert.Equal(t, expectedAdmins, runtime.Spec.Security.Administrators)
 
 	suite.AssertInstanceRuntimeAdmins(id, expectedAdmins)
@@ -1347,13 +1347,13 @@ func TestUpdateCustomAdminsOverwrittenWithOIDCUpdate(t *testing.T) {
 	// then
 	suite.WaitForOperationState(upgradeOperationID, domain.Succeeded)
 	runtime := suite.GetRuntimeResourceByInstanceID(id)
-	oidc := runtime.Spec.Shoot.Kubernetes.KubeAPIServer.OidcConfig
-	assert.Equal(t, "id-ooo", *oidc.ClientID)
-	assert.Equal(t, []string{"ES384"}, oidc.SigningAlgs)
-	assert.Equal(t, "https://issuer.url.com", *oidc.IssuerURL)
-	assert.Equal(t, "new-groups-claim", *oidc.GroupsClaim)
-	assert.Equal(t, "sub", *oidc.UsernameClaim)
-	assert.Equal(t, "-", *oidc.UsernamePrefix)
+	oidc := runtime.Spec.Shoot.Kubernetes.KubeAPIServer.AdditionalOidcConfig
+	assert.Equal(t, "id-ooo", *(*oidc)[0].ClientID)
+	assert.Equal(t, []string{"ES384"}, (*oidc)[0].SigningAlgs)
+	assert.Equal(t, "https://issuer.url.com", *(*oidc)[0].IssuerURL)
+	assert.Equal(t, "new-groups-claim", *(*oidc)[0].GroupsClaim)
+	assert.Equal(t, "sub", *(*oidc)[0].UsernameClaim)
+	assert.Equal(t, "-", *(*oidc)[0].UsernamePrefix)
 	assert.Equal(t, expectedAdmins, runtime.Spec.Security.Administrators)
 
 	suite.AssertInstanceRuntimeAdmins(id, expectedAdmins)
@@ -1527,7 +1527,8 @@ func TestUpdateAutoscalerParams(t *testing.T) {
 		SigningAlgs:    []string{"RS256"},
 		UsernameClaim:  ptr.String("sub"),
 		UsernamePrefix: ptr.String("-"),
-	}, runtime.Spec.Shoot.Kubernetes.KubeAPIServer.OidcConfig)
+		GroupsPrefix:   ptr.String("-"),
+	}, (*runtime.Spec.Shoot.Kubernetes.KubeAPIServer.AdditionalOidcConfig)[0])
 
 	assert.Equal(t, []string{"john.smith@email.com"}, runtime.Spec.Security.Administrators)
 }
@@ -2468,5 +2469,315 @@ func TestUpdateAdditionalWorkerNodePools(t *testing.T) {
 		assert.Equal(t, worker2Zones, updatedWorker2Zones)
 		assert.Equal(t, worker3Zones, updatedWorker3Zones)
 		assert.Equal(t, worker4Zones, updatedWorker4Zones)
+	})
+}
+
+func TestUpdateOIDC(t *testing.T) {
+	t.Run("should update OIDC object with OIDC list", func(t *testing.T) {
+		// given
+		suite := NewBrokerSuiteTest(t)
+		defer suite.TearDown()
+		iid := uuid.New().String()
+
+		resp := suite.CallAPI("PUT", fmt.Sprintf("oauth/cf-eu10/v2/service_instances/%s?accepts_incomplete=true&plan_id=7d55d31d-35ae-4438-bf13-6ffdfa107d9f&service_id=47c9dcbf-ff30-448e-ab36-d3bad66ba281", iid),
+			`{
+				"service_id": "47c9dcbf-ff30-448e-ab36-d3bad66ba281",
+				"plan_id": "5cb3d976-b85c-42ea-a636-79cadda109a9",
+				"context": {
+					"globalaccount_id": "g-account-id",
+					"subaccount_id": "sub-id",
+					"user_id": "john.smith@email.com"
+				},
+				"parameters": {
+					"name": "testing-cluster",
+					"oidc": {
+						"clientID": "id-initial",
+						"signingAlgs": ["PS512"],
+						"issuerURL": "https://issuer.url.com"
+					},
+					"region": "eu-central-1"
+				}
+			}`)
+		opID := suite.DecodeOperationID(resp)
+		suite.waitForRuntimeAndMakeItReady(opID)
+
+		suite.WaitForOperationState(opID, domain.Succeeded)
+
+		// when
+		// OSB update:
+		resp = suite.CallAPI("PATCH", fmt.Sprintf("oauth/cf-eu10/v2/service_instances/%s?accepts_incomplete=true", iid),
+			`{
+				"service_id": "47c9dcbf-ff30-448e-ab36-d3bad66ba281",
+				"plan_id": "7d55d31d-35ae-4438-bf13-6ffdfa107d9f",
+				"context": {
+					"globalaccount_id": "g-account-id",
+					"user_id": "john.smith@email.com"
+				},
+				"parameters": {
+					"oidc": {
+						"list": [
+							{
+								"clientID": "id-ooo",
+								"signingAlgs": ["RS256"],
+								"issuerURL": "https://issuer.url.com"
+							},
+							{
+								"clientID": "id-ooo2",
+								"signingAlgs": ["RS256"],
+								"issuerURL": "https://issuer.url.com"
+							}
+						]
+					}
+				}
+			}`)
+		assert.Equal(t, http.StatusAccepted, resp.StatusCode)
+		upgradeOperationID := suite.DecodeOperationID(resp)
+
+		suite.WaitForOperationState(upgradeOperationID, domain.Succeeded)
+		runtime := suite.GetRuntimeResourceByInstanceID(iid)
+
+		assert.Equal(t, "id-ooo", *(*runtime.Spec.Shoot.Kubernetes.KubeAPIServer.AdditionalOidcConfig)[0].ClientID)
+		assert.Equal(t, "id-ooo2", *(*runtime.Spec.Shoot.Kubernetes.KubeAPIServer.AdditionalOidcConfig)[1].ClientID)
+		assert.Len(t, *runtime.Spec.Shoot.Kubernetes.KubeAPIServer.AdditionalOidcConfig, 2)
+	})
+	t.Run("should update OIDC object with OIDC object", func(t *testing.T) {
+		// given
+		suite := NewBrokerSuiteTest(t)
+		defer suite.TearDown()
+		iid := uuid.New().String()
+
+		resp := suite.CallAPI("PUT", fmt.Sprintf("oauth/cf-eu10/v2/service_instances/%s?accepts_incomplete=true&plan_id=7d55d31d-35ae-4438-bf13-6ffdfa107d9f&service_id=47c9dcbf-ff30-448e-ab36-d3bad66ba281", iid),
+			`{
+				"service_id": "47c9dcbf-ff30-448e-ab36-d3bad66ba281",
+				"plan_id": "5cb3d976-b85c-42ea-a636-79cadda109a9",
+				"context": {
+					"globalaccount_id": "g-account-id",
+					"subaccount_id": "sub-id",
+					"user_id": "john.smith@email.com"
+				},
+				"parameters": {
+					"name": "testing-cluster",
+					"oidc": {
+						"clientID": "id-initial",
+						"signingAlgs": ["PS512"],
+						"issuerURL": "https://issuer.url.com"
+					},
+					"region": "eu-central-1"
+				}
+   			}`)
+		opID := suite.DecodeOperationID(resp)
+		suite.waitForRuntimeAndMakeItReady(opID)
+
+		suite.WaitForOperationState(opID, domain.Succeeded)
+
+		// when
+		// OSB update:
+		resp = suite.CallAPI("PATCH", fmt.Sprintf("oauth/cf-eu10/v2/service_instances/%s?accepts_incomplete=true", iid),
+			`{
+				"service_id": "47c9dcbf-ff30-448e-ab36-d3bad66ba281",
+				"plan_id": "7d55d31d-35ae-4438-bf13-6ffdfa107d9f",
+				"context": {
+					"globalaccount_id": "g-account-id",
+					"user_id": "john.smith@email.com"
+				},
+				"parameters": {
+					"oidc": {
+						"clientID": "id-ooo",
+						"signingAlgs": ["PS512"],
+						"issuerURL": "https://issuer.url.com"
+					}
+				}
+			}`)
+		assert.Equal(t, http.StatusAccepted, resp.StatusCode)
+		upgradeOperationID := suite.DecodeOperationID(resp)
+
+		suite.WaitForOperationState(upgradeOperationID, domain.Succeeded)
+		runtime := suite.GetRuntimeResourceByInstanceID(iid)
+
+		assert.Equal(t, "id-ooo", *(*runtime.Spec.Shoot.Kubernetes.KubeAPIServer.AdditionalOidcConfig)[0].ClientID)
+		assert.Len(t, *runtime.Spec.Shoot.Kubernetes.KubeAPIServer.AdditionalOidcConfig, 1)
+	})
+	t.Run("should reject update OIDC list with OIDC object", func(t *testing.T) {
+		// given
+		suite := NewBrokerSuiteTest(t)
+		defer suite.TearDown()
+		iid := uuid.New().String()
+
+		resp := suite.CallAPI("PUT", fmt.Sprintf("oauth/cf-eu10/v2/service_instances/%s?accepts_incomplete=true&plan_id=7d55d31d-35ae-4438-bf13-6ffdfa107d9f&service_id=47c9dcbf-ff30-448e-ab36-d3bad66ba281", iid),
+			`{
+				"service_id": "47c9dcbf-ff30-448e-ab36-d3bad66ba281",
+				"plan_id": "5cb3d976-b85c-42ea-a636-79cadda109a9",
+				"context": {
+					"globalaccount_id": "g-account-id",
+					"subaccount_id": "sub-id",
+					"user_id": "john.smith@email.com"
+				},
+				"parameters": {
+					"name": "testing-cluster",
+					"oidc": {
+						"list": [
+							{
+								"clientID": "id-ooo",
+								"signingAlgs": ["RS256"],
+								"issuerURL": "https://issuer.url.com"
+							},
+							{
+								"clientID": "id-ooo2",
+								"signingAlgs": ["RS256"],
+								"issuerURL": "https://issuer.url.com"
+							}
+						]
+					},
+					"region": "eu-central-1"
+				}
+			}`)
+		opID := suite.DecodeOperationID(resp)
+		suite.waitForRuntimeAndMakeItReady(opID)
+
+		suite.WaitForOperationState(opID, domain.Succeeded)
+
+		// when
+		// OSB update:
+		resp = suite.CallAPI("PATCH", fmt.Sprintf("oauth/cf-eu10/v2/service_instances/%s?accepts_incomplete=true", iid),
+			`{
+				"service_id": "47c9dcbf-ff30-448e-ab36-d3bad66ba281",
+				"plan_id": "7d55d31d-35ae-4438-bf13-6ffdfa107d9f",
+				"context": {
+					"globalaccount_id": "g-account-id",
+					"user_id": "john.smith@email.com"
+				},
+				"parameters": {
+					"oidc": {
+						"clientID": "id-client,
+						"signingAlgs": ["PS512"],
+						"issuerURL": "https://issuer.url.com"
+					}
+				}
+			}`)
+		assert.Equal(t, http.StatusUnprocessableEntity, resp.StatusCode)
+	})
+	t.Run("should update OIDC list with OIDC list", func(t *testing.T) {
+		// given
+		suite := NewBrokerSuiteTest(t)
+		defer suite.TearDown()
+		iid := uuid.New().String()
+
+		resp := suite.CallAPI("PUT", fmt.Sprintf("oauth/cf-eu10/v2/service_instances/%s?accepts_incomplete=true&plan_id=7d55d31d-35ae-4438-bf13-6ffdfa107d9f&service_id=47c9dcbf-ff30-448e-ab36-d3bad66ba281", iid),
+			`{
+				"service_id": "47c9dcbf-ff30-448e-ab36-d3bad66ba281",
+				"plan_id": "5cb3d976-b85c-42ea-a636-79cadda109a9",
+				"context": {
+					"globalaccount_id": "g-account-id",
+					"subaccount_id": "sub-id",
+					"user_id": "john.smith@email.com"
+				},
+				"parameters": {
+					"name": "testing-cluster",
+					"oidc": {
+						"list": [
+							{
+								"clientID": "id-ooo",
+								"signingAlgs": ["RS256"],
+								"issuerURL": "https://issuer.url.com"
+							},
+							{
+								"clientID": "id-ooo2",
+								"signingAlgs": ["RS256"],
+								"issuerURL": "https://issuer.url.com"
+							}
+						]
+					},
+					"region": "eu-central-1"
+				}
+			}`)
+		opID := suite.DecodeOperationID(resp)
+		suite.waitForRuntimeAndMakeItReady(opID)
+
+		suite.WaitForOperationState(opID, domain.Succeeded)
+
+		// when
+		// OSB update:
+		resp = suite.CallAPI("PATCH", fmt.Sprintf("oauth/cf-eu10/v2/service_instances/%s?accepts_incomplete=true", iid),
+			`{
+				"service_id": "47c9dcbf-ff30-448e-ab36-d3bad66ba281",
+				"plan_id": "7d55d31d-35ae-4438-bf13-6ffdfa107d9f",
+				"context": {
+					"globalaccount_id": "g-account-id",
+					"user_id": "john.smith@email.com"
+				},
+				"parameters": {
+					"oidc": {
+						"list": [
+							{
+								"clientID": "new-id-ooo",
+								"signingAlgs": ["RS256"],
+								"issuerURL": "https://issuer.url.com"
+							}
+						]
+					}
+				}
+			}`)
+		assert.Equal(t, http.StatusAccepted, resp.StatusCode)
+		upgradeOperationID := suite.DecodeOperationID(resp)
+
+		suite.WaitForOperationState(upgradeOperationID, domain.Succeeded)
+		runtime := suite.GetRuntimeResourceByInstanceID(iid)
+
+		assert.Equal(t, "new-id-ooo", *(*runtime.Spec.Shoot.Kubernetes.KubeAPIServer.AdditionalOidcConfig)[0].ClientID)
+		assert.Len(t, *runtime.Spec.Shoot.Kubernetes.KubeAPIServer.AdditionalOidcConfig, 1)
+	})
+	t.Run("should update OIDC object with empty OIDC list", func(t *testing.T) {
+		// given
+		suite := NewBrokerSuiteTest(t)
+		defer suite.TearDown()
+		iid := uuid.New().String()
+
+		resp := suite.CallAPI("PUT", fmt.Sprintf("oauth/cf-eu10/v2/service_instances/%s?accepts_incomplete=true&plan_id=7d55d31d-35ae-4438-bf13-6ffdfa107d9f&service_id=47c9dcbf-ff30-448e-ab36-d3bad66ba281", iid),
+			`{
+				"service_id": "47c9dcbf-ff30-448e-ab36-d3bad66ba281",
+				"plan_id": "5cb3d976-b85c-42ea-a636-79cadda109a9",
+				"context": {
+					"globalaccount_id": "g-account-id",
+					"subaccount_id": "sub-id",
+					"user_id": "john.smith@email.com"
+				},
+				"parameters": {
+					"name": "testing-cluster",
+					"oidc": {
+						"clientID": "id-initial",
+						"signingAlgs": ["PS512"],
+						"issuerURL": "https://issuer.url.com"
+					},
+					"region": "eu-central-1"
+				}
+			}`)
+		opID := suite.DecodeOperationID(resp)
+		suite.waitForRuntimeAndMakeItReady(opID)
+
+		suite.WaitForOperationState(opID, domain.Succeeded)
+
+		// when
+		// OSB update:
+		resp = suite.CallAPI("PATCH", fmt.Sprintf("oauth/cf-eu10/v2/service_instances/%s?accepts_incomplete=true", iid),
+			`{
+				"service_id": "47c9dcbf-ff30-448e-ab36-d3bad66ba281",
+				"plan_id": "7d55d31d-35ae-4438-bf13-6ffdfa107d9f",
+				"context": {
+					"globalaccount_id": "g-account-id",
+					"user_id": "john.smith@email.com"
+				},
+				"parameters": {
+					"oidc": {
+						"list": []
+					}
+				}
+			}`)
+		assert.Equal(t, http.StatusAccepted, resp.StatusCode)
+		upgradeOperationID := suite.DecodeOperationID(resp)
+
+		suite.WaitForOperationState(upgradeOperationID, domain.Succeeded)
+		runtime := suite.GetRuntimeResourceByInstanceID(iid)
+
+		assert.Len(t, *runtime.Spec.Shoot.Kubernetes.KubeAPIServer.AdditionalOidcConfig, 0)
 	})
 }
