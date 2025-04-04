@@ -11,14 +11,17 @@ import (
 	"github.com/spf13/cobra"
 )
 
+const sameSeedAndShootRegionParam = "shootAndSeedSameRegion"
+
 type ProvisionCommand struct {
-	cobraCmd      *cobra.Command
-	log           logger.Logger
-	planID        string
-	region        string
-	overlapIP     bool
-	invalidIP     bool
-	validCustomIP bool
+	cobraCmd                      *cobra.Command
+	log                           logger.Logger
+	planID                        string
+	region                        string
+	overlapIP                     bool
+	invalidIP                     bool
+	validCustomIP                 bool
+	enforceSameSeedAndShootRegion bool
 }
 
 func NewProvisionCmd() *cobra.Command {
@@ -42,6 +45,7 @@ func NewProvisionCmd() *cobra.Command {
 	cobraCmd.Flags().BoolVarP(&cmd.overlapIP, "overlapIP", "o", false, "Try to provision with an overlapping restricted IP range.")
 	cobraCmd.Flags().BoolVarP(&cmd.invalidIP, "invalidIP", "i", false, "Try to provision with an invalid IP range.")
 	cobraCmd.Flags().BoolVarP(&cmd.validCustomIP, "validCustomIP", "v", false, "Provision with a valid custom IP range.")
+	cobraCmd.Flags().BoolVarP(&cmd.enforceSameSeedAndShootRegion, "enforceSameSeedAndShootRegion", "f", false, "Enforce the same region for Seed and Shoot.")
 
 	return cobraCmd
 }
@@ -74,6 +78,9 @@ func (cmd *ProvisionCommand) Run() error {
 				"nodes": "10.253.0.0/21",
 			},
 		}
+	}
+	if cmd.enforceSameSeedAndShootRegion {
+		customParams[sameSeedAndShootRegionParam] = true
 	}
 	instanceID := uuid.New().String()
 	fmt.Printf("Instance ID: %s\n", instanceID)
