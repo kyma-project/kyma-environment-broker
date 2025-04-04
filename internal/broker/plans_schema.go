@@ -46,9 +46,9 @@ type UpdateProperties struct {
 	AdditionalWorkerNodePools *AdditionalWorkerNodePoolsType `json:"additionalWorkerNodePools,omitempty"`
 }
 
-func (up *UpdateProperties) IncludeAdditional(useAdditionalOIDCSchema bool, defaultOIDCConfig *pkg.OIDCConfigDTO) {
+func (up *UpdateProperties) IncludeAdditional(useAdditionalOIDCSchema bool, defaultOIDCConfig *pkg.OIDCConfigDTO, update bool) {
 	if useAdditionalOIDCSchema {
-		up.OIDC = NewMultipleOIDCSchema(defaultOIDCConfig)
+		up.OIDC = NewMultipleOIDCSchema(defaultOIDCConfig, update)
 	} else {
 		up.OIDC = NewOIDCSchema()
 	}
@@ -215,7 +215,7 @@ type AdditionalOIDCListItems struct {
 	Required      []string               `json:"required,omitempty"`
 }
 
-func NewMultipleOIDCSchema(defaultOIDCConfig *pkg.OIDCConfigDTO) *OIDCs {
+func NewMultipleOIDCSchema(defaultOIDCConfig *pkg.OIDCConfigDTO, update bool) *OIDCs {
 	return &OIDCs{
 		Type: Type{
 			Type:        "object",
@@ -275,7 +275,7 @@ func NewMultipleOIDCSchema(defaultOIDCConfig *pkg.OIDCConfigDTO) *OIDCs {
 										Type:    "string",
 										Pattern: "^[^=]+=[^=]+$",
 									},
-									Description: "Comma separated list of required claims in the format claim=value, for example, repository=myorg/foo-app, workflow=verify-foo-app",
+									Description: "key=value pairs that describes a required claim in the ID Token. If set, the claim is verified to be present in the ID Token with a matching value.",
 								},
 							},
 							Required: []string{"clientID", "issuerURL"},
@@ -292,29 +292,29 @@ func NewMultipleOIDCSchema(defaultOIDCConfig *pkg.OIDCConfigDTO) *OIDCs {
 				},
 				Properties: OIDCPropertiesExpanded{
 					OIDCProperties: OIDCProperties{
-						ClientID:       Type{Type: "string", ReadOnly: true, Description: "The client ID for the OpenID Connect client."},
-						IssuerURL:      Type{Type: "string", ReadOnly: true, Description: "The URL the provider signs ID Tokens as, only HTTPS scheme will be accepted."},
-						GroupsClaim:    Type{Type: "string", ReadOnly: true, Description: "If provided, the name of a custom OpenID Connect claim for specifying user groups."},
-						UsernameClaim:  Type{Type: "string", ReadOnly: true, Description: "The OpenID claim to use as the user name."},
-						UsernamePrefix: Type{Type: "string", ReadOnly: true, Description: "If provided, all usernames will be prefixed with this value. If not provided, username claims other than 'email' are prefixed by the issuer URL to avoid clashes. To skip any prefixing, provide the value '-' (dash character without additional characters)."},
+						ClientID:       Type{Type: "string", ReadOnly: !update, Description: "The client ID for the OpenID Connect client."},
+						IssuerURL:      Type{Type: "string", ReadOnly: !update, Description: "The URL the provider signs ID Tokens as, only HTTPS scheme will be accepted."},
+						GroupsClaim:    Type{Type: "string", ReadOnly: !update, Description: "If provided, the name of a custom OpenID Connect claim for specifying user groups."},
+						UsernameClaim:  Type{Type: "string", ReadOnly: !update, Description: "The OpenID claim to use as the user name."},
+						UsernamePrefix: Type{Type: "string", ReadOnly: !update, Description: "If provided, all usernames will be prefixed with this value. If not provided, username claims other than 'email' are prefixed by the issuer URL to avoid clashes. To skip any prefixing, provide the value '-' (dash character without additional characters)."},
 						SigningAlgs: Type{
 							Type: "array",
 							Items: &Type{
 								Type: "string",
 							},
-							ReadOnly:    true,
+							ReadOnly:    !update,
 							Description: "Comma separated list of allowed JOSE asymmetric signing algorithms, for example, RS256, ES256",
 						},
 					},
-					GroupsPrefix: Type{Type: "string", ReadOnly: true, Description: "if specified, causes claims mapping to group names to be prefixed with the value. A value 'oidc:' would result in groups like 'oidc:engineering' and 'oidc:marketing'. If not provided, the prefix defaults to '( .metadata.name )/'.The value '-' can be used to disable all prefixing."},
+					GroupsPrefix: Type{Type: "string", ReadOnly: !update, Description: "if specified, causes claims mapping to group names to be prefixed with the value. A value 'oidc:' would result in groups like 'oidc:engineering' and 'oidc:marketing'. If not provided, the prefix defaults to '( .metadata.name )/'.The value '-' can be used to disable all prefixing."},
 					RequiredClaims: Type{
 						Type: "array",
 						Items: &Type{
 							Type:    "string",
 							Pattern: "^[^=]+=[^=]+$",
 						},
-						ReadOnly:    true,
-						Description: "Comma separated list of required claims in the format claim=value, for example, repository=myorg/foo-app, workflow=verify-foo-app",
+						ReadOnly:    !update,
+						Description: "key=value pairs that describes a required claim in the ID Token. If set, the claim is verified to be present in the ID Token with a matching value.",
 					},
 				},
 				Required: []string{"clientID", "issuerURL"},
