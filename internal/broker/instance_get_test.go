@@ -12,9 +12,7 @@ import (
 
 	"github.com/kyma-project/kyma-environment-broker/internal/whitelist"
 
-	"github.com/kyma-project/control-plane/components/provisioner/pkg/gqlschema"
 	"github.com/kyma-project/kyma-environment-broker/common/gardener"
-	pkg "github.com/kyma-project/kyma-environment-broker/common/runtime"
 	"github.com/kyma-project/kyma-environment-broker/internal/broker"
 	"github.com/kyma-project/kyma-environment-broker/internal/broker/automock"
 	"github.com/kyma-project/kyma-environment-broker/internal/fixture"
@@ -51,9 +49,6 @@ func TestGetEndpoint_GetProvisioningInstance(t *testing.T) {
 	factoryBuilder := &automock.PlanValidator{}
 	factoryBuilder.On("IsPlanSupport", planID).Return(true)
 
-	planDefaults := func(planID string, platformProvider pkg.CloudProvider, provider *pkg.CloudProvider) (*gqlschema.ClusterConfigInput, error) {
-		return &gqlschema.ClusterConfigInput{}, nil
-	}
 	kcBuilder := &kcMock.KcBuilder{}
 	kcBuilder.On("GetServerURL", "").Return("", fmt.Errorf("error"))
 	createSvc := broker.NewProvision(
@@ -63,15 +58,14 @@ func TestGetEndpoint_GetProvisioningInstance(t *testing.T) {
 		st.Instances(),
 		st.InstancesArchived(),
 		queue,
-		factoryBuilder,
 		broker.PlansConfig{},
-		planDefaults,
 		fixLogger(),
 		dashboardConfig,
 		kcBuilder,
 		whitelist.Set{},
 		&broker.OneForAllConvergedCloudRegionsProvider{},
 		nil,
+		fixValueProvider(),
 	)
 	getSvc := broker.NewGetInstance(broker.Config{EnableKubeconfigURLLabel: true}, st.Instances(), st.Operations(), kcBuilder, fixLogger())
 

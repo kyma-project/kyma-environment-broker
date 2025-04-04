@@ -46,15 +46,15 @@ func TestOperationsResult(t *testing.T) {
 
 		operationResult := NewOperationResult(
 			context.Background(), operations, Config{
-				Enabled: true, OperationResultPollingInterval: 10 * time.Millisecond,
-				OperationStatsPollingInterval: 10 * time.Millisecond, OperationResultRetentionPeriod: 24 * time.Hour,
+				Enabled: true, OperationResultPollingInterval: 5 * time.Millisecond,
+				OperationStatsPollingInterval: 5 * time.Millisecond, OperationResultRetentionPeriod: 24 * time.Hour,
 			}, log,
 		)
 
 		eventBroker := event.NewPubSub(log)
 		eventBroker.Subscribe(process.OperationFinished{}, operationResult.Handler)
 
-		time.Sleep(20 * time.Millisecond)
+		time.Sleep(30 * time.Millisecond)
 
 		ops, err := operations.GetAllOperations()
 		assert.NoError(t, err)

@@ -5,10 +5,11 @@ import (
 	"log/slog"
 	"time"
 
+	"github.com/kyma-project/kyma-environment-broker/internal/config"
+
 	"github.com/kyma-project/kyma-environment-broker/common/hyperscaler"
 	"github.com/kyma-project/kyma-environment-broker/internal/process"
 	"github.com/kyma-project/kyma-environment-broker/internal/process/deprovisioning"
-	"github.com/kyma-project/kyma-environment-broker/internal/process/input"
 	"github.com/kyma-project/kyma-environment-broker/internal/storage"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
@@ -16,7 +17,7 @@ import (
 func NewDeprovisioningProcessingQueue(ctx context.Context, workersAmount int, deprovisionManager *process.StagedManager,
 	cfg *Config, db storage.BrokerStorage,
 	edpClient deprovisioning.EDPClient, accountProvider hyperscaler.AccountProvider,
-	k8sClientProvider K8sClientProvider, cli client.Client, configProvider input.ConfigurationProvider, logs *slog.Logger) *process.Queue {
+	k8sClientProvider K8sClientProvider, cli client.Client, configProvider config.ConfigurationProvider, logs *slog.Logger) *process.Queue {
 
 	deprovisioningSteps := []struct {
 		disabled bool
@@ -44,7 +45,7 @@ func NewDeprovisioningProcessingQueue(ctx context.Context, workersAmount int, de
 			step: deprovisioning.NewDeleteRuntimeResourceStep(db.Operations(), cli),
 		},
 		{
-			step: deprovisioning.NewCheckRuntimeResourceDeletionStep(db.Operations(), cli, cfg.Provisioner.CheckRuntimeResourceDeletionStepTimeout),
+			step: deprovisioning.NewCheckRuntimeResourceDeletionStep(db.Operations(), cli, cfg.StepTimeouts.CheckRuntimeResourceDeletion),
 		},
 		{
 			step: deprovisioning.NewReleaseSubscriptionStep(db.Operations(), db.Instances(), accountProvider),

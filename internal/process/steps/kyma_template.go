@@ -5,9 +5,9 @@ import (
 	"log/slog"
 	"time"
 
-	"github.com/kyma-project/kyma-environment-broker/internal/broker"
-	"github.com/kyma-project/kyma-environment-broker/internal/process/input"
+	"github.com/kyma-project/kyma-environment-broker/internal/config"
 
+	"github.com/kyma-project/kyma-environment-broker/internal/broker"
 	kebError "github.com/kyma-project/kyma-environment-broker/internal/error"
 
 	"github.com/kyma-project/kyma-environment-broker/internal"
@@ -17,12 +17,12 @@ import (
 
 type InitKymaTemplate struct {
 	operationManager *process.OperationManager
-	configProvider   input.ConfigurationProvider
+	configProvider   config.ConfigurationProvider
 }
 
 var _ process.Step = &InitKymaTemplate{}
 
-func NewInitKymaTemplate(os storage.Operations, configProvider input.ConfigurationProvider) *InitKymaTemplate {
+func NewInitKymaTemplate(os storage.Operations, configProvider config.ConfigurationProvider) *InitKymaTemplate {
 	step := &InitKymaTemplate{
 		configProvider: configProvider,
 	}

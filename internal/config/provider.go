@@ -5,6 +5,10 @@ import (
 )
 
 type (
+	ConfigurationProvider interface {
+		ProvideForGivenPlan(planName string) (*internal.ConfigForPlan, error)
+	}
+
 	ConfigReader interface {
 		Read(planName string) (string, error)
 	}
