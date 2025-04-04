@@ -153,6 +153,8 @@ replace (
 	// include fix https://github.com/satori/go.uuid/pull/75 https://nvd.nist.gov/vuln/detail/CVE-2021-3538
 	github.com/satori/go.uuid => github.com/satori/go.uuid v0.0.0-20181028125025-b2ce2384e17b
 
+	golang.org/x/net => golang.org/x/net v0.38.0
+
 	k8s.io/api => k8s.io/api v0.30.1
 	k8s.io/apiextensions-apiserver => k8s.io/apiextensions-apiserver v0.30.1
 	k8s.io/apimachinery => k8s.io/apimachinery v0.30.1
