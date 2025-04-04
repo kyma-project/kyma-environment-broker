@@ -261,6 +261,8 @@ spec:
               value: "{{ .Values.infrastructureManager.useAdditionalOIDC }}"
             - name: APP_INFRASTRUCTURE_MANAGER_DEFAULT_GARDENER_SHOOT_PURPOSE
               value: "{{ .Values.infrastructureManager.defaultShootPurpose }}"
+            - name: APP_INFRASTRUCTURE_MANAGER_DEFAULT_TRIAL_PROVIDER
+              value: "{{ .Values.infrastructureManager.defaultTrialProvider }}"
             - name: APP_DEFAULT_REQUEST_REGION
               value: "{{ .Values.broker.defaultRequestRegion }}"
             - name: APP_UPDATE_PROCESSING_ENABLED

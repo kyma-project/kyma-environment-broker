@@ -46,9 +46,9 @@ type UpdateProperties struct {
 	AdditionalWorkerNodePools *AdditionalWorkerNodePoolsType `json:"additionalWorkerNodePools,omitempty"`
 }
 
-func (up *UpdateProperties) IncludeAdditional(useAdditionalOIDCSchema bool, defaultOIDCConfig *pkg.OIDCConfigDTO) {
+func (up *UpdateProperties) IncludeAdditional(useAdditionalOIDCSchema bool, defaultOIDCConfig *pkg.OIDCConfigDTO, update bool) {
 	if useAdditionalOIDCSchema {
-		up.OIDC = NewMultipleOIDCSchema(defaultOIDCConfig)
+		up.OIDC = NewMultipleOIDCSchema(defaultOIDCConfig, update)
 	} else {
 		up.OIDC = NewOIDCSchema()
 	}
@@ -79,6 +79,7 @@ type OIDCProperties struct {
 type OIDCPropertiesExpanded struct {
 	OIDCProperties
 	RequiredClaims Type `json:"requiredClaims"`
+	GroupsPrefix   Type `json:"groupsPrefix"`
 }
 
 type OIDCType struct {
@@ -214,11 +215,11 @@ type AdditionalOIDCListItems struct {
 	Required      []string               `json:"required,omitempty"`
 }
 
-func NewMultipleOIDCSchema(defaultOIDCConfig *pkg.OIDCConfigDTO) *OIDCs {
+func NewMultipleOIDCSchema(defaultOIDCConfig *pkg.OIDCConfigDTO, update bool) *OIDCs {
 	return &OIDCs{
 		Type: Type{
 			Type:        "object",
-			Description: "OIDC configuration",
+			Description: "OIDC configration. The list-based configuration is recommended. The object-based configuration is provided for backward compatibility. The object-based configuration inputs are still writable, but only from the JSON view.",
 		},
 		OneOf: []any{
 			AdditionalOIDC{
@@ -233,7 +234,7 @@ func NewMultipleOIDCSchema(defaultOIDCConfig *pkg.OIDCConfigDTO) *OIDCs {
 						Type: Type{
 							Type:        "array",
 							UniqueItems: true,
-							Description: "Check a module technical name on this <a href=https://help.sap.com/docs/btp/sap-business-technology-platform/kyma-modules?version=Cloud>website</a>. You can only use a module technical name once. Provide an empty custom list of modules if you don’t want any modules enabled.",
+							Description: "Specifies the list of OIDC configurations. Besides the default OIDC configuration, you can add multiple custom OIDC configurations. Leave the list empty to not use any OIDC configuration.",
 							Default: []interface{}{
 								map[string]interface{}{
 									"clientID":       defaultOIDCConfig.ClientID,
@@ -242,14 +243,15 @@ func NewMultipleOIDCSchema(defaultOIDCConfig *pkg.OIDCConfigDTO) *OIDCs {
 									"signingAlgs":    defaultOIDCConfig.SigningAlgs,
 									"usernameClaim":  defaultOIDCConfig.UsernameClaim,
 									"usernamePrefix": defaultOIDCConfig.UsernamePrefix,
+									"groupsPrefix":   "-",
 									"requiredClaims": []interface{}{},
 								},
 							},
 						},
 						Items: AdditionalOIDCListItems{
-							ControlsOrder: []string{"clientID", "groupsClaim", "issuerURL", "signingAlgs", "usernameClaim", "usernamePrefix", "requiredClaims"},
-							Type: Type{
-								Type: "object",
+							ControlsOrder: []string{"clientID", "groupsClaim", "issuerURL", "signingAlgs", "usernameClaim", "usernamePrefix", "groupsPrefix", "requiredClaims"}, Type: Type{
+								Type:                 "object",
+								AdditionalProperties: false,
 							},
 							Properties: OIDCPropertiesExpanded{
 								OIDCProperties: OIDCProperties{
@@ -266,12 +268,14 @@ func NewMultipleOIDCSchema(defaultOIDCConfig *pkg.OIDCConfigDTO) *OIDCs {
 										Description: "Comma separated list of allowed JOSE asymmetric signing algorithms, for example, RS256, ES256",
 									},
 								},
+								GroupsPrefix: Type{Type: "string", Description: "if specified, causes claims mapping to group names to be prefixed with the value. A value 'oidc:' would result in groups like 'oidc:engineering' and 'oidc:marketing'. If not provided, the prefix defaults to '( .metadata.name )/'.The value '-' can be used to disable all prefixing."},
 								RequiredClaims: Type{
 									Type: "array",
 									Items: &Type{
-										Type: "string",
+										Type:    "string",
+										Pattern: "^[^=]+=[^=]+$",
 									},
-									Description: "Comma separated list of required claims, for example, repository:myorg/foo-app, workflow:verify-foo-app",
+									Description: "List of key=value pairs that describes a required claim in the ID Token. If set, the claim is verified to be present in the ID Token with a matching value.",
 								},
 							},
 							Required: []string{"clientID", "issuerURL"},
@@ -280,34 +284,37 @@ func NewMultipleOIDCSchema(defaultOIDCConfig *pkg.OIDCConfigDTO) *OIDCs {
 				},
 			},
 			OIDCTypeExpanded{
-				ControlsOrder: []string{"clientID", "groupsClaim", "issuerURL", "signingAlgs", "usernameClaim", "usernamePrefix", "requiredClaims"},
+				ControlsOrder: []string{"clientID", "groupsClaim", "issuerURL", "signingAlgs", "usernameClaim", "usernamePrefix", "groupsPrefix", "requiredClaims"},
 				Type: Type{
-					Type:                 "object",
-					Title:                "Object (not recommended)",
-					Description:          "OIDC configuration",
-					AdditionalProperties: false,
+					Type:        "object",
+					Title:       "Object (not recommended)",
+					Description: "Legacy OIDC configuration",
 				},
 				Properties: OIDCPropertiesExpanded{
 					OIDCProperties: OIDCProperties{
-						ClientID:       Type{Type: "string", Description: "The client ID for the OpenID Connect client."},
-						IssuerURL:      Type{Type: "string", Description: "The URL of the OpenID issuer, only HTTPS scheme will be accepted."},
-						GroupsClaim:    Type{Type: "string", Description: "If provided, the name of a custom OpenID Connect claim for specifying user groups."},
-						UsernameClaim:  Type{Type: "string", Description: "The OpenID claim to use as the user name."},
-						UsernamePrefix: Type{Type: "string", Description: "If provided, all usernames will be prefixed with this value. If not provided, username claims other than 'email' are prefixed by the issuer URL to avoid clashes. To skip any prefixing, provide the value '-' (dash character without additional characters)."},
+						ClientID:       Type{Type: "string", ReadOnly: !update, Description: "The client ID for the OpenID Connect client."},
+						IssuerURL:      Type{Type: "string", ReadOnly: !update, Description: "The URL of the OpenID issuer, only HTTPS scheme will be accepted."},
+						GroupsClaim:    Type{Type: "string", ReadOnly: !update, Description: "If provided, the name of a custom OpenID Connect claim for specifying user groups."},
+						UsernameClaim:  Type{Type: "string", ReadOnly: !update, Description: "The OpenID claim to use as the user name."},
+						UsernamePrefix: Type{Type: "string", ReadOnly: !update, Description: "If provided, all usernames will be prefixed with this value. If not provided, username claims other than 'email' are prefixed by the issuer URL to avoid clashes. To skip any prefixing, provide the value '-' (dash character without additional characters)."},
 						SigningAlgs: Type{
 							Type: "array",
 							Items: &Type{
 								Type: "string",
 							},
+							ReadOnly:    !update,
 							Description: "Comma separated list of allowed JOSE asymmetric signing algorithms, for example, RS256, ES256",
 						},
 					},
+					GroupsPrefix: Type{Type: "string", ReadOnly: !update, Description: "if specified, causes claims mapping to group names to be prefixed with the value. A value 'oidc:' would result in groups like 'oidc:engineering' and 'oidc:marketing'. If not provided, the prefix defaults to '( .metadata.name )/'.The value '-' can be used to disable all prefixing."},
 					RequiredClaims: Type{
 						Type: "array",
 						Items: &Type{
-							Type: "string",
+							Type:    "string",
+							Pattern: "^[^=]+=[^=]+$",
 						},
-						Description: "Comma separated list of required claims, for example, repository:myorg/foo-app, workflow:verify-foo-app",
+						ReadOnly:    !update,
+						Description: "List of key=value pairs that describes a required claim in the ID Token. If set, the claim is verified to be present in the ID Token with a matching value.",
 					},
 				},
 				Required: []string{"clientID", "issuerURL"},
