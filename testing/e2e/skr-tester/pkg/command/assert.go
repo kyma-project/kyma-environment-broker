@@ -15,7 +15,6 @@ import (
 	v1 "k8s.io/api/core/v1"
 	rbacv1 "k8s.io/api/rbac/v1"
 	k8serrors "k8s.io/apimachinery/pkg/api/errors"
-	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	k8sWait "k8s.io/apimachinery/pkg/util/wait"
 	"k8s.io/client-go/tools/clientcmd"
 	"k8s.io/kubectl/pkg/scheme"
@@ -332,7 +331,10 @@ func (cmd *AssertCommand) Run() error {
 		}
 		fmt.Println("All specified additional worker node pools are found in the instance")
 	} else if cmd.regionEnforced {
-		cmd.assertRegionEnforced(kcpClient)
+		if err := cmd.assertRegionEnforced(kcpClient); err != nil {
+			return fmt.Errorf("enforceSeedLocation assertion failed: %w", err)
+		}
+		fmt.Println("enforceSeedLocation is set to true - assertion passed")
 	}
 
 	return nil
@@ -490,18 +492,11 @@ func (cmd *AssertCommand) newK8sClient(kubeconfig []byte) (client.Client, error)
 }
 
 func (cmd *AssertCommand) assertRegionEnforced(kcpClient *kcp.KCPClient) error {
-	cr, err := kcpClient.GetRuntimeCR(cmd.instanceID)
+	regionEnforced, err := kcpClient.GetEnforceSeedLocationValue(cmd.instanceID)
 	if err != nil {
-		return fmt.Errorf("while getting Runtime CR for %s instance ID: %w", cmd.instanceID, err)
+		return fmt.Errorf("while getting enforceSeedLocation value from Runtime CR for %s instance ID: %w", cmd.instanceID, err)
 	}
-	val, found, err := unstructured.NestedBool(cr.Object, "spec", "shoot", "enforceSeedLocation")
-	if err != nil {
-		return fmt.Errorf("while getting nested bool field in Runtime CR: %w", err)
-	}
-	if !found {
-		return fmt.Errorf("enforceSeedLocation field not found in Runtime CR spec")
-	}
-	if !val {
+	if !regionEnforced {
 		return fmt.Errorf("enforceSeedLocation field in Runtime CR is set to false, but should be true")
 	}
 
