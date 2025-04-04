@@ -3,9 +3,10 @@ package deprovisioning
 import (
 	"context"
 	"fmt"
-	"github.com/kyma-project/kyma-environment-broker/internal/config"
 	"log/slog"
 	"time"
+
+	"github.com/kyma-project/kyma-environment-broker/internal/config"
 
 	kebError "github.com/kyma-project/kyma-environment-broker/internal/error"
 
