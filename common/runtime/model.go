@@ -156,6 +156,7 @@ func (p AutoScalerParameters) Validate(planMin, planMax int) error {
 type OIDCConfigDTO struct {
 	ClientID       string   `json:"clientID" yaml:"clientID"`
 	GroupsClaim    string   `json:"groupsClaim" yaml:"groupsClaim"`
+	GroupsPrefix   string   `json:"groupsPrefix" yaml:"groupsPrefix"`
 	IssuerURL      string   `json:"issuerURL" yaml:"issuerURL"`
 	SigningAlgs    []string `json:"signingAlgs" yaml:"signingAlgs"`
 	UsernameClaim  string   `json:"usernameClaim" yaml:"usernameClaim"`
@@ -169,7 +170,7 @@ func (o *OIDCsDTO) IsProvided() bool {
 	if o == nil {
 		return false
 	}
-	if o.OIDCConfigDTO != nil && (o.OIDCConfigDTO.ClientID != "" || o.OIDCConfigDTO.IssuerURL != "" || o.OIDCConfigDTO.GroupsClaim != "" || o.OIDCConfigDTO.UsernamePrefix != "" || o.OIDCConfigDTO.UsernameClaim != "" || len(o.OIDCConfigDTO.SigningAlgs) > 0 || len(o.OIDCConfigDTO.RequiredClaims) > 0) {
+	if o.OIDCConfigDTO != nil && (o.OIDCConfigDTO.ClientID != "" || o.OIDCConfigDTO.IssuerURL != "" || o.OIDCConfigDTO.GroupsClaim != "" || o.OIDCConfigDTO.UsernamePrefix != "" || o.OIDCConfigDTO.UsernameClaim != "" || len(o.OIDCConfigDTO.SigningAlgs) > 0 || len(o.OIDCConfigDTO.RequiredClaims) > 0 || o.OIDCConfigDTO.GroupsPrefix != "") {
 		return true
 	}
 	if o.List != nil {

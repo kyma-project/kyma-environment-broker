@@ -56,6 +56,7 @@ var defaultNetworking = imv1.Networking{
 var defaultOIDSConfig = pkg.OIDCConfigDTO{
 	ClientID:       "client-id-default",
 	GroupsClaim:    "gc-default",
+	GroupsPrefix:   "-",
 	IssuerURL:      "issuer-url-default",
 	SigningAlgs:    []string{"sa-default"},
 	UsernameClaim:  "uc-default",

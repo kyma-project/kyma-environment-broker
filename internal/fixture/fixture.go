@@ -234,6 +234,7 @@ func FixUpdatingOperationWithOIDCObject(operationId, instanceId string) internal
 			OIDCConfigDTO: &pkg.OIDCConfigDTO{
 				ClientID:       "clinet-id-oidc",
 				GroupsClaim:    "groups",
+				GroupsPrefix:   "-",
 				IssuerURL:      "issuer-url",
 				SigningAlgs:    []string{"signingAlgs"},
 				UsernameClaim:  "sub",

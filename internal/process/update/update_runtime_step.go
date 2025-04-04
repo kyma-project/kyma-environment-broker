@@ -8,7 +8,6 @@ import (
 	"time"
 
 	"github.com/kyma-project/kyma-environment-broker/internal/provider"
-	"github.com/kyma-project/kyma-environment-broker/internal/ptr"
 	"k8s.io/apimachinery/pkg/api/errors"
 
 	gardener "github.com/gardener/gardener/pkg/apis/core/v1beta1"
@@ -112,7 +111,7 @@ func (s *UpdateRuntimeStep) Run(operation internal.Operation, log *slog.Logger) 
 					UsernamePrefix: &oidcConfig.UsernamePrefix,
 					UsernameClaim:  &oidcConfig.UsernameClaim,
 					RequiredClaims: requiredClaims,
-					GroupsPrefix:   ptr.String("-"),
+					GroupsPrefix:   &oidcConfig.GroupsPrefix,
 				})
 			}
 			runtime.Spec.Shoot.Kubernetes.KubeAPIServer.AdditionalOidcConfig = &oidcConfigs
@@ -139,6 +138,9 @@ func (s *UpdateRuntimeStep) Run(operation internal.Operation, log *slog.Logger) 
 			if dto.UsernameClaim != "" {
 				config.UsernameClaim = &dto.UsernameClaim
 			}
+			if dto.GroupsPrefix != "" {
+				config.GroupsPrefix = &dto.GroupsPrefix
+			}
 			if s.useAdditionalOIDCSchema && len(dto.RequiredClaims) > 0 {
 				requiredClaims := make(map[string]string)
 				for _, claim := range dto.RequiredClaims {
@@ -149,7 +151,6 @@ func (s *UpdateRuntimeStep) Run(operation internal.Operation, log *slog.Logger) 
 				}
 				config.RequiredClaims = requiredClaims
 			}
-			(*runtime.Spec.Shoot.Kubernetes.KubeAPIServer.AdditionalOidcConfig)[0].GroupsPrefix = ptr.String("-")
 		}
 	}
 

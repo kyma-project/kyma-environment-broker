@@ -185,6 +185,7 @@ func TestUpdateRuntimeStep_RunUpdateEmptyAdditionalOIDCWithMultipleAdditionalOID
 				{
 					ClientID:       "first-client-id-custom",
 					GroupsClaim:    "first-gc-custom",
+					GroupsPrefix:   "first-gp-custom",
 					IssuerURL:      "first-issuer-url-custom",
 					SigningAlgs:    []string{"first-sa-custom"},
 					UsernameClaim:  "first-uc-custom",
@@ -194,6 +195,7 @@ func TestUpdateRuntimeStep_RunUpdateEmptyAdditionalOIDCWithMultipleAdditionalOID
 				{
 					ClientID:       "second-client-id-custom",
 					GroupsClaim:    "second-gc-custom",
+					GroupsPrefix:   "second-gp-custom",
 					IssuerURL:      "second-issuer-url-custom",
 					SigningAlgs:    []string{"second-sa-custom"},
 					UsernameClaim:  "second-uc-custom",
@@ -213,7 +215,7 @@ func TestUpdateRuntimeStep_RunUpdateEmptyAdditionalOIDCWithMultipleAdditionalOID
 			"claim1": "value1",
 			"claim2": "value2",
 		},
-		GroupsPrefix: ptr.String("-"),
+		GroupsPrefix: ptr.String("first-gp-custom"),
 	}
 	secondExpectedOIDCConfig := gardener.OIDCConfig{
 		ClientID:       ptr.String("second-client-id-custom"),
@@ -222,7 +224,7 @@ func TestUpdateRuntimeStep_RunUpdateEmptyAdditionalOIDCWithMultipleAdditionalOID
 		SigningAlgs:    []string{"second-sa-custom"},
 		UsernameClaim:  ptr.String("second-uc-custom"),
 		UsernamePrefix: ptr.String("second-up-custom"),
-		GroupsPrefix:   ptr.String("-"),
+		GroupsPrefix:   ptr.String("second-gp-custom"),
 	}
 	var gotRuntime imv1.Runtime
 	err = kcpClient.Get(context.Background(), client.ObjectKey{Name: operation.RuntimeResourceName, Namespace: "kcp-system"}, &gotRuntime)
@@ -263,6 +265,7 @@ func TestUpdateRuntimeStep_RunUpdateMultipleAdditionalOIDCWithMultipleAdditional
 				{
 					ClientID:       "first-client-id-custom",
 					GroupsClaim:    "first-gc-custom",
+					GroupsPrefix:   "first-gp-custom",
 					IssuerURL:      "first-issuer-url-custom",
 					SigningAlgs:    []string{"first-sa-custom"},
 					UsernameClaim:  "first-uc-custom",
@@ -272,6 +275,7 @@ func TestUpdateRuntimeStep_RunUpdateMultipleAdditionalOIDCWithMultipleAdditional
 				{
 					ClientID:       "second-client-id-custom",
 					GroupsClaim:    "second-gc-custom",
+					GroupsPrefix:   "second-gp-custom",
 					IssuerURL:      "second-issuer-url-custom",
 					SigningAlgs:    []string{"second-sa-custom"},
 					UsernameClaim:  "second-uc-custom",
@@ -292,7 +296,7 @@ func TestUpdateRuntimeStep_RunUpdateMultipleAdditionalOIDCWithMultipleAdditional
 			"claim1": "value1",
 			"claim2": "value2",
 		},
-		GroupsPrefix: ptr.String("-"),
+		GroupsPrefix: ptr.String("first-gp-custom"),
 	}
 	secondExpectedOIDCConfig := gardener.OIDCConfig{
 		ClientID:       ptr.String("second-client-id-custom"),
@@ -305,7 +309,7 @@ func TestUpdateRuntimeStep_RunUpdateMultipleAdditionalOIDCWithMultipleAdditional
 			"claim3": "value3",
 			"claim4": "value4",
 		},
-		GroupsPrefix: ptr.String("-"),
+		GroupsPrefix: ptr.String("second-gp-custom"),
 	}
 	var gotRuntime imv1.Runtime
 	err = kcpClient.Get(context.Background(), client.ObjectKey{Name: operation.RuntimeResourceName, Namespace: "kcp-system"}, &gotRuntime)
@@ -418,6 +422,7 @@ func fixRuntimeResourceWithOneAdditionalOidc(name string, controlledByProvisione
 							{
 								ClientID:       ptr.String("initial-client-id-oidc"),
 								GroupsClaim:    ptr.String("initial-groups"),
+								GroupsPrefix:   ptr.String("initial-groups-prefix"),
 								IssuerURL:      ptr.String("initial-issuer-url"),
 								SigningAlgs:    []string{"initial-signingAlgs"},
 								UsernameClaim:  ptr.String("initial-sub"),
@@ -461,6 +466,7 @@ func fixRuntimeResourceWithMultipleAdditionalOidc(name string, controlledByProvi
 							{
 								ClientID:       ptr.String("first-initial-client-id-oidc"),
 								GroupsClaim:    ptr.String("first-initial-groups"),
+								GroupsPrefix:   ptr.String("first-initial-groups-prefix"),
 								IssuerURL:      ptr.String("first-initial-issuer-url"),
 								SigningAlgs:    []string{"first-initial-signingAlgs"},
 								UsernameClaim:  ptr.String("first-initial-sub"),
@@ -469,6 +475,7 @@ func fixRuntimeResourceWithMultipleAdditionalOidc(name string, controlledByProvi
 							{
 								ClientID:       ptr.String("second-initial-client-id-oidc"),
 								GroupsClaim:    ptr.String("second-initial-groups"),
+								GroupsPrefix:   ptr.String("second-initial-groups-prefix"),
 								IssuerURL:      ptr.String("second-initial-issuer-url"),
 								SigningAlgs:    []string{"second-initial-signingAlgs"},
 								UsernameClaim:  ptr.String("second-initial-sub"),
@@ -477,6 +484,7 @@ func fixRuntimeResourceWithMultipleAdditionalOidc(name string, controlledByProvi
 							{
 								ClientID:       ptr.String("third-initial-client-id-oidc"),
 								GroupsClaim:    ptr.String("third-initial-groups"),
+								GroupsPrefix:   ptr.String("third-initial-groups-prefix"),
 								IssuerURL:      ptr.String("third-initial-issuer-url"),
 								SigningAlgs:    []string{"third-initial-signingAlgs"},
 								UsernameClaim:  ptr.String("third-initial-sub"),
