@@ -209,7 +209,7 @@ func FixProvisioningOperationWithProvisioningParameters(operationId, instanceId 
 func FixUpdatingOperation(operationId, instanceId string) internal.UpdatingOperation {
 	o := FixOperation(operationId, instanceId, internal.OperationTypeUpdate)
 	o.UpdatingParameters = internal.UpdatingParametersDTO{
-		OIDC: &pkg.OIDCsDTO{
+		OIDC: &pkg.OIDConnectDTO{
 			List: []pkg.OIDCConfigDTO{
 				{
 					ClientID:       "clinet-id-oidc",
@@ -230,7 +230,7 @@ func FixUpdatingOperation(operationId, instanceId string) internal.UpdatingOpera
 func FixUpdatingOperationWithOIDCObject(operationId, instanceId string) internal.UpdatingOperation {
 	o := FixOperation(operationId, instanceId, internal.OperationTypeUpdate)
 	o.UpdatingParameters = internal.UpdatingParametersDTO{
-		OIDC: &pkg.OIDCsDTO{
+		OIDC: &pkg.OIDConnectDTO{
 			OIDCConfigDTO: &pkg.OIDCConfigDTO{
 				ClientID:       "clinet-id-oidc",
 				GroupsClaim:    "groups",

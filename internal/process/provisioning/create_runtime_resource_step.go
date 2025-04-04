@@ -292,7 +292,7 @@ func (s *CreateRuntimeResourceStep) createDefaultOIDCConfig() gardener.OIDCConfi
 	}
 }
 
-func (s *CreateRuntimeResourceStep) createOIDCConfigFromInput(oidcInput *pkg.OIDCsDTO, defaultOIDC gardener.OIDCConfig) *[]gardener.OIDCConfig {
+func (s *CreateRuntimeResourceStep) createOIDCConfigFromInput(oidcInput *pkg.OIDConnectDTO, defaultOIDC gardener.OIDCConfig) *[]gardener.OIDCConfig {
 	if oidcInput.List != nil {
 		return s.createOIDCConfigList(oidcInput.List)
 	}

@@ -481,7 +481,7 @@ func TestUpdateEndpoint_UpdateGlobalAccountID(t *testing.T) {
 func TestUpdateEndpoint_UpdateFromOIDCObject(t *testing.T) {
 	// given
 	instance := fixture.FixInstance(instanceID)
-	instance.Parameters.Parameters.OIDC = &pkg.OIDCsDTO{
+	instance.Parameters.Parameters.OIDC = &pkg.OIDConnectDTO{
 		OIDCConfigDTO: &pkg.OIDCConfigDTO{
 			ClientID:       "client-id",
 			GroupsClaim:    "groups",
@@ -580,7 +580,7 @@ func TestUpdateEndpoint_UpdateFromOIDCObject(t *testing.T) {
 func TestUpdateEndpoint_UpdateFromOIDCList(t *testing.T) {
 	// given
 	instance := fixture.FixInstance(instanceID)
-	instance.Parameters.Parameters.OIDC = &pkg.OIDCsDTO{
+	instance.Parameters.Parameters.OIDC = &pkg.OIDConnectDTO{
 		List: []pkg.OIDCConfigDTO{
 			{
 				ClientID:       "client-id",

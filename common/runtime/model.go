@@ -99,7 +99,7 @@ type ProvisioningParametersDTO struct {
 	ShootName   string `json:"shootName,omitempty"`
 	ShootDomain string `json:"shootDomain,omitempty"`
 
-	OIDC                      *OIDCsDTO                  `json:"oidc,omitempty"`
+	OIDC                      *OIDConnectDTO             `json:"oidc,omitempty"`
 	Networking                *NetworkingDTO             `json:"networking,omitempty"`
 	Modules                   *ModulesDTO                `json:"modules,omitempty"`
 	ShootAndSeedSameRegion    *bool                      `json:"shootAndSeedSameRegion,omitempty"`
@@ -166,7 +166,7 @@ type OIDCConfigDTO struct {
 
 const oidcValidSigningAlgs = "RS256,RS384,RS512,ES256,ES384,ES512,PS256,PS384,PS512"
 
-func (o *OIDCsDTO) IsProvided() bool {
+func (o *OIDConnectDTO) IsProvided() bool {
 	if o == nil {
 		return false
 	}
@@ -179,7 +179,7 @@ func (o *OIDCsDTO) IsProvided() bool {
 	return false
 }
 
-func (o *OIDCsDTO) Validate(instanceOidcConfig *OIDCsDTO) error {
+func (o *OIDConnectDTO) Validate(instanceOidcConfig *OIDConnectDTO) error {
 	if o.List != nil && o.OIDCConfigDTO != nil {
 		return fmt.Errorf("both list and object OIDC cannot be set")
 	}
@@ -200,7 +200,7 @@ func (o *OIDCsDTO) Validate(instanceOidcConfig *OIDCsDTO) error {
 	return nil
 }
 
-func (o *OIDCsDTO) validateSingleOIDC(instanceOidcConfig *OIDCsDTO, errs *[]string) error {
+func (o *OIDConnectDTO) validateSingleOIDC(instanceOidcConfig *OIDConnectDTO, errs *[]string) error {
 	if instanceOidcConfig != nil && instanceOidcConfig.List != nil {
 		return fmt.Errorf("an object OIDC cannot be used because the instance OIDC configuration uses a list")
 	}
@@ -217,7 +217,7 @@ func (o *OIDCsDTO) validateSingleOIDC(instanceOidcConfig *OIDCsDTO, errs *[]stri
 	return nil
 }
 
-func (o *OIDCsDTO) validateOIDCList(errs *[]string) {
+func (o *OIDConnectDTO) validateOIDCList(errs *[]string) {
 	for i, oidc := range o.List {
 		if len(oidc.ClientID) == 0 {
 			*errs = append(*errs, fmt.Sprintf("clientID must not be empty for OIDC at index %d", i))
@@ -232,7 +232,7 @@ func (o *OIDCsDTO) validateOIDCList(errs *[]string) {
 	}
 }
 
-func (o *OIDCsDTO) validateIssuerURL(issuerURL string, errs *[]string) {
+func (o *OIDConnectDTO) validateIssuerURL(issuerURL string, errs *[]string) {
 	issuer, err := url.Parse(issuerURL)
 	if err != nil || (issuer != nil && len(issuer.Host) == 0) {
 		*errs = append(*errs, "issuerURL must be a valid URL")
@@ -253,7 +253,7 @@ func (o *OIDCsDTO) validateIssuerURL(issuerURL string, errs *[]string) {
 	}
 }
 
-func (o *OIDCsDTO) validateIssuerURLForIndex(issuerURL string, index int, errs *[]string) {
+func (o *OIDConnectDTO) validateIssuerURLForIndex(issuerURL string, index int, errs *[]string) {
 	issuer, err := url.Parse(issuerURL)
 	if err != nil || (issuer != nil && len(issuer.Host) == 0) {
 		*errs = append(*errs, fmt.Sprintf("issuerURL must be a valid URL for OIDC at index %d", index))
@@ -274,7 +274,7 @@ func (o *OIDCsDTO) validateIssuerURLForIndex(issuerURL string, index int, errs *
 	}
 }
 
-func (o *OIDCsDTO) validateSigningAlgs(signingAlgs []string, errs *[]string) {
+func (o *OIDConnectDTO) validateSigningAlgs(signingAlgs []string, errs *[]string) {
 	if len(signingAlgs) != 0 {
 		validSigningAlgs := o.validSigningAlgsSet()
 		for _, providedAlg := range signingAlgs {
@@ -286,7 +286,7 @@ func (o *OIDCsDTO) validateSigningAlgs(signingAlgs []string, errs *[]string) {
 	}
 }
 
-func (o *OIDCsDTO) validateSigningAlgsForIndex(signingAlgs []string, index int, errs *[]string) {
+func (o *OIDConnectDTO) validateSigningAlgsForIndex(signingAlgs []string, index int, errs *[]string) {
 	if len(signingAlgs) != 0 {
 		validSigningAlgs := o.validSigningAlgsSet()
 		for _, providedAlg := range signingAlgs {
@@ -298,7 +298,7 @@ func (o *OIDCsDTO) validateSigningAlgsForIndex(signingAlgs []string, index int, 
 	}
 }
 
-func (o *OIDCsDTO) validateRequiredClaims(requiredClaims []string, errs *[]string) {
+func (o *OIDConnectDTO) validateRequiredClaims(requiredClaims []string, errs *[]string) {
 	if len(requiredClaims) != 0 {
 		for _, claim := range requiredClaims {
 			if !strings.Contains(claim, "=") {
@@ -313,7 +313,7 @@ func (o *OIDCsDTO) validateRequiredClaims(requiredClaims []string, errs *[]strin
 	}
 }
 
-func (o *OIDCsDTO) validateRequiredClaimsForIndex(requiredClaims []string, index int, errs *[]string) {
+func (o *OIDConnectDTO) validateRequiredClaimsForIndex(requiredClaims []string, index int, errs *[]string) {
 	for _, claim := range requiredClaims {
 		if !strings.Contains(claim, "=") {
 			*errs = append(*errs, fmt.Sprintf("requiredClaims must be in claim=value format, invalid claim: %s for OIDC at index %d", claim, index))
@@ -321,7 +321,7 @@ func (o *OIDCsDTO) validateRequiredClaimsForIndex(requiredClaims []string, index
 	}
 }
 
-func (o *OIDCsDTO) validSigningAlgsSet() map[string]bool {
+func (o *OIDConnectDTO) validSigningAlgsSet() map[string]bool {
 	algs := strings.Split(oidcValidSigningAlgs, ",")
 	signingAlgsSet := make(map[string]bool, len(algs))
 
@@ -332,7 +332,7 @@ func (o *OIDCsDTO) validSigningAlgsSet() map[string]bool {
 	return signingAlgsSet
 }
 
-func (o *OIDCsDTO) validRequiredClaimst() map[string]bool {
+func (o *OIDConnectDTO) validRequiredClaimst() map[string]bool {
 	algs := strings.Split(oidcValidSigningAlgs, ",")
 	signingAlgsSet := make(map[string]bool, len(algs))
 
@@ -516,7 +516,7 @@ func (rt RuntimeDTO) LastOperation() Operation {
 	return op
 }
 
-type OIDCsDTO struct {
+type OIDConnectDTO struct {
 	*OIDCConfigDTO
 	List []OIDCConfigDTO `json:"list" yaml:"list"`
 }

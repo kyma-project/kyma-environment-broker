@@ -72,7 +72,7 @@ func TestCreateRuntimeResourceStep_AllCustom(t *testing.T) {
 		MultiZoneCluster: true,
 	}
 	instance, operation := fixInstanceAndOperation(broker.AzurePlanID, "westeurope", "platform-region", inputConfig, pkg.Azure)
-	operation.ProvisioningParameters.Parameters.OIDC = &pkg.OIDCsDTO{
+	operation.ProvisioningParameters.Parameters.OIDC = &pkg.OIDConnectDTO{
 		OIDCConfigDTO: &pkg.OIDCConfigDTO{
 			ClientID:       "client-id-custom",
 			GroupsClaim:    "gc-custom",
@@ -135,7 +135,7 @@ func TestCreateRuntimeResourceStep_AllCustomWithOIDCList(t *testing.T) {
 		MultiZoneCluster: true,
 	}
 	instance, operation := fixInstanceAndOperation(broker.AzurePlanID, "westeurope", "platform-region", inputConfig, pkg.Azure)
-	operation.ProvisioningParameters.Parameters.OIDC = &pkg.OIDCsDTO{
+	operation.ProvisioningParameters.Parameters.OIDC = &pkg.OIDConnectDTO{
 		List: []pkg.OIDCConfigDTO{
 			{
 				ClientID:       "client-id-custom",
@@ -195,7 +195,7 @@ func TestCreateRuntimeResourceStep_HandleMultipleAdditionalOIDC(t *testing.T) {
 		MultiZoneCluster: true,
 	}
 	instance, operation := fixInstanceAndOperation(broker.AzurePlanID, "westeurope", "platform-region", inputConfig, pkg.Azure)
-	operation.ProvisioningParameters.Parameters.OIDC = &pkg.OIDCsDTO{
+	operation.ProvisioningParameters.Parameters.OIDC = &pkg.OIDConnectDTO{
 		List: []pkg.OIDCConfigDTO{
 			{
 				ClientID:       "first-client-id-custom",
@@ -267,7 +267,7 @@ func TestCreateRuntimeResourceStep_OIDC_MixedCustom(t *testing.T) {
 		MultiZoneCluster: true,
 	}
 	instance, operation := fixInstanceAndOperation(broker.AzurePlanID, "westeurope", "platform-region", inputConfig, pkg.Azure)
-	operation.ProvisioningParameters.Parameters.OIDC = &pkg.OIDCsDTO{
+	operation.ProvisioningParameters.Parameters.OIDC = &pkg.OIDConnectDTO{
 		OIDCConfigDTO: &pkg.OIDCConfigDTO{
 			ClientID:      "client-id-custom",
 			GroupsClaim:   "gc-custom",
@@ -312,7 +312,7 @@ func TestCreateRuntimeResourceStep_HandleEmptyOIDCList(t *testing.T) {
 		MultiZoneCluster: true,
 	}
 	instance, operation := fixInstanceAndOperation(broker.AzurePlanID, "westeurope", "platform-region", inputConfig, pkg.Azure)
-	operation.ProvisioningParameters.Parameters.OIDC = &pkg.OIDCsDTO{
+	operation.ProvisioningParameters.Parameters.OIDC = &pkg.OIDConnectDTO{
 		List: []pkg.OIDCConfigDTO{},
 	}
 	assertInsertions(t, memoryStorage, instance, operation)
@@ -350,7 +350,7 @@ func TestCreateRuntimeResourceStep_HandleNotNilOIDCWithoutListOrObject(t *testin
 		MultiZoneCluster: true,
 	}
 	instance, operation := fixInstanceAndOperation(broker.AzurePlanID, "westeurope", "platform-region", inputConfig, pkg.Azure)
-	operation.ProvisioningParameters.Parameters.OIDC = &pkg.OIDCsDTO{}
+	operation.ProvisioningParameters.Parameters.OIDC = &pkg.OIDConnectDTO{}
 	assertInsertions(t, memoryStorage, instance, operation)
 	expectedOIDCConfig := gardener.OIDCConfig{
 		ClientID:       ptr.String("client-id-default"),
