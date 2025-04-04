@@ -4,8 +4,7 @@ This folder contains Kyma Environment Broker's (KEB's) documentation.
 
 If you want to know how to use KEB, read the documents in the [`user`](user) directory:  
 
-* [Kyma Environment Broker Architecture](./user/01-10-architecture.md)  
-* [Kyma Environment Broker Target Architecture](./user/01-10-architecture.md)
+* [Kyma Environment Broker Architecture](./user/01-10-architecture.md)
 * [Kyma Environment Broker Endpoints](./user/02-10-broker-endpoints.md)
 * [Service Description](./user/03-10-service-description.md)
 * [SAP BTP, Kyma Runtime Operations](./user/03-20-runtime-operations.md)
@@ -28,7 +27,6 @@ For technical details of KEB, go to the `contributor` directory:
 * [Kyma Environment Broker Configuration](./contributor/02-30-keb-configuration.md)
 * [Kyma Environment Broker Configuration for a Given Plan](./contributor/02-40-broker-configuration-for-given-plan.md)
 * [Orchestration](./contributor/02-50-orchestration.md)
-* [Check Orchestration Status](./contributor/02-70-orchestration-status.md)
 * [Hyperscaler Account Pool](./contributor/03-10-hyperscaler-account-pool.md)
 * [EU Access](./contributor/03-20-eu-access.md)
 * [Trial and Free Instance Expiration](./contributor/03-30-trial-and-free-expiration.md)
