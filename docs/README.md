@@ -5,7 +5,7 @@ This folder contains Kyma Environment Broker's (KEB's) documentation.
 If you want to know how to use KEB, read the documents in the [`user`](user) directory:  
 
 * [Kyma Environment Broker Architecture](./user/01-10-architecture.md)  
-* [Kyma Environment Broker Target Architecture](./user/01-20-target-architecture.md)
+* [Kyma Environment Broker Target Architecture](./user/01-10-architecture.md)
 * [Kyma Environment Broker Endpoints](./user/02-10-broker-endpoints.md)
 * [Service Description](./user/03-10-service-description.md)
 * [SAP BTP, Kyma Runtime Operations](./user/03-20-runtime-operations.md)

@@ -5,9 +5,6 @@ Kyma Environment Broker (KEB) allows you to configure operations you can run on 
 * Return an error, which interrupts the entire process, or skip step execution.
 * Repeat the entire operation after a specified period.
 
-> [!NOTE]
-> It's important to set lower timeouts for the Kyma installation in Runtime Provisioner.
-
 ## Stages
 
 A stage is a grouping unit for steps. An operation can consist of multiple stages, and a stage can consist of multiple steps. Once all the steps in a stage are successfully executed, the stage is marked as finished and never repeated, even if the next stage fails. If a step fails at a given stage, the whole stage is repeated from the beginning.
@@ -26,7 +23,7 @@ You can find all the provisioning steps in the [provisioning](../../cmd/broker/p
 Each deprovisioning step is responsible for a separate part of cleaning Kyma runtime dependencies. To properly deprovision all the dependencies, you need the data used during the Kyma runtime provisioning. The first step finds the previous operation and copies the data.
 
 None of the deprovisioning steps should block the entire deprovisioning operation. Use the `RetryOperationWithoutFail` function from the `DeprovisionOperationManager` struct to skip a step in case of a retry timeout. Set a 5-minute, at the most, timeout for retries in a step.
-Only one step may fail the operation, namely `Check_Runtime_Removal`. It fails the operation in case of a timeout while checking for the Provisioner to remove the shoot.
+Only one step may fail the operation, namely `Check_RuntimeResource_Deletion`. It fails the operation in case of a timeout while checking for the KIM to remove the shoot.
 Once the step is successfully executed, it isn't retried (every deprovisioning step is defined in a separate stage). If a step has been skipped due to a retry timeout or error, the [Cron Job](../contributor/06-50-deprovision-retrigger-cronjob.md) tries to deprovision all remaining Kyma runtime dependencies again at a scheduled time.
 You can find all the deprovisioning steps in the [deprovisioning](../../cmd/broker/deprovisioning.go) file.
 
