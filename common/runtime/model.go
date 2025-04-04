@@ -160,7 +160,6 @@ type OIDCConfigDTO struct {
 	SigningAlgs    []string `json:"signingAlgs" yaml:"signingAlgs"`
 	UsernameClaim  string   `json:"usernameClaim" yaml:"usernameClaim"`
 	UsernamePrefix string   `json:"usernamePrefix" yaml:"usernamePrefix"`
-	GroupsPrefix   string   `json:"groupsPrefix,omitempty" yaml:"groupsPrefix,omitempty"`
 }
 
 const oidcValidSigningAlgs = "RS256,RS384,RS512,ES256,ES384,ES512,PS256,PS384,PS512"
