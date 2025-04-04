@@ -153,14 +153,14 @@ replace (
 	// include fix https://github.com/satori/go.uuid/pull/75 https://nvd.nist.gov/vuln/detail/CVE-2021-3538
 	github.com/satori/go.uuid => github.com/satori/go.uuid v0.0.0-20181028125025-b2ce2384e17b
 
+	golang.org/x/net => golang.org/x/net v0.38.0
+
 	k8s.io/api => k8s.io/api v0.30.1
 	k8s.io/apiextensions-apiserver => k8s.io/apiextensions-apiserver v0.30.1
 	k8s.io/apimachinery => k8s.io/apimachinery v0.30.1
 	k8s.io/client-go => k8s.io/client-go v0.30.1
 	k8s.io/kubectl => k8s.io/kubectl v0.26.1
 	sigs.k8s.io/controller-runtime => sigs.k8s.io/controller-runtime v0.14.6
-
-	golang.org/x/net => golang.org/x/net v0.38.0
 )
 
 // This version with the 'v' was pushed by mistake, as we use SemVer without the 'v' prefix. Running 'go get github.com/kyma-project/kyma-environment-broker' will resolve v0.0.1 to the latest version and override the real latest version without the 'v' prefix.
