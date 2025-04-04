@@ -79,6 +79,7 @@ type OIDCProperties struct {
 type OIDCPropertiesExpanded struct {
 	OIDCProperties
 	RequiredClaims Type `json:"requiredClaims"`
+	GroupsPrefix   Type `json:"groupsPrefix"`
 }
 
 type OIDCType struct {
@@ -242,20 +243,20 @@ func NewMultipleOIDCSchema(defaultOIDCConfig *pkg.OIDCConfigDTO) *OIDCs {
 									"signingAlgs":    defaultOIDCConfig.SigningAlgs,
 									"usernameClaim":  defaultOIDCConfig.UsernameClaim,
 									"usernamePrefix": defaultOIDCConfig.UsernamePrefix,
+									"groupsPrefix":   defaultOIDCConfig.GroupsPrefix,
 									"requiredClaims": []interface{}{},
 								},
 							},
 						},
 						Items: AdditionalOIDCListItems{
-							ControlsOrder: []string{"clientID", "groupsClaim", "issuerURL", "signingAlgs", "usernameClaim", "usernamePrefix", "requiredClaims"},
-							Type: Type{
+							ControlsOrder: []string{"clientID", "groupsClaim", "issuerURL", "signingAlgs", "usernameClaim", "usernamePrefix", "groupsPrefix", "requiredClaims"}, Type: Type{
 								Type:                 "object",
 								AdditionalProperties: false,
 							},
 							Properties: OIDCPropertiesExpanded{
 								OIDCProperties: OIDCProperties{
 									ClientID:       Type{Type: "string", Description: "The client ID for the OpenID Connect client."},
-									IssuerURL:      Type{Type: "string", Description: "The URL of the OpenID issuer, only HTTPS scheme will be accepted."},
+									IssuerURL:      Type{Type: "string", Description: "The URL the provider signs ID Tokens as, only HTTPS scheme will be accepted."},
 									GroupsClaim:    Type{Type: "string", Description: "If provided, the name of a custom OpenID Connect claim for specifying user groups."},
 									UsernameClaim:  Type{Type: "string", Description: "The OpenID claim to use as the user name."},
 									UsernamePrefix: Type{Type: "string", Description: "If provided, all usernames will be prefixed with this value. If not provided, username claims other than 'email' are prefixed by the issuer URL to avoid clashes. To skip any prefixing, provide the value '-' (dash character without additional characters)."},
@@ -267,6 +268,7 @@ func NewMultipleOIDCSchema(defaultOIDCConfig *pkg.OIDCConfigDTO) *OIDCs {
 										Description: "Comma separated list of allowed JOSE asymmetric signing algorithms, for example, RS256, ES256",
 									},
 								},
+								GroupsPrefix: Type{Type: "string", Description: "if specified, causes claims mapping to group names to be prefixed with the value. A value 'oidc:' would result in groups like 'oidc:engineering' and 'oidc:marketing'. If not provided, the prefix defaults to '( .metadata.name )/'.The value '-' can be used to disable all prefixing."},
 								RequiredClaims: Type{
 									Type: "array",
 									Items: &Type{
@@ -282,7 +284,7 @@ func NewMultipleOIDCSchema(defaultOIDCConfig *pkg.OIDCConfigDTO) *OIDCs {
 				},
 			},
 			OIDCTypeExpanded{
-				ControlsOrder: []string{"clientID", "groupsClaim", "issuerURL", "signingAlgs", "usernameClaim", "usernamePrefix", "requiredClaims"},
+				ControlsOrder: []string{"clientID", "groupsClaim", "issuerURL", "signingAlgs", "usernameClaim", "usernamePrefix", "groupsPrefix", "requiredClaims"},
 				Type: Type{
 					Type:        "object",
 					Title:       "Object (not recommended)",
@@ -291,7 +293,7 @@ func NewMultipleOIDCSchema(defaultOIDCConfig *pkg.OIDCConfigDTO) *OIDCs {
 				Properties: OIDCPropertiesExpanded{
 					OIDCProperties: OIDCProperties{
 						ClientID:       Type{Type: "string", ReadOnly: true, Description: "The client ID for the OpenID Connect client."},
-						IssuerURL:      Type{Type: "string", ReadOnly: true, Description: "The URL of the OpenID issuer, only HTTPS scheme will be accepted."},
+						IssuerURL:      Type{Type: "string", ReadOnly: true, Description: "The URL the provider signs ID Tokens as, only HTTPS scheme will be accepted."},
 						GroupsClaim:    Type{Type: "string", ReadOnly: true, Description: "If provided, the name of a custom OpenID Connect claim for specifying user groups."},
 						UsernameClaim:  Type{Type: "string", ReadOnly: true, Description: "The OpenID claim to use as the user name."},
 						UsernamePrefix: Type{Type: "string", ReadOnly: true, Description: "If provided, all usernames will be prefixed with this value. If not provided, username claims other than 'email' are prefixed by the issuer URL to avoid clashes. To skip any prefixing, provide the value '-' (dash character without additional characters)."},
@@ -304,6 +306,7 @@ func NewMultipleOIDCSchema(defaultOIDCConfig *pkg.OIDCConfigDTO) *OIDCs {
 							Description: "Comma separated list of allowed JOSE asymmetric signing algorithms, for example, RS256, ES256",
 						},
 					},
+					GroupsPrefix: Type{Type: "string", ReadOnly: true, Description: "if specified, causes claims mapping to group names to be prefixed with the value. A value 'oidc:' would result in groups like 'oidc:engineering' and 'oidc:marketing'. If not provided, the prefix defaults to '( .metadata.name )/'.The value '-' can be used to disable all prefixing."},
 					RequiredClaims: Type{
 						Type: "array",
 						Items: &Type{
