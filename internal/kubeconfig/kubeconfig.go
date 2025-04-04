@@ -25,6 +25,7 @@ type kubeconfig struct {
 }
 
 const kubeconfigTemplate = `
+{{- if not .OIDCConfigs }}
 ---
 apiVersion: v1
 kind: Config
@@ -38,16 +39,33 @@ contexts:
 - name: {{ .ContextName }}
   context:
     cluster: {{ .ContextName }}
-    user: {{ .ContextName }}
-users:
+{{- else }}
+---
+apiVersion: v1
+kind: Config
+current-context: {{ .ContextName }}
+clusters:
 - name: {{ .ContextName }}
+  cluster:
+    certificate-authority-data: {{ .CAData }}
+    server: {{ .ServerURL }}
+contexts:
+{{- range .OIDCConfigs }}
+- name: {{ .Name }}
+  context:
+    cluster: {{ $.ContextName }}
+    user: {{ .Name }}
+{{- end }}
+users:
+{{- range .OIDCConfigs }}
+- name: {{ .Name }}
   user:
     exec:
       apiVersion: client.authentication.k8s.io/v1beta1
       args:
       - get-token
-      - "--oidc-issuer-url={{ .OIDCIssuerURL }}"
-      - "--oidc-client-id={{ .OIDCClientID }}"
+      - "--oidc-issuer-url={{ .IssuerURL }}"
+      - "--oidc-client-id={{ .ClientID }}"
       - "--oidc-extra-scope=email"
       - "--oidc-extra-scope=openid"
       command: kubectl-oidc_login
@@ -61,6 +79,8 @@ users:
 
         # Chocolatey (Windows)
         choco install kubelogin
+{{- end }}
+{{- end }}
 `
 
 const kubeconfigTemplateForKymaBindings = `
