@@ -219,7 +219,7 @@ func NewMultipleOIDCSchema(defaultOIDCConfig *pkg.OIDCConfigDTO, update bool) *O
 	return &OIDCs{
 		Type: Type{
 			Type:        "object",
-			Description: "OIDC Configration. We recommend using the list-based configuration. The object-based configuration is provided for backward compatibility. The object-based configuration inputs are still writable, but only from the JSON view.",
+			Description: "OIDC configration. The list-based configuration is recommended. The object-based configuration is provided for backward compatibility. The object-based configuration inputs are still writable, but only from the JSON view.",
 		},
 		OneOf: []any{
 			AdditionalOIDC{
@@ -256,7 +256,7 @@ func NewMultipleOIDCSchema(defaultOIDCConfig *pkg.OIDCConfigDTO, update bool) *O
 							Properties: OIDCPropertiesExpanded{
 								OIDCProperties: OIDCProperties{
 									ClientID:       Type{Type: "string", Description: "The client ID for the OpenID Connect client."},
-									IssuerURL:      Type{Type: "string", Description: "The URL the provider signs ID Tokens as, only HTTPS scheme will be accepted."},
+									IssuerURL:      Type{Type: "string", Description: "The URL of the OpenID issuer, only HTTPS scheme will be accepted."},
 									GroupsClaim:    Type{Type: "string", Description: "If provided, the name of a custom OpenID Connect claim for specifying user groups."},
 									UsernameClaim:  Type{Type: "string", Description: "The OpenID claim to use as the user name."},
 									UsernamePrefix: Type{Type: "string", Description: "If provided, all usernames will be prefixed with this value. If not provided, username claims other than 'email' are prefixed by the issuer URL to avoid clashes. To skip any prefixing, provide the value '-' (dash character without additional characters)."},
@@ -275,7 +275,7 @@ func NewMultipleOIDCSchema(defaultOIDCConfig *pkg.OIDCConfigDTO, update bool) *O
 										Type:    "string",
 										Pattern: "^[^=]+=[^=]+$",
 									},
-									Description: "key=value pairs that describes a required claim in the ID Token. If set, the claim is verified to be present in the ID Token with a matching value.",
+									Description: "List of key=value pairs that describes a required claim in the ID Token. If set, the claim is verified to be present in the ID Token with a matching value.",
 								},
 							},
 							Required: []string{"clientID", "issuerURL"},
@@ -293,7 +293,7 @@ func NewMultipleOIDCSchema(defaultOIDCConfig *pkg.OIDCConfigDTO, update bool) *O
 				Properties: OIDCPropertiesExpanded{
 					OIDCProperties: OIDCProperties{
 						ClientID:       Type{Type: "string", ReadOnly: !update, Description: "The client ID for the OpenID Connect client."},
-						IssuerURL:      Type{Type: "string", ReadOnly: !update, Description: "The URL the provider signs ID Tokens as, only HTTPS scheme will be accepted."},
+						IssuerURL:      Type{Type: "string", ReadOnly: !update, Description: "The URL of the OpenID issuer, only HTTPS scheme will be accepted."},
 						GroupsClaim:    Type{Type: "string", ReadOnly: !update, Description: "If provided, the name of a custom OpenID Connect claim for specifying user groups."},
 						UsernameClaim:  Type{Type: "string", ReadOnly: !update, Description: "The OpenID claim to use as the user name."},
 						UsernamePrefix: Type{Type: "string", ReadOnly: !update, Description: "If provided, all usernames will be prefixed with this value. If not provided, username claims other than 'email' are prefixed by the issuer URL to avoid clashes. To skip any prefixing, provide the value '-' (dash character without additional characters)."},
@@ -314,7 +314,7 @@ func NewMultipleOIDCSchema(defaultOIDCConfig *pkg.OIDCConfigDTO, update bool) *O
 							Pattern: "^[^=]+=[^=]+$",
 						},
 						ReadOnly:    !update,
-						Description: "key=value pairs that describes a required claim in the ID Token. If set, the claim is verified to be present in the ID Token with a matching value.",
+						Description: "List of key=value pairs that describes a required claim in the ID Token. If set, the claim is verified to be present in the ID Token with a matching value.",
 					},
 				},
 				Required: []string{"clientID", "issuerURL"},
