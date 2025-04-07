@@ -508,7 +508,7 @@ func (rt RuntimeDTO) LastOperation() Operation {
 
 type OIDCConnectDTO struct {
 	*OIDCConfigDTO
-	List []OIDCConfigDTO `json:"list,omitempty" yaml:"list,omitempty"`
+	List []OIDCConfigDTO `json:"list" yaml:"list"`
 }
 
 type ModulesDTO struct {
