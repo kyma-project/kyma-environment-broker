@@ -156,7 +156,7 @@ func (p AutoScalerParameters) Validate(planMin, planMax int) error {
 type OIDCConfigDTO struct {
 	ClientID       string   `json:"clientID" yaml:"clientID"`
 	GroupsClaim    string   `json:"groupsClaim" yaml:"groupsClaim"`
-	GroupsPrefix   string   `json:"groupsPrefix,omitempty" yaml:"groupsPrefix,omitempty"`
+	GroupsPrefix   string   `json:"groupsPrefix" yaml:"groupsPrefix"`
 	IssuerURL      string   `json:"issuerURL" yaml:"issuerURL"`
 	SigningAlgs    []string `json:"signingAlgs" yaml:"signingAlgs"`
 	UsernameClaim  string   `json:"usernameClaim" yaml:"usernameClaim"`
