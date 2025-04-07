@@ -550,7 +550,7 @@ func TestUpdateEndpoint_UpdateFromOIDCObject(t *testing.T) {
 
 		// then
 		require.NoError(t, err)
-		assert.Equal(t, &pkg.OIDCConfigDTO{
+		assert.Equal(t, pkg.OIDCConfigDTO{
 			ClientID:       "updated-client",
 			GroupsClaim:    "groups",
 			IssuerURL:      "https://test.com",
@@ -581,7 +581,7 @@ func TestUpdateEndpoint_UpdateFromOIDCList(t *testing.T) {
 	// given
 	instance := fixture.FixInstance(instanceID)
 	instance.Parameters.Parameters.OIDC = &pkg.OIDCConnectDTO{
-		List: []*pkg.OIDCConfigDTO{
+		List: []pkg.OIDCConfigDTO{
 			{
 				ClientID:       "client-id",
 				GroupsClaim:    "groups",
@@ -642,7 +642,7 @@ func TestUpdateEndpoint_UpdateFromOIDCList(t *testing.T) {
 
 		// then
 		require.NoError(t, err)
-		assert.Equal(t, &pkg.OIDCConfigDTO{
+		assert.Equal(t, pkg.OIDCConfigDTO{
 			ClientID:       "updated-client",
 			GroupsClaim:    "groups",
 			IssuerURL:      "https://test.com",

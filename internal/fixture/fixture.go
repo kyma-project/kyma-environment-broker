@@ -210,7 +210,7 @@ func FixUpdatingOperation(operationId, instanceId string) internal.UpdatingOpera
 	o := FixOperation(operationId, instanceId, internal.OperationTypeUpdate)
 	o.UpdatingParameters = internal.UpdatingParametersDTO{
 		OIDC: &pkg.OIDCConnectDTO{
-			List: []*pkg.OIDCConfigDTO{
+			List: []pkg.OIDCConfigDTO{
 				{
 					ClientID:       "clinet-id-oidc",
 					GroupsClaim:    "groups",

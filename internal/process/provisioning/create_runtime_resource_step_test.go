@@ -136,7 +136,7 @@ func TestCreateRuntimeResourceStep_AllCustomWithOIDCList(t *testing.T) {
 	}
 	instance, operation := fixInstanceAndOperation(broker.AzurePlanID, "westeurope", "platform-region", inputConfig, pkg.Azure)
 	operation.ProvisioningParameters.Parameters.OIDC = &pkg.OIDCConnectDTO{
-		List: []*pkg.OIDCConfigDTO{
+		List: []pkg.OIDCConfigDTO{
 			{
 				ClientID:       "client-id-custom",
 				GroupsClaim:    "gc-custom",
@@ -196,7 +196,7 @@ func TestCreateRuntimeResourceStep_HandleMultipleAdditionalOIDC(t *testing.T) {
 	}
 	instance, operation := fixInstanceAndOperation(broker.AzurePlanID, "westeurope", "platform-region", inputConfig, pkg.Azure)
 	operation.ProvisioningParameters.Parameters.OIDC = &pkg.OIDCConnectDTO{
-		List: []*pkg.OIDCConfigDTO{
+		List: []pkg.OIDCConfigDTO{
 			{
 				ClientID:       "first-client-id-custom",
 				GroupsClaim:    "first-gc-custom",
@@ -313,7 +313,7 @@ func TestCreateRuntimeResourceStep_HandleEmptyOIDCList(t *testing.T) {
 	}
 	instance, operation := fixInstanceAndOperation(broker.AzurePlanID, "westeurope", "platform-region", inputConfig, pkg.Azure)
 	operation.ProvisioningParameters.Parameters.OIDC = &pkg.OIDCConnectDTO{
-		List: []*pkg.OIDCConfigDTO{},
+		List: []pkg.OIDCConfigDTO{},
 	}
 	assertInsertions(t, memoryStorage, instance, operation)
 	cli := getClientForTests(t)
