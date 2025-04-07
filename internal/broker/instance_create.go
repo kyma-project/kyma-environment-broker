@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/base64"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"log/slog"
 	"net"
@@ -327,11 +328,11 @@ func (b *ProvisionEndpoint) validateAndExtract(details domain.ProvisionDetails, 
 	if parameters.AdditionalWorkerNodePools != nil {
 		if !supportsAdditionalWorkerNodePools(details.PlanID) {
 			message := fmt.Sprintf("additional worker node pools are not supported for plan ID: %s", details.PlanID)
-			return ersContext, parameters, apiresponses.NewFailureResponse(fmt.Errorf(message), http.StatusUnprocessableEntity, message)
+			return ersContext, parameters, apiresponses.NewFailureResponse(errors.New(message), http.StatusUnprocessableEntity, message)
 		}
 		if !AreNamesUnique(parameters.AdditionalWorkerNodePools) {
 			message := "names of additional worker node pools must be unique"
-			return ersContext, parameters, apiresponses.NewFailureResponse(fmt.Errorf(message), http.StatusUnprocessableEntity, message)
+			return ersContext, parameters, apiresponses.NewFailureResponse(errors.New(message), http.StatusUnprocessableEntity, message)
 		}
 		for _, additionalWorkerNodePool := range parameters.AdditionalWorkerNodePools {
 			if err := additionalWorkerNodePool.Validate(); err != nil {
@@ -504,7 +505,7 @@ func checkGPUMachinesUsage(additionalWorkerNodePools []pkg.AdditionalWorkerNodeP
 
 	errorMsg.WriteString(" are not available for your account. For details, please contact your sales representative.")
 
-	return fmt.Errorf(errorMsg.String())
+	return errors.New(errorMsg.String())
 }
 
 func checkUnsupportedMachines(regionsSupportingMachine map[string][]string, region string, additionalWorkerNodePools []pkg.AdditionalWorkerNodePool) error {
@@ -535,7 +536,7 @@ func checkUnsupportedMachines(regionsSupportingMachine map[string][]string, regi
 		errorMsg.WriteString(fmt.Sprintf("%s (used in: %s), it is supported in the %s", machineType, strings.Join(unsupportedMachines[machineType], ", "), availableRegions))
 	}
 
-	return fmt.Errorf(errorMsg.String())
+	return errors.New(errorMsg.String())
 }
 
 // Rudimentary kubeconfig validation

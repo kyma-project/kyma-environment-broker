@@ -3,6 +3,7 @@ package broker
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"net/http"
 	"strings"
@@ -753,7 +754,7 @@ func TestUpdateEndpoint_UpdateParameters(t *testing.T) {
 		for _, tc := range testCases {
 			t.Run(tc.name, func(t *testing.T) {
 				// given
-				errMsg := fmt.Errorf(tc.expectedError)
+				errMsg := errors.New(tc.expectedError)
 				expectedErr := apiresponses.NewFailureResponse(errMsg, http.StatusUnprocessableEntity, errMsg.Error())
 
 				// when

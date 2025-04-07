@@ -3,6 +3,7 @@ package broker_test
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"log/slog"
 	"net/http"
@@ -1225,7 +1226,7 @@ func TestProvision_Provision(t *testing.T) {
 
 		for _, tc := range testCases {
 			t.Run(tc.name, func(t *testing.T) {
-				err := fmt.Errorf(tc.expectedError)
+				err := errors.New(tc.expectedError)
 				errMsg := fmt.Sprintf("[instanceID: %s] %s", instanceID, err)
 				expectedErr := apiresponses.NewFailureResponse(err, http.StatusBadRequest, errMsg)
 
@@ -1317,7 +1318,7 @@ func TestProvision_Provision(t *testing.T) {
 
 		for _, tc := range testCases {
 			t.Run(tc.name, func(t *testing.T) {
-				err := fmt.Errorf(tc.expectedError)
+				err := errors.New(tc.expectedError)
 				errMsg := fmt.Sprintf("[instanceID: %s] %s", instanceID, err)
 				expectedErr := apiresponses.NewFailureResponse(err, http.StatusBadRequest, errMsg)
 
