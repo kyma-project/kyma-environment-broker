@@ -8,11 +8,7 @@ import (
 	"os/exec"
 	"strconv"
 	"strings"
-
-	"k8s.io/apimachinery/pkg/runtime/schema"
 )
-
-var RuntimeGVK = schema.GroupVersionKind{Group: "infrastructuremanager.kyma-project.io", Version: "v1", Kind: "Runtime"}
 
 type KCPConfig struct {
 	AuthType          string
