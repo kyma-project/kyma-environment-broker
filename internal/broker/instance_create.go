@@ -582,6 +582,9 @@ func (b *ProvisionEndpoint) extractInputParameters(details domain.ProvisionDetai
 		if parameters.OIDC.OIDCConfigDTO != nil && parameters.OIDC.OIDCConfigDTO.RequiredClaims != nil {
 			parameters.OIDC.OIDCConfigDTO.RequiredClaims = nil
 		}
+		if parameters.OIDC.OIDCConfigDTO != nil && parameters.OIDC.OIDCConfigDTO.GroupsPrefix != "" {
+			parameters.OIDC.OIDCConfigDTO.GroupsPrefix = ""
+		}
 	}
 
 	return parameters, nil

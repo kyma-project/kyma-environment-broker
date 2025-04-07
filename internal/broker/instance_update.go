@@ -242,6 +242,9 @@ func (b *UpdateEndpoint) processUpdateParameters(instance *internal.Instance, de
 			if params.OIDC.OIDCConfigDTO != nil && params.OIDC.OIDCConfigDTO.RequiredClaims != nil {
 				params.OIDC.OIDCConfigDTO.RequiredClaims = nil
 			}
+			if params.OIDC.OIDCConfigDTO != nil && params.OIDC.OIDCConfigDTO.GroupsPrefix != "" {
+				params.OIDC.OIDCConfigDTO.GroupsPrefix = ""
+			}
 		}
 		logger.Debug(fmt.Sprintf("Updating with params: %+v", params))
 	}
