@@ -236,9 +236,9 @@ func (o *OIDCConnectDTO) validateIssuerURL(issuerURL string, index *int, errs *[
 	issuer, err := url.Parse(issuerURL)
 	if err != nil || (issuer != nil && len(issuer.Host) == 0) {
 		if index != nil {
-			*errs = append(*errs, fmt.Sprintf("issuerURL must be a valid URL for OIDC at index %d", *index))
+			*errs = append(*errs, fmt.Sprintf("issuerURL must be a valid URL, issuerURL must have https scheme for OIDC at index %d", *index))
 		} else {
-			*errs = append(*errs, "issuerURL must be a valid URL")
+			*errs = append(*errs, "issuerURL must be a valid URL, issuerURL must have https scheme")
 		}
 		return
 	}
