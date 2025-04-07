@@ -449,10 +449,10 @@ contexts:
   context:
     cluster: shoot--kyma-dev--ac0d8d9
     user: shoot--kyma-dev--ac0d8d9
-- name: shoot--kyma-dev--ac0d8d9-1
+- name: shoot--kyma-dev--ac0d8d9-2
   context:
     cluster: shoot--kyma-dev--ac0d8d9
-    user: shoot--kyma-dev--ac0d8d9-1
+    user: shoot--kyma-dev--ac0d8d9-2
 users:
 - name: shoot--kyma-dev--ac0d8d9
   user:
@@ -475,7 +475,7 @@ users:
 
         # Chocolatey (Windows)
         choco install kubelogin
-- name: shoot--kyma-dev--ac0d8d9-1
+- name: shoot--kyma-dev--ac0d8d9-2
   user:
     exec:
       apiVersion: client.authentication.k8s.io/v1beta1
@@ -576,10 +576,10 @@ contexts:
   context:
     cluster: shoot--kyma-dev--admin
     user: shoot--kyma-dev--admin
-- name: shoot--kyma-dev--admin-1
+- name: shoot--kyma-dev--admin-2
   context:
     cluster: shoot--kyma-dev--admin
-    user: shoot--kyma-dev--admin-1
+    user: shoot--kyma-dev--admin-2
 users:
 - name: shoot--kyma-dev--admin
   user:
@@ -602,7 +602,7 @@ users:
 
         # Chocolatey (Windows)
         choco install kubelogin
-- name: shoot--kyma-dev--admin-1
+- name: shoot--kyma-dev--admin-2
   user:
     exec:
       apiVersion: client.authentication.k8s.io/v1beta1

@@ -189,7 +189,7 @@ func (b *Builder) getOidcDataFromRuntimeResource(id string, currentContext strin
 			}
 			name := currentContext
 			if i > 0 {
-				name = fmt.Sprintf("%s-%d", currentContext, i)
+				name = fmt.Sprintf("%s-%d", currentContext, i+1)
 			}
 			oidcConfigs = append(oidcConfigs, OIDCConfig{
 				Name:      name,
