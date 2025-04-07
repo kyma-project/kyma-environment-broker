@@ -180,7 +180,7 @@ func TestUpdateRuntimeStep_RunUpdateEmptyAdditionalOIDCWithMultipleAdditionalOID
 	operation.RuntimeResourceName = "runtime-name"
 	operation.KymaResourceNamespace = "kcp-system"
 	operation.UpdatingParameters = internal.UpdatingParametersDTO{
-		OIDC: &pkg.OIDConnectDTO{
+		OIDC: &pkg.OIDCConnectDTO{
 			List: []pkg.OIDCConfigDTO{
 				{
 					ClientID:       "first-client-id-custom",
@@ -260,7 +260,7 @@ func TestUpdateRuntimeStep_RunUpdateMultipleAdditionalOIDCWithMultipleAdditional
 	operation.RuntimeResourceName = "runtime-name"
 	operation.KymaResourceNamespace = "kcp-system"
 	operation.UpdatingParameters = internal.UpdatingParametersDTO{
-		OIDC: &pkg.OIDConnectDTO{
+		OIDC: &pkg.OIDCConnectDTO{
 			List: []pkg.OIDCConfigDTO{
 				{
 					ClientID:       "first-client-id-custom",
@@ -347,7 +347,7 @@ func TestUpdateRuntimeStep_RunUpdateMultipleAdditionalOIDCWitEmptyAdditionalOIDC
 	operation.RuntimeResourceName = "runtime-name"
 	operation.KymaResourceNamespace = "kcp-system"
 	operation.UpdatingParameters = internal.UpdatingParametersDTO{
-		OIDC: &pkg.OIDConnectDTO{
+		OIDC: &pkg.OIDCConnectDTO{
 			List: []pkg.OIDCConfigDTO{},
 		},
 	}
