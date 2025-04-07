@@ -1219,7 +1219,7 @@ func TestProvision_Provision(t *testing.T) {
 			{
 				name:          "URL with empty host",
 				oidcParams:    `"clientID":"client-id","issuerURL":"https:///path","signingAlgs":["RS256"]`,
-				expectedError: "issuerURL must be a valid URL",
+				expectedError: "issuerURL must be a valid URL, issuerURL must have https scheme",
 			},
 		}
 
