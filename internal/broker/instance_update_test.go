@@ -581,7 +581,7 @@ func TestUpdateEndpoint_UpdateFromOIDCList(t *testing.T) {
 	// given
 	instance := fixture.FixInstance(instanceID)
 	instance.Parameters.Parameters.OIDC = &pkg.OIDCConnectDTO{
-		List: []pkg.OIDCConfigDTO{
+		List: []*pkg.OIDCConfigDTO{
 			{
 				ClientID:       "client-id",
 				GroupsClaim:    "groups",

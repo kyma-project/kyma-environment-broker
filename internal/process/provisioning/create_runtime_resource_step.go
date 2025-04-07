@@ -304,7 +304,7 @@ func (s *CreateRuntimeResourceStep) createOIDCConfigFromInput(oidcInput *pkg.OID
 	return &[]gardener.OIDCConfig{defaultOIDC}
 }
 
-func (s *CreateRuntimeResourceStep) createOIDCConfigList(oidcList []pkg.OIDCConfigDTO) *[]gardener.OIDCConfig {
+func (s *CreateRuntimeResourceStep) createOIDCConfigList(oidcList []*pkg.OIDCConfigDTO) *[]gardener.OIDCConfig {
 	configs := make([]gardener.OIDCConfig, 0, len(oidcList))
 
 	for _, oidcConfig := range oidcList {
