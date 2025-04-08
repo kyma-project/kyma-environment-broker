@@ -74,9 +74,7 @@ func TestProvision_Provision(t *testing.T) {
 				OnlySingleTrialPerGA: true,
 			},
 			gardener.Config{Project: "test", ShootDomain: "example.com", DNSProviders: fixDNSProviders()},
-			memoryStorage.Operations(),
-			memoryStorage.Instances(),
-			memoryStorage.InstancesArchived(),
+			memoryStorage,
 			queue,
 			broker.PlansConfig{},
 			log,
@@ -86,6 +84,7 @@ func TestProvision_Provision(t *testing.T) {
 			&broker.OneForAllConvergedCloudRegionsProvider{},
 			nil,
 			fixValueProvider(),
+			false,
 		)
 
 		// when
@@ -145,9 +144,7 @@ func TestProvision_Provision(t *testing.T) {
 				OnlySingleTrialPerGA: true,
 			},
 			gardener.Config{Project: "test", ShootDomain: "example.com", DNSProviders: fixDNSProviders()},
-			memoryStorage.Operations(),
-			memoryStorage.Instances(),
-			memoryStorage.InstancesArchived(),
+			memoryStorage,
 			queue,
 			broker.PlansConfig{},
 			log,
@@ -157,6 +154,7 @@ func TestProvision_Provision(t *testing.T) {
 			&broker.OneForAllConvergedCloudRegionsProvider{},
 			nil,
 			fixValueProvider(),
+			false,
 		)
 
 		// when
@@ -221,9 +219,7 @@ func TestProvision_Provision(t *testing.T) {
 				OnlySingleTrialPerGA: true,
 			},
 			gardener.Config{Project: "test", ShootDomain: "example.com", DNSProviders: fixDNSProviders()},
-			memoryStorage.Operations(),
-			memoryStorage.Instances(),
-			memoryStorage.InstancesArchived(),
+			memoryStorage,
 			queue,
 			broker.PlansConfig{},
 			log,
@@ -233,6 +229,7 @@ func TestProvision_Provision(t *testing.T) {
 			&broker.OneForAllConvergedCloudRegionsProvider{},
 			nil,
 			fixValueProvider(),
+			false,
 		)
 
 		// when
@@ -268,9 +265,7 @@ func TestProvision_Provision(t *testing.T) {
 				OnlySingleTrialPerGA: true,
 			},
 			gardener.Config{Project: "test", ShootDomain: "example.com", DNSProviders: fixDNSProviders()},
-			memoryStorage.Operations(),
-			memoryStorage.Instances(),
-			memoryStorage.InstancesArchived(),
+			memoryStorage,
 			queue,
 			broker.PlansConfig{},
 			log,
@@ -280,6 +275,7 @@ func TestProvision_Provision(t *testing.T) {
 			&broker.OneForAllConvergedCloudRegionsProvider{},
 			nil,
 			fixValueProvider(),
+			false,
 		)
 
 		// when shootDomain is missing
@@ -340,9 +336,7 @@ func TestProvision_Provision(t *testing.T) {
 				OnlySingleTrialPerGA: true,
 			},
 			gardener.Config{Project: "test", ShootDomain: "example.com", DNSProviders: fixDNSProviders()},
-			memoryStorage.Operations(),
-			memoryStorage.Instances(),
-			memoryStorage.InstancesArchived(),
+			memoryStorage,
 			queue,
 			broker.PlansConfig{},
 			log,
@@ -352,6 +346,7 @@ func TestProvision_Provision(t *testing.T) {
 			&broker.OneForAllConvergedCloudRegionsProvider{},
 			nil,
 			fixValueProvider(),
+			false,
 		)
 
 		// when
@@ -414,9 +409,7 @@ func TestProvision_Provision(t *testing.T) {
 				OnlySingleTrialPerGA: true,
 			},
 			gardener.Config{Project: "test", ShootDomain: "example.com", DNSProviders: fixDNSProviders()},
-			memoryStorage.Operations(),
-			memoryStorage.Instances(),
-			memoryStorage.InstancesArchived(),
+			memoryStorage,
 			nil,
 			broker.PlansConfig{},
 			log,
@@ -426,6 +419,7 @@ func TestProvision_Provision(t *testing.T) {
 			&broker.OneForAllConvergedCloudRegionsProvider{},
 			nil,
 			fixValueProvider(),
+			false,
 		)
 
 		// when
@@ -462,9 +456,7 @@ func TestProvision_Provision(t *testing.T) {
 		provisionEndpoint := broker.NewProvision(
 			broker.Config{EnablePlans: []string{"gcp", "azure", "azure_lite", broker.TrialPlanName}, OnlySingleTrialPerGA: true},
 			gardener.Config{Project: "test", ShootDomain: "example.com", DNSProviders: fixDNSProviders()},
-			memoryStorage.Operations(),
-			memoryStorage.Instances(),
-			memoryStorage.InstancesArchived(),
+			memoryStorage,
 			nil,
 			broker.PlansConfig{},
 			log,
@@ -474,6 +466,7 @@ func TestProvision_Provision(t *testing.T) {
 			&broker.OneForAllConvergedCloudRegionsProvider{},
 			nil,
 			fixValueProvider(),
+			false,
 		)
 
 		// when
@@ -511,9 +504,7 @@ func TestProvision_Provision(t *testing.T) {
 		provisionEndpoint := broker.NewProvision(
 			broker.Config{EnablePlans: []string{"gcp", "azure", "azure_lite", broker.TrialPlanName}, OnlySingleTrialPerGA: false},
 			gardener.Config{Project: "test", ShootDomain: "example.com", DNSProviders: fixDNSProviders()},
-			memoryStorage.Operations(),
-			memoryStorage.Instances(),
-			memoryStorage.InstancesArchived(),
+			memoryStorage,
 			queue,
 			broker.PlansConfig{},
 			log,
@@ -523,6 +514,7 @@ func TestProvision_Provision(t *testing.T) {
 			&broker.OneForAllConvergedCloudRegionsProvider{},
 			nil,
 			fixValueProvider(),
+			false,
 		)
 
 		// when
@@ -574,9 +566,7 @@ func TestProvision_Provision(t *testing.T) {
 		provisionEndpoint := broker.NewProvision(
 			broker.Config{EnablePlans: []string{"gcp", "azure", "trial"}, OnlySingleTrialPerGA: true},
 			gardener.Config{Project: "test", ShootDomain: "example.com", DNSProviders: fixDNSProviders()},
-			memoryStorage.Operations(),
-			memoryStorage.Instances(),
-			memoryStorage.InstancesArchived(),
+			memoryStorage,
 			queue,
 			broker.PlansConfig{},
 			log,
@@ -586,6 +576,7 @@ func TestProvision_Provision(t *testing.T) {
 			&broker.OneForAllConvergedCloudRegionsProvider{},
 			nil,
 			fixValueProvider(),
+			false,
 		)
 
 		// when
@@ -637,9 +628,7 @@ func TestProvision_Provision(t *testing.T) {
 		provisionEndpoint := broker.NewProvision(
 			broker.Config{EnablePlans: []string{"gcp", "azure", "trial"}, OnlySingleTrialPerGA: true},
 			gardener.Config{Project: "test", ShootDomain: "example.com", DNSProviders: fixDNSProviders()},
-			memoryStorage.Operations(),
-			memoryStorage.Instances(),
-			memoryStorage.InstancesArchived(),
+			memoryStorage,
 			queue,
 			broker.PlansConfig{},
 			log,
@@ -649,6 +638,7 @@ func TestProvision_Provision(t *testing.T) {
 			&broker.OneForAllConvergedCloudRegionsProvider{},
 			nil,
 			fixValueProvider(),
+			false,
 		)
 
 		// when
@@ -680,9 +670,7 @@ func TestProvision_Provision(t *testing.T) {
 		provisionEndpoint := broker.NewProvision(
 			broker.Config{EnablePlans: []string{"gcp", "azure", "azure_lite"}, OnlySingleTrialPerGA: true},
 			gardener.Config{Project: "test", ShootDomain: "example.com", DNSProviders: fixDNSProviders()},
-			memoryStorage.Operations(),
-			memoryStorage.Instances(),
-			memoryStorage.InstancesArchived(),
+			memoryStorage,
 			nil,
 			broker.PlansConfig{},
 			log,
@@ -692,6 +680,7 @@ func TestProvision_Provision(t *testing.T) {
 			&broker.OneForAllConvergedCloudRegionsProvider{},
 			nil,
 			fixValueProvider(),
+			false,
 		)
 
 		// when
@@ -712,13 +701,13 @@ func TestProvision_Provision(t *testing.T) {
 		factoryBuilder := &automock.PlanValidator{}
 		factoryBuilder.On("IsPlanSupport", planID).Return(true)
 
+		memoryStorage := storage.NewMemoryStorage()
+
 		kcBuilder := &kcMock.KcBuilder{}
 		provisionEndpoint := broker.NewProvision(
 			broker.Config{EnablePlans: []string{"gcp", "azure", "azure_lite"}, OnlySingleTrialPerGA: true},
 			gardener.Config{Project: "test", ShootDomain: "example.com", DNSProviders: fixDNSProviders()},
-			nil,
-			nil,
-			nil,
+			memoryStorage,
 			nil,
 			broker.PlansConfig{},
 			log,
@@ -728,6 +717,7 @@ func TestProvision_Provision(t *testing.T) {
 			&broker.OneForAllConvergedCloudRegionsProvider{},
 			nil,
 			fixValueProvider(),
+			false,
 		)
 
 		// when
@@ -753,9 +743,7 @@ func TestProvision_Provision(t *testing.T) {
 		provisionEndpoint := broker.NewProvision(
 			broker.Config{EnablePlans: []string{"gcp", "azure", "azure_lite"}, OnlySingleTrialPerGA: true},
 			gardener.Config{Project: "test", ShootDomain: "example.com", DNSProviders: fixDNSProviders()},
-			memoryStorage.Operations(),
-			memoryStorage.Instances(),
-			memoryStorage.InstancesArchived(),
+			memoryStorage,
 			queue,
 			broker.PlansConfig{},
 			log,
@@ -765,6 +753,7 @@ func TestProvision_Provision(t *testing.T) {
 			&broker.OneForAllConvergedCloudRegionsProvider{},
 			nil,
 			fixValueProvider(),
+			false,
 		)
 
 		// when
@@ -797,9 +786,7 @@ func TestProvision_Provision(t *testing.T) {
 		provisionEndpoint := broker.NewProvision(
 			broker.Config{EnablePlans: []string{"gcp", "azure", "azure_lite", "trial"}, OnlySingleTrialPerGA: true},
 			gardener.Config{Project: "test", ShootDomain: "example.com", DNSProviders: fixDNSProviders()},
-			memoryStorage.Operations(),
-			memoryStorage.Instances(),
-			memoryStorage.InstancesArchived(),
+			memoryStorage,
 			queue,
 			broker.PlansConfig{},
 			log,
@@ -809,6 +796,7 @@ func TestProvision_Provision(t *testing.T) {
 			&broker.OneForAllConvergedCloudRegionsProvider{},
 			nil,
 			fixValueProvider(),
+			false,
 		)
 
 		// when
@@ -846,9 +834,7 @@ func TestProvision_Provision(t *testing.T) {
 				OnlySingleTrialPerGA: true,
 			},
 			gardener.Config{Project: "test", ShootDomain: "example.com", DNSProviders: fixDNSProviders()},
-			memoryStorage.Operations(),
-			memoryStorage.Instances(),
-			memoryStorage.InstancesArchived(),
+			memoryStorage,
 			queue,
 			broker.PlansConfig{},
 			log,
@@ -858,6 +844,7 @@ func TestProvision_Provision(t *testing.T) {
 			&broker.OneForAllConvergedCloudRegionsProvider{},
 			nil,
 			fixValueProvider(),
+			false,
 		)
 
 		oidcParams := `"issuerURL":"https://test.local"`
@@ -901,9 +888,7 @@ func TestProvision_Provision(t *testing.T) {
 				OnlySingleTrialPerGA: true,
 			},
 			gardener.Config{Project: "test", ShootDomain: "example.com", DNSProviders: fixDNSProviders()},
-			memoryStorage.Operations(),
-			memoryStorage.Instances(),
-			memoryStorage.InstancesArchived(),
+			memoryStorage,
 			queue,
 			broker.PlansConfig{},
 			log,
@@ -913,6 +898,7 @@ func TestProvision_Provision(t *testing.T) {
 			&broker.OneForAllConvergedCloudRegionsProvider{},
 			nil,
 			fixValueProvider(),
+			false,
 		)
 
 		oidcParams := `"clientID":"client-id","issuerURL":"https://test.local","signingAlgs":["RS256","notValid"]`
@@ -956,9 +942,7 @@ func TestProvision_Provision(t *testing.T) {
 				OnlySingleTrialPerGA: true,
 			},
 			gardener.Config{Project: "test", ShootDomain: "example.com", DNSProviders: fixDNSProviders()},
-			memoryStorage.Operations(),
-			memoryStorage.Instances(),
-			memoryStorage.InstancesArchived(),
+			memoryStorage,
 			queue,
 			broker.PlansConfig{},
 			log,
@@ -968,6 +952,7 @@ func TestProvision_Provision(t *testing.T) {
 			&broker.OneForAllConvergedCloudRegionsProvider{},
 			nil,
 			fixValueProvider(),
+			false,
 		)
 
 		testCases := []struct {
@@ -1052,9 +1037,7 @@ func TestProvision_Provision(t *testing.T) {
 				OnlySingleTrialPerGA: true,
 			},
 			gardener.Config{Project: "test", ShootDomain: "example.com", DNSProviders: fixDNSProviders()},
-			memoryStorage.Operations(),
-			memoryStorage.Instances(),
-			memoryStorage.InstancesArchived(),
+			memoryStorage,
 			queue,
 			broker.PlansConfig{},
 			log,
@@ -1064,6 +1047,7 @@ func TestProvision_Provision(t *testing.T) {
 			&broker.OneForAllConvergedCloudRegionsProvider{},
 			nil,
 			fixValueProvider(),
+			false,
 		)
 
 		oidcParams := `"clientID":"client-id","issuerURL":"https://test.local","signingAlgs":["RS256"]`
@@ -1095,9 +1079,7 @@ func TestProvision_Provision(t *testing.T) {
 		provisionEndpoint := broker.NewProvision(
 			broker.Config{EnablePlans: []string{"gcp", "azure", "azure_lite", broker.FreemiumPlanName}, OnlyOneFreePerGA: true},
 			gardener.Config{Project: "test", ShootDomain: "example.com", DNSProviders: fixDNSProviders()},
-			memoryStorage.Operations(),
-			memoryStorage.Instances(),
-			memoryStorage.InstancesArchived(),
+			memoryStorage,
 			queue,
 			broker.PlansConfig{},
 			log,
@@ -1107,6 +1089,7 @@ func TestProvision_Provision(t *testing.T) {
 			&broker.OneForAllConvergedCloudRegionsProvider{},
 			nil,
 			fixValueProvider(),
+			false,
 		)
 
 		// when
@@ -1160,9 +1143,7 @@ func TestProvision_Provision(t *testing.T) {
 		provisionEndpoint := broker.NewProvision(
 			broker.Config{EnablePlans: []string{"gcp", "azure", "azure_lite", broker.FreemiumPlanName}, OnlyOneFreePerGA: true},
 			gardener.Config{Project: "test", ShootDomain: "example.com", DNSProviders: fixDNSProviders()},
-			memoryStorage.Operations(),
-			memoryStorage.Instances(),
-			memoryStorage.InstancesArchived(),
+			memoryStorage,
 			queue,
 			broker.PlansConfig{},
 			log,
@@ -1172,6 +1153,7 @@ func TestProvision_Provision(t *testing.T) {
 			&broker.OneForAllConvergedCloudRegionsProvider{},
 			nil,
 			fixValueProvider(),
+			false,
 		)
 
 		// when
@@ -1215,9 +1197,7 @@ func TestProvision_Provision(t *testing.T) {
 		provisionEndpoint := broker.NewProvision(
 			broker.Config{EnablePlans: []string{"gcp", "azure", "azure_lite", broker.FreemiumPlanName}, OnlyOneFreePerGA: true},
 			gardener.Config{Project: "test", ShootDomain: "example.com", DNSProviders: fixDNSProviders()},
-			memoryStorage.Operations(),
-			memoryStorage.Instances(),
-			memoryStorage.InstancesArchived(),
+			memoryStorage,
 			queue,
 			broker.PlansConfig{},
 			log,
@@ -1227,6 +1207,7 @@ func TestProvision_Provision(t *testing.T) {
 			&broker.OneForAllConvergedCloudRegionsProvider{},
 			nil,
 			fixValueProvider(),
+			false,
 		)
 
 		// when
@@ -1268,9 +1249,7 @@ func TestProvision_Provision(t *testing.T) {
 		provisionEndpoint := broker.NewProvision(
 			broker.Config{EnablePlans: []string{"gcp", "azure", "azure_lite", broker.FreemiumPlanName}, OnlyOneFreePerGA: true},
 			gardener.Config{Project: "test", ShootDomain: "example.com", DNSProviders: fixDNSProviders()},
-			memoryStorage.Operations(),
-			memoryStorage.Instances(),
-			memoryStorage.InstancesArchived(),
+			memoryStorage,
 			nil,
 			broker.PlansConfig{},
 			log,
@@ -1280,6 +1259,7 @@ func TestProvision_Provision(t *testing.T) {
 			&broker.OneForAllConvergedCloudRegionsProvider{},
 			nil,
 			fixValueProvider(),
+			false,
 		)
 
 		// when
@@ -1311,9 +1291,7 @@ func TestProvision_Provision(t *testing.T) {
 		provisionEndpoint := broker.NewProvision(
 			broker.Config{EnablePlans: []string{"gcp", "azure", "azure_lite", broker.FreemiumPlanName}, OnlyOneFreePerGA: true},
 			gardener.Config{Project: "test", ShootDomain: "example.com", DNSProviders: fixDNSProviders()},
-			memoryStorage.Operations(),
-			memoryStorage.Instances(),
-			memoryStorage.InstancesArchived(),
+			memoryStorage,
 			nil,
 			broker.PlansConfig{},
 			log,
@@ -1323,6 +1301,7 @@ func TestProvision_Provision(t *testing.T) {
 			&broker.OneForAllConvergedCloudRegionsProvider{},
 			nil,
 			fixValueProvider(),
+			false,
 		)
 
 		// when
@@ -1357,9 +1336,7 @@ func TestProvision_Provision(t *testing.T) {
 				OnlySingleTrialPerGA: true,
 			},
 			gardener.Config{Project: "test", ShootDomain: "example.com", DNSProviders: fixDNSProviders()},
-			memoryStorage.Operations(),
-			memoryStorage.Instances(),
-			memoryStorage.InstancesArchived(),
+			memoryStorage,
 			queue,
 			broker.PlansConfig{},
 			log,
@@ -1369,6 +1346,7 @@ func TestProvision_Provision(t *testing.T) {
 			&broker.OneForAllConvergedCloudRegionsProvider{},
 			nil,
 			fixValueProvider(),
+			false,
 		)
 
 		oidcParams := `"clientID":"client-id","issuerURL":"https://test.local","signingAlgs":["RS256"]`
@@ -1406,9 +1384,7 @@ func TestProvision_Provision(t *testing.T) {
 				OnlySingleTrialPerGA: true,
 			},
 			gardener.Config{Project: "test", ShootDomain: "example.com", DNSProviders: fixDNSProviders()},
-			memoryStorage.Operations(),
-			memoryStorage.Instances(),
-			memoryStorage.InstancesArchived(),
+			memoryStorage,
 			queue,
 			broker.PlansConfig{},
 			log,
@@ -1418,6 +1394,7 @@ func TestProvision_Provision(t *testing.T) {
 			&broker.OneForAllConvergedCloudRegionsProvider{},
 			nil,
 			fixValueProvider(),
+			false,
 		)
 
 		oidcParams := `"clientID":"client-id","issuerURL":"https://test.local","signingAlgs":["RS256"]`
@@ -1538,9 +1515,7 @@ func TestAdditionalWorkerNodePools(t *testing.T) {
 					OnlySingleTrialPerGA: true,
 				},
 				gardener.Config{Project: "test", ShootDomain: "example.com", DNSProviders: fixDNSProviders()},
-				memoryStorage.Operations(),
-				memoryStorage.Instances(),
-				memoryStorage.InstancesArchived(),
+				memoryStorage,
 				queue,
 				broker.PlansConfig{},
 				log,
@@ -1550,6 +1525,7 @@ func TestAdditionalWorkerNodePools(t *testing.T) {
 				&broker.OneForAllConvergedCloudRegionsProvider{},
 				nil,
 				fixValueProvider(),
+				false,
 			)
 
 			// when
@@ -1602,9 +1578,7 @@ func TestAdditionalWorkerNodePoolsForUnsupportedPlans(t *testing.T) {
 					OnlySingleTrialPerGA: true,
 				},
 				gardener.Config{Project: "test", ShootDomain: "example.com", DNSProviders: fixDNSProviders()},
-				memoryStorage.Operations(),
-				memoryStorage.Instances(),
-				memoryStorage.InstancesArchived(),
+				memoryStorage,
 				queue,
 				broker.PlansConfig{},
 				log,
@@ -1614,6 +1588,7 @@ func TestAdditionalWorkerNodePoolsForUnsupportedPlans(t *testing.T) {
 				&broker.OneForAllConvergedCloudRegionsProvider{},
 				nil,
 				fixValueProvider(),
+				false,
 			)
 
 			additionalWorkerNodePools := `[{"name": "name-1", "machineType": "m6i.large", "autoScalerMin": 3, "autoScalerMax": 20}]`
@@ -1753,9 +1728,7 @@ func TestNetworkingValidation(t *testing.T) {
 			provisionEndpoint := broker.NewProvision(
 				broker.Config{EnablePlans: []string{"gcp", "azure", "free"}},
 				gardener.Config{Project: "test", ShootDomain: "example.com", DNSProviders: fixDNSProviders()},
-				memoryStorage.Operations(),
-				memoryStorage.Instances(),
-				memoryStorage.InstancesArchived(),
+				memoryStorage,
 				queue,
 				broker.PlansConfig{},
 				log,
@@ -1765,6 +1738,7 @@ func TestNetworkingValidation(t *testing.T) {
 				&broker.OneForAllConvergedCloudRegionsProvider{},
 				nil,
 				fixValueProvider(),
+				false,
 			)
 
 			// when
@@ -1852,9 +1826,7 @@ func TestRegionValidation(t *testing.T) {
 			provisionEndpoint := broker.NewProvision(
 				broker.Config{EnablePlans: []string{"gcp", "azure", "free"}, OnlySingleTrialPerGA: true},
 				gardener.Config{Project: "test", ShootDomain: "example.com", DNSProviders: fixDNSProviders()},
-				memoryStorage.Operations(),
-				memoryStorage.Instances(),
-				memoryStorage.InstancesArchived(),
+				memoryStorage,
 				queue,
 				broker.PlansConfig{},
 				log,
@@ -1864,6 +1836,7 @@ func TestRegionValidation(t *testing.T) {
 				&broker.OneForAllConvergedCloudRegionsProvider{},
 				nil,
 				fixValueProvider(),
+				false,
 			)
 
 			// when
@@ -1912,9 +1885,7 @@ func TestSapConvergedCloudBlocking(t *testing.T) {
 				DisableSapConvergedCloud: false,
 			},
 			gardener.Config{Project: "test", ShootDomain: "example.com", DNSProviders: fixDNSProviders()},
-			memoryStorage.Operations(),
-			memoryStorage.Instances(),
-			memoryStorage.InstancesArchived(),
+			memoryStorage,
 			queue,
 			broker.PlansConfig{},
 			log,
@@ -1924,6 +1895,7 @@ func TestSapConvergedCloudBlocking(t *testing.T) {
 			&broker.OneForAllConvergedCloudRegionsProvider{},
 			nil,
 			fixValueProvider(),
+			false,
 		)
 
 		oidcParams := `"clientID":"client-id","issuerURL":"https://test.local","signingAlgs":["RS256"]`
@@ -1960,9 +1932,7 @@ func TestSapConvergedCloudBlocking(t *testing.T) {
 				DisableSapConvergedCloud: true,
 			},
 			gardener.Config{Project: "test", ShootDomain: "example.com", DNSProviders: fixDNSProviders()},
-			memoryStorage.Operations(),
-			memoryStorage.Instances(),
-			memoryStorage.InstancesArchived(),
+			memoryStorage,
 			queue,
 			broker.PlansConfig{},
 			log,
@@ -1972,6 +1942,7 @@ func TestSapConvergedCloudBlocking(t *testing.T) {
 			&broker.OneForAllConvergedCloudRegionsProvider{},
 			nil,
 			fixValueProvider(),
+			false,
 		)
 
 		oidcParams := `"clientID":"client-id","issuerURL":"https://test.local","signingAlgs":["RS256"]`
@@ -2007,9 +1978,7 @@ func TestSapConvergedCloudBlocking(t *testing.T) {
 				DisableSapConvergedCloud: true,
 			},
 			gardener.Config{Project: "test", ShootDomain: "example.com", DNSProviders: fixDNSProviders()},
-			memoryStorage.Operations(),
-			memoryStorage.Instances(),
-			memoryStorage.InstancesArchived(),
+			memoryStorage,
 			queue,
 			broker.PlansConfig{},
 			log,
@@ -2019,6 +1988,7 @@ func TestSapConvergedCloudBlocking(t *testing.T) {
 			&broker.OneForAllConvergedCloudRegionsProvider{},
 			nil,
 			fixValueProvider(),
+			false,
 		)
 
 		oidcParams := `"clientID":"client-id","issuerURL":"https://test.local","signingAlgs":["RS256"]`
@@ -2068,9 +2038,7 @@ func TestUnsupportedMachineType(t *testing.T) {
 			OnlySingleTrialPerGA: true,
 		},
 		gardener.Config{Project: "test", ShootDomain: "example.com", DNSProviders: fixDNSProviders()},
-		memoryStorage.Operations(),
-		memoryStorage.Instances(),
-		memoryStorage.InstancesArchived(),
+		memoryStorage,
 		queue,
 		broker.PlansConfig{},
 		log,
@@ -2080,6 +2048,7 @@ func TestUnsupportedMachineType(t *testing.T) {
 		&broker.OneForAllConvergedCloudRegionsProvider{},
 		fixRegionsSupportingMachine(),
 		fixValueProvider(),
+		false,
 	)
 
 	// when
@@ -2119,9 +2088,7 @@ func TestUnsupportedMachineTypeInAdditionalWorkerNodePools(t *testing.T) {
 			OnlySingleTrialPerGA: true,
 		},
 		gardener.Config{Project: "test", ShootDomain: "example.com", DNSProviders: fixDNSProviders()},
-		memoryStorage.Operations(),
-		memoryStorage.Instances(),
-		memoryStorage.InstancesArchived(),
+		memoryStorage,
 		queue,
 		broker.PlansConfig{},
 		log,
@@ -2131,6 +2098,7 @@ func TestUnsupportedMachineTypeInAdditionalWorkerNodePools(t *testing.T) {
 		&broker.OneForAllConvergedCloudRegionsProvider{},
 		fixRegionsSupportingMachine(),
 		fixValueProvider(),
+		false,
 	)
 
 	testCases := []struct {
@@ -2196,9 +2164,7 @@ func TestGPUMachineForInternalUser(t *testing.T) {
 			OnlySingleTrialPerGA: true,
 		},
 		gardener.Config{Project: "test", ShootDomain: "example.com", DNSProviders: fixDNSProviders()},
-		memoryStorage.Operations(),
-		memoryStorage.Instances(),
-		memoryStorage.InstancesArchived(),
+		memoryStorage,
 		queue,
 		broker.PlansConfig{},
 		log,
@@ -2208,6 +2174,7 @@ func TestGPUMachineForInternalUser(t *testing.T) {
 		&broker.OneForAllConvergedCloudRegionsProvider{},
 		fixRegionsSupportingMachine(),
 		fixValueProvider(),
+		false,
 	)
 
 	additionalWorkerNodePools := `[{"name": "name-1", "machineType": "g6.xlarge", "haZones": true, "autoScalerMin": 3, "autoScalerMax": 20}]`
@@ -2245,9 +2212,7 @@ func TestGPUMachinesForExternalCustomer(t *testing.T) {
 			OnlySingleTrialPerGA: true,
 		},
 		gardener.Config{Project: "test", ShootDomain: "example.com", DNSProviders: fixDNSProviders()},
-		memoryStorage.Operations(),
-		memoryStorage.Instances(),
-		memoryStorage.InstancesArchived(),
+		memoryStorage,
 		queue,
 		broker.PlansConfig{},
 		log,
@@ -2257,6 +2222,7 @@ func TestGPUMachinesForExternalCustomer(t *testing.T) {
 		&broker.OneForAllConvergedCloudRegionsProvider{},
 		fixRegionsSupportingMachine(),
 		fixValueProvider(),
+		false,
 	)
 
 	testCases := []struct {

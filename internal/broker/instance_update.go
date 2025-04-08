@@ -63,14 +63,13 @@ type UpdateEndpoint struct {
 
 	regionsSupportingMachine map[string][]string
 
-	kcpClient      client.Client
-	valuesProvider ValuesProvider
+	kcpClient              client.Client
+	valuesProvider         ValuesProvider
+	useSmallerMachineTypes bool
 }
 
 func NewUpdate(cfg Config,
-	instanceStorage storage.Instances,
-	runtimeStates storage.RuntimeStates,
-	operationStorage storage.Operations,
+	db storage.BrokerStorage,
 	ctxUpdateHandler ContextUpdateHandler,
 	processingEnabled bool,
 	subaccountMovementEnabled bool,
@@ -84,13 +83,14 @@ func NewUpdate(cfg Config,
 	convergedCloudRegionsProvider ConvergedCloudRegionProvider,
 	kcpClient client.Client,
 	regionsSupportingMachine map[string][]string,
+	useSmallerMachineTypes bool,
 ) *UpdateEndpoint {
 	return &UpdateEndpoint{
 		config:                                   cfg,
 		log:                                      log.With("service", "UpdateEndpoint"),
-		instanceStorage:                          instanceStorage,
-		runtimeStates:                            runtimeStates,
-		operationStorage:                         operationStorage,
+		instanceStorage:                          db.Instances(),
+		runtimeStates:                            db.RuntimeStates(),
+		operationStorage:                         db.Operations(),
 		contextUpdateHandler:                     ctxUpdateHandler,
 		processingEnabled:                        processingEnabled,
 		subaccountMovementEnabled:                subaccountMovementEnabled,
@@ -103,6 +103,7 @@ func NewUpdate(cfg Config,
 		convergedCloudRegionsProvider:            convergedCloudRegionsProvider,
 		kcpClient:                                kcpClient,
 		regionsSupportingMachine:                 regionsSupportingMachine,
+		useSmallerMachineTypes:                   useSmallerMachineTypes,
 	}
 }
 
@@ -448,7 +449,7 @@ func (b *UpdateEndpoint) extractActiveValue(id string, provisioning internal.Pro
 func (b *UpdateEndpoint) getJsonSchemaValidator(provider pkg.CloudProvider, planID string, platformRegion string) (*jsonschema.Schema, error) {
 	// shootAndSeedSameRegion is never enabled for update
 	b.log.Info(fmt.Sprintf("region is: %s", platformRegion))
-	plans := Plans(b.plansConfig, provider, nil, b.config.IncludeAdditionalParamsInSchema, euaccess.IsEURestrictedAccess(platformRegion), b.config.UseSmallerMachineTypes, false, b.convergedCloudRegionsProvider.GetRegions(platformRegion), assuredworkloads.IsKSA(platformRegion), b.config.UseAdditionalOIDCSchema)
+	plans := Plans(b.plansConfig, provider, nil, b.config.IncludeAdditionalParamsInSchema, euaccess.IsEURestrictedAccess(platformRegion), b.useSmallerMachineTypes, false, b.convergedCloudRegionsProvider.GetRegions(platformRegion), assuredworkloads.IsKSA(platformRegion), b.config.UseAdditionalOIDCSchema)
 	plan := plans[planID]
 
 	return validator.NewFromSchema(plan.Schemas.Instance.Update.Parameters)

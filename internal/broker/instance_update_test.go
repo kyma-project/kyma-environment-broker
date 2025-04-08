@@ -84,9 +84,7 @@ func TestUpdateEndpoint_UpdateSuspension(t *testing.T) {
 	kcBuilder := &kcMock.KcBuilder{}
 	svc := broker.NewUpdate(
 		broker.Config{},
-		st.Instances(),
-		st.RuntimeStates(),
-		st.Operations(),
+		st,
 		handler,
 		true,
 		false,
@@ -99,7 +97,8 @@ func TestUpdateEndpoint_UpdateSuspension(t *testing.T) {
 		kcBuilder,
 		&broker.OneForAllConvergedCloudRegionsProvider{},
 		fakeKcpK8sClient,
-		nil)
+		nil,
+		false)
 
 	// when
 	response, err := svc.Update(context.Background(), instanceID, domain.UpdateDetails{
@@ -152,8 +151,9 @@ func TestUpdateEndpoint_UpdateOfExpiredTrial(t *testing.T) {
 	q := &automock.Queue{}
 	q.On("Add", mock.AnythingOfType("string"))
 	kcBuilder := &kcMock.KcBuilder{}
-	svc := broker.NewUpdate(broker.Config{}, st.Instances(), st.RuntimeStates(), st.Operations(), handler, true, false, true, q, broker.PlansConfig{},
-		nil, fixLogger(), dashboardConfig, kcBuilder, &broker.OneForAllConvergedCloudRegionsProvider{}, fakeKcpK8sClient, nil)
+	svc := broker.NewUpdate(broker.Config{}, st, handler, true, false, true, q, broker.PlansConfig{},
+		nil, fixLogger(),
+		dashboardConfig, kcBuilder, &broker.OneForAllConvergedCloudRegionsProvider{}, fakeKcpK8sClient, nil, false)
 
 	// when
 	response, err := svc.Update(context.Background(), instanceID, domain.UpdateDetails{
@@ -200,8 +200,9 @@ func TestUpdateEndpoint_UpdateAutoscalerParams(t *testing.T) {
 	q.On("Add", mock.AnythingOfType("string"))
 
 	kcBuilder := &kcMock.KcBuilder{}
-	svc := broker.NewUpdate(broker.Config{}, st.Instances(), st.RuntimeStates(), st.Operations(), handler, true, false, true, q, broker.PlansConfig{},
-		fixValueProvider(), fixLogger(), dashboardConfig, kcBuilder, &broker.OneForAllConvergedCloudRegionsProvider{}, fakeKcpK8sClient, nil)
+	svc := broker.NewUpdate(broker.Config{}, st, handler, true, false, true, q, broker.PlansConfig{},
+		fixValueProvider(), fixLogger(), dashboardConfig, kcBuilder, &broker.OneForAllConvergedCloudRegionsProvider{},
+		fakeKcpK8sClient, nil, false)
 
 	t.Run("Should fail on invalid (too low) autoScalerMin and autoScalerMax", func(t *testing.T) {
 
@@ -291,8 +292,8 @@ func TestUpdateEndpoint_UpdateUnsuspension(t *testing.T) {
 	q := &automock.Queue{}
 	q.On("Add", mock.AnythingOfType("string"))
 	kcBuilder := &kcMock.KcBuilder{}
-	svc := broker.NewUpdate(broker.Config{}, st.Instances(), st.RuntimeStates(), st.Operations(), handler, true, false, true, q, broker.PlansConfig{},
-		nil, fixLogger(), dashboardConfig, kcBuilder, &broker.OneForAllConvergedCloudRegionsProvider{}, fakeKcpK8sClient, nil)
+	svc := broker.NewUpdate(broker.Config{}, st, handler, true, false, true, q, broker.PlansConfig{},
+		nil, fixLogger(), dashboardConfig, kcBuilder, &broker.OneForAllConvergedCloudRegionsProvider{}, fakeKcpK8sClient, nil, false)
 
 	// when
 	_, err = svc.Update(context.Background(), instanceID, domain.UpdateDetails{
@@ -339,8 +340,9 @@ func TestUpdateEndpoint_UpdateInstanceWithWrongActiveValue(t *testing.T) {
 	q := &automock.Queue{}
 	q.On("Add", mock.AnythingOfType("string"))
 	kcBuilder := &kcMock.KcBuilder{}
-	svc := broker.NewUpdate(broker.Config{}, st.Instances(), st.RuntimeStates(), st.Operations(), handler, true, false, true, q, broker.PlansConfig{},
-		nil, fixLogger(), dashboardConfig, kcBuilder, &broker.OneForAllConvergedCloudRegionsProvider{}, fakeKcpK8sClient, nil)
+	svc := broker.NewUpdate(broker.Config{}, st, handler, true, false, true, q, broker.PlansConfig{},
+		nil, fixLogger(), dashboardConfig, kcBuilder, &broker.OneForAllConvergedCloudRegionsProvider{},
+		fakeKcpK8sClient, nil, false)
 
 	// when
 	_, err = svc.Update(context.Background(), instanceID, domain.UpdateDetails{
@@ -368,8 +370,9 @@ func TestUpdateEndpoint_UpdateNonExistingInstance(t *testing.T) {
 	q := &automock.Queue{}
 	q.On("Add", mock.AnythingOfType("string"))
 	kcBuilder := &kcMock.KcBuilder{}
-	svc := broker.NewUpdate(broker.Config{}, st.Instances(), st.RuntimeStates(), st.Operations(), handler, true, false, true, q, broker.PlansConfig{},
-		nil, fixLogger(), dashboardConfig, kcBuilder, &broker.OneForAllConvergedCloudRegionsProvider{}, fakeKcpK8sClient, nil)
+	svc := broker.NewUpdate(broker.Config{}, st, handler, true, false, true, q, broker.PlansConfig{},
+		nil, fixLogger(), dashboardConfig, kcBuilder, &broker.OneForAllConvergedCloudRegionsProvider{},
+		fakeKcpK8sClient, nil, false)
 
 	// when
 	_, err := svc.Update(context.Background(), instanceID, domain.UpdateDetails{
@@ -432,8 +435,8 @@ func TestUpdateEndpoint_UpdateGlobalAccountID(t *testing.T) {
 	q.On("Add", mock.AnythingOfType("string"))
 
 	kcBuilder := &kcMock.KcBuilder{}
-	svc := broker.NewUpdate(broker.Config{}, st.Instances(), st.RuntimeStates(), st.Operations(), handler, true, true, false, q, broker.PlansConfig{},
-		nil, fixLogger(), dashboardConfig, kcBuilder, &broker.OneForAllConvergedCloudRegionsProvider{}, fakeKcpK8sClient, nil)
+	svc := broker.NewUpdate(broker.Config{}, st, handler, true, true, false, q, broker.PlansConfig{},
+		nil, fixLogger(), dashboardConfig, kcBuilder, &broker.OneForAllConvergedCloudRegionsProvider{}, fakeKcpK8sClient, nil, false)
 
 	// when
 	response, err := svc.Update(context.Background(), instanceID, domain.UpdateDetails{
@@ -473,8 +476,8 @@ func TestUpdateEndpoint_UpdateParameters(t *testing.T) {
 	q := &automock.Queue{}
 	q.On("Add", mock.AnythingOfType("string"))
 	kcBuilder := &kcMock.KcBuilder{}
-	svc := broker.NewUpdate(broker.Config{}, st.Instances(), st.RuntimeStates(), st.Operations(), handler, true, true, false, q, broker.PlansConfig{},
-		nil, fixLogger(), dashboardConfig, kcBuilder, &broker.OneForAllConvergedCloudRegionsProvider{}, fakeKcpK8sClient, nil)
+	svc := broker.NewUpdate(broker.Config{}, st, handler, true, true, false, q, broker.PlansConfig{},
+		nil, fixLogger(), dashboardConfig, kcBuilder, &broker.OneForAllConvergedCloudRegionsProvider{}, fakeKcpK8sClient, nil, false)
 
 	t.Run("Should fail on invalid OIDC params", func(t *testing.T) {
 		// given
@@ -703,8 +706,8 @@ func TestUpdateAdditionalWorkerNodePools(t *testing.T) {
 
 			kcBuilder := &kcMock.KcBuilder{}
 			kcBuilder.On("GetServerURL", mock.Anything).Return("https://kcp.example.com", nil)
-			svc := broker.NewUpdate(broker.Config{}, st.Instances(), st.RuntimeStates(), st.Operations(), handler, true, true, false, q, broker.PlansConfig{},
-				fixValueProvider(), fixLogger(), dashboardConfig, kcBuilder, &broker.OneForAllConvergedCloudRegionsProvider{}, fakeKcpK8sClient, nil)
+			svc := broker.NewUpdate(broker.Config{}, st, handler, true, true, false, q, broker.PlansConfig{},
+				fixValueProvider(), fixLogger(), dashboardConfig, kcBuilder, &broker.OneForAllConvergedCloudRegionsProvider{}, fakeKcpK8sClient, nil, false)
 
 			// when
 			_, err = svc.Update(context.Background(), instanceID, domain.UpdateDetails{
@@ -747,8 +750,8 @@ func TestHAZones(t *testing.T) {
 		q.On("Add", mock.AnythingOfType("string"))
 
 		kcBuilder := &kcMock.KcBuilder{}
-		svc := broker.NewUpdate(broker.Config{}, st.Instances(), st.RuntimeStates(), st.Operations(), handler, true, true, false, q, broker.PlansConfig{},
-			fixValueProvider(), fixLogger(), dashboardConfig, kcBuilder, &broker.OneForAllConvergedCloudRegionsProvider{}, fakeKcpK8sClient, nil)
+		svc := broker.NewUpdate(broker.Config{}, st, handler, true, true, false, q, broker.PlansConfig{},
+			fixValueProvider(), fixLogger(), dashboardConfig, kcBuilder, &broker.OneForAllConvergedCloudRegionsProvider{}, fakeKcpK8sClient, nil, false)
 
 		// when
 		_, err = svc.Update(context.Background(), instanceID, domain.UpdateDetails{
@@ -788,8 +791,8 @@ func TestHAZones(t *testing.T) {
 		q.On("Add", mock.AnythingOfType("string"))
 
 		kcBuilder := &kcMock.KcBuilder{}
-		svc := broker.NewUpdate(broker.Config{}, st.Instances(), st.RuntimeStates(), st.Operations(), handler, true, true, false, q, broker.PlansConfig{},
-			fixValueProvider(), fixLogger(), dashboardConfig, kcBuilder, &broker.OneForAllConvergedCloudRegionsProvider{}, fakeKcpK8sClient, nil)
+		svc := broker.NewUpdate(broker.Config{}, st, handler, true, true, false, q, broker.PlansConfig{},
+			fixValueProvider(), fixLogger(), dashboardConfig, kcBuilder, &broker.OneForAllConvergedCloudRegionsProvider{}, fakeKcpK8sClient, nil, false)
 
 		// when
 		_, err = svc.Update(context.Background(), instanceID, domain.UpdateDetails{
@@ -832,8 +835,8 @@ func TestUpdateAdditionalWorkerNodePoolsForUnsupportedPlans(t *testing.T) {
 			q.On("Add", mock.AnythingOfType("string"))
 
 			kcBuilder := &kcMock.KcBuilder{}
-			svc := broker.NewUpdate(broker.Config{}, st.Instances(), st.RuntimeStates(), st.Operations(), handler, true, true, false, q, broker.PlansConfig{},
-				fixValueProvider(), fixLogger(), dashboardConfig, kcBuilder, &broker.OneForAllConvergedCloudRegionsProvider{}, fakeKcpK8sClient, nil)
+			svc := broker.NewUpdate(broker.Config{}, st, handler, true, true, false, q, broker.PlansConfig{},
+				fixValueProvider(), fixLogger(), dashboardConfig, kcBuilder, &broker.OneForAllConvergedCloudRegionsProvider{}, fakeKcpK8sClient, nil, false)
 
 			additionalWorkerNodePools := `[{"name": "name-1", "machineType": "m6i.large", "haZones": true, "autoScalerMin": 3, "autoScalerMax": 20}]`
 
@@ -882,8 +885,8 @@ func TestUpdateEndpoint_UpdateWithEnabledDashboard(t *testing.T) {
 	q.On("Add", mock.AnythingOfType("string"))
 
 	kcBuilder := &kcMock.KcBuilder{}
-	svc := broker.NewUpdate(broker.Config{AllowUpdateExpiredInstanceWithContext: true}, st.Instances(), st.RuntimeStates(), st.Operations(), handler, true, false, true, q, broker.PlansConfig{},
-		fixValueProvider(), fixLogger(), dashboardConfig, kcBuilder, &broker.OneForAllConvergedCloudRegionsProvider{}, fakeKcpK8sClient, nil)
+	svc := broker.NewUpdate(broker.Config{AllowUpdateExpiredInstanceWithContext: true}, st, handler, true, false, true, q, broker.PlansConfig{},
+		fixValueProvider(), fixLogger(), dashboardConfig, kcBuilder, &broker.OneForAllConvergedCloudRegionsProvider{}, fakeKcpK8sClient, nil, false)
 	createFakeCRs(t)
 	// when
 	response, err := svc.Update(context.Background(), instanceID, domain.UpdateDetails{
@@ -934,8 +937,8 @@ func TestUpdateExpiredInstance(t *testing.T) {
 	queue := &automock.Queue{}
 	queue.On("Add", mock.AnythingOfType("string"))
 
-	svc := broker.NewUpdate(broker.Config{AllowUpdateExpiredInstanceWithContext: true}, storage.Instances(), storage.RuntimeStates(), storage.Operations(), handler, true, false, true, queue, broker.PlansConfig{},
-		fixValueProvider(), fixLogger(), dashboardConfig, kcBuilder, &broker.OneForAllConvergedCloudRegionsProvider{}, fakeKcpK8sClient, nil)
+	svc := broker.NewUpdate(broker.Config{AllowUpdateExpiredInstanceWithContext: true}, storage, handler, true, false, true, queue, broker.PlansConfig{},
+		fixValueProvider(), fixLogger(), dashboardConfig, kcBuilder, &broker.OneForAllConvergedCloudRegionsProvider{}, fakeKcpK8sClient, nil, false)
 
 	t.Run("should accept if it is same as previous", func(t *testing.T) {
 		_, err = svc.Update(context.Background(), instanceID, domain.UpdateDetails{
@@ -1019,8 +1022,8 @@ func TestSubaccountMovement(t *testing.T) {
 	queue := &automock.Queue{}
 	queue.On("Add", mock.AnythingOfType("string"))
 
-	svc := broker.NewUpdate(broker.Config{SubaccountMovementEnabled: true}, storage.Instances(), storage.RuntimeStates(), storage.Operations(), handler, true, true, true, queue, broker.PlansConfig{},
-		fixValueProvider(), fixLogger(), dashboardConfig, kcBuilder, &broker.OneForAllConvergedCloudRegionsProvider{}, fakeKcpK8sClient, nil)
+	svc := broker.NewUpdate(broker.Config{SubaccountMovementEnabled: true}, storage, handler, true, true, true, queue, broker.PlansConfig{},
+		fixValueProvider(), fixLogger(), dashboardConfig, kcBuilder, &broker.OneForAllConvergedCloudRegionsProvider{}, fakeKcpK8sClient, nil, false)
 
 	t.Run("no move performed so subscription should be empty", func(t *testing.T) {
 		_, err = svc.Update(context.Background(), instanceID, domain.UpdateDetails{
@@ -1107,8 +1110,8 @@ func TestLabelChangeWhenMovingSubaccount(t *testing.T) {
 	queue := &automock.Queue{}
 	queue.On("Add", mock.AnythingOfType("string"))
 
-	svc := broker.NewUpdate(broker.Config{SubaccountMovementEnabled: true}, storage.Instances(), storage.RuntimeStates(), storage.Operations(), handler, true, true, true, queue, broker.PlansConfig{},
-		fixValueProvider(), fixLogger(), dashboardConfig, kcBuilder, &broker.OneForAllConvergedCloudRegionsProvider{}, fakeKcpK8sClient, nil)
+	svc := broker.NewUpdate(broker.Config{SubaccountMovementEnabled: true}, storage, handler, true, true, true, queue, broker.PlansConfig{},
+		fixValueProvider(), fixLogger(), dashboardConfig, kcBuilder, &broker.OneForAllConvergedCloudRegionsProvider{}, fakeKcpK8sClient, nil, false)
 
 	t.Run("simulate flow of moving account with labels on CRs", func(t *testing.T) {
 		// initial state of instance - moving account was never donex
@@ -1182,8 +1185,8 @@ func TestUpdateUnsupportedMachine(t *testing.T) {
 	q.On("Add", mock.AnythingOfType("string"))
 
 	kcBuilder := &kcMock.KcBuilder{}
-	svc := broker.NewUpdate(broker.Config{}, st.Instances(), st.RuntimeStates(), st.Operations(), handler, true, true, false, q, broker.PlansConfig{},
-		fixValueProvider(), fixLogger(), dashboardConfig, kcBuilder, &broker.OneForAllConvergedCloudRegionsProvider{}, fakeKcpK8sClient, fixRegionsSupportingMachine())
+	svc := broker.NewUpdate(broker.Config{}, st, handler, true, true, false, q, broker.PlansConfig{},
+		fixValueProvider(), fixLogger(), dashboardConfig, kcBuilder, &broker.OneForAllConvergedCloudRegionsProvider{}, fakeKcpK8sClient, fixRegionsSupportingMachine(), false)
 
 	// when
 	_, err = svc.Update(context.Background(), instanceID, domain.UpdateDetails{
@@ -1213,8 +1216,8 @@ func TestUpdateUnsupportedMachineInAdditionalWorkerNodePools(t *testing.T) {
 	q.On("Add", mock.AnythingOfType("string"))
 
 	kcBuilder := &kcMock.KcBuilder{}
-	svc := broker.NewUpdate(broker.Config{}, st.Instances(), st.RuntimeStates(), st.Operations(), handler, true, true, false, q, broker.PlansConfig{},
-		fixValueProvider(), fixLogger(), dashboardConfig, kcBuilder, &broker.OneForAllConvergedCloudRegionsProvider{}, fakeKcpK8sClient, fixRegionsSupportingMachine())
+	svc := broker.NewUpdate(broker.Config{}, st, handler, true, true, false, q, broker.PlansConfig{},
+		fixValueProvider(), fixLogger(), dashboardConfig, kcBuilder, &broker.OneForAllConvergedCloudRegionsProvider{}, fakeKcpK8sClient, fixRegionsSupportingMachine(), false)
 
 	testCases := []struct {
 		name                      string
@@ -1271,8 +1274,8 @@ func TestUpdateGPUMachineForInternalUser(t *testing.T) {
 
 	kcBuilder := &kcMock.KcBuilder{}
 	kcBuilder.On("GetServerURL", mock.Anything).Return("https://kcp.example.dummy", nil)
-	svc := broker.NewUpdate(broker.Config{}, st.Instances(), st.RuntimeStates(), st.Operations(), handler, true, true, false, q, broker.PlansConfig{},
-		fixValueProvider(), fixLogger(), dashboardConfig, kcBuilder, &broker.OneForAllConvergedCloudRegionsProvider{}, fakeKcpK8sClient, nil)
+	svc := broker.NewUpdate(broker.Config{}, st, handler, true, true, false, q, broker.PlansConfig{},
+		fixValueProvider(), fixLogger(), dashboardConfig, kcBuilder, &broker.OneForAllConvergedCloudRegionsProvider{}, fakeKcpK8sClient, nil, false)
 
 	additionalWorkerNodePools := `[{"name": "name-1", "machineType": "Standard_NC4as_T4_v3", "haZones": true, "autoScalerMin": 3, "autoScalerMax": 20}]`
 	// when
@@ -1371,8 +1374,8 @@ func TestUpdateGPUMachineForExternalCustomer(t *testing.T) {
 			q.On("Add", mock.AnythingOfType("string"))
 			kcBuilder := &kcMock.KcBuilder{}
 
-			svc := broker.NewUpdate(broker.Config{}, st.Instances(), st.RuntimeStates(), st.Operations(), handler, true, true, false, q, broker.PlansConfig{},
-				fixValueProvider(), fixLogger(), dashboardConfig, kcBuilder, &broker.OneForAllConvergedCloudRegionsProvider{}, fakeKcpK8sClient, nil)
+			svc := broker.NewUpdate(broker.Config{}, st, handler, true, true, false, q, broker.PlansConfig{},
+				fixValueProvider(), fixLogger(), dashboardConfig, kcBuilder, &broker.OneForAllConvergedCloudRegionsProvider{}, fakeKcpK8sClient, nil, false)
 
 			// when
 			_, err = svc.Update(context.Background(), instanceID, domain.UpdateDetails{

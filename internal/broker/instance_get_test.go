@@ -54,9 +54,7 @@ func TestGetEndpoint_GetProvisioningInstance(t *testing.T) {
 	createSvc := broker.NewProvision(
 		broker.Config{EnablePlans: []string{"gcp", "azure"}, OnlySingleTrialPerGA: true},
 		gardener.Config{Project: "test", ShootDomain: "example.com"},
-		st.Operations(),
-		st.Instances(),
-		st.InstancesArchived(),
+		st,
 		queue,
 		broker.PlansConfig{},
 		fixLogger(),
@@ -66,6 +64,7 @@ func TestGetEndpoint_GetProvisioningInstance(t *testing.T) {
 		&broker.OneForAllConvergedCloudRegionsProvider{},
 		nil,
 		fixValueProvider(),
+		false,
 	)
 	getSvc := broker.NewGetInstance(broker.Config{}, st.Instances(), st.Operations(), kcBuilder, fixLogger())
 

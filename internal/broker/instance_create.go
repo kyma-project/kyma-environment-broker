@@ -11,6 +11,7 @@ import (
 	"net/netip"
 	"strings"
 
+	"github.com/kyma-project/kyma-environment-broker/internal/process/input"
 	"github.com/kyma-project/kyma-environment-broker/internal/regionssupportingmachine"
 	"github.com/kyma-project/kyma-environment-broker/internal/validator"
 	"github.com/santhosh-tekuri/jsonschema/v6"
@@ -63,6 +64,7 @@ type ValuesProvider interface {
 
 type ProvisionEndpoint struct {
 	config                  Config
+	infrastructureManager   input.InfrastructureManagerConfig
 	operationsStorage       storage.Operations
 	instanceStorage         storage.Instances
 	instanceArchivedStorage storage.InstancesArchived
@@ -83,8 +85,9 @@ type ProvisionEndpoint struct {
 
 	regionsSupportingMachine map[string][]string
 
-	log            *slog.Logger
-	valuesProvider ValuesProvider
+	log                    *slog.Logger
+	valuesProvider         ValuesProvider
+	useSmallerMachineTypes bool
 }
 
 const (
@@ -93,9 +96,7 @@ const (
 
 func NewProvision(cfg Config,
 	gardenerConfig gardener.Config,
-	operationsStorage storage.Operations,
-	instanceStorage storage.Instances,
-	instanceArchivedStorage storage.InstancesArchived,
+	db storage.BrokerStorage,
 	queue Queue,
 	plansConfig PlansConfig,
 	log *slog.Logger,
@@ -105,6 +106,7 @@ func NewProvision(cfg Config,
 	convergedCloudRegionsProvider ConvergedCloudRegionProvider,
 	regionsSupportingMachine map[string][]string,
 	valuesProvider ValuesProvider,
+	useSmallerMachineTypes bool,
 ) *ProvisionEndpoint {
 	enabledPlanIDs := map[string]struct{}{}
 	for _, planName := range cfg.EnablePlans {
@@ -114,9 +116,9 @@ func NewProvision(cfg Config,
 
 	return &ProvisionEndpoint{
 		config:                        cfg,
-		operationsStorage:             operationsStorage,
-		instanceStorage:               instanceStorage,
-		instanceArchivedStorage:       instanceArchivedStorage,
+		operationsStorage:             db.Operations(),
+		instanceStorage:               db.Instances(),
+		instanceArchivedStorage:       db.InstancesArchived(),
 		queue:                         queue,
 		log:                           log.With("service", "ProvisionEndpoint"),
 		enabledPlanIDs:                enabledPlanIDs,
@@ -130,6 +132,7 @@ func NewProvision(cfg Config,
 		convergedCloudRegionsProvider: convergedCloudRegionsProvider,
 		regionsSupportingMachine:      regionsSupportingMachine,
 		valuesProvider:                valuesProvider,
+		useSmallerMachineTypes:        useSmallerMachineTypes,
 	}
 }
 
@@ -617,7 +620,9 @@ func (b *ProvisionEndpoint) determineLicenceType(planId string) *string {
 
 func (b *ProvisionEndpoint) validator(details *domain.ProvisionDetails, provider pkg.CloudProvider, ctx context.Context) (*jsonschema.Schema, error) {
 	platformRegion, _ := middleware.RegionFromContext(ctx)
-	plans := Plans(b.plansConfig, provider, nil, b.config.IncludeAdditionalParamsInSchema, euaccess.IsEURestrictedAccess(platformRegion), b.config.UseSmallerMachineTypes, b.config.EnableShootAndSeedSameRegion, b.convergedCloudRegionsProvider.GetRegions(platformRegion), assuredworkloads.IsKSA(platformRegion), b.config.UseAdditionalOIDCSchema)
+	plans := Plans(b.plansConfig, provider, nil, b.config.IncludeAdditionalParamsInSchema,
+		euaccess.IsEURestrictedAccess(platformRegion),
+		b.infrastructureManager.UseSmallerMachineTypes, b.config.EnableShootAndSeedSameRegion, b.convergedCloudRegionsProvider.GetRegions(platformRegion), assuredworkloads.IsKSA(platformRegion), b.config.UseAdditionalOIDCSchema)
 	plan := plans[details.PlanID]
 
 	return validator.NewFromSchema(plan.Schemas.Instance.Create.Parameters)

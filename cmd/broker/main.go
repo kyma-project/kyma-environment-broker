@@ -96,7 +96,6 @@ type Config struct {
 	Port       string `envconfig:"default=8080"`
 	StatusPort string `envconfig:"default=8071"`
 
-	Provisioner           input.Config
 	InfrastructureManager input.InfrastructureManagerConfig
 	Database              storage.Config
 	Gardener              gardener.Config
@@ -254,12 +253,6 @@ func main() {
 
 	logConfiguration(log, cfg)
 
-	// TODO this is temporary function to be removed after settings are migrated to infrastructureManager section/structure
-	// since settings are doubled for the time of migration we need to detect discrepancies and abort when they are found
-	if notSync := validateTemporarilyInfrastructureSettings(log, cfg); notSync {
-		fatalOnError(fmt.Errorf("infrastructure settings are not synchronized"), log)
-	}
-
 	// create kubernetes client
 	kcpK8sConfig, err := config.GetConfig()
 	fatalOnError(err, log)
@@ -397,51 +390,6 @@ func main() {
 	fatalOnError(http.ListenAndServe(cfg.Host+":"+cfg.Port, svr), log)
 }
 
-// Function will be removed after all settings are migrated to infrastructureManager section/structure
-func validateTemporarilyInfrastructureSettings(logs *slog.Logger, cfg Config) (notSync bool) {
-	if cfg.InfrastructureManager.UseMainOIDC != cfg.Provisioner.UseMainOIDC {
-		notSync = true
-		logs.Warn(fmt.Sprintf("UseMainOIDC settings for Provisioner and InfrastructureManager are different. %v!=%v", cfg.Provisioner.UseMainOIDC, cfg.InfrastructureManager.UseMainOIDC))
-	}
-	if cfg.InfrastructureManager.UseAdditionalOIDC != cfg.Provisioner.UseAdditionalOIDC {
-		notSync = true
-		logs.Warn(fmt.Sprintf("UseAdditionalOIDC settings for Provisioner and InfrastructureManager are different. %v!=%v", cfg.Provisioner.UseAdditionalOIDC, cfg.InfrastructureManager.UseAdditionalOIDC))
-	}
-	if cfg.InfrastructureManager.UseSmallerMachineTypes != cfg.Broker.UseSmallerMachineTypes {
-		notSync = true
-		logs.Warn(fmt.Sprintf("UseSmallerMachineTypes settings for Provisioner and InfrastructureManager are different. %v!=%v", cfg.Broker.UseSmallerMachineTypes, cfg.InfrastructureManager.UseSmallerMachineTypes))
-	}
-	if cfg.InfrastructureManager.KubernetesVersion != cfg.Provisioner.KubernetesVersion {
-		notSync = true
-		logs.Warn(fmt.Sprintf("KubernetesVersion settings for Provisioner and InfrastructureManager are different. %s!=%s", cfg.Provisioner.KubernetesVersion, cfg.InfrastructureManager.KubernetesVersion))
-	}
-	if cfg.InfrastructureManager.DefaultGardenerShootPurpose != cfg.Provisioner.DefaultGardenerShootPurpose {
-		notSync = true
-		logs.Warn(fmt.Sprintf("DefaultGardenerShootPurpose settings for Provisioner and InfrastructureManager are different. %s!=%s", cfg.Provisioner.DefaultGardenerShootPurpose, cfg.InfrastructureManager.DefaultGardenerShootPurpose))
-	}
-	if cfg.InfrastructureManager.MachineImage != cfg.Provisioner.MachineImage {
-		notSync = true
-		logs.Warn(fmt.Sprintf("MachineImage settings for Provisioner and InfrastructureManager are different. %s!=%s", cfg.Provisioner.MachineImage, cfg.InfrastructureManager.MachineImage))
-	}
-	if cfg.InfrastructureManager.MachineImageVersion != cfg.Provisioner.MachineImageVersion {
-		notSync = true
-		logs.Warn(fmt.Sprintf("MachineImageVersion settings for Provisioner and InfrastructureManager are different. %s!=%s", cfg.Provisioner.MachineImageVersion, cfg.InfrastructureManager.MachineImageVersion))
-	}
-	if cfg.InfrastructureManager.DefaultTrialProvider != cfg.Provisioner.DefaultTrialProvider {
-		notSync = true
-		logs.Warn(fmt.Sprintf("DefaultTrialProvider settings for Provisioner and InfrastructureManager are different. %s!=%s", cfg.Provisioner.DefaultTrialProvider, cfg.InfrastructureManager.DefaultTrialProvider))
-	}
-	if cfg.InfrastructureManager.MultiZoneCluster != cfg.Provisioner.MultiZoneCluster {
-		notSync = true
-		logs.Warn(fmt.Sprintf("MultiZoneCluster settings for Provisioner and InfrastructureManager are different. %v!=%v", cfg.Provisioner.MultiZoneCluster, cfg.InfrastructureManager.MultiZoneCluster))
-	}
-	if cfg.InfrastructureManager.ControlPlaneFailureTolerance != cfg.Provisioner.ControlPlaneFailureTolerance {
-		notSync = true
-		logs.Warn(fmt.Sprintf("ControlPlaneFailureTolerance settings for Provisioner and InfrastructureManager are different. %s!=%s", cfg.Provisioner.ControlPlaneFailureTolerance, cfg.InfrastructureManager.ControlPlaneFailureTolerance))
-	}
-	return notSync
-}
-
 func logConfiguration(logs *slog.Logger, cfg Config) {
 	logs.Info(fmt.Sprintf("Setting staged manager configuration: provisioning=%s, deprovisioning=%s, update=%s", cfg.Provisioning, cfg.Deprovisioning, cfg.Update))
 	logs.Info(fmt.Sprintf("InfrastructureManagerIntegrationDisabled: %v", cfg.InfrastructureManagerIntegrationDisabled))
@@ -502,15 +450,15 @@ func createAPI(router *httputil.Router, servicesConfig broker.ServicesConfig, cf
 
 	// create KymaEnvironmentBroker endpoints
 	kymaEnvBroker := &broker.KymaEnvironmentBroker{
-		ServicesEndpoint: broker.NewServices(cfg.Broker, servicesConfig, logs, convergedCloudRegionProvider, nil),
-		ProvisionEndpoint: broker.NewProvision(cfg.Broker, cfg.Gardener, db.Operations(), db.Instances(), db.InstancesArchived(),
+		ServicesEndpoint: broker.NewServices(cfg.Broker, servicesConfig, logs, convergedCloudRegionProvider, nil, cfg.InfrastructureManager.UseSmallerMachineTypes),
+		ProvisionEndpoint: broker.NewProvision(cfg.Broker, cfg.Gardener, db,
 			provisionQueue, defaultPlansConfig, logs, cfg.KymaDashboardConfig, kcBuilder, freemiumGlobalAccountIds,
-			convergedCloudRegionProvider, regionsSupportingMachine, valuesProvider,
+			convergedCloudRegionProvider, regionsSupportingMachine, valuesProvider, cfg.InfrastructureManager.UseSmallerMachineTypes,
 		),
 		DeprovisionEndpoint: broker.NewDeprovision(db.Instances(), db.Operations(), deprovisionQueue, logs),
-		UpdateEndpoint: broker.NewUpdate(cfg.Broker, db.Instances(), db.RuntimeStates(), db.Operations(),
+		UpdateEndpoint: broker.NewUpdate(cfg.Broker, db,
 			suspensionCtxHandler, cfg.UpdateProcessingEnabled, cfg.Broker.SubaccountMovementEnabled, cfg.Broker.UpdateCustomResourcesLabelsOnAccountMove, updateQueue, defaultPlansConfig,
-			valuesProvider, logs, cfg.KymaDashboardConfig, kcBuilder, convergedCloudRegionProvider, kcpK8sClient, regionsSupportingMachine),
+			valuesProvider, logs, cfg.KymaDashboardConfig, kcBuilder, convergedCloudRegionProvider, kcpK8sClient, regionsSupportingMachine, cfg.InfrastructureManager.UseSmallerMachineTypes),
 		GetInstanceEndpoint:          broker.NewGetInstance(cfg.Broker, db.Instances(), db.Operations(), kcBuilder, logs),
 		LastOperationEndpoint:        broker.NewLastOperation(db.Operations(), db.InstancesArchived(), logs),
 		BindEndpoint:                 broker.NewBind(cfg.Broker.Binding, db, logs, clientProvider, kubeconfigProvider, publisher, cfg.InfrastructureManager.UseAdditionalOIDC, cfg.InfrastructureManager.UseMainOIDC),

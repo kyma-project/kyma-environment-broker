@@ -8,6 +8,7 @@ import (
 
 	"github.com/kyma-project/kyma-environment-broker/common/gardener"
 	"github.com/kyma-project/kyma-environment-broker/internal/dashboard"
+	"github.com/kyma-project/kyma-environment-broker/internal/storage"
 	"github.com/pivotal-cf/brokerapi/v12/domain"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -17,6 +18,7 @@ func TestShootAndSeedSameRegion(t *testing.T) {
 	log := slog.New(slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{
 		Level: slog.LevelInfo,
 	}))
+	st := storage.NewMemoryStorage()
 
 	t.Run("should parse shootAndSeedSameRegion - true", func(t *testing.T) {
 		// given
@@ -24,12 +26,11 @@ func TestShootAndSeedSameRegion(t *testing.T) {
 		details := domain.ProvisionDetails{
 			RawParameters: rawParameters,
 		}
+
 		provisionEndpoint := NewProvision(
 			Config{},
 			gardener.Config{},
-			nil,
-			nil,
-			nil,
+			st,
 			nil,
 			nil,
 			log,
@@ -39,6 +40,7 @@ func TestShootAndSeedSameRegion(t *testing.T) {
 			&OneForAllConvergedCloudRegionsProvider{},
 			nil,
 			nil,
+			false,
 		)
 
 		// when
@@ -55,12 +57,11 @@ func TestShootAndSeedSameRegion(t *testing.T) {
 		details := domain.ProvisionDetails{
 			RawParameters: rawParameters,
 		}
+
 		provisionEndpoint := NewProvision(
 			Config{},
 			gardener.Config{},
-			nil,
-			nil,
-			nil,
+			st,
 			nil,
 			nil,
 			log,
@@ -70,6 +71,7 @@ func TestShootAndSeedSameRegion(t *testing.T) {
 			&OneForAllConvergedCloudRegionsProvider{},
 			nil,
 			nil,
+			false,
 		)
 
 		// when
@@ -89,9 +91,7 @@ func TestShootAndSeedSameRegion(t *testing.T) {
 		provisionEndpoint := NewProvision(
 			Config{},
 			gardener.Config{},
-			nil,
-			nil,
-			nil,
+			st,
 			nil,
 			nil,
 			log,
@@ -101,6 +101,7 @@ func TestShootAndSeedSameRegion(t *testing.T) {
 			&OneForAllConvergedCloudRegionsProvider{},
 			nil,
 			nil,
+			false,
 		)
 
 		// when
