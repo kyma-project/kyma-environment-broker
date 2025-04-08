@@ -4,11 +4,6 @@ import (
 	pkg "github.com/kyma-project/kyma-environment-broker/common/runtime"
 )
 
-const (
-	trialSuffixLength    = 5
-	maxRuntimeNameLength = 36
-)
-
 type InfrastructureManagerConfig struct {
 	KubernetesVersion            string            `envconfig:"default=1.16.9"`
 	DefaultGardenerShootPurpose  string            `envconfig:"default=development"`
