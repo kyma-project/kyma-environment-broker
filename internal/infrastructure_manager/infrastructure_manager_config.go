@@ -1,4 +1,4 @@
-package process
+package infrastructure_manager
 
 import "github.com/kyma-project/kyma-environment-broker/common/runtime"
 

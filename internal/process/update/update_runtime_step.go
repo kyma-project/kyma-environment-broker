@@ -13,7 +13,6 @@ import (
 	gardener "github.com/gardener/gardener/pkg/apis/core/v1beta1"
 
 	kebError "github.com/kyma-project/kyma-environment-broker/internal/error"
-	"github.com/kyma-project/kyma-environment-broker/internal/process/input"
 	"github.com/kyma-project/kyma-environment-broker/internal/process/provisioning"
 
 	imv1 "github.com/kyma-project/infrastructure-manager/api/v1"
@@ -28,7 +27,7 @@ type UpdateRuntimeStep struct {
 	operationManager           *process.OperationManager
 	k8sClient                  client.Client
 	delay                      time.Duration
-	config                     input.InfrastructureManagerConfig
+	config                     process.InfrastructureManagerConfig
 	useSmallerMachineTypes     bool
 	trialPlatformRegionMapping map[string]string
 }

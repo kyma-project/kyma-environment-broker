@@ -9,6 +9,7 @@ import (
 	"time"
 
 	kebError "github.com/kyma-project/kyma-environment-broker/internal/error"
+	"github.com/kyma-project/kyma-environment-broker/internal/infrastructure_manager"
 
 	"github.com/kyma-project/kyma-environment-broker/internal/storage/dberr"
 
@@ -24,7 +25,6 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	gardener "github.com/gardener/gardener/pkg/apis/core/v1beta1"
-	"github.com/kyma-project/kyma-environment-broker/internal/process/input"
 	"github.com/kyma-project/kyma-environment-broker/internal/provider"
 	"k8s.io/apimachinery/pkg/util/intstr"
 
@@ -47,11 +47,11 @@ type CreateRuntimeResourceStep struct {
 	instanceStorage     storage.Instances
 	runtimeStateStorage storage.RuntimeStates
 	k8sClient           client.Client
-	config              input.InfrastructureManagerConfig
+	config              infrastructure_manager.InfrastructureManagerConfig
 	oidcDefaultValues   pkg.OIDCConfigDTO
 }
 
-func NewCreateRuntimeResourceStep(os storage.Operations, is storage.Instances, k8sClient client.Client, infrastructureManagerConfig input.InfrastructureManagerConfig,
+func NewCreateRuntimeResourceStep(os storage.Operations, is storage.Instances, k8sClient client.Client, infrastructureManagerConfig infrastructure_manager.InfrastructureManagerConfig,
 	oidcDefaultValues pkg.OIDCConfigDTO) *CreateRuntimeResourceStep {
 	step := &CreateRuntimeResourceStep{
 		instanceStorage:   is,
@@ -343,7 +343,7 @@ func DefaultIfParamNotSet[T interface{}](d T, param *T) T {
 	return *param
 }
 
-func CreateAdditionalWorkers(imConfig input.InfrastructureManagerConfig, values internal.ProviderValues, currentAdditionalWorkers map[string]gardener.Worker, additionalWorkerNodePools []pkg.AdditionalWorkerNodePool, zones []string) []gardener.Worker {
+func CreateAdditionalWorkers(imConfig infrastructure_manager.InfrastructureManagerConfig, values internal.ProviderValues, currentAdditionalWorkers map[string]gardener.Worker, additionalWorkerNodePools []pkg.AdditionalWorkerNodePool, zones []string) []gardener.Worker {
 	additionalWorkerNodePoolsMaxUnavailable := intstr.FromInt32(int32(0))
 	workers := make([]gardener.Worker, 0, len(additionalWorkerNodePools))
 

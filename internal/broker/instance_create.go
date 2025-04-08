@@ -11,7 +11,7 @@ import (
 	"net/netip"
 	"strings"
 
-	"github.com/kyma-project/kyma-environment-broker/internal/process/input"
+	"github.com/kyma-project/kyma-environment-broker/internal/process"
 	"github.com/kyma-project/kyma-environment-broker/internal/regionssupportingmachine"
 	"github.com/kyma-project/kyma-environment-broker/internal/validator"
 	"github.com/santhosh-tekuri/jsonschema/v6"
@@ -64,7 +64,7 @@ type ValuesProvider interface {
 
 type ProvisionEndpoint struct {
 	config                  Config
-	infrastructureManager   input.InfrastructureManagerConfig
+	infrastructureManager   process.InfrastructureManagerConfig
 	operationsStorage       storage.Operations
 	instanceStorage         storage.Instances
 	instanceArchivedStorage storage.InstancesArchived
