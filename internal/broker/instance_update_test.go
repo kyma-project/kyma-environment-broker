@@ -562,7 +562,7 @@ func TestUpdateEndpoint_UpdateParameters(t *testing.T) {
 		for _, tc := range testCases {
 			t.Run(tc.name, func(t *testing.T) {
 				// given
-				errMsg := fmt.Errorf(tc.expectedError)
+				errMsg := fmt.Errorf("%s", tc.expectedError)
 				expectedErr := apiresponses.NewFailureResponse(errMsg, http.StatusUnprocessableEntity, errMsg.Error())
 
 				// when

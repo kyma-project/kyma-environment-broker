@@ -123,7 +123,7 @@ func (b *BindEndpoint) bind(ctx context.Context, instanceID, bindingID string, d
 		err = json.Unmarshal(details.RawContext, &bindingContext)
 		if err != nil {
 			message := fmt.Sprintf("failed to unmarshal context: %s", err)
-			return domain.Binding{}, apiresponses.NewFailureResponse(fmt.Errorf(message), http.StatusBadRequest, message)
+			return domain.Binding{}, apiresponses.NewFailureResponse(errors.New(message), http.StatusBadRequest, message)
 		}
 	}
 
@@ -134,7 +134,7 @@ func (b *BindEndpoint) bind(ctx context.Context, instanceID, bindingID string, d
 			message := fmt.Sprintf("failed to unmarshal parameters: %s", err)
 			message = strings.Replace(message, "json: ", "", 1)
 			message = strings.Replace(message, "Go struct field BindingParams.", "", 1)
-			return domain.Binding{}, apiresponses.NewFailureResponse(fmt.Errorf(message), http.StatusBadRequest, message)
+			return domain.Binding{}, apiresponses.NewFailureResponse(errors.New(message), http.StatusBadRequest, message)
 		}
 	}
 
@@ -142,11 +142,11 @@ func (b *BindEndpoint) bind(ctx context.Context, instanceID, bindingID string, d
 	if parameters.ExpirationSeconds != 0 {
 		if parameters.ExpirationSeconds > b.config.MaxExpirationSeconds {
 			message := fmt.Sprintf("expiration_seconds cannot be greater than %d", b.config.MaxExpirationSeconds)
-			return domain.Binding{}, apiresponses.NewFailureResponse(fmt.Errorf(message), http.StatusBadRequest, message)
+			return domain.Binding{}, apiresponses.NewFailureResponse(errors.New(message), http.StatusBadRequest, message)
 		}
 		if parameters.ExpirationSeconds < b.config.MinExpirationSeconds {
 			message := fmt.Sprintf("expiration_seconds cannot be less than %d", b.config.MinExpirationSeconds)
-			return domain.Binding{}, apiresponses.NewFailureResponse(fmt.Errorf(message), http.StatusBadRequest, message)
+			return domain.Binding{}, apiresponses.NewFailureResponse(errors.New(message), http.StatusBadRequest, message)
 		}
 		expirationSeconds = parameters.ExpirationSeconds
 	}
@@ -162,23 +162,23 @@ func (b *BindEndpoint) bind(ctx context.Context, instanceID, bindingID string, d
 		} else {
 			message = fmt.Sprintf("instance %s creation failed", instanceID)
 		}
-		return domain.Binding{}, apiresponses.NewFailureResponse(fmt.Errorf(message), http.StatusBadRequest, message) // Agreed with Provisioning API team to return 400
+		return domain.Binding{}, apiresponses.NewFailureResponse(errors.New(message), http.StatusBadRequest, message) // Agreed with Provisioning API team to return 400
 	}
 
 	bindingFromDB, err := b.bindingsStorage.Get(instanceID, bindingID)
 	if err != nil && !dberr.IsNotFound(err) {
 		message := fmt.Sprintf("failed to get Kyma binding from storage: %s", err)
-		return domain.Binding{}, apiresponses.NewFailureResponse(fmt.Errorf(message), http.StatusInternalServerError, message)
+		return domain.Binding{}, apiresponses.NewFailureResponse(errors.New(message), http.StatusInternalServerError, message)
 	}
 	if bindingFromDB != nil {
 		if bindingFromDB.ExpirationSeconds != int64(expirationSeconds) {
 			message := fmt.Sprintf("binding already exists but with different parameters")
-			return domain.Binding{}, apiresponses.NewFailureResponse(fmt.Errorf(message), http.StatusConflict, message)
+			return domain.Binding{}, apiresponses.NewFailureResponse(errors.New(message), http.StatusConflict, message)
 		}
 		if bindingFromDB.ExpiresAt.After(time.Now()) {
 			if len(bindingFromDB.Kubeconfig) == 0 {
 				message := fmt.Sprintf("binding creation already in progress")
-				return domain.Binding{}, apiresponses.NewFailureResponse(fmt.Errorf(message), http.StatusUnprocessableEntity, message)
+				return domain.Binding{}, apiresponses.NewFailureResponse(errors.New(message), http.StatusUnprocessableEntity, message)
 			}
 			return domain.Binding{
 				IsAsync:       false,
@@ -197,7 +197,7 @@ func (b *BindEndpoint) bind(ctx context.Context, instanceID, bindingID string, d
 	bindingList, err := b.bindingsStorage.ListByInstanceID(instanceID)
 	if err != nil {
 		message := fmt.Sprintf("failed to list Kyma bindings: %s", err)
-		return domain.Binding{}, apiresponses.NewFailureResponse(fmt.Errorf(message), http.StatusInternalServerError, message)
+		return domain.Binding{}, apiresponses.NewFailureResponse(errors.New(message), http.StatusInternalServerError, message)
 	}
 
 	bindingCount := len(bindingList)
@@ -218,7 +218,7 @@ func (b *BindEndpoint) bind(ctx context.Context, instanceID, bindingID string, d
 		if (bindingCount - expiredCount) >= b.config.MaxBindingsCount {
 			message := fmt.Sprintf("maximum number of non expired bindings reached: %d", b.config.MaxBindingsCount)
 			b.log.Info(fmt.Sprintf(message+" for instance %s", instanceID))
-			return domain.Binding{}, apiresponses.NewFailureResponse(fmt.Errorf(message), http.StatusBadRequest, message)
+			return domain.Binding{}, apiresponses.NewFailureResponse(errors.New(message), http.StatusBadRequest, message)
 		}
 	}
 
@@ -239,10 +239,10 @@ func (b *BindEndpoint) bind(ctx context.Context, instanceID, bindingID string, d
 	switch {
 	case dberr.IsAlreadyExists(err):
 		message := fmt.Sprintf("failed to insert Kyma binding into storage: %s", err)
-		return domain.Binding{}, apiresponses.NewFailureResponse(fmt.Errorf(message), http.StatusBadRequest, message)
+		return domain.Binding{}, apiresponses.NewFailureResponse(errors.New(message), http.StatusBadRequest, message)
 	case err != nil:
 		message := fmt.Sprintf("failed to insert Kyma binding into storage: %s", err)
-		return domain.Binding{}, apiresponses.NewFailureResponse(fmt.Errorf(message), http.StatusInternalServerError, message)
+		return domain.Binding{}, apiresponses.NewFailureResponse(errors.New(message), http.StatusInternalServerError, message)
 	}
 
 	// create kubeconfig for the instance
@@ -251,7 +251,7 @@ func (b *BindEndpoint) bind(ctx context.Context, instanceID, bindingID string, d
 	if err != nil {
 		message := fmt.Sprintf("failed to create a Kyma binding using service account's kubeconfig: %s", err)
 		b.log.Error(fmt.Sprintf("for instance %s %s", instanceID, message))
-		return domain.Binding{}, apiresponses.NewFailureResponse(fmt.Errorf(message), http.StatusBadRequest, message)
+		return domain.Binding{}, apiresponses.NewFailureResponse(errors.New(message), http.StatusBadRequest, message)
 	}
 
 	binding.ExpiresAt = expiresAt
@@ -260,7 +260,7 @@ func (b *BindEndpoint) bind(ctx context.Context, instanceID, bindingID string, d
 	err = b.bindingsStorage.Update(binding)
 	if err != nil {
 		message := fmt.Sprintf("failed to update Kyma binding in storage: %s", err)
-		return domain.Binding{}, apiresponses.NewFailureResponse(fmt.Errorf(message), http.StatusInternalServerError, message)
+		return domain.Binding{}, apiresponses.NewFailureResponse(errors.New(message), http.StatusInternalServerError, message)
 	}
 	b.log.Info(fmt.Sprintf("Successfully created binding %s for instance %s", bindingID, instanceID))
 	b.publisher.Publish(context.Background(), BindingCreated{PlanID: instance.ServicePlanID})

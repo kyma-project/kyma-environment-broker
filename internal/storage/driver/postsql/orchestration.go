@@ -32,7 +32,7 @@ func (s *orchestrations) Insert(orchestration internal.Orchestration) error {
 		return fmt.Errorf("while converting Orchestration to DTO: %w", err)
 	}
 
-	sess := s.NewWriteSession()
+	sess := s.Factory.NewWriteSession()
 	return wait.PollUntilContextTimeout(context.Background(), defaultRetryInterval, defaultRetryTimeout, true, func(ctx context.Context) (bool, error) {
 		err := sess.InsertOrchestration(dto)
 		if err != nil {
@@ -43,7 +43,7 @@ func (s *orchestrations) Insert(orchestration internal.Orchestration) error {
 }
 
 func (s *orchestrations) GetByID(orchestrationID string) (*internal.Orchestration, error) {
-	sess := s.NewReadSession()
+	sess := s.Factory.NewReadSession()
 	orchestration := internal.Orchestration{}
 	var lastErr error
 	err := wait.PollUntilContextTimeout(context.Background(), defaultRetryInterval, defaultRetryTimeout, true, func(ctx context.Context) (bool, error) {
@@ -65,7 +65,7 @@ func (s *orchestrations) GetByID(orchestrationID string) (*internal.Orchestratio
 }
 
 func (s *orchestrations) List(filter dbmodel.OrchestrationFilter) ([]internal.Orchestration, int, int, error) {
-	sess := s.NewReadSession()
+	sess := s.Factory.NewReadSession()
 	var (
 		orchestrations    = make([]internal.Orchestration, 0)
 		lastErr           error
@@ -102,7 +102,7 @@ func (s *orchestrations) Update(orchestration internal.Orchestration) error {
 		return fmt.Errorf("while converting Orchestration to DTO: %w", err)
 	}
 
-	sess := s.NewWriteSession()
+	sess := s.Factory.NewWriteSession()
 	var lastErr dberr.Error
 	err = wait.PollUntilContextTimeout(context.Background(), defaultRetryInterval, defaultRetryTimeout, true, func(ctx context.Context) (bool, error) {
 		lastErr = sess.UpdateOrchestration(dto)

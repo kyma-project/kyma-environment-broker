@@ -21,7 +21,7 @@ func (e *events) ListEvents(filter eventsapi.EventFilter) ([]eventsapi.EventDTO,
 	if e == nil {
 		return nil, fmt.Errorf("events are disabled")
 	}
-	sess := e.NewReadSession()
+	sess := e.Factory.NewReadSession()
 	return sess.ListEvents(filter)
 }
 
@@ -29,7 +29,7 @@ func (e *events) InsertEvent(eventLevel eventsapi.EventLevel, message, instanceI
 	if e == nil {
 		return
 	}
-	sess := e.NewWriteSession()
+	sess := e.Factory.NewWriteSession()
 	if err := sess.InsertEvent(eventLevel, message, instanceID, operationID); err != nil {
 		slog.Error(fmt.Sprintf("failed to insert event [%v] %v/%v %q", eventLevel, instanceID, operationID, message))
 	}
@@ -46,7 +46,7 @@ func (e *events) RunGarbageCollection(pollingPeriod, retention time.Duration) {
 	for {
 		select {
 		case <-ticker.C:
-			sess := e.NewWriteSession()
+			sess := e.Factory.NewWriteSession()
 			if err := sess.DeleteEvents(time.Now().Add(-retention)); err != nil {
 				slog.Error(fmt.Sprintf("failed to delete old events: %v", err))
 			}

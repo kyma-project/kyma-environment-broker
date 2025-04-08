@@ -210,7 +210,7 @@ func (o *OIDCConfigDTO) Validate() error {
 	}
 
 	if len(errs) > 0 {
-		err := fmt.Errorf(strings.Join(errs, ", "))
+		err := fmt.Errorf("%s", strings.Join(errs, ", "))
 		return err
 	}
 	return nil

@@ -25,7 +25,7 @@ type Instance struct {
 }
 
 func (s *Instance) GetDistinctSubAccounts() ([]string, error) {
-	sess := s.NewReadSession()
+	sess := s.Factory.NewReadSession()
 	var (
 		subAccounts []string
 		lastErr     dberr.Error
@@ -53,7 +53,7 @@ func NewInstance(sess postsql.Factory, operations *operations, cipher Cipher) *I
 }
 
 func (s *Instance) FindAllJoinedWithOperations(prct ...predicate.Predicate) ([]internal.InstanceWithOperation, error) {
-	sess := s.NewReadSession()
+	sess := s.Factory.NewReadSession()
 	var (
 		instances []dbmodel.InstanceWithOperationDTO
 		lastErr   dberr.Error
@@ -123,7 +123,7 @@ func (s *Instance) toDeprovisioningOp(dto *dbmodel.InstanceWithOperationDTO) (*i
 }
 
 func (s *Instance) FindAllInstancesForRuntimes(runtimeIdList []string) ([]internal.Instance, error) {
-	sess := s.NewReadSession()
+	sess := s.Factory.NewReadSession()
 	var instances []dbmodel.InstanceDTO
 	var lastErr dberr.Error
 	err := wait.PollUntilContextTimeout(context.Background(), defaultRetryInterval, defaultRetryTimeout, true, func(ctx context.Context) (bool, error) {
@@ -153,7 +153,7 @@ func (s *Instance) FindAllInstancesForRuntimes(runtimeIdList []string) ([]intern
 }
 
 func (s *Instance) FindAllInstancesForSubAccounts(subAccountslist []string) ([]internal.Instance, error) {
-	sess := s.NewReadSession()
+	sess := s.Factory.NewReadSession()
 	var (
 		instances []dbmodel.InstanceDTO
 		lastErr   dberr.Error
@@ -182,7 +182,7 @@ func (s *Instance) FindAllInstancesForSubAccounts(subAccountslist []string) ([]i
 }
 
 func (s *Instance) GetNumberOfInstancesForGlobalAccountID(globalAccountID string) (int, error) {
-	sess := s.NewReadSession()
+	sess := s.Factory.NewReadSession()
 	var result int
 	err := wait.PollUntilContextTimeout(context.Background(), defaultRetryInterval, defaultRetryTimeout, true, func(ctx context.Context) (bool, error) {
 		count, err := sess.GetNumberOfInstancesForGlobalAccountID(globalAccountID)
@@ -194,7 +194,7 @@ func (s *Instance) GetNumberOfInstancesForGlobalAccountID(globalAccountID string
 
 // TODO: Wrap retries in single method WithRetries
 func (s *Instance) GetByID(instanceID string) (*internal.Instance, error) {
-	sess := s.NewReadSession()
+	sess := s.Factory.NewReadSession()
 	instanceDTO := dbmodel.InstanceDTO{}
 	var lastErr dberr.Error
 	err := wait.PollUntilContextTimeout(context.Background(), defaultRetryInterval, defaultRetryTimeout, true, func(ctx context.Context) (bool, error) {
@@ -326,7 +326,7 @@ func (s *Instance) Insert(instance internal.Instance) error {
 		return err
 	}
 
-	sess := s.NewWriteSession()
+	sess := s.Factory.NewWriteSession()
 	return wait.PollUntilContextTimeout(context.Background(), defaultRetryInterval, defaultRetryTimeout, true, func(ctx context.Context) (bool, error) {
 		err := sess.InsertInstance(dto)
 		if err != nil {
@@ -337,7 +337,7 @@ func (s *Instance) Insert(instance internal.Instance) error {
 }
 
 func (s *Instance) Update(instance internal.Instance) (*internal.Instance, error) {
-	sess := s.NewWriteSession()
+	sess := s.Factory.NewWriteSession()
 	dto, err := s.toInstanceDTO(instance)
 	if err != nil {
 		return nil, err
@@ -348,7 +348,7 @@ func (s *Instance) Update(instance internal.Instance) (*internal.Instance, error
 
 		switch {
 		case dberr.IsNotFound(lastErr):
-			_, lastErr = s.NewReadSession().GetInstanceByID(instance.InstanceID)
+			_, lastErr = s.Factory.NewReadSession().GetInstanceByID(instance.InstanceID)
 			if dberr.IsNotFound(lastErr) {
 				return false, dberr.NotFound("Instance with id %s not exist", instance.InstanceID)
 			}
@@ -407,13 +407,13 @@ func (s *Instance) toInstanceDTO(instance internal.Instance) (dbmodel.InstanceDT
 }
 
 func (s *Instance) Delete(instanceID string) error {
-	sess := s.NewWriteSession()
+	sess := s.Factory.NewWriteSession()
 	return sess.DeleteInstance(instanceID)
 }
 
 func (s *Instance) GetActiveInstanceStats() (internal.InstanceStats, error) {
 
-	entries, err := s.NewReadSession().GetActiveInstanceStats()
+	entries, err := s.Factory.NewReadSession().GetActiveInstanceStats()
 
 	if err != nil {
 		return internal.InstanceStats{}, err
@@ -428,7 +428,7 @@ func (s *Instance) GetActiveInstanceStats() (internal.InstanceStats, error) {
 		result.TotalNumberOfInstances = result.TotalNumberOfInstances + e.Total
 	}
 
-	subEntries, err := s.NewReadSession().GetSubaccountsInstanceStats()
+	subEntries, err := s.Factory.NewReadSession().GetSubaccountsInstanceStats()
 
 	if err != nil {
 		return internal.InstanceStats{}, err
@@ -441,7 +441,7 @@ func (s *Instance) GetActiveInstanceStats() (internal.InstanceStats, error) {
 
 func (s *Instance) GetERSContextStats() (internal.ERSContextStats, error) {
 
-	entries, err := s.NewReadSession().GetERSContextStats()
+	entries, err := s.Factory.NewReadSession().GetERSContextStats()
 	if err != nil {
 		return internal.ERSContextStats{}, err
 	}
@@ -456,7 +456,7 @@ func (s *Instance) GetERSContextStats() (internal.ERSContextStats, error) {
 
 func (s *Instance) List(filter dbmodel.InstanceFilter) ([]internal.Instance, int, int, error) {
 
-	dtos, count, totalCount, err := s.NewReadSession().ListInstances(filter)
+	dtos, count, totalCount, err := s.Factory.NewReadSession().ListInstances(filter)
 
 	if err != nil {
 		return []internal.Instance{}, 0, 0, err
@@ -486,13 +486,13 @@ func (s *Instance) List(filter dbmodel.InstanceFilter) ([]internal.Instance, int
 }
 
 func (s *Instance) UpdateInstanceLastOperation(instanceID, operationID string) error {
-	sess := s.NewWriteSession()
+	sess := s.Factory.NewWriteSession()
 	return sess.UpdateInstanceLastOperation(instanceID, operationID)
 }
 
 func (s *Instance) ListWithSubaccountState(filter dbmodel.InstanceFilter) ([]internal.InstanceWithSubaccountState, int, int, error) {
 
-	dtos, count, totalCount, err := s.NewReadSession().ListInstancesWithSubaccountStates(filter)
+	dtos, count, totalCount, err := s.Factory.NewReadSession().ListInstancesWithSubaccountStates(filter)
 
 	if err != nil {
 		return []internal.InstanceWithSubaccountState{}, 0, 0, err
@@ -522,7 +522,7 @@ func (s *Instance) ListWithSubaccountState(filter dbmodel.InstanceFilter) ([]int
 }
 
 func (s *Instance) ListDeletedInstanceIDs(batchSize int) ([]string, error) {
-	ids, err := s.NewReadSession().ListDeletedInstanceIDs(batchSize)
+	ids, err := s.Factory.NewReadSession().ListDeletedInstanceIDs(batchSize)
 	if err != nil {
 		return nil, err
 	}
@@ -530,12 +530,12 @@ func (s *Instance) ListDeletedInstanceIDs(batchSize int) ([]string, error) {
 }
 
 func (s *Instance) DeletedInstancesStatistics() (internal.DeletedStats, error) {
-	numberOfOperations, err := s.NewReadSession().NumberOfOperationsForDeletedInstances()
+	numberOfOperations, err := s.Factory.NewReadSession().NumberOfOperationsForDeletedInstances()
 	if err != nil {
 		return internal.DeletedStats{}, err
 	}
 
-	numberOfInstances, err := s.NewReadSession().NumberOfDeletedInstances()
+	numberOfInstances, err := s.Factory.NewReadSession().NumberOfDeletedInstances()
 	if err != nil {
 		return internal.DeletedStats{}, err
 	}

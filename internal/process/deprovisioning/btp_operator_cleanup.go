@@ -78,7 +78,7 @@ func (s *BTPOperatorCleanupStep) softDelete(operation internal.Operation, k8sCli
 	}
 
 	if len(errors) != 0 {
-		return s.retryOnError(operation, nil, fmt.Errorf(strings.Join(errors, ";")), log, "failed to cleanup")
+		return s.retryOnError(operation, nil, fmt.Errorf("%s", strings.Join(errors, ";")), log, "failed to cleanup")
 	}
 	return operation, 0, nil
 }

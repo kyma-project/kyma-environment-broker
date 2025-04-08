@@ -27,7 +27,7 @@ func NewRuntimeStates(sess postsql.Factory, cipher Cipher) *runtimeState {
 }
 
 func (s *runtimeState) DeleteByOperationID(operationID string) error {
-	return s.NewWriteSession().DeleteRuntimeStatesByOperationID(operationID)
+	return s.Factory.NewWriteSession().DeleteRuntimeStatesByOperationID(operationID)
 }
 
 func (s *runtimeState) Insert(runtimeState internal.RuntimeState) error {
@@ -35,7 +35,7 @@ func (s *runtimeState) Insert(runtimeState internal.RuntimeState) error {
 	if err != nil {
 		return err
 	}
-	sess := s.NewWriteSession()
+	sess := s.Factory.NewWriteSession()
 	return wait.PollUntilContextTimeout(context.Background(), defaultRetryInterval, defaultRetryTimeout, true, func(ctx context.Context) (bool, error) {
 		err := sess.InsertRuntimeState(state)
 		if err != nil {
@@ -46,7 +46,7 @@ func (s *runtimeState) Insert(runtimeState internal.RuntimeState) error {
 }
 
 func (s *runtimeState) ListByRuntimeID(runtimeID string) ([]internal.RuntimeState, error) {
-	sess := s.NewReadSession()
+	sess := s.Factory.NewReadSession()
 	states := make([]dbmodel.RuntimeStateDTO, 0)
 	var lastErr dberr.Error
 	err := wait.PollUntilContextTimeout(context.Background(), defaultRetryInterval, defaultRetryTimeout, true, func(ctx context.Context) (bool, error) {
@@ -70,7 +70,7 @@ func (s *runtimeState) ListByRuntimeID(runtimeID string) ([]internal.RuntimeStat
 }
 
 func (s *runtimeState) GetByOperationID(operationID string) (internal.RuntimeState, error) {
-	sess := s.NewReadSession()
+	sess := s.Factory.NewReadSession()
 	state := dbmodel.RuntimeStateDTO{}
 	var lastErr dberr.Error
 	err := wait.PollUntilContextTimeout(context.Background(), defaultRetryInterval, defaultRetryTimeout, true, func(ctx context.Context) (bool, error) {
@@ -95,7 +95,7 @@ func (s *runtimeState) GetByOperationID(operationID string) (internal.RuntimeSta
 }
 
 func (s *runtimeState) GetLatestByRuntimeID(runtimeID string) (internal.RuntimeState, error) {
-	sess := s.NewReadSession()
+	sess := s.Factory.NewReadSession()
 	var state dbmodel.RuntimeStateDTO
 	var lastErr dberr.Error
 	err := wait.PollUntilContextTimeout(context.Background(), defaultRetryInterval, defaultRetryTimeout, true, func(ctx context.Context) (bool, error) {
@@ -120,7 +120,7 @@ func (s *runtimeState) GetLatestByRuntimeID(runtimeID string) (internal.RuntimeS
 }
 
 func (s *runtimeState) GetLatestWithOIDCConfigByRuntimeID(runtimeID string) (internal.RuntimeState, error) {
-	sess := s.NewReadSession()
+	sess := s.Factory.NewReadSession()
 	var state dbmodel.RuntimeStateDTO
 	var lastErr dberr.Error
 	err := wait.PollUntilContextTimeout(context.Background(), defaultRetryInterval, defaultRetryTimeout, true, func(ctx context.Context) (bool, error) {
