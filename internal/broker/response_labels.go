@@ -27,13 +27,13 @@ const (
 	apiServerURLErrorFormat = "while getting APIServerURL: %s"
 )
 
-func ResponseLabels(op internal.ProvisioningOperation, instance internal.Instance, brokerURL string, enableKubeconfigLabel bool, kubeconfigBuilder kubeconfig.KcBuilder) map[string]any {
+func ResponseLabels(op internal.ProvisioningOperation, instance internal.Instance, brokerURL string, kubeconfigBuilder kubeconfig.KcBuilder) map[string]any {
 	brokerURL = strings.TrimLeft(brokerURL, "https://")
 	brokerURL = strings.TrimLeft(brokerURL, "http://")
 
 	responseLabels := make(map[string]any, 0)
 	responseLabels["Name"] = op.ProvisioningParameters.Parameters.Name
-	if enableKubeconfigLabel && !IsOwnClusterPlan(instance.ServicePlanID) && instance.RuntimeID != "" {
+	if !IsOwnClusterPlan(instance.ServicePlanID) && instance.RuntimeID != "" {
 		responseLabels[kubeconfigURLKey] = fmt.Sprintf("https://%s/kubeconfig/%s", brokerURL, instance.InstanceID)
 		apiServerUrl, err := kubeconfigBuilder.GetServerURL(instance.RuntimeID)
 		switch {
@@ -54,14 +54,13 @@ func ResponseLabelsWithExpirationInfo(
 	instance internal.Instance,
 	brokerURL string,
 	docsURL string,
-	enableKubeconfigLabel bool,
 	docsKey string,
 	expireDuration time.Duration,
 	expiryDetailsKey string,
 	expiredInfoFormat string,
 	kubeconfigBuilder kubeconfig.KcBuilder,
 ) map[string]any {
-	labels := ResponseLabels(op, instance, brokerURL, enableKubeconfigLabel, kubeconfigBuilder)
+	labels := ResponseLabels(op, instance, brokerURL, kubeconfigBuilder)
 
 	expireTime := instance.CreatedAt.Add(expireDuration)
 	hoursLeft := calculateHoursLeft(expireTime)

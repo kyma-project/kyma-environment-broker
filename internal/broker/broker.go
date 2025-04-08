@@ -39,7 +39,6 @@ type Config struct {
 	EnablePlans                             EnablePlans `envconfig:"default=azure"`
 	OnlySingleTrialPerGA                    bool        `envconfig:"default=true"`
 	URL                                     string
-	EnableKubeconfigURLLabel                bool          `envconfig:"default=false"`
 	IncludeAdditionalParamsInSchema         bool          `envconfig:"default=false"`
 	ShowTrialExpirationInfo                 bool          `envconfig:"default=false"`
 	ShowFreeExpirationInfo                  bool          `envconfig:"default=false"`

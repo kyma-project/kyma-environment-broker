@@ -725,6 +725,7 @@ func TestUpdateAdditionalWorkerNodePools(t *testing.T) {
 				return &gqlschema.ClusterConfigInput{}, nil
 			}
 			kcBuilder := &kcMock.KcBuilder{}
+			kcBuilder.On("GetServerURL", mock.Anything).Return("https://kcp.example.com", nil)
 			svc := NewUpdate(Config{}, st.Instances(), st.RuntimeStates(), st.Operations(), handler, true, true, false, q, PlansConfig{},
 				planDefaults, fixLogger(), dashboardConfig, kcBuilder, &OneForAllConvergedCloudRegionsProvider{}, fakeKcpK8sClient, nil)
 

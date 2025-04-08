@@ -247,7 +247,7 @@ func (b *ProvisionEndpoint) Provision(ctx context.Context, instanceID string, de
 		OperationData: operation.ID,
 		DashboardURL:  dashboardURL,
 		Metadata: domain.InstanceMetadata{
-			Labels: ResponseLabels(operation, instance, b.config.URL, b.config.EnableKubeconfigURLLabel, b.kcBuilder),
+			Labels: ResponseLabels(operation, instance, b.config.URL, b.kcBuilder),
 		},
 	}, nil
 }
@@ -602,7 +602,7 @@ func (b *ProvisionEndpoint) handleExistingOperation(operation *internal.Provisio
 		OperationData: operation.ID,
 		DashboardURL:  operation.DashboardURL,
 		Metadata: domain.InstanceMetadata{
-			Labels: ResponseLabels(*operation, *instance, b.config.URL, b.config.EnableKubeconfigURLLabel, b.kcBuilder),
+			Labels: ResponseLabels(*operation, *instance, b.config.URL, b.kcBuilder),
 		},
 	}, nil
 }

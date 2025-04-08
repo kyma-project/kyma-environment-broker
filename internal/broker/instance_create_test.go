@@ -76,10 +76,9 @@ func TestProvision_Provision(t *testing.T) {
 		// #create provisioner endpoint
 		provisionEndpoint := broker.NewProvision(
 			broker.Config{
-				EnablePlans:              []string{"gcp", "azure"},
-				URL:                      brokerURL,
-				OnlySingleTrialPerGA:     true,
-				EnableKubeconfigURLLabel: true,
+				EnablePlans:          []string{"gcp", "azure"},
+				URL:                  brokerURL,
+				OnlySingleTrialPerGA: true,
 			},
 			gardener.Config{Project: "test", ShootDomain: "example.com", DNSProviders: fixDNSProviders()},
 			memoryStorage.Operations(),
@@ -152,10 +151,9 @@ func TestProvision_Provision(t *testing.T) {
 		// #create provisioner endpoint
 		provisionEndpoint := broker.NewProvision(
 			broker.Config{
-				EnablePlans:              []string{"gcp", "azure", "own_cluster"},
-				URL:                      brokerURL,
-				OnlySingleTrialPerGA:     true,
-				EnableKubeconfigURLLabel: true,
+				EnablePlans:          []string{"gcp", "azure", "own_cluster"},
+				URL:                  brokerURL,
+				OnlySingleTrialPerGA: true,
 			},
 			gardener.Config{Project: "test", ShootDomain: "example.com", DNSProviders: fixDNSProviders()},
 			memoryStorage.Operations(),
@@ -233,10 +231,9 @@ func TestProvision_Provision(t *testing.T) {
 		// #create provisioner endpoint
 		provisionEndpoint := broker.NewProvision(
 			broker.Config{
-				EnablePlans:              []string{"gcp", "azure", "own_cluster"},
-				URL:                      brokerURL,
-				OnlySingleTrialPerGA:     true,
-				EnableKubeconfigURLLabel: true,
+				EnablePlans:          []string{"gcp", "azure", "own_cluster"},
+				URL:                  brokerURL,
+				OnlySingleTrialPerGA: true,
 			},
 			gardener.Config{Project: "test", ShootDomain: "example.com", DNSProviders: fixDNSProviders()},
 			memoryStorage.Operations(),
@@ -285,10 +282,9 @@ func TestProvision_Provision(t *testing.T) {
 		// #create provisioner endpoint
 		provisionEndpoint := broker.NewProvision(
 			broker.Config{
-				EnablePlans:              []string{"gcp", "azure", "own_cluster"},
-				URL:                      brokerURL,
-				OnlySingleTrialPerGA:     true,
-				EnableKubeconfigURLLabel: true,
+				EnablePlans:          []string{"gcp", "azure", "own_cluster"},
+				URL:                  brokerURL,
+				OnlySingleTrialPerGA: true,
 			},
 			gardener.Config{Project: "test", ShootDomain: "example.com", DNSProviders: fixDNSProviders()},
 			memoryStorage.Operations(),
@@ -362,10 +358,9 @@ func TestProvision_Provision(t *testing.T) {
 		// #create provisioner endpoint
 		provisionEndpoint := broker.NewProvision(
 			broker.Config{
-				EnablePlans:              []string{"gcp", "azure"},
-				URL:                      brokerURL,
-				OnlySingleTrialPerGA:     true,
-				EnableKubeconfigURLLabel: true,
+				EnablePlans:          []string{"gcp", "azure"},
+				URL:                  brokerURL,
+				OnlySingleTrialPerGA: true,
 			},
 			gardener.Config{Project: "test", ShootDomain: "example.com", DNSProviders: fixDNSProviders()},
 			memoryStorage.Operations(),
@@ -442,9 +437,8 @@ func TestProvision_Provision(t *testing.T) {
 		// #create provisioner endpoint
 		provisionEndpoint := broker.NewProvision(
 			broker.Config{
-				EnablePlans:              []string{"gcp", "azure", "azure_lite"},
-				OnlySingleTrialPerGA:     true,
-				EnableKubeconfigURLLabel: true,
+				EnablePlans:          []string{"gcp", "azure", "azure_lite"},
+				OnlySingleTrialPerGA: true,
 			},
 			gardener.Config{Project: "test", ShootDomain: "example.com", DNSProviders: fixDNSProviders()},
 			memoryStorage.Operations(),
@@ -913,10 +907,9 @@ func TestProvision_Provision(t *testing.T) {
 		// #create provisioner endpoint
 		provisionEndpoint := broker.NewProvision(
 			broker.Config{
-				EnablePlans:              []string{"gcp", "azure"},
-				URL:                      brokerURL,
-				OnlySingleTrialPerGA:     true,
-				EnableKubeconfigURLLabel: true,
+				EnablePlans:          []string{"gcp", "azure"},
+				URL:                  brokerURL,
+				OnlySingleTrialPerGA: true,
 			},
 			gardener.Config{Project: "test", ShootDomain: "example.com", DNSProviders: fixDNSProviders()},
 			memoryStorage.Operations(),
@@ -973,10 +966,9 @@ func TestProvision_Provision(t *testing.T) {
 		// #create provisioner endpoint
 		provisionEndpoint := broker.NewProvision(
 			broker.Config{
-				EnablePlans:              []string{"gcp", "azure"},
-				URL:                      brokerURL,
-				OnlySingleTrialPerGA:     true,
-				EnableKubeconfigURLLabel: true,
+				EnablePlans:          []string{"gcp", "azure"},
+				URL:                  brokerURL,
+				OnlySingleTrialPerGA: true,
 			},
 			gardener.Config{Project: "test", ShootDomain: "example.com", DNSProviders: fixDNSProviders()},
 			memoryStorage.Operations(),
@@ -1033,10 +1025,9 @@ func TestProvision_Provision(t *testing.T) {
 		// #create provisioner endpoint
 		provisionEndpoint := broker.NewProvision(
 			broker.Config{
-				EnablePlans:              []string{"gcp", "azure"},
-				URL:                      brokerURL,
-				OnlySingleTrialPerGA:     true,
-				EnableKubeconfigURLLabel: true,
+				EnablePlans:          []string{"gcp", "azure"},
+				URL:                  brokerURL,
+				OnlySingleTrialPerGA: true,
 			},
 			gardener.Config{Project: "test", ShootDomain: "example.com", DNSProviders: fixDNSProviders()},
 			memoryStorage.Operations(),
@@ -1134,10 +1125,9 @@ func TestProvision_Provision(t *testing.T) {
 		// #create provisioner endpoint
 		provisionEndpoint := broker.NewProvision(
 			broker.Config{
-				EnablePlans:              []string{"gcp", "azure"},
-				URL:                      brokerURL,
-				OnlySingleTrialPerGA:     true,
-				EnableKubeconfigURLLabel: true,
+				EnablePlans:          []string{"gcp", "azure"},
+				URL:                  brokerURL,
+				OnlySingleTrialPerGA: true,
 			},
 			gardener.Config{Project: "test", ShootDomain: "example.com", DNSProviders: fixDNSProviders()},
 			memoryStorage.Operations(),
@@ -1465,10 +1455,9 @@ func TestProvision_Provision(t *testing.T) {
 		// #create provisioner endpoint
 		provisionEndpoint := broker.NewProvision(
 			broker.Config{
-				EnablePlans:              []string{"gcp"},
-				URL:                      brokerURL,
-				OnlySingleTrialPerGA:     true,
-				EnableKubeconfigURLLabel: true,
+				EnablePlans:          []string{"gcp"},
+				URL:                  brokerURL,
+				OnlySingleTrialPerGA: true,
 			},
 			gardener.Config{Project: "test", ShootDomain: "example.com", DNSProviders: fixDNSProviders()},
 			memoryStorage.Operations(),
@@ -1519,10 +1508,9 @@ func TestProvision_Provision(t *testing.T) {
 		// #create provisioner endpoint
 		provisionEndpoint := broker.NewProvision(
 			broker.Config{
-				EnablePlans:              []string{"gcp"},
-				URL:                      brokerURL,
-				OnlySingleTrialPerGA:     true,
-				EnableKubeconfigURLLabel: true,
+				EnablePlans:          []string{"gcp"},
+				URL:                  brokerURL,
+				OnlySingleTrialPerGA: true,
 			},
 			gardener.Config{Project: "test", ShootDomain: "example.com", DNSProviders: fixDNSProviders()},
 			memoryStorage.Operations(),
@@ -1656,10 +1644,9 @@ func TestAdditionalWorkerNodePools(t *testing.T) {
 			// #create provisioner endpoint
 			provisionEndpoint := broker.NewProvision(
 				broker.Config{
-					EnablePlans:              []string{"aws"},
-					URL:                      brokerURL,
-					OnlySingleTrialPerGA:     true,
-					EnableKubeconfigURLLabel: true,
+					EnablePlans:          []string{"aws"},
+					URL:                  brokerURL,
+					OnlySingleTrialPerGA: true,
 				},
 				gardener.Config{Project: "test", ShootDomain: "example.com", DNSProviders: fixDNSProviders()},
 				memoryStorage.Operations(),
@@ -1725,10 +1712,9 @@ func TestAdditionalWorkerNodePoolsForUnsupportedPlans(t *testing.T) {
 			// #create provisioner endpoint
 			provisionEndpoint := broker.NewProvision(
 				broker.Config{
-					EnablePlans:              []string{"trial", "free"},
-					URL:                      brokerURL,
-					OnlySingleTrialPerGA:     true,
-					EnableKubeconfigURLLabel: true,
+					EnablePlans:          []string{"trial", "free"},
+					URL:                  brokerURL,
+					OnlySingleTrialPerGA: true,
 				},
 				gardener.Config{Project: "test", ShootDomain: "example.com", DNSProviders: fixDNSProviders()},
 				memoryStorage.Operations(),
@@ -2216,10 +2202,9 @@ func TestUnsupportedMachineType(t *testing.T) {
 	// #create provisioner endpoint
 	provisionEndpoint := broker.NewProvision(
 		broker.Config{
-			EnablePlans:              []string{"gcp"},
-			URL:                      brokerURL,
-			OnlySingleTrialPerGA:     true,
-			EnableKubeconfigURLLabel: true,
+			EnablePlans:          []string{"gcp"},
+			URL:                  brokerURL,
+			OnlySingleTrialPerGA: true,
 		},
 		gardener.Config{Project: "test", ShootDomain: "example.com", DNSProviders: fixDNSProviders()},
 		memoryStorage.Operations(),
@@ -2272,10 +2257,9 @@ func TestUnsupportedMachineTypeInAdditionalWorkerNodePools(t *testing.T) {
 	// #create provisioner endpoint
 	provisionEndpoint := broker.NewProvision(
 		broker.Config{
-			EnablePlans:              []string{"aws"},
-			URL:                      brokerURL,
-			OnlySingleTrialPerGA:     true,
-			EnableKubeconfigURLLabel: true,
+			EnablePlans:          []string{"aws"},
+			URL:                  brokerURL,
+			OnlySingleTrialPerGA: true,
 		},
 		gardener.Config{Project: "test", ShootDomain: "example.com", DNSProviders: fixDNSProviders()},
 		memoryStorage.Operations(),
@@ -2354,10 +2338,9 @@ func TestGPUMachineForInternalUser(t *testing.T) {
 	// #create provisioner endpoint
 	provisionEndpoint := broker.NewProvision(
 		broker.Config{
-			EnablePlans:              []string{"aws"},
-			URL:                      brokerURL,
-			OnlySingleTrialPerGA:     true,
-			EnableKubeconfigURLLabel: true,
+			EnablePlans:          []string{"aws"},
+			URL:                  brokerURL,
+			OnlySingleTrialPerGA: true,
 		},
 		gardener.Config{Project: "test", ShootDomain: "example.com", DNSProviders: fixDNSProviders()},
 		memoryStorage.Operations(),
@@ -2410,10 +2393,9 @@ func TestGPUMachinesForExternalCustomer(t *testing.T) {
 	// #create provisioner endpoint
 	provisionEndpoint := broker.NewProvision(
 		broker.Config{
-			EnablePlans:              []string{"aws", "azure", "gcp"},
-			URL:                      brokerURL,
-			OnlySingleTrialPerGA:     true,
-			EnableKubeconfigURLLabel: true,
+			EnablePlans:          []string{"aws", "azure", "gcp"},
+			URL:                  brokerURL,
+			OnlySingleTrialPerGA: true,
 		},
 		gardener.Config{Project: "test", ShootDomain: "example.com", DNSProviders: fixDNSProviders()},
 		memoryStorage.Operations(),

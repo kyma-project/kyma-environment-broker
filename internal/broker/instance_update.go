@@ -186,7 +186,7 @@ func (b *UpdateEndpoint) Update(_ context.Context, instanceID string, details do
 		DashboardURL:  dashboardURL,
 		OperationData: "",
 		Metadata: domain.InstanceMetadata{
-			Labels: ResponseLabels(*lastProvisioningOperation, *instance, b.config.URL, b.config.EnableKubeconfigURLLabel, b.kcBuilder),
+			Labels: ResponseLabels(*lastProvisioningOperation, *instance, b.config.URL, b.kcBuilder),
 		},
 	}, nil
 }
@@ -223,7 +223,7 @@ func (b *UpdateEndpoint) processUpdateParameters(instance *internal.Instance, de
 			DashboardURL:  instance.DashboardURL,
 			OperationData: "",
 			Metadata: domain.InstanceMetadata{
-				Labels: ResponseLabels(*lastProvisioningOperation, *instance, b.config.URL, b.config.EnableKubeconfigURLLabel, b.kcBuilder),
+				Labels: ResponseLabels(*lastProvisioningOperation, *instance, b.config.URL, b.kcBuilder),
 			},
 		}, nil
 	}
@@ -363,7 +363,7 @@ func (b *UpdateEndpoint) processUpdateParameters(instance *internal.Instance, de
 		DashboardURL:  instance.DashboardURL,
 		OperationData: operation.ID,
 		Metadata: domain.InstanceMetadata{
-			Labels: ResponseLabels(*lastProvisioningOperation, *instance, b.config.URL, b.config.EnableKubeconfigURLLabel, b.kcBuilder),
+			Labels: ResponseLabels(*lastProvisioningOperation, *instance, b.config.URL, b.kcBuilder),
 		},
 	}, nil
 }
