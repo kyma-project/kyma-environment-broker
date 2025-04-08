@@ -160,6 +160,8 @@ type Config struct {
 	RegionsSupportingMachineFilePath string
 
 	HapRuleFilePath string
+
+	MultipleContexts bool `envconfig:"default=false"`
 }
 
 type ProfilerConfig struct {
@@ -347,7 +349,7 @@ func main() {
 	fatalOnError(err, log)
 
 	// create kubeconfig builder
-	kcBuilder := kubeconfig.NewBuilder(kcpK8sClient, skrK8sClientProvider, cfg.InfrastructureManager.UseAdditionalOIDC, cfg.InfrastructureManager.UseMainOIDC)
+	kcBuilder := kubeconfig.NewBuilder(kcpK8sClient, skrK8sClientProvider, cfg.InfrastructureManager.UseAdditionalOIDC, cfg.InfrastructureManager.UseMainOIDC, cfg.MultipleContexts)
 
 	// create server
 	router := httputil.NewRouter()
@@ -512,8 +514,8 @@ func createAPI(router *httputil.Router, servicesConfig broker.ServicesConfig, pl
 			planDefaults, logs, cfg.KymaDashboardConfig, kcBuilder, convergedCloudRegionProvider, kcpK8sClient, regionsSupportingMachine),
 		GetInstanceEndpoint:          broker.NewGetInstance(cfg.Broker, db.Instances(), db.Operations(), kcBuilder, logs),
 		LastOperationEndpoint:        broker.NewLastOperation(db.Operations(), db.InstancesArchived(), logs),
-		BindEndpoint:                 broker.NewBind(cfg.Broker.Binding, db, logs, clientProvider, kubeconfigProvider, publisher, cfg.InfrastructureManager.UseAdditionalOIDC, cfg.InfrastructureManager.UseMainOIDC),
-		UnbindEndpoint:               broker.NewUnbind(logs, db, brokerBindings.NewServiceAccountBindingsManager(clientProvider, kubeconfigProvider, cfg.InfrastructureManager.UseAdditionalOIDC, cfg.InfrastructureManager.UseMainOIDC), publisher),
+		BindEndpoint:                 broker.NewBind(cfg.Broker.Binding, db, logs, clientProvider, kubeconfigProvider, publisher, cfg.InfrastructureManager.UseAdditionalOIDC, cfg.InfrastructureManager.UseMainOIDC, cfg.MultipleContexts),
+		UnbindEndpoint:               broker.NewUnbind(logs, db, brokerBindings.NewServiceAccountBindingsManager(clientProvider, kubeconfigProvider, cfg.InfrastructureManager.UseAdditionalOIDC, cfg.InfrastructureManager.UseMainOIDC, cfg.MultipleContexts), publisher),
 		GetBindingEndpoint:           broker.NewGetBinding(logs, db),
 		LastBindingOperationEndpoint: broker.NewLastBindingOperation(logs),
 	}

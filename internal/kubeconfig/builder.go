@@ -21,18 +21,20 @@ type Builder struct {
 	kcpClient          client.Client
 	useAdditionalOIDC  bool
 	useMainOIDC        bool
+	multipleContexts   bool
 }
 
 type kubeconfigProvider interface {
 	KubeconfigForRuntimeID(runtimeID string) ([]byte, error)
 }
 
-func NewBuilder(kcpClient client.Client, provider kubeconfigProvider, useAdditionalOIDC, useMainOIDC bool) *Builder {
+func NewBuilder(kcpClient client.Client, provider kubeconfigProvider, useAdditionalOIDC, useMainOIDC, multipleContexts bool) *Builder {
 	return &Builder{
 		kcpClient:          kcpClient,
 		kubeconfigProvider: provider,
 		useAdditionalOIDC:  useAdditionalOIDC,
 		useMainOIDC:        useMainOIDC,
+		multipleContexts:   multipleContexts,
 	}
 }
 
@@ -196,6 +198,9 @@ func (b *Builder) getOidcDataFromRuntimeResource(id string, currentContext strin
 				IssuerURL: *config.IssuerURL,
 				ClientID:  *config.ClientID,
 			})
+			if !b.multipleContexts {
+				return oidcConfigs, nil
+			}
 		}
 	} else {
 		mainConfig := runtime.Spec.Shoot.Kubernetes.KubeAPIServer.OidcConfig
