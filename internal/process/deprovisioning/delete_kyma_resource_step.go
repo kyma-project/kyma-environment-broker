@@ -6,11 +6,11 @@ import (
 	"log/slog"
 	"time"
 
+	"github.com/kyma-project/kyma-environment-broker/internal/config"
+
 	kebError "github.com/kyma-project/kyma-environment-broker/internal/error"
 
 	"github.com/kyma-project/kyma-environment-broker/internal/broker"
-	"github.com/kyma-project/kyma-environment-broker/internal/process/input"
-
 	"github.com/kyma-project/kyma-environment-broker/internal/process/steps"
 
 	"k8s.io/apimachinery/pkg/api/errors"
@@ -30,11 +30,11 @@ const (
 type DeleteKymaResourceStep struct {
 	operationManager *process.OperationManager
 	kcpClient        client.Client
-	configProvider   input.ConfigurationProvider
+	configProvider   config.ConfigurationProvider
 	instances        storage.Instances
 }
 
-func NewDeleteKymaResourceStep(operations storage.Operations, instances storage.Instances, kcpClient client.Client, configProvider input.ConfigurationProvider) *DeleteKymaResourceStep {
+func NewDeleteKymaResourceStep(operations storage.Operations, instances storage.Instances, kcpClient client.Client, configProvider config.ConfigurationProvider) *DeleteKymaResourceStep {
 	step := &DeleteKymaResourceStep{
 		kcpClient:      kcpClient,
 		configProvider: configProvider,

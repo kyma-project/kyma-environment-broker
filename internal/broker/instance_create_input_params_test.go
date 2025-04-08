@@ -32,13 +32,12 @@ func TestShootAndSeedSameRegion(t *testing.T) {
 			nil,
 			nil,
 			nil,
-			nil,
-			nil,
 			log,
 			dashboard.Config{},
 			nil,
 			nil,
 			&OneForAllConvergedCloudRegionsProvider{},
+			nil,
 			nil,
 		)
 
@@ -64,13 +63,12 @@ func TestShootAndSeedSameRegion(t *testing.T) {
 			nil,
 			nil,
 			nil,
-			nil,
-			nil,
 			log,
 			dashboard.Config{},
 			nil,
 			nil,
 			&OneForAllConvergedCloudRegionsProvider{},
+			nil,
 			nil,
 		)
 
@@ -96,13 +94,12 @@ func TestShootAndSeedSameRegion(t *testing.T) {
 			nil,
 			nil,
 			nil,
-			nil,
-			nil,
 			log,
 			dashboard.Config{},
 			nil,
 			nil,
 			&OneForAllConvergedCloudRegionsProvider{},
+			nil,
 			nil,
 		)
 

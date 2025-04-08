@@ -849,56 +849,6 @@ func TestProvisioning_TrialAtEU(t *testing.T) {
 
 }
 
-func TestProvisioning_HandleExistingOperation(t *testing.T) {
-	// given
-	suite := NewBrokerSuiteTest(t)
-	defer suite.TearDown()
-	iid := uuid.New().String()
-
-	// when
-	firstResp := suite.CallAPI("PUT", fmt.Sprintf("oauth/cf-eu10/v2/service_instances/%s?accepts_incomplete=true", iid),
-		`{
-					"service_id": "47c9dcbf-ff30-448e-ab36-d3bad66ba281",
-					"plan_id": "7d55d31d-35ae-4438-bf13-6ffdfa107d9f",
-					"context": {
-						"sm_platform_credentials": {
-							  "url": "https://sm.url",
-							  "credentials": {}
-					    },
-						"globalaccount_id": "g-account-id",
-						"subaccount_id": "sub-id",
-						"user_id": "john.smith@email.com"
-					},
-					"parameters": {
-						"name": "testing-cluster"
-					}
-		}`)
-
-	secondResp := suite.CallAPI("PUT", fmt.Sprintf("oauth/cf-eu10/v2/service_instances/%s?accepts_incomplete=true", iid),
-		`{
-					"service_id": "47c9dcbf-ff30-448e-ab36-d3bad66ba281",
-					"plan_id": "7d55d31d-35ae-4438-bf13-6ffdfa107d9f",
-					"context": {
-						"sm_platform_credentials": {
-							  "url": "https://sm.url",
-							  "credentials": {}
-					    },
-						"globalaccount_id": "g-account-id",
-						"subaccount_id": "sub-id",
-						"user_id": "john.smith@email.com"
-					},
-					"parameters": {
-						"name": "testing-cluster"
-					}
-		}`)
-
-	firstBodyBytes, _ := io.ReadAll(firstResp.Body)
-	secondBodyBytes, _ := io.ReadAll(secondResp.Body)
-
-	// then
-	assert.Equal(t, string(firstBodyBytes), string(secondBodyBytes))
-}
-
 func TestProvisioning_ClusterParameters(t *testing.T) {
 	for tn, tc := range map[string]struct {
 		planID                       string

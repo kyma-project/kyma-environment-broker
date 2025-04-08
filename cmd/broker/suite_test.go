@@ -287,7 +287,7 @@ func fixConfig() *Config {
 		StepTimeouts: StepTimeoutsConfig{
 			CheckRuntimeResourceUpdate:   180 * time.Second,
 			CheckRuntimeResourceCreate:   60 * time.Second,
-			CheckRuntimeResourceDeletion: 60 * time.Second,
+			CheckRuntimeResourceDeletion: 50 * time.Millisecond,
 		},
 		Database: storage.Config{
 			SecretKey: dbSecretKey,
