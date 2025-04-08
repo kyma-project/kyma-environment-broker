@@ -1093,7 +1093,7 @@ func TestProvision_Provision(t *testing.T) {
 
 		for _, tc := range testCases {
 			t.Run(tc.name, func(t *testing.T) {
-				err := fmt.Errorf(tc.expectedError)
+				err := fmt.Errorf("%s", tc.expectedError)
 				errMsg := fmt.Sprintf("[instanceID: %s] %s", instanceID, err)
 				expectedErr := apiresponses.NewFailureResponse(err, http.StatusBadRequest, errMsg)
 
