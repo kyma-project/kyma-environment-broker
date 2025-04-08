@@ -1,15 +1,29 @@
+version: "2"
 run:
   allow-parallel-runners: true
-  timeout: 2m
-output:
-  format: "colored-tab:stderr,github-actions:stdout"
-  print-issued-lines: true
-  print-linter-name: true
-  uniq-by-line: false
 linters:
-  disable-all: true
+  default: none
   enable:
     - errcheck
-    - goimports
     - govet
+  exclusions:
+    generated: lax
+    presets:
+      - comments
+      - common-false-positives
+      - legacy
+      - std-error-handling
+    paths:
+      - third_party$
+      - builtin$
+      - examples$
+formatters:
+  enable:
     - gofmt
+    - goimports
+  exclusions:
+    generated: lax
+    paths:
+      - third_party$
+      - builtin$
+      - examples$
