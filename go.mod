@@ -1,6 +1,6 @@
 module github.com/kyma-project/kyma-environment-broker
 
-go 1.23.6
+go 1.24.2
 
 require (
 	code.cloudfoundry.org/lager v2.0.0+incompatible
