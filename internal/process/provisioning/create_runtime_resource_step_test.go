@@ -9,7 +9,6 @@ import (
 	"testing"
 
 	"github.com/kyma-project/kyma-environment-broker/internal/customresources"
-	"github.com/kyma-project/kyma-environment-broker/internal/infrastructure_manager"
 
 	"github.com/kyma-project/kyma-environment-broker/internal/provider"
 
@@ -23,6 +22,8 @@ import (
 
 	imv1 "github.com/kyma-project/infrastructure-manager/api/v1"
 	"github.com/kyma-project/kyma-environment-broker/internal/broker"
+
+	"github.com/kyma-project/kyma-environment-broker/internal/process/infrastructure_manager"
 
 	"github.com/kyma-project/kyma-environment-broker/internal"
 	"k8s.io/client-go/tools/clientcmd"

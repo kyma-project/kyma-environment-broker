@@ -47,6 +47,7 @@ import (
 	"github.com/kyma-project/kyma-environment-broker/internal/kubeconfig"
 	"github.com/kyma-project/kyma-environment-broker/internal/notification"
 	"github.com/kyma-project/kyma-environment-broker/internal/process"
+	"github.com/kyma-project/kyma-environment-broker/internal/process/infrastructure_manager"
 	"github.com/kyma-project/kyma-environment-broker/internal/provider"
 	"github.com/kyma-project/kyma-environment-broker/internal/runtime"
 	"github.com/kyma-project/kyma-environment-broker/internal/storage"
@@ -95,7 +96,7 @@ type Config struct {
 	Port       string `envconfig:"default=8080"`
 	StatusPort string `envconfig:"default=8071"`
 
-	InfrastructureManager input.InfrastructureManagerConfig
+	InfrastructureManager infrastructure_manager.InfrastructureManagerConfig
 	Database              storage.Config
 	Gardener              gardener.Config
 	Kubeconfig            kubeconfig.Config

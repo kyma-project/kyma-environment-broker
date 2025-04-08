@@ -9,7 +9,6 @@ import (
 	"time"
 
 	kebError "github.com/kyma-project/kyma-environment-broker/internal/error"
-	"github.com/kyma-project/kyma-environment-broker/internal/infrastructure_manager"
 
 	"github.com/kyma-project/kyma-environment-broker/internal/storage/dberr"
 
@@ -25,6 +24,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	gardener "github.com/gardener/gardener/pkg/apis/core/v1beta1"
+	"github.com/kyma-project/kyma-environment-broker/internal/process/infrastructure_manager"
 	"github.com/kyma-project/kyma-environment-broker/internal/provider"
 	"k8s.io/apimachinery/pkg/util/intstr"
 

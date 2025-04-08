@@ -8,8 +8,8 @@ import (
 	"github.com/kyma-project/kyma-environment-broker/common/runtime"
 	"github.com/kyma-project/kyma-environment-broker/internal"
 	kebError "github.com/kyma-project/kyma-environment-broker/internal/error"
-	"github.com/kyma-project/kyma-environment-broker/internal/infrastructure_manager"
 	"github.com/kyma-project/kyma-environment-broker/internal/process"
+	"github.com/kyma-project/kyma-environment-broker/internal/process/infrastructure_manager"
 	"github.com/kyma-project/kyma-environment-broker/internal/provider"
 	"github.com/kyma-project/kyma-environment-broker/internal/storage"
 )
