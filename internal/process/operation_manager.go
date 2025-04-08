@@ -77,7 +77,7 @@ func (om *OperationManager) OperationFailed(operation internal.Operation, descri
 	var retErr error
 	if err == nil {
 		// no exact err passed in
-		retErr = fmt.Errorf(description)
+		retErr = fmt.Errorf("%s", description)
 	} else {
 		// keep the original err object for error categorizer
 		retErr = fmt.Errorf("%s: %w", description, err)
@@ -136,7 +136,7 @@ func (om *OperationManager) RetryOperationWithoutFail(operation internal.Operati
 		return op, repeat, err
 	}
 
-	op.EventErrorf(fmt.Errorf(description), "step %s failed all retries: operation continues", stepName)
+	op.EventErrorf(fmt.Errorf("%s", description), "step %s failed all retries: operation continues", stepName)
 	if opErr != nil {
 		log.Error(fmt.Sprintf("quiting step after %s of failing retries, last error: %s", maxTime.String(), opErr.Error()))
 	} else {
@@ -188,7 +188,7 @@ func (om *OperationManager) MarkStepAsExecutedButNotCompleted(operation internal
 		return op, repeat, err
 	}
 
-	op.EventErrorf(fmt.Errorf(msg), "step %s failed: operation continues", stepName)
+	op.EventErrorf(fmt.Errorf("%s", msg), "step %s failed: operation continues", stepName)
 	log.Error(msg)
 	return op, 0, nil
 }

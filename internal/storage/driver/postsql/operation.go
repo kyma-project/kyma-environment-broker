@@ -927,7 +927,7 @@ func (s *operations) provisioningOperationToDTO(op *internal.ProvisioningOperati
 
 func (s *operations) toDeprovisioningOperation(op *dbmodel.OperationDTO) (*internal.DeprovisioningOperation, error) {
 	if op.Type != internal.OperationTypeDeprovision {
-		return nil, fmt.Errorf(fmt.Sprintf("expected operation type Deprovision, but was %s", op.Type))
+		return nil, fmt.Errorf("expected operation type Deprovision, but was %s", op.Type)
 	}
 	var operation internal.DeprovisioningOperation
 	var err error
@@ -1050,7 +1050,7 @@ func (s *operations) updateOperationToDTO(op *internal.UpdatingOperation) (dbmod
 
 func (s *operations) toUpdateOperation(op *dbmodel.OperationDTO) (*internal.UpdatingOperation, error) {
 	if op.Type != internal.OperationTypeUpdate {
-		return nil, fmt.Errorf(fmt.Sprintf("expected operation type update, but was %s", op.Type))
+		return nil, fmt.Errorf("expected operation type update, but was %s", op.Type)
 	}
 	var operation internal.UpdatingOperation
 	var err error

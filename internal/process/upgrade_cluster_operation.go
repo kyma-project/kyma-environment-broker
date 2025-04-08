@@ -42,7 +42,7 @@ func (om *UpgradeClusterOperationManager) OperationFailed(operation internal.Upg
 	var retErr error
 	if err == nil {
 		// no exact err passed in
-		retErr = fmt.Errorf(description)
+		retErr = fmt.Errorf("%s", description)
 	} else {
 		// keep the original err object for error categorizer
 		retErr = fmt.Errorf("%s: %w", description, err)

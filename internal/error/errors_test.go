@@ -16,14 +16,14 @@ import (
 func TestLastError(t *testing.T) {
 	t.Run("report correct reason and component", func(t *testing.T) {
 		// given
-		edpErr := edp.NewEDPBadRequestError("id", fmt.Sprintf("Bad request: %s", "response"))
+		edpErr := edp.NewEDPBadRequestError("id", "Bad request: response")
 		expectEdpMsg := fmt.Sprintf("Bad request: %s", "response")
 
-		edpConfErr := edp.NewEDPConflictError("id", fmt.Sprintf("Resource %s already exists", "id"))
+		edpConfErr := edp.NewEDPConflictError("id", "Resource id already exists")
 		expectEdpConfMsg := "Resource id already exists"
 
 		dbErr := fmt.Errorf("something: %w", dberr.NotFound("Some NotFound apperror, %s", "Some pkg err"))
-		expectDbErr := fmt.Sprintf("something: Some NotFound apperror, Some pkg err")
+		expectDbErr := "something: Some NotFound apperror, Some pkg err"
 
 		timeoutErr := fmt.Errorf("something: %w", fmt.Errorf("operation has reached the time limit: 2h"))
 		expectTimeoutMsg := "something: operation has reached the time limit: 2h"
