@@ -4,7 +4,6 @@ import (
 	"context"
 	"encoding/base64"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"log/slog"
 	"net"
@@ -143,12 +142,12 @@ func (b *ProvisionEndpoint) Provision(ctx context.Context, instanceID string, de
 
 	region, found := middleware.RegionFromContext(ctx)
 	if !found {
-		err := fmt.Errorf("No region specified in request.")
+		err := fmt.Errorf("%s", "No region specified in request.")
 		return domain.ProvisionedServiceSpec{}, apiresponses.NewFailureResponse(err, http.StatusInternalServerError, "provisioning")
 	}
 	platformProvider, found := middleware.ProviderFromContext(ctx)
 	if !found {
-		err := fmt.Errorf("No provider specified in request.")
+		err := fmt.Errorf("%s", "No provider specified in request.")
 		return domain.ProvisionedServiceSpec{}, apiresponses.NewFailureResponse(err, http.StatusInternalServerError, "provisioning")
 	}
 
@@ -160,7 +159,7 @@ func (b *ProvisionEndpoint) Provision(ctx context.Context, instanceID string, de
 	}
 
 	if b.config.DisableSapConvergedCloud && details.PlanID == SapConvergedCloudPlanID {
-		err := fmt.Errorf(CONVERGED_CLOUD_BLOCKED_MSG)
+		err := fmt.Errorf("%s", CONVERGED_CLOUD_BLOCKED_MSG)
 		return domain.ProvisionedServiceSpec{}, apiresponses.NewFailureResponse(err, http.StatusBadRequest, CONVERGED_CLOUD_BLOCKED_MSG)
 	}
 
@@ -173,7 +172,7 @@ func (b *ProvisionEndpoint) Provision(ctx context.Context, instanceID string, de
 		PlatformProvider: platformProvider,
 	}
 
-	logger.Info(fmt.Sprintf("Starting provisioning runtime: Name=%s, GlobalAccountID=%s, SubAccountID=%s, PlatformRegion=%s, ProvisioningParameterts.Region=%s, ShootAndSeedSameRegion=%t, ProvisioningParameterts.MachineType=%s",
+	logger.Info(fmt.Sprintf("Starting provisioning runtime: Name=%s, GlobalAccountID=%s, SubAccountID=%s, PlatformRegion=%s, ProvisioningParameters.Region=%s, ProvisioningParameters.ShootAndSeedSameRegion=%t, ProvisioningParameters.MachineType=%s",
 		parameters.Name, ersContext.GlobalAccountID, ersContext.SubAccountID, region, valueOfPtr(parameters.Region),
 		valueOfBoolPtr(parameters.ShootAndSeedSameRegion), valueOfPtr(parameters.MachineType)))
 	logParametersWithMaskedKubeconfig(parameters, logger)
@@ -328,11 +327,11 @@ func (b *ProvisionEndpoint) validateAndExtract(details domain.ProvisionDetails, 
 	if parameters.AdditionalWorkerNodePools != nil {
 		if !supportsAdditionalWorkerNodePools(details.PlanID) {
 			message := fmt.Sprintf("additional worker node pools are not supported for plan ID: %s", details.PlanID)
-			return ersContext, parameters, apiresponses.NewFailureResponse(errors.New(message), http.StatusUnprocessableEntity, message)
+			return ersContext, parameters, apiresponses.NewFailureResponse(fmt.Errorf("%s", message), http.StatusUnprocessableEntity, message)
 		}
 		if !AreNamesUnique(parameters.AdditionalWorkerNodePools) {
 			message := "names of additional worker node pools must be unique"
-			return ersContext, parameters, apiresponses.NewFailureResponse(errors.New(message), http.StatusUnprocessableEntity, message)
+			return ersContext, parameters, apiresponses.NewFailureResponse(fmt.Errorf("%s", message), http.StatusUnprocessableEntity, message)
 		}
 		for _, additionalWorkerNodePool := range parameters.AdditionalWorkerNodePools {
 			if err := additionalWorkerNodePool.Validate(); err != nil {
@@ -505,7 +504,7 @@ func checkGPUMachinesUsage(additionalWorkerNodePools []pkg.AdditionalWorkerNodeP
 
 	errorMsg.WriteString(" are not available for your account. For details, please contact your sales representative.")
 
-	return errors.New(errorMsg.String())
+	return fmt.Errorf("%s", errorMsg.String())
 }
 
 func checkUnsupportedMachines(regionsSupportingMachine map[string][]string, region string, additionalWorkerNodePools []pkg.AdditionalWorkerNodePool) error {
@@ -536,7 +535,7 @@ func checkUnsupportedMachines(regionsSupportingMachine map[string][]string, regi
 		errorMsg.WriteString(fmt.Sprintf("%s (used in: %s), it is supported in the %s", machineType, strings.Join(unsupportedMachines[machineType], ", "), availableRegions))
 	}
 
-	return errors.New(errorMsg.String())
+	return fmt.Errorf("%s", errorMsg.String())
 }
 
 // Rudimentary kubeconfig validation

@@ -42,9 +42,10 @@ type AssertCommand struct {
 	suspensionInProgress      bool
 	endpointsSecured          bool
 	additionalWorkerNodePools string
+	regionEnforced            bool
 }
 
-func NewAsertCmd() *cobra.Command {
+func NewAssertCmd() *cobra.Command {
 	cmd := AssertCommand{}
 	cobraCmd := &cobra.Command{
 		Use:     "assert",
@@ -60,7 +61,8 @@ func NewAsertCmd() *cobra.Command {
   skr-tester assert -i instanceID -d                                     Deletes the BTP manager secret in the instance and checks if the secret is reconciled.
   skr-tester assert -i instanceID -s                                     Checks if the suspension operation is in progress for the instance.
   skr-tester assert -i instanceID -n                                     Checks if KEB endpoints require authentication.
-  skr-tester assert -i instanceID -w additionalWorkerNodePools           Asserts the instance has the specified additional worker node pools.`,
+  skr-tester assert -i instanceID -w additionalWorkerNodePools           Asserts the instance has the specified additional worker node pools.
+  skr-tester assert -i instanceID -f                                     Asserts the Runtime CR has enforceSeedLocation field set to true.`,
 
 		PreRunE: func(_ *cobra.Command, _ []string) error { return cmd.Validate() },
 		RunE:    func(_ *cobra.Command, _ []string) error { return cmd.Run() },
@@ -78,6 +80,7 @@ func NewAsertCmd() *cobra.Command {
 	cobraCmd.Flags().BoolVarP(&cmd.suspensionInProgress, "suspensionInProgress", "s", false, "Checks if the suspension operation is in progress for the instance.")
 	cobraCmd.Flags().BoolVarP(&cmd.endpointsSecured, "endpointsSecured", "n", false, "Tests the KEB endpoints without authorization.")
 	cobraCmd.Flags().StringVarP(&cmd.additionalWorkerNodePools, "additionalWorkerNodePools", "w", "", "Additional worker node pools of the specific instance.")
+	cobraCmd.Flags().BoolVarP(&cmd.regionEnforced, "regionEnforced", "f", false, "Asserts the Runtime CR has enforceSeedLocation field set to true.")
 
 	return cobraCmd
 }
@@ -327,6 +330,11 @@ func (cmd *AssertCommand) Run() error {
 			return err
 		}
 		fmt.Println("All specified additional worker node pools are found in the instance")
+	} else if cmd.regionEnforced {
+		if err := cmd.assertRegionEnforced(kcpClient); err != nil {
+			return fmt.Errorf("enforceSeedLocation assertion failed: %w", err)
+		}
+		fmt.Println("enforceSeedLocation is set to true - assertion passed")
 	}
 
 	return nil
@@ -367,8 +375,11 @@ func (cmd *AssertCommand) Validate() error {
 	if cmd.additionalWorkerNodePools != "" {
 		count++
 	}
+	if cmd.regionEnforced {
+		count++
+	}
 	if count != 1 {
-		return fmt.Errorf("you must use exactly one of machineType, clusterOIDCConfig, kubeconfigOIDCConfig, admins, btpManagerSecretExists, editBtpManagerSecret, deleteBtpManagerSecret, suspensionInProgress, endpointsSecured or additionalWorkerNodePools")
+		return fmt.Errorf("you must use exactly one of machineType, clusterOIDCConfig, kubeconfigOIDCConfig, admins, btpManagerSecretExists, editBtpManagerSecret, deleteBtpManagerSecret, suspensionInProgress, endpointsSecured, additionalWorkerNodePools or regionEnforced")
 	}
 	return nil
 }
@@ -478,4 +489,16 @@ func (cmd *AssertCommand) newK8sClient(kubeconfig []byte) (client.Client, error)
 		}
 		return true, nil
 	})
+}
+
+func (cmd *AssertCommand) assertRegionEnforced(kcpClient *kcp.KCPClient) error {
+	regionEnforced, err := kcpClient.GetEnforceSeedLocationValue(cmd.instanceID)
+	if err != nil {
+		return fmt.Errorf("while getting enforceSeedLocation value from Runtime CR for %s instance ID: %w", cmd.instanceID, err)
+	}
+	if !regionEnforced {
+		return fmt.Errorf("enforceSeedLocation field in Runtime CR is set to false, but should be true")
+	}
+
+	return nil
 }

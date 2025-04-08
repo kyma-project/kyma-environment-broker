@@ -3,7 +3,6 @@ package broker
 import (
 	"context"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"log/slog"
 	"net/http"
@@ -257,7 +256,7 @@ func (b *UpdateEndpoint) processUpdateParameters(instance *internal.Instance, de
 			valueOfPtr(params.MachineType),
 			strings.Join(regionssupportingmachine.SupportedRegions(b.regionsSupportingMachine, valueOfPtr(params.MachineType)), ", "),
 		)
-		return domain.UpdateServiceSpec{}, apiresponses.NewFailureResponse(errors.New(message), http.StatusBadRequest, message)
+		return domain.UpdateServiceSpec{}, apiresponses.NewFailureResponse(fmt.Errorf("%s", message), http.StatusBadRequest, message)
 	}
 
 	if params.OIDC.IsProvided() {
@@ -294,11 +293,11 @@ func (b *UpdateEndpoint) processUpdateParameters(instance *internal.Instance, de
 	if params.AdditionalWorkerNodePools != nil {
 		if !supportsAdditionalWorkerNodePools(details.PlanID) {
 			message := fmt.Sprintf("additional worker node pools are not supported for plan ID: %s", details.PlanID)
-			return domain.UpdateServiceSpec{}, apiresponses.NewFailureResponse(errors.New(message), http.StatusBadRequest, message)
+			return domain.UpdateServiceSpec{}, apiresponses.NewFailureResponse(fmt.Errorf("%s", message), http.StatusBadRequest, message)
 		}
 		if !AreNamesUnique(params.AdditionalWorkerNodePools) {
 			message := "names of additional worker node pools must be unique"
-			return domain.UpdateServiceSpec{}, apiresponses.NewFailureResponse(errors.New(message), http.StatusBadRequest, message)
+			return domain.UpdateServiceSpec{}, apiresponses.NewFailureResponse(fmt.Errorf("%s", message), http.StatusBadRequest, message)
 		}
 		for _, additionalWorkerNodePool := range params.AdditionalWorkerNodePools {
 			if err := additionalWorkerNodePool.Validate(); err != nil {

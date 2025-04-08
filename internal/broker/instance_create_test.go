@@ -113,7 +113,6 @@ func TestProvision_Provision(t *testing.T) {
 		assert.NotEqual(t, instanceID, response.OperationData)
 		assert.Regexp(t, `^https:\/\/dashboard\.example\.com\/\?kubeconfigID=`, response.DashboardURL)
 		assert.Equal(t, clusterName, response.Metadata.Labels["Name"])
-		assert.Equal(t, fmt.Sprintf("https://%s/kubeconfig/%s", brokerURL, instanceID), response.Metadata.Labels["KubeconfigURL"])
 		assert.NotContains(t, response.Metadata.Labels, "APIServerURL")
 
 		operation, err := memoryStorage.Operations().GetProvisioningOperationByID(response.OperationData)
@@ -401,7 +400,6 @@ func TestProvision_Provision(t *testing.T) {
 		assert.NotEqual(t, instanceID, response.OperationData)
 		assert.Regexp(t, `^https:\/\/dashboard\.example\.com\/\?kubeconfigID=`, response.DashboardURL)
 		assert.Equal(t, clusterName, response.Metadata.Labels["Name"])
-		assert.Equal(t, fmt.Sprintf("https://%s/kubeconfig/%s", brokerURL, instanceID), response.Metadata.Labels["KubeconfigURL"])
 		assert.NotContains(t, response.Metadata.Labels, "APIServerURL")
 
 		operation, err := memoryStorage.Operations().GetProvisioningOperationByID(response.OperationData)
@@ -1226,7 +1224,7 @@ func TestProvision_Provision(t *testing.T) {
 
 		for _, tc := range testCases {
 			t.Run(tc.name, func(t *testing.T) {
-				err := errors.New(tc.expectedError)
+				err := fmt.Errorf("%s", tc.expectedError)
 				errMsg := fmt.Sprintf("[instanceID: %s] %s", instanceID, err)
 				expectedErr := apiresponses.NewFailureResponse(err, http.StatusBadRequest, errMsg)
 

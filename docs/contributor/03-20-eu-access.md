@@ -11,7 +11,7 @@ Kyma Control Plane manages `cf-eu11` Kyma runtimes in a separate AWS hyperscaler
 
 When the PlatformRegion is an EU access BTP subaccount region:
 
-* Kyma Environment Broker (KEB) provides the **euAccess** parameter to Provisioner
+* Kyma Environment Broker (KEB) provides the **euAccess** parameter to Infrastructure Manager
 * KEB services catalog handler exposes:
    * `eu-central-1` as the only possible value for the **region** parameter for `cf-eu11`
    * `switzerlandnorth` as the only possible value for the **region** parameter for `cf-ch20`

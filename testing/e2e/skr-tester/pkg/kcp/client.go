@@ -2,9 +2,11 @@ package kcp
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"os"
 	"os/exec"
+	"strconv"
 	"strings"
 )
 
@@ -218,6 +220,23 @@ func (c *KCPClient) GetEvents(instanceID string) (string, error) {
 		return "", newKCPClientError("failed to get events: %w", err)
 	}
 	return string(events), nil
+}
+
+func (c *KCPClient) GetEnforceSeedLocationValue(instanceID string) (bool, error) {
+	args := []string{"rt", "--runtime-config", "-i", instanceID, "-o", "custom=:{.runtimeConfig.spec.shoot.enforceSeedLocation}"}
+	if clientSecret := os.Getenv("KCP_OIDC_CLIENT_SECRET"); clientSecret != "" {
+		args = append(args, "--config", "config.yaml")
+	}
+	output, err := exec.Command("kcp", args...).Output()
+	if err != nil {
+		return false, newKCPClientError("failed to get enforceSeedLocation value from Runtime CR: %w", err)
+	}
+	value := strings.TrimSpace(string(output))
+	if value == "" {
+		return false, errors.New("enforceSeedLocation field in Runtime CR is empty or field does not exist")
+	}
+
+	return strconv.ParseBool(value)
 }
 
 func getEnvOrThrow(key string) string {

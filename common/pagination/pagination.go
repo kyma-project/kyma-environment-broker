@@ -60,7 +60,7 @@ func ExtractPaginationConfigFromRequest(req *http.Request, maxPage int) (int, in
 	}
 
 	if pageSize > maxPage {
-		return 0, 0, fmt.Errorf(fmt.Sprintf("pageSize is bigger than maxPage(%d)", maxPage))
+		return 0, 0, fmt.Errorf("pageSize is bigger than maxPage(%d)", maxPage)
 	}
 	if pageSize < 1 {
 		return 0, 0, fmt.Errorf("pageSize cannot be smaller than 1")
