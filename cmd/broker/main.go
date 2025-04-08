@@ -257,7 +257,7 @@ func main() {
 	// TODO this is temporary function to be removed after settings are migrated to infrastructureManager section/structure
 	// since settings are doubled for the time of migration we need to detect discrepancies and abort when they are found
 	if notSync := validateTemporarilyInfrastructureSettings(log, cfg); notSync {
-		log.Warn("infrastructure settings are not synchronized")
+		fatalOnError(fmt.Errorf("infrastructure settings are not synchronized"), log)
 	}
 
 	// create kubernetes client
