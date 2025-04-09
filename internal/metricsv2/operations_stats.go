@@ -83,7 +83,7 @@ func (s *OperationsStats) StartCollector(ctx context.Context) {
 	go s.runJob(ctx)
 }
 
-func (s *OperationsStats) MustRegister(ctx context.Context) {
+func (s *OperationsStats) MustRegister() {
 	defer func() {
 		if recovery := recover(); recovery != nil {
 			s.logger.Error(fmt.Sprintf("panic recovered while creating and registering operations metrics: %v", recovery))

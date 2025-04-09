@@ -120,9 +120,8 @@ func NewBindingStatsCollector(db storage.Bindings, pollingInterval time.Duration
 	}
 }
 
-func (c *BindingStatitics) MustRegister(ctx context.Context) {
+func (c *BindingStatitics) MustRegister() {
 	prometheus.MustRegister(c.MinutesSinceEarliestExpirationMetric)
-	go c.Job(ctx)
 }
 
 func (c *BindingStatitics) Job(ctx context.Context) {
@@ -159,4 +158,8 @@ func (c *BindingStatitics) updateMetrics() error {
 	}
 	c.MinutesSinceEarliestExpirationMetric.Set(stats.MinutesSinceEarliestExpiration)
 	return nil
+}
+
+func (c *BindingStatitics) StartCollector(ctx context.Context) {
+	go c.Job(ctx)
 }

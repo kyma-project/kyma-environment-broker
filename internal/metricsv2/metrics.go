@@ -59,11 +59,12 @@ func Register(ctx context.Context, sub event.Subscriber, db storage.BrokerStorag
 	opResult.StartCollector(ctx)
 
 	opStats := NewOperationsStats(db.Operations(), cfg, logger)
-	opStats.MustRegister(ctx)
+	opStats.MustRegister()
 	opStats.StartCollector(ctx)
 
 	bindingStats := NewBindingStatsCollector(db.Bindings(), cfg.BindingsStatsPollingInterval, logger)
-	bindingStats.MustRegister(ctx)
+	bindingStats.MustRegister()
+	bindingStats.StartCollector(ctx)
 
 	bindDurationCollector := NewBindDurationCollector(logger)
 	prometheus.MustRegister(bindDurationCollector)

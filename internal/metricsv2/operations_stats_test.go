@@ -102,13 +102,13 @@ func TestOperationsStats(t *testing.T) {
 	})).With("metrics", "test")
 
 	cfg := Config{
-		OperationStatsPollingInterval:  1 * time.Millisecond,
-		OperationResultPollingInterval: 1 * time.Millisecond,
-		OperationResultRetentionPeriod: 1 * time.Minute,
+		OperationStatsPollingInterval:  1 * time.Minute,
+		OperationResultPollingInterval: 1 * time.Minute,
+		OperationResultRetentionPeriod: 1 * time.Hour,
 	}
 
 	statsCollector = NewOperationsStats(operations, cfg, log)
-	statsCollector.MustRegister(context.Background())
+	statsCollector.MustRegister()
 	err = statsCollector.UpdateStatsMetrics()
 	assert.NoError(t, err)
 
