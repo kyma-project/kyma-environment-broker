@@ -118,6 +118,8 @@ func (s *OperationsStats) MustRegister(ctx context.Context) {
 	go s.Job(ctx)
 }
 
+// increments metric for finished operation
+// either failed or succeeded
 func (s *OperationsStats) Handler(_ context.Context, event interface{}) error {
 	defer s.sync.Unlock()
 	s.sync.Lock()
@@ -136,7 +138,7 @@ func (s *OperationsStats) Handler(_ context.Context, event interface{}) error {
 	opState := payload.Operation.State
 
 	if opState != domain.Failed && opState != domain.Succeeded {
-		return fmt.Errorf("operation state is %s, but operation counter support events only from failed or succeded operations", payload.Operation.State)
+		return fmt.Errorf("operation state is %s, but operation counter supports only failed or succeded operations events ", payload.Operation.State)
 	}
 
 	key, err := s.makeKey(payload.Operation.Type, opState, payload.PlanID)
@@ -147,7 +149,7 @@ func (s *OperationsStats) Handler(_ context.Context, event interface{}) error {
 
 	metric, found := s.counters[key]
 	if !found || metric == nil {
-		return fmt.Errorf("metric not found for key %s", key)
+		return fmt.Errorf("metric not found for key %s, unable to increment", key)
 	}
 	s.counters[key].Inc()
 
@@ -236,6 +238,7 @@ func (s *OperationsStats) Metric(opType internal.OperationType, opState domain.L
 	return s.counters[key], nil
 }
 
+// TODO no unit test for makeKey
 func (s *OperationsStats) makeKey(opType internal.OperationType, opState domain.LastOperationState, plan broker.PlanID) (metricKey, error) {
 	fmtState := formatOpState(opState)
 	fmtType := formatOpType(opType)
@@ -245,6 +248,7 @@ func (s *OperationsStats) makeKey(opType internal.OperationType, opState domain.
 	return metricKey(fmt.Sprintf("%s_%s_%s", fmtType, fmtState, plan)), nil
 }
 
+// TODO no unit test for formatOpType
 func formatOpType(opType internal.OperationType) string {
 	switch opType {
 	case internal.OperationTypeProvision, internal.OperationTypeDeprovision:

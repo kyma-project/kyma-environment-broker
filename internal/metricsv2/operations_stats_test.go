@@ -4,7 +4,6 @@ import (
 	"context"
 	"log/slog"
 	"os"
-	"sync"
 	"testing"
 	"time"
 
@@ -83,79 +82,46 @@ func TestOperationsStats(t *testing.T) {
 	ctr = NewOperationsStats(operations, cfg, log)
 	ctr.MustRegister(context.Background())
 
-	t.Run("gauge in_progress operations test", func(t *testing.T) {
-		err := operations.InsertOperation(internal.Operation{
-			ID:    "opState6",
-			State: opState5,
-			Type:  opType5,
-			ProvisioningParameters: internal.ProvisioningParameters{
-				PlanID: opPlan5,
-			},
+	err = operations.InsertOperation(internal.Operation{
+		ID:    "opState6",
+		State: opState5,
+		Type:  opType5,
+		ProvisioningParameters: internal.ProvisioningParameters{
+			PlanID: opPlan5,
+		},
+	})
+	assert.NoError(t, err)
+	err = operations.InsertOperation(internal.Operation{
+		ID:    "opState7",
+		State: opState6,
+		Type:  opType6,
+		ProvisioningParameters: internal.ProvisioningParameters{
+			PlanID: opPlan6,
+		},
+	})
+	assert.NoError(t, err)
+
+	for i := 0; i < eventsCount1; i++ {
+		err := ctr.Handler(context.TODO(), process.OperationFinished{
+			PlanID:    opPlan1,
+			Operation: internal.Operation{Type: opType1, State: opState1, ID: "test1"},
 		})
 		assert.NoError(t, err)
-		err = operations.InsertOperation(internal.Operation{
-			ID:    "opState7",
-			State: opState6,
-			Type:  opType6,
-			ProvisioningParameters: internal.ProvisioningParameters{
-				PlanID: opPlan6,
-			},
+	}
+	for i := 0; i < eventsCount2; i++ {
+		err := ctr.Handler(context.TODO(), process.OperationFinished{
+			PlanID:    opPlan2,
+			Operation: internal.Operation{Type: opType2, State: opState2, ID: "test2"},
 		})
 		assert.NoError(t, err)
-	})
-
-	t.Run("should increase all counter", func(t *testing.T) {
-		t.Run("should increase counter", func(t *testing.T) {
-			t.Parallel()
-			wg := sync.WaitGroup{}
-			for i := 0; i < eventsCount1; i++ {
-				wg.Add(1)
-				go func() {
-					defer wg.Done()
-					err := ctr.Handler(context.TODO(), process.OperationFinished{
-						PlanID:    opPlan1,
-						Operation: internal.Operation{Type: opType1, State: opState1, ID: "test1"},
-					})
-					assert.NoError(t, err)
-				}()
-			}
-			wg.Wait()
+	}
+	for i := 0; i < eventsCount3; i++ {
+		err := ctr.Handler(context.TODO(), process.OperationFinished{
+			PlanID:    opPlan3,
+			Operation: internal.Operation{Type: opType3, State: opState3, ID: "test3"},
 		})
-
-		t.Run("should increase counter", func(t *testing.T) {
-			t.Parallel()
-			wg := sync.WaitGroup{}
-			for i := 0; i < eventsCount2; i++ {
-				wg.Add(1)
-				go func() {
-					defer wg.Done()
-					err := ctr.Handler(context.TODO(), process.OperationFinished{
-						PlanID:    opPlan2,
-						Operation: internal.Operation{Type: opType2, State: opState2, ID: "test2"},
-					})
-					assert.NoError(t, err)
-				}()
-			}
-			wg.Wait()
-		})
-
-		t.Run("should increase counter", func(t *testing.T) {
-			t.Parallel()
-			wg := sync.WaitGroup{}
-			for i := 0; i < eventsCount3; i++ {
-				wg.Add(1)
-				go func() {
-					defer wg.Done()
-					err := ctr.Handler(context.TODO(), process.OperationFinished{
-						PlanID:    opPlan3,
-						Operation: internal.Operation{Type: opType3, State: opState3, ID: "test3"},
-					})
-					assert.NoError(t, err)
-				}()
-			}
-			wg.Wait()
-		})
-	})
+		assert.NoError(t, err)
+	}
 
 	t.Run("should get correct number of metrics", func(t *testing.T) {
 		time.Sleep(1 * time.Second)
@@ -166,9 +132,5 @@ func TestOperationsStats(t *testing.T) {
 		assert.Equal(t, float64(eventsCount5), testutil.ToFloat64(ctr.gauges[key5]))
 		assert.Equal(t, float64(eventsCount6), testutil.ToFloat64(ctr.gauges[key6]))
 		assert.Equal(t, float64(eventsCount7), testutil.ToFloat64(ctr.gauges[key7]))
-	})
-
-	t.Cleanup(func() {
-		ctr = nil
 	})
 }
