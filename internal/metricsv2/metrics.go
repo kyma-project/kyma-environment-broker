@@ -23,11 +23,11 @@ const (
 
 // Exposer gathers metrics and keeps these in memory and exposes to prometheus for fetching, it gathers them by:
 // listening in real time for events by "Handler"
-// fetching data from database by "Job"
+// fetching data from database by "runJob"
 
 type Exposer interface {
 	Handler(ctx context.Context, event interface{}) error
-	Job(ctx context.Context)
+	runJob(ctx context.Context)
 }
 
 type Config struct {
@@ -56,7 +56,7 @@ func Register(ctx context.Context, sub event.Subscriber, db storage.BrokerStorag
 	prometheus.MustRegister(opInstanceCollector)
 
 	opResult := NewOperationsResults(db.Operations(), cfg, logger)
-	//opResult.StartCollector(ctx)
+	opResult.StartCollector(ctx)
 
 	opStats := NewOperationsStats(db.Operations(), cfg, logger)
 	opStats.MustRegister(ctx)

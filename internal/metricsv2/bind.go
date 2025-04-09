@@ -115,7 +115,7 @@ func NewBindingStatsCollector(db storage.Bindings, pollingInterval time.Duration
 			Subsystem: prometheusSubsystemv2,
 			Name:      "minutes_since_earliest_binding_expiration",
 			Help: "Specifies the time in minutes since the earliest binding expiration. " +
-				"The value should not be greater than the binding cleaning job interval. The metric is created to detect problems with the job.",
+				"The value should not be greater than the binding cleaning runJob interval. The metric is created to detect problems with the runJob.",
 		}),
 	}
 }

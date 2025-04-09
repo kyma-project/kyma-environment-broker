@@ -50,7 +50,7 @@ func NewOperationsResults(db storage.Operations, cfg Config, logger *slog.Logger
 
 func (s *operationsResults) StartCollector(ctx context.Context) {
 	s.logger.Info("Starting operations results collector")
-	go s.Job(ctx)
+	go s.runJob(ctx)
 }
 
 func (s *operationsResults) Metrics() *prometheus.GaugeVec {
@@ -133,7 +133,7 @@ func (s *operationsResults) Handler(_ context.Context, event interface{}) error 
 	return nil
 }
 
-func (s *operationsResults) Job(ctx context.Context) {
+func (s *operationsResults) runJob(ctx context.Context) {
 	defer func() {
 		if recovery := recover(); recovery != nil {
 			s.logger.Error(fmt.Sprintf("panic recovered while collecting operations results metrics: %v", recovery))

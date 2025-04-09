@@ -80,7 +80,7 @@ func NewOperationsStats(operations storage.Operations, cfg Config, logger *slog.
 
 func (s *OperationsStats) StartCollector(ctx context.Context) {
 	s.logger.Info("Starting operations stats collector")
-	go s.Job(ctx)
+	go s.runJob(ctx)
 }
 
 func (s *OperationsStats) MustRegister(ctx context.Context) {
@@ -157,14 +157,14 @@ func (s *OperationsStats) Handler(_ context.Context, event interface{}) error {
 	return nil
 }
 
-func (s *OperationsStats) Job(ctx context.Context) {
+func (s *OperationsStats) runJob(ctx context.Context) {
 	defer func() {
 		if recovery := recover(); recovery != nil {
 			s.logger.Error(fmt.Sprintf("panic recovered while handling in progress operation counter: %v", recovery))
 		}
 	}()
 
-	fmt.Printf("starting operations stats metrics job with interval %s\n", s.poolingInterval)
+	fmt.Printf("starting operations stats metrics runJob with interval %s\n", s.poolingInterval)
 	if err := s.UpdateStatsMetrics(); err != nil {
 		s.logger.Error(fmt.Sprintf("failed to update metrics metrics: %v", err))
 	}
