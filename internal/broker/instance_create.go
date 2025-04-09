@@ -250,6 +250,7 @@ func (b *ProvisionEndpoint) Provision(ctx context.Context, instanceID string, de
 		ServicePlanName: PlanNamesMapping[provisioningParameters.PlanID],
 		DashboardURL:    dashboardURL,
 		Parameters:      operation.ProvisioningParameters,
+		Provider:        pkg.CloudProviderFromString(providerValues.ProviderType),
 	}
 	err = b.instanceStorage.Insert(instance)
 	if err != nil {

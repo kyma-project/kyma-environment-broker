@@ -122,6 +122,7 @@ func TestProvision_Provision(t *testing.T) {
 		assert.Regexp(t, `^https:\/\/dashboard\.example\.com\/\?kubeconfigID=`, response.DashboardURL)
 		assert.Equal(t, instance.GlobalAccountID, globalAccountID)
 		assert.Equal(t, fixDNSProviders(), instance.InstanceDetails.ShootDNSProviders)
+		assert.Equal(t, pkg.Azure, instance.Provider)
 	})
 
 	t.Run("new operation for own_cluster plan with kubeconfig will be created", func(t *testing.T) {
