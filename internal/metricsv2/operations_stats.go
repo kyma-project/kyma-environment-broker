@@ -79,6 +79,7 @@ func NewOperationsStats(operations storage.Operations, cfg Config, logger *slog.
 }
 
 func (s *OperationsStats) StartCollector(ctx context.Context) {
+	s.logger.Info("Starting operations stats collector")
 	go s.Job(ctx)
 }
 
@@ -120,8 +121,6 @@ func (s *OperationsStats) MustRegister(ctx context.Context) {
 	}
 }
 
-// increments metric for finished operation
-// either failed or succeeded
 func (s *OperationsStats) Handler(_ context.Context, event interface{}) error {
 	defer s.sync.Unlock()
 	s.sync.Lock()

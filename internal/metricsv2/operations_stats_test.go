@@ -18,7 +18,7 @@ import (
 )
 
 func TestOperationsStats(t *testing.T) {
-	var ctr *OperationsStats
+	var statsCollector *OperationsStats
 
 	operations := storage.NewMemoryStorage().Operations()
 	testData := []struct {
@@ -73,7 +73,7 @@ func TestOperationsStats(t *testing.T) {
 	}
 
 	for i, data := range testData {
-		key, err := ctr.makeKey(data.opType, data.opState, data.opPlan)
+		key, err := statsCollector.makeKey(data.opType, data.opState, data.opPlan)
 		assert.NoError(t, err)
 		testData[i].key = key
 	}
@@ -107,13 +107,14 @@ func TestOperationsStats(t *testing.T) {
 		OperationResultRetentionPeriod: 1 * time.Minute,
 	}
 
-	ctr = NewOperationsStats(operations, cfg, log)
-	ctr.MustRegister(context.Background())
-	ctr.UpdateStatsMetrics()
+	statsCollector = NewOperationsStats(operations, cfg, log)
+	statsCollector.MustRegister(context.Background())
+	err = statsCollector.UpdateStatsMetrics()
+	assert.NoError(t, err)
 
 	for i := 0; i < 3; i++ {
 		for j := 0; j < testData[i].eventsCount; j++ {
-			err = ctr.Handler(context.TODO(), process.OperationFinished{
+			err = statsCollector.Handler(context.TODO(), process.OperationFinished{
 				PlanID:    testData[i].opPlan,
 				Operation: internal.Operation{Type: testData[i].opType, State: testData[i].opState, ID: fmt.Sprintf("test-%d", i)},
 			})
@@ -122,15 +123,15 @@ func TestOperationsStats(t *testing.T) {
 	}
 
 	t.Run("should get correct counters", func(t *testing.T) {
-		assert.Equal(t, float64(testData[0].eventsCount), testutil.ToFloat64(ctr.counters[testData[0].key]))
-		assert.Equal(t, float64(testData[1].eventsCount), testutil.ToFloat64(ctr.counters[testData[1].key]))
-		assert.Equal(t, float64(testData[2].eventsCount), testutil.ToFloat64(ctr.counters[testData[2].key]))
+		assert.Equal(t, float64(testData[0].eventsCount), testutil.ToFloat64(statsCollector.counters[testData[0].key]))
+		assert.Equal(t, float64(testData[1].eventsCount), testutil.ToFloat64(statsCollector.counters[testData[1].key]))
+		assert.Equal(t, float64(testData[2].eventsCount), testutil.ToFloat64(statsCollector.counters[testData[2].key]))
 	})
 
 	t.Run("should get correct gauges", func(t *testing.T) {
-		assert.Equal(t, float64(testData[3].eventsCount), testutil.ToFloat64(ctr.gauges[testData[3].key]))
-		assert.Equal(t, float64(testData[4].eventsCount), testutil.ToFloat64(ctr.gauges[testData[4].key]))
-		assert.Equal(t, float64(testData[5].eventsCount), testutil.ToFloat64(ctr.gauges[testData[5].key]))
-		assert.Equal(t, float64(testData[6].eventsCount), testutil.ToFloat64(ctr.gauges[testData[6].key]))
+		assert.Equal(t, float64(testData[3].eventsCount), testutil.ToFloat64(statsCollector.gauges[testData[3].key]))
+		assert.Equal(t, float64(testData[4].eventsCount), testutil.ToFloat64(statsCollector.gauges[testData[4].key]))
+		assert.Equal(t, float64(testData[5].eventsCount), testutil.ToFloat64(statsCollector.gauges[testData[5].key]))
+		assert.Equal(t, float64(testData[6].eventsCount), testutil.ToFloat64(statsCollector.gauges[testData[6].key]))
 	})
 }

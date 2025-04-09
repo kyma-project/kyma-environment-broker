@@ -45,7 +45,13 @@ func NewOperationsResults(ctx context.Context, db storage.Operations, cfg Config
 		finishedOperationRetentionPeriod: cfg.OperationResultFinishedOperationRetentionPeriod,
 	}
 	go opInfo.Job(ctx)
+
 	return opInfo
+}
+
+func (s *operationsResults) StartCollector(ctx context.Context) {
+	s.logger.Info("Starting operations results collector")
+	go s.Job(ctx)
 }
 
 func (s *operationsResults) Metrics() *prometheus.GaugeVec {
@@ -86,7 +92,7 @@ func (s *operationsResults) updateOperation(op internal.Operation) {
 	}
 }
 
-func (s *operationsResults) updateMetrics() (err error) {
+func (s *operationsResults) UpdateOperationResultsMetrics() (err error) {
 	defer func() {
 		if r := recover(); r != nil {
 			err = fmt.Errorf("panic recovered: %v", r)
@@ -131,11 +137,11 @@ func (s *operationsResults) Handler(_ context.Context, event interface{}) error 
 func (s *operationsResults) Job(ctx context.Context) {
 	defer func() {
 		if recovery := recover(); recovery != nil {
-			s.logger.Error(fmt.Sprintf("panic recovered while performing operation info job: %v", recovery))
+			s.logger.Error(fmt.Sprintf("panic recovered while collecting operations results metrics: %v", recovery))
 		}
 	}()
 
-	if err := s.updateMetrics(); err != nil {
+	if err := s.UpdateOperationResultsMetrics(); err != nil {
 		s.logger.Error(fmt.Sprintf("failed to update metrics: %v", err))
 	}
 
@@ -143,8 +149,8 @@ func (s *operationsResults) Job(ctx context.Context) {
 	for {
 		select {
 		case <-ticker.C:
-			if err := s.updateMetrics(); err != nil {
-				s.logger.Error(fmt.Sprintf("failed to update operation info metrics: %v", err))
+			if err := s.UpdateOperationResultsMetrics(); err != nil {
+				s.logger.Error(fmt.Sprintf("failed to update operations info metrics: %v", err))
 			}
 		case <-ctx.Done():
 			return

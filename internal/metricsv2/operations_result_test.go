@@ -35,7 +35,7 @@ func TestOperationsResult(t *testing.T) {
 
 		insertRandomOperations(t, operations, operationsCount)
 
-		operationResult := NewOperationsResults(
+		resultsCollector := NewOperationsResults(
 			context.Background(), operations, Config{
 				Enabled: true, OperationResultPollingInterval: 5 * time.Millisecond,
 				OperationStatsPollingInterval: 5 * time.Millisecond, OperationResultRetentionPeriod: 24 * time.Hour,
@@ -43,7 +43,7 @@ func TestOperationsResult(t *testing.T) {
 		)
 
 		eventBroker := event.NewPubSub(log)
-		eventBroker.Subscribe(process.OperationFinished{}, operationResult.Handler)
+		eventBroker.Subscribe(process.OperationFinished{}, resultsCollector.Handler)
 
 		time.Sleep(30 * time.Millisecond)
 
@@ -54,7 +54,7 @@ func TestOperationsResult(t *testing.T) {
 		for _, op := range ops {
 			assert.Equal(
 				t, float64(1), testutil.ToFloat64(
-					operationResult.metrics.With(GetLabels(op)),
+					resultsCollector.metrics.With(GetLabels(op)),
 				),
 			)
 		}
@@ -64,25 +64,25 @@ func TestOperationsResult(t *testing.T) {
 		time.Sleep(20 * time.Millisecond)
 
 		assert.NoError(t, err)
-		assert.Equal(t, float64(1), testutil.ToFloat64(operationResult.metrics.With(GetLabels(newOp))))
+		assert.Equal(t, float64(1), testutil.ToFloat64(resultsCollector.metrics.With(GetLabels(newOp))))
 
 		newOp.State = domain.InProgress
 		newOp.UpdatedAt = time.Now().UTC().Add(1 * time.Second)
 		_, err = operations.UpdateOperation(newOp)
 		assert.NoError(t, err)
-		assert.Equal(t, float64(1), testutil.ToFloat64(operationResult.metrics.With(GetLabels(newOp))))
+		assert.Equal(t, float64(1), testutil.ToFloat64(resultsCollector.metrics.With(GetLabels(newOp))))
 
 		opEvent := fixRandomOp(randomCreatedAt(), domain.InProgress)
 		eventBroker.Publish(context.Background(), process.OperationFinished{Operation: opEvent})
 		time.Sleep(20 * time.Millisecond)
-		assert.Equal(t, float64(1), testutil.ToFloat64(operationResult.metrics.With(GetLabels(opEvent))))
+		assert.Equal(t, float64(1), testutil.ToFloat64(resultsCollector.metrics.With(GetLabels(opEvent))))
 
 		nonExistingOp1 := fixRandomOp(randomCreatedAt(), domain.InProgress)
 		nonExistingOp2 := fixRandomOp(randomCreatedAt(), domain.Failed)
 		time.Sleep(20 * time.Millisecond)
 
-		assert.Equal(t, float64(0), testutil.ToFloat64(operationResult.metrics.With(GetLabels(nonExistingOp1))))
-		assert.Equal(t, float64(0), testutil.ToFloat64(operationResult.metrics.With(GetLabels(nonExistingOp2))))
+		assert.Equal(t, float64(0), testutil.ToFloat64(resultsCollector.metrics.With(GetLabels(nonExistingOp1))))
+		assert.Equal(t, float64(0), testutil.ToFloat64(resultsCollector.metrics.With(GetLabels(nonExistingOp2))))
 
 		existingOp1 := fixRandomOp(time.Now().UTC(), domain.InProgress)
 		err = operations.InsertOperation(existingOp1)
@@ -102,10 +102,12 @@ func TestOperationsResult(t *testing.T) {
 
 		time.Sleep(20 * time.Millisecond)
 
-		assert.Equal(t, float64(1), testutil.ToFloat64(operationResult.metrics.With(GetLabels(existingOp1))))
-		assert.Equal(t, float64(1), testutil.ToFloat64(operationResult.metrics.With(GetLabels(existingOp2))))
-		assert.Equal(t, float64(1), testutil.ToFloat64(operationResult.metrics.With(GetLabels(existingOp4))))
-		assert.Equal(t, float64(1), testutil.ToFloat64(operationResult.metrics.With(GetLabels(existingOp3))))
+		resultsCollector.UpdateOperationResultsMetrics()
+
+		assert.Equal(t, float64(1), testutil.ToFloat64(resultsCollector.metrics.With(GetLabels(existingOp1))))
+		assert.Equal(t, float64(1), testutil.ToFloat64(resultsCollector.metrics.With(GetLabels(existingOp2))))
+		assert.Equal(t, float64(1), testutil.ToFloat64(resultsCollector.metrics.With(GetLabels(existingOp4))))
+		assert.Equal(t, float64(1), testutil.ToFloat64(resultsCollector.metrics.With(GetLabels(existingOp3))))
 	})
 }
 
