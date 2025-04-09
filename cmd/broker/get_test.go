@@ -29,7 +29,6 @@ func TestGetParameters_ProvisioningWithCustomOidcConfig(t *testing.T) {
 					"parameters": {
 						"name": "testing-cluster",
 						"region": "eu-central-1",
-						"administrators":["newAdmin1@kyma.cx", "newAdmin2@kyma.cx"],
 						"oidc": {				
 							"clientID": "client-id-oidc",
 							"groupsClaim": "groups",
@@ -65,7 +64,6 @@ func TestGetParameters_ProvisioningWithCustomOidcConfig(t *testing.T) {
 			"user_id": "john.smith@email.com"
 			},
 			"parameters": {
-				"administrators": ["newAdmin1@kyma.cx", "newAdmin2@kyma.cx"],
 				"name": "testing-cluster",
 				"oidc": {
 					"clientID": "client-id-oidc",
@@ -104,8 +102,7 @@ func TestGetParameters_ProvisioningWithNoOidcConfig(t *testing.T) {
 					},
 					"parameters": {
 						"name": "testing-cluster",
-						"region": "eu-central-1",
-						"administrators":["newAdmin1@kyma.cx", "newAdmin2@kyma.cx"]
+						"region": "eu-central-1"
 					}
 		}`)
 
@@ -131,7 +128,6 @@ func TestGetParameters_ProvisioningWithNoOidcConfig(t *testing.T) {
 			"user_id": "john.smith@email.com"
 			},
 			"parameters": {
-				"administrators": ["newAdmin1@kyma.cx", "newAdmin2@kyma.cx"],
 				"name": "testing-cluster",
 				"region": "eu-central-1"
 			},
@@ -163,7 +159,6 @@ func TestGetParameters_ProvisioningWithListOidcConfig(t *testing.T) {
 					"parameters": {
 						"name": "testing-cluster",
 						"region": "eu-central-1",
-						"administrators":["newAdmin1@kyma.cx", "newAdmin2@kyma.cx"],
 						"oidc": {
 							"list": [
 								{
@@ -201,7 +196,6 @@ func TestGetParameters_ProvisioningWithListOidcConfig(t *testing.T) {
 			"user_id": "john.smith@email.com"
 			},
 			"parameters": {
-				"administrators": ["newAdmin1@kyma.cx", "newAdmin2@kyma.cx"],
 				"name": "testing-cluster",
 				"oidc": {
 					"list": [
@@ -245,7 +239,6 @@ func TestGetParameters_ProvisioningWithEmptyListOidcConfig(t *testing.T) {
 					"parameters": {
 						"name": "testing-cluster",
 						"region": "eu-central-1",
-						"administrators":["newAdmin1@kyma.cx", "newAdmin2@kyma.cx"],
 						"oidc": {
 							"list": []
 						}
@@ -274,7 +267,6 @@ func TestGetParameters_ProvisioningWithEmptyListOidcConfig(t *testing.T) {
 			"user_id": "john.smith@email.com"
 			},
 			"parameters": {
-				"administrators": ["newAdmin1@kyma.cx", "newAdmin2@kyma.cx"],
 				"name": "testing-cluster",
 				"oidc": {
 					"list": []
@@ -310,7 +302,6 @@ func TestGetParameters_ProvisioningWithCustomOidcConfigWithGroupsPrefixAndRequir
 					"parameters": {
 						"name": "testing-cluster",
 						"region": "eu-central-1",
-						"administrators":["newAdmin1@kyma.cx", "newAdmin2@kyma.cx"],
 						"oidc": {				
 							"clientID": "client-id-oidc",
 							"groupsClaim": "groups",
@@ -348,7 +339,6 @@ func TestGetParameters_ProvisioningWithCustomOidcConfigWithGroupsPrefixAndRequir
 			"user_id": "john.smith@email.com"
 			},
 			"parameters": {
-				"administrators": ["newAdmin1@kyma.cx", "newAdmin2@kyma.cx"],
 				"name": "testing-cluster",
 				"oidc": {
 					"clientID": "client-id-oidc",
@@ -389,7 +379,6 @@ func TestGetParameters_ProvisioningWithCustomOidcConfigWithGroupsPrefixAndRequir
 					"parameters": {
 						"name": "testing-cluster",
 						"region": "eu-central-1",
-						"administrators":["newAdmin1@kyma.cx", "newAdmin2@kyma.cx"],
 						"oidc": {				
 							"clientID": "client-id-oidc",
 							"groupsClaim": "groups",
@@ -427,7 +416,6 @@ func TestGetParameters_ProvisioningWithCustomOidcConfigWithGroupsPrefixAndRequir
 			"user_id": "john.smith@email.com"
 			},
 			"parameters": {
-				"administrators": ["newAdmin1@kyma.cx", "newAdmin2@kyma.cx"],
 				"name": "testing-cluster",
 				"oidc": {
 					"clientID": "client-id-oidc",
