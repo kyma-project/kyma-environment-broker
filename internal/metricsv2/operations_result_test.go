@@ -2,6 +2,7 @@ package metricsv2
 
 import (
 	"context"
+	"fmt"
 	"log/slog"
 	"os"
 	"testing"
@@ -22,7 +23,8 @@ const (
 )
 
 func TestOperationsResult(t *testing.T) {
-	t.Run("1000 metrics should be published with 1 or 0", func(t *testing.T) {
+	testName := fmt.Sprintf("%d metrics should be published with 1 or 0", tries)
+	t.Run(testName, func(t *testing.T) {
 		operations := storage.NewMemoryStorage().Operations()
 		for i := 0; i < tries; i++ {
 			op := internal.Operation{
