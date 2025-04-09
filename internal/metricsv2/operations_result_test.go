@@ -102,7 +102,8 @@ func TestOperationsResult(t *testing.T) {
 
 		time.Sleep(20 * time.Millisecond)
 
-		resultsCollector.UpdateOperationResultsMetrics()
+		err = resultsCollector.UpdateOperationResultsMetrics()
+		assert.NoError(t, err)
 
 		assert.Equal(t, float64(1), testutil.ToFloat64(resultsCollector.metrics.With(GetLabels(existingOp1))))
 		assert.Equal(t, float64(1), testutil.ToFloat64(resultsCollector.metrics.With(GetLabels(existingOp2))))
