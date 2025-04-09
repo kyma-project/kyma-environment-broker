@@ -160,6 +160,7 @@ broker:
   enableShootAndSeedSameRegion: "false"
   subaccountMovementEnabled: "false"
   updateCustomResourcesLabelsOnAccountMove: "false"
+  useAdditionalOIDCSchema: "false"
 
 binding:
   enabled: false
@@ -290,7 +291,6 @@ trialDocsURL: "https://help.sap.com/docs/"
 useSmallerMachineTypes: "false"
 
 osbUpdateProcessingEnabled: "false"
-useAdditionalOIDCSchema: "false"
 
 
 gardener:
