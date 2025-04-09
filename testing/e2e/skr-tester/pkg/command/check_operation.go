@@ -48,6 +48,7 @@ func (cmd *CheckOperationCommand) Run() error {
 	if err != nil {
 		return fmt.Errorf("failed to create KCP client: %v", err)
 	}
+	var state string
 	defer func() {
 		status, err := kcpClient.GetStatus(cmd.instanceID)
 		if err != nil {
@@ -56,8 +57,17 @@ func (cmd *CheckOperationCommand) Run() error {
 		}
 		fmt.Println("Operation status:")
 		fmt.Println(status)
+		if state != "failed" {
+			return
+		}
+		runtimeConfig, err := kcpClient.GetRuntimeConfig(cmd.instanceID)
+		if err != nil {
+			fmt.Printf("failed to get runtime config: %v\n", err)
+			return
+		}
+		fmt.Println("\nRuntime config:")
+		fmt.Println(runtimeConfig)
 	}()
-	var state string
 	err = wait(func() (bool, error) {
 		var err error
 		resp, _, err := brokerClient.GetOperation(cmd.instanceID, cmd.operationID)

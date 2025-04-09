@@ -31,7 +31,7 @@ const (
 func NewProvisioningProcessingQueue(ctx context.Context, provisionManager *process.StagedManager, workersAmount int, cfg *Config,
 	db storage.BrokerStorage, configProvider config.ConfigurationProvider,
 	edpClient provisioning.EDPClient, accountProvider hyperscaler.AccountProvider,
-	k8sClientProvider provisioning.K8sClientProvider, cli client.Client, gardenerClient *gardener.Client, defaultOIDC pkg.OIDCConfigDTO, logs *slog.Logger, rulesService *rules.RulesService) *process.Queue {
+	k8sClientProvider provisioning.K8sClientProvider, k8sClient client.Client, gardenerClient *gardener.Client, defaultOIDC pkg.OIDCConfigDTO, logs *slog.Logger, rulesService *rules.RulesService) *process.Queue {
 
 	trialRegionsMapping, err := provider.ReadPlatformRegionMappingFromFile(cfg.TrialRegionMappingFilePath)
 	if err != nil {
@@ -106,18 +106,18 @@ func NewProvisioningProcessingQueue(ctx context.Context, provisionManager *proce
 		// postcondition: operation.KymaResourceName, operation.RuntimeResourceName is set
 		{
 			stage:     createRuntimeStageName,
-			step:      provisioning.NewCreateRuntimeResourceStep(db.Operations(), db.Instances(), cli, cfg.InfrastructureManager, defaultOIDC),
+			step:      provisioning.NewCreateRuntimeResourceStep(db.Operations(), db.Instances(), k8sClient, cfg.InfrastructureManager, defaultOIDC),
 			condition: provisioning.SkipForOwnClusterPlan,
 		},
 		{
 			stage:     createRuntimeStageName,
-			step:      steps.NewCheckRuntimeResourceStep(db.Operations(), cli, internal.RetryTuple{Timeout: cfg.StepTimeouts.CheckRuntimeResourceCreate, Interval: resourceStateRetryInterval}),
+			step:      steps.NewCheckRuntimeResourceStep(db.Operations(), k8sClient, internal.RetryTuple{Timeout: cfg.StepTimeouts.CheckRuntimeResourceCreate, Interval: resourceStateRetryInterval}),
 			condition: provisioning.SkipForOwnClusterPlan,
 		},
 		{ // TODO: this step must be removed when kubeconfig is created by IM and own_cluster plan is permanently removed
 			disabled:  cfg.LifecycleManagerIntegrationDisabled,
 			stage:     createRuntimeStageName,
-			step:      steps.SyncKubeconfig(db.Operations(), cli),
+			step:      steps.SyncKubeconfig(db.Operations(), k8sClient),
 			condition: provisioning.DoForOwnClusterPlanOnly,
 		},
 		{ // must be run after the secret with kubeconfig is created ("syncKubeconfig")
@@ -128,7 +128,7 @@ func NewProvisioningProcessingQueue(ctx context.Context, provisionManager *proce
 		{
 			disabled: cfg.LifecycleManagerIntegrationDisabled,
 			stage:    createKymaResourceStageName,
-			step:     provisioning.NewApplyKymaStep(db.Operations(), cli),
+			step:     provisioning.NewApplyKymaStep(db.Operations(), k8sClient),
 		},
 	}
 	for _, step := range provisioningSteps {
