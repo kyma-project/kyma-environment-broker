@@ -26,6 +26,11 @@ const (
 func TestOperationsResult(t *testing.T) {
 	testName := fmt.Sprintf("%d metrics should be published with 1 or 0", tries)
 	t.Run(testName, func(t *testing.T) {
+
+		log := slog.New(slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{
+			Level: slog.LevelInfo,
+		}))
+
 		operations := storage.NewMemoryStorage().Operations()
 		for i := 0; i < tries; i++ {
 			op := internal.Operation{
@@ -43,11 +48,7 @@ func TestOperationsResult(t *testing.T) {
 			assert.NoError(t, err)
 		}
 
-		log := slog.New(slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{
-			Level: slog.LevelInfo,
-		}))
-
-		operationResult := NewOperationResult(
+		operationResult := NewOperationsResults(
 			context.Background(), operations, Config{
 				Enabled: true, OperationResultPollingInterval: 5 * time.Millisecond,
 				OperationStatsPollingInterval: 5 * time.Millisecond, OperationResultRetentionPeriod: 24 * time.Hour,

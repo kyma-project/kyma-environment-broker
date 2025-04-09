@@ -55,7 +55,7 @@ func Register(ctx context.Context, sub event.Subscriber, db storage.BrokerStorag
 	opInstanceCollector := NewInstancesCollector(db.Instances(), logger)
 	prometheus.MustRegister(opInstanceCollector)
 
-	opResult := NewOperationResult(ctx, db.Operations(), cfg, logger)
+	opResult := NewOperationsResults(ctx, db.Operations(), cfg, logger)
 
 	opStats := NewOperationsStats(db.Operations(), cfg, logger)
 	opStats.MustRegister(ctx)
