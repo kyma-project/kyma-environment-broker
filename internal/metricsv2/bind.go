@@ -12,18 +12,18 @@ import (
 	"github.com/prometheus/client_golang/prometheus"
 )
 
-// BindDurationCollector provides histograms which describes the time of bind/unbind request processing:
+// BindDurationCollector provides histograms which describe the time of bind/unbind request processing:
 // - kcp_keb_v2_bind_duration_millisecond
 // - kcp_keb_v2_unbind_duration_millisecond
 type BindDurationCollector struct {
-	bindHistorgam   *prometheus.HistogramVec
+	bindHistogram   *prometheus.HistogramVec
 	unbindHistogram *prometheus.HistogramVec
 	logger          *slog.Logger
 }
 
 func NewBindDurationCollector(logger *slog.Logger) *BindDurationCollector {
 	return &BindDurationCollector{
-		bindHistorgam: prometheus.NewHistogramVec(prometheus.HistogramOpts{
+		bindHistogram: prometheus.NewHistogramVec(prometheus.HistogramOpts{
 			Namespace: prometheusNamespacev2,
 			Subsystem: prometheusSubsystemv2,
 			Name:      "bind_duration_millisecond",
@@ -42,18 +42,18 @@ func NewBindDurationCollector(logger *slog.Logger) *BindDurationCollector {
 }
 
 func (c *BindDurationCollector) Describe(ch chan<- *prometheus.Desc) {
-	c.bindHistorgam.Describe(ch)
+	c.bindHistogram.Describe(ch)
 	c.unbindHistogram.Describe(ch)
 }
 
 func (c *BindDurationCollector) Collect(ch chan<- prometheus.Metric) {
-	c.bindHistorgam.Collect(ch)
+	c.bindHistogram.Collect(ch)
 	c.unbindHistogram.Collect(ch)
 }
 
 func (c *BindDurationCollector) OnBindingExecuted(ctx context.Context, ev interface{}) error {
 	obj := ev.(broker.BindRequestProcessed)
-	c.bindHistorgam.WithLabelValues().Observe(float64(obj.ProcessingDuration.Milliseconds()))
+	c.bindHistogram.WithLabelValues().Observe(float64(obj.ProcessingDuration.Milliseconds()))
 	return nil
 }
 
@@ -133,7 +133,7 @@ func (c *BindingStatitics) Job(ctx context.Context) {
 	}()
 
 	if err := c.updateMetrics(); err != nil {
-		c.logger.Error(fmt.Sprintf("failed to update metrics metrics: %v", err))
+		c.logger.Error(fmt.Sprintf("failed to update metrics: %v", err))
 	}
 
 	ticker := time.NewTicker(c.pollingInterval)
