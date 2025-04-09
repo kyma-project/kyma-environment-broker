@@ -24,7 +24,6 @@ import (
 	"github.com/kyma-project/kyma-environment-broker/internal/broker"
 
 	"github.com/kyma-project/kyma-environment-broker/internal/process/infrastructure_manager"
-	"github.com/kyma-project/kyma-environment-broker/internal/process/input"
 
 	"github.com/kyma-project/kyma-environment-broker/internal"
 	"k8s.io/client-go/tools/clientcmd"
@@ -309,9 +308,8 @@ func TestCreateRuntimeResourceStep_HandleEmptyOIDCList(t *testing.T) {
 	err := imv1.AddToScheme(scheme.Scheme)
 	assert.NoError(t, err)
 	memoryStorage := storage.NewMemoryStorage()
-	inputConfig := input.InfrastructureManagerConfig{
-		MultiZoneCluster: true,
-	}
+	inputConfig := infrastructure_manager.InfrastructureManagerConfig{MultiZoneCluster: true}
+
 	instance, operation := fixInstanceAndOperation(broker.AzurePlanID, "westeurope", "platform-region", inputConfig, pkg.Azure)
 	operation.ProvisioningParameters.Parameters.OIDC = &pkg.OIDCConnectDTO{
 		List: []pkg.OIDCConfigDTO{},
@@ -347,9 +345,7 @@ func TestCreateRuntimeResourceStep_HandleNotNilOIDCWithoutListOrObject(t *testin
 	err := imv1.AddToScheme(scheme.Scheme)
 	assert.NoError(t, err)
 	memoryStorage := storage.NewMemoryStorage()
-	inputConfig := input.InfrastructureManagerConfig{
-		MultiZoneCluster: true,
-	}
+	inputConfig := infrastructure_manager.InfrastructureManagerConfig{MultiZoneCluster: true}
 	instance, operation := fixInstanceAndOperation(broker.AzurePlanID, "westeurope", "platform-region", inputConfig, pkg.Azure)
 	operation.ProvisioningParameters.Parameters.OIDC = &pkg.OIDCConnectDTO{}
 	assertInsertions(t, memoryStorage, instance, operation)

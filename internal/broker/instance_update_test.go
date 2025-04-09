@@ -9,7 +9,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/kyma-project/control-plane/components/provisioner/pkg/gqlschema"
 	"github.com/kyma-project/kyma-environment-broker/internal/broker"
 	"github.com/kyma-project/kyma-environment-broker/internal/provider"
 
@@ -487,8 +486,9 @@ func TestUpdateEndpoint_UpdateFromOIDCObject(t *testing.T) {
 	q := &automock.Queue{}
 	q.On("Add", mock.AnythingOfType("string"))
 	kcBuilder := &kcMock.KcBuilder{}
+	kcBuilder.On("GetServerURL", mock.Anything).Return("https://kcp.example.com", nil)
 	svc := broker.NewUpdate(broker.Config{}, st, handler, true, true, false, q, broker.PlansConfig{},
-		nil, fixLogger(), dashboardConfig, kcBuilder, &broker.OneForAllConvergedCloudRegionsProvider{}, fakeKcpK8sClient, nil, false)
+		fixValueProvider(), fixLogger(), dashboardConfig, kcBuilder, &broker.OneForAllConvergedCloudRegionsProvider{}, fakeKcpK8sClient, nil, false)
 
 	t.Run("Should accept update to OIDC object", func(t *testing.T) {
 		// given
@@ -497,7 +497,7 @@ func TestUpdateEndpoint_UpdateFromOIDCObject(t *testing.T) {
 		// when
 		response, err := svc.Update(context.Background(), instanceID, domain.UpdateDetails{
 			ServiceID:       "",
-			PlanID:          AzurePlanID,
+			PlanID:          broker.AzurePlanID,
 			RawParameters:   json.RawMessage("{\"oidc\":{" + oidcParams + "}}"),
 			PreviousValues:  domain.PreviousValues{},
 			RawContext:      json.RawMessage("{\"globalaccount_id\":\"globalaccount_id_1\", \"active\":true}"),
@@ -523,7 +523,7 @@ func TestUpdateEndpoint_UpdateFromOIDCObject(t *testing.T) {
 		// when
 		response, err := svc.Update(context.Background(), instanceID, domain.UpdateDetails{
 			ServiceID:       "",
-			PlanID:          AzurePlanID,
+			PlanID:          broker.AzurePlanID,
 			RawParameters:   json.RawMessage("{\"oidc\":{ \"list\":[{" + oidcParams + "}]}}"),
 			PreviousValues:  domain.PreviousValues{},
 			RawContext:      json.RawMessage("{\"globalaccount_id\":\"globalaccount_id_1\", \"active\":true}"),
@@ -546,7 +546,7 @@ func TestUpdateEndpoint_UpdateFromOIDCObject(t *testing.T) {
 		// when
 		response, err := svc.Update(context.Background(), instanceID, domain.UpdateDetails{
 			ServiceID:       "",
-			PlanID:          AzurePlanID,
+			PlanID:          broker.AzurePlanID,
 			RawParameters:   json.RawMessage("{\"oidc\":{ \"list\":[]}}"),
 			PreviousValues:  domain.PreviousValues{},
 			RawContext:      json.RawMessage("{\"globalaccount_id\":\"globalaccount_id_1\", \"active\":true}"),
@@ -585,8 +585,9 @@ func TestUpdateEndpoint_UpdateFromOIDCList(t *testing.T) {
 	q := &automock.Queue{}
 	q.On("Add", mock.AnythingOfType("string"))
 	kcBuilder := &kcMock.KcBuilder{}
+	kcBuilder.On("GetServerURL", mock.Anything).Return("https://kcp.example.com", nil)
 	svc := broker.NewUpdate(broker.Config{}, st, handler, true, true, false, q, broker.PlansConfig{},
-		nil, fixLogger(), dashboardConfig, kcBuilder, &broker.OneForAllConvergedCloudRegionsProvider{}, fakeKcpK8sClient, nil, false)
+		fixValueProvider(), fixLogger(), dashboardConfig, kcBuilder, &broker.OneForAllConvergedCloudRegionsProvider{}, fakeKcpK8sClient, nil, false)
 
 	t.Run("Should reject update to OIDC object", func(t *testing.T) {
 		// given
@@ -595,7 +596,7 @@ func TestUpdateEndpoint_UpdateFromOIDCList(t *testing.T) {
 		// when
 		_, err := svc.Update(context.Background(), instanceID, domain.UpdateDetails{
 			ServiceID:       "",
-			PlanID:          AzurePlanID,
+			PlanID:          broker.AzurePlanID,
 			RawParameters:   json.RawMessage("{\"oidc\":{" + oidcParams + "}}"),
 			PreviousValues:  domain.PreviousValues{},
 			RawContext:      json.RawMessage("{\"globalaccount_id\":\"globalaccount_id_1\", \"active\":true}"),
@@ -612,7 +613,7 @@ func TestUpdateEndpoint_UpdateFromOIDCList(t *testing.T) {
 		// when
 		response, err := svc.Update(context.Background(), instanceID, domain.UpdateDetails{
 			ServiceID:       "",
-			PlanID:          AzurePlanID,
+			PlanID:          broker.AzurePlanID,
 			RawParameters:   json.RawMessage("{\"oidc\":{ \"list\":[{" + oidcParams + "}]}}"),
 			PreviousValues:  domain.PreviousValues{},
 			RawContext:      json.RawMessage("{\"globalaccount_id\":\"globalaccount_id_1\", \"active\":true}"),
@@ -635,7 +636,7 @@ func TestUpdateEndpoint_UpdateFromOIDCList(t *testing.T) {
 		// when
 		response, err := svc.Update(context.Background(), instanceID, domain.UpdateDetails{
 			ServiceID:       "",
-			PlanID:          AzurePlanID,
+			PlanID:          broker.AzurePlanID,
 			RawParameters:   json.RawMessage("{\"oidc\":{ \"list\":[]}}"),
 			PreviousValues:  domain.PreviousValues{},
 			RawContext:      json.RawMessage("{\"globalaccount_id\":\"globalaccount_id_1\", \"active\":true}"),
@@ -646,374 +647,6 @@ func TestUpdateEndpoint_UpdateFromOIDCList(t *testing.T) {
 		// then
 		require.NoError(t, err)
 		assert.Len(t, operation.ProvisioningParameters.Parameters.OIDC.List, 0)
-	})
-}
-
-func TestUpdateEndpoint_UpdateParameters(t *testing.T) {
-	// given
-	instance := fixture.FixInstance(instanceID)
-	instance.Parameters.Parameters.OIDC = &pkg.OIDCConnectDTO{
-		OIDCConfigDTO: &pkg.OIDCConfigDTO{
-			ClientID:       "client-id",
-			GroupsClaim:    "groups",
-			IssuerURL:      "https://test.local",
-			SigningAlgs:    []string{"RS256"},
-			UsernameClaim:  "email",
-			UsernamePrefix: "-",
-		},
-	}
-	st := storage.NewMemoryStorage()
-	err := st.Instances().Insert(instance)
-	require.NoError(t, err)
-	err = st.Operations().InsertProvisioningOperation(fixProvisioningOperation("provisioning01"))
-	require.NoError(t, err)
-
-	handler := &handler{}
-	q := &automock.Queue{}
-	q.On("Add", mock.AnythingOfType("string"))
-	planDefaults := func(planID string, platformProvider pkg.CloudProvider, provider *pkg.CloudProvider) (*gqlschema.ClusterConfigInput, error) {
-		return &gqlschema.ClusterConfigInput{}, nil
-	}
-	kcBuilder := &kcMock.KcBuilder{}
-	svc := NewUpdate(Config{UseAdditionalOIDCSchema: true}, st.Instances(), st.RuntimeStates(), st.Operations(), handler, true, true, false, q, PlansConfig{},
-		planDefaults, fixLogger(), dashboardConfig, kcBuilder, &OneForAllConvergedCloudRegionsProvider{}, fakeKcpK8sClient, nil)
-
-	t.Run("Should accept update to OIDC object", func(t *testing.T) {
-		// given
-		oidcParams := `"clientID":"updated-client","groupsClaim":"groups","issuerURL":"https://test.com","signingAlgs":["RS256"],"usernameClaim":"email","usernamePrefix":"-"`
-
-		// when
-		response, err := svc.Update(context.Background(), instanceID, domain.UpdateDetails{
-			ServiceID:       "",
-			PlanID:          AzurePlanID,
-			RawParameters:   json.RawMessage("{\"oidc\":{" + oidcParams + "}}"),
-			PreviousValues:  domain.PreviousValues{},
-			RawContext:      json.RawMessage("{\"globalaccount_id\":\"globalaccount_id_1\", \"active\":true}"),
-			MaintenanceInfo: nil,
-		}, true)
-		operation, err := st.Operations().GetProvisioningOperationByID(response.OperationData)
-
-		// then
-		require.NoError(t, err)
-		assert.Equal(t, &pkg.OIDCConfigDTO{
-			ClientID:       "updated-client",
-			GroupsClaim:    "groups",
-			IssuerURL:      "https://test.com",
-			SigningAlgs:    []string{"RS256"},
-			UsernameClaim:  "email",
-			UsernamePrefix: "-",
-		}, operation.ProvisioningParameters.Parameters.OIDC.OIDCConfigDTO)
-	})
-	t.Run("Should accept update to OIDC list", func(t *testing.T) {
-		// given
-		oidcParams := `"clientID":"updated-client","groupsClaim":"groups","issuerURL":"https://test.com","signingAlgs":["RS256"],"usernameClaim":"email","usernamePrefix":"-"`
-
-		// when
-		response, err := svc.Update(context.Background(), instanceID, domain.UpdateDetails{
-			ServiceID:       "",
-			PlanID:          AzurePlanID,
-			RawParameters:   json.RawMessage("{\"oidc\":{ \"list\":[{" + oidcParams + "}]}}"),
-			PreviousValues:  domain.PreviousValues{},
-			RawContext:      json.RawMessage("{\"globalaccount_id\":\"globalaccount_id_1\", \"active\":true}"),
-			MaintenanceInfo: nil,
-		}, true)
-		operation, err := st.Operations().GetProvisioningOperationByID(response.OperationData)
-
-		// then
-		require.NoError(t, err)
-		assert.Equal(t, pkg.OIDCConfigDTO{
-			ClientID:       "updated-client",
-			GroupsClaim:    "groups",
-			IssuerURL:      "https://test.com",
-			SigningAlgs:    []string{"RS256"},
-			UsernameClaim:  "email",
-			UsernamePrefix: "-",
-		}, operation.ProvisioningParameters.Parameters.OIDC.List[0])
-	})
-	t.Run("Should accept update to empty OIDC list", func(t *testing.T) {
-		// when
-		response, err := svc.Update(context.Background(), instanceID, domain.UpdateDetails{
-			ServiceID:       "",
-			PlanID:          AzurePlanID,
-			RawParameters:   json.RawMessage("{\"oidc\":{ \"list\":[]}}"),
-			PreviousValues:  domain.PreviousValues{},
-			RawContext:      json.RawMessage("{\"globalaccount_id\":\"globalaccount_id_1\", \"active\":true}"),
-			MaintenanceInfo: nil,
-		}, true)
-		operation, err := st.Operations().GetProvisioningOperationByID(response.OperationData)
-
-		// then
-		require.NoError(t, err)
-		assert.Len(t, operation.ProvisioningParameters.Parameters.OIDC.List, 0)
-	})
-}
-
-func TestUpdateEndpoint_UpdateFromOIDCList(t *testing.T) {
-	// given
-	instance := fixture.FixInstance(instanceID)
-	instance.Parameters.Parameters.OIDC = &pkg.OIDCConnectDTO{
-		List: []pkg.OIDCConfigDTO{
-			{
-				ClientID:       "client-id",
-				GroupsClaim:    "groups",
-				IssuerURL:      "https://test.local",
-				SigningAlgs:    []string{"RS256"},
-				UsernameClaim:  "email",
-				UsernamePrefix: "-",
-			},
-		},
-	}
-	st := storage.NewMemoryStorage()
-	err := st.Instances().Insert(instance)
-	require.NoError(t, err)
-	err = st.Operations().InsertProvisioningOperation(fixProvisioningOperation("provisioning01"))
-	require.NoError(t, err)
-
-	handler := &handler{}
-	q := &automock.Queue{}
-	q.On("Add", mock.AnythingOfType("string"))
-	planDefaults := func(planID string, platformProvider pkg.CloudProvider, provider *pkg.CloudProvider) (*gqlschema.ClusterConfigInput, error) {
-		return &gqlschema.ClusterConfigInput{}, nil
-	}
-	kcBuilder := &kcMock.KcBuilder{}
-	svc := NewUpdate(Config{}, st.Instances(), st.RuntimeStates(), st.Operations(), handler, true, true, false, q, PlansConfig{},
-		planDefaults, fixLogger(), dashboardConfig, kcBuilder, &OneForAllConvergedCloudRegionsProvider{}, fakeKcpK8sClient, nil)
-
-	t.Run("Should reject update to OIDC object", func(t *testing.T) {
-		// given
-		oidcParams := `"clientID":"updated-client","groupsClaim":"groups","issuerURL":"https://test.com","signingAlgs":["RS256"],"usernameClaim":"email","usernamePrefix":"-"`
-
-		// when
-		_, err := svc.Update(context.Background(), instanceID, domain.UpdateDetails{
-			ServiceID:       "",
-			PlanID:          AzurePlanID,
-			RawParameters:   json.RawMessage("{\"oidc\":{" + oidcParams + "}}"),
-			PreviousValues:  domain.PreviousValues{},
-			RawContext:      json.RawMessage("{\"globalaccount_id\":\"globalaccount_id_1\", \"active\":true}"),
-			MaintenanceInfo: nil,
-		}, true)
-
-		// then
-		assert.EqualError(t, err, "an object OIDC cannot be used because the instance OIDC configuration uses a list")
-	})
-	t.Run("Should accept update to OIDC list", func(t *testing.T) {
-		// given
-		oidcParams := `"clientID":"updated-client","groupsClaim":"groups","issuerURL":"https://test.com","signingAlgs":["RS256"],"usernameClaim":"email","usernamePrefix":"-"`
-
-		// when
-		response, err := svc.Update(context.Background(), instanceID, domain.UpdateDetails{
-			ServiceID:       "",
-			PlanID:          AzurePlanID,
-			RawParameters:   json.RawMessage("{\"oidc\":{ \"list\":[{" + oidcParams + "}]}}"),
-			PreviousValues:  domain.PreviousValues{},
-			RawContext:      json.RawMessage("{\"globalaccount_id\":\"globalaccount_id_1\", \"active\":true}"),
-			MaintenanceInfo: nil,
-		}, true)
-		operation, err := st.Operations().GetProvisioningOperationByID(response.OperationData)
-
-		// then
-		require.NoError(t, err)
-		assert.Equal(t, pkg.OIDCConfigDTO{
-			ClientID:       "updated-client",
-			GroupsClaim:    "groups",
-			IssuerURL:      "https://test.com",
-			SigningAlgs:    []string{"RS256"},
-			UsernameClaim:  "email",
-			UsernamePrefix: "-",
-		}, operation.ProvisioningParameters.Parameters.OIDC.List[0])
-	})
-	t.Run("Should accept update to empty OIDC list", func(t *testing.T) {
-		// when
-		response, err := svc.Update(context.Background(), instanceID, domain.UpdateDetails{
-			ServiceID:       "",
-			PlanID:          AzurePlanID,
-			RawParameters:   json.RawMessage("{\"oidc\":{ \"list\":[]}}"),
-			PreviousValues:  domain.PreviousValues{},
-			RawContext:      json.RawMessage("{\"globalaccount_id\":\"globalaccount_id_1\", \"active\":true}"),
-			MaintenanceInfo: nil,
-		}, true)
-		operation, err := st.Operations().GetProvisioningOperationByID(response.OperationData)
-
-		// then
-		require.NoError(t, err)
-		assert.Len(t, operation.ProvisioningParameters.Parameters.OIDC.List, 0)
-	})
-}
-
-func TestUpdateEndpoint_UpdateParameters(t *testing.T) {
-	// given
-	instance := fixture.FixInstance(instanceID)
-	st := storage.NewMemoryStorage()
-	err := st.Instances().Insert(instance)
-	require.NoError(t, err)
-	err = st.Operations().InsertProvisioningOperation(fixProvisioningOperation("provisioning01"))
-	require.NoError(t, err)
-
-	handler := &handler{}
-	q := &automock.Queue{}
-	q.On("Add", mock.AnythingOfType("string"))
-	planDefaults := func(planID string, platformProvider pkg.CloudProvider, provider *pkg.CloudProvider) (*gqlschema.ClusterConfigInput, error) {
-		return &gqlschema.ClusterConfigInput{}, nil
-	}
-	kcBuilder := &kcMock.KcBuilder{}
-	svc := NewUpdate(Config{UseAdditionalOIDCSchema: true}, st.Instances(), st.RuntimeStates(), st.Operations(), handler, true, true, false, q, PlansConfig{},
-		planDefaults, fixLogger(), dashboardConfig, kcBuilder, &OneForAllConvergedCloudRegionsProvider{}, fakeKcpK8sClient, nil)
-
-	t.Run("Should fail on invalid OIDC params", func(t *testing.T) {
-		// given
-		oidcParams := `"clientID":"{clientID}","groupsClaim":"groups","issuerURL":"{issuerURL}","signingAlgs":["RS256"],"usernameClaim":"email","usernamePrefix":"-"`
-		errMsg := fmt.Errorf("issuerURL must be a valid URL, issuerURL must have https scheme")
-		expectedErr := apiresponses.NewFailureResponse(errMsg, http.StatusUnprocessableEntity, errMsg.Error())
-
-		// when
-		_, err := svc.Update(context.Background(), instanceID, domain.UpdateDetails{
-			ServiceID:       "",
-			PlanID:          broker.AzurePlanID,
-			RawParameters:   json.RawMessage("{\"oidc\":{" + oidcParams + "}}"),
-			PreviousValues:  domain.PreviousValues{},
-			RawContext:      json.RawMessage("{\"globalaccount_id\":\"globalaccount_id_1\", \"active\":true}"),
-			MaintenanceInfo: nil,
-		}, true)
-
-		// then
-		require.Error(t, err)
-		assert.IsType(t, &apiresponses.FailureResponse{}, err)
-		apierr := err.(*apiresponses.FailureResponse)
-		assert.Equal(t, expectedErr.(*apiresponses.FailureResponse).ValidatedStatusCode(nil), apierr.ValidatedStatusCode(nil))
-		assert.Equal(t, expectedErr.(*apiresponses.FailureResponse).LoggerAction(), apierr.LoggerAction())
-	})
-
-	t.Run("Should fail on invalid OIDC issuerURL param", func(t *testing.T) {
-		testCases := []struct {
-			name          string
-			oidcParams    string
-			expectedError string
-		}{
-			{
-				name:          "wrong scheme",
-				oidcParams:    `"clientID":"client-id","issuerURL":"http://test.local","signingAlgs":["RS256"]`,
-				expectedError: "issuerURL must have https scheme",
-			},
-			{
-				name:          "missing issuerURL",
-				oidcParams:    `"clientID":"client-id"`,
-				expectedError: "issuerURL must not be empty",
-			},
-			{
-				name:          "URL with fragment",
-				oidcParams:    `"clientID":"client-id","issuerURL":"https://test.local#fragment","signingAlgs":["RS256"]`,
-				expectedError: "issuerURL must not contain a fragment",
-			},
-			{
-				name:          "URL with username",
-				oidcParams:    `"clientID":"client-id","issuerURL":"https://user@test.local","signingAlgs":["RS256"]`,
-				expectedError: "issuerURL must not contain a username or password",
-			},
-			{
-				name:          "URL with query",
-				oidcParams:    `"clientID":"client-id","issuerURL":"https://test.local?query=param","signingAlgs":["RS256"]`,
-				expectedError: "issuerURL must not contain a query",
-			},
-			{
-				name:          "URL with empty host",
-				oidcParams:    `"clientID":"client-id","issuerURL":"https:///path","signingAlgs":["RS256"]`,
-				expectedError: "issuerURL must be a valid URL, issuerURL must have https scheme",
-			},
-		}
-
-		for _, tc := range testCases {
-			t.Run(tc.name, func(t *testing.T) {
-				// given
-				errMsg := fmt.Errorf("%s", tc.expectedError)
-				expectedErr := apiresponses.NewFailureResponse(errMsg, http.StatusUnprocessableEntity, errMsg.Error())
-
-				// when
-				_, err := svc.Update(context.Background(), instanceID, domain.UpdateDetails{
-					ServiceID:       "",
-					PlanID:          broker.AzurePlanID,
-					RawParameters:   json.RawMessage("{\"oidc\":{" + tc.oidcParams + "}}"),
-					PreviousValues:  domain.PreviousValues{},
-					RawContext:      json.RawMessage("{\"globalaccount_id\":\"globalaccount_id_1\", \"active\":true}"),
-					MaintenanceInfo: nil,
-				}, true)
-
-				// then
-				require.Error(t, err)
-				assert.IsType(t, &apiresponses.FailureResponse{}, err)
-				apierr := err.(*apiresponses.FailureResponse)
-				assert.Equal(t, expectedErr.(*apiresponses.FailureResponse).ValidatedStatusCode(nil), apierr.ValidatedStatusCode(nil))
-				assert.Equal(t, expectedErr.(*apiresponses.FailureResponse).LoggerAction(), apierr.LoggerAction())
-			})
-		}
-	})
-
-	t.Run("Should fail on insufficient OIDC params (missing clientID)", func(t *testing.T) {
-		// given
-		oidcParams := `"issuerURL":"https://test.local"`
-		errMsg := fmt.Errorf("clientID must not be empty")
-		expectedErr := apiresponses.NewFailureResponse(errMsg, http.StatusUnprocessableEntity, errMsg.Error())
-
-		// when
-		_, err := svc.Update(context.Background(), instanceID, domain.UpdateDetails{
-			ServiceID:       "",
-			PlanID:          broker.AzurePlanID,
-			RawParameters:   json.RawMessage("{\"oidc\":{" + oidcParams + "}}"),
-			PreviousValues:  domain.PreviousValues{},
-			RawContext:      json.RawMessage("{\"globalaccount_id\":\"globalaccount_id_1\", \"active\":true}"),
-			MaintenanceInfo: nil,
-		}, true)
-
-		// then
-		require.Error(t, err)
-		assert.IsType(t, &apiresponses.FailureResponse{}, err)
-		apierr := err.(*apiresponses.FailureResponse)
-		assert.Equal(t, expectedErr.(*apiresponses.FailureResponse).ValidatedStatusCode(nil), apierr.ValidatedStatusCode(nil))
-		assert.Equal(t, expectedErr.(*apiresponses.FailureResponse).LoggerAction(), apierr.LoggerAction())
-	})
-
-	t.Run("Should fail on invalid OIDC signingAlgs param", func(t *testing.T) {
-		// given
-		oidcParams := `"clientID":"client-id","issuerURL":"https://test.local","signingAlgs":["RS256","notValid"]`
-		errMsg := fmt.Errorf("signingAlgs must contain valid signing algorithm(s)")
-		expectedErr := apiresponses.NewFailureResponse(errMsg, http.StatusUnprocessableEntity, errMsg.Error())
-
-		// when
-		_, err := svc.Update(context.Background(), instanceID, domain.UpdateDetails{
-			ServiceID:       "",
-			PlanID:          broker.AzurePlanID,
-			RawParameters:   json.RawMessage("{\"oidc\":{" + oidcParams + "}}"),
-			PreviousValues:  domain.PreviousValues{},
-			RawContext:      json.RawMessage("{\"globalaccount_id\":\"globalaccount_id_1\", \"active\":true}"),
-			MaintenanceInfo: nil,
-		}, true)
-
-		// then
-		require.Error(t, err)
-		assert.IsType(t, &apiresponses.FailureResponse{}, err)
-		apierr := err.(*apiresponses.FailureResponse)
-		assert.Equal(t, expectedErr.(*apiresponses.FailureResponse).ValidatedStatusCode(nil), apierr.ValidatedStatusCode(nil))
-		assert.Equal(t, expectedErr.(*apiresponses.FailureResponse).LoggerAction(), apierr.LoggerAction())
-	})
-
-	t.Run("Should fail on invalid OIDC requiredClaims param", func(t *testing.T) {
-		// given
-		oidcParams := `"clientID":"client-id","issuerURL":"https://test.local","signingAlgs":["RS256"],"requiredClaims":["claim=value","notValid"]`
-
-		// when
-		_, err := svc.Update(context.Background(), instanceID, domain.UpdateDetails{
-			ServiceID:       "",
-			PlanID:          AzurePlanID,
-			RawParameters:   json.RawMessage("{\"oidc\":{" + oidcParams + "}}"),
-			PreviousValues:  domain.PreviousValues{},
-			RawContext:      json.RawMessage("{\"globalaccount_id\":\"globalaccount_id_1\", \"active\":true}"),
-			MaintenanceInfo: nil,
-		}, true)
-
-		// then
-		require.Error(t, err)
-		assert.IsType(t, &apiresponses.FailureResponse{}, err)
-		apierr := err.(*apiresponses.FailureResponse)
-		assert.Equal(t, http.StatusUnprocessableEntity, apierr.ValidatedStatusCode(nil))
 	})
 }
 
