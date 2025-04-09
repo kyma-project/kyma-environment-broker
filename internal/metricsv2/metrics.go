@@ -59,6 +59,7 @@ func Register(ctx context.Context, sub event.Subscriber, db storage.BrokerStorag
 
 	opStats := NewOperationsStats(db.Operations(), cfg, logger)
 	opStats.MustRegister(ctx)
+	opStats.StartCollector(ctx)
 
 	bindingStats := NewBindingStatsCollector(db.Bindings(), cfg.BindingsStatsPollingInterval, logger)
 	bindingStats.MustRegister(ctx)

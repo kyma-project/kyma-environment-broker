@@ -78,6 +78,10 @@ func NewOperationsStats(operations storage.Operations, cfg Config, logger *slog.
 	}
 }
 
+func (s *OperationsStats) StartCollector(ctx context.Context) {
+	go s.Job(ctx)
+}
+
 func (s *OperationsStats) MustRegister(ctx context.Context) {
 	defer func() {
 		if recovery := recover(); recovery != nil {
@@ -114,8 +118,6 @@ func (s *OperationsStats) MustRegister(ctx context.Context) {
 			}
 		}
 	}
-
-	go s.Job(ctx)
 }
 
 // increments metric for finished operation
@@ -163,7 +165,8 @@ func (s *OperationsStats) Job(ctx context.Context) {
 		}
 	}()
 
-	if err := s.updateMetrics(); err != nil {
+	fmt.Printf("starting operations stats metrics job with interval %s\n", s.poolingInterval)
+	if err := s.UpdateStatsMetrics(); err != nil {
 		s.logger.Error(fmt.Sprintf("failed to update metrics metrics: %v", err))
 	}
 
@@ -171,7 +174,7 @@ func (s *OperationsStats) Job(ctx context.Context) {
 	for {
 		select {
 		case <-ticker.C:
-			if err := s.updateMetrics(); err != nil {
+			if err := s.UpdateStatsMetrics(); err != nil {
 				s.logger.Error(fmt.Sprintf("failed to update operation stats metrics: %v", err))
 			}
 		case <-ctx.Done():
@@ -180,7 +183,7 @@ func (s *OperationsStats) Job(ctx context.Context) {
 	}
 }
 
-func (s *OperationsStats) updateMetrics() error {
+func (s *OperationsStats) UpdateStatsMetrics() error {
 	defer s.sync.Unlock()
 	s.sync.Lock()
 

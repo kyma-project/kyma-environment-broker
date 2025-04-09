@@ -109,6 +109,7 @@ func TestOperationsStats(t *testing.T) {
 
 	ctr = NewOperationsStats(operations, cfg, log)
 	ctr.MustRegister(context.Background())
+	ctr.UpdateStatsMetrics()
 
 	for i := 0; i < 3; i++ {
 		for j := 0; j < testData[i].eventsCount; j++ {
