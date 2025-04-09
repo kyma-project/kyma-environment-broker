@@ -20,11 +20,11 @@ import (
 )
 
 const (
-	tries = 1000
+	operationsCount = 1000
 )
 
 func TestOperationsResult(t *testing.T) {
-	testName := fmt.Sprintf("%d metrics should be published with 1 or 0", tries)
+	testName := fmt.Sprintf("%d metrics should be published with 1 or 0", operationsCount)
 	t.Run(testName, func(t *testing.T) {
 
 		log := slog.New(slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{
@@ -32,21 +32,8 @@ func TestOperationsResult(t *testing.T) {
 		}))
 
 		operations := storage.NewMemoryStorage().Operations()
-		for i := 0; i < tries; i++ {
-			op := internal.Operation{
-				ID:         uuid.New().String(),
-				InstanceID: uuid.New().String(),
-				ProvisioningParameters: internal.ProvisioningParameters{
-					PlanID: randomPlanId(),
-				},
-				CreatedAt: randomCreatedAt(),
-				UpdatedAt: randomUpdatedAtAfterCreatedAt(),
-				Type:      randomType(),
-				State:     randomState(),
-			}
-			err := operations.InsertOperation(op)
-			assert.NoError(t, err)
-		}
+
+		insertRandomOperations(t, operations, operationsCount)
 
 		operationResult := NewOperationsResults(
 			context.Background(), operations, Config{
@@ -62,7 +49,7 @@ func TestOperationsResult(t *testing.T) {
 
 		ops, err := operations.GetAllOperations()
 		assert.NoError(t, err)
-		assert.Equal(t, tries, len(ops))
+		assert.Equal(t, operationsCount, len(ops))
 
 		for _, op := range ops {
 			assert.Equal(
@@ -120,6 +107,24 @@ func TestOperationsResult(t *testing.T) {
 		assert.Equal(t, float64(1), testutil.ToFloat64(operationResult.metrics.With(GetLabels(existingOp4))))
 		assert.Equal(t, float64(1), testutil.ToFloat64(operationResult.metrics.With(GetLabels(existingOp3))))
 	})
+}
+
+func insertRandomOperations(t *testing.T, operations storage.Operations, count int) {
+	for i := 0; i < count; i++ {
+		op := internal.Operation{
+			ID:         uuid.New().String(),
+			InstanceID: uuid.New().String(),
+			ProvisioningParameters: internal.ProvisioningParameters{
+				PlanID: randomPlanId(),
+			},
+			CreatedAt: randomCreatedAt(),
+			UpdatedAt: randomUpdatedAtAfterCreatedAt(),
+			Type:      randomType(),
+			State:     randomState(),
+		}
+		err := operations.InsertOperation(op)
+		assert.NoError(t, err)
+	}
 }
 
 func fixRandomOp(createdAt time.Time, state domain.LastOperationState) internal.Operation {
