@@ -7,7 +7,7 @@ import (
 
 	"github.com/kyma-project/kyma-environment-broker/internal/broker"
 	"github.com/kyma-project/kyma-environment-broker/internal/fixture"
-	"github.com/kyma-project/kyma-environment-broker/internal/process/input"
+	"github.com/kyma-project/kyma-environment-broker/internal/process/infrastructure_manager"
 	"github.com/kyma-project/kyma-environment-broker/internal/ptr"
 	"github.com/kyma-project/kyma-environment-broker/internal/storage"
 	"github.com/stretchr/testify/assert"
@@ -30,7 +30,7 @@ func TestInitProviderValuesStep_Run(t *testing.T) {
 	err = memoryStorage.Operations().InsertOperation(operation)
 	assert.NoError(t, err)
 
-	step := NewInitProviderValuesStep(memoryStorage.Operations(), memoryStorage.Instances(), input.InfrastructureManagerConfig{
+	step := NewInitProviderValuesStep(memoryStorage.Operations(), memoryStorage.Instances(), infrastructure_manager.InfrastructureManagerConfig{
 		DefaultGardenerShootPurpose:  "production",
 		DefaultTrialProvider:         "aws",
 		MultiZoneCluster:             false,

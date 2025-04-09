@@ -36,7 +36,7 @@ func NewUpdateProcessingQueue(ctx context.Context, manager *process.StagedManage
 		},
 		{
 			stage:     "runtime_resource",
-			step:      update.NewUpdateRuntimeStep(db.Operations(), kcpClient, cfg.UpdateRuntimeResourceDelay, cfg.InfrastructureManager, cfg.Broker.UseSmallerMachineTypes, trialRegionsMapping, cfg.Broker.UseAdditionalOIDCSchema),
+			step:      update.NewUpdateRuntimeStep(db.Operations(), kcpClient, cfg.UpdateRuntimeResourceDelay, cfg.InfrastructureManager, cfg.InfrastructureManager.UseSmallerMachineTypes, trialRegionsMapping, cfg.Broker.UseAdditionalOIDCSchema),
 			condition: update.SkipForOwnClusterPlan,
 		},
 		{

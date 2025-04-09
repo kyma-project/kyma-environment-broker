@@ -5,6 +5,8 @@ import (
 	"log/slog"
 	"time"
 
+	"github.com/kyma-project/kyma-environment-broker/internal/config"
+
 	"github.com/kyma-project/kyma-environment-broker/common/gardener"
 	"github.com/kyma-project/kyma-environment-broker/internal"
 	"github.com/kyma-project/kyma-environment-broker/internal/provider"
@@ -13,7 +15,6 @@ import (
 	"github.com/kyma-project/kyma-environment-broker/common/hyperscaler/rules"
 	pkg "github.com/kyma-project/kyma-environment-broker/common/runtime"
 	"github.com/kyma-project/kyma-environment-broker/internal/process"
-	"github.com/kyma-project/kyma-environment-broker/internal/process/input"
 	"github.com/kyma-project/kyma-environment-broker/internal/process/provisioning"
 	"github.com/kyma-project/kyma-environment-broker/internal/process/steps"
 	"github.com/kyma-project/kyma-environment-broker/internal/storage"
@@ -28,7 +29,7 @@ const (
 )
 
 func NewProvisioningProcessingQueue(ctx context.Context, provisionManager *process.StagedManager, workersAmount int, cfg *Config,
-	db storage.BrokerStorage, configProvider input.ConfigurationProvider,
+	db storage.BrokerStorage, configProvider config.ConfigurationProvider,
 	edpClient provisioning.EDPClient, accountProvider hyperscaler.AccountProvider,
 	k8sClientProvider provisioning.K8sClientProvider, cli client.Client, gardenerClient *gardener.Client, defaultOIDC pkg.OIDCConfigDTO, logs *slog.Logger, rulesService *rules.RulesService) *process.Queue {
 

@@ -63,45 +63,47 @@ type UpdateEndpoint struct {
 
 	regionsSupportingMachine map[string][]string
 
-	kcpClient client.Client
+	kcpClient              client.Client
+	valuesProvider         ValuesProvider
+	useSmallerMachineTypes bool
 }
 
 func NewUpdate(cfg Config,
-	instanceStorage storage.Instances,
-	runtimeStates storage.RuntimeStates,
-	operationStorage storage.Operations,
+	db storage.BrokerStorage,
 	ctxUpdateHandler ContextUpdateHandler,
 	processingEnabled bool,
 	subaccountMovementEnabled bool,
 	updateCustomResourcesLabelsOnAccountMove bool,
 	queue Queue,
 	plansConfig PlansConfig,
-	planDefaults PlanDefaults,
+	valuesProvider ValuesProvider,
 	log *slog.Logger,
 	dashboardConfig dashboard.Config,
 	kcBuilder kubeconfig.KcBuilder,
 	convergedCloudRegionsProvider ConvergedCloudRegionProvider,
 	kcpClient client.Client,
 	regionsSupportingMachine map[string][]string,
+	useSmallerMachineTypes bool,
 ) *UpdateEndpoint {
 	return &UpdateEndpoint{
 		config:                                   cfg,
 		log:                                      log.With("service", "UpdateEndpoint"),
-		instanceStorage:                          instanceStorage,
-		runtimeStates:                            runtimeStates,
-		operationStorage:                         operationStorage,
+		instanceStorage:                          db.Instances(),
+		runtimeStates:                            db.RuntimeStates(),
+		operationStorage:                         db.Operations(),
 		contextUpdateHandler:                     ctxUpdateHandler,
 		processingEnabled:                        processingEnabled,
 		subaccountMovementEnabled:                subaccountMovementEnabled,
 		updateCustomResourcesLabelsOnAccountMove: updateCustomResourcesLabelsOnAccountMove,
 		updatingQueue:                            queue,
 		plansConfig:                              plansConfig,
-		planDefaults:                             planDefaults,
+		valuesProvider:                           valuesProvider,
 		dashboardConfig:                          dashboardConfig,
 		kcBuilder:                                kcBuilder,
 		convergedCloudRegionsProvider:            convergedCloudRegionsProvider,
 		kcpClient:                                kcpClient,
 		regionsSupportingMachine:                 regionsSupportingMachine,
+		useSmallerMachineTypes:                   useSmallerMachineTypes,
 	}
 }
 
@@ -186,7 +188,7 @@ func (b *UpdateEndpoint) Update(_ context.Context, instanceID string, details do
 		DashboardURL:  dashboardURL,
 		OperationData: "",
 		Metadata: domain.InstanceMetadata{
-			Labels: ResponseLabels(*lastProvisioningOperation, *instance, b.config.URL, b.config.EnableKubeconfigURLLabel, b.kcBuilder),
+			Labels: ResponseLabels(*lastProvisioningOperation, *instance, b.config.URL, b.kcBuilder),
 		},
 	}, nil
 }
@@ -223,7 +225,7 @@ func (b *UpdateEndpoint) processUpdateParameters(instance *internal.Instance, de
 			DashboardURL:  instance.DashboardURL,
 			OperationData: "",
 			Metadata: domain.InstanceMetadata{
-				Labels: ResponseLabels(*lastProvisioningOperation, *instance, b.config.URL, b.config.EnableKubeconfigURLLabel, b.kcBuilder),
+				Labels: ResponseLabels(*lastProvisioningOperation, *instance, b.config.URL, b.kcBuilder),
 			},
 		}, nil
 	}
@@ -271,21 +273,14 @@ func (b *UpdateEndpoint) processUpdateParameters(instance *internal.Instance, de
 
 	logger.Debug(fmt.Sprintf("creating update operation %v", params))
 	operation := internal.NewUpdateOperation(operationID, instance, params)
-	planID := instance.Parameters.PlanID
-	if len(details.PlanID) != 0 {
-		planID = details.PlanID
-	}
-	defaults, err := b.planDefaults(planID, instance.Provider, &instance.Provider)
+
+	providerValues, err := b.valuesProvider.ValuesForPlanAndParameters(instance.Parameters)
 	if err != nil {
-		logger.Error(fmt.Sprintf("unable to obtain plan defaults: %s", err.Error()))
-		return domain.UpdateServiceSpec{}, fmt.Errorf("unable to obtain plan defaults")
+		logger.Error(fmt.Sprintf("unable to obtain dummyProvider values: %s", err.Error()))
+		return domain.UpdateServiceSpec{}, fmt.Errorf("unable to process the request")
 	}
-	var autoscalerMin, autoscalerMax int
-	if defaults.GardenerConfig != nil {
-		p := defaults.GardenerConfig
-		autoscalerMin, autoscalerMax = p.AutoScalerMin, p.AutoScalerMax
-	}
-	if err := operation.ProvisioningParameters.Parameters.AutoScalerParameters.Validate(autoscalerMin, autoscalerMax); err != nil {
+
+	if err := operation.ProvisioningParameters.Parameters.AutoScalerParameters.Validate(providerValues.DefaultAutoScalerMin, providerValues.DefaultAutoScalerMax); err != nil {
 		logger.Error(fmt.Sprintf("invalid autoscaler parameters: %s", err.Error()))
 		return domain.UpdateServiceSpec{}, apiresponses.NewFailureResponse(err, http.StatusBadRequest, err.Error())
 	}
@@ -371,7 +366,7 @@ func (b *UpdateEndpoint) processUpdateParameters(instance *internal.Instance, de
 		DashboardURL:  instance.DashboardURL,
 		OperationData: operation.ID,
 		Metadata: domain.InstanceMetadata{
-			Labels: ResponseLabels(*lastProvisioningOperation, *instance, b.config.URL, b.config.EnableKubeconfigURLLabel, b.kcBuilder),
+			Labels: ResponseLabels(*lastProvisioningOperation, *instance, b.config.URL, b.kcBuilder),
 		},
 	}, nil
 }
@@ -462,7 +457,7 @@ func (b *UpdateEndpoint) extractActiveValue(id string, provisioning internal.Pro
 func (b *UpdateEndpoint) getJsonSchemaValidator(provider pkg.CloudProvider, planID string, platformRegion string) (*jsonschema.Schema, error) {
 	// shootAndSeedSameRegion is never enabled for update
 	b.log.Info(fmt.Sprintf("region is: %s", platformRegion))
-	plans := Plans(b.plansConfig, provider, nil, b.config.IncludeAdditionalParamsInSchema, euaccess.IsEURestrictedAccess(platformRegion), b.config.UseSmallerMachineTypes, false, b.convergedCloudRegionsProvider.GetRegions(platformRegion), assuredworkloads.IsKSA(platformRegion), b.config.UseAdditionalOIDCSchema)
+	plans := Plans(b.plansConfig, provider, nil, b.config.IncludeAdditionalParamsInSchema, euaccess.IsEURestrictedAccess(platformRegion), b.useSmallerMachineTypes, false, b.convergedCloudRegionsProvider.GetRegions(platformRegion), assuredworkloads.IsKSA(platformRegion), b.config.UseAdditionalOIDCSchema)
 	plan := plans[planID]
 
 	return validator.NewFromSchema(plan.Schemas.Instance.Update.Parameters)

@@ -4,16 +4,21 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/kyma-project/kyma-environment-broker/internal/process/input"
+	"github.com/kyma-project/kyma-environment-broker/internal"
+
 	"gopkg.in/yaml.v3"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 )
 
 const defaultPlan = "default"
 
+type ConfigurationProvider interface {
+	ProvideForGivenPlan(planName string) (*internal.ConfigForPlan, error)
+}
+
 type ResourceKindProvider struct {
 	runtimeConfigurationConfigMapName string
-	cfgProvider                       input.ConfigurationProvider
+	cfgProvider                       ConfigurationProvider
 }
 
 type apiVersionKind struct {
@@ -21,7 +26,7 @@ type apiVersionKind struct {
 	Kind       string `yaml:"kind"`
 }
 
-func NewResourceKindProvider(configMapName string, cfgProvider input.ConfigurationProvider) *ResourceKindProvider {
+func NewResourceKindProvider(configMapName string, cfgProvider ConfigurationProvider) *ResourceKindProvider {
 	return &ResourceKindProvider{
 		runtimeConfigurationConfigMapName: configMapName,
 		cfgProvider:                       cfgProvider,

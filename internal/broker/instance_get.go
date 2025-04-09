@@ -80,7 +80,7 @@ func (b *GetInstanceEndpoint) GetInstance(_ context.Context, instanceID string, 
 		DashboardURL: instance.DashboardURL,
 		Parameters:   parameters,
 		Metadata: domain.InstanceMetadata{
-			Labels: ResponseLabels(*op, *instance, b.config.URL, b.config.EnableKubeconfigURLLabel, b.kcBuilder),
+			Labels: ResponseLabels(*op, *instance, b.config.URL, b.kcBuilder),
 		},
 	}
 
@@ -88,11 +88,11 @@ func (b *GetInstanceEndpoint) GetInstance(_ context.Context, instanceID string, 
 		instance.ServicePlanID == TrialPlanID &&
 		(b.config.SubaccountsIdsToShowTrialExpirationInfo == allSubaccountsIDs ||
 			strings.Contains(b.config.SubaccountsIdsToShowTrialExpirationInfo, instance.SubAccountID)) {
-		spec.Metadata.Labels = ResponseLabelsWithExpirationInfo(*op, *instance, b.config.URL, b.config.TrialDocsURL, b.config.EnableKubeconfigURLLabel, trialDocsKey, trialExpireDuration, trialExpiryDetailsKey, trialExpiredInfoFormat, b.kcBuilder)
+		spec.Metadata.Labels = ResponseLabelsWithExpirationInfo(*op, *instance, b.config.URL, b.config.TrialDocsURL, trialDocsKey, trialExpireDuration, trialExpiryDetailsKey, trialExpiredInfoFormat, b.kcBuilder)
 	}
 
 	if b.config.ShowFreeExpirationInfo && instance.ServicePlanID == FreemiumPlanID {
-		spec.Metadata.Labels = ResponseLabelsWithExpirationInfo(*op, *instance, b.config.URL, b.config.FreeDocsURL, b.config.EnableKubeconfigURLLabel, freeDocsKey, b.config.FreeExpirationPeriod, freeExpiryDetailsKey, freeExpiredInfoFormat, b.kcBuilder)
+		spec.Metadata.Labels = ResponseLabelsWithExpirationInfo(*op, *instance, b.config.URL, b.config.FreeDocsURL, freeDocsKey, b.config.FreeExpirationPeriod, freeExpiryDetailsKey, freeExpiredInfoFormat, b.kcBuilder)
 	}
 
 	return spec, nil

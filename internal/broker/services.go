@@ -28,9 +28,10 @@ type ServicesEndpoint struct {
 	enabledPlanIDs                map[string]struct{}
 	convergedCloudRegionsProvider ConvergedCloudRegionProvider
 	defaultOIDCConfig             *pkg.OIDCConfigDTO
+	useSmallerMachineTypes        bool
 }
 
-func NewServices(cfg Config, servicesConfig ServicesConfig, log *slog.Logger, convergedCloudRegionsProvider ConvergedCloudRegionProvider, defaultOIDCConfig *pkg.OIDCConfigDTO) *ServicesEndpoint {
+func NewServices(cfg Config, servicesConfig ServicesConfig, log *slog.Logger, convergedCloudRegionsProvider ConvergedCloudRegionProvider, defaultOIDCConfig *pkg.OIDCConfigDTO, useSmallerMachineTypes bool) *ServicesEndpoint {
 	enabledPlanIDs := map[string]struct{}{}
 	for _, planName := range cfg.EnablePlans {
 		id := PlanIDsMapping[planName]
@@ -44,6 +45,7 @@ func NewServices(cfg Config, servicesConfig ServicesConfig, log *slog.Logger, co
 		enabledPlanIDs:                enabledPlanIDs,
 		convergedCloudRegionsProvider: convergedCloudRegionsProvider,
 		defaultOIDCConfig:             defaultOIDCConfig,
+		useSmallerMachineTypes:        useSmallerMachineTypes,
 	}
 }
 
@@ -66,7 +68,7 @@ func (b *ServicesEndpoint) Services(ctx context.Context) ([]domain.Service, erro
 		b.defaultOIDCConfig,
 		b.cfg.IncludeAdditionalParamsInSchema,
 		euaccess.IsEURestrictedAccess(platformRegion),
-		b.cfg.UseSmallerMachineTypes,
+		b.useSmallerMachineTypes,
 		b.cfg.EnableShootAndSeedSameRegion,
 		b.convergedCloudRegionsProvider.GetRegions(platformRegion),
 		assuredworkloads.IsKSA(platformRegion),
