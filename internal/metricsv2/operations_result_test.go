@@ -78,7 +78,9 @@ func TestOperationsResult(t *testing.T) {
 		assert.Equal(t, float64(1), testutil.ToFloat64(resultsCollector.metrics.With(GetLabels(newOp))))
 
 		opEvent := fixRandomOp(randomCreatedAt(), domain.InProgress)
-		resultsCollector.Handler(context.Background(), process.OperationFinished{Operation: opEvent})
+		err = resultsCollector.Handler(context.Background(), process.OperationFinished{Operation: opEvent})
+		assert.NoError(t, err)
+
 		assert.Equal(t, float64(1), testutil.ToFloat64(resultsCollector.metrics.With(GetLabels(opEvent))))
 
 		nonExistingOp1 := fixRandomOp(randomCreatedAt(), domain.InProgress)
