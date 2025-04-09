@@ -18,7 +18,7 @@ import (
 )
 
 func TestOperationsStats(t *testing.T) {
-	var ctr *OperationStats
+	var ctr *OperationsStats
 
 	opType1 := internal.OperationTypeProvision
 	opState1 := domain.Succeeded
@@ -77,13 +77,11 @@ func TestOperationsStats(t *testing.T) {
 		OperationResultRetentionPeriod: 1 * time.Minute,
 	}
 
-	t.Run("create counter key", func(t *testing.T) {
-		log := slog.New(slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{
-			Level: slog.LevelInfo,
-		})).With("metrics", "test")
-		ctr = NewOperationsStats(operations, cfg, log)
-		ctr.MustRegister(context.Background())
-	})
+	log := slog.New(slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{
+		Level: slog.LevelInfo,
+	})).With("metrics", "test")
+	ctr = NewOperationsStats(operations, cfg, log)
+	ctr.MustRegister(context.Background())
 
 	t.Run("gauge in_progress operations test", func(t *testing.T) {
 		err := operations.InsertOperation(internal.Operation{
