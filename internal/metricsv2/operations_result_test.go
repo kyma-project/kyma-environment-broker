@@ -20,7 +20,7 @@ import (
 )
 
 const (
-	operationsCount = 3 //TODO revert 1000
+	operationsCount = 1000
 )
 
 func TestOperationsResult(t *testing.T) {
