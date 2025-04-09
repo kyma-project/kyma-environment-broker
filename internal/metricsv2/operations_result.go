@@ -29,7 +29,7 @@ type operationsResults struct {
 
 var _ Exposer = (*operationsResults)(nil)
 
-func NewOperationsResults(ctx context.Context, db storage.Operations, cfg Config, logger *slog.Logger) *operationsResults {
+func NewOperationsResults(db storage.Operations, cfg Config, logger *slog.Logger) *operationsResults {
 	opInfo := &operationsResults{
 		operations: db,
 		lastUpdate: time.Now().UTC().Add(-cfg.OperationResultRetentionPeriod),
@@ -44,7 +44,6 @@ func NewOperationsResults(ctx context.Context, db storage.Operations, cfg Config
 		pollingInterval:                  cfg.OperationResultPollingInterval,
 		finishedOperationRetentionPeriod: cfg.OperationResultFinishedOperationRetentionPeriod,
 	}
-	go opInfo.Job(ctx)
 
 	return opInfo
 }
