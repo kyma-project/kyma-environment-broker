@@ -238,7 +238,6 @@ func (s *OperationsStats) Metric(opType internal.OperationType, opState domain.L
 	return s.counters[key], nil
 }
 
-// TODO no unit test for makeKey
 func (s *OperationsStats) makeKey(opType internal.OperationType, opState domain.LastOperationState, plan broker.PlanID) (metricKey, error) {
 	fmtState := formatOpState(opState)
 	fmtType := formatOpType(opType)
@@ -248,7 +247,6 @@ func (s *OperationsStats) makeKey(opType internal.OperationType, opState domain.
 	return metricKey(fmt.Sprintf("%s_%s_%s", fmtType, fmtState, plan)), nil
 }
 
-// TODO no unit test for formatOpType
 func formatOpType(opType internal.OperationType) string {
 	switch opType {
 	case internal.OperationTypeProvision, internal.OperationTypeDeprovision:
