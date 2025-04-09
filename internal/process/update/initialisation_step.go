@@ -21,12 +21,12 @@ type InitialisationStep struct {
 	instanceStorage  storage.Instances
 }
 
-func NewInitialisationStep(is storage.Instances, os storage.Operations) *InitialisationStep {
+func NewInitialisationStep(db storage.BrokerStorage) *InitialisationStep {
 	step := &InitialisationStep{
-		operationStorage: os,
-		instanceStorage:  is,
+		operationStorage: db.Operations(),
+		instanceStorage:  db.Instances(),
 	}
-	step.operationManager = process.NewOperationManager(os, step.Name(), kebError.KEBDependency)
+	step.operationManager = process.NewOperationManager(step.operationStorage, step.Name(), kebError.KEBDependency)
 	return step
 }
 
