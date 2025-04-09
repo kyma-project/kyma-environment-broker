@@ -4,17 +4,14 @@ import (
 	"context"
 	"fmt"
 	"log/slog"
-	"math/rand"
 	"time"
 
 	"github.com/kyma-project/kyma-environment-broker/internal/broker"
 
-	"github.com/google/uuid"
 	"github.com/kyma-project/kyma-environment-broker/internal"
 	"github.com/kyma-project/kyma-environment-broker/internal/event"
 	"github.com/kyma-project/kyma-environment-broker/internal/process"
 	"github.com/kyma-project/kyma-environment-broker/internal/storage"
-	"github.com/pivotal-cf/brokerapi/v12/domain"
 	"github.com/prometheus/client_golang/prometheus"
 )
 
@@ -90,40 +87,6 @@ func Register(ctx context.Context, sub event.Subscriber, db storage.BrokerStorag
 		OperationStats:             opStats,
 		OperationDurationCollector: opDurationCollector,
 		InstancesCollector:         opInstanceCollector,
-	}
-}
-
-func randomState() domain.LastOperationState {
-	return opStates[rand.Intn(len(opStates))]
-}
-
-func randomType() internal.OperationType {
-	return opTypes[rand.Intn(len(opTypes))]
-}
-
-func randomPlanId() string {
-	return string(plans[rand.Intn(len(plans))])
-}
-
-func randomCreatedAt() time.Time {
-	return time.Now().UTC().Add(-time.Duration(rand.Intn(60)) * time.Minute)
-}
-
-func randomUpdatedAtAfterCreatedAt() time.Time {
-	return randomCreatedAt().Add(time.Duration(rand.Intn(10)) * time.Minute)
-}
-
-func GetRandom(createdAt time.Time, state domain.LastOperationState) internal.Operation {
-	return internal.Operation{
-		ID:         uuid.New().String(),
-		InstanceID: uuid.New().String(),
-		ProvisioningParameters: internal.ProvisioningParameters{
-			PlanID: randomPlanId(),
-		},
-		CreatedAt: createdAt,
-		UpdatedAt: randomUpdatedAtAfterCreatedAt(),
-		Type:      randomType(),
-		State:     state,
 	}
 }
 
