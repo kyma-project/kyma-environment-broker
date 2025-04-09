@@ -22,11 +22,11 @@ type ArchivingStep struct {
 	dryRun            bool
 }
 
-func NewArchivingStep(operations storage.Operations, instances storage.Instances, archived storage.InstancesArchived, dryRun bool) *ArchivingStep {
+func NewArchivingStep(db storage.BrokerStorage, dryRun bool) *ArchivingStep {
 	return &ArchivingStep{
-		operations:        operations,
-		instances:         instances,
-		instancesArchived: archived,
+		operations:        db.Operations(),
+		instances:         db.Instances(),
+		instancesArchived: db.InstancesArchived(),
 		dryRun:            dryRun,
 	}
 }

@@ -14,10 +14,10 @@ type CleanStep struct {
 	dryRun     bool
 }
 
-func NewCleanStep(operations storage.Operations, dryRun bool) *CleanStep {
+func NewCleanStep(db storage.BrokerStorage, dryRun bool) *CleanStep {
 	return &CleanStep{
-		operations: operations,
-		dryRun:     dryRun,
+		operations:    db.Operations(),
+		dryRun:        dryRun,
 	}
 }
 

@@ -40,11 +40,11 @@ type BTPOperatorCleanupStep struct {
 	k8sClientProvider K8sClientProvider
 }
 
-func NewBTPOperatorCleanupStep(os storage.Operations, k8sClientProvider K8sClientProvider) *BTPOperatorCleanupStep {
+func NewBTPOperatorCleanupStep(db storage.BrokerStorage, k8sClientProvider K8sClientProvider) *BTPOperatorCleanupStep {
 	step := &BTPOperatorCleanupStep{
 		k8sClientProvider: k8sClientProvider,
 	}
-	step.operationManager = process.NewOperationManager(os, step.Name(), kebError.BtpManagerDependency)
+	step.operationManager = process.NewOperationManager(db.Operations(), step.Name(), kebError.BtpManagerDependency)
 	return step
 }
 

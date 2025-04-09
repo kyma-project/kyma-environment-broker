@@ -24,12 +24,12 @@ type CheckRuntimeResourceDeletionStep struct {
 	checkRuntimeResourceDeletionStepTimeout time.Duration
 }
 
-func NewCheckRuntimeResourceDeletionStep(operations storage.Operations, kcpClient client.Client, checkRuntimeResourceDeletionStepTimeout time.Duration) *CheckRuntimeResourceDeletionStep {
+func NewCheckRuntimeResourceDeletionStep(db storage.BrokerStorage, kcpClient client.Client, checkRuntimeResourceDeletionStepTimeout time.Duration) *CheckRuntimeResourceDeletionStep {
 	step := &CheckRuntimeResourceDeletionStep{
 		kcpClient:                               kcpClient,
 		checkRuntimeResourceDeletionStepTimeout: checkRuntimeResourceDeletionStepTimeout,
 	}
-	step.operationManager = process.NewOperationManager(operations, step.Name(), kebError.InfrastructureManagerDependency)
+	step.operationManager = process.NewOperationManager(db.Operations(), step.Name(), kebError.InfrastructureManagerDependency)
 	return step
 }
 
