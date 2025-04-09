@@ -60,10 +60,6 @@ type Config struct {
 	CheckRuntimeResourceDeletionStepTimeout time.Duration `envconfig:"default=1h"`
 	// deprecated - to be removed
 	EnableShootAndSeedSameRegion bool `envconfig:"default=false"`
-	// deprecated - is being moved to InfrastructureManager config
-	UseMainOIDC bool `envconfig:"default=true"`
-	// deprecated - is being moved to InfrastructureManager config
-	UseAdditionalOIDC bool `envconfig:"default=false"`
 }
 
 type InfrastructureManagerConfig struct {
@@ -74,8 +70,6 @@ type InfrastructureManagerConfig struct {
 	DefaultTrialProvider         pkg.CloudProvider `envconfig:"default=Azure"`
 	MultiZoneCluster             bool              `envconfig:"default=false"`
 	ControlPlaneFailureTolerance string            `envconfig:"optional"`
-	UseMainOIDC                  bool              `envconfig:"default=true"`
-	UseAdditionalOIDC            bool              `envconfig:"default=false"`
 	UseSmallerMachineTypes       bool              `envconfig:"default=false"`
 }
 type RuntimeInput struct {

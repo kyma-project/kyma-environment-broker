@@ -405,14 +405,6 @@ func main() {
 
 // Function will be removed after all settings are migrated to infrastructureManager section/structure
 func validateTemporarilyInfrastructureSettings(logs *slog.Logger, cfg Config) (notSync bool) {
-	if cfg.InfrastructureManager.UseMainOIDC != cfg.Provisioner.UseMainOIDC {
-		notSync = true
-		logs.Warn(fmt.Sprintf("UseMainOIDC settings for Provisioner and InfrastructureManager are different. %v!=%v", cfg.Provisioner.UseMainOIDC, cfg.InfrastructureManager.UseMainOIDC))
-	}
-	if cfg.InfrastructureManager.UseAdditionalOIDC != cfg.Provisioner.UseAdditionalOIDC {
-		notSync = true
-		logs.Warn(fmt.Sprintf("UseAdditionalOIDC settings for Provisioner and InfrastructureManager are different. %v!=%v", cfg.Provisioner.UseAdditionalOIDC, cfg.InfrastructureManager.UseAdditionalOIDC))
-	}
 	if cfg.InfrastructureManager.UseSmallerMachineTypes != cfg.Broker.UseSmallerMachineTypes {
 		notSync = true
 		logs.Warn(fmt.Sprintf("UseSmallerMachineTypes settings for Provisioner and InfrastructureManager are different. %v!=%v", cfg.Broker.UseSmallerMachineTypes, cfg.InfrastructureManager.UseSmallerMachineTypes))
@@ -464,8 +456,6 @@ func logConfiguration(logs *slog.Logger, cfg Config) {
 	logs.Info(fmt.Sprintf("InfrastructureManager.DefaultTrialProvider: %s", cfg.InfrastructureManager.DefaultTrialProvider))
 	logs.Info(fmt.Sprintf("InfrastructureManager.MultiZoneCluster: %v", cfg.InfrastructureManager.MultiZoneCluster))
 	logs.Info(fmt.Sprintf("InfrastructureManager.ControlPlaneFailureTolerance: %s", cfg.InfrastructureManager.ControlPlaneFailureTolerance))
-	logs.Info(fmt.Sprintf("InfrastructureManager.UseMainOIDC: %v", cfg.InfrastructureManager.UseMainOIDC))
-	logs.Info(fmt.Sprintf("InfrastructureManager.UseAdditionalOIDC: %v", cfg.InfrastructureManager.UseAdditionalOIDC))
 	logs.Info(fmt.Sprintf("InfrastructureManager.UseSmallerMachineTypes: %v", cfg.InfrastructureManager.UseSmallerMachineTypes))
 
 	logs.Info(fmt.Sprintf("ResolveSubscriptionSecretStepDisabled: %v", cfg.ResolveSubscriptionSecretStepDisabled))
