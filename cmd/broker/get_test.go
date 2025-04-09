@@ -54,7 +54,9 @@ func TestGetParametersAfterPovisioning_InstanceWithCustomOidcConfig(t *testing.T
 		"dashboard_url": "/?kubeconfigID=%s",
 		"metadata": {
 			"labels": {
-			"Name": "testing-cluster"
+				"Name": "testing-cluster",
+				"APIServerURL": "https://api.server.url.dummy",
+				"KubeconfigURL": "https:///kubeconfig/%s"
 			}
 		},
 		"parameters": {
@@ -82,7 +84,7 @@ func TestGetParametersAfterPovisioning_InstanceWithCustomOidcConfig(t *testing.T
 		},
 		"plan_id": "361c511f-f939-4621-b228-d0fb79a1fe15",
 		"service_id": "47c9dcbf-ff30-448e-ab36-d3bad66ba281"
-	}`, iid), string(r))
+	}`, iid, iid), string(r))
 }
 
 func TestGetParametersAfterPovisioning_InstanceWithNoOidcConfig(t *testing.T) {
@@ -118,7 +120,9 @@ func TestGetParametersAfterPovisioning_InstanceWithNoOidcConfig(t *testing.T) {
 		"dashboard_url": "/?kubeconfigID=%s",
 		"metadata": {
 			"labels": {
-			"Name": "testing-cluster"
+				"Name": "testing-cluster",
+				"APIServerURL": "https://api.server.url.dummy",
+				"KubeconfigURL": "https:///kubeconfig/%s"
 			}
 		},
 		"parameters": {
@@ -138,7 +142,7 @@ func TestGetParametersAfterPovisioning_InstanceWithNoOidcConfig(t *testing.T) {
 		},
 		"plan_id": "361c511f-f939-4621-b228-d0fb79a1fe15",
 		"service_id": "47c9dcbf-ff30-448e-ab36-d3bad66ba281"
-	}`, iid), string(r))
+	}`, iid, iid), string(r))
 }
 
 func TestGetParametersAfterPovisioning_InstanceWithListOidcConfig(t *testing.T) {
@@ -186,7 +190,9 @@ func TestGetParametersAfterPovisioning_InstanceWithListOidcConfig(t *testing.T) 
 		"dashboard_url": "/?kubeconfigID=%s",
 		"metadata": {
 			"labels": {
-			"Name": "testing-cluster"
+				"Name": "testing-cluster",
+				"APIServerURL": "https://api.server.url.dummy",
+				"KubeconfigURL": "https:///kubeconfig/%s"
 			}
 		},
 		"parameters": {
@@ -218,7 +224,7 @@ func TestGetParametersAfterPovisioning_InstanceWithListOidcConfig(t *testing.T) 
 		},
 		"plan_id": "361c511f-f939-4621-b228-d0fb79a1fe15",
 		"service_id": "47c9dcbf-ff30-448e-ab36-d3bad66ba281"
-	}`, iid), string(r))
+	}`, iid, iid), string(r))
 }
 
 func TestGetParametersAfterPovisioning_InstanceWithEmptyListOidcConfig(t *testing.T) {
@@ -257,7 +263,9 @@ func TestGetParametersAfterPovisioning_InstanceWithEmptyListOidcConfig(t *testin
 		"dashboard_url": "/?kubeconfigID=%s",
 		"metadata": {
 			"labels": {
-			"Name": "testing-cluster"
+				"Name": "testing-cluster",
+				"APIServerURL": "https://api.server.url.dummy",
+				"KubeconfigURL": "https:///kubeconfig/%s"
 			}
 		},
 		"parameters": {
@@ -280,7 +288,7 @@ func TestGetParametersAfterPovisioning_InstanceWithEmptyListOidcConfig(t *testin
 		},
 		"plan_id": "361c511f-f939-4621-b228-d0fb79a1fe15",
 		"service_id": "47c9dcbf-ff30-448e-ab36-d3bad66ba281"
-	}`, iid), string(r))
+	}`, iid, iid), string(r))
 }
 
 func TestGetParametersAfterPovisioning_InstancegWithCustomOidcConfigWithGroupsPrefixAndRequiredClaimsThatShouldBeIgnored(t *testing.T) {
@@ -329,7 +337,9 @@ func TestGetParametersAfterPovisioning_InstancegWithCustomOidcConfigWithGroupsPr
 		"dashboard_url": "/?kubeconfigID=%s",
 		"metadata": {
 			"labels": {
-			"Name": "testing-cluster"
+				"Name": "testing-cluster",
+				"APIServerURL": "https://api.server.url.dummy",
+				"KubeconfigURL": "https:///kubeconfig/%s"
 			}
 		},
 		"parameters": {
@@ -357,7 +367,7 @@ func TestGetParametersAfterPovisioning_InstancegWithCustomOidcConfigWithGroupsPr
 		},
 		"plan_id": "361c511f-f939-4621-b228-d0fb79a1fe15",
 		"service_id": "47c9dcbf-ff30-448e-ab36-d3bad66ba281"
-	}`, iid), string(r))
+	}`, iid, iid), string(r))
 }
 
 func TestGetParametersAfterPovisioning_InstanceWithCustomOidcConfigWithGroupsPrefixAndRequiredClaimsThatShouldBeReturned(t *testing.T) {
@@ -406,7 +416,9 @@ func TestGetParametersAfterPovisioning_InstanceWithCustomOidcConfigWithGroupsPre
 		"dashboard_url": "/?kubeconfigID=%s",
 		"metadata": {
 			"labels": {
-			"Name": "testing-cluster"
+				"Name": "testing-cluster",
+				"APIServerURL": "https://api.server.url.dummy",
+				"KubeconfigURL": "https:///kubeconfig/%s"
 			}
 		},
 		"parameters": {
@@ -436,7 +448,7 @@ func TestGetParametersAfterPovisioning_InstanceWithCustomOidcConfigWithGroupsPre
 		},
 		"plan_id": "361c511f-f939-4621-b228-d0fb79a1fe15",
 		"service_id": "47c9dcbf-ff30-448e-ab36-d3bad66ba281"
-	}`, iid), string(r))
+	}`, iid, iid), string(r))
 }
 
 func TestGetParametersAfterUpdate_InstanceWithObjectOidcUpdatedWithObjectOidc(t *testing.T) {
@@ -501,7 +513,9 @@ func TestGetParametersAfterUpdate_InstanceWithObjectOidcUpdatedWithObjectOidc(t 
 		"dashboard_url": "/?kubeconfigID=%s",
 		"metadata": {
 			"labels": {
-			"Name": "testing-cluster"
+				"Name": "testing-cluster",
+				"APIServerURL": "https://api.server.url.dummy",
+				"KubeconfigURL": "https:///kubeconfig/%s"
 			}
 		},
 		"parameters": {
@@ -530,7 +544,7 @@ func TestGetParametersAfterUpdate_InstanceWithObjectOidcUpdatedWithObjectOidc(t 
 		},
 		"plan_id": "361c511f-f939-4621-b228-d0fb79a1fe15",
 		"service_id": "47c9dcbf-ff30-448e-ab36-d3bad66ba281"
-	}`, iid), string(r))
+	}`, iid, iid), string(r))
 }
 
 func TestGetParametersAfterUpdate_InstanceWithObjectOidcUpdatedWithListOidc(t *testing.T) {
@@ -602,7 +616,9 @@ func TestGetParametersAfterUpdate_InstanceWithObjectOidcUpdatedWithListOidc(t *t
 		"dashboard_url": "/?kubeconfigID=%s",
 		"metadata": {
 			"labels": {
-			"Name": "testing-cluster"
+				"Name": "testing-cluster",
+				"APIServerURL": "https://api.server.url.dummy",
+				"KubeconfigURL": "https:///kubeconfig/%s"
 			}
 		},
 		"parameters": {
@@ -635,5 +651,5 @@ func TestGetParametersAfterUpdate_InstanceWithObjectOidcUpdatedWithListOidc(t *t
 		},
 		"plan_id": "361c511f-f939-4621-b228-d0fb79a1fe15",
 		"service_id": "47c9dcbf-ff30-448e-ab36-d3bad66ba281"
-	}`, iid), string(r))
+	}`, iid, iid), string(r))
 }
