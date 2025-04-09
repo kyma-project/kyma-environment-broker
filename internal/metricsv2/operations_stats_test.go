@@ -18,7 +18,7 @@ import (
 )
 
 func TestOperationsStats(t *testing.T) {
-	var statsCollector *OperationsStats
+	var statsCollector *operationsStats
 
 	operations := storage.NewMemoryStorage().Operations()
 	testData := []struct {

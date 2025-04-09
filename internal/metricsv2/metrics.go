@@ -41,7 +41,7 @@ type Config struct {
 
 type RegisterContainer struct {
 	OperationResult            *operationsResults
-	OperationStats             *OperationsStats
+	OperationStats             *operationsStats
 	OperationDurationCollector *OperationDurationCollector
 	InstancesCollector         *InstancesCollector
 }
