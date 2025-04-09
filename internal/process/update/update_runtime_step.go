@@ -34,12 +34,12 @@ type UpdateRuntimeStep struct {
 	useAdditionalOIDCSchema    bool
 }
 
-func NewUpdateRuntimeStep(os storage.Operations, k8sClient client.Client, delay time.Duration, infrastructureManagerConfig infrastructure_manager.InfrastructureManagerConfig, useSmallerMachines bool, trialPlatformRegionMapping map[string]string, useAdditionalOIDCSchema bool) *UpdateRuntimeStep {
+func NewUpdateRuntimeStep(os storage.Operations, k8sClient client.Client, delay time.Duration, infrastructureManagerConfig infrastructure_manager.InfrastructureManagerConfig, trialPlatformRegionMapping map[string]string, useAdditionalOIDCSchema bool) *UpdateRuntimeStep {
 	step := &UpdateRuntimeStep{
 		k8sClient:                  k8sClient,
 		delay:                      delay,
 		config:                     infrastructureManagerConfig,
-		useSmallerMachineTypes:     useSmallerMachines,
+		useSmallerMachineTypes:     infrastructureManagerConfig.UseSmallerMachineTypes,
 		trialPlatformRegionMapping: trialPlatformRegionMapping,
 		useAdditionalOIDCSchema:    useAdditionalOIDCSchema,
 	}

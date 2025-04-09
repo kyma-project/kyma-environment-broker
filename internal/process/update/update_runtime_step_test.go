@@ -43,7 +43,7 @@ func TestUpdateRuntimeStep_NoRuntime(t *testing.T) {
 	err = operations.InsertOperation(operation)
 	require.NoError(t, err)
 
-	step := NewUpdateRuntimeStep(operations, kcpClient, 0, infrastructure_manager.InfrastructureManagerConfig{}, false, nil, true)
+	step := NewUpdateRuntimeStep(operations, kcpClient, 0, infrastructure_manager.InfrastructureManagerConfig{}, nil, true)
 
 	// when
 	_, backoff, err := step.Run(operation, fixLogger())
@@ -58,7 +58,7 @@ func TestUpdateRuntimeStep_RunUpdateMachineType(t *testing.T) {
 	err := imv1.AddToScheme(scheme.Scheme)
 	assert.NoError(t, err)
 	kcpClient := fake.NewClientBuilder().WithRuntimeObjects(fixRuntimeResource("runtime-name", false)).Build()
-	step := NewUpdateRuntimeStep(nil, kcpClient, 0, infrastructure_manager.InfrastructureManagerConfig{}, false, nil, true)
+	step := NewUpdateRuntimeStep(nil, kcpClient, 0, infrastructure_manager.InfrastructureManagerConfig{}, nil, true)
 	operation := fixture.FixUpdatingOperation("op-id", "inst-id").Operation
 	operation.RuntimeResourceName = "runtime-name"
 	operation.KymaResourceNamespace = "kcp-system"
@@ -85,7 +85,7 @@ func TestUpdateRuntimeStep_RunUpdateEmptyOIDCConfigWithOIDCObject(t *testing.T) 
 	err := imv1.AddToScheme(scheme.Scheme)
 	assert.NoError(t, err)
 	kcpClient := fake.NewClientBuilder().WithRuntimeObjects(fixRuntimeResource("runtime-name", false)).Build()
-	step := NewUpdateRuntimeStep(nil, kcpClient, 0, infrastructure_manager.InfrastructureManagerConfig{}, false, nil, true)
+	step := NewUpdateRuntimeStep(nil, kcpClient, 0, infrastructure_manager.InfrastructureManagerConfig{}, nil, true)
 	operation := fixture.FixUpdatingOperationWithOIDCObject("op-id", "inst-id").Operation
 	operation.RuntimeResourceName = "runtime-name"
 	operation.KymaResourceNamespace = "kcp-system"
