@@ -206,8 +206,6 @@ func TestOperation(t *testing.T) {
 			assert.NoError(t, err)
 		}()
 
-		orchestrationID := "orchestration-id"
-
 		givenOperation1 := internal.UpgradeClusterOperation{
 			Operation: fixture.FixOperation("operation-id-1", "inst-id", internal.OperationTypeUpgradeCluster),
 		}
@@ -261,7 +259,7 @@ func TestOperation(t *testing.T) {
 		require.NoError(t, err)
 		assert.Equal(t, givenOperation2.Operation.ID, lastClusterUpgrade.ID)
 
-		ops, err = svc.ListUpgradeClusterOperationsByInstanceID("inst-id")
+		ops, err := svc.ListUpgradeClusterOperationsByInstanceID("inst-id")
 		require.NoError(t, err)
 		assert.Len(t, ops, 3)
 
@@ -270,8 +268,6 @@ func TestOperation(t *testing.T) {
 		givenOperation3.ProvisionerOperationID = "modified-op-id"
 		op, err = svc.UpdateUpgradeClusterOperation(givenOperation3)
 		op.CreatedAt = op.CreatedAt.Truncate(time.Millisecond)
-		op.MaintenanceWindowBegin = op.MaintenanceWindowBegin.Truncate(time.Millisecond)
-		op.MaintenanceWindowEnd = op.MaintenanceWindowEnd.Truncate(time.Millisecond)
 
 		// then
 		got, err := svc.GetUpgradeClusterOperationByID(givenOperation3.Operation.ID)
@@ -404,23 +400,19 @@ func assertDeprovisioningOperation(t *testing.T, expected, got internal.Deprovis
 }
 
 func assertUpgradeClusterOperation(t *testing.T, expected, got internal.UpgradeClusterOperation) {
-	// do not check zones and monothonic clock, see: https://golang.org/pkg/time/#Time
+	// do not check zones and monotonic clock, see: https://golang.org/pkg/time/#Time
 	assert.True(t, expected.CreatedAt.Equal(got.CreatedAt), fmt.Sprintf("Expected %s got %s", expected.CreatedAt, got.CreatedAt))
-	assert.True(t, expected.MaintenanceWindowBegin.Equal(got.MaintenanceWindowBegin))
-	assert.True(t, expected.MaintenanceWindowEnd.Equal(got.MaintenanceWindowEnd))
 	assert.Equal(t, expected.InstanceDetails, got.InstanceDetails)
 
 	expected.CreatedAt = got.CreatedAt
 	expected.UpdatedAt = got.UpdatedAt
-	expected.MaintenanceWindowBegin = got.MaintenanceWindowBegin
-	expected.MaintenanceWindowEnd = got.MaintenanceWindowEnd
 	expected.FinishedStages = got.FinishedStages
 
 	assert.Equal(t, expected, got)
 }
 
 func assertOperation(t *testing.T, expected, got internal.Operation) {
-	// do not check zones and monothonic clock, see: https://golang.org/pkg/time/#Time
+	// do not check zones and monotonic clock, see: https://golang.org/pkg/time/#Time
 	assert.True(t, expected.CreatedAt.Equal(got.CreatedAt), fmt.Sprintf("Expected %s got %s", expected.CreatedAt, got.CreatedAt))
 	assert.Equal(t, expected.InstanceDetails, got.InstanceDetails)
 
