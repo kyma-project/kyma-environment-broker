@@ -121,9 +121,11 @@ type Operation struct {
 	InstanceDetails
 
 	// PROVISIONING
-	DashboardURL   string          `json:"dashboardURL"`
-	ProviderValues *ProviderValues `json:"providerValues"`
-	Region         string          `json:"region"`
+	DashboardURL    string          `json:"dashboardURL"`
+	ProviderValues  *ProviderValues `json:"providerValues"`
+	Region          string          `json:"region"`
+	Plan            string          `json:"plan"`
+	GlobalAccountID string          `json:"globalAccountId"`
 
 	// DEPROVISIONING
 	// Temporary indicates that this deprovisioning operation must not remove the instance
