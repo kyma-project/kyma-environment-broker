@@ -419,41 +419,6 @@ func (r readSession) ListOperationsByType(operationType internal.OperationType) 
 	return operations, nil
 }
 
-func (r readSession) ListOperationsByOrchestrationID(orchestrationID string, filter dbmodel.OperationFilter) ([]dbmodel.OperationDTO, int, int, error) {
-	var ops []dbmodel.OperationDTO
-	condition := dbr.Eq("orchestration_id", orchestrationID)
-
-	stmt := r.session.
-		Select("o.*").
-		From(dbr.I(OperationTableName).As("o")).
-		Where(condition).
-		OrderBy("o.created_at")
-
-	// Add pagination if provided
-	if filter.Page > 0 && filter.PageSize > 0 {
-		stmt.Paginate(uint64(filter.Page), uint64(filter.PageSize))
-	}
-
-	// Apply filtering if provided
-	// TODO - assumes aliases o and i for operations and instances tables
-	addOperationFilters(stmt, filter)
-
-	_, err := stmt.Load(&ops)
-	if err != nil {
-		return nil, -1, -1, dberr.Internal("Failed to get operations: %s", err)
-	}
-
-	totalCount, err := r.getUpgradeOperationCount(orchestrationID, filter)
-	if err != nil {
-		return nil, -1, -1, err
-	}
-
-	return ops,
-		len(ops),
-		totalCount,
-		nil
-}
-
 // TODO quite a tough query as for now
 func (r readSession) ListOperationsInTimeRange(from, to time.Time) ([]dbmodel.OperationDTO, error) {
 	var ops []dbmodel.OperationDTO
@@ -551,13 +516,6 @@ func (r readSession) GetOperationStats() ([]dbmodel.OperationStatEntry, error) {
 func (r readSession) GetOperationsStatsV2() ([]dbmodel.OperationStatEntryV2, error) {
 	var rows []dbmodel.OperationStatEntryV2
 	_, err := r.session.SelectBySql(fmt.Sprintf("select count(*), type, state, provisioning_parameters ->> 'plan_id' AS plan_id from %s where state='in progress' group by type, state, plan_id", OperationTableName)).Load(&rows)
-	return rows, err
-}
-
-func (r readSession) GetOperationStatsForOrchestration(orchestrationID string) ([]dbmodel.OperationStatEntry, error) {
-	var rows []dbmodel.OperationStatEntry
-	_, err := r.session.SelectBySql(fmt.Sprintf("select type, state, instance_id, provisioning_parameters ->> 'plan_id' AS plan_id from %s where orchestration_id='%s'",
-		OperationTableName, orchestrationID)).Load(&rows)
 	return rows, err
 }
 
@@ -900,21 +858,6 @@ func (r readSession) getOperationCount(filter dbmodel.OperationFilter) (int, err
 	}
 	stmt := r.session.Select("count(1) as total").
 		From(dbr.I(OperationTableName).As("o"))
-
-	// TODO - assumes aliases o and i for operations and instances tables
-	addOperationFilters(stmt, filter)
-	err := stmt.LoadOne(&res)
-
-	return res.Total, err
-}
-
-func (r readSession) getUpgradeOperationCount(orchestrationID string, filter dbmodel.OperationFilter) (int, error) {
-	var res struct {
-		Total int
-	}
-	stmt := r.session.Select("count(1) as total").
-		From(dbr.I(OperationTableName).As("o")).
-		Where(dbr.Eq("o.orchestration_id", orchestrationID))
 
 	// TODO - assumes aliases o and i for operations and instances tables
 	addOperationFilters(stmt, filter)
