@@ -91,14 +91,15 @@ const (
 	OperationTypeUpgradeCluster OperationType = "upgradeCluster"
 )
 
+// replacement for orchestration constants
 const (
-	OperationStatePending = "pending"
-	// for backward compatibility - in case there are some old operations in the db
-	OperationStateCanceled  = "canceled"
-	OperationStateRetrying  = "retrying"
-	OperationStateCanceling = "canceling"
-	OperationStateSucceeded = "succeeded"
-	OperationStateFailed    = "failed"
+	OperationStatePending    = "pending"
+	OperationStateCanceled   = "canceled"
+	OperationStateRetrying   = "retrying"
+	OperationStateCanceling  = "canceling"
+	OperationStateSucceeded  = "succeeded"
+	OperationStateFailed     = "failed"
+	OperationStateInProgress = "in progress"
 )
 
 type Operation struct {
@@ -168,7 +169,7 @@ type GroupedOperations struct {
 }
 
 func (o *Operation) IsFinished() bool {
-	return o.State != OperationStatePending
+	return o.State != OperationStateInProgress && o.State != OperationStatePending && o.State != OperationStateCanceling && o.State != OperationStateRetrying
 }
 
 func (o *Operation) EventInfof(fmt string, args ...any) {
