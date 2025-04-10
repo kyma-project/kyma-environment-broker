@@ -10,7 +10,6 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/kyma-project/kyma-environment-broker/common/gardener"
-	"github.com/kyma-project/kyma-environment-broker/common/orchestration"
 	pkg "github.com/kyma-project/kyma-environment-broker/common/runtime"
 	kebError "github.com/kyma-project/kyma-environment-broker/internal/error"
 	"github.com/kyma-project/kyma-environment-broker/internal/events"
@@ -108,9 +107,7 @@ type Operation struct {
 	Description            string                    `json:"-"`
 	ProvisioningParameters ProvisioningParameters    `json:"-"`
 
-	// OrchestrationID specifies the origin orchestration which triggers the operation, empty for OSB operations (provisioning/deprovisioning)
-	OrchestrationID string   `json:"-"`
-	FinishedStages  []string `json:"-"`
+	FinishedStages []string `json:"-"`
 
 	// following fields are serialized to JSON and stored in the storage
 	InstanceDetails
@@ -130,8 +127,7 @@ type Operation struct {
 	UpdatingParameters UpdatingParametersDTO `json:"updating_parameters"`
 
 	// UPGRADE KYMA
-	orchestration.RuntimeOperation `json:"runtime_operation"`
-	ClusterConfigurationApplied    bool `json:"cluster_configuration_applied"`
+	ClusterConfigurationApplied bool `json:"cluster_configuration_applied"`
 
 	// KymaTemplate is read from the configuration then used in the apply_kyma step
 	KymaTemplate string `json:"KymaTemplate"`
@@ -343,11 +339,6 @@ func NewProvisioningOperationWithID(operationID, instanceID string, parameters P
 			UpdatedAt:              time.Now(),
 			Type:                   OperationTypeProvision,
 			ProvisioningParameters: parameters,
-			RuntimeOperation: orchestration.RuntimeOperation{
-				Runtime: orchestration.Runtime{
-					GlobalAccountID: parameters.ErsContext.GlobalAccountID,
-				},
-			},
 			InstanceDetails: InstanceDetails{
 				SubAccountID: parameters.ErsContext.SubAccountID,
 				Kubeconfig:   parameters.Parameters.Kubeconfig,
@@ -367,14 +358,11 @@ func NewDeprovisioningOperationWithID(operationID string, instance *Instance) (D
 	}
 	return DeprovisioningOperation{
 		Operation: Operation{
-			RuntimeOperation: orchestration.RuntimeOperation{
-				Runtime: orchestration.Runtime{GlobalAccountID: instance.GlobalAccountID, RuntimeID: instance.RuntimeID, Region: instance.ProviderRegion},
-			},
 			ID:                     operationID,
 			Version:                0,
 			Description:            "Operation created",
 			InstanceID:             instance.InstanceID,
-			State:                  orchestration.Pending,
+			State:                  OperationStatePending,
 			CreatedAt:              time.Now(),
 			UpdatedAt:              time.Now(),
 			Type:                   OperationTypeDeprovision,
@@ -392,7 +380,7 @@ func NewUpdateOperation(operationID string, instance *Instance, updatingParams U
 		Version:                0,
 		Description:            "Operation created",
 		InstanceID:             instance.InstanceID,
-		State:                  orchestration.Pending,
+		State:                  OperationStatePending,
 		CreatedAt:              time.Now(),
 		UpdatedAt:              time.Now(),
 		Type:                   OperationTypeUpdate,
@@ -400,10 +388,6 @@ func NewUpdateOperation(operationID string, instance *Instance, updatingParams U
 		FinishedStages:         make([]string, 0),
 		ProvisioningParameters: instance.Parameters,
 		UpdatingParameters:     updatingParams,
-		RuntimeOperation: orchestration.RuntimeOperation{
-			Runtime: orchestration.Runtime{
-				Region: instance.ProviderRegion},
-		},
 	}
 	if updatingParams.OIDC != nil {
 		op.ProvisioningParameters.Parameters.OIDC = updatingParams.OIDC
@@ -433,7 +417,7 @@ func NewSuspensionOperationWithID(operationID string, instance *Instance) Deprov
 			Version:                0,
 			Description:            "Operation created",
 			InstanceID:             instance.InstanceID,
-			State:                  orchestration.Pending,
+			State:                  OperationStatePending,
 			CreatedAt:              time.Now(),
 			UpdatedAt:              time.Now(),
 			Type:                   OperationTypeDeprovision,
@@ -441,10 +425,6 @@ func NewSuspensionOperationWithID(operationID string, instance *Instance) Deprov
 			ProvisioningParameters: instance.Parameters,
 			FinishedStages:         make([]string, 0),
 			Temporary:              true,
-			RuntimeOperation: orchestration.RuntimeOperation{
-				Runtime: orchestration.Runtime{
-					Region: instance.ProviderRegion},
-			},
 		},
 	}
 }
