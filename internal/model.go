@@ -92,7 +92,7 @@ const (
 	OperationTypeUpgradeCluster OperationType = "upgradeCluster"
 )
 
-const OperationTypePending = "pending"
+const OperationStatePending = "pending"
 
 type Operation struct {
 	// following fields are stored in the storage

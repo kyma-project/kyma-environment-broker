@@ -6,20 +6,12 @@ import (
 	"sync"
 	"time"
 
-	"github.com/kyma-project/kyma-environment-broker/common/orchestration"
 	"github.com/kyma-project/kyma-environment-broker/common/pagination"
 	"github.com/kyma-project/kyma-environment-broker/internal"
 	"github.com/kyma-project/kyma-environment-broker/internal/storage/dberr"
 	"github.com/kyma-project/kyma-environment-broker/internal/storage/dbmodel"
 
 	"github.com/pivotal-cf/brokerapi/v12/domain"
-)
-
-const (
-	Retrying   = "retrying" // to signal a retry sign before marking it to pending
-	Succeeded  = "succeeded"
-	Failed     = "failed"
-	InProgress = "in progress"
 )
 
 type operations struct {
@@ -389,7 +381,7 @@ func (s *operations) GetLastOperationByTypes(instanceID string, types []internal
 	var rows []internal.Operation
 
 	for _, op := range s.operations {
-		if op.InstanceID == instanceID && op.State != orchestration.Pending {
+		if op.InstanceID == instanceID && op.State != internal.OperationStatePending {
 			if len(types) > 0 {
 				for _, t := range types {
 					if op.Type == t {
@@ -402,7 +394,7 @@ func (s *operations) GetLastOperationByTypes(instanceID string, types []internal
 		}
 	}
 	for _, op := range s.upgradeClusterOperations {
-		if op.InstanceID == instanceID && op.State != orchestration.Pending {
+		if op.InstanceID == instanceID && op.State != internal.OperationStatePending {
 			if len(types) > 0 {
 				for _, t := range types {
 					if op.Type == t {
@@ -415,7 +407,7 @@ func (s *operations) GetLastOperationByTypes(instanceID string, types []internal
 		}
 	}
 	for _, op := range s.updateOperations {
-		if op.InstanceID == instanceID && op.State != orchestration.Pending {
+		if op.InstanceID == instanceID && op.State != internal.OperationStatePending {
 			if len(types) > 0 {
 				for _, t := range types {
 					if op.Type == t {
@@ -446,17 +438,17 @@ func (s *operations) GetLastOperation(instanceID string) (*internal.Operation, e
 	var rows []internal.Operation
 
 	for _, op := range s.operations {
-		if op.InstanceID == instanceID && op.State != orchestration.Pending {
+		if op.InstanceID == instanceID && op.State != internal.OperationStatePending {
 			rows = append(rows, op)
 		}
 	}
 	for _, op := range s.upgradeClusterOperations {
-		if op.InstanceID == instanceID && op.State != orchestration.Pending {
+		if op.InstanceID == instanceID && op.State != internal.OperationStatePending {
 			rows = append(rows, op.Operation)
 		}
 	}
 	for _, op := range s.updateOperations {
-		if op.InstanceID == instanceID && op.State != orchestration.Pending {
+		if op.InstanceID == instanceID && op.State != internal.OperationStatePending {
 			rows = append(rows, op.Operation)
 		}
 	}
@@ -789,38 +781,6 @@ func (s *operations) filterAll(filter dbmodel.OperationFilter) ([]internal.Opera
 		result = append(result, op)
 	}
 	return result, nil
-}
-
-func (s *operations) filterOperations(orchestrationID string, filter dbmodel.OperationFilter) []internal.Operation {
-	operations := make([]internal.Operation, 0, len(s.operations))
-	for _, v := range s.operations {
-		if orchestrationID != "" && orchestrationID != v.OrchestrationID {
-			continue
-		}
-		if ok := matchFilter(string(v.State), filter.States, s.equalFilter); !ok {
-			continue
-		}
-
-		operations = append(operations, v)
-	}
-
-	return operations
-}
-
-func (s *operations) filterUpgradeCluster(orchestrationID string, filter dbmodel.OperationFilter) []internal.UpgradeClusterOperation {
-	operations := make([]internal.UpgradeClusterOperation, 0, len(s.upgradeClusterOperations))
-	for _, v := range s.upgradeClusterOperations {
-		if orchestrationID != "" && orchestrationID != v.OrchestrationID {
-			continue
-		}
-		if ok := matchFilter(string(v.State), filter.States, s.equalFilter); !ok {
-			continue
-		}
-
-		operations = append(operations, v)
-	}
-
-	return operations
 }
 
 func (s *operations) filterUpgradeClusterByInstanceID(instanceID string, filter dbmodel.OperationFilter) []internal.UpgradeClusterOperation {
