@@ -162,7 +162,7 @@ type GroupedOperations struct {
 }
 
 func (o *Operation) IsFinished() bool {
-	return o.State != orchestration.InProgress && o.State != orchestration.Pending && o.State != orchestration.Canceling && o.State != orchestration.Retrying
+	return o.State != OperationStatePending
 }
 
 func (o *Operation) EventInfof(fmt string, args ...any) {
@@ -174,28 +174,6 @@ func (o *Operation) EventErrorf(err error, fmt string, args ...any) {
 }
 
 func (o *Operation) Merge(operation *Operation) {
-}
-
-// Orchestration holds all information about an orchestration.
-// Orchestration performs operations of a specific type UpgradeClusterOperation
-// on specific targets of SKRs.
-type Orchestration struct {
-	OrchestrationID string
-	Type            orchestration.Type
-	State           string
-	Description     string
-	CreatedAt       time.Time
-	UpdatedAt       time.Time
-	Parameters      orchestration.Parameters
-}
-
-func (o *Orchestration) IsFinished() bool {
-	return o.State == orchestration.Succeeded || o.State == orchestration.Failed || o.State == orchestration.Canceled
-}
-
-// IsCanceled returns true if orchestration's cancellation endpoint was ever triggered
-func (o *Orchestration) IsCanceled() bool {
-	return o.State == orchestration.Canceling || o.State == orchestration.Canceled
 }
 
 type InstanceWithOperation struct {
