@@ -217,7 +217,6 @@ func TestOperation(t *testing.T) {
 		givenOperation1.ProvisionerOperationID = "target-op-id"
 		givenOperation1.Description = "description"
 		givenOperation1.Version = 1
-		givenOperation1.OrchestrationID = orchestrationID
 
 		givenOperation2 := internal.UpgradeClusterOperation{
 			Operation: fixture.FixOperation("operation-id-2", "inst-id", internal.OperationTypeUpgradeCluster),
@@ -228,8 +227,6 @@ func TestOperation(t *testing.T) {
 		givenOperation2.ProvisionerOperationID = "target-op-id"
 		givenOperation2.Description = "description"
 		givenOperation2.Version = 1
-		givenOperation2.OrchestrationID = orchestrationID
-		givenOperation2.RuntimeOperation = fixRuntimeOperation("operation-id-2")
 
 		givenOperation3 := internal.UpgradeClusterOperation{
 			Operation: fixture.FixOperation("operation-id-3", "inst-id", internal.OperationTypeUpgradeCluster),
@@ -240,8 +237,6 @@ func TestOperation(t *testing.T) {
 		givenOperation3.ProvisionerOperationID = "target-op-id"
 		givenOperation3.Description = "pending-operation"
 		givenOperation3.Version = 1
-		givenOperation3.OrchestrationID = orchestrationID
-		givenOperation3.RuntimeOperation = fixRuntimeOperation("operation-id-3")
 
 		svc := brokerStorage.Operations()
 
