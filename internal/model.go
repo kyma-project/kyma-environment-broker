@@ -92,6 +92,8 @@ const (
 	OperationTypeUpgradeCluster OperationType = "upgradeCluster"
 )
 
+const OperationTypePending = "pending"
+
 type Operation struct {
 	// following fields are stored in the storage
 	ID        string        `json:"-"`
