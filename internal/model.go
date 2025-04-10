@@ -121,6 +121,7 @@ type Operation struct {
 	// PROVISIONING
 	DashboardURL   string          `json:"dashboardURL"`
 	ProviderValues *ProviderValues `json:"providerValues"`
+	Region         string          `json:"region"`
 
 	// DEPROVISIONING
 	// Temporary indicates that this deprovisioning operation must not remove the instance
