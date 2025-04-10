@@ -92,8 +92,11 @@ const (
 )
 
 const (
-	OperationStatePending  = "pending"
-	OperationStateCanceled = "canceled"
+	OperationStatePending = "pending"
+	// for backward compatibility - in case there are some old operations in the db
+	OperationStateCanceled  = "canceled"
+	OperationStateRetrying  = "retrying"
+	OperationStateCanceling = "canceling"
 )
 
 type Operation struct {

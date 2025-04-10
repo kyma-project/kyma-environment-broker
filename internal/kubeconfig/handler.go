@@ -8,7 +8,6 @@ import (
 	"strings"
 
 	"github.com/kennygrant/sanitize"
-	"github.com/kyma-project/kyma-environment-broker/common/orchestration"
 	"github.com/kyma-project/kyma-environment-broker/internal"
 	"github.com/kyma-project/kyma-environment-broker/internal/httputil"
 	"github.com/kyma-project/kyma-environment-broker/internal/storage"
@@ -108,7 +107,7 @@ func (h *Handler) GetKubeconfig(w http.ResponseWriter, r *http.Request) {
 	}
 
 	switch operation.State {
-	case domain.InProgress, orchestration.Pending:
+	case domain.InProgress, internal.OperationStatePending:
 		h.handleResponse(w, http.StatusNotFound, fmt.Errorf("provisioning operation for instance %s is in progress state, kubeconfig not exist yet, please try again later", instanceID))
 		return
 	case domain.Failed:
