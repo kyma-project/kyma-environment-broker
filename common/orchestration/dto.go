@@ -34,17 +34,6 @@ const (
 	StateParam = "state"
 )
 
-// Orchestration states
-const (
-	Pending    = "pending"
-	InProgress = "in progress"
-	Canceling  = "canceling"
-	Retrying   = "retrying" // to signal a retry sign before marking it to pending
-	Canceled   = "canceled"
-	Succeeded  = "succeeded"
-	Failed     = "failed"
-)
-
 // ListParameters hold attributes of list orchestrations / operations queries.
 type ListParameters struct {
 	Page     int

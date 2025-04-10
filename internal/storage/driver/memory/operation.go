@@ -617,60 +617,6 @@ func (s *operations) GetOperationStatsByPlanV2() ([]internal.OperationStatsV2, e
 	return stats, nil
 }
 
-func (s *operations) GetOperationStatsForOrchestration(orchestrationID string) (map[string]int, error) {
-	s.mu.Lock()
-	defer s.mu.Unlock()
-
-	result := map[string]int{
-		orchestration.Canceled:   0,
-		orchestration.Canceling:  0,
-		orchestration.InProgress: 0,
-		orchestration.Pending:    0,
-		orchestration.Succeeded:  0,
-		orchestration.Failed:     0,
-	}
-	opStatePerInstanceID := make(map[string][]string)
-	for _, op := range s.upgradeClusterOperations {
-		if op.OrchestrationID == orchestrationID {
-			if op.State != Failed {
-				result[string(op.State)] = result[string(op.State)] + 1
-			}
-			opStatePerInstanceID[string(op.Operation.InstanceID)] = append(opStatePerInstanceID[string(op.Operation.InstanceID)], string(op.State))
-		}
-	}
-
-	_, failedum := s.calFailedStatusForOrchestration(opStatePerInstanceID)
-	result[Failed] = failedum
-
-	return result, nil
-}
-
-func (s *operations) calFailedStatusForOrchestration(opStatePerInstanceID map[string][]string) ([]string, int) {
-	var result []string
-
-	var invalidFailed, failedFound bool
-
-	for instanceID, statuses := range opStatePerInstanceID {
-
-		invalidFailed = false
-		failedFound = false
-		for _, status := range statuses {
-			if status == Failed {
-				failedFound = true
-			}
-			//In Progress/Retrying/Succeeded means new operation for same instance_id is ongoing/succeeded.
-			if status == Succeeded || status == Retrying || status == InProgress {
-				invalidFailed = true
-			}
-		}
-		if failedFound && !invalidFailed {
-			result = append(result, instanceID)
-		}
-	}
-
-	return result, len(result)
-}
-
 func (s *operations) ListOperations(filter dbmodel.OperationFilter) ([]internal.Operation, int, int, error) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
@@ -686,46 +632,6 @@ func (s *operations) ListOperations(filter dbmodel.OperationFilter) ([]internal.
 
 	for i := offset; (filter.PageSize < 1 || i < offset+filter.PageSize) && i < len(operations)+offset; i++ {
 		result = append(result, operations[i])
-	}
-
-	return result,
-		len(result),
-		len(operations),
-		nil
-}
-
-func (s *operations) ListOperationsByOrchestrationID(orchestrationID string, filter dbmodel.OperationFilter) ([]internal.Operation, int, int, error) {
-	s.mu.Lock()
-	defer s.mu.Unlock()
-
-	result := make([]internal.Operation, 0)
-	offset := pagination.ConvertPageAndPageSizeToOffset(filter.PageSize, filter.Page)
-
-	operations := s.filterOperations(orchestrationID, filter)
-	s.sortByCreatedAt(operations)
-
-	for i := offset; (filter.PageSize < 1 || i < offset+filter.PageSize) && i < len(operations); i++ {
-		result = append(result, s.operations[operations[i].ID])
-	}
-
-	return result,
-		len(result),
-		len(operations),
-		nil
-}
-
-func (s *operations) ListUpgradeClusterOperationsByOrchestrationID(orchestrationID string, filter dbmodel.OperationFilter) ([]internal.UpgradeClusterOperation, int, int, error) {
-	s.mu.Lock()
-	defer s.mu.Unlock()
-
-	result := make([]internal.UpgradeClusterOperation, 0)
-	offset := pagination.ConvertPageAndPageSizeToOffset(filter.PageSize, filter.Page)
-
-	operations := s.filterUpgradeCluster(orchestrationID, filter)
-	s.sortUpgradeClusterByCreatedAt(operations)
-
-	for i := offset; (filter.PageSize < 1 || i < offset+filter.PageSize) && i < len(operations); i++ {
-		result = append(result, s.upgradeClusterOperations[operations[i].Operation.ID])
 	}
 
 	return result,
