@@ -18,13 +18,6 @@ import (
 	"k8s.io/apimachinery/pkg/util/wait"
 )
 
-const (
-	Retrying   = "retrying" // to signal a retry sign before marking it to pending
-	Succeeded  = "succeeded"
-	Failed     = "failed"
-	InProgress = "in progress"
-)
-
 type operations struct {
 	postsql.Factory
 	cipher Cipher
