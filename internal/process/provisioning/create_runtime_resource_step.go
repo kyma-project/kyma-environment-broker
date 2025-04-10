@@ -46,7 +46,6 @@ const (
 type CreateRuntimeResourceStep struct {
 	operationManager        *process.OperationManager
 	instanceStorage         storage.Instances
-	runtimeStateStorage     storage.RuntimeStates
 	k8sClient               client.Client
 	config                  infrastructure_manager.InfrastructureManagerConfig
 	oidcDefaultValues       pkg.OIDCConfigDTO

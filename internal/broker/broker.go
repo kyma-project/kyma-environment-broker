@@ -7,9 +7,6 @@ import (
 	"time"
 
 	"gopkg.in/yaml.v2"
-
-	"github.com/kyma-project/control-plane/components/provisioner/pkg/gqlschema"
-	pkg "github.com/kyma-project/kyma-environment-broker/common/runtime"
 )
 
 const (
@@ -18,8 +15,6 @@ const (
 	KymaNamespace   = "kyma-system"
 	KcpNamespace    = "kcp-system"
 )
-
-type PlanDefaults func(planID string, platformProvider pkg.CloudProvider, parametersProvider *pkg.CloudProvider) (*gqlschema.ClusterConfigInput, error)
 
 type KymaEnvironmentBroker struct {
 	*ServicesEndpoint

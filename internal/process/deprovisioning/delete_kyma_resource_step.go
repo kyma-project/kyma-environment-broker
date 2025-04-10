@@ -34,13 +34,13 @@ type DeleteKymaResourceStep struct {
 	instances        storage.Instances
 }
 
-func NewDeleteKymaResourceStep(operations storage.Operations, instances storage.Instances, kcpClient client.Client, configProvider config.ConfigurationProvider) *DeleteKymaResourceStep {
+func NewDeleteKymaResourceStep(db storage.BrokerStorage, kcpClient client.Client, configProvider config.ConfigurationProvider) *DeleteKymaResourceStep {
 	step := &DeleteKymaResourceStep{
 		kcpClient:      kcpClient,
 		configProvider: configProvider,
-		instances:      instances,
+		instances:      db.Instances(),
 	}
-	step.operationManager = process.NewOperationManager(operations, step.Name(), kebError.LifeCycleManagerDependency)
+	step.operationManager = process.NewOperationManager(db.Operations(), step.Name(), kebError.LifeCycleManagerDependency)
 	return step
 }
 

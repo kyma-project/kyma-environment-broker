@@ -31,7 +31,7 @@ func TestDeleteRuntimeResourceStep_RuntimeResourceDoesNotExists(t *testing.T) {
 	assert.NoError(t, err)
 
 	// when
-	step := NewDeleteRuntimeResourceStep(memoryStorage.Operations(), kcpClient)
+	step := NewDeleteRuntimeResourceStep(memoryStorage, kcpClient)
 	postOperation, backoff, err := step.Run(op.Operation, fixLogger())
 
 	// then
@@ -56,7 +56,7 @@ func TestDeleteRuntimeResourceStep_RuntimeResourceExists(t *testing.T) {
 	kcpClient := fake.NewClientBuilder().WithRuntimeObjects(fixRuntimeResourceControlledByProvisioner("kyma-ns", "runtime-name", false)).Build()
 
 	// when
-	step := NewDeleteRuntimeResourceStep(memoryStorage.Operations(), kcpClient)
+	step := NewDeleteRuntimeResourceStep(memoryStorage, kcpClient)
 	postOperation, backoff, err := step.Run(op.Operation, fixLogger())
 
 	// then
@@ -81,7 +81,7 @@ func TestDeleteRuntimeResourceStep_RuntimeResourceExistsControlledByProvisioner(
 	kcpClient := fake.NewClientBuilder().WithRuntimeObjects(fixRuntimeResourceControlledByProvisioner("kyma-ns", "runtime-name", true)).Build()
 
 	// when
-	step := NewDeleteRuntimeResourceStep(memoryStorage.Operations(), kcpClient)
+	step := NewDeleteRuntimeResourceStep(memoryStorage, kcpClient)
 	postOperation, backoff, err := step.Run(op.Operation, fixLogger())
 
 	// then

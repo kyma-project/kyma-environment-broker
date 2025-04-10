@@ -33,7 +33,6 @@ const numberOfUpgradeOperationsToReturn = 2
 type Handler struct {
 	instancesDb         storage.Instances
 	operationsDb        storage.Operations
-	runtimeStatesDb     storage.RuntimeStates
 	bindingsDb          storage.Bindings
 	instancesArchivedDb storage.InstancesArchived
 	subaccountStatesDb  storage.SubaccountStates
@@ -48,7 +47,6 @@ func NewHandler(storage storage.BrokerStorage, defaultMaxPage int, defaultReques
 	return &Handler{
 		instancesDb:         storage.Instances(),
 		operationsDb:        storage.Operations(),
-		runtimeStatesDb:     storage.RuntimeStates(),
 		bindingsDb:          storage.Bindings(),
 		instancesArchivedDb: storage.InstancesArchived(),
 		subaccountStatesDb:  storage.SubaccountStates(),
@@ -185,8 +183,6 @@ func (h *Handler) getRuntimes(w http.ResponseWriter, req *http.Request) {
 	filter.PageSize = pageSize
 	filter.Page = page
 	opDetail := getOpDetail(req)
-	kymaConfig := getBoolParam(pkg.KymaConfigParam, req)
-	clusterConfig := getBoolParam(pkg.ClusterConfigParam, req)
 	runtimeResourceConfig := getBoolParam(pkg.RuntimeConfigParam, req)
 	bindings := getBoolParam(pkg.BindingsParam, req)
 
@@ -214,13 +210,6 @@ func (h *Handler) getRuntimes(w http.ResponseWriter, req *http.Request) {
 		err = h.determineStatusModifiedAt(&dto)
 		if err != nil {
 			h.logger.Warn(fmt.Sprintf("unable to determine status: %s", err.Error()))
-			httputil.WriteErrorResponse(w, http.StatusInternalServerError, err)
-			return
-		}
-
-		err = h.setRuntimeOptionalAttributes(&dto, kymaConfig, clusterConfig)
-		if err != nil {
-			h.logger.Warn(fmt.Sprintf("unable to set optional attributes: %s", err.Error()))
 			httputil.WriteErrorResponse(w, http.StatusInternalServerError, err)
 			return
 		}
@@ -408,31 +397,6 @@ func (h *Handler) setRuntimeLastOperation(dto *pkg.RuntimeDTO) error {
 
 	default:
 		return fmt.Errorf("unsupported operation type: %s", lastOp.Type)
-	}
-
-	return nil
-}
-
-func (h *Handler) setRuntimeOptionalAttributes(dto *pkg.RuntimeDTO, kymaConfig, clusterConfig bool) error {
-
-	if kymaConfig || clusterConfig {
-		states, err := h.runtimeStatesDb.ListByRuntimeID(dto.RuntimeID)
-		if err != nil && !dberr.IsNotFound(err) {
-			return fmt.Errorf("while fetching runtime states for instance %s: %w", dto.InstanceID, err)
-		}
-		for _, state := range states {
-			if kymaConfig && dto.KymaConfig == nil && state.KymaConfig.Version != "" {
-				config := state.KymaConfig
-				dto.KymaConfig = &config
-			}
-			if clusterConfig && dto.ClusterConfig == nil && state.ClusterConfig.Provider != "" {
-				config := state.ClusterConfig
-				dto.ClusterConfig = &config
-			}
-			if dto.KymaConfig != nil && dto.ClusterConfig != nil {
-				break
-			}
-		}
 	}
 
 	return nil

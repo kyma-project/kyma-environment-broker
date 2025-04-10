@@ -9,7 +9,6 @@ import (
 
 	"github.com/kyma-project/kyma-environment-broker/internal/kubeconfig"
 
-	"github.com/kyma-project/control-plane/components/provisioner/pkg/gqlschema"
 	"github.com/kyma-project/kyma-environment-broker/internal"
 	"github.com/kyma-project/kyma-environment-broker/internal/broker"
 	"github.com/kyma-project/kyma-environment-broker/internal/fixture"
@@ -89,7 +88,7 @@ func TestRemoveServiceInstanceStep(t *testing.T) {
 
 		op := fixture.FixSuspensionOperationAsOperation(fixOperationID, fixInstanceID)
 		op.State = "in progress"
-		step := NewBTPOperatorCleanupStep(ms.Operations(), clientProvider)
+		step := NewBTPOperatorCleanupStep(ms, clientProvider)
 
 		// when
 		_, _, err = step.Run(op, log)
@@ -136,7 +135,7 @@ func TestRemoveServiceInstanceStep(t *testing.T) {
 		op := fixture.FixSuspensionOperationAsOperation(fixOperationID, fixInstanceID)
 		op.ProvisioningParameters.PlanID = broker.AWSPlanID
 		op.State = "in progress"
-		step := NewBTPOperatorCleanupStep(ms.Operations(), kubeconfig.NewFakeK8sClientProvider(k8sCli))
+		step := NewBTPOperatorCleanupStep(ms, kubeconfig.NewFakeK8sClientProvider(k8sCli))
 
 		// when
 		_, _, err = step.Run(op, log)
@@ -183,7 +182,7 @@ func TestRemoveServiceInstanceStep(t *testing.T) {
 		op := fixture.FixSuspensionOperationAsOperation(fixOperationID, fixInstanceID)
 		op.State = "in progress"
 		op.Temporary = false
-		step := NewBTPOperatorCleanupStep(ms.Operations(), kubeconfig.NewFakeK8sClientProvider(k8sCli))
+		step := NewBTPOperatorCleanupStep(ms, kubeconfig.NewFakeK8sClientProvider(k8sCli))
 
 		// when
 		_, _, err = step.Run(op, log)
@@ -223,7 +222,7 @@ func TestBTPOperatorCleanupStep_SoftDelete(t *testing.T) {
 		op := fixture.FixDeprovisioningOperation(fixOperationID, fixInstanceID)
 		op.UserAgent = broker.AccountCleanupJob
 		op.State = "in progress"
-		step := NewBTPOperatorCleanupStep(ms.Operations(), kubeconfig.NewFakeK8sClientProvider(k8sCli))
+		step := NewBTPOperatorCleanupStep(ms, kubeconfig.NewFakeK8sClientProvider(k8sCli))
 
 		// when
 		_, _, err = step.Run(op.Operation, log)
@@ -262,7 +261,7 @@ func TestBTPOperatorCleanupStep_SoftDelete(t *testing.T) {
 		op.ProvisioningParameters.PlanID = broker.TrialPlanID
 		op.UserAgent = broker.AccountCleanupJob
 		op.State = "in progress"
-		step := NewBTPOperatorCleanupStep(ms.Operations(), kubeconfig.NewFakeK8sClientProvider(k8sCli))
+		step := NewBTPOperatorCleanupStep(ms, kubeconfig.NewFakeK8sClientProvider(k8sCli))
 
 		// when
 		_, _, err = step.Run(op.Operation, log)
@@ -301,7 +300,7 @@ func TestBTPOperatorCleanupStep_SoftDelete(t *testing.T) {
 		op.State = "in progress"
 		op.Temporary = true
 		op.ProvisioningParameters.PlanID = broker.TrialPlanID
-		step := NewBTPOperatorCleanupStep(ms.Operations(), kubeconfig.NewFakeK8sClientProvider(k8sCli))
+		step := NewBTPOperatorCleanupStep(ms, kubeconfig.NewFakeK8sClientProvider(k8sCli))
 
 		// when
 		_, _, err = step.Run(op.Operation, log)
@@ -319,7 +318,7 @@ func TestBTPOperatorCleanupStep_NoKubeconfig(t *testing.T) {
 	scheme := internal.NewSchemeForTests(t)
 	// k8s client to an "empty" K8s
 	k8sCli := fake.NewClientBuilder().WithScheme(scheme).Build()
-	step := NewBTPOperatorCleanupStep(ms.Operations(), kubeconfig.NewK8sClientFromSecretProvider(k8sCli))
+	step := NewBTPOperatorCleanupStep(ms, kubeconfig.NewK8sClientFromSecretProvider(k8sCli))
 	op := fixture.FixDeprovisioningOperation(fixOperationID, fixInstanceID)
 	op.State = "in progress"
 
@@ -340,7 +339,7 @@ func TestBTPOperatorCleanupStep_NoRuntimeID(t *testing.T) {
 	scheme := internal.NewSchemeForTests(t)
 	// k8s client to an "empty" K8s
 	k8sCli := fake.NewClientBuilder().WithScheme(scheme).Build()
-	step := NewBTPOperatorCleanupStep(ms.Operations(), kubeconfig.NewFakeK8sClientProvider(k8sCli))
+	step := NewBTPOperatorCleanupStep(ms, kubeconfig.NewFakeK8sClientProvider(k8sCli))
 	op := fixture.FixDeprovisioningOperation(fixOperationID, fixInstanceID)
 	op.State = "in progress"
 	op.RuntimeID = ""
@@ -420,48 +419,4 @@ func (f *fakeK8sClientWrapper) RESTMapper() meta.RESTMapper {
 
 func (f *fakeK8sClientWrapper) SubResource(subresource string) client.SubResourceClient {
 	return f.fake.SubResource(subresource)
-}
-
-type fakeProvisionerClient struct {
-	empty bool
-}
-
-func newEmptyProvisionerClient() fakeProvisionerClient {
-	return fakeProvisionerClient{true}
-}
-
-func (f fakeProvisionerClient) ProvisionRuntime(accountID, subAccountID string, config gqlschema.ProvisionRuntimeInput) (gqlschema.OperationStatus, error) {
-	panic("not implemented")
-}
-
-func (f fakeProvisionerClient) DeprovisionRuntime(accountID, runtimeID string) (string, error) {
-	panic("not implemented")
-}
-
-func (f fakeProvisionerClient) UpgradeRuntime(accountID, runtimeID string, config gqlschema.UpgradeRuntimeInput) (gqlschema.OperationStatus, error) {
-	panic("not implemented")
-}
-
-func (f fakeProvisionerClient) UpgradeShoot(accountID, runtimeID string, config gqlschema.UpgradeShootInput) (gqlschema.OperationStatus, error) {
-	panic("not implemented")
-}
-
-func (f fakeProvisionerClient) ReconnectRuntimeAgent(accountID, runtimeID string) (string, error) {
-	panic("not implemented")
-}
-
-func (f fakeProvisionerClient) RuntimeOperationStatus(accountID, operationID string) (gqlschema.OperationStatus, error) {
-	panic("not implemented")
-}
-
-func (f fakeProvisionerClient) RuntimeStatus(accountID, runtimeID string) (gqlschema.RuntimeStatus, error) {
-	if f.empty {
-		return gqlschema.RuntimeStatus{}, fmt.Errorf("not found")
-	}
-	kubeconfig := "sample fake kubeconfig"
-	return gqlschema.RuntimeStatus{
-		RuntimeConfiguration: &gqlschema.RuntimeConfig{
-			Kubeconfig: &kubeconfig,
-		},
-	}, nil
 }

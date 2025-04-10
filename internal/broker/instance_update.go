@@ -42,7 +42,6 @@ type UpdateEndpoint struct {
 	log    *slog.Logger
 
 	instanceStorage                          storage.Instances
-	runtimeStates                            storage.RuntimeStates
 	contextUpdateHandler                     ContextUpdateHandler
 	brokerURL                                string
 	processingEnabled                        bool
@@ -53,8 +52,7 @@ type UpdateEndpoint struct {
 
 	updatingQueue Queue
 
-	plansConfig  PlansConfig
-	planDefaults PlanDefaults
+	plansConfig PlansConfig
 
 	dashboardConfig dashboard.Config
 	kcBuilder       kubeconfig.KcBuilder
@@ -89,7 +87,6 @@ func NewUpdate(cfg Config,
 		config:                                   cfg,
 		log:                                      log.With("service", "UpdateEndpoint"),
 		instanceStorage:                          db.Instances(),
-		runtimeStates:                            db.RuntimeStates(),
 		operationStorage:                         db.Operations(),
 		contextUpdateHandler:                     ctxUpdateHandler,
 		processingEnabled:                        processingEnabled,

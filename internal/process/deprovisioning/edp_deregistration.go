@@ -32,14 +32,14 @@ type InstanceOperationStorage interface {
 	storage.Instances
 }
 
-func NewEDPDeregistrationStep(os storage.Operations, is storage.Instances, client EDPClient, config edp.Config) *EDPDeregistrationStep {
+func NewEDPDeregistrationStep(db storage.BrokerStorage, client EDPClient, config edp.Config) *EDPDeregistrationStep {
 	step := &EDPDeregistrationStep{
 		client:       client,
 		config:       config,
-		dbOperations: os,
-		dbInstances:  is,
+		dbOperations: db.Operations(),
+		dbInstances:  db.Instances(),
 	}
-	step.operationManager = process.NewOperationManager(os, step.Name(), kebError.EDPDependency)
+	step.operationManager = process.NewOperationManager(db.Operations(), step.Name(), kebError.EDPDependency)
 	return step
 }
 

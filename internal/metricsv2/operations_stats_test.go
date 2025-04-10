@@ -2,9 +2,9 @@ package metricsv2
 
 import (
 	"context"
+	"fmt"
 	"log/slog"
 	"os"
-	"sync"
 	"testing"
 	"time"
 
@@ -18,159 +18,120 @@ import (
 )
 
 func TestOperationsStats(t *testing.T) {
-	var ctr *OperationStats
-
-	opType1 := internal.OperationTypeProvision
-	opState1 := domain.Succeeded
-	opPlan1 := broker.PlanID(broker.AzurePlanID)
-	eventsCount1 := 5
-	key1, err := ctr.makeKey(opType1, opState1, opPlan1)
-	assert.NoError(t, err)
-
-	opType2 := internal.OperationTypeUpdate
-	opState2 := domain.Failed
-	opPlan2 := broker.PlanID(broker.AWSPlanID)
-	key2, err := ctr.makeKey(opType2, opState2, opPlan2)
-	eventsCount2 := 1
-	assert.NoError(t, err)
-
-	opType3 := internal.OperationTypeDeprovision
-	opState3 := domain.Failed
-	opPlan3 := broker.PlanID(broker.GCPPlanID)
-	eventsCount3 := 3
-	key3, err := ctr.makeKey(opType3, opState3, opPlan3)
-	assert.NoError(t, err)
-
-	opType4 := internal.OperationTypeDeprovision
-	opState4 := domain.InProgress
-	opPlan4 := broker.PlanID(broker.GCPPlanID)
-	eventsCount4 := 0
-	key4, err := ctr.makeKey(opType4, opState4, opPlan4)
-	assert.NoError(t, err)
+	var statsCollector *operationsStats
 
 	operations := storage.NewMemoryStorage().Operations()
-
-	opType5 := internal.OperationTypeProvision
-	opState5 := domain.InProgress
-	opPlan5 := broker.AzurePlanID
-	eventsCount5 := 1
-	key5, err := ctr.makeKey(opType5, opState5, broker.PlanID(opPlan5))
-	assert.NoError(t, err)
-
-	opType6 := internal.OperationTypeProvision
-	opState6 := domain.InProgress
-	opPlan6 := broker.AWSPlanID
-	eventsCount6 := 1
-	key6, err := ctr.makeKey(opType6, opState6, broker.PlanID(opPlan6))
-	assert.NoError(t, err)
-
-	opType7 := internal.OperationTypeDeprovision
-	opState7 := domain.InProgress
-	opPlan7 := broker.AWSPlanID
-	eventsCount7 := 0
-	key7, err := ctr.makeKey(opType7, opState7, broker.PlanID(opPlan7))
-	assert.NoError(t, err)
-
-	cfg := Config{
-		OperationStatsPollingInterval:  1 * time.Millisecond,
-		OperationResultPollingInterval: 1 * time.Millisecond,
-		OperationResultRetentionPeriod: 1 * time.Minute,
+	testData := []struct {
+		opType      internal.OperationType
+		opState     domain.LastOperationState
+		opPlan      broker.PlanID
+		eventsCount int
+		key         metricKey
+	}{
+		{
+			opType:      internal.OperationTypeProvision,
+			opState:     domain.Succeeded,
+			opPlan:      broker.AzurePlanID,
+			eventsCount: 5,
+		},
+		{
+			opType:      internal.OperationTypeUpdate,
+			opState:     domain.Failed,
+			opPlan:      broker.AWSPlanID,
+			eventsCount: 1,
+		},
+		{
+			opType:      internal.OperationTypeDeprovision,
+			opState:     domain.Failed,
+			opPlan:      broker.GCPPlanID,
+			eventsCount: 3,
+		},
+		{
+			opType:      internal.OperationTypeDeprovision,
+			opState:     domain.InProgress,
+			opPlan:      broker.GCPPlanID,
+			eventsCount: 0,
+		},
+		{
+			opType:      internal.OperationTypeProvision,
+			opState:     domain.InProgress,
+			opPlan:      broker.AzurePlanID,
+			eventsCount: 1,
+		},
+		{
+			opType:      internal.OperationTypeProvision,
+			opState:     domain.InProgress,
+			opPlan:      broker.AWSPlanID,
+			eventsCount: 1,
+		},
+		{
+			opType:      internal.OperationTypeDeprovision,
+			opState:     domain.InProgress,
+			opPlan:      broker.AWSPlanID,
+			eventsCount: 0,
+		},
 	}
 
-	t.Run("create counter key", func(t *testing.T) {
-		log := slog.New(slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{
-			Level: slog.LevelInfo,
-		})).With("metrics", "test")
-		ctr = NewOperationsStats(operations, cfg, log)
-		ctr.MustRegister(context.Background())
-	})
-
-	t.Run("gauge in_progress operations test", func(t *testing.T) {
-		err := operations.InsertOperation(internal.Operation{
-			ID:    "opState6",
-			State: opState5,
-			Type:  opType5,
-			ProvisioningParameters: internal.ProvisioningParameters{
-				PlanID: opPlan5,
-			},
-		})
+	for i, data := range testData {
+		key, err := statsCollector.makeKey(data.opType, data.opState, data.opPlan)
 		assert.NoError(t, err)
-		err = operations.InsertOperation(internal.Operation{
-			ID:    "opState7",
-			State: opState6,
-			Type:  opType6,
-			ProvisioningParameters: internal.ProvisioningParameters{
-				PlanID: opPlan6,
-			},
-		})
-		assert.NoError(t, err)
+		testData[i].key = key
+	}
+
+	err := operations.InsertOperation(internal.Operation{
+		ID:    "test-4",
+		State: testData[4].opState,
+		Type:  testData[4].opType,
+		ProvisioningParameters: internal.ProvisioningParameters{
+			PlanID: string(testData[4].opPlan),
+		},
+	})
+	assert.NoError(t, err)
+	err = operations.InsertOperation(internal.Operation{
+		ID:    "test-5",
+		State: testData[5].opState,
+		Type:  testData[5].opType,
+		ProvisioningParameters: internal.ProvisioningParameters{
+			PlanID: string(testData[5].opPlan),
+		},
+	})
+	assert.NoError(t, err)
+
+	log := slog.New(slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{
+		Level: slog.LevelInfo,
+	})).With("metrics", "test")
+
+	cfg := Config{
+		OperationStatsPollingInterval:  1 * time.Minute,
+		OperationResultPollingInterval: 1 * time.Minute,
+		OperationResultRetentionPeriod: 1 * time.Hour,
+	}
+
+	statsCollector = NewOperationsStats(operations, cfg, log)
+	statsCollector.MustRegister()
+	err = statsCollector.UpdateStatsMetrics()
+	assert.NoError(t, err)
+
+	for i := 0; i < 3; i++ {
+		for j := 0; j < testData[i].eventsCount; j++ {
+			err = statsCollector.Handler(context.TODO(), process.OperationFinished{
+				PlanID:    testData[i].opPlan,
+				Operation: internal.Operation{Type: testData[i].opType, State: testData[i].opState, ID: fmt.Sprintf("test-%d", i)},
+			})
+			assert.NoError(t, err)
+		}
+	}
+
+	t.Run("should get correct counters", func(t *testing.T) {
+		assert.Equal(t, float64(testData[0].eventsCount), testutil.ToFloat64(statsCollector.counters[testData[0].key]))
+		assert.Equal(t, float64(testData[1].eventsCount), testutil.ToFloat64(statsCollector.counters[testData[1].key]))
+		assert.Equal(t, float64(testData[2].eventsCount), testutil.ToFloat64(statsCollector.counters[testData[2].key]))
 	})
 
-	t.Run("should increase all counter", func(t *testing.T) {
-		t.Run("should increase counter", func(t *testing.T) {
-			t.Parallel()
-			wg := sync.WaitGroup{}
-			for i := 0; i < eventsCount1; i++ {
-				wg.Add(1)
-				go func() {
-					defer wg.Done()
-					err := ctr.Handler(context.TODO(), process.OperationFinished{
-						PlanID:    opPlan1,
-						Operation: internal.Operation{Type: opType1, State: opState1, ID: "test1"},
-					})
-					assert.NoError(t, err)
-				}()
-			}
-			wg.Wait()
-		})
-
-		t.Run("should increase counter", func(t *testing.T) {
-			t.Parallel()
-			wg := sync.WaitGroup{}
-			for i := 0; i < eventsCount2; i++ {
-				wg.Add(1)
-				go func() {
-					defer wg.Done()
-					err := ctr.Handler(context.TODO(), process.OperationFinished{
-						PlanID:    opPlan2,
-						Operation: internal.Operation{Type: opType2, State: opState2, ID: "test2"},
-					})
-					assert.NoError(t, err)
-				}()
-			}
-			wg.Wait()
-		})
-
-		t.Run("should increase counter", func(t *testing.T) {
-			t.Parallel()
-			wg := sync.WaitGroup{}
-			for i := 0; i < eventsCount3; i++ {
-				wg.Add(1)
-				go func() {
-					defer wg.Done()
-					err := ctr.Handler(context.TODO(), process.OperationFinished{
-						PlanID:    opPlan3,
-						Operation: internal.Operation{Type: opType3, State: opState3, ID: "test3"},
-					})
-					assert.NoError(t, err)
-				}()
-			}
-			wg.Wait()
-		})
-	})
-
-	t.Run("should get correct number of metrics", func(t *testing.T) {
-		time.Sleep(1 * time.Second)
-		assert.Equal(t, float64(eventsCount1), testutil.ToFloat64(ctr.counters[key1]))
-		assert.Equal(t, float64(eventsCount2), testutil.ToFloat64(ctr.counters[key2]))
-		assert.Equal(t, float64(eventsCount3), testutil.ToFloat64(ctr.counters[key3]))
-		assert.Equal(t, float64(eventsCount4), testutil.ToFloat64(ctr.gauges[key4]))
-		assert.Equal(t, float64(eventsCount5), testutil.ToFloat64(ctr.gauges[key5]))
-		assert.Equal(t, float64(eventsCount6), testutil.ToFloat64(ctr.gauges[key6]))
-		assert.Equal(t, float64(eventsCount7), testutil.ToFloat64(ctr.gauges[key7]))
-	})
-
-	t.Cleanup(func() {
-		ctr = nil
+	t.Run("should get correct gauges", func(t *testing.T) {
+		assert.Equal(t, float64(testData[3].eventsCount), testutil.ToFloat64(statsCollector.gauges[testData[3].key]))
+		assert.Equal(t, float64(testData[4].eventsCount), testutil.ToFloat64(statsCollector.gauges[testData[4].key]))
+		assert.Equal(t, float64(testData[5].eventsCount), testutil.ToFloat64(statsCollector.gauges[testData[5].key]))
+		assert.Equal(t, float64(testData[6].eventsCount), testutil.ToFloat64(statsCollector.gauges[testData[6].key]))
 	})
 }

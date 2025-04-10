@@ -1,10 +1,9 @@
 package deprovisioning
 
 import (
+	"fmt"
 	"testing"
 	"time"
-
-	"fmt"
 
 	"github.com/kyma-project/kyma-environment-broker/common/hyperscaler"
 	hyperscalerMocks "github.com/kyma-project/kyma-environment-broker/common/hyperscaler/automock"
@@ -30,7 +29,7 @@ func TestReleaseSubscriptionStep_HappyPath(t *testing.T) {
 	accountProviderMock := &hyperscalerMocks.AccountProvider{}
 	accountProviderMock.On("MarkUnusedGardenerSecretBindingAsDirty", hyperscaler.GCP("westeurope"), instance.GetSubscriptionGlobalAccoundID(), false).Return(nil)
 
-	step := NewReleaseSubscriptionStep(memoryStorage.Operations(), memoryStorage.Instances(), accountProviderMock)
+	step := NewReleaseSubscriptionStep(memoryStorage, accountProviderMock)
 
 	// when
 	operation, repeat, err := step.Run(operation, fixLogger())
@@ -57,7 +56,7 @@ func TestReleaseSubscriptionStep_TrialPlan(t *testing.T) {
 	accountProviderMock := &hyperscalerMocks.AccountProvider{}
 	accountProviderMock.On("MarkUnusedGardenerSecretBindingAsDirty", hyperscaler.GCP("westeurope"), instance.GetSubscriptionGlobalAccoundID(), false).Return(nil)
 
-	step := NewReleaseSubscriptionStep(memoryStorage.Operations(), memoryStorage.Instances(), accountProviderMock)
+	step := NewReleaseSubscriptionStep(memoryStorage, accountProviderMock)
 
 	// when
 	operation, repeat, err := step.Run(operation, fixLogger())
@@ -84,7 +83,7 @@ func TestReleaseSubscriptionStep_OwnClusterPlan(t *testing.T) {
 	accountProviderMock := &hyperscalerMocks.AccountProvider{}
 	accountProviderMock.On("MarkUnusedGardenerSecretBindingAsDirty", hyperscaler.GCP("westeurope"), instance.GetSubscriptionGlobalAccoundID(), false).Return(nil)
 
-	step := NewReleaseSubscriptionStep(memoryStorage.Operations(), memoryStorage.Instances(), accountProviderMock)
+	step := NewReleaseSubscriptionStep(memoryStorage, accountProviderMock)
 
 	// when
 	operation, repeat, err := step.Run(operation, fixLogger())
@@ -108,7 +107,7 @@ func TestReleaseSubscriptionStep_InstanceNotFound(t *testing.T) {
 	accountProviderMock := &hyperscalerMocks.AccountProvider{}
 	accountProviderMock.On("MarkUnusedGardenerSecretBindingAsDirty", hyperscaler.GCP("westeurope"), instance.GetSubscriptionGlobalAccoundID(), false).Return(nil)
 
-	step := NewReleaseSubscriptionStep(memoryStorage.Operations(), memoryStorage.Instances(), accountProviderMock)
+	step := NewReleaseSubscriptionStep(memoryStorage, accountProviderMock)
 	err := memoryStorage.Operations().InsertOperation(operation)
 	assert.NoError(t, err)
 
@@ -138,7 +137,7 @@ func TestReleaseSubscriptionStep_ProviderNotFound(t *testing.T) {
 	accountProviderMock := &hyperscalerMocks.AccountProvider{}
 	accountProviderMock.On("MarkUnusedGardenerSecretBindingAsDirty", hyperscaler.GCP("westeurope"), instance.GetSubscriptionGlobalAccoundID(), false).Return(nil)
 
-	step := NewReleaseSubscriptionStep(memoryStorage.Operations(), memoryStorage.Instances(), accountProviderMock)
+	step := NewReleaseSubscriptionStep(memoryStorage, accountProviderMock)
 	err = memoryStorage.Operations().InsertOperation(operation)
 	assert.NoError(t, err)
 
@@ -167,7 +166,7 @@ func TestReleaseSubscriptionStepGardener_CallFails(t *testing.T) {
 	accountProviderMock := &hyperscalerMocks.AccountProvider{}
 	accountProviderMock.On("MarkUnusedGardenerSecretBindingAsDirty", hyperscaler.GCP("westeurope"), instance.GetSubscriptionGlobalAccoundID(), false).Return(fmt.Errorf("failed to release subscription for tenant. Gardener Account pool is not configured"))
 
-	step := NewReleaseSubscriptionStep(memoryStorage.Operations(), memoryStorage.Instances(), accountProviderMock)
+	step := NewReleaseSubscriptionStep(memoryStorage, accountProviderMock)
 
 	// when
 	operation, repeat, err := step.Run(operation, fixLogger())

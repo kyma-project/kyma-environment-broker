@@ -2,8 +2,29 @@ package provider
 
 import (
 	"github.com/kyma-project/kyma-environment-broker/internal"
+	"github.com/kyma-project/kyma-environment-broker/internal/broker"
 	"github.com/kyma-project/kyma-environment-broker/internal/euaccess"
 )
+
+const (
+	DefaultAzureRegion              = "eastus"
+	DefaultEuAccessAzureRegion      = "switzerlandnorth"
+	DefaultAzureMultiZoneCount      = 3
+	DefaultAzureMachineType         = "Standard_D2s_v5"
+	DefaultOldAzureTrialMachineType = "Standard_D4s_v5"
+)
+
+var europeAzure = "westeurope"
+var usAzure = "eastus"
+var asiaAzure = "southeastasia"
+
+var trialPurpose = "evaluation"
+
+var toAzureSpecific = map[string]*string{
+	string(broker.Europe): &europeAzure,
+	string(broker.Us):     &usAzure,
+	string(broker.Asia):   &asiaAzure,
+}
 
 type (
 	AzureInputProvider struct {
