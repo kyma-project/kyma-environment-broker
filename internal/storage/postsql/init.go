@@ -15,7 +15,6 @@ const (
 	schemaName                 = "public"
 	InstancesTableName         = "instances"
 	OperationTableName         = "operations"
-	OrchestrationTableName     = "orchestrations"
 	RuntimeStateTableName      = "runtime_states"
 	SubaccountStatesTableName  = "subaccount_states"
 	CreatedAtField             = "created_at"
