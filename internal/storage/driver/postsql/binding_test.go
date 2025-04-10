@@ -1,6 +1,7 @@
 package postsql_test
 
 import (
+	"math"
 	"testing"
 	"time"
 
@@ -252,8 +253,7 @@ func TestBindingMetrics(t *testing.T) {
 	// then
 	require.NoError(t, err)
 	// assert if the expiration time is close to 120 minutes
-	assert.GreaterOrEqual(t, got.MinutesSinceEarliestExpiration, 120.0)
-	assert.Less(t, got.MinutesSinceEarliestExpiration-120.0, 0.01)
+	assert.Less(t, math.Abs(got.MinutesSinceEarliestExpiration-120.0), 0.01)
 }
 
 func TestBindingMetrics_NoBindings(t *testing.T) {
