@@ -5,7 +5,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/kyma-project/kyma-environment-broker/common/orchestration"
 	"github.com/kyma-project/kyma-environment-broker/internal"
 	"github.com/kyma-project/kyma-environment-broker/internal/broker"
 	"github.com/kyma-project/kyma-environment-broker/internal/fixture"
@@ -54,14 +53,11 @@ func TestOperation(t *testing.T) {
 			assert.NoError(t, err)
 		}()
 
-		orchestrationID := "orch-id"
-
 		givenOperation := fixture.FixProvisioningOperation("operation-id", "inst-id")
 		givenOperation.State = domain.InProgress
 		givenOperation.CreatedAt = givenOperation.CreatedAt.Truncate(time.Millisecond)
 		givenOperation.UpdatedAt = givenOperation.UpdatedAt.Truncate(time.Millisecond)
 		givenOperation.Version = 1
-		givenOperation.OrchestrationID = orchestrationID
 		givenOperation.ProvisioningParameters.PlanID = broker.TrialPlanID
 
 		latestOperation := fixture.FixProvisioningOperation("latest-id", "inst-id")
@@ -69,19 +65,14 @@ func TestOperation(t *testing.T) {
 		latestOperation.CreatedAt = latestOperation.CreatedAt.Truncate(time.Millisecond).Add(time.Minute)
 		latestOperation.UpdatedAt = latestOperation.UpdatedAt.Truncate(time.Millisecond).Add(2 * time.Minute)
 		latestOperation.Version = 1
-		latestOperation.OrchestrationID = orchestrationID
 		latestOperation.ProvisioningParameters.PlanID = broker.TrialPlanID
 
 		latestPendingOperation := fixture.FixProvisioningOperation("latest-id-pending", "inst-id")
-		latestPendingOperation.State = orchestration.Pending
+		latestPendingOperation.State = internal.OperationStatePending
 		latestPendingOperation.CreatedAt = latestPendingOperation.CreatedAt.Truncate(time.Millisecond).Add(2 * time.Minute)
 		latestPendingOperation.UpdatedAt = latestPendingOperation.UpdatedAt.Truncate(time.Millisecond).Add(3 * time.Minute)
 		latestPendingOperation.Version = 1
-		latestPendingOperation.OrchestrationID = orchestrationID
 		latestPendingOperation.ProvisioningParameters.PlanID = broker.TrialPlanID
-
-		err = brokerStorage.Orchestrations().Insert(internal.Orchestration{OrchestrationID: orchestrationID})
-		require.NoError(t, err)
 
 		svc := brokerStorage.Operations()
 
@@ -132,11 +123,6 @@ func TestOperation(t *testing.T) {
 		require.NoError(t, err)
 
 		assert.Equal(t, 2, stats[broker.TrialPlanID].Provisioning[domain.InProgress])
-
-		opStats, err := svc.GetOperationStatsForOrchestration(orchestrationID)
-		require.NoError(t, err)
-
-		assert.Equal(t, 2, opStats[orchestration.InProgress])
 
 		// when
 		opList, err := svc.ListProvisioningOperationsByInstanceID("inst-id")
@@ -248,7 +234,7 @@ func TestOperation(t *testing.T) {
 		givenOperation3 := internal.UpgradeClusterOperation{
 			Operation: fixture.FixOperation("operation-id-3", "inst-id", internal.OperationTypeUpgradeCluster),
 		}
-		givenOperation3.State = orchestration.Pending
+		givenOperation3.State = internal.OperationStatePending
 		givenOperation3.CreatedAt = givenOperation3.CreatedAt.Truncate(time.Millisecond).Add(2 * time.Hour)
 		givenOperation3.UpdatedAt = givenOperation3.UpdatedAt.Truncate(time.Millisecond).Add(2 * time.Hour).Add(10 * time.Minute)
 		givenOperation3.ProvisionerOperationID = "target-op-id"
@@ -279,12 +265,6 @@ func TestOperation(t *testing.T) {
 		lastClusterUpgrade, err := svc.GetLastOperationByTypes("inst-id", []internal.OperationType{internal.OperationTypeUpgradeCluster})
 		require.NoError(t, err)
 		assert.Equal(t, givenOperation2.Operation.ID, lastClusterUpgrade.ID)
-
-		ops, count, totalCount, err := svc.ListUpgradeClusterOperationsByOrchestrationID(orchestrationID, dbmodel.OperationFilter{PageSize: 10, Page: 1})
-		require.NoError(t, err)
-		assert.Len(t, ops, 3)
-		assert.Equal(t, count, 3)
-		assert.Equal(t, totalCount, 3)
 
 		ops, err = svc.ListUpgradeClusterOperationsByInstanceID("inst-id")
 		require.NoError(t, err)
