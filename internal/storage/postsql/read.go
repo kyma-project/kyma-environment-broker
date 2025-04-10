@@ -206,7 +206,7 @@ func (r readSession) FindAllInstancesForSubAccounts(subAccountslist []string) ([
 
 func (r readSession) GetLastOperation(instanceID string, types []internal.OperationType) (dbmodel.OperationDTO, dberr.Error) {
 	inst := dbr.Eq("instance_id", instanceID)
-	state := dbr.Neq("state", []string{orchestration.Pending, orchestration.Canceled})
+	state := dbr.Neq("state", []string{internal.OperationStatePending, internal.OperationStateCanceled})
 	condition := dbr.And(inst, state)
 	if len(types) > 0 {
 		condition = dbr.And(condition, dbr.Expr("type IN ?", types))
@@ -293,51 +293,9 @@ func (r readSession) GetAllOperations() ([]dbmodel.OperationDTO, error) {
 	return operations, nil
 }
 
-func (r readSession) GetOrchestrationByID(oID string) (dbmodel.OrchestrationDTO, dberr.Error) {
-	condition := dbr.Eq("orchestration_id", oID)
-	operation, err := r.getOrchestration(condition)
-	if err != nil {
-		switch {
-		case dberr.IsNotFound(err):
-			return dbmodel.OrchestrationDTO{}, dberr.NotFound("for ID: %s %s", oID, err)
-		default:
-			return dbmodel.OrchestrationDTO{}, err
-		}
-	}
-	return operation, nil
-}
-
-func (r readSession) ListOrchestrations(filter dbmodel.OrchestrationFilter) ([]dbmodel.OrchestrationDTO, int, int, error) {
-	var orchestrations []dbmodel.OrchestrationDTO
-
-	stmt := r.session.Select("*").
-		From(OrchestrationTableName).
-		OrderBy(CreatedAtField)
-
-	// Add pagination if provided
-	if filter.Page > 0 && filter.PageSize > 0 {
-		stmt.Paginate(uint64(filter.Page), uint64(filter.PageSize))
-	}
-
-	// Apply filtering if provided
-	addOrchestrationFilters(stmt, filter)
-
-	_, err := stmt.Load(&orchestrations)
-
-	totalCount, err := r.getOrchestrationCount(filter)
-	if err != nil {
-		return nil, -1, -1, err
-	}
-
-	return orchestrations,
-		len(orchestrations),
-		totalCount,
-		nil
-}
-
 func (r readSession) CountNotFinishedOperationsByInstanceID(instanceID string) (int, dberr.Error) {
 	stateInProgress := dbr.Eq("state", domain.InProgress)
-	statePending := dbr.Eq("state", orchestration.Pending)
+	statePending := dbr.Eq("state", internal.OperationStatePending)
 	stateCondition := dbr.Or(statePending, stateInProgress)
 	instanceIDCondition := dbr.Eq("instance_id", instanceID)
 
@@ -358,7 +316,7 @@ func (r readSession) CountNotFinishedOperationsByInstanceID(instanceID string) (
 
 func (r readSession) GetNotFinishedOperationsByType(operationType internal.OperationType) ([]dbmodel.OperationDTO, dberr.Error) {
 	stateInProgress := dbr.Eq("state", domain.InProgress)
-	statePending := dbr.Eq("state", orchestration.Pending)
+	statePending := dbr.Eq("state", internal.OperationStatePending)
 	stateCondition := dbr.Or(statePending, stateInProgress)
 	typeCondition := dbr.Eq("type", operationType)
 	var operations []dbmodel.OperationDTO
@@ -584,24 +542,6 @@ func (r readSession) getLastOperation(condition dbr.Builder) (dbmodel.OperationD
 	return operation, nil
 }
 
-func (r readSession) getOrchestration(condition dbr.Builder) (dbmodel.OrchestrationDTO, dberr.Error) {
-	var operation dbmodel.OrchestrationDTO
-
-	err := r.session.
-		Select("*").
-		From(OrchestrationTableName).
-		Where(condition).
-		LoadOne(&operation)
-
-	if err != nil {
-		if err == dbr.ErrNotFound {
-			return dbmodel.OrchestrationDTO{}, dberr.NotFound("cannot find operation: %s", err)
-		}
-		return dbmodel.OrchestrationDTO{}, dberr.Internal("Failed to get operation: %s", err)
-	}
-	return operation, nil
-}
-
 func (r readSession) GetOperationStats() ([]dbmodel.OperationStatEntry, error) {
 	var rows []dbmodel.OperationStatEntry
 	_, err := r.session.SelectBySql(fmt.Sprintf("select type, state, provisioning_parameters ->> 'plan_id' AS plan_id from %s",
@@ -814,7 +754,7 @@ func (r readSession) getInstanceCount(filter dbmodel.InstanceFilter) (int, error
 		Join(dbr.I(OperationTableName).As("o1"), fmt.Sprintf("%s.instance_id = o1.instance_id", InstancesTableName)).
 		LeftJoin(dbr.I(OperationTableName).As("o2"), fmt.Sprintf("%s.instance_id = o2.instance_id AND o1.created_at < o2.created_at AND o2.state NOT IN ('%s', '%s')", InstancesTableName, orchestration.Pending, orchestration.Canceled)).
 		Where("o2.created_at IS NULL").
-		Where(fmt.Sprintf("o1.state NOT IN ('%s', '%s')", orchestration.Pending, orchestration.Canceled))
+		Where(fmt.Sprintf("o1.state NOT IN ('%s', '%s')", internal.OperationStatePending, internal.OperationStateCanceled))
 
 	if len(filter.States) > 0 || filter.Suspended != nil {
 		stateFilters := buildInstanceStateFilters("o1", filter)
@@ -939,15 +879,6 @@ func addInstanceFilters(stmt *dbr.SelectStmt, filter dbmodel.InstanceFilter, tab
 	}
 }
 
-func addOrchestrationFilters(stmt *dbr.SelectStmt, filter dbmodel.OrchestrationFilter) {
-	if len(filter.Types) > 0 {
-		stmt.Where("type IN ?", filter.Types)
-	}
-	if len(filter.States) > 0 {
-		stmt.Where("state IN ?", filter.States)
-	}
-}
-
 func addOperationFilters(stmt *dbr.SelectStmt, filter dbmodel.OperationFilter) {
 	if len(filter.States) > 0 {
 		stmt.Where("o.state IN ?", filter.States)
@@ -988,17 +919,6 @@ func (r readSession) getUpgradeOperationCount(orchestrationID string, filter dbm
 
 	// TODO - assumes aliases o and i for operations and instances tables
 	addOperationFilters(stmt, filter)
-	err := stmt.LoadOne(&res)
-
-	return res.Total, err
-}
-
-func (r readSession) getOrchestrationCount(filter dbmodel.OrchestrationFilter) (int, error) {
-	var res struct {
-		Total int
-	}
-	stmt := r.session.Select("count(*) as total").From(OrchestrationTableName)
-	addOrchestrationFilters(stmt, filter)
 	err := stmt.LoadOne(&res)
 
 	return res.Total, err

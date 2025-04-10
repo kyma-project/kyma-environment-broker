@@ -877,7 +877,6 @@ func (s *operations) toUpgradeClusterOperation(op *dbmodel.OperationDTO) (*inter
 	if err != nil {
 		return nil, err
 	}
-	operation.RuntimeOperation.ID = op.ID
 
 	return &operation, nil
 }
