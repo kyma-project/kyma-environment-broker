@@ -75,9 +75,6 @@ func prepareDataForDeletedInstance(t *testing.T, db storage.BrokerStorage, insta
 	require.NoError(t, err)
 	err = db.Operations().InsertOperation(fixture.FixDeprovisioningOperationAsOperation(fmt.Sprintf("%s-%s", instanceId, "deprovisioning"), instanceId))
 	require.NoError(t, err)
-
-	err = db.RuntimeStates().Insert(fixture.FixRuntimeState(fmt.Sprintf("%s-%s", instanceId, "runtime-state"), provisioningOperation.RuntimeID, provisioningOperation.ID))
-	require.NoError(t, err)
 }
 
 func prepareDataForInstanceWithFailedDeprovisioning(t *testing.T, db storage.BrokerStorage, instanceId string) {
@@ -89,7 +86,5 @@ func prepareDataForInstanceWithFailedDeprovisioning(t *testing.T, db storage.Bro
 	err = db.Operations().InsertOperation(op)
 	require.NoError(t, err)
 	err = db.Instances().Insert(fixture.FixInstance(instanceId))
-	require.NoError(t, err)
-	err = db.RuntimeStates().Insert(fixture.FixRuntimeState(fmt.Sprintf("%s-%s", instanceId, "runtime-state"), provisioningOperation.RuntimeID, provisioningOperation.ID))
 	require.NoError(t, err)
 }

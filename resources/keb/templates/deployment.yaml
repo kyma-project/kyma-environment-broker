@@ -221,28 +221,6 @@ spec:
               value: {{ .Values.gardener.kubeconfigPath }}
             - name: APP_KUBECONFIG_ALLOW_ORIGINS
               value: "{{ .Values.kubeconfig.allowOrigins }}"
-            - name: APP_PROVISIONER_KUBERNETES_VERSION
-              value: "{{ .Values.gardener.kubernetesVersion }}"
-            - name: APP_PROVISIONER_MACHINE_IMAGE
-              value: {{ .Values.gardener.machineImage }}
-            - name: APP_PROVISIONER_MACHINE_IMAGE_VERSION
-              value: {{ .Values.gardener.machineImageVersion }}
-            - name: APP_PROVISIONER_TRIAL_NODES_NUMBER
-              value: "{{ .Values.gardener.trialNodesNumber }}"
-            - name: APP_PROVISIONER_AUTO_UPDATE_KUBERNETES_VERSION
-              value: "{{ .Values.gardener.autoUpdateKubernetesVersion }}"
-            - name: APP_PROVISIONER_AUTO_UPDATE_MACHINE_IMAGE_VERSION
-              value: "{{ .Values.gardener.autoUpdateMachineImageVersion }}"
-            - name: APP_PROVISIONER_MULTI_ZONE_CLUSTER
-              value: "{{ .Values.gardener.multiZoneCluster }}"
-            - name: APP_PROVISIONER_CONTROL_PLANE_FAILURE_TOLERANCE
-              value: "{{ .Values.gardener.controlPlaneFailureTolerance }}"
-            - name: APP_PROVISIONER_ENABLE_SHOOT_AND_SEED_SAME_REGION
-              value: "{{ .Values.provisioner.gardener.enableShootAndSeedSameRegion }}"
-            - name: APP_PROVISIONER_USE_MAIN_OIDC
-              value: "{{ .Values.provisioner.useMainOIDC }}"
-            - name: APP_PROVISIONER_USE_ADDITIONAL_OIDC
-              value: "{{ .Values.provisioner.useAdditionalOIDC }}"
             - name: APP_INFRASTRUCTURE_MANAGER_KUBERNETES_VERSION
               value: "{{ .Values.infrastructureManager.kubernetesVersion }}"
             - name: APP_INFRASTRUCTURE_MANAGER_MACHINE_IMAGE
@@ -301,8 +279,6 @@ spec:
               value: /config/hapRule.yaml
             - name: APP_KYMA_RESOURCE_DELETION_TIMEOUT
               value: "{{ .Values.kymaResourceDeletionTimeout }}"
-            - name: APP_BROKER_USE_SMALLER_MACHINE_TYPES
-              value: "{{ .Values.useSmallerMachineTypes }}"
             - name: APP_BROKER_USE_ADDITIONAL_OIDC_SCHEMA
               value: "{{ .Values.broker.useAdditionalOIDCSchema }}"
             - name: APP_BROKER_DISABLE_SAP_CONVERGED_CLOUD

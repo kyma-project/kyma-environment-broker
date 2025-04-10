@@ -2,6 +2,7 @@ package broker
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"log/slog"
 	"net/http"
@@ -37,31 +38,31 @@ func (b *GetBindingEndpoint) GetBinding(_ context.Context, instanceID, bindingID
 	}
 	if lastOperation.Type == internal.OperationTypeDeprovision {
 		message := "Binding not found"
-		return domain.GetBindingSpec{}, apiresponses.NewFailureResponse(fmt.Errorf(message), http.StatusNotFound, message)
+		return domain.GetBindingSpec{}, apiresponses.NewFailureResponse(errors.New(message), http.StatusNotFound, message)
 	}
 
 	binding, err := b.bindings.Get(instanceID, bindingID)
 
 	if binding == nil {
 		message := "Binding not found"
-		return domain.GetBindingSpec{}, apiresponses.NewFailureResponse(fmt.Errorf(message), http.StatusNotFound, message)
+		return domain.GetBindingSpec{}, apiresponses.NewFailureResponse(errors.New(message), http.StatusNotFound, message)
 	}
 
 	if binding.ExpiresAt.Before(time.Now()) {
 		b.log.Info(fmt.Sprintf("GetBinding was called for expired binding %s for instance %s", bindingID, instanceID))
 		message := "Binding expired"
-		return domain.GetBindingSpec{}, apiresponses.NewFailureResponse(fmt.Errorf(message), http.StatusNotFound, message)
+		return domain.GetBindingSpec{}, apiresponses.NewFailureResponse(errors.New(message), http.StatusNotFound, message)
 	}
 
 	if len(binding.Kubeconfig) == 0 {
 		message := "Binding creation in progress"
-		return domain.GetBindingSpec{}, apiresponses.NewFailureResponse(fmt.Errorf(message), http.StatusNotFound, message)
+		return domain.GetBindingSpec{}, apiresponses.NewFailureResponse(errors.New(message), http.StatusNotFound, message)
 	}
 
 	if err != nil {
 		b.log.Error(fmt.Sprintf("GetBinding error: %s", err))
 		message := fmt.Sprintf("Unexpected error: %s", err)
-		return domain.GetBindingSpec{}, apiresponses.NewFailureResponse(fmt.Errorf(message), http.StatusInternalServerError, message)
+		return domain.GetBindingSpec{}, apiresponses.NewFailureResponse(errors.New(message), http.StatusInternalServerError, message)
 	}
 
 	return domain.GetBindingSpec{

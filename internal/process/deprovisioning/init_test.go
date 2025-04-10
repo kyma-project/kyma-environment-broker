@@ -13,11 +13,10 @@ import (
 )
 
 const (
-	fixOperationID            = "17f3ddba-1132-466d-a3c5-920f544d7ea6"
-	fixInstanceID             = "9d75a545-2e1e-4786-abd8-a37b14e185b9"
-	fixRuntimeID              = "ef4e3210-652c-453e-8015-bba1c1cd1e1c"
-	fixGlobalAccountID        = "abf73c71-a653-4951-b9c2-a26d6c2cccbd"
-	fixProvisionerOperationID = "e04de524-53b3-4890-b05a-296be393e4ba"
+	fixOperationID     = "17f3ddba-1132-466d-a3c5-920f544d7ea6"
+	fixInstanceID      = "9d75a545-2e1e-4786-abd8-a37b14e185b9"
+	fixRuntimeID       = "ef4e3210-652c-453e-8015-bba1c1cd1e1c"
+	fixGlobalAccountID = "abf73c71-a653-4951-b9c2-a26d6c2cccbd"
 )
 
 func TestInitStep_happyPath(t *testing.T) {
@@ -26,7 +25,7 @@ func TestInitStep_happyPath(t *testing.T) {
 	prepareProvisionedInstance(t, memoryStorage)
 	dOp := prepareDeprovisioningOperation(t, memoryStorage, orchestration.Pending)
 
-	svc := NewInitStep(memoryStorage.Operations(), memoryStorage.Instances(), 90*time.Second)
+	svc := NewInitStep(memoryStorage, 90*time.Second)
 
 	// when
 	op, d, err := svc.Run(dOp, fixLogger())
@@ -49,7 +48,7 @@ func TestInitStep_existingUpdatingOperation(t *testing.T) {
 	assert.NoError(t, err)
 	dOp := prepareDeprovisioningOperation(t, memoryStorage, orchestration.Pending)
 
-	svc := NewInitStep(memoryStorage.Operations(), memoryStorage.Instances(), 90*time.Second)
+	svc := NewInitStep(memoryStorage, 90*time.Second)
 
 	// when
 	op, d, err := svc.Run(dOp, fixLogger())

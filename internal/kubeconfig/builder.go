@@ -19,8 +19,6 @@ type Config struct {
 type Builder struct {
 	kubeconfigProvider kubeconfigProvider
 	kcpClient          client.Client
-	useAdditionalOIDC  bool
-	useMainOIDC        bool
 	multipleContexts   bool
 }
 
@@ -28,12 +26,10 @@ type kubeconfigProvider interface {
 	KubeconfigForRuntimeID(runtimeID string) ([]byte, error)
 }
 
-func NewBuilder(kcpClient client.Client, provider kubeconfigProvider, useAdditionalOIDC, useMainOIDC, multipleContexts bool) *Builder {
+func NewBuilder(kcpClient client.Client, provider kubeconfigProvider, multipleContexts bool) *Builder {
 	return &Builder{
 		kcpClient:          kcpClient,
 		kubeconfigProvider: provider,
-		useAdditionalOIDC:  useAdditionalOIDC,
-		useMainOIDC:        useMainOIDC,
 		multipleContexts:   multipleContexts,
 	}
 }
@@ -177,44 +173,30 @@ func (b *Builder) getOidcDataFromRuntimeResource(id string, currentContext strin
 	if err != nil {
 		return nil, err
 	}
-	if !b.useMainOIDC && b.useAdditionalOIDC {
-		additionalConfigs := runtime.Spec.Shoot.Kubernetes.KubeAPIServer.AdditionalOidcConfig
-		if additionalConfigs == nil {
-			return nil, fmt.Errorf("Runtime Resource contains no additional OIDC config")
-		}
-		for i, config := range *additionalConfigs {
-			if config.IssuerURL == nil {
-				return nil, fmt.Errorf("Runtime Resource contains an empty OIDC issuer URL")
-			}
-			if config.ClientID == nil {
-				return nil, fmt.Errorf("Runtime Resource contains an empty OIDC client ID")
-			}
-			name := currentContext
-			if i > 0 {
-				name = fmt.Sprintf("%s-%d", currentContext, i+1)
-			}
-			oidcConfigs = append(oidcConfigs, OIDCConfig{
-				Name:      name,
-				IssuerURL: *config.IssuerURL,
-				ClientID:  *config.ClientID,
-			})
-			if !b.multipleContexts {
-				return oidcConfigs, nil
-			}
-		}
-	} else {
-		mainConfig := runtime.Spec.Shoot.Kubernetes.KubeAPIServer.OidcConfig
-		if mainConfig.IssuerURL == nil {
+	additionalConfigs := runtime.Spec.Shoot.Kubernetes.KubeAPIServer.AdditionalOidcConfig
+	if additionalConfigs == nil {
+		return nil, fmt.Errorf("Runtime Resource contains no additional OIDC config")
+	}
+	for i, config := range *additionalConfigs {
+		if config.IssuerURL == nil {
 			return nil, fmt.Errorf("Runtime Resource contains an empty OIDC issuer URL")
 		}
-		if mainConfig.ClientID == nil {
+		if config.ClientID == nil {
 			return nil, fmt.Errorf("Runtime Resource contains an empty OIDC client ID")
 		}
+		name := currentContext
+		if i > 0 {
+			name = fmt.Sprintf("%s-%d", currentContext, i+1)
+		}
 		oidcConfigs = append(oidcConfigs, OIDCConfig{
-			Name:      currentContext,
-			IssuerURL: *mainConfig.IssuerURL,
-			ClientID:  *mainConfig.ClientID,
+			Name:      name,
+			IssuerURL: *config.IssuerURL,
+			ClientID:  *config.ClientID,
 		})
+		if !b.multipleContexts {
+			return oidcConfigs, nil
+		}
 	}
+
 	return oidcConfigs, nil
 }

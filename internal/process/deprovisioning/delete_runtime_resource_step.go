@@ -31,11 +31,11 @@ type DeleteRuntimeResourceStep struct {
 	kcpClient        client.Client
 }
 
-func NewDeleteRuntimeResourceStep(operations storage.Operations, kcpClient client.Client) *DeleteRuntimeResourceStep {
+func NewDeleteRuntimeResourceStep(db storage.BrokerStorage, kcpClient client.Client) *DeleteRuntimeResourceStep {
 	step := &DeleteRuntimeResourceStep{
 		kcpClient: kcpClient,
 	}
-	step.operationManager = process.NewOperationManager(operations, step.Name(), kebError.InfrastructureManagerDependency)
+	step.operationManager = process.NewOperationManager(db.Operations(), step.Name(), kebError.InfrastructureManagerDependency)
 	return step
 }
 

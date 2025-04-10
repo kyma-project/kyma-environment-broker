@@ -175,11 +175,13 @@ func TestProvisioning_SeedAndShootSameRegion(t *testing.T) {
 	// given
 	suite := NewBrokerSuiteTest(t)
 	defer suite.TearDown()
-	iid := uuid.New().String()
 
-	// when
-	resp := suite.CallAPI("PUT", fmt.Sprintf("oauth/v2/service_instances/%s?accepts_incomplete=true", iid),
-		`{
+	t.Run("should accept the provisioning param and set EnforceSeedLocation to false in Runtime CR", func(t *testing.T) {
+		iid := uuid.New().String()
+
+		// when
+		resp := suite.CallAPI("PUT", fmt.Sprintf("oauth/v2/service_instances/%s?accepts_incomplete=true", iid),
+			`{
 					"service_id": "47c9dcbf-ff30-448e-ab36-d3bad66ba281",
 					"plan_id": "361c511f-f939-4621-b228-d0fb79a1fe15",
 					"context": {
@@ -193,15 +195,46 @@ func TestProvisioning_SeedAndShootSameRegion(t *testing.T) {
 						"shootAndSeedSameRegion": false
 					}
 		}`)
-	opID := suite.DecodeOperationID(resp)
+		opID := suite.DecodeOperationID(resp)
 
-	suite.processKIMProvisioningByOperationID(opID)
+		suite.processKIMProvisioningByOperationID(opID)
 
-	// then
-	suite.WaitForOperationState(opID, domain.Succeeded)
+		// then
+		suite.WaitForOperationState(opID, domain.Succeeded)
 
-	runtime := suite.GetRuntimeResourceByInstanceID(iid)
-	assert.False(t, *runtime.Spec.Shoot.EnforceSeedLocation)
+		runtime := suite.GetRuntimeResourceByInstanceID(iid)
+		assert.False(t, *runtime.Spec.Shoot.EnforceSeedLocation)
+	})
+
+	t.Run("should accept the provisioning param and set EnforceSeedLocation to true in Runtime CR", func(t *testing.T) {
+		iid := uuid.New().String()
+
+		// when
+		resp := suite.CallAPI("PUT", fmt.Sprintf("oauth/v2/service_instances/%s?accepts_incomplete=true", iid),
+			`{
+					"service_id": "47c9dcbf-ff30-448e-ab36-d3bad66ba281",
+					"plan_id": "361c511f-f939-4621-b228-d0fb79a1fe15",
+					"context": {
+						"globalaccount_id": "g-account-id",
+						"subaccount_id": "sub-id",
+						"user_id": "john.smith@email.com"
+					},
+					"parameters": {
+						"name": "testing-cluster",
+						"region": "us-east-1",
+						"shootAndSeedSameRegion": true
+					}
+		}`)
+		opID := suite.DecodeOperationID(resp)
+
+		suite.processKIMProvisioningByOperationID(opID)
+
+		// then
+		suite.WaitForOperationState(opID, domain.Succeeded)
+
+		runtime := suite.GetRuntimeResourceByInstanceID(iid)
+		assert.True(t, *runtime.Spec.Shoot.EnforceSeedLocation)
+	})
 }
 
 func TestProvisioning_HappyPathSapConvergedCloud(t *testing.T) {
@@ -816,56 +849,6 @@ func TestProvisioning_TrialAtEU(t *testing.T) {
 
 }
 
-func TestProvisioning_HandleExistingOperation(t *testing.T) {
-	// given
-	suite := NewBrokerSuiteTest(t)
-	defer suite.TearDown()
-	iid := uuid.New().String()
-
-	// when
-	firstResp := suite.CallAPI("PUT", fmt.Sprintf("oauth/cf-eu10/v2/service_instances/%s?accepts_incomplete=true", iid),
-		`{
-					"service_id": "47c9dcbf-ff30-448e-ab36-d3bad66ba281",
-					"plan_id": "7d55d31d-35ae-4438-bf13-6ffdfa107d9f",
-					"context": {
-						"sm_platform_credentials": {
-							  "url": "https://sm.url",
-							  "credentials": {}
-					    },
-						"globalaccount_id": "g-account-id",
-						"subaccount_id": "sub-id",
-						"user_id": "john.smith@email.com"
-					},
-					"parameters": {
-						"name": "testing-cluster"
-					}
-		}`)
-
-	secondResp := suite.CallAPI("PUT", fmt.Sprintf("oauth/cf-eu10/v2/service_instances/%s?accepts_incomplete=true", iid),
-		`{
-					"service_id": "47c9dcbf-ff30-448e-ab36-d3bad66ba281",
-					"plan_id": "7d55d31d-35ae-4438-bf13-6ffdfa107d9f",
-					"context": {
-						"sm_platform_credentials": {
-							  "url": "https://sm.url",
-							  "credentials": {}
-					    },
-						"globalaccount_id": "g-account-id",
-						"subaccount_id": "sub-id",
-						"user_id": "john.smith@email.com"
-					},
-					"parameters": {
-						"name": "testing-cluster"
-					}
-		}`)
-
-	firstBodyBytes, _ := io.ReadAll(firstResp.Body)
-	secondBodyBytes, _ := io.ReadAll(secondResp.Body)
-
-	// then
-	assert.Equal(t, string(firstBodyBytes), string(secondBodyBytes))
-}
-
 func TestProvisioning_ClusterParameters(t *testing.T) {
 	for tn, tc := range map[string]struct {
 		planID                       string
@@ -1171,14 +1154,110 @@ func TestProvisioning_OIDCValues(t *testing.T) {
 
 		// then
 		runtime := suite.GetRuntimeResourceByInstanceID(iid)
-		gotOIDC := runtime.Spec.Shoot.Kubernetes.KubeAPIServer.OidcConfig
+		gotOIDC := runtime.Spec.Shoot.Kubernetes.KubeAPIServer.AdditionalOidcConfig
 
-		assert.Equal(t, defaultOIDCValues().ClientID, *gotOIDC.ClientID)
-		assert.Equal(t, defaultOIDCValues().GroupsClaim, *gotOIDC.GroupsClaim)
-		assert.Equal(t, defaultOIDCValues().IssuerURL, *gotOIDC.IssuerURL)
-		assert.Equal(t, defaultOIDCValues().SigningAlgs, gotOIDC.SigningAlgs)
-		assert.Equal(t, defaultOIDCValues().UsernameClaim, *gotOIDC.UsernameClaim)
-		assert.Equal(t, defaultOIDCValues().UsernamePrefix, *gotOIDC.UsernamePrefix)
+		assert.Equal(t, defaultOIDCValues().ClientID, *(*gotOIDC)[0].ClientID)
+		assert.Equal(t, defaultOIDCValues().GroupsClaim, *(*gotOIDC)[0].GroupsClaim)
+		assert.Equal(t, defaultOIDCValues().IssuerURL, *(*gotOIDC)[0].IssuerURL)
+		assert.Equal(t, defaultOIDCValues().SigningAlgs, (*gotOIDC)[0].SigningAlgs)
+		assert.Equal(t, defaultOIDCValues().UsernameClaim, *(*gotOIDC)[0].UsernameClaim)
+		assert.Equal(t, defaultOIDCValues().UsernamePrefix, *(*gotOIDC)[0].UsernamePrefix)
+		assert.Nil(t, (*gotOIDC)[0].RequiredClaims)
+	})
+
+	t.Run("should apply OIDC values list with one element", func(t *testing.T) {
+		// given
+		suite := NewBrokerSuiteTest(t)
+		defer suite.TearDown()
+		iid := uuid.New().String()
+
+		// when
+		resp := suite.CallAPI("PUT", fmt.Sprintf("oauth/v2/service_instances/%s?accepts_incomplete=true", iid),
+			fmt.Sprintf(`{
+					"service_id": "47c9dcbf-ff30-448e-ab36-d3bad66ba281",
+					"plan_id": "%s",
+					"context": {
+						"sm_platform_credentials": {
+							  "url": "https://sm.url",
+							  "credentials": {}
+					    },
+						"globalaccount_id": "g-account-id",
+						"subaccount_id": "sub-id",
+						"user_id": "john.smith@email.com"
+					},
+					"parameters": {
+						"region": "eu-central-1",
+						"name": "testing-cluster",
+						"oidc": {
+							"list": [
+								{
+									"clientID": "fake-client-id-1",
+									"groupsClaim": "fakeGroups",
+									"issuerURL": "https://testurl.local",
+									"signingAlgs": ["RS256", "RS384"],
+									"usernameClaim": "fakeUsernameClaim",
+									"usernamePrefix": "::",
+									"requiredClaims": ["claim=value"]
+								}
+							]
+						}
+					}
+		}`, broker.AWSPlanID))
+
+		opID := suite.DecodeOperationID(resp)
+		suite.processKIMProvisioningByOperationID(opID)
+		suite.WaitForOperationState(opID, domain.Succeeded)
+
+		// then
+		runtime := suite.GetRuntimeResourceByInstanceID(iid)
+		gotOIDC := runtime.Spec.Shoot.Kubernetes.KubeAPIServer.AdditionalOidcConfig
+
+		assert.Equal(t, ptr.String("fake-client-id-1"), (*gotOIDC)[0].ClientID)
+		assert.Equal(t, ptr.String("fakeGroups"), (*gotOIDC)[0].GroupsClaim)
+		assert.Equal(t, ptr.String("https://testurl.local"), (*gotOIDC)[0].IssuerURL)
+		assert.Equal(t, []string{"RS256", "RS384"}, (*gotOIDC)[0].SigningAlgs)
+		assert.Equal(t, ptr.String("fakeUsernameClaim"), (*gotOIDC)[0].UsernameClaim)
+		assert.Equal(t, ptr.String("::"), (*gotOIDC)[0].UsernamePrefix)
+		assert.Equal(t, map[string]string{"claim": "value"}, (*gotOIDC)[0].RequiredClaims)
+	})
+
+	t.Run("should apply empty OIDC list", func(t *testing.T) {
+		// given
+		suite := NewBrokerSuiteTest(t)
+		defer suite.TearDown()
+		iid := uuid.New().String()
+
+		// when
+		resp := suite.CallAPI("PUT", fmt.Sprintf("oauth/v2/service_instances/%s?accepts_incomplete=true", iid),
+			fmt.Sprintf(`{
+					"service_id": "47c9dcbf-ff30-448e-ab36-d3bad66ba281",
+					"plan_id": "%s",
+					"context": {
+						"sm_platform_credentials": {
+							  "url": "https://sm.url",
+							  "credentials": {}
+					    },
+						"globalaccount_id": "g-account-id",
+						"subaccount_id": "sub-id",
+						"user_id": "john.smith@email.com"
+					},
+					"parameters": {
+						"region": "eu-central-1",
+						"name": "testing-cluster",
+						"oidc": {
+							"list": []
+						}
+					}
+		}`, broker.AWSPlanID))
+
+		opID := suite.DecodeOperationID(resp)
+		suite.processKIMProvisioningByOperationID(opID)
+		suite.WaitForOperationState(opID, domain.Succeeded)
+
+		// then
+		runtime := suite.GetRuntimeResourceByInstanceID(iid)
+		gotOIDC := runtime.Spec.Shoot.Kubernetes.KubeAPIServer.AdditionalOidcConfig
+		assert.Empty(t, gotOIDC)
 	})
 
 	t.Run("should apply default OIDC values when all OIDC object's fields are empty", func(t *testing.T) {
@@ -1221,14 +1300,14 @@ func TestProvisioning_OIDCValues(t *testing.T) {
 
 		// then
 		runtime := suite.GetRuntimeResourceByInstanceID(iid)
-		gotOIDC := runtime.Spec.Shoot.Kubernetes.KubeAPIServer.OidcConfig
+		gotOIDC := runtime.Spec.Shoot.Kubernetes.KubeAPIServer.AdditionalOidcConfig
 
-		assert.Equal(t, defaultOIDCValues().ClientID, *gotOIDC.ClientID)
-		assert.Equal(t, defaultOIDCValues().GroupsClaim, *gotOIDC.GroupsClaim)
-		assert.Equal(t, defaultOIDCValues().IssuerURL, *gotOIDC.IssuerURL)
-		assert.Equal(t, defaultOIDCValues().SigningAlgs, gotOIDC.SigningAlgs)
-		assert.Equal(t, defaultOIDCValues().UsernameClaim, *gotOIDC.UsernameClaim)
-		assert.Equal(t, defaultOIDCValues().UsernamePrefix, *gotOIDC.UsernamePrefix)
+		assert.Equal(t, defaultOIDCValues().ClientID, *(*gotOIDC)[0].ClientID)
+		assert.Equal(t, defaultOIDCValues().GroupsClaim, *(*gotOIDC)[0].GroupsClaim)
+		assert.Equal(t, defaultOIDCValues().IssuerURL, *(*gotOIDC)[0].IssuerURL)
+		assert.Equal(t, defaultOIDCValues().SigningAlgs, (*gotOIDC)[0].SigningAlgs)
+		assert.Equal(t, defaultOIDCValues().UsernameClaim, *(*gotOIDC)[0].UsernameClaim)
+		assert.Equal(t, defaultOIDCValues().UsernamePrefix, *(*gotOIDC)[0].UsernamePrefix)
 	})
 
 	t.Run("should apply provided OIDC configuration", func(t *testing.T) {
@@ -1271,17 +1350,17 @@ func TestProvisioning_OIDCValues(t *testing.T) {
 
 		// then
 		runtime := suite.GetRuntimeResourceByInstanceID(iid)
-		gotOIDC := runtime.Spec.Shoot.Kubernetes.KubeAPIServer.OidcConfig
+		gotOIDC := runtime.Spec.Shoot.Kubernetes.KubeAPIServer.AdditionalOidcConfig
 
-		assert.Equal(t, "fake-client-id-1", *gotOIDC.ClientID)
-		assert.Equal(t, "fakeGroups", *gotOIDC.GroupsClaim)
-		assert.Equal(t, "https://testurl.local", *gotOIDC.IssuerURL)
-		assert.Equal(t, []string{"RS256", "RS384"}, gotOIDC.SigningAlgs)
-		assert.Equal(t, "fakeUsernameClaim", *gotOIDC.UsernameClaim)
-		assert.Equal(t, "::", *gotOIDC.UsernamePrefix)
+		assert.Equal(t, "fake-client-id-1", *(*gotOIDC)[0].ClientID)
+		assert.Equal(t, "fakeGroups", *(*gotOIDC)[0].GroupsClaim)
+		assert.Equal(t, "https://testurl.local", *(*gotOIDC)[0].IssuerURL)
+		assert.Equal(t, []string{"RS256", "RS384"}, (*gotOIDC)[0].SigningAlgs)
+		assert.Equal(t, "fakeUsernameClaim", *(*gotOIDC)[0].UsernameClaim)
+		assert.Equal(t, "::", *(*gotOIDC)[0].UsernamePrefix)
 	})
 
-	t.Run("should apply default OIDC values when all OIDC object's fields are empty", func(t *testing.T) {
+	t.Run("should apply default OIDC values when all OIDC object's fields are not present", func(t *testing.T) {
 		// given
 		suite := NewBrokerSuiteTest(t)
 		defer suite.TearDown()
@@ -1315,14 +1394,14 @@ func TestProvisioning_OIDCValues(t *testing.T) {
 
 		// then
 		runtime := suite.GetRuntimeResourceByInstanceID(iid)
-		gotOIDC := runtime.Spec.Shoot.Kubernetes.KubeAPIServer.OidcConfig
+		gotOIDC := runtime.Spec.Shoot.Kubernetes.KubeAPIServer.AdditionalOidcConfig
 
-		assert.Equal(t, defaultOIDCValues().ClientID, *gotOIDC.ClientID)
-		assert.Equal(t, defaultOIDCValues().GroupsClaim, *gotOIDC.GroupsClaim)
-		assert.Equal(t, defaultOIDCValues().IssuerURL, *gotOIDC.IssuerURL)
-		assert.Equal(t, defaultOIDCValues().SigningAlgs, gotOIDC.SigningAlgs)
-		assert.Equal(t, defaultOIDCValues().UsernameClaim, *gotOIDC.UsernameClaim)
-		assert.Equal(t, defaultOIDCValues().UsernamePrefix, *gotOIDC.UsernamePrefix)
+		assert.Equal(t, defaultOIDCValues().ClientID, *(*gotOIDC)[0].ClientID)
+		assert.Equal(t, defaultOIDCValues().GroupsClaim, *(*gotOIDC)[0].GroupsClaim)
+		assert.Equal(t, defaultOIDCValues().IssuerURL, *(*gotOIDC)[0].IssuerURL)
+		assert.Equal(t, defaultOIDCValues().SigningAlgs, (*gotOIDC)[0].SigningAlgs)
+		assert.Equal(t, defaultOIDCValues().UsernameClaim, *(*gotOIDC)[0].UsernameClaim)
+		assert.Equal(t, defaultOIDCValues().UsernamePrefix, *(*gotOIDC)[0].UsernamePrefix)
 	})
 }
 

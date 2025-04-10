@@ -28,13 +28,13 @@ const (
 	dbRetryTimeout  = 1 * time.Minute
 )
 
-func NewInitStep(operations storage.Operations, instances storage.Instances, operationTimeout time.Duration) *InitStep {
+func NewInitStep(db storage.BrokerStorage, operationTimeout time.Duration) *InitStep {
 	step := &InitStep{
 		operationTimeout: operationTimeout,
-		operationStorage: operations,
-		instanceStorage:  instances,
+		operationStorage: db.Operations(),
+		instanceStorage:  db.Instances(),
 	}
-	step.operationManager = process.NewOperationManager(operations, step.Name(), kebError.KEBDependency)
+	step.operationManager = process.NewOperationManager(step.operationStorage, step.Name(), kebError.KEBDependency)
 	return step
 }
 

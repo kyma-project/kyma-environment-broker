@@ -160,11 +160,11 @@ func (c *Client) do(sciReq *Request) (*http.Response, error) {
 			return response, nil
 		}
 	case http.StatusRequestTimeout:
-		return response, kebError.NewTemporaryError(c.responseErrorMessage(response))
+		return response, kebError.NewTemporaryError("%s", c.responseErrorMessage(response))
 	}
 
 	if response.StatusCode >= http.StatusInternalServerError {
-		return response, kebError.NewTemporaryError(c.responseErrorMessage(response))
+		return response, kebError.NewTemporaryError("%s", c.responseErrorMessage(response))
 	}
 	return response, fmt.Errorf("while sending request to IAS: %s", c.responseErrorMessage(response))
 }

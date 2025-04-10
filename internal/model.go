@@ -9,7 +9,6 @@ import (
 	"github.com/kyma-project/kyma-environment-broker/internal/euaccess"
 
 	"github.com/google/uuid"
-	"github.com/kyma-project/control-plane/components/provisioner/pkg/gqlschema"
 	"github.com/kyma-project/kyma-environment-broker/common/gardener"
 	"github.com/kyma-project/kyma-environment-broker/common/orchestration"
 	pkg "github.com/kyma-project/kyma-environment-broker/common/runtime"
@@ -17,26 +16,6 @@ import (
 	"github.com/kyma-project/kyma-environment-broker/internal/events"
 	"github.com/pivotal-cf/brokerapi/v12/domain"
 )
-
-type ProvisionerInputCreator interface {
-	SetProvisioningParameters(params ProvisioningParameters) ProvisionerInputCreator
-	SetShootName(string) ProvisionerInputCreator
-	SetLabel(key, value string) ProvisionerInputCreator
-	CreateProvisionRuntimeInput() (gqlschema.ProvisionRuntimeInput, error)
-	CreateUpgradeRuntimeInput() (gqlschema.UpgradeRuntimeInput, error)
-	CreateUpgradeShootInput() (gqlschema.UpgradeShootInput, error)
-	Provider() pkg.CloudProvider
-	Configuration() *ConfigForPlan
-
-	CreateProvisionClusterInput() (gqlschema.ProvisionRuntimeInput, error)
-	SetKubeconfig(kcfg string) ProvisionerInputCreator
-	SetRuntimeID(runtimeID string) ProvisionerInputCreator
-	SetInstanceID(instanceID string) ProvisionerInputCreator
-	SetShootDomain(shootDomain string) ProvisionerInputCreator
-	SetShootDNSProviders(dnsProviders gardener.DNSProvidersData) ProvisionerInputCreator
-	SetClusterName(name string) ProvisionerInputCreator
-	SetOIDCLastValues(oidcConfig gqlschema.OIDCConfigInput) ProvisionerInputCreator
-}
 
 type EventHub struct {
 	Deleted bool `json:"event_hub_deleted"`
@@ -328,28 +307,6 @@ type UpgradeClusterOperation struct {
 	Operation
 }
 
-func NewRuntimeState(runtimeID, operationID string, kymaConfig *gqlschema.KymaConfigInput, clusterConfig *gqlschema.GardenerConfigInput) RuntimeState {
-	var (
-		kymaConfigInput    gqlschema.KymaConfigInput
-		clusterConfigInput gqlschema.GardenerConfigInput
-	)
-	if kymaConfig != nil {
-		kymaConfigInput = *kymaConfig
-	}
-	if clusterConfig != nil {
-		clusterConfigInput = *clusterConfig
-	}
-
-	return RuntimeState{
-		ID:            uuid.New().String(),
-		CreatedAt:     time.Now(),
-		RuntimeID:     runtimeID,
-		OperationID:   operationID,
-		KymaConfig:    kymaConfigInput,
-		ClusterConfig: clusterConfigInput,
-	}
-}
-
 type RuntimeState struct {
 	ID string `json:"id"`
 
@@ -357,9 +314,6 @@ type RuntimeState struct {
 
 	RuntimeID   string `json:"runtimeId"`
 	OperationID string `json:"operationId"`
-
-	KymaConfig    gqlschema.KymaConfigInput     `json:"kymaConfig"`
-	ClusterConfig gqlschema.GardenerConfigInput `json:"clusterConfig"`
 }
 
 // OperationStats provide number of operations per type and state

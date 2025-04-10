@@ -3,6 +3,7 @@ package broker_test
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"log/slog"
 	"net/http"
@@ -13,13 +14,11 @@ import (
 
 	"github.com/pivotal-cf/brokerapi/v12/domain/apiresponses"
 
-	"github.com/kyma-project/control-plane/components/provisioner/pkg/gqlschema"
 	"github.com/kyma-project/kyma-environment-broker/common/gardener"
 	pkg "github.com/kyma-project/kyma-environment-broker/common/runtime"
 	"github.com/kyma-project/kyma-environment-broker/internal"
 	"github.com/kyma-project/kyma-environment-broker/internal/broker"
 	"github.com/kyma-project/kyma-environment-broker/internal/broker/automock"
-	"github.com/kyma-project/kyma-environment-broker/internal/dashboard"
 	"github.com/kyma-project/kyma-environment-broker/internal/fixture"
 	kcMock "github.com/kyma-project/kyma-environment-broker/internal/kubeconfig/automock"
 	"github.com/kyma-project/kyma-environment-broker/internal/middleware"
@@ -51,8 +50,6 @@ const (
 	shootDomain          = "kyma-dev.shoot.canary.k8s-hana.ondemand.com"
 )
 
-var dashboardConfig = dashboard.Config{LandscapeURL: "https://dashboard.example.com"}
-
 func TestProvision_Provision(t *testing.T) {
 	log := slog.New(slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{
 		Level: slog.LevelInfo,
@@ -68,33 +65,27 @@ func TestProvision_Provision(t *testing.T) {
 		factoryBuilder := &automock.PlanValidator{}
 		factoryBuilder.On("IsPlanSupport", planID).Return(true)
 
-		planDefaults := func(planID string, platformProvider pkg.CloudProvider, provider *pkg.CloudProvider) (*gqlschema.ClusterConfigInput, error) {
-			return &gqlschema.ClusterConfigInput{}, nil
-		}
 		kcBuilder := &kcMock.KcBuilder{}
 		kcBuilder.On("GetServerURL", "").Return("", fmt.Errorf("error"))
 		// #create provisioner endpoint
 		provisionEndpoint := broker.NewProvision(
 			broker.Config{
-				EnablePlans:              []string{"gcp", "azure"},
-				URL:                      brokerURL,
-				OnlySingleTrialPerGA:     true,
-				EnableKubeconfigURLLabel: true,
+				EnablePlans:          []string{"gcp", "azure"},
+				URL:                  brokerURL,
+				OnlySingleTrialPerGA: true,
 			},
 			gardener.Config{Project: "test", ShootDomain: "example.com", DNSProviders: fixDNSProviders()},
-			memoryStorage.Operations(),
-			memoryStorage.Instances(),
-			memoryStorage.InstancesArchived(),
+			memoryStorage,
 			queue,
-			factoryBuilder,
 			broker.PlansConfig{},
-			planDefaults,
 			log,
 			dashboardConfig,
 			kcBuilder,
 			whitelist.Set{},
 			&broker.OneForAllConvergedCloudRegionsProvider{},
 			nil,
+			fixValueProvider(),
+			false,
 		)
 
 		// when
@@ -112,7 +103,6 @@ func TestProvision_Provision(t *testing.T) {
 		assert.NotEqual(t, instanceID, response.OperationData)
 		assert.Regexp(t, `^https:\/\/dashboard\.example\.com\/\?kubeconfigID=`, response.DashboardURL)
 		assert.Equal(t, clusterName, response.Metadata.Labels["Name"])
-		assert.Equal(t, fmt.Sprintf("https://%s/kubeconfig/%s", brokerURL, instanceID), response.Metadata.Labels["KubeconfigURL"])
 		assert.NotContains(t, response.Metadata.Labels, "APIServerURL")
 
 		operation, err := memoryStorage.Operations().GetProvisioningOperationByID(response.OperationData)
@@ -133,6 +123,7 @@ func TestProvision_Provision(t *testing.T) {
 		assert.Regexp(t, `^https:\/\/dashboard\.example\.com\/\?kubeconfigID=`, response.DashboardURL)
 		assert.Equal(t, instance.GlobalAccountID, globalAccountID)
 		assert.Equal(t, fixDNSProviders(), instance.InstanceDetails.ShootDNSProviders)
+		assert.Equal(t, pkg.Azure, instance.Provider)
 	})
 
 	t.Run("new operation for own_cluster plan with kubeconfig will be created", func(t *testing.T) {
@@ -146,32 +137,26 @@ func TestProvision_Provision(t *testing.T) {
 		factoryBuilder := &automock.PlanValidator{}
 		factoryBuilder.On("IsPlanSupport", broker.OwnClusterPlanID).Return(true)
 
-		planDefaults := func(planID string, platformProvider pkg.CloudProvider, provider *pkg.CloudProvider) (*gqlschema.ClusterConfigInput, error) {
-			return &gqlschema.ClusterConfigInput{}, nil
-		}
 		kcBuilder := &kcMock.KcBuilder{}
 		// #create provisioner endpoint
 		provisionEndpoint := broker.NewProvision(
 			broker.Config{
-				EnablePlans:              []string{"gcp", "azure", "own_cluster"},
-				URL:                      brokerURL,
-				OnlySingleTrialPerGA:     true,
-				EnableKubeconfigURLLabel: true,
+				EnablePlans:          []string{"gcp", "azure", "own_cluster"},
+				URL:                  brokerURL,
+				OnlySingleTrialPerGA: true,
 			},
 			gardener.Config{Project: "test", ShootDomain: "example.com", DNSProviders: fixDNSProviders()},
-			memoryStorage.Operations(),
-			memoryStorage.Instances(),
-			memoryStorage.InstancesArchived(),
+			memoryStorage,
 			queue,
-			factoryBuilder,
 			broker.PlansConfig{},
-			planDefaults,
 			log,
 			dashboardConfig,
 			kcBuilder,
 			whitelist.Set{},
 			&broker.OneForAllConvergedCloudRegionsProvider{},
 			nil,
+			fixValueProvider(),
+			false,
 		)
 
 		// when
@@ -227,32 +212,26 @@ func TestProvision_Provision(t *testing.T) {
 		factoryBuilder := &automock.PlanValidator{}
 		factoryBuilder.On("IsPlanSupport", broker.OwnClusterPlanID).Return(true)
 
-		planDefaults := func(planID string, platformProvider pkg.CloudProvider, provider *pkg.CloudProvider) (*gqlschema.ClusterConfigInput, error) {
-			return &gqlschema.ClusterConfigInput{}, nil
-		}
 		kcBuilder := &kcMock.KcBuilder{}
 		// #create provisioner endpoint
 		provisionEndpoint := broker.NewProvision(
 			broker.Config{
-				EnablePlans:              []string{"gcp", "azure", "own_cluster"},
-				URL:                      brokerURL,
-				OnlySingleTrialPerGA:     true,
-				EnableKubeconfigURLLabel: true,
+				EnablePlans:          []string{"gcp", "azure", "own_cluster"},
+				URL:                  brokerURL,
+				OnlySingleTrialPerGA: true,
 			},
 			gardener.Config{Project: "test", ShootDomain: "example.com", DNSProviders: fixDNSProviders()},
-			memoryStorage.Operations(),
-			memoryStorage.Instances(),
-			memoryStorage.InstancesArchived(),
+			memoryStorage,
 			queue,
-			factoryBuilder,
 			broker.PlansConfig{},
-			planDefaults,
 			log,
 			dashboardConfig,
 			kcBuilder,
 			whitelist.Set{},
 			&broker.OneForAllConvergedCloudRegionsProvider{},
 			nil,
+			fixValueProvider(),
+			false,
 		)
 
 		// when
@@ -279,32 +258,26 @@ func TestProvision_Provision(t *testing.T) {
 		factoryBuilder := &automock.PlanValidator{}
 		factoryBuilder.On("IsPlanSupport", broker.OwnClusterPlanID).Return(true)
 
-		planDefaults := func(planID string, platformProvider pkg.CloudProvider, provider *pkg.CloudProvider) (*gqlschema.ClusterConfigInput, error) {
-			return &gqlschema.ClusterConfigInput{}, nil
-		}
 		kcBuilder := &kcMock.KcBuilder{}
 		// #create provisioner endpoint
 		provisionEndpoint := broker.NewProvision(
 			broker.Config{
-				EnablePlans:              []string{"gcp", "azure", "own_cluster"},
-				URL:                      brokerURL,
-				OnlySingleTrialPerGA:     true,
-				EnableKubeconfigURLLabel: true,
+				EnablePlans:          []string{"gcp", "azure", "own_cluster"},
+				URL:                  brokerURL,
+				OnlySingleTrialPerGA: true,
 			},
 			gardener.Config{Project: "test", ShootDomain: "example.com", DNSProviders: fixDNSProviders()},
-			memoryStorage.Operations(),
-			memoryStorage.Instances(),
-			memoryStorage.InstancesArchived(),
+			memoryStorage,
 			queue,
-			factoryBuilder,
 			broker.PlansConfig{},
-			planDefaults,
 			log,
 			dashboardConfig,
 			kcBuilder,
 			whitelist.Set{},
 			&broker.OneForAllConvergedCloudRegionsProvider{},
 			nil,
+			fixValueProvider(),
+			false,
 		)
 
 		// when shootDomain is missing
@@ -355,33 +328,27 @@ func TestProvision_Provision(t *testing.T) {
 		factoryBuilder := &automock.PlanValidator{}
 		factoryBuilder.On("IsPlanSupport", planID).Return(true)
 
-		planDefaults := func(planID string, platformProvider pkg.CloudProvider, provider *pkg.CloudProvider) (*gqlschema.ClusterConfigInput, error) {
-			return &gqlschema.ClusterConfigInput{}, nil
-		}
 		kcBuilder := &kcMock.KcBuilder{}
 		kcBuilder.On("GetServerURL", "").Return("", fmt.Errorf("error"))
 		// #create provisioner endpoint
 		provisionEndpoint := broker.NewProvision(
 			broker.Config{
-				EnablePlans:              []string{"gcp", "azure"},
-				URL:                      brokerURL,
-				OnlySingleTrialPerGA:     true,
-				EnableKubeconfigURLLabel: true,
+				EnablePlans:          []string{"gcp", "azure"},
+				URL:                  brokerURL,
+				OnlySingleTrialPerGA: true,
 			},
 			gardener.Config{Project: "test", ShootDomain: "example.com", DNSProviders: fixDNSProviders()},
-			memoryStorage.Operations(),
-			memoryStorage.Instances(),
-			memoryStorage.InstancesArchived(),
+			memoryStorage,
 			queue,
-			factoryBuilder,
 			broker.PlansConfig{},
-			planDefaults,
 			log,
 			dashboardConfig,
 			kcBuilder,
 			whitelist.Set{},
 			&broker.OneForAllConvergedCloudRegionsProvider{},
 			nil,
+			fixValueProvider(),
+			false,
 		)
 
 		// when
@@ -400,7 +367,6 @@ func TestProvision_Provision(t *testing.T) {
 		assert.NotEqual(t, instanceID, response.OperationData)
 		assert.Regexp(t, `^https:\/\/dashboard\.example\.com\/\?kubeconfigID=`, response.DashboardURL)
 		assert.Equal(t, clusterName, response.Metadata.Labels["Name"])
-		assert.Equal(t, fmt.Sprintf("https://%s/kubeconfig/%s", brokerURL, instanceID), response.Metadata.Labels["KubeconfigURL"])
 		assert.NotContains(t, response.Metadata.Labels, "APIServerURL")
 
 		operation, err := memoryStorage.Operations().GetProvisioningOperationByID(response.OperationData)
@@ -436,32 +402,26 @@ func TestProvision_Provision(t *testing.T) {
 		factoryBuilder := &automock.PlanValidator{}
 		factoryBuilder.On("IsPlanSupport", planID).Return(true)
 
-		planDefaults := func(planID string, platformProvider pkg.CloudProvider, provider *pkg.CloudProvider) (*gqlschema.ClusterConfigInput, error) {
-			return &gqlschema.ClusterConfigInput{}, nil
-		}
 		kcBuilder := &kcMock.KcBuilder{}
 		kcBuilder.On("GetServerURL", mock.AnythingOfType("string")).Return("", fmt.Errorf("error"))
 		// #create provisioner endpoint
 		provisionEndpoint := broker.NewProvision(
 			broker.Config{
-				EnablePlans:              []string{"gcp", "azure", "azure_lite"},
-				OnlySingleTrialPerGA:     true,
-				EnableKubeconfigURLLabel: true,
+				EnablePlans:          []string{"gcp", "azure", "azure_lite"},
+				OnlySingleTrialPerGA: true,
 			},
 			gardener.Config{Project: "test", ShootDomain: "example.com", DNSProviders: fixDNSProviders()},
-			memoryStorage.Operations(),
-			memoryStorage.Instances(),
-			memoryStorage.InstancesArchived(),
+			memoryStorage,
 			nil,
-			factoryBuilder,
 			broker.PlansConfig{},
-			planDefaults,
 			log,
 			dashboardConfig,
 			kcBuilder,
 			whitelist.Set{},
 			&broker.OneForAllConvergedCloudRegionsProvider{},
 			nil,
+			fixValueProvider(),
+			false,
 		)
 
 		// when
@@ -494,26 +454,21 @@ func TestProvision_Provision(t *testing.T) {
 		factoryBuilder := &automock.PlanValidator{}
 		factoryBuilder.On("IsPlanSupport", broker.TrialPlanID).Return(true)
 
-		planDefaults := func(planID string, platformProvider pkg.CloudProvider, provider *pkg.CloudProvider) (*gqlschema.ClusterConfigInput, error) {
-			return &gqlschema.ClusterConfigInput{}, nil
-		}
 		kcBuilder := &kcMock.KcBuilder{}
 		provisionEndpoint := broker.NewProvision(
 			broker.Config{EnablePlans: []string{"gcp", "azure", "azure_lite", broker.TrialPlanName}, OnlySingleTrialPerGA: true},
 			gardener.Config{Project: "test", ShootDomain: "example.com", DNSProviders: fixDNSProviders()},
-			memoryStorage.Operations(),
-			memoryStorage.Instances(),
-			memoryStorage.InstancesArchived(),
+			memoryStorage,
 			nil,
-			factoryBuilder,
 			broker.PlansConfig{},
-			planDefaults,
 			log,
 			dashboardConfig,
 			kcBuilder,
 			whitelist.Set{},
 			&broker.OneForAllConvergedCloudRegionsProvider{},
 			nil,
+			fixValueProvider(),
+			false,
 		)
 
 		// when
@@ -547,26 +502,21 @@ func TestProvision_Provision(t *testing.T) {
 		factoryBuilder := &automock.PlanValidator{}
 		factoryBuilder.On("IsPlanSupport", broker.TrialPlanID).Return(true)
 
-		planDefaults := func(planID string, platformProvider pkg.CloudProvider, provider *pkg.CloudProvider) (*gqlschema.ClusterConfigInput, error) {
-			return &gqlschema.ClusterConfigInput{}, nil
-		}
 		kcBuilder := &kcMock.KcBuilder{}
 		provisionEndpoint := broker.NewProvision(
 			broker.Config{EnablePlans: []string{"gcp", "azure", "azure_lite", broker.TrialPlanName}, OnlySingleTrialPerGA: false},
 			gardener.Config{Project: "test", ShootDomain: "example.com", DNSProviders: fixDNSProviders()},
-			memoryStorage.Operations(),
-			memoryStorage.Instances(),
-			memoryStorage.InstancesArchived(),
+			memoryStorage,
 			queue,
-			factoryBuilder,
 			broker.PlansConfig{},
-			planDefaults,
 			log,
 			dashboardConfig,
 			kcBuilder,
 			whitelist.Set{},
 			&broker.OneForAllConvergedCloudRegionsProvider{},
 			nil,
+			fixValueProvider(),
+			false,
 		)
 
 		// when
@@ -614,26 +564,21 @@ func TestProvision_Provision(t *testing.T) {
 		factoryBuilder := &automock.PlanValidator{}
 		factoryBuilder.On("IsPlanSupport", broker.TrialPlanID).Return(true)
 
-		planDefaults := func(planID string, platformProvider pkg.CloudProvider, provider *pkg.CloudProvider) (*gqlschema.ClusterConfigInput, error) {
-			return &gqlschema.ClusterConfigInput{}, nil
-		}
 		kcBuilder := &kcMock.KcBuilder{}
 		provisionEndpoint := broker.NewProvision(
 			broker.Config{EnablePlans: []string{"gcp", "azure", "trial"}, OnlySingleTrialPerGA: true},
 			gardener.Config{Project: "test", ShootDomain: "example.com", DNSProviders: fixDNSProviders()},
-			memoryStorage.Operations(),
-			memoryStorage.Instances(),
-			memoryStorage.InstancesArchived(),
+			memoryStorage,
 			queue,
-			factoryBuilder,
 			broker.PlansConfig{},
-			planDefaults,
 			log,
 			dashboardConfig,
 			kcBuilder,
 			whitelist.Set{},
 			&broker.OneForAllConvergedCloudRegionsProvider{},
 			nil,
+			fixValueProvider(),
+			false,
 		)
 
 		// when
@@ -681,26 +626,21 @@ func TestProvision_Provision(t *testing.T) {
 		factoryBuilder := &automock.PlanValidator{}
 		factoryBuilder.On("IsPlanSupport", broker.TrialPlanID).Return(true)
 
-		planDefaults := func(planID string, platformProvider pkg.CloudProvider, provider *pkg.CloudProvider) (*gqlschema.ClusterConfigInput, error) {
-			return &gqlschema.ClusterConfigInput{}, nil
-		}
 		kcBuilder := &kcMock.KcBuilder{}
 		provisionEndpoint := broker.NewProvision(
 			broker.Config{EnablePlans: []string{"gcp", "azure", "trial"}, OnlySingleTrialPerGA: true},
 			gardener.Config{Project: "test", ShootDomain: "example.com", DNSProviders: fixDNSProviders()},
-			memoryStorage.Operations(),
-			memoryStorage.Instances(),
-			memoryStorage.InstancesArchived(),
+			memoryStorage,
 			queue,
-			factoryBuilder,
 			broker.PlansConfig{},
-			planDefaults,
 			log,
 			dashboardConfig,
 			kcBuilder,
 			whitelist.Set{},
 			&broker.OneForAllConvergedCloudRegionsProvider{},
 			nil,
+			fixValueProvider(),
+			false,
 		)
 
 		// when
@@ -727,27 +667,22 @@ func TestProvision_Provision(t *testing.T) {
 		factoryBuilder := &automock.PlanValidator{}
 		factoryBuilder.On("IsPlanSupport", planID).Return(true)
 
-		planDefaults := func(planID string, platformProvider pkg.CloudProvider, provider *pkg.CloudProvider) (*gqlschema.ClusterConfigInput, error) {
-			return &gqlschema.ClusterConfigInput{}, nil
-		}
 		kcBuilder := &kcMock.KcBuilder{}
 		// #create provisioner endpoint
 		provisionEndpoint := broker.NewProvision(
 			broker.Config{EnablePlans: []string{"gcp", "azure", "azure_lite"}, OnlySingleTrialPerGA: true},
 			gardener.Config{Project: "test", ShootDomain: "example.com", DNSProviders: fixDNSProviders()},
-			memoryStorage.Operations(),
-			memoryStorage.Instances(),
-			memoryStorage.InstancesArchived(),
+			memoryStorage,
 			nil,
-			factoryBuilder,
 			broker.PlansConfig{},
-			planDefaults,
 			log,
 			dashboardConfig,
 			kcBuilder,
 			whitelist.Set{},
 			&broker.OneForAllConvergedCloudRegionsProvider{},
 			nil,
+			fixValueProvider(),
+			false,
 		)
 
 		// when
@@ -768,26 +703,23 @@ func TestProvision_Provision(t *testing.T) {
 		factoryBuilder := &automock.PlanValidator{}
 		factoryBuilder.On("IsPlanSupport", planID).Return(true)
 
-		planDefaults := func(planID string, platformProvider pkg.CloudProvider, provider *pkg.CloudProvider) (*gqlschema.ClusterConfigInput, error) {
-			return &gqlschema.ClusterConfigInput{}, nil
-		}
+		memoryStorage := storage.NewMemoryStorage()
+
 		kcBuilder := &kcMock.KcBuilder{}
 		provisionEndpoint := broker.NewProvision(
 			broker.Config{EnablePlans: []string{"gcp", "azure", "azure_lite"}, OnlySingleTrialPerGA: true},
 			gardener.Config{Project: "test", ShootDomain: "example.com", DNSProviders: fixDNSProviders()},
+			memoryStorage,
 			nil,
-			nil,
-			nil,
-			nil,
-			factoryBuilder,
 			broker.PlansConfig{},
-			planDefaults,
 			log,
 			dashboardConfig,
 			kcBuilder,
 			whitelist.Set{},
 			&broker.OneForAllConvergedCloudRegionsProvider{},
 			nil,
+			fixValueProvider(),
+			false,
 		)
 
 		// when
@@ -806,32 +738,24 @@ func TestProvision_Provision(t *testing.T) {
 		// given
 		memoryStorage := storage.NewMemoryStorage()
 
-		factoryBuilder := &automock.PlanValidator{}
-		factoryBuilder.On("IsPlanSupport", broker.AzureLitePlanID).Return(true)
-
 		queue := &automock.Queue{}
 		queue.On("Add", mock.AnythingOfType("string"))
 
-		planDefaults := func(planID string, platformProvider pkg.CloudProvider, provider *pkg.CloudProvider) (*gqlschema.ClusterConfigInput, error) {
-			return &gqlschema.ClusterConfigInput{}, nil
-		}
 		kcBuilder := &kcMock.KcBuilder{}
 		provisionEndpoint := broker.NewProvision(
 			broker.Config{EnablePlans: []string{"gcp", "azure", "azure_lite"}, OnlySingleTrialPerGA: true},
 			gardener.Config{Project: "test", ShootDomain: "example.com", DNSProviders: fixDNSProviders()},
-			memoryStorage.Operations(),
-			memoryStorage.Instances(),
-			memoryStorage.InstancesArchived(),
+			memoryStorage,
 			queue,
-			factoryBuilder,
 			broker.PlansConfig{},
-			planDefaults,
 			log,
 			dashboardConfig,
 			kcBuilder,
 			whitelist.Set{},
 			&broker.OneForAllConvergedCloudRegionsProvider{},
 			nil,
+			fixValueProvider(),
+			false,
 		)
 
 		// when
@@ -860,26 +784,21 @@ func TestProvision_Provision(t *testing.T) {
 		queue := &automock.Queue{}
 		queue.On("Add", mock.AnythingOfType("string"))
 
-		planDefaults := func(planID string, platformProvider pkg.CloudProvider, provider *pkg.CloudProvider) (*gqlschema.ClusterConfigInput, error) {
-			return &gqlschema.ClusterConfigInput{}, nil
-		}
 		kcBuilder := &kcMock.KcBuilder{}
 		provisionEndpoint := broker.NewProvision(
 			broker.Config{EnablePlans: []string{"gcp", "azure", "azure_lite", "trial"}, OnlySingleTrialPerGA: true},
 			gardener.Config{Project: "test", ShootDomain: "example.com", DNSProviders: fixDNSProviders()},
-			memoryStorage.Operations(),
-			memoryStorage.Instances(),
-			memoryStorage.InstancesArchived(),
+			memoryStorage,
 			queue,
-			factoryBuilder,
 			broker.PlansConfig{},
-			planDefaults,
 			log,
 			dashboardConfig,
 			kcBuilder,
 			whitelist.Set{},
 			&broker.OneForAllConvergedCloudRegionsProvider{},
 			nil,
+			fixValueProvider(),
+			false,
 		)
 
 		// when
@@ -908,32 +827,26 @@ func TestProvision_Provision(t *testing.T) {
 		factoryBuilder := &automock.PlanValidator{}
 		factoryBuilder.On("IsPlanSupport", planID).Return(true)
 
-		planDefaults := func(planID string, platformProvider pkg.CloudProvider, provider *pkg.CloudProvider) (*gqlschema.ClusterConfigInput, error) {
-			return &gqlschema.ClusterConfigInput{}, nil
-		}
 		kcBuilder := &kcMock.KcBuilder{}
 		// #create provisioner endpoint
 		provisionEndpoint := broker.NewProvision(
 			broker.Config{
-				EnablePlans:              []string{"gcp", "azure"},
-				URL:                      brokerURL,
-				OnlySingleTrialPerGA:     true,
-				EnableKubeconfigURLLabel: true,
+				EnablePlans:          []string{"gcp", "azure"},
+				URL:                  brokerURL,
+				OnlySingleTrialPerGA: true,
 			},
 			gardener.Config{Project: "test", ShootDomain: "example.com", DNSProviders: fixDNSProviders()},
-			memoryStorage.Operations(),
-			memoryStorage.Instances(),
-			memoryStorage.InstancesArchived(),
+			memoryStorage,
 			queue,
-			factoryBuilder,
 			broker.PlansConfig{},
-			planDefaults,
 			log,
 			dashboardConfig,
 			kcBuilder,
 			whitelist.Set{},
 			&broker.OneForAllConvergedCloudRegionsProvider{},
 			nil,
+			fixValueProvider(),
+			false,
 		)
 
 		oidcParams := `"issuerURL":"https://test.local"`
@@ -968,32 +881,26 @@ func TestProvision_Provision(t *testing.T) {
 		factoryBuilder := &automock.PlanValidator{}
 		factoryBuilder.On("IsPlanSupport", planID).Return(true)
 
-		planDefaults := func(planID string, platformProvider pkg.CloudProvider, provider *pkg.CloudProvider) (*gqlschema.ClusterConfigInput, error) {
-			return &gqlschema.ClusterConfigInput{}, nil
-		}
 		kcBuilder := &kcMock.KcBuilder{}
 		// #create provisioner endpoint
 		provisionEndpoint := broker.NewProvision(
 			broker.Config{
-				EnablePlans:              []string{"gcp", "azure"},
-				URL:                      brokerURL,
-				OnlySingleTrialPerGA:     true,
-				EnableKubeconfigURLLabel: true,
+				EnablePlans:          []string{"gcp", "azure"},
+				URL:                  brokerURL,
+				OnlySingleTrialPerGA: true,
 			},
 			gardener.Config{Project: "test", ShootDomain: "example.com", DNSProviders: fixDNSProviders()},
-			memoryStorage.Operations(),
-			memoryStorage.Instances(),
-			memoryStorage.InstancesArchived(),
+			memoryStorage,
 			queue,
-			factoryBuilder,
 			broker.PlansConfig{},
-			planDefaults,
 			log,
 			dashboardConfig,
 			kcBuilder,
 			whitelist.Set{},
 			&broker.OneForAllConvergedCloudRegionsProvider{},
 			nil,
+			fixValueProvider(),
+			false,
 		)
 
 		oidcParams := `"clientID":"client-id","issuerURL":"https://test.local","signingAlgs":["RS256","notValid"]`
@@ -1018,6 +925,118 @@ func TestProvision_Provision(t *testing.T) {
 		assert.Equal(t, expectedErr.(*apiresponses.FailureResponse).LoggerAction(), apierr.LoggerAction())
 	})
 
+	t.Run("Should accept an valid OIDC object type", func(t *testing.T) {
+		// given
+		memoryStorage := storage.NewMemoryStorage()
+
+		queue := &automock.Queue{}
+		queue.On("Add", mock.AnythingOfType("string"))
+
+		kcBuilder := &kcMock.KcBuilder{}
+		kcBuilder.On("GetServerURL", "").Return("", fmt.Errorf("error"))
+		// #create provisioner endpoint
+		provisionEndpoint := broker.NewProvision(
+			broker.Config{
+				EnablePlans:             []string{"gcp", "azure"},
+				URL:                     brokerURL,
+				OnlySingleTrialPerGA:    true,
+				UseAdditionalOIDCSchema: true,
+			},
+			gardener.Config{Project: "test", ShootDomain: "example.com", DNSProviders: fixDNSProviders()},
+			memoryStorage,
+			queue,
+			broker.PlansConfig{},
+			log,
+			dashboardConfig,
+			kcBuilder,
+			whitelist.Set{},
+			&broker.OneForAllConvergedCloudRegionsProvider{},
+			nil,
+			fixValueProvider(),
+			false,
+		)
+
+		oidcParams := `"clientID":"client-id","issuerURL":"https://test.local","signingAlgs":["RS256"],"requiredClaims":["claim=value"]`
+
+		// when
+		response, err := provisionEndpoint.Provision(fixRequestContext(t, "req-region"), instanceID, domain.ProvisionDetails{
+			ServiceID:     serviceID,
+			PlanID:        planID,
+			RawParameters: json.RawMessage(fmt.Sprintf(`{"name": "%s", "region": "%s","oidc":{ %s }}`, clusterName, clusterRegion, oidcParams)),
+			RawContext:    json.RawMessage(fmt.Sprintf(`{"globalaccount_id": "%s", "subaccount_id": "%s", "user_id": "%s"}`, globalAccountID, subAccountID, "Test@Test.pl")),
+		}, true)
+		t.Logf("%+v\n", *provisionEndpoint)
+
+		// then
+		require.NoError(t, err)
+		operation, err := memoryStorage.Operations().GetProvisioningOperationByID(response.OperationData)
+		require.NoError(t, err)
+		assert.Equal(t, "client-id", operation.ProvisioningParameters.Parameters.OIDC.OIDCConfigDTO.ClientID)
+		assert.Equal(t, "https://test.local", operation.ProvisioningParameters.Parameters.OIDC.OIDCConfigDTO.IssuerURL)
+		assert.Equal(t, []string{"RS256"}, operation.ProvisioningParameters.Parameters.OIDC.OIDCConfigDTO.SigningAlgs)
+		assert.Equal(t, []string{"claim=value"}, operation.ProvisioningParameters.Parameters.OIDC.OIDCConfigDTO.RequiredClaims)
+
+		instance, err := memoryStorage.Instances().GetByID(instanceID)
+		require.NoError(t, err)
+		assert.Equal(t, operation.ProvisioningParameters.Parameters.OIDC.OIDCConfigDTO, instance.Parameters.Parameters.OIDC.OIDCConfigDTO)
+	})
+
+	t.Run("Should accept an valid OIDC list type", func(t *testing.T) {
+		// given
+		memoryStorage := storage.NewMemoryStorage()
+
+		queue := &automock.Queue{}
+		queue.On("Add", mock.AnythingOfType("string"))
+
+		kcBuilder := &kcMock.KcBuilder{}
+		kcBuilder.On("GetServerURL", "").Return("", fmt.Errorf("error"))
+		// #create provisioner endpoint
+		provisionEndpoint := broker.NewProvision(
+			broker.Config{
+				EnablePlans:             []string{"gcp", "azure"},
+				URL:                     brokerURL,
+				OnlySingleTrialPerGA:    true,
+				UseAdditionalOIDCSchema: true,
+			},
+			gardener.Config{Project: "test", ShootDomain: "example.com", DNSProviders: fixDNSProviders()},
+			memoryStorage,
+			queue,
+			broker.PlansConfig{},
+			log,
+			dashboardConfig,
+			kcBuilder,
+			whitelist.Set{},
+			&broker.OneForAllConvergedCloudRegionsProvider{},
+			nil,
+			fixValueProvider(),
+			false,
+		)
+
+		oidcParams := `"clientID":"client-id","issuerURL":"https://test.local","signingAlgs":["RS256"],"requiredClaims":["claim=value"]`
+
+		// when
+		response, err := provisionEndpoint.Provision(fixRequestContext(t, "req-region"), instanceID, domain.ProvisionDetails{
+			ServiceID:     serviceID,
+			PlanID:        planID,
+			RawParameters: json.RawMessage(fmt.Sprintf(`{"name": "%s", "region": "%s","oidc":{"list":[{%s}]}}`, clusterName, clusterRegion, oidcParams)),
+			RawContext:    json.RawMessage(fmt.Sprintf(`{"globalaccount_id": "%s", "subaccount_id": "%s", "user_id": "%s"}`, globalAccountID, subAccountID, "Test@Test.pl")),
+		}, true)
+		t.Logf("%+v\n", *provisionEndpoint)
+
+		// then
+		require.NoError(t, err)
+		operation, err := memoryStorage.Operations().GetProvisioningOperationByID(response.OperationData)
+		require.NoError(t, err)
+		assert.Equal(t, "client-id", operation.ProvisioningParameters.Parameters.OIDC.List[0].ClientID)
+		assert.Equal(t, "https://test.local", operation.ProvisioningParameters.Parameters.OIDC.List[0].IssuerURL)
+		assert.Equal(t, []string{"RS256"}, operation.ProvisioningParameters.Parameters.OIDC.List[0].SigningAlgs)
+		assert.Equal(t, []string{"claim=value"}, operation.ProvisioningParameters.Parameters.OIDC.List[0].RequiredClaims)
+
+		instance, err := memoryStorage.Instances().GetByID(instanceID)
+		require.NoError(t, err)
+		assert.Equal(t, operation.ProvisioningParameters.Parameters.OIDC.List[0], instance.Parameters.Parameters.OIDC.List[0])
+	})
+
 	t.Run("Should fail on invalid OIDC issuerURL params", func(t *testing.T) {
 		// given
 		memoryStorage := storage.NewMemoryStorage()
@@ -1025,35 +1044,26 @@ func TestProvision_Provision(t *testing.T) {
 		queue := &automock.Queue{}
 		queue.On("Add", mock.AnythingOfType("string"))
 
-		factoryBuilder := &automock.PlanValidator{}
-		factoryBuilder.On("IsPlanSupport", planID).Return(true)
-
-		planDefaults := func(planID string, platformProvider pkg.CloudProvider, provider *pkg.CloudProvider) (*gqlschema.ClusterConfigInput, error) {
-			return &gqlschema.ClusterConfigInput{}, nil
-		}
 		kcBuilder := &kcMock.KcBuilder{}
 		// #create provisioner endpoint
 		provisionEndpoint := broker.NewProvision(
 			broker.Config{
-				EnablePlans:              []string{"gcp", "azure"},
-				URL:                      brokerURL,
-				OnlySingleTrialPerGA:     true,
-				EnableKubeconfigURLLabel: true,
+				EnablePlans:          []string{"gcp", "azure"},
+				URL:                  brokerURL,
+				OnlySingleTrialPerGA: true,
 			},
 			gardener.Config{Project: "test", ShootDomain: "example.com", DNSProviders: fixDNSProviders()},
-			memoryStorage.Operations(),
-			memoryStorage.Instances(),
-			memoryStorage.InstancesArchived(),
+			memoryStorage,
 			queue,
-			factoryBuilder,
 			broker.PlansConfig{},
-			planDefaults,
 			log,
 			dashboardConfig,
 			kcBuilder,
 			whitelist.Set{},
 			&broker.OneForAllConvergedCloudRegionsProvider{},
 			nil,
+			fixValueProvider(),
+			false,
 		)
 
 		testCases := []struct {
@@ -1089,13 +1099,13 @@ func TestProvision_Provision(t *testing.T) {
 			{
 				name:          "URL with empty host",
 				oidcParams:    `"clientID":"client-id","issuerURL":"https:///path","signingAlgs":["RS256"]`,
-				expectedError: "issuerURL must be a valid URL",
+				expectedError: "issuerURL must be a valid URL, issuerURL must have https scheme",
 			},
 		}
 
 		for _, tc := range testCases {
 			t.Run(tc.name, func(t *testing.T) {
-				err := fmt.Errorf(tc.expectedError)
+				err := fmt.Errorf("%s", tc.expectedError)
 				errMsg := fmt.Sprintf("[instanceID: %s] %s", instanceID, err)
 				expectedErr := apiresponses.NewFailureResponse(err, http.StatusBadRequest, errMsg)
 
@@ -1118,6 +1128,91 @@ func TestProvision_Provision(t *testing.T) {
 		}
 	})
 
+	t.Run("Should fail on invalid OIDC requiredClaims params", func(t *testing.T) {
+		// given
+		memoryStorage := storage.NewMemoryStorage()
+
+		queue := &automock.Queue{}
+		queue.On("Add", mock.AnythingOfType("string"))
+
+		factoryBuilder := &automock.PlanValidator{}
+		factoryBuilder.On("IsPlanSupport", planID).Return(true)
+
+		kcBuilder := &kcMock.KcBuilder{}
+		kcBuilder.On("GetServerURL", "").Return("", fmt.Errorf("error"))
+		// #create provisioner endpoint
+		provisionEndpoint := broker.NewProvision(
+			broker.Config{
+				EnablePlans:             []string{"gcp", "azure"},
+				URL:                     brokerURL,
+				OnlySingleTrialPerGA:    true,
+				UseAdditionalOIDCSchema: true,
+			},
+			gardener.Config{Project: "test", ShootDomain: "example.com", DNSProviders: fixDNSProviders()},
+			memoryStorage,
+			queue,
+			broker.PlansConfig{},
+			log,
+			dashboardConfig,
+			kcBuilder,
+			whitelist.Set{},
+			&broker.OneForAllConvergedCloudRegionsProvider{},
+			nil,
+			fixValueProvider(),
+			false,
+		)
+
+		testCases := []struct {
+			name          string
+			oidcParams    string
+			expectedError string
+		}{
+			{
+				name:       "only a string",
+				oidcParams: `"clientID":"client-id","issuerURL":"https://test.local","signingAlgs":["RS256"],"requiredClaims":["value"]`,
+			},
+			{
+				name:       "only claim=",
+				oidcParams: `"clientID":"client-id","issuerURL":"https://test.local","signingAlgs":["RS256"],"requiredClaims":["claim="]`,
+			},
+			{
+				name:       "only =value",
+				oidcParams: `"clientID":"client-id","issuerURL":"https://test.local","signingAlgs":["RS256"],"requiredClaims":["=value"]`,
+			},
+			{
+				name:       "only =",
+				oidcParams: `"clientID":"client-id","issuerURL":"https://test.local","signingAlgs":["RS256"],"requiredClaims":["="]`,
+			},
+			{
+				name:       "valid and invalid claim",
+				oidcParams: `"clientID":"client-id","issuerURL":"https://test.local","signingAlgs":["RS256"],"requiredClaims":["claim=value","claim="]`,
+			},
+		}
+
+		for _, tc := range testCases {
+			t.Run(tc.name, func(t *testing.T) {
+				err := errors.New(tc.expectedError)
+				errMsg := fmt.Sprintf("[instanceID: %s] %s", instanceID, err)
+				expectedErr := apiresponses.NewFailureResponse(err, http.StatusBadRequest, errMsg)
+
+				// when
+				_, err = provisionEndpoint.Provision(fixRequestContext(t, "req-region"), instanceID, domain.ProvisionDetails{
+					ServiceID:     serviceID,
+					PlanID:        planID,
+					RawParameters: json.RawMessage(fmt.Sprintf(`{"name": "%s", "region": "%s","oidc":{ %s }}`, clusterName, clusterRegion, tc.oidcParams)),
+					RawContext:    json.RawMessage(fmt.Sprintf(`{"globalaccount_id": "%s", "subaccount_id": "%s", "user_id": "%s"}`, globalAccountID, subAccountID, "Test@Test.pl")),
+				}, true)
+				t.Logf("%+v\n", *provisionEndpoint)
+
+				// then
+				require.Error(t, err)
+				assert.IsType(t, &apiresponses.FailureResponse{}, err)
+				apierr := err.(*apiresponses.FailureResponse)
+				assert.Equal(t, expectedErr.(*apiresponses.FailureResponse).ValidatedStatusCode(nil), apierr.ValidatedStatusCode(nil))
+			})
+		}
+	})
+
 	t.Run("Should pass for any globalAccountId - EU Access", func(t *testing.T) {
 		// given
 		memoryStorage := storage.NewMemoryStorage()
@@ -1128,33 +1223,27 @@ func TestProvision_Provision(t *testing.T) {
 		factoryBuilder := &automock.PlanValidator{}
 		factoryBuilder.On("IsPlanSupport", planID).Return(true)
 
-		planDefaults := func(planID string, platformProvider pkg.CloudProvider, provider *pkg.CloudProvider) (*gqlschema.ClusterConfigInput, error) {
-			return &gqlschema.ClusterConfigInput{}, nil
-		}
 		kcBuilder := &kcMock.KcBuilder{}
 		kcBuilder.On("GetServerURL", "").Return("", fmt.Errorf("error"))
 		// #create provisioner endpoint
 		provisionEndpoint := broker.NewProvision(
 			broker.Config{
-				EnablePlans:              []string{"gcp", "azure"},
-				URL:                      brokerURL,
-				OnlySingleTrialPerGA:     true,
-				EnableKubeconfigURLLabel: true,
+				EnablePlans:          []string{"gcp", "azure"},
+				URL:                  brokerURL,
+				OnlySingleTrialPerGA: true,
 			},
 			gardener.Config{Project: "test", ShootDomain: "example.com", DNSProviders: fixDNSProviders()},
-			memoryStorage.Operations(),
-			memoryStorage.Instances(),
-			memoryStorage.InstancesArchived(),
+			memoryStorage,
 			queue,
-			factoryBuilder,
 			broker.PlansConfig{},
-			planDefaults,
 			log,
 			dashboardConfig,
 			kcBuilder,
 			whitelist.Set{},
 			&broker.OneForAllConvergedCloudRegionsProvider{},
 			nil,
+			fixValueProvider(),
+			false,
 		)
 
 		oidcParams := `"clientID":"client-id","issuerURL":"https://test.local","signingAlgs":["RS256"]`
@@ -1182,26 +1271,21 @@ func TestProvision_Provision(t *testing.T) {
 		factoryBuilder := &automock.PlanValidator{}
 		factoryBuilder.On("IsPlanSupport", broker.FreemiumPlanID).Return(true)
 
-		planDefaults := func(planID string, platformProvider pkg.CloudProvider, provider *pkg.CloudProvider) (*gqlschema.ClusterConfigInput, error) {
-			return &gqlschema.ClusterConfigInput{}, nil
-		}
 		kcBuilder := &kcMock.KcBuilder{}
 		provisionEndpoint := broker.NewProvision(
 			broker.Config{EnablePlans: []string{"gcp", "azure", "azure_lite", broker.FreemiumPlanName}, OnlyOneFreePerGA: true},
 			gardener.Config{Project: "test", ShootDomain: "example.com", DNSProviders: fixDNSProviders()},
-			memoryStorage.Operations(),
-			memoryStorage.Instances(),
-			memoryStorage.InstancesArchived(),
+			memoryStorage,
 			queue,
-			factoryBuilder,
 			broker.PlansConfig{},
-			planDefaults,
 			log,
 			dashboardConfig,
 			kcBuilder,
 			whitelist.Set{},
 			&broker.OneForAllConvergedCloudRegionsProvider{},
 			nil,
+			fixValueProvider(),
+			false,
 		)
 
 		// when
@@ -1251,26 +1335,21 @@ func TestProvision_Provision(t *testing.T) {
 		factoryBuilder := &automock.PlanValidator{}
 		factoryBuilder.On("IsPlanSupport", broker.FreemiumPlanID).Return(true)
 
-		planDefaults := func(planID string, platformProvider pkg.CloudProvider, provider *pkg.CloudProvider) (*gqlschema.ClusterConfigInput, error) {
-			return &gqlschema.ClusterConfigInput{}, nil
-		}
 		kcBuilder := &kcMock.KcBuilder{}
 		provisionEndpoint := broker.NewProvision(
 			broker.Config{EnablePlans: []string{"gcp", "azure", "azure_lite", broker.FreemiumPlanName}, OnlyOneFreePerGA: true},
 			gardener.Config{Project: "test", ShootDomain: "example.com", DNSProviders: fixDNSProviders()},
-			memoryStorage.Operations(),
-			memoryStorage.Instances(),
-			memoryStorage.InstancesArchived(),
+			memoryStorage,
 			queue,
-			factoryBuilder,
 			broker.PlansConfig{},
-			planDefaults,
 			log,
 			dashboardConfig,
 			kcBuilder,
 			whitelist.Set{},
 			&broker.OneForAllConvergedCloudRegionsProvider{},
 			nil,
+			fixValueProvider(),
+			false,
 		)
 
 		// when
@@ -1310,26 +1389,21 @@ func TestProvision_Provision(t *testing.T) {
 		factoryBuilder := &automock.PlanValidator{}
 		factoryBuilder.On("IsPlanSupport", broker.FreemiumPlanID).Return(true)
 
-		planDefaults := func(planID string, platformProvider pkg.CloudProvider, provider *pkg.CloudProvider) (*gqlschema.ClusterConfigInput, error) {
-			return &gqlschema.ClusterConfigInput{}, nil
-		}
 		kcBuilder := &kcMock.KcBuilder{}
 		provisionEndpoint := broker.NewProvision(
 			broker.Config{EnablePlans: []string{"gcp", "azure", "azure_lite", broker.FreemiumPlanName}, OnlyOneFreePerGA: true},
 			gardener.Config{Project: "test", ShootDomain: "example.com", DNSProviders: fixDNSProviders()},
-			memoryStorage.Operations(),
-			memoryStorage.Instances(),
-			memoryStorage.InstancesArchived(),
+			memoryStorage,
 			queue,
-			factoryBuilder,
 			broker.PlansConfig{},
-			planDefaults,
 			log,
 			dashboardConfig,
 			kcBuilder,
 			whitelist.Set{globalAccountID: struct{}{}},
 			&broker.OneForAllConvergedCloudRegionsProvider{},
 			nil,
+			fixValueProvider(),
+			false,
 		)
 
 		// when
@@ -1367,26 +1441,21 @@ func TestProvision_Provision(t *testing.T) {
 		factoryBuilder := &automock.PlanValidator{}
 		factoryBuilder.On("IsPlanSupport", broker.FreemiumPlanID).Return(true)
 
-		planDefaults := func(planID string, platformProvider pkg.CloudProvider, provider *pkg.CloudProvider) (*gqlschema.ClusterConfigInput, error) {
-			return &gqlschema.ClusterConfigInput{}, nil
-		}
 		kcBuilder := &kcMock.KcBuilder{}
 		provisionEndpoint := broker.NewProvision(
 			broker.Config{EnablePlans: []string{"gcp", "azure", "azure_lite", broker.FreemiumPlanName}, OnlyOneFreePerGA: true},
 			gardener.Config{Project: "test", ShootDomain: "example.com", DNSProviders: fixDNSProviders()},
-			memoryStorage.Operations(),
-			memoryStorage.Instances(),
-			memoryStorage.InstancesArchived(),
+			memoryStorage,
 			nil,
-			factoryBuilder,
 			broker.PlansConfig{},
-			planDefaults,
 			log,
 			dashboardConfig,
 			kcBuilder,
 			whitelist.Set{},
 			&broker.OneForAllConvergedCloudRegionsProvider{},
 			nil,
+			fixValueProvider(),
+			false,
 		)
 
 		// when
@@ -1414,27 +1483,21 @@ func TestProvision_Provision(t *testing.T) {
 
 		factoryBuilder := &automock.PlanValidator{}
 		factoryBuilder.On("IsPlanSupport", broker.FreemiumPlanID).Return(true)
-
-		planDefaults := func(planID string, platformProvider pkg.CloudProvider, provider *pkg.CloudProvider) (*gqlschema.ClusterConfigInput, error) {
-			return &gqlschema.ClusterConfigInput{}, nil
-		}
 		kcBuilder := &kcMock.KcBuilder{}
 		provisionEndpoint := broker.NewProvision(
 			broker.Config{EnablePlans: []string{"gcp", "azure", "azure_lite", broker.FreemiumPlanName}, OnlyOneFreePerGA: true},
 			gardener.Config{Project: "test", ShootDomain: "example.com", DNSProviders: fixDNSProviders()},
-			memoryStorage.Operations(),
-			memoryStorage.Instances(),
-			memoryStorage.InstancesArchived(),
+			memoryStorage,
 			nil,
-			factoryBuilder,
 			broker.PlansConfig{},
-			planDefaults,
 			log,
 			dashboardConfig,
 			kcBuilder,
 			whitelist.Set{},
 			&broker.OneForAllConvergedCloudRegionsProvider{},
 			nil,
+			fixValueProvider(),
+			false,
 		)
 
 		// when
@@ -1459,33 +1522,27 @@ func TestProvision_Provision(t *testing.T) {
 		factoryBuilder := &automock.PlanValidator{}
 		factoryBuilder.On("IsPlanSupport", broker.GCPPlanID).Return(true)
 
-		planDefaults := func(planID string, platformProvider pkg.CloudProvider, provider *pkg.CloudProvider) (*gqlschema.ClusterConfigInput, error) {
-			return &gqlschema.ClusterConfigInput{}, nil
-		}
 		kcBuilder := &kcMock.KcBuilder{}
 		kcBuilder.On("GetServerURL", "").Return("", fmt.Errorf("error"))
 		// #create provisioner endpoint
 		provisionEndpoint := broker.NewProvision(
 			broker.Config{
-				EnablePlans:              []string{"gcp"},
-				URL:                      brokerURL,
-				OnlySingleTrialPerGA:     true,
-				EnableKubeconfigURLLabel: true,
+				EnablePlans:          []string{"gcp"},
+				URL:                  brokerURL,
+				OnlySingleTrialPerGA: true,
 			},
 			gardener.Config{Project: "test", ShootDomain: "example.com", DNSProviders: fixDNSProviders()},
-			memoryStorage.Operations(),
-			memoryStorage.Instances(),
-			memoryStorage.InstancesArchived(),
+			memoryStorage,
 			queue,
-			factoryBuilder,
 			broker.PlansConfig{},
-			planDefaults,
 			log,
 			dashboardConfig,
 			kcBuilder,
 			whitelist.Set{},
 			&broker.OneForAllConvergedCloudRegionsProvider{},
 			nil,
+			fixValueProvider(),
+			false,
 		)
 
 		oidcParams := `"clientID":"client-id","issuerURL":"https://test.local","signingAlgs":["RS256"]`
@@ -1513,33 +1570,27 @@ func TestProvision_Provision(t *testing.T) {
 		factoryBuilder := &automock.PlanValidator{}
 		factoryBuilder.On("IsPlanSupport", broker.GCPPlanID).Return(true)
 
-		planDefaults := func(planID string, platformProvider pkg.CloudProvider, provider *pkg.CloudProvider) (*gqlschema.ClusterConfigInput, error) {
-			return &gqlschema.ClusterConfigInput{}, nil
-		}
 		kcBuilder := &kcMock.KcBuilder{}
 		kcBuilder.On("GetServerURL", "").Return("", fmt.Errorf("error"))
 		// #create provisioner endpoint
 		provisionEndpoint := broker.NewProvision(
 			broker.Config{
-				EnablePlans:              []string{"gcp"},
-				URL:                      brokerURL,
-				OnlySingleTrialPerGA:     true,
-				EnableKubeconfigURLLabel: true,
+				EnablePlans:          []string{"gcp"},
+				URL:                  brokerURL,
+				OnlySingleTrialPerGA: true,
 			},
 			gardener.Config{Project: "test", ShootDomain: "example.com", DNSProviders: fixDNSProviders()},
-			memoryStorage.Operations(),
-			memoryStorage.Instances(),
-			memoryStorage.InstancesArchived(),
+			memoryStorage,
 			queue,
-			factoryBuilder,
 			broker.PlansConfig{},
-			planDefaults,
 			log,
 			dashboardConfig,
 			kcBuilder,
 			whitelist.Set{},
 			&broker.OneForAllConvergedCloudRegionsProvider{},
 			nil,
+			fixValueProvider(),
+			false,
 		)
 
 		oidcParams := `"clientID":"client-id","issuerURL":"https://test.local","signingAlgs":["RS256"]`
@@ -1650,33 +1701,27 @@ func TestAdditionalWorkerNodePools(t *testing.T) {
 			factoryBuilder := &automock.PlanValidator{}
 			factoryBuilder.On("IsPlanSupport", broker.AWSPlanID).Return(true)
 
-			planDefaults := func(planID string, platformProvider pkg.CloudProvider, provider *pkg.CloudProvider) (*gqlschema.ClusterConfigInput, error) {
-				return &gqlschema.ClusterConfigInput{}, nil
-			}
 			kcBuilder := &kcMock.KcBuilder{}
 			kcBuilder.On("GetServerURL", "").Return("", fmt.Errorf("error"))
 			// #create provisioner endpoint
 			provisionEndpoint := broker.NewProvision(
 				broker.Config{
-					EnablePlans:              []string{"aws"},
-					URL:                      brokerURL,
-					OnlySingleTrialPerGA:     true,
-					EnableKubeconfigURLLabel: true,
+					EnablePlans:          []string{"aws"},
+					URL:                  brokerURL,
+					OnlySingleTrialPerGA: true,
 				},
 				gardener.Config{Project: "test", ShootDomain: "example.com", DNSProviders: fixDNSProviders()},
-				memoryStorage.Operations(),
-				memoryStorage.Instances(),
-				memoryStorage.InstancesArchived(),
+				memoryStorage,
 				queue,
-				factoryBuilder,
 				broker.PlansConfig{},
-				planDefaults,
 				log,
 				dashboardConfig,
 				kcBuilder,
 				whitelist.Set{},
 				&broker.OneForAllConvergedCloudRegionsProvider{},
 				nil,
+				fixValueProvider(),
+				false,
 			)
 
 			// when
@@ -1719,33 +1764,27 @@ func TestAdditionalWorkerNodePoolsForUnsupportedPlans(t *testing.T) {
 			factoryBuilder := &automock.PlanValidator{}
 			factoryBuilder.On("IsPlanSupport", tc.planID).Return(true)
 
-			planDefaults := func(planID string, platformProvider pkg.CloudProvider, provider *pkg.CloudProvider) (*gqlschema.ClusterConfigInput, error) {
-				return &gqlschema.ClusterConfigInput{}, nil
-			}
 			kcBuilder := &kcMock.KcBuilder{}
 			kcBuilder.On("GetServerURL", "").Return("", fmt.Errorf("error"))
 			// #create provisioner endpoint
 			provisionEndpoint := broker.NewProvision(
 				broker.Config{
-					EnablePlans:              []string{"trial", "free"},
-					URL:                      brokerURL,
-					OnlySingleTrialPerGA:     true,
-					EnableKubeconfigURLLabel: true,
+					EnablePlans:          []string{"trial", "free"},
+					URL:                  brokerURL,
+					OnlySingleTrialPerGA: true,
 				},
 				gardener.Config{Project: "test", ShootDomain: "example.com", DNSProviders: fixDNSProviders()},
-				memoryStorage.Operations(),
-				memoryStorage.Instances(),
-				memoryStorage.InstancesArchived(),
+				memoryStorage,
 				queue,
-				factoryBuilder,
 				broker.PlansConfig{},
-				planDefaults,
 				log,
 				dashboardConfig,
 				kcBuilder,
 				whitelist.Set{},
 				&broker.OneForAllConvergedCloudRegionsProvider{},
 				nil,
+				fixValueProvider(),
+				false,
 			)
 
 			additionalWorkerNodePools := `[{"name": "name-1", "machineType": "m6i.large", "autoScalerMin": 3, "autoScalerMax": 20}]`
@@ -1880,27 +1919,22 @@ func TestNetworkingValidation(t *testing.T) {
 			factoryBuilder := &automock.PlanValidator{}
 			factoryBuilder.On("IsPlanSupport", mock.AnythingOfType("string")).Return(true)
 
-			planDefaults := func(planID string, platformProvider pkg.CloudProvider, provider *pkg.CloudProvider) (*gqlschema.ClusterConfigInput, error) {
-				return &gqlschema.ClusterConfigInput{}, nil
-			}
 			kcBuilder := &kcMock.KcBuilder{}
 			// #create provisioner endpoint
 			provisionEndpoint := broker.NewProvision(
 				broker.Config{EnablePlans: []string{"gcp", "azure", "free"}},
 				gardener.Config{Project: "test", ShootDomain: "example.com", DNSProviders: fixDNSProviders()},
-				memoryStorage.Operations(),
-				memoryStorage.Instances(),
-				memoryStorage.InstancesArchived(),
+				memoryStorage,
 				queue,
-				factoryBuilder,
 				broker.PlansConfig{},
-				planDefaults,
 				log,
 				dashboardConfig,
 				kcBuilder,
 				whitelist.Set{},
 				&broker.OneForAllConvergedCloudRegionsProvider{},
 				nil,
+				fixValueProvider(),
+				false,
 			)
 
 			// when
@@ -1983,27 +2017,22 @@ func TestRegionValidation(t *testing.T) {
 			factoryBuilder := &automock.PlanValidator{}
 			factoryBuilder.On("IsPlanSupport", tc.planID).Return(true)
 
-			planDefaults := func(planID string, platformProvider pkg.CloudProvider, provider *pkg.CloudProvider) (*gqlschema.ClusterConfigInput, error) {
-				return &gqlschema.ClusterConfigInput{}, nil
-			}
 			kcBuilder := &kcMock.KcBuilder{}
 			// #create provisioner endpoint
 			provisionEndpoint := broker.NewProvision(
 				broker.Config{EnablePlans: []string{"gcp", "azure", "free"}, OnlySingleTrialPerGA: true},
 				gardener.Config{Project: "test", ShootDomain: "example.com", DNSProviders: fixDNSProviders()},
-				memoryStorage.Operations(),
-				memoryStorage.Instances(),
-				memoryStorage.InstancesArchived(),
+				memoryStorage,
 				queue,
-				factoryBuilder,
 				broker.PlansConfig{},
-				planDefaults,
 				log,
 				dashboardConfig,
 				kcBuilder,
 				whitelist.Set{},
 				&broker.OneForAllConvergedCloudRegionsProvider{},
 				nil,
+				fixValueProvider(),
+				false,
 			)
 
 			// when
@@ -2042,9 +2071,6 @@ func TestSapConvergedCloudBlocking(t *testing.T) {
 		factoryBuilder := &automock.PlanValidator{}
 		factoryBuilder.On("IsPlanSupport", broker.SapConvergedCloudPlanID).Return(true)
 
-		planDefaults := func(planID string, platformProvider pkg.CloudProvider, provider *pkg.CloudProvider) (*gqlschema.ClusterConfigInput, error) {
-			return &gqlschema.ClusterConfigInput{}, nil
-		}
 		kcBuilder := &kcMock.KcBuilder{}
 		kcBuilder.On("GetServerURL", "").Return("", fmt.Errorf("error"))
 		// #create provisioner endpoint
@@ -2055,19 +2081,17 @@ func TestSapConvergedCloudBlocking(t *testing.T) {
 				DisableSapConvergedCloud: false,
 			},
 			gardener.Config{Project: "test", ShootDomain: "example.com", DNSProviders: fixDNSProviders()},
-			memoryStorage.Operations(),
-			memoryStorage.Instances(),
-			memoryStorage.InstancesArchived(),
+			memoryStorage,
 			queue,
-			factoryBuilder,
 			broker.PlansConfig{},
-			planDefaults,
 			log,
 			dashboardConfig,
 			kcBuilder,
 			whitelist.Set{},
 			&broker.OneForAllConvergedCloudRegionsProvider{},
 			nil,
+			fixValueProvider(),
+			false,
 		)
 
 		oidcParams := `"clientID":"client-id","issuerURL":"https://test.local","signingAlgs":["RS256"]`
@@ -2095,9 +2119,6 @@ func TestSapConvergedCloudBlocking(t *testing.T) {
 		factoryBuilder := &automock.PlanValidator{}
 		factoryBuilder.On("IsPlanSupport", planID).Return(true)
 
-		planDefaults := func(planID string, platformProvider pkg.CloudProvider, provider *pkg.CloudProvider) (*gqlschema.ClusterConfigInput, error) {
-			return &gqlschema.ClusterConfigInput{}, nil
-		}
 		kcBuilder := &kcMock.KcBuilder{}
 		kcBuilder.On("GetServerURL", "").Return("", fmt.Errorf("error"))
 		provisionEndpoint := broker.NewProvision(
@@ -2107,19 +2128,17 @@ func TestSapConvergedCloudBlocking(t *testing.T) {
 				DisableSapConvergedCloud: true,
 			},
 			gardener.Config{Project: "test", ShootDomain: "example.com", DNSProviders: fixDNSProviders()},
-			memoryStorage.Operations(),
-			memoryStorage.Instances(),
-			memoryStorage.InstancesArchived(),
+			memoryStorage,
 			queue,
-			factoryBuilder,
 			broker.PlansConfig{},
-			planDefaults,
 			log,
 			dashboardConfig,
 			kcBuilder,
 			whitelist.Set{},
 			&broker.OneForAllConvergedCloudRegionsProvider{},
 			nil,
+			fixValueProvider(),
+			false,
 		)
 
 		oidcParams := `"clientID":"client-id","issuerURL":"https://test.local","signingAlgs":["RS256"]`
@@ -2147,9 +2166,6 @@ func TestSapConvergedCloudBlocking(t *testing.T) {
 		factoryBuilder := &automock.PlanValidator{}
 		factoryBuilder.On("IsPlanSupport", broker.SapConvergedCloudPlanID).Return(true)
 
-		planDefaults := func(planID string, platformProvider pkg.CloudProvider, provider *pkg.CloudProvider) (*gqlschema.ClusterConfigInput, error) {
-			return &gqlschema.ClusterConfigInput{}, nil
-		}
 		kcBuilder := &kcMock.KcBuilder{}
 		provisionEndpoint := broker.NewProvision(
 			broker.Config{
@@ -2158,19 +2174,17 @@ func TestSapConvergedCloudBlocking(t *testing.T) {
 				DisableSapConvergedCloud: true,
 			},
 			gardener.Config{Project: "test", ShootDomain: "example.com", DNSProviders: fixDNSProviders()},
-			memoryStorage.Operations(),
-			memoryStorage.Instances(),
-			memoryStorage.InstancesArchived(),
+			memoryStorage,
 			queue,
-			factoryBuilder,
 			broker.PlansConfig{},
-			planDefaults,
 			log,
 			dashboardConfig,
 			kcBuilder,
 			whitelist.Set{},
 			&broker.OneForAllConvergedCloudRegionsProvider{},
 			nil,
+			fixValueProvider(),
+			false,
 		)
 
 		oidcParams := `"clientID":"client-id","issuerURL":"https://test.local","signingAlgs":["RS256"]`
@@ -2210,33 +2224,27 @@ func TestUnsupportedMachineType(t *testing.T) {
 	factoryBuilder := &automock.PlanValidator{}
 	factoryBuilder.On("IsPlanSupport", broker.GCPPlanID).Return(true)
 
-	planDefaults := func(planID string, platformProvider pkg.CloudProvider, provider *pkg.CloudProvider) (*gqlschema.ClusterConfigInput, error) {
-		return &gqlschema.ClusterConfigInput{}, nil
-	}
 	kcBuilder := &kcMock.KcBuilder{}
 	kcBuilder.On("GetServerURL", "").Return("", fmt.Errorf("error"))
 	// #create provisioner endpoint
 	provisionEndpoint := broker.NewProvision(
 		broker.Config{
-			EnablePlans:              []string{"gcp"},
-			URL:                      brokerURL,
-			OnlySingleTrialPerGA:     true,
-			EnableKubeconfigURLLabel: true,
+			EnablePlans:          []string{"gcp"},
+			URL:                  brokerURL,
+			OnlySingleTrialPerGA: true,
 		},
 		gardener.Config{Project: "test", ShootDomain: "example.com", DNSProviders: fixDNSProviders()},
-		memoryStorage.Operations(),
-		memoryStorage.Instances(),
-		memoryStorage.InstancesArchived(),
+		memoryStorage,
 		queue,
-		factoryBuilder,
 		broker.PlansConfig{},
-		planDefaults,
 		log,
 		dashboardConfig,
 		kcBuilder,
 		whitelist.Set{},
 		&broker.OneForAllConvergedCloudRegionsProvider{},
 		fixRegionsSupportingMachine(),
+		fixValueProvider(),
+		false,
 	)
 
 	// when
@@ -2266,33 +2274,27 @@ func TestUnsupportedMachineTypeInAdditionalWorkerNodePools(t *testing.T) {
 	factoryBuilder := &automock.PlanValidator{}
 	factoryBuilder.On("IsPlanSupport", broker.AWSPlanID).Return(true)
 
-	planDefaults := func(planID string, platformProvider pkg.CloudProvider, provider *pkg.CloudProvider) (*gqlschema.ClusterConfigInput, error) {
-		return &gqlschema.ClusterConfigInput{}, nil
-	}
 	kcBuilder := &kcMock.KcBuilder{}
 	kcBuilder.On("GetServerURL", "").Return("", fmt.Errorf("error"))
 	// #create provisioner endpoint
 	provisionEndpoint := broker.NewProvision(
 		broker.Config{
-			EnablePlans:              []string{"aws"},
-			URL:                      brokerURL,
-			OnlySingleTrialPerGA:     true,
-			EnableKubeconfigURLLabel: true,
+			EnablePlans:          []string{"aws"},
+			URL:                  brokerURL,
+			OnlySingleTrialPerGA: true,
 		},
 		gardener.Config{Project: "test", ShootDomain: "example.com", DNSProviders: fixDNSProviders()},
-		memoryStorage.Operations(),
-		memoryStorage.Instances(),
-		memoryStorage.InstancesArchived(),
+		memoryStorage,
 		queue,
-		factoryBuilder,
 		broker.PlansConfig{},
-		planDefaults,
 		log,
 		dashboardConfig,
 		kcBuilder,
 		whitelist.Set{},
 		&broker.OneForAllConvergedCloudRegionsProvider{},
 		fixRegionsSupportingMachine(),
+		fixValueProvider(),
+		false,
 	)
 
 	testCases := []struct {
@@ -2348,33 +2350,27 @@ func TestGPUMachineForInternalUser(t *testing.T) {
 	factoryBuilder := &automock.PlanValidator{}
 	factoryBuilder.On("IsPlanSupport", broker.AWSPlanID).Return(true)
 
-	planDefaults := func(planID string, platformProvider pkg.CloudProvider, provider *pkg.CloudProvider) (*gqlschema.ClusterConfigInput, error) {
-		return &gqlschema.ClusterConfigInput{}, nil
-	}
 	kcBuilder := &kcMock.KcBuilder{}
 	kcBuilder.On("GetServerURL", "").Return("", fmt.Errorf("error"))
 	// #create provisioner endpoint
 	provisionEndpoint := broker.NewProvision(
 		broker.Config{
-			EnablePlans:              []string{"aws"},
-			URL:                      brokerURL,
-			OnlySingleTrialPerGA:     true,
-			EnableKubeconfigURLLabel: true,
+			EnablePlans:          []string{"aws"},
+			URL:                  brokerURL,
+			OnlySingleTrialPerGA: true,
 		},
 		gardener.Config{Project: "test", ShootDomain: "example.com", DNSProviders: fixDNSProviders()},
-		memoryStorage.Operations(),
-		memoryStorage.Instances(),
-		memoryStorage.InstancesArchived(),
+		memoryStorage,
 		queue,
-		factoryBuilder,
 		broker.PlansConfig{},
-		planDefaults,
 		log,
 		dashboardConfig,
 		kcBuilder,
 		whitelist.Set{},
 		&broker.OneForAllConvergedCloudRegionsProvider{},
 		fixRegionsSupportingMachine(),
+		fixValueProvider(),
+		false,
 	)
 
 	additionalWorkerNodePools := `[{"name": "name-1", "machineType": "g6.xlarge", "haZones": true, "autoScalerMin": 3, "autoScalerMax": 20}]`
@@ -2402,35 +2398,27 @@ func TestGPUMachinesForExternalCustomer(t *testing.T) {
 	queue := &automock.Queue{}
 	queue.On("Add", mock.AnythingOfType("string"))
 
-	factoryBuilder := &automock.PlanValidator{}
-
-	planDefaults := func(planID string, platformProvider pkg.CloudProvider, provider *pkg.CloudProvider) (*gqlschema.ClusterConfigInput, error) {
-		return &gqlschema.ClusterConfigInput{}, nil
-	}
 	kcBuilder := &kcMock.KcBuilder{}
 	kcBuilder.On("GetServerURL", "").Return("", fmt.Errorf("error"))
 	// #create provisioner endpoint
 	provisionEndpoint := broker.NewProvision(
 		broker.Config{
-			EnablePlans:              []string{"aws", "azure", "gcp"},
-			URL:                      brokerURL,
-			OnlySingleTrialPerGA:     true,
-			EnableKubeconfigURLLabel: true,
+			EnablePlans:          []string{"aws", "azure", "gcp"},
+			URL:                  brokerURL,
+			OnlySingleTrialPerGA: true,
 		},
 		gardener.Config{Project: "test", ShootDomain: "example.com", DNSProviders: fixDNSProviders()},
-		memoryStorage.Operations(),
-		memoryStorage.Instances(),
-		memoryStorage.InstancesArchived(),
+		memoryStorage,
 		queue,
-		factoryBuilder,
 		broker.PlansConfig{},
-		planDefaults,
 		log,
 		dashboardConfig,
 		kcBuilder,
 		whitelist.Set{},
 		&broker.OneForAllConvergedCloudRegionsProvider{},
 		fixRegionsSupportingMachine(),
+		fixValueProvider(),
+		false,
 	)
 
 	testCases := []struct {
@@ -2587,5 +2575,6 @@ func fixRegionsSupportingMachine() map[string][]string {
 		"m8g":         {"ap-northeast-1", "ap-southeast-1", "ca-central-1"},
 		"m7g":         {"us-west-2"},
 		"c2d-highmem": {"us-central1", "southamerica-east1"},
+		"Standard_D":  {"uksouth", "brazilsouth"},
 	}
 }
