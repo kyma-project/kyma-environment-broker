@@ -31,17 +31,10 @@ const (
 	subAccountLabel       = "subaccount"
 	runtimeIDAnnotation   = "kcp.provisioner.kyma-project.io/runtime-id"
 	defaultKymaVer        = "2.4.0"
-	defaultRegion         = "cf-eu10"
-	globalAccountID       = "dummy-ga-id"
-	dashboardURL          = "http://console.garden-dummy.kyma.io"
 	operationID           = "provisioning-op-id"
-	deprovisioningOpID    = "deprovisioning-op-id"
-	reDeprovisioningOpID  = "re-deprovisioning-op-id"
 	instanceID            = "instance-id"
 	dbSecretKey           = "1234567890123456"
 	gardenerKymaNamespace = "kyma"
-
-	pollingInterval = 3 * time.Millisecond
 )
 
 var (
@@ -172,26 +165,6 @@ func fixK8sResources(defaultKymaVersion string, additionalKymaVersions []string)
 		scOverride.ObjectMeta.Labels[fmt.Sprintf("overrides-version-%s", version)] = "true"
 	}
 
-	orchestrationConfig := &coreV1.ConfigMap{
-		ObjectMeta: metaV1.ObjectMeta{
-			Name:      "orchestration-config",
-			Namespace: "kcp-system",
-			Labels:    map[string]string{},
-		},
-		Data: map[string]string{
-			"maintenancePolicy": `{
-	      "rules": [
-
-	      ],
-	      "default": {
-	        "days": ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"],
-	          "timeBegin": "010000+0000",
-	          "timeEnd": "010000+0000"
-	      }
-	    }`,
-		},
-	}
-
 	kebCfg := &coreV1.ConfigMap{
 		ObjectMeta: metaV1.ObjectMeta{
 			Name:      "keb-runtime-config",
@@ -225,7 +198,7 @@ kyma-template: |-
 		kebCfg.ObjectMeta.Labels[fmt.Sprintf("runtime-version-%s", version)] = "true"
 	}
 
-	resources = append(resources, override, scOverride, orchestrationConfig, kebCfg)
+	resources = append(resources, override, scOverride, kebCfg)
 
 	return resources
 }
