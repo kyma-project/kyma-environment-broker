@@ -240,13 +240,8 @@ func (b *UpdateEndpoint) processUpdateParameters(instance *internal.Instance, de
 			logger.Error(fmt.Sprintf("unable to unmarshal parameters: %s", err.Error()))
 			return domain.UpdateServiceSpec{}, fmt.Errorf("unable to unmarshal parameters")
 		}
-		if !b.config.UseAdditionalOIDCSchema && params.OIDC != nil {
-			if params.OIDC.OIDCConfigDTO != nil && params.OIDC.OIDCConfigDTO.RequiredClaims != nil {
-				params.OIDC.OIDCConfigDTO.RequiredClaims = nil
-			}
-			if params.OIDC.OIDCConfigDTO != nil && params.OIDC.OIDCConfigDTO.GroupsPrefix != "" {
-				params.OIDC.OIDCConfigDTO.GroupsPrefix = ""
-			}
+		if !b.config.UseAdditionalOIDCSchema {
+			ClearOIDCInput(params.OIDC)
 		}
 		logger.Debug(fmt.Sprintf("Updating with params: %+v", params))
 	}

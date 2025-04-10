@@ -173,10 +173,7 @@ func (o *OIDCConnectDTO) IsProvided() bool {
 	if o.OIDCConfigDTO != nil && (o.OIDCConfigDTO.ClientID != "" || o.OIDCConfigDTO.IssuerURL != "" || o.OIDCConfigDTO.GroupsClaim != "" || o.OIDCConfigDTO.UsernamePrefix != "" || o.OIDCConfigDTO.UsernameClaim != "" || len(o.OIDCConfigDTO.SigningAlgs) > 0 || len(o.OIDCConfigDTO.RequiredClaims) > 0 || o.OIDCConfigDTO.GroupsPrefix != "") {
 		return true
 	}
-	if o.List != nil {
-		return true
-	}
-	return false
+	return o.List != nil
 }
 
 func (o *OIDCConnectDTO) Validate(instanceOidcConfig *OIDCConnectDTO) error {
