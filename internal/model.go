@@ -124,7 +124,6 @@ type Operation struct {
 	DashboardURL    string          `json:"dashboardURL"`
 	ProviderValues  *ProviderValues `json:"providerValues"`
 	Region          string          `json:"region"`
-	Plan            string          `json:"plan"`
 	GlobalAccountID string          `json:"globalAccountId"`
 
 	// DEPROVISIONING
