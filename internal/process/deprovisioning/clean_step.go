@@ -16,8 +16,8 @@ type CleanStep struct {
 
 func NewCleanStep(db storage.BrokerStorage, dryRun bool) *CleanStep {
 	return &CleanStep{
-		operations:    db.Operations(),
-		dryRun:        dryRun,
+		operations: db.Operations(),
+		dryRun:     dryRun,
 	}
 }
 
