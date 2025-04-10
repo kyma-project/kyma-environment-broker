@@ -16,7 +16,7 @@ import (
 	"github.com/prometheus/client_golang/prometheus/promauto"
 )
 
-type operationsResult struct {
+type operationsResults struct {
 	logger                           *slog.Logger
 	metrics                          *prometheus.GaugeVec
 	lastUpdate                       time.Time
@@ -27,10 +27,10 @@ type operationsResult struct {
 	finishedOperationRetentionPeriod time.Duration // zero means metrics are stored forever, otherwise they are deleted after this period (starting from the time of operation finish)
 }
 
-var _ Exposer = (*operationsResult)(nil)
+var _ Exposer = (*operationsResults)(nil)
 
-func NewOperationResult(ctx context.Context, db storage.Operations, cfg Config, logger *slog.Logger) *operationsResult {
-	opInfo := &operationsResult{
+func NewOperationsResults(db storage.Operations, cfg Config, logger *slog.Logger) *operationsResults {
+	opInfo := &operationsResults{
 		operations: db,
 		lastUpdate: time.Now().UTC().Add(-cfg.OperationResultRetentionPeriod),
 		logger:     logger,
@@ -39,20 +39,25 @@ func NewOperationResult(ctx context.Context, db storage.Operations, cfg Config, 
 			Namespace: prometheusNamespacev2,
 			Subsystem: prometheusSubsystemv2,
 			Name:      "operation_result",
-			Help:      "Results of metrics",
+			Help:      "Metrics of operations results",
 		}, []string{"operation_id", "instance_id", "global_account_id", "plan_id", "type", "state", "error_category", "error_reason", "error"}),
 		pollingInterval:                  cfg.OperationResultPollingInterval,
 		finishedOperationRetentionPeriod: cfg.OperationResultFinishedOperationRetentionPeriod,
 	}
-	go opInfo.Job(ctx)
+
 	return opInfo
 }
 
-func (s *operationsResult) Metrics() *prometheus.GaugeVec {
+func (s *operationsResults) StartCollector(ctx context.Context) {
+	s.logger.Info("Starting operations results collector")
+	go s.runJob(ctx)
+}
+
+func (s *operationsResults) Metrics() *prometheus.GaugeVec {
 	return s.metrics
 }
 
-func (s *operationsResult) setOperation(op internal.Operation, val float64) {
+func (s *operationsResults) setOperation(op internal.Operation, val float64) {
 	labels := GetLabels(op)
 	s.metrics.With(labels).Set(val)
 }
@@ -60,8 +65,8 @@ func (s *operationsResult) setOperation(op internal.Operation, val float64) {
 // operation_result metrics works on 0/1 system.
 // each metric have labels which identify the operation data by Operation ID
 // if metrics with OpId is set to 1, then it means that this event happen in KEB system and will be persisted in Prometheus Server
-// metrics set to 0 means that this event is outdated, and will be replaced by new one which happen
-func (s *operationsResult) updateOperation(op internal.Operation) {
+// metrics set to 0 means that this event is outdated, and will be replaced by new one
+func (s *operationsResults) updateOperation(op internal.Operation) {
 	defer s.sync.Unlock()
 	s.sync.Lock()
 
@@ -86,7 +91,7 @@ func (s *operationsResult) updateOperation(op internal.Operation) {
 	}
 }
 
-func (s *operationsResult) updateMetrics() (err error) {
+func (s *operationsResults) UpdateOperationResultsMetrics() (err error) {
 	defer func() {
 		if r := recover(); r != nil {
 			err = fmt.Errorf("panic recovered: %v", r)
@@ -97,7 +102,7 @@ func (s *operationsResult) updateMetrics() (err error) {
 
 	operations, err := s.operations.ListOperationsInTimeRange(s.lastUpdate, now)
 	if len(operations) != 0 {
-		s.logger.Debug(fmt.Sprintf("UpdateMetrics: %d operations found", len(operations)))
+		s.logger.Debug(fmt.Sprintf("UpdateStatsMetrics: %d operations found", len(operations)))
 	}
 	if err != nil {
 		return fmt.Errorf("failed to list metrics: %v", err)
@@ -110,7 +115,7 @@ func (s *operationsResult) updateMetrics() (err error) {
 	return nil
 }
 
-func (s *operationsResult) Handler(_ context.Context, event interface{}) error {
+func (s *operationsResults) Handler(_ context.Context, event interface{}) error {
 	defer func() {
 		if recovery := recover(); recovery != nil {
 			s.logger.Error(fmt.Sprintf("panic recovered while handling operation finished event: %v", recovery))
@@ -128,23 +133,23 @@ func (s *operationsResult) Handler(_ context.Context, event interface{}) error {
 	return nil
 }
 
-func (s *operationsResult) Job(ctx context.Context) {
+func (s *operationsResults) runJob(ctx context.Context) {
 	defer func() {
 		if recovery := recover(); recovery != nil {
-			s.logger.Error(fmt.Sprintf("panic recovered while performing operation info job: %v", recovery))
+			s.logger.Error(fmt.Sprintf("panic recovered while collecting operations results metrics: %v", recovery))
 		}
 	}()
 
-	if err := s.updateMetrics(); err != nil {
-		s.logger.Error(fmt.Sprintf("failed to update metrics metrics: %v", err))
+	if err := s.UpdateOperationResultsMetrics(); err != nil {
+		s.logger.Error(fmt.Sprintf("failed to update metrics: %v", err))
 	}
 
 	ticker := time.NewTicker(s.pollingInterval)
 	for {
 		select {
 		case <-ticker.C:
-			if err := s.updateMetrics(); err != nil {
-				s.logger.Error(fmt.Sprintf("failed to update operation info metrics: %v", err))
+			if err := s.UpdateOperationResultsMetrics(); err != nil {
+				s.logger.Error(fmt.Sprintf("failed to update operations info metrics: %v", err))
 			}
 		case <-ctx.Done():
 			return

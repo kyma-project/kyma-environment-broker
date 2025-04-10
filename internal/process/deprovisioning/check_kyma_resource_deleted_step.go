@@ -25,12 +25,12 @@ type CheckKymaResourceDeletedStep struct {
 	kymaResourceDeletionTimeout time.Duration
 }
 
-func NewCheckKymaResourceDeletedStep(operations storage.Operations, kcpClient client.Client, kymaResourceDeletionTimeout time.Duration) *CheckKymaResourceDeletedStep {
+func NewCheckKymaResourceDeletedStep(db storage.BrokerStorage, kcpClient client.Client, kymaResourceDeletionTimeout time.Duration) *CheckKymaResourceDeletedStep {
 	step := &CheckKymaResourceDeletedStep{
 		kcpClient:                   kcpClient,
 		kymaResourceDeletionTimeout: kymaResourceDeletionTimeout,
 	}
-	step.operationManager = process.NewOperationManager(operations, step.Name(), kebError.LifeCycleManagerDependency)
+	step.operationManager = process.NewOperationManager(db.Operations(), step.Name(), kebError.LifeCycleManagerDependency)
 	return step
 }
 

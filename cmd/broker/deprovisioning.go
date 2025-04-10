@@ -17,49 +17,49 @@ import (
 func NewDeprovisioningProcessingQueue(ctx context.Context, workersAmount int, deprovisionManager *process.StagedManager,
 	cfg *Config, db storage.BrokerStorage,
 	edpClient deprovisioning.EDPClient, accountProvider hyperscaler.AccountProvider,
-	k8sClientProvider K8sClientProvider, cli client.Client, configProvider config.ConfigurationProvider, logs *slog.Logger) *process.Queue {
+	k8sClientProvider K8sClientProvider, kcpClient client.Client, configProvider config.ConfigurationProvider, logs *slog.Logger) *process.Queue {
 
 	deprovisioningSteps := []struct {
 		disabled bool
 		step     process.Step
 	}{
 		{
-			step: deprovisioning.NewInitStep(db.Operations(), db.Instances(), 12*time.Hour),
+			step: deprovisioning.NewInitStep(db, 12*time.Hour),
 		},
 		{
-			step: deprovisioning.NewBTPOperatorCleanupStep(db.Operations(), k8sClientProvider),
+			step: deprovisioning.NewBTPOperatorCleanupStep(db, k8sClientProvider),
 		},
 		{
-			step:     deprovisioning.NewEDPDeregistrationStep(db.Operations(), db.Instances(), edpClient, cfg.EDP),
+			step:     deprovisioning.NewEDPDeregistrationStep(db, edpClient, cfg.EDP),
 			disabled: cfg.EDP.Disabled,
 		},
 		{
 			disabled: cfg.LifecycleManagerIntegrationDisabled,
-			step:     deprovisioning.NewDeleteKymaResourceStep(db.Operations(), db.Instances(), cli, configProvider),
+			step:     deprovisioning.NewDeleteKymaResourceStep(db, kcpClient, configProvider),
 		},
 		{
 			disabled: cfg.LifecycleManagerIntegrationDisabled,
-			step:     deprovisioning.NewCheckKymaResourceDeletedStep(db.Operations(), cli, cfg.KymaResourceDeletionTimeout),
+			step:     deprovisioning.NewCheckKymaResourceDeletedStep(db, kcpClient, cfg.KymaResourceDeletionTimeout),
 		},
 		{
-			step: deprovisioning.NewDeleteRuntimeResourceStep(db.Operations(), cli),
+			step: deprovisioning.NewDeleteRuntimeResourceStep(db, kcpClient),
 		},
 		{
-			step: deprovisioning.NewCheckRuntimeResourceDeletionStep(db.Operations(), cli, cfg.StepTimeouts.CheckRuntimeResourceDeletion),
+			step: deprovisioning.NewCheckRuntimeResourceDeletionStep(db, kcpClient, cfg.StepTimeouts.CheckRuntimeResourceDeletion),
 		},
 		{
-			step: deprovisioning.NewReleaseSubscriptionStep(db.Operations(), db.Instances(), accountProvider),
+			step: deprovisioning.NewReleaseSubscriptionStep(db, accountProvider),
 		},
 		{
 			disabled: !cfg.ArchiveEnabled,
-			step:     deprovisioning.NewArchivingStep(db.Operations(), db.Instances(), db.InstancesArchived(), cfg.ArchiveDryRun),
+			step:     deprovisioning.NewArchivingStep(db, cfg.ArchiveDryRun),
 		},
 		{
-			step: deprovisioning.NewRemoveInstanceStep(db.Instances(), db.Operations()),
+			step: deprovisioning.NewRemoveInstanceStep(db),
 		},
 		{
 			disabled: !cfg.CleaningEnabled,
-			step:     deprovisioning.NewCleanStep(db.Operations(), cfg.CleaningDryRun),
+			step:     deprovisioning.NewCleanStep(db, cfg.CleaningDryRun),
 		},
 	}
 	var stages []string

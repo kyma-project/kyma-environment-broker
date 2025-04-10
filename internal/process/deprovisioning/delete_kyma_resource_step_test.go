@@ -36,7 +36,7 @@ func TestDeleteKymaResource_HappyFlow(t *testing.T) {
 	err := memoryStorage.Operations().InsertOperation(operation)
 	assert.NoError(t, err)
 
-	step := NewDeleteKymaResourceStep(memoryStorage.Operations(), memoryStorage.Instances(), kcpClient, fakeConfigProvider{})
+	step := NewDeleteKymaResourceStep(memoryStorage, kcpClient, fakeConfigProvider{})
 	err = memoryStorage.Operations().InsertOperation(operation)
 	assert.Contains(t, err.Error(), fmt.Sprintf("instance operation with id %s already exist", fixOperationID))
 
@@ -60,7 +60,7 @@ func TestDeleteKymaResource_EmptyRuntimeIDAndKymaResourceName(t *testing.T) {
 	err := memoryStorage.Operations().InsertOperation(operation)
 	assert.NoError(t, err)
 
-	step := NewDeleteKymaResourceStep(memoryStorage.Operations(), memoryStorage.Instances(), kcpClient, fakeConfigProvider{})
+	step := NewDeleteKymaResourceStep(memoryStorage, kcpClient, fakeConfigProvider{})
 	err = memoryStorage.Operations().InsertOperation(operation)
 	assert.Contains(t, err.Error(), fmt.Sprintf("instance operation with id %s already exist", fixOperationID))
 	err = memoryStorage.Instances().Insert(instance)
