@@ -319,17 +319,6 @@ func (o *OIDCConnectDTO) validSigningAlgsSet() map[string]bool {
 	return signingAlgsSet
 }
 
-func (o *OIDCConnectDTO) validRequiredClaimst() map[string]bool {
-	algs := strings.Split(oidcValidSigningAlgs, ",")
-	signingAlgsSet := make(map[string]bool, len(algs))
-
-	for _, v := range algs {
-		signingAlgsSet[v] = true
-	}
-
-	return signingAlgsSet
-}
-
 type NetworkingDTO struct {
 	NodesCidr    string  `json:"nodes,omitempty"`
 	PodsCidr     *string `json:"pods,omitempty"`
