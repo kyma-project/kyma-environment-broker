@@ -74,7 +74,7 @@ func TestInitialisationStep_OtherOperationIsInProgress(t *testing.T) {
 			require.NoError(t, err)
 			step := NewInitialisationStep(db)
 			updatingOperation := fixture.FixUpdatingOperation("up-id", "iid")
-			updatingOperation.State = orchestration.Pending
+			updatingOperation.State = internal.OperationStatePending
 			err = ops.InsertOperation(updatingOperation.Operation)
 			require.NoError(t, err)
 			tc.beforeFunc(ops)

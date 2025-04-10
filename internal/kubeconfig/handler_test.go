@@ -69,7 +69,7 @@ func TestHandler_GetKubeconfig(t *testing.T) {
 			pass:                 false,
 			instanceID:           instanceID,
 			runtimeID:            instanceRuntimeID,
-			operationStatus:      orchestration.Pending,
+			operationStatus:      internal.OperationStatePending,
 			expectedStatusCode:   http.StatusNotFound,
 			expectedErrorMessage: fmt.Sprintf("provisioning operation for instance %s is in progress state, kubeconfig not exist yet, please try again later", instanceID),
 		},

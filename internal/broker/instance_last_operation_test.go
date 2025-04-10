@@ -61,7 +61,7 @@ func TestLastOperation_LastOperation(t *testing.T) {
 		// given
 		memoryStorage := storage.NewMemoryStorage()
 		updateOp := fixture.FixUpdatingOperation(operationID, instID)
-		updateOp.State = orchestration.Pending
+		updateOp.State = internal.OperationStatePending
 		err := memoryStorage.Operations().InsertUpdatingOperation(updateOp)
 		assert.NoError(t, err)
 
