@@ -7,7 +7,6 @@ import (
 
 	kebError "github.com/kyma-project/kyma-environment-broker/internal/error"
 
-	"github.com/kyma-project/kyma-environment-broker/common/orchestration"
 	"github.com/kyma-project/kyma-environment-broker/internal"
 	"github.com/kyma-project/kyma-environment-broker/internal/process"
 	"github.com/kyma-project/kyma-environment-broker/internal/storage"
@@ -44,7 +43,7 @@ func (s *InitStep) Name() string {
 
 func (s *InitStep) Run(operation internal.Operation, log *slog.Logger) (internal.Operation, time.Duration, error) {
 
-	if operation.State != orchestration.Pending {
+	if operation.State != internal.OperationStatePending {
 		return operation, 0, nil
 	}
 	// Check concurrent operation

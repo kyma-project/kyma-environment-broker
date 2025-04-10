@@ -6,7 +6,6 @@ import (
 	"sync"
 	"time"
 
-	"github.com/kyma-project/kyma-environment-broker/common/orchestration"
 	"github.com/kyma-project/kyma-environment-broker/internal"
 	kebErr "github.com/kyma-project/kyma-environment-broker/internal/error"
 	"github.com/kyma-project/kyma-environment-broker/internal/storage"
@@ -91,7 +90,7 @@ func (om *OperationManager) OperationFailed(operation internal.Operation, descri
 
 // OperationCanceled marks the operation as canceled and returns status of the operation's update
 func (om *OperationManager) OperationCanceled(operation internal.Operation, description string, log *slog.Logger) (internal.Operation, time.Duration, error) {
-	return om.update(operation, orchestration.Canceled, description, log)
+	return om.update(operation, internal.OperationStateCanceled, description, log)
 }
 
 // RetryOperation checks if operation should be retried or if it's the status should be marked as failed

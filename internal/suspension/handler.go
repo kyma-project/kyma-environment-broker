@@ -6,7 +6,6 @@ import (
 	"net/http"
 
 	"github.com/google/uuid"
-	"github.com/kyma-project/kyma-environment-broker/common/orchestration"
 	"github.com/kyma-project/kyma-environment-broker/internal"
 	"github.com/kyma-project/kyma-environment-broker/internal/broker"
 	"github.com/kyma-project/kyma-environment-broker/internal/storage"
@@ -111,7 +110,7 @@ func (h *ContextUpdateHandler) suspend(instance *internal.Instance, log *slog.Lo
 	}
 
 	// no error, operation exists and is in progress
-	if err == nil && (lastDeprovisioning.State == domain.InProgress || lastDeprovisioning.State == orchestration.Pending) {
+	if err == nil && (lastDeprovisioning.State == domain.InProgress || lastDeprovisioning.State == internal.OperationStatePending) {
 		log.Info("Suspension already started")
 		return nil
 	}
@@ -142,7 +141,7 @@ func (h *ContextUpdateHandler) unsuspend(instance *internal.Instance, log *slog.
 		h.log.Error(fmt.Sprintf("unable to extract shoot name: %s", err.Error()))
 		return err
 	}
-	operation.State = orchestration.Pending
+	operation.State = internal.OperationStatePending
 	log.Info(fmt.Sprintf("Starting unsuspension: shootName=%s shootDomain=%s", operation.ShootName, operation.ShootDomain))
 	// RuntimeID must be cleaned  - this mean that there is no runtime in the provisioner/director
 	operation.RuntimeID = ""

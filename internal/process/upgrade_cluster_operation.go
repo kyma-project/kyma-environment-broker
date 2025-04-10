@@ -5,7 +5,6 @@ import (
 	"log/slog"
 	"time"
 
-	"github.com/kyma-project/kyma-environment-broker/common/orchestration"
 	"github.com/kyma-project/kyma-environment-broker/internal"
 	"github.com/kyma-project/kyma-environment-broker/internal/storage"
 	"github.com/kyma-project/kyma-environment-broker/internal/storage/dberr"
@@ -22,7 +21,7 @@ func NewUpgradeClusterOperationManager(storage storage.Operations) *UpgradeClust
 
 // OperationSucceeded marks the operation as succeeded and only repeats it if there is a storage error
 func (om *UpgradeClusterOperationManager) OperationSucceeded(operation internal.UpgradeClusterOperation, description string, log *slog.Logger) (internal.UpgradeClusterOperation, time.Duration, error) {
-	updatedOperation, repeat, _ := om.update(operation, orchestration.Succeeded, description, log)
+	updatedOperation, repeat, _ := om.update(operation, internal.OperationStateSucceeded, description, log)
 	// repeat in case of storage error
 	if repeat != 0 {
 		return updatedOperation, repeat, nil
@@ -33,7 +32,7 @@ func (om *UpgradeClusterOperationManager) OperationSucceeded(operation internal.
 
 // OperationFailed marks the operation as failed and only repeats it if there is a storage error
 func (om *UpgradeClusterOperationManager) OperationFailed(operation internal.UpgradeClusterOperation, description string, err error, log *slog.Logger) (internal.UpgradeClusterOperation, time.Duration, error) {
-	updatedOperation, repeat, _ := om.update(operation, orchestration.Failed, description, log)
+	updatedOperation, repeat, _ := om.update(operation, internal.OperationStateFailed, description, log)
 	// repeat in case of storage error
 	if repeat != 0 {
 		return updatedOperation, repeat, nil
@@ -53,7 +52,7 @@ func (om *UpgradeClusterOperationManager) OperationFailed(operation internal.Upg
 
 // OperationSucceeded marks the operation as succeeded and only repeats it if there is a storage error
 func (om *UpgradeClusterOperationManager) OperationCanceled(operation internal.UpgradeClusterOperation, description string, log *slog.Logger) (internal.UpgradeClusterOperation, time.Duration, error) {
-	updatedOperation, repeat, _ := om.update(operation, orchestration.Canceled, description, log)
+	updatedOperation, repeat, _ := om.update(operation, internal.OperationStateCanceled, description, log)
 	if repeat != 0 {
 		return updatedOperation, repeat, nil
 	}
@@ -105,8 +104,7 @@ func (om *UpgradeClusterOperationManager) UpdateOperation(operation internal.Upg
 func (om *UpgradeClusterOperationManager) SimpleUpdateOperation(operation internal.UpgradeClusterOperation) (internal.UpgradeClusterOperation, time.Duration) {
 	updatedOperation, err := om.storage.UpdateUpgradeClusterOperation(operation)
 	if err != nil {
-		slog.With("orchestrationID", operation.OrchestrationID).
-			With("instanceID", operation.InstanceID).
+		slog.With("instanceID", operation.InstanceID).
 			Error(fmt.Sprintf("Update upgradeCluster operation failed: %s", err.Error()))
 		return operation, 1 * time.Minute
 	}

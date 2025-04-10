@@ -3,7 +3,6 @@ package runtime
 import (
 	"reflect"
 
-	"github.com/kyma-project/kyma-environment-broker/common/orchestration"
 	pkg "github.com/kyma-project/kyma-environment-broker/common/runtime"
 	"github.com/kyma-project/kyma-environment-broker/internal"
 	kebError "github.com/kyma-project/kyma-environment-broker/internal/error"
@@ -54,7 +53,7 @@ func (c *converter) ApplyProvisioningOperation(dto *pkg.RuntimeDTO, pOpr *intern
 
 func (c *converter) ApplyDeprovisioningOperation(dto *pkg.RuntimeDTO, dOpr *internal.DeprovisioningOperation) {
 	if dOpr != nil {
-		if dOpr.Operation.State == orchestration.Pending {
+		if dOpr.Operation.State == internal.OperationStatePending {
 			return
 		}
 		dto.Status.Deprovisioning = &pkg.Operation{}
@@ -70,7 +69,6 @@ func (c *converter) applyOperation(source *internal.Operation, target *pkg.Opera
 		target.UpdatedAt = source.UpdatedAt
 		target.State = string(source.State)
 		target.Description = source.Description
-		target.OrchestrationID = source.OrchestrationID
 		target.FinishedStages = source.FinishedStages
 		target.ExecutedButNotCompletedSteps = source.ExcutedButNotCompleted
 		target.Parameters = source.ProvisioningParameters.Parameters
@@ -144,7 +142,7 @@ func (c *converter) ApplySuspensionOperations(dto *pkg.RuntimeDTO, oprs []intern
 	suspension.Data = make([]pkg.Operation, 0)
 
 	for _, o := range oprs {
-		if !o.Temporary || o.Operation.State == orchestration.Pending {
+		if !o.Temporary || o.Operation.State == internal.OperationStatePending {
 			continue
 		}
 		op := pkg.Operation{}

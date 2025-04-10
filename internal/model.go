@@ -97,6 +97,8 @@ const (
 	OperationStateCanceled  = "canceled"
 	OperationStateRetrying  = "retrying"
 	OperationStateCanceling = "canceling"
+	OperationStateSucceeded = "succeeded"
+	OperationStateFailed    = "failed"
 )
 
 type Operation struct {

@@ -8,7 +8,6 @@ import (
 	"time"
 
 	"github.com/google/uuid"
-	"github.com/kyma-project/kyma-environment-broker/common/orchestration"
 	"github.com/kyma-project/kyma-environment-broker/internal"
 	"github.com/kyma-project/kyma-environment-broker/internal/broker"
 	"github.com/kyma-project/kyma-environment-broker/internal/httputil"
@@ -127,7 +126,7 @@ func (h *handler) suspendInstance(instance *internal.Instance, log *slog.Logger)
 			opType = "suspension"
 		}
 		switch lastDeprovisioningOp.State {
-		case orchestration.Pending:
+		case internal.OperationStatePending:
 			log.Info(fmt.Sprintf("%s pending", opType))
 			return instance, lastDeprovisioningOp.ID, nil
 		case domain.InProgress:
