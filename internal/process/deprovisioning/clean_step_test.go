@@ -5,7 +5,6 @@ import (
 
 	"github.com/kyma-project/kyma-environment-broker/internal/fixture"
 	"github.com/kyma-project/kyma-environment-broker/internal/storage"
-	"github.com/kyma-project/kyma-environment-broker/internal/storage/dberr"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -14,15 +13,13 @@ func TestCleanStep_Run(t *testing.T) {
 	db := storage.NewMemoryStorage()
 	provisioning := fixture.FixProvisioningOperation("prov-id", "inst-id")
 	deprovisioning := fixture.FixDeprovisioningOperationAsOperation("deprov-id", "inst-id")
-	rs := fixture.FixRuntimeState("rs", provisioning.RuntimeID, "prov-id")
 	err := db.Operations().InsertOperation(provisioning)
 	assert.NoError(t, err)
 	err = db.Operations().InsertOperation(deprovisioning)
 	assert.NoError(t, err)
-	err = db.RuntimeStates().Insert(rs)
 	assert.NoError(t, err)
 
-	step := NewCleanStep(db.Operations(), db.RuntimeStates(), false)
+	step := NewCleanStep(db.Operations(), false)
 
 	// when
 	_, backoff, err := step.Run(deprovisioning, fixLogger())
@@ -33,9 +30,6 @@ func TestCleanStep_Run(t *testing.T) {
 	ops, err := db.Operations().ListOperationsByInstanceID("inst-id")
 	assert.NoError(t, err)
 	assert.Emptyf(t, ops, "Operations should be empty")
-	runtimeStates, err := db.RuntimeStates().GetByOperationID("prov-id")
-	assert.True(t, dberr.IsNotFound(err))
-	assert.Emptyf(t, runtimeStates, "Runtime states should be empty")
 }
 
 func TestCleanStep_Run_TemporaryOperation(t *testing.T) {
@@ -49,10 +43,8 @@ func TestCleanStep_Run_TemporaryOperation(t *testing.T) {
 	assert.NoError(t, err)
 	err = db.Operations().InsertOperation(deprovisioning)
 	assert.NoError(t, err)
-	rs := fixture.FixRuntimeState("rs", provisioning.RuntimeID, "prov-id")
-	err = db.RuntimeStates().Insert(rs)
-	assert.NoError(t, err)
-	step := NewCleanStep(db.Operations(), db.RuntimeStates(), false)
+
+	step := NewCleanStep(db.Operations(), false)
 
 	// when
 	_, backoff, err := step.Run(deprovisioning, fixLogger())
@@ -64,8 +56,6 @@ func TestCleanStep_Run_TemporaryOperation(t *testing.T) {
 	ops, err := db.Operations().ListOperationsByInstanceID("inst-id")
 	assert.NoError(t, err)
 	assert.Len(t, ops, 2)
-	_, err = db.RuntimeStates().GetByOperationID("prov-id")
-	assert.NoError(t, err)
 }
 
 func TestCleanStep_Run_ExcutedButNotCompleted(t *testing.T) {
@@ -79,10 +69,8 @@ func TestCleanStep_Run_ExcutedButNotCompleted(t *testing.T) {
 	assert.NoError(t, err)
 	err = db.Operations().InsertOperation(deprovisioning)
 	assert.NoError(t, err)
-	rs := fixture.FixRuntimeState("rs", provisioning.RuntimeID, "prov-id")
-	err = db.RuntimeStates().Insert(rs)
-	assert.NoError(t, err)
-	step := NewCleanStep(db.Operations(), db.RuntimeStates(), false)
+
+	step := NewCleanStep(db.Operations(), false)
 
 	// when
 	_, backoff, err := step.Run(deprovisioning, fixLogger())
@@ -94,6 +82,4 @@ func TestCleanStep_Run_ExcutedButNotCompleted(t *testing.T) {
 	ops, err := db.Operations().ListOperationsByInstanceID("inst-id")
 	assert.NoError(t, err)
 	assert.Len(t, ops, 2)
-	_, err = db.RuntimeStates().GetByOperationID("prov-id")
-	assert.NoError(t, err)
 }

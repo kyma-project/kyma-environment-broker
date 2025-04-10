@@ -43,12 +43,11 @@ const (
 )
 
 type CreateRuntimeResourceStep struct {
-	operationManager    *process.OperationManager
-	instanceStorage     storage.Instances
-	runtimeStateStorage storage.RuntimeStates
-	k8sClient           client.Client
-	config              infrastructure_manager.InfrastructureManagerConfig
-	oidcDefaultValues   pkg.OIDCConfigDTO
+	operationManager  *process.OperationManager
+	instanceStorage   storage.Instances
+	k8sClient         client.Client
+	config            infrastructure_manager.InfrastructureManagerConfig
+	oidcDefaultValues pkg.OIDCConfigDTO
 }
 
 func NewCreateRuntimeResourceStep(os storage.Operations, is storage.Instances, k8sClient client.Client, infrastructureManagerConfig infrastructure_manager.InfrastructureManagerConfig,

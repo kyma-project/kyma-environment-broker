@@ -2,8 +2,28 @@ package provider
 
 import (
 	"github.com/kyma-project/kyma-environment-broker/internal"
+	"github.com/kyma-project/kyma-environment-broker/internal/broker"
 	"github.com/kyma-project/kyma-environment-broker/internal/euaccess"
 )
+
+const (
+	DefaultAWSRegion              = "eu-central-1"
+	DefaultAWSTrialRegion         = "eu-west-1"
+	DefaultEuAccessAWSRegion      = "eu-central-1"
+	DefaultAWSMultiZoneCount      = 3
+	DefaultAWSMachineType         = "m6i.large"
+	DefaultOldAWSTrialMachineType = "m5.xlarge"
+)
+
+var europeAWS = "eu-west-1"
+var usAWS = "us-east-1"
+var asiaAWS = "ap-southeast-1"
+
+var toAWSSpecific = map[string]*string{
+	string(broker.Europe): &europeAWS,
+	string(broker.Us):     &usAWS,
+	string(broker.Asia):   &asiaAWS,
+}
 
 type (
 	AWSInputProvider struct {
@@ -22,6 +42,22 @@ type (
 		ProvisioningParameters internal.ProvisioningParameters
 	}
 )
+
+// awsZones defines a possible suffixes for given AWS regions
+// The table is tested in a unit test to check if all necessary regions are covered
+var awsZones = map[string]string{
+	"eu-central-1":   "abc",
+	"eu-west-2":      "abc",
+	"ca-central-1":   "abd",
+	"sa-east-1":      "abc",
+	"us-east-1":      "abcdf",
+	"us-west-2":      "abcd",
+	"ap-northeast-1": "acd",
+	"ap-northeast-2": "abc",
+	"ap-south-1":     "abc",
+	"ap-southeast-1": "abc",
+	"ap-southeast-2": "abc",
+}
 
 func (p *AWSInputProvider) Provide() internal.ProviderValues {
 	zonesCount := p.zonesCount()

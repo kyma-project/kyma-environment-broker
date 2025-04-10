@@ -10,16 +10,14 @@ import (
 )
 
 type CleanStep struct {
-	operations    storage.Operations
-	runtimeStates storage.RuntimeStates
-	dryRun        bool
+	operations storage.Operations
+	dryRun     bool
 }
 
-func NewCleanStep(operations storage.Operations, runtimeStates storage.RuntimeStates, dryRun bool) *CleanStep {
+func NewCleanStep(operations storage.Operations, dryRun bool) *CleanStep {
 	return &CleanStep{
-		operations:    operations,
-		runtimeStates: runtimeStates,
-		dryRun:        dryRun,
+		operations: operations,
+		dryRun:     dryRun,
 	}
 }
 
@@ -40,18 +38,6 @@ func (s *CleanStep) Run(operation internal.Operation, log *slog.Logger) (interna
 	operations, err := s.operations.ListOperationsByInstanceID(operation.InstanceID)
 	if err != nil {
 		return operation, dbRetryBackoff, nil
-	}
-	for _, op := range operations {
-		log.Info(fmt.Sprintf("removing runtime states for operation %s", op.ID))
-		if s.dryRun {
-			log.Info("dry run mode, skipping")
-			continue
-		}
-		err := s.runtimeStates.DeleteByOperationID(op.ID)
-		if err != nil {
-			log.Error(fmt.Sprintf("unable to delete runtime states: %s", err.Error()))
-			return operation, dbRetryBackoff, nil
-		}
 	}
 	for _, op := range operations {
 		log.Info(fmt.Sprintf("Removing operation %s", op.ID))

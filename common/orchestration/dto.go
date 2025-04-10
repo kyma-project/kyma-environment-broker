@@ -5,8 +5,6 @@ import (
 	"fmt"
 	"strconv"
 	"time"
-
-	"github.com/kyma-project/control-plane/components/provisioner/pkg/gqlschema"
 )
 
 // Parameters hold the attributes of orchestration create (upgrade) requests.
@@ -154,9 +152,6 @@ type OperationResponseList struct {
 
 type OperationDetailResponse struct {
 	OperationResponse
-
-	KymaConfig    *gqlschema.KymaConfigInput     `json:"kymaConfig,omitempty"`
-	ClusterConfig *gqlschema.GardenerConfigInput `json:"clusterConfig,omitempty"`
 }
 
 type StatusResponseList struct {

@@ -7,8 +7,6 @@ import (
 	"time"
 
 	kebError "github.com/kyma-project/kyma-environment-broker/internal/error"
-
-	"github.com/kyma-project/control-plane/components/provisioner/pkg/gqlschema"
 )
 
 type State string
@@ -40,31 +38,29 @@ const (
 )
 
 type RuntimeDTO struct {
-	InstanceID                  string                         `json:"instanceID"`
-	RuntimeID                   string                         `json:"runtimeID"`
-	GlobalAccountID             string                         `json:"globalAccountID"`
-	SubscriptionGlobalAccountID string                         `json:"subscriptionGlobalAccountID"`
-	SubAccountID                string                         `json:"subAccountID"`
-	ProviderRegion              string                         `json:"region"`
-	SubAccountRegion            string                         `json:"subAccountRegion"`
-	ShootName                   string                         `json:"shootName"`
-	ServiceClassID              string                         `json:"serviceClassID"`
-	ServiceClassName            string                         `json:"serviceClassName"`
-	ServicePlanID               string                         `json:"servicePlanID"`
-	ServicePlanName             string                         `json:"servicePlanName"`
-	Provider                    string                         `json:"provider"`
-	Parameters                  ProvisioningParametersDTO      `json:"parameters,omitempty"`
-	Status                      RuntimeStatus                  `json:"status"`
-	UserID                      string                         `json:"userID"`
-	KymaConfig                  *gqlschema.KymaConfigInput     `json:"kymaConfig,omitempty"`
-	ClusterConfig               *gqlschema.GardenerConfigInput `json:"clusterConfig,omitempty"`
-	RuntimeConfig               *map[string]interface{}        `json:"runtimeConfig,omitempty"`
-	Bindings                    []BindingDTO                   `json:"bindings,omitempty"`
-	BetaEnabled                 string                         `json:"betaEnabled,omitempty"`
-	UsedForProduction           string                         `json:"usedForProduction,omitempty"`
-	SubscriptionSecretName      *string                        `json:"subscriptionSecretName,omitempty"`
-	LicenseType                 *string                        `json:"licenseType,omitempty"`
-	CommercialModel             *string                        `json:"commercialModel,omitempty"`
+	InstanceID                  string                    `json:"instanceID"`
+	RuntimeID                   string                    `json:"runtimeID"`
+	GlobalAccountID             string                    `json:"globalAccountID"`
+	SubscriptionGlobalAccountID string                    `json:"subscriptionGlobalAccountID"`
+	SubAccountID                string                    `json:"subAccountID"`
+	ProviderRegion              string                    `json:"region"`
+	SubAccountRegion            string                    `json:"subAccountRegion"`
+	ShootName                   string                    `json:"shootName"`
+	ServiceClassID              string                    `json:"serviceClassID"`
+	ServiceClassName            string                    `json:"serviceClassName"`
+	ServicePlanID               string                    `json:"servicePlanID"`
+	ServicePlanName             string                    `json:"servicePlanName"`
+	Provider                    string                    `json:"provider"`
+	Parameters                  ProvisioningParametersDTO `json:"parameters,omitempty"`
+	Status                      RuntimeStatus             `json:"status"`
+	UserID                      string                    `json:"userID"`
+	RuntimeConfig               *map[string]interface{}   `json:"runtimeConfig,omitempty"`
+	Bindings                    []BindingDTO              `json:"bindings,omitempty"`
+	BetaEnabled                 string                    `json:"betaEnabled,omitempty"`
+	UsedForProduction           string                    `json:"usedForProduction,omitempty"`
+	SubscriptionSecretName      *string                   `json:"subscriptionSecretName,omitempty"`
+	LicenseType                 *string                   `json:"licenseType,omitempty"`
+	CommercialModel             *string                   `json:"commercialModel,omitempty"`
 }
 
 type CloudProvider string
@@ -243,18 +239,17 @@ type BindingDTO struct {
 }
 
 type RuntimeStatus struct {
-	CreatedAt        time.Time                 `json:"createdAt"`
-	ModifiedAt       time.Time                 `json:"modifiedAt"`
-	ExpiredAt        *time.Time                `json:"expiredAt,omitempty"`
-	DeletedAt        *time.Time                `json:"deletedAt,omitempty"`
-	State            State                     `json:"state"`
-	Provisioning     *Operation                `json:"provisioning,omitempty"`
-	Deprovisioning   *Operation                `json:"deprovisioning,omitempty"`
-	UpgradingCluster *OperationsData           `json:"upgradingCluster,omitempty"`
-	Update           *OperationsData           `json:"update,omitempty"`
-	Suspension       *OperationsData           `json:"suspension,omitempty"`
-	Unsuspension     *OperationsData           `json:"unsuspension,omitempty"`
-	GardenerConfig   *gqlschema.GardenerConfig `json:"gardenerConfig,omitempty"`
+	CreatedAt        time.Time       `json:"createdAt"`
+	ModifiedAt       time.Time       `json:"modifiedAt"`
+	ExpiredAt        *time.Time      `json:"expiredAt,omitempty"`
+	DeletedAt        *time.Time      `json:"deletedAt,omitempty"`
+	State            State           `json:"state"`
+	Provisioning     *Operation      `json:"provisioning,omitempty"`
+	Deprovisioning   *Operation      `json:"deprovisioning,omitempty"`
+	UpgradingCluster *OperationsData `json:"upgradingCluster,omitempty"`
+	Update           *OperationsData `json:"update,omitempty"`
+	Suspension       *OperationsData `json:"suspension,omitempty"`
+	Unsuspension     *OperationsData `json:"unsuspension,omitempty"`
 }
 
 type OperationType string

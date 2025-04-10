@@ -11,10 +11,9 @@ import (
 )
 
 type Service struct {
-	instances     storage.Instances
-	operations    storage.Operations
-	runtimeStates storage.RuntimeStates
-	archived      storage.InstancesArchived
+	instances  storage.Instances
+	operations storage.Operations
+	archived   storage.InstancesArchived
 
 	dryRun          bool
 	performDeletion bool
@@ -25,7 +24,6 @@ func NewService(db storage.BrokerStorage, dryRun bool, performDeletion bool, bat
 	return &Service{
 		instances:       db.Instances(),
 		operations:      db.Operations(),
-		runtimeStates:   db.RuntimeStates(),
 		archived:        db.InstancesArchived(),
 		dryRun:          dryRun,
 		performDeletion: performDeletion,
@@ -101,12 +99,6 @@ func (s *Service) Run() (error, int, int) {
 			// If the deletion of operation fails, it can be retried, because such instance ID will be fetched by
 			// the next run of ListDeletedInstanceIDs() method.
 
-			logger.Debug("Deleting runtime states for operation")
-			err := s.runtimeStates.DeleteByOperationID(operation.ID)
-			if err != nil {
-				logger.Error(fmt.Sprintf("Unable to delete runtime states for operation: %s", err.Error()))
-				continue
-			}
 			logger.Debug("Deleting operation")
 			err = s.operations.DeleteByID(operation.ID)
 			if err != nil {

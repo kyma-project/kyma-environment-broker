@@ -9,7 +9,6 @@ import (
 
 	"github.com/kyma-project/kyma-environment-broker/internal/kubeconfig"
 
-	"github.com/kyma-project/control-plane/components/provisioner/pkg/gqlschema"
 	"github.com/kyma-project/kyma-environment-broker/internal"
 	"github.com/kyma-project/kyma-environment-broker/internal/broker"
 	"github.com/kyma-project/kyma-environment-broker/internal/fixture"
@@ -420,48 +419,4 @@ func (f *fakeK8sClientWrapper) RESTMapper() meta.RESTMapper {
 
 func (f *fakeK8sClientWrapper) SubResource(subresource string) client.SubResourceClient {
 	return f.fake.SubResource(subresource)
-}
-
-type fakeProvisionerClient struct {
-	empty bool
-}
-
-func newEmptyProvisionerClient() fakeProvisionerClient {
-	return fakeProvisionerClient{true}
-}
-
-func (f fakeProvisionerClient) ProvisionRuntime(accountID, subAccountID string, config gqlschema.ProvisionRuntimeInput) (gqlschema.OperationStatus, error) {
-	panic("not implemented")
-}
-
-func (f fakeProvisionerClient) DeprovisionRuntime(accountID, runtimeID string) (string, error) {
-	panic("not implemented")
-}
-
-func (f fakeProvisionerClient) UpgradeRuntime(accountID, runtimeID string, config gqlschema.UpgradeRuntimeInput) (gqlschema.OperationStatus, error) {
-	panic("not implemented")
-}
-
-func (f fakeProvisionerClient) UpgradeShoot(accountID, runtimeID string, config gqlschema.UpgradeShootInput) (gqlschema.OperationStatus, error) {
-	panic("not implemented")
-}
-
-func (f fakeProvisionerClient) ReconnectRuntimeAgent(accountID, runtimeID string) (string, error) {
-	panic("not implemented")
-}
-
-func (f fakeProvisionerClient) RuntimeOperationStatus(accountID, operationID string) (gqlschema.OperationStatus, error) {
-	panic("not implemented")
-}
-
-func (f fakeProvisionerClient) RuntimeStatus(accountID, runtimeID string) (gqlschema.RuntimeStatus, error) {
-	if f.empty {
-		return gqlschema.RuntimeStatus{}, fmt.Errorf("not found")
-	}
-	kubeconfig := "sample fake kubeconfig"
-	return gqlschema.RuntimeStatus{
-		RuntimeConfiguration: &gqlschema.RuntimeConfig{
-			Kubeconfig: &kubeconfig,
-		},
-	}, nil
 }

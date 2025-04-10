@@ -1,9 +1,31 @@
 package provider
 
 import (
+	"fmt"
+	"math/rand"
+
 	"github.com/kyma-project/kyma-environment-broker/internal"
 	"github.com/kyma-project/kyma-environment-broker/internal/assuredworkloads"
+	"github.com/kyma-project/kyma-environment-broker/internal/broker"
 )
+
+const (
+	DefaultGCPRegion                 = "europe-west3"
+	DefaultGCPAssuredWorkloadsRegion = "me-central2"
+	DefaultGCPMachineType            = "n2-standard-2"
+	DefaultGCPTrialMachineType       = "n2-standard-4"
+	DefaultGCPMultiZoneCount         = 3
+)
+
+var europeGcp = "europe-west3"
+var usGcp = "us-central1"
+var asiaGcp = "asia-south1"
+
+var toGCPSpecific = map[string]*string{
+	string(broker.Europe): &europeGcp,
+	string(broker.Us):     &usGcp,
+	string(broker.Asia):   &asiaGcp,
+}
 
 type (
 	GCPInputProvider struct {
@@ -115,4 +137,22 @@ func (p *GCPTrialInputProvider) region() string {
 	}
 
 	return DefaultGCPRegion
+}
+
+func ZonesForGCPRegion(region string, zonesCount int) []string {
+	availableZones := []string{"a", "b", "c"}
+	var zones []string
+	if zonesCount > len(availableZones) {
+		zonesCount = len(availableZones)
+	}
+
+	availableZones = availableZones[:zonesCount]
+
+	rand.Shuffle(zonesCount, func(i, j int) { availableZones[i], availableZones[j] = availableZones[j], availableZones[i] })
+
+	for i := 0; i < zonesCount; i++ {
+		zones = append(zones, fmt.Sprintf("%s-%s", region, availableZones[i]))
+	}
+
+	return zones
 }

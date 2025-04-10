@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/kyma-project/control-plane/components/provisioner/pkg/gqlschema"
 	"github.com/kyma-project/kyma-environment-broker/common/gardener"
 	"github.com/kyma-project/kyma-environment-broker/common/orchestration"
 	pkg "github.com/kyma-project/kyma-environment-broker/common/runtime"
@@ -30,16 +29,6 @@ const (
 	MonitoringUsername          = "username"
 	MonitoringPassword          = "password"
 )
-
-type SimpleInputCreator struct {
-	Labels            map[string]string
-	ShootName         *string
-	ShootDomain       string
-	shootDnsProviders gardener.DNSProvidersData
-	CloudProvider     pkg.CloudProvider
-	RuntimeID         string
-	Config            *internal.ConfigForPlan
-}
 
 func FixServiceManagerEntryDTO() *internal.ServiceManagerEntryDTO {
 	return &internal.ServiceManagerEntryDTO{
@@ -317,16 +306,11 @@ func FixDNSProvidersConfig() gardener.DNSProvidersData {
 }
 
 func FixRuntimeState(id, runtimeID, operationID string) internal.RuntimeState {
-	disabled := false
 	return internal.RuntimeState{
 		ID:          id,
 		CreatedAt:   time.Now(),
 		RuntimeID:   runtimeID,
 		OperationID: operationID,
-		KymaConfig:  gqlschema.KymaConfigInput{},
-		ClusterConfig: gqlschema.GardenerConfigInput{
-			ShootNetworkingFilterDisabled: &disabled,
-		},
 	}
 }
 
@@ -379,74 +363,4 @@ func FixBindingInProgressWithInstanceID(bindingID string, instanceID string) int
 		ExpirationSeconds: 600,
 		CreatedBy:         "john.smith@email.com",
 	}
-}
-
-// SimpleInputCreator implements ProvisionerInputCreator interface
-func (c *SimpleInputCreator) SetProvisioningParameters(params internal.ProvisioningParameters) internal.ProvisionerInputCreator {
-	return c
-}
-
-func (c *SimpleInputCreator) SetShootName(name string) internal.ProvisionerInputCreator {
-	c.ShootName = &name
-	return c
-}
-
-func (c *SimpleInputCreator) SetShootDomain(name string) internal.ProvisionerInputCreator {
-	c.ShootDomain = name
-	return c
-}
-
-func (c *SimpleInputCreator) SetShootDNSProviders(providers gardener.DNSProvidersData) internal.ProvisionerInputCreator {
-	c.shootDnsProviders = providers
-	return c
-}
-
-func (c *SimpleInputCreator) SetLabel(key, val string) internal.ProvisionerInputCreator {
-	c.Labels[key] = val
-	return c
-}
-
-func (c *SimpleInputCreator) SetKubeconfig(_ string) internal.ProvisionerInputCreator {
-	return c
-}
-
-func (c *SimpleInputCreator) SetClusterName(_ string) internal.ProvisionerInputCreator {
-	return c
-}
-
-func (c *SimpleInputCreator) SetInstanceID(kcfg string) internal.ProvisionerInputCreator {
-	return c
-}
-
-func (c *SimpleInputCreator) SetRuntimeID(runtimeID string) internal.ProvisionerInputCreator {
-	c.RuntimeID = runtimeID
-	return c
-}
-
-func (c *SimpleInputCreator) SetOIDCLastValues(oidcConfig gqlschema.OIDCConfigInput) internal.ProvisionerInputCreator {
-	return c
-}
-
-func (c *SimpleInputCreator) CreateProvisionClusterInput() (gqlschema.ProvisionRuntimeInput, error) {
-	return gqlschema.ProvisionRuntimeInput{}, nil
-}
-
-func (c *SimpleInputCreator) CreateProvisionRuntimeInput() (gqlschema.ProvisionRuntimeInput, error) {
-	return gqlschema.ProvisionRuntimeInput{}, nil
-}
-
-func (c *SimpleInputCreator) CreateUpgradeRuntimeInput() (gqlschema.UpgradeRuntimeInput, error) {
-	return gqlschema.UpgradeRuntimeInput{}, nil
-}
-
-func (c *SimpleInputCreator) CreateUpgradeShootInput() (gqlschema.UpgradeShootInput, error) {
-	return gqlschema.UpgradeShootInput{}, nil
-}
-
-func (c *SimpleInputCreator) Provider() pkg.CloudProvider {
-	return c.CloudProvider
-}
-
-func (c *SimpleInputCreator) Configuration() *internal.ConfigForPlan {
-	return c.Config
 }

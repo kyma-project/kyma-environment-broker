@@ -10,7 +10,6 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"os"
-	"reflect"
 	"testing"
 	"time"
 
@@ -39,7 +38,6 @@ import (
 
 	"code.cloudfoundry.org/lager"
 	"github.com/google/uuid"
-	"github.com/kyma-project/control-plane/components/provisioner/pkg/gqlschema"
 	"github.com/kyma-project/kyma-environment-broker/common/gardener"
 	"github.com/kyma-project/kyma-environment-broker/common/orchestration"
 	pkg "github.com/kyma-project/kyma-environment-broker/common/runtime"
@@ -275,17 +273,6 @@ func defaultOIDCValues() pkg.OIDCConfigDTO {
 		SigningAlgs:    []string{"RS256"},
 		UsernameClaim:  "sub",
 		UsernamePrefix: "-",
-	}
-}
-
-func defaultOIDCConfig() *gqlschema.OIDCConfigInput {
-	return &gqlschema.OIDCConfigInput{
-		ClientID:       defaultOIDCValues().ClientID,
-		GroupsClaim:    defaultOIDCValues().GroupsClaim,
-		IssuerURL:      defaultOIDCValues().IssuerURL,
-		SigningAlgs:    defaultOIDCValues().SigningAlgs,
-		UsernameClaim:  defaultOIDCValues().UsernameClaim,
-		UsernamePrefix: defaultOIDCValues().UsernamePrefix,
 	}
 }
 
@@ -605,36 +592,6 @@ func (s *BrokerSuiteTest) AssertInstanceRuntimeAdmins(instanceId string, expecte
 	})
 	assert.NoError(s.t, err)
 	assert.Equal(s.t, expectedAdmins, instance.Parameters.Parameters.RuntimeAdministrators)
-}
-
-func (s *BrokerSuiteTest) AssertDisabledNetworkFilterRuntimeState(runtimeid, op string, val *bool) {
-	var got, exp string
-	err := s.poller.Invoke(func() (bool, error) {
-		states, _ := s.db.RuntimeStates().ListByRuntimeID(runtimeid)
-		exp = "<nil>"
-		if val != nil {
-			exp = fmt.Sprintf("%v", *val)
-		}
-		for _, rs := range states {
-			if rs.OperationID != op {
-				// skip runtime states for different operations
-				continue
-			}
-			if reflect.DeepEqual(val, rs.ClusterConfig.ShootNetworkingFilterDisabled) {
-				return true, nil
-			}
-			got = "<nil>"
-			if rs.ClusterConfig.ShootNetworkingFilterDisabled != nil {
-				got = fmt.Sprintf("%v", *rs.ClusterConfig.ShootNetworkingFilterDisabled)
-			}
-			return false, nil
-		}
-		return false, nil
-	})
-	if err != nil {
-		err = fmt.Errorf("ShootNetworkingFilterDisabled expected %v, got %v", exp, got)
-	}
-	require.NoError(s.t, err)
 }
 
 func (s *BrokerSuiteTest) Log(msg string) {

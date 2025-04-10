@@ -4,7 +4,6 @@ import (
 	"errors"
 	"strings"
 
-	gcli "github.com/kyma-project/kyma-environment-broker/internal/third_party/machinebox/graphql"
 	apierr "k8s.io/apimachinery/pkg/api/errors"
 	apierr2 "k8s.io/apimachinery/pkg/api/meta"
 )
@@ -120,38 +119,6 @@ func ReasonForError(err error, step string) LastError {
 			Reason:    status.GetReason(),
 			Component: status.GetComponent(),
 			Step:      step,
-		}
-	}
-
-	if ee, ok := cause.(gcli.ExtendedError); ok {
-		var errReason Reason
-		var errComponent Component
-		var errStep string
-
-		reason, found := ee.Extensions()["error_reason"]
-		if found {
-			if r, ok := reason.(string); ok {
-				errReason = Reason(r)
-			}
-		}
-		component, found := ee.Extensions()["error_component"]
-		if found {
-			if c, ok := component.(string); ok {
-				errComponent = Component(c)
-			}
-		}
-		step, found := ee.Extensions()["error_step"]
-		if found {
-			if s, ok := step.(string); ok {
-				errStep = s
-			}
-		}
-
-		return LastError{
-			Message:   err.Error(),
-			Reason:    errReason,
-			Component: errComponent,
-			Step:      errStep,
 		}
 	}
 
