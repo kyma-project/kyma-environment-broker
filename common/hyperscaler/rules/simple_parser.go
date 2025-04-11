@@ -13,15 +13,6 @@ const (
 	Equal  = "="
 )
 
-type Attribute struct {
-	Name          string
-	Setter        func(*Rule, string) error
-	modifiedLabel string
-	HasValue      bool
-
-	modifiedLabelName string
-}
-
 type SimpleParser struct {
 }
 

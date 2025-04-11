@@ -13,39 +13,38 @@ const (
 	HyperscalerRegionSuffix        = "HR"
 )
 
+type Attribute struct {
+	Name   string
+	Setter func(*Rule, string) error
+}
+
 var InputAttributes = []Attribute{
 	{
-		Name:     PlatformRegionAttributeName,
-		Setter:   setPlatformRegion,
-		HasValue: true,
+		Name:   PlatformRegionAttributeName,
+		Setter: setPlatformRegion,
 	},
 	{
-		Name:     HyperscalerRegionAttributeName,
-		Setter:   setHyperscalerRegion,
-		HasValue: true,
+		Name:   HyperscalerRegionAttributeName,
+		Setter: setHyperscalerRegion,
 	},
 }
 
 var OutputAttributes = []Attribute{
 	{
-		Name:     EUAccessAttributeName,
-		Setter:   setEuAccess,
-		HasValue: false,
+		Name:   EUAccessAttributeName,
+		Setter: setEuAccess,
 	},
 	{
-		Name:     SharedAttributeName,
-		Setter:   setShared,
-		HasValue: false,
+		Name:   SharedAttributeName,
+		Setter: setShared,
 	},
 	{
-		Name:     PlatformRegionSuffix,
-		Setter:   setPlatformRegionSuffix,
-		HasValue: false,
+		Name:   PlatformRegionSuffix,
+		Setter: setPlatformRegionSuffix,
 	},
 	{
-		Name:     HyperscalerRegionSuffix,
-		Setter:   setHyperscalerRegionSuffix,
-		HasValue: false,
+		Name:   HyperscalerRegionSuffix,
+		Setter: setHyperscalerRegionSuffix,
 	},
 }
 
