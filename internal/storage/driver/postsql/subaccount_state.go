@@ -26,7 +26,7 @@ func (s *SubaccountState) UpsertState(subaccountState internal.SubaccountState) 
 	if err != nil {
 		return err
 	}
-	sess := s.NewWriteSession()
+	sess := s.Factory.NewWriteSession()
 	return wait.PollUntilContextTimeout(context.Background(), defaultRetryInterval, defaultRetryTimeout, true, func(ctx context.Context) (bool, error) {
 		err := sess.UpsertSubaccountState(state)
 		if err != nil {
@@ -37,12 +37,12 @@ func (s *SubaccountState) UpsertState(subaccountState internal.SubaccountState) 
 }
 
 func (s *SubaccountState) DeleteState(subaccountID string) error {
-	sess := s.NewWriteSession()
+	sess := s.Factory.NewWriteSession()
 	return sess.DeleteState(subaccountID)
 }
 
 func (s *SubaccountState) ListStates() ([]internal.SubaccountState, error) {
-	sess := s.NewReadSession()
+	sess := s.Factory.NewReadSession()
 	states := make([]dbmodel.SubaccountStateDTO, 0)
 	var lastErr dberr.Error
 	err := wait.PollUntilContextTimeout(context.Background(), defaultRetryInterval, defaultRetryTimeout, true, func(ctx context.Context) (bool, error) {

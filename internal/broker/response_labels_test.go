@@ -29,7 +29,7 @@ func TestResponseLabels(t *testing.T) {
 		kcBuilder.On("GetServerURL", instance.RuntimeID).Return(serverURL, nil)
 
 		// when
-		labels := ResponseLabels(operation, instance, "https://example.com", true, kcBuilder)
+		labels := ResponseLabels(operation, instance, "https://example.com", kcBuilder)
 
 		// then
 		require.Len(t, labels, 3)
@@ -46,7 +46,7 @@ func TestResponseLabels(t *testing.T) {
 		kcBuilder := &automock.KcBuilder{}
 
 		// when
-		labels := ResponseLabels(operation, instance, "https://console.example.com", false, kcBuilder)
+		labels := ResponseLabels(operation, instance, "https://console.example.com", kcBuilder)
 
 		// then
 		require.Len(t, labels, 1)
@@ -64,7 +64,7 @@ func TestResponseLabels(t *testing.T) {
 		defer kcBuilder.AssertExpectations(t)
 
 		// when
-		labels := ResponseLabelsWithExpirationInfo(operation, instance, "https://example.com", "https://trial.docs.local", true, trialDocsKey, trialExpireDuration, trialExpiryDetailsKey, trialExpiredInfoFormat, kcBuilder)
+		labels := ResponseLabelsWithExpirationInfo(operation, instance, "https://example.com", "https://trial.docs.local", trialDocsKey, trialExpireDuration, trialExpiryDetailsKey, trialExpiredInfoFormat, kcBuilder)
 
 		// then
 		require.Len(t, labels, 4)
@@ -87,7 +87,7 @@ func TestResponseLabels(t *testing.T) {
 		expectedMsg := fmt.Sprintf(notExpiredInfoFormat, "today")
 
 		// when
-		labels := ResponseLabelsWithExpirationInfo(operation, instance, "https://example.com", "https://trial.docs.local", true, trialDocsKey, trialExpireDuration, trialExpiryDetailsKey, trialExpiredInfoFormat, kcBuilder)
+		labels := ResponseLabelsWithExpirationInfo(operation, instance, "https://example.com", "https://trial.docs.local", trialDocsKey, trialExpireDuration, trialExpiryDetailsKey, trialExpiredInfoFormat, kcBuilder)
 
 		// then
 		require.Len(t, labels, 4)
@@ -112,7 +112,7 @@ func TestResponseLabels(t *testing.T) {
 		kcBuilder.On("GetServerURL", instance.RuntimeID).Return(serverURL, nil)
 
 		// when
-		labels := ResponseLabelsWithExpirationInfo(operation, instance, "https://example.com", "https://trial.docs.local", true, trialDocsKey, trialExpireDuration, trialExpiryDetailsKey, trialExpiredInfoFormat, kcBuilder)
+		labels := ResponseLabelsWithExpirationInfo(operation, instance, "https://example.com", "https://trial.docs.local", trialDocsKey, trialExpireDuration, trialExpiryDetailsKey, trialExpiredInfoFormat, kcBuilder)
 
 		// then
 		require.Len(t, labels, 3)
@@ -133,7 +133,7 @@ func TestResponseLabels(t *testing.T) {
 		kcBuilder := &automock.KcBuilder{}
 
 		// when
-		labels := ResponseLabelsWithExpirationInfo(operation, instance, "https://example.com", "https://trial.docs.local", true, trialDocsKey, trialExpireDuration, trialExpiryDetailsKey, trialExpiredInfoFormat, kcBuilder)
+		labels := ResponseLabelsWithExpirationInfo(operation, instance, "https://example.com", "https://trial.docs.local", trialDocsKey, trialExpireDuration, trialExpiryDetailsKey, trialExpiredInfoFormat, kcBuilder)
 
 		// then
 		require.Len(t, labels, 2)
@@ -152,7 +152,7 @@ func TestResponseLabels(t *testing.T) {
 		kcBuilder.On("GetServerURL", instance.RuntimeID).Return("", kubeconfig.NewNotFoundError("missing secret"))
 
 		// when
-		labels := ResponseLabels(wrapper, instance, "https://example.com", true, kcBuilder)
+		labels := ResponseLabels(wrapper, instance, "https://example.com", kcBuilder)
 
 		// then
 		require.Len(t, labels, 2)

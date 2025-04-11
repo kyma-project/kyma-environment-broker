@@ -16,7 +16,6 @@ The job checks if the Secret on the Kyma runtime matches the credentials from th
 
 * The KEB Go packages so that Runtime Reconciler can reuse them
 * The KEB database for storing the Kubernetes Secrets that match the Secrets on Kyma runtimes
-* Provisioner API for fetching kubeconfigs
 
 ## Configuration
 

@@ -40,8 +40,6 @@ type ReadSession interface {
 	GetSubaccountsInstanceStats() ([]dbmodel.InstanceBySubAccountIDStatEntry, error)
 	GetERSContextStats() ([]dbmodel.InstanceERSContextStatsEntry, error)
 	GetNumberOfInstancesForGlobalAccountID(globalAccountID string) (int, error)
-	GetRuntimeStateByOperationID(operationID string) (dbmodel.RuntimeStateDTO, dberr.Error)
-	ListRuntimeStateByRuntimeID(runtimeID string) ([]dbmodel.RuntimeStateDTO, dberr.Error)
 	GetOrchestrationByID(oID string) (dbmodel.OrchestrationDTO, dberr.Error)
 	ListOrchestrations(filter dbmodel.OrchestrationFilter) ([]dbmodel.OrchestrationDTO, int, int, error)
 	ListInstances(filter dbmodel.InstanceFilter) ([]dbmodel.InstanceWithExtendedOperationDTO, int, int, error)
@@ -49,8 +47,6 @@ type ReadSession interface {
 	ListOperationsByOrchestrationID(orchestrationID string, filter dbmodel.OperationFilter) ([]dbmodel.OperationDTO, int, int, error)
 	ListOperationsInTimeRange(from, to time.Time) ([]dbmodel.OperationDTO, error)
 	GetOperationStatsForOrchestration(orchestrationID string) ([]dbmodel.OperationStatEntry, error)
-	GetLatestRuntimeStateByRuntimeID(runtimeID string) (dbmodel.RuntimeStateDTO, dberr.Error)
-	GetLatestRuntimeStateWithOIDCConfigByRuntimeID(runtimeID string) (dbmodel.RuntimeStateDTO, dberr.Error)
 	ListEvents(filter events.EventFilter) ([]events.EventDTO, error)
 	GetDistinctSubAccounts() ([]string, dberr.Error)
 	ListSubaccountStates() ([]dbmodel.SubaccountStateDTO, dberr.Error)
@@ -78,12 +74,10 @@ type WriteSession interface {
 	UpdateOperation(dto dbmodel.OperationDTO) dberr.Error
 	InsertOrchestration(o dbmodel.OrchestrationDTO) dberr.Error
 	UpdateOrchestration(o dbmodel.OrchestrationDTO) dberr.Error
-	InsertRuntimeState(state dbmodel.RuntimeStateDTO) dberr.Error
 	InsertEvent(level events.EventLevel, message, instanceID, operationID string) dberr.Error
 	DeleteEvents(until time.Time) dberr.Error
 	UpsertSubaccountState(state dbmodel.SubaccountStateDTO) dberr.Error
 	DeleteState(id string) dberr.Error
-	DeleteRuntimeStatesByOperationID(operationID string) error
 	DeleteOperationByID(operationID string) dberr.Error
 	InsertInstanceArchived(instance dbmodel.InstanceArchivedDTO) dberr.Error
 	InsertBinding(binding dbmodel.BindingDTO) dberr.Error

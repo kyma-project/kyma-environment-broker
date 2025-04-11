@@ -2,9 +2,11 @@ package kcp
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"os"
 	"os/exec"
+	"strconv"
 	"strings"
 )
 
@@ -218,6 +220,50 @@ func (c *KCPClient) GetEvents(instanceID string) (string, error) {
 		return "", newKCPClientError("failed to get events: %w", err)
 	}
 	return string(events), nil
+}
+
+func (c *KCPClient) GetEnforceSeedLocationValue(instanceID string) (bool, error) {
+	args := []string{"rt", "--runtime-config", "-i", instanceID, "-o", "custom=:{.runtimeConfig.spec.shoot.enforceSeedLocation}"}
+	if clientSecret := os.Getenv("KCP_OIDC_CLIENT_SECRET"); clientSecret != "" {
+		args = append(args, "--config", "config.yaml")
+	}
+	output, err := exec.Command("kcp", args...).Output()
+	if err != nil {
+		return false, newKCPClientError("failed to get enforceSeedLocation value from Runtime CR: %w", err)
+	}
+	value := strings.TrimSpace(string(output))
+	if value == "" {
+		return false, errors.New("enforceSeedLocation field in Runtime CR is empty or field does not exist")
+	}
+
+	return strconv.ParseBool(value)
+}
+
+func (c *KCPClient) GetRuntimeConfig(instanceID string) (string, error) {
+	args := []string{"rt", "-i", instanceID, "--runtime-config", "-o", "json"}
+	if secret := os.Getenv("KCP_OIDC_CLIENT_SECRET"); secret != "" {
+		args = append(args, "--config", "config.yaml")
+	}
+	output, err := exec.Command("kcp", args...).Output()
+	if err != nil {
+		return "", newKCPClientError("failed to get runtime config: %w", err)
+	}
+	var result struct {
+		Data []struct {
+			RuntimeConfig interface{} `json:"runtimeConfig"`
+		} `json:"data"`
+	}
+	if err := json.Unmarshal(output, &result); err != nil {
+		return "", newKCPClientError("failed to parse JSON: %w", err)
+	}
+	if len(result.Data) == 0 {
+		return "", newKCPClientError("no runtime config found in the kcp cli output")
+	}
+	formatted, err := json.MarshalIndent(result.Data[0].RuntimeConfig, "", "  ")
+	if err != nil {
+		return "", newKCPClientError("failed to format runtime config: %w", err)
+	}
+	return string(formatted), nil
 }
 
 func getEnvOrThrow(key string) string {

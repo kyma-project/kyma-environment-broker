@@ -22,7 +22,7 @@ func TestRemoveInstanceStep_HappyPathForPermanentRemoval(t *testing.T) {
 	err = memoryStorage.Operations().InsertOperation(operation)
 	assert.NoError(t, err)
 
-	step := NewRemoveInstanceStep(memoryStorage.Instances(), memoryStorage.Operations())
+	step := NewRemoveInstanceStep(memoryStorage)
 
 	// when
 	operation, backoff, err := step.Run(operation, fixLogger())
@@ -50,7 +50,7 @@ func TestRemoveInstanceStep_UpdateOperationFailsForPermanentRemoval(t *testing.T
 	err := memoryStorage.Instances().Insert(instance)
 	assert.NoError(t, err)
 
-	step := NewRemoveInstanceStep(memoryStorage.Instances(), memoryStorage.Operations())
+	step := NewRemoveInstanceStep(memoryStorage)
 
 	// when
 	operation, backoff, err := step.Run(operation, fixLogger())
@@ -75,7 +75,7 @@ func TestRemoveInstanceStep_HappyPathForSuspension(t *testing.T) {
 	err = memoryStorage.Operations().InsertOperation(operation)
 	assert.NoError(t, err)
 
-	step := NewRemoveInstanceStep(memoryStorage.Instances(), memoryStorage.Operations())
+	step := NewRemoveInstanceStep(memoryStorage)
 
 	// when
 	operation, backoff, err := step.Run(operation, fixLogger())
@@ -109,7 +109,7 @@ func TestRemoveInstanceStep_InstanceHasExecutedButNotCompletedOperationSteps(t *
 	err = memoryStorage.Operations().InsertOperation(operation)
 	assert.NoError(t, err)
 
-	step := NewRemoveInstanceStep(memoryStorage.Instances(), memoryStorage.Operations())
+	step := NewRemoveInstanceStep(memoryStorage)
 
 	// when
 	_, backoff, err := step.Run(operation, fixLogger())
@@ -137,7 +137,7 @@ func TestRemoveInstanceStep_InstanceDeleted(t *testing.T) {
 	err := memoryStorage.Operations().InsertOperation(operation)
 	assert.NoError(t, err)
 
-	step := NewRemoveInstanceStep(memoryStorage.Instances(), memoryStorage.Operations())
+	step := NewRemoveInstanceStep(memoryStorage)
 
 	// when
 	_, backoff, err := step.Run(operation, fixLogger())

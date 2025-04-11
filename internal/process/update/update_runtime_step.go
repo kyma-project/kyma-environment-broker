@@ -4,16 +4,16 @@ import (
 	"context"
 	"fmt"
 	"log/slog"
+	"strings"
 	"time"
 
 	"github.com/kyma-project/kyma-environment-broker/internal/provider"
-	"github.com/kyma-project/kyma-environment-broker/internal/ptr"
 	"k8s.io/apimachinery/pkg/api/errors"
 
 	gardener "github.com/gardener/gardener/pkg/apis/core/v1beta1"
 
 	kebError "github.com/kyma-project/kyma-environment-broker/internal/error"
-	"github.com/kyma-project/kyma-environment-broker/internal/process/input"
+	"github.com/kyma-project/kyma-environment-broker/internal/process/infrastructure_manager"
 	"github.com/kyma-project/kyma-environment-broker/internal/process/provisioning"
 
 	imv1 "github.com/kyma-project/infrastructure-manager/api/v1"
@@ -28,18 +28,20 @@ type UpdateRuntimeStep struct {
 	operationManager           *process.OperationManager
 	k8sClient                  client.Client
 	delay                      time.Duration
-	config                     input.InfrastructureManagerConfig
+	config                     infrastructure_manager.InfrastructureManagerConfig
 	useSmallerMachineTypes     bool
 	trialPlatformRegionMapping map[string]string
+	useAdditionalOIDCSchema    bool
 }
 
-func NewUpdateRuntimeStep(os storage.Operations, k8sClient client.Client, delay time.Duration, infrastructureManagerConfig input.InfrastructureManagerConfig, useSmallerMachines bool, trialPlatformRegionMapping map[string]string) *UpdateRuntimeStep {
+func NewUpdateRuntimeStep(os storage.Operations, k8sClient client.Client, delay time.Duration, infrastructureManagerConfig infrastructure_manager.InfrastructureManagerConfig, trialPlatformRegionMapping map[string]string, useAdditionalOIDCSchema bool) *UpdateRuntimeStep {
 	step := &UpdateRuntimeStep{
 		k8sClient:                  k8sClient,
 		delay:                      delay,
 		config:                     infrastructureManagerConfig,
-		useSmallerMachineTypes:     useSmallerMachines,
+		useSmallerMachineTypes:     infrastructureManagerConfig.UseSmallerMachineTypes,
 		trialPlatformRegionMapping: trialPlatformRegionMapping,
+		useAdditionalOIDCSchema:    useAdditionalOIDCSchema,
 	}
 	step.operationManager = process.NewOperationManager(os, step.Name(), kebError.InfrastructureManagerDependency)
 	return step
@@ -90,52 +92,65 @@ func (s *UpdateRuntimeStep) Run(operation internal.Operation, log *slog.Logger) 
 		runtime.Spec.Shoot.Provider.AdditionalWorkers = &additionalWorkers
 	}
 
-	if operation.UpdatingParameters.OIDC != nil {
-		input := operation.UpdatingParameters.OIDC
-		if s.config.UseMainOIDC {
-			if len(input.SigningAlgs) > 0 {
-				runtime.Spec.Shoot.Kubernetes.KubeAPIServer.OidcConfig.SigningAlgs = input.SigningAlgs
+	if oidc := operation.UpdatingParameters.OIDC; oidc != nil {
+		if oidc.List != nil {
+			oidcConfigs := make([]gardener.OIDCConfig, 0)
+			for _, oidcConfig := range oidc.List {
+				requiredClaims := make(map[string]string)
+				for _, claim := range oidcConfig.RequiredClaims {
+					parts := strings.SplitN(claim, "=", 2)
+					if len(parts) == 2 {
+						requiredClaims[parts[0]] = parts[1]
+					}
+				}
+				oidcConfigs = append(oidcConfigs, gardener.OIDCConfig{
+					ClientID:       &oidcConfig.ClientID,
+					IssuerURL:      &oidcConfig.IssuerURL,
+					SigningAlgs:    oidcConfig.SigningAlgs,
+					GroupsClaim:    &oidcConfig.GroupsClaim,
+					UsernamePrefix: &oidcConfig.UsernamePrefix,
+					UsernameClaim:  &oidcConfig.UsernameClaim,
+					RequiredClaims: requiredClaims,
+					GroupsPrefix:   &oidcConfig.GroupsPrefix,
+				})
 			}
-			if input.ClientID != "" {
-				runtime.Spec.Shoot.Kubernetes.KubeAPIServer.OidcConfig.ClientID = &input.ClientID
-			}
-			if input.IssuerURL != "" {
-				runtime.Spec.Shoot.Kubernetes.KubeAPIServer.OidcConfig.IssuerURL = &input.IssuerURL
-			}
-			if input.GroupsClaim != "" {
-				runtime.Spec.Shoot.Kubernetes.KubeAPIServer.OidcConfig.GroupsClaim = &input.GroupsClaim
-			}
-			if input.UsernamePrefix != "" {
-				runtime.Spec.Shoot.Kubernetes.KubeAPIServer.OidcConfig.UsernamePrefix = &input.UsernamePrefix
-			}
-			if input.UsernameClaim != "" {
-				runtime.Spec.Shoot.Kubernetes.KubeAPIServer.OidcConfig.UsernameClaim = &input.UsernameClaim
-			}
-		}
-
-		if s.config.UseAdditionalOIDC {
+			runtime.Spec.Shoot.Kubernetes.KubeAPIServer.AdditionalOidcConfig = &oidcConfigs
+		} else if dto := oidc.OIDCConfigDTO; dto != nil {
 			if runtime.Spec.Shoot.Kubernetes.KubeAPIServer.AdditionalOidcConfig == nil {
 				runtime.Spec.Shoot.Kubernetes.KubeAPIServer.AdditionalOidcConfig = &[]gardener.OIDCConfig{{}}
 			}
-			if len(input.SigningAlgs) > 0 {
-				(*runtime.Spec.Shoot.Kubernetes.KubeAPIServer.AdditionalOidcConfig)[0].SigningAlgs = input.SigningAlgs
+			config := &(*runtime.Spec.Shoot.Kubernetes.KubeAPIServer.AdditionalOidcConfig)[0]
+			if len(dto.SigningAlgs) > 0 {
+				config.SigningAlgs = dto.SigningAlgs
 			}
-			if input.ClientID != "" {
-				(*runtime.Spec.Shoot.Kubernetes.KubeAPIServer.AdditionalOidcConfig)[0].ClientID = &input.ClientID
+			if dto.ClientID != "" {
+				config.ClientID = &dto.ClientID
 			}
-			if input.IssuerURL != "" {
-				(*runtime.Spec.Shoot.Kubernetes.KubeAPIServer.AdditionalOidcConfig)[0].IssuerURL = &input.IssuerURL
+			if dto.IssuerURL != "" {
+				config.IssuerURL = &dto.IssuerURL
 			}
-			if input.GroupsClaim != "" {
-				(*runtime.Spec.Shoot.Kubernetes.KubeAPIServer.AdditionalOidcConfig)[0].GroupsClaim = &input.GroupsClaim
+			if dto.GroupsClaim != "" {
+				config.GroupsClaim = &dto.GroupsClaim
 			}
-			if input.UsernamePrefix != "" {
-				(*runtime.Spec.Shoot.Kubernetes.KubeAPIServer.AdditionalOidcConfig)[0].UsernamePrefix = &input.UsernamePrefix
+			if dto.UsernamePrefix != "" {
+				config.UsernamePrefix = &dto.UsernamePrefix
 			}
-			if input.UsernameClaim != "" {
-				(*runtime.Spec.Shoot.Kubernetes.KubeAPIServer.AdditionalOidcConfig)[0].UsernameClaim = &input.UsernameClaim
+			if dto.UsernameClaim != "" {
+				config.UsernameClaim = &dto.UsernameClaim
 			}
-			(*runtime.Spec.Shoot.Kubernetes.KubeAPIServer.AdditionalOidcConfig)[0].GroupsPrefix = ptr.String("-")
+			if dto.GroupsPrefix != "" {
+				config.GroupsPrefix = &dto.GroupsPrefix
+			}
+			if s.useAdditionalOIDCSchema && len(dto.RequiredClaims) > 0 {
+				requiredClaims := make(map[string]string)
+				for _, claim := range dto.RequiredClaims {
+					parts := strings.SplitN(claim, "=", 2)
+					if len(parts) == 2 {
+						requiredClaims[parts[0]] = parts[1]
+					}
+				}
+				config.RequiredClaims = requiredClaims
+			}
 		}
 	}
 

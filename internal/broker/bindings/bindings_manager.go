@@ -44,10 +44,10 @@ type ServiceAccountBindingsManager struct {
 	kubeconfigBuilder *kubeconfig.Builder
 }
 
-func NewServiceAccountBindingsManager(clientProvider ClientProvider, kubeconfigProvider KubeconfigProvider, useAdditionalOIDC, useMainOIDC, multipleContexts bool) *ServiceAccountBindingsManager {
+func NewServiceAccountBindingsManager(clientProvider ClientProvider, kubeconfigProvider KubeconfigProvider, multipleContexts bool) *ServiceAccountBindingsManager {
 	return &ServiceAccountBindingsManager{
 		clientProvider:    clientProvider,
-		kubeconfigBuilder: kubeconfig.NewBuilder(nil, kubeconfigProvider, useAdditionalOIDC, useMainOIDC, multipleContexts),
+		kubeconfigBuilder: kubeconfig.NewBuilder(nil, kubeconfigProvider, multipleContexts),
 	}
 }
 

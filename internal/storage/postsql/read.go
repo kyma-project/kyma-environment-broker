@@ -518,62 +518,6 @@ func (r readSession) ListOperationsInTimeRange(from, to time.Time) ([]dbmodel.Op
 	return ops, nil
 }
 
-func (r readSession) GetRuntimeStateByOperationID(operationID string) (dbmodel.RuntimeStateDTO, dberr.Error) {
-	var state dbmodel.RuntimeStateDTO
-
-	err := r.session.
-		Select("*").
-		From(RuntimeStateTableName).
-		Where(dbr.Eq("operation_id", operationID)).
-		LoadOne(&state)
-
-	if err != nil {
-		if err == dbr.ErrNotFound {
-			return dbmodel.RuntimeStateDTO{}, dberr.NotFound("cannot find runtime state: %s", err)
-		}
-		return dbmodel.RuntimeStateDTO{}, dberr.Internal("Failed to get runtime state: %s", err)
-	}
-	return state, nil
-}
-
-func (r readSession) ListRuntimeStateByRuntimeID(runtimeID string) ([]dbmodel.RuntimeStateDTO, dberr.Error) {
-	stateCondition := dbr.Eq("runtime_id", runtimeID)
-	var states []dbmodel.RuntimeStateDTO
-
-	_, err := r.session.
-		Select("*").
-		From(RuntimeStateTableName).
-		Where(stateCondition).
-		OrderDesc(CreatedAtField).
-		Load(&states)
-	if err != nil {
-		return nil, dberr.Internal("Failed to get states: %s", err)
-	}
-	return states, nil
-}
-
-func (r readSession) GetLatestRuntimeStateByRuntimeID(runtimeID string) (dbmodel.RuntimeStateDTO, dberr.Error) {
-	var state dbmodel.RuntimeStateDTO
-
-	count, err := r.session.
-		Select("*").
-		From(RuntimeStateTableName).
-		Where(dbr.Eq("runtime_id", runtimeID)).
-		OrderDesc(CreatedAtField).
-		Limit(1).
-		Load(&state)
-	if err != nil {
-		if err == dbr.ErrNotFound {
-			return dbmodel.RuntimeStateDTO{}, dberr.NotFound("cannot find runtime state: %s", err)
-		}
-		return dbmodel.RuntimeStateDTO{}, dberr.Internal("Failed to get the latest runtime state: %s", err)
-	}
-	if count == 0 {
-		return dbmodel.RuntimeStateDTO{}, dberr.NotFound("cannot find runtime state: %s", err)
-	}
-	return state, nil
-}
-
 func (r readSession) GetLatestRuntimeStateWithOIDCConfigByRuntimeID(runtimeID string) (dbmodel.RuntimeStateDTO, dberr.Error) {
 	var state dbmodel.RuntimeStateDTO
 	condition := dbr.And(dbr.Eq("runtime_id", runtimeID),

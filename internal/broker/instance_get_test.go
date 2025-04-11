@@ -12,9 +12,7 @@ import (
 
 	"github.com/kyma-project/kyma-environment-broker/internal/whitelist"
 
-	"github.com/kyma-project/control-plane/components/provisioner/pkg/gqlschema"
 	"github.com/kyma-project/kyma-environment-broker/common/gardener"
-	pkg "github.com/kyma-project/kyma-environment-broker/common/runtime"
 	"github.com/kyma-project/kyma-environment-broker/internal/broker"
 	"github.com/kyma-project/kyma-environment-broker/internal/broker/automock"
 	"github.com/kyma-project/kyma-environment-broker/internal/fixture"
@@ -51,29 +49,24 @@ func TestGetEndpoint_GetProvisioningInstance(t *testing.T) {
 	factoryBuilder := &automock.PlanValidator{}
 	factoryBuilder.On("IsPlanSupport", planID).Return(true)
 
-	planDefaults := func(planID string, platformProvider pkg.CloudProvider, provider *pkg.CloudProvider) (*gqlschema.ClusterConfigInput, error) {
-		return &gqlschema.ClusterConfigInput{}, nil
-	}
 	kcBuilder := &kcMock.KcBuilder{}
 	kcBuilder.On("GetServerURL", "").Return("", fmt.Errorf("error"))
 	createSvc := broker.NewProvision(
 		broker.Config{EnablePlans: []string{"gcp", "azure"}, OnlySingleTrialPerGA: true},
 		gardener.Config{Project: "test", ShootDomain: "example.com"},
-		st.Operations(),
-		st.Instances(),
-		st.InstancesArchived(),
+		st,
 		queue,
-		factoryBuilder,
 		broker.PlansConfig{},
-		planDefaults,
 		fixLogger(),
 		dashboardConfig,
 		kcBuilder,
 		whitelist.Set{},
 		&broker.OneForAllConvergedCloudRegionsProvider{},
 		nil,
+		fixValueProvider(),
+		false,
 	)
-	getSvc := broker.NewGetInstance(broker.Config{EnableKubeconfigURLLabel: true}, st.Instances(), st.Operations(), kcBuilder, fixLogger())
+	getSvc := broker.NewGetInstance(broker.Config{}, st.Instances(), st.Operations(), kcBuilder, fixLogger())
 
 	// when
 	_, err := createSvc.Provision(fixRequestContext(t, "req-region"), instanceID, domain.ProvisionDetails{
@@ -100,7 +93,7 @@ func TestGetEndpoint_GetProvisioningInstance(t *testing.T) {
 	// then
 	response, err := getSvc.GetInstance(context.Background(), instanceID, domain.FetchInstanceDetails{})
 	assert.Equal(t, nil, err, "Get returned error when expected to pass")
-	assert.Len(t, response.Metadata.Labels, 2)
+	assert.Len(t, response.Metadata.Labels, 1)
 }
 
 func TestGetEndpoint_DoNotReturnInstanceWhereDeletedAtIsNotZero(t *testing.T) {
@@ -108,7 +101,6 @@ func TestGetEndpoint_DoNotReturnInstanceWhereDeletedAtIsNotZero(t *testing.T) {
 	st := storage.NewMemoryStorage()
 	cfg := broker.Config{
 		URL:                                     "https://test-broker.local",
-		EnableKubeconfigURLLabel:                true,
 		ShowTrialExpirationInfo:                 true,
 		SubaccountsIdsToShowTrialExpirationInfo: "test-saID",
 	}
@@ -145,7 +137,6 @@ func TestGetEndpoint_GetExpiredInstanceWithExpirationDetails(t *testing.T) {
 	st := storage.NewMemoryStorage()
 	cfg := broker.Config{
 		URL:                                     "https://test-broker.local",
-		EnableKubeconfigURLLabel:                true,
 		ShowTrialExpirationInfo:                 true,
 		SubaccountsIdsToShowTrialExpirationInfo: "test-saID",
 	}
@@ -190,7 +181,6 @@ func TestGetEndpoint_GetExpiredInstanceWithExpirationDetailsAllSubaccountsIDs(t 
 	st := storage.NewMemoryStorage()
 	cfg := broker.Config{
 		URL:                                     "https://test-broker.local",
-		EnableKubeconfigURLLabel:                true,
 		ShowTrialExpirationInfo:                 true,
 		SubaccountsIdsToShowTrialExpirationInfo: "all",
 	}
@@ -236,7 +226,6 @@ func TestGetEndpoint_GetExpiredInstanceWithoutExpirationInfo(t *testing.T) {
 	st := storage.NewMemoryStorage()
 	cfg := broker.Config{
 		URL:                                     "https://test-broker.local",
-		EnableKubeconfigURLLabel:                true,
 		ShowTrialExpirationInfo:                 true,
 		SubaccountsIdsToShowTrialExpirationInfo: "subaccount-id1,subaccount-id2",
 	}
@@ -281,9 +270,8 @@ func TestGetEndpoint_GetExpiredFreeInstanceWithExpirationDetails(t *testing.T) {
 	// given
 	st := storage.NewMemoryStorage()
 	cfg := broker.Config{
-		URL:                      "https://test-broker.local",
-		EnableKubeconfigURLLabel: true,
-		ShowFreeExpirationInfo:   true,
+		URL:                    "https://test-broker.local",
+		ShowFreeExpirationInfo: true,
 	}
 
 	const (

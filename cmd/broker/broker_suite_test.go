@@ -10,9 +10,10 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"os"
-	"reflect"
 	"testing"
 	"time"
+
+	"github.com/stretchr/testify/mock"
 
 	"golang.org/x/exp/maps"
 	"k8s.io/apimachinery/pkg/util/sets"
@@ -37,7 +38,6 @@ import (
 
 	"code.cloudfoundry.org/lager"
 	"github.com/google/uuid"
-	"github.com/kyma-project/control-plane/components/provisioner/pkg/gqlschema"
 	"github.com/kyma-project/kyma-environment-broker/common/gardener"
 	"github.com/kyma-project/kyma-environment-broker/common/orchestration"
 	pkg "github.com/kyma-project/kyma-environment-broker/common/runtime"
@@ -50,7 +50,6 @@ import (
 	"github.com/kyma-project/kyma-environment-broker/internal/fixture"
 	kcMock "github.com/kyma-project/kyma-environment-broker/internal/kubeconfig/automock"
 	"github.com/kyma-project/kyma-environment-broker/internal/process"
-	"github.com/kyma-project/kyma-environment-broker/internal/process/input"
 	"github.com/kyma-project/kyma-environment-broker/internal/process/steps"
 	kebRuntime "github.com/kyma-project/kyma-environment-broker/internal/runtime"
 	"github.com/kyma-project/kyma-environment-broker/internal/storage"
@@ -102,8 +101,7 @@ type BrokerSuiteTest struct {
 	httpServer *httptest.Server
 	router     *httputil.Router
 
-	t                   *testing.T
-	inputBuilderFactory input.CreatorForPlan
+	t *testing.T
 
 	k8sKcp client.Client
 	k8sSKR client.Client
@@ -190,18 +188,6 @@ func NewBrokerSuiteTestWithConfig(t *testing.T, cfg *Config, version ...string) 
 		kebConfig.NewConfigMapKeysValidator(),
 		kebConfig.NewConfigMapConverter())
 
-	inputFactory, err := input.NewInputBuilderFactory(configProvider, input.Config{
-		MachineImageVersion:          "253",
-		KubernetesVersion:            "1.18",
-		MachineImage:                 "coreos",
-		URL:                          "http://localhost",
-		DefaultGardenerShootPurpose:  "testing",
-		DefaultTrialProvider:         pkg.AWS,
-		EnableShootAndSeedSameRegion: cfg.Provisioner.EnableShootAndSeedSameRegion,
-		UseMainOIDC:                  true,
-		UseAdditionalOIDC:            false,
-	}, map[string]string{"cf-eu10": "europe", "cf-us10": "us"}, cfg.FreemiumProviders, defaultOIDCValues(), cfg.Broker.UseSmallerMachineTypes)
-
 	storageCleanup, db, err := GetStorageForE2ETests()
 	assert.NoError(t, err)
 
@@ -247,21 +233,20 @@ func NewBrokerSuiteTestWithConfig(t *testing.T, cfg *Config, version ...string) 
 	deprovisioningQueue.SpeedUp(10000)
 
 	ts := &BrokerSuiteTest{
-		db:                  db,
-		storageCleanup:      storageCleanup,
-		gardenerClient:      gardenerClient,
-		router:              httputil.NewRouter(),
-		t:                   t,
-		inputBuilderFactory: inputFactory,
-		k8sKcp:              cli,
-		k8sSKR:              fakeK8sSKRClient,
-		eventBroker:         eventBroker,
+		db:             db,
+		storageCleanup: storageCleanup,
+		gardenerClient: gardenerClient,
+		router:         httputil.NewRouter(),
+		t:              t,
+		k8sKcp:         cli,
+		k8sSKR:         fakeK8sSKRClient,
+		eventBroker:    eventBroker,
 
 		k8sDeletionObjectTracker: ot,
 	}
 	ts.poller = &broker.TimerPoller{PollInterval: 3 * time.Millisecond, PollTimeout: 800 * time.Millisecond, Log: ts.t.Log}
 
-	ts.CreateAPI(inputFactory, cfg, db, provisioningQueue, deprovisioningQueue, updateQueue, log, k8sClientProvider, eventBroker)
+	ts.CreateAPI(cfg, db, provisioningQueue, deprovisioningQueue, updateQueue, log, k8sClientProvider, eventBroker)
 
 	expirationHandler := expiration.NewHandler(db.Instances(), db.Operations(), deprovisioningQueue, log)
 	expirationHandler.AttachRoutes(ts.router)
@@ -284,21 +269,11 @@ func defaultOIDCValues() pkg.OIDCConfigDTO {
 	return pkg.OIDCConfigDTO{
 		ClientID:       "client-id-oidc",
 		GroupsClaim:    "groups",
+		GroupsPrefix:   "-",
 		IssuerURL:      "https://issuer.url",
 		SigningAlgs:    []string{"RS256"},
 		UsernameClaim:  "sub",
 		UsernamePrefix: "-",
-	}
-}
-
-func defaultOIDCConfig() *gqlschema.OIDCConfigInput {
-	return &gqlschema.OIDCConfigInput{
-		ClientID:       defaultOIDCValues().ClientID,
-		GroupsClaim:    defaultOIDCValues().GroupsClaim,
-		IssuerURL:      defaultOIDCValues().IssuerURL,
-		SigningAlgs:    defaultOIDCValues().SigningAlgs,
-		UsernameClaim:  defaultOIDCValues().UsernameClaim,
-		UsernamePrefix: defaultOIDCValues().UsernamePrefix,
 	}
 }
 
@@ -331,10 +306,6 @@ func (s *BrokerSuiteTest) processInfrastructureManagerProvisioningRuntimeResourc
 	assert.NoError(s.t, err)
 }
 
-func (s *BrokerSuiteTest) ChangeDefaultTrialProvider(provider pkg.CloudProvider) {
-	s.inputBuilderFactory.(*input.InputBuilderFactory).SetDefaultTrialProvider(provider)
-}
-
 func (s *BrokerSuiteTest) CallAPI(method string, path string, body string) *http.Response {
 	cli := s.httpServer.Client()
 	req, err := http.NewRequest(method, fmt.Sprintf("%s/%s", s.httpServer.URL, path), bytes.NewBuffer([]byte(body)))
@@ -346,7 +317,7 @@ func (s *BrokerSuiteTest) CallAPI(method string, path string, body string) *http
 	return resp
 }
 
-func (s *BrokerSuiteTest) CreateAPI(inputFactory broker.PlanValidator, cfg *Config, db storage.BrokerStorage, provisioningQueue *process.Queue, deprovisionQueue *process.Queue, updateQueue *process.Queue, log *slog.Logger, skrK8sClientProvider *kubeconfig.FakeProvider, eventBroker *event.PubSub) {
+func (s *BrokerSuiteTest) CreateAPI(cfg *Config, db storage.BrokerStorage, provisioningQueue *process.Queue, deprovisionQueue *process.Queue, updateQueue *process.Queue, log *slog.Logger, skrK8sClientProvider *kubeconfig.FakeProvider, eventBroker *event.PubSub) {
 	servicesConfig := map[string]broker.Service{
 		broker.KymaServiceName: {
 			Description: "",
@@ -382,14 +353,12 @@ func (s *BrokerSuiteTest) CreateAPI(inputFactory broker.PlanValidator, cfg *Conf
 			},
 		},
 	}
-	planDefaults := func(planID string, platformProvider pkg.CloudProvider, provider *pkg.CloudProvider) (*gqlschema.ClusterConfigInput, error) {
-		return &gqlschema.ClusterConfigInput{}, nil
-	}
 	var fakeKcpK8sClient = fake.NewClientBuilder().Build()
 	kcBuilder := &kcMock.KcBuilder{}
 	kcBuilder.On("Build", nil).Return("--kubeconfig file", nil)
-	createAPI(s.router, servicesConfig, inputFactory, cfg, db, provisioningQueue, deprovisionQueue, updateQueue,
-		lager.NewLogger("api"), log, planDefaults, kcBuilder, skrK8sClientProvider, skrK8sClientProvider, fakeKcpK8sClient, eventBroker)
+	kcBuilder.On("GetServerURL", mock.Anything).Return("https://api.server.url.dummy", nil)
+	createAPI(s.router, servicesConfig, cfg, db, provisioningQueue, deprovisionQueue, updateQueue,
+		lager.NewLogger("api"), log, kcBuilder, skrK8sClientProvider, skrK8sClientProvider, fakeKcpK8sClient, eventBroker)
 
 	s.httpServer = httptest.NewServer(s.router)
 }
@@ -624,36 +593,6 @@ func (s *BrokerSuiteTest) AssertInstanceRuntimeAdmins(instanceId string, expecte
 	})
 	assert.NoError(s.t, err)
 	assert.Equal(s.t, expectedAdmins, instance.Parameters.Parameters.RuntimeAdministrators)
-}
-
-func (s *BrokerSuiteTest) AssertDisabledNetworkFilterRuntimeState(runtimeid, op string, val *bool) {
-	var got, exp string
-	err := s.poller.Invoke(func() (bool, error) {
-		states, _ := s.db.RuntimeStates().ListByRuntimeID(runtimeid)
-		exp = "<nil>"
-		if val != nil {
-			exp = fmt.Sprintf("%v", *val)
-		}
-		for _, rs := range states {
-			if rs.OperationID != op {
-				// skip runtime states for different operations
-				continue
-			}
-			if reflect.DeepEqual(val, rs.ClusterConfig.ShootNetworkingFilterDisabled) {
-				return true, nil
-			}
-			got = "<nil>"
-			if rs.ClusterConfig.ShootNetworkingFilterDisabled != nil {
-				got = fmt.Sprintf("%v", *rs.ClusterConfig.ShootNetworkingFilterDisabled)
-			}
-			return false, nil
-		}
-		return false, nil
-	})
-	if err != nil {
-		err = fmt.Errorf("ShootNetworkingFilterDisabled expected %v, got %v", exp, got)
-	}
-	require.NoError(s.t, err)
 }
 
 func (s *BrokerSuiteTest) Log(msg string) {

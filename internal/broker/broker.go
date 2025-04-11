@@ -7,9 +7,6 @@ import (
 	"time"
 
 	"gopkg.in/yaml.v2"
-
-	"github.com/kyma-project/control-plane/components/provisioner/pkg/gqlschema"
-	pkg "github.com/kyma-project/kyma-environment-broker/common/runtime"
 )
 
 const (
@@ -18,8 +15,6 @@ const (
 	KymaNamespace   = "kyma-system"
 	KcpNamespace    = "kcp-system"
 )
-
-type PlanDefaults func(planID string, platformProvider pkg.CloudProvider, parametersProvider *pkg.CloudProvider) (*gqlschema.ClusterConfigInput, error)
 
 type KymaEnvironmentBroker struct {
 	*ServicesEndpoint
@@ -39,7 +34,6 @@ type Config struct {
 	EnablePlans                             EnablePlans `envconfig:"default=azure"`
 	OnlySingleTrialPerGA                    bool        `envconfig:"default=true"`
 	URL                                     string
-	EnableKubeconfigURLLabel                bool          `envconfig:"default=false"`
 	IncludeAdditionalParamsInSchema         bool          `envconfig:"default=false"`
 	ShowTrialExpirationInfo                 bool          `envconfig:"default=false"`
 	ShowFreeExpirationInfo                  bool          `envconfig:"default=false"`
@@ -52,8 +46,6 @@ type Config struct {
 	AllowUpdateExpiredInstanceWithContext   bool          `envconfig:"default=false"`
 
 	Binding BindingConfig
-	// Deprecated - is being moved to InfrastructureManager config
-	UseSmallerMachineTypes bool `envconfig:"default=false"`
 
 	DisableSapConvergedCloud bool `envconfig:"default=false"`
 

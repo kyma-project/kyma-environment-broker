@@ -7,11 +7,9 @@ import (
 
 	"github.com/kyma-project/kyma-environment-broker/common/orchestration"
 	"github.com/kyma-project/kyma-environment-broker/internal/fixture"
-	"github.com/kyma-project/kyma-environment-broker/internal/process/input/automock"
 	"github.com/kyma-project/kyma-environment-broker/internal/storage"
 	"github.com/pivotal-cf/brokerapi/v12/domain"
 	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 )
 
@@ -71,17 +69,10 @@ func TestInitialisationStep_OtherOperationIsInProgress(t *testing.T) {
 			db := storage.NewMemoryStorage()
 			ops := db.Operations()
 			is := db.Instances()
-			rs := db.RuntimeStates()
 			inst := fixture.FixInstance("iid")
-			state := fixture.FixRuntimeState("op-id", "Runtime-iid", "op-id")
 			err := is.Insert(inst)
 			require.NoError(t, err)
-			err = rs.Insert(state)
-			require.NoError(t, err)
-			builder := &automock.CreatorForPlan{}
-			builder.On("CreateUpgradeShootInput", mock.Anything).
-				Return(&fixture.SimpleInputCreator{}, nil)
-			step := NewInitialisationStep(is, ops)
+			step := NewInitialisationStep(db)
 			updatingOperation := fixture.FixUpdatingOperation("up-id", "iid")
 			updatingOperation.State = orchestration.Pending
 			err = ops.InsertOperation(updatingOperation.Operation)

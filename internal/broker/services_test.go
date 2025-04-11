@@ -36,7 +36,7 @@ func TestServices_Services(t *testing.T) {
 				},
 			},
 		}
-		servicesEndpoint := broker.NewServices(cfg, servicesConfig, log, &broker.OneForAllConvergedCloudRegionsProvider{}, nil)
+		servicesEndpoint := broker.NewServices(cfg, servicesConfig, log, &broker.OneForAllConvergedCloudRegionsProvider{}, nil, false)
 
 		// when
 		services, err := servicesEndpoint.Services(context.TODO())
@@ -68,7 +68,7 @@ func TestServices_Services(t *testing.T) {
 				},
 			},
 		}
-		servicesEndpoint := broker.NewServices(cfg, servicesConfig, log, &broker.OneForAllConvergedCloudRegionsProvider{}, nil)
+		servicesEndpoint := broker.NewServices(cfg, servicesConfig, log, &broker.OneForAllConvergedCloudRegionsProvider{}, nil, false)
 
 		// when
 		services, err := servicesEndpoint.Services(context.TODO())
@@ -104,7 +104,7 @@ func TestServices_Services(t *testing.T) {
 				},
 			},
 		}
-		servicesEndpoint := broker.NewServices(cfg, servicesConfig, log, &broker.OneForAllConvergedCloudRegionsProvider{}, nil)
+		servicesEndpoint := broker.NewServices(cfg, servicesConfig, log, &broker.OneForAllConvergedCloudRegionsProvider{}, nil, false)
 
 		// when
 		services, err := servicesEndpoint.Services(context.TODO())
@@ -143,7 +143,7 @@ func TestServices_Services(t *testing.T) {
 				},
 			},
 		}
-		servicesEndpoint := broker.NewServices(cfg, servicesConfig, log, &broker.OneForAllConvergedCloudRegionsProvider{}, nil)
+		servicesEndpoint := broker.NewServices(cfg, servicesConfig, log, &broker.OneForAllConvergedCloudRegionsProvider{}, nil, false)
 
 		// when
 		services, err := servicesEndpoint.Services(context.TODO())
