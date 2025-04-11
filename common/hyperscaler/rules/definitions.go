@@ -6,17 +6,17 @@ import (
 )
 
 const (
-	PrAttrName       = "PR"
-	HrAttrName       = "HR"
-	EuAttrName       = "EU"
-	SharedAttrName   = "S"
-	PrSuffixAttrName = "PR"
-	HrSuffixAttrName = "HR"
+	PlatformRegionAttributeName    = "PR"
+	HyperscalerRegionAttributeName = "HR"
+	EUAccessAttributeName          = "EU"
+	SharedAttributeName            = "S"
+	PlatformRegionSuffix           = "PR"
+	HyperscalerRegionSuffix        = "HR"
 )
 
 var InputAttributes = []Attribute{
 	{
-		Name:        PrAttrName,
+		Name:        PlatformRegionAttributeName,
 		Description: "Platform Region",
 		Setter:      setPlatformRegion,
 		Getter:      func(r *Rule) string { return r.PlatformRegion },
@@ -25,7 +25,7 @@ var InputAttributes = []Attribute{
 		HasValue:    true,
 	},
 	{
-		Name:        HrAttrName,
+		Name:        HyperscalerRegionAttributeName,
 		Description: "Hyperscaler Region",
 		Setter:      setHyperscalerRegion,
 		Getter:      func(r *Rule) string { return r.HyperscalerRegion },
@@ -37,7 +37,7 @@ var InputAttributes = []Attribute{
 
 var OutputAttributes = []Attribute{
 	{
-		Name:        EuAttrName,
+		Name:        EUAccessAttributeName,
 		Description: "EU Access",
 		Setter:      setEuAccess,
 		Getter:      func(r *Rule) string { return strconv.FormatBool(r.EuAccess) },
@@ -46,7 +46,7 @@ var OutputAttributes = []Attribute{
 		HasValue:    false,
 	},
 	{
-		Name:        SharedAttrName,
+		Name:        SharedAttributeName,
 		Description: "Shared",
 		Setter:      setShared,
 		Getter:      func(r *Rule) string { return strconv.FormatBool(r.Shared) },
@@ -55,7 +55,7 @@ var OutputAttributes = []Attribute{
 		HasValue:    false,
 	},
 	{
-		Name:        PrSuffixAttrName,
+		Name:        PlatformRegionSuffix,
 		Description: "Platform Region suffix",
 		Setter:      setPlatformRegionSuffix,
 		Getter:      func(r *Rule) string { return strconv.FormatBool(r.PlatformRegionSuffix) },
@@ -64,7 +64,7 @@ var OutputAttributes = []Attribute{
 		HasValue:    false,
 	},
 	{
-		Name:        HrSuffixAttrName,
+		Name:        HyperscalerRegionSuffix,
 		Description: "Platform Region suffix",
 		Setter:      setHyperscalerRegionSuffix,
 		Getter:      func(r *Rule) string { return strconv.FormatBool(r.HyperscalerRegionSuffix) },
