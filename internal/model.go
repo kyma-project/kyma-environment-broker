@@ -355,6 +355,9 @@ func NewProvisioningOperationWithID(operationID, instanceID string, parameters P
 			UpdatedAt:              time.Now(),
 			Type:                   OperationTypeProvision,
 			ProvisioningParameters: parameters,
+			RuntimeOperation: RuntimeOperation{
+				GlobalAccountID: parameters.ErsContext.GlobalAccountID,
+			},
 			InstanceDetails: InstanceDetails{
 				SubAccountID: parameters.ErsContext.SubAccountID,
 				Kubeconfig:   parameters.Parameters.Kubeconfig,
@@ -374,6 +377,10 @@ func NewDeprovisioningOperationWithID(operationID string, instance *Instance) (D
 	}
 	return DeprovisioningOperation{
 		Operation: Operation{
+			RuntimeOperation: RuntimeOperation{
+				GlobalAccountID: instance.GlobalAccountID,
+				Region:          instance.ProviderRegion,
+			},
 			ID:                     operationID,
 			Version:                0,
 			Description:            "Operation created",
@@ -404,6 +411,8 @@ func NewUpdateOperation(operationID string, instance *Instance, updatingParams U
 		FinishedStages:         make([]string, 0),
 		ProvisioningParameters: instance.Parameters,
 		UpdatingParameters:     updatingParams,
+		RuntimeOperation: RuntimeOperation{
+			Region: instance.ProviderRegion},
 	}
 	if updatingParams.OIDC != nil {
 		op.ProvisioningParameters.Parameters.OIDC = updatingParams.OIDC
