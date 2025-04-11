@@ -105,12 +105,12 @@ const (
 // Runtime this structure is needed for backward compatibility with the old code using orchestration
 type Runtime struct {
 	GlobalAccountID string
+	Region          string
 }
 
 // RuntimeOperation this structure is needed for backward compatibility with the old code using orchestration
 type RuntimeOperation struct {
 	Runtime Runtime
-	Region  string
 }
 
 type Operation struct {
