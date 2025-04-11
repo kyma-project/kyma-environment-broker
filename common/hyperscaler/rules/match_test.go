@@ -60,7 +60,7 @@ func TestMatch_UseValidRuleset(t *testing.T) {
 				Shared:          false,
 				RawData: RawData{
 					Rule:   "azure(PR=cf-ch20) -> EU",
-					RuleNo: 0,
+					RuleNo: 1,
 				},
 			},
 		},
@@ -77,7 +77,7 @@ func TestMatch_UseValidRuleset(t *testing.T) {
 				Shared:          false,
 				RawData: RawData{
 					Rule:   "aws(PR=cf-eu11) -> EU",
-					RuleNo: 4,
+					RuleNo: 5,
 				},
 			},
 		},
@@ -94,7 +94,7 @@ func TestMatch_UseValidRuleset(t *testing.T) {
 				Shared:          false,
 				RawData: RawData{
 					Rule:   "free",
-					RuleNo: 8,
+					RuleNo: 9,
 				},
 			},
 		},
@@ -111,7 +111,7 @@ func TestMatch_UseValidRuleset(t *testing.T) {
 				Shared:          false,
 				RawData: RawData{
 					Rule:   "gcp(PR=cf-sa30) -> PR,HR",
-					RuleNo: 5,
+					RuleNo: 6,
 				},
 			},
 		},
@@ -129,7 +129,7 @@ func TestMatch_UseValidRuleset(t *testing.T) {
 				Shared:          false,
 				RawData: RawData{
 					Rule:   "gcp(PR=cf-sa30) -> PR,HR",
-					RuleNo: 5,
+					RuleNo: 6,
 				},
 			},
 		},
@@ -146,7 +146,7 @@ func TestMatch_UseValidRuleset(t *testing.T) {
 				Shared:          true,
 				RawData: RawData{
 					Rule:   "trial -> S",
-					RuleNo: 6,
+					RuleNo: 7,
 				},
 			},
 		},
@@ -163,7 +163,7 @@ func TestMatch_UseValidRuleset(t *testing.T) {
 				Shared:          true,
 				RawData: RawData{
 					Rule:   "trial(PR=cf-eu11) -> EU, S",
-					RuleNo: 7,
+					RuleNo: 8,
 				},
 			},
 		},
