@@ -5,7 +5,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/kyma-project/kyma-environment-broker/common/orchestration"
 	"github.com/kyma-project/kyma-environment-broker/common/runtime"
 	"github.com/kyma-project/kyma-environment-broker/internal"
 	"github.com/pivotal-cf/brokerapi/v12/domain"
@@ -114,7 +113,7 @@ func TestConverting_Suspending(t *testing.T) {
 		// when
 		dto, _ := svc.NewDTO(instance)
 		svc.ApplyProvisioningOperation(&dto, fixProvisioningOperation(domain.InProgress, time.Now()))
-		svc.ApplySuspensionOperations(&dto, fixSuspensionOperation(orchestration.Pending, time.Now().Add(time.Second)))
+		svc.ApplySuspensionOperations(&dto, fixSuspensionOperation(internal.OperationStatePending, time.Now().Add(time.Second)))
 
 		// then
 		assert.Equal(t, runtime.StateProvisioning, dto.Status.State)
@@ -144,7 +143,7 @@ func TestConverting_Deprovisioning(t *testing.T) {
 		// when
 		dto, _ := svc.NewDTO(instance)
 		svc.ApplyProvisioningOperation(&dto, fixProvisioningOperation(domain.InProgress, time.Now()))
-		svc.ApplyDeprovisioningOperation(&dto, fixDeprovisionOperation(orchestration.Pending, time.Now().Add(time.Second)))
+		svc.ApplyDeprovisioningOperation(&dto, fixDeprovisionOperation(internal.OperationStatePending, time.Now().Add(time.Second)))
 
 		// then
 		assert.Equal(t, runtime.StateProvisioning, dto.Status.State)

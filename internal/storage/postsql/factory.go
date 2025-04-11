@@ -40,13 +40,9 @@ type ReadSession interface {
 	GetSubaccountsInstanceStats() ([]dbmodel.InstanceBySubAccountIDStatEntry, error)
 	GetERSContextStats() ([]dbmodel.InstanceERSContextStatsEntry, error)
 	GetNumberOfInstancesForGlobalAccountID(globalAccountID string) (int, error)
-	GetOrchestrationByID(oID string) (dbmodel.OrchestrationDTO, dberr.Error)
-	ListOrchestrations(filter dbmodel.OrchestrationFilter) ([]dbmodel.OrchestrationDTO, int, int, error)
 	ListInstances(filter dbmodel.InstanceFilter) ([]dbmodel.InstanceWithExtendedOperationDTO, int, int, error)
 	ListInstancesWithSubaccountStates(filter dbmodel.InstanceFilter) ([]dbmodel.InstanceWithSubaccountStateDTO, int, int, error)
-	ListOperationsByOrchestrationID(orchestrationID string, filter dbmodel.OperationFilter) ([]dbmodel.OperationDTO, int, int, error)
 	ListOperationsInTimeRange(from, to time.Time) ([]dbmodel.OperationDTO, error)
-	GetOperationStatsForOrchestration(orchestrationID string) ([]dbmodel.OperationStatEntry, error)
 	ListEvents(filter events.EventFilter) ([]events.EventDTO, error)
 	GetDistinctSubAccounts() ([]string, dberr.Error)
 	ListSubaccountStates() ([]dbmodel.SubaccountStateDTO, dberr.Error)
@@ -72,8 +68,6 @@ type WriteSession interface {
 	DeleteInstance(instanceID string) dberr.Error
 	InsertOperation(dto dbmodel.OperationDTO) dberr.Error
 	UpdateOperation(dto dbmodel.OperationDTO) dberr.Error
-	InsertOrchestration(o dbmodel.OrchestrationDTO) dberr.Error
-	UpdateOrchestration(o dbmodel.OrchestrationDTO) dberr.Error
 	InsertEvent(level events.EventLevel, message, instanceID, operationID string) dberr.Error
 	DeleteEvents(until time.Time) dberr.Error
 	UpsertSubaccountState(state dbmodel.SubaccountStateDTO) dberr.Error

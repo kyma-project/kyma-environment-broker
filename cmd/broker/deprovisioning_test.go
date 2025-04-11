@@ -42,10 +42,17 @@ func TestReDeprovision(t *testing.T) {
 					}
 		}`)
 	opID := suite.DecodeOperationID(resp)
+
 	suite.processKIMProvisioningByOperationID(opID)
 
 	// then
 	suite.WaitForOperationState(opID, domain.Succeeded)
+
+	//then
+	op, err := suite.db.Operations().GetOperationByID(opID)
+	require.NoError(t, err)
+	assert.Equal(t, "eu-central-1", op.Region)
+	assert.Equal(t, "g-account-id", op.GlobalAccountID)
 
 	// FIRST DEPROVISION
 	resp = suite.CallAPI("DELETE", fmt.Sprintf("oauth/v2/service_instances/%s?accepts_incomplete=true&plan_id=7d55d31d-35ae-4438-bf13-6ffdfa107d9f&service_id=47c9dcbf-ff30-448e-ab36-d3bad66ba281", iid),
@@ -60,6 +67,13 @@ func TestReDeprovision(t *testing.T) {
 
 	suite.WaitForOperationState(deprovisioningID, domain.InProgress)
 	assert.Equal(t, deprovisioningID, suite.LastOperation(iid).ID)
+
+	//then
+	deprovisioningOp, err := suite.db.Operations().GetOperationByID(deprovisioningID)
+	require.NoError(t, err)
+	assert.Equal(t, "eu-central-1", deprovisioningOp.Region)
+	assert.Equal(t, "g-account-id", deprovisioningOp.GlobalAccountID)
+
 	suite.FinishDeprovisioningOperationByKIM(deprovisioningID)
 	// then
 	suite.WaitForInstanceArchivedCreated(iid)

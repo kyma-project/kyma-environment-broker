@@ -19,7 +19,6 @@ type BrokerStorage interface {
 	Operations() Operations
 	Provisioning() Provisioning
 	Deprovisioning() Deprovisioning
-	Orchestrations() Orchestrations
 	SubaccountStates() SubaccountStates
 	Events() Events
 	InstancesArchived() InstancesArchived
@@ -49,7 +48,6 @@ func NewFromConfig(cfg Config, evcfg events.Config, cipher postgres.Cipher) (Bro
 	return storage{
 		instance:          postgres.NewInstance(fact, operation, cipher),
 		operation:         operation,
-		orchestrations:    postgres.NewOrchestrations(fact),
 		events:            events.New(evcfg, eventstorage.New(fact)),
 		subaccountStates:  postgres.NewSubaccountStates(fact),
 		instancesArchived: postgres.NewInstanceArchived(fact),
@@ -64,7 +62,6 @@ func NewMemoryStorage() BrokerStorage {
 		operation:         op,
 		subaccountStates:  ss,
 		instance:          memory.NewInstance(op, ss),
-		orchestrations:    memory.NewOrchestrations(),
 		events:            events.New(events.Config{}, NewInMemoryEvents()),
 		instancesArchived: memory.NewInstanceArchivedInMemoryStorage(),
 		bindings:          memory.NewBinding(),
@@ -122,7 +119,6 @@ func requiredContains[T comparable](el *T, sl []T) bool {
 type storage struct {
 	instance          Instances
 	operation         Operations
-	orchestrations    Orchestrations
 	events            Events
 	subaccountStates  SubaccountStates
 	instancesArchived InstancesArchived
@@ -143,10 +139,6 @@ func (s storage) Provisioning() Provisioning {
 
 func (s storage) Deprovisioning() Deprovisioning {
 	return s.operation
-}
-
-func (s storage) Orchestrations() Orchestrations {
-	return s.orchestrations
 }
 
 func (s storage) Events() Events {

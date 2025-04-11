@@ -75,6 +75,11 @@ func TestUpdate(t *testing.T) {
 	suite.WaitForOperationState(upgradeOperationID, domain.Succeeded)
 	assert.Equal(t, upgradeOperationID, suite.LastOperation(iid).ID)
 
+	op, err := suite.db.Operations().GetOperationByID(upgradeOperationID)
+	require.NoError(t, err)
+	assert.Equal(t, "eu-west-1", op.Region)
+	assert.Equal(t, "g-account-id", op.GlobalAccountID)
+
 	runtime := suite.GetRuntimeResourceByInstanceID(iid)
 	oidc := (*runtime.Spec.Shoot.Kubernetes.KubeAPIServer.AdditionalOidcConfig)[0]
 

@@ -3,7 +3,7 @@ package provisioning
 import (
 	"testing"
 
-	"github.com/kyma-project/kyma-environment-broker/common/orchestration"
+	"github.com/kyma-project/kyma-environment-broker/internal"
 	"github.com/kyma-project/kyma-environment-broker/internal/fixture"
 	"github.com/pivotal-cf/brokerapi/v12/domain"
 	"github.com/stretchr/testify/assert"
@@ -19,7 +19,7 @@ func TestStartStep_RunIfDeprovisioningInProgress(t *testing.T) {
 	dOp.State = domain.InProgress
 	dOp.Temporary = true
 	pOp := fixture.FixProvisioningOperation("p-op-id", "instance-id")
-	pOp.State = orchestration.Pending
+	pOp.State = internal.OperationStatePending
 	inst := fixture.FixInstance("instance-id")
 
 	err := st.Instances().Insert(inst)
@@ -33,7 +33,7 @@ func TestStartStep_RunIfDeprovisioningInProgress(t *testing.T) {
 	operation, retry, err := step.Run(pOp, fixLogger())
 
 	// then
-	assert.Equal(t, domain.LastOperationState(orchestration.Pending), operation.State)
+	assert.Equal(t, domain.LastOperationState(internal.OperationStatePending), operation.State)
 	assert.NoError(t, err)
 	assert.NotZero(t, retry)
 }
@@ -46,7 +46,7 @@ func TestStartStep_RunIfDeprovisioningDone(t *testing.T) {
 	dOp.State = domain.Succeeded
 	dOp.Temporary = true
 	pOp := fixture.FixProvisioningOperation("p-op-id", "instance-id")
-	pOp.State = orchestration.Pending
+	pOp.State = internal.OperationStatePending
 	inst := fixture.FixInstance("instance-id")
 
 	err := st.Instances().Insert(inst)

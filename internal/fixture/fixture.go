@@ -5,7 +5,6 @@ import (
 	"time"
 
 	"github.com/kyma-project/kyma-environment-broker/common/gardener"
-	"github.com/kyma-project/kyma-environment-broker/common/orchestration"
 	pkg "github.com/kyma-project/kyma-environment-broker/common/runtime"
 	"github.com/kyma-project/kyma-environment-broker/internal"
 	"github.com/kyma-project/kyma-environment-broker/internal/ptr"
@@ -158,8 +157,7 @@ func FixInstance(id string) internal.Instance {
 
 func FixOperationWithProvisioningParameters(id, instanceId string, opType internal.OperationType, params internal.ProvisioningParameters) internal.Operation {
 	var (
-		description     = fmt.Sprintf("Description for operation %s", id)
-		orchestrationId = fmt.Sprintf("Orchestration-%s", id)
+		description = fmt.Sprintf("Description for operation %s", id)
 	)
 
 	return internal.Operation{
@@ -174,7 +172,6 @@ func FixOperationWithProvisioningParameters(id, instanceId string, opType intern
 		State:                  domain.Succeeded,
 		Description:            description,
 		ProvisioningParameters: params,
-		OrchestrationID:        orchestrationId,
 		FinishedStages:         []string{"prepare", "check_provisioning"},
 	}
 }
@@ -262,58 +259,18 @@ func FixSuspensionOperationAsOperation(operationId, instanceId string) internal.
 	return o
 }
 
-func FixRuntime(id string) orchestration.Runtime {
-	var (
-		instanceId   = fmt.Sprintf("Instance-%s", id)
-		subAccountId = fmt.Sprintf("SA-%s", id)
-	)
-
-	return orchestration.Runtime{
-		InstanceID:             instanceId,
-		RuntimeID:              id,
-		GlobalAccountID:        GlobalAccountId,
-		SubAccountID:           subAccountId,
-		ShootName:              "ShootName",
-		MaintenanceWindowBegin: time.Now().Truncate(time.Millisecond).Add(time.Hour),
-		MaintenanceWindowEnd:   time.Now().Truncate(time.Millisecond).Add(time.Minute).Add(time.Hour),
-	}
-}
-
-func FixRuntimeOperation(operationId string) orchestration.RuntimeOperation {
-	return orchestration.RuntimeOperation{
-		Runtime: FixRuntime(operationId),
-		ID:      operationId,
-		DryRun:  false,
-	}
-}
-
 func FixUpgradeClusterOperation(operationId, instanceId string) internal.UpgradeClusterOperation {
 	o := FixOperation(operationId, instanceId, internal.OperationTypeUpgradeCluster)
-	o.RuntimeOperation = FixRuntimeOperation(operationId)
+	o.RuntimeOperation = FixRuntimeOperation()
 	return internal.UpgradeClusterOperation{
 		Operation: o,
 	}
 }
 
-func FixOrchestration(id string) internal.Orchestration {
-	return internal.Orchestration{
-		OrchestrationID: id,
-		State:           orchestration.Succeeded,
-		Description:     "",
-		CreatedAt:       time.Now(),
-		UpdatedAt:       time.Now().Add(time.Hour * 1),
-		Parameters:      orchestration.Parameters{},
-	}
-}
-
-func FixOIDCConfigDTO() pkg.OIDCConfigDTO {
-	return pkg.OIDCConfigDTO{
-		ClientID:       "9bd05ed7-a930-44e6-8c79-e6defeb7dec9",
-		GroupsClaim:    "groups",
-		IssuerURL:      "https://kymatest.accounts400.ondemand.com",
-		SigningAlgs:    []string{"RS256"},
-		UsernameClaim:  "sub",
-		UsernamePrefix: "-",
+func FixRuntimeOperation() internal.RuntimeOperation {
+	return internal.RuntimeOperation{
+		GlobalAccountID: GlobalAccountId,
+		Region:          Region,
 	}
 }
 
@@ -327,15 +284,6 @@ func FixDNSProvidersConfig() gardener.DNSProvidersData {
 				Type:           "route53_type_test",
 			},
 		},
-	}
-}
-
-func FixRuntimeState(id, runtimeID, operationID string) internal.RuntimeState {
-	return internal.RuntimeState{
-		ID:          id,
-		CreatedAt:   time.Now(),
-		RuntimeID:   runtimeID,
-		OperationID: operationID,
 	}
 }
 
@@ -370,21 +318,6 @@ func FixExpiredBindingWithInstanceID(bindingID string, instanceID string, offset
 		ExpiresAt: time.Now().Add(time.Minute*10 - offset),
 
 		Kubeconfig:        "kubeconfig",
-		ExpirationSeconds: 600,
-		CreatedBy:         "john.smith@email.com",
-	}
-}
-
-func FixBindingInProgressWithInstanceID(bindingID string, instanceID string) internal.Binding {
-	return internal.Binding{
-		ID:         bindingID,
-		InstanceID: instanceID,
-
-		CreatedAt: time.Now(),
-		UpdatedAt: time.Now().Add(time.Minute * 5),
-		ExpiresAt: time.Now().Add(time.Minute * 10),
-
-		Kubeconfig:        "",
 		ExpirationSeconds: 600,
 		CreatedBy:         "john.smith@email.com",
 	}

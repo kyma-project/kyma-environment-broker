@@ -8,7 +8,6 @@ import (
 	"os"
 	gruntime "runtime"
 	"runtime/pprof"
-	"sort"
 	"strings"
 	"time"
 
@@ -31,7 +30,6 @@ import (
 	"github.com/kyma-project/kyma-environment-broker/common/gardener"
 	"github.com/kyma-project/kyma-environment-broker/common/hyperscaler"
 	"github.com/kyma-project/kyma-environment-broker/common/hyperscaler/rules"
-	orchestrationExt "github.com/kyma-project/kyma-environment-broker/common/orchestration"
 	"github.com/kyma-project/kyma-environment-broker/internal"
 	"github.com/kyma-project/kyma-environment-broker/internal/appinfo"
 	"github.com/kyma-project/kyma-environment-broker/internal/broker"
@@ -51,7 +49,6 @@ import (
 	"github.com/kyma-project/kyma-environment-broker/internal/provider"
 	"github.com/kyma-project/kyma-environment-broker/internal/runtime"
 	"github.com/kyma-project/kyma-environment-broker/internal/storage"
-	"github.com/kyma-project/kyma-environment-broker/internal/storage/dbmodel"
 	"github.com/kyma-project/kyma-environment-broker/internal/suspension"
 	"github.com/kyma-project/kyma-environment-broker/internal/swagger"
 	"github.com/prometheus/client_golang/prometheus"
@@ -488,76 +485,6 @@ func processOperationsInProgressByType(opType internal.OperationType, op storage
 	for _, operation := range operations {
 		queue.Add(operation.ID)
 		log.Info(fmt.Sprintf("Resuming the processing of %s operation ID: %s", opType, operation.ID))
-	}
-	return nil
-}
-
-func reprocessOrchestrations(orchestrationType orchestrationExt.Type, orchestrationsStorage storage.Orchestrations, operationsStorage storage.Operations, queue *process.Queue, log *slog.Logger) error {
-	if err := processCancelingOrchestrations(orchestrationType, orchestrationsStorage, operationsStorage, queue, log); err != nil {
-		return fmt.Errorf("while processing canceled %s orchestrations: %w", orchestrationType, err)
-	}
-	if err := processOrchestration(orchestrationType, orchestrationExt.InProgress, orchestrationsStorage, queue, log); err != nil {
-		return fmt.Errorf("while processing in progress %s orchestrations: %w", orchestrationType, err)
-	}
-	if err := processOrchestration(orchestrationType, orchestrationExt.Pending, orchestrationsStorage, queue, log); err != nil {
-		return fmt.Errorf("while processing pending %s orchestrations: %w", orchestrationType, err)
-	}
-	if err := processOrchestration(orchestrationType, orchestrationExt.Retrying, orchestrationsStorage, queue, log); err != nil {
-		return fmt.Errorf("while processing retrying %s orchestrations: %w", orchestrationType, err)
-	}
-	return nil
-}
-
-func processOrchestration(orchestrationType orchestrationExt.Type, state string, orchestrationsStorage storage.Orchestrations, queue *process.Queue, log *slog.Logger) error {
-	filter := dbmodel.OrchestrationFilter{
-		Types:  []string{string(orchestrationType)},
-		States: []string{state},
-	}
-	orchestrations, _, _, err := orchestrationsStorage.List(filter)
-	if err != nil {
-		return fmt.Errorf("while getting %s %s orchestrations from storage: %w", state, orchestrationType, err)
-	}
-	sort.Slice(orchestrations, func(i, j int) bool {
-		return orchestrations[i].CreatedAt.Before(orchestrations[j].CreatedAt)
-	})
-
-	for _, o := range orchestrations {
-		queue.Add(o.OrchestrationID)
-		log.Info(fmt.Sprintf("Resuming the processing of %s %s orchestration ID: %s", state, orchestrationType, o.OrchestrationID))
-	}
-	return nil
-}
-
-// processCancelingOrchestrations reprocess orchestrations with canceling state only when some in progress operations exists
-// reprocess only one orchestration to not clog up the orchestration queue on start
-func processCancelingOrchestrations(orchestrationType orchestrationExt.Type, orchestrationsStorage storage.Orchestrations, operationsStorage storage.Operations, queue *process.Queue, log *slog.Logger) error {
-	filter := dbmodel.OrchestrationFilter{
-		Types:  []string{string(orchestrationType)},
-		States: []string{orchestrationExt.Canceling},
-	}
-	orchestrations, _, _, err := orchestrationsStorage.List(filter)
-	if err != nil {
-		return fmt.Errorf("while getting canceling %s orchestrations from storage: %w", orchestrationType, err)
-	}
-	sort.Slice(orchestrations, func(i, j int) bool {
-		return orchestrations[i].CreatedAt.Before(orchestrations[j].CreatedAt)
-	})
-
-	for _, o := range orchestrations {
-		count := 0
-		err = nil
-		if orchestrationType == orchestrationExt.UpgradeClusterOrchestration {
-			_, count, _, err = operationsStorage.ListUpgradeClusterOperationsByOrchestrationID(o.OrchestrationID, dbmodel.OperationFilter{States: []string{orchestrationExt.InProgress}})
-		}
-		if err != nil {
-			return fmt.Errorf("while listing %s operations for orchestration %s: %w", orchestrationType, o.OrchestrationID, err)
-		}
-
-		if count > 0 {
-			log.Info(fmt.Sprintf("Resuming the processing of %s %s orchestration ID: %s", orchestrationExt.Canceling, orchestrationType, o.OrchestrationID))
-			queue.Add(o.OrchestrationID)
-			return nil
-		}
 	}
 	return nil
 }

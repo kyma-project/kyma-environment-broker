@@ -368,7 +368,6 @@ type Operation struct {
 	CreatedAt                    time.Time                 `json:"createdAt"`
 	UpdatedAt                    time.Time                 `json:"updatedAt"`
 	OperationID                  string                    `json:"operationID"`
-	OrchestrationID              string                    `json:"orchestrationID,omitempty"`
 	FinishedStages               []string                  `json:"finishedStages"`
 	ExecutedButNotCompletedSteps []string                  `json:"executedButNotCompletedSteps,omitempty"`
 	Parameters                   ProvisioningParametersDTO `json:"parameters,omitempty"`

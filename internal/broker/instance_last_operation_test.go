@@ -5,7 +5,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/kyma-project/kyma-environment-broker/common/orchestration"
 	"github.com/kyma-project/kyma-environment-broker/internal"
 	"github.com/kyma-project/kyma-environment-broker/internal/broker"
 	"github.com/kyma-project/kyma-environment-broker/internal/fixture"
@@ -61,7 +60,7 @@ func TestLastOperation_LastOperation(t *testing.T) {
 		// given
 		memoryStorage := storage.NewMemoryStorage()
 		updateOp := fixture.FixUpdatingOperation(operationID, instID)
-		updateOp.State = orchestration.Pending
+		updateOp.State = internal.OperationStatePending
 		err := memoryStorage.Operations().InsertUpdatingOperation(updateOp)
 		assert.NoError(t, err)
 
@@ -89,7 +88,7 @@ func TestLastOperation_LastOperation(t *testing.T) {
 		// given
 		memoryStorage := storage.NewMemoryStorage()
 		updateOp := fixture.FixUpdatingOperation(operationID, instID)
-		updateOp.State = orchestration.Retrying
+		updateOp.State = internal.OperationStateRetrying
 		err := memoryStorage.Operations().InsertUpdatingOperation(updateOp)
 		assert.NoError(t, err)
 
@@ -120,7 +119,7 @@ func TestLastOperation_LastOperation(t *testing.T) {
 		// given
 		memoryStorage := storage.NewMemoryStorage()
 		updateOp := fixture.FixUpdatingOperation(operationID, instID)
-		updateOp.State = orchestration.Canceling
+		updateOp.State = internal.OperationStateCanceling
 		err := memoryStorage.Operations().InsertUpdatingOperation(updateOp)
 		assert.NoError(t, err)
 
@@ -150,7 +149,7 @@ func TestLastOperation_LastOperation(t *testing.T) {
 		// given
 		memoryStorage := storage.NewMemoryStorage()
 		updateOp := fixture.FixUpdatingOperation(operationID, instID)
-		updateOp.State = orchestration.Canceled
+		updateOp.State = internal.OperationStateCanceled
 		err := memoryStorage.Operations().InsertUpdatingOperation(updateOp)
 		assert.NoError(t, err)
 

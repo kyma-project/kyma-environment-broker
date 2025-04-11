@@ -53,14 +53,12 @@ type Operations interface {
 	GetOperationStatsByPlan() (map[string]internal.OperationStats, error)
 	GetOperationStatsByPlanV2() ([]internal.OperationStatsV2, error)
 	GetOperationsForIDs(operationIDList []string) ([]internal.Operation, error)
-	GetOperationStatsForOrchestration(orchestrationID string) (map[string]int, error)
 	ListOperations(filter dbmodel.OperationFilter) ([]internal.Operation, int, int, error)
 
 	InsertOperation(operation internal.Operation) error
 	UpdateOperation(operation internal.Operation) (*internal.Operation, error)
 	ListOperationsByInstanceID(instanceID string) ([]internal.Operation, error)
 	ListOperationsByInstanceIDGroupByType(instanceID string) (*internal.GroupedOperations, error)
-	ListOperationsByOrchestrationID(orchestrationID string, filter dbmodel.OperationFilter) ([]internal.Operation, int, int, error)
 	ListOperationsInTimeRange(from, to time.Time) ([]internal.Operation, error)
 
 	DeleteByID(operationID string) error
@@ -84,13 +82,6 @@ type Deprovisioning interface {
 	ListDeprovisioningOperations() ([]internal.DeprovisioningOperation, error)
 }
 
-type Orchestrations interface {
-	Insert(orchestration internal.Orchestration) error
-	Update(orchestration internal.Orchestration) error
-	GetByID(orchestrationID string) (*internal.Orchestration, error)
-	List(filter dbmodel.OrchestrationFilter) ([]internal.Orchestration, int, int, error)
-}
-
 type RuntimeStates interface {
 	Insert(runtimeState internal.RuntimeState) error
 	GetByOperationID(operationID string) (internal.RuntimeState, error)
@@ -105,7 +96,6 @@ type UpgradeCluster interface {
 	UpdateUpgradeClusterOperation(operation internal.UpgradeClusterOperation) (*internal.UpgradeClusterOperation, error)
 	GetUpgradeClusterOperationByID(operationID string) (*internal.UpgradeClusterOperation, error)
 	ListUpgradeClusterOperationsByInstanceID(instanceID string) ([]internal.UpgradeClusterOperation, error)
-	ListUpgradeClusterOperationsByOrchestrationID(orchestrationID string, filter dbmodel.OperationFilter) ([]internal.UpgradeClusterOperation, int, int, error)
 }
 
 type Updating interface {

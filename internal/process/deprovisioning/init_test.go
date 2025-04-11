@@ -4,7 +4,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/kyma-project/kyma-environment-broker/common/orchestration"
 	"github.com/kyma-project/kyma-environment-broker/internal"
 	"github.com/kyma-project/kyma-environment-broker/internal/fixture"
 	"github.com/kyma-project/kyma-environment-broker/internal/storage"
@@ -23,7 +22,7 @@ func TestInitStep_happyPath(t *testing.T) {
 	// given
 	memoryStorage := storage.NewMemoryStorage()
 	prepareProvisionedInstance(t, memoryStorage)
-	dOp := prepareDeprovisioningOperation(t, memoryStorage, orchestration.Pending)
+	dOp := prepareDeprovisioningOperation(t, memoryStorage, internal.OperationStatePending)
 
 	svc := NewInitStep(memoryStorage, 90*time.Second)
 
@@ -46,7 +45,7 @@ func TestInitStep_existingUpdatingOperation(t *testing.T) {
 	uOp.State = domain.InProgress
 	err := memoryStorage.Operations().InsertOperation(uOp.Operation)
 	assert.NoError(t, err)
-	dOp := prepareDeprovisioningOperation(t, memoryStorage, orchestration.Pending)
+	dOp := prepareDeprovisioningOperation(t, memoryStorage, internal.OperationStatePending)
 
 	svc := NewInitStep(memoryStorage, 90*time.Second)
 
@@ -54,11 +53,11 @@ func TestInitStep_existingUpdatingOperation(t *testing.T) {
 	op, d, err := svc.Run(dOp, fixLogger())
 
 	// then
-	assert.Equal(t, orchestration.Pending, string(op.State))
+	assert.Equal(t, internal.OperationStatePending, string(op.State))
 	assert.NoError(t, err)
 	assert.NotZero(t, d)
 	dbOp, _ := memoryStorage.Operations().GetOperationByID(op.ID)
-	assert.Equal(t, orchestration.Pending, string(dbOp.State))
+	assert.Equal(t, internal.OperationStatePending, string(dbOp.State))
 }
 
 func prepareProvisionedInstance(t *testing.T, s storage.BrokerStorage) {

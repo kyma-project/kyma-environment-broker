@@ -103,6 +103,11 @@ func TestProvisioningWithKIMOnlyForTrial(t *testing.T) {
 	// then
 	suite.WaitForOperationState(opID, domain.Succeeded)
 	suite.AssertRuntimeResourceLabels(opID)
+
+	op, err := suite.db.Operations().GetOperationByID(opID)
+	require.NoError(t, err)
+	assert.Equal(t, "eu-west-1", op.Region)
+	assert.Equal(t, "g-account-id", op.GlobalAccountID)
 }
 
 func TestProvisioningWithKIMOnlyForAWS(t *testing.T) {

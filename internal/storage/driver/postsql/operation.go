@@ -18,13 +18,6 @@ import (
 	"k8s.io/apimachinery/pkg/util/wait"
 )
 
-const (
-	Retrying   = "retrying" // to signal a retry sign before marking it to pending
-	Succeeded  = "succeeded"
-	Failed     = "failed"
-	InProgress = "in progress"
-)
-
 type operations struct {
 	postsql.Factory
 	cipher Cipher
@@ -424,55 +417,6 @@ func (s *operations) GetOperationStatsByPlanV2() ([]internal.OperationStatsV2, e
 	return stats, nil
 }
 
-func calFailedStatusForOrchestration(entries []dbmodel.OperationStatEntry) ([]string, int) {
-	var result []string
-	resultPerInstanceID := make(map[string][]string)
-
-	for _, entry := range entries {
-		resultPerInstanceID[entry.InstanceID] = append(resultPerInstanceID[entry.InstanceID], entry.State)
-	}
-
-	var invalidFailed, failedFound bool
-
-	for instanceID, statuses := range resultPerInstanceID {
-
-		invalidFailed = false
-		failedFound = false
-		for _, status := range statuses {
-			if status == Failed {
-				failedFound = true
-			}
-			// In Progress/Retrying/Succeeded means new operation for same instance_id is ongoing/succeeded.
-			if status == Succeeded || status == Retrying || status == InProgress {
-				invalidFailed = true
-			}
-		}
-		if failedFound && !invalidFailed {
-			result = append(result, instanceID)
-		}
-	}
-
-	return result, len(result)
-}
-
-func (s *operations) GetOperationStatsForOrchestration(orchestrationID string) (map[string]int, error) {
-	entries, err := s.Factory.NewReadSession().GetOperationStatsForOrchestration(orchestrationID)
-	if err != nil {
-		return map[string]int{}, err
-	}
-
-	result := make(map[string]int)
-	_, failedNum := calFailedStatusForOrchestration(entries)
-	result[Failed] = failedNum
-
-	for _, entry := range entries {
-		if entry.State != Failed {
-			result[entry.State] += 1
-		}
-	}
-	return result, nil
-}
-
 func (s *operations) GetOperationsForIDs(operationIDList []string) ([]internal.Operation, error) {
 	session := s.Factory.NewReadSession()
 	operations := make([]dbmodel.OperationDTO, 0)
@@ -523,35 +467,6 @@ func (s *operations) GetAllOperations() ([]internal.Operation, error) {
 	}
 	result, err := s.toOperations(operations)
 	return result, err
-}
-
-func (s *operations) ListOperationsByOrchestrationID(orchestrationID string, filter dbmodel.OperationFilter) ([]internal.Operation, int, int, error) {
-	session := s.Factory.NewReadSession()
-	var (
-		operations        = make([]dbmodel.OperationDTO, 0)
-		lastErr           error
-		count, totalCount int
-	)
-	err := wait.PollUntilContextTimeout(context.Background(), defaultRetryInterval, defaultRetryTimeout, true, func(ctx context.Context) (bool, error) {
-		operations, count, totalCount, lastErr = session.ListOperationsByOrchestrationID(orchestrationID, filter)
-		if lastErr != nil {
-			if dberr.IsNotFound(lastErr) {
-				lastErr = dberr.NotFound("Operations for orchestration ID %s not exist", orchestrationID)
-				return false, lastErr
-			}
-			return false, nil
-		}
-		return true, nil
-	})
-	if err != nil {
-		return nil, -1, -1, fmt.Errorf("while getting operation by ID: %w", lastErr)
-	}
-	ret, err := s.toOperationList(operations)
-	if err != nil {
-		return nil, -1, -1, fmt.Errorf("while converting DTO to Operation: %w", err)
-	}
-
-	return ret, count, totalCount, nil
 }
 
 func (s *operations) ListOperationsInTimeRange(from, to time.Time) ([]internal.Operation, error) {
@@ -727,36 +642,6 @@ func (s *operations) ListUpgradeClusterOperationsByInstanceID(instanceID string)
 	return ret, nil
 }
 
-// ListUpgradeClusterOperationsByOrchestrationID Lists upgrade cluster operations for the given orchestration, according to filter(s) and/or pagination
-func (s *operations) ListUpgradeClusterOperationsByOrchestrationID(orchestrationID string, filter dbmodel.OperationFilter) ([]internal.UpgradeClusterOperation, int, int, error) {
-	session := s.Factory.NewReadSession()
-	var (
-		operations        = make([]dbmodel.OperationDTO, 0)
-		lastErr           error
-		count, totalCount int
-	)
-	err := wait.PollUntilContextTimeout(context.Background(), defaultRetryInterval, defaultRetryTimeout, true, func(ctx context.Context) (bool, error) {
-		operations, count, totalCount, lastErr = session.ListOperationsByOrchestrationID(orchestrationID, filter)
-		if lastErr != nil {
-			if dberr.IsNotFound(lastErr) {
-				lastErr = dberr.NotFound("Operations for orchestration ID %s not exist", orchestrationID)
-				return false, lastErr
-			}
-			return false, nil
-		}
-		return true, nil
-	})
-	if err != nil {
-		return nil, -1, -1, fmt.Errorf("while getting operation by ID: %w", lastErr)
-	}
-	ret, err := s.toUpgradeClusterOperationList(operations)
-	if err != nil {
-		return nil, -1, -1, fmt.Errorf("while converting DTO to Operation: %w", err)
-	}
-
-	return ret, count, totalCount, nil
-}
-
 func (s *operations) DeleteByID(operationID string) error {
 	return s.Factory.NewWriteSession().DeleteOperationByID(operationID)
 }
@@ -785,7 +670,6 @@ func (s *operations) operationToDB(op internal.Operation) (dbmodel.OperationDTO,
 		CreatedAt:              op.CreatedAt,
 		Version:                op.Version,
 		InstanceID:             op.InstanceID,
-		OrchestrationID:        storage.StringToSQLNullString(op.OrchestrationID),
 		ProvisioningParameters: storage.StringToSQLNullString(string(pp)),
 		FinishedStages:         storage.StringToSQLNullString(strings.Join(op.FinishedStages, ",")),
 	}, nil
@@ -826,7 +710,6 @@ func (s *operations) toOperation(dto *dbmodel.OperationDTO, existingOp internal.
 	existingOp.InstanceID = dto.InstanceID
 	existingOp.Description = dto.Description
 	existingOp.Version = dto.Version
-	existingOp.OrchestrationID = storage.SQLNullStringToString(dto.OrchestrationID)
 	existingOp.ProvisioningParameters = provisioningParameters
 	existingOp.FinishedStages = stages
 
@@ -994,10 +877,6 @@ func (s *operations) toUpgradeClusterOperation(op *dbmodel.OperationDTO) (*inter
 	if err != nil {
 		return nil, err
 	}
-	operation.RuntimeOperation.ID = op.ID
-	if op.OrchestrationID.Valid {
-		operation.OrchestrationID = op.OrchestrationID.String
-	}
 
 	return &operation, nil
 }
@@ -1028,7 +907,6 @@ func (s *operations) upgradeClusterOperationToDTO(op *internal.UpgradeClusterOpe
 	}
 	ret.Data = string(serialized)
 	ret.Type = internal.OperationTypeUpgradeCluster
-	ret.OrchestrationID = storage.StringToSQLNullString(op.OrchestrationID)
 	return ret, nil
 }
 
@@ -1044,7 +922,6 @@ func (s *operations) updateOperationToDTO(op *internal.UpdatingOperation) (dbmod
 	}
 	ret.Data = string(serialized)
 	ret.Type = internal.OperationTypeUpdate
-	ret.OrchestrationID = storage.StringToSQLNullString(op.OrchestrationID)
 	return ret, nil
 }
 
@@ -1112,7 +989,6 @@ func (s *operations) insert(dto dbmodel.OperationDTO) error {
 		if lastErr != nil {
 			return false, nil
 		}
-		// TODO: insert link to orchestration
 		return true, nil
 	})
 	return lastErr

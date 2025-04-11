@@ -17,7 +17,6 @@ import (
 
 	"github.com/kyma-project/kyma-environment-broker/internal/ptr"
 
-	"github.com/kyma-project/kyma-environment-broker/common/orchestration"
 	"github.com/kyma-project/kyma-environment-broker/internal"
 	"github.com/kyma-project/kyma-environment-broker/internal/fixture"
 	"github.com/kyma-project/kyma-environment-broker/internal/storage/dbmodel"
@@ -1324,14 +1323,6 @@ func fixInstance(testData instanceData) *internal.Instance {
 		instance.DeletedAt = testData.deletedAt
 	}
 	return &instance
-}
-
-func fixRuntimeOperation(operationId string) orchestration.RuntimeOperation {
-	runtime := fixture.FixRuntime("runtime-id")
-	runtimeOperation := fixture.FixRuntimeOperation(operationId)
-	runtimeOperation.Runtime = runtime
-
-	return runtimeOperation
 }
 
 func fixProvisionOperation(instanceId string) internal.Operation {

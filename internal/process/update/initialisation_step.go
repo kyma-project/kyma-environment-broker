@@ -7,7 +7,6 @@ import (
 
 	"github.com/kyma-project/kyma-environment-broker/internal/storage/dberr"
 
-	"github.com/kyma-project/kyma-environment-broker/common/orchestration"
 	"github.com/kyma-project/kyma-environment-broker/internal"
 	kebError "github.com/kyma-project/kyma-environment-broker/internal/error"
 	"github.com/kyma-project/kyma-environment-broker/internal/process"
@@ -42,7 +41,7 @@ func (s *InitialisationStep) Run(operation internal.Operation, log *slog.Logger)
 		return operation, time.Minute, nil
 	}
 
-	if operation.State == orchestration.Pending {
+	if operation.State == internal.OperationStatePending {
 		if !lastOp.IsFinished() {
 			log.Info(fmt.Sprintf("waiting for %s operation (%s) to be finished", lastOp.Type, lastOp.ID))
 			return operation, time.Minute, nil

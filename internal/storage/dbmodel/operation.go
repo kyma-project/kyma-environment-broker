@@ -22,7 +22,6 @@ type OperationDTO struct {
 	UpdatedAt time.Time
 
 	InstanceID        string
-	OrchestrationID   sql.NullString
 	TargetOperationID string
 
 	Data                   string

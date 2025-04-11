@@ -5,7 +5,7 @@ import (
 	"os"
 	"testing"
 
-	"github.com/kyma-project/kyma-environment-broker/common/orchestration"
+	"github.com/kyma-project/kyma-environment-broker/internal"
 	"github.com/kyma-project/kyma-environment-broker/internal/fixture"
 	"github.com/kyma-project/kyma-environment-broker/internal/storage"
 	"github.com/pivotal-cf/brokerapi/v12/domain"
@@ -74,7 +74,7 @@ func TestInitialisationStep_OtherOperationIsInProgress(t *testing.T) {
 			require.NoError(t, err)
 			step := NewInitialisationStep(db)
 			updatingOperation := fixture.FixUpdatingOperation("up-id", "iid")
-			updatingOperation.State = orchestration.Pending
+			updatingOperation.State = internal.OperationStatePending
 			err = ops.InsertOperation(updatingOperation.Operation)
 			require.NoError(t, err)
 			tc.beforeFunc(ops)

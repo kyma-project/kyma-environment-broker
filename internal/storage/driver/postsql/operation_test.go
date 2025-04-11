@@ -5,7 +5,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/kyma-project/kyma-environment-broker/common/orchestration"
 	"github.com/kyma-project/kyma-environment-broker/internal"
 	"github.com/kyma-project/kyma-environment-broker/internal/broker"
 	"github.com/kyma-project/kyma-environment-broker/internal/fixture"
@@ -54,34 +53,28 @@ func TestOperation(t *testing.T) {
 			assert.NoError(t, err)
 		}()
 
-		orchestrationID := "orch-id"
-
 		givenOperation := fixture.FixProvisioningOperation("operation-id", "inst-id")
 		givenOperation.State = domain.InProgress
 		givenOperation.CreatedAt = givenOperation.CreatedAt.Truncate(time.Millisecond)
 		givenOperation.UpdatedAt = givenOperation.UpdatedAt.Truncate(time.Millisecond)
 		givenOperation.Version = 1
-		givenOperation.OrchestrationID = orchestrationID
 		givenOperation.ProvisioningParameters.PlanID = broker.TrialPlanID
+		givenOperation.RuntimeOperation.Region = fixture.Region
+		givenOperation.RuntimeOperation.GlobalAccountID = fixture.GlobalAccountId
 
 		latestOperation := fixture.FixProvisioningOperation("latest-id", "inst-id")
 		latestOperation.State = domain.InProgress
 		latestOperation.CreatedAt = latestOperation.CreatedAt.Truncate(time.Millisecond).Add(time.Minute)
 		latestOperation.UpdatedAt = latestOperation.UpdatedAt.Truncate(time.Millisecond).Add(2 * time.Minute)
 		latestOperation.Version = 1
-		latestOperation.OrchestrationID = orchestrationID
 		latestOperation.ProvisioningParameters.PlanID = broker.TrialPlanID
 
 		latestPendingOperation := fixture.FixProvisioningOperation("latest-id-pending", "inst-id")
-		latestPendingOperation.State = orchestration.Pending
+		latestPendingOperation.State = internal.OperationStatePending
 		latestPendingOperation.CreatedAt = latestPendingOperation.CreatedAt.Truncate(time.Millisecond).Add(2 * time.Minute)
 		latestPendingOperation.UpdatedAt = latestPendingOperation.UpdatedAt.Truncate(time.Millisecond).Add(3 * time.Minute)
 		latestPendingOperation.Version = 1
-		latestPendingOperation.OrchestrationID = orchestrationID
 		latestPendingOperation.ProvisioningParameters.PlanID = broker.TrialPlanID
-
-		err = brokerStorage.Orchestrations().Insert(internal.Orchestration{OrchestrationID: orchestrationID})
-		require.NoError(t, err)
 
 		svc := brokerStorage.Operations()
 
@@ -104,6 +97,7 @@ func TestOperation(t *testing.T) {
 		op, err := svc.GetOperationByID("operation-id")
 		require.NoError(t, err)
 		assert.Equal(t, givenOperation.ID, op.ID)
+		assertRuntimeOperation(t, givenOperation)
 
 		lastOp, err := svc.GetLastOperation("inst-id")
 		require.NoError(t, err)
@@ -133,11 +127,6 @@ func TestOperation(t *testing.T) {
 
 		assert.Equal(t, 2, stats[broker.TrialPlanID].Provisioning[domain.InProgress])
 
-		opStats, err := svc.GetOperationStatsForOrchestration(orchestrationID)
-		require.NoError(t, err)
-
-		assert.Equal(t, 2, opStats[orchestration.InProgress])
-
 		// when
 		opList, err := svc.ListProvisioningOperationsByInstanceID("inst-id")
 		// then
@@ -161,6 +150,8 @@ func TestOperation(t *testing.T) {
 		givenOperation.ProvisionerOperationID = "target-op-id"
 		givenOperation.Description = "description"
 		givenOperation.Version = 1
+		givenOperation.RuntimeOperation.Region = fixture.Region
+		givenOperation.RuntimeOperation.GlobalAccountID = fixture.GlobalAccountId
 
 		svc := brokerStorage.Operations()
 
@@ -172,6 +163,7 @@ func TestOperation(t *testing.T) {
 		require.NoError(t, err)
 		assert.Len(t, ops, 1)
 		assertOperation(t, givenOperation.Operation, ops[0])
+		assertRuntimeOperation(t, ops[0])
 
 		gotOperation, err := svc.GetDeprovisioningOperationByID("operation-id")
 		require.NoError(t, err)
@@ -220,8 +212,6 @@ func TestOperation(t *testing.T) {
 			assert.NoError(t, err)
 		}()
 
-		orchestrationID := "orchestration-id"
-
 		givenOperation1 := internal.UpgradeClusterOperation{
 			Operation: fixture.FixOperation("operation-id-1", "inst-id", internal.OperationTypeUpgradeCluster),
 		}
@@ -231,7 +221,6 @@ func TestOperation(t *testing.T) {
 		givenOperation1.ProvisionerOperationID = "target-op-id"
 		givenOperation1.Description = "description"
 		givenOperation1.Version = 1
-		givenOperation1.OrchestrationID = orchestrationID
 
 		givenOperation2 := internal.UpgradeClusterOperation{
 			Operation: fixture.FixOperation("operation-id-2", "inst-id", internal.OperationTypeUpgradeCluster),
@@ -242,20 +231,18 @@ func TestOperation(t *testing.T) {
 		givenOperation2.ProvisionerOperationID = "target-op-id"
 		givenOperation2.Description = "description"
 		givenOperation2.Version = 1
-		givenOperation2.OrchestrationID = orchestrationID
-		givenOperation2.RuntimeOperation = fixRuntimeOperation("operation-id-2")
 
 		givenOperation3 := internal.UpgradeClusterOperation{
 			Operation: fixture.FixOperation("operation-id-3", "inst-id", internal.OperationTypeUpgradeCluster),
 		}
-		givenOperation3.State = orchestration.Pending
+		givenOperation3.State = internal.OperationStatePending
 		givenOperation3.CreatedAt = givenOperation3.CreatedAt.Truncate(time.Millisecond).Add(2 * time.Hour)
 		givenOperation3.UpdatedAt = givenOperation3.UpdatedAt.Truncate(time.Millisecond).Add(2 * time.Hour).Add(10 * time.Minute)
 		givenOperation3.ProvisionerOperationID = "target-op-id"
 		givenOperation3.Description = "pending-operation"
 		givenOperation3.Version = 1
-		givenOperation3.OrchestrationID = orchestrationID
-		givenOperation3.RuntimeOperation = fixRuntimeOperation("operation-id-3")
+		givenOperation3.RuntimeOperation.Region = fixture.Region
+		givenOperation3.RuntimeOperation.GlobalAccountID = fixture.GlobalAccountId
 
 		svc := brokerStorage.Operations()
 
@@ -271,6 +258,7 @@ func TestOperation(t *testing.T) {
 		op, err := svc.GetUpgradeClusterOperationByID(givenOperation3.Operation.ID)
 		require.NoError(t, err)
 		assertUpgradeClusterOperation(t, givenOperation3, *op)
+		assertRuntimeOperation(t, op.Operation)
 
 		lastOp, err := svc.GetLastOperation("inst-id")
 		require.NoError(t, err)
@@ -280,13 +268,7 @@ func TestOperation(t *testing.T) {
 		require.NoError(t, err)
 		assert.Equal(t, givenOperation2.Operation.ID, lastClusterUpgrade.ID)
 
-		ops, count, totalCount, err := svc.ListUpgradeClusterOperationsByOrchestrationID(orchestrationID, dbmodel.OperationFilter{PageSize: 10, Page: 1})
-		require.NoError(t, err)
-		assert.Len(t, ops, 3)
-		assert.Equal(t, count, 3)
-		assert.Equal(t, totalCount, 3)
-
-		ops, err = svc.ListUpgradeClusterOperationsByInstanceID("inst-id")
+		ops, err := svc.ListUpgradeClusterOperationsByInstanceID("inst-id")
 		require.NoError(t, err)
 		assert.Len(t, ops, 3)
 
@@ -295,8 +277,6 @@ func TestOperation(t *testing.T) {
 		givenOperation3.ProvisionerOperationID = "modified-op-id"
 		op, err = svc.UpdateUpgradeClusterOperation(givenOperation3)
 		op.CreatedAt = op.CreatedAt.Truncate(time.Millisecond)
-		op.MaintenanceWindowBegin = op.MaintenanceWindowBegin.Truncate(time.Millisecond)
-		op.MaintenanceWindowEnd = op.MaintenanceWindowEnd.Truncate(time.Millisecond)
 
 		// then
 		got, err := svc.GetUpgradeClusterOperationByID(givenOperation3.Operation.ID)
@@ -416,6 +396,11 @@ func TestOperation(t *testing.T) {
 	})
 }
 
+func assertRuntimeOperation(t *testing.T, operation internal.Operation) {
+	assert.Equal(t, fixture.GlobalAccountId, operation.RuntimeOperation.GlobalAccountID)
+	assert.Equal(t, fixture.Region, operation.RuntimeOperation.Region)
+}
+
 func assertDeprovisioningOperation(t *testing.T, expected, got internal.DeprovisioningOperation) {
 	// do not check zones and monothonic clock, see: https://golang.org/pkg/time/#Time
 	assert.True(t, expected.CreatedAt.Equal(got.CreatedAt), fmt.Sprintf("Expected %s got %s", expected.CreatedAt, got.CreatedAt))
@@ -429,23 +414,19 @@ func assertDeprovisioningOperation(t *testing.T, expected, got internal.Deprovis
 }
 
 func assertUpgradeClusterOperation(t *testing.T, expected, got internal.UpgradeClusterOperation) {
-	// do not check zones and monothonic clock, see: https://golang.org/pkg/time/#Time
+	// do not check zones and monotonic clock, see: https://golang.org/pkg/time/#Time
 	assert.True(t, expected.CreatedAt.Equal(got.CreatedAt), fmt.Sprintf("Expected %s got %s", expected.CreatedAt, got.CreatedAt))
-	assert.True(t, expected.MaintenanceWindowBegin.Equal(got.MaintenanceWindowBegin))
-	assert.True(t, expected.MaintenanceWindowEnd.Equal(got.MaintenanceWindowEnd))
 	assert.Equal(t, expected.InstanceDetails, got.InstanceDetails)
 
 	expected.CreatedAt = got.CreatedAt
 	expected.UpdatedAt = got.UpdatedAt
-	expected.MaintenanceWindowBegin = got.MaintenanceWindowBegin
-	expected.MaintenanceWindowEnd = got.MaintenanceWindowEnd
 	expected.FinishedStages = got.FinishedStages
 
 	assert.Equal(t, expected, got)
 }
 
 func assertOperation(t *testing.T, expected, got internal.Operation) {
-	// do not check zones and monothonic clock, see: https://golang.org/pkg/time/#Time
+	// do not check zones and monotonic clock, see: https://golang.org/pkg/time/#Time
 	assert.True(t, expected.CreatedAt.Equal(got.CreatedAt), fmt.Sprintf("Expected %s got %s", expected.CreatedAt, got.CreatedAt))
 	assert.Equal(t, expected.InstanceDetails, got.InstanceDetails)
 

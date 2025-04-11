@@ -6,7 +6,6 @@ import (
 	"log/slog"
 	"net/http"
 
-	"github.com/kyma-project/kyma-environment-broker/common/orchestration"
 	"github.com/kyma-project/kyma-environment-broker/internal"
 	"github.com/kyma-project/kyma-environment-broker/internal/storage"
 	"github.com/kyma-project/kyma-environment-broker/internal/storage/dberr"
@@ -101,9 +100,9 @@ func (b *LastOperationEndpoint) responseFromInstanceArchived(instanceID string, 
 
 func mapStateToOSBCompliantState(opState domain.LastOperationState) domain.LastOperationState {
 	switch {
-	case opState == orchestration.Pending || opState == orchestration.Retrying:
+	case opState == internal.OperationStatePending || opState == internal.OperationStateRetrying:
 		return domain.InProgress
-	case opState == orchestration.Canceled || opState == orchestration.Canceling:
+	case opState == internal.OperationStateCanceled || opState == internal.OperationStateCanceling:
 		return domain.Succeeded
 	default:
 		return opState

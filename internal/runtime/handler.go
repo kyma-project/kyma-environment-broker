@@ -278,13 +278,10 @@ func (h *Handler) getRuntimeNamesFromLastOperation(dto pkg.RuntimeDTO) (string, 
 	return runtimeResourceName, runtimeNamespaceName
 }
 
-func (h *Handler) takeLastNonDryRunClusterOperations(oprs []internal.UpgradeClusterOperation) ([]internal.UpgradeClusterOperation, int) {
+func (h *Handler) takeLastClusterOperations(oprs []internal.UpgradeClusterOperation) ([]internal.UpgradeClusterOperation, int) {
 	toReturn := make([]internal.UpgradeClusterOperation, 0)
 	totalCount := 0
 	for _, op := range oprs {
-		if op.DryRun {
-			continue
-		}
 		if len(toReturn) < numberOfUpgradeOperationsToReturn {
 			toReturn = append(toReturn, op)
 		}
@@ -334,7 +331,7 @@ func (h *Handler) setRuntimeAllOperations(dto *pkg.RuntimeDTO) error {
 	h.converter.ApplySuspensionOperations(dto, deprovOprs)
 
 	ucOprs := operationsGroup.UpgradeClusterOperations
-	ucOprs, totalCount := h.takeLastNonDryRunClusterOperations(ucOprs)
+	ucOprs, totalCount := h.takeLastClusterOperations(ucOprs)
 	h.converter.ApplyUpgradingClusterOperations(dto, ucOprs, totalCount)
 
 	uOprs := operationsGroup.UpdateOperations

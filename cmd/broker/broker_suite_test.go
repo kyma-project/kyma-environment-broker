@@ -39,7 +39,6 @@ import (
 	"code.cloudfoundry.org/lager"
 	"github.com/google/uuid"
 	"github.com/kyma-project/kyma-environment-broker/common/gardener"
-	"github.com/kyma-project/kyma-environment-broker/common/orchestration"
 	pkg "github.com/kyma-project/kyma-environment-broker/common/runtime"
 	"github.com/kyma-project/kyma-environment-broker/internal"
 	"github.com/kyma-project/kyma-environment-broker/internal/broker"
@@ -55,7 +54,6 @@ import (
 	"github.com/kyma-project/kyma-environment-broker/internal/storage"
 	"github.com/pivotal-cf/brokerapi/v12/domain"
 	"github.com/pivotal-cf/brokerapi/v12/domain/apiresponses"
-	"github.com/pkg/errors"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	apiextensionsv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
@@ -518,68 +516,6 @@ func (s *BrokerSuiteTest) DecodeOperationID(resp *http.Response) string {
 	require.NoError(s.t, err)
 
 	return provisioningResp.Operation
-}
-
-func (s *BrokerSuiteTest) DecodeOrchestrationID(resp *http.Response) string {
-	m, err := io.ReadAll(resp.Body)
-	s.Log(string(m))
-	require.NoError(s.t, err)
-	var upgradeResponse orchestration.UpgradeResponse
-	err = json.Unmarshal(m, &upgradeResponse)
-	require.NoError(s.t, err)
-
-	return upgradeResponse.OrchestrationID
-}
-
-func (s *BrokerSuiteTest) DecodeLastUpgradeKymaOperationFromOrchestration(resp *http.Response) (*orchestration.OperationResponse, error) {
-	m, err := io.ReadAll(resp.Body)
-	s.Log(string(m))
-	require.NoError(s.t, err)
-	var operationsList orchestration.OperationResponseList
-	err = json.Unmarshal(m, &operationsList)
-	require.NoError(s.t, err)
-
-	if operationsList.TotalCount == 0 || len(operationsList.Data) == 0 {
-		return nil, errors.New("no operations found for given orchestration")
-	}
-
-	return &operationsList.Data[len(operationsList.Data)-1], nil
-}
-
-func (s *BrokerSuiteTest) DecodeLastUpgradeKymaOperationIDFromOrchestration(resp *http.Response) (string, error) {
-	operation, err := s.DecodeLastUpgradeKymaOperationFromOrchestration(resp)
-	if err == nil {
-		return operation.OperationID, err
-	} else {
-		return "", err
-	}
-}
-
-func (s *BrokerSuiteTest) DecodeLastUpgradeClusterOperationIDFromOrchestration(orchestrationID string) (string, error) {
-	var operationsList orchestration.OperationResponseList
-	err := s.poller.Invoke(func() (bool, error) {
-		resp := s.CallAPI("GET", fmt.Sprintf("orchestrations/%s/operations", orchestrationID), "")
-		m, err := io.ReadAll(resp.Body)
-		s.Log(string(m))
-		if err != nil {
-			return false, fmt.Errorf("failed to read response body: %v", err)
-		}
-		operationsList = orchestration.OperationResponseList{}
-		err = json.Unmarshal(m, &operationsList)
-		if err != nil {
-			return false, fmt.Errorf("failed to marshal: %v", err)
-		}
-		if operationsList.TotalCount == 0 || len(operationsList.Data) == 0 {
-			return false, nil
-		}
-		return true, nil
-	})
-	require.NoError(s.t, err)
-	if operationsList.TotalCount == 0 || len(operationsList.Data) == 0 {
-		return "", errors.New("no operations found for given orchestration")
-	}
-
-	return operationsList.Data[len(operationsList.Data)-1].OperationID, nil
 }
 
 func (s *BrokerSuiteTest) AssertInstanceRuntimeAdmins(instanceId string, expectedAdmins []string) {
