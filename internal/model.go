@@ -102,6 +102,17 @@ const (
 	OperationStateInProgress = "in progress"
 )
 
+// Runtime this structure is needed for backward compatibility with the old code using orchestration
+type Runtime struct {
+	GlobalAccountID string
+}
+
+// RuntimeOperation this structure is needed for backward compatibility with the old code using orchestration
+type RuntimeOperation struct {
+	Runtime Runtime
+	Region  string
+}
+
 type Operation struct {
 	// following fields are stored in the storage
 	ID        string        `json:"-"`
@@ -122,10 +133,8 @@ type Operation struct {
 	InstanceDetails
 
 	// PROVISIONING
-	DashboardURL    string          `json:"dashboardURL"`
-	ProviderValues  *ProviderValues `json:"providerValues"`
-	Region          string          `json:"region"`
-	GlobalAccountID string          `json:"globalAccountId"`
+	DashboardURL   string          `json:"dashboardURL"`
+	ProviderValues *ProviderValues `json:"providerValues"`
 
 	// DEPROVISIONING
 	// Temporary indicates that this deprovisioning operation must not remove the instance
@@ -138,6 +147,7 @@ type Operation struct {
 	UpdatingParameters UpdatingParametersDTO `json:"updating_parameters"`
 
 	// UPGRADE KYMA
+	RuntimeOperation            `json:"runtime_operation"`
 	ClusterConfigurationApplied bool `json:"cluster_configuration_applied"`
 
 	// KymaTemplate is read from the configuration then used in the apply_kyma step
