@@ -93,7 +93,7 @@ func TestCreateBindingEndpoint_dbInsertionInCaseOfError(t *testing.T) {
 	publisher := event.NewPubSub(log)
 
 	//// api handler
-	bindEndpoint := NewBind(*bindingCfg, db, fixLogger(), &provider{}, &provider{}, publisher, false)
+	bindEndpoint := NewBind(*bindingCfg, db, fixLogger(), &dummyProvider{}, &dummyProvider{}, publisher, false)
 
 	// test relies on checking if got nil on kubeconfig dummyProvider but the instance got inserted either way
 	t.Run("should INSERT binding despite error on k8s api call", func(t *testing.T) {
