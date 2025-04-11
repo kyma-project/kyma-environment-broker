@@ -2,153 +2,126 @@ package rules
 
 import (
 	"fmt"
-	"strconv"
 )
 
 const (
-	PR_ATTR_NAME        = "PR"
-	HR_ATTR_NAME        = "HR"
-	EU_ATTR_NAME        = "EU"
-	SHARED_ATTR_NAME    = "S"
-	PR_SUFFIX_ATTR_NAME = "PR"
-	HR_SUFFIX_ATTR_NAME = "HR"
+	PlatformRegionAttributeName    = "PR"
+	HyperscalerRegionAttributeName = "HR"
+	EUAccessAttributeName          = "EU"
+	SharedAttributeName            = "S"
+	PlatformRegionSuffix           = "PR"
+	HyperscalerRegionSuffix        = "HR"
 )
+
+type Attribute struct {
+	Name   string
+	Setter func(*Rule, string) error
+}
 
 var InputAttributes = []Attribute{
 	{
-		Name:        PR_ATTR_NAME,
-		Description: "Platform Region",
-		Setter:      setPlatformRegion,
-		Getter:      func(r *Rule) string { return r.PlatformRegion },
-		input:       true,
-		output:      true,
-		HasValue:    true,
+		Name:   PlatformRegionAttributeName,
+		Setter: setPlatformRegion,
 	},
 	{
-		Name:        HR_ATTR_NAME,
-		Description: "Hyperscaler Region",
-		Setter:      setHyperscalerRegion,
-		Getter:      func(r *Rule) string { return r.HyperscalerRegion },
-		input:       true,
-		output:      true,
-		HasValue:    true,
+		Name:   HyperscalerRegionAttributeName,
+		Setter: setHyperscalerRegion,
 	},
 }
 
 var OutputAttributes = []Attribute{
 	{
-		Name:        EU_ATTR_NAME,
-		Description: "EU Access",
-		Setter:      setEuAccess,
-		Getter:      func(r *Rule) string { return strconv.FormatBool(r.EuAccess) },
-		input:       false,
-		output:      true,
-		HasValue:    false,
+		Name:   EUAccessAttributeName,
+		Setter: setEuAccess,
 	},
 	{
-		Name:        SHARED_ATTR_NAME,
-		Description: "Shared",
-		Setter:      setShared,
-		Getter:      func(r *Rule) string { return strconv.FormatBool(r.Shared) },
-		input:       false,
-		output:      true,
-		HasValue:    false,
+		Name:   SharedAttributeName,
+		Setter: setShared,
 	},
 	{
-		Name:        PR_SUFFIX_ATTR_NAME,
-		Description: "Platform Region suffix",
-		Setter:      setPlatformRegionSuffix,
-		Getter:      func(r *Rule) string { return strconv.FormatBool(r.PlatformRegionSuffix) },
-		input:       false,
-		output:      true,
-		HasValue:    false,
+		Name:   PlatformRegionSuffix,
+		Setter: setPlatformRegionSuffix,
 	},
 	{
-		Name:        HR_SUFFIX_ATTR_NAME,
-		Description: "Platform Region suffix",
-		Setter:      setHyperscalerRegionSuffix,
-		Getter:      func(r *Rule) string { return strconv.FormatBool(r.HyperscalerRegionSuffix) },
-		input:       false,
-		output:      true,
-		HasValue:    false,
+		Name:   HyperscalerRegionSuffix,
+		Setter: setHyperscalerRegionSuffix,
 	},
 }
 
-func setShared(r *Rule, value string) (*Rule, error) {
+func setShared(r *Rule, value string) error {
 	if r.Shared {
-		return nil, fmt.Errorf("Shared already set")
+		return fmt.Errorf("Shared already set")
 	}
 
 	r.ContainsOutputAttributes = true
 	r.Shared = true
 
-	return r, nil
+	return nil
 }
 
-func setPlatformRegionSuffix(r *Rule, value string) (*Rule, error) {
+func setPlatformRegionSuffix(r *Rule, value string) error {
 	if r.PlatformRegionSuffix {
-		return nil, fmt.Errorf("PlatformRegionSuffix already set")
+		return fmt.Errorf("PlatformRegionSuffix already set")
 	}
 
 	r.ContainsOutputAttributes = true
 	r.PlatformRegionSuffix = true
 
-	return r, nil
+	return nil
 }
 
-func setHyperscalerRegionSuffix(r *Rule, value string) (*Rule, error) {
+func setHyperscalerRegionSuffix(r *Rule, value string) error {
 	if r.HyperscalerRegionSuffix {
-		return nil, fmt.Errorf("HyperscalerRegionSuffix already set")
+		return fmt.Errorf("HyperscalerRegionSuffix already set")
 	}
 
 	r.ContainsOutputAttributes = true
 	r.HyperscalerRegionSuffix = true
 
-	return r, nil
+	return nil
 }
 
-func setEuAccess(r *Rule, value string) (*Rule, error) {
+func setEuAccess(r *Rule, value string) error {
 	if r.EuAccess {
-		return nil, fmt.Errorf("EuAccess already set")
+		return fmt.Errorf("EuAccess already set")
 	}
 	r.ContainsOutputAttributes = true
 	r.EuAccess = true
 
-	return r, nil
+	return nil
 }
 
 func (r *Rule) SetPlan(value string) (*Rule, error) {
 	if value == "" {
-		return nil, fmt.Errorf("plan is empty")
+		return nil, fmt.Errorf("plan name is empty")
 	}
 
 	r.Plan = value
-
 	return r, nil
 }
 
-func setPlatformRegion(r *Rule, value string) (*Rule, error) {
+func setPlatformRegion(r *Rule, value string) error {
 	if r.PlatformRegion != "" {
-		return nil, fmt.Errorf("PlatformRegion already set")
+		return fmt.Errorf("PlatformRegion already set")
 	} else if value == "" {
-		return nil, fmt.Errorf("PlatformRegion is empty")
+		return fmt.Errorf("PlatformRegion is empty")
 	}
 
 	r.ContainsInputAttributes = true
 	r.PlatformRegion = value
 
-	return r, nil
+	return nil
 }
 
-func setHyperscalerRegion(r *Rule, value string) (*Rule, error) {
+func setHyperscalerRegion(r *Rule, value string) error {
 	if r.HyperscalerRegion != "" {
-		return nil, fmt.Errorf("HyperscalerRegion already set")
+		return fmt.Errorf("HyperscalerRegion already set")
 	} else if value == "" {
-		return nil, fmt.Errorf("HyperscalerRegion is empty")
+		return fmt.Errorf("HyperscalerRegion is empty")
 	}
 
 	r.ContainsInputAttributes = true
 	r.HyperscalerRegion = value
 
-	return r, nil
+	return nil
 }

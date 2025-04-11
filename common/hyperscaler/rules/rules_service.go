@@ -108,10 +108,12 @@ func (rs *RulesService) postParse(rulesConfig *RulesConfig) (*ValidRuleset, *Val
 
 	for ruleNo, rawRule := range rulesConfig.Rules {
 		rule, err := rs.parser.Parse(rawRule)
+		naturalRuleNo := ruleNo + 1
 		if err != nil {
-			validationErrors.ParsingErrors = append(validationErrors.ParsingErrors, err)
+			errorDecorated := fmt.Errorf("error parsing rule %d: %s", naturalRuleNo, err)
+			validationErrors.ParsingErrors = append(validationErrors.ParsingErrors, errorDecorated)
 		} else {
-			validRule := toValidRule(rule, rawRule, ruleNo)
+			validRule := toValidRule(rule, rawRule, naturalRuleNo)
 			validRuleset.Rules = append(validRuleset.Rules, *validRule)
 		}
 	}

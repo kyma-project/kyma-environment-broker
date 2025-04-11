@@ -6,11 +6,11 @@ import (
 )
 
 const (
-	COMMA   = ","
-	ARROW   = "->"
-	L_PAREN = "("
-	R_PAREN = ")"
-	EQUAL   = "="
+	Comma  = ","
+	Arrow  = "->"
+	LParen = "("
+	RParen = ")"
+	Equal  = "="
 )
 
 type SimpleParser struct {
@@ -21,31 +21,31 @@ func (g *SimpleParser) Parse(ruleEntry string) (*Rule, error) {
 
 	ruleEntry = RemoveWhitespaces(ruleEntry)
 
-	outputInputPart := strings.Split(ruleEntry, ARROW)
+	ruleParts := strings.Split(ruleEntry, Arrow)
 
-	if len(outputInputPart) > 2 {
+	if len(ruleParts) > 2 {
 		return nil, fmt.Errorf("rule has more than one arrow")
 	}
 
-	inputPart := outputInputPart[0]
+	leftPart := ruleParts[0]
 
-	planAndInputAttr := strings.Split(inputPart, L_PAREN)
+	planAndInputAttr := strings.Split(leftPart, LParen)
 
 	if len(planAndInputAttr) > 2 {
-		return nil, fmt.Errorf("rule has more than one " + L_PAREN)
+		return nil, fmt.Errorf("rule has more than one " + LParen)
 	}
 
-	forValidationOnly := strings.Split(inputPart, R_PAREN)
+	forValidationOnly := strings.Split(leftPart, RParen)
 
 	if len(forValidationOnly) > 2 {
-		return nil, fmt.Errorf("rule has more than one " + R_PAREN)
+		return nil, fmt.Errorf("rule has more than one " + RParen)
 	}
 
-	if strings.Contains(inputPart, L_PAREN) && !strings.Contains(inputPart, R_PAREN) {
+	if strings.Contains(leftPart, LParen) && !strings.Contains(leftPart, RParen) {
 		return nil, fmt.Errorf("rule has not balanced parentheses")
 	}
 
-	if !strings.Contains(inputPart, L_PAREN) && strings.Contains(inputPart, R_PAREN) {
+	if !strings.Contains(leftPart, LParen) && strings.Contains(leftPart, RParen) {
 		return nil, fmt.Errorf("rule has not balanced parentheses")
 	}
 
@@ -55,9 +55,10 @@ func (g *SimpleParser) Parse(ruleEntry string) (*Rule, error) {
 	}
 
 	if len(planAndInputAttr) > 1 {
-		inputPart := strings.TrimSuffix(planAndInputAttr[1], R_PAREN)
 
-		inputAttrs := strings.Split(inputPart, COMMA)
+		inputPart := strings.TrimSuffix(planAndInputAttr[1], RParen)
+
+		inputAttrs := strings.Split(inputPart, Comma)
 
 		for _, inputAttr := range inputAttrs {
 
@@ -65,13 +66,13 @@ func (g *SimpleParser) Parse(ruleEntry string) (*Rule, error) {
 				return nil, fmt.Errorf("input attribute is empty")
 			}
 
-			attribute := strings.Split(inputAttr, EQUAL)
+			attribute := strings.Split(inputAttr, Equal)
 
 			if len(attribute) != 2 {
 				return nil, fmt.Errorf("input attribute has no value")
 			}
 
-			_, err := outputRule.SetAttributeValue(attribute[0], attribute[1], InputAttributes)
+			err = outputRule.SetAttributeValue(attribute[0], attribute[1], InputAttributes)
 
 			if err != nil {
 				return nil, err
@@ -79,15 +80,16 @@ func (g *SimpleParser) Parse(ruleEntry string) (*Rule, error) {
 		}
 	}
 
-	if len(outputInputPart) > 1 {
-		outputAttrs := strings.Split(outputInputPart[1], COMMA)
+	if len(ruleParts) > 1 {
+		rightPart := ruleParts[1]
+		outputAttrs := strings.Split(rightPart, Comma)
 
 		for _, outputAttr := range outputAttrs {
 			if outputAttr == "" {
 				return nil, fmt.Errorf("output attribute is empty")
 			}
 
-			_, err := outputRule.SetAttributeValue(outputAttr, "true", OutputAttributes)
+			err = outputRule.SetAttributeValue(outputAttr, "true", OutputAttributes)
 			if err != nil {
 				return nil, err
 			}
