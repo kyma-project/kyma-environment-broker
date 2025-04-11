@@ -104,7 +104,7 @@ func (cmd *AssertCommand) Run() error {
 			fmt.Println("Machine type assertion passed: expected and got", cmd.machineType)
 		}
 	} else if cmd.clusterOIDCConfig != "" {
-		currentOIDC, err := kcpClient.GetCurrentOIDCConfig(cmd.instanceID)
+		currentOIDC, err := kcpClient.GetRuntimeCrOIDCConfig(cmd.instanceID)
 		if err != nil {
 			return fmt.Errorf("failed to get current OIDC: %v", err)
 		}
