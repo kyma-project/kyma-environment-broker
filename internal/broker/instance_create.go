@@ -327,7 +327,7 @@ func (b *ProvisionEndpoint) validate(ctx context.Context, details domain.Provisi
 		return apiresponses.NewFailureResponse(err, http.StatusUnprocessableEntity, err.Error())
 	}
 	if parameters.OIDC.IsProvided() {
-		if err := parameters.OIDC.Validate(); err != nil {
+		if err := parameters.OIDC.Validate(nil); err != nil {
 			return apiresponses.NewFailureResponse(err, http.StatusUnprocessableEntity, err.Error())
 		}
 	}
@@ -581,7 +581,9 @@ func (b *ProvisionEndpoint) extractInputParameters(details domain.ProvisionDetai
 	if err != nil {
 		return parameters, fmt.Errorf("while unmarshaling raw parameters: %w", err)
 	}
-
+	if !b.config.UseAdditionalOIDCSchema {
+		ClearOIDCInput(parameters.OIDC)
+	}
 	parameters.LicenceType = b.determineLicenceType(details.PlanID)
 	return parameters, nil
 }

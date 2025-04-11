@@ -269,6 +269,7 @@ func defaultOIDCValues() pkg.OIDCConfigDTO {
 	return pkg.OIDCConfigDTO{
 		ClientID:       "client-id-oidc",
 		GroupsClaim:    "groups",
+		GroupsPrefix:   "-",
 		IssuerURL:      "https://issuer.url",
 		SigningAlgs:    []string{"RS256"},
 		UsernameClaim:  "sub",

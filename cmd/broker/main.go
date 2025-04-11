@@ -159,6 +159,8 @@ type Config struct {
 	RegionsSupportingMachineFilePath string
 
 	HapRuleFilePath string
+
+	MultipleContexts bool `envconfig:"default=false"`
 }
 
 type ProfilerConfig struct {
@@ -334,7 +336,7 @@ func main() {
 	fatalOnError(err, log)
 
 	// create kubeconfig builder
-	kcBuilder := kubeconfig.NewBuilder(kcpK8sClient, skrK8sClientProvider, cfg.InfrastructureManager.UseAdditionalOIDC, cfg.InfrastructureManager.UseMainOIDC)
+	kcBuilder := kubeconfig.NewBuilder(kcpK8sClient, skrK8sClientProvider, cfg.MultipleContexts)
 
 	// create server
 	router := httputil.NewRouter()
@@ -406,8 +408,6 @@ func logConfiguration(logs *slog.Logger, cfg Config) {
 	logs.Info(fmt.Sprintf("InfrastructureManager.DefaultTrialProvider: %s", cfg.InfrastructureManager.DefaultTrialProvider))
 	logs.Info(fmt.Sprintf("InfrastructureManager.MultiZoneCluster: %v", cfg.InfrastructureManager.MultiZoneCluster))
 	logs.Info(fmt.Sprintf("InfrastructureManager.ControlPlaneFailureTolerance: %s", cfg.InfrastructureManager.ControlPlaneFailureTolerance))
-	logs.Info(fmt.Sprintf("InfrastructureManager.UseMainOIDC: %v", cfg.InfrastructureManager.UseMainOIDC))
-	logs.Info(fmt.Sprintf("InfrastructureManager.UseAdditionalOIDC: %v", cfg.InfrastructureManager.UseAdditionalOIDC))
 	logs.Info(fmt.Sprintf("InfrastructureManager.UseSmallerMachineTypes: %v", cfg.InfrastructureManager.UseSmallerMachineTypes))
 
 	logs.Info(fmt.Sprintf("ResolveSubscriptionSecretStepDisabled: %v", cfg.ResolveSubscriptionSecretStepDisabled))
@@ -461,8 +461,8 @@ func createAPI(router *httputil.Router, servicesConfig broker.ServicesConfig, cf
 			valuesProvider, logs, cfg.KymaDashboardConfig, kcBuilder, convergedCloudRegionProvider, kcpK8sClient, regionsSupportingMachine, cfg.InfrastructureManager.UseSmallerMachineTypes),
 		GetInstanceEndpoint:          broker.NewGetInstance(cfg.Broker, db.Instances(), db.Operations(), kcBuilder, logs),
 		LastOperationEndpoint:        broker.NewLastOperation(db.Operations(), db.InstancesArchived(), logs),
-		BindEndpoint:                 broker.NewBind(cfg.Broker.Binding, db, logs, clientProvider, kubeconfigProvider, publisher, cfg.InfrastructureManager.UseAdditionalOIDC, cfg.InfrastructureManager.UseMainOIDC),
-		UnbindEndpoint:               broker.NewUnbind(logs, db, brokerBindings.NewServiceAccountBindingsManager(clientProvider, kubeconfigProvider, cfg.InfrastructureManager.UseAdditionalOIDC, cfg.InfrastructureManager.UseMainOIDC), publisher),
+		BindEndpoint:                 broker.NewBind(cfg.Broker.Binding, db, logs, clientProvider, kubeconfigProvider, publisher, cfg.MultipleContexts),
+		UnbindEndpoint:               broker.NewUnbind(logs, db, brokerBindings.NewServiceAccountBindingsManager(clientProvider, kubeconfigProvider, cfg.MultipleContexts), publisher),
 		GetBindingEndpoint:           broker.NewGetBinding(logs, db),
 		LastBindingOperationEndpoint: broker.NewLastBindingOperation(logs),
 	}

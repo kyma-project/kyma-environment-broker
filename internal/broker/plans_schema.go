@@ -216,6 +216,10 @@ type AdditionalOIDCListItems struct {
 }
 
 func NewMultipleOIDCSchema(defaultOIDCConfig *pkg.OIDCConfigDTO, update bool) *OIDCs {
+	if defaultOIDCConfig == nil {
+		defaultOIDCConfig = &pkg.OIDCConfigDTO{}
+	}
+
 	return &OIDCs{
 		Type: Type{
 			Type:        "object",

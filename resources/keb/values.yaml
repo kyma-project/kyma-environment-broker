@@ -9,34 +9,34 @@ global:
       path: europe-docker.pkg.dev/kyma-project/prod
     kyma_environment_broker:
       dir:
-      version: "1.17.10"
+      version: "1.18.1"
     kyma_environment_broker_schema_migrator:
       dir:
-      version: 1.17.10
+      version: 1.18.1
     kyma_environments_subaccount_cleanup_job:
       dir:
-      version: "1.17.10"
+      version: "1.18.1"
     kyma_environment_trial_cleanup_job:
       dir:
-      version: "1.17.10"
+      version: "1.18.1"
     kyma_environment_expirator_job:
       dir:
-      version: "1.17.10"
+      version: "1.18.1"
     kyma_environment_deprovision_retrigger_job:
       dir:
-      version: "1.17.10"
+      version: "1.18.1"
     kyma_environment_runtime_reconciler:
       dir:
-      version: "1.17.10"
+      version: "1.18.1"
     kyma_environment_subaccount_sync:
       dir:
-      version: "1.17.10"
+      version: "1.18.1"
     kyma_environment_globalaccounts:
       dir:
-      version: "1.17.10"
+      version: "1.18.1"
     kyma_environment_service_binding_cleanup_job:
       dir:
-      version: 1.17.10
+      version: 1.18.1
       
   kyma_environment_broker:
     serviceAccountName: "kcp-kyma-environment-broker"
@@ -160,6 +160,7 @@ broker:
   enableShootAndSeedSameRegion: "false"
   subaccountMovementEnabled: "false"
   updateCustomResourcesLabelsOnAccountMove: "false"
+  useAdditionalOIDCSchema: "false"
 
 binding:
   enabled: false
@@ -229,11 +230,6 @@ provisioner:
   gardener:
     enableShootAndSeedSameRegion: "false"
 
-  # these values are being moved to the infrastructure manager section - please keep in sync
-  useMainOIDC: "true"
-  useAdditionalOIDC: "false"
-  #end
-
 stepTimeouts:
   checkRuntimeResourceUpdate: 180m
   checkRuntimeResourceCreate: 60m
@@ -248,6 +244,7 @@ skrOIDCDefaultValues: |-
   clientID: "9bd05ed7-a930-44e6-8c79-e6defeb7dec9"
   issuerURL: "https://kymatest.accounts400.ondemand.com"
   groupsClaim: "groups"
+  groupsPrefix: "-"
   signingAlgs: [ "RS256" ]
   usernamePrefix: "-"
   usernameClaim: "sub"
@@ -294,7 +291,6 @@ trialDocsURL: "https://help.sap.com/docs/"
 useSmallerMachineTypes: "false"
 
 osbUpdateProcessingEnabled: "false"
-useAdditionalOIDCSchema: "false"
 
 
 gardener:
@@ -508,3 +504,5 @@ regionsSupportingMachine: |-
     - europe-west3
     - asia-south1
     - us-central1
+
+multipleContexts: false

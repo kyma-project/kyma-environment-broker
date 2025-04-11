@@ -25,12 +25,12 @@ type ReleaseSubscriptionStep struct {
 
 var _ process.Step = &ReleaseSubscriptionStep{}
 
-func NewReleaseSubscriptionStep(os storage.Operations, instanceStorage storage.Instances, accountProvider hyperscaler.AccountProvider) ReleaseSubscriptionStep {
+func NewReleaseSubscriptionStep(db storage.BrokerStorage, accountProvider hyperscaler.AccountProvider) ReleaseSubscriptionStep {
 	step := ReleaseSubscriptionStep{
-		instanceStorage: instanceStorage,
+		instanceStorage: db.Instances(),
 		accountProvider: accountProvider,
 	}
-	step.operationManager = process.NewOperationManager(os, step.Name(), kebError.AccountPoolDependency)
+	step.operationManager = process.NewOperationManager(db.Operations(), step.Name(), kebError.AccountPoolDependency)
 	return step
 }
 

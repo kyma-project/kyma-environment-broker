@@ -35,7 +35,7 @@ func TestEDPDeregistration_Run(t *testing.T) {
 	memoryStorage := storage.NewMemoryStorage()
 	_, operation := prepareDeprovisioningInstanceWithSubaccount(t, edpName, memoryStorage.Instances(), memoryStorage.Operations())
 
-	step := NewEDPDeregistrationStep(memoryStorage.Operations(), memoryStorage.Instances(), client, edp.Config{
+	step := NewEDPDeregistrationStep(memoryStorage, client, edp.Config{
 		Environment: edpEnvironment,
 	})
 
@@ -66,7 +66,7 @@ func TestEDPDeregistration_RunWithOtherInstances(t *testing.T) {
 	_, _ = prepareProvisionedInstanceWithSubaccount(t, edpName, memoryStorage.Instances(), memoryStorage.Operations())
 	_, operation := prepareDeprovisioningInstanceWithSubaccount(t, edpName, memoryStorage.Instances(), memoryStorage.Operations())
 
-	step := NewEDPDeregistrationStep(memoryStorage.Operations(), memoryStorage.Instances(), client, edp.Config{
+	step := NewEDPDeregistrationStep(memoryStorage, client, edp.Config{
 		Environment: edpEnvironment,
 	})
 
@@ -95,7 +95,7 @@ func TestEDPDeregistration_RunWithOtherInstancesButDifferentSubaccount(t *testin
 	_, _ = prepareProvisionedInstanceWithSubaccount(t, "subaccount-other", memoryStorage.Instances(), memoryStorage.Operations())
 	_, operation := prepareDeprovisioningInstanceWithSubaccount(t, edpName, memoryStorage.Instances(), memoryStorage.Operations())
 
-	step := NewEDPDeregistrationStep(memoryStorage.Operations(), memoryStorage.Instances(), client, edp.Config{
+	step := NewEDPDeregistrationStep(memoryStorage, client, edp.Config{
 		Environment: edpEnvironment,
 	})
 
@@ -124,7 +124,7 @@ func TestEDPDeregistration_RunWithOtherInstancesInDeprovisioningState(t *testing
 	_, _ = prepareDeprovisioningInstanceWithSubaccount(t, edpName, memoryStorage.Instances(), memoryStorage.Operations())
 	_, operation := prepareDeprovisioningInstanceWithSubaccount(t, edpName, memoryStorage.Instances(), memoryStorage.Operations())
 
-	step := NewEDPDeregistrationStep(memoryStorage.Operations(), memoryStorage.Instances(), client, edp.Config{
+	step := NewEDPDeregistrationStep(memoryStorage, client, edp.Config{
 		Environment: edpEnvironment,
 	})
 

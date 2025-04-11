@@ -291,6 +291,8 @@ spec:
               value: "{{ .Values.broker.updateCustomResourcesLabelsOnAccountMove }}"
             - name: APP_REGIONS_SUPPORTING_MACHINE_FILE_PATH
               value: /config/regionsSupportingMachine.yaml
+            - name: APP_MULTIPLE_CONTEXTS
+              value: "{{ .Values.multipleContexts }}"
           ports:
             - name: http
               containerPort: {{ .Values.broker.port }}

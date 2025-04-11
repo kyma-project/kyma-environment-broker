@@ -95,7 +95,7 @@ type ProvisioningParametersDTO struct {
 	ShootName   string `json:"shootName,omitempty"`
 	ShootDomain string `json:"shootDomain,omitempty"`
 
-	OIDC                      *OIDCConfigDTO             `json:"oidc,omitempty"`
+	OIDC                      *OIDCConnectDTO            `json:"oidc,omitempty"`
 	Networking                *NetworkingDTO             `json:"networking,omitempty"`
 	Modules                   *ModulesDTO                `json:"modules,omitempty"`
 	ShootAndSeedSameRegion    *bool                      `json:"shootAndSeedSameRegion,omitempty"`
@@ -152,67 +152,159 @@ func (p AutoScalerParameters) Validate(planMin, planMax int) error {
 type OIDCConfigDTO struct {
 	ClientID       string   `json:"clientID" yaml:"clientID"`
 	GroupsClaim    string   `json:"groupsClaim" yaml:"groupsClaim"`
+	GroupsPrefix   string   `json:"groupsPrefix,omitempty" yaml:"groupsPrefix,omitempty"`
 	IssuerURL      string   `json:"issuerURL" yaml:"issuerURL"`
 	SigningAlgs    []string `json:"signingAlgs" yaml:"signingAlgs"`
 	UsernameClaim  string   `json:"usernameClaim" yaml:"usernameClaim"`
 	UsernamePrefix string   `json:"usernamePrefix" yaml:"usernamePrefix"`
+	RequiredClaims []string `json:"requiredClaims,omitempty" yaml:"requiredClaims,omitempty"`
 }
 
 const oidcValidSigningAlgs = "RS256,RS384,RS512,ES256,ES384,ES512,PS256,PS384,PS512"
 
-func (o *OIDCConfigDTO) IsProvided() bool {
+func (o *OIDCConnectDTO) IsProvided() bool {
 	if o == nil {
 		return false
 	}
-	if o.ClientID == "" && o.IssuerURL == "" && o.GroupsClaim == "" && o.UsernamePrefix == "" && o.UsernameClaim == "" && len(o.SigningAlgs) == 0 {
-		return false
+	if o.OIDCConfigDTO != nil && (o.OIDCConfigDTO.ClientID != "" || o.OIDCConfigDTO.IssuerURL != "" || o.OIDCConfigDTO.GroupsClaim != "" || o.OIDCConfigDTO.UsernamePrefix != "" || o.OIDCConfigDTO.UsernameClaim != "" || len(o.OIDCConfigDTO.SigningAlgs) > 0 || len(o.OIDCConfigDTO.RequiredClaims) > 0 || o.OIDCConfigDTO.GroupsPrefix != "") {
+		return true
 	}
-	return true
+	return o.List != nil
 }
 
-func (o *OIDCConfigDTO) Validate() error {
-	errs := make([]string, 0)
-	if len(o.ClientID) == 0 {
-		errs = append(errs, "clientID must not be empty")
+func (o *OIDCConnectDTO) Validate(instanceOidcConfig *OIDCConnectDTO) error {
+	if o.List != nil && o.OIDCConfigDTO != nil {
+		return fmt.Errorf("both list and object OIDC cannot be set")
 	}
-	if len(o.IssuerURL) == 0 {
-		errs = append(errs, "issuerURL must not be empty")
-	} else {
-		issuer, err := url.Parse(o.IssuerURL)
-		if err != nil || (issuer != nil && len(issuer.Host) == 0) {
-			errs = append(errs, "issuerURL must be a valid URL")
+
+	var errs []string
+
+	if o.OIDCConfigDTO != nil {
+		if err := o.validateSingleOIDC(instanceOidcConfig, &errs); err != nil {
+			return err
 		}
-		if issuer != nil && issuer.Fragment != "" {
-			errs = append(errs, "issuerURL must not contain a fragment")
-		}
-		if issuer != nil && issuer.User != nil {
-			errs = append(errs, "issuerURL must not contain a username or password")
-		}
-		if issuer != nil && len(issuer.RawQuery) > 0 {
-			errs = append(errs, "issuerURL must not contain a query")
-		}
-		if issuer != nil && issuer.Scheme != "https" {
-			errs = append(errs, "issuerURL must have https scheme")
-		}
-	}
-	if len(o.SigningAlgs) != 0 {
-		validSigningAlgs := o.validSigningAlgsSet()
-		for _, providedAlg := range o.SigningAlgs {
-			if !validSigningAlgs[providedAlg] {
-				errs = append(errs, "signingAlgs must contain valid signing algorithm(s)")
-				break
-			}
-		}
+	} else if o.List != nil && len(o.List) > 0 {
+		o.validateOIDCList(&errs)
 	}
 
 	if len(errs) > 0 {
-		err := fmt.Errorf("%s", strings.Join(errs, ", "))
-		return err
+		return fmt.Errorf("%s", strings.Join(errs, ", "))
 	}
 	return nil
 }
 
-func (o *OIDCConfigDTO) validSigningAlgsSet() map[string]bool {
+func (o *OIDCConnectDTO) validateSingleOIDC(instanceOidcConfig *OIDCConnectDTO, errs *[]string) error {
+	if instanceOidcConfig != nil && instanceOidcConfig.List != nil {
+		return fmt.Errorf("an object OIDC cannot be used because the instance OIDC configuration uses a list")
+	}
+	if len(o.OIDCConfigDTO.ClientID) == 0 {
+		*errs = append(*errs, "clientID must not be empty")
+	}
+	if len(o.OIDCConfigDTO.IssuerURL) == 0 {
+		*errs = append(*errs, "issuerURL must not be empty")
+	} else {
+		o.validateIssuerURL(o.OIDCConfigDTO.IssuerURL, nil, errs)
+	}
+	o.validateSigningAlgs(o.OIDCConfigDTO.SigningAlgs, nil, errs)
+	o.validateRequiredClaims(o.OIDCConfigDTO.RequiredClaims, nil, errs)
+	return nil
+}
+
+func (o *OIDCConnectDTO) validateOIDCList(errs *[]string) {
+	for i, oidc := range o.List {
+		if len(oidc.ClientID) == 0 {
+			*errs = append(*errs, fmt.Sprintf("clientID must not be empty for OIDC at index %d", i))
+		}
+		if len(oidc.IssuerURL) == 0 {
+			*errs = append(*errs, fmt.Sprintf("issuerURL must not be empty for OIDC at index %d", i))
+		} else {
+			o.validateIssuerURL(oidc.IssuerURL, &i, errs)
+		}
+		o.validateSigningAlgs(oidc.SigningAlgs, &i, errs)
+		o.validateRequiredClaims(oidc.RequiredClaims, &i, errs)
+	}
+}
+
+func (o *OIDCConnectDTO) validateIssuerURL(issuerURL string, index *int, errs *[]string) {
+	issuer, err := url.Parse(issuerURL)
+	if err != nil || (issuer != nil && len(issuer.Host) == 0) {
+		if index != nil {
+			*errs = append(*errs, fmt.Sprintf("issuerURL must be a valid URL, issuerURL must have https scheme for OIDC at index %d", *index))
+		} else {
+			*errs = append(*errs, "issuerURL must be a valid URL, issuerURL must have https scheme")
+		}
+		return
+	}
+	if issuer.Fragment != "" {
+		if index != nil {
+			*errs = append(*errs, fmt.Sprintf("issuerURL must not contain a fragment for OIDC at index %d", *index))
+		} else {
+			*errs = append(*errs, "issuerURL must not contain a fragment")
+		}
+	}
+	if issuer.User != nil {
+		if index != nil {
+			*errs = append(*errs, fmt.Sprintf("issuerURL must not contain a username or password for OIDC at index %d", *index))
+		} else {
+			*errs = append(*errs, "issuerURL must not contain a username or password")
+		}
+	}
+	if len(issuer.RawQuery) > 0 {
+		if index != nil {
+			*errs = append(*errs, fmt.Sprintf("issuerURL must not contain a query for OIDC at index %d", *index))
+		} else {
+			*errs = append(*errs, "issuerURL must not contain a query")
+		}
+	}
+	if issuer.Scheme != "https" {
+		if index != nil {
+			*errs = append(*errs, fmt.Sprintf("issuerURL must have https scheme for OIDC at index %d", *index))
+		} else {
+			*errs = append(*errs, "issuerURL must have https scheme")
+		}
+	}
+}
+
+func (o *OIDCConnectDTO) validateSigningAlgs(signingAlgs []string, index *int, errs *[]string) {
+	if len(signingAlgs) != 0 {
+		validSigningAlgs := o.validSigningAlgsSet()
+		for _, providedAlg := range signingAlgs {
+			if !validSigningAlgs[providedAlg] {
+				if index != nil {
+					*errs = append(*errs, fmt.Sprintf("signingAlgs must contain valid signing algorithm(s) for OIDC at index %d", *index))
+				} else {
+					*errs = append(*errs, "signingAlgs must contain valid signing algorithm(s)")
+				}
+				break
+			}
+		}
+	}
+}
+
+func (o *OIDCConnectDTO) validateRequiredClaims(requiredClaims []string, index *int, errs *[]string) {
+	if len(requiredClaims) != 0 {
+		for _, claim := range requiredClaims {
+			if !strings.Contains(claim, "=") {
+				if index != nil {
+					*errs = append(*errs, fmt.Sprintf("requiredClaims must be in claim=value format, invalid claim: %s for OIDC at index %d", claim, *index))
+				} else {
+					*errs = append(*errs, fmt.Sprintf("requiredClaims must be in claim=value format, invalid claim: %s", claim))
+				}
+				continue
+			}
+			parts := strings.SplitN(claim, "=", 2)
+			if len(parts[0]) == 0 || len(parts[1]) == 0 {
+				if index != nil {
+					*errs = append(*errs, fmt.Sprintf("requiredClaims must be in claim=value format, invalid claim: %s for OIDC at index %d", claim, *index))
+				} else {
+					*errs = append(*errs, fmt.Sprintf("requiredClaims must be in claim=value format, invalid claim: %s", claim))
+				}
+			}
+		}
+	}
+}
+
+func (o *OIDCConnectDTO) validSigningAlgsSet() map[string]bool {
 	algs := strings.Split(oidcValidSigningAlgs, ",")
 	signingAlgsSet := make(map[string]bool, len(algs))
 
@@ -393,6 +485,11 @@ func (rt RuntimeDTO) LastOperation() Operation {
 	}
 
 	return op
+}
+
+type OIDCConnectDTO struct {
+	*OIDCConfigDTO
+	List []OIDCConfigDTO `json:"list,omitzero" yaml:"list,omitzero"`
 }
 
 type ModulesDTO struct {

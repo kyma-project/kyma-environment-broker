@@ -266,8 +266,6 @@ func fixConfig() *Config {
 			MultiZoneCluster:             true,
 			DefaultTrialProvider:         "AWS",
 			ControlPlaneFailureTolerance: "zone",
-			UseMainOIDC:                  true,
-			UseAdditionalOIDC:            false,
 		},
 		StepTimeouts: StepTimeoutsConfig{
 			CheckRuntimeResourceUpdate:   180 * time.Second,
