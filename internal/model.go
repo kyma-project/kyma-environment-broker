@@ -412,7 +412,8 @@ func NewUpdateOperation(operationID string, instance *Instance, updatingParams U
 		ProvisioningParameters: instance.Parameters,
 		UpdatingParameters:     updatingParams,
 		RuntimeOperation: RuntimeOperation{
-			Region: instance.ProviderRegion},
+			GlobalAccountID: instance.GlobalAccountID,
+			Region:          instance.ProviderRegion},
 	}
 	if updatingParams.OIDC != nil {
 		op.ProvisioningParameters.Parameters.OIDC = updatingParams.OIDC
