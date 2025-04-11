@@ -12,7 +12,5 @@ type InfrastructureManagerConfig struct {
 	DefaultTrialProvider         pkg.CloudProvider `envconfig:"default=Azure"`
 	MultiZoneCluster             bool              `envconfig:"default=false"`
 	ControlPlaneFailureTolerance string            `envconfig:"optional"`
-	UseMainOIDC                  bool              `envconfig:"default=true"`
-	UseAdditionalOIDC            bool              `envconfig:"default=false"`
 	UseSmallerMachineTypes       bool              `envconfig:"default=false"`
 }

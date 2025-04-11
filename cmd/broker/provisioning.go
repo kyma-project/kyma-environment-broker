@@ -106,7 +106,7 @@ func NewProvisioningProcessingQueue(ctx context.Context, provisionManager *proce
 		// postcondition: operation.KymaResourceName, operation.RuntimeResourceName is set
 		{
 			stage:     createRuntimeStageName,
-			step:      provisioning.NewCreateRuntimeResourceStep(db.Operations(), db.Instances(), k8sClient, cfg.InfrastructureManager, defaultOIDC),
+			step:      provisioning.NewCreateRuntimeResourceStep(db.Operations(), db.Instances(), k8sClient, cfg.InfrastructureManager, defaultOIDC, cfg.Broker.UseAdditionalOIDCSchema),
 			condition: provisioning.SkipForOwnClusterPlan,
 		},
 		{

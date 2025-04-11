@@ -237,6 +237,9 @@ func (b *UpdateEndpoint) processUpdateParameters(instance *internal.Instance, de
 			logger.Error(fmt.Sprintf("unable to unmarshal parameters: %s", err.Error()))
 			return domain.UpdateServiceSpec{}, fmt.Errorf("unable to unmarshal parameters")
 		}
+		if !b.config.UseAdditionalOIDCSchema {
+			ClearOIDCInput(params.OIDC)
+		}
 		logger.Debug(fmt.Sprintf("Updating with params: %+v", params))
 	}
 
@@ -251,7 +254,7 @@ func (b *UpdateEndpoint) processUpdateParameters(instance *internal.Instance, de
 	}
 
 	if params.OIDC.IsProvided() {
-		if err := params.OIDC.Validate(); err != nil {
+		if err := params.OIDC.Validate(instance.Parameters.Parameters.OIDC); err != nil {
 			logger.Error(fmt.Sprintf("invalid OIDC parameters: %s", err.Error()))
 			return domain.UpdateServiceSpec{}, apiresponses.NewFailureResponse(err, http.StatusUnprocessableEntity, err.Error())
 		}

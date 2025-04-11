@@ -3,6 +3,7 @@ package broker_test
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"log/slog"
 	"net/http"
@@ -924,15 +925,124 @@ func TestProvision_Provision(t *testing.T) {
 		assert.Equal(t, expectedErr.(*apiresponses.FailureResponse).LoggerAction(), apierr.LoggerAction())
 	})
 
-	t.Run("Should fail on invalid OIDC issuerURL params", func(t *testing.T) {
+	t.Run("Should accept an valid OIDC object type", func(t *testing.T) {
 		// given
 		memoryStorage := storage.NewMemoryStorage()
 
 		queue := &automock.Queue{}
 		queue.On("Add", mock.AnythingOfType("string"))
 
-		factoryBuilder := &automock.PlanValidator{}
-		factoryBuilder.On("IsPlanSupport", planID).Return(true)
+		kcBuilder := &kcMock.KcBuilder{}
+		kcBuilder.On("GetServerURL", "").Return("", fmt.Errorf("error"))
+		// #create provisioner endpoint
+		provisionEndpoint := broker.NewProvision(
+			broker.Config{
+				EnablePlans:             []string{"gcp", "azure"},
+				URL:                     brokerURL,
+				OnlySingleTrialPerGA:    true,
+				UseAdditionalOIDCSchema: true,
+			},
+			gardener.Config{Project: "test", ShootDomain: "example.com", DNSProviders: fixDNSProviders()},
+			memoryStorage,
+			queue,
+			broker.PlansConfig{},
+			log,
+			dashboardConfig,
+			kcBuilder,
+			whitelist.Set{},
+			&broker.OneForAllConvergedCloudRegionsProvider{},
+			nil,
+			fixValueProvider(),
+			false,
+		)
+
+		oidcParams := `"clientID":"client-id","issuerURL":"https://test.local","signingAlgs":["RS256"],"requiredClaims":["claim=value"]`
+
+		// when
+		response, err := provisionEndpoint.Provision(fixRequestContext(t, "req-region"), instanceID, domain.ProvisionDetails{
+			ServiceID:     serviceID,
+			PlanID:        planID,
+			RawParameters: json.RawMessage(fmt.Sprintf(`{"name": "%s", "region": "%s","oidc":{ %s }}`, clusterName, clusterRegion, oidcParams)),
+			RawContext:    json.RawMessage(fmt.Sprintf(`{"globalaccount_id": "%s", "subaccount_id": "%s", "user_id": "%s"}`, globalAccountID, subAccountID, "Test@Test.pl")),
+		}, true)
+		t.Logf("%+v\n", *provisionEndpoint)
+
+		// then
+		require.NoError(t, err)
+		operation, err := memoryStorage.Operations().GetProvisioningOperationByID(response.OperationData)
+		require.NoError(t, err)
+		assert.Equal(t, "client-id", operation.ProvisioningParameters.Parameters.OIDC.OIDCConfigDTO.ClientID)
+		assert.Equal(t, "https://test.local", operation.ProvisioningParameters.Parameters.OIDC.OIDCConfigDTO.IssuerURL)
+		assert.Equal(t, []string{"RS256"}, operation.ProvisioningParameters.Parameters.OIDC.OIDCConfigDTO.SigningAlgs)
+		assert.Equal(t, []string{"claim=value"}, operation.ProvisioningParameters.Parameters.OIDC.OIDCConfigDTO.RequiredClaims)
+
+		instance, err := memoryStorage.Instances().GetByID(instanceID)
+		require.NoError(t, err)
+		assert.Equal(t, operation.ProvisioningParameters.Parameters.OIDC.OIDCConfigDTO, instance.Parameters.Parameters.OIDC.OIDCConfigDTO)
+	})
+
+	t.Run("Should accept an valid OIDC list type", func(t *testing.T) {
+		// given
+		memoryStorage := storage.NewMemoryStorage()
+
+		queue := &automock.Queue{}
+		queue.On("Add", mock.AnythingOfType("string"))
+
+		kcBuilder := &kcMock.KcBuilder{}
+		kcBuilder.On("GetServerURL", "").Return("", fmt.Errorf("error"))
+		// #create provisioner endpoint
+		provisionEndpoint := broker.NewProvision(
+			broker.Config{
+				EnablePlans:             []string{"gcp", "azure"},
+				URL:                     brokerURL,
+				OnlySingleTrialPerGA:    true,
+				UseAdditionalOIDCSchema: true,
+			},
+			gardener.Config{Project: "test", ShootDomain: "example.com", DNSProviders: fixDNSProviders()},
+			memoryStorage,
+			queue,
+			broker.PlansConfig{},
+			log,
+			dashboardConfig,
+			kcBuilder,
+			whitelist.Set{},
+			&broker.OneForAllConvergedCloudRegionsProvider{},
+			nil,
+			fixValueProvider(),
+			false,
+		)
+
+		oidcParams := `"clientID":"client-id","issuerURL":"https://test.local","signingAlgs":["RS256"],"requiredClaims":["claim=value"]`
+
+		// when
+		response, err := provisionEndpoint.Provision(fixRequestContext(t, "req-region"), instanceID, domain.ProvisionDetails{
+			ServiceID:     serviceID,
+			PlanID:        planID,
+			RawParameters: json.RawMessage(fmt.Sprintf(`{"name": "%s", "region": "%s","oidc":{"list":[{%s}]}}`, clusterName, clusterRegion, oidcParams)),
+			RawContext:    json.RawMessage(fmt.Sprintf(`{"globalaccount_id": "%s", "subaccount_id": "%s", "user_id": "%s"}`, globalAccountID, subAccountID, "Test@Test.pl")),
+		}, true)
+		t.Logf("%+v\n", *provisionEndpoint)
+
+		// then
+		require.NoError(t, err)
+		operation, err := memoryStorage.Operations().GetProvisioningOperationByID(response.OperationData)
+		require.NoError(t, err)
+		assert.Equal(t, "client-id", operation.ProvisioningParameters.Parameters.OIDC.List[0].ClientID)
+		assert.Equal(t, "https://test.local", operation.ProvisioningParameters.Parameters.OIDC.List[0].IssuerURL)
+		assert.Equal(t, []string{"RS256"}, operation.ProvisioningParameters.Parameters.OIDC.List[0].SigningAlgs)
+		assert.Equal(t, []string{"claim=value"}, operation.ProvisioningParameters.Parameters.OIDC.List[0].RequiredClaims)
+
+		instance, err := memoryStorage.Instances().GetByID(instanceID)
+		require.NoError(t, err)
+		assert.Equal(t, operation.ProvisioningParameters.Parameters.OIDC.List[0], instance.Parameters.Parameters.OIDC.List[0])
+	})
+
+	t.Run("Should fail on invalid OIDC issuerURL params", func(t *testing.T) {
+		// given
+		memoryStorage := storage.NewMemoryStorage()
+
+		queue := &automock.Queue{}
+		queue.On("Add", mock.AnythingOfType("string"))
 
 		kcBuilder := &kcMock.KcBuilder{}
 		// #create provisioner endpoint
@@ -989,7 +1099,7 @@ func TestProvision_Provision(t *testing.T) {
 			{
 				name:          "URL with empty host",
 				oidcParams:    `"clientID":"client-id","issuerURL":"https:///path","signingAlgs":["RS256"]`,
-				expectedError: "issuerURL must be a valid URL",
+				expectedError: "issuerURL must be a valid URL, issuerURL must have https scheme",
 			},
 		}
 
@@ -1014,6 +1124,91 @@ func TestProvision_Provision(t *testing.T) {
 				apierr := err.(*apiresponses.FailureResponse)
 				assert.Equal(t, expectedErr.(*apiresponses.FailureResponse).ValidatedStatusCode(nil), apierr.ValidatedStatusCode(nil))
 				assert.Equal(t, expectedErr.(*apiresponses.FailureResponse).LoggerAction(), apierr.LoggerAction())
+			})
+		}
+	})
+
+	t.Run("Should fail on invalid OIDC requiredClaims params", func(t *testing.T) {
+		// given
+		memoryStorage := storage.NewMemoryStorage()
+
+		queue := &automock.Queue{}
+		queue.On("Add", mock.AnythingOfType("string"))
+
+		factoryBuilder := &automock.PlanValidator{}
+		factoryBuilder.On("IsPlanSupport", planID).Return(true)
+
+		kcBuilder := &kcMock.KcBuilder{}
+		kcBuilder.On("GetServerURL", "").Return("", fmt.Errorf("error"))
+		// #create provisioner endpoint
+		provisionEndpoint := broker.NewProvision(
+			broker.Config{
+				EnablePlans:             []string{"gcp", "azure"},
+				URL:                     brokerURL,
+				OnlySingleTrialPerGA:    true,
+				UseAdditionalOIDCSchema: true,
+			},
+			gardener.Config{Project: "test", ShootDomain: "example.com", DNSProviders: fixDNSProviders()},
+			memoryStorage,
+			queue,
+			broker.PlansConfig{},
+			log,
+			dashboardConfig,
+			kcBuilder,
+			whitelist.Set{},
+			&broker.OneForAllConvergedCloudRegionsProvider{},
+			nil,
+			fixValueProvider(),
+			false,
+		)
+
+		testCases := []struct {
+			name          string
+			oidcParams    string
+			expectedError string
+		}{
+			{
+				name:       "only a string",
+				oidcParams: `"clientID":"client-id","issuerURL":"https://test.local","signingAlgs":["RS256"],"requiredClaims":["value"]`,
+			},
+			{
+				name:       "only claim=",
+				oidcParams: `"clientID":"client-id","issuerURL":"https://test.local","signingAlgs":["RS256"],"requiredClaims":["claim="]`,
+			},
+			{
+				name:       "only =value",
+				oidcParams: `"clientID":"client-id","issuerURL":"https://test.local","signingAlgs":["RS256"],"requiredClaims":["=value"]`,
+			},
+			{
+				name:       "only =",
+				oidcParams: `"clientID":"client-id","issuerURL":"https://test.local","signingAlgs":["RS256"],"requiredClaims":["="]`,
+			},
+			{
+				name:       "valid and invalid claim",
+				oidcParams: `"clientID":"client-id","issuerURL":"https://test.local","signingAlgs":["RS256"],"requiredClaims":["claim=value","claim="]`,
+			},
+		}
+
+		for _, tc := range testCases {
+			t.Run(tc.name, func(t *testing.T) {
+				err := errors.New(tc.expectedError)
+				errMsg := fmt.Sprintf("[instanceID: %s] %s", instanceID, err)
+				expectedErr := apiresponses.NewFailureResponse(err, http.StatusBadRequest, errMsg)
+
+				// when
+				_, err = provisionEndpoint.Provision(fixRequestContext(t, "req-region"), instanceID, domain.ProvisionDetails{
+					ServiceID:     serviceID,
+					PlanID:        planID,
+					RawParameters: json.RawMessage(fmt.Sprintf(`{"name": "%s", "region": "%s","oidc":{ %s }}`, clusterName, clusterRegion, tc.oidcParams)),
+					RawContext:    json.RawMessage(fmt.Sprintf(`{"globalaccount_id": "%s", "subaccount_id": "%s", "user_id": "%s"}`, globalAccountID, subAccountID, "Test@Test.pl")),
+				}, true)
+				t.Logf("%+v\n", *provisionEndpoint)
+
+				// then
+				require.Error(t, err)
+				assert.IsType(t, &apiresponses.FailureResponse{}, err)
+				apierr := err.(*apiresponses.FailureResponse)
+				assert.Equal(t, expectedErr.(*apiresponses.FailureResponse).ValidatedStatusCode(nil), apierr.ValidatedStatusCode(nil))
 			})
 		}
 	})
