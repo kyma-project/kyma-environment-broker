@@ -2,7 +2,6 @@ package rules
 
 import (
 	"fmt"
-	"strconv"
 )
 
 const (
@@ -18,13 +17,11 @@ var InputAttributes = []Attribute{
 	{
 		Name:     PlatformRegionAttributeName,
 		Setter:   setPlatformRegion,
-		Getter:   func(r *Rule) string { return r.PlatformRegion },
 		HasValue: true,
 	},
 	{
 		Name:     HyperscalerRegionAttributeName,
 		Setter:   setHyperscalerRegion,
-		Getter:   func(r *Rule) string { return r.HyperscalerRegion },
 		HasValue: true,
 	},
 }
@@ -33,25 +30,21 @@ var OutputAttributes = []Attribute{
 	{
 		Name:     EUAccessAttributeName,
 		Setter:   setEuAccess,
-		Getter:   func(r *Rule) string { return strconv.FormatBool(r.EuAccess) },
 		HasValue: false,
 	},
 	{
 		Name:     SharedAttributeName,
 		Setter:   setShared,
-		Getter:   func(r *Rule) string { return strconv.FormatBool(r.Shared) },
 		HasValue: false,
 	},
 	{
 		Name:     PlatformRegionSuffix,
 		Setter:   setPlatformRegionSuffix,
-		Getter:   func(r *Rule) string { return strconv.FormatBool(r.PlatformRegionSuffix) },
 		HasValue: false,
 	},
 	{
 		Name:     HyperscalerRegionSuffix,
 		Setter:   setHyperscalerRegionSuffix,
-		Getter:   func(r *Rule) string { return strconv.FormatBool(r.HyperscalerRegionSuffix) },
 		HasValue: false,
 	},
 }
