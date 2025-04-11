@@ -283,8 +283,11 @@ func (cmd *UpdateCommand) Validate() error {
 	if cmd.updateAdditionalWorkerNodePools {
 		updateCount++
 	}
+	if cmd.updateMultipleOIDC {
+		updateCount++
+	}
 	if updateCount != 1 {
-		return fmt.Errorf("you must use exactly one of updateMachineType, updateOIDC, updateAdministrators or updateAdditionalWorkerNodePools")
+		return fmt.Errorf("you must use exactly one of updateMachineType, updateOIDC, updateAdministrators, updateAdditionalWorkerNodePools, or updateMultipleOIDC")
 	}
 	return nil
 }
