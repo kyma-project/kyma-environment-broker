@@ -15,11 +15,8 @@ const (
 
 type Attribute struct {
 	Name          string
-	Description   string
 	Setter        func(*Rule, string) error
 	Getter        func(*Rule) string
-	input         bool
-	output        bool
 	modifiedLabel string
 	HasValue      bool
 
