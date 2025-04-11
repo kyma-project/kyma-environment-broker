@@ -28,12 +28,12 @@ type ProvisioningAttributes struct {
 	Hyperscaler       string `json:"hyperscaler"`
 }
 
-func (r *Rule) SetAttributeValue(attribute, value string, attributes []Attribute) (*Rule, error) {
+func (r *Rule) SetAttributeValue(attribute, value string, attributes []Attribute) error {
 	for _, attr := range attributes {
 		if attr.Name == attribute {
 			return attr.Setter(r, value)
 		}
 	}
 
-	return nil, fmt.Errorf("unknown attribute %s", attribute)
+	return fmt.Errorf("unknown attribute %s", attribute)
 }

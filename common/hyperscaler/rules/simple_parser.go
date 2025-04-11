@@ -16,7 +16,7 @@ const (
 type Attribute struct {
 	Name          string
 	Description   string
-	Setter        func(*Rule, string) (*Rule, error)
+	Setter        func(*Rule, string) error
 	Getter        func(*Rule) string
 	input         bool
 	output        bool
@@ -85,7 +85,7 @@ func (g *SimpleParser) Parse(ruleEntry string) (*Rule, error) {
 				return nil, fmt.Errorf("input attribute has no value")
 			}
 
-			_, err = outputRule.SetAttributeValue(attribute[0], attribute[1], InputAttributes)
+			err = outputRule.SetAttributeValue(attribute[0], attribute[1], InputAttributes)
 
 			if err != nil {
 				return nil, err
@@ -102,7 +102,7 @@ func (g *SimpleParser) Parse(ruleEntry string) (*Rule, error) {
 				return nil, fmt.Errorf("output attribute is empty")
 			}
 
-			_, err = outputRule.SetAttributeValue(outputAttr, "true", OutputAttributes)
+			err = outputRule.SetAttributeValue(outputAttr, "true", OutputAttributes)
 			if err != nil {
 				return nil, err
 			}
