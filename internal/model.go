@@ -102,15 +102,15 @@ const (
 	OperationStateInProgress = "in progress"
 )
 
-// Runtime this structure is needed for backward compatibility with the old code using orchestration
+// Runtime this structure is needed for backward compatibility with the old data persisted by orchestration code
 type Runtime struct {
-	GlobalAccountID string
-	Region          string
+	GlobalAccountID string `json:"globalAccountId"`
+	Region          string `json:"region"`
 }
 
-// RuntimeOperation this structure is needed for backward compatibility with the old code using orchestration
+// RuntimeOperation this structure is needed for backward compatibility with the old data persisted by orchestration code
 type RuntimeOperation struct {
-	Runtime Runtime
+	Runtime `json:""`
 }
 
 type Operation struct {
