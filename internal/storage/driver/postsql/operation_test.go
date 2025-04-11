@@ -59,6 +59,8 @@ func TestOperation(t *testing.T) {
 		givenOperation.UpdatedAt = givenOperation.UpdatedAt.Truncate(time.Millisecond)
 		givenOperation.Version = 1
 		givenOperation.ProvisioningParameters.PlanID = broker.TrialPlanID
+		givenOperation.RuntimeOperation.Region = fixture.Region
+		givenOperation.RuntimeOperation.GlobalAccountID = fixture.GlobalAccountId
 
 		latestOperation := fixture.FixProvisioningOperation("latest-id", "inst-id")
 		latestOperation.State = domain.InProgress
@@ -95,6 +97,7 @@ func TestOperation(t *testing.T) {
 		op, err := svc.GetOperationByID("operation-id")
 		require.NoError(t, err)
 		assert.Equal(t, givenOperation.ID, op.ID)
+		assertRuntimeOperation(t, givenOperation)
 
 		lastOp, err := svc.GetLastOperation("inst-id")
 		require.NoError(t, err)
@@ -147,6 +150,8 @@ func TestOperation(t *testing.T) {
 		givenOperation.ProvisionerOperationID = "target-op-id"
 		givenOperation.Description = "description"
 		givenOperation.Version = 1
+		givenOperation.RuntimeOperation.Region = fixture.Region
+		givenOperation.RuntimeOperation.GlobalAccountID = fixture.GlobalAccountId
 
 		svc := brokerStorage.Operations()
 
@@ -158,6 +163,7 @@ func TestOperation(t *testing.T) {
 		require.NoError(t, err)
 		assert.Len(t, ops, 1)
 		assertOperation(t, givenOperation.Operation, ops[0])
+		assertRuntimeOperation(t, ops[0])
 
 		gotOperation, err := svc.GetDeprovisioningOperationByID("operation-id")
 		require.NoError(t, err)
@@ -235,6 +241,8 @@ func TestOperation(t *testing.T) {
 		givenOperation3.ProvisionerOperationID = "target-op-id"
 		givenOperation3.Description = "pending-operation"
 		givenOperation3.Version = 1
+		givenOperation3.RuntimeOperation.Region = fixture.Region
+		givenOperation3.RuntimeOperation.GlobalAccountID = fixture.GlobalAccountId
 
 		svc := brokerStorage.Operations()
 
@@ -250,6 +258,7 @@ func TestOperation(t *testing.T) {
 		op, err := svc.GetUpgradeClusterOperationByID(givenOperation3.Operation.ID)
 		require.NoError(t, err)
 		assertUpgradeClusterOperation(t, givenOperation3, *op)
+		assertRuntimeOperation(t, op.Operation)
 
 		lastOp, err := svc.GetLastOperation("inst-id")
 		require.NoError(t, err)
@@ -385,6 +394,11 @@ func TestOperation(t *testing.T) {
 		require.NoError(t, err)
 		assert.Equal(t, provisioning.ID, operation.ID)
 	})
+}
+
+func assertRuntimeOperation(t *testing.T, operation internal.Operation) {
+	assert.Equal(t, fixture.GlobalAccountId, operation.RuntimeOperation.GlobalAccountID)
+	assert.Equal(t, fixture.Region, operation.RuntimeOperation.Region)
 }
 
 func assertDeprovisioningOperation(t *testing.T, expected, got internal.DeprovisioningOperation) {

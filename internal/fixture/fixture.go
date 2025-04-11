@@ -261,8 +261,16 @@ func FixSuspensionOperationAsOperation(operationId, instanceId string) internal.
 
 func FixUpgradeClusterOperation(operationId, instanceId string) internal.UpgradeClusterOperation {
 	o := FixOperation(operationId, instanceId, internal.OperationTypeUpgradeCluster)
+	o.RuntimeOperation = FixRuntimeOperation()
 	return internal.UpgradeClusterOperation{
 		Operation: o,
+	}
+}
+
+func FixRuntimeOperation() internal.RuntimeOperation {
+	return internal.RuntimeOperation{
+		GlobalAccountID: GlobalAccountId,
+		Region:          Region,
 	}
 }
 
