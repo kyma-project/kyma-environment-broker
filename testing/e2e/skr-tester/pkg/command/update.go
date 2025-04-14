@@ -17,6 +17,7 @@ type UpdateCommand struct {
 	planID                          string
 	updateMachineType               bool
 	updateOIDC                      bool
+	updateMultipleOIDC              bool
 	updateAdministrators            bool
 	updateAdditionalWorkerNodePools bool
 	customMachineType               string
@@ -38,6 +39,7 @@ func NewUpdateCommand() *cobra.Command {
 	skr-tester update -i instanceID -p planID --updateAdditionalWorkerNodePools        Update the instance with new additional worker node pools.
 	skr-tester update -i instanceID -p planID --updateMachineType --machineType newMachineType                                             Update the instance with a custom machine type.
 	skr-tester update -i instanceID -p planID --updateOIDC --customOIDC '{"clientID":"foo-bar","issuerURL":"https://new.custom.ias.com"}'  Update the instance with a custom OIDC configuration.
+	skr-tester update -i instanceID -p planID --updateMultipleOIDC  				   Update the instance with a predefined OIDC configurations list.
 	skr-tester update -i instanceID -p planID --updateAdministrators --customAdministrators admin1@acme.com,admin2@acme.com                Update the instance with custom administrators.
 	skr-tester update -i instanceID -p planID --updateAdditionalWorkerNodePools --customAdditionalWorkerNodePools '[{"name":"worker-1","machineType":"m6i.large","haZones":true,"autoScalerMin":3,"autoScalerMax":20}]'      Update the instance with custom additional worker node pools.`,
 		PreRunE: func(_ *cobra.Command, _ []string) error { return cmd.Validate() },
@@ -48,6 +50,7 @@ func NewUpdateCommand() *cobra.Command {
 	cobraCmd.Flags().StringVarP(&cmd.planID, "planID", "p", "", "Plan ID of the specific instance.")
 	cobraCmd.Flags().BoolVarP(&cmd.updateMachineType, "updateMachineType", "m", false, "Update machine type.")
 	cobraCmd.Flags().BoolVarP(&cmd.updateOIDC, "updateOIDC", "o", false, "Update OIDC configuration.")
+	cobraCmd.Flags().BoolVarP(&cmd.updateMultipleOIDC, "updateMultipleOIDC", "M", false, "Update multiple OIDC configurations.")
 	cobraCmd.Flags().BoolVarP(&cmd.updateAdministrators, "updateAdministrators", "a", false, "Update administrators.")
 	cobraCmd.Flags().BoolVarP(&cmd.updateAdditionalWorkerNodePools, "updateAdditionalWorkerNodePools", "w", false, "Update additional worker node pools.")
 	cobraCmd.Flags().StringVar(&cmd.customMachineType, "customMachineType", "", "Machine type to update to (optional).")
@@ -145,7 +148,7 @@ func (cmd *UpdateCommand) Run() error {
 			return nil
 		}
 
-		currentOIDCConfig, err := kcpClient.GetCurrentOIDCConfig(cmd.instanceID)
+		currentOIDCConfig, err := kcpClient.GetRuntimeCrOIDCConfig(cmd.instanceID)
 		if err != nil {
 			return fmt.Errorf("failed to get current OIDC config: %v", err)
 		}
@@ -157,6 +160,40 @@ func (cmd *UpdateCommand) Run() error {
 			"signingAlgs":    []string{"RS256"},
 			"usernameClaim":  "email",
 			"usernamePrefix": "acme-",
+		}
+		fmt.Printf("Determined OIDC configuration to update: %v\n", newOIDCConfig)
+		resp, _, err := brokerClient.UpdateInstance(cmd.instanceID, map[string]interface{}{"oidc": newOIDCConfig})
+		if err != nil {
+			return fmt.Errorf("error updating instance: %v", err)
+		}
+		fmt.Printf("Update operationID: %s\n", resp["operation"].(string))
+	} else if cmd.updateMultipleOIDC {
+		currentOIDCConfig, err := kcpClient.GetRuntimeCrOIDCConfig(cmd.instanceID)
+		if err != nil {
+			return fmt.Errorf("failed to get current OIDC config: %v", err)
+		}
+		fmt.Printf("Current OIDC config: %v\n", currentOIDCConfig)
+		newOIDCConfig := map[string]interface{}{
+			"list": []map[string]interface{}{
+				{
+					"clientID":       "first-foo-bar",
+					"groupsClaim":    "first-groups",
+					"issuerURL":      "https://new.first.custom.ias.com",
+					"signingAlgs":    []string{"RS256"},
+					"usernameClaim":  "first-email",
+					"usernamePrefix": "first-acme-",
+				},
+				{
+					"clientID":       "second-foo-bar",
+					"groupsClaim":    "second-groups",
+					"issuerURL":      "https://new.second.custom.ias.com",
+					"signingAlgs":    []string{"RS256"},
+					"usernameClaim":  "second-email",
+					"usernamePrefix": "second-acme-",
+					"requiredClaims": []string{"clam1=value1", "claim2=value2"},
+					"groupsPrefix":   "second-group-",
+				},
+			},
 		}
 		fmt.Printf("Determined OIDC configuration to update: %v\n", newOIDCConfig)
 		resp, _, err := brokerClient.UpdateInstance(cmd.instanceID, map[string]interface{}{"oidc": newOIDCConfig})
@@ -246,8 +283,11 @@ func (cmd *UpdateCommand) Validate() error {
 	if cmd.updateAdditionalWorkerNodePools {
 		updateCount++
 	}
+	if cmd.updateMultipleOIDC {
+		updateCount++
+	}
 	if updateCount != 1 {
-		return fmt.Errorf("you must use exactly one of updateMachineType, updateOIDC, updateAdministrators or updateAdditionalWorkerNodePools")
+		return fmt.Errorf("you must use exactly one of updateMachineType, updateOIDC, updateAdministrators, updateAdditionalWorkerNodePools, or updateMultipleOIDC")
 	}
 	return nil
 }
