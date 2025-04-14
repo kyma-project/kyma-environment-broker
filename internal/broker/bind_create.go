@@ -153,7 +153,7 @@ func (b *BindEndpoint) bind(ctx context.Context, instanceID, bindingID string, d
 
 	lastOperation, err := b.operationsStorage.GetLastOperation(instance.InstanceID)
 	if err != nil {
-		return domain.Binding{}, apiresponses.NewFailureResponse(fmt.Errorf("failed to get last operation for instance %s", instanceID), http.StatusInternalServerError, fmt.Sprintf("failed to get last operation %s", instanceID))
+		return domain.Binding{}, apiresponses.NewFailureResponse(fmt.Errorf("failed to get last operation for instance %s", instanceID), http.StatusInternalServerError, fmt.Sprintf("failed to get last operation for instance %s", instanceID))
 	}
 	if lastOperation.Type == internal.OperationTypeProvision && (lastOperation.State == domain.InProgress || lastOperation.State == domain.Failed) {
 		var message string

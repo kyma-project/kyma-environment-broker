@@ -51,7 +51,7 @@ func (c *Client) kubeconfigForInstanceID() ([]byte, error) {
 	}
 	config, ok := secrets.Items[0].Data["config"]
 	if !ok {
-		return nil, fmt.Errorf("while getting 'config' from secret from %s", c.instanceID)
+		return nil, fmt.Errorf("while getting 'config' from secret from instance %s", c.instanceID)
 	}
 	if len(config) == 0 {
 		return nil, fmt.Errorf("empty kubeconfig")

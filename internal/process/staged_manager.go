@@ -119,7 +119,7 @@ func (m *StagedManager) Execute(operationID string) (time.Duration, error) {
 		return 3 * time.Second, nil
 	}
 
-	logOperation := m.log.With("operation", operationID, "instanceID", operation.InstanceID, "planID", operation.ProvisioningParameters.PlanID)
+	logOperation := m.log.With("operationID", operationID, "instanceID", operation.InstanceID, "planID", operation.ProvisioningParameters.PlanID)
 	logOperation.Info(fmt.Sprintf("Start process operation steps for GlobalAccount=%s, ", operation.ProvisioningParameters.ErsContext.GlobalAccountID))
 	if time.Since(operation.CreatedAt) > m.operationTimeout {
 		timeoutErr := kebError.TimeoutError("operation has reached the time limit", string(kebError.KEBDependency))
@@ -230,7 +230,7 @@ func (m *StagedManager) runStep(step Step, operation internal.Operation, logger 
 	for {
 		start = time.Now()
 		logger.Info("Start step")
-		stepLogger := logger.With("step", step.Name(), "operation", processedOperation.ID)
+		stepLogger := logger.With("step", step.Name(), "operationID", processedOperation.ID)
 		processedOperation, backoff, err = step.Run(processedOperation, stepLogger)
 		if err != nil {
 			logOperation := stepLogger.With("error_component", processedOperation.LastError.GetComponent(), "error_reason", processedOperation.LastError.GetReason())
@@ -259,7 +259,7 @@ func (m *StagedManager) runStep(step Step, operation internal.Operation, logger 
 		// - the loop takes too much time (to not block the worker too long)
 		if backoff == 0 || err != nil || time.Since(begin) > m.cfg.MaxStepProcessingTime {
 			if err != nil {
-				logOperation := m.log.With("step", step.Name(), "operation", processedOperation.ID, "error_component", processedOperation.LastError.GetComponent(), "error_reason", processedOperation.LastError.GetReason())
+				logOperation := m.log.With("step", step.Name(), "operationID", processedOperation.ID, "error_component", processedOperation.LastError.GetComponent(), "error_reason", processedOperation.LastError.GetReason())
 				logOperation.Error(fmt.Sprintf("Last Error that terminated the step: %s", processedOperation.LastError.Error()))
 			}
 			return processedOperation, backoff, err
@@ -270,7 +270,7 @@ func (m *StagedManager) runStep(step Step, operation internal.Operation, logger 
 }
 
 func (m *StagedManager) publishEventOnFail(operation *internal.Operation, err error) {
-	logOperation := m.log.With("operation", operation.ID, "error_component", operation.LastError.GetComponent(), "error_reason", operation.LastError.GetReason())
+	logOperation := m.log.With("operationID", operation.ID, "error_component", operation.LastError.GetComponent(), "error_reason", operation.LastError.GetReason())
 	logOperation.Error(fmt.Sprintf("Last error: %s", operation.LastError.Error()))
 
 	m.publishOperationFinishedEvent(*operation)

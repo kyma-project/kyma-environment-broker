@@ -84,7 +84,7 @@ func (_ inMemoryEvents) RunGarbageCollection(pollingPeriod, retention time.Durat
 
 func (e *inMemoryEvents) InsertEvent(eventLevel eventsapi.EventLevel, message, instanceID, operationID string) {
 	e.events = append(e.events, eventsapi.EventDTO{Level: eventLevel, InstanceID: &instanceID, OperationID: &operationID, Message: message})
-	slog.Info(fmt.Sprintf("EVENT [%v/%v] %v: %v", instanceID, operationID, eventLevel, message))
+	slog.Info(fmt.Sprintf("EVENT [instanceID=%v/operationID=%v] %v: %v", instanceID, operationID, eventLevel, message))
 }
 
 func (e *inMemoryEvents) ListEvents(filter eventsapi.EventFilter) ([]eventsapi.EventDTO, error) {

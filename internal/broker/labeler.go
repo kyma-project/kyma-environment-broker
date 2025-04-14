@@ -66,7 +66,7 @@ func (l *Labeler) updateCrLabel(id, crName, newGlobalAccountId string) error {
 
 	err = addOrOverrideLabel(&k8sObject, customresources.GlobalAccountIdLabel, newGlobalAccountId)
 	if err != nil {
-		return fmt.Errorf("while adding or overriding label (new=%s) for k8s object %s %s, because: %s", newGlobalAccountId, id, crName, err.Error())
+		return fmt.Errorf("while adding or overriding label (newGlobalAccountId=%s) for k8s object %s %s, because: %s", newGlobalAccountId, id, crName, err.Error())
 	}
 
 	err = l.kcpClient.Update(context.Background(), &k8sObject)
