@@ -82,15 +82,6 @@ type Deprovisioning interface {
 	ListDeprovisioningOperations() ([]internal.DeprovisioningOperation, error)
 }
 
-type RuntimeStates interface {
-	Insert(runtimeState internal.RuntimeState) error
-	GetByOperationID(operationID string) (internal.RuntimeState, error)
-	ListByRuntimeID(runtimeID string) ([]internal.RuntimeState, error)
-	GetLatestByRuntimeID(runtimeID string) (internal.RuntimeState, error)
-	GetLatestWithOIDCConfigByRuntimeID(runtimeID string) (internal.RuntimeState, error)
-	DeleteByOperationID(operationID string) error
-}
-
 type UpgradeCluster interface {
 	InsertUpgradeClusterOperation(operation internal.UpgradeClusterOperation) error
 	UpdateUpgradeClusterOperation(operation internal.UpgradeClusterOperation) (*internal.UpgradeClusterOperation, error)

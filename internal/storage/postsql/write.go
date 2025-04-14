@@ -222,39 +222,6 @@ func (ws writeSession) InsertOperation(op dbmodel.OperationDTO) dberr.Error {
 	return nil
 }
 
-func (ws writeSession) InsertRuntimeState(state dbmodel.RuntimeStateDTO) dberr.Error {
-	_, err := ws.insertInto(RuntimeStateTableName).
-		Pair("id", state.ID).
-		Pair("operation_id", state.OperationID).
-		Pair("runtime_id", state.RuntimeID).
-		Pair("created_at", state.CreatedAt).
-		Pair("k8s_version", state.K8SVersion).
-		Pair("kyma_config", state.KymaConfig).
-		Pair("cluster_config", state.ClusterConfig).
-		Exec()
-
-	if err != nil {
-		if err, ok := err.(*pq.Error); ok {
-			if err.Code == UniqueViolationErrorCode {
-				return dberr.AlreadyExists("RuntimeState with id %s already exist", state.ID)
-			}
-		}
-		return dberr.Internal("Failed to insert record to RuntimeState table: %s", err)
-	}
-
-	return nil
-}
-
-func (ws writeSession) DeleteRuntimeStatesByOperationID(operationID string) error {
-	_, err := ws.deleteFrom("runtime_states").
-		Where(dbr.Eq("operation_id", operationID)).
-		Exec()
-	if err != nil {
-		return dberr.Internal("failed to delete runtime states by operation ID %s: %s", operationID, err.Error())
-	}
-	return nil
-}
-
 func (ws writeSession) UpsertSubaccountState(state dbmodel.SubaccountStateDTO) dberr.Error {
 	result, err := ws.update(SubaccountStatesTableName).
 		Where(dbr.Eq("id", state.ID)).
