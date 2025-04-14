@@ -31,7 +31,7 @@ type ServicesEndpoint struct {
 	useSmallerMachineTypes        bool
 }
 
-func NewServices(cfg Config, servicesConfig ServicesConfig, log *slog.Logger, convergedCloudRegionsProvider ConvergedCloudRegionProvider, defaultOIDCConfig *pkg.OIDCConfigDTO, useSmallerMachineTypes bool) *ServicesEndpoint {
+func NewServices(cfg Config, servicesConfig ServicesConfig, log *slog.Logger, convergedCloudRegionsProvider ConvergedCloudRegionProvider, defaultOIDCConfig pkg.OIDCConfigDTO, useSmallerMachineTypes bool) *ServicesEndpoint {
 	enabledPlanIDs := map[string]struct{}{}
 	for _, planName := range cfg.EnablePlans {
 		id := PlanIDsMapping[planName]
@@ -44,7 +44,7 @@ func NewServices(cfg Config, servicesConfig ServicesConfig, log *slog.Logger, co
 		servicesConfig:                servicesConfig,
 		enabledPlanIDs:                enabledPlanIDs,
 		convergedCloudRegionsProvider: convergedCloudRegionsProvider,
-		defaultOIDCConfig:             defaultOIDCConfig,
+		defaultOIDCConfig:             &defaultOIDCConfig,
 		useSmallerMachineTypes:        useSmallerMachineTypes,
 	}
 }

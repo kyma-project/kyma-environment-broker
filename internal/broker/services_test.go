@@ -7,6 +7,7 @@ import (
 	"strings"
 	"testing"
 
+	pkg "github.com/kyma-project/kyma-environment-broker/common/runtime"
 	"github.com/kyma-project/kyma-environment-broker/internal/broker"
 	"github.com/pivotal-cf/brokerapi/v12/domain"
 	"github.com/stretchr/testify/assert"
@@ -36,7 +37,7 @@ func TestServices_Services(t *testing.T) {
 				},
 			},
 		}
-		servicesEndpoint := broker.NewServices(cfg, servicesConfig, log, &broker.OneForAllConvergedCloudRegionsProvider{}, nil, false)
+		servicesEndpoint := broker.NewServices(cfg, servicesConfig, log, &broker.OneForAllConvergedCloudRegionsProvider{}, pkg.OIDCConfigDTO{}, false)
 
 		// when
 		services, err := servicesEndpoint.Services(context.TODO())
@@ -68,7 +69,7 @@ func TestServices_Services(t *testing.T) {
 				},
 			},
 		}
-		servicesEndpoint := broker.NewServices(cfg, servicesConfig, log, &broker.OneForAllConvergedCloudRegionsProvider{}, nil, false)
+		servicesEndpoint := broker.NewServices(cfg, servicesConfig, log, &broker.OneForAllConvergedCloudRegionsProvider{}, pkg.OIDCConfigDTO{}, false)
 
 		// when
 		services, err := servicesEndpoint.Services(context.TODO())
@@ -104,7 +105,7 @@ func TestServices_Services(t *testing.T) {
 				},
 			},
 		}
-		servicesEndpoint := broker.NewServices(cfg, servicesConfig, log, &broker.OneForAllConvergedCloudRegionsProvider{}, nil, false)
+		servicesEndpoint := broker.NewServices(cfg, servicesConfig, log, &broker.OneForAllConvergedCloudRegionsProvider{}, pkg.OIDCConfigDTO{}, false)
 
 		// when
 		services, err := servicesEndpoint.Services(context.TODO())
@@ -143,7 +144,7 @@ func TestServices_Services(t *testing.T) {
 				},
 			},
 		}
-		servicesEndpoint := broker.NewServices(cfg, servicesConfig, log, &broker.OneForAllConvergedCloudRegionsProvider{}, nil, false)
+		servicesEndpoint := broker.NewServices(cfg, servicesConfig, log, &broker.OneForAllConvergedCloudRegionsProvider{}, pkg.OIDCConfigDTO{}, false)
 
 		// when
 		services, err := servicesEndpoint.Services(context.TODO())
