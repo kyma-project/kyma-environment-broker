@@ -64,6 +64,7 @@ type UpdateEndpoint struct {
 	kcpClient              client.Client
 	valuesProvider         ValuesProvider
 	useSmallerMachineTypes bool
+	oidcDefaultValues      *pkg.OIDCConfigDTO
 }
 
 func NewUpdate(cfg Config,
@@ -82,6 +83,7 @@ func NewUpdate(cfg Config,
 	kcpClient client.Client,
 	regionsSupportingMachine map[string][]string,
 	useSmallerMachineTypes bool,
+	oidcDefaultValues pkg.OIDCConfigDTO,
 ) *UpdateEndpoint {
 	return &UpdateEndpoint{
 		config:                                   cfg,
@@ -101,6 +103,7 @@ func NewUpdate(cfg Config,
 		kcpClient:                                kcpClient,
 		regionsSupportingMachine:                 regionsSupportingMachine,
 		useSmallerMachineTypes:                   useSmallerMachineTypes,
+		oidcDefaultValues:                        &oidcDefaultValues,
 	}
 }
 
@@ -449,7 +452,7 @@ func (b *UpdateEndpoint) extractActiveValue(id string, provisioning internal.Pro
 func (b *UpdateEndpoint) getJsonSchemaValidator(provider pkg.CloudProvider, planID string, platformRegion string) (*jsonschema.Schema, error) {
 	// shootAndSeedSameRegion is never enabled for update
 	b.log.Info(fmt.Sprintf("region is: %s", platformRegion))
-	plans := Plans(b.plansConfig, provider, nil, b.config.IncludeAdditionalParamsInSchema, euaccess.IsEURestrictedAccess(platformRegion), b.useSmallerMachineTypes, false, b.convergedCloudRegionsProvider.GetRegions(platformRegion), assuredworkloads.IsKSA(platformRegion), b.config.UseAdditionalOIDCSchema)
+	plans := Plans(b.plansConfig, provider, b.oidcDefaultValues, b.config.IncludeAdditionalParamsInSchema, euaccess.IsEURestrictedAccess(platformRegion), b.useSmallerMachineTypes, false, b.convergedCloudRegionsProvider.GetRegions(platformRegion), assuredworkloads.IsKSA(platformRegion), b.config.UseAdditionalOIDCSchema)
 	plan := plans[planID]
 
 	return validator.NewFromSchema(plan.Schemas.Instance.Update.Parameters)

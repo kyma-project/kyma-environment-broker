@@ -7,6 +7,7 @@ import (
 	"testing"
 
 	"github.com/kyma-project/kyma-environment-broker/common/gardener"
+	pkg "github.com/kyma-project/kyma-environment-broker/common/runtime"
 	"github.com/kyma-project/kyma-environment-broker/internal/dashboard"
 	"github.com/kyma-project/kyma-environment-broker/internal/storage"
 	"github.com/pivotal-cf/brokerapi/v12/domain"
@@ -41,6 +42,7 @@ func TestShootAndSeedSameRegion(t *testing.T) {
 			nil,
 			nil,
 			false,
+			pkg.OIDCConfigDTO{},
 		)
 
 		// when
@@ -72,6 +74,7 @@ func TestShootAndSeedSameRegion(t *testing.T) {
 			nil,
 			nil,
 			false,
+			pkg.OIDCConfigDTO{},
 		)
 
 		// when
@@ -102,6 +105,7 @@ func TestShootAndSeedSameRegion(t *testing.T) {
 			nil,
 			nil,
 			false,
+			pkg.OIDCConfigDTO{},
 		)
 
 		// when

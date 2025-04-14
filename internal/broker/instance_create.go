@@ -88,6 +88,7 @@ type ProvisionEndpoint struct {
 	log                    *slog.Logger
 	valuesProvider         ValuesProvider
 	useSmallerMachineTypes bool
+	oidcDefaultValues      *pkg.OIDCConfigDTO
 }
 
 const (
@@ -107,6 +108,7 @@ func NewProvision(cfg Config,
 	regionsSupportingMachine map[string][]string,
 	valuesProvider ValuesProvider,
 	useSmallerMachineTypes bool,
+	oidcDefaultValues pkg.OIDCConfigDTO,
 ) *ProvisionEndpoint {
 	enabledPlanIDs := map[string]struct{}{}
 	for _, planName := range cfg.EnablePlans {
@@ -133,6 +135,7 @@ func NewProvision(cfg Config,
 		regionsSupportingMachine:      regionsSupportingMachine,
 		valuesProvider:                valuesProvider,
 		useSmallerMachineTypes:        useSmallerMachineTypes,
+		oidcDefaultValues:             &oidcDefaultValues,
 	}
 }
 
@@ -623,7 +626,7 @@ func (b *ProvisionEndpoint) determineLicenceType(planId string) *string {
 
 func (b *ProvisionEndpoint) validator(details *domain.ProvisionDetails, provider pkg.CloudProvider, ctx context.Context) (*jsonschema.Schema, error) {
 	platformRegion, _ := middleware.RegionFromContext(ctx)
-	plans := Plans(b.plansConfig, provider, nil, b.config.IncludeAdditionalParamsInSchema,
+	plans := Plans(b.plansConfig, provider, b.oidcDefaultValues, b.config.IncludeAdditionalParamsInSchema,
 		euaccess.IsEURestrictedAccess(platformRegion),
 		b.infrastructureManager.UseSmallerMachineTypes, b.config.EnableShootAndSeedSameRegion, b.convergedCloudRegionsProvider.GetRegions(platformRegion), assuredworkloads.IsKSA(platformRegion), b.config.UseAdditionalOIDCSchema)
 	plan := plans[details.PlanID]

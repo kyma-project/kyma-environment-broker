@@ -86,6 +86,7 @@ func TestProvision_Provision(t *testing.T) {
 			nil,
 			fixValueProvider(),
 			false,
+			pkg.OIDCConfigDTO{},
 		)
 
 		// when
@@ -157,6 +158,7 @@ func TestProvision_Provision(t *testing.T) {
 			nil,
 			fixValueProvider(),
 			false,
+			pkg.OIDCConfigDTO{},
 		)
 
 		// when
@@ -232,6 +234,7 @@ func TestProvision_Provision(t *testing.T) {
 			nil,
 			fixValueProvider(),
 			false,
+			pkg.OIDCConfigDTO{},
 		)
 
 		// when
@@ -278,6 +281,7 @@ func TestProvision_Provision(t *testing.T) {
 			nil,
 			fixValueProvider(),
 			false,
+			pkg.OIDCConfigDTO{},
 		)
 
 		// when shootDomain is missing
@@ -349,6 +353,7 @@ func TestProvision_Provision(t *testing.T) {
 			nil,
 			fixValueProvider(),
 			false,
+			pkg.OIDCConfigDTO{},
 		)
 
 		// when
@@ -422,6 +427,7 @@ func TestProvision_Provision(t *testing.T) {
 			nil,
 			fixValueProvider(),
 			false,
+			pkg.OIDCConfigDTO{},
 		)
 
 		// when
@@ -469,6 +475,7 @@ func TestProvision_Provision(t *testing.T) {
 			nil,
 			fixValueProvider(),
 			false,
+			pkg.OIDCConfigDTO{},
 		)
 
 		// when
@@ -517,6 +524,7 @@ func TestProvision_Provision(t *testing.T) {
 			nil,
 			fixValueProvider(),
 			false,
+			pkg.OIDCConfigDTO{},
 		)
 
 		// when
@@ -579,6 +587,7 @@ func TestProvision_Provision(t *testing.T) {
 			nil,
 			fixValueProvider(),
 			false,
+			pkg.OIDCConfigDTO{},
 		)
 
 		// when
@@ -641,6 +650,7 @@ func TestProvision_Provision(t *testing.T) {
 			nil,
 			fixValueProvider(),
 			false,
+			pkg.OIDCConfigDTO{},
 		)
 
 		// when
@@ -683,6 +693,7 @@ func TestProvision_Provision(t *testing.T) {
 			nil,
 			fixValueProvider(),
 			false,
+			pkg.OIDCConfigDTO{},
 		)
 
 		// when
@@ -720,6 +731,7 @@ func TestProvision_Provision(t *testing.T) {
 			nil,
 			fixValueProvider(),
 			false,
+			pkg.OIDCConfigDTO{},
 		)
 
 		// when
@@ -756,6 +768,7 @@ func TestProvision_Provision(t *testing.T) {
 			nil,
 			fixValueProvider(),
 			false,
+			pkg.OIDCConfigDTO{},
 		)
 
 		// when
@@ -799,6 +812,7 @@ func TestProvision_Provision(t *testing.T) {
 			nil,
 			fixValueProvider(),
 			false,
+			pkg.OIDCConfigDTO{},
 		)
 
 		// when
@@ -847,6 +861,7 @@ func TestProvision_Provision(t *testing.T) {
 			nil,
 			fixValueProvider(),
 			false,
+			pkg.OIDCConfigDTO{},
 		)
 
 		oidcParams := `"issuerURL":"https://test.local"`
@@ -901,6 +916,7 @@ func TestProvision_Provision(t *testing.T) {
 			nil,
 			fixValueProvider(),
 			false,
+			pkg.OIDCConfigDTO{},
 		)
 
 		oidcParams := `"clientID":"client-id","issuerURL":"https://test.local","signingAlgs":["RS256","notValid"]`
@@ -954,6 +970,7 @@ func TestProvision_Provision(t *testing.T) {
 			nil,
 			fixValueProvider(),
 			false,
+			pkg.OIDCConfigDTO{},
 		)
 
 		oidcParams := `"clientID":"client-id","issuerURL":"https://test.local","signingAlgs":["RS256"],"requiredClaims":["claim=value"]`
@@ -1010,6 +1027,7 @@ func TestProvision_Provision(t *testing.T) {
 			nil,
 			fixValueProvider(),
 			false,
+			pkg.OIDCConfigDTO{},
 		)
 
 		oidcParams := `"clientID":"client-id","issuerURL":"https://test.local","signingAlgs":["RS256"],"requiredClaims":["claim=value"]`
@@ -1064,6 +1082,7 @@ func TestProvision_Provision(t *testing.T) {
 			nil,
 			fixValueProvider(),
 			false,
+			pkg.OIDCConfigDTO{},
 		)
 
 		testCases := []struct {
@@ -1160,6 +1179,7 @@ func TestProvision_Provision(t *testing.T) {
 			nil,
 			fixValueProvider(),
 			false,
+			pkg.OIDCConfigDTO{},
 		)
 
 		testCases := []struct {
@@ -1244,6 +1264,7 @@ func TestProvision_Provision(t *testing.T) {
 			nil,
 			fixValueProvider(),
 			false,
+			pkg.OIDCConfigDTO{},
 		)
 
 		oidcParams := `"clientID":"client-id","issuerURL":"https://test.local","signingAlgs":["RS256"]`
@@ -1286,6 +1307,7 @@ func TestProvision_Provision(t *testing.T) {
 			nil,
 			fixValueProvider(),
 			false,
+			pkg.OIDCConfigDTO{},
 		)
 
 		// when
@@ -1350,6 +1372,7 @@ func TestProvision_Provision(t *testing.T) {
 			nil,
 			fixValueProvider(),
 			false,
+			pkg.OIDCConfigDTO{},
 		)
 
 		// when
@@ -1404,6 +1427,7 @@ func TestProvision_Provision(t *testing.T) {
 			nil,
 			fixValueProvider(),
 			false,
+			pkg.OIDCConfigDTO{},
 		)
 
 		// when
@@ -1456,6 +1480,7 @@ func TestProvision_Provision(t *testing.T) {
 			nil,
 			fixValueProvider(),
 			false,
+			pkg.OIDCConfigDTO{},
 		)
 
 		// when
@@ -1498,6 +1523,7 @@ func TestProvision_Provision(t *testing.T) {
 			nil,
 			fixValueProvider(),
 			false,
+			pkg.OIDCConfigDTO{},
 		)
 
 		// when
@@ -1543,6 +1569,7 @@ func TestProvision_Provision(t *testing.T) {
 			nil,
 			fixValueProvider(),
 			false,
+			pkg.OIDCConfigDTO{},
 		)
 
 		oidcParams := `"clientID":"client-id","issuerURL":"https://test.local","signingAlgs":["RS256"]`
@@ -1591,6 +1618,7 @@ func TestProvision_Provision(t *testing.T) {
 			nil,
 			fixValueProvider(),
 			false,
+			pkg.OIDCConfigDTO{},
 		)
 
 		oidcParams := `"clientID":"client-id","issuerURL":"https://test.local","signingAlgs":["RS256"]`
@@ -1722,6 +1750,7 @@ func TestAdditionalWorkerNodePools(t *testing.T) {
 				nil,
 				fixValueProvider(),
 				false,
+				pkg.OIDCConfigDTO{},
 			)
 
 			// when
@@ -1785,6 +1814,7 @@ func TestAdditionalWorkerNodePoolsForUnsupportedPlans(t *testing.T) {
 				nil,
 				fixValueProvider(),
 				false,
+				pkg.OIDCConfigDTO{},
 			)
 
 			additionalWorkerNodePools := `[{"name": "name-1", "machineType": "m6i.large", "autoScalerMin": 3, "autoScalerMax": 20}]`
@@ -1935,6 +1965,7 @@ func TestNetworkingValidation(t *testing.T) {
 				nil,
 				fixValueProvider(),
 				false,
+				pkg.OIDCConfigDTO{},
 			)
 
 			// when
@@ -2033,6 +2064,7 @@ func TestRegionValidation(t *testing.T) {
 				nil,
 				fixValueProvider(),
 				false,
+				pkg.OIDCConfigDTO{},
 			)
 
 			// when
@@ -2092,6 +2124,7 @@ func TestSapConvergedCloudBlocking(t *testing.T) {
 			nil,
 			fixValueProvider(),
 			false,
+			pkg.OIDCConfigDTO{},
 		)
 
 		oidcParams := `"clientID":"client-id","issuerURL":"https://test.local","signingAlgs":["RS256"]`
@@ -2139,6 +2172,7 @@ func TestSapConvergedCloudBlocking(t *testing.T) {
 			nil,
 			fixValueProvider(),
 			false,
+			pkg.OIDCConfigDTO{},
 		)
 
 		oidcParams := `"clientID":"client-id","issuerURL":"https://test.local","signingAlgs":["RS256"]`
@@ -2185,6 +2219,7 @@ func TestSapConvergedCloudBlocking(t *testing.T) {
 			nil,
 			fixValueProvider(),
 			false,
+			pkg.OIDCConfigDTO{},
 		)
 
 		oidcParams := `"clientID":"client-id","issuerURL":"https://test.local","signingAlgs":["RS256"]`
@@ -2245,6 +2280,7 @@ func TestUnsupportedMachineType(t *testing.T) {
 		fixRegionsSupportingMachine(),
 		fixValueProvider(),
 		false,
+		pkg.OIDCConfigDTO{},
 	)
 
 	// when
@@ -2295,6 +2331,7 @@ func TestUnsupportedMachineTypeInAdditionalWorkerNodePools(t *testing.T) {
 		fixRegionsSupportingMachine(),
 		fixValueProvider(),
 		false,
+		pkg.OIDCConfigDTO{},
 	)
 
 	testCases := []struct {
@@ -2371,6 +2408,7 @@ func TestGPUMachineForInternalUser(t *testing.T) {
 		fixRegionsSupportingMachine(),
 		fixValueProvider(),
 		false,
+		pkg.OIDCConfigDTO{},
 	)
 
 	additionalWorkerNodePools := `[{"name": "name-1", "machineType": "g6.xlarge", "haZones": true, "autoScalerMin": 3, "autoScalerMax": 20}]`
@@ -2419,6 +2457,7 @@ func TestGPUMachinesForExternalCustomer(t *testing.T) {
 		fixRegionsSupportingMachine(),
 		fixValueProvider(),
 		false,
+		pkg.OIDCConfigDTO{},
 	)
 
 	testCases := []struct {

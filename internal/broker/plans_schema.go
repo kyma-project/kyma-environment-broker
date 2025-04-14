@@ -247,7 +247,7 @@ func NewMultipleOIDCSchema(defaultOIDCConfig *pkg.OIDCConfigDTO, update bool) *O
 									"signingAlgs":    defaultOIDCConfig.SigningAlgs,
 									"usernameClaim":  defaultOIDCConfig.UsernameClaim,
 									"usernamePrefix": defaultOIDCConfig.UsernamePrefix,
-									"groupsPrefix":   "-",
+									"groupsPrefix":   defaultOIDCConfig.GroupsPrefix,
 									"requiredClaims": []interface{}{},
 								},
 							},
