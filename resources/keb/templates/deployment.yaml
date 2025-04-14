@@ -233,10 +233,6 @@ spec:
               value: "{{ .Values.infrastructureManager.controlPlaneFailureTolerance }}"
             - name: APP_INFRASTRUCTURE_MANAGER_USE_SMALLER_MACHINE_TYPES
               value: "{{ .Values.infrastructureManager.useSmallerMachineTypes }}"
-            - name: APP_INFRASTRUCTURE_MANAGER_USE_MAIN_OIDC
-              value: "{{ .Values.infrastructureManager.useMainOIDC }}"
-            - name: APP_INFRASTRUCTURE_MANAGER_USE_ADDITIONAL_OIDC
-              value: "{{ .Values.infrastructureManager.useAdditionalOIDC }}"
             - name: APP_INFRASTRUCTURE_MANAGER_DEFAULT_GARDENER_SHOOT_PURPOSE
               value: "{{ .Values.infrastructureManager.defaultShootPurpose }}"
             - name: APP_INFRASTRUCTURE_MANAGER_DEFAULT_TRIAL_PROVIDER
