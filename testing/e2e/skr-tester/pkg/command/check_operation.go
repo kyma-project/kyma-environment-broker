@@ -50,22 +50,19 @@ func (cmd *CheckOperationCommand) Run() error {
 	}
 	var state string
 	defer func() {
+		fmt.Println("Operation status:")
 		status, err := kcpClient.GetStatus(cmd.instanceID)
 		if err != nil {
 			fmt.Printf("failed to get status: %v\n", err)
 			return
 		}
-		fmt.Println("Operation status:")
 		fmt.Println(status)
-		if state != "failed" {
-			return
-		}
+		fmt.Println("\nRuntime config:")
 		runtimeConfig, err := kcpClient.GetRuntimeConfig(cmd.instanceID)
 		if err != nil {
 			fmt.Printf("failed to get runtime config: %v\n", err)
 			return
 		}
-		fmt.Println("\nRuntime config:")
 		fmt.Println(runtimeConfig)
 	}()
 	err = wait(func() (bool, error) {

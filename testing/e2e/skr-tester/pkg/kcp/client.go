@@ -259,6 +259,9 @@ func (c *KCPClient) GetRuntimeConfig(instanceID string) (string, error) {
 	if len(result.Data) == 0 {
 		return "", newKCPClientError("no runtime config found in the kcp cli output")
 	}
+	if result.Data[0].RuntimeConfig == nil {
+		return "", newKCPClientError("runtimeCR does not exist")
+	}
 	formatted, err := json.MarshalIndent(result.Data[0].RuntimeConfig, "", "  ")
 	if err != nil {
 		return "", newKCPClientError("failed to format runtime config: %w", err)
