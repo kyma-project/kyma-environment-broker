@@ -216,20 +216,6 @@ infrastructureManager:
   controlPlaneFailureTolerance: ""
   useSmallerMachineTypes: "false"
 
-provisioner:
-  URL: "http://kcp-provisioner.kcp-system.svc.cluster.local:3000/graphql"
-  provisioningTimeout: "6h"
-  deprovisioningTimeout: "5h"
-  gardenerClusterStepTimeout: "3m"
-  runtimeResourceStepTimeout: "8m"
-  clusterUpdateStepTimeout: "2h"
-  checkRuntimeResourceDeletionStepTimeout: "1h"
-
-  deprovisioningDisabled: "false"
-
-  gardener:
-    enableShootAndSeedSameRegion: "false"
-
 stepTimeouts:
   checkRuntimeResourceUpdate: 180m
   checkRuntimeResourceCreate: 60m
