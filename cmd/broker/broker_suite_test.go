@@ -356,7 +356,7 @@ func (s *BrokerSuiteTest) CreateAPI(cfg *Config, db storage.BrokerStorage, provi
 	kcBuilder.On("Build", nil).Return("--kubeconfig file", nil)
 	kcBuilder.On("GetServerURL", mock.Anything).Return("https://api.server.url.dummy", nil)
 	createAPI(s.router, servicesConfig, cfg, db, provisioningQueue, deprovisionQueue, updateQueue,
-		lager.NewLogger("api"), log, kcBuilder, skrK8sClientProvider, skrK8sClientProvider, fakeKcpK8sClient, eventBroker)
+		lager.NewLogger("api"), log, kcBuilder, skrK8sClientProvider, skrK8sClientProvider, fakeKcpK8sClient, eventBroker, defaultOIDCValues())
 
 	s.httpServer = httptest.NewServer(s.router)
 }
