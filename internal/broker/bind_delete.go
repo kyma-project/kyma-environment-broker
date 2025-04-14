@@ -77,7 +77,7 @@ func (b *UnbindEndpoint) unbind(ctx context.Context, instanceID, bindingID strin
 
 	lastOperation, err := b.operationsStorage.GetLastOperation(instance.InstanceID)
 	if err != nil {
-		return domain.UnbindSpec{}, apiresponses.NewFailureResponse(fmt.Errorf("failed to get last operation for instance %s", instanceID), http.StatusInternalServerError, fmt.Sprintf("failed to get last operation %s", instanceID))
+		return domain.UnbindSpec{}, apiresponses.NewFailureResponse(fmt.Errorf("failed to get last operation for instance %s", instanceID), http.StatusInternalServerError, fmt.Sprintf("failed to get last operation for instance %s", instanceID))
 	}
 
 	if lastOperation.Type != internal.OperationTypeDeprovision {

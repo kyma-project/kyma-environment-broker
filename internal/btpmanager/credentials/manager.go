@@ -187,7 +187,7 @@ func (s *Manager) GetReconcileCandidates() ([]internal.Instance, error) {
 }
 
 func (s *Manager) ReconcileSecretForInstance(instance *internal.Instance) (bool, bool, error) {
-	s.logger.Info(fmt.Sprintf("reconciliation of btp-manager secret started for %s", instance.InstanceID))
+	s.logger.Info(fmt.Sprintf("reconciliation of btp-manager secret started for instance %s", instance.InstanceID))
 
 	futureSecret, err := PrepareSecret(instance.Parameters.ErsContext.SMOperatorCredentials, instance.InstanceDetails.ServiceManagerClusterID)
 	if err != nil {
@@ -196,7 +196,7 @@ func (s *Manager) ReconcileSecretForInstance(instance *internal.Instance) (bool,
 
 	k8sClient, err := s.k8sClientProvider.K8sClientForRuntimeID(instance.RuntimeID)
 	if err != nil {
-		return false, false, fmt.Errorf("while getting k8sClient for %s : %w", instance.InstanceID, err)
+		return false, false, fmt.Errorf("while getting k8sClient for instance %s : %w", instance.InstanceID, err)
 	}
 	s.logger.Info(fmt.Sprintf("connected to skr with success for instance %s", instance.InstanceID))
 
@@ -208,7 +208,7 @@ func (s *Manager) ReconcileSecretForInstance(instance *internal.Instance) (bool,
 			s.logger.Info(fmt.Sprintf("[dry-run] secret for instance %s would be re-created", instance.InstanceID))
 		} else {
 			if err := CreateOrUpdateSecret(k8sClient, futureSecret, s.logger.With("instanceID", instance.InstanceID)); err != nil {
-				s.logger.Error(fmt.Sprintf("while re-creating secret in cluster for %s", instance.InstanceID))
+				s.logger.Error(fmt.Sprintf("while re-creating secret in cluster for instance %s", instance.InstanceID))
 				return false, false, err
 			}
 			s.logger.Info(fmt.Sprintf("sap-btp-manager secret on cluster for instance %s re-created successfully", instance.InstanceID))
@@ -232,10 +232,10 @@ func (s *Manager) ReconcileSecretForInstance(instance *internal.Instance) (bool,
 			s.logger.Info(fmt.Sprintf("[dry-run] secret for instance %s would be updated", instance.InstanceID))
 		} else {
 			if err := CreateOrUpdateSecret(k8sClient, futureSecret, s.logger); err != nil {
-				s.logger.Error(fmt.Sprintf("while updating secret in cluster for %s %s", instance.InstanceID, err))
+				s.logger.Error(fmt.Sprintf("while updating secret in cluster for instance %s %s", instance.InstanceID, err))
 				return false, false, err
 			}
-			s.logger.Info(fmt.Sprintf("btp-manager secret on cluster updated for %s to match state from instances db", instance.InstanceID))
+			s.logger.Info(fmt.Sprintf("btp-manager secret on cluster updated for instance %s to match state from instances db", instance.InstanceID))
 		}
 		return true, false, nil
 	} else {

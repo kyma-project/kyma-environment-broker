@@ -225,16 +225,16 @@ func (h *Handler) getRuntimes(w http.ResponseWriter, req *http.Request) {
 			}, runtimeResourceObject)
 			switch {
 			case errors.IsNotFound(err):
-				h.logger.Info(fmt.Sprintf("Runtime resource %s/%s: is not found: %s", dto.InstanceID, dto.RuntimeID, err.Error()))
+				h.logger.Info(fmt.Sprintf("Runtime resource (instanceID=%s, runtimeID=%s): is not found: %s", dto.InstanceID, dto.RuntimeID, err.Error()))
 				dto.RuntimeConfig = nil
 			case err != nil:
-				h.logger.Warn(fmt.Sprintf("unable to get Runtime resource %s/%s: %s", dto.InstanceID, dto.RuntimeID, err.Error()))
+				h.logger.Warn(fmt.Sprintf("unable to get Runtime resource (instanceID=%s, runtimeID=%s): %s", dto.InstanceID, dto.RuntimeID, err.Error()))
 				dto.RuntimeConfig = nil
 			default:
 				// remove managedFields from the object to reduce the size of the response
 				_, ok := runtimeResourceObject.Object["metadata"].(map[string]interface{})
 				if !ok {
-					h.logger.Warn(fmt.Sprintf("unable to get Runtime resource metadata %s/%s: %s", dto.InstanceID, dto.RuntimeID, err.Error()))
+					h.logger.Warn(fmt.Sprintf("unable to get Runtime resource metadata (instanceID=%s, runtimeID=%s): %s", dto.InstanceID, dto.RuntimeID, err.Error()))
 					dto.RuntimeConfig = nil
 
 				} else {

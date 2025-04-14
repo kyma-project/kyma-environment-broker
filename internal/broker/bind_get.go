@@ -34,7 +34,7 @@ func (b *GetBindingEndpoint) GetBinding(_ context.Context, instanceID, bindingID
 
 	lastOperation, err := b.operations.GetLastOperation(instanceID)
 	if err != nil {
-		return domain.GetBindingSpec{}, apiresponses.NewFailureResponse(fmt.Errorf("failed to get last operation for instance %s", instanceID), http.StatusInternalServerError, fmt.Sprintf("failed to get last operation %s", instanceID))
+		return domain.GetBindingSpec{}, apiresponses.NewFailureResponse(fmt.Errorf("failed to get last operation for instance %s", instanceID), http.StatusInternalServerError, fmt.Sprintf("failed to get last operation for instance %s", instanceID))
 	}
 	if lastOperation.Type == internal.OperationTypeDeprovision {
 		message := "Binding not found"

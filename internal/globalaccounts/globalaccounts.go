@@ -167,14 +167,14 @@ func logic(config Config, svc *http.Client, kcp client.Client, db storage.Broker
 		return
 	}
 	for i, instance := range instances {
-		slog.Info(fmt.Sprintf("instance i: %s r: %s %d/%d", instance.InstanceID, instance.RuntimeID, i+1, instancesCount))
+		slog.Info(fmt.Sprintf("instanceID: %s runtimeID: %s %d/%d", instance.InstanceID, instance.RuntimeID, i+1, instancesCount))
 		if instance.SubAccountID == "" {
-			slog.Error(fmt.Sprintf("instance r: %s have empty SA %s", instance.RuntimeID, instance.SubAccountID))
+			slog.Error(fmt.Sprintf("instance with runtimeID: %s have empty SA %s", instance.RuntimeID, instance.SubAccountID))
 			kebInstanceMissingSACount++
 			continue
 		}
 		if instance.GlobalAccountID == "" {
-			slog.Error(fmt.Sprintf("instance r: %s have empty GA %s", instance.RuntimeID, instance.GlobalAccountID))
+			slog.Error(fmt.Sprintf("instance with runtimeID: %s have empty GA %s", instance.RuntimeID, instance.GlobalAccountID))
 			kebInstanceMissingGACount++
 			continue
 		}
@@ -187,11 +187,11 @@ func logic(config Config, svc *http.Client, kcp client.Client, db storage.Broker
 		svcGlobalAccountId := svcResponse.GlobalAccountGUID
 
 		if svcGlobalAccountId == "" {
-			slog.Error(fmt.Sprintf("svc response is empty for %s", instance.InstanceID))
+			slog.Error(fmt.Sprintf("svc response is empty for instance %s", instance.InstanceID))
 			svcGlobalAccountMissing++
 			continue
 		} else if svcGlobalAccountId != instance.GlobalAccountID {
-			info := fmt.Sprintf("(INSTANCE i: %s r: %s MISMATCH) for subaccount %s is %s but it should be: %s", instance.InstanceID, instance.RuntimeID, instance.SubAccountID, instance.GlobalAccountID, svcGlobalAccountId)
+			info := fmt.Sprintf("(instanceID: %s runtimeID: %s MISMATCH) for subaccount %s is %s but it should be: %s", instance.InstanceID, instance.RuntimeID, instance.SubAccountID, instance.GlobalAccountID, svcGlobalAccountId)
 			mismatches = append(mismatches, info)
 			mismatch++
 		} else {
@@ -200,7 +200,7 @@ func logic(config Config, svc *http.Client, kcp client.Client, db storage.Broker
 		}
 
 		if config.DryRun {
-			slog.Info(fmt.Sprintf("dry run: update instance in db %s with new %s", instance.InstanceID, svcGlobalAccountId))
+			slog.Info(fmt.Sprintf("dry run: update instance %s in db with new global account %s", instance.InstanceID, svcGlobalAccountId))
 			continue
 		}
 
@@ -230,7 +230,7 @@ func updateData(instance *internal.Instance, svcGlobalAccountId string, labeler 
 
 	// isExpired checks if field expireAt is not empty, if yes, then it means it is suspended
 	if instance.IsExpired() {
-		slog.Info(fmt.Sprintf("instance r: %s is suspended, skipping labels update", instance.RuntimeID))
+		slog.Info(fmt.Sprintf("instance with runtimeID: %s is suspended, skipping labels update", instance.RuntimeID))
 		return
 	}
 

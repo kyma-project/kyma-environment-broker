@@ -162,14 +162,14 @@ func (s *EDPRegistrationStep) handleConflict(operation internal.Operation, log *
 		edp.MaasConsumerSubAccountKey,
 		edp.MaasConsumerServicePlan,
 	} {
-		log.Info(fmt.Sprintf("Deleting DataTenant metadata %s (%s): %s", operation.SubAccountID, s.config.Environment, key))
+		log.Info(fmt.Sprintf("Deleting DataTenant metadata for subaccount %s (env=%s): %s", operation.SubAccountID, s.config.Environment, key))
 		err := s.client.DeleteMetadataTenant(operation.SubAccountID, s.config.Environment, key, log.With("service", "edpClient"))
 		if err != nil {
 			return s.handleError(operation, err, log, fmt.Sprintf("cannot remove DataTenant metadata with key: %s", key))
 		}
 	}
 
-	log.Info(fmt.Sprintf("Deleting DataTenant %s (%s)", operation.SubAccountID, s.config.Environment))
+	log.Info(fmt.Sprintf("Deleting DataTenant for subaccount %s (env=%s)", operation.SubAccountID, s.config.Environment))
 	err := s.client.DeleteDataTenant(operation.SubAccountID, s.config.Environment, log.With("service", "edpClient"))
 	if err != nil {
 		return s.handleError(operation, err, log, "cannot remove DataTenant")

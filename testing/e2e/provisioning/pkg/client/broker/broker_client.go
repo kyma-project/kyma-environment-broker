@@ -143,7 +143,7 @@ func (c *Client) DeprovisionRuntime() (string, error) {
 	deprovisionURL := fmt.Sprintf(format, c.baseURL(), c.InstanceID(), kymaClassID, c.brokerConfig.PlanID)
 
 	response := provisionResponse{}
-	c.log.Info(fmt.Sprintf("Deprovisioning Runtime [ID: %s, NAME: %s]", c.instanceID, c.clusterName))
+	c.log.Info(fmt.Sprintf("Deprovisioning Runtime [instanceID: %s, NAME: %s]", c.instanceID, c.clusterName))
 	err := wait.PollUntilContextTimeout(context.Background(), time.Second, time.Second*5, false, func(ctx context.Context) (bool, error) {
 		err := c.executeRequest(http.MethodDelete, deprovisionURL, http.StatusAccepted, nil, &response)
 		if err != nil {

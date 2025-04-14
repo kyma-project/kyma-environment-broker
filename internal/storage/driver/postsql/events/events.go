@@ -31,7 +31,7 @@ func (e *events) InsertEvent(eventLevel eventsapi.EventLevel, message, instanceI
 	}
 	sess := e.Factory.NewWriteSession()
 	if err := sess.InsertEvent(eventLevel, message, instanceID, operationID); err != nil {
-		slog.Error(fmt.Sprintf("failed to insert event [%v] %v/%v %q", eventLevel, instanceID, operationID, message))
+		slog.Error(fmt.Sprintf("failed to insert event [%v] instanceID=%v/operationID=%v %q", eventLevel, instanceID, operationID, message))
 	}
 }
 
