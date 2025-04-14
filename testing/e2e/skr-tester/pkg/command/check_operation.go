@@ -57,7 +57,7 @@ func (cmd *CheckOperationCommand) Run() error {
 			return
 		}
 		fmt.Println(status)
-		fmt.Println("\nRuntime config:")
+		fmt.Println("Runtime config:")
 		runtimeConfig, err := kcpClient.GetRuntimeConfig(cmd.instanceID)
 		if err != nil {
 			fmt.Printf("failed to get runtime config: %v\n", err)
