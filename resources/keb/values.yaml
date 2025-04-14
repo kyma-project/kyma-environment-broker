@@ -203,8 +203,6 @@ resolveSubscriptionSecretStep:
   disabled: "true"
 
 infrastructureManager:
-  useMainOIDC: "true"
-  useAdditionalOIDC: "false"
   kubernetesVersion: "1.16.9"
   defaultShootPurpose: "development"
   # if empty, the Gardener default value is used
