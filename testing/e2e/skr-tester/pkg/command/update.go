@@ -190,7 +190,7 @@ func (cmd *UpdateCommand) Run() error {
 					"signingAlgs":    []string{"RS256"},
 					"usernameClaim":  "second-email",
 					"usernamePrefix": "second-acme-",
-					"requiredClaims": []string{"clam1=value1, claim2=value2"},
+					"requiredClaims": []string{"clam1=value1", "claim2=value2"},
 					"groupsPrefix":   "second-group-",
 				},
 			},
