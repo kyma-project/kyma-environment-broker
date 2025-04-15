@@ -213,6 +213,7 @@ infrastructureManager:
   multiZoneCluster: "false"
   controlPlaneFailureTolerance: ""
   useSmallerMachineTypes: "false"
+  enableIngressFiltering: "false"
 
 stepTimeouts:
   checkRuntimeResourceUpdate: 180m
@@ -248,20 +249,20 @@ disableSapConvergedCloud: false
 disableProcessOperationsInProgress: "false"
 enablePlans: "azure,gcp,azure_lite,trial,aws"
 hap:
- rule:
-  - aws                             # pool: hyperscalerType: aws
-  - aws(PR=cf-eu11) -> EU           # pool: hyperscalerType: aws; euAccess: true
-  - azure                           # pool: hyperscalerType: azure
-  - azure(PR=cf-ch20) -> EU         # pool: hyperscalerType: azure; euAccess: true
-  - gcp                             # pool: hyperscalerType: gcp
-  - gcp(PR=cf-sa30) -> PR           # pool: hyperscalerType: gcp_cf-sa30
-  - trial -> S                      # pool: hyperscalerType: azure; shared: true - TRIAL POOL
-                                    # pool: hyperscalerType: aws; shared: true - TRIAL POOL
-  - sap-converged-cloud(HR=*) -> S  # pool: hyperscalerType: openstack_<HYPERSCALER_REGION>; shared: true
-  - azure_lite                      # pool: hyperscalerType: azure
-  - preview                         # pool: hyperscalerType: aws
-  - free                            # pool: hyperscalerType: aws
-                                    # pool: hyperscalerType: azure
+  rule:
+    - aws                             # pool: hyperscalerType: aws
+    - aws(PR=cf-eu11) -> EU           # pool: hyperscalerType: aws; euAccess: true
+    - azure                           # pool: hyperscalerType: azure
+    - azure(PR=cf-ch20) -> EU         # pool: hyperscalerType: azure; euAccess: true
+    - gcp                             # pool: hyperscalerType: gcp
+    - gcp(PR=cf-sa30) -> PR           # pool: hyperscalerType: gcp_cf-sa30
+    - trial -> S                      # pool: hyperscalerType: azure; shared: true - TRIAL POOL
+    # pool: hyperscalerType: aws; shared: true - TRIAL POOL
+    - sap-converged-cloud(HR=*) -> S  # pool: hyperscalerType: openstack_<HYPERSCALER_REGION>; shared: true
+    - azure_lite                      # pool: hyperscalerType: azure
+    - preview                         # pool: hyperscalerType: aws
+    - free                            # pool: hyperscalerType: aws
+    # pool: hyperscalerType: azure
 onlySingleTrialPerGA: "true"
 enableKubeconfigURLLabel: "false"
 includeAdditionalParamsInSchema: "false"

@@ -2,7 +2,6 @@ package provisioning
 
 import (
 	"context"
-	"fmt"
 	"log/slog"
 	"os"
 	"strings"
@@ -400,9 +399,7 @@ spec:
 		if err != nil {
 			t.Fatal(err.Error())
 		}
-		fmt.Println("using kubeconfig")
 	} else {
-		fmt.Println("using fake client")
 		cli = fake.NewClientBuilder().Build()
 	}
 

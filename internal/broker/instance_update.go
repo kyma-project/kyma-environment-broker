@@ -294,7 +294,7 @@ func (b *UpdateEndpoint) processUpdateParameters(instance *internal.Instance, de
 				return domain.UpdateServiceSpec{}, apiresponses.NewFailureResponse(err, http.StatusBadRequest, err.Error())
 			}
 		}
-		if isExternalCustomer(ersContext) {
+		if IsExternalCustomer(ersContext) {
 			if err := checkGPUMachinesUsage(params.AdditionalWorkerNodePools); err != nil {
 				return domain.UpdateServiceSpec{}, apiresponses.NewFailureResponse(err, http.StatusBadRequest, err.Error())
 			}

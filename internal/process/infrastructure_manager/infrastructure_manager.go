@@ -13,4 +13,5 @@ type InfrastructureManagerConfig struct {
 	MultiZoneCluster             bool              `envconfig:"default=false"`
 	ControlPlaneFailureTolerance string            `envconfig:"optional"`
 	UseSmallerMachineTypes       bool              `envconfig:"default=false"`
+	EnableIngressFiltering       bool              `envconfig:"default=false"`
 }

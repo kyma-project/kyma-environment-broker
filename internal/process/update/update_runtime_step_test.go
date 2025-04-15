@@ -4,10 +4,11 @@ import (
 	"context"
 	"log/slog"
 	"os"
-	"strconv"
 	"testing"
 
+	"github.com/kyma-project/kyma-environment-broker/internal/broker"
 	"github.com/kyma-project/kyma-environment-broker/internal/process/infrastructure_manager"
+	"github.com/kyma-project/kyma-environment-broker/internal/provider"
 	"github.com/kyma-project/kyma-environment-broker/internal/storage"
 
 	"k8s.io/apimachinery/pkg/util/intstr"
@@ -29,6 +30,8 @@ import (
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
+var memoryStorage = storage.NewMemoryStorage()
+
 func TestUpdateRuntimeStep_NoRuntime(t *testing.T) {
 	// given
 	err := imv1.AddToScheme(scheme.Scheme)
@@ -43,7 +46,7 @@ func TestUpdateRuntimeStep_NoRuntime(t *testing.T) {
 	err = operations.InsertOperation(operation)
 	require.NoError(t, err)
 
-	step := NewUpdateRuntimeStep(operations, kcpClient, 0, infrastructure_manager.InfrastructureManagerConfig{}, nil, true)
+	step := NewUpdateRuntimeStep(db, kcpClient, 0, infrastructure_manager.InfrastructureManagerConfig{}, nil, true)
 
 	// when
 	_, backoff, err := step.Run(operation, fixLogger())
@@ -57,8 +60,8 @@ func TestUpdateRuntimeStep_RunUpdateMachineType(t *testing.T) {
 	// given
 	err := imv1.AddToScheme(scheme.Scheme)
 	assert.NoError(t, err)
-	kcpClient := fake.NewClientBuilder().WithRuntimeObjects(fixRuntimeResource("runtime-name", false)).Build()
-	step := NewUpdateRuntimeStep(nil, kcpClient, 0, infrastructure_manager.InfrastructureManagerConfig{}, nil, true)
+	kcpClient := fake.NewClientBuilder().WithRuntimeObjects(fixRuntimeResource("runtime-name")).Build()
+	step := NewUpdateRuntimeStep(memoryStorage, kcpClient, 0, infrastructure_manager.InfrastructureManagerConfig{}, nil, true)
 	operation := fixture.FixUpdatingOperation("op-id", "inst-id").Operation
 	operation.RuntimeResourceName = "runtime-name"
 	operation.KymaResourceNamespace = "kcp-system"
@@ -84,13 +87,13 @@ func TestUpdateRuntimeStep_RunUpdateEmptyOIDCConfigWithOIDCObject(t *testing.T) 
 	// given
 	err := imv1.AddToScheme(scheme.Scheme)
 	assert.NoError(t, err)
-	kcpClient := fake.NewClientBuilder().WithRuntimeObjects(fixRuntimeResource("runtime-name", false)).Build()
-	step := NewUpdateRuntimeStep(nil, kcpClient, 0, infrastructure_manager.InfrastructureManagerConfig{}, nil, true)
+	kcpClient := fake.NewClientBuilder().WithRuntimeObjects(fixRuntimeResource("runtime-name")).Build()
+	step := NewUpdateRuntimeStep(memoryStorage, kcpClient, 0, infrastructure_manager.InfrastructureManagerConfig{}, nil, true)
 	operation := fixture.FixUpdatingOperationWithOIDCObject("op-id", "inst-id").Operation
 	operation.RuntimeResourceName = "runtime-name"
 	operation.KymaResourceNamespace = "kcp-system"
 	expectedOIDCConfig := gardener.OIDCConfig{
-		ClientID:       ptr.String("clinet-id-oidc"),
+		ClientID:       ptr.String("client-id-oidc"),
 		GroupsClaim:    ptr.String("groups"),
 		IssuerURL:      ptr.String("issuer-url"),
 		SigningAlgs:    []string{"signingAlgs"},
@@ -129,13 +132,13 @@ func TestUpdateRuntimeStep_RunUpdateOIDCWithOIDCObject(t *testing.T) {
 	// given
 	err := imv1.AddToScheme(scheme.Scheme)
 	assert.NoError(t, err)
-	kcpClient := fake.NewClientBuilder().WithRuntimeObjects(fixRuntimeResourceWithOneAdditionalOidc("runtime-name", false)).Build()
-	step := NewUpdateRuntimeStep(nil, kcpClient, 0, infrastructure_manager.InfrastructureManagerConfig{}, nil, true)
+	kcpClient := fake.NewClientBuilder().WithRuntimeObjects(fixRuntimeResourceWithOneAdditionalOidc("runtime-name")).Build()
+	step := NewUpdateRuntimeStep(memoryStorage, kcpClient, 0, infrastructure_manager.InfrastructureManagerConfig{}, nil, true)
 	operation := fixture.FixUpdatingOperationWithOIDCObject("op-id", "inst-id").Operation
 	operation.RuntimeResourceName = "runtime-name"
 	operation.KymaResourceNamespace = "kcp-system"
 	expectedOIDCConfig := gardener.OIDCConfig{
-		ClientID:       ptr.String("clinet-id-oidc"),
+		ClientID:       ptr.String("client-id-oidc"),
 		GroupsClaim:    ptr.String("groups"),
 		IssuerURL:      ptr.String("issuer-url"),
 		SigningAlgs:    []string{"signingAlgs"},
@@ -174,8 +177,8 @@ func TestUpdateRuntimeStep_RunUpdateEmptyAdditionalOIDCWithMultipleAdditionalOID
 	// given
 	err := imv1.AddToScheme(scheme.Scheme)
 	assert.NoError(t, err)
-	kcpClient := fake.NewClientBuilder().WithRuntimeObjects(fixRuntimeResource("runtime-name", false)).Build()
-	step := NewUpdateRuntimeStep(nil, kcpClient, 0, infrastructure_manager.InfrastructureManagerConfig{}, nil, true)
+	kcpClient := fake.NewClientBuilder().WithRuntimeObjects(fixRuntimeResource("runtime-name")).Build()
+	step := NewUpdateRuntimeStep(memoryStorage, kcpClient, 0, infrastructure_manager.InfrastructureManagerConfig{}, nil, true)
 	operation := fixture.FixUpdatingOperation("op-id", "inst-id").Operation
 	operation.RuntimeResourceName = "runtime-name"
 	operation.KymaResourceNamespace = "kcp-system"
@@ -254,8 +257,8 @@ func TestUpdateRuntimeStep_RunUpdateMultipleAdditionalOIDCWithMultipleAdditional
 	// given
 	err := imv1.AddToScheme(scheme.Scheme)
 	assert.NoError(t, err)
-	kcpClient := fake.NewClientBuilder().WithRuntimeObjects(fixRuntimeResourceWithMultipleAdditionalOidc("runtime-name", false)).Build()
-	step := NewUpdateRuntimeStep(nil, kcpClient, 0, infrastructure_manager.InfrastructureManagerConfig{}, nil, true)
+	kcpClient := fake.NewClientBuilder().WithRuntimeObjects(fixRuntimeResourceWithMultipleAdditionalOidc("runtime-name")).Build()
+	step := NewUpdateRuntimeStep(memoryStorage, kcpClient, 0, infrastructure_manager.InfrastructureManagerConfig{}, nil, true)
 	operation := fixture.FixUpdatingOperation("op-id", "inst-id").Operation
 	operation.RuntimeResourceName = "runtime-name"
 	operation.KymaResourceNamespace = "kcp-system"
@@ -341,8 +344,8 @@ func TestUpdateRuntimeStep_RunUpdateMultipleAdditionalOIDCWitEmptyAdditionalOIDC
 	// given
 	err := imv1.AddToScheme(scheme.Scheme)
 	assert.NoError(t, err)
-	kcpClient := fake.NewClientBuilder().WithRuntimeObjects(fixRuntimeResourceWithMultipleAdditionalOidc("runtime-name", false)).Build()
-	step := NewUpdateRuntimeStep(nil, kcpClient, 0, infrastructure_manager.InfrastructureManagerConfig{}, nil, true)
+	kcpClient := fake.NewClientBuilder().WithRuntimeObjects(fixRuntimeResourceWithMultipleAdditionalOidc("runtime-name")).Build()
+	step := NewUpdateRuntimeStep(memoryStorage, kcpClient, 0, infrastructure_manager.InfrastructureManagerConfig{}, nil, true)
 	operation := fixture.FixUpdatingOperation("op-id", "inst-id").Operation
 	operation.RuntimeResourceName = "runtime-name"
 	operation.KymaResourceNamespace = "kcp-system"
@@ -374,16 +377,90 @@ func TestUpdateRuntimeStep_RunUpdateMultipleAdditionalOIDCWitEmptyAdditionalOIDC
 	assert.Len(t, *gotRuntime.Spec.Shoot.Kubernetes.KubeAPIServer.AdditionalOidcConfig, 0)
 }
 
-func fixRuntimeResource(name string, controlledByProvisioner bool) runtime.Object {
+func TestUpdateRuntimeStep_NetworkFilter(t *testing.T) {
+	// given
+	for _, testCase := range []struct {
+		name string
+
+		initialEgressFiltering  bool
+		initialIngressFiltering bool
+
+		ingressFilteringFlag      bool
+		planID                    string
+		cloudProvider             pkg.CloudProvider
+		licenseType               string
+		ingressFilteringParameter *bool
+
+		expectedEgressResult  bool
+		expectedIngressResult bool
+	}{
+		// legacy behavior
+		{"Feature flag off - external", true, true, false, broker.SapConvergedCloudPlanID, pkg.SapConvergedCloud, "CUSTOMER", ptr.Bool(true), false, true},
+		{"Feature flag off - internal", false, true, false, broker.SapConvergedCloudPlanID, pkg.SapConvergedCloud, "NON-CUSTOMER", ptr.Bool(true), true, true},
+		{"Feature flag off - internal", false, false, false, broker.SapConvergedCloudPlanID, pkg.SapConvergedCloud, "NON-CUSTOMER", ptr.Bool(true), true, false},
+
+		// new behavior - external account and no parameter - not updating ingress at all
+		{"External- SapConvergedCloud - no parameter", true, true, true, broker.SapConvergedCloudPlanID, pkg.SapConvergedCloud, "CUSTOMER", nil, false, true},
+		{"External- SapConvergedCloud - no parameter", true, false, true, broker.SapConvergedCloudPlanID, pkg.SapConvergedCloud, "CUSTOMER", nil, false, false},
+		{"External - AWS", true, true, true, broker.AWSPlanID, pkg.AWS, "CUSTOMER", nil, false, true},
+		{"External - AWS", true, false, true, broker.AWSPlanID, pkg.AWS, "CUSTOMER", nil, false, false},
+
+		// new behavior - internal
+		{"Internal - AWS - no parameter", true, true, true, broker.AWSPlanID, pkg.AWS, "NON-CUSTOMER", nil, true, true},
+		{"Internal - AWS - turn on", true, true, true, broker.AWSPlanID, pkg.AWS, "NON-CUSTOMER", ptr.Bool(true), true, true},
+		{"Internal - AWS - turn off", true, true, true, broker.AWSPlanID, pkg.AWS, "NON-CUSTOMER", ptr.Bool(false), true, false},
+		{"Internal - AWS - no parameter", false, false, true, broker.AWSPlanID, pkg.AWS, "NON-CUSTOMER", nil, true, false},
+		{"Internal - AWS - turn on ingress", false, false, true, broker.AWSPlanID, pkg.AWS, "NON-CUSTOMER", ptr.Bool(true), true, true},
+		{"Internal - AWS - turn off ingress", false, false, true, broker.AWSPlanID, pkg.AWS, "NON-CUSTOMER", ptr.Bool(false), true, false},
+	} {
+		t.Run(testCase.name, func(t *testing.T) {
+			// when
+			err := imv1.AddToScheme(scheme.Scheme)
+			assert.NoError(t, err)
+
+			inputConfig := infrastructure_manager.InfrastructureManagerConfig{EnableIngressFiltering: testCase.ingressFilteringFlag, MultiZoneCluster: false, ControlPlaneFailureTolerance: "zone", DefaultGardenerShootPurpose: provider.PurposeProduction}
+
+			operation := fixture.FixUpdatingOperation("op-id", "inst-id").Operation
+			operation.RuntimeResourceName = "runtime-name"
+			operation.KymaResourceNamespace = "kcp-system"
+			operation.UpdatingParameters = internal.UpdatingParametersDTO{
+				IngressFiltering: testCase.ingressFilteringParameter,
+			}
+
+			operation.ProvisioningParameters.ErsContext.LicenseType = ptr.String(testCase.licenseType)
+			operation.ProvisioningParameters.Parameters.IngressFiltering = testCase.ingressFilteringParameter
+			operation.CloudProvider = string(testCase.cloudProvider)
+
+			kcpClient := fake.NewClientBuilder().WithRuntimeObjects(fixRuntimeResourceWithNetworkFilter("runtime-name", testCase.initialIngressFiltering, testCase.initialEgressFiltering)).Build()
+			step := NewUpdateRuntimeStep(memoryStorage, kcpClient, 0, inputConfig, nil, true)
+
+			// when
+			_, backoff, err := step.Run(operation, fixLogger())
+
+			// then
+			assert.NoError(t, err)
+			assert.Zero(t, backoff)
+
+			runtime := imv1.Runtime{}
+			err = kcpClient.Get(context.Background(), client.ObjectKey{Name: operation.RuntimeResourceName, Namespace: "kcp-system"}, &runtime)
+			require.NoError(t, err)
+
+			assert.Equal(t, imv1.Egress{Enabled: testCase.expectedEgressResult}, runtime.Spec.Security.Networking.Filter.Egress)
+			assert.Equal(t, &imv1.Ingress{Enabled: testCase.expectedIngressResult}, runtime.Spec.Security.Networking.Filter.Ingress)
+
+		})
+	}
+}
+
+// fixtures
+
+func fixRuntimeResource(name string) runtime.Object {
 	maxSurge := intstr.FromInt32(1)
 	maxUnavailable := intstr.FromInt32(0)
 	return &imv1.Runtime{
 		ObjectMeta: v1.ObjectMeta{
 			Name:      name,
 			Namespace: "kcp-system",
-			Labels: map[string]string{
-				imv1.LabelControlledByProvisioner: strconv.FormatBool(controlledByProvisioner),
-			},
 		},
 		Spec: imv1.RuntimeSpec{
 			Shoot: imv1.RuntimeShoot{
@@ -403,16 +480,47 @@ func fixRuntimeResource(name string, controlledByProvisioner bool) runtime.Objec
 	}
 }
 
-func fixRuntimeResourceWithOneAdditionalOidc(name string, controlledByProvisioner bool) runtime.Object {
+func fixRuntimeResourceWithNetworkFilter(name string, ingressFilter, egressFilter bool) runtime.Object {
 	maxSurge := intstr.FromInt32(1)
 	maxUnavailable := intstr.FromInt32(0)
 	return &imv1.Runtime{
 		ObjectMeta: v1.ObjectMeta{
 			Name:      name,
 			Namespace: "kcp-system",
-			Labels: map[string]string{
-				imv1.LabelControlledByProvisioner: strconv.FormatBool(controlledByProvisioner),
+		},
+		Spec: imv1.RuntimeSpec{
+			Shoot: imv1.RuntimeShoot{
+				Provider: imv1.Provider{
+					Workers: []gardener.Worker{
+						{
+							Machine: gardener.Machine{
+								Type: "original-type",
+							},
+							MaxSurge:       &maxSurge,
+							MaxUnavailable: &maxUnavailable,
+						},
+					},
+				},
 			},
+			Security: imv1.Security{
+				Networking: imv1.NetworkingSecurity{
+					Filter: imv1.Filter{
+						Ingress: &imv1.Ingress{Enabled: ingressFilter},
+						Egress:  imv1.Egress{Enabled: egressFilter},
+					},
+				},
+			},
+		},
+	}
+}
+
+func fixRuntimeResourceWithOneAdditionalOidc(name string) runtime.Object {
+	maxSurge := intstr.FromInt32(1)
+	maxUnavailable := intstr.FromInt32(0)
+	return &imv1.Runtime{
+		ObjectMeta: v1.ObjectMeta{
+			Name:      name,
+			Namespace: "kcp-system",
 		},
 		Spec: imv1.RuntimeSpec{
 			Shoot: imv1.RuntimeShoot{
@@ -447,16 +555,13 @@ func fixRuntimeResourceWithOneAdditionalOidc(name string, controlledByProvisione
 	}
 }
 
-func fixRuntimeResourceWithMultipleAdditionalOidc(name string, controlledByProvisioner bool) runtime.Object {
+func fixRuntimeResourceWithMultipleAdditionalOidc(name string) runtime.Object {
 	maxSurge := intstr.FromInt32(1)
 	maxUnavailable := intstr.FromInt32(0)
 	return &imv1.Runtime{
 		ObjectMeta: v1.ObjectMeta{
 			Name:      name,
 			Namespace: "kcp-system",
-			Labels: map[string]string{
-				imv1.LabelControlledByProvisioner: strconv.FormatBool(controlledByProvisioner),
-			},
 		},
 		Spec: imv1.RuntimeSpec{
 			Shoot: imv1.RuntimeShoot{

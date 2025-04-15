@@ -346,7 +346,7 @@ func (b *ProvisionEndpoint) validate(ctx context.Context, details domain.Provisi
 				return apiresponses.NewFailureResponse(err, http.StatusUnprocessableEntity, err.Error())
 			}
 		}
-		if isExternalCustomer(provisioningParameters.ErsContext) {
+		if IsExternalCustomer(provisioningParameters.ErsContext) {
 			if err := checkGPUMachinesUsage(parameters.AdditionalWorkerNodePools); err != nil {
 				return apiresponses.NewFailureResponse(err, http.StatusUnprocessableEntity, err.Error())
 			}
@@ -465,7 +465,7 @@ func AreNamesUnique(pools []pkg.AdditionalWorkerNodePool) bool {
 	return true
 }
 
-func isExternalCustomer(ersContext internal.ERSContext) bool {
+func IsExternalCustomer(ersContext internal.ERSContext) bool {
 	return *ersContext.DisableEnterprisePolicyFilter()
 }
 

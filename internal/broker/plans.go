@@ -12,8 +12,6 @@ type PlanID string
 type PlanName string
 
 const (
-	AllPlansSelector = "all_plans"
-
 	GCPPlanID                 = "ca6e5357-707f-4565-bbbd-b3ab732597c6"
 	GCPPlanName               = "gcp"
 	AWSPlanID                 = "361c511f-f939-4621-b228-d0fb79a1fe15"
@@ -70,6 +68,12 @@ var PlanIDsMapping = map[string]string{
 	BuildRuntimeAzurePlanName: BuildRuntimeAzurePlanID,
 }
 
+type FeatureFlags struct {
+	useAdditionalOIDCSchema     bool
+	shootAndSeedFeatureFlag     bool
+	shootAndSeedSameRegion      bool
+	ingressFilteringFeatureFlag bool
+}
 type TrialCloudRegion string
 
 const (

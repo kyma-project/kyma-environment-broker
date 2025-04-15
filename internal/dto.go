@@ -56,6 +56,7 @@ type UpdatingParametersDTO struct {
 	RuntimeAdministrators     []string                       `json:"administrators,omitempty"`
 	MachineType               *string                        `json:"machineType,omitempty"`
 	AdditionalWorkerNodePools []pkg.AdditionalWorkerNodePool `json:"additionalWorkerNodePools"`
+	IngressFiltering          *bool                          `json:"ingressFiltering,omitempty"`
 }
 
 func (u UpdatingParametersDTO) UpdateAutoScaler(p *pkg.ProvisioningParametersDTO) bool {

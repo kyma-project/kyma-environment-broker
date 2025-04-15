@@ -2,14 +2,13 @@ package provisioning
 
 import (
 	"context"
-	"fmt"
 	"os"
 	"reflect"
 	"strings"
 	"testing"
 
 	"github.com/kyma-project/kyma-environment-broker/internal/customresources"
-
+	"github.com/kyma-project/kyma-environment-broker/internal/process/steps"
 	"github.com/kyma-project/kyma-environment-broker/internal/provider"
 
 	"github.com/pivotal-cf/brokerapi/v12/domain"
@@ -102,7 +101,7 @@ func TestCreateRuntimeResourceStep_AllCustom(t *testing.T) {
 		GroupsPrefix: ptr.String("-"),
 	}
 	cli := getClientForTests(t)
-	step := NewCreateRuntimeResourceStep(memoryStorage.Operations(), memoryStorage.Instances(), cli, inputConfig, defaultOIDSConfig, true)
+	step := NewCreateRuntimeResourceStep(memoryStorage, cli, inputConfig, defaultOIDSConfig, true)
 
 	// when
 	_, repeat, err := step.Run(operation, fixLogger())
@@ -162,7 +161,7 @@ func TestCreateRuntimeResourceStep_AllCustomWithOIDCList(t *testing.T) {
 		GroupsPrefix: ptr.String("-"),
 	}
 	cli := getClientForTests(t)
-	step := NewCreateRuntimeResourceStep(memoryStorage.Operations(), memoryStorage.Instances(), cli, inputConfig, defaultOIDSConfig, true)
+	step := NewCreateRuntimeResourceStep(memoryStorage, cli, inputConfig, defaultOIDSConfig, true)
 
 	// when
 	_, repeat, err := step.Run(operation, fixLogger())
@@ -235,7 +234,7 @@ func TestCreateRuntimeResourceStep_HandleMultipleAdditionalOIDC(t *testing.T) {
 		GroupsPrefix:   ptr.String("-"),
 	}
 	cli := getClientForTests(t)
-	step := NewCreateRuntimeResourceStep(memoryStorage.Operations(), memoryStorage.Instances(), cli, inputConfig, defaultOIDSConfig, true)
+	step := NewCreateRuntimeResourceStep(memoryStorage, cli, inputConfig, defaultOIDSConfig, true)
 	// when
 	_, repeat, err := step.Run(operation, fixLogger())
 
@@ -286,7 +285,7 @@ func TestCreateRuntimeResourceStep_OIDC_MixedCustom(t *testing.T) {
 		GroupsPrefix:   ptr.String("-"),
 	}
 	cli := getClientForTests(t)
-	step := NewCreateRuntimeResourceStep(memoryStorage.Operations(), memoryStorage.Instances(), cli, inputConfig, defaultOIDSConfig, true)
+	step := NewCreateRuntimeResourceStep(memoryStorage, cli, inputConfig, defaultOIDSConfig, true)
 
 	// when
 	_, repeat, err := step.Run(operation, fixLogger())
@@ -316,7 +315,7 @@ func TestCreateRuntimeResourceStep_HandleEmptyOIDCList(t *testing.T) {
 	}
 	assertInsertions(t, memoryStorage, instance, operation)
 	cli := getClientForTests(t)
-	step := NewCreateRuntimeResourceStep(memoryStorage.Operations(), memoryStorage.Instances(), cli, inputConfig, defaultOIDSConfig, true)
+	step := NewCreateRuntimeResourceStep(memoryStorage, cli, inputConfig, defaultOIDSConfig, true)
 
 	// when
 	_, repeat, err := step.Run(operation, fixLogger())
@@ -359,7 +358,7 @@ func TestCreateRuntimeResourceStep_HandleNotNilOIDCWithoutListOrObject(t *testin
 		GroupsPrefix:   ptr.String("-"),
 	}
 	cli := getClientForTests(t)
-	step := NewCreateRuntimeResourceStep(memoryStorage.Operations(), memoryStorage.Instances(), cli, inputConfig, defaultOIDSConfig, true)
+	step := NewCreateRuntimeResourceStep(memoryStorage, cli, inputConfig, defaultOIDSConfig, true)
 
 	// when
 	_, repeat, err := step.Run(operation, fixLogger())
@@ -397,7 +396,7 @@ func TestCreateRuntimeResourceStep_FailureToleranceForTrial(t *testing.T) {
 
 	cli := getClientForTests(t)
 
-	step := NewCreateRuntimeResourceStep(memoryStorage.Operations(), memoryStorage.Instances(), cli, inputConfig, defaultOIDSConfig, true)
+	step := NewCreateRuntimeResourceStep(memoryStorage, cli, inputConfig, defaultOIDSConfig, true)
 
 	// when
 	_, _, err := step.Run(operation, fixLogger())
@@ -426,7 +425,7 @@ func TestCreateRuntimeResourceStep_FailureToleranceForCommercial(t *testing.T) {
 
 	cli := getClientForTests(t)
 
-	step := NewCreateRuntimeResourceStep(memoryStorage.Operations(), memoryStorage.Instances(), cli, inputConfig, defaultOIDSConfig, true)
+	step := NewCreateRuntimeResourceStep(memoryStorage, cli, inputConfig, defaultOIDSConfig, true)
 
 	// when
 	_, _, err := step.Run(operation, fixLogger())
@@ -455,7 +454,7 @@ func TestCreateRuntimeResourceStep_FailureToleranceForCommercialWithNoConfig(t *
 
 	cli := getClientForTests(t)
 
-	step := NewCreateRuntimeResourceStep(memoryStorage.Operations(), memoryStorage.Instances(), cli, inputConfig, defaultOIDSConfig, true)
+	step := NewCreateRuntimeResourceStep(memoryStorage, cli, inputConfig, defaultOIDSConfig, true)
 
 	// when
 	_, _, err := step.Run(operation, fixLogger())
@@ -484,7 +483,7 @@ func TestCreateRuntimeResourceStep_FailureToleranceForCommercialWithConfiguredNo
 
 	cli := getClientForTests(t)
 
-	step := NewCreateRuntimeResourceStep(memoryStorage.Operations(), memoryStorage.Instances(), cli, inputConfig, defaultOIDSConfig, true)
+	step := NewCreateRuntimeResourceStep(memoryStorage, cli, inputConfig, defaultOIDSConfig, true)
 
 	// when
 	_, _, err := step.Run(operation, fixLogger())
@@ -502,7 +501,7 @@ func TestCreateRuntimeResourceStep_FailureToleranceForCommercialWithConfiguredNo
 
 // Actual creation tests
 
-func TestCreateRuntimeResourceStep_Defaults_AWS_SingleZone_EnforceSeed_ActualCreation(t *testing.T) {
+func TestCreateRuntimeResourceStep_Defaults_AWS_SingleZone_EnforceSeed(t *testing.T) {
 	// given
 	memoryStorage := storage.NewMemoryStorage()
 
@@ -514,7 +513,7 @@ func TestCreateRuntimeResourceStep_Defaults_AWS_SingleZone_EnforceSeed_ActualCre
 	assertInsertions(t, memoryStorage, instance, operation)
 
 	cli := getClientForTests(t)
-	step := NewCreateRuntimeResourceStep(memoryStorage.Operations(), memoryStorage.Instances(), cli, inputConfig, defaultOIDSConfig, true)
+	step := NewCreateRuntimeResourceStep(memoryStorage, cli, inputConfig, defaultOIDSConfig, true)
 
 	// when
 	_, repeat, err := step.Run(operation, fixLogger())
@@ -548,7 +547,7 @@ func TestCreateRuntimeResourceStep_Defaults_AWS_SingleZone_EnforceSeed_ActualCre
 	assert.NoError(t, err)
 }
 
-func TestCreateRuntimeResourceStep_Defaults_AWS_SingleZone_DisableEnterpriseFilter_ActualCreation(t *testing.T) {
+func TestCreateRuntimeResourceStep_Defaults_AWS_SingleZone_DisableEnterpriseFilter(t *testing.T) {
 	// given
 	memoryStorage := storage.NewMemoryStorage()
 
@@ -560,7 +559,7 @@ func TestCreateRuntimeResourceStep_Defaults_AWS_SingleZone_DisableEnterpriseFilt
 	assertInsertions(t, memoryStorage, instance, operation)
 
 	cli := getClientForTests(t)
-	step := NewCreateRuntimeResourceStep(memoryStorage.Operations(), memoryStorage.Instances(), cli, inputConfig, defaultOIDSConfig, true)
+	step := NewCreateRuntimeResourceStep(memoryStorage, cli, inputConfig, defaultOIDSConfig, true)
 
 	// when
 	_, repeat, err := step.Run(operation, fixLogger())
@@ -594,7 +593,72 @@ func TestCreateRuntimeResourceStep_Defaults_AWS_SingleZone_DisableEnterpriseFilt
 	assert.NoError(t, err)
 }
 
-func TestCreateRuntimeResourceStep_Defaults_AWS_SingleZone_DefaultAdmin_ActualCreation(t *testing.T) {
+func TestCreateRuntimeResourceStep_NetworkFilter(t *testing.T) {
+	// given
+	for _, testCase := range []struct {
+		name                      string
+		ingressFilteringFlag      bool
+		planID                    string
+		cloudProvider             pkg.CloudProvider
+		licenseType               string
+		ingressFilteringParameter *bool
+
+		expectedEgressResult  bool
+		expectedIngressResult bool
+	}{
+		{"Feature flag off - external", false, broker.SapConvergedCloudPlanID, pkg.SapConvergedCloud, "CUSTOMER", ptr.Bool(true), false, false},
+		{"Feature flag off - internal", false, broker.SapConvergedCloudPlanID, pkg.SapConvergedCloud, "NON-CUSTOMER", ptr.Bool(true), true, false},
+		{"External- SapConvergedCloud", true, broker.SapConvergedCloudPlanID, pkg.SapConvergedCloud, "CUSTOMER", nil, false, false},
+		{"External - AWS", true, broker.AWSPlanID, pkg.AWS, "CUSTOMER", nil, false, false},
+		{"Internal - AWS - no parameter", true, broker.AWSPlanID, pkg.AWS, "NON-CUSTOMER", nil, true, false},
+		{"Internal - AWS - turn on", true, broker.AWSPlanID, pkg.AWS, "NON-CUSTOMER", ptr.Bool(true), true, true},
+		{"Internal - AWS - turn off", true, broker.AWSPlanID, pkg.AWS, "NON-CUSTOMER", ptr.Bool(false), true, false},
+	} {
+		t.Run(testCase.name, func(t *testing.T) {
+			// when
+			memoryStorage := storage.NewMemoryStorage()
+			err := imv1.AddToScheme(scheme.Scheme)
+			assert.NoError(t, err)
+
+			cli := getClientForTests(t)
+
+			inputConfig := infrastructure_manager.InfrastructureManagerConfig{EnableIngressFiltering: testCase.ingressFilteringFlag, MultiZoneCluster: false, ControlPlaneFailureTolerance: "zone", DefaultGardenerShootPurpose: provider.PurposeProduction}
+			instance, operation := fixInstanceAndOperation(broker.AWSPlanID, "hyperscaler-region", "platform-region", inputConfig, testCase.cloudProvider)
+			assertInsertions(t, memoryStorage, instance, operation)
+
+			operation.ProvisioningParameters.ErsContext.LicenseType = ptr.String(testCase.licenseType)
+			operation.ProvisioningParameters.Parameters.IngressFiltering = testCase.ingressFilteringParameter
+			operation.CloudProvider = string(testCase.cloudProvider)
+			step := NewCreateRuntimeResourceStep(memoryStorage, cli, inputConfig, defaultOIDSConfig, true)
+			_, repeat, err := step.Run(operation, fixLogger())
+
+			// then
+			assert.NoError(t, err)
+			assert.Zero(t, repeat)
+
+			runtime := imv1.Runtime{}
+			err = cli.Get(context.Background(), client.ObjectKey{
+				Namespace: "kyma-system",
+				Name:      operation.RuntimeID,
+			}, &runtime)
+			assert.NoError(t, err)
+			assert.Equal(t, runtime.Name, operation.RuntimeID)
+			assert.Equal(t, "runtime-58f8c703-1756-48ab-9299-a847974d1fee", runtime.Labels["operator.kyma-project.io/kyma-name"])
+
+			assertLabelsKIMDriven(t, operation, runtime)
+
+			assertSecurityWithNetworkFilter(t, runtime, testCase.expectedEgressResult, testCase.expectedIngressResult)
+
+			assertDefaultNetworking(t, runtime.Spec.Shoot.Networking)
+
+			_, err = memoryStorage.Instances().GetByID(operation.InstanceID)
+			assert.NoError(t, err)
+
+		})
+	}
+}
+
+func TestCreateRuntimeResourceStep_Defaults_AWS_SingleZone_DefaultAdmin(t *testing.T) {
 	// given
 	memoryStorage := storage.NewMemoryStorage()
 
@@ -606,7 +670,7 @@ func TestCreateRuntimeResourceStep_Defaults_AWS_SingleZone_DefaultAdmin_ActualCr
 	assertInsertions(t, memoryStorage, instance, operation)
 
 	cli := getClientForTests(t)
-	step := NewCreateRuntimeResourceStep(memoryStorage.Operations(), memoryStorage.Instances(), cli, inputConfig, defaultOIDSConfig, true)
+	step := NewCreateRuntimeResourceStep(memoryStorage, cli, inputConfig, defaultOIDSConfig, true)
 
 	// when
 	_, repeat, err := step.Run(operation, fixLogger())
@@ -639,7 +703,7 @@ func TestCreateRuntimeResourceStep_Defaults_AWS_SingleZone_DefaultAdmin_ActualCr
 	assert.NoError(t, err)
 }
 
-func TestCreateRuntimeResourceStep_Defaults_AWS_MultiZoneWithNetworking_ActualCreation(t *testing.T) {
+func TestCreateRuntimeResourceStep_Defaults_AWS_MultiZoneWithNetworking(t *testing.T) {
 	// given
 	memoryStorage := storage.NewMemoryStorage()
 
@@ -657,7 +721,7 @@ func TestCreateRuntimeResourceStep_Defaults_AWS_MultiZoneWithNetworking_ActualCr
 
 	cli := getClientForTests(t)
 
-	step := NewCreateRuntimeResourceStep(memoryStorage.Operations(), memoryStorage.Instances(), cli, inputConfig, defaultOIDSConfig, true)
+	step := NewCreateRuntimeResourceStep(memoryStorage, cli, inputConfig, defaultOIDSConfig, true)
 
 	// when
 	_, repeat, err := step.Run(operation, fixLogger())
@@ -696,7 +760,7 @@ func TestCreateRuntimeResourceStep_Defaults_AWS_MultiZoneWithNetworking_ActualCr
 	assert.NoError(t, err)
 }
 
-func TestCreateRuntimeResourceStep_Defaults_AWS_MultiZone_ActualCreation(t *testing.T) {
+func TestCreateRuntimeResourceStep_Defaults_AWS_MultiZone(t *testing.T) {
 	// given
 	memoryStorage := storage.NewMemoryStorage()
 
@@ -707,7 +771,7 @@ func TestCreateRuntimeResourceStep_Defaults_AWS_MultiZone_ActualCreation(t *test
 	assertInsertions(t, memoryStorage, instance, operation)
 
 	cli := getClientForTests(t)
-	step := NewCreateRuntimeResourceStep(memoryStorage.Operations(), memoryStorage.Instances(), cli, inputConfig, defaultOIDSConfig, true)
+	step := NewCreateRuntimeResourceStep(memoryStorage, cli, inputConfig, defaultOIDSConfig, true)
 
 	// when
 	_, repeat, err := step.Run(operation, fixLogger())
@@ -738,7 +802,7 @@ func TestCreateRuntimeResourceStep_Defaults_AWS_MultiZone_ActualCreation(t *test
 	assert.NoError(t, err)
 }
 
-func TestCreateRuntimeResourceStep_Defaults_Preview_SingleZone_ActualCreation(t *testing.T) {
+func TestCreateRuntimeResourceStep_Defaults_Preview_SingleZone(t *testing.T) {
 	// given
 	memoryStorage := storage.NewMemoryStorage()
 
@@ -749,7 +813,7 @@ func TestCreateRuntimeResourceStep_Defaults_Preview_SingleZone_ActualCreation(t 
 	assertInsertions(t, memoryStorage, instance, operation)
 
 	cli := getClientForTests(t)
-	step := NewCreateRuntimeResourceStep(memoryStorage.Operations(), memoryStorage.Instances(), cli, inputConfig, defaultOIDSConfig, true)
+	step := NewCreateRuntimeResourceStep(memoryStorage, cli, inputConfig, defaultOIDSConfig, true)
 
 	// when
 	_, repeat, err := step.Run(operation, fixLogger())
@@ -782,7 +846,7 @@ func TestCreateRuntimeResourceStep_Defaults_Preview_SingleZone_ActualCreation(t 
 
 }
 
-func TestCreateRuntimeResourceStep_Defaults_Preview_SingleZone_ActualCreation_WithRetry(t *testing.T) {
+func TestCreateRuntimeResourceStep_Defaults_Preview_SingleZone_WithRetry(t *testing.T) {
 	// given
 	memoryStorage := storage.NewMemoryStorage()
 
@@ -793,7 +857,7 @@ func TestCreateRuntimeResourceStep_Defaults_Preview_SingleZone_ActualCreation_Wi
 	assertInsertions(t, memoryStorage, instance, operation)
 
 	cli := getClientForTests(t)
-	step := NewCreateRuntimeResourceStep(memoryStorage.Operations(), memoryStorage.Instances(), cli, inputConfig, defaultOIDSConfig, true)
+	step := NewCreateRuntimeResourceStep(memoryStorage, cli, inputConfig, defaultOIDSConfig, true)
 
 	// when
 	_, repeat, err := step.Run(operation, fixLogger())
@@ -869,7 +933,7 @@ func TestCreateRuntimeResourceStep_SapConvergedCloud(t *testing.T) {
 			assertInsertions(t, memoryStorage, instance, operation)
 
 			cli := getClientForTests(t)
-			step := NewCreateRuntimeResourceStep(memoryStorage.Operations(), memoryStorage.Instances(), cli, inputConfig, defaultOIDSConfig, true)
+			step := NewCreateRuntimeResourceStep(memoryStorage, cli, inputConfig, defaultOIDSConfig, true)
 			// when
 			gotOperation, repeat, err := step.Run(operation, fixLogger())
 
@@ -918,7 +982,7 @@ func TestCreateRuntimeResourceStep_Defaults_Freemium(t *testing.T) {
 			assertInsertions(t, memoryStorage, instance, operation)
 
 			cli := getClientForTests(t)
-			step := NewCreateRuntimeResourceStep(memoryStorage.Operations(), memoryStorage.Instances(), cli, inputConfig, defaultOIDSConfig, true)
+			step := NewCreateRuntimeResourceStep(memoryStorage, cli, inputConfig, defaultOIDSConfig, true)
 
 			// when
 			gotOperation, repeat, err := step.Run(operation, fixLogger())
@@ -963,6 +1027,55 @@ func Test_Defaults(t *testing.T) {
 	assert.Equal(t, 7, nonDefaultInt)
 }
 
+func Test_IsIngressFiltering(t *testing.T) {
+
+	for _, testCase := range []struct {
+		name             string
+		externalAccount  bool
+		cloudProvider    pkg.CloudProvider
+		ingressFiltering *bool
+
+		expectedResult bool
+	}{
+		// given
+		{"SapConvergedCloud", false, pkg.SapConvergedCloud, ptr.Bool(true), false},
+		{"internal AWS without parameter", false, pkg.AWS, nil, false},
+		{"internal AWS with false parameter", false, pkg.AWS, ptr.Bool(false), false},
+		{"internal GCP with true parameter", false, pkg.GCP, ptr.Bool(true), true},
+		{"external GCP with true parameter", true, pkg.GCP, ptr.Bool(true), false},
+	} {
+		t.Run(testCase.name, func(t *testing.T) {
+			// when
+			result := steps.IsIngressFiltering(string(testCase.cloudProvider), testCase.ingressFiltering, testCase.externalAccount)
+			//then
+			assert.Equal(t, testCase.expectedResult, result)
+		})
+	}
+}
+
+func Test_IsExternalCustomer(t *testing.T) {
+
+	for _, testCase := range []struct {
+		name       string
+		ersContext internal.ERSContext
+
+		expectedResult bool
+	}{
+		// given
+		{"nil license", internal.ERSContext{LicenseType: nil}, false},
+		{"CUSTOMER license", internal.ERSContext{LicenseType: ptr.String("CUSTOMER")}, true},
+		{"TRIAL license", internal.ERSContext{LicenseType: ptr.String("TRIAL")}, true},
+		{"PARTNER license", internal.ERSContext{LicenseType: ptr.String("PARTNER")}, true},
+		{"other license", internal.ERSContext{LicenseType: ptr.String("any other")}, false}} {
+		t.Run(testCase.name, func(t *testing.T) {
+			// when
+			result := broker.IsExternalCustomer(testCase.ersContext)
+			// then
+			assert.Equal(t, testCase.expectedResult, result)
+		})
+	}
+}
+
 // assertions
 
 func assertSecurityWithDefaultAdministrator(t *testing.T, runtime imv1.Runtime) {
@@ -971,16 +1084,22 @@ func assertSecurityWithDefaultAdministrator(t *testing.T, runtime imv1.Runtime) 
 }
 
 func assertSecurityEgressEnabled(t *testing.T, runtime imv1.Runtime) {
-	assertSecurityWithNetworkingFilter(t, runtime, true)
+	assertSecurityWithEgressFilter(t, runtime, true)
 }
 
 func assertSecurityEgressDisabled(t *testing.T, runtime imv1.Runtime) {
-	assertSecurityWithNetworkingFilter(t, runtime, false)
+	assertSecurityWithEgressFilter(t, runtime, false)
 }
 
-func assertSecurityWithNetworkingFilter(t *testing.T, runtime imv1.Runtime, egress bool) {
+func assertSecurityWithEgressFilter(t *testing.T, runtime imv1.Runtime, egress bool) {
 	assert.ElementsMatch(t, runtime.Spec.Security.Administrators, runtimeAdministrators)
-	assert.Equal(t, runtime.Spec.Security.Networking.Filter.Egress, imv1.Egress{Enabled: egress})
+	assert.Equal(t, imv1.Egress{Enabled: egress}, runtime.Spec.Security.Networking.Filter.Egress)
+}
+
+func assertSecurityWithNetworkFilter(t *testing.T, runtime imv1.Runtime, egress bool, ingress bool) {
+	assert.ElementsMatch(t, runtime.Spec.Security.Administrators, runtimeAdministrators)
+	assert.Equal(t, imv1.Egress{Enabled: egress}, runtime.Spec.Security.Networking.Filter.Egress)
+	assert.Equal(t, &imv1.Ingress{Enabled: ingress}, runtime.Spec.Security.Networking.Filter.Ingress)
 }
 
 func assertLabelsKIMDriven(t *testing.T, preOperation internal.Operation, runtime imv1.Runtime) {
@@ -1055,9 +1174,7 @@ func getClientForTests(t *testing.T) client.Client {
 		if err != nil {
 			t.Fatal(err.Error())
 		}
-		fmt.Println("using kubeconfig")
 	} else {
-		fmt.Println("using fake client")
 		cli = fake.NewClientBuilder().Build()
 	}
 	return cli
