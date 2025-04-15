@@ -198,6 +198,9 @@ func (c *KCPClient) GetStatus(instanceID string) (string, error) {
 	}
 	if status["data"] == nil {
 		args = []string{"rt", "-i", instanceID, "-o", "json", "--state", "deprovisioned"}
+		if clientSecret := os.Getenv("KCP_OIDC_CLIENT_SECRET"); clientSecret != "" {
+			args = append(args, "--config", "config.yaml")
+		}
 		output, err = exec.Command("kcp", args...).Output()
 		if err != nil {
 			return "", newKCPClientError("failed to get status: %w", err)
