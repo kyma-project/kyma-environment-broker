@@ -184,7 +184,7 @@ func (c *KCPClient) GetPlanName(instanceID string) (string, error) {
 }
 
 func (c *KCPClient) GetStatus(instanceID string) (string, error) {
-	args := []string{"rt", "-i", instanceID, "-o", "custom=:{.status}"}
+	args := []string{"rt", "-i", instanceID, "-o", "json", "--runtime-config"}
 	if clientSecret := os.Getenv("KCP_OIDC_CLIENT_SECRET"); clientSecret != "" {
 		args = append(args, "--config", "config.yaml")
 	}
@@ -192,22 +192,19 @@ func (c *KCPClient) GetStatus(instanceID string) (string, error) {
 	if err != nil {
 		return "", newKCPClientError("failed to get status: %w", err)
 	}
-	if len(strings.TrimSpace(string(output))) == 0 {
-		args = append(args, "--state", "deprovisioned")
+	var status map[string]interface{}
+	if err := json.Unmarshal(output, &status); err != nil {
+		return "", newKCPClientError("failed to parse JSON: %w", err)
+	}
+	if status["data"] == nil {
+		args = []string{"rt", "-i", instanceID, "-o", "json", "--state", "deprovisioned"}
 		output, err = exec.Command("kcp", args...).Output()
 		if err != nil {
 			return "", newKCPClientError("failed to get status: %w", err)
 		}
 	}
-	var status map[string]interface{}
-	if err := json.Unmarshal(output, &status); err != nil {
-		return "", newKCPClientError("failed to parse JSON: %w", err)
-	}
-	formattedStatus, err := json.MarshalIndent(status, "", "  ")
-	if err != nil {
-		return "", newKCPClientError("failed to format JSON: %w", err)
-	}
-	return string(formattedStatus), nil
+	fmt.Println("kcp " + strings.Join(args, " "))
+	return string(output), nil
 }
 
 func (c *KCPClient) GetEvents(instanceID string) (string, error) {
@@ -237,36 +234,6 @@ func (c *KCPClient) GetEnforceSeedLocationValue(instanceID string) (bool, error)
 	}
 
 	return strconv.ParseBool(value)
-}
-
-func (c *KCPClient) GetRuntimeConfig(instanceID string) (string, error) {
-	args := []string{"rt", "-i", instanceID, "--runtime-config", "-o", "json"}
-	if secret := os.Getenv("KCP_OIDC_CLIENT_SECRET"); secret != "" {
-		args = append(args, "--config", "config.yaml")
-	}
-	output, err := exec.Command("kcp", args...).Output()
-	if err != nil {
-		return "", newKCPClientError("failed to get runtime config: %w", err)
-	}
-	var result struct {
-		Data []struct {
-			RuntimeConfig interface{} `json:"runtimeConfig"`
-		} `json:"data"`
-	}
-	if err := json.Unmarshal(output, &result); err != nil {
-		return "", newKCPClientError("failed to parse JSON: %w", err)
-	}
-	if len(result.Data) == 0 {
-		return "", newKCPClientError("no runtime config found in the kcp cli output")
-	}
-	if result.Data[0].RuntimeConfig == nil {
-		return "", newKCPClientError("runtimeCR does not exist")
-	}
-	formatted, err := json.MarshalIndent(result.Data[0].RuntimeConfig, "", "  ")
-	if err != nil {
-		return "", newKCPClientError("failed to format runtime config: %w", err)
-	}
-	return string(formatted), nil
 }
 
 func getEnvOrThrow(key string) string {
