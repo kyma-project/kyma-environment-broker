@@ -12,6 +12,7 @@ VERSION=${1:-''}
 kubectl create namespace kcp-system || true
 kubectl create namespace kyma-system || true
 kubectl create namespace istio-system || true
+kubectl create namespace garden-kyma-dev || true
 
 # Install Istio
 helm repo add istio https://istio-release.storage.googleapis.com/charts
@@ -25,7 +26,10 @@ kubectl create -f https://raw.githubusercontent.com/prometheus-operator/promethe
 kubectl create -f scripts/testing/yaml/postgres -n kcp-system
 
 # Prepare fake gardener credentials
-KCFG=$(kubectl config view --minify --raw)
+KUBE_SERVER_IP=$(ifconfig en0 | grep inet | awk '$1=="inet" {print $2}')
+KCFG=$(kubectl config view --minify --raw \
+       | sed "s|https://0\.0\.0\.0|https://${KUBE_SERVER_IP}|" \
+       | yq 'del(.clusters[].cluster."certificate-authority-data") | .clusters[].cluster."insecure-skip-tls-verify" = true')
 kubectl create secret generic gardener-credentials --from-literal=kubeconfig="$KCFG" -n kcp-system
 
 # Prepare chart for custom KEB version
@@ -36,6 +40,13 @@ if [[ -n "$VERSION" ]]; then
     scripts/bump_keb_chart.sh "$VERSION" "release"
   fi
 fi
+
+# Create custom resource definitions
+kubectl apply -f resources/installation/secret-binding-crd.yaml
+
+# Create predefined secrets
+kubectl apply -f resources/installation/azure-secret.yaml
+kubectl apply -f resources/installation/azure-secret-binding.yaml
 
 # Deploy KEB helm chart
 cd resources/keb

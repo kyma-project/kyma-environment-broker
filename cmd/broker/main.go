@@ -3,7 +3,6 @@ package main
 import (
 	"context"
 	"fmt"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"log/slog"
 	"net/http"
 	"os"
@@ -285,12 +284,6 @@ func main() {
 	fatalOnError(err, log)
 	dynamicGardener, err := dynamic.NewForConfig(gardenerClusterConfig)
 	fatalOnError(err, log)
-	fmt.Println("getting secret bindings")
-	secretBindings, err := dynamicGardener.Resource(gardener.SecretBindingResource).Namespace("garden-kyma-dev").List(context.Background(), metav1.ListOptions{})
-	if err != nil {
-		fmt.Println(err.Error())
-	}
-	fmt.Println(len(secretBindings.Items))
 
 	gardenerNamespace := fmt.Sprintf("garden-%v", cfg.Gardener.Project)
 	gardenerAccountPool := hyperscaler.NewAccountPool(dynamicGardener, gardenerNamespace)
