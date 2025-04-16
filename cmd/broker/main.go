@@ -286,11 +286,11 @@ func main() {
 	dynamicGardener, err := dynamic.NewForConfig(gardenerClusterConfig)
 	fatalOnError(err, log)
 	fmt.Println("getting secret bindings")
-	secretBindings, err := dynamicGardener.Resource(gardener.SecretBindingResource).Namespace("gardener-kyma-dev").List(context.Background(), metav1.ListOptions{})
+	secretBindings, err := dynamicGardener.Resource(gardener.SecretBindingResource).Namespace("garden-kyma-dev").List(context.Background(), metav1.ListOptions{})
 	if err != nil {
 		fmt.Println(err.Error())
 	}
-	fmt.Println(secretBindings)
+	fmt.Println(len(secretBindings.Items))
 
 	gardenerNamespace := fmt.Sprintf("garden-%v", cfg.Gardener.Project)
 	gardenerAccountPool := hyperscaler.NewAccountPool(dynamicGardener, gardenerNamespace)
