@@ -239,18 +239,23 @@ func NewMultipleOIDCSchema(defaultOIDCConfig *pkg.OIDCConfigDTO, update bool) *O
 							Type:        "array",
 							UniqueItems: true,
 							Description: "Specifies the list of OIDC configurations. Besides the default OIDC configuration, you can add multiple custom OIDC configurations. Leave the list empty to not use any OIDC configuration.",
-							Default: []interface{}{
-								map[string]interface{}{
-									"clientID":       defaultOIDCConfig.ClientID,
-									"issuerURL":      defaultOIDCConfig.IssuerURL,
-									"groupsClaim":    defaultOIDCConfig.GroupsClaim,
-									"signingAlgs":    defaultOIDCConfig.SigningAlgs,
-									"usernameClaim":  defaultOIDCConfig.UsernameClaim,
-									"usernamePrefix": defaultOIDCConfig.UsernamePrefix,
-									"groupsPrefix":   "-",
-									"requiredClaims": []interface{}{},
-								},
-							},
+							Default: func() any {
+								if update {
+									return nil
+								}
+								return []any{
+									map[string]interface{}{
+										"clientID":       defaultOIDCConfig.ClientID,
+										"issuerURL":      defaultOIDCConfig.IssuerURL,
+										"groupsClaim":    defaultOIDCConfig.GroupsClaim,
+										"signingAlgs":    defaultOIDCConfig.SigningAlgs,
+										"usernameClaim":  defaultOIDCConfig.UsernameClaim,
+										"usernamePrefix": defaultOIDCConfig.UsernamePrefix,
+										"groupsPrefix":   "-",
+										"requiredClaims": []interface{}{},
+									},
+								}
+							}(),
 						},
 						Items: AdditionalOIDCListItems{
 							ControlsOrder: []string{"clientID", "groupsClaim", "issuerURL", "signingAlgs", "usernameClaim", "usernamePrefix", "groupsPrefix", "requiredClaims"}, Type: Type{
