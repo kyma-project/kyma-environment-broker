@@ -184,6 +184,7 @@ func NewGardenerClusterConfig(kubeconfigPath string) (*restclient.Config, error)
 	if err != nil {
 		return nil, fmt.Errorf("failed to read Gardener Kubeconfig from path %s: %s", kubeconfigPath, err.Error())
 	}
+	fmt.Println(string(rawKubeconfig))
 
 	gardenerClusterConfig, err := RESTConfig(rawKubeconfig)
 	if err != nil {
