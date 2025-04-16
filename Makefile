@@ -64,3 +64,9 @@ fix: go-lint-install ## try to fix automatically issues
 .PHONY: build-hap
 build-hap:
 	cd cmd/parser; go build -ldflags "-X main.gitCommit=$(GIT_SHA)" -o ../../$(ARTIFACTS)/hap
+
+##@ Installation
+
+.PHONY: install
+install:
+	./scripts/installation.sh $(version)
