@@ -15,11 +15,11 @@
     ```
 
     ```bash
-    make install version=1.18.0
+    make install VERSION=1.18.0
     ```
 
     ```bash
-    make install version=PR-1980
+    make install VERSION=PR-1980
     ```
 
 2. To provision an instance, use the following command:
@@ -42,4 +42,10 @@
          "region": "northeurope"
       }
    }'
+   ```
+
+3. To simulate the infrastructure manager and transition the Runtime to the Ready state, use the following command:
+
+   ```bash
+   make set-runtime-state RUNTIME_ID=<runtime_id> STATE=Ready
    ```

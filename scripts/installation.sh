@@ -43,6 +43,7 @@ fi
 
 # Create custom resource definitions
 kubectl apply -f resources/installation/secret-binding-crd.yaml
+kubectl apply -f https://raw.githubusercontent.com/kyma-project/infrastructure-manager/main/config/crd/bases/infrastructuremanager.kyma-project.io_runtimes.yaml
 
 # Create predefined secrets
 kubectl apply -f resources/installation/azure-secret.yaml

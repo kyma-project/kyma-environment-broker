@@ -69,4 +69,10 @@ build-hap:
 
 .PHONY: install
 install:
-	./scripts/installation.sh $(version)
+	./scripts/installation.sh $(VERSION)
+
+##@ Patching Runtime to specified state
+
+.PHONY: set-runtime-state
+set-runtime-state:
+	./scripts/set_runtime_state.sh $(RUNTIME_ID) $(STATE)
