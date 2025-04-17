@@ -42,12 +42,14 @@ if [[ -n "$VERSION" ]]; then
 fi
 
 # Create custom resource definitions
-kubectl apply -f resources/installation/secret-binding-crd.yaml
+kubectl apply -f resources/installation/crd/
 kubectl apply -f https://raw.githubusercontent.com/kyma-project/infrastructure-manager/main/config/crd/bases/infrastructuremanager.kyma-project.io_runtimes.yaml
 
 # Create predefined secrets
-kubectl apply -f resources/installation/azure-secret.yaml
-kubectl apply -f resources/installation/azure-secret-binding.yaml
+kubectl apply -f resources/installation/secrets/
+
+# Create predefined secret bindings
+kubectl apply -f resources/installation/secretbindings/
 
 # Deploy KEB helm chart
 cd resources/keb
