@@ -246,7 +246,7 @@ sapConvergedCloudPlanRegionMappings: |-
     - eu-de-4
 disableSapConvergedCloud: false
 disableProcessOperationsInProgress: "false"
-enablePlans: "azure,gcp,azure_lite,trial"
+enablePlans: "azure,gcp,azure_lite,trial,aws"
 hap:
  rule:
   - aws                             # pool: hyperscalerType: aws
