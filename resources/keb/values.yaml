@@ -197,7 +197,7 @@ serviceAccount:
   annotations: { }
 
 lifecycleManager:
-  disabled: "true"
+  disabled: "false"
 
 resolveSubscriptionSecretStep:
   disabled: "true"
