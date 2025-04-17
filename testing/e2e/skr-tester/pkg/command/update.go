@@ -182,6 +182,7 @@ func (cmd *UpdateCommand) Run() error {
 					"signingAlgs":    []string{"RS256"},
 					"usernameClaim":  "first-email",
 					"usernamePrefix": "first-acme-",
+					"groupsPrefix":   "first-group-",
 				},
 				{
 					"clientID":       "second-foo-bar",
