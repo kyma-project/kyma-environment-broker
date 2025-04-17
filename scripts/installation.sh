@@ -25,7 +25,7 @@ kubectl create -f https://raw.githubusercontent.com/prometheus-operator/promethe
 # Install Postgres
 kubectl create -f scripts/testing/yaml/postgres -n kcp-system
 
-# Prepare fake gardener credentials
+# Prepare gardener credentials
 KUBE_SERVER_IP=$(ifconfig en0 | grep inet | awk '$1=="inet" {print $2}')
 KCFG=$(kubectl config view --minify --raw \
        | sed "s|https://0\.0\.0\.0|https://${KUBE_SERVER_IP}|" \
