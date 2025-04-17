@@ -32,7 +32,6 @@ type LastError struct {
 const (
 	KEBInternalCode         Reason = "err_keb_internal"
 	KEBTimeOutCode          Reason = "err_keb_timeout"
-	ProvisionerCode         Reason = "err_provisioner_nil_last_error"
 	HttpStatusCode          Reason = "err_http_status_code"
 	ClusterNotFoundCode     Reason = "err_cluster_not_found"
 	K8SUnexpectedServerCode Reason = "err_k8s_unexpected_server_error"
