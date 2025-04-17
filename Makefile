@@ -76,3 +76,9 @@ install:
 .PHONY: set-runtime-state
 set-runtime-state:
 	./scripts/set_runtime_state.sh $(RUNTIME_ID) $(STATE)
+
+##@ Patching Kyma to specified state
+
+.PHONY: set-kyma-state
+set-kyma-state:
+	./scripts/set_kyma_state.sh $(KYMA_ID) $(STATE)

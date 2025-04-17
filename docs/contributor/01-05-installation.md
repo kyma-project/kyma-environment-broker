@@ -56,7 +56,13 @@
    make set-runtime-state RUNTIME_ID=<runtime_id> STATE=Ready
    ```
 
-5. To update the instance, use the following command:
+5. To simulate the lifecycle manager and transition the Kyma to the Ready state, use the following command:
+
+   ```bash
+   make set-kyma-state KYMA_ID=<kyma_id> STATE=Ready
+   ```
+
+6. To update the instance, use the following command:
 
    ```bash
    curl --request PATCH \
@@ -77,7 +83,7 @@
    }'
    ```
 
-6. To deprovision the instance, use the following command:
+7. To deprovision the instance, use the following command:
 
    ```bash
    curl --request DELETE \
