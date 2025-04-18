@@ -69,10 +69,11 @@ var PlanIDsMapping = map[string]string{
 }
 
 type FeatureFlags struct {
-	useAdditionalOIDCSchema     bool
-	shootAndSeedFeatureFlag     bool
-	shootAndSeedSameRegion      bool
-	ingressFilteringFeatureFlag bool
+	allowAdditionalParamsFeatureFlag bool
+	useAdditionalOIDCSchema          bool
+	shootAndSeedFeatureFlag          bool
+	planWithShootAndSeedFeature      bool
+	ingressFilteringFeatureFlag      bool
 }
 type TrialCloudRegion string
 
@@ -510,22 +511,49 @@ func requiredOwnClusterSchemaProperties() []string {
 
 func SapConvergedCloudSchema(machineTypesDisplay, regionsDisplay map[string]string, defaultOIDCConfig *pkg.OIDCConfigDTO, machineTypes []string, additionalParams, update bool, shootAndSeedFeatureFlag bool, sapConvergedCloudRegions []string, useAdditionalOIDCSchema bool) *map[string]interface{} {
 	properties := NewProvisioningProperties(machineTypesDisplay, machineTypesDisplay, regionsDisplay, machineTypes, machineTypes, sapConvergedCloudRegions, update)
+	flags := FeatureFlags{
+		allowAdditionalParamsFeatureFlag: additionalParams,
+		useAdditionalOIDCSchema:          useAdditionalOIDCSchema,
+		shootAndSeedFeatureFlag:          shootAndSeedFeatureFlag,
+		planWithShootAndSeedFeature:      true,
+		ingressFilteringFeatureFlag:      false,
+	}
 	return createSchemaWithProperties(properties, defaultOIDCConfig, additionalParams, update, requiredSchemaProperties(), true, shootAndSeedFeatureFlag, useAdditionalOIDCSchema)
 }
 
 func PreviewSchema(machineTypesDisplay, additionalMachineTypesDisplay, regionsDisplay map[string]string, defaultOIDCConfig *pkg.OIDCConfigDTO, machineTypes, additionalMachineTypes []string, additionalParams, update bool, euAccessRestricted bool, useAdditionalOIDCSchema bool) *map[string]interface{} {
 	properties := NewProvisioningProperties(machineTypesDisplay, additionalMachineTypesDisplay, regionsDisplay, machineTypes, additionalMachineTypes, AWSRegions(euAccessRestricted), update)
 	properties.Networking = NewNetworkingSchema()
+	flags := FeatureFlags{
+		allowAdditionalParamsFeatureFlag: additionalParams,
+		useAdditionalOIDCSchema:          useAdditionalOIDCSchema,
+		shootAndSeedFeatureFlag:          false,
+		planWithShootAndSeedFeature:      false,
+		ingressFilteringFeatureFlag:      false,
+	}
 	return createSchemaWithProperties(properties, defaultOIDCConfig, additionalParams, update, requiredSchemaProperties(), false, false, useAdditionalOIDCSchema)
 }
 
 func GCPSchema(machineTypesDisplay, additionalMachineTypesDisplay, regionsDisplay map[string]string, defaultOIDCConfig *pkg.OIDCConfigDTO, machineTypes, additionalMachineTypes []string, additionalParams, update bool, shootAndSeedFeatureFlag bool, assuredWorkloads bool, useAdditionalOIDCSchema bool) *map[string]interface{} {
 	properties := NewProvisioningProperties(machineTypesDisplay, additionalMachineTypesDisplay, regionsDisplay, machineTypes, additionalMachineTypes, GcpRegions(assuredWorkloads), update)
+	flags := FeatureFlags{
+		allowAdditionalParamsFeatureFlag: additionalParams,
+		useAdditionalOIDCSchema:          useAdditionalOIDCSchema,
+		shootAndSeedFeatureFlag:          shootAndSeedFeatureFlag,
+		planWithShootAndSeedFeature:      true,
+		ingressFilteringFeatureFlag:      false,
+	}
 	return createSchemaWithProperties(properties, defaultOIDCConfig, additionalParams, update, requiredSchemaProperties(), true, shootAndSeedFeatureFlag, useAdditionalOIDCSchema)
 }
 
 func AWSSchema(machineTypesDisplay, additionalMachineTypesDisplay, regionsDisplay map[string]string, defaultOIDCConfig *pkg.OIDCConfigDTO, machineTypes, additionalMachineTypes []string, additionalParams, update bool, euAccessRestricted bool, shootAndSeedSameRegion bool, useAdditionalOIDCSchema bool) *map[string]interface{} {
 	properties := NewProvisioningProperties(machineTypesDisplay, additionalMachineTypesDisplay, regionsDisplay, machineTypes, additionalMachineTypes, AWSRegions(euAccessRestricted), update)
+	flags := FeatureFlags{
+		allowAdditionalParamsFeatureFlag: additionalParams,
+		useAdditionalOIDCSchema:          useAdditionalOIDCSchema,
+		shootAndSeedFeatureFlag:          true,
+		planWithShootAndSeedFeature:      shootAndSeedFeatureFlag,
+	}
 	return createSchemaWithProperties(properties, defaultOIDCConfig, additionalParams, update, requiredSchemaProperties(), true, shootAndSeedSameRegion, useAdditionalOIDCSchema)
 }
 
@@ -614,10 +642,10 @@ func OwnClusterSchema(update bool) *map[string]interface{} {
 	}
 
 	if update {
-		return createSchemaWith(properties.UpdateProperties, update, requiredOwnClusterSchemaProperties())
+		return createSchemaWith(properties.UpdateProperties, []string{})
 	} else {
 		properties.Modules = NewModulesSchema()
-		return createSchemaWith(properties, update, requiredOwnClusterSchemaProperties())
+		return createSchemaWith(properties, requiredOwnClusterSchemaProperties())
 	}
 }
 
@@ -626,42 +654,44 @@ func empty() *map[string]interface{} {
 	return &empty
 }
 
-func createSchemaWithProperties(properties ProvisioningProperties, defaultOIDCConfig *pkg.OIDCConfigDTO, additionalParams, update bool, required []string, shootAndSeedSameRegion bool, shootAndSeedFeatureFlag bool, useAdditionalOIDCSchema bool) *map[string]interface{} {
-	if additionalParams {
-		properties.IncludeAdditional(useAdditionalOIDCSchema, defaultOIDCConfig, update)
-		if shootAndSeedFeatureFlag && shootAndSeedSameRegion {
+func createSchemaWithProperties(properties ProvisioningProperties,
+	defaultOIDCConfig *pkg.OIDCConfigDTO,
+	update bool,
+	required []string,
+	flags FeatureFlags) *map[string]interface{} {
+	if flags.allowAdditionalParamsFeatureFlag {
+		properties.IncludeAdditional(flags.useAdditionalOIDCSchema, defaultOIDCConfig, update)
+		if flags.shootAndSeedFeatureFlag && flags.planWithShootAndSeedFeature {
 			properties.ShootAndSeedSameRegion = ShootAndSeedSameRegionProperty()
 		}
-		//if ingressFilteringFeatureFlag {
-		//	properties.IngressFiltering = IngressFilteringProperty()
-		//}
+		if flags.ingressFilteringFeatureFlag {
+			properties.IngressFiltering = IngressFilteringProperty()
+		}
 	}
 
 	if update {
-		return createSchemaWith(properties.UpdateProperties, update, required)
+		return createSchemaWith(properties.UpdateProperties, []string{})
 	} else {
-		return createSchemaWith(properties, update, required)
+		return createSchemaWith(properties, required)
 	}
 }
 
-func createSchemaWith(properties interface{}, update bool, requiered []string) *map[string]interface{} {
-	schema := NewSchema(properties, update, requiered)
-
-	return unmarshalSchema(schema)
+func createSchemaWith(properties interface{}, required []string) *map[string]interface{} {
+	return unmarshalSchema(NewSchema(properties, required))
 }
 
 func unmarshalSchema(schema *RootSchema) *map[string]interface{} {
 	target := make(map[string]interface{})
 	schema.ControlsOrder = DefaultControlsOrder()
 
-	unmarshaled := unmarshalOrPanic(schema, &target).(*map[string]interface{})
+	unmarshalled := unmarshalOrPanic(schema, &target).(*map[string]interface{})
 
 	// update controls order
-	props := (*unmarshaled)[PropertiesKey].(map[string]interface{})
-	controlsOrder := (*unmarshaled)[ControlsOrderKey].([]interface{})
-	(*unmarshaled)[ControlsOrderKey] = filter(&controlsOrder, props)
+	props := (*unmarshalled)[PropertiesKey].(map[string]interface{})
+	controlsOrder := (*unmarshalled)[ControlsOrderKey].([]interface{})
+	(*unmarshalled)[ControlsOrderKey] = filter(&controlsOrder, props)
 
-	return unmarshaled
+	return unmarshalled
 }
 
 // Plans is designed to hold plan defaulting logic

@@ -552,8 +552,8 @@ func NewNetworkingSchema() *NetworkingType {
 	}
 }
 
-func NewSchema(properties interface{}, update bool, required []string) *RootSchema {
-	schema := &RootSchema{
+func NewSchema(properties interface{}, required []string) *RootSchema {
+	return &RootSchema{
 		Schema: "http://json-schema.org/draft-04/schema#",
 		Type: Type{
 			Type: "object",
@@ -563,12 +563,6 @@ func NewSchema(properties interface{}, update bool, required []string) *RootSche
 		Required:          required,
 		LoadCurrentConfig: true,
 	}
-
-	if update {
-		schema.Required = []string{}
-	}
-
-	return schema
 }
 
 func unmarshalOrPanic(from, to interface{}) interface{} {
