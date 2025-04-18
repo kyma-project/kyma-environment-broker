@@ -449,7 +449,7 @@ func (b *UpdateEndpoint) extractActiveValue(id string, provisioning internal.Pro
 func (b *UpdateEndpoint) getJsonSchemaValidator(provider pkg.CloudProvider, planID string, platformRegion string) (*jsonschema.Schema, error) {
 	// shootAndSeedSameRegion is never enabled for update
 	b.log.Info(fmt.Sprintf("region is: %s", platformRegion))
-	_ := NewConfigBasedFeatureFlags(b.config.IncludeAdditionalParamsInSchema, b.config.UseAdditionalOIDCSchema, false, false, b.useSmallerMachineTypes)
+	configFlags := NewConfigBasedFeatureFlags(b.config.IncludeAdditionalParamsInSchema, b.config.UseAdditionalOIDCSchema, false, false, b.useSmallerMachineTypes)
 	plans := Plans(b.plansConfig, provider, nil, configFlags, b.config.IncludeAdditionalParamsInSchema, euaccess.IsEURestrictedAccess(platformRegion), b.useSmallerMachineTypes, false, b.convergedCloudRegionsProvider.GetRegions(platformRegion), assuredworkloads.IsKSA(platformRegion), b.config.UseAdditionalOIDCSchema)
 	plan := plans[planID]
 
