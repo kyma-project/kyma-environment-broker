@@ -211,7 +211,7 @@ This is the applied default OIDC configuration in JSON:
 }
 ```
 
-To update the OIDC configuration, provide values for the mandatory properties. Without these values, a validation error occurs. If you omit the `oidc` list or the single `oidc` object in the update request, the existing OIDC configuration remains unchanged. Providing an empty `oidc` list clears the OIDC configuration for the instance. The update operation overwrites the OIDC configuration values provided in JSON, meaning that OIDC properties with empty values are considered valid and will replace the existing values. This behavior applies to both the `oidc` object and the `oidc` list.
+To update the OIDC configuration, provide values for the mandatory properties. Without these values, a validation error occurs. If you omit the `oidc` list or the single `oidc` object in the update request, the existing OIDC configuration remains unchanged. Providing an empty `oidc` list clears the OIDC configuration for the instance. The update operation overwrites the OIDC configuration values provided in JSON for the `oidc` list, meaning that OIDC properties with empty values are considered valid and will replace the existing values. However, for the single `oidc` object, empty values do not change the configuration, and only the provided values are updated.
 
 ### Scenario: Instance with an OIDC Object List
 
@@ -221,24 +221,24 @@ To update the OIDC configuration, provide values for the mandatory properties. W
   ```json
   [
     {
-     "ClientID": "9bd05ed7-a930-44e6-8c79-e6defeb7dec9",
-     "IssuerURL": "https://kymatest.accounts400.ondemand.com",
-     "GroupsClaim": "groups",
-     "GroupsPrefix": "-",
-     "UsernameClaim": "sub",
-     "UsernamePrefix": "-",
-     "SigningAlgs": ["RS256"],
-     "RequiredClaims": []
+     "clientID": "9bd05ed7-a930-44e6-8c79-e6defeb7dec9",
+     "issuerURL": "https://kymatest.accounts400.ondemand.com",
+     "groupsClaim": "groups",
+     "groupsPrefix": "-",
+     "usernameClaim": "sub",
+     "usernamePrefix": "-",
+     "signingAlgs": ["RS256"],
+     "requiredClaims": ["first-claim=value", "second-claim=value"]
     },
     {
-     "ClientID": "3f2a1c8e-7b4d-4e2f-9a6b-2d8e5f7c9d12",
-     "IssuerURL": "https://foo.bar.com",
-     "GroupsClaim": "groups",
-     "GroupsPrefix": "-",
-     "UsernameClaim": "sub",
-     "UsernamePrefix": "acme-",
-     "SigningAlgs": ["RS256"],
-     "RequiredClaims": []
+     "clientID": "3f2a1c8e-7b4d-4e2f-9a6b-2d8e5f7c9d12",
+     "issuerURL": "https://foo.bar.com",
+     "groupsClaim": "groups",
+     "groupsPrefix": "-",
+     "usernameClaim": "sub",
+     "usernamePrefix": "acme-",
+     "signingAlgs": ["RS256"],
+     "requiredClaims": []
     }
   ]
   ```
@@ -270,11 +270,11 @@ To update the OIDC configuration, provide values for the mandatory properties. W
         {
          "clientID": "test",
          "issuerURL": "https://test.com",
-         "groupsClaim": "",
-         "groupsPrefix": "",
-         "signingAlgs": [],
-         "usernameClaim": "",
-         "usernamePrefix": "",
+         "groupsClaim": "groups",
+         "groupsPrefix": "-",
+         "usernameClaim": "sub",
+         "usernamePrefix": "acme-",
+         "signingAlgs": ["RS256"],
          "requiredClaims": []
         }
       ]
@@ -289,24 +289,24 @@ To update the OIDC configuration, provide values for the mandatory properties. W
   ```json
   [
     {
-     "ClientID": "9bd05ed7-a930-44e6-8c79-e6defeb7dec9",
-     "IssuerURL": "https://kymatest.accounts400.ondemand.com",
-     "GroupsClaim": "groups",
-     "GroupsPrefix": "-",
-     "UsernameClaim": "sub",
-     "UsernamePrefix": "-",
-     "SigningAlgs": ["RS256"],
-     "RequiredClaims": []
+     "clientID": "9bd05ed7-a930-44e6-8c79-e6defeb7dec9",
+     "issuerURL": "https://kymatest.accounts400.ondemand.com",
+     "groupsClaim": "groups",
+     "groupsPrefix": "-",
+     "usernameClaim": "sub",
+     "usernamePrefix": "-",
+     "signingAlgs": ["RS256"],
+     "requiredClaims": []
     },
     {
-     "ClientID": "test",
-     "IssuerURL": "https://test.com",
-     "GroupsClaim": "",
-     "GroupsPrefix": "",
-     "UsernameClaim": "",
-     "UsernamePrefix": "",
-     "SigningAlgs": [],
-     "RequiredClaims": []
+     "clientID": "test",
+     "issuerURL": "https://test.com",
+     "groupsClaim": "groups",
+     "groupsPrefix": "-",
+     "usernameClaim": "sub",
+     "usernamePrefix": "acme-",
+     "signingAlgs": ["RS256"],
+     "requiredClaims": []
     }
   ]
   ```
@@ -363,11 +363,11 @@ To update the OIDC configuration, provide values for the mandatory properties. W
   {
     "clientID": "new-client-id",
     "issuerURL": "https://new-issuer-url.local.com",
-    "groupsClaim": "",
-    "groupsPrefix": "",
-    "usernameClaim": "",
-    "usernamePrefix": "",
-    "signingAlgs": [],
+    "groupsClaim": "groups",
+    "groupsPrefix": "-",
+    "usernameClaim": "sub",
+    "usernamePrefix": "-",
+    "signingAlgs": ["RS256"],
     "requiredClaims": []
   }
   ```
