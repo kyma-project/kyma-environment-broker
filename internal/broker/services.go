@@ -63,9 +63,11 @@ func (b *ServicesEndpoint) Services(ctx context.Context) ([]domain.Service, erro
 
 	provider, ok := middleware.ProviderFromContext(ctx)
 	platformRegion, ok := middleware.RegionFromContext(ctx)
+	configPlans := NewConfigBasedFeatureFlags(b.cfg.IncludeAdditionalParamsInSchema, b.cfg.UseAdditionalOIDCSchema, b.cfg.EnableShootAndSeedSameRegion, false, b.useSmallerMachineTypes)
 	for _, plan := range Plans(class.Plans,
 		provider,
 		b.defaultOIDCConfig,
+		configPlans,
 		b.cfg.IncludeAdditionalParamsInSchema,
 		euaccess.IsEURestrictedAccess(platformRegion),
 		b.useSmallerMachineTypes,

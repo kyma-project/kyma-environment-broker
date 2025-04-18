@@ -287,7 +287,7 @@ func TestSapConvergedSchema(t *testing.T) {
 		regions := []string{"region1", "region2"}
 
 		// when
-		schema := Plans(nil, "", nil, false, false, false, false, regions, false, false)
+		schema := Plans(nil, "", nil, ConfigBasedFeatureFlags{}, false, false, false, false, regions, false, false)
 		convergedSchema, found := schema[SapConvergedCloudPlanID]
 		schemaRegionsCreate := convergedSchema.Schemas.Instance.Create.Parameters["properties"].(map[string]interface{})["region"].(map[string]interface{})["enum"]
 
@@ -302,7 +302,7 @@ func TestSapConvergedSchema(t *testing.T) {
 		regions := []string{}
 
 		// when
-		schema := Plans(nil, "", nil, false, false, false, false, regions, false, false)
+		schema := Plans(nil, "", nil, ConfigBasedFeatureFlags{}, false, false, false, false, regions, false, false)
 		_, found := schema[SapConvergedCloudPlanID]
 
 		// then
@@ -310,7 +310,7 @@ func TestSapConvergedSchema(t *testing.T) {
 		assert.False(t, found)
 
 		// when
-		schema = Plans(nil, "", nil, false, false, false, false, nil, false, false)
+		schema = Plans(nil, "", nil, ConfigBasedFeatureFlags{}, false, false, false, false, nil, false, false)
 		_, found = schema[SapConvergedCloudPlanID]
 
 		// then

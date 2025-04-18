@@ -624,7 +624,7 @@ func (b *ProvisionEndpoint) determineLicenceType(planId string) *string {
 func (b *ProvisionEndpoint) validator(details *domain.ProvisionDetails, provider pkg.CloudProvider, ctx context.Context) (*jsonschema.Schema, error) {
 	platformRegion, _ := middleware.RegionFromContext(ctx)
 	configFlags := NewConfigBasedFeatureFlags(b.config.IncludeAdditionalParamsInSchema, b.config.UseAdditionalOIDCSchema, b.config.EnableShootAndSeedSameRegion, false, b.infrastructureManager.UseSmallerMachineTypes)
-	plans := Plans(b.plansConfig, provider, nil, b.config.IncludeAdditionalParamsInSchema,
+	plans := Plans(b.plansConfig, provider, nil, configFlags, b.config.IncludeAdditionalParamsInSchema,
 		euaccess.IsEURestrictedAccess(platformRegion),
 		b.infrastructureManager.UseSmallerMachineTypes, b.config.EnableShootAndSeedSameRegion, b.convergedCloudRegionsProvider.GetRegions(platformRegion), assuredworkloads.IsKSA(platformRegion), b.config.UseAdditionalOIDCSchema)
 	plan := plans[details.PlanID]
