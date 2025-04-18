@@ -68,6 +68,24 @@ var PlanIDsMapping = map[string]string{
 	BuildRuntimeAzurePlanName: BuildRuntimeAzurePlanID,
 }
 
+type ConfigBasedFeatureFlags struct {
+	allowAdditionalParamsFeatureFlag bool
+	useAdditionalOIDCSchema          bool
+	shootAndSeedFeatureFlag          bool
+	ingressFilteringFeatureFlag      bool
+	useSmallerMachineTypes           bool
+}
+
+func NewConfigBasedFeatureFlags(allowAdditionalParamsFeatureFlag, useAdditionalOIDC, shootAndSeedFeatureFlag, ingressFilteringFeatureFlag, useSmallerMachineTypes bool) ConfigBasedFeatureFlags {
+	return ConfigBasedFeatureFlags{
+		allowAdditionalParamsFeatureFlag: allowAdditionalParamsFeatureFlag,
+		useAdditionalOIDCSchema:          useAdditionalOIDC,
+		shootAndSeedFeatureFlag:          shootAndSeedFeatureFlag,
+		ingressFilteringFeatureFlag:      ingressFilteringFeatureFlag,
+		useSmallerMachineTypes:           useSmallerMachineTypes,
+	}
+}
+
 type FeatureFlagsObject struct {
 	allowAdditionalParamsFeatureFlag bool
 	useAdditionalOIDCSchema          bool
