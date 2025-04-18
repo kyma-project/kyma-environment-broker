@@ -78,7 +78,11 @@ See the example with the OIDC list:
 
 If you do not include the `oidc` list or the single `oidc` object in the provisioning request, the default OIDC configuration is applied. However, if you provide an empty `oidc` list (with zero elements), no OIDC configuration will be applied to the instance. Unlike the single `oidc` object, which defaults to the predefined values when its properties are left empty, the `oidc` list does not inherit default values for its items and they need to be explicitly defined.
 
-See the following JSON example without the `oidc` object or list:
+### Example 1: Without the `oidc` Object or List
+
+This example demonstrates a request without specifying any `oidc` configuration. The default OIDC configuration is applied automatically.
+
+**Request:**
 
 ```json
 {
@@ -94,26 +98,32 @@ See the following JSON example without the `oidc` object or list:
 }
 ```
 
-This is the applied OIDC configuration in JSON:
+**Applied OIDC Configuration:**
 
 ```json
 {
   ...
-    "oidc" : {
-      "clientID" : "9bd05ed7-a930-44e6-8c79-e6defeb7dec9",
-      "issuerURL" : "https://kymatest.accounts400.ondemand.com",
-      "groupsClaim" : "groups",
-      "groupsPrefix" : "-",
-      "signingAlgs" : ["RS256"],
-      "usernamePrefix" : "-",
-      "usernameClaim" : "sub",
-      "requiredClaims" : []
-    }
+  "oidc" : {
+    "clientID" : "9bd05ed7-a930-44e6-8c79-e6defeb7dec9",
+    "issuerURL" : "https://kymatest.accounts400.ondemand.com",
+    "groupsClaim" : "groups",
+    "groupsPrefix" : "-",
+    "signingAlgs" : ["RS256"],
+    "usernamePrefix" : "-",
+    "usernameClaim" : "sub",
+    "requiredClaims" : []
+  }
   ...
 }
 ```
 
-See the following JSON example with the `oidc` list:
+---
+
+### Example 2: With the `oidc` List
+
+This example shows a request with an `oidc` list containing a single configuration. The list allows defining multiple OIDC configurations.
+
+**Request:**
 
 ```json
 {
@@ -143,30 +153,36 @@ See the following JSON example with the `oidc` list:
 }
 ```
 
-This is the applied OIDC configuration in JSON:
+**Applied OIDC Configuration:**
 
 ```json
 {
   ...
-    "oidc" : {
-      "list": [
-        {
-          "clientID" : "9bd05ed7-a930-44e6-8c79-e6defeb7dec9",
-          "issuerURL" : "https://kymatest.accounts400.ondemand.com",
-          "groupsClaim" : "groups",
-          "groupsPrefix" : "-",
-          "signingAlgs" : ["RS256"],
-          "usernamePrefix" : "-",
-          "usernameClaim" : "sub",
-          "requiredClaims" : ["first-claim=value", "second-claim=value"]
-        }
-      ]
-    }
+  "oidc" : {
+    "list": [
+      {
+        "clientID" : "9bd05ed7-a930-44e6-8c79-e6defeb7dec9",
+        "issuerURL" : "https://kymatest.accounts400.ondemand.com",
+        "groupsClaim" : "groups",
+        "groupsPrefix" : "-",
+        "signingAlgs" : ["RS256"],
+        "usernamePrefix" : "-",
+        "usernameClaim" : "sub",
+        "requiredClaims" : ["first-claim=value", "second-claim=value"]
+      }
+    ]
+  }
   ...
 }
 ```
 
-See the following JSON example with the `oidc` object whose properties are empty:
+---
+
+### Example 3: With the `oidc` Object (Empty Properties)
+
+This example illustrates a request with an `oidc` object where all properties are left empty. The default OIDC configuration is applied.
+
+**Request:**
 
 ```json
 {
@@ -192,28 +208,32 @@ See the following JSON example with the `oidc` object whose properties are empty
 }
 ```
 
-This is the applied default OIDC configuration in JSON:
+**Applied OIDC Configuration:**
 
 ```json
 {
   ...
-    "oidc" : {
-      "clientID" : "9bd05ed7-a930-44e6-8c79-e6defeb7dec9",
-      "issuerURL" : "https://kymatest.accounts400.ondemand.com",
-      "groupsClaim" : "groups",
-      "groupsPrefix" : "-",
-      "signingAlgs" : ["RS256"],
-      "usernamePrefix" : "-",
-      "usernameClaim" : "sub",
-      "requiredClaims" : []
-    }
+  "oidc" : {
+    "clientID" : "9bd05ed7-a930-44e6-8c79-e6defeb7dec9",
+    "issuerURL" : "https://kymatest.accounts400.ondemand.com",
+    "groupsClaim" : "groups",
+    "groupsPrefix" : "-",
+    "signingAlgs" : ["RS256"],
+    "usernamePrefix" : "-",
+    "usernameClaim" : "sub",
+    "requiredClaims" : []
+  }
   ...
 }
 ```
 
+## Updating the OIDC Configuration
+
 To update the OIDC configuration, provide values for the mandatory properties. Without these values, a validation error occurs. If you omit the `oidc` list or the single `oidc` object in the update request, the existing OIDC configuration remains unchanged. Providing an empty `oidc` list clears the OIDC configuration for the instance. The update operation overwrites the OIDC configuration values provided in JSON for the `oidc` list, meaning that OIDC properties with empty values are considered valid and will replace the existing values. However, for the single `oidc` object, empty values do not change the configuration, and only the provided values are updated. It is possible to update the configuration from a single `oidc` object to an `oidc` list. However, updating from an `oidc` list to a single `oidc` object is not supported.
 
-### Scenario: Instance with an OIDC Object List
+---
+
+### Scenario 1: Updating an Instance with an OIDC Object List
 
 1. **Current OIDC Configuration**  
   The instance has the following OIDC object list configuration:
@@ -311,8 +331,9 @@ To update the OIDC configuration, provide values for the mandatory properties. W
   ]
   ```
 
+---
 
-### Scenario: Instance with a Single OIDC Object
+### Scenario 2: Updating an Instance with a Single OIDC Object
 
 1. **Current OIDC Configuration**  
   The instance has the following OIDC object configuration:
