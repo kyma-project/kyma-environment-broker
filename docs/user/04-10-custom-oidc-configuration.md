@@ -2,10 +2,10 @@
 
 To create an SAP BTP, Kyma runtime with a custom Open ID Connect (OIDC) configuration, you can specify either a single `oidc` object or a list of `oidc` objects as provisioning parameters. While both options are supported, using a list of `oidc` objects is the recommended approach, even if you are defining only one OIDC configuration. The list allows you to define multiple OIDC configurations. The single `oidc` object is only supported for backward compatibility.
 
-> [!NOTE]
-> `clientID` and `issuerURL` values are mandatory for custom OIDC configuration.
-
 See the example with the OIDC list:
+
+> [!NOTE]
+> All fields except `requiredClaims` are mandatory when using the `oidc` list for custom OIDC configuration.
 
 ```bash
    export VERSION=1.15.0
@@ -42,6 +42,9 @@ See the example with the OIDC list:
 ```
 <details>
 <summary>See the example with the single OIDC object (not recommended):</summary>
+
+> [!NOTE]
+> `clientID` and `issuerURL` values are mandatory when using the single `oidc` object for for custom OIDC configuration.
 
 ```bash
    export VERSION=1.15.0
@@ -91,33 +94,7 @@ See the following JSON example without the `oidc` object or list:
 }
 ```
 
-See the following JSON example with the `oidc` list whose item has empty properties:
-
-```json
-{
-  "service_id" : "47c9dcbf-ff30-448e-ab36-d3bad66ba281",
-  "plan_id" : "4deee563-e5ec-4731-b9b1-53b42d855f0c",
-  "context" : {
-    "globalaccount_id" : {GLOBAL_ACCOUNT_ID}
-  },
-  "parameters" : {
-    "region": {REGION},
-    "name" : {CLUSTER_NAME},
-    "oidc" : {
-      "clientID" : "",
-      "issuerURL" : "",
-      "groupsClaim" : "",
-      "groupsPrefix" : "",
-      "signingAlgs" : [],
-      "usernamePrefix" : "",
-      "usernameClaim" : "",
-      "requiredClaims" : []
-    }
-  }
-}
-```
-
-This is the default OIDC configuration in JSON:
+This is the applied OIDC configuration in JSON:
 
 ```json
 {
@@ -131,6 +108,59 @@ This is the default OIDC configuration in JSON:
       "usernamePrefix" : "-",
       "usernameClaim" : "sub",
       "requiredClaims" : []
+    }
+  ...
+}
+```
+
+See the following JSON example with the `oidc` list:
+
+```json
+{
+  "service_id" : "47c9dcbf-ff30-448e-ab36-d3bad66ba281",
+  "plan_id" : "4deee563-e5ec-4731-b9b1-53b42d855f0c",
+  "context" : {
+    "globalaccount_id" : {GLOBAL_ACCOUNT_ID}
+  },
+  "parameters" : {
+    "region": {REGION},
+    "name" : {CLUSTER_NAME},
+    "oidc" : {
+      "list": [
+        {
+          "clientID" : "9bd05ed7-a930-44e6-8c79-e6defeb7dec9",
+          "issuerURL" : "https://kymatest.accounts400.ondemand.com",
+          "groupsClaim" : "groups",
+          "groupsPrefix" : "-",
+          "signingAlgs" : ["RS256"],
+          "usernamePrefix" : "-",
+          "usernameClaim" : "sub",
+          "requiredClaims" : ["first-claim=value", "second-claim=value"]
+        }
+      ]
+    }
+  }
+}
+```
+
+This is the applied OIDC configuration in JSON:
+
+```json
+{
+  ...
+    "oidc" : {
+      "list": [
+        {
+          "clientID" : "9bd05ed7-a930-44e6-8c79-e6defeb7dec9",
+          "issuerURL" : "https://kymatest.accounts400.ondemand.com",
+          "groupsClaim" : "groups",
+          "groupsPrefix" : "-",
+          "signingAlgs" : ["RS256"],
+          "usernamePrefix" : "-",
+          "usernameClaim" : "sub",
+          "requiredClaims" : ["first-claim=value", "second-claim=value"]
+        }
+      ]
     }
   ...
 }
@@ -162,7 +192,7 @@ See the following JSON example with the `oidc` object whose properties are empty
 }
 ```
 
-This is the default OIDC configuration in JSON:
+This is the applied default OIDC configuration in JSON:
 
 ```json
 {
