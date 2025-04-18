@@ -1,4 +1,4 @@
-# Install the Kyma Environment Broker
+# Install the Kyma Environment Broker Locally
 
 ## Prerequisites
 
@@ -28,7 +28,7 @@
    kubectl port-forward -n kcp-system deployment/kcp-kyma-environment-broker 8080:8080 5432:5432
    ```
 
-3. To provision the instance, use the following command:
+3. To provision the instance, use the following command. Note that this is an example of a command you can use for instance provisioning.
 
    ```bash
    curl --request PUT \
@@ -62,7 +62,7 @@
    make set-kyma-state KYMA_ID=<kyma_id> STATE=Ready
    ```
 
-6. To update the instance, use the following command:
+6. To update the instance, use the following command. Note that this is an example of a command you can use for instance updating.
 
    ```bash
    curl --request PATCH \
@@ -83,7 +83,7 @@
    }'
    ```
 
-7. To deprovision the instance, use the following command:
+7. To deprovision the instance, use the following command. Note that this command can only work if you have used the command provided in this document to create the instance.
 
    ```bash
    curl --request DELETE \
