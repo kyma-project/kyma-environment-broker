@@ -346,7 +346,7 @@ func (b *ProvisionEndpoint) validate(ctx context.Context, details domain.Provisi
 				return apiresponses.NewFailureResponse(err, http.StatusUnprocessableEntity, err.Error())
 			}
 		}
-		if isExternalCustomer(provisioningParameters.ErsContext) {
+		if IsExternalCustomer(provisioningParameters.ErsContext) {
 			if err := checkGPUMachinesUsage(parameters.AdditionalWorkerNodePools); err != nil {
 				return apiresponses.NewFailureResponse(err, http.StatusUnprocessableEntity, err.Error())
 			}
@@ -465,7 +465,7 @@ func AreNamesUnique(pools []pkg.AdditionalWorkerNodePool) bool {
 	return true
 }
 
-func isExternalCustomer(ersContext internal.ERSContext) bool {
+func IsExternalCustomer(ersContext internal.ERSContext) bool {
 	return *ersContext.DisableEnterprisePolicyFilter()
 }
 
@@ -623,7 +623,8 @@ func (b *ProvisionEndpoint) determineLicenceType(planId string) *string {
 
 func (b *ProvisionEndpoint) validator(details *domain.ProvisionDetails, provider pkg.CloudProvider, ctx context.Context) (*jsonschema.Schema, error) {
 	platformRegion, _ := middleware.RegionFromContext(ctx)
-	plans := Plans(b.plansConfig, provider, nil, b.config.IncludeAdditionalParamsInSchema,
+	configFlags := NewConfigBasedFeatureFlags(b.config.IncludeAdditionalParamsInSchema, b.config.UseAdditionalOIDCSchema, b.config.EnableShootAndSeedSameRegion, false, b.infrastructureManager.UseSmallerMachineTypes)
+	plans := Plans(b.plansConfig, provider, nil, configFlags, b.config.IncludeAdditionalParamsInSchema,
 		euaccess.IsEURestrictedAccess(platformRegion),
 		b.infrastructureManager.UseSmallerMachineTypes, b.config.EnableShootAndSeedSameRegion, b.convergedCloudRegionsProvider.GetRegions(platformRegion), assuredworkloads.IsKSA(platformRegion), b.config.UseAdditionalOIDCSchema)
 	plan := plans[details.PlanID]

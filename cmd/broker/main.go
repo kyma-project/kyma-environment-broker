@@ -100,15 +100,17 @@ type Config struct {
 	Kubeconfig            kubeconfig.Config
 	StepTimeouts          StepTimeoutsConfig
 
-	SkrOidcDefaultValuesYAMLFilePath         string
-	SkrDnsProvidersValuesYAMLFilePath        string
-	DefaultRequestRegion                     string `envconfig:"default=cf-eu10"`
-	UpdateProcessingEnabled                  bool   `envconfig:"default=false"`
-	LifecycleManagerIntegrationDisabled      bool   `envconfig:"default=true"`
-	InfrastructureManagerIntegrationDisabled bool   `envconfig:"default=true"`
-	ResolveSubscriptionSecretStepDisabled    bool   `envconfig:"default=true"`
-	Broker                                   broker.Config
-	CatalogFilePath                          string
+	SkrOidcDefaultValuesYAMLFilePath    string
+	SkrDnsProvidersValuesYAMLFilePath   string
+	DefaultRequestRegion                string `envconfig:"default=cf-eu10"`
+	UpdateProcessingEnabled             bool   `envconfig:"default=false"`
+	LifecycleManagerIntegrationDisabled bool   `envconfig:"default=true"`
+	// deprecated
+	InfrastructureManagerIntegrationDisabled bool `envconfig:"default=true"`
+	// deprecated
+	ResolveSubscriptionSecretStepDisabled bool `envconfig:"default=true"`
+	Broker                                broker.Config
+	CatalogFilePath                       string
 
 	EDP edp.Config
 
@@ -448,6 +450,7 @@ func createAPI(router *httputil.Router, servicesConfig broker.ServicesConfig, cf
 
 	// create KymaEnvironmentBroker endpoints
 	kymaEnvBroker := &broker.KymaEnvironmentBroker{
+		// TODO pass InfrastructureManager config as well, or Ingress setting (+), or entire config
 		ServicesEndpoint: broker.NewServices(cfg.Broker, servicesConfig, logs, convergedCloudRegionProvider, oidcDefaultValues, cfg.InfrastructureManager.UseSmallerMachineTypes),
 		ProvisionEndpoint: broker.NewProvision(cfg.Broker, cfg.Gardener, db,
 			provisionQueue, defaultPlansConfig, logs, cfg.KymaDashboardConfig, kcBuilder, freemiumGlobalAccountIds,

@@ -7,6 +7,8 @@ import (
 	"strings"
 	"time"
 
+	"github.com/kyma-project/kyma-environment-broker/internal/broker"
+	"github.com/kyma-project/kyma-environment-broker/internal/process/steps"
 	"github.com/kyma-project/kyma-environment-broker/internal/provider"
 	"k8s.io/apimachinery/pkg/api/errors"
 
@@ -34,7 +36,7 @@ type UpdateRuntimeStep struct {
 	useAdditionalOIDCSchema    bool
 }
 
-func NewUpdateRuntimeStep(os storage.Operations, k8sClient client.Client, delay time.Duration, infrastructureManagerConfig infrastructure_manager.InfrastructureManagerConfig, trialPlatformRegionMapping map[string]string, useAdditionalOIDCSchema bool) *UpdateRuntimeStep {
+func NewUpdateRuntimeStep(db storage.BrokerStorage, k8sClient client.Client, delay time.Duration, infrastructureManagerConfig infrastructure_manager.InfrastructureManagerConfig, trialPlatformRegionMapping map[string]string, useAdditionalOIDCSchema bool) *UpdateRuntimeStep {
 	step := &UpdateRuntimeStep{
 		k8sClient:                  k8sClient,
 		delay:                      delay,
@@ -43,7 +45,7 @@ func NewUpdateRuntimeStep(os storage.Operations, k8sClient client.Client, delay 
 		trialPlatformRegionMapping: trialPlatformRegionMapping,
 		useAdditionalOIDCSchema:    useAdditionalOIDCSchema,
 	}
-	step.operationManager = process.NewOperationManager(os, step.Name(), kebError.InfrastructureManagerDependency)
+	step.operationManager = process.NewOperationManager(db.Operations(), step.Name(), kebError.InfrastructureManagerDependency)
 	return step
 }
 
@@ -88,7 +90,7 @@ func (s *UpdateRuntimeStep) Run(operation internal.Operation, log *slog.Logger) 
 			}
 		}
 
-		additionalWorkers := provisioning.CreateAdditionalWorkers(s.config, values, currentAdditionalWorkers, operation.UpdatingParameters.AdditionalWorkerNodePools, runtime.Spec.Shoot.Provider.Workers[0].Zones)
+		additionalWorkers := provisioning.CreateAdditionalWorkers(s.config, operation.CloudProvider, values, currentAdditionalWorkers, operation.UpdatingParameters.AdditionalWorkerNodePools, runtime.Spec.Shoot.Provider.Workers[0].Zones)
 		runtime.Spec.Shoot.Provider.AdditionalWorkers = &additionalWorkers
 	}
 
@@ -166,14 +168,18 @@ func (s *UpdateRuntimeStep) Run(operation internal.Operation, log *slog.Logger) 
 			// get default admin (user_id from provisioning operation)
 			runtime.Spec.Security.Administrators = []string{operation.ProvisioningParameters.ErsContext.UserID}
 		} else {
-			// some old clusters does not have an user_id
+			// some old clusters does not have a user_id
 			runtime.Spec.Security.Administrators = []string{}
 		}
 	}
 
-	if operation.ProvisioningParameters.ErsContext.LicenseType != nil {
-		disabled := *operation.ProvisioningParameters.ErsContext.DisableEnterprisePolicyFilter()
-		runtime.Spec.Security.Networking.Filter.Egress.Enabled = !disabled
+	external := broker.IsExternalCustomer(operation.ProvisioningParameters.ErsContext)
+	runtime.Spec.Security.Networking.Filter.Egress.Enabled = !external
+
+	if s.config.EnableIngressFiltering && operation.UpdatingParameters.IngressFiltering != nil {
+		// change only if the parameter is set
+		ingressFiltering := steps.IsIngressFiltering(operation.CloudProvider, operation.UpdatingParameters.IngressFiltering, external)
+		runtime.Spec.Security.Networking.Filter.Ingress = &imv1.Ingress{Enabled: ingressFiltering}
 	}
 
 	err = s.k8sClient.Update(context.Background(), &runtime)

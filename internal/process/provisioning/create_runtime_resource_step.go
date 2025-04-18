@@ -9,6 +9,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/kyma-project/kyma-environment-broker/internal/broker"
 	kebError "github.com/kyma-project/kyma-environment-broker/internal/error"
 
 	"github.com/kyma-project/kyma-environment-broker/internal/storage/dberr"
@@ -52,16 +53,16 @@ type CreateRuntimeResourceStep struct {
 	useAdditionalOIDCSchema bool
 }
 
-func NewCreateRuntimeResourceStep(os storage.Operations, is storage.Instances, k8sClient client.Client, infrastructureManagerConfig infrastructure_manager.InfrastructureManagerConfig,
+func NewCreateRuntimeResourceStep(db storage.BrokerStorage, k8sClient client.Client, infrastructureManagerConfig infrastructure_manager.InfrastructureManagerConfig,
 	oidcDefaultValues pkg.OIDCConfigDTO, useAdditionalOIDCSchema bool) *CreateRuntimeResourceStep {
 	step := &CreateRuntimeResourceStep{
-		instanceStorage:         is,
+		instanceStorage:         db.Instances(),
 		k8sClient:               k8sClient,
 		config:                  infrastructureManagerConfig,
 		oidcDefaultValues:       oidcDefaultValues,
 		useAdditionalOIDCSchema: useAdditionalOIDCSchema,
 	}
-	step.operationManager = process.NewOperationManager(os, step.Name(), kebError.InfrastructureManagerDependency)
+	step.operationManager = process.NewOperationManager(db.Operations(), step.Name(), kebError.InfrastructureManagerDependency)
 	return step
 }
 
@@ -88,6 +89,7 @@ func (s *CreateRuntimeResourceStep) Run(operation internal.Operation, log *slog.
 		log.Info(fmt.Sprintf("Runtime resource already created %s/%s: ", operation.KymaResourceNamespace, runtimeResourceName))
 		return operation, 0, nil
 	} else {
+		var backoff time.Duration
 		err = s.updateRuntimeResourceObject(*operation.ProviderValues, runtimeCR, operation, runtimeResourceName, operation.CloudProvider)
 		if err != nil {
 			return s.operationManager.OperationFailed(operation, fmt.Sprintf("while creating Runtime CR object: %s", err), err, log)
@@ -99,7 +101,7 @@ func (s *CreateRuntimeResourceStep) Run(operation internal.Operation, log *slog.
 		}
 		log.Info(fmt.Sprintf("Runtime resource %s/%s creation process finished successfully", operation.KymaResourceNamespace, runtimeResourceName))
 
-		operation, backoff, _ := s.operationManager.UpdateOperation(operation, func(op *internal.Operation) {
+		operation, backoff, _ = s.operationManager.UpdateOperation(operation, func(op *internal.Operation) {
 			op.Region = runtimeCR.Spec.Shoot.Region
 			op.CloudProvider = operation.CloudProvider
 		}, log)
@@ -121,8 +123,8 @@ func (s *CreateRuntimeResourceStep) Run(operation internal.Operation, log *slog.
 			log.Error(fmt.Sprintf("cannot update instance: %s", err))
 			return s.operationManager.RetryOperation(operation, "cannot update instance", err, dbRetryInterval, dbRetryTimeout, log)
 		}
+		return operation, 0, nil
 	}
-	return operation, 0, nil
 }
 
 func (s *CreateRuntimeResourceStep) updateRuntimeResourceObject(values internal.ProviderValues, runtime *imv1.Runtime, operation internal.Operation, runtimeName, cloudProvider string) error {
@@ -173,12 +175,17 @@ func (s *CreateRuntimeResourceStep) createSecurityConfiguration(operation intern
 		security.Administrators = operation.ProvisioningParameters.Parameters.RuntimeAdministrators
 	}
 
-	// In Runtime CR logic is positive, so we need to negate the value
-	disabled := *operation.ProvisioningParameters.ErsContext.DisableEnterprisePolicyFilter()
-	security.Networking.Filter.Egress.Enabled = !disabled
+	external := broker.IsExternalCustomer(operation.ProvisioningParameters.ErsContext)
 
-	// Ingress is not supported yet, nevertheless we set it for completeness
-	security.Networking.Filter.Ingress = &imv1.Ingress{Enabled: false}
+	// In Runtime CR logic is positive, so we need to negate the value
+	security.Networking.Filter.Egress.Enabled = !external
+
+	var ingressFiltering bool
+	if s.config.EnableIngressFiltering { // to make it easier to remove when the feature flag is not needed any more
+		ingressFiltering = steps.IsIngressFiltering(operation.CloudProvider, operation.ProvisioningParameters.Parameters.IngressFiltering, external)
+	}
+	security.Networking.Filter.Ingress = &imv1.Ingress{Enabled: ingressFiltering}
+
 	return security
 }
 
@@ -211,7 +218,7 @@ func (s *CreateRuntimeResourceStep) createShootProvider(operation *internal.Oper
 		},
 	}
 
-	if values.ProviderType != "openstack" {
+	if steps.IsNotSapConvergedCloud(operation.CloudProvider) {
 		volumeSize := strconv.Itoa(DefaultIfParamNotSet(values.VolumeSizeGb, operation.ProvisioningParameters.Parameters.VolumeSizeGb))
 		provider.Workers[0].Volume = &gardener.Volume{
 			Type:       ptr.String(values.DiskType),
@@ -220,7 +227,7 @@ func (s *CreateRuntimeResourceStep) createShootProvider(operation *internal.Oper
 	}
 
 	if len(operation.ProvisioningParameters.Parameters.AdditionalWorkerNodePools) > 0 {
-		additionalWorkers := CreateAdditionalWorkers(s.config, values, nil, operation.ProvisioningParameters.Parameters.AdditionalWorkerNodePools, values.Zones)
+		additionalWorkers := CreateAdditionalWorkers(s.config, operation.CloudProvider, values, nil, operation.ProvisioningParameters.Parameters.AdditionalWorkerNodePools, values.Zones)
 		provider.AdditionalWorkers = &additionalWorkers
 	}
 
@@ -393,7 +400,13 @@ func DefaultIfParamNotSet[T interface{}](d T, param *T) T {
 	return *param
 }
 
-func CreateAdditionalWorkers(imConfig infrastructure_manager.InfrastructureManagerConfig, values internal.ProviderValues, currentAdditionalWorkers map[string]gardener.Worker, additionalWorkerNodePools []pkg.AdditionalWorkerNodePool, zones []string) []gardener.Worker {
+func CreateAdditionalWorkers(config infrastructure_manager.InfrastructureManagerConfig,
+	cloudProvider string,
+	values internal.ProviderValues,
+	currentAdditionalWorkers map[string]gardener.Worker,
+	additionalWorkerNodePools []pkg.AdditionalWorkerNodePool,
+	haZones []string) []gardener.Worker {
+
 	additionalWorkerNodePoolsMaxUnavailable := intstr.FromInt32(int32(0))
 	workers := make([]gardener.Worker, 0, len(additionalWorkerNodePools))
 
@@ -404,7 +417,7 @@ func CreateAdditionalWorkers(imConfig infrastructure_manager.InfrastructureManag
 		if exists {
 			workerZones = currentAdditionalWorker.Zones
 		} else {
-			workerZones = zones
+			workerZones = haZones
 			if !additionalWorkerNodePool.HAZones {
 				rand.Shuffle(len(workerZones), func(i, j int) { workerZones[i], workerZones[j] = workerZones[j], workerZones[i] })
 				workerZones = workerZones[:1]
@@ -417,8 +430,8 @@ func CreateAdditionalWorkers(imConfig infrastructure_manager.InfrastructureManag
 			Machine: gardener.Machine{
 				Type: additionalWorkerNodePool.MachineType,
 				Image: &gardener.ShootMachineImage{
-					Name:    imConfig.MachineImage,
-					Version: &imConfig.MachineImageVersion,
+					Name:    config.MachineImage,
+					Version: &config.MachineImageVersion,
 				},
 			},
 			Maximum:        int32(additionalWorkerNodePool.AutoScalerMax),
@@ -428,7 +441,7 @@ func CreateAdditionalWorkers(imConfig infrastructure_manager.InfrastructureManag
 			Zones:          workerZones,
 		}
 
-		if values.ProviderType != "openstack" {
+		if steps.IsNotSapConvergedCloud(cloudProvider) {
 			volumeSize := strconv.Itoa(values.VolumeSizeGb)
 			worker.Volume = &gardener.Volume{
 				Type:       ptr.String(values.DiskType),

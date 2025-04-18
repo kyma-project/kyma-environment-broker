@@ -100,6 +100,7 @@ type ProvisioningParametersDTO struct {
 	Modules                   *ModulesDTO                `json:"modules,omitempty"`
 	ShootAndSeedSameRegion    *bool                      `json:"shootAndSeedSameRegion,omitempty"`
 	AdditionalWorkerNodePools []AdditionalWorkerNodePool `json:"additionalWorkerNodePools,omitempty"`
+	IngressFiltering          *bool                      `json:"ingressFiltering,omitempty"`
 }
 
 type AutoScalerParameters struct {

@@ -44,6 +44,7 @@ type UpdateProperties struct {
 	Administrators            *Type                          `json:"administrators,omitempty"`
 	MachineType               *Type                          `json:"machineType,omitempty"`
 	AdditionalWorkerNodePools *AdditionalWorkerNodePoolsType `json:"additionalWorkerNodePools,omitempty"`
+	IngressFiltering          *Type                          `json:"ingressFiltering,omitempty"`
 }
 
 func (up *UpdateProperties) IncludeAdditional(useAdditionalOIDCSchema bool, defaultOIDCConfig *pkg.OIDCConfigDTO, update bool) {
@@ -225,7 +226,7 @@ func NewMultipleOIDCSchema(defaultOIDCConfig *pkg.OIDCConfigDTO, update bool) *O
 	return &OIDCs{
 		Type: Type{
 			Type:        "object",
-			Description: "OIDC configration. The list-based configuration is recommended. The object-based configuration is provided for backward compatibility. The object-based configuration inputs are still writable, but only from the JSON view.",
+			Description: "OIDC configuration. The list-based configuration is recommended. The object-based configuration is provided for backward compatibility. The object-based configuration inputs are still writable, but only from the JSON view.",
 		},
 		OneOf: []any{
 			AdditionalOIDC{
@@ -476,7 +477,16 @@ func ShootAndSeedSameRegionProperty() *Type {
 		Type:        "boolean",
 		Title:       "Enforce Same Location for Seed and Shoot",
 		Default:     false,
-		Description: "If set to true a Gardener seed will be placed in the same region as the selected region from the Region field. Provisioning process will fail if no seed is availabie in the region.",
+		Description: "If set to true a Gardener seed will be placed in the same region as the selected region from the Region field. Provisioning process will fail if no seed is available in the region.",
+	}
+}
+
+func IngressFilteringProperty() *Type {
+	return &Type{
+		Type:        "boolean",
+		Title:       "Enable ingress filtering",
+		Default:     false,
+		Description: "If set to true ingress traffic from embargoed countries will be blocked.",
 	}
 }
 
@@ -542,8 +552,8 @@ func NewNetworkingSchema() *NetworkingType {
 	}
 }
 
-func NewSchema(properties interface{}, update bool, required []string) *RootSchema {
-	schema := &RootSchema{
+func NewSchema(properties interface{}, required []string) *RootSchema {
+	return &RootSchema{
 		Schema: "http://json-schema.org/draft-04/schema#",
 		Type: Type{
 			Type: "object",
@@ -553,12 +563,6 @@ func NewSchema(properties interface{}, update bool, required []string) *RootSche
 		Required:          required,
 		LoadCurrentConfig: true,
 	}
-
-	if update {
-		schema.Required = []string{}
-	}
-
-	return schema
 }
 
 func unmarshalOrPanic(from, to interface{}) interface{} {
