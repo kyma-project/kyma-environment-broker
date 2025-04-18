@@ -50,7 +50,7 @@
    }'
    ```
 
-4. To simulate the infrastructure manager and transition the Runtime to the Ready state, use the following command:
+4. To simulate Infrastructure Manager and transition the runtime to the `Ready` state, use the following command:
 
    ```bash
    make set-runtime-state RUNTIME_ID=<runtime_id> STATE=Ready
