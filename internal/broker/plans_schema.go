@@ -44,6 +44,7 @@ type UpdateProperties struct {
 	Administrators            *Type                          `json:"administrators,omitempty"`
 	MachineType               *Type                          `json:"machineType,omitempty"`
 	AdditionalWorkerNodePools *AdditionalWorkerNodePoolsType `json:"additionalWorkerNodePools,omitempty"`
+	IngressFiltering          *Type                          `json:"ingressFiltering,omitempty"`
 }
 
 func (up *UpdateProperties) IncludeAdditional(useAdditionalOIDCSchema bool, defaultOIDCConfig *pkg.OIDCConfigDTO, update bool) {

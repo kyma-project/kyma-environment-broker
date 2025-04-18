@@ -629,10 +629,12 @@ func empty() *map[string]interface{} {
 func createSchemaWithProperties(properties ProvisioningProperties, defaultOIDCConfig *pkg.OIDCConfigDTO, additionalParams, update bool, required []string, shootAndSeedSameRegion bool, shootAndSeedFeatureFlag bool, useAdditionalOIDCSchema bool) *map[string]interface{} {
 	if additionalParams {
 		properties.IncludeAdditional(useAdditionalOIDCSchema, defaultOIDCConfig, update)
-	}
-
-	if shootAndSeedFeatureFlag && additionalParams && shootAndSeedSameRegion {
-		properties.ShootAndSeedSameRegion = ShootAndSeedSameRegionProperty()
+		if shootAndSeedFeatureFlag && shootAndSeedSameRegion {
+			properties.ShootAndSeedSameRegion = ShootAndSeedSameRegionProperty()
+		}
+		//if ingressFilteringFeatureFlag {
+		//	properties.IngressFiltering = IngressFilteringProperty()
+		//}
 	}
 
 	if update {
