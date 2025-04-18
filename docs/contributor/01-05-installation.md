@@ -103,4 +103,4 @@
 
 ### Kyma Control Plane (KCP) CLI
 
-To list, filter, and observe Runtimes and their various attributes and states using the KCP CLI set the `keb-api-url` to `http://localhost:8080` in KCP configuration file.
+To list, filter, and observe runtimes and their various attributes and states using the KCP CLI, set the `keb-api-url` to `http://localhost:8080` in the KCP configuration file.
