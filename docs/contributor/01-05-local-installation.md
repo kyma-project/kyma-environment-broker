@@ -1,9 +1,12 @@
 # Install the Kyma Environment Broker Locally
 
+## Local Architecture
+
 ![Local KEB architecture](../assets/local-keb-arch.drawio.svg)
 
+The diagram illustrates the architecture based on an example provisioning request.
 1. The user sends a provisioning request.
-2. KEB requests appropriate Secret Binding.
+2. KEB requests an appropriate Secret Binding.
 3. KEB creates a Runtime resource.
 4. KEB creates a Kyma resource.
 
