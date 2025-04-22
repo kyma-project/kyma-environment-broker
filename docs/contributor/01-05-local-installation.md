@@ -1,5 +1,12 @@
 # Install the Kyma Environment Broker Locally
 
+![Local KEB architecture](../assets/local-keb-arch.drawio.svg)
+
+1. The user sends a provisioning request.
+2. KEB requests appropriate Secret Binding.
+3. KEB creates a Runtime resource.
+4. KEB creates a Kyma resource.
+
 ## Prerequisites
 
 * [kubectl](https://kubernetes.io/docs/tasks/tools/install-kubectl/)
