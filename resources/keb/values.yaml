@@ -490,3 +490,5 @@ regionsSupportingMachine: |-
     - us-central1
 
 multipleContexts: false
+
+zoneMapping: false

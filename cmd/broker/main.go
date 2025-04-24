@@ -159,6 +159,8 @@ type Config struct {
 	HapRuleFilePath string
 
 	MultipleContexts bool `envconfig:"default=false"`
+
+	ZoneMapping bool `envconfig:"default=false"`
 }
 
 type ProfilerConfig struct {
@@ -442,7 +444,7 @@ func createAPI(router *httputil.Router, servicesConfig broker.ServicesConfig, cf
 	fatalOnError(err, logs)
 	logs.Info(fmt.Sprintf("%s plan region mappings loaded", broker.SapConvergedCloudPlanName))
 
-	regionsSupportingMachine, err := regionssupportingmachine.ReadRegionsSupportingMachineFromFile(cfg.RegionsSupportingMachineFilePath)
+	regionsSupportingMachine, err := regionssupportingmachine.ReadRegionsSupportingMachineFromFile(cfg.RegionsSupportingMachineFilePath, cfg.ZoneMapping)
 	fatalOnError(err, logs)
 	logs.Info(fmt.Sprintf("Number of machine types families that are not universally supported across all regions: %d", len(regionsSupportingMachine)))
 

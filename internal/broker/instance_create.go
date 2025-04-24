@@ -83,7 +83,7 @@ type ProvisionEndpoint struct {
 
 	convergedCloudRegionsProvider ConvergedCloudRegionProvider
 
-	regionsSupportingMachine map[string][]string
+	regionsSupportingMachine regionssupportingmachine.RegionsSupportingMachine
 
 	log                    *slog.Logger
 	valuesProvider         ValuesProvider
@@ -104,7 +104,7 @@ func NewProvision(cfg Config,
 	kcBuilder kubeconfig.KcBuilder,
 	freemiumWhitelist whitelist.Set,
 	convergedCloudRegionsProvider ConvergedCloudRegionProvider,
-	regionsSupportingMachine map[string][]string,
+	regionsSupportingMachine regionssupportingmachine.RegionsSupportingMachine,
 	valuesProvider ValuesProvider,
 	useSmallerMachineTypes bool,
 ) *ProvisionEndpoint {
@@ -310,12 +310,12 @@ func (b *ProvisionEndpoint) validate(ctx context.Context, details domain.Provisi
 		return fmt.Errorf("while obtaining plan defaults: %w", err)
 	}
 
-	if !regionssupportingmachine.IsSupported(b.regionsSupportingMachine, valueOfPtr(parameters.Region), valueOfPtr(parameters.MachineType)) {
+	if !b.regionsSupportingMachine.IsSupported(valueOfPtr(parameters.Region), valueOfPtr(parameters.MachineType)) {
 		return fmt.Errorf(
 			"In the region %s, the machine type %s is not available, it is supported in the %v",
 			valueOfPtr(parameters.Region),
 			valueOfPtr(parameters.MachineType),
-			strings.Join(regionssupportingmachine.SupportedRegions(b.regionsSupportingMachine, valueOfPtr(parameters.MachineType)), ", "),
+			strings.Join(b.regionsSupportingMachine.SupportedRegions(valueOfPtr(parameters.MachineType)), ", "),
 		)
 	}
 
@@ -510,12 +510,12 @@ func checkGPUMachinesUsage(additionalWorkerNodePools []pkg.AdditionalWorkerNodeP
 	return fmt.Errorf("%s", errorMsg.String())
 }
 
-func checkUnsupportedMachines(regionsSupportingMachine map[string][]string, region string, additionalWorkerNodePools []pkg.AdditionalWorkerNodePool) error {
+func checkUnsupportedMachines(regionsSupportingMachine regionssupportingmachine.RegionsSupportingMachine, region string, additionalWorkerNodePools []pkg.AdditionalWorkerNodePool) error {
 	unsupportedMachines := make(map[string][]string)
 	var orderedMachineTypes []string
 
 	for _, pool := range additionalWorkerNodePools {
-		if !regionssupportingmachine.IsSupported(regionsSupportingMachine, region, pool.MachineType) {
+		if !regionsSupportingMachine.IsSupported(region, pool.MachineType) {
 			if _, exists := unsupportedMachines[pool.MachineType]; !exists {
 				orderedMachineTypes = append(orderedMachineTypes, pool.MachineType)
 			}
@@ -534,7 +534,7 @@ func checkUnsupportedMachines(regionsSupportingMachine map[string][]string, regi
 		if i > 0 {
 			errorMsg.WriteString("; ")
 		}
-		availableRegions := strings.Join(regionssupportingmachine.SupportedRegions(regionsSupportingMachine, machineType), ", ")
+		availableRegions := strings.Join(regionsSupportingMachine.SupportedRegions(machineType), ", ")
 		errorMsg.WriteString(fmt.Sprintf("%s (used in: %s), it is supported in the %s", machineType, strings.Join(unsupportedMachines[machineType], ", "), availableRegions))
 	}
 

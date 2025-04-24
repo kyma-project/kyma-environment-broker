@@ -10,10 +10,6 @@ import (
 	"os"
 	"testing"
 
-	"github.com/kyma-project/kyma-environment-broker/internal/whitelist"
-
-	"github.com/pivotal-cf/brokerapi/v12/domain/apiresponses"
-
 	"github.com/kyma-project/kyma-environment-broker/common/gardener"
 	pkg "github.com/kyma-project/kyma-environment-broker/common/runtime"
 	"github.com/kyma-project/kyma-environment-broker/internal"
@@ -23,8 +19,12 @@ import (
 	kcMock "github.com/kyma-project/kyma-environment-broker/internal/kubeconfig/automock"
 	"github.com/kyma-project/kyma-environment-broker/internal/middleware"
 	"github.com/kyma-project/kyma-environment-broker/internal/ptr"
+	"github.com/kyma-project/kyma-environment-broker/internal/regionssupportingmachine"
 	"github.com/kyma-project/kyma-environment-broker/internal/storage"
+	"github.com/kyma-project/kyma-environment-broker/internal/whitelist"
+
 	"github.com/pivotal-cf/brokerapi/v12/domain"
+	"github.com/pivotal-cf/brokerapi/v12/domain/apiresponses"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
@@ -2257,7 +2257,7 @@ func TestUnsupportedMachineType(t *testing.T) {
 	t.Logf("%+v\n", *provisionEndpoint)
 
 	// then
-	assert.EqualError(t, err, "In the region europe-west3, the machine type c2d-highmem-32 is not available, it is supported in the us-central1, southamerica-east1")
+	assert.EqualError(t, err, "In the region europe-west3, the machine type c2d-highmem-32 is not available, it is supported in the southamerica-east1, us-central1")
 }
 
 func TestUnsupportedMachineTypeInAdditionalWorkerNodePools(t *testing.T) {
@@ -2570,11 +2570,23 @@ func fixDNSProviders() gardener.DNSProvidersData {
 	}
 }
 
-func fixRegionsSupportingMachine() map[string][]string {
-	return map[string][]string{
-		"m8g":         {"ap-northeast-1", "ap-southeast-1", "ca-central-1"},
-		"m7g":         {"us-west-2"},
-		"c2d-highmem": {"us-central1", "southamerica-east1"},
-		"Standard_D":  {"uksouth", "brazilsouth"},
+func fixRegionsSupportingMachine() regionssupportingmachine.RegionsSupportingMachine {
+	return regionssupportingmachine.RegionsSupportingMachine{
+		"m8g": {
+			"ap-northeast-1": nil,
+			"ap-southeast-1": nil,
+			"ca-central-1":   nil,
+		},
+		"m7g": {
+			"us-west-2": nil,
+		},
+		"c2d-highmem": {
+			"us-central1":        nil,
+			"southamerica-east1": nil,
+		},
+		"Standard_D": {
+			"uksouth":     nil,
+			"brazilsouth": nil,
+		},
 	}
 }

@@ -59,7 +59,7 @@ type UpdateEndpoint struct {
 
 	convergedCloudRegionsProvider ConvergedCloudRegionProvider
 
-	regionsSupportingMachine map[string][]string
+	regionsSupportingMachine regionssupportingmachine.RegionsSupportingMachine
 
 	kcpClient              client.Client
 	valuesProvider         ValuesProvider
@@ -80,7 +80,7 @@ func NewUpdate(cfg Config,
 	kcBuilder kubeconfig.KcBuilder,
 	convergedCloudRegionsProvider ConvergedCloudRegionProvider,
 	kcpClient client.Client,
-	regionsSupportingMachine map[string][]string,
+	regionsSupportingMachine regionssupportingmachine.RegionsSupportingMachine,
 	useSmallerMachineTypes bool,
 ) *UpdateEndpoint {
 	return &UpdateEndpoint{
@@ -243,12 +243,12 @@ func (b *UpdateEndpoint) processUpdateParameters(instance *internal.Instance, de
 		logger.Debug(fmt.Sprintf("Updating with params: %+v", params))
 	}
 
-	if !regionssupportingmachine.IsSupported(b.regionsSupportingMachine, valueOfPtr(instance.Parameters.Parameters.Region), valueOfPtr(params.MachineType)) {
+	if !b.regionsSupportingMachine.IsSupported(valueOfPtr(instance.Parameters.Parameters.Region), valueOfPtr(params.MachineType)) {
 		message := fmt.Sprintf(
 			"In the region %s, the machine type %s is not available, it is supported in the %v",
 			valueOfPtr(instance.Parameters.Parameters.Region),
 			valueOfPtr(params.MachineType),
-			strings.Join(regionssupportingmachine.SupportedRegions(b.regionsSupportingMachine, valueOfPtr(params.MachineType)), ", "),
+			strings.Join(b.regionsSupportingMachine.SupportedRegions(valueOfPtr(params.MachineType)), ", "),
 		)
 		return domain.UpdateServiceSpec{}, apiresponses.NewFailureResponse(fmt.Errorf("%s", message), http.StatusBadRequest, message)
 	}

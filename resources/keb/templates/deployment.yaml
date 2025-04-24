@@ -269,6 +269,8 @@ spec:
               value: /config/regionsSupportingMachine.yaml
             - name: APP_MULTIPLE_CONTEXTS
               value: "{{ .Values.multipleContexts }}"
+            - name: APP_ZONE_MAPPING
+              value: "{{ .Values.zoneMapping }}"
           ports:
             - name: http
               containerPort: {{ .Values.broker.port }}
