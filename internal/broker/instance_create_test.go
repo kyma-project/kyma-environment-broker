@@ -86,6 +86,7 @@ func TestProvision_Provision(t *testing.T) {
 			nil,
 			fixValueProvider(),
 			false,
+			false,
 		)
 
 		// when
@@ -156,6 +157,7 @@ func TestProvision_Provision(t *testing.T) {
 			&broker.OneForAllConvergedCloudRegionsProvider{},
 			nil,
 			fixValueProvider(),
+			false,
 			false,
 		)
 
@@ -232,6 +234,7 @@ func TestProvision_Provision(t *testing.T) {
 			nil,
 			fixValueProvider(),
 			false,
+			false,
 		)
 
 		// when
@@ -277,6 +280,7 @@ func TestProvision_Provision(t *testing.T) {
 			&broker.OneForAllConvergedCloudRegionsProvider{},
 			nil,
 			fixValueProvider(),
+			false,
 			false,
 		)
 
@@ -348,6 +352,7 @@ func TestProvision_Provision(t *testing.T) {
 			&broker.OneForAllConvergedCloudRegionsProvider{},
 			nil,
 			fixValueProvider(),
+			false,
 			false,
 		)
 
@@ -422,6 +427,7 @@ func TestProvision_Provision(t *testing.T) {
 			nil,
 			fixValueProvider(),
 			false,
+			false,
 		)
 
 		// when
@@ -468,6 +474,7 @@ func TestProvision_Provision(t *testing.T) {
 			&broker.OneForAllConvergedCloudRegionsProvider{},
 			nil,
 			fixValueProvider(),
+			false,
 			false,
 		)
 
@@ -516,6 +523,7 @@ func TestProvision_Provision(t *testing.T) {
 			&broker.OneForAllConvergedCloudRegionsProvider{},
 			nil,
 			fixValueProvider(),
+			false,
 			false,
 		)
 
@@ -579,6 +587,7 @@ func TestProvision_Provision(t *testing.T) {
 			nil,
 			fixValueProvider(),
 			false,
+			false,
 		)
 
 		// when
@@ -641,6 +650,7 @@ func TestProvision_Provision(t *testing.T) {
 			nil,
 			fixValueProvider(),
 			false,
+			false,
 		)
 
 		// when
@@ -683,6 +693,7 @@ func TestProvision_Provision(t *testing.T) {
 			nil,
 			fixValueProvider(),
 			false,
+			false,
 		)
 
 		// when
@@ -720,6 +731,7 @@ func TestProvision_Provision(t *testing.T) {
 			nil,
 			fixValueProvider(),
 			false,
+			false,
 		)
 
 		// when
@@ -755,6 +767,7 @@ func TestProvision_Provision(t *testing.T) {
 			&broker.OneForAllConvergedCloudRegionsProvider{},
 			nil,
 			fixValueProvider(),
+			false,
 			false,
 		)
 
@@ -798,6 +811,7 @@ func TestProvision_Provision(t *testing.T) {
 			&broker.OneForAllConvergedCloudRegionsProvider{},
 			nil,
 			fixValueProvider(),
+			false,
 			false,
 		)
 
@@ -846,6 +860,7 @@ func TestProvision_Provision(t *testing.T) {
 			&broker.OneForAllConvergedCloudRegionsProvider{},
 			nil,
 			fixValueProvider(),
+			false,
 			false,
 		)
 
@@ -901,6 +916,7 @@ func TestProvision_Provision(t *testing.T) {
 			nil,
 			fixValueProvider(),
 			false,
+			false,
 		)
 
 		oidcParams := `"clientID":"client-id","issuerURL":"https://test.local","signingAlgs":["RS256","notValid"]`
@@ -953,6 +969,7 @@ func TestProvision_Provision(t *testing.T) {
 			&broker.OneForAllConvergedCloudRegionsProvider{},
 			nil,
 			fixValueProvider(),
+			false,
 			false,
 		)
 
@@ -1010,6 +1027,7 @@ func TestProvision_Provision(t *testing.T) {
 			nil,
 			fixValueProvider(),
 			false,
+			false,
 		)
 
 		oidcParams := `"clientID":"client-id","issuerURL":"https://test.local","signingAlgs":["RS256"],"requiredClaims":["claim=value"]`
@@ -1063,6 +1081,7 @@ func TestProvision_Provision(t *testing.T) {
 			&broker.OneForAllConvergedCloudRegionsProvider{},
 			nil,
 			fixValueProvider(),
+			false,
 			false,
 		)
 
@@ -1160,6 +1179,7 @@ func TestProvision_Provision(t *testing.T) {
 			nil,
 			fixValueProvider(),
 			false,
+			false,
 		)
 
 		testCases := []struct {
@@ -1244,6 +1264,7 @@ func TestProvision_Provision(t *testing.T) {
 			nil,
 			fixValueProvider(),
 			false,
+			false,
 		)
 
 		oidcParams := `"clientID":"client-id","issuerURL":"https://test.local","signingAlgs":["RS256"]`
@@ -1285,6 +1306,7 @@ func TestProvision_Provision(t *testing.T) {
 			&broker.OneForAllConvergedCloudRegionsProvider{},
 			nil,
 			fixValueProvider(),
+			false,
 			false,
 		)
 
@@ -1350,6 +1372,7 @@ func TestProvision_Provision(t *testing.T) {
 			nil,
 			fixValueProvider(),
 			false,
+			false,
 		)
 
 		// when
@@ -1404,6 +1427,7 @@ func TestProvision_Provision(t *testing.T) {
 			nil,
 			fixValueProvider(),
 			false,
+			false,
 		)
 
 		// when
@@ -1456,6 +1480,7 @@ func TestProvision_Provision(t *testing.T) {
 			nil,
 			fixValueProvider(),
 			false,
+			false,
 		)
 
 		// when
@@ -1497,6 +1522,7 @@ func TestProvision_Provision(t *testing.T) {
 			&broker.OneForAllConvergedCloudRegionsProvider{},
 			nil,
 			fixValueProvider(),
+			false,
 			false,
 		)
 
@@ -1542,6 +1568,7 @@ func TestProvision_Provision(t *testing.T) {
 			&broker.OneForAllConvergedCloudRegionsProvider{},
 			nil,
 			fixValueProvider(),
+			false,
 			false,
 		)
 
@@ -1590,6 +1617,7 @@ func TestProvision_Provision(t *testing.T) {
 			&broker.OneForAllConvergedCloudRegionsProvider{},
 			nil,
 			fixValueProvider(),
+			false,
 			false,
 		)
 
@@ -1722,6 +1750,7 @@ func TestAdditionalWorkerNodePools(t *testing.T) {
 				nil,
 				fixValueProvider(),
 				false,
+				false,
 			)
 
 			// when
@@ -1784,6 +1813,7 @@ func TestAdditionalWorkerNodePoolsForUnsupportedPlans(t *testing.T) {
 				&broker.OneForAllConvergedCloudRegionsProvider{},
 				nil,
 				fixValueProvider(),
+				false,
 				false,
 			)
 
@@ -1935,6 +1965,7 @@ func TestNetworkingValidation(t *testing.T) {
 				nil,
 				fixValueProvider(),
 				false,
+				false,
 			)
 
 			// when
@@ -2033,6 +2064,7 @@ func TestRegionValidation(t *testing.T) {
 				nil,
 				fixValueProvider(),
 				false,
+				false,
 			)
 
 			// when
@@ -2092,6 +2124,7 @@ func TestSapConvergedCloudBlocking(t *testing.T) {
 			nil,
 			fixValueProvider(),
 			false,
+			false,
 		)
 
 		oidcParams := `"clientID":"client-id","issuerURL":"https://test.local","signingAlgs":["RS256"]`
@@ -2139,6 +2172,7 @@ func TestSapConvergedCloudBlocking(t *testing.T) {
 			nil,
 			fixValueProvider(),
 			false,
+			false,
 		)
 
 		oidcParams := `"clientID":"client-id","issuerURL":"https://test.local","signingAlgs":["RS256"]`
@@ -2184,6 +2218,7 @@ func TestSapConvergedCloudBlocking(t *testing.T) {
 			&broker.OneForAllConvergedCloudRegionsProvider{},
 			nil,
 			fixValueProvider(),
+			false,
 			false,
 		)
 
@@ -2245,6 +2280,7 @@ func TestUnsupportedMachineType(t *testing.T) {
 		fixRegionsSupportingMachine(),
 		fixValueProvider(),
 		false,
+		false,
 	)
 
 	// when
@@ -2294,6 +2330,7 @@ func TestUnsupportedMachineTypeInAdditionalWorkerNodePools(t *testing.T) {
 		&broker.OneForAllConvergedCloudRegionsProvider{},
 		fixRegionsSupportingMachine(),
 		fixValueProvider(),
+		false,
 		false,
 	)
 
@@ -2371,6 +2408,7 @@ func TestGPUMachineForInternalUser(t *testing.T) {
 		fixRegionsSupportingMachine(),
 		fixValueProvider(),
 		false,
+		false,
 	)
 
 	additionalWorkerNodePools := `[{"name": "name-1", "machineType": "g6.xlarge", "haZones": true, "autoScalerMin": 3, "autoScalerMax": 20}]`
@@ -2418,6 +2456,7 @@ func TestGPUMachinesForExternalCustomer(t *testing.T) {
 		&broker.OneForAllConvergedCloudRegionsProvider{},
 		fixRegionsSupportingMachine(),
 		fixValueProvider(),
+		false,
 		false,
 	)
 
@@ -2518,6 +2557,56 @@ func TestGPUMachinesForExternalCustomer(t *testing.T) {
 	}
 }
 
+func TestAvailableZonesValidation(t *testing.T) {
+	// given
+	log := slog.New(slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{
+		Level: slog.LevelInfo,
+	}))
+
+	memoryStorage := storage.NewMemoryStorage()
+
+	queue := &automock.Queue{}
+	queue.On("Add", mock.AnythingOfType("string"))
+
+	kcBuilder := &kcMock.KcBuilder{}
+	kcBuilder.On("GetServerURL", "").Return("", fmt.Errorf("error"))
+	// #create provisioner endpoint
+	provisionEndpoint := broker.NewProvision(
+		broker.Config{
+			EnablePlans:          []string{"aws"},
+			URL:                  brokerURL,
+			OnlySingleTrialPerGA: true,
+		},
+		gardener.Config{Project: "test", ShootDomain: "example.com", DNSProviders: fixDNSProviders()},
+		memoryStorage,
+		queue,
+		broker.PlansConfig{},
+		log,
+		dashboardConfig,
+		kcBuilder,
+		whitelist.Set{},
+		&broker.OneForAllConvergedCloudRegionsProvider{},
+		fixRegionsSupportingMachine(),
+		fixValueProvider(),
+		false,
+		true,
+	)
+
+	additionalWorkerNodePools := `[{"name": "name-1", "machineType": "g6.xlarge", "haZones": true, "autoScalerMin": 3, "autoScalerMax": 20}]`
+
+	// when
+	_, err := provisionEndpoint.Provision(fixRequestContext(t, "cf-eu10"), instanceID, domain.ProvisionDetails{
+		ServiceID:     serviceID,
+		PlanID:        broker.AWSPlanID,
+		RawParameters: json.RawMessage(fmt.Sprintf(`{"name": "%s", "region": "%s", "additionalWorkerNodePools": %s }`, clusterName, "us-east-1", additionalWorkerNodePools)),
+		RawContext:    json.RawMessage(fmt.Sprintf(`{"globalaccount_id": "%s", "subaccount_id": "%s", "user_id": "%s"}`, "any-global-account-id", subAccountID, "Test@Test.pl")),
+	}, true)
+	t.Logf("%+v\n", *provisionEndpoint)
+
+	// then
+	assert.EqualError(t, err, "In the us-east-1, the g6.xlarge machine type is not available in 3 zones. If you want to use this machine type, set HA to false.")
+}
+
 func fixExistOperation() internal.Operation {
 	provisioningOperation := fixture.FixProvisioningOperation(existOperationID, instanceID)
 	ptrClusterRegion := clusterRegion
@@ -2587,6 +2676,11 @@ func fixRegionsSupportingMachine() regionssupportingmachine.RegionsSupportingMac
 		"Standard_D": {
 			"uksouth":     nil,
 			"brazilsouth": nil,
+		},
+		"g6": {
+			"us-east-1":    []string{"a"},
+			"westeurope":   []string{"b"},
+			"eu-central-1": nil,
 		},
 	}
 }

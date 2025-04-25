@@ -88,6 +88,7 @@ type ProvisionEndpoint struct {
 	log                    *slog.Logger
 	valuesProvider         ValuesProvider
 	useSmallerMachineTypes bool
+	zoneMapping            bool
 }
 
 const (
@@ -107,6 +108,7 @@ func NewProvision(cfg Config,
 	regionsSupportingMachine regionssupportingmachine.RegionsSupportingMachine,
 	valuesProvider ValuesProvider,
 	useSmallerMachineTypes bool,
+	zoneMapping bool,
 ) *ProvisionEndpoint {
 	enabledPlanIDs := map[string]struct{}{}
 	for _, planName := range cfg.EnablePlans {
@@ -133,6 +135,7 @@ func NewProvision(cfg Config,
 		regionsSupportingMachine:      regionsSupportingMachine,
 		valuesProvider:                valuesProvider,
 		useSmallerMachineTypes:        useSmallerMachineTypes,
+		zoneMapping:                   zoneMapping,
 	}
 }
 
@@ -345,6 +348,11 @@ func (b *ProvisionEndpoint) validate(ctx context.Context, details domain.Provisi
 			if err := additionalWorkerNodePool.Validate(); err != nil {
 				return apiresponses.NewFailureResponse(err, http.StatusUnprocessableEntity, err.Error())
 			}
+			if b.zoneMapping {
+				if err := checkAvailableZones(b.regionsSupportingMachine, additionalWorkerNodePool, valueOfPtr(parameters.Region), details.PlanID); err != nil {
+					return apiresponses.NewFailureResponse(err, http.StatusUnprocessableEntity, err.Error())
+				}
+			}
 		}
 		if isExternalCustomer(provisioningParameters.ErsContext) {
 			if err := checkGPUMachinesUsage(parameters.AdditionalWorkerNodePools); err != nil {
@@ -539,6 +547,17 @@ func checkUnsupportedMachines(regionsSupportingMachine regionssupportingmachine.
 	}
 
 	return fmt.Errorf("%s", errorMsg.String())
+}
+
+func checkAvailableZones(regionsSupportingMachine regionssupportingmachine.RegionsSupportingMachine, additionalWorkerNodePool pkg.AdditionalWorkerNodePool, region, planID string) error {
+	zones, err := regionsSupportingMachine.AvailableZones(additionalWorkerNodePool.MachineType, region, planID)
+	if err != nil {
+		return fmt.Errorf("while getting available zones: %w", err)
+	}
+	if len(zones) > 0 && len(zones) < 3 && additionalWorkerNodePool.HAZones {
+		return fmt.Errorf("In the %s, the %s machine type is not available in 3 zones. If you want to use this machine type, set HA to false.", region, additionalWorkerNodePool.MachineType)
+	}
+	return nil
 }
 
 // Rudimentary kubeconfig validation
