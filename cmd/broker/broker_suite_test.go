@@ -13,52 +13,45 @@ import (
 	"testing"
 	"time"
 
-	"github.com/stretchr/testify/mock"
-
-	"golang.org/x/exp/maps"
-	"k8s.io/apimachinery/pkg/util/sets"
-
-	corev1 "k8s.io/api/core/v1"
-
-	"github.com/kyma-project/kyma-environment-broker/common/hyperscaler/rules"
-
-	"github.com/gardener/gardener/pkg/apis/core/v1beta1"
-
-	"github.com/kyma-project/kyma-environment-broker/internal/customresources"
-	"github.com/kyma-project/kyma-environment-broker/internal/httputil"
-
-	"github.com/kyma-project/kyma-environment-broker/internal/storage/dberr"
-
 	imv1 "github.com/kyma-project/infrastructure-manager/api/v1"
-
-	"github.com/kyma-project/kyma-environment-broker/internal/kubeconfig"
-	"github.com/kyma-project/kyma-environment-broker/internal/metricsv2"
-	"github.com/prometheus/client_golang/prometheus/promhttp"
-	"github.com/prometheus/client_golang/prometheus/testutil"
-
-	"code.cloudfoundry.org/lager"
-	"github.com/google/uuid"
 	"github.com/kyma-project/kyma-environment-broker/common/gardener"
+	"github.com/kyma-project/kyma-environment-broker/common/hyperscaler/rules"
 	pkg "github.com/kyma-project/kyma-environment-broker/common/runtime"
 	"github.com/kyma-project/kyma-environment-broker/internal"
 	"github.com/kyma-project/kyma-environment-broker/internal/broker"
 	kebConfig "github.com/kyma-project/kyma-environment-broker/internal/config"
+	"github.com/kyma-project/kyma-environment-broker/internal/customresources"
 	"github.com/kyma-project/kyma-environment-broker/internal/edp"
 	"github.com/kyma-project/kyma-environment-broker/internal/event"
 	"github.com/kyma-project/kyma-environment-broker/internal/expiration"
 	"github.com/kyma-project/kyma-environment-broker/internal/fixture"
+	"github.com/kyma-project/kyma-environment-broker/internal/httputil"
+	"github.com/kyma-project/kyma-environment-broker/internal/kubeconfig"
 	kcMock "github.com/kyma-project/kyma-environment-broker/internal/kubeconfig/automock"
+	"github.com/kyma-project/kyma-environment-broker/internal/metricsv2"
 	"github.com/kyma-project/kyma-environment-broker/internal/process"
 	"github.com/kyma-project/kyma-environment-broker/internal/process/steps"
+	"github.com/kyma-project/kyma-environment-broker/internal/regionssupportingmachine"
 	kebRuntime "github.com/kyma-project/kyma-environment-broker/internal/runtime"
 	"github.com/kyma-project/kyma-environment-broker/internal/storage"
+	"github.com/kyma-project/kyma-environment-broker/internal/storage/dberr"
+
+	"code.cloudfoundry.org/lager"
+	"github.com/gardener/gardener/pkg/apis/core/v1beta1"
+	"github.com/google/uuid"
 	"github.com/pivotal-cf/brokerapi/v12/domain"
 	"github.com/pivotal-cf/brokerapi/v12/domain/apiresponses"
+	"github.com/prometheus/client_golang/prometheus/promhttp"
+	"github.com/prometheus/client_golang/prometheus/testutil"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
+	"golang.org/x/exp/maps"
+	corev1 "k8s.io/api/core/v1"
 	apiextensionsv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime/schema"
+	"k8s.io/apimachinery/pkg/util/sets"
 	"k8s.io/client-go/dynamic"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/client/fake"
@@ -212,13 +205,14 @@ func NewBrokerSuiteTestWithConfig(t *testing.T, cfg *Config, version ...string) 
 	}
 
 	provisioningQueue := NewProvisioningProcessingQueue(context.Background(), provisionManager, workersAmount, cfg, db, configProvider,
-		edpClient, accountProvider, k8sClientProvider, cli, gardenerClientWithNamespace, defaultOIDCValues(), log, rulesService)
+		edpClient, accountProvider, k8sClientProvider, cli, gardenerClientWithNamespace, defaultOIDCValues(), log, rulesService,
+		regionsSupportingMachine())
 
 	provisioningQueue.SpeedUp(10000)
 	provisionManager.SpeedUp(10000)
 
 	updateManager := process.NewStagedManager(db.Operations(), eventBroker, time.Hour, cfg.Update, log.With("update", "manager"))
-	updateQueue := NewUpdateProcessingQueue(context.Background(), updateManager, 1, db, *cfg, cli, log)
+	updateQueue := NewUpdateProcessingQueue(context.Background(), updateManager, 1, db, *cfg, cli, log, regionsSupportingMachine())
 	updateQueue.SpeedUp(10000)
 	updateManager.SpeedUp(10000)
 
@@ -272,6 +266,20 @@ func defaultOIDCValues() pkg.OIDCConfigDTO {
 		SigningAlgs:    []string{"RS256"},
 		UsernameClaim:  "sub",
 		UsernamePrefix: "-",
+	}
+}
+
+func regionsSupportingMachine() regionssupportingmachine.RegionsSupportingMachine {
+	return regionssupportingmachine.RegionsSupportingMachine{
+		"c7i": {
+			"us-east-1": {"w", "x", "y", "z"},
+		},
+		"g6": {
+			"us-east-1": {"x", "y"},
+		},
+		"g4dn": {
+			"us-east-1": {"x"},
+		},
 	}
 }
 
@@ -356,7 +364,8 @@ func (s *BrokerSuiteTest) CreateAPI(cfg *Config, db storage.BrokerStorage, provi
 	kcBuilder.On("Build", nil).Return("--kubeconfig file", nil)
 	kcBuilder.On("GetServerURL", mock.Anything).Return("https://api.server.url.dummy", nil)
 	createAPI(s.router, servicesConfig, cfg, db, provisioningQueue, deprovisionQueue, updateQueue,
-		lager.NewLogger("api"), log, kcBuilder, skrK8sClientProvider, skrK8sClientProvider, fakeKcpK8sClient, eventBroker, defaultOIDCValues())
+		lager.NewLogger("api"), log, kcBuilder, skrK8sClientProvider, skrK8sClientProvider, fakeKcpK8sClient, eventBroker, defaultOIDCValues(),
+		regionssupportingmachine.RegionsSupportingMachine{})
 
 	s.httpServer = httptest.NewServer(s.router)
 }
@@ -898,4 +907,18 @@ func (s *BrokerSuiteTest) assertAdditionalWorkerIsCreated(t *testing.T, provider
 	assert.Equal(t, int32(autoScalerMax), worker.Maximum)
 	assert.Equal(t, zonesNumer, worker.MaxSurge.IntValue())
 	assert.Len(t, worker.Zones, zonesNumer)
+}
+
+func (s *BrokerSuiteTest) assertAdditionalWorkerZones(t *testing.T, provider imv1.Provider, name string, zonesNumber int, zones ...string) {
+	var worker *v1beta1.Worker
+	for _, additionalWorker := range *provider.AdditionalWorkers {
+		if additionalWorker.Name == name {
+			worker = &additionalWorker
+		}
+	}
+	require.NotNil(t, worker)
+	assert.Len(t, worker.Zones, zonesNumber)
+	for _, v := range worker.Zones {
+		assert.Contains(t, zones, v)
+	}
 }

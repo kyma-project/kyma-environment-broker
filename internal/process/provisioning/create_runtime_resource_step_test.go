@@ -8,34 +8,26 @@ import (
 	"strings"
 	"testing"
 
+	pkg "github.com/kyma-project/kyma-environment-broker/common/runtime"
+	"github.com/kyma-project/kyma-environment-broker/internal"
+	"github.com/kyma-project/kyma-environment-broker/internal/broker"
 	"github.com/kyma-project/kyma-environment-broker/internal/customresources"
-
-	"github.com/kyma-project/kyma-environment-broker/internal/provider"
-
-	"github.com/pivotal-cf/brokerapi/v12/domain"
-
+	"github.com/kyma-project/kyma-environment-broker/internal/fixture"
 	"github.com/kyma-project/kyma-environment-broker/internal/networking"
+	"github.com/kyma-project/kyma-environment-broker/internal/process/infrastructure_manager"
+	"github.com/kyma-project/kyma-environment-broker/internal/provider"
+	"github.com/kyma-project/kyma-environment-broker/internal/ptr"
+	"github.com/kyma-project/kyma-environment-broker/internal/regionssupportingmachine"
+	"github.com/kyma-project/kyma-environment-broker/internal/storage"
 
 	gardener "github.com/gardener/gardener/pkg/apis/core/v1beta1"
-
-	"github.com/kyma-project/kyma-environment-broker/internal/ptr"
-
 	imv1 "github.com/kyma-project/infrastructure-manager/api/v1"
-	"github.com/kyma-project/kyma-environment-broker/internal/broker"
-
-	"github.com/kyma-project/kyma-environment-broker/internal/process/infrastructure_manager"
-
-	"github.com/kyma-project/kyma-environment-broker/internal"
+	"github.com/pivotal-cf/brokerapi/v12/domain"
+	"github.com/stretchr/testify/assert"
+	"k8s.io/client-go/kubernetes/scheme"
 	"k8s.io/client-go/tools/clientcmd"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/client/fake"
-
-	"github.com/kyma-project/kyma-environment-broker/internal/fixture"
-	"github.com/kyma-project/kyma-environment-broker/internal/storage"
-	"github.com/stretchr/testify/assert"
-
-	pkg "github.com/kyma-project/kyma-environment-broker/common/runtime"
-	"k8s.io/client-go/kubernetes/scheme"
 )
 
 const (
@@ -102,7 +94,7 @@ func TestCreateRuntimeResourceStep_AllCustom(t *testing.T) {
 		GroupsPrefix: ptr.String("-"),
 	}
 	cli := getClientForTests(t)
-	step := NewCreateRuntimeResourceStep(memoryStorage.Operations(), memoryStorage.Instances(), cli, inputConfig, defaultOIDSConfig, true)
+	step := NewCreateRuntimeResourceStep(memoryStorage.Operations(), memoryStorage.Instances(), cli, inputConfig, defaultOIDSConfig, true, regionssupportingmachine.RegionsSupportingMachine{}, false)
 
 	// when
 	_, repeat, err := step.Run(operation, fixLogger())
@@ -162,7 +154,7 @@ func TestCreateRuntimeResourceStep_AllCustomWithOIDCList(t *testing.T) {
 		GroupsPrefix: ptr.String("-"),
 	}
 	cli := getClientForTests(t)
-	step := NewCreateRuntimeResourceStep(memoryStorage.Operations(), memoryStorage.Instances(), cli, inputConfig, defaultOIDSConfig, true)
+	step := NewCreateRuntimeResourceStep(memoryStorage.Operations(), memoryStorage.Instances(), cli, inputConfig, defaultOIDSConfig, true, regionssupportingmachine.RegionsSupportingMachine{}, false)
 
 	// when
 	_, repeat, err := step.Run(operation, fixLogger())
@@ -235,7 +227,7 @@ func TestCreateRuntimeResourceStep_HandleMultipleAdditionalOIDC(t *testing.T) {
 		GroupsPrefix:   ptr.String("-"),
 	}
 	cli := getClientForTests(t)
-	step := NewCreateRuntimeResourceStep(memoryStorage.Operations(), memoryStorage.Instances(), cli, inputConfig, defaultOIDSConfig, true)
+	step := NewCreateRuntimeResourceStep(memoryStorage.Operations(), memoryStorage.Instances(), cli, inputConfig, defaultOIDSConfig, true, regionssupportingmachine.RegionsSupportingMachine{}, false)
 	// when
 	_, repeat, err := step.Run(operation, fixLogger())
 
@@ -286,7 +278,7 @@ func TestCreateRuntimeResourceStep_OIDC_MixedCustom(t *testing.T) {
 		GroupsPrefix:   ptr.String("-"),
 	}
 	cli := getClientForTests(t)
-	step := NewCreateRuntimeResourceStep(memoryStorage.Operations(), memoryStorage.Instances(), cli, inputConfig, defaultOIDSConfig, true)
+	step := NewCreateRuntimeResourceStep(memoryStorage.Operations(), memoryStorage.Instances(), cli, inputConfig, defaultOIDSConfig, true, regionssupportingmachine.RegionsSupportingMachine{}, false)
 
 	// when
 	_, repeat, err := step.Run(operation, fixLogger())
@@ -316,7 +308,7 @@ func TestCreateRuntimeResourceStep_HandleEmptyOIDCList(t *testing.T) {
 	}
 	assertInsertions(t, memoryStorage, instance, operation)
 	cli := getClientForTests(t)
-	step := NewCreateRuntimeResourceStep(memoryStorage.Operations(), memoryStorage.Instances(), cli, inputConfig, defaultOIDSConfig, true)
+	step := NewCreateRuntimeResourceStep(memoryStorage.Operations(), memoryStorage.Instances(), cli, inputConfig, defaultOIDSConfig, true, regionssupportingmachine.RegionsSupportingMachine{}, false)
 
 	// when
 	_, repeat, err := step.Run(operation, fixLogger())
@@ -359,7 +351,7 @@ func TestCreateRuntimeResourceStep_HandleNotNilOIDCWithoutListOrObject(t *testin
 		GroupsPrefix:   ptr.String("-"),
 	}
 	cli := getClientForTests(t)
-	step := NewCreateRuntimeResourceStep(memoryStorage.Operations(), memoryStorage.Instances(), cli, inputConfig, defaultOIDSConfig, true)
+	step := NewCreateRuntimeResourceStep(memoryStorage.Operations(), memoryStorage.Instances(), cli, inputConfig, defaultOIDSConfig, true, regionssupportingmachine.RegionsSupportingMachine{}, false)
 
 	// when
 	_, repeat, err := step.Run(operation, fixLogger())
@@ -397,7 +389,7 @@ func TestCreateRuntimeResourceStep_FailureToleranceForTrial(t *testing.T) {
 
 	cli := getClientForTests(t)
 
-	step := NewCreateRuntimeResourceStep(memoryStorage.Operations(), memoryStorage.Instances(), cli, inputConfig, defaultOIDSConfig, true)
+	step := NewCreateRuntimeResourceStep(memoryStorage.Operations(), memoryStorage.Instances(), cli, inputConfig, defaultOIDSConfig, true, regionssupportingmachine.RegionsSupportingMachine{}, false)
 
 	// when
 	_, _, err := step.Run(operation, fixLogger())
@@ -426,7 +418,7 @@ func TestCreateRuntimeResourceStep_FailureToleranceForCommercial(t *testing.T) {
 
 	cli := getClientForTests(t)
 
-	step := NewCreateRuntimeResourceStep(memoryStorage.Operations(), memoryStorage.Instances(), cli, inputConfig, defaultOIDSConfig, true)
+	step := NewCreateRuntimeResourceStep(memoryStorage.Operations(), memoryStorage.Instances(), cli, inputConfig, defaultOIDSConfig, true, regionssupportingmachine.RegionsSupportingMachine{}, false)
 
 	// when
 	_, _, err := step.Run(operation, fixLogger())
@@ -455,7 +447,7 @@ func TestCreateRuntimeResourceStep_FailureToleranceForCommercialWithNoConfig(t *
 
 	cli := getClientForTests(t)
 
-	step := NewCreateRuntimeResourceStep(memoryStorage.Operations(), memoryStorage.Instances(), cli, inputConfig, defaultOIDSConfig, true)
+	step := NewCreateRuntimeResourceStep(memoryStorage.Operations(), memoryStorage.Instances(), cli, inputConfig, defaultOIDSConfig, true, regionssupportingmachine.RegionsSupportingMachine{}, false)
 
 	// when
 	_, _, err := step.Run(operation, fixLogger())
@@ -484,7 +476,7 @@ func TestCreateRuntimeResourceStep_FailureToleranceForCommercialWithConfiguredNo
 
 	cli := getClientForTests(t)
 
-	step := NewCreateRuntimeResourceStep(memoryStorage.Operations(), memoryStorage.Instances(), cli, inputConfig, defaultOIDSConfig, true)
+	step := NewCreateRuntimeResourceStep(memoryStorage.Operations(), memoryStorage.Instances(), cli, inputConfig, defaultOIDSConfig, true, regionssupportingmachine.RegionsSupportingMachine{}, false)
 
 	// when
 	_, _, err := step.Run(operation, fixLogger())
@@ -514,7 +506,7 @@ func TestCreateRuntimeResourceStep_Defaults_AWS_SingleZone_EnforceSeed_ActualCre
 	assertInsertions(t, memoryStorage, instance, operation)
 
 	cli := getClientForTests(t)
-	step := NewCreateRuntimeResourceStep(memoryStorage.Operations(), memoryStorage.Instances(), cli, inputConfig, defaultOIDSConfig, true)
+	step := NewCreateRuntimeResourceStep(memoryStorage.Operations(), memoryStorage.Instances(), cli, inputConfig, defaultOIDSConfig, true, regionssupportingmachine.RegionsSupportingMachine{}, false)
 
 	// when
 	_, repeat, err := step.Run(operation, fixLogger())
@@ -560,7 +552,7 @@ func TestCreateRuntimeResourceStep_Defaults_AWS_SingleZone_DisableEnterpriseFilt
 	assertInsertions(t, memoryStorage, instance, operation)
 
 	cli := getClientForTests(t)
-	step := NewCreateRuntimeResourceStep(memoryStorage.Operations(), memoryStorage.Instances(), cli, inputConfig, defaultOIDSConfig, true)
+	step := NewCreateRuntimeResourceStep(memoryStorage.Operations(), memoryStorage.Instances(), cli, inputConfig, defaultOIDSConfig, true, regionssupportingmachine.RegionsSupportingMachine{}, false)
 
 	// when
 	_, repeat, err := step.Run(operation, fixLogger())
@@ -606,7 +598,7 @@ func TestCreateRuntimeResourceStep_Defaults_AWS_SingleZone_DefaultAdmin_ActualCr
 	assertInsertions(t, memoryStorage, instance, operation)
 
 	cli := getClientForTests(t)
-	step := NewCreateRuntimeResourceStep(memoryStorage.Operations(), memoryStorage.Instances(), cli, inputConfig, defaultOIDSConfig, true)
+	step := NewCreateRuntimeResourceStep(memoryStorage.Operations(), memoryStorage.Instances(), cli, inputConfig, defaultOIDSConfig, true, regionssupportingmachine.RegionsSupportingMachine{}, false)
 
 	// when
 	_, repeat, err := step.Run(operation, fixLogger())
@@ -657,7 +649,7 @@ func TestCreateRuntimeResourceStep_Defaults_AWS_MultiZoneWithNetworking_ActualCr
 
 	cli := getClientForTests(t)
 
-	step := NewCreateRuntimeResourceStep(memoryStorage.Operations(), memoryStorage.Instances(), cli, inputConfig, defaultOIDSConfig, true)
+	step := NewCreateRuntimeResourceStep(memoryStorage.Operations(), memoryStorage.Instances(), cli, inputConfig, defaultOIDSConfig, true, regionssupportingmachine.RegionsSupportingMachine{}, false)
 
 	// when
 	_, repeat, err := step.Run(operation, fixLogger())
@@ -707,7 +699,7 @@ func TestCreateRuntimeResourceStep_Defaults_AWS_MultiZone_ActualCreation(t *test
 	assertInsertions(t, memoryStorage, instance, operation)
 
 	cli := getClientForTests(t)
-	step := NewCreateRuntimeResourceStep(memoryStorage.Operations(), memoryStorage.Instances(), cli, inputConfig, defaultOIDSConfig, true)
+	step := NewCreateRuntimeResourceStep(memoryStorage.Operations(), memoryStorage.Instances(), cli, inputConfig, defaultOIDSConfig, true, regionssupportingmachine.RegionsSupportingMachine{}, false)
 
 	// when
 	_, repeat, err := step.Run(operation, fixLogger())
@@ -749,7 +741,7 @@ func TestCreateRuntimeResourceStep_Defaults_Preview_SingleZone_ActualCreation(t 
 	assertInsertions(t, memoryStorage, instance, operation)
 
 	cli := getClientForTests(t)
-	step := NewCreateRuntimeResourceStep(memoryStorage.Operations(), memoryStorage.Instances(), cli, inputConfig, defaultOIDSConfig, true)
+	step := NewCreateRuntimeResourceStep(memoryStorage.Operations(), memoryStorage.Instances(), cli, inputConfig, defaultOIDSConfig, true, regionssupportingmachine.RegionsSupportingMachine{}, false)
 
 	// when
 	_, repeat, err := step.Run(operation, fixLogger())
@@ -793,7 +785,7 @@ func TestCreateRuntimeResourceStep_Defaults_Preview_SingleZone_ActualCreation_Wi
 	assertInsertions(t, memoryStorage, instance, operation)
 
 	cli := getClientForTests(t)
-	step := NewCreateRuntimeResourceStep(memoryStorage.Operations(), memoryStorage.Instances(), cli, inputConfig, defaultOIDSConfig, true)
+	step := NewCreateRuntimeResourceStep(memoryStorage.Operations(), memoryStorage.Instances(), cli, inputConfig, defaultOIDSConfig, true, regionssupportingmachine.RegionsSupportingMachine{}, false)
 
 	// when
 	_, repeat, err := step.Run(operation, fixLogger())
@@ -869,7 +861,7 @@ func TestCreateRuntimeResourceStep_SapConvergedCloud(t *testing.T) {
 			assertInsertions(t, memoryStorage, instance, operation)
 
 			cli := getClientForTests(t)
-			step := NewCreateRuntimeResourceStep(memoryStorage.Operations(), memoryStorage.Instances(), cli, inputConfig, defaultOIDSConfig, true)
+			step := NewCreateRuntimeResourceStep(memoryStorage.Operations(), memoryStorage.Instances(), cli, inputConfig, defaultOIDSConfig, true, regionssupportingmachine.RegionsSupportingMachine{}, false)
 			// when
 			gotOperation, repeat, err := step.Run(operation, fixLogger())
 
@@ -918,7 +910,7 @@ func TestCreateRuntimeResourceStep_Defaults_Freemium(t *testing.T) {
 			assertInsertions(t, memoryStorage, instance, operation)
 
 			cli := getClientForTests(t)
-			step := NewCreateRuntimeResourceStep(memoryStorage.Operations(), memoryStorage.Instances(), cli, inputConfig, defaultOIDSConfig, true)
+			step := NewCreateRuntimeResourceStep(memoryStorage.Operations(), memoryStorage.Instances(), cli, inputConfig, defaultOIDSConfig, true, regionssupportingmachine.RegionsSupportingMachine{}, false)
 
 			// when
 			gotOperation, repeat, err := step.Run(operation, fixLogger())

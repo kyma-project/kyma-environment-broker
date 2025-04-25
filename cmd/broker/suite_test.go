@@ -276,7 +276,6 @@ func fixConfig() *Config {
 		MaxPaginationPage:                         100,
 		FreemiumProviders:                         []string{"aws", "azure"},
 		FreemiumWhitelistedGlobalAccountsFilePath: "testdata/freemium_whitelist.yaml",
-		RegionsSupportingMachineFilePath:          "testdata/regions-supporting-machine.yaml",
 		Provisioning:                              process.StagedManagerConfiguration{MaxStepProcessingTime: time.Minute},
 		Deprovisioning:                            process.StagedManagerConfiguration{MaxStepProcessingTime: time.Minute},
 		Update:                                    process.StagedManagerConfiguration{MaxStepProcessingTime: time.Minute},
@@ -291,6 +290,7 @@ func fixConfig() *Config {
 			OperationResultFinishedOperationRetentionPeriod: time.Hour,
 			BindingsStatsPollingInterval:                    3 * time.Second,
 		},
+		ZoneMapping: true,
 	}
 }
 

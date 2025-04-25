@@ -2475,6 +2475,80 @@ func TestUpdateAdditionalWorkerNodePools(t *testing.T) {
 		assert.Equal(t, worker3Zones, updatedWorker3Zones)
 		assert.Equal(t, worker4Zones, updatedWorker4Zones)
 	})
+
+	t.Run("should add additional worker node pools with zones from zone mapping", func(t *testing.T) {
+		// given
+		cfg := fixConfig()
+
+		suite := NewBrokerSuiteTestWithConfig(t, cfg)
+		defer suite.TearDown()
+		iid := uuid.New().String()
+
+		resp := suite.CallAPI("PUT", fmt.Sprintf("oauth/cf-eu10/v2/service_instances/%s?accepts_incomplete=true&plan_id=361c511f-f939-4621-b228-d0fb79a1fe15&service_id=47c9dcbf-ff30-448e-ab36-d3bad66ba281", iid),
+			`{
+				   		"service_id": "47c9dcbf-ff30-448e-ab36-d3bad66ba281",
+				   		"plan_id": "361c511f-f939-4621-b228-d0fb79a1fe15",
+				   		"context": {
+					   		"globalaccount_id": "g-account-id",
+					   		"subaccount_id": "sub-id",
+					   		"user_id": "john.smith@email.com"
+				   		},
+						"parameters": {
+							"name": "testing-cluster",
+							"region": "us-east-1"
+						}
+   			}`)
+		opID := suite.DecodeOperationID(resp)
+		suite.waitForRuntimeAndMakeItReady(opID)
+		suite.WaitForOperationState(opID, domain.Succeeded)
+
+		// when
+		// OSB update:
+		resp = suite.CallAPI("PATCH", fmt.Sprintf("oauth/cf-eu10/v2/service_instances/%s?accepts_incomplete=true", iid),
+			`{
+       					"service_id": "47c9dcbf-ff30-448e-ab36-d3bad66ba281",
+       					"plan_id": "361c511f-f939-4621-b228-d0fb79a1fe15",
+       					"context": {
+           					"globalaccount_id": "g-account-id",
+           					"user_id": "john.smith@email.com"
+       					},
+						"parameters": {
+							"additionalWorkerNodePools": [
+								{
+									"name": "name-1",
+									"machineType": "c7i.large",
+									"haZones": true,
+									"autoScalerMin": 3,
+									"autoScalerMax": 20
+								},
+								{
+									"name": "name-2",
+									"machineType": "g6.xlarge",
+									"haZones": false,
+									"autoScalerMin": 1,
+									"autoScalerMax": 1
+								},
+								{
+									"name": "name-3",
+									"machineType": "g4dn.xlarge",
+									"haZones": false,
+									"autoScalerMin": 1,
+									"autoScalerMax": 1
+								}
+							]
+						}
+   			}`)
+		assert.Equal(t, http.StatusAccepted, resp.StatusCode)
+		upgradeOperationID := suite.DecodeOperationID(resp)
+
+		// then
+		suite.WaitForOperationState(upgradeOperationID, domain.Succeeded)
+		runtime := suite.GetRuntimeResourceByInstanceID(iid)
+		assert.Len(t, *runtime.Spec.Shoot.Provider.AdditionalWorkers, 3)
+		suite.assertAdditionalWorkerZones(t, runtime.Spec.Shoot.Provider, "name-1", 3, "us-east-1w", "us-east-1x", "us-east-1y", "us-east-1z")
+		suite.assertAdditionalWorkerZones(t, runtime.Spec.Shoot.Provider, "name-2", 1, "us-east-1x", "us-east-1y")
+		suite.assertAdditionalWorkerZones(t, runtime.Spec.Shoot.Provider, "name-3", 1, "us-east-1x")
+	})
 }
 
 func TestUpdateOIDC(t *testing.T) {

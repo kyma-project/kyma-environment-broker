@@ -320,17 +320,21 @@ func main() {
 		}
 	}
 
+	regionsSupportingMachine, err := regionssupportingmachine.ReadRegionsSupportingMachineFromFile(cfg.RegionsSupportingMachineFilePath, cfg.ZoneMapping)
+	fatalOnError(err, log)
+	log.Info(fmt.Sprintf("Number of machine types families that are not universally supported across all regions: %d", len(regionsSupportingMachine)))
+
 	// run queues
 	provisionManager := process.NewStagedManager(db.Operations(), eventBroker, cfg.OperationTimeout, cfg.Provisioning, log.With("provisioning", "manager"))
 	provisionQueue := NewProvisioningProcessingQueue(ctx, provisionManager, cfg.Provisioning.WorkersAmount, &cfg, db, configProvider,
-		edpClient, accountProvider, skrK8sClientProvider, kcpK8sClient, gardenerClient, oidcDefaultValues, log, rulesService)
+		edpClient, accountProvider, skrK8sClientProvider, kcpK8sClient, gardenerClient, oidcDefaultValues, log, rulesService, regionsSupportingMachine)
 
 	deprovisionManager := process.NewStagedManager(db.Operations(), eventBroker, cfg.OperationTimeout, cfg.Deprovisioning, log.With("deprovisioning", "manager"))
 	deprovisionQueue := NewDeprovisioningProcessingQueue(ctx, cfg.Deprovisioning.WorkersAmount, deprovisionManager, &cfg, db, edpClient, accountProvider,
 		skrK8sClientProvider, kcpK8sClient, configProvider, log)
 
 	updateManager := process.NewStagedManager(db.Operations(), eventBroker, cfg.OperationTimeout, cfg.Update, log.With("update", "manager"))
-	updateQueue := NewUpdateProcessingQueue(ctx, updateManager, cfg.Update.WorkersAmount, db, cfg, kcpK8sClient, log)
+	updateQueue := NewUpdateProcessingQueue(ctx, updateManager, cfg.Update.WorkersAmount, db, cfg, kcpK8sClient, log, regionsSupportingMachine)
 	/***/
 	servicesConfig, err := broker.NewServicesConfigFromFile(cfg.CatalogFilePath)
 	fatalOnError(err, log)
@@ -342,7 +346,7 @@ func main() {
 	router := httputil.NewRouter()
 
 	createAPI(router, servicesConfig, &cfg, db, provisionQueue, deprovisionQueue, updateQueue, logger, log,
-		kcBuilder, skrK8sClientProvider, skrK8sClientProvider, kcpK8sClient, eventBroker, oidcDefaultValues)
+		kcBuilder, skrK8sClientProvider, skrK8sClientProvider, kcpK8sClient, eventBroker, oidcDefaultValues, regionsSupportingMachine)
 
 	// create metrics endpoint
 	router.Handle("/metrics", promhttp.Handler())
@@ -415,7 +419,7 @@ func logConfiguration(logs *slog.Logger, cfg Config) {
 
 func createAPI(router *httputil.Router, servicesConfig broker.ServicesConfig, cfg *Config, db storage.BrokerStorage,
 	provisionQueue, deprovisionQueue, updateQueue *process.Queue, logger lager.Logger, logs *slog.Logger, kcBuilder kubeconfig.KcBuilder, clientProvider K8sClientProvider,
-	kubeconfigProvider KubeconfigProvider, kcpK8sClient client.Client, publisher event.Publisher, oidcDefaultValues pkg.OIDCConfigDTO) {
+	kubeconfigProvider KubeconfigProvider, kcpK8sClient client.Client, publisher event.Publisher, oidcDefaultValues pkg.OIDCConfigDTO, regionsSupportingMachine regionssupportingmachine.RegionsSupportingMachine) {
 
 	regions, err := provider.ReadPlatformRegionMappingFromFile(cfg.TrialRegionMappingFilePath)
 	fatalOnError(err, logs)
@@ -443,10 +447,6 @@ func createAPI(router *httputil.Router, servicesConfig broker.ServicesConfig, cf
 	convergedCloudRegionProvider, err := broker.NewDefaultConvergedCloudRegionsProvider(cfg.SapConvergedCloudRegionMappingsFilePath, &broker.YamlRegionReader{})
 	fatalOnError(err, logs)
 	logs.Info(fmt.Sprintf("%s plan region mappings loaded", broker.SapConvergedCloudPlanName))
-
-	regionsSupportingMachine, err := regionssupportingmachine.ReadRegionsSupportingMachineFromFile(cfg.RegionsSupportingMachineFilePath, cfg.ZoneMapping)
-	fatalOnError(err, logs)
-	logs.Info(fmt.Sprintf("Number of machine types families that are not universally supported across all regions: %d", len(regionsSupportingMachine)))
 
 	// create KymaEnvironmentBroker endpoints
 	kymaEnvBroker := &broker.KymaEnvironmentBroker{

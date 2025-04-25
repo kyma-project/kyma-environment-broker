@@ -7,19 +7,18 @@ import (
 	"strings"
 	"time"
 
-	"github.com/kyma-project/kyma-environment-broker/internal/provider"
-	"k8s.io/apimachinery/pkg/api/errors"
-
-	gardener "github.com/gardener/gardener/pkg/apis/core/v1beta1"
-
-	kebError "github.com/kyma-project/kyma-environment-broker/internal/error"
-	"github.com/kyma-project/kyma-environment-broker/internal/process/infrastructure_manager"
-	"github.com/kyma-project/kyma-environment-broker/internal/process/provisioning"
-
 	imv1 "github.com/kyma-project/infrastructure-manager/api/v1"
 	"github.com/kyma-project/kyma-environment-broker/internal"
+	kebError "github.com/kyma-project/kyma-environment-broker/internal/error"
 	"github.com/kyma-project/kyma-environment-broker/internal/process"
+	"github.com/kyma-project/kyma-environment-broker/internal/process/infrastructure_manager"
+	"github.com/kyma-project/kyma-environment-broker/internal/process/provisioning"
+	"github.com/kyma-project/kyma-environment-broker/internal/provider"
+	"github.com/kyma-project/kyma-environment-broker/internal/regionssupportingmachine"
 	"github.com/kyma-project/kyma-environment-broker/internal/storage"
+
+	gardener "github.com/gardener/gardener/pkg/apis/core/v1beta1"
+	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/util/intstr"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
@@ -32,9 +31,12 @@ type UpdateRuntimeStep struct {
 	useSmallerMachineTypes     bool
 	trialPlatformRegionMapping map[string]string
 	useAdditionalOIDCSchema    bool
+	regionsSupportingMachine   regionssupportingmachine.RegionsSupportingMachine
+	zoneMapping                bool
 }
 
-func NewUpdateRuntimeStep(os storage.Operations, k8sClient client.Client, delay time.Duration, infrastructureManagerConfig infrastructure_manager.InfrastructureManagerConfig, trialPlatformRegionMapping map[string]string, useAdditionalOIDCSchema bool) *UpdateRuntimeStep {
+func NewUpdateRuntimeStep(os storage.Operations, k8sClient client.Client, delay time.Duration, infrastructureManagerConfig infrastructure_manager.InfrastructureManagerConfig, trialPlatformRegionMapping map[string]string, useAdditionalOIDCSchema bool,
+	regionsSupportingMachine regionssupportingmachine.RegionsSupportingMachine, zoneMapping bool) *UpdateRuntimeStep {
 	step := &UpdateRuntimeStep{
 		k8sClient:                  k8sClient,
 		delay:                      delay,
@@ -42,6 +44,8 @@ func NewUpdateRuntimeStep(os storage.Operations, k8sClient client.Client, delay 
 		useSmallerMachineTypes:     infrastructureManagerConfig.UseSmallerMachineTypes,
 		trialPlatformRegionMapping: trialPlatformRegionMapping,
 		useAdditionalOIDCSchema:    useAdditionalOIDCSchema,
+		regionsSupportingMachine:   regionsSupportingMachine,
+		zoneMapping:                zoneMapping,
 	}
 	step.operationManager = process.NewOperationManager(os, step.Name(), kebError.InfrastructureManagerDependency)
 	return step
@@ -88,7 +92,10 @@ func (s *UpdateRuntimeStep) Run(operation internal.Operation, log *slog.Logger) 
 			}
 		}
 
-		additionalWorkers := provisioning.CreateAdditionalWorkers(s.config, values, currentAdditionalWorkers, operation.UpdatingParameters.AdditionalWorkerNodePools, runtime.Spec.Shoot.Provider.Workers[0].Zones)
+		additionalWorkers, err := provisioning.CreateAdditionalWorkers(s.config, values, currentAdditionalWorkers, operation.UpdatingParameters.AdditionalWorkerNodePools, runtime.Spec.Shoot.Provider.Workers[0].Zones, s.regionsSupportingMachine, operation.ProvisioningParameters.PlanID, s.zoneMapping)
+		if err != nil {
+			return s.operationManager.OperationFailed(operation, fmt.Sprintf("while creating additional workers: %s", err), err, log)
+		}
 		runtime.Spec.Shoot.Provider.AdditionalWorkers = &additionalWorkers
 	}
 

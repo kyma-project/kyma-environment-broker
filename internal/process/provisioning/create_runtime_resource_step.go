@@ -9,31 +9,25 @@ import (
 	"strings"
 	"time"
 
-	kebError "github.com/kyma-project/kyma-environment-broker/internal/error"
-
-	"github.com/kyma-project/kyma-environment-broker/internal/storage/dberr"
-
-	"github.com/kyma-project/kyma-environment-broker/internal/customresources"
-
-	"github.com/kyma-project/kyma-environment-broker/internal/ptr"
-
-	"github.com/kyma-project/kyma-environment-broker/internal/process/steps"
-	"k8s.io/apimachinery/pkg/api/errors"
-
-	"github.com/kyma-project/kyma-environment-broker/internal/networking"
-
-	"sigs.k8s.io/controller-runtime/pkg/client"
-
-	gardener "github.com/gardener/gardener/pkg/apis/core/v1beta1"
-	"github.com/kyma-project/kyma-environment-broker/internal/process/infrastructure_manager"
-	"github.com/kyma-project/kyma-environment-broker/internal/provider"
-	"k8s.io/apimachinery/pkg/util/intstr"
-
-	imv1 "github.com/kyma-project/infrastructure-manager/api/v1"
 	pkg "github.com/kyma-project/kyma-environment-broker/common/runtime"
 	"github.com/kyma-project/kyma-environment-broker/internal"
+	"github.com/kyma-project/kyma-environment-broker/internal/customresources"
+	kebError "github.com/kyma-project/kyma-environment-broker/internal/error"
+	"github.com/kyma-project/kyma-environment-broker/internal/networking"
 	"github.com/kyma-project/kyma-environment-broker/internal/process"
+	"github.com/kyma-project/kyma-environment-broker/internal/process/infrastructure_manager"
+	"github.com/kyma-project/kyma-environment-broker/internal/process/steps"
+	"github.com/kyma-project/kyma-environment-broker/internal/provider"
+	"github.com/kyma-project/kyma-environment-broker/internal/ptr"
+	"github.com/kyma-project/kyma-environment-broker/internal/regionssupportingmachine"
 	"github.com/kyma-project/kyma-environment-broker/internal/storage"
+	"github.com/kyma-project/kyma-environment-broker/internal/storage/dberr"
+
+	gardener "github.com/gardener/gardener/pkg/apis/core/v1beta1"
+	imv1 "github.com/kyma-project/infrastructure-manager/api/v1"
+	"k8s.io/apimachinery/pkg/api/errors"
+	"k8s.io/apimachinery/pkg/util/intstr"
+	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
 const (
@@ -44,22 +38,26 @@ const (
 )
 
 type CreateRuntimeResourceStep struct {
-	operationManager        *process.OperationManager
-	instanceStorage         storage.Instances
-	k8sClient               client.Client
-	config                  infrastructure_manager.InfrastructureManagerConfig
-	oidcDefaultValues       pkg.OIDCConfigDTO
-	useAdditionalOIDCSchema bool
+	operationManager         *process.OperationManager
+	instanceStorage          storage.Instances
+	k8sClient                client.Client
+	config                   infrastructure_manager.InfrastructureManagerConfig
+	oidcDefaultValues        pkg.OIDCConfigDTO
+	useAdditionalOIDCSchema  bool
+	regionsSupportingMachine regionssupportingmachine.RegionsSupportingMachine
+	zoneMapping              bool
 }
 
 func NewCreateRuntimeResourceStep(os storage.Operations, is storage.Instances, k8sClient client.Client, infrastructureManagerConfig infrastructure_manager.InfrastructureManagerConfig,
-	oidcDefaultValues pkg.OIDCConfigDTO, useAdditionalOIDCSchema bool) *CreateRuntimeResourceStep {
+	oidcDefaultValues pkg.OIDCConfigDTO, useAdditionalOIDCSchema bool, regionsSupportingMachine regionssupportingmachine.RegionsSupportingMachine, zoneMapping bool) *CreateRuntimeResourceStep {
 	step := &CreateRuntimeResourceStep{
-		instanceStorage:         is,
-		k8sClient:               k8sClient,
-		config:                  infrastructureManagerConfig,
-		oidcDefaultValues:       oidcDefaultValues,
-		useAdditionalOIDCSchema: useAdditionalOIDCSchema,
+		instanceStorage:          is,
+		k8sClient:                k8sClient,
+		config:                   infrastructureManagerConfig,
+		oidcDefaultValues:        oidcDefaultValues,
+		useAdditionalOIDCSchema:  useAdditionalOIDCSchema,
+		regionsSupportingMachine: regionsSupportingMachine,
+		zoneMapping:              zoneMapping,
 	}
 	step.operationManager = process.NewOperationManager(os, step.Name(), kebError.InfrastructureManagerDependency)
 	return step
@@ -220,7 +218,10 @@ func (s *CreateRuntimeResourceStep) createShootProvider(operation *internal.Oper
 	}
 
 	if len(operation.ProvisioningParameters.Parameters.AdditionalWorkerNodePools) > 0 {
-		additionalWorkers := CreateAdditionalWorkers(s.config, values, nil, operation.ProvisioningParameters.Parameters.AdditionalWorkerNodePools, values.Zones)
+		additionalWorkers, err := CreateAdditionalWorkers(s.config, values, nil, operation.ProvisioningParameters.Parameters.AdditionalWorkerNodePools, values.Zones, s.regionsSupportingMachine, operation.ProvisioningParameters.PlanID, s.zoneMapping)
+		if err != nil {
+			return imv1.Provider{}, fmt.Errorf("while creating additional workers: %w", err)
+		}
 		provider.AdditionalWorkers = &additionalWorkers
 	}
 
@@ -393,7 +394,8 @@ func DefaultIfParamNotSet[T interface{}](d T, param *T) T {
 	return *param
 }
 
-func CreateAdditionalWorkers(imConfig infrastructure_manager.InfrastructureManagerConfig, values internal.ProviderValues, currentAdditionalWorkers map[string]gardener.Worker, additionalWorkerNodePools []pkg.AdditionalWorkerNodePool, zones []string) []gardener.Worker {
+func CreateAdditionalWorkers(imConfig infrastructure_manager.InfrastructureManagerConfig, values internal.ProviderValues, currentAdditionalWorkers map[string]gardener.Worker, additionalWorkerNodePools []pkg.AdditionalWorkerNodePool, zones []string,
+	regionsSupportingMachine regionssupportingmachine.RegionsSupportingMachine, planID string, zoneMapping bool) ([]gardener.Worker, error) {
 	additionalWorkerNodePoolsMaxUnavailable := intstr.FromInt32(int32(0))
 	workers := make([]gardener.Worker, 0, len(additionalWorkerNodePools))
 
@@ -405,6 +407,15 @@ func CreateAdditionalWorkers(imConfig infrastructure_manager.InfrastructureManag
 			workerZones = currentAdditionalWorker.Zones
 		} else {
 			workerZones = zones
+			if zoneMapping {
+				availableZones, err := regionsSupportingMachine.AvailableZones(additionalWorkerNodePool.MachineType, values.Region, planID)
+				if err != nil {
+					return []gardener.Worker{}, fmt.Errorf("while getting avaialble zones from regions supporting machine: %w", err)
+				}
+				if len(availableZones) > 0 {
+					workerZones = availableZones
+				}
+			}
 			if !additionalWorkerNodePool.HAZones {
 				rand.Shuffle(len(workerZones), func(i, j int) { workerZones[i], workerZones[j] = workerZones[j], workerZones[i] })
 				workerZones = workerZones[:1]
@@ -439,5 +450,5 @@ func CreateAdditionalWorkers(imConfig infrastructure_manager.InfrastructureManag
 		workers = append(workers, worker)
 	}
 
-	return workers
+	return workers, nil
 }

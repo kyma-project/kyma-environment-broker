@@ -5,19 +5,19 @@ import (
 	"log/slog"
 	"time"
 
-	"github.com/kyma-project/kyma-environment-broker/internal/config"
-
 	"github.com/kyma-project/kyma-environment-broker/common/gardener"
-	"github.com/kyma-project/kyma-environment-broker/internal"
-	"github.com/kyma-project/kyma-environment-broker/internal/provider"
-
 	"github.com/kyma-project/kyma-environment-broker/common/hyperscaler"
 	"github.com/kyma-project/kyma-environment-broker/common/hyperscaler/rules"
 	pkg "github.com/kyma-project/kyma-environment-broker/common/runtime"
+	"github.com/kyma-project/kyma-environment-broker/internal"
+	"github.com/kyma-project/kyma-environment-broker/internal/config"
 	"github.com/kyma-project/kyma-environment-broker/internal/process"
 	"github.com/kyma-project/kyma-environment-broker/internal/process/provisioning"
 	"github.com/kyma-project/kyma-environment-broker/internal/process/steps"
+	"github.com/kyma-project/kyma-environment-broker/internal/provider"
+	"github.com/kyma-project/kyma-environment-broker/internal/regionssupportingmachine"
 	"github.com/kyma-project/kyma-environment-broker/internal/storage"
+
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
@@ -31,7 +31,8 @@ const (
 func NewProvisioningProcessingQueue(ctx context.Context, provisionManager *process.StagedManager, workersAmount int, cfg *Config,
 	db storage.BrokerStorage, configProvider config.ConfigurationProvider,
 	edpClient provisioning.EDPClient, accountProvider hyperscaler.AccountProvider,
-	k8sClientProvider provisioning.K8sClientProvider, k8sClient client.Client, gardenerClient *gardener.Client, defaultOIDC pkg.OIDCConfigDTO, logs *slog.Logger, rulesService *rules.RulesService) *process.Queue {
+	k8sClientProvider provisioning.K8sClientProvider, k8sClient client.Client, gardenerClient *gardener.Client, defaultOIDC pkg.OIDCConfigDTO, logs *slog.Logger, rulesService *rules.RulesService,
+	regionsSupportingMachine regionssupportingmachine.RegionsSupportingMachine) *process.Queue {
 
 	trialRegionsMapping, err := provider.ReadPlatformRegionMappingFromFile(cfg.TrialRegionMappingFilePath)
 	if err != nil {
@@ -106,7 +107,7 @@ func NewProvisioningProcessingQueue(ctx context.Context, provisionManager *proce
 		// postcondition: operation.KymaResourceName, operation.RuntimeResourceName is set
 		{
 			stage:     createRuntimeStageName,
-			step:      provisioning.NewCreateRuntimeResourceStep(db.Operations(), db.Instances(), k8sClient, cfg.InfrastructureManager, defaultOIDC, cfg.Broker.UseAdditionalOIDCSchema),
+			step:      provisioning.NewCreateRuntimeResourceStep(db.Operations(), db.Instances(), k8sClient, cfg.InfrastructureManager, defaultOIDC, cfg.Broker.UseAdditionalOIDCSchema, regionsSupportingMachine, cfg.ZoneMapping),
 			condition: provisioning.SkipForOwnClusterPlan,
 		},
 		{

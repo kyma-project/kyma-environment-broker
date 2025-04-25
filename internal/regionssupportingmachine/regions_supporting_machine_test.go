@@ -41,7 +41,7 @@ func TestReadRegionsSupportingMachineFromFile(t *testing.T) {
 
 		assert.Len(t, regionsSupportingMachine["m8g"], 3)
 		assert.Len(t, regionsSupportingMachine["m8g"]["ap-northeast-1"], 4)
-		assert.Nil(t, regionsSupportingMachine["m8g"]["ap-southeast-1"])
+		assert.Len(t, regionsSupportingMachine["m8g"]["ap-southeast-1"], 0)
 		assert.Nil(t, regionsSupportingMachine["m8g"]["ca-central-1"])
 
 		assert.Len(t, regionsSupportingMachine["c2d-highmem"], 2)
@@ -49,7 +49,7 @@ func TestReadRegionsSupportingMachineFromFile(t *testing.T) {
 		assert.Len(t, regionsSupportingMachine["c2d-highmem"]["southamerica-east1"], 3)
 
 		assert.Len(t, regionsSupportingMachine["Standard_L"], 3)
-		assert.Nil(t, regionsSupportingMachine["Standard_L"]["uksouth"])
+		assert.Len(t, regionsSupportingMachine["Standard_L"]["uksouth"], 1)
 		assert.Nil(t, regionsSupportingMachine["Standard_L"]["japaneast"])
 		assert.Len(t, regionsSupportingMachine["Standard_L"]["brazilsouth"], 2)
 	})
@@ -143,4 +143,222 @@ func TestSupportedRegions(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestAvailableZones(t *testing.T) {
+	// given
+	regionsSupportingMachine, err := ReadRegionsSupportingMachineFromFile("test/regions-supporting-machine-with-zones.yaml", true)
+	require.NoError(t, err)
+
+	tests := []struct {
+		name        string
+		planID      string
+		machineType string
+		region      string
+		expected    []string
+	}{
+		{
+			name:        "AWS plan - region with 3 zones",
+			planID:      AWSPlanID,
+			machineType: "c2d-highmem-32",
+			region:      "southamerica-east1",
+			expected:    []string{"southamerica-east1a", "southamerica-east1b", "southamerica-east1c"},
+		},
+		{
+			name:        "AWS plan - region with 2 zones",
+			planID:      AWSPlanID,
+			machineType: "Standard_L8s_v3",
+			region:      "brazilsouth",
+			expected:    []string{"brazilsoutha", "brazilsouthb"},
+		},
+		{
+			name:        "AWS plan - region with 1 zones",
+			planID:      AWSPlanID,
+			machineType: "Standard_L8s_v3",
+			region:      "uksouth",
+			expected:    []string{"uksoutha"},
+		},
+		{
+			name:        "Azure plan - region with 3 zones",
+			planID:      AzurePlanID,
+			machineType: "c2d-highmem-32",
+			region:      "southamerica-east1",
+			expected:    []string{"a", "b", "c"},
+		},
+		{
+			name:        "Azure plan - region with 2 zones",
+			planID:      AzurePlanID,
+			machineType: "Standard_L8s_v3",
+			region:      "brazilsouth",
+			expected:    []string{"a", "b"},
+		},
+		{
+			name:        "Azure plan - region with 1 zones",
+			planID:      AzurePlanID,
+			machineType: "Standard_L8s_v3",
+			region:      "uksouth",
+			expected:    []string{"a"},
+		},
+		{
+			name:        "GCP plan - region with 3 zones",
+			planID:      GCPPlanID,
+			machineType: "c2d-highmem-32",
+			region:      "southamerica-east1",
+			expected:    []string{"southamerica-east1-a", "southamerica-east1-b", "southamerica-east1-c"},
+		},
+		{
+			name:        "GCP plan - region with 2 zones",
+			planID:      GCPPlanID,
+			machineType: "Standard_L8s_v3",
+			region:      "brazilsouth",
+			expected:    []string{"brazilsouth-a", "brazilsouth-b"},
+		},
+		{
+			name:        "GCP plan - region with 1 zones",
+			planID:      GCPPlanID,
+			machineType: "Standard_L8s_v3",
+			region:      "uksouth",
+			expected:    []string{"uksouth-a"},
+		},
+		{
+			name:        "region with empty list of zones",
+			planID:      AzurePlanID,
+			machineType: "m8g.large",
+			region:      "ap-southeast-1",
+			expected:    []string{},
+		},
+		{
+			name:        "region with nil zones",
+			planID:      AzurePlanID,
+			machineType: "c2d-highmem-32",
+			region:      "us-central1",
+			expected:    []string{},
+		},
+		{
+			name:        "not supported region",
+			planID:      AzurePlanID,
+			machineType: "Standard_L8s_v3",
+			region:      "westus2",
+			expected:    []string{},
+		},
+		{
+			name:        "not supported machine type",
+			planID:      AzurePlanID,
+			machineType: "notSupportedMachineType",
+			region:      "notSupportedRegion",
+			expected:    []string{},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			// when
+			result, err := regionsSupportingMachine.AvailableZones(tt.machineType, tt.region, tt.planID)
+			assert.NoError(t, err)
+
+			// then
+			assert.ElementsMatch(t, tt.expected, result)
+		})
+	}
+}
+
+func TestAvailableZonesForRegionWith4Zones(t *testing.T) {
+	// given
+	regionsSupportingMachine, err := ReadRegionsSupportingMachineFromFile("test/regions-supporting-machine-with-zones.yaml", true)
+	require.NoError(t, err)
+
+	tests := []struct {
+		name     string
+		planID   string
+		expected []string
+	}{
+		{
+			name:     "AWS plan",
+			planID:   AWSPlanID,
+			expected: []string{"ap-northeast-1a", "ap-northeast-1b", "ap-northeast-1c", "ap-northeast-1d"},
+		},
+		{
+			name:     "Azure plan",
+			planID:   AzurePlanID,
+			expected: []string{"a", "b", "c", "d"},
+		},
+		{
+			name:     "GCP plan",
+			planID:   GCPPlanID,
+			expected: []string{"ap-northeast-1-a", "ap-northeast-1-b", "ap-northeast-1-c", "ap-northeast-1-d"},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			//when
+			result, err := regionsSupportingMachine.AvailableZones("m8g", "ap-northeast-1", tt.planID)
+			assert.NoError(t, err)
+
+			//then
+			assert.Len(t, result, 3)
+			for _, v := range result {
+				assert.Contains(t, tt.expected, v)
+			}
+		})
+	}
+}
+
+func TestAvailableZonesForAzureLite(t *testing.T) {
+	// given
+	regionsSupportingMachine, err := ReadRegionsSupportingMachineFromFile("test/regions-supporting-machine-with-zones.yaml", true)
+	require.NoError(t, err)
+
+	tests := []struct {
+		name        string
+		machineType string
+		region      string
+		expected    []string
+	}{
+		{
+			name:        "region with 4 zones",
+			machineType: "m8g",
+			region:      "ap-northeast-1",
+			expected:    []string{"a", "b", "c", "d"},
+		},
+		{
+			name:        "region with 3 zones",
+			machineType: "c2d-highmem-32",
+			region:      "southamerica-east1",
+			expected:    []string{"a", "b", "c"},
+		},
+		{
+			name:        "region with 2 zones",
+			machineType: "Standard_L8s_v3",
+			region:      "brazilsouth",
+			expected:    []string{"a", "b"},
+		},
+		{
+			name:        "region with 1 zones",
+			machineType: "Standard_L8s_v3",
+			region:      "uksouth",
+			expected:    []string{"a"},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			// when
+			result, err := regionsSupportingMachine.AvailableZones(tt.machineType, tt.region, AzureLitePlanID)
+			assert.NoError(t, err)
+
+			//then
+			assert.Len(t, result, 1)
+			assert.Contains(t, tt.expected, result[0])
+		})
+	}
+}
+
+func TestAvailableZonesForNotSupportedPlan(t *testing.T) {
+	// given
+	regionsSupportingMachine, err := ReadRegionsSupportingMachineFromFile("test/regions-supporting-machine-with-zones.yaml", true)
+	require.NoError(t, err)
+
+	_, err = regionsSupportingMachine.AvailableZones("Standard_L8s_v3", "uksouth", "not-supported-plan")
+	assert.EqualError(t, err, "plan not-supported-plan not supported")
 }

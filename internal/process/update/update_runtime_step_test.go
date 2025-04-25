@@ -7,26 +7,24 @@ import (
 	"strconv"
 	"testing"
 
-	"github.com/kyma-project/kyma-environment-broker/internal/process/infrastructure_manager"
-	"github.com/kyma-project/kyma-environment-broker/internal/storage"
-
-	"k8s.io/apimachinery/pkg/util/intstr"
-
-	"github.com/stretchr/testify/require"
-
-	gardener "github.com/gardener/gardener/pkg/apis/core/v1beta1"
 	imv1 "github.com/kyma-project/infrastructure-manager/api/v1"
 	pkg "github.com/kyma-project/kyma-environment-broker/common/runtime"
 	"github.com/kyma-project/kyma-environment-broker/internal"
 	"github.com/kyma-project/kyma-environment-broker/internal/fixture"
+	"github.com/kyma-project/kyma-environment-broker/internal/process/infrastructure_manager"
 	"github.com/kyma-project/kyma-environment-broker/internal/ptr"
+	"github.com/kyma-project/kyma-environment-broker/internal/regionssupportingmachine"
+	"github.com/kyma-project/kyma-environment-broker/internal/storage"
+
+	gardener "github.com/gardener/gardener/pkg/apis/core/v1beta1"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/util/intstr"
 	"k8s.io/client-go/kubernetes/scheme"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/client/fake"
-
-	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 func TestUpdateRuntimeStep_NoRuntime(t *testing.T) {
@@ -43,7 +41,7 @@ func TestUpdateRuntimeStep_NoRuntime(t *testing.T) {
 	err = operations.InsertOperation(operation)
 	require.NoError(t, err)
 
-	step := NewUpdateRuntimeStep(operations, kcpClient, 0, infrastructure_manager.InfrastructureManagerConfig{}, nil, true)
+	step := NewUpdateRuntimeStep(operations, kcpClient, 0, infrastructure_manager.InfrastructureManagerConfig{}, nil, true, regionssupportingmachine.RegionsSupportingMachine{}, false)
 
 	// when
 	_, backoff, err := step.Run(operation, fixLogger())
@@ -58,7 +56,7 @@ func TestUpdateRuntimeStep_RunUpdateMachineType(t *testing.T) {
 	err := imv1.AddToScheme(scheme.Scheme)
 	assert.NoError(t, err)
 	kcpClient := fake.NewClientBuilder().WithRuntimeObjects(fixRuntimeResource("runtime-name", false)).Build()
-	step := NewUpdateRuntimeStep(nil, kcpClient, 0, infrastructure_manager.InfrastructureManagerConfig{}, nil, true)
+	step := NewUpdateRuntimeStep(nil, kcpClient, 0, infrastructure_manager.InfrastructureManagerConfig{}, nil, true, regionssupportingmachine.RegionsSupportingMachine{}, false)
 	operation := fixture.FixUpdatingOperation("op-id", "inst-id").Operation
 	operation.RuntimeResourceName = "runtime-name"
 	operation.KymaResourceNamespace = "kcp-system"
@@ -85,7 +83,7 @@ func TestUpdateRuntimeStep_RunUpdateEmptyOIDCConfigWithOIDCObject(t *testing.T) 
 	err := imv1.AddToScheme(scheme.Scheme)
 	assert.NoError(t, err)
 	kcpClient := fake.NewClientBuilder().WithRuntimeObjects(fixRuntimeResource("runtime-name", false)).Build()
-	step := NewUpdateRuntimeStep(nil, kcpClient, 0, infrastructure_manager.InfrastructureManagerConfig{}, nil, true)
+	step := NewUpdateRuntimeStep(nil, kcpClient, 0, infrastructure_manager.InfrastructureManagerConfig{}, nil, true, regionssupportingmachine.RegionsSupportingMachine{}, false)
 	operation := fixture.FixUpdatingOperationWithOIDCObject("op-id", "inst-id").Operation
 	operation.RuntimeResourceName = "runtime-name"
 	operation.KymaResourceNamespace = "kcp-system"
@@ -130,7 +128,7 @@ func TestUpdateRuntimeStep_RunUpdateOIDCWithOIDCObject(t *testing.T) {
 	err := imv1.AddToScheme(scheme.Scheme)
 	assert.NoError(t, err)
 	kcpClient := fake.NewClientBuilder().WithRuntimeObjects(fixRuntimeResourceWithOneAdditionalOidc("runtime-name", false)).Build()
-	step := NewUpdateRuntimeStep(nil, kcpClient, 0, infrastructure_manager.InfrastructureManagerConfig{}, nil, true)
+	step := NewUpdateRuntimeStep(nil, kcpClient, 0, infrastructure_manager.InfrastructureManagerConfig{}, nil, true, regionssupportingmachine.RegionsSupportingMachine{}, false)
 	operation := fixture.FixUpdatingOperationWithOIDCObject("op-id", "inst-id").Operation
 	operation.RuntimeResourceName = "runtime-name"
 	operation.KymaResourceNamespace = "kcp-system"
@@ -175,7 +173,7 @@ func TestUpdateRuntimeStep_RunUpdateEmptyAdditionalOIDCWithMultipleAdditionalOID
 	err := imv1.AddToScheme(scheme.Scheme)
 	assert.NoError(t, err)
 	kcpClient := fake.NewClientBuilder().WithRuntimeObjects(fixRuntimeResource("runtime-name", false)).Build()
-	step := NewUpdateRuntimeStep(nil, kcpClient, 0, infrastructure_manager.InfrastructureManagerConfig{}, nil, true)
+	step := NewUpdateRuntimeStep(nil, kcpClient, 0, infrastructure_manager.InfrastructureManagerConfig{}, nil, true, regionssupportingmachine.RegionsSupportingMachine{}, false)
 	operation := fixture.FixUpdatingOperation("op-id", "inst-id").Operation
 	operation.RuntimeResourceName = "runtime-name"
 	operation.KymaResourceNamespace = "kcp-system"
@@ -255,7 +253,7 @@ func TestUpdateRuntimeStep_RunUpdateMultipleAdditionalOIDCWithMultipleAdditional
 	err := imv1.AddToScheme(scheme.Scheme)
 	assert.NoError(t, err)
 	kcpClient := fake.NewClientBuilder().WithRuntimeObjects(fixRuntimeResourceWithMultipleAdditionalOidc("runtime-name", false)).Build()
-	step := NewUpdateRuntimeStep(nil, kcpClient, 0, infrastructure_manager.InfrastructureManagerConfig{}, nil, true)
+	step := NewUpdateRuntimeStep(nil, kcpClient, 0, infrastructure_manager.InfrastructureManagerConfig{}, nil, true, regionssupportingmachine.RegionsSupportingMachine{}, false)
 	operation := fixture.FixUpdatingOperation("op-id", "inst-id").Operation
 	operation.RuntimeResourceName = "runtime-name"
 	operation.KymaResourceNamespace = "kcp-system"
@@ -342,7 +340,7 @@ func TestUpdateRuntimeStep_RunUpdateMultipleAdditionalOIDCWitEmptyAdditionalOIDC
 	err := imv1.AddToScheme(scheme.Scheme)
 	assert.NoError(t, err)
 	kcpClient := fake.NewClientBuilder().WithRuntimeObjects(fixRuntimeResourceWithMultipleAdditionalOidc("runtime-name", false)).Build()
-	step := NewUpdateRuntimeStep(nil, kcpClient, 0, infrastructure_manager.InfrastructureManagerConfig{}, nil, true)
+	step := NewUpdateRuntimeStep(nil, kcpClient, 0, infrastructure_manager.InfrastructureManagerConfig{}, nil, true, regionssupportingmachine.RegionsSupportingMachine{}, false)
 	operation := fixture.FixUpdatingOperation("op-id", "inst-id").Operation
 	operation.RuntimeResourceName = "runtime-name"
 	operation.KymaResourceNamespace = "kcp-system"
