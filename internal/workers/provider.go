@@ -43,12 +43,13 @@ func (p *Provider) CreateAdditionalWorkers(values internal.ProviderValues, curre
 		} else {
 			workerZones = zones
 			if p.zoneMapping {
-				availableZones, err := p.regionsSupportingMachine.AvailableZones(additionalWorkerNodePool.MachineType, values.Region, planID)
+				customAvailableZones, err := p.regionsSupportingMachine.AvailableZones(additionalWorkerNodePool.MachineType, values.Region, planID)
 				if err != nil {
-					return []gardener.Worker{}, fmt.Errorf("while getting avaialble zones from regions supporting machine: %w", err)
+					return []gardener.Worker{}, fmt.Errorf("while getting available zones from regions supporting machine: %w", err)
 				}
-				if len(availableZones) > 0 {
-					workerZones = availableZones
+				// If custom zones are found, use them instead of the Kyma workload zones.
+				if len(customAvailableZones) > 0 {
+					workerZones = customAvailableZones
 				}
 			}
 			if !additionalWorkerNodePool.HAZones {
