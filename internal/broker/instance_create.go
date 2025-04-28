@@ -12,7 +12,6 @@ import (
 	"strings"
 
 	"github.com/kyma-project/kyma-environment-broker/internal/process/infrastructure_manager"
-	"github.com/kyma-project/kyma-environment-broker/internal/regionssupportingmachine"
 	"github.com/kyma-project/kyma-environment-broker/internal/validator"
 	"github.com/santhosh-tekuri/jsonschema/v6"
 
@@ -62,6 +61,12 @@ type ValuesProvider interface {
 	ValuesForPlanAndParameters(provisioningParameters internal.ProvisioningParameters) (internal.ProviderValues, error)
 }
 
+type RegionsSupporter interface {
+	IsSupported(region string, machineType string) bool
+	SupportedRegions(machineType string) []string
+	AvailableZones(machineType, region, planID string) ([]string, error)
+}
+
 type ProvisionEndpoint struct {
 	config                  Config
 	infrastructureManager   infrastructure_manager.InfrastructureManagerConfig
@@ -83,7 +88,7 @@ type ProvisionEndpoint struct {
 
 	convergedCloudRegionsProvider ConvergedCloudRegionProvider
 
-	regionsSupportingMachine regionssupportingmachine.RegionsSupportingMachine
+	regionsSupportingMachine RegionsSupporter
 
 	log                    *slog.Logger
 	valuesProvider         ValuesProvider
@@ -105,7 +110,7 @@ func NewProvision(cfg Config,
 	kcBuilder kubeconfig.KcBuilder,
 	freemiumWhitelist whitelist.Set,
 	convergedCloudRegionsProvider ConvergedCloudRegionProvider,
-	regionsSupportingMachine regionssupportingmachine.RegionsSupportingMachine,
+	regionsSupportingMachine RegionsSupporter,
 	valuesProvider ValuesProvider,
 	useSmallerMachineTypes bool,
 	zoneMapping bool,
@@ -518,7 +523,7 @@ func checkGPUMachinesUsage(additionalWorkerNodePools []pkg.AdditionalWorkerNodeP
 	return fmt.Errorf("%s", errorMsg.String())
 }
 
-func checkUnsupportedMachines(regionsSupportingMachine regionssupportingmachine.RegionsSupportingMachine, region string, additionalWorkerNodePools []pkg.AdditionalWorkerNodePool) error {
+func checkUnsupportedMachines(regionsSupportingMachine RegionsSupporter, region string, additionalWorkerNodePools []pkg.AdditionalWorkerNodePool) error {
 	unsupportedMachines := make(map[string][]string)
 	var orderedMachineTypes []string
 
@@ -549,7 +554,7 @@ func checkUnsupportedMachines(regionsSupportingMachine regionssupportingmachine.
 	return fmt.Errorf("%s", errorMsg.String())
 }
 
-func checkAvailableZones(regionsSupportingMachine regionssupportingmachine.RegionsSupportingMachine, additionalWorkerNodePool pkg.AdditionalWorkerNodePool, region, planID string) error {
+func checkAvailableZones(regionsSupportingMachine RegionsSupporter, additionalWorkerNodePool pkg.AdditionalWorkerNodePool, region, planID string) error {
 	zones, err := regionsSupportingMachine.AvailableZones(additionalWorkerNodePool.MachineType, region, planID)
 	if err != nil {
 		return fmt.Errorf("while getting available zones: %w", err)

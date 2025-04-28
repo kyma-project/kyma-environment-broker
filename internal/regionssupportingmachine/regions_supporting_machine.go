@@ -6,19 +6,8 @@ import (
 	"sort"
 	"strings"
 
+	"github.com/kyma-project/kyma-environment-broker/internal/broker"
 	"github.com/kyma-project/kyma-environment-broker/internal/utils"
-)
-
-const (
-	GCPPlanID               = "ca6e5357-707f-4565-bbbd-b3ab732597c6"
-	AWSPlanID               = "361c511f-f939-4621-b228-d0fb79a1fe15"
-	AzurePlanID             = "4deee563-e5ec-4731-b9b1-53b42d855f0c"
-	AzureLitePlanID         = "8cb22518-aa26-44c5-91a0-e669ec9bf443"
-	SapConvergedCloudPlanID = "03b812ac-c991-4528-b5bd-08b303523a63"
-	PreviewPlanID           = "5cb3d976-b85c-42ea-a636-79cadda109a9"
-	BuildRuntimeAWSPlanID   = "6aae0ff3-89f7-4f12-86de-51466145422e"
-	BuildRuntimeGCPPlanID   = "a310cd6b-6452-45a0-935d-d24ab53f9eba"
-	BuildRuntimeAzurePlanID = "499244b4-1bef-48c9-be68-495269899f8e"
 )
 
 type RegionsSupportingMachine map[string]map[string][]string
@@ -81,20 +70,20 @@ func (r RegionsSupportingMachine) AvailableZones(machineType, region, planID str
 			}
 
 			switch planID {
-			case AWSPlanID, BuildRuntimeAWSPlanID, PreviewPlanID, SapConvergedCloudPlanID:
+			case broker.AWSPlanID, broker.BuildRuntimeAWSPlanID, broker.PreviewPlanID, broker.SapConvergedCloudPlanID:
 				var formattedZones []string
 				for _, zone := range zones {
 					formattedZones = append(formattedZones, fmt.Sprintf("%s%s", region, zone))
 				}
 				return formattedZones, nil
 
-			case AzurePlanID, BuildRuntimeAzurePlanID:
+			case broker.AzurePlanID, broker.BuildRuntimeAzurePlanID:
 				return zones, nil
 
-			case AzureLitePlanID:
+			case broker.AzureLitePlanID:
 				return zones[:1], nil
 
-			case GCPPlanID, BuildRuntimeGCPPlanID:
+			case broker.GCPPlanID, broker.BuildRuntimeGCPPlanID:
 				var formattedZones []string
 				for _, zone := range zones {
 					formattedZones = append(formattedZones, fmt.Sprintf("%s-%s", region, zone))

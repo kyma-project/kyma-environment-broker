@@ -12,8 +12,6 @@ import (
 	"github.com/kyma-project/kyma-environment-broker/internal/validator"
 	"github.com/santhosh-tekuri/jsonschema/v6"
 
-	"github.com/kyma-project/kyma-environment-broker/internal/regionssupportingmachine"
-
 	pkg "github.com/kyma-project/kyma-environment-broker/common/runtime"
 	"github.com/kyma-project/kyma-environment-broker/internal/assuredworkloads"
 
@@ -59,7 +57,7 @@ type UpdateEndpoint struct {
 
 	convergedCloudRegionsProvider ConvergedCloudRegionProvider
 
-	regionsSupportingMachine regionssupportingmachine.RegionsSupportingMachine
+	regionsSupportingMachine RegionsSupporter
 
 	kcpClient              client.Client
 	valuesProvider         ValuesProvider
@@ -81,7 +79,7 @@ func NewUpdate(cfg Config,
 	kcBuilder kubeconfig.KcBuilder,
 	convergedCloudRegionsProvider ConvergedCloudRegionProvider,
 	kcpClient client.Client,
-	regionsSupportingMachine regionssupportingmachine.RegionsSupportingMachine,
+	regionsSupportingMachine RegionsSupporter,
 	useSmallerMachineTypes bool,
 	zoneMapping bool,
 ) *UpdateEndpoint {

@@ -5,6 +5,7 @@ import (
 
 	"github.com/kyma-project/kyma-environment-broker/common/runtime"
 	"github.com/kyma-project/kyma-environment-broker/internal"
+	"github.com/kyma-project/kyma-environment-broker/internal/broker"
 	"github.com/kyma-project/kyma-environment-broker/internal/process/infrastructure_manager"
 	"github.com/kyma-project/kyma-environment-broker/internal/regionssupportingmachine"
 
@@ -36,7 +37,7 @@ func TestCreateAdditionalWorkers(t *testing.T) {
 			currentAdditionalWorkers,
 			additionalWorkerNodePools,
 			[]string{"zone-x", "zone-y", "zone-z"},
-			regionssupportingmachine.AWSPlanID,
+			broker.AWSPlanID,
 		)
 
 		// then
@@ -63,7 +64,7 @@ func TestCreateAdditionalWorkers(t *testing.T) {
 			nil,
 			additionalWorkerNodePools,
 			[]string{"zone-a", "zone-b", "zone-c"},
-			regionssupportingmachine.AWSPlanID,
+			broker.AWSPlanID,
 		)
 
 		// then
@@ -90,7 +91,7 @@ func TestCreateAdditionalWorkers(t *testing.T) {
 			nil,
 			additionalWorkerNodePools,
 			[]string{"zone-a", "zone-b", "zone-c"},
-			regionssupportingmachine.AWSPlanID,
+			broker.AWSPlanID,
 		)
 
 		// then
@@ -125,7 +126,7 @@ func TestCreateAdditionalWorkers(t *testing.T) {
 			nil,
 			additionalWorkerNodePools,
 			[]string{"zone-x", "zone-y", "zone-z"},
-			regionssupportingmachine.AWSPlanID,
+			broker.AWSPlanID,
 		)
 
 		// then
@@ -186,7 +187,7 @@ func TestCreateAdditionalWorkers(t *testing.T) {
 			nil,
 			additionalWorkerNodePools,
 			[]string{"zone-a", "zone-b", "zone-c"},
-			regionssupportingmachine.SapConvergedCloudPlanID,
+			broker.SapConvergedCloudPlanID,
 		)
 
 		// then
