@@ -30,11 +30,13 @@ import (
 	kcMock "github.com/kyma-project/kyma-environment-broker/internal/kubeconfig/automock"
 	"github.com/kyma-project/kyma-environment-broker/internal/metricsv2"
 	"github.com/kyma-project/kyma-environment-broker/internal/process"
+	"github.com/kyma-project/kyma-environment-broker/internal/process/infrastructure_manager"
 	"github.com/kyma-project/kyma-environment-broker/internal/process/steps"
 	"github.com/kyma-project/kyma-environment-broker/internal/regionssupportingmachine"
 	kebRuntime "github.com/kyma-project/kyma-environment-broker/internal/runtime"
 	"github.com/kyma-project/kyma-environment-broker/internal/storage"
 	"github.com/kyma-project/kyma-environment-broker/internal/storage/dberr"
+	"github.com/kyma-project/kyma-environment-broker/internal/workers"
 
 	"code.cloudfoundry.org/lager"
 	"github.com/gardener/gardener/pkg/apis/core/v1beta1"
@@ -206,13 +208,13 @@ func NewBrokerSuiteTestWithConfig(t *testing.T, cfg *Config, version ...string) 
 
 	provisioningQueue := NewProvisioningProcessingQueue(context.Background(), provisionManager, workersAmount, cfg, db, configProvider,
 		edpClient, accountProvider, k8sClientProvider, cli, gardenerClientWithNamespace, defaultOIDCValues(), log, rulesService,
-		regionsSupportingMachine())
+		workersProvider(cfg.InfrastructureManager))
 
 	provisioningQueue.SpeedUp(10000)
 	provisionManager.SpeedUp(10000)
 
 	updateManager := process.NewStagedManager(db.Operations(), eventBroker, time.Hour, cfg.Update, log.With("update", "manager"))
-	updateQueue := NewUpdateProcessingQueue(context.Background(), updateManager, 1, db, *cfg, cli, log, regionsSupportingMachine())
+	updateQueue := NewUpdateProcessingQueue(context.Background(), updateManager, 1, db, *cfg, cli, log, workersProvider(cfg.InfrastructureManager))
 	updateQueue.SpeedUp(10000)
 	updateManager.SpeedUp(10000)
 
@@ -269,18 +271,22 @@ func defaultOIDCValues() pkg.OIDCConfigDTO {
 	}
 }
 
-func regionsSupportingMachine() regionssupportingmachine.RegionsSupportingMachine {
-	return regionssupportingmachine.RegionsSupportingMachine{
-		"c7i": {
-			"us-east-1": {"w", "x", "y", "z"},
+func workersProvider(imConfig infrastructure_manager.InfrastructureManagerConfig) *workers.Provider {
+	return workers.NewProvider(
+		imConfig,
+		regionssupportingmachine.RegionsSupportingMachine{
+			"c7i": {
+				"us-east-1": {"w", "x", "y", "z"},
+			},
+			"g6": {
+				"us-east-1": {"x", "y"},
+			},
+			"g4dn": {
+				"us-east-1": {"x"},
+			},
 		},
-		"g6": {
-			"us-east-1": {"x", "y"},
-		},
-		"g4dn": {
-			"us-east-1": {"x"},
-		},
-	}
+		true,
+	)
 }
 
 func (s *BrokerSuiteTest) SetRuntimeResourceStateReady(runtimeID string) {

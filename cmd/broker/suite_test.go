@@ -290,7 +290,6 @@ func fixConfig() *Config {
 			OperationResultFinishedOperationRetentionPeriod: time.Hour,
 			BindingsStatsPollingInterval:                    3 * time.Second,
 		},
-		ZoneMapping: true,
 	}
 }
 
