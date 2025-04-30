@@ -82,57 +82,11 @@ jobs:
       - name: Prepare K3s cluster and docker registry
         run: "./scripts/testing/k3s-setup.sh ${{ matrix.version }} --wait"
 
-      - name: Create namespaces
-        run: |
-          kubectl create namespace kcp-system
-          kubectl create namespace kyma-system
-          kubectl create namespace istio-system
-
-      - name: Install istio
-        run: |
-          helm repo add istio https://istio-release.storage.googleapis.com/charts
-          helm install istio-base istio/base -n istio-system --set defaultRevision=default
-          
-      - name: Install Prometheus Operator for ServiceMonitor
-        run: |
-          kubectl create -f https://raw.githubusercontent.com/prometheus-operator/prometheus-operator/master/bundle.yaml
-
-      - name: Install Postgres
-        run: |
-          kubectl create -f scripts/testing/yaml/postgres -n kcp-system
-      
-      - name: Prepare fake gardener credentials
-        run: |
-          KCFG=$(kubectl config view --raw)
-          kubectl create secret generic gardener-credentials --from-literal=kubeconfig="$KCFG" -n kcp-system
-
-      - name: Prepare chart for next KEB version
+      - name: Install KEB chart
         run: |
           if [ "${{ inputs.release }}" == "true" ]; then
             scripts/bump_keb_chart.sh ${{ inputs.version }} "release"
+            make install VERSION=${{ inputs.version }}
           else
-            scripts/bump_keb_chart.sh PR-${{ inputs.version }} "pr"
-          fi
-
-      - name: Deploy KEB helm chart
-        run: |
-          cd resources/keb
-          if [ "${{ inputs.release }}" == "true" ]; then
-            helm install keb ../keb --namespace kcp-system -f values.yaml --set global.database.embedded.enabled=false --set testConfig.kebDeployment.useAnnotations=true --set global.secrets.mechanism=secrets --debug --wait
-          else
-            helm install keb ../keb --namespace kcp-system -f values.yaml --set global.database.embedded.enabled=false --set testConfig.kebDeployment.useAnnotations=true --set global.images.container_registry.path="europe-docker.pkg.dev/kyma-project/dev" --set global.secrets.mechanism=secrets --debug --wait
-          fi
-
-      - name: Check if KEB pod is in READY state
-        run: |
-          set +e
-          echo "Waiting for kyma-environment-broker pod to be in READY state..."
-          kubectl wait --namespace kcp-system --for=condition=Ready pod -l app.kubernetes.io/name=kyma-environment-broker --timeout=60s
-          EXIT_CODE=$?
-          if [ $EXIT_CODE -ne 0 ]; then
-            echo "The kyma-environment-broker pod did not become READY within the timeout."
-            echo "Fetching the logs from the pod..."
-            POD_NAME=$(kubectl get pod -l app.kubernetes.io/name=kyma-environment-broker -n kcp-system -o jsonpath='{.items[0].metadata.name}')
-            kubectl logs $POD_NAME -n kcp-system
-            exit 1
+            make install VERSION=PR-${{ inputs.version }}
           fi
