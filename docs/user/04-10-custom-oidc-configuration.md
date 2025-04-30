@@ -77,7 +77,9 @@ See the example with the OIDC list:
 
 If you do not include an `oidc` list or a single `oidc` object in the provisioning request, the default OIDC configuration is applied. However, if you provide an empty `oidc` list with zero elements, no OIDC configuration is applied to the instance. Unlike the single `oidc` object, which defaults to the predefined values when its properties are left empty, the `oidc` list does not inherit default values for its items and they must be explicitly defined.
 
-### Example 1: Without the `oidc` Object or List
+## Examples
+
+### Configuration with No `oidc` Object and No List
 
 This example demonstrates a request without specifying any `oidc` configuration. The default OIDC configuration is applied automatically.
 
