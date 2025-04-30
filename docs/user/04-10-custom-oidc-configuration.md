@@ -39,7 +39,6 @@ See the example with the OIDC list:
            }
        }
    }"
-```
 <details>
 <summary>See the example with the single OIDC object (not recommended):</summary>
 
