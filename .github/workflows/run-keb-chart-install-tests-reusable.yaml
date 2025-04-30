@@ -85,7 +85,6 @@ jobs:
       - name: Install KEB chart
         run: |
           if [ "${{ inputs.release }}" == "true" ]; then
-            scripts/bump_keb_chart.sh ${{ inputs.version }} "release"
             make install VERSION=${{ inputs.version }}
           else
             make install VERSION=PR-${{ inputs.version }}
