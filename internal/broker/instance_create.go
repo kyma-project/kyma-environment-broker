@@ -649,7 +649,7 @@ func (b *ProvisionEndpoint) validator(details *domain.ProvisionDetails, provider
 	platformRegion, _ := middleware.RegionFromContext(ctx)
 	plans := Plans(b.plansConfig, provider, nil, b.config.IncludeAdditionalParamsInSchema,
 		euaccess.IsEURestrictedAccess(platformRegion),
-		b.infrastructureManager.UseSmallerMachineTypes, b.config.EnableShootAndSeedSameRegion, b.convergedCloudRegionsProvider.GetRegions(platformRegion), assuredworkloads.IsKSA(platformRegion), b.config.UseAdditionalOIDCSchema)
+		b.infrastructureManager.UseSmallerMachineTypes, b.config.EnableShootAndSeedSameRegion, b.convergedCloudRegionsProvider.GetRegions(platformRegion), assuredworkloads.IsKSA(platformRegion), b.config.UseAdditionalOIDCSchema, b.config.DisableMachineTypeUpdate)
 	plan := plans[details.PlanID]
 
 	return validator.NewFromSchema(plan.Schemas.Instance.Create.Parameters)

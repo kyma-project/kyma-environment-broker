@@ -73,6 +73,7 @@ func (b *ServicesEndpoint) Services(ctx context.Context) ([]domain.Service, erro
 		b.convergedCloudRegionsProvider.GetRegions(platformRegion),
 		assuredworkloads.IsKSA(platformRegion),
 		b.cfg.UseAdditionalOIDCSchema,
+		b.cfg.DisableMachineTypeUpdate,
 	) {
 
 		// filter out not enabled plans

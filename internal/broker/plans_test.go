@@ -35,7 +35,7 @@ func TestSchemaGenerator(t *testing.T) {
 		{
 			name: "AWS schema is correct",
 			generator: func(machinesDisplay, regionsDisplay map[string]string, machines []string, additionalParams, update, useAdditionalOIDCSchema bool) *map[string]interface{} {
-				return AWSSchema(machinesDisplay, AwsMachinesDisplay(true), regionsDisplay, nil, machines, AwsMachinesNames(true), additionalParams, update, false, additionalParams, useAdditionalOIDCSchema)
+				return AWSSchema(machinesDisplay, AwsMachinesDisplay(true), regionsDisplay, nil, machines, AwsMachinesNames(true), additionalParams, update, false, additionalParams, useAdditionalOIDCSchema, true)
 			},
 			machineTypes:        AwsMachinesNames(false),
 			machineTypesDisplay: AwsMachinesDisplay(false),
@@ -49,7 +49,7 @@ func TestSchemaGenerator(t *testing.T) {
 		{
 			name: "AWS schema with EU access restriction is correct",
 			generator: func(machinesDisplay, regionsDisplay map[string]string, machines []string, additionalParams, update, useAdditionalOIDCSchema bool) *map[string]interface{} {
-				return AWSSchema(machinesDisplay, AwsMachinesDisplay(true), regionsDisplay, nil, machines, AwsMachinesNames(true), additionalParams, update, true, additionalParams, useAdditionalOIDCSchema)
+				return AWSSchema(machinesDisplay, AwsMachinesDisplay(true), regionsDisplay, nil, machines, AwsMachinesNames(true), additionalParams, update, true, additionalParams, useAdditionalOIDCSchema, true)
 			},
 			machineTypes:        AwsMachinesNames(false),
 			machineTypesDisplay: AwsMachinesDisplay(false),
@@ -63,7 +63,7 @@ func TestSchemaGenerator(t *testing.T) {
 		{
 			name: "Azure schema is correct",
 			generator: func(machinesDisplay, regionsDisplay map[string]string, machines []string, additionalParams, update, useAdditionalOIDCSchema bool) *map[string]interface{} {
-				return AzureSchema(machinesDisplay, AzureMachinesDisplay(true), regionsDisplay, nil, machines, AzureMachinesNames(true), additionalParams, update, false, additionalParams, useAdditionalOIDCSchema)
+				return AzureSchema(machinesDisplay, AzureMachinesDisplay(true), regionsDisplay, nil, machines, AzureMachinesNames(true), additionalParams, update, false, additionalParams, useAdditionalOIDCSchema, true)
 			},
 			machineTypes:        AzureMachinesNames(false),
 			machineTypesDisplay: AzureMachinesDisplay(false),
@@ -77,7 +77,7 @@ func TestSchemaGenerator(t *testing.T) {
 		{
 			name: "Azure schema with EU access restriction is correct",
 			generator: func(machinesDisplay, regionsDisplay map[string]string, machines []string, additionalParams, update, useAdditionalOIDCSchema bool) *map[string]interface{} {
-				return AzureSchema(machinesDisplay, AzureMachinesDisplay(true), regionsDisplay, nil, machines, AzureMachinesNames(true), additionalParams, update, true, additionalParams, useAdditionalOIDCSchema)
+				return AzureSchema(machinesDisplay, AzureMachinesDisplay(true), regionsDisplay, nil, machines, AzureMachinesNames(true), additionalParams, update, true, additionalParams, useAdditionalOIDCSchema, true)
 			},
 			machineTypes:        AzureMachinesNames(false),
 			machineTypesDisplay: AzureMachinesDisplay(false),
@@ -91,7 +91,7 @@ func TestSchemaGenerator(t *testing.T) {
 		{
 			name: "AzureLite schema is correct",
 			generator: func(machinesDisplay, regionsDisplay map[string]string, machines []string, additionalParams, update, useAdditionalOIDCSchema bool) *map[string]interface{} {
-				return AzureLiteSchema(machinesDisplay, regionsDisplay, nil, machines, additionalParams, update, false, additionalParams, useAdditionalOIDCSchema)
+				return AzureLiteSchema(machinesDisplay, regionsDisplay, nil, machines, additionalParams, update, false, additionalParams, useAdditionalOIDCSchema, true)
 			},
 			machineTypes:        AzureLiteMachinesNames(),
 			machineTypesDisplay: AzureLiteMachinesDisplay(),
@@ -105,7 +105,7 @@ func TestSchemaGenerator(t *testing.T) {
 		{
 			name: "AzureLite reduced schema is correct",
 			generator: func(machinesDisplay, regionsDisplay map[string]string, machines []string, additionalParams, update, useAdditionalOIDCSchema bool) *map[string]interface{} {
-				return AzureLiteSchema(machinesDisplay, regionsDisplay, nil, machines, additionalParams, update, false, false, useAdditionalOIDCSchema)
+				return AzureLiteSchema(machinesDisplay, regionsDisplay, nil, machines, additionalParams, update, false, false, useAdditionalOIDCSchema, true)
 			},
 			machineTypes:        azureLiteMachineNamesReduced,
 			machineTypesDisplay: azureLiteMachinesDisplayReduced,
@@ -119,7 +119,7 @@ func TestSchemaGenerator(t *testing.T) {
 		{
 			name: "AzureLite schema with EU access restriction is correct",
 			generator: func(machinesDisplay, regionsDisplay map[string]string, machines []string, additionalParams, update, useAdditionalOIDCSchema bool) *map[string]interface{} {
-				return AzureLiteSchema(machinesDisplay, regionsDisplay, nil, machines, additionalParams, update, true, additionalParams, useAdditionalOIDCSchema)
+				return AzureLiteSchema(machinesDisplay, regionsDisplay, nil, machines, additionalParams, update, true, additionalParams, useAdditionalOIDCSchema, true)
 			},
 			machineTypes:        AzureLiteMachinesNames(),
 			machineTypesDisplay: AzureLiteMachinesDisplay(),
@@ -133,7 +133,7 @@ func TestSchemaGenerator(t *testing.T) {
 		{
 			name: "AzureLite reduced schema with EU access restriction is correct",
 			generator: func(machinesDisplay, regionsDisplay map[string]string, machines []string, additionalParams, update, useAdditionalOIDCSchema bool) *map[string]interface{} {
-				return AzureLiteSchema(machinesDisplay, regionsDisplay, nil, machines, additionalParams, update, true, false, useAdditionalOIDCSchema)
+				return AzureLiteSchema(machinesDisplay, regionsDisplay, nil, machines, additionalParams, update, true, false, useAdditionalOIDCSchema, true)
 			},
 			machineTypes:        azureLiteMachineNamesReduced,
 			machineTypesDisplay: azureLiteMachinesDisplayReduced,
@@ -199,7 +199,7 @@ func TestSchemaGenerator(t *testing.T) {
 		{
 			name: "GCP schema is correct",
 			generator: func(machinesDisplay, regionsDisplay map[string]string, machines []string, additionalParams, update, useAdditionalOIDCSchema bool) *map[string]interface{} {
-				return GCPSchema(machinesDisplay, GcpMachinesDisplay(true), regionsDisplay, nil, machines, GcpMachinesNames(true), additionalParams, update, additionalParams, false, useAdditionalOIDCSchema)
+				return GCPSchema(machinesDisplay, GcpMachinesDisplay(true), regionsDisplay, nil, machines, GcpMachinesNames(true), additionalParams, update, additionalParams, false, useAdditionalOIDCSchema, true)
 			},
 			machineTypes:        GcpMachinesNames(false),
 			machineTypesDisplay: GcpMachinesDisplay(false),
@@ -213,7 +213,7 @@ func TestSchemaGenerator(t *testing.T) {
 		{
 			name: "GCP schema with assured workloads is correct",
 			generator: func(machinesDisplay, regionsDisplay map[string]string, machines []string, additionalParams, update, useAdditionalOIDCSchema bool) *map[string]interface{} {
-				return GCPSchema(machinesDisplay, GcpMachinesDisplay(true), regionsDisplay, nil, machines, GcpMachinesNames(true), additionalParams, update, additionalParams, true, useAdditionalOIDCSchema)
+				return GCPSchema(machinesDisplay, GcpMachinesDisplay(true), regionsDisplay, nil, machines, GcpMachinesNames(true), additionalParams, update, additionalParams, true, useAdditionalOIDCSchema, true)
 			},
 			machineTypes:        GcpMachinesNames(false),
 			machineTypesDisplay: GcpMachinesDisplay(false),
@@ -228,7 +228,7 @@ func TestSchemaGenerator(t *testing.T) {
 			name: "SapConvergedCloud schema is correct",
 			generator: func(machinesDisplay, regionsDisplay map[string]string, machines []string, additionalParams, update, useAdditionalOIDCSchema bool) *map[string]interface{} {
 				convergedCloudRegionProvider := &OneForAllConvergedCloudRegionsProvider{}
-				return SapConvergedCloudSchema(machinesDisplay, regionsDisplay, nil, machines, additionalParams, update, additionalParams, convergedCloudRegionProvider.GetRegions(""), useAdditionalOIDCSchema)
+				return SapConvergedCloudSchema(machinesDisplay, regionsDisplay, nil, machines, additionalParams, update, additionalParams, convergedCloudRegionProvider.GetRegions(""), useAdditionalOIDCSchema, true)
 			},
 			machineTypes:        SapConvergedCloudMachinesNames(),
 			machineTypesDisplay: SapConvergedCloudMachinesDisplay(),
@@ -287,7 +287,7 @@ func TestSapConvergedSchema(t *testing.T) {
 		regions := []string{"region1", "region2"}
 
 		// when
-		schema := Plans(nil, "", nil, false, false, false, false, regions, false, false)
+		schema := Plans(nil, "", nil, false, false, false, false, regions, false, false, true)
 		convergedSchema, found := schema[SapConvergedCloudPlanID]
 		schemaRegionsCreate := convergedSchema.Schemas.Instance.Create.Parameters["properties"].(map[string]interface{})["region"].(map[string]interface{})["enum"]
 
@@ -302,7 +302,7 @@ func TestSapConvergedSchema(t *testing.T) {
 		regions := []string{}
 
 		// when
-		schema := Plans(nil, "", nil, false, false, false, false, regions, false, false)
+		schema := Plans(nil, "", nil, false, false, false, false, regions, false, false, true)
 		_, found := schema[SapConvergedCloudPlanID]
 
 		// then
@@ -310,7 +310,7 @@ func TestSapConvergedSchema(t *testing.T) {
 		assert.False(t, found)
 
 		// when
-		schema = Plans(nil, "", nil, false, false, false, false, nil, false, false)
+		schema = Plans(nil, "", nil, false, false, false, false, nil, false, false, true)
 		_, found = schema[SapConvergedCloudPlanID]
 
 		// then

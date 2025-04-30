@@ -1463,6 +1463,48 @@ func TestAvailableZonesValidationDuringUpdate(t *testing.T) {
 	assert.EqualError(t, err, "In the westeurope, the g6.xlarge machine type is not available in 3 zones. If you want to use this machine type, set HA to false.")
 }
 
+func TestMachineTypeUpdateInAdditionalWorkerNodePools(t *testing.T) {
+	// given
+	instance := fixture.FixInstance(instanceID)
+	instance.Parameters.Parameters.AdditionalWorkerNodePools = []pkg.AdditionalWorkerNodePool{
+		{
+			Name:          "name-1",
+			MachineType:   "Standard_NC8as_T4_v3",
+			HAZones:       true,
+			AutoScalerMin: 3,
+			AutoScalerMax: 20,
+		},
+	}
+	st := storage.NewMemoryStorage()
+	err := st.Instances().Insert(instance)
+	require.NoError(t, err)
+	err = st.Operations().InsertProvisioningOperation(fixProvisioningOperation("provisioning01"))
+	require.NoError(t, err)
+
+	handler := &handler{}
+	q := &automock.Queue{}
+	q.On("Add", mock.AnythingOfType("string"))
+
+	kcBuilder := &kcMock.KcBuilder{}
+	kcBuilder.On("GetServerURL", mock.Anything).Return("https://kcp.example.dummy", nil)
+	svc := broker.NewUpdate(broker.Config{DisableMachineTypeUpdate: true}, st, handler, true, true, false, q, broker.PlansConfig{},
+		fixValueProvider(), fixLogger(), dashboardConfig, kcBuilder, &broker.OneForAllConvergedCloudRegionsProvider{}, fakeKcpK8sClient, regionssupportingmachine.RegionsSupportingMachine{}, false, false)
+
+	additionalWorkerNodePools := `[{"name": "name-1", "machineType": "Standard_NC4as_T4_v3", "haZones": true, "autoScalerMin": 3, "autoScalerMax": 20}]`
+	// when
+	_, err = svc.Update(context.Background(), instanceID, domain.UpdateDetails{
+		ServiceID:       "",
+		PlanID:          broker.AzurePlanID,
+		RawParameters:   json.RawMessage("{\"machineType\":\"Standard_D16s_v5\", \"additionalWorkerNodePools\": " + additionalWorkerNodePools + "}"),
+		PreviousValues:  domain.PreviousValues{},
+		RawContext:      json.RawMessage("{\"globalaccount_id\":\"globalaccount_id_1\", \"active\":true}"),
+		MaintenanceInfo: nil,
+	}, true)
+
+	// then
+	assert.EqualError(t, err, "Machine type is permanent and cannot be changed for name-1 additional worker node pool")
+}
+
 func fixValueProvider() broker.ValuesProvider {
 	return provider.NewPlanSpecificValuesProvider(true, pkg.AWS, true, nil, "production", "")
 }

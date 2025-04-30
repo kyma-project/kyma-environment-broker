@@ -161,6 +161,7 @@ broker:
   subaccountMovementEnabled: "false"
   updateCustomResourcesLabelsOnAccountMove: "false"
   useAdditionalOIDCSchema: "false"
+  disableMachineTypeUpdate: "false"
 
 binding:
   enabled: false

@@ -482,7 +482,7 @@ func ShootAndSeedSameRegionProperty() *Type {
 
 // NewProvisioningProperties creates a new properties for different plans
 // Note that the order of properties will be the same in the form on the website
-func NewProvisioningProperties(machineTypesDisplay, additionalMachineTypesDisplay, regionsDisplay map[string]string, machineTypes, additionalMachineTypes, regions []string, update bool) ProvisioningProperties {
+func NewProvisioningProperties(machineTypesDisplay, additionalMachineTypesDisplay, regionsDisplay map[string]string, machineTypes, additionalMachineTypes, regions []string, update bool, disabledMachineTypeUpdate bool) ProvisioningProperties {
 
 	properties := ProvisioningProperties{
 		UpdateProperties: UpdateProperties{
@@ -505,7 +505,7 @@ func NewProvisioningProperties(machineTypesDisplay, additionalMachineTypesDispla
 				EnumDisplayName: machineTypesDisplay,
 				Description:     "Specifies the type of the virtual machine.",
 			},
-			AdditionalWorkerNodePools: NewAdditionalWorkerNodePoolsSchema(additionalMachineTypesDisplay, additionalMachineTypes),
+			AdditionalWorkerNodePools: NewAdditionalWorkerNodePoolsSchema(additionalMachineTypesDisplay, additionalMachineTypes, disabledMachineTypeUpdate),
 		},
 		Name: NameProperty(),
 		Region: &Type{
@@ -595,8 +595,8 @@ func AdministratorsProperty() *Type {
 	}
 }
 
-func NewAdditionalWorkerNodePoolsSchema(machineTypesDisplay map[string]string, machineTypes []string) *AdditionalWorkerNodePoolsType {
-	return &AdditionalWorkerNodePoolsType{
+func NewAdditionalWorkerNodePoolsSchema(machineTypesDisplay map[string]string, machineTypes []string, disabledMachineTypeUpdate bool) *AdditionalWorkerNodePoolsType {
+	additionalWorkerNodePoolsType := &AdditionalWorkerNodePoolsType{
 		Type: Type{
 			Type:        "array",
 			UniqueItems: true,
@@ -644,4 +644,8 @@ func NewAdditionalWorkerNodePoolsSchema(machineTypesDisplay map[string]string, m
 			},
 		},
 	}
+	if disabledMachineTypeUpdate {
+		additionalWorkerNodePoolsType.Items.Properties.MachineType.Description = "Specifies the type of the virtual machine. The machine type marked with “*” has limited availability and generates high cost. This setting is permanent and cannot be changed later. Changing the machine type requires creating a new worker node pool, migrating workloads to it, and decommissioning the old one."
+	}
+	return additionalWorkerNodePoolsType
 }

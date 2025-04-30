@@ -271,6 +271,8 @@ spec:
               value: "{{ .Values.multipleContexts }}"
             - name: APP_ZONE_MAPPING
               value: "{{ .Values.zoneMapping }}"
+            - name: APP_BROKER_DISABLE_MACHINE_TYPE_UPDATE
+              value: "{{ .Values.disableMachineTypeUpdate }}"
           ports:
             - name: http
               containerPort: {{ .Values.broker.port }}

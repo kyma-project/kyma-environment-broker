@@ -56,6 +56,8 @@ type Config struct {
 	WorkerHealthCheckWarnInterval time.Duration `envconfig:"default=10m"`
 
 	UseAdditionalOIDCSchema bool `envconfig:"default=false"`
+
+	DisableMachineTypeUpdate bool `envconfig:"default=false"`
 }
 
 type ServicesConfig map[string]Service

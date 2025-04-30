@@ -504,34 +504,34 @@ func requiredOwnClusterSchemaProperties() []string {
 	return []string{"name", "kubeconfig", "shootName", "shootDomain"}
 }
 
-func SapConvergedCloudSchema(machineTypesDisplay, regionsDisplay map[string]string, defaultOIDCConfig *pkg.OIDCConfigDTO, machineTypes []string, additionalParams, update bool, shootAndSeedFeatureFlag bool, sapConvergedCloudRegions []string, useAdditionalOIDCSchema bool) *map[string]interface{} {
-	properties := NewProvisioningProperties(machineTypesDisplay, machineTypesDisplay, regionsDisplay, machineTypes, machineTypes, sapConvergedCloudRegions, update)
+func SapConvergedCloudSchema(machineTypesDisplay, regionsDisplay map[string]string, defaultOIDCConfig *pkg.OIDCConfigDTO, machineTypes []string, additionalParams, update bool, shootAndSeedFeatureFlag bool, sapConvergedCloudRegions []string, useAdditionalOIDCSchema bool, disabledMachineTypeUpdate bool) *map[string]interface{} {
+	properties := NewProvisioningProperties(machineTypesDisplay, machineTypesDisplay, regionsDisplay, machineTypes, machineTypes, sapConvergedCloudRegions, update, disabledMachineTypeUpdate)
 	return createSchemaWithProperties(properties, defaultOIDCConfig, additionalParams, update, requiredSchemaProperties(), true, shootAndSeedFeatureFlag, useAdditionalOIDCSchema)
 }
 
-func PreviewSchema(machineTypesDisplay, additionalMachineTypesDisplay, regionsDisplay map[string]string, defaultOIDCConfig *pkg.OIDCConfigDTO, machineTypes, additionalMachineTypes []string, additionalParams, update bool, euAccessRestricted bool, useAdditionalOIDCSchema bool) *map[string]interface{} {
-	properties := NewProvisioningProperties(machineTypesDisplay, additionalMachineTypesDisplay, regionsDisplay, machineTypes, additionalMachineTypes, AWSRegions(euAccessRestricted), update)
+func PreviewSchema(machineTypesDisplay, additionalMachineTypesDisplay, regionsDisplay map[string]string, defaultOIDCConfig *pkg.OIDCConfigDTO, machineTypes, additionalMachineTypes []string, additionalParams, update bool, euAccessRestricted bool, useAdditionalOIDCSchema bool, disabledMachineTypeUpdate bool) *map[string]interface{} {
+	properties := NewProvisioningProperties(machineTypesDisplay, additionalMachineTypesDisplay, regionsDisplay, machineTypes, additionalMachineTypes, AWSRegions(euAccessRestricted), update, disabledMachineTypeUpdate)
 	properties.Networking = NewNetworkingSchema()
 	return createSchemaWithProperties(properties, defaultOIDCConfig, additionalParams, update, requiredSchemaProperties(), false, false, useAdditionalOIDCSchema)
 }
 
-func GCPSchema(machineTypesDisplay, additionalMachineTypesDisplay, regionsDisplay map[string]string, defaultOIDCConfig *pkg.OIDCConfigDTO, machineTypes, additionalMachineTypes []string, additionalParams, update bool, shootAndSeedFeatureFlag bool, assuredWorkloads bool, useAdditionalOIDCSchema bool) *map[string]interface{} {
-	properties := NewProvisioningProperties(machineTypesDisplay, additionalMachineTypesDisplay, regionsDisplay, machineTypes, additionalMachineTypes, GcpRegions(assuredWorkloads), update)
+func GCPSchema(machineTypesDisplay, additionalMachineTypesDisplay, regionsDisplay map[string]string, defaultOIDCConfig *pkg.OIDCConfigDTO, machineTypes, additionalMachineTypes []string, additionalParams, update bool, shootAndSeedFeatureFlag bool, assuredWorkloads bool, useAdditionalOIDCSchema bool, disabledMachineTypeUpdate bool) *map[string]interface{} {
+	properties := NewProvisioningProperties(machineTypesDisplay, additionalMachineTypesDisplay, regionsDisplay, machineTypes, additionalMachineTypes, GcpRegions(assuredWorkloads), update, disabledMachineTypeUpdate)
 	return createSchemaWithProperties(properties, defaultOIDCConfig, additionalParams, update, requiredSchemaProperties(), true, shootAndSeedFeatureFlag, useAdditionalOIDCSchema)
 }
 
-func AWSSchema(machineTypesDisplay, additionalMachineTypesDisplay, regionsDisplay map[string]string, defaultOIDCConfig *pkg.OIDCConfigDTO, machineTypes, additionalMachineTypes []string, additionalParams, update bool, euAccessRestricted bool, shootAndSeedSameRegion bool, useAdditionalOIDCSchema bool) *map[string]interface{} {
-	properties := NewProvisioningProperties(machineTypesDisplay, additionalMachineTypesDisplay, regionsDisplay, machineTypes, additionalMachineTypes, AWSRegions(euAccessRestricted), update)
+func AWSSchema(machineTypesDisplay, additionalMachineTypesDisplay, regionsDisplay map[string]string, defaultOIDCConfig *pkg.OIDCConfigDTO, machineTypes, additionalMachineTypes []string, additionalParams, update bool, euAccessRestricted bool, shootAndSeedSameRegion bool, useAdditionalOIDCSchema bool, disabledMachineTypeUpdate bool) *map[string]interface{} {
+	properties := NewProvisioningProperties(machineTypesDisplay, additionalMachineTypesDisplay, regionsDisplay, machineTypes, additionalMachineTypes, AWSRegions(euAccessRestricted), update, disabledMachineTypeUpdate)
 	return createSchemaWithProperties(properties, defaultOIDCConfig, additionalParams, update, requiredSchemaProperties(), true, shootAndSeedSameRegion, useAdditionalOIDCSchema)
 }
 
-func AzureSchema(machineTypesDisplay, additionalMachineTypesDisplay, regionsDisplay map[string]string, defaultOIDCConfig *pkg.OIDCConfigDTO, machineTypes, additionalMachineTypes []string, additionalParams, update bool, euAccessRestricted bool, shootAndSeedFeatureFlag bool, useAdditionalOIDCSchema bool) *map[string]interface{} {
-	properties := NewProvisioningProperties(machineTypesDisplay, additionalMachineTypesDisplay, regionsDisplay, machineTypes, additionalMachineTypes, AzureRegions(euAccessRestricted), update)
+func AzureSchema(machineTypesDisplay, additionalMachineTypesDisplay, regionsDisplay map[string]string, defaultOIDCConfig *pkg.OIDCConfigDTO, machineTypes, additionalMachineTypes []string, additionalParams, update bool, euAccessRestricted bool, shootAndSeedFeatureFlag bool, useAdditionalOIDCSchema bool, disabledMachineTypeUpdate bool) *map[string]interface{} {
+	properties := NewProvisioningProperties(machineTypesDisplay, additionalMachineTypesDisplay, regionsDisplay, machineTypes, additionalMachineTypes, AzureRegions(euAccessRestricted), update, disabledMachineTypeUpdate)
 	return createSchemaWithProperties(properties, defaultOIDCConfig, additionalParams, update, requiredSchemaProperties(), true, shootAndSeedFeatureFlag, useAdditionalOIDCSchema)
 }
 
-func AzureLiteSchema(machineTypesDisplay, regionsDisplay map[string]string, defaultOIDCConfig *pkg.OIDCConfigDTO, machineTypes []string, additionalParams, update bool, euAccessRestricted bool, shootAndSeedFeatureFlag bool, useAdditionalOIDCSchema bool) *map[string]interface{} {
-	properties := NewProvisioningProperties(machineTypesDisplay, machineTypesDisplay, regionsDisplay, machineTypes, machineTypes, AzureRegions(euAccessRestricted), update)
+func AzureLiteSchema(machineTypesDisplay, regionsDisplay map[string]string, defaultOIDCConfig *pkg.OIDCConfigDTO, machineTypes []string, additionalParams, update bool, euAccessRestricted bool, shootAndSeedFeatureFlag bool, useAdditionalOIDCSchema bool, disabledMachineTypeUpdate bool) *map[string]interface{} {
+	properties := NewProvisioningProperties(machineTypesDisplay, machineTypesDisplay, regionsDisplay, machineTypes, machineTypes, AzureRegions(euAccessRestricted), update, disabledMachineTypeUpdate)
 
 	properties.AutoScalerMax.Minimum = 2
 	properties.AutoScalerMin.Minimum = 2
@@ -660,7 +660,7 @@ func unmarshalSchema(schema *RootSchema) *map[string]interface{} {
 
 // Plans is designed to hold plan defaulting logic
 // keep internal/hyperscaler/azure/config.go in sync with any changes to available zones
-func Plans(plans PlansConfig, provider pkg.CloudProvider, defaultOIDCConfig *pkg.OIDCConfigDTO, includeAdditionalParamsInSchema bool, euAccessRestricted bool, useSmallerMachineTypes bool, shootAndSeedFeatureFlag bool, sapConvergedCloudRegions []string, assuredWorkloads bool, useAdditionalOIDCSchema bool) map[string]domain.ServicePlan {
+func Plans(plans PlansConfig, provider pkg.CloudProvider, defaultOIDCConfig *pkg.OIDCConfigDTO, includeAdditionalParamsInSchema bool, euAccessRestricted bool, useSmallerMachineTypes bool, shootAndSeedFeatureFlag bool, sapConvergedCloudRegions []string, assuredWorkloads bool, useAdditionalOIDCSchema bool, disabledMachineTypeUpdate bool) map[string]domain.ServicePlan {
 	awsMachineNames := AwsMachinesNames(false)
 	awsMachinesDisplay := AwsMachinesDisplay(false)
 	awsAdditionalMachineNames := AwsMachinesNames(true)
@@ -684,20 +684,20 @@ func Plans(plans PlansConfig, provider pkg.CloudProvider, defaultOIDCConfig *pkg
 		delete(azureLiteMachinesDisplay, "Standard_D2s_v5")
 	}
 
-	awsCreateSchema := AWSSchema(awsMachinesDisplay, awsAdditionalMachinesDisplay, awsRegionsDisplay, defaultOIDCConfig, awsMachineNames, awsAdditionalMachineNames, includeAdditionalParamsInSchema, false, euAccessRestricted, shootAndSeedFeatureFlag, useAdditionalOIDCSchema)
-	awsUpdateSchema := AWSSchema(awsMachinesDisplay, awsAdditionalMachinesDisplay, awsRegionsDisplay, defaultOIDCConfig, awsMachineNames, awsAdditionalMachineNames, includeAdditionalParamsInSchema, true, euAccessRestricted, shootAndSeedFeatureFlag, useAdditionalOIDCSchema)
-	azureCreateSchema := AzureSchema(azureMachinesDisplay, azureAdditionalMachinesDisplay, azureRegionsDisplay, defaultOIDCConfig, azureMachinesNames, azureAdditionalMachinesNames, includeAdditionalParamsInSchema, false, euAccessRestricted, shootAndSeedFeatureFlag, useAdditionalOIDCSchema)
-	azureUpdateSchema := AzureSchema(azureMachinesDisplay, azureAdditionalMachinesDisplay, azureRegionsDisplay, defaultOIDCConfig, azureMachinesNames, azureAdditionalMachinesNames, includeAdditionalParamsInSchema, true, euAccessRestricted, shootAndSeedFeatureFlag, useAdditionalOIDCSchema)
-	azureLiteCreateSchema := AzureLiteSchema(azureLiteMachinesDisplay, azureRegionsDisplay, defaultOIDCConfig, azureLiteMachinesNames, includeAdditionalParamsInSchema, false, euAccessRestricted, shootAndSeedFeatureFlag, useAdditionalOIDCSchema)
-	azureLiteUpdateSchema := AzureLiteSchema(azureLiteMachinesDisplay, azureRegionsDisplay, defaultOIDCConfig, azureLiteMachinesNames, includeAdditionalParamsInSchema, true, euAccessRestricted, shootAndSeedFeatureFlag, useAdditionalOIDCSchema)
+	awsCreateSchema := AWSSchema(awsMachinesDisplay, awsAdditionalMachinesDisplay, awsRegionsDisplay, defaultOIDCConfig, awsMachineNames, awsAdditionalMachineNames, includeAdditionalParamsInSchema, false, euAccessRestricted, shootAndSeedFeatureFlag, useAdditionalOIDCSchema, disabledMachineTypeUpdate)
+	awsUpdateSchema := AWSSchema(awsMachinesDisplay, awsAdditionalMachinesDisplay, awsRegionsDisplay, defaultOIDCConfig, awsMachineNames, awsAdditionalMachineNames, includeAdditionalParamsInSchema, true, euAccessRestricted, shootAndSeedFeatureFlag, useAdditionalOIDCSchema, disabledMachineTypeUpdate)
+	azureCreateSchema := AzureSchema(azureMachinesDisplay, azureAdditionalMachinesDisplay, azureRegionsDisplay, defaultOIDCConfig, azureMachinesNames, azureAdditionalMachinesNames, includeAdditionalParamsInSchema, false, euAccessRestricted, shootAndSeedFeatureFlag, useAdditionalOIDCSchema, disabledMachineTypeUpdate)
+	azureUpdateSchema := AzureSchema(azureMachinesDisplay, azureAdditionalMachinesDisplay, azureRegionsDisplay, defaultOIDCConfig, azureMachinesNames, azureAdditionalMachinesNames, includeAdditionalParamsInSchema, true, euAccessRestricted, shootAndSeedFeatureFlag, useAdditionalOIDCSchema, disabledMachineTypeUpdate)
+	azureLiteCreateSchema := AzureLiteSchema(azureLiteMachinesDisplay, azureRegionsDisplay, defaultOIDCConfig, azureLiteMachinesNames, includeAdditionalParamsInSchema, false, euAccessRestricted, shootAndSeedFeatureFlag, useAdditionalOIDCSchema, disabledMachineTypeUpdate)
+	azureLiteUpdateSchema := AzureLiteSchema(azureLiteMachinesDisplay, azureRegionsDisplay, defaultOIDCConfig, azureLiteMachinesNames, includeAdditionalParamsInSchema, true, euAccessRestricted, shootAndSeedFeatureFlag, useAdditionalOIDCSchema, disabledMachineTypeUpdate)
 	freemiumCreateSchema := FreemiumSchema(provider, defaultOIDCConfig, azureRegionsDisplay, includeAdditionalParamsInSchema, false, euAccessRestricted, useAdditionalOIDCSchema)
 	freemiumUpdateSchema := FreemiumSchema(provider, defaultOIDCConfig, azureRegionsDisplay, includeAdditionalParamsInSchema, true, euAccessRestricted, useAdditionalOIDCSchema)
-	gcpCreateSchema := GCPSchema(gcpMachinesDisplay, gcpAdditionalMachinesDisplay, gcpRegionsDisplay, defaultOIDCConfig, gcpMachinesNames, gcpAdditionalMachinesNames, includeAdditionalParamsInSchema, false, shootAndSeedFeatureFlag, assuredWorkloads, useAdditionalOIDCSchema)
-	gcpUpdateSchema := GCPSchema(gcpMachinesDisplay, gcpAdditionalMachinesDisplay, gcpRegionsDisplay, defaultOIDCConfig, gcpMachinesNames, gcpAdditionalMachinesNames, includeAdditionalParamsInSchema, true, shootAndSeedFeatureFlag, assuredWorkloads, useAdditionalOIDCSchema)
+	gcpCreateSchema := GCPSchema(gcpMachinesDisplay, gcpAdditionalMachinesDisplay, gcpRegionsDisplay, defaultOIDCConfig, gcpMachinesNames, gcpAdditionalMachinesNames, includeAdditionalParamsInSchema, false, shootAndSeedFeatureFlag, assuredWorkloads, useAdditionalOIDCSchema, disabledMachineTypeUpdate)
+	gcpUpdateSchema := GCPSchema(gcpMachinesDisplay, gcpAdditionalMachinesDisplay, gcpRegionsDisplay, defaultOIDCConfig, gcpMachinesNames, gcpAdditionalMachinesNames, includeAdditionalParamsInSchema, true, shootAndSeedFeatureFlag, assuredWorkloads, useAdditionalOIDCSchema, disabledMachineTypeUpdate)
 	ownClusterCreateSchema := OwnClusterSchema(false)
 	ownClusterUpdateSchema := OwnClusterSchema(true)
-	previewCreateSchema := PreviewSchema(awsMachinesDisplay, awsAdditionalMachinesDisplay, awsRegionsDisplay, defaultOIDCConfig, awsMachineNames, awsAdditionalMachineNames, includeAdditionalParamsInSchema, false, euAccessRestricted, useAdditionalOIDCSchema)
-	previewUpdateSchema := PreviewSchema(awsMachinesDisplay, awsAdditionalMachinesDisplay, awsRegionsDisplay, defaultOIDCConfig, awsMachineNames, awsAdditionalMachineNames, includeAdditionalParamsInSchema, true, euAccessRestricted, useAdditionalOIDCSchema)
+	previewCreateSchema := PreviewSchema(awsMachinesDisplay, awsAdditionalMachinesDisplay, awsRegionsDisplay, defaultOIDCConfig, awsMachineNames, awsAdditionalMachineNames, includeAdditionalParamsInSchema, false, euAccessRestricted, useAdditionalOIDCSchema, disabledMachineTypeUpdate)
+	previewUpdateSchema := PreviewSchema(awsMachinesDisplay, awsAdditionalMachinesDisplay, awsRegionsDisplay, defaultOIDCConfig, awsMachineNames, awsAdditionalMachineNames, includeAdditionalParamsInSchema, true, euAccessRestricted, useAdditionalOIDCSchema, disabledMachineTypeUpdate)
 	trialCreateSchema := TrialSchema(defaultOIDCConfig, includeAdditionalParamsInSchema, false, useAdditionalOIDCSchema)
 	trialUpdateSchema := TrialSchema(defaultOIDCConfig, includeAdditionalParamsInSchema, true, useAdditionalOIDCSchema)
 
@@ -719,8 +719,8 @@ func Plans(plans PlansConfig, provider pkg.CloudProvider, defaultOIDCConfig *pkg
 		sapConvergedCloudMachinesNames := SapConvergedCloudMachinesNames()
 		sapConvergedCloudMachinesDisplay := SapConvergedCloudMachinesDisplay()
 		sapConvergedCloudRegionsDisplay := SapConvergedCloudRegionsDisplay()
-		sapConvergedCloudCreateSchema := SapConvergedCloudSchema(sapConvergedCloudMachinesDisplay, sapConvergedCloudRegionsDisplay, defaultOIDCConfig, sapConvergedCloudMachinesNames, includeAdditionalParamsInSchema, false, shootAndSeedFeatureFlag, sapConvergedCloudRegions, useAdditionalOIDCSchema)
-		sapConvergedCloudUpdateSchema := SapConvergedCloudSchema(sapConvergedCloudMachinesDisplay, sapConvergedCloudRegionsDisplay, defaultOIDCConfig, sapConvergedCloudMachinesNames, includeAdditionalParamsInSchema, true, shootAndSeedFeatureFlag, sapConvergedCloudRegions, useAdditionalOIDCSchema)
+		sapConvergedCloudCreateSchema := SapConvergedCloudSchema(sapConvergedCloudMachinesDisplay, sapConvergedCloudRegionsDisplay, defaultOIDCConfig, sapConvergedCloudMachinesNames, includeAdditionalParamsInSchema, false, shootAndSeedFeatureFlag, sapConvergedCloudRegions, useAdditionalOIDCSchema, disabledMachineTypeUpdate)
+		sapConvergedCloudUpdateSchema := SapConvergedCloudSchema(sapConvergedCloudMachinesDisplay, sapConvergedCloudRegionsDisplay, defaultOIDCConfig, sapConvergedCloudMachinesNames, includeAdditionalParamsInSchema, true, shootAndSeedFeatureFlag, sapConvergedCloudRegions, useAdditionalOIDCSchema, disabledMachineTypeUpdate)
 		outputPlans[SapConvergedCloudPlanID] = defaultServicePlan(SapConvergedCloudPlanID, SapConvergedCloudPlanName, plans, sapConvergedCloudCreateSchema, sapConvergedCloudUpdateSchema)
 	}
 
