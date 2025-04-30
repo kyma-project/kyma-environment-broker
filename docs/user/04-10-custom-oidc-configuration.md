@@ -236,8 +236,7 @@ To update the OIDC configuration, provide values for the mandatory properties. W
 
 ### Updating an Instance with an OIDC Object List
 
-1. **Current OIDC Configuration**  
-  The instance has the following OIDC object list configuration:
+1. The instance has the following OIDC object list configuration:
 
   ```json
   [
