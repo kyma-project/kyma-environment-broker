@@ -301,8 +301,7 @@ To update the OIDC configuration, provide values for the mandatory properties. W
   }
   ```
 
-3. **Updated OIDC Configuration**  
-  After the update, the OIDC configuration is modified to reflect the values provided in the request:
+3. After the update, the OIDC configuration is modified to reflect the values provided in the request:
 
   ```json
   [
