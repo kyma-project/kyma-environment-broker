@@ -43,7 +43,7 @@ See the example with the OIDC list:
 <summary>See an example configuration with a single OIDC object (not recommended):</summary>
 
 > [!NOTE]
-> `clientID` and `issuerURL` values are mandatory when using the single `oidc` object for for custom OIDC configuration.
+> `clientID` and `issuerURL` values are mandatory when using a single `oidc` object for custom OIDC configuration.
 
 ```bash
    export VERSION=1.15.0
