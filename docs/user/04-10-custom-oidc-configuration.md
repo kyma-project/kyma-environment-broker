@@ -332,7 +332,7 @@ To update the OIDC configuration, provide values for the mandatory properties. W
 
 ---
 
-### Scenario 2: Updating an Instance with a Single OIDC Object
+### Updating an Instance with a Single OIDC Object
 
 1. The instance has the following OIDC object configuration:
 
