@@ -40,7 +40,7 @@ See the example with the OIDC list:
        }
    }"
 <details>
-<summary>See the example with the single OIDC object (not recommended):</summary>
+<summary>See an example configuration with a single OIDC object (not recommended):</summary>
 
 > [!NOTE]
 > `clientID` and `issuerURL` values are mandatory when using the single `oidc` object for for custom OIDC configuration.
