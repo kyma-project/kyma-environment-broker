@@ -179,7 +179,7 @@ This example shows a request with an `oidc` list containing a single configurati
 
 ---
 
-### Example 3: With the `oidc` Object (Empty Properties)
+### Configuration with an Empty `oidc` Object
 
 This example illustrates a request with an `oidc` object where all properties are left empty. The default OIDC configuration is applied.
 
