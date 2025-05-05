@@ -31,6 +31,7 @@ echo "KUBE_SERVER_IP is: ${KUBE_SERVER_IP}"
 KCFG=$(kubectl config view --minify --raw \
        | sed "s|https://0\.0\.0\.0|https://${KUBE_SERVER_IP}|" \
        | yq 'del(.clusters[].cluster."certificate-authority-data") | .clusters[].cluster."insecure-skip-tls-verify" = true')
+echo "Kubeconfig is: ${KCFG}"
 kubectl create secret generic gardener-credentials --from-literal=kubeconfig="$KCFG" -n kcp-system
 
 # Prepare chart for custom KEB version
