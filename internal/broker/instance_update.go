@@ -59,10 +59,11 @@ type UpdateEndpoint struct {
 
 	regionsSupportingMachine RegionsSupporter
 
-	kcpClient              client.Client
-	valuesProvider         ValuesProvider
-	useSmallerMachineTypes bool
-	zoneMapping            bool
+	kcpClient                   client.Client
+	valuesProvider              ValuesProvider
+	useSmallerMachineTypes      bool
+	zoneMapping                 bool
+	infrastructureManagerConfig InfrastructureManager
 }
 
 func NewUpdate(cfg Config,
@@ -80,7 +81,7 @@ func NewUpdate(cfg Config,
 	convergedCloudRegionsProvider ConvergedCloudRegionProvider,
 	kcpClient client.Client,
 	regionsSupportingMachine RegionsSupporter,
-	useSmallerMachineTypes bool,
+	imConfig InfrastructureManager,
 	zoneMapping bool,
 ) *UpdateEndpoint {
 	return &UpdateEndpoint{
@@ -100,7 +101,7 @@ func NewUpdate(cfg Config,
 		convergedCloudRegionsProvider:            convergedCloudRegionsProvider,
 		kcpClient:                                kcpClient,
 		regionsSupportingMachine:                 regionsSupportingMachine,
-		useSmallerMachineTypes:                   useSmallerMachineTypes,
+		infrastructureManagerConfig:              imConfig,
 		zoneMapping:                              zoneMapping,
 	}
 }
@@ -305,12 +306,19 @@ func (b *UpdateEndpoint) processUpdateParameters(instance *internal.Instance, de
 				}
 			}
 		}
-		if isExternalCustomer(ersContext) {
+		if IsExternalCustomer(ersContext) {
 			if err := checkGPUMachinesUsage(params.AdditionalWorkerNodePools); err != nil {
 				return domain.UpdateServiceSpec{}, apiresponses.NewFailureResponse(err, http.StatusBadRequest, err.Error())
 			}
 		}
 		if err := checkUnsupportedMachines(b.regionsSupportingMachine, valueOfPtr(instance.Parameters.Parameters.Region), params.AdditionalWorkerNodePools); err != nil {
+			return domain.UpdateServiceSpec{}, apiresponses.NewFailureResponse(err, http.StatusBadRequest, err.Error())
+		}
+	}
+
+	if b.infrastructureManagerConfig.EnableIngressFiltering {
+		err = validateIngressFiltering(operation.ProvisioningParameters, params.IngressFiltering, b.infrastructureManagerConfig.IngressFilteringPlans, logger)
+		if err != nil {
 			return domain.UpdateServiceSpec{}, apiresponses.NewFailureResponse(err, http.StatusBadRequest, err.Error())
 		}
 	}
@@ -460,7 +468,12 @@ func (b *UpdateEndpoint) extractActiveValue(id string, provisioning internal.Pro
 func (b *UpdateEndpoint) getJsonSchemaValidator(provider pkg.CloudProvider, planID string, platformRegion string) (*jsonschema.Schema, error) {
 	// shootAndSeedSameRegion is never enabled for update
 	b.log.Info(fmt.Sprintf("region is: %s", platformRegion))
-	plans := Plans(b.plansConfig, provider, nil, b.config.IncludeAdditionalParamsInSchema, euaccess.IsEURestrictedAccess(platformRegion), b.useSmallerMachineTypes, false, b.convergedCloudRegionsProvider.GetRegions(platformRegion), assuredworkloads.IsKSA(platformRegion), b.config.UseAdditionalOIDCSchema, b.config.DisableMachineTypeUpdate)
+	plans := Plans(b.plansConfig, provider, nil, b.config.IncludeAdditionalParamsInSchema,
+		euaccess.IsEURestrictedAccess(platformRegion), b.infrastructureManagerConfig.UseSmallerMachineTypes, false,
+		b.convergedCloudRegionsProvider.GetRegions(platformRegion), assuredworkloads.IsKSA(platformRegion), b.config.UseAdditionalOIDCSchema,
+		b.infrastructureManagerConfig.EnableIngressFiltering,
+		b.infrastructureManagerConfig.IngressFilteringPlans,
+		b.config.DisableMachineTypeUpdate)
 	plan := plans[planID]
 
 	return validator.NewFromSchema(plan.Schemas.Instance.Update.Parameters)

@@ -30,7 +30,6 @@ import (
 	kcMock "github.com/kyma-project/kyma-environment-broker/internal/kubeconfig/automock"
 	"github.com/kyma-project/kyma-environment-broker/internal/metricsv2"
 	"github.com/kyma-project/kyma-environment-broker/internal/process"
-	"github.com/kyma-project/kyma-environment-broker/internal/process/infrastructure_manager"
 	"github.com/kyma-project/kyma-environment-broker/internal/process/steps"
 	"github.com/kyma-project/kyma-environment-broker/internal/regionssupportingmachine"
 	kebRuntime "github.com/kyma-project/kyma-environment-broker/internal/runtime"
@@ -271,7 +270,7 @@ func defaultOIDCValues() pkg.OIDCConfigDTO {
 	}
 }
 
-func workersProvider(imConfig infrastructure_manager.InfrastructureManagerConfig) *workers.Provider {
+func workersProvider(imConfig broker.InfrastructureManager) *workers.Provider {
 	return workers.NewProvider(
 		imConfig,
 		regionssupportingmachine.RegionsSupportingMachine{
@@ -845,9 +844,10 @@ func (s *BrokerSuiteTest) AssertRuntimeAdminsByInstanceID(id string, admins []st
 	assert.Equal(s.t, admins, runtime.Spec.Security.Administrators)
 }
 
-func (s *BrokerSuiteTest) AssertNetworkFilteringDisabled(iid string, expected bool) {
+func (s *BrokerSuiteTest) AssertNetworkFiltering(iid string, egressExpected bool, ingressExpected bool) {
 	runtime := s.GetRuntimeResourceByInstanceID(iid)
-	assert.Equal(s.t, !expected, runtime.Spec.Security.Networking.Filter.Egress.Enabled)
+	assert.Equal(s.t, egressExpected, runtime.Spec.Security.Networking.Filter.Egress.Enabled)
+	assert.Equal(s.t, ingressExpected, runtime.Spec.Security.Networking.Filter.Ingress.Enabled)
 }
 
 func (s *BrokerSuiteTest) failRuntimeByKIM(iid string) {

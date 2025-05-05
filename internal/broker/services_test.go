@@ -18,6 +18,11 @@ func TestServices_Services(t *testing.T) {
 	log := slog.New(slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{
 		Level: slog.LevelInfo,
 	}))
+	imConfig := broker.InfrastructureManager{
+		IngressFilteringPlans:  []string{"gcp", "azure", "aws"},
+		EnableIngressFiltering: true,
+		UseSmallerMachineTypes: false,
+	}
 
 	t.Run("should get service and plans without OIDC", func(t *testing.T) {
 		// given
@@ -37,7 +42,8 @@ func TestServices_Services(t *testing.T) {
 				},
 			},
 		}
-		servicesEndpoint := broker.NewServices(cfg, servicesConfig, log, &broker.OneForAllConvergedCloudRegionsProvider{}, pkg.OIDCConfigDTO{}, false)
+		servicesEndpoint := broker.NewServices(cfg,
+			servicesConfig, log, &broker.OneForAllConvergedCloudRegionsProvider{}, pkg.OIDCConfigDTO{}, imConfig)
 
 		// when
 		services, err := servicesEndpoint.Services(context.TODO())
@@ -69,7 +75,7 @@ func TestServices_Services(t *testing.T) {
 				},
 			},
 		}
-		servicesEndpoint := broker.NewServices(cfg, servicesConfig, log, &broker.OneForAllConvergedCloudRegionsProvider{}, pkg.OIDCConfigDTO{}, false)
+		servicesEndpoint := broker.NewServices(cfg, servicesConfig, log, &broker.OneForAllConvergedCloudRegionsProvider{}, pkg.OIDCConfigDTO{}, imConfig)
 
 		// when
 		services, err := servicesEndpoint.Services(context.TODO())
@@ -105,7 +111,7 @@ func TestServices_Services(t *testing.T) {
 				},
 			},
 		}
-		servicesEndpoint := broker.NewServices(cfg, servicesConfig, log, &broker.OneForAllConvergedCloudRegionsProvider{}, pkg.OIDCConfigDTO{}, false)
+		servicesEndpoint := broker.NewServices(cfg, servicesConfig, log, &broker.OneForAllConvergedCloudRegionsProvider{}, pkg.OIDCConfigDTO{}, imConfig)
 
 		// when
 		services, err := servicesEndpoint.Services(context.TODO())
@@ -144,7 +150,7 @@ func TestServices_Services(t *testing.T) {
 				},
 			},
 		}
-		servicesEndpoint := broker.NewServices(cfg, servicesConfig, log, &broker.OneForAllConvergedCloudRegionsProvider{}, pkg.OIDCConfigDTO{}, false)
+		servicesEndpoint := broker.NewServices(cfg, servicesConfig, log, &broker.OneForAllConvergedCloudRegionsProvider{}, pkg.OIDCConfigDTO{}, imConfig)
 
 		// when
 		services, err := servicesEndpoint.Services(context.TODO())

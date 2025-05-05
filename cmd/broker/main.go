@@ -32,7 +32,6 @@ import (
 	"github.com/kyma-project/kyma-environment-broker/internal/metricsv2"
 	"github.com/kyma-project/kyma-environment-broker/internal/notification"
 	"github.com/kyma-project/kyma-environment-broker/internal/process"
-	"github.com/kyma-project/kyma-environment-broker/internal/process/infrastructure_manager"
 	"github.com/kyma-project/kyma-environment-broker/internal/provider"
 	"github.com/kyma-project/kyma-environment-broker/internal/regionssupportingmachine"
 	"github.com/kyma-project/kyma-environment-broker/internal/runtime"
@@ -91,21 +90,23 @@ type Config struct {
 	Port       string `envconfig:"default=8080"`
 	StatusPort string `envconfig:"default=8071"`
 
-	InfrastructureManager infrastructure_manager.InfrastructureManagerConfig
+	InfrastructureManager broker.InfrastructureManager
 	Database              storage.Config
 	Gardener              gardener.Config
 	Kubeconfig            kubeconfig.Config
 	StepTimeouts          StepTimeoutsConfig
 
-	SkrOidcDefaultValuesYAMLFilePath         string
-	SkrDnsProvidersValuesYAMLFilePath        string
-	DefaultRequestRegion                     string `envconfig:"default=cf-eu10"`
-	UpdateProcessingEnabled                  bool   `envconfig:"default=false"`
-	LifecycleManagerIntegrationDisabled      bool   `envconfig:"default=true"`
-	InfrastructureManagerIntegrationDisabled bool   `envconfig:"default=true"`
-	ResolveSubscriptionSecretStepDisabled    bool   `envconfig:"default=true"`
-	Broker                                   broker.Config
-	CatalogFilePath                          string
+	SkrOidcDefaultValuesYAMLFilePath    string
+	SkrDnsProvidersValuesYAMLFilePath   string
+	DefaultRequestRegion                string `envconfig:"default=cf-eu10"`
+	UpdateProcessingEnabled             bool   `envconfig:"default=false"`
+	LifecycleManagerIntegrationDisabled bool   `envconfig:"default=true"`
+	// deprecated
+	InfrastructureManagerIntegrationDisabled bool `envconfig:"default=true"`
+	// deprecated
+	ResolveSubscriptionSecretStepDisabled bool `envconfig:"default=true"`
+	Broker                                broker.Config
+	CatalogFilePath                       string
 
 	EDP edp.Config
 
@@ -397,6 +398,7 @@ func main() {
 
 func logConfiguration(logs *slog.Logger, cfg Config) {
 	logs.Info(fmt.Sprintf("Setting staged manager configuration: provisioning=%s, deprovisioning=%s, update=%s", cfg.Provisioning, cfg.Deprovisioning, cfg.Update))
+	logs.Info(fmt.Sprintf("EnablePlans: %s", cfg.Broker.EnablePlans))
 	logs.Info(fmt.Sprintf("InfrastructureManagerIntegrationDisabled: %v", cfg.InfrastructureManagerIntegrationDisabled))
 	logs.Info(fmt.Sprintf("Archiving enabled: %v, dry run: %v", cfg.ArchiveEnabled, cfg.ArchiveDryRun))
 	logs.Info(fmt.Sprintf("Cleaning enabled: %v, dry run: %v", cfg.CleaningEnabled, cfg.CleaningDryRun))
@@ -412,6 +414,8 @@ func logConfiguration(logs *slog.Logger, cfg Config) {
 	logs.Info(fmt.Sprintf("InfrastructureManager.MultiZoneCluster: %v", cfg.InfrastructureManager.MultiZoneCluster))
 	logs.Info(fmt.Sprintf("InfrastructureManager.ControlPlaneFailureTolerance: %s", cfg.InfrastructureManager.ControlPlaneFailureTolerance))
 	logs.Info(fmt.Sprintf("InfrastructureManager.UseSmallerMachineTypes: %v", cfg.InfrastructureManager.UseSmallerMachineTypes))
+	logs.Info(fmt.Sprintf("InfrastructureManager.EnableIngressFiltering: %v", cfg.InfrastructureManager.EnableIngressFiltering))
+	logs.Info(fmt.Sprintf("InfrastructureManager.IngressFilteringPlans: %s", cfg.InfrastructureManager.IngressFilteringPlans))
 
 	logs.Info(fmt.Sprintf("ResolveSubscriptionSecretStepDisabled: %v", cfg.ResolveSubscriptionSecretStepDisabled))
 }
@@ -449,15 +453,15 @@ func createAPI(router *httputil.Router, servicesConfig broker.ServicesConfig, cf
 
 	// create KymaEnvironmentBroker endpoints
 	kymaEnvBroker := &broker.KymaEnvironmentBroker{
-		ServicesEndpoint: broker.NewServices(cfg.Broker, servicesConfig, logs, convergedCloudRegionProvider, oidcDefaultValues, cfg.InfrastructureManager.UseSmallerMachineTypes),
-		ProvisionEndpoint: broker.NewProvision(cfg.Broker, cfg.Gardener, db,
+		ServicesEndpoint: broker.NewServices(cfg.Broker, servicesConfig, logs, convergedCloudRegionProvider, oidcDefaultValues, cfg.InfrastructureManager),
+		ProvisionEndpoint: broker.NewProvision(cfg.Broker, cfg.Gardener, cfg.InfrastructureManager, db,
 			provisionQueue, defaultPlansConfig, logs, cfg.KymaDashboardConfig, kcBuilder, freemiumGlobalAccountIds,
 			convergedCloudRegionProvider, regionsSupportingMachine, valuesProvider, cfg.InfrastructureManager.UseSmallerMachineTypes, cfg.ZoneMapping,
 		),
 		DeprovisionEndpoint: broker.NewDeprovision(db.Instances(), db.Operations(), deprovisionQueue, logs),
 		UpdateEndpoint: broker.NewUpdate(cfg.Broker, db,
 			suspensionCtxHandler, cfg.UpdateProcessingEnabled, cfg.Broker.SubaccountMovementEnabled, cfg.Broker.UpdateCustomResourcesLabelsOnAccountMove, updateQueue, defaultPlansConfig,
-			valuesProvider, logs, cfg.KymaDashboardConfig, kcBuilder, convergedCloudRegionProvider, kcpK8sClient, regionsSupportingMachine, cfg.InfrastructureManager.UseSmallerMachineTypes, cfg.ZoneMapping),
+			valuesProvider, logs, cfg.KymaDashboardConfig, kcBuilder, convergedCloudRegionProvider, kcpK8sClient, regionsSupportingMachine, cfg.InfrastructureManager, cfg.ZoneMapping),
 		GetInstanceEndpoint:          broker.NewGetInstance(cfg.Broker, db.Instances(), db.Operations(), kcBuilder, logs),
 		LastOperationEndpoint:        broker.NewLastOperation(db.Operations(), db.InstancesArchived(), logs),
 		BindEndpoint:                 broker.NewBind(cfg.Broker.Binding, db, logs, clientProvider, kubeconfigProvider, publisher, cfg.MultipleContexts),

@@ -7,9 +7,9 @@ import (
 
 	"github.com/kyma-project/kyma-environment-broker/common/runtime"
 	"github.com/kyma-project/kyma-environment-broker/internal"
+	"github.com/kyma-project/kyma-environment-broker/internal/broker"
 	kebError "github.com/kyma-project/kyma-environment-broker/internal/error"
 	"github.com/kyma-project/kyma-environment-broker/internal/process"
-	"github.com/kyma-project/kyma-environment-broker/internal/process/infrastructure_manager"
 	"github.com/kyma-project/kyma-environment-broker/internal/provider"
 	"github.com/kyma-project/kyma-environment-broker/internal/storage"
 )
@@ -20,7 +20,7 @@ Those values can be used across the provisioning process and won't be used later
 */
 type InitProviderValuesStep struct {
 	operationManager           *process.OperationManager
-	config                     infrastructure_manager.InfrastructureManagerConfig
+	config                     broker.InfrastructureManager
 	trialPlatformRegionMapping map[string]string
 
 	instanceStorage storage.Instances
@@ -28,7 +28,7 @@ type InitProviderValuesStep struct {
 
 var _ process.Step = &InitProviderValuesStep{}
 
-func NewInitProviderValuesStep(os storage.Operations, is storage.Instances, infrastructureManagerConfig infrastructure_manager.InfrastructureManagerConfig, trialPlatformRegionMapping map[string]string) *InitProviderValuesStep {
+func NewInitProviderValuesStep(os storage.Operations, is storage.Instances, infrastructureManagerConfig broker.InfrastructureManager, trialPlatformRegionMapping map[string]string) *InitProviderValuesStep {
 	return &InitProviderValuesStep{
 		operationManager:           process.NewOperationManager(os, "InitProviderValuesStep", kebError.KEBDependency),
 		config:                     infrastructureManagerConfig,

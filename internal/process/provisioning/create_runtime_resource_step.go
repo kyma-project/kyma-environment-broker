@@ -8,21 +8,24 @@ import (
 	"strings"
 	"time"
 
+	"github.com/kyma-project/kyma-environment-broker/internal/broker"
+	kebError "github.com/kyma-project/kyma-environment-broker/internal/error"
+
+	"github.com/kyma-project/kyma-environment-broker/internal/storage/dberr"
+
 	pkg "github.com/kyma-project/kyma-environment-broker/common/runtime"
 	"github.com/kyma-project/kyma-environment-broker/internal"
 	"github.com/kyma-project/kyma-environment-broker/internal/customresources"
-	kebError "github.com/kyma-project/kyma-environment-broker/internal/error"
 	"github.com/kyma-project/kyma-environment-broker/internal/networking"
+
+	gardener "github.com/gardener/gardener/pkg/apis/core/v1beta1"
 	"github.com/kyma-project/kyma-environment-broker/internal/process"
-	"github.com/kyma-project/kyma-environment-broker/internal/process/infrastructure_manager"
 	"github.com/kyma-project/kyma-environment-broker/internal/process/steps"
 	"github.com/kyma-project/kyma-environment-broker/internal/provider"
 	"github.com/kyma-project/kyma-environment-broker/internal/ptr"
 	"github.com/kyma-project/kyma-environment-broker/internal/storage"
-	"github.com/kyma-project/kyma-environment-broker/internal/storage/dberr"
 	"github.com/kyma-project/kyma-environment-broker/internal/workers"
 
-	gardener "github.com/gardener/gardener/pkg/apis/core/v1beta1"
 	imv1 "github.com/kyma-project/infrastructure-manager/api/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/util/intstr"
@@ -40,23 +43,23 @@ type CreateRuntimeResourceStep struct {
 	operationManager        *process.OperationManager
 	instanceStorage         storage.Instances
 	k8sClient               client.Client
-	config                  infrastructure_manager.InfrastructureManagerConfig
+	config                  broker.InfrastructureManager
 	oidcDefaultValues       pkg.OIDCConfigDTO
 	useAdditionalOIDCSchema bool
 	workersProvider         *workers.Provider
 }
 
-func NewCreateRuntimeResourceStep(os storage.Operations, is storage.Instances, k8sClient client.Client, infrastructureManagerConfig infrastructure_manager.InfrastructureManagerConfig,
+func NewCreateRuntimeResourceStep(db storage.BrokerStorage, k8sClient client.Client, infrastructureManagerConfig broker.InfrastructureManager,
 	oidcDefaultValues pkg.OIDCConfigDTO, useAdditionalOIDCSchema bool, workersProvider *workers.Provider) *CreateRuntimeResourceStep {
 	step := &CreateRuntimeResourceStep{
-		instanceStorage:         is,
+		instanceStorage:         db.Instances(),
 		k8sClient:               k8sClient,
 		config:                  infrastructureManagerConfig,
 		oidcDefaultValues:       oidcDefaultValues,
 		useAdditionalOIDCSchema: useAdditionalOIDCSchema,
 		workersProvider:         workersProvider,
 	}
-	step.operationManager = process.NewOperationManager(os, step.Name(), kebError.InfrastructureManagerDependency)
+	step.operationManager = process.NewOperationManager(db.Operations(), step.Name(), kebError.InfrastructureManagerDependency)
 	return step
 }
 
@@ -83,6 +86,7 @@ func (s *CreateRuntimeResourceStep) Run(operation internal.Operation, log *slog.
 		log.Info(fmt.Sprintf("Runtime resource already created %s/%s: ", operation.KymaResourceNamespace, runtimeResourceName))
 		return operation, 0, nil
 	} else {
+		var backoff time.Duration
 		err = s.updateRuntimeResourceObject(*operation.ProviderValues, runtimeCR, operation, runtimeResourceName, operation.CloudProvider)
 		if err != nil {
 			return s.operationManager.OperationFailed(operation, fmt.Sprintf("while creating Runtime CR object: %s", err), err, log)
@@ -94,7 +98,7 @@ func (s *CreateRuntimeResourceStep) Run(operation internal.Operation, log *slog.
 		}
 		log.Info(fmt.Sprintf("Runtime resource %s/%s creation process finished successfully", operation.KymaResourceNamespace, runtimeResourceName))
 
-		operation, backoff, _ := s.operationManager.UpdateOperation(operation, func(op *internal.Operation) {
+		operation, backoff, _ = s.operationManager.UpdateOperation(operation, func(op *internal.Operation) {
 			op.Region = runtimeCR.Spec.Shoot.Region
 			op.CloudProvider = operation.CloudProvider
 		}, log)
@@ -116,8 +120,8 @@ func (s *CreateRuntimeResourceStep) Run(operation internal.Operation, log *slog.
 			log.Error(fmt.Sprintf("cannot update instance: %s", err))
 			return s.operationManager.RetryOperation(operation, "cannot update instance", err, dbRetryInterval, dbRetryTimeout, log)
 		}
+		return operation, 0, nil
 	}
-	return operation, 0, nil
 }
 
 func (s *CreateRuntimeResourceStep) updateRuntimeResourceObject(values internal.ProviderValues, runtime *imv1.Runtime, operation internal.Operation, runtimeName, cloudProvider string) error {
@@ -168,12 +172,17 @@ func (s *CreateRuntimeResourceStep) createSecurityConfiguration(operation intern
 		security.Administrators = operation.ProvisioningParameters.Parameters.RuntimeAdministrators
 	}
 
-	// In Runtime CR logic is positive, so we need to negate the value
-	disabled := *operation.ProvisioningParameters.ErsContext.DisableEnterprisePolicyFilter()
-	security.Networking.Filter.Egress.Enabled = !disabled
+	external := broker.IsExternalCustomer(operation.ProvisioningParameters.ErsContext)
 
-	// Ingress is not supported yet, nevertheless we set it for completeness
-	security.Networking.Filter.Ingress = &imv1.Ingress{Enabled: false}
+	// In Runtime CR logic is positive, so we need to negate the value
+	security.Networking.Filter.Egress.Enabled = !external
+
+	var ingressFiltering bool
+	if steps.IsIngressFilteringEnabled(operation.ProvisioningParameters.PlanID, s.config, external) {
+		ingressFiltering = operation.ProvisioningParameters.Parameters.IngressFiltering != nil && *operation.ProvisioningParameters.Parameters.IngressFiltering
+	}
+	security.Networking.Filter.Ingress = &imv1.Ingress{Enabled: ingressFiltering}
+
 	return security
 }
 
@@ -206,7 +215,7 @@ func (s *CreateRuntimeResourceStep) createShootProvider(operation *internal.Oper
 		},
 	}
 
-	if values.ProviderType != "openstack" {
+	if steps.IsNotSapConvergedCloud(operation.CloudProvider) {
 		volumeSize := strconv.Itoa(DefaultIfParamNotSet(values.VolumeSizeGb, operation.ProvisioningParameters.Parameters.VolumeSizeGb))
 		provider.Workers[0].Volume = &gardener.Volume{
 			Type:       ptr.String(values.DiskType),

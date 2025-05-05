@@ -7,7 +7,7 @@ import (
 
 	pkg "github.com/kyma-project/kyma-environment-broker/common/runtime"
 	"github.com/kyma-project/kyma-environment-broker/internal"
-	"github.com/kyma-project/kyma-environment-broker/internal/process/infrastructure_manager"
+	"github.com/kyma-project/kyma-environment-broker/internal/broker"
 	"github.com/kyma-project/kyma-environment-broker/internal/ptr"
 	"github.com/kyma-project/kyma-environment-broker/internal/regionssupportingmachine"
 
@@ -16,12 +16,12 @@ import (
 )
 
 type Provider struct {
-	imConfig                 infrastructure_manager.InfrastructureManagerConfig
+	imConfig                 broker.InfrastructureManager
 	regionsSupportingMachine regionssupportingmachine.RegionsSupportingMachine
 	zoneMapping              bool
 }
 
-func NewProvider(imConfig infrastructure_manager.InfrastructureManagerConfig, regionsSupportingMachine regionssupportingmachine.RegionsSupportingMachine, zoneMapping bool) *Provider {
+func NewProvider(imConfig broker.InfrastructureManager, regionsSupportingMachine regionssupportingmachine.RegionsSupportingMachine, zoneMapping bool) *Provider {
 	return &Provider{
 		imConfig:                 imConfig,
 		regionsSupportingMachine: regionsSupportingMachine,

@@ -55,6 +55,7 @@ func TestGetEndpoint_GetProvisioningInstance(t *testing.T) {
 	createSvc := broker.NewProvision(
 		broker.Config{EnablePlans: []string{"gcp", "azure"}, OnlySingleTrialPerGA: true},
 		gardener.Config{Project: "test", ShootDomain: "example.com"},
+		broker.InfrastructureManager{},
 		st,
 		queue,
 		broker.PlansConfig{},

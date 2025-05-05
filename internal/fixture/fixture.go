@@ -218,7 +218,7 @@ func FixUpdatingOperationWithOIDCObject(operationId, instanceId string) internal
 	o.UpdatingParameters = internal.UpdatingParametersDTO{
 		OIDC: &pkg.OIDCConnectDTO{
 			OIDCConfigDTO: &pkg.OIDCConfigDTO{
-				ClientID:       "clinet-id-oidc",
+				ClientID:       "client-id-oidc",
 				GroupsClaim:    "groups",
 				GroupsPrefix:   "-",
 				IssuerURL:      "issuer-url",

@@ -6,6 +6,8 @@ import (
 	"log/slog"
 	"time"
 
+	pkg "github.com/kyma-project/kyma-environment-broker/common/runtime"
+	"github.com/kyma-project/kyma-environment-broker/internal/broker"
 	kebError "github.com/kyma-project/kyma-environment-broker/internal/error"
 
 	imv1 "github.com/kyma-project/infrastructure-manager/api/v1"
@@ -71,4 +73,15 @@ func (s *checkRuntimeResource) GetRuntimeResource(name string, namespace string)
 		return nil, err
 	}
 	return &runtime, nil
+}
+
+func IsNotSapConvergedCloud(cloudProvider string) bool {
+	return cloudProvider != string(pkg.SapConvergedCloud)
+}
+
+func IsIngressFilteringEnabled(planID string, config broker.InfrastructureManager, external bool) bool {
+	ingressFiltering := config.EnableIngressFiltering &&
+		config.IngressFilteringPlans.Contains(broker.PlanNamesMapping[planID]) &&
+		!external
+	return ingressFiltering
 }

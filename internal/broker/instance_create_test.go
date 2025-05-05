@@ -75,6 +75,7 @@ func TestProvision_Provision(t *testing.T) {
 				OnlySingleTrialPerGA: true,
 			},
 			gardener.Config{Project: "test", ShootDomain: "example.com", DNSProviders: fixDNSProviders()},
+			imConfigFixture,
 			memoryStorage,
 			queue,
 			broker.PlansConfig{},
@@ -147,6 +148,7 @@ func TestProvision_Provision(t *testing.T) {
 				OnlySingleTrialPerGA: true,
 			},
 			gardener.Config{Project: "test", ShootDomain: "example.com", DNSProviders: fixDNSProviders()},
+			imConfigFixture,
 			memoryStorage,
 			queue,
 			broker.PlansConfig{},
@@ -223,6 +225,7 @@ func TestProvision_Provision(t *testing.T) {
 				OnlySingleTrialPerGA: true,
 			},
 			gardener.Config{Project: "test", ShootDomain: "example.com", DNSProviders: fixDNSProviders()},
+			imConfigFixture,
 			memoryStorage,
 			queue,
 			broker.PlansConfig{},
@@ -270,6 +273,7 @@ func TestProvision_Provision(t *testing.T) {
 				OnlySingleTrialPerGA: true,
 			},
 			gardener.Config{Project: "test", ShootDomain: "example.com", DNSProviders: fixDNSProviders()},
+			imConfigFixture,
 			memoryStorage,
 			queue,
 			broker.PlansConfig{},
@@ -342,6 +346,7 @@ func TestProvision_Provision(t *testing.T) {
 				OnlySingleTrialPerGA: true,
 			},
 			gardener.Config{Project: "test", ShootDomain: "example.com", DNSProviders: fixDNSProviders()},
+			imConfigFixture,
 			memoryStorage,
 			queue,
 			broker.PlansConfig{},
@@ -416,6 +421,7 @@ func TestProvision_Provision(t *testing.T) {
 				OnlySingleTrialPerGA: true,
 			},
 			gardener.Config{Project: "test", ShootDomain: "example.com", DNSProviders: fixDNSProviders()},
+			imConfigFixture,
 			memoryStorage,
 			nil,
 			broker.PlansConfig{},
@@ -464,6 +470,7 @@ func TestProvision_Provision(t *testing.T) {
 		provisionEndpoint := broker.NewProvision(
 			broker.Config{EnablePlans: []string{"gcp", "azure", "azure_lite", broker.TrialPlanName}, OnlySingleTrialPerGA: true},
 			gardener.Config{Project: "test", ShootDomain: "example.com", DNSProviders: fixDNSProviders()},
+			imConfigFixture,
 			memoryStorage,
 			nil,
 			broker.PlansConfig{},
@@ -513,6 +520,7 @@ func TestProvision_Provision(t *testing.T) {
 		provisionEndpoint := broker.NewProvision(
 			broker.Config{EnablePlans: []string{"gcp", "azure", "azure_lite", broker.TrialPlanName}, OnlySingleTrialPerGA: false},
 			gardener.Config{Project: "test", ShootDomain: "example.com", DNSProviders: fixDNSProviders()},
+			imConfigFixture,
 			memoryStorage,
 			queue,
 			broker.PlansConfig{},
@@ -576,6 +584,7 @@ func TestProvision_Provision(t *testing.T) {
 		provisionEndpoint := broker.NewProvision(
 			broker.Config{EnablePlans: []string{"gcp", "azure", "trial"}, OnlySingleTrialPerGA: true},
 			gardener.Config{Project: "test", ShootDomain: "example.com", DNSProviders: fixDNSProviders()},
+			imConfigFixture,
 			memoryStorage,
 			queue,
 			broker.PlansConfig{},
@@ -639,6 +648,7 @@ func TestProvision_Provision(t *testing.T) {
 		provisionEndpoint := broker.NewProvision(
 			broker.Config{EnablePlans: []string{"gcp", "azure", "trial"}, OnlySingleTrialPerGA: true},
 			gardener.Config{Project: "test", ShootDomain: "example.com", DNSProviders: fixDNSProviders()},
+			imConfigFixture,
 			memoryStorage,
 			queue,
 			broker.PlansConfig{},
@@ -682,6 +692,7 @@ func TestProvision_Provision(t *testing.T) {
 		provisionEndpoint := broker.NewProvision(
 			broker.Config{EnablePlans: []string{"gcp", "azure", "azure_lite"}, OnlySingleTrialPerGA: true},
 			gardener.Config{Project: "test", ShootDomain: "example.com", DNSProviders: fixDNSProviders()},
+			imConfigFixture,
 			memoryStorage,
 			nil,
 			broker.PlansConfig{},
@@ -720,6 +731,7 @@ func TestProvision_Provision(t *testing.T) {
 		provisionEndpoint := broker.NewProvision(
 			broker.Config{EnablePlans: []string{"gcp", "azure", "azure_lite"}, OnlySingleTrialPerGA: true},
 			gardener.Config{Project: "test", ShootDomain: "example.com", DNSProviders: fixDNSProviders()},
+			imConfigFixture,
 			memoryStorage,
 			nil,
 			broker.PlansConfig{},
@@ -757,6 +769,7 @@ func TestProvision_Provision(t *testing.T) {
 		provisionEndpoint := broker.NewProvision(
 			broker.Config{EnablePlans: []string{"gcp", "azure", "azure_lite"}, OnlySingleTrialPerGA: true},
 			gardener.Config{Project: "test", ShootDomain: "example.com", DNSProviders: fixDNSProviders()},
+			imConfigFixture,
 			memoryStorage,
 			queue,
 			broker.PlansConfig{},
@@ -801,6 +814,7 @@ func TestProvision_Provision(t *testing.T) {
 		provisionEndpoint := broker.NewProvision(
 			broker.Config{EnablePlans: []string{"gcp", "azure", "azure_lite", "trial"}, OnlySingleTrialPerGA: true},
 			gardener.Config{Project: "test", ShootDomain: "example.com", DNSProviders: fixDNSProviders()},
+			imConfigFixture,
 			memoryStorage,
 			queue,
 			broker.PlansConfig{},
@@ -850,6 +864,7 @@ func TestProvision_Provision(t *testing.T) {
 				OnlySingleTrialPerGA: true,
 			},
 			gardener.Config{Project: "test", ShootDomain: "example.com", DNSProviders: fixDNSProviders()},
+			imConfigFixture,
 			memoryStorage,
 			queue,
 			broker.PlansConfig{},
@@ -905,6 +920,7 @@ func TestProvision_Provision(t *testing.T) {
 				OnlySingleTrialPerGA: true,
 			},
 			gardener.Config{Project: "test", ShootDomain: "example.com", DNSProviders: fixDNSProviders()},
+			imConfigFixture,
 			memoryStorage,
 			queue,
 			broker.PlansConfig{},
@@ -959,6 +975,7 @@ func TestProvision_Provision(t *testing.T) {
 				UseAdditionalOIDCSchema: true,
 			},
 			gardener.Config{Project: "test", ShootDomain: "example.com", DNSProviders: fixDNSProviders()},
+			imConfigFixture,
 			memoryStorage,
 			queue,
 			broker.PlansConfig{},
@@ -1016,6 +1033,7 @@ func TestProvision_Provision(t *testing.T) {
 				UseAdditionalOIDCSchema: true,
 			},
 			gardener.Config{Project: "test", ShootDomain: "example.com", DNSProviders: fixDNSProviders()},
+			imConfigFixture,
 			memoryStorage,
 			queue,
 			broker.PlansConfig{},
@@ -1071,6 +1089,7 @@ func TestProvision_Provision(t *testing.T) {
 				OnlySingleTrialPerGA: true,
 			},
 			gardener.Config{Project: "test", ShootDomain: "example.com", DNSProviders: fixDNSProviders()},
+			imConfigFixture,
 			memoryStorage,
 			queue,
 			broker.PlansConfig{},
@@ -1168,6 +1187,7 @@ func TestProvision_Provision(t *testing.T) {
 				UseAdditionalOIDCSchema: true,
 			},
 			gardener.Config{Project: "test", ShootDomain: "example.com", DNSProviders: fixDNSProviders()},
+			imConfigFixture,
 			memoryStorage,
 			queue,
 			broker.PlansConfig{},
@@ -1253,6 +1273,7 @@ func TestProvision_Provision(t *testing.T) {
 				OnlySingleTrialPerGA: true,
 			},
 			gardener.Config{Project: "test", ShootDomain: "example.com", DNSProviders: fixDNSProviders()},
+			imConfigFixture,
 			memoryStorage,
 			queue,
 			broker.PlansConfig{},
@@ -1296,6 +1317,7 @@ func TestProvision_Provision(t *testing.T) {
 		provisionEndpoint := broker.NewProvision(
 			broker.Config{EnablePlans: []string{"gcp", "azure", "azure_lite", broker.FreemiumPlanName}, OnlyOneFreePerGA: true},
 			gardener.Config{Project: "test", ShootDomain: "example.com", DNSProviders: fixDNSProviders()},
+			imConfigFixture,
 			memoryStorage,
 			queue,
 			broker.PlansConfig{},
@@ -1361,6 +1383,7 @@ func TestProvision_Provision(t *testing.T) {
 		provisionEndpoint := broker.NewProvision(
 			broker.Config{EnablePlans: []string{"gcp", "azure", "azure_lite", broker.FreemiumPlanName}, OnlyOneFreePerGA: true},
 			gardener.Config{Project: "test", ShootDomain: "example.com", DNSProviders: fixDNSProviders()},
+			imConfigFixture,
 			memoryStorage,
 			queue,
 			broker.PlansConfig{},
@@ -1416,6 +1439,7 @@ func TestProvision_Provision(t *testing.T) {
 		provisionEndpoint := broker.NewProvision(
 			broker.Config{EnablePlans: []string{"gcp", "azure", "azure_lite", broker.FreemiumPlanName}, OnlyOneFreePerGA: true},
 			gardener.Config{Project: "test", ShootDomain: "example.com", DNSProviders: fixDNSProviders()},
+			imConfigFixture,
 			memoryStorage,
 			queue,
 			broker.PlansConfig{},
@@ -1469,6 +1493,7 @@ func TestProvision_Provision(t *testing.T) {
 		provisionEndpoint := broker.NewProvision(
 			broker.Config{EnablePlans: []string{"gcp", "azure", "azure_lite", broker.FreemiumPlanName}, OnlyOneFreePerGA: true},
 			gardener.Config{Project: "test", ShootDomain: "example.com", DNSProviders: fixDNSProviders()},
+			imConfigFixture,
 			memoryStorage,
 			nil,
 			broker.PlansConfig{},
@@ -1512,6 +1537,7 @@ func TestProvision_Provision(t *testing.T) {
 		provisionEndpoint := broker.NewProvision(
 			broker.Config{EnablePlans: []string{"gcp", "azure", "azure_lite", broker.FreemiumPlanName}, OnlyOneFreePerGA: true},
 			gardener.Config{Project: "test", ShootDomain: "example.com", DNSProviders: fixDNSProviders()},
+			imConfigFixture,
 			memoryStorage,
 			nil,
 			broker.PlansConfig{},
@@ -1558,6 +1584,7 @@ func TestProvision_Provision(t *testing.T) {
 				OnlySingleTrialPerGA: true,
 			},
 			gardener.Config{Project: "test", ShootDomain: "example.com", DNSProviders: fixDNSProviders()},
+			imConfigFixture,
 			memoryStorage,
 			queue,
 			broker.PlansConfig{},
@@ -1607,6 +1634,7 @@ func TestProvision_Provision(t *testing.T) {
 				OnlySingleTrialPerGA: true,
 			},
 			gardener.Config{Project: "test", ShootDomain: "example.com", DNSProviders: fixDNSProviders()},
+			imConfigFixture,
 			memoryStorage,
 			queue,
 			broker.PlansConfig{},
@@ -1739,6 +1767,7 @@ func TestAdditionalWorkerNodePools(t *testing.T) {
 					OnlySingleTrialPerGA: true,
 				},
 				gardener.Config{Project: "test", ShootDomain: "example.com", DNSProviders: fixDNSProviders()},
+				imConfigFixture,
 				memoryStorage,
 				queue,
 				broker.PlansConfig{},
@@ -1803,6 +1832,7 @@ func TestAdditionalWorkerNodePoolsForUnsupportedPlans(t *testing.T) {
 					OnlySingleTrialPerGA: true,
 				},
 				gardener.Config{Project: "test", ShootDomain: "example.com", DNSProviders: fixDNSProviders()},
+				imConfigFixture,
 				memoryStorage,
 				queue,
 				broker.PlansConfig{},
@@ -1954,6 +1984,7 @@ func TestNetworkingValidation(t *testing.T) {
 			provisionEndpoint := broker.NewProvision(
 				broker.Config{EnablePlans: []string{"gcp", "azure", "free"}},
 				gardener.Config{Project: "test", ShootDomain: "example.com", DNSProviders: fixDNSProviders()},
+				imConfigFixture,
 				memoryStorage,
 				queue,
 				broker.PlansConfig{},
@@ -2053,6 +2084,7 @@ func TestRegionValidation(t *testing.T) {
 			provisionEndpoint := broker.NewProvision(
 				broker.Config{EnablePlans: []string{"gcp", "azure", "free"}, OnlySingleTrialPerGA: true},
 				gardener.Config{Project: "test", ShootDomain: "example.com", DNSProviders: fixDNSProviders()},
+				imConfigFixture,
 				memoryStorage,
 				queue,
 				broker.PlansConfig{},
@@ -2113,6 +2145,7 @@ func TestSapConvergedCloudBlocking(t *testing.T) {
 				DisableSapConvergedCloud: false,
 			},
 			gardener.Config{Project: "test", ShootDomain: "example.com", DNSProviders: fixDNSProviders()},
+			imConfigFixture,
 			memoryStorage,
 			queue,
 			broker.PlansConfig{},
@@ -2161,6 +2194,7 @@ func TestSapConvergedCloudBlocking(t *testing.T) {
 				DisableSapConvergedCloud: true,
 			},
 			gardener.Config{Project: "test", ShootDomain: "example.com", DNSProviders: fixDNSProviders()},
+			imConfigFixture,
 			memoryStorage,
 			queue,
 			broker.PlansConfig{},
@@ -2208,6 +2242,7 @@ func TestSapConvergedCloudBlocking(t *testing.T) {
 				DisableSapConvergedCloud: true,
 			},
 			gardener.Config{Project: "test", ShootDomain: "example.com", DNSProviders: fixDNSProviders()},
+			imConfigFixture,
 			memoryStorage,
 			queue,
 			broker.PlansConfig{},
@@ -2223,8 +2258,8 @@ func TestSapConvergedCloudBlocking(t *testing.T) {
 		)
 
 		oidcParams := `"clientID":"client-id","issuerURL":"https://test.local","signingAlgs":["RS256"]`
-		err := fmt.Errorf(broker.CONVERGED_CLOUD_BLOCKED_MSG)
-		errMsg := broker.CONVERGED_CLOUD_BLOCKED_MSG
+		err := fmt.Errorf(broker.ConvergedCloudBlockedMsg)
+		errMsg := broker.ConvergedCloudBlockedMsg
 		expectedErr := apiresponses.NewFailureResponse(err, http.StatusBadRequest, errMsg)
 
 		// when
@@ -2269,6 +2304,7 @@ func TestUnsupportedMachineType(t *testing.T) {
 			OnlySingleTrialPerGA: true,
 		},
 		gardener.Config{Project: "test", ShootDomain: "example.com", DNSProviders: fixDNSProviders()},
+		imConfigFixture,
 		memoryStorage,
 		queue,
 		broker.PlansConfig{},
@@ -2320,6 +2356,7 @@ func TestUnsupportedMachineTypeInAdditionalWorkerNodePools(t *testing.T) {
 			OnlySingleTrialPerGA: true,
 		},
 		gardener.Config{Project: "test", ShootDomain: "example.com", DNSProviders: fixDNSProviders()},
+		imConfigFixture,
 		memoryStorage,
 		queue,
 		broker.PlansConfig{},
@@ -2397,6 +2434,7 @@ func TestGPUMachineForInternalUser(t *testing.T) {
 			OnlySingleTrialPerGA: true,
 		},
 		gardener.Config{Project: "test", ShootDomain: "example.com", DNSProviders: fixDNSProviders()},
+		imConfigFixture,
 		memoryStorage,
 		queue,
 		broker.PlansConfig{},
@@ -2446,6 +2484,8 @@ func TestGPUMachinesForExternalCustomer(t *testing.T) {
 			OnlySingleTrialPerGA: true,
 		},
 		gardener.Config{Project: "test", ShootDomain: "example.com", DNSProviders: fixDNSProviders()},
+		imConfigFixture,
+
 		memoryStorage,
 		queue,
 		broker.PlansConfig{},
@@ -2578,6 +2618,7 @@ func TestAvailableZonesValidation(t *testing.T) {
 			OnlySingleTrialPerGA: true,
 		},
 		gardener.Config{Project: "test", ShootDomain: "example.com", DNSProviders: fixDNSProviders()},
+		imConfigFixture,
 		memoryStorage,
 		queue,
 		broker.PlansConfig{},

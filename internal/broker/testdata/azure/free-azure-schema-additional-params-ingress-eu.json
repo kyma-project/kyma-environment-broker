@@ -1,0 +1,204 @@
+{
+  "$schema": "http://json-schema.org/draft-04/schema#",
+  "_controlsOrder": [
+    "name",
+    "region",
+    "modules",
+    "networking",
+    "oidc",
+    "administrators",
+    "ingressFiltering"
+  ],
+  "_load_current_config": true,
+  "_show_form_view": true,
+  "properties": {
+    "administrators": {
+      "description": "Specifies the list of runtime administrators",
+      "items": {
+        "type": "string"
+      },
+      "title": "Administrators",
+      "type": "array"
+    },
+    "ingressFiltering": {
+      "default": false,
+      "description": "If set to true ingress traffic from embargoed countries will be blocked.",
+      "title": "Enable ingress geo-blocking",
+      "type": "boolean"
+    },
+    "modules": {
+      "_controlsOrder": [
+        "default",
+        "list"
+      ],
+      "description": "Use default modules or provide your custom list of modules. Provide an empty custom list of modules if you don’t want any modules enabled.",
+      "oneOf": [
+        {
+          "additionalProperties": false,
+          "description": "Default modules",
+          "properties": {
+            "default": {
+              "default": true,
+              "description": "Check the default modules in the <a href=https://help.sap.com/docs/btp/sap-business-technology-platform/kyma-modules?version=Cloud>default modules table</a>.",
+              "readOnly": true,
+              "title": "Use Default",
+              "type": "boolean"
+            }
+          },
+          "title": "Default",
+          "type": "object"
+        },
+        {
+          "additionalProperties": false,
+          "description": "Define custom module list",
+          "properties": {
+            "list": {
+              "description": "Check a module technical name on this <a href=https://help.sap.com/docs/btp/sap-business-technology-platform/kyma-modules?version=Cloud>website</a>. You can only use a module technical name once. Provide an empty custom list of modules if you don’t want any modules enabled.",
+              "items": {
+                "_controlsOrder": [
+                  "name",
+                  "channel",
+                  "customResourcePolicy"
+                ],
+                "properties": {
+                  "channel": {
+                    "_enumDisplayName": {
+                      "": "",
+                      "fast": "Fast - latest version",
+                      "regular": "Regular - default version"
+                    },
+                    "default": "",
+                    "description": "Select your preferred release channel or leave this field empty.",
+                    "enum": [
+                      "",
+                      "regular",
+                      "fast"
+                    ],
+                    "type": "string"
+                  },
+                  "customResourcePolicy": {
+                    "_enumDisplayName": {
+                      "": "",
+                      "CreateAndDelete": "CreateAndDelete - default module resource is created or deleted.",
+                      "Ignore": "Ignore - module resource is not created."
+                    },
+                    "default": "",
+                    "description": "Select your preferred CustomResourcePolicy setting or leave this field empty.",
+                    "enum": [
+                      "",
+                      "CreateAndDelete",
+                      "Ignore"
+                    ],
+                    "type": "string"
+                  },
+                  "name": {
+                    "description": "Check a module technical name on this <a href=https://help.sap.com/docs/btp/sap-business-technology-platform/kyma-modules?version=Cloud>website</a>. You can only use a module technical name once.",
+                    "minLength": 1,
+                    "title": "Name",
+                    "type": "string"
+                  }
+                },
+                "type": "object"
+              },
+              "type": "array",
+              "uniqueItems": true
+            }
+          },
+          "title": "Custom",
+          "type": "object"
+        }
+      ],
+      "type": "object"
+    },
+    "name": {
+      "_BTPdefaultTemplate": {
+        "elements": [
+          "saSubdomain"
+        ]
+      },
+      "minLength": 1,
+      "pattern": "^[a-zA-Z0-9-]*$",
+      "title": "Cluster Name",
+      "type": "string"
+    },
+    "networking": {
+      "description": "Networking configuration. These values are immutable and cannot be updated later. All provided CIDR ranges must not overlap one another.",
+      "properties": {
+        "nodes": {
+          "default": "10.250.0.0/16",
+          "description": "CIDR range for Nodes, must not overlap with the following CIDRs: 10.243.128.0/17, 10.242.0.0/16, 10.243.0.0/17, 10.64.0.0/11, 10.254.0.0/16, 10.243.0.0/16, 192.168.123.0/24, 240.0.0.0/8",
+          "title": "CIDR range for Nodes",
+          "type": "string"
+        },
+        "pods": {
+          "default": "10.96.0.0/13",
+          "description": "CIDR range for Pods, must not overlap with the following CIDRs: 10.243.128.0/17, 10.242.0.0/16, 10.243.0.0/17, 10.64.0.0/11, 10.254.0.0/16, 10.243.0.0/16, 192.168.123.0/24, 240.0.0.0/8",
+          "title": "CIDR range for Pods",
+          "type": "string"
+        },
+        "services": {
+          "default": "10.104.0.0/13",
+          "description": "CIDR range for Services, must not overlap with the following CIDRs: 10.243.128.0/17, 10.242.0.0/16, 10.243.0.0/17, 10.64.0.0/11, 10.254.0.0/16, 10.243.0.0/16, 192.168.123.0/24, 240.0.0.0/8",
+          "title": "CIDR range for Services",
+          "type": "string"
+        }
+      },
+      "required": [
+        "nodes"
+      ],
+      "type": "object"
+    },
+    "oidc": {
+      "description": "OIDC configuration",
+      "properties": {
+        "clientID": {
+          "description": "The client ID for the OpenID Connect client.",
+          "type": "string"
+        },
+        "groupsClaim": {
+          "description": "If provided, the name of a custom OpenID Connect claim for specifying user groups.",
+          "type": "string"
+        },
+        "issuerURL": {
+          "description": "The URL of the OpenID issuer, only HTTPS scheme will be accepted.",
+          "type": "string"
+        },
+        "signingAlgs": {
+          "description": "Comma separated list of allowed JOSE asymmetric signing algorithms, for example, RS256, ES256",
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "usernameClaim": {
+          "description": "The OpenID claim to use as the user name.",
+          "type": "string"
+        },
+        "usernamePrefix": {
+          "description": "If provided, all usernames will be prefixed with this value. If not provided, username claims other than 'email' are prefixed by the issuer URL to avoid clashes. To skip any prefixing, provide the value '-' (dash character without additional characters).",
+          "type": "string"
+        }
+      },
+      "required": [
+        "clientID",
+        "issuerURL"
+      ],
+      "type": "object"
+    },
+    "region": {
+      "_enumDisplayName": {
+        "switzerlandnorth": "switzerlandnorth (Switzerland, Zurich)"
+      },
+      "enum": [
+        "switzerlandnorth"
+      ],
+      "minLength": 1,
+      "type": "string"
+    }
+  },
+  "required": [
+    "name",
+    "region"
+  ],
+  "type": "object"
+}

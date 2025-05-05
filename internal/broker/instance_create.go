@@ -11,7 +11,6 @@ import (
 	"net/netip"
 	"strings"
 
-	"github.com/kyma-project/kyma-environment-broker/internal/process/infrastructure_manager"
 	"github.com/kyma-project/kyma-environment-broker/internal/validator"
 	"github.com/santhosh-tekuri/jsonschema/v6"
 
@@ -69,7 +68,7 @@ type RegionsSupporter interface {
 
 type ProvisionEndpoint struct {
 	config                  Config
-	infrastructureManager   infrastructure_manager.InfrastructureManagerConfig
+	infrastructureManager   InfrastructureManager
 	operationsStorage       storage.Operations
 	instanceStorage         storage.Instances
 	instanceArchivedStorage storage.InstancesArchived
@@ -97,11 +96,15 @@ type ProvisionEndpoint struct {
 }
 
 const (
-	CONVERGED_CLOUD_BLOCKED_MSG = "This offer is currently not available."
+	ConvergedCloudBlockedMsg                           = "This offer is currently not available."
+	IngressFilteringNotSupportedForPlanMsg             = "ingress filtering is not available for %s plan"
+	IngressFilteringNotSupportedForExternalCustomerMsg = "ingress filtering is not available for your type of license"
+	IngressFilteringOptionIsNotSupported               = "ingress filtering option is not available"
 )
 
-func NewProvision(cfg Config,
+func NewProvision(brokerConfig Config,
 	gardenerConfig gardener.Config,
+	imConfig InfrastructureManager,
 	db storage.BrokerStorage,
 	queue Queue,
 	plansConfig PlansConfig,
@@ -116,13 +119,14 @@ func NewProvision(cfg Config,
 	zoneMapping bool,
 ) *ProvisionEndpoint {
 	enabledPlanIDs := map[string]struct{}{}
-	for _, planName := range cfg.EnablePlans {
+	for _, planName := range brokerConfig.EnablePlans {
 		id := PlanIDsMapping[planName]
 		enabledPlanIDs[id] = struct{}{}
 	}
 
 	return &ProvisionEndpoint{
-		config:                        cfg,
+		config:                        brokerConfig,
+		infrastructureManager:         imConfig,
 		operationsStorage:             db.Operations(),
 		instanceStorage:               db.Instances(),
 		instanceArchivedStorage:       db.InstancesArchived(),
@@ -174,8 +178,8 @@ func (b *ProvisionEndpoint) Provision(ctx context.Context, instanceID string, de
 		return domain.ProvisionedServiceSpec{}, apiresponses.NewFailureResponse(err, http.StatusBadRequest, "while extracting context")
 	}
 	if b.config.DisableSapConvergedCloud && details.PlanID == SapConvergedCloudPlanID {
-		err := fmt.Errorf("%s", CONVERGED_CLOUD_BLOCKED_MSG)
-		return domain.ProvisionedServiceSpec{}, apiresponses.NewFailureResponse(err, http.StatusBadRequest, CONVERGED_CLOUD_BLOCKED_MSG)
+		err := fmt.Errorf("%s", ConvergedCloudBlockedMsg)
+		return domain.ProvisionedServiceSpec{}, apiresponses.NewFailureResponse(err, http.StatusBadRequest, ConvergedCloudBlockedMsg)
 	}
 	provisioningParameters := internal.ProvisioningParameters{
 		PlanID:           details.PlanID,
@@ -196,11 +200,6 @@ func (b *ProvisionEndpoint) Provision(ctx context.Context, instanceID string, de
 	if err != nil {
 		errMsg := fmt.Sprintf("[instanceID: %s] %s", instanceID, err)
 		return domain.ProvisionedServiceSpec{}, apiresponses.NewFailureResponse(err, http.StatusBadRequest, errMsg)
-	}
-
-	if b.config.DisableSapConvergedCloud && details.PlanID == SapConvergedCloudPlanID {
-		err := fmt.Errorf(CONVERGED_CLOUD_BLOCKED_MSG)
-		return domain.ProvisionedServiceSpec{}, apiresponses.NewFailureResponse(err, http.StatusBadRequest, CONVERGED_CLOUD_BLOCKED_MSG)
 	}
 
 	logger.Info(fmt.Sprintf("Starting provisioning runtime: Name=%s, GlobalAccountID=%s, SubAccountID=%s, PlatformRegion=%s, ProvisioningParameters.Region=%s, ProvisioningParameters.ShootAndSeedSameRegion=%t, ProvisioningParameters.MachineType=%s",
@@ -359,13 +358,20 @@ func (b *ProvisionEndpoint) validate(ctx context.Context, details domain.Provisi
 				}
 			}
 		}
-		if isExternalCustomer(provisioningParameters.ErsContext) {
+		if IsExternalCustomer(provisioningParameters.ErsContext) {
 			if err := checkGPUMachinesUsage(parameters.AdditionalWorkerNodePools); err != nil {
 				return apiresponses.NewFailureResponse(err, http.StatusUnprocessableEntity, err.Error())
 			}
 		}
 		if err := checkUnsupportedMachines(b.regionsSupportingMachine, valueOfPtr(parameters.Region), parameters.AdditionalWorkerNodePools); err != nil {
 			return apiresponses.NewFailureResponse(err, http.StatusUnprocessableEntity, err.Error())
+		}
+	}
+
+	if b.infrastructureManager.EnableIngressFiltering {
+		err = validateIngressFiltering(provisioningParameters, parameters.IngressFiltering, b.infrastructureManager.IngressFilteringPlans, l)
+		if err != nil {
+			return apiresponses.NewFailureResponse(err, http.StatusBadRequest, err.Error())
 		}
 	}
 
@@ -449,6 +455,20 @@ func (b *ProvisionEndpoint) validate(ctx context.Context, details domain.Provisi
 	return nil
 }
 
+func validateIngressFiltering(provisioningParameters internal.ProvisioningParameters, ingressFilteringParameter *bool, plans EnablePlans, log *slog.Logger) error {
+	if ingressFilteringParameter != nil {
+		if IsExternalCustomer(provisioningParameters.ErsContext) {
+			log.Info(IngressFilteringNotSupportedForExternalCustomerMsg)
+			return fmt.Errorf(IngressFilteringOptionIsNotSupported)
+		}
+		if !plans.Contains(PlanNamesMapping[provisioningParameters.PlanID]) {
+			log.Info(IngressFilteringNotSupportedForPlanMsg)
+			return fmt.Errorf(IngressFilteringOptionIsNotSupported)
+		}
+	}
+	return nil
+}
+
 func isEuRestrictedAccess(ctx context.Context) bool {
 	platformRegion, _ := middleware.RegionFromContext(ctx)
 	return euaccess.IsEURestrictedAccess(platformRegion)
@@ -478,7 +498,7 @@ func AreNamesUnique(pools []pkg.AdditionalWorkerNodePool) bool {
 	return true
 }
 
-func isExternalCustomer(ersContext internal.ERSContext) bool {
+func IsExternalCustomer(ersContext internal.ERSContext) bool {
 	return *ersContext.DisableEnterprisePolicyFilter()
 }
 
@@ -649,7 +669,14 @@ func (b *ProvisionEndpoint) validator(details *domain.ProvisionDetails, provider
 	platformRegion, _ := middleware.RegionFromContext(ctx)
 	plans := Plans(b.plansConfig, provider, nil, b.config.IncludeAdditionalParamsInSchema,
 		euaccess.IsEURestrictedAccess(platformRegion),
-		b.infrastructureManager.UseSmallerMachineTypes, b.config.EnableShootAndSeedSameRegion, b.convergedCloudRegionsProvider.GetRegions(platformRegion), assuredworkloads.IsKSA(platformRegion), b.config.UseAdditionalOIDCSchema, b.config.DisableMachineTypeUpdate)
+		b.infrastructureManager.UseSmallerMachineTypes,
+		b.config.EnableShootAndSeedSameRegion,
+		b.convergedCloudRegionsProvider.GetRegions(platformRegion),
+		assuredworkloads.IsKSA(platformRegion),
+		b.config.UseAdditionalOIDCSchema,
+		b.infrastructureManager.EnableIngressFiltering,
+		b.infrastructureManager.IngressFilteringPlans,
+		b.config.DisableMachineTypeUpdate)
 	plan := plans[details.PlanID]
 
 	return validator.NewFromSchema(plan.Schemas.Instance.Create.Parameters)

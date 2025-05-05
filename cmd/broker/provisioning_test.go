@@ -31,7 +31,7 @@ const (
 
 func TestCatalog(t *testing.T) {
 	// this test is used for human-testing the catalog response
-	t.Skip()
+	//t.Skip()
 	catalogTestFile := "catalog-test.json"
 	catalogTestFilePerm := os.FileMode.Perm(0666)
 	outputToFile := true
@@ -71,12 +71,9 @@ func TestCatalog(t *testing.T) {
 	}
 }
 
-func TestProvisioningWithKIMOnlyForTrial(t *testing.T) {
+func TestProvisioningForTrial(t *testing.T) {
 
 	cfg := fixConfig()
-
-	cfg.InfrastructureManager.DefaultTrialProvider = pkg.AWS
-
 	suite := NewBrokerSuiteTestWithConfig(t, cfg)
 	defer suite.TearDown()
 	iid := uuid.New().String()
@@ -110,7 +107,7 @@ func TestProvisioningWithKIMOnlyForTrial(t *testing.T) {
 	assert.Equal(t, "g-account-id", op.GlobalAccountID)
 }
 
-func TestProvisioningWithKIMOnlyForAWS(t *testing.T) {
+func TestProvisioningForAWS(t *testing.T) {
 
 	cfg := fixConfig()
 
@@ -240,6 +237,219 @@ func TestProvisioning_SeedAndShootSameRegion(t *testing.T) {
 		runtime := suite.GetRuntimeResourceByInstanceID(iid)
 		assert.True(t, *runtime.Spec.Shoot.EnforceSeedLocation)
 	})
+}
+
+func TestProvisioning_IngressFiltering_Enabled(t *testing.T) {
+	// given
+	suite := NewBrokerSuiteTest(t)
+	defer suite.TearDown()
+
+	t.Run("should accept the ingress filtering param and set Filter.Ingress.Enabled to true in Runtime CR", func(t *testing.T) {
+		iid := uuid.New().String()
+
+		// when
+		resp := suite.CallAPI("PUT", fmt.Sprintf("oauth/v2/service_instances/%s?accepts_incomplete=true", iid),
+			`{
+					"service_id": "47c9dcbf-ff30-448e-ab36-d3bad66ba281",
+					"plan_id": "361c511f-f939-4621-b228-d0fb79a1fe15",
+					"context": {
+						"globalaccount_id": "g-account-id",
+						"subaccount_id": "sub-id",
+						"user_id": "john.smith@email.com"
+					},
+					"parameters": {
+						"name": "testing-cluster",
+						"region": "eu-central-1",
+						"ingressFiltering": true
+					}
+		}`)
+		opID := suite.DecodeOperationID(resp)
+
+		suite.processKIMProvisioningByOperationID(opID)
+
+		// then
+		suite.WaitForOperationState(opID, domain.Succeeded)
+
+		runtime := suite.GetRuntimeResourceByInstanceID(iid)
+		assert.True(t, runtime.Spec.Security.Networking.Filter.Ingress.Enabled)
+	})
+
+	t.Run("should accept the ingress filtering param and set Filter.Ingress.Enabled to false in Runtime CR", func(t *testing.T) {
+		iid := uuid.New().String()
+
+		// when
+		resp := suite.CallAPI("PUT", fmt.Sprintf("oauth/v2/service_instances/%s?accepts_incomplete=true", iid),
+			`{
+					"service_id": "47c9dcbf-ff30-448e-ab36-d3bad66ba281",
+					"plan_id": "361c511f-f939-4621-b228-d0fb79a1fe15",
+					"context": {
+						"globalaccount_id": "g-account-id",
+						"subaccount_id": "sub-id",
+						"user_id": "john.smith@email.com"
+					},
+					"parameters": {
+						"name": "testing-cluster",
+						"region": "eu-central-1",
+						"ingressFiltering": false
+					}
+		}`)
+		opID := suite.DecodeOperationID(resp)
+
+		suite.processKIMProvisioningByOperationID(opID)
+
+		// then
+		suite.WaitForOperationState(opID, domain.Succeeded)
+
+		runtime := suite.GetRuntimeResourceByInstanceID(iid)
+		assert.False(t, runtime.Spec.Security.Networking.Filter.Ingress.Enabled)
+	})
+
+	t.Run("should set Filter.Ingress.Enabled to default false when there is no parameter", func(t *testing.T) {
+		iid := uuid.New().String()
+
+		// when
+		resp := suite.CallAPI("PUT", fmt.Sprintf("oauth/v2/service_instances/%s?accepts_incomplete=true", iid),
+			`{
+					"service_id": "47c9dcbf-ff30-448e-ab36-d3bad66ba281",
+					"plan_id": "361c511f-f939-4621-b228-d0fb79a1fe15",
+					"context": {
+						"globalaccount_id": "g-account-id",
+						"subaccount_id": "sub-id",
+						"user_id": "john.smith@email.com"
+					},
+					"parameters": {
+						"name": "testing-cluster",
+						"region": "eu-central-1"
+					}
+		}`)
+		opID := suite.DecodeOperationID(resp)
+
+		suite.processKIMProvisioningByOperationID(opID)
+
+		// then
+		suite.WaitForOperationState(opID, domain.Succeeded)
+
+		runtime := suite.GetRuntimeResourceByInstanceID(iid)
+		assert.False(t, runtime.Spec.Security.Networking.Filter.Ingress.Enabled)
+	})
+
+	t.Run("should not accept the enabling ingress filtering for SapConvergedCloud plan", func(t *testing.T) {
+		iid := uuid.New().String()
+
+		// when
+		resp := suite.CallAPI("PUT", fmt.Sprintf("oauth/cf-eu20-staging/v2/service_instances/%s?accepts_incomplete=true", iid),
+			`{
+						"service_id": "47c9dcbf-ff30-448e-ab36-d3bad66ba281",
+						"plan_id": "03b812ac-c991-4528-b5bd-08b303523a63",
+						"context": {
+							"globalaccount_id": "g-account-id",
+							"subaccount_id": "sub-id",
+							"user_id": "john.smith@email.com"
+						},
+						"parameters": {
+							"name": "testing-cluster",
+							"region": "eu-de-1",
+							"ingressFiltering": true
+						}
+			}`)
+		parsedResponse := suite.ReadResponse(resp)
+		assert.Equal(t, http.StatusBadRequest, resp.StatusCode)
+		assert.Contains(t, string(parsedResponse), "ingress filtering option is not available")
+	})
+
+	t.Run("should not accept the disabling ingress filtering for SapConvergedCloud plan", func(t *testing.T) {
+		iid := uuid.New().String()
+
+		// when
+		resp := suite.CallAPI("PUT", fmt.Sprintf("oauth/cf-eu20-staging/v2/service_instances/%s?accepts_incomplete=true", iid),
+			`{
+						"service_id": "47c9dcbf-ff30-448e-ab36-d3bad66ba281",
+						"plan_id": "03b812ac-c991-4528-b5bd-08b303523a63",
+						"context": {
+							"globalaccount_id": "g-account-id",
+							"subaccount_id": "sub-id",
+							"user_id": "john.smith@email.com"
+						},
+						"parameters": {
+							"name": "testing-cluster",
+							"region": "eu-de-1",
+							"ingressFiltering": true
+						}
+			}`)
+		parsedResponse := suite.ReadResponse(resp)
+		assert.Equal(t, http.StatusBadRequest, resp.StatusCode)
+		assert.Contains(t, string(parsedResponse), "ingress filtering option is not available")
+	})
+
+}
+
+func TestProvisioning_IngressFiltering_Disabled(t *testing.T) {
+	// given
+	cfg := fixConfig()
+	cfg.InfrastructureManager.EnableIngressFiltering = false
+	suite := NewBrokerSuiteTestWithConfig(t, cfg)
+	defer suite.TearDown()
+
+	t.Run("should ignore ingress filtering parameter for AWS plan", func(t *testing.T) {
+		iid := uuid.New().String()
+
+		// when
+		resp := suite.CallAPI("PUT", fmt.Sprintf("oauth/v2/service_instances/%s?accepts_incomplete=true", iid),
+			`{
+					"service_id": "47c9dcbf-ff30-448e-ab36-d3bad66ba281",
+					"plan_id": "361c511f-f939-4621-b228-d0fb79a1fe15",
+					"context": {
+						"globalaccount_id": "g-account-id",
+						"subaccount_id": "sub-id",
+						"user_id": "john.smith@email.com"
+					},
+					"parameters": {
+						"name": "testing-cluster",
+						"region": "eu-central-1",
+						"ingressFiltering": true
+					}
+		}`)
+		opID := suite.DecodeOperationID(resp)
+
+		suite.processKIMProvisioningByOperationID(opID)
+
+		// then
+		suite.WaitForOperationState(opID, domain.Succeeded)
+
+		runtime := suite.GetRuntimeResourceByInstanceID(iid)
+		assert.False(t, runtime.Spec.Security.Networking.Filter.Ingress.Enabled)
+	})
+
+	t.Run("should ignore ingress filtering parameter for for SapConvergedCloud plan", func(t *testing.T) {
+		iid := uuid.New().String()
+
+		// when
+		resp := suite.CallAPI("PUT", fmt.Sprintf("oauth/cf-eu20-staging/v2/service_instances/%s?accepts_incomplete=true", iid),
+			`{
+						"service_id": "47c9dcbf-ff30-448e-ab36-d3bad66ba281",
+						"plan_id": "03b812ac-c991-4528-b5bd-08b303523a63",
+						"context": {
+							"globalaccount_id": "g-account-id",
+							"subaccount_id": "sub-id",
+							"user_id": "john.smith@email.com"
+						},
+						"parameters": {
+							"name": "testing-cluster",
+							"region": "eu-de-1",
+							"ingressFiltering": true
+						}
+			}`)
+		opID := suite.DecodeOperationID(resp)
+
+		suite.processKIMProvisioningByOperationID(opID)
+
+		// then
+		suite.WaitForOperationState(opID, domain.Succeeded)
+
+		runtime := suite.GetRuntimeResourceByInstanceID(iid)
+		assert.False(t, runtime.Spec.Security.Networking.Filter.Ingress.Enabled)
+	})
+
 }
 
 func TestProvisioning_HappyPathSapConvergedCloud(t *testing.T) {
@@ -1521,7 +1731,7 @@ func TestProvisioning_RuntimeAdministrators(t *testing.T) {
 	})
 }
 
-func TestProvisioning_WithoutNetworkFilter(t *testing.T) {
+func TestProvisioning_WithNetworkFilters(t *testing.T) {
 	// given
 	suite := NewBrokerSuiteTest(t, "2.0")
 	defer suite.TearDown()
@@ -1531,7 +1741,7 @@ func TestProvisioning_WithoutNetworkFilter(t *testing.T) {
 	resp := suite.CallAPI("PUT", fmt.Sprintf("oauth/v2/service_instances/%s?accepts_incomplete=true", iid),
 		`{
 					"service_id": "47c9dcbf-ff30-448e-ab36-d3bad66ba281",
-					"plan_id": "7d55d31d-35ae-4438-bf13-6ffdfa107d9f",
+					"plan_id": "361c511f-f939-4621-b228-d0fb79a1fe15",
 					"context": {
 						"sm_platform_credentials": {
 							  "url": "https://sm.url",
@@ -1542,19 +1752,22 @@ func TestProvisioning_WithoutNetworkFilter(t *testing.T) {
 						"user_id": "john.smith@email.com"
 					},
 					"parameters": {
-						"name": "testing-cluster"
+						"name": "testing-cluster",
+						"region": "eu-central-1",
+						"ingressFiltering": true
 					}
 		}`)
 	opID := suite.DecodeOperationID(resp)
+	require.NotEmpty(t, opID)
 	suite.processKIMProvisioningByOperationID(opID)
 	instance := suite.GetInstance(iid)
 
 	// then
-	suite.AssertNetworkFilteringDisabled(iid, false)
+	suite.AssertNetworkFiltering(iid, true, true)
 	assert.Nil(suite.t, instance.Parameters.ErsContext.LicenseType)
 }
 
-func TestProvisioning_WithNetworkFilter(t *testing.T) {
+func TestProvisioning_NetworkFilter_External(t *testing.T) {
 	// given
 	suite := NewBrokerSuiteTest(t, "2.0")
 	defer suite.TearDown()
@@ -1564,7 +1777,7 @@ func TestProvisioning_WithNetworkFilter(t *testing.T) {
 	resp := suite.CallAPI("PUT", fmt.Sprintf("oauth/v2/service_instances/%s?accepts_incomplete=true", iid),
 		`{
 					"service_id": "47c9dcbf-ff30-448e-ab36-d3bad66ba281",
-					"plan_id": "7d55d31d-35ae-4438-bf13-6ffdfa107d9f",
+					"plan_id": "361c511f-f939-4621-b228-d0fb79a1fe15",
 					"context": {
 						"sm_platform_credentials": {
 							  "url": "https://sm.url",
@@ -1576,17 +1789,14 @@ func TestProvisioning_WithNetworkFilter(t *testing.T) {
 						"user_id": "john.smith@email.com"
 					},
 					"parameters": {
-						"name": "testing-cluster"
+						"name": "testing-cluster",
+						"region": "eu-central-1",
+						"ingressFiltering": true
 					}
 		}`)
-	opID := suite.DecodeOperationID(resp)
-	suite.processKIMProvisioningByOperationID(opID)
-	instance := suite.GetInstance(iid)
-
-	// then
-
-	suite.AssertNetworkFilteringDisabled(iid, true)
-	assert.Equal(suite.t, "CUSTOMER", *instance.Parameters.ErsContext.LicenseType)
+	assert.Equal(t, resp.StatusCode, http.StatusBadRequest)
+	parsedResponse := suite.ReadResponse(resp)
+	assert.Contains(t, string(parsedResponse), "ingress filtering option is not available")
 }
 
 func TestProvisioning_Modules(t *testing.T) {

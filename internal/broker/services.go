@@ -29,9 +29,11 @@ type ServicesEndpoint struct {
 	convergedCloudRegionsProvider ConvergedCloudRegionProvider
 	defaultOIDCConfig             *pkg.OIDCConfigDTO
 	useSmallerMachineTypes        bool
+	ingressFilteringFeatureFlag   bool
+	ingressFilteringPlans         EnablePlans
 }
 
-func NewServices(cfg Config, servicesConfig ServicesConfig, log *slog.Logger, convergedCloudRegionsProvider ConvergedCloudRegionProvider, defaultOIDCConfig pkg.OIDCConfigDTO, useSmallerMachineTypes bool) *ServicesEndpoint {
+func NewServices(cfg Config, servicesConfig ServicesConfig, log *slog.Logger, convergedCloudRegionsProvider ConvergedCloudRegionProvider, defaultOIDCConfig pkg.OIDCConfigDTO, imConfig InfrastructureManager) *ServicesEndpoint {
 	enabledPlanIDs := map[string]struct{}{}
 	for _, planName := range cfg.EnablePlans {
 		id := PlanIDsMapping[planName]
@@ -45,18 +47,20 @@ func NewServices(cfg Config, servicesConfig ServicesConfig, log *slog.Logger, co
 		enabledPlanIDs:                enabledPlanIDs,
 		convergedCloudRegionsProvider: convergedCloudRegionsProvider,
 		defaultOIDCConfig:             &defaultOIDCConfig,
-		useSmallerMachineTypes:        useSmallerMachineTypes,
+		useSmallerMachineTypes:        imConfig.UseSmallerMachineTypes,
+		ingressFilteringFeatureFlag:   imConfig.EnableIngressFiltering,
+		ingressFilteringPlans:         imConfig.IngressFilteringPlans,
 	}
 }
 
 // Services gets the catalog of services offered by the service broker
 //
 //	GET /v2/catalog
-func (b *ServicesEndpoint) Services(ctx context.Context) ([]domain.Service, error) {
+func (se *ServicesEndpoint) Services(ctx context.Context) ([]domain.Service, error) {
 	var availableServicePlans []domain.ServicePlan
 	bindable := true
 	// we scope to the kymaruntime service only
-	class, ok := b.servicesConfig[KymaServiceName]
+	class, ok := se.servicesConfig[KymaServiceName]
 	if !ok {
 		return nil, fmt.Errorf("while getting %s class data", KymaServiceName)
 	}
@@ -65,22 +69,24 @@ func (b *ServicesEndpoint) Services(ctx context.Context) ([]domain.Service, erro
 	platformRegion, ok := middleware.RegionFromContext(ctx)
 	for _, plan := range Plans(class.Plans,
 		provider,
-		b.defaultOIDCConfig,
-		b.cfg.IncludeAdditionalParamsInSchema,
+		se.defaultOIDCConfig,
+		se.cfg.IncludeAdditionalParamsInSchema,
 		euaccess.IsEURestrictedAccess(platformRegion),
-		b.useSmallerMachineTypes,
-		b.cfg.EnableShootAndSeedSameRegion,
-		b.convergedCloudRegionsProvider.GetRegions(platformRegion),
+		se.useSmallerMachineTypes,
+		se.cfg.EnableShootAndSeedSameRegion,
+		se.convergedCloudRegionsProvider.GetRegions(platformRegion),
 		assuredworkloads.IsKSA(platformRegion),
-		b.cfg.UseAdditionalOIDCSchema,
-		b.cfg.DisableMachineTypeUpdate,
+		se.cfg.UseAdditionalOIDCSchema,
+		se.ingressFilteringFeatureFlag,
+		se.ingressFilteringPlans,
+		se.cfg.DisableMachineTypeUpdate,
 	) {
 
 		// filter out not enabled plans
-		if _, exists := b.enabledPlanIDs[plan.ID]; !exists {
+		if _, exists := se.enabledPlanIDs[plan.ID]; !exists {
 			continue
 		}
-		if b.cfg.Binding.Enabled && b.cfg.Binding.BindablePlans.Contains(plan.Name) {
+		if se.cfg.Binding.Enabled && se.cfg.Binding.BindablePlans.Contains(plan.Name) {
 			plan.Bindable = &bindable
 		}
 

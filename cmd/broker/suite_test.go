@@ -18,7 +18,7 @@ import (
 	"github.com/kyma-project/kyma-environment-broker/internal/broker"
 	"github.com/kyma-project/kyma-environment-broker/internal/notification"
 	"github.com/kyma-project/kyma-environment-broker/internal/process"
-	"github.com/kyma-project/kyma-environment-broker/internal/process/infrastructure_manager"
+
 	"github.com/kyma-project/kyma-environment-broker/internal/storage"
 	coreV1 "k8s.io/api/core/v1"
 	metaV1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -203,14 +203,6 @@ kyma-template: |-
 	return resources
 }
 
-func regularSubscription(ht hyperscaler.Type) string {
-	return fmt.Sprintf("regular-%s", ht.GetKey())
-}
-
-func sharedSubscription(ht hyperscaler.Type) string {
-	return fmt.Sprintf("shared-%s", ht.GetKey())
-}
-
 func fixConfig() *Config {
 	brokerConfigPlans := []string{
 		"azure",
@@ -233,12 +225,14 @@ func fixConfig() *Config {
 		DevelopmentMode:                       true,
 		DumpProvisionerRequests:               true,
 		OperationTimeout:                      2 * time.Minute,
-		InfrastructureManager: infrastructure_manager.InfrastructureManagerConfig{
+		InfrastructureManager: broker.InfrastructureManager{
 			MachineImage:                 "gardenlinux",
 			MachineImageVersion:          "12345.6",
 			MultiZoneCluster:             true,
 			DefaultTrialProvider:         "AWS",
 			ControlPlaneFailureTolerance: "zone",
+			EnableIngressFiltering:       true,
+			IngressFilteringPlans:        []string{"aws", "azure", "gcp"},
 		},
 		StepTimeouts: StepTimeoutsConfig{
 			CheckRuntimeResourceUpdate:   180 * time.Second,

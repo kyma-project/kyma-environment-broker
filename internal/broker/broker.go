@@ -6,13 +6,13 @@ import (
 	"strings"
 	"time"
 
+	pkg "github.com/kyma-project/kyma-environment-broker/common/runtime"
 	"gopkg.in/yaml.v2"
 )
 
 const (
 	KymaServiceID   = "47c9dcbf-ff30-448e-ab36-d3bad66ba281"
 	KymaServiceName = "kymaruntime"
-	KymaNamespace   = "kyma-system"
 	KcpNamespace    = "kcp-system"
 )
 
@@ -98,6 +98,19 @@ type ServiceMetadata struct {
 	ProviderDisplayName string `yaml:"providerDisplayName"`
 	DocumentationUrl    string `yaml:"documentationUrl"`
 	SupportUrl          string `yaml:"supportUrl"`
+}
+
+type InfrastructureManager struct {
+	KubernetesVersion            string            `envconfig:"default=1.16.9"`
+	DefaultGardenerShootPurpose  string            `envconfig:"default=development"`
+	MachineImage                 string            `envconfig:"optional"`
+	MachineImageVersion          string            `envconfig:"optional"`
+	DefaultTrialProvider         pkg.CloudProvider `envconfig:"default=Azure"`
+	MultiZoneCluster             bool              `envconfig:"default=false"`
+	ControlPlaneFailureTolerance string            `envconfig:"optional"`
+	UseSmallerMachineTypes       bool              `envconfig:"default=false"`
+	EnableIngressFiltering       bool              `envconfig:"default=false"`
+	IngressFilteringPlans        EnablePlans       `envconfig:"default=no-plan"`
 }
 
 type PlansConfig map[string]PlanData
