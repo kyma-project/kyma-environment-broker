@@ -122,6 +122,10 @@ jobs:
               --header 'X-Broker-API-Version: 2.16' | jq -r '.data[] | select(.instanceID=="azure-cluster") | .runtimeID')
               if [ -z "$RUNTIME_ID" ]; then
                 echo "RuntimeID is empty. Retrying in 5 seconds..."
+                curl --request GET \
+                --url http://localhost:8080/runtimes \
+                --header 'Content-Type: application/json' \
+                --header 'X-Broker-API-Version: 2.16' | jq -r '.data[]'
                 sleep 5
               fi
             done
