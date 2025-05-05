@@ -92,6 +92,7 @@ jobs:
 
       - name: Provision an instance
         run: |
+          kubectl port-forward -n kcp-system deployment/kcp-kyma-environment-broker 8080:8080 5432:5432 &
           curl --request PUT \
           --url http://localhost:8080/oauth/v2/service_instances/azure-cluster \
           --header 'Content-Type: application/json' \
