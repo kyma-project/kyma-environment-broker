@@ -115,10 +115,16 @@ jobs:
       - name: Get RuntimeID
         id: get-runtime-id
         run: |
-            RUNTIME_ID=$(curl --request GET \
-            --url http://localhost:8080/runtimes \
-            --header 'Content-Type: application/json' \
-            --header 'X-Broker-API-Version: 2.16' | jq -r '.data[] | select(.instanceID=="azure-cluster") | .runtimeID')
+            while [ -z "$RUNTIME_ID" ]; do
+              RUNTIME_ID=$(curl --request GET \
+              --url http://localhost:8080/runtimes \
+              --header 'Content-Type: application/json' \
+              --header 'X-Broker-API-Version: 2.16' | jq -r '.data[] | select(.instanceID=="azure-cluster") | .runtimeID')
+              if [ -z "$RUNTIME_ID" ]; then
+                echo "RuntimeID is empty. Retrying in 5 seconds..."
+                sleep 5
+              fi
+            done
             echo "RuntimeID: ${RUNTIME_ID}"
             echo "RUNTIME_ID=$RUNTIME_ID" >> $GITHUB_ENV
               
