@@ -136,7 +136,6 @@ jobs:
       - name: Set Runtime State to Ready
         run: |
           make set-runtime-state RUNTIME_ID=$RUNTIME_ID STATE=Ready
-          make set-kyma-state KYMA_ID=$RUNTIME_ID STATE=Ready
 
       - name: Wait for provisioning to finish
         run: |
@@ -156,3 +155,4 @@ jobs:
             fi
             sleep 10
           done
+          make set-kyma-state KYMA_ID=$RUNTIME_ID STATE=Ready
