@@ -1501,10 +1501,15 @@ func TestMachineTypeUpdateInAdditionalWorkerNodePools(t *testing.T) {
 	q := &automock.Queue{}
 	q.On("Add", mock.AnythingOfType("string"))
 
+	imConfig := broker.InfrastructureManager{
+		UseSmallerMachineTypes: false,
+		EnableIngressFiltering: false,
+	}
+
 	kcBuilder := &kcMock.KcBuilder{}
 	kcBuilder.On("GetServerURL", mock.Anything).Return("https://kcp.example.dummy", nil)
 	svc := broker.NewUpdate(broker.Config{DisableMachineTypeUpdate: true}, st, handler, true, true, false, q, broker.PlansConfig{},
-		fixValueProvider(), fixLogger(), dashboardConfig, kcBuilder, &broker.OneForAllConvergedCloudRegionsProvider{}, fakeKcpK8sClient, regionssupportingmachine.RegionsSupportingMachine{}, false, false)
+		fixValueProvider(), fixLogger(), dashboardConfig, kcBuilder, &broker.OneForAllConvergedCloudRegionsProvider{}, fakeKcpK8sClient, regionssupportingmachine.RegionsSupportingMachine{}, imConfig, false)
 
 	additionalWorkerNodePools := `[{"name": "name-1", "machineType": "Standard_NC4as_T4_v3", "haZones": true, "autoScalerMin": 3, "autoScalerMax": 20}]`
 	// when
