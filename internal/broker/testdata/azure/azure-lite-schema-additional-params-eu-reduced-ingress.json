@@ -33,7 +33,7 @@
             "pattern": "^(?!cpu-worker-0$)[a-z0-9]([-a-z0-9]*[a-z0-9])?$"
           },
           "machineType": {
-            "description": "Specifies the type of the virtual machine. The machine type marked with “*” has limited availability and generates high cost.",
+            "description": "Specifies the type of the virtual machine. The machine type marked with “*” has limited availability and generates high cost. This setting is permanent, and you cannot change it later. To use a different machine type, you must create a new worker node pool, migrate workloads to it, and decommission the old one.",
             "type": "string",
             "minLength": 1,
             "enum": [
