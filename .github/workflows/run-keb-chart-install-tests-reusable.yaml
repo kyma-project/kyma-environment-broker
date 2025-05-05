@@ -113,13 +113,16 @@ jobs:
           }'
 
       - name: Get RuntimeID
+        id: get-runtime-id
         run: |
             RUNTIME_ID=$(curl --request GET \
             --url http://localhost:8080/runtimes \
             --header 'Content-Type: application/json' \
             --header 'X-Broker-API-Version: 2.16' | jq -r '.data[] | select(.instanceID=="azure-cluster") | .runtimeID')
             echo "RuntimeID: ${RUNTIME_ID}"
+            echo "RUNTIME_ID=$RUNTIME_ID" >> $GITHUB_ENV
               
       - name: Set Runtime State to Ready
         run: |
-          make set-runtime-state RUNTIME_ID=${RUNTIME_ID} STATE=Ready
+          make set-runtime-state RUNTIME_ID=$RUNTIME_ID STATE=Ready
+          make set-kyma-state KYMA_ID=$RUNTIME_ID STATE=Ready
