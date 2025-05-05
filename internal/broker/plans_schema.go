@@ -645,7 +645,7 @@ func NewAdditionalWorkerNodePoolsSchema(machineTypesDisplay map[string]string, m
 		},
 	}
 	if disabledMachineTypeUpdate {
-		additionalWorkerNodePoolsType.Items.Properties.MachineType.Description = "Specifies the type of the virtual machine. The machine type marked with “*” has limited availability and generates high cost. This setting is permanent and cannot be changed later. Changing the machine type requires creating a new worker node pool, migrating workloads to it, and decommissioning the old one."
+		additionalWorkerNodePoolsType.Items.Properties.MachineType.Description = "Specifies the type of the virtual machine. The machine type marked with “*” has limited availability and generates high cost. This setting is permanent, and you cannot change it later. To use a different machine type, you must create a new worker node pool, migrate workloads to it, and decommission the old one."
 	}
 	return additionalWorkerNodePoolsType
 }

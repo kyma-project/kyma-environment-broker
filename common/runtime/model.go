@@ -539,7 +539,7 @@ func (a AdditionalWorkerNodePool) ValidateMachineTypesUnchanged(currentAdditiona
 	for _, currentAdditionalWorkerNodePool := range currentAdditionalWorkerNodePools {
 		if a.Name == currentAdditionalWorkerNodePool.Name {
 			if a.MachineType != currentAdditionalWorkerNodePool.MachineType {
-				return fmt.Errorf("Machine type is permanent and cannot be changed for %s additional worker node pool", a.Name)
+				return fmt.Errorf("Machine type setting is permanent, and you cannot change it for the %s additional worker node pool", a.Name)
 			}
 		}
 	}

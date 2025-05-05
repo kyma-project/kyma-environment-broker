@@ -1502,7 +1502,7 @@ func TestMachineTypeUpdateInAdditionalWorkerNodePools(t *testing.T) {
 	}, true)
 
 	// then
-	assert.EqualError(t, err, "Machine type is permanent and cannot be changed for name-1 additional worker node pool")
+	assert.EqualError(t, err, "Machine type setting is permanent, and you cannot change it for the name-1 additional worker node pool")
 }
 
 func fixValueProvider() broker.ValuesProvider {
