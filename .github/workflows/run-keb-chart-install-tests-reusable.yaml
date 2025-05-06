@@ -36,7 +36,6 @@ jobs:
       run: |
         cd resources/keb
         helm template .
-        ifconfig
   
   prepare-tests:
     runs-on: ubuntu-latest
