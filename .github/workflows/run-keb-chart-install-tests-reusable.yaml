@@ -114,7 +114,6 @@ jobs:
           }'
 
       - name: Get RuntimeID
-        id: get-runtime-id
         run: |
             while [ -z "$RUNTIME_ID" ]; do
               RUNTIME_ID=$(curl --request GET \
@@ -153,6 +152,87 @@ jobs:
               echo "Provisioning failed."
               exit 1
             fi
-            sleep 10
+            sleep 5
           done
           make set-kyma-state KYMA_ID=$RUNTIME_ID STATE=Ready
+
+      - name: Update the instance
+        run: |
+          curl --request PATCH \
+          --url http://localhost:8080/oauth/v2/service_instances/azure-cluster?accepts_incomplete=true \
+          --header 'Content-Type: application/json' \
+          --header 'X-Broker-API-Version: 2.16' \
+          --data '{
+            "service_id": "47c9dcbf-ff30-448e-ab36-d3bad66ba281",
+            "plan_id": "4deee563-e5ec-4731-b9b1-53b42d855f0c",
+            "context": {
+                "globalaccount_id": "2f5011af-2fd3-44ba-ac60-eeb1148c2995",
+                "subaccount_id": "8b9a0db4-9aef-4da2-a856-61a4420b66fd",
+                "user_id": "user@email.com"
+            },
+            "parameters": {
+                "machineType": "Standard_D4s_v5"
+            }
+          }'
+
+      - name: Wait for updating to finish
+        run: |
+          while true; do
+            STATUS=$(curl --request GET \
+              --url http://localhost:8080/runtimes \
+              --header 'Content-Type: application/json' \
+              --header 'X-Broker-API-Version: 2.16' | jq -r '.data[] | select(.instanceID=="azure-cluster") | .status.update.data[0].state')
+
+            echo "Current updating status: $STATUS"
+            if [ "$STATUS" == "succeeded" ]; then
+              echo "Updating succeeded."
+              break
+            elif [ "$STATUS" == "failed" ]; then
+              echo "Updating failed."
+              exit 1
+            fi
+            sleep 5
+          done
+
+          TOTAL_COUNT=$(curl --request GET \
+            --url http://localhost:8080/runtimes \
+            --header 'Content-Type: application/json' \
+            --header 'X-Broker-API-Version: 2.16' | jq -r '.data[] | select(.instanceID=="azure-cluster") | .status.update.totalCount')
+
+          if [ "$TOTAL_COUNT" -eq 1 ]; then
+            echo "Assertion passed: totalCount is 1."
+          else
+            echo "Assertion failed: totalCount is not 1. Actual value: $TOTAL_COUNT"
+            exit 1
+          fi
+
+      - name: Deprovision the instance
+        run: |
+          curl --request DELETE \
+          --url http://localhost:8080/oauth/v2/service_instances/azure-cluster?accepts_incomplete=true&service_id=47c9dcbf-ff30-448e-ab36-d3bad66ba281&plan_id=4deee563-e5ec-4731-b9b1-53b42d855f0c \
+          --header 'Content-Type: application/json' \
+          --header 'X-Broker-API-Version: 2.16' \
+          --data '{
+            "service_id": "47c9dcbf-ff30-448e-ab36-d3bad66ba281",
+            "plan_id": "4deee563-e5ec-4731-b9b1-53b42d855f0c",
+            "context": {
+                "globalaccount_id": "2f5011af-2fd3-44ba-ac60-eeb1148c2995",
+                "subaccount_id": "8b9a0db4-9aef-4da2-a856-61a4420b66fd",
+                "user_id": "user@email.com"
+            }
+          }'
+      
+      - name: Wait for deprovisioning to finish
+        run: |
+          while true; do
+          RESULT=$(curl --request GET \
+            --url http://localhost:8080/runtimes \
+            --header 'Content-Type: application/json' \
+            --header 'X-Broker-API-Version: 2.16' | jq -r '.data[]')
+
+          if [ -z "$RESULT" ]; then
+            echo "Deprovisioning succeeded."
+            break
+          fi
+          sleep 5
+          done
