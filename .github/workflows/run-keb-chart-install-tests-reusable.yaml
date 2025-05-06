@@ -204,7 +204,6 @@ jobs:
             echo "Assertion failed: totalCount is not 1. Actual value: $TOTAL_COUNT"
             exit 1
           fi
-          exit 1
 
       - name: Deprovision the instance
         run: |
