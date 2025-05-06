@@ -95,7 +95,7 @@ The workflow:
 4. Creates required namespaces
 5. Installs required dependencies by the KEB chart
 6. Installs the KEB chart in the k3s cluster using `helm install`
-7. Waits for the KEB pod to be ready
+7. Waits for the KEB Pod to be ready
 8. Provisions an instance
 9. Updates the instance  
 10. Deprovisions the instance  
