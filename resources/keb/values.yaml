@@ -215,7 +215,7 @@ infrastructureManager:
   controlPlaneFailureTolerance: ""
   useSmallerMachineTypes: "false"
   enableIngressFiltering: "false"
-  ingressFilteringPlans: "azure,gcp,aws,build-runtime-aws,build-runtime-azure,build-runtime-gcp,azure_lite"
+  ingressFilteringPlans: "azure,gcp,aws"
 
 stepTimeouts:
   checkRuntimeResourceUpdate: 180m
