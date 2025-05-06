@@ -225,14 +225,14 @@ jobs:
       - name: Wait for deprovisioning to finish
         run: |
           while true; do
-          RESULT=$(curl --request GET \
-            --url http://localhost:8080/runtimes \
-            --header 'Content-Type: application/json' \
-            --header 'X-Broker-API-Version: 2.16' | jq -r '.data[]')
+            RESULT=$(curl --request GET \
+              --url http://localhost:8080/runtimes \
+              --header 'Content-Type: application/json' \
+              --header 'X-Broker-API-Version: 2.16' | jq -r '.data[]')
 
-          if [ -z "$RESULT" ]; then
-            echo "Deprovisioning succeeded."
-            break
-          fi
-          sleep 5
+            if [ -z "$RESULT" ]; then
+              echo "Deprovisioning succeeded."
+              break
+            fi
+            sleep 5
           done
