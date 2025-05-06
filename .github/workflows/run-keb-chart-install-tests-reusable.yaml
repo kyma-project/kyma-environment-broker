@@ -204,6 +204,7 @@ jobs:
             echo "Assertion failed: totalCount is not 1. Actual value: $TOTAL_COUNT"
             exit 1
           fi
+          exit 1
 
       - name: Deprovision the instance
         run: |
@@ -235,3 +236,19 @@ jobs:
             fi
             sleep 5
           done
+          
+          echo "Checking if RuntimeCR was removed"
+          RUNTIME_COUNT=$(kubectl get runtimes -n kcp-system | wc -l)
+          if [ "$RUNTIME_COUNT" -ne 0 ]; then
+            echo "RuntimeCR still exists."
+            exit 1
+          fi
+
+      - name: Print runtimes in case of failure
+        if: ${{ !success() }}
+        run: |
+          curl --request GET \
+          --url http://localhost:8080/runtimes \
+          --header 'Content-Type: application/json' \
+          --header 'X-Broker-API-Version: 2.16' | jq
+
