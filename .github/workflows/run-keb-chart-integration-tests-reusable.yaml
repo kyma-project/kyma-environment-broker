@@ -1,4 +1,4 @@
-name: Validate KEB chart install (reusable)
+name: KEB chart integration tests (reusable)
 
 on:
   workflow_call:

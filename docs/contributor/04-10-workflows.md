@@ -77,10 +77,9 @@ The workflow:
 3. Invokes `make go-mod-check`
 4. Invokes `make test`
 
-### KEB Chart  Install Tests
+### KEB Chart Integration Tests
 
-This [workflow](/.github/workflows/run-keb-chart-install-tests-reusable.yaml) installs the KEB chart in the k3s cluster.
-You pass the following parameters from the calling workflow:
+This [workflow](/.github/workflows/run-keb-chart-integration-tests-reusable.yaml) installs the KEB chart in the k3s cluster. It also provisions, updates, and deprovisions an instance. You pass the following parameters from the calling workflow:
 
 | Parameter name  | Required | Description                                                          |
 | ------------- | ------------- |----------------------------------------------------------------------|
@@ -96,4 +95,8 @@ The workflow:
 4. Creates required namespaces
 5. Installs required dependencies by the KEB chart
 6. Installs the KEB chart in the k3s cluster using `helm install`
-7. Waits for all tests to finish
+7. Waits for the KEB pod to be ready
+8. Provisions an instance
+9. Updates the instance  
+10. Deprovisions the instance  
+11. Waits for all tests to finish
