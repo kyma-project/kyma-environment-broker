@@ -132,7 +132,7 @@ jobs:
             echo "RuntimeID: ${RUNTIME_ID}"
             echo "RUNTIME_ID=$RUNTIME_ID" >> $GITHUB_ENV
               
-      - name: Set Runtime State to Ready
+      - name: Set RuntimeCR State to Ready
         run: |
           make set-runtime-state RUNTIME_ID=$RUNTIME_ID STATE=Ready
 
@@ -209,7 +209,7 @@ jobs:
       - name: Deprovision the instance
         run: |
           curl --request DELETE \
-          --url http://localhost:8080/oauth/v2/service_instances/azure-cluster?accepts_incomplete=true&service_id=47c9dcbf-ff30-448e-ab36-d3bad66ba281&plan_id=4deee563-e5ec-4731-b9b1-53b42d855f0c \
+          --url 'http://localhost:8080/oauth/v2/service_instances/azure-cluster?accepts_incomplete=true&service_id=47c9dcbf-ff30-448e-ab36-d3bad66ba281&plan_id=4deee563-e5ec-4731-b9b1-53b42d855f0c' \
           --header 'Content-Type: application/json' \
           --header 'X-Broker-API-Version: 2.16' \
           --data '{
