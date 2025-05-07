@@ -162,7 +162,7 @@ broker:
   updateCustomResourcesLabelsOnAccountMove: "false"
   useAdditionalOIDCSchema: "false"
   disableMachineTypeUpdate: "false"
-  monitorAdditionalProperties: "false"
+  monitorAdditionalProperties: false
 
 binding:
   enabled: false
