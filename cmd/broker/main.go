@@ -101,12 +101,8 @@ type Config struct {
 	DefaultRequestRegion                string `envconfig:"default=cf-eu10"`
 	UpdateProcessingEnabled             bool   `envconfig:"default=false"`
 	LifecycleManagerIntegrationDisabled bool   `envconfig:"default=true"`
-	// deprecated
-	InfrastructureManagerIntegrationDisabled bool `envconfig:"default=true"`
-	// deprecated
-	ResolveSubscriptionSecretStepDisabled bool `envconfig:"default=true"`
-	Broker                                broker.Config
-	CatalogFilePath                       string
+	Broker                              broker.Config
+	CatalogFilePath                     string
 
 	EDP edp.Config
 
@@ -308,14 +304,11 @@ func main() {
 	rulesetValid := rulesService.IsRulesetValid()
 
 	if !rulesetValid {
-		log.Error("There are errors in rules configuration:")
+		log.Error("There are errors in subscription secret rules configuration:")
 		for _, ve := range rulesService.ValidationInfo.All() {
 			log.Error(fmt.Sprintf("%s", ve))
 		}
-		// when the ruleservice is used (the step is not disabled) - the configuration must be valid
-		if !cfg.ResolveSubscriptionSecretStepDisabled {
-			fatalOnError(err, log)
-		}
+		fatalOnError(err, log)
 	}
 
 	regionsSupportingMachine, err := regionssupportingmachine.ReadRegionsSupportingMachineFromFile(cfg.RegionsSupportingMachineFilePath, cfg.ZoneMapping)
@@ -399,7 +392,6 @@ func main() {
 func logConfiguration(logs *slog.Logger, cfg Config) {
 	logs.Info(fmt.Sprintf("Setting staged manager configuration: provisioning=%s, deprovisioning=%s, update=%s", cfg.Provisioning, cfg.Deprovisioning, cfg.Update))
 	logs.Info(fmt.Sprintf("EnablePlans: %s", cfg.Broker.EnablePlans))
-	logs.Info(fmt.Sprintf("InfrastructureManagerIntegrationDisabled: %v", cfg.InfrastructureManagerIntegrationDisabled))
 	logs.Info(fmt.Sprintf("Archiving enabled: %v, dry run: %v", cfg.ArchiveEnabled, cfg.ArchiveDryRun))
 	logs.Info(fmt.Sprintf("Cleaning enabled: %v, dry run: %v", cfg.CleaningEnabled, cfg.CleaningDryRun))
 	logs.Info(fmt.Sprintf("Is SubaccountMovementEnabled: %t", cfg.Broker.SubaccountMovementEnabled))

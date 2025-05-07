@@ -219,12 +219,11 @@ func fixConfig() *Config {
 	}
 
 	return &Config{
-		DbInMemory:                            true,
-		DisableProcessOperationsInProgress:    false,
-		ResolveSubscriptionSecretStepDisabled: true,
-		DevelopmentMode:                       true,
-		DumpProvisionerRequests:               true,
-		OperationTimeout:                      2 * time.Minute,
+		DbInMemory:                         true,
+		DisableProcessOperationsInProgress: false,
+		DevelopmentMode:                    true,
+		DumpProvisionerRequests:            true,
+		OperationTimeout:                   2 * time.Minute,
 		InfrastructureManager: broker.InfrastructureManager{
 			MachineImage:                 "gardenlinux",
 			MachineImageVersion:          "12345.6",
