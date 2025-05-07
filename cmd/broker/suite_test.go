@@ -248,6 +248,7 @@ func fixConfig() *Config {
 		UpdateProcessingEnabled: true,
 		Broker: broker.Config{
 			EnablePlans:                           brokerConfigPlans,
+			IncludeAdditionalParamsInSchema:       true,
 			AllowUpdateExpiredInstanceWithContext: true,
 			Binding: broker.BindingConfig{
 				Enabled:              true,
