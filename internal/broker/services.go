@@ -67,6 +67,8 @@ func (se *ServicesEndpoint) Services(ctx context.Context) ([]domain.Service, err
 
 	provider, ok := middleware.ProviderFromContext(ctx)
 	platformRegion, ok := middleware.RegionFromContext(ctx)
+	se.log.Info(fmt.Sprintf("IngressFiltering feature flag %t", se.ingressFilteringFeatureFlag))
+	se.log.Info(fmt.Sprintf("IngressFiltering plans %v", se.ingressFilteringPlans))
 	for _, plan := range Plans(class.Plans,
 		provider,
 		se.defaultOIDCConfig,
@@ -89,7 +91,6 @@ func (se *ServicesEndpoint) Services(ctx context.Context) ([]domain.Service, err
 		if se.cfg.Binding.Enabled && se.cfg.Binding.BindablePlans.Contains(plan.Name) {
 			plan.Bindable = &bindable
 		}
-
 		availableServicePlans = append(availableServicePlans, plan)
 	}
 
