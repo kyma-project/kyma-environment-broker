@@ -800,13 +800,13 @@ func (b *ProvisionEndpoint) monitorAdditionalProperties(instanceID string, ersCo
 	}
 
 	dirPath := "/additional-properties"
-	if err := os.MkdirAll(dirPath, 0755); err != nil {
+	if err := os.MkdirAll(dirPath, os.ModePerm); err != nil {
 		b.log.Error(fmt.Sprintf("Failed to create directory: %v", err))
 		return
 	}
 
 	filePath := filepath.Join(dirPath, "requests.jsonl")
-	f, err := os.OpenFile(filePath, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
+	f, err := os.OpenFile(filePath, os.O_APPEND|os.O_CREATE|os.O_WRONLY, os.ModePerm)
 	if err != nil {
 		b.log.Error(fmt.Sprintf("Failed to open file: %v", err))
 		return
