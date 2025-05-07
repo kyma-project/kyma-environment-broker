@@ -416,8 +416,6 @@ func logConfiguration(logs *slog.Logger, cfg Config) {
 	logs.Info(fmt.Sprintf("InfrastructureManager.UseSmallerMachineTypes: %v", cfg.InfrastructureManager.UseSmallerMachineTypes))
 	logs.Info(fmt.Sprintf("InfrastructureManager.EnableIngressFiltering: %v", cfg.InfrastructureManager.EnableIngressFiltering))
 	logs.Info(fmt.Sprintf("InfrastructureManager.IngressFilteringPlans: %s", cfg.InfrastructureManager.IngressFilteringPlans))
-
-	logs.Info(fmt.Sprintf("ResolveSubscriptionSecretStepDisabled: %v", cfg.ResolveSubscriptionSecretStepDisabled))
 }
 
 func createAPI(router *httputil.Router, servicesConfig broker.ServicesConfig, cfg *Config, db storage.BrokerStorage,
