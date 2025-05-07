@@ -304,11 +304,11 @@ spec:
               mountPath: /tmp/profiler
               readOnly: false
           {{- end }}
-          {{ - if .Values.broker.monitorAdditionalProperties }}
+          {{- if .Values.broker.monitorAdditionalProperties }}
           - name: keb-additional-properties
             mountPath: /additional-properties
             readOnly: false
-          {{ - end }}
+          {{- end }}
           {{- if and (eq .Values.global.database.embedded.enabled false) (eq .Values.global.database.cloudsqlproxy.enabled false)}}
             - name: cloudsql-sslrootcert
               mountPath: /secrets/cloudsql-sslrootcert
