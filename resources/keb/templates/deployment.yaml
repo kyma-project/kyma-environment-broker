@@ -269,6 +269,8 @@ spec:
               value: "{{ .Values.zoneMapping }}"
             - name: APP_BROKER_DISABLE_MACHINE_TYPE_UPDATE
               value: "{{ .Values.broker.disableMachineTypeUpdate }}"
+            - name: APP_BROKER_MONITOR_ADDITIONAL_PROPERTIES
+              value: "{{ .Values.broker.monitorAdditionalProperties }}"
           ports:
             - name: http
               containerPort: {{ .Values.broker.port }}
@@ -302,6 +304,11 @@ spec:
               mountPath: /tmp/profiler
               readOnly: false
           {{- end }}
+          {{ - if .Values.broker.monitorAdditionalProperties }}
+          - name: keb-additional-properties
+            mountPath: /additional-properties
+            readOnly: false
+          {{ - end }}
           {{- if and (eq .Values.global.database.embedded.enabled false) (eq .Values.global.database.cloudsqlproxy.enabled false)}}
             - name: cloudsql-sslrootcert
               mountPath: /secrets/cloudsql-sslrootcert
@@ -359,4 +366,9 @@ spec:
       - name: keb-memory-profile
         persistentVolumeClaim:
           claimName: {{ include "kyma-env-broker.fullname" . }}-profiler
+      {{- end }}
+      {{- if .Values.broker.monitorAdditionalProperties }}
+      - name: keb-additional-properties
+        persistentVolumeClaim:
+          claimName: {{ include "kyma-env-broker.fullname" . }}-additional-properties
       {{- end }}

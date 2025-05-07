@@ -58,6 +58,8 @@ type Config struct {
 	UseAdditionalOIDCSchema bool `envconfig:"default=false"`
 
 	DisableMachineTypeUpdate bool `envconfig:"default=false"`
+
+	MonitorAdditionalProperties bool `envconfig:"default=false"`
 }
 
 type ServicesConfig map[string]Service
