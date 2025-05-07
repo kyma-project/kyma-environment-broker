@@ -54,4 +54,4 @@ See the example of the update request:
 ```
 
 > [!NOTE]
-> Attempt to enable or disable ingress filtering for unsupported plan or external customer will result in an error.
+> Attempt to enable or disable ingress filtering for an unsupported plan or an external customer results in an error.
