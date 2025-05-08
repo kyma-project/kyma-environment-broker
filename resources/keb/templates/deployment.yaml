@@ -56,6 +56,21 @@ spec:
               mountPath: /tmp/profiler
               readOnly: false
         {{- end }}
+        {{- if .Values.broker.monitorAdditionalProperties }}
+        - name: additional-properties
+          command:
+          - bash
+          - -c
+          - chmod 777 /additional-properties && sleep inf
+          securityContext:
+            runAsUser: 0
+          image: ubuntu:20.04
+          imagePullPolicy: Always
+          volumeMounts:
+            - name: keb-additional-properties
+              mountPath: /additional-properties
+              readOnly: false
+        {{- end }}
         - name: {{ include "kyma-env-broker.name" . }}
           image: "{{ .Values.global.images.container_registry.path }}/{{ .Values.global.images.kyma_environment_broker.dir }}kyma-environment-broker:{{ .Values.global.images.kyma_environment_broker.version }}"
           imagePullPolicy: {{ .Values.deployment.image.pullPolicy }}
