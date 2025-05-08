@@ -524,6 +524,9 @@ func (a AdditionalWorkerNodePool) Validate() error {
 	if a.HAZones && a.AutoScalerMin < minAutoScalerMinValueForHA {
 		return fmt.Errorf("AutoScalerMin %v should be at least %v when HA zones are enabled for %s additional worker node pool", a.AutoScalerMin, minAutoScalerMinValueForHA, a.Name)
 	}
+	if a.AutoScalerMin < 0 {
+		return fmt.Errorf("AutoScalerMin value cannot be lower than 0 for %s additional worker node pool", a.Name)
+	}
 	return nil
 }
 
