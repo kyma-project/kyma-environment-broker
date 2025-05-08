@@ -7,17 +7,22 @@ import (
 	"log/slog"
 	"net/http"
 	"os"
+	"path/filepath"
 
 	"github.com/kyma-project/kyma-environment-broker/internal/httputil"
 )
 
+const ProvisioningRequestsFileName = "provisioning-requests.jsonl"
+
 type Handler struct {
-	logger *slog.Logger
+	logger                   *slog.Logger
+	additionalPropertiesPath string
 }
 
-func NewHandler(logger *slog.Logger) *Handler {
+func NewHandler(logger *slog.Logger, additionalPropertiesPath string) *Handler {
 	return &Handler{
-		logger: logger.With("service", "additional-properties-handler"),
+		logger:                   logger.With("service", "additional-properties-handler"),
+		additionalPropertiesPath: additionalPropertiesPath,
 	}
 }
 
@@ -26,7 +31,7 @@ func (h *Handler) AttachRoutes(router *httputil.Router) {
 }
 
 func (h *Handler) getAdditionalProperties(w http.ResponseWriter, req *http.Request) {
-	filePath := "additional-properties/provisioning-requests.jsonl"
+	filePath := filepath.Join(h.additionalPropertiesPath, ProvisioningRequestsFileName)
 
 	f, err := os.Open(filePath)
 	if err != nil {
