@@ -1,14 +1,18 @@
 package broker_test
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"os"
+	"path/filepath"
 	"strings"
 	"testing"
 	"time"
 
+	"github.com/kyma-project/kyma-environment-broker/internal/additionalproperties"
 	"github.com/kyma-project/kyma-environment-broker/internal/broker"
 	"github.com/kyma-project/kyma-environment-broker/internal/provider"
 	"github.com/kyma-project/kyma-environment-broker/internal/regionssupportingmachine"
@@ -1524,6 +1528,93 @@ func TestMachineTypeUpdateInAdditionalWorkerNodePools(t *testing.T) {
 
 	// then
 	assert.EqualError(t, err, "Machine type setting is permanent, and you cannot change it for the name-1 additional worker node pool")
+}
+
+func TestUpdateAdditionalProperties(t *testing.T) {
+	t.Run("file should contain request with additional properties", func(t *testing.T) {
+		// given
+		tempDir := t.TempDir()
+		expectedFile := filepath.Join(tempDir, additionalproperties.UpdateRequestsFileName)
+		instance := fixture.FixInstance(instanceID)
+		st := storage.NewMemoryStorage()
+		err := st.Instances().Insert(instance)
+		require.NoError(t, err)
+		err = st.Operations().InsertProvisioningOperation(fixProvisioningOperation("provisioning01"))
+		require.NoError(t, err)
+
+		handler := &handler{}
+		q := &automock.Queue{}
+		q.On("Add", mock.AnythingOfType("string"))
+
+		kcBuilder := &kcMock.KcBuilder{}
+		kcBuilder.On("GetServerURL", mock.Anything).Return("https://kcp.example.dummy", nil)
+		svc := broker.NewUpdate(broker.Config{MonitorAdditionalProperties: true, AdditionalPropertiesPath: tempDir}, st, handler, true, true, false, q, broker.PlansConfig{},
+			fixValueProvider(), fixLogger(), dashboardConfig, kcBuilder, &broker.OneForAllConvergedCloudRegionsProvider{}, fakeKcpK8sClient, regionssupportingmachine.RegionsSupportingMachine{}, imConfigFixture, false)
+
+		// when
+		_, err = svc.Update(context.Background(), instanceID, domain.UpdateDetails{
+			ServiceID:       "",
+			PlanID:          broker.AzurePlanID,
+			RawParameters:   json.RawMessage("{\"machineType\":\"Standard_D16s_v5\",\"test\":\"test\"}"),
+			PreviousValues:  domain.PreviousValues{},
+			RawContext:      json.RawMessage("{\"globalaccount_id\":\"globalaccount_id_1\", \"subaccount_id\":\"subaccount_id_1\", \"active\":true}"),
+			MaintenanceInfo: nil,
+		}, true)
+
+		// then
+		assert.NoError(t, err)
+
+		contents, err := os.ReadFile(expectedFile)
+		assert.NoError(t, err)
+
+		lines := bytes.Split(contents, []byte("\n"))
+		assert.Greater(t, len(lines), 0)
+		var entry map[string]interface{}
+		err = json.Unmarshal(lines[0], &entry)
+		assert.NoError(t, err)
+
+		assert.Equal(t, "globalaccount_id_1", entry["globalAccountID"])
+		assert.Equal(t, "subaccount_id_1", entry["subAccountID"])
+		assert.Equal(t, instanceID, entry["instanceID"])
+	})
+
+	t.Run("file should not contain request without additional properties", func(t *testing.T) {
+		// given
+		tempDir := t.TempDir()
+		expectedFile := filepath.Join(tempDir, additionalproperties.UpdateRequestsFileName)
+		instance := fixture.FixInstance(instanceID)
+		st := storage.NewMemoryStorage()
+		err := st.Instances().Insert(instance)
+		require.NoError(t, err)
+		err = st.Operations().InsertProvisioningOperation(fixProvisioningOperation("provisioning01"))
+		require.NoError(t, err)
+
+		handler := &handler{}
+		q := &automock.Queue{}
+		q.On("Add", mock.AnythingOfType("string"))
+
+		kcBuilder := &kcMock.KcBuilder{}
+		kcBuilder.On("GetServerURL", mock.Anything).Return("https://kcp.example.dummy", nil)
+		svc := broker.NewUpdate(broker.Config{MonitorAdditionalProperties: true, AdditionalPropertiesPath: tempDir}, st, handler, true, true, false, q, broker.PlansConfig{},
+			fixValueProvider(), fixLogger(), dashboardConfig, kcBuilder, &broker.OneForAllConvergedCloudRegionsProvider{}, fakeKcpK8sClient, regionssupportingmachine.RegionsSupportingMachine{}, imConfigFixture, false)
+
+		// when
+		_, err = svc.Update(context.Background(), instanceID, domain.UpdateDetails{
+			ServiceID:       "",
+			PlanID:          broker.AzurePlanID,
+			RawParameters:   json.RawMessage("{\"machineType\":\"Standard_D16s_v5\"}"),
+			PreviousValues:  domain.PreviousValues{},
+			RawContext:      json.RawMessage("{\"globalaccount_id\":\"globalaccount_id_1\", \"subaccount_id\":\"subaccount_id_1\", \"active\":true}"),
+			MaintenanceInfo: nil,
+		}, true)
+
+		// then
+		assert.NoError(t, err)
+
+		contents, err := os.ReadFile(expectedFile)
+		assert.Nil(t, contents)
+		assert.Error(t, err)
+	})
 }
 
 func fixValueProvider() broker.ValuesProvider {

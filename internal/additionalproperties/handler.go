@@ -12,7 +12,10 @@ import (
 	"github.com/kyma-project/kyma-environment-broker/internal/httputil"
 )
 
-const ProvisioningRequestsFileName = "provisioning-requests.jsonl"
+const (
+	ProvisioningRequestsFileName = "provisioning-requests.jsonl"
+	UpdateRequestsFileName       = "update-requests.jsonl"
+)
 
 type Handler struct {
 	logger                   *slog.Logger
@@ -31,7 +34,27 @@ func (h *Handler) AttachRoutes(router *httputil.Router) {
 }
 
 func (h *Handler) getAdditionalProperties(w http.ResponseWriter, req *http.Request) {
-	filePath := filepath.Join(h.additionalPropertiesPath, ProvisioningRequestsFileName)
+	requestType := req.URL.Query().Get("requestType")
+	var fileName string
+	switch requestType {
+	case "provisioning":
+		fileName = ProvisioningRequestsFileName
+	case "update":
+		fileName = UpdateRequestsFileName
+	case "":
+		info := map[string]string{
+			"message": "Missing query parameter 'requestType'. Supported values are 'provisioning' and 'update'.",
+		}
+		httputil.WriteResponse(w, http.StatusBadRequest, info)
+		return
+	default:
+		info := map[string]string{
+			"message": fmt.Sprintf("Unsupported requestType '%s'. Supported values are 'provisioning' and 'update'.", requestType),
+		}
+		httputil.WriteResponse(w, http.StatusBadRequest, info)
+		return
+	}
+	filePath := filepath.Join(h.additionalPropertiesPath, fileName)
 
 	f, err := os.Open(filePath)
 	if err != nil {
