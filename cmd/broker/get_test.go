@@ -232,6 +232,7 @@ func TestGetParametersAfterProvisioning_InstanceWithListOidcConfig(t *testing.T)
 
 func TestGetParametersAfterProvisioning_InstanceWithEmptyListOidcConfig(t *testing.T) {
 	cfg := fixConfig()
+	cfg.Broker.UseAdditionalOIDCSchema = true
 	suite := NewBrokerSuiteTestWithConfig(t, cfg)
 	defer suite.TearDown()
 	iid := uuid.New().String()
@@ -553,6 +554,7 @@ func TestGetParametersAfterUpdate_InstanceWithObjectOidcUpdatedWithObjectOidc(t 
 func TestGetParametersAfterUpdate_InstanceWithObjectOidcUpdatedWithListOidc(t *testing.T) {
 	// given
 	cfg := fixConfig()
+	cfg.Broker.UseAdditionalOIDCSchema = true
 	suite := NewBrokerSuiteTestWithConfig(t, cfg)
 	defer suite.TearDown()
 	iid := uuid.New().String()
@@ -572,6 +574,7 @@ func TestGetParametersAfterUpdate_InstanceWithObjectOidcUpdatedWithListOidc(t *t
 						"oidc": {				
 							"clientID": "client-id-oidc",
 							"groupsClaim": "groups",
+							"groupsPrefix": "-",
 							"issuerURL": "https://isssuer.url",
 							"signingAlgs": [
 									"RS256"
@@ -599,6 +602,7 @@ func TestGetParametersAfterUpdate_InstanceWithObjectOidcUpdatedWithListOidc(t *t
 						{
 							"clientID": "client-id-oidc2",
 							"groupsClaim": "groups",
+							"groupsPrefix": "-",
 							"issuerURL": "https://isssuer.url",
 							"signingAlgs": ["RS256"],
 							"usernameClaim": "sub",
@@ -638,6 +642,7 @@ func TestGetParametersAfterUpdate_InstanceWithObjectOidcUpdatedWithListOidc(t *t
 						{
 							"clientID": "client-id-oidc2",
 							"groupsClaim": "groups",
+							"groupsPrefix": "-",
 							"issuerURL": "https://isssuer.url",
 							"signingAlgs": ["RS256"],
 							"usernameClaim": "sub",
