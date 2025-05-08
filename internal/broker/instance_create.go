@@ -806,7 +806,7 @@ func (b *ProvisionEndpoint) monitorAdditionalProperties(instanceID string, ersCo
 	}
 
 	filePath := filepath.Join(dirPath, "provisioning-requests.jsonl")
-	f, err := os.OpenFile(filePath, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
+	f, err := os.OpenFile(filePath, os.O_APPEND|os.O_CREATE|os.O_WRONLY, os.ModePerm)
 	if err != nil {
 		b.log.Error(fmt.Sprintf("Failed to open file: %v", err))
 		return
