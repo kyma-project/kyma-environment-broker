@@ -1382,7 +1382,9 @@ func TestProvisioning_OIDCValues(t *testing.T) {
 
 	t.Run("should apply OIDC values list with one element", func(t *testing.T) {
 		// given
-		suite := NewBrokerSuiteTest(t)
+		cfg := fixConfig()
+		cfg.Broker.UseAdditionalOIDCSchema = true
+		suite := NewBrokerSuiteTestWithConfig(t, cfg)
 		defer suite.TearDown()
 		iid := uuid.New().String()
 
@@ -1411,6 +1413,7 @@ func TestProvisioning_OIDCValues(t *testing.T) {
 									"issuerURL": "https://testurl.local",
 									"signingAlgs": ["RS256", "RS384"],
 									"usernameClaim": "fakeUsernameClaim",
+									"groupsPrefix": "-",
 									"usernamePrefix": "::",
 									"requiredClaims": ["claim=value"]
 								}
