@@ -370,7 +370,7 @@ func main() {
 	runtimeHandler.AttachRoutes(router)
 
 	// create list requests with additional properties endpoint
-	additionalPropertiesHandler := additionalproperties.NewHandler(log)
+	additionalPropertiesHandler := additionalproperties.NewHandler(log, cfg.Broker.AdditionalPropertiesPath)
 	additionalPropertiesHandler.AttachRoutes(router)
 
 	// create expiration endpoint

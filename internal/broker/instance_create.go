@@ -14,6 +14,8 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/kyma-project/kyma-environment-broker/internal/additionalproperties"
+
 	"github.com/kyma-project/kyma-environment-broker/internal/validator"
 	"github.com/santhosh-tekuri/jsonschema/v6"
 
@@ -788,8 +790,8 @@ func (b *ProvisionEndpoint) monitorAdditionalProperties(instanceID string, ersCo
 	}
 
 	payload := map[string]interface{}{
-		"GlobalAccountID": ersContext.GlobalAccountID,
-		"SubAccountID":    ersContext.SubAccountID,
+		"globalAccountID": ersContext.GlobalAccountID,
+		"subAccountID":    ersContext.SubAccountID,
 		"instanceID":      instanceID,
 		"payload":         rawParameters,
 	}
@@ -799,13 +801,12 @@ func (b *ProvisionEndpoint) monitorAdditionalProperties(instanceID string, ersCo
 		return
 	}
 
-	dirPath := "/additional-properties"
-	if err := os.MkdirAll(dirPath, os.ModePerm); err != nil {
+	if err := os.MkdirAll(b.config.AdditionalPropertiesPath, os.ModePerm); err != nil {
 		b.log.Error(fmt.Sprintf("Failed to create directory: %v", err))
 		return
 	}
 
-	filePath := filepath.Join(dirPath, "provisioning-requests.jsonl")
+	filePath := filepath.Join(b.config.AdditionalPropertiesPath, additionalproperties.ProvisioningRequestsFileName)
 	f, err := os.OpenFile(filePath, os.O_APPEND|os.O_CREATE|os.O_WRONLY, os.ModePerm)
 	if err != nil {
 		b.log.Error(fmt.Sprintf("Failed to open file: %v", err))
