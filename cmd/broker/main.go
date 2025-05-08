@@ -16,6 +16,7 @@ import (
 	"github.com/kyma-project/kyma-environment-broker/common/hyperscaler/rules"
 	pkg "github.com/kyma-project/kyma-environment-broker/common/runtime"
 	"github.com/kyma-project/kyma-environment-broker/internal"
+	"github.com/kyma-project/kyma-environment-broker/internal/additionalproperties"
 	"github.com/kyma-project/kyma-environment-broker/internal/appinfo"
 	"github.com/kyma-project/kyma-environment-broker/internal/broker"
 	brokerBindings "github.com/kyma-project/kyma-environment-broker/internal/broker/bindings"
@@ -367,6 +368,10 @@ func main() {
 		kcpK8sClient,
 		log)
 	runtimeHandler.AttachRoutes(router)
+
+	// create list requests with additional properties endpoint
+	additionalPropertiesHandler := additionalproperties.NewHandler(log)
+	additionalPropertiesHandler.AttachRoutes(router)
 
 	// create expiration endpoint
 	expirationHandler := expiration.NewHandler(db.Instances(), db.Operations(), deprovisionQueue, log)
