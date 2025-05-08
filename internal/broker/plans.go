@@ -557,7 +557,6 @@ func AzureLiteSchema(machineTypesDisplay, regionsDisplay map[string]string, defa
 	properties.AdditionalWorkerNodePools.Items.ControlsOrder = removeString(properties.AdditionalWorkerNodePools.Items.ControlsOrder, "haZones")
 	properties.AdditionalWorkerNodePools.Items.Required = removeString(properties.AdditionalWorkerNodePools.Items.Required, "haZones")
 	properties.AdditionalWorkerNodePools.Items.Properties.AutoScalerMin.Default = 2
-	properties.AdditionalWorkerNodePools.Items.Properties.AutoScalerMin.Minimum = 0
 	properties.AdditionalWorkerNodePools.Items.Properties.AutoScalerMax.Default = 10
 	properties.AdditionalWorkerNodePools.Items.Properties.AutoScalerMax.Maximum = 40
 
