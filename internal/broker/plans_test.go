@@ -13,6 +13,77 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+func TestSchemaService_Azure(t *testing.T) {
+	schemaService := createSchemaService(t)
+
+	got := schemaService.AzureSchema("cf-ch20", false)
+	validateSchema(t, Marshal(got), "azure/azure-schema-additional-params-ingress-eu.json")
+
+	got = schemaService.AzureSchema("cf-us21", false)
+	validateSchema(t, Marshal(got), "azure/azure-schema-additional-params-ingress.json")
+}
+
+func TestSchemaService_Aws(t *testing.T) {
+	schemaService := createSchemaService(t)
+
+	got := schemaService.AWSSchema("cf-eu11", false)
+	validateSchema(t, Marshal(got), "aws/aws-schema-additional-params-ingress-eu.json")
+
+	got = schemaService.AWSSchema("cf-us11", false)
+	validateSchema(t, Marshal(got), "aws/aws-schema-additional-params-ingress.json")
+}
+
+func TestSchemaService_Gcp(t *testing.T) {
+	schemaService := createSchemaService(t)
+
+	got := schemaService.GCPSchema("cf-us11", false)
+	validateSchema(t, Marshal(got), "gcp/gcp-schema-additional-params-ingress.json")
+}
+
+func TestSchemaService_SapConvergedCloud(t *testing.T) {
+	schemaService := createSchemaService(t)
+
+	got := schemaService.SapConvergedCloudSchema("cf-eu20", false)
+	validateSchema(t, Marshal(got), "sap-converged-cloud/sap-converged-cloud-schema-additional-params-ingress.json")
+}
+
+func TestSchemaService_FreeAWS(t *testing.T) {
+	schemaService := createSchemaService(t)
+
+	got := schemaService.FreeSchema(pkg.AWS, "cf-us21", false)
+	validateSchema(t, Marshal(got), "aws/free-aws-schema-additional-params-ingress.json")
+
+	got = schemaService.FreeSchema(pkg.AWS, "cf-eu11", false)
+	validateSchema(t, Marshal(got), "aws/free-aws-schema-additional-params-ingress-eu.json")
+}
+
+func TestSchemaService_FreeAzure(t *testing.T) {
+	schemaService := createSchemaService(t)
+
+	got := schemaService.FreeSchema(pkg.Azure, "cf-us21", false)
+	validateSchema(t, Marshal(got), "azure/free-azure-schema-additional-params-ingress.json")
+
+	got = schemaService.FreeSchema(pkg.Azure, "cf-ch20", false)
+	validateSchema(t, Marshal(got), "azure/free-azure-schema-additional-params-ingress-eu.json")
+}
+
+func TestSchemaService_AzureLite(t *testing.T) {
+	schemaService := createSchemaService(t)
+
+	got := schemaService.AzureLiteSchema("cf-us21", false)
+	validateSchema(t, Marshal(got), "azure/azure-lite-schema-additional-params-ingress.json")
+
+	got = schemaService.AzureLiteSchema("cf-ch20", false)
+	validateSchema(t, Marshal(got), "azure/azure-lite-schema-additional-params-ingress-eu.json")
+}
+
+func TestSchemaService_Trial(t *testing.T) {
+	schemaService := createSchemaService(t)
+
+	got := schemaService.TrialSchema(false)
+	validateSchema(t, Marshal(got), "azure/azure-trial-schema-additional-params-ingress.json")
+}
+
 func TestSchemaGenerator(t *testing.T) {
 	azureLiteMachineNamesReduced := AzureLiteMachinesNames()
 	azureLiteMachinesDisplayReduced := AzureLiteMachinesDisplay()
@@ -421,4 +492,23 @@ func TestRemoveString(t *testing.T) {
 			assert.Equal(t, tt.expected, result)
 		})
 	}
+}
+
+func createSchemaService(t *testing.T) *SchemaService {
+	plans, err := os.Open("testdata/plans.yaml")
+	require.NoError(t, err)
+	defer plans.Close()
+
+	provider, err := os.Open("testdata/providers.yaml")
+	require.NoError(t, err)
+	defer provider.Close()
+
+	schemaService, err := NewSchemaService(provider, plans, nil, Config{
+		IncludeAdditionalParamsInSchema: true,
+		EnableShootAndSeedSameRegion:    true,
+		UseAdditionalOIDCSchema:         false,
+		DisableMachineTypeUpdate:        true,
+	}, true, EnablePlans{TrialPlanName, AzurePlanName, AzureLitePlanName, AWSPlanName, GCPPlanName, SapConvergedCloudPlanName, FreemiumPlanName})
+	require.NoError(t, err)
+	return schemaService
 }
