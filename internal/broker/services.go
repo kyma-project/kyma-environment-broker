@@ -78,7 +78,6 @@ func (se *ServicesEndpoint) Services(ctx context.Context) ([]domain.Service, err
 		if se.cfg.Binding.Enabled && se.cfg.Binding.BindablePlans.Contains(plan.Name) {
 			plan.Bindable = &bindable
 		}
-
 		availableServicePlans = append(availableServicePlans, plan)
 	}
 

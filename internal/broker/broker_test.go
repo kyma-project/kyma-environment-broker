@@ -23,3 +23,53 @@ func TestEnablePlans_Unmarshal(t *testing.T) {
 	}
 	assert.Error(t, enablePlans.Unmarshal("invalid,plan"))
 }
+
+func TestEnablePlans_Contains(t *testing.T) {
+	// given
+	planList := "gcp,azure,aws,sap-converged-cloud,free"
+	enablePlans := EnablePlans{}
+	err := enablePlans.Unmarshal(planList)
+	assert.NoError(t, err)
+
+	// when
+	tests := []struct {
+		name     string
+		planName string
+		expected bool
+	}{
+		{"Valid Plan", "gcp", true},
+		{"Invalid Plan", "invalid", false},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			result := enablePlans.Contains(test.planName)
+			assert.Equal(t, test.expected, result)
+		})
+	}
+}
+
+func TestEnablePlans_ContainsPlanID(t *testing.T) {
+	// given
+	planList := "gcp,azure,aws,sap-converged-cloud,free"
+	enablePlans := EnablePlans{}
+	err := enablePlans.Unmarshal(planList)
+	assert.NoError(t, err)
+
+	// when
+	tests := []struct {
+		name     string
+		planID   string
+		expected bool
+	}{
+		{"Valid Plan ID", GCPPlanID, true},
+		{"Invalid Plan ID", "invalid", false},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			result := enablePlans.ContainsPlanID(test.planID)
+			assert.Equal(t, test.expected, result)
+		})
+	}
+}

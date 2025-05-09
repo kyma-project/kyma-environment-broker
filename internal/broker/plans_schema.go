@@ -9,6 +9,13 @@ import (
 	"github.com/kyma-project/kyma-environment-broker/internal/networking"
 )
 
+const (
+	nonHAAutoscalerMinMinimumValue = 0
+	nonHAAutoscalerMaxMinimumValue = 1
+	autoscalerMaximumValue         = 300
+	autoscalerMaxDefaultValue      = 20
+)
+
 type RootSchema struct {
 	Schema string `json:"$schema"`
 	Type
@@ -36,9 +43,9 @@ type ProvisioningProperties struct {
 }
 
 type UpdateProperties struct {
-	Kubeconfig    *Type `json:"kubeconfig,omitempty"`
-	AutoScalerMin *Type `json:"autoScalerMin,omitempty"`
-	AutoScalerMax *Type `json:"autoScalerMax,omitempty"`
+	Kubeconfig    *Type           `json:"kubeconfig,omitempty"`
+	AutoScalerMin *AutoscalerType `json:"autoScalerMin,omitempty"`
+	AutoScalerMax *AutoscalerType `json:"autoScalerMax,omitempty"`
 	// Change the type to *OIDCs after we are fully migrated to additionalOIDC
 	OIDC                      interface{}                    `json:"oidc,omitempty"`
 	Administrators            *Type                          `json:"administrators,omitempty"`
@@ -112,6 +119,14 @@ type Type struct {
 	AdditionalProperties interface{}       `json:"additionalProperties,omitempty"`
 }
 
+type AutoscalerType struct {
+	Type        string      `json:"type"`
+	Description string      `json:"description"`
+	Minimum     int         `json:"minimum"`
+	Maximum     int         `json:"maximum"`
+	Default     interface{} `json:"default,omitempty"`
+}
+
 type NameType struct {
 	Type
 	BTPdefaultTemplate BTPdefaultTemplate `json:"_BTPdefaultTemplate,omitempty"`
@@ -176,11 +191,11 @@ type AdditionalWorkerNodePoolsItems struct {
 }
 
 type AdditionalWorkerNodePoolsItemsProperties struct {
-	Name          Type  `json:"name,omitempty"`
-	MachineType   Type  `json:"machineType,omitempty"`
-	HAZones       *Type `json:"haZones,omitempty"`
-	AutoScalerMin Type  `json:"autoScalerMin,omitempty"`
-	AutoScalerMax Type  `json:"autoScalerMax,omitempty"`
+	Name          Type           `json:"name,omitempty"`
+	MachineType   Type           `json:"machineType,omitempty"`
+	HAZones       *Type          `json:"haZones,omitempty"`
+	AutoScalerMin AutoscalerType `json:"autoScalerMin,omitempty"`
+	AutoScalerMax AutoscalerType `json:"autoScalerMax,omitempty"`
 }
 
 type OIDCs struct {
@@ -487,17 +502,18 @@ func NewProvisioningProperties(machineTypesDisplay, additionalMachineTypesDispla
 
 	properties := ProvisioningProperties{
 		UpdateProperties: UpdateProperties{
-			AutoScalerMin: &Type{
+			AutoScalerMin: &AutoscalerType{
 				Type:        "integer",
-				Minimum:     3,
-				Default:     3,
+				Minimum:     pkg.HAAutoscalerMinimumValue,
+				Maximum:     autoscalerMaximumValue,
+				Default:     pkg.HAAutoscalerMinimumValue,
 				Description: "Specifies the minimum number of virtual machines to create",
 			},
-			AutoScalerMax: &Type{
+			AutoScalerMax: &AutoscalerType{
 				Type:        "integer",
-				Minimum:     3,
-				Maximum:     300,
-				Default:     20,
+				Minimum:     pkg.HAAutoscalerMinimumValue,
+				Maximum:     autoscalerMaximumValue,
+				Default:     autoscalerMaxDefaultValue,
 				Description: "Specifies the maximum number of virtual machines to create",
 			},
 			MachineType: &Type{
@@ -621,19 +637,20 @@ func NewAdditionalWorkerNodePoolsSchema(machineTypesDisplay map[string]string, m
 					Type:        "boolean",
 					Title:       "HA zones",
 					Default:     true,
-					Description: "Specifies whether high availability (HA) zones are supported. This setting is permanent and cannot be changed later. If HA is disabled, all resources are placed in a single, randomly selected zone. Disabled HA allows setting both autoScalerMin and autoScalerMax to 1, which helps reduce costs. It is not recommended for production environments. When enabled, resources are distributed across three zones to enhance fault tolerance. Enabled HA requires setting autoScalerMin to the minimal value 3.",
+					Description: "Specifies whether high availability (HA) zones are supported. This setting is permanent and cannot be changed later. If HA is disabled, all resources are placed in a single, randomly selected zone. Disabled HA allows setting autoScalerMin to 0 and autoScalerMax to 1, which helps reduce costs. It is not recommended for production environments. When enabled, resources are distributed across three zones to enhance fault tolerance. Enabled HA requires setting autoScalerMin to the minimal value 3.",
 				},
-				AutoScalerMin: Type{
+				AutoScalerMin: AutoscalerType{
 					Type:        "integer",
-					Minimum:     1,
-					Default:     3,
+					Minimum:     nonHAAutoscalerMinMinimumValue,
+					Maximum:     autoscalerMaximumValue,
+					Default:     pkg.HAAutoscalerMinimumValue,
 					Description: "Specifies the minimum number of virtual machines to create.",
 				},
-				AutoScalerMax: Type{
+				AutoScalerMax: AutoscalerType{
 					Type:        "integer",
-					Minimum:     1,
-					Maximum:     300,
-					Default:     20,
+					Minimum:     nonHAAutoscalerMaxMinimumValue,
+					Maximum:     autoscalerMaximumValue,
+					Default:     autoscalerMaxDefaultValue,
 					Description: "Specifies the maximum number of virtual machines to create.",
 				},
 			},

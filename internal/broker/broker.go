@@ -140,6 +140,10 @@ func (m *EnablePlans) Unmarshal(in string) error {
 	return nil
 }
 
+func (m *EnablePlans) ContainsPlanID(PlanID string) bool {
+	return m.Contains(PlanNamesMapping[PlanID])
+}
+
 func (m *EnablePlans) Contains(name string) bool {
 	lowerName := strings.ToLower(name)
 	for _, plan := range *m {

@@ -6,6 +6,7 @@ import (
 	broker "skr-tester/pkg/broker"
 	kcp "skr-tester/pkg/kcp"
 	"skr-tester/pkg/logger"
+	"strconv"
 
 	"github.com/spf13/cobra"
 )
@@ -24,6 +25,7 @@ type UpdateCommand struct {
 	customOIDC                      string
 	customAdministrators            []string
 	customAdditionalWorkerNodePools string
+	ingressFiltering                string
 }
 
 func NewUpdateCommand() *cobra.Command {
@@ -41,7 +43,8 @@ func NewUpdateCommand() *cobra.Command {
 	skr-tester update -i instanceID -p planID --updateOIDC --customOIDC '{"clientID":"foo-bar","issuerURL":"https://new.custom.ias.com"}'  Update the instance with a custom OIDC configuration.
 	skr-tester update -i instanceID -p planID --updateMultipleOIDC  				   Update the instance with a predefined OIDC configurations list.
 	skr-tester update -i instanceID -p planID --updateAdministrators --customAdministrators admin1@acme.com,admin2@acme.com                Update the instance with custom administrators.
-	skr-tester update -i instanceID -p planID --updateAdditionalWorkerNodePools --customAdditionalWorkerNodePools '[{"name":"worker-1","machineType":"m6i.large","haZones":true,"autoScalerMin":3,"autoScalerMax":20}]'      Update the instance with custom additional worker node pools.`,
+	skr-tester update -i instanceID -p planID --updateAdditionalWorkerNodePools --customAdditionalWorkerNodePools '[{"name":"worker-1","machineType":"m6i.large","haZones":true,"autoScalerMin":3,"autoScalerMax":20}]'      Update the instance with custom additional worker node pools.
+	skr-tester update -i instanceID -p planID --ingressFiltering=true                      Update the instance with ingress filtering enabled.`,
 		PreRunE: func(_ *cobra.Command, _ []string) error { return cmd.Validate() },
 		RunE:    func(_ *cobra.Command, _ []string) error { return cmd.Run() },
 	}
@@ -57,6 +60,7 @@ func NewUpdateCommand() *cobra.Command {
 	cobraCmd.Flags().StringVar(&cmd.customOIDC, "customOIDC", "", "Custom OIDC configuration in JSON format (optional).")
 	cobraCmd.Flags().StringSliceVar(&cmd.customAdministrators, "customAdministrators", nil, "Custom administrators (optional).")
 	cobraCmd.Flags().StringVar(&cmd.customAdditionalWorkerNodePools, "customAdditionalWorkerNodePools", "", "Custom additional worker node pools in JSON format (optional).")
+	cobraCmd.Flags().StringVarP(&cmd.ingressFiltering, "ingressFiltering", "g", "", "Update ingress filtering (optional).")
 
 	return cobraCmd
 }
@@ -263,6 +267,17 @@ func (cmd *UpdateCommand) Run() error {
 			return fmt.Errorf("error updating instance: %v", err)
 		}
 		fmt.Printf("Update operationID: %s\n", resp["operation"].(string))
+	} else if len(cmd.ingressFiltering) > 0 {
+		fmt.Printf("User provided ingress filtering: %v\n", cmd.ingressFiltering)
+		ingressFilteringValue, err := strconv.ParseBool(cmd.ingressFiltering)
+		if err != nil {
+			return fmt.Errorf("error parsing ingress filtering value: %v", err)
+		}
+		resp, _, err := brokerClient.UpdateInstance(cmd.instanceID, map[string]interface{}{"ingressFiltering": ingressFilteringValue})
+		if err != nil {
+			return fmt.Errorf("error updating instance: %v", err)
+		}
+		fmt.Printf("Update operationID: %s\n", resp["operation"].(string))
 	}
 	return nil
 }
@@ -287,8 +302,14 @@ func (cmd *UpdateCommand) Validate() error {
 	if cmd.updateMultipleOIDC {
 		updateCount++
 	}
+	if len(cmd.ingressFiltering) > 0 {
+		if cmd.ingressFiltering != "true" && cmd.ingressFiltering != "false" {
+			return fmt.Errorf("ingressFiltering must be either 'true' or 'false'")
+		}
+		updateCount++
+	}
 	if updateCount != 1 {
-		return fmt.Errorf("you must use exactly one of updateMachineType, updateOIDC, updateAdministrators, updateAdditionalWorkerNodePools, or updateMultipleOIDC")
+		return fmt.Errorf("you must use exactly one of updateMachineType, updateOIDC, updateAdministrators, updateAdditionalWorkerNodePools, updateMultipleOIDC, or ingressFiltering")
 	}
 	return nil
 }

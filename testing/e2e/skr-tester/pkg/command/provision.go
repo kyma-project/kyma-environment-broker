@@ -11,7 +11,10 @@ import (
 	"github.com/spf13/cobra"
 )
 
-const sameSeedAndShootRegionParam = "shootAndSeedSameRegion"
+const (
+	sameSeedAndShootRegionParam = "shootAndSeedSameRegion"
+	ingressFilteringParam       = "ingressFiltering"
+)
 
 type ProvisionCommand struct {
 	cobraCmd                      *cobra.Command
@@ -22,6 +25,7 @@ type ProvisionCommand struct {
 	invalidIP                     bool
 	validCustomIP                 bool
 	enforceSameSeedAndShootRegion bool
+	ingressFiltering              bool
 }
 
 func NewProvisionCmd() *cobra.Command {
@@ -46,6 +50,7 @@ func NewProvisionCmd() *cobra.Command {
 	cobraCmd.Flags().BoolVarP(&cmd.invalidIP, "invalidIP", "i", false, "Try to provision with an invalid IP range.")
 	cobraCmd.Flags().BoolVarP(&cmd.validCustomIP, "validCustomIP", "v", false, "Provision with a valid custom IP range.")
 	cobraCmd.Flags().BoolVarP(&cmd.enforceSameSeedAndShootRegion, "enforceSameSeedAndShootRegion", "f", false, "Enforce the same region for Seed and Shoot.")
+	cobraCmd.Flags().BoolVarP(&cmd.ingressFiltering, "ingressFiltering", "g", false, "Enable ingress filtering.")
 
 	return cobraCmd
 }
@@ -81,6 +86,9 @@ func (cmd *ProvisionCommand) Run() error {
 	}
 	if cmd.enforceSameSeedAndShootRegion {
 		customParams[sameSeedAndShootRegionParam] = true
+	}
+	if cmd.ingressFiltering {
+		customParams[ingressFilteringParam] = true
 	}
 	instanceID := uuid.New().String()
 	fmt.Printf("Instance ID: %s\n", instanceID)

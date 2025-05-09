@@ -462,7 +462,7 @@ func validateIngressFiltering(provisioningParameters internal.ProvisioningParame
 			return fmt.Errorf(IngressFilteringOptionIsNotSupported)
 		}
 		if !plans.Contains(PlanNamesMapping[provisioningParameters.PlanID]) {
-			log.Info(IngressFilteringNotSupportedForPlanMsg)
+			log.Info(fmt.Sprintf(IngressFilteringNotSupportedForPlanMsg, PlanNamesMapping[provisioningParameters.PlanID]))
 			return fmt.Errorf(IngressFilteringOptionIsNotSupported)
 		}
 	}
