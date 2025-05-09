@@ -125,7 +125,7 @@ type AutoscalerType struct {
 	Description string      `json:"description"`
 	Minimum     int         `json:"minimum"`
 	Maximum     int         `json:"maximum"`
-	Default     interface{} `json:"default"`
+	Default     interface{} `json:"default,omitempty"`
 }
 
 type NameType struct {
