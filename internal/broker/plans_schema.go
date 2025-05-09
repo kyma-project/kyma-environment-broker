@@ -10,11 +10,11 @@ import (
 )
 
 const (
-	haAutoscalerMin      = 3
-	nonHAAutoscalerMin   = 0
-	nonHAAutoscalerMax   = 1
-	autoscalerMax        = 300
-	defaultAutoscalerMax = 20
+	haAutoscalerMinimumValue       = 3
+	nonHAAutoscalerMinMinimumValue = 0
+	nonHAAutoscalerMaxMinimumValue = 1
+	autoscalerMaximumValue         = 300
+	autoscalerMaxDefaultValue      = 20
 )
 
 type RootSchema struct {
@@ -505,16 +505,16 @@ func NewProvisioningProperties(machineTypesDisplay, additionalMachineTypesDispla
 		UpdateProperties: UpdateProperties{
 			AutoScalerMin: &AutoscalerType{
 				Type:        "integer",
-				Minimum:     haAutoscalerMin,
-				Maximum:     autoscalerMax,
-				Default:     haAutoscalerMin,
+				Minimum:     haAutoscalerMinimumValue,
+				Maximum:     autoscalerMaximumValue,
+				Default:     haAutoscalerMinimumValue,
 				Description: "Specifies the minimum number of virtual machines to create",
 			},
 			AutoScalerMax: &AutoscalerType{
 				Type:        "integer",
-				Minimum:     haAutoscalerMin,
-				Maximum:     autoscalerMax,
-				Default:     defaultAutoscalerMax,
+				Minimum:     haAutoscalerMinimumValue,
+				Maximum:     autoscalerMaximumValue,
+				Default:     autoscalerMaxDefaultValue,
 				Description: "Specifies the maximum number of virtual machines to create",
 			},
 			MachineType: &Type{
@@ -642,16 +642,16 @@ func NewAdditionalWorkerNodePoolsSchema(machineTypesDisplay map[string]string, m
 				},
 				AutoScalerMin: AutoscalerType{
 					Type:        "integer",
-					Minimum:     nonHAAutoscalerMin,
-					Maximum:     autoscalerMax,
-					Default:     haAutoscalerMin,
+					Minimum:     nonHAAutoscalerMinMinimumValue,
+					Maximum:     autoscalerMaximumValue,
+					Default:     haAutoscalerMinimumValue,
 					Description: "Specifies the minimum number of virtual machines to create.",
 				},
 				AutoScalerMax: AutoscalerType{
 					Type:        "integer",
-					Minimum:     nonHAAutoscalerMax,
-					Maximum:     autoscalerMax,
-					Default:     defaultAutoscalerMax,
+					Minimum:     nonHAAutoscalerMaxMinimumValue,
+					Maximum:     autoscalerMaximumValue,
+					Default:     autoscalerMaxDefaultValue,
 					Description: "Specifies the maximum number of virtual machines to create.",
 				},
 			},
