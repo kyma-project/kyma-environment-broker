@@ -103,7 +103,7 @@ type ProvisioningParametersDTO struct {
 	IngressFiltering          *bool                      `json:"ingressFiltering,omitempty"`
 }
 
-const minAutoScalerMinValueForHA = 3
+const HAAutoscalerMinimumValue = 3
 
 type AutoScalerParameters struct {
 	AutoScalerMin  *int `json:"autoScalerMin,omitempty"`
@@ -521,8 +521,8 @@ func (a AdditionalWorkerNodePool) Validate() error {
 	if a.AutoScalerMin > a.AutoScalerMax {
 		return fmt.Errorf("AutoScalerMax %v should be larger than AutoScalerMin %v for %s additional worker node pool", a.AutoScalerMax, a.AutoScalerMin, a.Name)
 	}
-	if a.HAZones && a.AutoScalerMin < minAutoScalerMinValueForHA {
-		return fmt.Errorf("AutoScalerMin %v should be at least %v when HA zones are enabled for %s additional worker node pool", a.AutoScalerMin, minAutoScalerMinValueForHA, a.Name)
+	if a.HAZones && a.AutoScalerMin < HAAutoscalerMinimumValue {
+		return fmt.Errorf("AutoScalerMin %v should be at least %v when HA zones are enabled for %s additional worker node pool", a.AutoScalerMin, HAAutoscalerMinimumValue, a.Name)
 	}
 	if a.AutoScalerMin < 0 {
 		return fmt.Errorf("AutoScalerMin value cannot be lower than 0 for %s additional worker node pool", a.Name)

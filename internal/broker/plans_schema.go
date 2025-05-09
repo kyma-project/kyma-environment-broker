@@ -10,7 +10,6 @@ import (
 )
 
 const (
-	haAutoscalerMinimumValue       = 3
 	nonHAAutoscalerMinMinimumValue = 0
 	nonHAAutoscalerMaxMinimumValue = 1
 	autoscalerMaximumValue         = 300
@@ -505,14 +504,14 @@ func NewProvisioningProperties(machineTypesDisplay, additionalMachineTypesDispla
 		UpdateProperties: UpdateProperties{
 			AutoScalerMin: &AutoscalerType{
 				Type:        "integer",
-				Minimum:     haAutoscalerMinimumValue,
+				Minimum:     pkg.HAAutoscalerMinimumValue,
 				Maximum:     autoscalerMaximumValue,
-				Default:     haAutoscalerMinimumValue,
+				Default:     pkg.HAAutoscalerMinimumValue,
 				Description: "Specifies the minimum number of virtual machines to create",
 			},
 			AutoScalerMax: &AutoscalerType{
 				Type:        "integer",
-				Minimum:     haAutoscalerMinimumValue,
+				Minimum:     pkg.HAAutoscalerMinimumValue,
 				Maximum:     autoscalerMaximumValue,
 				Default:     autoscalerMaxDefaultValue,
 				Description: "Specifies the maximum number of virtual machines to create",
@@ -644,7 +643,7 @@ func NewAdditionalWorkerNodePoolsSchema(machineTypesDisplay map[string]string, m
 					Type:        "integer",
 					Minimum:     nonHAAutoscalerMinMinimumValue,
 					Maximum:     autoscalerMaximumValue,
-					Default:     haAutoscalerMinimumValue,
+					Default:     pkg.HAAutoscalerMinimumValue,
 					Description: "Specifies the minimum number of virtual machines to create.",
 				},
 				AutoScalerMax: AutoscalerType{
