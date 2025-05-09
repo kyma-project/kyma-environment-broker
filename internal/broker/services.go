@@ -5,10 +5,6 @@ import (
 	"fmt"
 	"log/slog"
 
-	"github.com/kyma-project/kyma-environment-broker/internal/assuredworkloads"
-
-	"github.com/kyma-project/kyma-environment-broker/internal/euaccess"
-
 	"github.com/kyma-project/kyma-environment-broker/internal/middleware"
 
 	pkg "github.com/kyma-project/kyma-environment-broker/common/runtime"
@@ -31,6 +27,7 @@ type ServicesEndpoint struct {
 	useSmallerMachineTypes        bool
 	ingressFilteringFeatureFlag   bool
 	ingressFilteringPlans         EnablePlans
+	schemaService                 *SchemaService
 }
 
 func NewServices(cfg Config, servicesConfig ServicesConfig, log *slog.Logger, convergedCloudRegionsProvider ConvergedCloudRegionProvider, defaultOIDCConfig pkg.OIDCConfigDTO, imConfig InfrastructureManager) *ServicesEndpoint {
@@ -39,6 +36,9 @@ func NewServices(cfg Config, servicesConfig ServicesConfig, log *slog.Logger, co
 		id := PlanIDsMapping[planName]
 		enabledPlanIDs[id] = struct{}{}
 	}
+	// TODO handle error
+	schemaService, _ := NewSchemaService(nil, nil,
+		&defaultOIDCConfig, cfg, imConfig.EnableIngressFiltering, imConfig.IngressFilteringPlans)
 
 	return &ServicesEndpoint{
 		log:                           log.With("service", "ServicesEndpoint"),
@@ -50,6 +50,7 @@ func NewServices(cfg Config, servicesConfig ServicesConfig, log *slog.Logger, co
 		useSmallerMachineTypes:        imConfig.UseSmallerMachineTypes,
 		ingressFilteringFeatureFlag:   imConfig.EnableIngressFiltering,
 		ingressFilteringPlans:         imConfig.IngressFilteringPlans,
+		schemaService:                 schemaService,
 	}
 }
 
@@ -67,25 +68,13 @@ func (se *ServicesEndpoint) Services(ctx context.Context) ([]domain.Service, err
 
 	provider, ok := middleware.ProviderFromContext(ctx)
 	platformRegion, ok := middleware.RegionFromContext(ctx)
-	for _, plan := range Plans(class.Plans,
-		provider,
-		se.defaultOIDCConfig,
-		se.cfg.IncludeAdditionalParamsInSchema,
-		euaccess.IsEURestrictedAccess(platformRegion),
-		se.useSmallerMachineTypes,
-		se.cfg.EnableShootAndSeedSameRegion,
-		se.convergedCloudRegionsProvider.GetRegions(platformRegion),
-		assuredworkloads.IsKSA(platformRegion),
-		se.cfg.UseAdditionalOIDCSchema,
-		se.ingressFilteringFeatureFlag,
-		se.ingressFilteringPlans,
-		se.cfg.DisableMachineTypeUpdate,
-	) {
 
+	for _, plan := range se.schemaService.Plans(class.Plans, platformRegion, provider) {
 		// filter out not enabled plans
 		if _, exists := se.enabledPlanIDs[plan.ID]; !exists {
 			continue
 		}
+
 		if se.cfg.Binding.Enabled && se.cfg.Binding.BindablePlans.Contains(plan.Name) {
 			plan.Bindable = &bindable
 		}
