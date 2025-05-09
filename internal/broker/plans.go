@@ -550,15 +550,19 @@ func AzureLiteSchema(machineTypesDisplay, regionsDisplay map[string]string, defa
 	properties := NewProvisioningProperties(machineTypesDisplay, machineTypesDisplay, regionsDisplay, machineTypes, machineTypes, AzureRegions(euAccessRestricted), update, flags.disabledMachineTypeUpdate)
 
 	properties.AutoScalerMax.Minimum = 2
+	properties.AutoScalerMin.Maximum = 40
 	properties.AutoScalerMin.Minimum = 2
 	properties.AutoScalerMax.Maximum = 40
 
 	properties.AdditionalWorkerNodePools.Items.Properties.HAZones = nil
 	properties.AdditionalWorkerNodePools.Items.ControlsOrder = removeString(properties.AdditionalWorkerNodePools.Items.ControlsOrder, "haZones")
 	properties.AdditionalWorkerNodePools.Items.Required = removeString(properties.AdditionalWorkerNodePools.Items.Required, "haZones")
+	properties.AdditionalWorkerNodePools.Items.Properties.AutoScalerMin.Minimum = 0
+	properties.AdditionalWorkerNodePools.Items.Properties.AutoScalerMin.Maximum = 40
 	properties.AdditionalWorkerNodePools.Items.Properties.AutoScalerMin.Default = 2
-	properties.AdditionalWorkerNodePools.Items.Properties.AutoScalerMax.Default = 10
+	properties.AdditionalWorkerNodePools.Items.Properties.AutoScalerMax.Minimum = 1
 	properties.AdditionalWorkerNodePools.Items.Properties.AutoScalerMax.Maximum = 40
+	properties.AdditionalWorkerNodePools.Items.Properties.AutoScalerMax.Default = 10
 
 	if !update {
 		properties.AutoScalerMax.Default = 10
