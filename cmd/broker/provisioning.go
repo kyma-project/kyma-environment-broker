@@ -79,15 +79,8 @@ func NewProvisioningProcessingQueue(ctx context.Context, provisionManager *proce
 		},
 		{
 			stage:     createRuntimeStageName,
-			step:      provisioning.NewResolveCredentialsStep(db.Operations(), accountProvider, rulesService),
-			condition: provisioning.SkipForOwnClusterPlan,
-			disabled:  !cfg.ResolveSubscriptionSecretStepDisabled,
-		},
-		{
-			stage:     createRuntimeStageName,
 			step:      provisioning.NewResolveSubscriptionSecretStep(db.Operations(), gardenerClient, rulesService, internal.RetryTuple{Timeout: resolveSubscriptionSecretTimeout, Interval: resolveSubscriptionSecretRetryInterval}),
 			condition: provisioning.SkipForOwnClusterPlan,
-			disabled:  cfg.ResolveSubscriptionSecretStepDisabled,
 		},
 		{
 			stage:     createRuntimeStageName,
@@ -99,12 +92,10 @@ func NewProvisioningProcessingQueue(ctx context.Context, provisionManager *proce
 			stage: createRuntimeStageName,
 			step:  provisioning.NewGenerateRuntimeIDStep(db.Operations(), db.Instances()),
 		},
-		// postcondition: operation.RuntimeID is set
 		{
 			stage: createRuntimeStageName,
 			step:  provisioning.NewCreateResourceNamesStep(db.Operations()),
 		},
-		// postcondition: operation.KymaResourceName, operation.RuntimeResourceName is set
 		{
 			stage:     createRuntimeStageName,
 			step:      provisioning.NewCreateRuntimeResourceStep(db, k8sClient, cfg.InfrastructureManager, defaultOIDC, cfg.Broker.UseAdditionalOIDCSchema, workersProvider),

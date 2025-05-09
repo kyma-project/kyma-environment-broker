@@ -114,10 +114,6 @@ spec:
               value: "{{ .Values.broker.operationTimeout }}"
             - name: APP_LIFECYCLE_MANAGER_INTEGRATION_DISABLED
               value: "{{ .Values.lifecycleManager.disabled}}"
-            - name: APP_INFRASTRUCTURE_MANAGER_INTEGRATION_DISABLED
-              value: "{{ .Values.infrastructureManager.disabled}}"
-            - name: APP_RESOLVE_SUBSCRIPTION_SECRET_STEP_DISABLED
-              value: "{{ .Values.resolveSubscriptionSecretStep.disabled}}"
             - name: APP_STEP_TIMEOUTS_CHECK_RUNTIME_RESOURCE_CREATE
               value: "{{ .Values.stepTimeouts.checkRuntimeResourceCreate }}"
             - name: APP_STEP_TIMEOUTS_CHECK_RUNTIME_RESOURCE_UPDATE
