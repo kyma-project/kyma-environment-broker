@@ -56,6 +56,21 @@ spec:
               mountPath: /tmp/profiler
               readOnly: false
         {{- end }}
+        {{- if .Values.broker.monitorAdditionalProperties }}
+        - name: additional-properties
+          command:
+          - bash
+          - -c
+          - chmod 777 /additional-properties && sleep inf
+          securityContext:
+            runAsUser: 0
+          image: ubuntu:20.04
+          imagePullPolicy: Always
+          volumeMounts:
+            - name: keb-additional-properties
+              mountPath: /additional-properties
+              readOnly: false
+        {{- end }}
         - name: {{ include "kyma-env-broker.name" . }}
           image: "{{ .Values.global.images.container_registry.path }}/{{ .Values.global.images.kyma_environment_broker.dir }}kyma-environment-broker:{{ .Values.global.images.kyma_environment_broker.version }}"
           imagePullPolicy: {{ .Values.deployment.image.pullPolicy }}
@@ -273,6 +288,8 @@ spec:
               value: "{{ .Values.zoneMapping }}"
             - name: APP_BROKER_DISABLE_MACHINE_TYPE_UPDATE
               value: "{{ .Values.broker.disableMachineTypeUpdate }}"
+            - name: APP_BROKER_MONITOR_ADDITIONAL_PROPERTIES
+              value: "{{ .Values.broker.monitorAdditionalProperties }}"
           ports:
             - name: http
               containerPort: {{ .Values.broker.port }}
@@ -304,6 +321,11 @@ spec:
           {{- if .Values.broker.profiler.memory }}
             - name: keb-memory-profile
               mountPath: /tmp/profiler
+              readOnly: false
+          {{- end }}
+          {{- if .Values.broker.monitorAdditionalProperties }}
+            - name: keb-additional-properties
+              mountPath: /additional-properties
               readOnly: false
           {{- end }}
           {{- if and (eq .Values.global.database.embedded.enabled false) (eq .Values.global.database.cloudsqlproxy.enabled false)}}
@@ -363,4 +385,9 @@ spec:
       - name: keb-memory-profile
         persistentVolumeClaim:
           claimName: {{ include "kyma-env-broker.fullname" . }}-profiler
+      {{- end }}
+      {{- if .Values.broker.monitorAdditionalProperties }}
+      - name: keb-additional-properties
+        persistentVolumeClaim:
+          claimName: {{ include "kyma-env-broker.fullname" . }}-additional-properties
       {{- end }}

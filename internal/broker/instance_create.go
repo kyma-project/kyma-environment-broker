@@ -1,6 +1,7 @@
 package broker
 
 import (
+	"bytes"
 	"context"
 	"encoding/base64"
 	"encoding/json"
@@ -9,7 +10,11 @@ import (
 	"net"
 	"net/http"
 	"net/netip"
+	"os"
+	"path/filepath"
 	"strings"
+
+	"github.com/kyma-project/kyma-environment-broker/internal/additionalproperties"
 
 	"github.com/kyma-project/kyma-environment-broker/internal/validator"
 	"github.com/santhosh-tekuri/jsonschema/v6"
@@ -176,6 +181,9 @@ func (b *ProvisionEndpoint) Provision(ctx context.Context, instanceID string, de
 	logger = logger.With("globalAccountID", ersContext.GlobalAccountID)
 	if err != nil {
 		return domain.ProvisionedServiceSpec{}, apiresponses.NewFailureResponse(err, http.StatusBadRequest, "while extracting context")
+	}
+	if b.config.MonitorAdditionalProperties {
+		b.monitorAdditionalProperties(instanceID, ersContext, details.RawParameters)
 	}
 	if b.config.DisableSapConvergedCloud && details.PlanID == SapConvergedCloudPlanID {
 		err := fmt.Errorf("%s", ConvergedCloudBlockedMsg)
@@ -771,6 +779,44 @@ func (b *ProvisionEndpoint) validateNetworking(parameters pkg.ProvisioningParame
 	}
 
 	return err
+}
+
+func (b *ProvisionEndpoint) monitorAdditionalProperties(instanceID string, ersContext internal.ERSContext, rawParameters json.RawMessage) {
+	var parameters pkg.ProvisioningParametersDTO
+	decoder := json.NewDecoder(bytes.NewReader(rawParameters))
+	decoder.DisallowUnknownFields()
+	if err := decoder.Decode(&parameters); err == nil {
+		return
+	}
+
+	payload := map[string]interface{}{
+		"globalAccountID": ersContext.GlobalAccountID,
+		"subAccountID":    ersContext.SubAccountID,
+		"instanceID":      instanceID,
+		"payload":         rawParameters,
+	}
+	data, err := json.Marshal(payload)
+	if err != nil {
+		b.log.Error(fmt.Sprintf("Failed to marshal payload: %v", err))
+		return
+	}
+
+	if err := os.MkdirAll(b.config.AdditionalPropertiesPath, os.ModePerm); err != nil {
+		b.log.Error(fmt.Sprintf("Failed to create directory: %v", err))
+		return
+	}
+
+	filePath := filepath.Join(b.config.AdditionalPropertiesPath, additionalproperties.ProvisioningRequestsFileName)
+	f, err := os.OpenFile(filePath, os.O_APPEND|os.O_CREATE|os.O_WRONLY, os.ModePerm)
+	if err != nil {
+		b.log.Error(fmt.Sprintf("Failed to open file: %v", err))
+		return
+	}
+	defer f.Close()
+
+	if _, err := f.Write(append(data, '\n')); err != nil {
+		b.log.Error(fmt.Sprintf("Failed to write payload: %v", err))
+	}
 }
 
 func validateOverlapping(n1 net.IPNet, n2 net.IPNet) error {
