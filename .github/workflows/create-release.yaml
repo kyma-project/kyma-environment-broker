@@ -191,10 +191,10 @@ jobs:
       build-args: BIN=servicebindingcleanup
       tags: ${{ inputs.name }}
 
-  run-keb-chart-install-tests:
+  run-keb-chart-integration-tests:
     name: Validate KEB chart 
     needs: [build-keb-image, build-archiver-image, build-environments-cleanup-image, build-deprovision-retrigger-image, build-expirator-image, build-runtime-reconciler-image, build-subaccount-cleanup-image, build-subaccount-sync-image, build-globalaccounts-image, build-schema-migrator-image, build-service-binding-cleanup-image]
-    uses: "./.github/workflows/run-keb-chart-install-tests-reusable.yaml"
+    uses: "./.github/workflows/run-keb-chart-integration-tests-reusable.yaml"
     secrets: inherit
     with:
       last-k3s-versions: ${{ vars.LAST_K3S_VERSIONS }}
@@ -203,7 +203,7 @@ jobs:
 
   bumps:
     name: Bump sec-scanners-config, KEB chart
-    needs: [validate-release, run-unit-tests, run-keb-chart-install-tests]
+    needs: [validate-release, run-unit-tests, run-keb-chart-integration-tests]
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code

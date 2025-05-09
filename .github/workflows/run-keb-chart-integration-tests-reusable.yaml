@@ -1,0 +1,253 @@
+name: KEB chart integration tests (reusable)
+
+on:
+  workflow_call:
+    inputs:
+      last-k3s-versions:
+        description: number of the most recent K3s versions to be used
+        required: false
+        default: 1
+        type: string
+      release:
+        description: 'Determines if the workflow is called from release'
+        default: "true"
+        type: string
+      version:
+        description: 'Release version'
+        default: "0.0.0.0"
+        type: string
+
+jobs:
+  validate-keb-helm-chart:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Prepare chart for next KEB version
+      run: |
+        if [ "${{ inputs.release }}" == "true" ]; then
+          scripts/bump_keb_chart.sh ${{ inputs.version }} "release"
+        else
+          scripts/bump_keb_chart.sh PR-${{ inputs.version }} "pr"
+        fi
+
+    - name: Validate KEB helm chart
+      run: |
+        cd resources/keb
+        helm template .
+  
+  prepare-tests:
+    runs-on: ubuntu-latest
+    needs: validate-keb-helm-chart
+    outputs:
+      versions: ${{ steps.get-versions.outputs.k3s_versions }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - id: get-versions
+        name: Get K3s versions
+        # prepare json representing GitHub matrix:
+        # {"include": [
+        #    {"version":"v1.26.10+k3s1"},
+        #      ...
+        #    {"version":"v1.28.3+k3s1"}
+        # ]
+        # }
+        run: |
+          VERSIONS=($(./scripts/testing/get-latest-k3s-releases.sh ${{ inputs.last-k3s-versions }}))
+          MATRIX_AS_JSON=$(echo ${VERSIONS[*]} | awk 'END {printf "{\"include\":[";for (i = 1; i < NF; i++) printf "{\"version\":%s},",$i;printf "{\"version\":%s}]}",$i }'|jq -c)
+          echo "k3s_versions=${MATRIX_AS_JSON}" >> "${GITHUB_OUTPUT}"
+      - name: Wait for images to be ready
+        uses: wechuli/allcheckspassed@2e5e8bbc775f5680ed5d02e3a22e2fc7219792ac
+        if: ${{ inputs.release == 'false' }}
+        with:
+          delay: '1'
+          retries: '10'
+          polling_interval: '1'
+          checks_include: 'kyma-environment-broker-image / Build image, archiver-image / Build image, environments-cleanup-image / Build image, deprovision-retrigger-image / Build image, expirator-image / Build image, runtime-reconciler-image / Build image, subaccount-cleanup-image / Build image, subaccount-sync-image / Build image, globalaccounts-image / Build image, schema-migrator-image / Build image, service-binding-cleanup-image / Build image'
+          verbose: true
+
+  run-keb-chart-matrix:
+    runs-on: ubuntu-latest
+    needs: prepare-tests
+    timeout-minutes: 5
+    strategy:
+      matrix: ${{ fromJSON(needs.prepare-tests.outputs.versions) }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Prepare K3s cluster and docker registry
+        run: "./scripts/testing/k3s-setup.sh ${{ matrix.version }} --wait"
+
+      - name: Install KEB chart
+        run: |
+          if [ "${{ inputs.release }}" == "true" ]; then
+            make install VERSION=${{ inputs.version }}
+          else
+            make install VERSION=PR-${{ inputs.version }}
+          fi
+
+      - name: Provision an instance
+        run: |
+          kubectl port-forward -n kcp-system deployment/kcp-kyma-environment-broker 8080:8080 5432:5432 &
+          sleep 5
+          curl --request PUT \
+          --url http://localhost:8080/oauth/v2/service_instances/azure-cluster \
+          --header 'Content-Type: application/json' \
+          --header 'X-Broker-API-Version: 2.16' \
+          --data '{
+            "service_id": "47c9dcbf-ff30-448e-ab36-d3bad66ba281",
+            "plan_id": "4deee563-e5ec-4731-b9b1-53b42d855f0c",
+            "context": {
+              "globalaccount_id": "2f5011af-2fd3-44ba-ac60-eeb1148c2995",
+              "subaccount_id": "8b9a0db4-9aef-4da2-a856-61a4420b66fd",
+              "user_id": "user@email.com"
+            },
+            "parameters": {
+              "name": "azure-cluster",
+              "region": "northeurope"
+            }
+          }'
+
+      - name: Get RuntimeID
+        run: |
+            while [ -z "$RUNTIME_ID" ]; do
+              RUNTIME_ID=$(curl --request GET \
+              --url http://localhost:8080/runtimes \
+              --header 'Content-Type: application/json' \
+              --header 'X-Broker-API-Version: 2.16' | jq -r '.data[] | select(.instanceID=="azure-cluster") | .runtimeID')
+              if [ -z "$RUNTIME_ID" ]; then
+                echo "RuntimeID is empty. Retrying in 5 seconds..."
+                curl --request GET \
+                --url http://localhost:8080/runtimes \
+                --header 'Content-Type: application/json' \
+                --header 'X-Broker-API-Version: 2.16' | jq -r '.data[]'
+                sleep 5
+              fi
+            done
+            echo "RuntimeID: ${RUNTIME_ID}"
+            echo "RUNTIME_ID=$RUNTIME_ID" >> $GITHUB_ENV
+              
+      - name: Set RuntimeCR State to Ready
+        run: |
+          make set-runtime-state RUNTIME_ID=$RUNTIME_ID STATE=Ready
+
+      - name: Wait for provisioning to finish
+        run: |
+          while true; do
+            STATUS=$(curl --request GET \
+              --url http://localhost:8080/runtimes \
+              --header 'Content-Type: application/json' \
+              --header 'X-Broker-API-Version: 2.16' | jq -r '.data[] | select(.instanceID=="azure-cluster") | .status.provisioning.state')
+
+            echo "Current provisioning status: $STATUS"
+            if [ "$STATUS" == "succeeded" ]; then
+              echo "Provisioning succeeded."
+              break
+            elif [ "$STATUS" == "failed" ]; then
+              echo "Provisioning failed."
+              exit 1
+            fi
+            sleep 5
+          done
+          make set-kyma-state KYMA_ID=$RUNTIME_ID STATE=Ready
+
+      - name: Update the instance
+        run: |
+          curl --request PATCH \
+          --url http://localhost:8080/oauth/v2/service_instances/azure-cluster?accepts_incomplete=true \
+          --header 'Content-Type: application/json' \
+          --header 'X-Broker-API-Version: 2.16' \
+          --data '{
+            "service_id": "47c9dcbf-ff30-448e-ab36-d3bad66ba281",
+            "plan_id": "4deee563-e5ec-4731-b9b1-53b42d855f0c",
+            "context": {
+                "globalaccount_id": "2f5011af-2fd3-44ba-ac60-eeb1148c2995",
+                "subaccount_id": "8b9a0db4-9aef-4da2-a856-61a4420b66fd",
+                "user_id": "user@email.com"
+            },
+            "parameters": {
+                "machineType": "Standard_D4s_v5"
+            }
+          }'
+
+      - name: Wait for updating to finish
+        run: |
+          while true; do
+            STATUS=$(curl --request GET \
+              --url http://localhost:8080/runtimes \
+              --header 'Content-Type: application/json' \
+              --header 'X-Broker-API-Version: 2.16' | jq -r '.data[] | select(.instanceID=="azure-cluster") | .status.update.data[0].state')
+
+            echo "Current updating status: $STATUS"
+            if [ "$STATUS" == "succeeded" ]; then
+              echo "Updating succeeded."
+              break
+            elif [ "$STATUS" == "failed" ]; then
+              echo "Updating failed."
+              exit 1
+            fi
+            sleep 5
+          done
+
+          TOTAL_COUNT=$(curl --request GET \
+            --url http://localhost:8080/runtimes \
+            --header 'Content-Type: application/json' \
+            --header 'X-Broker-API-Version: 2.16' | jq -r '.data[] | select(.instanceID=="azure-cluster") | .status.update.totalCount')
+
+          if [ "$TOTAL_COUNT" -eq 1 ]; then
+            echo "Assertion passed: totalCount is 1."
+          else
+            echo "Assertion failed: totalCount is not 1. Actual value: $TOTAL_COUNT"
+            exit 1
+          fi
+
+      - name: Deprovision the instance
+        run: |
+          curl --request DELETE \
+          --url 'http://localhost:8080/oauth/v2/service_instances/azure-cluster?accepts_incomplete=true&service_id=47c9dcbf-ff30-448e-ab36-d3bad66ba281&plan_id=4deee563-e5ec-4731-b9b1-53b42d855f0c' \
+          --header 'Content-Type: application/json' \
+          --header 'X-Broker-API-Version: 2.16' \
+          --data '{
+            "service_id": "47c9dcbf-ff30-448e-ab36-d3bad66ba281",
+            "plan_id": "4deee563-e5ec-4731-b9b1-53b42d855f0c",
+            "context": {
+                "globalaccount_id": "2f5011af-2fd3-44ba-ac60-eeb1148c2995",
+                "subaccount_id": "8b9a0db4-9aef-4da2-a856-61a4420b66fd",
+                "user_id": "user@email.com"
+            }
+          }'
+      
+      - name: Wait for deprovisioning to finish
+        run: |
+          while true; do
+            RESULT=$(curl --request GET \
+              --url http://localhost:8080/runtimes \
+              --header 'Content-Type: application/json' \
+              --header 'X-Broker-API-Version: 2.16' | jq -r '.data[]')
+
+            if [ -z "$RESULT" ]; then
+              echo "Deprovisioning succeeded."
+              break
+            fi
+            sleep 5
+          done
+          
+          echo "Checking if RuntimeCR was removed"
+          RUNTIME_COUNT=$(kubectl get runtimes -n kcp-system | wc -l)
+          if [ "$RUNTIME_COUNT" -ne 0 ]; then
+            echo "RuntimeCR still exists."
+            exit 1
+          fi
+
+      - name: Print runtimes in case of failure
+        if: ${{ !success() }}
+        run: |
+          curl --request GET \
+          --url http://localhost:8080/runtimes \
+          --header 'Content-Type: application/json' \
+          --header 'X-Broker-API-Version: 2.16' | jq
+

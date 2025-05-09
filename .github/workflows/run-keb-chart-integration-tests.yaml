@@ -1,4 +1,4 @@
-name: Run KEB chart install tests
+name: Run KEB chart integration tests
 
 on:
   pull_request:
@@ -10,7 +10,7 @@ on:
 
 jobs:
   run-install-keb-chart-tests:
-    uses: "./.github/workflows/run-keb-chart-install-tests-reusable.yaml"
+    uses: "./.github/workflows/run-keb-chart-integration-tests-reusable.yaml"
     with:
       last-k3s-versions: 3
       release: "false"

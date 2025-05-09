@@ -1382,7 +1382,9 @@ func TestProvisioning_OIDCValues(t *testing.T) {
 
 	t.Run("should apply OIDC values list with one element", func(t *testing.T) {
 		// given
-		suite := NewBrokerSuiteTest(t)
+		cfg := fixConfig()
+		cfg.Broker.UseAdditionalOIDCSchema = true
+		suite := NewBrokerSuiteTestWithConfig(t, cfg)
 		defer suite.TearDown()
 		iid := uuid.New().String()
 
@@ -1411,6 +1413,7 @@ func TestProvisioning_OIDCValues(t *testing.T) {
 									"issuerURL": "https://testurl.local",
 									"signingAlgs": ["RS256", "RS384"],
 									"usernameClaim": "fakeUsernameClaim",
+									"groupsPrefix": "-",
 									"usernamePrefix": "::",
 									"requiredClaims": ["claim=value"]
 								}
@@ -1438,7 +1441,9 @@ func TestProvisioning_OIDCValues(t *testing.T) {
 
 	t.Run("should apply empty OIDC list", func(t *testing.T) {
 		// given
-		suite := NewBrokerSuiteTest(t)
+		cfg := fixConfig()
+		cfg.Broker.UseAdditionalOIDCSchema = true
+		suite := NewBrokerSuiteTestWithConfig(t, cfg)
 		defer suite.TearDown()
 		iid := uuid.New().String()
 
@@ -1577,7 +1582,10 @@ func TestProvisioning_OIDCValues(t *testing.T) {
 
 	t.Run("should apply default OIDC values when all OIDC object's fields are not present", func(t *testing.T) {
 		// given
-		suite := NewBrokerSuiteTest(t)
+		cfg := fixConfig()
+		cfg.Broker.IncludeAdditionalParamsInSchema = false
+		suite := NewBrokerSuiteTestWithConfig(t, cfg)
+
 		defer suite.TearDown()
 		iid := uuid.New().String()
 
@@ -2523,7 +2531,6 @@ func TestProvisioning_ResolveSubscriptionSecretStepEnabled(t *testing.T) {
 			// given
 			cfg := fixConfig()
 			cfg.Broker.EnablePlans = append(cfg.Broker.EnablePlans, "azure_lite")
-			cfg.ResolveSubscriptionSecretStepDisabled = false
 			suite := NewBrokerSuiteTestWithConfig(t, cfg)
 			defer suite.TearDown()
 			iid := uuid.New().String()

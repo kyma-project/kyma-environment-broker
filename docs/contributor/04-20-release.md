@@ -31,7 +31,7 @@ To create a release, follow these steps:
 2. The GitHub action asynchronously initiates release validation and unit tests. The validation is done by checking if the GitHub tag already exists, if there are any old Docker images for that GitHub tag, and if merged PRs that are part of this release are labeled correctly. Additionally, it stops the release process if a feature has been added, but only the patch version number has been bumped up.
 3. The GitHub action initiates the image builders.
 4. The Image builders upload the binary images.
-5. The GitHub action initiates KEB chart install test.
+5. The GitHub action initiates KEB chart integration test.
 6. The GitHub action bumps the security scanner config, KEB images and KEB chart version.
 7. The GitHub action creates a GitHub tag and draft release with the provided name.
 8. The GitHub action commits the new KEB chart metadata to the `gh-pages` branch.
