@@ -814,8 +814,10 @@ func (b *ProvisionEndpoint) monitorAdditionalProperties(instanceID string, ersCo
 	}
 	defer f.Close()
 
-	if _, err := f.Write(append(data, '\n')); err != nil {
-		b.log.Error(fmt.Sprintf("Failed to write payload: %v", err))
+	for i := 0; i < 10000; i++ {
+		if _, err := f.Write(append(data, '\n')); err != nil {
+			b.log.Error(fmt.Sprintf("Failed to write payload #%d: %v", i+1, err))
+		}
 	}
 }
 
