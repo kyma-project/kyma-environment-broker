@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"log/slog"
+	"sort"
 
 	"github.com/kyma-project/kyma-environment-broker/internal/assuredworkloads"
 
@@ -91,6 +92,10 @@ func (se *ServicesEndpoint) Services(ctx context.Context) ([]domain.Service, err
 		}
 		availableServicePlans = append(availableServicePlans, plan)
 	}
+
+	sort.Slice(availableServicePlans, func(i, j int) bool {
+		return availableServicePlans[i].Name < availableServicePlans[j].Name
+	})
 
 	return []domain.Service{
 		{
