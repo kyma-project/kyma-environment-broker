@@ -1,6 +1,109 @@
+allowUpdateExpiredInstanceWithContext: "false"
+binding:
+  bindablePlans: "aws"
+  createBindingTimeout: 15s
+  enabled: false
+  expirationSeconds: 600
+  maxBindingsCount: 10
+  maxExpirationSeconds: 7200
+  minExpirationSeconds: 600
+broker:
+  defaultRequestRegion: "cf-eu10"
+  disableMachineTypeUpdate: "false"
+  enableShootAndSeedSameRegion: "false"
+  events:
+    enabled: true
+  operationTimeout: "7h"
+  port: "8080"
+  profiler:
+    memory: false
+  statusPort: "8071"
+  subaccountMovementEnabled: "false"
+  updateCustomResourcesLabelsOnAccountMove: "false"
+  useAdditionalOIDCSchema: "false"
+cleaning:
+  dryRun: true
+  enabled: false
+cis:
+  accounts:
+    authURL: "TBD"
+    id: "TBD"
+    secret: "TBD"
+    secretName: "cis-creds-accounts"
+    serviceURL: "TBD"
+  v1:
+    authURL: "TBD"
+    eventServiceURL: "TBD"
+    id: "TBD"
+    secret: "TBD"
+    secretName: "cis-creds-v1"
+  v2:
+    authURL: "TBD"
+    eventServiceURL: "TBD"
+    id: "TBD"
+    jobRetries: 6
+    maxRequestRetries: "3"
+    rateLimitingInterval: "2s"
+    requestInterval: "200ms"
+    secret: "TBD"
+    secretName: "cis-creds-v2"
+common:
+cronJobs:
+dashboardConfig:
+  landscapeURL: "https://dashboard.dev.kyma.cloud.sap"
+deployment:
+  image:
+    pullPolicy: Always
+  nodeSelector: { }
+  replicaCount: 1
+  securityContext:
+    runAsUser: 2000
+  strategy: { }
+deprovisionRetrigger:
+  dryRun: true
+  enabled: true
+  schedule: "0 2 * * *"
+disableProcessOperationsInProgress: "false"
+disableSapConvergedCloud: false
+enableKubeconfigURLLabel: "false"
+enablePlans: "azure,gcp,azure_lite,trial,aws"
+edp:
+  adminURL: "TBD"
+  authURL: "TBD"
+  disabled: true
+  environment: "dev"
+  namespace: "kyma-dev"
+  required: false
+  secret: "TBD"
+  secretName: "edp-creds"
+freeCleanup:
+  dryRun: true
+  enabled: true
+  expirationPeriod: 2160h # 90 days
+  schedule: "0,15,30,45 * * * *"
+  testRun: false
+  testSubaccountID: "prow-keb-trial-suspension"
+freeDocsURL: "https://help.sap.com/docs/"
+freeExpirationPeriod: 720h
+freemiumWhitelistedGlobalAccountIds: |-
+  whitelist:
+gardener:
+  freemiumProviders: "azure,aws"
+  kubeconfigPath: "/gardener/kubeconfig/kubeconfig"
+  project: "kyma-dev" # Gardener project connected to SA for HAP credentials lookup
+  secretName: "gardener-credentials"
+  shootDomain: "kyma-dev.shoot.canary.k8s-hana.ondemand.com"
 global:
-  ingress:
-    domainName: localhost
+  database:
+    cloudsqlproxy:
+      enabled: false
+      workloadIdentity:
+        enabled: false
+    embedded:
+      enabled: true
+    managedGCP:
+      encryptionSecretName: "kcp-storage-client-secret"
+      instanceConnectionName: ""
   images:
     cloudsql_proxy:
       repository: eu.gcr.io/sap-ti-dx-kyma-mps-dev/images/cloudsql-proxy
@@ -13,240 +116,49 @@ global:
     kyma_environment_broker_schema_migrator:
       dir:
       version: 1.19.0
-    kyma_environments_subaccount_cleanup_job:
-      dir:
-      version: "1.19.0"
-    kyma_environment_trial_cleanup_job:
+    kyma_environment_deprovision_retrigger_job:
       dir:
       version: "1.19.0"
     kyma_environment_expirator_job:
       dir:
       version: "1.19.0"
-    kyma_environment_deprovision_retrigger_job:
+    kyma_environment_globalaccounts:
       dir:
       version: "1.19.0"
     kyma_environment_runtime_reconciler:
       dir:
       version: "1.19.0"
-    kyma_environment_subaccount_sync:
-      dir:
-      version: "1.19.0"
-    kyma_environment_globalaccounts:
-      dir:
-      version: "1.19.0"
     kyma_environment_service_binding_cleanup_job:
       dir:
       version: 1.19.0
-      
-  kyma_environment_broker:
-    serviceAccountName: "kcp-kyma-environment-broker"
+    kyma_environment_subaccount_sync:
+      dir:
+      version: "1.19.0"
+    kyma_environment_trial_cleanup_job:
+      dir:
+      version: "1.19.0"
+    kyma_environments_subaccount_cleanup_job:
+      dir:
+      version: "1.19.0"
+  ingress:
+    domainName: localhost
   istio:
     gateway: "kyma-system/kyma-gateway"
     proxy:
       port: 15020
-  database:
-    cloudsqlproxy:
-      enabled: false
-      workloadIdentity:
-        enabled: false
-    embedded:
-      enabled: true
-    # Values for GCP managed PostgreSQL database
-    managedGCP:
-      # secret with a secret key used to encrypt particular data
-      encryptionSecretName: "kcp-storage-client-secret"
-      instanceConnectionName: ""
-
+  kyma_environment_broker:
+    serviceAccountName: "kcp-kyma-environment-broker"
   secrets:
     enabled: true
     mechanism: vso
     vso:
+      mount: kcp-dev
       namespace: kyma
       refreshAfter: 30s
-      mount: kcp-dev
-
-# Please read the documentation at:
-# https://pages.github.tools.sap/kyma/docusaurus-docs/kyma/cicd/argocd/secrets
-vsoSecrets:
-  secrets:
-    edp:
-      path: edp
-      secretName: "{{ .Values.edp.secretName }}"
-      restartTargets:
-        - kind: Deployment
-          name: >-
-            {{- template "kyma-env-broker.fullname" . -}}
-      labels: >-
-        {{ template "kyma-env-broker.labels" . }}
-      templating:
-        enabled: true
-        keys:
-          secret: keb_edp_secret
-        data:
-          secret: {}
-    cis-v1:
-      path: cis
-      secretName: "{{ .Values.cis.v1.secretName | required \"please specify .Values.cis.v1.secretName\"}}"
-      labels: >-
-        {{ template "kyma-env-broker.labels" . }}
-      templating:
-        enabled: true
-        keys:
-          id: v1_id
-          secret: v1_secret
-        data:
-          id: {}
-          secret: {}
-    cis-v2:
-      path: cis
-      secretName: "{{ .Values.cis.v2.secretName | required \"please specify .Values.cis.v2.secretName\"}}"
-      restartTargets:
-        - kind: Deployment
-          name: "{{- .Values.subaccountSync.name -}}"
-      labels: >-
-        {{ template "kyma-env-broker.labels" . }}
-      templating:
-        enabled: true
-        keys:
-          id: v2_id
-          secret: v2_secret
-        data:
-          id: {}
-          secret: {}
-    cis-accounts:
-      path: cis
-      secretName: "{{ .Values.cis.accounts.secretName | required \"please specify .Values.cis.accounts.secretName\"}}"
-      restartTargets:
-        - kind: Deployment
-          name: "{{- .Values.subaccountSync.name -}}"
-      labels: >-
-        {{ template "kyma-env-broker.labels" . }}
-      templating:
-        enabled: true
-        keys:
-          id: account_id
-          secret: account_secret
-        data:
-          id: {}
-          secret: {}
-
-deployment:
-  replicaCount: 1
-  image:
-    pullPolicy: Always
-  securityContext:
-    runAsUser: 2000
-  strategy: { } # Read more: https://kubernetes.io/docs/concepts/workloads/controllers/deployment/#strategy
-  nodeSelector: { }
-
-imagePullSecrets: [ ]
-namePrefix: "kcp"
-nameOverride: "kyma-environment-broker"
-fullnameOverride: "kcp-kyma-environment-broker"
-host: "kyma-env-broker"
-manageSecrets: true
-allowUpdateExpiredInstanceWithContext: "false"
-
-broker:
-  port: "8080"
-  # serving health probes routes on statusPort
-  statusPort: "8071"
-  defaultRequestRegion: "cf-eu10"
-  operationTimeout: "7h"
-  profiler:
-    memory: false
-  events:
-    enabled: true
-  enableShootAndSeedSameRegion: "false"
-  subaccountMovementEnabled: "false"
-  updateCustomResourcesLabelsOnAccountMove: "false"
-  useAdditionalOIDCSchema: "false"
-  disableMachineTypeUpdate: "false"
-
-binding:
+globalaccounts:
+  dryRun: true
   enabled: false
-  bindablePlans: "aws"
-  expirationSeconds: 600
-  maxExpirationSeconds: 7200
-  # minExpirationSeconds can't be lower than 600 seconds. Forced by Gardener
-  minExpirationSeconds: 600
-  maxBindingsCount: 10
-  createBindingTimeout: 15s
-
-service:
-  type: ClusterIP
-  port: 80
-
-swagger:
-  virtualService:
-    enabled: true
-
-resources:
-  { }
-  # We usually recommend not to specify default resources and to leave this as a conscious
-  # choice for the user. This also increases chances charts run on environments with little
-  # resources, such as Minikube. If you do want to specify resources, uncomment the following
-  # lines, adjust them as necessary, and remove the curly braces after 'resources:'.
-  # limits:
-  #   cpu: 100m
-  #   memory: 128Mi
-  # requests:
-#   cpu: 100m
-#   memory: 128Mi
-
-serviceAccount:
-  annotations: { }
-
-lifecycleManager:
-  disabled: "false"
-
-infrastructureManager:
-  kubernetesVersion: "1.16.9"
-  defaultShootPurpose: "development"
-  # if empty, the Gardener default value is used
-  machineImage: ""
-  # if empty, the Gardener default value is used
-  machineImageVersion: ""
-  defaultTrialProvider: "Azure" # Azure, AWS
-  multiZoneCluster: "false"
-  controlPlaneFailureTolerance: ""
-  useSmallerMachineTypes: "false"
-  enableIngressFiltering: "false"
-  ingressFilteringPlans: "azure,gcp,aws"
-
-stepTimeouts:
-  checkRuntimeResourceUpdate: 180m
-  checkRuntimeResourceCreate: 60m
-  checkRuntimeResourceDeletion: 60m
-
-trialRegionsMapping: |-
-  cf-eu10: europe
-  cf-us10: us
-  cf-ap21: asia
-
-skrOIDCDefaultValues: |-
-  clientID: "9bd05ed7-a930-44e6-8c79-e6defeb7dec9"
-  issuerURL: "https://kymatest.accounts400.ondemand.com"
-  groupsClaim: "groups"
-  groupsPrefix: "-"
-  signingAlgs: [ "RS256" ]
-  usernamePrefix: "-"
-  usernameClaim: "sub"
-
-skrDNSProvidersValues: |-
-  providers: []
-
-# Following data serves just as a template
-sapConvergedCloudPlanRegionMappings: |-
-  cf-eu20-staging:
-    - eu-de-1
-    - eu-de-2
-  cf-eu21-staging:
-    - eu-de-3
-    - eu-de-4
-disableSapConvergedCloud: false
-disableProcessOperationsInProgress: "false"
-enablePlans: "azure,gcp,azure_lite,trial,aws"
+  name: "kyma-environment-globalaccounts"
 hap:
   rule:
     - aws                             # pool: hyperscalerType: aws
@@ -262,181 +174,61 @@ hap:
     - preview                         # pool: hyperscalerType: aws
     - free                            # pool: hyperscalerType: aws
     # pool: hyperscalerType: azure
-onlySingleTrialPerGA: "true"
-enableKubeconfigURLLabel: "false"
+imagePullSecret: ""
 includeAdditionalParamsInSchema: "false"
-showTrialExpirationInfo: "false"
-showFreeExpirationInfo: "false"
-freeDocsURL: "https://help.sap.com/docs/"
-freeExpirationPeriod: 720h
-onlyOneFreePerGA: "false"
-subaccountsIdsToShowTrialExpirationInfo: "a45be5d8-eddc-4001-91cf-48cc644d571f"
-trialDocsURL: "https://help.sap.com/docs/"
-useSmallerMachineTypes: "false"
-
-osbUpdateProcessingEnabled: "true"
-
-
-gardener:
-  project: "kyma-dev" # Gardener project connected to SA for HAP credentials lookup
-  shootDomain: "kyma-dev.shoot.canary.k8s-hana.ondemand.com"
-  kubeconfigPath: "/gardener/kubeconfig/kubeconfig"
-  secretName: "gardener-credentials"
-  freemiumProviders: "azure,aws"
-
+infrastructureManager:
+  controlPlaneFailureTolerance: ""
+  defaultShootPurpose: "development"
+  defaultTrialProvider: "Azure" # Azure, AWS
+  enableIngressFiltering: "false"
+  ingressFilteringPlans: "azure,gcp,aws"
+  kubernetesVersion: "1.16.9"
+  machineImage: ""
+  machineImageVersion: ""
+  multiZoneCluster: "false"
+  useSmallerMachineTypes: "false"
+kymaResourceDeletionTimeout: 30s
+kebClient:
+  scope: "broker:write cld:read"
 kubeconfig:
   allowOrigins: "*"
-
-edp:
-  authURL: "TBD"
-  adminURL: "TBD"
-  namespace: "kyma-dev"
-  environment: "dev"
-  required: false
-  disabled: true
-  secret: "TBD"
-  secretName: "edp-creds"
-
-cis:
-  v1:
-    authURL: "TBD"
-    eventServiceURL: "TBD"
-    id: "TBD"
-    secret: "TBD"
-    secretName: "cis-creds-v1"
-  v2:
-    authURL: "TBD"
-    eventServiceURL: "TBD"
-    id: "TBD"
-    secret: "TBD"
-    secretName: "cis-creds-v2"
-    requestInterval: "200ms"
-    rateLimitingInterval: "2s"
-    maxRequestRetries: "3"
-    jobRetries: 6
-  accounts:
-    authURL: "TBD"
-    serviceURL: "TBD"
-    id: "TBD"
-    secret: "TBD"
-    secretName: "cis-creds-accounts"
-
+lifecycleManager:
+  disabled: "false"
+metricsv2:
+  enabled: false
+  operationResultFinishedOperationRetentionPeriod: 3h
+  operationResultPoolingInterval: 1m
+  operationResultRetentionPeriod: 1h
+  operationStatsPoolingInterval: 1m
+migratorJobs:
+  argosync:
+    enabled: false
+    syncwave: "0"
+  enabled: true
+  helmhook:
+    enabled: true
+    weight: "1"
+multipleContexts: false
 notification:
   url: "TBD"
-
 oidc:
-  issuer: https://kymatest.accounts400.ondemand.com
-  keysURL: https://kymatest.accounts400.ondemand.com/oauth2/certs
   groups:
     admin: runtimeAdmin
     operator: runtimeOperator
     orchestrations: orchestrationsAdmin
     viewer: runtimeViewer
-
-kebClient:
-  scope: "broker:write cld:read"
-
+  issuer: https://kymatest.accounts400.ondemand.com
+  keysURL: https://kymatest.accounts400.ondemand.com/oauth2/certs
+onlyOneFreePerGA: "false"
+onlySingleTrialPerGA: "true"
+osbUpdateProcessingEnabled: "true"
+regionsSupportingMachine: |-
+  c2d-highcpu:
+    - europe-west3
+    - asia-south1
+    - us-central1
 runtimeAllowedPrincipals: |-
   - cluster.local/ns/kcp-system/sa/kcp-kyma-metrics-collector
-
-subaccountCleanup:
-  nameV1: "kcp-subaccount-cleaner-v1.0"
-  nameV2: "kcp-subaccount-cleaner-v2.0"
-  enabled: "false"
-  schedule: "0 1 * * *"
-
-trialCleanup:
-  enabled: true
-  schedule: "15 1 * * *"
-  dryRun: true
-  expirationPeriod: 336h
-  testRun: false
-  testSubaccountID: "prow-keb-trial-suspension"
-
-freeCleanup:
-  enabled: true
-  schedule: "0,15,30,45 * * * *"
-  dryRun: true
-  expirationPeriod: 2160h # 90 days
-  testRun: false
-  testSubaccountID: "prow-keb-trial-suspension"
-
-deprovisionRetrigger:
-  schedule: "0 2 * * *"
-  dryRun: true
-  enabled: true
-
-subaccountSync:
-  name: "subaccount-sync"
-  enabled: true
-  updateResources: false
-  alwaysSubaccountFromDatabase: false
-  accountSyncInterval: 24h
-  storageSyncInterval: 5m
-  eventsWindowSize: 20m
-  eventsWindowInterval: 15m
-  queueSleepInterval: 30s
-  metricsPort: 8081
-  logLevel: info
-  cisRateLimits:
-    events:
-      rateLimitingInterval: 2s
-      maxRequestsPerInterval: 5
-    accounts:
-      rateLimitingInterval: 2s
-      maxRequestsPerInterval: 5
-
-serviceMonitor:
-  enabled: false
-  scrapeTimeout: &scrapeTimeout 10s
-  interval: &scrapeInterval 30s
-
-vmscrapes:
-  enabled: true
-  scrapeTimeout: *scrapeTimeout
-  interval: *scrapeInterval
-
-dashboardConfig:
-  landscapeURL: "https://dashboard.dev.kyma.cloud.sap"
-
-cronJobs:
-
-runtimeReconciler:
-  enabled: false
-  dryRun: true
-  jobEnabled: false
-  jobInterval: 1440
-  jobReconciliationDelay: 1s
-  metricsPort: 8081
-
-migratorJobs:
-  enabled: true
-  helmhook:
-    enabled: true
-    weight: "1"
-  argosync:
-    enabled: false
-    syncwave: "0"
-
-archiving:
-  enabled: false
-  dryRun: true
-cleaning:
-  enabled: false
-  dryRun: true
-
-metricsv2:
-  enabled: false
-  operationResultRetentionPeriod: 1h
-  operationResultPoolingInterval: 1m
-  operationStatsPoolingInterval: 1m
-  operationResultFinishedOperationRetentionPeriod: 3h
-
-freemiumWhitelistedGlobalAccountIds: |-
-  whitelist:
-
-kymaResourceDeletionTimeout: 30s
-
 runtimeConfiguration: |-
   default: |-
     kyma-template: |-
@@ -451,32 +243,158 @@ runtimeConfiguration: |-
         channel: fast
         modules: []
     additional-components: []
-
-imagePullSecret: ""
-
+runtimeReconciler:
+  dryRun: true
+  enabled: false
+  jobEnabled: false
+  jobInterval: 1440
+  jobReconciliationDelay: 1s
+  metricsPort: 8081
+sapConvergedCloudPlanRegionMappings: |-
+  cf-eu20-staging:
+    - eu-de-1
+    - eu-de-2
+  cf-eu21-staging:
+    - eu-de-3
+    - eu-de-4
+service:
+  port: 80
+  type: ClusterIP
+serviceAccount:
+  annotations: { }
+serviceBindingCleanup:
+  dryRun: true
+  enabled: false
+  requestRetries: 2
+  requestTimeout: 2s
+  schedule: "0 2,14 * * *"
+serviceMonitor:
+  enabled: false
+  interval: &scrapeInterval 30s
+  scrapeTimeout: &scrapeTimeout 10s
+showFreeExpirationInfo: "false"
+showTrialExpirationInfo: "false"
+skrDNSProvidersValues: |-
+  providers: []
+skrOIDCDefaultValues: |-
+  clientID: "9bd05ed7-a930-44e6-8c79-e6defeb7dec9"
+  groupsClaim: "groups"
+  groupsPrefix: "-"
+  issuerURL: "https://kymatest.accounts400.ondemand.com"
+  signingAlgs: [ "RS256" ]
+  usernameClaim: "sub"
+  usernamePrefix: "-"
+stepTimeouts:
+  checkRuntimeResourceCreate: 60m
+  checkRuntimeResourceDeletion: 60m
+  checkRuntimeResourceUpdate: 180m
+subaccountCleanup:
+  enabled: "false"
+  nameV1: "kcp-subaccount-cleaner-v1.0"
+  nameV2: "kcp-subaccount-cleaner-v2.0"
+  schedule: "0 1 * * *"
+subaccountSync:
+  accountSyncInterval: 24h
+  alwaysSubaccountFromDatabase: false
+  cisRateLimits:
+    accounts:
+      maxRequestsPerInterval: 5
+      rateLimitingInterval: 2s
+    events:
+      maxRequestsPerInterval: 5
+      rateLimitingInterval: 2s
+  enabled: true
+  eventsWindowInterval: 15m
+  eventsWindowSize: 20m
+  logLevel: info
+  metricsPort: 8081
+  name: "subaccount-sync"
+  queueSleepInterval: 30s
+  storageSyncInterval: 5m
+  updateResources: false
+swagger:
+  virtualService:
+    enabled: true
 testConfig:
   kebDeployment:
     useAnnotations: false
     weight: "2"
-
-globalaccounts:
-  enabled: false
+trialCleanup:
   dryRun: true
-  name: "kyma-environment-globalaccounts"
-
-serviceBindingCleanup:
-  enabled: false
-  dryRun: true
-  schedule: "0 2,14 * * *"
-  requestTimeout: 2s
-  requestRetries: 2
-
-regionsSupportingMachine: |-
-  c2d-highcpu:
-    - europe-west3
-    - asia-south1
-    - us-central1
-
-multipleContexts: false
-
+  enabled: true
+  expirationPeriod: 336h
+  schedule: "15 1 * * *"
+  testRun: false
+  testSubaccountID: "prow-keb-trial-suspension"
+trialDocsURL: "https://help.sap.com/docs/"
+trialRegionsMapping: |-
+  cf-eu10: europe
+  cf-us10: us
+  cf-ap21: asia
+vmscrapes:
+  enabled: true
+  interval: *scrapeInterval
+  scrapeTimeout: *scrapeTimeout
+vsoSecrets:
+  secrets:
+    cis-accounts:
+      labels: >-
+        {{ template "kyma-env-broker.labels" . }}
+      path: cis
+      restartTargets:
+        - kind: Deployment
+          name: "{{- .Values.subaccountSync.name -}}"
+      secretName: "{{ .Values.cis.accounts.secretName | required \"please specify .Values.cis.accounts.secretName\"}}"
+      templating:
+        data:
+          id: {}
+          secret: {}
+        enabled: true
+        keys:
+          id: account_id
+          secret: account_secret
+    cis-v1:
+      labels: >-
+        {{ template "kyma-env-broker.labels" . }}
+      path: cis
+      secretName: "{{ .Values.cis.v1.secretName | required \"please specify .Values.cis.v1.secretName\"}}"
+      templating:
+        data:
+          id: {}
+          secret: {}
+        enabled: true
+        keys:
+          id: v1_id
+          secret: v1_secret
+    cis-v2:
+      labels: >-
+        {{ template "kyma-env-broker.labels" . }}
+      path: cis
+      restartTargets:
+        - kind: Deployment
+          name: "{{- .Values.subaccountSync.name -}}"
+      secretName: "{{ .Values.cis.v2.secretName | required \"please specify .Values.cis.v2.secretName\"}}"
+      templating:
+        data:
+          id: {}
+          secret: {}
+        enabled: true
+        keys:
+          id: v2_id
+          secret: v2_secret
+    edp:
+      labels: >-
+        {{ template "kyma-env-broker.labels" . }}
+      path: edp
+      restartTargets:
+        - kind: Deployment
+          name: >-
+            {{- template "kyma-env-broker.fullname" . -}}
+      secretName: "{{ .Values.edp.secretName }}"
+      templating:
+        data:
+          secret: {}
+        enabled: true
+        keys:
+          secret: keb_edp_secret
 zoneMapping: false
