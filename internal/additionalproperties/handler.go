@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
+	"strconv"
 
 	"github.com/kyma-project/kyma-environment-broker/internal/httputil"
 )
@@ -20,6 +21,12 @@ const (
 type Handler struct {
 	logger                   *slog.Logger
 	additionalPropertiesPath string
+}
+
+type Page struct {
+	Data       []map[string]interface{} `json:"data"`
+	Count      int                      `json:"count"`
+	TotalCount int                      `json:"totalCount"`
 }
 
 func NewHandler(logger *slog.Logger, additionalPropertiesPath string) *Handler {
@@ -35,6 +42,23 @@ func (h *Handler) AttachRoutes(router *httputil.Router) {
 
 func (h *Handler) getAdditionalProperties(w http.ResponseWriter, req *http.Request) {
 	requestType := req.URL.Query().Get("requestType")
+	pageNumberStr := req.URL.Query().Get("pageNumber")
+	pageSizeStr := req.URL.Query().Get("pageSize")
+
+	pageNumber := 0
+	pageSize := 100
+
+	if pageNumberStr != "" {
+		if n, err := strconv.Atoi(pageNumberStr); err == nil && n >= 0 {
+			pageNumber = n
+		}
+	}
+	if pageSizeStr != "" {
+		if s, err := strconv.Atoi(pageSizeStr); err == nil && s > 0 {
+			pageSize = s
+		}
+	}
+
 	var fileName string
 	switch requestType {
 	case "provisioning":
@@ -64,15 +88,21 @@ func (h *Handler) getAdditionalProperties(w http.ResponseWriter, req *http.Reque
 	}
 	defer f.Close()
 
-	var records []map[string]interface{}
+	skip := pageNumber * pageSize
+	end := skip + pageSize
+	lineNumber := 0
+	var pageData []map[string]interface{}
 	scanner := bufio.NewScanner(f)
 	for scanner.Scan() {
-		var record map[string]interface{}
-		if err := json.Unmarshal(scanner.Bytes(), &record); err != nil {
-			h.logger.Error("Failed to parse a line from additional properties", "error", err)
-			continue
+		if lineNumber >= skip && lineNumber < end {
+			var record map[string]interface{}
+			if err := json.Unmarshal(scanner.Bytes(), &record); err != nil {
+				h.logger.Error("Failed to parse a line from additional properties", "error", err)
+			} else {
+				pageData = append(pageData, record)
+			}
 		}
-		records = append(records, record)
+		lineNumber++
 	}
 	if err := scanner.Err(); err != nil {
 		h.logger.Error("Error reading additional properties file", "error", err)
@@ -80,5 +110,11 @@ func (h *Handler) getAdditionalProperties(w http.ResponseWriter, req *http.Reque
 		return
 	}
 
-	httputil.WriteResponse(w, http.StatusOK, records)
+	page := Page{
+		Data:       pageData,
+		Count:      len(pageData),
+		TotalCount: lineNumber,
+	}
+
+	httputil.WriteResponse(w, http.StatusOK, page)
 }
