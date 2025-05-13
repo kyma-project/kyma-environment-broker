@@ -2,7 +2,6 @@ package additionalproperties
 
 import (
 	"bufio"
-	"encoding/json"
 	"fmt"
 	"log/slog"
 	"net/http"
@@ -24,9 +23,9 @@ type Handler struct {
 }
 
 type Page struct {
-	Data       []map[string]interface{} `json:"data"`
-	Count      int                      `json:"count"`
-	TotalCount int                      `json:"totalCount"`
+	Data       []string `json:"data"`
+	Count      int      `json:"count"`
+	TotalCount int      `json:"totalCount"`
 }
 
 func NewHandler(logger *slog.Logger, additionalPropertiesPath string) *Handler {
@@ -91,16 +90,11 @@ func (h *Handler) getAdditionalProperties(w http.ResponseWriter, req *http.Reque
 	skip := pageNumber * pageSize
 	end := skip + pageSize
 	lineNumber := 0
-	var pageData []map[string]interface{}
+	var pageData []string
 	scanner := bufio.NewScanner(f)
 	for scanner.Scan() {
 		if lineNumber >= skip && lineNumber < end {
-			var record map[string]interface{}
-			if err := json.Unmarshal(scanner.Bytes(), &record); err != nil {
-				h.logger.Error("Failed to parse a line from additional properties", "error", err)
-			} else {
-				pageData = append(pageData, record)
-			}
+			pageData = append(pageData, string(scanner.Bytes()))
 		}
 		lineNumber++
 	}

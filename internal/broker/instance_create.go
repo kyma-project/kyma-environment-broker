@@ -788,7 +788,12 @@ func (b *ProvisionEndpoint) monitorAdditionalProperties(instanceID string, ersCo
 	if err := decoder.Decode(&parameters); err == nil {
 		return
 	}
+	if err := insertRequest(instanceID, filepath.Join(b.config.AdditionalPropertiesPath, additionalproperties.ProvisioningRequestsFileName), ersContext, rawParameters); err != nil {
+		b.log.Error(fmt.Sprintf("failed to save provisioning request with additonal properties: %v", err))
+	}
+}
 
+func insertRequest(instanceID, filePath string, ersContext internal.ERSContext, rawParameters json.RawMessage) error {
 	payload := map[string]interface{}{
 		"globalAccountID": ersContext.GlobalAccountID,
 		"subAccountID":    ersContext.SubAccountID,
@@ -797,26 +802,20 @@ func (b *ProvisionEndpoint) monitorAdditionalProperties(instanceID string, ersCo
 	}
 	data, err := json.Marshal(payload)
 	if err != nil {
-		b.log.Error(fmt.Sprintf("Failed to marshal payload: %v", err))
-		return
+		return fmt.Errorf("failed to marshal payload: %w", err)
 	}
 
-	if err := os.MkdirAll(b.config.AdditionalPropertiesPath, os.ModePerm); err != nil {
-		b.log.Error(fmt.Sprintf("Failed to create directory: %v", err))
-		return
-	}
-
-	filePath := filepath.Join(b.config.AdditionalPropertiesPath, additionalproperties.ProvisioningRequestsFileName)
 	f, err := os.OpenFile(filePath, os.O_APPEND|os.O_CREATE|os.O_WRONLY, os.ModePerm)
 	if err != nil {
-		b.log.Error(fmt.Sprintf("Failed to open file: %v", err))
-		return
+		return fmt.Errorf("failed to open file: %w", err)
 	}
 	defer f.Close()
 
 	if _, err := f.Write(append(data, '\n')); err != nil {
-		b.log.Error(fmt.Sprintf("Failed to write payload: %v", err))
+		return fmt.Errorf("failed to write payload: %w", err)
 	}
+
+	return nil
 }
 
 func validateOverlapping(n1 net.IPNet, n2 net.IPNet) error {

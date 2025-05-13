@@ -252,6 +252,11 @@ func main() {
 	fatalOnError(err, log)
 	skrK8sClientProvider := kubeconfig.NewK8sClientFromSecretProvider(kcpK8sClient)
 
+	if cfg.Broker.MonitorAdditionalProperties {
+		err := os.MkdirAll(cfg.Broker.AdditionalPropertiesPath, os.ModePerm)
+		fatalOnError(fmt.Errorf("failed to create directory: %w", err), log)
+	}
+
 	// create storage
 	cipher := storage.NewEncrypter(cfg.Database.SecretKey)
 	var db storage.BrokerStorage

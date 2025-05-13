@@ -7,7 +7,6 @@ import (
 	"fmt"
 	"log/slog"
 	"net/http"
-	"os"
 	"path/filepath"
 	"strings"
 	"time"
@@ -490,33 +489,7 @@ func (b *UpdateEndpoint) monitorAdditionalProperties(instanceID string, ersConte
 	if err := decoder.Decode(&parameters); err == nil {
 		return
 	}
-
-	payload := map[string]interface{}{
-		"globalAccountID": ersContext.GlobalAccountID,
-		"subAccountID":    ersContext.SubAccountID,
-		"instanceID":      instanceID,
-		"payload":         rawParameters,
-	}
-	data, err := json.Marshal(payload)
-	if err != nil {
-		b.log.Error(fmt.Sprintf("Failed to marshal payload: %v", err))
-		return
-	}
-
-	if err := os.MkdirAll(b.config.AdditionalPropertiesPath, os.ModePerm); err != nil {
-		b.log.Error(fmt.Sprintf("Failed to create directory: %v", err))
-		return
-	}
-
-	filePath := filepath.Join(b.config.AdditionalPropertiesPath, additionalproperties.UpdateRequestsFileName)
-	f, err := os.OpenFile(filePath, os.O_APPEND|os.O_CREATE|os.O_WRONLY, os.ModePerm)
-	if err != nil {
-		b.log.Error(fmt.Sprintf("Failed to open file: %v", err))
-		return
-	}
-	defer f.Close()
-
-	if _, err := f.Write(append(data, '\n')); err != nil {
-		b.log.Error(fmt.Sprintf("Failed to write payload: %v", err))
+	if err := insertRequest(instanceID, filepath.Join(b.config.AdditionalPropertiesPath, additionalproperties.UpdateRequestsFileName), ersContext, rawParameters); err != nil {
+		b.log.Error(fmt.Sprintf("failed to save update request with additonal properties: %v", err))
 	}
 }

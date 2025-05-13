@@ -50,7 +50,9 @@ func TestGetAdditionalProperties(t *testing.T) {
 		assert.Equal(t, 1, page.Count)
 		assert.Equal(t, 1, page.TotalCount)
 
-		data := page.Data[0]
+		var data map[string]interface{}
+		err = json.Unmarshal([]byte(page.Data[0]), &data)
+		require.NoError(t, err)
 		assert.Equal(t, "ga1", data["globalAccountID"])
 		assert.Equal(t, "sa1", data["subAccountID"])
 		assert.Equal(t, "id1", data["instanceID"])
@@ -73,7 +75,9 @@ func TestGetAdditionalProperties(t *testing.T) {
 		assert.Equal(t, 1, page.Count)
 		assert.Equal(t, 1, page.TotalCount)
 
-		data := page.Data[0]
+		var data map[string]interface{}
+		err = json.Unmarshal([]byte(page.Data[0]), &data)
+		require.NoError(t, err)
 		assert.Equal(t, "ga2", data["globalAccountID"])
 		assert.Equal(t, "sa2", data["subAccountID"])
 		assert.Equal(t, "id2", data["instanceID"])
@@ -141,8 +145,15 @@ func TestGetAdditionalProperties_Paging(t *testing.T) {
 		require.NoError(t, err)
 		assert.Equal(t, 2, page.Count)
 		assert.Equal(t, 5, page.TotalCount)
-		assert.Equal(t, "ga1", page.Data[0]["globalAccountID"])
-		assert.Equal(t, "ga2", page.Data[1]["globalAccountID"])
+
+		var data map[string]interface{}
+		err = json.Unmarshal([]byte(page.Data[0]), &data)
+		require.NoError(t, err)
+		assert.Equal(t, "ga1", data["globalAccountID"])
+
+		err = json.Unmarshal([]byte(page.Data[1]), &data)
+		require.NoError(t, err)
+		assert.Equal(t, "ga2", data["globalAccountID"])
 	})
 
 	t.Run("returns second page with pageSize=2", func(t *testing.T) {
@@ -156,8 +167,15 @@ func TestGetAdditionalProperties_Paging(t *testing.T) {
 		require.NoError(t, err)
 		assert.Equal(t, 2, page.Count)
 		assert.Equal(t, 5, page.TotalCount)
-		assert.Equal(t, "ga3", page.Data[0]["globalAccountID"])
-		assert.Equal(t, "ga4", page.Data[1]["globalAccountID"])
+
+		var data map[string]interface{}
+		err = json.Unmarshal([]byte(page.Data[0]), &data)
+		require.NoError(t, err)
+		assert.Equal(t, "ga3", data["globalAccountID"])
+
+		err = json.Unmarshal([]byte(page.Data[1]), &data)
+		require.NoError(t, err)
+		assert.Equal(t, "ga4", data["globalAccountID"])
 	})
 
 	t.Run("returns last page with 1 item", func(t *testing.T) {
@@ -171,7 +189,11 @@ func TestGetAdditionalProperties_Paging(t *testing.T) {
 		require.NoError(t, err)
 		assert.Equal(t, 1, page.Count)
 		assert.Equal(t, 5, page.TotalCount)
-		assert.Equal(t, "ga5", page.Data[0]["globalAccountID"])
+
+		var data map[string]interface{}
+		err = json.Unmarshal([]byte(page.Data[0]), &data)
+		require.NoError(t, err)
+		assert.Equal(t, "ga5", data["globalAccountID"])
 	})
 
 	t.Run("returns empty data for out-of-range page", func(t *testing.T) {
