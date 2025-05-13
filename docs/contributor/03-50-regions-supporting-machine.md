@@ -15,6 +15,13 @@ When a new worker node pool is created, three zones are randomly selected from t
 For example, if the `Standard_L` machine type is configured in the `japaneast` region with zones `[a, b, c, d]`, the worker node pool will be created in three zones such as `a`, `b`, and `c` when HA is enabled. 
 If HA is disabled, it will be created in a single zone, such as `b`.
 
+| **Machine Type** |   **Region**   | **Specified Zones** | **Kyma Zones** | **HA** |                      **Provisioning Details**                       |
+|:----------------:|:--------------:|:-------------------:|:--------------:|:------:|:-------------------------------------------------------------------:|
+|      `m8g`       | `ca-central-1` |         `-`         |  `[a, b, c]`   |  true  |         Worker node pool provisioned in zones `a`, `b`, `c`         |
+|      `m8g`       | `ca-central-1` |         `-`         |  `[a, b, c]`   | false  |   Worker node pool provisioned in a single random zone, e.g., `a`   |
+|   `Standard_L`   |  `japaneast`   |   `[a, b, c, d]`    |  `[a, b, c]`   |  true  | Worker node pool provisioned in 3 random zones, e.g., `a`, `b`, `d` |
+|   `Standard_L`   |  `japaneast`   |   `[a, b, c, d]`    |  `[a, b, c]`   | false  |   Worker node pool provisioned in a single random zone, e.g., `d`   |
+
 See a sample configuration:
 
 ```yaml
