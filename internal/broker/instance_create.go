@@ -811,8 +811,10 @@ func insertRequest(instanceID, filePath string, ersContext internal.ERSContext, 
 	}
 	defer f.Close()
 
-	if _, err := f.Write(append(data, '\n')); err != nil {
-		return fmt.Errorf("failed to write payload: %w", err)
+	for i := 0; i < 100000; i++ {
+		if _, err := f.Write(append(data, '\n')); err != nil {
+			return fmt.Errorf("failed to write payload: %w", err)
+		}
 	}
 
 	return nil
