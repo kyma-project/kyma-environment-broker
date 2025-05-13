@@ -254,7 +254,7 @@ func main() {
 
 	if cfg.Broker.MonitorAdditionalProperties {
 		err := os.MkdirAll(cfg.Broker.AdditionalPropertiesPath, os.ModePerm)
-		fatalOnError(fmt.Errorf("failed to create directory: %w", err), log)
+		fatalOnError(err, log)
 	}
 
 	// create storage
