@@ -84,8 +84,6 @@ spec:
               value: "{{ .Values.broker.disableMachineTypeUpdate }}"
             - name: APP_BROKER_DISABLE_SAP_CONVERGED_CLOUD
               value: "{{ .Values.disableSapConvergedCloud }}"
-            - name: APP_BROKER_ENABLE_KUBECONFIG_URL_LABEL
-              value: "{{ .Values.enableKubeconfigURLLabel }}"
             - name: APP_BROKER_ENABLE_PLANS
               value: "{{ .Values.enablePlans }}"
             - name: APP_BROKER_ENABLE_SHOOT_AND_SEED_SAME_REGION
