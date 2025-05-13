@@ -12,7 +12,7 @@ If HA is disabled, the new pool is created in only one of those zones — for ex
 
 If zones are specified, the machine type is only available in those zones within the region.
 When a new worker node pool is created, three zones are randomly selected from the list provided in the configuration. If HA is disabled, only one of those zones is used.
-For example, if the `Standard_L` machine type is configured in the `japaneast` region with zones `[a, b, c, d]`, the worker node pool will be created in three zones such as `a`, `b`, and `c` when HA is enabled. 
+For example, if the `Standard_L` machine type is configured in the `japaneast` region with zones `[a, b, c, d]`, the worker node pool is created in three zones, such as `a`, `b`, and `c` when HA is enabled. 
 If HA is disabled, it will be created in a single zone, such as `b`.
 
 | **Machine Type** |   **Region**   | **Specified Zones** | **Kyma Zones** | **HA** |                      **Provisioning Details**                       |
