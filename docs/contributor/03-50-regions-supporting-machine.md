@@ -19,7 +19,7 @@ If HA is disabled, it is created in a single zone, such as `b`.
 |:----------------:|:--------------:|:-------------------:|:--------------:|:------:|:-------------------------------------------------------------------:|
 |      `m8g`       | `ca-central-1` |         `-`         |  `[a, b, c]`   |  true  |         Worker node pool provisioned in zones `a`, `b`, `c`         |
 |      `m8g`       | `ca-central-1` |         `-`         |  `[a, b, c]`   | false  |   Worker node pool provisioned in a single random zone, for example, `a`   |
-|   `Standard_L`   |  `japaneast`   |   `[a, b, c, d]`    |  `[a, b, c]`   |  true  | Worker node pool provisioned in 3 random zones, e.g., `a`, `b`, `d` |
+|   `Standard_L`   |  `japaneast`   |   `[a, b, c, d]`    |  `[a, b, c]`   |  true  | Worker node pool provisioned in 3 random zones, for example, `a`, `b`, `d` |
 |   `Standard_L`   |  `japaneast`   |   `[a, b, c, d]`    |  `[a, b, c]`   | false  |   Worker node pool provisioned in a single random zone, e.g., `d`   |
 
 See a sample configuration:
