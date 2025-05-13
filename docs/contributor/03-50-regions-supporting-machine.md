@@ -6,7 +6,7 @@ The **regionsSupportingMachine** configuration field defines machine type famili
 This configuration ensures that if a machine type family is listed, it is restricted to the explicitly specified regions, and optionally to specific zones within those regions.
 
 If a region is listed without zones, the machine type is supported in all zones of that region.
-When a new worker node pool is created, it uses the same zones as the Kyma worker node pool. If High Availability (HA) is turned off, it uses just one of those zones.
+When a new worker node pool is created, it uses the same zones as the Kyma worker node pool. If high availability (HA) is turned off, it uses just one of those zones.
 For example if new worker node pool is created in `ca-central-1` with `m8g` machine type and Kyma worker node pool was provisioned in `a`, `b`, `c` zones the new worker node pool will be provisioned in `a`, `b`, `c` zones.
 If HA is disabled, the new pool will be created in only one of those zones — for example, just zone `a`.
 
