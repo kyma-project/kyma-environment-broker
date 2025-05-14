@@ -64,14 +64,8 @@ spec:
           command:
             - /bin/schema-migrator
           env:
-            {{- if eq .Values.global.database.embedded.enabled true }}
             - name: DATABASE_EMBEDDED
-              value: "true"
-            {{- end}}
-            {{- if eq .Values.global.database.embedded.enabled false }}
-            - name: DATABASE_EMBEDDED
-              value: "false"
-            {{- end }}
+              value: "{{ .Values.global.database.embedded.enabled }}"
             - name: DB_USER
               valueFrom:
                 secretKeyRef:
