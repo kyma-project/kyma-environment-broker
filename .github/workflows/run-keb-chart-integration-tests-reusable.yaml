@@ -42,7 +42,7 @@ jobs:
         ENV_PATH=resources/keb/templates/deployment.yaml
         # Extract env section, ignoring templating, and compare to sorted
         awk '/env:/ {flag=1; next} /ports:/ {flag=0} flag && /^ *- name:/' "$ENV_PATH" | sed 's/^ *- name: //' > /tmp/env_vars.txt
-        sort -f /tmp/env_vars.txt > /tmp/env_vars_sorted.txt
+        awk '{print tolower($0)}' /tmp/env_vars.txt | sort > /tmp/env_vars_sorted.txt
         if ! diff -u --color=always /tmp/env_vars.txt /tmp/env_vars_sorted.txt; then
           echo "Environment variables in deployment.yaml are not sorted alphabetically!"
           exit 1
