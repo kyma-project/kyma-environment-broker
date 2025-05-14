@@ -54,7 +54,7 @@ jobs:
         ENV_PATH=resources/keb/templates/runtime-reconciler-deployment.yaml
         awk '/env:/ {flag=1; next} /volumeMounts:/ {flag=0} flag && /^ *- name:/' "$ENV_PATH" | sed 's/^ *- name: //' > /tmp/env_vars_runtime_reconciler.txt
         sort /tmp/env_vars_runtime_reconciler.txt > /tmp/env_vars_runtime_reconciler_sorted.txt
-        if ! diff -u --color=always /mp/env_vars_runtime_reconciler.txt /tmp/env_vars_runtime_reconciler_sorted.txt; then
+        if ! diff -u --color=always /tmp/env_vars_runtime_reconciler.txt /tmp/env_vars_runtime_reconciler_sorted.txt; then
           echo "Environment variables in runtime-reconciler-deployment.yaml are not sorted alphabetically!"
           exit 1
         fi
@@ -99,6 +99,28 @@ jobs:
           exit 1
         fi
         echo "Environment variables in keb-db-job.yaml are sorted alphabetically."
+
+    - name: Enforce env alphabetical order in service-binding-cleanup-job.yaml
+      run: |
+        ENV_PATH=resources/keb/templates/service-binding-cleanup-job.yaml
+        awk '/env:/ {flag=1; next} /volumeMounts:/ {flag=0} flag && /^ *- name:/' "$ENV_PATH" | sed 's/^ *- name: //' > /tmp/env_vars_service_binding_cleanup.txt
+        sort /tmp/env_vars_service_binding_cleanup.txt > /tmp/env_vars_service_binding_cleanup_sorted.txt
+        if ! diff -u --color=always /tmp/env_vars_service_binding_cleanup.txt /tmp/env_vars_service_binding_cleanup_sorted.txt; then
+          echo "Environment variables in service-binding-cleanup-job.yaml are not sorted alphabetically!"
+          exit 1
+        fi
+        echo "Environment variables in service-binding-cleanup-job.yaml are sorted alphabetically."
+
+    - name: Enforce env alphabetical order in subaccount-cleanup-job.yaml
+      run: |
+        ENV_PATH=resources/keb/templates/subaccount-cleanup-job.yaml
+        awk '/env:/ {flag=1; next} /volumeMounts:/ {flag=0} flag && /^ *- name:/' "$ENV_PATH" | sed 's/^ *- name: //' > /tmp/env_vars_subaccount_cleanup.txt
+        sort /tmp/env_vars_subaccount_cleanup.txt > /tmp/env_vars_subaccount_cleanup_sorted.txt
+        if ! diff -u --color=always /tmp/env_vars_subaccount_cleanup.txt /tmp/env_vars_subaccount_cleanup_sorted.txt; then
+          echo "Environment variables in subaccount-cleanup-job.yaml are not sorted alphabetically!"
+          exit 1
+        fi
+        echo "Environment variables in subaccount-cleanup-job.yaml are sorted alphabetically."
       
   prepare-tests:
     runs-on: ubuntu-latest
