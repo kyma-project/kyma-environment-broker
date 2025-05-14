@@ -36,7 +36,21 @@ jobs:
       run: |
         cd resources/keb
         helm template .
-  
+
+    - name: Enforce env alphabetical order in deployment.yaml
+      run: |
+        ENV_PATH=resources/keb/templates/deployment.yaml
+        # Extract env section, ignoring templating, and compare to sorted
+        awk '/env:/ {flag=1; print; next} /ports:/ {flag=0} flag && /name:/ {print}' "$ENV_PATH" | sed 's/^ *//' > /tmp/env_vars.txt
+        sort /tmp/env_vars.txt > /tmp/env_vars_sorted.txt
+        if ! diff -u /tmp/env_vars.txt /tmp/env_vars_sorted.txt; then
+          echo "Environment variables in deployment.yaml are not sorted alphabetically!"
+          echo "Diff:"
+          diff -u /tmp/env_vars.txt /tmp/env_vars_sorted.txt
+          exit 1
+        fi
+        echo "Environment variables in deployment.yaml are sorted alphabetically."
+      
   prepare-tests:
     runs-on: ubuntu-latest
     needs: validate-keb-helm-chart
