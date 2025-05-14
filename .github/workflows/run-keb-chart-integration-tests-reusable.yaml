@@ -64,7 +64,7 @@ jobs:
         ENV_PATH=resources/keb/templates/trial-cleanup-job.yaml
         awk '/env:/ {flag=1; next} /volumeMounts:/ {flag=0} flag && /^ *- name:/' "$ENV_PATH" | sed 's/^ *- name: //' > /tmp/env_vars_trial_cleanup.txt
         sort /tmp/env_vars_trial_cleanup.txt > /tmp/env_vars_trial_cleanup_sorted.txt
-        if ! diff -u --color=always /mp/env_vars_trial_cleanup.txt /tmp/env_vars_trial_cleanup_sorted.txt; then
+        if ! diff -u --color=always /tmp/env_vars_trial_cleanup.txt /tmp/env_vars_trial_cleanup_sorted.txt; then
           echo "Environment variables in trial-cleanup-job.yaml are not sorted alphabetically!"
           exit 1
         fi
@@ -74,7 +74,7 @@ jobs:
         ENV_PATH=resources/keb/templates/deprovision-retrigger-job.yaml
         awk '/env:/ {flag=1; next} /volumeMounts:/ {flag=0} flag && /^ *- name:/' "$ENV_PATH" | sed 's/^ *- name: //' > /tmp/env_vars_deprovision_retrigger.txt
         sort /tmp/env_vars_deprovision_retrigger.txt > /tmp/env_vars_deprovision_retrigger_sorted.txt
-        if ! diff -u --color=always /mp/env_vars_deprovision_retrigger.txt /tmp/env_vars_deprovision_retrigger_sorted.txt; then
+        if ! diff -u --color=always /tmp/env_vars_deprovision_retrigger.txt /tmp/env_vars_deprovision_retrigger_sorted.txt; then
           echo "Environment variables in deprovision-retrigger-job.yaml are not sorted alphabetically!"
           exit 1
         fi
@@ -84,7 +84,7 @@ jobs:
         ENV_PATH=resources/keb/templates/free-cleanup-job.yaml
         awk '/env:/ {flag=1; next} /volumeMounts:/ {flag=0} flag && /^ *- name:/' "$ENV_PATH" | sed 's/^ *- name: //' > /tmp/env_vars_free_cleanup.txt
         sort /tmp/env_vars_free_cleanup.txt > /tmp/env_vars_free_cleanup_sorted.txt
-        if ! diff -u --color=always /mp/env_vars_free_cleanup.txt /tmp/env_vars_free_cleanup_sorted.txt; then
+        if ! diff -u --color=always /tmp/env_vars_free_cleanup.txt /tmp/env_vars_free_cleanup_sorted.txt; then
           echo "Environment variables in free-cleanup-job.yaml are not sorted alphabetically!"
           exit 1
         fi
@@ -94,7 +94,7 @@ jobs:
         ENV_PATH=resources/keb/templates/keb-db-job.yaml
         awk '/env:/ {flag=1; next} /volumeMounts:/ {flag=0} flag && /^ *- name:/' "$ENV_PATH" | sed 's/^ *- name: //' > /tmp/env_vars_keb_db.txt
         sort /tmp/env_vars_keb_db.txt > /tmp/env_vars_keb_db_sorted.txt
-        if ! diff -u --color=always /mp/env_vars_keb_db.txt /tmp/env_vars_keb_db_sorted.txt; then
+        if ! diff -u --color=always /tmp/env_vars_keb_db.txt /tmp/env_vars_keb_db_sorted.txt; then
           echo "Environment variables in keb-db-job.yaml are not sorted alphabetically!"
           exit 1
         fi
