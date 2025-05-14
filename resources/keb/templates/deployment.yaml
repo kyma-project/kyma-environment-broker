@@ -60,118 +60,94 @@ spec:
           image: "{{ .Values.global.images.container_registry.path }}/{{ .Values.global.images.kyma_environment_broker.dir }}kyma-environment-broker:{{ .Values.global.images.kyma_environment_broker.version }}"
           imagePullPolicy: {{ .Values.deployment.image.pullPolicy }}
           env:
-            - name: APP_RUNTIME_CONFIGURATION_CONFIG_MAP_NAME
-              value: "{{ include "kyma-env-broker.fullname" . }}-runtime-configuration"
-            - name: APP_DISABLE_PROCESS_OPERATIONS_IN_PROGRESS
-              value: "{{ .Values.disableProcessOperationsInProgress }}"
-            - name: APP_BROKER_ENABLE_PLANS
-              value: "{{ .Values.enablePlans }}"
-            - name: APP_INFRASTRUCTURE_MANAGER_INGRESS_FILTERING_PLANS
-              value: "{{ .Values.infrastructureManager.ingressFilteringPlans }}"
-            - name: APP_ARCHIVE_ENABLED
-              value: "{{ .Values.archiving.enabled }}"
             - name: APP_ARCHIVE_DRY_RUN
               value: "{{ .Values.archiving.dryRun }}"
-            - name: APP_CLEANING_ENABLED
-              value: "{{ .Values.cleaning.enabled }}"
-            - name: APP_CLEANING_DRY_RUN
-              value: "{{ .Values.cleaning.dryRun }}"
-            - name: APP_BROKER_BINDING_ENABLED
-              value: "{{ .Values.binding.enabled}}"
+            - name: APP_ARCHIVE_ENABLED
+              value: "{{ .Values.archiving.enabled }}"
+            - name: APP_BROKER_ALLOW_UPDATE_EXPIRED_INSTANCE_WITH_CONTEXT
+              value: "{{ .Values.allowUpdateExpiredInstanceWithContext }}"
             - name: APP_BROKER_BINDING_BINDABLE_PLANS
               value: "{{ .Values.binding.bindablePlans}}"
+            - name: APP_BROKER_BINDING_CREATE_BINDING_TIMEOUT
+              value: "{{ .Values.binding.createBindingTimeout}}"
+            - name: APP_BROKER_BINDING_ENABLED
+              value: "{{ .Values.binding.enabled}}"
             - name: APP_BROKER_BINDING_EXPIRATION_SECONDS
               value: "{{ .Values.binding.expirationSeconds}}"
+            - name: APP_BROKER_BINDING_MAX_BINDINGS_COUNT
+              value: "{{ .Values.binding.maxBindingsCount}}"
             - name: APP_BROKER_BINDING_MAX_EXPIRATION_SECONDS
               value: "{{ .Values.binding.maxExpirationSeconds}}"
             - name: APP_BROKER_BINDING_MIN_EXPIRATION_SECONDS
               value: "{{ .Values.binding.minExpirationSeconds}}"
-            - name: APP_BROKER_BINDING_MAX_BINDINGS_COUNT
-              value: "{{ .Values.binding.maxBindingsCount}}"
-            - name: APP_BROKER_BINDING_CREATE_BINDING_TIMEOUT
-              value: "{{ .Values.binding.createBindingTimeout}}"
-            - name: APP_BROKER_ONLY_SINGLE_TRIAL_PER_GA
-              value: "{{ .Values.onlySingleTrialPerGA }}"
-            - name: APP_BROKER_URL
-              value: {{ .Values.host }}.{{ .Values.global.ingress.domainName }}
+            - name: APP_BROKER_DISABLE_MACHINE_TYPE_UPDATE
+              value: "{{ .Values.broker.disableMachineTypeUpdate }}"
+            - name: APP_BROKER_DISABLE_SAP_CONVERGED_CLOUD
+              value: "{{ .Values.disableSapConvergedCloud }}"
             - name: APP_BROKER_ENABLE_KUBECONFIG_URL_LABEL
               value: "{{ .Values.enableKubeconfigURLLabel }}"
-            - name: APP_BROKER_INCLUDE_ADDITIONAL_PARAMS_IN_SCHEMA
-              value: "{{ .Values.includeAdditionalParamsInSchema }}"
-            - name: APP_BROKER_SHOW_FREE_EXPIRATION_INFO
-              value: "{{ .Values.showFreeExpirationInfo }}"
+            - name: APP_BROKER_ENABLE_PLANS
+              value: "{{ .Values.enablePlans }}"
+            - name: APP_BROKER_ENABLE_SHOOT_AND_SEED_SAME_REGION
+              value: "{{ .Values.broker.enableShootAndSeedSameRegion }}"
             - name: APP_BROKER_FREE_DOCS_URL
               value: "{{ .Values.freeDocsURL }}"
             - name: APP_BROKER_FREE_EXPIRATION_PERIOD
               value: "{{ .Values.freeExpirationPeriod }}"
+            - name: APP_BROKER_INCLUDE_ADDITIONAL_PARAMS_IN_SCHEMA
+              value: "{{ .Values.includeAdditionalParamsInSchema }}"
+            - name: APP_BROKER_ONLY_ONE_FREE_PER_GA
+              value: "{{ .Values.onlyOneFreePerGA }}"
+            - name: APP_BROKER_ONLY_SINGLE_TRIAL_PER_GA
+              value: "{{ .Values.onlySingleTrialPerGA }}"
+            - name: APP_BROKER_SHOW_FREE_EXPIRATION_INFO
+              value: "{{ .Values.showFreeExpirationInfo }}"
             - name: APP_BROKER_SHOW_TRIAL_EXPIRATION_INFO
               value: "{{ .Values.showTrialExpirationInfo }}"
+            - name: APP_BROKER_SUBACCOUNT_MOVEMENT_ENABLED
+              value: "{{ .Values.broker.subaccountMovementEnabled }}"
             - name: APP_BROKER_SUBACCOUNTS_IDS_TO_SHOW_TRIAL_EXPIRATION_INFO
               value: "{{ .Values.subaccountsIdsToShowTrialExpirationInfo }}"
             - name: APP_BROKER_TRIAL_DOCS_URL
               value: "{{ .Values.trialDocsURL }}"
-            - name: APP_OPERATION_TIMEOUT
-              value: "{{ .Values.broker.operationTimeout }}"
-            - name: APP_LIFECYCLE_MANAGER_INTEGRATION_DISABLED
-              value: "{{ .Values.lifecycleManager.disabled}}"
-            - name: APP_STEP_TIMEOUTS_CHECK_RUNTIME_RESOURCE_CREATE
-              value: "{{ .Values.stepTimeouts.checkRuntimeResourceCreate }}"
-            - name: APP_STEP_TIMEOUTS_CHECK_RUNTIME_RESOURCE_UPDATE
-              value: "{{ .Values.stepTimeouts.checkRuntimeResourceUpdate }}"
-            - name: APP_STEP_TIMEOUTS_CHECK_RUNTIME_RESOURCE_DELETION
-              value: "{{ .Values.stepTimeouts.checkRuntimeResourceDeletion }}"
-            - name: APP_PORT
-              value: "{{ .Values.broker.port }}"
-            - name: APP_STATUS_PORT
-              value: "{{ .Values.broker.statusPort }}"
-            - name: APP_EDP_AUTH_URL
-              value: "{{ .Values.edp.authURL }}"
-            - name: APP_EDP_ADMIN_URL
-              value: "{{ .Values.edp.adminURL }}"
-            - name: APP_EDP_NAMESPACE
-              value: "{{ .Values.edp.namespace }}"
-            - name: APP_EDP_ENVIRONMENT
-              value: "{{ .Values.edp.environment }}"
-            - name: APP_EDP_REQUIRED
-              value: "{{ .Values.edp.required }}"
-            - name: APP_EDP_DISABLED
-              value: "{{ .Values.edp.disabled }}"
-            - name: APP_EDP_SECRET
+            - name: APP_BROKER_UPDATE_CUSTOM_RESOURCES_LABELS_ON_ACCOUNT_MOVE
+              value: "{{ .Values.broker.updateCustomResourcesLabelsOnAccountMove }}"
+            - name: APP_BROKER_URL
+              value: {{ .Values.host }}.{{ .Values.global.ingress.domainName }}
+            - name: APP_BROKER_USE_ADDITIONAL_OIDC_SCHEMA
+              value: "{{ .Values.broker.useAdditionalOIDCSchema }}"
+            - name: APP_CATALOG_FILE_PATH
+              value: /config/catalog.yaml
+            - name: APP_CLEANING_DRY_RUN
+              value: "{{ .Values.cleaning.dryRun }}"
+            - name: APP_CLEANING_ENABLED
+              value: "{{ .Values.cleaning.enabled }}"
+            - name: APP_DATABASE_HOST
               valueFrom:
                 secretKeyRef:
-                  name: "{{ .Values.edp.secretName }}"
-                  key: secret
+                  name: kcp-postgresql
+                  key: postgresql-serviceName
+            - name: APP_DATABASE_NAME
+              valueFrom:
+                secretKeyRef:
+                  name: kcp-postgresql
+                  key: postgresql-broker-db-name
+            - name: APP_DATABASE_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: kcp-postgresql
+                  key: postgresql-broker-password
+            - name: APP_DATABASE_PORT
+              valueFrom:
+                secretKeyRef:
+                  name: kcp-postgresql
+                  key: postgresql-servicePort
             - name: APP_DATABASE_SECRET_KEY
               valueFrom:
                 secretKeyRef:
                   name: "{{ .Values.global.database.managedGCP.encryptionSecretName }}"
                   key: secretKey
                   optional: true
-            - name: APP_DATABASE_USER
-              valueFrom:
-                secretKeyRef:
-                  name: kcp-postgresql
-                  key: postgresql-broker-username
-            - name: APP_DATABASE_PASSWORD
-              valueFrom:
-                secretKeyRef:
-                  name: kcp-postgresql
-                  key: postgresql-broker-password
-            - name: APP_DATABASE_HOST
-              valueFrom:
-                secretKeyRef:
-                  name: kcp-postgresql
-                  key: postgresql-serviceName
-            - name: APP_DATABASE_PORT
-              valueFrom:
-                secretKeyRef:
-                  name: kcp-postgresql
-                  key: postgresql-servicePort
-            - name: APP_DATABASE_NAME
-              valueFrom:
-                secretKeyRef:
-                  name: kcp-postgresql
-                  key: postgresql-broker-db-name
             - name: APP_DATABASE_SSLMODE
               valueFrom:
                 secretKeyRef:
@@ -179,26 +155,58 @@ spec:
                   key: postgresql-sslMode
             - name: APP_DATABASE_SSLROOTCERT
               value: /secrets/cloudsql-sslrootcert/server-ca.pem
-            - name: APP_TRIAL_REGION_MAPPING_FILE_PATH
-              value: /config/trialRegionMapping.yaml
-            - name: APP_SAP_CONVERGED_CLOUD_REGION_MAPPINGS_FILE_PATH
-              value: /config/sapConvergedCloudPlanRegionMappings.yaml
+            - name: APP_DATABASE_USER
+              valueFrom:
+                secretKeyRef:
+                  name: kcp-postgresql
+                  key: postgresql-broker-username
+            - name: APP_DEFAULT_REQUEST_REGION
+              value: "{{ .Values.broker.defaultRequestRegion }}"
+            - name: APP_DISABLE_PROCESS_OPERATIONS_IN_PROGRESS
+              value: "{{ .Values.disableProcessOperationsInProgress }}"
+            - name: APP_DOMAIN_NAME
+              value: "{{ .Values.global.ingress.domainName }}"
+            - name: APP_EDP_ADMIN_URL
+              value: "{{ .Values.edp.adminURL }}"
+            - name: APP_EDP_AUTH_URL
+              value: "{{ .Values.edp.authURL }}"
+            - name: APP_EDP_DISABLED
+              value: "{{ .Values.edp.disabled }}"
+            - name: APP_EDP_ENVIRONMENT
+              value: "{{ .Values.edp.environment }}"
+            - name: APP_EDP_NAMESPACE
+              value: "{{ .Values.edp.namespace }}"
+            - name: APP_EDP_REQUIRED
+              value: "{{ .Values.edp.required }}"
+            - name: APP_EDP_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: "{{ .Values.edp.secretName }}"
+                  key: secret
+            - name: APP_EVENTS_ENABLED
+              value: "{{ .Values.broker.events.enabled }}"
             - name: APP_FREEMIUM_PROVIDERS
               value: "{{ .Values.gardener.freemiumProviders }}"
-            - name: APP_BROKER_ONLY_ONE_FREE_PER_GA
-              value: "{{ .Values.onlyOneFreePerGA }}"
-            - name: APP_BROKER_ENABLE_SHOOT_AND_SEED_SAME_REGION
-              value: "{{ .Values.broker.enableShootAndSeedSameRegion }}"
-            - name: APP_CATALOG_FILE_PATH
-              value: /config/catalog.yaml
+            - name: APP_FREEMIUM_WHITELISTED_GLOBAL_ACCOUNTS_FILE_PATH
+              value: /config/freemiumWhitelistedGlobalAccountIds.yaml
+            - name: APP_GARDENER_KUBECONFIG_PATH
+              value: {{ .Values.gardener.kubeconfigPath }}
             - name: APP_GARDENER_PROJECT
               value: {{ .Values.gardener.project }}
             - name: APP_GARDENER_SHOOT_DOMAIN
               value: "{{ .Values.gardener.shootDomain }}"
-            - name: APP_GARDENER_KUBECONFIG_PATH
-              value: {{ .Values.gardener.kubeconfigPath }}
-            - name: APP_KUBECONFIG_ALLOW_ORIGINS
-              value: "{{ .Values.kubeconfig.allowOrigins }}"
+            - name: APP_HAP_RULE_FILE_PATH
+              value: /config/hapRule.yaml
+            - name: APP_INFRASTRUCTURE_MANAGER_CONTROL_PLANE_FAILURE_TOLERANCE
+              value: "{{ .Values.infrastructureManager.controlPlaneFailureTolerance }}"
+            - name: APP_INFRASTRUCTURE_MANAGER_DEFAULT_GARDENER_SHOOT_PURPOSE
+              value: "{{ .Values.infrastructureManager.defaultShootPurpose }}"
+            - name: APP_INFRASTRUCTURE_MANAGER_DEFAULT_TRIAL_PROVIDER
+              value: "{{ .Values.infrastructureManager.defaultTrialProvider }}"
+            - name: APP_INFRASTRUCTURE_MANAGER_ENABLE_INGRESS_FILTERING
+              value: "{{ .Values.infrastructureManager.enableIngressFiltering }}"
+            - name: APP_INFRASTRUCTURE_MANAGER_INGRESS_FILTERING_PLANS
+              value: "{{ .Values.infrastructureManager.ingressFilteringPlans }}"
             - name: APP_INFRASTRUCTURE_MANAGER_KUBERNETES_VERSION
               value: "{{ .Values.infrastructureManager.kubernetesVersion }}"
             - name: APP_INFRASTRUCTURE_MANAGER_MACHINE_IMAGE
@@ -207,68 +215,60 @@ spec:
               value: {{ .Values.infrastructureManager.machineImageVersion }}
             - name: APP_INFRASTRUCTURE_MANAGER_MULTI_ZONE_CLUSTER
               value: "{{ .Values.infrastructureManager.multiZoneCluster }}"
-            - name: APP_INFRASTRUCTURE_MANAGER_CONTROL_PLANE_FAILURE_TOLERANCE
-              value: "{{ .Values.infrastructureManager.controlPlaneFailureTolerance }}"
             - name: APP_INFRASTRUCTURE_MANAGER_USE_SMALLER_MACHINE_TYPES
               value: "{{ .Values.infrastructureManager.useSmallerMachineTypes }}"
-            - name: APP_INFRASTRUCTURE_MANAGER_ENABLE_INGRESS_FILTERING
-              value: "{{ .Values.infrastructureManager.enableIngressFiltering }}"
-            - name: APP_INFRASTRUCTURE_MANAGER_DEFAULT_GARDENER_SHOOT_PURPOSE
-              value: "{{ .Values.infrastructureManager.defaultShootPurpose }}"
-            - name: APP_INFRASTRUCTURE_MANAGER_DEFAULT_TRIAL_PROVIDER
-              value: "{{ .Values.infrastructureManager.defaultTrialProvider }}"
-            - name: APP_DEFAULT_REQUEST_REGION
-              value: "{{ .Values.broker.defaultRequestRegion }}"
-            - name: APP_UPDATE_PROCESSING_ENABLED
-              value: "{{ .Values.osbUpdateProcessingEnabled }}"
-            - name: APP_DOMAIN_NAME
-              value: "{{ .Values.global.ingress.domainName }}"
-            - name: APP_SKR_OIDC_DEFAULT_VALUES_YAML_FILE_PATH
-              value: /config/skrOIDCDefaultValues.yaml
-            - name: APP_SKR_DNS_PROVIDERS_VALUES_YAML_FILE_PATH
-              value: /config/skrDNSProvidersValues.yaml
-            - name: APP_ORCHESTRATION_CONFIG_NAMESPACE
-              value: "{{ .Release.Namespace }}"
-            - name: APP_ORCHESTRATION_CONFIG_NAME
-              value: "orchestration-config"
-            - name: APP_PROFILER_MEMORY
-              value: "{{ .Values.broker.profiler.memory }}"
+            - name: APP_KUBECONFIG_ALLOW_ORIGINS
+              value: "{{ .Values.kubeconfig.allowOrigins }}"
             - name: APP_KYMA_DASHBOARD_CONFIG_LANDSCAPE_URL
               value: "{{ .Values.dashboardConfig.landscapeURL }}"
-            - name: APP_EVENTS_ENABLED
-              value: "{{ .Values.broker.events.enabled }}"
+            - name: APP_LIFECYCLE_MANAGER_INTEGRATION_DISABLED
+              value: "{{ .Values.lifecycleManager.disabled}}"
             - name: APP_METRICSV2_ENABLED
               value: "{{ .Values.metricsv2.enabled }}"
-            - name: APP_METRICSV2_OPERATION_RESULT_RETENTION_PERIOD
-              value: "{{ .Values.metricsv2.operationResultRetentionPeriod }}"
             - name: APP_METRICSV2_OPERATION_RESULT_FINISHED_OPERATION_RETENTION_PERIOD
               value: "{{ .Values.metricsv2.operationResultFinishedOperationRetentionPeriod }}"
             - name: APP_METRICSV2_OPERATION_RESULT_POOLING_INTERVAL
               value: "{{ .Values.metricsv2.operationResultPoolingInterval }}"
+            - name: APP_METRICSV2_OPERATION_RESULT_RETENTION_PERIOD
+              value: "{{ .Values.metricsv2.operationResultRetentionPeriod }}"
             - name: APP_METRICSV2_OPERATION_STATS_POOLING_INTERVAL
               value: "{{ .Values.metricsv2.operationStatsPoolingInterval }}"
-            - name: APP_FREEMIUM_WHITELISTED_GLOBAL_ACCOUNTS_FILE_PATH
-              value: /config/freemiumWhitelistedGlobalAccountIds.yaml
-            - name: APP_HAP_RULE_FILE_PATH
-              value: /config/hapRule.yaml
-            - name: APP_BROKER_USE_ADDITIONAL_OIDC_SCHEMA
-              value: "{{ .Values.broker.useAdditionalOIDCSchema }}"
-            - name: APP_BROKER_DISABLE_SAP_CONVERGED_CLOUD
-              value: "{{ .Values.disableSapConvergedCloud }}"
-            - name: APP_BROKER_ALLOW_UPDATE_EXPIRED_INSTANCE_WITH_CONTEXT
-              value: "{{ .Values.allowUpdateExpiredInstanceWithContext }}"
-            - name: APP_BROKER_SUBACCOUNT_MOVEMENT_ENABLED
-              value: "{{ .Values.broker.subaccountMovementEnabled }}"
-            - name: APP_BROKER_UPDATE_CUSTOM_RESOURCES_LABELS_ON_ACCOUNT_MOVE
-              value: "{{ .Values.broker.updateCustomResourcesLabelsOnAccountMove }}"
-            - name: APP_REGIONS_SUPPORTING_MACHINE_FILE_PATH
-              value: /config/regionsSupportingMachine.yaml
             - name: APP_MULTIPLE_CONTEXTS
               value: "{{ .Values.multipleContexts }}"
+            - name: APP_OPERATION_TIMEOUT
+              value: "{{ .Values.broker.operationTimeout }}"
+            - name: APP_ORCHESTRATION_CONFIG_NAME
+              value: "orchestration-config"
+            - name: APP_ORCHESTRATION_CONFIG_NAMESPACE
+              value: "{{ .Release.Namespace }}"
+            - name: APP_PORT
+              value: "{{ .Values.broker.port }}"
+            - name: APP_PROFILER_MEMORY
+              value: "{{ .Values.broker.profiler.memory }}"
+            - name: APP_REGIONS_SUPPORTING_MACHINE_FILE_PATH
+              value: /config/regionsSupportingMachine.yaml
+            - name: APP_RUNTIME_CONFIGURATION_CONFIG_MAP_NAME
+              value: "{{ include "kyma-env-broker.fullname" . }}-runtime-configuration"
+            - name: APP_SAP_CONVERGED_CLOUD_REGION_MAPPINGS_FILE_PATH
+              value: /config/sapConvergedCloudPlanRegionMappings.yaml
+            - name: APP_SKR_DNS_PROVIDERS_VALUES_YAML_FILE_PATH
+              value: /config/skrDNSProvidersValues.yaml
+            - name: APP_SKR_OIDC_DEFAULT_VALUES_YAML_FILE_PATH
+              value: /config/skrOIDCDefaultValues.yaml
+            - name: APP_STATUS_PORT
+              value: "{{ .Values.broker.statusPort }}"
+            - name: APP_STEP_TIMEOUTS_CHECK_RUNTIME_RESOURCE_CREATE
+              value: "{{ .Values.stepTimeouts.checkRuntimeResourceCreate }}"
+            - name: APP_STEP_TIMEOUTS_CHECK_RUNTIME_RESOURCE_DELETION
+              value: "{{ .Values.stepTimeouts.checkRuntimeResourceDeletion }}"
+            - name: APP_STEP_TIMEOUTS_CHECK_RUNTIME_RESOURCE_UPDATE
+              value: "{{ .Values.stepTimeouts.checkRuntimeResourceUpdate }}"   
+            - name: APP_TRIAL_REGION_MAPPING_FILE_PATH
+              value: /config/trialRegionMapping.yaml
+            - name: APP_UPDATE_PROCESSING_ENABLED
+              value: "{{ .Values.osbUpdateProcessingEnabled }}"
             - name: APP_ZONE_MAPPING
               value: "{{ .Values.zoneMapping }}"
-            - name: APP_BROKER_DISABLE_MACHINE_TYPE_UPDATE
-              value: "{{ .Values.broker.disableMachineTypeUpdate }}"
           ports:
             - name: http
               containerPort: {{ .Values.broker.port }}
