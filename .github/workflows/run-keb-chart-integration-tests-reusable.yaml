@@ -43,10 +43,8 @@ jobs:
         # Extract env section, ignoring templating, and compare to sorted
         awk '/env:/ {flag=1; next} /ports:/ {flag=0} flag && /^ *- name:/' "$ENV_PATH" | sed 's/^ *- name: //' > /tmp/env_vars.txt
         sort /tmp/env_vars.txt > /tmp/env_vars_sorted.txt
-        if ! diff -u /tmp/env_vars.txt /tmp/env_vars_sorted.txt; then
+        if ! diff -u --color=always /tmp/env_vars.txt /tmp/env_vars_sorted.txt | cat; then
           echo "Environment variables in deployment.yaml are not sorted alphabetically!"
-          echo "Diff:"
-          diff -u /tmp/env_vars.txt /tmp/env_vars_sorted.txt
           exit 1
         fi
         echo "Environment variables in deployment.yaml are sorted alphabetically."
