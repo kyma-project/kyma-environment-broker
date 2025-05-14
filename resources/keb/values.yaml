@@ -1,5 +1,10 @@
 # Allow update of expired instance only if context contains globalaccount_id (see docs/contributor/03-30-trial-and-free-expiration.md)
 allowUpdateExpiredInstanceWithContext: "false"
+archiving:
+  # If true, enables the archiving mechanism, which stores data about deprovisioned instances in an archive table at the end of the deprovisioning process (before cleaning).
+  enabled: false
+  # If true, runs the archiving process in dry-run mode: no changes are made to the database, only logs what would be archived or deleted.
+  dryRun: true
 binding:
   # Comma-separated list of plan names for which service binding is enabled (e.g. "aws,gcp")
   bindablePlans: "aws"
