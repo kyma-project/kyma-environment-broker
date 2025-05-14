@@ -37,7 +37,7 @@ jobs:
         cd resources/keb
         helm template .
 
-    - name: Enforce env alphabetical order in deployment.yaml
+    - name: Enforce env alphabetical order in deployment.yaml (KEB)
       run: |
         ENV_PATH=resources/keb/templates/deployment.yaml
         # Extract env section, ignoring templating, and compare to sorted
@@ -48,6 +48,57 @@ jobs:
           exit 1
         fi
         echo "Environment variables in deployment.yaml are sorted alphabetically."
+
+    - name: Enforce env alphabetical order in runtime-reconciler-deployment.yaml
+      run: |
+        ENV_PATH=resources/keb/templates/runtime-reconciler-deployment.yaml
+        awk '/env:/ {flag=1; next} /volumeMounts:/ {flag=0} flag && /^ *- name:/' "$ENV_PATH" | sed 's/^ *- name: //' > /tmp/env_vars_runtime_reconciler.txt
+        sort /tmp/env_vars_runtime_reconciler.txt > /tmp/env_vars_runtime_reconciler_sorted.txt
+        if ! diff -u --color=always /mp/env_vars_runtime_reconciler.txt /tmp/env_vars_runtime_reconciler_sorted.txt; then
+          echo "Environment variables in runtime-reconciler-deployment.yaml are not sorted alphabetically!"
+          exit 1
+        fi
+        echo "Environment variables in runtime-reconciler-deployment.yaml are sorted alphabetically."
+    - name: Enforce env alphabetical order in trial-cleanup-job.yaml
+      run: |
+        ENV_PATH=resources/keb/templates/trial-cleanup-job.yaml
+        awk '/env:/ {flag=1; next} /volumeMounts:/ {flag=0} flag && /^ *- name:/' "$ENV_PATH" | sed 's/^ *- name: //' > /tmp/env_vars_trial_cleanup.txt
+        sort /tmp/env_vars_trial_cleanup.txt > /tmp/env_vars_trial_cleanup_sorted.txt
+        if ! diff -u --color=always /mp/env_vars_trial_cleanup.txt /tmp/env_vars_trial_cleanup_sorted.txt; then
+          echo "Environment variables in trial-cleanup-job.yaml are not sorted alphabetically!"
+          exit 1
+        fi
+        echo "Environment variables in trial-cleanup-job.yaml are sorted alphabetically."
+    - name: Enforce env alphabetical order in deprovision-retrigger-job.yaml
+      run: |
+        ENV_PATH=resources/keb/templates/deprovision-retrigger-job.yaml
+        awk '/env:/ {flag=1; next} /volumeMounts:/ {flag=0} flag && /^ *- name:/' "$ENV_PATH" | sed 's/^ *- name: //' > /tmp/env_vars_deprovision_retrigger.txt
+        sort /tmp/env_vars_deprovision_retrigger.txt > /tmp/env_vars_deprovision_retrigger_sorted.txt
+        if ! diff -u --color=always /mp/env_vars_deprovision_retrigger.txt /tmp/env_vars_deprovision_retrigger_sorted.txt; then
+          echo "Environment variables in deprovision-retrigger-job.yaml are not sorted alphabetically!"
+          exit 1
+        fi
+        echo "Environment variables in deprovision-retrigger-job.yaml are sorted alphabetically."
+    - name: Enforce env alphabetical order in free-cleanup-job.yaml
+      run: |
+        ENV_PATH=resources/keb/templates/free-cleanup-job.yaml
+        awk '/env:/ {flag=1; next} /volumeMounts:/ {flag=0} flag && /^ *- name:/' "$ENV_PATH" | sed 's/^ *- name: //' > /tmp/env_vars_free_cleanup.txt
+        sort /tmp/env_vars_free_cleanup.txt > /tmp/env_vars_free_cleanup_sorted.txt
+        if ! diff -u --color=always /mp/env_vars_free_cleanup.txt /tmp/env_vars_free_cleanup_sorted.txt; then
+          echo "Environment variables in free-cleanup-job.yaml are not sorted alphabetically!"
+          exit 1
+        fi
+        echo "Environment variables in free-cleanup-job.yaml are sorted alphabetically."
+    - name: Enforce env alphabetical order in keb-db-job.yaml
+      run: |
+        ENV_PATH=resources/keb/templates/keb-db-job.yaml
+        awk '/env:/ {flag=1; next} /volumeMounts:/ {flag=0} flag && /^ *- name:/' "$ENV_PATH" | sed 's/^ *- name: //' > /tmp/env_vars_keb_db.txt
+        sort /tmp/env_vars_keb_db.txt > /tmp/env_vars_keb_db_sorted.txt
+        if ! diff -u --color=always /mp/env_vars_keb_db.txt /tmp/env_vars_keb_db_sorted.txt; then
+          echo "Environment variables in keb-db-job.yaml are not sorted alphabetically!"
+          exit 1
+        fi
+        echo "Environment variables in keb-db-job.yaml are sorted alphabetically."
       
   prepare-tests:
     runs-on: ubuntu-latest
