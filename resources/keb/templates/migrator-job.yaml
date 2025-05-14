@@ -66,31 +66,26 @@ spec:
           env:
             - name: DATABASE_EMBEDDED
               value: "{{ .Values.global.database.embedded.enabled }}"
-            - name: DB_USER
-              valueFrom:
-                secretKeyRef:
-                  name: kcp-postgresql
-                  key: postgresql-broker-username
-            - name: DB_PASSWORD
-              valueFrom:
-                secretKeyRef:
-                  name: kcp-postgresql
-                  key: postgresql-broker-password
             - name: DB_HOST
               valueFrom:
                 secretKeyRef:
                   name: kcp-postgresql
                   key: postgresql-serviceName
-            - name: DB_PORT
-              valueFrom:
-                secretKeyRef:
-                  name: kcp-postgresql
-                  key: postgresql-servicePort
             - name: DB_NAME
               valueFrom:
                 secretKeyRef:
                   name: kcp-postgresql
                   key: postgresql-broker-db-name
+            - name: DB_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: kcp-postgresql
+                  key: postgresql-broker-password
+            - name: DB_PORT
+              valueFrom:
+                secretKeyRef:
+                  name: kcp-postgresql
+                  key: postgresql-servicePort     
             - name: DB_SSL
               valueFrom:
                 secretKeyRef:
@@ -98,6 +93,11 @@ spec:
                   key: postgresql-sslMode
             - name: DB_SSLROOTCERT
               value: /secrets/cloudsql-sslrootcert/server-ca.pem
+            - name: DB_USER
+              valueFrom:
+                secretKeyRef:
+                  name: kcp-postgresql
+                  key: postgresql-broker-username
             - name: DIRECTION
               value: "up"
           volumeMounts:
