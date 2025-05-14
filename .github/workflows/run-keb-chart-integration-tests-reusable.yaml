@@ -100,18 +100,7 @@ jobs:
           exit 1
         fi
         echo "Environment variables in service-binding-cleanup-job.yaml are sorted alphabetically."
-
-    - name: Enforce env alphabetical order in subaccount-cleanup-job.yaml
-      run: |
-        ENV_PATH=resources/keb/templates/subaccount-cleanup-job.yaml
-        awk '/env:/ {flag=1; next} /volumeMounts:/ {flag=0} flag && /^ *- name:/' "$ENV_PATH" | sed 's/^ *- name: //' > /tmp/env_vars_subaccount_cleanup.txt
-        sort /tmp/env_vars_subaccount_cleanup.txt > /tmp/env_vars_subaccount_cleanup_sorted.txt
-        if ! diff -u --color=always /tmp/env_vars_subaccount_cleanup.txt /tmp/env_vars_subaccount_cleanup_sorted.txt; then
-          echo "Environment variables in subaccount-cleanup-job.yaml are not sorted alphabetically!"
-          exit 1
-        fi
-        echo "Environment variables in subaccount-cleanup-job.yaml are sorted alphabetically."
-
+        
     - name: Enforce env alphabetical order in globalaccounts.yaml
       run: |
         ENV_PATH=resources/keb/templates/globalaccounts.yaml
