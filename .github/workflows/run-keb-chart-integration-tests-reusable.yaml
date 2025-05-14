@@ -89,16 +89,6 @@ jobs:
           exit 1
         fi
         echo "Environment variables in free-cleanup-job.yaml are sorted alphabetically."
-    - name: Enforce env alphabetical order in keb-db-job.yaml
-      run: |
-        ENV_PATH=resources/keb/templates/keb-db-job.yaml
-        awk '/env:/ {flag=1; next} /volumeMounts:/ {flag=0} flag && /^ *- name:/' "$ENV_PATH" | sed 's/^ *- name: //' > /tmp/env_vars_keb_db.txt
-        sort /tmp/env_vars_keb_db.txt > /tmp/env_vars_keb_db_sorted.txt
-        if ! diff -u --color=always /tmp/env_vars_keb_db.txt /tmp/env_vars_keb_db_sorted.txt; then
-          echo "Environment variables in keb-db-job.yaml are not sorted alphabetically!"
-          exit 1
-        fi
-        echo "Environment variables in keb-db-job.yaml are sorted alphabetically."
 
     - name: Enforce env alphabetical order in service-binding-cleanup-job.yaml
       run: |
