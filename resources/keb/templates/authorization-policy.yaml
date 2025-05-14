@@ -60,7 +60,14 @@ spec:
     from:
       - source:
           requestPrincipals:
+          {{- $oidcs := .Values.oidcs | default list }}
+          {{- if gt (len $oidcs) 0 }}
+          {{- range $i, $p := $oidcs }}
+          - {{ $p.issuer }}/*
+          {{- end }}
+          {{- else }}
           - {{ tpl .Values.oidc.issuer $ }}/*
+          {{- end }}
     when:
     - key: request.auth.claims[scp]
       values:
@@ -106,7 +113,14 @@ spec:
     from:
       - source:
           requestPrincipals:
+          {{- $oidcs := .Values.oidcs | default list }}
+          {{- if gt (len $oidcs) 0 }}
+          {{- range $i, $p := $oidcs }}
+          - {{ $p.issuer }}/*
+          {{- end }}
+          {{- else }}
           - {{ tpl .Values.oidc.issuer $ }}/*
+          {{- end }}
     when:
     - key: request.auth.claims[scp]
       values:
@@ -133,7 +147,14 @@ spec:
     from:
       - source:
           requestPrincipals:
+          {{- $oidcs := .Values.oidcs | default list }}
+          {{- if gt (len $oidcs) 0 }}
+          {{- range $i, $p := $oidcs }}
+          - {{ $p.issuer }}/*
+          {{- end }}
+          {{- else }}
           - {{ tpl .Values.oidc.issuer $ }}/*
+          {{- end }}
     when:
     - key: request.auth.claims[groups]
       values:
@@ -175,7 +196,14 @@ spec:
     from:
       - source:
           requestPrincipals:
+          {{- $oidcs := .Values.oidcs | default list }}
+          {{- if gt (len $oidcs) 0 }}
+          {{- range $i, $p := $oidcs }}
+          - {{ $p.issuer }}/*
+          {{- end }}
+          {{- else }}
           - {{ tpl .Values.oidc.issuer $ }}/*
+          {{- end }}
     when:
     - key: request.auth.claims[groups]
       values:
@@ -217,7 +245,14 @@ spec:
     from:
       - source:
           requestPrincipals:
+          {{- $oidcs := .Values.oidcs | default list }}
+          {{- if gt (len $oidcs) 0 }}
+          {{- range $i, $p := $oidcs }}
+          - {{ $p.issuer }}/*
+          {{- end }}
+          {{- else }}
           - {{ tpl .Values.oidc.issuer $ }}/*
+          {{- end }}
     when:
     - key: request.auth.claims[groups]
       values:
@@ -245,7 +280,14 @@ spec:
     from:
       - source:
           requestPrincipals:
+          {{- $oidcs := .Values.oidcs | default list }}
+          {{- if gt (len $oidcs) 0 }}
+          {{- range $i, $p := $oidcs }}
+          - {{ $p.issuer }}/*
+          {{- end }}
+          {{- else }}
           - {{ tpl .Values.oidc.issuer $ }}/*
+          {{- end }}
     when:
     - key: request.auth.claims[groups]
       values:

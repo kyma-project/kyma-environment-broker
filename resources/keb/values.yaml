@@ -330,6 +330,12 @@ oidc:
     orchestrations: orchestrationsAdmin
     viewer: runtimeViewer
 
+oidcs:
+  - issuer: https://kymatest.accounts400.ondemand.com
+    keysURL: https://kymatest.accounts400.ondemand.com/oauth2/certs
+  - issuer: https://kymacanary.newIAS.ondemand.com
+    keysURL: https://kymacanary.newIAS.ondemand.com/oauth2/certs
+
 kebClient:
   scope: "broker:write cld:read"
 
