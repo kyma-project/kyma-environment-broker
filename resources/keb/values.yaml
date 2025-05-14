@@ -369,12 +369,19 @@ runtimeConfiguration: |-
         modules: []
     additional-components: []
 runtimeReconciler:
+  # If true, runs the reconciler in dry-run mode (no changes are made, only logs actions).
   dryRun: true
+  # Enables or disables the Runtime Reconciler deployment.
   enabled: false
+  # If true, enables the periodic reconciliation job.
   jobEnabled: false
+  # Interval (in minutes) between reconciliation job runs.
   jobInterval: 1440
+  # Delay before starting reconciliation after job trigger (e.g., "1s").
   jobReconciliationDelay: 1s
+  # Port on which the reconciler exposes Prometheus metrics.
   metricsPort: 8081
+# Restricts where the sap-converged-cloud plan is available. If a region is not listed, the plan is not offered for that platform region.
 sapConvergedCloudPlanRegionMappings: |-
   cf-eu20-staging:
     - eu-de-1
@@ -387,20 +394,31 @@ service:
   type: ClusterIP
 serviceAccount:
   annotations: { }
+# Configures the Service Binding Cleanup CronJob, which removes expired service bindings from the Kyma Environment Broker.
+# The job periodically finds expired bindings and sends DELETE requests to clean them up. Supports dry-run mode, request timeout, and retry settings.
 serviceBindingCleanup:
+  # If true, the job only logs what would be deleted without actually removing any bindings.
   dryRun: true
+  # If true, enables the Service Binding Cleanup CronJob.
   enabled: false
+  # Number of times to retry a failed DELETE request for a binding.
   requestRetries: 2
+  # Timeout for each DELETE request to the broker (e.g., "2s").
   requestTimeout: 2s
+  # Cron schedule for running the cleanup job.
   schedule: "0 2,14 * * *"
 serviceMonitor:
   enabled: false
   interval: &scrapeInterval 30s
   scrapeTimeout: &scrapeTimeout 10s
+# If true, adds expiration information for free plan Kyma environments to API responses and UI labels.
 showFreeExpirationInfo: "false"
+# If true, adds expiration information for trial plan Kyma environments to API responses and UI labels.
 showTrialExpirationInfo: "false"
+# Contains DNS provider configuration for SKR clusters.
 skrDNSProvidersValues: |-
   providers: []
+# Contains the default OIDC configuration for SKR clusters.
 skrOIDCDefaultValues: |-
   clientID: "9bd05ed7-a930-44e6-8c79-e6defeb7dec9"
   groupsClaim: "groups"
@@ -410,8 +428,11 @@ skrOIDCDefaultValues: |-
   usernameClaim: "sub"
   usernamePrefix: "-"
 stepTimeouts:
+  # Maximum time to wait for a runtime resource to be created before considering the step as failed (e.g., 60m = 60 minutes).
   checkRuntimeResourceCreate: 60m
+  # Maximum time to wait for a runtime resource to be deleted before considering the step as failed (e.g., 60m = 60 minutes).
   checkRuntimeResourceDeletion: 60m
+  # Maximum time to wait for a runtime resource to be updated before considering the step as failed (e.g., 180m = 180 minutes).
   checkRuntimeResourceUpdate: 180m
 subaccountCleanup:
   enabled: "false"
@@ -419,23 +440,38 @@ subaccountCleanup:
   nameV2: "kcp-subaccount-cleaner-v2.0"
   schedule: "0 1 * * *"
 subaccountSync:
+  # Interval between full account synchronization runs (e.g., 24h = every 24 hours).
   accountSyncInterval: 24h
+  # If true, always fetch subaccount data from the database instead of external sources.
   alwaysSubaccountFromDatabase: false
   cisRateLimits:
     accounts:
+      # Maximum number of requests per interval to the CIS Accounts API.
       maxRequestsPerInterval: 5
+      # Minimum interval between requests to the CIS Accounts API (e.g., 2s = 2 seconds).
       rateLimitingInterval: 2s
     events:
+      # Maximum number of requests per interval to the CIS Events API.
       maxRequestsPerInterval: 5
+      # Minimum interval between requests to the CIS Events API (e.g., 2s = 2 seconds).
       rateLimitingInterval: 2s
+  # If true, enables the subaccount synchronization job.
   enabled: true
+  # Time window for collecting events from CIS (e.g., 15m = 15 minutes).
   eventsWindowInterval: 15m
+  # Size of the time window for collecting events from CIS (e.g., 20m = 20 minutes).
   eventsWindowSize: 20m
+  # Log level for the subaccount sync job (e.g., info, debug).
   logLevel: info
+  # Port on which the subaccount sync service exposes Prometheus metrics.
   metricsPort: 8081
+  # Name of the subaccount sync deployment.
   name: "subaccount-sync"
+  # Interval between queue processing cycles (e.g., 30s = 30 seconds).
   queueSleepInterval: 30s
+  # Interval between full storage synchronization runs (e.g., 5m = 5 minutes).
   storageSyncInterval: 5m
+  # If true, enables updating resources during subaccount sync.
   updateResources: false
 swagger:
   virtualService:
@@ -445,13 +481,21 @@ testConfig:
     useAnnotations: false
     weight: "2"
 trialCleanup:
+  # If true, the job only logs what would be deleted without actually removing any data.
   dryRun: true
+  # If true, enables the Trial Cleanup CronJob, which removes expired trial Kyma environments.
   enabled: true
+  # Specifies how long a trial instance can exist before being expired.
   expirationPeriod: 336h
+  # Cron schedule for running the cleanup job.
   schedule: "15 1 * * *"
+  # If true, runs the job in test mode.
   testRun: false
+  # Subaccount ID used for test runs.
   testSubaccountID: "prow-keb-trial-suspension"
+# URL to the documentation for trial Kyma environments. Used in API responses and UI labels.
 trialDocsURL: "https://help.sap.com/docs/"
+# Used to determine the Kyma region for a trial environment based on the requested platform region.
 trialRegionsMapping: |-
   cf-eu10: europe
   cf-us10: us
