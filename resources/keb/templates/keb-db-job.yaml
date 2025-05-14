@@ -43,58 +43,52 @@ spec:
               - name: {{ $key }}
                 value: {{ $val }}
               {{- end}}
-              - name: APP_PROVISIONER_URL
-                value: "{{ $.Values.provisioner.URL }}"
-              {{if eq $.Values.global.database.embedded.enabled false}}
-              - name: DATABASE_EMBEDDED
-                value: "false"
-              {{end}}
-              {{if eq $.Values.global.database.embedded.enabled true}}
-              - name: DATABASE_EMBEDDED
-                value: "true"
-              {{end}}
-              - name: APP_DATABASE_SECRET_KEY
-                valueFrom:
-                  secretKeyRef:
-                    name: "{{ $.Values.global.database.managedGCP.encryptionSecretName }}"
-                    key: secretKey
-                    optional: true
-              - name: APP_DATABASE_USER
-                valueFrom:
-                  secretKeyRef:
-                    key: postgresql-broker-username
-                    name: kcp-postgresql
-              - name: APP_DATABASE_PASSWORD
-                valueFrom:
-                  secretKeyRef:
-                    key: postgresql-broker-password
-                    name: kcp-postgresql
+              - name: APP_BROKER_SCOPE
+                value: {{$.Values.kebClient.scope}}
+              - name: APP_BROKER_URL
+                value: "http://{{ include "kyma-env-broker.fullname" . }}"
               - name: APP_DATABASE_HOST
                 valueFrom:
                   secretKeyRef:
+                    name: kcp-postgresql
                     key: postgresql-serviceName
-                    name: kcp-postgresql
-              - name: APP_DATABASE_PORT
-                valueFrom:
-                  secretKeyRef:
-                    key: postgresql-servicePort
-                    name: kcp-postgresql
               - name: APP_DATABASE_NAME
                 valueFrom:
                   secretKeyRef:
-                    key: postgresql-broker-db-name
                     name: kcp-postgresql
+                    key: postgresql-broker-db-name
+              - name: APP_DATABASE_PASSWORD
+                valueFrom:
+                  secretKeyRef:
+                    name: kcp-postgresql
+                    key: postgresql-broker-password
+              - name: APP_DATABASE_PORT
+                valueFrom:
+                  secretKeyRef:
+                    name: kcp-postgresql
+                    key: postgresql-servicePort
+              - name: APP_DATABASE_SECRET_KEY
+                valueFrom:
+                  secretKeyRef:
+                    name: "{{ .Values.global.database.managedGCP.encryptionSecretName }}"
+                    key: secretKey
+                    optional: true
               - name: APP_DATABASE_SSLMODE
                 valueFrom:
                   secretKeyRef:
-                    key: postgresql-sslMode
                     name: kcp-postgresql
+                    key: postgresql-sslMode
               - name: APP_DATABASE_SSLROOTCERT
                 value: /secrets/cloudsql-sslrootcert/server-ca.pem
-                - name: APP_BROKER_URL
-                  value: "http://{{ include "kyma-env-broker.fullname" . }}"
-              - name: APP_BROKER_SCOPE
-                value: {{$.Values.kebClient.scope}}
+              - name: APP_DATABASE_USER
+                valueFrom:
+                  secretKeyRef:
+                    name: kcp-postgresql
+                    key: postgresql-broker-username
+              - name: APP_PROVISIONER_URL
+                value: "{{ $.Values.provisioner.URL }}"
+              - name: DATABASE_EMBEDDED
+                value: "{{ .Values.global.database.embedded.enabled }}"
             command:
               - "/bin/main"
             volumeMounts:
