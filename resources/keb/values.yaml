@@ -321,9 +321,6 @@ cis:
     secret: "TBD"
     secretName: "cis-creds-accounts"
 
-notification:
-  url: "TBD"
-
 oidc:
   issuer: https://kymatest.accounts400.ondemand.com
   keysURL: https://kymatest.accounts400.ondemand.com/oauth2/certs

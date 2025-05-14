@@ -221,8 +221,6 @@ spec:
               value: "{{ .Values.broker.defaultRequestRegion }}"
             - name: APP_UPDATE_PROCESSING_ENABLED
               value: "{{ .Values.osbUpdateProcessingEnabled }}"
-            - name: APP_NOTIFICATION_URL
-              value: "{{ .Values.notification.url }}"
             - name: APP_DOMAIN_NAME
               value: "{{ .Values.global.ingress.domainName }}"
             - name: APP_SKR_OIDC_DEFAULT_VALUES_YAML_FILE_PATH

@@ -16,7 +16,6 @@ import (
 	"github.com/kyma-project/kyma-environment-broker/common/hyperscaler"
 	pkg "github.com/kyma-project/kyma-environment-broker/common/runtime"
 	"github.com/kyma-project/kyma-environment-broker/internal/broker"
-	"github.com/kyma-project/kyma-environment-broker/internal/notification"
 	"github.com/kyma-project/kyma-environment-broker/internal/process"
 
 	"github.com/kyma-project/kyma-environment-broker/internal/storage"
@@ -261,9 +260,6 @@ func fixConfig() *Config {
 			},
 			WorkerHealthCheckInterval:     10 * time.Minute,
 			WorkerHealthCheckWarnInterval: 10 * time.Minute,
-		},
-		Notification: notification.Config{
-			Url: "http://host:8080/",
 		},
 		TrialRegionMappingFilePath:                "testdata/trial-regions.yaml",
 		SapConvergedCloudRegionMappingsFilePath:   "testdata/old-sap-converged-cloud-region-mappings.yaml",
