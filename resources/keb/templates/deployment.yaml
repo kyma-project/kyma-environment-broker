@@ -253,8 +253,6 @@ spec:
               value: /config/freemiumWhitelistedGlobalAccountIds.yaml
             - name: APP_HAP_RULE_FILE_PATH
               value: /config/hapRule.yaml
-            - name: APP_KYMA_RESOURCE_DELETION_TIMEOUT
-              value: "{{ .Values.kymaResourceDeletionTimeout }}"
             - name: APP_BROKER_USE_ADDITIONAL_OIDC_SCHEMA
               value: "{{ .Values.broker.useAdditionalOIDCSchema }}"
             - name: APP_BROKER_DISABLE_SAP_CONVERGED_CLOUD

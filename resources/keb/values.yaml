@@ -435,8 +435,6 @@ metricsv2:
 freemiumWhitelistedGlobalAccountIds: |-
   whitelist:
 
-kymaResourceDeletionTimeout: 30s
-
 runtimeConfiguration: |-
   default: |-
     kyma-template: |-

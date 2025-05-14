@@ -142,8 +142,6 @@ type Config struct {
 	CleaningEnabled bool `envconfig:"default=false"`
 	CleaningDryRun  bool `envconfig:"default=true"`
 
-	KymaResourceDeletionTimeout time.Duration `envconfig:"default=30s"`
-
 	RuntimeConfigurationConfigMapName string `envconfig:"default=keb-runtime-config"`
 
 	UpdateRuntimeResourceDelay time.Duration `envconfig:"default=4s"`
