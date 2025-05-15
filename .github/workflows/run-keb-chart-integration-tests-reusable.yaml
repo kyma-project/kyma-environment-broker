@@ -38,101 +38,23 @@ jobs:
         helm template .
 
     - name: Enforce env alphabetical order in deployment.yaml (KEB)
-      run: |
-        ENV_PATH=resources/keb/templates/deployment.yaml
-        # Extract env section, ignoring templating, and compare to sorted
-        awk '/env:/ {flag=1; next} /ports:/ {flag=0} flag && /^ *- name:/' "$ENV_PATH" | sed 's/^ *- name: //' > /tmp/env_vars.txt
-        sort -d /tmp/env_vars.txt > /tmp/env_vars_sorted.txt
-        if ! diff -u --color=always /tmp/env_vars.txt /tmp/env_vars_sorted.txt; then
-          echo "Environment variables in deployment.yaml are not sorted alphabetically!"
-          exit 1
-        fi
-        echo "Environment variables in deployment.yaml are sorted alphabetically."
-
+      run: scripts/check_env_alphabetical_order.sh resources/keb/templates/deployment.yaml deployment_KEB ports
     - name: Enforce env alphabetical order in runtime-reconciler-deployment.yaml
-      run: |
-        ENV_PATH=resources/keb/templates/runtime-reconciler-deployment.yaml
-        awk '/env:/ {flag=1; next} /volumeMounts:/ {flag=0} flag && /^ *- name:/' "$ENV_PATH" | sed 's/^ *- name: //' > /tmp/env_vars_runtime_reconciler.txt
-        sort /tmp/env_vars_runtime_reconciler.txt > /tmp/env_vars_runtime_reconciler_sorted.txt
-        if ! diff -u --color=always /tmp/env_vars_runtime_reconciler.txt /tmp/env_vars_runtime_reconciler_sorted.txt; then
-          echo "Environment variables in runtime-reconciler-deployment.yaml are not sorted alphabetically!"
-          exit 1
-        fi
-        echo "Environment variables in runtime-reconciler-deployment.yaml are sorted alphabetically."
+      run: scripts/check_env_alphabetical_order.sh resources/keb/templates/runtime-reconciler-deployment.yaml runtime_reconciler
     - name: Enforce env alphabetical order in trial-cleanup-job.yaml
-      run: |
-        ENV_PATH=resources/keb/templates/trial-cleanup-job.yaml
-        awk '/env:/ {flag=1; next} /volumeMounts:/ {flag=0} flag && /^ *- name:/' "$ENV_PATH" | sed 's/^ *- name: //' > /tmp/env_vars_trial_cleanup.txt
-        sort /tmp/env_vars_trial_cleanup.txt > /tmp/env_vars_trial_cleanup_sorted.txt
-        if ! diff -u --color=always /tmp/env_vars_trial_cleanup.txt /tmp/env_vars_trial_cleanup_sorted.txt; then
-          echo "Environment variables in trial-cleanup-job.yaml are not sorted alphabetically!"
-          exit 1
-        fi
-        echo "Environment variables in trial-cleanup-job.yaml are sorted alphabetically."
+      run: scripts/check_env_alphabetical_order.sh resources/keb/templates/trial-cleanup-job.yaml trial_cleanup
     - name: Enforce env alphabetical order in deprovision-retrigger-job.yaml
-      run: |
-        ENV_PATH=resources/keb/templates/deprovision-retrigger-job.yaml
-        awk '/env:/ {flag=1; next} /volumeMounts:/ {flag=0} flag && /^ *- name:/' "$ENV_PATH" | sed 's/^ *- name: //' > /tmp/env_vars_deprovision_retrigger.txt
-        sort /tmp/env_vars_deprovision_retrigger.txt > /tmp/env_vars_deprovision_retrigger_sorted.txt
-        if ! diff -u --color=always /tmp/env_vars_deprovision_retrigger.txt /tmp/env_vars_deprovision_retrigger_sorted.txt; then
-          echo "Environment variables in deprovision-retrigger-job.yaml are not sorted alphabetically!"
-          exit 1
-        fi
-        echo "Environment variables in deprovision-retrigger-job.yaml are sorted alphabetically."
+      run: scripts/check_env_alphabetical_order.sh resources/keb/templates/deprovision-retrigger-job.yaml deprovision_retrigger
     - name: Enforce env alphabetical order in free-cleanup-job.yaml
-      run: |
-        ENV_PATH=resources/keb/templates/free-cleanup-job.yaml
-        awk '/env:/ {flag=1; next} /volumeMounts:/ {flag=0} flag && /^ *- name:/' "$ENV_PATH" | sed 's/^ *- name: //' > /tmp/env_vars_free_cleanup.txt
-        sort /tmp/env_vars_free_cleanup.txt > /tmp/env_vars_free_cleanup_sorted.txt
-        if ! diff -u --color=always /tmp/env_vars_free_cleanup.txt /tmp/env_vars_free_cleanup_sorted.txt; then
-          echo "Environment variables in free-cleanup-job.yaml are not sorted alphabetically!"
-          exit 1
-        fi
-        echo "Environment variables in free-cleanup-job.yaml are sorted alphabetically."
-
+      run: scripts/check_env_alphabetical_order.sh resources/keb/templates/free-cleanup-job.yaml free_cleanup
     - name: Enforce env alphabetical order in service-binding-cleanup-job.yaml
-      run: |
-        ENV_PATH=resources/keb/templates/service-binding-cleanup-job.yaml
-        awk '/env:/ {flag=1; next} /volumeMounts:/ {flag=0} flag && /^ *- name:/' "$ENV_PATH" | sed 's/^ *- name: //' > /tmp/env_vars_service_binding_cleanup.txt
-        sort /tmp/env_vars_service_binding_cleanup.txt > /tmp/env_vars_service_binding_cleanup_sorted.txt
-        if ! diff -u --color=always /tmp/env_vars_service_binding_cleanup.txt /tmp/env_vars_service_binding_cleanup_sorted.txt; then
-          echo "Environment variables in service-binding-cleanup-job.yaml are not sorted alphabetically!"
-          exit 1
-        fi
-        echo "Environment variables in service-binding-cleanup-job.yaml are sorted alphabetically."
-        
+      run: scripts/check_env_alphabetical_order.sh resources/keb/templates/service-binding-cleanup-job.yaml service_binding_cleanup
     - name: Enforce env alphabetical order in globalaccounts.yaml
-      run: |
-        ENV_PATH=resources/keb/templates/globalaccounts.yaml
-        awk '/env:/ {flag=1; next} /volumeMounts:/ {flag=0} flag && /^ *- name:/' "$ENV_PATH" | sed 's/^ *- name: //' > /tmp/env_vars_globalaccounts.txt
-        sort /tmp/env_vars_globalaccounts.txt > /tmp/env_vars_globalaccounts_sorted.txt
-        if ! diff -u --color=always /tmp/env_vars_globalaccounts.txt /tmp/env_vars_globalaccounts_sorted.txt; then
-          echo "Environment variables in globalaccounts.yaml are not sorted alphabetically!"
-          exit 1
-        fi
-        echo "Environment variables in globalaccounts.yaml are sorted alphabetically."
-
+      run: scripts/check_env_alphabetical_order.sh resources/keb/templates/globalaccounts.yaml globalaccounts
     - name: Enforce env alphabetical order in subaccount-sync-deployment.yaml
-      run: |
-        ENV_PATH=resources/keb/templates/subaccount-sync-deployment.yaml
-        awk '/env:/ {flag=1; next} /volumeMounts:/ {flag=0} flag && /^ *- name:/' "$ENV_PATH" | sed 's/^ *- name: //' > /tmp/env_vars_subaccount_sync.txt
-        sort /tmp/env_vars_subaccount_sync.txt > /tmp/env_vars_subaccount_sync_sorted.txt
-        if ! diff -u --color=always /tmp/env_vars_subaccount_sync.txt /tmp/env_vars_subaccount_sync_sorted.txt; then
-          echo "Environment variables in subaccount-sync-deployment.yaml are not sorted alphabetically!"
-          exit 1
-        fi
-        echo "Environment variables in subaccount-sync-deployment.yaml are sorted alphabetically."
-
+      run: scripts/check_env_alphabetical_order.sh resources/keb/templates/subaccount-sync-deployment.yaml subaccount_sync
     - name: Enforce env alphabetical order in migrator-job.yaml
-      run: |
-        ENV_PATH=resources/keb/templates/migrator-job.yaml
-        awk '/env:/ {flag=1; next} /volumeMounts:/ {flag=0} flag && /^ *- name:/' "$ENV_PATH" | sed 's/^ *- name: //' > /tmp/env_vars_migrator_job.txt
-        sort /tmp/env_vars_migrator_job.txt > /tmp/env_vars_migrator_job_sorted.txt
-        if ! diff -u --color=always /tmp/env_vars_migrator_job.txt /tmp/env_vars_migrator_job_sorted.txt; then
-          echo "Environment variables in migrator-job.yaml are not sorted alphabetically!"
-          exit 1
-        fi
-        echo "Environment variables in migrator-job.yaml are sorted alphabetically."
+      run: scripts/check_env_alphabetical_order.sh resources/keb/templates/migrator-job.yaml migrator_job
       
   prepare-tests:
     runs-on: ubuntu-latest
