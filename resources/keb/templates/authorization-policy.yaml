@@ -60,10 +60,9 @@ spec:
     from:
       - source:
           requestPrincipals:
-          {{- $oidcs := .Values.oidcs | default list }}
-          {{- if gt (len $oidcs) 0 }}
-          {{- range $i, $p := $oidcs }}
-          - {{ $p.issuer }}/*
+          {{- if .Values.oidc.issuers }}
+          {{- range $i, $p := .Values.oidc.issuers }}
+          - {{ $p}}/*
           {{- end }}
           {{- else }}
           - {{ tpl .Values.oidc.issuer $ }}/*
