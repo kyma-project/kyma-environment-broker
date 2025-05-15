@@ -207,6 +207,8 @@ freeExpirationPeriod: 720h
 freemiumWhitelistedGlobalAccountIds: |-
   whitelist:
 
+fullnameOverride: "kcp-kyma-environment-broker"
+
 # ========================
 # Gardener Settings
 # ========================
@@ -323,8 +325,11 @@ hap:
     # pool: hyperscalerType: azure
 # ========================
 
+host: "kyma-env-broker"
+
 # Name of the Kubernetes Secret used for pulling container images from private registries.
 imagePullSecret: ""
+imagePullSecrets: [ ]
 # If true, additional (advanced or less common) parameters are included in the provisioning schema for service plans.
 # This allows users to configure more options when provisioning a Kyma environment. If false, only the most common parameters are shown.
 includeAdditionalParamsInSchema: "false"
@@ -353,6 +358,7 @@ infrastructureManager:
   # If true, enables provisioning of clusters with nodes distributed across multiple availability zones for higher availability.
   multiZoneCluster: "false"
   # If true, provisions trial, freemium, and azure_lite clusters using smaller/cheaper machine types.
+  useSmallerMachineTypes: "false"
 # =========================
 
 kebClient:
@@ -365,6 +371,8 @@ kubeconfig:
 lifecycleManager:
   # When disabled, the broker will not create, update, or delete Kyma custom resources
   disabled: "false"
+
+manageSecrets: true
 
 # =========================
 # Metrics Settings
@@ -402,6 +410,8 @@ migratorJobs:
 
 # If true, generates kubeconfig files with multiple contexts (if possible) instead of a single context.
 multipleContexts: false
+namePrefix: "kcp"
+nameOverride: "kyma-environment-broker"
 
 # =========================
 # OIDC Settings
@@ -537,6 +547,7 @@ subaccountCleanup:
   nameV1: "kcp-subaccount-cleaner-v1.0"
   nameV2: "kcp-subaccount-cleaner-v2.0"
   schedule: "0 1 * * *"
+subaccountsIdsToShowTrialExpirationInfo: "a45be5d8-eddc-4001-91cf-48cc644d571f"
 subaccountSync:
   # Interval between full account synchronization runs (e.g., 24h = every 24 hours).
   accountSyncInterval: 24h
