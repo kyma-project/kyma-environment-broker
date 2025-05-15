@@ -355,8 +355,6 @@ infrastructureManager:
   # If true, provisions trial, freemium, and azure_lite clusters using smaller/cheaper machine types.
 # =========================
 
-# REMOVE NOT USED
-kymaResourceDeletionTimeout: 30s
 kebClient:
   # OAuth2 scope(s) used when authenticating requests from the broker to other services
   scope: "broker:write cld:read"
@@ -404,9 +402,6 @@ migratorJobs:
 
 # If true, generates kubeconfig files with multiple contexts (if possible) instead of a single context.
 multipleContexts: false
-# DELETE
-notification:
-  url: "TBD"
 
 # =========================
 # OIDC Settings
@@ -437,10 +432,12 @@ regionsSupportingMachine: |-
     - europe-west3
     - asia-south1
     - us-central1
+
 # List of Kubernetes service account principals allowed to access Kyma Environment Broker endpoints
 # via Istio AuthorizationPolicy, bypassing OIDC group-based authorization.
 runtimeAllowedPrincipals: |-
   - cluster.local/ns/kcp-system/sa/kcp-kyma-metrics-collector
+
 # Defines the default Kyma custom resource (CR) template and additional runtime configuration.
 runtimeConfiguration: |-
   default: |-
@@ -483,6 +480,7 @@ sapConvergedCloudPlanRegionMappings: |-
   cf-eu21-staging:
     - eu-de-3
     - eu-de-4
+
 service:
   port: 80
   type: ClusterIP
@@ -516,6 +514,7 @@ showTrialExpirationInfo: "false"
 # Contains DNS provider configuration for SKR clusters.
 skrDNSProvidersValues: |-
   providers: []
+
 # Contains the default OIDC configuration for SKR clusters.
 skrOIDCDefaultValues: |-
   clientID: "9bd05ed7-a930-44e6-8c79-e6defeb7dec9"
@@ -525,6 +524,7 @@ skrOIDCDefaultValues: |-
   signingAlgs: [ "RS256" ]
   usernameClaim: "sub"
   usernamePrefix: "-"
+
 stepTimeouts:
   # Maximum time to wait for a runtime resource to be created before considering the step as failed (e.g., 60m = 60 minutes).
   checkRuntimeResourceCreate: 60m
@@ -604,6 +604,7 @@ trialRegionsMapping: |-
   cf-eu10: europe
   cf-us10: us
   cf-ap21: asia
+
 vmscrapes:
   enabled: true
   interval: *scrapeInterval
