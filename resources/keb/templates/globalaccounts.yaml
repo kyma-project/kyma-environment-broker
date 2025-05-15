@@ -30,39 +30,8 @@ spec:
           image: "{{ .Values.global.images.container_registry.path }}/{{ .Values.global.images.kyma_environment_broker.dir }}{{ .Values.globalaccounts.name -}}:{{ .Values.global.images.kyma_environment_globalaccounts.version }}"
           imagePullPolicy: Always
           env:
-            - name: GLOBALACCOUNTS_DRY_RUN
-              value: {{ .Values.globalaccounts.dryRun | quote }}
-            - name: GLOBALACCOUNTS_DATABASE_SECRET_KEY
-              valueFrom:
-                secretKeyRef:
-                  name: kcp-storage-client-secret
-                  key: secretKey
-                  optional: true
-            - name: GLOBALACCOUNTS_DATABASE_USER
-              valueFrom:
-                secretKeyRef:
-                  key: postgresql-broker-username
-                  name: kcp-postgresql
-            - name: GLOBALACCOUNTS_DATABASE_PASSWORD
-              valueFrom:
-                secretKeyRef:
-                  key: postgresql-broker-password
-                  name: kcp-postgresql
-            - name: GLOBALACCOUNTS_DATABASE_HOST
-              valueFrom:
-                secretKeyRef:
-                  key: postgresql-serviceName
-                  name: kcp-postgresql
-            - name: GLOBALACCOUNTS_DATABASE_PORT
-              valueFrom:
-                secretKeyRef:
-                  key: postgresql-servicePort
-                  name: kcp-postgresql
-            - name: GLOBALACCOUNTS_DATABASE_NAME
-              valueFrom:
-                secretKeyRef:
-                  key: postgresql-broker-db-name
-                  name: kcp-postgresql
+            - name: GLOBALACCOUNTS_AUTH_URL
+              value: {{ .Values.cis.accounts.authURL | required "please specify .Values.cis.accounts.authURL" | quote }}
             - name: GLOBALACCOUNTS_CLIENT_ID
               valueFrom:
                 secretKeyRef:
@@ -73,10 +42,32 @@ spec:
                 secretKeyRef:
                   name: {{ .Values.cis.accounts.secretName | required "please specify .Values.cis.accounts.secretName" | quote }}  
                   key: secret
-            - name: GLOBALACCOUNTS_AUTH_URL
-              value: {{ .Values.cis.accounts.authURL | required "please specify .Values.cis.accounts.authURL" | quote }}
-            - name: GLOBALACCOUNTS_SERVICE_URL
-              value: {{ .Values.cis.accounts.serviceURL | required "please specify .Values.cis.accounts.serviceURL" | quote }}
+            - name: GLOBALACCOUNTS_DATABASE_HOST
+              valueFrom:
+                secretKeyRef:
+                  key: postgresql-serviceName
+                  name: kcp-postgresql
+            - name: GLOBALACCOUNTS_DATABASE_NAME
+              valueFrom:
+                secretKeyRef:
+                  key: postgresql-broker-db-name
+                  name: kcp-postgresql
+            - name: GLOBALACCOUNTS_DATABASE_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  key: postgresql-broker-password
+                  name: kcp-postgresql
+            - name: GLOBALACCOUNTS_DATABASE_PORT
+              valueFrom:
+                secretKeyRef:
+                  key: postgresql-servicePort
+                  name: kcp-postgresql
+            - name: GLOBALACCOUNTS_DATABASE_SECRET_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: kcp-storage-client-secret
+                  key: secretKey
+                  optional: true
             - name: GLOBALACCOUNTS_DATABASE_SSLMODE
               valueFrom:
                 secretKeyRef:
@@ -84,7 +75,15 @@ spec:
                   name: kcp-postgresql
             - name: GLOBALACCOUNTS_DATABASE_SSLROOTCERT
               value: /secrets/cloudsql-sslrootcert/server-ca.pem
-
+            - name: GLOBALACCOUNTS_DATABASE_USER
+              valueFrom:
+                secretKeyRef:
+                  key: postgresql-broker-username
+                  name: kcp-postgresql
+            - name: GLOBALACCOUNTS_DRY_RUN
+              value: {{ .Values.globalaccounts.dryRun | quote }}
+            - name: GLOBALACCOUNTS_SERVICE_URL
+              value: {{ .Values.cis.accounts.serviceURL | required "please specify .Values.cis.accounts.serviceURL" | quote }}
         {{- if and (eq .Values.global.database.embedded.enabled false) (eq .Values.global.database.cloudsqlproxy.enabled false)}}
           volumeMounts:
               - name: cloudsql-sslrootcert

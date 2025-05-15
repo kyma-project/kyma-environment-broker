@@ -38,16 +38,10 @@ spec:
               image: "{{ .Values.global.images.container_registry.path }}/{{ .Values.global.images.kyma_environment_broker.dir }}kyma-environment-subaccount-cleanup-job:{{ .Values.global.images.kyma_environments_subaccount_cleanup_job.version }}"
               imagePullPolicy: IfNotPresent
               env:
-                {{if eq .Values.global.database.embedded.enabled true}}
-                - name: DATABASE_EMBEDDED
-                  value: "true"
-                {{end}}
-                {{if eq .Values.global.database.embedded.enabled false}}
-                - name: DATABASE_EMBEDDED
-                  value: "false"
-                {{end}} 
-                - name: APP_CLIENT_VERSION
-                  value: "v1.0"
+                - name: APP_BROKER_URL
+                  value: "http://{{ include "kyma-env-broker.fullname" . }}"
+                - name: APP_CIS_AUTH_URL
+                  value: {{ .Values.cis.v1.authURL }}
                 - name: APP_CIS_CLIENT_ID
                   valueFrom:
                     secretKeyRef:
@@ -58,41 +52,36 @@ spec:
                     secretKeyRef:
                       name: {{ .Values.cis.v1.secretName }}
                       key: secret
-                - name: APP_CIS_AUTH_URL
-                  value: {{ .Values.cis.v1.authURL }}
                 - name: APP_CIS_EVENT_SERVICE_URL
                   value: {{ .Values.cis.v1.eventServiceURL }}
+                - name: APP_CLIENT_VERSION
+                  value: "v1.0"
+                - name: APP_DATABASE_HOST
+                  valueFrom:
+                    secretKeyRef:
+                      name: kcp-postgresql
+                      key: postgresql-serviceName
+                - name: APP_DATABASE_NAME
+                  valueFrom:
+                    secretKeyRef:
+                      name: kcp-postgresql
+                      key: postgresql-broker-db-name
+                - name: APP_DATABASE_PASSWORD
+                  valueFrom:
+                    secretKeyRef:
+                      name: kcp-postgresql
+                      key: postgresql-broker-password
+                - name: APP_DATABASE_PORT
+                  valueFrom:
+                    secretKeyRef:
+                      name: kcp-postgresql
+                      key: postgresql-servicePort
                 - name: APP_DATABASE_SECRET_KEY
                   valueFrom:
                     secretKeyRef:
                       name: "{{ .Values.global.database.managedGCP.encryptionSecretName }}"
                       key: secretKey
                       optional: true
-                - name: APP_DATABASE_USER
-                  valueFrom:
-                    secretKeyRef:
-                      name: kcp-postgresql
-                      key: postgresql-broker-username
-                - name: APP_DATABASE_PASSWORD
-                  valueFrom:
-                    secretKeyRef:
-                      name: kcp-postgresql
-                      key: postgresql-broker-password
-                - name: APP_DATABASE_HOST
-                  valueFrom:
-                    secretKeyRef:
-                      name: kcp-postgresql
-                      key: postgresql-serviceName
-                - name: APP_DATABASE_PORT
-                  valueFrom:
-                    secretKeyRef:
-                      name: kcp-postgresql
-                      key: postgresql-servicePort
-                - name: APP_DATABASE_NAME
-                  valueFrom:
-                    secretKeyRef:
-                      name: kcp-postgresql
-                      key: postgresql-broker-db-name
                 - name: APP_DATABASE_SSLMODE
                   valueFrom:
                     secretKeyRef:
@@ -100,8 +89,13 @@ spec:
                       key: postgresql-sslMode
                 - name: APP_DATABASE_SSLROOTCERT
                   value: /secrets/cloudsql-sslrootcert/server-ca.pem
-                - name: APP_BROKER_URL
-                  value: "http://{{ include "kyma-env-broker.fullname" . }}"
+                - name: APP_DATABASE_USER
+                  valueFrom:
+                    secretKeyRef:
+                      name: kcp-postgresql
+                      key: postgresql-broker-username
+                - name: DATABASE_EMBEDDED
+                  value: "{{ .Values.global.database.embedded.enabled }}"
               command:
                 - "/bin/main"
               volumeMounts:
@@ -183,16 +177,10 @@ spec:
               image: "{{ .Values.global.images.container_registry.path }}/{{ .Values.global.images.kyma_environment_broker.dir }}kyma-environment-subaccount-cleanup-job:{{ .Values.global.images.kyma_environments_subaccount_cleanup_job.version }}"
               imagePullPolicy: IfNotPresent
               env:
-                {{if eq .Values.global.database.embedded.enabled true}}
-                - name: DATABASE_EMBEDDED
-                  value: "true"
-                {{end}}
-                {{if eq .Values.global.database.embedded.enabled false}}
-                - name: DATABASE_EMBEDDED
-                  value: "false"
-                {{end}}  
-                - name: APP_CLIENT_VERSION
-                  value: "v2.0"
+                - name: APP_BROKER_URL
+                  value: "http://{{ include "kyma-env-broker.fullname" . }}"
+                - name: APP_CIS_AUTH_URL
+                  value: {{ .Values.cis.v2.authURL }}
                 - name: APP_CIS_CLIENT_ID
                   valueFrom:
                     secretKeyRef:
@@ -203,47 +191,42 @@ spec:
                     secretKeyRef:
                       name: {{ .Values.cis.v2.secretName }}
                       key: secret
-                - name: APP_CIS_AUTH_URL
-                  value: {{ .Values.cis.v2.authURL }}
                 - name: APP_CIS_EVENT_SERVICE_URL
                   value: {{ .Values.cis.v2.eventServiceURL }}
-                - name: APP_CIS_REQUEST_INTERVAL
-                  value: {{ .Values.cis.v2.requestInterval | quote }}
-                - name: APP_CIS_RATE_LIMITING_INTERVAL
-                  value: {{ .Values.cis.v2.rateLimitingInterval | quote }}
                 - name: APP_CIS_MAX_REQUEST_RETRIES
                   value: {{ .Values.cis.v2.maxRequestRetries | quote }}
+                - name: APP_CIS_RATE_LIMITING_INTERVAL
+                  value: {{ .Values.cis.v2.rateLimitingInterval | quote }}
+                - name: APP_CIS_REQUEST_INTERVAL
+                  value: {{ .Values.cis.v2.requestInterval | quote }}
+                - name: APP_CLIENT_VERSION
+                  value: "v2.0"
+                - name: APP_DATABASE_HOST
+                  valueFrom:
+                    secretKeyRef:
+                      name: kcp-postgresql
+                      key: postgresql-serviceName
+                - name: APP_DATABASE_NAME
+                  valueFrom:
+                    secretKeyRef:
+                      name: kcp-postgresql
+                      key: postgresql-broker-db-name
+                - name: APP_DATABASE_PASSWORD
+                  valueFrom:
+                    secretKeyRef:
+                      name: kcp-postgresql
+                      key: postgresql-broker-password
+                - name: APP_DATABASE_PORT
+                  valueFrom:
+                    secretKeyRef:
+                      name: kcp-postgresql
+                      key: postgresql-servicePort
                 - name: APP_DATABASE_SECRET_KEY
                   valueFrom:
                     secretKeyRef:
                       name: "{{ .Values.global.database.managedGCP.encryptionSecretName }}"
                       key: secretKey
                       optional: true
-                - name: APP_DATABASE_USER
-                  valueFrom:
-                    secretKeyRef:
-                      name: kcp-postgresql
-                      key: postgresql-broker-username
-                - name: APP_DATABASE_PASSWORD
-                  valueFrom:
-                    secretKeyRef:
-                      name: kcp-postgresql
-                      key: postgresql-broker-password
-                - name: APP_DATABASE_HOST
-                  valueFrom:
-                    secretKeyRef:
-                      name: kcp-postgresql
-                      key: postgresql-serviceName
-                - name: APP_DATABASE_PORT
-                  valueFrom:
-                    secretKeyRef:
-                      name: kcp-postgresql
-                      key: postgresql-servicePort
-                - name: APP_DATABASE_NAME
-                  valueFrom:
-                    secretKeyRef:
-                      name: kcp-postgresql
-                      key: postgresql-broker-db-name
                 - name: APP_DATABASE_SSLMODE
                   valueFrom:
                     secretKeyRef:
@@ -251,8 +234,13 @@ spec:
                       key: postgresql-sslMode
                 - name: APP_DATABASE_SSLROOTCERT
                   value: /secrets/cloudsql-sslrootcert/server-ca.pem
-                - name: APP_BROKER_URL
-                  value: "http://{{ include "kyma-env-broker.fullname" . }}"
+                - name: APP_DATABASE_USER
+                  valueFrom:
+                    secretKeyRef:
+                      name: kcp-postgresql
+                      key: postgresql-broker-username
+                - name: DATABASE_EMBEDDED
+                  value: "{{ .Values.global.database.embedded.enabled }}"
               command:
                 - "/bin/main"
               volumeMounts:

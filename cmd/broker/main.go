@@ -30,7 +30,6 @@ import (
 	"github.com/kyma-project/kyma-environment-broker/internal/httputil"
 	"github.com/kyma-project/kyma-environment-broker/internal/kubeconfig"
 	"github.com/kyma-project/kyma-environment-broker/internal/metricsv2"
-	"github.com/kyma-project/kyma-environment-broker/internal/notification"
 	"github.com/kyma-project/kyma-environment-broker/internal/process"
 	"github.com/kyma-project/kyma-environment-broker/internal/provider"
 	"github.com/kyma-project/kyma-environment-broker/internal/regionssupportingmachine"
@@ -106,8 +105,6 @@ type Config struct {
 
 	EDP edp.Config
 
-	Notification notification.Config
-
 	KymaDashboardConfig dashboard.Config
 
 	TrialRegionMappingFilePath string
@@ -141,8 +138,6 @@ type Config struct {
 	ArchiveDryRun   bool `envconfig:"default=true"`
 	CleaningEnabled bool `envconfig:"default=false"`
 	CleaningDryRun  bool `envconfig:"default=true"`
-
-	KymaResourceDeletionTimeout time.Duration `envconfig:"default=30s"`
 
 	RuntimeConfigurationConfigMapName string `envconfig:"default=keb-runtime-config"`
 

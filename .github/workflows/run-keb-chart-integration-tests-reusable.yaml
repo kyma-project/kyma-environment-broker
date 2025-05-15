@@ -36,7 +36,34 @@ jobs:
       run: |
         cd resources/keb
         helm template .
-  
+
+    - name: Enforce env alphabetical order in deployment.yaml (KEB)
+      run: scripts/check_env_alphabetical_order.sh resources/keb/templates/deployment.yaml deployment_KEB ports
+
+    - name: Enforce env alphabetical order in runtime-reconciler-deployment.yaml
+      run: scripts/check_env_alphabetical_order.sh resources/keb/templates/runtime-reconciler-deployment.yaml runtime_reconciler
+
+    - name: Enforce env alphabetical order in trial-cleanup-job.yaml
+      run: scripts/check_env_alphabetical_order.sh resources/keb/templates/trial-cleanup-job.yaml trial_cleanup
+
+    - name: Enforce env alphabetical order in deprovision-retrigger-job.yaml
+      run: scripts/check_env_alphabetical_order.sh resources/keb/templates/deprovision-retrigger-job.yaml deprovision_retrigger
+
+    - name: Enforce env alphabetical order in free-cleanup-job.yaml
+      run: scripts/check_env_alphabetical_order.sh resources/keb/templates/free-cleanup-job.yaml free_cleanup
+
+    - name: Enforce env alphabetical order in service-binding-cleanup-job.yaml
+      run: scripts/check_env_alphabetical_order.sh resources/keb/templates/service-binding-cleanup-job.yaml service_binding_cleanup
+
+    - name: Enforce env alphabetical order in globalaccounts.yaml
+      run: scripts/check_env_alphabetical_order.sh resources/keb/templates/globalaccounts.yaml globalaccounts
+
+    - name: Enforce env alphabetical order in subaccount-sync-deployment.yaml
+      run: scripts/check_env_alphabetical_order.sh resources/keb/templates/subaccount-sync-deployment.yaml subaccount_sync
+      
+    - name: Enforce env alphabetical order in migrator-job.yaml
+      run: scripts/check_env_alphabetical_order.sh resources/keb/templates/migrator-job.yaml migrator_job
+      
   prepare-tests:
     runs-on: ubuntu-latest
     needs: validate-keb-helm-chart

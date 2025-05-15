@@ -39,7 +39,7 @@ func NewDeprovisioningProcessingQueue(ctx context.Context, workersAmount int, de
 		},
 		{
 			disabled: cfg.LifecycleManagerIntegrationDisabled,
-			step:     deprovisioning.NewCheckKymaResourceDeletedStep(db, kcpClient, cfg.KymaResourceDeletionTimeout),
+			step:     deprovisioning.NewCheckKymaResourceDeletedStep(db, kcpClient),
 		},
 		{
 			step: deprovisioning.NewDeleteRuntimeResourceStep(db, kcpClient),

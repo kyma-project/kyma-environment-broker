@@ -35,48 +35,32 @@ spec:
             name: http
             protocol: TCP
           env:
-            - name: RUNTIME_RECONCILER_DRY_RUN
-              value: "{{ .Values.runtimeReconciler.dryRun }}"
-            - name: RUNTIME_RECONCILER_METRICS_PORT
-              value: {{ .Values.runtimeReconciler.metricsPort | quote }}
-
-            - name: RUNTIME_RECONCILER_JOB_ENABLED
-              value: "{{ .Values.runtimeReconciler.jobEnabled }}"
-            - name: RUNTIME_RECONCILER_JOB_INTERVAL
-              value: "{{ .Values.runtimeReconciler.jobInterval }}"
-            - name: RUNTIME_RECONCILER_JOB_RECONCILIATION_DELAY
-              value: "{{ .Values.runtimeReconciler.jobReconciliationDelay }}"
+            - name: RUNTIME_RECONCILER_DATABASE_HOST
+              valueFrom:
+                secretKeyRef:
+                  name: kcp-postgresql
+                  key: postgresql-serviceName
+            - name: RUNTIME_RECONCILER_DATABASE_NAME
+              valueFrom:
+                secretKeyRef:
+                  name: kcp-postgresql
+                  key: postgresql-broker-db-name
+            - name: RUNTIME_RECONCILER_DATABASE_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: kcp-postgresql
+                  key: postgresql-broker-password
+            - name: RUNTIME_RECONCILER_DATABASE_PORT
+              valueFrom:
+                secretKeyRef:
+                  name: kcp-postgresql
+                  key: postgresql-servicePort
             - name: RUNTIME_RECONCILER_DATABASE_SECRET_KEY
               valueFrom:
                 secretKeyRef:
                   name: kcp-storage-client-secret
                   key: secretKey
                   optional: true
-            - name: RUNTIME_RECONCILER_DATABASE_USER
-              valueFrom:
-                secretKeyRef:
-                  name: kcp-postgresql
-                  key: postgresql-broker-username
-            - name: RUNTIME_RECONCILER_DATABASE_PASSWORD
-              valueFrom:
-                secretKeyRef:
-                  name: kcp-postgresql
-                  key: postgresql-broker-password
-            - name: RUNTIME_RECONCILER_DATABASE_HOST
-              valueFrom:
-                secretKeyRef:
-                  name: kcp-postgresql
-                  key: postgresql-serviceName
-            - name: RUNTIME_RECONCILER_DATABASE_PORT
-              valueFrom:
-                secretKeyRef:
-                  name: kcp-postgresql
-                  key: postgresql-servicePort
-            - name: RUNTIME_RECONCILER_DATABASE_NAME
-              valueFrom:
-                secretKeyRef:
-                  name: kcp-postgresql
-                  key: postgresql-broker-db-name
             - name: RUNTIME_RECONCILER_DATABASE_SSLMODE
               valueFrom:
                 secretKeyRef:
@@ -84,7 +68,21 @@ spec:
                   key: postgresql-sslMode
             - name: RUNTIME_RECONCILER_DATABASE_SSLROOTCERT
               value: /secrets/cloudsql-sslrootcert/server-ca.pem
-
+            - name: RUNTIME_RECONCILER_DATABASE_USER
+              valueFrom:
+                secretKeyRef:
+                  name: kcp-postgresql
+                  key: postgresql-broker-username
+            - name: RUNTIME_RECONCILER_DRY_RUN
+              value: "{{ .Values.runtimeReconciler.dryRun }}"
+            - name: RUNTIME_RECONCILER_JOB_ENABLED
+              value: "{{ .Values.runtimeReconciler.jobEnabled }}"
+            - name: RUNTIME_RECONCILER_JOB_INTERVAL
+              value: "{{ .Values.runtimeReconciler.jobInterval }}"
+            - name: RUNTIME_RECONCILER_JOB_RECONCILIATION_DELAY
+              value: "{{ .Values.runtimeReconciler.jobReconciliationDelay }}"
+            - name: RUNTIME_RECONCILER_METRICS_PORT
+              value: {{ .Values.runtimeReconciler.metricsPort | quote }}
         {{- if and (eq .Values.global.database.embedded.enabled false) (eq .Values.global.database.cloudsqlproxy.enabled false)}}
           volumeMounts:
               - name: cloudsql-sslrootcert
