@@ -396,8 +396,6 @@ vmscrapes:
 dashboardConfig:
   landscapeURL: "https://dashboard.dev.kyma.cloud.sap"
 
-cronJobs:
-
 runtimeReconciler:
   enabled: false
   dryRun: true
