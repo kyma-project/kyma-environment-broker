@@ -249,6 +249,9 @@ global:
     kyma_environment_broker_schema_migrator:
       dir:
       version: 1.19.1
+    kyma_environment_deprovision_retrigger_job:
+      dir:
+      version: "1.19.1"
     kyma_environment_expirator_job:
       dir:
       version: "1.19.1"
