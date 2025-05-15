@@ -2730,6 +2730,90 @@ func TestAdditionalProperties(t *testing.T) {
 		assert.Equal(t, instanceID, entry["instanceID"])
 	})
 
+	t.Run("file should contain two requests with additional properties", func(t *testing.T) {
+		// given
+		tempDir := t.TempDir()
+		expectedFile := filepath.Join(tempDir, additionalproperties.ProvisioningRequestsFileName)
+
+		log := slog.New(slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{
+			Level: slog.LevelInfo,
+		}))
+
+		memoryStorage := storage.NewMemoryStorage()
+
+		queue := &automock.Queue{}
+		queue.On("Add", mock.AnythingOfType("string"))
+
+		factoryBuilder := &automock.PlanValidator{}
+		factoryBuilder.On("IsPlanSupport", broker.AWSPlanID).Return(true)
+
+		kcBuilder := &kcMock.KcBuilder{}
+		kcBuilder.On("GetServerURL", "").Return("", fmt.Errorf("error"))
+		// #create provisioner endpoint
+		provisionEndpoint := broker.NewProvision(
+			broker.Config{
+				EnablePlans:                 []string{"aws"},
+				URL:                         brokerURL,
+				OnlySingleTrialPerGA:        true,
+				MonitorAdditionalProperties: true,
+				AdditionalPropertiesPath:    tempDir,
+			},
+			gardener.Config{Project: "test", ShootDomain: "example.com", DNSProviders: fixDNSProviders()},
+			imConfigFixture,
+			memoryStorage,
+			queue,
+			broker.PlansConfig{},
+			log,
+			dashboardConfig,
+			kcBuilder,
+			whitelist.Set{},
+			&broker.OneForAllConvergedCloudRegionsProvider{},
+			fixRegionsSupportingMachine(),
+			fixValueProvider(),
+			false,
+			false,
+		)
+
+		// when
+		_, err := provisionEndpoint.Provision(fixRequestContext(t, "cf-eu10"), instanceID, domain.ProvisionDetails{
+			ServiceID:     serviceID,
+			PlanID:        broker.AWSPlanID,
+			RawParameters: json.RawMessage(fmt.Sprintf(`{"name": "%s", "region": "%s", "test": "test"}`, clusterName, "eu-central-1")),
+			RawContext:    json.RawMessage(fmt.Sprintf(`{"globalaccount_id": "%s", "subaccount_id": "%s", "user_id": "%s"}`, "any-global-account-id", subAccountID, "Test@Test.pl")),
+		}, true)
+		t.Logf("%+v\n", *provisionEndpoint)
+		assert.NoError(t, err)
+
+		_, err = provisionEndpoint.Provision(fixRequestContext(t, "cf-eu10"), instanceID, domain.ProvisionDetails{
+			ServiceID:     serviceID,
+			PlanID:        broker.AWSPlanID,
+			RawParameters: json.RawMessage(fmt.Sprintf(`{"name": "%s", "region": "%s", "test": "test"}`, clusterName, "eu-central-1")),
+			RawContext:    json.RawMessage(fmt.Sprintf(`{"globalaccount_id": "%s", "subaccount_id": "%s", "user_id": "%s"}`, "any-global-account-id", subAccountID, "Test@Test.pl")),
+		}, true)
+		t.Logf("%+v\n", *provisionEndpoint)
+		assert.NoError(t, err)
+
+		// then
+		contents, err := os.ReadFile(expectedFile)
+		assert.NoError(t, err)
+
+		lines := bytes.Split(contents, []byte("\n"))
+		assert.Equal(t, len(lines), 3)
+		var entry map[string]interface{}
+
+		err = json.Unmarshal(lines[0], &entry)
+		assert.NoError(t, err)
+		assert.Equal(t, "any-global-account-id", entry["globalAccountID"])
+		assert.Equal(t, subAccountID, entry["subAccountID"])
+		assert.Equal(t, instanceID, entry["instanceID"])
+
+		err = json.Unmarshal(lines[1], &entry)
+		assert.NoError(t, err)
+		assert.Equal(t, "any-global-account-id", entry["globalAccountID"])
+		assert.Equal(t, subAccountID, entry["subAccountID"])
+		assert.Equal(t, instanceID, entry["instanceID"])
+	})
+
 	t.Run("file should not contain request without additional properties", func(t *testing.T) {
 		// given
 		tempDir := t.TempDir()

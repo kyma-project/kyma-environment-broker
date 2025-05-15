@@ -1578,6 +1578,67 @@ func TestUpdateAdditionalProperties(t *testing.T) {
 		assert.Equal(t, instanceID, entry["instanceID"])
 	})
 
+	t.Run("file should contain two requests with additional properties", func(t *testing.T) {
+		// given
+		tempDir := t.TempDir()
+		expectedFile := filepath.Join(tempDir, additionalproperties.UpdateRequestsFileName)
+		instance := fixture.FixInstance(instanceID)
+		st := storage.NewMemoryStorage()
+		err := st.Instances().Insert(instance)
+		require.NoError(t, err)
+		err = st.Operations().InsertProvisioningOperation(fixProvisioningOperation("provisioning01"))
+		require.NoError(t, err)
+
+		handler := &handler{}
+		q := &automock.Queue{}
+		q.On("Add", mock.AnythingOfType("string"))
+
+		kcBuilder := &kcMock.KcBuilder{}
+		kcBuilder.On("GetServerURL", mock.Anything).Return("https://kcp.example.dummy", nil)
+		svc := broker.NewUpdate(broker.Config{MonitorAdditionalProperties: true, AdditionalPropertiesPath: tempDir}, st, handler, true, true, false, q, broker.PlansConfig{},
+			fixValueProvider(), fixLogger(), dashboardConfig, kcBuilder, &broker.OneForAllConvergedCloudRegionsProvider{}, fakeKcpK8sClient, regionssupportingmachine.RegionsSupportingMachine{}, imConfigFixture, false)
+
+		// when
+		_, err = svc.Update(context.Background(), instanceID, domain.UpdateDetails{
+			ServiceID:       "",
+			PlanID:          broker.AzurePlanID,
+			RawParameters:   json.RawMessage("{\"machineType\":\"Standard_D16s_v5\",\"test\":\"test\"}"),
+			PreviousValues:  domain.PreviousValues{},
+			RawContext:      json.RawMessage("{\"globalaccount_id\":\"globalaccount_id_1\", \"subaccount_id\":\"subaccount_id_1\", \"active\":true}"),
+			MaintenanceInfo: nil,
+		}, true)
+		assert.NoError(t, err)
+
+		_, err = svc.Update(context.Background(), instanceID, domain.UpdateDetails{
+			ServiceID:       "",
+			PlanID:          broker.AzurePlanID,
+			RawParameters:   json.RawMessage("{\"machineType\":\"Standard_D16s_v5\",\"test\":\"test\"}"),
+			PreviousValues:  domain.PreviousValues{},
+			RawContext:      json.RawMessage("{\"globalaccount_id\":\"globalaccount_id_1\", \"subaccount_id\":\"subaccount_id_1\", \"active\":true}"),
+			MaintenanceInfo: nil,
+		}, true)
+		assert.NoError(t, err)
+
+		// then
+		contents, err := os.ReadFile(expectedFile)
+		assert.NoError(t, err)
+		lines := bytes.Split(contents, []byte("\n"))
+		assert.Equal(t, len(lines), 3)
+		var entry map[string]interface{}
+
+		err = json.Unmarshal(lines[0], &entry)
+		assert.NoError(t, err)
+		assert.Equal(t, "globalaccount_id_1", entry["globalAccountID"])
+		assert.Equal(t, "subaccount_id_1", entry["subAccountID"])
+		assert.Equal(t, instanceID, entry["instanceID"])
+
+		err = json.Unmarshal(lines[1], &entry)
+		assert.NoError(t, err)
+		assert.Equal(t, "globalaccount_id_1", entry["globalAccountID"])
+		assert.Equal(t, "subaccount_id_1", entry["subAccountID"])
+		assert.Equal(t, instanceID, entry["instanceID"])
+	})
+
 	t.Run("file should not contain request without additional properties", func(t *testing.T) {
 		// given
 		tempDir := t.TempDir()
