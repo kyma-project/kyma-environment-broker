@@ -1,10 +1,14 @@
-# Allow update of expired instance only if context contains globalaccount_id (see docs/contributor/03-30-trial-and-free-expiration.md)
+# Allow update of expired instance only if context contains globalaccount_id
 allowUpdateExpiredInstanceWithContext: "false"
 archiving:
   # If true, enables the archiving mechanism, which stores data about deprovisioned instances in an archive table at the end of the deprovisioning process (before cleaning).
   enabled: false
   # If true, runs the archiving process in dry-run mode: no changes are made to the database, only logs what would be archived or deleted.
   dryRun: true
+
+# =========================
+# Service Binding Settings
+# =========================
 binding:
   # Comma-separated list of plan names for which service binding is enabled (e.g. "aws,gcp")
   bindablePlans: "aws"
@@ -20,6 +24,11 @@ binding:
   maxExpirationSeconds: 7200
   # Minimum allowed expiration time (in seconds) for a binding
   minExpirationSeconds: 600
+# =========================
+
+# =========================
+# Broker Settings
+# =========================
 broker:
   # Default platform region for requests if not specified (e.g. "cf-eu10")
   defaultRequestRegion: "cf-eu10"
@@ -49,6 +58,11 @@ broker:
   updateCustomResourcesLabelsOnAccountMove: "false"
   # If true, enables the new list-based OIDC schema, allowing multiple OIDC configurations to be specified for a runtime.
   useAdditionalOIDCSchema: "false"
+# =========================
+
+# =========================
+# Database Settings
+# =========================
 cleaning:
   # If true, the cleaning process runs in dry-run mode and does not actually delete any data from the database.
   # Only logs what would be deleted. 
@@ -57,6 +71,11 @@ cleaning:
   # This includes deleting the instance record, all related operations, and all runtime states associated with those operations.
   # If false, the cleaning process is disabled and no cleanup will be performed.
   enabled: false
+# ==========================
+
+# ========================
+# CIS Jobs Settings
+# ========================
 cis:
   accounts:
     # The OAuth2 token endpoint (authorization URL) used to obtain access tokens for authenticating requests to the CIS Accounts API.
@@ -99,9 +118,15 @@ cis:
     rateLimitingInterval: "2s"
     # The interval between requests to the CIS v2 API.
     requestInterval: "200ms"
+# ========================
+
 dashboardConfig:
   # The base URL of the Kyma Dashboard used to generate links to the web UI for Kyma environments.
   landscapeURL: "https://dashboard.dev.kyma.cloud.sap"
+
+# ========================
+# Deployment Settings
+# ========================
 deployment:
   image:
     pullPolicy: Always
@@ -110,6 +135,11 @@ deployment:
   securityContext:
     runAsUser: 2000
   strategy: { }
+# ========================
+
+# ========================
+# Deprovision Retrigger Settings
+# ========================
 deprovisionRetrigger:
   # If true, the job runs in dry-run mode and does not actually retrigger deprovisioning (only logs what would be done).
   dryRun: true
@@ -117,6 +147,8 @@ deprovisionRetrigger:
   enabled: true
   # The cron schedule for running the Deprovision Retrigger job.
   schedule: "0 2 * * *"
+# =========================
+
 # If true, the broker will NOT resume processing operations (provisioning, deprovisioning, updating, etc.) that were in progress when the broker process last stopped or restarted.
 disableProcessOperationsInProgress: "false"
 # If true, disables the SAP Converged Cloud plan in the Kyma Environment Broker. When set to true, users cannot provision SAP Converged Cloud clusters
@@ -124,7 +156,10 @@ disableSapConvergedCloud: false
 # Comma-separated list of plan names that are enabled and available for provisioning in the Kyma Environment Broker.
 # Only the plans listed here will be offered to users via the service catalog and API. Example: "azure,gcp,azure_lite,trial,aws"
 enablePlans: "azure,gcp,azure_lite,trial,aws"
-# Configuration for the EDP integration.
+
+# =========================
+# EDP Settings
+# =========================
 edp:
   # Base URL for the EDP admin API
   adminURL: "TBD"
@@ -142,7 +177,11 @@ edp:
   secret: "TBD"
   # Name of the Kubernetes Secret containing EDP credentials
   secretName: "edp-creds"
-# Periodically deletes expired free Kyma environments.
+# =========================
+
+# =========================
+# Free Cleanup Settings
+# =========================
 freeCleanup:
   # If true, the job only logs what would be deleted without actually removing any data.
   dryRun: true
@@ -156,6 +195,8 @@ freeCleanup:
   testRun: false
   # Subaccount ID used for test runs.
   testSubaccountID: "prow-keb-trial-suspension"
+# =========================
+
 # URL to the documentation for free Kyma environments. Used in API responses and UI labels to direct users to help or documentation about free plans.
 freeDocsURL: "https://help.sap.com/docs/"
 # Specifies the duration (e.g., 720h = 30 days) after which a free Kyma environment is considered expired.
@@ -165,6 +206,10 @@ freeExpirationPeriod: 720h
 # Only accounts listed here can provision more than the default limit of free environments.
 freemiumWhitelistedGlobalAccountIds: |-
   whitelist:
+
+# ========================
+# Gardener Settings
+# ========================
 gardener:
   # Comma-separated list of cloud providers that support freemium plans.
   freemiumProviders: "azure,aws"
@@ -176,6 +221,11 @@ gardener:
   secretName: "gardener-credentials"
   # Default domain for shoots (clusters) created by Gardener.
   shootDomain: "kyma-dev.shoot.canary.k8s-hana.ondemand.com"
+# ========================
+
+# ========================
+# Global Settings
+# ========================
 global:
   database:
     cloudsqlproxy:
@@ -238,6 +288,11 @@ global:
       mount: kcp-dev
       namespace: kyma
       refreshAfter: 30s
+# ========================
+
+# ========================
+# Global Accounts Settings
+# ========================
 globalaccounts:
   # If true, runs the global accounts synchronization job in dry-run mode (no changes are made).
   dryRun: true
@@ -245,6 +300,11 @@ globalaccounts:
   enabled: false
   # Name of the global accounts synchronization job or deployment.
   name: "kyma-environment-globalaccounts"
+# =========================
+
+# ========================
+# HAP Settings
+# ========================
 hap:
   # Rules for mapping plans and regions to hyperscaler account pools.
   rule:
@@ -261,11 +321,17 @@ hap:
     - preview                         # pool: hyperscalerType: aws
     - free                            # pool: hyperscalerType: aws
     # pool: hyperscalerType: azure
+# ========================
+
 # Name of the Kubernetes Secret used for pulling container images from private registries.
 imagePullSecret: ""
 # If true, additional (advanced or less common) parameters are included in the provisioning schema for service plans.
 # This allows users to configure more options when provisioning a Kyma environment. If false, only the most common parameters are shown.
 includeAdditionalParamsInSchema: "false"
+
+# =========================
+# Infrastructure Manager Settings
+# =========================
 infrastructureManager:
   # Sets the failure tolerance level for the Kubernetes control plane in Gardener clusters.
   # Possible values: "node", "zone", or empty (default).
@@ -287,6 +353,8 @@ infrastructureManager:
   # If true, enables provisioning of clusters with nodes distributed across multiple availability zones for higher availability.
   multiZoneCluster: "false"
   # If true, provisions trial, freemium, and azure_lite clusters using smaller/cheaper machine types.
+# =========================
+
 # REMOVE NOT USED
 kymaResourceDeletionTimeout: 30s
 kebClient:
@@ -299,6 +367,10 @@ kubeconfig:
 lifecycleManager:
   # When disabled, the broker will not create, update, or delete Kyma custom resources
   disabled: "false"
+
+# =========================
+# Metrics Settings
+# =========================
 metricsv2:
   # If true, enables metricsv2 collection and Prometheus exposure.
   enabled: false
@@ -310,6 +382,11 @@ metricsv2:
   operationResultRetentionPeriod: 1h
   # How often to poll for operation statistics (e.g., 1m).
   operationStatsPoolingInterval: 1m
+# =========================
+
+# ========================
+# Migrator Jobs Settings
+# ========================
 migratorJobs:
   argosync:
     # If true, enables the ArgoCD sync job for schema migration.
@@ -323,11 +400,17 @@ migratorJobs:
     enabled: true
     # The weight value for the Helm hook.
     weight: "1"
+# ========================
+
 # If true, generates kubeconfig files with multiple contexts (if possible) instead of a single context.
 multipleContexts: false
 # DELETE
 notification:
   url: "TBD"
+
+# =========================
+# OIDC Settings
+# =========================
 oidc:
   groups:
     admin: runtimeAdmin
@@ -373,6 +456,10 @@ runtimeConfiguration: |-
         channel: fast
         modules: []
     additional-components: []
+
+# =========================
+# Runtime Reconciler Settings
+# =========================
 runtimeReconciler:
   # If true, runs the reconciler in dry-run mode (no changes are made, only logs actions).
   dryRun: true
@@ -386,6 +473,8 @@ runtimeReconciler:
   jobReconciliationDelay: 1s
   # Port on which the reconciler exposes Prometheus metrics.
   metricsPort: 8081
+# =========================
+
 # Restricts where the sap-converged-cloud plan is available. If a region is not listed, the plan is not offered for that platform region.
 sapConvergedCloudPlanRegionMappings: |-
   cf-eu20-staging:
@@ -399,8 +488,10 @@ service:
   type: ClusterIP
 serviceAccount:
   annotations: { }
-# Configures the Service Binding Cleanup CronJob, which removes expired service bindings from the Kyma Environment Broker.
-# The job periodically finds expired bindings and sends DELETE requests to clean them up. Supports dry-run mode, request timeout, and retry settings.
+
+# =========================
+# Service Binding Cleanup Settings
+# =========================
 serviceBindingCleanup:
   # If true, the job only logs what would be deleted without actually removing any bindings.
   dryRun: true
@@ -412,6 +503,8 @@ serviceBindingCleanup:
   requestTimeout: 2s
   # Cron schedule for running the cleanup job.
   schedule: "0 2,14 * * *"
+# =========================
+
 serviceMonitor:
   enabled: false
   interval: &scrapeInterval 30s
@@ -485,6 +578,10 @@ testConfig:
   kebDeployment:
     useAnnotations: false
     weight: "2"
+
+# ========================
+# Trial Cleanup Settings
+# ========================
 trialCleanup:
   # If true, the job only logs what would be deleted without actually removing any data.
   dryRun: true
@@ -498,6 +595,8 @@ trialCleanup:
   testRun: false
   # Subaccount ID used for test runs.
   testSubaccountID: "prow-keb-trial-suspension"
+# =========================
+
 # URL to the documentation for trial Kyma environments. Used in API responses and UI labels.
 trialDocsURL: "https://help.sap.com/docs/"
 # Used to determine the Kyma region for a trial environment based on the requested platform region.
@@ -509,6 +608,10 @@ vmscrapes:
   enabled: true
   interval: *scrapeInterval
   scrapeTimeout: *scrapeTimeout
+
+# ========================
+# VSO Secrets Settings
+# ========================
 vsoSecrets:
   secrets:
     cis-accounts:
@@ -571,4 +674,9 @@ vsoSecrets:
         enabled: true
         keys:
           secret: keb_edp_secret
+# =========================
+
+# If true, enables advanced mapping of machine types to specific availability zones within regions.
+# When enabled, the broker restricts and selects zones for worker nodes based on a detailed mapping of which zones support which machine types in each region.
+# When false, only region-level restrictions are applied and zones are chosen generically.
 zoneMapping: false
