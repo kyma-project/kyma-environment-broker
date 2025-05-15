@@ -207,6 +207,7 @@ freeExpirationPeriod: 720h
 freemiumWhitelistedGlobalAccountIds: |-
   whitelist:
 
+# If set, overrides the full name used for Kubernetes resources created by this Helm chart (e.g., Deployment, Service).
 fullnameOverride: "kcp-kyma-environment-broker"
 
 # ========================
@@ -327,8 +328,11 @@ hap:
 
 host: "kyma-env-broker"
 
-# Name of the Kubernetes Secret used for pulling container images from private registries.
+# Name of a single Kubernetes Secret used for pulling container images from private registries.
+# Used to authenticate to a private registry when pulling images for this workload.
 imagePullSecret: ""
+# List of Kubernetes Secret names used for pulling container images from private registries.
+# Allows specifying multiple secrets for image pull authentication.
 imagePullSecrets: [ ]
 # If true, additional (advanced or less common) parameters are included in the provisioning schema for service plans.
 # This allows users to configure more options when provisioning a Kyma environment. If false, only the most common parameters are shown.
@@ -372,6 +376,8 @@ lifecycleManager:
   # When disabled, the broker will not create, update, or delete Kyma custom resources
   disabled: "false"
 
+# If true, this Helm chart will create and manage Kubernetes Secret resources for credentials.
+# Set to false if you want to manage these secrets externally or manually, and prevent the chart from creating them.
 manageSecrets: true
 
 # =========================
@@ -410,7 +416,11 @@ migratorJobs:
 
 # If true, generates kubeconfig files with multiple contexts (if possible) instead of a single context.
 multipleContexts: false
+# Sets the value for the app.kubernetes.io/instance label on Kubernetes resources created by this Helm chart.
+# Useful for identifying, grouping, or filtering resources that belong to the same logical instance or release.
 namePrefix: "kcp"
+# If set, overrides the default chart name used as the base for Kubernetes resource names created by this Helm chart.
+# Useful for customizing resource names across environments or deployments.
 nameOverride: "kyma-environment-broker"
 
 # =========================
