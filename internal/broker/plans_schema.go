@@ -498,7 +498,7 @@ func IngressFilteringProperty() *Type {
 
 // NewProvisioningProperties creates a new properties for different plans
 // Note that the order of properties will be the same in the form on the website
-func NewProvisioningProperties(machineTypesDisplay, additionalMachineTypesDisplay, regionsDisplay map[string]string, machineTypes, additionalMachineTypes, regions []string, update bool, disabledMachineTypeUpdate bool) ProvisioningProperties {
+func NewProvisioningProperties(machineTypesDisplay, additionalMachineTypesDisplay, regionsDisplay map[string]string, machineTypes, additionalMachineTypes, regions []string, update bool) ProvisioningProperties {
 
 	properties := ProvisioningProperties{
 		UpdateProperties: UpdateProperties{
@@ -522,7 +522,7 @@ func NewProvisioningProperties(machineTypesDisplay, additionalMachineTypesDispla
 				EnumDisplayName: machineTypesDisplay,
 				Description:     "Specifies the type of the virtual machine.",
 			},
-			AdditionalWorkerNodePools: NewAdditionalWorkerNodePoolsSchema(additionalMachineTypesDisplay, additionalMachineTypes, disabledMachineTypeUpdate),
+			AdditionalWorkerNodePools: NewAdditionalWorkerNodePoolsSchema(additionalMachineTypesDisplay, additionalMachineTypes),
 		},
 		Name: NameProperty(),
 		Region: &Type{
@@ -606,8 +606,8 @@ func AdministratorsProperty() *Type {
 	}
 }
 
-func NewAdditionalWorkerNodePoolsSchema(machineTypesDisplay map[string]string, machineTypes []string, disabledMachineTypeUpdate bool) *AdditionalWorkerNodePoolsType {
-	additionalWorkerNodePoolsType := &AdditionalWorkerNodePoolsType{
+func NewAdditionalWorkerNodePoolsSchema(machineTypesDisplay map[string]string, machineTypes []string) *AdditionalWorkerNodePoolsType {
+	return &AdditionalWorkerNodePoolsType{
 		Type: Type{
 			Type:        "array",
 			UniqueItems: true,
@@ -631,7 +631,7 @@ func NewAdditionalWorkerNodePoolsSchema(machineTypesDisplay map[string]string, m
 					MinLength:       1,
 					Enum:            ToInterfaceSlice(machineTypes),
 					EnumDisplayName: machineTypesDisplay,
-					Description:     "Specifies the type of the virtual machine. The machine type marked with “*” has limited availability and generates high cost.",
+					Description:     "Specifies the type of the virtual machine. The machine type marked with “*” has limited availability and generates high cost. This setting is permanent, and you cannot change it later. To use a different machine type, you must create a new worker node pool, migrate workloads to it, and decommission the old one.",
 				},
 				HAZones: &Type{
 					Type:        "boolean",
@@ -656,8 +656,4 @@ func NewAdditionalWorkerNodePoolsSchema(machineTypesDisplay map[string]string, m
 			},
 		},
 	}
-	if disabledMachineTypeUpdate {
-		additionalWorkerNodePoolsType.Items.Properties.MachineType.Description = "Specifies the type of the virtual machine. The machine type marked with “*” has limited availability and generates high cost. This setting is permanent, and you cannot change it later. To use a different machine type, you must create a new worker node pool, migrate workloads to it, and decommission the old one."
-	}
-	return additionalWorkerNodePoolsType
 }

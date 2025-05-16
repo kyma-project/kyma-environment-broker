@@ -678,8 +678,7 @@ func (b *ProvisionEndpoint) validator(details *domain.ProvisionDetails, provider
 		assuredworkloads.IsKSA(platformRegion),
 		b.config.UseAdditionalOIDCSchema,
 		b.infrastructureManager.EnableIngressFiltering,
-		b.infrastructureManager.IngressFilteringPlans,
-		b.config.DisableMachineTypeUpdate)
+		b.infrastructureManager.IngressFilteringPlans)
 	plan := plans[details.PlanID]
 
 	return validator.NewFromSchema(plan.Schemas.Instance.Create.Parameters)

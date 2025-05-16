@@ -57,8 +57,6 @@ type Config struct {
 
 	UseAdditionalOIDCSchema bool `envconfig:"default=false"`
 
-	DisableMachineTypeUpdate bool `envconfig:"default=false"`
-
 	MonitorAdditionalProperties bool   `envconfig:"default=false"`
 	AdditionalPropertiesPath    string `envconfig:"default=/additional-properties"`
 }

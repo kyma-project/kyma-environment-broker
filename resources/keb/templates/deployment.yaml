@@ -95,8 +95,6 @@ spec:
               value: "{{ .Values.binding.maxExpirationSeconds}}"
             - name: APP_BROKER_BINDING_MIN_EXPIRATION_SECONDS
               value: "{{ .Values.binding.minExpirationSeconds}}"
-            - name: APP_BROKER_DISABLE_MACHINE_TYPE_UPDATE
-              value: "{{ .Values.broker.disableMachineTypeUpdate }}"
             - name: APP_BROKER_DISABLE_SAP_CONVERGED_CLOUD
               value: "{{ .Values.disableSapConvergedCloud }}"
             - name: APP_BROKER_ENABLE_KUBECONFIG_URL_LABEL

@@ -80,7 +80,6 @@ func (se *ServicesEndpoint) Services(ctx context.Context) ([]domain.Service, err
 		se.cfg.UseAdditionalOIDCSchema,
 		se.ingressFilteringFeatureFlag,
 		se.ingressFilteringPlans,
-		se.cfg.DisableMachineTypeUpdate,
 	) {
 
 		// filter out not enabled plans
