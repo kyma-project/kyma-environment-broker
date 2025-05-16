@@ -181,8 +181,8 @@ broker:
   useAdditionalOIDCSchema: "false"
   monitorAdditionalProperties: false
 
-  events:
-    enabled: true
+events:
+  enabled: true
 
 service:
   type: ClusterIP
