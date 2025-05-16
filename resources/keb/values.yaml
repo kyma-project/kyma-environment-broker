@@ -158,7 +158,6 @@ broker:
     maxBindingsCount: 10
     createBindingTimeout: 15s
   disableSapConvergedCloud: false
-  enableKubeconfigURLLabel: "false"
   enablePlans: "azure,gcp,azure_lite,trial,aws"
   freeDocsURL: "https://help.sap.com/docs/"
   freeExpirationPeriod: 720h
