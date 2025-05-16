@@ -1,11 +1,11 @@
 m8g:
-  - ap-northeast-1
-  - ap-southeast-1
-  - ca-central-1
+  ap-northeast-1: [a, b, c, d]
+  ap-southeast-1: []
+  ca-central-1:
 c2d-highmem:
-  - us-central1
-  - southamerica-east1
+  us-central1:
+  southamerica-east1: [a, b, c]
 Standard_L:
-  - uksouth
-  - japaneast
-  - brazilsouth
+  uksouth: [a]
+  japaneast:
+  brazilsouth: [a, b]

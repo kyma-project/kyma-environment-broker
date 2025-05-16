@@ -15,7 +15,7 @@ import (
 func TestCreateAdditionalWorkers(t *testing.T) {
 	t.Run("should create worker with zones from existing worker", func(t *testing.T) {
 		// given
-		provider := NewProvider(broker.InfrastructureManager{}, nil, true)
+		provider := NewProvider(broker.InfrastructureManager{}, nil)
 		currentAdditionalWorkers := map[string]gardener.Worker{
 			"worker-existing": {
 				Name:  "worker-existing",
@@ -48,7 +48,7 @@ func TestCreateAdditionalWorkers(t *testing.T) {
 
 	t.Run("should create worker with Kyma workload zones", func(t *testing.T) {
 		// given
-		provider := NewProvider(broker.InfrastructureManager{}, nil, true)
+		provider := NewProvider(broker.InfrastructureManager{}, nil)
 		additionalWorkerNodePools := []runtime.AdditionalWorkerNodePool{
 			{
 				Name:        "worker",
@@ -75,7 +75,7 @@ func TestCreateAdditionalWorkers(t *testing.T) {
 
 	t.Run("should create worker with one zone if ha is disabled", func(t *testing.T) {
 		// given
-		provider := NewProvider(broker.InfrastructureManager{}, nil, true)
+		provider := NewProvider(broker.InfrastructureManager{}, nil)
 		additionalWorkerNodePools := []runtime.AdditionalWorkerNodePool{
 			{
 				Name:        "worker",
@@ -108,7 +108,7 @@ func TestCreateAdditionalWorkers(t *testing.T) {
 				"eu-west-1": {"a", "b", "c"},
 			},
 		}
-		provider := NewProvider(broker.InfrastructureManager{}, regionsSupportingMachine, true)
+		provider := NewProvider(broker.InfrastructureManager{}, regionsSupportingMachine)
 		additionalWorkerNodePools := []runtime.AdditionalWorkerNodePool{
 			{
 				Name:        "worker",
@@ -143,7 +143,7 @@ func TestCreateAdditionalWorkers(t *testing.T) {
 				"eu-west-1": {"a", "b", "c"},
 			},
 		}
-		provider := NewProvider(broker.InfrastructureManager{}, regionsSupportingMachine, true)
+		provider := NewProvider(broker.InfrastructureManager{}, regionsSupportingMachine)
 		additionalWorkerNodePools := []runtime.AdditionalWorkerNodePool{
 			{
 				Name:        "worker",
@@ -169,7 +169,7 @@ func TestCreateAdditionalWorkers(t *testing.T) {
 
 	t.Run("should skip volume for openstack provider", func(t *testing.T) {
 		// given
-		provider := NewProvider(broker.InfrastructureManager{}, nil, true)
+		provider := NewProvider(broker.InfrastructureManager{}, nil)
 		additionalWorkerNodePools := []runtime.AdditionalWorkerNodePool{
 			{
 				Name:        "worker",

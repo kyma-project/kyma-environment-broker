@@ -34,3 +34,7 @@ data:
   hapRule.yaml: |-
     rule:
 {{ toYaml .Values.hap.rule | indent 4  }}
+  providersConfig.yaml: |-
+{{ toYaml .Values.providersConfiguration | indent 4 }}
+  plansConfig.yaml: |-
+{{ toYaml .Values.plansConfiguration | indent 4 }}

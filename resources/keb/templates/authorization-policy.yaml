@@ -254,3 +254,20 @@ spec:
     matchLabels:
       app.kubernetes.io/name: {{ include "kyma-env-broker.name" . }}
       app.kubernetes.io/instance: {{ .Values.namePrefix }}
+---
+apiVersion: security.istio.io/v1beta1
+kind: AuthorizationPolicy
+metadata:
+  name: istio-additional-properties
+  namespace: kcp-system
+spec:
+  action: DENY
+  rules:
+  - to:
+    - operation:
+        paths:
+        - /additional_properties
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: {{ include "kyma-env-broker.name" . }}
+      app.kubernetes.io/instance: {{ .Values.namePrefix }}

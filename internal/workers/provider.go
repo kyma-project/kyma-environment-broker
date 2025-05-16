@@ -18,14 +18,12 @@ import (
 type Provider struct {
 	imConfig                 broker.InfrastructureManager
 	regionsSupportingMachine regionssupportingmachine.RegionsSupportingMachine
-	zoneMapping              bool
 }
 
-func NewProvider(imConfig broker.InfrastructureManager, regionsSupportingMachine regionssupportingmachine.RegionsSupportingMachine, zoneMapping bool) *Provider {
+func NewProvider(imConfig broker.InfrastructureManager, regionsSupportingMachine regionssupportingmachine.RegionsSupportingMachine) *Provider {
 	return &Provider{
 		imConfig:                 imConfig,
 		regionsSupportingMachine: regionsSupportingMachine,
-		zoneMapping:              zoneMapping,
 	}
 }
 
@@ -42,15 +40,13 @@ func (p *Provider) CreateAdditionalWorkers(values internal.ProviderValues, curre
 			workerZones = currentAdditionalWorker.Zones
 		} else {
 			workerZones = zones
-			if p.zoneMapping {
-				customAvailableZones, err := p.regionsSupportingMachine.AvailableZones(additionalWorkerNodePool.MachineType, values.Region, planID)
-				if err != nil {
-					return []gardener.Worker{}, fmt.Errorf("while getting available zones from regions supporting machine: %w", err)
-				}
-				// If custom zones are found, use them instead of the Kyma workload zones.
-				if len(customAvailableZones) > 0 {
-					workerZones = customAvailableZones
-				}
+			customAvailableZones, err := p.regionsSupportingMachine.AvailableZones(additionalWorkerNodePool.MachineType, values.Region, planID)
+			if err != nil {
+				return []gardener.Worker{}, fmt.Errorf("while getting available zones from regions supporting machine: %w", err)
+			}
+			// If custom zones are found, use them instead of the Kyma workload zones.
+			if len(customAvailableZones) > 0 {
+				workerZones = customAvailableZones
 			}
 			if !additionalWorkerNodePool.HAZones {
 				rand.Shuffle(len(workerZones), func(i, j int) { workerZones[i], workerZones[j] = workerZones[j], workerZones[i] })

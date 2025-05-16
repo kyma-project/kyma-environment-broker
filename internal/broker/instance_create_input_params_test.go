@@ -42,10 +42,9 @@ func TestShootAndSeedSameRegion(t *testing.T) {
 			dashboard.Config{},
 			nil,
 			nil,
-			&OneForAllConvergedCloudRegionsProvider{},
+			createSchemaService(t),
 			nil,
 			nil,
-			false,
 			false,
 		)
 
@@ -75,10 +74,9 @@ func TestShootAndSeedSameRegion(t *testing.T) {
 			dashboard.Config{},
 			nil,
 			nil,
-			&OneForAllConvergedCloudRegionsProvider{},
+			createSchemaService(t),
 			nil,
 			nil,
-			false,
 			false,
 		)
 
@@ -107,10 +105,9 @@ func TestShootAndSeedSameRegion(t *testing.T) {
 			dashboard.Config{},
 			nil,
 			nil,
-			&OneForAllConvergedCloudRegionsProvider{},
+			createSchemaService(t),
 			nil,
 			nil,
-			false,
 			false,
 		)
 
