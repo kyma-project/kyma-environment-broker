@@ -146,7 +146,6 @@ fullnameOverride: "kcp-kyma-environment-broker"
 host: "kyma-env-broker"
 manageSecrets: true
 
-
 broker:
   allowUpdateExpiredInstanceWithContext: "false"
   binding:
@@ -279,7 +278,6 @@ hap:
 useSmallerMachineTypes: "false"
 
 osbUpdateProcessingEnabled: "true"
-
 
 gardener:
   project: "kyma-dev" # Gardener project connected to SA for HAP credentials lookup

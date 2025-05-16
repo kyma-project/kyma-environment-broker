@@ -78,8 +78,6 @@ type Config struct {
 	// Currently works only with /info endpoints.
 	DevelopmentMode bool `envconfig:"default=false"`
 
-	Host string `envconfig:"optional"`
-
 	InfrastructureManager broker.InfrastructureManager
 	Database              storage.Config
 	Gardener              gardener.Config
