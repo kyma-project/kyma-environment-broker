@@ -1,4 +1,4 @@
-{{ if .Values.broker.profiler.memory }}
+{{ if .Values.profiler.memory }}
 apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:

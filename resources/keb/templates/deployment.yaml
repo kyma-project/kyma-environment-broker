@@ -41,7 +41,7 @@ spec:
       nodeSelector:
         {{- toYaml .Values.deployment.nodeSelector | nindent 8 }}
       containers:
-        {{- if .Values.broker.profiler.memory }}
+        {{- if .Values.profiler.memory }}
         - name: profiler
           command:
           - bash
@@ -97,8 +97,6 @@ spec:
               value: "{{ .Values.broker.binding.minExpirationSeconds}}"
             - name: APP_BROKER_DEFAULT_REQUEST_REGION
               value: "{{ .Values.broker.defaultRequestRegion }}"
-            - name: APP_BROKER_DISABLE_MACHINE_TYPE_UPDATE
-              value: "{{ .Values.broker.disableMachineTypeUpdate }}"
             - name: APP_BROKER_DISABLE_SAP_CONVERGED_CLOUD
               value: "{{ .Values.broker.disableSapConvergedCloud }}"
             - name: APP_BROKER_ENABLE_KUBECONFIG_URL_LABEL
@@ -306,7 +304,7 @@ spec:
               name: config-volume
             - mountPath: /swagger/schema
               name: swagger-volume
-          {{- if .Values.broker.profiler.memory }}
+          {{- if .Values.profiler.memory }}
             - name: keb-memory-profile
               mountPath: /tmp/profiler
               readOnly: false
@@ -369,12 +367,12 @@ spec:
       - name: gardener-kubeconfig
         secret:
           secretName: {{ .Values.gardener.secretName }}
-      {{- if .Values.broker.profiler.memory }}
+      {{- if .Values.profiler.memory }}
       - name: keb-memory-profile
         persistentVolumeClaim:
           claimName: {{ include "kyma-env-broker.fullname" . }}-profiler
       {{- end }}
-      {{- if .Values.broker.monitorAdditionalProperties }}
+      {{- if .Values.monitorAdditionalProperties }}
       - name: keb-additional-properties
         persistentVolumeClaim:
           claimName: {{ include "kyma-env-broker.fullname" . }}-additional-properties
