@@ -370,7 +370,7 @@ spec:
         persistentVolumeClaim:
           claimName: {{ include "kyma-env-broker.fullname" . }}-profiler
       {{- end }}
-      {{- if .Values.monitorAdditionalProperties }}
+      {{- if .Values.broker.monitorAdditionalProperties }}
       - name: keb-additional-properties
         persistentVolumeClaim:
           claimName: {{ include "kyma-env-broker.fullname" . }}-additional-properties
