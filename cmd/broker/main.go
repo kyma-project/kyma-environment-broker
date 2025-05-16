@@ -78,17 +78,7 @@ type Config struct {
 	// Currently works only with /info endpoints.
 	DevelopmentMode bool `envconfig:"default=false"`
 
-	// DumpProvisionerRequests enables dumping Provisioner requests. Must be disabled on Production environments
-	// because some data must not be visible in the log file.
-	DumpProvisionerRequests bool `envconfig:"default=false"`
-
-	// OperationTimeout is used to check on a top-level if any operation didn't exceed the time for processing.
-	// It is used for provisioning and deprovisioning operations.
-	OperationTimeout time.Duration `envconfig:"default=24h"`
-
-	Host       string `envconfig:"optional"`
-	Port       string `envconfig:"default=8080"`
-	StatusPort string `envconfig:"default=8071"`
+	Host string `envconfig:"optional"`
 
 	InfrastructureManager broker.InfrastructureManager
 	Database              storage.Config
@@ -98,9 +88,8 @@ type Config struct {
 
 	SkrOidcDefaultValuesYAMLFilePath    string
 	SkrDnsProvidersValuesYAMLFilePath   string
-	DefaultRequestRegion                string `envconfig:"default=cf-eu10"`
-	UpdateProcessingEnabled             bool   `envconfig:"default=false"`
-	LifecycleManagerIntegrationDisabled bool   `envconfig:"default=true"`
+	UpdateProcessingEnabled             bool `envconfig:"default=false"`
+	LifecycleManagerIntegrationDisabled bool `envconfig:"default=true"`
 	Broker                              broker.Config
 	CatalogFilePath                     string
 
@@ -116,9 +105,6 @@ type Config struct {
 
 	LogLevel string `envconfig:"default=info"`
 
-	// FreemiumProviders is a list of providers for freemium
-	FreemiumProviders []string `envconfig:"default=aws"`
-
 	FreemiumWhitelistedGlobalAccountsFilePath string
 
 	DomainName string
@@ -132,13 +118,13 @@ type Config struct {
 
 	MetricsV2 metricsv2.Config
 
-	Provisioning    process.StagedManagerConfiguration
-	Deprovisioning  process.StagedManagerConfiguration
-	Update          process.StagedManagerConfiguration
-	ArchiveEnabled  bool `envconfig:"default=false"`
-	ArchiveDryRun   bool `envconfig:"default=true"`
-	CleaningEnabled bool `envconfig:"default=false"`
-	CleaningDryRun  bool `envconfig:"default=true"`
+	Provisioning     process.StagedManagerConfiguration
+	Deprovisioning   process.StagedManagerConfiguration
+	Update           process.StagedManagerConfiguration
+	ArchivingEnabled bool `envconfig:"default=false"`
+	ArchivingDryRun  bool `envconfig:"default=true"`
+	CleaningEnabled  bool `envconfig:"default=false"`
+	CleaningDryRun   bool `envconfig:"default=true"`
 
 	RuntimeConfigurationConfigMapName string `envconfig:"default=keb-runtime-config"`
 
@@ -240,7 +226,7 @@ func main() {
 	log.Info("Starting Kyma Environment Broker")
 
 	log.Info("Registering healthz endpoint for health probes")
-	health.NewServer(cfg.Host, cfg.StatusPort, log).ServeAsync()
+	health.NewServer(cfg.Host, cfg.Broker.StatusPort, log).ServeAsync()
 	go periodicProfile(log, cfg.Profiler)
 
 	logConfiguration(log, cfg)
@@ -319,15 +305,15 @@ func main() {
 	workersProvider := workers.NewProvider(cfg.InfrastructureManager, regionsSupportingMachine, cfg.ZoneMapping)
 
 	// run queues
-	provisionManager := process.NewStagedManager(db.Operations(), eventBroker, cfg.OperationTimeout, cfg.Provisioning, log.With("provisioning", "manager"))
+	provisionManager := process.NewStagedManager(db.Operations(), eventBroker, cfg.Broker.OperationTimeout, cfg.Provisioning, log.With("provisioning", "manager"))
 	provisionQueue := NewProvisioningProcessingQueue(ctx, provisionManager, cfg.Provisioning.WorkersAmount, &cfg, db, configProvider,
 		edpClient, accountProvider, skrK8sClientProvider, kcpK8sClient, gardenerClient, oidcDefaultValues, log, rulesService, workersProvider)
 
-	deprovisionManager := process.NewStagedManager(db.Operations(), eventBroker, cfg.OperationTimeout, cfg.Deprovisioning, log.With("deprovisioning", "manager"))
+	deprovisionManager := process.NewStagedManager(db.Operations(), eventBroker, cfg.Broker.OperationTimeout, cfg.Deprovisioning, log.With("deprovisioning", "manager"))
 	deprovisionQueue := NewDeprovisioningProcessingQueue(ctx, cfg.Deprovisioning.WorkersAmount, deprovisionManager, &cfg, db, edpClient, accountProvider,
 		skrK8sClientProvider, kcpK8sClient, configProvider, log)
 
-	updateManager := process.NewStagedManager(db.Operations(), eventBroker, cfg.OperationTimeout, cfg.Update, log.With("update", "manager"))
+	updateManager := process.NewStagedManager(db.Operations(), eventBroker, cfg.Broker.OperationTimeout, cfg.Update, log.With("update", "manager"))
 	updateQueue := NewUpdateProcessingQueue(ctx, updateManager, cfg.Update.WorkersAmount, db, cfg, kcpK8sClient, log, workersProvider)
 	/***/
 	servicesConfig, err := broker.NewServicesConfigFromFile(cfg.CatalogFilePath)
@@ -369,7 +355,7 @@ func main() {
 
 	// create list runtimes endpoint
 	runtimeHandler := runtime.NewHandler(db, cfg.MaxPaginationPage,
-		cfg.DefaultRequestRegion,
+		cfg.Broker.DefaultRequestRegion,
 		kcpK8sClient,
 		log)
 	runtimeHandler.AttachRoutes(router)
@@ -391,13 +377,13 @@ func main() {
 		router.ServeHTTP(rec, r)
 		log.Info(fmt.Sprintf("Call handled: method=%s url=%s statusCode=%d size=%d", r.Method, r.URL.Path, rec.StatusCode, rec.Size))
 	})
-	fatalOnError(http.ListenAndServe(cfg.Host+":"+cfg.Port, svr), log)
+	fatalOnError(http.ListenAndServe(cfg.Host+":"+cfg.Broker.Port, svr), log)
 }
 
 func logConfiguration(logs *slog.Logger, cfg Config) {
 	logs.Info(fmt.Sprintf("Setting staged manager configuration: provisioning=%s, deprovisioning=%s, update=%s", cfg.Provisioning, cfg.Deprovisioning, cfg.Update))
 	logs.Info(fmt.Sprintf("EnablePlans: %s", cfg.Broker.EnablePlans))
-	logs.Info(fmt.Sprintf("Archiving enabled: %v, dry run: %v", cfg.ArchiveEnabled, cfg.ArchiveDryRun))
+	logs.Info(fmt.Sprintf("Archiving enabled: %v, dry run: %v", cfg.ArchivingEnabled, cfg.ArchivingDryRun))
 	logs.Info(fmt.Sprintf("Cleaning enabled: %v, dry run: %v", cfg.CleaningEnabled, cfg.CleaningDryRun))
 	logs.Info(fmt.Sprintf("Is SubaccountMovementEnabled: %t", cfg.Broker.SubaccountMovementEnabled))
 	logs.Info(fmt.Sprintf("Is UpdateCustomResourcesLabelsOnAccountMove enabled: %t", cfg.Broker.UpdateCustomResourcesLabelsOnAccountMove))
@@ -468,11 +454,11 @@ func createAPI(router *httputil.Router, servicesConfig broker.ServicesConfig, cf
 	prefixes := []string{"/{region}", ""}
 	subRouter, err := router.NewSubRouter(brokerAPISubrouterName)
 	fatalOnError(err, logs)
-	broker.AttachRoutes(subRouter, kymaEnvBroker, logs, cfg.Broker.Binding.CreateBindingTimeout, cfg.DefaultRequestRegion, prefixes)
+	broker.AttachRoutes(subRouter, kymaEnvBroker, logs, cfg.Broker.Binding.CreateBindingTimeout, cfg.Broker.DefaultRequestRegion, prefixes)
 	router.Handle("/oauth/", http.StripPrefix("/oauth", subRouter))
 
 	respWriter := httputil.NewResponseWriter(logs, cfg.DevelopmentMode)
-	runtimesInfoHandler := appinfo.NewRuntimeInfoHandler(db.Instances(), db.Operations(), defaultPlansConfig, cfg.DefaultRequestRegion, respWriter)
+	runtimesInfoHandler := appinfo.NewRuntimeInfoHandler(db.Instances(), db.Operations(), defaultPlansConfig, cfg.Broker.DefaultRequestRegion, respWriter)
 	router.Handle("/info/runtimes", runtimesInfoHandler)
 	router.Handle("/events", eventshandler.NewHandler(db.Events(), db.Instances()))
 }

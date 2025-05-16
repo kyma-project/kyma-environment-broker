@@ -145,18 +145,36 @@ nameOverride: "kyma-environment-broker"
 fullnameOverride: "kcp-kyma-environment-broker"
 host: "kyma-env-broker"
 manageSecrets: true
-allowUpdateExpiredInstanceWithContext: "false"
+
 
 broker:
+  allowUpdateExpiredInstanceWithContext: "false"
+  binding:
+    enabled: false
+    bindablePlans: "aws"
+    expirationSeconds: 600
+    maxExpirationSeconds: 7200
+    # minExpirationSeconds can't be lower than 600 seconds. Forced by Gardener
+    minExpirationSeconds: 600
+    maxBindingsCount: 10
+    createBindingTimeout: 15s
+  disableSapConvergedCloud: false
+  enableKubeconfigURLLabel: "false"
+  enablePlans: "azure,gcp,azure_lite,trial,aws"
+  freeDocsURL: "https://help.sap.com/docs/"
+  freeExpirationPeriod: 720h
+  includeAdditionalParamsInSchema: "false"
+  onlyOneFreePerGA: "false"
+  onlySingleTrialPerGA: "true"
+  showFreeExpirationInfo: "false"
+  showTrialExpirationInfo: "false"
+  subaccountsIdsToShowTrialExpirationInfo: "a45be5d8-eddc-4001-91cf-48cc644d571f"
+  trialDocsURL: "https://help.sap.com/docs/"
   port: "8080"
   # serving health probes routes on statusPort
   statusPort: "8071"
   defaultRequestRegion: "cf-eu10"
   operationTimeout: "7h"
-  profiler:
-    memory: false
-  events:
-    enabled: true
   enableShootAndSeedSameRegion: "false"
   subaccountMovementEnabled: "false"
   updateCustomResourcesLabelsOnAccountMove: "false"
@@ -164,15 +182,8 @@ broker:
   disableMachineTypeUpdate: "false"
   monitorAdditionalProperties: false
 
-binding:
-  enabled: false
-  bindablePlans: "aws"
-  expirationSeconds: 600
-  maxExpirationSeconds: 7200
-  # minExpirationSeconds can't be lower than 600 seconds. Forced by Gardener
-  minExpirationSeconds: 600
-  maxBindingsCount: 10
-  createBindingTimeout: 15s
+  events:
+    enabled: true
 
 service:
   type: ClusterIP
@@ -181,6 +192,9 @@ service:
 swagger:
   virtualService:
     enabled: true
+
+profiler:
+    memory: false
 
 resources:
   { }
@@ -245,9 +259,9 @@ sapConvergedCloudPlanRegionMappings: |-
   cf-eu21-staging:
     - eu-de-3
     - eu-de-4
-disableSapConvergedCloud: false
+
 disableProcessOperationsInProgress: "false"
-enablePlans: "azure,gcp,azure_lite,trial,aws"
+
 hap:
   rule:
     - aws                             # pool: hyperscalerType: aws
@@ -263,16 +277,6 @@ hap:
     - preview                         # pool: hyperscalerType: aws
     - free                            # pool: hyperscalerType: aws
     # pool: hyperscalerType: azure
-onlySingleTrialPerGA: "true"
-enableKubeconfigURLLabel: "false"
-includeAdditionalParamsInSchema: "false"
-showTrialExpirationInfo: "false"
-showFreeExpirationInfo: "false"
-freeDocsURL: "https://help.sap.com/docs/"
-freeExpirationPeriod: 720h
-onlyOneFreePerGA: "false"
-subaccountsIdsToShowTrialExpirationInfo: "a45be5d8-eddc-4001-91cf-48cc644d571f"
-trialDocsURL: "https://help.sap.com/docs/"
 useSmallerMachineTypes: "false"
 
 osbUpdateProcessingEnabled: "true"
@@ -283,7 +287,6 @@ gardener:
   shootDomain: "kyma-dev.shoot.canary.k8s-hana.ondemand.com"
   kubeconfigPath: "/gardener/kubeconfig/kubeconfig"
   secretName: "gardener-credentials"
-  freemiumProviders: "azure,aws"
 
 kubeconfig:
   allowOrigins: "*"
@@ -394,7 +397,7 @@ vmscrapes:
   scrapeTimeout: *scrapeTimeout
   interval: *scrapeInterval
 
-dashboardConfig:
+kymaDashboardConfig:
   landscapeURL: "https://dashboard.dev.kyma.cloud.sap"
 
 runtimeReconciler:
