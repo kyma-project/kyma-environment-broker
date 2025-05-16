@@ -12,20 +12,11 @@ import (
 
 type RegionsSupportingMachine map[string]map[string][]string
 
-func ReadRegionsSupportingMachineFromFile(filename string, zoneMapping bool) (RegionsSupportingMachine, error) {
+func ReadRegionsSupportingMachineFromFile(filename string) (RegionsSupportingMachine, error) {
 	var regionsSupportingMachineWithZones RegionsSupportingMachine
-	if zoneMapping {
-		err := utils.UnmarshalYamlFile(filename, &regionsSupportingMachineWithZones)
-		if err != nil {
-			return RegionsSupportingMachine{}, fmt.Errorf("while unmarshalling a file with regions supporting machine extended with zone mapping: %w", err)
-		}
-	} else {
-		regionsSupportingMachine := make(map[string][]string)
-		err := utils.UnmarshalYamlFile(filename, &regionsSupportingMachine)
-		if err != nil {
-			return RegionsSupportingMachine{}, fmt.Errorf("while unmarshalling a file with regions supporting machine: %w", err)
-		}
-		regionsSupportingMachineWithZones = convert(regionsSupportingMachine)
+	err := utils.UnmarshalYamlFile(filename, &regionsSupportingMachineWithZones)
+	if err != nil {
+		return RegionsSupportingMachine{}, fmt.Errorf("while unmarshalling a file with regions supporting machine extended with zone mapping: %w", err)
 	}
 	return regionsSupportingMachineWithZones, nil
 }
@@ -97,17 +88,4 @@ func (r RegionsSupportingMachine) AvailableZones(machineType, region, planID str
 	}
 
 	return []string{}, nil
-}
-
-func convert(input map[string][]string) RegionsSupportingMachine {
-	output := make(RegionsSupportingMachine)
-
-	for machineType, regions := range input {
-		output[machineType] = make(map[string][]string)
-		for _, region := range regions {
-			output[machineType][region] = nil
-		}
-	}
-
-	return output
 }

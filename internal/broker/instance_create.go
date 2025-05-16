@@ -97,7 +97,6 @@ type ProvisionEndpoint struct {
 	log                    *slog.Logger
 	valuesProvider         ValuesProvider
 	useSmallerMachineTypes bool
-	zoneMapping            bool
 }
 
 const (
@@ -121,7 +120,6 @@ func NewProvision(brokerConfig Config,
 	regionsSupportingMachine RegionsSupporter,
 	valuesProvider ValuesProvider,
 	useSmallerMachineTypes bool,
-	zoneMapping bool,
 ) *ProvisionEndpoint {
 	enabledPlanIDs := map[string]struct{}{}
 	for _, planName := range brokerConfig.EnablePlans {
@@ -149,7 +147,6 @@ func NewProvision(brokerConfig Config,
 		regionsSupportingMachine:      regionsSupportingMachine,
 		valuesProvider:                valuesProvider,
 		useSmallerMachineTypes:        useSmallerMachineTypes,
-		zoneMapping:                   zoneMapping,
 	}
 }
 
@@ -360,10 +357,8 @@ func (b *ProvisionEndpoint) validate(ctx context.Context, details domain.Provisi
 			if err := additionalWorkerNodePool.Validate(); err != nil {
 				return apiresponses.NewFailureResponse(err, http.StatusUnprocessableEntity, err.Error())
 			}
-			if b.zoneMapping {
-				if err := checkAvailableZones(b.regionsSupportingMachine, additionalWorkerNodePool, valueOfPtr(parameters.Region), details.PlanID); err != nil {
-					return apiresponses.NewFailureResponse(err, http.StatusUnprocessableEntity, err.Error())
-				}
+			if err := checkAvailableZones(b.regionsSupportingMachine, additionalWorkerNodePool, valueOfPtr(parameters.Region), details.PlanID); err != nil {
+				return apiresponses.NewFailureResponse(err, http.StatusUnprocessableEntity, err.Error())
 			}
 		}
 		if IsExternalCustomer(provisioningParameters.ErsContext) {
@@ -683,8 +678,7 @@ func (b *ProvisionEndpoint) validator(details *domain.ProvisionDetails, provider
 		assuredworkloads.IsKSA(platformRegion),
 		b.config.UseAdditionalOIDCSchema,
 		b.infrastructureManager.EnableIngressFiltering,
-		b.infrastructureManager.IngressFilteringPlans,
-		b.config.DisableMachineTypeUpdate)
+		b.infrastructureManager.IngressFilteringPlans)
 	plan := plans[details.PlanID]
 
 	return validator.NewFromSchema(plan.Schemas.Instance.Create.Parameters)

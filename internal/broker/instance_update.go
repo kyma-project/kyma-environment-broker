@@ -62,7 +62,6 @@ type UpdateEndpoint struct {
 	kcpClient                   client.Client
 	valuesProvider              ValuesProvider
 	useSmallerMachineTypes      bool
-	zoneMapping                 bool
 	infrastructureManagerConfig InfrastructureManager
 }
 
@@ -82,7 +81,6 @@ func NewUpdate(cfg Config,
 	kcpClient client.Client,
 	regionsSupportingMachine RegionsSupporter,
 	imConfig InfrastructureManager,
-	zoneMapping bool,
 ) *UpdateEndpoint {
 	return &UpdateEndpoint{
 		config:                                   cfg,
@@ -102,7 +100,6 @@ func NewUpdate(cfg Config,
 		kcpClient:                                kcpClient,
 		regionsSupportingMachine:                 regionsSupportingMachine,
 		infrastructureManagerConfig:              imConfig,
-		zoneMapping:                              zoneMapping,
 	}
 }
 
@@ -298,15 +295,11 @@ func (b *UpdateEndpoint) processUpdateParameters(instance *internal.Instance, de
 			if err := additionalWorkerNodePool.ValidateHAZonesUnchanged(instance.Parameters.Parameters.AdditionalWorkerNodePools); err != nil {
 				return domain.UpdateServiceSpec{}, apiresponses.NewFailureResponse(err, http.StatusBadRequest, err.Error())
 			}
-			if b.config.DisableMachineTypeUpdate {
-				if err := additionalWorkerNodePool.ValidateMachineTypesUnchanged(instance.Parameters.Parameters.AdditionalWorkerNodePools); err != nil {
-					return domain.UpdateServiceSpec{}, apiresponses.NewFailureResponse(err, http.StatusBadRequest, err.Error())
-				}
+			if err := additionalWorkerNodePool.ValidateMachineTypesUnchanged(instance.Parameters.Parameters.AdditionalWorkerNodePools); err != nil {
+				return domain.UpdateServiceSpec{}, apiresponses.NewFailureResponse(err, http.StatusBadRequest, err.Error())
 			}
-			if b.zoneMapping {
-				if err := checkAvailableZones(b.regionsSupportingMachine, additionalWorkerNodePool, providerValues.Region, details.PlanID); err != nil {
-					return domain.UpdateServiceSpec{}, apiresponses.NewFailureResponse(err, http.StatusBadRequest, err.Error())
-				}
+			if err := checkAvailableZones(b.regionsSupportingMachine, additionalWorkerNodePool, providerValues.Region, details.PlanID); err != nil {
+				return domain.UpdateServiceSpec{}, apiresponses.NewFailureResponse(err, http.StatusBadRequest, err.Error())
 			}
 		}
 		if IsExternalCustomer(ersContext) {
@@ -475,8 +468,7 @@ func (b *UpdateEndpoint) getJsonSchemaValidator(provider pkg.CloudProvider, plan
 		euaccess.IsEURestrictedAccess(platformRegion), b.infrastructureManagerConfig.UseSmallerMachineTypes, false,
 		b.convergedCloudRegionsProvider.GetRegions(platformRegion), assuredworkloads.IsKSA(platformRegion), b.config.UseAdditionalOIDCSchema,
 		b.infrastructureManagerConfig.EnableIngressFiltering,
-		b.infrastructureManagerConfig.IngressFilteringPlans,
-		b.config.DisableMachineTypeUpdate)
+		b.infrastructureManagerConfig.IngressFilteringPlans)
 	plan := plans[planID]
 
 	return validator.NewFromSchema(plan.Schemas.Instance.Update.Parameters)

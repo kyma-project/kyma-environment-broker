@@ -90,7 +90,6 @@ func TestProvision_Provision(t *testing.T) {
 			regionssupportingmachine.RegionsSupportingMachine{},
 			fixValueProvider(),
 			false,
-			false,
 		)
 
 		// when
@@ -162,7 +161,6 @@ func TestProvision_Provision(t *testing.T) {
 			&broker.OneForAllConvergedCloudRegionsProvider{},
 			regionssupportingmachine.RegionsSupportingMachine{},
 			fixValueProvider(),
-			false,
 			false,
 		)
 
@@ -240,7 +238,6 @@ func TestProvision_Provision(t *testing.T) {
 			regionssupportingmachine.RegionsSupportingMachine{},
 			fixValueProvider(),
 			false,
-			false,
 		)
 
 		// when
@@ -287,7 +284,6 @@ func TestProvision_Provision(t *testing.T) {
 			&broker.OneForAllConvergedCloudRegionsProvider{},
 			regionssupportingmachine.RegionsSupportingMachine{},
 			fixValueProvider(),
-			false,
 			false,
 		)
 
@@ -360,7 +356,6 @@ func TestProvision_Provision(t *testing.T) {
 			&broker.OneForAllConvergedCloudRegionsProvider{},
 			regionssupportingmachine.RegionsSupportingMachine{},
 			fixValueProvider(),
-			false,
 			false,
 		)
 
@@ -436,7 +431,6 @@ func TestProvision_Provision(t *testing.T) {
 			regionssupportingmachine.RegionsSupportingMachine{},
 			fixValueProvider(),
 			false,
-			false,
 		)
 
 		// when
@@ -484,7 +478,6 @@ func TestProvision_Provision(t *testing.T) {
 			&broker.OneForAllConvergedCloudRegionsProvider{},
 			regionssupportingmachine.RegionsSupportingMachine{},
 			fixValueProvider(),
-			false,
 			false,
 		)
 
@@ -534,7 +527,6 @@ func TestProvision_Provision(t *testing.T) {
 			&broker.OneForAllConvergedCloudRegionsProvider{},
 			regionssupportingmachine.RegionsSupportingMachine{},
 			fixValueProvider(),
-			false,
 			false,
 		)
 
@@ -599,7 +591,6 @@ func TestProvision_Provision(t *testing.T) {
 			regionssupportingmachine.RegionsSupportingMachine{},
 			fixValueProvider(),
 			false,
-			false,
 		)
 
 		// when
@@ -663,7 +654,6 @@ func TestProvision_Provision(t *testing.T) {
 			regionssupportingmachine.RegionsSupportingMachine{},
 			fixValueProvider(),
 			false,
-			false,
 		)
 
 		// when
@@ -707,7 +697,6 @@ func TestProvision_Provision(t *testing.T) {
 			regionssupportingmachine.RegionsSupportingMachine{},
 			fixValueProvider(),
 			false,
-			false,
 		)
 
 		// when
@@ -746,7 +735,6 @@ func TestProvision_Provision(t *testing.T) {
 			regionssupportingmachine.RegionsSupportingMachine{},
 			fixValueProvider(),
 			false,
-			false,
 		)
 
 		// when
@@ -783,7 +771,6 @@ func TestProvision_Provision(t *testing.T) {
 			&broker.OneForAllConvergedCloudRegionsProvider{},
 			regionssupportingmachine.RegionsSupportingMachine{},
 			fixValueProvider(),
-			false,
 			false,
 		)
 
@@ -828,7 +815,6 @@ func TestProvision_Provision(t *testing.T) {
 			&broker.OneForAllConvergedCloudRegionsProvider{},
 			regionssupportingmachine.RegionsSupportingMachine{},
 			fixValueProvider(),
-			false,
 			false,
 		)
 
@@ -878,7 +864,6 @@ func TestProvision_Provision(t *testing.T) {
 			&broker.OneForAllConvergedCloudRegionsProvider{},
 			regionssupportingmachine.RegionsSupportingMachine{},
 			fixValueProvider(),
-			false,
 			false,
 		)
 
@@ -935,7 +920,6 @@ func TestProvision_Provision(t *testing.T) {
 			regionssupportingmachine.RegionsSupportingMachine{},
 			fixValueProvider(),
 			false,
-			false,
 		)
 
 		oidcParams := `"clientID":"client-id","issuerURL":"https://test.local","signingAlgs":["RS256","notValid"]`
@@ -989,7 +973,6 @@ func TestProvision_Provision(t *testing.T) {
 			&broker.OneForAllConvergedCloudRegionsProvider{},
 			regionssupportingmachine.RegionsSupportingMachine{},
 			fixValueProvider(),
-			false,
 			false,
 		)
 
@@ -1048,7 +1031,6 @@ func TestProvision_Provision(t *testing.T) {
 			regionssupportingmachine.RegionsSupportingMachine{},
 			fixValueProvider(),
 			false,
-			false,
 		)
 
 		oidcParams := `"clientID":"client-id","issuerURL":"https://test.local","signingAlgs":["RS256"],"requiredClaims":["claim=value"]`
@@ -1103,7 +1085,6 @@ func TestProvision_Provision(t *testing.T) {
 			&broker.OneForAllConvergedCloudRegionsProvider{},
 			regionssupportingmachine.RegionsSupportingMachine{},
 			fixValueProvider(),
-			false,
 			false,
 		)
 
@@ -1202,7 +1183,6 @@ func TestProvision_Provision(t *testing.T) {
 			regionssupportingmachine.RegionsSupportingMachine{},
 			fixValueProvider(),
 			false,
-			false,
 		)
 
 		testCases := []struct {
@@ -1288,7 +1268,6 @@ func TestProvision_Provision(t *testing.T) {
 			regionssupportingmachine.RegionsSupportingMachine{},
 			fixValueProvider(),
 			false,
-			false,
 		)
 
 		oidcParams := `"clientID":"client-id","issuerURL":"https://test.local","signingAlgs":["RS256"]`
@@ -1331,7 +1310,6 @@ func TestProvision_Provision(t *testing.T) {
 			&broker.OneForAllConvergedCloudRegionsProvider{},
 			regionssupportingmachine.RegionsSupportingMachine{},
 			fixValueProvider(),
-			false,
 			false,
 		)
 
@@ -1398,7 +1376,6 @@ func TestProvision_Provision(t *testing.T) {
 			regionssupportingmachine.RegionsSupportingMachine{},
 			fixValueProvider(),
 			false,
-			false,
 		)
 
 		// when
@@ -1454,7 +1431,6 @@ func TestProvision_Provision(t *testing.T) {
 			regionssupportingmachine.RegionsSupportingMachine{},
 			fixValueProvider(),
 			false,
-			false,
 		)
 
 		// when
@@ -1508,7 +1484,6 @@ func TestProvision_Provision(t *testing.T) {
 			regionssupportingmachine.RegionsSupportingMachine{},
 			fixValueProvider(),
 			false,
-			false,
 		)
 
 		// when
@@ -1551,7 +1526,6 @@ func TestProvision_Provision(t *testing.T) {
 			&broker.OneForAllConvergedCloudRegionsProvider{},
 			regionssupportingmachine.RegionsSupportingMachine{},
 			fixValueProvider(),
-			false,
 			false,
 		)
 
@@ -1598,7 +1572,6 @@ func TestProvision_Provision(t *testing.T) {
 			&broker.OneForAllConvergedCloudRegionsProvider{},
 			regionssupportingmachine.RegionsSupportingMachine{},
 			fixValueProvider(),
-			false,
 			false,
 		)
 
@@ -1648,7 +1621,6 @@ func TestProvision_Provision(t *testing.T) {
 			&broker.OneForAllConvergedCloudRegionsProvider{},
 			regionssupportingmachine.RegionsSupportingMachine{},
 			fixValueProvider(),
-			false,
 			false,
 		)
 
@@ -1790,7 +1762,6 @@ func TestAdditionalWorkerNodePools(t *testing.T) {
 				regionssupportingmachine.RegionsSupportingMachine{},
 				fixValueProvider(),
 				false,
-				false,
 			)
 
 			// when
@@ -1854,7 +1825,6 @@ func TestAdditionalWorkerNodePoolsForUnsupportedPlans(t *testing.T) {
 				&broker.OneForAllConvergedCloudRegionsProvider{},
 				regionssupportingmachine.RegionsSupportingMachine{},
 				fixValueProvider(),
-				false,
 				false,
 			)
 
@@ -2007,7 +1977,6 @@ func TestNetworkingValidation(t *testing.T) {
 				regionssupportingmachine.RegionsSupportingMachine{},
 				fixValueProvider(),
 				false,
-				false,
 			)
 
 			// when
@@ -2107,7 +2076,6 @@ func TestRegionValidation(t *testing.T) {
 				regionssupportingmachine.RegionsSupportingMachine{},
 				fixValueProvider(),
 				false,
-				false,
 			)
 
 			// when
@@ -2168,7 +2136,6 @@ func TestSapConvergedCloudBlocking(t *testing.T) {
 			regionssupportingmachine.RegionsSupportingMachine{},
 			fixValueProvider(),
 			false,
-			false,
 		)
 
 		oidcParams := `"clientID":"client-id","issuerURL":"https://test.local","signingAlgs":["RS256"]`
@@ -2217,7 +2184,6 @@ func TestSapConvergedCloudBlocking(t *testing.T) {
 			regionssupportingmachine.RegionsSupportingMachine{},
 			fixValueProvider(),
 			false,
-			false,
 		)
 
 		oidcParams := `"clientID":"client-id","issuerURL":"https://test.local","signingAlgs":["RS256"]`
@@ -2264,7 +2230,6 @@ func TestSapConvergedCloudBlocking(t *testing.T) {
 			&broker.OneForAllConvergedCloudRegionsProvider{},
 			regionssupportingmachine.RegionsSupportingMachine{},
 			fixValueProvider(),
-			false,
 			false,
 		)
 
@@ -2327,7 +2292,6 @@ func TestUnsupportedMachineType(t *testing.T) {
 		fixRegionsSupportingMachine(),
 		fixValueProvider(),
 		false,
-		false,
 	)
 
 	// when
@@ -2378,7 +2342,6 @@ func TestUnsupportedMachineTypeInAdditionalWorkerNodePools(t *testing.T) {
 		&broker.OneForAllConvergedCloudRegionsProvider{},
 		fixRegionsSupportingMachine(),
 		fixValueProvider(),
-		false,
 		false,
 	)
 
@@ -2457,7 +2420,6 @@ func TestGPUMachineForInternalUser(t *testing.T) {
 		fixRegionsSupportingMachine(),
 		fixValueProvider(),
 		false,
-		false,
 	)
 
 	additionalWorkerNodePools := `[{"name": "name-1", "machineType": "g6.xlarge", "haZones": true, "autoScalerMin": 3, "autoScalerMax": 20}]`
@@ -2507,7 +2469,6 @@ func TestGPUMachinesForExternalCustomer(t *testing.T) {
 		&broker.OneForAllConvergedCloudRegionsProvider{},
 		fixRegionsSupportingMachine(),
 		fixValueProvider(),
-		false,
 		false,
 	)
 
@@ -2641,7 +2602,6 @@ func TestAvailableZonesValidation(t *testing.T) {
 		fixRegionsSupportingMachine(),
 		fixValueProvider(),
 		false,
-		true,
 	)
 
 	additionalWorkerNodePools := `[{"name": "name-1", "machineType": "g6.xlarge", "haZones": true, "autoScalerMin": 3, "autoScalerMax": 20}]`
@@ -2700,7 +2660,6 @@ func TestAdditionalProperties(t *testing.T) {
 			&broker.OneForAllConvergedCloudRegionsProvider{},
 			fixRegionsSupportingMachine(),
 			fixValueProvider(),
-			false,
 			false,
 		)
 
@@ -2770,7 +2729,6 @@ func TestAdditionalProperties(t *testing.T) {
 			&broker.OneForAllConvergedCloudRegionsProvider{},
 			fixRegionsSupportingMachine(),
 			fixValueProvider(),
-			false,
 			false,
 		)
 
@@ -2854,7 +2812,6 @@ func TestAdditionalProperties(t *testing.T) {
 			&broker.OneForAllConvergedCloudRegionsProvider{},
 			fixRegionsSupportingMachine(),
 			fixValueProvider(),
-			false,
 			false,
 		)
 
