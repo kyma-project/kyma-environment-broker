@@ -50,6 +50,7 @@ type Config struct {
 	OperationTimeout time.Duration `envconfig:"default=24h"`
 	Port             string        `envconfig:"default=8080"`
 	StatusPort       string        `envconfig:"default=8071"`
+	Host             string        `envconfig:"optional"`
 
 	Binding BindingConfig
 

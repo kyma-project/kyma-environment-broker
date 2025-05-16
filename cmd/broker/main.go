@@ -224,7 +224,7 @@ func main() {
 	log.Info("Starting Kyma Environment Broker")
 
 	log.Info("Registering healthz endpoint for health probes")
-	health.NewServer(cfg.Host, cfg.Broker.StatusPort, log).ServeAsync()
+	health.NewServer(cfg.Broker.Host, cfg.Broker.StatusPort, log).ServeAsync()
 	go periodicProfile(log, cfg.Profiler)
 
 	logConfiguration(log, cfg)
@@ -375,7 +375,7 @@ func main() {
 		router.ServeHTTP(rec, r)
 		log.Info(fmt.Sprintf("Call handled: method=%s url=%s statusCode=%d size=%d", r.Method, r.URL.Path, rec.StatusCode, rec.Size))
 	})
-	fatalOnError(http.ListenAndServe(cfg.Host+":"+cfg.Broker.Port, svr), log)
+	fatalOnError(http.ListenAndServe(cfg.Broker.Host+":"+cfg.Broker.Port, svr), log)
 }
 
 func logConfiguration(logs *slog.Logger, cfg Config) {
