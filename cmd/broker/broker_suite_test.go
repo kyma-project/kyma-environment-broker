@@ -284,7 +284,6 @@ func workersProvider(imConfig broker.InfrastructureManager) *workers.Provider {
 				"us-east-1": {"x"},
 			},
 		},
-		true,
 	)
 }
 

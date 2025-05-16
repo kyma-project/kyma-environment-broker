@@ -46,7 +46,6 @@ func TestShootAndSeedSameRegion(t *testing.T) {
 			nil,
 			nil,
 			false,
-			false,
 		)
 
 		// when
@@ -79,7 +78,6 @@ func TestShootAndSeedSameRegion(t *testing.T) {
 			nil,
 			nil,
 			false,
-			false,
 		)
 
 		// when
@@ -110,7 +108,6 @@ func TestShootAndSeedSameRegion(t *testing.T) {
 			&OneForAllConvergedCloudRegionsProvider{},
 			nil,
 			nil,
-			false,
 			false,
 		)
 

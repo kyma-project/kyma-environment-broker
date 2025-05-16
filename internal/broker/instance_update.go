@@ -62,7 +62,6 @@ type UpdateEndpoint struct {
 	kcpClient                   client.Client
 	valuesProvider              ValuesProvider
 	useSmallerMachineTypes      bool
-	zoneMapping                 bool
 	infrastructureManagerConfig InfrastructureManager
 }
 
@@ -82,7 +81,6 @@ func NewUpdate(cfg Config,
 	kcpClient client.Client,
 	regionsSupportingMachine RegionsSupporter,
 	imConfig InfrastructureManager,
-	zoneMapping bool,
 ) *UpdateEndpoint {
 	return &UpdateEndpoint{
 		config:                                   cfg,
@@ -102,7 +100,6 @@ func NewUpdate(cfg Config,
 		kcpClient:                                kcpClient,
 		regionsSupportingMachine:                 regionsSupportingMachine,
 		infrastructureManagerConfig:              imConfig,
-		zoneMapping:                              zoneMapping,
 	}
 }
 
@@ -303,10 +300,8 @@ func (b *UpdateEndpoint) processUpdateParameters(instance *internal.Instance, de
 					return domain.UpdateServiceSpec{}, apiresponses.NewFailureResponse(err, http.StatusBadRequest, err.Error())
 				}
 			}
-			if b.zoneMapping {
-				if err := checkAvailableZones(b.regionsSupportingMachine, additionalWorkerNodePool, providerValues.Region, details.PlanID); err != nil {
-					return domain.UpdateServiceSpec{}, apiresponses.NewFailureResponse(err, http.StatusBadRequest, err.Error())
-				}
+			if err := checkAvailableZones(b.regionsSupportingMachine, additionalWorkerNodePool, providerValues.Region, details.PlanID); err != nil {
+				return domain.UpdateServiceSpec{}, apiresponses.NewFailureResponse(err, http.StatusBadRequest, err.Error())
 			}
 		}
 		if IsExternalCustomer(ersContext) {

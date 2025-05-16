@@ -284,8 +284,6 @@ spec:
               value: /config/trialRegionMapping.yaml
             - name: APP_UPDATE_PROCESSING_ENABLED
               value: "{{ .Values.osbUpdateProcessingEnabled }}"
-            - name: APP_ZONE_MAPPING
-              value: "{{ .Values.zoneMapping }}"
           ports:
             - name: http
               containerPort: {{ .Values.broker.port }}
