@@ -41,7 +41,7 @@ spec:
       nodeSelector:
         {{- toYaml .Values.deployment.nodeSelector | nindent 8 }}
       containers:
-        {{- if .Values.broker.profiler.memory }}
+        {{- if .Values.profiler.memory }}
         - name: profiler
           command:
           - bash
@@ -75,56 +75,62 @@ spec:
           image: "{{ .Values.global.images.container_registry.path }}/{{ .Values.global.images.kyma_environment_broker.dir }}kyma-environment-broker:{{ .Values.global.images.kyma_environment_broker.version }}"
           imagePullPolicy: {{ .Values.deployment.image.pullPolicy }}
           env:
-            - name: APP_ARCHIVE_DRY_RUN
+            - name: APP_ARCHIVING_DRY_RUN
               value: "{{ .Values.archiving.dryRun }}"
-            - name: APP_ARCHIVE_ENABLED
+            - name: APP_ARCHIVING_ENABLED
               value: "{{ .Values.archiving.enabled }}"
             - name: APP_BROKER_ALLOW_UPDATE_EXPIRED_INSTANCE_WITH_CONTEXT
-              value: "{{ .Values.allowUpdateExpiredInstanceWithContext }}"
+              value: "{{ .Values.broker.allowUpdateExpiredInstanceWithContext }}"
             - name: APP_BROKER_BINDING_BINDABLE_PLANS
-              value: "{{ .Values.binding.bindablePlans}}"
+              value: "{{ .Values.broker.binding.bindablePlans}}"
             - name: APP_BROKER_BINDING_CREATE_BINDING_TIMEOUT
-              value: "{{ .Values.binding.createBindingTimeout}}"
+              value: "{{ .Values.broker.binding.createBindingTimeout}}"
             - name: APP_BROKER_BINDING_ENABLED
-              value: "{{ .Values.binding.enabled}}"
+              value: "{{ .Values.broker.binding.enabled}}"
             - name: APP_BROKER_BINDING_EXPIRATION_SECONDS
-              value: "{{ .Values.binding.expirationSeconds}}"
+              value: "{{ .Values.broker.binding.expirationSeconds}}"
             - name: APP_BROKER_BINDING_MAX_BINDINGS_COUNT
-              value: "{{ .Values.binding.maxBindingsCount}}"
+              value: "{{ .Values.broker.binding.maxBindingsCount}}"
             - name: APP_BROKER_BINDING_MAX_EXPIRATION_SECONDS
-              value: "{{ .Values.binding.maxExpirationSeconds}}"
+              value: "{{ .Values.broker.binding.maxExpirationSeconds}}"
             - name: APP_BROKER_BINDING_MIN_EXPIRATION_SECONDS
-              value: "{{ .Values.binding.minExpirationSeconds}}"
+              value: "{{ .Values.broker.binding.minExpirationSeconds}}"
+            - name: APP_BROKER_DEFAULT_REQUEST_REGION
+              value: "{{ .Values.broker.defaultRequestRegion }}"
             - name: APP_BROKER_DISABLE_SAP_CONVERGED_CLOUD
-              value: "{{ .Values.disableSapConvergedCloud }}"
-            - name: APP_BROKER_ENABLE_KUBECONFIG_URL_LABEL
-              value: "{{ .Values.enableKubeconfigURLLabel }}"
+              value: "{{ .Values.broker.disableSapConvergedCloud }}"
             - name: APP_BROKER_ENABLE_PLANS
-              value: "{{ .Values.enablePlans }}"
+              value: "{{ .Values.broker.enablePlans }}"
             - name: APP_BROKER_ENABLE_SHOOT_AND_SEED_SAME_REGION
               value: "{{ .Values.broker.enableShootAndSeedSameRegion }}"
             - name: APP_BROKER_FREE_DOCS_URL
-              value: "{{ .Values.freeDocsURL }}"
+              value: "{{ .Values.broker.freeDocsURL }}"
             - name: APP_BROKER_FREE_EXPIRATION_PERIOD
-              value: "{{ .Values.freeExpirationPeriod }}"
+              value: "{{ .Values.broker.freeExpirationPeriod }}"
             - name: APP_BROKER_INCLUDE_ADDITIONAL_PARAMS_IN_SCHEMA
-              value: "{{ .Values.includeAdditionalParamsInSchema }}"
+              value: "{{ .Values.broker.includeAdditionalParamsInSchema }}"
             - name: APP_BROKER_MONITOR_ADDITIONAL_PROPERTIES
               value: "{{ .Values.broker.monitorAdditionalProperties }}"
             - name: APP_BROKER_ONLY_ONE_FREE_PER_GA
-              value: "{{ .Values.onlyOneFreePerGA }}"
+              value: "{{ .Values.broker.onlyOneFreePerGA }}"
             - name: APP_BROKER_ONLY_SINGLE_TRIAL_PER_GA
-              value: "{{ .Values.onlySingleTrialPerGA }}"
+              value: "{{ .Values.broker.onlySingleTrialPerGA }}"
+            - name: APP_BROKER_OPERATION_TIMEOUT
+              value: "{{ .Values.broker.operationTimeout }}"
+            - name: APP_BROKER_PORT
+              value: "{{ .Values.broker.port }}"
             - name: APP_BROKER_SHOW_FREE_EXPIRATION_INFO
-              value: "{{ .Values.showFreeExpirationInfo }}"
+              value: "{{ .Values.broker.showFreeExpirationInfo }}"
             - name: APP_BROKER_SHOW_TRIAL_EXPIRATION_INFO
-              value: "{{ .Values.showTrialExpirationInfo }}"
+              value: "{{ .Values.broker.showTrialExpirationInfo }}"
+            - name: APP_BROKER_STATUS_PORT
+              value: "{{ .Values.broker.statusPort }}"
             - name: APP_BROKER_SUBACCOUNT_MOVEMENT_ENABLED
               value: "{{ .Values.broker.subaccountMovementEnabled }}"
             - name: APP_BROKER_SUBACCOUNTS_IDS_TO_SHOW_TRIAL_EXPIRATION_INFO
-              value: "{{ .Values.subaccountsIdsToShowTrialExpirationInfo }}"
+              value: "{{ .Values.broker.subaccountsIdsToShowTrialExpirationInfo }}"
             - name: APP_BROKER_TRIAL_DOCS_URL
-              value: "{{ .Values.trialDocsURL }}"
+              value: "{{ .Values.broker.trialDocsURL }}"
             - name: APP_BROKER_UPDATE_CUSTOM_RESOURCES_LABELS_ON_ACCOUNT_MOVE
               value: "{{ .Values.broker.updateCustomResourcesLabelsOnAccountMove }}"
             - name: APP_BROKER_URL
@@ -175,8 +181,6 @@ spec:
                 secretKeyRef:
                   name: kcp-postgresql
                   key: postgresql-broker-username
-            - name: APP_DEFAULT_REQUEST_REGION
-              value: "{{ .Values.broker.defaultRequestRegion }}"
             - name: APP_DISABLE_PROCESS_OPERATIONS_IN_PROGRESS
               value: "{{ .Values.disableProcessOperationsInProgress }}"
             - name: APP_DOMAIN_NAME
@@ -199,9 +203,7 @@ spec:
                   name: "{{ .Values.edp.secretName }}"
                   key: secret
             - name: APP_EVENTS_ENABLED
-              value: "{{ .Values.broker.events.enabled }}"
-            - name: APP_FREEMIUM_PROVIDERS
-              value: "{{ .Values.gardener.freemiumProviders }}"
+              value: "{{ .Values.events.enabled }}"
             - name: APP_FREEMIUM_WHITELISTED_GLOBAL_ACCOUNTS_FILE_PATH
               value: /config/freemiumWhitelistedGlobalAccountIds.yaml
             - name: APP_GARDENER_KUBECONFIG_PATH
@@ -235,7 +237,7 @@ spec:
             - name: APP_KUBECONFIG_ALLOW_ORIGINS
               value: "{{ .Values.kubeconfig.allowOrigins }}"
             - name: APP_KYMA_DASHBOARD_CONFIG_LANDSCAPE_URL
-              value: "{{ .Values.dashboardConfig.landscapeURL }}"
+              value: "{{ .Values.kymaDashboardConfig.landscapeURL }}"
             - name: APP_LIFECYCLE_MANAGER_INTEGRATION_DISABLED
               value: "{{ .Values.lifecycleManager.disabled}}"
             - name: APP_METRICSV2_ENABLED
@@ -250,18 +252,10 @@ spec:
               value: "{{ .Values.metricsv2.operationStatsPoolingInterval }}"
             - name: APP_MULTIPLE_CONTEXTS
               value: "{{ .Values.multipleContexts }}"
-            - name: APP_OPERATION_TIMEOUT
-              value: "{{ .Values.broker.operationTimeout }}"
-            - name: APP_ORCHESTRATION_CONFIG_NAME
-              value: "orchestration-config"
-            - name: APP_ORCHESTRATION_CONFIG_NAMESPACE
-              value: "{{ .Release.Namespace }}"
             - name: APP_PLANS_CONFIGURATION_FILE_PATH
               value: /config/plansConfig.yaml
-            - name: APP_PORT
-              value: "{{ .Values.broker.port }}"
             - name: APP_PROFILER_MEMORY
-              value: "{{ .Values.broker.profiler.memory }}"
+              value: "{{ .Values.profiler.memory }}"
             - name: APP_PROVIDERS_CONFIGURATION_FILE_PATH
               value: /config/providersConfig.yaml
             - name: APP_REGIONS_SUPPORTING_MACHINE_FILE_PATH
@@ -274,8 +268,6 @@ spec:
               value: /config/skrDNSProvidersValues.yaml
             - name: APP_SKR_OIDC_DEFAULT_VALUES_YAML_FILE_PATH
               value: /config/skrOIDCDefaultValues.yaml
-            - name: APP_STATUS_PORT
-              value: "{{ .Values.broker.statusPort }}"
             - name: APP_STEP_TIMEOUTS_CHECK_RUNTIME_RESOURCE_CREATE
               value: "{{ .Values.stepTimeouts.checkRuntimeResourceCreate }}"
             - name: APP_STEP_TIMEOUTS_CHECK_RUNTIME_RESOURCE_DELETION
@@ -314,7 +306,7 @@ spec:
               name: config-volume
             - mountPath: /swagger/schema
               name: swagger-volume
-          {{- if .Values.broker.profiler.memory }}
+          {{- if .Values.profiler.memory }}
             - name: keb-memory-profile
               mountPath: /tmp/profiler
               readOnly: false
@@ -377,7 +369,7 @@ spec:
       - name: gardener-kubeconfig
         secret:
           secretName: {{ .Values.gardener.secretName }}
-      {{- if .Values.broker.profiler.memory }}
+      {{- if .Values.profiler.memory }}
       - name: keb-memory-profile
         persistentVolumeClaim:
           claimName: {{ include "kyma-env-broker.fullname" . }}-profiler

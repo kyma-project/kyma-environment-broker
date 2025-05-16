@@ -221,8 +221,6 @@ func fixConfig() *Config {
 		DbInMemory:                         true,
 		DisableProcessOperationsInProgress: false,
 		DevelopmentMode:                    true,
-		DumpProvisionerRequests:            true,
-		OperationTimeout:                   2 * time.Minute,
 		InfrastructureManager: broker.InfrastructureManager{
 			MachineImage:                 "gardenlinux",
 			MachineImageVersion:          "12345.6",
@@ -247,6 +245,7 @@ func fixConfig() *Config {
 		UpdateProcessingEnabled: true,
 		Broker: broker.Config{
 			EnablePlans:                           brokerConfigPlans,
+			OperationTimeout:                      2 * time.Minute,
 			IncludeAdditionalParamsInSchema:       true,
 			AllowUpdateExpiredInstanceWithContext: true,
 			Binding: broker.BindingConfig{
@@ -263,12 +262,11 @@ func fixConfig() *Config {
 		},
 		TrialRegionMappingFilePath:                "testdata/trial-regions.yaml",
 		MaxPaginationPage:                         100,
-		FreemiumProviders:                         []string{"aws", "azure"},
 		FreemiumWhitelistedGlobalAccountsFilePath: "testdata/freemium_whitelist.yaml",
 		Provisioning:                              process.StagedManagerConfiguration{MaxStepProcessingTime: time.Minute},
 		Deprovisioning:                            process.StagedManagerConfiguration{MaxStepProcessingTime: time.Minute},
 		Update:                                    process.StagedManagerConfiguration{MaxStepProcessingTime: time.Minute},
-		ArchiveEnabled:                            true,
+		ArchivingEnabled:                          true,
 		CleaningEnabled:                           true,
 		UpdateRuntimeResourceDelay:                time.Millisecond,
 		MetricsV2: metricsv2.Config{
