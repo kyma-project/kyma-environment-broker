@@ -274,8 +274,6 @@ hap:
     - preview                         # pool: hyperscalerType: aws
     - free                            # pool: hyperscalerType: aws
     # pool: hyperscalerType: azure
-useSmallerMachineTypes: "false"
-
 osbUpdateProcessingEnabled: "true"
 
 gardener:
