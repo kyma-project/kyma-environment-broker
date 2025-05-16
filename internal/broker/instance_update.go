@@ -14,9 +14,7 @@ import (
 	pkg "github.com/kyma-project/kyma-environment-broker/common/runtime"
 	"github.com/kyma-project/kyma-environment-broker/internal"
 	"github.com/kyma-project/kyma-environment-broker/internal/additionalproperties"
-	"github.com/kyma-project/kyma-environment-broker/internal/assuredworkloads"
 	"github.com/kyma-project/kyma-environment-broker/internal/dashboard"
-	"github.com/kyma-project/kyma-environment-broker/internal/euaccess"
 	"github.com/kyma-project/kyma-environment-broker/internal/kubeconfig"
 	"github.com/kyma-project/kyma-environment-broker/internal/ptr"
 	"github.com/kyma-project/kyma-environment-broker/internal/storage"
@@ -55,14 +53,14 @@ type UpdateEndpoint struct {
 	dashboardConfig dashboard.Config
 	kcBuilder       kubeconfig.KcBuilder
 
-	convergedCloudRegionsProvider ConvergedCloudRegionProvider
-
 	regionsSupportingMachine RegionsSupporter
 
 	kcpClient                   client.Client
 	valuesProvider              ValuesProvider
 	useSmallerMachineTypes      bool
 	infrastructureManagerConfig InfrastructureManager
+
+	schemaService *SchemaService
 }
 
 func NewUpdate(cfg Config,
@@ -77,10 +75,10 @@ func NewUpdate(cfg Config,
 	log *slog.Logger,
 	dashboardConfig dashboard.Config,
 	kcBuilder kubeconfig.KcBuilder,
-	convergedCloudRegionsProvider ConvergedCloudRegionProvider,
 	kcpClient client.Client,
 	regionsSupportingMachine RegionsSupporter,
 	imConfig InfrastructureManager,
+	schemaService *SchemaService,
 ) *UpdateEndpoint {
 	return &UpdateEndpoint{
 		config:                                   cfg,
@@ -96,10 +94,10 @@ func NewUpdate(cfg Config,
 		valuesProvider:                           valuesProvider,
 		dashboardConfig:                          dashboardConfig,
 		kcBuilder:                                kcBuilder,
-		convergedCloudRegionsProvider:            convergedCloudRegionsProvider,
 		kcpClient:                                kcpClient,
 		regionsSupportingMachine:                 regionsSupportingMachine,
 		infrastructureManagerConfig:              imConfig,
+		schemaService:                            schemaService,
 	}
 }
 
@@ -464,11 +462,8 @@ func (b *UpdateEndpoint) extractActiveValue(id string, provisioning internal.Pro
 func (b *UpdateEndpoint) getJsonSchemaValidator(provider pkg.CloudProvider, planID string, platformRegion string) (*jsonschema.Schema, error) {
 	// shootAndSeedSameRegion is never enabled for update
 	b.log.Info(fmt.Sprintf("region is: %s", platformRegion))
-	plans := Plans(b.plansConfig, provider, nil, b.config.IncludeAdditionalParamsInSchema,
-		euaccess.IsEURestrictedAccess(platformRegion), b.infrastructureManagerConfig.UseSmallerMachineTypes, false,
-		b.convergedCloudRegionsProvider.GetRegions(platformRegion), assuredworkloads.IsKSA(platformRegion), b.config.UseAdditionalOIDCSchema,
-		b.infrastructureManagerConfig.EnableIngressFiltering,
-		b.infrastructureManagerConfig.IngressFilteringPlans)
+
+	plans := b.schemaService.Plans(b.plansConfig, platformRegion, provider)
 	plan := plans[planID]
 
 	return validator.NewFromSchema(plan.Schemas.Instance.Update.Parameters)

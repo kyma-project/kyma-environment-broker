@@ -252,8 +252,12 @@ spec:
               value: "{{ .Values.metricsv2.operationStatsPoolingInterval }}"
             - name: APP_MULTIPLE_CONTEXTS
               value: "{{ .Values.multipleContexts }}"
+            - name: APP_PLANS_CONFIGURATION_FILE_PATH
+              value: /config/plansConfig.yaml
             - name: APP_PROFILER_MEMORY
               value: "{{ .Values.profiler.memory }}"
+            - name: APP_PROVIDERS_CONFIGURATION_FILE_PATH
+              value: /config/providersConfig.yaml
             - name: APP_REGIONS_SUPPORTING_MACHINE_FILE_PATH
               value: /config/regionsSupportingMachine.yaml
             - name: APP_RUNTIME_CONFIGURATION_CONFIG_MAP_NAME
@@ -269,7 +273,7 @@ spec:
             - name: APP_STEP_TIMEOUTS_CHECK_RUNTIME_RESOURCE_DELETION
               value: "{{ .Values.stepTimeouts.checkRuntimeResourceDeletion }}"
             - name: APP_STEP_TIMEOUTS_CHECK_RUNTIME_RESOURCE_UPDATE
-              value: "{{ .Values.stepTimeouts.checkRuntimeResourceUpdate }}"   
+              value: "{{ .Values.stepTimeouts.checkRuntimeResourceUpdate }}"
             - name: APP_TRIAL_REGION_MAPPING_FILE_PATH
               value: /config/trialRegionMapping.yaml
             - name: APP_UPDATE_PROCESSING_ENABLED

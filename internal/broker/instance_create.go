@@ -19,8 +19,6 @@ import (
 	"github.com/kyma-project/kyma-environment-broker/internal/validator"
 	"github.com/santhosh-tekuri/jsonschema/v6"
 
-	"github.com/kyma-project/kyma-environment-broker/internal/assuredworkloads"
-
 	"github.com/kyma-project/kyma-environment-broker/internal/kubeconfig"
 	"github.com/kyma-project/kyma-environment-broker/internal/whitelist"
 
@@ -90,13 +88,12 @@ type ProvisionEndpoint struct {
 
 	freemiumWhiteList whitelist.Set
 
-	convergedCloudRegionsProvider ConvergedCloudRegionProvider
-
 	regionsSupportingMachine RegionsSupporter
 
 	log                    *slog.Logger
 	valuesProvider         ValuesProvider
 	useSmallerMachineTypes bool
+	schemaService          *SchemaService
 }
 
 const (
@@ -116,7 +113,7 @@ func NewProvision(brokerConfig Config,
 	dashboardConfig dashboard.Config,
 	kcBuilder kubeconfig.KcBuilder,
 	freemiumWhitelist whitelist.Set,
-	convergedCloudRegionsProvider ConvergedCloudRegionProvider,
+	schemaService *SchemaService,
 	regionsSupportingMachine RegionsSupporter,
 	valuesProvider ValuesProvider,
 	useSmallerMachineTypes bool,
@@ -128,25 +125,25 @@ func NewProvision(brokerConfig Config,
 	}
 
 	return &ProvisionEndpoint{
-		config:                        brokerConfig,
-		infrastructureManager:         imConfig,
-		operationsStorage:             db.Operations(),
-		instanceStorage:               db.Instances(),
-		instanceArchivedStorage:       db.InstancesArchived(),
-		queue:                         queue,
-		log:                           log.With("service", "ProvisionEndpoint"),
-		enabledPlanIDs:                enabledPlanIDs,
-		plansConfig:                   plansConfig,
-		shootDomain:                   gardenerConfig.ShootDomain,
-		shootProject:                  gardenerConfig.Project,
-		shootDnsProviders:             gardenerConfig.DNSProviders,
-		dashboardConfig:               dashboardConfig,
-		freemiumWhiteList:             freemiumWhitelist,
-		kcBuilder:                     kcBuilder,
-		convergedCloudRegionsProvider: convergedCloudRegionsProvider,
-		regionsSupportingMachine:      regionsSupportingMachine,
-		valuesProvider:                valuesProvider,
-		useSmallerMachineTypes:        useSmallerMachineTypes,
+		config:                   brokerConfig,
+		infrastructureManager:    imConfig,
+		operationsStorage:        db.Operations(),
+		instanceStorage:          db.Instances(),
+		instanceArchivedStorage:  db.InstancesArchived(),
+		queue:                    queue,
+		log:                      log.With("service", "ProvisionEndpoint"),
+		enabledPlanIDs:           enabledPlanIDs,
+		plansConfig:              plansConfig,
+		shootDomain:              gardenerConfig.ShootDomain,
+		shootProject:             gardenerConfig.Project,
+		shootDnsProviders:        gardenerConfig.DNSProviders,
+		dashboardConfig:          dashboardConfig,
+		freemiumWhiteList:        freemiumWhitelist,
+		kcBuilder:                kcBuilder,
+		regionsSupportingMachine: regionsSupportingMachine,
+		valuesProvider:           valuesProvider,
+		useSmallerMachineTypes:   useSmallerMachineTypes,
+		schemaService:            schemaService,
 	}
 }
 
@@ -670,15 +667,7 @@ func (b *ProvisionEndpoint) determineLicenceType(planId string) *string {
 
 func (b *ProvisionEndpoint) validator(details *domain.ProvisionDetails, provider pkg.CloudProvider, ctx context.Context) (*jsonschema.Schema, error) {
 	platformRegion, _ := middleware.RegionFromContext(ctx)
-	plans := Plans(b.plansConfig, provider, nil, b.config.IncludeAdditionalParamsInSchema,
-		euaccess.IsEURestrictedAccess(platformRegion),
-		b.infrastructureManager.UseSmallerMachineTypes,
-		b.config.EnableShootAndSeedSameRegion,
-		b.convergedCloudRegionsProvider.GetRegions(platformRegion),
-		assuredworkloads.IsKSA(platformRegion),
-		b.config.UseAdditionalOIDCSchema,
-		b.infrastructureManager.EnableIngressFiltering,
-		b.infrastructureManager.IngressFilteringPlans)
+	plans := b.schemaService.Plans(b.plansConfig, platformRegion, provider)
 	plan := plans[details.PlanID]
 
 	return validator.NewFromSchema(plan.Schemas.Instance.Create.Parameters)

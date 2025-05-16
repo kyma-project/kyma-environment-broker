@@ -128,8 +128,7 @@ type Operation struct {
 	InstanceDetails
 
 	// PROVISIONING
-	DashboardURL   string          `json:"dashboardURL"`
-	ProviderValues *ProviderValues `json:"providerValues"`
+	DashboardURL string `json:"dashboardURL"`
 
 	// DEPROVISIONING
 	// Temporary indicates that this deprovisioning operation must not remove the instance
@@ -226,6 +225,8 @@ type InstanceDetails struct {
 
 	// Used during KIM integration while deprovisioning - to be removed later on when provisioner not used anymore
 	KimDeprovisionsOnly *bool `json:"kim_deprovisions_only"`
+
+	ProviderValues *ProviderValues `json:"providerValues"`
 }
 
 func (i *InstanceDetails) GetRuntimeResourceName() string {

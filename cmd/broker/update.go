@@ -4,6 +4,8 @@ import (
 	"context"
 	"log/slog"
 
+	"github.com/kyma-project/kyma-environment-broker/internal/broker"
+
 	"github.com/kyma-project/kyma-environment-broker/internal"
 	"github.com/kyma-project/kyma-environment-broker/internal/process"
 	"github.com/kyma-project/kyma-environment-broker/internal/process/steps"
@@ -16,12 +18,15 @@ import (
 )
 
 func NewUpdateProcessingQueue(ctx context.Context, manager *process.StagedManager, workersAmount int, db storage.BrokerStorage,
-	cfg Config, kcpClient client.Client, logs *slog.Logger, workersProvider *workers.Provider) *process.Queue {
+	cfg Config, kcpClient client.Client, logs *slog.Logger, workersProvider *workers.Provider, schemaService *broker.SchemaService) *process.Queue {
 
 	trialRegionsMapping, err := provider.ReadPlatformRegionMappingFromFile(cfg.TrialRegionMappingFilePath)
 	if err != nil {
 		fatalOnError(err, logs)
 	}
+
+	regions, err := provider.ReadPlatformRegionMappingFromFile(cfg.TrialRegionMappingFilePath)
+	valuesProvider := provider.NewPlanSpecificValuesProvider(cfg.InfrastructureManager, regions, schemaService)
 
 	manager.DefineStages([]string{"cluster", "btp-operator", "btp-operator-check", "check", "runtime_resource", "check_runtime_resource"})
 	updateSteps := []struct {
@@ -36,7 +41,7 @@ func NewUpdateProcessingQueue(ctx context.Context, manager *process.StagedManage
 		},
 		{
 			stage:     "runtime_resource",
-			step:      update.NewUpdateRuntimeStep(db, kcpClient, cfg.UpdateRuntimeResourceDelay, cfg.InfrastructureManager, trialRegionsMapping, cfg.Broker.UseAdditionalOIDCSchema, workersProvider),
+			step:      update.NewUpdateRuntimeStep(db, kcpClient, cfg.UpdateRuntimeResourceDelay, cfg.InfrastructureManager, trialRegionsMapping, cfg.Broker.UseAdditionalOIDCSchema, workersProvider, valuesProvider),
 			condition: update.SkipForOwnClusterPlan,
 		},
 		{

@@ -261,7 +261,6 @@ func fixConfig() *Config {
 			WorkerHealthCheckWarnInterval: 10 * time.Minute,
 		},
 		TrialRegionMappingFilePath:                "testdata/trial-regions.yaml",
-		SapConvergedCloudRegionMappingsFilePath:   "testdata/old-sap-converged-cloud-region-mappings.yaml",
 		MaxPaginationPage:                         100,
 		FreemiumWhitelistedGlobalAccountsFilePath: "testdata/freemium_whitelist.yaml",
 		Provisioning:                              process.StagedManagerConfiguration{MaxStepProcessingTime: time.Minute},
@@ -278,6 +277,8 @@ func fixConfig() *Config {
 			OperationResultFinishedOperationRetentionPeriod: time.Hour,
 			BindingsStatsPollingInterval:                    3 * time.Second,
 		},
+		ProvidersConfigurationFilePath: "testdata/providers.yaml",
+		PlansConfigurationFilePath:     "testdata/plans.yaml",
 	}
 }
 

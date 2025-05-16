@@ -15,7 +15,6 @@ import (
 	"github.com/kyma-project/kyma-environment-broker/internal/process/steps"
 
 	"github.com/kyma-project/kyma-environment-broker/internal/process/provisioning"
-	"github.com/kyma-project/kyma-environment-broker/internal/provider"
 	"github.com/kyma-project/kyma-environment-broker/internal/storage"
 	"github.com/kyma-project/kyma-environment-broker/internal/workers"
 
@@ -34,10 +33,11 @@ type UpdateRuntimeStep struct {
 	trialPlatformRegionMapping map[string]string
 	useAdditionalOIDCSchema    bool
 	workersProvider            *workers.Provider
+	valuesProvider             broker.ValuesProvider
 }
 
 func NewUpdateRuntimeStep(db storage.BrokerStorage, k8sClient client.Client, delay time.Duration, infrastructureManagerConfig broker.InfrastructureManager, trialPlatformRegionMapping map[string]string, useAdditionalOIDCSchema bool,
-	workersProvider *workers.Provider) *UpdateRuntimeStep {
+	workersProvider *workers.Provider, valuesProvider broker.ValuesProvider) *UpdateRuntimeStep {
 	step := &UpdateRuntimeStep{
 		k8sClient:                  k8sClient,
 		delay:                      delay,
@@ -46,6 +46,7 @@ func NewUpdateRuntimeStep(db storage.BrokerStorage, k8sClient client.Client, del
 		trialPlatformRegionMapping: trialPlatformRegionMapping,
 		useAdditionalOIDCSchema:    useAdditionalOIDCSchema,
 		workersProvider:            workersProvider,
+		valuesProvider:             valuesProvider,
 	}
 	step.operationManager = process.NewOperationManager(db.Operations(), step.Name(), kebError.InfrastructureManagerDependency)
 	return step
@@ -79,8 +80,7 @@ func (s *UpdateRuntimeStep) Run(operation internal.Operation, log *slog.Logger) 
 	runtime.Spec.Shoot.Provider.Workers[0].MaxUnavailable = &maxUnavailable
 
 	if operation.UpdatingParameters.AdditionalWorkerNodePools != nil {
-		values, err := provider.GetPlanSpecificValues(&operation, s.config.MultiZoneCluster, s.config.DefaultTrialProvider, s.config.UseSmallerMachineTypes, s.trialPlatformRegionMapping,
-			s.config.DefaultGardenerShootPurpose, s.config.ControlPlaneFailureTolerance)
+		values, err := s.valuesProvider.ValuesForPlanAndParameters(operation.ProvisioningParameters)
 		if err != nil {
 			return s.operationManager.OperationFailed(operation, fmt.Sprintf("while calculating plan specific values: %s", err), err, log)
 		}

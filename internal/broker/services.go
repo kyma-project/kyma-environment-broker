@@ -6,10 +6,6 @@ import (
 	"log/slog"
 	"sort"
 
-	"github.com/kyma-project/kyma-environment-broker/internal/assuredworkloads"
-
-	"github.com/kyma-project/kyma-environment-broker/internal/euaccess"
-
 	"github.com/kyma-project/kyma-environment-broker/internal/middleware"
 
 	pkg "github.com/kyma-project/kyma-environment-broker/common/runtime"
@@ -26,15 +22,15 @@ type ServicesEndpoint struct {
 	cfg            Config
 	servicesConfig ServicesConfig
 
-	enabledPlanIDs                map[string]struct{}
-	convergedCloudRegionsProvider ConvergedCloudRegionProvider
-	defaultOIDCConfig             *pkg.OIDCConfigDTO
-	useSmallerMachineTypes        bool
-	ingressFilteringFeatureFlag   bool
-	ingressFilteringPlans         EnablePlans
+	enabledPlanIDs              map[string]struct{}
+	defaultOIDCConfig           *pkg.OIDCConfigDTO
+	useSmallerMachineTypes      bool
+	ingressFilteringFeatureFlag bool
+	ingressFilteringPlans       EnablePlans
+	schemaService               *SchemaService
 }
 
-func NewServices(cfg Config, servicesConfig ServicesConfig, log *slog.Logger, convergedCloudRegionsProvider ConvergedCloudRegionProvider, defaultOIDCConfig pkg.OIDCConfigDTO, imConfig InfrastructureManager) *ServicesEndpoint {
+func NewServices(cfg Config, schemaService *SchemaService, servicesConfig ServicesConfig, log *slog.Logger, defaultOIDCConfig pkg.OIDCConfigDTO, imConfig InfrastructureManager) *ServicesEndpoint {
 	enabledPlanIDs := map[string]struct{}{}
 	for _, planName := range cfg.EnablePlans {
 		id := PlanIDsMapping[planName]
@@ -42,15 +38,15 @@ func NewServices(cfg Config, servicesConfig ServicesConfig, log *slog.Logger, co
 	}
 
 	return &ServicesEndpoint{
-		log:                           log.With("service", "ServicesEndpoint"),
-		cfg:                           cfg,
-		servicesConfig:                servicesConfig,
-		enabledPlanIDs:                enabledPlanIDs,
-		convergedCloudRegionsProvider: convergedCloudRegionsProvider,
-		defaultOIDCConfig:             &defaultOIDCConfig,
-		useSmallerMachineTypes:        imConfig.UseSmallerMachineTypes,
-		ingressFilteringFeatureFlag:   imConfig.EnableIngressFiltering,
-		ingressFilteringPlans:         imConfig.IngressFilteringPlans,
+		log:                         log.With("service", "ServicesEndpoint"),
+		cfg:                         cfg,
+		servicesConfig:              servicesConfig,
+		enabledPlanIDs:              enabledPlanIDs,
+		defaultOIDCConfig:           &defaultOIDCConfig,
+		useSmallerMachineTypes:      imConfig.UseSmallerMachineTypes,
+		ingressFilteringFeatureFlag: imConfig.EnableIngressFiltering,
+		ingressFilteringPlans:       imConfig.IngressFilteringPlans,
+		schemaService:               schemaService,
 	}
 }
 
@@ -68,24 +64,13 @@ func (se *ServicesEndpoint) Services(ctx context.Context) ([]domain.Service, err
 
 	provider, ok := middleware.ProviderFromContext(ctx)
 	platformRegion, ok := middleware.RegionFromContext(ctx)
-	for _, plan := range Plans(class.Plans,
-		provider,
-		se.defaultOIDCConfig,
-		se.cfg.IncludeAdditionalParamsInSchema,
-		euaccess.IsEURestrictedAccess(platformRegion),
-		se.useSmallerMachineTypes,
-		se.cfg.EnableShootAndSeedSameRegion,
-		se.convergedCloudRegionsProvider.GetRegions(platformRegion),
-		assuredworkloads.IsKSA(platformRegion),
-		se.cfg.UseAdditionalOIDCSchema,
-		se.ingressFilteringFeatureFlag,
-		se.ingressFilteringPlans,
-	) {
 
+	for _, plan := range se.schemaService.Plans(class.Plans, platformRegion, provider) {
 		// filter out not enabled plans
 		if _, exists := se.enabledPlanIDs[plan.ID]; !exists {
 			continue
 		}
+
 		if se.cfg.Binding.Enabled && se.cfg.Binding.BindablePlans.Contains(plan.Name) {
 			plan.Bindable = &bindable
 		}

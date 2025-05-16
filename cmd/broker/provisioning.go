@@ -14,7 +14,6 @@ import (
 	"github.com/kyma-project/kyma-environment-broker/internal/process"
 	"github.com/kyma-project/kyma-environment-broker/internal/process/provisioning"
 	"github.com/kyma-project/kyma-environment-broker/internal/process/steps"
-	"github.com/kyma-project/kyma-environment-broker/internal/provider"
 	"github.com/kyma-project/kyma-environment-broker/internal/storage"
 	"github.com/kyma-project/kyma-environment-broker/internal/workers"
 
@@ -34,11 +33,6 @@ func NewProvisioningProcessingQueue(ctx context.Context, provisionManager *proce
 	k8sClientProvider provisioning.K8sClientProvider, k8sClient client.Client, gardenerClient *gardener.Client, defaultOIDC pkg.OIDCConfigDTO, logs *slog.Logger, rulesService *rules.RulesService,
 	workersProvider *workers.Provider) *process.Queue {
 
-	trialRegionsMapping, err := provider.ReadPlatformRegionMappingFromFile(cfg.TrialRegionMappingFilePath)
-	if err != nil {
-		fatalOnError(err, logs)
-	}
-
 	provisionManager.DefineStages([]string{startStageName, createRuntimeStageName,
 		checkKymaStageName, createKymaResourceStageName})
 	/*
@@ -53,8 +47,6 @@ func NewProvisioningProcessingQueue(ctx context.Context, provisionManager *proce
 			Once the stage is done it will never be retried.
 	*/
 
-	fatalOnError(err, logs)
-
 	provisioningSteps := []struct {
 		disabled  bool
 		stage     string
@@ -64,10 +56,6 @@ func NewProvisioningProcessingQueue(ctx context.Context, provisionManager *proce
 		{
 			stage: startStageName,
 			step:  provisioning.NewStartStep(db.Operations(), db.Instances()),
-		},
-		{
-			stage: createRuntimeStageName,
-			step:  provisioning.NewInitProviderValuesStep(db.Operations(), db.Instances(), cfg.InfrastructureManager, trialRegionsMapping),
 		},
 		{
 			stage: createRuntimeStageName,

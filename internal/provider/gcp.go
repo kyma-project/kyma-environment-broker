@@ -2,8 +2,8 @@ package provider
 
 import (
 	"fmt"
-	"math/rand"
 
+	pkg "github.com/kyma-project/kyma-environment-broker/common/runtime"
 	"github.com/kyma-project/kyma-environment-broker/internal"
 	"github.com/kyma-project/kyma-environment-broker/internal/assuredworkloads"
 	"github.com/kyma-project/kyma-environment-broker/internal/broker"
@@ -33,19 +33,21 @@ type (
 		MultiZone              bool
 		ProvisioningParameters internal.ProvisioningParameters
 		FailureTolerance       string
+		ZonesProvider          ZonesProvider
 	}
 
 	GCPTrialInputProvider struct {
 		Purpose                string
 		PlatformRegionMapping  map[string]string
 		ProvisioningParameters internal.ProvisioningParameters
+		ZonesProvider          ZonesProvider
 	}
 )
 
 func (p *GCPInputProvider) Provide() internal.ProviderValues {
 	zonesCount := p.zonesCount()
-	zones := p.zones()
 	region := p.region()
+	zones := ZonesForGCPRegion(region, p.ZonesProvider.RandomZones(pkg.GCP, region, zonesCount))
 	return internal.ProviderValues{
 		DefaultAutoScalerMax: 20,
 		DefaultAutoScalerMin: 3,
@@ -69,14 +71,6 @@ func (p *GCPInputProvider) zonesCount() int {
 	return zonesCount
 }
 
-func (p *GCPInputProvider) zones() []string {
-	region := DefaultGCPRegion
-	if p.ProvisioningParameters.Parameters.Region != nil {
-		region = *p.ProvisioningParameters.Parameters.Region
-	}
-	return ZonesForGCPRegion(region, p.zonesCount())
-}
-
 func (p *GCPInputProvider) region() string {
 	if assuredworkloads.IsKSA(p.ProvisioningParameters.PlatformRegion) {
 		return DefaultGCPAssuredWorkloadsRegion
@@ -91,12 +85,11 @@ func (p *GCPInputProvider) region() string {
 
 func (p *GCPTrialInputProvider) Provide() internal.ProviderValues {
 	region := p.region()
-
 	return internal.ProviderValues{
 		DefaultAutoScalerMax: 1,
 		DefaultAutoScalerMin: 1,
 		ZonesCount:           1,
-		Zones:                ZonesForGCPRegion(region, 1),
+		Zones:                ZonesForGCPRegion(region, p.ZonesProvider.RandomZones(pkg.GCP, region, 1)),
 		ProviderType:         GCPProviderType,
 		DefaultMachineType:   DefaultGCPTrialMachineType,
 		Region:               region,
@@ -105,14 +98,6 @@ func (p *GCPTrialInputProvider) Provide() internal.ProviderValues {
 		DiskType:             "pd-standard",
 		FailureTolerance:     nil,
 	}
-}
-
-func (p *GCPTrialInputProvider) zones() []string {
-	region := DefaultGCPRegion
-	if p.ProvisioningParameters.Parameters.Region != nil {
-		region = *p.ProvisioningParameters.Parameters.Region
-	}
-	return ZonesForGCPRegion(region, 1)
 }
 
 func (p *GCPTrialInputProvider) region() string {
@@ -139,20 +124,11 @@ func (p *GCPTrialInputProvider) region() string {
 	return DefaultGCPRegion
 }
 
-func ZonesForGCPRegion(region string, zonesCount int) []string {
-	availableZones := []string{"a", "b", "c"}
-	var zones []string
-	if zonesCount > len(availableZones) {
-		zonesCount = len(availableZones)
+func ZonesForGCPRegion(region string, zones []string) []string {
+	fullNames := []string{}
+	for _, zone := range zones {
+		fullNames = append(fullNames, fmt.Sprintf("%s-%s", region, zone))
 	}
 
-	availableZones = availableZones[:zonesCount]
-
-	rand.Shuffle(zonesCount, func(i, j int) { availableZones[i], availableZones[j] = availableZones[j], availableZones[i] })
-
-	for i := 0; i < zonesCount; i++ {
-		zones = append(zones, fmt.Sprintf("%s-%s", region, availableZones[i]))
-	}
-
-	return zones
+	return fullNames
 }
