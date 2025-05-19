@@ -39,8 +39,6 @@ broker:
   events:
     # Enable or disable the /events API and event storage for operation events (true/false)
     enabled: true
-    # retention: 336h  # (optional) How long to retain events (e.g. "336h" for 2 weeks)
-    # pollingPeriod: 1h  # (optional) How often to run event garbage collection (e.g. "1h")
   # Maximum allowed duration for processing a single operation (provisioning, deprovisioning, etc.).
   # If the operation exceeds this timeout, it will be marked as failed. Example: "7h" for 7 hours.
   operationTimeout: "7h"
@@ -53,10 +51,10 @@ broker:
   statusPort: "8071"
   # If true, enables subaccount movement (allows changing global account for an instance).
   subaccountMovementEnabled: "false"
-  # If true, updates custom resource labels when moving subaccounts
+  # If true, updates runtimeCR labels when moving subaccounts
   updateCustomResourcesLabelsOnAccountMove: "false"
   # If true, enables the new list-based OIDC schema, allowing multiple OIDC configurations to be specified for a runtime.
-  useAdditionalOIDCSchema: "false"
+  useAdditionalOIDCSchema: "false" # temporary feature flag
 # =========================
 
 # =========================
@@ -64,11 +62,8 @@ broker:
 # =========================
 cleaning:
   # If true, the cleaning process runs in dry-run mode and does not actually delete any data from the database.
-  # Only logs what would be deleted. 
   dryRun: true
   # If true, enables the cleaning process, which removes all data about deprovisioned instances from the database.
-  # This includes deleting the instance record, all related operations, and all runtime states associated with those operations.
-  # If false, the cleaning process is disabled and no cleanup will be performed.
   enabled: false
 # ==========================
 
@@ -113,7 +108,7 @@ cis:
     jobRetries: 6
     # The maximum number of request retries to the CIS v2 API in case of errors.
     maxRequestRetries: "3"
-    # The minimum interval between requests to the CIS v2 API for rate limiting.
+    # The minimum interval between requests to the CIS v2 API in case of errors.
     rateLimitingInterval: "2s"
     # The interval between requests to the CIS v2 API.
     requestInterval: "200ms"
@@ -140,11 +135,10 @@ deployment:
 # Deprovision Retrigger Settings
 # ========================
 deprovisionRetrigger:
-  # If true, the job runs in dry-run mode and does not actually retrigger deprovisioning (only logs what would be done).
+  # If true, the job runs in dry-run mode and does not actually retrigger deprovisioning.
   dryRun: true
   # If true, enables the Deprovision Retrigger CronJob, which periodically attempts to deprovision instances that were not fully deleted.
   enabled: true
-  # The cron schedule for running the Deprovision Retrigger job.
   schedule: "0 2 * * *"
 # =========================
 
@@ -153,7 +147,6 @@ disableProcessOperationsInProgress: "false"
 # If true, disables the SAP Converged Cloud plan in the Kyma Environment Broker. When set to true, users cannot provision SAP Converged Cloud clusters
 disableSapConvergedCloud: false
 # Comma-separated list of plan names that are enabled and available for provisioning in the Kyma Environment Broker.
-# Only the plans listed here will be offered to users via the service catalog and API. Example: "azure,gcp,azure_lite,trial,aws"
 enablePlans: "azure,gcp,azure_lite,trial,aws"
 
 # =========================
@@ -188,7 +181,6 @@ freeCleanup:
   enabled: true
   # Specifies how long a free instance can exist before being eligible for cleanup (e.g., 2160h = 90 days).
   expirationPeriod: 2160h # 90 days
-  # Cron schedule for running the cleanup job.
   schedule: "0,15,30,45 * * * *"
   # If true, runs the job in test mode (no real deletions, for testing purposes).
   testRun: false
@@ -198,8 +190,7 @@ freeCleanup:
 
 # URL to the documentation for free Kyma environments. Used in API responses and UI labels to direct users to help or documentation about free plans.
 freeDocsURL: "https://help.sap.com/docs/"
-# Specifies the duration (e.g., 720h = 30 days) after which a free Kyma environment is considered expired.
-# Used to determine when to show expiration info and when to trigger cleanup or restrict access.
+# Used to determine when to show expiration info to users.
 freeExpirationPeriod: 720h
 # List of global account IDs that are allowed unlimited access to freemium (free) Kyma environments.
 # Only accounts listed here can provision more than the default limit of free environments.
@@ -218,7 +209,7 @@ gardener:
   # Path to the kubeconfig file for accessing the Gardener cluster.
   kubeconfigPath: "/gardener/kubeconfig/kubeconfig"
   # Gardener project name used for resource provisioning and HAP credentials lookup.
-  project: "kyma-dev" # Gardener project connected to SA for HAP credentials lookup
+  project: "kyma-dev"
   # Name of the Kubernetes Secret containing Gardener credentials.
   secretName: "gardener-credentials"
   # Default domain for shoots (clusters) created by Gardener.
@@ -327,14 +318,9 @@ hap:
 
 host: "kyma-env-broker"
 
-# Name of a single Kubernetes Secret used for pulling container images from private registries.
-# Used to authenticate to a private registry when pulling images for this workload.
 imagePullSecret: ""
-# List of Kubernetes Secret names used for pulling container images from private registries.
-# Allows specifying multiple secrets for image pull authentication.
 imagePullSecrets: [ ]
 # If true, additional (advanced or less common) parameters are included in the provisioning schema for service plans.
-# This allows users to configure more options when provisioning a Kyma environment. If false, only the most common parameters are shown.
 includeAdditionalParamsInSchema: "false"
 
 # =========================
@@ -348,7 +334,7 @@ infrastructureManager:
   defaultShootPurpose: "development"
   # Sets the default cloud provider to use for trial Kyma environments (e.g., Azure, AWS).
   defaultTrialProvider: "Azure"
-  # If true, enables network ingress filtering
+  # If true, allows to enable ingress filtering clusters.
   enableIngressFiltering: "false"
   # Comma-separated list of plan names for which ingress filtering is available.
   ingressFilteringPlans: "azure,gcp,aws"
@@ -358,9 +344,9 @@ infrastructureManager:
   machineImage: ""
   # Sets the version of the machine image to use for nodes in provisioned clusters
   machineImageVersion: ""
-  # If true, enables provisioning of clusters with nodes distributed across multiple availability zones for higher availability.
+  # If true, enables provisioning of clusters with nodes distributed across multiple availability zones.
   multiZoneCluster: "false"
-  # If true, provisions trial, freemium, and azure_lite clusters using smaller/cheaper machine types.
+  # If true, provisions trial, freemium, and azure_lite clusters using smaller machine types.
   useSmallerMachineTypes: "false"
 # =========================
 
@@ -372,7 +358,7 @@ kubeconfig:
   allowOrigins: "*"
 
 lifecycleManager:
-  # When disabled, the broker will not create, update, or delete Kyma custom resources
+  # When disabled, the broker will not create, update, or delete the KymaCR.
   disabled: "false"
 
 # If true, this Helm chart will create and manage Kubernetes Secret resources for credentials.
@@ -388,11 +374,11 @@ metricsv2:
   # How long to retain finished operation results in memory (e.g., 3h).
   operationResultFinishedOperationRetentionPeriod: 3h
   # How often to poll for operation results (e.g., 1m).
-  operationResultPoolingInterval: 1m
+  operationResultPoolingInterval: 1m # WRONG NAME !!!!!
   # How long to retain operation results (e.g., 1h).
   operationResultRetentionPeriod: 1h
   # How often to poll for operation statistics (e.g., 1m).
-  operationStatsPoolingInterval: 1m
+  operationStatsPoolingInterval: 1m # WRONG NAME !!!!!
 # =========================
 
 # ========================
@@ -416,7 +402,6 @@ migratorJobs:
 # If true, generates kubeconfig files with multiple contexts (if possible) instead of a single context.
 multipleContexts: false
 # Sets the value for the app.kubernetes.io/instance label on Kubernetes resources created by this Helm chart.
-# Useful for identifying, grouping, or filtering resources that belong to the same logical instance or release.
 namePrefix: "kcp"
 # If set, overrides the default chart name used as the base for Kubernetes resource names created by this Helm chart.
 # Useful for customizing resource names across environments or deployments.
@@ -439,9 +424,7 @@ onlyOneFreePerGA: "false"
 # If true, restricts each global account to only one active trial Kyma environment at a time.
 # When enabled, provisioning another trial environment for the same global account will be blocked until the previous one is deprovisioned.
 onlySingleTrialPerGA: "true"
-# If true, the broker processes update requests for service instances via the Open Service Broker (OSB) API.
-# This enables updating existing Kyma environments (e.g., changing machine type, OIDC config, administrators).
-# If false, update requests are ignored or rejected.
+# If true, the broker processes update requests for service instances
 osbUpdateProcessingEnabled: "true"
 # Defines which machine type families are available in which regions (and optionally, zones).
 # Restricts provisioning of listed machine types to the specified regions/zones only.
@@ -457,8 +440,7 @@ regionsSupportingMachine: |-
 runtimeAllowedPrincipals: |-
   - cluster.local/ns/kcp-system/sa/kcp-kyma-metrics-collector
 
-# Defines the default Kyma custom resource (CR) template and additional runtime configuration.
-runtimeConfiguration: |-
+# Defines the default KymaCR template.
   default: |-
     kyma-template: |-
       apiVersion: operator.kyma-project.io/v1beta2
@@ -518,7 +500,6 @@ serviceBindingCleanup:
   requestRetries: 2
   # Timeout for each DELETE request to the broker (e.g., "2s").
   requestTimeout: 2s
-  # Cron schedule for running the cleanup job.
   schedule: "0 2,14 * * *"
 # =========================
 
@@ -556,11 +537,12 @@ subaccountCleanup:
   nameV1: "kcp-subaccount-cleaner-v1.0"
   nameV2: "kcp-subaccount-cleaner-v2.0"
   schedule: "0 1 * * *"
+# Shows trial expiration information for specific subaccounts in the UI and API responses.
 subaccountsIdsToShowTrialExpirationInfo: "a45be5d8-eddc-4001-91cf-48cc644d571f"
 subaccountSync:
   # Interval between full account synchronization runs (e.g., 24h = every 24 hours).
   accountSyncInterval: 24h
-  # If true, always fetch subaccount data from the database instead of external sources.
+  # If true, fetches subaccountID from the database only when the subaccount is empty.
   alwaysSubaccountFromDatabase: false
   cisRateLimits:
     accounts:
@@ -587,7 +569,7 @@ subaccountSync:
   name: "subaccount-sync"
   # Interval between queue processing cycles (e.g., 30s = 30 seconds).
   queueSleepInterval: 30s
-  # Interval between full storage synchronization runs (e.g., 5m = 5 minutes).
+  # Interval between storage synchronization runs (e.g., 5m = 5 minutes).
   storageSyncInterval: 5m
   # If true, enables updating resources during subaccount sync.
   updateResources: false
