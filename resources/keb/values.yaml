@@ -441,6 +441,7 @@ runtimeAllowedPrincipals: |-
   - cluster.local/ns/kcp-system/sa/kcp-kyma-metrics-collector
 
 # Defines the default KymaCR template.
+runtimeConfiguration: |-
   default: |-
     kyma-template: |-
       apiVersion: operator.kyma-project.io/v1beta2
