@@ -1,4 +1,4 @@
-# Allow update of expired instance only if context contains globalaccount_id
+# Allow update of expired instance
 allowUpdateExpiredInstanceWithContext: "false"
 archiving:
   # If true, enables the archiving mechanism, which stores data about deprovisioned instances in an archive table at the end of the deprovisioning process.
@@ -34,8 +34,7 @@ broker:
   defaultRequestRegion: "cf-eu10"
   # If true, disables updating the machine type of additional worker node pools in a runtime
   disableMachineTypeUpdate: "false"
-  # If true, enforces that the Gardener seed cluster is placed in the same region as the selected shoot region during provisioning.
-  # If no seed is available in the selected region, the provisioning will fail.
+  # If true, enforces that the Gardener seed is placed in the same region as the selected shoot region during provisioning.
   enableShootAndSeedSameRegion: "false"
   events:
     # Enable or disable the /events API and event storage for operation events (true/false)
