@@ -1,0 +1,15 @@
+{{ if .Values.broker.monitorAdditionalProperties }}
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: {{ include "kyma-env-broker.fullname" . }}-additional-properties
+  labels:
+{{ include "kyma-env-broker.labels" . | indent 4 }}
+spec:
+  accessModes:
+  - ReadWriteOnce
+  resources:
+    requests:
+      storage: 5Gi
+  storageClassName: standard
+{{ end }}

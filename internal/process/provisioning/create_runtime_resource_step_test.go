@@ -916,8 +916,8 @@ func TestCreateRuntimeResourceStep_SapConvergedCloud(t *testing.T) {
 		expectedRegion      string
 		possibleZones       []string
 	}{
-		{"Single zone", pkg.SapConvergedCloud, 1, "openstack", "g_c2_m8", "eu-de-1", []string{"eu-de-1a", "eu-de-1b", "eu-de-1d"}},
-		{"Multi zone", pkg.SapConvergedCloud, 3, "openstack", "g_c2_m8", "eu-de-1", []string{"eu-de-1a", "eu-de-1b", "eu-de-1d"}},
+		{"Single zone", pkg.SapConvergedCloud, 1, "openstack", "g_c2_m8", "eu-de-1", []string{"eu-de-1a", "eu-de-1b", "eu-de-1c"}},
+		{"Multi zone", pkg.SapConvergedCloud, 3, "openstack", "g_c2_m8", "eu-de-1", []string{"eu-de-1a", "eu-de-1b", "eu-de-1c"}},
 	} {
 		t.Run(testCase.name, func(t *testing.T) {
 			memoryStorage := storage.NewMemoryStorage()
@@ -965,7 +965,10 @@ func TestCreateRuntimeResourceStep_Defaults_Freemium(t *testing.T) {
 		expectedRegion      string
 		possibleZones       []string
 	}{
-		{"azure", pkg.Azure, "azure", "Standard_D4s_v5", "westeurope", []string{"1", "2", "3"}},
+		/**
+		zone provider is mocked, always returns: a, b, c
+		*/
+		{"azure", pkg.Azure, "azure", "Standard_D4s_v5", "westeurope", []string{"a", "b", "c"}},
 		{"aws", pkg.AWS, "aws", "m5.xlarge", "westeurope", []string{"eu-central-1a", "eu-central-1b", "eu-central-1c"}},
 	} {
 		t.Run(testCase.name, func(t *testing.T) {
@@ -1215,8 +1218,10 @@ channel: stable
 modules: []
 `
 	operation.ProvisioningParameters.PlatformProvider = platformProvider
-	values, _ := provider.GetPlanSpecificValues(&operation, inputConfig.MultiZoneCluster, inputConfig.DefaultTrialProvider, false, nil,
-		inputConfig.DefaultGardenerShootPurpose, inputConfig.ControlPlaneFailureTolerance)
+
+	valuesProvider := provider.NewPlanSpecificValuesProvider(inputConfig, nil, provider.FakeZonesProvider([]string{"a", "b", "c"}))
+
+	values, _ := valuesProvider.ValuesForPlanAndParameters(operation.ProvisioningParameters)
 	operation.ProviderValues = &values
 	return operation
 }

@@ -53,7 +53,8 @@ With high availability enabled, resources are distributed across three zones to 
 In this scenario, you must set **autoScalerMin** to at least `3`.
 
 If high availability is disabled, all resources are placed in a single, randomly selected zone. In this case, you can set **autoScalerMin** to 0 and **autoScalerMax** to `1`, which helps reduce costs. 
-However, it is not recommended for production environments. 
+However, it is not recommended for production environments. Setting the **autoScalerMin** value to 0 results in an automatic removal of the additional worker nodes depending on the current workload in the cluster.
+If there are no user workloads deployed onto the nodes associated with the given additional worker node pool, the nodes are removed automatically. The process should take around 30 minutes.
 
 See the following JSON example without the `additionalWorkerNodePools` list:
 

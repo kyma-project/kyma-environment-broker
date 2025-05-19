@@ -56,6 +56,21 @@ spec:
               mountPath: /tmp/profiler
               readOnly: false
         {{- end }}
+        {{- if .Values.broker.monitorAdditionalProperties }}
+        - name: additional-properties
+          command:
+          - sh
+          - -c
+          - "chmod 777 /additional-properties && sleep infinity"
+          securityContext:
+            runAsUser: 0
+          image: europe-docker.pkg.dev/kyma-project/prod/alpine:v20250430-cb54844f
+          imagePullPolicy: Always
+          volumeMounts:
+            - name: keb-additional-properties
+              mountPath: /additional-properties
+              readOnly: false
+        {{- end }}
         - name: {{ include "kyma-env-broker.name" . }}
           image: "{{ .Values.global.images.container_registry.path }}/{{ .Values.global.images.kyma_environment_broker.dir }}kyma-environment-broker:{{ .Values.global.images.kyma_environment_broker.version }}"
           imagePullPolicy: {{ .Values.deployment.image.pullPolicy }}
@@ -80,8 +95,6 @@ spec:
               value: "{{ .Values.binding.maxExpirationSeconds}}"
             - name: APP_BROKER_BINDING_MIN_EXPIRATION_SECONDS
               value: "{{ .Values.binding.minExpirationSeconds}}"
-            - name: APP_BROKER_DISABLE_MACHINE_TYPE_UPDATE
-              value: "{{ .Values.broker.disableMachineTypeUpdate }}"
             - name: APP_BROKER_DISABLE_SAP_CONVERGED_CLOUD
               value: "{{ .Values.disableSapConvergedCloud }}"
             - name: APP_BROKER_ENABLE_PLANS
@@ -94,6 +107,8 @@ spec:
               value: "{{ .Values.freeExpirationPeriod }}"
             - name: APP_BROKER_INCLUDE_ADDITIONAL_PARAMS_IN_SCHEMA
               value: "{{ .Values.includeAdditionalParamsInSchema }}"
+            - name: APP_BROKER_MONITOR_ADDITIONAL_PROPERTIES
+              value: "{{ .Values.broker.monitorAdditionalProperties }}"
             - name: APP_BROKER_ONLY_ONE_FREE_PER_GA
               value: "{{ .Values.onlyOneFreePerGA }}"
             - name: APP_BROKER_ONLY_SINGLE_TRIAL_PER_GA
@@ -239,10 +254,14 @@ spec:
               value: "orchestration-config"
             - name: APP_ORCHESTRATION_CONFIG_NAMESPACE
               value: "{{ .Release.Namespace }}"
+            - name: APP_PLANS_CONFIGURATION_FILE_PATH
+              value: /config/plansConfig.yaml
             - name: APP_PORT
               value: "{{ .Values.broker.port }}"
             - name: APP_PROFILER_MEMORY
               value: "{{ .Values.broker.profiler.memory }}"
+            - name: APP_PROVIDERS_CONFIGURATION_FILE_PATH
+              value: /config/providersConfig.yaml
             - name: APP_REGIONS_SUPPORTING_MACHINE_FILE_PATH
               value: /config/regionsSupportingMachine.yaml
             - name: APP_RUNTIME_CONFIGURATION_CONFIG_MAP_NAME
@@ -265,8 +284,6 @@ spec:
               value: /config/trialRegionMapping.yaml
             - name: APP_UPDATE_PROCESSING_ENABLED
               value: "{{ .Values.osbUpdateProcessingEnabled }}"
-            - name: APP_ZONE_MAPPING
-              value: "{{ .Values.zoneMapping }}"
           ports:
             - name: http
               containerPort: {{ .Values.broker.port }}
@@ -298,6 +315,11 @@ spec:
           {{- if .Values.broker.profiler.memory }}
             - name: keb-memory-profile
               mountPath: /tmp/profiler
+              readOnly: false
+          {{- end }}
+          {{- if .Values.broker.monitorAdditionalProperties }}
+            - name: keb-additional-properties
+              mountPath: /additional-properties
               readOnly: false
           {{- end }}
           {{- if and (eq .Values.global.database.embedded.enabled false) (eq .Values.global.database.cloudsqlproxy.enabled false)}}
@@ -357,4 +379,9 @@ spec:
       - name: keb-memory-profile
         persistentVolumeClaim:
           claimName: {{ include "kyma-env-broker.fullname" . }}-profiler
+      {{- end }}
+      {{- if .Values.broker.monitorAdditionalProperties }}
+      - name: keb-additional-properties
+        persistentVolumeClaim:
+          claimName: {{ include "kyma-env-broker.fullname" . }}-additional-properties
       {{- end }}
