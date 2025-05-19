@@ -591,7 +591,6 @@ trialCleanup:
   enabled: true
   # Specifies how long a trial instance can exist before being expired.
   expirationPeriod: 336h
-  # Cron schedule for running the cleanup job.
   schedule: "15 1 * * *"
   # If true, runs the job in test mode.
   testRun: false
