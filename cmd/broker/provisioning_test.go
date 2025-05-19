@@ -337,7 +337,7 @@ func TestProvisioning_IngressFiltering_Enabled(t *testing.T) {
 		iid := uuid.New().String()
 
 		// when
-		resp := suite.CallAPI("PUT", fmt.Sprintf("oauth/cf-eu20-staging/v2/service_instances/%s?accepts_incomplete=true", iid),
+		resp := suite.CallAPI("PUT", fmt.Sprintf("oauth/cf-eu20/v2/service_instances/%s?accepts_incomplete=true", iid),
 			`{
 						"service_id": "47c9dcbf-ff30-448e-ab36-d3bad66ba281",
 						"plan_id": "03b812ac-c991-4528-b5bd-08b303523a63",
@@ -361,7 +361,7 @@ func TestProvisioning_IngressFiltering_Enabled(t *testing.T) {
 		iid := uuid.New().String()
 
 		// when
-		resp := suite.CallAPI("PUT", fmt.Sprintf("oauth/cf-eu20-staging/v2/service_instances/%s?accepts_incomplete=true", iid),
+		resp := suite.CallAPI("PUT", fmt.Sprintf("oauth/cf-eu20/v2/service_instances/%s?accepts_incomplete=true", iid),
 			`{
 						"service_id": "47c9dcbf-ff30-448e-ab36-d3bad66ba281",
 						"plan_id": "03b812ac-c991-4528-b5bd-08b303523a63",
@@ -424,7 +424,7 @@ func TestProvisioning_IngressFiltering_Disabled(t *testing.T) {
 		iid := uuid.New().String()
 
 		// when
-		resp := suite.CallAPI("PUT", fmt.Sprintf("oauth/cf-eu20-staging/v2/service_instances/%s?accepts_incomplete=true", iid),
+		resp := suite.CallAPI("PUT", fmt.Sprintf("oauth/cf-eu20/v2/service_instances/%s?accepts_incomplete=true", iid),
 			`{
 						"service_id": "47c9dcbf-ff30-448e-ab36-d3bad66ba281",
 						"plan_id": "03b812ac-c991-4528-b5bd-08b303523a63",
@@ -456,11 +456,11 @@ func TestProvisioning_HappyPathSapConvergedCloud(t *testing.T) {
 	// given
 	suite := NewBrokerSuiteTest(t)
 	defer suite.TearDown()
-	iid := uuid.New().String()
 
 	t.Run("should provision SAP Converged Cloud", func(t *testing.T) {
+		iid := uuid.New().String()
 		// when
-		resp := suite.CallAPI("PUT", fmt.Sprintf("oauth/cf-eu20-staging/v2/service_instances/%s?accepts_incomplete=true", iid),
+		resp := suite.CallAPI("PUT", fmt.Sprintf("oauth/cf-eu20/v2/service_instances/%s?accepts_incomplete=true", iid),
 			`{
 						"service_id": "47c9dcbf-ff30-448e-ab36-d3bad66ba281",
 						"plan_id": "03b812ac-c991-4528-b5bd-08b303523a63",
@@ -486,6 +486,7 @@ func TestProvisioning_HappyPathSapConvergedCloud(t *testing.T) {
 	})
 
 	t.Run("should fail for invalid platform region - invalid platform region", func(t *testing.T) {
+		iid := uuid.New().String()
 		// when
 		resp := suite.CallAPI("PUT", fmt.Sprintf("oauth/invalid/v2/service_instances/%s?accepts_incomplete=true", iid),
 			`{
@@ -506,6 +507,7 @@ func TestProvisioning_HappyPathSapConvergedCloud(t *testing.T) {
 	})
 
 	t.Run("should fail for invalid platform region - default platform region", func(t *testing.T) {
+		iid := uuid.New().String()
 
 		// when
 		resp := suite.CallAPI("PUT", fmt.Sprintf("oauth/v2/service_instances/%s?accepts_incomplete=true", iid),
@@ -527,9 +529,10 @@ func TestProvisioning_HappyPathSapConvergedCloud(t *testing.T) {
 	})
 
 	t.Run("should fail for invalid platform region - invalid Kyma region", func(t *testing.T) {
+		iid := uuid.New().String()
 
 		// when
-		resp := suite.CallAPI("PUT", fmt.Sprintf("oauth/cf-eu20-staging/v2/service_instances/%s?accepts_incomplete=true", iid),
+		resp := suite.CallAPI("PUT", fmt.Sprintf("oauth/cf-eu20/v2/service_instances/%s?accepts_incomplete=true", iid),
 			`{
 					"service_id": "47c9dcbf-ff30-448e-ab36-d3bad66ba281",
 					"plan_id": "03b812ac-c991-4528-b5bd-08b303523a63",
@@ -1243,7 +1246,7 @@ func TestProvisioning_ClusterParameters(t *testing.T) {
 			planID: broker.SapConvergedCloudPlanID,
 			region: "eu-de-1",
 			// this is mandatory because the plan is not existing if the platform region is not in the list (cmd/broker/testdata/old-sap-converged-cloud-region-mappings)
-			platformRegionPart:           "cf-eu20-staging/",
+			platformRegionPart:           "cf-eu20/",
 			multiZone:                    true,
 			controlPlaneFailureTolerance: "zone",
 
@@ -1257,7 +1260,7 @@ func TestProvisioning_ClusterParameters(t *testing.T) {
 		"sap converged cloud eu-de-2": {
 			planID:                       broker.SapConvergedCloudPlanID,
 			region:                       "eu-de-2",
-			platformRegionPart:           "cf-eu20-staging/",
+			platformRegionPart:           "cf-eu10/",
 			multiZone:                    true,
 			controlPlaneFailureTolerance: "zone",
 
@@ -2513,7 +2516,7 @@ func TestProvisioning_ResolveSubscriptionSecretStepEnabled(t *testing.T) {
 		"sap converged cloud eu-de-1": {
 			planID:         broker.SapConvergedCloudPlanID,
 			region:         "eu-de-1",
-			platformRegion: "cf-eu20-staging",
+			platformRegion: "cf-eu20",
 
 			expectedProvider:         "openstack",
 			expectedSubscriptionName: "sb-openstack_eu-de-1",
@@ -2521,7 +2524,7 @@ func TestProvisioning_ResolveSubscriptionSecretStepEnabled(t *testing.T) {
 		"sap converged cloud eu-de-2": {
 			planID:         broker.SapConvergedCloudPlanID,
 			region:         "eu-de-2",
-			platformRegion: "cf-eu20-staging",
+			platformRegion: "cf-eu10",
 
 			expectedProvider:         "openstack",
 			expectedSubscriptionName: "sb-openstack_eu-de-2",

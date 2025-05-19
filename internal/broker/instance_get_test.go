@@ -63,10 +63,9 @@ func TestGetEndpoint_GetProvisioningInstance(t *testing.T) {
 		dashboardConfig,
 		kcBuilder,
 		whitelist.Set{},
-		&broker.OneForAllConvergedCloudRegionsProvider{},
+		newSchemaService(t),
 		regionssupportingmachine.RegionsSupportingMachine{},
-		fixValueProvider(),
-		false,
+		fixValueProvider(t),
 		false,
 	)
 	getSvc := broker.NewGetInstance(broker.Config{}, st.Instances(), st.Operations(), kcBuilder, fixLogger())

@@ -1,6 +1,7 @@
 package broker
 
 import (
+	"bytes"
 	"context"
 	"encoding/base64"
 	"encoding/json"
@@ -9,12 +10,14 @@ import (
 	"net"
 	"net/http"
 	"net/netip"
+	"os"
+	"path/filepath"
 	"strings"
+
+	"github.com/kyma-project/kyma-environment-broker/internal/additionalproperties"
 
 	"github.com/kyma-project/kyma-environment-broker/internal/validator"
 	"github.com/santhosh-tekuri/jsonschema/v6"
-
-	"github.com/kyma-project/kyma-environment-broker/internal/assuredworkloads"
 
 	"github.com/kyma-project/kyma-environment-broker/internal/kubeconfig"
 	"github.com/kyma-project/kyma-environment-broker/internal/whitelist"
@@ -85,14 +88,12 @@ type ProvisionEndpoint struct {
 
 	freemiumWhiteList whitelist.Set
 
-	convergedCloudRegionsProvider ConvergedCloudRegionProvider
-
 	regionsSupportingMachine RegionsSupporter
 
 	log                    *slog.Logger
 	valuesProvider         ValuesProvider
 	useSmallerMachineTypes bool
-	zoneMapping            bool
+	schemaService          *SchemaService
 }
 
 const (
@@ -112,11 +113,10 @@ func NewProvision(brokerConfig Config,
 	dashboardConfig dashboard.Config,
 	kcBuilder kubeconfig.KcBuilder,
 	freemiumWhitelist whitelist.Set,
-	convergedCloudRegionsProvider ConvergedCloudRegionProvider,
+	schemaService *SchemaService,
 	regionsSupportingMachine RegionsSupporter,
 	valuesProvider ValuesProvider,
 	useSmallerMachineTypes bool,
-	zoneMapping bool,
 ) *ProvisionEndpoint {
 	enabledPlanIDs := map[string]struct{}{}
 	for _, planName := range brokerConfig.EnablePlans {
@@ -125,26 +125,25 @@ func NewProvision(brokerConfig Config,
 	}
 
 	return &ProvisionEndpoint{
-		config:                        brokerConfig,
-		infrastructureManager:         imConfig,
-		operationsStorage:             db.Operations(),
-		instanceStorage:               db.Instances(),
-		instanceArchivedStorage:       db.InstancesArchived(),
-		queue:                         queue,
-		log:                           log.With("service", "ProvisionEndpoint"),
-		enabledPlanIDs:                enabledPlanIDs,
-		plansConfig:                   plansConfig,
-		shootDomain:                   gardenerConfig.ShootDomain,
-		shootProject:                  gardenerConfig.Project,
-		shootDnsProviders:             gardenerConfig.DNSProviders,
-		dashboardConfig:               dashboardConfig,
-		freemiumWhiteList:             freemiumWhitelist,
-		kcBuilder:                     kcBuilder,
-		convergedCloudRegionsProvider: convergedCloudRegionsProvider,
-		regionsSupportingMachine:      regionsSupportingMachine,
-		valuesProvider:                valuesProvider,
-		useSmallerMachineTypes:        useSmallerMachineTypes,
-		zoneMapping:                   zoneMapping,
+		config:                   brokerConfig,
+		infrastructureManager:    imConfig,
+		operationsStorage:        db.Operations(),
+		instanceStorage:          db.Instances(),
+		instanceArchivedStorage:  db.InstancesArchived(),
+		queue:                    queue,
+		log:                      log.With("service", "ProvisionEndpoint"),
+		enabledPlanIDs:           enabledPlanIDs,
+		plansConfig:              plansConfig,
+		shootDomain:              gardenerConfig.ShootDomain,
+		shootProject:             gardenerConfig.Project,
+		shootDnsProviders:        gardenerConfig.DNSProviders,
+		dashboardConfig:          dashboardConfig,
+		freemiumWhiteList:        freemiumWhitelist,
+		kcBuilder:                kcBuilder,
+		regionsSupportingMachine: regionsSupportingMachine,
+		valuesProvider:           valuesProvider,
+		useSmallerMachineTypes:   useSmallerMachineTypes,
+		schemaService:            schemaService,
 	}
 }
 
@@ -176,6 +175,9 @@ func (b *ProvisionEndpoint) Provision(ctx context.Context, instanceID string, de
 	logger = logger.With("globalAccountID", ersContext.GlobalAccountID)
 	if err != nil {
 		return domain.ProvisionedServiceSpec{}, apiresponses.NewFailureResponse(err, http.StatusBadRequest, "while extracting context")
+	}
+	if b.config.MonitorAdditionalProperties {
+		b.monitorAdditionalProperties(instanceID, ersContext, details.RawParameters)
 	}
 	if b.config.DisableSapConvergedCloud && details.PlanID == SapConvergedCloudPlanID {
 		err := fmt.Errorf("%s", ConvergedCloudBlockedMsg)
@@ -352,10 +354,8 @@ func (b *ProvisionEndpoint) validate(ctx context.Context, details domain.Provisi
 			if err := additionalWorkerNodePool.Validate(); err != nil {
 				return apiresponses.NewFailureResponse(err, http.StatusUnprocessableEntity, err.Error())
 			}
-			if b.zoneMapping {
-				if err := checkAvailableZones(b.regionsSupportingMachine, additionalWorkerNodePool, valueOfPtr(parameters.Region), details.PlanID); err != nil {
-					return apiresponses.NewFailureResponse(err, http.StatusUnprocessableEntity, err.Error())
-				}
+			if err := checkAvailableZones(b.regionsSupportingMachine, additionalWorkerNodePool, valueOfPtr(parameters.Region), details.PlanID); err != nil {
+				return apiresponses.NewFailureResponse(err, http.StatusUnprocessableEntity, err.Error())
 			}
 		}
 		if IsExternalCustomer(provisioningParameters.ErsContext) {
@@ -667,16 +667,7 @@ func (b *ProvisionEndpoint) determineLicenceType(planId string) *string {
 
 func (b *ProvisionEndpoint) validator(details *domain.ProvisionDetails, provider pkg.CloudProvider, ctx context.Context) (*jsonschema.Schema, error) {
 	platformRegion, _ := middleware.RegionFromContext(ctx)
-	plans := Plans(b.plansConfig, provider, nil, b.config.IncludeAdditionalParamsInSchema,
-		euaccess.IsEURestrictedAccess(platformRegion),
-		b.infrastructureManager.UseSmallerMachineTypes,
-		b.config.EnableShootAndSeedSameRegion,
-		b.convergedCloudRegionsProvider.GetRegions(platformRegion),
-		assuredworkloads.IsKSA(platformRegion),
-		b.config.UseAdditionalOIDCSchema,
-		b.infrastructureManager.EnableIngressFiltering,
-		b.infrastructureManager.IngressFilteringPlans,
-		b.config.DisableMachineTypeUpdate)
+	plans := b.schemaService.Plans(b.plansConfig, platformRegion, provider)
 	plan := plans[details.PlanID]
 
 	return validator.NewFromSchema(plan.Schemas.Instance.Create.Parameters)
@@ -771,6 +762,43 @@ func (b *ProvisionEndpoint) validateNetworking(parameters pkg.ProvisioningParame
 	}
 
 	return err
+}
+
+func (b *ProvisionEndpoint) monitorAdditionalProperties(instanceID string, ersContext internal.ERSContext, rawParameters json.RawMessage) {
+	var parameters pkg.ProvisioningParametersDTO
+	decoder := json.NewDecoder(bytes.NewReader(rawParameters))
+	decoder.DisallowUnknownFields()
+	if err := decoder.Decode(&parameters); err == nil {
+		return
+	}
+	if err := insertRequest(instanceID, filepath.Join(b.config.AdditionalPropertiesPath, additionalproperties.ProvisioningRequestsFileName), ersContext, rawParameters); err != nil {
+		b.log.Error(fmt.Sprintf("failed to save provisioning request with additonal properties: %v", err))
+	}
+}
+
+func insertRequest(instanceID, filePath string, ersContext internal.ERSContext, rawParameters json.RawMessage) error {
+	payload := map[string]interface{}{
+		"globalAccountID": ersContext.GlobalAccountID,
+		"subAccountID":    ersContext.SubAccountID,
+		"instanceID":      instanceID,
+		"payload":         rawParameters,
+	}
+	data, err := json.Marshal(payload)
+	if err != nil {
+		return fmt.Errorf("failed to marshal payload: %w", err)
+	}
+
+	f, err := os.OpenFile(filePath, os.O_APPEND|os.O_CREATE|os.O_WRONLY, os.ModePerm)
+	if err != nil {
+		return fmt.Errorf("failed to open file: %w", err)
+	}
+	defer f.Close()
+
+	if _, err := f.Write(append(data, '\n')); err != nil {
+		return fmt.Errorf("failed to write payload: %w", err)
+	}
+
+	return nil
 }
 
 func validateOverlapping(n1 net.IPNet, n2 net.IPNet) error {

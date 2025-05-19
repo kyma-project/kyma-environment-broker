@@ -293,6 +293,9 @@
       "type": "object"
     },
     "region": {
+      "_enumDisplayName": {
+        "eu-de-1": "eu-de-1"
+      },
       "enum": [
         "eu-de-1"
       ],

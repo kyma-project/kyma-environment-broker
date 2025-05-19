@@ -12,6 +12,10 @@ type Provider interface {
 	Provide() internal.ProviderValues
 }
 
+type ZonesProvider interface {
+	RandomZones(cp pkg.CloudProvider, region string, zonesCount int) []string
+}
+
 type PlanSpecificValuesProvider struct {
 	multiZoneCluster           bool
 	defaultTrialProvider       pkg.CloudProvider
@@ -19,18 +23,21 @@ type PlanSpecificValuesProvider struct {
 	trialPlatformRegionMapping map[string]string
 	defaultPurpose             string
 	commercialFailureTolerance string
+
+	zonesProvider ZonesProvider
 }
 
-func NewPlanSpecificValuesProvider(multiZoneCluster bool, defaultTrialProvider pkg.CloudProvider,
-	useSmallerMachineTypes bool, trialPlatformRegionMapping map[string]string, defaultPurpose string,
-	commercialFailureTolerance string) *PlanSpecificValuesProvider {
+func NewPlanSpecificValuesProvider(cfg broker.InfrastructureManager,
+	trialPlatformRegionMapping map[string]string, zonesProvider ZonesProvider) *PlanSpecificValuesProvider {
+
 	return &PlanSpecificValuesProvider{
-		multiZoneCluster:           multiZoneCluster,
-		defaultTrialProvider:       defaultTrialProvider,
-		useSmallerMachineTypes:     useSmallerMachineTypes,
+		multiZoneCluster:           cfg.MultiZoneCluster,
+		defaultTrialProvider:       cfg.DefaultTrialProvider,
+		useSmallerMachineTypes:     cfg.UseSmallerMachineTypes,
 		trialPlatformRegionMapping: trialPlatformRegionMapping,
-		defaultPurpose:             defaultPurpose,
-		commercialFailureTolerance: commercialFailureTolerance,
+		defaultPurpose:             cfg.DefaultGardenerShootPurpose,
+		commercialFailureTolerance: cfg.ControlPlaneFailureTolerance,
+		zonesProvider:              zonesProvider,
 	}
 }
 
@@ -43,6 +50,7 @@ func (s *PlanSpecificValuesProvider) ValuesForPlanAndParameters(provisioningPara
 			MultiZone:              s.multiZoneCluster,
 			ProvisioningParameters: provisioningParameters,
 			FailureTolerance:       s.commercialFailureTolerance,
+			ZonesProvider:          s.zonesProvider,
 		}
 	case broker.PreviewPlanID:
 		p = &AWSInputProvider{
@@ -50,6 +58,7 @@ func (s *PlanSpecificValuesProvider) ValuesForPlanAndParameters(provisioningPara
 			MultiZone:              s.multiZoneCluster,
 			ProvisioningParameters: provisioningParameters,
 			FailureTolerance:       s.commercialFailureTolerance,
+			ZonesProvider:          s.zonesProvider,
 		}
 	case broker.AzurePlanID, broker.BuildRuntimeAzurePlanID:
 		p = &AzureInputProvider{
@@ -57,12 +66,14 @@ func (s *PlanSpecificValuesProvider) ValuesForPlanAndParameters(provisioningPara
 			MultiZone:              s.multiZoneCluster,
 			ProvisioningParameters: provisioningParameters,
 			FailureTolerance:       s.commercialFailureTolerance,
+			ZonesProvider:          s.zonesProvider,
 		}
 	case broker.AzureLitePlanID:
 		p = &AzureLiteInputProvider{
 			Purpose:                s.defaultPurpose,
 			UseSmallerMachineTypes: s.useSmallerMachineTypes,
 			ProvisioningParameters: provisioningParameters,
+			ZonesProvider:          s.zonesProvider,
 		}
 	case broker.GCPPlanID, broker.BuildRuntimeGCPPlanID:
 		p = &GCPInputProvider{
@@ -70,6 +81,7 @@ func (s *PlanSpecificValuesProvider) ValuesForPlanAndParameters(provisioningPara
 			MultiZone:              s.multiZoneCluster,
 			ProvisioningParameters: provisioningParameters,
 			FailureTolerance:       s.commercialFailureTolerance,
+			ZonesProvider:          s.zonesProvider,
 		}
 	case broker.FreemiumPlanID:
 		switch provisioningParameters.PlatformProvider {
@@ -77,11 +89,13 @@ func (s *PlanSpecificValuesProvider) ValuesForPlanAndParameters(provisioningPara
 			p = &AWSFreemiumInputProvider{
 				UseSmallerMachineTypes: s.useSmallerMachineTypes,
 				ProvisioningParameters: provisioningParameters,
+				ZonesProvider:          s.zonesProvider,
 			}
 		case pkg.Azure:
 			p = &AzureFreemiumInputProvider{
 				UseSmallerMachineTypes: s.useSmallerMachineTypes,
 				ProvisioningParameters: provisioningParameters,
+				ZonesProvider:          s.zonesProvider,
 			}
 		default:
 			return internal.ProviderValues{}, fmt.Errorf("freemium provider for '%s' is not supported", provisioningParameters.PlatformProvider)
@@ -92,6 +106,7 @@ func (s *PlanSpecificValuesProvider) ValuesForPlanAndParameters(provisioningPara
 			MultiZone:              s.multiZoneCluster,
 			ProvisioningParameters: provisioningParameters,
 			FailureTolerance:       s.commercialFailureTolerance,
+			ZonesProvider:          s.zonesProvider,
 		}
 	case broker.TrialPlanID:
 		var trialProvider pkg.CloudProvider
@@ -106,17 +121,20 @@ func (s *PlanSpecificValuesProvider) ValuesForPlanAndParameters(provisioningPara
 				PlatformRegionMapping:  s.trialPlatformRegionMapping,
 				UseSmallerMachineTypes: s.useSmallerMachineTypes,
 				ProvisioningParameters: provisioningParameters,
+				ZonesProvider:          s.zonesProvider,
 			}
 		case pkg.GCP:
 			p = &GCPTrialInputProvider{
 				PlatformRegionMapping:  s.trialPlatformRegionMapping,
 				ProvisioningParameters: provisioningParameters,
+				ZonesProvider:          s.zonesProvider,
 			}
 		case pkg.Azure:
 			p = &AzureTrialInputProvider{
 				PlatformRegionMapping:  s.trialPlatformRegionMapping,
 				UseSmallerMachineTypes: s.useSmallerMachineTypes,
 				ProvisioningParameters: provisioningParameters,
+				ZonesProvider:          s.zonesProvider,
 			}
 		default:
 			return internal.ProviderValues{}, fmt.Errorf("trial provider for %s not yet implemented", trialProvider)

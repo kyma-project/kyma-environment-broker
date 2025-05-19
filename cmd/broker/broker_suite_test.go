@@ -123,12 +123,6 @@ func NewBrokerSuiteTest(t *testing.T, version ...string) *BrokerSuiteTest {
 	return NewBrokerSuiteTestWithConfig(t, cfg, version...)
 }
 
-func NewBrokerSuiteTestWithConvergedCloudRegionMappings(t *testing.T, version ...string) *BrokerSuiteTest {
-	cfg := fixConfig()
-	cfg.SapConvergedCloudRegionMappingsFilePath = "testdata/sap-converged-cloud-region-mappings.yaml"
-	return NewBrokerSuiteTestWithConfig(t, cfg, version...)
-}
-
 func NewBrokerSuitTestWithMetrics(t *testing.T, cfg *Config, version ...string) *BrokerSuiteTest {
 	defer func() {
 		if r := recover(); r != nil {
@@ -195,6 +189,14 @@ func NewBrokerSuiteTestWithConfig(t *testing.T, cfg *Config, version ...string) 
 
 	gardenerClientWithNamespace := gardener.NewClient(gardenerClient, gardenerKymaNamespace)
 
+	providersSource, err := os.Open(cfg.ProvidersConfigurationFilePath)
+	fatalOnError(err, log)
+	plansSource, err := os.Open(cfg.PlansConfigurationFilePath)
+	fatalOnError(err, log)
+	defaultOIDC := defaultOIDCValues()
+	schemaService, err := broker.NewSchemaService(providersSource, plansSource, &defaultOIDC, cfg.Broker, cfg.InfrastructureManager.EnableIngressFiltering, cfg.InfrastructureManager.IngressFilteringPlans)
+	fatalOnError(err, log)
+
 	fakeK8sSKRClient := fake.NewClientBuilder().WithScheme(sch).Build()
 	k8sClientProvider := kubeconfig.NewFakeK8sClientProvider(fakeK8sSKRClient)
 	provisionManager := process.NewStagedManager(db.Operations(), eventBroker, cfg.OperationTimeout, cfg.Provisioning, log.With("provisioning", "manager"))
@@ -213,7 +215,7 @@ func NewBrokerSuiteTestWithConfig(t *testing.T, cfg *Config, version ...string) 
 	provisionManager.SpeedUp(10000)
 
 	updateManager := process.NewStagedManager(db.Operations(), eventBroker, time.Hour, cfg.Update, log.With("update", "manager"))
-	updateQueue := NewUpdateProcessingQueue(context.Background(), updateManager, 1, db, *cfg, cli, log, workersProvider(cfg.InfrastructureManager))
+	updateQueue := NewUpdateProcessingQueue(context.Background(), updateManager, 1, db, *cfg, cli, log, workersProvider(cfg.InfrastructureManager), schemaService)
 	updateQueue.SpeedUp(10000)
 	updateManager.SpeedUp(10000)
 
@@ -284,7 +286,6 @@ func workersProvider(imConfig broker.InfrastructureManager) *workers.Provider {
 				"us-east-1": {"x"},
 			},
 		},
-		true,
 	)
 }
 
@@ -368,7 +369,15 @@ func (s *BrokerSuiteTest) CreateAPI(cfg *Config, db storage.BrokerStorage, provi
 	kcBuilder := &kcMock.KcBuilder{}
 	kcBuilder.On("Build", nil).Return("--kubeconfig file", nil)
 	kcBuilder.On("GetServerURL", mock.Anything).Return("https://api.server.url.dummy", nil)
-	createAPI(s.router, servicesConfig, cfg, db, provisioningQueue, deprovisionQueue, updateQueue,
+
+	providersSource, err := os.Open(cfg.ProvidersConfigurationFilePath)
+	fatalOnError(err, log)
+	plansSource, err := os.Open(cfg.PlansConfigurationFilePath)
+	fatalOnError(err, log)
+	defaultOIDC := defaultOIDCValues()
+	schemaService, err := broker.NewSchemaService(providersSource, plansSource, &defaultOIDC, cfg.Broker, cfg.InfrastructureManager.EnableIngressFiltering, cfg.InfrastructureManager.IngressFilteringPlans)
+
+	createAPI(s.router, schemaService, servicesConfig, cfg, db, provisioningQueue, deprovisionQueue, updateQueue,
 		lager.NewLogger("api"), log, kcBuilder, skrK8sClientProvider, skrK8sClientProvider, fakeKcpK8sClient, eventBroker, defaultOIDCValues(),
 		regionssupportingmachine.RegionsSupportingMachine{})
 
