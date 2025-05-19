@@ -42,7 +42,7 @@ broker:
   # Maximum allowed duration for processing a single operation (provisioning, deprovisioning, etc.).
   # If the operation exceeds this timeout, it will be marked as failed. Example: "7h" for 7 hours.
   operationTimeout: "7h"
-  # Port for the main broker HTTP server
+  # Port for the broker HTTP server
   port: "8080"
   profiler:
     # Enable memory profiler (true/false)
@@ -331,10 +331,11 @@ infrastructureManager:
   # Possible values: "node", "zone", or empty (default).
   controlPlaneFailureTolerance: ""
   # Sets the default purpose for Gardener shoots (clusters) created by the broker.
+  # Possible values: development, evaluation, production, testing
   defaultShootPurpose: "development"
   # Sets the default cloud provider to use for trial Kyma environments (e.g., Azure, AWS).
   defaultTrialProvider: "Azure"
-  # If true, allows to enable ingress filtering clusters.
+  # If true, allows to enable ingress filtering for defined plans.
   enableIngressFiltering: "false"
   # Comma-separated list of plan names for which ingress filtering is available.
   ingressFilteringPlans: "azure,gcp,aws"
