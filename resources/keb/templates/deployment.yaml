@@ -59,12 +59,12 @@ spec:
         {{- if .Values.broker.monitorAdditionalProperties }}
         - name: additional-properties
           command:
-          - bash
+          - sh
           - -c
-          - chmod 777 /additional-properties && sleep inf
+          - "chmod 777 /additional-properties && sleep infinity"
           securityContext:
             runAsUser: 0
-          image: ubuntu:20.04
+          image: europe-docker.pkg.dev/kyma-project/prod/alpine:v20250430-cb54844f
           imagePullPolicy: Always
           volumeMounts:
             - name: keb-additional-properties
