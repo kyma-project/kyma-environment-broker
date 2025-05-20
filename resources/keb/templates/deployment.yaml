@@ -264,6 +264,10 @@ spec:
               value: "{{ .Values.broker.profiler.memory }}"
             - name: APP_PROVIDERS_CONFIGURATION_FILE_PATH
               value: /config/providersConfig.yaml
+            - name: APP_PROVISIONING_MAX_STEP_PROCESSING_TIME
+              value: "{{ .Values.provisioning.maxStepProcessingTime }}"
+            - name: APP_PROVISIONING_WORKERS_AMOUNT
+              value: "{{ .Values.provisioning.workersAmount }}"
             - name: APP_REGIONS_SUPPORTING_MACHINE_FILE_PATH
               value: /config/regionsSupportingMachine.yaml
             - name: APP_RUNTIME_CONFIGURATION_CONFIG_MAP_NAME

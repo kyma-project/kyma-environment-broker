@@ -470,6 +470,9 @@ regionsSupportingMachine: |-
 
 multipleContexts: false
 
+provisioning:
+  maxStepProcessingTime: 2m
+  workersAmount: 20
 
 plansConfiguration:
   sap-converged-cloud:

@@ -16,6 +16,18 @@ on:
         description: 'Release version'
         default: "0.0.0.0"
         type: string
+      instances-number:
+        description: number of instances to be provisioned
+        default: 100
+        type: number
+      provisioning-max-step-processing-time:
+        description: max time to process a step in provisioning queue
+        default: 1m
+        type: string
+      provisioning-workers-amount:
+        description: amount of workers in provisioning queue
+        default: 25
+        type: number
 
 jobs:
   validate-keb-helm-chart:
@@ -107,6 +119,11 @@ jobs:
 
       - name: Prepare K3s cluster and docker registry
         run: "./scripts/testing/k3s-setup.sh ${{ matrix.version }} --wait"
+        
+      - name: Set provisioning workers amount
+        run: |
+          yq e ".provisioning.maxStepProcessingTime = \"${{ inputs.provisioning-max-step-processing-time }}\"" -i resources/keb/values.yaml
+          yq e ".provisioning.workersAmount = ${{ inputs.provisioning-workers-amount }}" -i resources/keb/values.yaml
 
       - name: Install KEB chart
         run: |
@@ -116,7 +133,7 @@ jobs:
             make install VERSION=PR-${{ inputs.version }}
           fi
 
-      - name: Initialize schema
+      - name: Populate database
         run: |
           DB_NAME=$(kubectl get secret kcp-postgresql -n kcp-system -o jsonpath="{.data.postgresql-broker-db-name}" | base64 -d)
           DB_USER=$(kubectl get secret kcp-postgresql -n kcp-system -o jsonpath="{.data.postgresql-broker-username}" | base64 -d)
@@ -127,14 +144,25 @@ jobs:
           echo $PORT_FORWARD_PID
           sleep 5
           
-          PGPASSWORD=$DB_PASS psql -h localhost -p 5432 -U $DB_USER -d $DB_NAME -f resources/installation/migrations/initialize_performance_tests_schema.up.sql
+          PGPASSWORD=$DB_PASS psql -h localhost -p 5432 -U $DB_USER -d $DB_NAME -f resources/installation/migrations/populate_performance_tests_database.up.sql
           
           kill $PORT_FORWARD_PID
 
-      - name: Print runtimes
+      - name: Provision multiple instances
         run: |
           kubectl port-forward -n kcp-system deployment/kcp-kyma-environment-broker 8080:8080 5432:5432 &
           sleep 5
+          seq 1 ${{ inputs.instances-number }} | xargs -n1 -P20 -I{} bash -c '
+            uid=$(uuidgen)
+            curl --silent --show-error --fail --request PUT \
+              --url http://localhost:8080/oauth/v2/service_instances/$uid \
+              --header "Content-Type: application/json" \
+              --header "X-Broker-API-Version: 2.16" \
+              --data "{\"service_id\":\"47c9dcbf-ff30-448e-ab36-d3bad66ba281\",\"plan_id\":\"4deee563-e5ec-4731-b9b1-53b42d855f0c\",\"context\":{\"globalaccount_id\":\"2f5011af-2fd3-44ba-ac60-eeb1148c2995\",\"subaccount_id\":\"8b9a0db4-9aef-4da2-a856-61a4420b66fd\",\"user_id\":\"user@email.com\"},\"parameters\":{\"name\":\"azure-cluster\",\"region\":\"northeurope\"}}" > /dev/null 2>&1
+          '
+
+      - name: Print runtimes
+        run: |
           curl --request GET \
           --url http://localhost:8080/runtimes \
           --header 'Content-Type: application/json' \
