@@ -680,8 +680,3 @@ vsoSecrets:
         keys:
           secret: keb_edp_secret
 # =========================
-
-# If true, enables advanced mapping of machine types to specific availability zones within regions.
-# When enabled, the broker restricts and selects zones for worker nodes based on a detailed mapping of which zones support which machine types in each region.
-# When false, only region-level restrictions are applied and zones are chosen generically.
-zoneMapping: false
