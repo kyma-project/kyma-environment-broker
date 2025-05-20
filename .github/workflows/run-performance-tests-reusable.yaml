@@ -1,0 +1,135 @@
+name: Run performance tests (reusable)
+
+on:
+  workflow_call:
+    inputs:
+      last-k3s-versions:
+        description: number of the most recent K3s versions to be used
+        required: false
+        default: 1
+        type: string
+      release:
+        description: 'Determines if the workflow is called from release'
+        default: "true"
+        type: string
+      version:
+        description: 'Release version'
+        default: "0.0.0.0"
+        type: string
+
+jobs:
+  validate-keb-helm-chart:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Prepare chart for next KEB version
+        run: |
+          if [ "${{ inputs.release }}" == "true" ]; then
+            scripts/bump_keb_chart.sh ${{ inputs.version }} "release"
+          else
+            scripts/bump_keb_chart.sh PR-${{ inputs.version }} "pr"
+          fi
+
+      - name: Validate KEB helm chart
+        run: |
+          cd resources/keb
+          helm template .
+
+      - name: Enforce env alphabetical order in deployment.yaml (KEB)
+        run: scripts/check_env_alphabetical_order.sh resources/keb/templates/deployment.yaml deployment_KEB ports
+
+      - name: Enforce env alphabetical order in runtime-reconciler-deployment.yaml
+        run: scripts/check_env_alphabetical_order.sh resources/keb/templates/runtime-reconciler-deployment.yaml runtime_reconciler
+
+      - name: Enforce env alphabetical order in trial-cleanup-job.yaml
+        run: scripts/check_env_alphabetical_order.sh resources/keb/templates/trial-cleanup-job.yaml trial_cleanup
+
+      - name: Enforce env alphabetical order in deprovision-retrigger-job.yaml
+        run: scripts/check_env_alphabetical_order.sh resources/keb/templates/deprovision-retrigger-job.yaml deprovision_retrigger
+
+      - name: Enforce env alphabetical order in free-cleanup-job.yaml
+        run: scripts/check_env_alphabetical_order.sh resources/keb/templates/free-cleanup-job.yaml free_cleanup
+
+      - name: Enforce env alphabetical order in service-binding-cleanup-job.yaml
+        run: scripts/check_env_alphabetical_order.sh resources/keb/templates/service-binding-cleanup-job.yaml service_binding_cleanup
+
+      - name: Enforce env alphabetical order in globalaccounts.yaml
+        run: scripts/check_env_alphabetical_order.sh resources/keb/templates/globalaccounts.yaml globalaccounts
+
+      - name: Enforce env alphabetical order in subaccount-sync-deployment.yaml
+        run: scripts/check_env_alphabetical_order.sh resources/keb/templates/subaccount-sync-deployment.yaml subaccount_sync
+
+      - name: Enforce env alphabetical order in migrator-job.yaml
+        run: scripts/check_env_alphabetical_order.sh resources/keb/templates/migrator-job.yaml migrator_job
+  
+  prepare-tests:
+    runs-on: ubuntu-latest
+    needs: validate-keb-helm-chart
+    outputs:
+      versions: ${{ steps.get-versions.outputs.k3s_versions }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - id: get-versions
+        name: Get K3s versions
+        # prepare json representing GitHub matrix:
+        # {"include": [
+        #    {"version":"v1.26.10+k3s1"},
+        #      ...
+        #    {"version":"v1.28.3+k3s1"}
+        # ]
+        # }
+        run: |
+          VERSIONS=($(./scripts/testing/get-latest-k3s-releases.sh ${{ inputs.last-k3s-versions }}))
+          MATRIX_AS_JSON=$(echo ${VERSIONS[*]} | awk 'END {printf "{\"include\":[";for (i = 1; i < NF; i++) printf "{\"version\":%s},",$i;printf "{\"version\":%s}]}",$i }'|jq -c)
+          echo "k3s_versions=${MATRIX_AS_JSON}" >> "${GITHUB_OUTPUT}"
+      - name: Wait for images to be ready
+        uses: wechuli/allcheckspassed@2e5e8bbc775f5680ed5d02e3a22e2fc7219792ac
+        if: ${{ inputs.release == 'false' }}
+        with:
+          delay: '1'
+          retries: '10'
+          polling_interval: '1'
+          checks_include: 'kyma-environment-broker-image / Build image, archiver-image / Build image, environments-cleanup-image / Build image, deprovision-retrigger-image / Build image, expirator-image / Build image, runtime-reconciler-image / Build image, subaccount-cleanup-image / Build image, subaccount-sync-image / Build image, globalaccounts-image / Build image, schema-migrator-image / Build image, service-binding-cleanup-image / Build image'
+          verbose: true
+
+  run-concurrent-provisioning-test:
+    runs-on: ubuntu-latest
+    needs: prepare-tests
+    strategy:
+      matrix: ${{ fromJSON(needs.prepare-tests.outputs.versions) }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Prepare K3s cluster and docker registry
+        run: "./scripts/testing/k3s-setup.sh ${{ matrix.version }} --wait"
+
+      - name: Install KEB chart
+        run: |
+          if [ "${{ inputs.release }}" == "true" ]; then
+            make install VERSION=${{ inputs.version }}
+          else
+            make install VERSION=PR-${{ inputs.version }}
+          fi
+
+      - name: Initialize schema
+        run: |
+          DB_NAME=$(kubectl get secret kcp-postgresql -n kcp-system -o jsonpath="{.data.postgresql-broker-db-name}" | base64 -d)
+          DB_USER=$(kubectl get secret kcp-postgresql -n kcp-system -o jsonpath="{.data.postgresql-broker-username}" | base64 -d)
+          DB_PASS=$(kubectl get secret kcp-postgresql -n kcp-system -o jsonpath="{.data.postgresql-broker-password}" | base64 -d)
+          
+          kubectl port-forward -n kcp-system deployment/postgres 5432:5432 &
+          sleep 5
+          
+          PGPASSWORD=$DB_PASS psql -h localhost -p 5432 -U $DB_USER -d $DB_NAME -f resources/installation/migrations/initialize_performance_tests_schema.up.sql
+
+      - name: Print runtimes in case of failure
+        run: |
+          curl --request GET \
+          --url http://localhost:8080/runtimes \
+          --header 'Content-Type: application/json' \
+          --header 'X-Broker-API-Version: 2.16' | jq

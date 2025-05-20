@@ -1,0 +1,17 @@
+name: Run performance tests
+
+on:
+  pull_request:
+    branches: [ main ]
+    types: [ opened, synchronize, reopened, ready_for_review ]
+    paths-ignore:
+      - "**.md"
+      - "sec-scanners-config.yaml"
+
+jobs:
+  run-performance-tests:
+    uses: "./.github/workflows/run-performance-tests-reusable.yaml"
+    with:
+      last-k3s-versions: 1
+      release: "false"
+      version: ${{ github.event.pull_request.number }}
