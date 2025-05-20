@@ -412,15 +412,13 @@ nameOverride: "kyma-environment-broker"
 # OIDC Settings
 # =========================
 oidc:
-  issuer: https://kymatest.accounts400.ondemand.com
-  issuers: []
-  keysURL: https://kymatest.accounts400.ondemand.com/oauth2/certs
   groups:
     admin: runtimeAdmin
     operator: runtimeOperator
     orchestrations: orchestrationsAdmin
     viewer: runtimeViewer
   issuer: https://kymatest.accounts400.ondemand.com
+  issuers: []
   keysURL: https://kymatest.accounts400.ondemand.com/oauth2/certs
 # If true, restricts each global account to only one free (freemium) Kyma environment.
 # When enabled, provisioning another free environment for the same global account will be blocked even if the previous one is deprovisioned.
