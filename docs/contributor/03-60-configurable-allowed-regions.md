@@ -1,10 +1,10 @@
 ## Regions and Zones Configuration
 
-Most of the Kyma plans requires a region to be specified in the request body (provisioning parameters). The regions configuration  allows you to control which regions are available for the Kyma plan and a platform region. Additionally, every region has different zones which needs to be specified. The configuration is defined in the `values.yaml` file.
+Most of the Kyma plans requires a region to be specified in the request body (provisioning parameters). The regions configuration  allows you to control which regions are available for the Kyma plan and a platform region. Additionally, every region has different set of zones which can be sleected.
 
 # Allowed regions
 
-The `plansConfiguration` section of the `values.yaml` file contains a list of plans. Every plan has a mapping - platform region to allowed provider regions. To avoid specifying all possible platform regions you can define `default` values, for example:
+The `plansConfiguration` section of the `values.yaml` file contains a list of plans. Every plan has a platform region with allowed regions. To avoid specifying all possible platform regions you can define `default` values, for example:
 
 ```yaml
 
@@ -21,7 +21,7 @@ The above configuration means that the `cf-eu11` platform region is allowed to u
 
 # Display names and zones
 
-The json schema, which defines allowed regions, contains a list of a region display name, which is shown to the user. The mapping between the region code and the display name is defined in the `providersCofiguration`. Mappings are grouped by a provider. Every region has two properties: displayName and zones. The display name is shown to the user in the UI, while the zones are used by the provisioning process to create a worker node pool.
+The json schema, which defines allowed regions, contains a list of a region display name, which is shown to the user. All region must have corresponding display name and set of zones defined in the `providersConfiguration`. The display name is shown to the user in the UI, while the zones are used by the provisioning process to create a worker node pool.
 ```yaml
 providersConfiguration:
   aws:
