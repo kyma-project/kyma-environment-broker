@@ -37,7 +37,7 @@ global:
     kyma_environment_service_binding_cleanup_job:
       dir:
       version: 1.19.4
-      
+
   kyma_environment_broker:
     serviceAccountName: "kcp-kyma-environment-broker"
   istio:
@@ -191,7 +191,7 @@ resources:
   # limits:
   #   cpu: 100m
   #   memory: 128Mi
-  # requests:
+# requests:
 #   cpu: 100m
 #   memory: 128Mi
 
