@@ -794,66 +794,68 @@ vmscrapes:
 # ========================
 # VSO Secrets Settings
 # ========================
+# Please read the documentation at:
+# https://pages.github.tools.sap/kyma/docusaurus-docs/kyma/cicd/argocd/secrets
 vsoSecrets:
   secrets:
-    cis-accounts:
-      labels: >-
-        {{ template "kyma-env-broker.labels" . }}
-      path: cis
-      restartTargets:
-        - kind: Deployment
-          name: "{{- .Values.subaccountSync.name -}}"
-      secretName: "{{ .Values.cis.accounts.secretName | required \"please specify .Values.cis.accounts.secretName\"}}"
-      templating:
-        data:
-          id: {}
-          secret: {}
-        enabled: true
-        keys:
-          id: account_id
-          secret: account_secret
-    cis-v1:
-      labels: >-
-        {{ template "kyma-env-broker.labels" . }}
-      path: cis
-      secretName: "{{ .Values.cis.v1.secretName | required \"please specify .Values.cis.v1.secretName\"}}"
-      templating:
-        data:
-          id: {}
-          secret: {}
-        enabled: true
-        keys:
-          id: v1_id
-          secret: v1_secret
-    cis-v2:
-      labels: >-
-        {{ template "kyma-env-broker.labels" . }}
-      path: cis
-      restartTargets:
-        - kind: Deployment
-          name: "{{- .Values.subaccountSync.name -}}"
-      secretName: "{{ .Values.cis.v2.secretName | required \"please specify .Values.cis.v2.secretName\"}}"
-      templating:
-        data:
-          id: {}
-          secret: {}
-        enabled: true
-        keys:
-          id: v2_id
-          secret: v2_secret
     edp:
-      labels: >-
-        {{ template "kyma-env-broker.labels" . }}
       path: edp
+      secretName: "{{ .Values.edp.secretName }}"
       restartTargets:
         - kind: Deployment
           name: >-
             {{- template "kyma-env-broker.fullname" . -}}
-      secretName: "{{ .Values.edp.secretName }}"
+      labels: >-
+        {{ template "kyma-env-broker.labels" . }}
       templating:
-        data:
-          secret: {}
         enabled: true
         keys:
           secret: keb_edp_secret
+        data:
+          secret: {}
+    cis-v1:
+      path: cis
+      secretName: "{{ .Values.cis.v1.secretName | required \"please specify .Values.cis.v1.secretName\"}}"
+      labels: >-
+        {{ template "kyma-env-broker.labels" . }}
+      templating:
+        enabled: true
+        keys:
+          id: v1_id
+          secret: v1_secret
+        data:
+          id: {}
+          secret: {}
+    cis-v2:
+      path: cis
+      secretName: "{{ .Values.cis.v2.secretName | required \"please specify .Values.cis.v2.secretName\"}}"
+      restartTargets:
+        - kind: Deployment
+          name: "{{- .Values.subaccountSync.name -}}"
+      labels: >-
+        {{ template "kyma-env-broker.labels" . }}
+      templating:
+        enabled: true
+        keys:
+          id: v2_id
+          secret: v2_secret
+        data:
+          id: {}
+          secret: {}
+    cis-accounts:
+      path: cis
+      secretName: "{{ .Values.cis.accounts.secretName | required \"please specify .Values.cis.accounts.secretName\"}}"
+      restartTargets:
+        - kind: Deployment
+          name: "{{- .Values.subaccountSync.name -}}"
+      labels: >-
+        {{ template "kyma-env-broker.labels" . }}
+      templating:
+        enabled: true
+        keys:
+          id: account_id
+          secret: account_secret
+        data:
+          id: {}
+          secret: {}
 # =========================
