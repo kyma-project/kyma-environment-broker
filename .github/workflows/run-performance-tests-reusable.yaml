@@ -183,3 +183,12 @@ jobs:
         env:
           KIM_DELAY_SECONDS: ${{ inputs.kim-delay-seconds }}
         run: scripts/simulate_kim.sh
+        
+      - name: Fetch metrics from KEB
+        run: |
+          METRICS=$(curl -s http://localhost:8080/metrics)
+          SUCCEEDED_TOTAL=$(echo "$METRICS" | grep 'kcp_keb_v2_operations_provisioning_succeeded_total{plan_id="4deee563-e5ec-4731-b9b1-53b42d855f0c"}' | awk '{print $2}')
+          FAILED_TOTAL=$(echo "$METRICS" | grep 'kcp_keb_v2_operations_provisioning_failed_total{plan_id="4deee563-e5ec-4731-b9b1-53b42d855f0c"}' | awk '{print $2}')
+          SUCCESS_RATE=$(awk "BEGIN {printf \"%.2f\", ($SUCCEEDED_TOTAL / $TOTAL) * 100}")
+          echo "Success rate of provisioning requests: $SUCCESS_RATE%" >> $GITHUB_STEP_SUMMARY
+          
