@@ -1,31 +1,3 @@
 ## Kyma Environment Broker Configuration
 
-Kyma Environment Broker (KEB) binary allows you to override some configuration parameters. You can specify the following
-environment variables:
-
-| Name                                                           | Description                                                                                                                  |            Default value             |
-|----------------------------------------------------------------|------------------------------------------------------------------------------------------------------------------------------|:------------------------------------:|
-| **APP_PORT**                                                   | Specifies the port on which the HTTP server listens.                                                                         |                `8080`                |
-| **APP_DATABASE_USER**                                          | Defines the database username.                                                                                               |              `postgres`              |
-| **APP_DATABASE_PASSWORD**                                      | Defines the database user password.                                                                                          |              `password`              |
-| **APP_DATABASE_HOST**                                          | Defines the database host.                                                                                                   |             `localhost`              |
-| **APP_DATABASE_PORT**                                          | Defines the database port.                                                                                                   |                `5432`                |
-| **APP_DATABASE_NAME**                                          | Defines the database name.                                                                                                   |               `broker`               |
-| **APP_DATABASE_SSLMODE**                                       | Specifies the SSL Mode for PostgreSQL. See [all the possible values](https://www.postgresql.org/docs/9.1/libpq-ssl.html).    |              `disable`               |
-| **APP_DATABASE_SSLROOTCERT**                                   | Specifies the location of CA cert of PostgreSQL. (Optional)                                                                  |                 None                 |
-| **APP_TRIAL_REGION_MAPPING_FILE_PATH**                         | Defines a path to the file which contains a mapping between the platform region and the trial plan region.                   |                 None                 |
-| **APP_GARDENER_PROJECT**                                       | Defines the project in which the cluster is created.                                                                         |              `kyma-dev`              |
-| **APP_GARDENER_SHOOT_DOMAIN**                                  | Defines the domain for clusters created in Gardener.                                                                         | `shoot.canary.k8s-hana.ondemand.com` |
-| **APP_GARDENER_KUBECONFIG_PATH**                               | Defines the path to the kubeconfig file for Gardener.                                                                        |  `/gardener/kubeconfig/kubeconfig`   |
-| **APP_MAX_PAGINATION_PAGE**                                    | Defines the maximum number of objects that can be queried in one page using the endpoints that use pagination.               |                `100`                 |
-| **APP_PROFILER_MEMORY**                                        | Enables memory profiling every sampling period with the default location `/tmp/profiler`, backed by a persistent volume.     |               `false`                |
-| **APP_INFRASTRUCTURE_MANAGER_MACHINE_IMAGE**                   | Defines the Gardener machine image used in a provisioned node.                                                               |                 None                 |
-| **APP_INFRASTRUCTURE_MANAGER_MACHINE_IMAGE_VERSION**           | Defines the Gardener image version used in a provisioned cluster.                                                            |                 None                 |
-| **APP_INFRASTRUCTURE_MANAGER_ENABLE_INGRESS_FILTERING**        | Enables ingress filtering support for selected plans.                                                                        |               `false`                |
-| **APP_INFRASTRUCTURE_MANAGER_INGRESS_FILTERING_PLANS**         | Enumerates the plans that support ingress filtering.                                                                         |                 None                 |
-| **APP_INFRASTRUCTURE_MANAGER_KUBERNETES_VERSION**              | Specifies the Kubernetes version used in a provisioned cluster.                                                              |                 None                 |
-| **APP_INFRASTRUCTURE_MANAGER_MULTI_ZONE_CLUSTER**              | Allows creation of multi-zone clusters.                                                                                      |               `false`                |
-| **APP_INFRASTRUCTURE_MANAGER_CONTROL_PLANE_FAILURE_TOLERANCE** | Defines the landscape failure tolerance. The possible values are: ``, `node`, `zone`.                                        |                 None                 |
-| **APP_INFRASTRUCTURE_MANAGER_USE_SMALLER_MACHINE_TYPES**       | Allows usage of smaller machine types for the given landscape.                                                             |               `false`                |
-| **APP_INFRASTRUCTURE_MANAGER_DEFAULT_GARDENER_SHOOT_PURPOSE**  | Specifies the purpose of the created cluster. The possible values are: `development`, `evaluation`, `production`, `testing`. |            `development`             |
-| **APP_INFRASTRUCTURE_MANAGER_DEFAULT_TRIAL_PROVIDER**          | Defines the default provider for trial clusters.                                                                             |               `Azure`                |
+The current configuration for Kyma Environment Broker is defined in the [`values.yaml`](https://github.com/kyma-project/kyma-environment-broker/blob/main/resources/keb/values.yaml) file of the chart. All available configuration options are documented within this YAML file.
