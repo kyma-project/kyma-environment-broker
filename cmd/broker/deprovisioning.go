@@ -51,8 +51,8 @@ func NewDeprovisioningProcessingQueue(ctx context.Context, workersAmount int, de
 			step: deprovisioning.NewReleaseSubscriptionStep(db, accountProvider),
 		},
 		{
-			disabled: !cfg.ArchiveEnabled,
-			step:     deprovisioning.NewArchivingStep(db, cfg.ArchiveDryRun),
+			disabled: !cfg.ArchivingEnabled,
+			step:     deprovisioning.NewArchivingStep(db, cfg.ArchivingDryRun),
 		},
 		{
 			step: deprovisioning.NewRemoveInstanceStep(db),
