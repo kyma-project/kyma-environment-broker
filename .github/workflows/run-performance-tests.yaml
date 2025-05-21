@@ -18,4 +18,4 @@ jobs:
       instances-number: 1000
       kim-delay-seconds: 120
       provisioning-max-step-processing-time: 1m
-      provisioning-workers-amount: 250
+      provisioning-workers-amount: 200

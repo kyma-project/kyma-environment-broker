@@ -30,7 +30,7 @@ on:
         type: string
       provisioning-workers-amount:
         description: amount of workers in provisioning queue
-        default: 250
+        default: 200
         type: number
 
 jobs:
