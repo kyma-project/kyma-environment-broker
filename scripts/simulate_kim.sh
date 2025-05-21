@@ -52,7 +52,7 @@ while (( COUNT > 0 )); do
     fi
   done <<< "$RUNTIMES"
 
-  sleep 10
+  sleep 20
 
   COUNT=$(get_provisioning_runtimes)
   if (( COUNT == 0 )); then
