@@ -23,7 +23,7 @@ broker:
     maxBindingsCount: 10
     # Maximum allowed expiration time (in seconds) for a binding
     maxExpirationSeconds: 7200
-    # Minimum allowed expiration time (in seconds) for a binding
+    # Minimum allowed expiration time (in seconds) for a binding. Can't be lower than 600 seconds. Forced by Gardener
     minExpirationSeconds: 600
   # Default platform region for requests if not specified (e.g. "cf-eu10")
   defaultRequestRegion: "cf-eu10"
@@ -39,6 +39,8 @@ broker:
   freeExpirationPeriod: 720h
   # If true, additional (advanced or less common) parameters are included in the provisioning schema for service plans.
   includeAdditionalParamsInSchema: "false"
+  # If true, collects properties from the provisioning request that are not explicitly defined in the schema and stores them in persistent storage.
+  monitorAdditionalProperties: false
   # If true, restricts each global account to only one free (freemium) Kyma environment.
   # When enabled, provisioning another free environment for the same global account will be blocked even if the previous one is deprovisioned.
   onlyOneFreePerGA: "false"
@@ -135,7 +137,7 @@ deployment:
   replicaCount: 1
   securityContext:
     runAsUser: 2000
-  strategy: { }
+  strategy: { } # Read more: https://kubernetes.io/docs/concepts/workloads/controllers/deployment/#strategy
 # ========================
 
 # ========================
@@ -209,7 +211,7 @@ fullnameOverride: "kcp-kyma-environment-broker"
 gardener:
   # Path to the kubeconfig file for accessing the Gardener cluster.
   kubeconfigPath: "/gardener/kubeconfig/kubeconfig"
-  # Gardener project name used for resource provisioning and HAP credentials lookup.
+  # Gardener project connected to SA for HAP credentials lookup.
   project: "kyma-dev"
   # Name of the Kubernetes Secret containing Gardener credentials.
   secretName: "gardener-credentials"
@@ -342,9 +344,9 @@ infrastructureManager:
   ingressFilteringPlans: "azure,gcp,aws"
   # Sets the default Kubernetes version to use for new clusters provisioned by the broker.
   kubernetesVersion: "1.16.9"
-  # Sets the default machine image name to use for nodes in provisioned clusters
+  # Sets the default machine image name to use for nodes in provisioned clusters. If empty, the Gardener default value is used.
   machineImage: ""
-  # Sets the version of the machine image to use for nodes in provisioned clusters
+  # Sets the version of the machine image to use for nodes in provisioned clusters. If empty, the Gardener default value is used.
   machineImageVersion: ""
   # If true, enables provisioning of clusters with nodes distributed across multiple availability zones.
   multiZoneCluster: "false"
@@ -352,9 +354,6 @@ infrastructureManager:
   useSmallerMachineTypes: "false"
 # =========================
 
-kebClient:
-  # OAuth2 scope(s) used when authenticating requests from the broker to other services
-  scope: "broker:write cld:read"
 kubeconfig:
   # Specifies which origins are allowed for CORS (Cross-Origin Resource Sharing) on the /kubeconfig endpoint.
   allowOrigins: "*"
@@ -614,10 +613,19 @@ profiler:
 # Restricts provisioning of listed machine types to the specified regions/zones only.
 # If a machine type is not listed, it is considered available in all regions.
 regionsSupportingMachine: |-
-  c2d-highcpu:
-    - europe-west3
-    - asia-south1
-    - us-central1
+
+resources:
+  { }
+  # We usually recommend not to specify default resources and to leave this as a conscious
+  # choice for the user. This also increases chances charts run on environments with little
+  # resources, such as Minikube. If you do want to specify resources, uncomment the following
+  # lines, adjust them as necessary, and remove the curly braces after 'resources:'.
+  # limits:
+  #   cpu: 100m
+  #   memory: 128Mi
+  # requests:
+#   cpu: 100m
+#   memory: 128Mi
 
 # List of Kubernetes service account principals allowed to access Kyma Environment Broker endpoints
 # via Istio AuthorizationPolicy, bypassing OIDC group-based authorization.
