@@ -177,7 +177,6 @@ broker:
   subaccountMovementEnabled: "false"
   updateCustomResourcesLabelsOnAccountMove: "false"
   useAdditionalOIDCSchema: "false"
-  disableMachineTypeUpdate: "false"
   monitorAdditionalProperties: false
 
 events:
