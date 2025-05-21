@@ -20,6 +20,10 @@ on:
         description: number of instances to be provisioned
         default: 200
         type: number
+      kim-delay-seconds:
+        description: time to wait before transitioning the runtime CR to the Ready state
+        default: 120
+        type: number
       provisioning-max-step-processing-time:
         description: max time to process a step in provisioning queue
         default: 1m
@@ -177,5 +181,5 @@ jobs:
       - name: Simulate KIM
         timeout-minutes: 45
         env:
-          KIM_DELAY_SECONDS: 90
+          KIM_DELAY_SECONDS: ${{ inputs.kim-delay-seconds }}
         run: scripts/simulate_kim.sh
