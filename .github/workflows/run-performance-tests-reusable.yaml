@@ -30,7 +30,7 @@ on:
         type: string
       provisioning-workers-amount:
         description: amount of workers in provisioning queue
-        default: 500
+        default: 250
         type: number
 
 jobs:
@@ -188,7 +188,14 @@ jobs:
         run: |
           METRICS=$(curl -s http://localhost:8080/metrics)
           SUCCEEDED_TOTAL=$(echo "$METRICS" | grep 'kcp_keb_v2_operations_provisioning_succeeded_total{plan_id="4deee563-e5ec-4731-b9b1-53b42d855f0c"}' | awk '{print $2}')
+          SUCCEEDED_TOTAL=${SUCCEEDED_TOTAL:-0}
           FAILED_TOTAL=$(echo "$METRICS" | grep 'kcp_keb_v2_operations_provisioning_failed_total{plan_id="4deee563-e5ec-4731-b9b1-53b42d855f0c"}' | awk '{print $2}')
-          SUCCESS_RATE=$(awk "BEGIN {printf \"%.2f\", ($SUCCEEDED_TOTAL / $TOTAL) * 100}")
+          FAILED_TOTAL=${FAILED_TOTAL:-0}
+          TOTAL=$(echo "$SUCCEEDED_TOTAL + $FAILED_TOTAL" | bc)
+          if [ "$TOTAL" -eq 0 ]; then
+            SUCCESS_RATE=0
+          else
+            SUCCESS_RATE=$(awk "BEGIN {printf \"%.2f\", ($SUCCEEDED_TOTAL / $TOTAL) * 100}")
+          fi
           echo "Success rate of provisioning requests: $SUCCESS_RATE%" >> $GITHUB_STEP_SUMMARY
           
