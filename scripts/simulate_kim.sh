@@ -48,6 +48,9 @@ while (( COUNT > 0 )); do
     '.items[] | select(.status.state != "Ready") | "\(.metadata.name) \(.metadata.creationTimestamp)"')
 
   while read -r RUNTIME_ID CREATION_TS; do
+    if [[ -z "$RUNTIME_ID" || -z "$CREATION_TS" ]]; then
+      continue
+    fi
     if is_older_than_threshold "$CREATION_TS"; then
       echo "Patching runtime: $RUNTIME_ID (created at $CREATION_TS)"
       kubectl patch runtime "$RUNTIME_ID" \
@@ -58,7 +61,7 @@ while (( COUNT > 0 )); do
     fi
   done <<< "$RUNTIMES"
 
-  sleep 20
+  sleep 10
 
   COUNT=$(get_provisioning_runtimes)
   if (( COUNT == 0 )); then
