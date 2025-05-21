@@ -18,7 +18,7 @@ on:
         type: string
       instances-number:
         description: number of instances to be provisioned
-        default: 100
+        default: 200
         type: number
       provisioning-max-step-processing-time:
         description: max time to process a step in provisioning queue
