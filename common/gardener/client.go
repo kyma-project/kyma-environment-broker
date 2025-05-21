@@ -14,7 +14,7 @@ import (
 	"k8s.io/client-go/tools/clientcmd"
 )
 
-const requestTimeout = 10 * time.Second
+const requestTimeout = 45 * time.Second
 
 const (
 	TenantNameLabelKey      = "tenantName"

@@ -102,15 +102,15 @@ jobs:
           VERSIONS=($(./scripts/testing/get-latest-k3s-releases.sh ${{ inputs.last-k3s-versions }}))
           MATRIX_AS_JSON=$(echo ${VERSIONS[*]} | awk 'END {printf "{\"include\":[";for (i = 1; i < NF; i++) printf "{\"version\":%s},",$i;printf "{\"version\":%s}]}",$i }'|jq -c)
           echo "k3s_versions=${MATRIX_AS_JSON}" >> "${GITHUB_OUTPUT}"
-#      - name: Wait for images to be ready
-#        uses: wechuli/allcheckspassed@2e5e8bbc775f5680ed5d02e3a22e2fc7219792ac
-#        if: ${{ inputs.release == 'false' }}
-#        with:
-#          delay: '1'
-#          retries: '10'
-#          polling_interval: '1'
-#          checks_include: 'kyma-environment-broker-image / Build image, archiver-image / Build image, environments-cleanup-image / Build image, deprovision-retrigger-image / Build image, expirator-image / Build image, runtime-reconciler-image / Build image, subaccount-cleanup-image / Build image, subaccount-sync-image / Build image, globalaccounts-image / Build image, schema-migrator-image / Build image, service-binding-cleanup-image / Build image'
-#          verbose: true
+      - name: Wait for images to be ready
+        uses: wechuli/allcheckspassed@2e5e8bbc775f5680ed5d02e3a22e2fc7219792ac
+        if: ${{ inputs.release == 'false' }}
+        with:
+          delay: '1'
+          retries: '10'
+          polling_interval: '1'
+          checks_include: 'kyma-environment-broker-image / Build image, archiver-image / Build image, environments-cleanup-image / Build image, deprovision-retrigger-image / Build image, expirator-image / Build image, runtime-reconciler-image / Build image, subaccount-cleanup-image / Build image, subaccount-sync-image / Build image, globalaccounts-image / Build image, schema-migrator-image / Build image, service-binding-cleanup-image / Build image'
+          verbose: true
 
   run-concurrent-provisioning-test:
     runs-on: ubuntu-latest
@@ -186,11 +186,6 @@ jobs:
         
       - name: Fetch metrics from KEB
         run: |          
-          curl --request GET \
-            --url http://localhost:8080/runtimes?state=failed&plan=azure \
-            --header 'Content-Type: application/json' \
-            --header 'X-Broker-API-Version: 2.16'
-
           METRICS=$(curl -s http://localhost:8080/metrics)
           SUCCEEDED_TOTAL=$(echo "$METRICS" | grep 'kcp_keb_v2_operations_provisioning_succeeded_total{plan_id="4deee563-e5ec-4731-b9b1-53b42d855f0c"}' | awk '{print $2}')
           SUCCEEDED_TOTAL=${SUCCEEDED_TOTAL:-0}
