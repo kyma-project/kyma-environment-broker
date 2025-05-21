@@ -82,10 +82,7 @@ imagePullSecrets: [ ]
 # If true, this Helm chart will create and manage Kubernetes Secret resources for credentials.
 # Set to false if you want to manage these secrets externally or manually, and prevent the chart from creating them.
 manageSecrets: true
-# Sets the value for the app.kubernetes.io/instance label on Kubernetes resources created by this Helm chart.
 namePrefix: "kcp"
-# If set, overrides the default chart name used as the base for Kubernetes resource names created by this Helm chart.
-# Useful for customizing resource names across environments or deployments.
 nameOverride: "kyma-environment-broker"
 resources:
   { }
@@ -100,8 +97,6 @@ resources:
 #   cpu: 100m
 #   memory: 128Mi
 
-# List of Kubernetes service account principals allowed to access Kyma Environment Broker endpoints
-# via Istio AuthorizationPolicy, bypassing OIDC group-based authorization.
 runtimeAllowedPrincipals: |-
   - cluster.local/ns/kcp-system/sa/kcp-kyma-metrics-collector
 
@@ -111,23 +106,9 @@ service:
 serviceAccount:
   annotations: { }
 
-serviceMonitor:
-  enabled: false
-  interval: &scrapeInterval 30s
-  scrapeTimeout: &scrapeTimeout 10s
-
 swagger:
   virtualService:
     enabled: true
-testConfig:
-  kebDeployment:
-    useAnnotations: false
-    weight: "2"
-
-vmscrapes:
-  enabled: true
-  interval: *scrapeInterval
-  scrapeTimeout: *scrapeTimeout
 # =================================================
 
 
@@ -551,6 +532,12 @@ stepTimeouts:
   # Maximum time to wait for a runtime resource to be updated before considering the step as failed (e.g., 180m = 180 minutes).
   checkRuntimeResourceUpdate: 180m
 
+# Used in local k3s KEB integration tests
+testConfig:
+  kebDeployment:
+    useAnnotations: false
+    weight: "2"
+
 # Used to determine the Kyma region for a trial environment based on the requested platform region.
 trialRegionsMapping: |-
   cf-eu10: europe
@@ -799,6 +786,22 @@ trialCleanup:
   testRun: false
   # Subaccount ID used for test runs.
   testSubaccountID: "prow-keb-trial-suspension"
+# =================================================
+
+
+
+# =================================================
+# Service Monitor Settings
+# =================================================
+serviceMonitor:
+  enabled: false
+  interval: &scrapeInterval 30s
+  scrapeTimeout: &scrapeTimeout 10s
+
+vmscrapes:
+  enabled: true
+  interval: *scrapeInterval
+  scrapeTimeout: *scrapeTimeout
 # =================================================
 
 
