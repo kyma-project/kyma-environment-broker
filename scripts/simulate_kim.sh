@@ -1,9 +1,17 @@
 #!/usr/bin/env bash
 
-set -o nounset
-set -o errexit
-set -E
-set -o pipefail
+# This script simulates the successful readiness of runtimes stuck in
+# a provisioning state by patching them to "Ready" if they are older than
+# a specified threshold.
+# It has the following arguments:
+#   - KIM delay seconds (default: 60 seconds)
+# ./simulate_kim.sh 120
+
+# standard bash error handling
+set -o nounset  # treat unset variables as an error and exit immediately.
+set -o errexit  # exit immediately when a command fails.
+set -E          # needs to be set if we want the ERR trap
+set -o pipefail # prevents errors in a pipeline from being masked
 
 KIM_DELAY_SECONDS="${KIM_DELAY_SECONDS:-${1:-60}}"
 
@@ -29,7 +37,6 @@ is_older_than_threshold() {
   now_seconds=$(date +%s)
 
   local age_seconds=$(( now_seconds - creation_seconds ))
-  echo $KIM_DELAY_SECONDS
   (( age_seconds >= KIM_DELAY_SECONDS ))
 }
 
