@@ -18,7 +18,7 @@ on:
         type: string
       instances-number:
         description: number of instances to be provisioned
-        default: 200
+        default: 1000
         type: number
       kim-delay-seconds:
         description: time to wait before transitioning the runtime CR to the Ready state
