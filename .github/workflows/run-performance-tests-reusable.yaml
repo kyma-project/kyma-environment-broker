@@ -153,7 +153,7 @@ jobs:
           kubectl port-forward -n kcp-system deployment/kcp-kyma-environment-broker 8080:8080 5432:5432 &
           sleep 5
           
-          seq 1 ${{ inputs.instances-number }} | xargs -n1 -P20 -I{} bash -c '
+          seq 1 100 | xargs -n1 -P8 -I{} bash -c '
             uid=$(uuidgen)
             curl --silent --show-error --fail --request PUT \
               --url http://localhost:8080/oauth/v2/service_instances/$uid \
@@ -173,3 +173,6 @@ jobs:
             echo "Assertion failed: totalCount is not ${{ inputs.instances-number }}. Actual value: $TOTAL_COUNT"
             exit 1
           fi
+      
+      - name: Simulate KIM
+        run: scripts/simulate_kim.sh
