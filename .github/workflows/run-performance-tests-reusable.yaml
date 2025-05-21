@@ -30,7 +30,7 @@ on:
         type: string
       provisioning-workers-amount:
         description: amount of workers in provisioning queue
-        default: 100
+        default: 200
         type: number
 
 jobs:
@@ -186,6 +186,30 @@ jobs:
         
       - name: Fetch metrics from KEB
         run: |
+          succeeded=$(curl --request GET \
+            --url http://localhost:8080/runtimes?state=succeeded \
+            --header 'Content-Type: application/json' \
+            --header 'X-Broker-API-Version: 2.16' | jq .totalCount)
+          echo "succeeded: $succeeded:
+          
+          failed=$(curl --request GET \
+            --url http://localhost:8080/runtimes?state=failed \
+            --header 'Content-Type: application/json' \
+            --header 'X-Broker-API-Version: 2.16' | jq .totalCount)
+          echo "failed: $failed:
+          
+          error=$(curl --request GET \
+            --url http://localhost:8080/runtimes?state=error \
+            --header 'Content-Type: application/json' \
+            --header 'X-Broker-API-Version: 2.16' | jq .totalCount)
+          echo "error: $error:
+          
+          provisioning=$(curl --request GET \
+            --url http://localhost:8080/runtimes?state=provisioning \
+            --header 'Content-Type: application/json' \
+            --header 'X-Broker-API-Version: 2.16' | jq .totalCount)
+          echo "provisioning: $provisioning:
+          
           METRICS=$(curl -s http://localhost:8080/metrics)
           SUCCEEDED_TOTAL=$(echo "$METRICS" | grep 'kcp_keb_v2_operations_provisioning_succeeded_total{plan_id="4deee563-e5ec-4731-b9b1-53b42d855f0c"}' | awk '{print $2}')
           SUCCEEDED_TOTAL=${SUCCEEDED_TOTAL:-0}
