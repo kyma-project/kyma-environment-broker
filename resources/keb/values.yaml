@@ -228,7 +228,9 @@ global:
         enabled: false
     embedded:
       enabled: true
+    # Values for GCP managed PostgreSQL database
     managedGCP:
+      # secret with a secret key used to encrypt particular data
       encryptionSecretName: "kcp-storage-client-secret"
       instanceConnectionName: ""
   images:
@@ -242,31 +244,31 @@ global:
       version: "1.19.4"
     kyma_environment_broker_schema_migrator:
       dir:
-      version: 1.19.3
-    kyma_environment_deprovision_retrigger_job:
+      version: 1.19.4
+    kyma_environments_subaccount_cleanup_job:
+      dir:
+      version: "1.19.4"
+    kyma_environment_trial_cleanup_job:
       dir:
       version: "1.19.4"
     kyma_environment_expirator_job:
       dir:
       version: "1.19.4"
-    kyma_environment_globalaccounts:
+    kyma_environment_deprovision_retrigger_job:
       dir:
       version: "1.19.4"
     kyma_environment_runtime_reconciler:
       dir:
       version: "1.19.4"
-    kyma_environment_service_binding_cleanup_job:
-      dir:
-      version: "1.19.4"
     kyma_environment_subaccount_sync:
       dir:
-      version: "1.19.3"
-    kyma_environment_trial_cleanup_job:
+      version: "1.19.4"
+    kyma_environment_globalaccounts:
       dir:
-      version: "1.19.3"
-    kyma_environments_subaccount_cleanup_job:
+      version: "1.19.4"
+    kyma_environment_service_binding_cleanup_job:
       dir:
-      version: "1.19.3"
+      version: 1.19.4
   ingress:
     domainName: localhost
   istio:
