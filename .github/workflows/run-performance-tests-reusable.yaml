@@ -176,4 +176,6 @@ jobs:
       
       - name: Simulate KIM
         timeout-minutes: 45
+        env:
+          KIM_DELAY_SECONDS: 90
         run: scripts/simulate_kim.sh

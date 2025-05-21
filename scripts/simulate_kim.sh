@@ -5,7 +5,7 @@ set -o errexit
 set -E
 set -o pipefail
 
-AGE_THRESHOLD_SECONDS=60
+KIM_DELAY_SECONDS="${KIM_DELAY_SECONDS:-${1:-60}}"
 
 get_provisioning_runtimes() {
   local count
@@ -29,7 +29,8 @@ is_older_than_threshold() {
   now_seconds=$(date +%s)
 
   local age_seconds=$(( now_seconds - creation_seconds ))
-  (( age_seconds >= AGE_THRESHOLD_SECONDS ))
+  echo $KIM_DELAY_SECONDS
+  (( age_seconds >= KIM_DELAY_SECONDS ))
 }
 
 COUNT=$(get_provisioning_runtimes)
@@ -47,8 +48,6 @@ while (( COUNT > 0 )); do
         --type merge \
         --subresource status \
         -p '{"status": {"state": "Ready"}}'
-    else
-      echo "Skipping $RUNTIME_ID — too recent (created at $CREATION_TS)"
     fi
   done <<< "$RUNTIMES"
 
