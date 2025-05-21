@@ -1,6 +1,6 @@
-# ========================
-# Global Settings
-# ========================
+# =================================================
+# Common Settings
+# =================================================
 global:
   database:
     cloudsqlproxy:
@@ -65,11 +65,67 @@ global:
       mount: kcp-dev
       namespace: kyma
       refreshAfter: 30s
-# ========================
 
-# =================================
+fullnameOverride: "kcp-kyma-environment-broker"
+host: "kyma-env-broker"
+imagePullSecret: ""
+imagePullSecrets: [ ]
+# If true, this Helm chart will create and manage Kubernetes Secret resources for credentials.
+# Set to false if you want to manage these secrets externally or manually, and prevent the chart from creating them.
+manageSecrets: true
+# Sets the value for the app.kubernetes.io/instance label on Kubernetes resources created by this Helm chart.
+namePrefix: "kcp"
+# If set, overrides the default chart name used as the base for Kubernetes resource names created by this Helm chart.
+# Useful for customizing resource names across environments or deployments.
+nameOverride: "kyma-environment-broker"
+resources:
+  { }
+  # We usually recommend not to specify default resources and to leave this as a conscious
+  # choice for the user. This also increases chances charts run on environments with little
+  # resources, such as Minikube. If you do want to specify resources, uncomment the following
+  # lines, adjust them as necessary, and remove the curly braces after 'resources:'.
+  # limits:
+  #   cpu: 100m
+  #   memory: 128Mi
+  # requests:
+#   cpu: 100m
+#   memory: 128Mi
+
+# List of Kubernetes service account principals allowed to access Kyma Environment Broker endpoints
+# via Istio AuthorizationPolicy, bypassing OIDC group-based authorization.
+runtimeAllowedPrincipals: |-
+  - cluster.local/ns/kcp-system/sa/kcp-kyma-metrics-collector
+
+service:
+  port: 80
+  type: ClusterIP
+serviceAccount:
+  annotations: { }
+
+serviceMonitor:
+  enabled: false
+  interval: &scrapeInterval 30s
+  scrapeTimeout: &scrapeTimeout 10s
+
+swagger:
+  virtualService:
+    enabled: true
+testConfig:
+  kebDeployment:
+    useAnnotations: false
+    weight: "2"
+
+vmscrapes:
+  enabled: true
+  interval: *scrapeInterval
+  scrapeTimeout: *scrapeTimeout
+# =================================================
+
+
+
+# =================================================
 # Kyma Environment Broker Deployment Settings
-# =================================
+# =================================================
 
 archiving:
   # If true, enables the archiving mechanism, which stores data about deprovisioned instances in an archive table at the end of the deprovisioning process.
@@ -494,11 +550,13 @@ trialRegionsMapping: |-
 
 # If true, the broker processes update requests for service instances
 osbUpdateProcessingEnabled: "true"
-# =================================
+# =================================================
 
-# ========================
+
+
+# =================================================
 # CIS Related Settings
-# ========================
+# =================================================
 cis:
   accounts:
     # The OAuth2 token endpoint (authorization URL) used to obtain access tokens for authenticating requests to the CIS Accounts API.
@@ -541,11 +599,13 @@ cis:
     rateLimitingInterval: "2s"
     # The interval between requests to the CIS v2 API.
     requestInterval: "200ms"
-# ========================
+# =================================================
 
-# ========================
+
+
+# =================================================
 # Deployments and Jobs Settings
-# ========================
+# =================================================
 deployment:
   image:
     pullPolicy: Always
@@ -554,7 +614,9 @@ deployment:
   securityContext:
     runAsUser: 2000
   strategy: { } # Read more: https://kubernetes.io/docs/concepts/workloads/controllers/deployment/#strategy
-# ========================
+# =================================================
+
+
 
 # =================================
 # Deprovision Retrigger Job Settings
@@ -566,6 +628,8 @@ deprovisionRetrigger:
   enabled: true
   schedule: "0 2 * * *"
 # =================================
+
+
 
 # =================================
 # Free Cleanup Job Settings
@@ -584,12 +648,11 @@ freeCleanup:
   testSubaccountID: "prow-keb-trial-suspension"
 # =================================
 
-# If set, overrides the full name used for Kubernetes resources created by this Helm chart (e.g., Deployment, Service).
-fullnameOverride: "kcp-kyma-environment-broker"
 
-# ========================
+
+# =================================================
 # Global Accounts Deployment Settings
-# ========================
+# =================================================
 globalaccounts:
   # If true, runs the global accounts synchronization job in dry-run mode (no changes are made).
   dryRun: true
@@ -597,20 +660,13 @@ globalaccounts:
   enabled: false
   # Name of the global accounts synchronization job or deployment.
   name: "kyma-environment-globalaccounts"
-# =================================
+# =================================================
 
-host: "kyma-env-broker"
 
-imagePullSecret: ""
-imagePullSecrets: [ ]
 
-# If true, this Helm chart will create and manage Kubernetes Secret resources for credentials.
-# Set to false if you want to manage these secrets externally or manually, and prevent the chart from creating them.
-manageSecrets: true
-
-# ========================
+# =================================================
 # Migrator Jobs Settings
-# ========================
+# =================================================
 migratorJobs:
   argosync:
     # If true, enables the ArgoCD sync job for schema migration.
@@ -624,17 +680,13 @@ migratorJobs:
     enabled: true
     # The weight value for the Helm hook.
     weight: "1"
-# ========================
+# =================================================
 
-# Sets the value for the app.kubernetes.io/instance label on Kubernetes resources created by this Helm chart.
-namePrefix: "kcp"
-# If set, overrides the default chart name used as the base for Kubernetes resource names created by this Helm chart.
-# Useful for customizing resource names across environments or deployments.
-nameOverride: "kyma-environment-broker"
 
-# =================================
+
+# =================================================
 # OIDC Settings
-# =================================
+# =================================================
 oidc:
   groups:
     admin: runtimeAdmin
@@ -644,29 +696,13 @@ oidc:
   issuer: https://kymatest.accounts400.ondemand.com
   issuers: []
   keysURL: https://kymatest.accounts400.ondemand.com/oauth2/certs
+# =================================================
 
 
-resources:
-  { }
-  # We usually recommend not to specify default resources and to leave this as a conscious
-  # choice for the user. This also increases chances charts run on environments with little
-  # resources, such as Minikube. If you do want to specify resources, uncomment the following
-  # lines, adjust them as necessary, and remove the curly braces after 'resources:'.
-  # limits:
-  #   cpu: 100m
-  #   memory: 128Mi
-  # requests:
-#   cpu: 100m
-#   memory: 128Mi
 
-# List of Kubernetes service account principals allowed to access Kyma Environment Broker endpoints
-# via Istio AuthorizationPolicy, bypassing OIDC group-based authorization.
-runtimeAllowedPrincipals: |-
-  - cluster.local/ns/kcp-system/sa/kcp-kyma-metrics-collector
-
-# =================================
+# =================================================
 # Runtime Reconciler Deployment Settings
-# =================================
+# =================================================
 runtimeReconciler:
   # If true, runs the reconciler in dry-run mode (no changes are made, only logs actions).
   dryRun: true
@@ -680,17 +716,13 @@ runtimeReconciler:
   jobReconciliationDelay: 1s
   # Port on which the reconciler exposes Prometheus metrics.
   metricsPort: 8081
-# =================================
+# =================================================
 
-service:
-  port: 80
-  type: ClusterIP
-serviceAccount:
-  annotations: { }
 
-# =================================
+
+# =================================================
 # Service Binding Cleanup Job Settings
-# =================================
+# =================================================
 serviceBindingCleanup:
   # If true, the job only logs what would be deleted without actually removing any bindings.
   dryRun: true
@@ -701,26 +733,25 @@ serviceBindingCleanup:
   # Timeout for each DELETE request to the broker (e.g., "2s").
   requestTimeout: 2s
   schedule: "0 2,14 * * *"
-# =================================
+# =================================================
 
-serviceMonitor:
-  enabled: false
-  interval: &scrapeInterval 30s
-  scrapeTimeout: &scrapeTimeout 10s
 
-# =================================
+
+# =================================================
 # Subaccount Cleanup Jobs Settings
-# =================================
+# =================================================
 subaccountCleanup:
   enabled: "false"
   nameV1: "kcp-subaccount-cleaner-v1.0"
   nameV2: "kcp-subaccount-cleaner-v2.0"
   schedule: "0 1 * * *"
-# =================================
+# =================================================
 
-# =================================
+
+
+# =================================================
 # Subaccount Sync Deployment Settings
-# =================================
+# =================================================
 subaccountSync:
   # Interval between full account synchronization runs (e.g., 24h = every 24 hours).
   accountSyncInterval: 24h
@@ -755,19 +786,13 @@ subaccountSync:
   storageSyncInterval: 5m
   # If true, enables updating resources during subaccount sync.
   updateResources: false
-# =================================
+# =================================================
 
-swagger:
-  virtualService:
-    enabled: true
-testConfig:
-  kebDeployment:
-    useAnnotations: false
-    weight: "2"
 
-# ========================
+
+# =================================================
 # Trial Cleanup Job Settings
-# ========================
+# =================================================
 trialCleanup:
   # If true, the job only logs what would be deleted without actually removing any data.
   dryRun: true
@@ -780,16 +805,13 @@ trialCleanup:
   testRun: false
   # Subaccount ID used for test runs.
   testSubaccountID: "prow-keb-trial-suspension"
-# =================================
+# =================================================
 
-vmscrapes:
-  enabled: true
-  interval: *scrapeInterval
-  scrapeTimeout: *scrapeTimeout
 
-# ========================
+
+# =================================================
 # VSO Secrets Settings
-# ========================
+# =================================================
 # Please read the documentation at:
 # https://pages.github.tools.sap/kyma/docusaurus-docs/kyma/cicd/argocd/secrets
 vsoSecrets:
@@ -854,4 +876,4 @@ vsoSecrets:
         data:
           id: {}
           secret: {}
-# =================================
+# =================================================
