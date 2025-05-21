@@ -5,13 +5,19 @@ set -o errexit
 set -E
 set -o pipefail
 
-AGE_THRESHOLD_MINUTES=2
+AGE_THRESHOLD_SECONDS=60
 
 get_provisioning_runtimes() {
-  curl --request GET \
-    --url http://localhost:8080/runtimes?state=provisioning \
-    --header 'Content-Type: application/json' \
-    --header 'X-Broker-API-Version: 2.16' | jq .totalCount
+  local count
+  if ! count=$(curl --silent --fail --request GET \
+      --url http://localhost:8080/runtimes?state=provisioning \
+      --header 'Content-Type: application/json' \
+      --header 'X-Broker-API-Version: 2.16' | jq .totalCount); then
+    echo "Warning: Failed to fetch provisioning runtimes. Assuming at least 1 remains." >&2
+    echo 1
+  else
+    echo "$count"
+  fi
 }
 
 is_older_than_threshold() {
@@ -22,9 +28,8 @@ is_older_than_threshold() {
   creation_seconds=$(date --date="$creation_timestamp" +%s)
   now_seconds=$(date +%s)
 
-  local age_minutes=$(( (now_seconds - creation_seconds) / 60 ))
-
-  (( age_minutes >= AGE_THRESHOLD_MINUTES ))
+  local age_seconds=$(( now_seconds - creation_seconds ))
+  (( age_seconds >= AGE_THRESHOLD_SECONDS ))
 }
 
 COUNT=$(get_provisioning_runtimes)

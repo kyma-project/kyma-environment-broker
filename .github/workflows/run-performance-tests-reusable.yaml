@@ -175,4 +175,5 @@ jobs:
           fi
       
       - name: Simulate KIM
+        timeout-minutes: 45
         run: scripts/simulate_kim.sh
