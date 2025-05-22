@@ -130,7 +130,7 @@ broker:
     bindablePlans: "aws"
     # Timeout for creating a binding, for example, 15s, 1m
     createBindingTimeout: 15s
-    # Enable or disable the service binding endpoint (true/false)
+    # Enables or disables the service binding endpoint (true/false)
     enabled: false
     # Default expiration time (in seconds) for a binding if not specified in the request
     expirationSeconds: 600
