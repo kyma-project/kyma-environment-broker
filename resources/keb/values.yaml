@@ -290,7 +290,7 @@ metricsv2:
   operationResultFinishedOperationRetentionPeriod: 3h
   # How often to poll for operation results (e.g., 1m).
   operationResultPollingInterval: 1m
-  # How long to retain operation results (e.g., 1h).
+  # Duration of retaining operation results, for example, 1h.
   operationResultRetentionPeriod: 1h
   # How often to poll for operation statistics (e.g., 1m).
   operationStatsPollingInterval: 1m
