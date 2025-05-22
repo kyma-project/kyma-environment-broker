@@ -119,7 +119,7 @@ swagger:
 archiving:
   # If true, enables the archiving mechanism, which stores data about deprovisioned instances in an archive table at the end of the deprovisioning process.
   enabled: false
-  # If true, runs the archiving process in dry-run mode: no changes are made to the database, only logs what would be archived or deleted.
+  # If true, runs the archiving process in dry-run mode: Makes no changes to the database, only logs what is to be archived or deleted.
   dryRun: true
 
 broker:
