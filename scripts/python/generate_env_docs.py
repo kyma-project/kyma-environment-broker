@@ -169,7 +169,7 @@ def write_markdown_table(env_docs, output_path):
     with open(output_path, "w") as f:
         f.write("## Kyma Environment Broker Configuration\n\n")
         f.write("Kyma Environment Broker (KEB) binary allows you to override some configuration parameters. You can specify the following environment variables:\n\n")
-        f.write("| Environment Variable | Value | Description |\n")
+        f.write("| Environment Variable | Current Value | Description |\n")
         f.write("|---------------------|-------|-------------|\n")
         for doc in env_docs:
             desc = doc['description'] if doc['description'] else '-'
