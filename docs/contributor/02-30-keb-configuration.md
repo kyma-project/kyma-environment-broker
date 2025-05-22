@@ -14,7 +14,7 @@ Kyma Environment Broker (KEB) binary allows you to override some configuration p
 | `APP_BROKER_BINDING_MAX_BINDINGS_COUNT` | `10` | Maximum number of non-expired bindings allowed per instance |
 | `APP_BROKER_BINDING_MAX_EXPIRATION_SECONDS` | `7200` | Maximum allowed expiration time (in seconds) for a binding |
 | `APP_BROKER_BINDING_MIN_EXPIRATION_SECONDS` | `600` | Minimum allowed expiration time (in seconds) for a binding. Can't be lower than 600 seconds. Forced by Gardener |
-| `APP_BROKER_DEFAULT_REQUEST_REGION` | `cf-eu10` | Default platform region for requests if not specified (e.g. "cf-eu10")ssss |
+| `APP_BROKER_DEFAULT_REQUEST_REGION` | `cf-eu10` | Default platform region for requests if not specified (e.g. "cf-eu10") |
 | `APP_BROKER_DISABLE_SAP_CONVERGED_CLOUD` | `False` | If true, disables the SAP Converged Cloud plan in the Kyma Environment Broker. When set to true, users cannot provision SAP Converged Cloud clusters |
 | `APP_BROKER_ENABLE_PLANS` | `azure,gcp,azure_lite,trial,aws` | Comma-separated list of plan names that are enabled and available for provisioning in the Kyma Environment Broker. |
 | `APP_BROKER_ENABLE_SHOOT_AND_SEED_SAME_REGION` | `false` | If true, enforces that the Gardener seed is placed in the same region as the selected shoot region during provisioning. |
