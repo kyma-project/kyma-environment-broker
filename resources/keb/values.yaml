@@ -148,7 +148,7 @@ broker:
   enablePlans: "azure,gcp,azure_lite,trial,aws"
   # If true, enforces that the Gardener seed is placed in the same region as the shoot region selected during provisioning
   enableShootAndSeedSameRegion: "false"
-  # URL to the documentation of free Kyma environments. Used in API responses and UI labels to direct users to help or documentation about free plans
+  # URL to the documentation of free Kyma runtimes. Used in API responses and UI labels to direct users to help or documentation about free plans
   freeDocsURL: "https://help.sap.com/docs/"
   # Determines when to show expiration info to users
   freeExpirationPeriod: 720h
@@ -156,10 +156,10 @@ broker:
   includeAdditionalParamsInSchema: "false"
   # If true, collects properties from the provisioning request that are not explicitly defined in the schema and stores them in persistent storage
   monitorAdditionalProperties: false
-  # If true, restricts each global account to only one free (freemium) Kyma environment.
+  # If true, restricts each global account to only one free (freemium) Kyma runtime.
   # When enabled, provisioning another free environment for the same global account is blocked even if the previous one is deprovisioned
   onlyOneFreePerGA: "false"
-  # If true, restricts each global account to only one active trial Kyma environment at a time
+  # If true, restricts each global account to only one active trial Kyma runtime at a time
   # When enabled, provisioning another trial environment for the same global account is blocked until the previous one is deprovisioned
   onlySingleTrialPerGA: "true"
   # Maximum allowed duration for processing a single operation (provisioning, deprovisioning, etc.)
@@ -167,9 +167,9 @@ broker:
   operationTimeout: "7h"
   # Port for the broker HTTP server
   port: "8080"
-  # If true, adds expiration information for free plan Kyma environments to API responses and UI labels
+  # If true, adds expiration information for free plan Kyma runtimes to API responses and UI labels
   showFreeExpirationInfo: "false"
-  # If true, adds expiration information for trial plan Kyma environments to API responses and UI labels
+  # If true, adds expiration information for trial plan Kyma runtimes to API responses and UI labels
   showTrialExpirationInfo: "false"
   # Port for the broker status/health endpoint
   statusPort: "8071"
@@ -177,7 +177,7 @@ broker:
   subaccountMovementEnabled: "false"
   # Shows trial expiration information for specific subaccounts in the UI and API responses
   subaccountsIdsToShowTrialExpirationInfo: "a45be5d8-eddc-4001-91cf-48cc644d571f"
-  # URL to the documentation for trial Kyma environments. Used in API responses and UI labels
+  # URL to the documentation for trial Kyma runtimes. Used in API responses and UI labels
   trialDocsURL: "https://help.sap.com/docs/"
   # If true, updates runtimeCR labels when moving subaccounts
   updateCustomResourcesLabelsOnAccountMove: "false"
@@ -215,7 +215,7 @@ events:
   # Enables or disables the /events API and event storage for operation events (true/false)
   enabled: true
 
-# List of global account IDs that are allowed unlimited access to freemium (free) Kyma environments
+# List of global account IDs that are allowed unlimited access to freemium (free) Kyma runtimes
 # Only accounts listed here can provision more than the default limit of free environments
 freemiumWhitelistedGlobalAccountIds: |-
   whitelist:
@@ -254,7 +254,7 @@ infrastructureManager:
   # Sets the default purpose for Gardener shoots (clusters) created by the broker
   # Possible values: development, evaluation, production, testing
   defaultShootPurpose: "development"
-  # Sets the default cloud provider for trial Kyma environments, for example, Azure, AWS
+  # Sets the default cloud provider for trial Kyma runtimes, for example, Azure, AWS
   defaultTrialProvider: "Azure"
   # If true, enables ingress filtering for defined plans
   enableIngressFiltering: "false"
@@ -276,7 +276,7 @@ kubeconfig:
   allowOrigins: "*"
 
 kymaDashboardConfig:
-  # The base URL of the Kyma Dashboard used to generate links to the web UI for Kyma environments
+  # The base URL of the Kyma Dashboard used to generate links to the web UI for Kyma runtimes
   landscapeURL: "https://dashboard.dev.kyma.cloud.sap"
 
 lifecycleManager:
@@ -776,7 +776,7 @@ subaccountSync:
 trialCleanup:
   # If true, the job only logs what would be deleted without actually removing any data
   dryRun: true
-  # If true, enables the Trial Cleanup CronJob, which removes expired trial Kyma environments
+  # If true, enables the Trial Cleanup CronJob, which removes expired trial Kyma runtimes
   enabled: true
   # Specifies how long a trial instance can exist before being expired
   expirationPeriod: 336h
