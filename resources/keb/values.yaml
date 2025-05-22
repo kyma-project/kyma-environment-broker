@@ -337,7 +337,7 @@ plansConfiguration:
       default: [ "eastus","centralus","westus2","uksouth","northeurope","westeurope","japaneast","southeastasia","australiaeast","brazilsouth","canadacentral" ]
 
 profiler:
-  # Enable memory profiler (true/false)
+  # Enables memory profiler (true/false)
   memory: false
 
 providersConfiguration:
