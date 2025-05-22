@@ -140,7 +140,7 @@ broker:
     maxExpirationSeconds: 7200
     # Minimum allowed expiration time (in seconds) for a binding. Can't be lower than 600 seconds. Forced by Gardener
     minExpirationSeconds: 600
-  # Default platform region for requests if not specified (e.g. "cf-eu10")
+  # Default platform region for requests if not specified (e.g. "cf-eu10")ssss
   defaultRequestRegion: "cf-eu10"
   # If true, disables the SAP Converged Cloud plan in the Kyma Environment Broker. When set to true, users cannot provision SAP Converged Cloud clusters
   disableSapConvergedCloud: false
