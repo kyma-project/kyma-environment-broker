@@ -187,6 +187,7 @@ jobs:
       - name: Fetch metrics from KEB
         run: |          
           METRICS=$(curl -s http://localhost:8080/metrics)
+          
           SUCCEEDED_TOTAL=$(echo "$METRICS" | grep 'kcp_keb_v2_operations_provisioning_succeeded_total{plan_id="4deee563-e5ec-4731-b9b1-53b42d855f0c"}' | awk '{print $2}')
           SUCCEEDED_TOTAL=${SUCCEEDED_TOTAL:-0}
           FAILED_TOTAL=$(echo "$METRICS" | grep 'kcp_keb_v2_operations_provisioning_failed_total{plan_id="4deee563-e5ec-4731-b9b1-53b42d855f0c"}' | awk '{print $2}')
@@ -198,4 +199,26 @@ jobs:
             SUCCESS_RATE=$(awk "BEGIN {printf \"%.2f\", ($SUCCEEDED_TOTAL / $TOTAL) * 100}")
           fi
           echo "Success rate of provisioning requests: $SUCCESS_RATE%" >> $GITHUB_STEP_SUMMARY
+          
+          PROVISIONING_DURATION=$(echo "$METRICS" | grep 'kcp_keb_v2_provisioning_duration_minutes_sum{plan_id="4deee563-e5ec-4731-b9b1-53b42d855f0c"}' | awk '{print $2}')
+          PROVISIONING_DURATION=${PROVISIONING_DURATION:-0}
+          PROVISIONING_COUNT=$(echo "$METRICS" | grep 'kcp_keb_v2_provisioning_duration_minutes_count{plan_id="4deee563-e5ec-4731-b9b1-53b42d855f0c"}' | awk '{print $2}')
+          PROVISIONING_COUNT=${PROVISIONING_COUNT:-0}
+          if [ "$PROVISIONING_COUNT" -eq 0 ]; then
+            AVG_PROVISIONING_DURATION=0
+          else
+            AVG_PROVISIONING_DURATION=$(awk "BEGIN {printf \"%.2f\", ($PROVISIONING_DURATION / $PROVISIONING_COUNT)}")
+          fi
+          echo "Average duration of provisioning requests: $AVG_PROVISIONING_DURATION minutes" >> $GITHUB_STEP_SUMMARY
+          
+          PROVISIONING_DURATION_BUCKETS=$(echo "$METRICS" | grep 'kcp_keb_v2_provisioning_duration_minutes_bucket{plan_id="4deee563-e5ec-4731-b9b1-53b42d855f0c"')
+          INF_TOTAL=$(echo "$PROVISIONING_DURATION_BUCKETS" | grep 'le="+Inf"' | awk '{print $2}')
+          MAX_PROVISIONING_DURATION=$(echo "$PROVISIONING_DURATION_BUCKETS" | grep -v 'le="\+Inf"' | sed -n 's/.*le="\([^"]*\)"} \([0-9]*\)/\1 \2/p' | \
+          while read le count; do
+            if [ "$count" -eq "$INF_TOTAL" ]; then
+              echo "$le"
+              break
+            fi
+          done)
+          echo "Maximum duration of provisioning requests: $MAX_PROVISIONING_DURATION minutes" >> $GITHUB_STEP_SUMMARY
           
