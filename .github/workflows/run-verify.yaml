@@ -73,6 +73,6 @@ jobs:
         run: |
           if [[ $(git status --porcelain docs/contributor/02-30-keb-configuration.md) ]]; then
             echo 'docs/contributor/02-30-keb-configuration.md is out of date. Please run the generator and commit the changes.'
-            git diff docs/contributor/02-30-keb-configuration.md
+            git diff --color=always docs/contributor/02-30-keb-configuration.md
             exit 1
           fi
