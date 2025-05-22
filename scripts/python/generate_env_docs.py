@@ -175,7 +175,7 @@ def write_markdown_table(env_docs, output_path):
             desc = doc['description'] if doc['description'] else '-'
             # Format default value for Markdown
             if doc['default'] is None or doc['default'] == '':
-                default = '-'
+                default = 'None'
             else:
                 default = f'`{doc["default"]}`'
             f.write(f"| `{doc['env']}` | {default} | {desc} |\n")
