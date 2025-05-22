@@ -140,30 +140,30 @@ broker:
     maxExpirationSeconds: 7200
     # Minimum allowed expiration time (in seconds) for a binding. Can't be lower than 600 seconds. Forced by Gardener
     minExpirationSeconds: 600
-  # Default platform region for requests if not specified (e.g. "cf-eu10")
+  # Default platform region for requests if not specified, for example, "cf-eu10"
   defaultRequestRegion: "cf-eu10"
-  # If true, disables the SAP Converged Cloud plan in the Kyma Environment Broker. When set to true, users cannot provision SAP Converged Cloud clusters
+  # If true, disables the sap-converged-cloud plan in the KEB. When set to true, users cannot provision sap-converged-cloud clusters
   disableSapConvergedCloud: false
-  # Comma-separated list of plan names that are enabled and available for provisioning in the Kyma Environment Broker.
+  # Comma-separated list of plan names enabled and available for provisioning in KEB
   enablePlans: "azure,gcp,azure_lite,trial,aws"
-  # If true, enforces that the Gardener seed is placed in the same region as the selected shoot region during provisioning.
+  # If true, enforces that the Gardener seed is placed in the same region as the shoot region selected during provisioning.
   enableShootAndSeedSameRegion: "false"
-  # URL to the documentation for free Kyma environments. Used in API responses and UI labels to direct users to help or documentation about free plans.
+  # URL to the documentation of free Kyma environments. Used in API responses and UI labels to direct users to help or documentation about free plans.
   freeDocsURL: "https://help.sap.com/docs/"
-  # Used to determine when to show expiration info to users.
+  # Determines when to show expiration info to users.
   freeExpirationPeriod: 720h
   # If true, additional (advanced or less common) parameters are included in the provisioning schema for service plans.
   includeAdditionalParamsInSchema: "false"
   # If true, collects properties from the provisioning request that are not explicitly defined in the schema and stores them in persistent storage.
   monitorAdditionalProperties: false
   # If true, restricts each global account to only one free (freemium) Kyma environment.
-  # When enabled, provisioning another free environment for the same global account will be blocked even if the previous one is deprovisioned.
+  # When enabled, provisioning another free environment for the same global account is blocked even if the previous one is deprovisioned.
   onlyOneFreePerGA: "false"
   # If true, restricts each global account to only one active trial Kyma environment at a time.
-  # When enabled, provisioning another trial environment for the same global account will be blocked until the previous one is deprovisioned.
+  # When enabled, provisioning another trial environment for the same global account is blocked until the previous one is deprovisioned.
   onlySingleTrialPerGA: "true"
   # Maximum allowed duration for processing a single operation (provisioning, deprovisioning, etc.).
-  # If the operation exceeds this timeout, it will be marked as failed. Example: "7h" for 7 hours.
+  # If the operation exceeds this timeout, it is marked as failed. Example: "7h" for 7 hours.
   operationTimeout: "7h"
   # Port for the broker HTTP server
   port: "8080"
@@ -181,7 +181,7 @@ broker:
   trialDocsURL: "https://help.sap.com/docs/"
   # If true, updates runtimeCR labels when moving subaccounts
   updateCustomResourcesLabelsOnAccountMove: "false"
-  # If true, enables the new list-based OIDC schema, allowing multiple OIDC configurations to be specified for a runtime.
+  # If true, enables the new list-based OIDC schema, allowing multiple OIDC configurations for a runtime.
   useAdditionalOIDCSchema: "false" # temporary feature flag
 
 cleaning:
@@ -190,7 +190,7 @@ cleaning:
   # If true, enables the cleaning process, which removes all data about deprovisioned instances from the database.
   enabled: false
 
-# If true, the broker will NOT resume processing operations (provisioning, deprovisioning, updating, etc.) that were in progress when the broker process last stopped or restarted.
+# If true, the broker does NOT resume processing operations (provisioning, deprovisioning, updating, etc.) that were in progress when the broker process last stopped or restarted.
 disableProcessOperationsInProgress: "false"
 
 edp:
@@ -200,7 +200,7 @@ edp:
   authURL: "TBD"
   # If true, disables EDP integration
   disabled: true
-  # EDP environment (e.g., dev, prod)
+  # EDP environment, for example, dev, prod
   environment: "dev"
   # EDP namespace to use
   namespace: "kyma-dev"
@@ -212,7 +212,7 @@ edp:
   secretName: "edp-creds"
 
 events:
-  # Enable or disable the /events API and event storage for operation events (true/false)
+  # Enables or disables the /events API and event storage for operation events (true/false)
   enabled: true
 
 # List of global account IDs that are allowed unlimited access to freemium (free) Kyma environments.
@@ -249,22 +249,22 @@ hap:
 
 infrastructureManager:
   # Sets the failure tolerance level for the Kubernetes control plane in Gardener clusters.
-  # Possible values: "node", "zone", or empty (default).
+  # Possible values: empty (default), "node", or "zone".
   controlPlaneFailureTolerance: ""
   # Sets the default purpose for Gardener shoots (clusters) created by the broker.
   # Possible values: development, evaluation, production, testing
   defaultShootPurpose: "development"
-  # Sets the default cloud provider to use for trial Kyma environments (e.g., Azure, AWS).
+  # Sets the default cloud provider for trial Kyma environments, for example, Azure, AWS.
   defaultTrialProvider: "Azure"
-  # If true, allows to enable ingress filtering for defined plans.
+  # If true, enables ingress filtering for defined plans.
   enableIngressFiltering: "false"
   # Comma-separated list of plan names for which ingress filtering is available.
   ingressFilteringPlans: "azure,gcp,aws"
-  # Sets the default Kubernetes version to use for new clusters provisioned by the broker.
+  # Sets the default Kubernetes version for new clusters provisioned by the broker.
   kubernetesVersion: "1.16.9"
-  # Sets the default machine image name to use for nodes in provisioned clusters. If empty, the Gardener default value is used.
+  # Sets the default machine image name for nodes in provisioned clusters. If empty, the Gardener default value is used.
   machineImage: ""
-  # Sets the version of the machine image to use for nodes in provisioned clusters. If empty, the Gardener default value is used.
+  # Sets the version of the machine image for nodes in provisioned clusters. If empty, the Gardener default value is used.
   machineImageVersion: ""
   # If true, enables provisioning of clusters with nodes distributed across multiple availability zones.
   multiZoneCluster: "false"
@@ -272,7 +272,7 @@ infrastructureManager:
   useSmallerMachineTypes: "false"
 
 kubeconfig:
-  # Specifies which origins are allowed for CORS (Cross-Origin Resource Sharing) on the /kubeconfig endpoint.
+  # Specifies which origins are allowed for Cross-Origin Resource Sharing (CORS) on the /kubeconfig endpoint.
   allowOrigins: "*"
 
 kymaDashboardConfig:
@@ -280,15 +280,15 @@ kymaDashboardConfig:
   landscapeURL: "https://dashboard.dev.kyma.cloud.sap"
 
 lifecycleManager:
-  # When disabled, the broker will not create, update, or delete the KymaCR.
+  # When disabled, the broker does not create, update, or delete the KymaCR.
   disabled: "false"
 
 metricsv2:
   # If true, enables metricsv2 collection and Prometheus exposure.
   enabled: false
-  # How long to retain finished operation results in memory (e.g., 3h).
+  # Duration of retaining finished operation results in memory, for example, 3h.
   operationResultFinishedOperationRetentionPeriod: 3h
-  # How often to poll for operation results (e.g., 1m).
+  # Frequency of polling for operation results, for example, 1m.
   operationResultPollingInterval: 1m
   # Duration of retaining operation results, for example, 1h.
   operationResultRetentionPeriod: 1h
