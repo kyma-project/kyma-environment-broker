@@ -139,7 +139,7 @@ func createDynamicK8sClient() dynamic.Interface {
 	return clusterClient
 }
 
-func getResourceKindProvider(kymaVersion string, configProvider *kebConfig.ConfigProvider) schema.GroupVersionResource {
+func getResourceKindProvider(kymaVersion string, configProvider kebConfig.Provider) schema.GroupVersionResource {
 	resourceKindProvider := kymacustomresource.NewResourceKindProvider(kymaVersion, configProvider)
 	kymaGVR, err := resourceKindProvider.DefaultGvr()
 	fatalOnError(err)

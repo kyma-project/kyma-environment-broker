@@ -17,12 +17,12 @@ import (
 
 type InitKymaTemplate struct {
 	operationManager *process.OperationManager
-	configProvider   config.ConfigurationProvider
+	configProvider   config.Provider
 }
 
 var _ process.Step = &InitKymaTemplate{}
 
-func NewInitKymaTemplate(os storage.Operations, configProvider config.ConfigurationProvider) *InitKymaTemplate {
+func NewInitKymaTemplate(os storage.Operations, configProvider config.Provider) *InitKymaTemplate {
 	step := &InitKymaTemplate{
 		configProvider: configProvider,
 	}

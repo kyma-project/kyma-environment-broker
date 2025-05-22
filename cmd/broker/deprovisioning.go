@@ -17,7 +17,7 @@ import (
 func NewDeprovisioningProcessingQueue(ctx context.Context, workersAmount int, deprovisionManager *process.StagedManager,
 	cfg *Config, db storage.BrokerStorage,
 	edpClient deprovisioning.EDPClient, accountProvider hyperscaler.AccountProvider,
-	k8sClientProvider K8sClientProvider, kcpClient client.Client, configProvider config.ConfigurationProvider, logs *slog.Logger) *process.Queue {
+	k8sClientProvider K8sClientProvider, kcpClient client.Client, configProvider config.Provider, logs *slog.Logger) *process.Queue {
 
 	deprovisioningSteps := []struct {
 		disabled bool

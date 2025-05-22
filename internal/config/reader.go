@@ -25,7 +25,7 @@ type ConfigMapReader struct {
 	configMapName string
 }
 
-func NewConfigMapReader(ctx context.Context, k8sClient client.Client, logger *slog.Logger, cmName string) ConfigReader {
+func NewConfigMapReader(ctx context.Context, k8sClient client.Client, logger *slog.Logger, cmName string) Reader {
 	return &argoReader{target: &ConfigMapReader{
 		ctx:           ctx,
 		k8sClient:     k8sClient,
@@ -71,7 +71,7 @@ func (r *ConfigMapReader) getConfigStringForPlanOrDefaults(cfgMap *coreV1.Config
 }
 
 type argoReader struct {
-	target ConfigReader
+	target Reader
 }
 
 func (r *argoReader) Read(planName string) (string, error) {

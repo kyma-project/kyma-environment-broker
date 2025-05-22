@@ -5,34 +5,34 @@ import (
 )
 
 type (
-	ConfigurationProvider interface {
+	Provider interface {
 		ProvideForGivenPlan(planName string) (*internal.ConfigForPlan, error)
 	}
 
-	ConfigReader interface {
+	Reader interface {
 		Read(planName string) (string, error)
 	}
 
-	ConfigValidator interface {
+	Validator interface {
 		Validate(cfgString string) error
 	}
 
-	ConfigConverter interface {
+	Converter interface {
 		ConvertToStruct(cfgString string) (internal.ConfigForPlan, error)
 	}
 )
 
-type ConfigProvider struct {
-	Reader    ConfigReader
-	Validator ConfigValidator
-	Converter ConfigConverter
+type provider struct {
+	Reader    Reader
+	Validator Validator
+	Converter Converter
 }
 
-func NewConfigProvider(reader ConfigReader, validator ConfigValidator, converter ConfigConverter) *ConfigProvider {
-	return &ConfigProvider{Reader: reader, Validator: validator, Converter: converter}
+func NewConfigProvider(reader Reader, validator Validator, converter Converter) Provider {
+	return &provider{Reader: reader, Validator: validator, Converter: converter}
 }
 
-func (p *ConfigProvider) ProvideForGivenPlan(planName string) (*internal.ConfigForPlan, error) {
+func (p *provider) ProvideForGivenPlan(planName string) (*internal.ConfigForPlan, error) {
 	cfgString, err := p.Reader.Read(planName)
 	if err != nil {
 		return nil, err
