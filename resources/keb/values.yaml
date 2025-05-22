@@ -292,7 +292,7 @@ metricsv2:
   operationResultPollingInterval: 1m
   # Duration of retaining operation results, for example, 1h.
   operationResultRetentionPeriod: 1h
-  # How often to poll for operation statistics (e.g., 1m).
+  # Frequency of polling for operation statistics, for example, 1m.
   operationStatsPollingInterval: 1m
 
 # If true, generates kubeconfig files with multiple contexts (if possible) instead of a single context.
