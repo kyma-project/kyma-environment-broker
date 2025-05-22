@@ -537,7 +537,7 @@ testConfig:
     useAnnotations: false
     weight: "2"
 
-# Used to determine the Kyma region for a trial environment based on the requested platform region.
+# Determines the Kyma region for a trial environment based on the requested platform region.
 trialRegionsMapping: |-
   cf-eu10: europe
   cf-us10: us
