@@ -128,7 +128,7 @@ broker:
   binding:
     # Comma-separated list of plan names for which service binding is enabled, for example, "aws,gcp"
     bindablePlans: "aws"
-    # Timeout for creating a binding (e.g. 15s, 1m)
+    # Timeout for creating a binding, for example, 15s, 1m
     createBindingTimeout: 15s
     # Enable or disable the service binding endpoint (true/false)
     enabled: false
