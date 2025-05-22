@@ -6,6 +6,21 @@ import yaml
 # It extracts environment variables from the deployment template, maps them to their descriptions and default values from values.yaml (including comments),
 # and outputs a Markdown table. It handles static, single, and composite value references robustly.
 
+
+# Custom loader to load all scalars as strings (including booleans)
+class StrLoader(yaml.SafeLoader):
+    pass
+
+def str_constructor(loader, node):
+    return loader.construct_scalar(node)
+
+# Remove boolean resolver so 'true'/'false' are loaded as strings
+for bool_tag in ['bool', 'bool#yes', 'bool#no']:
+    if bool_tag in yaml.SafeLoader.yaml_implicit_resolvers:
+        del yaml.SafeLoader.yaml_implicit_resolvers[bool_tag]
+StrLoader.add_constructor('tag:yaml.org,2002:bool', str_constructor)
+StrLoader.add_constructor('tag:yaml.org,2002:str', str_constructor)
+
 DEPLOYMENT_YAML = "resources/keb/templates/deployment.yaml"
 VALUES_YAML = "resources/keb/values.yaml"
 OUTPUT_MD = "docs/contributor/02-30-keb-configuration.md"
@@ -63,7 +78,8 @@ def parse_values_yaml_with_comments(values_yaml_path):
     """
     with open(values_yaml_path, "r") as f:
         lines = f.readlines()
-    yaml_data = yaml.safe_load(open(values_yaml_path))
+    # Use custom loader to keep all values as strings
+    yaml_data = yaml.load(open(values_yaml_path), Loader=StrLoader)
     doc_map = {}
     path_stack = []
     comment_accumulator = []
