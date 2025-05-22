@@ -524,7 +524,7 @@ skrOIDCDefaultValues: |-
   usernamePrefix: "-"
 
 stepTimeouts:
-  # Maximum time to wait for a runtime resource to be created before considering the step as failed (e.g., 60m = 60 minutes).
+  # Maximum time to wait for a runtime resource to be created before considering the step as failed, for example, 60m = 60 minutes.
   checkRuntimeResourceCreate: 60m
   # Maximum time to wait for a runtime resource to be deleted before considering the step as failed (e.g., 60m = 60 minutes).
   checkRuntimeResourceDeletion: 60m
