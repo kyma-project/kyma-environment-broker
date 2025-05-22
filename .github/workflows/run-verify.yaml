@@ -50,3 +50,29 @@ jobs:
 
       - name: Run go checks
         run: make checks
+
+  verify-python-md-sync:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.9'
+          cache: 'pip'
+
+      - name: Install requirements
+        run: pip install -r scripts/python/requirements.txt
+
+      - name: Run env docs generator
+        run: python3 scripts/python/generate_env_docs.py
+
+      - name: Check for changes in ENVIRONMENT_VARIABLES.md
+        run: |
+          if [[ $(git status --porcelain ENVIRONMENT_VARIABLES.md) ]]; then
+            echo 'ENVIRONMENT_VARIABLES.md is out of date. Please run the generator and commit the changes.'
+            git diff ENVIRONMENT_VARIABLES.md
+            exit 1
+          fi
