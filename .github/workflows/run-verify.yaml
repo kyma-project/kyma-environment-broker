@@ -71,7 +71,7 @@ jobs:
 
       - name: Check for changes in ENVIRONMENT_VARIABLES.md
         run: |
-          if [[ $(git status --porcelain ENVIRONMENT_VARIABLES.md) ]]; then
+          if [[ $(git status --porcelain docs/contributor/02-30-keb-configuration.md) ]]; then
             echo 'ENVIRONMENT_VARIABLES.md is out of date. Please run the generator and commit the changes.'
             git diff ENVIRONMENT_VARIABLES.md
             exit 1
