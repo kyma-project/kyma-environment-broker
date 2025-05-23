@@ -14,7 +14,7 @@ type (
 	}
 
 	Validator interface {
-		Validate(cfgString string) error
+		Validate(requiredFields, cfgString string) error
 	}
 
 	Converter interface {
@@ -38,7 +38,7 @@ func (p *provider) ProvideForGivenPlan(planName string) (*internal.ConfigForPlan
 		return nil, err
 	}
 
-	if err = p.Validator.Validate(cfgString); err != nil {
+	if err = p.Validator.Validate(runtimeConfigurationRequiredFields, cfgString); err != nil {
 		return nil, err
 	}
 
