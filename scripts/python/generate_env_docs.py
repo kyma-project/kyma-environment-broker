@@ -209,7 +209,7 @@ def write_markdown_table(env_docs, output_path):
     """
     Write the environment variable documentation as a Markdown table.
     Fields with missing description or value are rendered as '-'.
-    Long values in the first and second columns are split with a soft break (S\u200b;).
+    Long values in the first and second columns are split with a soft break (S\u200b;), except the value column, which is not split.
     The description column is visually wider.
     """
     with open(output_path, "w") as f:
@@ -229,8 +229,8 @@ def write_markdown_table(env_docs, output_path):
             if default == 'None':
                 val_col = 'None'
             else:
-                val_val = soft_break(str(default), 10)
-                val_col = f'<code>{val_val}</code>'
+                # Do not split or break the value column at all
+                val_col = f'<code>{str(default)}</code>'
             f.write(f"| {env_col} | {val_col} | {desc} |\n")
 
 def main():
