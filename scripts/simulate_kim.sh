@@ -24,7 +24,6 @@ DB_CONNECTIONS_MAX_OPEN_ARRAY=()
 DB_CONNECTIONS_IN_USE_ARRAY=()
 
 MEM_ALLOC_BYTES_ARRAY=()
-MEM_ALLOC_BYTES_TOTAL_ARRAY=()
 MEM_STACK_INUSE_BYTES_ARRAY=()
 MEM_HEAP_INUSE_BYTES_ARRAY=()
 
@@ -93,8 +92,6 @@ while (( COUNT > 0 )); do
   
   MEM_ALLOC_BYTES=$(echo "$METRICS" | grep -w '^go_memstats_alloc_bytes' | LC_ALL=C awk '{printf "%.2f", $2/1048576}')
   MEM_ALLOC_BYTES_ARRAY+=("$MEM_ALLOC_BYTES")
-  MEM_ALLOC_BYTES_TOTAL=$(echo "$METRICS" | grep '^go_memstats_alloc_bytes_total' | LC_ALL=C awk '{printf "%.2f", $2/1048576}')
-  MEM_ALLOC_BYTES_TOTAL_ARRAY+=("$MEM_ALLOC_BYTES_TOTAL")
   MEM_STACK_INUSE_BYTES=$(echo "$METRICS" | grep '^go_memstats_stack_inuse_bytes' | LC_ALL=C awk '{printf "%.2f", $2/1048576}')
   MEM_STACK_INUSE_BYTES_ARRAY+=("$MEM_STACK_INUSE_BYTES")
   MEM_HEAP_INUSE_BYTES=$(echo "$METRICS" | grep '^go_memstats_heap_inuse_bytes' | LC_ALL=C awk '{printf "%.2f", $2/1048576}')
@@ -138,23 +135,23 @@ echo "| Blue  | Idle     |" >> "$GITHUB_STEP_SUMMARY"
 echo "| Green | Max open |" >> "$GITHUB_STEP_SUMMARY"
 echo "| Red   | In use   |" >> "$GITHUB_STEP_SUMMARY"
 echo "</div>" >> "$GITHUB_STEP_SUMMARY"
+echo "" >> "$GITHUB_STEP_SUMMARY"
 
 MERMAID_MEM_ALLOC_BYTES=$(IFS=, ; echo "[${MEM_ALLOC_BYTES_ARRAY[*]}]")
-MERMAID_MEM_ALLOC_BYTES_TOTAL=$(IFS=, ; echo "[${MEM_ALLOC_BYTES_TOTAL_ARRAY[*]}]")
 MERMAID_MEM_STACK_INUSE_BYTES=$(IFS=, ; echo "[${MEM_STACK_INUSE_BYTES_ARRAY[*]}]")
 MERMAID_MEM_HEAP_INUSE_BYTES=$(IFS=, ; echo "[${MEM_HEAP_INUSE_BYTES_ARRAY[*]}]")
 {
   echo '```mermaid'
-  echo "xychart-beta title \"Go Memstats\" y-axis \"Memory (in MiB)\" line \"Alloc bytes\" $MERMAID_MEM_ALLOC_BYTES line \"Alloc bytes total\" $MERMAID_MEM_ALLOC_BYTES_TOTAL line \"Stack in use bytes\" $MERMAID_MEM_STACK_INUSE_BYTES line \"Heap in use bytes\" $MERMAID_MEM_HEAP_INUSE_BYTES"
+  echo "xychart-beta title \"Go Memstats\" y-axis \"Memory (in MiB)\" line \"Alloc bytes\" $MERMAID_MEM_ALLOC_BYTES line \"Stack in use bytes\" $MERMAID_MEM_STACK_INUSE_BYTES line \"Heap in use bytes\" $MERMAID_MEM_HEAP_INUSE_BYTES"
   echo '```'
 } >> "$GITHUB_STEP_SUMMARY"
 
 echo "<div align=\"center\">" >> "$GITHUB_STEP_SUMMARY"
 echo "" >> "$GITHUB_STEP_SUMMARY"
-echo "| Color  | Type               |" >> "$GITHUB_STEP_SUMMARY"
-echo "|--------|--------------------|" >> "$GITHUB_STEP_SUMMARY"
-echo "| Blue   | Alloc bytes        |" >> "$GITHUB_STEP_SUMMARY"
-echo "| Green  | Alloc bytes total  |" >> "$GITHUB_STEP_SUMMARY"
-echo "| Red    | Stack in use bytes |" >> "$GITHUB_STEP_SUMMARY"
-echo "| Yellow | Heap in use bytes  |" >> "$GITHUB_STEP_SUMMARY"
+echo "| Color | Type               |" >> "$GITHUB_STEP_SUMMARY"
+echo "|-------|--------------------|" >> "$GITHUB_STEP_SUMMARY"
+echo "| Blue  | Alloc bytes        |" >> "$GITHUB_STEP_SUMMARY"
+echo "| Green | Stack in use bytes |" >> "$GITHUB_STEP_SUMMARY"
+echo "| Red   | Heap in use bytes  |" >> "$GITHUB_STEP_SUMMARY"
 echo "</div>" >> "$GITHUB_STEP_SUMMARY"
+echo "" >> "$GITHUB_STEP_SUMMARY"
