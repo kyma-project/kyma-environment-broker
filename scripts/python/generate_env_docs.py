@@ -225,7 +225,7 @@ def write_markdown_table(env_docs, output_path):
             else:
                 default = doc["default"]
             env_val = soft_break(doc["env"], 20, prefer_char='_')
-            env_col = f'<code>{env_val}</code>'
+            env_col = f'**{env_val}**'
             if default == 'None':
                 val_col = 'None'
             else:
