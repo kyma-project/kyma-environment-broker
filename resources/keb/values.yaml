@@ -630,7 +630,9 @@ vmscrapes:
   scrapeTimeout: *scrapeTimeout
 # =================================================
 
-
+provisioning:
+  maxStepProcessingTime: 2m
+  workersAmount: 20
 
 # =================================================
 # VSO Secrets Settings

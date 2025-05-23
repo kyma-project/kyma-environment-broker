@@ -1,0 +1,362 @@
+name: Run performance tests (reusable)
+
+on:
+  workflow_call:
+    inputs:
+      last-k3s-versions:
+        description: number of the most recent K3s versions to be used
+        required: false
+        default: 1
+        type: string
+      release:
+        description: 'Determines if the workflow is called from release'
+        default: "true"
+        type: string
+      version:
+        description: 'Release version'
+        default: "0.0.0.0"
+        type: string
+      instances-number:
+        description: number of instances to be provisioned
+        default: 100
+        type: number
+      kim-delay-seconds:
+        description: time to wait before transitioning the runtime CR to the Ready state
+        default: 420
+        type: number
+      provisioning-max-step-processing-time:
+        description: max time to process a step in provisioning queue
+        default: 30s
+        type: string
+      provisioning-workers-amount:
+        description: amount of workers in provisioning queue
+        default: 20
+        type: number
+
+jobs:
+  validate-keb-helm-chart:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Prepare chart for next KEB version
+        run: |
+          if [ "${{ inputs.release }}" == "true" ]; then
+            scripts/bump_keb_chart.sh ${{ inputs.version }} "release"
+          else
+            scripts/bump_keb_chart.sh PR-${{ inputs.version }} "pr"
+          fi
+
+      - name: Validate KEB helm chart
+        run: |
+          cd resources/keb
+          helm template .
+
+      - name: Enforce env alphabetical order in deployment.yaml (KEB)
+        run: scripts/check_env_alphabetical_order.sh resources/keb/templates/deployment.yaml deployment_KEB ports
+
+      - name: Enforce env alphabetical order in runtime-reconciler-deployment.yaml
+        run: scripts/check_env_alphabetical_order.sh resources/keb/templates/runtime-reconciler-deployment.yaml runtime_reconciler
+
+      - name: Enforce env alphabetical order in trial-cleanup-job.yaml
+        run: scripts/check_env_alphabetical_order.sh resources/keb/templates/trial-cleanup-job.yaml trial_cleanup
+
+      - name: Enforce env alphabetical order in deprovision-retrigger-job.yaml
+        run: scripts/check_env_alphabetical_order.sh resources/keb/templates/deprovision-retrigger-job.yaml deprovision_retrigger
+
+      - name: Enforce env alphabetical order in free-cleanup-job.yaml
+        run: scripts/check_env_alphabetical_order.sh resources/keb/templates/free-cleanup-job.yaml free_cleanup
+
+      - name: Enforce env alphabetical order in service-binding-cleanup-job.yaml
+        run: scripts/check_env_alphabetical_order.sh resources/keb/templates/service-binding-cleanup-job.yaml service_binding_cleanup
+
+      - name: Enforce env alphabetical order in globalaccounts.yaml
+        run: scripts/check_env_alphabetical_order.sh resources/keb/templates/globalaccounts.yaml globalaccounts
+
+      - name: Enforce env alphabetical order in subaccount-sync-deployment.yaml
+        run: scripts/check_env_alphabetical_order.sh resources/keb/templates/subaccount-sync-deployment.yaml subaccount_sync
+
+      - name: Enforce env alphabetical order in migrator-job.yaml
+        run: scripts/check_env_alphabetical_order.sh resources/keb/templates/migrator-job.yaml migrator_job
+  
+  prepare-tests:
+    runs-on: ubuntu-latest
+    needs: validate-keb-helm-chart
+    outputs:
+      versions: ${{ steps.get-versions.outputs.k3s_versions }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - id: get-versions
+        name: Get K3s versions
+        # prepare json representing GitHub matrix:
+        # {"include": [
+        #    {"version":"v1.26.10+k3s1"},
+        #      ...
+        #    {"version":"v1.28.3+k3s1"}
+        # ]
+        # }
+        run: |
+          VERSIONS=($(./scripts/testing/get-latest-k3s-releases.sh ${{ inputs.last-k3s-versions }}))
+          MATRIX_AS_JSON=$(echo ${VERSIONS[*]} | awk 'END {printf "{\"include\":[";for (i = 1; i < NF; i++) printf "{\"version\":%s},",$i;printf "{\"version\":%s}]}",$i }'|jq -c)
+          echo "k3s_versions=${MATRIX_AS_JSON}" >> "${GITHUB_OUTPUT}"
+#      - name: Wait for images to be ready
+#        uses: wechuli/allcheckspassed@2e5e8bbc775f5680ed5d02e3a22e2fc7219792ac
+#        if: ${{ inputs.release == 'false' }}
+#        with:
+#          delay: '1'
+#          retries: '10'
+#          polling_interval: '1'
+#          checks_include: 'kyma-environment-broker-image / Build image, archiver-image / Build image, environments-cleanup-image / Build image, deprovision-retrigger-image / Build image, expirator-image / Build image, runtime-reconciler-image / Build image, subaccount-cleanup-image / Build image, subaccount-sync-image / Build image, globalaccounts-image / Build image, schema-migrator-image / Build image, service-binding-cleanup-image / Build image'
+#          verbose: true
+
+  run-concurrent-provisioning-test:
+    runs-on: ubuntu-latest
+    needs: prepare-tests
+    strategy:
+      matrix: ${{ fromJSON(needs.prepare-tests.outputs.versions) }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Prepare K3s cluster and docker registry
+        run: "./scripts/testing/k3s-setup.sh ${{ matrix.version }} --wait"
+        
+      - name: Prepare values.yaml
+        run: |
+          yq e ".provisioning.maxStepProcessingTime = \"${{ inputs.provisioning-max-step-processing-time }}\"" -i resources/keb/values.yaml
+          yq e ".provisioning.workersAmount = ${{ inputs.provisioning-workers-amount }}" -i resources/keb/values.yaml
+
+      - name: Install KEB chart
+        run: |
+          if [ "${{ inputs.release }}" == "true" ]; then
+            make install VERSION=${{ inputs.version }}
+          else
+            make install VERSION=PR-${{ inputs.version }}
+          fi
+
+      - name: Populate database
+        run: |
+          DB_NAME=$(kubectl get secret kcp-postgresql -n kcp-system -o jsonpath="{.data.postgresql-broker-db-name}" | base64 -d)
+          DB_USER=$(kubectl get secret kcp-postgresql -n kcp-system -o jsonpath="{.data.postgresql-broker-username}" | base64 -d)
+          DB_PASS=$(kubectl get secret kcp-postgresql -n kcp-system -o jsonpath="{.data.postgresql-broker-password}" | base64 -d)
+          
+          kubectl port-forward -n kcp-system deployment/postgres 5432:5432 &
+          PORT_FORWARD_PID=$!
+          echo $PORT_FORWARD_PID
+          sleep 5
+          
+          PGPASSWORD=$DB_PASS psql -h localhost -p 5432 -U $DB_USER -d $DB_NAME -f resources/installation/migrations/populate_performance_tests_database.up.sql
+          
+          kill $PORT_FORWARD_PID
+          
+      - name: Start background metrics collector
+        run: |
+          kubectl port-forward -n kcp-system deployment/kcp-kyma-environment-broker 8080:8080 5432:5432 &
+          sleep 5
+          
+          nohup bash scripts/monitor_metrics.sh > /dev/null 2>&1 &
+          echo $! > /tmp/metrics_pid
+
+      - name: Provision multiple instances
+        run: |
+          seq 1 ${{ inputs.instances-number }} | xargs -n1 -P8 -I{} bash -c '
+            uid=$(uuidgen)
+            curl --silent --show-error --fail --request PUT \
+              --url http://localhost:8080/oauth/v2/service_instances/$uid \
+              --header "Content-Type: application/json" \
+              --header "X-Broker-API-Version: 2.16" \
+              --data "{\"service_id\":\"47c9dcbf-ff30-448e-ab36-d3bad66ba281\",\"plan_id\":\"4deee563-e5ec-4731-b9b1-53b42d855f0c\",\"context\":{\"globalaccount_id\":\"2f5011af-2fd3-44ba-ac60-eeb1148c2995\",\"subaccount_id\":\"8b9a0db4-9aef-4da2-a856-61a4420b66fd\",\"user_id\":\"user@email.com\"},\"parameters\":{\"name\":\"azure-cluster\",\"region\":\"northeurope\"}}" > /dev/null 2>&1
+          '
+          
+          TOTAL_COUNT=$(curl --request GET \
+            --url http://localhost:8080/runtimes?plan=azure \
+            --header 'Content-Type: application/json' \
+            --header 'X-Broker-API-Version: 2.16' | jq .totalCount)
+
+          if [ "$TOTAL_COUNT" -eq "${{ inputs.instances-number }}" ]; then
+            echo "Assertion passed: totalCount is $TOTAL_COUNT"
+          else
+            echo "Assertion failed: totalCount is not ${{ inputs.instances-number }}. Actual value: $TOTAL_COUNT"
+            exit 1
+          fi
+      
+      - name: Simulate KIM
+        timeout-minutes: 60
+        env:
+          KIM_DELAY_SECONDS: ${{ inputs.kim-delay-seconds }}
+        run: scripts/simulate_kim.sh
+        
+      - name: Fetch metrics from KEB
+        run: |          
+          METRICS=$(curl -s http://localhost:8080/metrics)
+          
+          SUCCEEDED_TOTAL=$(echo "$METRICS" | grep 'kcp_keb_v2_operations_provisioning_succeeded_total{plan_id="4deee563-e5ec-4731-b9b1-53b42d855f0c"}' | awk '{print $2}')
+          SUCCEEDED_TOTAL=${SUCCEEDED_TOTAL:-0}
+          FAILED_TOTAL=$(echo "$METRICS" | grep 'kcp_keb_v2_operations_provisioning_failed_total{plan_id="4deee563-e5ec-4731-b9b1-53b42d855f0c"}' | awk '{print $2}')
+          FAILED_TOTAL=${FAILED_TOTAL:-0}
+          TOTAL=$(echo "$SUCCEEDED_TOTAL + $FAILED_TOTAL" | bc)
+          if [ "$TOTAL" -eq 0 ]; then
+            SUCCESS_RATE=0
+          else
+            SUCCESS_RATE=$(awk "BEGIN {printf \"%.2f\", ($SUCCEEDED_TOTAL / $TOTAL) * 100}")
+          fi
+          echo "Success rate of provisioning requests: $SUCCESS_RATE%" >> $GITHUB_STEP_SUMMARY
+          
+          PROVISIONING_DURATION=$(echo "$METRICS" | grep 'kcp_keb_v2_provisioning_duration_minutes_sum{plan_id="4deee563-e5ec-4731-b9b1-53b42d855f0c"}' | awk '{print $2}')
+          PROVISIONING_DURATION=${PROVISIONING_DURATION:-0}
+          PROVISIONING_COUNT=$(echo "$METRICS" | grep 'kcp_keb_v2_provisioning_duration_minutes_count{plan_id="4deee563-e5ec-4731-b9b1-53b42d855f0c"}' | awk '{print $2}')
+          PROVISIONING_COUNT=${PROVISIONING_COUNT:-0}
+          if [ "$PROVISIONING_COUNT" -eq 0 ]; then
+            AVG_PROVISIONING_DURATION=0
+          else
+            AVG_PROVISIONING_DURATION=$(awk "BEGIN {printf \"%.2f\", ($PROVISIONING_DURATION / $PROVISIONING_COUNT)}")
+          fi
+          echo "Average duration of provisioning requests: $AVG_PROVISIONING_DURATION minutes" >> $GITHUB_STEP_SUMMARY
+          
+          PROVISIONING_DURATION_BUCKETS=$(echo "$METRICS" | grep 'kcp_keb_v2_provisioning_duration_minutes_bucket{plan_id="4deee563-e5ec-4731-b9b1-53b42d855f0c"')
+          INF_TOTAL=$(echo "$PROVISIONING_DURATION_BUCKETS" | grep 'le="+Inf"' | awk '{print $2}')
+          MAX_PROVISIONING_DURATION=$(echo "$PROVISIONING_DURATION_BUCKETS" | grep -v 'le="\+Inf"' | sed -n 's/.*le="\([^"]*\)"} \([0-9]*\)/\1 \2/p' | \
+          while read le count; do
+            if [ "$count" -eq "$INF_TOTAL" ]; then
+              echo "$le"
+              break
+            fi
+          done)
+          echo "Maximum duration of provisioning requests: $MAX_PROVISIONING_DURATION minutes" >> $GITHUB_STEP_SUMMARY
+          
+          kill $(cat /tmp/metrics_pid) || echo "Metrics script not running"
+          METRICS_FILE="/tmp/keb_metrics.jsonl"
+      
+          jq -s '
+          {
+            goroutines: map(.goroutines),
+            open_fds: map(.open_fds),
+            db_idle: map(.db_idle),
+            db_max_open: map(.db_max_open),
+            db_in_use: map(.db_in_use),
+            mem_alloc: map(.mem_alloc),
+            mem_stack: map(.mem_stack),
+            mem_heap: map(.mem_heap)
+          }' "$METRICS_FILE" > /tmp/aggregated_metrics.json
+      
+          echo '```mermaid' >> $GITHUB_STEP_SUMMARY
+          echo "xychart-beta title \"Goroutines\" line \"Goroutines\" [$(jq -r '.goroutines | @csv' /tmp/aggregated_metrics.json)]" >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY
+          
+          echo '```mermaid' >> $GITHUB_STEP_SUMMARY
+          echo "xychart-beta title \"Open FDs\" line \"open_fds\" [$(jq -r '.open_fds | @csv' /tmp/aggregated_metrics.json)]" >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY
+          
+          echo '```mermaid' >> $GITHUB_STEP_SUMMARY
+          echo "xychart-beta title \"Go Memstats\" y-axis \"Memory (in MiB)\" line \"Alloc\" [$(jq -r '.mem_alloc | @csv' /tmp/aggregated_metrics.json)] line \"Heap\" [$(jq -r '.mem_heap | @csv' /tmp/aggregated_metrics.json)] line \"Stack\" [$(jq -r '.mem_stack | @csv' /tmp/aggregated_metrics.json)]" >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY
+          echo "<div align=\"center\">" >> "$GITHUB_STEP_SUMMARY"
+          echo "" >> "$GITHUB_STEP_SUMMARY"
+          echo "| Color | Type               |" >> "$GITHUB_STEP_SUMMARY"
+          echo "|-------|--------------------|" >> "$GITHUB_STEP_SUMMARY"
+          echo "| Green | Heap in use bytes  |" >> "$GITHUB_STEP_SUMMARY"
+          echo "| Blue  | Alloc bytes        |" >> "$GITHUB_STEP_SUMMARY"
+          echo "| Red   | Stack in use bytes |" >> "$GITHUB_STEP_SUMMARY"
+          echo "</div>" >> "$GITHUB_STEP_SUMMARY"
+          echo "" >> "$GITHUB_STEP_SUMMARY"
+          
+          echo '```mermaid' >> $GITHUB_STEP_SUMMARY
+          echo "xychart-beta title \"DB Connections\" line \"Idle\" [$(jq -r '.db_idle | @csv' /tmp/aggregated_metrics.json)] line \"In Use\" [$(jq -r '.db_in_use | @csv' /tmp/aggregated_metrics.json)] line \"Max Open\" [$(jq -r '.db_max_open | @csv' /tmp/aggregated_metrics.json)]" >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY
+          echo "<div align=\"center\">" >> "$GITHUB_STEP_SUMMARY"
+          echo "" >> "$GITHUB_STEP_SUMMARY"
+          echo "| Color | Type     |" >> "$GITHUB_STEP_SUMMARY"
+          echo "|-------|----------|" >> "$GITHUB_STEP_SUMMARY"
+          echo "| Red   | Max open |" >> "$GITHUB_STEP_SUMMARY"
+          echo "| Blue  | Idle     |" >> "$GITHUB_STEP_SUMMARY"
+          echo "| Green | In use   |" >> "$GITHUB_STEP_SUMMARY"
+          echo "</div>" >> "$GITHUB_STEP_SUMMARY"
+          echo "" >> "$GITHUB_STEP_SUMMARY"
+
+  run-concurrent-update-test:
+    runs-on: ubuntu-latest
+    needs: prepare-tests
+    strategy:
+      matrix: ${{ fromJSON(needs.prepare-tests.outputs.versions) }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Prepare K3s cluster and docker registry
+        run: "./scripts/testing/k3s-setup.sh ${{ matrix.version }} --wait"
+
+      - name: Prepare values.yaml
+        run: |
+          yq e ".provisioning.maxStepProcessingTime = \"10s\"" -i resources/keb/values.yaml
+          yq e ".provisioning.workersAmount = 100" -i resources/keb/values.yaml
+
+      - name: Install KEB chart
+        run: |
+          if [ "${{ inputs.release }}" == "true" ]; then
+            make install VERSION=${{ inputs.version }}
+          else
+            make install VERSION=PR-${{ inputs.version }}
+          fi
+
+      - name: Populate database
+        run: |
+          DB_NAME=$(kubectl get secret kcp-postgresql -n kcp-system -o jsonpath="{.data.postgresql-broker-db-name}" | base64 -d)
+          DB_USER=$(kubectl get secret kcp-postgresql -n kcp-system -o jsonpath="{.data.postgresql-broker-username}" | base64 -d)
+          DB_PASS=$(kubectl get secret kcp-postgresql -n kcp-system -o jsonpath="{.data.postgresql-broker-password}" | base64 -d)
+
+          kubectl port-forward -n kcp-system deployment/postgres 5432:5432 &
+          PORT_FORWARD_PID=$!
+          echo $PORT_FORWARD_PID
+          sleep 5
+
+          PGPASSWORD=$DB_PASS psql -h localhost -p 5432 -U $DB_USER -d $DB_NAME -f resources/installation/migrations/populate_performance_tests_database.up.sql
+
+          kill $PORT_FORWARD_PID
+
+      - name: Provision multiple instances
+        run: |
+          kubectl port-forward -n kcp-system deployment/kcp-kyma-environment-broker 8080:8080 5432:5432 &
+          sleep 5
+          
+          seq 1 ${{ inputs.instances-number }} | xargs -n1 -P8 -I{} bash -c '
+            uid=$(uuidgen)
+            curl --silent --show-error --fail --request PUT \
+              --url http://localhost:8080/oauth/v2/service_instances/$uid \
+              --header "Content-Type: application/json" \
+              --header "X-Broker-API-Version: 2.16" \
+              --data "{\"service_id\":\"47c9dcbf-ff30-448e-ab36-d3bad66ba281\",\"plan_id\":\"4deee563-e5ec-4731-b9b1-53b42d855f0c\",\"context\":{\"globalaccount_id\":\"2f5011af-2fd3-44ba-ac60-eeb1148c2995\",\"subaccount_id\":\"8b9a0db4-9aef-4da2-a856-61a4420b66fd\",\"user_id\":\"user@email.com\"},\"parameters\":{\"name\":\"azure-cluster\",\"region\":\"northeurope\"}}" > /dev/null 2>&1
+          '
+
+          TOTAL_COUNT=$(curl --request GET \
+            --url http://localhost:8080/runtimes?plan=azure \
+            --header 'Content-Type: application/json' \
+            --header 'X-Broker-API-Version: 2.16' | jq .totalCount)
+
+          if [ "$TOTAL_COUNT" -eq "${{ inputs.instances-number }}" ]; then
+            echo "Assertion passed: totalCount is $TOTAL_COUNT"
+          else
+            echo "Assertion failed: totalCount is not ${{ inputs.instances-number }}. Actual value: $TOTAL_COUNT"
+            exit 1
+          fi
+
+      - name: Simulate KIM
+        timeout-minutes: 60
+        env:
+          KIM_DELAY_SECONDS: 0
+        run: |
+          scripts/simulate_kim.sh
+          
+          TOTAL_COUNT=$(curl --request GET \
+            --url http://localhost:8080/runtimes?plan=azure&state=succeeded \
+            --header 'Content-Type: application/json' \
+            --header 'X-Broker-API-Version: 2.16' | jq .totalCount)
+
+          if [ "$TOTAL_COUNT" -eq "${{ inputs.instances-number }}" ]; then
+            echo "Assertion passed: totalCount is $TOTAL_COUNT"
+          else
+            echo "Assertion failed: totalCount is not ${{ inputs.instances-number }}. Actual value: $TOTAL_COUNT"
+            exit 1
+          fi
