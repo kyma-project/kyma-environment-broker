@@ -50,3 +50,29 @@ jobs:
 
       - name: Run go checks
         run: make checks
+
+  verify-python-md-sync:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.9'
+          cache: 'pip'
+
+      - name: Install requirements
+        run: pip install -r scripts/python/requirements.txt
+
+      - name: Run env docs generator
+        run: python3 scripts/python/generate_env_docs.py
+
+      - name: Check for changes in docs/contributor/02-30-keb-configuration.md
+        run: |
+          if [[ $(git status --porcelain docs/contributor/02-30-keb-configuration.md) ]]; then
+            echo 'docs/contributor/02-30-keb-configuration.md is out of date. Please run the generator and commit the changes.'
+            git diff --color=always docs/contributor/02-30-keb-configuration.md
+            exit 1
+          fi
