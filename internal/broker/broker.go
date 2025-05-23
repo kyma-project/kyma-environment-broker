@@ -44,6 +44,13 @@ type Config struct {
 	TrialDocsURL                            string        `envconfig:"default="`
 	EnableShootAndSeedSameRegion            bool          `envconfig:"default=false"`
 	AllowUpdateExpiredInstanceWithContext   bool          `envconfig:"default=false"`
+	DefaultRequestRegion                    string        `envconfig:"default=cf-eu10"`
+	// OperationTimeout is used to check on a top-level if any operation didn't exceed the time for processing.
+	// It is used for provisioning and deprovisioning operations.
+	OperationTimeout time.Duration `envconfig:"default=24h"`
+	Port             string        `envconfig:"default=8080"`
+	StatusPort       string        `envconfig:"default=8071"`
+	Host             string        `envconfig:"optional"`
 
 	Binding BindingConfig
 

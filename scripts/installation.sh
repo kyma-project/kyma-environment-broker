@@ -58,7 +58,7 @@ cd resources/keb
 if [[ "$VERSION" == PR* ]]; then
   helm install keb ../keb \
     --namespace kcp-system \
-    -f values.yaml \
+    -f ../../scripts/values.yaml \
     --set global.database.embedded.enabled=false \
     --set testConfig.kebDeployment.useAnnotations=true \
     --set global.images.container_registry.path="europe-docker.pkg.dev/kyma-project/dev" \
@@ -67,7 +67,7 @@ if [[ "$VERSION" == PR* ]]; then
 else
   helm install keb ../keb \
     --namespace kcp-system \
-    -f values.yaml \
+    -f ../../scripts/values.yaml \
     --set global.database.embedded.enabled=false \
     --set testConfig.kebDeployment.useAnnotations=true \
     --set global.secrets.mechanism=secrets \
