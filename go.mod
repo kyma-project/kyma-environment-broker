@@ -24,7 +24,7 @@ require (
 	github.com/pivotal-cf/brokerapi/v12 v12.0.1
 	github.com/pkg/errors v0.9.1
 	github.com/prometheus/client_golang v1.22.0
-	github.com/santhosh-tekuri/jsonschema/v6 v6.0.1
+	github.com/santhosh-tekuri/jsonschema/v6 v6.0.2
 	github.com/sebdah/goldie/v2 v2.5.5
 	github.com/spf13/cobra v1.9.1
 	github.com/stretchr/testify v1.10.0
