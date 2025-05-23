@@ -76,7 +76,9 @@ while (( COUNT > 0 )); do
   echo "Provisioning runtimes remaining: $COUNT"
 done
 
-echo "Collected go_goroutines values during execution:"
-for val in "${GO_GOROUTINES_ARRAY[@]}"; do
-  echo "$val"
-done
+MERMAID_GO_GOROUTINES="[${GO_GOROUTINES_ARRAY[*]}]"
+{
+  echo '```mermaid'
+  echo "xychart-beta title \"Goroutines\" line $MERMAID_GO_GOROUTINES"
+  echo '```'
+} >> "$GITHUB_STEP_SUMMARY"
