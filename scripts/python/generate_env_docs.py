@@ -181,20 +181,35 @@ def write_markdown_table(env_docs, output_path):
     """
     Write the environment variable documentation as a Markdown table.
     Fields with missing description or value are rendered as '-'.
+    Long values in the first and second columns are split with a soft break (S\u200b;).
+    The description column is visually wider.
     """
+    def soft_break(text, max_len):
+        if not text or len(text) <= max_len:
+            return text
+        parts = [text[i:i+max_len] for i in range(0, len(text), max_len)]
+        return '&#x200b;'.join(parts)
+
     with open(output_path, "w") as f:
         f.write("## Kyma Environment Broker Configuration\n\n")
         f.write("Kyma Environment Broker (KEB) binary allows you to override some configuration parameters. You can specify the following environment variables:\n\n")
-        f.write("| Environment Variable | Current Value | Description |\n")
-        f.write("|---------------------|-------|-------------|\n")
+        f.write("| Environment Variable | Current Value | Description |")
+        f.write("\n|---------------------|------------------------------|---------------------------------------------------------------|\n")
         for doc in env_docs:
             desc = doc['description'] if doc['description'] else '-'
             # Format default value for Markdown
             if doc['default'] is None or doc['default'] == '':
                 default = 'None'
             else:
-                default = f'`{doc["default"]}`'
-            f.write(f"| `{doc['env']}` | {default} | {desc} |\n")
+                default = doc["default"]
+            env_val = soft_break(doc["env"], 20)
+            env_col = f'<code>{env_val}</code>'
+            if default == 'None':
+                val_col = 'None'
+            else:
+                val_val = soft_break(str(default), 10)
+                val_col = f'<code>{val_val}</code>'
+            f.write(f"| {env_col} | {val_col} | {desc} |\n")
 
 def main():
     """
