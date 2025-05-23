@@ -290,7 +290,7 @@ jobs:
 
       - name: Prepare values.yaml
         run: |
-          yq e ".provisioning.maxStepProcessingTime = 10s" -i resources/keb/values.yaml
+          yq e ".provisioning.maxStepProcessingTime = \"10s\"" -i resources/keb/values.yaml
           yq e ".provisioning.workersAmount = 100" -i resources/keb/values.yaml
 
       - name: Install KEB chart
