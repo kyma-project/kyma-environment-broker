@@ -18,7 +18,7 @@ Kyma Environment Broker (KEB) binary allows you to override some configuration p
 | **APP_BROKER_DISABLE_&#x200b;SAP_CONVERGED_CLOUD** | <code>false</code> | If true, disables the SAP Cloud Infrastructure plan in the KEB. When set to true, users cannot provision SAP Cloud Infrastructure clusters |
 | **APP_BROKER_ENABLE_&#x200b;PLANS** | <code>azure,gcp,&#x200b;azure_lite&#x200b;,trial,aws</code> | Comma-separated list of plan names enabled and available for provisioning in KEB |
 | **APP_BROKER_ENABLE_&#x200b;SHOOT_AND_SEED_SAME_&#x200b;REGION** | <code>false</code> | If true, enforces that the Gardener seed is placed in the same region as the shoot region selected during provisioning |
-| **APP_BROKER_FREE_&#x200b;DOCS_URL** | https://he&#x200b;lp.sap.com&#x200b;/docs/ | URL to the documentation of free Kyma runtimes. Used in API responses and UI labels to direct users to help or documentation about free plans |
+| **APP_BROKER_FREE_&#x200b;DOCS_URL** | <code>https://he&#x200b;lp.sap.com&#x200b;/docs/</code> | URL to the documentation of free Kyma runtimes. Used in API responses and UI labels to direct users to help or documentation about free plans |
 | **APP_BROKER_FREE_&#x200b;EXPIRATION_PERIOD** | <code>720h</code> | Determines when to show expiration info to users |
 | **APP_BROKER_INCLUDE_&#x200b;ADDITIONAL_PARAMS_&#x200b;IN_SCHEMA** | <code>false</code> | If true, additional (advanced or less common) parameters are included in the provisioning schema for service plans |
 | **APP_BROKER_MONITOR_&#x200b;ADDITIONAL_&#x200b;PROPERTIES** | <code>false</code> | If true, collects properties from the provisioning request that are not explicitly defined in the schema and stores them in persistent storage |
@@ -31,7 +31,7 @@ Kyma Environment Broker (KEB) binary allows you to override some configuration p
 | **APP_BROKER_STATUS_&#x200b;PORT** | <code>8071</code> | Port for the broker status/health endpoint |
 | **APP_BROKER_&#x200b;SUBACCOUNT_MOVEMENT_&#x200b;ENABLED** | <code>false</code> | If true, enables subaccount movement (allows changing global account for an instance) |
 | **APP_BROKER_&#x200b;SUBACCOUNTS_IDS_TO_&#x200b;SHOW_TRIAL_&#x200b;EXPIRATION_INFO** | <code>a45be5d8-e&#x200b;ddc-4001-9&#x200b;1cf-48cc64&#x200b;4d571f</code> | Shows trial expiration information for specific subaccounts in the UI and API responses |
-| **APP_BROKER_TRIAL_&#x200b;DOCS_URL** | https://he&#x200b;lp.sap.com&#x200b;/docs/ | URL to the documentation for trial Kyma runtimes. Used in API responses and UI labels |
+| **APP_BROKER_TRIAL_&#x200b;DOCS_URL** | <code>https://he&#x200b;lp.sap.com&#x200b;/docs/</code> | URL to the documentation for trial Kyma runtimes. Used in API responses and UI labels |
 | **APP_BROKER_UPDATE_&#x200b;CUSTOM_RESOURCES_&#x200b;LABELS_ON_ACCOUNT_&#x200b;MOVE** | <code>false</code> | If true, updates runtimeCR labels when moving subaccounts |
 | **APP_BROKER_URL** | <code>kyma-env-b&#x200b;roker.loca&#x200b;lhost</code> | - |
 | **APP_BROKER_USE_&#x200b;ADDITIONAL_OIDC_&#x200b;SCHEMA** | <code>false</code> | If true, enables the new list-based OIDC schema, allowing multiple OIDC configurations for a runtime |
@@ -72,7 +72,7 @@ Kyma Environment Broker (KEB) binary allows you to override some configuration p
 | **APP_INFRASTRUCTURE_&#x200b;MANAGER_MULTI_ZONE_&#x200b;CLUSTER** | <code>false</code> | If true, enables provisioning of clusters with nodes distributed across multiple availability zones |
 | **APP_INFRASTRUCTURE_&#x200b;MANAGER_USE_SMALLER_&#x200b;MACHINE_TYPES** | <code>false</code> | If true, provisions trial, freemium, and azure_lite clusters using smaller machine types |
 | **APP_KUBECONFIG_&#x200b;ALLOW_ORIGINS** | <code>*</code> | Specifies which origins are allowed for Cross-Origin Resource Sharing (CORS) on the /kubeconfig endpoint |
-| **APP_KYMA_DASHBOARD_&#x200b;CONFIG_LANDSCAPE_URL** | https://da&#x200b;shboard.de&#x200b;v.kyma.clo&#x200b;ud.sap | The base URL of the Kyma Dashboard used to generate links to the web UI for Kyma runtimes |
+| **APP_KYMA_DASHBOARD_&#x200b;CONFIG_LANDSCAPE_URL** | <code>https://da&#x200b;shboard.de&#x200b;v.kyma.clo&#x200b;ud.sap</code> | The base URL of the Kyma Dashboard used to generate links to the web UI for Kyma runtimes |
 | **APP_LIFECYCLE_&#x200b;MANAGER_INTEGRATION_&#x200b;DISABLED** | <code>false</code> | When disabled, the broker does not create, update, or delete the KymaCR |
 | **APP_METRICSV2_&#x200b;ENABLED** | <code>false</code> | If true, enables metricsv2 collection and Prometheus exposure |
 | **APP_METRICSV2_&#x200b;OPERATION_RESULT_&#x200b;FINISHED_OPERATION_&#x200b;RETENTION_PERIOD** | <code>3h</code> | Duration of retaining finished operation results in memory |
