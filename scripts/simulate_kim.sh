@@ -76,7 +76,7 @@ while (( COUNT > 0 )); do
   echo "Provisioning runtimes remaining: $COUNT"
 done
 
-MERMAID_GO_GOROUTINES="[${GO_GOROUTINES_ARRAY[*]}]"
+MERMAID_GO_GOROUTINES=$(IFS=, ; echo "[${GO_GOROUTINES_ARRAY[*]}]")
 {
   echo '```mermaid'
   echo "xychart-beta title \"Goroutines\" line $MERMAID_GO_GOROUTINES"
