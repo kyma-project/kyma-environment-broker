@@ -1,8 +1,32 @@
 #!/usr/bin/env bash
 
-set -o nounset
-set -o errexit
-set -o pipefail
+# This script continuously monitors selected kyma-environment-broker metrics.
+# It captures values such as goroutine count, open file descriptors, 
+# database connection pool statistics, and memory usage.
+# The script appends these metrics as JSON objects to /tmp/keb_metrics.jsonl
+# at 10-second intervals.
+#
+# Usage:
+#   ./monitor_metrics.sh
+#
+# Metrics collected:
+# - go_goroutines: Number of current goroutines.
+# - process_open_fds: Number of open file descriptors.
+# - go_sql_stats_connections_idle: Idle DB connections.
+# - go_sql_stats_connections_max_open: Max open DB connections.
+# - go_sql_stats_connections_in_use: Active DB connections.
+# - go_memstats_alloc_bytes: Allocated memory in MiB.
+# - go_memstats_stack_inuse_bytes: Stack memory in use in MiB.
+# - go_memstats_heap_inuse_bytes: Heap memory in use in MiB.
+#
+# Output:
+# Each line in /tmp/keb_metrics.jsonl is a JSON object with a timestamp and the collected metrics.
+
+# standard bash error handling
+set -o nounset  # treat unset variables as an error and exit immediately.
+set -o errexit  # exit immediately when a command fails.
+set -E          # needs to be set if we want the ERR trap
+set -o pipefail # prevents errors in a pipeline from being masked
 
 METRICS_FILE="/tmp/keb_metrics.jsonl"
 echo "" > "$METRICS_FILE"
