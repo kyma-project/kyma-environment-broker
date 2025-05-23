@@ -190,6 +190,27 @@ def write_markdown_table(env_docs, output_path):
         parts = [text[i:i+max_len] for i in range(0, len(text), max_len)]
         return '&#x200b;'.join(parts)
 
+    def soft_break_env(text, max_len):
+        if not text or len(text) <= max_len:
+            return text
+        result = ''
+        start = 0
+        while start < len(text):
+            if len(text) - start <= max_len:
+                result += text[start:]
+                break
+            # Find the last '_' before max_len
+            chunk = text[start:start+max_len]
+            last_ = chunk.rfind('_')
+            if last_ == -1:
+                # No _, just break at max_len
+                result += text[start:start+max_len] + '&#x200b;'
+                start += max_len
+            else:
+                result += text[start:start+last_+1] + '&#x200b;'
+                start += last_+1
+        return result
+
     with open(output_path, "w") as f:
         f.write("## Kyma Environment Broker Configuration\n\n")
         f.write("Kyma Environment Broker (KEB) binary allows you to override some configuration parameters. You can specify the following environment variables:\n\n")
@@ -202,7 +223,7 @@ def write_markdown_table(env_docs, output_path):
                 default = 'None'
             else:
                 default = doc["default"]
-            env_val = soft_break(doc["env"], 20)
+            env_val = soft_break_env(doc["env"], 20)
             env_col = f'<code>{env_val}</code>'
             if default == 'None':
                 val_col = 'None'
