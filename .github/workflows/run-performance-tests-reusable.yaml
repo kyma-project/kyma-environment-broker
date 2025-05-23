@@ -151,12 +151,17 @@ jobs:
           PGPASSWORD=$DB_PASS psql -h localhost -p 5432 -U $DB_USER -d $DB_NAME -f resources/installation/migrations/populate_performance_tests_database.up.sql
           
           kill $PORT_FORWARD_PID
-
-      - name: Provision multiple instances
+          
+      - name: Start background metrics collector
         run: |
           kubectl port-forward -n kcp-system deployment/kcp-kyma-environment-broker 8080:8080 5432:5432 &
           sleep 5
           
+          nohup bash scripts/monitor_metrics.sh > /dev/null 2>&1 &
+          echo $! > /tmp/metrics_pid
+
+      - name: Provision multiple instances
+        run: |
           seq 1 ${{ inputs.instances-number }} | xargs -n1 -P8 -I{} bash -c '
             uid=$(uuidgen)
             curl --silent --show-error --fail --request PUT \
@@ -221,4 +226,29 @@ jobs:
             fi
           done)
           echo "Maximum duration of provisioning requests: $MAX_PROVISIONING_DURATION minutes" >> $GITHUB_STEP_SUMMARY
+          
+          kill $(cat /tmp/metrics_pid) || echo "Metrics script not running"
+          METRICS_FILE="/tmp/keb_metrics.jsonl"
+          echo "Collected metrics samples:"
+          cat "$METRICS_FILE" >> $GITHUB_STEP_SUMMARY
+      
+          jq -s '
+          {
+            goroutines: map(.goroutines),
+            open_fds: map(.open_fds),
+            db_idle: map(.db_idle),
+            db_max_open: map(.db_max_open),
+            db_in_use: map(.db_in_use),
+            mem_alloc: map(.mem_alloc),
+            mem_stack: map(.mem_stack),
+            mem_heap: map(.mem_heap)
+          }' "$METRICS_FILE" > /tmp/aggregated_metrics.json
+      
+          echo '```mermaid' >> $GITHUB_STEP_SUMMARY
+          echo "xychart-beta title \"Go Metrics\" line \"Goroutines\" $(jq -r '.goroutines | @csv' /tmp/aggregated_metrics.json)" >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY
+      
+          echo '```mermaid' >> $GITHUB_STEP_SUMMARY
+          echo "xychart-beta title \"Memory Usage (MiB)\" line \"Alloc\" $(jq -r '.mem_alloc | @csv' /tmp/aggregated_metrics.json) line \"Heap\" $(jq -r '.mem_heap | @csv' /tmp/aggregated_metrics.json) line \"Stack\" $(jq -r '.mem_stack | @csv' /tmp/aggregated_metrics.json)" >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY
           
