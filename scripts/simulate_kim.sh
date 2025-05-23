@@ -106,15 +106,17 @@ MERMAID_PROCESS_OPEN_FDS=$(IFS=, ; echo "[${PROCESS_OPEN_FDS_ARRAY[*]}]")
 } >> "$GITHUB_STEP_SUMMARY"
 
 MERMAID_DB_CONNECTIONS_IDLE=$(IFS=, ; echo "[${DB_CONNECTIONS_IDLE_ARRAY[*]}]")
-MERMAID_DB_CONNECTIONS_MAX_OPEN=$(IFS=, ; echo "[${DB_CONNECTIONS_MAX_OPEN[*]}]")
-MERMAID_DB_CONNECTIONS_IN_USE=$(IFS=, ; echo "[${DB_CONNECTIONS_IN_USE[*]}]")
+MERMAID_DB_CONNECTIONS_MAX_OPEN=$(IFS=, ; echo "[${DB_CONNECTIONS_MAX_OPEN_ARRAY[*]}]")
+MERMAID_DB_CONNECTIONS_IN_USE=$(IFS=, ; echo "[${DB_CONNECTIONS_IN_USE_ARRAY[*]}]")
 {
   echo '```mermaid'
   echo "xychart-beta title \"DB connections\" line \"Idle\" $MERMAID_DB_CONNECTIONS_IDLE line \"Max open\" $MERMAID_DB_CONNECTIONS_MAX_OPEN line \"In use\" $MERMAID_DB_CONNECTIONS_IN_USE"
   echo '```'
 } >> "$GITHUB_STEP_SUMMARY"
+echo "<div align=\"center\">" >> "$GITHUB_STEP_SUMMARY"
 echo "| Color | Type     |" >> "$GITHUB_STEP_SUMMARY"
 echo "|-------|----------|" >> "$GITHUB_STEP_SUMMARY"
 echo "| Blue  | Idle     |" >> "$GITHUB_STEP_SUMMARY"
 echo "| Green | Max open |" >> "$GITHUB_STEP_SUMMARY"
 echo "| Red   | In use   |" >> "$GITHUB_STEP_SUMMARY"
+echo "</div>" >> "$GITHUB_STEP_SUMMARY"
