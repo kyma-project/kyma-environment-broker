@@ -211,6 +211,7 @@ def write_markdown_table(env_docs, output_path):
     Fields with missing description or value are rendered as '-'.
     Long values in the first and second columns are split with a soft break (S\u200b;).
     The description column is visually wider.
+    URLs in the value column are not wrapped in <code>...</code> to allow line breaks.
     """
     with open(output_path, "w") as f:
         f.write("## Kyma Environment Broker Configuration\n\n")
@@ -230,7 +231,11 @@ def write_markdown_table(env_docs, output_path):
                 val_col = 'None'
             else:
                 val_val = soft_break(str(default), 10)
-                val_col = f'<code>{val_val}</code>'
+                # Remove <code>...</code> for URLs to allow line breaks
+                if str(default).startswith('http://') or str(default).startswith('https://'):
+                    val_col = val_val
+                else:
+                    val_col = f'<code>{val_val}</code>'
             f.write(f"| {env_col} | {val_col} | {desc} |\n")
 
 def main():
