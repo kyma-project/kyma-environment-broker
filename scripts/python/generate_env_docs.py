@@ -230,7 +230,7 @@ def write_markdown_table(env_docs, output_path):
                 val_col = 'None'
             else:
                 val_val = soft_break(str(default), 10)
-                val_col = f'<code>{val_val}</code>'
+                val_col = f'`{val_val}`'
             f.write(f"| {env_col} | {val_col} | {desc} |\n")
 
 def main():
