@@ -14,6 +14,7 @@ set -E          # needs to be set if we want the ERR trap
 set -o pipefail # prevents errors in a pipeline from being masked
 
 KIM_DELAY_SECONDS="${KIM_DELAY_SECONDS:-${1:-60}}"
+GO_GOROUTINES_ARRAY=()
 
 get_provisioning_runtimes() {
   local count
@@ -62,6 +63,10 @@ while (( COUNT > 0 )); do
   done <<< "$RUNTIMES"
 
   sleep 10
+  
+  METRICS=$(curl -s http://localhost:8080/metrics)
+  GO_GOROUTINES=$(echo "$METRICS" | grep '^go_goroutines' | awk '{print $2}')
+  GO_GOROUTINES_ARRAY+=("$GO_GOROUTINES")
 
   COUNT=$(get_provisioning_runtimes)
   if (( COUNT == 0 )); then
@@ -69,4 +74,9 @@ while (( COUNT > 0 )); do
     break
   fi
   echo "Provisioning runtimes remaining: $COUNT"
+done
+
+echo "Collected go_goroutines values during execution:"
+for val in "${GO_GOROUTINES_ARRAY[@]}"; do
+  echo "$val"
 done
