@@ -177,6 +177,34 @@ def map_env_to_values(env_vars, values_doc):
         })
     return result
 
+def soft_break(text, max_len, prefer_char=None):
+    """
+    Insert a soft break (\u200b) into text at max_len intervals.
+    If prefer_char is set, break at the nearest prefer_char before max_len, otherwise break at max_len.
+    """
+    if not text or len(text) <= max_len:
+        return text
+    result = ''
+    start = 0
+    while start < len(text):
+        if len(text) - start <= max_len:
+            result += text[start:]
+            break
+        if prefer_char:
+            chunk = text[start:start+max_len]
+            last = chunk.rfind(prefer_char)
+            if last == -1:
+                # No prefer_char, just break at max_len
+                result += text[start:start+max_len] + '&#x200b;'
+                start += max_len
+            else:
+                result += text[start:start+last+1] + '&#x200b;'
+                start += last+1
+        else:
+            result += text[start:start+max_len] + '&#x200b;'
+            start += max_len
+    return result
+
 def write_markdown_table(env_docs, output_path):
     """
     Write the environment variable documentation as a Markdown table.
@@ -184,33 +212,6 @@ def write_markdown_table(env_docs, output_path):
     Long values in the first and second columns are split with a soft break (S\u200b;).
     The description column is visually wider.
     """
-    def soft_break(text, max_len):
-        if not text or len(text) <= max_len:
-            return text
-        parts = [text[i:i+max_len] for i in range(0, len(text), max_len)]
-        return '&#x200b;'.join(parts)
-
-    def soft_break_env(text, max_len):
-        if not text or len(text) <= max_len:
-            return text
-        result = ''
-        start = 0
-        while start < len(text):
-            if len(text) - start <= max_len:
-                result += text[start:]
-                break
-            # Find the last '_' before max_len
-            chunk = text[start:start+max_len]
-            last_ = chunk.rfind('_')
-            if last_ == -1:
-                # No _, just break at max_len
-                result += text[start:start+max_len] + '&#x200b;'
-                start += max_len
-            else:
-                result += text[start:start+last_+1] + '&#x200b;'
-                start += last_+1
-        return result
-
     with open(output_path, "w") as f:
         f.write("## Kyma Environment Broker Configuration\n\n")
         f.write("Kyma Environment Broker (KEB) binary allows you to override some configuration parameters. You can specify the following environment variables:\n\n")
@@ -223,7 +224,7 @@ def write_markdown_table(env_docs, output_path):
                 default = 'None'
             else:
                 default = doc["default"]
-            env_val = soft_break_env(doc["env"], 20)
+            env_val = soft_break(doc["env"], 20, prefer_char='_')
             env_col = f'<code>{env_val}</code>'
             if default == 'None':
                 val_col = 'None'
