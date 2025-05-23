@@ -15,6 +15,10 @@ set -o pipefail # prevents errors in a pipeline from being masked
 
 KIM_DELAY_SECONDS="${KIM_DELAY_SECONDS:-${1:-60}}"
 GO_GOROUTINES_ARRAY=()
+PROCESS_OPEN_FDS_ARRAY=()
+DB_CONNECTIONS_IDLE_ARRAY=()
+DB_CONNECTIONS_MAX_OPEN_ARRAY=()
+DB_CONNECTIONS_IN_USE_ARRAY=()
 
 get_provisioning_runtimes() {
   local count
@@ -65,8 +69,19 @@ while (( COUNT > 0 )); do
   sleep 10
   
   METRICS=$(curl -s http://localhost:8080/metrics)
+  
   GO_GOROUTINES=$(echo "$METRICS" | grep '^go_goroutines' | awk '{print $2}')
   GO_GOROUTINES_ARRAY+=("$GO_GOROUTINES")
+  
+  PROCESS_OPEN_FDS=$(echo "$METRICS" | grep '^process_open_fds' | awk '{print $2}')
+  PROCESS_OPEN_FDS_ARRAY+=("$PROCESS_OPEN_FDS")
+  
+  DB_CONNECTIONS_IDLE=$(echo "$METRICS" | grep 'go_sql_stats_connections_idle{db_name="broker"}' | awk '{print $2}')
+  DB_CONNECTIONS_IDLE_ARRAY+=("$DB_CONNECTIONS_IDLE")
+  DB_CONNECTIONS_MAX_OPEN=$(echo "$METRICS" | grep 'go_sql_stats_connections_max_open{db_name="broker"}' | awk '{print $2}')
+  DB_CONNECTIONS_MAX_OPEN_ARRAY+=("$DB_CONNECTIONS_MAX_OPEN")
+  DB_CONNECTIONS_IN_USE=$(echo "$METRICS" | grep 'go_sql_stats_connections_in_use{db_name="broker"}' | awk '{print $2}')
+  DB_CONNECTIONS_IN_USE_ARRAY+=("$DB_CONNECTIONS_IN_USE")
 
   COUNT=$(get_provisioning_runtimes)
   if (( COUNT == 0 )); then
@@ -82,3 +97,24 @@ MERMAID_GO_GOROUTINES=$(IFS=, ; echo "[${GO_GOROUTINES_ARRAY[*]}]")
   echo "xychart-beta title \"Goroutines\" line $MERMAID_GO_GOROUTINES"
   echo '```'
 } >> "$GITHUB_STEP_SUMMARY"
+
+MERMAID_PROCESS_OPEN_FDS=$(IFS=, ; echo "[${PROCESS_OPEN_FDS_ARRAY[*]}]")
+{
+  echo '```mermaid'
+  echo "xychart-beta title \"Open FDs\" line $MERMAID_PROCESS_OPEN_FDS"
+  echo '```'
+} >> "$GITHUB_STEP_SUMMARY"
+
+MERMAID_DB_CONNECTIONS_IDLE=$(IFS=, ; echo "[${DB_CONNECTIONS_IDLE_ARRAY[*]}]")
+MERMAID_DB_CONNECTIONS_MAX_OPEN=$(IFS=, ; echo "[${DB_CONNECTIONS_MAX_OPEN[*]}]")
+MERMAID_DB_CONNECTIONS_IN_USE=$(IFS=, ; echo "[${DB_CONNECTIONS_IN_USE[*]}]")
+{
+  echo '```mermaid'
+  echo "xychart-beta title \"DB connections\" line \"Idle\" $MERMAID_DB_CONNECTIONS_IDLE line \"Max open\" $MERMAID_DB_CONNECTIONS_MAX_OPEN line \"In use\" $MERMAID_DB_CONNECTIONS_IN_USE"
+  echo '```'
+} >> "$GITHUB_STEP_SUMMARY"
+echo "| Color | Type     |" >> "$GITHUB_STEP_SUMMARY"
+echo "|-------|----------|" >> "$GITHUB_STEP_SUMMARY"
+echo "| Blue  | Idle     |" >> "$GITHUB_STEP_SUMMARY"
+echo "| Green | Max open |" >> "$GITHUB_STEP_SUMMARY"
+echo "| Red   | In use   |" >> "$GITHUB_STEP_SUMMARY"
