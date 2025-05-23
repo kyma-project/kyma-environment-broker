@@ -18,7 +18,7 @@ type (
 	}
 
 	Converter interface {
-		ConvertToStruct(cfgString string) (internal.ConfigForPlan, error)
+		Convert(from string, to any) error
 	}
 )
 
@@ -42,7 +42,8 @@ func (p *provider) ProvideForGivenPlan(planName string) (*internal.ConfigForPlan
 		return nil, err
 	}
 
-	cfg, err := p.Converter.ConvertToStruct(cfgString)
+	var cfg internal.ConfigForPlan
+	err = p.Converter.Convert(cfgString, &cfg)
 	if err != nil {
 		return nil, err
 	}
