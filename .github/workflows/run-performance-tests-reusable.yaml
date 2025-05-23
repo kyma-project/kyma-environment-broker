@@ -318,6 +318,9 @@ jobs:
 
       - name: Provision multiple instances
         run: |
+          kubectl port-forward -n kcp-system deployment/kcp-kyma-environment-broker 8080:8080 5432:5432 &
+          sleep 5
+          
           seq 1 ${{ inputs.instances-number }} | xargs -n1 -P8 -I{} bash -c '
             uid=$(uuidgen)
             curl --silent --show-error --fail --request PUT \
