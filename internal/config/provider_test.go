@@ -29,7 +29,7 @@ func TestConfigProvider(t *testing.T) {
 	log := slog.New(slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{
 		Level: slog.LevelInfo,
 	}))
-	cfgReader := config.NewConfigMapReader(ctx, fakeK8sClient, log, "keb-config")
+	cfgReader := config.NewConfigMapReader(ctx, fakeK8sClient, log)
 	cfgValidator := config.NewConfigMapKeysValidator()
 	cfgConverter := config.NewConfigMapConverter()
 	cfgProvider := config.NewConfigProvider(cfgReader, cfgValidator, cfgConverter)

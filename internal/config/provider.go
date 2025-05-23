@@ -10,7 +10,7 @@ type (
 	}
 
 	Reader interface {
-		Read(planName string) (string, error)
+		Read(objectName, configKey string) (string, error)
 	}
 
 	Validator interface {
@@ -33,7 +33,7 @@ func NewConfigProvider(reader Reader, validator Validator, converter Converter) 
 }
 
 func (p *provider) ProvideForGivenPlan(planName string) (*internal.ConfigForPlan, error) {
-	cfgString, err := p.Reader.Read(planName)
+	cfgString, err := p.Reader.Read("", planName)
 	if err != nil {
 		return nil, err
 	}
