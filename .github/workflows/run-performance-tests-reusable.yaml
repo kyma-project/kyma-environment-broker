@@ -455,7 +455,7 @@ jobs:
             --header 'X-Broker-API-Version: 2.16')
           INSTANCE_STATE=$(echo "$INSTANCE_JSON" | jq '.data[0].status.state')
 
-          if [ "$INSTANCE_STATE" = "succeeded" ]; then
+          if [ "$INSTANCE_STATE" = '"succeeded"' ]; then
             echo "Assertion passed: state is $INSTANCE_STATE"
           else
             echo "Assertion failed: state is not 'succeeded'. Actual value: $INSTANCE_STATE"
@@ -487,7 +487,7 @@ jobs:
               --header 'Content-Type: application/json' \
               --header 'X-Broker-API-Version: 2.16' | jq '.data[0].status.state')
 
-            if [ "$INSTANCE_STATE" = "succeeded" ]; then
+            if [ "$INSTANCE_STATE" = '"succeeded"' ]; then
               echo "Instance is updated. Done."
               break
             fi
