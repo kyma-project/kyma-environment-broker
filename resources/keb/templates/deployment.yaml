@@ -280,8 +280,12 @@ spec:
               value: "{{ .Values.stepTimeouts.checkRuntimeResourceUpdate }}"
             - name: APP_TRIAL_REGION_MAPPING_FILE_PATH
               value: /config/trialRegionMapping.yaml
+            - name: APP_UPDATE_MAX_STEP_PROCESSING_TIME
+              value: "{{ .Values.update.maxStepProcessingTime }}"
             - name: APP_UPDATE_PROCESSING_ENABLED
               value: "{{ .Values.osbUpdateProcessingEnabled }}"
+            - name: APP_UPDATE_WORKERS_AMOUNT
+              value: "{{ .Values.update.workersAmount }}"
           ports:
             - name: http
               containerPort: {{ .Values.broker.port }}

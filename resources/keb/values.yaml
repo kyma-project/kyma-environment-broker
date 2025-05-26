@@ -183,6 +183,13 @@ broker:
   updateCustomResourcesLabelsOnAccountMove: "false"
   # If true, enables the new list-based OIDC schema, allowing multiple OIDC configurations for a runtime
   useAdditionalOIDCSchema: "false" # temporary feature flag
+  
+provisioning:
+  maxStepProcessingTime: 2m
+  workersAmount: 20
+update:
+  maxStepProcessingTime: 2m
+  workersAmount: 20
 
 cleaning:
   # If true, the cleaning process runs in dry-run mode and does not actually delete any data from the database
@@ -629,10 +636,6 @@ vmscrapes:
   interval: *scrapeInterval
   scrapeTimeout: *scrapeTimeout
 # =================================================
-
-provisioning:
-  maxStepProcessingTime: 2m
-  workersAmount: 20
 
 # =================================================
 # VSO Secrets Settings

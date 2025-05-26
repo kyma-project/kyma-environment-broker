@@ -32,6 +32,14 @@ on:
         description: amount of workers in provisioning queue
         default: 20
         type: number
+      update-max-step-processing-time:
+        description: max time to process a step in update queue
+        default: 30s
+        type: string
+      update-workers-amount:
+        description: amount of workers in update queue
+        default: 20
+        type: number
 
 jobs:
   validate-keb-helm-chart:
@@ -292,6 +300,8 @@ jobs:
         run: |
           yq e ".provisioning.maxStepProcessingTime = \"10s\"" -i resources/keb/values.yaml
           yq e ".provisioning.workersAmount = 100" -i resources/keb/values.yaml
+          yq e ".update.maxStepProcessingTime = \"${{ inputs.update-max-step-processing-time }}\"" -i resources/keb/values.yaml
+          yq e ".update.workersAmount = ${{ inputs.update-workers-amount }}" -i resources/keb/values.yaml
 
       - name: Install KEB chart
         run: |
@@ -368,6 +378,7 @@ jobs:
           echo $! > /tmp/metrics_pid  
         
       - name: Update instances
+        timeout-minutes: 60
         run: |
           PAGE=1
           

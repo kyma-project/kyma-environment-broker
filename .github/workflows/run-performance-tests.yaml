@@ -19,3 +19,5 @@ jobs:
       kim-delay-seconds: 420
       provisioning-max-step-processing-time: 30s
       provisioning-workers-amount: 20
+      update-max-step-processing-time: 30s
+      update-workers-amount: 20
