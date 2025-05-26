@@ -28,17 +28,19 @@ const (
 )
 
 type DeleteKymaResourceStep struct {
-	operationManager *process.OperationManager
-	kcpClient        client.Client
-	configProvider   config.Provider
-	instances        storage.Instances
+	operationManager   *process.OperationManager
+	instances          storage.Instances
+	kcpClient          client.Client
+	configProvider     config.Provider
+	configResourceName string
 }
 
-func NewDeleteKymaResourceStep(db storage.BrokerStorage, kcpClient client.Client, configProvider config.Provider) *DeleteKymaResourceStep {
+func NewDeleteKymaResourceStep(db storage.BrokerStorage, kcpClient client.Client, configProvider config.Provider, cfgResourceName string) *DeleteKymaResourceStep {
 	step := &DeleteKymaResourceStep{
-		kcpClient:      kcpClient,
-		configProvider: configProvider,
-		instances:      db.Instances(),
+		instances:          db.Instances(),
+		kcpClient:          kcpClient,
+		configProvider:     configProvider,
+		configResourceName: cfgResourceName,
 	}
 	step.operationManager = process.NewOperationManager(db.Operations(), step.Name(), kebError.LifeCycleManagerDependency)
 	return step
@@ -51,7 +53,8 @@ func (step *DeleteKymaResourceStep) Name() string {
 func (step *DeleteKymaResourceStep) Run(operation internal.Operation, logger *slog.Logger) (internal.Operation, time.Duration, error) {
 	// read the KymaTemplate from the config if needed
 	if operation.KymaTemplate == "" {
-		cfg, err := step.configProvider.ProvideForGivenPlan(broker.PlanNamesMapping[operation.ProvisioningParameters.PlanID]) // TODO check if this is properly passed
+		cfg := &internal.ConfigForPlan{}
+		err := step.configProvider.Provide(step.configResourceName, broker.PlanNamesMapping[operation.ProvisioningParameters.PlanID], config.RuntimeConfigurationRequiredFields, cfg) // TODO check if this is properly passed
 		if err != nil {
 			return step.operationManager.RetryOperationWithoutFail(operation, step.Name(), "unable to get config for given version and plan", 5*time.Second, 30*time.Second, logger,
 				fmt.Errorf("unable to get config for given version and plan"))

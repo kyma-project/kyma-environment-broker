@@ -59,7 +59,7 @@ func NewProvisioningProcessingQueue(ctx context.Context, provisionManager *proce
 		},
 		{
 			stage: createRuntimeStageName,
-			step:  steps.NewInitKymaTemplate(db.Operations(), configProvider),
+			step:  steps.NewInitKymaTemplate(db.Operations(), configProvider, cfg.RuntimeConfigurationConfigMapName),
 		},
 		{
 			stage: createRuntimeStageName,
