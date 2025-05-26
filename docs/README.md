@@ -30,6 +30,7 @@ For technical details of KEB, go to the `contributor` directory:
 * [EU Access](./contributor/03-20-eu-access.md)
 * [Trial and Free Instance Expiration](./contributor/03-30-trial-and-free-expiration.md)
 * [Kyma Bindings Processes](./contributor/03-40-kyma-bindings-processes.md)
+* [Regions and Zones Configuration](./contributor/03-60-regions-configuration.md)
 * [GitHub Actions Workflows](./contributor/04-10-workflows.md)
 * [Kyma Environment Broker Release Pipeline](./contributor/04-20-release.md)
 * [Kyma Environment Broker CronJobs](./contributor/06-10-keb-cronjobs.md)
