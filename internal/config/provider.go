@@ -1,12 +1,8 @@
 package config
 
-import (
-	"github.com/kyma-project/kyma-environment-broker/internal"
-)
-
 type (
 	Provider interface {
-		ProvideForGivenPlan(planName string) (*internal.ConfigForPlan, error)
+		Provide(cfgSrcName, cfgKeyName string, cfgDestObj any) error
 	}
 
 	Reader interface {
@@ -32,21 +28,20 @@ func NewConfigProvider(reader Reader, validator Validator, converter Converter) 
 	return &provider{Reader: reader, Validator: validator, Converter: converter}
 }
 
-func (p *provider) ProvideForGivenPlan(planName string) (*internal.ConfigForPlan, error) {
-	cfgString, err := p.Reader.Read("", planName)
+func (p *provider) Provide(cfgSrcName, cfgKeyName string, cfgDestObj any) error {
+	cfgString, err := p.Reader.Read(cfgSrcName, cfgKeyName)
 	if err != nil {
-		return nil, err
+		return err
 	}
 
 	if err = p.Validator.Validate(runtimeConfigurationRequiredFields, cfgString); err != nil {
-		return nil, err
+		return err
 	}
 
-	var cfg internal.ConfigForPlan
-	err = p.Converter.Convert(cfgString, &cfg)
+	err = p.Converter.Convert(cfgString, &cfgDestObj)
 	if err != nil {
-		return nil, err
+		return err
 	}
 
-	return &cfg, nil
+	return nil
 }

@@ -36,9 +36,11 @@ func TestConfigProvider(t *testing.T) {
 
 	t.Run("should provide config for Kyma 2.4.0 azure plan", func(t *testing.T) {
 		// given
+		cfg := internal.ConfigForPlan{}
 		expectedCfg := fixAzureConfig()
+
 		// when
-		cfg, err := cfgProvider.ProvideForGivenPlan(broker.AzurePlanName)
+		err := cfgProvider.Provide(configMapName, broker.AzurePlanName, cfg)
 
 		// then
 		require.NoError(t, err)
@@ -47,9 +49,11 @@ func TestConfigProvider(t *testing.T) {
 
 	t.Run("should provide config for a default", func(t *testing.T) {
 		// given
+		cfg := internal.ConfigForPlan{}
 		expectedCfg := fixDefault()
+
 		// when
-		cfg, err := cfgProvider.ProvideForGivenPlan(broker.AWSPlanName)
+		err := cfgProvider.Provide(configMapName, broker.AWSPlanName, cfg)
 
 		// then
 		require.NoError(t, err)
@@ -58,12 +62,14 @@ func TestConfigProvider(t *testing.T) {
 
 	t.Run("validator should return error indicating missing required fields", func(t *testing.T) {
 		// given
+		cfg := internal.ConfigForPlan{}
 		expectedMissingConfigKeys := []string{
 			"kyma-template",
 		}
 		expectedErrMsg := fmt.Sprintf("missing required configuration entires: %s", strings.Join(expectedMissingConfigKeys, ","))
+
 		// when
-		cfg, err := cfgProvider.ProvideForGivenPlan(wrongConfigPlan)
+		err := cfgProvider.Provide(configMapName, wrongConfigPlan, cfg)
 
 		// then
 		require.Error(t, err)
@@ -73,11 +79,12 @@ func TestConfigProvider(t *testing.T) {
 
 	t.Run("reader should return error indicating missing configmap", func(t *testing.T) {
 		// given
+		cfg := internal.ConfigForPlan{}
 		err = fakeK8sClient.Delete(ctx, cfgMap)
 		require.NoError(t, err)
 
 		// when
-		cfg, err := cfgProvider.ProvideForGivenPlan(broker.AzurePlanName)
+		err := cfgProvider.Provide(configMapName, broker.AzurePlanName, cfg)
 
 		// then
 		require.Error(t, err)
