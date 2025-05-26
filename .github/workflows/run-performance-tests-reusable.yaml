@@ -349,15 +349,17 @@ jobs:
         run: |
           scripts/simulate_kim.sh
           
-          TOTAL_COUNT=$(curl --request GET \
+          RESPONSE_JSON=$(curl --request GET \
             --url http://localhost:8080/runtimes?plan=azure&state=succeeded \
             --header 'Content-Type: application/json' \
-            --header 'X-Broker-API-Version: 2.16' | jq .totalCount)
+            --header 'X-Broker-API-Version: 2.16')
+  
+          SUCCEEDED_TOTAL_COUNT=$(echo "$RESPONSE_JSON" | jq .totalCount)
 
-          if [ "$TOTAL_COUNT" -eq "${{ inputs.instances-number }}" ]; then
-            echo "Assertion passed: totalCount is $TOTAL_COUNT"
+          if [ "$SUCCEEDED_TOTAL_COUNT" -eq "${{ inputs.instances-number }}" ]; then
+            echo "Assertion passed: totalCount is $SUCCEEDED_TOTAL_COUNT"
           else
-            echo "Assertion failed: totalCount is not ${{ inputs.instances-number }}. Actual value: $TOTAL_COUNT"
+            echo "Assertion failed: totalCount is not ${{ inputs.instances-number }}. Actual value: $SUCCEEDED_TOTAL_COUNT"
             exit 1
           fi
         
