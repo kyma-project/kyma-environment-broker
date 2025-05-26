@@ -20,6 +20,10 @@ on:
         description: number of instances to be provisioned
         default: 100
         type: number
+      updates-number:
+        description: number of updates on a single instance
+        default: 300
+        type: number
       kim-delay-seconds:
         description: time to wait before transitioning the runtime CR to the Ready state
         default: 420
@@ -470,15 +474,19 @@ jobs:
       - name: Update the instance
         timeout-minutes: 60
         run: |
-          for i in $(seq 1 100); do
-            max=$((i + 4))
+          max=5
+          for i in $(seq 1 ${{ inputs.updates-number }}); do
             echo "Updating instance: Iteration $i with autoScalerMax=$max"
-          
             curl --silent --show-error --fail --request PATCH \
               --url "http://localhost:8080/oauth/v2/service_instances/azure-cluster?accepts_incomplete=true" \
               --header "Content-Type: application/json" \
               --header "X-Broker-API-Version: 2.16" \
               --data "{\"service_id\":\"47c9dcbf-ff30-448e-ab36-d3bad66ba281\",\"plan_id\":\"4deee563-e5ec-4731-b9b1-53b42d855f0c\",\"context\":{\"globalaccount_id\":\"2f5011af-2fd3-44ba-ac60-eeb1148c2995\",\"subaccount_id\":\"8b9a0db4-9aef-4da2-a856-61a4420b66fd\",\"user_id\":\"user@email.com\"},\"parameters\":{\"autoScalerMax\":$max}}" > /dev/null 2>&1
+    
+            max=$((max + 1))
+            if [ "$max" -gt 100 ]; then
+              max=5
+            fi
           done
           
           while true; do

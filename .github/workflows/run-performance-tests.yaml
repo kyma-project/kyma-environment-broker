@@ -16,6 +16,7 @@ jobs:
       release: "false"
       version: ${{ github.event.pull_request.number }}
       instances-number: 100
+      updates-number: 300
       kim-delay-seconds: 420
       provisioning-max-step-processing-time: 30s
       provisioning-workers-amount: 20

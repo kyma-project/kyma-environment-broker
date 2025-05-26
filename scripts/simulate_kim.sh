@@ -21,8 +21,6 @@ get_provisioning_runtimes() {
       --url http://localhost:8080/runtimes?state=provisioning \
       --header 'Content-Type: application/json' \
       --header 'X-Broker-API-Version: 2.16' | jq .totalCount); then
-    kubectl port-forward -n kcp-system deployment/kcp-kyma-environment-broker 8080:8080 5432:5432 &
-    sleep 5
     echo "Warning: Failed to fetch provisioning runtimes. Assuming at least 1 remains." >&2
     echo 1
   else
