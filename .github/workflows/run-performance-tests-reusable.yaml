@@ -423,6 +423,7 @@ jobs:
         
       - name: Fetch metrics from KEB
         run: |
+          sleep 120
           METRICS=$(curl -s http://localhost:8080/metrics)
           echo $METRICS
 
