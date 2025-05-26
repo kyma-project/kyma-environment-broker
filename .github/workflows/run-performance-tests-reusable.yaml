@@ -152,7 +152,7 @@ jobs:
           
           kill $PORT_FORWARD_PID
           
-      - name: Start background metrics collector
+      - name: Start metrics collector
         run: |
           kubectl port-forward -n kcp-system deployment/kcp-kyma-environment-broker 8080:8080 5432:5432 &
           sleep 5
@@ -362,7 +362,7 @@ jobs:
             exit 1
           fi
           
-      - name: Start background metrics collector
+      - name: Start metrics collector
         run: |
           nohup bash scripts/monitor_metrics.sh > /dev/null 2>&1 &
           echo $! > /tmp/metrics_pid  
@@ -392,6 +392,22 @@ jobs:
             done
           
             PAGE=$((PAGE + 1))
+          done
+          
+          while true; do
+            UPDATED_COUNT=$(curl --request GET \
+              --url "http://localhost:8080/runtimes?plan=azure&state=succeeded,failed" \
+              --header 'Content-Type: application/json' \
+              --header 'X-Broker-API-Version: 2.16' | jq .totalCount)
+          
+            echo $UPDATED_COUNT
+            
+            if [ "$UPDATED_COUNT" -eq "${{ inputs.instances-number }}" ]; then
+              echo "All instances are updated. Done."
+              break
+            fi
+          
+            sleep 10
           done
         
       - name: Fetch metrics from KEB
