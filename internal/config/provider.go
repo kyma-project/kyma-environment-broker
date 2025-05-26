@@ -2,7 +2,7 @@ package config
 
 type (
 	Provider interface {
-		Provide(cfgSrcName, cfgKeyName string, cfgDestObj any) error
+		Provide(cfgSrcName, cfgKeyName, reqCfgKeys string, cfgDestObj any) error
 	}
 
 	Reader interface {
@@ -28,13 +28,13 @@ func NewConfigProvider(reader Reader, validator Validator, converter Converter) 
 	return &provider{Reader: reader, Validator: validator, Converter: converter}
 }
 
-func (p *provider) Provide(cfgSrcName, cfgKeyName string, cfgDestObj any) error {
+func (p *provider) Provide(cfgSrcName, cfgKeyName, reqCfgKeys string, cfgDestObj any) error {
 	cfgString, err := p.Reader.Read(cfgSrcName, cfgKeyName)
 	if err != nil {
 		return err
 	}
 
-	if err = p.Validator.Validate(runtimeConfigurationRequiredFields, cfgString); err != nil {
+	if err = p.Validator.Validate(reqCfgKeys, cfgString); err != nil {
 		return err
 	}
 

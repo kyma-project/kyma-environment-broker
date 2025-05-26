@@ -34,13 +34,13 @@ func TestConfigProvider(t *testing.T) {
 	cfgConverter := config.NewConfigMapConverter()
 	cfgProvider := config.NewConfigProvider(cfgReader, cfgValidator, cfgConverter)
 
-	t.Run("should provide config for Kyma 2.4.0 azure plan", func(t *testing.T) {
+	t.Run("should provide config for azure plan", func(t *testing.T) {
 		// given
 		cfg := internal.ConfigForPlan{}
 		expectedCfg := fixAzureConfig()
 
 		// when
-		err := cfgProvider.Provide(configMapName, broker.AzurePlanName, cfg)
+		err := cfgProvider.Provide(configMapName, broker.AzurePlanName, config.RuntimeConfigurationRequiredFields, cfg)
 
 		// then
 		require.NoError(t, err)
@@ -53,7 +53,7 @@ func TestConfigProvider(t *testing.T) {
 		expectedCfg := fixDefault()
 
 		// when
-		err := cfgProvider.Provide(configMapName, broker.AWSPlanName, cfg)
+		err := cfgProvider.Provide(configMapName, broker.AWSPlanName, config.RuntimeConfigurationRequiredFields, cfg)
 
 		// then
 		require.NoError(t, err)
@@ -69,12 +69,12 @@ func TestConfigProvider(t *testing.T) {
 		expectedErrMsg := fmt.Sprintf("missing required configuration entires: %s", strings.Join(expectedMissingConfigKeys, ","))
 
 		// when
-		err := cfgProvider.Provide(configMapName, wrongConfigPlan, cfg)
+		err := cfgProvider.Provide(configMapName, wrongConfigPlan, config.RuntimeConfigurationRequiredFields, cfg)
 
 		// then
 		require.Error(t, err)
 		assert.ErrorContains(t, err, expectedErrMsg)
-		assert.Nil(t, cfg)
+		assert.Equal(t, internal.ConfigForPlan{}, cfg)
 	})
 
 	t.Run("reader should return error indicating missing configmap", func(t *testing.T) {
@@ -84,17 +84,38 @@ func TestConfigProvider(t *testing.T) {
 		require.NoError(t, err)
 
 		// when
-		err := cfgProvider.Provide(configMapName, broker.AzurePlanName, cfg)
+		err := cfgProvider.Provide(configMapName, broker.AzurePlanName, config.RuntimeConfigurationRequiredFields, cfg)
 
 		// then
 		require.Error(t, err)
-		assert.Equal(t, "configmap keb-config with configuration does not exist", errors.Unwrap(err).Error())
-		assert.Nil(t, cfg)
+		assert.Equal(t, "configmap keb-config does not exist in kcp-system namespace", errors.Unwrap(err).Error())
+		assert.Equal(t, internal.ConfigForPlan{}, cfg)
 	})
 }
 
 func fixAzureConfig() *internal.ConfigForPlan {
-	return &internal.ConfigForPlan{}
+	return &internal.ConfigForPlan{
+		KymaTemplate: `apiVersion: operator.kyma-project.io/v1beta2
+kind: Kyma
+metadata:
+  name: tbd
+  namespace: kyma-system
+spec:
+  sync:
+    strategy: secret
+  channel: stable
+  modules: []
+  additional-components:
+  - name: "additional-component1"
+    namespace: "kyma-system"
+  - name: "additional-component2"
+    namespace: "test-system"
+  # no additional-component3
+  - name: "azure-component"
+  namespace: "azure-system"
+  source:
+    url: "https://azure.domain/component/azure-component.git"`,
+	}
 }
 
 func fixDefault() *internal.ConfigForPlan {
