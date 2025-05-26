@@ -160,7 +160,7 @@ jobs:
           nohup bash scripts/monitor_metrics.sh > /dev/null 2>&1 &
           echo $! > /tmp/metrics_pid
 
-      - name: Provision multiple instances
+      - name: Provision instances
         run: |
           seq 1 ${{ inputs.instances-number }} | xargs -n1 -P8 -I{} bash -c '
             uid=$(uuidgen)
@@ -316,7 +316,7 @@ jobs:
 
           kill $PORT_FORWARD_PID
 
-      - name: Provision multiple instances
+      - name: Provision instances
         run: |
           kubectl port-forward -n kcp-system deployment/kcp-kyma-environment-broker 8080:8080 5432:5432 &
           sleep 5
@@ -360,3 +360,30 @@ jobs:
             echo "Assertion failed: totalCount is not ${{ inputs.instances-number }}. Actual value: $TOTAL_COUNT"
             exit 1
           fi
+        
+      - name: Update instances
+        run: |
+          PAGE=1
+          
+          while true; do
+            RESPONSE=$(curl --silent --show-error --fail --request GET \
+              --url "http://localhost:8080/runtimes?plan=azure&page=$PAGE" \
+              --header 'Content-Type: application/json' \
+              --header 'X-Broker-API-Version: 2.16')
+          
+            COUNT=$(echo "$RESPONSE" | jq '.count')
+            if [ "$COUNT" -eq 0 ]; then
+              break
+            fi
+          
+            echo "$RESPONSE" | jq -r '.data[].instanceID' | while read -r INSTANCE_ID; do
+              echo "Updating instance: $INSTANCE_ID"
+              curl --silent --show-error --fail --request PUT \
+                --url "http://localhost:8080/oauth/v2/service_instances/$INSTANCE_ID" \
+                --header "Content-Type: application/json" \
+                --header "X-Broker-API-Version: 2.16" \
+                --data '{"service_id":"47c9dcbf-ff30-448e-ab36-d3bad66ba281","plan_id":"4deee563-e5ec-4731-b9b1-53b42d855f0c","context":{"globalaccount_id":"2f5011af-2fd3-44ba-ac60-eeb1148c2995","subaccount_id":"8b9a0db4-9aef-4da2-a856-61a4420b66fd","user_id":"user@email.com"},"parameters":{"autoScalerMax":15}}' > /dev/null 2>&1 && echo "Updated $INSTANCE_ID"
+            done
+          
+            PAGE=$((PAGE + 1))
+          done
