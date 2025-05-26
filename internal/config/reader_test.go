@@ -1,6 +1,7 @@
 package config_test
 
 import (
+	"bytes"
 	"context"
 	"fmt"
 	"log/slog"
@@ -22,9 +23,8 @@ import (
 )
 
 const (
-	configMapName         = "keb-config"
-	expectedKebConfigYaml = "keb-config-expected.yaml"
-	defaultConfigKey      = "default"
+	configMapName    = "keb-config"
+	defaultConfigKey = "default"
 )
 
 func TestConfigReaderSuccessFlow(t *testing.T) {
@@ -105,12 +105,13 @@ func TestConfigReaderErrors(t *testing.T) {
 }
 
 func fixConfigMap() (*coreV1.ConfigMap, error) {
-	yamlFilePath := path.Join("testdata", expectedKebConfigYaml)
+	yamlFilePath := path.Join("testdata", fmt.Sprintf("%s.yaml", configMapName))
 	contents, err := os.ReadFile(yamlFilePath)
 	if err != nil {
 		return nil, fmt.Errorf("while reading configmap")
 	}
 
+	contents = bytes.ReplaceAll(contents, []byte("Kind"), []byte("kind"))
 	var tempCfgMap tempConfigMap
 	err = yaml.Unmarshal(contents, &tempCfgMap)
 	if err != nil {
@@ -122,7 +123,7 @@ func fixConfigMap() (*coreV1.ConfigMap, error) {
 
 type tempConfigMap struct {
 	APIVersion string            `yaml:"apiVersion,omitempty"`
-	Kind       string            `yaml:"kind,omitempty"`
+	Kind       string            `yaml:",omitempty"`
 	Metadata   tempMetadata      `yaml:"metadata,omitempty"`
 	Data       map[string]string `yaml:"data,omitempty"`
 }
