@@ -38,7 +38,7 @@ func (p *provider) Provide(cfgSrcName, cfgKeyName, reqCfgKeys string, cfgDestObj
 		return err
 	}
 
-	err = p.Converter.Convert(cfgString, &cfgDestObj)
+	err = p.Converter.Convert(cfgString, cfgDestObj)
 	if err != nil {
 		return err
 	}

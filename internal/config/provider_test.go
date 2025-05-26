@@ -36,7 +36,7 @@ func TestConfigProvider(t *testing.T) {
 
 	t.Run("should provide config for azure plan", func(t *testing.T) {
 		// given
-		cfg := internal.ConfigForPlan{}
+		cfg := &internal.ConfigForPlan{}
 		expectedCfg := fixAzureConfig()
 
 		// when
@@ -49,7 +49,7 @@ func TestConfigProvider(t *testing.T) {
 
 	t.Run("should provide config for a default", func(t *testing.T) {
 		// given
-		cfg := internal.ConfigForPlan{}
+		cfg := &internal.ConfigForPlan{}
 		expectedCfg := fixDefault()
 
 		// when
@@ -62,7 +62,7 @@ func TestConfigProvider(t *testing.T) {
 
 	t.Run("validator should return error indicating missing required fields", func(t *testing.T) {
 		// given
-		cfg := internal.ConfigForPlan{}
+		cfg := &internal.ConfigForPlan{}
 		expectedMissingConfigKeys := []string{
 			"kyma-template",
 		}
@@ -74,12 +74,12 @@ func TestConfigProvider(t *testing.T) {
 		// then
 		require.Error(t, err)
 		assert.ErrorContains(t, err, expectedErrMsg)
-		assert.Equal(t, internal.ConfigForPlan{}, cfg)
+		assert.Equal(t, internal.ConfigForPlan{}, *cfg)
 	})
 
 	t.Run("reader should return error indicating missing configmap", func(t *testing.T) {
 		// given
-		cfg := internal.ConfigForPlan{}
+		cfg := &internal.ConfigForPlan{}
 		err = fakeK8sClient.Delete(ctx, cfgMap)
 		require.NoError(t, err)
 
@@ -89,7 +89,7 @@ func TestConfigProvider(t *testing.T) {
 		// then
 		require.Error(t, err)
 		assert.Equal(t, "configmap keb-config does not exist in kcp-system namespace", errors.Unwrap(err).Error())
-		assert.Equal(t, internal.ConfigForPlan{}, cfg)
+		assert.Equal(t, internal.ConfigForPlan{}, *cfg)
 	})
 }
 
