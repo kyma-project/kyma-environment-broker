@@ -16,6 +16,10 @@ set -o pipefail # prevents errors in a pipeline from being masked
 KIM_DELAY_SECONDS="${KIM_DELAY_SECONDS:-${1:-60}}"
 
 get_provisioning_runtimes() {
+  curl --request GET \
+        --url http://localhost:8080/runtimes?state=provisioning \
+        --header 'Content-Type: application/json' \
+        --header 'X-Broker-API-Version: 2.16' | jq .totalCount
   local count
   if ! count=$(curl --silent --fail --request GET \
       --url http://localhost:8080/runtimes?state=provisioning \

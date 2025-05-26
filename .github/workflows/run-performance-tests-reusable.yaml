@@ -411,8 +411,6 @@ jobs:
               --header 'Content-Type: application/json' \
               --header 'X-Broker-API-Version: 2.16' | jq .totalCount)
           
-            echo $UPDATED_COUNT
-            
             if [ "$UPDATED_COUNT" -eq "${{ inputs.instances-number }}" ]; then
               echo "All instances are updated. Done."
               break
@@ -423,27 +421,9 @@ jobs:
         
       - name: Fetch metrics from KEB
         run: |
-          sleep 120
-          METRICS=$(curl -s http://localhost:8080/metrics)
-          echo $METRICS
-
-          SUCCEEDED_TOTAL=$(echo "$METRICS" | grep 'kcp_keb_v2_operation_result.*plan_id="4deee563-e5ec-4731-b9b1-53b42d855f0c".*state="succeeded".*type="update"' | wc -l | xargs)
-          echo $SUCCEEDED_TOTAL
-          SUCCEEDED_TOTAL=${SUCCEEDED_TOTAL:-0}
-          FAILED_TOTAL=$(echo "$METRICS" | grep 'kcp_keb_v2_operation_result.*plan_id="4deee563-e5ec-4731-b9b1-53b42d855f0c".*state="failed".*type="update"' | wc -l | xargs)
-          echo $FAILED_TOTAL
-          FAILED_TOTAL=${FAILED_TOTAL:-0}
-          TOTAL=$(echo "$SUCCEEDED_TOTAL + $FAILED_TOTAL" | bc)
-          if [ "$TOTAL" -eq 0 ]; then
-            SUCCESS_RATE=0
-          else
-            SUCCESS_RATE=$(awk "BEGIN {printf \"%.2f\", ($SUCCEEDED_TOTAL / $TOTAL) * 100}")
-          fi
-          echo "Success rate of provisioning requests: $SUCCESS_RATE%" >> $GITHUB_STEP_SUMMARY
-          
           kill $(cat /tmp/metrics_pid) || echo "Metrics script not running"
           METRICS_FILE="/tmp/keb_metrics.jsonl"
-
+          
           jq -s '
           {
             goroutines: map(.goroutines),
@@ -455,7 +435,22 @@ jobs:
             mem_stack: map(.mem_stack),
             mem_heap: map(.mem_heap)
           }' "$METRICS_FILE" > /tmp/aggregated_metrics.json
-
+          
+          sleep 30
+          
+          METRICS=$(curl -s http://localhost:8080/metrics)
+          SUCCEEDED_TOTAL=$(echo "$METRICS" | grep 'kcp_keb_v2_operation_result.*plan_id="4deee563-e5ec-4731-b9b1-53b42d855f0c".*state="succeeded".*type="update"' | wc -l | xargs)
+          SUCCEEDED_TOTAL=${SUCCEEDED_TOTAL:-0}
+          FAILED_TOTAL=$(echo "$METRICS" | grep 'kcp_keb_v2_operation_result.*plan_id="4deee563-e5ec-4731-b9b1-53b42d855f0c".*state="failed".*type="update"' | wc -l | xargs)
+          FAILED_TOTAL=${FAILED_TOTAL:-0}
+          TOTAL=$(echo "$SUCCEEDED_TOTAL + $FAILED_TOTAL" | bc)
+          if [ "$TOTAL" -eq 0 ]; then
+            SUCCESS_RATE=0
+          else
+            SUCCESS_RATE=$(awk "BEGIN {printf \"%.2f\", ($SUCCEEDED_TOTAL / $TOTAL) * 100}")
+          fi
+          echo "Success rate of provisioning requests: $SUCCESS_RATE%" >> $GITHUB_STEP_SUMMARY
+          
           echo '```mermaid' >> $GITHUB_STEP_SUMMARY
           echo "xychart-beta title \"Goroutines\" line \"Goroutines\" [$(jq -r '.goroutines | @csv' /tmp/aggregated_metrics.json)]" >> $GITHUB_STEP_SUMMARY
           echo '```' >> $GITHUB_STEP_SUMMARY
