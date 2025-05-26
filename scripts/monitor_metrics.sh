@@ -46,5 +46,5 @@ while true; do
 
   echo "{\"timestamp\": $TIMESTAMP, \"goroutines\": $GO_GOROUTINES, \"open_fds\": $OPEN_FDS, \"db_idle\": $DB_IDLE, \"db_max_open\": $DB_MAX_OPEN, \"db_in_use\": $DB_IN_USE, \"mem_alloc\": $MEM_ALLOC, \"mem_stack\": $MEM_STACK, \"mem_heap\": $MEM_HEAP}" >> "$METRICS_FILE"
 
-  sleep 10
+  sleep 2
 done

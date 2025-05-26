@@ -424,10 +424,13 @@ jobs:
       - name: Fetch metrics from KEB
         run: |
           METRICS=$(curl -s http://localhost:8080/metrics)
+          echo $METRICS
 
           SUCCEEDED_TOTAL=$(echo "$METRICS" | grep 'kcp_keb_v2_operations_updating_succeeded_total{plan_id="4deee563-e5ec-4731-b9b1-53b42d855f0c"}' | awk '{print $2}')
+          echo $SUCCEEDED_TOTAL
           SUCCEEDED_TOTAL=${SUCCEEDED_TOTAL:-0}
           FAILED_TOTAL=$(echo "$METRICS" | grep 'kcp_keb_v2_operations_updating_failed_total{plan_id="4deee563-e5ec-4731-b9b1-53b42d855f0c"}' | awk '{print $2}')
+          echo $FAILED_TOTAL
           FAILED_TOTAL=${FAILED_TOTAL:-0}
           TOTAL=$(echo "$SUCCEEDED_TOTAL + $FAILED_TOTAL" | bc)
           if [ "$TOTAL" -eq 0 ]; then
