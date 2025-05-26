@@ -350,7 +350,7 @@ jobs:
           scripts/simulate_kim.sh
           
           RESPONSE_JSON=$(curl --request GET \
-            --url http://localhost:8080/runtimes?plan=azure&state=succeeded \
+            --url "http://localhost:8080/runtimes?plan=azure&state=succeeded" \
             --header 'Content-Type: application/json' \
             --header 'X-Broker-API-Version: 2.16')
   
