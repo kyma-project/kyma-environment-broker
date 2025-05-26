@@ -18,7 +18,7 @@ on:
         type: string
       instances-number:
         description: number of instances to be provisioned
-        default: 100
+        default: 300
         type: number
       kim-delay-seconds:
         description: time to wait before transitioning the runtime CR to the Ready state
@@ -449,7 +449,7 @@ jobs:
           else
             SUCCESS_RATE=$(awk "BEGIN {printf \"%.2f\", ($SUCCEEDED_TOTAL / $TOTAL) * 100}")
           fi
-          echo "Success rate of provisioning requests: $SUCCESS_RATE%" >> $GITHUB_STEP_SUMMARY
+          echo "Success rate of update requests: $SUCCESS_RATE%" >> $GITHUB_STEP_SUMMARY
           
           echo '```mermaid' >> $GITHUB_STEP_SUMMARY
           echo "xychart-beta title \"Goroutines\" line \"Goroutines\" [$(jq -r '.goroutines | @csv' /tmp/aggregated_metrics.json)]" >> $GITHUB_STEP_SUMMARY
