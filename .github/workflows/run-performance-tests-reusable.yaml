@@ -176,6 +176,8 @@ jobs:
         run: |
           nohup bash scripts/monitor_metrics.sh > /dev/null 2>&1 &
           echo $! > /tmp/metrics_pid
+          kubectl port-forward -n kcp-system deployment/kcp-kyma-environment-broker 8080:8080 5432:5432 &
+          sleep 5
 
       - name: Provision instances
         run: |
@@ -337,7 +339,9 @@ jobs:
       - name: Start metrics collector
         run: |
           nohup bash scripts/monitor_metrics.sh > /dev/null 2>&1 &
-          echo $! > /tmp/metrics_pid  
+          echo $! > /tmp/metrics_pid
+          kubectl port-forward -n kcp-system deployment/kcp-kyma-environment-broker 8080:8080 5432:5432 &
+          sleep 5
         
       - name: Update instances
         timeout-minutes: 60
@@ -473,7 +477,9 @@ jobs:
       - name: Start metrics collector
         run: |
           nohup bash scripts/monitor_metrics.sh > /dev/null 2>&1 &
-          echo $! > /tmp/metrics_pid  
+          echo $! > /tmp/metrics_pid
+          kubectl port-forward -n kcp-system deployment/kcp-kyma-environment-broker 8080:8080 5432:5432 &
+          sleep 5
 
       - name: Update the instance
         timeout-minutes: 60
@@ -616,7 +622,9 @@ jobs:
       - name: Start metrics collector
         run: |
           nohup bash scripts/monitor_metrics.sh > /dev/null 2>&1 &
-          echo $! > /tmp/metrics_pid  
+          echo $! > /tmp/metrics_pid
+          kubectl port-forward -n kcp-system deployment/kcp-kyma-environment-broker 8080:8080 5432:5432 &
+          sleep 5
 
       - name: Deprovision instances
         timeout-minutes: 60
@@ -793,6 +801,8 @@ jobs:
         run: |
           nohup bash scripts/monitor_metrics.sh > /dev/null 2>&1 &
           echo $! > /tmp/metrics_pid
+          kubectl port-forward -n kcp-system deployment/kcp-kyma-environment-broker 8080:8080 5432:5432 &
+          sleep 5
 
       - name: Run mixed operations
         run: |
