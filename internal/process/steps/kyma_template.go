@@ -16,17 +16,15 @@ import (
 )
 
 type InitKymaTemplate struct {
-	operationManager   *process.OperationManager
-	configProvider     config.Provider
-	configResourceName string
+	operationManager *process.OperationManager
+	configProvider   config.ConfigMapConfigProvider
 }
 
 var _ process.Step = &InitKymaTemplate{}
 
-func NewInitKymaTemplate(os storage.Operations, configProvider config.Provider, cfgResourceName string) *InitKymaTemplate {
+func NewInitKymaTemplate(os storage.Operations, configProvider config.ConfigMapConfigProvider) *InitKymaTemplate {
 	step := &InitKymaTemplate{
-		configProvider:     configProvider,
-		configResourceName: cfgResourceName,
+		configProvider: configProvider,
 	}
 	step.operationManager = process.NewOperationManager(os, step.Name(), kebError.KEBDependency)
 	return step
@@ -42,7 +40,7 @@ func (s *InitKymaTemplate) Run(operation internal.Operation, logger *slog.Logger
 		return s.operationManager.OperationFailed(operation, fmt.Sprintf("PlanID %s not found in PlanNamesMapping", operation.ProvisioningParameters.PlanID), nil, logger)
 	}
 	cfg := &internal.ConfigForPlan{}
-	err := s.configProvider.Provide(s.configResourceName, planName, config.RuntimeConfigurationRequiredFields, cfg)
+	err := s.configProvider.Provide(planName, cfg)
 	if err != nil {
 		return s.operationManager.RetryOperation(operation, fmt.Sprintf("unable to provide configuration for plan %s", planName), err, 10*time.Second, 30*time.Second, logger)
 	}

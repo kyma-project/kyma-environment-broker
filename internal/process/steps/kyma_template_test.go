@@ -17,7 +17,7 @@ func TestInitKymaTemplate_Run(t *testing.T) {
 	err := db.Operations().InsertOperation(operation)
 	require.NoError(t, err)
 
-	svc := NewInitKymaTemplate(db.Operations(), &fakeConfigProvider{}, "")
+	svc := NewInitKymaTemplate(db.Operations(), &fakeConfigProvider{})
 
 	// when
 	op, backoff, err := svc.Run(operation, fixLogger())
@@ -31,7 +31,7 @@ func TestInitKymaTemplate_Run(t *testing.T) {
 
 type fakeConfigProvider struct{}
 
-func (f fakeConfigProvider) Provide(cfgSrcName, cfgKeyName, reqCfgKeys string, cfgDestObj any) error {
+func (f fakeConfigProvider) Provide(cfgKeyName string, cfgDestObj any) error {
 	cfg, _ := cfgDestObj.(*internal.ConfigForPlan)
 	cfg.KymaTemplate = `apiVersion: operator.kyma-project.io/v1beta2
 kind: Kyma

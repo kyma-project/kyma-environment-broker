@@ -35,7 +35,7 @@ func NewDeprovisioningProcessingQueue(ctx context.Context, workersAmount int, de
 		},
 		{
 			disabled: cfg.LifecycleManagerIntegrationDisabled,
-			step:     deprovisioning.NewDeleteKymaResourceStep(db, kcpClient, configProvider, cfg.RuntimeConfigurationConfigMapName),
+			step:     deprovisioning.NewDeleteKymaResourceStep(db, kcpClient, config.NewConfigMapConfigProvider(configProvider, cfg.RuntimeConfigurationConfigMapName, config.RuntimeConfigurationRequiredFields)),
 		},
 		{
 			disabled: cfg.LifecycleManagerIntegrationDisabled,

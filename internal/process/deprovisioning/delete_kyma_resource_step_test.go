@@ -35,7 +35,7 @@ func TestDeleteKymaResource_HappyFlow(t *testing.T) {
 	err := memoryStorage.Operations().InsertOperation(operation)
 	assert.NoError(t, err)
 
-	step := NewDeleteKymaResourceStep(memoryStorage, kcpClient, fakeConfigProvider{}, "")
+	step := NewDeleteKymaResourceStep(memoryStorage, kcpClient, fakeConfigProvider{})
 	err = memoryStorage.Operations().InsertOperation(operation)
 	assert.Contains(t, err.Error(), fmt.Sprintf("instance operation with id %s already exist", fixOperationID))
 
@@ -59,7 +59,7 @@ func TestDeleteKymaResource_EmptyRuntimeIDAndKymaResourceName(t *testing.T) {
 	err := memoryStorage.Operations().InsertOperation(operation)
 	assert.NoError(t, err)
 
-	step := NewDeleteKymaResourceStep(memoryStorage, kcpClient, fakeConfigProvider{}, "")
+	step := NewDeleteKymaResourceStep(memoryStorage, kcpClient, fakeConfigProvider{})
 	err = memoryStorage.Operations().InsertOperation(operation)
 	assert.Contains(t, err.Error(), fmt.Sprintf("instance operation with id %s already exist", fixOperationID))
 	err = memoryStorage.Instances().Insert(instance)
@@ -75,7 +75,7 @@ func TestDeleteKymaResource_EmptyRuntimeIDAndKymaResourceName(t *testing.T) {
 type fakeConfigProvider struct {
 }
 
-func (fakeConfigProvider) Provide(cfgSrcName, cfgKeyName, reqCfgKeys string, cfgDestObj any) error {
+func (fakeConfigProvider) Provide(cfgKeyName string, cfgDestObj any) error {
 	cfg, _ := cfgDestObj.(*internal.ConfigForPlan)
 	cfg.KymaTemplate = kymaTemplate
 	cfgDestObj = cfg
