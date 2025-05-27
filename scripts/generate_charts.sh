@@ -5,7 +5,7 @@
 # and generates visual summaries using Mermaid charts for GitHub Actions.
 
 # Usage:
-#   ./generate_metrics.sh
+#   ./generate_charts.sh
 
 # standard bash error handling
 set -o nounset  # treat unset variables as an error and exit immediately.

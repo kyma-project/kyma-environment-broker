@@ -181,6 +181,10 @@ spec:
                 secretKeyRef:
                   name: kcp-postgresql
                   key: postgresql-broker-username
+            - name: APP_DEPROVISIONING_MAX_STEP_PROCESSING_TIME
+              value: "{{ .Values.deprovisioning.maxStepProcessingTime }}"
+            - name: APP_DEPROVISIONING_WORKERS_AMOUNT
+              value: "{{ .Values.deprovisioning.workersAmount }}"
             - name: APP_DISABLE_PROCESS_OPERATIONS_IN_PROGRESS
               value: "{{ .Values.disableProcessOperationsInProgress }}"
             - name: APP_DOMAIN_NAME

@@ -190,6 +190,9 @@ provisioning:
 update:
   maxStepProcessingTime: 2m
   workersAmount: 20
+deprovisioning:
+  maxStepProcessingTime: 2m
+  workersAmount: 20
 
 cleaning:
   # If true, the cleaning process runs in dry-run mode and does not actually delete any data from the database
