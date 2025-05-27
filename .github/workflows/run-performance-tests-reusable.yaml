@@ -686,7 +686,6 @@ jobs:
           echo "Average duration of deprovisioning requests: $AVG_DEPROVISIONING_DURATION minutes" >> $GITHUB_STEP_SUMMARY
           
           DEPROVISIONING_DURATION_BUCKETS=$(echo "$METRICS" | grep 'kcp_keb_v2_deprovisioning_duration_minutes_bucket{plan_id="4deee563-e5ec-4731-b9b1-53b42d855f0c"')
-          echo $DEPROVISIONING_DURATION_BUCKETS
           INF_TOTAL=$(echo "$DEPROVISIONING_DURATION_BUCKETS" | grep 'le="+Inf"' | awk '{print $2}')
           MAX_DEPROVISIONING_DURATION=$(echo "$DEPROVISIONING_DURATION_BUCKETS" | grep -v 'le="\+Inf"' | sed -n 's/.*le="\([^"]*\)"} \([0-9]*\)/\1 \2/p' | \
           while read le count; do
