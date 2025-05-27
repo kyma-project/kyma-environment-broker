@@ -338,6 +338,15 @@ jobs:
           
       - name: Start metrics collector
         run: |
+          PID=$(lsof -ti :8080)
+          if [ -n "$PID" ]; then
+            echo "Killing process using port 8080 (PID: $PID)..."
+            kill -9 $PID
+            echo "Process killed."
+          else
+            echo "No process is using port 8080."
+          fi
+          
           echo "Restarting kyma-environment-broker pod..."
           POD_NAME=$(kubectl get pod -l app.kubernetes.io/name=kyma-environment-broker -n kcp-system -o jsonpath='{.items[0].metadata.name}')
           kubectl delete pod $POD_NAME -n kcp-system
@@ -492,6 +501,15 @@ jobs:
 
       - name: Start metrics collector
         run: |
+          PID=$(lsof -ti :8080)
+          if [ -n "$PID" ]; then
+            echo "Killing process using port 8080 (PID: $PID)..."
+            kill -9 $PID
+            echo "Process killed."
+          else
+            echo "No process is using port 8080."
+          fi
+          
           echo "Restarting kyma-environment-broker pod..."
           POD_NAME=$(kubectl get pod -l app.kubernetes.io/name=kyma-environment-broker -n kcp-system -o jsonpath='{.items[0].metadata.name}')
           kubectl delete pod $POD_NAME -n kcp-system
@@ -653,6 +671,15 @@ jobs:
 
       - name: Start metrics collector
         run: |
+          PID=$(lsof -ti :8080)
+          if [ -n "$PID" ]; then
+            echo "Killing process using port 8080 (PID: $PID)..."
+            kill -9 $PID
+            echo "Process killed."
+          else
+            echo "No process is using port 8080."
+          fi
+          
           echo "Restarting kyma-environment-broker pod..."
           POD_NAME=$(kubectl get pod -l app.kubernetes.io/name=kyma-environment-broker -n kcp-system -o jsonpath='{.items[0].metadata.name}')
           kubectl delete pod $POD_NAME -n kcp-system
@@ -847,6 +874,15 @@ jobs:
           
       - name: Start metrics collector
         run: |
+          PID=$(lsof -ti :8080)
+          if [ -n "$PID" ]; then
+            echo "Killing process using port 8080 (PID: $PID)..."
+            kill -9 $PID
+            echo "Process killed."
+          else
+            echo "No process is using port 8080."
+          fi
+          
           echo "Restarting kyma-environment-broker pod..."
           POD_NAME=$(kubectl get pod -l app.kubernetes.io/name=kyma-environment-broker -n kcp-system -o jsonpath='{.items[0].metadata.name}')
           kubectl delete pod $POD_NAME -n kcp-system
