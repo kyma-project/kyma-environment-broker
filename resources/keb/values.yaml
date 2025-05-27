@@ -185,13 +185,19 @@ broker:
   useAdditionalOIDCSchema: "false" # temporary feature flag
   
 provisioning:
+  # Maximum time a worker is allowed to process a step before it must return to the provisioning queue
   maxStepProcessingTime: 2m
+  # Amount of workers in provisioning queue
   workersAmount: 20
 update:
+  # Maximum time a worker is allowed to process a step before it must return to the update queue
   maxStepProcessingTime: 2m
+  # Amount of workers in update queue
   workersAmount: 20
 deprovisioning:
+  # Maximum time a worker is allowed to process a step before it must return to the deprovisioning queue
   maxStepProcessingTime: 2m
+  # Amount of workers in deprovisioning queue
   workersAmount: 20
 
 cleaning:
