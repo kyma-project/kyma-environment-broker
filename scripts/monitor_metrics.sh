@@ -28,6 +28,26 @@ set -o errexit  # exit immediately when a command fails.
 set -E          # needs to be set if we want the ERR trap
 set -o pipefail # prevents errors in a pipeline from being masked
 
+# Restart the kyma-environment-broker pod
+echo "Restarting kyma-environment-broker pod..."
+POD_NAME=$(kubectl get pod -l app.kubernetes.io/name=kyma-environment-broker -n kcp-system -o jsonpath='{.items[0].metadata.name}')
+kubectl delete pod $POD_NAME -n kcp-system
+
+# Check if kyma-environment-broker pod is in READY state
+echo "Waiting for kyma-environment-broker pod to be in READY state..."
+kubectl wait --namespace kcp-system --for=condition=Ready pod -l app.kubernetes.io/name=kyma-environment-broker --timeout=60s
+EXIT_CODE=$?
+if [ $EXIT_CODE -ne 0 ]; then
+  echo "The kyma-environment-broker pod did not become READY within the timeout."
+  echo "Fetching the logs from the pod..."
+  POD_NAME=$(kubectl get pod -l app.kubernetes.io/name=kyma-environment-broker -n kcp-system -o jsonpath='{.items[0].metadata.name}')
+  kubectl logs $POD_NAME -n kcp-system
+  exit 1
+fi
+
+kubectl port-forward -n kcp-system deployment/kcp-kyma-environment-broker 8080:8080 5432:5432 &
+sleep 5
+
 METRICS_FILE="/tmp/keb_metrics.jsonl"
 echo "" > "$METRICS_FILE"
 

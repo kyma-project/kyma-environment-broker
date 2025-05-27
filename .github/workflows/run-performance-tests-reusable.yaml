@@ -174,9 +174,6 @@ jobs:
           
       - name: Start metrics collector
         run: |
-          kubectl port-forward -n kcp-system deployment/kcp-kyma-environment-broker 8080:8080 5432:5432 &
-          sleep 5
-          
           nohup bash scripts/monitor_metrics.sh > /dev/null 2>&1 &
           echo $! > /tmp/metrics_pid
 
@@ -859,8 +856,8 @@ jobs:
           
           # Provisioning metrics
 
+          echo "### Provisioning Requests" >> $GITHUB_STEP_SUMMARY
           SUCCEEDED_TOTAL=$(echo "$METRICS" | grep 'kcp_keb_v2_operations_provisioning_succeeded_total{plan_id="ca6e5357-707f-4565-bbbd-b3ab732597c6"}' | awk '{print $2}')
-          echo $SUCCEEDED_TOTAL
           SUCCEEDED_TOTAL=${SUCCEEDED_TOTAL:-0}
           FAILED_TOTAL=$(echo "$METRICS" | grep 'kcp_keb_v2_operations_provisioning_failed_total{plan_id="ca6e5357-707f-4565-bbbd-b3ab732597c6"}' | awk '{print $2}')
           FAILED_TOTAL=${FAILED_TOTAL:-0}
@@ -896,8 +893,8 @@ jobs:
           
           # Deprovisioning metrics
           
+          echo "### Deprovisioning Requests" >> $GITHUB_STEP_SUMMARY
           SUCCEEDED_TOTAL=$(echo "$METRICS" | grep 'kcp_keb_v2_operations_deprovisioning_succeeded_total{plan_id="4deee563-e5ec-4731-b9b1-53b42d855f0c"}' | awk '{print $2}')
-          echo $SUCCEEDED_TOTAL
           SUCCEEDED_TOTAL=${SUCCEEDED_TOTAL:-0}
           FAILED_TOTAL=$(echo "$METRICS" | grep 'kcp_keb_v2_operations_deprovisioning_failed_total{plan_id="4deee563-e5ec-4731-b9b1-53b42d855f0c"}' | awk '{print $2}')
           FAILED_TOTAL=${FAILED_TOTAL:-0}
