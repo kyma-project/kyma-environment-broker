@@ -85,7 +85,7 @@ You can configure SAP BTP, Kyma runtime operations by providing additional steps
         RuntimeVersion RuntimeVersionData `json:"runtime_version"`
 
         // These fields are not stored in the storage
-        InputCreator ProvisionerInputCreator `json:"-"`
+        InputCreator InputCreator `json:"-"`
     }
     ```
 
@@ -101,7 +101,6 @@ You can configure SAP BTP, Kyma runtime operations by providing additional steps
         "net/http"
         "time"
 
-        "github.com/kyma-incubator/compass/components/provisioner/pkg/gqlschema"
         "github.com/kyma-incubator/compass/components/kyma-environment-broker/internal"
         "github.com/kyma-incubator/compass/components/kyma-environment-broker/internal/storage"
     )

@@ -4,7 +4,7 @@ To provision clusters through Gardener using Infrastructure Manager, Kyma Enviro
 
 HAP stores credentials for the hyperscaler accounts that have been set up in advance in Kubernetes Secrets. The credentials are stored separately for each provider and tenant. The content of the credentials Secrets may vary for different use cases. The Secrets are labeled with the **hyperscalerType** and **tenantName** labels to manage pools of credentials for use by the provisioning process. This way, the in-use credentials and unassigned credentials available for use are tracked. Only the **hyperscalerType** label is added during Secret creation, and the **tenantName** label is added when the account respective for a given Secret is claimed. The content of the Secrets is opaque to HAP.
 
-The Secrets are stored in a Gardener seed cluster pointed to by HAP. They are available within a given Gardener project specified in the KEB and Runtime Provisioner configuration. This configuration uses a `kubeconfig` that gives KEB and Runtime Provisioner access to a specific Gardener seed cluster, which, in turn, enables access to those Secrets.
+The Secrets are stored in a Gardener seed cluster pointed to by HAP. They are available within a given Gardener project specified in the KEB and Infrastructure Manager configuration. This configuration uses a `kubeconfig` that gives KEB and Infrastructure Manager access to a specific Gardener seed cluster, which, in turn, enables access to those Secrets.
 
 This diagram shows the HAP workflow:
 

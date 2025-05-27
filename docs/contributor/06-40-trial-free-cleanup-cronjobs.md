@@ -47,7 +47,7 @@ Use the following environment variables to configure the Jobs:
 | **APP_DATABASE_PASSWORD**    | Specifies the user password for the database.                                                                                         | `password`                               |
 | **APP_DATABASE_HOST**        | Specifies the host of the database.                                                                                                   | `localhost`                              |
 | **APP_DATABASE_PORT**        | Specifies the port for the database.                                                                                                  | `5432`                                   |
-| **APP_DATABASE_NAME**        | Specifies the name of the database.                                                                                                   | `provisioner`                            |
+| **APP_DATABASE_NAME**        | Specifies the name of the database.                                                                                                   | `broker`                                 |
 | **APP_DATABASE_SSLMODE**     | Activates the SSL mode for PostgreSQL. See [all the possible values](https://www.postgresql.org/docs/9.1/libpq-ssl.html).             | `disable`                                |
 | **APP_DATABASE_SSLROOTCERT** | Specifies the location of CA cert of PostgreSQL. (Optional)                                                                           | None                                     |
 | **APP_BROKER_URL**           | Specifies the KEB URL.                                                                                                                | `https://kyma-env-broker.kyma.local`     |
