@@ -701,3 +701,171 @@ jobs:
           echo "Maximum duration of deprovisioning requests: $MAX_DEPROVISIONING_DURATION minutes" >> $GITHUB_STEP_SUMMARY
 
           scripts/generate_charts.sh
+          
+  run-mixed-operations-test:
+    runs-on: ubuntu-latest
+    needs: prepare-tests
+    strategy:
+      matrix: ${{ fromJSON(needs.prepare-tests.outputs.versions) }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Prepare K3s cluster and docker registry
+        run: "./scripts/testing/k3s-setup.sh ${{ matrix.version }} --wait"
+
+      - name: Prepare values.yaml
+        run: |
+          yq e ".provisioning.maxStepProcessingTime = \"${{ inputs.provisioning-max-step-processing-time }}\"" -i resources/keb/values.yaml
+          yq e ".provisioning.workersAmount = ${{ inputs.provisioning-workers-amount }}" -i resources/keb/values.yaml
+          yq e ".update.maxStepProcessingTime = \"${{ inputs.update-max-step-processing-time }}\"" -i resources/keb/values.yaml
+          yq e ".update.workersAmount = ${{ inputs.update-workers-amount }}" -i resources/keb/values.yaml
+          yq e ".deprovisioning.maxStepProcessingTime = \"${{ inputs.deprovisioning-max-step-processing-time }}\"" -i resources/keb/values.yaml
+          yq e ".deprovisioning.workersAmount = ${{ inputs.deprovisioning-workers-amount }}" -i resources/keb/values.yaml
+
+      - name: Install KEB chart
+        run: |
+          if [ "${{ inputs.release }}" == "true" ]; then
+            make install VERSION=${{ inputs.version }}
+          else
+            make install VERSION=PR-${{ inputs.version }}
+          fi
+
+      - name: Populate database
+        run: |
+          DB_NAME=$(kubectl get secret kcp-postgresql -n kcp-system -o jsonpath="{.data.postgresql-broker-db-name}" | base64 -d)
+          DB_USER=$(kubectl get secret kcp-postgresql -n kcp-system -o jsonpath="{.data.postgresql-broker-username}" | base64 -d)
+          DB_PASS=$(kubectl get secret kcp-postgresql -n kcp-system -o jsonpath="{.data.postgresql-broker-password}" | base64 -d)
+
+          kubectl port-forward -n kcp-system deployment/postgres 5432:5432 &
+          PORT_FORWARD_PID=$!
+          echo $PORT_FORWARD_PID
+          sleep 5
+
+          PGPASSWORD=$DB_PASS psql -h localhost -p 5432 -U $DB_USER -d $DB_NAME -f resources/installation/migrations/populate_performance_tests_database.up.sql
+
+          kill $PORT_FORWARD_PID
+
+      - name: Prepare instances for update and deprovisioning
+        run: |
+          kubectl port-forward -n kcp-system deployment/kcp-kyma-environment-broker 8080:8080 5432:5432 &
+          sleep 5
+          
+          INSTANCES_NUMBER=$(( 2 * ${{ inputs.instances-number }} ))
+
+          seq 1 $INSTANCES_NUMBER | xargs -n1 -P8 -I{} bash -c '
+            uid=$(uuidgen)
+            curl --silent --show-error --fail --request PUT \
+              --url http://localhost:8080/oauth/v2/service_instances/$uid \
+              --header "Content-Type: application/json" \
+              --header "X-Broker-API-Version: 2.16" \
+              --data "{\"service_id\":\"47c9dcbf-ff30-448e-ab36-d3bad66ba281\",\"plan_id\":\"4deee563-e5ec-4731-b9b1-53b42d855f0c\",\"context\":{\"globalaccount_id\":\"2f5011af-2fd3-44ba-ac60-eeb1148c2995\",\"subaccount_id\":\"8b9a0db4-9aef-4da2-a856-61a4420b66fd\",\"user_id\":\"user@email.com\"},\"parameters\":{\"name\":\"azure-cluster\",\"region\":\"northeurope\"}}" > /dev/null 2>&1
+          '
+
+          TOTAL_COUNT=$(curl --request GET \
+            --url http://localhost:8080/runtimes?plan=azure \
+            --header 'Content-Type: application/json' \
+            --header 'X-Broker-API-Version: 2.16' | jq .totalCount)
+
+          if [ "$TOTAL_COUNT" -eq "$INSTANCES_NUMBER" ]; then
+            echo "Assertion passed: totalCount is $TOTAL_COUNT"
+          else
+            echo "Assertion failed: totalCount is not $INSTANCES_NUMBER. Actual value: $TOTAL_COUNT"
+            exit 1
+          fi
+          
+      - name: Simulate KIM
+        timeout-minutes: 60
+        env:
+          KIM_DELAY_SECONDS: 0
+        run: |
+          scripts/simulate_kim.sh
+          
+          INSTANCES_NUMBER=$(( 2 * ${{ inputs.instances-number }} ))
+
+          RESPONSE_JSON=$(curl --request GET \
+            --url "http://localhost:8080/runtimes?plan=azure&state=succeeded" \
+            --header 'Content-Type: application/json' \
+            --header 'X-Broker-API-Version: 2.16')
+          SUCCEEDED_TOTAL_COUNT=$(echo "$RESPONSE_JSON" | jq .totalCount)
+
+          if [ "$SUCCEEDED_TOTAL_COUNT" -eq "$INSTANCES_NUMBER" ]; then
+            echo "Assertion passed: totalCount is $SUCCEEDED_TOTAL_COUNT"
+          else
+            echo "Assertion failed: totalCount is not $INSTANCES_NUMBER. Actual value: $SUCCEEDED_TOTAL_COUNT"
+            exit 1
+          fi
+          
+      - name: Start metrics collector
+        run: |
+          nohup bash scripts/monitor_metrics.sh > /dev/null 2>&1 &
+          echo $! > /tmp/metrics_pid
+
+      - name: Run mixed operations
+        run: |
+          seq 1 ${{ inputs.instances-number }} | xargs -n1 -P8 -I{} bash -c '
+            uid=$(uuidgen)
+            curl --silent --show-error --fail --request PUT \
+              --url http://localhost:8080/oauth/v2/service_instances/$uid \
+              --header "Content-Type: application/json" \
+              --header "X-Broker-API-Version: 2.16" \
+              --data "{\"service_id\":\"47c9dcbf-ff30-448e-ab36-d3bad66ba281\",\"plan_id\":\"ca6e5357-707f-4565-bbbd-b3ab732597c6\",\"context\":{\"globalaccount_id\":\"2f5011af-2fd3-44ba-ac60-eeb1148c2995\",\"subaccount_id\":\"8b9a0db4-9aef-4da2-a856-61a4420b66fd\",\"user_id\":\"user@email.com\"},\"parameters\":{\"name\":\"gcp-cluster\",\"region\":\"europe-west3\"}}" > /dev/null 2>&1
+          '
+
+          TOTAL_COUNT=$(curl --request GET \
+            --url http://localhost:8080/runtimes?plan=gcp \
+            --header 'Content-Type: application/json' \
+            --header 'X-Broker-API-Version: 2.16' | jq .totalCount)
+
+          if [ "$TOTAL_COUNT" -eq "${{ inputs.instances-number }}" ]; then
+            echo "Assertion passed: totalCount is $TOTAL_COUNT"
+          else
+            echo "Assertion failed: totalCount is not ${{ inputs.instances-number }}. Actual value: $TOTAL_COUNT"
+            exit 1
+          fi
+          
+      - name: Simulate KIM
+        timeout-minutes: 60
+        env:
+          KIM_DELAY_SECONDS: ${{ inputs.kim-delay-seconds }}
+        run: scripts/simulate_kim.sh
+        
+      - name: Fetch metrics
+        run: |
+          METRICS=$(curl -s http://localhost:8080/metrics)
+
+          SUCCEEDED_TOTAL=$(echo "$METRICS" | grep 'kcp_keb_v2_operations_provisioning_succeeded_total{plan_id="ca6e5357-707f-4565-bbbd-b3ab732597c6"}' | awk '{print $2}')
+          SUCCEEDED_TOTAL=${SUCCEEDED_TOTAL:-0}
+          FAILED_TOTAL=$(echo "$METRICS" | grep 'kcp_keb_v2_operations_provisioning_failed_total{plan_id="ca6e5357-707f-4565-bbbd-b3ab732597c6"}' | awk '{print $2}')
+          FAILED_TOTAL=${FAILED_TOTAL:-0}
+          TOTAL=$(echo "$SUCCEEDED_TOTAL + $FAILED_TOTAL" | bc)
+          if [ "$TOTAL" -eq 0 ]; then
+            SUCCESS_RATE=0
+          else
+            SUCCESS_RATE=$(awk "BEGIN {printf \"%.2f\", ($SUCCEEDED_TOTAL / $TOTAL) * 100}")
+          fi
+          echo "Success rate of provisioning requests: $SUCCESS_RATE%" >> $GITHUB_STEP_SUMMARY
+
+          PROVISIONING_DURATION=$(echo "$METRICS" | grep 'kcp_keb_v2_provisioning_duration_minutes_sum{plan_id="ca6e5357-707f-4565-bbbd-b3ab732597c6"}' | awk '{print $2}')
+          PROVISIONING_DURATION=${PROVISIONING_DURATION:-0}
+          PROVISIONING_COUNT=$(echo "$METRICS" | grep 'kcp_keb_v2_provisioning_duration_minutes_count{plan_id="ca6e5357-707f-4565-bbbd-b3ab732597c6"}' | awk '{print $2}')
+          PROVISIONING_COUNT=${PROVISIONING_COUNT:-0}
+          if [ "$PROVISIONING_COUNT" -eq 0 ]; then
+            AVG_PROVISIONING_DURATION=0
+          else
+            AVG_PROVISIONING_DURATION=$(awk "BEGIN {printf \"%.2f\", ($PROVISIONING_DURATION / $PROVISIONING_COUNT)}")
+          fi
+          echo "Average duration of provisioning requests: $AVG_PROVISIONING_DURATION minutes" >> $GITHUB_STEP_SUMMARY
+
+          PROVISIONING_DURATION_BUCKETS=$(echo "$METRICS" | grep 'kcp_keb_v2_provisioning_duration_minutes_bucket{plan_id="ca6e5357-707f-4565-bbbd-b3ab732597c6"')
+          INF_TOTAL=$(echo "$PROVISIONING_DURATION_BUCKETS" | grep 'le="+Inf"' | awk '{print $2}')
+          MAX_PROVISIONING_DURATION=$(echo "$PROVISIONING_DURATION_BUCKETS" | grep -v 'le="\+Inf"' | sed -n 's/.*le="\([^"]*\)"} \([0-9]*\)/\1 \2/p' | \
+          while read le count; do
+            if [ "$count" -eq "$INF_TOTAL" ]; then
+              echo "$le"
+              break
+            fi
+          done)
+          echo "Maximum duration of provisioning requests: $MAX_PROVISIONING_DURATION minutes" >> $GITHUB_STEP_SUMMARY
+
+          scripts/generate_charts.sh
