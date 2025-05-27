@@ -289,12 +289,16 @@ jobs:
           PGPASSWORD=$DB_PASS psql -h localhost -p 5432 -U $DB_USER -d $DB_NAME -f resources/installation/migrations/populate_performance_tests_database.up.sql
 
           kill $PORT_FORWARD_PID
-
-      - name: Provision instances
+          
+      - name: Start metrics collector
         run: |
           kubectl port-forward -n kcp-system deployment/kcp-kyma-environment-broker 8080:8080 5432:5432 &
           sleep 5
-          
+          nohup bash scripts/monitor_metrics.sh > /dev/null 2>&1 &
+          echo $! > /tmp/metrics_pid
+
+      - name: Provision instances
+        run: |
           seq 1 ${{ inputs.instances-number }} | xargs -n1 -P8 -I{} bash -c '
             uid=$(uuidgen)
             curl --silent --show-error --fail --request PUT \
@@ -335,38 +339,6 @@ jobs:
             echo "Assertion failed: totalCount is not ${{ inputs.instances-number }}. Actual value: $SUCCEEDED_TOTAL_COUNT"
             exit 1
           fi
-          
-      - name: Start metrics collector
-        run: |
-          PID=$(lsof -ti :8080)
-          if [ -n "$PID" ]; then
-            echo "Killing process using port 8080 (PID: $PID)..."
-            kill -9 $PID
-            echo "Process killed."
-          else
-            echo "No process is using port 8080."
-          fi
-          
-          echo "Restarting kyma-environment-broker pod..."
-          POD_NAME=$(kubectl get pod -l app.kubernetes.io/name=kyma-environment-broker -n kcp-system -o jsonpath='{.items[0].metadata.name}')
-          kubectl delete pod $POD_NAME -n kcp-system
-          
-          echo "Waiting for kyma-environment-broker pod to be in READY state..."
-          kubectl wait --namespace kcp-system --for=condition=Ready pod -l app.kubernetes.io/name=kyma-environment-broker --timeout=60s
-          EXIT_CODE=$?
-          if [ $EXIT_CODE -ne 0 ]; then
-            echo "The kyma-environment-broker pod did not become READY within the timeout."
-            echo "Fetching the logs from the pod..."
-            POD_NAME=$(kubectl get pod -l app.kubernetes.io/name=kyma-environment-broker -n kcp-system -o jsonpath='{.items[0].metadata.name}')
-            kubectl logs $POD_NAME -n kcp-system
-            exit 1
-          fi
-          
-          kubectl port-forward -n kcp-system deployment/kcp-kyma-environment-broker 8080:8080 5432:5432 &
-          sleep 5
-  
-          nohup bash scripts/monitor_metrics.sh > /dev/null 2>&1 &
-          echo $! > /tmp/metrics_pid
         
       - name: Update instances
         timeout-minutes: 60
@@ -467,12 +439,16 @@ jobs:
           PGPASSWORD=$DB_PASS psql -h localhost -p 5432 -U $DB_USER -d $DB_NAME -f resources/installation/migrations/populate_performance_tests_database.up.sql
 
           kill $PORT_FORWARD_PID
-
-      - name: Provision the instance
+          
+      - name: Start metrics collector
         run: |
           kubectl port-forward -n kcp-system deployment/kcp-kyma-environment-broker 8080:8080 5432:5432 &
           sleep 5
+          nohup bash scripts/monitor_metrics.sh > /dev/null 2>&1 &
+          echo $! > /tmp/metrics_pid
 
+      - name: Provision the instance
+        run: |
           curl --request PUT \
             --url http://localhost:8080/oauth/v2/service_instances/azure-cluster \
             --header "Content-Type: application/json" \
@@ -498,38 +474,6 @@ jobs:
             echo "Assertion failed: state is not 'succeeded'. Actual value: $INSTANCE_STATE"
             exit 1
           fi
-
-      - name: Start metrics collector
-        run: |
-          PID=$(lsof -ti :8080)
-          if [ -n "$PID" ]; then
-            echo "Killing process using port 8080 (PID: $PID)..."
-            kill -9 $PID
-            echo "Process killed."
-          else
-            echo "No process is using port 8080."
-          fi
-          
-          echo "Restarting kyma-environment-broker pod..."
-          POD_NAME=$(kubectl get pod -l app.kubernetes.io/name=kyma-environment-broker -n kcp-system -o jsonpath='{.items[0].metadata.name}')
-          kubectl delete pod $POD_NAME -n kcp-system
-          
-          echo "Waiting for kyma-environment-broker pod to be in READY state..."
-          kubectl wait --namespace kcp-system --for=condition=Ready pod -l app.kubernetes.io/name=kyma-environment-broker --timeout=60s
-          EXIT_CODE=$?
-          if [ $EXIT_CODE -ne 0 ]; then
-            echo "The kyma-environment-broker pod did not become READY within the timeout."
-            echo "Fetching the logs from the pod..."
-            POD_NAME=$(kubectl get pod -l app.kubernetes.io/name=kyma-environment-broker -n kcp-system -o jsonpath='{.items[0].metadata.name}')
-            kubectl logs $POD_NAME -n kcp-system
-            exit 1
-          fi
-          
-          kubectl port-forward -n kcp-system deployment/kcp-kyma-environment-broker 8080:8080 5432:5432 &
-          sleep 5
-          
-          nohup bash scripts/monitor_metrics.sh > /dev/null 2>&1 &
-          echo $! > /tmp/metrics_pid
 
       - name: Update the instance
         timeout-minutes: 60
@@ -622,12 +566,16 @@ jobs:
           PGPASSWORD=$DB_PASS psql -h localhost -p 5432 -U $DB_USER -d $DB_NAME -f resources/installation/migrations/populate_performance_tests_database.up.sql
 
           kill $PORT_FORWARD_PID
-
-      - name: Provision instances
+          
+      - name: Start metrics collector
         run: |
           kubectl port-forward -n kcp-system deployment/kcp-kyma-environment-broker 8080:8080 5432:5432 &
           sleep 5
+          nohup bash scripts/monitor_metrics.sh > /dev/null 2>&1 &
+          echo $! > /tmp/metrics_pid
 
+      - name: Provision instances
+        run: |
           seq 1 ${{ inputs.instances-number }} | xargs -n1 -P8 -I{} bash -c '
             uid=$(uuidgen)
             curl --silent --show-error --fail --request PUT \
@@ -668,38 +616,6 @@ jobs:
             echo "Assertion failed: totalCount is not ${{ inputs.instances-number }}. Actual value: $SUCCEEDED_TOTAL_COUNT"
             exit 1
           fi
-
-      - name: Start metrics collector
-        run: |
-          PID=$(lsof -ti :8080)
-          if [ -n "$PID" ]; then
-            echo "Killing process using port 8080 (PID: $PID)..."
-            kill -9 $PID
-            echo "Process killed."
-          else
-            echo "No process is using port 8080."
-          fi
-          
-          echo "Restarting kyma-environment-broker pod..."
-          POD_NAME=$(kubectl get pod -l app.kubernetes.io/name=kyma-environment-broker -n kcp-system -o jsonpath='{.items[0].metadata.name}')
-          kubectl delete pod $POD_NAME -n kcp-system
-          
-          echo "Waiting for kyma-environment-broker pod to be in READY state..."
-          kubectl wait --namespace kcp-system --for=condition=Ready pod -l app.kubernetes.io/name=kyma-environment-broker --timeout=60s
-          EXIT_CODE=$?
-          if [ $EXIT_CODE -ne 0 ]; then
-            echo "The kyma-environment-broker pod did not become READY within the timeout."
-            echo "Fetching the logs from the pod..."
-            POD_NAME=$(kubectl get pod -l app.kubernetes.io/name=kyma-environment-broker -n kcp-system -o jsonpath='{.items[0].metadata.name}')
-            kubectl logs $POD_NAME -n kcp-system
-            exit 1
-          fi
-          
-          kubectl port-forward -n kcp-system deployment/kcp-kyma-environment-broker 8080:8080 5432:5432 &
-          sleep 5
-          
-          nohup bash scripts/monitor_metrics.sh > /dev/null 2>&1 &
-          echo $! > /tmp/metrics_pid
 
       - name: Deprovision instances
         timeout-minutes: 60
@@ -825,12 +741,16 @@ jobs:
           PGPASSWORD=$DB_PASS psql -h localhost -p 5432 -U $DB_USER -d $DB_NAME -f resources/installation/migrations/populate_performance_tests_database.up.sql
 
           kill $PORT_FORWARD_PID
-
-      - name: Prepare instances for update and deprovisioning
+          
+      - name: Start metrics collector
         run: |
           kubectl port-forward -n kcp-system deployment/kcp-kyma-environment-broker 8080:8080 5432:5432 &
           sleep 5
-          
+          nohup bash scripts/monitor_metrics.sh > /dev/null 2>&1 &
+          echo $! > /tmp/metrics_pid
+
+      - name: Prepare instances for update and deprovisioning
+        run: |
           seq 1 ${{ inputs.instances-number }} | xargs -n1 -P8 -I{} bash -c '
             uid=$(uuidgen)
             curl --silent --show-error --fail --request PUT \
@@ -871,38 +791,6 @@ jobs:
             echo "Assertion failed: totalCount is not ${{ inputs.instances-number }}. Actual value: $SUCCEEDED_TOTAL_COUNT"
             exit 1
           fi
-          
-      - name: Start metrics collector
-        run: |
-          PID=$(lsof -ti :8080)
-          if [ -n "$PID" ]; then
-            echo "Killing process using port 8080 (PID: $PID)..."
-            kill -9 $PID
-            echo "Process killed."
-          else
-            echo "No process is using port 8080."
-          fi
-          
-          echo "Restarting kyma-environment-broker pod..."
-          POD_NAME=$(kubectl get pod -l app.kubernetes.io/name=kyma-environment-broker -n kcp-system -o jsonpath='{.items[0].metadata.name}')
-          kubectl delete pod $POD_NAME -n kcp-system
-          
-          echo "Waiting for kyma-environment-broker pod to be in READY state..."
-          kubectl wait --namespace kcp-system --for=condition=Ready pod -l app.kubernetes.io/name=kyma-environment-broker --timeout=60s
-          EXIT_CODE=$?
-          if [ $EXIT_CODE -ne 0 ]; then
-            echo "The kyma-environment-broker pod did not become READY within the timeout."
-            echo "Fetching the logs from the pod..."
-            POD_NAME=$(kubectl get pod -l app.kubernetes.io/name=kyma-environment-broker -n kcp-system -o jsonpath='{.items[0].metadata.name}')
-            kubectl logs $POD_NAME -n kcp-system
-            exit 1
-          fi
-          
-          kubectl port-forward -n kcp-system deployment/kcp-kyma-environment-broker 8080:8080 5432:5432 &
-          sleep 5
-          
-          nohup bash scripts/monitor_metrics.sh > /dev/null 2>&1 &
-          echo $! > /tmp/metrics_pid
 
       - name: Run mixed operations
         run: |
