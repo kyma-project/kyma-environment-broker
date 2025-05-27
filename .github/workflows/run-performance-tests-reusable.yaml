@@ -835,6 +835,7 @@ jobs:
           METRICS=$(curl -s http://localhost:8080/metrics)
 
           SUCCEEDED_TOTAL=$(echo "$METRICS" | grep 'kcp_keb_v2_operations_provisioning_succeeded_total{plan_id="ca6e5357-707f-4565-bbbd-b3ab732597c6"}' | awk '{print $2}')
+          echo $SUCCEEDED_TOTAL
           SUCCEEDED_TOTAL=${SUCCEEDED_TOTAL:-0}
           FAILED_TOTAL=$(echo "$METRICS" | grep 'kcp_keb_v2_operations_provisioning_failed_total{plan_id="ca6e5357-707f-4565-bbbd-b3ab732597c6"}' | awk '{print $2}')
           FAILED_TOTAL=${FAILED_TOTAL:-0}
