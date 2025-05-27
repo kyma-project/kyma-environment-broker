@@ -44,6 +44,14 @@ on:
         description: amount of workers in update queue
         default: 20
         type: number
+      deprovsioning-max-step-processing-time:
+        description: max time to process a step in deprovisioning queue
+        default: 30s
+        type: string
+      deprovisioning-workers-amount:
+        description: amount of workers in deprovisioning queue
+        default: 20
+        type: number
 
 jobs:
   validate-keb-helm-chart:

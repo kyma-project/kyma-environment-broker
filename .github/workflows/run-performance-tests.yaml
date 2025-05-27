@@ -22,3 +22,5 @@ jobs:
       provisioning-workers-amount: 20
       update-max-step-processing-time: 30s
       update-workers-amount: 20
+      deprovisioning-max-step-processing-time: 30s
+      deprovisioning-workers-amount: 20
