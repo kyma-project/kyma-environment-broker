@@ -56,7 +56,6 @@ on:
 jobs:
   prepare-tests:
     runs-on: ubuntu-latest
-    needs: validate-keb-helm-chart
     outputs:
       versions: ${{ steps.get-versions.outputs.k3s_versions }}
     steps:
