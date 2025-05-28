@@ -16,16 +16,10 @@ set -o pipefail # prevents errors in a pipeline from being masked
 KIM_DELAY_SECONDS="${KIM_DELAY_SECONDS:-${1:-60}}"
 
 get_provisioning_runtimes() {
-  local count
-  if ! count=$(curl --silent --fail --request GET \
-      --url http://localhost:8080/runtimes?state=provisioning \
-      --header 'Content-Type: application/json' \
-      --header 'X-Broker-API-Version: 2.16' | jq .totalCount); then
-    echo "Warning: Failed to fetch provisioning runtimes. Assuming at least 1 remains." >&2
-    echo 1
-  else
-    echo "$count"
-  fi
+  curl --request GET \
+    --url http://localhost:8080/runtimes?state=provisioning \
+    --header 'Content-Type: application/json' \
+    --header 'X-Broker-API-Version: 2.16' | jq .totalCount
 }
 
 is_older_than_threshold() {
@@ -67,15 +61,6 @@ while (( COUNT > 0 )); do
   if (( COUNT == 0 )); then
     echo "All runtimes are ready. Done."
     break
-  elif (( COUNT == 1 )); then
-    PID=$(lsof -ti :8080)
-    if [ -z "$PID" ]; then
-      echo "Starting port-forwarding to kcp-kyma-environment-broker..."
-      kubectl port-forward -n kcp-system deployment/kcp-kyma-environment-broker 8080:8080 5432:5432 &
-      sleep 5
-    else
-      echo "Port 8080 is already in use by PID $PID"
-    fi
   fi
   
   echo "Provisioning runtimes remaining: $COUNT"
