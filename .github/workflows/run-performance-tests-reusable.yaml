@@ -989,7 +989,7 @@ jobs:
           
       - name: Start metrics collector
         run: |
-          kubectl port-forward -n kcp-system deployment/kcp-kyma-environment-broker 8080:8080 5432:5432 &
+          kubectl port-forward -n kcp-system deployment/kcp-kyma-environment-broker 8080:8080 &
           sleep 5
           nohup bash scripts/monitor_metrics.sh > /dev/null 2>&1 &
           echo $! > /tmp/metrics_pid
