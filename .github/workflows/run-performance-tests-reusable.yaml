@@ -1003,25 +1003,16 @@ jobs:
 
           echo "<div align=\"center\">" >> "$GITHUB_STEP_SUMMARY"
           echo "" >> "$GITHUB_STEP_SUMMARY"
-          echo "| Number of Instances | Average Time per Page | Maximum Time per Page | Total Fetch Time |" >> $GITHUB_STEP_SUMMARY
-          echo "| :---: | :---: | :---: | :---: |" >> $GITHUB_STEP_SUMMARY
+          echo "| Number of Instances | Average Time per Page | Maximum Time per Page |" >> $GITHUB_STEP_SUMMARY
+          echo "| :---: | :---: | :---: |" >> $GITHUB_STEP_SUMMARY
 
           fetch_and_measure() {
             local num_instances=$1
             local pages=$2
 
-            START_TIME=$(date +%s%3N)
-            curl --silent --request GET \
-              --url http://localhost:8080/runtimes \
-              --header 'Content-Type: application/json' \
-              --header 'X-Broker-API-Version: 2.16' > /dev/null
-            END_TIME=$(date +%s%3N)
-            INITIAL_FETCH_TIME=$((END_TIME - START_TIME))
-
             TOTAL_TIME=0
             MAX_TIME=0
 
-            START_ALL=$(date +%s%3N)
             for PAGE in $(seq 1 $pages); do
               START=$(date +%s%3N)
               curl --silent --request GET \
@@ -1035,11 +1026,9 @@ jobs:
                 MAX_TIME=$ELAPSED
               fi
             done
-            END_ALL=$(date +%s%3N)
-            ALL_ELAPSED=$((END_ALL - START_ALL))
             AVG_TIME=$((TOTAL_TIME / pages))
 
-            echo "| $num_instances | $AVG_TIME ms | $MAX_TIME ms | $ALL_ELAPSED ms |" >> $GITHUB_STEP_SUMMARY
+            echo "| $num_instances | $AVG_TIME ms | $MAX_TIME ms |" >> $GITHUB_STEP_SUMMARY
           }
 
           # 1k
@@ -1056,7 +1045,7 @@ jobs:
           for i in {1..90}; do
             PGPASSWORD=$DB_PASS psql -h localhost -p 5432 -U $DB_USER -d $DB_NAME -f resources/installation/migrations/populate_performance_tests_database.up.sql
           done
-          fetch_and_measure 100000 1000
+          fetch_and_measure 100000 100
 
           echo "</div>" >> "$GITHUB_STEP_SUMMARY"
 
