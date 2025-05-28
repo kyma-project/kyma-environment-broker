@@ -751,7 +751,7 @@ jobs:
 
       - name: Prepare instances for update and deprovisioning
         run: |
-          # Instances for updating
+          # Instances for update
           seq 1 ${{ inputs.instances-number }} | xargs -n1 -P8 -I{} bash -c '
             uid=$(uuidgen)
             curl --silent --show-error --fail --request PUT \
@@ -805,10 +805,18 @@ jobs:
           INSTANCES_NUMBER=$(( 2 * ${{ inputs.instances-number }} ))
           
           RESPONSE_JSON=$(curl --request GET \
-            --url "http://localhost:8080/runtimes?plan=azure,azure_lite&state=succeeded" \
+            --url "http://localhost:8080/runtimes?plan=azure&state=succeeded" \
             --header 'Content-Type: application/json' \
             --header 'X-Broker-API-Version: 2.16')
           SUCCEEDED_TOTAL_COUNT=$(echo "$RESPONSE_JSON" | jq .totalCount)
+          echo $SUCCEEDED_TOTAL_COUNT
+          
+          RESPONSE_JSON=$(curl --request GET \
+            --url "http://localhost:8080/runtimes?plan=azure_lite&state=succeeded" \
+            --header 'Content-Type: application/json' \
+            --header 'X-Broker-API-Version: 2.16')
+          SUCCEEDED_TOTAL_COUNT=$(echo "$RESPONSE_JSON" | jq .totalCount)
+          echo $SUCCEEDED_TOTAL_COUNT
 
           if [ "$SUCCEEDED_TOTAL_COUNT" -eq "$INSTANCES_NUMBER" ]; then
             echo "Assertion passed: totalCount is $SUCCEEDED_TOTAL_COUNT"
@@ -820,7 +828,6 @@ jobs:
       - name: Run mixed operations
         run: |
           # Provisioning requests
-          
           seq 1 ${{ inputs.instances-number }} | xargs -n1 -P8 -I{} bash -c '
             uid=$(uuidgen)
             curl --silent --show-error --fail --request PUT \
@@ -843,7 +850,6 @@ jobs:
           fi
           
           # Deprovisioning requests
-          
           PAGE=1
           while true; do
             RESPONSE=$(curl --silent --show-error --fail --request GET \
