@@ -1002,8 +1002,8 @@ jobs:
 
           kill $PORT_FORWARD_PID
           
-          echo "| Number of instances | Time of fetching one page | Time of fetching all pages |"
-          echo "| :---: | :---: | :---: |"
+          echo "| Number of instances | Time of fetching one page | Time of fetching all pages |" >> $GITHUB_STEP_SUMMARY
+          echo "| :---: | :---: | :---: |" >> $GITHUB_STEP_SUMMARY
           
           START_TIME=$(date +%s%3N)
           RUNTIMES=$(curl --request GET \
@@ -1023,7 +1023,7 @@ jobs:
           END_TIME=$(date +%s%3N)
           ALL_RUNTIMES_ELAPSED=$((END_TIME - START_TIME))
           
-          echo "| 1000 | $ELAPSED milliseconds | $ALL_RUNTIMES_ELAPSED milliseconds |"
+          echo "| 1000 | $ELAPSED milliseconds | $ALL_RUNTIMES_ELAPSED milliseconds |" >> $GITHUB_STEP_SUMMARY
 
       - name: Start metrics collector
         run: |
