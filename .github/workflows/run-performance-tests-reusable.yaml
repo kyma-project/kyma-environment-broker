@@ -200,6 +200,11 @@ jobs:
           echo "Maximum duration of provisioning requests: $MAX_PROVISIONING_DURATION minutes" >> $GITHUB_STEP_SUMMARY
           
           scripts/generate_charts.sh
+          
+          if [[ "$SUCCESS_RATE" != "100.00" ]]; then
+            echo "Error: SUCCESS_RATE is $SUCCESS_RATE, expected 100.00"
+            exit 1
+          fi
 
   run-concurrent-update-test:
     runs-on: ubuntu-latest
@@ -353,6 +358,11 @@ jobs:
           
           scripts/generate_charts.sh
           
+          if [[ "$SUCCESS_RATE" != "100.00" ]]; then
+            echo "Error: SUCCESS_RATE is $SUCCESS_RATE, expected 100.00"
+            exit 1
+          fi
+          
   run-updates-on-a-single-instance-test:
     runs-on: ubuntu-latest
     needs: prepare-tests
@@ -477,6 +487,11 @@ jobs:
           echo "Success rate of update requests: $SUCCESS_RATE%" >> $GITHUB_STEP_SUMMARY
 
           scripts/generate_charts.sh
+          
+          if [[ "$SUCCESS_RATE" != "100.00" ]]; then
+            echo "Error: SUCCESS_RATE is $SUCCESS_RATE, expected 100.00"
+            exit 1
+          fi
           
   run-concurrent-deprovisoning-test:
     runs-on: ubuntu-latest
@@ -639,6 +654,11 @@ jobs:
           echo "Average duration of deprovisioning requests: $AVG_DEPROVISIONING_DURATION minutes" >> $GITHUB_STEP_SUMMARY
 
           scripts/generate_charts.sh
+          
+          if [[ "$SUCCESS_RATE" != "100.00" ]]; then
+            echo "Error: SUCCESS_RATE is $SUCCESS_RATE, expected 100.00"
+            exit 1
+          fi
           
   run-mixed-operations-test:
     runs-on: ubuntu-latest
@@ -861,11 +881,11 @@ jobs:
           FAILED_TOTAL=${FAILED_TOTAL:-0}
           TOTAL=$(echo "$SUCCEEDED_TOTAL + $FAILED_TOTAL" | bc)
           if [ "$TOTAL" -eq 0 ]; then
-            SUCCESS_RATE=0
+            PROVISIONING_SUCCESS_RATE=0
           else
-            SUCCESS_RATE=$(awk "BEGIN {printf \"%.2f\", ($SUCCEEDED_TOTAL / $TOTAL) * 100}")
+            PROVISIONING_SUCCESS_RATE=$(awk "BEGIN {printf \"%.2f\", ($SUCCEEDED_TOTAL / $TOTAL) * 100}")
           fi
-          echo "Success rate of provisioning requests: $SUCCESS_RATE%" >> $GITHUB_STEP_SUMMARY
+          echo "Success rate of provisioning requests: $PROVISIONING_SUCCESS_RATE%" >> $GITHUB_STEP_SUMMARY
 
           PROVISIONING_DURATION=$(echo "$METRICS" | grep 'kcp_keb_v2_provisioning_duration_minutes_sum{plan_id="ca6e5357-707f-4565-bbbd-b3ab732597c6"}' | awk '{print $2}')
           PROVISIONING_DURATION=${PROVISIONING_DURATION:-0}
@@ -898,11 +918,11 @@ jobs:
           FAILED_TOTAL=${FAILED_TOTAL:-0}
           TOTAL=$(echo "$SUCCEEDED_TOTAL + $FAILED_TOTAL" | bc)
           if [ "$TOTAL" -eq 0 ]; then
-            SUCCESS_RATE=0
+            UPDATE_SUCCESS_RATE=0
           else
-            SUCCESS_RATE=$(awk "BEGIN {printf \"%.2f\", ($SUCCEEDED_TOTAL / $TOTAL) * 100}")
+            UPDATE_SUCCESS_RATE=$(awk "BEGIN {printf \"%.2f\", ($SUCCEEDED_TOTAL / $TOTAL) * 100}")
           fi
-          echo "Success rate of update requests: $SUCCESS_RATE%" >> $GITHUB_STEP_SUMMARY
+          echo "Success rate of update requests: $UPDATE_SUCCESS_RATE%" >> $GITHUB_STEP_SUMMARY
           
           # Deprovisioning metrics
           
@@ -913,11 +933,11 @@ jobs:
           FAILED_TOTAL=${FAILED_TOTAL:-0}
           TOTAL=$(echo "$SUCCEEDED_TOTAL + $FAILED_TOTAL" | bc)
           if [ "$TOTAL" -eq 0 ]; then
-            SUCCESS_RATE=0
+            DEPROVISIONING_SUCCESS_RATE=0
           else
-            SUCCESS_RATE=$(awk "BEGIN {printf \"%.2f\", ($SUCCEEDED_TOTAL / $TOTAL) * 100}")
+            DEPROVISIONING_SUCCESS_RATE=$(awk "BEGIN {printf \"%.2f\", ($SUCCEEDED_TOTAL / $TOTAL) * 100}")
           fi
-          echo "Success rate of deprovisioning requests: $SUCCESS_RATE%" >> $GITHUB_STEP_SUMMARY
+          echo "Success rate of deprovisioning requests: $DEPROVISIONING_SUCCESS_RATE%" >> $GITHUB_STEP_SUMMARY
           
           DEPROVISIONING_DURATION=$(echo "$METRICS" | grep 'kcp_keb_v2_deprovisioning_duration_minutes_sum{plan_id="4deee563-e5ec-4731-b9b1-53b42d855f0c"}' | awk '{print $2}')
           DEPROVISIONING_DURATION=${DEPROVISIONING_DURATION:-0}
@@ -931,3 +951,18 @@ jobs:
           echo "Average duration of deprovisioning requests: $AVG_DEPROVISIONING_DURATION minutes" >> $GITHUB_STEP_SUMMARY
 
           scripts/generate_charts.sh
+          
+          if [[ "$PROVISIONING_SUCCESS_RATE" != "100.00" ]]; then
+            echo "Error: PROVISIONING_SUCCESS_RATE is $PROVISIONING_SUCCESS_RATE, expected 100.00"
+            exit 1
+          fi
+          
+          if [[ "$UPDATE_SUCCESS_RATE" != "100.00" ]]; then
+            echo "Error: UPDATE_SUCCESS_RATE is $UPDATE_SUCCESS_RATE, expected 100.00"
+            exit 1
+          fi
+          
+          if [[ "$DEPROVISIONING_SUCCESS_RATE" != "100.00" ]]; then
+            echo "Error: DEPROVISIONING_SUCCESS_RATE is $DEPROVISIONING_SUCCESS_RATE, expected 100.00"
+            exit 1
+          fi
