@@ -278,6 +278,8 @@ spec:
               value: /config/trialRegionMapping.yaml
             - name: APP_UPDATE_PROCESSING_ENABLED
               value: "{{ .Values.osbUpdateProcessingEnabled }}"
+            - name: APP_BROKER_GARDENER_SEEDS_CACHE_CONFIG_MAP_NAME
+              value: "gardener-seeds-cache"
           ports:
             - name: http
               containerPort: {{ .Values.broker.port }}
