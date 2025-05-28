@@ -1048,6 +1048,7 @@ jobs:
           fetch_and_measure 100000 100
 
           echo "</div>" >> "$GITHUB_STEP_SUMMARY"
+          echo "" >> "$GITHUB_STEP_SUMMARY"
           
           SUCCESS_COUNT=0
           for i in {1..100}; do
