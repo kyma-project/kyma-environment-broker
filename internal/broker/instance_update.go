@@ -328,10 +328,9 @@ func (b *UpdateEndpoint) processUpdateParameters(instance *internal.Instance, de
 		updateStorage = append(updateStorage, "OIDC")
 	}
 
-	if b.infrastructureManagerConfig.EnableIngressFiltering {
+	if b.infrastructureManagerConfig.EnableIngressFiltering && params.IngressFiltering != nil {
 		instance.Parameters.Parameters.IngressFiltering = params.IngressFiltering
 		updateStorage = append(updateStorage, "Ingress Filtering")
-
 	}
 
 	if len(params.RuntimeAdministrators) != 0 {
