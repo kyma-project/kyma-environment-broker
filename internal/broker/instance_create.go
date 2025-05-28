@@ -14,36 +14,28 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/kyma-project/kyma-environment-broker/internal/additionalproperties"
-	"github.com/kyma-project/kyma-environment-broker/internal/config"
-
-	"github.com/kyma-project/kyma-environment-broker/internal/validator"
-	"github.com/santhosh-tekuri/jsonschema/v6"
-
-	"github.com/kyma-project/kyma-environment-broker/internal/kubeconfig"
-	"github.com/kyma-project/kyma-environment-broker/internal/whitelist"
-
-	"github.com/kyma-project/kyma-environment-broker/internal/storage/dbmodel"
-
-	"github.com/kyma-project/kyma-environment-broker/internal/networking"
-
-	"github.com/hashicorp/go-multierror"
-
-	"github.com/kyma-project/kyma-environment-broker/internal/euaccess"
-
-	"k8s.io/client-go/tools/clientcmd"
-
 	"github.com/google/uuid"
+	"github.com/hashicorp/go-multierror"
 	"github.com/kyma-project/kyma-environment-broker/common/gardener"
 	pkg "github.com/kyma-project/kyma-environment-broker/common/runtime"
 	"github.com/kyma-project/kyma-environment-broker/internal"
+	"github.com/kyma-project/kyma-environment-broker/internal/additionalproperties"
+	"github.com/kyma-project/kyma-environment-broker/internal/config"
 	"github.com/kyma-project/kyma-environment-broker/internal/dashboard"
+	"github.com/kyma-project/kyma-environment-broker/internal/euaccess"
+	"github.com/kyma-project/kyma-environment-broker/internal/kubeconfig"
 	"github.com/kyma-project/kyma-environment-broker/internal/middleware"
+	"github.com/kyma-project/kyma-environment-broker/internal/networking"
 	"github.com/kyma-project/kyma-environment-broker/internal/ptr"
 	"github.com/kyma-project/kyma-environment-broker/internal/storage"
 	"github.com/kyma-project/kyma-environment-broker/internal/storage/dberr"
+	"github.com/kyma-project/kyma-environment-broker/internal/storage/dbmodel"
+	"github.com/kyma-project/kyma-environment-broker/internal/validator"
+	"github.com/kyma-project/kyma-environment-broker/internal/whitelist"
 	"github.com/pivotal-cf/brokerapi/v12/domain"
 	"github.com/pivotal-cf/brokerapi/v12/domain/apiresponses"
+	"github.com/santhosh-tekuri/jsonschema/v6"
+	"k8s.io/client-go/tools/clientcmd"
 )
 
 //go:generate mockery --name=Queue --output=automock --outpkg=automock --case=underscore
