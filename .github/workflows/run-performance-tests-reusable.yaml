@@ -986,6 +986,13 @@ jobs:
           else
             make install VERSION=PR-${{ inputs.version }}
           fi
+          
+      - name: Start metrics collector
+        run: |
+          kubectl port-forward -n kcp-system deployment/kcp-kyma-environment-broker 8080:8080 5432:5432 &
+          sleep 5
+          nohup bash scripts/monitor_metrics.sh > /dev/null 2>&1 &
+          echo $! > /tmp/metrics_pid
 
       - name: Thousand of instances
         run: |
@@ -1024,13 +1031,6 @@ jobs:
           ALL_RUNTIMES_ELAPSED=$((END_TIME - START_TIME))
           
           echo "| 1000 | $ELAPSED milliseconds | $ALL_RUNTIMES_ELAPSED milliseconds |" >> $GITHUB_STEP_SUMMARY
-
-      - name: Start metrics collector
-        run: |
-          kubectl port-forward -n kcp-system deployment/kcp-kyma-environment-broker 8080:8080 5432:5432 &
-          sleep 5
-          nohup bash scripts/monitor_metrics.sh > /dev/null 2>&1 &
-          echo $! > /tmp/metrics_pid
 
       - name: Fetch metrics
         run: scripts/generate_charts.sh
