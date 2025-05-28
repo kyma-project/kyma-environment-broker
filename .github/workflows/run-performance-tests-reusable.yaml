@@ -136,11 +136,11 @@ jobs:
         run: |
           seq 1 ${{ inputs.instances-number }} | xargs -n1 -P8 -I{} bash -c '
             uid=$(uuidgen)
-            curl --silent --show-error --fail --request PUT \
+            curl --request PUT \
               --url http://localhost:8080/oauth/v2/service_instances/$uid \
               --header "Content-Type: application/json" \
               --header "X-Broker-API-Version: 2.16" \
-              --data "{\"service_id\":\"47c9dcbf-ff30-448e-ab36-d3bad66ba281\",\"plan_id\":\"4deee563-e5ec-4731-b9b1-53b42d855f0c\",\"context\":{\"globalaccount_id\":\"2f5011af-2fd3-44ba-ac60-eeb1148c2995\",\"subaccount_id\":\"8b9a0db4-9aef-4da2-a856-61a4420b66fd\",\"user_id\":\"user@email.com\"},\"parameters\":{\"name\":\"azure-cluster\",\"region\":\"northeurope\"}}" > /dev/null 2>&1
+              --data "{\"service_id\":\"47c9dcbf-ff30-448e-ab36-d3bad66ba281\",\"plan_id\":\"4deee563-e5ec-4731-b9b1-53b42d855f0c\",\"context\":{\"globalaccount_id\":\"2f5011af-2fd3-44ba-ac60-eeb1148c2995\",\"subaccount_id\":\"8b9a0db4-9aef-4da2-a856-61a4420b66fd\",\"user_id\":\"user@email.com\"},\"parameters\":{\"name\":\"azure-cluster\",\"region\":\"northeurope\"}}"
           '
           
           TOTAL_COUNT=$(curl --request GET \
@@ -254,11 +254,11 @@ jobs:
         run: |
           seq 1 ${{ inputs.instances-number }} | xargs -n1 -P8 -I{} bash -c '
             uid=$(uuidgen)
-            curl --silent --show-error --fail --request PUT \
+            curl --request PUT \
               --url http://localhost:8080/oauth/v2/service_instances/$uid \
               --header "Content-Type: application/json" \
               --header "X-Broker-API-Version: 2.16" \
-              --data "{\"service_id\":\"47c9dcbf-ff30-448e-ab36-d3bad66ba281\",\"plan_id\":\"4deee563-e5ec-4731-b9b1-53b42d855f0c\",\"context\":{\"globalaccount_id\":\"2f5011af-2fd3-44ba-ac60-eeb1148c2995\",\"subaccount_id\":\"8b9a0db4-9aef-4da2-a856-61a4420b66fd\",\"user_id\":\"user@email.com\"},\"parameters\":{\"name\":\"azure-cluster\",\"region\":\"northeurope\"}}" > /dev/null 2>&1
+              --data "{\"service_id\":\"47c9dcbf-ff30-448e-ab36-d3bad66ba281\",\"plan_id\":\"4deee563-e5ec-4731-b9b1-53b42d855f0c\",\"context\":{\"globalaccount_id\":\"2f5011af-2fd3-44ba-ac60-eeb1148c2995\",\"subaccount_id\":\"8b9a0db4-9aef-4da2-a856-61a4420b66fd\",\"user_id\":\"user@email.com\"},\"parameters\":{\"name\":\"azure-cluster\",\"region\":\"northeurope\"}}"
           '
 
           TOTAL_COUNT=$(curl --request GET \
@@ -299,7 +299,7 @@ jobs:
           PAGE=1
           
           while true; do
-            RESPONSE=$(curl --silent --show-error --fail --request GET \
+            RESPONSE=$(curl --request GET \
               --url "http://localhost:8080/runtimes?plan=azure&page=$PAGE" \
               --header 'Content-Type: application/json' \
               --header 'X-Broker-API-Version: 2.16')
@@ -310,11 +310,11 @@ jobs:
             fi
           
             echo "$RESPONSE" | jq -r '.data[].instanceID' | while read -r INSTANCE_ID; do
-              curl --silent --show-error --fail --request PATCH \
+              curl --request PATCH \
                 --url "http://localhost:8080/oauth/v2/service_instances/$INSTANCE_ID?accepts_incomplete=true" \
                 --header "Content-Type: application/json" \
                 --header "X-Broker-API-Version: 2.16" \
-                --data '{"service_id":"47c9dcbf-ff30-448e-ab36-d3bad66ba281","plan_id":"4deee563-e5ec-4731-b9b1-53b42d855f0c","context":{"globalaccount_id":"2f5011af-2fd3-44ba-ac60-eeb1148c2995","subaccount_id":"8b9a0db4-9aef-4da2-a856-61a4420b66fd","user_id":"user@email.com"},"parameters":{"autoScalerMax":15}}' > /dev/null 2>&1
+                --data '{"service_id":"47c9dcbf-ff30-448e-ab36-d3bad66ba281","plan_id":"4deee563-e5ec-4731-b9b1-53b42d855f0c","context":{"globalaccount_id":"2f5011af-2fd3-44ba-ac60-eeb1148c2995","subaccount_id":"8b9a0db4-9aef-4da2-a856-61a4420b66fd","user_id":"user@email.com"},"parameters":{"autoScalerMax":15}}'
             done
           
             PAGE=$((PAGE + 1))
@@ -433,11 +433,11 @@ jobs:
         run: |
           max=5
           for i in $(seq 1 ${{ inputs.updates-number }}); do
-            curl --silent --show-error --fail --request PATCH \
+            curl --request PATCH \
               --url "http://localhost:8080/oauth/v2/service_instances/azure-cluster?accepts_incomplete=true" \
               --header "Content-Type: application/json" \
               --header "X-Broker-API-Version: 2.16" \
-              --data "{\"service_id\":\"47c9dcbf-ff30-448e-ab36-d3bad66ba281\",\"plan_id\":\"4deee563-e5ec-4731-b9b1-53b42d855f0c\",\"context\":{\"globalaccount_id\":\"2f5011af-2fd3-44ba-ac60-eeb1148c2995\",\"subaccount_id\":\"8b9a0db4-9aef-4da2-a856-61a4420b66fd\",\"user_id\":\"user@email.com\"},\"parameters\":{\"autoScalerMax\":$max}}" > /dev/null 2>&1
+              --data "{\"service_id\":\"47c9dcbf-ff30-448e-ab36-d3bad66ba281\",\"plan_id\":\"4deee563-e5ec-4731-b9b1-53b42d855f0c\",\"context\":{\"globalaccount_id\":\"2f5011af-2fd3-44ba-ac60-eeb1148c2995\",\"subaccount_id\":\"8b9a0db4-9aef-4da2-a856-61a4420b66fd\",\"user_id\":\"user@email.com\"},\"parameters\":{\"autoScalerMax\":$max}}"
     
             max=$((max + 1))
             if [ "$max" -gt 100 ]; then
@@ -531,11 +531,11 @@ jobs:
         run: |
           seq 1 ${{ inputs.instances-number }} | xargs -n1 -P8 -I{} bash -c '
             uid=$(uuidgen)
-            curl --silent --show-error --fail --request PUT \
+            curl --request PUT \
               --url http://localhost:8080/oauth/v2/service_instances/$uid \
               --header "Content-Type: application/json" \
               --header "X-Broker-API-Version: 2.16" \
-              --data "{\"service_id\":\"47c9dcbf-ff30-448e-ab36-d3bad66ba281\",\"plan_id\":\"4deee563-e5ec-4731-b9b1-53b42d855f0c\",\"context\":{\"globalaccount_id\":\"2f5011af-2fd3-44ba-ac60-eeb1148c2995\",\"subaccount_id\":\"8b9a0db4-9aef-4da2-a856-61a4420b66fd\",\"user_id\":\"user@email.com\"},\"parameters\":{\"name\":\"azure-cluster\",\"region\":\"northeurope\"}}" > /dev/null 2>&1
+              --data "{\"service_id\":\"47c9dcbf-ff30-448e-ab36-d3bad66ba281\",\"plan_id\":\"4deee563-e5ec-4731-b9b1-53b42d855f0c\",\"context\":{\"globalaccount_id\":\"2f5011af-2fd3-44ba-ac60-eeb1148c2995\",\"subaccount_id\":\"8b9a0db4-9aef-4da2-a856-61a4420b66fd\",\"user_id\":\"user@email.com\"},\"parameters\":{\"name\":\"azure-cluster\",\"region\":\"northeurope\"}}"
           '
 
           TOTAL_COUNT=$(curl --request GET \
@@ -576,7 +576,7 @@ jobs:
           PAGE=1
 
           while true; do
-            RESPONSE=$(curl --silent --show-error --fail --request GET \
+            RESPONSE=$(curl --request GET \
               --url "http://localhost:8080/runtimes?plan=azure&page=$PAGE" \
               --header 'Content-Type: application/json' \
               --header 'X-Broker-API-Version: 2.16')
@@ -587,11 +587,11 @@ jobs:
             fi
 
             echo "$RESPONSE" | jq -r '.data[].instanceID' | while read -r INSTANCE_ID; do
-              curl --silent --show-error --fail --request DELETE \
+              curl --request DELETE \
                 --url "http://localhost:8080/oauth/v2/service_instances/$INSTANCE_ID?accepts_incomplete=true&service_id=47c9dcbf-ff30-448e-ab36-d3bad66ba281&plan_id=4deee563-e5ec-4731-b9b1-53b42d855f0c" \
                 --header "Content-Type: application/json" \
                 --header "X-Broker-API-Version: 2.16" \
-                --data '{"service_id":"47c9dcbf-ff30-448e-ab36-d3bad66ba281","plan_id":"4deee563-e5ec-4731-b9b1-53b42d855f0c","context":{"globalaccount_id":"2f5011af-2fd3-44ba-ac60-eeb1148c2995","subaccount_id":"8b9a0db4-9aef-4da2-a856-61a4420b66fd","user_id":"user@email.com"}}' > /dev/null 2>&1
+                --data '{"service_id":"47c9dcbf-ff30-448e-ab36-d3bad66ba281","plan_id":"4deee563-e5ec-4731-b9b1-53b42d855f0c","context":{"globalaccount_id":"2f5011af-2fd3-44ba-ac60-eeb1148c2995","subaccount_id":"8b9a0db4-9aef-4da2-a856-61a4420b66fd","user_id":"user@email.com"}}'
             done
 
             PAGE=$((PAGE + 1))
@@ -696,11 +696,11 @@ jobs:
           # Instances for update
           seq 1 ${{ inputs.instances-number }} | xargs -n1 -P8 -I{} bash -c '
             uid=$(uuidgen)
-            curl --silent --show-error --fail --request PUT \
+            curl --request PUT \
               --url "http://localhost:8080/oauth/v2/service_instances/$uid" \
               --header "Content-Type: application/json" \
               --header "X-Broker-API-Version: 2.16" \
-              --data "{\"service_id\":\"47c9dcbf-ff30-448e-ab36-d3bad66ba281\",\"plan_id\":\"8cb22518-aa26-44c5-91a0-e669ec9bf443\",\"context\":{\"globalaccount_id\":\"2f5011af-2fd3-44ba-ac60-eeb1148c2995\",\"subaccount_id\":\"8b9a0db4-9aef-4da2-a856-61a4420b66fd\",\"user_id\":\"user@email.com\"},\"parameters\":{\"name\":\"azure-lite-cluster\",\"region\":\"northeurope\"}}" > /dev/null 2>&1
+              --data "{\"service_id\":\"47c9dcbf-ff30-448e-ab36-d3bad66ba281\",\"plan_id\":\"8cb22518-aa26-44c5-91a0-e669ec9bf443\",\"context\":{\"globalaccount_id\":\"2f5011af-2fd3-44ba-ac60-eeb1148c2995\",\"subaccount_id\":\"8b9a0db4-9aef-4da2-a856-61a4420b66fd\",\"user_id\":\"user@email.com\"},\"parameters\":{\"name\":\"azure-lite-cluster\",\"region\":\"northeurope\"}}"
           '
 
           TOTAL_COUNT=$(curl --request GET \
@@ -718,11 +718,11 @@ jobs:
           # Instances for deprovisioning
           seq 1 ${{ inputs.instances-number }} | xargs -n1 -P8 -I{} bash -c '
             uid=$(uuidgen)
-            curl --silent --show-error --fail --request PUT \
+            curl --request PUT \
               --url http://localhost:8080/oauth/v2/service_instances/$uid \
               --header "Content-Type: application/json" \
               --header "X-Broker-API-Version: 2.16" \
-              --data "{\"service_id\":\"47c9dcbf-ff30-448e-ab36-d3bad66ba281\",\"plan_id\":\"4deee563-e5ec-4731-b9b1-53b42d855f0c\",\"context\":{\"globalaccount_id\":\"2f5011af-2fd3-44ba-ac60-eeb1148c2995\",\"subaccount_id\":\"8b9a0db4-9aef-4da2-a856-61a4420b66fd\",\"user_id\":\"user@email.com\"},\"parameters\":{\"name\":\"azure-cluster\",\"region\":\"northeurope\"}}" > /dev/null 2>&1
+              --data "{\"service_id\":\"47c9dcbf-ff30-448e-ab36-d3bad66ba281\",\"plan_id\":\"4deee563-e5ec-4731-b9b1-53b42d855f0c\",\"context\":{\"globalaccount_id\":\"2f5011af-2fd3-44ba-ac60-eeb1148c2995\",\"subaccount_id\":\"8b9a0db4-9aef-4da2-a856-61a4420b66fd\",\"user_id\":\"user@email.com\"},\"parameters\":{\"name\":\"azure-cluster\",\"region\":\"northeurope\"}}"
           '
 
           TOTAL_COUNT=$(curl --request GET \
@@ -775,11 +775,11 @@ jobs:
           # Provisioning requests
           seq 1 ${{ inputs.instances-number }} | xargs -n1 -P8 -I{} bash -c '
             uid=$(uuidgen)
-            curl --silent --show-error --fail --request PUT \
+            curl --request PUT \
               --url http://localhost:8080/oauth/v2/service_instances/$uid \
               --header "Content-Type: application/json" \
               --header "X-Broker-API-Version: 2.16" \
-              --data "{\"service_id\":\"47c9dcbf-ff30-448e-ab36-d3bad66ba281\",\"plan_id\":\"ca6e5357-707f-4565-bbbd-b3ab732597c6\",\"context\":{\"globalaccount_id\":\"2f5011af-2fd3-44ba-ac60-eeb1148c2995\",\"subaccount_id\":\"8b9a0db4-9aef-4da2-a856-61a4420b66fd\",\"user_id\":\"user@email.com\"},\"parameters\":{\"name\":\"gcp-cluster\",\"region\":\"europe-west3\"}}" > /dev/null 2>&1
+              --data "{\"service_id\":\"47c9dcbf-ff30-448e-ab36-d3bad66ba281\",\"plan_id\":\"ca6e5357-707f-4565-bbbd-b3ab732597c6\",\"context\":{\"globalaccount_id\":\"2f5011af-2fd3-44ba-ac60-eeb1148c2995\",\"subaccount_id\":\"8b9a0db4-9aef-4da2-a856-61a4420b66fd\",\"user_id\":\"user@email.com\"},\"parameters\":{\"name\":\"gcp-cluster\",\"region\":\"europe-west3\"}}"
           '
 
           TOTAL_COUNT=$(curl --request GET \
@@ -797,7 +797,7 @@ jobs:
           # Update requests
           PAGE=1
           while true; do
-            RESPONSE=$(curl --silent --show-error --fail --request GET \
+            RESPONSE=$(curl --request GET \
               --url "http://localhost:8080/runtimes?plan=azure_lite&page=$PAGE" \
               --header 'Content-Type: application/json' \
               --header 'X-Broker-API-Version: 2.16')
@@ -808,11 +808,11 @@ jobs:
             fi
 
             echo "$RESPONSE" | jq -r '.data[].instanceID' | while read -r INSTANCE_ID; do
-              curl --silent --show-error --fail --request PATCH \
+              curl --request PATCH \
                 --url "http://localhost:8080/oauth/v2/service_instances/$INSTANCE_ID?accepts_incomplete=true" \
                 --header "Content-Type: application/json" \
                 --header "X-Broker-API-Version: 2.16" \
-                --data '{"service_id":"47c9dcbf-ff30-448e-ab36-d3bad66ba281","plan_id":"8cb22518-aa26-44c5-91a0-e669ec9bf443","context":{"globalaccount_id":"2f5011af-2fd3-44ba-ac60-eeb1148c2995","subaccount_id":"8b9a0db4-9aef-4da2-a856-61a4420b66fd","user_id":"user@email.com"},"parameters":{"autoScalerMax":15}}' > /dev/null 2>&1
+                --data '{"service_id":"47c9dcbf-ff30-448e-ab36-d3bad66ba281","plan_id":"8cb22518-aa26-44c5-91a0-e669ec9bf443","context":{"globalaccount_id":"2f5011af-2fd3-44ba-ac60-eeb1148c2995","subaccount_id":"8b9a0db4-9aef-4da2-a856-61a4420b66fd","user_id":"user@email.com"},"parameters":{"autoScalerMax":15}}'
             done
 
             PAGE=$((PAGE + 1))
@@ -821,7 +821,7 @@ jobs:
           # Deprovisioning requests
           PAGE=1
           while true; do
-            RESPONSE=$(curl --silent --show-error --fail --request GET \
+            RESPONSE=$(curl --request GET \
               --url "http://localhost:8080/runtimes?plan=azure&page=$PAGE" \
               --header 'Content-Type: application/json' \
               --header 'X-Broker-API-Version: 2.16')
@@ -832,11 +832,11 @@ jobs:
             fi
 
             echo "$RESPONSE" | jq -r '.data[].instanceID' | while read -r INSTANCE_ID; do
-              curl --silent --show-error --fail --request DELETE \
+              curl --request DELETE \
                 --url "http://localhost:8080/oauth/v2/service_instances/$INSTANCE_ID?accepts_incomplete=true&service_id=47c9dcbf-ff30-448e-ab36-d3bad66ba281&plan_id=4deee563-e5ec-4731-b9b1-53b42d855f0c" \
                 --header "Content-Type: application/json" \
                 --header "X-Broker-API-Version: 2.16" \
-                --data '{"service_id":"47c9dcbf-ff30-448e-ab36-d3bad66ba281","plan_id":"4deee563-e5ec-4731-b9b1-53b42d855f0c","context":{"globalaccount_id":"2f5011af-2fd3-44ba-ac60-eeb1148c2995","subaccount_id":"8b9a0db4-9aef-4da2-a856-61a4420b66fd","user_id":"user@email.com"}}' > /dev/null 2>&1
+                --data '{"service_id":"47c9dcbf-ff30-448e-ab36-d3bad66ba281","plan_id":"4deee563-e5ec-4731-b9b1-53b42d855f0c","context":{"globalaccount_id":"2f5011af-2fd3-44ba-ac60-eeb1148c2995","subaccount_id":"8b9a0db4-9aef-4da2-a856-61a4420b66fd","user_id":"user@email.com"}}'
             done
 
             PAGE=$((PAGE + 1))
