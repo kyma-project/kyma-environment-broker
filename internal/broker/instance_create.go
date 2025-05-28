@@ -15,6 +15,7 @@ import (
 	"strings"
 
 	"github.com/kyma-project/kyma-environment-broker/internal/additionalproperties"
+	"github.com/kyma-project/kyma-environment-broker/internal/config"
 
 	"github.com/kyma-project/kyma-environment-broker/internal/validator"
 	"github.com/santhosh-tekuri/jsonschema/v6"
@@ -94,6 +95,7 @@ type ProvisionEndpoint struct {
 	valuesProvider         ValuesProvider
 	useSmallerMachineTypes bool
 	schemaService          *SchemaService
+	providerConfigProvider config.ConfigMapConfigProvider
 }
 
 const (
@@ -117,6 +119,7 @@ func NewProvision(brokerConfig Config,
 	regionsSupportingMachine RegionsSupporter,
 	valuesProvider ValuesProvider,
 	useSmallerMachineTypes bool,
+	providerConfigProvider config.ConfigMapConfigProvider,
 ) *ProvisionEndpoint {
 	enabledPlanIDs := map[string]struct{}{}
 	for _, planName := range brokerConfig.EnablePlans {
@@ -144,6 +147,7 @@ func NewProvision(brokerConfig Config,
 		valuesProvider:           valuesProvider,
 		useSmallerMachineTypes:   useSmallerMachineTypes,
 		schemaService:            schemaService,
+		providerConfigProvider:   providerConfigProvider,
 	}
 }
 
