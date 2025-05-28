@@ -67,6 +67,16 @@ while (( COUNT > 0 )); do
   if (( COUNT == 0 )); then
     echo "All runtimes are ready. Done."
     break
+  elif (( COUNT == 1 )); then
+    PID=$(lsof -ti :8080)
+    if [ -z "$PID" ]; then
+      echo "Starting port-forwarding to kcp-kyma-environment-broker..."
+      kubectl port-forward -n kcp-system deployment/kcp-kyma-environment-broker 8080:8080 5432:5432 &
+      sleep 5
+    else
+      echo "Port 8080 is already in use by PID $PID"
+    fi
   fi
+  
   echo "Provisioning runtimes remaining: $COUNT"
 done
