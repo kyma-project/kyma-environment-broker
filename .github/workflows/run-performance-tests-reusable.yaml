@@ -995,94 +995,70 @@ jobs:
           nohup bash scripts/monitor_metrics.sh > /dev/null 2>&1 &
           echo $! > /tmp/metrics_pid
 
-      - name: Thousand of instances
+      - name: Fetch runtimes using GET endpoint
         run: |
           DB_NAME=$(kubectl get secret kcp-postgresql -n kcp-system -o jsonpath="{.data.postgresql-broker-db-name}" | base64 -d)
           DB_USER=$(kubectl get secret kcp-postgresql -n kcp-system -o jsonpath="{.data.postgresql-broker-username}" | base64 -d)
           DB_PASS=$(kubectl get secret kcp-postgresql -n kcp-system -o jsonpath="{.data.postgresql-broker-password}" | base64 -d)
 
-          PGPASSWORD=$DB_PASS psql -h localhost -p 5432 -U $DB_USER -d $DB_NAME -f resources/installation/migrations/populate_performance_tests_database.up.sql
-          
           echo "<div align=\"center\">" >> "$GITHUB_STEP_SUMMARY"
           echo "" >> "$GITHUB_STEP_SUMMARY"
-          echo "| Number of Instances | Time per Page | Total Fetch Time |" >> $GITHUB_STEP_SUMMARY
-          echo "| :---: | :---: | :---: |" >> $GITHUB_STEP_SUMMARY
-          
-          # Thousand of instances
-          
-          START_TIME=$(date +%s%3N)
-          RUNTIMES=$(curl --silent --request GET \
-            --url http://localhost:8080/runtimes \
-            --header 'Content-Type: application/json' \
-            --header 'X-Broker-API-Version: 2.16')
-          END_TIME=$(date +%s%3N)
-          ELAPSED=$((END_TIME - START_TIME))
-          
-          START_TIME=$(date +%s%3N)
-          for PAGE in {1..10}; do
-            RESPONSE=$(curl --silent --request GET \
-              --url "http://localhost:8080/runtimes?page=$PAGE" \
+          echo "| Number of Instances | Average Time per Page | Maximum Time per Page | Total Fetch Time |" >> $GITHUB_STEP_SUMMARY
+          echo "| :---: | :---: | :---: | :---: |" >> $GITHUB_STEP_SUMMARY
+
+          fetch_and_measure() {
+            local num_instances=$1
+            local pages=$2
+
+            START_TIME=$(date +%s%3N)
+            curl --silent --request GET \
+              --url http://localhost:8080/runtimes \
               --header 'Content-Type: application/json' \
-              --header 'X-Broker-API-Version: 2.16')
-          done
-          END_TIME=$(date +%s%3N)
-          ALL_RUNTIMES_ELAPSED=$((END_TIME - START_TIME))
-          
-          echo "| 1000 | $ELAPSED milliseconds | $ALL_RUNTIMES_ELAPSED milliseconds |" >> $GITHUB_STEP_SUMMARY
-          
-          # 10 thousands of instances
-          
+              --header 'X-Broker-API-Version: 2.16' > /dev/null
+            END_TIME=$(date +%s%3N)
+            INITIAL_FETCH_TIME=$((END_TIME - START_TIME))
+
+            TOTAL_TIME=0
+            MAX_TIME=0
+
+            START_ALL=$(date +%s%3N)
+            for PAGE in $(seq 1 $pages); do
+              START=$(date +%s%3N)
+              curl --silent --request GET \
+                --url "http://localhost:8080/runtimes?page=$PAGE" \
+                --header 'Content-Type: application/json' \
+                --header 'X-Broker-API-Version: 2.16' > /dev/null
+              END=$(date +%s%3N)
+              ELAPSED=$((END - START))
+              TOTAL_TIME=$((TOTAL_TIME + ELAPSED))
+              if (( ELAPSED > MAX_TIME )); then
+                MAX_TIME=$ELAPSED
+              fi
+            done
+            END_ALL=$(date +%s%3N)
+            ALL_ELAPSED=$((END_ALL - START_ALL))
+            AVG_TIME=$((TOTAL_TIME / pages))
+
+            echo "| $num_instances | $AVG_TIME ms | $MAX_TIME ms | $ALL_ELAPSED ms |" >> $GITHUB_STEP_SUMMARY
+          }
+
+          # 1k
+          PGPASSWORD=$DB_PASS psql -h localhost -p 5432 -U $DB_USER -d $DB_NAME -f resources/installation/migrations/populate_performance_tests_database.up.sql
+          fetch_and_measure 1000 10
+
+          # 10k
           for i in {1..9}; do
             PGPASSWORD=$DB_PASS psql -h localhost -p 5432 -U $DB_USER -d $DB_NAME -f resources/installation/migrations/populate_performance_tests_database.up.sql
           done
-          
-          START_TIME=$(date +%s%3N)
-          RUNTIMES=$(curl --silent --request GET \
-            --url http://localhost:8080/runtimes \
-            --header 'Content-Type: application/json' \
-            --header 'X-Broker-API-Version: 2.16')
-          END_TIME=$(date +%s%3N)
-          ELAPSED=$((END_TIME - START_TIME))
-          
-          START_TIME=$(date +%s%3N)
-          for PAGE in {1..100}; do
-            RESPONSE=$(curl --silent --request GET \
-              --url "http://localhost:8080/runtimes?page=$PAGE" \
-              --header 'Content-Type: application/json' \
-              --header 'X-Broker-API-Version: 2.16')
-          done
-          END_TIME=$(date +%s%3N)
-          ALL_RUNTIMES_ELAPSED=$((END_TIME - START_TIME))
-          
-          echo "| 10 000 | $ELAPSED milliseconds | $ALL_RUNTIMES_ELAPSED milliseconds |" >> $GITHUB_STEP_SUMMARY
-          
-          # 100 thousands of instances
-          
+          fetch_and_measure 10000 100
+
+          # 100k
           for i in {1..90}; do
             PGPASSWORD=$DB_PASS psql -h localhost -p 5432 -U $DB_USER -d $DB_NAME -f resources/installation/migrations/populate_performance_tests_database.up.sql
           done
-          
-          START_TIME=$(date +%s%3N)
-          RUNTIMES=$(curl --silent --request GET \
-            --url http://localhost:8080/runtimes \
-            --header 'Content-Type: application/json' \
-            --header 'X-Broker-API-Version: 2.16')
-          END_TIME=$(date +%s%3N)
-          ELAPSED=$((END_TIME - START_TIME))
-          
-          START_TIME=$(date +%s%3N)
-          for PAGE in {1..1000}; do
-            RESPONSE=$(curl --silent --request GET \
-              --url "http://localhost:8080/runtimes?page=$PAGE" \
-              --header 'Content-Type: application/json' \
-              --header 'X-Broker-API-Version: 2.16')
-          done
-          END_TIME=$(date +%s%3N)
-          ALL_RUNTIMES_ELAPSED=$((END_TIME - START_TIME))
-          
-          echo "| 100 000 | $ELAPSED milliseconds | $ALL_RUNTIMES_ELAPSED milliseconds |" >> $GITHUB_STEP_SUMMARY
+          fetch_and_measure 100000 1000
+
           echo "</div>" >> "$GITHUB_STEP_SUMMARY"
-          echo "" >> "$GITHUB_STEP_SUMMARY"
 
       - name: Fetch metrics
         run: scripts/generate_charts.sh
