@@ -67,8 +67,8 @@ func (i *Instance) GetSubscriptionGlobalAccoundID() string {
 
 func (i *Instance) GetInstanceDetails() (InstanceDetails, error) {
 	result := i.InstanceDetails
-	//overwrite RuntimeID in InstanceDetails with Instance.RuntimeID
-	//needed for runtimes suspended without clearing RuntimeID in deprovisioning operation
+	// overwrite RuntimeID in InstanceDetails with Instance.RuntimeID
+	// needed for runtimes suspended without clearing RuntimeID in deprovisioning operation
 	result.RuntimeID = i.RuntimeID
 	return result, nil
 }
@@ -527,4 +527,8 @@ type Binding struct {
 type RetryTuple struct {
 	Timeout  time.Duration
 	Interval time.Duration
+}
+
+type ProviderConfig struct {
+	SeedRegions []string `json:"seedRegions" yaml:"seedRegions"`
 }
