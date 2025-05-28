@@ -457,12 +457,12 @@ func (b *ProvisionEndpoint) validate(ctx context.Context, details domain.Provisi
 
 func validateIngressFiltering(provisioningParameters internal.ProvisioningParameters, ingressFilteringParameter *bool, plans EnablePlans, log *slog.Logger) error {
 	if ingressFilteringParameter != nil {
-		if IsExternalCustomer(provisioningParameters.ErsContext) {
-			log.Info(IngressFilteringNotSupportedForExternalCustomerMsg)
-			return fmt.Errorf(IngressFilteringOptionIsNotSupported)
-		}
 		if !plans.Contains(PlanNamesMapping[provisioningParameters.PlanID]) {
 			log.Info(fmt.Sprintf(IngressFilteringNotSupportedForPlanMsg, PlanNamesMapping[provisioningParameters.PlanID]))
+			return fmt.Errorf(IngressFilteringOptionIsNotSupported)
+		}
+		if IsExternalCustomer(provisioningParameters.ErsContext) && *ingressFilteringParameter {
+			log.Info(IngressFilteringNotSupportedForExternalCustomerMsg)
 			return fmt.Errorf(IngressFilteringOptionIsNotSupported)
 		}
 	}

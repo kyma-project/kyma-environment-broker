@@ -1778,7 +1778,7 @@ func TestProvisioning_WithNetworkFilters(t *testing.T) {
 	assert.Nil(suite.t, instance.Parameters.ErsContext.LicenseType)
 }
 
-func TestProvisioning_NetworkFilter_External(t *testing.T) {
+func TestProvisioning_NetworkFilter_External_True(t *testing.T) {
 	// given
 	suite := NewBrokerSuiteTest(t, "2.0")
 	defer suite.TearDown()
@@ -1808,6 +1808,36 @@ func TestProvisioning_NetworkFilter_External(t *testing.T) {
 	assert.Equal(t, resp.StatusCode, http.StatusBadRequest)
 	parsedResponse := suite.ReadResponse(resp)
 	assert.Contains(t, string(parsedResponse), "ingress filtering option is not available")
+}
+
+func TestProvisioning_NetworkFilter_External_False(t *testing.T) {
+	// given
+	suite := NewBrokerSuiteTest(t, "2.0")
+	defer suite.TearDown()
+	iid := uuid.New().String()
+
+	// when
+	resp := suite.CallAPI("PUT", fmt.Sprintf("oauth/v2/service_instances/%s?accepts_incomplete=true", iid),
+		`{
+					"service_id": "47c9dcbf-ff30-448e-ab36-d3bad66ba281",
+					"plan_id": "361c511f-f939-4621-b228-d0fb79a1fe15",
+					"context": {
+						"sm_platform_credentials": {
+							  "url": "https://sm.url",
+							  "credentials": {}
+					    },
+						"license_type": "CUSTOMER",
+						"globalaccount_id": "g-account-id",
+						"subaccount_id": "sub-id",
+						"user_id": "john.smith@email.com"
+					},
+					"parameters": {
+						"name": "testing-cluster",
+						"region": "eu-central-1",
+						"ingressFiltering": false
+					}
+		}`)
+	assert.Equal(t, resp.StatusCode, http.StatusAccepted)
 }
 
 func TestProvisioning_Modules(t *testing.T) {
