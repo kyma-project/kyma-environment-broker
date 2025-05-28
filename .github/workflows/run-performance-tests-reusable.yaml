@@ -802,26 +802,29 @@ jobs:
         run: |
           scripts/simulate_kim.sh
           
-          INSTANCES_NUMBER=$(( 2 * ${{ inputs.instances-number }} ))
+          RESPONSE_JSON=$(curl --request GET \
+            --url "http://localhost:8080/runtimes?plan=azure_lite&state=succeeded" \
+            --header 'Content-Type: application/json' \
+            --header 'X-Broker-API-Version: 2.16')
+          SUCCEEDED_TOTAL_COUNT=$(echo "$RESPONSE_JSON" | jq .totalCount)
+
+          if [ "$SUCCEEDED_TOTAL_COUNT" -eq "${{ inputs.instances-number }}" ]; then
+            echo "Assertion passed: totalCount is $SUCCEEDED_TOTAL_COUNT"
+          else
+            echo "Assertion failed: totalCount is not ${{ inputs.instances-number }}. Actual value: $SUCCEEDED_TOTAL_COUNT"
+            exit 1
+          fi
           
           RESPONSE_JSON=$(curl --request GET \
             --url "http://localhost:8080/runtimes?plan=azure&state=succeeded" \
             --header 'Content-Type: application/json' \
             --header 'X-Broker-API-Version: 2.16')
           SUCCEEDED_TOTAL_COUNT=$(echo "$RESPONSE_JSON" | jq .totalCount)
-          echo $SUCCEEDED_TOTAL_COUNT
-          
-          RESPONSE_JSON=$(curl --request GET \
-            --url "http://localhost:8080/runtimes?plan=azure_lite&state=succeeded" \
-            --header 'Content-Type: application/json' \
-            --header 'X-Broker-API-Version: 2.16')
-          SUCCEEDED_TOTAL_COUNT=$(echo "$RESPONSE_JSON" | jq .totalCount)
-          echo $SUCCEEDED_TOTAL_COUNT
 
-          if [ "$SUCCEEDED_TOTAL_COUNT" -eq "$INSTANCES_NUMBER" ]; then
+          if [ "$SUCCEEDED_TOTAL_COUNT" -eq "${{ inputs.instances-number }}" ]; then
             echo "Assertion passed: totalCount is $SUCCEEDED_TOTAL_COUNT"
           else
-            echo "Assertion failed: totalCount is not $INSTANCES_NUMBER. Actual value: $SUCCEEDED_TOTAL_COUNT"
+            echo "Assertion failed: totalCount is not ${{ inputs.instances-number }}. Actual value: $SUCCEEDED_TOTAL_COUNT"
             exit 1
           fi
 
@@ -848,6 +851,30 @@ jobs:
             echo "Assertion failed: totalCount is not ${{ inputs.instances-number }}. Actual value: $TOTAL_COUNT"
             exit 1
           fi
+          
+          # Update requests
+          PAGE=1
+          while true; do
+            RESPONSE=$(curl --silent --show-error --fail --request GET \
+              --url "http://localhost:8080/runtimes?plan=azure_lite&page=$PAGE" \
+              --header 'Content-Type: application/json' \
+              --header 'X-Broker-API-Version: 2.16')
+
+            COUNT=$(echo "$RESPONSE" | jq '.count')
+            if [ "$COUNT" -eq 0 ]; then
+              break
+            fi
+
+            echo "$RESPONSE" | jq -r '.data[].instanceID' | while read -r INSTANCE_ID; do
+              curl --silent --show-error --fail --request PATCH \
+                --url "http://localhost:8080/oauth/v2/service_instances/$INSTANCE_ID?accepts_incomplete=true" \
+                --header "Content-Type: application/json" \
+                --header "X-Broker-API-Version: 2.16" \
+                --data '{"service_id":"47c9dcbf-ff30-448e-ab36-d3bad66ba281","plan_id":"8cb22518-aa26-44c5-91a0-e669ec9bf443","context":{"globalaccount_id":"2f5011af-2fd3-44ba-ac60-eeb1148c2995","subaccount_id":"8b9a0db4-9aef-4da2-a856-61a4420b66fd","user_id":"user@email.com"},"parameters":{"autoScalerMax":15}}' > /dev/null 2>&1
+            done
+
+            PAGE=$((PAGE + 1))
+          done
           
           # Deprovisioning requests
           PAGE=1
@@ -919,6 +946,21 @@ jobs:
             fi
           done)
           echo "Maximum duration of provisioning requests: $MAX_PROVISIONING_DURATION minutes" >> $GITHUB_STEP_SUMMARY
+          
+          # Update metrics
+          
+          echo "### Update Requests" >> $GITHUB_STEP_SUMMARY
+          SUCCEEDED_TOTAL=$(echo "$METRICS" | grep 'kcp_keb_v2_operation_result.*plan_id="4deee563-e5ec-4731-b9b1-53b42d855f0c".*state="succeeded".*type="update"' | wc -l | xargs)
+          SUCCEEDED_TOTAL=${SUCCEEDED_TOTAL:-0}
+          FAILED_TOTAL=$(echo "$METRICS" | grep 'kcp_keb_v2_operation_result.*plan_id="4deee563-e5ec-4731-b9b1-53b42d855f0c".*state="failed".*type="update"' | wc -l | xargs)
+          FAILED_TOTAL=${FAILED_TOTAL:-0}
+          TOTAL=$(echo "$SUCCEEDED_TOTAL + $FAILED_TOTAL" | bc)
+          if [ "$TOTAL" -eq 0 ]; then
+            SUCCESS_RATE=0
+          else
+            SUCCESS_RATE=$(awk "BEGIN {printf \"%.2f\", ($SUCCEEDED_TOTAL / $TOTAL) * 100}")
+          fi
+          echo "Success rate of update requests: $SUCCESS_RATE%" >> $GITHUB_STEP_SUMMARY
           
           # Deprovisioning metrics
           
