@@ -26,7 +26,7 @@ on:
         type: number
       kim-delay-seconds:
         description: time to wait before transitioning the runtime CR to the Ready state
-        default: 420
+        default: 0
         type: number
       provisioning-max-step-processing-time:
         description: max time to process a step in provisioning queue
@@ -34,7 +34,7 @@ on:
         type: string
       provisioning-workers-amount:
         description: amount of workers in provisioning queue
-        default: 20
+        default: 25
         type: number
       update-max-step-processing-time:
         description: max time to process a step in update queue
@@ -42,7 +42,7 @@ on:
         type: string
       update-workers-amount:
         description: amount of workers in update queue
-        default: 20
+        default: 25
         type: number
       deprovisioning-max-step-processing-time:
         description: max time to process a step in deprovisioning queue
@@ -50,7 +50,7 @@ on:
         type: string
       deprovisioning-workers-amount:
         description: amount of workers in deprovisioning queue
-        default: 20
+        default: 25
         type: number
 
 jobs:
