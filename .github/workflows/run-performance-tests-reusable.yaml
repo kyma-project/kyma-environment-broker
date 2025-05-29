@@ -1063,7 +1063,7 @@ jobs:
             echo $STATUS_CODE
             if [[ "$STATUS_CODE" == "200" ]]; then
               echo "test4"
-              ((SUCCESS_COUNT++))
+              SUCCESS_COUNT=$((SUCCESS_COUNT + 1))
               echo "test5"
             fi
           done
