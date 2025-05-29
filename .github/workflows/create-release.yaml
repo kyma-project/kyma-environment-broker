@@ -200,10 +200,29 @@ jobs:
       last-k3s-versions: ${{ vars.LAST_K3S_VERSIONS }}
       release: "true"
       version: ${{ inputs.name }}
+      
+  run-performance-tests:
+    name: Performance tests
+    needs: [ build-keb-image, build-archiver-image, build-environments-cleanup-image, build-deprovision-retrigger-image, build-expirator-image, build-runtime-reconciler-image, build-subaccount-cleanup-image, build-subaccount-sync-image, build-globalaccounts-image, build-schema-migrator-image, build-service-binding-cleanup-image ]
+    uses: "./.github/workflows/run-performance-tests-reusable.yaml"
+    secrets: inherit
+    with:
+      last-k3s-versions: ${{ vars.LAST_K3S_VERSIONS }}
+      release: "true"
+      version: ${{ inputs.name }}
+      instances-number: 100
+      updates-number: 300
+      kim-delay-seconds: 0
+      provisioning-max-step-processing-time: 30s
+      provisioning-workers-amount: 25
+      update-max-step-processing-time: 30s
+      update-workers-amount: 25
+      deprovisioning-max-step-processing-time: 30s
+      deprovisioning-workers-amount: 25
 
   bumps:
     name: Bump sec-scanners-config, KEB chart
-    needs: [validate-release, run-unit-tests, run-keb-chart-integration-tests]
+    needs: [validate-release, run-unit-tests, run-keb-chart-integration-tests, run-performance-tests]
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
