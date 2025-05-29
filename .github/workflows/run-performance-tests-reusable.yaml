@@ -1051,24 +1051,19 @@ jobs:
           echo "" >> "$GITHUB_STEP_SUMMARY"
           
           SUCCESS_COUNT=0
-          echo "test1"
           for i in {1..100}; do
-            echo "test2"
             STATUS_CODE=$(curl --write-out "%{http_code}" --silent --output /dev/null \
               --request GET \
               --url "http://localhost:8080/runtimes" \
               --header 'Content-Type: application/json' \
               --header 'X-Broker-API-Version: 2.16')
-            echo "test3"
             echo $STATUS_CODE
             if [[ "$STATUS_CODE" == "200" ]]; then
-              echo "test4"
               SUCCESS_COUNT=$((SUCCESS_COUNT + 1))
-              echo "test5"
             fi
           done
           SUCCESS_RATE=$((SUCCESS_COUNT * 100 / 100))
-          echo "Success rate of runtimes requests: $SUCCESS_RATE%"
+          echo "Success rate of runtimes requests: $SUCCESS_RATE%" >> $GITHUB_STEP_SUMMARY
           if [[ "$SUCCESS_RATE" != "100" ]]; then
             echo "Error: SUCCESS_RATE is $SUCCESS_RATE, expected 100"
             exit 1
