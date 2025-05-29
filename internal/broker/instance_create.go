@@ -318,7 +318,7 @@ func (b *ProvisionEndpoint) validate(ctx context.Context, details domain.Provisi
 
 	enforceSameRegionForSeedAndShoot := valueOfBoolPtr(parameters.ShootAndSeedSameRegion)
 	if enforceSameRegionForSeedAndShoot {
-		if err := b.validateSeedAndShootRegion(strings.ToLower(values.ProviderType), valueOfPtr(parameters.Region)); err != nil {
+		if err := b.validateSeedAndShootRegion(strings.ToLower(values.ProviderType), valueOfPtr(parameters.Region), l); err != nil {
 			return fmt.Errorf("validation of the same region for seed and shoot: %w", err)
 		}
 	}
@@ -780,12 +780,14 @@ func (b *ProvisionEndpoint) monitorAdditionalProperties(instanceID string, ersCo
 	}
 }
 
-func (b *ProvisionEndpoint) validateSeedAndShootRegion(providerType, region string) error {
+func (b *ProvisionEndpoint) validateSeedAndShootRegion(providerType, region string, logger *slog.Logger) error {
 	providerConfig := &internal.ProviderConfig{}
 	if err := b.providerConfigProvider.Provide(providerType, providerConfig); err != nil {
-		return fmt.Errorf("cannot load provider config: %w", err)
+		logger.Error(fmt.Sprintf("while loading %s provider config with seed regions", providerType), "error", err)
+		return fmt.Errorf("unable to load %s provider config", providerType)
 	}
 	if !slices.Contains(providerConfig.SeedRegions, region) {
+		logger.Warn(fmt.Sprintf("missing seed region %s for provider %s", region, providerType))
 		return fmt.Errorf("seed does not exist in %s region. Provider %s has seeds in the following regions: %s", region, providerType, providerConfig.SeedRegions)
 	}
 
