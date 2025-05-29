@@ -1060,8 +1060,11 @@ jobs:
               --header 'Content-Type: application/json' \
               --header 'X-Broker-API-Version: 2.16')
             echo "test3"
+            echo $STATUS_CODE
             if [[ "$STATUS_CODE" == "200" ]]; then
+              echo $test4
               ((SUCCESS_COUNT++))
+              echo $test5
             fi
           done
           SUCCESS_RATE=$((SUCCESS_COUNT * 100 / 100))
