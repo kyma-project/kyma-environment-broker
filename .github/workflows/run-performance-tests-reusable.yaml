@@ -1000,6 +1000,23 @@ jobs:
           DB_NAME=$(kubectl get secret kcp-postgresql -n kcp-system -o jsonpath="{.data.postgresql-broker-db-name}" | base64 -d)
           DB_USER=$(kubectl get secret kcp-postgresql -n kcp-system -o jsonpath="{.data.postgresql-broker-username}" | base64 -d)
           DB_PASS=$(kubectl get secret kcp-postgresql -n kcp-system -o jsonpath="{.data.postgresql-broker-password}" | base64 -d)
+          
+          PGPASSWORD=$DB_PASS psql -h localhost -p 5432 -U $DB_USER -d $DB_NAME -f resources/installation/migrations/populate_performance_tests_database.up.sql
+          
+          SUCCESS_COUNT=0
+          for i in {1..100}; do
+            STATUS_CODE=$(curl --write-out "%{http_code}" --silent --output /dev/null \
+              --request GET \
+              --url "http://localhost:8080/runtimes" \
+              --header 'Content-Type: application/json' \
+              --header 'X-Broker-API-Version: 2.16')
+            echo $STATUS_CODE
+            if [[ "$STATUS_CODE" == "200" ]]; then
+              SUCCESS_COUNT=$((SUCCESS_COUNT + 1))
+            fi
+          done
+          SUCCESS_RATE=$((SUCCESS_COUNT * 100 / 100))
+          echo "Success rate of runtimes requests: $SUCCESS_RATE%" >> $GITHUB_STEP_SUMMARY
 
           echo "<div align=\"center\">" >> "$GITHUB_STEP_SUMMARY"
           echo "" >> "$GITHUB_STEP_SUMMARY"
@@ -1032,7 +1049,6 @@ jobs:
           }
 
           # 1k
-          PGPASSWORD=$DB_PASS psql -h localhost -p 5432 -U $DB_USER -d $DB_NAME -f resources/installation/migrations/populate_performance_tests_database.up.sql
           fetch_and_measure 1000 10
 
           # 10k
@@ -1050,20 +1066,6 @@ jobs:
           echo "</div>" >> "$GITHUB_STEP_SUMMARY"
           echo "" >> "$GITHUB_STEP_SUMMARY"
           
-          SUCCESS_COUNT=0
-          for i in {1..100}; do
-            STATUS_CODE=$(curl --write-out "%{http_code}" --silent --output /dev/null \
-              --request GET \
-              --url "http://localhost:8080/runtimes" \
-              --header 'Content-Type: application/json' \
-              --header 'X-Broker-API-Version: 2.16')
-            echo $STATUS_CODE
-            if [[ "$STATUS_CODE" == "200" ]]; then
-              SUCCESS_COUNT=$((SUCCESS_COUNT + 1))
-            fi
-          done
-          SUCCESS_RATE=$((SUCCESS_COUNT * 100 / 100))
-          echo "Success rate of runtimes requests: $SUCCESS_RATE%" >> $GITHUB_STEP_SUMMARY
           if [[ "$SUCCESS_RATE" != "100" ]]; then
             echo "Error: SUCCESS_RATE is $SUCCESS_RATE, expected 100"
             exit 1
