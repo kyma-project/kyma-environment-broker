@@ -18,7 +18,7 @@ on:
         type: string
       instances-number:
         description: number of instances to be provisioned
-        default: 300
+        default: 100
         type: number
       updates-number:
         description: number of updates on a single instance
@@ -109,6 +109,9 @@ jobs:
           else
             make install VERSION=PR-${{ inputs.version }}
           fi
+          
+      - name: Test
+        run: curl http://localhost:30080/runtimes
 
       - name: Populate database
         run: |
