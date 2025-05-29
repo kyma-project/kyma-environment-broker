@@ -786,7 +786,7 @@ func (b *ProvisionEndpoint) validateSeedAndShootRegion(providerType, region stri
 		return fmt.Errorf("cannot load provider config: %w", err)
 	}
 	if !slices.Contains(providerConfig.SeedRegions, region) {
-		return fmt.Errorf("seed does not exist in %s region", region)
+		return fmt.Errorf("seed does not exist in %s region. Provider %s has seeds in the following regions: %s", region, providerType, providerConfig.SeedRegions)
 	}
 
 	return nil

@@ -2881,6 +2881,8 @@ func TestSameRegionForSeedAndShoot(t *testing.T) {
 	log := slog.New(slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{
 		Level: slog.LevelInfo,
 	}))
+	existingAWSSeedRegions := []string{"eu-central-1"}
+
 	t.Run("should succeed if configuration contains region from provisioning parameters", func(t *testing.T) {
 		// given
 		const expectedRegion = "eu-central-1"
@@ -2967,7 +2969,8 @@ func TestSameRegionForSeedAndShoot(t *testing.T) {
 		)
 
 		oidcParams := `"clientID":"client-id","issuerURL":"https://test.local","signingAlgs":["RS256"]`
-		expectedErr := fmt.Errorf("[instanceID: %s] validation of the same region for seed and shoot: seed does not exist in %s region", instanceID, missingRegion)
+		expectedErr := fmt.Errorf("[instanceID: %s] validation of the same region for seed and shoot: seed does not exist in %s region. Provider aws has seeds in the following regions: %s",
+			instanceID, missingRegion, existingAWSSeedRegions)
 		expectedAPIResponse := apiresponses.NewFailureResponse(
 			expectedErr,
 			http.StatusBadRequest,
