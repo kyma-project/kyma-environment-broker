@@ -109,9 +109,6 @@ jobs:
           else
             make install VERSION=PR-${{ inputs.version }}
           fi
-          
-      - name: Test
-        run: curl http://localhost:30080/runtimes
 
       - name: Populate database
         run: |
