@@ -18,7 +18,7 @@ on:
         type: string
       instances-number:
         description: number of instances to be provisioned
-        default: 100
+        default: 300
         type: number
       updates-number:
         description: number of updates on a single instance
