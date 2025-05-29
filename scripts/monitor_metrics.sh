@@ -33,7 +33,7 @@ echo "" > "$METRICS_FILE"
 
 while true; do
   TIMESTAMP=$(date +%s)
-  METRICS=$(curl -s http://localhost:8080/metrics)
+  METRICS=$(curl -s http://localhost:30080/metrics)
 
   GO_GOROUTINES=$(echo "$METRICS" | grep '^go_goroutines' | awk '{print $2}')
   OPEN_FDS=$(echo "$METRICS" | grep '^process_open_fds' | awk '{print $2}')

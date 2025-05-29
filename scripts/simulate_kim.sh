@@ -17,7 +17,7 @@ KIM_DELAY_SECONDS="${KIM_DELAY_SECONDS:-${1:-60}}"
 
 get_provisioning_runtimes() {
   curl --request GET \
-    --url http://localhost:8080/runtimes?state=provisioning \
+    --url http://localhost:30080/runtimes?state=provisioning \
     --header 'Content-Type: application/json' \
     --header 'X-Broker-API-Version: 2.16' | jq .totalCount
 }

@@ -130,8 +130,6 @@ jobs:
           
       - name: Start metrics collector
         run: |
-          kubectl port-forward -n kcp-system deployment/kcp-kyma-environment-broker 8080:8080 5432:5432 &
-          sleep 5
           nohup bash scripts/monitor_metrics.sh > /dev/null 2>&1 &
           echo $! > /tmp/metrics_pid
 
@@ -140,14 +138,14 @@ jobs:
           seq 1 ${{ inputs.instances-number }} | xargs -n1 -P8 -I{} bash -c '
             uid=$(uuidgen)
             curl --request PUT \
-              --url http://localhost:8080/oauth/v2/service_instances/$uid \
+              --url http://localhost:30080/oauth/v2/service_instances/$uid \
               --header "Content-Type: application/json" \
               --header "X-Broker-API-Version: 2.16" \
               --data "{\"service_id\":\"47c9dcbf-ff30-448e-ab36-d3bad66ba281\",\"plan_id\":\"4deee563-e5ec-4731-b9b1-53b42d855f0c\",\"context\":{\"globalaccount_id\":\"2f5011af-2fd3-44ba-ac60-eeb1148c2995\",\"subaccount_id\":\"8b9a0db4-9aef-4da2-a856-61a4420b66fd\",\"user_id\":\"user@email.com\"},\"parameters\":{\"name\":\"azure-cluster\",\"region\":\"northeurope\"}}"
           '
           
           TOTAL_COUNT=$(curl --request GET \
-            --url http://localhost:8080/runtimes?plan=azure \
+            --url http://localhost:30080/runtimes?plan=azure \
             --header 'Content-Type: application/json' \
             --header 'X-Broker-API-Version: 2.16' | jq .totalCount)
 
@@ -166,7 +164,7 @@ jobs:
         
       - name: Fetch metrics
         run: |          
-          METRICS=$(curl -s http://localhost:8080/metrics)
+          METRICS=$(curl -s http://localhost:30080/metrics)
           
           SUCCEEDED_TOTAL=$(echo "$METRICS" | grep 'kcp_keb_v2_operations_provisioning_succeeded_total{plan_id="4deee563-e5ec-4731-b9b1-53b42d855f0c"}' | awk '{print $2}')
           SUCCEEDED_TOTAL=${SUCCEEDED_TOTAL:-0}
@@ -242,8 +240,6 @@ jobs:
           
       - name: Start metrics collector
         run: |
-          kubectl port-forward -n kcp-system deployment/kcp-kyma-environment-broker 8080:8080 5432:5432 &
-          sleep 5
           nohup bash scripts/monitor_metrics.sh > /dev/null 2>&1 &
           echo $! > /tmp/metrics_pid
 
@@ -252,14 +248,14 @@ jobs:
           seq 1 ${{ inputs.instances-number }} | xargs -n1 -P8 -I{} bash -c '
             uid=$(uuidgen)
             curl --request PUT \
-              --url http://localhost:8080/oauth/v2/service_instances/$uid \
+              --url http://localhost:30080/oauth/v2/service_instances/$uid \
               --header "Content-Type: application/json" \
               --header "X-Broker-API-Version: 2.16" \
               --data "{\"service_id\":\"47c9dcbf-ff30-448e-ab36-d3bad66ba281\",\"plan_id\":\"4deee563-e5ec-4731-b9b1-53b42d855f0c\",\"context\":{\"globalaccount_id\":\"2f5011af-2fd3-44ba-ac60-eeb1148c2995\",\"subaccount_id\":\"8b9a0db4-9aef-4da2-a856-61a4420b66fd\",\"user_id\":\"user@email.com\"},\"parameters\":{\"name\":\"azure-cluster\",\"region\":\"northeurope\"}}"
           '
 
           TOTAL_COUNT=$(curl --request GET \
-            --url http://localhost:8080/runtimes?plan=azure \
+            --url http://localhost:30080/runtimes?plan=azure \
             --header 'Content-Type: application/json' \
             --header 'X-Broker-API-Version: 2.16' | jq .totalCount)
 
@@ -278,7 +274,7 @@ jobs:
           scripts/simulate_kim.sh
           
           RESPONSE_JSON=$(curl --request GET \
-            --url "http://localhost:8080/runtimes?plan=azure&state=succeeded" \
+            --url "http://localhost:30080/runtimes?plan=azure&state=succeeded" \
             --header 'Content-Type: application/json' \
             --header 'X-Broker-API-Version: 2.16')
           SUCCEEDED_TOTAL_COUNT=$(echo "$RESPONSE_JSON" | jq .totalCount)
@@ -297,7 +293,7 @@ jobs:
           
           while true; do
             RESPONSE=$(curl --request GET \
-              --url "http://localhost:8080/runtimes?plan=azure&page=$PAGE" \
+              --url "http://localhost:30080/runtimes?plan=azure&page=$PAGE" \
               --header 'Content-Type: application/json' \
               --header 'X-Broker-API-Version: 2.16')
           
@@ -308,7 +304,7 @@ jobs:
           
             echo "$RESPONSE" | jq -r '.data[].instanceID' | while read -r INSTANCE_ID; do
               curl --request PATCH \
-                --url "http://localhost:8080/oauth/v2/service_instances/$INSTANCE_ID?accepts_incomplete=true" \
+                --url "http://localhost:30080/oauth/v2/service_instances/$INSTANCE_ID?accepts_incomplete=true" \
                 --header "Content-Type: application/json" \
                 --header "X-Broker-API-Version: 2.16" \
                 --data '{"service_id":"47c9dcbf-ff30-448e-ab36-d3bad66ba281","plan_id":"4deee563-e5ec-4731-b9b1-53b42d855f0c","context":{"globalaccount_id":"2f5011af-2fd3-44ba-ac60-eeb1148c2995","subaccount_id":"8b9a0db4-9aef-4da2-a856-61a4420b66fd","user_id":"user@email.com"},"parameters":{"autoScalerMax":15}}'
@@ -319,7 +315,7 @@ jobs:
           
           while true; do
             UPDATED_COUNT=$(curl --request GET \
-              --url "http://localhost:8080/runtimes?plan=azure&state=succeeded,failed" \
+              --url "http://localhost:30080/runtimes?plan=azure&state=succeeded,failed" \
               --header 'Content-Type: application/json' \
               --header 'X-Broker-API-Version: 2.16' | jq .totalCount)
           
@@ -335,7 +331,7 @@ jobs:
         run: |
           sleep 15
           
-          METRICS=$(curl -s http://localhost:8080/metrics)
+          METRICS=$(curl -s http://localhost:30080/metrics)
           SUCCEEDED_TOTAL=$(echo "$METRICS" | grep 'kcp_keb_v2_operation_result.*plan_id="4deee563-e5ec-4731-b9b1-53b42d855f0c".*state="succeeded".*type="update"' | wc -l | xargs)
           SUCCEEDED_TOTAL=${SUCCEEDED_TOTAL:-0}
           FAILED_TOTAL=$(echo "$METRICS" | grep 'kcp_keb_v2_operation_result.*plan_id="4deee563-e5ec-4731-b9b1-53b42d855f0c".*state="failed".*type="update"' | wc -l | xargs)
@@ -397,15 +393,13 @@ jobs:
           
       - name: Start metrics collector
         run: |
-          kubectl port-forward -n kcp-system deployment/kcp-kyma-environment-broker 8080:8080 5432:5432 &
-          sleep 5
           nohup bash scripts/monitor_metrics.sh > /dev/null 2>&1 &
           echo $! > /tmp/metrics_pid
 
       - name: Provision the instance
         run: |
           curl --request PUT \
-            --url http://localhost:8080/oauth/v2/service_instances/azure-cluster \
+            --url http://localhost:30080/oauth/v2/service_instances/azure-cluster \
             --header "Content-Type: application/json" \
             --header "X-Broker-API-Version: 2.16" \
             --data "{\"service_id\":\"47c9dcbf-ff30-448e-ab36-d3bad66ba281\",\"plan_id\":\"4deee563-e5ec-4731-b9b1-53b42d855f0c\",\"context\":{\"globalaccount_id\":\"2f5011af-2fd3-44ba-ac60-eeb1148c2995\",\"subaccount_id\":\"8b9a0db4-9aef-4da2-a856-61a4420b66fd\",\"user_id\":\"user@email.com\"},\"parameters\":{\"name\":\"azure-cluster\",\"region\":\"northeurope\"}}"
@@ -418,7 +412,7 @@ jobs:
           scripts/simulate_kim.sh
 
           INSTANCE_JSON=$(curl --request GET \
-            --url "http://localhost:8080/runtimes?instance_id=azure-cluster" \
+            --url "http://localhost:30080/runtimes?instance_id=azure-cluster" \
             --header 'Content-Type: application/json' \
             --header 'X-Broker-API-Version: 2.16')
           INSTANCE_STATE=$(echo "$INSTANCE_JSON" | jq '.data[0].status.state')
@@ -436,7 +430,7 @@ jobs:
           max=5
           for i in $(seq 1 ${{ inputs.updates-number }}); do
             curl --request PATCH \
-              --url "http://localhost:8080/oauth/v2/service_instances/azure-cluster?accepts_incomplete=true" \
+              --url "http://localhost:30080/oauth/v2/service_instances/azure-cluster?accepts_incomplete=true" \
               --header "Content-Type: application/json" \
               --header "X-Broker-API-Version: 2.16" \
               --data "{\"service_id\":\"47c9dcbf-ff30-448e-ab36-d3bad66ba281\",\"plan_id\":\"4deee563-e5ec-4731-b9b1-53b42d855f0c\",\"context\":{\"globalaccount_id\":\"2f5011af-2fd3-44ba-ac60-eeb1148c2995\",\"subaccount_id\":\"8b9a0db4-9aef-4da2-a856-61a4420b66fd\",\"user_id\":\"user@email.com\"},\"parameters\":{\"autoScalerMax\":$max}}"
@@ -449,7 +443,7 @@ jobs:
           
           while true; do
             INSTANCE_STATE=$(curl --request GET \
-              --url "http://localhost:8080/runtimes?instance_id=azure-cluster" \
+              --url "http://localhost:30080/runtimes?instance_id=azure-cluster" \
               --header 'Content-Type: application/json' \
               --header 'X-Broker-API-Version: 2.16' | jq '.data[0].status.state')
 
@@ -465,7 +459,7 @@ jobs:
         run: |
           sleep 15
 
-          METRICS=$(curl -s http://localhost:8080/metrics)
+          METRICS=$(curl -s http://localhost:30080/metrics)
           SUCCEEDED_TOTAL=$(echo "$METRICS" | grep 'kcp_keb_v2_operation_result.*plan_id="4deee563-e5ec-4731-b9b1-53b42d855f0c".*state="succeeded".*type="update"' | wc -l | xargs)
           SUCCEEDED_TOTAL=${SUCCEEDED_TOTAL:-0}
           FAILED_TOTAL=$(echo "$METRICS" | grep 'kcp_keb_v2_operation_result.*plan_id="4deee563-e5ec-4731-b9b1-53b42d855f0c".*state="failed".*type="update"' | wc -l | xargs)
@@ -529,8 +523,6 @@ jobs:
           
       - name: Start metrics collector
         run: |
-          kubectl port-forward -n kcp-system deployment/kcp-kyma-environment-broker 8080:8080 5432:5432 &
-          sleep 5
           nohup bash scripts/monitor_metrics.sh > /dev/null 2>&1 &
           echo $! > /tmp/metrics_pid
 
@@ -539,14 +531,14 @@ jobs:
           seq 1 ${{ inputs.instances-number }} | xargs -n1 -P8 -I{} bash -c '
             uid=$(uuidgen)
             curl --request PUT \
-              --url http://localhost:8080/oauth/v2/service_instances/$uid \
+              --url http://localhost:30080/oauth/v2/service_instances/$uid \
               --header "Content-Type: application/json" \
               --header "X-Broker-API-Version: 2.16" \
               --data "{\"service_id\":\"47c9dcbf-ff30-448e-ab36-d3bad66ba281\",\"plan_id\":\"4deee563-e5ec-4731-b9b1-53b42d855f0c\",\"context\":{\"globalaccount_id\":\"2f5011af-2fd3-44ba-ac60-eeb1148c2995\",\"subaccount_id\":\"8b9a0db4-9aef-4da2-a856-61a4420b66fd\",\"user_id\":\"user@email.com\"},\"parameters\":{\"name\":\"azure-cluster\",\"region\":\"northeurope\"}}"
           '
 
           TOTAL_COUNT=$(curl --request GET \
-            --url http://localhost:8080/runtimes?plan=azure \
+            --url http://localhost:30080/runtimes?plan=azure \
             --header 'Content-Type: application/json' \
             --header 'X-Broker-API-Version: 2.16' | jq .totalCount)
 
@@ -565,7 +557,7 @@ jobs:
           scripts/simulate_kim.sh
 
           RESPONSE_JSON=$(curl --request GET \
-            --url "http://localhost:8080/runtimes?plan=azure&state=succeeded" \
+            --url "http://localhost:30080/runtimes?plan=azure&state=succeeded" \
             --header 'Content-Type: application/json' \
             --header 'X-Broker-API-Version: 2.16')
           SUCCEEDED_TOTAL_COUNT=$(echo "$RESPONSE_JSON" | jq .totalCount)
@@ -584,7 +576,7 @@ jobs:
 
           while true; do
             RESPONSE=$(curl --request GET \
-              --url "http://localhost:8080/runtimes?plan=azure&page=$PAGE" \
+              --url "http://localhost:30080/runtimes?plan=azure&page=$PAGE" \
               --header 'Content-Type: application/json' \
               --header 'X-Broker-API-Version: 2.16')
 
@@ -595,7 +587,7 @@ jobs:
 
             echo "$RESPONSE" | jq -r '.data[].instanceID' | while read -r INSTANCE_ID; do
               curl --request DELETE \
-                --url "http://localhost:8080/oauth/v2/service_instances/$INSTANCE_ID?accepts_incomplete=true&service_id=47c9dcbf-ff30-448e-ab36-d3bad66ba281&plan_id=4deee563-e5ec-4731-b9b1-53b42d855f0c" \
+                --url "http://localhost:30080/oauth/v2/service_instances/$INSTANCE_ID?accepts_incomplete=true&service_id=47c9dcbf-ff30-448e-ab36-d3bad66ba281&plan_id=4deee563-e5ec-4731-b9b1-53b42d855f0c" \
                 --header "Content-Type: application/json" \
                 --header "X-Broker-API-Version: 2.16" \
                 --data '{"service_id":"47c9dcbf-ff30-448e-ab36-d3bad66ba281","plan_id":"4deee563-e5ec-4731-b9b1-53b42d855f0c","context":{"globalaccount_id":"2f5011af-2fd3-44ba-ac60-eeb1148c2995","subaccount_id":"8b9a0db4-9aef-4da2-a856-61a4420b66fd","user_id":"user@email.com"}}'
@@ -606,7 +598,7 @@ jobs:
 
           while true; do
             DEPROVISIONING_COUNT=$(curl --request GET \
-              --url "http://localhost:8080/runtimes?plan=azure&state=deprovisioning" \
+              --url "http://localhost:30080/runtimes?plan=azure&state=deprovisioning" \
               --header 'Content-Type: application/json' \
               --header 'X-Broker-API-Version: 2.16' | jq .totalCount)
 
@@ -620,7 +612,7 @@ jobs:
 
       - name: Fetch metrics
         run: |
-          METRICS=$(curl -s http://localhost:8080/metrics)
+          METRICS=$(curl -s http://localhost:30080/metrics)
           
           SUCCEEDED_TOTAL=$(echo "$METRICS" | grep 'kcp_keb_v2_operations_deprovisioning_succeeded_total{plan_id="4deee563-e5ec-4731-b9b1-53b42d855f0c"}' | awk '{print $2}')
           SUCCEEDED_TOTAL=${SUCCEEDED_TOTAL:-0}
@@ -698,8 +690,6 @@ jobs:
           
       - name: Start metrics collector
         run: |
-          kubectl port-forward -n kcp-system deployment/kcp-kyma-environment-broker 8080:8080 5432:5432 &
-          sleep 5
           nohup bash scripts/monitor_metrics.sh > /dev/null 2>&1 &
           echo $! > /tmp/metrics_pid
 
@@ -709,14 +699,14 @@ jobs:
           seq 1 ${{ inputs.instances-number }} | xargs -n1 -P8 -I{} bash -c '
             uid=$(uuidgen)
             curl --request PUT \
-              --url "http://localhost:8080/oauth/v2/service_instances/$uid" \
+              --url "http://localhost:30080/oauth/v2/service_instances/$uid" \
               --header "Content-Type: application/json" \
               --header "X-Broker-API-Version: 2.16" \
               --data "{\"service_id\":\"47c9dcbf-ff30-448e-ab36-d3bad66ba281\",\"plan_id\":\"8cb22518-aa26-44c5-91a0-e669ec9bf443\",\"context\":{\"globalaccount_id\":\"2f5011af-2fd3-44ba-ac60-eeb1148c2995\",\"subaccount_id\":\"8b9a0db4-9aef-4da2-a856-61a4420b66fd\",\"user_id\":\"user@email.com\"},\"parameters\":{\"name\":\"azure-lite-cluster\",\"region\":\"northeurope\"}}"
           '
 
           TOTAL_COUNT=$(curl --request GET \
-            --url http://localhost:8080/runtimes?plan=azure_lite \
+            --url http://localhost:30080/runtimes?plan=azure_lite \
             --header 'Content-Type: application/json' \
             --header 'X-Broker-API-Version: 2.16' | jq .totalCount)
 
@@ -731,14 +721,14 @@ jobs:
           seq 1 ${{ inputs.instances-number }} | xargs -n1 -P8 -I{} bash -c '
             uid=$(uuidgen)
             curl --request PUT \
-              --url http://localhost:8080/oauth/v2/service_instances/$uid \
+              --url http://localhost:30080/oauth/v2/service_instances/$uid \
               --header "Content-Type: application/json" \
               --header "X-Broker-API-Version: 2.16" \
               --data "{\"service_id\":\"47c9dcbf-ff30-448e-ab36-d3bad66ba281\",\"plan_id\":\"4deee563-e5ec-4731-b9b1-53b42d855f0c\",\"context\":{\"globalaccount_id\":\"2f5011af-2fd3-44ba-ac60-eeb1148c2995\",\"subaccount_id\":\"8b9a0db4-9aef-4da2-a856-61a4420b66fd\",\"user_id\":\"user@email.com\"},\"parameters\":{\"name\":\"azure-cluster\",\"region\":\"northeurope\"}}"
           '
 
           TOTAL_COUNT=$(curl --request GET \
-            --url http://localhost:8080/runtimes?plan=azure \
+            --url http://localhost:30080/runtimes?plan=azure \
             --header 'Content-Type: application/json' \
             --header 'X-Broker-API-Version: 2.16' | jq .totalCount)
 
@@ -757,7 +747,7 @@ jobs:
           scripts/simulate_kim.sh
           
           RESPONSE_JSON=$(curl --request GET \
-            --url "http://localhost:8080/runtimes?plan=azure_lite&state=succeeded" \
+            --url "http://localhost:30080/runtimes?plan=azure_lite&state=succeeded" \
             --header 'Content-Type: application/json' \
             --header 'X-Broker-API-Version: 2.16')
           SUCCEEDED_TOTAL_COUNT=$(echo "$RESPONSE_JSON" | jq .totalCount)
@@ -770,7 +760,7 @@ jobs:
           fi
           
           RESPONSE_JSON=$(curl --request GET \
-            --url "http://localhost:8080/runtimes?plan=azure&state=succeeded" \
+            --url "http://localhost:30080/runtimes?plan=azure&state=succeeded" \
             --header 'Content-Type: application/json' \
             --header 'X-Broker-API-Version: 2.16')
           SUCCEEDED_TOTAL_COUNT=$(echo "$RESPONSE_JSON" | jq .totalCount)
@@ -788,14 +778,14 @@ jobs:
           seq 1 ${{ inputs.instances-number }} | xargs -n1 -P8 -I{} bash -c '
             uid=$(uuidgen)
             curl --request PUT \
-              --url http://localhost:8080/oauth/v2/service_instances/$uid \
+              --url http://localhost:30080/oauth/v2/service_instances/$uid \
               --header "Content-Type: application/json" \
               --header "X-Broker-API-Version: 2.16" \
               --data "{\"service_id\":\"47c9dcbf-ff30-448e-ab36-d3bad66ba281\",\"plan_id\":\"ca6e5357-707f-4565-bbbd-b3ab732597c6\",\"context\":{\"globalaccount_id\":\"2f5011af-2fd3-44ba-ac60-eeb1148c2995\",\"subaccount_id\":\"8b9a0db4-9aef-4da2-a856-61a4420b66fd\",\"user_id\":\"user@email.com\"},\"parameters\":{\"name\":\"gcp-cluster\",\"region\":\"europe-west3\"}}"
           '
 
           TOTAL_COUNT=$(curl --request GET \
-            --url http://localhost:8080/runtimes?plan=gcp \
+            --url http://localhost:30080/runtimes?plan=gcp \
             --header 'Content-Type: application/json' \
             --header 'X-Broker-API-Version: 2.16' | jq .totalCount)
 
@@ -810,7 +800,7 @@ jobs:
           PAGE=1
           while true; do
             RESPONSE=$(curl --request GET \
-              --url "http://localhost:8080/runtimes?plan=azure_lite&page=$PAGE" \
+              --url "http://localhost:30080/runtimes?plan=azure_lite&page=$PAGE" \
               --header 'Content-Type: application/json' \
               --header 'X-Broker-API-Version: 2.16')
 
@@ -821,7 +811,7 @@ jobs:
 
             echo "$RESPONSE" | jq -r '.data[].instanceID' | while read -r INSTANCE_ID; do
               curl --request PATCH \
-                --url "http://localhost:8080/oauth/v2/service_instances/$INSTANCE_ID?accepts_incomplete=true" \
+                --url "http://localhost:30080/oauth/v2/service_instances/$INSTANCE_ID?accepts_incomplete=true" \
                 --header "Content-Type: application/json" \
                 --header "X-Broker-API-Version: 2.16" \
                 --data '{"service_id":"47c9dcbf-ff30-448e-ab36-d3bad66ba281","plan_id":"8cb22518-aa26-44c5-91a0-e669ec9bf443","context":{"globalaccount_id":"2f5011af-2fd3-44ba-ac60-eeb1148c2995","subaccount_id":"8b9a0db4-9aef-4da2-a856-61a4420b66fd","user_id":"user@email.com"},"parameters":{"autoScalerMax":15}}'
@@ -834,7 +824,7 @@ jobs:
           PAGE=1
           while true; do
             RESPONSE=$(curl --request GET \
-              --url "http://localhost:8080/runtimes?plan=azure&page=$PAGE" \
+              --url "http://localhost:30080/runtimes?plan=azure&page=$PAGE" \
               --header 'Content-Type: application/json' \
               --header 'X-Broker-API-Version: 2.16')
 
@@ -845,7 +835,7 @@ jobs:
 
             echo "$RESPONSE" | jq -r '.data[].instanceID' | while read -r INSTANCE_ID; do
               curl --request DELETE \
-                --url "http://localhost:8080/oauth/v2/service_instances/$INSTANCE_ID?accepts_incomplete=true&service_id=47c9dcbf-ff30-448e-ab36-d3bad66ba281&plan_id=4deee563-e5ec-4731-b9b1-53b42d855f0c" \
+                --url "http://localhost:30080/oauth/v2/service_instances/$INSTANCE_ID?accepts_incomplete=true&service_id=47c9dcbf-ff30-448e-ab36-d3bad66ba281&plan_id=4deee563-e5ec-4731-b9b1-53b42d855f0c" \
                 --header "Content-Type: application/json" \
                 --header "X-Broker-API-Version: 2.16" \
                 --data '{"service_id":"47c9dcbf-ff30-448e-ab36-d3bad66ba281","plan_id":"4deee563-e5ec-4731-b9b1-53b42d855f0c","context":{"globalaccount_id":"2f5011af-2fd3-44ba-ac60-eeb1148c2995","subaccount_id":"8b9a0db4-9aef-4da2-a856-61a4420b66fd","user_id":"user@email.com"}}'
@@ -862,7 +852,7 @@ jobs:
         
       - name: Fetch metrics
         run: |
-          METRICS=$(curl -s http://localhost:8080/metrics)
+          METRICS=$(curl -s http://localhost:30080/metrics)
           
           # Provisioning metrics
 
@@ -970,14 +960,14 @@ jobs:
           
       - name: Start metrics collector
         run: |
-          kubectl port-forward -n kcp-system deployment/kcp-kyma-environment-broker 8080:8080 &
-          kubectl port-forward -n kcp-system deployment/postgres 5432:5432 &
-          sleep 5
           nohup bash scripts/monitor_metrics.sh > /dev/null 2>&1 &
           echo $! > /tmp/metrics_pid
 
       - name: Fetch runtimes using GET endpoint
         run: |
+          kubectl port-forward -n kcp-system deployment/postgres 5432:5432 &
+          sleep 5
+          
           DB_NAME=$(kubectl get secret kcp-postgresql -n kcp-system -o jsonpath="{.data.postgresql-broker-db-name}" | base64 -d)
           DB_USER=$(kubectl get secret kcp-postgresql -n kcp-system -o jsonpath="{.data.postgresql-broker-username}" | base64 -d)
           DB_PASS=$(kubectl get secret kcp-postgresql -n kcp-system -o jsonpath="{.data.postgresql-broker-password}" | base64 -d)
@@ -988,7 +978,7 @@ jobs:
           for i in {1..100}; do
             STATUS_CODE=$(curl --write-out "%{http_code}" --silent --output /dev/null \
               --request GET \
-              --url "http://localhost:8080/runtimes" \
+              --url "http://localhost:30080/runtimes" \
               --header 'Content-Type: application/json' \
               --header 'X-Broker-API-Version: 2.16')
             echo $STATUS_CODE
@@ -1014,7 +1004,7 @@ jobs:
             for PAGE in $(seq 1 $pages); do
               START=$(date +%s%3N)
               curl --silent --request GET \
-                --url "http://localhost:8080/runtimes?page=$PAGE" \
+                --url "http://localhost:30080/runtimes?page=$PAGE" \
                 --header 'Content-Type: application/json' \
                 --header 'X-Broker-API-Version: 2.16' > /dev/null
               END=$(date +%s%3N)
