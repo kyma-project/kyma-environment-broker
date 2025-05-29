@@ -28,7 +28,7 @@ const (
 )
 
 func NewProvisioningProcessingQueue(ctx context.Context, provisionManager *process.StagedManager, workersAmount int, cfg *Config,
-	db storage.BrokerStorage, configProvider config.ConfigurationProvider,
+	db storage.BrokerStorage, configProvider config.Provider,
 	edpClient provisioning.EDPClient, accountProvider hyperscaler.AccountProvider,
 	k8sClientProvider provisioning.K8sClientProvider, k8sClient client.Client, gardenerClient *gardener.Client, defaultOIDC pkg.OIDCConfigDTO, logs *slog.Logger, rulesService *rules.RulesService,
 	workersProvider *workers.Provider) *process.Queue {
@@ -59,7 +59,7 @@ func NewProvisioningProcessingQueue(ctx context.Context, provisionManager *proce
 		},
 		{
 			stage: createRuntimeStageName,
-			step:  steps.NewInitKymaTemplate(db.Operations(), configProvider),
+			step:  steps.NewInitKymaTemplate(db.Operations(), config.NewConfigMapConfigProvider(configProvider, cfg.RuntimeConfigurationConfigMapName, config.RuntimeConfigurationRequiredFields)),
 		},
 		{
 			stage: createRuntimeStageName,

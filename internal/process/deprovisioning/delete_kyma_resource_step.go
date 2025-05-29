@@ -29,16 +29,16 @@ const (
 
 type DeleteKymaResourceStep struct {
 	operationManager *process.OperationManager
-	kcpClient        client.Client
-	configProvider   config.ConfigurationProvider
 	instances        storage.Instances
+	kcpClient        client.Client
+	configProvider   config.ConfigMapConfigProvider
 }
 
-func NewDeleteKymaResourceStep(db storage.BrokerStorage, kcpClient client.Client, configProvider config.ConfigurationProvider) *DeleteKymaResourceStep {
+func NewDeleteKymaResourceStep(db storage.BrokerStorage, kcpClient client.Client, configProvider config.ConfigMapConfigProvider) *DeleteKymaResourceStep {
 	step := &DeleteKymaResourceStep{
+		instances:      db.Instances(),
 		kcpClient:      kcpClient,
 		configProvider: configProvider,
-		instances:      db.Instances(),
 	}
 	step.operationManager = process.NewOperationManager(db.Operations(), step.Name(), kebError.LifeCycleManagerDependency)
 	return step
@@ -51,7 +51,8 @@ func (step *DeleteKymaResourceStep) Name() string {
 func (step *DeleteKymaResourceStep) Run(operation internal.Operation, logger *slog.Logger) (internal.Operation, time.Duration, error) {
 	// read the KymaTemplate from the config if needed
 	if operation.KymaTemplate == "" {
-		cfg, err := step.configProvider.ProvideForGivenPlan(broker.PlanNamesMapping[operation.ProvisioningParameters.PlanID]) //TODO check if this is properly passed
+		cfg := &internal.ConfigForPlan{}
+		err := step.configProvider.Provide(broker.PlanNamesMapping[operation.ProvisioningParameters.PlanID], cfg) // TODO check if this is properly passed
 		if err != nil {
 			return step.operationManager.RetryOperationWithoutFail(operation, step.Name(), "unable to get config for given version and plan", 5*time.Second, 30*time.Second, logger,
 				fmt.Errorf("unable to get config for given version and plan"))

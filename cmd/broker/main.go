@@ -258,7 +258,7 @@ func main() {
 
 	// provides configuration for specified Kyma version and plan
 	configProvider := kebConfig.NewConfigProvider(
-		kebConfig.NewConfigMapReader(ctx, kcpK8sClient, log, cfg.RuntimeConfigurationConfigMapName),
+		kebConfig.NewConfigMapReader(ctx, kcpK8sClient, log),
 		kebConfig.NewConfigMapKeysValidator(),
 		kebConfig.NewConfigMapConverter())
 	gardenerClusterConfig, err := gardener.NewGardenerClusterConfig(cfg.Gardener.KubeconfigPath)

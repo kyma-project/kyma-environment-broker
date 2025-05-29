@@ -277,8 +277,9 @@ func fixConfig() *Config {
 			OperationResultFinishedOperationRetentionPeriod: time.Hour,
 			BindingsStatsPollingInterval:                    3 * time.Second,
 		},
-		ProvidersConfigurationFilePath: "testdata/providers.yaml",
-		PlansConfigurationFilePath:     "testdata/plans.yaml",
+		ProvidersConfigurationFilePath:    "testdata/providers.yaml",
+		PlansConfigurationFilePath:        "testdata/plans.yaml",
+		RuntimeConfigurationConfigMapName: "keb-runtime-config",
 	}
 }
 
