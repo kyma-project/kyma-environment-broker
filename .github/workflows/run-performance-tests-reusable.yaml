@@ -188,17 +188,6 @@ jobs:
           fi
           echo "Average duration of provisioning requests: $AVG_PROVISIONING_DURATION minutes" >> $GITHUB_STEP_SUMMARY
           
-          PROVISIONING_DURATION_BUCKETS=$(echo "$METRICS" | grep 'kcp_keb_v2_provisioning_duration_minutes_bucket{plan_id="4deee563-e5ec-4731-b9b1-53b42d855f0c"')
-          INF_TOTAL=$(echo "$PROVISIONING_DURATION_BUCKETS" | grep 'le="+Inf"' | awk '{print $2}')
-          MAX_PROVISIONING_DURATION=$(echo "$PROVISIONING_DURATION_BUCKETS" | grep -v 'le="\+Inf"' | sed -n 's/.*le="\([^"]*\)"} \([0-9]*\)/\1 \2/p' | \
-          while read le count; do
-            if [ "$count" -eq "$INF_TOTAL" ]; then
-              echo "$le"
-              break
-            fi
-          done)
-          echo "Maximum duration of provisioning requests: $MAX_PROVISIONING_DURATION minutes" >> $GITHUB_STEP_SUMMARY
-          
           scripts/generate_charts.sh
           
           if [[ "$SUCCESS_RATE" != "100.00" ]]; then
@@ -897,17 +886,6 @@ jobs:
             AVG_PROVISIONING_DURATION=$(awk "BEGIN {printf \"%.2f\", ($PROVISIONING_DURATION / $PROVISIONING_COUNT)}")
           fi
           echo "Average duration of provisioning requests: $AVG_PROVISIONING_DURATION minutes" >> $GITHUB_STEP_SUMMARY
-
-          PROVISIONING_DURATION_BUCKETS=$(echo "$METRICS" | grep 'kcp_keb_v2_provisioning_duration_minutes_bucket{plan_id="ca6e5357-707f-4565-bbbd-b3ab732597c6"')
-          INF_TOTAL=$(echo "$PROVISIONING_DURATION_BUCKETS" | grep 'le="+Inf"' | awk '{print $2}')
-          MAX_PROVISIONING_DURATION=$(echo "$PROVISIONING_DURATION_BUCKETS" | grep -v 'le="\+Inf"' | sed -n 's/.*le="\([^"]*\)"} \([0-9]*\)/\1 \2/p' | \
-          while read le count; do
-            if [ "$count" -eq "$INF_TOTAL" ]; then
-              echo "$le"
-              break
-            fi
-          done)
-          echo "Maximum duration of provisioning requests: $MAX_PROVISIONING_DURATION minutes" >> $GITHUB_STEP_SUMMARY
           
           # Update metrics
           
