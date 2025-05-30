@@ -107,11 +107,20 @@ DO $$
                 'cluster,btp-operator,btp-operator-check,check,runtime_resource,check_runtime_resource'
             );
 
-            UPDATE instances
-            SET last_operation_id = v_operation_update_id
-            WHERE instance_id = v_instance_id::text;
-
             i := i + 1;
         END LOOP;
     END
 $$;
+
+UPDATE instances i
+SET last_operation_id = o.id
+FROM (
+         SELECT DISTINCT ON (instance_id)
+             id,
+             instance_id,
+             created_at
+         FROM operations
+         WHERE type = 'update'
+         ORDER BY instance_id, created_at DESC
+     ) o
+WHERE i.instance_id = o.instance_id;

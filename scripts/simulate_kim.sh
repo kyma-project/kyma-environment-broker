@@ -38,6 +38,7 @@ COUNT=$(get_provisioning_runtimes)
 echo "Initial provisioning runtimes count: $COUNT"
 
 while (( COUNT > 0 )); do
+  echo "Provisioning runtimes remaining: $COUNT"
   RUNTIMES=$(kubectl get runtimes -n kcp-system -o json | jq -r \
     '.items[] | select(.status.state != "Ready") | "\(.metadata.name) \(.metadata.creationTimestamp)"')
 
@@ -58,10 +59,6 @@ while (( COUNT > 0 )); do
   sleep 10
 
   COUNT=$(get_provisioning_runtimes)
-  if (( COUNT == 0 )); then
-    echo "All runtimes are ready. Done."
-    break
-  fi
-  
-  echo "Provisioning runtimes remaining: $COUNT"
 done
+
+echo "All runtimes are ready. Done."

@@ -29,7 +29,7 @@ set -E          # needs to be set if we want the ERR trap
 set -o pipefail # prevents errors in a pipeline from being masked
 
 METRICS_FILE="/tmp/keb_metrics.jsonl"
-echo "" > "$METRICS_FILE"
+touch "$METRICS_FILE"
 
 while true; do
   TIMESTAMP=$(date +%s)
